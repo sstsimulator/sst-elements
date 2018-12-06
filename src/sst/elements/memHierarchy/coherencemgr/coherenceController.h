@@ -60,6 +60,10 @@ public:
     /* Handle a response - AckInv, GetSResp, etc. */
     virtual CacheAction handleResponse(MemEvent * event, CacheLine * line, MemEvent * request) =0;
 
+    virtual CacheAction handleNoAllocRequest(MemEvent* event, CacheLine* line, bool replay) {
+        output->fatal(CALL_INFO, -1, "%s, Error: No implementation for F_NOALLOC events in this cache controller\n", getName().c_str());
+    }
+
     /* Determine whether an event needs to be retried after a NACK */
     virtual bool isRetryNeeded(MemEvent * event, CacheLine * line) =0;
 

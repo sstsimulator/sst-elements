@@ -492,6 +492,10 @@ public:
     /** Process responses - GetSResp, GetXResp, FetchResp */
     CacheAction handleResponse(MemEvent* responseEvent, CacheLine* cacheLine, MemEvent* origRequest);
 
+    /** Handle No-Alloc events */
+    CacheAction handleNoAllocRequest(MemEvent* event, CacheLine* line, bool replay);
+    CacheAction handleNoAllocResponse(MemEvent* event, MemEvent* origRequest);
+    
 /* Message send */
     /** Forward a message up, used for non-inclusive caches */
     void forwardMessageUp(MemEvent * event);

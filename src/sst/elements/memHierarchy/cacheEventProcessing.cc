@@ -220,7 +220,7 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
         ev->setFlag(MemEvent::F_NONCACHEABLE);
     }
     bool noncacheable = ev->queryFlag(MemEvent::F_NONCACHEABLE);
-
+    bool checkonly = ev->queryFlag(MemEvent::F_NOALLOC);
 
     if (MemEventTypeArr[(int)ev->getCmd()] != MemEventType::Cache || noncacheable) {
         statNoncacheableEventsReceived->addData(1);
@@ -300,7 +300,7 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
                     event->setBlocked(true);
                 }
                 // track times in our separate queue
-                if (startTimeList_.find(event) == startTimeList_.end()) {
+                if (!checkonly && (startTimeList_.find(event) == startTimeList_.end())) {
                     startTimeList_.insert(std::pair<MemEvent*,uint64>(event, timestamp_));
                 }
 
@@ -308,15 +308,21 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
             }
             
             // track times in our separate queue
-            if (startTimeList_.find(event) == startTimeList_.end()) {
+            if (!checkonly && (startTimeList_.find(event) == startTimeList_.end())) {
                 startTimeList_.insert(std::pair<MemEvent*,uint64>(event, timestamp_));
             }
-            
-            processCacheRequest(event, cmd, baseAddr, replay);
+            if (checkonly)
+                processNoAllocRequest(event, cmd, baseAddr, replay);
+            else 
+                processCacheRequest(event, cmd, baseAddr, replay);
             break;
         case Command::GetSResp:
         case Command::GetXResp:
         case Command::FlushLineResp:
+            if (checkonly) {
+                processNoncacheable(event);
+                break;
+            }
             profileEvent(event, cmd, replay, canStall);
             processCacheResponse(event, baseAddr);
             break;

@@ -64,15 +64,23 @@ ScratchCPU::ScratchCPU(ComponentId_t id, Params& params) : Component(id), rng(id
 
     std::string size = params.find<std::string>("scratchSize", "0");
     size += "B";
-    params.insert("scratchpad_size", size);
 
-    memory = dynamic_cast<Interfaces::SimpleMem*>(loadSubComponent("memHierarchy.scratchInterface", this, params));
-    if ( !memory ) {
-        out.fatal(CALL_INFO, -1, "Unable to load scratchInterface subcomponent\n");
+    if (nullptr != (scratchmem = dynamic_cast<Interfaces::SimpleMem*>(loadNamedSubComponent("scratchpad")))) {
+        scratchmem->initialize("", new Interfaces::SimpleMem::Handler<ScratchCPU>(this, &ScratchCPU::handleEvent) );
+    } else {
+        Params scratchparams;
+        scratchparams.insert("scratchpad_size", std::to_string(scratchSize) + "B");
+        scratchmem = dynamic_cast<Interfaces::SimpleMem*>(loadSubComponent("memHierarchy.scratchInterface", this, scratchparams));
+        scratchmem->initialize("mem_link", new Interfaces::SimpleMem::Handler<ScratchCPU>(this, &ScratchCPU::handleEvent) );
     }
 
-    memory->initialize("mem_link",
-			new Interfaces::SimpleMem::Handler<ScratchCPU>(this, &ScratchCPU::handleEvent) );
+    if (nullptr != (cachemem = dynamic_cast<Interfaces::SimpleMem*>(loadNamedSubComponent("cache")))) {
+        cachemem->initialize("", new Interfaces::SimpleMem::Handler<ScratchCPU>(this, &ScratchCPU::handleEvent) );
+    }
+
+    if ( !scratchmem) {
+        out.fatal(CALL_INFO, -1, "Unable to load scratchInterface subcomponent\n");
+    }
 
     // Initialize local variables
     timestamp = 0;
@@ -81,7 +89,9 @@ ScratchCPU::ScratchCPU(ComponentId_t id, Params& params) : Component(id), rng(id
 
 // SST Component functions
 void ScratchCPU::init(unsigned int phase) {
-    memory->init(phase);
+    scratchmem->init(phase);
+    if (cachemem)
+        cachemem->init(phase);
 }
 
 void ScratchCPU::finish() {
@@ -109,7 +119,8 @@ bool ScratchCPU::tick(Cycle_t time) {
                 
                 // Determine what kind of request to send -> 6 options
                 uint32_t instType = rng.generateNextUInt32() % 6;
-                
+                bool sendcache = false;
+
                 Interfaces::SimpleMem::Request * req;
                 if (instType == 0) { // Scratch read
                     // Generate request size
@@ -156,7 +167,9 @@ bool ScratchCPU::tick(Cycle_t time) {
                     uint32_t size = 1 << log2Size;
 
                     Interfaces::SimpleMem::Addr addr = (Interfaces::SimpleMem::Addr) (((rng.generateNextUInt64() % (maxAddr - scratchSize)) >> log2Size ) << log2Size);
-                    addr += scratchSize;
+                    
+                    if (!cachemem) addr += scratchSize;
+                    sendcache = (cachemem != nullptr);
                     req = new Interfaces::SimpleMem::Request(Interfaces::SimpleMem::Request::Read, addr, size);
                     out.debug(_L3_, "ScratchCPU (%s) sending mem Read. Addr: %" PRIu64 ", Size: %u\n\n", getName().c_str(), addr, size);
                 } else { // Memory write
@@ -164,8 +177,9 @@ bool ScratchCPU::tick(Cycle_t time) {
                     uint32_t size = 1 << log2Size;
 
                     Interfaces::SimpleMem::Addr addr = (Interfaces::SimpleMem::Addr) (((rng.generateNextUInt64() % (maxAddr - scratchSize)) >> log2Size ) << log2Size);
-                    addr += scratchSize;
-                    
+                    if (!cachemem) addr += scratchSize;
+                    sendcache = (cachemem != nullptr);
+
                     std::vector<uint8_t> data;
                     data.resize(size, 0);
                     
@@ -174,7 +188,10 @@ bool ScratchCPU::tick(Cycle_t time) {
                 }
 
 		// Send request
-                memory->sendRequest(req);
+                if (sendcache)
+                    cachemem->sendRequest(req);
+                else
+                    scratchmem->sendRequest(req);
 		requests[req->id] = timestamp;
 
                 // Update counter info

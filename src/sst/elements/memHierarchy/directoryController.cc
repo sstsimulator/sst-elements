@@ -289,6 +289,11 @@ void DirectoryController::handlePacket(SST::Event *event){
 
     }
 
+    if (evb->queryFlag(MemEventBase::F_NOALLOC) && (evb->getCmd() == Command::GetSResp || evb->getCmd() == Command::GetXResp)) {
+        handleNoncacheableResponse(evb);
+        return;
+    }
+
     MemEvent *ev = static_cast<MemEvent*>(event);
     if (ev->getCmd() == Command::GetSResp || ev->getCmd() == Command::GetXResp || ev->getCmd() == Command::FlushLineResp
             || ev->getCmd() == Command::ForceInv || ev->getCmd() == Command::FetchInv || ev->getCmd() == Command::AckPut) {
@@ -490,6 +495,11 @@ void DirectoryController::processPacket(MemEvent * ev, bool replay) {
                 getName().c_str(), ev->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
 
+    if (ev->queryFlag(MemEventBase::F_NOALLOC)) {
+        handleNoAllocRequest(ev, replay);
+        return;
+    }
+
     Command cmd = ev->getCmd();
     switch (cmd) {
         case Command::GetS:
@@ -571,10 +581,87 @@ void DirectoryController::handleNoncacheableResponse(MemEventBase * ev) {
 
 /* Event handlers */
 
+/*
+ * No Alloc
+ * If no coherence conflict, read/write data at memory
+ * If there is a coherence conflict:
+ *      on a read, downgrade block and writeback to memory
+ *      on a write, invalidate block, and writeback to memory                                 
+ * If there are outstanding requests for the address, stall until we're at the head of the MSHR
+ */
+void DirectoryController::handleNoAllocRequest(MemEvent * ev, bool replay) {
+    DirEntry * entry = getDirEntry(ev->getBaseAddr());
+    
+    bool inMSHR = mshr->elementIsHit(ev->getBaseAddr(), ev);
+
+    /* Check if there's an MSHR hit and we should stall this request */
+    if (!inMSHR) {
+        if (mshr->isHit(ev->getBaseAddr())) {
+            if (!mshr->insert(ev->getBaseAddr(), ev)) {
+                mshrNACKRequest(ev);
+                dbg.debug(_L5_, "\tNoAlloc: MSHR conflict but MSHR is full, NACKing request\n");
+            }
+            dbg.debug(_L5_, "\tNoAlloc: MSHR conflict, stalling request\n");
+            return;
+        }
+    }
+
+    /* If entry is not cached, just handle as noncacheable */
+    if (!entry->isCached()) {
+        dbg.debug(_L5_, "\tNoAlloc: Directory entry not cached, handling as noncacheable\n");
+        if (inMSHR)
+            mshr->removeElement(ev->getBaseAddr(), ev);
+        handleNoncacheableRequest(ev);
+        return;
+    }
+    
+    State state = entry->getState();
+    dbg.debug(_L5_, "\tNoAlloc: State is %s\n", StateString[state]);
+    switch (state) {
+        case I:
+            handleNoncacheableRequest(ev);
+            if (inMSHR)
+                mshr->removeElement(ev->getBaseAddr(), ev);
+            return;
+        case S:
+            if (ev->getCmd() == Command::GetX) {
+                if (!inMSHR && !mshr->insert(ev->getBaseAddr(), ev)) {
+                    mshrNACKRequest(ev);
+                    return;
+                }
+                entry->setState(S_Inv);
+                issueInvalidates(ev, entry, Command::Inv);
+            } else {
+                if (inMSHR)
+                    mshr->removeElement(ev->getBaseAddr(), ev);
+                handleNoncacheableRequest(ev);
+            }
+            return;
+        case M:
+            if (!inMSHR && !mshr->insert(ev->getBaseAddr(), ev)) {
+                mshrNACKRequest(ev);
+                return;
+            }
+            if (ev->getCmd() == Command::GetX) {
+                entry->setState(M_Inv);
+                issueFetch(ev, entry, Command::FetchInv);
+            } else {
+                entry->setState(M_InvX);
+                issueFetch(ev, entry, Command::FetchInvX);
+            }
+            return;
+        default:
+            dbg.fatal(CALL_INFO, -1, "Directory %s received F_NOALLOC event but state is %s. Event: %s\n", getName().c_str(), StateString[state], ev->getVerboseString().c_str());
+    }
+}
+
 /** GetS */
 void DirectoryController::handleGetS(MemEvent * ev, bool replay) {
     /* Locate directory entry and allocate if needed */
     DirEntry * entry = getDirEntry(ev->getBaseAddr());
+    
+    bool noalloc = ev->queryFlag(MemEventBase::F_NOALLOC);
+   
     /* Put request in MSHR (all GetS requests need to be buffered while they wait for data) and stall if there are waiting requests ahead of us */
     if (!(mshr->elementIsHit(ev->getBaseAddr(), ev))) {
         bool conflict = mshr->isHit(ev->getBaseAddr());
@@ -590,7 +677,7 @@ void DirectoryController::handleGetS(MemEvent * ev, bool replay) {
     } else if (!replay) {
         profileRequestRecv(ev, entry);
     }
-
+    
     if (!entry->isCached()) {
 
         if (is_debug_addr(entry->getBaseAddr())) dbg.debug(_L6_, "Entry %" PRIx64 " not in cache.  Requesting from memory.\n", entry->getBaseAddr());
@@ -771,6 +858,7 @@ void DirectoryController::handlePutE(MemEvent * ev) {
     profileRequestRecv(ev, entry);
     entry->clearOwner();
 
+    Addr addr = ev->getBaseAddr();
     State state = entry->getState();
     switch  (state) {
         case M:
@@ -781,14 +869,30 @@ void DirectoryController::handlePutE(MemEvent * ev) {
             updateCache(entry);         // update cache;
             break;
         case M_Inv:     /* If PutE comes with data then we can handle this immediately but otherwise */
-            entry->setState(IM);
-            issueMemoryRequest(mshr->lookupFront(ev->getBaseAddr()), entry);
-            postRequestProcessing(ev, entry, false);  // profile & delete ev
+            if (mshr->lookupFront(addr)->queryFlag(MemEventBase::F_NOALLOC)) {
+                handleNoncacheableRequest(mshr->lookupFront(addr));
+                mshr->removeFront(addr);
+                entry->setState(I);
+                postRequestProcessing(ev, entry, false);  // profile & delete ev
+                replayWaitingEvents(addr);
+            } else {
+                entry->setState(IM);
+                issueMemoryRequest(mshr->lookupFront(addr), entry);
+                postRequestProcessing(ev, entry, false);  // profile & delete ev
+            }
             break;
         case M_InvX:
-            entry->setState(IS);
-            issueMemoryRequest(mshr->lookupFront(ev->getBaseAddr()), entry);
-            postRequestProcessing(ev, entry, false);  // profile & delete ev
+            if (mshr->lookupFront(addr)->queryFlag(MemEventBase::F_NOALLOC)) {
+                handleNoncacheableRequest(mshr->lookupFront(addr));
+                mshr->removeFront(addr);
+                entry->setState(I);
+                postRequestProcessing(ev, entry, false);  // profile & delete ev
+                replayWaitingEvents(addr);
+            } else {
+                entry->setState(IS);
+                issueMemoryRequest(mshr->lookupFront(addr), entry);
+                postRequestProcessing(ev, entry, false);  // profile & delete ev
+            }
             break;
         default:
             dbg.fatal(CALL_INFO, -1, "%s, Error: Directory received PutE but state is %s. Event: %s. Time = %" PRIu64 "ns\n",
@@ -830,6 +934,7 @@ void DirectoryController::handlePutM(MemEvent * ev) {
         return;
     }
 
+    Addr addr = ev->getBaseAddr();
     State state = entry->getState();
     switch  (state) {
         case M:
@@ -839,12 +944,22 @@ void DirectoryController::handlePutM(MemEvent * ev) {
             entry->setState(I);
             sendAckPut(ev);
             postRequestProcessing(ev, entry, true);  // profile & delete event
-            replayWaitingEvents(ev->getBaseAddr());
+            replayWaitingEvents(addr);
             updateCache(entry);
             break;
         case M_Inv:
         case M_InvX:
-            handleFetchResp(ev, false);
+            if (mshr->lookupFront(addr)->queryFlag(MemEventBase::F_NOALLOC)) {
+                writebackData(ev, Command::PutM);
+                entry->clearOwner();
+                entry->setState(I);
+                handleNoncacheableRequest(mshr->lookupFront(addr));
+                mshr->removeFront(addr);
+                postRequestProcessing(ev, entry, true);
+                replayWaitingEvents(addr);
+            } else {
+                handleFetchResp(ev, false);
+            }
             break;
         default:
             dbg.fatal(CALL_INFO, -1, "%s, Error: Directory received PutM but state is %s. Event: %s. Time = %" PRIu64 "ns, %" PRIu64 " cycles.\n",
@@ -1072,6 +1187,7 @@ void DirectoryController::handleFetchResp(MemEvent * ev, bool keepEvent) {
 
     DirEntry * entry = getDirEntry(ev->getBaseAddr());
     MemEvent * reqEv = mshr->removeFront(ev->getBaseAddr());
+    bool noalloc = reqEv->queryFlag(MemEventBase::F_NOALLOC);
 
     if (is_debug_event(ev)) dbg.debug(_L4_, "Finishing Fetch for reqEv = %s.\n", reqEv->getBriefString().c_str());
 
@@ -1089,14 +1205,23 @@ void DirectoryController::handleFetchResp(MemEvent * ev, bool keepEvent) {
 
     MemEvent * respEv = NULL;
     State state = entry->getState();
-
+    
     /* Handle request */
     switch (state) {
         case M_Inv:
             if (reqEv->getCmd() != Command::FetchInv && reqEv->getCmd() != Command::ForceInv) { // GetX request, not back invalidation
                 writebackData(ev, Command::PutM);
-                entry->setOwner(node_id(reqEv->getSrc()));
-                entry->setState(M);
+                if (noalloc) {
+                    entry->setState(I);
+                    handleNoncacheableRequest(reqEv);
+                    if (!keepEvent) delete ev;
+                    replayWaitingEvents(entry->getBaseAddr());
+                    updateCache(entry);
+                    return;
+                } else {
+                    entry->setOwner(node_id(reqEv->getSrc()));
+                    entry->setState(M);
+                }
             } else entry->setState(I);
             respEv = reqEv->makeResponse();
             break;
@@ -1107,7 +1232,14 @@ void DirectoryController::handleFetchResp(MemEvent * ev, bool keepEvent) {
                 // have the FetchInv/ForceInv go second
             }
             writebackData(ev, Command::PutM);
-            if (protocol == CoherenceProtocol::MESI && entry->getSharerCount() == 0) {
+            if (noalloc) {
+                entry->setState(S);
+                handleNoncacheableRequest(reqEv);
+                if (!keepEvent) delete ev;
+                replayWaitingEvents(entry->getBaseAddr());
+                updateCache(entry);
+                return;
+            } else if (protocol == CoherenceProtocol::MESI && entry->getSharerCount() == 0) {
                 entry->setOwner(node_id(reqEv->getSrc()));
                 respEv = reqEv->makeResponse(Command::GetXResp);
                 entry->setState(M);
@@ -1157,6 +1289,14 @@ void DirectoryController::handleFetchXResp(MemEvent * ev, bool keepEvent) {
     entry->addSharer(node_name_to_id(ev->getSrc()));
     entry->setState(S);
     if (ev->getDirty()) writebackData(ev, Command::PutM);
+
+    if (reqEv->queryFlag(MemEventBase::F_NOALLOC)) {
+        handleNoncacheableRequest(reqEv);
+        if (!keepEvent) delete ev;
+        replayWaitingEvents(entry->getBaseAddr());
+        updateCache(entry);
+        return;
+    }
 
     MemEvent * respEv = reqEv->makeResponse();
     entry->addSharer(node_id(reqEv->getSrc()));

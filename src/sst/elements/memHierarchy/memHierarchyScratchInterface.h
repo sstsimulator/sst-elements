@@ -46,7 +46,11 @@ class MemHierarchyScratchInterface : public Interfaces::SimpleMem {
 public:
 /* Element Library Info */
     SST_ELI_REGISTER_SUBCOMPONENT(MemHierarchyScratchInterface, "memHierarchy", "scratchInterface", SST_ELI_ELEMENT_VERSION(1,0,0),
-            "Interface to a scratchpad", "SST::Interfaces::SimpleMem")
+            "Interface to a memory hierarchy containing a scratchpad", "SST::Interfaces::SimpleMem")
+
+    SST_ELI_DOCUMENT_PARAMS( { "scratchpad_size", "Size of scratchpad with units in bytes ('B'). SI ok." } )
+
+    SST_ELI_DOCUMENT_PORTS( {"port",   "Link to a memory hierarchy containing a scratchpad.",   {"memHierarchy.MemEventBase"} } )
 
 /* Begin class definition */
     MemHierarchyScratchInterface(SST::Component *comp, Params &params);
@@ -84,10 +88,10 @@ private:
     HandlerBase*    recvHandler_;
     SST::Link*      link_;
     std::map<SST::Event::id_type, Interfaces::SimpleMem::Request*> requests_;
-    Addr baseAddrMask_;
+    Addr addrMask_;
     std::string rqstr_;
-    Addr remoteMemStart_;
-    bool allNoncache_;
+    std::string dst_;
+    Addr scratchMaxAddr_;
 
     bool initDone_;
     std::queue<MemEventInit*> initSendQueue_;

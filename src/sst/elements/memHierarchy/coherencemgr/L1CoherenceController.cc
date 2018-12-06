@@ -267,12 +267,58 @@ bool L1CoherenceController::isRetryNeeded(MemEvent * event, CacheLine * cacheLin
  *
  *------------------------------------------------------------------------------------------------*/
 
+CacheAction L1CoherenceController::handleNoAllocRequest(MemEvent* event, CacheLine* cacheLine, bool replay) {
+    State state = cacheLine ? cacheLine->getState() : I;
+    recordStateEventCount(event->getCmd(), state);
+    bool write = event->getCmd() == Command::GetX;
+    uint64_t sendTime;
+
+    switch (state) {
+        case I:
+            forwardMessage(event, event->getBaseAddr(), event->getSize(), 0, &event->getPayload());
+            return IGNORE;
+        case S:
+            if (write) {
+                event->clearFlag(MemEventBase::F_NOALLOC); // Clear flag so that subsequent request doesn't get it
+                sendTime = forwardMessage(event, cacheLine->getBaseAddr(), cacheLine->getSize(), cacheLine->getTimestamp(), NULL);
+                event->setFlag(MemEventBase::F_NOALLOC);
+                cacheLine->setState(SM);
+                if (cacheLine->getPrefetch()) {
+                    statPrefetchUpgradeMiss->addData(1);
+                    cacheLine->setPrefetch(false);
+                }
+                cacheLine->setTimestamp(sendTime);
+                return STALL;
+            }
+        case E:
+        case M:
+            if (cacheLine->getPrefetch()) {
+                statPrefetchHit->addData(1);
+                cacheLine->setPrefetch(false);
+            }
+            
+            if (write) {
+                cacheLine->setData(event->getPayload(), event->getAddr() - event->getBaseAddr());
+                cacheLine->setState(M);
+            } else {
+                sendTime = sendResponseUp(event, cacheLine->getData(), replay, cacheLine->getTimestamp());
+                cacheLine->setTimestamp(sendTime);
+            }
+            return DONE;
+        default:
+            debug->fatal(CALL_INFO,-1,"%s, Error: No handler for event in state %s. Event = %s. Time = %" PRIu64 "ns.\n",
+                    parent->getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
+    }
+    return STALL;
+}
+
 
 CacheAction L1CoherenceController::handleGetSRequest(MemEvent* event, CacheLine* cacheLine, bool replay){
     State state = cacheLine->getState();
     vector<uint8_t>* data = cacheLine->getData();
     
     bool localPrefetch = event->isPrefetch() && (event->getRqstr() == parent->getName());
+
     recordStateEventCount(event->getCmd(), state);
     uint64_t sendTime = 0;
     switch (state) {
@@ -515,11 +561,12 @@ void L1CoherenceController::handleDataResponse(MemEvent* responseEvent, CacheLin
                 cacheLine->incLock(); 
             }
             
-            if (origRequest->isStoreConditional()) sendTime = sendResponseUp(origRequest, cacheLine->getData(), true, cacheLine->getTimestamp(), atomic);
-            else sendTime = sendResponseUp(origRequest, cacheLine->getData(), true, cacheLine->getTimestamp());
-            cacheLine->setTimestamp(sendTime-1);
+            if (!(origRequest->queryFlag(MemEventBase::F_NOALLOC))) {
+                if (origRequest->isStoreConditional()) sendTime = sendResponseUp(origRequest, cacheLine->getData(), true, cacheLine->getTimestamp(), atomic);
+                else sendTime = sendResponseUp(origRequest, cacheLine->getData(), true, cacheLine->getTimestamp());
+                cacheLine->setTimestamp(sendTime-1);
+            }
             
-            notifyListenerOfAccess(origRequest, NotifyAccessType::WRITE, NotifyResultType::HIT);
             break;
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: Response received but state is not handled. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, State = %s. Time = %" PRIu64 "ns\n",

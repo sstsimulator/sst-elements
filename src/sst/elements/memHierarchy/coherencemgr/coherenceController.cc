@@ -125,7 +125,17 @@ uint64_t CoherenceController::sendResponseUp(MemEvent * event, Command cmd, vect
     MemEvent * responseEvent = event->makeResponse(cmd);
     responseEvent->setDst(event->getSrc());
     responseEvent->setSize(event->getSize());
-    if (data != NULL) responseEvent->setPayload(*data);
+    if (data != nullptr) {
+        if (data->size() > event->getSize()) { // Truncate data
+            Addr start = event->getAddr() - event->getBaseAddr();
+            Addr end = start + event->getSize();
+            vector<uint8_t> ndata (data->begin() + start, data->begin() + end);
+            responseEvent->setPayload(ndata);
+        } else {
+            responseEvent->setPayload(*data);
+        }
+    }
+    
     responseEvent->setDirty(dirty);
 
     if (baseTime < timestamp_) baseTime = timestamp_;

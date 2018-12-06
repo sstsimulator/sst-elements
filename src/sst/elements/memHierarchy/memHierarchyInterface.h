@@ -48,6 +48,9 @@ public:
     SST_ELI_REGISTER_SUBCOMPONENT(MemHierarchyInterface, "memHierarchy", "memInterface", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Interface to memory hierarchy. Converts SimpleMem requests into MemEventBases.", "SST::Interfaces::SimpleMem")
 
+    // Ports only available if loaded as named subcomponent from the python
+    SST_ELI_DOCUMENT_PORTS( { "port", "Link to memHierarchy", { "memHierarchy.MemEventBase" } } )
+
 /* Begin class definition */
     MemHierarchyInterface(SST::Component *comp, Params &params);
     
@@ -74,6 +77,7 @@ protected:
     Output      output;
     Addr        baseAddrMask_;
     std::string rqstr_;
+    std::string dst_;
     std::map<MemEventBase::id_type, Interfaces::SimpleMem::Request*> requests_;
     SST::Link*  link_;
     

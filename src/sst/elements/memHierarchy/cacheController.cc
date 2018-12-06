@@ -24,8 +24,6 @@
 #include <sst/core/simulation.h>
 #include <sst/core/interfaces/stringEvent.h>
 
-#include <csignal>
-
 #include "cacheController.h"
 #include "memEvent.h"
 #include "mshr.h"
@@ -67,11 +65,63 @@ using namespace SST::MemHierarchy;
  *      Line is not currently being invalidated (TopCC state is correct)
  *  @return int indicating cache hit (0) or miss (1=cold miss, 2=block has incorrect permissions, 3=sharers/owner needs to be invalidated)
  */
+
 int Cache::isCacheHit(MemEvent* event, Command cmd, Addr baseAddr) {
     CacheLine * line = cacheArray_->lookup(baseAddr, false);
     if (line == nullptr) return 1; // Cache miss, line not found
     return coherenceMgr_->isCoherenceMiss(event, line);
 }
+
+/*
+ * No-Alloc Events
+ * 1) Reads (GetS)
+ *      If hit but line in transition -> stall in mshr
+ *      If hit and line is stable -> if coherent: return response
+ *                                   if noncoherent (e.g., this cache doesn't own the block): request read permission
+ *      If miss -> forward request and handle as noncacheable
+ * 2) Writes (GetX)
+ *      If hit and line in transition -> stall in mshr
+ *      If hit and owned -> write data and respond
+ *      If hit but not owned -> upgrade to owned and write
+ *      If miss -> forward and don't expect a response
+ * 3) Responses (to reads since writes aren't ack'd)
+ *      Handle out of noncacheable mshr
+ */
+void Cache::processNoAllocRequest(MemEvent* event, Command cmd, Addr baseAddr, bool replay) {
+    if (is_debug_addr(baseAddr)) printLine(baseAddr);
+    bool updateLine = !replay && event->isDataRequest();
+    CacheLine * line = cacheArray_->lookup(baseAddr, updateLine);
+
+    bool miss = (line == nullptr);
+
+    if (miss && (is_debug_addr(baseAddr))) d_->debug(_L3_, "-- Miss --\n");
+   
+    /* Stall in cacheable path until line is stable */
+    if (!miss && line->inTransition()) {
+        processRequestInMSHR(baseAddr, event);
+        return;
+    }
+
+    CacheAction action = coherenceMgr_->handleNoAllocRequest(event, line, replay);
+    
+    if (is_debug_addr(baseAddr)) printLine(baseAddr);
+    
+    // 3 possible responses
+    // IGNORE - request forwarded, handle as noncacheable now
+    // STALL - needed permission change, handle in mshr
+    // DONE - finished
+
+    // If data is not here, treat as noncacheable (forward & don't stall other requests)
+    if (action == IGNORE && !(event->queryFlag(MemEventBase::F_NORESPONSE))) {   // If not done, then handle as if it's noncacheable
+        responseDst_.insert(std::make_pair(event->getID(), event->getSrc()));
+    }
+
+    if (action == STALL)
+        processRequestInMSHR(baseAddr, event);
+    else // Stop blocking MSHR -> we're either done or moved to noncacheable
+        postRequestProcessing(event, line, replay);
+}
+
 
 /**
  *  Handle a request from upper level caches
@@ -86,7 +136,7 @@ void Cache::processCacheRequest(MemEvent* event, Command cmd, Addr baseAddr, boo
     if (is_debug_addr(baseAddr)) printLine(baseAddr);
     
     bool updateLine = !replay && event->isDataRequest();   /* TODO: move replacement manager update to time when cache actually sends a response */
-    CacheLine * line = cacheArray_->lookup(baseAddr, updateLine);; 
+    CacheLine * line = cacheArray_->lookup(baseAddr, updateLine); 
     
     bool miss = (line == nullptr);
     
@@ -632,7 +682,7 @@ void Cache::postRequestProcessing(MemEvent* event, CacheLine* cacheLine, bool re
     
     /* For atomic requests handled by the cache itself, GetX unlocks the cache line.  Therefore,
        we possibly need to 'replay' events that blocked due to an locked cacheline */
-    if (cmd == Command::GetX && L1_ && cacheLine->getEventsWaitingForLock() && !cacheLine->isLocked()) reActivateEventWaitingForUserLock(cacheLine);
+    if (cmd == Command::GetX && L1_ && cacheLine && cacheLine->getEventsWaitingForLock() && !cacheLine->isLocked()) reActivateEventWaitingForUserLock(cacheLine);
 
     if (mshr_->isHit(addr)) activatePrevEvents(addr);   // Replay any waiting events that blocked for this one
 

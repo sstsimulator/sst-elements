@@ -389,6 +389,39 @@ int MESIController::isCoherenceMiss(MemEvent* event, CacheLine* cacheLine) {
  *  Internal event handlers
  *---------------------------------------------------------------------------------------------------------------------*/
 
+/** Handle No-Alloc events */
+CacheAction MESIController::handleNoAllocRequest(MemEvent* event, CacheLine* line, bool replay) {
+    State state = line ? line->getState() : I;
+    recordStateEventCount(event->getCmd(), state);
+    bool write = event->getCmd() == Command::GetX;
+    
+    CacheAction action;
+
+    State newstate = M_InvX;
+    switch(state) {
+        case I:
+            forwardMessage(event, event->getBaseAddr(), event->getSize(), 0, &(event->getPayload()));
+            return IGNORE;
+        case S:
+        case E:
+        case M:
+            if (write) {
+                action = handleGetXRequest(event, line, replay); 
+                if (action == DONE) {
+                    line->setData(event->getPayload(), event->getAddr() - event->getBaseAddr()); 
+                }
+                return action;
+            } else {
+                return handleGetSRequest(event, line, replay);
+            }
+        default:
+            debug->fatal(CALL_INFO,-1,"%s, Error: Handling an F_NOALLOC request but coherence state is not valid and stable. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, State = %s. Time = %" PRIu64 "ns\n",
+                    parent->getName().c_str(), event->getBaseAddr(), CommandString[(int)event->getCmd()], event->getSrc().c_str(), 
+                    StateString[state], getCurrentSimTimeNano());
+    }
+    return DONE;
+}
+
 
 /** Handle GetS request */
 CacheAction MESIController::handleGetSRequest(MemEvent* event, CacheLine* cacheLine, bool replay) {
@@ -397,6 +430,8 @@ CacheAction MESIController::handleGetSRequest(MemEvent* event, CacheLine* cacheL
     
     if (is_debug_event(event)) printData(cacheLine->getData(), false);
     
+    bool alloc = !(event->queryFlag(MemEventBase::F_NOALLOC));
+
     uint64_t sendTime = 0;
     bool localPrefetch = event->isPrefetch() && (event->getRqstr() == parent->getName());
     recordStateEventCount(event->getCmd(), state);
@@ -417,7 +452,7 @@ CacheAction MESIController::handleGetSRequest(MemEvent* event, CacheLine* cacheL
                 statPrefetchHit->addData(1);
                 cacheLine->setPrefetch(false);
             }
-            cacheLine->addSharer(event->getSrc());
+            if (alloc) cacheLine->addSharer(event->getSrc());
             sendTime = sendResponseUp(event, data, replay, cacheLine->getTimestamp());
             cacheLine->setTimestamp(sendTime);
             return DONE;
@@ -435,14 +470,14 @@ CacheAction MESIController::handleGetSRequest(MemEvent* event, CacheLine* cacheL
             
             // For Non-inclusive caches, we will deallocate this block so E/M permission needs to transfer!
             // Alternately could write back
-            if (!inclusive_) {
+            if (alloc && !inclusive_) {
                 sendTime = sendResponseUp(event, Command::GetXResp, data, state == M, replay, cacheLine->getTimestamp());
                 cacheLine->setTimestamp(sendTime);
                 cacheLine->setOwner(event->getSrc());
                 return DONE;
             }
 
-            if (cacheLine->isShareless() && !cacheLine->ownerExists() && protocol_) {
+            if (alloc && cacheLine->isShareless() && !cacheLine->ownerExists() && protocol_) {
                 if (is_debug_addr(cacheLine->getBaseAddr())) debug->debug(_L7_, "New owner: %s\n", event->getSrc().c_str());
                 
                 cacheLine->setOwner(event->getSrc());
@@ -454,12 +489,12 @@ CacheAction MESIController::handleGetSRequest(MemEvent* event, CacheLine* cacheL
                 if (is_debug_addr(cacheLine->getBaseAddr())) debug->debug(_L7_,"GetS request but exclusive owner exists \n");
                 
                 sendFetchInvX(cacheLine, event->getRqstr(), replay);
-                mshr_->incrementAcksNeeded(event->getBaseAddr());
                 if (state == E) cacheLine->setState(E_InvX);
                 else cacheLine->setState(M_InvX);
                 return STALL;
             }
-            cacheLine->addSharer(event->getSrc());
+            if (alloc) 
+                cacheLine->addSharer(event->getSrc());
             sendTime = sendResponseUp(event, data, replay, cacheLine->getTimestamp());
             cacheLine->setTimestamp(sendTime);
             return DONE;
@@ -487,6 +522,8 @@ CacheAction MESIController::handleGetXRequest(MemEvent* event, CacheLine* cacheL
         cacheLine->setState(M);
     }
 
+    bool response = !(event->queryFlag(MemEventBase::F_NOALLOC));
+
     switch (state) {
         case I:
             notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::MISS);
@@ -502,7 +539,10 @@ CacheAction MESIController::handleGetXRequest(MemEvent* event, CacheLine* cacheL
                 cacheLine->setPrefetch(false);
             }
             
+            event->clearFlag(MemEventBase::F_NOALLOC); // Clear flag so that subsequent request doesn't get it
             sendTime = forwardMessage(event, cacheLine->getBaseAddr(), cacheLine->getSize(), cacheLine->getTimestamp(), NULL);
+            if (!response) event->setFlag(MemEventBase::F_NOALLOC);
+
             if (invalidateSharersExceptRequestor(cacheLine, event->getSrc(), event->getRqstr(), replay)) {
                 cacheLine->setState(SM_Inv);
             } else {
@@ -532,11 +572,12 @@ CacheAction MESIController::handleGetXRequest(MemEvent* event, CacheLine* cacheL
                 cacheLine->setState(M_Inv);
                 return STALL;
             }
-            cacheLine->setOwner(event->getSrc());
-            if (cacheLine->isSharer(event->getSrc())) cacheLine->removeSharer(event->getSrc());
-            sendTime = sendResponseUp(event, cacheLine->getData(), replay, cacheLine->getTimestamp());
-            cacheLine->setTimestamp(sendTime);
-            
+            if (response) {
+                if (cacheLine->isSharer(event->getSrc())) cacheLine->removeSharer(event->getSrc());
+                cacheLine->setOwner(event->getSrc());
+                sendTime = sendResponseUp(event, cacheLine->getData(), replay, cacheLine->getTimestamp());
+                cacheLine->setTimestamp(sendTime);
+            }
             if (is_debug_event(event)) printData(cacheLine->getData(), false);
             
             return DONE;
@@ -560,6 +601,7 @@ CacheAction MESIController::handleFlushLineRequest(MemEvent * event, CacheLine* 
     if (!replay) recordStateEventCount(event->getCmd(), state);
 
     CacheAction reqEventAction;
+    bool reqAlloc = reqEvent && !(reqEvent->queryFlag(MemEventBase::F_NOALLOC));
     uint64_t sendTime = 0;
     
     // Handle flush at local level
@@ -582,7 +624,6 @@ CacheAction MESIController::handleFlushLineRequest(MemEvent * event, CacheLine* 
             }
             if (cacheLine->ownerExists()) {
                 sendFetchInvX(cacheLine, event->getRqstr(), replay);
-                mshr_->incrementAcksNeeded(event->getBaseAddr());
                 state == M ? cacheLine->setState(M_InvX) : cacheLine->setState(E_InvX);
                 return STALL;
             }
@@ -642,7 +683,8 @@ CacheAction MESIController::handleFlushLineRequest(MemEvent * event, CacheLine* 
                     debug->fatal(CALL_INFO, -1, "%s, Error: Handling not implemented because state not expected: noninclusive cache, state = %s, request = %s. Time = %" PRIu64 " ns\n",
                             parent->getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
                 } else {
-                    cacheLine->addSharer(reqEvent->getSrc());
+                    if (reqAlloc)
+                        cacheLine->addSharer(reqEvent->getSrc());
                     sendTime = sendResponseUp(reqEvent, cacheLine->getData(), (event->getDirty()), cacheLine->getTimestamp());
                     cacheLine->setTimestamp(sendTime);
                     (state == M_InvX || event->getDirty()) ? cacheLine->setState(M) : cacheLine->setState(E);
@@ -697,6 +739,7 @@ CacheAction MESIController::handleFlushLineInvRequest(MemEvent * event, CacheLin
     }
             
     CacheAction reqEventAction;
+    bool reqAlloc = reqEvent && !(reqEvent->queryFlag(MemEventBase::F_NOALLOC));
     uint64_t sendTime = 0;
     // Handle flush at local level
     switch (state) {
@@ -800,10 +843,14 @@ CacheAction MESIController::handleFlushLineInvRequest(MemEvent * event, CacheLin
                     cacheLine->setState(I);
                     return DONE;
                 } else if (reqEvent->getCmd() == Command::GetX || reqEvent->getCmd() == Command::GetSX) {
-                    cacheLine->setOwner(reqEvent->getSrc());
-                    if (cacheLine->isSharer(reqEvent->getSrc())) cacheLine->removeSharer(reqEvent->getSrc());
-                    sendTime = sendResponseUp(reqEvent, cacheLine->getData(), true, cacheLine->getTimestamp());
-                    cacheLine->setTimestamp(sendTime);
+                    if (reqAlloc) {
+                        cacheLine->setOwner(reqEvent->getSrc());
+                        if (cacheLine->isSharer(reqEvent->getSrc())) cacheLine->removeSharer(reqEvent->getSrc());
+                        sendTime = sendResponseUp(reqEvent, cacheLine->getData(), true, cacheLine->getTimestamp());
+                        cacheLine->setTimestamp(sendTime);
+                    } else { // No-alloc: just write data
+                        cacheLine->setData(reqEvent->getPayload(), reqEvent->getAddr() - reqEvent->getBaseAddr()); 
+                    }
                     cacheLine->setState(M);
                     return DONE;
                 } else if (reqEvent->getCmd() == Command::FlushLineInv) {
@@ -836,17 +883,23 @@ CacheAction MESIController::handleFlushLineInvRequest(MemEvent * event, CacheLin
                     else cacheLine->setState(E);
                     return handleFlushLineRequest(reqEvent, cacheLine, NULL, true);
                 } else if (!inclusive_) { // cmd = GetS; need to forward dirty/M so we don't lose that info
-                    cacheLine->setOwner(reqEvent->getSrc());
+                    if (reqAlloc) {
+                        cacheLine->setOwner(reqEvent->getSrc());
+                    }
                     sendTime = sendResponseUp(reqEvent, Command::GetXResp, cacheLine->getData(), (state == M_InvX || event->getDirty()), true, cacheLine->getTimestamp());
                     cacheLine->setTimestamp(sendTime);
                     (state == M_InvX || event->getDirty()) ? cacheLine->setState(M) : cacheLine->setState(E);
                 } else if (protocol_) { // MESI, fwd exclusive since now no other owner
-                    cacheLine->setOwner(reqEvent->getSrc());
+                    if (reqAlloc) {
+                        cacheLine->setOwner(reqEvent->getSrc());
+                    }
                     sendTime = sendResponseUp(reqEvent, Command::GetXResp, cacheLine->getData(), true, cacheLine->getTimestamp());
                     cacheLine->setTimestamp(sendTime);
                     (state == M_InvX || event->getDirty()) ? cacheLine->setState(M) : cacheLine->setState(E);
                 } else {
-                    cacheLine->addSharer(reqEvent->getSrc());
+                    if (reqAlloc) {
+                        cacheLine->addSharer(reqEvent->getSrc());
+                    }                   
                     sendTime = sendResponseUp(reqEvent, cacheLine->getData(), true, cacheLine->getTimestamp());
                     cacheLine->setTimestamp(sendTime);
                     (state == M_InvX || event->getDirty()) ? cacheLine->setState(M) : cacheLine->setState(E);
@@ -918,6 +971,7 @@ CacheAction MESIController::handlePutSRequest(MemEvent* event, CacheLine* line, 
     state = line->getState(); 
     if (!retry) return IGNORE;
 
+    bool reqAlloc = reqEvent && !(reqEvent->queryFlag(MemEventBase::F_NOALLOC));
     uint64_t sendTime = 0;
     
     switch (state) {
@@ -986,10 +1040,14 @@ CacheAction MESIController::handlePutSRequest(MemEvent* event, CacheLine* line, 
                 sendResponseDown(reqEvent, line, true, true);
                 line->setState(I);
             } else if (reqEvent->getCmd() == Command::GetX || reqEvent->getCmd() == Command::GetSX) {
-                line->setOwner(reqEvent->getSrc());
-                if (line->isSharer(reqEvent->getSrc())) line->removeSharer(reqEvent->getSrc());
-                sendTime = sendResponseUp(reqEvent, line->getData(), true, line->getTimestamp());
-                line->setTimestamp(sendTime);
+                if (reqAlloc) {
+                    line->setOwner(reqEvent->getSrc());
+                    if (line->isSharer(reqEvent->getSrc())) line->removeSharer(reqEvent->getSrc());
+                    sendTime = sendResponseUp(reqEvent, line->getData(), true, line->getTimestamp());
+                    line->setTimestamp(sendTime);
+                } else {
+                    line->setData(reqEvent->getPayload(), reqEvent->getAddr() - reqEvent->getBaseAddr()); 
+                }
                 line->setState(M);
                 
                 if (is_debug_event(reqEvent)) printData(line->getData(), false);
@@ -1066,7 +1124,8 @@ CacheAction MESIController::handlePutMRequest(MemEvent* event, CacheLine* cacheL
     cacheLine->clearOwner();
             
     if (mshr_->getAcksNeeded(event->getBaseAddr()) > 0) mshr_->decrementAcksNeeded(event->getBaseAddr());
-    
+   
+    bool reqAlloc = reqEvent && !(reqEvent->queryFlag(MemEventBase::F_NOALLOC));
     uint64_t sendTime = 0;
     
     switch (state) {
@@ -1111,11 +1170,13 @@ CacheAction MESIController::handlePutMRequest(MemEvent* event, CacheLine* cacheL
                 else return IGNORE;
             } else {
                 cacheLine->setState(M);
-                notifyListenerOfAccess(reqEvent, NotifyAccessType::WRITE, NotifyResultType::HIT);
-                cacheLine->setOwner(reqEvent->getSrc());
-                sendTime = sendResponseUp(reqEvent, cacheLine->getData(), true, cacheLine->getTimestamp());
-                cacheLine->setTimestamp(sendTime);
-            
+                if (reqAlloc) {
+                    cacheLine->setOwner(reqEvent->getSrc());
+                    sendTime = sendResponseUp(reqEvent, cacheLine->getData(), true, cacheLine->getTimestamp());
+                    cacheLine->setTimestamp(sendTime);
+                } else {
+                    cacheLine->setData(reqEvent->getPayload(), reqEvent->getAddr() - reqEvent->getBaseAddr()); 
+                }
                 if (is_debug_event(reqEvent)) printData(cacheLine->getData(), false);
             }
             break;
@@ -1133,15 +1194,17 @@ CacheAction MESIController::handlePutMRequest(MemEvent* event, CacheLine* cacheL
             } else if (!inclusive_) { // Race with GetS
                 sendTime = sendResponseUp(reqEvent, Command::GetXResp, cacheLine->getData(), (cacheLine->getState() == M), true, cacheLine->getTimestamp());
                 cacheLine->setTimestamp(sendTime);
-                cacheLine->setOwner(reqEvent->getSrc());
+                if (reqAlloc)
+                    cacheLine->setOwner(reqEvent->getSrc());
             } else if (protocol_) {
                 if (is_debug_addr(cacheLine->getBaseAddr())) debug->debug(_L7_, "New owner: %s\n", reqEvent->getSrc().c_str());
-                
-                cacheLine->setOwner(reqEvent->getSrc());
+                if (reqAlloc) 
+                    cacheLine->setOwner(reqEvent->getSrc());
                 sendTime = sendResponseUp(reqEvent, Command::GetXResp, cacheLine->getData(), true, cacheLine->getTimestamp());
                 cacheLine->setTimestamp(sendTime);
             } else {
-                cacheLine->addSharer(reqEvent->getSrc());
+                if (reqAlloc)
+                    cacheLine->addSharer(reqEvent->getSrc());
                 sendTime = sendResponseUp(reqEvent, cacheLine->getData(), true, cacheLine->getTimestamp());
                 cacheLine->setTimestamp(sendTime);
             }
@@ -1414,7 +1477,6 @@ CacheAction MESIController::handleFetchInvX(MemEvent * event, CacheLine * cacheL
         case E:
             if (cacheLine->ownerExists()) {
                 sendFetchInvX(cacheLine, event->getRqstr(), replay);
-                mshr_->incrementAcksNeeded(event->getBaseAddr());
                 cacheLine->setState(E_InvX);
                 return STALL;
             }
@@ -1422,7 +1484,6 @@ CacheAction MESIController::handleFetchInvX(MemEvent * event, CacheLine * cacheL
         case M:
             if (cacheLine->ownerExists()) {
                 sendFetchInvX(cacheLine, event->getRqstr(), replay);
-                mshr_->incrementAcksNeeded(event->getBaseAddr());
                 cacheLine->setState(M_InvX);
                 return STALL;
             }
@@ -1498,6 +1559,8 @@ CacheAction MESIController::handleDataResponse(MemEvent* responseEvent, CacheLin
     
     bool localPrefetch = origRequest->isPrefetch() && (origRequest->getRqstr() == parent->getName());
     
+    bool alloc = !(origRequest->queryFlag(MemEventBase::F_NOALLOC));
+
     uint64_t sendTime = 0;
     
     switch (state) {
@@ -1514,15 +1577,15 @@ CacheAction MESIController::handleDataResponse(MemEvent* responseEvent, CacheLin
                 cacheLine->setPrefetch(true);
                 return DONE;     
             }
-            
-            if (!inclusive_ && cacheLine->getState() != S) { // Transfer E/M permission
+                
+            if (alloc && !inclusive_ && cacheLine->getState() != S) { // Transfer E/M permission
                 cacheLine->setOwner(origRequest->getSrc());
                 sendTime = sendResponseUp(origRequest, Command::GetXResp, &responseEvent->getPayload(), state == M, true, cacheLine->getTimestamp());
-            } else if (protocol_ && cacheLine->getState() != S && mshr_->lookup(responseEvent->getBaseAddr()).size() == 1) { // Send exclusive response unless another request is waiting
+            } else if (alloc && protocol_ && cacheLine->getState() != S && mshr_->lookup(responseEvent->getBaseAddr()).size() == 1) { // Send exclusive response unless another request is waiting
                 cacheLine->setOwner(origRequest->getSrc());
                 sendTime = sendResponseUp(origRequest, Command::GetXResp, &responseEvent->getPayload(), true, cacheLine->getTimestamp());
             } else { // Default shared response
-                cacheLine->addSharer(origRequest->getSrc());
+                if (alloc) cacheLine->addSharer(origRequest->getSrc());
                 sendTime = sendResponseUp(origRequest, &responseEvent->getPayload(), true, cacheLine->getTimestamp());
             }
 
@@ -1537,12 +1600,14 @@ CacheAction MESIController::handleDataResponse(MemEvent* responseEvent, CacheLin
             if (is_debug_event(responseEvent)) printData(cacheLine->getData(), true);
         case SM:
             cacheLine->setState(M);
-            cacheLine->setOwner(origRequest->getSrc());
-            if (cacheLine->isSharer(origRequest->getSrc())) cacheLine->removeSharer(origRequest->getSrc());
-            notifyListenerOfAccess(origRequest, NotifyAccessType::WRITE, NotifyResultType::HIT);
-            sendTime = sendResponseUp(origRequest, cacheLine->getData(), true, cacheLine->getTimestamp());
-            cacheLine->setTimestamp(sendTime);
-            
+            if (alloc) {
+                cacheLine->setOwner(origRequest->getSrc());
+                if (cacheLine->isSharer(origRequest->getSrc())) cacheLine->removeSharer(origRequest->getSrc());
+                sendTime = sendResponseUp(origRequest, cacheLine->getData(), true, cacheLine->getTimestamp());
+                cacheLine->setTimestamp(sendTime);
+            } else {
+                cacheLine->setData(origRequest->getPayload(), origRequest->getAddr() - origRequest->getBaseAddr());
+            }
             if (is_debug_event(responseEvent)) printData(cacheLine->getData(), false);
             
             return DONE;
@@ -1573,7 +1638,8 @@ CacheAction MESIController::handleFetchResp(MemEvent * responseEvent, CacheLine*
     if (state != I && (is_debug_event(responseEvent))) printData(cacheLine->getData(), true);
 
     recordStateEventCount(responseEvent->getCmd(), state);
-    
+   
+    bool reqAlloc = reqEvent && !(reqEvent->queryFlag(MemEventBase::F_NOALLOC));
     uint64_t sendTime = 0;
 
     switch (state) {
@@ -1627,7 +1693,8 @@ CacheAction MESIController::handleFetchResp(MemEvent * responseEvent, CacheLine*
                 break;
             } else {
                 notifyListenerOfAccess(reqEvent, NotifyAccessType::READ, NotifyResultType::HIT);
-                cacheLine->addSharer(reqEvent->getSrc());
+                if (reqAlloc) 
+                    cacheLine->addSharer(reqEvent->getSrc());
                 if (responseEvent->getDirty()) {
                     cacheLine->setState(M);
                     cacheLine->setData(responseEvent->getPayload(), 0);
@@ -1686,7 +1753,8 @@ CacheAction MESIController::handleFetchResp(MemEvent * responseEvent, CacheLine*
                 break;
             } else {    // reqEvent->getCmd() == GetS
                 notifyListenerOfAccess(reqEvent, NotifyAccessType::READ, NotifyResultType::HIT);
-                cacheLine->addSharer(reqEvent->getSrc());
+                if (reqAlloc) 
+                    cacheLine->addSharer(reqEvent->getSrc());
                 sendTime = sendResponseUp(reqEvent, cacheLine->getData(), true, cacheLine->getTimestamp());
                 cacheLine->setTimestamp(sendTime);
                 cacheLine->setState(M);
@@ -1709,10 +1777,14 @@ CacheAction MESIController::handleFetchResp(MemEvent * responseEvent, CacheLine*
                 cacheLine->setState(I);
             } else {    // reqEvent->getCmd() == GetX
                 notifyListenerOfAccess(reqEvent, NotifyAccessType::WRITE, NotifyResultType::HIT);
-                cacheLine->setOwner(reqEvent->getSrc());
-                if (cacheLine->isSharer(reqEvent->getSrc())) cacheLine->removeSharer(reqEvent->getSrc());
-                sendTime = sendResponseUp(reqEvent, cacheLine->getData(), true, cacheLine->getTimestamp());
-                cacheLine->setTimestamp(sendTime);
+                if (reqAlloc) {
+                    cacheLine->setOwner(reqEvent->getSrc());
+                    if (cacheLine->isSharer(reqEvent->getSrc())) cacheLine->removeSharer(reqEvent->getSrc());
+                    sendTime = sendResponseUp(reqEvent, cacheLine->getData(), true, cacheLine->getTimestamp());
+                    cacheLine->setTimestamp(sendTime);
+                } else {
+                    cacheLine->setData(reqEvent->getPayload(), reqEvent->getAddr() - reqEvent->getBaseAddr());
+                }
                 
                 if (is_debug_event(reqEvent)) printData(cacheLine->getData(), false);
                 
@@ -1746,7 +1818,9 @@ CacheAction MESIController::handleAckInv(MemEvent * ack, CacheLine * line, MemEv
     
     if (mshr_->getAcksNeeded(ack->getBaseAddr()) > 0) mshr_->decrementAcksNeeded(ack->getBaseAddr());
     CacheAction action = (mshr_->getAcksNeeded(ack->getBaseAddr()) == 0) ? DONE : IGNORE;
-    
+   
+    bool reqAlloc = reqEvent && !(reqEvent->queryFlag(MemEventBase::F_NOALLOC));
+
     uint64_t sendTime = 0;
     
     switch (state) {
@@ -1849,10 +1923,14 @@ CacheAction MESIController::handleAckInv(MemEvent * ack, CacheLine * line, MemEv
                     line->setState(I);  
                 } else { // reqEvent->getCmd() == GetX/GetSX
                     notifyListenerOfAccess(reqEvent, NotifyAccessType::WRITE, NotifyResultType::HIT);
-                    line->setOwner(reqEvent->getSrc());
-                    if (line->isSharer(reqEvent->getSrc())) line->removeSharer(reqEvent->getSrc());
-                    sendTime = sendResponseUp(reqEvent, line->getData(), true, line->getTimestamp());
-                    line->setTimestamp(sendTime);
+                    if (reqAlloc) {
+                        line->setOwner(reqEvent->getSrc());
+                        if (line->isSharer(reqEvent->getSrc())) line->removeSharer(reqEvent->getSrc());
+                        sendTime = sendResponseUp(reqEvent, line->getData(), true, line->getTimestamp());
+                        line->setTimestamp(sendTime);
+                    } else {
+                        line->setData(reqEvent->getPayload(), reqEvent->getAddr() - reqEvent->getBaseAddr());
+                    }
                     
                     if (is_debug_event(reqEvent)) printData(line->getData(), false);
                     
@@ -1982,6 +2060,8 @@ void MESIController::sendFetchInvX(CacheLine * cacheLine, string rqstr, bool rep
     Response resp = {fetch, deliveryTime, packetHeaderBytes};
     addToOutgoingQueueUp(resp);
     cacheLine->setTimestamp(deliveryTime);
+                
+    mshr_->incrementAcksNeeded(cacheLine->getBaseAddr());
     
     if (is_debug_addr(cacheLine->getBaseAddr())) {
         debug->debug(_L7_, "Sending FetchInvX: Addr = 0x%" PRIx64 ", Dst = %s @ cycles = %" PRIu64 ".\n", 

@@ -32,11 +32,21 @@ MemHierarchyInterface::MemHierarchyInterface(SST::Component *comp, Params &param
 { 
     output.init("", 1, 0, Output::STDOUT);
     rqstr_ = "";
+    dst_ = "";
     initDone_ = false;
+    
 }
 
 
 void MemHierarchyInterface::init(unsigned int phase) {
+    /* 
+     * Check that there's a default timebase on the link, otherwise set one to avoid error
+     * What we choose won't matter since we're not adding extra latency
+     */
+    if (link_->getDefaultTimeBase() == nullptr) {
+        link_->setDefaultTimeBase(getTimeConverter("1ns"));
+    }
+    
     /* Send region message */
     if (!phase) {
         MemRegion region;
@@ -55,7 +65,8 @@ void MemHierarchyInterface::init(unsigned int phase) {
         MemEventInit * memEvent = dynamic_cast<MemEventInit*>(ev);
         if (memEvent) {
             if (memEvent->getCmd() == Command::NULLCMD) {
-                rqstr_ = memEvent->getSrc();
+                if (rqstr_ == "") rqstr_ = memEvent->getSrc();
+                dst_ = memEvent->getSrc();
                 if (memEvent->getInitCmd() == MemEventInit::InitCommand::Coherence) {
                     MemEventInitCoherence * memEventC = static_cast<MemEventInitCoherence*>(memEvent);
                     baseAddrMask_ = ~(memEventC->getLineSize() - 1);
@@ -127,7 +138,7 @@ MemEventBase* MemHierarchyInterface::createMemEvent(SimpleMem::Request *req) con
     MemEvent *me = new MemEvent(owner_, req->addrs[0], baseAddr, cmd);
     
     me->setRqstr(rqstr_);
-    me->setDst(rqstr_);
+    me->setDst(dst_);
     me->setSize(req->size);
 
     if (SimpleMem::Request::Write == req->cmd)  {
@@ -166,7 +177,7 @@ MemEventBase* MemHierarchyInterface::createCustomEvent(SimpleMem::Request * req)
     Addr baseAddr = (req->addrs[0]) & baseAddrMask_;
     CustomCmdEvent * cme = new CustomCmdEvent(getName().c_str(), req->addrs[0], baseAddr, Command::CustomReq, req->getCustomOpc(), req->size);
     cme->setRqstr(rqstr_);
-    cme->setDst(rqstr_);
+    cme->setDst(dst_);
 
     if(req->flags & SimpleMem::Request::F_NONCACHEABLE)
         cme->setFlag(MemEvent::F_NONCACHEABLE);
@@ -210,7 +221,7 @@ SimpleMem::Request* MemHierarchyInterface::processIncoming(MemEventBase *ev){
             updateRequest(req, static_cast<MemEvent*>(ev));
         }
     } else {
-        output.fatal(CALL_INFO, -1, "(%s interface) Unable to find matching request. Event: %s\n", owner_->getName().c_str(), ev->getVerboseString().c_str());
+        output.fatal(CALL_INFO, -1, "(%s interface) Unable to find matching request. Event: %s\n", getName().c_str(), ev->getVerboseString().c_str());
     }
     return req;
 }
@@ -251,8 +262,18 @@ void MemHierarchyInterface::updateCustomRequest(SimpleMem::Request* req, MemEven
 
 bool MemHierarchyInterface::initialize(const std::string &linkName, HandlerBase *handler){
     recvHandler_ = handler;
-    if ( NULL == recvHandler_) link_ = owner_->configureLink(linkName);
-    else                       link_ = owner_->configureLink(linkName, new Event::Handler<MemHierarchyInterface>(this, &MemHierarchyInterface::handleIncoming));
+    std::string port;
+    if (isPortConnected("port")) {
+        port = "port";
+        rqstr_ = getName(); // Named subcomponent, we have a unique name
+    } else {
+        port = linkName;
+    }
+    if ( NULL == recvHandler_) {
+        link_ = configureLink(port);
+    } else {
+        link_ = configureLink(port, new Event::Handler<MemHierarchyInterface>(this, &MemHierarchyInterface::handleIncoming));
+    }
 
     return (link_ != NULL);
 }

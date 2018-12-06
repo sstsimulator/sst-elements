@@ -300,6 +300,10 @@ void Scratchpad::init(unsigned int phase) {
                 }
             }
         } else { // Not a NULLCMD
+            if (initEv->getAddr() < remoteAddrOffset_) {
+                dbg.fatal(CALL_INFO, -1, "%s, Error: No mechanism exists to initialize data in a scratchpad. Received a request to write data at address %" PRIu64 " which is part of the scratchpad's address range.\n",
+                        getName().c_str(), initEv->getAddr());
+            }
             MemEventInit * memRequest = new MemEventInit(getName(), initEv->getCmd(), initEv->getAddr() - remoteAddrOffset_, initEv->getPayload());
             memRequest->setDst(linkDown_->findTargetDestination(memRequest->getAddr()));
             linkDown_->sendInitData(memRequest);
@@ -483,6 +487,7 @@ void Scratchpad::handleRead(MemEventBase * event) {
     }
 }
 
+
 /*
  *  Sort write requests into local and remote
  *  Also send coherence reads that correspond to processor writes to the read function
@@ -490,9 +495,14 @@ void Scratchpad::handleRead(MemEventBase * event) {
 void Scratchpad::handleWrite(MemEventBase * event) {
     MemEvent * ev = static_cast<MemEvent*>(event);
     if (ev->getAddr() < scratchSize_) {
-        if (ev->isWriteback() || ev->queryFlag(MemEvent::F_NONCACHEABLE)) {
+        // Real write if:
+        // 1) Writeback from cache
+        // 2) Noncacheable write
+        // 3) !caching
+        if (!caching_ || ev->isWriteback() || ev->queryFlag(MemEvent::F_NONCACHEABLE)) {
             handleScratchWrite(ev);
         } else {
+            // Actually a read if cache above us and we get a GetX (cache does write then)
             handleScratchRead(ev);
         }
     } else {
@@ -667,7 +677,7 @@ void Scratchpad::handleScratchGet(MemEventBase * event) {
     // Issue remote read
     ev->setSrcBaseAddr((ev->getSrcAddr() - remoteAddrOffset_) & ~(remoteLineSize_ - 1));
     MemEvent * remoteRead = new MemEvent(this, ev->getSrcAddr() - remoteAddrOffset_, ev->getSrcBaseAddr(), Command::GetS, ev->getSize());
-    remoteRead->setFlag(MemEvent::F_NONCACHEABLE);
+    remoteRead->setFlag(MemEvent::F_NOALLOC);   /* If we end up searching a cache hierarchy, don't allocate, just return the data */
     remoteRead->setRqstr(ev->getRqstr());
     remoteRead->setVirtualAddress(ev->getSrcVirtualAddress());
     remoteRead->setInstructionPointer(ev->getInstructionPointer());
@@ -722,7 +732,7 @@ void Scratchpad::handleScratchPut(MemEventBase * event) {
     
     MemEvent * remoteWrite = new MemEvent(this, ev->getDstAddr() - remoteAddrOffset_, ev->getDstBaseAddr(), Command::GetX, ev->getSize());
     remoteWrite->setZeroPayload(ev->getSize());
-    remoteWrite->setFlag(MemEvent::F_NONCACHEABLE);
+    remoteWrite->setFlag(MemEvent::F_NOALLOC);
     remoteWrite->setFlag(MemEvent::F_NORESPONSE);
 
     outstandingEventList_.insert(std::make_pair(ev->getID(), OutstandingEvent(ev, response, remoteWrite)));
@@ -957,7 +967,6 @@ void Scratchpad::handleRemoteRead(MemEvent * event) {
 
     event->setBaseAddr((event->getAddr() - remoteAddrOffset_) & ~(remoteLineSize_ - 1));
     MemEvent * request = new MemEvent(this, event->getAddr() - remoteAddrOffset_, event->getBaseAddr(), Command::GetS, event->getSize());
-    request->setFlag(MemEvent::F_NONCACHEABLE); // Use byte not line address
     request->setRqstr(event->getRqstr());
     request->setVirtualAddress(event->getVirtualAddress());
     request->setInstructionPointer(event->getInstructionPointer());
@@ -985,7 +994,6 @@ void Scratchpad::handleRemoteWrite(MemEvent * event) {
     event->setBaseAddr((event->getAddr() - remoteAddrOffset_) & ~(remoteLineSize_ - 1));
     MemEvent * request = new MemEvent(this, event->getAddr() - remoteAddrOffset_, event->getBaseAddr(), Command::GetX, event->getPayload());
     request->setFlag(MemEvent::F_NORESPONSE);
-    request->setFlag(MemEvent::F_NONCACHEABLE);
     request->setRqstr(event->getRqstr());
     request->setVirtualAddress(event->getVirtualAddress());
     request->setInstructionPointer(event->getInstructionPointer());

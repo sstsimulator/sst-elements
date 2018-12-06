@@ -227,6 +227,8 @@ private:
 
     void processFetchResp(MemEvent* event, Addr baseAddr);
 
+    void processNoAllocRequest(MemEvent* event, Command cmd, Addr baseAddr, bool mshrHit);
+
     /** Find replacement for the current request.  If the replacement candidate is
         valid then a writeback is needed.  If replacemenent candidate is transitioning, we
         need to wait (stall) until the replacement is in a 'stable' state */

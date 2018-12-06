@@ -42,6 +42,7 @@ public:
     static const uint32_t F_LLSC            = 0x00000100;
     static const uint32_t F_SUCCESS         = 0x00001000;
     static const uint32_t F_NORESPONSE      = 0x00010000;
+    static const uint32_t F_NOALLOC         = 0x00100000;
 
 
     /** Creates a new MemEventBase */
@@ -154,6 +155,11 @@ public:
             str += "F_NORESPONSE"; 
             addComma = true;
         }
+        if (flags_ & F_NOALLOC) {
+            if (addComma) str += ", ";
+            str += "F_NOALLOC";
+            addComma = true;
+        }
         str += "]";
         return str;
     }
@@ -182,7 +188,7 @@ public:
         if (BasicCommandClassArr[(int)cmd_] == BasicCommandClass::Response) {
             idstring << " RespID: <" << responseToID_.first << "," << responseToID_.second << ">";
         }
-        return idstring.str() + " Cmd: " + cmdStr + " Src: " + src_ + " Dst: " + dst_;
+        return idstring.str() + " Cmd: " + cmdStr + " Src: " + src_ + " Dst: " + dst_ + " Flags: " + getFlagString().c_str();
     }
 
     virtual bool doDebug(std::set<Addr> &UNUSED(addr)) {
