@@ -19,7 +19,7 @@ networkParams = {
     "input_latency" : "30ns",
     "output_latency" : "30ns",
     "flitSize" : "32B",
-    "input_buf_size" : "65KB",
+    "input_buf_size" : "64KB",
     "output_buf_size" : "32KB",
 }
 
