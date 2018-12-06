@@ -75,7 +75,9 @@ class ArielCPU : public SST::Component {
         {"memmgr", "Memory manager to use for address translation", "ariel.MemoryManagerSimple"},
         {"writepayloadtrace", "Trace write payloads and put real memory contents into the memory system", "0"},
         {"opal_enabled", "If enabled, MLM allocation hints will be communicated to the centralized memory manager", "0"},
-	{"opal_latency", "latency to communicate to the centralized memory manager", "32ps"})
+	{"opal_latency", "latency to communicate to the centralized memory manager", "32ps"},
+        {"scratchsize", "Per-core scratchpad size in bytes", "0",},
+        {"scratchlinesize", "Line size for scratchpad", "64"})
 
     SST_ELI_DOCUMENT_PORTS(
         {"cache_link_%(corecount)d", "Each core's link to its cache", {}},
@@ -104,7 +106,11 @@ class ArielCPU : public SST::Component {
         { "fp_sp_ops",            "Statistic for counting SP-FP operations (inst * SIMD width)", "instructions", 1 },
         { "cycles",               "Statistic for counting cycles of the Ariel core.", "cycles", 1 },
         { "active_cycles",        "Statistic for counting active cycles (cycles not idle) of the Ariel core.", "cycles", 1 })
-        
+       
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+        { "cacheInterface",     "SimpleMem interface to the cache hierarchy."},
+        { "scratchInterface",   "SimpleMem interface to a scratchpad if any."})
+
         /* Ariel class */
         ArielCPU(ComponentId_t id, Params& params);
         ~ArielCPU();
@@ -119,7 +125,8 @@ class ArielCPU : public SST::Component {
         SST::Output* output;
         ArielMemoryManager* memmgr;
         ArielCore** cpu_cores;
-        Interfaces::SimpleMem** cpu_to_cache_links;
+        std::vector<Interfaces::SimpleMem*> cpu_to_cache_links;
+        std::vector<Interfaces::SimpleMem*> cpu_to_scratch_links;
         SST::Link **cpu_to_alloc_tracker_links;
 
         SST::Link **cpu_to_opal_links;

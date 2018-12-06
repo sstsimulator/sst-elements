@@ -94,6 +94,8 @@ class ArielCore {
         void createSwitchPoolEvent(uint32_t pool);
 
         void setCacheLink(SimpleMem* newCacheLink, Link* allocLink);
+        void setScratchLink(SimpleMem* newScratchLink);
+        void configureScratchpad(uint64_t line, uint64_t size);
 
         void handleEvent(SimpleMem::Request* event);
         void handleReadRequest(ArielReadEvent* wEv);
@@ -134,6 +136,7 @@ class ArielCore {
         bool isHalted;
         bool isFenced;
         SimpleMem* cacheLink;
+        SimpleMem* scratchLink;
         Link* allocLink;
         Link* OpalLink;
         ArielTunnel *tunnel;
@@ -141,6 +144,9 @@ class ArielCore {
         uint32_t maxIssuePerCycle;
         uint32_t maxQLength;
         uint64_t cacheLineSize;
+        uint64_t scratchLineSize;
+        uint64_t scratchCapacity;
+        bool hasScratchpad;
         SST::Component* owner;
         ArielMemoryManager* memmgr;
         const uint32_t verbosity;

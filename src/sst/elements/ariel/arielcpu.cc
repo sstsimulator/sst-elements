@@ -348,7 +348,25 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     /////////////////////////////////////////////////////////////////////////////////////
 
     output->verbose(CALL_INFO, 1, 0, "Creating core to cache links...\n");
-    cpu_to_cache_links = (SimpleMem**) malloc( sizeof(SimpleMem*) * core_count );
+
+    SubComponentSlotInfo* info = getSubComponentSlotInfo("cacheInterface");
+    if (info) {
+        info->createAll(cpu_to_cache_links);
+        printf("Got %zu cache interfaces via named subcomponents.", cpu_to_cache_links.size());
+        if (cpu_to_cache_links.size() != core_count) {
+            output->fatal(CALL_INFO, -1, "%s, Error: Counts of cache interface subcomponents and cores do not match. Cores: %d, Interfaces: %zu\n",
+                    getName().c_str(), core_count, cpu_to_cache_links.size());
+        }
+    }
+
+    info = getSubComponentSlotInfo("scratchInterface");
+    if (info) {
+        info->createAll(cpu_to_scratch_links);
+        if (cpu_to_scratch_links.size() != core_count) {
+            output->fatal(CALL_INFO, -1, "%s, Error: Counts of scratchpad interface subcomponents and cores do not match. Cores: %d, Interfaces: %zu\n",
+                    getName().c_str(), core_count, cpu_to_scratch_links.size());
+        }
+    }
 
     if (useAllocTracker) {
         output->verbose(CALL_INFO, 1, 0, "Creating core to allocate tracker links...\n");
@@ -369,14 +387,31 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 
     output->verbose(CALL_INFO, 1, 0, "Configuring cores and cache links...\n");
     char* link_buffer = (char*) malloc(sizeof(char) * 256);
+    
+    if (cpu_to_cache_links.empty())
+        cpu_to_cache_links.insert(cpu_to_cache_links.begin(), core_count, nullptr);
+
+    uint64_t scratchSize = params.find<uint64_t>("scratchsize", 0);
+    uint64_t scratchline = params.find<uint64_t>("scratchlinesize", 64);
+
     for(uint32_t i = 0; i < core_count; ++i) {
         sprintf(link_buffer, "cache_link_%" PRIu32, i);
 
         cpu_cores[i] = new ArielCore(tunnel, NULL, i, maxPendingTransCore, output,
                 maxIssuesPerCycle, maxCoreQueueLen, cacheLineSize, this,
                 memmgr, perform_checks, params);
-        cpu_to_cache_links[i] = dynamic_cast<Interfaces::SimpleMem*>(loadSubComponent("memHierarchy.memInterface", this, params));
+        
+        // Create/initialize interfaces to memory hierarchy
+
+        if (cpu_to_cache_links[i] == nullptr) {
+            cpu_to_cache_links[i] = dynamic_cast<Interfaces::SimpleMem*>(loadSubComponent("memHierarchy.memInterface", this, params));
+        }
         cpu_to_cache_links[i]->initialize(link_buffer, new SimpleMem::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleEvent));
+
+        if (!cpu_to_scratch_links.empty()) {
+            cpu_to_scratch_links[i]->initialize("", new SimpleMem::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleEvent));
+            cpu_cores[i]->configureScratchpad(scratchline, scratchSize);
+        }
 
         // Set max number of instructions
         cpu_cores[i]->setMaxInsts(max_insts);
@@ -389,6 +424,9 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
         } else {
             cpu_cores[i]->setCacheLink(cpu_to_cache_links[i], 0);
         }
+
+        if (!cpu_to_scratch_links.empty())
+            cpu_cores[i]->setScratchLink(cpu_to_scratch_links[i]);
 
         if(opal_enabled) {
             sprintf(link_buffer, "opal_link_%" PRIu32, i);
@@ -434,6 +472,11 @@ void ArielCPU::init(unsigned int phase)
 
     for (uint32_t i = 0; i < core_count; i++) {
         cpu_to_cache_links[i]->init(phase);
+    }
+    if (!cpu_to_scratch_links.empty()) {
+        for (uint32_t i = 0; i < core_count; i++) {
+            cpu_to_scratch_links[i]->init(phase);
+        }
     }
 }
 

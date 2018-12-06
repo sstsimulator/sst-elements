@@ -44,6 +44,7 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
     cacheLineSize = cacheLineSz;
     owner = own;
     memmgr = memMgr;
+    hasScratchpad = false;
 
     opal_enabled = false;
     writePayloads = params.find<int>("writepayloadtrace") == 0 ? false : true;
@@ -128,6 +129,16 @@ void ArielCore::setOpalLink(Link * opallink) {
 void ArielCore::setCacheLink(SimpleMem* newLink, Link* newAllocLink) {
     cacheLink = newLink;
     allocLink = newAllocLink;
+}
+
+void ArielCore::setScratchLink(SimpleMem* scrLink) {
+    scratchLink = scrLink;
+}
+
+void ArielCore::configureScratchpad(uint64_t line, uint64_t size) {
+    hasScratchpad = true;
+    scratchLineSize = line;
+    scratchCapacity = size;
 }
 
 void ArielCore::printTraceEntry(const bool isRead,
