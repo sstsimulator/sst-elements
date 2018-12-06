@@ -252,7 +252,7 @@
             m_dbg.verbosePrefix(prefix(),CALL_INFO,2,CACHE_MASK,"scheduled=%d blocked=%d numBlocked=%zu`\n",
                     m_scheduled, blocked(), m_blockedQ.size());
 			if ( ! m_scheduled && ! blocked() && ! m_blockedQ.empty() ) {
-                m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"scheduled checkHitRetry addr=%x\n", 
+                m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"scheduled checkHitRetry addr=%#" PRIx64 "\n", 
 										m_blockedQ.front()->req->addr);
 				Callback* cb = new Callback;
 				*cb = std::bind( &CacheUnit::checkHitRetry, this );

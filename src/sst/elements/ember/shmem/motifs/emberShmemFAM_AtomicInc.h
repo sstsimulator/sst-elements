@@ -77,7 +77,7 @@ public:
                 printf("motif: %s\n", getMotifName().c_str() );
                 printf("\tnum_pes: %d\n", m_num_pes );
                 printf("\tnode_num: %d\n", m_node_num );
-                printf("\ttotal Bytes: %d\n", m_dataSize * sizeof(TYPE) );
+                printf("\ttotal Bytes: %zu\n", m_dataSize * sizeof(TYPE) );
                 printf("\tupdates: %d\n", m_updates );
                 printf("\titerations: %d\n", m_iterations );
                 printf("\touterLoop: %d\n", m_outLoop );
