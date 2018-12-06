@@ -66,6 +66,8 @@ public:
         { "host_cache_hits",                   "number of TLB hits", "count", 1},
         { "host_cache_total",                  "total number of TLB requests", "count", 1},
         { "mem_blocked_time",                  "time memory requests were blocked", "nanseconds", 1},
+        { "mem_num_loads",                     "total number of loads", "count", 1},
+        { "mem_num_stores",                    "total number of stores", "count", 1},
 	)
 
 
