@@ -11,27 +11,19 @@ class PartInfo:
 		self.numNodes = int(numNodes)
 		self.numCores = int(numCores)
 		self.detailedModel = detailedModel
-		self.endpoint = None 
 		self.nicParams["num_vNics"] = numCores
 
-        def setEndpoint( self, endpoint ):
-                self.endpoint = endpoint
-        
-        
 class LoadInfo:
 
-        def __init__(self,numNics, baseNicParams, defaultEmberParams):
+	def __init__(self,numNics, baseNicParams, defaultEmberParams):
 		self.numNics = int(numNics)
-		nullMotif = {
-                        'motif0.api': '',
-			'motif0.name' : 'ember.NullMotif',
-			'motif0.printStats' : 0,
-			'motif0.spyplotmode': 0
-                        }
+		nullMotif = { 'motif0.api': '', 'motif0.name' : 'ember.NullMotif', 'motif0.printStats' : 0, 'motif0.spyplotmode': 0 }
 
-                self.parts = {} 
-		self.nullEP = EmberEP( -1 , defaultEmberParams, baseNicParams, nullMotif, 1,1,[],'Null',[],None)
-		self.nullEP.prepParams()
+		self.parts = {} 
+		ep = EmberEP( -1 , defaultEmberParams, baseNicParams, nullMotif, 1,1,[],'Null',1,[],None)
+		ep.prepParams()
+		self.endPointMap = [ ep for i in range(self.numNics)]
+		self.globalToLocalNidMap = [ -1 for i in range(self.numNics) ]
 
 	def addPart(self, nodeList, nicParams, epParams, numCores, detailedModel = None ):
                 self.parts[nodeList] = PartInfo( nicParams, epParams, calcNetMapSize(nodeList), numCores, detailedModel );
@@ -53,19 +45,44 @@ class LoadInfo:
 			motifLogNodes.append(tempnidList[0])
 		# end
 
-		numNodes = calcMaxNode( nidList ) 
-		if numNodes > self.numNics:
+		maxNode = calcMaxNode( nidList ) 
+
+		if maxNode > self.numNics:
 			sys.exit('Error: Requested max nodes ' + str(numNodes) +\
 				 ' is greater than available nodes ' + str(self.numNics) ) 
+		numNodes = calcNetMapSize( nidList ) 
 
-		ep = EmberEP( jobId, epParams, nicParams, motifs, numCores, ranksPerNode, statNodes, nidList, motifLogNodes, detailedModel ) # added motifLogNodes here
+		ep = EmberEP( jobId, epParams, nicParams, motifs, numCores, ranksPerNode, statNodes, self.globalToLocalNidMap, numNodes, motifLogNodes, detailedModel ) # added motifLogNodes here
 
 		ep.prepParams()
 		return ep
 
 	def initWork(self, nidList, workList, statNodes ):
-		for jobid, work in workList:
-			self.parts[nidList].setEndpoint( self.createEP( jobid, nidList, self.parts[nidList].numCores, self.readWorkList( jobid, nidList, work ), statNodes, self.parts[nidList].detailedModel ) )
+		if len(workList) > 1:
+			sys.exit('ERROR: LoadInfo.initWork() invalid argument {0}'.format(workList) )
+		
+		jobid = workList[0][0]
+		work = workList[0][1]
+		ep = self.createEP( jobid, nidList, self.parts[nidList].numCores, self.readWorkList( jobid, nidList, work ), statNodes, self.parts[nidList].detailedModel ) 
+		self.setEndpoint( nidList, ep )
+
+	def setEndpoint( self, nidList, ep ):
+		nidList = nidList.split(',')
+		pos = 0	
+		for x in nidList:
+			y = x.split('-')
+			
+			start = int(y[0]) 
+			if len(y) == 1:
+				self.endPointMap[start] = ep
+				self.globalToLocalNidMap[start] = pos
+				pos += 1
+			else:
+				end = int(y[1])
+				for i in range( start, end + 1 ): 
+					self.endPointMap[i] = ep
+					self.globalToLocalNidMap[i] = pos
+					pos += 1
 
 	def readWorkList(self, jobid, nidList, workList ):
 		tmp = {}
@@ -110,16 +127,6 @@ class LoadInfo:
 		return False
 
 	def setNode(self,nodeId):
-		for nidList, part in self.parts.items():
-                        ep = part.endpoint
-			x = nidList.split(',')
-			for y in x:	
-				tmp = y.split('-')
-
-				if 1 == len(tmp):
-					if nodeId == int( tmp[0] ):
-						return ep 
-				else:
-					if self.inRange( nodeId, int(tmp[0]), int(tmp[1]) ):
-						return ep 
-		return self.nullEP
+		if self.endPointMap[nodeId] == None:
+			sys.exit('ERROR: endpoint not set for node {0} '.format(nodeId)); 
+		return self.endPointMap[nodeId]
