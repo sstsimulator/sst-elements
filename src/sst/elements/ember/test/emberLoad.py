@@ -26,6 +26,7 @@ nidList = ''
 
 platform = 'default'
 
+paramDir='paramFiles'
 netFlitSize = '' 
 netBW = '' 
 netPktSize = '' 
@@ -65,7 +66,6 @@ motifDefaults = {
 	'api': motifAPI, 
 }
 
-sys.path.append( os.getcwd() + '/paramFiles' )
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], "", ["topo=", "shape=","hostsPerRtr=",
@@ -75,7 +75,7 @@ try:
 		"rtrArb=","embermotifLog=",	"rankmapper=","motifAPI=",
 		"bgPercentage=","bgMean=","bgStddev=","bgMsgSize=","netInspect=",
         "detailedNameModel=","detailedModelParams=","detailedModelNodes=",
-		"useSimpleMemoryModel","param="])
+		"useSimpleMemoryModel","param=","paramDir="])
 
 except getopt.GetoptError as err:
     print str(err)
@@ -149,8 +149,13 @@ for o, a in opts:
         params[key] += [value]  
     elif o in ("--useSimpleMemoryModel"):
 		useSimpleMemoryModel=True
+    elif o in ("--paramDir"):
+        paramDir = a
     else:
         assert False, "unhandle option" 
+
+sys.path.append( os.getcwd() + '/' + paramDir )
+print 'EMBER: using param directory: {0}'.format( paramDir )
 
 if 1 == len(sys.argv):
 	simConfig = 'defaultSim'
