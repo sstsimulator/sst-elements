@@ -5,7 +5,7 @@ from sst.merlin import *
 from loadUtils import *
 
 class EmberEP( EndPoint ):
-    def __init__( self, jobId, driverParams, nicParams, motifs, numCores, ranksPerNode, statNodes, nidList, motifLogNodes, detailedModel ): # added motifLogNodes here
+    def __init__( self, jobId, driverParams, nicParams, motifs, numCores, ranksPerNode, statNodes, nidMap, numNodes, motifLogNodes, detailedModel ): # added motifLogNodes here
 
         self.driverParams = driverParams
         self.nicParams = nicParams
@@ -13,8 +13,8 @@ class EmberEP( EndPoint ):
         self.numCores = numCores
         self.driverParams['jobId'] = jobId
         self.statNodes = statNodes
-        self.nidList = nidList
-        self.numNids = calcNetMapSize( self.nidList )
+        self.nidMap = nidMap
+        self.numNids = numNodes
         # in order to create motifLog files only for the desired nodes of a job
         self.motifLogNodes = motifLogNodes
         self.detailedModel = detailedModel
@@ -99,7 +99,7 @@ class EmberEP( EndPoint ):
                     ep.addParams( {'motif1.printStats': 1} )
 
             ep.addParams( {'hermesParams.netId': nodeID } )
-            ep.addParams( {'hermesParams.netMapId': calcNetMapId( nodeID, self.nidList ) } ) 
+            ep.addParams( {'hermesParams.netMapId': self.nidMap[ nodeID ] } ) 
             ep.addParams( {'hermesParams.netMapSize': self.numNids } ) 
             ep.addParams( {'hermesParams.coreId': x } ) 
 
