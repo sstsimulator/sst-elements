@@ -1,3 +1,4 @@
+EMBER: using param directory: paramFiles
 EMBER: platform: default
 EMBER: network: topology=torus shape=4x4x4
 EMBER: numNodes=64 numNics=64
