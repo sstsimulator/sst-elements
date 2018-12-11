@@ -23,6 +23,8 @@ workFlow = []
 numCores = 1
 numNodes = 0
 nidList = ''
+statsModuleName=''
+statsFile='stats.csv'
 
 platform = 'default'
 
@@ -75,7 +77,7 @@ try:
 		"rtrArb=","embermotifLog=",	"rankmapper=","motifAPI=",
 		"bgPercentage=","bgMean=","bgStddev=","bgMsgSize=","netInspect=",
         "detailedNameModel=","detailedModelParams=","detailedModelNodes=",
-		"useSimpleMemoryModel","param=","paramDir="])
+		"useSimpleMemoryModel","param=","paramDir=","statsModule=","statsFile="])
 
 except getopt.GetoptError as err:
     print str(err)
@@ -151,6 +153,10 @@ for o, a in opts:
 		useSimpleMemoryModel=True
     elif o in ("--paramDir"):
         paramDir = a
+    elif o in ("--statsModule"):
+        statsModuleName = a
+    elif o in ("--statsFile"):
+        statsFile = a
     else:
         assert False, "unhandle option" 
 
@@ -489,3 +495,14 @@ topo.prepParams()
 
 topo.setEndPointFunc( loadInfo.setNode )
 topo.build()
+
+if statsModuleName:
+
+	try:
+		statsModule = __import__( statsModuleName, fromlist=[''] )
+	except:
+		sys.exit('Failed: could not import statsistics module `{0}`'.format(statsModuleName) )
+
+	print 'EMBER: statistics module: {0} '.format(statsModuleName)
+	print 'EMBER: statistics file: {0} '.format(statsFile)
+	statsModule.init(statsFile)
