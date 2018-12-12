@@ -87,10 +87,11 @@ class LoadInfo:
 	def readWorkList(self, jobid, nidList, workList ):
 		tmp = {}
 		tmp['motif_count'] = len(workList) 
+		print "EMBER: Job={0}, nidList=\'{1}\'".format( jobid, truncate(nidList) )
 		for i, work in enumerate( workList ) :
 			cmdList = work['cmd'].split()
 
-			print "EMBER: Job={0} nidList=\'{1}\' Motif=\'{2}\'".format( jobid, truncate(nidList), ' '.join(cmdList) )
+			print "EMBER: Motif=\'{0}\'".format( ' '.join(cmdList) )
 			del work['cmd']
 
 			motif = self.parseCmd( "ember.", "Motif", cmdList, i )
