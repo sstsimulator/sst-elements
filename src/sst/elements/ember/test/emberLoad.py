@@ -18,6 +18,7 @@ useSimpleMemoryModel=False
 statNodeList = []
 jobid = 0
 loadFile = '' 
+loadFileVars ={}
 workList = []
 workFlow = []
 numCores = 1
@@ -72,7 +73,7 @@ motifDefaults = {
 try:
     opts, args = getopt.getopt(sys.argv[1:], "", ["topo=", "shape=","hostsPerRtr=",
 		"simConfig=","platParams=",",debug=","platform=","numNodes=",
-		"numCores=","loadFile=","cmdLine=","printStats=","randomPlacement=",
+		"numCores=","loadFile=","loadFileVar=","cmdLine=","printStats=","randomPlacement=",
 		"emberVerbose=","netBW=","netPktSize=","netFlitSize=",
 		"rtrArb=","embermotifLog=",	"rankmapper=","motifAPI=",
 		"bgPercentage=","bgMean=","bgStddev=","bgMsgSize=","netInspect=",
@@ -98,6 +99,9 @@ for o, a in opts:
         debug = a
     elif o in ("--loadFile"):
         loadFile = a
+    elif o in ("--loadFileVar"):
+        key,value = a.split("=",1)
+        loadFileVars[key] = value  
     elif o in ("--motifAPI"):
 		motifAPI= a
     elif o in ("--cmdLine"):
@@ -458,7 +462,7 @@ baseNicParams = {
 loadInfo = LoadInfo( topoInfo.getNumNodes(), baseNicParams, epParams)
 
 if len(loadFile) > 0:
-    for jobid, nidlist, numCores, params, api, motifs in ParseLoadFile( loadFile ):
+    for jobid, nidlist, numCores, params, api, motifs in ParseLoadFile( loadFile, loadFileVars ):
 
         workList = []
         workFlow = []

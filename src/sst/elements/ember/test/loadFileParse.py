@@ -16,10 +16,10 @@ class Buffer:
 
 class ParseLoadFile:
 
-    def __init__( self, filename ):
+    def __init__( self, filename, fileVars ):
         self.fp = open(filename, 'r')
         self.buffer = Buffer()
-        self.preprocess()
+        self.preprocess( fileVars )
         self.lastLine = self.getline()
 
         self.stuff = [] 
@@ -101,8 +101,7 @@ class ParseLoadFile:
 
         return retval
 
-    def preprocess( self ):
-		vars = {}
+    def preprocess( self, vars ):
 		while True:
 			line = self.fp.readline()
 			if len(line) > 0:
