@@ -40,6 +40,7 @@ class Group_FamAddrMapper : public FamAddrMapper {
 		m_numNodes = m_groupSize * m_numGroups;
 
 		m_totalBlocks = m_numNodes * m_bytesPerNode/m_blockSize;
+		m_blocksPerNode = m_totalBlocks/m_numNodes;
 
 #if 0 
 		printf("numNodes=%d bytesPerNode=%zu blockSize=%d m_startNode=%d interval=%d groupSize=%d numGroups=%d\n",
@@ -55,14 +56,18 @@ class Group_FamAddrMapper : public FamAddrMapper {
 			output.fatal(CALL_INFO, -1,"Group_FamAddrMapper addr 0x%" PRIx64 " is out of range maxAddr 0x%" PRIx64 "\n", globalOffset, (uint64_t ) m_blockSize* m_totalBlocks  );
 		}
 
-		int tmp = (block % m_numNodes);
+		// this node number is relative to contiguous numbers 
+		int tmpNode = block / m_blocksPerNode;
 
+		// figure out the node number based on the group configuration
 		node = m_start;
-		node += ( tmp / m_groupSize ) * m_interval;
-		node += tmp % m_groupSize;
+		node += ( tmpNode / m_groupSize ) * m_interval;
+		node += tmpNode % m_groupSize;
 
-		localOffset = (block / m_numNodes) * m_blockSize;
-		localOffset += globalOffset % m_blockSize;
+		localOffset = (block % m_blocksPerNode) * m_blockSize;
+
+		localOffset += (globalOffset % m_blockSize);
+
 		output.debug(CALL_INFO,3,0,"globalOffset=%#" PRIx64" blockNum=%" PRIu64 " node=%d localOffset=0x%" PRIx64 "\n", globalOffset, block, node, localOffset );
 		node |= 1<<31;
 
@@ -70,6 +75,7 @@ class Group_FamAddrMapper : public FamAddrMapper {
 
   private:
 
+	int m_blocksPerNode;
 	int m_groupSize;
 	int m_numGroups;
 
