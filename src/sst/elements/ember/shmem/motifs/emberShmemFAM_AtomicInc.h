@@ -39,14 +39,14 @@ public:
 		EmberShmemGenerator(owner, params, name ), m_phase(-3), m_one(1)
 	{ 
         m_computeTime = params.find<int>("arg.computeTime", 50 );
-		m_dataSize = (size_t) params.find<SST::UnitAlgebra>("arg.totalBytes").getRoundedValue() / sizeof(TYPE);
+		m_totalBytes = (size_t) params.find<SST::UnitAlgebra>("arg.totalBytes").getRoundedValue();
 		
 		m_updates = params.find<int>("arg.updates", 4096);
 		m_iterations = params.find<int>("arg.iterations", 1);
 		m_hotMult = params.find<int>("arg.hotMult", 1);
 		m_pageSize = params.find<int>("arg.pageSize", 4096);
         
-		m_numPages = m_dataSize/m_pageSize;
+		m_numPages = m_totalBytes/m_pageSize;
 		m_printTotals = params.find<bool>("arg.printTotals", false);
 		m_outLoop = params.find<int>("arg.outLoop", 1);
 		m_times.resize(m_outLoop);
@@ -58,7 +58,7 @@ public:
 #endif
 	}
 
-	size_t m_dataSize;
+	size_t m_totalBytes;
 	std::string m_groupName;
 
     bool generate( std::queue<EmberEvent*>& evQ) 
@@ -77,7 +77,7 @@ public:
                 printf("motif: %s\n", getMotifName().c_str() );
                 printf("\tnum_pes: %d\n", m_num_pes );
                 printf("\tnode_num: %d\n", m_node_num );
-                printf("\ttotal Bytes: %zu\n", m_dataSize * sizeof(TYPE) );
+                printf("\ttotal Bytes: %zu\n", m_totalBytes );
                 printf("\tupdates: %d\n", m_updates );
                 printf("\titerations: %d\n", m_iterations );
                 printf("\touterLoop: %d\n", m_outLoop );
@@ -163,15 +163,19 @@ public:
  protected:
 
 	uint64_t genAddr() {
+		uint64_t ret = 0;
 		if ( m_hotMult > 0 ) {
 			uint64_t page = genRand() % (m_numPages + m_hotMult);
 			if ( page >= m_numPages) {
 				page = m_numPages - 1;
 			}
-			return page * m_pageSize + ( genRand( ) & (m_pageSize - 1) );
+			ret = page * m_pageSize;
+			ret += ( genRand( ) & (m_pageSize - 1) );
 		} else {
-			return genRand() % m_dataSize;
+			ret = genRand() % m_totalBytes;
 		}
+		ret &= ~(sizeof(TYPE)-1);
+		return ret;
 	}
 
     uint32_t genRand() {
