@@ -63,29 +63,29 @@ void Bus::processIncomingEvent(SST::Event* ev) {
 
 bool Bus::clockTick(Cycle_t time) {
 
-    if (!eventQueue_.empty()) {
-         while ((!eventQueue_.empty())) {
-            SST::Event* event = eventQueue_.front();
+   if (eventQueue_.empty() && busOn_)
+      idleCount_++;
 
-            if (broadcast_)
-               broadcastEvent(event);
-            else
-               sendSingleEvent(event);
+   if (idleCount_ > idleMax_) {
+      busOn_ = false;
+      idleCount_ = 0;
+      return true;
+   }
 
-            eventQueue_.pop();
-            idleCount_ = 0;
+   while (!eventQueue_.empty()) {
+      SST::Event* event = eventQueue_.front();
 
-            if (drain_ == 0 )
-               break;
-         }
-    } else if (busOn_)
-       idleCount_++;
+      if (broadcast_)
+         broadcastEvent(event);
+      else
+         sendSingleEvent(event);
 
-    if (idleCount_ > idleMax_) {
-        busOn_ = false;
-        idleCount_ = 0;
-        return true;
-    }
+      eventQueue_.pop();
+      idleCount_ = 0;
+
+      if (drain_ == 0 )
+         break;
+   }
 
     return false;
 }
@@ -205,7 +205,7 @@ void Bus::configureParameters(SST::Params& params) {
     busFrequency_ = params.find<std::string>("bus_frequency", "Invalid");
     broadcast_    = params.find<bool>("broadcast", 0);
     fanout_       = params.find<bool>("fanout", 0);  /* TODO:  Fanout: Only send messages to lower level caches */
-    drain_        = params.find<bool>("drain", 0);
+    drain_        = params.find<bool>("drain_bus", 0);
 
     if (busFrequency_ == "Invalid") dbg_.fatal(CALL_INFO, -1, "Bus Frequency was not specified\n");
 
