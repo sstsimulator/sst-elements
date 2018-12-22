@@ -377,6 +377,7 @@ private:
     std::map<MemEvent*,uint64>      startTimeList_;
     std::map<MemEvent*,int>         missTypeList_;
     std::vector<bool>               bankStatus_;    // TODO change if we want multiported banks
+    MemRegion                       region_; // Memory region handled by this cache
 
     // These parameters are for the coherence controller and are detected during init
     bool                    isLL;
@@ -390,7 +391,8 @@ private:
     SimTime_t               checkMaxWaitInterval_;      // Check for timeouts on this interval - when clock is on
     UnitAlgebra             maxWaitWakeupDelay_;        // Set wakeup event to check timeout on this interval - when clock is off
     bool                    maxWaitWakeupExists_;       // Whether a timeout wakeup exists
-    bool                    clockLink_; // Whether link actually needs clock() called or not
+    bool                    clockUpLink_; // Whether link actually needs clock() called or not
+    bool                    clockDownLink_; // Whether link actually needs clock() called or not
 
     /*
      * Statistics API stats

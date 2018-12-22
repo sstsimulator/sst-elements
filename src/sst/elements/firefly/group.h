@@ -27,6 +27,7 @@ class MapBase {
   public:
     virtual ~MapBase() {}
     virtual int getSize() = 0;
+    virtual void initMapping( int size ) {} 
     virtual void initMapping( int from, int to, int range ) {} 
     virtual void initMapping( const int* map, int size, int numCores ) {} 
     virtual int getMapping( int from ) = 0;
@@ -98,10 +99,8 @@ class IdentityGroup : public Group
 
     int getSize() { return m_size; }
 
-    void initMapping( int from, int to, int range ) {
-        assert( from == to ); 
-        assert( 0 == m_size );
-        m_size = range; 
+    void initMapping( int size ) {
+        m_size = size; 
     }
 
     int getMapping( int from ) { return from; }

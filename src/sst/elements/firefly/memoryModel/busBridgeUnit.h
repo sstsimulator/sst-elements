@@ -186,7 +186,7 @@ class BusBridgeUnit : public Unit {
 		if ( entry->callback ) { 
             m_model.schedCallback(m_latency, entry->callback );
 		}
-		if( 0 == entry->addr ) {
+		if( -1 == (int64_t) entry->addr ) {
 			if ( entry->src->numPendingWrites() == 10 ) {
 		        m_dbg.verbosePrefix(prefix(),CALL_INFO,2,BUS_BRIDGE_MASK,"unblock src\n");
 				m_model.schedResume( 0, entry->src );

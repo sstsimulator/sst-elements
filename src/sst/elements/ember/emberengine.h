@@ -131,6 +131,12 @@ public:
 	Thornhill::DetailedCompute* getDetailedCompute() {
 		return m_detailedCompute;
 	}
+
+
+	FamAddrMapper* getFamAddrMapper() {
+		return m_famAddrMapper;
+	}
+
 	Thornhill::MemoryHeapLink* getMemHeapLink() {
 		return m_memHeapLink;
 	}
@@ -191,6 +197,7 @@ private:
 	std::vector<SST::Params> motifParams;
 	Thornhill::DetailedCompute* m_detailedCompute;
 	Thornhill::MemoryHeapLink*  m_memHeapLink;
+	FamAddrMapper* m_famAddrMapper;
 
 	EmberEngine();			    		// For serialization
 	EmberEngine(const EmberEngine&);    // Do not implement

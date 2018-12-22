@@ -40,16 +40,16 @@ namespace Firefly {
 
 #include "nicEvents.h"
 
-#define NIC_DBG_DMA_ARBITRATE 1<<1
-#define NIC_DBG_DETAILED_MEM 1<<2
-#define NIC_DBG_SEND_MACHINE 1<<3
-#define NIC_DBG_RECV_MACHINE 1<<4
-#define NIC_DBG_SHMEM        1<<5 
-#define NIC_DBG_SEND_NETWORK 1<<6
-#define NIC_DBG_RECV_CTX     1<<7
-#define NIC_DBG_RECV_STREAM  1<<8
-#define NIC_DBG_RECV_MOVE    1<<9
-#define NIC_DBG_LINK_CTRL    1<<10
+#define NIC_DBG_DMA_ARBITRATE (1<<1)
+#define NIC_DBG_DETAILED_MEM (1<<2)
+#define NIC_DBG_SEND_MACHINE (1<<3)
+#define NIC_DBG_RECV_MACHINE (1<<4)
+#define NIC_DBG_SHMEM        (1<<5) 
+#define NIC_DBG_SEND_NETWORK (1<<6)
+#define NIC_DBG_RECV_CTX     (1<<7)
+#define NIC_DBG_RECV_STREAM  (1<<8)
+#define NIC_DBG_RECV_MOVE    (1<<9)
+#define NIC_DBG_LINK_CTRL    (1<<10)
 
 #define STREAM_NUM_SIZE 12
 
@@ -486,7 +486,6 @@ struct X {
 	int getSendStreamNum( int pid ) {
 		unsigned int val = m_sendStreamNum[pid]++;
 		
-		m_sendStreamNum[pid] &= (( 1 <<  STREAM_NUM_SIZE ) - 1 ); 
 		m_dbg.debug(CALL_INFO,3,NIC_DBG_SEND_MACHINE,"pid=%d stream=%d next=%d\n",pid,val, m_sendStreamNum[pid] );
 		return val;
 	}

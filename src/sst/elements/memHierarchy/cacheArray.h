@@ -282,7 +282,14 @@ public:
     Addr getLineSize() { return lineSize_; }
     
     /** Drop block offset bits (ie. log2(lineSize) */
-    Addr toLineAddr(Addr addr) { return (Addr) ((addr >> lineOffset_) / slices_); }
+    Addr toLineAddr(Addr addr) { 
+        Addr shift = addr >> lineOffset_;
+        Addr step = shift / sliceStep_;
+        Addr offset = shift % sliceSize_;
+        Addr conv = step * sliceSize_ + offset;
+        return conv;
+    }
+
     
     /** Return bank num */
     Addr getBank(Addr addr) { return (toLineAddr(addr) % banks_); }
@@ -295,8 +302,14 @@ public:
         delete hash_;
     }
 
-    void setSliceAware(unsigned int numSlices) {
-        slices_ = numSlices;
+    /** Make sure there are no empty sets when we're 
+     *  interleaving addresses across caches
+     */
+    void setSliceAware(Addr size, Addr step) {
+        sliceSize_ = size >> lineOffset_;
+        sliceStep_ = step >> lineOffset_;
+        if (sliceSize_ == 0) sliceSize_ = 1;
+        if (sliceStep_ == 0) sliceStep_ = 1;
     }
 
     void setBanked(unsigned int numBanks) {
@@ -324,7 +337,8 @@ protected:
     ReplacementMgr* replacementMgr_;
     HashFunction*   hash_;
     bool            sharersAware_;
-    unsigned int    slices_;    // Both slices are banks_ are banks; slices_ are external to this cache array, banks_ are internal
+    Addr            sliceSize_;
+    Addr            sliceStep_;
     unsigned int    banks_;
     vector<CacheLine *> lines_; // The actual cache
 
@@ -336,7 +350,8 @@ protected:
         numSets_    = numLines_ / associativity_;
         lineOffset_ = log2Of(lineSize_);
         lines_.resize(numLines_);
-        slices_ = 1;
+        sliceStep_ = 1;
+        sliceSize_ = 1;
         banks_ = 1;
 
         for (unsigned int i = 0; i < numLines_; i++) {

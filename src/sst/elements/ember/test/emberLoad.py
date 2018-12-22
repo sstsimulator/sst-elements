@@ -1,17 +1,12 @@
 
-import sys,getopt
-import pprint
+import sys,getopt,copy,pprint,random,os
 
 import sst
 from sst.merlin import *
-
-import loadInfo
 from loadInfo import *
-
-import networkConfig 
 from networkConfig import *
-
-import random 
+from loadFileParse import *
+from paramUtils import *
 
 debug    = 0
 emberVerbose = 0
@@ -23,13 +18,18 @@ useSimpleMemoryModel=False
 statNodeList = []
 jobid = 0
 loadFile = '' 
+loadFileVars ={}
 workList = []
 workFlow = []
 numCores = 1
 numNodes = 0
+nidList = ''
+statsModuleName=''
+statsFile='stats.csv'
 
 platform = 'default'
 
+paramDir='paramFiles'
 netFlitSize = '' 
 netBW = '' 
 netPktSize = '' 
@@ -73,12 +73,12 @@ motifDefaults = {
 try:
     opts, args = getopt.getopt(sys.argv[1:], "", ["topo=", "shape=","hostsPerRtr=",
 		"simConfig=","platParams=",",debug=","platform=","numNodes=",
-		"numCores=","loadFile=","cmdLine=","printStats=","randomPlacement=",
+		"numCores=","loadFile=","loadFileVar=","cmdLine=","printStats=","randomPlacement=",
 		"emberVerbose=","netBW=","netPktSize=","netFlitSize=",
 		"rtrArb=","embermotifLog=",	"rankmapper=","motifAPI=",
 		"bgPercentage=","bgMean=","bgStddev=","bgMsgSize=","netInspect=",
         "detailedNameModel=","detailedModelParams=","detailedModelNodes=",
-		"useSimpleMemoryModel","param="])
+		"useSimpleMemoryModel","param=","paramDir=","statsModule=","statsFile="])
 
 except getopt.GetoptError as err:
     print str(err)
@@ -99,6 +99,9 @@ for o, a in opts:
         debug = a
     elif o in ("--loadFile"):
         loadFile = a
+    elif o in ("--loadFileVar"):
+        key,value = a.split("=",1)
+        loadFileVars[key] = value  
     elif o in ("--motifAPI"):
 		motifAPI= a
     elif o in ("--cmdLine"):
@@ -152,11 +155,23 @@ for o, a in opts:
         params[key] += [value]  
     elif o in ("--useSimpleMemoryModel"):
 		useSimpleMemoryModel=True
+    elif o in ("--paramDir"):
+        paramDir = a
+    elif o in ("--statsModule"):
+        statsModuleName = a
+    elif o in ("--statsFile"):
+        statsFile = a
     else:
         assert False, "unhandle option" 
 
+sys.path.append( os.getcwd() + '/' + paramDir )
+print 'EMBER: using param directory: {0}'.format( paramDir )
+
 if 1 == len(sys.argv):
 	simConfig = 'defaultSim'
+
+if len(loadFile) > 0 and  len(workList) > 0:
+	sys.exit("Error: can't specify both loadFile and cmdLine");
 
 if simConfig:
 	try:
@@ -222,7 +237,9 @@ if "" == netTopo:
 	else:
 		sys.exit("What topo? [torus|fattree|dragonfly]")
 
+usePlatNetConfig = False
 if "" == netShape:
+	usePlatNetConfig = True 
 	if platNetConfig['shape']:
 		netShape = platNetConfig['shape']
 	else:
@@ -240,7 +257,10 @@ elif "fattree" == netTopo:
 
 elif "dragonfly" == netTopo or "dragonfly2" == netTopo:
 		
-	topoInfo = DragonFlyInfo(netShape)
+	if usePlatNetConfig:
+		topoInfo = DragonFlyInfo(platNetConfig)
+	else:
+		topoInfo = DragonFlyInfo(netShape)
 	topo = topoDragonFly()
 
 elif "dragonflyLegacy" == netTopo:
@@ -250,7 +270,11 @@ elif "dragonflyLegacy" == netTopo:
 
 elif "hyperx" == netTopo:
 
-	topoInfo = HyperXInfo(netShape, netHostsPerRtr)
+	if usePlatNetConfig:
+		topoInfo = HyperXInfo(platNetConfig)
+	else:
+		topoInfo = HyperXInfo(netShape, netHostsPerRtr)
+
 	topo = topoHyperX()
 
 else:
@@ -263,6 +287,8 @@ else:
 
 if int(numNodes) == 0:
     numNodes = int(topoInfo.getNumNodes())
+
+nidList='0-' + str(int(numNodes)-1)
 
 if int(numNodes) > int(topoInfo.getNumNodes()):
     sys.exit("need more nodes want " + str(numNodes) + ", have " + str(topoInfo.getNumNodes()))
@@ -355,41 +381,41 @@ if emberrankmapper:
 for a in params['network']:
     key, value = a.split("=")
     if key in networkParams:
-        print "override networkParams {}={} with {}".format( key, networkParams[key], value )
+        print "override networkParams {0}={1} with {2}".format( key, networkParams[key], value )
     else:
-        print "set networkParams {}={}".format( key, value )
+        print "set networkParams {0}={1}".format( key, value )
     networkParams[key] = value
 
 for a in params['nic']:
     key, value = a.split("=")
     if key in nicParams:
-        print "override nicParams {}={} with {}".format( key, nicParams[key], value )
+        print "override nicParams {0}={1} with {2}".format( key, nicParams[key], value )
     else:
-        print "set nicParams {}={}".format( key, value )
+        print "set nicParams {0}={1}".format( key, value )
     nicParams[key] = value
 
 for a in params['ember']:
     key, value = a.split("=")
     if key in emberParams:
-        print "override emberParams {}={} with {}".format( key, emberParams[key], value )
+        print "override emberParams {0}={1} with {2}".format( key, emberParams[key], value )
     else:
-        print "set emberParams {}={}".format( key, value )
+        print "set emberParams {0}={1}".format( key, value )
     emberParams[key] = value
 
 for a in params['hermes']:
     key, value = a.split("=")
     if key in hermesParams:
-        print "override hermesParams {}={} with {}".format( key, hermesParams[key], value )
+        print "override hermesParams {0}={1} with {2}".format( key, hermesParams[key], value )
     else:
-        print "set hermesParams {}={}".format( key, value )
+        print "set hermesParams {0}={1}".format( key, value )
     hermesParams[key] = value
 
 for a in params['merlin']:
     key, value = a.split("=")
     if key in sst.merlin._params:
-        print "override hermesParams {}={} with {}".format( key, sst.merlin._params[key], value )
+        print "override hermesParams {0}={1} with {2}".format( key, sst.merlin._params[key], value )
     else:
-        print "set merlin {}={}".format( key, value )
+        print "set merlin {0}={1}".format( key, value )
     sst.merlin._params[key] = value
 
 
@@ -425,22 +451,46 @@ epParams.update(hermesParams)
 #pprint.pprint( nicParams, width=1)
 #pprint.pprint( sst.merlin._params, width=1)
 
+baseNicParams = {
+    "packetSize" : networkParams['packetSize'],
+    "link_bw" : networkParams['link_bw'],
+    "input_buf_size" : networkParams['input_buf_size'],
+    "output_buf_size" : networkParams['output_buf_size'],
+    "module" : nicParams['module']
+}
 
-loadInfo = LoadInfo( nicParams, epParams, numNodes, numCores, topoInfo.getNumNodes(), model )
+loadInfo = LoadInfo( topoInfo.getNumNodes(), baseNicParams, epParams)
 
 if len(loadFile) > 0:
-	if len(workList) > 0:
-		sys.exit("Error: can't specify both loadFile and cmdLine");
+    for jobid, nidlist, numCores, params, api, motifs in ParseLoadFile( loadFile, loadFileVars ):
 
-	loadInfo.initFile( motifDefaults, loadFile, statNodeList )
+        workList = []
+        workFlow = []
+
+        myNicParams = copy.deepcopy(nicParams)
+        myEpParams = copy.deepcopy(epParams)
+        myNidList = copy.deepcopy(nidlist)
+
+ 
+        updateParams( params, sst.merlin._params, myNicParams, myEpParams )
+
+        for motif in motifs:
+            tmp = dict.copy( motifDefaults )
+            if len(api):
+                tmp['api'] = api
+            tmp['cmd'] = motif
+            workFlow.append( tmp )
+
+	workList.append( [jobid, workFlow] )
+
+        loadInfo.addPart( myNidList, myNicParams, myEpParams, numCores,  model )
+        loadInfo.initWork( myNidList, workList, statNodeList )
+
+elif len(workList) > 0:
+    loadInfo.addPart( nidList, nicParams, epParams, numCores,  model )
+    loadInfo.initWork( nidList, workList, statNodeList )
 else:
-	if len(workList) > 0:
-		if len(loadFile) > 0:
-			sys.exit("Error: can't specify both loadFile and cmdLine");
-
-		loadInfo.initWork( workList, statNodeList )
-	else:
-		sys.exit("Error: need a loadFile or cmdLine")
+    sys.exit("Error: need a loadFile or cmdLine")
 
 if topo.getName() == "Fat Tree":
 	topo.keepEndPointsWithRouter()
@@ -449,3 +499,14 @@ topo.prepParams()
 
 topo.setEndPointFunc( loadInfo.setNode )
 topo.build()
+
+if statsModuleName:
+
+	try:
+		statsModule = __import__( statsModuleName, fromlist=[''] )
+	except:
+		sys.exit('Failed: could not import statsistics module `{0}`'.format(statsModuleName) )
+
+	print 'EMBER: statistics module: {0} '.format(statsModuleName)
+	print 'EMBER: statistics file: {0} '.format(statsFile)
+	statsModule.init(statsFile)

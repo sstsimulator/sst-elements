@@ -169,7 +169,7 @@ void Nic::SendMachine::OutQ::enque( FireflyNetworkEvent* ev, int dest, Callback 
 	PriorityX* px = new PriorityX( m_lastEnq, m_enqCnt, new X( std::bind( &Nic::SendMachine::OutQ::pop, this, callback ), ev, dest ) );
 
 	++m_qCnt;
-	m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_SEND_MACHINE, "qCnt=%lu priority=%lu.%d\n", m_qCnt, m_lastEnq, m_enqCnt);
+	m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_SEND_MACHINE, "qCnt=%d priority=%" PRIu64 ".%d\n", m_qCnt, m_lastEnq, m_enqCnt);
 
 	m_nic.notifyHavePkt( px );	
 }

@@ -33,13 +33,12 @@ EmberGenerator::EmberGenerator( Component* owner, Params& params,
 
     m_detailedCompute = ee->getDetailedCompute();
 	m_memHeapLink = ee->getMemHeapLink();
+	m_famAddrMapper = ee->getFamAddrMapper();
 
     m_motifNum = params.find<int>( "_motifNum", -1 );	
     m_jobId = params.find<int>( "_jobId", -1 );	
 
-    m_verbosePrefix << "@t:" << getJobId() << ":" << rank() << 
-						":EmberEngine:MPI:" << name << ":@p:@l: ";
-    //std::cout << "Job:" << getJobId() << " Rank:" << rank() << std::endl;//NetworkSim
+    setVerbosePrefix();
     
     Params distribParams = params.find_prefix_params("distribParams.");
     std::string distribModule = params.find<std::string>("distribModule",

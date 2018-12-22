@@ -32,6 +32,7 @@ using namespace std::placeholders;
 int Nic::MaxPayload = (int)((1L<<32) - 1);
 int Nic::m_packetId = 0;
 int Nic::ShmemSendMove::m_alignment = 64;
+int Nic::EntryBase::m_alignment = 1;
 
 Nic::Nic(ComponentId_t id, Params &params) :
     Component( id ),
@@ -54,6 +55,8 @@ Nic::Nic(ComponentId_t id, Params &params) :
         params.find<uint32_t>("verboseMask",-1), 
         Output::STDOUT);
 
+    bool printConfig = ( 0 == params.find<std::string>( "printConfig", "no" ).compare("yes" ) );
+
 	// The link between the NIC and HOST historically provided the latency of crossing a bus such as PCI
 	// hence it was configured at wire up with a value like 150ns. The NIC has since taken on some HOST functionality
 	// so the latency has been dropped to 1ns. The bus latency must still be added for some messages so the 
@@ -74,12 +77,21 @@ Nic::Nic(ComponentId_t id, Params &params) :
 		m_sendStreamNum.push_back(0); 
 	}
 
+
     m_tracedNode =     params.find<int>( "tracedNode", -1 );
     m_tracedPkt  =     params.find<int>( "tracedPkt", -1 );
     int numShmemCmdSlots =    params.find<int>( "numShmemCmdSlots", 32 );
     int maxSendMachineQsize = params.find<int>( "maxSendMachineQsize", 1 );
     int maxRecvMachineQsize = params.find<int>( "maxRecvMachineQsize", 1 );
     Nic::ShmemSendMove::m_alignment = params.find<int>("shmemSendAlignment",64);
+
+    if ( Nic::ShmemSendMove::m_alignment == 0 ) {
+        m_dbg.fatal(CALL_INFO,-1,"Error:  shmemSendAlignment must be greater than 0 \n");
+    }
+    Nic::EntryBase::m_alignment = params.find<int>("messageSendAlignment",1);
+    if ( Nic::EntryBase::m_alignment == 0 ) {
+        m_dbg.fatal(CALL_INFO,-1,"Error:  messageSendAlignment must be greater than 0 \n");
+    }
     int numSendMachines = params.find<int>( "numSendMachines",1);
     if ( numSendMachines < 1 ) {
         m_dbg.fatal(CALL_INFO,-1,"Error: numSendMachines must be greater than 1, requested %d\n",numSendMachines);
@@ -164,23 +176,39 @@ Nic::Nic(ComponentId_t id, Params &params) :
 
 	Params shmemParams = params.find_prefix_params( "shmem." ); 
     m_shmem = new Shmem( *this, shmemParams, m_myNodeId, m_num_vNics, m_dbg, numShmemCmdSlots, getDelay_ns(), getDelay_ns() );
+	size_t FAM_memSizeBytes = params.find<SST::UnitAlgebra>("FAM_memSize" ).getRoundedValue();
+	if ( FAM_memSizeBytes ) {
+		if ( printConfig ) {
+			m_dbg.output("Node id=%d: register FAM memory %zu bytes\n", m_myNodeId, FAM_memSizeBytes);
+		}
+
+		void* backing = NULL;
+		if ( 0 == params.find<std::string>("FAM_backed", "yes" ).compare("yes") ) {
+			backing = malloc( FAM_memSizeBytes );
+		}
+		m_shmem->regMem( 0, 0, FAM_memSizeBytes, backing );
+	}
 
     if ( params.find<int>( "useSimpleMemoryModel", 0 ) ) {
         Params smmParams = params.find_prefix_params( "simpleMemoryModel." );
         smmParams.insert( "busLatency",  std::to_string(m_nic2host_lat_ns), false );
 
-		std::string useCache = smmParams.find<std::string>("useHostCache","all");
-		std::string useBus = smmParams.find<std::string>("useBusBridge","all");
+		std::string useCache = smmParams.find<std::string>("useHostCache","yes");
+		std::string useBus = smmParams.find<std::string>("useBusBridge","yes");
 
-		if ( findNid( m_myNodeId, useCache ) ) {
-        	smmParams.insert( "useHostCache",  "1", true );
-		} else {
-        	smmParams.insert( "useHostCache",  "0", true );
+		if ( isdigit( useCache[0] ) ) {
+			if ( findNid( m_myNodeId, useCache ) ) {
+        		smmParams.insert( "useHostCache",  "yes", true );
+			} else {
+        		smmParams.insert( "useHostCache",  "no", true );
+			}
 		}
-		if ( findNid( m_myNodeId, useBus ) ) {
-        	smmParams.insert( "useBusBridge",  "1", true );
-		} else {
-        	smmParams.insert( "useBusBridge",  "0", true );
+		if ( isdigit( useBus[0] ) ) {
+			if ( findNid( m_myNodeId, useBus ) ) {
+        		smmParams.insert( "useBusBridge",  "yes", true );
+			} else {
+        		smmParams.insert( "useBusBridge",  "no", true );
+			}
 		}
         
         std::stringstream tmp;

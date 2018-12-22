@@ -518,29 +518,6 @@ void Cache::setup() {
         out_->fatal(CALL_INFO, -1,"%s did not find any sources\n", getName().c_str());
 
     names = linkDown_->getDests();
-    if (names->empty()) {
-        std::set<MemLinkBase::EndpointInfo> dstNames;
-        if (lowerLevelCacheNames_.empty()) lowerLevelCacheNames_.push_back(""); // TODO is this a carry over from the old init or is it needed to avoid segfaults still?
-        uint64_t ilStep = 0;
-        uint64_t ilSize = 0;
-        if (lowerLevelCacheNames_.size() > 1) { // RR slice addressing
-            ilStep = cacheArray_->getLineSize() * lowerLevelCacheNames_.size();
-            ilSize = cacheArray_->getLineSize();
-        }
-        for (int i = 0; i < lowerLevelCacheNames_.size(); i++) {
-            MemLinkBase::EndpointInfo info;
-            info.name = lowerLevelCacheNames_[i];
-            info.addr = 0;
-            info.id = 0;
-            info.region.setDefault();
-            info.region.interleaveStep = ilStep;
-            info.region.interleaveSize = ilSize;
-            dstNames.insert(info);
-        }
-        linkDown_->setDests(dstNames);
-    }
-
-    names = linkDown_->getDests();
     if (names->empty())
         out_->fatal(CALL_INFO, -1, "%s did not find any destinations\n", getName().c_str());
 
@@ -586,8 +563,14 @@ bool Cache::clockTick(Cycle_t time) {
     timestamp_++;
     bool queuesEmpty = coherenceMgr_->sendOutgoingCommands(getCurrentSimTimeNano());
         
-    bool nicIdle = true;
-    if (clockLink_) nicIdle = linkDown_->clock();
+    bool upIdle = true;
+    bool downIdle = true;
+    if (clockUpLink_) {
+        upIdle = linkUp_->clock();
+    }
+    if (clockDownLink_) {
+        downIdle = linkDown_->clock();
+    }
 
     if (checkMaxWaitInterval_ > 0 && timestamp_ % checkMaxWaitInterval_ == 0) checkMaxWait();
         
@@ -635,7 +618,7 @@ bool Cache::clockTick(Cycle_t time) {
         requestBuffer_.swap(tmpBuffer);
     }
     // Disable lower-level cache clocks if they're idle
-    if (queuesEmpty && nicIdle && clockIsOn_ && !conflicts) {
+    if (queuesEmpty && upIdle && downIdle && clockIsOn_ && !conflicts) {
         turnClockOff();
         return true;
     }

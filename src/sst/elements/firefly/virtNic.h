@@ -162,6 +162,8 @@ class VirtNic : public SST::Module {
 	int calcCoreId( int nodeId ) {
 		if ( -1 == nodeId ) {
 			return -1;
+		} else if ( nodeId & (1<<31) )  {
+			return 0;
 		} else {
 			return nodeId % m_numCores;
 		}
@@ -208,6 +210,8 @@ class VirtNic : public SST::Module {
 	int calcRealNicId( int nodeId ) {
 		if ( -1 == nodeId ) {
 			return -1;
+		} else if ( nodeId & (1<<31) )  {
+			return nodeId & ~(1<<31);
 		} else {
 			return nodeId / m_numCores;
 		}

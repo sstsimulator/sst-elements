@@ -27,6 +27,7 @@
 #include <sst/elements/hermes/msgapi.h>
 #include "sst/elements/thornhill/detailedCompute.h"
 #include "sst/elements/thornhill/memoryHeapLink.h"
+#include "emberFamAddrMapper.h"
 
 #include "emberevent.h"
 #include "embermap.h"
@@ -86,6 +87,15 @@ class EmberGenerator : public SubComponent {
                const char* format, ...)    const
                   __attribute__ ((format (printf, 6, 7))) ;
 
+    void setVerbosePrefix( int _rank = -1 ) {
+        if ( _rank == -1 ) {
+            _rank = rank(); 
+        }
+        m_verbosePrefix.str(std::string());
+        m_verbosePrefix << "@t:" << getJobId() << ":" << _rank <<
+                    ":EmberEngine:MPI:" << getMotifName() << ":@p:@l: ";
+    }
+
     std::string getMotifName() { return m_motifName; }
     void setRank( int rank ) { m_api->setRank( rank ); }
     void setSize( int size ) { m_api->setSize( size ); }
@@ -115,6 +125,7 @@ class EmberGenerator : public SubComponent {
     }
     bool haveDetailed() { return m_detailedCompute; }
 
+	FamAddrMapper* 			m_famAddrMapper;
     Hermes::Interface*  	m_api;
     Thornhill::DetailedCompute*   m_detailedCompute;
     Thornhill::MemoryHeapLink*    m_memHeapLink;
@@ -127,6 +138,7 @@ class EmberGenerator : public SubComponent {
     enum { NoBacking, Backing, BackingZeroed  } m_dataMode; 
 
   private:
+
     Output* 	        	m_output;
     std::string				m_motifName;
     std::ostringstream      m_verbosePrefix;

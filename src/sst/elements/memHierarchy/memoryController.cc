@@ -143,6 +143,35 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     std::string opalShMem = params.find<std::string>("shared_memory", "0");
     std::string opalSize = params.find<std::string>("local_memory_size", "0");
 
+    // Memory region - overwrite with what we got if we got some
+    bool gotRegion = false;
+    uint64_t addrStart = params.find<uint64_t>("addr_range_start", 0, gotRegion);
+    uint64_t addrEnd = params.find<uint64_t>("addr_range_end", (uint64_t) - 1, found);
+    gotRegion |= found;
+    string ilSize = params.find<std::string>("interleave_size", "0B", found);
+    gotRegion |= found;
+    string ilStep = params.find<std::string>("interleave_step", "0B", found);
+    gotRegion |= found;
+
+    // Ensure SI units are power-2 not power-10 - for backward compability
+    fixByteUnits(ilSize);
+    fixByteUnits(ilStep);
+
+    if (!UnitAlgebra(ilSize).hasUnits("B")) {
+        dbg.fatal(CALL_INFO, -1, "Invalid param(%s): interleave_size - must be specified in bytes with units (SI units OK). For example, '1KiB'. You specified '%s'\n",
+                getName().c_str(), ilSize.c_str());
+    }
+        
+    if (!UnitAlgebra(ilStep).hasUnits("B")) {
+        dbg.fatal(CALL_INFO, -1, "Invalid param(%s): interleave_step - must be specified in bytes with units (SI units OK). For example, '1KiB'. You specified '%s'\n",
+                getName().c_str(), ilSize.c_str());
+    }
+
+    region_.start = addrStart;
+    region_.end = addrEnd;
+    region_.interleaveSize = UnitAlgebra(ilSize).getRoundedValue();
+    region_.interleaveStep = UnitAlgebra(ilStep).getRoundedValue();
+
     if (isPortConnected("direct_link")) {
         Params linkParams = params.find_prefix_params("cpulink.");
         linkParams.insert("port", "direct_link");
@@ -182,8 +211,11 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
         link_->setRecvHandler( new Event::Handler<MemController>(this, &MemController::handleEvent) );
         clockLink_ = true;
     }
-    
-    region_ = link_->getRegion();
+   
+    if (gotRegion) 
+        link_->setRegion(region_);
+    else 
+        region_ = link_->getRegion();
     privateMemOffset_ = 0;
 
     // Set up backing store if needed
