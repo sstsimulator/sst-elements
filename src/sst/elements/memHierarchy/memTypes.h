@@ -149,7 +149,7 @@ static const std::vector<ElementInfoStatistic> networkMemoryInspector_statistics
 
 
 /******************************************************************************************
- * Coherence states. Not all protocols use all states 
+ * Coherence states. Not all protocols use all states
  *****************************************************************************************/
 /* State NextState */
 #define STATE_TYPES \
@@ -246,7 +246,9 @@ struct MemRegion {
 
     std::string toString() const {
         std::ostringstream str;
+        str << showbase << hex;
         str << "Start: " << start << " End: " << end;
+        str << noshowbase << dec;
         str << " InterleaveSize: " << interleaveSize;
         str << " InterleaveStep: " << interleaveStep;
         return str.str();
