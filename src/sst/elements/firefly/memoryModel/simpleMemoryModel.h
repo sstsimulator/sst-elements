@@ -68,6 +68,7 @@ public:
         { "mem_blocked_time",                  "time memory requests were blocked", "nanseconds", 1},
         { "mem_num_loads",                     "total number of loads", "count", 1},
         { "mem_num_stores",                    "total number of stores", "count", 1},
+        { "mem_addrs",                         "addresses accesed", "value", 1},
 	)
 
 
