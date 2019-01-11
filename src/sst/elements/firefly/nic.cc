@@ -753,7 +753,10 @@ Hermes::MemAddr Nic::findShmem(  int core, Hermes::Vaddr addr, size_t length )
 
     uint64_t offset =  addr - region.first.getSimVAddr();
 
-    assert(  addr + length <= region.first.getSimVAddr() + region.second );
+    if (  addr + length > region.first.getSimVAddr() + region.second ) {
+        m_dbg.fatal(CALL_INFO, -1,"address %#" PRIx64 " not in region %#" PRIx64 " length %lu \n", addr+length, region.first.getSimVAddr() , region.second );
+    }
+
     return region.first.offset(offset);
 }
 
