@@ -23,6 +23,7 @@
 			m_latency = model.registerStatistic<uint64_t>("mem_blocked_time");
 			m_loads = model.registerStatistic<uint64_t>("mem_num_loads");
 			m_stores = model.registerStatistic<uint64_t>("mem_num_stores");
+			m_addrs = model.registerStatistic<uint64_t>("mem_addrs");
         }
 
         bool store( UnitBase* src, MemReq* req ) {
@@ -54,6 +55,7 @@
 
         bool work( SimTime_t delay, Op op, MemReq* req,  UnitBase* src, SimTime_t qTime, Callback* callback = NULL ) {
 
+			m_addrs->addData( req->addr  );
             if ( m_pending == m_numSlots ) {
 
 				m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MEM_MASK,"blocking src\n");
@@ -106,6 +108,7 @@
         Statistic<uint64_t>* m_latency;
         Statistic<uint64_t>* m_loads;
         Statistic<uint64_t>* m_stores;
+        Statistic<uint64_t>* m_addrs;
         std::queue< Entry > m_blocked;
         int m_pending;
         int m_numSlots;
