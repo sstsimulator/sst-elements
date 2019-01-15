@@ -24,6 +24,7 @@
 
 #include "memEvent.h"
 #include "sst/core/rng/marsaglia.h"
+#include "sst/core/warnmacros.h"
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>       /* time */
 
@@ -80,7 +81,7 @@ private:
     };
 
 public:
-    LRUReplacementMgr(Output* _dbg, uint _numLines, uint _numWays, bool _sharersAware) : timestamp(1), bestCandidate(-1), numLines(_numLines), numWays(_numWays)  {
+    LRUReplacementMgr(Output* UNUSED(_dbg), uint _numLines, uint _numWays, bool UNUSED(_sharersAware)) : timestamp(1), bestCandidate(-1), numLines(_numLines), numWays(_numWays)  {
         array = (uint64_t*) calloc(numLines, sizeof(uint64_t));
     }
 
@@ -171,7 +172,7 @@ class LFUReplacementMgr : public ReplacementMgr {
 
     public:
     
-        LFUReplacementMgr(Output* _dbg, uint _numLines, uint _numWays) : timestamp(1), bestCandidate(-1), numLines(_numLines), numWays(_numWays) {
+        LFUReplacementMgr(Output* UNUSED(_dbg), uint _numLines, uint _numWays) : timestamp(1), bestCandidate(-1), numLines(_numLines), numWays(_numWays) {
             array = (LFUInfo*)calloc(numLines, sizeof(LFUInfo));
         }
 
@@ -252,7 +253,7 @@ private:
     };
 
 public:
-    MRUReplacementMgr(Output* _dbg, uint _numLines, uint _numWays, bool _sharersAware) : timestamp(1), bestCandidate(-1), numLines(_numLines), numWays(_numWays)  {
+    MRUReplacementMgr(Output* UNUSED(_dbg), uint _numLines, uint _numWays, bool UNUSED(_sharersAware)) : timestamp(1), bestCandidate(-1), numLines(_numLines), numWays(_numWays)  {
         array = (uint64_t*) calloc(numLines, sizeof(uint64_t));
     }
 
@@ -301,16 +302,16 @@ class RandomReplacementMgr : public ReplacementMgr {
     SST::RNG::MarsagliaRNG randomGenerator_;
 
 public:
-    RandomReplacementMgr(Output* _dbg, uint _numWays) : numWays(_numWays), randomGenerator_(1, 1) {
+    RandomReplacementMgr(Output* UNUSED(_dbg), uint _numWays) : numWays(_numWays), randomGenerator_(1, 1) {
     }
     virtual ~RandomReplacementMgr() {
         
     }
 
-    void update(uint id){}
-       
+    void update(uint UNUSED(id)){}
+
     // Return a empty slot if one exists, otherwise return a random candidate
-    uint findBestCandidate(uint setBegin, State * state, uint * sharers, bool * owned, bool sharersAware) {
+    uint findBestCandidate(uint setBegin, State * state, uint * UNUSED(sharers), bool * UNUSED(owned), Honeycomb::Priority * UNUSED(priority), bool UNUSED(sharersAware)) {
         for (uint i = 0; i < numWays; i++) {
             if (state[i] == I) {
                 bestCandidate = setBegin + i;
@@ -325,7 +326,7 @@ public:
         return (uint)bestCandidate;
     }
 
-    void replaced(uint id) { }
+    void replaced(uint UNUSED(id)) { }
 };
 
 /* ------------------------------------------------------------------------------------------
@@ -341,7 +342,7 @@ private:
     SST::RNG::MarsagliaRNG randomGenerator;
 
 public:
-    NMRUReplacementMgr(Output* _dbg, uint _numLines, uint _numWays) : bestCandidate(-1), numLines(_numLines), numWays(_numWays), randomGenerator(1,1)  {
+    NMRUReplacementMgr(Output* UNUSED(_dbg), uint _numLines, uint _numWays) : bestCandidate(-1), numLines(_numLines), numWays(_numWays), randomGenerator(1,1)  {
         array = (int32_t*) calloc(numLines/numWays, sizeof(int32_t));
     }
 
@@ -351,8 +352,9 @@ public:
         array[id/numWays] = id % numWays; 
     }
 
+
     // Return an empty slot if one exists, otherwise return any slot that is not the most-recently used in the set
-    uint findBestCandidate(uint setBegin, State * state, uint * sharers, bool * owned, bool sharersAware) {
+    uint findBestCandidate(uint setBegin, State * state, uint * UNUSED(sharers), bool * UNUSED(owned), Honeycomb::Priority * UNUSED(priority), bool UNUSED(sharersAware)) {
         for (uint i = 0; i < numWays; i++) {
             if (state[i] == I) {
                 bestCandidate = setBegin + i;
@@ -369,7 +371,7 @@ public:
 
     uint getBestCandidate() { return (uint)bestCandidate;}
 
-    void replaced(uint id) {}
+    void replaced(uint UNUSED(id)) {}
 
 };
 

@@ -33,6 +33,7 @@
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
 #include <sst/core/output.h>
+#include <sst/core/warnmacros.h>
 
 #include "sst/elements/memHierarchy/cacheArray.h"
 #include "sst/elements/memHierarchy/mshr.h"
@@ -60,11 +61,11 @@ public:
     SST_ELI_DOCUMENT_PARAMS(
             /* Required */
             {"cache_frequency",         "(string) Clock frequency or period with units (Hz or s; SI units OK). For L1s, this is usually the same as the CPU's frequency.", NULL},
-            {"cache_size",              "(string) Cache size with units. Eg. 4KiB or 1MiB"},
-            {"associativity",           "(int) Associativity of the cache. In set associative mode, this is the number of ways."},
-            {"access_latency_cycles",   "(int) Latency (in cycles) to access the cache data array. This latency is paid by cache hits and coherence requests that need to return data."},
+            {"cache_size",              "(string) Cache size with units. Eg. 4KiB or 1MiB", NULL},
+            {"associativity",           "(int) Associativity of the cache. In set associative mode, this is the number of ways.", NULL},
+            {"access_latency_cycles",   "(int) Latency (in cycles) to access the cache data array. This latency is paid by cache hits and coherence requests that need to return data.", NULL},
             {"L1",                      "(bool) Required for L1s, specifies whether cache is an L1. Options: 0[not L1], 1[L1]", "false"},
-            {"node",			"(uint) Node number in multinode evnironment"},
+            {"node",			"(uint) Node number in multinode evnironment", NULL},
             /* Not required */
             {"cache_line_size",         "(uint) Size of a cache line (aka cache block) in bytes.", "64"},
             {"hash_function",           "(int) 0 - none (default), 1 - linear, 2 - XOR", "0"},
@@ -100,7 +101,7 @@ public:
             {"min_packet_size",         "(string) Number of bytes in a request/response not including payload (e.g., addr + cmd). Specify in B.", "8B"},
             {"banks",                   "(uint) Number of cache banks: One access per bank per cycle. Use '0' to simulate no bank limits (only limits on bandwidth then are max_requests_per_cycle and *_link_width", "0"},
             /* Old parameters - deprecated or moved */
-            {"network_address",             "DEPRECATED - Now auto-detected by link control."}, // Remove 9.0
+            {"network_address",             "DEPRECATED - Now auto-detected by link control.", NULL}, // Remove 9.0
             {"network_bw",                  "MOVED - Now a member of the MemNIC subcomponent.", "80GiB/s"}, // Remove 9.0
             {"network_input_buffer_size",   "MOVED - Now a member of the MemNIC subcomponent.", "1KiB"}, // Remove 9.0
             {"network_output_buffer_size",  "MOVED - Now a member of the MemNIC subcomponent.", "1KiB"}) // Remove 9.0
@@ -303,7 +304,7 @@ private:
     void turnClockOn();
     void turnClockOff();
 
-    void maxWaitWakeup(SST::Event * ev) {
+    void maxWaitWakeup(SST::Event * UNUSED(ev)) {
         checkMaxWait();
         maxWaitSelfLink_->send(1, NULL);
     }

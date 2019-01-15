@@ -59,12 +59,12 @@ public:
             {"interleave_size",     "(string) Size of interleaved chunks. E.g., to interleave 8B chunks among 3 memories, set size=8B, step=24B", "0B"},\
             {"interleave_step",     "(string) Distance between interleaved chunks. E.g., to interleave 8B chunks among 3 memories, set size=8B, step=24B", "0B"},\
             {"customCmdMemHandler", "(string) Name of the custom command handler to load", ""},\
-            {"node",		    "Node number in multinode environment"},\
+            {"node",		    "Node number in multinode environment", NULL},\
             /* Old parameters - deprecated or moved */\
             {"do_not_back",         "DEPRECATED. Use parameter 'backing' instead.", "0"}, /* Remove 9.0 */\
             {"network_num_vc",      "DEPRECATED. Number of virtual channels (VCs) on the on-chip network. memHierarchy only uses one VC.", "1"}, /* Remove 9.0 */\
             {"coherence_protocol",  "DEPRECATED. No longer needed. Coherence protocol.  Supported: MESI (default), MSI. Only used when a directory controller is not present.", "MESI"}, /* Remove 9.0 */\
-            {"network_address",     "DEPRECATED - Now auto-detected by link control."}, /* Remove 9.0 */\
+            {"network_address",     "DEPRECATED - Now auto-detected by link control.", NULL}, /* Remove 9.0 */\
             {"network_bw",          "MOVED. Now a member of the MemNIC subcomponent.", NULL}, /* Remove 9.0 */\
             {"network_input_buffer_size",   "MOVED. Now a member of the MemNIC subcomponent.", "1KiB"}, /* Remove 9.0 */\
             {"network_output_buffer_size",  "MOVED. Now a member of the MemNIC subcomponent.", "1KiB"}, /* Remove 9.0 */\

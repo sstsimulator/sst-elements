@@ -24,6 +24,7 @@
 #define	HASH_H
 
 #include <sst_config.h>
+#include <sst/core/warnmacros.h>
 #include <stdint.h>
 
 
@@ -40,7 +41,7 @@ public:
 /* Simplest ID hashing */
 class PureIdHashFunction : public HashFunction {
 public:
-    inline uint64_t hash(uint32_t ID, uint64_t value) {
+    inline uint64_t hash(uint32_t UNUSED(ID), uint64_t value) {
         return value;
     }
 };
@@ -49,7 +50,7 @@ public:
    each input to an output. */
 class LinearHashFunction : public HashFunction {
 public:
-  uint64_t hash(uint32_t ID, uint64_t x) {
+  uint64_t hash(uint32_t UNUSED(ID), uint64_t x) {
       return 1103515245*x + 12345;
   }
 };
@@ -57,7 +58,7 @@ public:
 /* Just a simple xor-based hash. */
 class XorHashFunction : public HashFunction {
 public:
-  uint64_t hash(uint32_t ID, uint64_t x) {
+  uint64_t hash(uint32_t UNUSED(ID), uint64_t x) {
     unsigned char b[8];
     for (unsigned i = 0; i < 8; ++i)
       b[i] = (x >> (i*8))&0xff;
