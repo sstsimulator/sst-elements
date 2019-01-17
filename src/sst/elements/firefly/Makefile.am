@@ -93,6 +93,8 @@ libfirefly_la_SOURCES = \
 	shmem/fcollect.h \
 	shmem/reduction.cc \
 	shmem/reduction.h \
+	shmem/famAddrMapper.h \
+	shmem/famNodeMapper.h \
 	memoryModel/memoryModel.h \
 	memoryModel/simpleMemoryModel.h \
 	memoryModel/trivialMemoryModel.h \

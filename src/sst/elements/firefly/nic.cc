@@ -583,6 +583,7 @@ void Nic::feedTheNetwork( )
 			m_predNetIdleTime += latPS;
 
 			m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_NETWORK,"predNetIdleTime=%lld\n",m_predNetIdleTime );
+			m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_NETWORK,"p1=%" PRIu64 " p2=%d\n", entry->p1(), entry->p2() );
 
 			sendPkt( x.pkt, x.dest, vc );
 
@@ -616,7 +617,8 @@ void Nic::sendPkt( FireflyNetworkEvent* ev, int dest, int vc )
         ++m_packetId;
     }
     m_dbg.debug(CALL_INFO,3,NIC_DBG_SEND_NETWORK,
-                    "dst=%" PRIu64 " sending event with %zu bytes packetId=%" PRIu64 " %s %s\n",req->dest,
+                    "node=%" PRIu64 " stream=%d bytes=%zu packetId=%" PRIu64 " %s %s\n",req->dest,
+													ev->getSrcStream(),
                                                     ev->bufSize(), (uint64_t)m_packetId, 
                                                     ev->isHdr() ? "Hdr":"", 
                                                     ev->isTail() ? "Tail":"" );

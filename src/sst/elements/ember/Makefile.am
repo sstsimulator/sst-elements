@@ -172,6 +172,9 @@ libember_la_SOURCES = \
 	shmem/emberShmemSwapEv.h \
 	shmem/emberShmemWaitEv.h \
 	shmem/motifs/emberShmemAdd.h \
+	shmem/emberFamEvent.h \
+	shmem/emberFamAddEv.h \
+	shmem/emberFamGetNB_Ev.h \
 	shmem/motifs/emberShmemAlltoall.h \
 	shmem/motifs/emberShmemAlltoalls.h \
 	shmem/motifs/emberShmemBarrier.h \

@@ -72,7 +72,7 @@ public:
 
 	uint64_t m_regionSize;
 	std::string m_groupName;
-	Fam_Region_Descriptor m_rd;
+	Shmem::Fam_Region_Descriptor m_rd;
 	EmberMiscLib* m_miscLib;
 
 	bool m_backed;
@@ -153,7 +153,7 @@ public:
 			}
 
 			verbose(CALL_INFO,2,0,"0x%" PRIx64" %p\n", m_mem.getSimVAddr(), m_mem.getBacking() );
-    		Hermes::MemAddr m_dest = m_mem.offset<unsigned char>( 4096 * (m_curBlock % m_numBlocksPerPartition) );
+    		Hermes::MemAddr m_dest = m_mem.offset<unsigned char>( m_blockSize * (m_curBlock % m_numBlocksPerPartition) );
 
         	enQ_fam_get_nonblocking( evQ, m_dest,
                     m_rd,
