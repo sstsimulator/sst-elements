@@ -304,7 +304,7 @@ class Nic : public SST::Component  {
 	template <class T>
 	class PriorityEntry : public Priority {
 	  public:
-    	PriorityEntry( int p1, int p2, T data ) : Priority( p1, p2), m_data(data) {}
+    	PriorityEntry( SimTime_t p1, int p2, T data ) : Priority( p1, p2), m_data(data) {}
     	T data() const { return m_data; }
   	  private:
     	T   m_data;
@@ -508,6 +508,7 @@ struct X {
     void qSendEntry( SendEntryBase* entry );
 
     void notifyHavePkt( PriorityX* px ) {
+        m_dbg.debug(CALL_INFO,3,NIC_DBG_SEND_MACHINE,"p1=%" PRIu64 " p2=%d\n",px->p1(),px->p2());
         m_sendPQ.push( px );
 		
         if ( 1 == m_sendPQ.size() ) {
