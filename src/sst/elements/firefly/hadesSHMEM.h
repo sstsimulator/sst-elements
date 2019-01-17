@@ -17,9 +17,12 @@
 #ifndef COMPONENTS_FIREFLY_HADESSHMEM_H
 #define COMPONENTS_FIREFLY_HADESSHMEM_H
 
+#include <sst/core/module.h>
 #include <sst/core/elementinfo.h>
+
 #include <sst/core/params.h>
 
+#include <queue>
 #include <stdlib.h>
 #include <string.h>
 #include "sst/elements/hermes/shmemapi.h"
@@ -32,6 +35,8 @@
 #include "shmem/alltoall.h"
 #include "shmem/alltoalls.h"
 #include "shmem/reduction.h"
+#include "shmem/famAddrMapper.h"
+#include "shmem/famNodeMapper.h"
 
 #define SHMEM_BASE      1<<0
 #define SHMEM_BARRIER   1<<1
@@ -248,6 +253,9 @@ class HadesSHMEM : public Shmem::Interface
     virtual void fadd( Hermes::Value&, Hermes::Vaddr, Hermes::Value&, int pe, Shmem::Callback);
     virtual void fadd2( Hermes::Value&, Hermes::Vaddr, Hermes::Value&, int pe, Shmem::Callback);
 
+    virtual void fam_add( uint64_t, Hermes::Value&, Shmem::Callback);
+    virtual void fam_get_nb( Hermes::Vaddr dest, Shmem::Fam_Region_Descriptor rd, uint64_t offset, uint64_t nbytes, Shmem::Callback);
+
     void memcpy( Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, Shmem::Callback callback );
 
     void delay( Shmem::Callback callback, uint64_t delay, int retval );
@@ -284,9 +292,48 @@ class HadesSHMEM : public Shmem::Interface
 		} else {
 			tmp =m_os->getInfo()->getGroup( MP::GroupWorld )->getMapping( pe ) ;
 		}
-		dbg().debug(CALL_INFO,1,SHMEM_BASE,"%d -> %d\n",pe,tmp);
+		dbg().debug(CALL_INFO,1,SHMEM_BASE,"%x -> %x\n",pe,tmp);
         return  tmp;
     }
+
+ 	void getFamNetAddr( uint64_t globalOffset, int& node, uint64_t& localOffset ) {
+	    if( ! m_famNodeMapper || ! m_famAddrMapper ) {
+			dbg().fatal(CALL_INFO, -1,"FAM mapping module not configured\n");
+		}
+    	m_famAddrMapper->getAddr( globalOffset, node, localOffset );
+		node = m_famNodeMapper->calcNode( node );
+		node |= 1<<31;
+	}
+
+	struct FamWork {
+    	std::queue< std::pair< uint64_t, uint64_t > > work;
+    	Shmem::Callback callback;
+		Hermes::Vaddr dest;
+	};
+
+	void doOneFamGet( FamWork* );
+
+	void createWorkList( uint64_t addr, uint64_t nbytes, std::queue< std::pair< uint64_t, uint64_t > >& list ) {
+	    if( ! m_famAddrMapper ) {
+			dbg().fatal(CALL_INFO, -1,"FAM mapping module not configured\n");
+		}
+		uint32_t blockSize = m_famAddrMapper->blockSize();
+		dbg().debug(CALL_INFO,1,SHMEM_BASE,"addr=%#" PRIx64 " nbytes=%" PRIu64"\n", addr, nbytes);
+
+		while ( nbytes ) {
+			uint64_t seg_nbytes = blockSize - ( addr & (blockSize-1) );		
+
+			if ( 0 == seg_nbytes ) {
+				seg_nbytes = blockSize;
+			}
+			dbg().debug(CALL_INFO,1,SHMEM_BASE,"seg_addr=%#" PRIx64 " seg_nbytes=%" PRIu64"\n", addr, seg_nbytes);
+
+			list.push( std::make_pair(addr,seg_nbytes) );
+
+			nbytes -= seg_nbytes;
+			addr += seg_nbytes;
+		}
+	}
 
     SST::Link*      m_selfLink;
 
@@ -313,6 +360,9 @@ class HadesSHMEM : public Shmem::Interface
     Hermes::MemAddr  m_localScratch;
     Hermes::MemAddr  m_pendingRemoteOps;
     Hermes::Value    m_zero;
+
+	FamNodeMapper* m_famNodeMapper;
+	FamAddrMapper* m_famAddrMapper;
 };
 
 }

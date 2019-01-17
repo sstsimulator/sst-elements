@@ -40,7 +40,20 @@ HadesSHMEM::HadesSHMEM(Component* owner, Params& params) :
 	m_enterLat_ns = params.find<int>("enterLat_ns",30);
 	m_returnLat_ns = params.find<int>("returnLat_ns",30);
 	m_blockingReturnLat_ns = params.find<int>("blockingReturnLat_ns",300);
+
+	Params famMapperParams = params.find_prefix_params( "famNodeMapper." );
+	if ( famMapperParams.size() ) {
+		m_famNodeMapper = dynamic_cast<FamNodeMapper*>( loadModule( famMapperParams.find<std::string>("name"), famMapperParams ) );
+		m_famNodeMapper->setDbg( &m_dbg );
+	}
+
+	famMapperParams = params.find_prefix_params( "famAddrMapper." );
+	if ( famMapperParams.size() ) {
+		m_famAddrMapper = dynamic_cast<FamAddrMapper*>( loadModule( famMapperParams.find<std::string>("name"), famMapperParams ) );
+		m_famAddrMapper->setDbg( &m_dbg );
+	}
 }
+
 
 HadesSHMEM::~HadesSHMEM() { 
 	delete m_heap; 
@@ -708,4 +721,61 @@ void HadesSHMEM::fadd2(Hermes::Value& result, Hermes::Vaddr addr, Hermes::Value&
                     this->delayReturn( callback, m_blockingReturnLat_ns );
                 }
             );
+}
+
+void HadesSHMEM::fam_add( uint64_t offset, Hermes::Value& value, Shmem::Callback callback)
+{
+	uint64_t localOffset;
+	int      node;
+
+	dbg().debug(CALL_INFO,1,SHMEM_BASE,"\n");
+
+	getFamNetAddr( offset, node, localOffset ); 
+
+	Hermes::MemAddr target( localOffset, NULL );
+
+	add( target.getSimVAddr(), value, node, callback );
+}
+
+void HadesSHMEM::fam_get_nb( Hermes::Vaddr dest, Shmem::Fam_Region_Descriptor rd, uint64_t offset, uint64_t nbytes, Shmem::Callback callback )
+{
+	FamWork* work = new FamWork;
+	work->callback = callback;	
+	work->dest =  dest;
+
+	m_dbg.debug(CALL_INFO,1,SHMEM_BASE,"dest=%#" PRIx64" globalOffset=%#" PRIx64 " nbytes=%lu\n",
+				work->dest, offset, nbytes );
+
+	createWorkList( offset, nbytes, work->work );
+	doOneFamGet( work );
+}
+
+void HadesSHMEM::doOneFamGet( FamWork* work ) {
+	int64_t localOffset;
+	int      node;
+		
+	getFamNetAddr( work->work.front().first, node, localOffset ); 
+
+	Hermes::MemAddr target( localOffset, NULL );
+
+	Hermes::Vaddr dest = work->dest;
+	uint64_t nbytes = work->work.front().second;
+	Shmem::Callback callback; 
+
+	work->dest += work->work.front().second;
+	work->work.pop();
+
+	if (  work->work.empty() ) {
+		callback = work->callback;
+		delete work;
+	} else {		
+		callback = [=](int) {
+			doOneFamGet(work);
+	  	};
+	}
+
+	m_dbg.debug(CALL_INFO,1,SHMEM_BASE,"dest=%#" PRIx64" target=%#" PRIx64 " nbytes=%lu node=%x\n",
+				dest, target.getSimVAddr() , nbytes, node );
+
+	get_nbi( dest, target.getSimVAddr(), nbytes, node, callback ); 
 }
