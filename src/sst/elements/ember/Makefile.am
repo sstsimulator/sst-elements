@@ -143,6 +143,9 @@ libember_la_SOURCES = \
 	mpi/motifs/emberrandomgen.h \
 	mpi/motifs/emberrandomgen.cc \
 	sirius/include/sirius/siriusglobals.h \
+	shmem/emberFamAddEv.h \
+	shmem/emberFamEvent.h \
+	shmem/emberFamGetNB_Ev.h \
 	shmem/emberShmemAddEv.h \
 	shmem/emberShmemAlltoallEv.h \
 	shmem/emberShmemAlltoallsEv.h \
