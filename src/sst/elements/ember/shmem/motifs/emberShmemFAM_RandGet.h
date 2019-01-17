@@ -166,7 +166,7 @@ public:
 
 	uint64_t m_regionSize;
 	std::string m_groupName;
-	Fam_Region_Descriptor m_rd;
+	Shmem::Fam_Region_Descriptor m_rd;
 	EmberMiscLib* m_miscLib;
 
 	bool m_backed;
