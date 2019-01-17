@@ -26,6 +26,8 @@ namespace Shmem {
 
 typedef Hermes::Callback Callback;
 
+typedef int Fam_Region_Descriptor;
+
 typedef enum { LTE, LT, EQ, NE, GT, GTE } WaitOp;
 
 static std::string WaitOpName( WaitOp op ) {
@@ -94,6 +96,9 @@ class Interface : public Hermes::Interface {
     virtual void swap( Value& result, Vaddr, Value&, int pe, Callback) { assert(0); }
     virtual void fadd( Value& result, Vaddr, Value&, int pe, Callback) { assert(0); }
     virtual void add( Vaddr, Value&, int pe, Callback) { assert(0); }
+
+    virtual void fam_get_nb( Hermes::Vaddr dest, Fam_Region_Descriptor rd, uint64_t offset, uint64_t nbytes, Callback) { assert(0); }
+    virtual void fam_add( uint64_t, Value&, Callback) { assert(0); }
 };
 
 }
