@@ -77,8 +77,6 @@ libfirefly_la_SOURCES = \
 	hadesSHMEM.cc \
 	hadesSHMEM.h \
 	hadesMisc.h \
-	shmem/famAddrMapper.cc \
-	shmem/famNodeMapper.cc \
 	shmem/alltoall.cc \
 	shmem/alltoall.h \
 	shmem/alltoalls.cc \
@@ -95,6 +93,8 @@ libfirefly_la_SOURCES = \
 	shmem/fcollect.h \
 	shmem/reduction.cc \
 	shmem/reduction.h \
+	shmem/famAddrMapper.h \
+	shmem/famNodeMapper.h \
 	memoryModel/memoryModel.h \
 	memoryModel/simpleMemoryModel.h \
 	memoryModel/trivialMemoryModel.h \
