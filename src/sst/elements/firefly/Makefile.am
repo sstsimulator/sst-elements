@@ -77,6 +77,8 @@ libfirefly_la_SOURCES = \
 	hadesSHMEM.cc \
 	hadesSHMEM.h \
 	hadesMisc.h \
+	shmem/famAddrMapper.cc \
+	shmem/famNodeMapper.cc \
 	shmem/alltoall.cc \
 	shmem/alltoall.h \
 	shmem/alltoalls.cc \
