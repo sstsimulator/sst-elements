@@ -751,7 +751,7 @@ void HadesSHMEM::fam_get_nb( Hermes::Vaddr dest, Shmem::Fam_Region_Descriptor rd
 }
 
 void HadesSHMEM::doOneFamGet( FamWork* work ) {
-	int64_t localOffset;
+	uint64_t localOffset;
 	int      node;
 		
 	getFamNetAddr( work->work.front().first, node, localOffset ); 
