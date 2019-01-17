@@ -2,10 +2,15 @@
 SHAPE="5,5:5,5:8"
 LOADFILE="loadFAM200"
 
+STATMODULE='statModule'
+STATFILE='myStats.out'
+
 time sst -n32 \
 --print-timing-info \
 --partitioner=roundrobin \
 --model-options=" \
+--statsModule=$STATMODULE \
+--statsFile=$STATFILE \
 --loadFile=$LOADFILE \
 --platform=default \
 --topo=fattree \
