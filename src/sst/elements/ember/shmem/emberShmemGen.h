@@ -103,9 +103,6 @@ protected:
 
 
     inline void enQ_fam_initialize( Queue&, std::string groupName );
-    inline void enQ_fam_finalize( Queue&, std::string groupName );
-    inline void enQ_fam_create_region( Queue&, std::string groupName, uint64_t size, Shmem::Fam_Region_Descriptor& rd );
-    inline void enQ_fam_create_region( Queue&, Shmem::Fam_Region_Descriptor rd );
     inline void enQ_fam_get_nonblocking( Queue&, Hermes::MemAddr, Shmem::Fam_Region_Descriptor rd, uint64_t offset, uint64_t nbytes );
 	template <class TYPE>
 	inline void enQ_fam_add( Queue&, uint64_t offset, TYPE* );
@@ -172,26 +169,14 @@ protected:
 private:
 };
 
-void EmberShmemGenerator::enQ_fam_initialize( Queue& q, std::string groupName ) {
-    verbose(CALL_INFO,2,0,"\n");
-	enQ_init(q);
-}
-
-void EmberShmemGenerator::enQ_fam_finalize( Queue&, std::string groupName ) {
-    verbose(CALL_INFO,2,0,"\n");
-}
-
-void EmberShmemGenerator::enQ_fam_create_region( Queue&, std::string groupName, uint64_t size, Shmem::Fam_Region_Descriptor& rd ) {
-    verbose(CALL_INFO,2,0,"\n");
-}
-
-void EmberShmemGenerator::enQ_fam_create_region( Queue&, Shmem::Fam_Region_Descriptor rd ) {
-    verbose(CALL_INFO,2,0,"\n");
-}
-
 static inline Hermes::Shmem::Interface* shmem_cast( Hermes::Interface *in )
 {
     return static_cast<Hermes::Shmem::Interface*>(in);
+}
+
+void EmberShmemGenerator::enQ_fam_initialize( Queue& q, std::string groupName ) {
+    verbose(CALL_INFO,2,0,"\n");
+	enQ_init(q);
 }
 
 template <class TYPE>
