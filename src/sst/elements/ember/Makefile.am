@@ -34,7 +34,6 @@ libember_la_SOURCES = \
 	embermotiflog.h \
 	embermotiflog.cc \
 	embermemoryev.h \
-	emberFamAddrMapper.h \
 	libs/emberLib.h \
 	libs/misc.h \
 	libs/miscEvents/emberGetNodeNumEvent.h \
@@ -143,6 +142,9 @@ libember_la_SOURCES = \
 	mpi/motifs/emberrandomgen.h \
 	mpi/motifs/emberrandomgen.cc \
 	sirius/include/sirius/siriusglobals.h \
+	shmem/emberFamAddEv.h \
+	shmem/emberFamEvent.h \
+	shmem/emberFamGetNB_Ev.h \
 	shmem/emberShmemAddEv.h \
 	shmem/emberShmemAlltoallEv.h \
 	shmem/emberShmemAlltoallsEv.h \
@@ -219,6 +221,7 @@ EXTRA_DIST = \
 	test/loadFileParse.py \
 	test/CrossProduct.py \
 	test/networkConfig.py \
+	test/statModule.py \
 	test/generateNidListInterval.py \
 	test/generateNidListRange.py \
 	test/generateNidListRandom.py \
