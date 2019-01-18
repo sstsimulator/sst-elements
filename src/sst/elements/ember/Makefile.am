@@ -222,6 +222,7 @@ EXTRA_DIST = \
 	test/loadFileParse.py \
 	test/CrossProduct.py \
 	test/networkConfig.py \
+	test/statModule.py \
 	test/generateNidListInterval.py \
 	test/generateNidListRange.py \
 	test/generateNidListRandom.py \
