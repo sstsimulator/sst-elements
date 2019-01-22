@@ -53,7 +53,7 @@ AllocInfo* DflyRDRAllocator::allocate(Job* j)
         std::set<int> occupiedNodes;
         const int jobSize = ai->getNodesNeeded();
         const int routerNum = dMach.routersPerGroup * dMach.numGroups;
-        std::cout << "jobSize = " << jobSize << ", allocation, ";
+        //std::cout << "jobSize = " << jobSize << ", allocation, ";
         int i = 0;
         while (i < jobSize) {
             //randomly choose a router.
@@ -65,7 +65,7 @@ AllocInfo* DflyRDRAllocator::allocate(Job* j)
                     ai->nodeIndices[i] = nodeID;
                     ++i;
                     occupiedNodes.insert(nodeID);
-                    std::cout << nodeID << " ";
+                    //std::cout << nodeID << " ";
                 }
                 else {
                     continue;
@@ -75,7 +75,7 @@ AllocInfo* DflyRDRAllocator::allocate(Job* j)
                 }
             }
         }
-        std::cout << endl;
+        //std::cout << endl;
         return ai;
     }
     return NULL;
