@@ -36,21 +36,21 @@ class EmberShmemFAM_AtomicIncBaseGenerator : public EmberShmemGenerator {
 
 public:
 	EmberShmemFAM_AtomicIncBaseGenerator(SST::Component* owner, Params& params, std::string name) :
-		EmberShmemGenerator(owner, params, name ), m_phase(-3), m_one(1)
+		EmberShmemGenerator(owner, params, name ), m_phase(-3), m_one(1), m_numFamNodes(0)
 	{ 
-        m_computeTime = params.find<int>("arg.computeTime", 50 );
+        m_computeTime = params.find<int>("arg.computeTime", 0 );
 		m_totalBytes = (size_t) params.find<SST::UnitAlgebra>("arg.totalBytes").getRoundedValue();
 		
 		m_updates = params.find<int>("arg.updates", 4096);
 		m_iterations = params.find<int>("arg.iterations", 1);
 		m_hotMult = params.find<int>("arg.hotMult", 1);
-		m_pageSize = params.find<int>("arg.pageSize", 4096);
         
-		m_numPages = m_totalBytes/m_pageSize;
 		m_printTotals = params.find<bool>("arg.printTotals", false);
 		m_outLoop = params.find<int>("arg.outLoop", 1);
 		m_times.resize(m_outLoop);
         
+        m_numFamNodes = (int) params.find<int>("arg.numFamNodes",0);
+
         m_miscLib = static_cast<EmberMiscLib*>(getLib("HadesMisc"));
         assert(m_miscLib);
 #if USE_SST_RNG
@@ -58,8 +58,6 @@ public:
 #endif
 	}
 
-	size_t m_totalBytes;
-	std::string m_groupName;
 
     bool generate( std::queue<EmberEvent*>& evQ) 
 	{
@@ -82,9 +80,11 @@ public:
                 printf("\titerations: %d\n", m_iterations );
                 printf("\touterLoop: %d\n", m_outLoop );
                 printf("\thotMult: %d\n", m_hotMult );
+                printf("\tnumFamNodes: %d\n", m_numFamNodes );
+                printf("\tcomputeTime: %d\n", m_computeTime );
             }
 			++m_phase;
-			initRngSeed( getSeed() );
+			initRngSeed( getSeed() + m_my_pe );
 			enQ_getTime( evQ, &m_startTime );
 
 		} else if ( -1 == m_phase ) {
@@ -96,7 +96,9 @@ public:
 
 			size_t offset = genAddr();
 
-            enQ_compute( evQ, m_computeTime );
+			if ( m_computeTime ) {
+            	enQ_compute( evQ, m_computeTime );
+			}
 	
             enQ_fam_add( evQ, offset, &m_one );
 
@@ -165,25 +167,37 @@ public:
 	uint64_t genAddr() {
 		uint64_t ret = 0;
 		if ( m_hotMult > 0 ) {
-			uint64_t page = genRand() % (m_numPages + m_hotMult);
-			if ( page >= m_numPages) {
-				page = m_numPages - 1;
+			assert( m_numFamNodes );
+			int node = genRand() % ( m_numFamNodes + m_hotMult );
+
+			if ( node >= m_numFamNodes ) {
+				node = m_numFamNodes - 1;
 			}
-			ret = page * m_pageSize;
-			ret += ( genRand( ) & (m_pageSize - 1) );
+
+			// get a offset in a FAMs address space
+			ret = genRand() % ( (m_totalBytes / m_numFamNodes ) / sizeof(TYPE) );
+			ret *= sizeof(TYPE);
+			if ( ret >= m_totalBytes / m_numFamNodes ) {
+				printf("%x %x\n",ret, m_totalBytes / m_numFamNodes);
+				exit( 0); 
+			}
+
+			// add the global offset to the local offset
+			ret += node * (m_totalBytes / m_numFamNodes); 
+
 		} else {
-			ret = genRand() % m_totalBytes;
+			ret = genRand() % ( m_totalBytes / sizeof(TYPE) );
+			ret *= sizeof(TYPE);
 		}
-		ret &= ~(sizeof(TYPE)-1);
 		return ret;
 	}
 
-    uint32_t genRand() {
-        uint32_t retval;
+    uint64_t genRand() {
+        uint64_t retval;
 #if USE_SST_RNG 
-        retval = m_rng->generateNextUInt32();
+        retval = ((uint64_t) m_rng->generateNextUInt32()) << 32 | m_rng->generateNextUInt32();
 #else
-        retval = rand_r(&m_randSeed);
+        retval = ((uint64_t) rand_r(&m_randSeed)) << 32 | rand_r(&m_randSeed);
 #endif
         return retval;
     } 
@@ -195,6 +209,10 @@ public:
 #endif
     }
 
+	int m_numFamNodes;
+	size_t m_totalBytes;
+	std::string m_groupName;
+
     EmberMiscLib* m_miscLib;
 	int m_outLoop;
 	std::vector<double> m_times;
@@ -205,8 +223,6 @@ public:
     unsigned int m_randSeed;
 #endif
 
-	uint64_t m_numPages;
-	int m_pageSize;
     int m_computeTime;
 	bool m_printTotals;
 	TYPE m_one;
