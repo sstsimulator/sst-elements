@@ -20,7 +20,7 @@ class FamAddrMapper : public SST::Module {
 	uint32_t blockSize() { return m_blockSize; }
   protected:
 	int 	m_numNodes;
-	int    	m_blockSize;
+	size_t 	m_blockSize;
 	size_t 	m_bytesPerNode;
 	int		m_totalBlocks;
 	Output* m_dbg;
@@ -40,7 +40,7 @@ class RR_FamAddrMapper : public FamAddrMapper {
   public:
 	RR_FamAddrMapper( Params& params ) {
 		m_bytesPerNode = (size_t) params.find<SST::UnitAlgebra>("bytesPerNode","16MiB").getRoundedValue();
-		m_blockSize = (int) params.find<SST::UnitAlgebra>("blockSize","4KiB").getRoundedValue();
+		m_blockSize = (size_t) params.find<SST::UnitAlgebra>("blockSize","4KiB").getRoundedValue();
 		m_numNodes = (int) params.find<int>("numNodes",0);
 
 		m_totalBlocks = m_numNodes * m_bytesPerNode/m_blockSize;
