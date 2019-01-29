@@ -77,7 +77,7 @@ try:
 		"emberVerbose=","netBW=","netPktSize=","netFlitSize=",
 		"rtrArb=","embermotifLog=",	"rankmapper=","motifAPI=",
 		"bgPercentage=","bgMean=","bgStddev=","bgMsgSize=","netInspect=",
-        "detailedNameModel=","detailedModelParams=","detailedModelNodes=",
+        "detailedModelName=","detailedModelParams=","detailedModelNodes=",
 		"useSimpleMemoryModel","param=","paramDir=","statsModule=","statsFile="])
 
 except getopt.GetoptError as err:
@@ -143,7 +143,7 @@ for o, a in opts:
     elif o in ("--detailedModelName"):
         detailedModelName = a
     elif o in ("--detailedModelNodes"):
-        detailedModelNodes = a
+        detailedModelNodes = [int(i) for i in a.split(',')] 
     elif o in ("--detailedModelParams"):
         detailedModelParams = a
     elif o in ("--simConfig"):
@@ -162,7 +162,7 @@ for o, a in opts:
     elif o in ("--statsFile"):
         statsFile = a
     else:
-        assert False, "unhandle option" 
+        assert False, "unknow option {0}".format(o)
 
 sys.path.append( os.getcwd() + '/' + paramDir )
 print 'EMBER: using param directory: {0}'.format( paramDir )

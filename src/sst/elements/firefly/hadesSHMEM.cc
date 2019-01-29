@@ -75,6 +75,11 @@ void HadesSHMEM::setup()
     snprintf(buffer,100,"@t:%d:%d:HadesSHMEM::@p():@l ",
                     m_os->getNic()->getRealNodeId(), m_os->getInfo()->worldRank());
     m_dbg.setPrefix(buffer);
+
+	m_memHeapLink = m_os->getMemHeapLink();
+	if ( m_memHeapLink ) {
+    	dbg().debug(CALL_INFO,1,SHMEM_BASE,"using memHeap\n");
+	}		
 }
 
 void HadesSHMEM::delayEnter( Callback callback, SimTime_t delay ) 
@@ -249,11 +254,20 @@ void HadesSHMEM::malloc2( Hermes::MemAddr* ptr, size_t size, bool backed, Shmem:
 
 void HadesSHMEM::malloc( Hermes::MemAddr* ptr, size_t size, bool backed, Callback callback )
 {
-    *ptr =  m_heap->malloc( size, backed );
-
     dbg().debug(CALL_INFO,1,SHMEM_BASE," maddr ptr=%p size=%lu\n",ptr,size);
 
-	m_os->getNic()->shmemRegMem( *ptr, size, callback) ; 
+    if ( m_memHeapLink ) {
+        m_memHeapLink->alloc( size, 
+        [=](uint64_t addr ) {
+                this->dbg().debug(CALL_INFO_LAMBDA,"malloc",1,SHMEM_BASE,"addr=%#" PRIx64 " size=%zu\n",addr,size);
+                *ptr = m_heap->addAddr( addr, size, backed );
+                m_os->getNic()->shmemRegMem( *ptr, size, callback) ; 
+            }
+        );
+    } else {
+        *ptr =  m_heap->malloc( size, backed );
+        m_os->getNic()->shmemRegMem( *ptr, size, callback) ; 
+    }
 }
 
 void HadesSHMEM::free( Hermes::MemAddr* ptr, Shmem::Callback callback)
@@ -743,7 +757,7 @@ void HadesSHMEM::fam_get_nb( Hermes::Vaddr dest, Shmem::Fam_Region_Descriptor rd
 	work->callback = callback;	
 	work->dest =  dest;
 
-	m_dbg.debug(CALL_INFO,1,SHMEM_BASE,"dest=%#" PRIx64" globalOffset=%#" PRIx64 " nbytes=%lu\n",
+	m_dbg.debug(CALL_INFO,1,SHMEM_BASE,"dest=%#" PRIx64" globalOffset=%#" PRIx64 " nbytes=%" PRIu64 "\n",
 				work->dest, offset, nbytes );
 
 	createWorkList( offset, nbytes, work->work );
@@ -774,7 +788,7 @@ void HadesSHMEM::doOneFamGet( FamWork* work ) {
 	  	};
 	}
 
-	m_dbg.debug(CALL_INFO,1,SHMEM_BASE,"dest=%#" PRIx64" target=%#" PRIx64 " nbytes=%lu node=%x\n",
+	m_dbg.debug(CALL_INFO,1,SHMEM_BASE,"dest=%#" PRIx64" target=%#" PRIx64 " nbytes=%" PRIu64 " node=%x\n",
 				dest, target.getSimVAddr() , nbytes, node );
 
 	get_nbi( dest, target.getSimVAddr(), nbytes, node, callback ); 
