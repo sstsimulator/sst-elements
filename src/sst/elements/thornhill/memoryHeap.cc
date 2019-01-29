@@ -27,7 +27,7 @@ using namespace SST;
 using namespace SST::Thornhill;
 
 MemoryHeap::MemoryHeap(ComponentId_t id, Params& params ) :
-        Component( id ), m_currentVaddr( 0x100000 )
+        Component( id ), m_currentVaddr( 0x1000 )
 {
     int nodeId = params.find<int>("nid", -1);
     assert( -1 != nodeId );
