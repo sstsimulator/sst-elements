@@ -127,19 +127,33 @@ class HadesSHMEM : public Shmem::Interface
             m_curAddr += 64;
             m_curAddr &= ~(64-1);
 
+
+			addAddr( addr, n, backed );
+            return addr; 
+        }  
+
+		void addAddr( Hermes::MemAddr& addr, size_t n, bool backed ) { 
             if ( backed ) {
                 addr.setBacking( ::malloc(n) );
             }
             m_map[ addr.getSimVAddr() ] = Entry( addr, n );
 
-            return addr; 
-        }  
+		}
+
         void free( Hermes::MemAddr& addr ) {
             if ( addr.getBacking() ) {
                 ::free( addr.getBacking() );
             }
             m_map.erase( addr.getSimVAddr() );
         }
+
+		Hermes::MemAddr addAddr( uint64_t addr, size_t n, bool backed ) {
+            Hermes::MemAddr memAddr( Hermes::MemAddr::Shmem );
+            memAddr.setSimVAddr( addr );
+			addAddr( memAddr, n, backed );
+			return memAddr;
+		}
+
         void* findBacking( Hermes::Vaddr addr ) {
             std::map<Hermes::Vaddr,Entry>::iterator iter = m_map.begin();
             for ( ; iter != m_map.end(); ++iter ) {
@@ -363,6 +377,7 @@ class HadesSHMEM : public Shmem::Interface
 
 	FamNodeMapper* m_famNodeMapper;
 	FamAddrMapper* m_famAddrMapper;
+	Thornhill::MemoryHeapLink* m_memHeapLink;
 };
 
 }
