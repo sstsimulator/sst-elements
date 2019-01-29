@@ -55,6 +55,7 @@ public:
 		m_blockSize	    = params.find<int>("arg.blockSize", 4096);
 		m_partitionSize = (size_t) params.find<SST::UnitAlgebra>("arg.partitionSize","16MiB").getRoundedValue();
 		m_backed	    = (bool) ( 0 == params.find<std::string>("arg.backed", "yes").compare("yes") );
+		m_randomGet     = params.find<bool>("arg.randomGet",false);
 
 		m_numBlocks = m_totalBytes/m_blockSize;
 		m_numBlocksPerPartition = m_partitionSize/m_blockSize;
@@ -62,7 +63,7 @@ public:
         m_miscLib = static_cast<EmberMiscLib*>(getLib("HadesMisc"));
         assert(m_miscLib);
 
-		if ( params.find<int>("arg.useRand",false) ) {
+		if ( params.find<int>("arg.useRand",false) || m_randomGet ) {
 			m_rng = new SST::RNG::XORShiftRNG();
         	struct timeval start;
         	gettimeofday( &start, NULL );
@@ -72,7 +73,7 @@ public:
 
 	uint64_t m_regionSize;
 	std::string m_groupName;
-	Fam_Region_Descriptor m_rd;
+	Shmem::Fam_Region_Descriptor m_rd;
 	EmberMiscLib* m_miscLib;
 
 	bool m_backed;
@@ -107,12 +108,14 @@ public:
 				printf("block size:              %d\n",	m_blockSize );
 				printf("number of blocks:        %d\n",	m_numBlocks );
 				printf("loop:                    %d\n",	m_getLoop );
+				printf("randomGet                %d\n", m_randomGet );
 				if ( m_rng ) {
 					printf("using random:        %d\n",	m_maxDelay );
 				}
 			}
 			m_blockOffset = m_my_pe;
 			enQ_malloc( evQ, &m_mem, m_numBlocksPerPartition * m_blockSize, m_backed );
+			enQ_getTime( evQ, &m_startTime );
 			m_phase = Work;
             break;
 
@@ -127,15 +130,18 @@ public:
         case Wait:
 
             enQ_barrier_all( evQ );
+			enQ_getTime( evQ, &m_stopTime );
 			m_phase = Fini;
             break;
 
         case Fini:
 
-			if ( m_my_pe == 0 ) {
-				printf("Finished\n");
-			}
-			return true;
+            if ( m_my_pe == 0 ) {
+                double time = m_stopTime-m_startTime;
+                size_t bytes = m_numBlocks * m_blockSize;
+                printf("%d:%s:  %zu bytes, %.3lf GB/s \n",m_my_pe, getMotifName().c_str(), bytes, (double) bytes/ time );
+            }
+            return true;
         }
         return false;
 	}
@@ -144,7 +150,14 @@ public:
 
 		for ( int i = 0; i < m_getLoop && m_curBlock < m_numBlocks; i++ ) {
 
-			int block = (m_curBlock + m_blockOffset) % m_numBlocks; 
+			uint32_t block;
+			if ( m_randomGet ) {
+				block = m_rng->generateNextUInt32(); 
+			} else {
+				block = (m_curBlock + m_blockOffset);
+			}
+
+			block %= m_numBlocks;
 			uint64_t offset = block * m_blockSize;
 
 			if ( m_rng ) {
@@ -153,7 +166,7 @@ public:
 			}
 
 			verbose(CALL_INFO,2,0,"0x%" PRIx64" %p\n", m_mem.getSimVAddr(), m_mem.getBacking() );
-    		Hermes::MemAddr m_dest = m_mem.offset<unsigned char>( 4096 * (m_curBlock % m_numBlocksPerPartition) );
+    		Hermes::MemAddr m_dest = m_mem.offset<unsigned char>( m_blockSize * (m_curBlock % m_numBlocksPerPartition) );
 
         	enQ_fam_get_nonblocking( evQ, m_dest,
                     m_rd,
@@ -171,6 +184,9 @@ public:
     enum { Init, Alloc, Work, Wait, Fini } m_phase;
     int m_my_pe;
     int m_num_pes;
+    uint64_t m_startTime;
+    uint64_t m_stopTime;
+    bool m_randomGet;
 };
 
 }

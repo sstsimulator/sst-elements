@@ -27,7 +27,6 @@
 #include <sst/elements/hermes/msgapi.h>
 #include "sst/elements/thornhill/detailedCompute.h"
 #include "sst/elements/thornhill/memoryHeapLink.h"
-#include "emberFamAddrMapper.h"
 
 #include "emberevent.h"
 #include "embermap.h"
@@ -125,7 +124,6 @@ class EmberGenerator : public SubComponent {
     }
     bool haveDetailed() { return m_detailedCompute; }
 
-	FamAddrMapper* 			m_famAddrMapper;
     Hermes::Interface*  	m_api;
     Thornhill::DetailedCompute*   m_detailedCompute;
     Thornhill::MemoryHeapLink*    m_memHeapLink;

@@ -46,7 +46,7 @@ AllocInfo* DflyJokanovicAllocator::allocate(Job* j)
         //This set keeps track of allocated nodes in the current allocation.
         std::set<int> occupiedNodes;
         const int jobSize = ai->getNodesNeeded();
-        std::cout << "jobSize=" << jobSize << ", ";
+        //std::cout << "jobSize=" << jobSize << ", ";
         int nodesPerGroup = dMach.routersPerGroup * dMach.nodesPerRouter;
         if (jobSize <= nodesPerGroup) {
             //start from the leftmost group, find a group with enough idle nodes. If there isn't one, just put it simply from the leftmost place.
@@ -71,12 +71,12 @@ AllocInfo* DflyJokanovicAllocator::allocate(Job* j)
                         if ( dMach.isFree(nodeID) && occupiedNodes.find(nodeID) == occupiedNodes.end() ) {
                             ai->nodeIndices[i] = nodeID;
                             occupiedNodes.insert(nodeID);
-                            std::cout << nodeID << " ";
+                            //std::cout << nodeID << " ";
                             ++i;
                             if (i == jobSize) {
                                 finish = true;
-                                std::cout << ",grouped";
-                                std::cout << endl;
+                                //std::cout << ",grouped";
+                                //std::cout << endl;
                                 break;
                             }
                         }
@@ -95,11 +95,11 @@ AllocInfo* DflyJokanovicAllocator::allocate(Job* j)
                 if ( dMach.isFree(nodeID) && occupiedNodes.find(nodeID) == occupiedNodes.end() ) {
                     ai->nodeIndices[i] = nodeID;
                     occupiedNodes.insert(nodeID);
-                    std::cout << nodeID << " ";
+                    //std::cout << nodeID << " ";
                     ++i;
                     if (i == jobSize) {
-                        std::cout << ",simple from left";
-                        std::cout << endl;
+                        //std::cout << ",simple from left";
+                        //std::cout << endl;
                         break;
                     }
                 }
@@ -116,11 +116,11 @@ AllocInfo* DflyJokanovicAllocator::allocate(Job* j)
                 if ( dMach.isFree(nodeID) && occupiedNodes.find(nodeID) == occupiedNodes.end() ) {
                     ai->nodeIndices[i] = nodeID;
                     occupiedNodes.insert(nodeID);
-                    std::cout << nodeID << " ";
+                    //std::cout << nodeID << " ";
                     ++i;
                     if (i == jobSize) {
-                        std::cout << ",simple from right";
-                        std::cout << endl;
+                        //std::cout << ",simple from right";
+                        //std::cout << endl;
                         break;
                     }
                 }

@@ -52,7 +52,7 @@ AllocInfo* DflySlurmAllocator::allocate(Job* j)
         //This set keeps track of allocated nodes in the current allocation.
         std::set<int> occupiedNodes;
         const int jobSize = ai->getNodesNeeded();
-        std::cout << "jobSize = " << jobSize << ", allocation, ";
+        //std::cout << "jobSize = " << jobSize << ", allocation, ";
         int BestRouter = -1;
         // possible to fit in one router.
         if (jobSize <= dMach.nodesPerRouter) {
@@ -82,7 +82,7 @@ AllocInfo* DflySlurmAllocator::allocate(Job* j)
                     if ( dMach.isFree(nodeID) && occupiedNodes.find(nodeID) == occupiedNodes.end() ) {
                         ai->nodeIndices[i] = nodeID;
                         occupiedNodes.insert(nodeID);
-                        std::cout << nodeID << " ";
+                        //std::cout << nodeID << " ";
                         ++i;
                         ++nodeID;
                     }
@@ -90,7 +90,7 @@ AllocInfo* DflySlurmAllocator::allocate(Job* j)
                         ++nodeID;
                     }
                 }
-                std::cout << endl;
+                //std::cout << endl;
                 return ai;
             }
         }
@@ -122,7 +122,7 @@ AllocInfo* DflySlurmAllocator::allocate(Job* j)
                     if ( dMach.isFree(nodeID) && occupiedNodes.find(nodeID) == occupiedNodes.end() ) {
                         ai->nodeIndices[i] = nodeID;
                         occupiedNodes.insert(nodeID);
-                        std::cout << nodeID << " ";
+                        //std::cout << nodeID << " ";
                         ++i;
                         if (i == jobSize) {
                             break;
@@ -139,7 +139,7 @@ AllocInfo* DflySlurmAllocator::allocate(Job* j)
                     }
                 }
             }
-            std::cout << endl;
+            //std::cout << endl;
             return ai;
         }
     }

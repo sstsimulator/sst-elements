@@ -2,14 +2,18 @@
 SHAPE="5,5:5,5:8"
 LOADFILE="loadFAM200"
 
+STATMODULE='statModule'
+STATFILE='myStats.out'
+
 time sst -n32 \
 --print-timing-info \
 --partitioner=roundrobin \
 --model-options=" \
+--statsModule=$STATMODULE \
+--statsFile=$STATFILE \
 --loadFile=$LOADFILE \
---platform=test \
+--platform=default \
 --topo=fattree \
---platform=test \
 --shape=$SHAPE \
 --param=nic:simpleMemoryModel.nicNumLoadSlots=1000 \
 --param=nic:simpleMemoryModel.nicNumStoreSlots=1000 \
@@ -19,7 +23,7 @@ time sst -n32 \
 --param=nic:numSendMachines=256 \
 --param=nic:numRecvNicUnits=1 \
 --param=nic:maxRecvMachineQsize=72 \
---param=nic:maxSendMachineQsize=72 \
+--param=nic:maxSendMachineQsize=8 \
 --param=nic:numShmemCmdSlots=256 \
 --param=nic:simpleMemoryModel.numWalkers=32 \
 --param=nic:simpleMemoryModel.tlbSize=0 \
