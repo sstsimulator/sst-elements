@@ -13,15 +13,15 @@ class FamAddrMapper : public SST::Module {
 	virtual void getAddr( uint64_t globalOffset, int& node, uint64_t& localOffset ) = 0;
 	void setDbg( Output* output ) {
 		m_dbg = output; 
-		m_dbg->debug(CALL_INFO,3,0,"numNodes=%d bytesPerNode=%zu blockSize=%d\n",
+		m_dbg->debug(CALL_INFO,3,0,"numNodes=%d bytesPerNode=%" PRIu64 " blockSize=%" PRIu64 "\n",
 						m_numNodes, m_bytesPerNode, m_blockSize );
 	}
 
 	uint32_t blockSize() { return m_blockSize; }
   protected:
 	int 	m_numNodes;
-	size_t 	m_blockSize;
-	size_t 	m_bytesPerNode;
+	uint64_t 	m_blockSize;
+	uint64_t 	m_bytesPerNode;
 	int		m_totalBlocks;
 	Output* m_dbg;
 };

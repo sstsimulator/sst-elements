@@ -39,7 +39,7 @@ public:
 		EmberShmemGenerator(owner, params, name ), m_phase(-3), m_one(1), m_numFamNodes(0)
 	{ 
         m_computeTime = params.find<int>("arg.computeTime", 0 );
-		m_totalBytes = (size_t) params.find<SST::UnitAlgebra>("arg.totalBytes").getRoundedValue();
+		m_totalBytes = (uint64_t) params.find<SST::UnitAlgebra>("arg.totalBytes").getRoundedValue();
 		
 		m_updates = params.find<int>("arg.updates", 4096);
 		m_iterations = params.find<int>("arg.iterations", 1);
@@ -75,7 +75,7 @@ public:
                 printf("motif: %s\n", getMotifName().c_str() );
                 printf("\tnum_pes: %d\n", m_num_pes );
                 printf("\tnode_num: %d\n", m_node_num );
-                printf("\ttotal Bytes: %zu\n", m_totalBytes );
+                printf("\ttotal Bytes: %" PRIu64 "\n", m_totalBytes );
                 printf("\tupdates: %d\n", m_updates );
                 printf("\titerations: %d\n", m_iterations );
                 printf("\touterLoop: %d\n", m_outLoop );
@@ -94,7 +94,7 @@ public:
 
 		} else if ( m_phase < m_iterations * m_updates ) {
 
-			size_t offset = genAddr();
+			uint64_t offset = genAddr();
 
 			if ( m_computeTime ) {
             	enQ_compute( evQ, m_computeTime );
@@ -178,7 +178,7 @@ public:
 			ret = genRand() % ( (m_totalBytes / m_numFamNodes ) / sizeof(TYPE) );
 			ret *= sizeof(TYPE);
 			if ( ret >= m_totalBytes / m_numFamNodes ) {
-				printf("%x %x\n",ret, m_totalBytes / m_numFamNodes);
+				printf("%" PRIu64 " %" PRIx64 "\n",ret, m_totalBytes / m_numFamNodes);
 				exit( 0); 
 			}
 
@@ -210,7 +210,7 @@ public:
     }
 
 	int m_numFamNodes;
-	size_t m_totalBytes;
+	uint64_t m_totalBytes;
 	std::string m_groupName;
 
     EmberMiscLib* m_miscLib;
