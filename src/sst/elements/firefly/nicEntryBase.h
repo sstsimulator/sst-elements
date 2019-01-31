@@ -36,6 +36,7 @@ class EntryBase {
     virtual bool isDone()       { return ( currentVec() == ioVec().size() ); }
 
     virtual size_t& currentLen() { return m_currentLen; }
+    static  int m_alignment;
   private:
     virtual std::vector<IoVec>& ioVec() = 0;
     virtual size_t& currentVec() { return m_currentVec; }

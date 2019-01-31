@@ -55,6 +55,7 @@ public:
             {"fanout",              "(bool) If set, messages from the high network are replicated and sent to all low network ports", "0"},
             {"bus_latency_cycles",  "(uint) Bus latency in cycles", "0"},
             {"idle_max",            "(uint) Bus temporarily turns off clock after this number of idle cycles", "6"},
+            {"drain_bus",           "(bool) Drain bus on every cycle", "0"},
             {"debug",               "(uint) Output location for debug statements. Requires core configuration flag '--enable-debug'. --0[None], 1[STDOUT], 2[STDERR], 3[FILE]--", "0"},
             {"debug_level",         "(uint) Debugging level: 0 to 10", "0"},
             {"debug_addr",          "(comma separated uints) Address(es) to be debugged. Leave empty for all, otherwise specify one or more comma separated values. Start and end string with brackets", ""} )
@@ -104,6 +105,7 @@ private:
     bool                            fanout_;
     bool                            broadcast_;
     bool                            busOn_;
+    bool                            drain_;
     Clock::Handler<Bus>*            clockHandler_;
     TimeConverter*                  defaultTimeBase_;
 

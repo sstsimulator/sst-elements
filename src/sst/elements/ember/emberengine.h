@@ -131,6 +131,7 @@ public:
 	Thornhill::DetailedCompute* getDetailedCompute() {
 		return m_detailedCompute;
 	}
+
 	Thornhill::MemoryHeapLink* getMemHeapLink() {
 		return m_memHeapLink;
 	}

@@ -16,11 +16,11 @@
 	class MuxUnit : public Unit {
 		struct Entry {
 			enum Op { Load, Store } op;
-			Entry( Op op, UnitBase* src, MemReq* req, uint64_t start, Callback callback=NULL ) : 
-				op(op), src(src), req(req), start(start), callback(callback) {}
+			Entry( Op op, UnitBase* src, MemReq* req, uint64_t start, Callback* callback=NULL ) :
+                op(op), src(src), req(req), start(start), callback(callback) {}
 			UnitBase* src;
 			MemReq* req;
-			Callback callback;
+			Callback* callback;
 			uint64_t start;
 		};
 
@@ -30,10 +30,12 @@
 
 		MuxUnit( SimpleMemoryModel& model, Output& dbg, int id, Unit* unit, std::string name ) : Unit( model, dbg), m_unit(unit), m_blockedSrc(NULL), m_scheduled(false)  {
             m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::" + name + "MuxUnit::@p():@l ";
+
+			m_blocked_ns = model.registerStatistic<uint64_t>(name + "_mux_blocked_ns");
 		}
 
 		std::string& name() { return m_name; }
-
+		
         bool store( UnitBase* src, MemReq* req ) {
             m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MUX_MASK,"%s addr=%#" PRIx64 " length=%lu\n",src->name().c_str(), req->addr,req->length);
 			if ( ! m_blockedSrc && ! m_scheduled ) {
@@ -41,38 +43,44 @@
 
                     m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MUX_MASK,"blocking\n");
 					m_blockedSrc = src;
+					m_blockedTime_ns = m_model.getCurrentSimTimeNano();
 					return true;
 				} else { 
 					return false; 
 				}
 			} else {
                 m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MUX_MASK,"blocking\n");
-				m_blockedQ.push_back( Entry( Entry::Store, src, req, m_model.getCurrentSimTimeNano() ) );	
+				m_blockedQ.push( Entry( Entry::Store, src, req, m_model.getCurrentSimTimeNano() ) );
 				return true;
 			}
 		}
 
 
-        bool load( UnitBase* src, MemReq* req, Callback callback ) {
+        bool load( UnitBase* src, MemReq* req, Callback* callback ) {
             m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MUX_MASK,"%s addr=%#" PRIx64 " length=%lu\n",src->name().c_str(), req->addr,req->length);
 
 			uint64_t now = m_model.getCurrentSimTimeNano();
 			if ( ! m_blockedSrc && ! m_scheduled ) {
-				if ( m_unit->load( this, req, [=]() {
-							m_dbg.verbosePrefix( prefix(), CALL_INFO_LAMBDA, "load",1,MUX_MASK, "load done latency=%" PRIu64 "\n",
+
+
+				Callback* cb = new Callback;
+				*cb = [=]() {
+								m_dbg.verbosePrefix( prefix(), CALL_INFO_LAMBDA, "load",1,MUX_MASK, "load done latency=%" PRIu64 "\n",
 												m_model.getCurrentSimTimeNano() - now );  
-							callback();
-					} ) ) 
-				{
+								(*callback)();
+								delete callback;
+							}; 
+				if ( m_unit->load( this, req, cb ) ) {
                     m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MUX_MASK,"blocking\n");
 					m_blockedSrc = src;
+					m_blockedTime_ns = m_model.getCurrentSimTimeNano();
 					return true;
 				} else { 
 					return false; 
 				}
 			} else {
                 m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MUX_MASK,"blocking\n");
-				m_blockedQ.push_back( Entry( Entry::Load, src, req, m_model.getCurrentSimTimeNano(), callback ) );	
+				m_blockedQ.push( Entry( Entry::Load, src, req, m_model.getCurrentSimTimeNano(), callback ) );
 				return true;
 			}
 		}
@@ -83,16 +91,18 @@
 			assert( ! m_blockedQ.empty() );
 			Entry& entry = m_blockedQ.front();
 
-			Callback callback =  entry.callback;
+			Callback* callback =  entry.callback;
 			bool blocked = false;
 			uint64_t now = entry.start;
 			if ( Entry::Load == entry.op ) {
-				blocked = m_unit->load( this, entry.req, 
-						[=](){
+				Callback* cb = new Callback;
+				*cb = [=](){
 								m_dbg.verbosePrefix( prefix(), CALL_INFO_LAMBDA, "processQ",1,MUX_MASK, "load done latency=%" PRIu64 "\n",
 										m_model.getCurrentSimTimeNano() - now );  
-								callback();
-							} );
+								(*callback)();
+								delete callback;
+						   }; 
+				blocked = m_unit->load( this, entry.req, cb );
 			} else {
 				blocked = m_unit->store( this, entry.req );
 			}	
@@ -102,12 +112,14 @@
 				m_model.schedResume( 0, entry.src  );
 				if ( m_blockedQ.size() > 1 ) {
                     m_scheduled = true;
-					m_model.schedCallback( 0, std::bind( &MuxUnit::processQ, this ) );
+					Callback* cb = new Callback;
+					*cb = std::bind( &MuxUnit::processQ, this );
+					m_model.schedCallback( 0, cb );
 				}
 			} else {
 				m_blockedSrc = entry.src;
 			}
-			m_blockedQ.pop_front();
+			m_blockedQ.pop();
 		}
 
 		void resume( UnitBase* src = NULL ) {
@@ -116,6 +128,10 @@
                 m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MUX_MASK,"unblocking\n");
 				m_model.schedResume( 0, m_blockedSrc );
 				m_blockedSrc = NULL;
+				SimTime_t latency = m_model.getCurrentSimTimeNano() - m_blockedTime_ns; 
+				if ( latency ) {
+					m_blocked_ns->addData( latency );
+				}
 			}
                 m_dbg.verbosePrefix(prefix(),CALL_INFO,2,MUX_MASK,"scheduled=%d numBlocked=%zu\n",m_scheduled, m_blockedQ.size());
 
@@ -127,6 +143,8 @@
 	  private:
 		UnitBase* m_blockedSrc;
 		Unit* m_unit;
-		std::deque<Entry> m_blockedQ;
+		std::queue<Entry> m_blockedQ;
         bool m_scheduled;
+		Statistic<uint64_t>* m_blocked_ns;
+		SimTime_t m_blockedTime_ns;
 	};

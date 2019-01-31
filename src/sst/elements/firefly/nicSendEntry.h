@@ -58,7 +58,7 @@ class CmdSendEntry: public SendEntryBase, public EntryBase {
         m_cmd(cmd),
         m_callback(callback)
     {
-        m_hdr.len = totalBytes();
+        m_hdr.len = EntryBase::totalBytes();
         m_hdr.tag = m_cmd->tag;
     }
 
@@ -68,7 +68,7 @@ class CmdSendEntry: public SendEntryBase, public EntryBase {
     }
 
     std::vector<IoVec>& ioVec() { return m_cmd->iovec; }
-    size_t totalBytes() { return EntryBase::totalBytes(); }
+    size_t totalBytes() { return m_hdr.len; }
     bool isDone()       { return EntryBase::isDone(); }
     void copyOut( Output& dbg, int numBytes, 
                 FireflyNetworkEvent& event, std::vector<MemOp>& vec ) {
@@ -122,7 +122,10 @@ class GetOrgnEntry : public MsgSendEntry {
 
     bool isDone()      { return true; }
     void copyOut( Output& dbg, int numBytes,
-                FireflyNetworkEvent& event, std::vector<MemOp>& vec ) {}; 
+                FireflyNetworkEvent& event, std::vector<MemOp>& vec ) 
+	{
+		vec.push_back( MemOp( 0, numBytes, MemOp::Op::LocalLoad ) );
+	}; 
 
     size_t totalBytes(){ return sizeof( m_hdr ); }
     MsgHdr::Op getOp() { return MsgHdr::Rdma; }
@@ -141,6 +144,7 @@ class PutOrgnEntry : public MsgSendEntry, public EntryBase {
         MsgSendEntry( local_vNic, streamNum, dst_node, dst_vNic ),
         m_memRgn( memRgn )
     {
+        m_totalBytes = EntryBase::totalBytes();
         m_hdr.respKey = respKey;
         m_hdr.op = RdmaMsgHdr::GetResp;
     }
@@ -154,13 +158,14 @@ class PutOrgnEntry : public MsgSendEntry, public EntryBase {
         EntryBase::copyOut(dbg,numBytes, event, vec );
     }
 
-    size_t totalBytes() { return EntryBase::totalBytes(); }
+    size_t totalBytes() { return m_totalBytes; }
     bool isDone()       { return EntryBase::isDone(); }
     MsgHdr::Op getOp()  { return MsgHdr::Rdma; }
     void* hdr()         { return &m_hdr; }
     size_t hdrSize()    { return sizeof(m_hdr); }
 
   private:
+    size_t				m_totalBytes;
     MemRgnEntry*        m_memRgn;
     RdmaMsgHdr          m_hdr;
 };

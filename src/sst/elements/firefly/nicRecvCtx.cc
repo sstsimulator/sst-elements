@@ -48,10 +48,13 @@ bool Nic::RecvMachine::Ctx::processStdPkt( FireflyNetworkEvent* ev ) {
     StreamBase* stream;
     if ( ev->isHdr() ) {
 
+        if ( m_streamMap.find(srcKey) != m_streamMap.end() ) {
+		
+			m_dbg.fatal(CALL_INFO,-1,"m_streamMap.find(srcKey) != m_streamMap.end() node=%d pid=%d stream=%d for pid=%d\n",ev->getSrcNode(),ev->getSrcPid(), ev->getSrcStream(), m_pid);
+        }
         stream = newStream( ev );
         m_dbg.verbosePrefix(prefix(),CALL_INFO,1,NIC_DBG_RECV_CTX,"new stream %p %s node=%d pid=%d stream=%d for pid=%d\n",stream, ev->isTail()? "single packet stream":"",
                ev->getSrcNode(),ev->getSrcPid(), ev->getSrcStream(), m_pid );
-        assert ( m_streamMap.find(srcKey) == m_streamMap.end() ); 
 
         if ( ! ev->isTail() ) { 
             m_streamMap[srcKey] = stream;

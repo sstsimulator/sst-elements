@@ -7,6 +7,7 @@ netConfig = {
 networkParams = {
     "packetSize" : "2048B",
     "link_bw" : "4GB/s",
+    "xbar_bw" : "4GB/s",
     "link_lat" : "40ns",
     "input_latency" : "50ns",
     "output_latency" : "50ns",
@@ -38,16 +39,14 @@ nicParams = {
 	"simpleMemoryModel.verboseLevel" : 0,
 	"simpleMemoryModel.verboseMask" : -1,
 
-	"simpleMemoryModel.hostCacheUnitSize" : 612, 
-	"simpleMemoryModel.hostCacheNumMSHR" : 16, 
-	"simpleMemoryModel.hostCacheLineSize" : 64, 
-
-	"simpleMemoryModel.memNumSlots" : 128, 
-
-	"simpleMemoryModel.nicCacheUnitSize" : 2, 
-
+	"simpleMemoryModel.memNumSlots" : 32,
 	"simpleMemoryModel.memReadLat_ns" : 150, 
 	"simpleMemoryModel.memWriteLat_ns" : 40, 
+
+	"simpleMemoryModel.hostCacheUnitSize" : 32, 
+	"simpleMemoryModel.hostCacheNumMSHR" : 32, 
+	"simpleMemoryModel.hostCacheLineSize" : 64, 
+
 	"simpleMemoryModel.widgetSlots" : 32, 
 
 	"simpleMemoryModel.nicNumLoadSlots" : 16, 
@@ -56,7 +55,10 @@ nicParams = {
 	"simpleMemoryModel.nicHostLoadSlots" : 1, 
 	"simpleMemoryModel.nicHostStoreSlots" : 1, 
 
-    "simpleMemoryModel.busBandwidth_GB" : 7.8,
+	"simpleMemoryModel.busBandwidth_Gbs" : 7.8,
+	"simpleMemoryModel.busNumLinks" : 8,
+	"maxRecvMachineQsize" : 100,
+	"maxSendMachineQsize" : 100,
 }
 
 emberParams = {

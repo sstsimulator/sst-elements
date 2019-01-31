@@ -35,7 +35,6 @@ bool Nic::EntryBase::copyIn( Output& dbg,
     dbg.debug(CALL_INFO,3,NIC_DBG_RECV_MACHINE,
                 "ioVec.size()=%lu\n", ioVec().size() );
 
-
     for ( ; currentVec() < ioVec().size();
                 currentVec()++, currentPos() = 0 ) {
 
@@ -44,11 +43,7 @@ bool Nic::EntryBase::copyIn( Output& dbg,
             size_t fromLen = event.bufSize();
             size_t len = toLen < fromLen ? toLen : fromLen;
 
-            MemOp tmp;
-            tmp.length = len;
-            tmp.addr = ioVec()[currentVec()].addr.getSimVAddr() +
-                                                    currentPos();
-            vec.push_back( tmp );
+            vec.push_back( MemOp( ioVec()[currentVec()].addr.getSimVAddr() + currentPos(), len, MemOp::Op::BusDmaToHost ) );
 
             char* toPtr = (char*) ioVec()[currentVec()].addr.getBacking() +
                                                         currentPos();
@@ -91,6 +86,11 @@ void Nic::EntryBase::copyOut( Output& dbg, int numBytes,
     dbg.debug(CALL_INFO,3,NIC_DBG_SEND_MACHINE,"Send: "
                     "ioVec.size()=%lu\n", ioVec().size() );
 
+    if ( m_alignment > 1) {
+        size_t bufSpace = numBytes - event.bufSize();
+        numBytes = (bufSpace / m_alignment ) * m_alignment;
+    }
+
     for ( ; currentVec() < ioVec().size() &&
                 event.bufSize() <  numBytes;
                 currentVec()++, currentPos() = 0 ) {
@@ -109,10 +109,8 @@ void Nic::EntryBase::copyOut( Output& dbg, int numBytes,
 
             const char* from =
                     (const char*) ioVec()[currentVec()].addr.getBacking() + currentPos();
-            MemOp tmp;
-            tmp.addr = ioVec()[currentVec()].addr.getSimVAddr() + currentPos();
-            tmp.length = len;
-            vec.push_back(tmp);
+
+            vec.push_back( MemOp( ioVec()[currentVec()].addr.getSimVAddr() + currentPos(), len, MemOp::Op::BusDmaFromHost ) );
 
             if ( ioVec()[currentVec()].addr.getBacking()) {
                 event.bufAppend( from, len );

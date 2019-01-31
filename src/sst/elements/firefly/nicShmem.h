@@ -120,15 +120,26 @@ class Shmem {
 	}	
 
     std::pair<Hermes::MemAddr, size_t>& findRegion( int core, uint64_t addr ) { 
-//		printf("%s() core=%d %#" PRIx64 "\n",__func__,core,addr);
         for ( int i = 0; i < m_regMem[core].size(); i++ ) {
             if ( addr >= m_regMem[core][i].first.getSimVAddr() &&
                 addr < m_regMem[core][i].first.getSimVAddr() + m_regMem[core][i].second ) {
                 return m_regMem[core][i]; 
             } 
         } 
-        assert(0);
+		m_dbg.fatal(CALL_INFO,0," core %d Unable to find for for addr %" PRIx64 "\n", core, addr);
+		// quiet compiler warning
+		assert(0);
     }
+	
+	void regMem( int id, uint64_t simAddr, size_t length, void* backing ) {
+		Hermes::MemAddr addr( simAddr, backing );
+
+	    m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_DBG_SHMEM,"core=%d simVAddr=%" PRIx64 " backing=%p len=%lu\n",
+            id, addr.getSimVAddr(), addr.getBacking(), length );
+
+    	m_regMem[id].push_back( std::make_pair(addr, length) );
+	}
+
     void checkWaitOps( int core, Hermes::Vaddr addr, size_t length );
 
 private:
@@ -169,11 +180,11 @@ private:
         m_dbg.verbosePrefix( prefix(), CALL_INFO,1,NIC_DBG_SHMEM,"\n" );
 		if ( ! m_pendingCmds.empty() ) {
 			handleEvent( m_pendingCmds.front().first, m_pendingCmds.front().second );
-			m_pendingCmds.pop_front();
+			m_pendingCmds.pop();
 		}
 	}
 
-	std::deque<std::pair<NicShmemCmdEvent*, int> > m_pendingCmds;
+	std::queue<std::pair<NicShmemCmdEvent*, int> > m_pendingCmds;
 	int m_freeCmdSlots;
 
 	Hermes::Value m_one;
@@ -185,9 +196,9 @@ private:
 	SimTime_t m_nic2HostDelay_ns;
 	SimTime_t m_host2NicDelay_ns;
 
-	std::deque< std::pair< NicShmemCmdEvent*, int > > m_cmdQ;
+	std::queue< std::pair< NicShmemCmdEvent*, int > > m_cmdQ;
 	bool m_engineBusy;
-	std::deque< std::pair< NicShmemCmdEvent*, int > > m_hostCmdQ;
+	std::queue< std::pair< NicShmemCmdEvent*, int > > m_hostCmdQ;
 	bool m_hostBusy;
 	SimTime_t m_nicCmdLatency;
 	SimTime_t m_hostCmdLatency;

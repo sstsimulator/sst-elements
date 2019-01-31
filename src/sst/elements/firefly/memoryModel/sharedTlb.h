@@ -21,24 +21,24 @@ class SharedTlb {
 public:
     SharedTlb( SimpleMemoryModel& model, Output& dbg, int id, int size, int pageSize, int tlbMissLat_ns, int numWalkers ) :
         m_model(model), m_dbg(dbg), m_tlbMissLat_ns(tlbMissLat_ns), m_numWalkers(numWalkers), m_pageMask( ~(pageSize - 1) ),
-        m_cache(size), m_total(0), m_hitCnt(0), m_numLookups(0), m_maxNumLookups(numWalkers), m_cacheSize(size)
-        //m_cache(4,128,pageSize), m_total(0), m_hitCnt(0), m_numLookups(0), m_maxNumLookups(numWalkers)
-        //m_cache(512,1,pageSize), m_total(0), m_hitCnt(0), m_numLookups(0), m_maxNumLookups(numWalkers)
+        m_cache(size), m_numLookups(0), m_maxNumLookups(numWalkers), m_cacheSize(size)
     {
         m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::SharedTlb::@p():@l ";
 
         m_dbg.verbosePrefix(prefix(),CALL_INFO,1,SHARED_TLB_MASK,"tlbSize=%d, pageMask=%#" PRIx64 ", numWalkers=%d\n",
                         size, m_pageMask, numWalkers );
+		m_hitCnt = model.registerStatistic<uint64_t>("nic_TLB_hits");
+		m_totalCnt = model.registerStatistic<uint64_t>("nic_TLB_total");
     }
 
     uint64_t lookup( MemReq* req, Callback callback, bool flag = false ) {
 
-        ++m_total;
         uint64_t pageAddr = processPageAddr(req); 
         uint64_t physAddr = processPhysAddr(req);
 
+		m_totalCnt->addData( 1 );
         if ( 0 == m_cacheSize ) {
-            ++m_hitCnt;
+			m_hitCnt->addData( 1 );
             return physAddr;
         }
 
@@ -46,22 +46,24 @@ public:
         if (  m_cache.isValid( pageAddr ) ) {
             m_dbg.verbosePrefix(prefix(),CALL_INFO,1,SHARED_TLB_MASK, "Hit: virtAddr=%#" PRIx64 " physAddr=%#" PRIx64 " pageAddr=%#" PRIx64"\n", 
                 req->addr, physAddr, pageAddr );
-            ++m_hitCnt;
+			m_hitCnt->addData( 1 );
             return physAddr;
         } else {
             if ( m_pendingMap.find(pageAddr) != m_pendingMap.end() ) {
                 m_dbg.verbosePrefix(prefix(),CALL_INFO,1,SHARED_TLB_MASK, "Pending: virtAddr=%#" PRIx64 " physAddr=%#" PRIx64 " pageAddr=%#" PRIx64"\n", 
                     req->addr, physAddr, pageAddr );
-                m_pendingMap[pageAddr].push_back( std::make_pair( req, callback ) );
+                m_pendingMap[pageAddr].push( std::make_pair( req, callback ) );
             } else {
                 if ( m_numLookups < m_maxNumLookups ) {
                     ++m_numLookups;
                     m_pendingMap[pageAddr];
-                    m_model.schedCallback( m_tlbMissLat_ns, std::bind( &SharedTlb::resolved, this, req, callback )); 
+					MemoryModel::Callback* cb =  new MemoryModel::Callback;
+					*cb = std::bind( &SharedTlb::resolved, this, req, callback ); 
+                    m_model.schedCallback( m_tlbMissLat_ns, cb ); 
                     m_dbg.verbosePrefix(prefix(),CALL_INFO,1,SHARED_TLB_MASK, "Schedule: virtAddr=%#" PRIx64 " physAddr=%#" PRIx64 " pageAddr=%#" PRIx64"\n", 
                         req->addr, physAddr, pageAddr );
                 } else {
-                    m_pendingLookups.push_back( std::make_pair( req, callback ) );
+                    m_pendingLookups.push( std::make_pair( req, callback ) );
                     m_dbg.verbosePrefix(prefix(),CALL_INFO,1,SHARED_TLB_MASK, "Blocked: virtAddr=%#" PRIx64 " physAddr=%#" PRIx64 " pageAddr=%#" PRIx64"\n", 
                         req->addr, physAddr, pageAddr );
                 }
@@ -71,21 +73,12 @@ public:
         return -1;
     }
 
-    void printStats() {
-        if ( m_total ) {
-            m_dbg.output("SharedTlb: total requests %" PRIu64 " %f percent hits\n",
-                        m_total, (float)m_hitCnt/(float)m_total);
-        }
-        //m_cache.printStats( m_dbg );
-    }
 private:
 
-    std::deque< std::pair< MemReq*, Callback > > m_pendingLookups;
+    std::queue< std::pair< MemReq*, Callback > > m_pendingLookups;
     int m_cacheSize;
     int m_numLookups;
     int m_maxNumLookups;
-    uint64_t m_total;
-    uint64_t m_hitCnt;
 
     void resolved( MemReq* req, Callback callback  ) {
         uint64_t pageAddr = processPageAddr(req); 
@@ -101,7 +94,7 @@ private:
         while( ! m_pendingMap[pageAddr].empty() ) {
                              
             m_pendingMap[pageAddr].front().second( m_pendingMap[pageAddr].front().first, physAddr );
-            m_pendingMap[pageAddr].pop_front();
+            m_pendingMap[pageAddr].pop();
          }
          m_pendingMap.erase(pageAddr);
 
@@ -112,18 +105,20 @@ private:
             
             uint64_t pageAddr = processPageAddr(req); 
 
-            m_pendingLookups.pop_front();
+            m_pendingLookups.pop();
 
             if ( m_cache.isValid( pageAddr )  ) {
                 callback( req, processPhysAddr(req) );
             } else if ( m_pendingMap.find(pageAddr) != m_pendingMap.end() ) {
                 m_dbg.verbosePrefix(prefix(),CALL_INFO,1,SHARED_TLB_MASK, "Pending: virtAddr=%#" PRIx64 " physAddr=%#" PRIx64 " pageAddr=%#" PRIx64"\n", 
                         req->addr, physAddr, pageAddr );
-                m_pendingMap[pageAddr].push_back( std::make_pair( req, callback ) );
+                m_pendingMap[pageAddr].push( std::make_pair( req, callback ) );
             } else {
                 ++m_numLookups;
                 m_pendingMap[pageAddr];
-                m_model.schedCallback( m_tlbMissLat_ns, std::bind( &SharedTlb::resolved, this, req, callback )); 
+				MemoryModel::Callback* cb = new MemoryModel::Callback;
+				*cb = std::bind( &SharedTlb::resolved, this, req, callback ); 
+                m_model.schedCallback( m_tlbMissLat_ns, cb );
                 m_dbg.verbosePrefix(prefix(),CALL_INFO,1,SHARED_TLB_MASK, "Schedule: virtAddr=%#" PRIx64 " physAddr=%#" PRIx64 " pageAddr=%#" PRIx64"\n", 
                 req->addr, physAddr, pageAddr );
                 break;
@@ -142,12 +137,13 @@ private:
         return addr & m_pageMask;
     }
 
-    std::unordered_map< uint64_t, std::deque< std::pair< MemReq*, Callback > > > m_pendingMap;
+    std::unordered_map< uint64_t, std::queue< std::pair< MemReq*, Callback > > > m_pendingMap;
     SimpleMemoryModel& m_model;
     Output& m_dbg;
     int m_tlbMissLat_ns;
     int m_numWalkers;
     uint64_t m_pageMask;
-    //NWayCache       m_cache;
     Cache       m_cache;
+	Statistic<uint64_t>* m_hitCnt;
+	Statistic<uint64_t>* m_totalCnt;
 };

@@ -40,7 +40,20 @@ HadesSHMEM::HadesSHMEM(Component* owner, Params& params) :
 	m_enterLat_ns = params.find<int>("enterLat_ns",30);
 	m_returnLat_ns = params.find<int>("returnLat_ns",30);
 	m_blockingReturnLat_ns = params.find<int>("blockingReturnLat_ns",300);
+
+	Params famMapperParams = params.find_prefix_params( "famNodeMapper." );
+	if ( famMapperParams.size() ) {
+		m_famNodeMapper = dynamic_cast<FamNodeMapper*>( loadModule( famMapperParams.find<std::string>("name"), famMapperParams ) );
+		m_famNodeMapper->setDbg( &m_dbg );
+	}
+
+	famMapperParams = params.find_prefix_params( "famAddrMapper." );
+	if ( famMapperParams.size() ) {
+		m_famAddrMapper = dynamic_cast<FamAddrMapper*>( loadModule( famMapperParams.find<std::string>("name"), famMapperParams ) );
+		m_famAddrMapper->setDbg( &m_dbg );
+	}
 }
+
 
 HadesSHMEM::~HadesSHMEM() { 
 	delete m_heap; 
@@ -62,6 +75,11 @@ void HadesSHMEM::setup()
     snprintf(buffer,100,"@t:%d:%d:HadesSHMEM::@p():@l ",
                     m_os->getNic()->getRealNodeId(), m_os->getInfo()->worldRank());
     m_dbg.setPrefix(buffer);
+
+	m_memHeapLink = m_os->getMemHeapLink();
+	if ( m_memHeapLink ) {
+    	dbg().debug(CALL_INFO,1,SHMEM_BASE,"using memHeap\n");
+	}		
 }
 
 void HadesSHMEM::delayEnter( Callback callback, SimTime_t delay ) 
@@ -236,11 +254,20 @@ void HadesSHMEM::malloc2( Hermes::MemAddr* ptr, size_t size, bool backed, Shmem:
 
 void HadesSHMEM::malloc( Hermes::MemAddr* ptr, size_t size, bool backed, Callback callback )
 {
-    *ptr =  m_heap->malloc( size, backed );
-
     dbg().debug(CALL_INFO,1,SHMEM_BASE," maddr ptr=%p size=%lu\n",ptr,size);
 
-	m_os->getNic()->shmemRegMem( *ptr, size, callback) ; 
+    if ( m_memHeapLink ) {
+        m_memHeapLink->alloc( size, 
+        [=](uint64_t addr ) {
+                this->dbg().debug(CALL_INFO_LAMBDA,"malloc",1,SHMEM_BASE,"addr=%#" PRIx64 " size=%zu\n",addr,size);
+                *ptr = m_heap->addAddr( addr, size, backed );
+                m_os->getNic()->shmemRegMem( *ptr, size, callback) ; 
+            }
+        );
+    } else {
+        *ptr =  m_heap->malloc( size, backed );
+        m_os->getNic()->shmemRegMem( *ptr, size, callback) ; 
+    }
 }
 
 void HadesSHMEM::free( Hermes::MemAddr* ptr, Shmem::Callback callback)
@@ -708,4 +735,61 @@ void HadesSHMEM::fadd2(Hermes::Value& result, Hermes::Vaddr addr, Hermes::Value&
                     this->delayReturn( callback, m_blockingReturnLat_ns );
                 }
             );
+}
+
+void HadesSHMEM::fam_add( uint64_t offset, Hermes::Value& value, Shmem::Callback callback)
+{
+	uint64_t localOffset;
+	int      node;
+
+	dbg().debug(CALL_INFO,1,SHMEM_BASE,"\n");
+
+	getFamNetAddr( offset, node, localOffset ); 
+
+	Hermes::MemAddr target( localOffset, NULL );
+
+	add( target.getSimVAddr(), value, node, callback );
+}
+
+void HadesSHMEM::fam_get_nb( Hermes::Vaddr dest, Shmem::Fam_Region_Descriptor rd, uint64_t offset, uint64_t nbytes, Shmem::Callback callback )
+{
+	FamWork* work = new FamWork;
+	work->callback = callback;	
+	work->dest =  dest;
+
+	m_dbg.debug(CALL_INFO,1,SHMEM_BASE,"dest=%#" PRIx64" globalOffset=%#" PRIx64 " nbytes=%" PRIu64 "\n",
+				work->dest, offset, nbytes );
+
+	createWorkList( offset, nbytes, work->work );
+	doOneFamGet( work );
+}
+
+void HadesSHMEM::doOneFamGet( FamWork* work ) {
+	uint64_t localOffset;
+	int      node;
+		
+	getFamNetAddr( work->work.front().first, node, localOffset ); 
+
+	Hermes::MemAddr target( localOffset, NULL );
+
+	Hermes::Vaddr dest = work->dest;
+	uint64_t nbytes = work->work.front().second;
+	Shmem::Callback callback; 
+
+	work->dest += work->work.front().second;
+	work->work.pop();
+
+	if (  work->work.empty() ) {
+		callback = work->callback;
+		delete work;
+	} else {		
+		callback = [=](int) {
+			doOneFamGet(work);
+	  	};
+	}
+
+	m_dbg.debug(CALL_INFO,1,SHMEM_BASE,"dest=%#" PRIx64" target=%#" PRIx64 " nbytes=%" PRIu64 " node=%x\n",
+				dest, target.getSimVAddr() , nbytes, node );
+
+	get_nbi( dest, target.getSimVAddr(), nbytes, node, callback ); 
 }

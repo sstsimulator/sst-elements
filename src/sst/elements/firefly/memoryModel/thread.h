@@ -17,7 +17,7 @@ class Work {
 
   public:
     Work( int pid, std::vector< MemOp >* ops, Callback callback, SimTime_t start, int alignment = 64 ) :
-        m_pid(pid), m_ops(ops), m_callback(callback), m_start(start), m_pos(0) 
+        m_pid(pid), m_ops(ops), m_callback(callback), m_start(start), m_pos(0)
     {
         if( 0 == ops->size() ) {
             ops->push_back( MemOp( MemOp::Op::NoOp ) );
@@ -79,7 +79,7 @@ class Work {
         }
     }
     int m_workNum;
-    std::deque<Callback>    m_pendingCallbacks;
+    std::queue<Callback>    m_pendingCallbacks;
   private:
     SimTime_t               m_start;
     int 					m_pos;
@@ -94,13 +94,15 @@ class Thread : public UnitBase {
     std::string m_name;
 
   public:	  
-     Thread( SimpleMemoryModel& model, std::string name, Output& output, int id, int accessSize, Unit* load, Unit* store ) : 
+     Thread( SimpleMemoryModel& model, std::string name, Output& output, int id, int thread_id , int accessSize, Unit* load, Unit* store ) : 
 			m_model(model), m_name(name), m_dbg(output), m_id(id), m_loadUnit(load), m_storeUnit(store), 
 			m_maxAccessSize( accessSize ), m_nextOp(NULL), m_waitingOnOp(NULL), m_blocked(false), m_curWorkNum(0),m_lastDelete(0)
 	{
 		m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::" + name +"::@p():@l ";
         m_dbg.verbosePrefix( prefix(), CALL_INFO,1,THREAD_MASK,"this=%p\n",this );
+		m_workQdepth = model.registerStatistic<uint64_t>(name + "_thread_work_Q_depth",std::to_string(thread_id));
 	}
+
 
     ~Thread() {
         delete m_loadUnit;
@@ -137,6 +139,7 @@ class Thread : public UnitBase {
 		m_workQ.push_back( work ); 
 
         work->print(m_dbg,prefix());
+		m_workQdepth->addData( m_workQ.size() );
 
 		if ( ! m_blocked && ! m_nextOp ) {
 			m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"prime pump\n");		
@@ -188,7 +191,8 @@ class Thread : public UnitBase {
         
         // note that "work" will be a valid  ptr for all of the issues of the last Op 
         // because we don't know which one will complete last
-    	Callback callback = std::bind(&Thread::opCallback,this, work, op, deleteWork );
+    	Callback* callback = new Callback;
+		*callback = std::bind(&Thread::opCallback,this, work, op, deleteWork );
 
         switch( op->getOp() ) {
           case MemOp::NoOp:
@@ -200,25 +204,25 @@ class Thread : public UnitBase {
 		    break;
 
           case MemOp::LocalLoad:
-            m_blocked = m_model.nicUnit().load( this, new MemReq( 0, 0), callback );
+			m_blocked = m_model.nicUnit().load( this, new MemReq( 0, 0), callback );
             break;
 
           case MemOp::LocalStore:
-            m_blocked = m_model.nicUnit().storeCB( this, new MemReq( 0, 0), callback );
+			m_blocked = m_model.nicUnit().storeCB( this, new MemReq( 0, 0), callback );
             break;
 
           case MemOp::HostStore:
           case MemOp::BusStore:
           case MemOp::BusDmaToHost:
             addr |= (uint64_t) pid << 56;
-            m_blocked = m_storeUnit->storeCB( this, new MemReq( addr, length, pid ), callback );
+			m_blocked = m_storeUnit->storeCB( this, new MemReq( addr, length, pid ), callback );
             break;
 
           case MemOp::HostLoad:
           case MemOp::BusLoad:
           case MemOp::BusDmaFromHost:
             addr |= (uint64_t) pid << 56;
-            m_blocked = m_loadUnit->load( this, new MemReq( addr, length, pid ), callback );
+			m_blocked = m_loadUnit->load( this, new MemReq( addr, length, pid ), callback );
             break;
 
           default:
@@ -250,7 +254,9 @@ class Thread : public UnitBase {
             // the OP callback will also be called
 		} else if ( m_nextOp && ! m_waitingOnOp ) { 
             m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"schedule process()\n");
-		    m_model.schedCallback( 0, std::bind(&Thread::process, this, m_nextOp ) ); 
+			Callback* cb = new Callback;
+			*cb = std::bind(&Thread::process, this, m_nextOp ); 
+		    m_model.schedCallback( 0, cb );
         }
     }
 
@@ -262,7 +268,7 @@ class Thread : public UnitBase {
             if ( work->m_workNum  == m_lastDelete ) {
                 while ( ! work->m_pendingCallbacks.empty() ) {
                     work->m_pendingCallbacks.front()();
-                    work->m_pendingCallbacks.pop_front();
+                    work->m_pendingCallbacks.pop();
                 }
                 if ( op->callback ) {
                     m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"do op callback\n");
@@ -280,7 +286,7 @@ class Thread : public UnitBase {
                             m_dbg.verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"delete OOO work %p\n",m_OOOwork[m_lastDelete]);
                             while ( ! work->m_pendingCallbacks.empty() ) {
                                 work->m_pendingCallbacks.front()();
-                                work->m_pendingCallbacks.pop_front();
+                                work->m_pendingCallbacks.pop();
                             }
                             delete work;
                             m_OOOwork.erase( m_lastDelete++ );
@@ -295,7 +301,7 @@ class Thread : public UnitBase {
                     m_OOOwork[work->m_workNum] = work;
                 }
                 if ( op->callback ) {
-                    work->m_pendingCallbacks.push_back(op->callback);
+                    work->m_pendingCallbacks.push(op->callback);
                 }
             }
         }
@@ -327,5 +333,6 @@ class Thread : public UnitBase {
     int                 m_lastDelete;
     int                 m_id;
     std::map<int,Work*> m_OOOwork;
+	Statistic<uint64_t>* m_workQdepth;
 };
 

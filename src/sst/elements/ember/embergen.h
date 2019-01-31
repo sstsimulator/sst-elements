@@ -86,6 +86,15 @@ class EmberGenerator : public SubComponent {
                const char* format, ...)    const
                   __attribute__ ((format (printf, 6, 7))) ;
 
+    void setVerbosePrefix( int _rank = -1 ) {
+        if ( _rank == -1 ) {
+            _rank = rank(); 
+        }
+        m_verbosePrefix.str(std::string());
+        m_verbosePrefix << "@t:" << getJobId() << ":" << _rank <<
+                    ":EmberEngine:MPI:" << getMotifName() << ":@p:@l: ";
+    }
+
     std::string getMotifName() { return m_motifName; }
     void setRank( int rank ) { m_api->setRank( rank ); }
     void setSize( int size ) { m_api->setSize( size ); }
@@ -127,6 +136,7 @@ class EmberGenerator : public SubComponent {
     enum { NoBacking, Backing, BackingZeroed  } m_dataMode; 
 
   private:
+
     Output* 	        	m_output;
     std::string				m_motifName;
     std::ostringstream      m_verbosePrefix;

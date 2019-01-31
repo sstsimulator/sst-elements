@@ -142,6 +142,9 @@ libember_la_SOURCES = \
 	mpi/motifs/emberrandomgen.h \
 	mpi/motifs/emberrandomgen.cc \
 	sirius/include/sirius/siriusglobals.h \
+	shmem/emberFamAddEv.h \
+	shmem/emberFamEvent.h \
+	shmem/emberFamGetNB_Ev.h \
 	shmem/emberShmemAddEv.h \
 	shmem/emberShmemAlltoallEv.h \
 	shmem/emberShmemAlltoallsEv.h \
@@ -171,6 +174,9 @@ libember_la_SOURCES = \
 	shmem/emberShmemSwapEv.h \
 	shmem/emberShmemWaitEv.h \
 	shmem/motifs/emberShmemAdd.h \
+	shmem/emberFamEvent.h \
+	shmem/emberFamAddEv.h \
+	shmem/emberFamGetNB_Ev.h \
 	shmem/motifs/emberShmemAlltoall.h \
 	shmem/motifs/emberShmemAlltoalls.h \
 	shmem/motifs/emberShmemBarrier.h \
@@ -193,7 +199,8 @@ libember_la_SOURCES = \
 	shmem/motifs/emberShmemWait.h \
 	shmem/motifs/emberShmemWaitUntil.h \
 	shmem/motifs/emberShmemAtomicInc.h \
-	shmem/motifs/emberShmemFAM_Get.h \
+	shmem/motifs/emberShmemFAM_Get2.h \
+	shmem/motifs/emberShmemFAM_AtomicInc.h \
 	mpi/motifs/emberunstructured.h \
 	mpi/motifs/emberunstructured.cc
 
@@ -208,14 +215,30 @@ EXTRA_DIST = \
 	test/emberLoad.py \
 	test/exaParams.py \
 	test/loadInfo.py \
+	test/EmberEP.py \
+	test/loadFileParse.py \
 	test/CrossProduct.py \
 	test/networkConfig.py \
+	test/statModule.py \
+	test/generateNidListInterval.py \
+	test/generateNidListRange.py \
+	test/generateNidListRandom.py \
+	test/generateNidListGroup.py \
+	test/loadFAM \
+	test/loadFAMvars \
+	test/loadFAM200 \
+	test/loadFAM200rand \
+	test/loadFAM2048 \
+	test/loadFileParse.py \
+	test/loadUtils.py \
+	test/paramUtils.py \
 	test/Tester.py \
 	test/defaultSim.py \
 	test/defaultParams.py \
 	test/chamaOpenIBParams.py \
 	test/chamaPSMParams.py \
-	test/bgqParams.py
+	test/bgqParams.py \
+	test/runFAMloadfile
 
 if USE_EMBER_CONTEXTS
 libember_la_SOURCES += \

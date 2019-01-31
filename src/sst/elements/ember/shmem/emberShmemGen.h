@@ -48,6 +48,9 @@
 #include "emberShmemFaddEv.h"
 #include "emberShmemAddEv.h"
 
+#include "emberFamGetNB_Ev.h"
+#include "emberFamAddEv.h"
+
 using namespace Hermes;
 
 namespace SST {
@@ -97,6 +100,12 @@ protected:
             int sst, size_t nelmes, int PE_start, int logPE_stride, int PE_size, Hermes::MemAddr );
     inline void enQ_alltoalls64( Queue&, Hermes::MemAddr dest, Hermes::MemAddr src, int dst,
             int sst, size_t nelmes, int PE_start, int logPE_stride, int PE_size, Hermes::MemAddr );
+
+
+    inline void enQ_fam_initialize( Queue&, std::string groupName );
+    inline void enQ_fam_get_nonblocking( Queue&, Hermes::MemAddr, Shmem::Fam_Region_Descriptor rd, uint64_t offset, uint64_t nbytes );
+	template <class TYPE>
+	inline void enQ_fam_add( Queue&, uint64_t offset, TYPE* );
 
 #define declareOp( type, op) \
     inline void enQ_##type##_##op##_to_all( Queue&, Hermes::MemAddr dest, Hermes::MemAddr src, int nelmes, \
@@ -163,6 +172,23 @@ private:
 static inline Hermes::Shmem::Interface* shmem_cast( Hermes::Interface *in )
 {
     return static_cast<Hermes::Shmem::Interface*>(in);
+}
+
+void EmberShmemGenerator::enQ_fam_initialize( Queue& q, std::string groupName ) {
+    verbose(CALL_INFO,2,0,"\n");
+	enQ_init(q);
+}
+
+template <class TYPE>
+void EmberShmemGenerator::enQ_fam_add( Queue& q, uint64_t offset, TYPE* value )
+{
+    verbose(CALL_INFO,2,0,"\n");
+    q.push( new EmberFamAddEvent( *shmem_cast(m_api), &getOutput(), offset, Hermes::Value(value) ) );
+}
+
+void EmberShmemGenerator::enQ_fam_get_nonblocking( Queue& q, Hermes::MemAddr dest, Shmem::Fam_Region_Descriptor rd, uint64_t offset, uint64_t nbytes ){
+    verbose(CALL_INFO,2,0,"\n");
+    q.push( new EmberFamGetNB_Event( *shmem_cast(m_api), &getOutput(), dest.getSimVAddr(), rd, offset, nbytes ) );
 }
 
 void EmberShmemGenerator::enQ_getTime( Queue& q, uint64_t* time )
