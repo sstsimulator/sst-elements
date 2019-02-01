@@ -17,6 +17,7 @@
 
 #include <sst/core/event.h>
 #include "shogun.h"
+#include "arb/shogunrrarb.h"
 
 using namespace SST;
 using namespace SST::Shogun;
@@ -24,6 +25,8 @@ using namespace SST::Shogun;
 ShogunComponent::ShogunComponent(ComponentId_t id, Params& params) : Component(id)
 {
     const std::string clock_rate = params.find<std::string>("clock");
+
+    arb = new ShogunRoundRobinArbitrator();
 
     master_port_count = params.find<int>("master_port_count");
     slave_port_count  = params.find<int>("slave_port_count");
@@ -67,6 +70,7 @@ ShogunComponent::~ShogunComponent()
 {
     output->verbose(CALL_INFO, 1, 0, "Shogun destructor fired, closing down.\n");
     delete output;
+    delete arb;
 }
 
 ShogunComponent::ShogunComponent() : Component(-1)
@@ -80,6 +84,8 @@ bool ShogunComponent::tick( Cycle_t currentCycle )
     populateInputs();
 
     // Migrate events across the cross-bar
+    arb->moveEvents( master_port_count, slave_port_count, pendingInputs,
+	pendingOutputs, static_cast<uint64_t>( currentCycle ) );
 
     // Send any events which can be sent this cycle
     emitOutputs();

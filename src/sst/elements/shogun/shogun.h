@@ -23,6 +23,7 @@
 #include <sst/core/params.h>
 
 #include "shogun_event.h"
+#include "arb/shogunarb.h"
 
 namespace SST {
 namespace Shogun {
@@ -43,6 +44,7 @@ public:
     SST_ELI_DOCUMENT_PARAMS(
 	{ "master_count", "Number of master ports on the crossbar", 0 },
    	{ "slave_count", "Number of slave ports on the crossbar", 0 },
+	{ "arbitration", "Select the arbitration scheme", "roundrobin" },
         { "clock",       "Clock Frequency for the crossbar", "1.0GHz" }
     )
 
@@ -83,6 +85,7 @@ private:
     SST::Link** links;
     ShogunEvent** pendingInputs;
     ShogunEvent** pendingOutputs;
+    ShogunArbitrator* arb;
     SST::Output* output;
 
 };
