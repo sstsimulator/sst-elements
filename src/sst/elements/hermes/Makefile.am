@@ -8,7 +8,13 @@ AM_CPPFLAGS = \
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libhermes.la
+
+sstdir = $(includedir)/sst/elements/hermes
+
 libhermes_la_SOURCES = \
+	libhermes.c
+
+nobase_sst_HEADERS = \
 	msgapi.h \
 	miscapi.h \
 	hermes.h \
