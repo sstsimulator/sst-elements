@@ -16,8 +16,10 @@
 #include "sst_config.h"
 
 #include <sst/core/event.h>
+
 #include "shogun.h"
 #include "arb/shogunrrarb.h"
+#include "shogun_init_event.h"
 
 using namespace SST;
 using namespace SST::Shogun;
@@ -28,42 +30,43 @@ ShogunComponent::ShogunComponent(ComponentId_t id, Params& params) : Component(i
 
     arb = new ShogunRoundRobinArbitrator();
 
-    master_port_count = params.find<int>("master_port_count");
-    slave_port_count  = params.find<int>("slave_port_count");
+    input_port_count = params.find<int>("input_port_count");
+    output_port_count  = params.find<int>("output_port_count");
 
-    output->verbose(CALL_INFO, 1, 0, "Creating Shogun crossbar at %s clock rate and %d master ports and %d slave ports\n",
-	clock_rate.c_str(), master_port_count, slave_port_count);
+    output->verbose(CALL_INFO, 1, 0, "Creating Shogun crossbar at %s clock rate and %d input ports and %d output ports\n",
+	clock_rate.c_str(), input_port_count, output_port_count);
 
     registerClock(clock_rate, new Clock::Handler<ShogunComponent>(this,
                   &ShogunComponent::tick));
 
-    if( master_port_count <= 0 || slave_port_count <= 0 ) {
-	output->fatal(CALL_INFO, -1, "Error: you specified a master or slave port count of less than or equal to zero.\n" );
+    if( input_port_count <= 0 || output_port_count <= 0 ) {
+	output->fatal(CALL_INFO, -1, "Error: you specified a input or output port count of less than or equal to zero.\n" );
     }
 
-    output->verbose(CALL_INFO, 1, 0, "Connecting %d master links...\n", master_port_count);
-    links = (SST::Link**) malloc( sizeof(SST::Link*) * (master_port_count + slave_port_count) );
+    output->verbose(CALL_INFO, 1, 0, "Connecting %d input links...\n", input_port_count);
+    inputLinks = (SST::Link**) malloc( sizeof(SST::Link*) * (input_port_count) );
     char* linkName = new char[256];
 
-    for( int i = 0; i < master_port_count; ++i ) {
-	sprintf(linkName, "master_link%d", i);
-	links[i] = configureLink(linkName);
-	links[i]->setPolling();
+    for( int i = 0; i < input_port_count; ++i ) {
+	sprintf(linkName, "input_link%d", i);
+	inputLinks[i] = configureLink(linkName);
+	inputLinks[i]->setPolling();
     }
 
-    output->verbose(CALL_INFO, 1, 0, "Connecting %d slave links...\n", slave_port_count);
+    outputLinks = (SST::Link**) malloc( sizeof(SST::Link*) * (output_port_count) );
+    output->verbose(CALL_INFO, 1, 0, "Connecting %d output links...\n", output_port_count);
 
-    for( int i = 0; i < slave_port_count; ++i ) {
-	sprintf(linkName, "slave_link%d", i);
-	links[master_port_count + i] = configureLink(linkName);
-	links[master_port_count + i]->setPolling();
+    for( int i = 0; i < output_port_count; ++i ) {
+	sprintf(linkName, "output_link%d", i);
+	outputLinks[i] = configureLink(linkName);
+	outputLinks[i]->setPolling();
     }
 
     delete[] linkName;
 
     output->verbose(CALL_INFO, 1, 0, "Allocating pending input/output slots...\n" );
-    pendingInputs  = (ShogunEvent**) malloc( sizeof(ShogunEvent*) * (master_port_count + slave_port_count) );
-    pendingOutputs = (ShogunEvent**) malloc( sizeof(ShogunEvent*) * (master_port_count + slave_port_count) );
+    pendingInputs  = (ShogunEvent**) malloc( sizeof(ShogunEvent*) * (input_port_count) );
+    pendingOutputs = (ShogunEvent**) malloc( sizeof(ShogunEvent*) * (output_port_count) );
 }
 
 ShogunComponent::~ShogunComponent()
@@ -84,7 +87,7 @@ bool ShogunComponent::tick( Cycle_t currentCycle )
     populateInputs();
 
     // Migrate events across the cross-bar
-    arb->moveEvents( master_port_count, slave_port_count, pendingInputs,
+    arb->moveEvents( input_port_count, output_port_count, pendingInputs,
 	pendingOutputs, static_cast<uint64_t>( currentCycle ) );
 
     // Send any events which can be sent this cycle
@@ -94,19 +97,47 @@ bool ShogunComponent::tick( Cycle_t currentCycle )
     return false;
 }
 
+void ShogunComponent::init(unsigned int phase) {
+	output->verbose(CALL_INFO, 2, 0, "Executing initialization phase %u...\n", phase);
+
+	for(int i = 0; i < input_port_count; ++i) {
+		Event* initEv = inputLinks[i]->recvUntimedData();
+
+		if( nullptr != initEv ) {
+			ShogunInitEvent* initEv = dynamic_cast<ShogunInitEvent*>( initEv );
+
+			if( nullptr == initEv ) {
+				output->verbose(CALL_INFO, 2, 0, "Found event on input link %d, broadcast to all output links...\n", i);
+
+				for( int j = 0; j < output_port_count; ++j ) {
+					outputLinks[j]->sendUntimedData( initEv );
+				}
+			} else {
+				inputLinks[i]->sendUntimedData( new ShogunInitEvent( input_port_count, output_port_count ) );
+			}
+		}
+	}
+}
+
 void ShogunComponent::populateInputs() {
     output->verbose(CALL_INFO, 4, 0, "Processing input events...\n");
     int count = 0;
 
-    for( int i = 0; i < (master_port_count + slave_port_count); ++i ) {
+    for( int i = 0; i < input_port_count; ++i ) {
 	if( nullptr == pendingInputs[i] ) {
 		// Poll link for next event
-		SST::Event* incoming = links[i]->recv();
+		SST::Event* incoming = inputLinks[i]->recv();
 
 		if( nullptr != incoming ) {
 			ShogunEvent* incomingShogun = dynamic_cast<ShogunEvent*>(incoming);
 
-			if( nullptr != incoming ) {
+			if( nullptr != incomingShogun ) {
+				// If the incoming event doesn't know where its coming from (or what
+				// it needs to be mapped to) then we will automatically set it
+				if( incomingShogun->getSource() == -1 ) {
+					incomingShogun->setSource( i );
+				}
+
 				pendingInputs[i] = incomingShogun;
 				count++;
 			} else {
@@ -120,22 +151,22 @@ void ShogunComponent::populateInputs() {
 }
 
 void ShogunComponent::emitOutputs() {
-    for( int i = 0; i < (master_port_count + slave_port_count); ++i ) {
+    for( int i = 0; i < output_port_count; ++i ) {
 	if( nullptr != pendingOutputs[i] ) {
-		links[i]->send( pendingOutputs[i] );
+		outputLinks[i]->send( pendingOutputs[i] );
 		pendingOutputs[i] = nullptr;
 	}
     }
 }
 
 void ShogunComponent::clearOutputs() {
-    for( int i = 0; i < (master_port_count + slave_port_count); ++i ) {
+    for( int i = 0; i < output_port_count; ++i ) {
 	pendingOutputs[i] = nullptr;
     }
 }
 
 void ShogunComponent::clearInputs() {
-    for( int i = 0; i < (master_port_count + slave_port_count); ++i ) {
+    for( int i = 0; i < input_port_count; ++i ) {
 	pendingInputs[i] = nullptr;
     }
 }

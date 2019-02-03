@@ -53,8 +53,8 @@ public:
     )
 
     SST_ELI_DOCUMENT_PORTS(
-	{ "master_link%(port_count)", "Link to input and output for a master port", {} },
-	{ "slave_link%(port_count)", "Link to input and output for a slave port", {} }
+	{ "input_link%(port_count)", "Link to input ports", {} },
+	{ "output_link%(port_count)", "Link to output ports", {} }
     )
 
     // Optional since there is nothing to document
@@ -63,6 +63,8 @@ public:
 
     ShogunComponent(SST::ComponentId_t id, SST::Params& params);
     ~ShogunComponent();
+
+    virtual void init(unsigned int phase);
 
     void setup() { }
     void finish() { }
@@ -79,10 +81,11 @@ private:
     void populateInputs();
     void emitOutputs();
 
-    int master_port_count;
-    int slave_port_count;
+    int input_port_count;
+    int output_port_count;
 
-    SST::Link** links;
+    SST::Link** inputLinks;
+    SST::Link** outputLinks;
     ShogunEvent** pendingInputs;
     ShogunEvent** pendingOutputs;
     ShogunArbitrator* arb;

@@ -10,7 +10,8 @@ comp_LTLIBRARIES = libshogun.la
 libshogun_la_SOURCES = \
 	shogun.cc \
 	shogun.h \
-	shogun_event.h
+	shogun_event.h \
+	shogun_init_event.h
 
 EXTRA_DIST =
 
