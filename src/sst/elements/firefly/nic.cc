@@ -195,6 +195,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
 
 		std::string useCache = smmParams.find<std::string>("useHostCache","yes");
 		std::string useBus = smmParams.find<std::string>("useBusBridge","yes");
+		std::string useDetailed = smmParams.find<std::string>("useDetailedModel","no");
 
 		if ( isdigit( useCache[0] ) ) {
 			if ( findNid( m_myNodeId, useCache ) ) {
@@ -203,6 +204,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
         		smmParams.insert( "useHostCache",  "no", true );
 			}
 		}
+
 		if ( isdigit( useBus[0] ) ) {
 			if ( findNid( m_myNodeId, useBus ) ) {
         		smmParams.insert( "useBusBridge",  "yes", true );
@@ -211,10 +213,17 @@ Nic::Nic(ComponentId_t id, Params &params) :
 			}
 		}
         
+		if ( isdigit( useDetailed[0] ) ) {
+			if ( findNid( m_myNodeId, useDetailed ) ) {
+        		smmParams.insert( "useDetailedModel",  "yes", true );
+			} else {
+        		smmParams.insert( "useDetailedModel",  "no", true );
+			}
+		}
+        
         std::stringstream tmp;
 		tmp << m_myNodeId;
 		smmParams.insert( "id", tmp.str(), true );
-
 
         tmp.str( std::string() ); tmp.clear();
 
@@ -347,6 +356,9 @@ void Nic::init( unsigned int phase )
         } 
     } 
     m_linkControl->init(phase);
+	if ( m_memoryModel ) {
+		m_memoryModel->init(phase);
+	}
 }
 
 void Nic::handleVnicEvent( Event* ev, int id )
