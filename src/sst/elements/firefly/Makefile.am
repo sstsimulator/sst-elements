@@ -116,6 +116,7 @@ libfirefly_la_SOURCES = \
 	memoryModel/thread.h \
 	memoryModel/cache.h \
 	memoryModel/unit.h \
+	memoryModel/detailedUnit.h \
 	merlinEvent.h \
 	virtNic.h \
 	virtNic.cc \
