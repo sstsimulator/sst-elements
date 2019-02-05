@@ -706,7 +706,7 @@ void Nic::detailedMemOp( Thornhill::DetailedCompute* detailed,
             callback( );
             return 0;
         };
-        detailed->start( gens, foo );
+        detailed->start( gens, foo, NULL );
     }
 }
 
