@@ -50,11 +50,16 @@ void SingleThread::eventHandler( SST::Event* ev )
 }
 
 void SingleThread::start( const std::deque< std::pair< std::string, SST::Params> >& generators,
-                 std::function<int()> finiHandler )
+                 std::function<int()> retHandler, std::function<int()> finiHandler )
 {
     MirandaReqEvent* event = new MirandaReqEvent;
 	
-	event->key = (uint64_t) new Entry( finiHandler );
+	if ( finiHandler ) {
+		retHandler();
+		event->key = (uint64_t) new Entry( finiHandler );
+	} else {	
+		event->key = (uint64_t) new Entry( retHandler );
+	}
 
 	event->generators = generators;
 
