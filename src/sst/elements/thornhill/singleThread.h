@@ -46,7 +46,7 @@ class SingleThread : public DetailedCompute {
 
     virtual void start( const std::deque< 
 						std::pair< std::string, SST::Params > >&, 
-                 std::function<int()> );
+                 std::function<int()>, std::function<int()> );
     virtual bool isConnected() { return ( m_link ); }
 	
 	virtual std::string getModelName() {

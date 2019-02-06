@@ -29,11 +29,12 @@ public:
 	EmberDetailedComputeEvent( Output* output,
                         Thornhill::DetailedCompute& api,
                         std::string& name,
-                        Params& params ) :
+                        Params& params, std::function<int()> fini ) :
         EmberEvent(output),
         m_api(api),
         m_name(name),
-        m_params(params)
+        m_params(params),
+        m_fini(fini)
     {
         m_state = IssueFunctor;
     }  
@@ -53,13 +54,14 @@ public:
 
         std::deque< std::pair< std::string, SST::Params> > tmp;
         tmp.push_back( std::make_pair( m_name, m_params ) );
-        m_api.start( tmp, foo );
+        m_api.start( tmp, foo, m_fini );
     }
 
 protected:
     Thornhill::DetailedCompute&  m_api;
     std::string     m_name;
     Params          m_params;
+    std::function<int()> m_fini;
 };
 
 }
