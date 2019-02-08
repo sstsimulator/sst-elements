@@ -25,7 +25,7 @@
 [PARAM] nic:simpleMemoryModel.printConfig=no
 [PARAM] ember:firefly.hadesSHMEM.verboseLevel=0
 [PARAM] ember:firefly.hadesSHMEM.verboseMask=-1
-[PARAM] ember:verbose=00
+[PARAM] ember:verbose=0
 
 # use the Group node mapper 
 [PARAM] ember:firefly.hadesSHMEM.famNodeMapper.name=firefly.Group_FamNodeMapper
