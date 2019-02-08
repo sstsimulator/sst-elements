@@ -17,13 +17,13 @@ class DetailedUnit : public Unit {
 	enum Op { Read, Write };
 	struct Entry {
 
-		Entry( Op op, MemReq* memReq, SimTime_t qTime, Callback* callback = NULL ) :
-                op(op), memReq(memReq), callback( callback ), qTime(qTime)
+		Entry( Op op, MemReq* memReq, Callback* callback = NULL ) :
+                op(op), memReq(memReq), callback( callback )
             { }
             Op op;
             MemReq* memReq;
             Callback* callback;
-            SimTime_t qTime;
+            SimTime_t issueTime;
         };
 
 	std::vector<uint32_t> m_maxRequestsPending;
@@ -61,6 +61,10 @@ class DetailedUnit : public Unit {
 
 		m_clock_handler = new Clock::Handler<DetailedUnit>(this,&DetailedUnit::clock_handler);
 		m_clock = model.registerClock( freq, m_clock_handler);
+		m_reqCnt.resize(2);
+		m_reqCnt[Read] = model.registerStatistic<uint64_t>( "detailed_num_reads" );
+		m_reqCnt[Write] = model.registerStatistic<uint64_t>( "detailed_num_writes" );
+		m_reqLatency  = model.registerStatistic<uint64_t>( "detailed_req_latency" );
     }
 
     bool store( UnitBase* src, MemReq* req ) {
@@ -71,7 +75,8 @@ class DetailedUnit : public Unit {
 		} else {
 			m_blockedSrc.push( src );
 		}
-		m_pendingQ.push( new Entry( Read, req, m_model.getCurrentSimTimeNano() ) );
+		m_reqCnt[Write]->addData(1);
+		m_pendingQ.push( new Entry( Write, req ) );
 
 		return src;
     }
@@ -84,7 +89,8 @@ class DetailedUnit : public Unit {
 		} else {
 			m_blockedSrc.push( src );
 		}
-		m_pendingQ.push( new Entry( Read, req, m_model.getCurrentSimTimeNano(), callback ) );
+		m_reqCnt[Read]->addData(1);
+		m_pendingQ.push( new Entry( Read, req, callback ) );
 		return src;
 	}
 
@@ -103,6 +109,7 @@ class DetailedUnit : public Unit {
         	m_dbg.fatal(CALL_INFO, -1, "Unable to find request %" PRIu64 " in request map.\n", reqID);
     	} else{
 			Entry* entry = reqFind->second;
+			m_reqLatency->addData( m_model.getCurrentSimTimeNano() - entry->issueTime );
 			m_inFlightAddr.erase( entry->memReq->addr );
 			--m_requestsPending[entry->op];
         	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,DETAILED_MASK,"id=%" PRIu64 ", inflight=%zu blockedSrc=%zu addr=%" PRIx64 " pendingQ=%zu\n",
@@ -135,6 +142,7 @@ class DetailedUnit : public Unit {
 				m_inflight[req->id] = entry; 
         		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,DETAILED_MASK,"id=%" PRIu64 ", addr=%" PRIx64 ", reqPending=%d\n",
 									req->id, req->addr, m_requestsPending[entry->op]);
+				entry->issueTime = m_model.getCurrentSimTimeNano();
 				m_mem_link->sendRequest( req );
 				m_pendingQ.pop();
 				m_inFlightAddr.insert( entry->memReq->addr );
@@ -160,4 +168,6 @@ class DetailedUnit : public Unit {
 	std::queue< Entry* > m_pendingQ;
 	std::map< Interfaces::SimpleMem::Request::id_t, Entry* > m_inflight;
 	std::set< uint64_t > m_inFlightAddr; 
+	std::vector< Statistic<uint64_t>* > m_reqCnt;
+	Statistic<uint64_t>* m_reqLatency;
 };
