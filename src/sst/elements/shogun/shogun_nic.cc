@@ -28,15 +28,31 @@ bool ShogunNIC::initialize(const std::string &portName, const UnitAlgebra& link_
 }
 
 void ShogunNIC::sendInitData(SimpleNetwork::Request *req) {
-	link->sendInitData( req->takePayload() );
-	delete req;
+	ShogunEvent* ev = new ShogunEvent();
+	ev->setSource( netID );
+	ev->setPayload( req );
+
+	link->sendInitData( ev );
 }
 
 SimpleNetwork::Request* ShogunNIC::recvInitData() {
+	printf("recvInitData on netid %5d initEvents has %d events\n", netID, initReqs.size());
+
+	if( ! initReqs.empty() ) {
+		SimpleNetwork::Request* req = initReqs.front();
+		initReqs.erase( initReqs.begin() );
+		return req;
+	} else {
+		return nullptr;
+	}
+
+/*
 	SST::Event* ev = link->recvInitData();
 	SimpleNetwork::Request* req = nullptr;
 
 	while( nullptr != ev ) {
+		printf("recv untimed data on nic %d\n", netID);
+
 		ShogunInitEvent*   initEv = dynamic_cast<ShogunInitEvent*>(ev);
                 ShogunCreditEvent* credEv = dynamic_cast<ShogunCreditEvent*>(ev);
                 ShogunEvent*       shgnEv = dynamic_cast<ShogunEvent*>(ev);
@@ -54,13 +70,14 @@ SimpleNetwork::Request* ShogunNIC::recvInitData() {
 
 		ev = link->recvInitData();
 	}
+*/
 }
 
 bool ShogunNIC::send(SimpleNetwork::Request *req, int vn) {
 	if( netID > -1 ) {
 		if( remote_input_slots > 0 ) {
 			ShogunEvent* newEv = new ShogunEvent( req->dest, netID );
-			newEv->setPayload( req->takePayload() );
+			newEv->setPayload( req );
 
 			link->send( newEv );
 
@@ -92,16 +109,38 @@ SimpleNetwork::Request* ShogunNIC::recv(int vn) {
 
 void ShogunNIC::setup() {}
 void ShogunNIC::init(unsigned int phase) {
-	if( 0 == phase ) {
-		// Let the crossbar know how many slots we have in our incoming queue
-		link->sendInitData( new ShogunInitEvent( -1, -1, -1 ) );
-	}
+//	if( 0 == phase ) {
+//		// Let the crossbar know how many slots we have in our incoming queue
+//		link->sendInitData( new ShogunInitEvent( -1, -1, -1 ) );
+//	}
 
 	SST::Event* ev = link->recvInitData();
-	ShogunInitEvent* initEv = dynamic_cast<ShogunInitEvent*>(ev);
 
-	if( nullptr != initEv ) {
-		reconfigureNIC( initEv );
+	printf("init phase %u on net-id: %5d\n", phase, netID);
+
+	while( nullptr != ev ) {
+		ShogunInitEvent* initEv = dynamic_cast<ShogunInitEvent*>(ev);
+
+		if( nullptr != initEv ) {
+			reconfigureNIC( initEv );
+			delete ev;
+		} else {
+			ShogunCreditEvent* creditEv = dynamic_cast<ShogunCreditEvent*>(ev);
+
+			if( nullptr == creditEv ) {
+				ShogunEvent* shogunEvent = dynamic_cast<ShogunEvent*>(ev);
+
+				if( nullptr == shogunEvent) {
+					fprintf(stderr, "ERROR: UNKNOWN EVENT TYPE AT INIT IN NIC\n");
+				} else {
+					initReqs.push_back( shogunEvent->getPayload() );
+				}
+			} else {
+				delete ev;
+			}
+		}
+
+		ev = link->recvInitData();
 	}
 }
 
@@ -150,17 +189,12 @@ void ShogunNIC::recvLinkEvent( SST::Event* ev ) {
 		ShogunEvent* inEv = dynamic_cast<ShogunEvent*>( ev );
 
 		if( nullptr != inEv ) {
-			SimpleNetwork::Request* req = new SimpleNetwork::Request();
-			req->dest = inEv->getDestination();
-			req->src  = inEv->getSource();
-			req->givePayload( inEv->getPayload() );
-
 			if( reqQ->full() ) {
 				fprintf(stderr, "ERROR: QUEUE IS FULL\n");
 				exit(-1);
 			}
 
-			reqQ->push(req);
+			reqQ->push( inEv->getPayload() );
 		} else {
 			ShogunCreditEvent* creditEv = dynamic_cast<ShogunCreditEvent*>( ev );
 

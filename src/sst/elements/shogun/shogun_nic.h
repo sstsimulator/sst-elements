@@ -188,6 +188,8 @@ private:
 	void recvLinkEvent( SST::Event* ev );
 	void reconfigureNIC( ShogunInitEvent* initEv );
 
+	std::vector<Request*> initReqs;
+
 };
 
 }

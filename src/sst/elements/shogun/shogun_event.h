@@ -3,6 +3,9 @@
 #define _H_SHOGUN_EVENT
 
 #include <sst/core/event.h>
+#include <sst/core/interfaces/simpleNetwork.h>
+
+using namespace SST::Interfaces;
 
 namespace SST {
 namespace Shogun {
@@ -13,20 +16,27 @@ public:
 	ShogunEvent(int dst) :
 		dest(dst) {
 		src = -1;
-		innerEvent = nullptr;
+		req = nullptr;
 	}
 
 	ShogunEvent(int dst, int source) :
 		dest(dst), src(source) {
-		innerEvent = nullptr;
+		req = nullptr;
 	}
 
 	ShogunEvent() :
 		dest(-1), src(-1) {
-		innerEvent = nullptr;
+		req = nullptr;
 	}
 
 	~ShogunEvent() {}
+
+	ShogunEvent* clone() {
+		ShogunEvent* newEv = new ShogunEvent(dest, src);
+		newEv->setPayload( req->clone() );
+
+		return newEv;
+	}
 
 	int getDestination() const {
 		return dest;
@@ -40,19 +50,19 @@ public:
 		src = source;
 	}
 
-	SST::Event* getPayload() {
-		return innerEvent;
+	SimpleNetwork::Request* getPayload() {
+		return req;
 	}
 
-	void setPayload( SST::Event* payload ) {
-		innerEvent = payload;
+	void setPayload( SimpleNetwork::Request* payload ) {
+		req = payload;
 	}
 
         void serialize_order(SST::Core::Serialization::serializer & ser) override {
                 Event::serialize_order( ser );
                 ser & dest;
 		ser & src;
-		ser & innerEvent;
+		ser & req;
         }
 
         ImplementSerializable(SST::Shogun::ShogunEvent);
@@ -60,7 +70,7 @@ public:
 private:
 	int dest;
 	int src;
-	SST::Event* innerEvent;
+	SimpleNetwork::Request* req;
 
 };
 

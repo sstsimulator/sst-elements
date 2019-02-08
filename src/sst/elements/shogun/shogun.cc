@@ -74,6 +74,8 @@ ShogunComponent::ShogunComponent(ComponentId_t id, Params& params) : Component(i
 	inputQueues[i] = new ShogunQueue<ShogunEvent*>( queue_slots );
 	remote_output_slots[i] = 2;
     }
+
+    clearOutputs();
 }
 
 ShogunComponent::~ShogunComponent()
@@ -181,6 +183,9 @@ void ShogunComponent::populateInputs() {
 void ShogunComponent::emitOutputs() {
     for( int i = 0; i < port_count; ++i ) {
 	if( nullptr != pendingOutputs[i] && (remote_output_slots[i] > 0 ) ) {
+		output->verbose(CALL_INFO, 4, 0, "Port %5d has output and remote slots %5d, sending event...\n",
+			i, remote_output_slots[i]);
+
 		links[i]->send( pendingOutputs[i] );
 		pendingOutputs[i] = nullptr;
 	}
