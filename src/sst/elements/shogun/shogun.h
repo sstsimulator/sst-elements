@@ -22,6 +22,7 @@
 #include <sst/core/output.h>
 #include <sst/core/params.h>
 
+#include "shogun_q.h"
 #include "shogun_event.h"
 #include "arb/shogunarb.h"
 
@@ -35,15 +36,14 @@ public:
     SST_ELI_REGISTER_COMPONENT(
         ShogunComponent,
         "shogun",
-        "ShogunComponent",
+        "ShogunXBar",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Shogun Arbitrated Crossbar Component",
         COMPONENT_CATEGORY_PROCESSOR
     )
 
     SST_ELI_DOCUMENT_PARAMS(
-	{ "master_count", "Number of master ports on the crossbar", 0 },
-   	{ "slave_count", "Number of slave ports on the crossbar", 0 },
+	{ "port_count", "Number of ports on the Crossbar", 0 },
 	{ "arbitration", "Select the arbitration scheme", "roundrobin" },
         { "clock",       "Clock Frequency for the crossbar", "1.0GHz" }
     )
@@ -53,8 +53,7 @@ public:
     )
 
     SST_ELI_DOCUMENT_PORTS(
-	{ "input_link%(port_count)", "Link to input ports", {} },
-	{ "output_link%(port_count)", "Link to output ports", {} }
+	{ "port%(port_count)d", "Link to port X", { "shogun.ShogunEvent"} }
     )
 
     // Optional since there is nothing to document
@@ -81,14 +80,16 @@ private:
     void populateInputs();
     void emitOutputs();
 
-    int input_port_count;
-    int output_port_count;
+    int port_count;
+    int queue_slots;
 
-    SST::Link** inputLinks;
-    SST::Link** outputLinks;
-    ShogunEvent** pendingInputs;
+    SST::Link** links;
+
+    ShogunQueue<ShogunEvent*>** inputQueues;
     ShogunEvent** pendingOutputs;
+    int* remote_output_slots;
     ShogunArbitrator* arb;
+
     SST::Output* output;
 
 };

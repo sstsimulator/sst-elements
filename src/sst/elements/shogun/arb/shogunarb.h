@@ -2,6 +2,7 @@
 #ifndef _H_SHOGUN_ARB_H
 #define _H_SHOGUN_ARB_H
 
+#include "shogun_q.h"
 #include "shogun_event.h"
 
 namespace SST {
@@ -13,8 +14,8 @@ public:
 	ShogunArbitrator() {}
 	virtual ~ShogunArbitrator() {}
 
-	virtual void moveEvents( const int master_port_count, const int slave_port_count,
-		ShogunEvent** inputEvents, ShogunEvent** outputEvents, uint64_t cycle ) = 0;
+	virtual void moveEvents( const int port_count,
+		ShogunQueue<ShogunEvent*>** inputQueues, ShogunEvent** outputEvents, uint64_t cycle ) = 0;
 };
 
 }

@@ -11,35 +11,45 @@ class ShogunInitEvent : public SST::Event {
 
 public:
 	ShogunInitEvent() :
-		input_port_count(0),
-		output_port_count(0) {}
+		port_count(01),
+		netID(-1),
+		queue_slots(-1) {}
 
-	ShogunInitEvent(const int inputPortCount,
-		const int outputPortCount) :
-		input_port_count(inputPortCount),
-		output_port_count(outputPortCount) {}
+	ShogunInitEvent(
+		const int portCnt,
+		const int netid,
+		const int qSlot ) :
+		port_count(portCnt),
+		netID(netid),
+		queue_slots(qSlot) {}
 
 	~ShogunInitEvent() {}
 
-	int getInputPortCount() const {
-		return input_port_count;
+	int getPortCount() const {
+		return port_count;
 	}
 
-	int getOutputPortCount() const {
-		return output_port_count;
+	int getNetworkID() const {
+		return netID;
+	}
+
+	int getQueueSlotCount() const {
+		return queue_slots;
 	}
 
 	void serialize_order(SST::Core::Serialization::serializer & ser) override {
 		Event::serialize_order( ser );
-		ser & input_port_count;
-		ser & output_port_count;
-        }
+		ser & port_count;
+		ser & netID;
+		ser & queue_slots;
+       }
 
 	ImplementSerializable(SST::Shogun::ShogunInitEvent);
 
 private:
-	int input_port_count;
-	int output_port_count;
+	int port_count;
+	int netID;
+	int queue_slots;
 
 };
 

@@ -40,11 +40,11 @@ public:
 		src = source;
 	}
 
-	SST::Event* getInnerEvent() {
+	SST::Event* getPayload() {
 		return innerEvent;
 	}
 
-	void setEventPayload( SST::Event* payload ) {
+	void setPayload( SST::Event* payload ) {
 		innerEvent = payload;
 	}
 

@@ -11,7 +11,9 @@ libshogun_la_SOURCES = \
 	shogun.cc \
 	shogun.h \
 	shogun_event.h \
-	shogun_init_event.h
+	shogun_init_event.h \
+	shogun_nic.cc \
+	shogun_nic.h
 
 EXTRA_DIST =
 
