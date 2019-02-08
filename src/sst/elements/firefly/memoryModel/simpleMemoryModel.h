@@ -70,6 +70,9 @@ public:
         { "mem_num_loads",                     "total number of loads", "count", 1},
         { "mem_num_stores",                    "total number of stores", "count", 1},
         { "mem_addrs",                         "addresses accesed", "value", 1},
+        { "detailed_num_reads",                "total number of loads", "count", 1},
+        { "detailed_num_writes",               "total number of stores", "count", 1},
+        { "detailed_req_latency",              "Running total of all latency for all requests", "count", 1},
 	)
 
 
