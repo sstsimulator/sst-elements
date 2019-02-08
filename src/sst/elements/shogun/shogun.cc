@@ -51,11 +51,16 @@ ShogunComponent::ShogunComponent(ComponentId_t id, Params& params) : Component(i
     char* linkName = new char[256];
 
     for( int i = 0; i < port_count; ++i ) {
-	sprintf(linkName, "link%d", i);
-	output->verbose(CALL_INFO, 1, 0, "Creating link %s ...\n", linkName);
+	sprintf(linkName, "port%d", i);
+	output->verbose(CALL_INFO, 1, 0, "Configuring port %s ...\n", linkName);
 
 	links[i] = configureLink(linkName);
-//	links[i]->setPolling();
+
+	if( nullptr == links[i] ) {
+		output->fatal(CALL_INFO, -1, "Failed to configure link on port %d\n", i);
+	}
+
+	links[i]->setPolling();
     }
 
     delete[] linkName;
@@ -101,21 +106,37 @@ bool ShogunComponent::tick( Cycle_t currentCycle )
 void ShogunComponent::init(unsigned int phase) {
 	output->verbose(CALL_INFO, 2, 0, "Executing initialization phase %u...\n", phase);
 
-	for(int i = 0; i < port_count; ++i) {
-		Event* initEv = links[i]->recvUntimedData();
+	if( 0 == phase ) {
+		for( int i = 0; i < port_count; ++i ) {
+			links[i]->sendUntimedData( new ShogunInitEvent( port_count, i, inputQueues[i]->capacity() ) );
+		}
+	}
 
-		if( nullptr != initEv ) {
-			ShogunInitEvent* initEv = dynamic_cast<ShogunInitEvent*>( initEv );
+	for( int i = 0; i < port_count; ++i ) {
+		SST::Event* ev = links[i]->recvUntimedData();
 
-			if( nullptr == initEv ) {
-				output->verbose(CALL_INFO, 2, 0, "Found event on input link %d, broadcast to all output links...\n", i);
+		while( nullptr != ev ) {
 
-				for( int j = 0; j < port_count; ++j ) {
-					links[j]->sendUntimedData( initEv );
+			if( nullptr != ev ) {
+				ShogunInitEvent* initEv     = dynamic_cast<ShogunInitEvent*>(ev);
+				ShogunCreditEvent* creditEv = dynamic_cast<ShogunCreditEvent*>(ev);
+
+				// if the event is not a ShogunInit then we want to broadcast it out
+				// if it is an init event, just drop it
+				if( ( nullptr == initEv ) && ( nullptr == creditEv )) {
+
+					for( int j = 0; j < port_count; ++j ) {
+						if( i != j ) {
+							printf("sending untimed data from %d to %d\n", i, j);
+							links[j]->sendUntimedData( ev->clone() );
+						}
+					}
+				} else {
+					delete ev;
 				}
-			} else {
-				links[i]->sendUntimedData( new ShogunInitEvent( port_count, i, inputQueues[i]->capacity() ) );
 			}
+
+			ev = links[i]->recvUntimedData();
 		}
 	}
 }

@@ -1,4 +1,5 @@
 
+#include <sst_config.h>
 #include <sst/core/interfaces/simpleNetwork.h>
 
 #include "shogun_event.h"
@@ -8,7 +9,7 @@
 
 using namespace SST::Shogun;
 
-ShogunNIC::ShogunNIC( SST::Component* component ) :
+ShogunNIC::ShogunNIC( SST::Component* component, Params &params ) :
 		SimpleNetwork( component ), netID(-1) {
 
 		//TODO: output = new ...
@@ -27,11 +28,32 @@ bool ShogunNIC::initialize(const std::string &portName, const UnitAlgebra& link_
 }
 
 void ShogunNIC::sendInitData(SimpleNetwork::Request *req) {
-
+	link->sendInitData( req->takePayload() );
+	delete req;
 }
 
 SimpleNetwork::Request* ShogunNIC::recvInitData() {
+	SST::Event* ev = link->recvInitData();
+	SimpleNetwork::Request* req = nullptr;
 
+	while( nullptr != ev ) {
+		ShogunInitEvent*   initEv = dynamic_cast<ShogunInitEvent*>(ev);
+                ShogunCreditEvent* credEv = dynamic_cast<ShogunCreditEvent*>(ev);
+                ShogunEvent*       shgnEv = dynamic_cast<ShogunEvent*>(ev);
+
+		if(     ( nullptr != initEv ) &&
+                        ( nullptr != credEv ) &&
+                        ( nullptr != shgnEv ) ) {
+
+			req = new SimpleNetwork::Request();
+			req->dest = netID;
+			req->givePayload( ev );
+
+			return req;
+		}
+
+		ev = link->recvInitData();
+	}
 }
 
 bool ShogunNIC::send(SimpleNetwork::Request *req, int vn) {
@@ -72,7 +94,14 @@ void ShogunNIC::setup() {}
 void ShogunNIC::init(unsigned int phase) {
 	if( 0 == phase ) {
 		// Let the crossbar know how many slots we have in our incoming queue
-		link->send( new ShogunInitEvent( -1, -1, reqQ->capacity() ) );
+		link->sendInitData( new ShogunInitEvent( -1, -1, -1 ) );
+	}
+
+	SST::Event* ev = link->recvInitData();
+	ShogunInitEvent* initEv = dynamic_cast<ShogunInitEvent*>(ev);
+
+	if( nullptr != initEv ) {
+		reconfigureNIC( initEv );
 	}
 }
 
@@ -96,7 +125,16 @@ void ShogunNIC::setNotifyOnSend(SimpleNetwork::HandlerBase* functor) {
 }
 
 bool ShogunNIC::isNetworkInitialized() const {
-	return ( netID > -1 );
+	printf("Is network ready? I am id %5d\n", netID );
+	const bool netReady = (netID > -1);
+
+	if( netReady ) {
+		printf("network is ready!\n");
+	} else {
+		printf("network is NOT ready\n");
+	}
+
+	return netReady;
 }
 
 SimpleNetwork::nid_t ShogunNIC::getEndpointID() const {
@@ -133,15 +171,26 @@ void ShogunNIC::recvLinkEvent( SST::Event* ev ) {
 				ShogunInitEvent* initEv = dynamic_cast<ShogunInitEvent*>( ev );
 
 				if( nullptr != initEv ) {
-					remote_input_slots = initEv->getQueueSlotCount();
-					netID = initEv->getNetworkID();
-					port_count = initEv->getPortCount();
-
-					printf("Shogun: network-id: %5d configured with %5d slots total-ports: %5d\n", netID, remote_input_slots, port_count );
+					reconfigureNIC( initEv );
 				} else {
 					fprintf(stderr, "UNKNOWN EVENT TYPE RECV\n");
 					exit(-1);
 				}
 			}
 		}
+}
+
+void ShogunNIC::reconfigureNIC( ShogunInitEvent* initEv ) {
+	remote_input_slots = initEv->getQueueSlotCount();
+
+        if( nullptr != reqQ ) {
+	        delete reqQ;
+        }
+
+        reqQ = new ShogunQueue< SimpleNetwork::Request* >( initEv->getQueueSlotCount() );
+
+        netID = initEv->getNetworkID();
+        port_count = initEv->getPortCount();
+	printf("Shogun: network-id: %5d configured with %5d slots total-ports: %5d\n", netID, remote_input_slots, port_count );
+
 }

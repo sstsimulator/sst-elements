@@ -52,8 +52,7 @@ public:
                 Event::serialize_order( ser );
                 ser & dest;
 		ser & src;
-
-		//TODO: serialize innerEvent
+		ser & innerEvent;
         }
 
         ImplementSerializable(SST::Shogun::ShogunEvent);

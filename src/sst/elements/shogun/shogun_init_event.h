@@ -23,8 +23,6 @@ public:
 		netID(netid),
 		queue_slots(qSlot) {}
 
-	~ShogunInitEvent() {}
-
 	int getPortCount() const {
 		return port_count;
 	}

@@ -2,6 +2,7 @@
 #ifndef _H_SHOGUN_NIC
 #define _H_SHOGUN_NIC
 
+#include <sst/core/elementinfo.h>
 #include <sst/core/link.h>
 #include <sst/core/unitAlgebra.h>
 #include <sst/core/interfaces/simpleNetwork.h>
@@ -15,10 +16,18 @@ using namespace SST::Interfaces;
 namespace SST {
 namespace Shogun {
 
-class ShogunNIC : SST::Interfaces::SimpleNetwork {
+class ShogunNIC : public SST::Interfaces::SimpleNetwork {
 
 public:
-   	ShogunNIC( SST::Component* component );
+	SST_ELI_REGISTER_SUBCOMPONENT(
+		ShogunNIC,
+		"shogun",
+		"ShogunNIC",
+		SST_ELI_ELEMENT_VERSION(1,0,0),
+		"Shogun X-Bar Interface for Memory Crossbars",
+		"SST::Interfaces::SimpleNetwork");
+
+   	ShogunNIC( SST::Component* component, Params &params );
 
     /** Second half of building the interface.
         Initialize network interface
@@ -162,7 +171,7 @@ public:
      * initialized.
      * @return Link bandwidth of associated link
      */
-    virtual const UnitAlgebra& getLinkBW() const = 0;
+    virtual const UnitAlgebra& getLinkBW() const;
 
 private:
 	SST::Output* output;
@@ -177,6 +186,7 @@ private:
 	int port_count;
 
 	void recvLinkEvent( SST::Event* ev );
+	void reconfigureNIC( ShogunInitEvent* initEv );
 
 };
 

@@ -12,6 +12,7 @@ public:
 	ShogunQueue(const int buffSize) :
 		buffMax(buffSize) {
 
+		printf("Create a queue with buffer size %d\n", buffSize);
 		queue = new T[buffSize];
 		clear();
 	}
