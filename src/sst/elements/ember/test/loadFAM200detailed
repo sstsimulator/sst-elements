@@ -23,6 +23,8 @@
 [PARAM] nic:simpleMemoryModel.useBusBridge=yes
 [PARAM] nic:simpleMemoryModel.useHostCache=yes
 [PARAM] nic:simpleMemoryModel.printConfig=no
+[PARAM] nic:simpleMemoryModel.useDetailedModel=1
+
 [PARAM] ember:firefly.hadesSHMEM.verboseLevel=0
 [PARAM] ember:firefly.hadesSHMEM.verboseMask=-1
 [PARAM] ember:verbose=0
@@ -44,7 +46,7 @@
 [PARAM] ember:firefly.hadesSHMEM.famAddrMapper.blockSize=1024
 
 # totalBYtes should be <= number of FAM nodes * memory per FAM node, blockSize specifies size of each get
-[MOTIF] ShmemFAM_Get2 totalBytes=200MiB getLoop=1 backed=no blockSize=4096
+[MOTIF] ShmemFAM_Get2 totalBytes=4MiB getLoop=1 backed=no blockSize=4096 detailedCompute=1
 
 [JOB_ID] 11
 # 100 FAM nodes starting at network node 0, with an interval of 2
