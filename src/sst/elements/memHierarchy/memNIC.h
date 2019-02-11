@@ -157,6 +157,7 @@ class MemNIC : public MemNICBase {
 public:
 /* Element Library Info */
 #define MEMNIC_ELI_PARAMS MEMNICBASE_ELI_PARAMS, \
+        { "network_link_control",        "(string) Link control for network", "merlin.linkcontrol" },\
         { "network_bw",                  "(string) Network bandwidth", "80GiB/s" },\
         { "network_input_buffer_size",   "(string) Size of input buffer", "1KiB"},\
         { "network_output_buffer_size",  "(string) Size of output buffer", "1KiB"},\
