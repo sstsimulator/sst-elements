@@ -28,6 +28,7 @@ public:
 		"SST::Interfaces::SimpleNetwork");
 
    	ShogunNIC( SST::Component* component, Params &params );
+	~ShogunNIC();
 
     /** Second half of building the interface.
         Initialize network interface
@@ -189,7 +190,6 @@ private:
 	void reconfigureNIC( ShogunInitEvent* initEv );
 
 	std::vector<Request*> initReqs;
-
 };
 
 }

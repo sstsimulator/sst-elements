@@ -68,6 +68,8 @@ public:
     void setup() { }
     void finish() { }
 
+    void printStatus();
+
 private:
     ShogunComponent();  // for serialization only
     ShogunComponent(const ShogunComponent&); // do not implement

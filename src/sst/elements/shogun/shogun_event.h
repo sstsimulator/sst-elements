@@ -29,7 +29,11 @@ public:
 		req = nullptr;
 	}
 
-	~ShogunEvent() {}
+	~ShogunEvent() {
+		if( nullptr != req ) {
+			delete req;
+		}
+	}
 
 	ShogunEvent* clone() override {
 		ShogunEvent* newEv = new ShogunEvent(dest, src);
@@ -52,6 +56,10 @@ public:
 
 	SimpleNetwork::Request* getPayload() {
 		return req;
+	}
+
+	void unlinkPayload() {
+		req = nullptr;
 	}
 
 	void setPayload( SimpleNetwork::Request* payload ) {

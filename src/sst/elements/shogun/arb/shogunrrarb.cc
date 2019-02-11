@@ -16,12 +16,14 @@ void ShogunRoundRobinArbitrator::moveEvents( const int port_count,
                 ShogunEvent** outputEvents,
                 uint64_t cycle ) {
 
+	output->verbose(CALL_INFO, 4, 0, "BEGIN: Arbitration --------------------------------------------------\n");
+	output->verbose(CALL_INFO, 4, 0, "-> lastStart %d\n", lastStart);
+
 	int currentPort = lastStart;
 
 	for( int i = 0; i < port_count; ++i ) {
-		printf("Arbitrator: current-port: %d\n", currentPort);
-		printf("-> pending events? %s\n", inputQueues[currentPort]->empty() ?
-			"no" : "yes");
+		output->verbose(CALL_INFO, 4, 0, "-> process port %d, has-events? %s\n", currentPort,
+			inputQueues[currentPort]->empty() ? "no" : "yes");
 
 		if( inputQueues[currentPort]->empty() ) {
 
@@ -29,16 +31,14 @@ void ShogunRoundRobinArbitrator::moveEvents( const int port_count,
 
 		ShogunEvent* pendingEv = inputQueues[currentPort]->peek();
 
-		printf("-> attempting to send to: %d\n", pendingEv->getDestination());
-		printf("-> remote empty? %s\n", outputEvents[pendingEv->getDestination()] == nullptr ?
-			"yes" : "no");
+			output->verbose(CALL_INFO, 4, 0, "  -> attempting send to: %d, remote status: %s\n",
+				pendingEv->getDestination(),
+				outputEvents[pendingEv->getDestination()] == nullptr ? "empty" : "full");
 
 		if( outputEvents[pendingEv->getDestination()] == nullptr ) {
-			printf("-> moving event, pop from queue\n");
+			output->verbose(CALL_INFO, 4, 0, "  -> moving event to remote queue\n");
 			pendingEv = inputQueues[currentPort]->pop();
 			outputEvents[pendingEv->getDestination()] = pendingEv;
-		} else {
-			printf("-> not moving event, remote dest is busy.\n");
 		}
 		}
 
@@ -47,4 +47,6 @@ void ShogunRoundRobinArbitrator::moveEvents( const int port_count,
 	}
 
 	lastStart = nextPort(port_count, lastStart);
+
+	output->verbose(CALL_INFO, 4, 0, "END: Arbitration ----------------------------------------------------\n");
 }
