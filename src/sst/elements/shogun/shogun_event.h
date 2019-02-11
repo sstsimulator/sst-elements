@@ -31,7 +31,7 @@ public:
 
 	~ShogunEvent() {}
 
-	ShogunEvent* clone() {
+	ShogunEvent* clone() override {
 		ShogunEvent* newEv = new ShogunEvent(dest, src);
 		newEv->setPayload( req->clone() );
 

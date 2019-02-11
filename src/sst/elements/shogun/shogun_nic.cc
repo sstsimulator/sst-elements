@@ -21,7 +21,8 @@ bool ShogunNIC::initialize(const std::string &portName, const UnitAlgebra& link_
                             int vns, const UnitAlgebra& in_buf_size,
                             const UnitAlgebra& out_buf_size) {
 
-		link = configureLink( portName, new Event::Handler<ShogunNIC>(this, &ShogunNIC::recvLinkEvent) );
+		link = configureLink( portName, "1ps", 
+			new Event::Handler<ShogunNIC>(this, &ShogunNIC::recvLinkEvent) );
 //		link->sendUntimedData( new ShogunInitEvent() );
 
 		return ( nullptr != link );
@@ -45,43 +46,26 @@ SimpleNetwork::Request* ShogunNIC::recvInitData() {
 	} else {
 		return nullptr;
 	}
-
-/*
-	SST::Event* ev = link->recvInitData();
-	SimpleNetwork::Request* req = nullptr;
-
-	while( nullptr != ev ) {
-		printf("recv untimed data on nic %d\n", netID);
-
-		ShogunInitEvent*   initEv = dynamic_cast<ShogunInitEvent*>(ev);
-                ShogunCreditEvent* credEv = dynamic_cast<ShogunCreditEvent*>(ev);
-                ShogunEvent*       shgnEv = dynamic_cast<ShogunEvent*>(ev);
-
-		if(     ( nullptr != initEv ) &&
-                        ( nullptr != credEv ) &&
-                        ( nullptr != shgnEv ) ) {
-
-			req = new SimpleNetwork::Request();
-			req->dest = netID;
-			req->givePayload( ev );
-
-			return req;
-		}
-
-		ev = link->recvInitData();
-	}
-*/
 }
 
 bool ShogunNIC::send(SimpleNetwork::Request *req, int vn) {
 	if( netID > -1 ) {
+		printf("send, netID=%d remote slot count: %d\n", netID, remote_input_slots);
+
 		if( remote_input_slots > 0 ) {
 			ShogunEvent* newEv = new ShogunEvent( req->dest, netID );
+			req->src = netID;
 			newEv->setPayload( req );
 
-			link->send( newEv );
+			printf("sending now...\n");
+			//TimeConverter* tc = new TimeConverter(0);
+			//link->send( 0, tc, newEv );
+			link->send(newEv);
 
-			(*onSendFunctor)( 0 );
+			if( nullptr != onSendFunctor ) {
+				(*onSendFunctor)( 0 );
+			}
+
 			remote_input_slots--;
 		} else {
 			fprintf(stderr, "called send but no free slots on remote send side.\n");
@@ -101,6 +85,7 @@ SimpleNetwork::Request* ShogunNIC::recv(int vn) {
 	if( reqQ->empty() ) {
 		return nullptr;
 	} else {
+		printf("net-id: %d recv event from the network\n", netID);
 		SimpleNetwork::Request* req = reqQ->pop();
 		link->send( new ShogunCreditEvent() );
 		return req;
@@ -189,11 +174,14 @@ void ShogunNIC::recvLinkEvent( SST::Event* ev ) {
 		ShogunEvent* inEv = dynamic_cast<ShogunEvent*>( ev );
 
 		if( nullptr != inEv ) {
+			printf("recvLinkEvent, netID=%d, q_count=%d\n", netID, reqQ->count());
+
 			if( reqQ->full() ) {
 				fprintf(stderr, "ERROR: QUEUE IS FULL\n");
 				exit(-1);
 			}
 
+			printf("pushing payload...\n");
 			reqQ->push( inEv->getPayload() );
 		} else {
 			ShogunCreditEvent* creditEv = dynamic_cast<ShogunCreditEvent*>( ev );

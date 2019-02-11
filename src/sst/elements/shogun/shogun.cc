@@ -162,6 +162,7 @@ void ShogunComponent::populateInputs() {
 					incomingShogun->setSource( i );
 				}
 
+				printf("incoming shogun->push()\n");
 				inputQueues[i]->push( incomingShogun );
 				count++;
 			} else {
@@ -181,15 +182,27 @@ void ShogunComponent::populateInputs() {
 }
 
 void ShogunComponent::emitOutputs() {
-    for( int i = 0; i < port_count; ++i ) {
-	if( nullptr != pendingOutputs[i] && (remote_output_slots[i] > 0 ) ) {
-		output->verbose(CALL_INFO, 4, 0, "Port %5d has output and remote slots %5d, sending event...\n",
-			i, remote_output_slots[i]);
+    printf("emitOutputs begin --------------------------\n");
 
-		links[i]->send( pendingOutputs[i] );
-		pendingOutputs[i] = nullptr;
+    for( int i = 0; i < port_count; ++i ) {
+	if( nullptr != pendingOutputs[i] ) {
+		printf("output for %d is not null, remote slots %d\n", i, remote_output_slots[i]);
+		if( ( remote_output_slots[i] > 0 ) ) {
+			output->verbose(CALL_INFO, 4, 0, "Port %5d has output and remote slots %5d, sending event...\n",
+				i, remote_output_slots[i]);
+
+			links[i]->send( pendingOutputs[i] );
+			pendingOutputs[i] = nullptr;
+			remote_output_slots[i]--;
+		} else {
+			printf("remote_output_slots for %d are %d, will not send this cycle\n", i, remote_output_slots[i]);
+		}
+	} else {
+		printf("outputs for %d are empty, no action needed\n", i);
 	}
     }
+
+    printf("emitOutputs end ----------------------------\n");
 }
 
 void ShogunComponent::clearOutputs() {

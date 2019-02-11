@@ -11,20 +11,24 @@ namespace Shogun {
 class ShogunRoundRobinArbitrator : public ShogunArbitrator {
 
 public:
-	ShogunRoundRobinArbitrator() {
-		lastStart = 0;
-	}
-
-	~ShogunRoundRobinArbitrator() {
-	}
+	ShogunRoundRobinArbitrator();
+	~ShogunRoundRobinArbitrator();
 
 	void moveEvents( const int port_count,
-                ShogunQueue<ShogunEvent*>** inputQueues, ShogunEvent** outputEvents, uint64_t cycle ) override {
-
-        }
+                ShogunQueue<ShogunEvent*>** inputQueues,
+		ShogunEvent** outputEvents,
+		uint64_t cycle ) override;
 
 private:
 	int lastStart;
+
+	int nextPort(const int port_count, const int i) const {
+		return (i+1) % port_count;
+	}
+
+	int convertToPort(const int port_count, const int port) const {
+		return port % port_count;
+	}
 
 };
 

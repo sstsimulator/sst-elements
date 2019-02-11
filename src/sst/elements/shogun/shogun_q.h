@@ -31,7 +31,8 @@ public:
 	}
 
 	bool full() const {
-		return (head == nextTail());
+		return ( (tail == buffMax && head == 0) ||
+			 ( tail == head - 1 ) );
 	}
 
 	bool hasNext() const {
@@ -59,6 +60,18 @@ public:
 		return buffMax;
 	}
 
+	int count() const {
+		int entries = 0;
+
+		int head_copy = head;
+		while( head_copy != tail ) {
+			entries++;
+			head_copy = (head_copy + 1) % buffMax;
+		}
+
+		return entries;
+	}
+
 private:
 	int head;
 	int tail;
@@ -78,7 +91,7 @@ private:
 	}
 
 	int nextTail() const {
-		return (tail + 1)% buffMax;
+		return (tail + 1) % buffMax;
 	}
 
 };
