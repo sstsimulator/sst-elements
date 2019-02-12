@@ -175,12 +175,6 @@ void ShogunComponent::populateInputs() {
 			ShogunEvent* incomingShogun = dynamic_cast<ShogunEvent*>(incoming);
 
 			if( nullptr != incomingShogun ) {
-				// If the incoming event doesn't know where its coming from (or what
-				// it needs to be mapped to) then we will automatically set it
-				if( incomingShogun->getSource() == -1 ) {
-					incomingShogun->setSource( i );
-				}
-
 				output->verbose(CALL_INFO, 4, 0, "  -> recv from: %d dest: %d\n",
 					incomingShogun->getPayload()->src,
 					incomingShogun->getPayload()->dest);
@@ -213,12 +207,14 @@ void ShogunComponent::emitOutputs() {
 	output->verbose(CALL_INFO, 4, 0, "-> Processing port %d:\n", i);
 
 	if( nullptr != pendingOutputs[i] ) {
-		output->verbose(CALL_INFO, 4, 0, "  -> output is not null, remote-slot-count: %d\n", remote_output_slots[i]);
+		output->verbose(CALL_INFO, 4, 0, "  -> output is not null, remote-slot-count: %d, src=%5d\n", remote_output_slots[i],
+			pendingOutputs[i]->getSource());
 
 		if( ( remote_output_slots[i] > 0 ) ) {
 			output->verbose(CALL_INFO, 4, 0, "    -> sending event (has entry and free %d slots)\n", remote_output_slots[i]);
 
 			links[i]->send( pendingOutputs[i] );
+			links[ pendingOutputs[i]->getSource() ]->send( new ShogunCreditEvent() );
 			pendingOutputs[i] = nullptr;
 			remote_output_slots[i]--;
 		} else {

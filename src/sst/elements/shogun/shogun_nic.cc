@@ -17,6 +17,9 @@ ShogunNIC::ShogunNIC( SST::Component* component, Params &params ) :
 		output = new SST::Output("ShogunNIC-Startup ", 16, 0, Output::STDOUT);
 		reqQ = nullptr;
 		remote_input_slots = -1;
+
+		onSendFunctor = nullptr;
+		onRecvFunctor = nullptr;
 }
 
 ShogunNIC::~ShogunNIC() {
@@ -33,6 +36,7 @@ bool ShogunNIC::initialize(const std::string &portName, const UnitAlgebra& link_
 		new Event::Handler<ShogunNIC>(this, &ShogunNIC::recvLinkEvent) );
 
 	output->verbose(CALL_INFO, 4, 0, "-> result: %s\n", (nullptr == link) ? "null, not-configured" : "configure successful");
+
 	return ( nullptr != link );
 }
 
@@ -79,7 +83,7 @@ bool ShogunNIC::send(SimpleNetwork::Request *req, int vn) {
 			}
 
 			remote_input_slots--;
-			output->verbose(CALL_INFO, 8, 0, "-> sent, remote slots now %5d\n", remote_input_slots);
+			output->verbose(CALL_INFO, 8, 0, "-> sent, remote slots now %5d, dest=%5d\n", remote_input_slots, req->dest);
 
 			return true;
 		} else {
@@ -156,6 +160,8 @@ void ShogunNIC::complete(unsigned int UNUSED(phase)) {}
 void ShogunNIC::finish() {}
 
 bool ShogunNIC::spaceToSend(int vn, int num_bits) {
+	output->verbose(CALL_INFO, 4, 0, "Space to send? %s\n",
+		(remote_input_slots > 0) ? "yes" : "no");
 	return (remote_input_slots > 0);
 }
 
@@ -195,6 +201,8 @@ const UnitAlgebra& ShogunNIC::getLinkBW() const {
 }
 
 void ShogunNIC::recvLinkEvent( SST::Event* ev ) {
+		output->verbose(CALL_INFO, 8, 0, "RECV-LINK-EVENT CALLED\n");
+
 		ShogunEvent* inEv = dynamic_cast<ShogunEvent*>( ev );
 
 		if( nullptr != inEv ) {
@@ -208,7 +216,7 @@ void ShogunNIC::recvLinkEvent( SST::Event* ev ) {
 			reqQ->push( inEv->getPayload() );
 
 			if( nullptr != onRecvFunctor ) {
-				if( ! (*onRecvFunctor)(0) ) {
+				if( ! (*onRecvFunctor)( inEv->getPayload()->vn ) ) {
  					onRecvFunctor = nullptr;
 				}
 			}
@@ -230,6 +238,8 @@ void ShogunNIC::recvLinkEvent( SST::Event* ev ) {
 
 			delete ev;
 		}
+
+		output->verbose(CALL_INFO, 8, 0, "RECV-LINK-EVENT CALL END\n");
 }
 
 void ShogunNIC::reconfigureNIC( ShogunInitEvent* initEv ) {
