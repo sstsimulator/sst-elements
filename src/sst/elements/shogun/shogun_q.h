@@ -22,17 +22,17 @@ public:
 	}
 
 	bool empty() const {
-		return head == tail;
+		return size == 0;
 	}
 
 	void clear() {
 		head = 0;
 		tail = 0;
+		size = 0;
 	}
 
 	bool full() const {
-		return ( (tail == buffMax && head == 0) ||
-			 ( tail == head - 1 ) );
+		return (size == buffMax);
 	}
 
 	bool hasNext() const {
@@ -48,12 +48,14 @@ public:
 		T item = queue[head];
 		incHead();
 
+		size--;
 		return item;
 	}
 
 	void push(T newItem) {
 		queue[tail] = newItem;
 		incTail();
+		size++;
 	}
 
 	int capacity() const {
@@ -61,20 +63,13 @@ public:
 	}
 
 	int count() const {
-		int entries = 0;
-
-		int head_copy = head;
-		while( head_copy != tail ) {
-			entries++;
-			head_copy = (head_copy + 1) % buffMax;
-		}
-
-		return entries;
+		return size;
 	}
 
 private:
 	int head;
 	int tail;
+	int size;;
 	T* queue;
 	const int buffMax;
 

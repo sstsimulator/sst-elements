@@ -17,13 +17,14 @@ void ShogunRoundRobinArbitrator::moveEvents( const int port_count,
                 uint64_t cycle ) {
 
 	output->verbose(CALL_INFO, 4, 0, "BEGIN: Arbitration --------------------------------------------------\n");
-	output->verbose(CALL_INFO, 4, 0, "-> lastStart %d\n", lastStart);
+	output->verbose(CALL_INFO, 4, 0, "-> start: %d\n", lastStart);
 
 	int currentPort = lastStart;
 
 	for( int i = 0; i < port_count; ++i ) {
-		output->verbose(CALL_INFO, 4, 0, "-> process port %d, has-events? %s\n", currentPort,
-			inputQueues[currentPort]->empty() ? "no" : "yes");
+		auto nextQ = inputQueues[currentPort];
+		output->verbose(CALL_INFO, 4, 0, "-> processing port: %d, event-count: %d\n", currentPort,
+			nextQ->count());			
 
 		if( inputQueues[currentPort]->empty() ) {
 
@@ -48,5 +49,6 @@ void ShogunRoundRobinArbitrator::moveEvents( const int port_count,
 
 	lastStart = nextPort(port_count, lastStart);
 
+	output->verbose(CALL_INFO, 4, 0, "-> next-start: %d\n", lastStart);
 	output->verbose(CALL_INFO, 4, 0, "END: Arbitration ----------------------------------------------------\n");
 }
