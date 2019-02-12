@@ -12,7 +12,7 @@ memory_mb = 1024
 # Define the simulation components
 comp_cpu0 = sst.Component("cpu0", "miranda.BaseCPU")
 comp_cpu0.addParams({
-	"verbose" : 4,
+	"verbose" : 0,
 	"generator" : "miranda.GUPSGenerator",
 	"generatorParams.verbose" : 0,
 	"generatorParams.count" : 10000,
@@ -23,7 +23,7 @@ comp_cpu0.addParams({
 
 comp_cpu1 = sst.Component("cpu1", "miranda.BaseCPU")
 comp_cpu1.addParams({
-	"verbose" : 4,
+	"verbose" : 0,
 	"generator" : "miranda.GUPSGenerator",
 	"generatorParams.verbose" : 0,
 	"generatorParams.count" : 10000,
@@ -38,6 +38,7 @@ comp_cpu1.enableAllStatistics({"type":"sst.AccumulatorStatistic"})
 
 comp_l1cache0 = sst.Component("l1cache0", "memHierarchy.Cache")
 comp_l1cache0.addParams({
+      "maxRequestDelay" : 100000,
       "access_latency_cycles" : "2",
       "cache_frequency" : "2 Ghz",
       "replacement_policy" : "lru",
@@ -52,6 +53,7 @@ comp_l1cache0.addParams({
 
 comp_l1cache1 = sst.Component("l1cache1", "memHierarchy.Cache")
 comp_l1cache1.addParams({
+      "maxRequestDelay" : 100000,
       "access_latency_cycles" : "2",
       "cache_frequency" : "2 Ghz",
       "replacement_policy" : "lru",
@@ -122,6 +124,8 @@ shogun_xbar = sst.Component("shogunxbar", "shogun.ShogunXBar")
 shogun_xbar.addParams({
 	"port_count" : 4
 })
+
+shogun_xbar.enableAllStatistics({"type":"sst.AccumulatorStatistic"})
 
 # Define the simulation links
 link_cpu_cache_link0 = sst.Link("link_cpu_cache_link0")

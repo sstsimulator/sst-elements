@@ -25,6 +25,7 @@
 #include "shogun_q.h"
 #include "shogun_event.h"
 #include "arb/shogunarb.h"
+#include "shogun_stat_bundle.h"
 
 namespace SST {
 namespace Shogun {
@@ -32,7 +33,6 @@ namespace Shogun {
 class ShogunComponent : public SST::Component {
 public:
 
-    // REGISTER THIS COMPONENT INTO THE ELEMENT LIBRARY
     SST_ELI_REGISTER_COMPONENT(
         ShogunComponent,
         "shogun",
@@ -48,8 +48,9 @@ public:
         { "clock",       "Clock Frequency for the crossbar", "1.0GHz" }
     )
 
-    // Optional since there is nothing to document
     SST_ELI_DOCUMENT_STATISTICS(
+	{ "output_packet_count", "Number of communication packets which have been output", "packets", 1 },
+	{ "input_packet_count",  "Number of communication packets which have been input", "packets", 1 }
     )
 
     SST_ELI_DOCUMENT_PORTS(
@@ -85,6 +86,7 @@ private:
     int port_count;
     int queue_slots;
 
+    ShogunStatisticsBundle* stats;
     SST::Link** links;
 
     ShogunQueue<ShogunEvent*>** inputQueues;

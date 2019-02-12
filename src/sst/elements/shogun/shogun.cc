@@ -78,6 +78,9 @@ ShogunComponent::ShogunComponent(ComponentId_t id, Params& params) : Component(i
 	remote_output_slots[i] = 2;
     }
 
+    stats = new ShogunStatisticsBundle(port_count);
+    stats->registerStatistics(this);
+
     clearOutputs();
 }
 
@@ -86,6 +89,7 @@ ShogunComponent::~ShogunComponent()
     output->verbose(CALL_INFO, 1, 0, "Shogun destructor fired, closing down.\n");
     delete output;
     delete arb;
+    delete stats;
 }
 
 ShogunComponent::ShogunComponent() : Component(-1)
@@ -172,6 +176,8 @@ void ShogunComponent::populateInputs() {
 		SST::Event* incoming = links[i]->recv();
 
 		if( nullptr != incoming ) {
+			stats->getInputPacketCount(i)->addData(1);
+
 			ShogunEvent* incomingShogun = dynamic_cast<ShogunEvent*>(incoming);
 
 			if( nullptr != incomingShogun ) {
@@ -212,6 +218,7 @@ void ShogunComponent::emitOutputs() {
 
 		if( ( remote_output_slots[i] > 0 ) ) {
 			output->verbose(CALL_INFO, 4, 0, "    -> sending event (has entry and free %d slots)\n", remote_output_slots[i]);
+			stats->getOutputPacketCount(i)->addData(1);
 
 			links[i]->send( pendingOutputs[i] );
 			links[ pendingOutputs[i]->getSource() ]->send( new ShogunCreditEvent() );
