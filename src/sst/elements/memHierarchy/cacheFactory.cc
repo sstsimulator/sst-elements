@@ -474,7 +474,7 @@ void Cache::createPrefetcher(Params &params, int mshrSize) {
 
     if (prefetcher.empty()) {
 	Params emptyParams;
-	listener_ = new CacheListener(this, emptyParams);
+        listener_ = dynamic_cast<CacheListener*>(loadSubComponent("memHierarchy.emptyCacheListener", this, emptyParams));
     } else {
 	Params prefetcherParams = params.find_prefix_params("prefetcher." );
         listener_ = dynamic_cast<CacheListener*>(loadSubComponent(prefetcher, this, prefetcherParams));

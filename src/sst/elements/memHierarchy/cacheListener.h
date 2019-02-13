@@ -27,6 +27,7 @@
 #include <sst/core/event.h>
 #include <sst/core/subcomponent.h>
 #include <sst/core/warnmacros.h>
+#include <sst/core/elementinfo.h>
 
 #include "sst/elements/memHierarchy/memEvent.h"
 
@@ -71,6 +72,9 @@ private:
 
 class CacheListener : public SubComponent {
 public:
+    
+    SST_ELI_REGISTER_SUBCOMPONENT(CacheListener, "memHierarchy", "emptyCacheListener", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Empty cache listener", "SST::MemHierarchy::CacheListener")
 
     CacheListener(Component* owner, Params& UNUSED(params)) : SubComponent(owner) {}
     virtual ~CacheListener() {}
