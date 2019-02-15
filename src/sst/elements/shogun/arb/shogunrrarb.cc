@@ -20,6 +20,7 @@ void ShogunRoundRobinArbitrator::moveEvents( const int port_count,
 	output->verbose(CALL_INFO, 4, 0, "-> start: %d\n", lastStart);
 
 	int currentPort = lastStart;
+	int moved_count = 0;
 
 	for( int i = 0; i < port_count; ++i ) {
 		auto nextQ = inputQueues[currentPort];
@@ -40,6 +41,7 @@ void ShogunRoundRobinArbitrator::moveEvents( const int port_count,
 			output->verbose(CALL_INFO, 4, 0, "  -> moving event to remote queue\n");
 			pendingEv = inputQueues[currentPort]->pop();
 			outputEvents[pendingEv->getDestination()] = pendingEv;
+			moved_count++;
 		}
 		}
 
@@ -49,6 +51,7 @@ void ShogunRoundRobinArbitrator::moveEvents( const int port_count,
 
 	lastStart = nextPort(port_count, lastStart);
 
+	bundle->getPacketsMoved()->addData(moved_count);	
 	output->verbose(CALL_INFO, 4, 0, "-> next-start: %d\n", lastStart);
 	output->verbose(CALL_INFO, 4, 0, "END: Arbitration ----------------------------------------------------\n");
 }

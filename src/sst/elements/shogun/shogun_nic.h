@@ -27,6 +27,10 @@ public:
 		"Shogun X-Bar Interface for Memory Crossbars",
 		"SST::Interfaces::SimpleNetwork");
 
+        SST_ELI_DOCUMENT_PARAMS(
+       		{ "verbose",   	"Level of output verbosity, higher is more output, 0 is	no output", 0 }
+    	)
+
    	ShogunNIC( SST::Component* component, Params &params );
 	~ShogunNIC();
 

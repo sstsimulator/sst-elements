@@ -13,8 +13,10 @@ using namespace SST::Shogun;
 ShogunNIC::ShogunNIC( SST::Component* component, Params &params ) :
 		SimpleNetwork( component ), netID(-1) {
 
+		const int verbosity = params.find<uint32_t>("verbose", 0);
+
 		//TODO: output = new ...
-		output = new SST::Output("ShogunNIC-Startup ", 16, 0, Output::STDOUT);
+		output = new SST::Output("ShogunNIC-Startup ", verbosity, 0, Output::STDOUT);
 		reqQ = nullptr;
 		remote_input_slots = -1;
 

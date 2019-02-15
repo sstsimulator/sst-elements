@@ -4,6 +4,9 @@
 
 #include "shogun_q.h"
 #include "shogun_event.h"
+#include "shogun_stat_bundle.h"
+
+using namespace SST::Shogun;
 
 namespace SST {
 namespace Shogun {
@@ -21,8 +24,13 @@ public:
 		output = out;
 	}
 
+	void setStatisticsBundle( ShogunStatisticsBundle* b ) {
+		bundle = b;
+	}
+
 protected:
 	SST::Output* output;
+	ShogunStatisticsBundle* bundle;
 
 };
 

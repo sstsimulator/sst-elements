@@ -30,11 +30,15 @@ ShogunComponent::ShogunComponent(ComponentId_t id, Params& params) : Component(i
 {
     const std::string clock_rate = params.find<std::string>("clock", "1.0GHz");
     queue_slots = 64;
+    pending_events = 0;
+
     arb = new ShogunRoundRobinArbitrator();
+
+    const int verbosity = params.find<uint32_t>("verbose", 0);
 
     char prefix[256];
     sprintf(prefix, "[t=@t][%s]: ", getName().c_str());
-    output = new SST::Output( prefix, 16, 0, Output::STDOUT );
+    output = new SST::Output( prefix, verbosity, 0, Output::STDOUT );
     arb->setOutput(output);
 
     port_count = params.find<int>("port_count");
@@ -81,6 +85,10 @@ ShogunComponent::ShogunComponent(ComponentId_t id, Params& params) : Component(i
     stats = new ShogunStatisticsBundle(port_count);
     stats->registerStatistics(this);
 
+    zeroEventCycles = registerStatistic<uint64_t>("cycles_zero_events");
+    eventCycles     = registerStatistic<uint64_t>("cycles_events");
+
+    arb->setStatisticsBundle( stats );
     clearOutputs();
 }
 
@@ -105,19 +113,27 @@ bool ShogunComponent::tick( Cycle_t currentCycle )
     // Pull any pending events from incoming links
     populateInputs();
 
-    // Migrate events across the cross-bar
-    arb->moveEvents( port_count, inputQueues, pendingOutputs, static_cast<uint64_t>( currentCycle ) );
+    // If we have nothing to do then don't crank all the heavy work.
+    if( pending_events == 0 ) {
+	zeroEventCycles->addData(1);
+	return false;
+    } else {
+	    eventCycles->addData(1);
 
-    printStatus();
+	    // Migrate events across the cross-bar
+	    arb->moveEvents( port_count, inputQueues, pendingOutputs, static_cast<uint64_t>( currentCycle ) );
 
-    // Send any events which can be sent this cycle
-    emitOutputs();
+	    printStatus();
 
-    printStatus();
-    output->verbose(CALL_INFO, 4, 0, "TICK() END *******************************************************\n");
+	    // Send any events which can be sent this cycle
+	    emitOutputs();
 
-    // return false so we keep going
-    return false;
+	    printStatus();
+	    output->verbose(CALL_INFO, 4, 0, "TICK() END *******************************************************\n");
+
+	    // return false so we keep going
+	    return false;
+    }
 }
 
 void ShogunComponent::init(unsigned int phase) {
@@ -187,6 +203,7 @@ void ShogunComponent::populateInputs() {
 
 				inputQueues[i]->push( incomingShogun );
 				count++;
+				pending_events++;
 			} else {
 				ShogunCreditEvent* creditEv = dynamic_cast<ShogunCreditEvent*>( incoming );
 
@@ -224,6 +241,7 @@ void ShogunComponent::emitOutputs() {
 			links[ pendingOutputs[i]->getSource() ]->send( new ShogunCreditEvent() );
 			pendingOutputs[i] = nullptr;
 			remote_output_slots[i]--;
+			pending_events--;
 		} else {
 			output->verbose(CALL_INFO, 4, 0, "    -> no free slots, event send disabled for this round (slots: %d)\n", remote_output_slots[i]);
 		}

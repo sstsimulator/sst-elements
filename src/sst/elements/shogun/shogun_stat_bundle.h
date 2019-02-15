@@ -39,6 +39,8 @@ public:
 			input_packet_count[i]  = comp->registerStatistic<uint64_t>("input_packet_count", subIDName);
 		}
 
+		packetsMoved = comp->registerStatistic<uint64_t>("packets_moved");
+
 		delete[] subIDName;
 	}
 
@@ -50,10 +52,15 @@ public:
 		return input_packet_count[port];
 	}
 
+	Statistic<uint64_t>* getPacketsMoved() {
+		return packetsMoved;
+        }
+
 private:
 	const int port_count;
 	Statistic<uint64_t>** output_packet_count;
 	Statistic<uint64_t>** input_packet_count;
+	Statistic<uint64_t>*  packetsMoved;
 
 };
 

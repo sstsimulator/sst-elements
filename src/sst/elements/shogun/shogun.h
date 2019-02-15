@@ -43,12 +43,16 @@ public:
     )
 
     SST_ELI_DOCUMENT_PARAMS(
+        { "verbose",    "Level of output verbosity, higher is more output, 0 is no output", 0 },
 	{ "port_count", "Number of ports on the Crossbar", 0 },
 	{ "arbitration", "Select the arbitration scheme", "roundrobin" },
         { "clock",       "Clock Frequency for the crossbar", "1.0GHz" }
     )
 
     SST_ELI_DOCUMENT_STATISTICS(
+	{ "cycles_zero_events",  "Number of cycles where there were no events to process, x-bar was quiet", "cycles", 1 },
+        { "cycles_events",       "Number of cycles where events needed to be processed, x-bar may have been busy.", "cycles", 1 },
+	{ "packets_moved",       "Number of packets moved each cycle", "packets", 1 },
 	{ "output_packet_count", "Number of communication packets which have been output", "packets", 1 },
 	{ "input_packet_count",  "Number of communication packets which have been input", "packets", 1 }
     )
@@ -85,6 +89,7 @@ private:
 
     int port_count;
     int queue_slots;
+    int pending_events;
 
     ShogunStatisticsBundle* stats;
     SST::Link** links;
@@ -95,6 +100,8 @@ private:
     ShogunArbitrator* arb;
 
     SST::Output* output;
+    Statistic<uint64_t>* zeroEventCycles;
+    Statistic<uint64_t>* eventCycles;
 
 };
 
