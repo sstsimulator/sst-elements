@@ -29,7 +29,7 @@ using namespace SST::Shogun;
 ShogunComponent::ShogunComponent(ComponentId_t id, Params& params) : Component(id)
 {
     const std::string clock_rate = params.find<std::string>("clock", "1.0GHz");
-    queue_slots = 64;
+    queue_slots = params.find<uint64_t>("queue_slots", 64);
     pending_events = 0;
 
     arb = new ShogunRoundRobinArbitrator();
