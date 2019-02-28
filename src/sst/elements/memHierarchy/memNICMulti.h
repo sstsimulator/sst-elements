@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
-// of Contract DE-NA0003525 with NTESS, the U.S.
+// Copyright 2013-2017 Sandia Corporation. Under the terms
+// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2017, Sandia Corporation
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -13,8 +13,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef _MEMHIERARCHY_MEMNICFOUR_SUBCOMPONENT_H_
-#define _MEMHIERARCHY_MEMNICFOUR_SUBCOMPONENT_H_
+#ifndef _MEMHIERARCHY_MULTINETMEMNIC_SUBCOMPONENT_H_
+#define _MEMHIERARCHY_MULTINETMEMNIC_SUBCOMPONENT_H_
 
 #include <string>
 #include <map>
@@ -33,45 +33,35 @@
 namespace SST {
 namespace MemHierarchy {
 
+/*
+ *  MemNIC provides a simpleNetwork (from SST core) network interface for memory components
+ *  and overlays memory functions on top
+ *
+ *  The multinet memNIC sends data on different networks depending on traffic class
+ *
+ *  The memNIC assumes each network endpoint is associated with a set of memory addresses and that
+ *  each endpoint communicates with a subset of endpoints on the network as defined by "sources"
+ *  and "destinations".
+ *
+ */
 class MemNICMulti : public MemNICBase {
 
 public:
 /* Element Library Info */
-#define MEMNICFOUR_ELI_PARAMS MEMNICBASE_ELI_PARAMS, \
-        { "resp.network_bw",                "(string) Data network. Network bandwidth", "80GiB/s" },\
-        { "resp.network_input_buffer_size", "(string) Data network. Size of input buffer", "1KiB"},\
-        { "resp.network_output_buffer_size","(string) data network. Size of output buffer", "1KiB"},\
-        { "resp.min_packet_size",           "(string) Data network. Size of a packet without a payload (e.g., control message size)", "8B"},\
-        { "resp.port",                      "(string) Data network. Set by parent component. Name of port this NIC sits on.", ""}, \
-        { "req.network_bw",                 "(string) Req network. Network bandwidth", "80GiB/s" },\
-        { "req.network_input_buffer_size",  "(string) Req network. Size of input buffer", "1KiB"},\
-        { "req.network_output_buffer_size", "(string) Req network. Size of output buffer", "1KiB"},\
-        { "req.min_packet_size",            "(string) Req network. Size of a packet without a payload (e.g., control message size)", "8B"},\
-        { "req.port",                       "(string) Req network. Set by parent component. Name of port this NIC sits on.", ""}, \
-        { "clock",                          "(string) Units for latency statistics", "1GHz"}
+#define MULTINETMEMNIC_ELI_PARAMS MEMNIC_ELI_PARAMS, \
+        { "data.network_bw",                "(string) Data network. Network bandwidth", "80GiB/s" },\
+        { "data.network_input_buffer_size", "(string) Data network. Size of input buffer", "1KiB"},\
+        { "data.network_output_buffer_size","(string) data network. Size of output buffer", "1KiB"},\
+        { "data.min_packet_size",           "(string) Data network. Size of a packet without a payload (e.g., control message size)", "8B"},\
+        { "data.port",                      "(string) Data network. Set by parent component. Name of port this NIC sits on.", ""}
 
 
     SST_ELI_REGISTER_SUBCOMPONENT(MemNICMulti, "memHierarchy", "MemNICMulti", SST_ELI_ELEMENT_VERSION(1,0,0),
-            "Memory-oriented network interface for split networks", "SST::MemLinkBase")
+            "Memory-oriented network interface for split control and data networks", "SST::MemLinkBase")
 
-    SST_ELI_DOCUMENT_PARAMS( MEMNICFOUR_ELI_PARAMS )
-
-    SST_ELI_DOCUMENT_STATISTICS(
-            { "data_events", "Number of events received on data network", "count", 1},
-            { "req_events", "Number of events received on request network", "count", 1},
-            { "ack_events", "Number of events received on acknowledgement network", "count", 1},
-            { "fwd_events", "Number of events received on forward request network", "count", 1},
-            { "outoforder_data_events", "Number of out of order events on data network", "count", 1},
-            { "outoforder_req_events", "Number of out of order events on request network", "count", 1},
-            { "outoforder_ack_events", "Number of out of order events on acknowledgement network", "count", 1},
-            { "outoforder_fwd_events", "Number of out of order events on forward request network", "count", 1},
-            { "outoforder_depth_at_event_receive", "Depth of re-order buffer at an event receive", "count", 1},
-            { "outoforder_depth_at_event_receive_src", "Depth of re-order buffer for the sender of an event at event receive", "count", 1},
-            { "ordering_latency", "For events that arrived out of order, cycles spent in buffer. Cycles in units determined by 'clock' parameter (default 1GHz)", "cycles", 1})
+    SST_ELI_DOCUMENT_PARAMS( MULTINETMEMNIC_ELI_PARAMS )
 
 /* Begin class definition */
-
-    enum NetType { REQ, DATA };
     /* Constructor */
     MemNICMulti(Component * comp, Params &params);
 
@@ -81,77 +71,82 @@ public:
     /* Functions called by parent for handling events */
     bool clock();
     void send(MemEventBase * ev);
-    bool recvNotifyReq(int);
+    bool recvNotifyCtrl(int);
     bool recvNotifyData(int);
-    void doRecv(SST::Interfaces::SimpleNetwork::Request* req, NetType net);
+    MemEventBase* recv(bool ctrlLink);
 
     /* Helper functions */
-    size_t getSizeInBits(MemEventBase * ev, NetType net);
+    size_t getSizeInBits(MemEventBase * ev);
 
     /* Initialization and finish */
     void init(unsigned int phase);
-    void finish() {
-        for (int i = 0; i < 4; i++)
-            link_control[i]->finish();
+    void finish() { link_control->finish(); data_link_control->finish(); }
+    void setup() {
+        link_control->setup();
+        data_link_control->setup();
+        MemLinkBase::setup();
     }
-    void setup();
 
     // Router events
-    class OrderedMemRtrEvent : public MemNICBase::MemRtrEvent {
+    class SplitMemRtrEvent : public MemNICBase::MemRtrEvent {
         public:
-            unsigned int tag;
+            unsigned int tag;   // Tag -> matches from control & data (unique = <src,tag>). 0 for no match needed
 
-            OrderedMemRtrEvent() : MemRtrEvent() { }
-            OrderedMemRtrEvent(MemEventBase * ev, unsigned int t) : MemRtrEvent(ev), tag(t) { }
+            SplitMemRtrEvent() : MemRtrEvent() { }
+            SplitMemRtrEvent(MemEventBase * ev, unsigned int t) : MemRtrEvent(ev), tag(t) { }
+            SplitMemRtrEvent(unsigned int t) : MemRtrEvent(nullptr), tag(t) { }
+            SplitMemRtrEvent(MemEventBase * ev) : MemRtrEvent(ev), tag(0) { }
 
             virtual Event* clone(void) override {
-                OrderedMemRtrEvent * omre = new OrderedMemRtrEvent(*this);
-                if (this->event != nullptr)
-                    omre->event = this->event->clone();
-                else
-                    omre->event = nullptr;
-                return omre;
+                SplitMemRtrEvent *mre = new SplitMemRtrEvent(*this);
+                if (this->event != nullptr) {
+                    mre->event = this->event->clone();
+                } else {
+                    mre->event = nullptr;
+                }
+                return mre;
             }
 
-            virtual bool hasClientData() const override { return true; }
+            virtual bool hasClientData() const { return true; }
 
             void serialize_order(SST::Core::Serialization::serializer &ser) override {
                 MemRtrEvent::serialize_order(ser);
                 ser & tag;
             }
 
-            ImplementSerializable(SST::MemHierarchy::MemNICMulti::OrderedMemRtrEvent);
+            ImplementSerializable(SST::MemHierarchy::MemNICMulti::SplitMemRtrEvent);
     };
-
-    /* Debug support */
-    void printStatus(Output& out);
 
 private:
 
-    void recvNotify(MemNICMulti::OrderedMemRtrEvent* mre);
-    MemNICMulti::OrderedMemRtrEvent* processRecv(SST::Interfaces::SimpleNetwork::Request* req);
+    void recvNotify(MemNICMulti::SplitMemRtrEvent* mre);
+    MemNICMulti::SplitMemRtrEvent* processRecv(SST::Interfaces::SimpleNetwork::Request* req);
+
+    bool matchCtrlTags(uint64_t src, unsigned int tag);
+    bool matchDataTags(uint64_t src, unsigned int tag);
 
     // Other parameters
-    size_t packetHeaderBytes[4];
+    size_t packetHeaderBytes;
+    size_t dataPacketHeaderBytes;
 
     // Handlers and network
-    SST::Interfaces::SimpleNetwork * link_control[4];
+    SST::Interfaces::SimpleNetwork *link_control;
+    SST::Interfaces::SimpleNetwork *data_link_control;
 
     // Event queues
-    std::queue<SST::Interfaces::SimpleNetwork::Request*> sendQueue[4];
-    std::queue<MemNICMulti::OrderedMemRtrEvent*> recvQueue;
+    std::queue<SST::Interfaces::SimpleNetwork::Request*> dataSendQueue; // Queue of events waiting to be sent (sent on clock)
 
-    // Order tag tracking
-    std::map<uint64_t, unsigned int> sendTags;
-    std::map<uint64_t, unsigned int> recvTags;
-    std::map<uint64_t, std::map<unsigned int, std::pair<OrderedMemRtrEvent*,SimTime_t> > > orderBuffer;
+    // Receive queue for forcing ordering
+    // A queue for each source
+    std::queue<SST::Interfaces::SimpleNetwork::Request*> sendQueue; // Queue of events waiting to be sent (sent on clock)
+    std::map<uint64_t, std::queue< std::pair<bool,SplitMemRtrEvent*> > > recvMsgQueue;
 
-    // Statistics
-    Statistic<uint64_t>* stat_oooEvent[4];
-    Statistic<uint64_t>* stat_oooDepth;
-    Statistic<uint64_t>* stat_oooDepthSrc;
-    Statistic<uint64_t>* stat_orderLatency;
-    uint64_t totalOOO; // Since there's no simple count of orderBuffer size
+    // Unmatched tag tracking, set for each source
+    std::map<uint64_t, std::set<unsigned int> > dataTags;
+    std::map<uint64_t, std::set<unsigned int> > ctrlTags;
+
+    unsigned int nextTag;
+    bool dupCtrl;
 };
 
 } //namespace memHierarchy
