@@ -115,7 +115,10 @@ public:
             {"cache",           "Network link port to cache; doubles as request network port for split networks",   {"memHierarchy.MemRtrEvent"} },
             {"cache_ack",       "For split networks, response/ack network port to cache",                           {"memHierarchy.MemRtrEvent"} },
             {"cache_fwd",       "For split networks, forward request network port to cache",                        {"memHierarchy.MemRtrEvent"} },
-            {"cache_data",      "For split networks, data network port to cache",                                   {"memHierarchy.MemRtrEvent"} })
+            {"cache_data",      "For split networks, data network port to cache",                                   {"memHierarchy.MemRtrEvent"} },
+            {"req_0",      "For split networks, data network port to cache",                                   {"memHierarchy.MemRtrEvent"} },
+            {"resp_0",      "For split networks, data network port to cache",                                   {"memHierarchy.MemRtrEvent"} },
+            {"resp_1",      "For split networks, data network port to cache",                                   {"memHierarchy.MemRtrEvent"} })
 
     SST_ELI_DOCUMENT_STATISTICS(
             /* Cache hits and misses */

@@ -206,14 +206,21 @@ void Cache::configureLinks(Params &params) {
     bool lowDirExists   = false;    // directory is connected -> network link towards memory to directory
     bool lowNetExists   = false;    // low_network_%d port(s) are connected -> direct link towards memory (to bus or other component)
 
+    bool reqExists     = false;
+    bool respExits     = false;
+
+
     highNetExists   = isPortConnected("high_network_0");
     lowCacheExists  = isPortConnected("cache");
     lowDirExists    = isPortConnected("directory");
     lowNetExists    = isPortConnected("low_network_0");
 
+    reqExists   = isPortConnected("req_0");
+    respExits   = isPortConnected("resp_0");
+
     /* Check for valid port combos */
     if (highNetExists) {
-        if (!lowCacheExists && !lowDirExists && !lowNetExists)
+        if (!lowCacheExists && !lowDirExists && !lowNetExists && !(reqExists && respExits))
             out_->fatal(CALL_INFO,-1,"%s, Error: no connected low ports detected. Please connect one of 'cache' or 'directory' or connect N components to 'low_network_n' where n is in the range 0 to N-1\n",
                     getName().c_str());
         if ((lowCacheExists && (lowDirExists || lowNetExists)) || (lowDirExists && lowNetExists))
@@ -309,7 +316,7 @@ void Cache::configureLinks(Params &params) {
         linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
         clockDownLink_ = true;
         clockUpLink_ = false;
-        
+
         region_ = linkDown_->getRegion();
         linkUp_->setRegion(region_);
 
@@ -342,7 +349,7 @@ void Cache::configureLinks(Params &params) {
         linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
         clockUpLink_ = true;
         clockDownLink_ = false;
-        
+
         /* Pull region off network link, really we should have the same region on both and it should be a cache property not link property... */
         region_ = linkUp_->getRegion();
         linkDown_->setRegion(region_);
@@ -377,10 +384,26 @@ void Cache::configureLinks(Params &params) {
         linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
         clockDownLink_ = true;
         clockUpLink_ = false;
-        
+
         region_ = linkDown_->getRegion();
         linkUp_->setRegion(region_);
 
+    } else if (highNetExists && (reqExists && respExits)) {
+        d_->debug(_INFO_,"Configuring cache with a direct link above and %d request links and %d response links below\n", 1, 2);
+
+        nicParams.find<std::string>("group", "", found);
+        if (!found) {
+            nicParams.insert("group", "2");
+        }
+
+        nicParams.find<std::string>("req.port", "", found);
+        if (!found) nicParams.insert("req.port", "req_0");
+        nicParams.find<std::string>("data.port", "", found);
+        if (!found) nicParams.insert("data.port", "resp_0");
+
+        linkDown_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemNICMulti", this, nicParams));
+
+//         exit(0);
     } else {    // lowDirExists
 
         d_->debug(_INFO_, "Configuring cache with a network to talk to both a cache above and a directory below\n");
@@ -452,11 +475,11 @@ void Cache::configureLinks(Params &params) {
         linkUp_ = linkDown_;
         clockDownLink_ = true;
         clockUpLink_ = false;
-        
+
         region_ = linkDown_->getRegion();
         linkUp_->setRegion(region_);
     }
-   
+
     cacheArray_->setSliceAware(region_.interleaveSize, region_.interleaveStep);
 
 }
@@ -572,7 +595,7 @@ CacheArray* Cache::createCacheArray(Params &params) {
     uint64_t cacheSize = ua.getRoundedValue();
 
     if (lineSize > cacheSize)
-        out_->fatal(CALL_INFO, -1, "%s, Invalid param combo: cache_line_size cannot be greater than cache_size. You specified: cache_size = '%s', cache_line_size = '%" PRIu64 "'\n", 
+        out_->fatal(CALL_INFO, -1, "%s, Invalid param combo: cache_line_size cannot be greater than cache_size. You specified: cache_size = '%s', cache_line_size = '%" PRIu64 "'\n",
                 getName().c_str(), sizeStr.c_str(), lineSize);
     if (!isPowerOfTwo(lineSize)) out_->fatal(CALL_INFO, -1, "%s, cache_line_size - must be a power of 2. You specified '%" PRIu64 "'.\n", getName().c_str(), lineSize);
 
