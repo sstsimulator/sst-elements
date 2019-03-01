@@ -1,10 +1,10 @@
 // Copyright 2009-2018 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
+//
 // Copyright (c) 2009-2018, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -94,8 +94,8 @@ void Cache::profileEvent(MemEvent* event, Command cmd, bool replay, bool canStal
     bool wasBlocked = event->blocked();                             // Event was blocked, now we're starting to handle it
     if (wasBlocked) event->setBlocked(false);
     if (cmd == Command::GetS || cmd == Command::GetX || cmd == Command::GetSX) {
-        if (mshr_->isFull() || (!L1_ && !replay && mshr_->isAlmostFull()  && !(cacheHit == 0))) { 
-                return; // profile later, this event is getting NACKed 
+        if (mshr_->isFull() || (!L1_ && !replay && mshr_->isAlmostFull()  && !(cacheHit == 0))) {
+                return; // profile later, this event is getting NACKed
         }
     }
 
@@ -172,7 +172,7 @@ void Cache::profileEvent(MemEvent* event, Command cmd, bool replay, bool canStal
                     statGetSXMissOnArrival->addData(1);
                     if (cacheHit == 1) {
                         missTypeList_.insert(std::pair<MemEvent*,int>(event, 5));
-                    } else if (cacheHit == 2) { 
+                    } else if (cacheHit == 2) {
                         missTypeList_.insert(std::pair<MemEvent*,int>(event, 6));
                     } else if (cacheHit == 3) {
                         missTypeList_.insert(std::pair<MemEvent*,int>(event, 7));
@@ -202,14 +202,14 @@ void Cache::profileEvent(MemEvent* event, Command cmd, bool replay, bool canStal
 
 
 bool Cache::processEvent(MemEventBase* ev, bool replay) {
-    
-    
+
+
     // Debug
     if (is_debug_event(ev)) {
         if (replay) {
             d_->debug(_L3_, "Replay. Name: %s. Cycles: %" PRIu64 ". Event: (%s)\n", this->getName().c_str(), timestamp_, ev->getVerboseString().c_str());
         } else {
-            d2_->debug(_L3_,"\n\n-------------------------------------------------------------------------------------------------------------------------------------------------------------------\n"); 
+            d2_->debug(_L3_,"\n\n-------------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
             d_->debug(_L3_,"New Event. Name: %s. Cycles: %" PRIu64 ", Event: (%s)\n", this->getName().c_str(), timestamp_, ev->getVerboseString().c_str());
         }
         cout << flush;
@@ -236,7 +236,7 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
     if (baseAddr % cacheArray_->getLineSize() != 0) {
         out_->fatal(CALL_INFO, -1, "%s, Base address is not a multiple of line size! Line size: %" PRIu64 ". Event: %s\n", getName().c_str(), cacheArray_->getLineSize(), ev->getVerboseString().c_str());
     }
-    
+
     // Check bank free before we do anything
     if (bankStatus_.size() > 0) {
         Addr bank = cacheArray_->getBank(event->getBaseAddr());
@@ -251,13 +251,13 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
             bankStatus_[bank] = true;
         }
     }
-    
+
     MemEvent* origEvent;
-    
+
     // Update statistics
     if (!replay) statTotalEventsReceived->addData(1);
     else statTotalEventsReplayed->addData(1);
-    
+
     // Cannot stall if this is a GetX to L1 and the line is locked because GetX is the unlock!
     bool canStall = !L1_ || event->getCmd() != Command::GetX;
     if (!canStall) {
@@ -270,7 +270,7 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
         case Command::GetX:
         case Command::GetSX:
             // Determine if request should be NACKed: Request cannot be handled immediately and there are no free MSHRs to buffer the request
-            if (!replay && mshr_->isAlmostFull()) { 
+            if (!replay && mshr_->isAlmostFull()) {
                 // Requests can cause deadlock because requests and fwd requests (inv, fetch, etc) share mshrs -> always leave one mshr free for fwd requests
                 if (!L1_) {
                     profileEvent(event, cmd, replay, canStall);
@@ -281,9 +281,9 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
                     return false;
                 }
             }
-            
+
             profileEvent(event, cmd, replay, canStall);
-            
+
             if (mshr_->isHit(baseAddr) && canStall) {
                 // Drop local prefetches if there are outstanding requests for the same address NOTE this includes replacements/inv/etc.
                 if (event->isPrefetch() && event->getRqstr() == this->getName()) {
@@ -294,9 +294,9 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
                     break;
                 }
                 if (processRequestInMSHR(baseAddr, event)) {
-                    if (is_debug_addr(baseAddr)) 
+                    if (is_debug_addr(baseAddr))
                         d_->debug(_L9_,"Added event to MSHR queue.  Wait till blocking event completes to proceed with this event.\n");
-                    
+
                     event->setBlocked(true);
                 }
                 // track times in our separate queue
@@ -306,12 +306,12 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
 
                 break;
             }
-            
+
             // track times in our separate queue
             if (startTimeList_.find(event) == startTimeList_.end()) {
                 startTimeList_.insert(std::pair<MemEvent*,uint64>(event, timestamp_));
             }
-            
+
             processCacheRequest(event, cmd, baseAddr, replay);
             break;
         case Command::GetSResp:
@@ -396,7 +396,7 @@ void Cache::processPrefetchEvent(SST::Event* ev) {
 
     // Drop prefetch if we can't handle it immediately or handling it would violate maxOustandingPrefetch or dropPrefetchLevel
     if (requestsThisCycle_ != maxRequestsPerCycle_) {
-        if (event->getCmd() != Command::NULLCMD && mshr_->getSize() < dropPrefetchLevel_ && mshr_->getPrefetchCount() < maxOutstandingPrefetch_) { 
+        if (event->getCmd() != Command::NULLCMD && mshr_->getSize() < dropPrefetchLevel_ && mshr_->getPrefetchCount() < maxOutstandingPrefetch_) {
             requestsThisCycle_++;
             processEvent(event, false);
         } else {
@@ -421,7 +421,7 @@ void Cache::init(unsigned int phase) {
         /*  */
         while(MemEventInit *event = linkDown_->recvInitData()) {
             if (event->getCmd() == Command::NULLCMD) {
-                d_->debug(_L10_, "%s received init event: %s\n", 
+                d_->debug(_L10_, "%s received init event: %s\n",
                         this->getName().c_str(), event->getVerboseString().c_str());
             }
             /* If event is from one of our destinations, update parameters - link only returns events from destinations */
@@ -444,10 +444,14 @@ void Cache::init(unsigned int phase) {
         }
         return;
     }
-    
+
+    std::cout << "** " << this->getName() << "  linkUp:    " << linkUp_ << std::endl;
+    std::cout << "** " << this->getName() << "  linkDown:  " << linkDown_ << std::endl;
+
     linkUp_->init(phase);
+
     linkDown_->init(phase);
-    
+
     if (!phase) {
         // MemEventInit: Name, NULLCMD, Endpoint type, inclusive of all upper levels, will send writeback acks, line size
         linkUp_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Cache, type_ == "inclusive", type_ != "inclusive", cacheArray_->getLineSize(), true));
@@ -467,11 +471,11 @@ void Cache::init(unsigned int phase) {
         }
         delete memEvent;
     }
-    
+
     while (MemEventInit * memEvent = linkDown_->recvInitData()) {
         if (memEvent->getCmd() == Command::NULLCMD) {
             d_->debug(_L10_, "%s received init event %s\n", getName().c_str(), memEvent->getVerboseString().c_str());
-            
+
             if (linkDown_->isDest(memEvent->getSrc()) && memEvent->getInitCmd() == MemEventInit::InitCommand::Coherence) {
                 MemEventInitCoherence * eventC = static_cast<MemEventInitCoherence*>(memEvent);
                 if (eventC->getType() != Endpoint::Memory) { // All other types to coherence
@@ -497,7 +501,7 @@ void Cache::init(unsigned int phase) {
 
 void Cache::setup() {
     // Check that our sources and destinations exist or configure if needed
-    
+
     std::set<MemLinkBase::EndpointInfo> * names = linkUp_->getSources();
 
     if (names->empty()) {
@@ -514,7 +518,7 @@ void Cache::setup() {
         linkUp_->setSources(srcNames);
     }
     names = linkUp_->getSources();
-    if (names->empty()) 
+    if (names->empty())
         out_->fatal(CALL_INFO, -1,"%s did not find any sources\n", getName().c_str());
 
     names = linkDown_->getDests();
@@ -552,7 +556,7 @@ void Cache::processIncomingEvent(SST::Event* ev) {
         } else {
             requestsThisCycle_++;
             if (!processEvent(event, false)) {
-                requestBuffer_.push(event);   
+                requestBuffer_.push(event);
             }
         }
     }
@@ -562,7 +566,7 @@ void Cache::processIncomingEvent(SST::Event* ev) {
 bool Cache::clockTick(Cycle_t time) {
     timestamp_++;
     bool queuesEmpty = coherenceMgr_->sendOutgoingCommands(getCurrentSimTimeNano());
-        
+
     bool upIdle = true;
     bool downIdle = true;
     if (clockUpLink_) {
@@ -573,19 +577,19 @@ bool Cache::clockTick(Cycle_t time) {
     }
 
     if (checkMaxWaitInterval_ > 0 && timestamp_ % checkMaxWaitInterval_ == 0) checkMaxWait();
-        
+
     // MSHR occupancy
     statMSHROccupancy->addData(mshr_->getSize());
-        
+
     // Clear bank status and issue conflicted requests
     bool conflicts = false;
     for (unsigned int bank = 0; bank < bankStatus_.size(); bank++) {
         bankStatus_[bank] = false;
         while (!bankConflictBuffer_[bank].empty() && !bankStatus_[bank]) {
             conflicts = true;
-            if (is_debug_event(bankConflictBuffer_[bank].front())) 
+            if (is_debug_event(bankConflictBuffer_[bank].front()))
                 d_->debug(_L9_,"%s, Retrying event from bank conflict. Bank: %u, Event: %s\n", getName().c_str(), bank, bankConflictBuffer_[bank].front()->getBriefString().c_str());
-                
+
             bool processed = processEvent(bankConflictBuffer_[bank].front(), false);
             if (!processed) break;
             bankConflictBuffer_[bank].pop();
@@ -599,14 +603,14 @@ bool Cache::clockTick(Cycle_t time) {
         if (requestsThisCycle_ == maxRequestsPerCycle_) {
             break;
         }
-        
+
         bool wasProcessed = processEvent(requestBuffer_.front(), false);
         if (wasProcessed) {
             requestsThisCycle_++;
         } else {
             tmpBuffer.push(requestBuffer_.front());
         }
-            
+
         requestBuffer_.pop();
         queuesEmpty = false;
     }
@@ -626,7 +630,7 @@ bool Cache::clockTick(Cycle_t time) {
 }
 
 void Cache::turnClockOn() {
-    Cycle_t time = reregisterClock(defaultTimeBase_, clockHandler_); 
+    Cycle_t time = reregisterClock(defaultTimeBase_, clockHandler_);
     timestamp_ = time - 1;
     coherenceMgr_->updateTimestamp(timestamp_);
     int64_t cyclesOff = timestamp_ - lastActiveClockCycle_;
