@@ -48,4 +48,7 @@
 #include "shmem/motifs/emberShmemAtomicInc.h"
 #include "shmem/motifs/emberShmemAtomicIncV2.h"
 #include "shmem/motifs/emberShmemFAM_Get2.h"
+#include "shmem/motifs/emberShmemFAM_Put.h"
+#include "shmem/motifs/emberShmemFAM_Scatterv.h"
+#include "shmem/motifs/emberShmemFAM_Gatherv.h"
 #include "shmem/motifs/emberShmemFAM_AtomicInc.h"
