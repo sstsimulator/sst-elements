@@ -277,6 +277,12 @@ elif "hyperx" == netTopo:
 
 	topo = topoHyperX()
 
+elif "json" == netTopo:
+
+        topo,rtr = netShape.split(':') 
+        topo = TopoJSON( topo, rtr )
+        topoInfo = JSONInfo(topo.num_nodes)
+
 else:
 	sys.exit("how did we get here")
 
