@@ -173,7 +173,7 @@ public:
     		Hermes::MemAddr m_dest = m_mem.offset<unsigned char>( m_blockSize * (m_curBlock % m_numBlocksPerPartition) );
 
         	enQ_fam_get_nonblocking( evQ, m_dest,
-                    m_rd,
+                    m_fd,
                     offset, 
 					m_blockSize );
 
@@ -260,7 +260,7 @@ public:
 
 	uint64_t m_regionSize;
 	std::string m_groupName;
-	Shmem::Fam_Region_Descriptor m_rd;
+	Shmem::Fam_Descriptor m_fd;
 	EmberMiscLib* m_miscLib;
 
 	int m_stream_n;
