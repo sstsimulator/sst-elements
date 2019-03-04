@@ -268,7 +268,20 @@ class HadesSHMEM : public Shmem::Interface
     virtual void fadd2( Hermes::Value&, Hermes::Vaddr, Hermes::Value&, int pe, Shmem::Callback);
 
     virtual void fam_add( uint64_t, Hermes::Value&, Shmem::Callback);
-    virtual void fam_get_nb( Hermes::Vaddr dest, Shmem::Fam_Region_Descriptor rd, uint64_t offset, uint64_t nbytes, Shmem::Callback);
+    virtual void fam_get( Hermes::Vaddr dest, Shmem::Fam_Descriptor fd, uint64_t offset, uint64_t nbytes,
+			bool blocking, Shmem::Callback);
+    virtual void fam_put( Shmem::Fam_Descriptor fd, uint64_t offset, Hermes::Vaddr src, uint64_t nbytes,
+			bool blocking, Shmem::Callback);
+
+	virtual void fam_scatter( Hermes::Vaddr src, Shmem::Fam_Descriptor rd, uint64_t nElements, 
+			uint64_t firstElement, uint64_t stride, uint64_t elementSize, bool blocking, Shmem::Callback );
+    virtual void fam_scatterv( Hermes::Vaddr src, Shmem::Fam_Descriptor fd, uint64_t nElements,
+			std::vector<uint64_t> elementIndex, uint64_t elementSize, bool blocking, Shmem::Callback );
+
+    virtual void fam_gather( Hermes::Vaddr dest, Shmem::Fam_Descriptor fd, uint64_t nElements, 
+			uint64_t firstElement, uint64_t stride, uint64_t elmentSize, bool blocking, Shmem::Callback );
+    virtual void fam_gatherv( Hermes::Vaddr dest, Shmem::Fam_Descriptor fd, uint64_t nElements,
+			std::vector<uint64_t> elementIndex, uint64_t elmentSize, bool blocking, Shmem::Callback );
 
     void memcpy( Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, Shmem::Callback callback );
 
@@ -322,10 +335,28 @@ class HadesSHMEM : public Shmem::Interface
 	struct FamWork {
     	std::queue< std::pair< uint64_t, uint64_t > > work;
     	Shmem::Callback callback;
-		Hermes::Vaddr dest;
+		Hermes::Vaddr addr;
+		bool blocking;
 	};
 
 	void doOneFamGet( FamWork* );
+	void doOneFamPut( FamWork* );
+
+	struct FamVectorWork {
+		Hermes::Vaddr addr;
+		Shmem::Fam_Descriptor fd;
+		uint64_t nElements;
+		std::vector<uint64_t> indexes;
+		uint64_t firstElement;
+		uint64_t stride;
+		uint64_t elementSize;
+		Shmem::Callback callback;
+		int currentVector;
+		bool blocking;
+	};
+
+	void doFamVectorPut( FamVectorWork* );
+	void doFamVectorGet( FamVectorWork* );
 
 	void createWorkList( uint64_t addr, uint64_t nbytes, std::queue< std::pair< uint64_t, uint64_t > >& list ) {
 	    if( ! m_famAddrMapper ) {
@@ -335,11 +366,17 @@ class HadesSHMEM : public Shmem::Interface
 		dbg().debug(CALL_INFO,1,SHMEM_BASE,"addr=%#" PRIx64 " nbytes=%" PRIu64"\n", addr, nbytes);
 
 		while ( nbytes ) {
-			uint64_t seg_nbytes = blockSize - ( addr & (blockSize-1) );		
+			uint64_t alignment = addr & (blockSize-1);		
+			uint64_t seg_nbytes = blockSize;
 
-			if ( 0 == seg_nbytes ) {
-				seg_nbytes = blockSize;
+			if ( alignment ) {
+				seg_nbytes -= alignment;
+			} else {
+				if ( nbytes < blockSize ) {
+					seg_nbytes = nbytes;
+				}	
 			}
+
 			dbg().debug(CALL_INFO,1,SHMEM_BASE,"seg_addr=%#" PRIx64 " seg_nbytes=%" PRIu64"\n", addr, seg_nbytes);
 
 			list.push( std::make_pair(addr,seg_nbytes) );
