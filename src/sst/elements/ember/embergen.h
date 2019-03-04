@@ -92,7 +92,7 @@ class EmberGenerator : public SubComponent {
         }
         m_verbosePrefix.str(std::string());
         m_verbosePrefix << "@t:" << getJobId() << ":" << _rank <<
-                    ":EmberEngine:MPI:" << getMotifName() << ":@p:@l: ";
+                    ":EmberEngine:" << getMotifName() << ":@p:@l: ";
     }
 
     std::string getMotifName() { return m_motifName; }
