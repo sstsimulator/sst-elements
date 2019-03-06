@@ -19,20 +19,21 @@ namespace Shogun {
 class ShogunNIC : public SST::Interfaces::SimpleNetwork {
 
 public:
-	SST_ELI_REGISTER_SUBCOMPONENT(
-		ShogunNIC,
-		"shogun",
-		"ShogunNIC",
-		SST_ELI_ELEMENT_VERSION(1,0,0),
-		"Shogun X-Bar Interface for Memory Crossbars",
-		"SST::Interfaces::SimpleNetwork");
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        ShogunNIC,
+        "shogun",
+        "ShogunNIC",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Shogun X-Bar Interface for Memory Crossbars",
+        "SST::Interfaces::SimpleNetwork"
+    );
 
-        SST_ELI_DOCUMENT_PARAMS(
-       		{ "verbose",   	"Level of output verbosity, higher is more output, 0 is	no output", 0 }
-    	)
+    SST_ELI_DOCUMENT_PARAMS(
+        { "verbose",   	"Level of output verbosity, higher is more output, 0 is	no output", 0 }
+    );
 
-   	ShogunNIC( SST::Component* component, Params &params );
-	~ShogunNIC();
+    ShogunNIC( SST::Component* component, Params &params );
+    ~ShogunNIC();
 
     /** Second half of building the interface.
         Initialize network interface
@@ -43,22 +44,22 @@ public:
         @param out_buf_size - Size of output buffers (to router)
      * @return true if the link was able to be configured.
      */
-    	virtual bool initialize(const std::string &portName, const UnitAlgebra& link_bw,
-                            int vns, const UnitAlgebra& in_buf_size,
-                            const UnitAlgebra& out_buf_size) override;
+    virtual bool initialize(const std::string &portName, const UnitAlgebra& link_bw,
+                        int vns, const UnitAlgebra& in_buf_size,
+                        const UnitAlgebra& out_buf_size) override;
 
-    	/**
-     		* Sends a network request during the init() phase
-     	*/
-    	virtual void sendInitData(Request *req) override;
+    /**
+        * Sends a network request during the init() phase
+    */
+    virtual void sendInitData(Request *req) override;
 
-    	/**
-     		* Receive any data during the init() phase.
-     		* @see SST::Link::recvInitData()
-     	*/
-    	virtual Request* recvInitData() override;
+    /**
+        * Receive any data during the init() phase.
+        * @see SST::Link::recvInitData()
+    */
+    virtual Request* recvInitData() override;
 
-    	/**
+    /**
      * Sends a network request during untimed phases (init() and
      * complete()).
      * @see SST::Link::sendUntimedData()
@@ -72,7 +73,7 @@ public:
      * removed in SST 9.0.
      */
     virtual void sendUntimedData(Request *req) override {
-	sendInitData(req);
+        sendInitData(req);
     }
 
     /**
@@ -88,7 +89,7 @@ public:
      * removed in SST 9.0.
      */
      virtual Request* recvUntimedData() override {
-	return recvInitData();
+        return recvInitData();
      }
 
         // /**
@@ -179,21 +180,21 @@ public:
     virtual const UnitAlgebra& getLinkBW() const;
 
 private:
-	SST::Output* output;
-	SST::Link* link;
-	nid_t netID;
+    SST::Output* output;
+    SST::Link* link;
+    nid_t netID;
 
-	SimpleNetwork::HandlerBase* onSendFunctor;
-	SimpleNetwork::HandlerBase* onRecvFunctor;
+    SimpleNetwork::HandlerBase* onSendFunctor;
+    SimpleNetwork::HandlerBase* onRecvFunctor;
 
-	ShogunQueue<Request*>* reqQ;
-	int remote_input_slots;
-	int port_count;
+    ShogunQueue< Request* >* reqQ;
+    int remote_input_slots;
+    int port_count;
 
-	void recvLinkEvent( SST::Event* ev );
-	void reconfigureNIC( ShogunInitEvent* initEv );
+    void recvLinkEvent( SST::Event* ev );
+    void reconfigureNIC( ShogunInitEvent* initEv );
 
-	std::vector<Request*> initReqs;
+    std::vector< Request* > initReqs;
 };
 
 }
