@@ -361,8 +361,8 @@ class HadesSHMEM : public Shmem::Interface
 		int pe;
 	};
 	struct Swap : public Base { 
-		Swap( Value& result, Vaddr addr, Value&, int pe, Shmem::Callback callback ) :
-			Base(callback), result(result), addr(addr), pe(pe)  {} 
+		Swap( Value& result, Vaddr addr, Value& value, int pe, Shmem::Callback callback ) :
+			Base(callback), result(result), addr(addr), value(value), pe(pe)  {} 
 		Value result;
 		Vaddr addr;
 	   	Value value;
