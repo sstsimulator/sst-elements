@@ -85,7 +85,7 @@ void ShmemAlltoalls::put( int )
         callback = std::bind( &ShmemAlltoalls::do_peer_0, this, std::placeholders::_1 );
     }
 
-    m_api.put( m_dest, m_src, m_elem_size, m_peer, callback );
+    m_api.put( m_dest, m_src, m_elem_size, m_peer, true, callback );
     //shmem_internal_put_nbi((void *) dest_ptr, (uint8_t *) source + peer_as_rank * len, len, peer);
     --m_iteration; 
 
