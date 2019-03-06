@@ -48,7 +48,7 @@ void ShmemCollect::start( Vaddr dest, Vaddr source, size_t nelems, int PE_start,
         //tmp[0] = (long) len; /* FIXME: Potential truncation of size_t into long */
         //tmp[1] = 1; /* FIXME: Packing flag with data relies on byte ordering */
         printf(":%d:%s():%d send offset to %d\n",my_pe(),__func__,__LINE__, PE_start + stride());
-        m_api.put( m_pSync, m_scratch->getSimVAddr(), sizeof(pSync_t) * 2, PE_start + stride(),
+        m_api.put( m_pSync, m_scratch->getSimVAddr(), sizeof(pSync_t) * 2, PE_start + stride(), true,
            std::bind( &ShmemCollect::do_data_0, this, std::placeholders::_1 ) );
 
         //shmem_internal_put_small(pSync, tmp, 2 * sizeof(long), PE_start + stride);
@@ -76,7 +76,7 @@ void ShmemCollect::do_offset_0(int )
         //tmp[1] = 1;
         
         printf(":%d:%s():%d send offset to %d\n",my_pe(),__func__,__LINE__, m_common.my_pe() + stride());
-        m_api.put( m_pSync, m_scratch->getSimVAddr(), sizeof(pSync_t) * 2, m_common.my_pe() + stride(),
+        m_api.put( m_pSync, m_scratch->getSimVAddr(), sizeof(pSync_t) * 2, m_common.my_pe() + stride(), true,
            std::bind( &ShmemCollect::do_data_0, this, std::placeholders::_1 ) );
         //shmem_internal_put_small(pSync, tmp, 2 * sizeof(long), shmem_internal_my_pe + stride);
         //
@@ -99,7 +99,7 @@ void ShmemCollect::do_data_1(int )
 {
     printf(":%d:%s():%d m_peer=%d,m_my_offset=%#lx\n",my_pe(),__func__,__LINE__,m_peer,m_my_offset);
     if (m_nelems > 0) {
-        m_api.put( m_dest + m_my_offset, m_src, m_nelems, m_peer,
+        m_api.put( m_dest + m_my_offset, m_src, m_nelems, m_peer, true,
            std::bind( &ShmemCollect::do_data_2, this, std::placeholders::_1 ) );
         //shmem_internal_put_nbi(((uint8_t *) target) + my_offset, source, len, peer);
     } else {
