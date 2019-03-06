@@ -206,21 +206,14 @@ void Cache::configureLinks(Params &params) {
     bool lowDirExists   = false;    // directory is connected -> network link towards memory to directory
     bool lowNetExists   = false;    // low_network_%d port(s) are connected -> direct link towards memory (to bus or other component)
 
-    bool reqExists     = false;
-    bool respExits     = false;
-
-
     highNetExists   = isPortConnected("high_network_0");
     lowCacheExists  = isPortConnected("cache");
     lowDirExists    = isPortConnected("directory");
     lowNetExists    = isPortConnected("low_network_0");
 
-    reqExists   = isPortConnected("req_0");
-    respExits   = isPortConnected("resp_0");
-
     /* Check for valid port combos */
     if (highNetExists) {
-        if (!lowCacheExists && !lowDirExists && !lowNetExists && !(reqExists && respExits))
+        if (!lowCacheExists && !lowDirExists && !lowNetExists)
             out_->fatal(CALL_INFO,-1,"%s, Error: no connected low ports detected. Please connect one of 'cache' or 'directory' or connect N components to 'low_network_n' where n is in the range 0 to N-1\n",
                     getName().c_str());
         if ((lowCacheExists && (lowDirExists || lowNetExists)) || (lowDirExists && lowNetExists))
@@ -230,7 +223,7 @@ void Cache::configureLinks(Params &params) {
             out_->fatal(CALL_INFO,-1,"%s, Error: multiple connected high ports detected. Use the 'Bus' component to connect multiple entities to port 'high_network_0' (e.g., connect 2 L1s to a bus and connect the bus to the L2)\n",
                     getName().c_str());
     } else {
-        if (!lowCacheExists && !lowDirExists && !((reqExists && respExits) && lowNetExists))
+        if (!lowCacheExists && !lowDirExists)
             out_->fatal(CALL_INFO,-1,"%s, Error: no connected ports detected. Valid ports are high_network_0, cache, directory, and low_network_n\n",
                     getName().c_str());
     }
@@ -354,31 +347,6 @@ void Cache::configureLinks(Params &params) {
         region_ = linkUp_->getRegion();
         linkDown_->setRegion(region_);
 
-    } else if ((reqExists && respExits) && lowNetExists) { // "lowCache" is really "highCache" now
-        d_->debug(_INFO_,"Configuring cache with a network link to a cache above and a direct link below\n");
-
-        nicParams.find<std::string>("group", "", found);
-        if (!found) nicParams.insert("group", "1");
-
-        nicParams.find<std::string>("req.port", "", found);
-        if (!found){ nicParams.insert("req.port", "cache"); std::cout << "77777777777777777777777777\n"; }
-        nicParams.find<std::string>("data.port", "", found);
-        if (!found) { nicParams.insert("data.port", "cache_data"); std::cout << "888888888888888888888888\n"; }
-
-        linkUp_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemNICMulti", this, nicParams));
-
-         linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
-
-        // Configure high link
-        linkDown_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemLink", this, memlink));
-        linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
-        clockUpLink_ = true;
-        clockDownLink_ = false;
-
-        /* Pull region off network link, really we should have the same region on both and it should be a cache property not link property... */
-        region_ = linkUp_->getRegion();
-        linkDown_->setRegion(region_);
-
     } else if (highNetExists && lowDirExists) {
 
         d_->debug(_INFO_,"Configuring cache with a direct link above and a network link to a directory below\n");
@@ -413,33 +381,6 @@ void Cache::configureLinks(Params &params) {
         region_ = linkDown_->getRegion();
         linkUp_->setRegion(region_);
 
-    } else if (highNetExists && (reqExists && respExits)) {
-        d_->debug(_INFO_,"Configuring cache with a direct link above and %d request links and %d response links below\n", 1, 2);
-
-        nicParams.find<std::string>("group", "", found);
-        if (!found) {
-            nicParams.insert("group", "2");
-        }
-
-        nicParams.find<std::string>("req.port", "", found);
-        if (!found){ nicParams.insert("req.port", "cache"); std::cout << "222222222222222222222\n"; }
-        nicParams.find<std::string>("data.port", "", found);
-        if (!found) { nicParams.insert("data.port", "cache_data"); std::cout << "33333333333333333333\n"; }
-
-        linkDown_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemNICMulti", this, nicParams));
-
-        linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
-
-        // Configure high link
-        linkUp_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemLink", this, cpulink));
-        linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
-        clockDownLink_ = true;
-        clockUpLink_ = false;
-
-        region_ = linkDown_->getRegion();
-        linkUp_->setRegion(region_);
-
-//         exit(0);
     } else {    // lowDirExists
 
         d_->debug(_INFO_, "Configuring cache with a network to talk to both a cache above and a directory below\n");
