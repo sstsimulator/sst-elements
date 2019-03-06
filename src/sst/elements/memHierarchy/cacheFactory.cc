@@ -309,7 +309,7 @@ void Cache::configureLinks(Params &params) {
         linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
         clockDownLink_ = true;
         clockUpLink_ = false;
-
+        
         region_ = linkDown_->getRegion();
         linkUp_->setRegion(region_);
 
@@ -342,7 +342,7 @@ void Cache::configureLinks(Params &params) {
         linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
         clockUpLink_ = true;
         clockDownLink_ = false;
-
+        
         /* Pull region off network link, really we should have the same region on both and it should be a cache property not link property... */
         region_ = linkUp_->getRegion();
         linkDown_->setRegion(region_);
@@ -377,7 +377,7 @@ void Cache::configureLinks(Params &params) {
         linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
         clockDownLink_ = true;
         clockUpLink_ = false;
-
+        
         region_ = linkDown_->getRegion();
         linkUp_->setRegion(region_);
 
@@ -452,11 +452,11 @@ void Cache::configureLinks(Params &params) {
         linkUp_ = linkDown_;
         clockDownLink_ = true;
         clockUpLink_ = false;
-
+        
         region_ = linkDown_->getRegion();
         linkUp_->setRegion(region_);
     }
-
+   
     cacheArray_->setSliceAware(region_.interleaveSize, region_.interleaveStep);
 
 }
@@ -572,7 +572,7 @@ CacheArray* Cache::createCacheArray(Params &params) {
     uint64_t cacheSize = ua.getRoundedValue();
 
     if (lineSize > cacheSize)
-        out_->fatal(CALL_INFO, -1, "%s, Invalid param combo: cache_line_size cannot be greater than cache_size. You specified: cache_size = '%s', cache_line_size = '%" PRIu64 "'\n",
+        out_->fatal(CALL_INFO, -1, "%s, Invalid param combo: cache_line_size cannot be greater than cache_size. You specified: cache_size = '%s', cache_line_size = '%" PRIu64 "'\n", 
                 getName().c_str(), sizeStr.c_str(), lineSize);
     if (!isPowerOfTwo(lineSize)) out_->fatal(CALL_INFO, -1, "%s, cache_line_size - must be a power of 2. You specified '%" PRIu64 "'.\n", getName().c_str(), lineSize);
 

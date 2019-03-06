@@ -48,7 +48,7 @@ MemNICBase::MemNICBase(Component * parent, Params &params) : MemLinkBase(parent,
     std::stringstream sources, destinations;
     sources.str(params.find<std::string>("sources", ""));
     destinations.str(params.find<std::string>("destinations", ""));
-
+    
     uint32_t id;
     while (sources >> id) {
         sourceIDs.insert(id);
@@ -75,7 +75,7 @@ MemNICBase::MemNICBase(Component * parent, Params &params) : MemLinkBase(parent,
 
 void MemNICBase::nicInit(SST::Interfaces::SimpleNetwork * linkcontrol, unsigned int phase) {
     bool networkReady = linkcontrol->isNetworkInitialized();
-
+    
     // After we've set up network and exchanged params, drain the send queue
     if (networkReady && initMsgSent) {
         while (!initSendQueue.empty()) {
@@ -99,7 +99,7 @@ void MemNICBase::nicInit(SST::Interfaces::SimpleNetwork * linkcontrol, unsigned 
     // Expect different kinds of init events
     // 1. MemNIC - record these as needed and do not inform parent
     // 2. MemEventBase - only notify parent if sender is a src or dst for us
-    // We should know since network is in order and NIC does its init before the
+    // We should know since network is in order and NIC does its init before the 
     // parents do
     while (SimpleNetwork::Request *req = linkcontrol->recvInitData()) {
         Event * payload = req->takePayload();
@@ -109,7 +109,7 @@ void MemNICBase::nicInit(SST::Interfaces::SimpleNetwork * linkcontrol, unsigned 
         if (imre) {
             // Record name->address map for all other endpoints
             networkAddressMap.insert(std::make_pair(imre->info.name, imre->info.addr));
-
+            
             dbg.debug(_L10_, "%s (memNICBase) received imre. Name: %s, Addr: %" PRIu64 ", ID: %" PRIu32 ", start: %" PRIu64 ", end: %" PRIu64 ", size: %" PRIu64 ", step: %" PRIu64 "\n",
                     getName().c_str(), imre->info.name.c_str(), imre->info.addr, imre->info.id, imre->info.region.start, imre->info.region.end, imre->info.region.interleaveSize, imre->info.region.interleaveStep);
 
@@ -160,7 +160,7 @@ void MemNICBase::nicInit(SST::Interfaces::SimpleNetwork * linkcontrol, unsigned 
                 delete ev;
                 delete mre;
             } else if (
-                    (ev->getCmd() == Command::NULLCMD && (isSource(mre->event->getSrc()) || isDest(mre->event->getSrc())))
+                    (ev->getCmd() == Command::NULLCMD && (isSource(mre->event->getSrc()) || isDest(mre->event->getSrc()))) 
                     || ev->getDst() == getName()) {
                 dbg.debug(_L10_, "\tInserting in initQueue\n");
                 initQueue.push(mre);
@@ -207,10 +207,10 @@ uint64_t MemNICBase::lookupNetworkAddress(const std::string & dst) const {
 
 /* Constructor */
 MemNIC::MemNIC(Component * parent, Params &params) : MemNICBase(parent, params) {
-
+    
     // Get network parameters and create link control
     std::string linkName = params.find<std::string>("port", "");
-    if (linkName == "")
+    if (linkName == "") 
         dbg.fatal(CALL_INFO, -1, "Param not specified(%s): port - the name of the port that the MemNIC is attached to. This should be set internally by components creating the memNIC.\n",
                 getName().c_str());
 
@@ -221,8 +221,8 @@ MemNIC::MemNIC(Component * parent, Params &params) : MemNICBase(parent, params) 
     std::string linkInbufSize = params.find<std::string>("network_input_buffer_size", "1KiB");
     std::string linkOutbufSize = params.find<std::string>("network_output_buffer_size", "1KiB");
 
-//     link_control = (SimpleNetwork*)parent->loadSubComponent("merlin.linkcontrol", parent, params); // But link control doesn't use params so manually initialize
-	link_control = (SimpleNetwork*)parent->loadSubComponent("shogun.ShogunNIC", parent, params); // But link control doesn't use params so manually initialize
+    link_control = (SimpleNetwork*)parent->loadSubComponent(/*"merlin.linkcontrol"*/
+	"shogun.ShogunNIC", parent, params); // But link control doesn't use params so manually initialize
     link_control->initialize(linkName, UnitAlgebra(linkBandwidth), num_vcs, UnitAlgebra(linkInbufSize), UnitAlgebra(linkOutbufSize));
 
     // Packet size
@@ -242,8 +242,8 @@ void MemNIC::init(unsigned int phase) {
     MemNICBase::nicInit(link_control, phase);
 }
 
-/*
- * Called by parent on a clock
+/* 
+ * Called by parent on a clock 
  * Returns whether anything sent this cycle
  */
 bool MemNIC::clock() {
@@ -256,7 +256,7 @@ bool MemNIC::clock() {
         std::string debugEvStr;
         uint64_t dst = head->dest;
         bool doDebug = false;
-        if (ev) {
+        if (ev) { 
             debugEvStr = ev->getBriefString();
             doDebug = is_debug_event(ev);
         }
@@ -276,15 +276,15 @@ bool MemNIC::clock() {
     return false;
 }
 
-/*
- * Event handler called by link control on event receive
+/* 
+ * Event handler called by link control on event receive 
  * Return whether event can be received
  */
 bool MemNIC::recvNotify(int) {
     MemEventBase * me = recv();
     if (me) {
         if (is_debug_event(me)) {
-            dbg.debug(_L9_, "%s, memNIC recv: src: %s. cmd: %s\n",
+            dbg.debug(_L9_, "%s, memNIC recv: src: %s. cmd: %s\n", 
                     getName().c_str(), me->getSrc().c_str(), CommandString[(int)me->getCmd()]);
         }
 
@@ -303,7 +303,7 @@ void MemNIC::send(MemEventBase *ev) {
     req->dest = lookupNetworkAddress(ev->getDst());
     req->size_in_bits = getSizeInBits(ev);
     req->vn = 0;
-
+    
     if (is_debug_event(ev)) {
         dbg.debug(_L9_, "%s, memNIC adding to send queue: dst: %s, bits: %zu, cmd: %s\n",
                 getName().c_str(), ev->getDst().c_str(), req->size_in_bits, CommandString[(int)ev->getCmd()]);
@@ -322,7 +322,7 @@ size_t MemNIC::getSizeInBits(MemEventBase *ev) {
 }
 
 
-/*
+/* 
  * Polling-based receive function
  */
 MemEventBase* MemNIC::recv() {
@@ -330,7 +330,7 @@ MemEventBase* MemNIC::recv() {
     if (req != nullptr) {
         MemRtrEvent *mre = static_cast<MemRtrEvent*>(req->takePayload());
         delete req;
-
+        
         if (mre->hasClientData()) {
             MemEventBase * ev = mre->event;
             ev->setDeliveryLink(mre->getLinkId(), NULL);
@@ -359,7 +359,7 @@ MemEventBase* MemNIC::recv() {
 void MemNIC::printStatus(Output &out) {
     out.output("  MemHierarchy::MemNIC\n");
     out.output("    Send queue (%zu entries):\n", sendQueue.size());
-
+    
     // Since this is just debug/fatal we're just going to read out the queue & re-populate it
     std::queue<SST::Interfaces::SimpleNetwork::Request*> tmpQ;
     while (!sendQueue.empty()) {
