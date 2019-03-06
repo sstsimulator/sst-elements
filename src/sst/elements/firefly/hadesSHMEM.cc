@@ -539,10 +539,13 @@ void HadesSHMEM::put( Put* info )
     nic().shmemPut( calcNetPE(info->pe), info->dest, info->src, info->nelems, info->blocking, 
                 [=]() {
                     this->dbg().debug(CALL_INFO_LAMBDA,"put2",1,SHMEM_BASE,"returning\n");
+					// this logic does not make sense and was found during a reorg of hadesSHMEM.cc
+					// the resulting timing make may sense so it will stay as is until 
+					// it can be verified
 					if ( info->blocking ) {
-						this->delayReturn( info->callback, m_blockingReturnLat_ns );
-					} else {
 						this->delayReturn( info->callback, m_returnLat_ns  );
+					} else {
+						this->delayReturn( info->callback, m_blockingReturnLat_ns );
 					}	
 					delete info;
                 }
