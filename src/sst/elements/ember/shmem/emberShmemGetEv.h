@@ -37,11 +37,7 @@ public:
     void issue( uint64_t time, Shmem::Callback callback ) {
 
         EmberEvent::issue( time );
-        if ( m_blocking) {
-            m_api.get( m_dest, m_src, m_length, m_pe, callback );
-        } else {
-            m_api.get_nbi( m_dest, m_src, m_length, m_pe, callback );
-        }
+        m_api.get( m_dest, m_src, m_length, m_pe, m_blocking, callback );
     }
 private:
     Hermes::Vaddr m_dest;
