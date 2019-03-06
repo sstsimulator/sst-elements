@@ -46,10 +46,11 @@ public:
         { "verbose",     "Level of output verbosity, higher is more output, 0 is no output", 0 },
         { "debug",       "(uint) Output location for debug statements. Requires core configuration flag '--enable-debug'. --0[None], 1[STDOUT], 2[STDERR], 3[FILE]--", "0"},
         { "debug_level", "(uint) Debugging level: 0 to 16", "0"},
-        { "port_count",  "Number of ports on the Crossbar", 0 },
+        { "port_count",  "Number of ports on the Crossbar", "0" },
         { "arbitration", "Select the arbitration scheme", "roundrobin" },
         { "clock",       "Clock Frequency for the crossbar", "1.0GHz" },
         { "queue_slots", "Depth of input queue", "64" },
+        { "num_messages", "Number of messages per cycle", "1" },
     )
 
     SST_ELI_DOCUMENT_STATISTICS(
@@ -90,9 +91,11 @@ private:
     void populateInputs();
     void emitOutputs();
 
-    int port_count;
-    int queue_slots;
-    int pending_events;
+    int32_t port_count;
+    int32_t queue_slots;
+    int32_t pending_events;
+
+    uint32_t num_messages;
 
     ShogunStatisticsBundle* stats;
     SST::Link** links;

@@ -41,16 +41,17 @@ ShogunComponent::ShogunComponent(ComponentId_t id, Params& params) : Component(i
     output = new SST::Output( prefix, verbosity, 0, Output::STDOUT );
     arb->setOutput(output);
 
+    num_messages = params.find<uint32_t>("num_messages");
     port_count = params.find<int>("port_count");
 
     output->verbose(CALL_INFO, 1, 0, "Creating Shogun crossbar at %s clock rate and %d ports\n",
-	clock_rate.c_str(), port_count);
+            clock_rate.c_str(), port_count);
 
     registerClock(clock_rate, new Clock::Handler<ShogunComponent>(this,
                   &ShogunComponent::tick));
 
     if( port_count <= 0 ) {
-	output->fatal(CALL_INFO, -1, "Error: you specified a port count of less than or equal to zero.\n" );
+        output->fatal(CALL_INFO, -1, "Error: you specified a port count of less than or equal to zero.\n" );
     }
 
     output->verbose(CALL_INFO, 1, 0, "Connecting %d links...\n", port_count);
@@ -58,16 +59,16 @@ ShogunComponent::ShogunComponent(ComponentId_t id, Params& params) : Component(i
     char* linkName = new char[256];
 
     for( int i = 0; i < port_count; ++i ) {
-	sprintf(linkName, "port%d", i);
-	output->verbose(CALL_INFO, 1, 0, "Configuring port %s ...\n", linkName);
+        sprintf(linkName, "port%d", i);
+        output->verbose(CALL_INFO, 1, 0, "Configuring port %s ...\n", linkName);
 
-	links[i] = configureLink(linkName);
+        links[i] = configureLink(linkName);
 
-	if( nullptr == links[i] ) {
-		output->fatal(CALL_INFO, -1, "Failed to configure link on port %d\n", i);
-	}
+        if( nullptr == links[i] ) {
+            output->fatal(CALL_INFO, -1, "Failed to configure link on port %d\n", i);
+        }
 
-	links[i]->setPolling();
+        links[i]->setPolling();
     }
 
     delete[] linkName;
@@ -78,8 +79,8 @@ ShogunComponent::ShogunComponent(ComponentId_t id, Params& params) : Component(i
     remote_output_slots = (int*) malloc( sizeof(int) * port_count );
 
     for( int i = 0; i < port_count; ++i ) {
-	inputQueues[i] = new ShogunQueue<ShogunEvent*>( queue_slots );
-	remote_output_slots[i] = 2;
+        inputQueues[i] = new ShogunQueue<ShogunEvent*>( queue_slots );
+        remote_output_slots[i] = 2;
     }
 
     stats = new ShogunStatisticsBundle(port_count);
@@ -115,24 +116,26 @@ bool ShogunComponent::tick( Cycle_t currentCycle )
 
     // If we have nothing to do then don't crank all the heavy work.
     if( pending_events == 0 ) {
-	zeroEventCycles->addData(1);
-	return false;
+        zeroEventCycles->addData(1);
+        return false;
     } else {
-	    eventCycles->addData(1);
+        for( auto i = 0; i < num_messages; ++i) {
+            eventCycles->addData(1);
 
-	    // Migrate events across the cross-bar
-	    arb->moveEvents( port_count, inputQueues, pendingOutputs, static_cast<uint64_t>( currentCycle ) );
+            // Migrate events across the cross-bar
+            arb->moveEvents( port_count, inputQueues, pendingOutputs, static_cast<uint64_t>( currentCycle ) );
 
-	    printStatus();
+            printStatus();
 
-	    // Send any events which can be sent this cycle
-	    emitOutputs();
+            // Send any events which can be sent this cycle
+            emitOutputs();
+        }
 
-	    printStatus();
-	    output->verbose(CALL_INFO, 4, 0, "TICK() END *******************************************************\n");
+        printStatus();
+        output->verbose(CALL_INFO, 4, 0, "TICK() END *******************************************************\n");
 
-	    // return false so we keep going
-	    return false;
+        // return false so we keep going
+        return false;
     }
 }
 
