@@ -50,7 +50,8 @@ public:
         { "arbitration", "Select the arbitration scheme", "roundrobin" },
         { "clock",       "Clock Frequency for the crossbar", "1.0GHz" },
         { "queue_slots", "Depth of input queue", "64" },
-        { "num_messages", "Number of messages per cycle", "1" },
+        { "input_message_slots", "Number of messages injested per cycle", "1" },
+        { "output_message_slots", "Number of messages ejected per cycle", "1" },
     )
 
     SST_ELI_DOCUMENT_STATISTICS(
@@ -95,13 +96,16 @@ private:
     int32_t queue_slots;
     int32_t pending_events;
 
-    uint32_t num_messages;
+    uint32_t events_per_clock;
+    uint32_t input_message_slots;
+    uint32_t output_message_slots;
 
     ShogunStatisticsBundle* stats;
     SST::Link** links;
 
     ShogunQueue<ShogunEvent*>** inputQueues;
-    ShogunEvent** pendingOutputs;
+//     ShogunEvent** pendingOutputs;
+    std::vector< std::vector< ShogunEvent* > >* pendingOutputs;
     int* remote_output_slots;
     ShogunArbitrator* arb;
 

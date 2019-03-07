@@ -14,9 +14,9 @@ public:
 	ShogunRoundRobinArbitrator();
 	~ShogunRoundRobinArbitrator();
 
-	void moveEvents( const int port_count,
-                ShogunQueue<ShogunEvent*>** inputQueues,
-		ShogunEvent** outputEvents,
+    void moveEvents( const int num_events, const int port_count,
+        ShogunQueue<ShogunEvent*>** inputQueues,
+        std::vector< std::vector< ShogunEvent* > >* outputEvents,
 		uint64_t cycle ) override;
 
 private:
