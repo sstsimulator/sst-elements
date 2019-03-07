@@ -5,91 +5,106 @@
 namespace SST {
 namespace Shogun {
 
-template<typename T>
-class ShogunQueue {
+    template <typename T>
+    class ShogunQueue {
 
-public:
-	ShogunQueue(const int buffSize) :
-		buffMax(buffSize) {
+    public:
+        ShogunQueue(const int buffSize)
+            : buffMax(buffSize)
+        {
 
-		printf("Create a queue with buffer size %d\n", buffSize);
-		queue = new T[buffSize];
-		clear();
-	}
+            printf("Create a queue with buffer size %d\n", buffSize);
+            queue = new T[buffSize];
+            clear();
+        }
 
-	~ShogunQueue() {
-		delete[] queue;
-	}
+        ~ShogunQueue()
+        {
+            delete[] queue;
+        }
 
-	bool empty() const {
-		return size == 0;
-	}
+        bool empty() const
+        {
+            return size == 0;
+        }
 
-	void clear() {
-		head = 0;
-		tail = 0;
-		size = 0;
-	}
+        void clear()
+        {
+            head = 0;
+            tail = 0;
+            size = 0;
+        }
 
-	bool full() const {
-		return (size == buffMax);
-	}
+        bool full() const
+        {
+            return (size == buffMax);
+        }
 
-	bool hasNext() const {
-		return ! empty();
-	}
+        bool hasNext() const
+        {
+            return !empty();
+        }
 
-	T peek() const {
-		T item = queue[head];
-		return item;
-	}
+        T peek() const
+        {
+            T item = queue[head];
+            return item;
+        }
 
-	T pop() {
-		T item = queue[head];
-		incHead();
+        T pop()
+        {
+            T item = queue[head];
+            incHead();
 
-		size--;
-		return item;
-	}
+            size--;
+            return item;
+        }
 
-	void push(T newItem) {
-		queue[tail] = newItem;
-		incTail();
-		size++;
-	}
+        void push(T newItem)
+        {
+            queue[tail] = newItem;
+            incTail();
+            size++;
+        }
 
-	int capacity() const {
-		return buffMax;
-	}
+        int capacity() const
+        {
+            return buffMax;
+        }
 
-	int count() const {
-		return size;
-	}
+        int count() const
+        {
+            return size;
+        }
 
-private:
-	int head;
-	int tail;
-	int size;;
-	T* queue;
-	const int buffMax;
+    private:
+        int head;
+        int tail;
+        int size;
+        ;
+        T* queue;
+        const int buffMax;
 
-	void incHead() {
-		head = nextHead();
-	}
+        void incHead()
+        {
+            head = nextHead();
+        }
 
-	void incTail() {
-		tail = nextTail();
-	}
+        void incTail()
+        {
+            tail = nextTail();
+        }
 
-	int nextHead() {
-		return (head + 1) % buffMax;
-	}
+        int nextHead()
+        {
+            return (head + 1) % buffMax;
+        }
 
-	int nextTail() const {
-		return (tail + 1) % buffMax;
-	}
-
-};
+        int nextTail() const
+        {
+            return (tail + 1) % buffMax;
+        }
+    };
 
 }
 }

@@ -15,19 +15,20 @@
 
 #include "sst_config.h"
 
-#include <sst/core/output.h>
 #include <sst/core/event.h>
+#include <sst/core/output.h>
 #include <sst/core/unitAlgebra.h>
 
-#include "shogun.h"
 #include "arb/shogunrrarb.h"
-#include "shogun_init_event.h"
+#include "shogun.h"
 #include "shogun_credit_event.h"
+#include "shogun_init_event.h"
 
 using namespace SST;
 using namespace SST::Shogun;
 
-ShogunComponent::ShogunComponent(ComponentId_t id, Params& params) : Component(id)
+ShogunComponent::ShogunComponent(ComponentId_t id, Params& params)
+    : Component(id)
 {
     const std::string clock_rate = params.find<std::string>("clock", "1.0GHz");
     queue_slots = params.find<uint64_t>("queue_slots", 64);
@@ -39,58 +40,58 @@ ShogunComponent::ShogunComponent(ComponentId_t id, Params& params) : Component(i
 
     char prefix[256];
     sprintf(prefix, "[t=@t][%s]: ", getName().c_str());
-    output = new SST::Output( prefix, verbosity, 0, Output::STDOUT );
+    output = new SST::Output(prefix, verbosity, 0, Output::STDOUT);
     arb->setOutput(output);
 
     port_count = params.find<int>("port_count");
 
     output->verbose(CALL_INFO, 1, 0, "Creating Shogun crossbar at %s clock rate and %d ports\n",
-	clock_rate.c_str(), port_count);
+        clock_rate.c_str(), port_count);
 
-	clockTickHandler = new Clock::Handler<ShogunComponent>(this, &ShogunComponent::tick);
+    clockTickHandler = new Clock::Handler<ShogunComponent>(this, &ShogunComponent::tick);
     tc = registerClock(clock_rate, clockTickHandler);
     handlerRegistered = true;
 
-    if( port_count <= 0 ) {
-	output->fatal(CALL_INFO, -1, "Error: you specified a port count of less than or equal to zero.\n" );
+    if (port_count <= 0) {
+        output->fatal(CALL_INFO, -1, "Error: you specified a port count of less than or equal to zero.\n");
     }
 
     output->verbose(CALL_INFO, 1, 0, "Connecting %d links...\n", port_count);
-    links = (SST::Link**) malloc( sizeof(SST::Link*) * (port_count) );
+    links = (SST::Link**)malloc(sizeof(SST::Link*) * (port_count));
     char* linkName = new char[256];
 
-    for( int i = 0; i < port_count; ++i ) {
-	sprintf(linkName, "port%d", i);
-	output->verbose(CALL_INFO, 1, 0, "Configuring port %s ...\n", linkName);
+    for (int i = 0; i < port_count; ++i) {
+        sprintf(linkName, "port%d", i);
+        output->verbose(CALL_INFO, 1, 0, "Configuring port %s ...\n", linkName);
 
-	links[i] = configureLink(linkName, new Event::Handler<ShogunComponent>(this, &ShogunComponent::handleIncoming));
+        links[i] = configureLink(linkName, new Event::Handler<ShogunComponent>(this, &ShogunComponent::handleIncoming));
 
-	if( nullptr == links[i] ) {
-		output->fatal(CALL_INFO, -1, "Failed to configure link on port %d\n", i);
-	}
+        if (nullptr == links[i]) {
+            output->fatal(CALL_INFO, -1, "Failed to configure link on port %d\n", i);
+        }
 
-//	links[i]->setPolling();
+        //	links[i]->setPolling();
     }
 
     delete[] linkName;
 
-    output->verbose(CALL_INFO, 1, 0, "Allocating pending input/output queues...\n" );
-    inputQueues = (ShogunQueue<ShogunEvent*>**) malloc( sizeof(ShogunQueue<ShogunEvent*>*) * port_count );
-    pendingOutputs = (ShogunEvent**) malloc( sizeof(ShogunEvent*) * (port_count) );
-    remote_output_slots = (int*) malloc( sizeof(int) * port_count );
+    output->verbose(CALL_INFO, 1, 0, "Allocating pending input/output queues...\n");
+    inputQueues = (ShogunQueue<ShogunEvent*>**)malloc(sizeof(ShogunQueue<ShogunEvent*>*) * port_count);
+    pendingOutputs = (ShogunEvent**)malloc(sizeof(ShogunEvent*) * (port_count));
+    remote_output_slots = (int*)malloc(sizeof(int) * port_count);
 
-    for( int i = 0; i < port_count; ++i ) {
-	inputQueues[i] = new ShogunQueue<ShogunEvent*>( queue_slots );
-	remote_output_slots[i] = 2;
+    for (int i = 0; i < port_count; ++i) {
+        inputQueues[i] = new ShogunQueue<ShogunEvent*>(queue_slots);
+        remote_output_slots[i] = 2;
     }
 
     stats = new ShogunStatisticsBundle(port_count);
     stats->registerStatistics(this);
 
     zeroEventCycles = registerStatistic<uint64_t>("cycles_zero_events");
-    eventCycles     = registerStatistic<uint64_t>("cycles_events");
+    eventCycles = registerStatistic<uint64_t>("cycles_events");
 
-    arb->setStatisticsBundle( stats );
+    arb->setStatisticsBundle(stats);
     clearOutputs();
 }
 
@@ -102,173 +103,180 @@ ShogunComponent::~ShogunComponent()
     delete stats;
 }
 
-ShogunComponent::ShogunComponent() : Component(-1)
+ShogunComponent::ShogunComponent()
+    : Component(-1)
 {
     // for serialization only
 }
 
-bool ShogunComponent::tick( SST::Cycle_t currentCycle )
+bool ShogunComponent::tick(SST::Cycle_t currentCycle)
 {
     output->verbose(CALL_INFO, 4, 0, "TICK() START [%30" PRIu64 "] ********************\n", static_cast<uint64_t>(currentCycle));
     printStatus();
 
-	eventCycles->addData(1);
+    eventCycles->addData(1);
 
-	// Migrate events across the cross-bar
-	arb->moveEvents( port_count, inputQueues, pendingOutputs, static_cast<uint64_t>( currentCycle ) );
+    // Migrate events across the cross-bar
+    arb->moveEvents(port_count, inputQueues, pendingOutputs, static_cast<uint64_t>(currentCycle));
 
-	printStatus();
+    printStatus();
 
-	// Send any events which can be sent this cycle
-	emitOutputs();
+    // Send any events which can be sent this cycle
+    emitOutputs();
 
-	printStatus();
-	
-	output->verbose(CALL_INFO, 4, 0, "Pending event count: %d\n", pending_events);
-	// If we have pending events to process, then schedule another tick
-	if( 0 == pending_events ) {
-		if( handlerRegistered ) {
-			output->verbose(CALL_INFO, 4, 0, "De-registering clock handlers, no events pending.\n");
-			handlerRegistered = false;
-			//unregisterClock( tc, clockTickHandler );
-		}
+    printStatus();
 
-		output->verbose(CALL_INFO, 4, 0, "TICK() END  *****************************************************\n");
-		return true;
-	} else {
-		output->verbose(CALL_INFO, 4, 0, "TICK() END  *****************************************************\n");
-		return false;
-	}
+    output->verbose(CALL_INFO, 4, 0, "Pending event count: %d\n", pending_events);
+    // If we have pending events to process, then schedule another tick
+    if (0 == pending_events) {
+        if (handlerRegistered) {
+            output->verbose(CALL_INFO, 4, 0, "De-registering clock handlers, no events pending.\n");
+            handlerRegistered = false;
+            //unregisterClock( tc, clockTickHandler );
+        }
+
+        output->verbose(CALL_INFO, 4, 0, "TICK() END  *****************************************************\n");
+        return true;
+    } else {
+        output->verbose(CALL_INFO, 4, 0, "TICK() END  *****************************************************\n");
+        return false;
+    }
 }
 
-void ShogunComponent::init(unsigned int phase) {
-	output->verbose(CALL_INFO, 2, 0, "Executing initialization phase %u...\n", phase);
+void ShogunComponent::init(unsigned int phase)
+{
+    output->verbose(CALL_INFO, 2, 0, "Executing initialization phase %u...\n", phase);
 
-	if( 0 == phase ) {
-		for( int i = 0; i < port_count; ++i ) {
-			links[i]->sendUntimedData( new ShogunInitEvent( port_count, i, inputQueues[i]->capacity() ) );
-		}
-	}
+    if (0 == phase) {
+        for (int i = 0; i < port_count; ++i) {
+            links[i]->sendUntimedData(new ShogunInitEvent(port_count, i, inputQueues[i]->capacity()));
+        }
+    }
 
-	for( int i = 0; i < port_count; ++i ) {
-		SST::Event* ev = links[i]->recvUntimedData();
+    for (int i = 0; i < port_count; ++i) {
+        SST::Event* ev = links[i]->recvUntimedData();
 
-		while( nullptr != ev ) {
+        while (nullptr != ev) {
 
-			if( nullptr != ev ) {
-				ShogunInitEvent* initEv     = dynamic_cast<ShogunInitEvent*>(ev);
-				ShogunCreditEvent* creditEv = dynamic_cast<ShogunCreditEvent*>(ev);
+            if (nullptr != ev) {
+                ShogunInitEvent* initEv = dynamic_cast<ShogunInitEvent*>(ev);
+                ShogunCreditEvent* creditEv = dynamic_cast<ShogunCreditEvent*>(ev);
 
-				// if the event is not a ShogunInit then we want to broadcast it out
-				// if it is an init event, just drop it
-				if( ( nullptr == initEv ) && ( nullptr == creditEv )) {
+                // if the event is not a ShogunInit then we want to broadcast it out
+                // if it is an init event, just drop it
+                if ((nullptr == initEv) && (nullptr == creditEv)) {
 
-					for( int j = 0; j < port_count; ++j ) {
-						if( i != j ) {
-							printf("sending untimed data from %d to %d\n", i, j);
-							links[j]->sendUntimedData( ev->clone() );
-						}
-					}
-				} else {
-					delete ev;
-				}
-			}
+                    for (int j = 0; j < port_count; ++j) {
+                        if (i != j) {
+                            printf("sending untimed data from %d to %d\n", i, j);
+                            links[j]->sendUntimedData(ev->clone());
+                        }
+                    }
+                } else {
+                    delete ev;
+                }
+            }
 
-			ev = links[i]->recvUntimedData();
-		}
-	}
+            ev = links[i]->recvUntimedData();
+        }
+    }
 }
 
-void ShogunComponent::emitOutputs() {
+void ShogunComponent::emitOutputs()
+{
     output->verbose(CALL_INFO, 4, 0, "BEGIN: emitOutputs -----------------------------------------------\n");
 
-    for( int i = 0; i < port_count; ++i ) {
-	output->verbose(CALL_INFO, 4, 0, "-> Processing port %d:\n", i);
+    for (int i = 0; i < port_count; ++i) {
+        output->verbose(CALL_INFO, 4, 0, "-> Processing port %d:\n", i);
 
-	if( nullptr != pendingOutputs[i] ) {
-		output->verbose(CALL_INFO, 4, 0, "  -> output is not null, remote-slot-count: %d, src=%5d\n", remote_output_slots[i],
-			pendingOutputs[i]->getSource());
+        if (nullptr != pendingOutputs[i]) {
+            output->verbose(CALL_INFO, 4, 0, "  -> output is not null, remote-slot-count: %d, src=%5d\n", remote_output_slots[i],
+                pendingOutputs[i]->getSource());
 
-		if( ( remote_output_slots[i] > 0 ) ) {
-			output->verbose(CALL_INFO, 4, 0, "    -> sending event (has entry and free %d slots)\n", remote_output_slots[i]);
-			stats->getOutputPacketCount(i)->addData(1);
+            if ((remote_output_slots[i] > 0)) {
+                output->verbose(CALL_INFO, 4, 0, "    -> sending event (has entry and free %d slots)\n", remote_output_slots[i]);
+                stats->getOutputPacketCount(i)->addData(1);
 
-			links[i]->send( pendingOutputs[i] );
-			links[ pendingOutputs[i]->getSource() ]->send( new ShogunCreditEvent() );
-			pendingOutputs[i] = nullptr;
-			remote_output_slots[i]--;
-			pending_events--;
-		} else {
-			output->verbose(CALL_INFO, 4, 0, "    -> no free slots, event send disabled for this round (slots: %d)\n", remote_output_slots[i]);
-		}
-	}
+                links[i]->send(pendingOutputs[i]);
+                links[pendingOutputs[i]->getSource()]->send(new ShogunCreditEvent());
+                pendingOutputs[i] = nullptr;
+                remote_output_slots[i]--;
+                pending_events--;
+            } else {
+                output->verbose(CALL_INFO, 4, 0, "    -> no free slots, event send disabled for this round (slots: %d)\n", remote_output_slots[i]);
+            }
+        }
     }
 
     output->verbose(CALL_INFO, 4, 0, "END: emitOutputs -------------------------------------------------\n");
 }
 
-void ShogunComponent::clearOutputs() {
-    for( int i = 0; i < port_count; ++i ) {
-	pendingOutputs[i] = nullptr;
-	remote_output_slots[i] = inputQueues[i]->capacity();
+void ShogunComponent::clearOutputs()
+{
+    for (int i = 0; i < port_count; ++i) {
+        pendingOutputs[i] = nullptr;
+        remote_output_slots[i] = inputQueues[i]->capacity();
     }
 }
 
-void ShogunComponent::clearInputs() {
-    for( int i = 0; i < port_count; ++i ) {
-	inputQueues[i]->clear();
+void ShogunComponent::clearInputs()
+{
+    for (int i = 0; i < port_count; ++i) {
+        inputQueues[i]->clear();
     }
 }
 
-void ShogunComponent::printStatus() {
+void ShogunComponent::printStatus()
+{
     output->verbose(CALL_INFO, 4, 0, "BEGIN: processing x-bar inputs -----------------------------------------------\n");
     output->verbose(CALL_INFO, 4, 0, "BEGIN X-BAR STATUS REPORT ====================================================\n");
-    for( int i = 0; i < port_count; ++i ) {
-    output->verbose(CALL_INFO, 4, 0, "port %5d / in-q-count: %5d / remote-losts: %5d / out-q: %s\n", i,
-	inputQueues[i]->count(), remote_output_slots[i], pendingOutputs[i] == nullptr ? "empty" : "full");
+    for (int i = 0; i < port_count; ++i) {
+        output->verbose(CALL_INFO, 4, 0, "port %5d / in-q-count: %5d / remote-losts: %5d / out-q: %s\n", i,
+            inputQueues[i]->count(), remote_output_slots[i], pendingOutputs[i] == nullptr ? "empty" : "full");
     }
     output->verbose(CALL_INFO, 4, 0, "END X-BAR STATUS REPORT ======================================================\n");
 }
 
-void ShogunComponent::handleIncoming( SST::Event* event ) {
-	output->verbose(CALL_INFO, 4, 0, "BEGIN: handleIncoming --------------------------------------------------------\n");
-	
-	ShogunEvent* incomingShogunEv = dynamic_cast<ShogunEvent*>( event );
-	
-	if( nullptr != incomingShogunEv ) {
-		const int src_port = incomingShogunEv->getPayload()->src;
-	
-		if( inputQueues[src_port]->full() ) {
-			output->fatal(CALL_INFO, 4, 0, "Error: recv event for port %d but queues are full\n", src_port);
-		}
-	
-		output->verbose(CALL_INFO, 4, 0, "-> recv from %d dest: %d\n",
-			src_port,
-			incomingShogunEv->getPayload()->dest);
+void ShogunComponent::handleIncoming(SST::Event* event)
+{
+    output->verbose(CALL_INFO, 4, 0, "BEGIN: handleIncoming --------------------------------------------------------\n");
 
-		inputQueues[src_port]->push( incomingShogunEv );
-		pending_events++;
-		stats->getInputPacketCount(src_port)->addData(1);
-		
-		// Reregister clock handler in the event that it has not been done
-		if(! handlerRegistered ) {
-			output->verbose(CALL_INFO, 4, 0, "Re-registering clock handlers...\n");
-			reregisterClock(tc, clockTickHandler);
-			handlerRegistered = true;
-		}
-	} else {
-		ShogunCreditEvent* creditEv = dynamic_cast<ShogunCreditEvent*>( event );
-		
-		if( nullptr != creditEv ) {
-			const int src_port = creditEv->getSrc();
-			
-			output->verbose(CALL_INFO, 4, 0, "-> recv-credit from %d\n", src_port);
-			remote_output_slots[src_port]++;
-		} else {
-			output->fatal(CALL_INFO, -1, "Error: received a non-shogun compatible event.\n");
-		}
-	}
+    ShogunEvent* incomingShogunEv = dynamic_cast<ShogunEvent*>(event);
 
-	output->verbose(CALL_INFO, 4, 0, "handlerRegistered? %s\n", (handlerRegistered ? "yes" : "no"));
-	output->verbose(CALL_INFO, 4, 0, "END: handleIncoming --------------------------------------------------------\n");
+    if (nullptr != incomingShogunEv) {
+        const int src_port = incomingShogunEv->getPayload()->src;
+
+        if (inputQueues[src_port]->full()) {
+            output->fatal(CALL_INFO, 4, 0, "Error: recv event for port %d but queues are full\n", src_port);
+        }
+
+        output->verbose(CALL_INFO, 4, 0, "-> recv from %d dest: %d\n",
+            src_port,
+            incomingShogunEv->getPayload()->dest);
+
+        inputQueues[src_port]->push(incomingShogunEv);
+        pending_events++;
+        stats->getInputPacketCount(src_port)->addData(1);
+
+        // Reregister clock handler in the event that it has not been done
+        if (!handlerRegistered) {
+            output->verbose(CALL_INFO, 4, 0, "Re-registering clock handlers...\n");
+            reregisterClock(tc, clockTickHandler);
+            handlerRegistered = true;
+        }
+    } else {
+        ShogunCreditEvent* creditEv = dynamic_cast<ShogunCreditEvent*>(event);
+
+        if (nullptr != creditEv) {
+            const int src_port = creditEv->getSrc();
+
+            output->verbose(CALL_INFO, 4, 0, "-> recv-credit from %d\n", src_port);
+            remote_output_slots[src_port]++;
+        } else {
+            output->fatal(CALL_INFO, -1, "Error: received a non-shogun compatible event.\n");
+        }
+    }
+
+    output->verbose(CALL_INFO, 4, 0, "handlerRegistered? %s\n", (handlerRegistered ? "yes" : "no"));
+    output->verbose(CALL_INFO, 4, 0, "END: handleIncoming --------------------------------------------------------\n");
 }
