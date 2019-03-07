@@ -109,7 +109,7 @@ SimpleNetwork::Request* ShogunNIC::recv(int vn) {
 				output->verbose(CALL_INFO, 8, 0, "-> request src: %d\n", req->src);
 			}
 
-			link->send( new ShogunCreditEvent() );
+			link->send( new ShogunCreditEvent(netID) );
 			return req;
 		} else {
 			output->verbose(CALL_INFO, 8, 0, "-> request-q empty, nothing to receive\n");

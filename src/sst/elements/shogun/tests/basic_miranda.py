@@ -15,7 +15,7 @@ comp_cpu0.addParams({
 	"verbose" : 0,
 	"generator" : "miranda.GUPSGenerator",
 	"generatorParams.verbose" : 0,
-	"generatorParams.count" : 10000,
+	"generatorParams.count" : 100000,
 	"generatorParams.seed_a"  : 11,
 	"generatorParams.seed_b"  : 177,
 	"generatorParams.max_address" : ((memory_mb) / 2) * 1024 * 1024,
@@ -26,7 +26,7 @@ comp_cpu1.addParams({
 	"verbose" : 0,
 	"generator" : "miranda.GUPSGenerator",
 	"generatorParams.verbose" : 0,
-	"generatorParams.count" : 10000,
+	"generatorParams.count" : 100000,
 	"generatorParams.seed_a"  : 10101110101,
 	"generatorParams.seed_b"  : 101011,
 	"generatorParams.max_address" : ((memory_mb) / 2) * 1024 * 1024,
@@ -122,7 +122,9 @@ comp_dirctrl1.addParams({
 
 shogun_xbar = sst.Component("shogunxbar", "shogun.ShogunXBar")
 shogun_xbar.addParams({
-	"port_count" : 4
+       "clock" : "1.0GHz",
+       "port_count" : 4,
+       "verbose" : 0
 })
 
 shogun_xbar.enableAllStatistics({"type":"sst.AccumulatorStatistic"})

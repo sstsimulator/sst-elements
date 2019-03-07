@@ -84,6 +84,8 @@ private:
     void operator=(const ShogunComponent&); // do not implement
 
     virtual bool tick(SST::Cycle_t);
+    //void tickEvent( SST::Event* ev );
+    void handleIncoming( SST::Event* event );
 
     void clearInputs();
     void clearOutputs();
@@ -96,6 +98,7 @@ private:
 
     ShogunStatisticsBundle* stats;
     SST::Link** links;
+    SST::Link*  clockLink;
 
     ShogunQueue<ShogunEvent*>** inputQueues;
     ShogunEvent** pendingOutputs;
@@ -106,6 +109,12 @@ private:
     Statistic<uint64_t>* zeroEventCycles;
     Statistic<uint64_t>* eventCycles;
 
+    int64_t clockPS;
+
+    uint64_t parseClockInPicoSeconds( const std::string clock ) const;
+    TimeConverter* tc;
+    Clock::HandlerBase* clockTickHandler;
+    bool handlerRegistered;
 };
 
 } // namespace ShogunComponent
