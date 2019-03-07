@@ -180,14 +180,14 @@ class VirtNic : public SST::Module {
     void shmemInit( Hermes::Vaddr, Callback );
     void shmemRegMem( Hermes::MemAddr&, size_t len, Callback );
     void shmemWait( Hermes::Vaddr dest, Hermes::Shmem::WaitOp, Hermes::Value&, Callback );
-    void shmemPutv( int node, Hermes::Vaddr dest, Hermes::Value&, Callback );
+    void shmemPutv( int node, Hermes::Vaddr dest, Hermes::Value& );
     void shmemGetv( int node, Hermes::Vaddr src, Hermes::Value::Type, CallbackV );
-    void shmemPut( int node, Hermes::Vaddr dest, Hermes::Vaddr src, size_t len, bool blocking, Callback );
-    void shmemGet( int node, Hermes::Vaddr dest, Hermes::Vaddr src, size_t len, bool blocking, Callback );
+    void shmemPut( int node, Hermes::Vaddr dest, Hermes::Vaddr src, size_t len, Callback );
+    void shmemGet( int node, Hermes::Vaddr dest, Hermes::Vaddr src, size_t len, Callback );
     void shmemPutOp( int node, Hermes::Vaddr dest, Hermes::Vaddr src, size_t len, Hermes::Shmem::ReduOp, Hermes::Value::Type, Callback );
     void shmemSwap( int node, Hermes::Vaddr dest, Hermes::Value& value, CallbackV );
     void shmemCswap( int node, Hermes::Vaddr dest, Hermes::Value& cond, Hermes::Value& value, CallbackV );
-    void shmemAdd( int node, Hermes::Vaddr dest, Hermes::Value&, Callback );
+    void shmemAdd( int node, Hermes::Vaddr dest, Hermes::Value& );
     void shmemFadd( int node, Hermes::Vaddr dest, Hermes::Value&, CallbackV );
 
     void setNotifyOnRecvDmaDone(
@@ -201,9 +201,23 @@ class VirtNic : public SST::Module {
     void notifyRecvDmaDone( int src, int tag, size_t len, void* key );
     void notifyNeedRecv( int src, int tag, size_t length );
 
+    bool isBlocked() {
+		m_dbg.debug(CALL_INFO,2,0,"%d %d\n", m_curNicQdepth, m_maxNicQdepth);
+        return m_curNicQdepth == m_maxNicQdepth;  
+    }
+
+    void setBlockedCallback( Callback callback ) {
+		m_dbg.debug(CALL_INFO,2,0,"\n");
+        assert( ! m_blockedCallback );
+        m_blockedCallback = callback;
+    }
+
   private:
 
     void sendCmd( SimTime_t delay ,Event* ev) {
+		m_dbg.debug(CALL_INFO,2,0,"%d %d\n", m_curNicQdepth, m_maxNicQdepth);
+        assert( m_curNicQdepth < m_maxNicQdepth );
+        ++m_curNicQdepth;
         m_toNicLink->send( delay, ev );  
     }
          
@@ -236,6 +250,9 @@ class VirtNic : public SST::Module {
     VirtNic::HandlerBase<void*>* m_notifySendDmaDone; 
     VirtNic::HandlerBase4Args<int, int, size_t, void*>* m_notifyRecvDmaDone; 
     VirtNic::HandlerBase2Args<int, size_t>* m_notifyNeedRecv;
+    int m_maxNicQdepth;
+    int m_curNicQdepth;
+    Callback m_blockedCallback;
 };
 
 }
