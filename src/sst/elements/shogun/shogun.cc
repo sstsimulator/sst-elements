@@ -356,6 +356,7 @@ void ShogunComponent::handleIncoming( SST::Event* event ) {
 
 		inputQueues[src_port]->push( incomingShogunEv );
 		pending_events++;
+		stats->getInputPacketCount(src_port)->addData(1);
 		
 		// Reregister clock handler in the event that it has not been done
 		if(! handlerRegistered ) {
