@@ -30,9 +30,6 @@ using namespace SST::Shogun;
 ShogunComponent::ShogunComponent(ComponentId_t id, Params& params) : Component(id)
 {
     const std::string clock_rate = params.find<std::string>("clock", "1.0GHz");
-    uint64_t ps_per_clock = parseClockInPicoSeconds(clock_rate);
-    printf("ps_per_clock = %ld\n", ps_per_clock);
-
     queue_slots = params.find<uint64_t>("queue_slots", 64);
     pending_events = 0;
 
@@ -182,55 +179,6 @@ void ShogunComponent::init(unsigned int phase) {
 	}
 }
 
-void ShogunComponent::populateInputs() {
-    output->verbose(CALL_INFO, 4, 0, "BEGIN: processing x-bar inputs -----------------------------------------------\n");
-    output->verbose(CALL_INFO, 4, 0, "Port Status:\n");
-    for( int i = 0; i < port_count; ++i ) {
-    output->verbose(CALL_INFO, 4, 0, "port %5d / in-q-count: %5d / remote-slots: %5d\n", i, inputQueues[i]->count(), remote_output_slots[i]);
-    }
-    output->verbose(CALL_INFO, 4, 0, "Processing inputs...\n");
-
-    int count = 0;
-
-    for( int i = 0; i < port_count; ++i ) {
-	output->verbose(CALL_INFO, 4, 0, "-> processing port %d input-queue-count: %d\n", i, inputQueues[i]->count());
-
-	if( ! inputQueues[i]->full() ) {
-		// Poll link for next event
-		SST::Event* incoming = links[i]->recv();
-
-		if( nullptr != incoming ) {
-			stats->getInputPacketCount(i)->addData(1);
-
-			ShogunEvent* incomingShogun = dynamic_cast<ShogunEvent*>(incoming);
-
-			if( nullptr != incomingShogun ) {
-				output->verbose(CALL_INFO, 4, 0, "  -> recv from: %d dest: %d\n",
-					incomingShogun->getPayload()->src,
-					incomingShogun->getPayload()->dest);
-
-				inputQueues[i]->push( incomingShogun );
-				count++;
-				pending_events++;
-			} else {
-				ShogunCreditEvent* creditEv = dynamic_cast<ShogunCreditEvent*>( incoming );
-
-				if( nullptr != creditEv ) {
-					output->verbose(CALL_INFO, 8, 0, "-> recv credit event, output-slots on %d now %d\n", i, remote_output_slots[i]);
-					remote_output_slots[i]++;
-				} else {
-					output->fatal(CALL_INFO, -1, "Error: received a non-shogun compatible event via a polling link (id=%d)\n", i);
-				}
-			}
-		}
-	} else {
-		output->verbose(CALL_INFO, 4, 0, "-> queues for port %d are full, cannot accept any events\n");
-	}
-    }
-
-    output->verbose(CALL_INFO, 4, 0, "END: processing x-bar inputs -------------------------------------------------\n");
-}
-
 void ShogunComponent::emitOutputs() {
     output->verbose(CALL_INFO, 4, 0, "BEGIN: emitOutputs -----------------------------------------------\n");
 
@@ -280,62 +228,6 @@ void ShogunComponent::printStatus() {
 	inputQueues[i]->count(), remote_output_slots[i], pendingOutputs[i] == nullptr ? "empty" : "full");
     }
     output->verbose(CALL_INFO, 4, 0, "END X-BAR STATUS REPORT ======================================================\n");
-}
-
-uint64_t ShogunComponent::parseClockInPicoSeconds( const std::string clock ) const {
-
-    char* preUnitBuffer = new char[ (clock.size() + 1) ];
-    char* unitBuffer    = new char[ (clock.size() + 1) ];
-
-    int preUnitIndex = 0;
-
-    for( int i = 0; i < clock.size(); ++i ) {
-	preUnitBuffer[i] = '\0';
-	unitBuffer[i] = '\0';
-    }
-
-    for( int i = 0; i < clock.size(); ++i ) {
-	const char next_char = clock[i];
-
-	if( 0 == preUnitIndex ) {
-		if( std::isdigit(next_char) || (next_char == '.' ) ) {
-			preUnitBuffer[i] = clock[i];
-		} else {
-			preUnitIndex = i;
-			unitBuffer[0] = static_cast<char>(std::toupper(next_char));
-		}
-	} else {
-		unitBuffer[(i-preUnitIndex)] = static_cast<char>(std::toupper(next_char));
-	}
-    }
-
-    const double digits = std::strtod(preUnitBuffer, nullptr);
-    double multiplier = 1.0;
-
-    if( strcmp("THZ", unitBuffer) == 0 ) {
-	multiplier = 1.0e12;
-    } else if( strcmp("GHZ", unitBuffer) == 0 ) {
-	multiplier = 1.0e9;
-    } else if( strcmp("MHZ", unitBuffer) == 0 ) {
-	multiplier = 1.0e6;
-    } else if( strcmp("KHZ", unitBuffer) == 0 ) {
-	multiplier = 1.0e3;
-    } else if( strcmp("HZ", unitBuffer) == 0 ) {
-	multiplier = 1.0;
-    }
-
-    printf("preUnits = \"%s\"\n", preUnitBuffer);
-    printf("units    = \"%s\"\n", unitBuffer);
-
-    const double picoSeconds = 1.0e12;
-
-    delete [] unitBuffer;
-    delete [] preUnitBuffer;
-
-    const double result = picoSeconds / (digits * multiplier);
-    printf("%f %f picoseonds = %f\n", digits, multiplier, result);
-
-    return (int)(result);
 }
 
 void ShogunComponent::handleIncoming( SST::Event* event ) {

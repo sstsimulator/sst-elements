@@ -89,7 +89,6 @@ private:
 
     void clearInputs();
     void clearOutputs();
-    void populateInputs();
     void emitOutputs();
 
     int port_count;
@@ -111,7 +110,6 @@ private:
 
     int64_t clockPS;
 
-    uint64_t parseClockInPicoSeconds( const std::string clock ) const;
     TimeConverter* tc;
     Clock::HandlerBase* clockTickHandler;
     bool handlerRegistered;
