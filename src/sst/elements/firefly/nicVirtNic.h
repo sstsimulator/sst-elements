@@ -72,6 +72,9 @@ class VirtNic {
             send( new NicRespEvent( NicRespEvent::Get, key ));
         }
 
+        void notifyShmem( SimTime_t delay ) {
+            sendShmem( delay, new NicShmemRespEvent( [](){} ));
+        }
 
         void notifyShmem( SimTime_t delay, NicShmemRespEvent::Callback callback ) {
             sendShmem( delay, new NicShmemRespEvent( callback ));
