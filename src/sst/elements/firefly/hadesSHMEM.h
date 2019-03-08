@@ -397,11 +397,11 @@ class HadesSHMEM : public Shmem::Interface
 	   	int pe;
 	};
 	struct Fam_Get : public Base { 
-		Fam_Get( Hermes::Vaddr dest, Shmem::Fam_Region_Descriptor rd, uint64_t offset, uint64_t nbytes,
+		Fam_Get( Hermes::Vaddr dest, Shmem::Fam_Descriptor rd, uint64_t offset, uint64_t nbytes,
 				bool blocking, Shmem::Callback callback ) :
 			Base(callback), dest(dest), rd(rd), offset(offset), nbytes(nbytes), blocking(blocking)  {} 
 		Hermes::Vaddr dest;
-		Shmem::Fam_Region_Descriptor rd;
+		Shmem::Fam_Descriptor rd;
 		uint64_t offset;
 	   	uint64_t nbytes;
 		bool blocking;

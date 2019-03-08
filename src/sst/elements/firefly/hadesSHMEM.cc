@@ -463,7 +463,7 @@ void HadesSHMEM::reduction( Reduction* info )
 	);	
 }
 
-void HadesSHMEM::get(Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, int pe, bool blocking, Shmem::Callback callback)
+void HadesSHMEM::get(Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, int pe, bool blocking, Shmem::Callback callback )
 {
     dbg().debug(CALL_INFO,1,SHMEM_BASE,"destSimVAddr=%#" PRIx64 " srcSimVaddr=%#" PRIx64 " length=%lu\n",
                     dest, src, length);
@@ -825,7 +825,7 @@ void HadesSHMEM::doOneFamPut( FamWork* work ) {
 	m_dbg.debug(CALL_INFO,1,SHMEM_BASE,"src=%#" PRIx64" target=%#" PRIx64 " nbytes=%" PRIu64 " node=%x\n",
 				src, target.getSimVAddr() , nbytes, node );
 
-	put_nbi( target.getSimVAddr(), src, nbytes, node, callback ); 
+	put( target.getSimVAddr(), src, nbytes, node, false, callback ); 
 }
 
 void HadesSHMEM::fam_scatter( Hermes::Vaddr src, Shmem::Fam_Descriptor fd, uint64_t nElements,
