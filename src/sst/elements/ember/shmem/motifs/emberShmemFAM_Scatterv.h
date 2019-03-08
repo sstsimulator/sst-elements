@@ -81,10 +81,10 @@ public:
 			setVerbosePrefix( m_my_pe );
 			if ( m_my_pe == 0 ) {
 				printf("number of pes:           %d\n",	m_num_pes );
-				printf("block size:              %d\n",	m_blockSize );
-				printf("number of blocks:        %d\n",	m_numBlocks );
-				printf("firstBlock:              %d\n",	m_firstBlock );
-				printf("blockStride              %d\n",	m_blockStride );
+				printf("block size:              %" PRIu64 "\n",	m_blockSize );
+				printf("number of blocks:        %" PRIu64 "\n",	m_numBlocks );
+				printf("firstBlock:              %" PRIu64 "\n",	m_firstBlock );
+				printf("blockStride              %" PRIu64 "\n",	m_blockStride );
 			}
 			enQ_malloc( evQ, &m_src, m_blockSize, m_backed );
 			enQ_getTime( evQ, &m_startTime );
@@ -126,7 +126,7 @@ public:
                 } else {
                     postTime = m_stopTime - m_startTime;
                 }
-                printf("%d:%s:  %zu bytes, %.3lf GB/s, postTime %lu \n",m_my_pe, getMotifName().c_str(), bytes, (double) bytes/ time, postTime );
+                printf("%d:%s:  %zu bytes, %.3lf GB/s, postTime %" PRIu64 " \n",m_my_pe, getMotifName().c_str(), bytes, (double) bytes/ time, postTime );
             }
             return true;
         }
@@ -149,7 +149,7 @@ public:
 	Shmem::Fam_Descriptor m_fd;
 	EmberMiscLib* m_miscLib;
 
-    enum { Init, Alloc, Work, Wait, Fini } m_phase;
+    enum { Init, Alloc, Work, Fini } m_phase;
 
 	int m_node_num;
     int m_my_pe;
