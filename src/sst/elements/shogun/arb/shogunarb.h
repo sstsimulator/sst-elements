@@ -18,7 +18,10 @@ public:
 	virtual ~ShogunArbitrator() {}
 
 	virtual void moveEvents( const int num_events, const int port_count,
-                             ShogunQueue<ShogunEvent*>** inputQueues, std::vector< std::vector< ShogunEvent* > >* outputEvents, uint64_t cycle ) = 0;
+                          ShogunQueue<ShogunEvent*>** inputQueues,
+                          uint32_t output_slots,
+                          std::vector< std::vector< ShogunEvent* > >* outputEvents,
+                          uint64_t cycle ) = 0;
 
 	void setOutput(SST::Output* out) {
 		output = out;

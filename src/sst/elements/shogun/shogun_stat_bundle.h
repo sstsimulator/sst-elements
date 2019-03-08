@@ -54,7 +54,7 @@ public:
 
 	Statistic<uint64_t>* getPacketsMoved() {
 		return packetsMoved;
-        }
+    }
 
 private:
 	const int port_count;

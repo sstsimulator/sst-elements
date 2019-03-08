@@ -130,7 +130,7 @@ bool ShogunComponent::tick( Cycle_t currentCycle )
         eventCycles->addData(1);
 
         // Migrate events across the cross-bar
-        arb->moveEvents( events_per_clock, port_count, inputQueues, pendingOutputs, static_cast<uint64_t>( currentCycle ) );
+        arb->moveEvents( events_per_clock, port_count, inputQueues, output_message_slots, pendingOutputs, static_cast<uint64_t>( currentCycle ) );
 
         printStatus();
 
@@ -202,7 +202,7 @@ void ShogunComponent::populateInputs() {
             SST::Event* incoming = links[i]->recv();
 
             if( nullptr != incoming ) {
-//                 stats->getInputPacketCount(i)->addData(1);
+                stats->getInputPacketCount(i)->addData(1);
 
                 ShogunEvent* incomingShogun = dynamic_cast<ShogunEvent*>(incoming);
 
@@ -210,7 +210,7 @@ void ShogunComponent::populateInputs() {
                     output->verbose(CALL_INFO, 4, 0, "  -> recv from: %d dest: %d\n",
                         incomingShogun->getPayload()->src,
                         incomingShogun->getPayload()->dest);
-                    stats->getInputPacketCount(i)->addData(1);
+
                     inputQueues[i]->push( incomingShogun );
                     count++;
                     pending_events++;

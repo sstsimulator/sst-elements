@@ -13,6 +13,7 @@ ShogunRoundRobinArbitrator::~ShogunRoundRobinArbitrator() {}
 
 void ShogunRoundRobinArbitrator::moveEvents( const int num_events, const int port_count,
                 ShogunQueue<ShogunEvent*>** inputQueues,
+                uint32_t output_slots,
                 std::vector< std::vector< ShogunEvent* > >* outputEvents,
                 uint64_t cycle ) {
 
@@ -24,18 +25,19 @@ void ShogunRoundRobinArbitrator::moveEvents( const int num_events, const int por
 
 	for( int i = 0; i < port_count; ++i ) {
 		auto nextQ = inputQueues[currentPort];
-        output->verbose(CALL_INFO, 4, 0, "-> processing port: %d(%d), event-count: %d\n", currentPort, num_events,
-			nextQ->count());
+        output->verbose(CALL_INFO, 4, 0, "-> processing port: %d, event-count: %d out of %d\n", currentPort,
+                        nextQ->count(), num_events);
 
         //Want to send num_events for each port
         for( auto j = 0; j < num_events; ++j ) {
             if( inputQueues[currentPort]->empty() ) {
-                //do nothing
+                output->verbose(CALL_INFO, 4, 0, "  (%d)-> input queue empty...\n", j);
+//                 break;
             } else {
 
                 ShogunEvent* pendingEv = inputQueues[currentPort]->peek();
 
-                for( auto moop = 0; moop < 1; ++moop) {
+                for( auto moop = 0; moop < output_slots; ++moop) {
                     output->verbose(CALL_INFO, 4, 0, "  (%d)-> attempting send from: %d to: %d, remote status: %s\n",
                         j, pendingEv->getSource(), pendingEv->getDestination(),
                         (*outputEvents)[pendingEv->getDestination()][moop] == nullptr ? "empty" : "full");

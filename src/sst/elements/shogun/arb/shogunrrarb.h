@@ -16,6 +16,7 @@ public:
 
     void moveEvents( const int num_events, const int port_count,
         ShogunQueue<ShogunEvent*>** inputQueues,
+        uint32_t output_slots,
         std::vector< std::vector< ShogunEvent* > >* outputEvents,
 		uint64_t cycle ) override;
 
