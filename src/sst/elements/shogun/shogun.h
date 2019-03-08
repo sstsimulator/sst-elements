@@ -105,7 +105,8 @@ private:
 
     ShogunQueue<ShogunEvent*>** inputQueues;
 //     ShogunEvent** pendingOutputs;
-    std::vector< std::vector< ShogunEvent* > >* pendingOutputs;
+//     std::vector< std::vector< ShogunEvent* > >* pendingOutputs;
+    ShogunEvent*** pendingOutputs;
     int* remote_output_slots;
     ShogunArbitrator* arb;
 

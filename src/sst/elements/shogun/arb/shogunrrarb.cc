@@ -12,10 +12,10 @@ ShogunRoundRobinArbitrator::ShogunRoundRobinArbitrator() :
 ShogunRoundRobinArbitrator::~ShogunRoundRobinArbitrator() {}
 
 void ShogunRoundRobinArbitrator::moveEvents( const int num_events, const int port_count,
-                ShogunQueue<ShogunEvent*>** inputQueues,
-                uint32_t output_slots,
-                std::vector< std::vector< ShogunEvent* > >* outputEvents,
-                uint64_t cycle ) {
+                                             ShogunQueue<ShogunEvent*>** inputQueues,
+                                             uint32_t output_slots,
+                                             ShogunEvent*** outputEvents,
+                                             uint64_t cycle ) {
 
 	output->verbose(CALL_INFO, 4, 0, "BEGIN: Arbitration %d --------------------------------------------------\n", cycle);
 	output->verbose(CALL_INFO, 4, 0, "-> start: %d\n", lastStart);
@@ -32,20 +32,20 @@ void ShogunRoundRobinArbitrator::moveEvents( const int num_events, const int por
         for( auto j = 0; j < num_events; ++j ) {
             if( inputQueues[currentPort]->empty() ) {
                 output->verbose(CALL_INFO, 4, 0, "  (%d)-> input queue empty...\n", j);
-//                 break;
+                break;
             } else {
 
                 ShogunEvent* pendingEv = inputQueues[currentPort]->peek();
 
-                for( auto moop = 0; moop < output_slots; ++moop) {
+                for( auto k = 0; k < output_slots; ++k) {
                     output->verbose(CALL_INFO, 4, 0, "  (%d)-> attempting send from: %d to: %d, remote status: %s\n",
                         j, pendingEv->getSource(), pendingEv->getDestination(),
-                        (*outputEvents)[pendingEv->getDestination()][moop] == nullptr ? "empty" : "full");
+                        outputEvents[pendingEv->getDestination()][k] == nullptr ? "empty" : "full");
 
-                    if( (*outputEvents)[pendingEv->getDestination()][moop] == nullptr ) {
+                    if( outputEvents[pendingEv->getDestination()][k] == nullptr ) {
                         output->verbose(CALL_INFO, 4, 0, "  (%d)-> moving event to remote queue\n");
                         j, pendingEv = inputQueues[currentPort]->pop();
-                        (*outputEvents)[pendingEv->getDestination()][moop] = pendingEv;
+                        outputEvents[pendingEv->getDestination()][k] = pendingEv;
                         moved_count++;
 
                         break;
