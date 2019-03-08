@@ -40,9 +40,10 @@ namespace Neuron_Loader_Types {
 
   // Neuron Configuration Transmission (NCT) (Floating-Point Format)
   typedef struct {
-    float NrnThr; // Neuron Firing Potential
-    float NrnMin; // Neuron Minimum Allowed Potential
-    float NrnLkg; // Neuron Leakage Value
+      float NrnThr; // Neuron Firing Potential
+      float NrnMin; // Neuron Minimum Allowed Potential
+      float NrnLkg; // Neuron Leakage Value
+      uint16_t randomFireChance; // chance (out of 256) to fire
   } T_NctFl;
 
 } // Neuron_Loader_Types
