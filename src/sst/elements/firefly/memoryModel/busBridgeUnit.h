@@ -43,6 +43,11 @@ class BusBridgeUnit : public Unit {
 		m_blocked_ns = model.registerStatistic<uint64_t>("bus_blocked_ns");
     }
 
+	~BusBridgeUnit() {
+		delete m_loadWidget;
+		delete m_storeWidget;
+	}
+
     void resume( UnitBase* unit = 0 ) {
 		if ( unit == m_loadWidget ) {
         	m_dbg.verbosePrefix(prefix(),CALL_INFO,2,BUS_BRIDGE_MASK,"load\n");

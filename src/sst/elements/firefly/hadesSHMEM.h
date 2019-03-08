@@ -344,6 +344,19 @@ class HadesSHMEM : public Shmem::Interface
 		int pe;
 		bool blocking;
 	};
+	struct PutOp : public Base { 
+    	PutOp(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe,
+				Hermes::Shmem::ReduOp op, Hermes::Value::Type type, Shmem::Callback callback) : 
+			Base(callback), dest(dest), src(src), nelems(nelems), pe(pe), op(op), type(type) {}
+
+    	Hermes::Vaddr dest;
+	 	Hermes::Vaddr src;
+	   	size_t nelems;
+	   	int pe; 
+        Hermes::Shmem::ReduOp op;
+		Hermes::Value::Type type;
+	};
+
 	struct WaitUntil : public Base { 
 		WaitUntil( Vaddr addr, Shmem::WaitOp op, Value& value, Shmem::Callback callback ) :
 			Base(callback), addr(addr), op(op), value(value) {} 
@@ -450,8 +463,6 @@ class HadesSHMEM : public Shmem::Interface
 
     virtual void putOp(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe, 
             Hermes::Shmem::ReduOp, Hermes::Value::Type, Shmem::Callback);
-    virtual void putOp2(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe, 
-            Hermes::Shmem::ReduOp, Hermes::Value::Type, Shmem::Callback);
 
     virtual void wait_until(Hermes::Vaddr src, Hermes::Shmem::WaitOp, Hermes::Value&, Shmem::Callback);
 
@@ -493,6 +504,7 @@ class HadesSHMEM : public Shmem::Interface
 	void get( Get* );
 	void putv( Putv* );
 	void put( Put* );
+	void putOp( PutOp* );
 	void wait_until( WaitUntil* );
 	void cswap( Cswap* );
 	void swap( Swap* );
@@ -603,6 +615,9 @@ class HadesSHMEM : public Shmem::Interface
 	FamNodeMapper* m_famNodeMapper;
 	FamAddrMapper* m_famAddrMapper;
 	Thornhill::MemoryHeapLink* m_memHeapLink;
+
+	std::set< Put* > m_pendingPuts;
+	std::set< Get* > m_pendingGets;
 };
 
 }

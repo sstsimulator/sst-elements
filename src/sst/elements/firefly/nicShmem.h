@@ -82,7 +82,7 @@ class Shmem {
 	const char* prefix() { return m_prefix.c_str(); }
   public:
     Shmem( Nic& nic, Params& params, int id, int numVnics, Output& output, int numCmdSlots, SimTime_t nic2HostDelay_ns, SimTime_t host2NicDelay_ns ) : 
-		m_nic( nic ), m_dbg(output), m_one( (long) 1 ), m_freeCmdSlots( numCmdSlots ),
+		m_nic( nic ), m_dbg(output), m_one( (long) 1 ),
     	m_nic2HostDelay_ns(nic2HostDelay_ns), m_host2NicDelay_ns(host2NicDelay_ns), m_engineBusy(false),m_hostBusy(false)
     {
         m_prefix = "@t:" + std::to_string(id) + ":Nic::Shmem::@p():@l ";
@@ -174,18 +174,6 @@ private:
 	void doReduction( Hermes::Shmem::ReduOp op, int destCore, Hermes::Vaddr destAddr,
             int srcCore, Hermes::Vaddr srcAddr, size_t length, Hermes::Value::Type,
 			std::vector<MemOp>& vec );
-
-	void incFreeCmdSlots( ) {
-		++m_freeCmdSlots;
-        m_dbg.verbosePrefix( prefix(), CALL_INFO,1,NIC_DBG_SHMEM,"\n" );
-		if ( ! m_pendingCmds.empty() ) {
-			handleEvent( m_pendingCmds.front().first, m_pendingCmds.front().second );
-			m_pendingCmds.pop();
-		}
-	}
-
-	std::queue<std::pair<NicShmemCmdEvent*, int> > m_pendingCmds;
-	int m_freeCmdSlots;
 
 	Hermes::Value m_one;
 	std::vector< std::pair< Hermes::Vaddr, Hermes::Value > > m_pendingRemoteOps;
