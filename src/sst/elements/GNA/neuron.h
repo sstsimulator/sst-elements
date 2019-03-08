@@ -17,6 +17,7 @@
 #define _NEURON_H
 
 #include <map>
+#include <sst/core/rng/marsaglia.h>
 #include "gna_lib.h"
 
 namespace SST {
@@ -26,8 +27,11 @@ using namespace std;
 
 class neuron {
 public:
-    void configure(const Neuron_Loader_Types::T_NctFl &in) {
+    void configure(const Neuron_Loader_Types::T_NctFl &in,
+                   RNG::MarsagliaRNG *r) {
         config = in;
+        rng = r;
+        rngCache = 0;
     }
     void deliverSpike(float str, uint when) {
         temporalBuffer[when] += str;
@@ -47,9 +51,31 @@ public:
         // Integrate
         value += getCurrentSpikes(now);
 
+        // Random Fire
+        bool randFire = 0;
+        if (0 != config.randomFireChance) {
+            uint16_t roll = getRand8();
+            if (roll < config.randomFireChance) {
+                randFire = 1;
+                //printf("rand Fire\n");
+            }
+        }
+
         // Fire?
-        if (value > config.NrnThr) {
+        if (randFire || value > config.NrnThr) {
             value = config.NrnMin;
+
+#if 0
+            static int rf = 0;
+            static int f = 0;
+            if (randFire) rf++;
+            f++;
+            if ((f & 0xfff) == 0) {
+                printf("%.2f %% rand %d\n", double(rf)/double(f)*100.0, f);
+            }
+#endif
+
+
             return true;
         } else {
             return false;
@@ -64,12 +90,25 @@ public:
 private:
     Neuron_Loader_Types::T_NctFl config;
     float value;
+    RNG::MarsagliaRNG *rng;
     // temporal buffer
     typedef map<const uint, float> tBuf_t;
     tBuf_t temporalBuffer;
     // Neuron's white matter list
     uint64_t WMLAddr; // start
     uint32_t WMLLen; // number of entries in WML
+    // random number cache
+    uint64_t rngCache;
+
+    uint16_t getRand8() {
+        if (rngCache == 0) {
+            rngCache = rng->generateNextUInt64();
+        }
+
+        uint16_t roll = rngCache & 0xff;
+        rngCache >>= 8;
+        return roll;
+    }
 
     // get any current spike values
     float getCurrentSpikes(const int now) {
@@ -77,7 +116,7 @@ private:
         if (i != temporalBuffer.end()) {
             float val = i->second;
             temporalBuffer.erase(i);
-            //printf(" got current spike %f @ %d\n", val, now);
+            //printf(" got current spike %f @ %d. val %f Trig %f\n", val, now, value, config.NrnThr);
             return val;
         } else {
             return 0;

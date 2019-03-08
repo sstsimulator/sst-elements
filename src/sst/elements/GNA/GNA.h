@@ -32,6 +32,7 @@
 
 #include <sst/core/interfaces/simpleMem.h>
 #include <sst/elements/memHierarchy/memEvent.h>
+#include <sst/core/rng/marsaglia.h>
 #include "gna_lib.h"
 #include "neuron.h"
 #include "sts.h"
@@ -53,7 +54,12 @@ public:
             {"STSDispatch",               "Max # spikes that can be dispatched to the STS in a clock cycle","2"},
             {"STSParallelism",               "Max # spikes the STS can process in parallelism ","2"},
             {"MaxOutMem", "Maximum # of outgoing memory requests per cycle","STSParallelism"},
-            {"neurons",                  "(uint) number of neurons", "32"}
+            {"neurons",                  "(uint) number of neurons", "32"},
+            {"graphType",                  "(uint) 0=wavy 1=random", "0"},
+            {"connPer",                  "Connectivity chance (random graph) (float)", "0.01"},
+            {"connPer_high",                  "Connectivity chance for highly connected nodes (random graph) (float)", "0.1"},
+            {"highConn",                  "chance a node will be highly connected (random graph) (float)", "0.1"},
+            {"randFire",                  "chance a node will fire randomly (float) Note: is discretized to x/256 chance.", "0.0"},
                             )
 
     SST_ELI_DOCUMENT_PORTS( {"mem_link", "Connection to memory", { "memHierarchy.MemEventBase" } } )
@@ -80,7 +86,9 @@ private:
     GNA(const GNA&); // do not implement
     void operator=(const GNA&); // do not implement
     void init(unsigned int phase);
-    
+    void wavyGraph();
+    void randomConnectivity();
+
     void handleEvent( SST::Interfaces::SimpleMem::Request * req );
     virtual bool clockTic( SST::Cycle_t );
     bool deliverBWPs();
@@ -91,6 +99,8 @@ private:
     typedef enum {IDLE, PROCESS_FIRE, LIF, LAST_STATE} gnaState_t;
     gnaState_t state;
 
+
+    RNG::MarsagliaRNG rng;
     Output out;
     Interfaces::SimpleMem * memory;
     uint numNeurons;
@@ -102,6 +112,13 @@ private:
     uint numFirings;
     uint numDeliveries;
     queue<SST::Interfaces::SimpleMem::Request *> outgoingReqs;
+
+    //graph params
+    int graphType;
+    double connPer;
+    double connPer_high;
+    double highConn;
+    uint16_t randFire;
 
     neuron *neurons;
     vector<STS> STSUnits;
