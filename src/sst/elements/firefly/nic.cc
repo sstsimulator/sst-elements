@@ -324,6 +324,9 @@ Nic::~Nic()
     }  
 	delete m_shmem;
 	delete m_linkControl;
+	delete m_unitPool;
+ 	delete m_linkSendWidget;
+	delete m_linkRecvWidget;
 
     int numRcvd = m_recvMachine->getNumReceived();
     int numSent=0;

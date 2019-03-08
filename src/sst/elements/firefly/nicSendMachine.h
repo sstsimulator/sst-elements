@@ -145,7 +145,10 @@ class SendMachine {
             m_inQ = new InQ( nic, m_dbg, myId, m_outQ, maxQsize );
         }
 
-        ~SendMachine() { }
+        ~SendMachine() { 
+			delete m_outQ;
+			delete m_inQ;
+		}
 
         int getNumSent() { return m_numSent; }
 

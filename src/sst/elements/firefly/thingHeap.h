@@ -8,6 +8,11 @@ class ThingHeap {
 
     ThingHeap() : m_pos(0), m_heap(256) {
     }
+	~ThingHeap() {
+		for ( size_t i = 0; i < m_heap.size(); i++ ) {
+			delete m_heap[i];
+		}
+	}
 
     T* alloc() {
         T* ev;
@@ -30,39 +35,5 @@ class ThingHeap {
     std::vector<T*> m_heap;
     int m_pos;
 };
-
-template < class T>
-class ThingQueue {
-
-  public:
-
-    ThingQueue() : m_pos(0), m_heap(256) {
-    }
-
-    void push( T* ) {
-#if 0
-        if ( m_pos > 0 ) {
-            ev = m_heap[--m_pos];
-        } else {
-            ev = new T;
-        }
-        return ev;
-#endif
-    }
-
-    T* pop( ) {
-#if 0
-        if ( m_pos == m_heap.size() ) {
-            m_heap.resize( m_heap.size() + 256 );
-        }
-        m_heap[m_pos++] = ev;
-#endif
-    }
-
-  private:
-    std::vector<T*> m_heap;
-    int m_pos;
-};
-
 
 #endif
