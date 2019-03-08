@@ -154,6 +154,7 @@ void GNA::randomConnectivity() {
     uint64_t startAddr = 0x10000;
     int countLinks = 0;
     for (int n = 0; n < numNeurons; ++n) {
+        using namespace Interfaces;
         vector<int> connections;
         double conChance;
         if (rng.nextUniform() < highConn) {
@@ -173,28 +174,29 @@ void GNA::randomConnectivity() {
         int numCon = connections.size();
         countLinks += numCon;
         neurons[n].setWML(startAddr,numCon);
+        uint64_t reqAddr = startAddr; //+nn*sizeof(T_Wme);
+        SimpleMem::Request *req = 
+            new SimpleMem::Request(SimpleMem::Request::Write, reqAddr,
+                                   sizeof(T_Wme)*numCon);
+        req->data.resize(sizeof(T_Wme)*numCon);
+        uint offset=0;
         for (int nn=0; nn<numCon; ++nn) {
-            using namespace Interfaces;
             uint16_t targ = connections[nn];
 
-            uint64_t reqAddr = startAddr+nn*sizeof(T_Wme);
-            SimpleMem::Request *req = 
-                new SimpleMem::Request(SimpleMem::Request::Write, reqAddr,
-                                       sizeof(T_Wme));
-            req->data.resize(sizeof(T_Wme));
             uint32_t str = 1;
             uint32_t tmpOff = 2 + (rng.generateNextUInt32() % 12);
-            req->data[0] = (str>>8) & 0xff; // Synaptic Str upper
-            req->data[1] = (str) & 0xff; // Synaptic Str lower
-            req->data[2] = (tmpOff>>8) & 0xff; // temp offset upper
-            req->data[3] = (tmpOff) & 0xff; // temp offset lower
-            req->data[4] = (targ>>8) & 0xff; // address upper
-            req->data[5] = (targ) & 0xff; // address lower
-            req->data[6] = 0; // valid
-            req->data[7] = 0; // valid
+            req->data[offset+0] = (str>>8) & 0xff; // Synaptic Str upper
+            req->data[offset+1] = (str) & 0xff; // Synaptic Str lower
+            req->data[offset+2] = (tmpOff>>8) & 0xff; // temp offset upper
+            req->data[offset+3] = (tmpOff) & 0xff; // temp offset lower
+            req->data[offset+4] = (targ>>8) & 0xff; // address upper
+            req->data[offset+5] = (targ) & 0xff; // address lower
+            req->data[offset+6] = 0; // valid
+            req->data[offset+7] = 0; // valid
             //printf("Writing n%d to targ%d at %p\n", n, targ, (void*)reqAddr);
-            memory->sendInitData(req);
+            offset += sizeof(T_Wme);
         }
+        memory->sendInitData(req);
         assert(sizeof(T_Wme) == 8);
         startAddr += numCon * sizeof(T_Wme);
     }
