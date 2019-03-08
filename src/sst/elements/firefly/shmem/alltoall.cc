@@ -63,7 +63,7 @@ void ShmemAlltoall::put( int )
     printf(":%d:%s():%d src=%#" PRIx64 " dest=%#" PRIx64 " peer=%d\n",my_pe(),__func__,__LINE__,
             m_src + peer_as_rank * m_nelems, m_dest,m_peer);
 
-    m_api.put( m_dest, m_src + peer_as_rank * m_nelems, m_nelems, m_peer, callback );
+    m_api.put( m_dest, m_src + peer_as_rank * m_nelems, m_nelems, m_peer, true, callback );
     //shmem_internal_put_nbi((void *) dest_ptr, (uint8_t *) source + peer_as_rank * len, len, peer);
    
     m_peer = next_peer;

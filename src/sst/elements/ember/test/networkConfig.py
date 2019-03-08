@@ -177,3 +177,15 @@ class DragonFlyInfo(TopoInfo):
 
 	def getNumNodes(self):
 		return self.numNodes 
+
+class JSONInfo(TopoInfo):
+	def __init__( self, numNodes ):
+		self.params = {}
+		self.numNodes = numNodes
+
+	def getNetworkParams(self):
+		return self.params
+
+	def getNumNodes(self):
+		return self.numNodes
+

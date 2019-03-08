@@ -263,6 +263,8 @@ public:
         for ( unsigned i = 0; i < m_threads.size(); i++ ) {
             delete m_threads[i];
         }
+		delete m_sharedTlb;
+		delete m_nicUnit;
     }
 
 	ThingHeap<SelfEvent> m_eventHeap;

@@ -73,7 +73,7 @@ void HadesSHMEM::setup()
 {
     char buffer[100];
     snprintf(buffer,100,"@t:%d:%d:HadesSHMEM::@p():@l ",
-                    m_os->getNic()->getRealNodeId(), m_os->getInfo()->worldRank());
+                    nic().getRealNodeId(), m_os->getInfo()->worldRank());
     m_dbg.setPrefix(buffer);
 
 	m_memHeapLink = m_os->getMemHeapLink();
@@ -107,16 +107,27 @@ void HadesSHMEM::memcpy( Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, S
     m_selfLink->send( 0, new HadesSHMEM::DelayEvent( callback, 0 ) );
 }
 
-void HadesSHMEM::init(Shmem::Callback callback)
-{
-	delayEnter(
-			[=]() {
-				this->init2( callback );
-		  	}
-	);
+#define DO(name,arg)\
+[=]() {\
+	if ( this->nic().isBlocked() ) {\
+		printf("%s blocked\n",__func__);\
+		this->nic().setBlockedCallback(\
+			[=](){\
+				this->name( arg );\
+			}\
+		);\
+	} else {\
+		this->name( arg );\
+	}\
 }
 
-void HadesSHMEM::init2(Shmem::Callback callback)
+void HadesSHMEM::init(Shmem::Callback callback)
+{
+	Init* info = new Init( callback );
+	delayEnter( DO(init,info) );
+}
+
+void HadesSHMEM::init(Init *info ) 
 {
     m_num_pes = m_os->getInfo()->getGroup(MP::GroupWorld)->getSize();
     m_my_pe = m_os->getInfo()->getGroup(MP::GroupWorld)->getMyRank();
@@ -142,9 +153,10 @@ void HadesSHMEM::init2(Shmem::Callback callback)
 				m_pendingRemoteOps.at<long>(0) = 0;
                 m_localScratch = m_pendingRemoteOps.offset<long>(1);
 
-            	this->m_os->getNic()->shmemInit( m_pendingRemoteOps.getSimVAddr(), 
+                this->nic().shmemInit( m_pendingRemoteOps.getSimVAddr(), 
                 	[=]()  {
-						this->delayReturn( callback );
+						this->delayReturn( info->callback );
+						delete info;
 					} 
 				);
             }
@@ -153,101 +165,95 @@ void HadesSHMEM::init2(Shmem::Callback callback)
 
 void HadesSHMEM::finalize(Shmem::Callback callback)
 {
-	delayEnter(
-			[=]() {
-				this->finalize2( callback );
-		  	}
-	);
+	Finalize* info = new Finalize(callback);
+	delayEnter( DO( finalize, info ) );
 }
 
-void HadesSHMEM::finalize2(Shmem::Callback callback)
+
+void HadesSHMEM::finalize(Finalize* info)
 {
     dbg().debug(CALL_INFO,1,SHMEM_BASE,"\n");
-    delayReturn( callback );
+    delayReturn( info->callback );
+	delete info;
 } 
 
 void HadesSHMEM::n_pes(int* val, Shmem::Callback callback )
 {
+	N_Pes* info = new N_Pes( val, callback );
 	delayEnter(
 			[=]() {
-				this->n_pes2( val, callback );
+				this->n_pes( info );
 		  	}
 	);
 }
 
-void HadesSHMEM::n_pes2(int* val, Shmem::Callback callback )
+void HadesSHMEM::n_pes( N_Pes* info )
 {
     dbg().debug(CALL_INFO,1,SHMEM_BASE,"\n");
-    *val = m_num_pes;
-	delayReturn( callback );
+    *info->val = m_num_pes;
+	delayReturn( info->callback );
+	delete info;
 }
 
 void HadesSHMEM::my_pe(int* val, Shmem::Callback callback )
 {
+	MyPe* info = new MyPe(val, callback);
 	delayEnter(
 			[=]() {
-				this->my_pe2( val, callback );
+				this->my_pe( info );
 		  	}
 	);
 }
 
-void HadesSHMEM::my_pe2(int* val, Shmem::Callback callback )
+void HadesSHMEM::my_pe( MyPe* info )
 {
     dbg().debug(CALL_INFO,1,SHMEM_BASE,"\n");
-    *val = m_my_pe;
-	delayReturn( callback );
+    *info->val = m_my_pe;
+	delayReturn( info->callback );
+	delete info;
 }
 
 void HadesSHMEM::quiet(Shmem::Callback callback)
 {
     dbg().debug(CALL_INFO,1,SHMEM_BASE,"\n");
-	wait_until( m_pendingRemoteOps.getSimVAddr(), Shmem::EQ, m_zero, 
+	wait_until( m_pendingRemoteOps.getSimVAddr(), Shmem::EQ, m_zero,
             [=](int) { 
                 dbg().debug(CALL_INFO_LAMBDA,"quiet",1,SHMEM_BASE,"returning\n");
-                callback(0); } 
-            ); 
-}
-
-void HadesSHMEM::quiet2(Shmem::Callback callback)
-{
-    dbg().debug(CALL_INFO,1,SHMEM_BASE,"\n");
-	wait_until( m_pendingRemoteOps.getSimVAddr(), Shmem::EQ, m_zero, 
-		[=](int) {
-			this->delayReturn(callback);
-		}
-	);
+                callback(0); 
+			} 
+    ); 
 }
 
 void HadesSHMEM::fence(Shmem::Callback callback)
 {
+	Fence* info = new Fence( callback );
 	delayEnter(
 			[=]() {
-				this->fence2( callback );
+				this->fence( info );
 		  	}
 	);
 }
 
-void HadesSHMEM::fence2(Shmem::Callback callback)
+void HadesSHMEM::fence( Fence* info )
 {
     dbg().debug(CALL_INFO,1,SHMEM_BASE,"\n");
-	delayReturn( callback );
+	delayReturn( info->callback );
+	delete info;
 }
 
 void HadesSHMEM::malloc( Hermes::MemAddr* ptr, size_t size, bool backed, Shmem::Callback callback )
 {
-	delayEnter(
-			[=]() {
-				this->malloc2( ptr, size, backed, callback );
-		  	}
-	);
+	Malloc* info = new Malloc( ptr, size, backed, callback );
+	delayEnter( DO(malloc,info) );
 }
 
-void HadesSHMEM::malloc2( Hermes::MemAddr* ptr, size_t size, bool backed, Shmem::Callback callback )
+void HadesSHMEM::malloc( Malloc* info )
 {
-    dbg().debug(CALL_INFO,1,SHMEM_BASE," maddr ptr=%p size=%lu\n",ptr,size);
-    malloc( ptr, size, backed, 
+    dbg().debug(CALL_INFO,1,SHMEM_BASE," maddr ptr=%p size=%lu\n",info->addr,info->length);
+    malloc( info->addr, info->length, info->backed, 
             [=]() { 
-				this->delayReturn( callback );
+				this->delayReturn( info->callback );
+				delete info;
             }
     );
 }
@@ -261,16 +267,16 @@ void HadesSHMEM::malloc( Hermes::MemAddr* ptr, size_t size, bool backed, Callbac
         [=](uint64_t addr ) {
                 this->dbg().debug(CALL_INFO_LAMBDA,"malloc",1,SHMEM_BASE,"addr=%#" PRIx64 " size=%zu\n",addr,size);
                 *ptr = m_heap->addAddr( addr, size, backed );
-                m_os->getNic()->shmemRegMem( *ptr, size, callback) ; 
+                nic().shmemRegMem( *ptr, size, callback);
             }
         );
     } else {
         *ptr =  m_heap->malloc( size, backed );
-        m_os->getNic()->shmemRegMem( *ptr, size, callback) ; 
+        nic().shmemRegMem( *ptr, size, callback) ; 
     }
 }
 
-void HadesSHMEM::free( Hermes::MemAddr* ptr, Shmem::Callback callback)
+void HadesSHMEM::free( Hermes::MemAddr& ptr, Shmem::Callback callback)
 {
     dbg().debug(CALL_INFO,1,SHMEM_BASE,"\n");
     assert(0);
@@ -278,14 +284,15 @@ void HadesSHMEM::free( Hermes::MemAddr* ptr, Shmem::Callback callback)
 
 void HadesSHMEM::barrier_all(Shmem::Callback callback)
 {
+	Barrier_all* info = new Barrier_all(callback);
 	delayEnter(
 			[=]() {
-				this->barrier_all2( callback );
+				this->barrier_all( info );
 		  	}
 	);
 }
 
-void HadesSHMEM::barrier_all2(Shmem::Callback callback)
+void HadesSHMEM::barrier_all( Barrier_all* info )
 {
     dbg().debug(CALL_INFO,1,SHMEM_BASE,"\n");
 
@@ -293,27 +300,30 @@ void HadesSHMEM::barrier_all2(Shmem::Callback callback)
             [=](int) { 
 
     			dbg().debug(CALL_INFO,1,SHMEM_BASE,"barrier_all2() complete\n");
-				this->delayReturn( callback );
+				this->delayReturn( info->callback );
+				delete info;
             }
 	);
 }
 
 void HadesSHMEM::barrier( int start, int stride, int size, Vaddr pSync, Shmem::Callback callback )
 {
+	Barrier* info = new Barrier( start, stride, size, pSync, callback );
 	delayEnter(
 			[=]() {
-				this->barrier2( start, stride, size, pSync, callback );
+				this->barrier( info );
 		  	}
 	);
 }
 
-void HadesSHMEM::barrier2( int start, int stride, int size, Vaddr pSync, Shmem::Callback callback )
+void HadesSHMEM::barrier( Barrier* info )
 {
     dbg().debug(CALL_INFO,1,SHMEM_BASE,"\n");
 
-    m_barrier->start( start, stride, size, pSync,
+    m_barrier->start( info->start, info->stride, info->size, info->pSync,
             [=](int) { 
-				this->delayReturn( callback );
+				this->delayReturn( info->callback );
+				delete info;
             }
 	);
 } 
@@ -321,20 +331,21 @@ void HadesSHMEM::barrier2( int start, int stride, int size, Vaddr pSync, Shmem::
 void HadesSHMEM::broadcast( Vaddr dest, Vaddr source, size_t nelems, int root, int start,
                                 int stride, int size, Vaddr pSync, Shmem::Callback callback)
 {
+	Broadcast* info = new Broadcast( dest, source, nelems, root, start, stride, size, pSync, callback );
 	delayEnter(
 			[=]() {
-				this->broadcast2( dest, source, nelems, root, start, stride, size, pSync, callback );
+				this->broadcast( info );
 		  	}
 	);
 }
 
-void HadesSHMEM::broadcast2( Vaddr dest, Vaddr source, size_t nelems, int root, int start,
-                                int stride, int size, Vaddr pSync, Shmem::Callback callback)
+void HadesSHMEM::broadcast( Broadcast* info )
 {
     dbg().debug(CALL_INFO,1,SHMEM_BASE,"\n");
-    m_broadcast->start( dest, source, nelems, root, start, stride, size, pSync, 
+    m_broadcast->start( info->dest, info->source, info->nelems, info->root, info->PE_start, info->logPE_stride, info->PE_size, info->pSync, 
             [=](int) { 
-				this->delayReturn( callback );
+				this->delayReturn( info->callback );
+				delete info;
             },
 	true );
 }
@@ -342,20 +353,21 @@ void HadesSHMEM::broadcast2( Vaddr dest, Vaddr source, size_t nelems, int root, 
 void HadesSHMEM::fcollect( Vaddr dest, Vaddr source, size_t nelems, int start,
                                 int stride, int size, Vaddr pSync, Shmem::Callback callback)
 {
+	Fcollect* info = new Fcollect( dest, source, nelems, start, stride, size, pSync, callback );
 	delayEnter(
 			[=]() {
-				this->fcollect2( dest, source, nelems, start, stride, size, pSync, callback );
+				this->fcollect( info );
 		  	}
 	);
 }
 
-void HadesSHMEM::fcollect2( Vaddr dest, Vaddr source, size_t nelems, int start,
-                                int stride, int size, Vaddr pSync, Shmem::Callback callback)
+void HadesSHMEM::fcollect( Fcollect* info )
 {
     dbg().debug(CALL_INFO,1,SHMEM_BASE,"\n");
-    m_fcollect->start( dest, source, nelems, start, stride, size, pSync,
+    m_fcollect->start( info->dest, info->source, info->nelems, info->PE_start, info->logPE_stride, info->PE_size, info->pSync,
             [=](int) { 
-				this->delayReturn( callback );
+				this->delayReturn( info->callback );
+				delete info;
             }
 	);
 }
@@ -363,20 +375,21 @@ void HadesSHMEM::fcollect2( Vaddr dest, Vaddr source, size_t nelems, int start,
 void HadesSHMEM::collect( Vaddr dest, Vaddr source, size_t nelems, int start,
                                 int stride, int size, Vaddr pSync, Shmem::Callback callback)
 {
+	Collect* info = new Collect( dest, source, nelems, start, stride, size, pSync, callback );
 	delayEnter(
 			[=]() {
-				this->collect2( dest, source, nelems, start, stride, size, pSync, callback );
+				this->collect( info );
 		  	}
 	);
 }
 
-void HadesSHMEM::collect2( Vaddr dest, Vaddr source, size_t nelems, int start,
-                                int stride, int size, Vaddr pSync, Shmem::Callback callback)
+void HadesSHMEM::collect( Collect* info )
 {
     dbg().debug(CALL_INFO,1,SHMEM_BASE,"\n");
-    m_collect->start( dest, source, nelems, start, stride, size, pSync, &m_localScratch, 
+    m_collect->start( info->dest, info->source, info->nelems, info->PE_start, info->logPE_stride, info->PE_size, info->pSync, &m_localScratch, 
             [=](int) { 
-				this->delayReturn( callback );
+				this->delayReturn( info->callback );
+				delete info;
             }
 	);
 }
@@ -384,20 +397,21 @@ void HadesSHMEM::collect2( Vaddr dest, Vaddr source, size_t nelems, int start,
 void HadesSHMEM::alltoall( Vaddr dest, Vaddr source, size_t nelems, int start,
                                 int stride, int size, Vaddr pSync, Shmem::Callback callback)
 {
+	Alltoall* info = new Alltoall( dest, source, nelems, start, stride, size, pSync, callback );
 	delayEnter(
 			[=]() {
-				this->alltoall2( dest, source, nelems, start, stride, size, pSync, callback );
+				this->alltoall( info );
 		  	}
 	);
 }
 
-void HadesSHMEM::alltoall2( Vaddr dest, Vaddr source, size_t nelems, int start,
-                                int stride, int size, Vaddr pSync, Shmem::Callback callback)
+void HadesSHMEM::alltoall( Alltoall* info )
 {
     dbg().debug(CALL_INFO,1,SHMEM_BASE,"\n");
-    m_alltoall->start( dest, source, nelems, start, stride, size, pSync,
+    m_alltoall->start( info->dest, info->source, info->nelems, info->PE_start, info->logPE_stride, info->PE_size, info->pSync,
             [=](int) { 
-				this->delayReturn( callback );
+				this->delayReturn( info->callback );
+				delete info;
             }
 	);
 }
@@ -405,20 +419,22 @@ void HadesSHMEM::alltoall2( Vaddr dest, Vaddr source, size_t nelems, int start,
 void HadesSHMEM::alltoalls( Vaddr dest, Vaddr source, int dst, int sst, size_t nelems, int elsize, int start,
                                 int stride, int size, Vaddr pSync, Shmem::Callback callback)
 {
+	Alltoalls* info = new Alltoalls( dest, source, dst, sst, nelems, elsize, start, stride, size, pSync, callback );
 	delayEnter(
 			[=]() {
-				this->alltoalls2( dest, source, dst, sst, nelems, elsize, start, stride, size, pSync, callback );
+				this->alltoalls( info );
 		  	}
 	);
 }
 
-void HadesSHMEM::alltoalls2( Vaddr dest, Vaddr source, int dst, int sst, size_t nelems, int elsize, int start,
-                                int stride, int size, Vaddr pSync, Shmem::Callback callback)
+void HadesSHMEM::alltoalls( Alltoalls* info )
 {
     dbg().debug(CALL_INFO,1,SHMEM_BASE,"\n");
-    m_alltoalls->start( dest, source, dst, sst, nelems, elsize, start, stride, size, pSync,
+    m_alltoalls->start( info->dest, info->source, info->dst, info->sst, info->nelems, info->elsize, info->PE_start,
+		info->logPE_stride, info->PE_size, info->pSync,
             [=](int) { 
-				this->delayReturn( callback );
+				this->delayReturn( info->callback );
+				delete info;
             }
 	);
 }
@@ -427,313 +443,283 @@ void HadesSHMEM::reduction( Vaddr dest, Vaddr source, int nelems, int PE_start,
                 int logPE_stride, int PE_size, Vaddr pSync,
                 Hermes::Shmem::ReduOp op, Hermes::Value::Type dataType, Shmem::Callback callback) 
 {
+	Reduction* info = new Reduction( dest, source, nelems, PE_start, logPE_stride, PE_size, pSync, op, dataType, callback );
 	delayEnter(
 			[=]() {
-				this->reduction2( dest, source, nelems, PE_start, logPE_stride, PE_size, pSync, op, dataType, callback );
+				this->reduction( info );
 		  	}
 	);
 }
 
-void HadesSHMEM::reduction2( Vaddr dest, Vaddr source, int nelems, int PE_start,
-                int logPE_stride, int PE_size, Vaddr pSync,
-                Hermes::Shmem::ReduOp op, Hermes::Value::Type dataType, Shmem::Callback callback) 
+void HadesSHMEM::reduction( Reduction* info )
 {
     dbg().debug(CALL_INFO,1,SHMEM_BASE,"\n");
-    m_reduction->start( dest, source, nelems, PE_start, logPE_stride, PE_size, pSync,
-            op, dataType, 
+    m_reduction->start( info->dest, info->source, info->nelems, info->PE_start, info->logPE_stride, info->PE_size, info->pSync,
+            info->op, info->type, 
             [=](int) { 
-				this->delayReturn( callback );
+				this->delayReturn( info->callback );
+				delete info;
             }
 	);	
 }
 
-void HadesSHMEM::get(Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, int pe, Shmem::Callback callback)
+void HadesSHMEM::get(Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, int pe, bool blocking, Shmem::Callback callback)
 {
     dbg().debug(CALL_INFO,1,SHMEM_BASE,"destSimVAddr=%#" PRIx64 " srcSimVaddr=%#" PRIx64 " length=%lu\n",
                     dest, src, length);
-	delayEnter(
-			[=]() {
-				this->get2( dest, src, length, pe, true, callback, m_blockingReturnLat_ns );
-		  	}
-	);
+
+	Get* info = new Get( dest, src, length, pe, blocking, callback );
+
+	delayEnter( DO(get,info) );
 }
 
-void HadesSHMEM::get_nbi(Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, int pe, Shmem::Callback callback)
+void HadesSHMEM::get( Get* info )
 {
-    dbg().debug(CALL_INFO,1,SHMEM_BASE,"destSimVAddr=%#" PRIx64 " srcSimVaddr=%#" PRIx64 " length=%lu\n",
-                    dest, src, length);
-	delayEnter(
-			[=]() {
-				this->get2( dest, src, length, pe, false, callback, m_returnLat_ns );
-		  	}
-	);
-}
+	Callback callback;
+    dbg().debug(CALL_INFO,1,SHMEM_BASE,"destSimVAddr=%#" PRIx64 " srcSimVaddr=%#" PRIx64 " length=%lu blocking=%d\n",
+                    info->dest, info->src, info->nelems, info->blocking );
 
-void HadesSHMEM::get2(Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, int pe, bool blocking, Shmem::Callback callback, SimTime_t delay)
-{
-    dbg().debug(CALL_INFO,1,SHMEM_BASE,"destSimVAddr=%#" PRIx64 " srcSimVaddr=%#" PRIx64 " length=%lu\n",
-                    dest, src, length);
+	if ( info->blocking ) {
+		callback = [=]() {
+            this->dbg().debug(CALL_INFO_LAMBDA,"get",1,SHMEM_BASE,"returning\n");
+			this->delayReturn( info->callback, m_blockingReturnLat_ns );
+			delete info;
+		};
+	} else {
+		callback = [=]() {
+            this->dbg().debug(CALL_INFO_LAMBDA,"get",1,SHMEM_BASE,"returning\n");
+            assert( m_pendingGets.find( info ) != m_pendingGets.end() ) ;
+            m_pendingGets.erase(info);
+            delete info;
+		};
+	}
 
-    m_os->getNic()->shmemGet( calcNetPE(pe), dest, src, length, blocking, 
-                [=]() {
-                    this->dbg().debug(CALL_INFO_LAMBDA,"get",1,SHMEM_BASE,"returning\n");
-                    this->delayReturn( callback, delay );
-                }
-            );
+    nic().shmemGet( calcNetPE(info->pe), info->dest, info->src, info->nelems, callback );
+
+	if ( ! info->blocking ) {
+		this->delayReturn( info->callback, m_returnLat_ns );
+		assert( m_pendingGets.find( info ) == m_pendingGets.end() ) ;
+        m_pendingGets.insert(info);
+	}
 }
 
 void HadesSHMEM::getv( Hermes::Value& value, Hermes::Vaddr src, int pe, Shmem::Callback callback)
 {
-	delayEnter(
-			[=]() {
-                Hermes::Value _value = value;
-				this->getv2( _value, src, pe, callback );
-		  	}
-	);
+	Getv* info = new Getv( value, src, pe, callback );
+	delayEnter( DO(getv,info) );
 }
 
-void HadesSHMEM::getv2( Hermes::Value& value, Hermes::Vaddr src, int pe, Shmem::Callback callback)
+void HadesSHMEM::getv( Getv* info )
 {
-    dbg().debug(CALL_INFO,1,SHMEM_BASE,"srcSimVaddr=%#" PRIx64 "\n",src );
+    dbg().debug(CALL_INFO,1,SHMEM_BASE,"srcSimVaddr=%#" PRIx64 "\n", info->src );
 
-    Hermes::Value::Type type = value.getType(); 
-
-    m_os->getNic()->shmemGetv( calcNetPE(pe), src, type, 
+    nic().shmemGetv( calcNetPE(info->pe), info->src, info->result.getType(), 
 
                 [=]( Hermes::Value& newValue ) {
                     this->dbg().debug(CALL_INFO_LAMBDA,"getv2",1,SHMEM_BASE,"returning\n");
-
-                    Hermes::Value _value = value;
-                    ::memcpy( _value.getPtr(), newValue.getPtr(), _value.getLength() );
-
-                    this->delayReturn( callback, m_blockingReturnLat_ns );
+                    ::memcpy( info->result.getPtr(), newValue.getPtr(), info->result.getLength() );
+                   	this->delayReturn( info->callback, m_blockingReturnLat_ns );
+					delete info;
                 }
             );
 }
 
-void HadesSHMEM::put(Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, int pe, Shmem::Callback callback)
+void HadesSHMEM::put(Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, int pe, bool blocking, Shmem::Callback callback)
 {
 	if ( length == 0 ) {
-		
 		delay( callback, 0, 0 );
 		return; 
 	}
-	delayEnter( 
-			[=]() {
-				this->put2( dest, src, length, pe, true, callback, m_returnLat_ns );
-		  	}
-		 );
+
+	Put* info= new Put( dest, src, length, pe, blocking, callback );
+	delayEnter( DO(put,info) );
 }
 
-void HadesSHMEM::put_nbi(Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, int pe, Shmem::Callback callback)
+void HadesSHMEM::put( Put* info )
 {
-	dbg().debug(CALL_INFO,1,SHMEM_BASE,"dest=%" PRIx64 " src=%" PRIx64 " length=%" PRIu64" pe=%" PRIx64 "\n",dest,src,length,pe);
-	if ( length == 0 ) {
-		
-		delay( callback, 0, 0 );
-		return; 
-	}
-	delayEnter( 
-			[=]() {
-				this->put2( dest, src, length, pe, false, callback, m_blockingReturnLat_ns );
-		  	}
-		 );
-}
-
-void HadesSHMEM::put2(Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, int pe, bool blocking, Shmem::Callback callback, SimTime_t delay )
-{
+	Callback callback;
     dbg().debug(CALL_INFO,1,SHMEM_BASE,"\n");
-    m_os->getNic()->shmemPut( calcNetPE(pe), dest, src, length, blocking, 
-                [=]() {
-                    this->dbg().debug(CALL_INFO_LAMBDA,"put2",1,SHMEM_BASE,"returning\n");
-					this->delayReturn( callback, delay );
-                }
-            );
+
+	// this logic does not make sense and was found during a reorg of hadesSHMEM.cc
+	// the resulting timing make may sense so it will stay as is until 
+	// it can be verified
+	if ( info->blocking ) {
+		callback = [=]() { 
+                    this->dbg().debug(CALL_INFO_LAMBDA,"put",1,SHMEM_BASE,"returning\n");
+					this->delayReturn( info->callback, m_returnLat_ns  );
+					delete info;
+				};
+	} else {
+		callback = [=]() {
+                    this->dbg().debug(CALL_INFO_LAMBDA,"put",1,SHMEM_BASE,"returning\n");
+					assert( m_pendingPuts.find( info ) != m_pendingPuts.end() ) ;
+					m_pendingPuts.erase(info);
+					delete info;
+				};
+	}	
+
+    nic().shmemPut( calcNetPE(info->pe), info->dest, info->src, info->nelems, callback  );
+
+	if ( ! info->blocking ) {
+		this->delayReturn( info->callback, m_blockingReturnLat_ns );
+		assert( m_pendingPuts.find( info ) == m_pendingPuts.end() ) ;
+		m_pendingPuts.insert(info);
+	}
 }
 
 void HadesSHMEM::putOp(Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, int pe,
                 Hermes::Shmem::ReduOp op, Hermes::Value::Type dataType, Shmem::Callback callback)
 {
-	delayEnter(
-			[=]() {
-				this->putOp2( dest, src, length, pe, op, dataType, callback );
-		  	}
-	);
+	PutOp* info = new PutOp( dest, src, length, pe, op, dataType, callback );
+	delayEnter( DO( putOp, info ) );
 }
 
-void HadesSHMEM::putOp2(Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, int pe,
-                Hermes::Shmem::ReduOp op, Hermes::Value::Type dataType, Shmem::Callback callback)
+void HadesSHMEM::putOp( PutOp* info )
 {
     dbg().debug(CALL_INFO,1,SHMEM_BASE,"\n");
-    m_os->getNic()->shmemPutOp( calcNetPE(pe), dest, src, length, op, dataType, 
+    nic().shmemPutOp( calcNetPE(info->pe), info->dest, info->src, info->nelems, info->op, info->type, 
                 [=]() {
                     this->dbg().debug(CALL_INFO_LAMBDA,"putOp2",1,SHMEM_BASE,"returning\n");
-                    this->delayReturn( callback );
+                    this->delayReturn( info->callback );
+					delete info;
                 }
             );
 }
 
 void HadesSHMEM::putv(Hermes::Vaddr dest, Hermes::Value& value, int pe, Shmem::Callback callback)
 {
-	delayEnter(
-			[=]() {
-                Hermes::Value _value = value;
-				this->putv2( dest, _value, pe, callback );
-		  	}
-	);
+	Putv* info = new Putv( dest, value, pe, callback );
+	delayEnter( DO( putv, info ) );
 }
 
-void HadesSHMEM::putv2(Hermes::Vaddr dest, Hermes::Value& value, int pe, Shmem::Callback callback)
+void HadesSHMEM::putv( Putv* info )
 {
     std::stringstream tmp;
-    tmp << value;
-    dbg().debug(CALL_INFO,1,SHMEM_BASE,"destSimVaddr=%#" PRIx64 " value=%s\n", dest, tmp.str().c_str() );
+    tmp << info->value;
+    dbg().debug(CALL_INFO,1,SHMEM_BASE,"destSimVaddr=%#" PRIx64 " value=%s\n", info->dest, tmp.str().c_str() );
 
-    m_os->getNic()->shmemPutv( calcNetPE(pe), dest, value,
-                [=]() {
-                    this->dbg().debug(CALL_INFO_LAMBDA,"putv2",1,SHMEM_BASE,"returning\n");
-                    this->delayReturn( callback );
-                }
-            );
+    nic().shmemPutv( calcNetPE(info->pe), info->dest, info->value );
+
+	delayReturn( info->callback );
+	delete info;
 }
 
 void HadesSHMEM::wait_until(Hermes::Vaddr addr, Hermes::Shmem::WaitOp op, Hermes::Value& value, Shmem::Callback callback)
 {
-	delayEnter(
-			[=]() {
-                Hermes::Value _value = value;
-				this->wait_until2( addr, op, _value, callback );
-		  	}
-	);
+	WaitUntil* info = new WaitUntil( addr, op, value, callback );
+
+	delayEnter( DO( wait_until, info ) );
 }
-void HadesSHMEM::wait_until2(Hermes::Vaddr addr, Hermes::Shmem::WaitOp op, Hermes::Value& value, Shmem::Callback callback)
+void HadesSHMEM::wait_until( WaitUntil* info )
 {
     std::stringstream tmp;
-    tmp << value;
-    dbg().debug(CALL_INFO,1,SHMEM_BASE,"addr=%#" PRIx64 " val=%s\n",addr, tmp.str().c_str());
+    tmp << info->value;
+    dbg().debug(CALL_INFO,1,SHMEM_BASE,"addr=%#" PRIx64 " val=%s\n", info->addr, tmp.str().c_str());
 
-    m_os->getNic()->shmemWait( addr, op, value,
+    nic().shmemWait( info->addr, info->op, info->value,
                 [=]() {
-                    this->dbg().debug(CALL_INFO_LAMBDA,"wait_until2",1,SHMEM_BASE,"addr=%#" PRIx64 " returning\n",addr);
-                    this->delayReturn( callback );
+                    this->dbg().debug(CALL_INFO_LAMBDA,"wait_until2",1,SHMEM_BASE,"addr=%#" PRIx64 " returning\n",info->addr);
+                    this->delayReturn( info->callback );
+					delete info;
                 }
             );
 }
 
 void HadesSHMEM::swap(Hermes::Value& result, Hermes::Vaddr addr, Hermes::Value& value, int pe, Shmem::Callback callback)
 {
-	delayEnter(
-			[=]() {
-                Hermes::Value _value = value;
-                Hermes::Value _result = result;
-				this->swap2( _result, addr, _value, pe, callback );
-		  	}
-	);
+	Swap* info = new Swap( result, addr, value, pe, callback );
+	delayEnter( DO( swap, info ) );
 }
 
-void HadesSHMEM::swap2(Hermes::Value& result, Hermes::Vaddr addr, Hermes::Value& value, int pe, Shmem::Callback callback)
+void HadesSHMEM::swap( Swap* info )
 {
     std::stringstream tmp1;
-    tmp1 << value;
-    dbg().debug(CALL_INFO,1,SHMEM_BASE,"addr=%#" PRIx64 " val=%s\n",addr, tmp1.str().c_str());
+    tmp1 << info->value;
+    dbg().debug(CALL_INFO,1,SHMEM_BASE,"addr=%#" PRIx64 " val=%s\n",info->addr, tmp1.str().c_str());
 
-    m_os->getNic()->shmemSwap( calcNetPE(pe), addr,  value, 
+    nic().shmemSwap( calcNetPE(info->pe), info->addr,  info->value, 
 
                 [=]( Hermes::Value& newValue ) {
                     this->dbg().debug(CALL_INFO_LAMBDA,"swap2",1,SHMEM_BASE,"returning\n");
 
-                    Hermes::Value _result = result;
-                    ::memcpy( _result.getPtr(), newValue.getPtr(), value.getLength() );
+                    ::memcpy( info->result.getPtr(), newValue.getPtr(), info->value.getLength() );
 
-                    this->delayReturn( callback, m_blockingReturnLat_ns );
+                    this->delayReturn( info->callback, m_blockingReturnLat_ns );
+					delete info;
                 }
             );
 }
 
 void HadesSHMEM::cswap(Hermes::Value& result, Hermes::Vaddr addr, Hermes::Value& cond, Hermes::Value& value, int pe, Shmem::Callback callback)
 {
-	delayEnter(
-			[=]() {
-                Hermes::Value _result = result;
-                Hermes::Value _cond = cond;
-                Hermes::Value _value = value;
-				this->cswap2( _result, addr, _cond, _value, pe, callback );
-		  	}
-	);
+	Cswap* info = new Cswap( result, addr, cond, value, pe, callback );
+
+	delayEnter( DO( cswap, info ) );
 }
 
-void HadesSHMEM::cswap2(Hermes::Value& result, Hermes::Vaddr addr, Hermes::Value& cond, Hermes::Value& value, int pe, Shmem::Callback callback)
+void HadesSHMEM::cswap( Cswap* info )
 {
     std::stringstream tmp1;
-    tmp1 << value;
+    tmp1 << info->value;
     std::stringstream tmp2;
-    tmp2 << cond;
-    dbg().debug(CALL_INFO,1,SHMEM_BASE,"addr=%#" PRIx64 " val=%s cond=%s\n",addr, tmp1.str().c_str(),tmp2.str().c_str());
+    tmp2 << info->cond;
+    dbg().debug(CALL_INFO,1,SHMEM_BASE,"addr=%#" PRIx64 " val=%s cond=%s\n",info->addr, tmp1.str().c_str(),tmp2.str().c_str());
 
-    m_os->getNic()->shmemCswap( calcNetPE(pe), addr, cond, value, 
+    nic().shmemCswap( calcNetPE(info->pe), info->addr, info->cond, info->value, 
 
                 [=]( Hermes::Value& newValue ) {
                     this->dbg().debug(CALL_INFO_LAMBDA,"cswap2",1,SHMEM_BASE,"returning\n");
 
-                    Hermes::Value _result = result;
-                    ::memcpy( _result.getPtr(), newValue.getPtr(), value.getLength() );
+                    ::memcpy( info->result.getPtr(), newValue.getPtr(), info->value.getLength() );
 
-                    this->delayReturn( callback, m_blockingReturnLat_ns );
+                    this->delayReturn( info->callback, m_blockingReturnLat_ns );
+					delete info;
                 }
             );
 }
 
 void HadesSHMEM::add( Hermes::Vaddr addr, Hermes::Value& value, int pe, Shmem::Callback callback)
 {
+	Add* info = new Add( addr, value, pe, callback );
+
     dbg().debug(CALL_INFO,1,SHMEM_BASE,"addr=%#" PRIx64 "\n",addr);
-	delayEnter(
-			[=]() {
-                Hermes::Value _value = value;
-				this->add2( addr, _value, pe, callback );
-		  	}
-	);
+
+	delayEnter( DO( add ,info ) );
 }
 
-void HadesSHMEM::add2( Hermes::Vaddr addr, Hermes::Value& value, int pe, Shmem::Callback callback)
+void HadesSHMEM::add( Add* info )
 {
     std::stringstream tmp;
-    tmp << value;
-    dbg().debug(CALL_INFO,1,SHMEM_BASE,"addr=%#" PRIx64 " val=%s\n",addr, tmp.str().c_str());
+    tmp << info->value;
+    dbg().debug(CALL_INFO,1,SHMEM_BASE,"addr=%#" PRIx64 " val=%s\n",info->addr, tmp.str().c_str());
 
-    m_os->getNic()->shmemAdd( calcNetPE(pe), addr, value, 
-                [=]( ) {
-                    this->dbg().debug(CALL_INFO_LAMBDA,"add2",1,SHMEM_BASE,"addr=%#" PRIx64 " returning\n", addr );
+    nic().shmemAdd( calcNetPE(info->pe), info->addr, info->value );
 
-                    this->delayReturn( callback );
-                }
-            );
+    delayReturn( info->callback );
+    delete info;
 }
 
 void HadesSHMEM::fadd(Hermes::Value& result, Hermes::Vaddr addr, Hermes::Value& value, int pe, Shmem::Callback callback)
 {
-	delayEnter(
-			[=]() {
-                Hermes::Value _value = value;
-                Hermes::Value _result = result;
-				this->fadd2( _result, addr, _value, pe, callback );
-		  	}
-	);
+	Fadd* info = new Fadd( result, addr, value, pe, callback );
+
+	delayEnter( DO( fadd, info ) );
 }
 
-void HadesSHMEM::fadd2(Hermes::Value& result, Hermes::Vaddr addr, Hermes::Value& value, int pe, Shmem::Callback callback)
+void HadesSHMEM::fadd( Fadd* info )
 {
     std::stringstream tmp;
-    tmp << value;
-    dbg().debug(CALL_INFO,1,SHMEM_BASE,"addr=%#" PRIx64 " val=%s\n",addr, tmp.str().c_str());
+    tmp << info->value;
+    dbg().debug(CALL_INFO,1,SHMEM_BASE,"addr=%#" PRIx64 " val=%s\n",info->addr, tmp.str().c_str());
 
-    m_os->getNic()->shmemFadd( calcNetPE(pe), addr, value, 
+    nic().shmemFadd( calcNetPE(info->pe), info->addr, info->value, 
                 [=]( Hermes::Value& newValue ) {
                     this->dbg().debug(CALL_INFO_LAMBDA,"fadd2",1,SHMEM_BASE,"returning\n");
 
-                    Hermes::Value _result = result;
-                    ::memcpy( _result.getPtr(), newValue.getPtr(), _result.getLength() );
+                    ::memcpy( info->result.getPtr(), newValue.getPtr(), info->result.getLength() );
 
-                    this->delayReturn( callback, m_blockingReturnLat_ns );
+                    this->delayReturn( info->callback, m_blockingReturnLat_ns );
+					delete info;
                 }
             );
 }
@@ -794,7 +780,7 @@ void HadesSHMEM::doOneFamGet( FamWork* work ) {
 	m_dbg.debug(CALL_INFO,1,SHMEM_BASE,"dest=%#" PRIx64" target=%#" PRIx64 " nbytes=%" PRIu64 " node=%x\n",
 				dest, target.getSimVAddr() , nbytes, node );
 
-	get_nbi( dest, target.getSimVAddr(), nbytes, node, callback ); 
+	get( dest, target.getSimVAddr(), nbytes, node, false, callback ); 
 }
 
 void HadesSHMEM::fam_put( Shmem::Fam_Descriptor fd, uint64_t offset, Hermes::Vaddr src, uint64_t nbytes,
