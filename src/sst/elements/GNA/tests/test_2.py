@@ -11,7 +11,17 @@ op.add_option("-c", "--cacheSz", action="store", type="int", dest="cacheSz", def
 op.add_option("-s", "--STS", action="store", type="int", dest="sts", default=4)
 # max memory out
 op.add_option("-m", "--memOut", action="store", type="int", dest="memOut", default=4)
+op.add_option("-a", "--assoc", action="store", type="int", dest="assoc", default=4)
+op.add_option("-g", "--graph", action="store", type="int", dest="graph", default=1)
+op.add_option("-C", "--conn", action="store", type="float", dest="conn", default=0.001)
+#op.add_option("-H", "--connHigh", action="store", type="float", dest="connHigh", default=0.001)
 (options, args) = op.parse_args()
+
+if options.graph == 2:   # graph with 10% 'high connectivity'
+    options.graph = 1
+    connHigh = options.conn * 10
+else:
+    connHigh = options.conn
 
 # Define the simulation components
 comp_gna = sst.Component("GNA", "GNA.GNA")
@@ -24,9 +34,10 @@ comp_gna.addParams({
     "STSParallelism" : options.sts,
     "MaxOutMem" : options.memOut,
 
-    "graphType" : 1,
+    "graphType" : options.graph,
     "randFire" : 0.1,
-    "connPer" : 0.16
+    "connPer" : options.conn,
+    "connPer_high" : connHigh,
 })
 
 comp_l1cache = sst.Component("l1cache", "memHierarchy.Cache")
@@ -35,7 +46,7 @@ comp_l1cache.addParams({
     "cache_frequency" : "1 Ghz",
     "replacement_policy" : "lru",
     "coherence_protocol" : "MSI",
-    "associativity" : "4",
+    "associativity" : options.assoc,
     "cache_line_size" : "64",
     #"debug" : "1",
     #"debug_level" : "10",

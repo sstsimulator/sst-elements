@@ -329,7 +329,7 @@ bool GNA::deliverBWPs() {
         if (i != BWPs.end()) {
             // deliver it
             const Ctrl_And_Stat_Types::T_BwpFl &pulse = i->second;
-            printf("BWP st%.1f to %d\n", pulse.InpValFl, pulse.InpNrn);
+            //printf("BWP st%.1f to %d\n", pulse.InpValFl, pulse.InpNrn);
             deliver(pulse.InpValFl, pulse.InpNrn, pulse.TmpSft);
             BWPs.erase(i);
         } else {
@@ -425,12 +425,12 @@ bool GNA::clockTic( Cycle_t )
         now++;
         state = PROCESS_FIRE;
         numFirings += firedNeurons.size();
-        if ((now & 0xf) == 0)
+        if ((now & 0x7) == 0)
             printf("%lu neurons fired @ %d\n", firedNeurons.size(), now);
         if (firedNeurons.size() == 0 && now > 100) {
             primaryComponentOKToEndSim();
         }
-        if (now > 100) primaryComponentOKToEndSim();
+        if (now > 80) primaryComponentOKToEndSim();
         break;
     default:
         out.fatal(CALL_INFO, -1,"Invalid GNA state\n");
