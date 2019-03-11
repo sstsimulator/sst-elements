@@ -109,7 +109,9 @@ protected:
 
     inline void enQ_fam_initialize( Queue&, std::string groupName );
     inline void enQ_fam_get_nonblocking( Queue&, Hermes::MemAddr, Shmem::Fam_Descriptor fd, uint64_t offset, uint64_t nbytes );
+    inline void enQ_fam_get_blocking( Queue&, Hermes::MemAddr, Shmem::Fam_Descriptor fd, uint64_t offset, uint64_t nbytes );
     inline void enQ_fam_put_nonblocking( Queue&, Shmem::Fam_Descriptor fd, uint64_t offset, Hermes::MemAddr, uint64_t nbytes );
+    inline void enQ_fam_put_blocking( Queue&, Shmem::Fam_Descriptor fd, uint64_t offset, Hermes::MemAddr, uint64_t nbytes );
 
 	inline void enQ_fam_scatter_blocking( Queue&, Hermes::MemAddr src, Shmem::Fam_Descriptor fd, uint64_t nblocks, 
 			uint64_t firstBlock, uint64_t stride, uint64_t blockSize );
@@ -221,6 +223,14 @@ void EmberShmemGenerator::enQ_fam_get_nonblocking( Queue& q, Hermes::MemAddr des
 			fd, offset, nbytes, false ) );
 }
 
+void EmberShmemGenerator::enQ_fam_get_blocking( Queue& q, Hermes::MemAddr dest, Shmem::Fam_Descriptor fd,
+	uint64_t offset, uint64_t nbytes )
+{
+    verbose(CALL_INFO,2,0,"\n");
+    q.push( new EmberFamGet_Event( *shmem_cast(m_api), &getOutput(), dest.getSimVAddr(),
+			fd, offset, nbytes, true ) );
+}
+
 void EmberShmemGenerator::enQ_fam_put_nonblocking( Queue& q, Shmem::Fam_Descriptor fd, uint64_t offset,
 	Hermes::MemAddr src, uint64_t nbytes )
 {
@@ -229,6 +239,13 @@ void EmberShmemGenerator::enQ_fam_put_nonblocking( Queue& q, Shmem::Fam_Descript
 			fd, offset, src.getSimVAddr(), nbytes, false ) );
 }
 
+void EmberShmemGenerator::enQ_fam_put_blocking( Queue& q, Shmem::Fam_Descriptor fd, uint64_t offset,
+	Hermes::MemAddr src, uint64_t nbytes )
+{
+    verbose(CALL_INFO,2,0,"\n");
+    q.push( new EmberFamPut_Event( *shmem_cast(m_api), &getOutput(),
+			fd, offset, src.getSimVAddr(), nbytes, true ) );
+}
 
 void EmberShmemGenerator::enQ_fam_scatterv_blocking( Queue& q, Hermes::MemAddr src, Shmem::Fam_Descriptor fd,
 	uint64_t nblocks, std::vector<uint64_t> indexes, uint64_t blockSize )
