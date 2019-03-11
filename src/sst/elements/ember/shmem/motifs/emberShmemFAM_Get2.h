@@ -58,6 +58,7 @@ public:
 		m_randomGet     = params.find<bool>("arg.randomGet",false);
 		m_stream_n = params.find<int32_t>("arg.stream_n", 1000);
 		m_randCompute = params.find<int>("arg.useRand",false);
+		m_blocking = params.find<bool>("arg.blocking",false);
 
 		m_detailedComputeList =	params.find<std::string>("arg.detailedCompute","");
 
@@ -172,10 +173,17 @@ public:
 			verbose(CALL_INFO,2,0,"0x%" PRIx64" %p\n", m_mem.getSimVAddr(), m_mem.getBacking() );
     		Hermes::MemAddr m_dest = m_mem.offset<unsigned char>( m_blockSize * (m_curBlock % m_numBlocksPerPartition) );
 
-        	enQ_fam_get_nonblocking( evQ, m_dest,
+			if ( m_blocking ) {
+        		enQ_fam_get_blocking( evQ, m_dest,
                     m_fd,
                     offset, 
 					m_blockSize );
+			} else {
+        		enQ_fam_get_nonblocking( evQ, m_dest,
+                    m_fd,
+                    offset, 
+					m_blockSize );
+			}
 
 			++m_curBlock;
 		}
@@ -282,6 +290,7 @@ public:
     uint64_t m_startTime;
     uint64_t m_stopTime;
     bool m_randomGet;
+	bool m_blocking;
 };
 
 }
