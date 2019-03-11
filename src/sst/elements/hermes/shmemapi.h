@@ -96,21 +96,21 @@ class Interface : public Hermes::Interface {
     virtual void add( Vaddr, Value&, int pe, Callback) { assert(0); }
 
     virtual void fam_get( Hermes::Vaddr dest, Fam_Descriptor fd, uint64_t offset, uint64_t nbytes,
-			bool blocking, Callback) { assert(0); }
+			bool blocking, Callback &) { assert(0); }
     virtual void fam_put( Fam_Descriptor fd, uint64_t offset, Hermes::Vaddr dest, uint64_t nbytes,
-			bool blocking, Callback) { assert(0); }
+			bool blocking, Callback& ) { assert(0); }
 
 	virtual void fam_scatter( Hermes::Vaddr src, Fam_Descriptor fd, uint64_t nElements, uint64_t firstElement,
-			uint64_t stride, uint64_t elmentSize, bool blocking, Callback ) {assert(0); };
+			uint64_t stride, uint64_t elmentSize, bool blocking, Callback& ) {assert(0); };
 	virtual void fam_scatterv( Hermes::Vaddr src, Fam_Descriptor fd, uint64_t nElements, 
-			std::vector<uint64_t> elementIndex, uint64_t elmentSize, bool blocking, Callback ) {assert(0);};
+			std::vector<uint64_t> elementIndex, uint64_t elmentSize, bool blocking, Callback& ) {assert(0);};
 
 	virtual void fam_gather( Hermes::Vaddr dest, Fam_Descriptor fd, uint64_t nElements, uint64_t firstElement,
-			uint64_t stride, uint64_t elmentSize, bool blocking, Callback ) {assert(0); };
+			uint64_t stride, uint64_t elmentSize, bool blocking, Callback& ) {assert(0); };
 	virtual void fam_gatherv( Hermes::Vaddr dest, Fam_Descriptor fd, uint64_t nElements,
-			std::vector<uint64_t> elementIndex, uint64_t elmentSize, bool blocking, Callback ) {assert(0);};
+			std::vector<uint64_t> elementIndex, uint64_t elmentSize, bool blocking, Callback& ) {assert(0);};
 
-    virtual void fam_add( uint64_t, Value&, Callback) { assert(0); }
+    virtual void fam_add( uint64_t, Value&, Callback& ) { assert(0); }
 };
 
 }
