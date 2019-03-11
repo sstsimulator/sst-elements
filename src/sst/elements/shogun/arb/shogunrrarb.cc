@@ -17,7 +17,7 @@ void ShogunRoundRobinArbitrator::moveEvents( const int num_events, const int por
                                              ShogunEvent*** outputEvents,
                                              uint64_t cycle ) {
 
-	output->verbose(CALL_INFO, 4, 0, "BEGIN: Arbitration %d --------------------------------------------------\n", cycle);
+    output->verbose(CALL_INFO, 4, 0, "BEGIN: Arbitration --------------------------------------------------\n");
 	output->verbose(CALL_INFO, 4, 0, "-> start: %d\n", lastStart);
 
 	int currentPort = lastStart;
