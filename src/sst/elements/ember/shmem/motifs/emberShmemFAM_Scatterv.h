@@ -106,9 +106,8 @@ public:
         			enQ_fam_scatterv_nonblocking( evQ, m_src, m_fd, m_numBlocks, m_indexes, m_blockSize );
 				}
 			}	
-           if ( ! m_blocking ) {
+            if ( ! m_blocking ) {
                 enQ_getTime( evQ, &m_postTime );
-                enQ_quiet( evQ );
             }
 			enQ_quiet( evQ );
 			enQ_getTime( evQ, &m_stopTime );
