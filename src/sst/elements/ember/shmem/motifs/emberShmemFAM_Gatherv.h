@@ -111,8 +111,8 @@ public:
 
 			if ( ! m_blocking ) {
 				enQ_getTime( evQ, &m_postTime );
-				enQ_quiet( evQ );
 			}
+			enQ_quiet( evQ );
 			enQ_getTime( evQ, &m_stopTime );
 			m_phase = Fini;
             break;
