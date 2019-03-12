@@ -1,11 +1,12 @@
 
-#include <sst/core/interfaces/simpleNetwork.h>
-#include <sst/core/output.h>
 #include <sst_config.h>
+#include <sst/core/output.h>
+#include <sst/core/interfaces/simpleNetwork.h>
 
-#include "shogun_credit_event.h"
 #include "shogun_event.h"
 #include "shogun_init_event.h"
+#include "shogun_credit_event.h"
+
 #include "shogun_nic.h"
 
 using namespace SST::Shogun;
