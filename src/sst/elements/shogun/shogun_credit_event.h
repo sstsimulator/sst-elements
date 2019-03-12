@@ -7,22 +7,38 @@
 namespace SST {
 namespace Shogun {
 
-class ShogunCreditEvent : public SST::Event {
+    class ShogunCreditEvent : public SST::Event {
 
-public:
-	ShogunCreditEvent() {}
-	~ShogunCreditEvent() {}
+    public:
+        ShogunCreditEvent()
+            : sourcePort(0)
+        {
+        }
+        ShogunCreditEvent(const int source)
+            : sourcePort(source)
+        {
+        }
+        ~ShogunCreditEvent() {}
 
-	void serialize_order(SST::Core::Serialization::serializer & ser) override {
-		Event::serialize_order( ser );
+        int getSrc() const
+        {
+            return sourcePort;
+        }
+
+        void serialize_order(SST::Core::Serialization::serializer& ser) override
+        {
+            Event::serialize_order(ser);
+
+            ser& sourcePort;
         }
 
         ImplementSerializable(SST::Shogun::ShogunCreditEvent);
 
-};
+    protected:
+        int sourcePort;
+    };
 
 }
 }
 
 #endif
-

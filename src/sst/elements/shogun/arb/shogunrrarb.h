@@ -8,30 +8,32 @@
 namespace SST {
 namespace Shogun {
 
-class ShogunRoundRobinArbitrator : public ShogunArbitrator {
+    class ShogunRoundRobinArbitrator : public ShogunArbitrator {
 
-public:
-	ShogunRoundRobinArbitrator();
-	~ShogunRoundRobinArbitrator();
+    public:
+        ShogunRoundRobinArbitrator();
+        ~ShogunRoundRobinArbitrator();
 
-    void moveEvents( const int num_events, const int port_count,
-                     ShogunQueue<ShogunEvent*>** inputQueues,
-                     uint32_t output_slots,
-                     ShogunEvent*** outputEvents,
-                     uint64_t cycle ) override;
+        void moveEvents( const int num_events,
+                         const int port_count,
+                         ShogunQueue<ShogunEvent*>** inputQueues,
+                         uint32_t output_slots,
+                         ShogunEvent*** outputEvents,
+                         uint64_t cycle ) override;
 
-private:
-	int lastStart;
+    private:
+        int lastStart;
 
-	int nextPort(const int port_count, const int i) const {
-		return (i+1) % port_count;
-	}
+        int nextPort(const int port_count, const int i) const
+        {
+            return (i + 1) % port_count;
+        }
 
-	int convertToPort(const int port_count, const int port) const {
-		return port % port_count;
-	}
-
-};
+        int convertToPort(const int port_count, const int port) const
+        {
+            return port % port_count;
+        }
+    };
 
 }
 }

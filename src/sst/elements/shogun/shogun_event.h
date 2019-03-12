@@ -10,77 +10,90 @@ using namespace SST::Interfaces;
 namespace SST {
 namespace Shogun {
 
-class ShogunEvent : public SST::Event {
+    class ShogunEvent : public SST::Event {
 
-public:
-	ShogunEvent(int dst) :
-		dest(dst) {
-		src = -1;
-		req = nullptr;
-	}
+    public:
+        ShogunEvent(int dst)
+            : dest(dst)
+        {
+            src = -1;
+            req = nullptr;
+        }
 
-	ShogunEvent(int dst, int source) :
-		dest(dst), src(source) {
-		req = nullptr;
-	}
+        ShogunEvent(int dst, int source)
+            : dest(dst)
+            , src(source)
+        {
+            req = nullptr;
+        }
 
-	ShogunEvent() :
-		dest(-1), src(-1) {
-		req = nullptr;
-	}
+        ShogunEvent()
+            : dest(-1)
+            , src(-1)
+        {
+            req = nullptr;
+        }
 
-	~ShogunEvent() {
-		if( nullptr != req ) {
-			delete req;
-		}
-	}
+        ~ShogunEvent()
+        {
+            if (nullptr != req) {
+                delete req;
+            }
+        }
 
-	ShogunEvent* clone() override {
-		ShogunEvent* newEv = new ShogunEvent(dest, src);
-		newEv->setPayload( req->clone() );
+        ShogunEvent* clone() override
+        {
+            ShogunEvent* newEv = new ShogunEvent(dest, src);
+            newEv->setPayload(req->clone());
 
-		return newEv;
-	}
+            return newEv;
+        }
 
-	int getDestination() const {
-		return dest;
-	}
+        int getDestination() const
+        {
+            return dest;
+        }
 
-	int getSource() const {
-		return src;
-	}
+        int getSource() const
+        {
+            return src;
+        }
 
-	void setSource(int source) {
-		src = source;
-	}
+        void setSource(int source)
+        {
+            src = source;
+        }
 
-	SimpleNetwork::Request* getPayload() {
-		return req;
-	}
+        SimpleNetwork::Request* getPayload()
+        {
+            return req;
+        }
 
-	void unlinkPayload() {
-		req = nullptr;
-	}
+        void unlinkPayload()
+        {
+            req = nullptr;
+        }
 
-	void setPayload( SimpleNetwork::Request* payload ) {
-		req = payload;
-	}
+        void setPayload(SimpleNetwork::Request* payload)
+        {
+            req = payload;
+        }
 
-        void serialize_order(SST::Core::Serialization::serializer & ser) override {
-                Event::serialize_order( ser );
-                ser & dest;
-		ser & src;
-		ser & req;
+        void serialize_order(SST::Core::Serialization::serializer& ser) override
+        {
+            Event::serialize_order(ser);
+            ser& dest;
+            ser& src;
+            ser& req;
         }
 
         ImplementSerializable(SST::Shogun::ShogunEvent);
 
-private:
-	int dest;
-	int src;
-	SimpleNetwork::Request* req;
-
-};
+    private:
+        int dest;
+        int src;
+        SimpleNetwork::Request* req;
+    };
 
 }
 }

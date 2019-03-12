@@ -22,9 +22,9 @@
 #include <sst/core/output.h>
 #include <sst/core/params.h>
 
-#include "shogun_q.h"
-#include "shogun_event.h"
 #include "arb/shogunarb.h"
+#include "shogun_event.h"
+#include "shogun_q.h"
 #include "shogun_stat_bundle.h"
 
 namespace SST {
@@ -86,6 +86,8 @@ private:
     void operator=(const ShogunComponent&); // do not implement
 
     virtual bool tick(SST::Cycle_t);
+    //void tickEvent( SST::Event* ev );
+    void handleIncoming(SST::Event* event);
 
     void clearInputs();
     void clearOutputs();
@@ -102,10 +104,9 @@ private:
 
     ShogunStatisticsBundle* stats;
     SST::Link** links;
+    SST::Link* clockLink;
 
     ShogunQueue<ShogunEvent*>** inputQueues;
-//     ShogunEvent** pendingOutputs;
-//     std::vector< std::vector< ShogunEvent* > >* pendingOutputs;
     ShogunEvent*** pendingOutputs;
     int* remote_output_slots;
     ShogunArbitrator* arb;
@@ -114,7 +115,13 @@ private:
     Statistic<uint64_t>* zeroEventCycles;
     Statistic<uint64_t>* eventCycles;
 
+    int64_t clockPS;
+
+    TimeConverter* tc;
+    Clock::HandlerBase* clockTickHandler;
+    bool handlerRegistered;
 };
+
 
 } // namespace ShogunComponent
 } // namespace SST

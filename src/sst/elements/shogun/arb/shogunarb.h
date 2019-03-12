@@ -2,8 +2,8 @@
 #ifndef _H_SHOGUN_ARB_H
 #define _H_SHOGUN_ARB_H
 
-#include "shogun_q.h"
 #include "shogun_event.h"
+#include "shogun_q.h"
 #include "shogun_stat_bundle.h"
 
 using namespace SST::Shogun;
@@ -11,32 +11,34 @@ using namespace SST::Shogun;
 namespace SST {
 namespace Shogun {
 
-class ShogunArbitrator {
+    class ShogunArbitrator {
 
-public:
-	ShogunArbitrator() {}
-	virtual ~ShogunArbitrator() {}
+    public:
+        ShogunArbitrator() {}
+        virtual ~ShogunArbitrator() {}
 
-virtual void moveEvents( const int num_events, const int port_count,
-                         ShogunQueue<ShogunEvent*>** inputQueues,
-                         uint32_t output_slots,
-                         ShogunEvent*** outputEvents,
-                         uint64_t cycle ) = 0;
+    virtual void moveEvents(const int num_events,
+                            const int port_count,
+                            ShogunQueue<ShogunEvent*>** inputQueues,
+                            uint32_t output_slots,
+                            ShogunEvent*** outputEvents,
+                            uint64_t cycle )
+                            = 0;
 
+        void setOutput(SST::Output* out)
+        {
+            output = out;
+        }
 
-	void setOutput(SST::Output* out) {
-		output = out;
-	}
+        void setStatisticsBundle(ShogunStatisticsBundle* b)
+        {
+            bundle = b;
+        }
 
-	void setStatisticsBundle( ShogunStatisticsBundle* b ) {
-		bundle = b;
-	}
-
-protected:
-	SST::Output* output;
-	ShogunStatisticsBundle* bundle;
-
-};
+    protected:
+        SST::Output* output;
+        ShogunStatisticsBundle* bundle;
+    };
 
 }
 }
