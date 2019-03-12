@@ -177,6 +177,12 @@ void VirtNic::shmemInit( Hermes::Vaddr addr, Callback callback )
     sendCmd(0, new NicShmemInitCmdEvent( addr, callback ) );
 }
 
+void VirtNic::shmemFence( Callback callback )
+{
+    m_dbg.debug(CALL_INFO,2,0,"\n");
+    sendCmd(0, new NicShmemFenceCmdEvent( callback ) );
+}
+
 void VirtNic::shmemRegMem( Hermes::MemAddr& addr, size_t len, Callback callback )
 {
     m_dbg.debug(CALL_INFO,2,0,"\n");
