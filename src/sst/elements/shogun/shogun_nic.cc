@@ -40,7 +40,7 @@ bool ShogunNIC::initialize(const std::string& portName, const UnitAlgebra& link_
     output->verbose(CALL_INFO, 4, 0, "Configuring port %s...\n", portName.c_str());
 
     link = configureLink(portName, "1ps",
-        new Event::Handler<ShogunNIC>(this, &ShogunNIC::recvLinkEvent));
+    new Event::Handler<ShogunNIC>(this, &ShogunNIC::recvLinkEvent));
 
     output->verbose(CALL_INFO, 4, 0, "-> result: %s\n", (nullptr == link) ? "null, not-configured" : "configure successful");
 
@@ -131,6 +131,7 @@ SimpleNetwork::Request* ShogunNIC::recv(int vn)
 }
 
 void ShogunNIC::setup() {}
+
 void ShogunNIC::init(unsigned int phase)
 {
     //	if( 0 == phase ) {
