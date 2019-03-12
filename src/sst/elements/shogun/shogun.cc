@@ -27,13 +27,19 @@
 using namespace SST;
 using namespace SST::Shogun;
 
+#define SHOGUN_MAX(a,b) \
+({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
+
 ShogunComponent::ShogunComponent(ComponentId_t id, Params& params)
     : Component(id)
 {
     const std::string clock_rate = params.find<std::string>("clock", "1.0GHz");
     queue_slots = params.find<uint64_t>("queue_slots", 64);
+    input_message_slots = params.find<uint32_t>("input_message_slots", 1);
+    output_message_slots = params.find<uint32_t>("output_message_slots", 1);
     pending_events = 0;
 
+    events_per_clock = SHOGUN_MAX(input_message_slots, output_message_slots);
     arb = new ShogunRoundRobinArbitrator();
 
     const int verbosity = params.find<uint32_t>("verbose", 0);
@@ -43,7 +49,7 @@ ShogunComponent::ShogunComponent(ComponentId_t id, Params& params)
     output = new SST::Output(prefix, verbosity, 0, Output::STDOUT);
     arb->setOutput(output);
 
-    port_count = params.find<int>("port_count");
+    port_count = params.find<int>("port_count", -1);
 
     output->verbose(CALL_INFO, 1, 0, "Creating Shogun crossbar at %s clock rate and %d ports\n",
         clock_rate.c_str(), port_count);
@@ -75,15 +81,24 @@ ShogunComponent::ShogunComponent(ComponentId_t id, Params& params)
 
     delete[] linkName;
 
-    output->verbose(CALL_INFO, 1, 0, "Allocating pending input/output queues...\n");
-    inputQueues = (ShogunQueue<ShogunEvent*>**)malloc(sizeof(ShogunQueue<ShogunEvent*>*) * port_count);
-    pendingOutputs = (ShogunEvent**)malloc(sizeof(ShogunEvent*) * (port_count));
-    remote_output_slots = (int*)malloc(sizeof(int) * port_count);
+    output->verbose(CALL_INFO, 1, 0, "Allocating pending input/output queues...\n" );
+    inputQueues = (ShogunQueue<ShogunEvent*>**) malloc( sizeof(ShogunQueue<ShogunEvent*>*) * port_count );
+    remote_output_slots = (int*) malloc( sizeof(int) * port_count );
+    pendingOutputs = new ShogunEvent**[port_count];
 
-    for (int i = 0; i < port_count; ++i) {
-        inputQueues[i] = new ShogunQueue<ShogunEvent*>(queue_slots);
+    for( int i = 0; i < port_count; ++i ) {
+        inputQueues[i] = new ShogunQueue<ShogunEvent*>( queue_slots );
         remote_output_slots[i] = 2;
+
+        pendingOutputs[i] = new ShogunEvent*[output_message_slots];
     }
+
+    for( int i = 0; i < port_count; ++i ) {
+        for( int j = 0; j < output_message_slots; ++j ){
+            pendingOutputs[i][j] = new ShogunEvent;
+        }
+    }
+
 
     stats = new ShogunStatisticsBundle(port_count);
     stats->registerStatistics(this);
@@ -101,6 +116,12 @@ ShogunComponent::~ShogunComponent()
     delete output;
     delete arb;
     delete stats;
+
+    for( int i = 0; i < port_count; ++i ) {
+        delete [] pendingOutputs[i];
+    }
+
+    delete [] pendingOutputs;
 }
 
 ShogunComponent::ShogunComponent()
@@ -117,7 +138,7 @@ bool ShogunComponent::tick(SST::Cycle_t currentCycle)
     eventCycles->addData(1);
 
     // Migrate events across the cross-bar
-    arb->moveEvents(port_count, inputQueues, pendingOutputs, static_cast<uint64_t>(currentCycle));
+    arb->moveEvents( events_per_clock, port_count, inputQueues, output_message_slots, pendingOutputs, static_cast<uint64_t>( currentCycle ) );
 
     printStatus();
 
@@ -186,24 +207,26 @@ void ShogunComponent::emitOutputs()
 {
     output->verbose(CALL_INFO, 4, 0, "BEGIN: emitOutputs -----------------------------------------------\n");
 
-    for (int i = 0; i < port_count; ++i) {
+    for( int i = 0; i < port_count; ++i ) {
         output->verbose(CALL_INFO, 4, 0, "-> Processing port %d:\n", i);
 
-        if (nullptr != pendingOutputs[i]) {
-            output->verbose(CALL_INFO, 4, 0, "  -> output is not null, remote-slot-count: %d, src=%5d\n", remote_output_slots[i],
-                pendingOutputs[i]->getSource());
+        for( auto j = 0; j < output_message_slots; ++j ) {
+            if( nullptr != pendingOutputs[i][j] ) {
+                output->verbose(CALL_INFO, 4, 0, "  -> output is not null, remote-slot-count: %d, src=%5d\n", remote_output_slots[i],
+                pendingOutputs[i][j]->getSource());
 
-            if ((remote_output_slots[i] > 0)) {
-                output->verbose(CALL_INFO, 4, 0, "    -> sending event (has entry and free %d slots)\n", remote_output_slots[i]);
-                stats->getOutputPacketCount(i)->addData(1);
+                if( remote_output_slots[i] > 0 ) {
+                    output->verbose(CALL_INFO, 4, 0, "    -> sending event (has entry and free %d slots)\n", remote_output_slots[i]);
+                    stats->getOutputPacketCount(i)->addData(1);
 
-                links[i]->send(pendingOutputs[i]);
-                links[pendingOutputs[i]->getSource()]->send(new ShogunCreditEvent());
-                pendingOutputs[i] = nullptr;
-                remote_output_slots[i]--;
-                pending_events--;
-            } else {
-                output->verbose(CALL_INFO, 4, 0, "    -> no free slots, event send disabled for this round (slots: %d)\n", remote_output_slots[i]);
+                    links[i]->send( pendingOutputs[i][j] );
+                    links[ pendingOutputs[i][j]->getSource() ]->send( new ShogunCreditEvent() );
+                    pendingOutputs[i][j] = nullptr;
+                    remote_output_slots[i]--;
+                    pending_events--;
+                } else {
+                    output->verbose(CALL_INFO, 4, 0, "    -> no free slots, event send disabled for this round (slots: %d)\n", remote_output_slots[i]);
+                }
             }
         }
     }
@@ -213,8 +236,11 @@ void ShogunComponent::emitOutputs()
 
 void ShogunComponent::clearOutputs()
 {
-    for (int i = 0; i < port_count; ++i) {
-        pendingOutputs[i] = nullptr;
+    for( int i = 0; i < port_count; ++i ) {
+        for( int j = 0; j < output_message_slots; ++j ) {
+                pendingOutputs[i][j] = nullptr;;
+        }
+
         remote_output_slots[i] = inputQueues[i]->capacity();
     }
 }
@@ -230,9 +256,17 @@ void ShogunComponent::printStatus()
 {
     output->verbose(CALL_INFO, 4, 0, "BEGIN: processing x-bar inputs -----------------------------------------------\n");
     output->verbose(CALL_INFO, 4, 0, "BEGIN X-BAR STATUS REPORT ====================================================\n");
-    for (int i = 0; i < port_count; ++i) {
-        output->verbose(CALL_INFO, 4, 0, "port %5d / in-q-count: %5d / remote-losts: %5d / out-q: %s\n", i,
-            inputQueues[i]->count(), remote_output_slots[i], pendingOutputs[i] == nullptr ? "empty" : "full");
+
+    for( int i = 0; i < port_count; ++i ) {
+        output->verbose(CALL_INFO, 4, 0, "port %5d / in-q-count: %5d / remote-slots: %5d / out-q:", i,
+        inputQueues[i]->count(), remote_output_slots[i]);
+
+        if( output->getVerboseLevel() >= 4 ) {
+            for( int j = 0; j < output_message_slots; ++j ) {
+                output->output(" %s", pendingOutputs[i][j] == nullptr ? "empty" : "full");
+            }
+            output->output("\n");
+        }
     }
     output->verbose(CALL_INFO, 4, 0, "END X-BAR STATUS REPORT ======================================================\n");
 }

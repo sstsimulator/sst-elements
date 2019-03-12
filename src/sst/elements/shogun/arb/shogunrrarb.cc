@@ -13,11 +13,11 @@ ShogunRoundRobinArbitrator::ShogunRoundRobinArbitrator()
 
 ShogunRoundRobinArbitrator::~ShogunRoundRobinArbitrator() {}
 
-void ShogunRoundRobinArbitrator::moveEvents(const int port_count,
-    ShogunQueue<ShogunEvent*>** inputQueues,
-    ShogunEvent** outputEvents,
-    uint64_t cycle)
-{
+void ShogunRoundRobinArbitrator::moveEvents( const int num_events, const int port_count,
+                                             ShogunQueue<ShogunEvent*>** inputQueues,
+                                             uint32_t output_slots,
+                                             ShogunEvent*** outputEvents,
+                                             uint64_t cycle ) {
 
     output->verbose(CALL_INFO, 4, 0, "BEGIN: Arbitration --------------------------------------------------\n");
     output->verbose(CALL_INFO, 4, 0, "-> start: %d\n", lastStart);
@@ -25,29 +25,36 @@ void ShogunRoundRobinArbitrator::moveEvents(const int port_count,
     int currentPort = lastStart;
     int moved_count = 0;
 
-    for (int i = 0; i < port_count; ++i) {
+    for( int i = 0; i < port_count; ++i ) {
         auto nextQ = inputQueues[currentPort];
-        output->verbose(CALL_INFO, 4, 0, "-> processing port: %d, event-count: %d\n", currentPort,
-            nextQ->count());
+        output->verbose(CALL_INFO, 4, 0, "-> processing port: %d, event-count: %d out of %d\n", currentPort,
+                        nextQ->count(), num_events);
 
-        if (inputQueues[currentPort]->empty()) {
+        //Want to send num_events for each port
+        for( auto j = 0; j < num_events; ++j ) {
+            if( inputQueues[currentPort]->empty() ) {
+                output->verbose(CALL_INFO, 4, 0, "  (%d)-> input queue empty...\n", j);
+                break;
+            } else {
 
-        } else {
+                ShogunEvent* pendingEv = inputQueues[currentPort]->peek();
 
-            ShogunEvent* pendingEv = inputQueues[currentPort]->peek();
+                for( auto k = 0; k < output_slots; ++k) {
+                    output->verbose(CALL_INFO, 4, 0, "  (%d)-> attempting send from: %d to: %d, remote status: %s\n",
+                        j, pendingEv->getSource(), pendingEv->getDestination(),
+                        outputEvents[pendingEv->getDestination()][k] == nullptr ? "empty" : "full");
 
-            output->verbose(CALL_INFO, 4, 0, "  -> attempting send to: %d, remote status: %s\n",
-                pendingEv->getDestination(),
-                outputEvents[pendingEv->getDestination()] == nullptr ? "empty" : "full");
+                    if( outputEvents[pendingEv->getDestination()][k] == nullptr ) {
+                        output->verbose(CALL_INFO, 4, 0, "  (%d)-> moving event to remote queue\n");
+                        j, pendingEv = inputQueues[currentPort]->pop();
+                        outputEvents[pendingEv->getDestination()][k] = pendingEv;
+                        moved_count++;
 
-            if (outputEvents[pendingEv->getDestination()] == nullptr) {
-                output->verbose(CALL_INFO, 4, 0, "  -> moving event to remote queue\n");
-                pendingEv = inputQueues[currentPort]->pop();
-                outputEvents[pendingEv->getDestination()] = pendingEv;
-                moved_count++;
+                        break;
+                    }
+                }
             }
         }
-
         // Increment to next port in sequence
         currentPort = nextPort(port_count, currentPort);
     }
