@@ -361,8 +361,9 @@ public:
     VirtNic* getVirtNic( int id ) {
         return m_vNicV[id];
     }
-	void shmemDecPending( int core ) {
-		m_shmem->decPending( core );
+
+	void shmemDecPendingPuts( int core ) {
+		m_shmem->decPendingPuts( core );
 	}
 
   private:

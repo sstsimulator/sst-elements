@@ -111,6 +111,18 @@ class NicShmemInitCmdEvent : public NicShmemCmdEvent {
     NotSerializable(NicShmemInitCmdEvent)
 };
 
+class NicShmemFenceCmdEvent : public NicShmemCmdEvent {
+  public:
+    typedef std::function<void()> Callback;
+    NicShmemFenceCmdEvent( Callback callback ) :
+        NicShmemCmdEvent( Fence ), callback(callback) {}
+
+    Callback      callback;
+    virtual int getNode() { return -1; }
+
+    NotSerializable(NicShmemInitCmdEvent)
+};
+
 class NicShmemRegMemCmdEvent : public NicShmemCmdEvent {
   public:
     typedef std::function<void()> Callback;
