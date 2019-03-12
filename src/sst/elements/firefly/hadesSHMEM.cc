@@ -34,7 +34,7 @@ HadesSHMEM::HadesSHMEM(Component* owner, Params& params) :
         Output::STDOUT );
 
     m_selfLink = configureSelfLink("ShmemToDriver", "1 ns",
-            new Event::Handler<HadesSHMEM>(this,&HadesSHMEM::handleToDriver));
+            new Event::Handler<HadesSHMEM>(this,&HadesSHMEM::doCallback));
     m_heap = new Heap();
 
 	m_enterLat_ns = params.find<int>("enterLat_ns",30);
@@ -110,7 +110,6 @@ void HadesSHMEM::memcpy( Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, S
 #define DO(name,arg)\
 [=]() {\
 	if ( this->nic().isBlocked() ) {\
-		printf("%s blocked\n",__func__);\
 		this->nic().setBlockedCallback(\
 			[=](){\
 				this->name( arg );\
@@ -463,15 +462,26 @@ void HadesSHMEM::reduction( Reduction* info )
 	);	
 }
 
-void HadesSHMEM::get(Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, int pe, bool blocking, Shmem::Callback callback)
+void HadesSHMEM::get(Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, int pe, bool blocking, Shmem::Callback callback )
 {
     dbg().debug(CALL_INFO,1,SHMEM_BASE,"destSimVAddr=%#" PRIx64 " srcSimVaddr=%#" PRIx64 " length=%lu\n",
                     dest, src, length);
 
-	Get* info = new Get( dest, src, length, pe, blocking, callback );
+	Get* info = new Get( dest, src, length, pe, blocking, callback, [](int){} );
 
 	delayEnter( DO(get,info) );
 }
+
+void HadesSHMEM::get(Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, int pe, bool blocking, Shmem::Callback callback, Shmem::Callback& finiCallback )
+{
+    dbg().debug(CALL_INFO,1,SHMEM_BASE,"destSimVAddr=%#" PRIx64 " srcSimVaddr=%#" PRIx64 " length=%lu\n",
+                    dest, src, length);
+
+	Get* info = new Get( dest, src, length, pe, blocking, callback, finiCallback );
+
+	delayEnter( DO(get,info) );
+}
+
 
 void HadesSHMEM::get( Get* info )
 {
@@ -489,6 +499,7 @@ void HadesSHMEM::get( Get* info )
 		callback = [=]() {
             this->dbg().debug(CALL_INFO_LAMBDA,"get",1,SHMEM_BASE,"returning\n");
             assert( m_pendingGets.find( info ) != m_pendingGets.end() ) ;
+            info->finiCallback(0);
             m_pendingGets.erase(info);
             delete info;
 		};
@@ -531,7 +542,13 @@ void HadesSHMEM::put(Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, int p
 		return; 
 	}
 
-	Put* info= new Put( dest, src, length, pe, blocking, callback );
+	Put* info= new Put( dest, src, length, pe, blocking, callback, [](int){} );
+	delayEnter( DO(put,info) );
+}
+
+void HadesSHMEM::put(Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, int pe, bool blocking, Shmem::Callback callback, Shmem::Callback& fini)
+{
+	Put* info= new Put( dest, src, length, pe, blocking, callback, fini );
 	delayEnter( DO(put,info) );
 }
 
@@ -553,6 +570,7 @@ void HadesSHMEM::put( Put* info )
 		callback = [=]() {
                     this->dbg().debug(CALL_INFO_LAMBDA,"put",1,SHMEM_BASE,"returning\n");
 					assert( m_pendingPuts.find( info ) != m_pendingPuts.end() ) ;
+					info->finiCallback(0);
 					m_pendingPuts.erase(info);
 					delete info;
 				};
@@ -724,7 +742,7 @@ void HadesSHMEM::fadd( Fadd* info )
             );
 }
 
-void HadesSHMEM::fam_add( uint64_t offset, Hermes::Value& value, Shmem::Callback callback)
+void HadesSHMEM::fam_add( uint64_t offset, Hermes::Value& value, Shmem::Callback& callback )
 {
 	uint64_t localOffset;
 	int      node;
@@ -738,16 +756,26 @@ void HadesSHMEM::fam_add( uint64_t offset, Hermes::Value& value, Shmem::Callback
 	add( target.getSimVAddr(), value, node, callback );
 }
 
-void HadesSHMEM::fam_get_nb( Hermes::Vaddr dest, Shmem::Fam_Region_Descriptor rd, uint64_t offset, uint64_t nbytes, Shmem::Callback callback )
+void HadesSHMEM::fam_get( Hermes::Vaddr dest, Shmem::Fam_Descriptor fd, uint64_t offset, uint64_t nbytes, 
+	bool blocking, Shmem::Callback& callback )
 {
-	FamWork* work = new FamWork;
-	work->callback = callback;	
-	work->dest =  dest;
+	if ( blocking ) {
+		fam_get2( dest,fd, offset, nbytes, [](int){}, callback );
+	} else {
+		fam_get2( dest,fd, offset, nbytes, callback, [](int){} );
+	}
+}
+
+void HadesSHMEM::fam_get2( Hermes::Vaddr dest, Shmem::Fam_Descriptor fd, uint64_t offset, uint64_t nbytes, 
+	Shmem::Callback callback, Shmem::Callback finiCallback )
+{
+	FamWork* work = new FamWork( dest, callback, finiCallback );
 
 	m_dbg.debug(CALL_INFO,1,SHMEM_BASE,"dest=%#" PRIx64" globalOffset=%#" PRIx64 " nbytes=%" PRIu64 "\n",
-				work->dest, offset, nbytes );
+				work->addr, offset, nbytes );
 
 	createWorkList( offset, nbytes, work->work );
+	work->pending = work->work.size();
 	doOneFamGet( work );
 }
 
@@ -759,16 +787,25 @@ void HadesSHMEM::doOneFamGet( FamWork* work ) {
 
 	Hermes::MemAddr target( localOffset, NULL );
 
-	Hermes::Vaddr dest = work->dest;
+	Hermes::Vaddr dest = work->addr;
 	uint64_t nbytes = work->work.front().second;
 	Shmem::Callback callback; 
+	Shmem::Callback finiCallback = 
+				[=](int){
+					--work->pending;
+                	dbg().debug(CALL_INFO_LAMBDA,"doOneFamGet",1,SHMEM_BASE,"pending=%zu\n",work->pending);
+					if ( 0 == work->pending ) { 
+						work->finiCallback(0);
+						delete work;
+					}
+				};	
 
-	work->dest += work->work.front().second;
+	work->addr += work->work.front().second;
 	work->work.pop();
 
-	if (  work->work.empty() ) {
+	if ( work->work.empty() ) {
+		m_dbg.debug(CALL_INFO,1,SHMEM_BASE,"all work issued\n");
 		callback = work->callback;
-		delete work;
 	} else {		
 		callback = [=](int) {
 			doOneFamGet(work);
@@ -778,5 +815,233 @@ void HadesSHMEM::doOneFamGet( FamWork* work ) {
 	m_dbg.debug(CALL_INFO,1,SHMEM_BASE,"dest=%#" PRIx64" target=%#" PRIx64 " nbytes=%" PRIu64 " node=%x\n",
 				dest, target.getSimVAddr() , nbytes, node );
 
-	get( dest, target.getSimVAddr(), nbytes, node, false, callback ); 
+	get( dest, target.getSimVAddr(), nbytes, node, false, callback, finiCallback ); 
+}
+
+void HadesSHMEM::fam_put( Shmem::Fam_Descriptor fd, uint64_t offset, Hermes::Vaddr src, uint64_t nbytes,
+	bool blocking, Shmem::Callback& callback )
+{
+	if ( blocking ) {
+		fam_put2( fd, offset, src, nbytes, [](int){}, callback );
+	} else {
+		fam_put2( fd, offset, src, nbytes, callback, [](int){} );
+	}
+}
+
+void HadesSHMEM::fam_put2( Shmem::Fam_Descriptor fd, uint64_t offset, Hermes::Vaddr src, uint64_t nbytes,
+	Shmem::Callback callback, Shmem::Callback finiCallback )
+{
+	FamWork* work = new FamWork( src, callback, finiCallback );
+
+	m_dbg.debug(CALL_INFO,1,SHMEM_BASE,"src=%#" PRIx64" globalOffset=%#" PRIx64 " nbytes=%" PRIu64 "\n",
+				work->addr, offset, nbytes );
+
+	createWorkList( offset, nbytes, work->work );
+	work->pending = work->work.size();
+	doOneFamPut( work );
+}
+
+void HadesSHMEM::doOneFamPut( FamWork* work ) {
+	uint64_t localOffset;
+	int      node;
+		
+	getFamNetAddr( work->work.front().first, node, localOffset ); 
+
+	Hermes::MemAddr target( localOffset, NULL );
+
+	Hermes::Vaddr src = work->addr;
+	uint64_t nbytes = work->work.front().second;
+	Shmem::Callback callback; 
+	Shmem::Callback finiCallback = 
+				[=](int){
+					--work->pending;
+                	dbg().debug(CALL_INFO_LAMBDA,"doOneFamPut",1,SHMEM_BASE,"pending=%zu\n",work->pending);
+					if ( 0 == work->pending ) { 
+						work->finiCallback(0);
+						delete work;
+					}
+				};	
+
+	work->addr += work->work.front().second;
+	work->work.pop();
+
+	if ( work->work.empty() ) {
+		m_dbg.debug(CALL_INFO,1,SHMEM_BASE,"all work issued\n");
+		callback = work->callback;
+	} else {		
+		callback = [=](int) {
+			doOneFamPut(work);
+	  	};
+	}
+
+	m_dbg.debug(CALL_INFO,1,SHMEM_BASE,"src=%#" PRIx64" target=%#" PRIx64 " nbytes=%" PRIu64 " node=%x\n",
+				src, target.getSimVAddr() , nbytes, node );
+
+	put( target.getSimVAddr(), src, nbytes, node, false, callback, finiCallback ); 
+}
+
+void HadesSHMEM::fam_scatter( Hermes::Vaddr src, Shmem::Fam_Descriptor fd, uint64_t nElements,
+	uint64_t firstElement, uint64_t stride, uint64_t elementSize, bool blocking, Shmem::Callback& callback )
+{
+	m_dbg.debug(CALL_INFO,1,SHMEM_BASE,"src=%#" PRIx64 "nElements=%" PRIu64 " elementSize=%" PRIu64 " %s\n",
+			src, nElements, elementSize, blocking ? "blocking" : "" );
+
+	FamVectorWork* work = new FamVectorWork;
+	work->firstElement = firstElement;
+	work->stride = stride;
+
+	fam_scatter( work, src, fd, nElements, elementSize, blocking, callback );		
+}
+
+void HadesSHMEM::fam_scatterv( Hermes::Vaddr src, Shmem::Fam_Descriptor fd, uint64_t nElements,
+	std::vector<uint64_t> elementIndexes, uint64_t elementSize, bool blocking, Shmem::Callback& callback )
+{
+	m_dbg.debug(CALL_INFO,1,SHMEM_BASE,"src=%#" PRIx64 "nElements=%" PRIu64 " elementSize=%" PRIu64 " %s\n",
+			src, nElements, elementSize, blocking ? "blocking" : "" );
+
+	FamVectorWork* work = new FamVectorWork;
+	work->indexes = elementIndexes;
+
+	fam_scatter( work, src, fd, nElements, elementSize, blocking, callback );		
+}
+
+void HadesSHMEM::fam_scatter( FamVectorWork* work, Hermes::Vaddr src, Shmem::Fam_Descriptor fd, uint64_t nElements,
+	uint64_t elementSize, bool blocking, Shmem::Callback& callback )
+{
+	work->addr = src;
+	work->fd =fd;
+	work->nElements = nElements;
+	work->pending = nElements;
+	work->elementSize = elementSize;
+	work->currentVector = 0;
+	work->blocking = blocking;
+
+	if ( work->blocking ) {
+		work->callback = [](int){};;
+		work->finiCallback = callback;
+	} else {
+		work->callback = callback;
+		work->finiCallback = [](int){};
+	}
+
+	doFamVectorPut( work );		
+}
+
+
+void HadesSHMEM::doFamVectorPut( FamVectorWork* work )
+{
+	uint64_t offset;
+	int index = work->currentVector++; 
+	Shmem::Callback callback;
+	Shmem::Callback finiCallback = 
+		[=](int){
+			--work->pending;
+           	dbg().debug(CALL_INFO_LAMBDA,"doFamVectorPut",1,SHMEM_BASE,"pending=%zu\n",work->pending);
+			if (  0 == work->pending ) {
+           		dbg().debug(CALL_INFO_LAMBDA,"doFamVectorPut",1,SHMEM_BASE,"callback\n");
+				work->finiCallback(0);
+				delete work;
+			}
+		};
+
+	if ( work->currentVector == work->nElements ) {
+		callback = work->callback;
+	} else {
+		callback = [=](int) {
+			doFamVectorPut( work );
+		};
+	}
+
+	if ( ! work->indexes.empty() ) {
+		offset = work->indexes[index] * work->elementSize;
+	} else {
+		offset = work->firstElement + index * work->stride * work->elementSize;
+	}
+
+	m_dbg.debug(CALL_INFO,1,SHMEM_BASE,"src=%#" PRIx64 " offset=%" PRIu64 " size=%" PRIu64 "\n",
+			work->addr, offset, work->elementSize );
+
+	fam_put2( work->fd, offset, work->addr, work->elementSize, callback, finiCallback );
+}
+
+void HadesSHMEM::fam_gather( Hermes::Vaddr dest, Shmem::Fam_Descriptor fd, uint64_t nElements,
+	uint64_t firstElement, uint64_t stride, uint64_t elementSize, bool blocking, Shmem::Callback& callback )
+{
+	m_dbg.debug(CALL_INFO,1,SHMEM_BASE,"dest=%#" PRIx64 "nElements=%" PRIu64 " elementSize=%" PRIu64 " %s\n",
+		dest, nElements, elementSize, blocking ? "blocking":"" );
+
+	FamVectorWork* work = new FamVectorWork;
+	work->firstElement = firstElement;
+	work->stride = stride;
+	fam_gather( work, dest, fd, nElements, elementSize, blocking, callback );
+}
+
+void HadesSHMEM::fam_gatherv( Hermes::Vaddr dest, Shmem::Fam_Descriptor fd, uint64_t nElements,
+	std::vector<uint64_t> elementIndexes, uint64_t elementSize, bool blocking, Shmem::Callback& callback )
+{
+	m_dbg.debug(CALL_INFO,1,SHMEM_BASE,"dest=%#" PRIx64 "nElements=%" PRIu64 " elementSize=%" PRIu64 " %s\n",
+		dest, nElements, elementSize,  blocking ? "blocking" : "" );
+
+	FamVectorWork* work = new FamVectorWork;
+	work->indexes = elementIndexes;
+	fam_gather( work, dest, fd, nElements, elementSize, blocking, callback );
+}
+
+
+void HadesSHMEM::fam_gather( FamVectorWork* work, Hermes::Vaddr dest, Shmem::Fam_Descriptor fd, uint64_t nElements,
+	uint64_t elementSize, bool blocking, Shmem::Callback& callback )
+{
+	work->addr = dest;
+	work->fd = fd;
+	work->nElements = nElements;
+	work->pending = nElements;
+	work->elementSize = elementSize;
+	work->currentVector = 0;
+	work->blocking = blocking;
+
+	if ( work->blocking ) {
+		work->callback = [](int){};;
+		work->finiCallback = callback;
+	} else {
+		work->callback = callback;
+		work->finiCallback = [](int){};
+	}
+
+	doFamVectorGet( work );		
+}
+
+void HadesSHMEM::doFamVectorGet( FamVectorWork* work )
+{
+	uint64_t offset;
+	int index = work->currentVector++; 
+	Shmem::Callback callback;
+	Shmem::Callback finiCallback =
+		[=](int){
+			--work->pending;
+           	dbg().debug(CALL_INFO_LAMBDA,"doFamVectorGet",1,SHMEM_BASE,"pending=%zu\n",work->pending);
+			if (  0 == work->pending ) {
+           		dbg().debug(CALL_INFO_LAMBDA,"doFamVectorGet",1,SHMEM_BASE,"callback\n");
+				work->finiCallback(0);
+				delete work;
+			}
+		};
+
+	if ( work->currentVector == work->nElements ) {
+		m_dbg.debug(CALL_INFO,1,SHMEM_BASE,"all gets made\n");
+		callback = work->callback;
+	} else {
+		m_dbg.debug(CALL_INFO,1,SHMEM_BASE,"sched next vector\n");
+		callback = [=](int) {
+			doFamVectorGet( work );
+		};
+	}
+
+	if ( ! work->indexes.empty() ) {
+		offset = work->indexes[index] * work->elementSize;
+	} else {
+		offset = work->firstElement + index * work->stride * work->elementSize;
+	}
+
+	m_dbg.debug(CALL_INFO,1,SHMEM_BASE,"dest=%#" PRIx64 " offset=%" PRIu64 " size=%" PRIu64 "\n", work->addr, offset, work->elementSize );
+	fam_get2( work->addr + index* work->elementSize, work->fd, offset, work->elementSize, callback, finiCallback );
 }

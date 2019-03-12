@@ -120,10 +120,10 @@ void Nic::Shmem::handleNicEvent( NicShmemCmdEvent* event, int id )
       case NicShmemCmdEvent::Add:
       case NicShmemCmdEvent::Putv:
       case NicShmemCmdEvent::Put:
+      case NicShmemCmdEvent::Get:
         incPending(id);
 		break;
 
-      case NicShmemCmdEvent::Get:
       case NicShmemCmdEvent::Getv:
       case NicShmemCmdEvent::Fadd:
       case NicShmemCmdEvent::Cswap:
@@ -319,6 +319,7 @@ void Nic::Shmem::get( NicShmemGetCmdEvent* event, int id )
             [=]() {
                 m_dbg.verbosePrefix( prefix(),CALL_INFO_LAMBDA,"get",1,NIC_DBG_SHMEM,"finished\n");
                 m_nic.getVirtNic(id)->notifyShmem( getNic2HostDelay_ns(), callback );
+				decPending( id );
             } 
     );  
 
