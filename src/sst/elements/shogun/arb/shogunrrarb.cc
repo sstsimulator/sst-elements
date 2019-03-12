@@ -13,11 +13,12 @@ ShogunRoundRobinArbitrator::ShogunRoundRobinArbitrator()
 
 ShogunRoundRobinArbitrator::~ShogunRoundRobinArbitrator() {}
 
-void ShogunRoundRobinArbitrator::moveEvents( const int num_events, const int port_count,
-                                             ShogunQueue<ShogunEvent*>** inputQueues,
-                                             uint32_t output_slots,
-                                             ShogunEvent*** outputEvents,
-                                             uint64_t cycle ) {
+void ShogunRoundRobinArbitrator::moveEvents(const int num_events,
+                                            const int port_count,
+                                            ShogunQueue<ShogunEvent*>** inputQueues,
+                                            uint32_t output_slots,
+                                            ShogunEvent*** outputEvents,
+                                            uint64_t cycle ) {
 
     output->verbose(CALL_INFO, 4, 0, "BEGIN: Arbitration --------------------------------------------------\n");
     output->verbose(CALL_INFO, 4, 0, "-> start: %d\n", lastStart);
