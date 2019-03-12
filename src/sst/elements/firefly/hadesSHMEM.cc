@@ -142,17 +142,21 @@ void HadesSHMEM::init(Init *info )
     m_reduction = new ShmemReduction( *this, *m_common );
 
 	// need space for global pSync, scratch for collect and pending remote operations count
-    m_localDataSize = sizeof(ShmemCollective::pSync_t) + sizeof(long) * 3;
+    m_localDataSize = sizeof(ShmemCollective::pSync_t) + sizeof(long) * 4;
 
     malloc( &m_localData, m_localDataSize, true, 
             [=]() { 
                 m_pSync = m_localData;
                 m_pSync.at<ShmemCollective::pSync_t>(0) = 0;
-                m_pendingRemoteOps = m_pSync.offset<ShmemCollective::pSync_t>(1);
-				m_pendingRemoteOps.at<long>(0) = 0;
-                m_localScratch = m_pendingRemoteOps.offset<long>(1);
+                m_pendingPutCnt = m_pSync.offset<ShmemCollective::pSync_t>(1);
+				m_pendingPutCnt.at<long>(0) = 0;
+                m_pendingGetCnt = m_pendingPutCnt.offset<long>(1);
+				m_pendingGetCnt.at<long>(0) = 0;
+                m_localScratch = m_pendingGetCnt.offset<long>(1);
+				dbg().debug(CALL_INFO,1,SHMEM_BASE,"pSync=%" PRIx64 " PutCnt=%" PRIx64 " , GetCnt=%" PRIx64 "\n",
+					   m_pSync.getSimVAddr(), m_pendingPutCnt.getSimVAddr() , m_pendingGetCnt.getSimVAddr() );
 
-                this->nic().shmemInit( m_pendingRemoteOps.getSimVAddr(), 
+                this->nic().shmemInit( m_pendingPutCnt.getSimVAddr(),
                 	[=]()  {
 						this->delayReturn( info->callback );
 						delete info;
@@ -214,8 +218,17 @@ void HadesSHMEM::my_pe( MyPe* info )
 
 void HadesSHMEM::quiet(Shmem::Callback callback)
 {
+    put_quiet(
+			[=](int){
+				get_quiet( callback );
+			}
+	);
+}
+
+void HadesSHMEM::put_quiet(Shmem::Callback callback)
+{
     dbg().debug(CALL_INFO,1,SHMEM_BASE,"\n");
-	wait_until( m_pendingRemoteOps.getSimVAddr(), Shmem::EQ, m_zero,
+	wait_until( m_pendingPutCnt.getSimVAddr(), Shmem::EQ, m_zero,
             [=](int) { 
                 dbg().debug(CALL_INFO_LAMBDA,"quiet",1,SHMEM_BASE,"returning\n");
                 callback(0); 
@@ -223,21 +236,33 @@ void HadesSHMEM::quiet(Shmem::Callback callback)
     ); 
 }
 
+void HadesSHMEM::get_quiet(Shmem::Callback callback)
+{
+    dbg().debug(CALL_INFO,1,SHMEM_BASE,"\n");
+	wait_until( m_pendingGetCnt.getSimVAddr(), Shmem::EQ, m_zero,
+            [=](int) {
+                dbg().debug(CALL_INFO_LAMBDA,"quiet",1,SHMEM_BASE,"returning\n");
+                callback(0);
+			}
+    );
+}
+
 void HadesSHMEM::fence(Shmem::Callback callback)
 {
 	Fence* info = new Fence( callback );
-	delayEnter(
-			[=]() {
-				this->fence( info );
-		  	}
-	);
+	delayEnter( DO(fence,info) );
 }
 
 void HadesSHMEM::fence( Fence* info )
 {
     dbg().debug(CALL_INFO,1,SHMEM_BASE,"\n");
-	delayReturn( info->callback );
-	delete info;
+    nic().shmemFence(
+		[=]() {
+            this->dbg().debug(CALL_INFO_LAMBDA,"fence",1,SHMEM_BASE,"returning\n");
+			this->delayReturn( info->callback );
+			delete info;
+		}
+	);
 }
 
 void HadesSHMEM::malloc( Hermes::MemAddr* ptr, size_t size, bool backed, Shmem::Callback callback )

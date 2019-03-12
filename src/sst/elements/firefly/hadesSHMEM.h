@@ -501,6 +501,8 @@ class HadesSHMEM : public Shmem::Interface
 
     Output& dbg() { return m_dbg; }
   private:
+    virtual void put_quiet(Shmem::Callback);
+    virtual void get_quiet(Shmem::Callback);
     virtual void get(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe, bool blocking, Shmem::Callback, Shmem::Callback& fini );
     virtual void put(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe, bool blocking, Shmem::Callback, Shmem::Callback& fini );
 
@@ -664,7 +666,8 @@ class HadesSHMEM : public Shmem::Interface
     Hermes::MemAddr  m_localData;
     Hermes::MemAddr  m_pSync;
     Hermes::MemAddr  m_localScratch;
-    Hermes::MemAddr  m_pendingRemoteOps;
+    Hermes::MemAddr  m_pendingPutCnt;
+    Hermes::MemAddr  m_pendingGetCnt;
     Hermes::Value    m_zero;
 
 	FamNodeMapper* m_famNodeMapper;
