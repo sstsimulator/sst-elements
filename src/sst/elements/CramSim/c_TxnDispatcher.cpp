@@ -147,7 +147,7 @@ bool c_TxnDispatcher::clockTic(Cycle_t clock)
 void c_TxnDispatcher::handleTxnGenEvent(SST::Event *ev)
 {
     //get a lane index
-    c_TxnReqEvent* l_newReq=dynamic_cast<c_TxnReqEvent*>(ev);
+    c_TxnReqEvent* l_newReq=static_cast<c_TxnReqEvent*>(ev);
     m_reqQ.push_back(l_newReq);
 
     #ifdef __SST_DEBUG_OUTPUT__
@@ -158,7 +158,7 @@ void c_TxnDispatcher::handleTxnGenEvent(SST::Event *ev)
 
 void c_TxnDispatcher::handleCtrlEvent(SST::Event *ev)
 {
-    c_TxnResEvent* l_newRes=dynamic_cast<c_TxnResEvent*>(ev);
+    c_TxnResEvent* l_newRes=static_cast<c_TxnResEvent*>(ev);
     m_resQ.push_back(l_newRes);
 }
 

@@ -246,7 +246,7 @@ void c_Controller::sendResponse() {
 ///** Link Event handlers **///
 void c_Controller::handleIncomingTransaction(SST::Event *ev){
 
-    c_TxnReqEvent* l_txnReqEventPtr = dynamic_cast<c_TxnReqEvent*>(ev);
+    c_TxnReqEvent* l_txnReqEventPtr = static_cast<c_TxnReqEvent*>(ev);
 
     if (l_txnReqEventPtr) {
         c_Transaction* newTxn=l_txnReqEventPtr->m_payload;
@@ -268,7 +268,7 @@ void c_Controller::handleIncomingTransaction(SST::Event *ev){
 
 
 void c_Controller::handleInDeviceResPtrEvent(SST::Event *ev){
-    c_CmdResEvent* l_cmdResEventPtr = dynamic_cast<c_CmdResEvent*>(ev);
+    c_CmdResEvent* l_cmdResEventPtr = static_cast<c_CmdResEvent*>(ev);
     if (l_cmdResEventPtr) {
         ulong l_resSeqNum = l_cmdResEventPtr->m_payload->getSeqNum();
         // need to find which txn matches the command seq number in the txnResQ

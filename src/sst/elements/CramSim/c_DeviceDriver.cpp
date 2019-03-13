@@ -591,10 +591,10 @@ void c_DeviceDriver::sendRequest() {
 	// get count of ACT cmds issued in the FAW
 	std::vector<unsigned> l_numACTIssuedInFAW;
 	l_numACTIssuedInFAW.clear();
-	for(int l_rankId=0;l_rankId<m_numRanks;l_rankId++)
+/*	for(int l_rankId=0;l_rankId<m_numRanks;l_rankId++)
 	{
 		l_numACTIssuedInFAW.push_back(getNumIssuedACTinFAW(l_rankId));
-	}
+	}*/
 
 
 	for (auto l_cmdPtrItr = m_inputQ.begin(); l_cmdPtrItr != m_inputQ.end();)  {
@@ -624,7 +624,8 @@ void c_DeviceDriver::sendRequest() {
 		if ((l_cmdPtr)->getCommandMnemonic() == e_BankCommandType::REF)
 			break;
 
-		if ((e_BankCommandType::ACT == ((l_cmdPtr))->getCommandMnemonic()) && (l_numACTIssuedInFAW[l_rankNum] >= 4))
+//		if ((e_BankCommandType::ACT == ((l_cmdPtr))->getCommandMnemonic()) && (l_numACTIssuedInFAW[l_rankNum] >= 4))
+		if ((e_BankCommandType::ACT == ((l_cmdPtr))->getCommandMnemonic()) && (getNumIssuedACTinFAW(l_rankNum) >= 4))
 		{
 			l_proceed = false;
 		}

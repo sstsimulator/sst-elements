@@ -50,7 +50,7 @@ c_MemhBridge::c_MemhBridge(ComponentId_t x_id, Params& x_params) :
 
 	k_txnTraceFileName = (std::string) x_params.find<std::string>("strTxnTraceFile", "-", l_found);
 	//k_txnTraceFileName.pop_back(); // remove trailing newline (??)
-	if (k_printTxnTrace) {
+/*	if (k_printTxnTrace) {
 		if (k_txnTraceFileName.compare("-") == 0) {// set output to std::cout
 			std::cout << "Setting txn trace output to std::cout" << std::endl;
 			m_txnTraceStreamBuf = std::cout.rdbuf();
@@ -66,13 +66,13 @@ c_MemhBridge::c_MemhBridge(ComponentId_t x_id, Params& x_params) :
 		}
 		m_txnTraceStream = new std::ostream(m_txnTraceStreamBuf);
 	}
-
+*/
 
 
 	/*---- CONFIGURE LINKS ----*/
 
 	// CPU links
-	m_linkCPU = configureLink( "cpuLink");
+	m_linkCPU = configureLink( "cpuLink", new Event::Handler<c_MemhBridge>(this, &c_MemhBridge::handleIncomingTransaction));
 
 }
 
@@ -80,12 +80,33 @@ c_MemhBridge::~c_MemhBridge() {
 }
 
 
+void c_MemhBridge::handleIncomingTransaction(SST::Event * ev) {
+    MemReqEvent * event = static_cast<MemReqEvent*>(ev);
+    m_tmpQueue.push(event);
+}
 
 void c_MemhBridge::createTxn() {
    
     uint64_t l_cycle = m_simCycle;
     
-    SST::Event* e = 0;
+    while (!m_tmpQueue.empty()) {
+        MemReqEvent *event = m_tmpQueue.front();
+        m_tmpQueue.pop();
+
+        c_Transaction *mTxn;
+        ulong addr = event->getAddr();
+
+        if (event->getIsWrite())
+                mTxn = new c_Transaction(event->getReqId(), e_TransactionType::WRITE, addr, 1);
+        else
+                mTxn = new c_Transaction(event->getReqId(), e_TransactionType::READ, addr, 1);
+
+        
+        std::pair<c_Transaction*, uint64_t > l_entry = std::make_pair(mTxn,l_cycle);
+        m_txnReqQ.push_back(l_entry);
+    }
+
+    /*SST::Event* e = 0;
     while((e = m_linkCPU->recv())) {
         MemReqEvent *event = dynamic_cast<MemReqEvent *>(e);
 
@@ -101,9 +122,9 @@ void c_MemhBridge::createTxn() {
         std::pair<c_Transaction*, uint64_t > l_entry = std::make_pair(mTxn,l_cycle);
         m_txnReqQ.push_back(l_entry);
      
-        if(k_printTxnTrace)
-            printTxn(event->getIsWrite(),addr);
-    }
+//        if(k_printTxnTrace)
+//            printTxn(event->getIsWrite(),addr);
+    }*/
 }
 
 

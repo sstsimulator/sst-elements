@@ -131,12 +131,11 @@ void c_Bank::handleCommand(c_BankCommand* x_bankCommandPtr) {
 	}
 }
 
-c_BankCommand* c_Bank::clockTic() {
+c_BankCommand* c_Bank::clockTic(bool& l_active) {
+        l_active = false;
 
 	c_BankCommand* l_resPtr = nullptr;
 	if (m_cmd != nullptr) {
-
-
 		if (m_cmd->isResponseReady()) {
 			bool l_doSendRes = false;
 			switch (m_cmd->getCommandMnemonic()) {
@@ -185,7 +184,10 @@ c_BankCommand* c_Bank::clockTic() {
 			}
 		}
 	}
-
+        
+        if (m_cmd != nullptr) {
+            l_active = true;
+        }
 
 	return l_resPtr;
 } // c_BankCommand* c_Bank::clockTic()

@@ -57,7 +57,7 @@ c_Dimm::c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params) :
 
 
 	m_simCycle=0;
-
+        m_clockOn=true;
 	// / configure links
 	// DIMM <-> Controller Links
 	//// DIMM <-> CmdUnit (Req) (Cmd)
@@ -223,17 +223,11 @@ c_Dimm::c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params) :
 		unsigned l_bankNum = l_entry->getBankNum();
 		c_BankStatistics *l_bankStats = new c_BankStatistics();
 		
-		l_statName = "bankACTsRecvd_" + std::to_string(l_bankNum);
-		l_bankStats->s_bankACTsRecvd = registerStatistic<uint64_t>(l_statName);
-		l_statName = "bankREADsRecvd_" + std::to_string(l_bankNum);
-		l_bankStats->s_bankREADsRecvd = registerStatistic<uint64_t>(l_statName);
-		l_statName = "bankWRITEsRecvd_" + std::to_string(l_bankNum);
-		l_bankStats->s_bankWRITEsRecvd = registerStatistic<uint64_t>(l_statName);
-		l_statName = "bankPREsRecvd_" + std::to_string(l_bankNum);
-		l_bankStats->s_bankPREsRecvd = registerStatistic<uint64_t>(l_statName);
-
-		l_statName = "bankRowHits_" + std::to_string(l_bankNum);
-		l_bankStats->s_bankRowHits = registerStatistic<uint64_t>(l_statName);
+		l_bankStats->s_bankACTsRecvd = registerStatistic<uint64_t>("bankACTsRecvd", std::to_string(l_bankNum));
+		l_bankStats->s_bankREADsRecvd = registerStatistic<uint64_t>("bankREADsRecvd", std::to_string(l_bankNum));
+		l_bankStats->s_bankWRITEsRecvd = registerStatistic<uint64_t>("bankWRITEsRecvd", std::to_string(l_bankNum));
+		l_bankStats->s_bankPREsRecvd = registerStatistic<uint64_t>("bankPREsRecvd", std::to_string(l_bankNum));
+		l_bankStats->s_bankRowHits = registerStatistic<uint64_t>("bankRowHits", std::to_string(l_bankNum));
 		
 		l_bankStats->s_totalRowHits = l_totalRowHits;
 		
@@ -246,7 +240,7 @@ c_Dimm::c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params) :
     
 	//set our clock
 	m_clockHandler=new Clock::Handler<c_Dimm>(this, &c_Dimm::clockTic);
-	registerClock(l_clockFreqStr, m_clockHandler);
+	m_timeBase = registerClock(l_clockFreqStr, m_clockHandler);
 
 	// Statistics setup
 	s_actCmdsRecvd     = registerStatistic<uint64_t>("actCmdsRecvd");
@@ -296,25 +290,61 @@ void c_Dimm::printQueues() {
 
 bool c_Dimm::clockTic(SST::Cycle_t) {
 	m_simCycle++;
-	for (int l_i = 0; l_i != m_banks.size(); ++l_i) {
 
-		c_BankCommand* l_resPtr = m_banks.at(l_i)->clockTic();
-		if (nullptr != l_resPtr) {
-			m_cmdResQ.push_back(l_resPtr);
-		}
-	}
+        // For each bank, check if command is ready to return
+/*        for (int l_i = 0; l_i != m_banks.size(); ++l_i) {
+
+	    c_BankCommand* l_resPtr = m_banks.at(l_i)->clockTic();
+	    if (nullptr != l_resPtr) {
+		m_cmdResQ.push_back(l_resPtr);
+	    }
+	}*/
+        bool active;
+        for (std::set<int>::iterator it = m_activeBanks.begin(); it != m_activeBanks.end();) {
+            c_BankCommand* l_resPtr = m_banks.at(*it)->clockTic(active);
+
+            if (nullptr != l_resPtr) {
+                m_cmdResQ.push_back(l_resPtr);
+            }
+            if (!active) {
+                std::set<int>::iterator eit = it;
+                it++;
+                m_activeBanks.erase(eit);
+            } else
+                it++;
+        }
 
 	sendResponse();
 
 	if(k_boolPowerCalc)
 		updateBackgroundEnergy();
+        
+        if (m_activeBanks.empty()) {
+            m_clockOn = false;
+            return true;
+        } else
+	    return false;
+}
 
-	return false;
+void c_Dimm::turnClockOn() {
+    Cycle_t time = reregisterClock(m_timeBase, m_clockHandler);
+    time--; // Returns  the next clock cycle
+    Cycle_t timeOff = time - m_simCycle;
+
+    // Update local time count
+    m_simCycle = time;
+
+    // Update power
+    if (k_boolPowerCalc) {
+        for (Cycle_t t= 0; t < timeOff; t++)
+            updateBackgroundEnergy();
+    }
+    m_clockOn = true;
 }
 
 void c_Dimm::handleInCmdUnitReqPtrEvent(SST::Event *ev) {
 
-	c_CmdReqEvent* l_cmdReqEventPtr = dynamic_cast<c_CmdReqEvent*>(ev);
+	c_CmdReqEvent* l_cmdReqEventPtr = static_cast<c_CmdReqEvent*>(ev);
 	if (l_cmdReqEventPtr) {
 
 		c_BankCommand* l_cmdReq = l_cmdReqEventPtr->m_payload;
@@ -415,19 +445,24 @@ void c_Dimm::updateBackgroundEnergy()
 	}
 }
 void c_Dimm::sendToBank(c_BankCommand* x_bankCommandPtr) {
-	unsigned l_bankNum = 0;
-	if (x_bankCommandPtr->getBankIdVec().size() > 0) {
-		for (auto &l_bankid:x_bankCommandPtr->getBankIdVec()) {
-			c_BankCommand *l_cmd = new c_BankCommand(x_bankCommandPtr->getSeqNum(), x_bankCommandPtr->getCommandMnemonic(),
-													 x_bankCommandPtr->getAddress(), l_bankid);
-			l_cmd->setResponseReady();
-			m_banks.at(l_bankid)->handleCommand(l_cmd);
-		}
-		delete x_bankCommandPtr;
-	} else {
-		l_bankNum = x_bankCommandPtr->getBankId();
-		m_banks.at(l_bankNum)->handleCommand(x_bankCommandPtr);
-	}
+    if (!m_clockOn) {
+        turnClockOn();
+    }
+    unsigned l_bankNum = 0;
+    if (x_bankCommandPtr->getBankIdVec().size() > 0) {
+	for (auto &l_bankid:x_bankCommandPtr->getBankIdVec()) {
+	    c_BankCommand *l_cmd = new c_BankCommand(x_bankCommandPtr->getSeqNum(), x_bankCommandPtr->getCommandMnemonic(), x_bankCommandPtr->getAddress(), l_bankid);
+	    l_cmd->setResponseReady();
+	    m_banks.at(l_bankid)->handleCommand(l_cmd);
+            m_activeBanks.insert(l_bankid);
+        }
+
+	delete x_bankCommandPtr;
+    } else {
+	l_bankNum = x_bankCommandPtr->getBankId();
+	m_banks.at(l_bankNum)->handleCommand(x_bankCommandPtr);
+        m_activeBanks.insert(l_bankNum);
+    }
 }
 
 
@@ -446,6 +481,8 @@ void c_Dimm::sendResponse() {
 }
 
 void c_Dimm::finish(){
+        if (!m_clockOn)
+            turnClockOn();
 
 	double l_actprePower=0;
 	double l_readPower =0;

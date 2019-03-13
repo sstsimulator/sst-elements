@@ -90,7 +90,30 @@ std::list<e_BankCommandType> c_BankStateIdle::getAllowedCommands() {
 void c_BankStateIdle::clockTic(c_BankInfo* x_bank, SimTime_t x_cycle) {
 
 	SimTime_t l_time = x_cycle;
-	
+        
+        if (m_timer == 1) {
+            m_timer--;
+            if (m_receivedCommandPtr) {
+				c_BankState* l_p = nullptr;
+				switch (m_receivedCommandPtr->getCommandMnemonic()) {
+				case e_BankCommandType::ACT:
+					l_p = new c_BankStateActivating(m_bankParams);
+					break;
+				case e_BankCommandType::REF:
+					l_p = new c_BankStateRefresh(m_bankParams);
+					break;
+					case e_BankCommandType::PRE:
+						l_p = new c_BankStatePrecharge(m_bankParams);
+						break;
+				default:
+				break;
+				}
+
+				// make sure we have a command
+				l_p->enter(x_bank, this, m_receivedCommandPtr,l_time);
+            }
+        }
+/*
         if (2 < m_timer) {
 		--m_timer;
 	} else {
@@ -122,7 +145,7 @@ void c_BankStateIdle::clockTic(c_BankInfo* x_bank, SimTime_t x_cycle) {
 				l_p->enter(x_bank, this, m_receivedCommandPtr,l_time);
 			}
 		}
-	}
+	}*/
 }
 
 // call this function after receiving a command

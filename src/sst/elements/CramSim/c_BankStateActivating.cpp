@@ -66,14 +66,14 @@ void c_BankStateActivating::handleCommand(c_BankInfo* x_bank, c_BankCommand* x_b
 
 void c_BankStateActivating::clockTic(c_BankInfo* x_bank, SimTime_t x_cycle) {
 
-	if (0 < m_timer) {
-		--m_timer;
+//	if (0 < m_timer) {
+//		--m_timer;
 
-	} else {
+//	} else {
 		auto l_p = new c_BankStateActive(m_bankParams); // create pointer to the next state
 		assert(e_BankCommandType::ACT == m_prevCommandPtr->getCommandMnemonic()); // only cmd allowed to flow through to BankStateActive is ACT
 		l_p->enter(x_bank, this, m_prevCommandPtr, x_cycle);
-	}
+//	}
 }
 
 void c_BankStateActivating::enter(c_BankInfo* x_bank,

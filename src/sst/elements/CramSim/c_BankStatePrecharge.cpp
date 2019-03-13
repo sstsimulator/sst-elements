@@ -66,9 +66,6 @@ void c_BankStatePrecharge::handleCommand(c_BankInfo* x_bank,
 void c_BankStatePrecharge::clockTic(c_BankInfo* x_bank, SimTime_t x_cycle) {
 	if (0 < m_timer) {
 		--m_timer;
-
-
-
 	} else {
 
 		if (m_prevCommandPtr) {

@@ -159,10 +159,10 @@ bool c_TxnGenBase::clockTic(Cycle_t) {
         } else
             break;
 
-        if(k_maxTxns>0 && m_numTxns>=k_maxTxns) {
+/*        if(k_maxTxns>0 && m_numTxns>=k_maxTxns) {
             primaryComponentOKToEndSim();
             return true;
-        }
+        }*/
     }
     return false;
 }
@@ -171,7 +171,7 @@ bool c_TxnGenBase::clockTic(Cycle_t) {
 
 void c_TxnGenBase::handleResEvent(SST::Event* ev) {
 
-    c_TxnResEvent* l_txnResEventPtr = dynamic_cast<c_TxnResEvent*> (ev);
+    c_TxnResEvent* l_txnResEventPtr = static_cast<c_TxnResEvent*> (ev);
 
     if (l_txnResEventPtr)
     {
