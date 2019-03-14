@@ -52,8 +52,8 @@ namespace SST {
             SimTime_t m_simCycle;
 
             //internal microarchitecture
-            std::deque<std::pair<c_Transaction*, uint64_t>> m_txnReqQ;
-            std::deque<c_Transaction*> m_txnResQ;
+            std::deque<std::pair<c_Transaction*, uint64_t> > m_txnReqQ;
+            std::deque<std::pair<c_Transaction*, uint64_t> > m_txnResQ;
             std::map<uint64_t, uint64_t> m_outstandingReqs; //(txn_id, birth time)
             uint32_t m_numOutstandingReqs;
             uint64_t m_numTxns;
@@ -85,6 +85,10 @@ namespace SST {
             Statistic<uint64_t>* s_readTxnsLatency;
             Statistic<uint64_t>* s_writeTxnsLatency;
             Statistic<uint64_t>* s_txnsLatency;
+            Statistic<uint64_t>* s_requestLatencyNone;
+            Statistic<uint64_t>* s_requestLatency;
+            Statistic<uint64_t>* s_responseLatencyNone;
+            Statistic<uint64_t>* s_responseLatency;
 
             // Debug Output
             Output* output;
@@ -122,6 +126,10 @@ namespace SST {
               {"readTxnsLatency", "Average latency of read transactions", "cycles", 1},
               {"writeTxnsLatency", "Average latency of write transactions", "cycles", 1},
               {"txnsLatency", "Average latency of (read/write) transactions", "cycles", 1},
+              {"requestLatencyNone", "Instances where a request (into CramSim) did not stall", "count", 1},
+              {"requestLatency", "Sum of latencies seen by requests passing through the bridge", "cycles", 1},
+              {"responseLatencyNone", "Instances where a response (from CramSim) did not stall", "count", 1},
+              {"responseLatency", "Sum of latencies seen by responses passing through the bridge", "cycles", 1},
             )
 
             c_TxnGen (SST::ComponentId_t x_id, SST::Params& x_params);

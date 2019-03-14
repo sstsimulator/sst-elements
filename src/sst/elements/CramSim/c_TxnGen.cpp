@@ -108,6 +108,11 @@ c_TxnGenBase::c_TxnGenBase(ComponentId_t x_id, Params& x_params) :
     s_readTxnsLatency= registerStatistic<uint64_t>("readTxnsLatency");
     s_writeTxnsLatency= registerStatistic<uint64_t>("writeTxnsLatency");
     s_txnsLatency= registerStatistic<uint64_t>("txnsLatency");
+            
+    s_requestLatencyNone = registerStatistic<uint64_t>("requestLatencyNone");
+    s_requestLatency = registerStatistic<uint64_t>("requestLatency");
+    s_responseLatencyNone = registerStatistic<uint64_t>("responseLatencyNone");
+    s_responseLatency = registerStatistic<uint64_t>("responseLatency");
 
 }
 
@@ -146,11 +151,12 @@ bool c_TxnGenBase::clockTic(Cycle_t) {
 
     createTxn();
 
+    for (int i=0; i < k_numTxnPerCycle; i++) 
+        readResponse();
+
     for(int i=0;i<k_numTxnPerCycle;i++) {
         if(k_maxOutstandingReqs==0 || m_numOutstandingReqs<k_maxOutstandingReqs) {
 
-            readResponse();
-            
             if(sendRequest()==false)
                 break;
             
@@ -159,10 +165,10 @@ bool c_TxnGenBase::clockTic(Cycle_t) {
         } else
             break;
 
-/*        if(k_maxTxns>0 && m_numTxns>=k_maxTxns) {
+        if(k_maxTxns>0 && m_numTxns>=k_maxTxns) {
             primaryComponentOKToEndSim();
             return true;
-        }*/
+        }
     }
     return false;
 }
@@ -189,7 +195,7 @@ void c_TxnGenBase::handleResEvent(SST::Event* ev) {
         assert(m_numOutstandingReqs>=0);
     
 
-	m_txnResQ.push_back(l_txn);
+	m_txnResQ.push_back(std::make_pair(l_txn,m_simCycle));
         
         delete l_txnResEventPtr;
         uint64_t l_currentCycle = m_simCycle;
@@ -250,6 +256,11 @@ bool c_TxnGenBase::sendRequest()
             m_reqWriteCount++;
         }
 
+        uint64_t latency = l_cycle - m_txnReqQ.front().second;
+        if (latency == 0)
+            s_requestLatencyNone->addData(1);
+        s_requestLatency->addData(latency);
+
         c_TxnReqEvent* l_txnReqEvPtr = new c_TxnReqEvent();
         l_txnReqEvPtr->m_payload = m_txnReqQ.front().first;
         m_txnReqQ.pop_front(); 
@@ -273,7 +284,7 @@ bool c_TxnGenBase::sendRequest()
 
 void c_TxnGenBase::readResponse() {
 	if (m_txnResQ.size() > 0) {
-		c_Transaction* l_txn = m_txnResQ.front();
+		c_Transaction* l_txn = m_txnResQ.front().first;
 		delete l_txn;
 
 		m_txnResQ.pop_front();

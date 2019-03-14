@@ -25,6 +25,7 @@
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/output.h>
+#include <sst/core/elementinfo.h>
 
 //local includes
 #include "c_Transaction.hpp"
@@ -44,6 +45,37 @@ class c_MemhBridge: public c_TxnGenBase {
 
 
 public:
+    SST_ELI_REGISTER_COMPONENT(
+        c_MemhBridge,
+        "CramSim",
+        "c_MemhBridge",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Bridge to communicate with MemoryHierarchy",
+        COMPONENT_CATEGORY_UNCATEGORIZED
+    )
+    SST_ELI_DOCUMENT_PARAMS(
+        {"maxOutstandingReqs", "Maximum number of the outstanding requests", NULL},
+    )
+    SST_ELI_DOCUMENT_PORTS(
+        { "cpuLink", "link to/from CPU", {"c_CPUevent"} },
+        { "memLink", "link to memory-side components (txn dispatcher or controller)", { "c_TxnReqEvent", "c_TxnResEvent"} },
+    )
+    SST_ELI_DOCUMENT_STATISTICS(
+        {"readTxnsSent", "Number of read transactions sent", "reads", 1}, // Name, Desc, Units, Enable Level
+        {"writeTxnsSent", "Number of write transactions sent", "writes", 1}, // Name, Desc, Units, Enable Level
+        {"readTxnsCompleted", "Number of read transactions completed", "reads", 1}, // Name, Desc, Units, Enable Level
+        {"writeTxnsCompleted", "Number of write transactions completed", "writes", 1},
+        {"txnsPerCycle", "Transactions Per Cycle", "Txns/Cycle", 1},
+        {"readTxnsLatency", "Average latency of read transactions", "cycles", 1},
+        {"writeTxnsLatency", "Average latency of write transactions", "cycles", 1},
+        {"txnsLatency", "Average latency of (read/write) transactions", "cycles", 1},
+        {"requestLatencyNone", "Instances where a request (into CramSim) did not stall", "count", 1},
+        {"requestLatency", "Sum of latencies seen by requests passing through the bridge", "cycles", 1},
+        {"responseLatencyNone", "Instances where a response (from CramSim) did not stall", "count", 1},
+        {"responseLatency", "Sum of latencies seen by responses passing through the bridge", "cycles", 1},
+    )
+
+
 	c_MemhBridge(SST::ComponentId_t x_id, SST::Params& x_params);
 	~c_MemhBridge();
 
