@@ -57,7 +57,6 @@ comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
       "debug" : DEBUG_MEM,
       "backend.access_time" : "100 ns",
-      "max_requests_per_cycle": "1",
       "clock" : "1GHz",
       "backend.mem_size" : "512MiB"
 })

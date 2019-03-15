@@ -40,7 +40,6 @@ comp_memory.addParams({
       "coherence_protocol" : "MSI",
       "backend.access_time" : "1000 ns",
       "backend.mem_size" : "512MiB",
-      "max_requests_per_cycle": "1",
       "clock" : "1GHz"
 })
 
