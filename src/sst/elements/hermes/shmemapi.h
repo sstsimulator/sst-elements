@@ -1,8 +1,8 @@
-// Copyright 2013-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2017, Sandia Corporation
+// Copyright (c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -24,9 +24,29 @@ namespace SST {
 namespace Hermes {
 namespace Shmem {
 
-typedef std::function<void(int)> Callback;
+typedef Hermes::Callback Callback;
+
+typedef int Fam_Region_Descriptor;
 
 typedef enum { LTE, LT, EQ, NE, GT, GTE } WaitOp;
+
+static std::string WaitOpName( WaitOp op ) {
+	switch( op ) {
+		case LTE:
+			return "LTE";
+		case LT:
+			return "LT";
+		case EQ:
+			return "EQ";
+		case NE:
+			return "NE";
+		case GT:
+			return "GT";
+		case GTE:
+			return "GTE";
+	}
+}
+
 typedef enum { MOVE, AND, MAX, MIN, SUM, PROD, OR, XOR } ReduOp;
 
 class Interface : public Hermes::Interface {
@@ -63,8 +83,8 @@ class Interface : public Hermes::Interface {
     virtual void malloc(MemAddr*, size_t, bool backed, Callback) { assert(0); }
     virtual void free(MemAddr&, Callback) { assert(0); }
 
-    virtual void get( Vaddr dst, Vaddr src, size_t nelems, int pe, Callback) { assert(0); }
-    virtual void put( Vaddr dst, Vaddr src, size_t nelems, int pe, Callback) { assert(0); }
+    virtual void get( Vaddr dst, Vaddr src, size_t nelems, int pe, bool blocking, Callback) { assert(0); }
+    virtual void put( Vaddr dst, Vaddr src, size_t nelems, int pe, bool blocking, Callback) { assert(0); }
 
     virtual void getv( Value& result, Vaddr src, int pe, Callback) { assert(0); }
     virtual void putv( Vaddr dest, Value& value, int pe, Callback) { assert(0); }
@@ -74,6 +94,9 @@ class Interface : public Hermes::Interface {
     virtual void swap( Value& result, Vaddr, Value&, int pe, Callback) { assert(0); }
     virtual void fadd( Value& result, Vaddr, Value&, int pe, Callback) { assert(0); }
     virtual void add( Vaddr, Value&, int pe, Callback) { assert(0); }
+
+    virtual void fam_get_nb( Hermes::Vaddr dest, Fam_Region_Descriptor rd, uint64_t offset, uint64_t nbytes, Callback) { assert(0); }
+    virtual void fam_add( uint64_t, Value&, Callback) { assert(0); }
 };
 
 }

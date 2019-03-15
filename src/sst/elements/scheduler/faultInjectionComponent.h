@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 // 
 // Portions are copyright of other developers:
@@ -21,6 +21,7 @@
 
 #include <sst/core/component.h>
 #include <sst/core/link.h>
+#include <sst/core/elementinfo.h>
 
 namespace SST{
 	class Event;
@@ -32,6 +33,34 @@ namespace SST{
 
 		class faultInjectionComponent : public SST::Component{
 			public:
+
+                SST_ELI_REGISTER_COMPONENT(
+                    faultInjectionComponent,
+                    "scheduler",
+                    "faultInjectionComponent",
+                    SST_ELI_ELEMENT_VERSION(1,0,0),
+                    "Generates and injects failures from a flatfile",
+                    COMPONENT_CATEGORY_UNCATEGORIZED
+                )
+
+                SST_ELI_DOCUMENT_PARAMS(
+                    { "faultInjectionFilename",
+                        "File to use for fault injections",
+                        NULL
+                    },
+                    { "injectionFrequency",
+                        "Frequency with which injections occur",
+                        NULL
+                    }
+                )
+
+                SST_ELI_DOCUMENT_PORTS(
+                    {"faultInjector",
+                     "Causes nodes to fail",
+                     {"faultActivationEvents"}
+                    }
+                )
+
 				faultInjectionComponent();
 				faultInjectionComponent( SST::ComponentId_t id, SST::Params& params );
 				~faultInjectionComponent();

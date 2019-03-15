@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 // 
 // Portions are copyright of other developers:
@@ -364,6 +364,7 @@ bool Cache::allocateLine(MemEvent * event, Addr baseAddr) {
     }
 
     /* OK to replace line */
+    notifyListenerOfEvict(event, replacementLine);
     cacheArray_->replace(baseAddr, replacementLine);
     return true;
 }
@@ -391,6 +392,7 @@ bool Cache::allocateCacheLine(MemEvent* event, Addr baseAddr) {
     }
     
     /* OK to replace line  */
+    notifyListenerOfEvict(event, replacementLine);
     cacheArray_->replace(baseAddr, replacementLine);
     return true;
 }
@@ -415,6 +417,7 @@ bool Cache::allocateDirCacheLine(MemEvent * event, Addr baseAddr, CacheLine * di
             mshr_->insertPointer(replacementDirLine->getBaseAddr(), baseAddr);
             return false;
         }
+        // should listener be informed?
         coherenceMgr_->handleEviction(replacementDirLine, this->getName(), true);
     }
 
@@ -422,6 +425,18 @@ bool Cache::allocateDirCacheLine(MemEvent * event, Addr baseAddr, CacheLine * di
     return true;
 }
 
+
+void Cache::notifyListenerOfEvict(const MemEvent *event, 
+                                  const CacheLine *replaceLine) {
+    if (listener_) {
+        CacheListenerNotification notify(replaceLine->getBaseAddr(), 
+                                         replaceLine->getBaseAddr(), 
+                                         0,
+                                         event->getInstructionPointer(),
+                                         replaceLine->getSize(), EVICT, NA);
+        listener_->notifyAccess(notify);
+    }
+}
 
 
 /* -------------------------------------------------------------------------------------
@@ -483,7 +498,7 @@ void Cache::activatePrevEvents(Addr baseAddr) {
                         mshr_->insertAll(pointerAddr, pointerEntries);
                         break;
                     } else {
-                        d_->fatal(CALL_INFO, -1, "%s, Error: Reactivating events for addr = 0x%" PRIx64 " and encountered unexpected mshr entry not of type MemEvent. Time = %" PRIu64 " ns\n",
+                        out_->fatal(CALL_INFO, -1, "%s, Error: Reactivating events for addr = 0x%" PRIx64 " and encountered unexpected mshr entry not of type MemEvent. Time = %" PRIu64 " ns\n",
                                 this->getName().c_str(), pointerAddr, getCurrentSimTimeNano());
                     }
                 }
@@ -612,10 +627,6 @@ void Cache::postRequestProcessing(MemEvent* event, CacheLine* cacheLine, bool re
     Command cmd = event->getCmd();
     Addr addr   = event->getBaseAddr();
 
-    /* Clean up */
-    if (event->isPrefetch() && event->getRqstr() == this->getName() && !replay) {
-        statPrefetchHit->addData(1);
-    }
     recordLatency(event);
     delete event;
     
@@ -642,7 +653,7 @@ void Cache::reActivateEventWaitingForUserLock(CacheLine* cacheLine) {
    --------------------------------------- */
 MemEvent* Cache::getOrigReq(const vector<mshrType> entries) {
     if (entries.front().elem.isAddr()) {
-        d_->fatal(CALL_INFO, -1, "%s, Error: Request at front of the mshr is not of type MemEvent. Time = %" PRIu64 "\n",
+        out_->fatal(CALL_INFO, -1, "%s, Error: Request at front of the mshr is not of type MemEvent. Time = %" PRIu64 "\n",
                 this->getName().c_str(), getCurrentSimTimeNano());
     }
 
@@ -700,7 +711,7 @@ void Cache::processIncomingNACK(MemEvent* origReqEvent) {
     } else if (origReqEvent->fromLowNetNACK()) {
         coherenceMgr_->resendEvent(origReqEvent, false);
     } else
-        d_->fatal(CALL_INFO, -1, "Command type not recognized, Cmd = %s\n", CommandString[(int)origReqEvent->getCmd()]);
+        out_->fatal(CALL_INFO, -1, "%s, ProcessIncomingNACK, command not recognized. Event: %s\n", getName().c_str(), origReqEvent->getVerboseString().c_str());
 }
 
 void Cache::printLine(Addr addr) {
@@ -730,5 +741,44 @@ void Cache::printLine(Addr addr) {
 bool operator== ( const mshrType& n1, const mshrType& n2) {
     if (n1.elem.isAddr()) return false;
     return((n1.elem).getEvent() == (n2.elem).getEvent());
+}
+
+void Cache::printStatus(Output &out) {
+    out.output("MemHierarchy::Cache %s\n", getName().c_str());
+    out.output("  Clock is %s. Last active cycle: %" PRIu64 "\n", clockIsOn_ ? "on" : "off", timestamp_);
+    out.output("  Requests waiting to be handled by cache: %zu\n", requestBuffer_.size());
+    out.output("  Requests waiting for bank access: %zu\n", bankConflictBuffer_.size());
+    if (mshr_) {
+        out.output("  MSHR Status:\n");
+        mshr_->printStatus(out);
+    }
+    if (linkUp_ && linkUp_ != linkDown_) {
+        out.output("  Up link status: ");
+        linkUp_->printStatus(out);
+        out.output("  Down link status: ");
+    } else {
+        out.output("  Link status: ");
+    }
+    if (linkDown_) linkDown_->printStatus(out);
+
+    out.output("  Cache contents:\n");
+    cacheArray_->printCacheArray(out);
+    out.output("End MemHierarchy::Cache\n\n");
+}
+
+void Cache::emergencyShutdown() {
+    if (out_->getVerboseLevel() > 1) {
+        if (out_->getOutputLocation() == Output::STDOUT)
+            out_->setOutputLocation(Output::STDERR);
+        printStatus(*out_);
+        if (linkUp_ && linkUp_ != linkDown_) {
+            out_->output("  Checking for unreceived events on up link: \n");
+            linkUp_->emergencyShutdownDebug(*out_);
+            out_->output("  Checking for unreceived events on down link: \n");
+        } else {
+            out_->output("  Checking for unreceived events on link: \n");
+        }
+        linkDown_->emergencyShutdownDebug(*out_);
+    }
 }
 

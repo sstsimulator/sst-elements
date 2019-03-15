@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -51,6 +51,24 @@ CoherentMemController::CoherentMemController(ComponentId_t id, Params &params) :
     timestamp_ = 0;
 }
 
+/**
+ * Init
+ */
+void CoherentMemController::init(unsigned int phase) {
+    link_->init(phase);
+    
+    region_ = link_->getRegion(); // This can change during init, but should stabilize before we start receiving init data
+    
+    /* Inherit region from our source(s) */
+    if (!phase) {
+        /* Announce our presence on link */
+        link_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Memory, true, false, memBackendConvertor_->getRequestWidth(), true));
+    }
+
+    while (MemEventInit *ev = link_->recvInitData()) {
+        processInitEvent(ev);
+    }
+}
 
 /*
  * After init we know line size so initialize cacheStatus_
@@ -610,24 +628,5 @@ void CoherentMemController::replayMemEvent(MemEvent * ev) {
                     getName().c_str(), ev->getVerboseString().c_str(), getCurrentSimTimeNano());
             break;
     }
-}
-
-
-/* Backing store interactions for custom command subcomponents */
-void CoherentMemController::writeData(Addr addr, std::vector<uint8_t> * data) {
-    if (!backing_) return;
-
-    for (size_t i = 0; i < data->size(); i++)
-        backing_->set(addr + i, data->at(i));
-}
-
-
-void CoherentMemController::readData(Addr addr, size_t bytes, std::vector<uint8_t> &data) {
-    data.resize(bytes, 0);
-    
-    if (!backing_) return;
-
-    for (size_t i = 0; i < bytes; i++)
-        data[i] = backing_->get(addr + i);
 }
 

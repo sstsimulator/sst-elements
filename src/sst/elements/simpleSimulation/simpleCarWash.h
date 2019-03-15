@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 // 
 // This file is part of the SST software package. For license
@@ -12,6 +12,7 @@
 #ifndef _UNCLEEDSCARWASH_H
 #define _UNCLEEDSCARWASH_H
 
+#include <sst/core/elementinfo.h>
 #include <sst/core/component.h>
 #include <sst/core/rng/marsaglia.h>
 
@@ -65,6 +66,20 @@ public:
 		int soapInv;
 		int brushInv;
     } CAR_WASH_INV;
+
+    SST_ELI_REGISTER_COMPONENT(
+        simpleCarWash,
+        "simpleSimulation",
+        "simpleCarWash",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Simple Demo Componnent",
+	COMPONENT_CATEGORY_UNCATEGORIZED
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+	{ "clock", "Clock frequency", "1GHz" },
+    	{ "clockcount", "Number of clock ticks to execute", "100000" }
+    )
 
 private:
     simpleCarWash();  // for serialization only

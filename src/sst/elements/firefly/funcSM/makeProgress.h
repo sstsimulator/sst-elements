@@ -1,8 +1,8 @@
-// Copyright 2013-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2017, Sandia Corporation
+// Copyright (c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -26,6 +26,16 @@ namespace Firefly {
 class MakeProgressFuncSM :  public FunctionSMInterface 
 {
   public:
+    SST_ELI_REGISTER_MODULE(
+        MakeProgressFuncSM,
+        "firefly",
+        "MakeProgress",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "",
+        ""
+    )
+
+  public:
     MakeProgressFuncSM( SST::Params& params ) : FunctionSMInterface( params ), m_event(NULL) {}
 
 	virtual std::string protocolName() { return "CtrlMsgProtocol"; }
@@ -33,7 +43,7 @@ class MakeProgressFuncSM :  public FunctionSMInterface
     virtual void handleStartEvent( SST::Event *e, Retval& retval ) {
 
 		assert( NULL == m_event );
-        m_dbg.verbose(CALL_INFO,1,0,"\n");
+        m_dbg.debug(CALL_INFO,1,0,"\n");
 
 		m_event = static_cast<MakeProgressStartEvent*>(e);
 

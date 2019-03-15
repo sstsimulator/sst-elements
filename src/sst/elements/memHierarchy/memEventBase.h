@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -18,9 +18,10 @@
 
 #include <sst/core/sst_types.h>
 #include <sst/core/event.h>
+#include <sst/core/warnmacros.h>
 
-#include "util.h"
-#include "memTypes.h"
+#include "sst/elements/memHierarchy/util.h"
+#include "sst/elements/memHierarchy/memTypes.h"
 
 namespace SST { namespace MemHierarchy {
 
@@ -184,7 +185,7 @@ public:
         return idstring.str() + " Cmd: " + cmdStr + " Src: " + src_ + " Dst: " + dst_;
     }
 
-    virtual bool doDebug(std::set<Addr> &addr) {
+    virtual bool doDebug(std::set<Addr> &UNUSED(addr)) {
         return true;    // Always debug unless we come up with a different way of determining it
     }
 
@@ -306,13 +307,14 @@ class MemEventInitCoherence : public MemEventInit  {
 public:
     
     /* Init events for coordintating coherence policies */
-    MemEventInitCoherence(std::string src, Endpoint type, bool inclusive, bool WBAck, Addr lineSize) : 
-        MemEventInit(src, InitCommand::Coherence), type_(type), inclusive_(inclusive), needWBAck_(WBAck), lineSize_(lineSize) { }
+    MemEventInitCoherence(std::string src, Endpoint type, bool inclusive, bool WBAck, Addr lineSize, bool tracksPresence) : 
+        MemEventInit(src, InitCommand::Coherence), type_(type), inclusive_(inclusive), needWBAck_(WBAck), lineSize_(lineSize), tracksPresence_(tracksPresence) { }
 
     Endpoint getType() { return type_; }
     bool getInclusive() { return inclusive_; }
     bool getWBAck() { return needWBAck_; }
     Addr getLineSize() { return lineSize_; }
+    bool getTracksPresence() { return tracksPresence_; }
 
     virtual MemEventInitCoherence* clone(void) override {
         return new MemEventInitCoherence(*this);
@@ -321,7 +323,7 @@ public:
     virtual std::string getVerboseString() override {
         std::ostringstream str;
         str << " Type: " << (int) type_ << " Inclusive: " << (inclusive_ ? "true" : "false");
-        str << " LineSize: " << lineSize_;
+        str << " LineSize: " << lineSize_ << " Tracks presence: " << (tracksPresence_ ? "true" : "false");
         return MemEventInit::getVerboseString() + str.str();
     }
 
@@ -330,6 +332,7 @@ private:
     bool inclusive_;    // Whether endpoint is inclusive
     bool needWBAck_;    // Whether endpoint expects writeback acks
     Addr lineSize_;     // Endpoint's linesize
+    bool tracksPresence_;     // Endpoint manages or tracks coherence
 
     MemEventInitCoherence() {} // For serialization only
 
@@ -340,6 +343,7 @@ public:
         ser & inclusive_;
         ser & needWBAck_;
         ser & lineSize_;
+        ser & tracksPresence_;
     }
     
     ImplementSerializable(SST::MemHierarchy::MemEventInitCoherence);

@@ -1,8 +1,8 @@
-// Copyright 2013-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2017, Sandia Corporation
+// Copyright (c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -51,7 +51,7 @@ void ShmemFcollect::state_0( int )
     size_t iter_offset = ((my_id() + 1 - m_iteration + m_PE_size) % m_PE_size) * m_nelems;
     printf(":%d:%s():%d iter_offset=%lu dest=%#" PRIx64 "\n",my_pe(),__func__,__LINE__,iter_offset,(uint64_t)m_dest + iter_offset);
 
-    m_api.put( m_dest + iter_offset, m_dest + iter_offset, m_nelems, next_proc(), 
+    m_api.put( m_dest + iter_offset, m_dest + iter_offset, m_nelems, next_proc(), true, 
         std::bind( &ShmemFcollect::state_1, this, std::placeholders::_1 ) );
 }
 

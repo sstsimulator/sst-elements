@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 // 
 // Portions are copyright of other developers:
@@ -22,11 +22,12 @@
 
 #include <vector>
 
-#include "memTypes.h"
-#include "hash.h"
-#include "sst/core/output.h"
-#include "util.h"
-#include "replacementManager.h"
+#include <sst/core/output.h>
+
+#include "sst/elements/memHierarchy/memTypes.h"
+#include "sst/elements/memHierarchy/hash.h"
+#include "sst/elements/memHierarchy/util.h"
+#include "sst/elements/memHierarchy/replacementManager.h"
 
 using namespace std;
 
@@ -88,6 +89,8 @@ public:
         
         uint64_t            lastSendTimestamp_; // Use to force sequential timing for subsequent accesses to the line
 
+        bool                wasPrefetch_;   // Track prefetch success rates
+
         /* L1 specific */
         unsigned int userLock_;
         bool LLSCAtomic_;
@@ -114,6 +117,8 @@ public:
             
             lastSendTimestamp_      = 0;
 
+            wasPrefetch_ = false;
+
             /* Dir specific */
             dataLine_ = NULL;
 
@@ -123,16 +128,28 @@ public:
             LLSCAtomic_             = false;
         }
 
+        std::string getString() {
+            std::ostringstream str;
+            str << std::hex << "0x" << baseAddr_;
+            str << " State: " << StateString[state_];
+            str << " Sharers: [";
+            for (std::set<std::string>::iterator it = sharers_.begin(); it != sharers_.end(); it++) {
+                if (it != sharers_.begin()) str << ",";
+                str << *it;
+            }
+            str << "] Owner: " << owner_;
+            return str.str();
+        }
 
         /** Getter for size. Constant field - no setter */
-        unsigned int getSize() { return size_; }
+        unsigned int getSize() const { return size_; }
         /** Getter for index. Constant field - no setter */
         int getIndex() { return index_; }
 
         /** Setter for line address */
         void setBaseAddr(Addr addr) { baseAddr_ = addr; }
         /** Getter for line address */
-        Addr getBaseAddr() { return baseAddr_; }
+        Addr getBaseAddr() const { return baseAddr_; }
 
         /** Setter for line state */
         virtual void setState(State state) { 
@@ -191,6 +208,11 @@ public:
         void setTimestamp(uint64_t timestamp) { lastSendTimestamp_ = timestamp; }
         /** Getter for timestamp field */
         uint64_t getTimestamp() { return lastSendTimestamp_; }
+
+        /** Setter for prefetch field */
+        void setPrefetch(bool prefetch) { wasPrefetch_ = prefetch; }
+        /** Getter for prefetch field */
+        bool getPrefetch() { return wasPrefetch_; }
 
         /****** L1 specific fields ******/
         
@@ -260,7 +282,14 @@ public:
     Addr getLineSize() { return lineSize_; }
     
     /** Drop block offset bits (ie. log2(lineSize) */
-    Addr toLineAddr(Addr addr) { return (Addr) ((addr >> lineOffset_) / slices_); }
+    Addr toLineAddr(Addr addr) { 
+        Addr shift = addr >> lineOffset_;
+        Addr step = shift / sliceStep_;
+        Addr offset = shift % sliceSize_;
+        Addr conv = step * sliceSize_ + offset;
+        return conv;
+    }
+
     
     /** Return bank num */
     Addr getBank(Addr addr) { return (toLineAddr(addr) % banks_); }
@@ -273,13 +302,24 @@ public:
         delete hash_;
     }
 
-    vector<CacheLine *> lines_;
-    void setSliceAware(unsigned int numSlices) {
-        slices_ = numSlices;
+    /** Make sure there are no empty sets when we're 
+     *  interleaving addresses across caches
+     */
+    void setSliceAware(Addr size, Addr step) {
+        sliceSize_ = size >> lineOffset_;
+        sliceStep_ = step >> lineOffset_;
+        if (sliceSize_ == 0) sliceSize_ = 1;
+        if (sliceStep_ == 0) sliceStep_ = 1;
     }
 
     void setBanked(unsigned int numBanks) {
         banks_ = numBanks;
+    }
+
+    void printCacheArray(Output &out) {
+        for (unsigned int i = 0; i < numLines_; i++) {
+            out.output("   %u %s\n", i, lines_[i]->getString().c_str());
+        }
     }
 
 private:
@@ -297,8 +337,10 @@ protected:
     ReplacementMgr* replacementMgr_;
     HashFunction*   hash_;
     bool            sharersAware_;
-    unsigned int    slices_;    // Both slices are banks_ are banks; slices_ are external to this cache array, banks_ are internal
+    Addr            sliceSize_;
+    Addr            sliceStep_;
     unsigned int    banks_;
+    vector<CacheLine *> lines_; // The actual cache
 
     CacheArray(Output* dbg, unsigned int numLines, unsigned int associativity, unsigned int lineSize,
                ReplacementMgr* replacementMgr, HashFunction* hash, bool sharersAware, bool cache) : dbg_(dbg), 
@@ -308,7 +350,8 @@ protected:
         numSets_    = numLines_ / associativity_;
         lineOffset_ = log2Of(lineSize_);
         lines_.resize(numLines_);
-        slices_ = 1;
+        sliceStep_ = 1;
+        sliceSize_ = 1;
         banks_ = 1;
 
         for (unsigned int i = 0; i < numLines_; i++) {

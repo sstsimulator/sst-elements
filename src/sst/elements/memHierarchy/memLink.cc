@@ -1,8 +1,8 @@
-// Copyright 2013-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2017, Sandia Corporation
+// Copyright (c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -55,9 +55,12 @@ void MemLink::init(unsigned int phase) {
                 epInfo.name = mEvRegion->getSrc();
                 epInfo.addr = 0;
                 epInfo.id = 0;
+                epInfo.node = node;
                 epInfo.region = mEvRegion->getRegion();
-                sourceEndpointInfo.insert(epInfo);
-                destEndpointInfo.insert(epInfo);
+                //sourceEndpointInfo.insert(epInfo);
+                //destEndpointInfo.insert(epInfo);
+                addSource(epInfo);
+                addDest(epInfo);
 
                 if (mEvRegion->getSetRegion() && acceptRegion) {
                     dbg.debug(_L10_, "\tUpdating local region\n");

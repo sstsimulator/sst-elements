@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -301,49 +301,3 @@ void cacheTracer::PrintAccessLatencyDistribution(FILE* fp, unsigned int numBins)
     fprintf(fp, "- Total_Events_Latency: %u\n", count);
     fprintf(fp, "-----------------------------------------------------------------\n\n");
 }
-
-
-const char * memEvent_List[] = {"MemEvent", NULL};
-
-static Component* create_cacheTracer(SST::ComponentId_t id, SST::Params& params) {
-    return new cacheTracer(id, params);
-};
-
-static const ElementInfoParam component_params[] = {
-    {"clock", "Frequency, same as system clock frequency", "1 Ghz"},
-    {"statsPrefix", "writes stats to statsPrefix file", ""},
-    {"tracePrefix", "writes trace to tracePrefix tracing is enable", ""},
-    {"debug", "Print debug statements with increasing verbosity [0-10]", "0"},
-    {"statistics", "0-No-stats, 1-print-stats", "0"},
-    {"pageSize", "Page Size (bytes), used for selecting number of bins for address histogram ", "4096"},
-    {"accessLatencyBins", "Number of bins for access latency histogram" "10"},
-    {NULL, NULL}
-};
-
-static const ElementInfoPort component_ports[] = {
-    {"northBus", "Connect towards cpu side", memEvent_List},
-    {"southBus", "Connect towards memory side", memEvent_List},
-    {NULL, NULL, NULL}
-};
-
-static const ElementInfoComponent components[] = {
-    {
-        "cacheTracer",
-        "Simple tracer and stats collector component",
-        NULL,
-        create_cacheTracer,
-        component_params,
-        component_ports,
-        COMPONENT_CATEGORY_UNCATEGORIZED
-    },
-    {NULL, NULL, NULL, NULL}
-};
-
-extern "C" {
-    ElementLibraryInfo cacheTracer_eli = {
-        "cacheTracer", 
-        "Simple tracer and stats collector",
-        components,
-    };
-}
-

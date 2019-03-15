@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -22,6 +22,7 @@
 #include "emberengine.h"
 #include "embergen.h"
 #include "embermotiflog.h"
+#include "libs/misc.h"
 
 using namespace std;
 using namespace SST::Ember;
@@ -164,6 +165,11 @@ EmberEngine::ApiMap EmberEngine::createApiMap( OS* os,
         tmp[ api->getName() ] = new ApiInfo;
         tmp[ api->getName() ]->data = NULL;
         tmp[ api->getName() ]->api = api;
+        tmp[ api->getName() ]->lib = NULL;
+        if ( 0 == api->getName().compare("HadesMisc") ) {
+            tmp[ api->getName() ]->lib = 
+                new EmberMiscLib( getOutput(), static_cast<Misc::Interface*>(api) );
+        } 
     }
 
     return tmp;
@@ -239,8 +245,8 @@ void EmberEngine::setup() {
     }
 
     std::ostringstream prefix;
-    prefix << "@t:" << m_jobId << ":" << m_os->getNid() << ":EmberEngine:@p:@l: ";
-    //std::cout << "@t:" << m_jobId << ":" << m_os->getNid() << ":EmberEngine:@p:@l: " << std::endl; //NetworkSim
+    prefix << "@t:" << m_jobId << ":" << m_os->getRank() << ":EmberEngine:@p:@l: ";
+    //std::cout << "@t:" << m_jobId << ":" << m_os->getRank() << ":EmberEngine:@p:@l: " << std::endl; //NetworkSim
 
     output.setPrefix( prefix.str() );
 
@@ -250,7 +256,7 @@ void EmberEngine::setup() {
 
 void EmberEngine::issueNextEvent(uint64_t nanoDelay) {
 
-    output.verbose(CALL_INFO, 8, 0, "Engine issuing next event with delay %" PRIu64 "\n", nanoDelay);
+    output.debug(CALL_INFO, 8, 0, "Engine issuing next event with delay %" PRIu64 "\n", nanoDelay);
 
     while ( evQueue.empty() ) {
 
@@ -287,7 +293,7 @@ void EmberEngine::issueNextEvent(uint64_t nanoDelay) {
 
 bool EmberEngine::completeFunctor( int retval, EmberEvent* ev )
 {
-    output.verbose(CALL_INFO, 2, 0, "%s %s Event\n", 
+    output.debug(CALL_INFO, 2, 0, "%s %s Event\n", 
               ev->stateName( ev->state() ).c_str(), ev->getName().c_str());
 
     if ( ev->complete( getCurrentSimTimeNano(), retval ) ) {
@@ -305,7 +311,7 @@ void EmberEngine::handleEvent(Event* ev) {
 	// handlers we have created
 	EmberEvent* eEv = static_cast<EmberEvent*>(ev);
 
-    output.verbose(CALL_INFO, 2, 0, "%s %s Event\n", 
+    output.debug(CALL_INFO, 2, 0, "%s %s Event\n", 
               eEv->stateName( eEv->state() ).c_str(), eEv->getName().c_str());
 
     switch ( eEv->state() ) { 

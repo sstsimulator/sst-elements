@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 // 
 // Portions are copyright of other developers:
@@ -27,7 +27,7 @@ using namespace SST;
 using namespace SST::Thornhill;
 
 MemoryHeap::MemoryHeap(ComponentId_t id, Params& params ) :
-        Component( id ), m_currentVaddr( 0x100000 )
+        Component( id ), m_currentVaddr( 0x1000 )
 {
     int nodeId = params.find<int>("nid", -1);
     assert( -1 != nodeId );

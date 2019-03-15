@@ -1,8 +1,8 @@
-// Copyright 2013-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2017, Sandia Corporation
+// Copyright (c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -30,6 +30,8 @@ using namespace SST;
 namespace SST {
 
 namespace Hermes {
+
+typedef std::function<void(int)> Callback;
 
 typedef uint64_t Vaddr;
 
@@ -331,11 +333,11 @@ class MemAddr {
     }
 
     template< class TYPE >
-    uint64_t getSimVAddr( size_t offset = 0 ) {
+    uint64_t getSimVAddr( size_t offset = 0 ) const {
         return simVAddr + offset * sizeof( TYPE );
     }
 
-    uint64_t getSimVAddr( size_t offset = 0) {
+    uint64_t getSimVAddr( size_t offset = 0) const {
         return simVAddr + offset;
     }
 
@@ -343,7 +345,7 @@ class MemAddr {
         simVAddr = addr;
     }
 
-    void* getBacking( size_t offset = 0 ) {
+    void* getBacking( size_t offset = 0 ) const {
 	   	void* ptr = NULL;
 		if ( backing ) {
         	ptr =  (uint8_t*) backing + offset;
@@ -374,7 +376,8 @@ class OS : public SubComponent {
     virtual void _componentInit( unsigned int phase ) {}
     virtual void _componentSetup( void ) {}
     virtual void printStatus( Output& ) {}
-    virtual int  getNid() { assert(0); }
+    virtual int  getRank() { assert(0); }
+    virtual int  getNodeNum() { assert(0); }
     virtual void finish() {}
     virtual NodePerf* getNodePerf() { assert(0); }
     virtual Thornhill::DetailedCompute* getDetailedCompute() { assert(0); }

@@ -1,8 +1,8 @@
-// Copyright 2013-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright(c) 2013-2017, Sandia Corporation
+// Copyright(c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -145,28 +145,23 @@ void MultiThreadL1::finish() {}
 void MultiThreadL1::init(unsigned int phase) {
     SST::Event * ev;
 
-    if (!phase) {
-        for (int i = 0; i < threadLinks.size(); i++) {
-            threadLinks[i]->sendInitData(new Interfaces::StringEvent("SST::MemHierarchy::MemEvent"));
-        }
-    }
-
     // Pass CPU events to memory hierarchy, generally these are memory initialization
     for (int i = 0; i < threadLinks.size(); i++) {
         while ((ev = threadLinks[i]->recvInitData()) != NULL) {
             MemEventInit * memEvent = dynamic_cast<MemEventInit*>(ev);
             if (memEvent) {
-                cacheLink->sendInitData(new MemEventInit(*memEvent));
+                cacheLink->sendInitData(memEvent->clone());
             }
             delete ev;
         }
     }
     
+    // Broadcast L1 events to connected CPUs
     while ((ev = cacheLink->recvInitData()) != NULL) {
         MemEventInit * memEvent = dynamic_cast<MemEventInit*>(ev);
         if (memEvent) {
             for (int i = 0; i < threadLinks.size(); i++) {
-                threadLinks[i]->sendInitData(new MemEventInit(*memEvent));
+                threadLinks[i]->sendInitData(memEvent->clone());
             }
         }
         delete ev;

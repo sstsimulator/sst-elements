@@ -98,7 +98,6 @@ comp_l3cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "64 KB",
       "debug" : "0",
-      "memNIC.network_address" : "1",
       "memNIC.network_bw" : "25GB/s",
       "hash_function" : 2
 })
@@ -118,7 +117,6 @@ comp_dirctrl.addParams({
       "coherence_protocol" : "MESI",
       "debug" : "0",
       "entry_cache_size" : "32768",
-      "memNIC.network_address" : "0",
       "memNIC.network_bw" : "25GB/s",
       "memNIC.addr_range_end" : "0x40000000",
       "memNIC.addr_range_start" : "0x0"

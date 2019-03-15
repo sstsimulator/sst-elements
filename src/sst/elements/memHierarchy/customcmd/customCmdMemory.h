@@ -1,8 +1,8 @@
-// Copyright 2013-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2017, Sandia Corporation
+// Copyright (c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -34,7 +34,9 @@ public:
     CustomCmdInfo() { }
     
     CustomCmdInfo(SST::Event::id_type id, std::string rqstr, uint32_t flags = 0 ) :
-      id_(id), rqstr_(rqstr), flags_(flags) { }
+      id_(id), flags_(flags), rqstr_(rqstr) { }
+
+    virtual ~CustomCmdInfo() = default;
     
     /* String-ify info for debug */
     virtual std::string getString() { 

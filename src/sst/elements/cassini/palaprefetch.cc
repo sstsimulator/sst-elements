@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -30,143 +30,148 @@ using namespace SST::Cassini;
 
 void PalaPrefetcher::notifyAccess(const CacheListenerNotification& notify)
 {
-        const NotifyResultType notifyResType = notify.getResultType();
-        const Addr addr = notify.getPhysicalAddress();
+    const NotifyAccessType notifyType = notify.getAccessType();
 
-        // Insert address into the history table using the tag as the index
-        uint64_t tag = addr >> (addressSize - tagSize);
-        StrideFilter filterEntry;
-        filterEntry.lastAddress = addr;
-        filterEntry.stride = blockSize;
-        filterEntry.lastStride = 0;
-        filterEntry.state = P_INVALID;
+    if (notifyType == EVICT)  // ignore evictions
+        return;
 
-        // If the value is already present, then we need to check its state information
-        // and update the values in the table. If the stride values match for two addresses
-        // in a row, then we update the stride value in the table. Otherwise, the value
-        // remains unchanged.
-        int32_t tempStride = 0;
-        std::pair < std::unordered_map< uint64_t, StrideFilter >::iterator, bool >  retVal;
-        retVal = recentAddrList->insert ( std::pair< uint64_t, StrideFilter >(tag, filterEntry) );
-        if( retVal.second == false )
+    const NotifyResultType notifyResType = notify.getResultType();
+    const Addr addr = notify.getPhysicalAddress();
+
+    // Insert address into the history table using the tag as the index
+    uint64_t tag = addr >> (addressSize - tagSize);
+    StrideFilter filterEntry;
+    filterEntry.lastAddress = addr;
+    filterEntry.stride = blockSize;
+    filterEntry.lastStride = 0;
+    filterEntry.state = P_INVALID;
+
+    // If the value is already present, then we need to check its state information
+    // and update the values in the table. If the stride values match for two addresses
+    // in a row, then we update the stride value in the table. Otherwise, the value
+    // remains unchanged.
+    int32_t tempStride = 0;
+    std::pair < std::unordered_map< uint64_t, StrideFilter >::iterator, bool >  retVal;
+    retVal = recentAddrList->insert ( std::pair< uint64_t, StrideFilter >(tag, filterEntry) );
+    if( retVal.second == false )
+    {
+        tempStride = int32_t( addr - (*recentAddrList)[tag].lastAddress );
+        if( (*recentAddrList)[tag].state == P_INVALID )
         {
-            tempStride = int32_t( addr - (*recentAddrList)[tag].lastAddress );
-            if( (*recentAddrList)[tag].state == P_INVALID )
+            if( (*recentAddrList)[tag].lastStride == tempStride )
             {
-                if( (*recentAddrList)[tag].lastStride == tempStride )
-                {
-                    (*recentAddrList)[tag].state = P_PENDING;
-                }
+                (*recentAddrList)[tag].state = P_PENDING;
             }
-            else if( (*recentAddrList)[tag].state == P_PENDING )
+        }
+        else if( (*recentAddrList)[tag].state == P_PENDING )
+        {
+            if( (*recentAddrList)[tag].lastStride == tempStride )
             {
-                if( (*recentAddrList)[tag].lastStride == tempStride )
-                {
-                    (*recentAddrList)[tag].state = P_VALID;
-                    (*recentAddrList)[tag].stride = tempStride;
-                }
-
-            }
-            else
-            {
-                if( (*recentAddrList)[tag].lastStride != tempStride )
-                {
-                    (*recentAddrList)[tag].state = P_PENDING;
-                }
+                (*recentAddrList)[tag].state = P_VALID;
+                (*recentAddrList)[tag].stride = tempStride;
             }
 
-            (*recentAddrList)[tag].lastStride = tempStride;
-            (*recentAddrList)[tag].lastAddress = addr;
-
-            // Insert a reference to the new element at the front of the queue
-            // and remove any other references to the element. Requires traversal
-            // of the list (max n - 1), but need to keep it lru.
-            if( recentAddrListQueue->front() != retVal.first )
-            {
-                for( it = recentAddrListQueue->begin(); it != recentAddrListQueue->end(); it++ )
-                {
-                    if( *it == retVal.first )
-                    {
-                        recentAddrListQueue->erase(it);
-                        recentAddrListQueue->push_front(retVal.first);
-                        break;
-                    }
-                }
-            }
         }
         else
         {
-            // Insert a reference to the new element at the front of the queue
-            recentAddrListQueue->push_front(retVal.first);
+            if( (*recentAddrList)[tag].lastStride != tempStride )
+            {
+                (*recentAddrList)[tag].state = P_PENDING;
+            }
         }
 
-        if( recentAddrList->size() >= recentAddrListCount )
+        (*recentAddrList)[tag].lastStride = tempStride;
+        (*recentAddrList)[tag].lastAddress = addr;
+
+        // Insert a reference to the new element at the front of the queue
+        // and remove any other references to the element. Requires traversal
+        // of the list (max n - 1), but need to keep it lru.
+        if( recentAddrListQueue->front() != retVal.first )
         {
-            recentAddrList->erase(recentAddrListQueue->back());
-            recentAddrListQueue->pop_back();
+            for( it = recentAddrListQueue->begin(); it != recentAddrListQueue->end(); it++ )
+            {
+                if( *it == retVal.first )
+                {
+                    recentAddrListQueue->erase(it);
+                    recentAddrListQueue->push_front(retVal.first);
+                    break;
+                }
+            }
         }
+    }
+    else
+    {
+        // Insert a reference to the new element at the front of the queue
+        recentAddrListQueue->push_front(retVal.first);
+    }
 
-        recheckCountdown = (recheckCountdown + 1) % strideDetectionRange;
+    if( recentAddrList->size() >= recentAddrListCount )
+    {
+        recentAddrList->erase(recentAddrListQueue->back());
+        recentAddrListQueue->pop_back();
+    }
 
-        notifyResType == MISS ? missEventsProcessed++ : hitEventsProcessed++;
+    recheckCountdown = (recheckCountdown + 1) % strideDetectionRange;
 
-        if(recheckCountdown == 0)
-            DispatchRequest(addr);
+    notifyResType == MISS ? missEventsProcessed++ : hitEventsProcessed++;
+
+    if(recheckCountdown == 0)
+        DispatchRequest(addr);
 }
 
 void PalaPrefetcher::DispatchRequest(Addr targetAddress)
 {
-        /*  Needs to be updated with current MemHierarchy Commands/States, MemHierarchyInterface */
-        MemEvent* ev = NULL;
+    /*  TODO Needs to be updated with current MemHierarchy Commands/States, MemHierarchyInterface */
+    MemEvent* ev = NULL;
 
-        uint64_t tag = targetAddress >> (addressSize - tagSize);
-        int32_t stride = (*recentAddrList)[tag].stride;
+    uint64_t tag = targetAddress >> (addressSize - tagSize);
+    int32_t stride = (*recentAddrList)[tag].stride;
 
-        Addr targetPrefetchAddress = targetAddress + (strideReach * stride);
-        targetPrefetchAddress = targetPrefetchAddress - (targetPrefetchAddress % blockSize);
+    Addr targetPrefetchAddress = targetAddress + (strideReach * stride);
+    targetPrefetchAddress = targetPrefetchAddress - (targetPrefetchAddress % blockSize);
 
-        if(overrunPageBoundary)
+    if(overrunPageBoundary)
+    {
+        output->verbose(CALL_INFO, 2, 0,
+                "Issue prefetch, target address: %" PRIx64 ", prefetch address: %" PRIx64 " (reach out: %" PRIu32 ", stride=%" PRIu32 "), prefetchAddress=%" PRIu64 "\n",
+                targetAddress, targetAddress + (strideReach * stride),
+                (strideReach * stride), stride, targetPrefetchAddress);
+
+        statPrefetchOpportunities->addData(1);
+
+        // Check next address is aligned to a cache line boundary
+        assert((targetAddress + (strideReach * stride)) % blockSize == 0);
+
+        ev = new MemEvent(parent, targetAddress + (strideReach * stride), targetAddress + (strideReach * stride), Command::GetS);
+    }
+    else
+    {
+        const Addr targetAddressPhysPage = targetAddress / pageSize;
+        const Addr targetPrefetchAddressPage = targetPrefetchAddress / pageSize;
+
+        // Check next address is aligned to a cache line boundary
+        assert(targetPrefetchAddress % blockSize == 0);
+
+        // if the address we found and the next prefetch address are on the same
+        // we can safely prefetch without causing a page fault, otherwise we
+        // choose to not prefetch the address
+        if(targetAddressPhysPage == targetPrefetchAddressPage)
         {
-            output->verbose(CALL_INFO, 2, 0,
-                    "Issue prefetch, target address: %" PRIx64 ", prefetch address: %" PRIx64 " (reach out: %" PRIu32 ", stride=%" PRIu32 "), prefetchAddress=%" PRIu64 "\n",
-                    targetAddress, targetAddress + (strideReach * stride),
-                    (strideReach * stride), stride, targetPrefetchAddress);
-
+            output->verbose(CALL_INFO, 2, 0, "Issue prefetch, target address: %" PRIx64 ", prefetch address: %" PRIx64 " (reach out: %" PRIu32 ", stride=%" PRIu32 ")\n",
+                        targetAddress, targetPrefetchAddress, (strideReach * stride), stride);
+            ev = new MemEvent(parent, targetPrefetchAddress, targetPrefetchAddress, Command::GetS);
             statPrefetchOpportunities->addData(1);
-
-            // Check next address is aligned to a cache line boundary
-            assert((targetAddress + (strideReach * stride)) % blockSize == 0);
-
-            ev = new MemEvent(parent, targetAddress + (strideReach * stride), targetAddress + (strideReach * stride), Command::GetS);
         }
         else
         {
-            const Addr targetAddressPhysPage = targetAddress / pageSize;
-            const Addr targetPrefetchAddressPage = targetPrefetchAddress / pageSize;
+            output->verbose(CALL_INFO, 2, 0, "Cancel prefetch issue, request exceeds physical page limit\n");
+            output->verbose(CALL_INFO, 4, 0, "Target address: %" PRIx64 ", page=%" PRIx64 ", Prefetch address: %" PRIx64 ", page=%" PRIx64 "\n", targetAddress,
+                            targetAddressPhysPage, targetPrefetchAddress, targetPrefetchAddressPage);
 
-            // Check next address is aligned to a cache line boundary
-            assert(targetPrefetchAddress % blockSize == 0);
-
-            // if the address we found and the next prefetch address are on the same
-            // we can safely prefetch without causing a page fault, otherwise we
-            // choose to not prefetch the address
-            if(targetAddressPhysPage == targetPrefetchAddressPage)
-            {
-                output->verbose(CALL_INFO, 2, 0, "Issue prefetch, target address: %" PRIx64 ", prefetch address: %" PRIx64 " (reach out: %" PRIu32 ", stride=%" PRIu32 ")\n",
-                            targetAddress, targetPrefetchAddress, (strideReach * stride), stride);
-                ev = new MemEvent(parent, targetPrefetchAddress, targetPrefetchAddress, Command::GetS);
-                statPrefetchOpportunities->addData(1);
-            }
-            else
-            {
-                output->verbose(CALL_INFO, 2, 0, "Cancel prefetch issue, request exceeds physical page limit\n");
-                output->verbose(CALL_INFO, 4, 0, "Target address: %" PRIx64 ", page=%" PRIx64 ", Prefetch address: %" PRIx64 ", page=%" PRIx64 "\n", targetAddress, targetAddressPhysPage, targetPrefetchAddress, targetPrefetchAddressPage);
-
-                statPrefetchIssueCanceledByPageBoundary->addData(1);
-                ev = NULL;
-            }
+            statPrefetchIssueCanceledByPageBoundary->addData(1);
+            ev = NULL;
         }
-
+    }
 
     if(ev != NULL)
     {
@@ -177,7 +182,7 @@ void PalaPrefetcher::DispatchRequest(Addr targetAddress)
         const uint32_t currentHistCount = prefetchHistory->size();
 
         output->verbose(CALL_INFO, 2, 0, "Checking prefetch history for cache line at base %" PRIx64 ", valid prefetch history entries=%" PRIu32 "\n", prefetchCacheLineBase,
-                currentHistCount);
+                        currentHistCount);
 
         for(uint32_t i = 0; i < currentHistCount; ++i)
         {
@@ -233,7 +238,7 @@ PalaPrefetcher::PalaPrefetcher(Component* owner, Params& params) : CacheListener
     verbosity = params.find<int>("verbose", 0);
 
     char* new_prefix = (char*) malloc(sizeof(char) * 128);
-    sprintf(new_prefix, "StridePrefetcher[%s | @f:@p:@l] ", parent->getName().c_str());
+    sprintf(new_prefix, "PalaPrefetcher[%s | @f:@p:@l] ", parent->getName().c_str());
     output = new Output(new_prefix, verbosity, 0, Output::STDOUT);
     free(new_prefix);
 
@@ -257,7 +262,7 @@ PalaPrefetcher::PalaPrefetcher(Component* owner, Params& params) : CacheListener
     recentAddrList = new std::unordered_map< uint64_t, StrideFilter >;
     recentAddrListQueue = new std::deque< std::unordered_map< uint64_t, StrideFilter >::iterator >;
 
-    output->verbose(CALL_INFO, 1, 0, "StridePrefetcher created, cache line: %" PRIu64 ", page size: %" PRIu64 "\n",
+    output->verbose(CALL_INFO, 1, 0, "PalaPrefetcher created, cache line: %" PRIu64 ", page size: %" PRIu64 "\n",
             blockSize, pageSize);
 
     missEventsProcessed = 0;

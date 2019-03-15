@@ -1,8 +1,8 @@
-// Copyright 2013-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2017, Sandia Corporation
+// Copyright (c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -46,7 +46,7 @@ class Memory : public MemoryBase {
     }
 
     virtual void copy( Callback callback, MemAddr to, MemAddr from, size_t length ) {
-        m_dbg->verbose(CALL_INFO,1,1,"\n");
+        m_dbg->debug(CALL_INFO,1,1,"\n");
         uint64_t delay;
         if ( from ) {
             delay = txMemcpyDelay( length );
@@ -59,27 +59,27 @@ class Memory : public MemoryBase {
     }
 
     virtual void write( Callback callback, MemAddr to, size_t length ) {
-        m_dbg->verbose(CALL_INFO,1,1,"\n");
+        m_dbg->debug(CALL_INFO,1,1,"\n");
         schedCallback( callback, txMemcpyDelay( length ) );
     } 
 
     virtual void read( Callback callback, MemAddr to, size_t length ) {
-        m_dbg->verbose(CALL_INFO,1,1,"\n");
+        m_dbg->debug(CALL_INFO,1,1,"\n");
         schedCallback( callback, txMemcpyDelay( length ) );
     }
 
     virtual void pin( Callback callback, MemAddr, size_t length ) {
-        m_dbg->verbose(CALL_INFO,1,1,"\n");
+        m_dbg->debug(CALL_INFO,1,1,"\n");
         schedCallback( callback, regRegionDelay( length ) );
     }
 
     virtual void unpin( Callback callback, MemAddr, size_t  length ) {
-        m_dbg->verbose(CALL_INFO,1,1,"\n");
+        m_dbg->debug(CALL_INFO,1,1,"\n");
         schedCallback( callback, regRegionDelay( length ) );
     }        
 
     virtual void walk( Callback callback, int count ) {
-        m_dbg->verbose(CALL_INFO,1,1,"\n");
+        m_dbg->debug(CALL_INFO,1,1,"\n");
         schedCallback( callback, matchDelay( count ) );
     }
 
@@ -119,7 +119,7 @@ class Memory : public MemoryBase {
     {
         DelayEvent* event = static_cast<DelayEvent*>(e);
 
-        m_dbg->verbose(CALL_INFO,2,1,"execute callback\n");
+        m_dbg->debug(CALL_INFO,2,1,"execute callback\n");
 
         event->callback();
         delete e;

@@ -1,8 +1,8 @@
-// Copyright 2013-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2017, Sandia Corporation
+// Copyright (c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -25,8 +25,8 @@ void CommSplitFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
     m_commSplitEvent = static_cast< CommSplitStartEvent* >(e);
     assert( m_commSplitEvent );
     
-    m_dbg.verbose(CALL_INFO,1,0,"oldGroup=%d\n", m_commSplitEvent->oldComm );
-    m_dbg.verbose(CALL_INFO,1,0,"color=%d key=%d\n", 
+    m_dbg.debug(CALL_INFO,1,0,"oldGroup=%d\n", m_commSplitEvent->oldComm );
+    m_dbg.debug(CALL_INFO,1,0,"color=%d key=%d\n", 
                 m_commSplitEvent->color, m_commSplitEvent->key );
 
     Group* oldGrp = m_info->getGroup( m_commSplitEvent->oldComm );
@@ -47,7 +47,7 @@ void CommSplitFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
         return;
     }
 
-    m_dbg.verbose(CALL_INFO,1,0,"grpSize=%d\n", cnt );
+    m_dbg.debug(CALL_INFO,1,0,"grpSize=%d\n", cnt );
 
 	m_sendbuf.setSimVAddr( 1 );
     m_sendbuf.setBacking( (int*) malloc( sizeof(int) * 2 ) );
@@ -58,7 +58,7 @@ void CommSplitFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
 
     MP::PayloadDataType datatype = MP::INT;
 
-    m_dbg.verbose(CALL_INFO,1,0,"send=%p recv=%p\n",&m_sendbuf,&m_recvbuf);
+    m_dbg.debug(CALL_INFO,1,0,"send=%p recv=%p\n",&m_sendbuf,&m_recvbuf);
 
     GatherStartEvent* tmp = new GatherStartEvent( m_sendbuf, 2,
            datatype, m_recvbuf, 2, datatype, m_commSplitEvent->oldComm );
@@ -69,7 +69,7 @@ void CommSplitFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
 
 void CommSplitFuncSM::handleEnterEvent( Retval& retval )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
+    m_dbg.debug(CALL_INFO,1,0,"\n");
 
     AllgatherFuncSM::handleEnterEvent( retval );
 
@@ -82,13 +82,13 @@ void CommSplitFuncSM::handleEnterEvent( Retval& retval )
         assert( oldGrp );
     
         for ( int i = 0; i < oldGrp->getSize(); i++ ) {
-            m_dbg.verbose(CALL_INFO,1,0,"i=%d color=%#x key=%#x\n", i,
+            m_dbg.debug(CALL_INFO,1,0,"i=%d color=%#x key=%#x\n", i,
                  	((int*)m_recvbuf.getBacking())[i*2],
 					((int*)m_recvbuf.getBacking())[i*2 + 1] );
             if ( m_commSplitEvent->color == 
 					((int*)m_recvbuf.getBacking())[i*2] ) {
             
-                m_dbg.verbose(CALL_INFO,1,0,"add: oldRank=%d newRank=%d\n",
+                m_dbg.debug(CALL_INFO,1,0,"add: oldRank=%d newRank=%d\n",
                                     i,
 					((int*)m_recvbuf.getBacking())[i*2 + 1]);
                 newGroup->initMapping( 

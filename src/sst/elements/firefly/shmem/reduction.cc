@@ -1,8 +1,8 @@
-// Copyright 2013-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2017, Sandia Corporation
+// Copyright (c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -70,7 +70,7 @@ void ShmemReduction::have_children_0(int)
        exist. */
     int dataSize = Hermes::Value::getLength( m_dataType );
    
-    m_api.put( m_dest, m_src, m_nelems * dataSize , my_pe(), 
+    m_api.put( m_dest, m_src, m_nelems * dataSize , my_pe(), true, 
            std::bind( &ShmemReduction::have_children_1, this, std::placeholders::_1 ) );
     // shmem_internal_put_nb(target, source, count * type_size, shmem_internal_my_pe, &completion);
 }   

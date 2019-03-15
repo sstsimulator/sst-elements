@@ -19,6 +19,7 @@ DEBUG_L2 = 0
 DEBUG_L3 = 0
 DEBUG_DIR = 0
 DEBUG_MEM = 0
+verbose = 2
 
 # Create merlin network - this is just simple single router
 comp_network = sst.Component("network", "merlin.hr_router")
@@ -63,6 +64,7 @@ for x in range(cores):
         "L1" : 1,
         "debug" : DEBUG_L1,
         "debug_level" : 10,
+        "verbose" : verbose,
     })
 
     comp_l2cache = sst.Component("l2cache" + str(x), "memHierarchy.Cache")
@@ -79,9 +81,9 @@ for x in range(cores):
         "mshr_num_entries" : 8,
         # MemNIC parameters
         "memNIC.network_bw" : network_bw,
-        "memNIC.network_address" : x,
         "memNIC.network_input_buffer_size" : "2KiB",
         "memNIC.network_output_buffer_size" : "2KiB",
+        "verbose" : verbose,
         "debug" : DEBUG_L2,
         "debug_level" : 10,
     })
@@ -113,9 +115,9 @@ for x in range(caches):
         "slice_id" : x,
         # MemNIC parameters
         "memNIC.network_bw" : network_bw,
-        "memNIC.network_address" : x + cores,
         "memNIC.network_input_buffer_size" : "2KiB",
         "memNIC.network_output_buffer_size" : "2KiB",
+        "verbose" : verbose,
         "debug" : DEBUG_L3,
         "debug_level" : 10,
     })
@@ -137,9 +139,9 @@ for x in range(memories):
         "memNIC.network_bw" : network_bw,
         "memNIC.addr_range_start" : x*64,
         "memNIC.addr_range_end" :  1024*1024*1024 - ((memories - x) * 64) + 63,
-        "memNIC.network_address" : x + caches + cores,
         "memNIC.network_input_buffer_size" : "2KiB",
         "memNIC.network_output_buffer_size" : "2KiB",
+        "verbose" : verbose,
         "debug" : DEBUG_DIR,
         "debug_level" : 10,
     })
@@ -158,6 +160,7 @@ for x in range(memories):
         "backend.cycle_time" : "3ns",
         "backend.row_size" : "4KiB",
         "backend.row_policy" : "closed",
+        "verbose" : verbose,
         "debug" : DEBUG_MEM,
         "debug_level" : 10,
     })

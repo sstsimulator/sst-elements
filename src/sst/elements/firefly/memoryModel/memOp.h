@@ -1,11 +1,31 @@
-   class MemOp {
-	  public:
-        enum Op { NotInit, BusLoad, BusStore, LocalLoad, LocalStore, HostLoad, HostStore, HostCopy, BusDmaToHost, BusDmaFromHost };
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2009-2018, NTESS
+// All rights reserved.
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
 
-        MemOp( ) : addr(0), length(0), type(NotInit), offset(0) {}
-        MemOp( Hermes::Vaddr addr, size_t length, Op op) : addr(addr), length(length), type(op), offset(0) {}
-        MemOp( Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, Op op) : 
-				dest(dest), src(src), length(length), type(op), offset(0), chunk(0)  {
+   class MemOp {
+
+        typedef std::function<void()> Callback;
+
+	  public:
+        enum Op { NotInit, NoOp, BusLoad, BusStore, LocalLoad, LocalStore, HostLoad, HostStore, HostCopy, BusDmaToHost, BusDmaFromHost, HostBusWrite, HostBusRead };
+
+        MemOp( ) : addr(0), length(0), type(NotInit), offset(0), callback(NULL), m_pending(0) {}
+        MemOp( Op op ) : addr(0), length(0), type(op), offset(0), callback(NULL), m_pending(0) {}
+        MemOp( Hermes::Vaddr addr, size_t length, Op op, Callback callback = NULL ) : 
+                addr(addr), length(length), type(op), offset(0), callback(callback), m_pending(0) {}
+        MemOp( Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, Op op, Callback callback = NULL ) : 
+				dest(dest), src(src), length(length), type(op), offset(0), chunk(0), callback(callback), m_pending(0) {
 			//printf("%s() dest=%#lx src=%#lx length=%lu\n",__func__,dest,src,length);
 		}
 
@@ -39,8 +59,12 @@
 			} else {
 				offset += chunkSize;
 			}
+            ++m_pending;
 		}
 
+		bool isWrite() {
+			return type == HostBusWrite;
+		}
 		bool isLoad() {
 			if ( HostCopy == type ) {
 				if ( 1 == chunk % 2 ) {
@@ -64,6 +88,12 @@
 			}
 		}
 
+        void decPending() {
+            --m_pending;
+        }
+        bool canBeRetired() { 
+            return isDone() && 0 == m_pending; 
+        }
 		bool isDone() { 
 			return offset == length; 
 		}
@@ -86,6 +116,8 @@
         Hermes::Vaddr addr;
         Hermes::Vaddr src;
         Hermes::Vaddr dest;
+        Callback callback;
+        int m_pending;
 
         size_t   length;
 		size_t offset;
@@ -93,6 +125,7 @@
         const char* getName( ) {
             switch( type ) {
             case NotInit: return "NotInit";
+            case NoOp: return "NoOp";
             case BusLoad: return "BusLoad";
             case BusStore: return "BusStore";
             case LocalLoad: return "LocalLoad";
@@ -102,6 +135,8 @@
             case HostCopy: return "HostCopy";
             case BusDmaToHost: return "BusDmaToHost";
             case BusDmaFromHost: return "BusDmaFromHost";
+            case HostBusWrite: return "HostBusWrite";
+            case HostBusRead: return "HostBusRead";
             }
         }
      private: 

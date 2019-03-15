@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -34,26 +34,26 @@ EmberFFT3DGenerator::EmberFFT3DGenerator(SST::Component* owner, Params& params) 
 	m_backwardTotal(0),
     m_transCostPer(6)
 {
-	m_data.np0 = (uint32_t) params.find("arg.nx", 100);
-	m_data.np1  = (uint32_t) params.find("arg.ny", 100);
-	m_data.np2  = (uint32_t) params.find("arg.nz", 100);
+	m_data.np0 = params.find<uint32_t>("arg.nx", 100);
+	m_data.np1  = params.find<uint32_t>("arg.ny", 100);
+	m_data.np2  = params.find<uint32_t>("arg.nz", 100);
 
     assert( m_data.np0 == m_data.np1 );
     assert( m_data.np1 == m_data.np2 );
 
-    m_data.nprow = (uint32_t) params.find("arg.npRow", 0);
+    m_data.nprow = params.find<uint32_t>("arg.npRow", 0);
     assert( 0 < m_data.nprow );
 
-	m_iterations = (uint32_t) params.find("arg.iterations", 1);
+	m_iterations = params.find<uint32_t>("arg.iterations", 1);
 
-    m_nsPerElement = (float) params.find("arg.nsPerElement",1);
+    m_nsPerElement = params.find<float>("arg.nsPerElement",1);
 
-    m_transCostPer[0] = (float) params.find("arg.fwd_fft1",1);
-    m_transCostPer[1] = (float) params.find("arg.fwd_fft2",1);
-    m_transCostPer[2] = (float) params.find("arg.fwd_fft3",1);
-    m_transCostPer[3] = (float) params.find("arg.bwd_fft1",1);
-    m_transCostPer[4] = (float) params.find("arg.bwd_fft2",1);
-    m_transCostPer[5] = (float) params.find("arg.bwd_fft3",1);
+    m_transCostPer[0] = params.find<float>("arg.fwd_fft1",1);
+    m_transCostPer[1] = params.find<float>("arg.fwd_fft2",1);
+    m_transCostPer[2] = params.find<float>("arg.fwd_fft3",1);
+    m_transCostPer[3] = params.find<float>("arg.bwd_fft1",1);
+    m_transCostPer[4] = params.find<float>("arg.bwd_fft2",1);
+    m_transCostPer[5] = params.find<float>("arg.bwd_fft3",1);
 
 	configure();
 }

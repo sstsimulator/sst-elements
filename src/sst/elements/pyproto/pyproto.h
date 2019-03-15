@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -21,6 +21,8 @@
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/event.h>
+#include <sst/core/elementinfo.h>
+
 
 extern "C" struct PyEvent_t;
 extern "C" struct PyProto_t;
@@ -55,6 +57,20 @@ public:
 class PyProto : public SST::Component
 {
 public:
+
+    SST_ELI_REGISTER_COMPONENT(
+        PyProto,
+        "pyproto",
+        "PyProto",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Python Prototyping Component",
+        COMPONENT_CATEGORY_UNCATEGORIZED
+    )
+
+    SST_ELI_DOCUMENT_PORTS(
+        {"port%d", "Link to another object", {}}
+    )
+
     PyProto(SST::ComponentId_t id, SST::Params& params);
     ~PyProto();
 

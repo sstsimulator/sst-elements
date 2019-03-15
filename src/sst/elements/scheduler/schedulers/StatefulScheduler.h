@@ -1,9 +1,8 @@
-// Copyright 2011 Sandia Corporation. Under the terms                          
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 // 
 // Portions are copyright of other developers:
@@ -18,9 +17,12 @@
 #define SST_SCHEDULER__STATEFULSCHEDULER_H__
 
 //#include <functional>
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wuser-defined-warnings"
 #include <map>
 #include <set>
 #include <string>
+#pragma clang diagnostic pop
 
 #include "Scheduler.h"
 

@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 #
-# Copyright 2009-2017 Sandia Corporation. Under the terms
-# of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+# Copyright 2009-2018 NTESS. Under the terms
+# of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2017, Sandia Corporation
+# Copyright (c) 2009-2018, NTESS
 # All rights reserved.
 #
 # Portions are copyright of other developers:
@@ -37,7 +37,7 @@ l1cache_params = {
     "cache_frequency": clock,
     "replacement_policy": "lru",
     "cache_size": "32KB",
-    "maxRequestDelay" : "1000000",
+    "maxRequestDelay" : "10000",
     "associativity": 8,
     "cache_line_size": 64,
     "access_latency_cycles": 1,
@@ -55,11 +55,9 @@ l2cache_params = {
     "cache_frequency": clock,
     "replacement_policy": "lru",
     "cache_size": "32KB",
-    "maxRequestDelay" : "1000000",
     "associativity": 8,
     "cache_line_size": 64,
     "access_latency_cycles": 1,
-    "LL": 1,
     "debug": "0" 
 }
 
@@ -67,7 +65,7 @@ memory_params = {
     "coherence_protocol" : coherence_protocol,
     "backend.access_time" : "1ps",
     "rangeStart" : 0,
-    "backend.mem_size" : memory_capacity / (groups * memory_controllers_per_group),
+    "backend.mem_size" : str( memory_capacity / (groups * memory_controllers_per_group)) + "MiB",
     "clock" : memory_clock,
 }
 

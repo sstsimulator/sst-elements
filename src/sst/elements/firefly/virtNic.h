@@ -1,9 +1,9 @@
 
-// Copyright 2013-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2017, Sandia Corporation
+// Copyright (c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -17,6 +17,7 @@
 #ifndef COMPONENTS_FIREFLY_VIRTNIC_H
 #define COMPONENTS_FIREFLY_VIRTNIC_H
 
+#include <sst/core/elementinfo.h>
 #include <sst/core/module.h>
 #include <sst/core/output.h>
 #include <sst/core/component.h>
@@ -31,6 +32,24 @@ class NicRespEvent;
 class NicShmemRespBaseEvent;
 
 class VirtNic : public SST::Module {
+
+  public:
+    SST_ELI_REGISTER_MODULE(
+        VirtNic,
+        "firefly",
+        "VirtNic",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "",
+        "SST::Firefly::VirtNic"
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+        {"debugLevel", "Sets the output verbosity of the component", "1"},
+        {"debug", "Sets the messaging API of the end point", "0"},
+        {"portName", "Sets the name of the port for the link", "nic"},
+    ) 
+
+  private:
 
     // Functor classes for handling callbacks
     template < typename argT >
@@ -143,6 +162,8 @@ class VirtNic : public SST::Module {
 	int calcCoreId( int nodeId ) {
 		if ( -1 == nodeId ) {
 			return -1;
+		} else if ( nodeId & (1<<31) )  {
+			return 0;
 		} else {
 			return nodeId % m_numCores;
 		}
@@ -159,14 +180,14 @@ class VirtNic : public SST::Module {
     void shmemInit( Hermes::Vaddr, Callback );
     void shmemRegMem( Hermes::MemAddr&, size_t len, Callback );
     void shmemWait( Hermes::Vaddr dest, Hermes::Shmem::WaitOp, Hermes::Value&, Callback );
-    void shmemPutv( int node, Hermes::Vaddr dest, Hermes::Value&, Callback );
+    void shmemPutv( int node, Hermes::Vaddr dest, Hermes::Value& );
     void shmemGetv( int node, Hermes::Vaddr src, Hermes::Value::Type, CallbackV );
     void shmemPut( int node, Hermes::Vaddr dest, Hermes::Vaddr src, size_t len, Callback );
     void shmemGet( int node, Hermes::Vaddr dest, Hermes::Vaddr src, size_t len, Callback );
     void shmemPutOp( int node, Hermes::Vaddr dest, Hermes::Vaddr src, size_t len, Hermes::Shmem::ReduOp, Hermes::Value::Type, Callback );
     void shmemSwap( int node, Hermes::Vaddr dest, Hermes::Value& value, CallbackV );
     void shmemCswap( int node, Hermes::Vaddr dest, Hermes::Value& cond, Hermes::Value& value, CallbackV );
-    void shmemAdd( int node, Hermes::Vaddr dest, Hermes::Value&, Callback );
+    void shmemAdd( int node, Hermes::Vaddr dest, Hermes::Value& );
     void shmemFadd( int node, Hermes::Vaddr dest, Hermes::Value&, CallbackV );
 
     void setNotifyOnRecvDmaDone(
@@ -180,15 +201,31 @@ class VirtNic : public SST::Module {
     void notifyRecvDmaDone( int src, int tag, size_t len, void* key );
     void notifyNeedRecv( int src, int tag, size_t length );
 
+    bool isBlocked() {
+		m_dbg.debug(CALL_INFO,2,0,"%d %d\n", m_curNicQdepth, m_maxNicQdepth);
+        return m_curNicQdepth == m_maxNicQdepth;  
+    }
+
+    void setBlockedCallback( Callback callback ) {
+		m_dbg.debug(CALL_INFO,2,0,"\n");
+        assert( ! m_blockedCallback );
+        m_blockedCallback = callback;
+    }
+
   private:
 
     void sendCmd( SimTime_t delay ,Event* ev) {
+		m_dbg.debug(CALL_INFO,2,0,"%d %d\n", m_curNicQdepth, m_maxNicQdepth);
+        assert( m_curNicQdepth < m_maxNicQdepth );
+        ++m_curNicQdepth;
         m_toNicLink->send( delay, ev );  
     }
          
 	int calcRealNicId( int nodeId ) {
 		if ( -1 == nodeId ) {
 			return -1;
+		} else if ( nodeId & (1<<31) )  {
+			return nodeId & ~(1<<31);
 		} else {
 			return nodeId / m_numCores;
 		}
@@ -213,6 +250,9 @@ class VirtNic : public SST::Module {
     VirtNic::HandlerBase<void*>* m_notifySendDmaDone; 
     VirtNic::HandlerBase4Args<int, int, size_t, void*>* m_notifyRecvDmaDone; 
     VirtNic::HandlerBase2Args<int, size_t>* m_notifyNeedRecv;
+    int m_maxNicQdepth;
+    int m_curNicQdepth;
+    Callback m_blockedCallback;
 };
 
 }

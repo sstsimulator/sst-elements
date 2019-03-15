@@ -1,8 +1,8 @@
-// Copyright 2013-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2017, Sandia Corporation
+// Copyright (c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -20,6 +20,7 @@
 #include <sst/core/output.h>
 #include <sst/core/params.h>
 
+#include <sst/core/elementinfo.h>
 #include <sst/core/sharedRegion.h>
 
 #include "sst/elements/hermes/hermes.h"
@@ -38,14 +39,40 @@ class VirtNic;
 class Hades : public OS 
 {
   public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        Hades,
+        "firefly",
+        "hades",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "",
+        ""
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+        {"mapType","Sets the type of data structure to use for mapping ranks to NICs", ""},
+        {"netId","Sets the network id of the endpoint", ""},
+        {"netMapId","Sets the network mapping id of the endpoint", ""},
+        {"netMapSize","Sets the network map Size of the endpoint", ""},
+        {"netMapName","Sets the network map Name of the endpoint", ""},
+        {"nicModule", "Sets the NIC module", "firefly.VirtNic"},
+        {"verboseLevel", "Sets the output verbosity of the component", "1"},
+        {"verboseMask", "Sets the output mask of the component", "1"},
+        {"debug", "Sets the messaging API of the end point", "0"},
+        {"defaultVerbose","Sets the default function verbose level","0"},
+        {"defaultDebug","Sets the default function debug level","0"},
+        {"flops", "Sets the FLOP rate of the endpoint ", "1"},
+        {"bandwidth", "Sets the bandwidth of the endpoint ", "1"},
+        {"nodePerf", "Sets the node performance module ", "1"},
+    )
+
     Hades(Component*, Params&);
     ~Hades();
     virtual void _componentInit(unsigned int phase );
     virtual void _componentSetup();
     virtual void finish();
 
-    int getNid();
-    int getNumNids();
+    int getRank();
+    int getNodeNum();
 
     int sizeofDataType( MP::PayloadDataType type ) { 
         return m_info.sizeofDataType(type); 
@@ -67,6 +94,7 @@ class Hades : public OS
     Info*               getInfo() { return &m_info; }
     FunctionSM&         getFunctionSM() { return *m_functionSM; }
     ProtocolAPI&        getMsgStack() { return *m_proto; }
+    int                 getNumNodes() { return m_numNodes; } 
 
   private:
 
@@ -83,6 +111,7 @@ class Hades : public OS
     SharedRegion*                        m_sreg;
     int                                  m_netMapSize;
     std::string                          m_netMapName;
+    int                                  m_numNodes;
 };
 
 } // namesapce Firefly 

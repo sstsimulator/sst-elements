@@ -1,3 +1,17 @@
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2009-2018, NTESS
+// All rights reserved.
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
     
 	#include "muxUnit.h"
 
@@ -5,35 +19,34 @@
 
 		struct Entry {
 			enum Op { Load, Store } op;
-			Entry( Op op, UnitBase* src, MemReq* req, SimTime_t time, Callback callback=NULL ) : 
-				op(op), src(src), req(req), time(time), callback(callback) {}
-			~Entry() { delete req; }
+            Entry( Op op, UnitBase* src, MemReq* req, SimTime_t time, Callback* callback=NULL ) :
+                op(op), src(src), req(req), time(time), callback(callback) {}
 			UnitBase* src;
-			Callback callback;
+			Callback* callback;
 			MemReq* req;
 			SimTime_t time;
+			Hermes::Vaddr addr;
+			SimTime_t startTime;
 		};
-    #include "cacheList.h"
+        std::string stats;
       public:
-        CacheUnit( SimpleMemoryModel& model, Output& dbg, int id, Unit* memory, int size, int cacheLineSize, int numMSHR, std::string name ) :
-            Unit( model, dbg ), m_size(size), m_memory(memory), m_numPending(0), m_blockedSrc(NULL), m_numMSHR(numMSHR), m_scheduled(false),
-			m_cacheLineSize(cacheLineSize), m_qSize(32), m_numIssuedLoads(0), m_state( Idle ), m_missEntry(NULL), m_mshrEntry(NULL)
+        CacheUnit( SimpleMemoryModel& model, Output& dbg, int id, Unit* memory, int cacheSize, int cacheLineSize, int numMSHR, std::string name ) :
+            Unit( model, dbg ),  m_memory(memory), m_numPending(0), m_blockedSrc(NULL), m_numMSHR(numMSHR), m_scheduled(false),
+			m_cacheLineSize(cacheLineSize), m_qSize(numMSHR), m_numIssuedLoads(0),
+            m_cache( cacheSize ), m_blockedOnMemUnit(false)
 		{
             m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::" + name + "CacheUnit::@p():@l ";
+            stats = std::to_string(id) + ":SimpleMemoryModel::" + name + "CacheUnit:: ";
 
-			if ( numMSHR > size ) {
-				m_numMSHR = size;
-			}
-
-			if ( m_qSize > size ) {
-				m_qSize = size;
-			}
-			for ( unsigned i = 0; i < size; i++ ) {
-				insert( (i + 1 ) * m_cacheLineSize );
-			}
+       		m_hitCnt = model.registerStatistic<uint64_t>(name + "_cache_hits");
+       		m_totalCnt = model.registerStatistic<uint64_t>(name + "_cache_total");
+			assert( m_numMSHR <= cacheSize );
         }
+		~CacheUnit() {
+			m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"numPending=%d,  \n",m_numPending);
+		}
 
-		enum State { Idle, BlockedStore, BlockedLoad, BlockedMSHR } m_state;
+        bool m_blockedOnMemUnit;;
 		int m_numIssuedLoads;
 		int m_numMSHR;
 		int m_qSize;
@@ -41,59 +54,51 @@
 
 		bool m_scheduled;
 		UnitBase* m_blockedSrc; 
-		Entry* m_missEntry;
-		Entry* m_mshrEntry;
-		std::deque<Entry*> m_blockedQ;
+		std::queue<Entry*> m_blockedQ;
+		std::queue<Entry*> m_blockedDone;
+    	Statistic<uint64_t>* m_hitCnt;
+    	Statistic<uint64_t>* m_totalCnt;
 
         bool store( UnitBase* src, MemReq* req ) {
-            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"addr=%#lx length=%lu\n",req->addr,req->length);
-
-			return addEntry( new Entry( Entry::Store, src, req, m_model.getCurrentSimTimeNano()  ) ); 
+            //m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"addr=%#" PRIx64 " length=%lu\n",req->addr,req->length);
+			//assert( (req->addr & (m_cacheLineSize - 1) ) == 0 );
+			return addEntry( new Entry( Entry::Store, src, req, m_model.getCurrentSimTimeNano()  ) );
 		}
 
-        bool load( UnitBase* src, MemReq* req, Callback callback ) {
-            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"addr=%#lx length=%lu\n",req->addr,req->length);
-
-			return addEntry( new Entry( Entry::Load, src, req, m_model.getCurrentSimTimeNano(), callback ) ); 
+        bool load( UnitBase* src, MemReq* req, Callback* callback ) {
+            //m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"addr=%#" PRIx64 " length=%lu\n",req->addr,req->length);
+            //assert( (req->addr & (m_cacheLineSize - 1) ) == 0 );
+			return addEntry( new Entry( Entry::Load, src, req, m_model.getCurrentSimTimeNano(), callback ) );
 		}
 
 		void resume( UnitBase* src = NULL ) {
-			m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"state=%d blocked=%lu\n", m_state, m_blockedQ.size());
-			switch (m_state) {
-			  case BlockedStore:
-				assert( m_missEntry );
-				m_state = Idle;
-				miss2( m_missEntry );	
-				m_missEntry = NULL;
-				break;
+            m_blockedOnMemUnit = false;
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"blocked=%lu bockedDone=%lu numPending=%d\n",
+								m_blockedQ.size(), m_blockedDone.size(), m_numPending );
 
-			  case BlockedLoad:
-				m_state = Idle;
-				break;	
-			  default:
-				assert(0);
+			while ( ! m_blockedOnMemUnit && ! m_blockedDone.empty() ) {
+				Entry* entry = m_blockedDone.front();
+				m_blockedDone.pop();
+				m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"process blocked done, addr=%#" PRIx64 "\n",entry->addr);
+				loadDone2(entry);
 			}
 
-			m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"state=%d blocked=%lu\n", m_state, m_blockedQ.size());
 			schedule();
 		}
 
 	  private:
 		
 		bool addEntry( Entry* entry ) {
-       		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"%s addr=%#lx pending=%d\n", 
+			entry->req->addr = alignAddr( entry->req->addr );
+       		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"%s addr=%#" PRIx64 " pending=%d\n", 
 					entry->op == Entry::Load?"Load":"Store",entry->req->addr,m_numPending);
 
-			entry->req->addr = alignAddr( entry->req->addr );
+            incNumPending();
 
-			++m_numPending;
-
-			assert( m_numPending <= m_qSize ); 
-
-            m_model.schedCallback( 1, std::bind( &CacheUnit::checkHit, this, entry ) );
+            checkHitNew( entry );
 				
 			if ( m_numPending == m_qSize ) {
-           		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"pending Q is full\n");
+           		m_dbg.verbosePrefix(prefix(),CALL_INFO,2,CACHE_MASK,"pending Q is full\n");
 				m_blockedSrc = entry->src;
 				return true;
 			} else {
@@ -101,166 +106,174 @@
 			}
 		}
 
-		void checkHit( Entry* entry ) {
-           	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"%s addr=%#lx\n", entry->op == Entry::Load?"Load":"Store",entry->req->addr);
-            if ( isValid( entry->req->addr ) ) { 
-				hit( entry );
-			} else if ( isPending(entry->req->addr ) ) {
-				m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"pending addr=%#lx\n",entry->req->addr);
-           		m_pendingMap[entry->req->addr].push_back( entry );
-			} else {
-
-				if ( ! blocked() && m_blockedQ.empty() ) {
-					miss( entry );
-				} else {
-					m_blockedQ.push_back( entry );	
+		void checkHitNew( Entry* entry ) {
+           	m_dbg.verbosePrefix(prefix(),CALL_INFO,2,CACHE_MASK,"\n");
+            if ( checkHit( entry, false ) ) {
+       	        m_dbg.verbosePrefix(prefix(),CALL_INFO,2,CACHE_MASK,"queue blocked %s addr=%#" PRIx64 "\n", entry->op == Entry::Load?"Load":"Store",entry->req->addr);
+				m_blockedQ.push( entry );	
+            }
+        }
+		void checkHitRetry( ) {
+            m_scheduled = false;
+           	m_dbg.verbosePrefix(prefix(),CALL_INFO,2,CACHE_MASK,"\n");
+			while ( ! blocked() && ! m_blockedQ.empty() ) {
+				Entry* entry = m_blockedQ.front();	
+				if (  ! checkHit( entry, true ) )  {
+					m_blockedQ.pop();
 				}
 			}
 		}
 
-		void checkHit2( ) {
-			m_scheduled = false;
-			assert( ! m_blockedQ.empty() );
-			Entry* entry = m_blockedQ.front();
-           	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"%s addr=%#lx\n", entry->op == Entry::Load?"Load":"Store",entry->req->addr);
-			m_blockedQ.pop_front();
-            if ( isValid( entry->req->addr ) ) { 
+		bool checkHit( Entry* entry, bool flag ) {
+            if ( flag ) {
+           	    m_dbg.verbosePrefix(prefix(),CALL_INFO,2,CACHE_MASK,"retry\n");
+            }
+           	m_dbg.verbosePrefix(prefix(),CALL_INFO,2,CACHE_MASK,"%s addr=%#" PRIx64 "\n", entry->op == Entry::Load?"Load":"Store",entry->req->addr);
+            if ( m_cache.isValid( entry->req->addr ) ) { 
+				m_totalCnt->addData(1);
+           	    m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"done, hit %s addr=%#" PRIx64 "\n",
+                                                entry->op == Entry::Load?"Load":"Store",entry->req->addr);
+				m_hitCnt->addData(1);
 				hit( entry );
 			} else if ( isPending(entry->req->addr ) ) {
-				m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"pending addr=%#lx\n",entry->req->addr);
-           		m_pendingMap[entry->req->addr].push_back( entry );
+				m_totalCnt->addData(1);
+				m_dbg.verbosePrefix(prefix(),CALL_INFO,2,CACHE_MASK,"pending addr=%#" PRIx64 "\n",entry->req->addr);
+
+           		if ( NULL == m_pendingMap[entry->req->addr] ) {
+           			m_pendingMap[entry->req->addr] = m_qHeap.alloc();
+				}
+           		m_pendingMap[entry->req->addr]->push( entry );
 			} else {
-				miss( entry );
+
+				if ( ! blocked() && ( m_blockedQ.empty() || flag ) ) {
+					m_totalCnt->addData(1);
+       	            m_pendingMap[entry->req->addr] = NULL;
+					miss( entry );
+				} else {
+					m_dbg.verbosePrefix(prefix(),CALL_INFO,2,CACHE_MASK,"blocked addr=%#" PRIx64 "\n",entry->req->addr);
+                    return true;
+				}
 			}
-			schedule();
+            return false;
 		}
 
 		void hit( Entry* entry ) {
-            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"addr=%#lx\n",entry->req->addr);
+            //m_dbg.verbosePrefix(prefix(),CALL_INFO,2,CACHE_MASK,"addr=%#" PRIx64 "\n",entry->req->addr);
 
 			decNumPending();
 
-            updateAge( entry->req->addr );
+            m_cache.updateAge( entry->req->addr );
 			if ( entry->callback ) {
-				m_model.schedCallback( 1, entry->callback );
+				m_model.schedCallback( 0, entry->callback );
+			}
+			if ( entry->req ) {
+				delete entry->req;
 			}
 			delete entry;
 		}
 
-		void setState( State state ) {
-			m_state = state;
-		}
-
 		bool blocked() {
-			return m_state != Idle; 
+		
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,2,CACHE_MASK,"memUnitBlocked=%d outOfMSHR=%d\n", 
+					m_blockedOnMemUnit, m_numIssuedLoads == m_numMSHR);
+			return m_blockedOnMemUnit || m_numIssuedLoads == m_numMSHR; 
 		}
 
 		void miss( Entry* entry ) {
 
-            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"addr=%#lx\n",entry->req->addr);
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,2,CACHE_MASK,"addr=%#" PRIx64 "\n",entry->req->addr);
 
-            if ( ! isPending(entry->req->addr) ) {
-				Hermes::Vaddr evictAddr = evict();
-           		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"evict addr=%#lx\n", evictAddr );
-
-				if ( m_memory->store( this, new MemReq( evictAddr, m_cacheLineSize ) ) ) {
-					m_missEntry = entry;
-					setState( BlockedStore );
-					return;
-				}
-			}
-			miss2( entry );
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,2,CACHE_MASK,"%p\n",entry);
+			Callback* cb = new Callback;
+			entry->addr = entry->req->addr;
+			entry->startTime = m_model.getCurrentSimTimeNano(); 
+			*cb = std::bind(&CacheUnit::loadDone, this, entry );
+		    m_blockedOnMemUnit = m_memory->load( this, entry->req, cb );
+                            
+            // Note that the load deletes the request, so the req pointer is no longer valid
+            entry->req=NULL;
+            assert( m_numIssuedLoads < m_numMSHR);
+		    ++m_numIssuedLoads;
 		}
 
-		void miss2( Entry* entry ) {
-
-            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"addr=%#lx\n",entry->req->addr);
-			if ( entry->op == Entry::Store ) {
-				store( entry );
+		void loadDone( Entry* entry ){
+			if ( m_blockedOnMemUnit ) {
+				m_blockedDone.push( entry );
 			} else {
-				load( entry );
-			}
-			m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"state=%d blocked=%lu\n", m_state, m_blockedQ.size());
+				loadDone2( entry );
+				schedule();
+			}  
 		}
 
-		void store( Entry *entry ) {
-            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"addr=%#lx\n",entry->req->addr);
-			decNumPending();
-            if ( ! isPending(entry->req->addr) ) {
-				insert( entry->req->addr );
-			}
-			if ( entry->callback ) {
-				m_model.schedCallback( 1, entry->callback );
-			}
-			m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"state=%d blocked=%lu\n", m_state, m_blockedQ.size());
-			delete entry;
-		}
-
-		void load( Entry *entry ) {
-            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"addr=%#lx numIssued=%d\n",entry->req->addr, m_numIssuedLoads);
-
-			if ( m_numIssuedLoads == m_numMSHR ) {
-            	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"addr=%#lx blocked MSHR\n",entry->req->addr);
-				m_mshrEntry = entry;
-				setState( BlockedMSHR );
-				return;
-			}
-			++m_numIssuedLoads;
-
-           	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"addr=%#lx issue load\n",entry->req->addr);
-			MemReq* req = new MemReq( entry->req->addr, m_cacheLineSize );
-			if ( m_memory->load( this, req, std::bind(&CacheUnit::loadDone, this, entry->req->addr, m_model.getCurrentSimTimeNano() ) ) ) {
-				setState( BlockedLoad );
-			}else{
-				m_state = Idle;
-			}
-
-       		m_pendingMap[entry->req->addr].push_back( entry );
-
-			m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"state=%d blocked=%lu\n", m_state, m_blockedQ.size());
-		}
-
-		void loadDone( Hermes::Vaddr addr, SimTime_t startTime )
+		void loadDone2( Entry* entry )
 		{
-   			m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"addr=%#lx latency=%lu numIssued=%d\n",
-							addr,m_model.getCurrentSimTimeNano()-startTime, m_numIssuedLoads);
-			while ( ! m_pendingMap[addr].empty() ) {
-				decNumPending();
-				if ( m_pendingMap[addr].front()->callback ) {
-					m_model.schedCallback( 1, m_pendingMap[addr].front()->callback );
+			Hermes::Vaddr addr = entry->addr;	
+   			m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"done, op=%s addr=%#" PRIx64 " latency=%" PRIu64 " numIssued=%d\n",
+                            entry->op == Entry::Load ? "load" : "store",                            
+							addr,m_model.getCurrentSimTimeNano()- entry->startTime, m_numIssuedLoads);
+
+			Hermes::Vaddr evictAddr = m_cache.evict();
+
+			MemReq* req = new MemReq( evictAddr, m_cacheLineSize );
+			m_blockedOnMemUnit = m_memory->store( this, req );
+
+			if ( entry->callback ) {
+                m_model.schedCallback( 0, entry->callback );
+			}
+			decNumPending();
+			if ( m_pendingMap[addr] ) {
+				while ( ! m_pendingMap[addr]->empty() ) {
+   			    	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"done addr=%#" PRIx64 "\n", addr);
+					decNumPending();
+					if ( m_pendingMap[addr]->front()->callback ) {
+						m_model.schedCallback( 0, m_pendingMap[addr]->front()->callback );
+					}
+					if ( m_pendingMap[addr]->front()->req ) {
+						delete m_pendingMap[addr]->front()->req;
+					}
+					delete m_pendingMap[addr]->front();
+					m_pendingMap[addr]->pop();
 				}
-				delete m_pendingMap[addr].front();
-				m_pendingMap[addr].pop_front();
+				m_qHeap.free( m_pendingMap[addr] );
 			}
 			m_pendingMap.erase( addr );
+			if ( entry->req ) {
+				delete entry->req;
+			}
+			delete entry;
 
-			insert( addr );
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,2,CACHE_MASK,"insert addr=%#" PRIx64 "\n",addr);
+			m_cache.insert( addr );
 
 			--m_numIssuedLoads;
-
-			if ( BlockedMSHR == m_state ) {
-				assert( m_mshrEntry );
-				m_state = Idle;
-				load( m_mshrEntry );		
-				m_mshrEntry = NULL;
-			}
-
-			schedule();
 		}
 
 		void schedule() {
-			if ( ! m_scheduled && Idle == m_state && ! m_blockedQ.empty() ) {
-            	m_model.schedCallback( 1, std::bind( &CacheUnit::checkHit2, this ) );
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,2,CACHE_MASK,"scheduled=%d blocked=%d numBlocked=%zu`\n",
+                    m_scheduled, blocked(), m_blockedQ.size());
+			if ( ! m_scheduled && ! blocked() && ! m_blockedQ.empty() ) {
+                m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"scheduled checkHitRetry addr=%#" PRIx64 "\n", 
+										m_blockedQ.front()->req->addr);
+				Callback* cb = new Callback;
+				*cb = std::bind( &CacheUnit::checkHitRetry, this );
+            	m_model.schedCallback( 0, cb );
 				m_scheduled = true;
 			}
 		}
 
+		void incNumPending() {
+			++m_numPending;
+			assert( m_numPending <= m_qSize ); 
+         	m_dbg.verbosePrefix(prefix(),CALL_INFO,2,CACHE_MASK,"numPending=%d\n",m_numPending);
+        }
 		void decNumPending() {
 			assert(m_numPending);
 			--m_numPending;
+			assert( m_numPending >=0 ); 
+         	m_dbg.verbosePrefix(prefix(),CALL_INFO,2,CACHE_MASK,"numPending=%d\n",m_numPending);
 			if ( m_blockedSrc ) { 
-           		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"unblock src\n");
-               	m_model.schedResume( 1, m_blockedSrc );
+           		m_dbg.verbosePrefix(prefix(),CALL_INFO,2,CACHE_MASK,"unblock src schedResume\n");
+               	m_model.schedResume( 0, m_blockedSrc );
                	m_blockedSrc = NULL;
 			} 
 		}
@@ -275,42 +288,10 @@
             return m_pendingMap.find(addr) != m_pendingMap.end();
         }
 
-        bool isValid( Hermes::Vaddr addr ) {
-            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK," addr=%#lx %s mapSize=%lu\n",
-					addr, m_addrMap.find(addr) != m_addrMap.end() ? "True":"False",m_addrMap.size());
-            return m_addrMap.find(addr) != m_addrMap.end();
-        }
-
-        void updateAge( Hermes::Vaddr addr ) {
-            //m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK," addr=%#lx %p\n",addr, m_addrMap[addr]);
-
-            m_ageList.move_to_back( m_addrMap[addr] );
-            m_addrMap[addr] = m_ageList.end();
-        }
-
-        Hermes::Vaddr evict() {
-
-            Hermes::Vaddr addr = m_ageList.get_front_value();
-            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK," addr=%#lx ptr=%p mapSize=%lu\n", addr, m_addrMap[ addr ], m_addrMap.size() );
-
-            m_addrMap.erase( addr );
-            m_ageList.pop_front();
-			return addr;
-        }
-
-        void insert( Hermes::Vaddr addr ) {
-            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK," addr=%#lx mapSize=%lu\n",addr, m_addrMap.size());
-            assert( m_addrMap.find(addr) == m_addrMap.end() );
-			assert( m_addrMap.size() < m_size );
-            m_ageList.push_back( addr );
-            m_addrMap[addr] = m_ageList.end();
-        }
-
 		int m_cacheLineSize;
-        int m_size;
         Unit* m_memory;
+        Cache m_cache;
 
-        std::map<Hermes::Vaddr, std::deque<Entry*> > m_pendingMap;
-        List<Hermes::Vaddr> m_ageList;
-        std::map<Hermes::Vaddr, List<Hermes::Vaddr>::Entry > m_addrMap;
+        std::map<Hermes::Vaddr, std::queue<Entry*>* > m_pendingMap;
+		ThingHeap<std::queue<Entry*>> m_qHeap;
     };

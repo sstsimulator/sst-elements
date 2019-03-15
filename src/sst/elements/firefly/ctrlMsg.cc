@@ -1,8 +1,8 @@
-// Copyright 2013-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2017, Sandia Corporation
+// Copyright (c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -38,7 +38,7 @@ API::API( Component* owner, Params& params ) :
         m_dbg_mask,
         Output::STDOUT );
 
-    m_processQueuesState = new ProcessQueuesState( owner, params );
+    m_processQueuesState = dynamic_cast<ProcessQueuesState*>( owner->loadSubComponent( "firefly.ctrlMsg", owner, params) );
 
     m_mem = new Memory( owner, params );
     static_cast<Memory*>(m_mem)->setOutput( &m_dbg );
@@ -109,7 +109,7 @@ void API::sendv_common( std::vector<IoVec>& ioVec,
     MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
     MP::Communicator group, CommReq* commReq )
 {
-    m_dbg.verbose(CALL_INFO,1,1,"dest=%#x tag=%#x length=%lu \n",
+    m_dbg.debug(CALL_INFO,1,1,"dest=%#x tag=%#x length=%lu \n",
                                         dest, tag, calcLength(ioVec) );
 
     _CommReq* req;
@@ -175,7 +175,7 @@ void API::recvv_common( std::vector<IoVec>& ioVec,
     MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
     MP::Communicator group, CommReq* commReq )
 {
-    m_dbg.verbose(CALL_INFO,1,1,"src=%#x tag=%#x length=%lu\n",
+    m_dbg.debug(CALL_INFO,1,1,"src=%#x tag=%#x length=%lu\n",
                                         src, tag, calcLength(ioVec) );
 
     _CommReq* req;
@@ -255,7 +255,7 @@ void API::send( const Hermes::MemAddr& buf, uint32_t count,
         MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
         MP::Communicator group )
 {
-    m_dbg.verbose(CALL_INFO,1,1,"count=%d dest=%d tag=%#x\n",count,dest,tag);
+    m_dbg.debug(CALL_INFO,1,1,"count=%d dest=%d tag=%#x\n",count,dest,tag);
 
     m_processQueuesState->enterSend( new _CommReq( _CommReq::Send, buf, count,
             m_info->sizeofDataType( dtype), dest, tag, group ) );
@@ -267,7 +267,7 @@ void API::isend( const Hermes::MemAddr& buf, uint32_t count,
 {
     *req = new _CommReq( _CommReq::Isend, buf, count,
                         m_info->sizeofDataType(dtype) , dest, tag, group );
-    m_dbg.verbose(CALL_INFO,1,1,"%p\n",*req);
+    m_dbg.debug(CALL_INFO,1,1,"%p\n",*req);
     m_processQueuesState->enterSend( static_cast<_CommReq*>(*req) );
 }
 
@@ -275,7 +275,7 @@ void API::recv( const Hermes::MemAddr& buf, uint32_t count,
         MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
         MP::Communicator group, MP::MessageResponse* resp )
 {
-    m_dbg.verbose(CALL_INFO,1,1,"count=%d src=%d tag=%#x\n",count,src,tag);
+    m_dbg.debug(CALL_INFO,1,1,"count=%d src=%d tag=%#x\n",count,src,tag);
     m_processQueuesState->enterRecv( new _CommReq( _CommReq::Recv, buf, count,
             m_info->sizeofDataType(dtype), src, tag, group, resp ) );
 }
@@ -284,7 +284,7 @@ void API::irecv( const Hermes::MemAddr& buf, uint32_t count,
         MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
         MP::Communicator group, MP::MessageRequest* req )
 {
-    m_dbg.verbose(CALL_INFO,1,1,"count=%d src=%d tag=%#x\n",count,src,tag);
+    m_dbg.debug(CALL_INFO,1,1,"count=%d src=%d tag=%#x\n",count,src,tag);
     *req = new _CommReq( _CommReq::Irecv, buf, count,
                             m_info->sizeofDataType(dtype), src, tag, group );
     m_processQueuesState->enterRecv( static_cast<_CommReq*>(*req) );
@@ -293,21 +293,21 @@ void API::irecv( const Hermes::MemAddr& buf, uint32_t count,
 
 void API::wait( MP::MessageRequest req, MP::MessageResponse* resp )
 {
-    m_dbg.verbose(CALL_INFO,1,1,"\n");
+    m_dbg.debug(CALL_INFO,1,1,"\n");
     m_processQueuesState->enterWait( new WaitReq( req, resp ) );
 }
 
 void API::waitAny( int count, MP::MessageRequest req[], int *index,
        	MP::MessageResponse* resp )
 {
-    m_dbg.verbose(CALL_INFO,1,1,"\n");
+    m_dbg.debug(CALL_INFO,1,1,"\n");
     m_processQueuesState->enterWait( new WaitReq( count, req, index, resp ) );
 }
 
 void API::waitAll( int count, MP::MessageRequest req[],
         MP::MessageResponse* resp[] )
 {
-    m_dbg.verbose(CALL_INFO,1,1,"\n");
+    m_dbg.debug(CALL_INFO,1,1,"\n");
     m_processQueuesState->enterWait( new WaitReq( count, req, resp ) );    
 }
 
@@ -315,7 +315,7 @@ void API::waitAll( int count, MP::MessageRequest req[],
 
 bool API::notifyGetDone( void* key )
 {
-    m_dbg.verbose(CALL_INFO,1,1,"key=%p\n",key);
+    m_dbg.debug(CALL_INFO,1,1,"key=%p\n",key);
 
     if ( key ) {
         Callback* callback = static_cast<Callback*>(key);
@@ -328,7 +328,7 @@ bool API::notifyGetDone( void* key )
 
 bool API::notifySendPioDone( void* key )
 {
-    m_dbg.verbose(CALL_INFO,2,1,"key=%p\n",key);
+    m_dbg.debug(CALL_INFO,2,1,"key=%p\n",key);
 
     if ( key ) {
         Callback* callback = static_cast<Callback*>(key);
@@ -341,7 +341,7 @@ bool API::notifySendPioDone( void* key )
 
 bool API::notifyRecvDmaDone( int nid, int tag, size_t len, void* key )
 {
-    m_dbg.verbose(CALL_INFO,1,1,"src=%#x tag=%#x len=%lu key=%p\n",
+    m_dbg.debug(CALL_INFO,1,1,"src=%#x tag=%#x len=%lu key=%p\n",
                                                     nid,tag,len,key);
     if ( key ) {
         Callback2* callback = static_cast<Callback2*>(key);
@@ -355,7 +355,7 @@ bool API::notifyRecvDmaDone( int nid, int tag, size_t len, void* key )
 bool API::notifyNeedRecv(int nid, size_t len )
 {
 
-    m_dbg.verbose(CALL_INFO,1,1,"src=%#x len=%lu\n",nid,len);
+    m_dbg.debug(CALL_INFO,1,1,"src=%#x len=%lu\n",nid,len);
     m_processQueuesState->needRecv( nid, len );
 
     return true;

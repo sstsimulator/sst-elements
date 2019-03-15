@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -50,11 +50,16 @@ void SingleThread::eventHandler( SST::Event* ev )
 }
 
 void SingleThread::start( const std::deque< std::pair< std::string, SST::Params> >& generators,
-                 std::function<int()> finiHandler )
+                 std::function<int()> retHandler, std::function<int()> finiHandler )
 {
     MirandaReqEvent* event = new MirandaReqEvent;
 	
-	event->key = (uint64_t) new Entry( finiHandler );
+	if ( finiHandler ) {
+		retHandler();
+		event->key = (uint64_t) new Entry( finiHandler );
+	} else {	
+		event->key = (uint64_t) new Entry( retHandler );
+	}
 
 	event->generators = generators;
 

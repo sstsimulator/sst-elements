@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
+// Copyright 2009-2018 NTESS. Under the terms
 
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -18,6 +18,7 @@
 
 #include "embergen.h"
 
+#include <sst/core/elementinfo.h>
 #include <sst/elements/hermes/shmemapi.h>
 
 #include "embergettimeev.h"
@@ -46,6 +47,9 @@
 #include "emberShmemSwapEv.h"
 #include "emberShmemFaddEv.h"
 #include "emberShmemAddEv.h"
+
+#include "emberFamGetNB_Ev.h"
+#include "emberFamAddEv.h"
 
 using namespace Hermes;
 
@@ -97,6 +101,12 @@ protected:
     inline void enQ_alltoalls64( Queue&, Hermes::MemAddr dest, Hermes::MemAddr src, int dst,
             int sst, size_t nelmes, int PE_start, int logPE_stride, int PE_size, Hermes::MemAddr );
 
+
+    inline void enQ_fam_initialize( Queue&, std::string groupName );
+    inline void enQ_fam_get_nonblocking( Queue&, Hermes::MemAddr, Shmem::Fam_Region_Descriptor rd, uint64_t offset, uint64_t nbytes );
+	template <class TYPE>
+	inline void enQ_fam_add( Queue&, uint64_t offset, TYPE* );
+
 #define declareOp( type, op) \
     inline void enQ_##type##_##op##_to_all( Queue&, Hermes::MemAddr dest, Hermes::MemAddr src, int nelmes, \
             int PE_start, int logPE_stride, int PE_size, Hermes::MemAddr pSync );\
@@ -142,6 +152,8 @@ protected:
 
     inline void enQ_get( Queue&, Hermes::MemAddr dest, Hermes::MemAddr src, size_t length, int pe );
     inline void enQ_put( Queue&, Hermes::MemAddr dest, Hermes::MemAddr src, size_t length, int pe );
+    inline void enQ_get_nbi( Queue&, Hermes::MemAddr dest, Hermes::MemAddr src, size_t length, int pe );
+    inline void enQ_put_nbi( Queue&, Hermes::MemAddr dest, Hermes::MemAddr src, size_t length, int pe );
 
     template <class TYPE>
     inline void enQ_add( Queue&, Hermes::MemAddr, TYPE*, int pe );
@@ -160,6 +172,23 @@ private:
 static inline Hermes::Shmem::Interface* shmem_cast( Hermes::Interface *in )
 {
     return static_cast<Hermes::Shmem::Interface*>(in);
+}
+
+void EmberShmemGenerator::enQ_fam_initialize( Queue& q, std::string groupName ) {
+    verbose(CALL_INFO,2,0,"\n");
+	enQ_init(q);
+}
+
+template <class TYPE>
+void EmberShmemGenerator::enQ_fam_add( Queue& q, uint64_t offset, TYPE* value )
+{
+    verbose(CALL_INFO,2,0,"\n");
+    q.push( new EmberFamAddEvent( *shmem_cast(m_api), &getOutput(), offset, Hermes::Value(value) ) );
+}
+
+void EmberShmemGenerator::enQ_fam_get_nonblocking( Queue& q, Hermes::MemAddr dest, Shmem::Fam_Region_Descriptor rd, uint64_t offset, uint64_t nbytes ){
+    verbose(CALL_INFO,2,0,"\n");
+    q.push( new EmberFamGetNB_Event( *shmem_cast(m_api), &getOutput(), dest.getSimVAddr(), rd, offset, nbytes ) );
 }
 
 void EmberShmemGenerator::enQ_getTime( Queue& q, uint64_t* time )
@@ -358,7 +387,15 @@ void EmberShmemGenerator::enQ_get( Queue& q, Hermes::MemAddr dest,
 {
     verbose(CALL_INFO,2,0,"\n");
     q.push( new EmberGetShmemEvent( *shmem_cast(m_api), &getOutput(),  
-                dest.getSimVAddr(), src.getSimVAddr(), length, pe ) );
+                dest.getSimVAddr(), src.getSimVAddr(), length, pe, true ) );
+}
+
+void EmberShmemGenerator::enQ_get_nbi( Queue& q, Hermes::MemAddr dest, 
+        Hermes::MemAddr src, size_t length, int pe )
+{
+    verbose(CALL_INFO,2,0,"\n");
+    q.push( new EmberGetShmemEvent( *shmem_cast(m_api), &getOutput(),  
+                dest.getSimVAddr(), src.getSimVAddr(), length, pe, false ) );
 }
 
 template <class TYPE>
@@ -375,7 +412,15 @@ void EmberShmemGenerator::enQ_put( Queue& q, Hermes::MemAddr dest,
 {
     verbose(CALL_INFO,2,0,"\n");
     q.push( new EmberPutShmemEvent( *shmem_cast(m_api), &getOutput(),  
-                dest.getSimVAddr(), src.getSimVAddr(), length, pe ) );
+                dest.getSimVAddr(), src.getSimVAddr(), length, pe, true ) );
+}
+
+void EmberShmemGenerator::enQ_put_nbi( Queue& q, Hermes::MemAddr dest, 
+        Hermes::MemAddr src, size_t length, int pe )
+{
+    verbose(CALL_INFO,2,0,"\n");
+    q.push( new EmberPutShmemEvent( *shmem_cast(m_api), &getOutput(),  
+                dest.getSimVAddr(), src.getSimVAddr(), length, pe, false ) );
 }
 
 template <class TYPE>

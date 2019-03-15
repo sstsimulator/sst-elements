@@ -1,8 +1,8 @@
-// Copyright 2013-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2017, Sandia Corporation
+// Copyright (c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -36,6 +36,17 @@ namespace Firefly {
 
 class AlltoallvFuncSM :  public FunctionSMInterface
 {
+  public:
+    SST_ELI_REGISTER_MODULE(
+        AlltoallvFuncSM,
+        "firefly",
+        "Alltoallv",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "",
+        ""
+    )
+  private:
+
     enum StateEnum {
          FOREACH_ENUM(GENERATE_ENUM)
     } m_state;
@@ -74,7 +85,7 @@ class AlltoallvFuncSM :  public FunctionSMInterface
         } else {
             ptr += rank * sendChunkSize( rank );
         }
-        m_dbg.verbose(CALL_INFO,2,0,"rank %d, buf %p, ptr %p\n", rank, 
+        m_dbg.debug(CALL_INFO,2,0,"rank %d, buf %p, ptr %p\n", rank, 
                                     &m_event->sendbuf,ptr);
 
         return ptr;
@@ -89,7 +100,7 @@ class AlltoallvFuncSM :  public FunctionSMInterface
             size = m_info->sizeofDataType( m_event->sendtype ) *
                                                 m_event->sendcnt;
         }
-        m_dbg.verbose(CALL_INFO,2,0,"rank %d, size %lu\n",rank,size);
+        m_dbg.debug(CALL_INFO,2,0,"rank %d, size %lu\n",rank,size);
         return size;
     }
 
@@ -101,7 +112,7 @@ class AlltoallvFuncSM :  public FunctionSMInterface
         } else {
             ptr += rank * recvChunkSize( rank );
         }
-        m_dbg.verbose(CALL_INFO,2,0,"rank %d, buf %p, ptr %p\n", rank, 
+        m_dbg.debug(CALL_INFO,2,0,"rank %d, buf %p, ptr %p\n", rank, 
                     &m_event->recvbuf, ptr);
 
         return ptr;
@@ -116,7 +127,7 @@ class AlltoallvFuncSM :  public FunctionSMInterface
             size = m_info->sizeofDataType( m_event->recvtype ) *
                                                 m_event->recvcnt;
         }
-        m_dbg.verbose(CALL_INFO,2,0,"rank %d, size %lu\n",rank,size);
+        m_dbg.debug(CALL_INFO,2,0,"rank %d, size %lu\n",rank,size);
         return size;
     }
 

@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -23,30 +23,30 @@ EmberHalo3DGenerator::EmberHalo3DGenerator(SST::Component* owner, Params& params
 	EmberMessagePassingGenerator(owner, params, "Halo3D"), 
 	m_loopIndex(0)
 {
-	nx  = (uint32_t) params.find("arg.nx", 100);
-	ny  = (uint32_t) params.find("arg.ny", 100);
-	nz  = (uint32_t) params.find("arg.nz", 100);
+	nx  = params.find<uint32_t>("arg.nx", 100);
+	ny  = params.find<uint32_t>("arg.ny", 100);
+	nz  = params.find<uint32_t>("arg.nz", 100);
 
-	peX = (uint32_t) params.find("arg.pex", 0);
-	peY = (uint32_t) params.find("arg.pey", 0);
-	peZ = (uint32_t) params.find("arg.pez", 0);
+	peX = params.find<uint32_t>("arg.pex", 0);
+	peY = params.find<uint32_t>("arg.pey", 0);
+	peZ = params.find<uint32_t>("arg.pez", 0);
 
-	items_per_cell = (uint32_t) params.find("arg.fields_per_cell", 1);
-	performReduction = (params.find("arg.doreduce", 1) == 1);
-	sizeof_cell = (uint32_t) params.find("arg.datatype_width", 8);
+	items_per_cell = params.find<uint32_t>("arg.fields_per_cell", 1);
+	performReduction = (params.find<int>("arg.doreduce", 1) == 1);
+	sizeof_cell = params.find<uint32_t>("arg.datatype_width", 8);
 
-	uint64_t pe_flops = (uint64_t) params.find("arg.peflops", 10000000000);
-	uint64_t flops_per_cell = (uint64_t) params.find("arg.flopspercell", 26);
+	uint64_t pe_flops = params.find<uint64_t>("arg.peflops", 10000000000);
+	uint64_t flops_per_cell = params.find<uint64_t>("arg.flopspercell", 26);
 
 	const uint64_t total_grid_points = (uint64_t) (nx * ny * nz);
 	const uint64_t total_flops       = total_grid_points * ((uint64_t) items_per_cell) * ((uint64_t) flops_per_cell);
 
 	// Converts FLOP/s into nano seconds of compute
 	const double compute_seconds = ( (double) total_flops / ( (double) pe_flops / 1000000000.0 ) );
-	nsCompute  = (uint64_t) params.find("arg.computetime", (uint64_t) compute_seconds);
-	nsCopyTime = (uint32_t) params.find("arg.copytime", 0);
+	nsCompute  = params.find<uint64_t>("arg.computetime", (uint64_t) compute_seconds);
+	nsCopyTime = params.find<uint32_t>("arg.copytime", 0);
 
-	iterations = (uint32_t) params.find("arg.iterations", 1);
+	iterations = params.find<uint32_t>("arg.iterations", 1);
 
 	x_down = -1;
 	x_up   = -1;
@@ -55,7 +55,7 @@ EmberHalo3DGenerator::EmberHalo3DGenerator(SST::Component* owner, Params& params
 	z_down = -1;
 	z_up   = -1;
 
-    jobId        = (int) params.find<int>("_jobId"); //NetworkSim
+    jobId        = params.find<int>("_jobId"); //NetworkSim
 
 	configure();
 }

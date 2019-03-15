@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -24,7 +24,7 @@
 #ifndef _H_SST_MEMH_HBM_DRAMSIM_BACKEND
 #define _H_SST_MEMH_HBM_DRAMSIM_BACKEND
 
-#include "membackend/memBackend.h"
+#include "sst/elements/memHierarchy/membackend/memBackend.h"
 
 #ifdef DEBUG
 #define OLD_DEBUG DEBUG
@@ -85,7 +85,7 @@ public:
 protected:
     void dramSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle);
 
-    DRAMSim::MultiChannelMemorySystem *memSystem;
+    HBMDRAMSim::MultiChannelMemorySystem *memSystem;
     std::map<uint64_t, std::deque<ReqId> > dramReqs;
 };
 

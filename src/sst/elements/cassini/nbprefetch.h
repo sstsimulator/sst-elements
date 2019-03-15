@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -26,6 +26,7 @@
 #include <sst/core/timeConverter.h>
 #include <sst/elements/memHierarchy/memEvent.h>
 #include <sst/elements/memHierarchy/cacheListener.h>
+#include <sst/core/elementinfo.h>
 
 using namespace SST;
 using namespace SST::MemHierarchy;
@@ -35,21 +36,40 @@ namespace SST {
 namespace Cassini {
 
 class NextBlockPrefetcher : public SST::MemHierarchy::CacheListener {
-    public:
-	NextBlockPrefetcher(Component* owner, Params& params);
-        ~NextBlockPrefetcher();
+public:
+    NextBlockPrefetcher(Component* owner, Params& params);
+    ~NextBlockPrefetcher();
 
-	void notifyAccess(const CacheListenerNotification& notify);
-	void registerResponseCallback(Event::HandlerBase *handler);
-	void printStats(Output& out);
+    void notifyAccess(const CacheListenerNotification& notify);
+    void registerResponseCallback(Event::HandlerBase *handler);
+    void printStats(Output& out);
 
-    private:
-	std::vector<Event::HandlerBase*> registeredCallbacks;
-	uint64_t blockSize;
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        NextBlockPrefetcher,
+        "cassini",
+        "NextBlockPrefetcher",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Next Block Prefetcher",
+        "SST::Cassini::CacheListener"
+    )
 
-	Statistic<uint64_t>* statPrefetchEventsIssued;
-	Statistic<uint64_t>* statMissEventsProcessed;
-	Statistic<uint64_t>* statHitEventsProcessed;
+    SST_ELI_DOCUMENT_PARAMS(
+        { "cache_line_size", "Size of the cache line the prefetcher is attached to", "64" }
+    )
+
+    SST_ELI_DOCUMENT_STATISTICS(
+        { "prefetches_issued", "Number of prefetch requests issued", "prefetches", 1 },
+        { "miss_events_processed", "Number of cache misses received", "misses", 2 },
+        { "hit_events_processed", "Number of cache hits received", "hits", 2 }
+    )
+
+private:
+    std::vector<Event::HandlerBase*> registeredCallbacks;
+    uint64_t blockSize;
+
+    Statistic<uint64_t>* statPrefetchEventsIssued;
+    Statistic<uint64_t>* statMissEventsProcessed;
+    Statistic<uint64_t>* statHitEventsProcessed;
 
 };
 

@@ -1,8 +1,8 @@
-// Copyright 2013-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2017, Sandia Corporation
+// Copyright (c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -27,6 +27,7 @@ class MapBase {
   public:
     virtual ~MapBase() {}
     virtual int getSize() = 0;
+    virtual void initMapping( int size ) {} 
     virtual void initMapping( int from, int to, int range ) {} 
     virtual void initMapping( const int* map, int size, int numCores ) {} 
     virtual int getMapping( int from ) = 0;
@@ -98,10 +99,8 @@ class IdentityGroup : public Group
 
     int getSize() { return m_size; }
 
-    void initMapping( int from, int to, int range ) {
-        assert( from == to ); 
-        assert( 0 == m_size );
-        m_size = range; 
+    void initMapping( int size ) {
+        m_size = size; 
     }
 
     int getMapping( int from ) { return from; }

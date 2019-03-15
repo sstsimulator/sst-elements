@@ -1,8 +1,8 @@
-// Copyright 2013-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2017, Sandia Corporation
+// Copyright (c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -25,13 +25,22 @@ namespace Firefly {
 class SizeFuncSM :  public FunctionSMInterface
 {
   public:
+    SST_ELI_REGISTER_MODULE(
+        SizeFuncSM,
+        "firefly",
+        "Size",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "",
+        ""
+    )
+  public:
     SizeFuncSM( SST::Params& params ) : FunctionSMInterface( params ) {}
 
     virtual void handleStartEvent( SST::Event *e, Retval& retval ) {
 
         SizeStartEvent* event = static_cast< SizeStartEvent* >(e);
 
-        m_dbg.verbose(CALL_INFO,1,0,"group=%d\n",event->group);
+        m_dbg.debug(CALL_INFO,1,0,"group=%d\n",event->group);
 
         assert( m_info->getGroup(event->group) );
         *event->size = m_info->getGroup(event->group)->getSize();

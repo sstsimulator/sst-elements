@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 // 
 // Portions are copyright of other developers:
@@ -38,6 +38,13 @@
 #include "allocators/OctetMBSAllocator.h"
 #include "allocators/BestFitAllocator.h"
 #include "allocators/ConstraintAllocator.h"
+#include "allocators/DflyHybridAllocator.h"
+#include "allocators/DflyJokanovicAllocator.h"
+#include "allocators/DflyRDGAllocator.h"
+#include "allocators/DflyRDRAllocator.h"
+#include "allocators/DflyRRNAllocator.h"
+#include "allocators/DflyRRRAllocator.h"
+#include "allocators/DflySlurmAllocator.h"
 #include "allocators/EnergyAllocator.h"
 #include "allocators/FirstFitAllocator.h"
 #include "allocators/GranularMBSAllocator.h"
@@ -105,6 +112,13 @@ const Factory::allocTableEntry Factory::allocTable[] = {
     {NEARESTAMAP, "nearestamap"},
     {SPECTRALAMAP, "spectralamap"},
     {SIMPLESPREAD, "simplespread"},
+    {DFLYHYBRID, "dflyhybrid"},
+    {DFLYJOKANOVIC, "dflyjokanovic"},
+    {DFLYRDR, "dflyrdr"},
+    {DFLYRDG, "dflyrdg"},
+    {DFLYRRN, "dflyrrn"},
+    {DFLYRRR, "dflyrrr"},
+    {DFLYSLURM, "dflyslurm"},
 };
 
 const Factory::taskMapTableEntry Factory::taskMapTable[] = {
@@ -485,6 +499,76 @@ Allocator* Factory::getAllocator(SST::Params& params, Machine* m, schedComponent
                     schedout.fatal(CALL_INFO, 1, "Simple Spread allocator requires dragonfly machine\n");
                 } else {
                     return new SimpleSpreadAllocator(*dMachine);
+                }
+                break;
+            }
+        case DFLYHYBRID:
+            {
+                DragonflyMachine *dMachine = dynamic_cast<DragonflyMachine*>(m);
+                if (dMachine == NULL) {
+                    schedout.fatal(CALL_INFO, 1, "Dragonfly Hybrid allocator requires dragonfly machine\n");
+                } else {
+                    return new DflyHybridAllocator(*dMachine);
+                }
+                break;
+            }
+        case DFLYJOKANOVIC:
+            {
+                DragonflyMachine *dMachine = dynamic_cast<DragonflyMachine*>(m);
+                if (dMachine == NULL) {
+                    schedout.fatal(CALL_INFO, 1, "Dragonfly Jokanovic allocator requires dragonfly machine\n");
+                } else {
+                    return new DflyJokanovicAllocator(*dMachine);
+                }
+                break;
+            }
+        case DFLYRDR:
+            {
+                DragonflyMachine *dMachine = dynamic_cast<DragonflyMachine*>(m);
+                if (dMachine == NULL) {
+                    schedout.fatal(CALL_INFO, 1, "Dragonfly Random Router allocator requires dragonfly machine\n");
+                } else {
+                    return new DflyRDRAllocator(*dMachine);
+                }
+                break;
+            }
+        case DFLYRDG:
+            {
+                DragonflyMachine *dMachine = dynamic_cast<DragonflyMachine*>(m);
+                if (dMachine == NULL) {
+                    schedout.fatal(CALL_INFO, 1, "Dragonfly Random Group allocator requires dragonfly machine\n");
+                } else {
+                    return new DflyRDGAllocator(*dMachine);
+                }
+                break;
+            }
+        case DFLYRRN:
+            {
+                DragonflyMachine *dMachine = dynamic_cast<DragonflyMachine*>(m);
+                if (dMachine == NULL) {
+                    schedout.fatal(CALL_INFO, 1, "Dragonfly Round Robin Nodes allocator requires dragonfly machine\n");
+                } else {
+                    return new DflyRRNAllocator(*dMachine);
+                }
+                break;
+            }
+        case DFLYRRR:
+            {
+                DragonflyMachine *dMachine = dynamic_cast<DragonflyMachine*>(m);
+                if (dMachine == NULL) {
+                    schedout.fatal(CALL_INFO, 1, "Dragonfly Round Robin Routers allocator requires dragonfly machine\n");
+                } else {
+                    return new DflyRRRAllocator(*dMachine);
+                }
+                break;
+            }
+        case DFLYSLURM:
+            {
+                DragonflyMachine *dMachine = dynamic_cast<DragonflyMachine*>(m);
+                if (dMachine == NULL) {
+                    schedout.fatal(CALL_INFO, 1, "Dragonfly Slurm allocator requires dragonfly machine\n");
+                } else {
+                    return new DflySlurmAllocator(*dMachine);
                 }
                 break;
             }

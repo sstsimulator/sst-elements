@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 // 
 // Portions are copyright of other developers:
@@ -65,10 +65,20 @@ CacheAction L1IncoherentController::handleEviction(CacheLine* wbCacheLine, strin
                 sendWriteback(Command::PutE, wbCacheLine, origRqstr);
             }
             wbCacheLine->setState(I);
+            wbCacheLine->atomicEnd();
+            if (wbCacheLine->getPrefetch()) {
+                statPrefetchEvict->addData(1);
+                wbCacheLine->setPrefetch(false);
+            }
             return DONE;
         case M:
             sendWriteback(Command::PutM, wbCacheLine, origRqstr);
             wbCacheLine->setState(I);
+            wbCacheLine->atomicEnd();
+            if (wbCacheLine->getPrefetch()) {
+                statPrefetchEvict->addData(1);
+                wbCacheLine->setPrefetch(false);
+            }
             return DONE;
         case IS:
         case IM:
@@ -147,7 +157,10 @@ CacheAction L1IncoherentController::handleResponse(MemEvent * respEvent, CacheLi
         case Command::FlushLineResp:
             recordStateEventCount(respEvent->getCmd(), cacheLine ? cacheLine->getState() : I);
             if (cacheLine && cacheLine->getState() == S_B) cacheLine->setState(E);
-            else if (cacheLine && cacheLine->getState() == I_B) cacheLine->setState(I);
+            else if (cacheLine && cacheLine->getState() == I_B){
+                cacheLine->setState(I);
+                cacheLine->atomicEnd();
+            }
             sendFlushResponse(reqEvent, respEvent->success(), timestamp_, true);
             break;
         default:
@@ -177,7 +190,7 @@ CacheAction L1IncoherentController::handleGetSRequest(MemEvent* event, CacheLine
     State state = cacheLine->getState();
     vector<uint8_t>* data = cacheLine->getData();
     
-    bool shouldRespond = !(event->isPrefetch() && (event->getRqstr() == parent->getName()));
+    bool localPrefetch = event->isPrefetch() && (event->getRqstr() == parent->getName());
     recordStateEventCount(event->getCmd(), state);
     
     uint64_t sendTime = 0;
@@ -191,7 +204,14 @@ CacheAction L1IncoherentController::handleGetSRequest(MemEvent* event, CacheLine
         case E:
         case M:
             notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
-            if (!shouldRespond) return DONE;
+            if (localPrefetch) {
+                statPrefetchRedundant->addData(1);
+                return DONE;
+            }
+            if (cacheLine->getPrefetch()) {
+                cacheLine->setPrefetch(false);
+                statPrefetchHit->addData(1);
+            }
             if (event->isLoadLink()) cacheLine->atomicStart();
             sendTime = sendResponseUp(event, data, replay, cacheLine->getTimestamp());
             cacheLine->setTimestamp(sendTime);
@@ -216,6 +236,8 @@ CacheAction L1IncoherentController::handleGetXRequest(MemEvent* event, CacheLine
     
     uint64_t sendTime = 0;
 
+    bool atomic = cacheLine->isAtomic();
+
     recordStateEventCount(event->getCmd(), state);
     switch (state) {
         case I:
@@ -226,11 +248,16 @@ CacheAction L1IncoherentController::handleGetXRequest(MemEvent* event, CacheLine
         case E:
             cacheLine->setState(M);
         case M:
+            if (cacheLine->getPrefetch()) {
+                cacheLine->setPrefetch(false);
+                statPrefetchHit->addData(1);
+            }
             if (cmd == Command::GetX) {
                 /* L1s write back immediately */
-                if (!event->isStoreConditional() || cacheLine->isAtomic()) {
+                if (!event->isStoreConditional() ||atomic) {
                     cacheLine->setData(event->getPayload(), event->getAddr() - event->getBaseAddr());
                 }
+                cacheLine->atomicEnd();
                 /* Handle GetX as unlock (store-unlock) */
                 if (event->queryFlag(MemEvent::F_LOCKED)) {
             	    if (!cacheLine->isLocked()) {  // Sanity check - can't unlock an already unlocked line 
@@ -244,7 +271,7 @@ CacheAction L1IncoherentController::handleGetXRequest(MemEvent* event, CacheLine
                 cacheLine->incLock(); 
             }
             
-            if (event->isStoreConditional()) sendTime = sendResponseUp(event, data, replay, cacheLine->getTimestamp(), cacheLine->isAtomic());
+            if (event->isStoreConditional()) sendTime = sendResponseUp(event, data, replay, cacheLine->getTimestamp(), atomic);
             else sendTime = sendResponseUp(event, data, replay, cacheLine->getTimestamp());
             cacheLine->setTimestamp(sendTime);
 
@@ -277,7 +304,7 @@ CacheAction L1IncoherentController::handleFlushLineRequest(MemEvent * event, Cac
     }
     
     forwardFlushLine(event->getBaseAddr(), Command::FlushLine, event->getRqstr(), cacheLine);
-    
+            
     if (cacheLine != NULL && state != I) cacheLine->setState(S_B);
     else if (cacheLine != NULL) cacheLine->setState(I_B);
     return STALL;   // wait for response
@@ -302,6 +329,12 @@ CacheAction L1IncoherentController::handleFlushLineInvRequest(MemEvent * event, 
     }
 
     forwardFlushLine(event->getBaseAddr(), Command::FlushLineInv, event->getRqstr(), cacheLine);
+    
+    if (cacheLine && cacheLine->getPrefetch()) {
+        cacheLine->setPrefetch(false);
+        statPrefetchEvict->addData(1);
+    }
+    
     if (cacheLine != NULL) cacheLine->setState(I_B);
     return STALL;   // wait for response
 }
@@ -310,7 +343,7 @@ CacheAction L1IncoherentController::handleFlushLineInvRequest(MemEvent * event, 
 void L1IncoherentController::handleDataResponse(MemEvent* responseEvent, CacheLine* cacheLine, MemEvent* origRequest){
     
     cacheLine->setData(responseEvent->getPayload(), 0);
-    bool shouldRespond = !(origRequest->isPrefetch() && (origRequest->getRqstr() == parent->getName()));
+    bool localPrefetch = origRequest->isPrefetch() && (origRequest->getRqstr() == parent->getName());
     
     State state = cacheLine->getState();
     recordStateEventCount(responseEvent->getCmd(), state);
@@ -322,7 +355,10 @@ void L1IncoherentController::handleDataResponse(MemEvent* responseEvent, CacheLi
         case IS:
             cacheLine->setState(E);
             notifyListenerOfAccess(origRequest, NotifyAccessType::READ, NotifyResultType::HIT);
-            if (!shouldRespond) break;
+            if (localPrefetch) {
+                cacheLine->setPrefetch(true);
+                break;
+            }
             if (origRequest->isLoadLink()) cacheLine->atomicStart();
             sendTime = sendResponseUp(origRequest, cacheLine->getData(), true, cacheLine->getTimestamp());
             cacheLine->setTimestamp(sendTime);

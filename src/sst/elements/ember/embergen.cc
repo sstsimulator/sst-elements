@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -30,6 +30,7 @@ EmberGenerator::EmberGenerator( Component* owner, Params& params,
     m_output = ee->getOutput();
     m_nodePerf = ee->getNodePerf();
     m_api = ee->getAPI( params.find<std::string>("_apiName") );
+    m_primary = params.find<bool>("primary",true);
 
     m_detailedCompute = ee->getDetailedCompute();
 	m_memHeapLink = ee->getMemHeapLink();
@@ -37,9 +38,7 @@ EmberGenerator::EmberGenerator( Component* owner, Params& params,
     m_motifNum = params.find<int>( "_motifNum", -1 );	
     m_jobId = params.find<int>( "_jobId", -1 );	
 
-    m_verbosePrefix << "@t:" << getJobId() << ":" << rank() << 
-						":EmberEngine:MPI:" << name << ":@p:@l: ";
-    //std::cout << "Job:" << getJobId() << " Rank:" << rank() << std::endl;//NetworkSim
+    setVerbosePrefix();
     
     Params distribParams = params.find_prefix_params("distribParams.");
     std::string distribModule = params.find<std::string>("distribModule",
@@ -53,6 +52,11 @@ EmberGenerator::EmberGenerator( Component* owner, Params& params,
                                     << distribModule << "\'" << std::endl;
         exit(-1);
     } 
+}
+
+EmberLib* EmberGenerator::getLib(std::string name )
+{
+    return static_cast<EmberEngine*>(parent)->getLib( name );
 }
 
 #if defined(__clang__)

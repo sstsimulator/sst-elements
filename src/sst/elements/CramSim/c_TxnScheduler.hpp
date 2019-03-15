@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -47,6 +47,26 @@ namespace SST {
 
         class c_TxnScheduler: public SubComponent{
         public:
+
+            SST_ELI_REGISTER_SUBCOMPONENT(
+                c_TxnScheduler,
+                "CramSim",
+                "c_TxnScheduler",
+                SST_ELI_ELEMENT_VERSION(1,0,0),
+                "Transaction Scheduler",
+                "SST::CramSim::Controller::TxnScheduler"
+            )
+
+            SST_ELI_DOCUMENT_PARAMS(
+                {"txnSchedulingPolicy", "Transaction scheduling policy", NULL},
+                {"numTxnQEntries", "The number of transaction queue entries", NULL},
+            )
+
+            SST_ELI_DOCUMENT_PORTS(
+            )
+
+            SST_ELI_DOCUMENT_STATISTICS(
+            )
 
             c_TxnScheduler(SST::Component *comp, SST::Params &x_params);
             ~c_TxnScheduler();

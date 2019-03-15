@@ -65,6 +65,8 @@ libmemHierarchy_la_SOURCES = \
 	memLink.cc \
 	memNIC.h \
 	memNIC.cc \
+	memNICFour.h \
+	memNICFour.cc \
 	customcmd/customCmdEvent.h \
 	customcmd/customCmdMemory.h \
 	customcmd/customOpCodeCmd.h \
@@ -141,9 +143,13 @@ EXTRA_DIST = \
 	tests/sdl8-4.py \
 	tests/sdl9-1.py \
 	tests/sdl9-2.py \
+	tests/sdl4-2-ramulator.py \
+	tests/sdl5-1-ramulator.py \
 	tests/testBackendChaining.py \
 	tests/testBackendDelayBuffer.py \
 	tests/testBackendGoblinHMC.py \
+	tests/testBackendHBMDramsim.py \
+	tests/testBackendHBMPagedMulti.py \
 	tests/testBackendPagedMulti.py \
 	tests/testBackendReorderRow.py \
 	tests/testBackendReorderSimple.py \
@@ -162,6 +168,7 @@ EXTRA_DIST = \
 	tests/testFlushes-2.py \
 	tests/testHashXor.py \
 	tests/testIncoherent.py \
+	tests/testKingsley.py \
 	tests/testNoninclusive-1.py \
 	tests/testNoninclusive-2.py \
 	tests/testPrefetchParams.py \
@@ -170,6 +177,11 @@ EXTRA_DIST = \
 	tests/testScratchNetwork.py \
 	tests/DDR3_micron_32M_8B_x4_sg125.ini \
 	tests/system.ini \
+	tests/ramulator-ddr3.cfg \
+	tests/ddr_device.ini \
+	tests/ddr_system.ini \
+	tests/hbm_device.ini \
+	tests/hbm_system.ini \
 	tests/utils.py
 
 sstdir = $(includedir)/sst/elements/memHierarchy
@@ -177,10 +189,16 @@ nobase_sst_HEADERS = \
 	memEventBase.h \
 	memEvent.h \
 	memNIC.h \
+	memNICFour.h \
+	memLink.h \
+	memLinkBase.h \
+	memHierarchyInterface.h \
+	memHierarchyScratchInterface.h \
 	customcmd/customCmdEvent.h \
 	customcmd/customCmdMemory.h \
 	customcmd/customOpCodeCmd.h \
 	customcmd/amoCustomCmdHandler.h \
+	membackend/backing.h \
 	membackend/memBackend.h \
 	membackend/vaultSimBackend.h \
 	membackend/MessierBackend.h \
@@ -189,6 +207,12 @@ nobase_sst_HEADERS = \
 	membackend/requestReorderSimple.h \
 	membackend/requestReorderByRow.h \
 	membackend/delayBuffer.h \
+	membackend/memBackendConvertor.h \
+	membackend/extMemBackendConvertor.h \
+	membackend/flagMemBackendConvertor.h \
+	membackend/scratchBackendConvertor.h \
+	membackend/simpleMemBackendConvertor.h \
+	membackend/simpleMemScratchBackendConvertor.h \
 	memoryController.h \
 	coherentMemoryController.h \
 	cacheListener.h \
@@ -228,7 +252,7 @@ libmemHierarchy_la_LIBADD += $(HBMDRAMSIM_LIB)
 libmemHierarchy_la_SOURCES += membackend/HBMdramSimBackend.cc \
 	membackend/HBMdramSimBackend.h
 nobase_sst_HEADERS += membackend/HBMdramSimBackend.h
-AM_CPPFLAGS += $(HBMDRAMSIM_CPPFLAGS) -DHAVE_HBMLIBDRAMSIM -DHAVE_HBMDRAMSIM
+AM_CPPFLAGS += $(HBMDRAMSIM_CPPFLAGS) -DHAVE_LIBHBMDRAMSIM
 
 libmemHierarchy_la_SOURCES += membackend/HBMpagedMultiBackend.cc \
 	membackend/HBMpagedMultiBackend.h
@@ -281,4 +305,5 @@ install-exec-hook:
 	$(SST_REGISTER_TOOL) NVDIMMSIM LIBDIR=$(NVDIMMSIM_LIBDIR)
 	$(SST_REGISTER_TOOL) FDSIM LIBDIR=$(FDSIM_LIBDIR)
 	$(SST_REGISTER_TOOL) GOBLIN_HMCSIM LIBDIR=$(GOBLIN_HMCSIM_LIBDIR)
+	$(SST_REGISTER_TOOL) RAMULATOR LIBDIR=$(RAMULATOR_LIBDIR)
 

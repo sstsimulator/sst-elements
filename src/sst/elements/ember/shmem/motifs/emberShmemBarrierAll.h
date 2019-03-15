@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -24,6 +24,19 @@ namespace SST {
 namespace Ember {
 
 class EmberShmemBarrierAllGenerator : public EmberShmemGenerator {
+
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemBarrierAllGenerator,
+        "ember",
+        "ShmemBarrierAllMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM barrier_all",
+        "SST::Ember::EmberGenerator"
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
 
 public:
 	EmberShmemBarrierAllGenerator(SST::Component* owner, Params& params) :

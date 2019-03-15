@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -17,6 +17,7 @@
 #ifndef _ZODIAC_SIRIUS_TRACE_READER_H
 #define _ZODIAC_SIRIUS_TRACE_READER_H
 
+#include <sst/core/elementinfo.h>
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>
@@ -46,6 +47,30 @@ public:
   void setup();
   void finish();
   void init(unsigned int phase);
+
+  SST_ELI_REGISTER_COMPONENT(
+        ZodiacSiriusTraceReader,
+        "zodiac",
+        "ZodiacSiriusTraceReader",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SIRIUS MPI Trace Reader/Replay for Network Simulation",
+        COMPONENT_CATEGORY_PROCESSOR
+  )
+
+  SST_ELI_DOCUMENT_PARAMS(
+	{ "trace", "Set the trace file to be read in for this end point." },
+	{ "os.module", "Sets the messaging API to use for generation and handling of the message protocol" },
+	{ "scalecompute", "Scale compute event times by a double precision value (allows dilation of times in traces), default is 1.0", "1.0" },
+	{ "verbose", "Sets the verbosity level for the component to output debug/information messages", "0" },
+	{ "buffer", "Sets the size of the buffer to use for message data backing, default is 4096 bytes", "4096" },
+    	{ "name","used internally","" },
+    	{ "module","used internally","" }
+  )
+
+  SST_ELI_DOCUMENT_PORTS(
+	{ "nic", "Network Interface port", { "" } },
+    	{ "loop", "Firefly Loopback port", { "" } }
+  )
 
 private:
   ~ZodiacSiriusTraceReader();

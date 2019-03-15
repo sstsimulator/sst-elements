@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 // 
 // Portions are copyright of other developers:
@@ -20,7 +20,10 @@
 #ifndef SST_SCHEDULER_FACTORY_H__
 #define SST_SCHEDULER_FACTORY_H__
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wuser-defined-warnings"
 #include "sst/core/element.h"
+#pragma clang diagnostic pop
 #include <string>
 #include <vector>
 
@@ -87,6 +90,13 @@ namespace SST {
                     NEARESTAMAP = 16,
                     SPECTRALAMAP = 17,
                     SIMPLESPREAD = 18,
+                    DFLYHYBRID = 19,
+                    DFLYRDR = 20,
+                    DFLYRDG = 21,
+                    DFLYRRN = 22,
+                    DFLYRRR = 23,
+                    DFLYSLURM = 24,
+                    DFLYJOKANOVIC = 25,
                 };
                 enum TaskMapperType{
                     SIMPLEMAP = 0,
@@ -129,13 +139,13 @@ namespace SST {
                 static const int numMachTableEntries = 4;
                 static const int numSchedTableEntries = 6;
                 static const int numFSTTableEntries = 3;
-                static const int numAllocTableEntries = 19;
+                static const int numAllocTableEntries = 26;
                 static const int numTaskMapTableEntries = 7;
                 
                 static const machTableEntry machTable[4];
                 static const schedTableEntry schedTable[6];
                 static const FSTTableEntry FSTTable[3];
-                static const allocTableEntry allocTable[19];
+                static const allocTableEntry allocTable[26];
                 static const taskMapTableEntry taskMapTable[7];
 
                 SchedulerType schedulername(std::string inparam);

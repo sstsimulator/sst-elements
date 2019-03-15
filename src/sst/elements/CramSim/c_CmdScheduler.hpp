@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -42,6 +42,26 @@ namespace SST{
 
         class c_CmdScheduler : public SubComponent{
         public:
+
+            SST_ELI_REGISTER_SUBCOMPONENT(
+                c_CmdScheduler,
+                "CramSim",
+                "c_CmdScheduler",
+                SST_ELI_ELEMENT_VERSION(1,0,0),
+                "Command Scheduler",
+                "SST::CramSim::Controller::CmdScheduler"
+            )
+
+            SST_ELI_DOCUMENT_PARAMS(
+                {"numCmdQEntries", "The number of entries in command scheduler's command queue"},
+            )
+
+            SST_ELI_DOCUMENT_PORTS(
+            )
+
+            SST_ELI_DOCUMENT_STATISTICS(
+            )
+
             c_CmdScheduler(Component *comp, Params &x_params);
             ~c_CmdScheduler();
 

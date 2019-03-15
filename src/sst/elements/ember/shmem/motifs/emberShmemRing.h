@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -14,8 +14,8 @@
 // distribution.
 
 
-#ifndef _H_EMBER_SHMEM_RING2
-#define _H_EMBER_SHMEM_RING2
+#ifndef _H_EMBER_SHMEM_RING
+#define _H_EMBER_SHMEM_RING
 
 #include <strings.h>
 #include "shmem/emberShmemGen.h"
@@ -78,7 +78,7 @@ public:
                 double latency = ((totalTime/m_iterations)/m_num_pes);
                 printf("%d:%s: message-size %d, iterations %d, total-time %.3lf us, time-per %.3lf us, %.3f GB/s\n",m_my_pe,
                             getMotifName().c_str(), 
-							m_count * sizeof(TYPE), 
+							(int)(m_count * sizeof(TYPE)), 
 							m_iterations, 
 							totalTime * 1000000.0,
 							latency * 1000000.0,
@@ -104,6 +104,25 @@ public:
     int m_phase;
     int m_my_pe;
     int m_num_pes;
+};
+class EmberShmemRingIntGenerator : public EmberShmemRingGenerator<int> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemRingIntGenerator,
+        "ember",
+        "ShmemRingIntMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM ring2 int",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemRingIntGenerator( SST::Component* owner, Params& params ) :
+        EmberShmemRingGenerator(owner,  params) { }
 };
 
 }

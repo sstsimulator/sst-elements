@@ -1,8 +1,8 @@
-// Copyright 2013-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2017, Sandia Corporation
+// Copyright (c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -54,6 +54,7 @@ class NicCmdBaseEvent : public Event {
 
     NicCmdBaseEvent( Type type ) : Event(), base_type(type) {}
 
+    virtual int getPid() { return -1; } 
     NotSerializable(NicCmdBaseEvent)
 };
 
@@ -61,6 +62,34 @@ class NicShmemCmdEvent : public NicCmdBaseEvent {
   public:
 
     enum Type { Init, RegMem, Fence, Put, Putv, Get, Getv, Wait, Add, Fadd, Swap, Cswap } type;
+    std::string getTypeStr( ) {
+        switch( type ) {
+            case Init:
+            return "Init";
+            case RegMem:
+            return "RegMem";
+            case Fence:
+            return "Fence";
+            case Put:
+            return "Put";
+            case Putv:
+            return "Putv";
+            case Get:
+            return "Get";
+            case Getv:
+            return "Getv";
+            case Wait:
+            return "Wait";
+            case Add:
+            return "Add";
+            case Fadd:
+            return "Fadd";
+            case Swap:
+            return "Swap";
+            case Cswap:
+            return "Cswap";
+        }
+    }
 
     NicShmemCmdEvent( Type type ) :
         NicCmdBaseEvent( Shmem ), type(type) {}
@@ -103,6 +132,7 @@ class NicShmemSendCmdEvent : public NicShmemCmdEvent {
         NicShmemCmdEvent( type ), vnic(vnic), node(node) {}
 
     virtual ~NicShmemSendCmdEvent() {}
+    virtual int getPid() { return vnic; } 
     int getVnic() { return vnic; }
     int getNode() { return node; }
     virtual Hermes::Vaddr getMyAddr()  { assert(0); } 
@@ -122,21 +152,19 @@ class NicShmemSendCmdEvent : public NicShmemCmdEvent {
 class NicShmemPutvCmdEvent : public NicShmemSendCmdEvent {
   public:
     typedef std::function<void()> Callback;
-    NicShmemPutvCmdEvent( int vnic, int node, Hermes::Vaddr addr, Hermes::Value& value, Callback callback ) :
-        NicShmemSendCmdEvent( Putv, vnic, node ), destAddr(addr), value(value), callback(callback) {}
+    NicShmemPutvCmdEvent( int vnic, int node, Hermes::Vaddr addr, Hermes::Value& value ) :
+        NicShmemSendCmdEvent( Putv, vnic, node ), destAddr(addr), value(value) {}
 
     Hermes::Vaddr getFarAddr()  override { return destAddr; } 
     size_t getLength()          override { return value.getLength(); } 
     void* getBacking()          override { return value.getPtr(); } 
     Hermes::Value::Type   getDataType() override { return value.getType(); }
-    Callback getCallback()      { return callback; } 
     Hermes::Value& getValue() { return value; }
 
   private:
 
     Hermes::Vaddr   destAddr;
     Hermes::Value   value;
-    Callback        callback;
 
 	NotSerializable(NicShmemPutvCmdEvent)
 };
@@ -152,7 +180,7 @@ class NicShmemPutCmdEvent : public NicShmemSendCmdEvent {
     NicShmemPutCmdEvent( int vnic, int node, Hermes::Vaddr dest, Hermes::Vaddr src, 
         size_t length, Hermes::Shmem::ReduOp op, Hermes::Value::Type dataType,  Callback callback  ) :
         NicShmemSendCmdEvent( Put, vnic, node ), destAddr(dest), srcAddr(src), 
-        length(length), callback(callback), op(op), dataType(dataType)
+        length(length),  callback(callback), op(op), dataType(dataType)
     { }
 
     Hermes::Vaddr getFarAddr()  override { return destAddr; } 
@@ -183,11 +211,8 @@ class NicShmemGetCmdEvent : public NicShmemSendCmdEvent {
 
     typedef std::function<void( )> Callback;
 
-    NicShmemGetCmdEvent( int vnic, int node,
-            Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, 
-            Callback callback ) :
-        NicShmemSendCmdEvent( Get, vnic, node ), dest(dest), src(src), length( length ), 
-        callback(callback)
+    NicShmemGetCmdEvent( int vnic, int node, Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, Callback callback ) :
+        NicShmemSendCmdEvent( Get, vnic, node ), dest(dest), src(src), length( length ), callback(callback)
     {}
 
     Hermes::Vaddr getFarAddr()  override { return src; } 
@@ -229,17 +254,15 @@ class NicShmemGetvCmdEvent : public NicShmemSendCmdEvent {
 class NicShmemAddCmdEvent : public NicShmemSendCmdEvent {
   public:
     typedef std::function<void( )> Callback;
-    NicShmemAddCmdEvent( int vnic, int node, Hermes::Vaddr addr, Hermes::Value& value, Callback callback ) :
-        NicShmemSendCmdEvent( Add, vnic, node ), srcAddr(addr), data(value), callback(callback) {}
+    NicShmemAddCmdEvent( int vnic, int node, Hermes::Vaddr addr, Hermes::Value& value ) :
+        NicShmemSendCmdEvent( Add, vnic, node ), srcAddr(addr), data(value) {}
 
     Hermes::Vaddr getFarAddr()  override { return srcAddr; } 
     size_t getLength()          override { return data.getLength(); } 
     void* getBacking()          override { return data.getPtr(); } 
-    Callback getCallback()      { return callback; } 
     Hermes::Value::Type getDataType() override { return data.getType(); }
     Hermes::Value& getValue() { return data; }
 
-    Callback        callback;
   private:
 
     Hermes::Vaddr  srcAddr;
@@ -325,7 +348,7 @@ class NicShmemOpCmdEvent : public NicShmemCmdEvent {
         NicShmemCmdEvent( Wait ), addr(addr), op(op), value(value), callback(callback) {}
 
     Hermes::Vaddr getAddr()  { return addr; } 
-    virtual int getNode() { return -2; }
+    virtual int getNode() { return -1; }
 
     Hermes::Shmem::WaitOp op;
     Hermes::Vaddr   addr;

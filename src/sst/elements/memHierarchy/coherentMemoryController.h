@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -52,16 +52,15 @@ public:
 
     CoherentMemController(ComponentId_t id, Params &params);
 
-    /* Utilities for CustomCmd subcomponent */
-    void writeData(Addr addr, std::vector<uint8_t> * data);
-    void readData(Addr addr, size_t bytes, std::vector<uint8_t> &data);
-
     /* Event handling */
     void handleMemResponse(SST::Event::id_type id, uint32_t flags);
+    
+    /* Component API */
+    virtual void init(unsigned int phase);
+    virtual void setup();
 
 protected:
     virtual void processInitEvent(MemEventInit* ev);
-    virtual void setup();
     
     virtual void handleEvent(SST::Event * event);
 

@@ -7,7 +7,6 @@ compdir = $(pkglibdir)
 comp_LTLIBRARIES = libprospero.la 
 
 libprospero_la_SOURCES = \
-	libprospero.cc \
         proscpu.h \
         proscpu.cc \
 	prosreader.h \

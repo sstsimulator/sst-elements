@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -23,6 +23,48 @@ namespace SST {
 namespace Ember {
 
 class EmberPingPongGenerator : public EmberMessagePassingGenerator {
+
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberPingPongGenerator,
+        "ember",
+        "PingPongMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Performs a Ping-Pong Motif",
+        "SST::Ember::EmberGenerator"
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+        {   "arg.messageSize",      "Sets the message size of the ping pong operation", "1024"},
+        {   "arg.iterations",       "Sets the number of ping pong operations to perform",   "1"},
+        {   "arg.rank2",        "Sets the 2nd rank to pingpong with (0 is the 1st)",    "1"},
+        {   "arg.blockingSend",     "Sets the send mode",   "1"},
+        {   "arg.blockingRecv",     "Sets the recv mode",   "1"},
+        {   "arg.waitall",          "Sets the wait mode",   "1"},
+    )
+    SST_ELI_DOCUMENT_STATISTICS(
+        { "time-Init", "Time spent in Init event",          "ns",  0},
+        { "time-Finalize", "Time spent in Finalize event",  "ns", 0},
+        { "time-Rank", "Time spent in Rank event",          "ns", 0},
+        { "time-Size", "Time spent in Size event",          "ns", 0},
+        { "time-Send", "Time spent in Recv event",          "ns", 0},
+        { "time-Recv", "Time spent in Recv event",          "ns", 0},
+        { "time-Irecv", "Time spent in Irecv event",        "ns", 0},
+        { "time-Isend", "Time spent in Isend event",        "ns", 0},
+        { "time-Wait", "Time spent in Wait event",          "ns", 0},
+        { "time-Waitall", "Time spent in Waitall event",    "ns", 0},
+        { "time-Waitany", "Time spent in Waitany event",    "ns", 0},
+        { "time-Compute", "Time spent in Compute event",    "ns", 0},
+        { "time-Barrier", "Time spent in Barrier event",    "ns", 0},
+        { "time-Alltoallv", "Time spent in Alltoallv event", "ns", 0},
+        { "time-Alltoall", "Time spent in Alltoall event",  "ns", 0},
+        { "time-Allreduce", "Time spent in Allreduce event", "ns", 0},
+        { "time-Reduce", "Time spent in Reduce event",      "ns", 0},
+        { "time-Bcast", "Time spent in Bcast event",        "ns", 0},
+        { "time-Gettime", "Time spent in Gettime event",    "ns", 0},
+        { "time-Commsplit", "Time spent in Commsplit event", "ns", 0},
+        { "time-Commcreate", "Time spent in Commcreate event", "ns", 0},
+    )
 
 public:
 	EmberPingPongGenerator(SST::Component* owner, Params& params);

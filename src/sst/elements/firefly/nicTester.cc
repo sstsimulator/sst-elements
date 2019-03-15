@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 // 
 // Portions are copyright of other developers:
@@ -60,7 +60,7 @@ NicTester::NicTester(ComponentId_t id, Params &params) :
     std::string name = params.find_string("nicModule");
     assert( ! name.empty() );
 
-    m_dbg.verbose(CALL_INFO,1,0,"nicModule `%s`\n",name.c_str()); 
+    m_dbg.debug(CALL_INFO,1,0,"nicModule `%s`\n",name.c_str()); 
 
     Params nicParams = params.find_prefix_params("nicParams." );
 
@@ -105,13 +105,13 @@ void NicTester::init( unsigned int phase )
 
 void NicTester::setup()
 {
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
+    m_dbg.debug(CALL_INFO,1,0,"\n");
     m_selfLink->send(0,NULL);
 }
 
 bool NicTester::notifySendDmaDone( void* key )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
+    m_dbg.debug(CALL_INFO,1,0,"\n");
     handleSelfEvent(NULL);
     return true;
 }
@@ -119,7 +119,7 @@ bool NicTester::notifySendDmaDone( void* key )
 bool NicTester::notifyRecvDmaDone( int src, int tag, size_t len, void* key )
 {
     DmaEntry* entry = static_cast<DmaEntry*>(key);
-    m_dbg.verbose(CALL_INFO,1,0,"src=%d tag=%#x len=%lu pid=%d\n",src, 
+    m_dbg.debug(CALL_INFO,1,0,"src=%d tag=%#x len=%lu pid=%d\n",src, 
             tag, len, entry->hdr.pid);
 
     for ( unsigned int i = 0; i < len - sizeof(entry->hdr); i++ ) {
@@ -133,21 +133,21 @@ bool NicTester::notifyRecvDmaDone( int src, int tag, size_t len, void* key )
 
 bool NicTester::notifySendPioDone( void* key)
 {
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
+    m_dbg.debug(CALL_INFO,1,0,"\n");
     handleSelfEvent(NULL);
     return true;
 }
 
 bool NicTester::notifyNeedRecv( int nid, int tag, size_t len )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"nid=%d tag=%d len=%lu\n",nid,tag,len);
+    m_dbg.debug(CALL_INFO,1,0,"nid=%d tag=%d len=%lu\n",nid,tag,len);
     postRecv();
     return true;
 }
 
 void NicTester::handleSelfEvent( SST::Event* e )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"%s\n",m_stateName[m_state]);
+    m_dbg.debug(CALL_INFO,1,0,"%s\n",m_stateName[m_state]);
 
     switch( m_state ) {
       case PostRecv:
@@ -166,7 +166,7 @@ void NicTester::handleSelfEvent( SST::Event* e )
 
 void NicTester::postRecv()
 {
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
+    m_dbg.debug(CALL_INFO,1,0,"\n");
 
     DmaEntry* entry = new DmaEntry;
     std::vector<IoVec> iovec(2);
@@ -184,7 +184,7 @@ void NicTester::postRecv()
 
 void NicTester::postSend()
 {
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
+    m_dbg.debug(CALL_INFO,1,0,"\n");
 
     PioEntry* entry = new PioEntry;
     std::vector<IoVec> iovec(2);
@@ -208,6 +208,6 @@ void NicTester::postSend()
 
 void NicTester::waitSend()
 {
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
+    m_dbg.debug(CALL_INFO,1,0,"\n");
     m_state = WaitRecv;
 }

@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 // 
 // Portions are copyright of other developers:
@@ -508,6 +508,23 @@ void MSHR::printTable() {
     }
 }*/
 
+void MSHR::printStatus(Output &out) {
+    out.output("    MSHR Status for %s. Size: %u. Prefetches: %u\n", ownerName_.c_str(), size_, prefetchCount_);
+    for (mshrTable::iterator it = map_.begin(); it != map_.end(); it++) {
+        vector<mshrType> entries = (it->second).mshrQueue;
+        out.output("      Entry: Addr = 0x%" PRIx64 " Acks needed: %d\n", (it->first), it->second.acksNeeded);
+        for (vector<mshrType>::iterator it2 = entries.begin(); it2 != entries.end(); it2++) {
+            if (it2->elem.isAddr()) {
+                Addr ptr = (it2->elem).getAddr();
+                out.output("        0x%" PRIx64 "\n", ptr);
+            } else {
+                MemEvent * ev = (it2->elem).getEvent();
+                out.output("        %s\n", ev->getVerboseString().c_str());
+            }
+        }
+    }
+    out.output("    End MSHR Status for %s\n", ownerName_.c_str());
+}
 
 
 

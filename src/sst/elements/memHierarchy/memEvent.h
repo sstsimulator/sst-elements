@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -19,11 +19,12 @@
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>
 #include <sst/core/event.h>
-#include "sst/core/element.h"
+#include <sst/core/element.h>
+#include <sst/core/warnmacros.h>
 
-#include "util.h"
-#include "memEventBase.h"
-#include "memTypes.h"
+#include "sst/elements/memHierarchy/util.h"
+#include "sst/elements/memHierarchy/memEventBase.h"
+#include "sst/elements/memHierarchy/memTypes.h"
 
 namespace SST { namespace MemHierarchy {
 
@@ -90,7 +91,7 @@ public:
     }
 
     /** Generate a new MemEvent, pre-populated as a response */
-    MemEvent* makeResponse(State state) {
+    MemEvent* makeResponse(State UNUSED(state)) {
         MemEvent *me = makeResponse();
         return me;
     }
@@ -142,12 +143,12 @@ public:
     /** Sets the virtual address of this MemEvent */
     void setVirtualAddress(Addr newVA) { vAddr_ = newVA; }
     /** Gets the virtual address of this MemEvent */
-    uint64_t getVirtualAddress() { return vAddr_; }
+    uint64_t getVirtualAddress() const { return vAddr_; }
 
     /** Sets the instruction pointer of that caused this MemEvent */
     void setInstructionPointer(Addr newIP) { instPtr_ = newIP; }
     /** Get the instruction pointer of that caused this MemEvent */
-    uint64_t getInstructionPointer() { return instPtr_; }
+    uint64_t getInstructionPointer() const { return instPtr_; }
 
     /** Returns the time (in nanoseconds) when this event was created */
     SimTime_t getInitializationTime(void) const { return initTime_; }

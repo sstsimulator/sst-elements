@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 // 
 // Portions are copyright of other developers:
@@ -26,8 +26,10 @@
 #include <sst/core/element.h>
 #include <sst/core/event.h>
 #include <sst/core/subcomponent.h>
+#include <sst/core/warnmacros.h>
+#include <sst/core/elementinfo.h>
 
-#include "memEvent.h"
+#include "sst/elements/memHierarchy/memEvent.h"
 
 using namespace SST;
 
@@ -36,18 +38,22 @@ class Output;
 
 namespace MemHierarchy {
 
-enum NotifyAccessType{ READ, WRITE };
-enum NotifyResultType{ HIT, MISS };
+    enum NotifyAccessType{ READ, WRITE, EVICT };
+    enum NotifyResultType{ HIT, MISS, NA };
 
 class CacheListenerNotification {
 public:
-	CacheListenerNotification(const Addr pAddr, const Addr vAddr,
-		const Addr iPtr, const uint32_t reqSize,
-		NotifyAccessType accessT,
-		NotifyResultType resultT) :
-		size(reqSize), physAddr(pAddr), virtAddr(vAddr), instPtr(iPtr),
-		access(accessT), result(resultT) {}
+    CacheListenerNotification(const Addr tAddr, const Addr pAddr, const Addr vAddr,
+                              const Addr iPtr, const uint32_t reqSize,
+                              NotifyAccessType accessT,
+                              NotifyResultType resultT) :
+        size(reqSize), targAddr(tAddr), physAddr(pAddr), virtAddr(vAddr), instPtr(iPtr),
+        access(accessT), result(resultT) {}
 
+    /** the target address is the underlying address from the
+        LOAD/STORE, not the baseAddr (which is usually he cache line
+        address). For an evict they are the same. */
+        Addr getTargetAddress() const {return targAddr;}
 	Addr getPhysicalAddress() const { return physAddr; }
 	Addr getVirtualAddress() const { return virtAddr; }
 	Addr getInstructionPointer() const { return instPtr; }
@@ -56,6 +62,7 @@ public:
 	uint32_t getSize() const { return size; }
 private:
 	uint32_t size;
+        Addr targAddr;
 	Addr physAddr;
 	Addr virtAddr;
 	Addr instPtr;
@@ -65,12 +72,15 @@ private:
 
 class CacheListener : public SubComponent {
 public:
+    
+    SST_ELI_REGISTER_SUBCOMPONENT(CacheListener, "memHierarchy", "emptyCacheListener", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Empty cache listener", "SST::MemHierarchy::CacheListener")
 
-    CacheListener(Component* owner, Params& params) : SubComponent(owner) {}
+    CacheListener(Component* owner, Params& UNUSED(params)) : SubComponent(owner) {}
     virtual ~CacheListener() {}
 
-    virtual void printStats(Output &out) {}
-    virtual void notifyAccess(const CacheListenerNotification& notify) {}
+    virtual void printStats(Output &UNUSED(out)) {}
+    virtual void notifyAccess(const CacheListenerNotification& UNUSED(notify)) {}
     virtual void registerResponseCallback(Event::HandlerBase *handler) { delete handler; }
 };
 

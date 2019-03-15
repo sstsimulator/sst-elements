@@ -1,8 +1,8 @@
-// Copyright 2013-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2017, Sandia Corporation
+// Copyright (c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -40,13 +40,13 @@ void GathervFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
     m_qqq = new QQQ( 2, m_info->getGroup(m_event->group)->getMyRank(),
                 m_info->getGroup(m_event->group)->getSize(), m_event->root );
 
-    m_dbg.verbose(CALL_INFO,1,0,"group %d, root %d, size %d, rank %d\n",
+    m_dbg.debug(CALL_INFO,1,0,"group %d, root %d, size %d, rank %d\n",
                     m_event->group, m_event->root, m_qqq->size(),
                     m_qqq->myRank());
 
-    m_dbg.verbose(CALL_INFO,1,0,"parent %d \n",m_qqq->parent());
+    m_dbg.debug(CALL_INFO,1,0,"parent %d \n",m_qqq->parent());
     for ( unsigned int i = 0; i < m_qqq->numChildren(); i++ ) {
-        m_dbg.verbose(CALL_INFO,1,0,"child[%d]=%d\n",i,m_qqq->calcChild(i));
+        m_dbg.debug(CALL_INFO,1,0,"child[%d]=%d\n",i,m_qqq->calcChild(i));
     }
 
     m_state = WaitUp;
@@ -61,7 +61,7 @@ void GathervFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
 
 void GathervFuncSM::handleEnterEvent( Retval& retval )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
+    m_dbg.debug(CALL_INFO,1,0,"\n");
     switch( m_state ) {
     case WaitUp:
         if ( m_qqq->numChildren() && waitUp(retval) ) {
@@ -72,7 +72,7 @@ void GathervFuncSM::handleEnterEvent( Retval& retval )
         if ( -1 != m_qqq->parent() && sendUp(retval) ) {
             return;
         }
-        m_dbg.verbose(CALL_INFO,1,0,"leave\n");
+        m_dbg.debug(CALL_INFO,1,0,"leave\n");
         retval.setExit(0);
         delete m_qqq;
         delete m_event;
@@ -84,12 +84,12 @@ bool GathervFuncSM::waitUp(Retval& retval)
 {
 	Hermes::MemAddr addr;
     int len;
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
+    m_dbg.debug(CALL_INFO,1,0,"\n");
     switch( m_waitUpState.state ) { 
 
       case WaitUpState::PostSizeRecvs:
 
-        m_dbg.verbose(CALL_INFO,1,0,"post recv for child %d[%d]\n", 
+        m_dbg.debug(CALL_INFO,1,0,"post recv for child %d[%d]\n", 
                  m_waitUpState.count, m_qqq->calcChild(m_waitUpState.count) );
 
 		addr.setSimVAddr( 1 );
@@ -110,7 +110,7 @@ bool GathervFuncSM::waitUp(Retval& retval)
 
       case WaitUpState::WaitSizeRecvs:
 
-        m_dbg.verbose(CALL_INFO,1,0,"wait for Size msg from child %d[%d]\n",
+        m_dbg.debug(CALL_INFO,1,0,"wait for Size msg from child %d[%d]\n",
                  m_waitUpState.count, m_qqq->calcChild(m_waitUpState.count) );
         proto()->wait( &m_recvReqV[m_waitUpState.count] );
 
@@ -122,13 +122,13 @@ bool GathervFuncSM::waitUp(Retval& retval)
         return true;
 
       case WaitUpState::Setup:
-        m_dbg.verbose(CALL_INFO,1,0,"all children have checked in\n");
+        m_dbg.debug(CALL_INFO,1,0,"all children have checked in\n");
         // calculate the size of receive buffer
         // this nodes part of buffer
         len = m_info->sizeofDataType( m_event->sendtype ) * m_event->sendcnt;
         for ( unsigned int i = 0; i < m_qqq->numChildren(); i++ ) {
                 
-            m_dbg.verbose(CALL_INFO,1,0,"child %d[%d] has %d bytes\n",
+            m_dbg.debug(CALL_INFO,1,0,"child %d[%d] has %d bytes\n",
                                i, m_qqq->calcChild(i), m_waitUpSize[i] );
             // childs part of buffer
             len += m_waitUpSize[i];
@@ -141,7 +141,7 @@ bool GathervFuncSM::waitUp(Retval& retval)
 
       case WaitUpState::PostDataRecv:
 
-        m_dbg.verbose(CALL_INFO,1,0,"post recv for child %d[%d]\n",
+        m_dbg.debug(CALL_INFO,1,0,"post recv for child %d[%d]\n",
                    m_waitUpState.count, m_qqq->calcChild(m_waitUpState.count) );
 		addr.setSimVAddr( 1 );
 		addr.setBacking( &m_recvBuf[m_waitUpState.len] );
@@ -161,7 +161,7 @@ bool GathervFuncSM::waitUp(Retval& retval)
         return true;
 
     case WaitUpState::SendSize:
-        m_dbg.verbose(CALL_INFO,1,0,"send I'm ready message to"
+        m_dbg.debug(CALL_INFO,1,0,"send I'm ready message to"
                 " child %d[%d]\n", m_waitUpState.count, 
                 m_qqq->calcChild( m_waitUpState.count ) );
 		addr.setSimVAddr( 1 );
@@ -178,7 +178,7 @@ bool GathervFuncSM::waitUp(Retval& retval)
         return true;
 
     case WaitUpState::WaitDataRecv:
-        m_dbg.verbose(CALL_INFO,1,0,"wait for data from %d\n",
+        m_dbg.debug(CALL_INFO,1,0,"wait for data from %d\n",
                             m_waitUpState.count );
 
         proto()->wait( &m_recvReqV[m_waitUpState.count] );
@@ -191,7 +191,7 @@ bool GathervFuncSM::waitUp(Retval& retval)
         return true;
 
     case WaitUpState::DoRoot:
-        m_dbg.verbose(CALL_INFO,1,0,"doRoot\n");
+        m_dbg.debug(CALL_INFO,1,0,"doRoot\n");
         if ( -1 == m_qqq->parent() ) {
             doRoot( );
         }
@@ -204,7 +204,7 @@ void GathervFuncSM::doRoot()
     std::vector<int> map = m_qqq->getMap();
 
     int len = m_info->sizeofDataType( m_event->sendtype ) * m_event->sendcnt;
-    m_dbg.verbose(CALL_INFO,1,0,"I'm root buf.size()=%lu\n", m_recvBuf.size());
+    m_dbg.debug(CALL_INFO,1,0,"I'm root buf.size()=%lu\n", m_recvBuf.size());
 
     memcpy( &m_recvBuf[0], m_event->sendbuf.getBacking(), len ); 
 
@@ -216,7 +216,7 @@ void GathervFuncSM::doRoot()
     
     int offset = 0;
     for ( unsigned int  i = 0; i < map.size(); i++ ) {
-        m_dbg.verbose(CALL_INFO,1,0,"%d -> %d\n", map[i], i);
+        m_dbg.debug(CALL_INFO,1,0,"%d -> %d\n", map[i], i);
         
         int rank = map[i];
 
@@ -228,7 +228,7 @@ void GathervFuncSM::doRoot()
 
             len = m_info->sizeofDataType( m_event->recvtype ) * recvcnt;
 
-            m_dbg.verbose(CALL_INFO,1,0,"rank %d, recvcnt %d, displs %d, "
+            m_dbg.debug(CALL_INFO,1,0,"rank %d, recvcnt %d, displs %d, "
                                 "len=%u\n", rank, recvcnt, displs, len);
             memcpy( (unsigned char*) m_event->recvbuf.getBacking() + displs, 
                             &m_recvBuf[offset], len);
@@ -253,7 +253,7 @@ bool GathervFuncSM::sendUp(Retval& retval)
 { 
 	Hermes::MemAddr addr;
     size_t len;
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
+    m_dbg.debug(CALL_INFO,1,0,"\n");
 
     switch ( m_sendUpState.state ) {
     case SendUpState::SendSize:
@@ -264,7 +264,7 @@ bool GathervFuncSM::sendUp(Retval& retval)
         }
         memcpy( &m_recvBuf[0], m_event->sendbuf.getBacking(), len ); 
         m_intBuf = m_recvBuf.size();
-        m_dbg.verbose(CALL_INFO,1,0,"send Sening %d bytes message to %d\n", 
+        m_dbg.debug(CALL_INFO,1,0,"send Sening %d bytes message to %d\n", 
                                                 m_intBuf, m_qqq->parent());
 		addr.setSimVAddr( 1 );
 		addr.setBacking( &m_intBuf );
@@ -275,7 +275,7 @@ bool GathervFuncSM::sendUp(Retval& retval)
         return true;
 
     case SendUpState::RecvGo:
-        m_dbg.verbose(CALL_INFO,1,0,"post receive for Go msg, parrent=%d\n",
+        m_dbg.debug(CALL_INFO,1,0,"post receive for Go msg, parrent=%d\n",
                                         m_qqq->parent());
 		addr.setSimVAddr( 1 );
 		addr.setBacking( NULL );
@@ -286,7 +286,7 @@ bool GathervFuncSM::sendUp(Retval& retval)
 
     case SendUpState::SendBody:
 
-        m_dbg.verbose(CALL_INFO,1,0,"sending body to parent %d\n", 
+        m_dbg.debug(CALL_INFO,1,0,"sending body to parent %d\n", 
                                             m_qqq->parent());
 		addr.setSimVAddr( 1 );
 		addr.setBacking( &m_recvBuf[0] );

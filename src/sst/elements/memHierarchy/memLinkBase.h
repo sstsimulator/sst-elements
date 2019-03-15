@@ -1,8 +1,8 @@
-// Copyright 2013-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2017, Sandia Corporation
+// Copyright (c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -25,6 +25,7 @@
 #include <sst/core/output.h>
 #include <sst/core/link.h>
 #include <sst/core/subcomponent.h>
+#include <sst/core/warnmacros.h>
 
 #include "sst/elements/memHierarchy/memEventBase.h"
 #include "sst/elements/memHierarchy/memEvent.h"
@@ -49,7 +50,10 @@ public:
     { "addr_range_start",   "(uint) Set by parent component. Lowest address handled by the parent.", "0"},\
     { "addr_range_end",     "(uint) Set by parent component. Highest address handled by the parent.", "uint64_t-1"},\
     { "interleave_size",    "(string) Set by parent component. Size of interleaved chunks.", "0B"},\
-    { "interleave_step",    "(string) Set by parent component. Distance between interleaved chunks.", "0B"}
+    { "interleave_step",    "(string) Set by parent component. Distance between interleaved chunks.", "0B"},\
+    { "node",    			"Node number in multinode environment", "0"},\
+    { "shared_memory",    	"Shared meory enable flag", "0"},\
+    { "local_memory_size",  "Local memory size to mask local memory addresses", "0"}
 
 
     // Struct identifying an endpoint
@@ -57,16 +61,17 @@ public:
         std::string name;
         uint64_t addr;
         uint32_t id;
+        uint32_t node;
         MemRegion region;
 
         bool operator<(const EndpointInfo &o) const {
             if (region != o.region)
                 return region < o.region;
-            else 
+            else
                 return name < o.name;
         }
     };
-    
+
     /* Constructor */
     MemLinkBase(Component * comp, Params &params) : SubComponent(comp) {
         /* Create debug output */
@@ -86,6 +91,7 @@ public:
         uint64_t addrEnd = params.find<uint64_t>("addr_range_end", (uint64_t) - 1);
         string ilSize = params.find<std::string>("interleave_size", "0B");
         string ilStep = params.find<std::string>("interleave_step", "0B");
+        node = params.find<uint32_t>("node", 0);
 
         // Ensure SI units are power-2 not power-10 - for backward compability
         fixByteUnits(ilSize);
@@ -95,7 +101,7 @@ public:
             dbg.fatal(CALL_INFO, -1, "Invalid param(%s): interleave_size - must be specified in bytes with units (SI units OK). For example, '1KiB'. You specified '%s'\n",
                     getName().c_str(), ilSize.c_str());
         }
-        
+
         if (!UnitAlgebra(ilStep).hasUnits("B")) {
             dbg.fatal(CALL_INFO, -1, "Invalid param(%s): interleave_step - must be specified in bytes with units (SI units OK). For example, '1KiB'. You specified '%s'\n",
                     getName().c_str(), ilSize.c_str());
@@ -108,19 +114,24 @@ public:
         info.name = getName();
         info.addr = 0;
         info.id = 0;
+        info.node = node;
 
         // Check whether we should accept a region push by someone else
         acceptRegion = params.find<bool>("accept_region", false);
+
+        // Check whether we should accept shared memory addresses or not
+        sharedMemEnabled = params.find<bool>("shared_memory", false);
+        localMemSize = params.find<uint64_t>("local_memory_size", 0);
     }
-    
+
     /* Destructor */
     ~MemLinkBase() { }
 
     /* Initialization functions for parent */
     virtual void setRecvHandler(Event::HandlerBase * handler) { recvHandler = handler; }
-    virtual void init(unsigned int phase) { }
+    virtual void init(unsigned int UNUSED(phase)) { }
     virtual void finish() { }
-    virtual void setup() { 
+    virtual void setup() {
 #ifdef __SST_DEBUG_OUTPUT__
         stringstream srcs;
         srcs << getName() + " (MemLinkBase) sources are: ";
@@ -131,30 +142,45 @@ public:
 #endif
     }
 
+    /* Debug - triggered by output.fatal() or SIGUSR2 */
+    virtual void printStatus(Output &out) {
+        out.output("  MemHierarchy::MemLinkBase: No status given\n");
+    }
+
+    virtual void emergencyShutdownDebug(Output &out) { }
+
     /* Send and receive functions for MemLink */
     virtual void sendInitData(MemEventInit * ev) =0;
     virtual MemEventInit* recvInitData() =0;
     virtual void send(MemEventBase * ev) =0;
-    virtual MemEventBase * recv() =0;
 
-    /* 
-     * Extra functions for MemLink derivatives 
+    /*
+     * Extra functions for MemLink derivatives
      */
     virtual bool clock() { return true; } // No clock
-    virtual uint64_t lookupNetworkAddress(const std::string &dst) const { return 0; } // No network address
+    virtual uint64_t lookupNetworkAddress(const std::string &UNUSED(dst)) const { return 0; } // No network address
 
     // Link call back for incoming events
     void recvNotify(SST::Event * ev) { (*recvHandler)(ev); }
 
     /* Functions for managing communication according to address */
     virtual std::string findTargetDestination(Addr addr) {
-        for (std::set<EndpointInfo>::const_iterator it = destEndpointInfo.begin(); it != destEndpointInfo.end(); it++) {
+    	for (std::set<EndpointInfo>::const_iterator it = destEndpointInfo.begin(); it != destEndpointInfo.end(); it++) {
             if (it->region.contains(addr)) return it->name;
         }
 
+        if(sharedMemEnabled) {
+            if(localMemSize) {
+        	Addr tempAddr = addr & (localMemSize-1);
+                for (std::set<EndpointInfo>::const_iterator it = destEndpointInfo.begin(); it != destEndpointInfo.end(); it++) {
+        	    if(it->region.contains(tempAddr)) return it->name;
+        	}
+            }
+	}
+
         /* Build error string */
         stringstream error;
-        error << getName() + " (MemLinkBase) cannot find a destination for address " << addr << endl;
+        error << getName() + " (MemLinkBase) cannot find a destination for address " << showbase << hex << addr << noshowbase << dec << endl;
         error << "Known destination regions: " << endl;
         for (std::set<EndpointInfo>::const_iterator it = destEndpointInfo.begin(); it != destEndpointInfo.end(); it++) {
             error << it->name << " " << it->region.toString() << endl;
@@ -168,21 +194,29 @@ public:
     /* Functions for managing source/destination information */
     std::set<EndpointInfo> * getSources() { return &sourceEndpointInfo; }
     std::set<EndpointInfo> * getDests() { return &destEndpointInfo; }
-    
+
     void setSources(std::set<EndpointInfo>& srcs) { sourceEndpointInfo = srcs; }
     void setDests(std::set<EndpointInfo>& dsts) { destEndpointInfo = dsts; }
-    
+
     void addSource(EndpointInfo info) { sourceEndpointInfo.insert(info); }
-    void addDest(EndpointInfo info) { destEndpointInfo.insert(info); }
-    
-    virtual bool isDest(std::string str) { return true; } // Anything we get on this link is valid for a dest 
-    virtual bool isSource(std::string str) { return true; } // Anything we get on this link is valid for a source
+    void addDest(EndpointInfo dstInfo) {
+    	if(sharedMemEnabled) {
+    		if (info.node == dstInfo.node || dstInfo.node == 9999) // node 9999 is treated as shared memory components
+    			destEndpointInfo.insert(dstInfo);
+    	} else {
+    		destEndpointInfo.insert(dstInfo);
+    	}
+
+    }
+
+    virtual bool isDest(std::string UNUSED(str)) { return true; } // Anything we get on this link is valid for a dest
+    virtual bool isSource(std::string UNUSED(str)) { return true; } // Anything we get on this link is valid for a source
 
     MemRegion getRegion() { return info.region; }
     void setRegion(MemRegion region) { info.region = region; }
 
 protected:
-    
+
     // Debug stuff
     Output dbg;
     std::set<Addr> DEBUG_ADDR;
@@ -191,10 +225,15 @@ protected:
     EndpointInfo info;
     bool acceptRegion; // Accept a region push from a source
 
+    // Used to calculate shared memory destination
+    bool sharedMemEnabled;
+    uint64_t localMemSize;
+    uint32_t node;
+
     // Other parameters
     std::unordered_set<uint32_t> sourceIDs, destIDs; // IDs which this endpoint cares about
 
-    // Handlers 
+    // Handlers
     SST::Event::HandlerBase * recvHandler; // Event handler to call when an event is received
 
     // Data structures

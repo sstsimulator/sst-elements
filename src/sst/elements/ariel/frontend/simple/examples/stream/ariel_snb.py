@@ -173,9 +173,6 @@ for next_group in range(groups):
 		l1.addParams(l1_prefetch_params)
 
 		l2 = sst.Component("l2cache_" + str(next_core_id), "memHierarchy.Cache")
-		l2.addParams({
-			"network_address" : next_network_id
-			})
 		l2.addParams(l2_params)
 		l2.addParams(l1_prefetch_params)
 
@@ -199,9 +196,6 @@ for next_group in range(groups):
 		l1.addParams(l1_prefetch_params)
 
 		l2 = sst.Component("l2cache_" + str(next_core_id), "memHierarchy.Cache")
-		l2.addParams({
-			"network_address" : next_network_id
-		})
 		l2.addParams(l2_params)
 		l2.addParams(l2_prefetch_params)
 
@@ -224,7 +218,6 @@ for next_group in range(groups):
 		l3cache.addParams(l3_params)
 
 		l3cache.addParams({
-                       	"network_address" : next_network_id,
 			"slice_id" : str((next_group * l3cache_blocks_per_group) + next_l3_cache_block)
                 })
 
@@ -241,7 +234,6 @@ for next_group in range(groups):
 
 		dc = sst.Component("dc_" + str(next_memory_ctrl_id), "memHierarchy.DirectoryController")
 		dc.addParams({
-			"memNIC.network_address" : next_network_id,
 			"memNIC.addr_range_start" : next_memory_ctrl_id * mem_interleave_size,
 			"memNIC.addr_range_end" : (memory_capacity * 1024 * 1024) - (groups * memory_controllers_per_group * mem_interleave_size) + (next_memory_ctrl_id * mem_interleave_size)
 			})

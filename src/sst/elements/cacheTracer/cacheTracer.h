@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -17,6 +17,7 @@
 #define _CACHETRACER_H
 
 #include <sst/core/output.h>
+#include <sst/core/elementinfo.h>
 #include <sst/core/event.h>
 #include <sst/core/component.h>
 #include <sst/core/params.h>
@@ -48,6 +49,30 @@ public:
     ~cacheTracer();
     void finish();
     void init(unsigned int phase);
+
+    SST_ELI_REGISTER_COMPONENT(
+       	cacheTracer,
+       	"cacheTracer",
+       	"cacheTracer",
+       	SST_ELI_ELEMENT_VERSION(1,0,0),
+       	"Cache Tracing Plugin for MemHierarchy",
+	COMPONENT_CATEGORY_UNCATEGORIZED
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+	{ "clock", "Frequency, same as system clock frequency", "1 GHz" },
+    	{ "statsPrefix", "writes stats to statsPrefix file", "" },
+    	{ "tracePrefix", "writes trace to tracePrefix tracing is enable", "" },
+    	{ "debug", "Print debug statements with increasing verbosity [0-10]", "0" },
+    	{ "statistics", "0-No-stats, 1-print-stats", "0" },
+    	{ "pageSize", "Page Size (bytes), used for selecting number of bins for address histogram ", "4096" },
+    	{"accessLatencyBins", "Number of bins for access latency histogram" "10" }
+    )
+
+    SST_ELI_DOCUMENT_PORTS(
+	{ "northBus", "Connect towards cpu side", { "memHierarchy.MemEvent", "" } },
+    	{ "southBus", "Connect towards memory side", { "memHierarchy.MemEvent", "" } }
+    )
 
 private:
     // Functions

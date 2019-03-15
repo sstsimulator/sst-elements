@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 // 
 // This file is part of the SST software package. For license
@@ -22,6 +22,7 @@
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
 #include <sst/core/interfaces/simpleMem.h>
+#include <sst/core/elementinfo.h>
 
 #include <sst/core/output.h>
 
@@ -49,6 +50,53 @@ namespace SST {
 		class Samba : public SST::Component {
 			public:
 
+                SST_ELI_REGISTER_COMPONENT(
+                    Samba,
+                    "Samba",
+                    "Samba",
+                    SST_ELI_ELEMENT_VERSION(1,0,0),
+                    "Memory Management Unit (MMU) Component of SST",
+                    COMPONENT_CATEGORY_PROCESSOR
+                )
+
+                SST_ELI_DOCUMENT_STATISTICS(
+                    { "tlb_hits",        "Number of TLB hits", "requests", 1},   // Name, Desc, Enable Level
+                    { "tlb_misses",      "Number of TLB misses", "requests", 1},   // Name, Desc, Enable Level
+                    { "total_waiting",   "The total waiting time", "cycles", 1},   // Name, Desc, Enable Level
+                    { "write_requests",  "Stat write_requests", "requests", 1},
+                    { "tlb_shootdown",   "Number of TLB clears because of page-frees", "shootdowns", 2 },
+                    { "tlb_page_allocs", "Number of pages allocated by the memory manager", "pages", 2 }
+                )
+
+                SST_ELI_DOCUMENT_PARAMS(
+                    {"corecount", "Number of CPU cores to emulate, i.e., number of private Sambas", "1"},
+                    {"levels", "Number of TLB levels per Samba", "1"},
+                    {"perfect", "This is set to 1, when modeling an ideal TLB hierachy with 100\% hit rate", "0"},
+                    {"os_page_size", "This represents the size of frames the OS allocates in KB", "4"}, // This is a hack, assuming the OS allocated only one page size, this will change later
+                    {"sizes_L%(levels)", "Number of page sizes supported by Samba", "1"},
+                    {"page_size%(sizes)_L%(levels)d", "the page size of the supported page size number x in level y","4"},
+                    {"max_outstanding_L%(levels)d", "the number of max outstanding misses","1"},
+                    {"max_width_L%(levels)d", "the number of accesses on the same cycle","1"},
+                    {"size%(sizes)_L%(levels)d", "the number of entries of page size number x on level y","1"},
+                    {"upper_link_L%(levels)d", "the latency of the upper link connects to this structure","0"},
+                    {"assoc%(sizes)_L%(levels)d", "the associativity of size number X in Level Y", "1"},
+                    {"clock", "the clock frequency", "1GHz"},
+                    {"latency_L%(levels)d", "the access latency in cycles for this level of memory","1"},
+                    {"parallel_mode_L%(levels)d", "this is for the corner case of having a one cycle overlap with accessing cache","0"},
+                    {"page_walk_latency", "Each page table walk latency in nanoseconds", "50"},
+                    {"self_connected", "Determines if the page walkers are acutally connected to memory hierarchy or just add fixed latency (self-connected)", "0"},
+                    {"emulate_faults", "This indicates if the page faults should be emulated through requesting pages from Opal", "0"},
+                    {"opal_latency", "latency to communicate to the centralized memory manager", "32ps"}
+                )
+
+                SST_ELI_DOCUMENT_PORTS(
+                    {"cpu_to_mmu%(corecount)d", "Each Samba has link to its core", {}},
+                    {"ptw_to_opal%(corecount)d", "Each Samba has link to page fault handler (memory manager)", {}},
+                    {"mmu_to_cache%(corecount)d", "Each Samba to its corresponding cache", {}},
+                    {"ptw_to_mem%(corecount)d", "Each TLB hierarchy has a link to the memory for page walking", {}},
+                    {"alloc_link_%(corecount)d", "Each core's link to an allocation tracker (e.g. memSieve)", {}}
+                )
+
 				Samba(SST::ComponentId_t id, SST::Params& params); 
 				void init(unsigned int phase);
                                 void setup()  { };
@@ -59,14 +107,17 @@ namespace SST {
 				// Following are the page table components of the application running on the Ariel instance that owns this Samba unit
 				// Note, the application might be multi-threaded, however, all threads will share the sambe page table components below
 
-				long long int CR3;
-				std::map<long long int, long long int> PGD;
-				std::map<long long int, long long int> PUD;
-				std::map<long long int, long long int> PMD;
-				std::map<long long int, long long int> PTE;
-				std::map<long long int,int>  MAPPED_PAGE_SIZE4KB;
-				std::map<long long int,int>  MAPPED_PAGE_SIZE2MB;
-				std::map<long long int,int>  MAPPED_PAGE_SIZE1GB;
+				Address_t CR3;
+				std::map<Address_t, Address_t> PGD;
+				std::map<Address_t, Address_t> PUD;
+				std::map<Address_t, Address_t> PMD;
+				std::map<Address_t, Address_t> PTE;
+				std::map<Address_t,int>  MAPPED_PAGE_SIZE4KB;
+				std::map<Address_t,int>  MAPPED_PAGE_SIZE2MB;
+				std::map<Address_t,int>  MAPPED_PAGE_SIZE1GB;
+
+				std::map<Address_t,int> PENDING_PAGE_FAULTS;
+				std::map<Address_t,int> PENDING_SHOOTDOWN_EVENTS;
 
 
 			private:
@@ -101,7 +152,7 @@ namespace SST {
 				SST::Link** Samba_link;
 
 
-				Statistic<long long int>* statReadRequests;
+				Statistic<uint64_t>* statReadRequests;
 
 
 		};

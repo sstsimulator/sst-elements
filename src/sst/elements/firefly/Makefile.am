@@ -76,6 +76,7 @@ libfirefly_la_SOURCES = \
 	hadesMP.h \
 	hadesSHMEM.cc \
 	hadesSHMEM.h \
+	hadesMisc.h \
 	shmem/alltoall.cc \
 	shmem/alltoall.h \
 	shmem/alltoalls.cc \
@@ -92,7 +93,11 @@ libfirefly_la_SOURCES = \
 	shmem/fcollect.h \
 	shmem/reduction.cc \
 	shmem/reduction.h \
+	shmem/famAddrMapper.h \
+	shmem/famNodeMapper.h \
+	memoryModel/memoryModel.h \
 	memoryModel/simpleMemoryModel.h \
+	memoryModel/trivialMemoryModel.h \
 	memoryModel/busBridgeUnit.h \
 	memoryModel/busWidget.h \
 	memoryModel/cacheList.h \
@@ -103,9 +108,15 @@ libfirefly_la_SOURCES = \
 	memoryModel/memUnit.h \
 	memoryModel/muxUnit.h \
 	memoryModel/nicUnit.h \
+	memoryModel/nWayCache.h \
 	memoryModel/storeUnit.h \
+	memoryModel/tlbUnit.h \
+	memoryModel/sharedTlb.h \
+	memoryModel/sharedTlbUnit.h \
 	memoryModel/thread.h \
+	memoryModel/cache.h \
 	memoryModel/unit.h \
+	memoryModel/detailedUnit.h \
 	merlinEvent.h \
 	virtNic.h \
 	virtNic.cc \
@@ -122,6 +133,10 @@ libfirefly_la_SOURCES = \
 	nicRecvEntry.h \
 	nicRecvMachine.cc \
 	nicRecvMachine.h \
+	nicRecvCtx.cc \
+	nicRecvCtx.h \
+	nicRecvStream.cc \
+	nicRecvStream.h \
 	nicSendEntry.h \
 	nicSendMachine.cc \
 	nicSendMachine.h \
@@ -134,6 +149,8 @@ libfirefly_la_SOURCES = \
 	nicShmemStream.cc \
 	nicShmemStream.h \
 	nicVirtNic.h \
+	nicUnitPool.h \
+	thingHeap.h \
 	nodePerf.h
 
 libfirefly_la_LDFLAGS = -module -avoid-version

@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -60,6 +60,71 @@ namespace n_Bank{
   
 class c_DeviceDriver: public SubComponent{
 public:
+
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        c_DeviceDriver,
+        "CramSim",
+        "c_DeviceDriver",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Dram Control Unit",
+        "SST::CramSim::Controller::DeviceDriver"
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+		{"numChannels", "Total number of channels per DIMM", NULL},
+		{"numPChannelsPerChannel", "Total number of channels per pseudo channel (added to support HBM)", NULL},
+		{"numRanksPerChannel", "Total number of ranks per (p)channel", NULL},
+		{"numBankGroupsPerRank", "Total number of bank groups per rank", NULL},
+		{"numBanksPerBankGroup", "Total number of banks per group", NULL},
+		{"numRowsPerBank" "Number of rows in every bank", NULL},
+		{"numColsPerBank", "Number of cols in every bank", NULL},
+		{"boolPrintCmdTrace", "Print a command trace", NULL},
+		{"strCmdTraceFile", "Filename to print the command trace, or - for stdout", NULL},
+		{"boolAllocateCmdResACT", "Allocate space in DeviceDriver Res Q for ACT Cmds", NULL},
+		{"boolAllocateCmdResREAD", "Allocate space in DeviceDriver Res Q for READ Cmds", NULL},
+		{"boolAllocateCmdResREADA", "Allocate space in DeviceDriver Res Q for READA Cmds", NULL},
+		{"boolAllocateCmdResWRITE", "Allocate space in DeviceDriver Res Q for WRITE Cmds", NULL},
+		{"boolAllocateCmdResWRITEA", "Allocate space in DeviceDriver Res Q for WRITEA Cmds", NULL},
+		{"boolAllocateCmdResPRE", "Allocate space in DeviceDriver Res Q for PRE Cmds", NULL},
+		{"boolUseRefresh", "Whether to use REF or not", NULL},
+		{"boolDualCommandBus", "Whether to use dual command bus (added to support HBM)", NULL},
+		{"boolMultiCycleACT", "Whether to use multi-cycle (two cycles) active command (added to support HBM)", NULL},
+		{"nRC", "Bank Param", NULL},
+		{"nRRD", "Bank Param", NULL},
+		{"nRRD_L", "Bank Param", NULL},
+		{"nRRD_S", "Bank Param", NULL},
+		{"nRCD", "Bank Param", NULL},
+		{"nCCD", "Bank Param", NULL},
+		{"nCCD_L", "Bank Param", NULL},
+		{"nCCD_L_WR", "Bank Param", NULL},
+		{"nCCD_S", "Bank Param", NULL},
+		{"nAL", "Bank Param", NULL},
+		{"nCL", "Bank Param", NULL},
+		{"nCWL", "Bank Param", NULL},
+		{"nWR", "Bank Param", NULL},
+		{"nWTR", "Bank Param", NULL},
+		{"nWTR_L", "Bank Param", NULL},
+		{"nWTR_S", "Bank Param", NULL},
+		{"nRTW", "Bank Param", NULL},
+		{"nEWTR", "Bank Param", NULL},
+		{"nERTW", "Bank Param", NULL},
+		{"nEWTW", "Bank Param", NULL},
+		{"nERTR", "Bank Param", NULL},
+		{"nRAS", "Bank Param", NULL},
+		{"nRTP", "Bank Param", NULL},
+		{"nRP", "Bank Param", NULL},
+		{"nRFC", "Bank Param", NULL},
+		{"nREFI", "Bank Param", NULL},
+		{"nFAW", "Bank Param", NULL},
+		{"nBL", "Bank Param", NULL},
+    )
+
+    SST_ELI_DOCUMENT_PORTS(
+    )
+
+    SST_ELI_DOCUMENT_STATISTICS(
+    )
+
 	c_DeviceDriver(Component *comp, Params& x_params);
 	~c_DeviceDriver();
 

@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 // 
 // Portions are copyright of other developers:
@@ -19,6 +19,7 @@
 #include <functional>
 #include <stdint.h>
 #include "ctrlMsg.h"
+#include <sst/core/elementinfo.h>
 #include <sst/core/output.h>
 
 #include "info.h"
@@ -28,6 +29,15 @@
 
 #include "ctrlMsgCommReq.h"
 #include "ctrlMsgWaitReq.h"
+
+#define DBG_MSK_PQS_APP_SIDE 1 << 0
+#define DBG_MSK_PQS_INT 1 << 1 
+#define DBG_MSK_PQS_Q 1 << 2 
+#define DBG_MSK_PQS_CB 1 << 3 
+#define DBG_MSK_PQS_LOOP 1<< 4
+#define DBG_MSK_PQS_NEED_RECV 1<< 5 
+#define DBG_MSK_PQS_POST_SHORT 1<< 6 
+
 
 namespace SST {
 namespace Firefly {
@@ -45,8 +55,51 @@ typedef int region_t;
 
 class MemoryBase;
 
-class ProcessQueuesState : SubComponent
+class ProcessQueuesState : public SubComponent
 {
+  public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        ProcessQueuesState,
+        "firefly",
+        "ctrlMsg",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "",
+        ""
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+        {"shortMsgLength","Sets the short to long message transition point", "16000"},
+        {"verboseLevel","Set the verbose level", "1"},
+        {"debug","Set the debug level", "0"},
+        {"txMemcpyMod","Set the module used to calculate TX mempcy latency", ""},
+        {"rxMemcpyMod","Set the module used to calculate RX mempcy latency", ""},
+        {"matchDelay_ns","Sets the time to do a match", "100"},
+        {"txSetupMod","Set the module used to calculate TX setup latency", ""},
+        {"rxSetupMod","Set the module used to calculate RX setup latency", ""},
+        {"txFiniMod","Set the module used to calculate TX fini latency", ""},
+        {"rxFiniMod","Set the module used to calculate RX fini latency", ""},
+        {"rxPostMod","Set the module used to calculate RX post latency", ""},
+        {"loopBackPortName","Sets port name to use when connecting to the loopBack component","loop"},
+        {"rxNicDelay_ns","", "0"},
+        {"txNicDelay_ns","", "0"},
+        {"sendReqFiniDelay_ns","", "0"},
+        {"recvReqFiniDelay_ns","", "0"},
+        {"sendAckDelay_ns","", "0"},
+        {"regRegionXoverLength","Sets the transition point page pinning", "4096"},
+        {"regRegionPerPageDelay_ns","Sets the time to pin pages", "0"},
+        {"regRegionBaseDelay_ns","Sets the base time to pin pages", "0"},
+        {"sendStateDelay_ps","", "0"},
+        {"recvStateDelay_ps","", "0"},
+        {"waitallStateDelay_ps","", "0"},
+        {"waitanyStateDelay_ps","", "0"},
+    )
+
+    SST_ELI_DOCUMENT_STATISTICS(
+        { "posted_receive_list", "", "count", 1 },
+        { "received_msg_list", "", "count", 1 }
+    )
+
+  private:
     typedef std::function<void(nid_t, uint32_t, size_t)> Callback2;
     typedef std::function<void()> VoidFunction;
 
@@ -326,7 +379,7 @@ class ProcessQueuesState : SubComponent
     _CommReq*	searchPostedRecv( MatchHdr& hdr, int& delay );
 
     void exit( int delay = 0 ) {
-        dbg().verbose(CALL_INFO,2,1,"exit ProcessQueuesState\n"); 
+        dbg().debug(CALL_INFO,2,DBG_MSK_PQS_APP_SIDE,"exit ProcessQueuesState\n"); 
         passCtrlToFunction( m_exitDelay + delay );
         m_exitDelay = 0;
     }
@@ -389,6 +442,7 @@ class ProcessQueuesState : SubComponent
         m_delayLink->send( delay, new DelayEvent(callback) );
     }  
     void passCtrlToFunction( uint64_t delay = 0 ) {
+        dbg().debug(CALL_INFO,1,DBG_MSK_PQS_APP_SIDE,"\n"); 
         m_returnToCaller->send( delay, NULL );
     }
 
@@ -439,6 +493,8 @@ class ProcessQueuesState : SubComponent
 
     Statistic<uint64_t>* m_statRcvdMsg;
     Statistic<uint64_t>* m_statPstdRcv;
+    int m_numSent;
+    int m_numRecv;
 };
 
 }

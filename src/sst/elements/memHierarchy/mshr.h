@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -17,16 +17,16 @@
 #define _MSHR_H_
 
 #include <map>
+#include <string>
+#include <sstream>
 
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>
 #include <sst/core/output.h>
 
-#include <memEvent.h>
-#include <util.h>
-#include <string>
-#include <sstream>
+#include "sst/elements/memHierarchy/memEvent.h"
+#include "sst/elements/memHierarchy/util.h"
 
 namespace SST { namespace MemHierarchy {
 
@@ -122,7 +122,9 @@ public:
     bool insert(Addr keyAddr, Addr ptrAddr);         // internal
     bool insertInv(Addr baseAddr, mshrType entry, bool inProgress);         // internal
     bool removeElement(Addr baseAddr, mshrType entry);  // internal
-    
+
+    // debug
+    void printStatus(Output& out);
 
     // unimplemented or unused functions
     void printEntry(Addr baseAddr);                         // not implemented

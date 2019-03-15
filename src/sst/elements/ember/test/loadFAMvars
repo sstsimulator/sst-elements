@@ -1,0 +1,77 @@
+# This file must be ordered
+#
+# [JOB_ID]
+# [NID_LIST]
+# [MOTIF_API]
+# [PARAM]
+# [MOTIF]
+# [MOTIF]
+#
+# keywords must be left justified and not contain white space
+# all characters between keywords will be considered part of the leading keyword 
+# you can have multiple MOTIF keywords for a given JOB_ID 
+# you can have multiple jobs
+# two jobs can not have the same NID 
+
+[VAR] TOTAL_NODES=200
+[VAR] COMPUTE_NODES=80
+[VAR] FAM_NODES=100
+# COMPUTE_NODES + FAM_NODES
+[VAR] IDLE_OFFSET=180
+[VAR] IDLE_NODES=20
+[VAR] FAM_MEMORY_SIZE=2MiB
+[VAR] TOTAL_MEMORY_SIZE=200MiB
+[VAR] MOTIF=ShmemFAM_Get2
+
+[JOB_ID] 10 
+# 80 nodes randomly placed out of 200 nodes, 
+# 1st param: total nodes 
+# 2nd param: where to start in list of 200  random numbers 
+# 3rd param: number needed
+[NID_LIST] generateNidList=generateNidListRandom({TOTAL_NODES},0,{COMPUTE_NODES}) 
+[MOTIF_API]  HadesSHMEM
+[PARAM] nic:verboseLevel=0
+[PARAM] nic:verboseMask=-1
+[PARAM] nic:useSimpleMemoryModel=1
+[PARAM] nic:simpleMemoryModel.useBusBridge=yes
+[PARAM] nic:simpleMemoryModel.useHostCache=yes
+[PARAM] nic:simpleMemoryModel.printConfig=no
+[PARAM] ember:firefly.hadesSHMEM.verboseLevel=0
+[PARAM] ember:firefly.hadesSHMEM.verboseMask=-1
+[PARAM] ember:verbose=0
+# use the Random Node mapper 
+[PARAM] ember:famAddrMapper.name=ember.RandomNode_FamAddrMapper
+# every FAM nodes has X bytes, this number has to match the FAM_memSize of the FAM node
+[PARAM] ember:famAddrMapper.bytesPerNode={FAM_MEMORY_SIZE}
+# number of FAM nodes
+[PARAM] ember:famAddrMapper.numNodes={FAM_NODES}
+[PARAM] ember:famAddrMapper.nidList=generateNidListRandom({TOTAL_NODES},{COMPUTE_NODES},{FAM_NODES})
+
+# randomly get a block for the total number of blocks, totalBytes should be the number
+# of FAM nodes * memory per FAM node 
+#[MOTIF] ShmemFAM_RandGet totalBytes=200MiB getLoop=200 backed=no
+[MOTIF] {MOTIF} totalBytes={TOTAL_MEMORY_SIZE} getLoop=200 backed=no
+
+[JOB_ID] 11
+# 100 nodes randomly placed out 200 nodes,
+# give me a list of 100 random numbers that start at position 80 of the 200 unique numbers
+[NID_LIST] generateNidList=generateNidListRandom({TOTAL_NODES},{COMPUTE_NODES},{FAM_NODES}) 
+[PARAM] nic:verboseLevel=0
+[PARAM] nic:verboseMask=-1
+[PARAM] nic:printConfig=no
+[PARAM] nic:useSimpleMemoryModel=1
+[PARAM] nic:simpleMemoryModel.verboseLevel=0
+[PARAM] nic:simpleMemoryModel.verboseMask=-1
+[PARAM] nic:simpleMemoryModel.useHostCache=no
+[PARAM] nic:simpleMemoryModel.useBusBridge=no
+[PARAM] nic:simpleMemoryModel.printConfig=no
+# how much memory does the FAM node have
+[PARAM] nic:FAM_memSize={FAM_MEMORY_SIZE}
+[PARAM] nic:FAM_backed=no
+[MOTIF] Null
+
+[JOB_ID] 12
+# idle nodes
+# 20 nodes randomly placed
+[NID_LIST] generateNidList=generateNidListRandom({TOTAL_NODES},{IDLE_OFFSET},{IDLE_NODES}) 
+[MOTIF] Null

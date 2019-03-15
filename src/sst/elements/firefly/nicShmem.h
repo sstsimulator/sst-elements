@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -26,7 +26,7 @@ class Shmem {
 			delete m_cmd;
         }
         Callback&  callback() { return m_callback; }
-        virtual bool checkOp( Output& ) = 0;
+        virtual bool checkOp( Output&, int core ) = 0;
         bool inRange( Hermes::Vaddr addr, size_t length ) {
             //printf("%s() addr=%lu length=%lu\n",__func__,addr, length);
             return ( m_cmd->addr >= addr && m_cmd->addr + m_cmd->value.getLength() <= addr + length );
@@ -45,10 +45,10 @@ class Shmem {
             m_value( cmd->value.getType(), backing ) 
         {} 
 
-        bool checkOp( Output& dbg ) {
+        bool checkOp( Output& dbg, int core ) {
             std::stringstream tmp;
-            tmp << m_value << " " << m_cmd->op << " " << m_cmd->value;
-            dbg.verbose( CALL_INFO,1,NIC_SHMEM,"%s %s\n",__func__,tmp.str().c_str());
+            tmp << "op=" << WaitOpName(m_cmd->op) << " testValue=" << m_cmd->value << " memValue=" << m_value;
+            dbg.debug( CALL_INFO,1,NIC_DBG_SHMEM,"%s core=%d %s\n",__func__,core,tmp.str().c_str());
             switch ( m_cmd->op ) {
               case Hermes::Shmem::NE:
                 return m_value != m_cmd->value; 
@@ -81,40 +81,66 @@ class Shmem {
 		
 	const char* prefix() { return m_prefix.c_str(); }
   public:
-    Shmem( Nic& nic, int id, int numVnics, Output& output, SimTime_t nic2HostDelay_ns, SimTime_t host2NicDelay_ns ) : 
-		m_nic( nic ), m_dbg(output), m_one( (long) 1 ), m_freeCmdSlots( 1000 ),
-    	m_nic2HostDelay_ns(nic2HostDelay_ns), m_host2NicDelay_ns(host2NicDelay_ns)
+    Shmem( Nic& nic, Params& params, int id, int numVnics, Output& output, int numCmdSlots, SimTime_t nic2HostDelay_ns, SimTime_t host2NicDelay_ns ) : 
+		m_nic( nic ), m_dbg(output), m_one( (long) 1 ),
+    	m_nic2HostDelay_ns(nic2HostDelay_ns), m_host2NicDelay_ns(host2NicDelay_ns), m_engineBusy(false),m_hostBusy(false)
     {
         m_prefix = "@t:" + std::to_string(id) + ":Nic::Shmem::@p():@l ";
-        m_dbg.verbosePrefix( prefix(), CALL_INFO,1,NIC_SHMEM,"this=%p\n",this );
+        m_dbg.verbosePrefix( prefix(), CALL_INFO,1,NIC_DBG_SHMEM,"this=%p\n",this );
 
 		m_regMem.resize( numVnics ); 
 		m_pendingOps.resize( numVnics );
 		m_pendingRemoteOps.resize( numVnics );
+		m_nicCmdLatency =    params.find<int>( "nicCmdLatency", 10 );
+		m_hostCmdLatency =   params.find<int>( "hostCmdLatency", 10 );
 	}
     ~Shmem() {
         m_regMem.clear();
     }
 	void handleEvent( NicShmemCmdEvent* event, int id );
 	void handleHostEvent( NicShmemCmdEvent* event, int id );
+	void handleHostEvent2( NicShmemCmdEvent* event, int id );
 	void handleNicEvent( NicShmemCmdEvent* event, int id );
-	void handleEvent2( NicShmemCmdEvent* event, int id );
+	void handleNicEvent2( NicShmemCmdEvent* event, int id );
+	void handleNicEvent3( NicShmemCmdEvent* event, int id );
+	long getPending( int core ) {
+		return  m_pendingRemoteOps[core].second.get<long>();
+    }
+    void incPending( int core ) {
+		long value = m_pendingRemoteOps[core].second.get<long>();
+        m_dbg.verbosePrefix( prefix(), CALL_INFO,1,NIC_DBG_SHMEM,"core=%d count=%lu\n", core, value );
+        m_pendingRemoteOps[core].second += m_one;
+    }
 	void decPending( int core ) {
+		long value = m_pendingRemoteOps[core].second.get<long>();
+        m_dbg.verbosePrefix( prefix(), CALL_INFO,1,NIC_DBG_SHMEM,"core=%d count=%lu\n", core, value );
+        assert(value>0);
 		m_pendingRemoteOps[core].second -= m_one;
 		checkWaitOps( core, m_pendingRemoteOps[core].first, m_pendingRemoteOps[core].second.getLength() );
 	}	
 
     std::pair<Hermes::MemAddr, size_t>& findRegion( int core, uint64_t addr ) { 
-//		printf("%s() core=%d %#" PRIx64 "\n",__func__,core,addr);
         for ( int i = 0; i < m_regMem[core].size(); i++ ) {
             if ( addr >= m_regMem[core][i].first.getSimVAddr() &&
                 addr < m_regMem[core][i].first.getSimVAddr() + m_regMem[core][i].second ) {
                 return m_regMem[core][i]; 
             } 
         } 
-        assert(0);
+		m_dbg.fatal(CALL_INFO,0," core %d Unable to find for for addr %" PRIx64 "\n", core, addr);
+		// quiet compiler warning
+		assert(0);
     }
-    void checkWaitOps( int core, Hermes::Vaddr addr, size_t length, bool nic = false );
+	
+	void regMem( int id, uint64_t simAddr, size_t length, void* backing ) {
+		Hermes::MemAddr addr( simAddr, backing );
+
+	    m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_DBG_SHMEM,"core=%d simVAddr=%" PRIx64 " backing=%p len=%lu\n",
+            id, addr.getSimVAddr(), addr.getBacking(), length );
+
+    	m_regMem[id].push_back( std::make_pair(addr, length) );
+	}
+
+    void checkWaitOps( int core, Hermes::Vaddr addr, size_t length );
 
 private:
 	SimTime_t getNic2HostDelay_ns() { return m_nic2HostDelay_ns; }
@@ -127,10 +153,11 @@ private:
     void hostPutv( NicShmemPutvCmdEvent*, int id );
     void hostGet( NicShmemGetCmdEvent*, int id );
     void hostGetv( NicShmemGetvCmdEvent*, int id );
+
     void hostAdd( NicShmemAddCmdEvent*, int id );
     void hostFadd( NicShmemFaddCmdEvent*, int id );
-    void hostCswap( NicShmemCswapCmdEvent*, int id );
-    void hostSwap( NicShmemSwapCmdEvent*, int id );
+    void sameNodeCswap( NicShmemCswapCmdEvent*, int id );
+    void sameNodeSwap( NicShmemSwapCmdEvent*, int id );
 
     void put( NicShmemPutCmdEvent*, int id );
     void putv( NicShmemPutvCmdEvent*, int id );
@@ -148,17 +175,6 @@ private:
             int srcCore, Hermes::Vaddr srcAddr, size_t length, Hermes::Value::Type,
 			std::vector<MemOp>& vec );
 
-	void incFreeCmdSlots( ) {
-		++m_freeCmdSlots;
-		if ( ! m_pendingCmds.empty() ) {
-			handleEvent( m_pendingCmds.front().first, m_pendingCmds.front().second );
-			m_pendingCmds.pop_front();
-		}
-	}
-
-	std::deque<std::pair<NicShmemCmdEvent*, int> > m_pendingCmds;
-	int m_freeCmdSlots;
-
 	Hermes::Value m_one;
 	std::vector< std::pair< Hermes::Vaddr, Hermes::Value > > m_pendingRemoteOps;
     Nic& m_nic;
@@ -167,4 +183,11 @@ private:
     std::vector<std::vector< std::pair<Hermes::MemAddr, size_t> > > m_regMem;
 	SimTime_t m_nic2HostDelay_ns;
 	SimTime_t m_host2NicDelay_ns;
+
+	std::queue< std::pair< NicShmemCmdEvent*, int > > m_cmdQ;
+	bool m_engineBusy;
+	std::queue< std::pair< NicShmemCmdEvent*, int > > m_hostCmdQ;
+	bool m_hostBusy;
+	SimTime_t m_nicCmdLatency;
+	SimTime_t m_hostCmdLatency;
 };

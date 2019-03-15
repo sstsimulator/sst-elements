@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -94,7 +94,7 @@ public:
         /* Alloc unit needs to be pwr-2 */
         if (!isPowerOfTwo(m_allocUnit)) {
             Output out("", 1, 0, Output::STDOUT);
-            out.fatal(CALL_INFO, -1, "BackingMalloc: Error - size must be a power of two. Got: %u\n", size);
+            out.fatal(CALL_INFO, -1, "BackingMalloc: Error - size must be a power of two. Got: %zu\n", size);
         }
         m_shift = log2Of(m_allocUnit);
     }

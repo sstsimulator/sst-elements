@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -93,6 +93,85 @@ public:
     int m_num_pes;
 };
 
+class EmberShmemAddIntGenerator : public EmberShmemAddGenerator<int> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemAddIntGenerator,
+        "ember",
+        "ShmemAddIntMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM add int",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemAddIntGenerator( SST::Component* owner, Params& params ) :
+        EmberShmemAddGenerator(owner,  params) { }
+};
+
+class EmberShmemAddLongGenerator : public EmberShmemAddGenerator<long> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemAddLongGenerator,
+        "ember",
+        "ShmemAddLongMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM add long",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemAddLongGenerator( SST::Component* owner, Params& params ) :
+        EmberShmemAddGenerator(owner,  params) { }
+};
+
+class EmberShmemAddDoubleGenerator : public EmberShmemAddGenerator<double> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemAddDoubleGenerator,
+        "ember",
+        "ShmemAddDoubleMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM add double",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemAddDoubleGenerator( SST::Component* owner, Params& params ) :
+        EmberShmemAddGenerator(owner,  params) { }
+};
+
+class EmberShmemAddFloatGenerator : public EmberShmemAddGenerator<float> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemAddFloatGenerator,
+        "ember",
+        "ShmemAddFloatMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM add float",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemAddFloatGenerator( SST::Component* owner, Params& params ) :
+        EmberShmemAddGenerator(owner,  params) { }
+};
 }
 }
 

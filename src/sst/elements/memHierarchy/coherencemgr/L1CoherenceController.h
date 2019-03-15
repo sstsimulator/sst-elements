@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 // 
 // Portions are copyright of other developers:
@@ -20,7 +20,7 @@
 
 #include <sst/core/elementinfo.h>
 
-#include "coherencemgr/coherenceController.h"
+#include "sst/elements/memHierarchy/coherencemgr/coherenceController.h"
 
 
 namespace SST { namespace MemHierarchy {
@@ -136,6 +136,12 @@ public:
         {"latency_GetSX_IM",        "Latency for read-exclusive misses in I state", "cycles", 1},
         {"latency_GetSX_SM",        "Latency for read-exclusive misses in S state", "cycles", 1},
         {"latency_GetSX_M",         "Latency for read-exclusive misses that find the block owned by another cache in M state", "cycles", 1},
+        /* Track what happens to prefetched blocks */
+        {"prefetch_useful",         "Prefetched block had a subsequent hit (useful prefetch)", "count", 2},
+        {"prefetch_evict",          "Prefetched block was evicted/flushed before being accessed", "count", 2},
+        {"prefetch_inv",            "Prefetched block was invalidated before being accessed", "count", 2},
+        {"prefetch_coherence_miss", "Prefetched block incurred a coherence miss (upgrade) on its first access", "count", 2},
+        {"prefetch_redundant",      "Prefetch issued for a block that was already in cache", "count", 2},
         /* Miscellaneous */
         {"EventStalledForLockedCacheline",  "Number of times an event (FetchInv, FetchInvX, eviction, Fetch, etc.) was stalled because a cache line was locked", "instances", 1})
 
@@ -235,6 +241,15 @@ public:
         // Only for caches that forward invs to the processor
         if (snoopL1Invs_) {
             stat_eventSent_Inv =            registerStatistic<uint64_t>("eventSent_Inv");
+        }
+
+        /* Prefetch statistics */
+        if (!params.find<std::string>("prefetcher", "").empty()) {
+            statPrefetchEvict = registerStatistic<uint64_t>("prefetch_evict");
+            statPrefetchInv = registerStatistic<uint64_t>("prefetch_inv");
+            statPrefetchHit = registerStatistic<uint64_t>("prefetch_useful");
+            statPrefetchUpgradeMiss = registerStatistic<uint64_t>("prefetch_coherence_miss");
+            statPrefetchRedundant = registerStatistic<uint64_t>("prefetch_redundant");
         }
 
         /* MESI-specific statistics (as opposed to MSI) */

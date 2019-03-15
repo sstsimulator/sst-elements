@@ -7,12 +7,12 @@ compdir = $(pkglibdir)
 comp_LTLIBRARIES = libmiranda.la
 
 libmiranda_la_SOURCES = \
-	miranda.cc \
 	mirandaEvent.h \
 	mirandaGenerator.h \
 	mirandaCPU.cc \
 	mirandaCPU.h	\
 	mirandaMemMgr.h \
+	mirandaIncGen.cc \
 	generators/singlestream.h \
 	generators/singlestream.cc \
 	generators/randomgen.h \
@@ -40,6 +40,14 @@ EXTRA_DIST = \
 	tests/streambench.py \
 	tests/inorderstream.py \
 	tests/copybench.py \
-	tests/gupsgen.py 
+	tests/gupsgen.py
 
 libmiranda_la_LDFLAGS = -module -avoid-version
+
+if USE_STAKE
+libmiranda_la_SOURCES += \
+	generators/stake.cc \
+	generators/stake.h
+libmiranda_la_LDFLAGS += $(STAKE_LDFLAGS) $(STAKE_LIB)
+AM_CPPFLAGS += $(STAKE_CPPFLAGS) -DHAVE_STAKE
+endif

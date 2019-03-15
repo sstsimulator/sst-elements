@@ -195,9 +195,10 @@ elif "fattree" == netTopo:
 	topo = topoFatTree()
 
 elif "dragonfly" == netTopo:
-		
-	topoInfo = DragonFlyInfo(netShape)
-	topo = topoDragonFly()
+
+	# Only supports legacy dragonfly
+	topoInfo = DragonFlyLegacyInfo(netShape)
+	topo = topoDragonFlyLegacy()
 
 else:
 	sys.exit("how did we get here")
@@ -303,8 +304,8 @@ sst.merlin._params["xbar_bw"] = networkParams['link_bw']
 sst.merlin._params["flit_size"] = networkParams['flitSize'] 
 sst.merlin._params["input_latency"] = networkParams['input_latency'] 
 sst.merlin._params["output_latency"] = networkParams['output_latency'] 
-sst.merlin._params["input_buf_size"] = networkParams['buffer_size'] 
-sst.merlin._params["output_buf_size"] = networkParams['buffer_size'] 
+sst.merlin._params["input_buf_size"] = networkParams['input_buf_size'] 
+sst.merlin._params["output_buf_size"] = networkParams['output_buf_size'] 
 
 if rtrArb:
 	sst.merlin._params["xbar_arb"] = "merlin." + rtrArb 

@@ -1,8 +1,8 @@
-// Copyright 2013-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2017, Sandia Corporation
+// Copyright (c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -28,7 +28,7 @@ WaitAnyFuncSM::WaitAnyFuncSM( SST::Params& params ) :
 void WaitAnyFuncSM::handleStartEvent( SST::Event *e, Retval& retval ) 
 {
     assert( NULL == m_event );
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
+    m_dbg.debug(CALL_INFO,1,0,"\n");
 
     m_event = static_cast< WaitAnyStartEvent* >(e);
 
@@ -38,7 +38,7 @@ void WaitAnyFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
 
 void WaitAnyFuncSM::handleEnterEvent( Retval& retval )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
+    m_dbg.debug(CALL_INFO,1,0,"\n");
     retval.setExit(0);
     delete m_event;
     m_event = NULL;

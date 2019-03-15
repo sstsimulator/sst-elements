@@ -1,8 +1,8 @@
-// Copyright 2013-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2017, Sandia Corporation
+// Copyright (c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -83,6 +83,7 @@ class ShmemRecvEntry : public RecvEntryBase {
 
     void notify( int src_vNic, int src_node, int tag, size_t length ) {}
 
+    size_t totalBytes( ) { return m_shmemMove->totalBytes(); }
     std::vector<IoVec>& ioVec() { assert(0); }
 
     bool copyIn( Output& dbg, FireflyNetworkEvent& ev, std::vector<MemOp>& vec ) {
@@ -104,6 +105,7 @@ class ShmemGetRespRecvEntry : public RecvEntryBase {
         delete m_entry;
     }
 
+    size_t totalBytes( ) { return m_shmemMove->totalBytes(); }
     std::vector<IoVec>& ioVec() { assert(0); }
 
     bool copyIn( Output& dbg, FireflyNetworkEvent& ev, std::vector<MemOp>& vec ) {
@@ -126,6 +128,7 @@ class ShmemGetvRespRecvEntry : public ShmemGetRespRecvEntry {
         m_shmemMove = new ShmemRecvMoveValue( m_value );
     }
 
+    size_t totalBytes( ) { return m_shmemMove->totalBytes(); }
     virtual void notify( int src_vNic, int src_node, int tag, size_t length ) {
         static_cast<ShmemGetvSendEntry*>(m_entry)->callback( m_value );
     }
@@ -147,6 +150,7 @@ class ShmemGetbRespRecvEntry : public ShmemGetRespRecvEntry {
         m_shmemMove = new ShmemRecvMoveMem( backing, length, shmem, core, cmd->getMyAddr() );
     }
 
+    size_t totalBytes( ) { return m_shmemMove->totalBytes(); }
     virtual void notify( int src_vNic, int src_node, int tag, size_t length ) {
         static_cast<ShmemGetbSendEntry*>(m_entry)->callback( );
     }

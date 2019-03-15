@@ -1,8 +1,8 @@
-// Copyright 2013-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2017, Sandia Corporation
+// Copyright (c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -17,8 +17,12 @@
 #ifndef COMPONENTS_FIREFLY_HADESSHMEM_H
 #define COMPONENTS_FIREFLY_HADESSHMEM_H
 
+#include <sst/core/module.h>
+#include <sst/core/elementinfo.h>
+
 #include <sst/core/params.h>
 
+#include <queue>
 #include <stdlib.h>
 #include <string.h>
 #include "sst/elements/hermes/shmemapi.h"
@@ -31,6 +35,8 @@
 #include "shmem/alltoall.h"
 #include "shmem/alltoalls.h"
 #include "shmem/reduction.h"
+#include "shmem/famAddrMapper.h"
+#include "shmem/famNodeMapper.h"
 
 #define SHMEM_BASE      1<<0
 #define SHMEM_BARRIER   1<<1
@@ -43,6 +49,22 @@ namespace Firefly {
 class HadesSHMEM : public Shmem::Interface
 {
   public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        HadesSHMEM,
+        "firefly",
+        "hadesSHMEM",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "",
+        ""
+    )
+    SST_ELI_DOCUMENT_PARAMS(
+        {"verboseLevel","Sets the level of debug verbosity",""},
+        {"verboseMask","Sets the debug mask",""},
+        {"enterLat_ns","Sets the latency of entering a SHMEM call","" },
+        {"returnLat_ns","Sets the latency of returning from a SHMEM call","" },
+        {"blockingReturnLat_ns","Sets the latency of returning from a SHMEM call that blocked on response","" },
+    )
+
     typedef std::function<void()> Callback;
 
   private:
@@ -105,19 +127,33 @@ class HadesSHMEM : public Shmem::Interface
             m_curAddr += 64;
             m_curAddr &= ~(64-1);
 
+
+			addAddr( addr, n, backed );
+            return addr; 
+        }  
+
+		void addAddr( Hermes::MemAddr& addr, size_t n, bool backed ) { 
             if ( backed ) {
                 addr.setBacking( ::malloc(n) );
             }
             m_map[ addr.getSimVAddr() ] = Entry( addr, n );
 
-            return addr; 
-        }  
+		}
+
         void free( Hermes::MemAddr& addr ) {
             if ( addr.getBacking() ) {
                 ::free( addr.getBacking() );
             }
             m_map.erase( addr.getSimVAddr() );
         }
+
+		Hermes::MemAddr addAddr( uint64_t addr, size_t n, bool backed ) {
+            Hermes::MemAddr memAddr( Hermes::MemAddr::Shmem );
+            memAddr.setSimVAddr( addr );
+			addAddr( memAddr, n, backed );
+			return memAddr;
+		}
+
         void* findBacking( Hermes::Vaddr addr ) {
             std::map<Hermes::Vaddr,Entry>::iterator iter = m_map.begin();
             for ( ; iter != m_map.end(); ++iter ) {
@@ -138,6 +174,245 @@ class HadesSHMEM : public Shmem::Interface
         std::map<Hermes::Vaddr, Entry > m_map;
     };
 
+	struct Base {
+		Base( Shmem::Callback callback ) :  callback( callback ) {}
+		Shmem::Callback callback;
+	};
+	struct Init : public Base { 
+		Init( Shmem::Callback callback ) : Base(callback) {} 
+	};
+	struct Finalize : public Base { 
+		Finalize( Shmem::Callback callback ) : Base(callback) {} 
+	};
+	struct N_Pes : public Base { 
+		N_Pes( int* val, Shmem::Callback callback ) : Base(callback), val( val ) {} 
+		int* val;
+	};
+	struct MyPe : public Base { 
+		MyPe( int* val, Shmem::Callback callback ) : Base(callback), val( val ) {} 
+		int* val;
+	};
+	struct Fence : public Base { 
+		Fence( Shmem::Callback callback ) : Base(callback) {} 
+	};
+	struct Quiet : public Base { 
+		Quiet( Shmem::Callback callback ) : Base(callback) {} 
+	};
+	struct Barrier_all : public Base { 
+		Barrier_all( Shmem::Callback callback ) : Base(callback) {} 
+	};
+	struct Barrier : public Base { 
+		Barrier( int start, int stride, int size, Vaddr addr, Shmem::Callback callback ) : 
+			Base(callback), start(start), stride(stride), size(size), pSync(addr) {} 
+		int start;
+		int stride;
+		int size; 
+		Vaddr pSync;
+	};
+	struct Broadcast : public Base { 
+		Broadcast( Vaddr dest, Vaddr source, size_t nelems, int root, int PE_start,
+            int logPE_stride, int PE_size, Vaddr addr, Shmem::Callback callback ) :
+			Base(callback), dest(dest), source(source), nelems(nelems), root(root), PE_start(PE_start),
+	   		logPE_stride(logPE_stride), PE_size(PE_size), pSync(addr)	{} 
+		Vaddr dest;
+		Vaddr source;
+		size_t nelems; 
+		int root; 
+		int PE_start;
+        int logPE_stride;
+		 int PE_size;
+		Vaddr pSync;
+	};
+	struct Fcollect : public Base { 
+		Fcollect( Vaddr dest, Vaddr source, size_t nelems, int PE_start,
+            int logPE_stride, int PE_size, Vaddr addr, Shmem::Callback callback ) :
+			Base(callback), dest(dest), source(source), nelems(nelems), PE_start(PE_start),
+	  		logPE_stride(logPE_stride), PE_size(PE_size), pSync(addr)	{} 
+		Vaddr dest;
+		Vaddr source;
+		size_t nelems;
+	   	int PE_start;
+        int logPE_stride;
+	   	int PE_size;
+	   	Vaddr pSync;
+	};
+	struct Collect : public Base { 
+		Collect( Vaddr dest, Vaddr source, size_t nelems, int PE_start,
+            int logPE_stride, int PE_size, Vaddr pSync, Shmem::Callback callback ) :
+			Base(callback), dest(dest), source(source), nelems(nelems), PE_start(PE_start),
+	   		logPE_stride(logPE_stride), PE_size(PE_size), pSync(pSync)	{} 
+		Vaddr dest;
+		Vaddr source;
+		size_t nelems;
+		int PE_start;
+        int logPE_stride;
+		int PE_size;
+		Vaddr pSync;
+	};
+
+	struct Alltoall : public Base { 
+		Alltoall( Vaddr dest, Vaddr source, size_t nelems, int PE_start,
+            int logPE_stride, int PE_size, Vaddr pSync, Shmem::Callback callback ) :
+			Base(callback), dest(dest), source(source), nelems(nelems), PE_start(PE_start),
+	   		logPE_stride(logPE_stride), PE_size(PE_size), pSync(pSync) {} 
+		Vaddr dest;
+		Vaddr source;
+	   	size_t nelems;
+		int PE_start;
+        int logPE_stride;
+	   	int PE_size;
+		Vaddr pSync;
+	};
+
+	struct Alltoalls : public Base { 
+		Alltoalls( Vaddr dest, Vaddr source, int dst, int sst, size_t nelems, int elsize,
+            int PE_start, int logPE_stride, int PE_size, Vaddr pSync, Shmem::Callback callback ) :
+			Base(callback), dest(dest), source(source), dst(dst), sst(sst), nelems(nelems),
+	   		elsize(elsize), PE_start(PE_start), logPE_stride(logPE_stride), PE_size(PE_size),
+			pSync(pSync)	{} 
+		Vaddr dest;
+		Vaddr source;
+		int dst;
+		int sst;
+		size_t nelems;
+	   	int elsize;
+        int PE_start;
+	   	int logPE_stride;
+	   	int PE_size;
+		Vaddr pSync;
+	};
+	struct Reduction : public Base { 
+		Reduction( Vaddr dest, Vaddr source, int nelems, int PE_start, int logPE_stride,
+			int PE_size, Vaddr pSync, Shmem::ReduOp op, Hermes::Value::Type type, Shmem::Callback callback ) : 
+			Base(callback), dest(dest), source(source), nelems(nelems), PE_start(PE_start),
+			logPE_stride(logPE_stride), PE_size(PE_size), pSync(pSync), op(op), type(type) {} 
+		Vaddr dest;
+		Vaddr source;
+		int nelems;
+		int PE_start;
+        int logPE_stride;
+		int PE_size;
+		Vaddr pSync;
+        Hermes::Shmem::ReduOp op ;
+	   	Hermes::Value::Type type;
+	};
+
+	struct  Malloc : public Base { 
+		Malloc( MemAddr* addr, size_t length, bool backed, Shmem::Callback callback ) :
+			Base(callback), addr(addr), length(length), backed(backed) {} 
+		Hermes::MemAddr* addr ;
+		size_t length;
+		bool backed;
+	};
+
+	struct Free : public Base { 
+		Free( MemAddr& addr, Shmem::Callback callback ) :
+			Base(callback), addr(addr)  {} 
+		Hermes::MemAddr addr;	
+	};
+
+	struct Getv : public Base { 
+		Getv( Value& result, Vaddr src, int pe, Shmem::Callback callback ) :
+			Base(callback), result(result), src(src), pe(pe) {} 
+		Hermes::Value result;
+	   	Hermes::Vaddr src;
+		int pe;
+	};
+
+	struct Get : public Base { 
+		Get( Vaddr dest, Vaddr src, size_t nelems, int pe, bool blocking, Shmem::Callback callback ) :
+			Base(callback), dest(dest), src(src), nelems(nelems), pe(pe), blocking(blocking)  {} 
+		Hermes::Vaddr dest;
+		Hermes::Vaddr src;
+		size_t nelems;
+	   	int pe;
+		bool blocking;
+	};
+	struct Putv  : public Base { 
+		Putv( Vaddr dest, Value& value, int pe, Shmem::Callback callback ) :
+			Base(callback), dest(dest), value(value), pe(pe) {} 
+		Hermes::Vaddr dest;
+	   	Hermes::Value value;
+	   	int pe;	
+	};
+	struct Put : public Base { 
+		Put( Vaddr dest, Vaddr src, size_t nelems, int pe, bool blocking, Shmem::Callback callback ) :
+			Base(callback), dest(dest), src(src), nelems(nelems), pe(pe), blocking(blocking) {} 
+		Hermes::Vaddr dest;
+	   	Hermes::Vaddr src;
+		size_t nelems;
+		int pe;
+		bool blocking;
+	};
+	struct PutOp : public Base { 
+    	PutOp(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe,
+				Hermes::Shmem::ReduOp op, Hermes::Value::Type type, Shmem::Callback callback) : 
+			Base(callback), dest(dest), src(src), nelems(nelems), pe(pe), op(op), type(type) {}
+
+    	Hermes::Vaddr dest;
+	 	Hermes::Vaddr src;
+	   	size_t nelems;
+	   	int pe; 
+        Hermes::Shmem::ReduOp op;
+		Hermes::Value::Type type;
+	};
+
+	struct WaitUntil : public Base { 
+		WaitUntil( Vaddr addr, Shmem::WaitOp op, Value& value, Shmem::Callback callback ) :
+			Base(callback), addr(addr), op(op), value(value) {} 
+		Hermes::Vaddr addr;
+		Hermes::Shmem::WaitOp op;
+		Hermes::Value value;
+	};
+	struct Cswap : public Base { 
+		Cswap( Value& result, Vaddr addr, Value& cond, Value& value, int pe, Shmem::Callback callback ) :
+			Base(callback), result(result), addr(addr), cond(cond), value(value), pe(pe)  {} 
+		Value result;
+	   	Vaddr addr;
+	   	Value cond;
+		Value value;
+		int pe;
+	};
+	struct Swap : public Base { 
+		Swap( Value& result, Vaddr addr, Value& value, int pe, Shmem::Callback callback ) :
+			Base(callback), result(result), addr(addr), value(value), pe(pe)  {} 
+		Value result;
+		Vaddr addr;
+	   	Value value;
+		int pe;
+	};
+	struct Fadd : public Base { 
+		Fadd( Value& result, Vaddr addr, Value& value, int pe, Shmem::Callback callback ) :
+			Base(callback), result(result), addr(addr), value(value), pe(pe) {} 
+		Value result;
+		Vaddr addr; 
+		Value value;
+        int pe;
+	};
+	struct Add : public Base { 
+		Add( Vaddr addr, Value& value , int pe, Shmem::Callback callback ) :
+			Base(callback), addr(addr), value(value), pe(pe) {} 
+		Vaddr addr;
+		Value value;
+	   	int pe;
+	};
+	struct Fam_Get : public Base { 
+		Fam_Get( Hermes::Vaddr dest, Shmem::Fam_Region_Descriptor rd, uint64_t offset, uint64_t nbytes,
+				bool blocking, Shmem::Callback callback ) :
+			Base(callback), dest(dest), rd(rd), offset(offset), nbytes(nbytes), blocking(blocking)  {} 
+		Hermes::Vaddr dest;
+		Shmem::Fam_Region_Descriptor rd;
+		uint64_t offset;
+	   	uint64_t nbytes;
+		bool blocking;
+	};
+	struct Fam_Add : public Base { 
+		Fam_Add( uint64_t addr, Value& value, Shmem::Callback callback ) :
+			Base(callback), addr(addr), value(value) {} 
+		uint64_t addr;
+	   	Value value;
+	};
+
   public:
     HadesSHMEM(Component*, Params&);
     ~HadesSHMEM();
@@ -148,86 +423,57 @@ class HadesSHMEM : public Shmem::Interface
 
     virtual void setOS( OS* os ) {
         m_os = static_cast<Hades*>(os);
-        dbg().verbose(CALL_INFO,2,0,"\n");
+        dbg().debug(CALL_INFO,2,0,"\n");
     }
 
     virtual void init(Shmem::Callback);
-    virtual void init2(Shmem::Callback);
     virtual void finalize(Shmem::Callback);
-    virtual void finalize2(Shmem::Callback);
 
     virtual void n_pes(int*, Shmem::Callback);
-    virtual void n_pes2(int*, Shmem::Callback);
     virtual void my_pe(int*, Shmem::Callback);
-    virtual void my_pe2(int*, Shmem::Callback);
 
     virtual void fence(Shmem::Callback);
-    virtual void fence2(Shmem::Callback);
     virtual void quiet(Shmem::Callback);
-    virtual void quiet2(Shmem::Callback);
 
     virtual void barrier_all(Shmem::Callback);
-    virtual void barrier_all2(Shmem::Callback);
     virtual void barrier( int start, int stride, int size, Vaddr, Shmem::Callback);
-    virtual void barrier2( int start, int stride, int size, Vaddr, Shmem::Callback);
+
     virtual void broadcast( Vaddr dest, Vaddr source, size_t nelems, int root, int PE_start,
-                        int logPE_stride, int PE_size, Vaddr, Shmem::Callback);
-    virtual void broadcast2( Vaddr dest, Vaddr source, size_t nelems, int root, int PE_start,
                         int logPE_stride, int PE_size, Vaddr, Shmem::Callback);
     virtual void fcollect( Vaddr dest, Vaddr source, size_t nelems, int PE_start,
                         int logPE_stride, int PE_size, Vaddr, Shmem::Callback);
-    virtual void fcollect2( Vaddr dest, Vaddr source, size_t nelems, int PE_start,
-                        int logPE_stride, int PE_size, Vaddr, Shmem::Callback);
     virtual void collect( Vaddr dest, Vaddr source, size_t nelems, int PE_start,
-                        int logPE_stride, int PE_size, Vaddr, Shmem::Callback);
-    virtual void collect2( Vaddr dest, Vaddr source, size_t nelems, int PE_start,
                         int logPE_stride, int PE_size, Vaddr, Shmem::Callback);
     virtual void alltoall( Vaddr dest, Vaddr source, size_t nelems, int PE_start,
                         int logPE_stride, int PE_size, Vaddr, Shmem::Callback);
-    virtual void alltoall2( Vaddr dest, Vaddr source, size_t nelems, int PE_start,
-                        int logPE_stride, int PE_size, Vaddr, Shmem::Callback);
     virtual void alltoalls( Vaddr dest, Vaddr source, int dst, int sst, size_t nelems, int elsize, 
-                        int PE_start, int logPE_stride, int PE_size, Vaddr, Shmem::Callback);
-    virtual void alltoalls2( Vaddr dest, Vaddr source, int dst, int sst, size_t nelems, int elsize, 
                         int PE_start, int logPE_stride, int PE_size, Vaddr, Shmem::Callback);
     virtual void reduction( Vaddr dest, Vaddr source, int nelems, int PE_start,
                         int logPE_stride, int PE_size, Vaddr pSync,
                         Hermes::Shmem::ReduOp, Hermes::Value::Type, Shmem::Callback);
-    virtual void reduction2( Vaddr dest, Vaddr source, int nelems, int PE_start,
-                        int logPE_stride, int PE_size, Vaddr pSync,
-                        Hermes::Shmem::ReduOp, Hermes::Value::Type, Shmem::Callback);
 
     virtual void malloc(Hermes::MemAddr*,size_t,bool backed, Shmem::Callback);
-    virtual void malloc2(Hermes::MemAddr*,size_t,bool backed, Shmem::Callback);
-    virtual void free(Hermes::MemAddr*,Shmem::Callback);
+    virtual void free(Hermes::MemAddr&,Shmem::Callback);
 
     virtual void getv(Hermes::Value&, Hermes::Vaddr src, int pe, Shmem::Callback);
-    virtual void getv2(Hermes::Value&, Hermes::Vaddr src, int pe, Shmem::Callback);
-    virtual void get(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe, Shmem::Callback);
-    virtual void get2(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe, Shmem::Callback);
+    virtual void get(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe, bool blocking, Shmem::Callback);
 
     virtual void putv(Hermes::Vaddr dest, Hermes::Value&, int pe, Shmem::Callback);
-    virtual void putv2(Hermes::Vaddr dest, Hermes::Value&, int pe, Shmem::Callback);
-    virtual void put(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe, Shmem::Callback);
-    virtual void put2(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe, Shmem::Callback);
+    virtual void put(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe, bool blocking, Shmem::Callback);
 
     virtual void putOp(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe, 
             Hermes::Shmem::ReduOp, Hermes::Value::Type, Shmem::Callback);
-    virtual void putOp2(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe, 
-            Hermes::Shmem::ReduOp, Hermes::Value::Type, Shmem::Callback);
 
     virtual void wait_until(Hermes::Vaddr src, Hermes::Shmem::WaitOp, Hermes::Value&, Shmem::Callback);
-    virtual void wait_until2(Hermes::Vaddr src, Hermes::Shmem::WaitOp, Hermes::Value&, Shmem::Callback);
 
     virtual void cswap( Hermes::Value& result, Hermes::Vaddr, Hermes::Value& cond, Hermes::Value& value, int pe, Shmem::Callback);
-    virtual void cswap2( Hermes::Value& result, Hermes::Vaddr, Hermes::Value& cond, Hermes::Value& value, int pe, Shmem::Callback);
 
     virtual void swap( Hermes::Value& result, Hermes::Vaddr, Hermes::Value& value, int pe, Shmem::Callback);
-    virtual void swap2( Hermes::Value& result, Hermes::Vaddr, Hermes::Value& value, int pe, Shmem::Callback);
     virtual void add(  Hermes::Vaddr, Hermes::Value&, int pe, Shmem::Callback);
-    virtual void add2(  Hermes::Vaddr, Hermes::Value&, int pe, Shmem::Callback);
     virtual void fadd( Hermes::Value&, Hermes::Vaddr, Hermes::Value&, int pe, Shmem::Callback);
-    virtual void fadd2( Hermes::Value&, Hermes::Vaddr, Hermes::Value&, int pe, Shmem::Callback);
+
+    virtual void fam_add( uint64_t, Hermes::Value&, Shmem::Callback);
+    virtual void fam_get_nb( Hermes::Vaddr dest, Shmem::Fam_Region_Descriptor rd, uint64_t offset, uint64_t nbytes, Shmem::Callback);
 
     void memcpy( Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, Shmem::Callback callback );
 
@@ -239,6 +485,34 @@ class HadesSHMEM : public Shmem::Interface
 
     Output& dbg() { return m_dbg; }
   private:
+	void init( Init* );
+	void finalize( Finalize* );
+	void n_pes( N_Pes* );
+	void my_pe( MyPe* );
+	void fence( Fence* );
+	void barrier_all( Barrier_all* );
+	void barrier( Barrier* );
+	void broadcast( Broadcast* );
+	void fcollect( Fcollect * );
+	void collect( Collect * );
+	void alltoall( Alltoall* );
+	void alltoalls( Alltoalls* );
+	void reduction( Reduction * );
+	void malloc( Malloc * );
+	void free( Free* );
+	void getv( Getv* );
+	void get( Get* );
+	void putv( Putv* );
+	void put( Put* );
+	void putOp( PutOp* );
+	void wait_until( WaitUntil* );
+	void cswap( Cswap* );
+	void swap( Swap* );
+	void fadd( Fadd* );
+	void add( Add* );
+	void fam_get( Fam_Get* );
+	void fam_add( Fam_Add* );
+
     virtual void malloc(Hermes::MemAddr*,size_t,bool backed,Callback);
     Output m_dbg;
     Hades*      m_os;
@@ -248,6 +522,7 @@ class HadesSHMEM : public Shmem::Interface
 	void delayReturn( Shmem::Callback callback, SimTime_t delay = 0 );
 
     void handleToDriver(SST::Event* e) {
+        dbg().debug(CALL_INFO,1,SHMEM_BASE,"\n");
         DelayEvent* event = static_cast<DelayEvent*>(e);
 		if ( DelayEvent::One == event->type ) {
         	event->m_callback1();
@@ -257,13 +532,67 @@ class HadesSHMEM : public Shmem::Interface
         delete e;
     }
 
-    FunctionSM& functionSM() { return m_os->getFunctionSM(); }
+    int calcNetPE( uint32_t pe ) {
+		int tmp;
+		if ( pe & 1 << 31 ) {
+			tmp = pe;
+		} else {
+			tmp =m_os->getInfo()->getGroup( MP::GroupWorld )->getMapping( pe ) ;
+		}
+		dbg().debug(CALL_INFO,1,SHMEM_BASE,"%x -> %x\n",pe,tmp);
+        return  tmp;
+    }
+
+ 	void getFamNetAddr( uint64_t globalOffset, int& node, uint64_t& localOffset ) {
+	    if( ! m_famNodeMapper || ! m_famAddrMapper ) {
+			dbg().fatal(CALL_INFO, -1,"FAM mapping module not configured\n");
+		}
+    	m_famAddrMapper->getAddr( globalOffset, node, localOffset );
+		node = m_famNodeMapper->calcNode( node );
+		node |= 1<<31;
+	}
+
+	struct FamWork {
+    	std::queue< std::pair< uint64_t, uint64_t > > work;
+    	Shmem::Callback callback;
+		Hermes::Vaddr dest;
+	};
+
+	void doOneFamGet( FamWork* );
+
+	void createWorkList( uint64_t addr, uint64_t nbytes, std::queue< std::pair< uint64_t, uint64_t > >& list ) {
+	    if( ! m_famAddrMapper ) {
+			dbg().fatal(CALL_INFO, -1,"FAM mapping module not configured\n");
+		}
+		uint32_t blockSize = m_famAddrMapper->blockSize();
+		dbg().debug(CALL_INFO,1,SHMEM_BASE,"addr=%#" PRIx64 " nbytes=%" PRIu64"\n", addr, nbytes);
+
+		while ( nbytes ) {
+			uint64_t seg_nbytes = blockSize - ( addr & (blockSize-1) );		
+
+			if ( 0 == seg_nbytes ) {
+				seg_nbytes = blockSize;
+			}
+			dbg().debug(CALL_INFO,1,SHMEM_BASE,"seg_addr=%#" PRIx64 " seg_nbytes=%" PRIu64"\n", addr, seg_nbytes);
+
+			list.push( std::make_pair(addr,seg_nbytes) );
+
+			nbytes -= seg_nbytes;
+			addr += seg_nbytes;
+		}
+	}
+
+	VirtNic& nic() {
+		return *m_os->getNic();
+	}
+
     SST::Link*      m_selfLink;
 
     Heap* m_heap;
 
 	SimTime_t m_returnLat_ns;
 	SimTime_t m_enterLat_ns;
+    SimTime_t m_blockingReturnLat_ns;
 
     ShmemCommon*    m_common;
     ShmemBarrier*   m_barrier;
@@ -282,6 +611,13 @@ class HadesSHMEM : public Shmem::Interface
     Hermes::MemAddr  m_localScratch;
     Hermes::MemAddr  m_pendingRemoteOps;
     Hermes::Value    m_zero;
+
+	FamNodeMapper* m_famNodeMapper;
+	FamAddrMapper* m_famAddrMapper;
+	Thornhill::MemoryHeapLink* m_memHeapLink;
+
+	std::set< Put* > m_pendingPuts;
+	std::set< Get* > m_pendingGets;
 };
 
 }

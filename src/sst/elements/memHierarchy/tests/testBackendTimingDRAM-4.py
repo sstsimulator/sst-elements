@@ -17,17 +17,17 @@ bus.addParams({ "bus_frequency" : "2Ghz" })
 
 l3cache = sst.Component("l3cache", "memHierarchy.Cache")
 l3cache.addParams({
-      "access_latency_cycles" : "30",
-      "mshr_latency_cycles" : 3,
-      "cache_frequency" : "2Ghz",
-      "replacement_policy" : "lru",
-      "coherence_protocol" : "MESI",
-      "associativity" : "16",
-      "cache_line_size" : "64",
-      "cache_size" : "64 KB",
-      "debug" : "0",
-      "memNIC.network_address" : "1",
-      "memNIC.network_bw" : "25GB/s",
+    "access_latency_cycles" : "30",
+    "mshr_latency_cycles" : 3,
+    "verbose" : 2,
+    "cache_frequency" : "2Ghz",
+    "replacement_policy" : "lru",
+    "coherence_protocol" : "MESI",
+    "associativity" : "16",
+    "cache_line_size" : "64",
+    "cache_size" : "64 KB",
+    "debug" : "0",
+    "memNIC.network_bw" : "25GB/s",
 })
 
 for i in range(0,8):
@@ -43,6 +43,7 @@ for i in range(0,8):
         "access_latency_cycles" : "4",
         "cache_frequency" : "2Ghz",
         "replacement_policy" : "lru",
+        "verbose" : 2,
         "coherence_protocol" : "MESI",
         "associativity" : "4",
         "cache_line_size" : "64",
@@ -53,15 +54,16 @@ for i in range(0,8):
 
     l2cache = sst.Component("c" + str(i) + ".l2cache", "memHierarchy.Cache")
     l2cache.addParams({
-      "access_latency_cycles" : "9",
-      "mshr_latency_cycles" : 2,
-      "cache_frequency" : "2Ghz",
-      "replacement_policy" : "lru",
-      "coherence_protocol" : "MESI",
-      "associativity" : "8",
-      "cache_line_size" : "64",
-      "cache_size" : "32 KB",
-      "debug" : "0"
+        "access_latency_cycles" : "9",
+        "mshr_latency_cycles" : 2,
+        "cache_frequency" : "2Ghz",
+        "replacement_policy" : "lru",
+        "coherence_protocol" : "MESI",
+        "associativity" : "8",
+        "cache_line_size" : "64",
+        "cache_size" : "32 KB",
+        "verbose" : 2,
+        "debug" : "0"
     })
 
     # Connect
@@ -88,13 +90,13 @@ comp_chiprtr.addParams({
 })
 comp_dirctrl = sst.Component("dirctrl", "memHierarchy.DirectoryController")
 comp_dirctrl.addParams({
-      "coherence_protocol" : "MESI",
-      "debug" : "0",
-      "memNIC.network_address" : "0",
-      "entry_cache_size" : "32768",
-      "memNIC.network_bw" : "25GB/s",
-      "memNIC.addr_range_end" : "0x1F000000",
-      "memNIC.addr_range_start" : "0x0"
+    "coherence_protocol" : "MESI",
+    "debug" : "0",
+    "verbose" : 2,
+    "entry_cache_size" : "32768",
+    "memNIC.network_bw" : "25GB/s",
+    "memNIC.addr_range_end" : "0x1F000000",
+    "memNIC.addr_range_start" : "0x0"
 })
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
@@ -118,6 +120,7 @@ comp_memory.addParams({
     "backend.channel.rank.bank.pagePolicy" : "memHierarchy.simplePagePolicy",
     "backend.channel.rank.bank.transactionQ" : "memHierarchy.fifoTransactionQ",
     "backend.channel.rank.bank.pagePolicy.close" : 1,
+    "verbose" : 2,
     "debug" : 0,
     "debug_level" : 5
 })

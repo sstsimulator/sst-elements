@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -26,10 +26,10 @@ class EmberPutShmemEvent : public EmberShmemEvent {
 
 public:
 	EmberPutShmemEvent( Shmem::Interface& api, Output* output,
-            Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, int pe, 
+            Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, int pe, bool blocking, 
             EmberEventTimeStatistic* stat = NULL ) :
             EmberShmemEvent( api, output, stat ), 
-            m_dest(dest), m_src(src), m_length(length), m_pe(pe) {}
+            m_dest(dest), m_src(src), m_length(length), m_pe(pe), m_blocking(blocking) {}
 	~EmberPutShmemEvent() {}
 
     std::string getName() { return "Malloc"; }
@@ -37,13 +37,14 @@ public:
     void issue( uint64_t time, Callback callback ) {
 
         EmberEvent::issue( time );
-        m_api.put( m_dest, m_src, m_length, m_pe, callback );
+       	m_api.put( m_dest, m_src, m_length, m_pe, m_blocking, callback );
     }
 private:
     Hermes::Vaddr m_dest;
     Hermes::Vaddr m_src;
     size_t m_length;
     int m_pe;
+    bool m_blocking;
 };
 
 }

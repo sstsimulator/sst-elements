@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 // 
 // Portions are copyright of other developers:
@@ -196,7 +196,7 @@ nic::init_complete(unsigned int phase) {
         // SimpleNetwork::Request* req = link_control->recvInitData();
         SimpleNetwork::Request* req;
         while ( (req = link_control->recvInitData() ) != NULL ) {
-            // std::cout << "NIC " << id << " Received an init event in phase " << phase << "!" << std::endl;
+            // std::cout << "NIC " << id << " Received an init event from " << req->src << " in phase " << phase << "!" << std::endl;
             delete req;
             init_broadcast_count++;
         }
@@ -215,7 +215,7 @@ nic::init_complete(unsigned int phase) {
     {   
         SimpleNetwork::Request* req;
         while ( (req = link_control->recvInitData() ) != NULL ) {
-            // std::cout << "NIC " << id << " Received an init event in phase " << phase << "!" << std::endl;
+            // std::cout << "NIC " << id << " Received an init event from " << req->src << " in phase " << phase << "!" << std::endl;
 
             // It's possible some of the point to point will overlap
             // some of the broadcasts, so we need to check to see

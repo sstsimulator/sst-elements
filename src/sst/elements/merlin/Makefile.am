@@ -21,6 +21,12 @@ libmerlin_la_SOURCES = \
 	reorderLinkControl.cc \
 	bridge.h \
 	bridge.cc \
+	offeredload/offered_load.h \
+	offeredload/offered_load.cc \
+	target_generator/target_generator.h \
+	target_generator/target_generator.cc \
+	target_generator/bit_complement.h \
+	target_generator/uniform.h \
 	test/nic.h \
 	test/nic.cc \
 	test/route_test/route_test.h \
@@ -39,10 +45,14 @@ libmerlin_la_SOURCES = \
 	topology/fattree.cc \
 	topology/dragonfly.h \
 	topology/dragonfly.cc \
+	topology/dragonfly_legacy.h \
+	topology/dragonfly_legacy.cc \
 	topology/dragonfly2.h \
 	topology/dragonfly2.cc \
 	topology/singlerouter.h \
 	topology/singlerouter.cc \
+	topology/hyperx.h \
+	topology/hyperx.cc \
 	hr_router/hr_router.h \
 	hr_router/hr_router.cc \
 	hr_router/xbar_arb_age.h \
@@ -59,6 +69,15 @@ libmerlin_la_SOURCES = \
 	pymodule.h \
 	pymodule.c \
 	pymerlin.py
+
+EXTRA_DIST = \
+	tests/dragon_128_test.py \
+	tests/dragon_72_test.py \
+	tests/fattree_128_test.py \
+	tests/fattree_256_test.py \
+	tests/torus_128_test.py \
+	tests/torus_5_trafficgen.py \
+	tests/torus_64_test.py
 
 sstdir = $(includedir)/sst/elements/merlin
 nobase_sst_HEADERS = \

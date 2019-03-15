@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 // 
 // Portions are copyright of other developers:
@@ -42,31 +42,31 @@ namespace SST {
 namespace ArielComponent {
 
 class Ariel : public SST::Component {
-public:
+    public:
+        Ariel(SST::ComponentId_t id, SST::Params& params);
 
-  Ariel(SST::ComponentId_t id, SST::Params& params);
+        void setup()  { }
+        void finish();
 
-  void setup()  { }
-  void finish();
+        void handleEvent(SST::Event* event);
+        
+    private:
+        Ariel();  // for serialization only
+        Ariel(const Ariel&); // do not implement
+        void operator=(const Ariel&); // do not implement
 
-  void handleEvent(SST::Event* event);
-private:
-  Ariel();  // for serialization only
-  Ariel(const Ariel&); // do not implement
-  void operator=(const Ariel&); // do not implement
+        virtual bool tick( SST::Cycle_t );
+        int create_pinchild(char* prog_binary, char** arg_list);
 
-  virtual bool tick( SST::Cycle_t );
-  int create_pinchild(char* prog_binary, char** arg_list);
+        uint64_t max_inst;
+        char* named_pipe;
+        int* pipe_id;
+        std::string user_binary;
+        Output* output;
 
-  uint64_t max_inst;
-  char* named_pipe;
-  int* pipe_id;
-  std::string user_binary;
-  Output* output;
-
-  ArielCore** cores;
-  uint32_t core_count;
-  SST::Link** cache_link;
+        ArielCore** cores;
+        uint32_t core_count;
+        SST::Link** cache_link;
 
 };
 

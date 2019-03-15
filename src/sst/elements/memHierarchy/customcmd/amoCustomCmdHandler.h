@@ -1,8 +1,8 @@
-// Copyright 2013-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2017, Sandia Corporation
+// Copyright (c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -23,9 +23,9 @@
 #include <sst/core/subcomponent.h>
 #include <sst/core/elementinfo.h>
 
-#include "memEventBase.h"
-#include "memEvent.h"
-#include "customcmd/customCmdMemory.h"
+#include "sst/elements/memHierarchy/memEventBase.h"
+#include "sst/elements/memHierarchy/memEvent.h"
+#include "sst/elements/memHierarchy/customcmd/customCmdMemory.h"
 
 namespace SST {
 namespace MemHierarchy {

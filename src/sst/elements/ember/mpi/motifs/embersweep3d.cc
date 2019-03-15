@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -28,21 +28,21 @@ EmberSweep3DGenerator::EmberSweep3DGenerator(SST::Component* owner, Params& para
     m_loopIndex(0),
     m_InnerLoopIndex(0)
 {
-	px = (int32_t) params.find("arg.pex", 0);
-	py = (int32_t) params.find("arg.pey", 0);
+	px = (int32_t) params.find<int32_t>("arg.pex", 0);
+	py = (int32_t) params.find<int32_t>("arg.pey", 0);
 
-	iterations = (uint32_t) params.find("arg.iterations", 1);
+	iterations = (uint32_t) params.find<uint32_t>("arg.iterations", 1);
 
-	nx  = (uint32_t) params.find("arg.nx", 50);
-	ny  = (uint32_t) params.find("arg.ny", 50);
-	nz  = (uint32_t) params.find("arg.nz", 50);
-	kba = (uint32_t) params.find("arg.kba", 1);
+	nx  = (uint32_t) params.find<uint32_t>("arg.nx", 50);
+	ny  = (uint32_t) params.find<uint32_t>("arg.ny", 50);
+	nz  = (uint32_t) params.find<uint32_t>("arg.nz", 50);
+	kba = (uint32_t) params.find<uint32_t>("arg.kba", 1);
 
-	data_width = (uint32_t) params.find("arg.datatype_width", 8);
-	fields_per_cell = (uint32_t) params.find("arg.fields_per_cell", 8);
+	data_width = (uint32_t) params.find<uint32_t>("arg.datatype_width", 8);
+	fields_per_cell = (uint32_t) params.find<uint32_t>("arg.fields_per_cell", 8);
 
-	double flops_per_cell = params.find("arg.flops_per_cell", 275.0);
-	double node_flops = params.find("arg.nodeflops", 1000000000);
+	double flops_per_cell = params.find<double>("arg.flops_per_cell", 275.0);
+	double node_flops = params.find<double>("arg.nodeflops", 1000000000);
 
 	const double mesh_slice_size = (double) (nx * ny);
 	double compute_time_d = mesh_slice_size * flops_per_cell;

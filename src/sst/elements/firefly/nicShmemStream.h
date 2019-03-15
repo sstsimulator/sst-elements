@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -16,9 +16,24 @@
 class ShmemStream : public StreamBase {
   public:
 
-    ShmemStream( Output&, FireflyNetworkEvent*, RecvMachine& );
+    ShmemStream( Output&, Ctx*, int srcNode, int srcPid, int destPid, FireflyNetworkEvent* );
 
+    bool isBlocked() {
+        return  StreamBase::isBlocked() || m_blocked;
+    }
+  protected:
+    void processFirstPkt( FireflyNetworkEvent* ev ) {
+        m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_STREAM,"\n");
+        m_blocked = false;
+        m_ctx->schedCallback( m_wakeupCallback );
+        m_wakeupCallback = NULL;
+    }
+    void processPktHdr( FireflyNetworkEvent* ev ) {
+        m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_STREAM,"\n");
+        processOp(ev);
+    }
   private:
+    void processOp( FireflyNetworkEvent* ev );
     void processAck( ShmemMsgHdr&, FireflyNetworkEvent*, int, int );
     void processPut( ShmemMsgHdr&, FireflyNetworkEvent*, int, int );
     void processGetResp( ShmemMsgHdr&, FireflyNetworkEvent*, int, int );
@@ -28,4 +43,5 @@ class ShmemStream : public StreamBase {
     void processCswap( ShmemMsgHdr&, FireflyNetworkEvent*, int, int );
     void processSwap( ShmemMsgHdr&, FireflyNetworkEvent*, int, int );
     ShmemMsgHdr m_shmemHdr;
+    bool m_blocked;
 };

@@ -9,19 +9,18 @@ AM_CPPFLAGS = \
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libcassini.la
 libcassini_la_SOURCES = \
-	cassini.cc \
 	strideprefetch.cc \
 	strideprefetch.h \
 	palaprefetch.h \
 	palaprefetch.cc \
 	nbprefetch.cc \
 	nbprefetch.h \
-	simpletlb.h \
-	simpletlb.cc \
 	pageentry.h \
 	pageentry.cc \
 	addrHistogrammer.cc \
-	addrHistogrammer.h
+	addrHistogrammer.h \
+	cacheLineTrack.cc \
+	cacheLineTrack.h
 
 EXTRA_DIST = \
 	tests/streamcpu-nbp.py \

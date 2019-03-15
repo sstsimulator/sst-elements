@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -27,13 +27,36 @@ namespace Firefly {
 class FireflyNetworkEvent : public Event {
 
   public:
-    uint16_t        seq;
-    int             src;
 
-    FireflyNetworkEvent( size_t reserve = 1000 ) : offset(0), bufLen(0) {
+    FireflyNetworkEvent( ) : offset(0), bufLen(0), m_isHdr(false), m_isCtrl(false), pktOverhead(0) {
+        buf.reserve( 1000 );
+        assert( 0 == buf.size() );
+    }
+
+    FireflyNetworkEvent( int pktOverhead, size_t reserve = 1000 ) : offset(0), bufLen(0), 
+            m_isHdr(false), m_isTail(false), m_isCtrl(false), pktOverhead(pktOverhead) {
         buf.reserve( reserve );
         assert( 0 == buf.size() );
     }
+
+    void setCtrl() { m_isCtrl = true; }
+    bool isCtrl() { return m_isCtrl; }
+    void setHdr() { m_isHdr = true; }
+    void clearHdr() { m_isHdr = false; }
+    bool isHdr() { return m_isHdr; }
+    void setTail() { m_isTail = true; }
+    bool isTail() { return m_isTail; }
+    int calcPayloadSizeInBits() { return payloadSize() * 8; }
+    int payloadSize() { return pktOverhead + bufSize(); }
+    void setSrcNode(int node ) { srcNode = node; }
+    void setSrcPid( int pid ) { srcPid = pid; }
+    void setSrcStream( int stream ) { srcStream = stream; }
+    void setDestPid( int pid ) { destPid = pid; }
+
+    int getSrcNode() { return srcNode; }
+    int getSrcPid() { return srcPid; }
+    int getSrcStream() { return srcStream; }
+    int getDestPid() { return destPid; }
 
     size_t bufSize() {
         return bufLen - offset;
@@ -69,8 +92,15 @@ class FireflyNetworkEvent : public Event {
     {
         buf = me->buf;
         seq = me->seq;
-        src = me->src;
+        srcNode = me->srcNode;
+        srcPid = me->srcPid;
+        srcStream = me->srcStream;
+        destPid = me->destPid;
+        m_isHdr = me->m_isHdr;
+        m_isTail = me->m_isTail;
+        m_isCtrl = me->m_isCtrl;
         offset = me->offset;
+        pktOverhead = me->pktOverhead;
     }
 
     FireflyNetworkEvent(const FireflyNetworkEvent &me) :
@@ -78,8 +108,15 @@ class FireflyNetworkEvent : public Event {
     {
         buf = me.buf;
         seq = me.seq;
-        src = me.src;
+        srcNode = me.srcNode;
+        srcPid = me.srcPid;
+        srcStream = me.srcStream;
+        destPid = me.destPid;
+        m_isHdr = me.m_isHdr;
+        m_isTail = me.m_isTail;
+        m_isCtrl = me.m_isCtrl;
         offset = me.offset;
+        pktOverhead = me.pktOverhead;
     }
 
     virtual Event* clone(void) override
@@ -100,9 +137,19 @@ class FireflyNetworkEvent : public Event {
 
   private:
 
-    std::vector<unsigned char>     buf;
+    uint16_t        seq;
+    int             srcNode;
+    int             srcPid;
+    int             srcStream;
+    int             destPid;
+    bool            m_isHdr;
+    bool            m_isTail;
+    bool            m_isCtrl;
+    int             pktOverhead;
+    
     size_t          offset;
     size_t          bufLen;
+    std::vector<unsigned char>     buf;
 
   public:	
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
@@ -111,7 +158,14 @@ class FireflyNetworkEvent : public Event {
         ser & offset;
         ser & bufLen;
         ser & buf;
-        ser & src;
+        ser & srcNode;
+        ser & srcPid;
+        ser & srcStream;
+        ser & destPid;
+        ser & pktOverhead;
+        ser & m_isHdr;
+        ser & m_isTail;
+        ser & m_isCtrl;
     }
     
     ImplementSerializable(SST::Firefly::FireflyNetworkEvent);     

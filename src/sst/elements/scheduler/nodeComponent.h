@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 // 
 // Portions are copyright of other developers:
@@ -22,6 +22,7 @@
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
+#include <sst/core/elementinfo.h>
 #include "events/FaultEvent.h"
 #include "events/JobKillEvent.h"
 
@@ -37,6 +38,85 @@ namespace SST {
             friend class linkBuilder;
 
             public:
+
+            SST_ELI_REGISTER_COMPONENT(
+                nodeComponent,
+                "scheduler",
+                "nodeComponent",
+                SST_ELI_ELEMENT_VERSION(1,0,0),
+                "Implements nodes for use with schedComponent",
+                COMPONENT_CATEGORY_UNCATEGORIZED
+            )
+
+            SST_ELI_DOCUMENT_PARAMS(
+                { "nodeNum",
+                  "The number of the node",
+                  NULL
+                },
+                { "id",
+                  "The id of the node",
+                  NULL
+                },
+                { "type",
+                  "The type of the node",
+                  "None"
+                },
+                { "faultLogFileName",
+                  "File to store the fault log",
+                  "None"
+                },
+                { "errorLogFileName",
+                  "File to store the error log",
+                  "None"
+                },
+                { "faultActivationRate",
+                    "CSV specifying the fault type and corresponding rates",
+                    "None"
+                },
+                { "errorMessageProbability",
+                    "error log is written according to this probability",
+                    "None"
+                },
+                { "errorCorrectionProbability",
+                    "Probability that a node corrects an error",
+                    "None"
+                },
+                { "jobFailureProbability",
+                    "Probability that a node ends a job when a failure propogates",
+                    "None"
+                } ,
+                { "errorPropagationDelay",
+                    "Time taken for a fault to travel",
+                    "None"
+                }
+            )
+
+            SST_ELI_DOCUMENT_PORTS(
+                {"Scheduler",
+                  "Used to communicate with the scheduler",
+                  {"ArrivalEvent","CompletionEvent","FaultEvent","FinalTimeEvent", "JobKillEvent", "JobStartEvent"}
+                },
+                {"nodeLink%(number of node)d",
+                 "Each node has an associated port to send events",
+                 {"FaultEvent","JobKillEvent","JobStartEvent"}
+                },
+                {"faultInjector",
+                 "Causes nodes to fail",
+                 {"faultActivationEvents"}
+                },
+                {"Builder",
+                 "Link to communicate with parent",
+                 {"ObjectRetrievalEvent"},
+                },
+                {"Parent%(numparent)d",
+                 "Link to communicate with parent",
+                 {}
+                },
+                {"Child%(numchild)d",
+                 "Link to communicate with children",
+                 {}
+                }
+            )
 
             nodeComponent(SST::ComponentId_t id, SST::Params& params);
             void setup();

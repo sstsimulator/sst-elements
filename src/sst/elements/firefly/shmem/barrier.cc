@@ -1,8 +1,8 @@
-// Copyright 2013-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2017, Sandia Corporation
+// Copyright (c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -39,7 +39,7 @@ void ShmemBarrier::start( int PE_start, int logPE_stride, int PE_size,
         m_num_children = full_tree_num_children();
         m_children = &full_tree_children()[0];    
     } else {
-        m_api.dbg().verbosePrefix( prefix(),CALL_INFO,1,SHMEM_BARRIER," part full tree\n");
+        m_api.dbg().verbosePrefix( prefix(),CALL_INFO,1,SHMEM_BARRIER," part tree\n");
         m_part_tree_children.resize( tree_radix() );
         m_children = &m_part_tree_children[0];
         m_common.build_kary_tree(tree_radix(), PE_start, 1 << logPE_stride , PE_size, 0, &m_parent, &m_num_children, m_children);

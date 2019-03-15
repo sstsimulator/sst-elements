@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -33,7 +33,9 @@ AddrHistogrammer::AddrHistogrammer(Component* owner, Params& params) : CacheList
     std::string cutoff_s = params.find<std::string>("addr_cutoff", "16GiB");
     UnitAlgebra cutoff_u(cutoff_s);
     cutoff = cutoff_u.getRoundedValue();
-    
+
+    captureVirtual = params.find<bool>("virtual_addr", 0);
+
     rdHisto = registerStatistic<Addr>("histogram_reads");
     wrHisto = registerStatistic<Addr>("histogram_writes");
 
@@ -43,11 +45,17 @@ AddrHistogrammer::AddrHistogrammer(Component* owner, Params& params) : CacheList
 void AddrHistogrammer::notifyAccess(const CacheListenerNotification& notify) {
     const NotifyAccessType notifyType = notify.getAccessType();
     const NotifyResultType notifyResType = notify.getResultType();
-    //const Addr addr = notify.getPhysicalAddress();
-    const Addr vaddr = notify.getVirtualAddress();
-    
-    if(notifyResType != MISS || vaddr >= cutoff) return;
-    
+
+    Addr vaddr;
+    if (captureVirtual) {
+        vaddr = notify.getVirtualAddress();
+    } else {
+        vaddr = notify.getPhysicalAddress();
+    }
+
+
+    if(notifyType == EVICT || notifyResType != MISS || vaddr >= cutoff) return;
+
     // // Remove the offset within a bin
     // Addr baseAddr = vaddr & binMask;
     switch (notifyType) {
@@ -59,9 +67,11 @@ void AddrHistogrammer::notifyAccess(const CacheListenerNotification& notify) {
         // Add to the write hitogram
         wrHisto->addData(vaddr);
         return;
+    case EVICT:
+        return;
     }
 }
 
 void AddrHistogrammer::registerResponseCallback(Event::HandlerBase *handler) {
-	registeredCallbacks.push_back(handler);
+    registeredCallbacks.push_back(handler);
 }

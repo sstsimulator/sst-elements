@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -41,7 +41,7 @@ class ArbitrateDMA {
 
     void canIWrite( Callback callback, int bytes ) {
 
-        m_dbg.verbose(CALL_INFO,1,NIC_DBG_DMA_ARBITRATE,"bytes=%d\n",bytes);
+        m_dbg.debug(CALL_INFO,1,NIC_DBG_DMA_ARBITRATE,"bytes=%d\n",bytes);
         uint64_t delay = foo( m_xx[Write], m_xx[Read], bytes  );
         if ( delay ) {
             m_nic.schedCallback( callback, delay );
@@ -51,7 +51,7 @@ class ArbitrateDMA {
     }
 
     void canIRead( Callback callback, int bytes ) {
-        m_dbg.verbose(CALL_INFO,1,NIC_DBG_DMA_ARBITRATE,"bytes=%d\n",bytes);
+        m_dbg.debug(CALL_INFO,1,NIC_DBG_DMA_ARBITRATE,"bytes=%d\n",bytes);
         uint64_t delay = foo( m_xx[Read], m_xx[Write], bytes  );
         if ( delay ) {
             m_nic.schedCallback( callback, delay );
@@ -71,7 +71,7 @@ class ArbitrateDMA {
             xx.avail = m_bufferSize;
         }
 
-        m_dbg.verbose(CALL_INFO,1,NIC_DBG_DMA_ARBITRATE,
+        m_dbg.debug(CALL_INFO,1,NIC_DBG_DMA_ARBITRATE,
 				"avail Bytes %ld, delta %" PRIu64 " ns, "
             	"added %ld \n", xx.avail, delta, add ); 
 		//assert( xx.avail >= 0 );

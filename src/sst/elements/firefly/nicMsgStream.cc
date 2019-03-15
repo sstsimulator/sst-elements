@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -20,30 +20,31 @@
 using namespace SST;
 using namespace SST::Firefly;
 
-Nic::RecvMachine::MsgStream::MsgStream( Output& output, FireflyNetworkEvent* ev,
-       RecvMachine& rm  ) : 
-    StreamBase(output,rm)
+Nic::RecvMachine::MsgStream::MsgStream( Output& output, Ctx* ctx,
+        int srcNode, int srcPid, int destPid, FireflyNetworkEvent* ev ) : 
+    StreamBase(output,ctx,srcNode,srcPid,destPid), m_blocked(false)
 {
-    m_hdr = *(MsgHdr*) ev->bufPtr();
-    m_tag = *(int*) ev->bufPtr( sizeof(MsgHdr) );
-    m_src = ev->src;
+    m_unit = m_ctx->allocRecvUnit();
+    m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_STREAM,"%p\n",this);
 
-    m_dbg.verbose(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"Msg Operation srcNode=%d tag=%#x lenght=%lu\n",
-                            m_src,m_tag,m_hdr.len);
+    MsgHdr& hdr =           *(MsgHdr*) ev->bufPtr();
+    MatchMsgHdr& matchHdr = *(MatchMsgHdr*) ev->bufPtr( sizeof(MsgHdr) );
+    m_matched_len = matchHdr.len;
+    m_matched_tag = matchHdr.tag;
+
+    m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_STREAM,"Msg Operation srcNode=%d tag=%#x length=%lu\n",
+                            m_srcNode,matchHdr.tag,matchHdr.len);
+
+    m_recvEntry = static_cast<DmaRecvEntry *>( m_ctx->findRecv( m_srcNode, m_srcPid, hdr, matchHdr ) );
 
     Callback callback;
-
-    m_recvEntry = static_cast<DmaRecvEntry *>( m_rm.nic().findRecv( m_src, m_hdr, m_tag ) );
-    if ( m_recvEntry ) {
-        ev->bufPop( sizeof(MsgHdr) );
-        ev->bufPop( sizeof(m_tag) );
-
-        callback = std::bind( &Nic::RecvMachine::state_move_0, &m_rm, ev, this );
-
+    if ( NULL== m_recvEntry ) {
+        callback =  std::bind( &Nic::RecvMachine::StreamBase::needRecv, this, ev );
     } else {
-        callback = std::bind( &Nic::RecvMachine::state_2, &m_rm, ev );
+        m_blocked = true;
+        ev->bufPop( sizeof(MsgHdr) + sizeof(MatchMsgHdr) );
+        ev->clearHdr();
+        callback = std::bind( &Nic::RecvMachine::MsgStream::processFirstPkt, this, ev );
     }
-    m_rm.nic().schedCallback( callback, m_rm.m_rxMatchDelay );
-
-    m_matched_len = m_hdr.len;
+    m_ctx->nic().schedCallback( callback,  m_ctx->getRxMatchDelay() );
 }

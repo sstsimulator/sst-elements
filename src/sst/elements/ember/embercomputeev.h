@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -56,7 +56,7 @@ public:
         }
         m_completeDelayNS *= m_computeDistrib->sample(time);
 
-        m_output->verbose(CALL_INFO, 2, 0, "Adjust time by noise "
+        m_output->debug(CALL_INFO, 2, 0, "Adjust time by noise "
                 "distribution to give: %" PRIu64 "ns\n", m_completeDelayNS );
     }
 

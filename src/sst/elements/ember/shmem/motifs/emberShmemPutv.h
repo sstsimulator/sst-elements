@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -119,6 +119,86 @@ public:
     int m_phase;
     int m_my_pe;
     int m_num_pes;
+};
+
+class EmberShmemPutvIntGenerator : public EmberShmemPutvGenerator<int> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemPutvIntGenerator,
+        "ember",
+        "ShmemPutvIntMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM putv int",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemPutvIntGenerator( SST::Component* owner, Params& params ) :
+        EmberShmemPutvGenerator(owner,  params) { }
+};
+
+class EmberShmemPutvLongGenerator : public EmberShmemPutvGenerator<long> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemPutvLongGenerator,
+        "ember",
+        "ShmemPutvLongMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM putv long",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemPutvLongGenerator( SST::Component* owner, Params& params ) :
+        EmberShmemPutvGenerator(owner,  params) { }
+};
+
+class EmberShmemPutvDoubleGenerator : public EmberShmemPutvGenerator<double> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemPutvDoubleGenerator,
+        "ember",
+        "ShmemPutvDoubleMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM putv double",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemPutvDoubleGenerator( SST::Component* owner, Params& params ) :
+        EmberShmemPutvGenerator(owner,  params) { }
+};
+
+class EmberShmemPutvFloatGenerator : public EmberShmemPutvGenerator<float> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemPutvFloatGenerator,
+        "ember",
+        "ShmemPutvFloatMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM putv float",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemPutvFloatGenerator( SST::Component* owner, Params& params ) :
+        EmberShmemPutvGenerator(owner,  params) { }
 };
 
 }

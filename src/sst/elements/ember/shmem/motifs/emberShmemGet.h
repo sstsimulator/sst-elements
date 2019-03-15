@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -33,6 +33,7 @@ public:
 	{ 
         m_nelems = params.find<int>("arg.nelems", 1);
         m_printResults = params.find<bool>("arg.printResults", false );
+        m_blocking = params.find<bool>("arg.blocking", true );
         int status;
         std::string tname = typeid(TYPE).name();
 		char* tmp = abi::__cxa_demangle(tname.c_str(), NULL, NULL, &status);
@@ -75,12 +76,21 @@ public:
             break;
 
         case 3:
-            enQ_get( evQ, 
+            if ( m_blocking ) {
+                enQ_get( evQ, 
                     m_dest,
                     m_src, 
                     m_nelems*sizeof(TYPE),
                     m_other_pe );
-            enQ_barrier_all( evQ );
+                enQ_barrier_all( evQ );
+            } else {
+                enQ_get_nbi( evQ, 
+                    m_dest,
+                    m_src, 
+                    m_nelems*sizeof(TYPE),
+                    m_other_pe );
+                enQ_quiet( evQ );
+            }
             break;
 
         case 4: 
@@ -102,6 +112,7 @@ public:
         return ret;
 	}
   private:
+    bool m_blocking;
     bool m_printResults;
     std::string m_type_name;
     Hermes::MemAddr m_src;
@@ -113,6 +124,85 @@ public:
     int m_num_pes;
 };
 
+class EmberShmemGetIntGenerator : public EmberShmemGetGenerator<int> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemGetIntGenerator,
+        "ember",
+        "ShmemGetIntMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM get int",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemGetIntGenerator( SST::Component* owner, Params& params ) :
+        EmberShmemGetGenerator(owner,  params) { }
+};
+
+class EmberShmemGetLongGenerator : public EmberShmemGetGenerator<long> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemGetLongGenerator,
+        "ember",
+        "ShmemGetLongMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM get long",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemGetLongGenerator( SST::Component* owner, Params& params ) :
+        EmberShmemGetGenerator(owner,  params) { }
+};
+
+class EmberShmemGetDoubleGenerator : public EmberShmemGetGenerator<double> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemGetDoubleGenerator,
+        "ember",
+        "ShmemGetDoubleMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM get double",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemGetDoubleGenerator( SST::Component* owner, Params& params ) :
+        EmberShmemGetGenerator(owner,  params) { }
+};
+
+class EmberShmemGetFloatGenerator : public EmberShmemGetGenerator<float> {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT(
+        EmberShmemGetFloatGenerator,
+        "ember",
+        "ShmemGetFloatMotif",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "SHMEM get float",
+        "SST::Ember::EmberGenerator"
+
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+    )
+
+public:
+    EmberShmemGetFloatGenerator( SST::Component* owner, Params& params ) :
+        EmberShmemGetGenerator(owner,  params) { }
+};
 }
 }
 

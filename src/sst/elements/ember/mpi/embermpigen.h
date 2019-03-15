@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -20,6 +20,7 @@
 
 #include "embergen.h"
 
+#include <sst/core/elementinfo.h>
 #include <sst/elements/hermes/msgapi.h>
 
 #include "emberMPIEvent.h"
@@ -112,8 +113,6 @@ public:
 	EmberMessagePassingGenerator( Component* owner, Params& params, std::string name = "" );
 	~EmberMessagePassingGenerator();
     virtual void completed( const SST::Output*, uint64_t time );
-
-protected:
 
 	void getPosition( int32_t rank, int32_t px, int32_t py, int32_t pz, 
 					int32_t* myX, int32_t* myY, int32_t* myZ );	

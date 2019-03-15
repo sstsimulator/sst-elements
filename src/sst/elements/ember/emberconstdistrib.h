@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -17,12 +17,26 @@
 #ifndef _H_SST_EMBER_CONSTANT_COMPUTE_DISTRIBUTION
 #define _H_SST_EMBER_CONSTANT_COMPUTE_DISTRIBUTION
 
+#include <sst/core/elementinfo.h>
 #include "emberdistrib.h"
 
 namespace SST {
 namespace Ember {
 
 class EmberConstDistribution : public EmberComputeDistribution {
+public:
+   SST_ELI_REGISTER_MODULE(
+        EmberConstDistribution,
+        "ember",
+        "ConstDistrib",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Constant compute distribution model",
+        "SST::Ember::EmberComputeDistribution"
+    )
+
+    SST_ELI_DOCUMENT_PARAMS(
+        {   "constant",     "Sets the constant value to return in the distribution.", "1.0" },
+    )
 
 public:
 	EmberConstDistribution(Component* owner, Params& params);

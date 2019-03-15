@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -45,6 +45,13 @@ using namespace SST::MemHierarchy;
 #define is_debug_event(ev) false
 #define Debug(level, fmt, ... )
 #endif
+/*
+ *  Debug levels:
+ *  3  - event receive/response
+ *  4  - backing store
+ *  9  - init()
+ *  10 - address translation
+ */
 
 /*************************** Memory Controller ********************/
 MemController::MemController(ComponentId_t id, Params &params) : Component(id), backing_(NULL) {
@@ -60,7 +67,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     // Output for debug
     dbg.init("", debugLevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
     if (debugLevel < 0 || debugLevel > 10)
-        dbg.fatal(CALL_INFO, -1, "Debugging level must be between 0 and 10. \n");
+        out.fatal(CALL_INFO, -1, "Debugging level must be between 0 and 10. \n");
 
     // Debug address
     std::vector<Addr> addrArr;
@@ -70,7 +77,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     }
 
     // Output for warnings
-    Output out("", 1, 0, Output::STDOUT);
+    out.init("", params.find<int>("verbose", 1), 0, Output::STDOUT);
     
     // Check for deprecated parameters and warn/fatal
     // Currently deprecated - mem_size (replaced by backend.mem_size), network_num_vc, statistic, direct_link 
@@ -131,9 +138,46 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     free(nextListenerParams);
 
 
+    // Opal
+    std::string opalNode = params.find<std::string>("node", "0");
+    std::string opalShMem = params.find<std::string>("shared_memory", "0");
+    std::string opalSize = params.find<std::string>("local_memory_size", "0");
+
+    // Memory region - overwrite with what we got if we got some
+    bool gotRegion = false;
+    uint64_t addrStart = params.find<uint64_t>("addr_range_start", 0, gotRegion);
+    uint64_t addrEnd = params.find<uint64_t>("addr_range_end", (uint64_t) - 1, found);
+    gotRegion |= found;
+    string ilSize = params.find<std::string>("interleave_size", "0B", found);
+    gotRegion |= found;
+    string ilStep = params.find<std::string>("interleave_step", "0B", found);
+    gotRegion |= found;
+
+    // Ensure SI units are power-2 not power-10 - for backward compability
+    fixByteUnits(ilSize);
+    fixByteUnits(ilStep);
+
+    if (!UnitAlgebra(ilSize).hasUnits("B")) {
+        dbg.fatal(CALL_INFO, -1, "Invalid param(%s): interleave_size - must be specified in bytes with units (SI units OK). For example, '1KiB'. You specified '%s'\n",
+                getName().c_str(), ilSize.c_str());
+    }
+        
+    if (!UnitAlgebra(ilStep).hasUnits("B")) {
+        dbg.fatal(CALL_INFO, -1, "Invalid param(%s): interleave_step - must be specified in bytes with units (SI units OK). For example, '1KiB'. You specified '%s'\n",
+                getName().c_str(), ilSize.c_str());
+    }
+
+    region_.start = addrStart;
+    region_.end = addrEnd;
+    region_.interleaveSize = UnitAlgebra(ilSize).getRoundedValue();
+    region_.interleaveStep = UnitAlgebra(ilStep).getRoundedValue();
+
     if (isPortConnected("direct_link")) {
         Params linkParams = params.find_prefix_params("cpulink.");
         linkParams.insert("port", "direct_link");
+        linkParams.insert("node", opalNode);
+        linkParams.insert("shared_memory", opalShMem);
+        linkParams.insert("local_memory_size", opalSize);
         linkParams.insert("latency", link_lat, false);
         linkParams.insert("accept_region", "1", false);
         link_ = dynamic_cast<MemLink*>(loadSubComponent("memHierarchy.MemLink", this, linkParams));
@@ -142,20 +186,36 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     } else {
 
         if (!isPortConnected("network")) {
-            dbg.fatal(CALL_INFO,-1,"%s, Error: No connected port detected. Connect 'direct_link' or 'network' port.\n", getName().c_str());
+            out.fatal(CALL_INFO,-1,"%s, Error: No connected port detected. Connect 'direct_link' or 'network' port.\n", getName().c_str());
         }
 
         Params nicParams = params.find_prefix_params("memNIC.");
-        nicParams.insert("port", "network");
+        nicParams.insert("node", opalNode);
+        nicParams.insert("shared_memory", opalShMem);
+        nicParams.insert("local_memory_size", opalSize);
+        
         nicParams.insert("group", "4", false);
         nicParams.insert("accept_region", "1", false);
 
-        link_ = dynamic_cast<MemNIC*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams)); 
+        if (isPortConnected("network_ack") && isPortConnected("network_fwd") && isPortConnected("network_data")) {
+            nicParams.insert("req.port", "network");
+            nicParams.insert("ack.port", "network_ack");
+            nicParams.insert("fwd.port", "network_fwd");
+            nicParams.insert("data.port", "network_data");
+            link_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemNICFour", this, nicParams)); 
+        } else {
+            nicParams.insert("port", "network");
+            link_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams)); 
+        }
+
         link_->setRecvHandler( new Event::Handler<MemController>(this, &MemController::handleEvent) );
         clockLink_ = true;
     }
-    
-    region_ = link_->getRegion();
+   
+    if (gotRegion) 
+        link_->setRegion(region_);
+    else 
+        region_ = link_->getRegion();
     privateMemOffset_ = 0;
 
     // Set up backing store if needed
@@ -200,12 +260,12 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
         }
         catch ( int e) {
             if (e == 1) 
-                dbg.fatal(CALL_INFO, -1, "%s, Error - unable to open memory_file. You specified '%s'.\n", getName().c_str(), memoryFile.c_str());
+                out.fatal(CALL_INFO, -1, "%s, Error - unable to open memory_file. You specified '%s'.\n", getName().c_str(), memoryFile.c_str());
             else if (e == 2) {
-                out.output("%s, Could not MMAP backing store (likely, simulated memory exceeds real memory). Creating malloc based store instead.\n", getName().c_str());
+                out.verbose(CALL_INFO, 1, 0, "%s, Could not MMAP backing store (likely, simulated memory exceeds real memory). Creating malloc based store instead.\n", getName().c_str());
                 backing_ = new Backend::BackingMalloc(sizeBytes);
             } else 
-                dbg.fatal(CALL_INFO, -1, "%s, Error - unable to create backing store. Exception thrown is %d.\n", getName().c_str(), e);
+                out.fatal(CALL_INFO, -1, "%s, Error - unable to create backing store. Exception thrown is %d.\n", getName().c_str(), e);
         }
     } else if (backingType == "malloc") {
         backing_ = new Backend::BackingMalloc(sizeBytes);
@@ -216,7 +276,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     clockTimeBase_ = registerClock(memBackendConvertor_->getClockFreq(), clockHandler_);
     clockOn_ = true;
 
-    registerTimeBase("1 ns", true);
+    registerTimeBase("1 ns", true); // TODO - is this needed? We already registered a clock...
 
     /* Custom command handler */
     if (nullptr == (customCommandHandler_ = dynamic_cast<CustomCmdMemHandler*>(loadNamedSubComponent("customCmdHandler")))) {
@@ -290,7 +350,7 @@ void MemController::handleEvent(SST::Event* event) {
             delete ev;
             break;
         default:
-            dbg.fatal(CALL_INFO,-1,"Memory controller received unrecognized command: %s", CommandString[(int)cmd]);
+            out.fatal(CALL_INFO,-1,"Memory controller received unrecognized command: %s", CommandString[(int)cmd]);
     }
 }
 
@@ -320,12 +380,12 @@ Cycle_t MemController::turnClockOn() {
 
 void MemController::handleCustomEvent(MemEventBase * ev) {
     if (!customCommandHandler_) 
-        dbg.fatal(CALL_INFO, -1, "%s, Error: Received custom event but no handler loaded. Ev = %s. Time = %" PRIu64 "ns\n",
+        out.fatal(CALL_INFO, -1, "%s, Error: Received custom event but no handler loaded. Ev = %s. Time = %" PRIu64 "ns\n",
                 getName().c_str(), ev->getVerboseString().c_str(), getCurrentSimTimeNano());
 
     CustomCmdMemHandler::MemEventInfo evInfo = customCommandHandler_->receive(ev);
     if (evInfo.shootdown) {
-        Debug(_WARNING_, "%s, WARNING: Custom event expects a shootdown but this memory controller does not support shootdowns. Ev = %s\n", getName().c_str(), ev->getVerboseString().c_str());
+        out.verbose(CALL_INFO, 1, 0, "%s, WARNING: Custom event expects a shootdown but this memory controller does not support shootdowns. Ev = %s\n", getName().c_str(), ev->getVerboseString().c_str());
     }
     
     CustomCmdInfo * info = customCommandHandler_->ready(ev);
@@ -338,7 +398,7 @@ void MemController::handleMemResponse( Event::id_type id, uint32_t flags ) {
 
     std::map<SST::Event::id_type,MemEventBase*>::iterator it = outstandingEvents_.find(id);
     if (it == outstandingEvents_.end())
-        dbg.fatal(CALL_INFO, -1, "Memory controller (%s) received unrecognized response ID: %" PRIu64 ", %" PRIu32 "", getName().c_str(), id.first, id.second);
+        out.fatal(CALL_INFO, -1, "Memory controller (%s) received unrecognized response ID: %" PRIu64 ", %" PRIu32 "", getName().c_str(), id.first, id.second);
 
     MemEventBase * evb = it->second;
     outstandingEvents_.erase(it);
@@ -397,7 +457,7 @@ void MemController::init(unsigned int phase) {
     /* Inherit region from our source(s) */
     if (!phase) {
         /* Announce our presence on link */
-        link_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Memory, true, false, memBackendConvertor_->getRequestWidth()));
+        link_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Memory, true, false, memBackendConvertor_->getRequestWidth(), false));
     }
 
     while (MemEventInit *ev = link_->recvInitData()) {
@@ -452,11 +512,29 @@ void MemController::readData(MemEvent* event) {
     vector<uint8_t> payload;
     payload.resize(event->getSize(), 0);
 
-    if (!backing_) return;
-
-    backing_->get(localAddr, event->getSize(), payload);
+    if (backing_)
+        backing_->get(localAddr, event->getSize(), payload);
     
     event->setPayload(payload);
+}
+
+
+/* Backing store interactions for custom command subcomponents */
+void MemController::writeData(Addr addr, std::vector<uint8_t> * data) {
+    if (!backing_) return;
+
+    for (size_t i = 0; i < data->size(); i++)
+        backing_->set(addr + i, data->at(i));
+}
+
+
+void MemController::readData(Addr addr, size_t bytes, std::vector<uint8_t> &data) {
+    data.resize(bytes, 0);
+    
+    if (!backing_) return;
+
+    for (size_t i = 0; i < bytes; i++)
+        data[i] = backing_->get(addr + i);
 }
 
 
@@ -496,17 +574,44 @@ void MemController::processInitEvent( MemEventInit* me ) {
     if (Command::GetX == me->getCmd()) {
         me->setAddr(translateToLocal(me->getAddr()));
         Addr addr = me->getAddr();
-        if (is_debug_event(me)) { Debug(_L10_,"Memory init %s - Received GetX for %" PRIx64 " size %zu\n", getName().c_str(), me->getAddr(),me->getPayload().size()); }
+        if (is_debug_event(me)) { Debug(_L9_,"Memory init %s - Received GetX for %" PRIx64 " size %zu\n", getName().c_str(), me->getAddr(),me->getPayload().size()); }
         if ( isRequestAddressValid(addr) && backing_ ) {
             backing_->set(addr, me->getPayload().size(), me->getPayload());
         }
     } else if (Command::NULLCMD == me->getCmd()) {
-        if (is_debug_event(me)) { Debug(_L10_, "Memory (%s) received init event: %s\n", getName().c_str(), me->getVerboseString().c_str()); }
+        if (is_debug_event(me)) { Debug(_L9_, "Memory (%s) received init event: %s\n", getName().c_str(), me->getVerboseString().c_str()); }
     } else {
-        Output out("", 0, 0, Output::STDERR);
         out.debug(_L10_,"Memory received unexpected Init Command: %d\n", (int)me->getCmd());
     }
 
     delete me;
 }
 
+void MemController::printStatus(Output &statusOut) {
+    statusOut.output("MemHierarchy::MemoryController %s\n", getName().c_str());
+    
+    statusOut.output("  Outstanding events: %zu\n", outstandingEvents_.size());
+    for (std::map<SST::Event::id_type, MemEventBase*>::iterator it = outstandingEvents_.begin(); it != outstandingEvents_.end(); it++) {
+        statusOut.output("    %s\n", it->second->getVerboseString().c_str());
+    }
+    
+    statusOut.output("  Link Status: ");
+    if (link_) 
+        link_->printStatus(statusOut);
+    
+    statusOut.output("End MemHierarchy::MemoryController\n\n");
+}
+
+void MemController::emergencyShutdown() {
+    if (out.getVerboseLevel() > 1) {
+        if (out.getOutputLocation() == Output::STDOUT)
+            out.setOutputLocation(Output::STDERR);
+        
+        printStatus(out);
+        
+        if (link_) {
+            out.output("  Checking for unreceived events on link: \n");
+            link_->emergencyShutdownDebug(out);
+        }
+    }
+}

@@ -1,8 +1,8 @@
-// Copyright 2013-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2017, Sandia Corporation
+// Copyright (c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -99,6 +99,11 @@ public:
     virtual MemEventInit* recvInitData();
     virtual void send(MemEventBase * ev);
     virtual MemEventBase * recv();
+
+    /* Debug */
+    virtual void printStatus(Output &out) {
+        out.output("  MemHierarchy::MemLink: No status given\n");
+    }
 
 protected:
     

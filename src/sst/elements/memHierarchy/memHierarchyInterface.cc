@@ -1,9 +1,9 @@
 // -*- mode: c++ -*-
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -32,6 +32,7 @@ MemHierarchyInterface::MemHierarchyInterface(SST::Component *comp, Params &param
 { 
     output.init("", 1, 0, Output::STDOUT);
     rqstr_ = "";
+    initDone_ = false;
 }
 
 
@@ -45,7 +46,7 @@ void MemHierarchyInterface::init(unsigned int phase) {
         region.interleaveSize = 0;
         link_->sendInitData(new MemEventInitRegion(parent->getName(), region, false));
 
-        MemEventInitCoherence * event = new MemEventInitCoherence(parent->getName(), Endpoint::CPU, false, false, 0);
+        MemEventInitCoherence * event = new MemEventInitCoherence(parent->getName(), Endpoint::CPU, false, false, 0, false);
         link_->sendInitData(event);
 
     }
@@ -58,22 +59,38 @@ void MemHierarchyInterface::init(unsigned int phase) {
                 if (memEvent->getInitCmd() == MemEventInit::InitCommand::Coherence) {
                     MemEventInitCoherence * memEventC = static_cast<MemEventInitCoherence*>(memEvent);
                     baseAddrMask_ = ~(memEventC->getLineSize() - 1);
+                    initDone_ = true;
                 }
             }
         }
         delete ev;
+    }
+
+    if (initDone_) { // Drain send queue
+        while (!initSendQueue_.empty()) {
+            link_->sendInitData(initSendQueue_.front());
+            initSendQueue_.pop();
+        }
     }
     
 }
 
 void MemHierarchyInterface::sendInitData(SimpleMem::Request *req){
     MemEventInit *me = new MemEventInit(getName(), Command::GetX, req->addrs[0], req->data);
-    link_->sendInitData(me);
+    if (initDone_)
+        link_->sendInitData(me);
+    else
+        initSendQueue_.push(me);
 }
 
 
 void MemHierarchyInterface::sendRequest(SimpleMem::Request *req){
-    MemEventBase *me = createMemEvent(req);
+    MemEventBase *me;
+    if (req->cmd == SimpleMem::Request::CustomCmd) {
+        me = createCustomEvent(req);
+    } else {
+        me = createMemEvent(req);
+    }
     requests_[me->getID()] = req;
     link_->send(me);
 }
@@ -82,7 +99,7 @@ void MemHierarchyInterface::sendRequest(SimpleMem::Request *req){
 SimpleMem::Request* MemHierarchyInterface::recvResponse(void){
     SST::Event *ev = link_->recv();
     if (NULL != ev) {
-        MemEvent *me = static_cast<MemEvent*>(ev);
+        MemEventBase *me = static_cast<MemEventBase*>(ev);
         Request *req = processIncoming(me);
         delete me;
         return req;
@@ -102,12 +119,7 @@ MemEventBase* MemHierarchyInterface::createMemEvent(SimpleMem::Request *req) con
         case SimpleMem::Request::FlushLine:     cmd = Command::FlushLine;    break;
         case SimpleMem::Request::FlushLineInv:  cmd = Command::FlushLineInv; break;
         case SimpleMem::Request::FlushLineResp: cmd = Command::FlushLineResp; break;
-        case SimpleMem::Request::CustomCmd:     cmd = Command::CustomReq;    break;
         default: output.fatal(CALL_INFO, -1, "Unknown req->cmd in createMemEvent()\n");
-    }
-
-    if (cmd == Command::CustomReq) {
-        return createCustomMemEvent(req);
     }
 
     Addr baseAddr = (req->addrs[0]) & baseAddrMask_;
@@ -150,14 +162,19 @@ MemEventBase* MemHierarchyInterface::createMemEvent(SimpleMem::Request *req) con
 }
 
 
-CustomCmdEvent* MemHierarchyInterface::createCustomMemEvent(SimpleMem::Request * req) const {
-    CustomCmdEvent * cme = new CustomCmdEvent(getName().c_str(), req->addrs[0], Command::CustomReq, req->getCustomOpc(), req->size);
+MemEventBase* MemHierarchyInterface::createCustomEvent(SimpleMem::Request * req) const {
+    Addr baseAddr = (req->addrs[0]) & baseAddrMask_;
+    CustomCmdEvent * cme = new CustomCmdEvent(getName().c_str(), req->addrs[0], baseAddr, Command::CustomReq, req->getCustomOpc(), req->size);
     cme->setRqstr(rqstr_);
     cme->setDst(rqstr_);
 
     if(req->flags & SimpleMem::Request::F_NONCACHEABLE)
         cme->setFlag(MemEvent::F_NONCACHEABLE);
     
+    if (req->data.size() != 0) {
+        cme->setPayload(req->data); // Note this updates cme->size to payload.size()...
+        cme->setSize(req->size);    // Assume this is what we want, not the copied payload size
+    }
     cme->setVirtualAddress(req->getVirtualAddress());
     cme->setInstructionPointer(req->getInstructionPointer());
 
@@ -166,28 +183,34 @@ CustomCmdEvent* MemHierarchyInterface::createCustomMemEvent(SimpleMem::Request *
     return cme;
 }
 
-
+/* Handle (response) events from memHierarchy 
+ *  Update original request
+ *  Call owner's callback
+ */
 void MemHierarchyInterface::handleIncoming(SST::Event *ev){
-    MemEvent *me = static_cast<MemEvent*>(ev);
+    MemEventBase *me = static_cast<MemEventBase*>(ev);
     SimpleMem::Request *req = processIncoming(me);
-    if(req) (*recvHandler_)(req);
+    if (req) (*recvHandler_)(req);
     delete me;
 }
 
-
-SimpleMem::Request* MemHierarchyInterface::processIncoming(MemEvent *ev){
+/* Match response to request. Update request with results. Return request to processor */
+SimpleMem::Request* MemHierarchyInterface::processIncoming(MemEventBase *ev){
     SimpleMem::Request *req = NULL;
     Command cmd = ev->getCmd();
-    MemEvent::id_type origID = ev->getResponseToID();
+    MemEventBase::id_type origID = ev->getResponseToID();
     
-    std::map<MemEvent::id_type, SimpleMem::Request*>::iterator i = requests_.find(origID);
+    std::map<MemEventBase::id_type, SimpleMem::Request*>::iterator i = requests_.find(origID);
     if(i != requests_.end()){
         req = i->second;
         requests_.erase(i);
-        updateRequest(req, ev);
-    }
-    else{
-        output.fatal(CALL_INFO, -1, "Unable to find matching request.  Cmd = %s, Addr = %" PRIx64 ", respID = %" PRIx64 "\n", CommandString[(int)ev->getCmd()], ev->getAddr(), ev->getResponseToID().first);
+        if (req->cmd == SimpleMem::Request::CustomCmd) {
+            updateCustomRequest(req, ev);
+        } else {
+            updateRequest(req, static_cast<MemEvent*>(ev));
+        }
+    } else {
+        output.fatal(CALL_INFO, -1, "(%s interface) Unable to find matching request. Event: %s\n", owner_->getName().c_str(), ev->getVerboseString().c_str());
     }
     return req;
 }
@@ -196,27 +219,34 @@ SimpleMem::Request* MemHierarchyInterface::processIncoming(MemEvent *ev){
 void MemHierarchyInterface::updateRequest(SimpleMem::Request* req, MemEvent *me) const{
     switch (me->getCmd()) {
         case Command::GetSResp:
-        req->cmd   = SimpleMem::Request::ReadResp;
-        req->data  = me->getPayload();
-        req->size  = me->getPayload().size();
-        break;
+            req->cmd   = SimpleMem::Request::ReadResp;
+            req->data  = me->getPayload();
+            req->size  = me->getPayload().size();
+            break;
         case Command::GetXResp:
-        req->cmd   = SimpleMem::Request::WriteResp;
-        if(me->success()) req->flags |= (SimpleMem::Request::F_LLSC_RESP);
-        break;
+            req->cmd   = SimpleMem::Request::WriteResp;
+            if (me->success()) 
+                req->flags |= (SimpleMem::Request::F_LLSC_RESP);
+            break;
         case Command::FlushLineResp:
-        req->cmd = SimpleMem::Request::FlushLineResp;
-        if (me->success()) req->flags |= (SimpleMem::Request::F_FLUSH_SUCCESS);
-        break;
-        case Command::CustomResp:
-        req->cmd = SimpleMem::Request::CustomCmd;
-        break;
+            req->cmd = SimpleMem::Request::FlushLineResp;
+            if (me->success()) 
+                req->flags |= (SimpleMem::Request::F_FLUSH_SUCCESS);
+            break;
     default:
         output.fatal(CALL_INFO, -1, "Don't know how to deal with command %s\n", CommandString[(int)me->getCmd()]);
     }
    // Always update memFlags to faciliate mem->processor communication
     req->memFlags = me->getMemFlags();
     
+}
+
+
+void MemHierarchyInterface::updateCustomRequest(SimpleMem::Request* req, MemEventBase *ev) const{
+    CustomCmdEvent* cev = static_cast<CustomCmdEvent*>(ev);
+    req->cmd = SimpleMem::Request::CustomCmd;
+    req->memFlags = cev->getMemFlags();
+    req->data = cev->getPayload();
 }
 
 bool MemHierarchyInterface::initialize(const std::string &linkName, HandlerBase *handler){

@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2009-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -31,9 +31,9 @@ ZodiacDUMPITraceReader::ZodiacDUMPITraceReader(ComponentId_t id, Params& params)
     string msgiface = params.find<std::string>("msgapi");
 
     if ( msgiface == "" ) {
-        msgapi = new SST::Hermes::MP::Interface();
+        msgapi = new SST::Hermes::MP::Interface(this);
     } else {
-	msgapi = dynamic_cast<SST::Hermes::MP::Interface*>(loadSubcomponent(msgiface, this, params));
+	msgapi = dynamic_cast<SST::Hermes::MP::Interface*>(loadSubComponent(msgiface, this, params));
 
         if(NULL == msgapi) {
 		std::cerr << "Message API: " << msgiface << " could not be loaded." << std::endl;

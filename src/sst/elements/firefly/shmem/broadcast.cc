@@ -1,8 +1,8 @@
-// Copyright 2013-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2017, Sandia Corporation
+// Copyright (c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -102,7 +102,7 @@ void ShmemBroadcast::node_2(int)
     }
 
     assert( m_children[m_iteration] != my_pe() );
-    m_api.put( m_dest, m_src, m_nelems, m_children[m_iteration], callback );
+    m_api.put( m_dest, m_src, m_nelems, m_children[m_iteration], true, callback );
     ++m_iteration;
 
     //for (i = 0 ; i < num_children ; ++i) {

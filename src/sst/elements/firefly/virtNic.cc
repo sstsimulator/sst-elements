@@ -1,8 +1,8 @@
-// Copyright 2013-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2017, Sandia Corporation
+// Copyright (c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -28,12 +28,15 @@ VirtNic::VirtNic( Component* owner, Params& params ) :
     m_notifyGetDone(NULL),
     m_notifySendPioDone(NULL),
     m_notifyRecvDmaDone(NULL),
-    m_notifyNeedRecv(NULL)
+    m_notifyNeedRecv(NULL),
+    m_curNicQdepth(0),
+    m_blockedCallback(NULL)
 {
     m_dbg.init("@t:VirtNic::@p():@l ", 
         params.find<uint32_t>("verboseLevel",0),
         0,
         Output::STDOUT );
+    m_maxNicQdepth = params.find<int>("m_maxNicQdepth",32);
 
     m_toNicLink = owner->configureLink( params.find<std::string>("portName","nic"), 
 			"1 ns", new Event::Handler<VirtNic>(this,&VirtNic::handleEvent) );
@@ -51,7 +54,7 @@ VirtNic::~VirtNic()
 
 void VirtNic::init( unsigned int phase )
 {
-    m_dbg.verbose(CALL_INFO,1,0,"phase=%d\n",phase);
+    m_dbg.debug(CALL_INFO,1,0,"phase=%d\n",phase);
 
     if ( 1 == phase ) {
         NicInitEvent* ev = 
@@ -67,7 +70,7 @@ void VirtNic::init( unsigned int phase )
 							m_coreId );
         m_dbg.setPrefix( buffer );
 
-        m_dbg.verbose(CALL_INFO,1,0,"we are nic=%d core=%d\n",
+        m_dbg.debug(CALL_INFO,1,0,"we are nic=%d core=%d\n",
                         m_realNicId, m_coreId );
     }
 }
@@ -76,7 +79,7 @@ void VirtNic::handleEvent( Event* ev )
 {
     NicRespBaseEvent* event = static_cast<NicRespBaseEvent*>(ev);
 
-    m_dbg.verbose(CALL_INFO,2,0,"type=%d\n",event->base_type);
+    m_dbg.debug(CALL_INFO,2,0,"type=%d\n",event->base_type);
 
     switch( event->base_type ) {
     case NicRespBaseEvent::Msg:
@@ -91,7 +94,7 @@ void VirtNic::handleEvent( Event* ev )
 
 void VirtNic::handleMsgEvent( NicRespEvent* event )
 {
-    m_dbg.verbose(CALL_INFO,2,0,"type=%d\n",event->type);
+    m_dbg.debug(CALL_INFO,2,0,"type=%d\n",event->type);
     switch( event->type ) {
     case NicRespEvent::Get:
         (*m_notifyGetDone)( event->key );
@@ -112,148 +115,157 @@ void VirtNic::handleMsgEvent( NicRespEvent* event )
 }
 void VirtNic::handleShmemEvent( NicShmemRespBaseEvent* event )
 {
-    m_dbg.verbose(CALL_INFO,2,0,"\n");
     NicShmemRespBaseEvent* ev = static_cast<NicShmemRespBaseEvent*>(event);
-    ev->callback();
+
+   	m_dbg.debug(CALL_INFO,2,0,"calling callback\n");
+   	ev->callback();
+
+	m_dbg.debug(CALL_INFO,2,0," %d %d\n", m_curNicQdepth, m_maxNicQdepth);
+   	assert( m_curNicQdepth > 0 );
+   	--m_curNicQdepth;
+   	if ( m_blockedCallback ) {
+       	m_blockedCallback();
+       	m_blockedCallback = NULL;
+   	}
 }
 
 bool VirtNic::canDmaSend()
 {
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
+    m_dbg.debug(CALL_INFO,1,0,"\n");
     //return m_nic.canDmaSend( this ); 
     return true;
 }
 
 bool VirtNic::canDmaRecv()
 { 
-    m_dbg.verbose(CALL_INFO,1,0,"\n");
+    m_dbg.debug(CALL_INFO,1,0,"\n");
 //    return m_nic.canDmaRecv( this ); 
     return true;
 }
 
 void VirtNic::dmaRecv( int src, int tag, std::vector<IoVec>& vec, void* key )
 {
-    m_dbg.verbose(CALL_INFO,2,0,"src=%d\n",src);
+    m_dbg.debug(CALL_INFO,2,0,"src=%d\n",src);
     m_toNicLink->send(0, new NicCmdEvent( NicCmdEvent::DmaRecv,
             calcCoreId(src), calcRealNicId(src), tag, vec, key ) );
 }
 
 void VirtNic::pioSend( int dest, int tag, std::vector<IoVec>& vec, void* key )
 {
-    m_dbg.verbose(CALL_INFO,2,0,"dest=%d\n",dest);
+    m_dbg.debug(CALL_INFO,2,0,"dest=%d\n",dest);
     m_toNicLink->send(0, new NicCmdEvent( NicCmdEvent::PioSend, 
 			calcCoreId(dest), calcRealNicId(dest), tag, vec, key ) );
 }
 
 void VirtNic::get( int node, int tag, std::vector<IoVec>& vec, void* key )
 {
-    m_dbg.verbose(CALL_INFO,2,0,"node=%d\n",node);
+    m_dbg.debug(CALL_INFO,2,0,"node=%d\n",node);
     m_toNicLink->send(0, new NicCmdEvent( NicCmdEvent::Get, 
 			calcCoreId(node), calcRealNicId(node), tag, vec, key ) );
 }
 
 void VirtNic::regMem( int node, int tag, std::vector<IoVec>& vec, void* key )
 {
-    m_dbg.verbose(CALL_INFO,2,0,"node=%d\n",node);
+    m_dbg.debug(CALL_INFO,2,0,"node=%d\n",node);
     m_toNicLink->send(0, new NicCmdEvent( NicCmdEvent::RegMemRgn, 
 			calcCoreId(node), calcRealNicId(node), tag, vec, key ) );
 }
 
 void VirtNic::shmemInit( Hermes::Vaddr addr, Callback callback )
 {
-    m_dbg.verbose(CALL_INFO,2,0,"\n");
+    m_dbg.debug(CALL_INFO,2,0,"\n");
     sendCmd(0, new NicShmemInitCmdEvent( addr, callback ) );
 }
 
 void VirtNic::shmemRegMem( Hermes::MemAddr& addr, size_t len, Callback callback )
 {
-    m_dbg.verbose(CALL_INFO,2,0,"\n");
+    m_dbg.debug(CALL_INFO,2,0,"\n");
     sendCmd(0, new NicShmemRegMemCmdEvent( addr, len, callback ) );
 }
 
 void VirtNic::shmemGet( int node, Hermes::Vaddr dest, Hermes::Vaddr src, size_t len, Callback callback )
 {
-    m_dbg.verbose(CALL_INFO,2,0,"\n");
+    m_dbg.debug(CALL_INFO,2,0,"\n");
     sendCmd(0, new NicShmemGetCmdEvent( calcCoreId(node), calcRealNicId(node), dest, src, len, callback ) );
 }
 
 void VirtNic::shmemGetv( int node, Hermes::Vaddr src, Hermes::Value::Type type, CallbackV callback )
 {
-    m_dbg.verbose(CALL_INFO,2,0,"\n");
+    m_dbg.debug(CALL_INFO,2,0,"\n");
     sendCmd(0, new NicShmemGetvCmdEvent( calcCoreId(node), calcRealNicId(node), src, type, callback ) );
 }
 
 void VirtNic::shmemWait( Hermes::Vaddr addr, Hermes::Shmem::WaitOp op, Hermes::Value& value, Callback callback )
 {
-    m_dbg.verbose(CALL_INFO,2,0,"\n");
+    m_dbg.debug(CALL_INFO,2,0,"\n");
     sendCmd(0, new NicShmemOpCmdEvent( addr, op, value, callback ) );
 }
 
 void VirtNic::shmemPut( int node, Hermes::Vaddr dest, Hermes::Vaddr src, size_t len, Callback callback )
 {
-    m_dbg.verbose(CALL_INFO,2,0,"\n");
+    m_dbg.debug(CALL_INFO,2,0,"\n");
     sendCmd(0, new NicShmemPutCmdEvent( calcCoreId(node), calcRealNicId(node), dest, src, len, callback ) );
 }
 
 void VirtNic::shmemPutOp( int node, Hermes::Vaddr dest, Hermes::Vaddr src, size_t len,
             Hermes::Shmem::ReduOp op, Hermes::Value::Type dataType, Callback callback )
 {
-    m_dbg.verbose(CALL_INFO,2,0," %d\n",op);
+    m_dbg.debug(CALL_INFO,2,0," %d\n",op);
     sendCmd(0, new NicShmemPutCmdEvent( calcCoreId(node), calcRealNicId(node), dest, src, len, op, dataType, callback ) );
 }
 
-void VirtNic::shmemPutv( int node, Hermes::Vaddr dest, Hermes::Value& value, Callback callback )
+void VirtNic::shmemPutv( int node, Hermes::Vaddr dest, Hermes::Value& value )
 {
-    m_dbg.verbose(CALL_INFO,2,0,"\n");
-    sendCmd(0, new NicShmemPutvCmdEvent( calcCoreId(node), calcRealNicId(node), dest, value, callback ) );
+    m_dbg.debug(CALL_INFO,2,0,"\n");
+    sendCmd(0, new NicShmemPutvCmdEvent( calcCoreId(node), calcRealNicId(node), dest, value ) );
 }
 
 void VirtNic::shmemSwap( int node, Hermes::Vaddr dest, Hermes::Value& value , CallbackV callback )
 {
-    m_dbg.verbose(CALL_INFO,2,0,"\n");
+    m_dbg.debug(CALL_INFO,2,0,"\n");
     sendCmd(0, new NicShmemSwapCmdEvent( calcCoreId(node), calcRealNicId(node), dest, value, callback ) );
 }
 
 void VirtNic::shmemCswap( int node, Hermes::Vaddr dest, Hermes::Value& cond, Hermes::Value& value , CallbackV callback )
 {
-    m_dbg.verbose(CALL_INFO,2,0,"\n");
+    m_dbg.debug(CALL_INFO,2,0,"\n");
     sendCmd(0, new NicShmemCswapCmdEvent( calcCoreId(node), calcRealNicId(node), dest, cond, value, callback ) );
 }
 
-void VirtNic::shmemAdd( int node, Hermes::Vaddr dest, Hermes::Value& value, Callback callback )
+void VirtNic::shmemAdd( int node, Hermes::Vaddr dest, Hermes::Value& value )
 {
-    m_dbg.verbose(CALL_INFO,2,0,"\n");
-    sendCmd(0, new NicShmemAddCmdEvent( calcCoreId(node), calcRealNicId(node), dest, value, callback ) );
+    m_dbg.debug(CALL_INFO,2,0,"\n");
+    sendCmd(0, new NicShmemAddCmdEvent( calcCoreId(node), calcRealNicId(node), dest, value ) );
 }
 
 void VirtNic::shmemFadd( int node, Hermes::Vaddr dest, Hermes::Value& value, CallbackV callback )
 {
-    m_dbg.verbose(CALL_INFO,2,0,"\n");
+    m_dbg.debug(CALL_INFO,2,0,"\n");
     sendCmd(0, new NicShmemFaddCmdEvent( calcCoreId(node), calcRealNicId(node), dest, value, callback ) );
 }
 
 void VirtNic::setNotifyOnRecvDmaDone(
                 VirtNic::HandlerBase4Args<int,int,size_t,void*>* functor) 
 {
-    m_dbg.verbose(CALL_INFO,2,0,"\n");
+    m_dbg.debug(CALL_INFO,2,0,"\n");
     m_notifyRecvDmaDone = functor;
 }
 
 void VirtNic::setNotifyOnSendPioDone(VirtNic::HandlerBase<void*>* functor) 
 {
-    m_dbg.verbose(CALL_INFO,2,0,"\n");
+    m_dbg.debug(CALL_INFO,2,0,"\n");
     m_notifySendPioDone = functor;
 }
 
 void VirtNic::setNotifyOnGetDone(VirtNic::HandlerBase<void*>* functor) 
 {
-    m_dbg.verbose(CALL_INFO,2,0,"\n");
+    m_dbg.debug(CALL_INFO,2,0,"\n");
     m_notifyGetDone = functor;
 }
 
 void VirtNic::setNotifyNeedRecv(
                 VirtNic::HandlerBase2Args<int,size_t>* functor) 
 {
-    m_dbg.verbose(CALL_INFO,2,0,"\n");
+    m_dbg.debug(CALL_INFO,2,0,"\n");
     m_notifyNeedRecv = functor;
 }

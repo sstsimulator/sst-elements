@@ -1,8 +1,8 @@
-// Copyright 2013-2017 Sandia Corporation. Under the terms
-// of Contract DE-NA0003525 with Sandia Corporation, the U.S.
+// Copyright 2013-2018 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2017, Sandia Corporation
+// Copyright (c) 2013-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -30,7 +30,7 @@ void SendFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
     assert( NULL == m_event );
     m_event = static_cast< SendStartEvent* >(e);
 
-    m_dbg.verbose(CALL_INFO,1,0,"%s buf=%p count=%d type=%d dest=%d tag=%#x\n",
+    m_dbg.debug(CALL_INFO,1,0,"%s buf=%p count=%d type=%d dest=%d tag=%#x\n",
                 m_event->req ? "Isend":"Send",
                 &m_event->buf,
                 m_event->count,
