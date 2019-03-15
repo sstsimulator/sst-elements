@@ -28,6 +28,8 @@ SimpleMemory::SimpleMemory(Component *comp, Params &params) : SimpleMemBackend(c
     std::string access_time = params.find<std::string>("access_time", "100 ns");
     self_link = comp->configureSelfLink("Self", access_time,
             new Event::Handler<SimpleMemory>(this, &SimpleMemory::handleSelfEvent));
+
+    m_maxReqPerCycle = params.find<>("max_requests_per_cycle", 1);
 }
 
 void SimpleMemory::handleSelfEvent(SST::Event *event){
