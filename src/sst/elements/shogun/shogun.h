@@ -44,8 +44,6 @@ public:
 
     SST_ELI_DOCUMENT_PARAMS(
         { "verbose",                "Level of output verbosity, higher is more output, 0 is no output", 0 },
-        { "debug",                  "(uint) Output location for debug statements. Requires core configuration flag '--enable-debug'. --0[None], 1[STDOUT], 2[STDERR], 3[FILE]--", "0"},
-        { "debug_level",            "(uint) Debugging level: 0 to 16", "0"},
         { "port_count",             "Number of ports on the Crossbar", "0" },
         { "arbitration",            "Select the arbitration scheme", "roundrobin" },
         { "clock",                  "Clock Frequency for the crossbar", "1.0GHz" },
@@ -108,7 +106,7 @@ private:
 
     ShogunQueue<ShogunEvent*>** inputQueues;
     ShogunEvent*** pendingOutputs;
-    int* remote_output_slots;
+    int32_t* remote_output_slots;
     ShogunArbitrator* arb;
 
     SST::Output* output;
