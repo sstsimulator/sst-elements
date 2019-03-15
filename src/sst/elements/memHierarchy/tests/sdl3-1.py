@@ -70,6 +70,7 @@ comp_memory.addParams({
       "debug" : DEBUG_MEM,
       "debug_level" : 10,
       "backend.mem_size" : "512MiB",
+      "max_requests_per_cycle": "1",
       "printStats" : "1",
       "clock" : "1GHz",
       "backend.access_time" : "100 ns",
