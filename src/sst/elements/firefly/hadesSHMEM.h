@@ -320,13 +320,14 @@ class HadesSHMEM : public Shmem::Interface
 	};
 
 	struct Get : public Base { 
-		Get( Vaddr dest, Vaddr src, size_t nelems, int pe, bool blocking, Shmem::Callback callback ) :
-			Base(callback), dest(dest), src(src), nelems(nelems), pe(pe), blocking(blocking)  {} 
+		Get( Vaddr dest, Vaddr src, size_t nelems, int pe, bool blocking, Shmem::Callback callback, Shmem::Callback fini ) :
+			Base(callback), dest(dest), src(src), nelems(nelems), pe(pe), blocking(blocking), finiCallback(fini)  {} 
 		Hermes::Vaddr dest;
 		Hermes::Vaddr src;
 		size_t nelems;
 	   	int pe;
 		bool blocking;
+		Shmem::Callback finiCallback;
 	};
 	struct Putv  : public Base { 
 		Putv( Vaddr dest, Value& value, int pe, Shmem::Callback callback ) :
@@ -336,13 +337,14 @@ class HadesSHMEM : public Shmem::Interface
 	   	int pe;	
 	};
 	struct Put : public Base { 
-		Put( Vaddr dest, Vaddr src, size_t nelems, int pe, bool blocking, Shmem::Callback callback ) :
-			Base(callback), dest(dest), src(src), nelems(nelems), pe(pe), blocking(blocking) {} 
+		Put( Vaddr dest, Vaddr src, size_t nelems, int pe, bool blocking, Shmem::Callback callback, Shmem::Callback fini ) :
+			Base(callback), dest(dest), src(src), nelems(nelems), pe(pe), blocking(blocking), finiCallback(fini) {} 
 		Hermes::Vaddr dest;
 	   	Hermes::Vaddr src;
 		size_t nelems;
 		int pe;
 		bool blocking;
+		Shmem::Callback finiCallback;
 	};
 	struct PutOp : public Base { 
     	PutOp(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe,
@@ -397,11 +399,11 @@ class HadesSHMEM : public Shmem::Interface
 	   	int pe;
 	};
 	struct Fam_Get : public Base { 
-		Fam_Get( Hermes::Vaddr dest, Shmem::Fam_Region_Descriptor rd, uint64_t offset, uint64_t nbytes,
+		Fam_Get( Hermes::Vaddr dest, Shmem::Fam_Descriptor rd, uint64_t offset, uint64_t nbytes,
 				bool blocking, Shmem::Callback callback ) :
 			Base(callback), dest(dest), rd(rd), offset(offset), nbytes(nbytes), blocking(blocking)  {} 
 		Hermes::Vaddr dest;
-		Shmem::Fam_Region_Descriptor rd;
+		Shmem::Fam_Descriptor rd;
 		uint64_t offset;
 	   	uint64_t nbytes;
 		bool blocking;
@@ -472,8 +474,22 @@ class HadesSHMEM : public Shmem::Interface
     virtual void add(  Hermes::Vaddr, Hermes::Value&, int pe, Shmem::Callback);
     virtual void fadd( Hermes::Value&, Hermes::Vaddr, Hermes::Value&, int pe, Shmem::Callback);
 
-    virtual void fam_add( uint64_t, Hermes::Value&, Shmem::Callback);
-    virtual void fam_get_nb( Hermes::Vaddr dest, Shmem::Fam_Region_Descriptor rd, uint64_t offset, uint64_t nbytes, Shmem::Callback);
+    virtual void fam_add( uint64_t, Hermes::Value&, Shmem::Callback& );
+    virtual void fam_get( Hermes::Vaddr dest, Shmem::Fam_Descriptor fd, uint64_t offset, uint64_t nbytes,
+			bool blocking, Shmem::Callback&);
+
+    virtual void fam_put( Shmem::Fam_Descriptor fd, uint64_t offset, Hermes::Vaddr src, uint64_t nbytes,
+			bool blocking, Shmem::Callback&);
+
+	virtual void fam_scatter( Hermes::Vaddr src, Shmem::Fam_Descriptor rd, uint64_t nElements, 
+			uint64_t firstElement, uint64_t stride, uint64_t elementSize, bool blocking, Shmem::Callback& );
+    virtual void fam_scatterv( Hermes::Vaddr src, Shmem::Fam_Descriptor fd, uint64_t nElements,
+			std::vector<uint64_t> elementIndex, uint64_t elementSize, bool blocking, Shmem::Callback& );
+
+    virtual void fam_gather( Hermes::Vaddr dest, Shmem::Fam_Descriptor fd, uint64_t nElements, 
+			uint64_t firstElement, uint64_t stride, uint64_t elmentSize, bool blocking, Shmem::Callback& );
+    virtual void fam_gatherv( Hermes::Vaddr dest, Shmem::Fam_Descriptor fd, uint64_t nElements,
+			std::vector<uint64_t> elementIndex, uint64_t elmentSize, bool blocking, Shmem::Callback& );
 
     void memcpy( Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, Shmem::Callback callback );
 
@@ -485,6 +501,14 @@ class HadesSHMEM : public Shmem::Interface
 
     Output& dbg() { return m_dbg; }
   private:
+    virtual void put_quiet(Shmem::Callback);
+    virtual void get_quiet(Shmem::Callback);
+    virtual void get(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe, bool blocking, Shmem::Callback, Shmem::Callback& fini );
+    virtual void put(Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int pe, bool blocking, Shmem::Callback, Shmem::Callback& fini );
+
+    virtual void fam_put2( Shmem::Fam_Descriptor fd, uint64_t offset, Hermes::Vaddr src, uint64_t nbytes, Shmem::Callback, Shmem::Callback );
+    virtual void fam_get2( Hermes::Vaddr dest, Shmem::Fam_Descriptor fd, uint64_t offset, uint64_t nbytes, Shmem::Callback, Shmem::Callback );
+
 	void init( Init* );
 	void finalize( Finalize* );
 	void n_pes( N_Pes* );
@@ -521,7 +545,7 @@ class HadesSHMEM : public Shmem::Interface
 	void delayEnter( Shmem::Callback callback, SimTime_t delay = 0 );
 	void delayReturn( Shmem::Callback callback, SimTime_t delay = 0 );
 
-    void handleToDriver(SST::Event* e) {
+    void doCallback(SST::Event* e) {
         dbg().debug(CALL_INFO,1,SHMEM_BASE,"\n");
         DelayEvent* event = static_cast<DelayEvent*>(e);
 		if ( DelayEvent::One == event->type ) {
@@ -539,7 +563,7 @@ class HadesSHMEM : public Shmem::Interface
 		} else {
 			tmp =m_os->getInfo()->getGroup( MP::GroupWorld )->getMapping( pe ) ;
 		}
-		dbg().debug(CALL_INFO,1,SHMEM_BASE,"%x -> %x\n",pe,tmp);
+		dbg().debug(CALL_INFO,2,SHMEM_BASE,"%x -> %x\n",pe,tmp);
         return  tmp;
     }
 
@@ -553,27 +577,60 @@ class HadesSHMEM : public Shmem::Interface
 	}
 
 	struct FamWork {
+		FamWork( Hermes::Vaddr addr, Shmem::Callback callback, Shmem::Callback finiCallback) :
+			addr(addr),callback(callback),finiCallback(finiCallback) {}
     	std::queue< std::pair< uint64_t, uint64_t > > work;
+		Hermes::Vaddr addr;
     	Shmem::Callback callback;
-		Hermes::Vaddr dest;
+    	Shmem::Callback finiCallback;
+		size_t pending; 
 	};
 
 	void doOneFamGet( FamWork* );
+	void doOneFamPut( FamWork* );
+
+	struct FamVectorWork {
+		Hermes::Vaddr addr;
+		Shmem::Fam_Descriptor fd;
+		uint64_t nElements;
+		std::vector<uint64_t> indexes;
+		uint64_t firstElement;
+		uint64_t stride;
+		uint64_t elementSize;
+		Shmem::Callback callback;
+		int currentVector;
+		bool blocking;
+		size_t pending; 
+		Shmem::Callback finiCallback;
+	};
+	void fam_gather( FamVectorWork* work, Hermes::Vaddr dest, Shmem::Fam_Descriptor fd, uint64_t nElements,
+    		uint64_t elementSize, bool blocking, Shmem::Callback& callback );
+	void fam_scatter( FamVectorWork* work, Hermes::Vaddr src, Shmem::Fam_Descriptor fd, uint64_t nElements,
+    		uint64_t elementSize, bool blocking, Shmem::Callback& callback );
+
+	void doFamVectorPut( FamVectorWork* );
+	void doFamVectorGet( FamVectorWork* );
 
 	void createWorkList( uint64_t addr, uint64_t nbytes, std::queue< std::pair< uint64_t, uint64_t > >& list ) {
 	    if( ! m_famAddrMapper ) {
 			dbg().fatal(CALL_INFO, -1,"FAM mapping module not configured\n");
 		}
 		uint32_t blockSize = m_famAddrMapper->blockSize();
-		dbg().debug(CALL_INFO,1,SHMEM_BASE,"addr=%#" PRIx64 " nbytes=%" PRIu64"\n", addr, nbytes);
+		dbg().debug(CALL_INFO,2,SHMEM_BASE,"addr=%#" PRIx64 " nbytes=%" PRIu64"\n", addr, nbytes);
 
 		while ( nbytes ) {
-			uint64_t seg_nbytes = blockSize - ( addr & (blockSize-1) );		
+			uint64_t alignment = addr & (blockSize-1);		
+			uint64_t seg_nbytes = blockSize;
 
-			if ( 0 == seg_nbytes ) {
-				seg_nbytes = blockSize;
+			if ( alignment ) {
+				seg_nbytes -= alignment;
+			} else {
+				if ( nbytes < blockSize ) {
+					seg_nbytes = nbytes;
+				}	
 			}
-			dbg().debug(CALL_INFO,1,SHMEM_BASE,"seg_addr=%#" PRIx64 " seg_nbytes=%" PRIu64"\n", addr, seg_nbytes);
+
+			dbg().debug(CALL_INFO,3,SHMEM_BASE,"seg_addr=%#" PRIx64 " seg_nbytes=%" PRIu64"\n", addr, seg_nbytes);
 
 			list.push( std::make_pair(addr,seg_nbytes) );
 
@@ -609,7 +666,8 @@ class HadesSHMEM : public Shmem::Interface
     Hermes::MemAddr  m_localData;
     Hermes::MemAddr  m_pSync;
     Hermes::MemAddr  m_localScratch;
-    Hermes::MemAddr  m_pendingRemoteOps;
+    Hermes::MemAddr  m_pendingPutCnt;
+    Hermes::MemAddr  m_pendingGetCnt;
     Hermes::Value    m_zero;
 
 	FamNodeMapper* m_famNodeMapper;

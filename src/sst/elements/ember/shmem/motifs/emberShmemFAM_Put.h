@@ -14,8 +14,8 @@
 // distribution.
 
 
-#ifndef _H_EMBER_SHMEM_FAM_GET2
-#define _H_EMBER_SHMEM_FAM_GET2
+#ifndef _H_EMBER_SHMEM_FAM_PUT
+#define _H_EMBER_SHMEM_FAM_PUT
 
 #include <strings.h>
 #include "shmem/emberShmemGen.h"
@@ -29,15 +29,15 @@
 namespace SST {
 namespace Ember {
 
-class EmberShmemFAM_Get2Generator : public EmberShmemGenerator {
+class EmberShmemFAM_PutGenerator : public EmberShmemGenerator {
 
 public:
     SST_ELI_REGISTER_SUBCOMPONENT(
-        EmberShmemFAM_Get2Generator,
+        EmberShmemFAM_PutGenerator,
         "ember",
-        "ShmemFAM_Get2Motif",
+        "ShmemFAM_PutMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
-        "SHMEM FAM_Get2",
+        "SHMEM FAM_Put",
         "SST::Ember::EmberGenerator"
 
     )
@@ -46,8 +46,8 @@ public:
     )
 
 public:
-	EmberShmemFAM_Get2Generator(SST::Component* owner, Params& params) :
-		EmberShmemGenerator(owner, params, "ShmemFAM_Get2" ), m_phase(Init), m_groupName("MyApplication"),m_curBlock(0),m_rng(NULL)
+	EmberShmemFAM_PutGenerator(SST::Component* owner, Params& params) :
+		EmberShmemGenerator(owner, params, "ShmemFAM_Put" ), m_phase(Init), m_groupName("MyApplication"),m_curBlock(0),m_rng(NULL)
 	{ 
 		m_totalBytes = (size_t) params.find<SST::UnitAlgebra>("arg.totalBytes").getRoundedValue(); 
 		m_getLoop       = params.find<int>("arg.getLoop", 1);
@@ -92,6 +92,7 @@ public:
 
         case Alloc:
 
+			setVerbosePrefix( m_my_pe );
 			m_detailedCompute = findNid( m_node_num, m_detailedComputeList );
 			if ( m_my_pe == 0 ) {
 				printf("number of pes:           %d\n",	m_num_pes );
@@ -171,18 +172,12 @@ public:
 			}
 
 			verbose(CALL_INFO,2,0,"0x%" PRIx64" %p\n", m_mem.getSimVAddr(), m_mem.getBacking() );
-    		Hermes::MemAddr m_dest = m_mem.offset<unsigned char>( m_blockSize * (m_curBlock % m_numBlocksPerPartition) );
+    		Hermes::MemAddr m_src = m_mem.offset<unsigned char>( m_blockSize * (m_curBlock % m_numBlocksPerPartition) );
 
 			if ( m_blocking ) {
-        		enQ_fam_get_blocking( evQ, m_dest,
-                    m_fd,
-                    offset, 
-					m_blockSize );
+        		enQ_fam_put_blocking( evQ, m_fd, offset, m_src, m_blockSize );
 			} else {
-        		enQ_fam_get_nonblocking( evQ, m_dest,
-                    m_fd,
-                    offset, 
-					m_blockSize );
+        		enQ_fam_put_nonblocking( evQ, m_fd, offset, m_src, m_blockSize );
 			}
 
 			++m_curBlock;

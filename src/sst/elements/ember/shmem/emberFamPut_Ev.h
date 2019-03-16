@@ -14,36 +14,37 @@
 // distribution.
 
 
-#ifndef _H_EMBER_FAM_GET_NB_EVENT
-#define _H_EMBER_FAM_GET_NB_EVENT
+#ifndef _H_EMBER_FAM_PUT_EVENT
+#define _H_EMBER_FAM_PUT_EVENT
 
 #include "emberFamEvent.h"
 
 namespace SST {
 namespace Ember {
 
-class EmberFamGetNB_Event : public EmberFamEvent {
+class EmberFamPut_Event : public EmberFamEvent {
 
 public:
-	EmberFamGetNB_Event( Shmem::Interface& api, Output* output,
-            Hermes::Vaddr dest, Shmem::Fam_Region_Descriptor rd, uint64_t offset, uint64_t nbytes,
+	EmberFamPut_Event( Shmem::Interface& api, Output* output,
+            Shmem::Fam_Descriptor fd, uint64_t offset, Hermes::Vaddr src, uint64_t nbytes, bool blocking,
             EmberEventTimeStatistic* stat = NULL ) :
             EmberFamEvent( api, output, stat ), 
-            m_dest(dest), m_rd(rd), m_offset(offset), m_nbytes(nbytes) {}
-	~EmberFamGetNB_Event() {}
+            m_src(src), m_fd(fd), m_offset(offset), m_nbytes(nbytes), m_blocking(blocking) {}
+	~EmberFamPut_Event() {}
 
-    std::string getName() { return "FamGetNB"; }
+    std::string getName() { return "FamPut"; }
 
     void issue( uint64_t time, Shmem::Callback callback ) {
 
         EmberEvent::issue( time );
-        m_api.fam_get_nb( m_dest, m_rd, m_offset, m_nbytes, callback );
+        m_api.fam_put( m_fd, m_offset, m_src, m_nbytes, m_blocking, callback );
     }
 private:
-    Hermes::Vaddr m_dest;
-	Shmem::Fam_Region_Descriptor m_rd;
+    Hermes::Vaddr m_src;
+	Shmem::Fam_Descriptor m_fd;
 	uint64_t m_offset;
 	uint64_t m_nbytes;
+	bool m_blocking;
 };
 
 }

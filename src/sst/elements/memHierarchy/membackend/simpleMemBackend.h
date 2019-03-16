@@ -27,7 +27,7 @@ public:
 /* Element Library Info */
     SST_ELI_REGISTER_SUBCOMPONENT(SimpleMemory, "memHierarchy", "simpleMem", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Basic constant-access-time memory timing model", "SST::MemHierarchy::MemBackend")
-    
+
     SST_ELI_DOCUMENT_PARAMS( MEMBACKEND_ELI_PARAMS,
             /* Own parameters */
             {"access_time", "(string) Constant latency of memory operations. With units (SI ok).", "100ns"} )
@@ -36,8 +36,7 @@ public:
     SimpleMemory();
     SimpleMemory(Component *comp, Params &params);
     bool issueRequest(ReqId, Addr, bool, unsigned );
-    virtual int32_t getMaxReqPerCycle() { return 1; }
-    virtual bool isClocked() { return false; }    
+    virtual bool isClocked() { return false; }
 
 public:
     class MemCtrlEvent : public SST::Event {
@@ -45,17 +44,17 @@ public:
         MemCtrlEvent( ReqId id_) : SST::Event(), reqId(id_)
         { }
 
-		ReqId reqId;
-     
-    private:   
+        ReqId reqId;
+
+    private:
         MemCtrlEvent() {} // For Serialization only
-        
+
     public:
         void serialize_order(SST::Core::Serialization::serializer &ser)  override {
             Event::serialize_order(ser);
             ser & reqId;  // Cannot serialize pointers unless they are a serializable object
        }
-        
+
         ImplementSerializable(SST::MemHierarchy::SimpleMemory::MemCtrlEvent);
     };
 
