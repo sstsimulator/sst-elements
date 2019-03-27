@@ -99,7 +99,6 @@ ShogunComponent::ShogunComponent(ComponentId_t id, Params& params)
         }
     }
 
-
     stats = new ShogunStatisticsBundle(port_count);
     stats->registerStatistics(this);
 
@@ -189,7 +188,7 @@ void ShogunComponent::init(unsigned int phase)
 
                     for (int32_t j = 0; j < port_count; ++j) {
                         if (i != j) {
-                            printf("sending untimed data from %d to %d\n", i, j);
+                            output->verbose(CALL_INFO, 4, 0, "sending untimed data from %d to %d\n", i, j);                             
                             links[j]->sendUntimedData(ev->clone());
                         }
                     }

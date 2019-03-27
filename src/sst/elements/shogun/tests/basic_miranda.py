@@ -49,6 +49,7 @@ comp_l1cache0.addParams({
       "L1" : "1",
       "cache_size" : "8KB",
       "backing" : "none",
+      "verbose" : 0
 })
 
 comp_l1cache1 = sst.Component("l1cache1", "memHierarchy.Cache")
@@ -64,6 +65,7 @@ comp_l1cache1.addParams({
       "L1" : "1",
       "cache_size" : "8KB",
       "backing" : "none",
+      "verbose" : 0
 })
 
 # Enable statistics outputs
@@ -76,9 +78,10 @@ comp_memory0.addParams({
       "backend.access_time" : "1ns",
       "backend.mem_size" : str(memory_mb * 1024 * 1024) + "B",
       "request_width" : "64",
-      "debug" : 1,
+      "debug" : 0,
       "debug_level" : 10,
-      "clock" : "1GHz"
+      "clock" : "1GHz",
+      "verbose" : 0
 })
 
 comp_memory1 = sst.Component("memory1", "memHierarchy.MemController")
@@ -87,13 +90,17 @@ comp_memory1.addParams({
       "backend.access_time" : "1ns",
       "backend.mem_size" : str(memory_mb * 1024 * 1024) + "B",
       "request_width" : "64",
-      "debug" : 1,
+      "debug" : 0,
       "debug_level" : 10,
-      "clock" : "1GHz"
+      "clock" : "1GHz",
+      "verbose" : 0
 })
 
 comp_dirctrl0 = sst.Component("dirctrl0", "memHierarchy.DirectoryController")
 comp_dirctrl0.addParams({
+      "verbose" : 0,
+      "debug" : 0,
+      "debug_level" : 10,
       "coherence_protocol" : "MESI",
       "entry_cache_size" : "1024",
       "memNIC.network_bw" : "10GB/s",
@@ -101,14 +108,15 @@ comp_dirctrl0.addParams({
       "memNIC.addr_range_end" : (1024 * 1024 * 1024) - 64,
       "memNIC.interleave_size" : "64B",
       "memNIC.interleave_step" : "128B",
-      "memNIC.debug" : 1,
+      "memNIC.debug" : 0,
       "memNIC.debug_level" : 10,
 })
 
 comp_dirctrl1 = sst.Component("dirctrl1", "memHierarchy.DirectoryController")
 comp_dirctrl1.addParams({
       "coherence_protocol" : "MESI",
-      "debug" : 1,
+      "verbose" : 0,
+      "debug" : 0,
       "debug_level" : 10,
       "entry_cache_size" : "1024",
       "memNIC.network_bw" : "10GB/s",

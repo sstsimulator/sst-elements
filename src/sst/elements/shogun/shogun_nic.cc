@@ -140,8 +140,6 @@ void ShogunNIC::init(unsigned int phase)
 
     SST::Event* ev = link->recvInitData();
 
-    printf("init phase %u on net-id: %5d\n", phase, netID);
-
     while (nullptr != ev) {
         ShogunInitEvent* initEv = dynamic_cast<ShogunInitEvent*>(ev);
 
