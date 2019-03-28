@@ -65,7 +65,6 @@ comp_l1cache1.addParams({
       "L1" : "1",
       "cache_size" : "8KB",
       "backing" : "none",
-      "verbose" : 0
 })
 
 # Enable statistics outputs
@@ -81,7 +80,6 @@ comp_memory0.addParams({
       "debug" : 0,
       "debug_level" : 10,
       "clock" : "1GHz",
-      "verbose" : 0
 })
 
 comp_memory1 = sst.Component("memory1", "memHierarchy.MemController")
@@ -93,14 +91,10 @@ comp_memory1.addParams({
       "debug" : 0,
       "debug_level" : 10,
       "clock" : "1GHz",
-      "verbose" : 0
 })
 
 comp_dirctrl0 = sst.Component("dirctrl0", "memHierarchy.DirectoryController")
 comp_dirctrl0.addParams({
-      "verbose" : 0,
-      "debug" : 0,
-      "debug_level" : 10,
       "coherence_protocol" : "MESI",
       "entry_cache_size" : "1024",
       "memNIC.network_link_control" : "shogun.ShogunNIC", 
@@ -116,9 +110,6 @@ comp_dirctrl0.addParams({
 comp_dirctrl1 = sst.Component("dirctrl1", "memHierarchy.DirectoryController")
 comp_dirctrl1.addParams({
       "coherence_protocol" : "MESI",
-      "verbose" : 0,
-      "debug" : 0,
-      "debug_level" : 10,
       "entry_cache_size" : "1024",
       "memNIC.network_link_control" : "shogun.ShogunNIC",
       "memNIC.network_bw" : "10GB/s",
