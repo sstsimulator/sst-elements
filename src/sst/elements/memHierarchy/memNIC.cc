@@ -124,11 +124,9 @@ void MemNICBase::nicInit(SST::Interfaces::SimpleNetwork * linkcontrol, unsigned 
         } else {
             MemRtrEvent * mre = static_cast<MemRtrEvent*>(payload);
             MemEventInit *ev = static_cast<MemEventInit*>(mre->event);
-
-            dbg.debug(_L10_, "%s (memNICBase) received mre during init. %s\n", getName().c_str(),
-		mre->event->getVerboseString().c_str());
-
-            /*
+            dbg.debug(_L10_, "%s (memNICBase) received mre during init. %s\n", getName().c_str(), mre->event->getVerboseString().c_str());
+            
+            /* 
              * Event is for us if:
              *  1. We are the dst
              *  2. Broadcast (dst = "") and:
@@ -207,8 +205,9 @@ MemNIC::MemNIC(Component * parent, Params &params) : MemNICBase(parent, params) 
     std::string linkInbufSize = params.find<std::string>("network_input_buffer_size", "1KiB");
     std::string linkOutbufSize = params.find<std::string>("network_output_buffer_size", "1KiB");
 
-    link_control = (SimpleNetwork*)parent->loadSubComponent(/*"merlin.linkcontrol"*/
-	"shogun.ShogunNIC", parent, params); // But link control doesn't use params so manually initialize
+    std::string link_control_class = params.find<std::string>("network_link_control", "merlin.linkcontrol");
+
+    link_control = (SimpleNetwork*)parent->loadSubComponent(link_control_class, parent, params); // But link control doesn't use params so manually initialize
     link_control->initialize(linkName, UnitAlgebra(linkBandwidth), num_vcs, UnitAlgebra(linkInbufSize), UnitAlgebra(linkOutbufSize));
 
     // Packet size
