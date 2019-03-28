@@ -12,7 +12,6 @@ memory_mb = 1024
 # Define the simulation components
 comp_cpu0 = sst.Component("cpu0", "miranda.BaseCPU")
 comp_cpu0.addParams({
-	"verbose" : 0,
 	"generator" : "miranda.GUPSGenerator",
 	"generatorParams.verbose" : 0,
 	"generatorParams.count" : 100000,
@@ -23,7 +22,6 @@ comp_cpu0.addParams({
 
 comp_cpu1 = sst.Component("cpu1", "miranda.BaseCPU")
 comp_cpu1.addParams({
-	"verbose" : 0,
 	"generator" : "miranda.GUPSGenerator",
 	"generatorParams.verbose" : 0,
 	"generatorParams.count" : 100000,
@@ -38,6 +36,7 @@ comp_cpu1.enableAllStatistics({"type":"sst.AccumulatorStatistic"})
 
 comp_l1cache0 = sst.Component("l1cache0", "memHierarchy.Cache")
 comp_l1cache0.addParams({
+      "memNIC.network_link_control" : "shogun.ShogunNIC",
       "maxRequestDelay" : 100000,
       "access_latency_cycles" : "2",
       "cache_frequency" : "2 Ghz",
@@ -54,6 +53,7 @@ comp_l1cache0.addParams({
 
 comp_l1cache1 = sst.Component("l1cache1", "memHierarchy.Cache")
 comp_l1cache1.addParams({
+      "memNIC.network_link_control" : "shogun.ShogunNIC",
       "maxRequestDelay" : 100000,
       "access_latency_cycles" : "2",
       "cache_frequency" : "2 Ghz",
@@ -103,6 +103,7 @@ comp_dirctrl0.addParams({
       "debug_level" : 10,
       "coherence_protocol" : "MESI",
       "entry_cache_size" : "1024",
+      "memNIC.network_link_control" : "shogun.ShogunNIC", 
       "memNIC.network_bw" : "10GB/s",
       "memNIC.addr_range_start" : "0x00",
       "memNIC.addr_range_end" : (1024 * 1024 * 1024) - 64,
@@ -119,6 +120,7 @@ comp_dirctrl1.addParams({
       "debug" : 0,
       "debug_level" : 10,
       "entry_cache_size" : "1024",
+      "memNIC.network_link_control" : "shogun.ShogunNIC",
       "memNIC.network_bw" : "10GB/s",
       "memNIC.addr_range_start" : "0x40",
       "memNIC.addr_range_end" : (1024 * 1024 * 1024),
