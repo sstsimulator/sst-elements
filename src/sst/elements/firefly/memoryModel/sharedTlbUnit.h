@@ -44,8 +44,11 @@ class SharedTlbUnit : public Unit {
     }
 
     ~SharedTlbUnit() {
+		delete m_load;
+		if ( m_load != m_store ) {
+			delete m_store;
+		}
     }
-
 
     void printStatus( Output& out, int id ) {
         out.output("NIC %d: %s pending=%d %p %p\n",id, m_name.c_str(), m_pendingLookups, m_blockedStoreSrc, m_blockedLoadSrc );

@@ -59,7 +59,9 @@ public:
 
 private:
 	uint64_t reqLength;
-	uint64_t maxAddr;
+
+	uint64_t memLength;
+	uint64_t memStart;
 	uint64_t issueCount;
 	uint64_t iterations;
 	uint64_t seed_a;

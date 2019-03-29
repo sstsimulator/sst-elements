@@ -142,9 +142,14 @@ libember_la_SOURCES = \
 	mpi/motifs/emberrandomgen.h \
 	mpi/motifs/emberrandomgen.cc \
 	sirius/include/sirius/siriusglobals.h \
-	shmem/emberFamAddEv.h \
 	shmem/emberFamEvent.h \
-	shmem/emberFamGetNB_Ev.h \
+	shmem/emberFamAddEv.h \
+	shmem/emberFamPut_Ev.h \
+	shmem/emberFamGet_Ev.h \
+	shmem/emberFamScatterv_Ev.h \
+	shmem/emberFamScatter_Ev.h \
+	shmem/emberFamGatherv_Ev.h \
+	shmem/emberFamGather_Ev.h \
 	shmem/emberShmemAddEv.h \
 	shmem/emberShmemAlltoallEv.h \
 	shmem/emberShmemAlltoallsEv.h \
@@ -174,9 +179,6 @@ libember_la_SOURCES = \
 	shmem/emberShmemSwapEv.h \
 	shmem/emberShmemWaitEv.h \
 	shmem/motifs/emberShmemAdd.h \
-	shmem/emberFamEvent.h \
-	shmem/emberFamAddEv.h \
-	shmem/emberFamGetNB_Ev.h \
 	shmem/motifs/emberShmemAlltoall.h \
 	shmem/motifs/emberShmemAlltoalls.h \
 	shmem/motifs/emberShmemBarrier.h \
@@ -199,7 +201,11 @@ libember_la_SOURCES = \
 	shmem/motifs/emberShmemWait.h \
 	shmem/motifs/emberShmemWaitUntil.h \
 	shmem/motifs/emberShmemAtomicInc.h \
+	shmem/motifs/emberShmemAtomicIncV2.h \
 	shmem/motifs/emberShmemFAM_Get2.h \
+	shmem/motifs/emberShmemFAM_Put.h \
+	shmem/motifs/emberShmemFAM_Scatterv.h \
+	shmem/motifs/emberShmemFAM_Gatherv.h \
 	shmem/motifs/emberShmemFAM_AtomicInc.h \
 	mpi/motifs/emberunstructured.h \
 	mpi/motifs/emberunstructured.cc

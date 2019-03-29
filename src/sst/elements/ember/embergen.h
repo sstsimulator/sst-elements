@@ -64,7 +64,7 @@ class EmberGenerator : public SubComponent {
         assert(0);
     }
 
-    virtual bool primary( ) { return true; }
+    virtual bool primary( ) { return m_primary; }
 
     virtual std::string getComputeModelName() {
         return "";
@@ -92,7 +92,7 @@ class EmberGenerator : public SubComponent {
         }
         m_verbosePrefix.str(std::string());
         m_verbosePrefix << "@t:" << getJobId() << ":" << _rank <<
-                    ":EmberEngine:MPI:" << getMotifName() << ":@p:@l: ";
+                    ":EmberEngine:" << getMotifName() << ":@p:@l: ";
     }
 
     std::string getMotifName() { return m_motifName; }
@@ -131,7 +131,7 @@ class EmberGenerator : public SubComponent {
     inline void enQ_memAlloc( Queue&, Hermes::MemAddr* addr, size_t length  );
     inline void enQ_compute( Queue&, uint64_t nanoSecondDelay );
     inline void enQ_compute( Queue& q, std::function<uint64_t()> func );
-    inline void enQ_detailedCompute( Queue& q, std::string, Params& );
+    inline void enQ_detailedCompute( Queue& q, std::string, Params&, std::function<int()> func );
 
     enum { NoBacking, Backing, BackingZeroed  } m_dataMode; 
 
@@ -143,6 +143,7 @@ class EmberGenerator : public SubComponent {
     Hermes::NodePerf*       m_nodePerf;
     int                     m_jobId;
     int                     m_motifNum;
+    bool                    m_primary;
     EmberComputeDistribution*           m_computeDistrib;
 };
 
@@ -157,11 +158,12 @@ void EmberGenerator::enQ_compute( Queue& q, std::function<uint64_t()> func )
 }
 
 void EmberGenerator::enQ_detailedCompute( Queue& q, std::string name,
-        Params& params )
+        Params& params, std::function<int()> fini = NULL )
 {
     assert( m_detailedCompute );
-    q.push( new EmberDetailedComputeEvent( &getOutput(), *m_detailedCompute, name, params ) );
+    q.push( new EmberDetailedComputeEvent( &getOutput(), *m_detailedCompute, name, params, fini ) );
 }
+
 void EmberGenerator::enQ_memAlloc( Queue& q, Hermes::MemAddr* addr, size_t length )
 {
     assert( m_memHeapLink );

@@ -35,7 +35,7 @@ class DetailedCompute : public SubComponent {
     virtual ~DetailedCompute(){};
     virtual void start( const std::deque< 
 								std::pair< std::string, SST::Params > >&,
-                 std::function<int()> ) = 0;
+                 std::function<int()> retFunc, std::function<int()> finiFunc) = 0;
     virtual bool isConnected() = 0;
 	virtual std::string getModelName() = 0;
 };

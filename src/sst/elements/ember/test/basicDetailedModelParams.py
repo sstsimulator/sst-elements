@@ -37,7 +37,7 @@ l1cache_params = {
     "cache_frequency": clock,
     "replacement_policy": "lru",
     "cache_size": "32KB",
-    "maxRequestDelay" : "1000000",
+    "maxRequestDelay" : "10000",
     "associativity": 8,
     "cache_line_size": 64,
     "access_latency_cycles": 1,
@@ -55,11 +55,9 @@ l2cache_params = {
     "cache_frequency": clock,
     "replacement_policy": "lru",
     "cache_size": "32KB",
-    "maxRequestDelay" : "1000000",
     "associativity": 8,
     "cache_line_size": 64,
     "access_latency_cycles": 1,
-    "LL": 1,
     "debug": "0" 
 }
 

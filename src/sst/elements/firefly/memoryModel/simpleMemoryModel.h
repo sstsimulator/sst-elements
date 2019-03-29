@@ -18,6 +18,7 @@
 
 #include <math.h>
 #include <sst/core/elementinfo.h>
+#include <sst/core/interfaces/simpleMem.h>
 #include "ioVec.h"
 #include "memoryModel/memoryModel.h"
 
@@ -69,6 +70,9 @@ public:
         { "mem_num_loads",                     "total number of loads", "count", 1},
         { "mem_num_stores",                    "total number of stores", "count", 1},
         { "mem_addrs",                         "addresses accesed", "value", 1},
+        { "detailed_num_reads",                "total number of loads", "count", 1},
+        { "detailed_num_writes",               "total number of stores", "count", 1},
+        { "detailed_req_latency",              "Running total of all latency for all requests", "count", 1},
 	)
 
 
@@ -83,6 +87,7 @@ public:
 #define TLB_MASK        1<<9
 #define SM_MASK        1<<10
 #define SHARED_TLB_MASK 1<<11
+#define DETAILED_MASK   1<<12
 
 #include "cache.h"
 #include "memReq.h"
@@ -97,6 +102,7 @@ public:
 #include "storeUnit.h"
 #include "memUnit.h"
 #include "cacheUnit.h"
+#include "detailedUnit.h"
 
 
     class SelfEvent : public SST::Event {
@@ -167,6 +173,14 @@ public:
 			m_dbg.fatal(CALL_INFO,0,"unknown value for parameter useHostCache '%s'\n",tmp.c_str()); 
 		}
 
+		m_detailedUnit = NULL;
+		tmp = params.find<std::string>( "useDetailedModel", "no" );
+		if ( 0 == tmp.compare("yes" ) ) {
+			Params detailedParams = params.find_prefix_params("detailedModel.");
+			m_detailedUnit = new DetailedUnit( *this, m_dbg, id, detailedParams );
+			useHostCache = false;
+		}
+
 		bool useBusBridge;
 		tmp = params.find<std::string>( "useBusBridge", "yes" );
 		if ( 0 == tmp.compare("yes" ) ) {
@@ -181,7 +195,11 @@ public:
 			m_dbg.output("Node id=%d is using SimpleMemoryModel, useBusBridge=%d, useHostCache=%d\n", id, useBusBridge, useHostCache);
 		}
 
-		m_memUnit = new MemUnit( *this, m_dbg, id, memReadLat_ns, memWriteLat_ns, memNumSlots );
+		if ( ! m_detailedUnit ) {
+			m_memUnit = new MemUnit( *this, m_dbg, id, memReadLat_ns, memWriteLat_ns, memNumSlots );
+		} else {
+			m_memUnit = static_cast<MemUnit*>(m_detailedUnit);
+		}
 
 		MuxUnit* nicMuxUnit;
         if ( useHostCache ) {
@@ -245,6 +263,8 @@ public:
         for ( unsigned i = 0; i < m_threads.size(); i++ ) {
             delete m_threads[i];
         }
+		delete m_sharedTlb;
+		delete m_nicUnit;
     }
 
 	ThingHeap<SelfEvent> m_eventHeap;
@@ -329,11 +349,19 @@ public:
         }
     }
 
+	void init(unsigned int phase) {
+		if ( m_detailedUnit ) {
+			m_detailedUnit->init(phase);
+		}
+	}
+
+
 
   private:
 
 	Link* m_selfLink;
 
+	Unit*			m_detailedUnit;
 	MuxUnit* 		m_muxUnit;
 	MemUnit* 		m_memUnit;
 	CacheUnit* 		m_hostCacheUnit;

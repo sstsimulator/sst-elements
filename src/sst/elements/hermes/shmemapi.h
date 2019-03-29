@@ -26,7 +26,7 @@ namespace Shmem {
 
 typedef Hermes::Callback Callback;
 
-typedef int Fam_Region_Descriptor;
+typedef int Fam_Descriptor;
 
 typedef enum { LTE, LT, EQ, NE, GT, GTE } WaitOp;
 
@@ -83,10 +83,8 @@ class Interface : public Hermes::Interface {
     virtual void malloc(MemAddr*, size_t, bool backed, Callback) { assert(0); }
     virtual void free(MemAddr&, Callback) { assert(0); }
 
-    virtual void get( Vaddr dst, Vaddr src, size_t nelems, int pe, Callback) { assert(0); }
-    virtual void put( Vaddr dst, Vaddr src, size_t nelems, int pe, Callback) { assert(0); }
-    virtual void get_nbi( Vaddr dst, Vaddr src, size_t nelems, int pe, Callback) { assert(0); }
-    virtual void put_nbi( Vaddr dst, Vaddr src, size_t nelems, int pe, Callback) { assert(0); }
+    virtual void get( Vaddr dst, Vaddr src, size_t nelems, int pe, bool blocking, Callback) { assert(0); }
+    virtual void put( Vaddr dst, Vaddr src, size_t nelems, int pe, bool blocking, Callback) { assert(0); }
 
     virtual void getv( Value& result, Vaddr src, int pe, Callback) { assert(0); }
     virtual void putv( Vaddr dest, Value& value, int pe, Callback) { assert(0); }
@@ -97,8 +95,22 @@ class Interface : public Hermes::Interface {
     virtual void fadd( Value& result, Vaddr, Value&, int pe, Callback) { assert(0); }
     virtual void add( Vaddr, Value&, int pe, Callback) { assert(0); }
 
-    virtual void fam_get_nb( Hermes::Vaddr dest, Fam_Region_Descriptor rd, uint64_t offset, uint64_t nbytes, Callback) { assert(0); }
-    virtual void fam_add( uint64_t, Value&, Callback) { assert(0); }
+    virtual void fam_get( Hermes::Vaddr dest, Fam_Descriptor fd, uint64_t offset, uint64_t nbytes,
+			bool blocking, Callback &) { assert(0); }
+    virtual void fam_put( Fam_Descriptor fd, uint64_t offset, Hermes::Vaddr dest, uint64_t nbytes,
+			bool blocking, Callback& ) { assert(0); }
+
+	virtual void fam_scatter( Hermes::Vaddr src, Fam_Descriptor fd, uint64_t nElements, uint64_t firstElement,
+			uint64_t stride, uint64_t elmentSize, bool blocking, Callback& ) {assert(0); };
+	virtual void fam_scatterv( Hermes::Vaddr src, Fam_Descriptor fd, uint64_t nElements, 
+			std::vector<uint64_t> elementIndex, uint64_t elmentSize, bool blocking, Callback& ) {assert(0);};
+
+	virtual void fam_gather( Hermes::Vaddr dest, Fam_Descriptor fd, uint64_t nElements, uint64_t firstElement,
+			uint64_t stride, uint64_t elmentSize, bool blocking, Callback& ) {assert(0); };
+	virtual void fam_gatherv( Hermes::Vaddr dest, Fam_Descriptor fd, uint64_t nElements,
+			std::vector<uint64_t> elementIndex, uint64_t elmentSize, bool blocking, Callback& ) {assert(0);};
+
+    virtual void fam_add( uint64_t, Value&, Callback& ) { assert(0); }
 };
 
 }

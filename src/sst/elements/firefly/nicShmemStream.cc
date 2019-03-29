@@ -90,7 +90,7 @@ void Nic::RecvMachine::ShmemStream::processOp( FireflyNetworkEvent* ev )
 
 void Nic::RecvMachine::ShmemStream::processAck( ShmemMsgHdr& hdr, FireflyNetworkEvent* ev, int pid, int srcPid  )
 {
-    m_ctx->nic().shmemDecPending( pid );
+    m_ctx->nic().shmemDecPendingPuts( pid );
     m_ctx->deleteStream(this);
 
     delete ev;

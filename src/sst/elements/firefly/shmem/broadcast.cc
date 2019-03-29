@@ -102,7 +102,7 @@ void ShmemBroadcast::node_2(int)
     }
 
     assert( m_children[m_iteration] != my_pe() );
-    m_api.put( m_dest, m_src, m_nelems, m_children[m_iteration], callback );
+    m_api.put( m_dest, m_src, m_nelems, m_children[m_iteration], true, callback );
     ++m_iteration;
 
     //for (i = 0 ; i < num_children ; ++i) {
