@@ -24,6 +24,6 @@ libshogun_la_SOURCES = \
 EXTRA_DIST = \
 	tests/basic_miranda.py \
 	tests/hierarchy_test.py \
-libshogun_la_LDFLAGS = -module -avoid-version
+	libshogun_la_LDFLAGS = -module -avoid-version
 
 
