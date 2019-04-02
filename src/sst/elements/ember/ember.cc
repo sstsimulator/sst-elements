@@ -52,3 +52,4 @@
 #include "shmem/motifs/emberShmemFAM_Scatterv.h"
 #include "shmem/motifs/emberShmemFAM_Gatherv.h"
 #include "shmem/motifs/emberShmemFAM_AtomicInc.h"
+#include "shmem/motifs/emberShmemFAM_Cswap.h"
