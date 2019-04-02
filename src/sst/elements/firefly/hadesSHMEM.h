@@ -474,7 +474,9 @@ class HadesSHMEM : public Shmem::Interface
     virtual void add(  Hermes::Vaddr, Hermes::Value&, int pe, Shmem::Callback);
     virtual void fadd( Hermes::Value&, Hermes::Vaddr, Hermes::Value&, int pe, Shmem::Callback);
 
-    virtual void fam_add( uint64_t, Hermes::Value&, Shmem::Callback& );
+	virtual void fam_add( Shmem::Fam_Descriptor fd, uint64_t, Hermes::Value&, Shmem::Callback& );
+    virtual void fam_cswap( Hermes::Value& result, Shmem::Fam_Descriptor fd, uint64_t, Hermes::Value& oldValue , Hermes::Value& newValue, Shmem::Callback);
+
     virtual void fam_get( Hermes::Vaddr dest, Shmem::Fam_Descriptor fd, uint64_t offset, uint64_t nbytes,
 			bool blocking, Shmem::Callback&);
 
