@@ -24,7 +24,6 @@
 #include <cmath>
 #include <stdio.h>
 
-#include "sst/core/element.h"
 #include <sst/core/params.h>
 #include <sst/core/stringize.h>
 

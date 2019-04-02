@@ -15,7 +15,6 @@
 
 
 #include <sst_config.h>
-#include <sst/core/element.h>
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>
 

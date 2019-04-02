@@ -15,7 +15,6 @@
 
 
 #include "sst_config.h"
-#include "sst/core/element.h"
 
 #include <sst/elements/memHierarchy/memEvent.h>
 #include <pageentry.h>

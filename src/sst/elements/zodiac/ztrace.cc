@@ -18,7 +18,6 @@
 #include <assert.h>
 
 #include "sst/core/subcomponent.h"
-#include "sst/core/element.h"
 #include "sst/core/params.h"
 
 #include "ztrace.h"

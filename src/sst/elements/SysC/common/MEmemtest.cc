@@ -25,7 +25,6 @@ using std::dec;
 using std::setw;
 using std::setfill;
 
-#include <sst/core/element.h>
 #include <sst/core/component.h>
 #include <sst/core/params.h>
 #include <sst/core/link.h>

@@ -19,7 +19,6 @@
 #include "sst/elements/SysC/common/TLManouncer.h"
 
 #include <sst/core/component.h>
-//#include <sst/core/element.h>
 //#include <sst/core/params.h>
 #include <sst/elements/memHierarchy/memEvent.h>
 #include "sst/elements/SysC/TLM/memEventAdapterFunctions.h"
