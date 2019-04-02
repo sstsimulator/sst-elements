@@ -767,7 +767,7 @@ void HadesSHMEM::fadd( Fadd* info )
             );
 }
 
-void HadesSHMEM::fam_add( uint64_t offset, Hermes::Value& value, Shmem::Callback& callback )
+void HadesSHMEM::fam_add( Shmem::Fam_Descriptor fd, uint64_t offset, Hermes::Value& value, Shmem::Callback& callback )
 {
 	uint64_t localOffset;
 	int      node;
@@ -779,6 +779,20 @@ void HadesSHMEM::fam_add( uint64_t offset, Hermes::Value& value, Shmem::Callback
 	Hermes::MemAddr target( localOffset, NULL );
 
 	add( target.getSimVAddr(), value, node, callback );
+}
+
+void HadesSHMEM::fam_cswap( Value& result, Shmem::Fam_Descriptor fd, uint64_t offset, Hermes::Value& oldValue, Hermes::Value& newValue, Shmem::Callback callback )
+{
+	uint64_t localOffset;
+	int      node;
+
+	dbg().debug(CALL_INFO,1,SHMEM_BASE,"\n");
+
+	getFamNetAddr( offset, node, localOffset ); 
+
+	Hermes::MemAddr target( localOffset, NULL );
+
+	cswap( result, target.getSimVAddr(), oldValue, newValue, node, callback );
 }
 
 void HadesSHMEM::fam_get( Hermes::Vaddr dest, Shmem::Fam_Descriptor fd, uint64_t offset, uint64_t nbytes, 

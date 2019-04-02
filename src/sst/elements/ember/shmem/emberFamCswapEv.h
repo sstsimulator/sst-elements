@@ -14,35 +14,37 @@
 // distribution.
 
 
-#ifndef _H_EMBER_FAM_ADD_EVENT
-#define _H_EMBER_FAM_ADD_EVENT
+#ifndef _H_EMBER_FAM_CSWAP_EVENT
+#define _H_EMBER_FAM_CSWAP_EVENT
 
 #include "emberFamEvent.h"
 
 namespace SST {
 namespace Ember {
 
-class EmberFamAddEvent : public EmberFamEvent {
+class EmberFamCswapEvent : public EmberFamEvent {
 
 public:
-	EmberFamAddEvent( Shmem::Interface& api, Output* output,
-			Shmem::Fam_Descriptor fd, uint64_t dest, Hermes::Value value, 
+	EmberFamCswapEvent( Shmem::Interface& api, Output* output,
+			Hermes::Value result, Shmem::Fam_Descriptor fd, uint64_t dest, Hermes::Value oldValue, Hermes::Value newValue, 
             EmberEventTimeStatistic* stat = NULL ) :
             EmberFamEvent( api, output, stat ), 
-            m_fd(fd), m_dest(dest), m_value(value) {}
-	~EmberFamAddEvent() {}
+            m_result(result), m_fd(fd), m_dest(dest), m_oldValue(oldValue), m_newValue(newValue) {}
+	~EmberFamCswapEvent() {}
 
     std::string getName() { return "Fam_Add"; }
 
     void issue( uint64_t time, Shmem::Callback callback ) {
         EmberEvent::issue( time );
-        m_api.fam_add( m_fd, m_dest, m_value, callback );
+        m_api.fam_cswap( m_result, m_fd, m_dest, m_oldValue, m_newValue, callback );
     }
 
 private:
 	Shmem::Fam_Descriptor m_fd;
     uint64_t m_dest;
-    Hermes::Value m_value;
+    Hermes::Value m_result;
+    Hermes::Value m_oldValue;
+    Hermes::Value m_newValue;
 };
 
 }

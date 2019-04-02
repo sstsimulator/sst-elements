@@ -14,8 +14,8 @@
 // distribution.
 
 
-#ifndef _H_EMBER_SHMEM_FAM_ATOMIC_INC
-#define _H_EMBER_SHMEM_FAM_ATOMIC_INC
+#ifndef _H_EMBER_SHMEM_FAM_CSWAP_INC
+#define _H_EMBER_SHMEM_FAM_CSWAP_INC
 
 #include <strings.h>
 #include "shmem/emberShmemGen.h"
@@ -32,11 +32,11 @@ namespace Ember {
 
 
 template < class TYPE, int VAL >
-class EmberShmemFAM_AtomicIncBaseGenerator : public EmberShmemGenerator {
+class EmberShmemFAM_CswapBaseGenerator : public EmberShmemGenerator {
 
 public:
-	EmberShmemFAM_AtomicIncBaseGenerator(SST::Component* owner, Params& params, std::string name) :
-		EmberShmemGenerator(owner, params, name ), m_phase(-3), m_one(1), m_numFamNodes(0)
+	EmberShmemFAM_CswapBaseGenerator(SST::Component* owner, Params& params, std::string name) :
+		EmberShmemGenerator(owner, params, name ), m_phase(-3), m_numFamNodes(0), m_oldValue(0), m_newValue(1)
 	{ 
         m_computeTime = params.find<int>("arg.computeTime", 0 );
 		m_totalBytes = (uint64_t) params.find<SST::UnitAlgebra>("arg.totalBytes").getRoundedValue();
@@ -100,7 +100,7 @@ public:
             	enQ_compute( evQ, m_computeTime );
 			}
 	
-            enQ_fam_add( evQ, m_fd, offset, &m_one );
+            enQ_fam_compare_swap( evQ, &m_result, m_fd, offset, &m_oldValue, &m_newValue );
 
             if ( m_phase + 1 == m_iterations * m_updates ) {
                 enQ_barrier_all( evQ );
@@ -226,7 +226,9 @@ public:
 	Shmem::Fam_Descriptor m_fd;
     int m_computeTime;
 	bool m_printTotals;
-	TYPE m_one;
+	TYPE m_result;
+	TYPE m_oldValue;
+	TYPE m_newValue;
 	int m_updates;
 	int m_iterations;
     uint64_t m_startTime;
@@ -239,35 +241,35 @@ public:
 };
 
 template < class TYPE, int VAL >
-class EmberShmemFAM_AtomicIncGenerator : public EmberShmemFAM_AtomicIncBaseGenerator<TYPE,VAL> {
+class EmberShmemFAM_CswapGenerator : public EmberShmemFAM_CswapBaseGenerator<TYPE,VAL> {
 public:
-    EmberShmemFAM_AtomicIncGenerator(SST::Component* owner, Params& params, std::string name ) :
-	    EmberShmemFAM_AtomicIncBaseGenerator<TYPE,VAL>(owner, params, name) {
+    EmberShmemFAM_CswapGenerator(SST::Component* owner, Params& params, std::string name ) :
+	    EmberShmemFAM_CswapBaseGenerator<TYPE,VAL>(owner, params, name) {
         } 
 };
 
 template < class TYPE >
-class EmberShmemFAM_AtomicIncGenerator<TYPE,1> : public EmberShmemFAM_AtomicIncBaseGenerator<TYPE,1> {
+class EmberShmemFAM_CswapGenerator<TYPE,1> : public EmberShmemFAM_CswapBaseGenerator<TYPE,1> {
 public:
-	EmberShmemFAM_AtomicIncGenerator(SST::Component* owner, Params& params, std::string name ) :
-	    EmberShmemFAM_AtomicIncBaseGenerator<TYPE,1>(owner, params, name) {
+	EmberShmemFAM_CswapGenerator(SST::Component* owner, Params& params, std::string name ) :
+	    EmberShmemFAM_CswapBaseGenerator<TYPE,1>(owner, params, name) {
         } 
 };
 
 template < class TYPE >
-class EmberShmemFAM_AtomicIncGenerator<TYPE,2> : public EmberShmemFAM_AtomicIncBaseGenerator<TYPE,2> {
+class EmberShmemFAM_CswapGenerator<TYPE,2> : public EmberShmemFAM_CswapBaseGenerator<TYPE,2> {
 public:
-	EmberShmemFAM_AtomicIncGenerator(SST::Component* owner, Params& params, std::string name ) :
-	    EmberShmemFAM_AtomicIncBaseGenerator<TYPE,2>(owner, params, name ) {
+	EmberShmemFAM_CswapGenerator(SST::Component* owner, Params& params, std::string name ) :
+	    EmberShmemFAM_CswapBaseGenerator<TYPE,2>(owner, params, name ) {
         } 
 };
 
-class EmberShmemFAM_AtomicIncIntGenerator : public EmberShmemFAM_AtomicIncGenerator<int, 0> {
+class EmberShmemFAM_CswapIntGenerator : public EmberShmemFAM_CswapGenerator<int, 0> {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT(
-        EmberShmemFAM_AtomicIncIntGenerator,
+        EmberShmemFAM_CswapIntGenerator,
         "ember",
-        "ShmemFAM_AtomicIncIntMotif",
+        "ShmemFAM_CswapIntMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM atomic inc int",
         "SST::Ember::EmberGenerator"
@@ -276,16 +278,16 @@ public:
     SST_ELI_DOCUMENT_PARAMS(
     )
 public:
-	EmberShmemFAM_AtomicIncIntGenerator(SST::Component* owner, Params& params) :
-	    EmberShmemFAM_AtomicIncGenerator(owner, params, "ShmemFAM_AtomicIncInt" ) { } 
+	EmberShmemFAM_CswapIntGenerator(SST::Component* owner, Params& params) :
+	    EmberShmemFAM_CswapGenerator(owner, params, "ShmemFAM_CswapInt" ) { } 
 };
 
-class EmberShmemFAM_AtomicIncLongGenerator : public EmberShmemFAM_AtomicIncGenerator<long, 0 > {
+class EmberShmemFAM_CswapLongGenerator : public EmberShmemFAM_CswapGenerator<long, 0 > {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT(
-        EmberShmemFAM_AtomicIncLongGenerator,
+        EmberShmemFAM_CswapLongGenerator,
         "ember",
-        "ShmemFAM_AtomicIncLongMotif",
+        "ShmemFAM_CswapLongMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM atomic inc long",
         "SST::Ember::EmberGenerator"
@@ -294,8 +296,8 @@ public:
     SST_ELI_DOCUMENT_PARAMS(
     )
 public:
-	EmberShmemFAM_AtomicIncLongGenerator(SST::Component* owner, Params& params) :
-	    EmberShmemFAM_AtomicIncGenerator(owner, params, "ShmemFAM_AtomicIncLong") {} 
+	EmberShmemFAM_CswapLongGenerator(SST::Component* owner, Params& params) :
+	    EmberShmemFAM_CswapGenerator(owner, params, "ShmemFAM_CswapLong") {} 
 };
 
 }
