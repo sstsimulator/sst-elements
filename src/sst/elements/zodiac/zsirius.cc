@@ -19,7 +19,6 @@
 
 #include <assert.h>
 
-#include "sst/core/element.h"
 #include "sst/core/params.h"
 
 

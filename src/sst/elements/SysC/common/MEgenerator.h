@@ -21,7 +21,6 @@
 #include <sst/elements/memHierarchy/memEvent.h>
 /*#include <sst_config.h>
 
-#include <sst/core/element.h>
 #include <sst/core/params.h>
 
 #define SC_INCLUDE_DYNAMIC_PROCESSES

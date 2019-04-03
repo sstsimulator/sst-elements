@@ -15,7 +15,6 @@
 
 #include <sst_config.h>
 
-#include <sst/core/element.h>
 #include "merlin.h"
 
 

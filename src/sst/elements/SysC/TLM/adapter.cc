@@ -16,7 +16,6 @@
 #include <sst_config.h>
 #include "sst/elements/SysC/TLM/adapter.h"
 
-#include <sst/core/element.h>
 #include <sst/core/link.h>
 #include <sst/core/params.h>
 

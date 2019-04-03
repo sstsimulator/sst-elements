@@ -19,7 +19,6 @@
 #include <stdint.h>
 #include <vector>
 
-#include "sst/core/element.h"
 #include "sst/core/params.h"
 
 using namespace SST;

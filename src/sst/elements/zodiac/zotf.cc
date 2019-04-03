@@ -17,8 +17,6 @@
 #include "sst_config.h"
 #include <assert.h>
 
-#include "sst/core/element.h"
-
 #include <queue>
 #include "zotf.h"
 
