@@ -129,11 +129,12 @@ class _CommReq : public MP::MessageRequestBase {
         return &m_matchInfo;
     }
 
-    void setResp( uint32_t tag, MP::RankID src, uint32_t count )
+    void setResp( uint32_t tag, MP::RankID src, uint32_t count, uint32_t dtypeSize )
     {
         m_matchInfo.tag = tag;
         m_matchInfo.src = src;
         m_matchInfo.count = count;
+        m_matchInfo.dtypeSize = dtypeSize;
 
         if ( m_resp ) {
             *m_resp = m_matchInfo;
