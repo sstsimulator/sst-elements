@@ -39,7 +39,7 @@ bool EmberReduceGenerator::generate( std::queue<EmberEvent*>& evQ) {
 
     enQ_compute( evQ, 11000 );
     enQ_reduce( evQ, m_sendBuf, m_recvBuf, m_count, DOUBLE,
-                                                 SUM, m_redRoot, GroupWorld );
+                                                 MP::SUM, m_redRoot, GroupWorld );
     if ( ++m_loopIndex == m_iterations ) {
         return true;
     } else {

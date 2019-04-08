@@ -275,7 +275,7 @@ bool EmberHalo3DGenerator::generate( std::queue<EmberEvent*>& evQ )
 		}
 
 		if(performReduction) {
-			enQ_allreduce( evQ, NULL, NULL, 1, DOUBLE, SUM, GroupWorld);
+			enQ_allreduce( evQ, NULL, NULL, 1, DOUBLE, MP::SUM, GroupWorld);
 		}
 
 	
