@@ -291,6 +291,25 @@ void API::irecv( const Hermes::MemAddr& buf, uint32_t count,
 }
 
 
+void API::cancel( MP::MessageRequest req )
+{
+    m_dbg.debug(CALL_INFO,1,1,"\n");
+    m_processQueuesState->enterCancel( req );
+}
+
+void API::test( MP::MessageRequest req, int* flag, MP::MessageResponse* resp )
+{
+    m_dbg.debug(CALL_INFO,1,1,"%p %p\n",req,resp);
+    m_processQueuesState->enterTest( new WaitReq( req, resp ), flag );
+}
+
+void API::testany( int count, MP::MessageRequest req[], int *index, int* flag,
+       	MP::MessageResponse* resp )
+{
+    m_dbg.debug(CALL_INFO,1,1,"\n");
+    m_processQueuesState->enterTest( new WaitReq( count, req, index, resp ), flag );
+}
+
 void API::wait( MP::MessageRequest req, MP::MessageResponse* resp )
 {
     m_dbg.debug(CALL_INFO,1,1,"\n");

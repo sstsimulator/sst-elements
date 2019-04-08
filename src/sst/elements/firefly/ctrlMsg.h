@@ -108,6 +108,10 @@ class API : public ProtocolAPI {
         MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
         MP::Communicator group, MP::MessageRequest* req );
 
+	void cancel( MP::MessageRequest );
+	void test( MP::MessageRequest, int* flag, MP::MessageResponse* resp );
+	void testany( int count, MP::MessageRequest req[], int *index, int* flag,
+		MP::MessageResponse* resp );
 	void wait( MP::MessageRequest, MP::MessageResponse* resp );
    	void waitAny( int count, MP::MessageRequest req[], int *index,
               	MP::MessageResponse* resp );

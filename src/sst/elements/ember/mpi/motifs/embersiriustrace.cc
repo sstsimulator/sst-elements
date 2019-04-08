@@ -580,14 +580,14 @@ ReductionOperation EmberSIRIUSTraceGenerator::readReductionOp() const {
 
 	switch(opType) {
 	case SIRIUS_MPI_SUM:
-		return SUM;
+		return MP::SUM;
 	case SIRIUS_MPI_MAX:
-		return MAX;
+		return MP::MAX;
 	case SIRIUS_MPI_MIN:
-		return MIN;
+		return MP::MIN;
 	default:
 		fatal(CALL_INFO, -1, "I/O Error - unknown MPI operation type\n");
 	}
 
-	return SUM;
+	return MP::SUM;
 }

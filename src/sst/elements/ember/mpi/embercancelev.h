@@ -14,44 +14,37 @@
 // distribution.
 
 
-#ifndef _H_EMBER_WAIT_EV
-#define _H_EMBER_WAIT_EV
+#ifndef _H_EMBER_CANCEL_EV
+#define _H_EMBER_CANCEL_EV
 
 #include "emberMPIEvent.h"
 
 namespace SST {
 namespace Ember {
 
-class EmberWaitEvent : public EmberMPIEvent {
+class EmberCancelEvent : public EmberMPIEvent {
 
 public:
-	EmberWaitEvent( MP::Interface& api, Output* output,
+	EmberCancelEvent( MP::Interface& api, Output* output,
                    EmberEventTimeStatistic* stat,
-       		MessageRequest* req, MessageResponse* resp, bool deleteReq  ) :
+       		MessageRequest req ) :
        	EmberMPIEvent( api, output, stat ),
-       	m_req( req ),
-		m_respPtr( resp ),
-		m_deleteReq( deleteReq )
+       	m_req( req )
     { }
 
-	~EmberWaitEvent() {}
+	~EmberCancelEvent() {}
 
-    std::string getName() { return "Wait"; }
+    std::string getName() { return "Cancel"; }
 
     void issue( uint64_t time, FOO* functor ) {
 
         EmberEvent::issue( time );
 
-       	m_api.wait( *m_req, m_respPtr, functor );
-		if ( m_deleteReq ) {
-			delete m_req;
-		} 
+       	m_api.cancel( m_req, functor );
     }
 
 private:
-    MessageRequest* 	m_req;
-	MessageResponse*	m_respPtr;	
-	bool				m_deleteReq;
+    MessageRequest 	m_req;
 };
 
 }

@@ -14,32 +14,28 @@
 // distribution.
 
 
-#ifndef _H_EMBER_ALLREDUCE_MOTIF
-#define _H_EMBER_ALLREDUCE_MOTIF
+#ifndef _H_EMBER_SENDRECV
+#define _H_EMBER_SENDRECV
 
 #include "mpi/embermpigen.h"
+#include "rng/xorshift.h"
 
 namespace SST {
 namespace Ember {
 
-class EmberAllreduceGenerator : public EmberMessagePassingGenerator {
+
+#define DATA_TYPE INT
+class EmberSendrecvGenerator : public EmberMessagePassingGenerator {
 
 public:
     SST_ELI_REGISTER_SUBCOMPONENT(
-        EmberAllreduceGenerator,
+        EmberSendrecvGenerator,
         "ember",
-        "AllreduceMotif",
+        "SendrecvMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
-        "Performs a Allreduce operation with type set to float64 and operation SUM",
+        "Performs a Sendrecv Motif",
         "SST::Ember::EmberGenerator"
     )
-
-    SST_ELI_DOCUMENT_PARAMS(
-        {   "arg.iterations",       "Sets the number of allreduce operations to perform",   "1"},
-        {   "arg.count",        "Sets the number of elements to reduce",        "1"},
-        {   "arg.compute",      "Sets the time spent computing",        "1"},
-    )
-
     SST_ELI_DOCUMENT_STATISTICS(
         { "time-Init", "Time spent in Init event",          "ns",  0},
         { "time-Finalize", "Time spent in Finalize event",  "ns", 0},
@@ -52,6 +48,7 @@ public:
         { "time-Wait", "Time spent in Wait event",          "ns", 0},
         { "time-Waitall", "Time spent in Waitall event",    "ns", 0},
         { "time-Waitany", "Time spent in Waitany event",    "ns", 0},
+        { "time-Sendrecv", "Time spent in Sendrecv event",    "ns", 0},
         { "time-Compute", "Time spent in Compute event",    "ns", 0},
         { "time-Barrier", "Time spent in Barrier event",    "ns", 0},
         { "time-Alltoallv", "Time spent in Alltoallv event", "ns", 0},
@@ -65,19 +62,46 @@ public:
     )
 
 public:
-	EmberAllreduceGenerator(SST::Component* owner, Params& params);
-    bool generate( std::queue<EmberEvent*>& evQ);
+	EmberSendrecvGenerator(SST::Component* owner, Params& params): 
+        EmberMessagePassingGenerator(owner, params, "Null" ), m_phase(Init)
+	{
+			m_messageSize = 1024;
+		    m_sendBuf = memAlloc(m_messageSize * sizeofDataType(DATA_TYPE) );
+    		m_recvBuf = memAlloc(m_messageSize * sizeofDataType(DATA_TYPE) );
+   	}
+
+    bool generate( std::queue<EmberEvent*>& evQ){
+		assert( size() == 2 );
+		switch ( m_phase ) {
+			case Init:
+				enQ_sendrecv( evQ, 
+							m_sendBuf, m_messageSize, DATA_TYPE, destRank(), 0xdeadbeef,
+							m_recvBuf, m_messageSize, DATA_TYPE, srcRank(),  0xdeadbeef,
+							GroupWorld, &m_resp );
+				m_phase = Fini;
+				return false;
+
+			case Fini:
+				printf("rand %d done\n",rank());
+				return true;
+
+		}
+		assert(0);
+	}
+	int destRank() {
+		return (rank() + 1) % 2;
+	}
+	int srcRank() {
+		return (rank() + 1) % 2;
+	}
 
 private:
-    uint64_t  m_startTime;
-    uint64_t  m_stopTime;
-    uint64_t m_compute;
-	uint32_t m_iterations;
-	uint32_t m_count;
+
+	int      m_messageSize;
     void*    m_sendBuf;
     void*    m_recvBuf;
-    uint32_t m_loopIndex;
-	_ReductionOperation* m_op;
+	enum { Init, Fini } m_phase;
+    MessageResponse m_resp;
 };
 
 }

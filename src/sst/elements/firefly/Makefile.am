@@ -56,7 +56,13 @@ libfirefly_la_SOURCES = \
 	funcSM/recv.h \
 	funcSM/send.cc \
 	funcSM/send.h \
+	funcSM/cancel.cc \
+	funcSM/cancel.h \
 	funcSM/wait.cc \
+	funcSM/test.h \
+	funcSM/test.cc \
+	funcSM/testany.cc \
+	funcSM/testany.h \
 	funcSM/wait.h \
 	funcSM/waitAny.cc \
 	funcSM/waitAny.h \

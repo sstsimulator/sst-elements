@@ -150,6 +150,8 @@ class ProcessQueuesState : public SubComponent
     void enterRecv( _CommReq*, uint64_t exitDelay = 0 );
     void enterWait( WaitReq*, uint64_t exitDelay = 0 );
     void enterMakeProgress( uint64_t exitDelay = 0 );
+    void enterCancel( MP::MessageRequest, uint64_t exitDelay = 0 );
+    void enterTest( WaitReq*, int* flag, uint64_t exitDelay = 0 );
 
     void needRecv( int, size_t );
 
@@ -307,12 +309,13 @@ class ProcessQueuesState : public SubComponent
 
     class WaitCtx : public FuncCtxBase {
       public:
-		WaitCtx( WaitReq* _req, VoidFunction callback ) :
-			FuncCtxBase( callback ), req( _req ) {}
+		WaitCtx( WaitReq* _req, VoidFunction callback, int* flag = NULL ) :
+			FuncCtxBase( callback ), req( _req ), flag(flag) {}
 
         ~WaitCtx() { delete req; }
 
         WaitReq*    req;
+        int* flag;
     };
 
     class ProcessLongGetFiniCtx : public FuncCtxBase {
