@@ -43,17 +43,20 @@ template< class T>
 T doOp( T x, T y, MP::ReductionOperation op )
 {
     T retval = 0;
-    switch( op ) {
-      case MP::SUM: 
+    switch( op->type ) {
+      case MP::ReductionOpType::Sum: 
         retval = sum( x, y );
         break;
-      case MP::MIN: 
+      case MP::ReductionOpType::Min: 
         retval = min( x, y );
         break;
-      case MP::MAX: 
+      case MP::ReductionOpType::Max: 
         retval = max( x, y );
         break;
-      case MP::NOP: 
+      case MP::ReductionOpType::Nop: 
+        assert(0);
+        break;
+      case MP::ReductionOpType::Func: 
         assert(0);
         break;
     } 
@@ -65,7 +68,6 @@ template< class T >
 void collectiveOp( T* input[], int numIn, T result[],
                     int count, MP::ReductionOperation op )
 {
-         
     for ( int c = 0; c < count; c++ ) {
         result[c] = input[0][c];
         for ( int n = 1; n < numIn; n++ ) {
@@ -77,6 +79,10 @@ void collectiveOp( T* input[], int numIn, T result[],
 inline void collectiveOp( void* input[], int numIn, void* result, int count, 
         MP::PayloadDataType dtype, MP::ReductionOperation op )
 {
+    if ( op->type == MP::ReductionOpType::Func ) {
+        op->userFunction( input, result, &count, &dtype );
+        return;
+    }		
     switch ( dtype  ) {
       case MP::CHAR: 
 
