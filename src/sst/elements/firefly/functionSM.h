@@ -44,6 +44,9 @@ class ProtocolAPI;
         NAME(Alltoallv)   \
         NAME(Send)   \
         NAME(Recv)   \
+        NAME(Cancel)   \
+        NAME(Test)   \
+        NAME(Testany)   \
         NAME(Wait)   \
         NAME(WaitAny)   \
         NAME(WaitAll)   \
