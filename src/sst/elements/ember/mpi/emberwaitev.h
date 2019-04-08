@@ -27,10 +27,11 @@ class EmberWaitEvent : public EmberMPIEvent {
 public:
 	EmberWaitEvent( MP::Interface& api, Output* output,
                    EmberEventTimeStatistic* stat,
-       		MessageRequest* req, MessageResponse* resp = NULL ) :
+       		MessageRequest* req, MessageResponse* resp, bool deleteReq  ) :
        	EmberMPIEvent( api, output, stat ),
        	m_req( req ),
-		m_respPtr( resp )
+		m_respPtr( resp ),
+		m_deleteReq( deleteReq )
     { }
 
 	~EmberWaitEvent() {}
@@ -42,11 +43,15 @@ public:
         EmberEvent::issue( time );
 
        	m_api.wait( *m_req, m_respPtr, functor );
+		if ( m_deleteReq ) {
+			delete m_req;
+		} 
     }
 
 private:
     MessageRequest* 	m_req;
 	MessageResponse*	m_respPtr;	
+	bool				m_deleteReq;
 };
 
 }
