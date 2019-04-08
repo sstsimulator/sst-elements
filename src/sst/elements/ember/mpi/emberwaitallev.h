@@ -27,11 +27,11 @@ class EmberWaitallEvent : public EmberMPIEvent {
 public:
 	EmberWaitallEvent( MP::Interface& api, Output* output,
                       EmberEventTimeStatistic* stat,
-           int count, MessageRequest* m_req, MessageResponse** m_resp  ) :
+           int count, MessageRequest* req, MessageResponse** resp  ) :
         EmberMPIEvent( api, output, stat ),
         m_count(count),
-        m_req(m_req),
-        m_resp(m_resp)
+        m_req(req),
+        m_resp(resp)
     { }
 
 	~EmberWaitallEvent() {}
