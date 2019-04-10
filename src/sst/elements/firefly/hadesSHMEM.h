@@ -18,7 +18,6 @@
 #define COMPONENTS_FIREFLY_HADESSHMEM_H
 
 #include <sst/core/module.h>
-#include <sst/core/elementinfo.h>
 
 #include <sst/core/params.h>
 

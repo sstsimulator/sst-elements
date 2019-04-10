@@ -17,7 +17,6 @@
 #define _SIMPLE_PARAM_COMPONENT_H
 
 #include <sst/core/component.h>
-#include <sst/core/elementinfo.h>
 
 namespace SST {
 namespace SimpleParamComponent {

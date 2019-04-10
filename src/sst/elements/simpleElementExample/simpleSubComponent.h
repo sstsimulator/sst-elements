@@ -19,7 +19,6 @@
 #include<vector>
 
 #include <sst/core/component.h>
-#include <sst/core/elementinfo.h>
 #include <sst/core/subcomponent.h>
 #include <sst/core/link.h>
 

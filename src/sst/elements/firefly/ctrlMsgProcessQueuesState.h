@@ -19,7 +19,6 @@
 #include <functional>
 #include <stdint.h>
 #include "ctrlMsg.h"
-#include <sst/core/elementinfo.h>
 #include <sst/core/output.h>
 
 #include "info.h"

@@ -17,7 +17,6 @@
 #ifndef COMPONENTS_FIREFLY_HADESMISC_H
 #define COMPONENTS_FIREFLY_HADESMISC_H
 
-#include <sst/core/elementinfo.h>
 #include "sst/elements/hermes/miscapi.h"
 #include "hades.h"
 

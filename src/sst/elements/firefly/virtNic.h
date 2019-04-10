@@ -17,7 +17,6 @@
 #ifndef COMPONENTS_FIREFLY_VIRTNIC_H
 #define COMPONENTS_FIREFLY_VIRTNIC_H
 
-#include <sst/core/elementinfo.h>
 #include <sst/core/module.h>
 #include <sst/core/output.h>
 #include <sst/core/component.h>

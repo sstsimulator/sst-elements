@@ -32,7 +32,6 @@
 //SST includes
 #include <sst/core/component.h>
 #include <sst/core/link.h>
-#include <sst/core/elementinfo.h>
 #include "c_Transaction.hpp"
 #include "c_TxnReqEvent.hpp"
 #include "c_TxnResEvent.hpp"

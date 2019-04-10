@@ -36,7 +36,6 @@
 // SST includes
 #include <sst/core/component.h>
 #include <sst/core/link.h>
-#include <sst/core/elementinfo.h>
 
 // local includes
 //#include "c_BankCommand.hpp"

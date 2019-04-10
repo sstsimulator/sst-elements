@@ -26,7 +26,6 @@
 #include <sst/core/event.h>
 #include <sst/core/subcomponent.h>
 #include <sst/core/warnmacros.h>
-#include <sst/core/elementinfo.h>
 
 #include "sst/elements/memHierarchy/memEvent.h"
 

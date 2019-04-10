@@ -17,7 +17,6 @@
 #ifndef _ZODIAC_SIRIUS_TRACE_READER_H
 #define _ZODIAC_SIRIUS_TRACE_READER_H
 
-#include <sst/core/elementinfo.h>
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>

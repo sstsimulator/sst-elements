@@ -21,7 +21,6 @@
 #include <vector>
 
 #include <sst/core/component.h>
-#include <sst/core/elementinfo.h>
 #include <sst/core/params.h>
 #include <sst/core/output.h>
 #include "sst/elements/memHierarchy/membackend/memBackend.h"

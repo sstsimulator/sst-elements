@@ -17,7 +17,6 @@
 #define _SIMPLERNGCOMPONENT_H
 
 #include "sst/core/component.h"
-#include <sst/core/elementinfo.h>
 #include "sst/core/rng/sstrng.h"
 
 using namespace SST;

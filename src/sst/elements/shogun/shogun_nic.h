@@ -2,7 +2,6 @@
 #ifndef _H_SHOGUN_NIC
 #define _H_SHOGUN_NIC
 
-#include <sst/core/elementinfo.h>
 #include <sst/core/interfaces/simpleNetwork.h>
 #include <sst/core/link.h>
 #include <sst/core/unitAlgebra.h>
