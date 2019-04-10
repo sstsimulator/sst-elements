@@ -77,6 +77,7 @@ private:
     void*    m_sendBuf;
     void*    m_recvBuf;
     uint32_t m_loopIndex;
+	_ReductionOperation* m_op;
 };
 
 }

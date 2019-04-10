@@ -22,7 +22,6 @@
 
 #include "stdlib.h"
 
-#include "sst/core/element.h"
 #include "sst/core/params.h"
 
 using namespace SST;

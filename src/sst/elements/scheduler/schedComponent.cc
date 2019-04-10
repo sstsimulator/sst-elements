@@ -23,7 +23,6 @@
 
 #include <iostream> //debug
 
-#include <sst/core/element.h>
 #include <sst/core/params.h>
 
 #include "Allocator.h"

@@ -345,6 +345,37 @@ void ProcessQueuesState::processMakeProgress( Stack* stack )
 	exit();
 }
 
+void ProcessQueuesState::enterCancel( MP::MessageRequest req, uint64_t exitDelay ) {
+
+    std::deque< _CommReq* >:: iterator iter = m_pstdRcvQ.begin();
+    for ( ; iter != m_pstdRcvQ.end(); ++iter ) {
+
+		if ( *iter == req ) {
+    		dbg().debug(CALL_INFO,2,DBG_MSK_PQS_Q,"found req=%p\n",*iter);
+			delete( *iter );
+        	m_pstdRcvQ.erase(iter);
+			break;
+		}
+    }
+	exit();
+}
+
+void ProcessQueuesState::enterTest( WaitReq* req, int* flag, uint64_t exitDelay  )
+{
+	dbg().debug(CALL_INFO,1,DBG_MSK_PQS_APP_SIDE,"\n");
+
+    m_exitDelay = exitDelay;
+
+    WaitCtx* ctx = new WaitCtx ( req,
+        std::bind( &ProcessQueuesState::processWait_0, this, &m_funcStack ),
+		flag	
+    );
+
+    m_funcStack.push_back( ctx );
+
+    processQueues( &m_funcStack );
+}
+
 void ProcessQueuesState::enterWait( WaitReq* req, uint64_t exitDelay  )
 {
     dbg().debug(CALL_INFO,1,DBG_MSK_PQS_APP_SIDE,"num pstd %lu, num short %lu\n",
@@ -376,6 +407,9 @@ void ProcessQueuesState::processWait_0( Stack* stack )
 
     if ( req ) {
         processWaitCtx_0( ctx, req ); 
+    } else if ( ctx->flag ) {
+        delete ctx;
+        exit();
     } else {
         processWaitCtx_2( ctx );
     }
@@ -423,6 +457,10 @@ void ProcessQueuesState::processWaitCtx_2( WaitCtx* ctx )
     if ( req ) {
         processWaitCtx_0( ctx, req ); 
     } else  if ( ctx->req->isDone() ) {
+        if ( ctx->flag ) {
+            dbg().debug(CALL_INFO,2,DBG_MSK_PQS_APP_SIDE,"set flag\n");
+            *ctx->flag = 1;
+        }
         delete ctx;
         exit( );
     } else {
@@ -543,7 +581,7 @@ void ProcessQueuesState::processShortList_3( Stack* stack )
 
     _CommReq* req = ctx->req;
 
-    req->setResp( ctx->hdr().tag, ctx->hdr().rank, ctx->hdr().count );
+    req->setResp( ctx->hdr().tag, ctx->hdr().rank, ctx->hdr().count, ctx->hdr().dtypeSize );
 
     size_t length = ctx->hdr().count * ctx->hdr().dtypeSize;
 

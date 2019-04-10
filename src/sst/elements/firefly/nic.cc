@@ -18,7 +18,6 @@
 #include <sst/core/component.h>
 #include <sst/core/params.h>
 #include <sst/core/timeLord.h>
-#include <sst/core/element.h>
 
 #include <sstream>
 

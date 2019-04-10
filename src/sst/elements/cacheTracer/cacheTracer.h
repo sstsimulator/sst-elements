@@ -17,7 +17,6 @@
 #define _CACHETRACER_H
 
 #include <sst/core/output.h>
-#include <sst/core/elementinfo.h>
 #include <sst/core/event.h>
 #include <sst/core/component.h>
 #include <sst/core/params.h>

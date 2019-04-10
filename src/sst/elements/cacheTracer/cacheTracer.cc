@@ -16,10 +16,6 @@
 #include "sst_config.h"
 #include <cmath>
 
-#define SST_ELI_COMPILE_OLD_ELI_WITHOUT_DEPRECATION_WARNINGS
-
-#include "sst/core/element.h"
-
 #include "cacheTracer.h"
 
 using namespace std;

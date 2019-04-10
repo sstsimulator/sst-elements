@@ -17,7 +17,6 @@
 #ifndef _H_SST_MEMH_CRAM_SIM_BACKEND
 #define _H_SST_MEMH_CRAM_SIM_BACKEND
 
-#include <sst/core/elementinfo.h>
 
 #include "sst/elements/memHierarchy/membackend/memBackend.h"
 

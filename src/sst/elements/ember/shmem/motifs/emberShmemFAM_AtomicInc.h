@@ -100,7 +100,7 @@ public:
             	enQ_compute( evQ, m_computeTime );
 			}
 	
-            enQ_fam_add( evQ, offset, &m_one );
+            enQ_fam_add( evQ, m_fd, offset, &m_one );
 
             if ( m_phase + 1 == m_iterations * m_updates ) {
                 enQ_barrier_all( evQ );
@@ -223,6 +223,7 @@ public:
     unsigned int m_randSeed;
 #endif
 
+	Shmem::Fam_Descriptor m_fd;
     int m_computeTime;
 	bool m_printTotals;
 	TYPE m_one;

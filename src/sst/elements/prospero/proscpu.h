@@ -16,10 +16,8 @@
 #ifndef _SST_PROSPERO_H
 #define _SST_PROSPERO_H
 
-#include "sst/core/elementinfo.h"
 #include "sst/core/output.h"
 #include "sst/core/component.h"
-#include "sst/core/element.h"
 #include "sst/core/params.h"
 #include "sst/core/event.h"
 #include "sst/core/sst_types.h"

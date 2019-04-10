@@ -23,11 +23,9 @@
 #define _H_MEMHIERARCHY_CACHE_LISTENER
 
 #include <sst/core/simulation.h>
-#include <sst/core/element.h>
 #include <sst/core/event.h>
 #include <sst/core/subcomponent.h>
 #include <sst/core/warnmacros.h>
-#include <sst/core/elementinfo.h>
 
 #include "sst/elements/memHierarchy/memEvent.h"
 

@@ -67,6 +67,10 @@ libember_la_SOURCES = \
 	mpi/motifs/emberfini.h  \
 	mpi/motifs/ember3dcommdbl.h \
 	mpi/motifs/ember3dcommdbl.cc \
+	mpi/motifs/embersendrecv.h  \
+	mpi/motifs/emberwaitany.h  \
+	mpi/motifs/embertest.h  \
+	mpi/motifs/embertestany.h  \
 	mpi/motifs/embernull.h  \
 	mpi/motifs/emberhalo1d.h  \
 	mpi/motifs/emberhalo1d.cc  \
@@ -207,6 +211,7 @@ libember_la_SOURCES = \
 	shmem/motifs/emberShmemFAM_Scatterv.h \
 	shmem/motifs/emberShmemFAM_Gatherv.h \
 	shmem/motifs/emberShmemFAM_AtomicInc.h \
+	shmem/motifs/emberShmemFAM_Cswap.h \
 	mpi/motifs/emberunstructured.h \
 	mpi/motifs/emberunstructured.cc
 

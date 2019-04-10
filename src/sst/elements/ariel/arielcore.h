@@ -23,7 +23,6 @@
 #include <sst/core/link.h>
 #include <sst/core/output.h>
 #include <sst/core/interfaces/simpleMem.h>
-#include <sst/core/element.h>
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>
 #include <sst/core/timeConverter.h>

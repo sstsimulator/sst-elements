@@ -17,7 +17,6 @@
 #ifndef _H_SST_EMBER_CONSTANT_COMPUTE_DISTRIBUTION
 #define _H_SST_EMBER_CONSTANT_COMPUTE_DISTRIBUTION
 
-#include <sst/core/elementinfo.h>
 #include "emberdistrib.h"
 
 namespace SST {

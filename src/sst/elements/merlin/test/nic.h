@@ -21,7 +21,6 @@
 
 #include <sst/core/component.h>
 #include <sst/core/event.h>
-#include <sst/core/elementinfo.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
 #include <sst/core/interfaces/simpleNetwork.h>

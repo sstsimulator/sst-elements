@@ -16,13 +16,11 @@
 #ifndef _LINKBUILDER_H
 #define _LINKBUILDER_H
 
-#include <sst/core/element.h>
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
-#include <sst/core/elementinfo.h>
 
 #include "Job.h"
 

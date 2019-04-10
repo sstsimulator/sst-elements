@@ -20,7 +20,6 @@
 
 #include "embergen.h"
 
-#include <sst/core/elementinfo.h>
 #include <sst/elements/hermes/msgapi.h>
 
 #include "emberMPIEvent.h"
@@ -39,7 +38,11 @@
 #include "emberirecvev.h"
 #include "embergettimeev.h"
 #include "emberwaitallev.h"
+#include "emberwaitanyev.h"
 #include "emberwaitev.h"
+#include "embercancelev.h"
+#include "embertestev.h"
+#include "embertestanyev.h"
 #include "emberCommSplitEv.h"
 #include "emberCommCreateEv.h"
 #include "emberCommDestroyEv.h"
@@ -159,10 +162,25 @@ public:
         PayloadDataType dtype, RankID source, uint32_t tag, Communicator group,
         MessageRequest* req );
 
+    inline void enQ_sendrecv( Queue&, 
+			Addr sendbuf, uint32_t sendcount, PayloadDataType sendtype,
+			RankID dest, uint32_t sendtag,	
+			Addr recvbuf, uint32_t recvcnt, PayloadDataType recvtype,
+			RankID source, uint32_t recvtag, 
+			Communicator group, MessageResponse* resp );
+
+    inline void enQ_cancel( Queue&, MessageRequest req );
+
+	inline void enQ_test( Queue&, MessageRequest*, int* flag, MessageResponse* = NULL );
+	inline void enQ_testany( Queue&, int count, MessageRequest req[], int* indx, int* flag,
+									MessageResponse* = NULL );
     inline void enQ_wait( Queue&, MessageRequest* req, 
 									MessageResponse* resp = NULL );
     inline void enQ_waitall( Queue&, int count, MessageRequest req[],
                 MessageResponse* resp[] = NULL );
+
+    inline void enQ_waitany( Queue&, int count, MessageRequest req[], int *indx,
+                MessageResponse* = NULL );
 
     inline void enQ_commSplit( Queue&, Communicator, int color, int key, 
                 Communicator* newComm );
@@ -209,6 +227,9 @@ public:
         const Hermes::MemAddr& recvData, Addr recvCnts, Addr recvDsp, PayloadDataType recvdtype,
         Communicator group );
 
+	inline ReductionOperation op_create( User_function*, int communte );
+	inline void op_free( ReductionOperation );
+	inline int get_count( MessageResponse* resp, PayloadDataType datatype, int* count ); 
     inline int sizeofDataType( PayloadDataType );
 
 	// deprecated
@@ -234,9 +255,34 @@ private:
     std::map<int32_t, EmberSpyInfo*>*   m_spyinfo;
 };
 
+
 static inline MP::Interface* cast( Hermes::Interface *in )
 {
     return static_cast<MP::Interface*>(in);
+}
+
+ReductionOperation EmberMessagePassingGenerator::op_create( User_function* func, int commute ) 
+{
+	return MP::Op_create( func, commute );
+}
+
+void EmberMessagePassingGenerator::op_free( ReductionOperation op ) 
+{
+	MP::Op_free( op );
+}
+
+int EmberMessagePassingGenerator::get_count( MessageResponse* resp, PayloadDataType datatype, int* count )
+{
+	printf("count=%d dtypeSize=%d\n",resp->count,resp->dtypeSize);
+	uint32_t nbytes = resp->count * resp->dtypeSize;
+	int dtypesize = sizeofDataType(datatype);
+	if ( nbytes % dtypesize ) { 
+		*count = 0;
+		return -1;
+	}
+	*count = nbytes / dtypesize;
+
+	return 0;
 }
 
 int EmberMessagePassingGenerator::sizeofDataType( PayloadDataType type )
@@ -391,16 +437,52 @@ void EmberMessagePassingGenerator::enQ_irecv( Queue& q, uint32_t src,
 	enQ_irecv( q, NULL, nBytes, CHAR, src, tag, group, req );
 }
 
+
+void EmberMessagePassingGenerator::enQ_sendrecv( Queue& q, 
+			Addr sendbuf, uint32_t sendcount, PayloadDataType sendtype,
+			RankID dest, uint32_t sendtag,	
+			Addr recvbuf, uint32_t recvcnt, PayloadDataType recvtype,
+			RankID source, uint32_t recvtag, 
+			Communicator group, MessageResponse* resp )
+{
+	MessageRequest* req = new MessageRequest;
+	enQ_irecv(q, recvbuf, recvcnt, recvtype, source, recvtag, group, req ); 
+	enQ_send(q, sendbuf, sendcount, sendtype, dest, sendtag, group );
+    q.push( new EmberWaitEvent( *cast(m_api), &getOutput(), m_Stats[Wait],
+		 												req, resp, true ) ); 
+}
+
 void EmberMessagePassingGenerator::enQ_getTime( Queue& q, uint64_t* time )
 {
     q.push( new EmberGetTimeEvent( &getOutput(), time ) ); 
+}
+
+void EmberMessagePassingGenerator::enQ_cancel( Queue& q, MessageRequest req )
+{
+    q.push( new EmberCancelEvent( *cast(m_api), &getOutput(), m_Stats[Waitall], req ) ); 
+}
+
+void EmberMessagePassingGenerator::enQ_test( Queue& q, MessageRequest* req,
+			int* flag, MessageResponse* resp)
+{
+	*flag = 0;
+    q.push( new EmberTestEvent( *cast(m_api), &getOutput(), m_Stats[Waitall],
+        req, flag, resp ) );
+}
+
+void EmberMessagePassingGenerator::enQ_testany( Queue& q, int count,
+		MessageRequest req[], int* indx, int* flag, MessageResponse* resp )
+{
+	*flag = 0;
+    q.push( new EmberTestanyEvent( *cast(m_api), &getOutput(), m_Stats[Waitall],
+        count, req, indx, flag, resp ) );
 }
 
 void EmberMessagePassingGenerator::enQ_wait( Queue& q, MessageRequest* req,
 				MessageResponse* resp )
 {
     q.push( new EmberWaitEvent( *cast(m_api), &getOutput(), m_Stats[Wait],
-		 												req, resp ) ); 
+		 												req, resp, false ) ); 
 }
 
 void EmberMessagePassingGenerator::enQ_waitall( Queue& q, int count,
@@ -409,6 +491,14 @@ void EmberMessagePassingGenerator::enQ_waitall( Queue& q, int count,
     q.push( new EmberWaitallEvent( *cast(m_api), &getOutput(), m_Stats[Waitall],
         count, req, resp ) );
 }
+
+void EmberMessagePassingGenerator::enQ_waitany( Queue& q, int count, 
+	MessageRequest req[], int *indx, MessageResponse* resp ) 
+{
+    q.push( new EmberWaitanyEvent( *cast(m_api), &getOutput(), m_Stats[Waitall],
+        count, req, indx, resp ) );
+}
+
 void EmberMessagePassingGenerator::enQ_commSplit( Queue& q, Communicator oldcom,
         int color, int key, Communicator* newCom )
 {

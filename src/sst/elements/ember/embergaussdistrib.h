@@ -18,7 +18,6 @@
 #define _H_SST_EMBER_GAUSSIAN_COMPUTE_DISTRIBUTION
 
 #include "emberdistrib.h"
-#include <sst/core/elementinfo.h>
 #include <sst/core/rng/gaussian.h>
 
 namespace SST {

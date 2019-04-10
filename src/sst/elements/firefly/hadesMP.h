@@ -17,7 +17,6 @@
 #ifndef COMPONENTS_FIREFLY_HADESMP_H
 #define COMPONENTS_FIREFLY_HADESMP_H
 
-#include <sst/core/elementinfo.h>
 #include <sst/core/params.h>
 
 #include "sst/elements/hermes/msgapi.h"
@@ -156,6 +155,8 @@ class HadesMP : public MP::Interface
     virtual void probe( int source, uint32_t tag, 
         MP::Communicator group, MP::MessageResponse* resp, MP::Functor* ) {} 
 
+	virtual void cancel( MP::MessageRequest req, MP::Functor* );
+
     virtual void wait(MP::MessageRequest req,
         MP::MessageResponse* resp, MP::Functor*);
 
@@ -165,8 +166,11 @@ class HadesMP : public MP::Interface
     virtual void waitall( int count, MP::MessageRequest req[],
                  MP::MessageResponse* resp[], MP::Functor* );
 
-    virtual void test(MP::MessageRequest req, int& flag, 
+    virtual void test(MP::MessageRequest req, int* flag, 
         MP::MessageResponse* resp, MP::Functor*);
+
+	virtual void testany( int count, MP::MessageRequest req[], int* indx, int* flag,
+		   MP::MessageResponse* resp, MP::Functor* );
 
     // Added (but unused) to avoid compile warning on overloaded virtual function
     virtual void test(MP::MessageRequest* req, int& flag, MP::MessageResponse* resp,

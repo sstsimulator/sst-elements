@@ -19,7 +19,6 @@
 #include <sst/core/sst_config.h>
 #include <sst/core/interfaces/simpleMem.h>
 #include <sst/core/component.h>
-#include <sst/core/elementinfo.h>
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>
 

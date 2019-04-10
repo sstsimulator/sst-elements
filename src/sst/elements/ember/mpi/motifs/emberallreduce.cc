@@ -19,16 +19,27 @@
 
 using namespace SST::Ember;
 
+static void test(void* a, void* b, int* len, PayloadDataType* ) {
+
+	printf("%s() len=%d\n",__func__,*len);
+}
+
 EmberAllreduceGenerator::EmberAllreduceGenerator(SST::Component* owner,
                                             Params& params) :
 	EmberMessagePassingGenerator(owner, params, "Allreduce"),
     m_loopIndex(0)
 {
+	m_dataMode = Backing;
 	m_iterations = (uint32_t) params.find("arg.iterations", 1);
-    m_compute    = (uint32_t) params.find("arg.compute", 0);
+	m_compute    = (uint32_t) params.find("arg.compute", 0);
 	m_count      = (uint32_t) params.find("arg.count", 1);
-    m_sendBuf = NULL;
-    m_recvBuf = NULL;
+	if ( params.find<bool>("arg.doUserFunc", false )  )   {
+		m_op = op_create( test, 0 );
+	} else {
+		m_op = MP::SUM;
+	}	
+	m_sendBuf = memAlloc(sizeofDataType(DOUBLE));
+	m_recvBuf = memAlloc(sizeofDataType(DOUBLE));
 }
 
 bool EmberAllreduceGenerator::generate( std::queue<EmberEvent*>& evQ) {
@@ -47,8 +58,7 @@ bool EmberAllreduceGenerator::generate( std::queue<EmberEvent*>& evQ) {
     }
 
     enQ_compute( evQ, m_compute );
-    enQ_allreduce( evQ, m_sendBuf, m_recvBuf, m_count, DOUBLE,
-                                                     SUM, GroupWorld );
+    enQ_allreduce( evQ, m_sendBuf, m_recvBuf, m_count, DOUBLE, m_op, GroupWorld );
 
     if ( ++m_loopIndex == m_iterations ) {
         enQ_getTime( evQ, &m_stopTime );

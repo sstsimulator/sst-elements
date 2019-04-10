@@ -20,7 +20,6 @@
 
 #include <sst/core/output.h>
 #include <sst/core/interfaces/simpleNetwork.h>
-#include <sst/core/elementinfo.h>
 
 #include "sst/elements/memHierarchy/memTypes.h"
 #include "sst/elements/memHierarchy/memEvent.h"

@@ -22,24 +22,34 @@
 namespace SST {
 namespace Ember {
 
-class EmberWaitAnyEvent : public EmberMPIEvent {
+class EmberWaitanyEvent : public EmberMPIEvent {
 
 	public:
-		EmberWaitAnyEvent(MP::Request* req, int* index,
-			const int requestCount);
-		EmberWaitAnyEvent(MessageRequest* req, MessageResponse* resp, int* index,
-			const int requestCount);
-		~EmberWaitAnyEvent();
-		MessageRequest* getMessageRequestHandleArray();
-		int getMessageRequestCount();
-		std::string getPrintableString();
-		bool requestsMessageResponse();
+		EmberWaitanyEvent(MP::Interface& api, Output* output,
+                      EmberEventTimeStatistic* stat,
+           int count, MessageRequest* req, int* indx, MessageResponse* resp  = NULL ) :
+        EmberMPIEvent( api, output, stat ),
+        m_count(count),
+        m_req(req),
+		m_indx(indx),
+        m_resp(resp)
+    { }
+
+		~EmberWaitanyEvent() {}
+    	std::string getName() { return "Waitany"; }
+
+    	void issue( uint64_t time, FOO* functor ) {
+
+        	EmberEvent::issue( time );
+
+        	m_api.waitany( m_count, m_req, m_indx, m_resp, functor );
+    	}
 
 	private:
-		MessageRequest* request;
-		MessageResponse* response;
-		int count;
-		int* index;
+		MessageRequest* m_req;
+		MessageResponse* m_resp;
+		int m_count;
+		int* m_indx;
 
 };
 

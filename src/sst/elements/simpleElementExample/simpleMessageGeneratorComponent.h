@@ -17,7 +17,6 @@
 #define _SIMPLEMESSAGEGENERATORCOMPONENT_H
 
 #include "sst/core/component.h"
-#include <sst/core/elementinfo.h>
 #include "sst/core/link.h"
 
 namespace SST {

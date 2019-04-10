@@ -19,7 +19,6 @@
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>
 #include <sst/core/event.h>
-#include <sst/core/element.h>
 #include <sst/core/warnmacros.h>
 
 #include "sst/elements/memHierarchy/util.h"

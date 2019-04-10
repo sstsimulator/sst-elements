@@ -17,7 +17,6 @@
 #ifndef __SST_MEMH_SIMPLEMEMSCRATCHBACKENDCONVERTOR__
 #define __SST_MEMH_SIMPLEMEMSCRATCHBACKENDCONVERTOR__
 
-#include <sst/core/elementinfo.h>
 
 #include "sst/elements/memHierarchy/membackend/scratchBackendConvertor.h"
 
