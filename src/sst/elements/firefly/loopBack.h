@@ -16,7 +16,6 @@
 #ifndef COMPONENTS_FIREFLY_LOOPBACK_H
 #define COMPONENTS_FIREFLY_LOOPBACK_H
 
-#include <sst/core/elementinfo.h>
 #include <sst/core/component.h>
 
 namespace SST {

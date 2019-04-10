@@ -17,7 +17,6 @@
 #define _H_THORNHILL_MEMORY_HEAP_LINK
 
 
-#include <sst/core/elementinfo.h>
 #include <functional>
 #include "sst/core/subcomponent.h"
 #include "sst/core/link.h"

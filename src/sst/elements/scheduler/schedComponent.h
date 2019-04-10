@@ -23,7 +23,6 @@
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/rng/sstrng.h>
-#include <sst/core/elementinfo.h>
 
 #include "output.h"
 #include "misc.h" //NetworkSim: For ITMI definition

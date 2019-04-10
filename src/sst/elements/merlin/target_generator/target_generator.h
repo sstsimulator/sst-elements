@@ -20,7 +20,6 @@
 #define COMPONENTS_MERLIN_TARGET_GENERATOR_TARGET_GENERATOR_H
 
 #include <sst/core/subcomponent.h>
-#include <sst/core/elementinfo.h>
 
 namespace SST {
 namespace Merlin {

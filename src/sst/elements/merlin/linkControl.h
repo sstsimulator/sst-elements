@@ -19,7 +19,6 @@
 #ifndef COMPONENTS_MERLIN_LINKCONTROL_H
 #define COMPONENTS_MERLIN_LINKCONTROL_H
 
-#include <sst/core/elementinfo.h>
 #include <sst/core/subcomponent.h>
 #include <sst/core/unitAlgebra.h>
 

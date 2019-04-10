@@ -18,7 +18,6 @@
 
 #include <sst/core/component.h>
 #include <sst/core/interfaces/simpleMem.h>
-#include <sst/core/elementinfo.h>
 #include <sst/core/statapi/stataccumulator.h>
 
 #include "mirandaGenerator.h"

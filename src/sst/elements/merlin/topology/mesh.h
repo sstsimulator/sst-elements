@@ -19,7 +19,6 @@
 #ifndef COMPONENTS_MERLIN_TOPOLOGY_MESH_H
 #define COMPONENTS_MERLIN_TOPOLOGY_MESH_H
 
-#include <sst/core/elementinfo.h>
 #include <sst/core/event.h>
 #include <sst/core/link.h>
 #include <sst/core/params.h>

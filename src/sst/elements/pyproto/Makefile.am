@@ -8,7 +8,6 @@ AM_CPPFLAGS = \
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libpyproto.la
 libpyproto_la_SOURCES = \
-						eli.cc \
 						pyproto.h \
 						pyproto.cc \
 						pymodule.h \

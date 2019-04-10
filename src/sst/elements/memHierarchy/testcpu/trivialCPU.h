@@ -29,7 +29,6 @@
 #include <sst/core/output.h>
 #include <sst/core/interfaces/simpleMem.h>
 #include <sst/core/rng/marsaglia.h>
-#include <sst/core/elementinfo.h>
 
 using namespace SST::Statistics;
 

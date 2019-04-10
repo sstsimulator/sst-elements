@@ -37,7 +37,6 @@
 #include <sst/core/timeConverter.h>
 #include <sst/core/interfaces/simpleMem.h>
 #include <sst/core/output.h>
-#include <sst/core/elementinfo.h>
 
 #include "Opal_Event.h"
 #include "mempool.h"

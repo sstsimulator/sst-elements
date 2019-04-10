@@ -28,7 +28,6 @@
 #include <sst/elements/memHierarchy/memEvent.h>
 #include <sst/elements/memHierarchy/cacheListener.h>
 
-#include <sst/core/elementinfo.h>
 
 using namespace SST;
 using namespace SST::MemHierarchy;

@@ -19,7 +19,6 @@
 
 #include <iostream>
 
-#include <sst/core/elementinfo.h>
 
 #include "sst/elements/memHierarchy/coherencemgr/coherenceController.h"
 

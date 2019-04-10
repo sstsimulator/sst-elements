@@ -19,7 +19,6 @@
 #ifndef COMPONENTS_KINGSLEY_LINKCONTROL_H
 #define COMPONENTS_KINGSLEY_LINKCONTROL_H
 
-#include <sst/core/elementinfo.h>
 #include <sst/core/subcomponent.h>
 #include <sst/core/unitAlgebra.h>
 

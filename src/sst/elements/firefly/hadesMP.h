@@ -17,7 +17,6 @@
 #ifndef COMPONENTS_FIREFLY_HADESMP_H
 #define COMPONENTS_FIREFLY_HADESMP_H
 
-#include <sst/core/elementinfo.h>
 #include <sst/core/params.h>
 
 #include "sst/elements/hermes/msgapi.h"

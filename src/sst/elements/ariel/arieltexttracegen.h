@@ -20,7 +20,6 @@
 #include <climits>
 
 #include <sst/core/params.h>
-#include <sst/core/elementinfo.h>
 
 #include "arieltracegen.h"
 

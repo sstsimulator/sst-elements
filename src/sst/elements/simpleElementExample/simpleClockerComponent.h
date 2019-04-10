@@ -17,7 +17,6 @@
 #define _SIMPLECLOCKERCOMPONENT_H
 
 #include <sst/core/component.h>
-#include <sst/core/elementinfo.h>
 
 namespace SST {
 namespace SimpleClockerComponent {

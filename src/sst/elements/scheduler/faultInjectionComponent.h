@@ -21,7 +21,6 @@
 
 #include <sst/core/component.h>
 #include <sst/core/link.h>
-#include <sst/core/elementinfo.h>
 
 namespace SST{
 	class Event;

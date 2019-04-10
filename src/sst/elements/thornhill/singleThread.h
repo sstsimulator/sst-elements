@@ -16,7 +16,6 @@
 #ifndef _H_THORNHILL_SINGLE_THREAD
 #define _H_THORNHILL_SINGLE_THREAD
 
-#include <sst/core/elementinfo.h>
 #include "detailedCompute.h"
 
 namespace SST {

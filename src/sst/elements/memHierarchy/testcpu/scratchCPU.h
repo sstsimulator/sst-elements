@@ -21,7 +21,6 @@
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>
 #include <sst/core/rng/marsaglia.h>
-#include <sst/core/elementinfo.h>
 
 #include <unordered_map>
 

@@ -17,7 +17,6 @@
 #ifndef __SST_MEMH_SIMPLEMEMBACKENDCONVERTOR__
 #define __SST_MEMH_SIMPLEMEMBACKENDCONVERTOR__
 
-#include <sst/core/elementinfo.h>
 
 #include "sst/elements/memHierarchy/membackend/memBackendConvertor.h"
 

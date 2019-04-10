@@ -34,7 +34,6 @@
 // SST includes
 #include <sst/core/link.h>
 #include <sst/core/component.h>
-#include <sst/core/elementinfo.h>
 #include "c_AddressHasher.hpp"
 #include "c_DeviceDriver.hpp"
 #include "c_TxnConverter.hpp"

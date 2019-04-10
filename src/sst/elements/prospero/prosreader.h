@@ -17,7 +17,6 @@
 #ifndef _H_SST_PROSPERO_READER
 #define _H_SST_PROSPERO_READER
 
-#include <sst/core/elementinfo.h>
 #include <sst/core/component.h>
 #include <sst/core/output.h>
 #include <sst/core/subcomponent.h>
