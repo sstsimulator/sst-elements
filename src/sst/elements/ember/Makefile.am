@@ -13,6 +13,7 @@ libember_la_SOURCES = \
 	embergen.cc	\
 	embermap.h \
 	ember.cc \
+	embercancelev.h \
 	emberengine.h  \
 	emberengine.cc  \
 	emberevent.h \
