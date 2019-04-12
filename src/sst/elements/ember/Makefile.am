@@ -13,7 +13,6 @@ libember_la_SOURCES = \
 	embergen.cc	\
 	embermap.h \
 	ember.cc \
-	embercancelev.h \
 	emberengine.h  \
 	emberengine.cc  \
 	emberevent.h \
@@ -40,6 +39,7 @@ libember_la_SOURCES = \
 	libs/miscEvents/emberGetNodeNumEvent.h \
 	libs/miscEvents/emberGetNumNodesEvent.h \
 	libs/miscEvents/emberMiscEvent.h \
+	mpi/embercancelev.h \
 	mpi/embermpigen.h \
 	mpi/embermpigen.cc \
 	mpi/emberrecvev.h \
