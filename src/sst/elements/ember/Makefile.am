@@ -46,6 +46,7 @@ libember_la_SOURCES = \
 	mpi/embersendev.h \
 	mpi/emberfinalizeev.h \
 	mpi/emberinitev.h  \
+        mpi/embertestev.h \
 	mpi/emberwaitev.h \
 	mpi/emberwaitanyev.h \
 	mpi/emberwaitallev.h \
