@@ -151,6 +151,7 @@ libember_la_SOURCES = \
 	sirius/include/sirius/siriusglobals.h \
 	shmem/emberFamEvent.h \
 	shmem/emberFamAddEv.h \
+	shmem/emberFamCswapEv.h \
 	shmem/emberFamPut_Ev.h \
 	shmem/emberFamGet_Ev.h \
 	shmem/emberFamScatterv_Ev.h \
