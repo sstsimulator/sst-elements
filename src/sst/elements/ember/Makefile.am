@@ -39,12 +39,15 @@ libember_la_SOURCES = \
 	libs/miscEvents/emberGetNodeNumEvent.h \
 	libs/miscEvents/emberGetNumNodesEvent.h \
 	libs/miscEvents/emberMiscEvent.h \
+	mpi/embercancelev.h \
 	mpi/embermpigen.h \
 	mpi/embermpigen.cc \
 	mpi/emberrecvev.h \
 	mpi/embersendev.h \
 	mpi/emberfinalizeev.h \
-	mpi/emberinitev.h  \
+	mpi/emberinitev.h \
+	mpi/embertestanyev.h \
+	mpi/embertestev.h \
 	mpi/emberwaitev.h \
 	mpi/emberwaitanyev.h \
 	mpi/emberwaitallev.h \
@@ -148,6 +151,7 @@ libember_la_SOURCES = \
 	sirius/include/sirius/siriusglobals.h \
 	shmem/emberFamEvent.h \
 	shmem/emberFamAddEv.h \
+	shmem/emberFamCswapEv.h \
 	shmem/emberFamPut_Ev.h \
 	shmem/emberFamGet_Ev.h \
 	shmem/emberFamScatterv_Ev.h \
