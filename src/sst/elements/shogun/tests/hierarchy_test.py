@@ -82,9 +82,6 @@ for cpu_id in range(num_cpu):
       "cache_line_size" : "64",
       "cache_size" : "32KB",
       "memNIC.network_link_control" : "shogun.ShogunNIC",
-      #"prefetcher" : "cassini.StridePrefetcher",
-      #"prefetcher.detect_range" : "1",
-      #"prefetcher.reach" : "4"
    })
 
    corel1link = sst.Link("cpu_l1_link_" + str(cpu_id))
@@ -96,7 +93,6 @@ for cpu_id in range(num_cpu):
    l1xbarlink.setNoCut()
 
    next_port = next_port + 1
-
 
 # Connect L2 caches to the routers
 num_L2s_per_stack = num_l2 / hbmStacks
@@ -173,8 +169,6 @@ for next_group_id in range(hbmStacks):
             "debug" : memDebug,
             "debug_level" : memLevel,
             "verbose" : memVerbose,
-            #"backend.debug_location" : 1,
-            #"backend.debug_level" : 10,
             "max_requests_per_cycle" : "-1",
          })
 
@@ -212,9 +206,7 @@ for next_group_id in range(hbmStacks):
             "boolUseWriteA" : 0,
             "bankPolicy" : "OPEN",
             ### AddressHasher ###
-   #         "strAddressMapStr" : "r:14_b:2_B:2_l:3_C:2_l:3_c:1_h:5_",
             "strAddressMapStr" : "r:14_b:2_B:2_l:3_C:3_l:3_c:1_h:6_",
-            #"strAddressMapStr" : "r_b_B_c_l:3_C_l:3_h:5_",
             "numBytesPerTransaction" : 64,
             ### CmdScheduler ###
             "numCmdQEntries" : 32,
@@ -309,6 +301,7 @@ for next_group_id in range(hbmStacks):
          "cache_size" : "192KiB",
          "cache_type" : "noninclusive",
          "coherence_protocol" : "MESI",
+         "mshr_latency_cycles" : "32",
          "debug" : globalDebug,
          "debug_level" : globalLevel,
          "memNIC.addr_range_end" : endAddr,
