@@ -46,8 +46,8 @@ router.addParams({
    "verbose" : "0",
    "buffer_depth" : "64",
    "clock" : "1200MHz",
-   "input_message_slots" : "3",
-   "output_message_slots" : "3",
+   "in_msg_per_cycle" : "-1",
+   "out_msg_per_cycle" : "3",
    "port_count" : router_ports,
 })
 
@@ -301,7 +301,7 @@ for next_group_id in range(hbmStacks):
          "cache_size" : "192KiB",
          "cache_type" : "noninclusive",
          "coherence_protocol" : "MESI",
-         #"mshr_latency_cycles" : "32",
+         "mshr_latency_cycles" : "32",
          "debug" : globalDebug,
          "debug_level" : globalLevel,
          "memNIC.addr_range_end" : endAddr,

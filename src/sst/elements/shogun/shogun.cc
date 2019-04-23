@@ -33,13 +33,20 @@ using namespace SST::Shogun;
 ShogunComponent::ShogunComponent(ComponentId_t id, Params& params)
     : Component(id)
 {
-    const std::string clock_rate = params.find<std::string>("clock", "1.0GHz");
-    queue_slots = params.find<uint64_t>("queue_slots", 64);
-    input_message_slots = params.find<uint32_t>("input_message_slots", 1);
-    output_message_slots = params.find<uint32_t>("output_message_slots", 1);
     pending_events = 0;
 
-    events_per_clock = SHOGUN_MAX(input_message_slots, output_message_slots);
+    const std::string clock_rate = params.find<std::string>("clock", "1.0GHz");
+    queue_slots = params.find<uint64_t>("queue_slots", 64);
+
+    input_message_slots = params.find<int32_t>("in_msg_per_cycle", 1);
+    output_message_slots = params.find<int32_t>("out_msg_per_cycle", 1);
+    // Can't really have a negative number of output slots, so make it large-ish
+    if (output_message_slots < 0) {
+       output_message_slots = 256;
+    }
+
+    // Process 1:max(input_slots, output_slots) per cycle
+    events_per_clock = SHOGUN_MAX(1, SHOGUN_MAX(input_message_slots, output_message_slots));
     arb = new ShogunRoundRobinArbitrator();
 
     const int32_t verbosity = params.find<uint32_t>("verbose", 0);
@@ -75,8 +82,6 @@ ShogunComponent::ShogunComponent(ComponentId_t id, Params& params)
         if (nullptr == links[i]) {
             output->fatal(CALL_INFO, -1, "Failed to configure link on port %d\n", i);
         }
-
-        //	links[i]->setPolling();
     }
 
     delete[] linkName;
@@ -90,10 +95,10 @@ ShogunComponent::ShogunComponent(ComponentId_t id, Params& params)
 
     for (int32_t i = 0; i < port_count; ++i) {
         input_events_this_cycle[i] = 0;
-        event_buffer[i] = new ShogunQueue<ShogunEvent*>( 1024 );
-        inputQueues[i]  = new ShogunQueue<ShogunEvent*>( queue_slots );
         remote_output_slots[i] = 2;
 
+        event_buffer[i]   = new ShogunQueue<ShogunEvent*>( 1024 );
+        inputQueues[i]    = new ShogunQueue<ShogunEvent*>( queue_slots );
         pendingOutputs[i] = new ShogunEvent*[output_message_slots];
     }
 
@@ -139,6 +144,10 @@ bool ShogunComponent::processInputEvent(uint32_t src_port, ShogunEvent* event)
       src_port,
       event->getPayload()->dest);
 
+   if (inputQueues[src_port]->full()) {
+      output->fatal(CALL_INFO, 4, 0, "Error: recv event for port %" PRIu32 " but queues are full\n", src_port);
+   }
+
    pending_events++;
    input_events_this_cycle[src_port]++;
    inputQueues[src_port]->push(event);
@@ -156,9 +165,17 @@ bool ShogunComponent::processInputEvent(uint32_t src_port, ShogunEvent* event)
 bool ShogunComponent::tick(SST::Cycle_t currentCycle)
 {
     output->verbose(CALL_INFO, 4, 0, "TICK() START [%30" PRIu64 "] ********************\n", static_cast<uint64_t>(currentCycle));
+    eventCycles->addData(1);
+
     printStatus();
 
-    eventCycles->addData(1);
+    // Migrate events across the cross-bar
+    arb->moveEvents( events_per_clock, port_count, inputQueues, output_message_slots, pendingOutputs, static_cast<uint64_t>( currentCycle ) );
+    printStatus();
+
+    // Send any events which can be sent this cycle
+    emitOutputs();
+    printStatus();
 
     // Accept any incoming requests that were delayed because of port limits
     for (int32_t src_port = 0; src_port < port_count; ++src_port) {
@@ -172,14 +189,6 @@ bool ShogunComponent::tick(SST::Cycle_t currentCycle)
          processInputEvent( src_port, event_buffer[src_port]->pop() );
       }
     }
-
-    // Migrate events across the cross-bar
-    arb->moveEvents( events_per_clock, port_count, inputQueues, output_message_slots, pendingOutputs, static_cast<uint64_t>( currentCycle ) );
-    printStatus();
-
-    // Send any events which can be sent this cycle
-    emitOutputs();
-    printStatus();
 
     output->verbose(CALL_INFO, 4, 0, "Pending event count: %d\n", pending_events);
     // If we have pending events to process, then schedule another tick
@@ -324,11 +333,6 @@ void ShogunComponent::handleIncoming(SST::Event* event)
             event_buffer[src_port]->push(incomingShogunEv);
          }
       } else {
-
-         if (inputQueues[src_port]->full()) {
-            output->fatal(CALL_INFO, 4, 0, "Error: recv event for port %" PRIu32 " but queues are full\n", src_port);
-         }
-
          processInputEvent( src_port, incomingShogunEv );
       }
     } else {
