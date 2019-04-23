@@ -85,6 +85,7 @@ private:
     virtual bool tick(SST::Cycle_t);
     //void tickEvent( SST::Event* ev );
     void handleIncoming(SST::Event* event);
+    bool processInputEvent(uint32_t src_port, ShogunEvent* event);
 
     void clearInputs();
     void clearOutputs();

@@ -133,6 +133,27 @@ ShogunComponent::ShogunComponent()
     // for serialization only
 }
 
+bool ShogunComponent::processInputEvent(uint32_t src_port, ShogunEvent* event)
+{
+
+   output->verbose(CALL_INFO, 4, 0, "-> recv from %d dest: %d\n",
+      src_port,
+      event->getPayload()->dest);
+
+   pending_events++;
+   input_events_this_cycle[src_port]++;
+   inputQueues[src_port]->push(event);
+   stats->getInputPacketCount(src_port)->addData(1);
+
+   // Reregister clock handler in the event that it has not been done
+   if (!handlerRegistered) {
+      output->verbose(CALL_INFO, 4, 0, "Re-registering clock handlers...\n");
+      reregisterClock(tc, clockTickHandler);
+      handlerRegistered = true;
+   }
+
+}
+
 bool ShogunComponent::tick(SST::Cycle_t currentCycle)
 {
     output->verbose(CALL_INFO, 4, 0, "TICK() START [%30" PRIu64 "] ********************\n", static_cast<uint64_t>(currentCycle));
@@ -149,14 +170,7 @@ bool ShogunComponent::tick(SST::Cycle_t currentCycle)
                break;
          }
 
-         output->verbose(CALL_INFO, 4, 0, "-> recv from %d dest: %d\n",
-            src_port,
-            event_buffer[src_port]->peek()->getPayload()->dest);
-
-         input_events_this_cycle[src_port]++;
-         inputQueues[src_port]->push(event_buffer[src_port]->pop());
-         pending_events++;
-         stats->getInputPacketCount(src_port)->addData(1);
+         processInputEvent( src_port, event_buffer[src_port]->pop() );
       }
     }
 
@@ -314,21 +328,7 @@ void ShogunComponent::handleIncoming(SST::Event* event)
             output->fatal(CALL_INFO, 4, 0, "Error: recv event for port %d but queues are full\n", src_port);
          }
 
-         output->verbose(CALL_INFO, 4, 0, "-> recv from %d dest: %d\n",
-            src_port,
-            incomingShogunEv->getPayload()->dest);
-
-         input_events_this_cycle[src_port]++;
-         inputQueues[src_port]->push(incomingShogunEv);
-         pending_events++;
-         stats->getInputPacketCount(src_port)->addData(1);
-
-         // Reregister clock handler in the event that it has not been done
-         if (!handlerRegistered) {
-            output->verbose(CALL_INFO, 4, 0, "Re-registering clock handlers...\n");
-            reregisterClock(tc, clockTickHandler);
-            handlerRegistered = true;
-         }
+         processInputEvent( src_port, incomingShogunEv );
       }
     } else {
         ShogunCreditEvent* creditEv = dynamic_cast<ShogunCreditEvent*>(event);
