@@ -95,8 +95,6 @@ private:
     int32_t queue_slots;
     int32_t pending_events;
 
-    uint32_t previousCycle;
-
     uint32_t events_per_clock;
     uint32_t input_message_slots;
     uint32_t output_message_slots;

@@ -103,8 +103,6 @@ ShogunComponent::ShogunComponent(ComponentId_t id, Params& params)
         }
     }
 
-    previousCycle = 0;
-
     stats = new ShogunStatisticsBundle(port_count);
     stats->registerStatistics(this);
 
@@ -160,11 +158,6 @@ bool ShogunComponent::tick(SST::Cycle_t currentCycle)
     output->verbose(CALL_INFO, 4, 0, "TICK() START [%30" PRIu64 "] ********************\n", static_cast<uint64_t>(currentCycle));
     printStatus();
 
-    if( previousCycle + 1 != currentCycle ) {
-       zeroEventCycles->addData(currentCycle - previousCycle);
-    }
-
-    previousCycle = currentCycle;
     eventCycles->addData(1);
 
     // Accept any incoming requests that were delayed because of port limits
@@ -323,15 +316,17 @@ void ShogunComponent::handleIncoming(SST::Event* event)
 
       //Only want to actually process a limited number of input events per cycle and need to silently buffer the rest
       if (input_events_this_cycle[src_port] == input_message_slots) {
+         output->verbose(CALL_INFO, 10, 0, "port %" PRIu32 " has no free input slots\n", src_port);
+
          if (event_buffer[src_port]->full()) {
-            output->fatal(CALL_INFO, 4, 0, "Error: recv event for port %d but event buffer is full\n", src_port);
+            output->fatal(CALL_INFO, 4, 0, "Error: recv event for port %" PRIu32 " but event buffer is full\n", src_port);
          } else {
             event_buffer[src_port]->push(incomingShogunEv);
          }
       } else {
 
          if (inputQueues[src_port]->full()) {
-            output->fatal(CALL_INFO, 4, 0, "Error: recv event for port %d but queues are full\n", src_port);
+            output->fatal(CALL_INFO, 4, 0, "Error: recv event for port %" PRIu32 " but queues are full\n", src_port);
          }
 
          processInputEvent( src_port, incomingShogunEv );
@@ -342,7 +337,7 @@ void ShogunComponent::handleIncoming(SST::Event* event)
         if (nullptr != creditEv) {
             const int src_port = creditEv->getSrc();
 
-            output->verbose(CALL_INFO, 4, 0, "-> recv-credit from %d\n", src_port);
+            output->verbose(CALL_INFO, 4, 0, "-> recv-credit from %" PRIu32 "\n", src_port);
             remote_output_slots[src_port]++;
         } else {
             output->fatal(CALL_INFO, -1, "Error: received a non-shogun compatible event.\n");
