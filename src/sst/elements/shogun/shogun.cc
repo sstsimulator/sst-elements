@@ -103,6 +103,8 @@ ShogunComponent::ShogunComponent(ComponentId_t id, Params& params)
         }
     }
 
+    previousCycle = 0;
+
     stats = new ShogunStatisticsBundle(port_count);
     stats->registerStatistics(this);
 
@@ -135,7 +137,6 @@ ShogunComponent::ShogunComponent()
 
 bool ShogunComponent::processInputEvent(uint32_t src_port, ShogunEvent* event)
 {
-
    output->verbose(CALL_INFO, 4, 0, "-> recv from %d dest: %d\n",
       src_port,
       event->getPayload()->dest);
@@ -159,6 +160,11 @@ bool ShogunComponent::tick(SST::Cycle_t currentCycle)
     output->verbose(CALL_INFO, 4, 0, "TICK() START [%30" PRIu64 "] ********************\n", static_cast<uint64_t>(currentCycle));
     printStatus();
 
+    if( previousCycle + 1 != currentCycle ) {
+       zeroEventCycles->addData(currentCycle - previousCycle);
+    }
+
+    previousCycle = currentCycle;
     eventCycles->addData(1);
 
     // Accept any incoming requests that were delayed because of port limits

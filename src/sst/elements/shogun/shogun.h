@@ -83,7 +83,6 @@ private:
     void operator=(const ShogunComponent&); // do not implement
 
     virtual bool tick(SST::Cycle_t);
-    //void tickEvent( SST::Event* ev );
     void handleIncoming(SST::Event* event);
     bool processInputEvent(uint32_t src_port, ShogunEvent* event);
 
@@ -95,6 +94,8 @@ private:
     int32_t port_count;
     int32_t queue_slots;
     int32_t pending_events;
+
+    uint32_t previousCycle;
 
     uint32_t events_per_clock;
     uint32_t input_message_slots;
