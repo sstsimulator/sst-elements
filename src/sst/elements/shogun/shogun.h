@@ -99,6 +99,9 @@ private:
     uint32_t input_message_slots;
     uint32_t output_message_slots;
 
+    uint32_t* input_events_this_cycle;
+    ShogunQueue<ShogunEvent*>** event_buffer;
+
     ShogunStatisticsBundle* stats;
     SST::Link** links;
     SST::Link* clockLink;

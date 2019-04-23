@@ -82,12 +82,16 @@ ShogunComponent::ShogunComponent(ComponentId_t id, Params& params)
     delete[] linkName;
 
     output->verbose(CALL_INFO, 1, 0, "Allocating pending input/output queues...\n" );
+    input_events_this_cycle = (uint32_t*) malloc( sizeof(uint32_t) * port_count );
+    event_buffer = (ShogunQueue<ShogunEvent*>**) malloc( sizeof(ShogunQueue<ShogunEvent*>*) * port_count );
     inputQueues = (ShogunQueue<ShogunEvent*>**) malloc( sizeof(ShogunQueue<ShogunEvent*>*) * port_count );
     remote_output_slots = (int*) malloc( sizeof(int) * port_count );
     pendingOutputs = new ShogunEvent**[port_count];
 
     for (int32_t i = 0; i < port_count; ++i) {
-        inputQueues[i] = new ShogunQueue<ShogunEvent*>( queue_slots );
+        input_events_this_cycle[i] = 0;
+        event_buffer[i] = new ShogunQueue<ShogunEvent*>( 1024 );
+        inputQueues[i]  = new ShogunQueue<ShogunEvent*>( queue_slots );
         remote_output_slots[i] = 2;
 
         pendingOutputs[i] = new ShogunEvent*[output_message_slots];
@@ -138,13 +142,31 @@ bool ShogunComponent::tick(SST::Cycle_t currentCycle)
 
     // Migrate events across the cross-bar
     arb->moveEvents( events_per_clock, port_count, inputQueues, output_message_slots, pendingOutputs, static_cast<uint64_t>( currentCycle ) );
-
     printStatus();
 
     // Send any events which can be sent this cycle
     emitOutputs();
-
     printStatus();
+
+    // Accept any incoming requests that were delayed because of port limits
+    for (int32_t src_port = 0; src_port < port_count; ++src_port) {
+      input_events_this_cycle[src_port] = 0;
+
+      while (!event_buffer[src_port]->empty()) {
+         if (input_events_this_cycle[src_port] == input_message_slots) {
+               break;
+         }
+
+         output->verbose(CALL_INFO, 4, 0, "-> recv from %d dest: %d\n",
+            src_port,
+            event_buffer[src_port]->peek()->getPayload()->dest);
+
+         input_events_this_cycle[src_port]++;
+         inputQueues[src_port]->push(event_buffer[src_port]->pop());
+         pending_events++;
+         stats->getInputPacketCount(src_port)->addData(1);
+      }
+    }
 
     output->verbose(CALL_INFO, 4, 0, "Pending event count: %d\n", pending_events);
     // If we have pending events to process, then schedule another tick
@@ -188,7 +210,7 @@ void ShogunComponent::init(unsigned int phase)
 
                     for (int32_t j = 0; j < port_count; ++j) {
                         if (i != j) {
-                            output->verbose(CALL_INFO, 4, 0, "sending untimed data from %d to %d\n", i, j);                             
+                            output->verbose(CALL_INFO, 4, 0, "sending untimed data from %d to %d\n", i, j);
                             links[j]->sendUntimedData(ev->clone());
                         }
                     }
@@ -279,24 +301,35 @@ void ShogunComponent::handleIncoming(SST::Event* event)
     if (nullptr != incomingShogunEv) {
         const int src_port = incomingShogunEv->getPayload()->src;
 
-        if (inputQueues[src_port]->full()) {
-            output->fatal(CALL_INFO, 4, 0, "Error: recv event for port %d but queues are full\n", src_port);
-        }
+      //Only want to actually process a limited number of input events per cycle and need to silently buffer the rest
+      if (input_events_this_cycle[src_port] == input_message_slots) {
+         if (event_buffer[src_port]->full()) {
+            output->fatal(CALL_INFO, 4, 0, "Error: recv event for port %d but event buffer is full\n", src_port);
+         } else {
+            event_buffer[src_port]->push(incomingShogunEv);
+         }
+      } else {
 
-        output->verbose(CALL_INFO, 4, 0, "-> recv from %d dest: %d\n",
+         if (inputQueues[src_port]->full()) {
+            output->fatal(CALL_INFO, 4, 0, "Error: recv event for port %d but queues are full\n", src_port);
+         }
+
+         output->verbose(CALL_INFO, 4, 0, "-> recv from %d dest: %d\n",
             src_port,
             incomingShogunEv->getPayload()->dest);
 
-        inputQueues[src_port]->push(incomingShogunEv);
-        pending_events++;
-        stats->getInputPacketCount(src_port)->addData(1);
+         input_events_this_cycle[src_port]++;
+         inputQueues[src_port]->push(incomingShogunEv);
+         pending_events++;
+         stats->getInputPacketCount(src_port)->addData(1);
 
-        // Reregister clock handler in the event that it has not been done
-        if (!handlerRegistered) {
+         // Reregister clock handler in the event that it has not been done
+         if (!handlerRegistered) {
             output->verbose(CALL_INFO, 4, 0, "Re-registering clock handlers...\n");
             reregisterClock(tc, clockTickHandler);
             handlerRegistered = true;
-        }
+         }
+      }
     } else {
         ShogunCreditEvent* creditEv = dynamic_cast<ShogunCreditEvent*>(event);
 
