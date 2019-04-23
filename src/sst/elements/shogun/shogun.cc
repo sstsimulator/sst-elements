@@ -140,14 +140,6 @@ bool ShogunComponent::tick(SST::Cycle_t currentCycle)
 
     eventCycles->addData(1);
 
-    // Migrate events across the cross-bar
-    arb->moveEvents( events_per_clock, port_count, inputQueues, output_message_slots, pendingOutputs, static_cast<uint64_t>( currentCycle ) );
-    printStatus();
-
-    // Send any events which can be sent this cycle
-    emitOutputs();
-    printStatus();
-
     // Accept any incoming requests that were delayed because of port limits
     for (int32_t src_port = 0; src_port < port_count; ++src_port) {
       input_events_this_cycle[src_port] = 0;
@@ -167,6 +159,14 @@ bool ShogunComponent::tick(SST::Cycle_t currentCycle)
          stats->getInputPacketCount(src_port)->addData(1);
       }
     }
+
+    // Migrate events across the cross-bar
+    arb->moveEvents( events_per_clock, port_count, inputQueues, output_message_slots, pendingOutputs, static_cast<uint64_t>( currentCycle ) );
+    printStatus();
+
+    // Send any events which can be sent this cycle
+    emitOutputs();
+    printStatus();
 
     output->verbose(CALL_INFO, 4, 0, "Pending event count: %d\n", pending_events);
     // If we have pending events to process, then schedule another tick
