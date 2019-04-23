@@ -301,7 +301,7 @@ for next_group_id in range(hbmStacks):
          "cache_size" : "192KiB",
          "cache_type" : "noninclusive",
          "coherence_protocol" : "MESI",
-         "mshr_latency_cycles" : "32",
+         #"mshr_latency_cycles" : "32",
          "debug" : globalDebug,
          "debug_level" : globalLevel,
          "memNIC.addr_range_end" : endAddr,
