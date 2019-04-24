@@ -210,7 +210,7 @@ void ShogunComponent::emitOutputs()
 
         for (uint32_t j = 0; j < output_message_slots; ++j) {
             if( nullptr != pendingOutputs[i][j] ) {
-                output->verbose(CALL_INFO, 4, 0, "  -> output is not null, remote-slot-count: %" PRIi32 ", src=%5d" PRIi32 "\n", remote_output_slots[i],
+                output->verbose(CALL_INFO, 4, 0, "  -> output is not null, remote-slot-count: %" PRIi32 ", src=%5" PRIi32 "\n", remote_output_slots[i],
                 pendingOutputs[i][j]->getSource());
 
                 if (remote_output_slots[i] > 0) {
@@ -256,7 +256,7 @@ void ShogunComponent::printStatus()
     output->verbose(CALL_INFO, 4, 0, "BEGIN X-BAR STATUS REPORT ====================================================\n");
 
     for (int32_t i = 0; i < port_count; ++i) {
-        output->verbose(CALL_INFO, 4, 0, "port %5d" PRIi32 " / in-q-count: %5d" PRIi32 " / remote-slots: %5d" PRIi32 " / out-q:",
+        output->verbose(CALL_INFO, 4, 0, "port %5" PRIi32 " / in-q-count: %5" PRIi32 " / remote-slots: %5" PRIi32 " / out-q:",
         i, inputQueues[i]->count(), remote_output_slots[i]);
 
         if (output->getVerboseLevel() >= 4) {

@@ -61,7 +61,7 @@ void ShogunNIC::sendInitData(SimpleNetwork::Request* req)
 
 SimpleNetwork::Request* ShogunNIC::recvInitData()
 {
-    output->verbose(CALL_INFO, 8, 0, "Recv init-data on net: %5d" PRIi32 " init-events have %5d" PRIi32 " events.\n", netID, initReqs.size());
+    output->verbose(CALL_INFO, 8, 0, "Recv init-data on net: %5" PRIi32 " init-events have %5" PRIi32 " events.\n", netID, initReqs.size());
 
     if (!initReqs.empty()) {
         SimpleNetwork::Request* req = initReqs.front();
@@ -77,7 +77,7 @@ SimpleNetwork::Request* ShogunNIC::recvInitData()
 bool ShogunNIC::send(SimpleNetwork::Request* req, int vn)
 {
     if (netID > -1) {
-        output->verbose(CALL_INFO, 8, 0, "Send: remote-slots: %5d" PRIi32 "\n", remote_input_slots);
+        output->verbose(CALL_INFO, 8, 0, "Send: remote-slots: %5" PRIi32 "\n", remote_input_slots);
 
         if (remote_input_slots > 0) {
             ShogunEvent* newEv = new ShogunEvent(req->dest, netID);
@@ -92,7 +92,7 @@ bool ShogunNIC::send(SimpleNetwork::Request* req, int vn)
             }
 
             remote_input_slots--;
-            output->verbose(CALL_INFO, 8, 0, "-> sent, remote slots now %5d" PRIi32 ", dest=%5d" PRIi32 "\n", remote_input_slots, req->dest);
+            output->verbose(CALL_INFO, 8, 0, "-> sent, remote slots now %5" PRIi32 ", dest=%5" PRIi32 "\n", remote_input_slots, req->dest);
 
             return true;
         } else {
@@ -224,7 +224,7 @@ void ShogunNIC::recvLinkEvent(SST::Event* ev)
     ShogunEvent* inEv = dynamic_cast<ShogunEvent*>(ev);
 
     if (nullptr != inEv) {
-        output->verbose(CALL_INFO, 8, 0, "Recv link in handler: current pending request count: %5d" PRIi32 "\n", reqQ->count());
+        output->verbose(CALL_INFO, 8, 0, "Recv link in handler: current pending request count: %5" PRIi32 "\n", reqQ->count());
 
         if (reqQ->full()) {
             output->fatal(CALL_INFO, -1, "Error - received a message but the NIC queues are full.\n");
@@ -243,7 +243,7 @@ void ShogunNIC::recvLinkEvent(SST::Event* ev)
 
         if (nullptr != creditEv) {
             remote_input_slots++;
-            output->verbose(CALL_INFO, 8, 0, "Recv link credit event, remote_input_slots now set to: %5d" PRIi32 "\n", remote_input_slots);
+            output->verbose(CALL_INFO, 8, 0, "Recv link credit event, remote_input_slots now set to: %5" PRIi32 "\n", remote_input_slots);
         } else {
             ShogunInitEvent* initEv = dynamic_cast<ShogunInitEvent*>(ev);
 
