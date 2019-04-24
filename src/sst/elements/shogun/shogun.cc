@@ -32,8 +32,8 @@ ShogunComponent::ShogunComponent(ComponentId_t id, Params& params)
 {
     const std::string clock_rate = params.find<std::string>("clock", "1.0GHz");
     queue_slots = params.find<uint64_t>("queue_slots", 64);
-    input_message_slots  = params.find<int32_t>("input_message_slots", 1);
-    output_message_slots = params.find<int32_t>("output_message_slots", 1);
+    input_message_slots  = params.find<int32_t>("in_msg_per_cycle", 1);
+    output_message_slots = params.find<int32_t>("out_msg_per_cycle", 1);
     // Can't really have a negative number of output slots, so make it large-ish
     if (output_message_slots < 0) {
        output_message_slots = 256;
