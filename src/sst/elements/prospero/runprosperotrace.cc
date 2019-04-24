@@ -75,6 +75,8 @@ int main(int argc, char* argv[]) {
 	appParams.push_back(const_cast<char*>(PINTOOL_EXECUTABLE));
 	appParams.push_back(pinToolMarker);
 	appParams.push_back(toolPath);
+        
+        bool uselucky = false;
 
 	for(int i = 1; i < argc; i++) {
 		if(foundMarker) {
@@ -93,7 +95,9 @@ int main(int argc, char* argv[]) {
 
 					i++;
 				}
-			} else {
+			} else if (std::strcmp(argv[i], "-ifeellucky") == 0) {
+                            uselucky = true;
+                        } else {
 				prosParams.push_back(argv[i]);
 			}
 		}
@@ -203,6 +207,11 @@ int main(int argc, char* argv[]) {
 		std::vector<char*> execParams;
 
 		execParams.push_back(appParams[0]);
+
+                if (uselucky) {
+                    char* lucky = const_cast<char*>("-ifeellucky");
+                    execParams.push_back(lucky);
+                }
 
 		char* injectionPtr = const_cast<char*>("-injection");
 		execParams.push_back(injectionPtr);
