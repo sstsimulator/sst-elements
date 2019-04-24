@@ -37,7 +37,7 @@ namespace Shogun {
             char* subIDName = new char[256];
 
             for (int i = 0; i < port_count; ++i) {
-                sprintf(subIDName, "port%d", i);
+                sprintf(subIDName, "port%" PRIi32, i);
                 output_packet_count[i] = comp->registerStatistic<uint64_t>("output_packet_count", subIDName);
                 input_packet_count[i] = comp->registerStatistic<uint64_t>("input_packet_count", subIDName);
             }
