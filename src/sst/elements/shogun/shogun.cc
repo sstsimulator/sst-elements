@@ -27,19 +27,20 @@
 using namespace SST;
 using namespace SST::Shogun;
 
-#define SHOGUN_MAX(a,b) \
-({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
-
 ShogunComponent::ShogunComponent(ComponentId_t id, Params& params)
     : Component(id)
 {
     const std::string clock_rate = params.find<std::string>("clock", "1.0GHz");
     queue_slots = params.find<uint64_t>("queue_slots", 64);
-    input_message_slots = params.find<uint32_t>("input_message_slots", 1);
-    output_message_slots = params.find<uint32_t>("output_message_slots", 1);
+    input_message_slots  = params.find<int32_t>("input_message_slots", 1);
+    output_message_slots = params.find<int32_t>("output_message_slots", 1);
+    // Can't really have a negative number of output slots, so make it large-ish
+    if (output_message_slots < 0) {
+       output_message_slots = 256;
+    }
+
     pending_events = 0;
 
-    events_per_clock = SHOGUN_MAX(input_message_slots, output_message_slots);
     arb = new ShogunRoundRobinArbitrator();
 
     const int32_t verbosity = params.find<uint32_t>("verbose", 0);
@@ -75,8 +76,6 @@ ShogunComponent::ShogunComponent(ComponentId_t id, Params& params)
         if (nullptr == links[i]) {
             output->fatal(CALL_INFO, -1, "Failed to configure link on port %d\n", i);
         }
-
-        //	links[i]->setPolling();
     }
 
     delete[] linkName;
@@ -137,7 +136,7 @@ bool ShogunComponent::tick(SST::Cycle_t currentCycle)
     eventCycles->addData(1);
 
     // Migrate events across the cross-bar
-    arb->moveEvents( events_per_clock, port_count, inputQueues, output_message_slots, pendingOutputs, static_cast<uint64_t>( currentCycle ) );
+    arb->moveEvents( input_message_slots, port_count, inputQueues, output_message_slots, pendingOutputs, static_cast<uint64_t>( currentCycle ) );
 
     printStatus();
 
@@ -188,7 +187,7 @@ void ShogunComponent::init(unsigned int phase)
 
                     for (int32_t j = 0; j < port_count; ++j) {
                         if (i != j) {
-                            output->verbose(CALL_INFO, 4, 0, "sending untimed data from %d to %d\n", i, j);                             
+                            output->verbose(CALL_INFO, 4, 0, "sending untimed data from %d to %d\n", i, j);
                             links[j]->sendUntimedData(ev->clone());
                         }
                     }
