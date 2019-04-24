@@ -1,3 +1,7 @@
+l2cache_0: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 32 cycles.
+l2cache_1: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 32 cycles.
+l2cache_2: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 32 cycles.
+l2cache_3: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 32 cycles.
  cpu_xbar.output_packet_count.port0 : Accumulator : Sum.u64 = 399488; SumSQ.u64 = 399488; Count.u64 = 399488; Min.u64 = 1; Max.u64 = 1; 
  cpu_xbar.input_packet_count.port0 : Accumulator : Sum.u64 = 399488; SumSQ.u64 = 399488; Count.u64 = 399488; Min.u64 = 1; Max.u64 = 1; 
  cpu_xbar.output_packet_count.port1 : Accumulator : Sum.u64 = 399490; SumSQ.u64 = 399490; Count.u64 = 399490; Min.u64 = 1; Max.u64 = 1; 
