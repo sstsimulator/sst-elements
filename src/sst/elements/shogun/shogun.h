@@ -47,8 +47,8 @@ public:
         { "arbitration",            "Select the arbitration scheme", "roundrobin" },
         { "clock",                  "Clock Frequency for the crossbar", "1.0GHz" },
         { "queue_slots",            "Depth of input queue", "64" },
-        { "input_message_slots",    "Number of messages injested per cycle", "1" },
-        { "output_message_slots",   "Number of messages ejected per cycle", "1" },
+        { "input_message_slots",    "Number of messages injested per cycle; -1 is unlimited", "1" },
+        { "output_message_slots",   "Number of messages ejected per cycle; -1 is unlimited", "1" },
     )
 
     SST_ELI_DOCUMENT_STATISTICS(
@@ -95,9 +95,8 @@ private:
     int32_t queue_slots;
     int32_t pending_events;
 
-    uint32_t events_per_clock;
-    uint32_t input_message_slots;
-    uint32_t output_message_slots;
+    int32_t  input_message_slots;
+    int32_t  output_message_slots;
 
     ShogunStatisticsBundle* stats;
     SST::Link** links;
