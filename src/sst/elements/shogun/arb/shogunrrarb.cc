@@ -21,7 +21,7 @@ void ShogunRoundRobinArbitrator::moveEvents(const int num_events,
                                             uint64_t cycle ) {
 
     output->verbose(CALL_INFO, 4, 0, "BEGIN: Arbitration --------------------------------------------------\n");
-    output->verbose(CALL_INFO, 4, 0, "-> start: %d\n", lastStart);
+    output->verbose(CALL_INFO, 4, 0, "-> start: %" PRIi32 "\n", lastStart);
 
     int32_t currentPort = lastStart;
     int32_t moved_count = 0;
@@ -29,14 +29,14 @@ void ShogunRoundRobinArbitrator::moveEvents(const int num_events,
     // RR, so iterate through the ports one at a time and process num_events from the queue
     for (int32_t i = 0; i < port_count; ++i) {
         auto nextQ = inputQueues[currentPort];
-        output->verbose(CALL_INFO, 4, 0, "-> processing port: %d, event-count: %d out of %d\n", currentPort,
+        output->verbose(CALL_INFO, 4, 0, "-> processing port: %" PRIi32 ", event-count: %" PRIi32 " out of %" PRIi32 "\n", currentPort,
                         nextQ->count(), num_events);
 
         //Want to send num_events for each port
         int32_t j = 0;
         while (j < num_events || num_events == -1 ) {
             if (inputQueues[currentPort]->empty()) {
-                output->verbose(CALL_INFO, 4, 0, "  (%d)-> input queue empty...\n", j);
+                output->verbose(CALL_INFO, 4, 0, "  (%" PRIi32 ")-> input queue empty...\n", j);
                 break;
             } else {
 
@@ -44,12 +44,12 @@ void ShogunRoundRobinArbitrator::moveEvents(const int num_events,
 
                 int32_t k = 0;
                 while (k < output_slots) {
-                    output->verbose(CALL_INFO, 4, 0, "  (%d)-> attempting send from: %d to: %d, remote status: %s\n",
+                    output->verbose(CALL_INFO, 4, 0, "  (%" PRIi32 ")-> attempting send from: %" PRIi32 " to: %" PRIi32 ", remote status: %s\n",
                         j, pendingEv->getSource(), pendingEv->getDestination(),
                         outputEvents[pendingEv->getDestination()][k] == nullptr ? "empty" : "full");
 
                     if (outputEvents[pendingEv->getDestination()][k] == nullptr) {
-                        output->verbose(CALL_INFO, 4, 0, "  (%d)-> moving event to remote queue\n");
+                        output->verbose(CALL_INFO, 4, 0, "  (%" PRIi32 ")-> moving event to remote queue\n", j);
                         pendingEv = inputQueues[currentPort]->pop();
                         outputEvents[pendingEv->getDestination()][k] = pendingEv;
                         moved_count++;
@@ -61,7 +61,7 @@ void ShogunRoundRobinArbitrator::moveEvents(const int num_events,
                 }
 
                 if ( k == output_slots ) {
-                   output->verbose(CALL_INFO, 4, 0, "  (%d)-> output queue full...\n", j);
+                   output->verbose(CALL_INFO, 4, 0, "  (%" PRIi32 ")-> output queue full...\n", j);
                    break;
                 }
             }
@@ -75,6 +75,6 @@ void ShogunRoundRobinArbitrator::moveEvents(const int num_events,
     lastStart = nextPort(port_count, lastStart);
 
     bundle->getPacketsMoved()->addData(moved_count);
-    output->verbose(CALL_INFO, 4, 0, "-> next-start: %d\n", lastStart);
+    output->verbose(CALL_INFO, 4, 0, "-> next-start: %" PRIi32 "\n", lastStart);
     output->verbose(CALL_INFO, 4, 0, "END: Arbitration ----------------------------------------------------\n");
 }

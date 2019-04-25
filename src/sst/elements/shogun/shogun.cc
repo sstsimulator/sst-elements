@@ -52,7 +52,7 @@ ShogunComponent::ShogunComponent(ComponentId_t id, Params& params)
 
     port_count = params.find<int32_t>("port_count", -1);
 
-    output->verbose(CALL_INFO, 1, 0, "Creating Shogun crossbar at %s clock rate and %d ports\n",
+    output->verbose(CALL_INFO, 1, 0, "Creating Shogun crossbar at %s clock rate and %" PRIi32 " ports\n",
         clock_rate.c_str(), port_count);
 
     clockTickHandler = new Clock::Handler<ShogunComponent>(this, &ShogunComponent::tick);
@@ -63,18 +63,18 @@ ShogunComponent::ShogunComponent(ComponentId_t id, Params& params)
         output->fatal(CALL_INFO, -1, "Error: you specified a port count of less than or equal to zero.\n");
     }
 
-    output->verbose(CALL_INFO, 1, 0, "Connecting %d links...\n", port_count);
+    output->verbose(CALL_INFO, 1, 0, "Connecting %" PRIi32 " links...\n", port_count);
     links = (SST::Link**)malloc(sizeof(SST::Link*) * (port_count));
     char* linkName = new char[256];
 
     for (int32_t i = 0; i < port_count; ++i) {
-        sprintf(linkName, "port%d", i);
+        sprintf(linkName, "port%" PRIi32, i);
         output->verbose(CALL_INFO, 1, 0, "Configuring port %s ...\n", linkName);
 
         links[i] = configureLink(linkName, new Event::Handler<ShogunComponent>(this, &ShogunComponent::handleIncoming));
 
         if (nullptr == links[i]) {
-            output->fatal(CALL_INFO, -1, "Failed to configure link on port %d\n", i);
+            output->fatal(CALL_INFO, -1, "Failed to configure link on port %" PRIi32 "\n", i);
         }
     }
 
@@ -145,7 +145,7 @@ bool ShogunComponent::tick(SST::Cycle_t currentCycle)
 
     printStatus();
 
-    output->verbose(CALL_INFO, 4, 0, "Pending event count: %d\n", pending_events);
+    output->verbose(CALL_INFO, 4, 0, "Pending event count: %" PRIi32 "\n", pending_events);
     // If we have pending events to process, then schedule another tick
     if (0 == pending_events) {
         if (handlerRegistered) {
@@ -164,7 +164,7 @@ bool ShogunComponent::tick(SST::Cycle_t currentCycle)
 
 void ShogunComponent::init(unsigned int phase)
 {
-    output->verbose(CALL_INFO, 2, 0, "Executing initialization phase %u...\n", phase);
+    output->verbose(CALL_INFO, 2, 0, "Executing initialization phase %u" PRIu32 "...\n", phase);
 
     if (0 == phase) {
         for (int32_t i = 0; i < port_count; ++i) {
@@ -187,7 +187,7 @@ void ShogunComponent::init(unsigned int phase)
 
                     for (int32_t j = 0; j < port_count; ++j) {
                         if (i != j) {
-                            output->verbose(CALL_INFO, 4, 0, "sending untimed data from %d to %d\n", i, j);
+                            output->verbose(CALL_INFO, 4, 0, "sending untimed data from %" PRIi32 " to %" PRIi32 "\n", i, j);
                             links[j]->sendUntimedData(ev->clone());
                         }
                     }
@@ -206,15 +206,15 @@ void ShogunComponent::emitOutputs()
     output->verbose(CALL_INFO, 4, 0, "BEGIN: emitOutputs -----------------------------------------------\n");
 
     for (int32_t i = 0; i < port_count; ++i) {
-        output->verbose(CALL_INFO, 4, 0, "-> Processing port %d:\n", i);
+        output->verbose(CALL_INFO, 4, 0, "-> Processing port %" PRIi32 ":\n", i);
 
         for (uint32_t j = 0; j < output_message_slots; ++j) {
             if( nullptr != pendingOutputs[i][j] ) {
-                output->verbose(CALL_INFO, 4, 0, "  -> output is not null, remote-slot-count: %d, src=%5d\n", remote_output_slots[i],
+                output->verbose(CALL_INFO, 4, 0, "  -> output is not null, remote-slot-count: %" PRIi32 ", src=%5" PRIi32 "\n", remote_output_slots[i],
                 pendingOutputs[i][j]->getSource());
 
                 if (remote_output_slots[i] > 0) {
-                    output->verbose(CALL_INFO, 4, 0, "    -> sending event (has entry and free %d slots)\n", remote_output_slots[i]);
+                    output->verbose(CALL_INFO, 4, 0, "    -> sending event (has entry and free %" PRIi32 " slots)\n", remote_output_slots[i]);
                     stats->getOutputPacketCount(i)->addData(1);
 
                     links[i]->send( pendingOutputs[i][j] );
@@ -223,7 +223,7 @@ void ShogunComponent::emitOutputs()
                     remote_output_slots[i]--;
                     pending_events--;
                 } else {
-                    output->verbose(CALL_INFO, 4, 0, "    -> no free slots, event send disabled for this round (slots: %d)\n", remote_output_slots[i]);
+                    output->verbose(CALL_INFO, 4, 0, "    -> no free slots, event send disabled for this round (slots: %" PRIi32 ")\n", remote_output_slots[i]);
                 }
             }
         }
@@ -256,8 +256,8 @@ void ShogunComponent::printStatus()
     output->verbose(CALL_INFO, 4, 0, "BEGIN X-BAR STATUS REPORT ====================================================\n");
 
     for (int32_t i = 0; i < port_count; ++i) {
-        output->verbose(CALL_INFO, 4, 0, "port %5d / in-q-count: %5d / remote-slots: %5d / out-q:", i,
-        inputQueues[i]->count(), remote_output_slots[i]);
+        output->verbose(CALL_INFO, 4, 0, "port %5" PRIi32 " / in-q-count: %5" PRIi32 " / remote-slots: %5" PRIi32 " / out-q:",
+        i, inputQueues[i]->count(), remote_output_slots[i]);
 
         if (output->getVerboseLevel() >= 4) {
             for (uint32_t j = 0; j < output_message_slots; ++j) {
@@ -279,10 +279,10 @@ void ShogunComponent::handleIncoming(SST::Event* event)
         const int src_port = incomingShogunEv->getPayload()->src;
 
         if (inputQueues[src_port]->full()) {
-            output->fatal(CALL_INFO, 4, 0, "Error: recv event for port %d but queues are full\n", src_port);
+            output->fatal(CALL_INFO, 4, 0, "Error: recv event for port %" PRIi32 " but queues are full\n", src_port);
         }
 
-        output->verbose(CALL_INFO, 4, 0, "-> recv from %d dest: %d\n",
+        output->verbose(CALL_INFO, 4, 0, "-> recv from %" PRIi32 " dest: %" PRIi32 "\n",
             src_port,
             incomingShogunEv->getPayload()->dest);
 
@@ -302,7 +302,7 @@ void ShogunComponent::handleIncoming(SST::Event* event)
         if (nullptr != creditEv) {
             const int src_port = creditEv->getSrc();
 
-            output->verbose(CALL_INFO, 4, 0, "-> recv-credit from %d\n", src_port);
+            output->verbose(CALL_INFO, 4, 0, "-> recv-credit from %" PRIi32 "\n", src_port);
             remote_output_slots[src_port]++;
         } else {
             output->fatal(CALL_INFO, -1, "Error: received a non-shogun compatible event.\n");
