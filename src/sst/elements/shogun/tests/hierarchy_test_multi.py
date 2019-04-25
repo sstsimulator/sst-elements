@@ -46,8 +46,8 @@ router.addParams({
    "verbose" : "0",
    "buffer_depth" : "64",
    "clock" : "1200MHz",
-   "in_msg_per_cycle" : "1",
-   "out_msg_per_cycle" : "1",
+   "in_msg_per_cycle" : "3",
+   "out_msg_per_cycle" : "4",
    "port_count" : router_ports,
 })
 
