@@ -122,7 +122,7 @@ ShogunComponent::~ShogunComponent()
 
     delete [] pendingOutputs;
 
-    //TODO add accumlation of remainder of zero cycles
+    //TODO add accumulation of remainder of zero cycles
 }
 
 ShogunComponent::ShogunComponent()
@@ -137,9 +137,9 @@ bool ShogunComponent::tick(SST::Cycle_t currentCycle)
     if( previousCycle + 1 != currentCycle ) {
        zeroEventCycles->addData(currentCycle - previousCycle);
     }
-
-    eventCycles->addData(1);
+    
     previousCycle = currentCycle;
+    eventCycles->addData(1);
 
     printStatus();
 
