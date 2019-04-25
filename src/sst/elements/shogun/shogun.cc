@@ -39,6 +39,7 @@ ShogunComponent::ShogunComponent(ComponentId_t id, Params& params)
        output_message_slots = 256;
     }
 
+    previousCycle = 0;
     pending_events = 0;
 
     arb = new ShogunRoundRobinArbitrator();
@@ -120,6 +121,8 @@ ShogunComponent::~ShogunComponent()
     }
 
     delete [] pendingOutputs;
+
+    //TODO add accumlation of remainder of zero cycles
 }
 
 ShogunComponent::ShogunComponent()
@@ -131,9 +134,14 @@ ShogunComponent::ShogunComponent()
 bool ShogunComponent::tick(SST::Cycle_t currentCycle)
 {
     output->verbose(CALL_INFO, 4, 0, "TICK() START [%30" PRIu64 "] ********************\n", static_cast<uint64_t>(currentCycle));
-    printStatus();
+    if( previousCycle + 1 != currentCycle ) {
+       zeroEventCycles->addData(currentCycle - previousCycle);
+    }
 
     eventCycles->addData(1);
+    previousCycle = currentCycle;
+
+    printStatus();
 
     // Migrate events across the cross-bar
     arb->moveEvents( input_message_slots, port_count, inputQueues, output_message_slots, pendingOutputs, static_cast<uint64_t>( currentCycle ) );

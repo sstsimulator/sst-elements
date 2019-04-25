@@ -91,6 +91,8 @@ private:
     void populateInputs();
     void emitOutputs();
 
+    uint64_t previousCycle;
+
     int32_t port_count;
     int32_t queue_slots;
     int32_t pending_events;
