@@ -839,7 +839,7 @@ void DirectoryController::handlePutM(MemEvent * ev) {
             entry->setState(I);
             sendAckPut(ev);
             postRequestProcessing(ev, entry, true);  // profile & delete event
-            replayWaitingEvents(ev->getBaseAddr());
+            replayWaitingEvents(entry->getBaseAddr());
             updateCache(entry);
             break;
         case M_Inv:
