@@ -14,7 +14,6 @@ op.add_option("-m", "--memOut", action="store", type="int", dest="memOut", defau
 op.add_option("-a", "--assoc", action="store", type="int", dest="assoc", default=4)
 op.add_option("-g", "--graph", action="store", type="int", dest="graph", default=1)
 op.add_option("-C", "--conn", action="store", type="float", dest="conn", default=0.001)
-#op.add_option("-H", "--connHigh", action="store", type="float", dest="connHigh", default=0.001)
 (options, args) = op.parse_args()
 
 if options.graph == 2:   # graph with 10% 'high connectivity'
