@@ -217,7 +217,12 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
         clockLink_ = true;
     }
     
-    region_ = link_->getRegion();
+    
+    if (gotRegion) 
+        link_->setRegion(region_);
+    else 
+        region_ = link_->getRegion();
+
     privateMemOffset_ = 0;
 
     // Set up backing store if needed
@@ -628,8 +633,21 @@ void MemController::printStatus(Output &statusOut) {
 }
 
 void MemController::emergencyShutdown() {
-    if (out.getVerboseLevel() > 1)
+
+ if (out.getVerboseLevel() > 1) {
+        if (out.getOutputLocation() == Output::STDOUT)
+            out.setOutputLocation(Output::STDERR);
+        
         printStatus(out);
+        
+        if (link_) {
+            out.output("  Checking for unreceived events on link: \n");
+            link_->emergencyShutdownDebug(out);
+        }
+    }
+
+	
+
 }
 
 
