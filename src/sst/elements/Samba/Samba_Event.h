@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2018 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -33,7 +33,7 @@ using namespace SST;
 
 namespace SST{ namespace SambaComponent{
 
-	enum EventType { PAGE_FAULT, OPAL_RESPONSE, SHOOTDOWN};
+	enum EventType { PAGE_FAULT, OPAL_RESPONSE, PAGE_FAULT_SERVED, SHOOTDOWN, PAGE_REFERENCE, SDACK };
 
 	// Thie defines a class for events of Samba
 	class SambaEvent : public SST::Event
@@ -72,3 +72,5 @@ namespace SST{ namespace SambaComponent{
 }}
 
 #endif
+
+

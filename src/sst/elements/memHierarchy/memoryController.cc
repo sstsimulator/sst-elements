@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2018 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -14,13 +14,16 @@
 // distribution.
 
 #include <sst_config.h>
+//#include <sst/core/element.h>
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>
+#include<cmath>
 
 #include "memoryController.h"
 #include "util.h"
 
 #include "membackend/memBackendConvertor.h"
+#include "membackend/pagePlacementMethods.h"
 #include "memEventBase.h"
 #include "memEvent.h"
 #include "bus.h"
@@ -78,6 +81,8 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     // Output for warnings
     out.init("", params.find<int>("verbose", 1), 0, Output::STDOUT);
     
+    timestamp = 0;
+
     // Check for deprecated parameters and warn/fatal
     // Currently deprecated - mem_size (replaced by backend.mem_size), network_num_vc, statistic, direct_link 
     bool found;
@@ -136,47 +141,46 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     free(nextListenerName);
     free(nextListenerParams);
 
+    opal_enabled = params.find<uint32_t>("opal_enabled", 0);
+    page_placement = 0;
+    std::string opalNode, opalShMem, opalSize;
 
-    // Opal
-    std::string opalNode = params.find<std::string>("node", "0");
-    std::string opalShMem = params.find<std::string>("shared_memory", "0");
-    std::string opalSize = params.find<std::string>("local_memory_size", "0");
+    if(opal_enabled)
+    {
+        opalNode = params.find<std::string>("node", "0");
+        opalShMem = params.find<std::string>("shared_memory", "0");
+        opalSize = params.find<std::string>("local_memory_size", "0");
+        uint64_t memory_size = params.find<uint64_t>("memory_size", 0);
 
-    // Memory region - overwrite with what we got if we got some
-    bool gotRegion = false;
-    uint64_t addrStart = params.find<uint64_t>("addr_range_start", 0, gotRegion);
-    uint64_t addrEnd = params.find<uint64_t>("addr_range_end", (uint64_t) - 1, found);
-    gotRegion |= found;
-    string ilSize = params.find<std::string>("interleave_size", "0B", found);
-    gotRegion |= found;
-    string ilStep = params.find<std::string>("interleave_step", "0B", found);
-    gotRegion |= found;
+    	//page_placement = params.find<uint32_t>("page_placement", 0);
+		//opalLink_ = configureLink("opal_link", "1ns", new Event::Handler<MemController>(this, &MemController::handleOpalEvent));
+		//Params tmpParams = params.find_prefix_params("page_placement.");
+		//tmpParams.insert("node", opalNode);
+		//tmpParams.insert("page_placement", params.find<std::string>("page_placement", "0"));
+		//tmpParams.insert("output_file", params.find<std::string>("output_file", "NULL"));
+		//pagePlacementMethods_  = new PagePlacementMethods((SST::Component *)this, tmpParams);
+		//pagePlacementMethods_->setOpalLink(opalLink_);
 
-    // Ensure SI units are power-2 not power-10 - for backward compability
-    fixByteUnits(ilSize);
-    fixByteUnits(ilStep);
+    	uint64_t pages = ceil(memory_size/4096);
+    	std::cerr << getName().c_str() << " memory size: " << memory_size << " pages: " << pages << std::endl;
+    	//density_points = 100;
+    	//page_stats = new MemPageStats*[pages];
+    	//page_map[0] = 0;
+    	//for(uint64_t i=0; i<density_points; i++) {
+    	//	page_stats[i] = new MemPageStats(this, i);
+    	//}
 
-    if (!UnitAlgebra(ilSize).hasUnits("B")) {
-        dbg.fatal(CALL_INFO, -1, "Invalid param(%s): interleave_size - must be specified in bytes with units (SI units OK). For example, '1KiB'. You specified '%s'\n",
-                getName().c_str(), ilSize.c_str());
     }
-        
-    if (!UnitAlgebra(ilStep).hasUnits("B")) {
-        dbg.fatal(CALL_INFO, -1, "Invalid param(%s): interleave_step - must be specified in bytes with units (SI units OK). For example, '1KiB'. You specified '%s'\n",
-                getName().c_str(), ilSize.c_str());
-    }
-
-    region_.start = addrStart;
-    region_.end = addrEnd;
-    region_.interleaveSize = UnitAlgebra(ilSize).getRoundedValue();
-    region_.interleaveStep = UnitAlgebra(ilStep).getRoundedValue();
 
     if (isPortConnected("direct_link")) {
         Params linkParams = params.find_prefix_params("cpulink.");
         linkParams.insert("port", "direct_link");
-        linkParams.insert("node", opalNode);
-        linkParams.insert("shared_memory", opalShMem);
-        linkParams.insert("local_memory_size", opalSize);
+        if(opal_enabled)
+        {
+        	linkParams.insert("node", opalNode);
+        	linkParams.insert("shared_memory", opalShMem);
+        	linkParams.insert("local_memory_size", opalSize);
+        }
         linkParams.insert("latency", link_lat, false);
         linkParams.insert("accept_region", "1", false);
         link_ = dynamic_cast<MemLink*>(loadSubComponent("memHierarchy.MemLink", this, linkParams));
@@ -189,10 +193,12 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
         }
 
         Params nicParams = params.find_prefix_params("memNIC.");
-        nicParams.insert("node", opalNode);
-        nicParams.insert("shared_memory", opalShMem);
-        nicParams.insert("local_memory_size", opalSize);
-        
+        if(opal_enabled)
+        {
+			nicParams.insert("node", opalNode);
+			nicParams.insert("shared_memory", opalShMem);
+			nicParams.insert("local_memory_size", opalSize);
+        }
         nicParams.insert("group", "4", false);
         nicParams.insert("accept_region", "1", false);
 
@@ -210,11 +216,8 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
         link_->setRecvHandler( new Event::Handler<MemController>(this, &MemController::handleEvent) );
         clockLink_ = true;
     }
-   
-    if (gotRegion) 
-        link_->setRegion(region_);
-    else 
-        region_ = link_->getRegion();
+    
+    region_ = link_->getRegion();
     privateMemOffset_ = 0;
 
     // Set up backing store if needed
@@ -286,6 +289,13 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     }
 }
 
+void MemController::handleOpalEvent(SST::Event* event) {
+
+	// currently memory controller an only handle page placement requests from Opal
+	//pagePlacementMethods_->handleEvents(event);
+}
+
+
 void MemController::handleEvent(SST::Event* event) {
     if (!clockOn_) {
         Cycle_t cycle = turnClockOn();
@@ -306,13 +316,21 @@ void MemController::handleEvent(SST::Event* event) {
     }
 
     MemEvent * ev = static_cast<MemEvent*>(meb);
+    uint64_t global_address = ev->getAddr();
+    //std::cerr << getName().c_str() << " request address: " << ev->getBaseAddr() << std::endl;
+    //int page = global_address/4096;
+    //if(page_map.find(page) == page_map.end()) {
+    	//page_map[page] = 0;
+    	//page_stats[page] = new MemPageStats(this, page);
+    //}
+   // page_map[page]++;
+    //if(page >= density_points) page = 99;
+    //page_stats[page]->density->addData(1);
 
     if (ev->isAddrGlobal()) {
         ev->setBaseAddr(translateToLocal(ev->getBaseAddr()));
         ev->setAddr(translateToLocal(ev->getAddr()));
     }
-
-
     // Notify our listeners that we have received an event
     switch (cmd) {
         case Command::PutM:
@@ -320,6 +338,10 @@ void MemController::handleEvent(SST::Event* event) {
         case Command::GetS:
         case Command::GetX:
         case Command::GetSX:
+        	//if(page_placement)
+        	//if(pagePlacementMethods_->node_num < 9999)
+        	//pagePlacementMethods_->registerEvent(event,global_address); //record page accesses
+
             outstandingEvents_.insert(std::make_pair(ev->getID(), ev));
             notifyListeners( ev );
             memBackendConvertor_->handleMemEvent( ev );
@@ -354,7 +376,9 @@ void MemController::handleEvent(SST::Event* event) {
 }
 
 bool MemController::clock(Cycle_t cycle) {
-    bool unclockLink = true;
+    timestamp++;
+
+	bool unclockLink = true;
     if (clockLink_) {
         unclockLink = link_->clock();
     }
@@ -417,7 +441,6 @@ void MemController::handleMemResponse( Event::id_type id, uint32_t flags ) {
 
     /* Handle MemEvents */
     MemEvent * ev = static_cast<MemEvent*>(evb);
-
     bool noncacheable  = ev->queryFlag(MemEvent::F_NONCACHEABLE);
     
     /* Write data. Here instead of receive to try to match backing access order to backend execute order */
@@ -443,7 +466,7 @@ void MemController::handleMemResponse( Event::id_type id, uint32_t flags ) {
         resp->setBaseAddr(translateToGlobal(ev->getBaseAddr()));
         resp->setAddr(translateToGlobal(ev->getAddr()));
     }
-    
+    //std::cerr << getName().c_str() << " response address: " << resp->getBaseAddr() << std::endl;    
     link_->send( resp );
     delete ev;
 }
@@ -456,7 +479,9 @@ void MemController::init(unsigned int phase) {
     /* Inherit region from our source(s) */
     if (!phase) {
         /* Announce our presence on link */
-        link_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Memory, true, false, memBackendConvertor_->getRequestWidth(), false));
+        //link_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Memory, true, false, memBackendConvertor_->getRequestWidth()));
+	        link_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Memory, true, false, memBackendConvertor_->getRequestWidth(), false));
+
     }
 
     while (MemEventInit *ev = link_->recvInitData()) {
@@ -476,6 +501,7 @@ void MemController::finish(void) {
         Cycle_t cycle = turnClockOn();
         memBackendConvertor_->turnClockOn(cycle);
     }
+    //pagePlacementMethods_->finish();
     memBackendConvertor_->finish();
     link_->finish();
 }
@@ -602,15 +628,8 @@ void MemController::printStatus(Output &statusOut) {
 }
 
 void MemController::emergencyShutdown() {
-    if (out.getVerboseLevel() > 1) {
-        if (out.getOutputLocation() == Output::STDOUT)
-            out.setOutputLocation(Output::STDERR);
-        
+    if (out.getVerboseLevel() > 1)
         printStatus(out);
-        
-        if (link_) {
-            out.output("  Checking for unreceived events on link: \n");
-            link_->emergencyShutdownDebug(out);
-        }
-    }
 }
+
+

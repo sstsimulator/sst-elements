@@ -1,8 +1,8 @@
-/// Copyright 2009-2019 NTESS. Under the terms
+/// Copyright 2009-2018 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -60,13 +60,7 @@ namespace SST { namespace SambaComponent{
 		// If faults are emulated
 	    int emulate_faults;
 
-	    // Enable page migration if Opal is used
-		int page_migration;
-
-		// Page migration policy
-		PageMigrationType page_migration_policy;
-
-		uint64_t memory_size;
+	    int page_placement;
 
 	    int max_shootdown_width;
 
@@ -97,11 +91,14 @@ namespace SST { namespace SambaComponent{
 		// This tells TLB hierarchy to invalidate all TLB entries due to TLB Shootdown from other cores
 		int shootdown;
 
-		// This tells TLB hierarchy to invalidate all TLB entries due to TLB Shootdown from the same core
-		int own_shootdown;
+		int shootdown_delay;
+
+		int page_swapping_delay;
+
+		int hasInvalidAddrs;
 
 		// This vector holds the invalidation requests
-		std::list<Address_t> invalid_addrs;
+		std::vector<std::pair<Address_t, int> > invalid_addrs;
 
 		// This vector holds the current requests to be translated
 		std::map<SST::Event *, long long int> mem_reqs_sizes;
@@ -114,6 +111,11 @@ namespace SST { namespace SambaComponent{
 
 		// This represents the maximum number of outstanding requests for this structure
 		int max_outstanding; 
+
+		uint64_t timeStamp;
+
+		// system translation unit parameters
+		int *STU_enabled;
 
 		// Holds CR3 value of current context
 		Address_t *CR3;
@@ -130,15 +132,24 @@ namespace SST { namespace SambaComponent{
 		// Holds the PTE physical pointers, the key is the 9 bits 12-20, i.e., VA/(4096)
 		std::map<Address_t, Address_t> * PTE; // This should give you the exact physical address of the page
 
-
 		// The structures below are used to quickly check if the page is mapped or not
 		std::map<Address_t,int> * MAPPED_PAGE_SIZE4KB;
 		std::map<Address_t,int> * MAPPED_PAGE_SIZE2MB;
 		std::map<Address_t,int> * MAPPED_PAGE_SIZE1GB;
 
 		std::map<Address_t,int> *PENDING_PAGE_FAULTS;
+		std::map<Address_t,int> *PENDING_PAGE_FAULTS_PGD;
+		std::map<Address_t,int> *PENDING_PAGE_FAULTS_PUD;
+		std::map<Address_t,int> *PENDING_PAGE_FAULTS_PMD;
+		std::map<Address_t,int> *PENDING_PAGE_FAULTS_PTE;
 		std::map<Address_t,int> *PENDING_SHOOTDOWN_EVENTS;
 
+		//std::vector<std::pair<Address_t, int> > * PTR;
+		//std::map<Address_t,int> * PTR_map;
+
+		//PageReferenceTable *PAGE_REFERENCE_TABLE; // This is used to help page placement by sending page reference updates to Opal
+
+		uint64_t memory_size;
 
 		public:
 
@@ -153,8 +164,8 @@ namespace SST { namespace SambaComponent{
 		void handleEvent_OPAL(SST::Event * event);
 
 
-		void setPageTablePointers( Address_t * cr3, std::map<Address_t, Address_t> * pgd,  std::map<Address_t, Address_t> * pud,  std::map<Address_t, Address_t> * pmd, std::map<Address_t, Address_t> * pte,
-				std::map<Address_t,int> * gb,  std::map<Address_t,int> * mb,  std::map<Address_t,int> * kb, std::map<Address_t,int> * pr, std::map<Address_t,int> * sr)
+		void setPageTablePointers( Address_t * cr3, std::map<Address_t, Address_t> * pgd,  std::map<Address_t, Address_t> * pud,  std::map<Address_t, Address_t> * pmd, std::map<Address_t, Address_t> * pte, std::map<Address_t,int> * gb,  std::map<Address_t,int> * mb,  std::map<Address_t,int> * kb, std::map<Address_t,int> * pr,int *cr3I, std::map<Address_t,int> *pf_pgd,  std::map<Address_t,int> *pf_pud,  std::map<Address_t,int> *pf_pmd, std::map<Address_t,int> * pf_pte)  //, std::map<Address_t,int> * sr,
+				//std::vector<std::pair<Address_t, int> > * ptr, std::map<Address_t, int> * ptr_map)
 		{
 	                CR3 = cr3;
                         PGD = pgd;
@@ -165,12 +176,21 @@ namespace SST { namespace SambaComponent{
                         MAPPED_PAGE_SIZE2MB = mb;
                         MAPPED_PAGE_SIZE1GB = gb;
                         PENDING_PAGE_FAULTS = pr;
-                        PENDING_SHOOTDOWN_EVENTS = sr;
+                        PENDING_PAGE_FAULTS_PGD = pf_pgd;
+                        PENDING_PAGE_FAULTS_PUD = pf_pud;
+                        PENDING_PAGE_FAULTS_PMD = pf_pmd;
+                        PENDING_PAGE_FAULTS_PTE = pf_pte;
+                        //PENDING_SHOOTDOWN_EVENTS = sr;
+                        //PTR = ptr;
+                        //PTR_map = ptr_map;
 
 			if(PTW!=NULL)
-				PTW->setPageTablePointers(cr3, pgd, pud, pmd, pte, gb, mb, kb, pr, sr);
+				PTW->setPageTablePointers(cr3, pgd, pud, pmd, pte, gb, mb, kb, pr,cr3I,pf_pgd,pf_pud,pf_pmd,pf_pte);//, sr, ptr, ptr_map);
 
 		}
+
+		//void setPageReferenceTable(PageReferenceTable * prt) { PAGE_REFERENCE_TABLE = prt; PTW->setPageReferenceTable(prt); }
+
 		// Constructor for component
 		TLBhierarchy(ComponentId_t id, Params& params);
 		TLBhierarchy(ComponentId_t id, Params& params, int tlb_id);
@@ -186,6 +206,7 @@ namespace SST { namespace SambaComponent{
 		Address_t translate(Address_t VA);
 
 		Statistic<uint64_t>* total_waiting;
+
 		//	std::map<int, Statistic<uint64_t>*> statTLBHits;
 
 		//	std::map<int, Statistic<uint64_t>*> statTLBMisses;
@@ -204,8 +225,15 @@ namespace SST { namespace SambaComponent{
 		// Setting the line size for the page table walker's dummy requests
 		void setLineSize(uint64_t size) { PTW->setLineSize(size); }
 
+		void setSTU(int *stu_en) { 
+			STU_enabled = stu_en; 
+			for(int level=1; level <=levels; level++) TLB_CACHE[level]->setSTU(stu_en);
+			PTW->setSTU(stu_en); 
+		}
 	};
 
 }}
 
 #endif
+
+

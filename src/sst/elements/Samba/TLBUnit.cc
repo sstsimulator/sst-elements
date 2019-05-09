@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2018 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -46,6 +46,8 @@ TLB::TLB(int Page_size, int Assoc, TLB * Next_level, int Size)
 // The constructer mainly used when creating TLBUnits
 TLB::TLB(int tlb_id, TLB * Next_level, int Level, SST::Component * owner, SST::Params& params)
 {
+
+	output = new SST::Output("OpalComponent[@f:@l:@p] ", 1, 0, SST::Output::STDOUT);
 
 	Owner = owner;
 
@@ -95,7 +97,7 @@ TLB::TLB(int tlb_id, TLB * Next_level, int Level, SST::Component * owner, SST::P
 
 	size = new int[sizes]; 
 	assoc = new int[sizes];
-	page_size = new int[sizes];
+	page_size = new uint64_t[sizes];
 	sets = new int[sizes];
 	tags = new Address_t**[sizes];
 	valid = new bool**[sizes];
@@ -111,8 +113,8 @@ TLB::TLB(int tlb_id, TLB * Next_level, int Level, SST::Component * owner, SST::P
 		assoc[i] =  ((uint32_t) params.find<uint32_t>("assoc"+std::to_string(i+1) +  "_L"+LEVEL, 1));
 
 
-		page_size[i] = 1024 * ((uint32_t) params.find<uint32_t>("page_size"+ std::to_string(i+1) + "_L" + LEVEL, 4));
-
+		page_size[i] = 1024 * ((uint64_t) params.find<uint32_t>("page_size"+ std::to_string(i+1) + "_L" + LEVEL, 4));
+		//std::cerr << owner->getName().c_str() << " coreID: " << coreId << " level: " << level << " page_size["<<i<<"]" << page_size[i] << std::endl;
 
 		// Here we add the supported page size and the structure index
 		SIZE_LOOKUP[page_size[i]/1024]=i;
@@ -182,8 +184,8 @@ bool TLB::tick(SST::Cycle_t x)
 		SST::Event * ev = pushed_back.back();
 
 		Address_t addr = ((MemEvent*) ev)->getVirtualAddress();
-
-
+		if(*STU_enabled)
+			addr = ((MemEvent*) ev)->getBaseAddr();
 
 		// Double checking that we actually still don't have it inserted
 		// Insert the translation into all structures with same or smaller size page support. Note that smaller page sizes will still have the same translation with offset derived from address
@@ -221,6 +223,7 @@ bool TLB::tick(SST::Cycle_t x)
 			st++;
 		}
 
+		//std::cerr << Owner->getName().c_str() << "level: "<<level << " serviced address: " << addr << std::endl;
 		// Note that here we are sustitiuing for latency of checking the tag before proceeing to the next level, we also add the upper link latency for the round trip
 		ready_by[ev]= x + latency + 2*upper_link_latency;
 
@@ -271,7 +274,8 @@ bool TLB::tick(SST::Cycle_t x)
 
 		SST::Event * ev = *st_1; 
 		Address_t addr = ((MemEvent*) ev)->getVirtualAddress();
-
+		if(*STU_enabled)
+			addr = ((MemEvent*) ev)->getBaseAddr();
 
 		// Those track if any hit in one of the supported pages' structures
 		bool hit=false;
@@ -335,12 +339,13 @@ bool TLB::tick(SST::Cycle_t x)
 					// Check if the last level TLB or not, if last-level, pass the request to the page table walker
 					if(next_level!=NULL)
 					{
-
+						//std::cerr << Owner->getName().c_str() << "level: "<<level<<" request address: "<<addr<<std::endl;
 						next_level->push_request(ev);
 						st_1 = not_serviced.erase(st_1);
 					}
 					else // Passs it to the page table walker
 					{
+						//std::cerr << Owner->getName().c_str() << "level: ptw request address: "<<addr<<std::endl;
 						PTW->push_request(ev);
 						st_1 = not_serviced.erase(st_1);
 					}
@@ -375,7 +380,8 @@ bool TLB::tick(SST::Cycle_t x)
 			//	std::cout<<"The request was read at "<<st->second<<" The time now is "<<x<<std::endl;
 
 			Address_t addr = ((MemEvent*) st->first)->getVirtualAddress();
-
+			if(*STU_enabled)
+				addr = ((MemEvent*) st->first)->getBaseAddr();
 
 			if(SIZE_LOOKUP.find(ready_by_size[st->first])!= SIZE_LOOKUP.end())
 			{
@@ -390,7 +396,7 @@ bool TLB::tick(SST::Cycle_t x)
 			}
 
 
-
+			//std::cerr << Owner->getName().c_str() << "level: "<<level << " response address: " << addr << std::endl;
 			service_back->push_back(st->first);
 
 			(*service_back_size)[st->first]=ready_by_size[st->first];
@@ -456,21 +462,22 @@ Address_t TLB::translate(Address_t vadd)
 
 
 // Invalidate TLB entries
-void TLB::invalidate(Address_t vadd)
+void TLB::invalidate(Address_t vadd, int id)
 {
 
-	for(int id=0; id<sizes; id++)
-	{
-		//std::cout << Owner->getName().c_str() << " TLB " << coreId << " id: " << id << " invalidate address: " << vadd << " index: " << vadd*page_size[0]/page_size[id] << std::endl;
-		int set= abs_int((vadd*page_size[0]/page_size[id])%sets[id]);
-		for(int i=0; i<assoc[id]; i++) {
-			if(tags[id][set][i]==vadd*page_size[0]/page_size[id] && valid[id][set][i]) {
-				//std::cout << Owner->getName().c_str() << " TLB " << coreId << " invalidate address: " << vadd << " index: " << vadd*page_size[0]/page_size[id] << " found" << std::endl;
-				valid[id][set][i] = false;
-				break;
-			}
+	if(page_size[id] == 0 || sets[id] == 0)
+		//output->fatal(CALL_INFO, -1, "%s, Invalidating id: " is not valid\n", Owner->getName().c_str());
+		std::cerr << Owner->getName().c_str() << " TLB " << coreId << " invalidate address: " << vadd << " id: " << id << " page_size: " << page_size[id] << " set: " << sets[id] << std::endl;
+
+	int set= abs_int((vadd*page_size[0]/page_size[id])%sets[id]);
+	for(int i=0; i<assoc[id]; i++) {
+		if(tags[id][set][i]==vadd*(Address_t)page_size[0]/(Address_t)page_size[id] && valid[id][set][i]) {
+			//std::cout << Owner->getName().c_str() << " TLB " << coreId << " invalidate address: " << vadd << " index: " << vadd*page_size[0]/page_size[id] << " found" << std::endl;
+			valid[id][set][i] = false;
+			break;
 		}
 	}
+
 
 	statTLBShootdowns->addData(1);
 }
@@ -481,6 +488,9 @@ void TLB::invalidate(Address_t vadd)
 bool TLB::check_hit(Address_t vadd, int struct_id)
 {
 
+	if(page_size[struct_id] == 0 || sets[struct_id] == 0)
+		//output->fatal(CALL_INFO, -1, "%s, Invalidating id: " is not valid\n", Owner->getName().c_str());
+		std::cerr << Owner->getName().c_str() << " TLB " << coreId << " invalidate address: " << vadd << " id: " << struct_id << " page_size: " << page_size[struct_id] << " set: " << sets[struct_id] << std::endl;
 
 	int set= abs_int((vadd/page_size[struct_id])%sets[struct_id]);
 	for(int i=0; i<assoc[struct_id];i++)
@@ -527,5 +537,7 @@ void TLB::update_lru(Address_t vaddr, int struct_id)
 
 
 }
+
+
 
 

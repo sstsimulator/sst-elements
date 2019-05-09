@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2018 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -23,6 +23,7 @@
 #include <sst_config.h>
 #include <string>
 #include<iostream>
+#include <thread>
 #include "Opal.h"
 
 
@@ -43,13 +44,17 @@ Opal::Opal(SST::ComponentId_t id, SST::Params& params): Component(id) {
     verbosity = (uint32_t) params.find<uint32_t>("verbose", 1);
 	output = new SST::Output("OpalComponent[@f:@l:@p] ", verbosity, 0, SST::Output::STDOUT);
 
-
+	ariel_enable_count = 0;
 	max_inst = (uint32_t) params.find<uint32_t>("max_inst", 1);
-	num_nodes = (uint32_t) params.find<uint32_t>("num_nodes", 1);
+	num_nodes = (uint32_t) params.find<uint32_t>("num_nodes", 1); 	std::cerr << "Number of Nodes: "<< num_nodes << std::endl;
 	nodeInfo = new NodePrivateInfo*[num_nodes];
 	num_cores = 0;
+	num_memCntrls = 0;
+	uint32_t shootdown_latency = (uint32_t) params.find<uint32_t>("shootdown_latency", 1); std::cerr << "Shootdown latency: "<< shootdown_latency << std::endl;
+
 	std::cerr << "Maximum Instructions per cycle: " << max_inst << std::endl;
 
+	cycles = 0;
 
 	char* buffer = (char*) malloc(sizeof(char) * 256);
 
@@ -62,21 +67,24 @@ Opal::Opal(SST::ComponentId_t id, SST::Params& params): Component(id) {
 	Params sharedMemParams = params.find_prefix_params("shared_mem.");
 	shared_mem_size = 0;
 
-	sharedMemoryInfo = new Pool*[num_shared_mempools];
+	sharedMemoryInfo = new MemoryPrivateInfo*[num_shared_mempools];//Pool*[num_shared_mempools];
 
 	for(uint32_t i = 0; i < num_shared_mempools; i++) {
 		memset(buffer, 0 , 256);
 		sprintf(buffer, "mempool%" PRIu32 ".", i);
 		Params memPoolParams = sharedMemParams.find_prefix_params(buffer);
+		sharedMemoryInfo[i] = new MemoryPrivateInfo(this, i, memPoolParams);
 		std::cerr << "Configuring Shared " << buffer << std::endl;
-		sharedMemoryInfo[i] = new Pool(this, memPoolParams, SST::OpalComponent::MemType::SHARED, i);
 		shared_mem_size += memPoolParams.find<uint64_t>("size", 0);
+		memset(buffer, 0 , 256);
+		sprintf(buffer, "globalMemCntrLink%" PRIu32, i);
+		sharedMemoryInfo[i]->link = configureLink(buffer, "1ns", new Event::Handler<MemoryPrivateInfo>((sharedMemoryInfo[i]), &MemoryPrivateInfo::handleRequest));
+		//num_memCntrls++;
 	}
 
 	/* Configuring nodes */
 	/*----------------------------------------------------------------------------------------*/
 
-	int linksCount = 0;
 	for(uint32_t i = 0; i < num_nodes; i++) {
 		memset(buffer, 0 , 256);
 		sprintf(buffer, "node%" PRIu32 ".", i);
@@ -84,24 +92,54 @@ Opal::Opal(SST::ComponentId_t id, SST::Params& params): Component(id) {
 		nodeInfo[i] = new NodePrivateInfo(this, i, nodePrivateParams);
 		for(uint32_t j=0; j<nodeInfo[i]->cores; j++) {
 			memset(buffer, 0 , 256);
-			sprintf(buffer, "requestLink%" PRIu32, linksCount + j*2);
+			sprintf(buffer, "coreLink%" PRIu32, num_cores);
 			nodeInfo[i]->coreInfo[j].coreLink = configureLink(buffer, "1ns", new Event::Handler<CorePrivateInfo>((&nodeInfo[i]->coreInfo[j]), &CorePrivateInfo::handleRequest));
 			memset(buffer, 0 , 256);
-			sprintf(buffer, "requestLink%" PRIu32, linksCount + (j*2)+1);
+			sprintf(buffer, "mmuLink%" PRIu32, num_cores);
 			nodeInfo[i]->coreInfo[j].mmuLink = configureLink(buffer, "1ns", new Event::Handler<CorePrivateInfo>((&nodeInfo[i]->coreInfo[j]), &CorePrivateInfo::handleRequest));
-			nodeInfo[i]->coreInfo[j].id = num_cores;
 			num_cores++;
 		}
-		linksCount += nodeInfo[i]->cores*2;
+		for(uint32_t j=0; j<nodeInfo[i]->memory_cntrls; j++) {
+			memset(buffer, 0 , 256);
+			sprintf(buffer, "memCntrLink%" PRIu32, num_memCntrls);
+			nodeInfo[i]->memCntrlInfo[j].link = configureLink(buffer, "1ns", new Event::Handler<MemoryPrivateInfo>((&nodeInfo[i]->memCntrlInfo[j]), &MemoryPrivateInfo::handleRequest));
+			num_memCntrls++;
+		}
+
+		// IPI + context switching latency with respect to number of cores. 15000 cycles for 2 cores
+		// nodeInfo[i]->shootdown_latency = (nodeInfo[i]->cores/2)*(15000/nodeInfo[i]->clock)*1000;
+		nodeInfo[i]->shootdown_latency = shootdown_latency; // ns
+
 	}
 
 	free(buffer);
 
-	statPagesMigrated = registerStatistic<uint64_t>( "num_of_pages_migrated" );
+	self_link = configureSelfLink("opal_self_link", "1ns", new Event::Handler<Opal>(this, &Opal::handleEvent));
+
+	ptw_aware_allocation = params.find<uint32_t>("ptw_aware_allocation", 0); std::cerr << "ptw aware allocation: "<< ptw_aware_allocation << std::endl;
+
+	//page_placement = params.find<uint32_t>("page_placement", 0); std::cerr << "page placement: "<< page_placement << std::endl;
+
+	//localPageReferenceQ = new std::queue<OpalEvent*>[num_nodes];
+	//localPageReferenceQ = new std::vector<uint64_t>[num_nodes];
+	//globalPageReferenceQ = new std::queue<OpalEvent*>[num_shared_mempools];
+
+	//for(uint32_t n=0; n<num_nodes; n++)
+	//{
+		//local_page_reference_threads.push_back(std::thread(&Opal::localPageReferences, this, n));
+	//	nodeInfo[n]->local_page_ref_epoch = params.find<uint32_t>("page_ref_epoch", 1000);
+	//	nodeInfo[n]->migration_epoch = params.find<uint32_t>("migration_epoch", 100000);
+	//	std::cerr << "migration epoch/print page access stats epoch: "<< nodeInfo[n]->migration_epoch << std::endl;
+	//}
+	//for(uint32_t s=0; s<num_shared_mempools; s++)
+	//{
+		//global_page_reference_threads.push_back(std::thread(&Opal::globalPageReferences, this, s));
+	//}
 
 	/* registering clock */
 	/*----------------------------------------------------------------------------------------*/
 	std::string cpu_clock = params.find<std::string>("clock", "1GHz");
+	std::cerr << "clock: "<< cpu_clock.c_str() << std::endl;
 	registerClock( cpu_clock, new Clock::Handler<Opal>(this, &Opal::tick ) );
 }
 
@@ -161,13 +199,13 @@ void Opal::setNextMemPool( int node )
 void Opal::processHint(int node, int fileId, uint64_t vAddress, int size)
 {
 
-	std::map<int, std::pair<std::list<int>*, std::list<uint64_t>* > >::iterator fileIdHint = mmapFileIdHints.find(fileId);
+	std::map<int, std::pair<std::vector<int>*, std::vector<uint64_t>* > >::iterator fileIdHint = mmapFileIdHints.find(fileId);
 
 	//fileId is already registered by another node
 	if( fileIdHint != mmapFileIdHints.end() )
 	{
 		//search for nodeId
-		std::list<int>* it = (fileIdHint->second).first;
+		std::vector<int>* it = (fileIdHint->second).first;
 	    auto it1 = std::find(it->begin(), it->end(), node);
 		if( it1 != it->end() )
 		{
@@ -181,17 +219,17 @@ void Opal::processHint(int node, int fileId, uint64_t vAddress, int size)
 
 			it->push_back(node);
 			//(fileIdHint->second).first = it;
-			nodeInfo[node]->reservedSpace.insert(std::make_pair(vAddress/4096, std::make_pair(fileId, std::make_pair( ceil(size/(nodeInfo[node]->page_size*1024)), 0))));
+			nodeInfo[node]->reservedSpace.insert(std::make_pair(vAddress/4096, std::make_pair(fileId, std::make_pair( ceil(size/(nodeInfo[node]->page_size)), 0))));
 		}
 	}
 	else
 	{
-		std::list<int> *it = new std::list<int>;
-		std::list<uint64_t> *pa = new std::list<uint64_t>;
+		std::vector<int> *it = new std::vector<int>;
+		std::vector<uint64_t> *pa = new std::vector<uint64_t>;
 
 		it->push_back(node);
 		mmapFileIdHints.insert(std::make_pair(fileId, std::make_pair( it, pa )));
-		nodeInfo[node]->reservedSpace.insert(std::make_pair(vAddress/4096, std::make_pair(fileId, std::make_pair( ceil(size/(nodeInfo[node]->page_size*1024)), 0))));
+		nodeInfo[node]->reservedSpace.insert(std::make_pair(vAddress/4096, std::make_pair(fileId, std::make_pair( ceil(size/(nodeInfo[node]->page_size)), 0))));
 
 	}
 }
@@ -206,7 +244,7 @@ REQRESPONSE Opal::isAddressReserved(int node, uint64_t vAddress)
 	{
 		uint64_t reservedVAddress = it->first;
 		int pages_reserved = (it->second).second.first;
-		if(reservedVAddress <= vAddress && vAddress < reservedVAddress + pages_reserved*nodeInfo[node]->page_size*1024) {
+		if(reservedVAddress <= vAddress && vAddress < reservedVAddress + pages_reserved*nodeInfo[node]->page_size) {
 			response.status = 1;
 			response.address = reservedVAddress;
 		}
@@ -226,72 +264,8 @@ REQRESPONSE Opal::allocateSharedMemory(int node, int coreId, uint64_t vAddress, 
 
 		sharedMemPoolId = nodeInfo[node]->allocatedmempool - 1;
 
-		/*
-		 * TODO:
-		 *    Opal is not parallel for now, i.e, requests are addressed serially.
-		 * 	  So just checking if the memory is available or not and allocating.
-		 * 	  In future lock share memory pool and allocate pages if available.
-		 */
-		if( sharedMemoryInfo[sharedMemPoolId]->available_frames >= pages ) {
-			Pool *pool = sharedMemoryInfo[sharedMemPoolId];
-			for(int j=0; j<pages; j++) {
-				response = pool->allocate_frame(1);
-				nodeInfo[node]->insertFrame(coreId, response.address, vAddress, fault_level, SST::OpalComponent::MemType::SHARED);
-
-				if(!response.status)
-					output->fatal(CALL_INFO, -1, "Opal: Allocating shared memory. This should never happen\n");
-			}
-
-			setNextMemPool( node );
-			sharedMemoryInfo[sharedMemPoolId]->profileStats(0,pages);
-			sharedMemoryInfo[sharedMemPoolId]->profileStats(1,pages);
-			response.pages = pages;
-			response.status = 1;
-		}
-
-		else{
-
-			for(uint32_t i = 0; i < num_shared_mempools; i++)
-			{
-				setNextMemPool(node);
-				if( !nodeInfo[node]->allocatedmempool ) // skip local memory
-					setNextMemPool( node );
-
-				sharedMemPoolId = nodeInfo[node]->allocatedmempool - 1;
-
-				/*
-				 * TODO:
-				 *    Opal is not parallel for now, i.e, requests are addressed serially.
-				 * 	  So just checking if the memory is available or not and allocating.
-				 * 	  In future lock share memory pool and allocate pages if available.
-				 */
-				if( sharedMemoryInfo[sharedMemPoolId]->available_frames >= pages ) {
-					Pool *pool = sharedMemoryInfo[sharedMemPoolId];
-					for(int j=0; j<pages; j++) {
-						response = pool->allocate_frame(1);
-						nodeInfo[node]->insertFrame(coreId, response.address, vAddress, fault_level, SST::OpalComponent::MemType::SHARED);
-
-						if(!response.status)
-							output->fatal(CALL_INFO, -1, "Opal: Allocating shared memory. This should never happen\n");
-					}
-
-					setNextMemPool( node );
-					sharedMemoryInfo[sharedMemPoolId]->profileStats(0,pages);
-					sharedMemoryInfo[sharedMemPoolId]->profileStats(1,pages);
-					response.pages = pages;
-					response.status = 1;
-					break;
-				}
-			}
-
-			if(!response.status)
-				output->fatal(CALL_INFO, -1, "Opal: Memory is drained out\n");
-
-		}
 	}
-
-	else
-	{
+	else {
 
 		for(uint32_t i = 0; i<num_shared_mempools; i++) {
 
@@ -301,25 +275,83 @@ REQRESPONSE Opal::allocateSharedMemory(int node, int coreId, uint64_t vAddress, 
 			 * 	  So just checking if the memory is available or not and allocating.
 			 * 	  In future lock share memory pool and allocate pages if available.
 			 */
-			if( sharedMemoryInfo[i]->available_frames >= pages ) {
+			if( sharedMemoryInfo[i]->pool->available_frames >= pages ) {
 
-				Pool *pool = sharedMemoryInfo[i];
+				Pool *pool = sharedMemoryInfo[i]->pool;
 				for(int j=0; j<pages; j++) {
 					response = pool->allocate_frame(1);
-					nodeInfo[node]->insertFrame(coreId, response.address, vAddress, fault_level, SST::OpalComponent::MemType::SHARED);
+					nodeInfo[node]->insertFrame(response.address, vAddress, fault_level, SST::OpalComponent::MemType::SHARED);
 
 					if(!response.status)
 						output->fatal(CALL_INFO, -1, "Opal: Allocating shared memory. This should never happen\n");
 				}
 
-				sharedMemPoolId = i;
-				sharedMemoryInfo[sharedMemPoolId]->profileStats(0,pages);
-				sharedMemoryInfo[sharedMemPoolId]->profileStats(1,pages);
 				response.pages = pages;
 				response.status = 1;
 				break;
 			}
+		}
 
+		if(!response.status)
+			output->fatal(CALL_INFO, -1, "Opal: Memory is drained out\n");
+
+		return response;
+	}
+
+	/*
+	 * TODO:
+	 *    Opal is not parallel for now, i.e, requests are addressed serially.
+	 * 	  So just checking if the memory is available or not and allocating.
+	 * 	  In future lock share memory pool and allocate pages if available.
+	 */
+	if( sharedMemoryInfo[sharedMemPoolId]->pool->available_frames >= pages ) {
+		Pool *pool = sharedMemoryInfo[sharedMemPoolId]->pool;
+		for(int j=0; j<pages; j++) {
+			response = pool->allocate_frame(1);
+			nodeInfo[node]->insertFrame(response.address, vAddress, fault_level, SST::OpalComponent::MemType::SHARED);
+
+			if(!response.status)
+				output->fatal(CALL_INFO, -1, "Opal: Allocating shared memory. This should never happen\n");
+		}
+
+		setNextMemPool( node );
+		response.pages = pages;
+		response.status = 1;
+	}
+	else
+	{
+
+		// Memory in shared memory pool: " << sharedMemPoolId << " is full. Searching in other shared memory pools" << endl;
+
+		for(uint32_t i = 0; i < num_shared_mempools; i++)
+		{
+			setNextMemPool(node);
+			if( !nodeInfo[node]->allocatedmempool ) // skip local memory
+				setNextMemPool( node );
+
+			sharedMemPoolId = nodeInfo[node]->allocatedmempool - 1;
+
+			/*
+			 * TODO:
+			 *    Opal is not parallel for now, i.e, requests are addressed serially.
+			 * 	  So just checking if the memory is available or not and allocating.
+			 * 	  In future lock share memory pool and allocate pages if available.
+			 */
+			if( sharedMemoryInfo[sharedMemPoolId]->pool->available_frames >= pages ) {
+				Pool *pool = sharedMemoryInfo[sharedMemPoolId]->pool;
+				for(int j=0; j<pages; j++) {
+					response = pool->allocate_frame(1);
+					nodeInfo[node]->insertFrame(response.address, vAddress, fault_level, SST::OpalComponent::MemType::SHARED);
+
+					if(!response.status)
+						output->fatal(CALL_INFO, -1, "Opal: Allocating shared memory. This should never happen\n");
+				}
+
+				setNextMemPool( node );
+				response.pages = pages;
+				response.status = 1;
+				break;
+			}
 		}
 
 		if(!response.status)
@@ -341,32 +373,27 @@ REQRESPONSE Opal::allocateLocalMemory(int node, int coreId, uint64_t vAddress, i
 		Pool *pool = nodeInfo[node]->pool;
 		for(int i=0; i<pages; i++) {
 			response = pool->allocate_frame(1);
-			nodeInfo[node]->insertFrame(coreId, response.address, vAddress, fault_level, SST::OpalComponent::MemType::LOCAL);
+			if(4 == fault_level)
+				nodeInfo[node]->regiserCR3Address(coreId, response.address, vAddress);
+			else
+				nodeInfo[node]->insertFrame(response.address, vAddress, fault_level, SST::OpalComponent::MemType::LOCAL);
 			if(!response.status)
 				output->fatal(CALL_INFO, -1, "Opal: Allocating local memory. This should never happen\n");
 		}
 
-		pool->profileStats(0,1);
-		pool->profileStats(1,1);
 		response.pages = pages;
 		response.status = 1;
-		response.page_migration = 0;
 		setNextMemPool( node );
 	}
 	else {
 		OPAL_VERBOSE(8, output->verbose(CALL_INFO, 8, 0, "Node%" PRIu32 " Local Memory is drained out\n", node));
 
-		if((nodeInfo[node]->page_migration && !nodeInfo[node]->memoryAllocationPolicy) || 4 == fault_level) {
-			if(4 == fault_level)
-				std::cerr << getName().c_str() << " migrating a page to allocate memory for node " << node << " core " << coreId << " CR3" << std::endl;
-
-			response.page_migration = 1;
-		}
-		else {
+		//if(4 == fault_level)
+		//	output->fatal(CALL_INFO, -1, "Opal: Allocating memory for CR3 failed\n");
+		//else {
 			setNextMemPool( node );
 			response = allocateSharedMemory(node, coreId, vAddress, fault_level, pages);
-			response.page_migration = 0;
-		}
+		//}
 	}
 
 
@@ -383,7 +410,7 @@ REQRESPONSE Opal::allocateFromReservedMemory(int node, uint64_t reserved_vAddres
 	int pages_reserved = nodeInfo[node]->reservedSpace[reserved_vAddress].second.first;
 	int pages_used = nodeInfo[node]->reservedSpace[reserved_vAddress].second.second;
 
-	std::list<uint64_t> *reserved_pAddress = mmapFileIdHints[fileID].second;
+	std::vector<uint64_t> *reserved_pAddress = mmapFileIdHints[fileID].second;
 
 	//Allocate all the pages. TODO: pages can be reserved on demand instead of allocating all the pages at a time. But what if the memory is drained out.
 	if(reserved_pAddress->empty()) {
@@ -399,11 +426,11 @@ REQRESPONSE Opal::allocateFromReservedMemory(int node, uint64_t reserved_vAddres
 			 * 	  In future lock share memory pool and allocate pages if available.
 			 *
 			*/
-			if( sharedMemoryInfo[i]->available_frames >= pages ) {
-				Pool *pool = sharedMemoryInfo[i];
+			if( sharedMemoryInfo[i]->pool->available_frames >= pages ) {
+				Pool *pool = sharedMemoryInfo[i]->pool;
 				for(int j=0; j<pages_reserved; j++) {
 					response = pool->allocate_frame(1);
-					//nodeInfo[node]->insertFrame(coreId, response.address, vAddress, SST::OpalComponent::MemType::SHARED); // Not saving reserved frames in node information as these should not be migrated.
+					//nodeInfo[node]->insertFrame(response.address, vAddress, SST::OpalComponent::MemType::SHARED); // Not saving reserved frames in node information as these should not be migrated.
 					reserved_pAddress->push_back( response.address );
 
 					if(!response.status)
@@ -435,7 +462,7 @@ REQRESPONSE Opal::allocateFromReservedMemory(int node, uint64_t reserved_vAddres
 	}
 	else
 	{
-		output->fatal(CALL_INFO, -1, "Opal: address :%" PRIu64 "llu requested with fileId:%d has no space left\n", vAddress, fileID);
+		output->fatal(CALL_INFO, -1, "Opal: address :%lu requested with fileId:%d has no space left\n", vAddress, fileID);
 	}
 
 	return response;
@@ -445,62 +472,82 @@ bool Opal::processRequest(int node, int coreId, uint64_t vAddress, int fault_lev
 {
 
 	REQRESPONSE response;
-	int pages = ceil(size/(nodeInfo[node]->page_size*1024));
+	response.status = 0;
+
+	int pages = ceil(size/(nodeInfo[node]->page_size));
 
 	// If multiple pages are requested how are the physical addresses sent to the requester as in future sue to opal parallelization continuous addresses cannot be allocated
 	if(pages != 1)
 		output->fatal(CALL_INFO, -1, "Opal: currently opal does not support multiple page allocations\n");
 
 	// if the page fault request is for CR3 register allocate the memory from local memory
-	if(4 == fault_level)
-	{
-		response = allocateLocalMemory(node, coreId, vAddress, fault_level, pages);
-		if(response.page_migration) {
-			migratePages(node, coreId, 1);
-			return false;
-		}
-	}
-	else
-	{
+	//if(4 == fault_level)
+	//	response = allocateLocalMemory(node, coreId, vAddress, fault_level, pages);
+	//else
+	//{
 
 		// check if memory is to be allocated from the reserved address space
-		response = isAddressReserved(node, vAddress);
+		//response = isAddressReserved(node, vAddress);
 
-		if( response.status )
-			response = allocateFromReservedMemory(node, response.address, vAddress, pages);
+		//if( response.status )
+		//	response = allocateFromReservedMemory(node, response.address, vAddress, pages);
 
-		else {
-			if( !nodeInfo[node]->allocatedmempool ) {
-				response = allocateLocalMemory(node, coreId, vAddress, fault_level, pages);
-				if(response.page_migration) {
-					if(nodeInfo[node]->page_migration && 0==nodeInfo[node]->page_migration_policy && !nodeInfo[node]->memoryAllocationPolicy)
-					{
-						// Bulk page migrations
-						migratePages(node, coreId, nodeInfo[node]->num_pages_to_migrate);
+		//else {
+
+			if(ptw_aware_allocation) {
+				if(ptw_aware_allocation == 1 && fault_level != 0) {
+					//response = allocateLocalMemory(node, coreId, vAddress, fault_level, pages);
+					if(nodeInfo[node]->pool->available_frames >= pages) {
+						Pool *pool = nodeInfo[node]->pool;
+						for(int i=0; i<pages; i++) {
+							response = pool->allocate_frame(1);
+							if(4 == fault_level)
+								nodeInfo[node]->regiserCR3Address(coreId, response.address, vAddress);
+							else
+								nodeInfo[node]->insertFrame(response.address, vAddress, fault_level, SST::OpalComponent::MemType::LOCAL);
+							if(!response.status)
+								output->fatal(CALL_INFO, -1, "Opal: Allocating local memory. This should never happen\n");
+						}
+
+						response.pages = pages;
+						response.status = 1;
 					}
-					else if(nodeInfo[node]->page_migration && 1==nodeInfo[node]->page_migration_policy && !nodeInfo[node]->memoryAllocationPolicy)
-					{
-						// Only one page migration
-						migratePages(node, coreId, 1);
-					}
-					else
-						output->fatal(CALL_INFO, -1, "Opal: Page migration policy not detected. This should not happen\n");
-
-					return false;
+					else response = allocateSharedMemory(node, coreId, vAddress, fault_level, pages);
 				}
-				//std::cout << getName() << " Node: " << node << " core " << coreId << " vAddress: " << vAddress << " allocated local  address: " << response.address << " pages: " << " level: " << fault_level  << std::endl;
+				else if(ptw_aware_allocation == 2 && fault_level != 0) {
+					//response = allocateLocalMemory(node, coreId, vAddress, fault_level, pages);
+					if( sharedMemoryInfo[0]->pool->available_frames >= pages ) {
+						Pool *pool = sharedMemoryInfo[0]->pool;
+						for(int j=0; j<pages; j++) {
+							response = pool->allocate_frame(1);
+							nodeInfo[node]->insertFrame(response.address, vAddress, fault_level, SST::OpalComponent::MemType::SHARED);
+
+							if(!response.status)
+								output->fatal(CALL_INFO, -1, "Opal: Allocating shared memory. This should never happen\n");
+						}
+
+						response.pages = pages;
+						response.status = 1;
+					}
+				}
 			}
-			else {
-				response = allocateSharedMemory(node, coreId, vAddress, fault_level, pages);
-				//std::cout << getName() << " Node: " << node << " core " << coreId << " vAddress: " << vAddress << " allocated shared address: " << response.address << " pages: " << " level: " << fault_level << std::endl;
+			if(!ptw_aware_allocation || fault_level == 0) {
+				if( !nodeInfo[node]->allocatedmempool ) {
+					response = allocateLocalMemory(node, coreId, vAddress, fault_level, pages);
+				//std::cerr << getName() << " Node: " << node << " core " << coreId << " response page address: " << vAddress << " allocated local address: " << response.address << " pages: "<< pages << " level: " << fault_level  << std::endl;
+				}
+				else {
+					response = allocateSharedMemory(node, coreId, vAddress, fault_level, pages);
+				//std::cerr << getName() << " Node: " << node << " core " << coreId << " response page address: " << vAddress << " allocated shared address: " << response.address << " pages: " << " level: " << fault_level << std::endl;
+				}
 			}
-		}
-	}
+		//}
+	//}
 
 	if( response.status ) {
 		OpalEvent *tse = new OpalEvent(EventType::RESPONSE);
-		tse->setResp(vAddress, response.address, response.pages*nodeInfo[node]->page_size*1024);
-		nodeInfo[node]->coreInfo[coreId].mmuLink->send(nodeInfo[node]->latency, tse);
+		tse->setResp(vAddress, response.address, response.pages*nodeInfo[node]->page_size);
+		nodeInfo[node]->coreInfo[coreId].mmuLink->send(tse);
 	}
 	else
 		output->fatal(CALL_INFO, -1, "Opal: Memory is drained out\n");
@@ -509,268 +556,111 @@ bool Opal::processRequest(int node, int coreId, uint64_t vAddress, int fault_lev
 
 }
 
-void Opal::migratePages(int node, int coreId, int pages)
-{
 
-	REQRESPONSE response;
-	response.status = 0;
+// gathers shared memory page references
+void Opal::globalPageReferences(int memPoolId) {
+	/*
+	while(!globalPageReferenceQ[memPoolId].empty()) {
+		OpalEvent *ev = globalPageReferenceQ[memPoolId].front();
 
-	// local memory pages to migrate
-	std::list<std::pair<uint64_t, std::pair<uint64_t, int> > > lm_pages = nodeInfo[node]->getPagesToMigrate(pages);
-
-	// get shared memory pages
-	int sharedMemPoolId = 0;
-	std::list<uint64_t> sm_pages;
-	for(uint32_t i = 0; i<num_shared_mempools; i++) {
-
-		/*
-		 * TODO:
-		 *    Opal is not parallel for now, i.e, requests are addressed serially.
-		 * 	  So just checking if the memory is available or not and allocating.
-		 * 	  In future lock share memory pool and allocate pages if available.
-		 */
-		if( sharedMemoryInfo[i]->available_frames >= pages ) {
-			Pool *pool = sharedMemoryInfo[i];
-			for(int j = 0; j < pages; j++)
-			{
-				response = pool->allocate_frame(1);
-
-				if(!response.status)
-					output->fatal(CALL_INFO, -1, "Opal: Allocating shared memory. This should never happen\n");
-
-				sm_pages.push_back(response.address);
-				sharedMemoryInfo[i]->profileStats(0,1);
-				sharedMemoryInfo[i]->profileStats(1,1);
-			}
-
-			sharedMemPoolId = i;
-			response.pages = pages;
-			response.status = 1;
+		if(ev->getType() == EventType::PAGE_REFERENCE_END)
+		{
+			nodeInfo[ev->getNodeId()]->global_memory_response_count++; // memory controller sends invalid node number to indicate end of sending page references
+			globalPageReferenceQ[memPoolId].pop();
+			delete ev;
 			break;
 		}
-
-		if(!response.status)
-			output->fatal(CALL_INFO, -1, "Opal: memory not available to migrate pages\n");
-
-	}
-
-
-	// error checking
-	if( (uint32_t)lm_pages.size() != (uint32_t)pages && (uint32_t)sm_pages.size() != (uint32_t)pages)
-		output->fatal(CALL_INFO, -1, "Opal: This should not happen\n");
-
-	// swap
-	uint64_t sm_address, lm_address;
-	while(!lm_pages.empty())
-	{
-		auto it = lm_pages.front();
-
-		sm_address = sm_pages.front();
-		sm_pages.pop_front();
-
-		lm_address = it.first;
-		it.first = sm_address;
-
-		// move the local page to shared memory
-		nodeInfo[node]->insertFrame(coreId, sm_address, it.second.first, it.second.second, SST::OpalComponent::MemType::SHARED);
-
-		// unmap local memory
-		nodeInfo[node]->pool->deallocate_frame(lm_address,1);
-
-		// store the address to invalidate
-		nodeInfo[node]->coreInfo[coreId].addInvalidAddress(sm_address, it.second.first, it.second.second);
-
-		lm_pages.pop_front();
-
-		nodeInfo[node]->pool->profileStats(2,1);
-		sharedMemoryInfo[sharedMemPoolId]->profileStats(2,1);
-
-		statPagesMigrated->addData(1);
-
-	}
-
-	int shootdownId = nodeInfo[node]->coreInfo[coreId].id;
-	// register tlb shootdown id
-	tlbShootdownInfo[shootdownId] = std::make_pair(node, coreId);
-
-	// initiate tlb shootdown
-	tlbShootdown(node, coreId, shootdownId);
-
-}
-
-//TODO:: Can we send a list instead of sending one address at a time
-void Opal::tlbShootdown(int node, int coreId, int shootdownId)
-{
-
-	std::list<std::pair<uint64_t, std::pair<uint64_t, int> > > *invalidAddrs = nodeInfo[node]->coreInfo[coreId].getInvalidAddresses();
-
-	if(invalidAddrs->empty()) {
-		std::cerr << getName().c_str() << " Nothing to invalidate" << std::endl;
-		OpalEvent *tse = new OpalEvent(EventType::SDACK);
-		nodeInfo[node]->coreInfo[coreId].coreLink->send(nodeInfo[node]->latency, tse);
-
-	}
-
-	// set how many cores does this shootdown should wait for
-	//nodeInfo[node]->coreInfo[coreId].sdAckCount = num_nodes * num_cores;
-	nodeInfo[node]->coreInfo[coreId].sdAckCount = nodeInfo[node]->cores;
-
-	// stall cores
-	//for(uint32_t n=0; n<num_nodes; n++)
-		int n=node;
-		for(uint32_t c=0; c<nodeInfo[n]->cores; c++) {
-			OpalEvent *tse = new OpalEvent(EventType::SHOOTDOWN);
-			nodeInfo[n]->coreInfo[c].coreLink->send(tse); // Stall all the cores
+		else
+		{
+			nodeInfo[ev->getNodeId()]->registerGlobalPageReference(ev->getPaddress(), ev->getSize());
 		}
 
-
-	// send invalid addresses to core 0 1st as core 0 ptw will register the updated addresses.
-	std::list<std::pair<uint64_t, std::pair<uint64_t, int> > > temp = *invalidAddrs;
-	while(!temp.empty())
-	{
-		auto it = temp.front();
-		OpalEvent *tse = new OpalEvent(EventType::INVALIDADDR);
-		tse->setResp(it.second.first,it.first,0);
-		tse->setFaultLevel(it.second.second);
-		tse->setShootdownId(shootdownId);
-		nodeInfo[n]->coreInfo[0].mmuLink->send(tse); // 1ns to update address
-		temp.pop_front();
+		globalPageReferenceQ[memPoolId].pop();
+		delete ev;
 	}
 
-	// send invalid addresses to core mmu's
-	while(!invalidAddrs->empty())
+	//std::cerr << " thread sm id: " << memPoolId << " existing" << std::endl;
+	//pthread_exit(NULL);
+	 */
+}
+
+
+// processes page placement related
+void Opal::processPagePlacement()
+{
+	/*
+	for(uint32_t n=0; n<num_nodes; n++)
 	{
-		auto it = invalidAddrs->front();
-		//for(uint32_t n=0; n<num_nodes; n++)
-			//int n=node;
-			for(uint32_t c=1; c<nodeInfo[n]->cores; c++) {
-				OpalEvent *tse = new OpalEvent(EventType::INVALIDADDR);
-				tse->setResp(it.second.first,it.first,0);
-				tse->setFaultLevel(it.second.second);
-				tse->setShootdownId(shootdownId);
-				nodeInfo[n]->coreInfo[c].mmuLink->send(tse); // 1ns to update address
+		if(!nodeInfo[n]->page_migration_in_progress)
+		{
+			// perform page migration for every epoch
+			if(nodeInfo[n]->current_migration_epoch >= nodeInfo[n]->migration_epoch) {
+				/* print page access stats
+				//std::cerr << getName().c_str() << " node: " << n << " printing average: " << std::endl;
+				OpalEvent *tse1 = new OpalEvent(EventType::PRINT_AVG_PAGE_ACCESS);
+				tse1->setNodeId(0);
+				nodeInfo[n]->memCntrlInfo->link->send(tse1);
+				for(uint32_t m=0; m<num_shared_mempools; m++)
+				{
+					//std::cerr << getName().c_str() << " node: " << n << " shared memory: " << m << " printing average: " << std::endl;
+					OpalEvent *tse = new OpalEvent(EventType::PRINT_AVG_PAGE_ACCESS);
+					tse->setNodeId(n);
+					sharedMemoryInfo[m]->link->send(tse);
+				}
+
+				if(page_placement)
+				{
+					/* get shared memory migration pages
+					nodeInfo[n]->page_migration_in_progress = 1;
+					// collect pages to be migrated information
+					for(uint32_t m=0; m<num_shared_mempools; m++)
+					{
+						OpalEvent *tse = new OpalEvent(EventType::PAGE_REFERENCE);
+						tse->setNodeId(n);
+						sharedMemoryInfo[m]->link->send(tse);
+					}
+				}
+				nodeInfo[n]->current_migration_epoch = 0;
+			}
+			nodeInfo[n]->current_migration_epoch++;
+		}
+		else
+		{
+			for(uint32_t s=0; s<num_shared_mempools; s++)
+			{
+				globalPageReferences(s);
 			}
 
-		invalidAddrs->pop_front();
+			if(nodeInfo[n]->global_memory_response_count == num_shared_mempools)	// check if received responses from all the shared memory pools
+			{
+				nodeInfo[n]->global_memory_response_count = 0;
+				nodeInfo[n]->migratePages(); 	// perform page migration
+			}
+
+		}
 	}
-
-
-	// this include IPI + context switching latency with respect to number of cores
-	// 15000 cycles for 2 cores
-	int shootdown_latency = (nodeInfo[node]->cores/2)*(15000/nodeInfo[node]->clock)*1000; // in ns
-
-	// initiate shootdown
-	//for(uint32_t n=0; n<num_nodes; n++)
-		//int n=node;
-		for(uint32_t c=0; c<nodeInfo[n]->cores; c++) {
-			OpalEvent *tse = new OpalEvent(EventType::SHOOTDOWN);
-			tse->setShootdownId(shootdownId);
-			nodeInfo[n]->coreInfo[c].mmuLink->send(shootdown_latency, tse);
-		}
-
-	nodeInfo[n]->pool->profileStats(3,1);
-	nodeInfo[n]->pool->profileStats(4,(shootdown_latency/1000)); // in us
-
+	*/
 }
 
-void Opal::processTLBShootdownAck(int node, int coreId, int shootdownId)
-{
-	std::map<int, std::pair<int, int> >::iterator it = tlbShootdownInfo.find(shootdownId);
-	if( it == tlbShootdownInfo.end() )
-		output->fatal(CALL_INFO, -1, "Opal: DANGER\n");
 
-	int n=it->second.first;
-	int c=it->second.second;
-	nodeInfo[n]->coreInfo[c].sdAckCount--;
-	if(nodeInfo[n]->coreInfo[c].sdAckCount < 0)
-		std::cerr << getName().c_str() << " DANGER!! sdAckCount less than 0" << std::endl;
-
-	OpalEvent *tse = new OpalEvent(EventType::SDACK);
-	nodeInfo[node]->coreInfo[coreId].coreLink->send(nodeInfo[node]->latency, tse);
-
-	/*if(nodeInfo[n]->coreInfo[c].sdAckCount != 0) {
-		// should not resume initiated core
-		// find out if ack is by initiated core or not
-		if(nodeInfo[node]->coreInfo[coreId].id != shootdownId) {
-			nodeInfo[node]->coreInfo[coreId].coreLink->send(nodeInfo[node]->latency, tse);
-		}
-	} else {
-		// shootdown is performed by all the cores. resume all the cores
-		// find out if the last acknowledged core is initiated core or not. If it is initiated core then resume only initiated core if not resume acknowledged core and initialized core
-		nodeInfo[n]->coreInfo[c].coreLink->send(nodeInfo[n]->latency, tse);
-		if(nodeInfo[node]->coreInfo[coreId].id != shootdownId) {
-			nodeInfo[node]->coreInfo[coreId].coreLink->send(nodeInfo[node]->latency, tse);
-		}
-	}*/
-
-}
-
-void Opal::processInvalidAddrEvent(int node, int coreId, uint64_t vAddress)
-{
-	//store invalid address
-	//nodeInfo[node]->coreInfo[coreId].invalidAddrs(vAddress);
-}
-
-void Opal::processShootdownEvent(int node, int coreId, uint64_t vaddress, uint64_t paddress, int fault_level)
-{
-	int shootdownId = nodeInfo[node]->coreInfo[coreId].id;
-
-	// register tlb shootdown id
-	tlbShootdownInfo[shootdownId] = std::make_pair(node, coreId);
-
-	std::pair<uint64_t, int> temp = nodeInfo[node]->globalPageList[paddress];
-	//std::cout << getName().c_str() << " Node: " << node << " core: " << coreId << " paddress: " << std::hex << paddress << " vaddress: " << temp.first << " and level: " << temp.second << " vaddress: " << vaddress << std::endl;
-	if(temp.first != vaddress)
-		output->fatal(CALL_INFO, -1, "%s, Error - unknown shootdown request\n", getName().c_str());
-
-	std::list<std::pair<uint64_t, std::pair<uint64_t, int> > > lm_pages = nodeInfo[node]->getPagesToMigrate(1);
-
-	if(lm_pages.size() > 1)
-		output->fatal(CALL_INFO, -1, "%s, Error - shootdown request local memory migration pages more than 1\n", getName().c_str());
-
-
-	auto it = lm_pages.front();
-
-	// move the local page to shared memory
-	nodeInfo[node]->removeFrame(paddress, SST::OpalComponent::MemType::SHARED);
-	nodeInfo[node]->insertFrame(coreId, paddress, it.second.first, it.second.second, SST::OpalComponent::MemType::SHARED);
-
-	nodeInfo[node]->insertFrame(coreId, it.first, vaddress, fault_level, SST::OpalComponent::MemType::LOCAL);
-
-	// store the address to invalidate
-	nodeInfo[node]->coreInfo[coreId].addInvalidAddress(paddress, it.second.first, it.second.second);
-	nodeInfo[node]->coreInfo[coreId].addInvalidAddress(it.first, vaddress, fault_level);
-
-	lm_pages.pop_front();
-
-	//nodeInfo[node]->pool->profileStats(2,1);
-	//sharedMemoryInfo[sharedMemPoolId]->profileStats(2,1);
-
-	statPagesMigrated->addData(1);
-
-	// initiate tlb shootdown
-	tlbShootdown(node, coreId, shootdownId);
-
-}
 
 bool Opal::tick(SST::Cycle_t x)
 {
 
-	int inst_served = 0;
+	cycles++;
 
+	//processPagePlacement(); // and print average page access count
+
+	int inst_served = 0;
 	while(!requestQ.empty()) {
 		if(inst_served < max_inst) {
-
 			OpalEvent *ev = requestQ.front();
 			bool removeEvent = true;
 
 			switch(ev->getType()) {
 			case SST::OpalComponent::EventType::HINT:
 			{
-				//std::cerr << "MLM Hint(0) : level "<< ev->hint << " Starting address is "<< std::hex << ev->getAddress();
-				//std::cerr << std::dec << " Size: "<< ev->getSize();
-				//std::cerr << " Ending address is " << std::hex << ev->getAddress() + ev->getSize() - 1;
-				//std::cerr << std::dec << std::endl;
+				std::cerr << getName().c_str() << " node: " << ev->getNodeId() << " core: "<< ev->getCoreId() << " request page address: " << ev->getAddress() << " hint" << std::endl;
 			}
 			break;
 
@@ -782,42 +672,63 @@ bool Opal::tick(SST::Cycle_t x)
 				std::cerr << " Ending address is " << std::hex << ev->getAddress() + ev->getSize() - 1;
 				std::cerr << std::dec << std::endl;
 				//size should be in the multiple of page size (4096) from ariel core
-				processHint(ev->getNodeId(), ev->getFileId(), ev->getAddress(), ev->getSize());
+				//processHint(ev->getNodeId(), ev->getFileId(), ev->getAddress(), ev->getSize());
 			}
 			break;
 
 			case SST::OpalComponent::EventType::UNMAP:
 			{
+				std::cerr << getName().c_str() << " node: " << ev->getNodeId() << " core: "<< ev->getCoreId() << " request page address: " << ev->getAddress() << " unmap"<< std::endl;
 				OPAL_VERBOSE(8, output->verbose(CALL_INFO, 8, 0, "Node%" PRIu32 " Opal has received an UNMAP CALL\n", ev->getNodeId()));
 			}
 			break;
 
-			case SST::OpalComponent::EventType::INVALIDADDR:
+			/*case SST::OpalComponent::EventType::SDACK:
 			{
-				OPAL_VERBOSE(8, output->verbose(CALL_INFO, 8, 0, "Node%" PRIu32 " Opal has received an INVALIDADDR CALL\n", ev->getNodeId()));
-				processInvalidAddrEvent(ev->getNodeId(), ev->getCoreId(), ev->getAddress());
+				OPAL_VERBOSE(8, output->verbose(CALL_INFO, 8, 0, "Node%" PRIu32 " Opal has received a SDACK CALL\n", ev->getNodeId()));
+				OpalEvent *tse = new OpalEvent(EventType::SDACK);
+				nodeInfo[ev->getNodeId()]->coreInfo[ev->getCoreId()].coreLink->send(tse);	// resume core
+				if(0 == ev->getCoreId()) {
+					nodeInfo[ev->getNodeId()]->tlb_shootdown_in_progress = 0;
+					nodeInfo[ev->getNodeId()]->page_migration_in_progress = 0;
+					int thr_change = nodeInfo[ev->getNodeId()]->getUpdatedThreshold();
+					for(uint32_t m=0; m<num_shared_mempools; m++)
+					{
+						if(thr_change != 0) {
+							OpalEvent *tse = new OpalEvent(EventType::IPC_INFO);
+							tse->setResp(0,0,thr_change); // embed threshold value in size
+							tse->setNodeId(ev->getNodeId());
+							sharedMemoryInfo[m]->link->send(tse);
+						}
+					}
+				}
 			}
 			break;
-
-			case SST::OpalComponent::EventType::SHOOTDOWN:
-			{
-				OPAL_VERBOSE(8, output->verbose(CALL_INFO, 8, 0, "Node%" PRIu32 " Opal has received an SHOOTDOWN CALL\n", ev->getNodeId()));
-				processShootdownEvent(ev->getNodeId(), ev->getCoreId(), ev->getAddress(), ev->getPaddress(), ev->getFaultLevel());
-			}
-			break;
-
-			case SST::OpalComponent::EventType::SDACK:
-			{
-				OPAL_VERBOSE(8, output->verbose(CALL_INFO, 8, 0, "Node%" PRIu32 " Opal has received an SDACK CALL\n", ev->getNodeId()));
-				processTLBShootdownAck(ev->getNodeId(), ev->getCoreId(), ev->getShootdownId());
-			}
-			break;
-
+			*/
 			case SST::OpalComponent::EventType::REQUEST:
 			{
-				//size is 4096 (4K pages) from PTW
 				removeEvent = processRequest(ev->getNodeId(), ev->getCoreId(), ev->getAddress(), ev->getFaultLevel(), ev->getSize());
+			}
+			break;
 
+			case SST::OpalComponent::EventType::ARIEL_ENABLED:
+			{
+				ariel_enable_count++;
+				if(ariel_enable_count >= num_nodes) {
+					for(uint32_t i=0; i<num_nodes; i++)
+						for(uint32_t j=0; j<nodeInfo[i]->cores; j++) {
+							OpalEvent *tse = new OpalEvent(EventType::ARIEL_ENABLED);
+							nodeInfo[i]->coreInfo[j].coreLink->send(tse);
+							std::cerr << "enabling core: " << j << std::endl;
+						}
+				}
+				else {
+					for(uint32_t j=0; j<nodeInfo[ev->getNodeId()]->cores; j++) {
+						std::cerr << "disable core: " << j << std::endl;
+						OpalEvent *tse = new OpalEvent(EventType::SHOOTDOWN);
+						nodeInfo[ev->getNodeId()]->coreInfo[j].coreLink->send(tse);
+					}
+				}
 			}
 			break;
 
@@ -828,7 +739,7 @@ bool Opal::tick(SST::Cycle_t x)
 			}
 
 			if(!removeEvent) {
-				return false;
+				break;
 			}
 
 			requestQ.pop();
@@ -847,6 +758,8 @@ bool Opal::tick(SST::Cycle_t x)
 
 void Opal::finish()
 {
+	//page_placement=0;
+
 	uint32_t i;
 
 	for(i = 0; i < num_nodes; i++ )
@@ -854,7 +767,29 @@ void Opal::finish()
 
 
 	for(i = 0; i < num_shared_mempools; i++ )
-	  sharedMemoryInfo[i]->finish();
+	  sharedMemoryInfo[i]->pool->finish();
 
 }
+
+void Opal::deallocateSharedMemory(uint64_t page, int N)
+{
+	for(uint32_t sm=0; sm<num_shared_mempools; sm++)
+		if(sharedMemoryInfo[sm]->contains(page)) {
+			sharedMemoryInfo[sm]->pool->deallocate_frame(page, 1);
+			break;
+		}
+}
+
+
+//void Opal::updateLocalPTR(uint64_t page, int ref, int node) {
+	//std::cerr << getName().c_str() << " updateLocalPTR page: " << page << " ref: " << ref << std::endl;
+	//nodeInfo[node]->local_PTR[page] = ref;
+//}
+
+
+void Opal::handleEvent(SST::Event* event)
+{
+
+}
+
 

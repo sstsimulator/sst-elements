@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2018 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -41,86 +41,101 @@ Samba::Samba(SST::ComponentId_t id, SST::Params& params): Component(id) {
 
 	int emulate_faults = (uint32_t) params.find<uint32_t>("emulate_faults", 0);
 
+	cr3I = 0;
+	if(emulate_faults)
+	{
+		//int page_reference_table_size = params.find<uint32_t>("page_reference_table_size", 200);
+		//PAGE_REFERENCE_TABLE = new PageReferenceTable(page_reference_table_size);
+	}
+
 	int levels = (uint32_t) params.find<uint32_t>("levels", 1);
 
 	int  page_walk_latency = ((uint32_t) params.find<uint32_t>("page_walk_latency", 50));
 
-	TLB = new TLBhierarchy*[core_count];
-	std::cout<<"Initialized with "<<core_count<<" cores"<<std::endl;
+	STU_enabled = ((int) params.find<int>("stu", 0));
+	//int STU_active_TLB = ((int) params.find<int>("stu_active_tlb", 0));
+	std::cerr<< getName().c_str() << " stu: " << STU_enabled << std::endl;
+	//if(!STU_enabled) { 
+		TLB = new TLBhierarchy*[core_count];
+		std::cout<<"Initialized with "<<core_count<<" cores"<<std::endl;
 
 
-	cpu_to_mmu = (SST::Link **) malloc( sizeof(SST::Link*) * core_count );
+		cpu_to_mmu = (SST::Link **) malloc( sizeof(SST::Link*) * core_count );
 
-	mmu_to_cache = (SST::Link **) malloc( sizeof(SST::Link *) * core_count );
+		mmu_to_cache = (SST::Link **) malloc( sizeof(SST::Link *) * core_count );
 
-	ptw_to_mem = (SST::Link **) malloc( sizeof(SST::Link *) * core_count );
+		int active_TLB = ((uint32_t) params.find<uint32_t>("active_TLB", 1));
+		if(active_TLB)
+			ptw_to_mem = (SST::Link **) malloc( sizeof(SST::Link *) * core_count );
 
-	ptw_to_opal = (SST::Link **) malloc( sizeof(SST::Link *) * core_count );
-
-
-	char* link_buffer = (char*) malloc(sizeof(char) * 256);
-
-	char* link_buffer2 = (char*) malloc(sizeof(char) * 256);
-
-	char* link_buffer3 = (char*) malloc(sizeof(char) * 256);
-
-	char* link_buffer4 = (char*) malloc(sizeof(char) * 256);
-
-	std::cout<<"Before initialization "<<std::endl;
-	for(uint32_t i = 0; i < core_count; ++i) {
-		sprintf(link_buffer, "cpu_to_mmu%" PRIu32, i);
-
-		sprintf(link_buffer2, "mmu_to_cache%" PRIu32, i);
+		ptw_to_opal = (SST::Link **) malloc( sizeof(SST::Link *) * core_count );
 
 
+		char* link_buffer = (char*) malloc(sizeof(char) * 256);
 
-		TLB[i]= new TLBhierarchy(i, levels /* level */, (SST::Component *) this,params);
+		char* link_buffer2 = (char*) malloc(sizeof(char) * 256);
 
+		char* link_buffer3 = (char*) malloc(sizeof(char) * 256);
 
-		SST::Link * link2 = configureLink(link_buffer, "0ps", new Event::Handler<TLBhierarchy>(TLB[i], &TLBhierarchy::handleEvent_CPU));
-		cpu_to_mmu[i] = link2;
+		char* link_buffer4 = (char*) malloc(sizeof(char) * 256);
+
+		std::cout<<"Before initialization "<<std::endl;
+		for(uint32_t i = 0; i < core_count; ++i) {
+			sprintf(link_buffer, "cpu_to_mmu%" PRIu32, i);
+
+			sprintf(link_buffer2, "mmu_to_cache%" PRIu32, i);
 
 
 
-		SST::Link * link = configureLink(link_buffer2, "0ps", new Event::Handler<TLBhierarchy>(TLB[i], &TLBhierarchy::handleEvent_CACHE));
-		mmu_to_cache[i] = link;
+			TLB[i]= new TLBhierarchy(i, levels /* level */, (SST::Component *) this,params);
 
 
-		sprintf(link_buffer3, "ptw_to_mem%" PRIu32, i);
-		SST::Link * link3;
-
-		if(self==0)
-			link3 = configureLink(link_buffer3, new Event::Handler<PageTableWalker>(TLB[i]->getPTW(), &PageTableWalker::recvResp));
-		else
-			link3 = configureSelfLink(link_buffer3, std::to_string(page_walk_latency)+ "ns", new Event::Handler<PageTableWalker>(TLB[i]->getPTW(), &PageTableWalker::recvResp));
-
-		ptw_to_mem[i] = link3;
+			SST::Link * link2 = configureLink(link_buffer, "0ps", new Event::Handler<TLBhierarchy>(TLB[i], &TLBhierarchy::handleEvent_CPU));
+			cpu_to_mmu[i] = link2;
 
 
-		sprintf(link_buffer4, "ptw_to_opal%" PRIu32, i);
-		SST::Link * link4;
+
+			SST::Link * link = configureLink(link_buffer2, "0ps", new Event::Handler<TLBhierarchy>(TLB[i], &TLBhierarchy::handleEvent_CACHE));
+			mmu_to_cache[i] = link;
+
+			sprintf(link_buffer3, "ptw_to_mem%" PRIu32, i);
+			SST::Link * link3;
+			if(active_TLB) {
+				if(self==0)
+					link3 = configureLink(link_buffer3, new Event::Handler<PageTableWalker>(TLB[i]->getPTW(), &PageTableWalker::recvResp));
+				else
+					link3 = configureSelfLink(link_buffer3, std::to_string(page_walk_latency)+ "ns", new Event::Handler<PageTableWalker>(TLB[i]->getPTW(), &PageTableWalker::recvResp));
+
+				ptw_to_mem[i] = link3;
+			}
 
 
-		if(emulate_faults==1)
-		{
-			link4 = configureLink(link_buffer4, new Event::Handler<PageTableWalker>(TLB[i]->getPTW(), &PageTableWalker::recvOpal));
-			ptw_to_opal[i] = link4;
-			TLB[i]->setOpalLink(link4);
+			sprintf(link_buffer4, "ptw_to_opal%" PRIu32, i);
+			SST::Link * link4;
 
-			sprintf(link_buffer, "event_bus%" PRIu32, i);
 
-			event_link = configureSelfLink(link_buffer, "1ns", new Event::Handler<PageTableWalker>(TLB[i]->getPTW(), &PageTableWalker::handleEvent));
+			if(emulate_faults==1)
+			{
+				link4 = configureLink(link_buffer4, "1ns", new Event::Handler<PageTableWalker>(TLB[i]->getPTW(), &PageTableWalker::recvOpal));
+				ptw_to_opal[i] = link4;
+				TLB[i]->setOpalLink(link4);
 
-			TLB[i]->getPTW()->setEventChannel(event_link);
-			TLB[i]->setPageTablePointers(&CR3, &PGD, &PUD, &PMD, &PTE, &MAPPED_PAGE_SIZE1GB, &MAPPED_PAGE_SIZE2MB, &MAPPED_PAGE_SIZE4KB, &PENDING_PAGE_FAULTS, &PENDING_SHOOTDOWN_EVENTS);
+				sprintf(link_buffer, "event_bus%" PRIu32, i);
 
+				event_link = configureSelfLink(link_buffer, "1ns", new Event::Handler<PageTableWalker>(TLB[i]->getPTW(), &PageTableWalker::handleEvent));
+
+				TLB[i]->getPTW()->setEventChannel(event_link);
+				TLB[i]->setPageTablePointers(&CR3, &PGD, &PUD, &PMD, &PTE, &MAPPED_PAGE_SIZE1GB, &MAPPED_PAGE_SIZE2MB, &MAPPED_PAGE_SIZE4KB, &PENDING_PAGE_FAULTS, &cr3I, &PENDING_PAGE_FAULTS_PGD, &PENDING_PAGE_FAULTS_PUD, &PENDING_PAGE_FAULTS_PMD, &PENDING_PAGE_FAULTS_PTE);//, &PENDING_SHOOTDOWN_EVENTS, &PTR, &PTR_map);
+				//TLB[i]->setPageReferenceTable(PAGE_REFERENCE_TABLE);
+			}
+
+			if(active_TLB)
+				TLB[i]->setPTWLink(link3); // We make a connection from the TLB hierarchy to the memory hierarchy, for page table walking purposes
+			TLB[i]->setCacheLink(mmu_to_cache[i]);
+			TLB[i]->setCPULink(cpu_to_mmu[i]);
+			TLB[i]->setSTU(&STU_enabled);
 		}
-
-		TLB[i]->setPTWLink(link3); // We make a connection from the TLB hierarchy to the memory hierarchy, for page table walking purposes
-		TLB[i]->setCacheLink(mmu_to_cache[i]);
-		TLB[i]->setCPULink(cpu_to_mmu[i]);
-
-	}
+	//}
 
 
 
@@ -148,6 +163,13 @@ Samba::Samba() : Component(-1)
 
 void Samba::init(unsigned int phase) {
 
+	if(STU_enabled) {
+		SST::Event * ev;
+		while ((ev = cpu_to_mmu[0]->recvInitData())) {
+			delete ev;
+		}
+		return;
+	}
 	/* 
 	 * CPU may send init events to memory, pass them through, 
 	 * also pass memory events to CPU
@@ -181,3 +203,4 @@ bool Samba::tick(SST::Cycle_t x)
 
 	return false;
 }
+

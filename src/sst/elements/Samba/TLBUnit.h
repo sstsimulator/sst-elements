@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2018 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -34,6 +34,8 @@ class TLB
 
 	SST::Component *Owner;
 
+	Output * output;
+
 	int coreId;
 
 	int level; // This indicates the level of the TLB Unit
@@ -42,7 +44,7 @@ class TLB
 
 	int sizes; // This indicates the number of sizes supported
 
-	int * page_size; // By default, lets assume 4KB pages
+	uint64_t * page_size; // By default, lets assume 4KB pages
 
 	int * assoc; // This represents the associativiety
 
@@ -102,6 +104,8 @@ class TLB
 
 	int page_walk_latency; // this is really nothing than the page walk latency in case of having no walkers
 
+	int *STU_enabled;
+
 	public: 
 
 	TLB() {} // For serialization
@@ -114,7 +118,7 @@ class TLB
 	void finish(){}
 
 	// Invalidate TLB entry
-	void invalidate(Address_t vadd);
+	void invalidate(Address_t vadd, int id);
 
 	// Find if it exists
 	bool check_hit(Address_t vadd, int struct_id);
@@ -150,7 +154,9 @@ class TLB
 
 	bool tick(SST::Cycle_t x);
 
-
+	void setSTU(int *stu_en){ STU_enabled = stu_en; }
 };
 
 #endif
+
+

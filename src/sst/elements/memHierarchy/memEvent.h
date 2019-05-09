@@ -179,6 +179,10 @@ public:
     bool fromHighNetNACK()  { return !CommandCPUSide[(int)cmd_];}
     bool fromLowNetNACK()   { return CommandCPUSide[(int)cmd_];}
 
+    void setPT() { pt_=true; }
+
+    bool getPT() { return pt_; }
+
     /** @return  the data payload. */
     dataVec& getPayload(void) {
         /* Lazily allocate space for payload */
@@ -279,6 +283,8 @@ private:
     Addr	    instPtr_;           // Instruction pointer associated with the request
     Addr 	    vAddr_;             // Virtual address associated with the request
     bool            inProgress_;        // Whether this request is currently being handled, if in MSHR TODO move to mshrs
+
+    bool			pt_;
 
     MemEvent() : MemEventBase() {} // For serialization only
 

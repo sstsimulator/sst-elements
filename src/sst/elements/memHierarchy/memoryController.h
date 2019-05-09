@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2018 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -20,16 +20,19 @@
 
 #include <sst/core/component.h>
 #include <sst/core/event.h>
+#include <sst/core/elementinfo.h>
 
 #include "sst/elements/memHierarchy/memEvent.h"
 #include "sst/elements/memHierarchy/cacheListener.h"
 #include "sst/elements/memHierarchy/memLinkBase.h"
 #include "sst/elements/memHierarchy/membackend/backing.h"
 #include "sst/elements/memHierarchy/customcmd/customCmdMemory.h"
+#include "memPageStats.h"
 
 namespace SST {
 namespace MemHierarchy {
 
+class PagePlacementMethods;
 class MemBackendConvertor;
 
 class MemController : public SST::Component {
@@ -58,7 +61,7 @@ public:
             {"interleave_size",     "(string) Size of interleaved chunks. E.g., to interleave 8B chunks among 3 memories, set size=8B, step=24B", "0B"},\
             {"interleave_step",     "(string) Distance between interleaved chunks. E.g., to interleave 8B chunks among 3 memories, set size=8B, step=24B", "0B"},\
             {"customCmdMemHandler", "(string) Name of the custom command handler to load", ""},\
-            {"node",		    "Node number in multinode environment"},\
+            {"node",					"Node number in multinode environment"},\
             /* Old parameters - deprecated or moved */\
             {"do_not_back",         "DEPRECATED. Use parameter 'backing' instead.", "0"}, /* Remove 9.0 */\
             {"network_num_vc",      "DEPRECATED. Number of virtual channels (VCs) on the on-chip network. memHierarchy only uses one VC.", "1"}, /* Remove 9.0 */\
@@ -77,7 +80,8 @@ public:
             {"network_ack", "For split networks, ack/response network connection to a cache/directory controller", {"memHierarchy.MemRtrEvent"} },\
             {"network_fwd", "For split networks, forward request network connection to a cache/directory controller", {"memHierarchy.MemRtrEvent"} },\
             {"network_data","For split networks, data network connection to a cache/directory controller", {"memHierarchy.MemRtrEvent"} },\
-            {"cube_link",   "DEPRECATED. Use named subcomponents and their links instead.", {"sst.Event"} }
+            {"cube_link",   "DEPRECATED. Use named subcomponents and their links instead.", {"sst.Event"} },\
+            {"opal_link",	"Connect to opal centralized memory manager", {"sst.Event"} }
 
     SST_ELI_DOCUMENT_PORTS( MEMCONTROLLER_ELI_PORTS )
     
@@ -86,6 +90,10 @@ public:
             {"customCmdHandler", "Optional handler for custom command types", "SST::MemHierarchy::CustomCmdMemHandler"} 
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( MEMCONTROLLER_ELI_SUBCOMPONENTSLOTS )
+
+#define MEMCONTROLLER_ELI_STATS { "page_count", "Total cycles with successful issue to back end",   "cycles",   1 }
+
+    SST_ELI_DOCUMENT_STATISTICS( MEMCONTROLLER_ELI_STATS )
 
 /* Begin class definition */
     typedef uint64_t ReqId;
@@ -103,14 +111,15 @@ public:
     void writeData(Addr addr, std::vector<uint8_t>* data);
     void readData(Addr addr, size_t size, std::vector<uint8_t>& data);
 
+    void handleOpalEvent( SST::Event* );
+
 protected:
     MemController();  // for serialization only
     ~MemController() {}
 
     void notifyListeners( MemEvent* ev ) {
         if (  ! listeners_.empty()) {
-            // AFR: should this pass the base Addr?
-            CacheListenerNotification notify(ev->getAddr(), ev->getAddr(), ev->getVirtualAddress(), 
+	 CacheListenerNotification notify(ev->getAddr(), ev->getAddr(), ev->getVirtualAddress(), 
                         ev->getInstructionPointer(), ev->getSize(), READ, HIT);
 
             for (unsigned long int i = 0; i < listeners_.size(); ++i) {
@@ -133,6 +142,8 @@ protected:
 
     MemLinkBase* link_;         // Link to the rest of memHierarchy 
     bool clockLink_;            // Flag - should we call clock() on this link or not
+
+    SST::Link* opalLink_;
 
     std::vector<CacheListener*> listeners_;
     
@@ -166,8 +177,17 @@ private:
     std::map<SST::Event::id_type, MemEventBase*> outstandingEvents_; // For sending responses. Expect backend to respond to ALL requests so that we know the execution order
 
     void handleCustomEvent(MemEventBase* ev);
+
+    uint32_t opal_enabled;
+    uint32_t page_placement;
+    PagePlacementMethods *pagePlacementMethods_;
+    MemPageStats** page_stats;
+    int density_points;
+    std::map<uint64_t, int> page_map;
+    uint64_t timestamp;
 };
 
 }}
 
 #endif /* _MEMORYCONTROLLER_H */
+
