@@ -87,6 +87,7 @@ all-local: frontend/simple/fesimple.cc
 	$(LIBZ_CPPFLAGS) \
 	-DBIGARRAY_MULTIPLIER=1 \
 	-DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_MAC \
+	$(CUDA_CPPFLAGS) \
 	-I./ \
 	-I$(PINTOOL_DIR)/source/include/pin \
 	-I$(PINTOOL_DIR)/ \
@@ -98,6 +99,7 @@ all-local: frontend/simple/fesimple.cc
 	-fomit-frame-pointer -fno-stack-protector \
 	-Wl,-exported_symbols_list \
 	-Wl,$(PINTOOL_DIR)/source/include/pin/pintool.exp \
+	$(CUDA_LDFLAGS) \
 	-L$(PINTOOL_DIR)/intel64/lib \
 	-L$(PINTOOL_DIR)/intel64/lib-ext \
 	-L$(PINTOOL_DIR)/extras/xed-intel64/lib \
@@ -118,6 +120,7 @@ all-local:
 	$(CXXFLAGS) \
 	$(CPPFLAGS) \
 	$(LIBZ_CPPFLAGS) \
+	$(CUDA_CPPFLAGS) \
 	-DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_LINUX \
 	-I./ \
 	-I$(PINTOOL_DIR)/source/include/pin \
