@@ -95,6 +95,8 @@ ProsperoComponent::ProsperoComponent(ComponentId_t id, Params& params) :
 	cyclesWithIssue = 0;
 
 	output->verbose(CALL_INFO, 1, 0, "Prospero configuration completed successfully.\n");
+
+
 }
 
 ProsperoComponent::~ProsperoComponent() {
@@ -242,11 +244,12 @@ bool ProsperoComponent::tick(SST::Cycle_t currentCycle) {
 }
 
 void ProsperoComponent::issueRequest(const ProsperoTraceEntry* entry) {
-	const uint64_t entryAddress = entry->getAddress();
-	const uint64_t entryLength  = (uint64_t) entry->getLength();
+    // Trim request size to cacheline length in case of instructions like xsave, fxsave, etc. (happens rarely)
+    const uint64_t entryAddress = entry->getAddress();
+    const uint64_t entryLength  = std::min((uint64_t) entry->getLength(), cacheLineSize);
 
-	const uint64_t lineOffset   = entryAddress % cacheLineSize;
-	bool  isRead                = entry->isRead();
+    const uint64_t lineOffset   = entryAddress % cacheLineSize;
+    bool  isRead                = entry->isRead();
 
 	if(isRead) {
 		totalBytesRead += entryLength;
