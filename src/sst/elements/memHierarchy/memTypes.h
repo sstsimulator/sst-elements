@@ -18,7 +18,7 @@
 
 #include <sst/core/sst_types.h>
 
-#include <sst/core/elibase.h>   // For ElementInfoStatistic
+#include <sst/core/eli/elibase.h>   // For ElementInfoStatistic
 
 #include "sst/elements/memHierarchy/util.h"
 
