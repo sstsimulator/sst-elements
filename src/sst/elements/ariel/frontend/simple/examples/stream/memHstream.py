@@ -59,6 +59,8 @@ ariel.addParams({
    "executable" : sst_root + "/sst-elements/src/sst/elements/ariel/frontend/simple/examples/stream/stream",
    "memorylevels"        : "1",
    "arielinterceptcalls" : "1",
+   "launchparamcount"    : 1,
+   "launchparam0"        : "-ifeellucky",
    "arielmode"           : "1",
    "corecount"           : corecount,
    "defaultlevel"        : defaultLevel,

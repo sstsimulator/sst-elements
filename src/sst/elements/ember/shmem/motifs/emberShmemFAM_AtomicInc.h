@@ -1,8 +1,8 @@
-// Copyright 2009-2018 NTESS. Under the terms
+// Copyright 2009-2019 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2018, NTESS
+// Copyright (c) 2009-2019, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -100,7 +100,7 @@ public:
             	enQ_compute( evQ, m_computeTime );
 			}
 	
-            enQ_fam_add( evQ, offset, &m_one );
+            enQ_fam_add( evQ, m_fd, offset, &m_one );
 
             if ( m_phase + 1 == m_iterations * m_updates ) {
                 enQ_barrier_all( evQ );
@@ -223,6 +223,7 @@ public:
     unsigned int m_randSeed;
 #endif
 
+	Shmem::Fam_Descriptor m_fd;
     int m_computeTime;
 	bool m_printTotals;
 	TYPE m_one;

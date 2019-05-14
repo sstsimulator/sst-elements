@@ -111,6 +111,8 @@ ariel.addParams({
    "executable"         : "./stream",
    "memorylevels"        : "1",
    "arielinterceptcalls" : "1",
+   "launchparamcount" : 1,
+   "launchparam0" : "-ifeellucky",
    "arielmode"           : "1",
    "corecount"           : corecount,
    "defaultlevel"        : defaultLevel,

@@ -32,7 +32,6 @@
 #include <sst/core/component.h>
 #include <sst/core/timeConverter.h>
 #include <sst/core/output.h>
-#include <sst/core/elementinfo.h>
 
 #include "sst/elements/memHierarchy/memLinkBase.h"
 #include "sst/elements/memHierarchy/memEvent.h"

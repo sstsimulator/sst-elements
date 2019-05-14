@@ -807,11 +807,6 @@ PortControl::handle_input_r2r(Event* ev)
             if ( have_packets) {
                 output_port_stalls->addData(Simulation::getSimulation()->getCurrentSimCycle() - start_block);
             }
-            // I don't think this should be idle, but I need to think it over more carefully - TLG
-            if (idle_start) {
-                idle_time->addData(Simulation::getSimulation()->getCurrentSimCycle() - idle_start);
-                idle_start = 0;
-            }
 	    }
 	}
     break;

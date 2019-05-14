@@ -1,8 +1,8 @@
-// Copyright 2009-2018 NTESS. Under the terms
+// Copyright 2009-2019 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2018, NTESS
+// Copyright (c) 2009-2019, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -27,10 +27,11 @@ class EmberWaitEvent : public EmberMPIEvent {
 public:
 	EmberWaitEvent( MP::Interface& api, Output* output,
                    EmberEventTimeStatistic* stat,
-       		MessageRequest* req, MessageResponse* resp = NULL ) :
+       		MessageRequest* req, MessageResponse* resp, bool deleteReq  ) :
        	EmberMPIEvent( api, output, stat ),
        	m_req( req ),
-		m_respPtr( resp )
+		m_respPtr( resp ),
+		m_deleteReq( deleteReq )
     { }
 
 	~EmberWaitEvent() {}
@@ -42,11 +43,15 @@ public:
         EmberEvent::issue( time );
 
        	m_api.wait( *m_req, m_respPtr, functor );
+		if ( m_deleteReq ) {
+			delete m_req;
+		} 
     }
 
 private:
     MessageRequest* 	m_req;
 	MessageResponse*	m_respPtr;	
+	bool				m_deleteReq;
 };
 
 }

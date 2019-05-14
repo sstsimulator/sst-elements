@@ -16,7 +16,6 @@
 #ifndef COMPONENTS_FIREFLY_NODE_PERF_H
 #define COMPONENTS_FIREFLY_NODE_PERF_H
 
-#include <sst/core/elementinfo.h>
 #include "sst/elements/hermes/hermes.h"
 
 namespace SST {

@@ -1,8 +1,8 @@
-// Copyright 2009-2018 NTESS. Under the terms
+// Copyright 2009-2019 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2018, NTESS
+// Copyright (c) 2009-2019, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -580,14 +580,14 @@ ReductionOperation EmberSIRIUSTraceGenerator::readReductionOp() const {
 
 	switch(opType) {
 	case SIRIUS_MPI_SUM:
-		return SUM;
+		return MP::SUM;
 	case SIRIUS_MPI_MAX:
-		return MAX;
+		return MP::MAX;
 	case SIRIUS_MPI_MIN:
-		return MIN;
+		return MP::MIN;
 	default:
 		fatal(CALL_INFO, -1, "I/O Error - unknown MPI operation type\n");
 	}
 
-	return SUM;
+	return MP::SUM;
 }

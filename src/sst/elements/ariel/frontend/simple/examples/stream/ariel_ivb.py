@@ -127,6 +127,8 @@ ariel.addParams({
         "appargcount"         : "0",
        	"memmgr.memorylevels" : "1",
         "arielinterceptcalls" : "1",
+        "launchparamcount"    : 1,
+        "launchparam0"        : "-ifeellucky",
        	"arielmode"           : "1",
 	"memmgr.pagecount0"   : "1048576",
         "corecount"           : groups * cores_per_group,

@@ -110,7 +110,8 @@ class Interface : public Hermes::Interface {
 	virtual void fam_gatherv( Hermes::Vaddr dest, Fam_Descriptor fd, uint64_t nElements,
 			std::vector<uint64_t> elementIndex, uint64_t elmentSize, bool blocking, Callback& ) {assert(0);};
 
-    virtual void fam_add( uint64_t, Value&, Callback& ) { assert(0); }
+    virtual void fam_add( Fam_Descriptor fd, uint64_t, Value&, Callback& ) { assert(0); }
+    virtual void fam_cswap( Value& result, Fam_Descriptor fd, uint64_t, Value& oldValue , Value& newValue, Callback) { assert(0); }
 };
 
 }

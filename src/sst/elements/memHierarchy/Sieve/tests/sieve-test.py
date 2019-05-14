@@ -34,7 +34,9 @@ ariel.addParams({
     "memmgr.pagecount0" : num_pages,
     "memmgr.pagesize0" : pageSize * 1024,
     "arielstack" : 1,
-    "arielinterceptcalls" : 1
+    "arielinterceptcalls" : 1,
+    "launchparamcount" : 1,
+    "launchparam0" : "-ifeellucky"
 })
 
 sieveId = sst.Component("sieve", "memHierarchy.Sieve")
