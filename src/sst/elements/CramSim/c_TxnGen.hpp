@@ -46,9 +46,14 @@ namespace SST {
             virtual bool sendRequest(); //send out txn req ptr to Transaction unit
             virtual void readResponse(); //read from res q to output
             virtual bool clockTic(SST::Cycle_t); //called every cycle
+            virtual void turnClockOn(); // Re-enable clock
 
             //Simulation cycles
             SimTime_t m_simCycle;
+            bool m_clockOff;
+            bool m_canDeclock;
+            TimeConverter* m_timeBase;
+            Clock::Handler<c_TxnGenBase>* m_clockHandler;
 
             //internal microarchitecture
             std::deque<std::pair<c_Transaction*, uint64_t> > m_txnReqQ;

@@ -50,7 +50,7 @@ c_MemhBridge::c_MemhBridge(ComponentId_t x_id, Params& x_params) :
 
 	k_txnTraceFileName = (std::string) x_params.find<std::string>("strTxnTraceFile", "-", l_found);
 	//k_txnTraceFileName.pop_back(); // remove trailing newline (??)
-/*	if (k_printTxnTrace) {
+	if (k_printTxnTrace) {
 		if (k_txnTraceFileName.compare("-") == 0) {// set output to std::cout
 			std::cout << "Setting txn trace output to std::cout" << std::endl;
 			m_txnTraceStreamBuf = std::cout.rdbuf();
@@ -66,7 +66,8 @@ c_MemhBridge::c_MemhBridge(ComponentId_t x_id, Params& x_params) :
 		}
 		m_txnTraceStream = new std::ostream(m_txnTraceStreamBuf);
 	}
-*/
+
+        m_canDeclock = true; // Requests are triggered by events not clock so we can turn off the clock
 
 
 	/*---- CONFIGURE LINKS ----*/
@@ -83,6 +84,9 @@ c_MemhBridge::~c_MemhBridge() {
 void c_MemhBridge::handleIncomingTransaction(SST::Event * ev) {
     MemReqEvent * event = static_cast<MemReqEvent*>(ev);
     m_tmpQueue.push(event);
+
+    if (m_clockOff)
+        turnClockOn();
 }
 
 void c_MemhBridge::createTxn() {

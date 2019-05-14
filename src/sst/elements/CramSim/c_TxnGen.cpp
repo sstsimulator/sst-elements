@@ -95,8 +95,10 @@ c_TxnGenBase::c_TxnGenBase(ComponentId_t x_id, Params& x_params) :
     std::string l_controllerClockFreqStr = (std::string)x_params.find<std::string>("strControllerClockFrequency", "1GHz", l_found);
 
     //set our clock
-    registerClock(l_controllerClockFreqStr,
-                  new Clock::Handler<c_TxnGenBase>(this, &c_TxnGenBase::clockTic));
+    m_clockHandler = new Clock::Handler<c_TxnGenBase>(this, &c_TxnGenBase::clockTic);
+    m_timeBase = registerClock(l_controllerClockFreqStr, m_clockHandler);
+    m_clockOff = false;
+    m_canDeclock = false; // Default
 
     // Statistics
     s_readTxnsCompleted = registerStatistic<uint64_t>("readTxnsCompleted");
@@ -145,6 +147,12 @@ void c_TxnGenBase::finish()
     s_txnsPerCycle->addData(l_txnsPerCycle);
 }
 
+void c_TxnGenBase::turnClockOn() {
+    m_clockOff = false;
+    m_simCycle = reregisterClock(m_timeBase, m_clockHandler);
+    m_simCycle--;
+}
+
 bool c_TxnGenBase::clockTic(Cycle_t) {
     
     m_simCycle++;
@@ -170,7 +178,9 @@ bool c_TxnGenBase::clockTic(Cycle_t) {
             return true;
         }
     }
-    return false;
+    m_clockOff = m_canDeclock && m_txnResQ.empty() && m_txnReqQ.empty();
+
+    return m_clockOff;
 }
 
 
@@ -181,6 +191,9 @@ void c_TxnGenBase::handleResEvent(SST::Event* ev) {
 
     if (l_txnResEventPtr)
     {
+        if (m_clockOff)
+            turnClockOn();
+
         c_Transaction *l_txn=l_txnResEventPtr->m_payload;
         if (l_txn->getTransactionMnemonic()
             == e_TransactionType::READ) {
