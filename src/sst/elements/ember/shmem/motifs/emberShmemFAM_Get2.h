@@ -1,8 +1,8 @@
-// Copyright 2009-2018 NTESS. Under the terms
+// Copyright 2009-2019 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2018, NTESS
+// Copyright (c) 2009-2019, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -58,6 +58,7 @@ public:
 		m_randomGet     = params.find<bool>("arg.randomGet",false);
 		m_stream_n = params.find<int32_t>("arg.stream_n", 1000);
 		m_randCompute = params.find<int>("arg.useRand",false);
+		m_blocking = params.find<bool>("arg.blocking",false);
 
 		m_detailedComputeList =	params.find<std::string>("arg.detailedCompute","");
 
@@ -172,10 +173,17 @@ public:
 			verbose(CALL_INFO,2,0,"0x%" PRIx64" %p\n", m_mem.getSimVAddr(), m_mem.getBacking() );
     		Hermes::MemAddr m_dest = m_mem.offset<unsigned char>( m_blockSize * (m_curBlock % m_numBlocksPerPartition) );
 
-        	enQ_fam_get_nonblocking( evQ, m_dest,
-                    m_rd,
+			if ( m_blocking ) {
+        		enQ_fam_get_blocking( evQ, m_dest,
+                    m_fd,
                     offset, 
 					m_blockSize );
+			} else {
+        		enQ_fam_get_nonblocking( evQ, m_dest,
+                    m_fd,
+                    offset, 
+					m_blockSize );
+			}
 
 			++m_curBlock;
 		}
@@ -260,7 +268,7 @@ public:
 
 	uint64_t m_regionSize;
 	std::string m_groupName;
-	Shmem::Fam_Region_Descriptor m_rd;
+	Shmem::Fam_Descriptor m_fd;
 	EmberMiscLib* m_miscLib;
 
 	int m_stream_n;
@@ -282,6 +290,7 @@ public:
     uint64_t m_startTime;
     uint64_t m_stopTime;
     bool m_randomGet;
+	bool m_blocking;
 };
 
 }

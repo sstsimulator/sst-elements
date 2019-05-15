@@ -1,8 +1,8 @@
-// Copyright 2009-2018 NTESS. Under the terms
+// Copyright 2009-2019 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2018, NTESS
+// Copyright (c) 2009-2019, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -44,8 +44,11 @@ class SharedTlbUnit : public Unit {
     }
 
     ~SharedTlbUnit() {
+		delete m_load;
+		if ( m_load != m_store ) {
+			delete m_store;
+		}
     }
-
 
     void printStatus( Output& out, int id ) {
         out.output("NIC %d: %s pending=%d %p %p\n",id, m_name.c_str(), m_pendingLookups, m_blockedStoreSrc, m_blockedLoadSrc );

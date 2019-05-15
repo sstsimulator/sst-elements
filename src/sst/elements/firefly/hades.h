@@ -20,7 +20,6 @@
 #include <sst/core/output.h>
 #include <sst/core/params.h>
 
-#include <sst/core/elementinfo.h>
 #include <sst/core/sharedRegion.h>
 
 #include "sst/elements/hermes/hermes.h"

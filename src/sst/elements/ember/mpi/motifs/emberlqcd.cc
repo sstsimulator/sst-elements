@@ -441,7 +441,7 @@ bool EmberLQCDGenerator::generate( std::queue<EmberEvent*>& evQ )
 
     // Allreduce MPI_DOUBLE
     coll_start = Simulation::getSimulation()->getCurrentSimCycle();
-    enQ_allreduce( evQ, NULL, NULL, 1, DOUBLE, SUM, GroupWorld);
+    enQ_allreduce( evQ, NULL, NULL, 1, DOUBLE, MP::SUM, GroupWorld);
     coll_time += Simulation::getSimulation()->getCurrentSimCycle() - coll_start;
     // Compute ResidSq
     // Our profiling shows this is ~ 1/4th the FLOPS of the 
@@ -453,7 +453,7 @@ bool EmberLQCDGenerator::generate( std::queue<EmberEvent*>& evQ )
     // Allreduce MPI_DOUBLE
     coll_start = Simulation::getSimulation()->getCurrentSimCycle();
     //output("Rank %" PRIu32 ", Collective start: %" PRIu64 "\n", rank(), coll_start);
-    enQ_allreduce( evQ, NULL, NULL, 1, DOUBLE, SUM, GroupWorld);
+    enQ_allreduce( evQ, NULL, NULL, 1, DOUBLE, MP::SUM, GroupWorld);
     coll_time += Simulation::getSimulation()->getCurrentSimCycle() - coll_start;
     //output("Rank %" PRIu32 ", Collective end: %" PRIu64 "\n", rank(), Simulation::getSimulation()->getCurrentSimCycle());
 

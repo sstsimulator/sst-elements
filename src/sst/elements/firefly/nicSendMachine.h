@@ -1,8 +1,8 @@
-// Copyright 2009-2018 NTESS. Under the terms
+// Copyright 2009-2019 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2018, NTESS
+// Copyright (c) 2009-2019, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -145,7 +145,10 @@ class SendMachine {
             m_inQ = new InQ( nic, m_dbg, myId, m_outQ, maxQsize );
         }
 
-        ~SendMachine() { }
+        ~SendMachine() { 
+			delete m_outQ;
+			delete m_inQ;
+		}
 
         int getNumSent() { return m_numSent; }
 

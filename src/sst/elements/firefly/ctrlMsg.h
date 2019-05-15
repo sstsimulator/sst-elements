@@ -1,8 +1,8 @@
-// Copyright 2009-2018 NTESS. Under the terms
+// Copyright 2009-2019 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2018, NTESS
+// Copyright (c) 2009-2019, NTESS
 // All rights reserved.
 // 
 // Portions are copyright of other developers:
@@ -16,7 +16,6 @@
 #ifndef COMPONENTS_FIREFLY_CTRLMSG_H
 #define COMPONENTS_FIREFLY_CTRLMSG_H
 
-#include <sst/core/elementinfo.h>
 #include <sst/core/component.h>
 #include "protocolAPI.h"
 #include "ctrlMsgFunctors.h"
@@ -108,6 +107,10 @@ class API : public ProtocolAPI {
         MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
         MP::Communicator group, MP::MessageRequest* req );
 
+	void cancel( MP::MessageRequest );
+	void test( MP::MessageRequest, int* flag, MP::MessageResponse* resp );
+	void testany( int count, MP::MessageRequest req[], int *index, int* flag,
+		MP::MessageResponse* resp );
 	void wait( MP::MessageRequest, MP::MessageResponse* resp );
    	void waitAny( int count, MP::MessageRequest req[], int *index,
               	MP::MessageResponse* resp );

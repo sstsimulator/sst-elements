@@ -327,6 +327,33 @@ class AlltoallStartEvent: public Event {
     NotSerializable(AlltoallStartEvent)
 };
 
+class CancelStartEvent : public Event {
+  public:
+    CancelStartEvent(
+        MP::MessageRequest req ) :
+        req(req)
+    { }
+
+    MP::MessageRequest req;
+
+    NotSerializable(CancelStartEvent)
+};
+
+class TestStartEvent : public Event {
+  public:
+    TestStartEvent(
+        MP::MessageRequest _req, int* flag, MP::MessageResponse* _resp ) :
+        req(_req),
+		flag(flag),
+        resp(_resp)
+    { }
+
+    MP::MessageRequest req;
+    MP::MessageResponse* resp;
+	int* flag;
+
+    NotSerializable(TestStartEvent)
+};
 class WaitStartEvent : public Event {
   public:
     WaitStartEvent(
@@ -339,6 +366,26 @@ class WaitStartEvent : public Event {
     MP::MessageResponse* resp;
 
     NotSerializable(WaitStartEvent)
+};
+
+class TestanyStartEvent : public Event {
+  public:
+    TestanyStartEvent( int count, MP::MessageRequest req[], 
+                            int* index, int* flag, MP::MessageResponse* resp ) :
+        count( count ),
+        req( req ),
+        index( index ),
+        flag( flag ),
+        resp( resp )
+    { }
+
+    int count;
+    MP::MessageRequest* req;
+    int* index;
+	int* flag;
+    MP::MessageResponse* resp;
+
+    NotSerializable(TestanyStartEvent)
 };
 
 class WaitAnyStartEvent : public Event {

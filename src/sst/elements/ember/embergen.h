@@ -1,8 +1,8 @@
-// Copyright 2009-2018 NTESS. Under the terms
+// Copyright 2009-2019 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2018, NTESS
+// Copyright (c) 2009-2019, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -92,7 +92,7 @@ class EmberGenerator : public SubComponent {
         }
         m_verbosePrefix.str(std::string());
         m_verbosePrefix << "@t:" << getJobId() << ":" << _rank <<
-                    ":EmberEngine:MPI:" << getMotifName() << ":@p:@l: ";
+                    ":EmberEngine:" << getMotifName() << ":@p:@l: ";
     }
 
     std::string getMotifName() { return m_motifName; }

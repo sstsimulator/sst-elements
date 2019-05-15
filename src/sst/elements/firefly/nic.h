@@ -20,7 +20,6 @@
 #include <math.h>
 #include <sstream>
 #include <queue>
-#include <sst/core/elementinfo.h>
 #include <sst/core/module.h>
 #include <sst/core/component.h>
 #include <sst/core/output.h>
@@ -361,8 +360,9 @@ public:
     VirtNic* getVirtNic( int id ) {
         return m_vNicV[id];
     }
-	void shmemDecPending( int core ) {
-		m_shmem->decPending( core );
+
+	void shmemDecPendingPuts( int core ) {
+		m_shmem->decPendingPuts( core );
 	}
 
   private:

@@ -1,8 +1,8 @@
-// Copyright 2009-2018 NTESS. Under the terms
+// Copyright 2009-2019 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2018, NTESS
+// Copyright (c) 2009-2019, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -28,6 +28,8 @@ SimpleMemory::SimpleMemory(Component *comp, Params &params) : SimpleMemBackend(c
     std::string access_time = params.find<std::string>("access_time", "100 ns");
     self_link = comp->configureSelfLink("Self", access_time,
             new Event::Handler<SimpleMemory>(this, &SimpleMemory::handleSelfEvent));
+
+    m_maxReqPerCycle = params.find<>("max_requests_per_cycle", 1);
 }
 
 void SimpleMemory::handleSelfEvent(SST::Event *event){

@@ -3,7 +3,6 @@
 #define _H_FIREFLY_SHMEM_FAM_ADDR_MAPPER
 
 #include <sst/core/module.h>
-#include <sst/core/elementinfo.h>
 
 namespace SST {
 namespace Firefly {

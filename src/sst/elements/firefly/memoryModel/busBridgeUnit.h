@@ -1,8 +1,8 @@
-// Copyright 2009-2018 NTESS. Under the terms
+// Copyright 2009-2019 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2018, NTESS
+// Copyright (c) 2009-2019, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -42,6 +42,11 @@ class BusBridgeUnit : public Unit {
         m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::BusBridgeUnit::@p():@l ";
 		m_blocked_ns = model.registerStatistic<uint64_t>("bus_blocked_ns");
     }
+
+	~BusBridgeUnit() {
+		delete m_loadWidget;
+		delete m_storeWidget;
+	}
 
     void resume( UnitBase* unit = 0 ) {
 		if ( unit == m_loadWidget ) {

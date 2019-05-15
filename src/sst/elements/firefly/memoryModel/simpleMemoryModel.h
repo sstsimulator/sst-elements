@@ -17,7 +17,6 @@
 #define COMPONENTS_FIREFLY_SIMPLE_MEMORY_MODEL_H
 
 #include <math.h>
-#include <sst/core/elementinfo.h>
 #include <sst/core/interfaces/simpleMem.h>
 #include "ioVec.h"
 #include "memoryModel/memoryModel.h"
@@ -263,6 +262,8 @@ public:
         for ( unsigned i = 0; i < m_threads.size(); i++ ) {
             delete m_threads[i];
         }
+		delete m_sharedTlb;
+		delete m_nicUnit;
     }
 
 	ThingHeap<SelfEvent> m_eventHeap;

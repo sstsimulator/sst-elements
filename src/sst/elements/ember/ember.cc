@@ -1,8 +1,8 @@
-// Copyright 2009-2018 NTESS. Under the terms
+// Copyright 2009-2019 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2018, NTESS
+// Copyright (c) 2009-2019, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -22,6 +22,10 @@
 #include "mpi/motifs/emberinit.h"
 #include "mpi/motifs/emberfini.h"
 #include "mpi/motifs/embernull.h"
+#include "mpi/motifs/emberwaitany.h"
+#include "mpi/motifs/embertest.h"
+#include "mpi/motifs/embertestany.h"
+#include "mpi/motifs/embersendrecv.h"
 
 #include "shmem/motifs/emberShmemTest.h"
 #include "shmem/motifs/emberShmemWait.h"
@@ -48,4 +52,8 @@
 #include "shmem/motifs/emberShmemAtomicInc.h"
 #include "shmem/motifs/emberShmemAtomicIncV2.h"
 #include "shmem/motifs/emberShmemFAM_Get2.h"
+#include "shmem/motifs/emberShmemFAM_Put.h"
+#include "shmem/motifs/emberShmemFAM_Scatterv.h"
+#include "shmem/motifs/emberShmemFAM_Gatherv.h"
 #include "shmem/motifs/emberShmemFAM_AtomicInc.h"
+#include "shmem/motifs/emberShmemFAM_Cswap.h"

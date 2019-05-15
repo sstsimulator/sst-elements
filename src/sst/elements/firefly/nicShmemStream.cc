@@ -1,8 +1,8 @@
-// Copyright 2009-2018 NTESS. Under the terms
+// Copyright 2009-2019 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2018, NTESS
+// Copyright (c) 2009-2019, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -90,7 +90,7 @@ void Nic::RecvMachine::ShmemStream::processOp( FireflyNetworkEvent* ev )
 
 void Nic::RecvMachine::ShmemStream::processAck( ShmemMsgHdr& hdr, FireflyNetworkEvent* ev, int pid, int srcPid  )
 {
-    m_ctx->nic().shmemDecPending( pid );
+    m_ctx->nic().shmemDecPendingPuts( pid );
     m_ctx->deleteStream(this);
 
     delete ev;

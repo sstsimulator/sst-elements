@@ -3,7 +3,6 @@
 #define _H_FIREFLY_SHMEM_FAM_NODE_MAPPER
 
 #include <sst/core/module.h>
-#include <sst/core/elementinfo.h>
 
 namespace SST {
 namespace Firefly {
@@ -43,8 +42,9 @@ class Group_FamNodeMapper : public FamNodeMapper {
 
 	virtual int calcNode( int node ) {
 		int groupNum = node/m_nodesPerGroup;
-		m_dbg->debug(CALL_INFO,3,0,"\n");
-		return m_firstNode + (groupNum * m_nodeStride) + (node % m_nodesPerGroup); 
+		int newNode = m_firstNode + (groupNum * m_nodeStride) + (node % m_nodesPerGroup); 
+		m_dbg->debug(CALL_INFO,3,0,"node %d -> %d\n",node,newNode);
+		return newNode;
 	};
 
   private:
