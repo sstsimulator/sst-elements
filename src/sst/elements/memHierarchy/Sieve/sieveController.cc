@@ -69,10 +69,10 @@ void Sieve::recordMiss(Addr addr, bool isRead) {
 }
 
 void Sieve::processAllocEvent(SST::Event* event) {
-    // should only recieve arielAllocTrackEvent events
-    ArielComponent::arielAllocTrackEvent* ev = (ArielComponent::arielAllocTrackEvent*)event;
+    // should only recieve AllocTrackEvent events
+    AllocTrackEvent* ev = static_cast<AllocTrackEvent*>(event);
     
-    if (ev->getType() == ArielComponent::arielAllocTrackEvent::ALLOC) {
+    if (ev->getType() == AllocTrackEvent::ALLOC) {
         // add to the list of active allocations (i.e. not FREEd)
         mallocEntry entry = {ev->getInstructionPointer(), ev->getAllocateLength()};
         activeAllocMap[ev->getVirtualAddress()] = entry;
@@ -84,7 +84,7 @@ void Sieve::processAllocEvent(SST::Event* event) {
         }
 #endif
         delete ev;
-    } else if (ev->getType() == ArielComponent::arielAllocTrackEvent::FREE) {
+    } else if (ev->getType() == AllocTrackEvent::FREE) {
         allocMap_t::iterator targ = activeAllocMap.find(ev->getVirtualAddress());
         if (targ != activeAllocMap.end()) {
             uint64_t allocID = targ->second.id;
@@ -104,12 +104,12 @@ void Sieve::processAllocEvent(SST::Event* event) {
 #endif
         }
         delete ev;
-    } else if (ev->getType() == ArielComponent::arielAllocTrackEvent::BUOY) {
+    } else if (ev->getType() == AllocTrackEvent::BUOY) {
         // output stats
         outputStats(ev->getInstructionPointer());
         delete ev;
     } else {
-        output_->fatal(CALL_INFO, -1, "Unrecognized Ariel Allocation Tracking Event Type \n");
+        output_->fatal(CALL_INFO, -1, "Unrecognized Allocation Tracking Event Type \n");
     }
 }
 

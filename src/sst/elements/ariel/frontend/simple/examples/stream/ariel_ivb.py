@@ -75,6 +75,7 @@ l2_params = {
         "cache_line_size": 64,
         "access_latency_cycles": 8,
         "mshr_num_entries" : 16,
+        "mshr_latency_cycles" : 2,
         "L1": 0,
         "debug": 0,
 }
@@ -91,6 +92,7 @@ l3_params = {
       	"L1" : "0",
       	"cache_size" : "128 KB",
       	"mshr_num_entries" : "4096",
+        "mshr_latency_cycles" : 2,
       	"num_cache_slices" : str(groups * l3cache_blocks_per_group),
       	"slice_allocation_policy" : "rr",
 }
@@ -125,15 +127,17 @@ ariel.addParams({
         "pipetimeout"         : "0",
         "executable"          : str(os.environ['OMP_EXE']),
         "appargcount"         : "0",
-       	"memmgr.memorylevels" : "1",
         "arielinterceptcalls" : "1",
         "launchparamcount"    : 1,
         "launchparam0"        : "-ifeellucky",
        	"arielmode"           : "1",
-	"memmgr.pagecount0"   : "1048576",
         "corecount"           : groups * cores_per_group,
-        "memmgr.defaultlevel" : 0,
         "clock"               : str(clock)
+})
+
+memmgr = ariel.setSubComponent("memmgr", "ariel.MemoryManagerSimple")
+memmgr.addParams({
+    "pagecount0"    : "1048576"
 })
 
 router_map = {}
