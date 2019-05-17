@@ -20,8 +20,8 @@
 
 using namespace SST::ArielComponent;
 
-ArielMemoryManagerMalloc::ArielMemoryManagerMalloc(SST::Component* owner, Params& params) : 
-            ArielMemoryManagerCache(owner, params) {
+ArielMemoryManagerMalloc::ArielMemoryManagerMalloc(ComponentId_t id, Params& params) : 
+            ArielMemoryManagerCache(id, params) {
     
     memoryLevels = (uint32_t) params.find<uint32_t>("memorylevels", 1);
     defaultLevel = (uint32_t) params.find<uint32_t>("defaultlevel", 0);

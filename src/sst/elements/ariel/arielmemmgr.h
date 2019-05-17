@@ -17,7 +17,6 @@
 #ifndef _H_ARIEL_MEM_MANAGER
 #define _H_ARIEL_MEM_MANAGER
 
-#include <sst/core/component.h>
 #include <sst/core/subcomponent.h>
 #include <sst/core/output.h>
 
@@ -33,13 +32,19 @@ namespace ArielComponent {
 class ArielMemoryManager : public SubComponent {
 
     public:
+        SST_ELI_REGISTER_SUBCOMPONENT_API(SST::ArielComponent::ArielMemoryManager)
+
         enum class InterruptAction { STALL, UNSTALL };
 
-        ArielMemoryManager(Component * ownMe, Params& params) : SubComponent(ownMe) {
-            owner = ownMe;
+        ArielMemoryManager(ComponentId_t id, Params& params) : SubComponent(id) {
             int verbosity = params.find<int>("verbose", 0);
             output = new SST::Output("ArielMemoryManager[@f:@l:@p] ",
                 verbosity, 0, SST::Output::STDOUT);
+        }
+
+        ArielMemoryManager(Component* comp, Params& params) : SubComponent(comp) {
+            output = new SST::Output("", 0, 0, SST::Output::STDOUT);
+            output->fatal(CALL_INFO, -1, "Error: ArielMemoryManager subcomponents do not support loading using legacy load functions");
         }
 
         ~ArielMemoryManager() {};

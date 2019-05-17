@@ -17,8 +17,6 @@
 #ifndef _H_ARIEL_MEM_MANAGER_CACHE
 #define _H_ARIEL_MEM_MANAGER_CACHE
 
-#include <sst/core/component.h>
-#include <sst/core/subcomponent.h>
 #include <sst/core/output.h>
 #include <sst/core/rng/marsaglia.h>
 
@@ -62,7 +60,7 @@ class ArielMemoryManagerCache : public ArielMemoryManager{
             *  Constructs free page sets for each memory pool
             *  Initializes a translation cache
             */
-        ArielMemoryManagerCache(Component * ownMe, Params& params) : ArielMemoryManager(ownMe, params) {
+        ArielMemoryManagerCache(ComponentId_t id, Params& params) : ArielMemoryManager(id, params) {
             translationEnabled = params.find<bool>("vtop_translate", true);
 
             /* Common statistics */
@@ -90,7 +88,8 @@ class ArielMemoryManagerCache : public ArielMemoryManager{
 
             /* Statistics used by all memory managers; managers may also have their own */
         } // End constructor
-
+        
+        ArielMemoryManagerCache(Component* comp, Params& params) : ArielMemoryManager(comp, params) { } // Legacy
         ~ArielMemoryManagerCache() {};
 
     protected:

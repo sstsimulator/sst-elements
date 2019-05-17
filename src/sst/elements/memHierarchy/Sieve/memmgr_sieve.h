@@ -36,15 +36,16 @@ class MemoryManagerSieve : public ArielComponent::ArielMemoryManager {
 
     public:
         /* SST ELI */
-        SST_ELI_REGISTER_SUBCOMPONENT(MemoryManagerSieve, "memHierarchy", "MemoryManagerSieve", SST_ELI_ELEMENT_VERSION(1,0,0),
-                "Memory manager for interfacing to MemSieve", "SST::ArielComponent::ArielMemoryManager")
+        SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(MemoryManagerSieve, "memHierarchy", "MemoryManagerSieve", SST_ELI_ELEMENT_VERSION(1,0,0),
+                "Memory manager for interfacing to MemSieve", SST::ArielComponent::ArielMemoryManager)
 
         SST_ELI_DOCUMENT_PORTS( {"alloc_link_%(corecound)d", "Each core's link memSieve", {"memHierarchy.AllocTrackEvent"}} )
 
         SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( {"memmgr", "Which memory manager to use for translation", "SST::Ariel::ArielMemoryManager" } )
 
         /* MemoryManagerSieve */
-        MemoryManagerSieve(SST::Component* owner, Params& params);
+        MemoryManagerSieve(ComponentId_t id, Params& params);
+        MemoryManagerSieve(Component* comp, Params& params) : ArielMemoryManager(comp, params) { } // Legacy
         ~MemoryManagerSieve();
 
         uint64_t translateAddress(uint64_t virtAddr);

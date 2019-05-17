@@ -126,7 +126,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 /** End memory manager subcomponent parameter translation */
 
     std::string memorymanager = params.find<std::string>("memmgr", "ariel.MemoryManagerSimple");
-    if (NULL != (memmgr = dynamic_cast<ArielMemoryManager*>(loadNamedSubComponent("memmgr")))) {
+    if (NULL != (memmgr = loadUserSubComponent<ArielMemoryManager>("memmgr"))) {
         output->verbose(CALL_INFO, 1, 0, "Loaded memory manager: %s\n", memmgr->getName().c_str());
     } else {
         // Warn about memory levels and the selected memory manager if needed
@@ -137,7 +137,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 
         output->verbose(CALL_INFO, 1, 0, "Loading memory manager: %s\n", memorymanager.c_str());
         Params mmParams = params.find_prefix_params("memmgr.");
-        memmgr = dynamic_cast<ArielMemoryManager*>( loadSubComponent(memorymanager, this, mmParams));
+        memmgr = loadAnonymousSubComponent<ArielMemoryManager>(memorymanager, "memmgr", 0, ComponentInfo::SHARE_STATS | ComponentInfo::INSERT_STATS, mmParams);
         if (NULL == memmgr) output->fatal(CALL_INFO, -1, "Failed to load memory manager: %s\n", memorymanager.c_str());
     }
 

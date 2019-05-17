@@ -24,19 +24,19 @@
 using namespace SST::MemHierarchy;
 using namespace SST::ArielComponent;
 
-MemoryManagerSieve::MemoryManagerSieve(SST::Component* owner, Params& params) : 
-            ArielMemoryManager(owner, params) {
+MemoryManagerSieve::MemoryManagerSieve(ComponentId_t id, Params& params) : 
+            ArielMemoryManager(id, params) {
     
     // Load a memory manager to actually do the translation -> we're just interception allocation events
     
     // Attempt to load as a named subcomponent first
-    if (NULL != (memmgr = dynamic_cast<ArielMemoryManager*>(loadNamedSubComponent("memmgr")))) {
+    if (NULL != (memmgr = loadUserSubComponent<ArielMemoryManager>("memmgr"))) {
         output->verbose(CALL_INFO, 1, 0, "Loaded memory manager: %s\n", memmgr->getName().c_str());
     } else {
         std::string memorymanager = params.find<std::string>("memmgr", "ariel.MemoryManagerSimple");
         output->verbose(CALL_INFO, 1, 0, "Loading memory manager: %s\n", memorymanager.c_str());
         Params mmParams = params.find_prefix_params("memmgr.");
-        memmgr = dynamic_cast<ArielMemoryManager*>( loadSubComponent(memorymanager, mmParams));
+        memmgr = loadAnonymousSubComponent<ArielMemoryManager>(memorymanager, "memmgr", 0, ComponentInfo::SHARE_STATS | ComponentInfo::INSERT_STATS, mmParams);
         if (NULL == memmgr) output->fatal(CALL_INFO, -1, "Failed to load memory manager: %s\n", memorymanager.c_str());
     }
     

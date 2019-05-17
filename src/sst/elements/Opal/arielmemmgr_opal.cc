@@ -23,8 +23,8 @@
 
 using namespace SST::OpalComponent;
 
-MemoryManagerOpal::MemoryManagerOpal(SST::Component* owner, Params& params) : 
-            ArielComponent::ArielMemoryManager(owner, params) {
+MemoryManagerOpal::MemoryManagerOpal(ComponentId_t id, Params& params) : 
+            ArielComponent::ArielMemoryManager(id, params) {
 
     // Find links
     std::string linkprefix = "opal_link_";
@@ -41,7 +41,7 @@ MemoryManagerOpal::MemoryManagerOpal(SST::Component* owner, Params& params) :
     }
     
     std::string translatorstr = params.find<std::string>("translator", "ariel.MemoryManagerSimple");
-    if (NULL != (temp_translator = dynamic_cast<ArielMemoryManager*>(loadNamedSubComponent("translator")))) {
+    if (NULL != (temp_translator = loadUserSubComponent<ArielMemoryManager>("translator"))) {
         output->verbose(CALL_INFO, 1, 0, "Opal is using named subcomponent translator\n");
     } else {
         int memLevels = params.find<int>("memmgr.memorylevels", 1);
@@ -51,7 +51,7 @@ MemoryManagerOpal::MemoryManagerOpal(SST::Component* owner, Params& params) :
         }
         output->verbose(CALL_INFO, 1, 0, "Loading memory manager: %s\n", translatorstr.c_str());
         Params translatorParams = params.find_prefix_params("memmgr.");
-        temp_translator = dynamic_cast<ArielMemoryManager*>( loadSubComponent(translatorstr, translatorParams));
+        temp_translator = loadAnonymousSubComponent<ArielMemoryManager>(translatorstr, "translator", 0, ComponentInfo::SHARE_STATS | ComponentInfo::INSERT_STATS, translatorParams);
         if (NULL == temp_translator)
             output->fatal(CALL_INFO, -1, "Failed to load memory manager: %s\n", translatorstr.c_str());
     }
