@@ -112,6 +112,8 @@ public:
     /* Initialize variables that tell this coherence controller how to interact with the cache below it */
     void setupLowerStatus(bool silentEvict, bool isLastLevel, bool isNoninclusive, bool isDir);
 
+    void setOwnerName(std::string name) { ownerName_ = name; }
+
     /* Setup pointers to other subcomponents/cache structures */
     void setCacheListener(CacheListener* ptr) { listener_ = ptr; }
     void setMSHR(MSHR* ptr) { mshr_ = ptr; }
@@ -139,6 +141,8 @@ protected:
         uint64_t deliveryTime;
         uint64_t size;
     };
+
+    std::string ownerName_; // Owning component name
 
     /* Pointers to other subcomponents and cache structures */
     CacheListener*  listener_;

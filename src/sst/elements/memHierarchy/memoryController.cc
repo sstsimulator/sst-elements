@@ -330,7 +330,7 @@ void MemController::handleEvent(SST::Event* event) {
             {
                 MemEvent* put = NULL;
                 if ( ev->getPayloadSize() != 0 ) {
-                    put = new MemEvent(this, ev->getBaseAddr(), ev->getBaseAddr(), Command::PutM, ev->getPayload() );
+                    put = new MemEvent(getName(), ev->getBaseAddr(), ev->getBaseAddr(), Command::PutM, ev->getPayload(), getCurrentSimTimeNano());
                     put->setFlag(MemEvent::F_NORESPONSE);
                     outstandingEvents_.insert(std::make_pair(put->getID(), put));
                     notifyListeners(ev);

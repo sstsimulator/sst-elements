@@ -281,7 +281,7 @@ void CoherentMemController::handleFlush(MemEvent * ev) {
 
     MemEvent* put = NULL;
     if (ev->getPayloadSize() != 0) {
-        put = new MemEvent(this, ev->getBaseAddr(), ev->getBaseAddr(), Command::PutM, ev->getPayload());
+        put = new MemEvent(getName(), ev->getBaseAddr(), ev->getBaseAddr(), Command::PutM, ev->getPayload(), getCurrentSimTimeNano());
         put->setFlag(MemEvent::F_NORESPONSE);
         outstandingEventList_.insert(std::make_pair(put->getID(), OutstandingEvent(put, put->getBaseAddr())));
         notifyListeners(ev);
@@ -356,7 +356,7 @@ void CoherentMemController::handleFetchResp(MemEvent * ev) {
 
     // Write dirty data if needed
     if (ev->getDirty()) {
-        MemEvent * write = new MemEvent(this, ev->getAddr(), baseAddr, Command::PutM, ev->getPayload());
+        MemEvent * write = new MemEvent(getName(), ev->getAddr(), baseAddr, Command::PutM, ev->getPayload(), getCurrentSimTimeNano());
         write->setRqstr(ev->getRqstr());
         ev->setFlag(MemEvent::F_NORESPONSE);
 
@@ -449,7 +449,7 @@ void CoherentMemController::handleCustomCmd(MemEventBase * evb) {
 bool CoherentMemController::doShootdown(Addr addr, MemEventBase * ev) {
     if (cacheStatus_.at(addr/lineSize_) == true) {
         Addr globalAddr = translateToGlobal(addr);
-        MemEvent * inv = new MemEvent(this, globalAddr, globalAddr, Command::FetchInv, lineSize_);
+        MemEvent * inv = new MemEvent(getName(), globalAddr, globalAddr, Command::FetchInv, lineSize_, getCurrentSimTimeNano());
         inv->setRqstr(ev->getRqstr());
         inv->setDst(ev->getSrc());
 

@@ -36,20 +36,21 @@ namespace Cassini {
 
 class NextBlockPrefetcher : public SST::MemHierarchy::CacheListener {
 public:
-    NextBlockPrefetcher(Component* owner, Params& params);
+    NextBlockPrefetcher(Component* owner, Params& params); // Legacy
+    NextBlockPrefetcher(ComponentId_t id, Params& params);
     ~NextBlockPrefetcher();
 
     void notifyAccess(const CacheListenerNotification& notify);
     void registerResponseCallback(Event::HandlerBase *handler);
     void printStats(Output& out);
 
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         NextBlockPrefetcher,
         "cassini",
         "NextBlockPrefetcher",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Next Block Prefetcher",
-        "SST::Cassini::CacheListener"
+        SST::MemHierarchy::CacheListener
     )
 
     SST_ELI_DOCUMENT_PARAMS(

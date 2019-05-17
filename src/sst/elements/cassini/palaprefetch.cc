@@ -141,7 +141,7 @@ void PalaPrefetcher::DispatchRequest(Addr targetAddress)
         // Check next address is aligned to a cache line boundary
         assert((targetAddress + (strideReach * stride)) % blockSize == 0);
 
-        ev = new MemEvent(parent, targetAddress + (strideReach * stride), targetAddress + (strideReach * stride), Command::GetS);
+        ev = new MemEvent(getName(), targetAddress + (strideReach * stride), targetAddress + (strideReach * stride), Command::GetS, getCurrentSimTimeNano());
     }
     else
     {
@@ -158,7 +158,7 @@ void PalaPrefetcher::DispatchRequest(Addr targetAddress)
         {
             output->verbose(CALL_INFO, 2, 0, "Issue prefetch, target address: %" PRIx64 ", prefetch address: %" PRIx64 " (reach out: %" PRIu32 ", stride=%" PRIu32 ")\n",
                         targetAddress, targetPrefetchAddress, (strideReach * stride), stride);
-            ev = new MemEvent(parent, targetPrefetchAddress, targetPrefetchAddress, Command::GetS);
+            ev = new MemEvent(getName(), targetPrefetchAddress, targetPrefetchAddress, Command::GetS, getCurrentSimTimeNano());
             statPrefetchOpportunities->addData(1);
         }
         else
@@ -212,7 +212,7 @@ void PalaPrefetcher::DispatchRequest(Addr targetAddress)
             {
                 // Create a new read request, we cannot issue a write because the data will get
                 // overwritten and corrupt memory (even if we really do want to do a write)
-                MemEvent* newEv = new MemEvent(parent, ev->getAddr(), ev->getAddr(), Command::GetS);
+                MemEvent* newEv = new MemEvent(getName(), ev->getAddr(), ev->getAddr(), Command::GetS, getCurrentSimTimeNano());
                 newEv->setSize(blockSize);
                 newEv->setPrefetchFlag(true);
 
@@ -232,12 +232,18 @@ void PalaPrefetcher::DispatchRequest(Addr targetAddress)
 
 PalaPrefetcher::PalaPrefetcher(Component* owner, Params& params) : CacheListener(owner, params)
 {
+    Output out("", 1, 0, Output::STDOUT);
+    out.fatal(CALL_INFO, -1, "%s, Error: SubComponent does not support legacy loadSubComponent call; use new calls (loadUserSubComponent or loadAnonymousSubComponent)\n", getName().c_str());
+}
+
+PalaPrefetcher::PalaPrefetcher(ComponentId_t id, Params& params) : CacheListener(id, params)
+{
     Simulation::getSimulation()->requireEvent("memHierarchy.MemEvent");
 
     verbosity = params.find<int>("verbose", 0);
 
     char* new_prefix = (char*) malloc(sizeof(char) * 128);
-    sprintf(new_prefix, "PalaPrefetcher[%s | @f:@p:@l] ", parent->getName().c_str());
+    sprintf(new_prefix, "PalaPrefetcher[%s | @f:@p:@l] ", getName().c_str());
     output = new Output(new_prefix, verbosity, 0, Output::STDOUT);
     free(new_prefix);
 

@@ -53,6 +53,7 @@ class PalaPrefetcher : public SST::MemHierarchy::CacheListener
 {
 public:
     PalaPrefetcher(Component* owner, Params& params);
+    PalaPrefetcher(ComponentId_t id, Params& params);
     ~PalaPrefetcher();
 
     void notifyAccess(const CacheListenerNotification& notify);

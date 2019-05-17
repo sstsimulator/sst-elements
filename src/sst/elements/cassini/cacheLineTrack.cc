@@ -49,7 +49,7 @@ static int log2_64(uint64_t value)
     return tab64[((uint64_t)((value - (value >> 1))*0x07EDD5E59A4E28C2)) >> 58];
 }
 
-cacheLineTrack::cacheLineTrack(Component* owner, Params& params) : CacheListener(owner, params) {
+cacheLineTrack::cacheLineTrack(ComponentId_t id, Params& params) : CacheListener(id, params) {
     std::string cutoff_s = params.find<std::string>("addr_cutoff", "16GiB");
     UnitAlgebra cutoff_u(cutoff_s);
     cutoff = cutoff_u.getRoundedValue();
@@ -60,6 +60,10 @@ cacheLineTrack::cacheLineTrack(Component* owner, Params& params) : CacheListener
     ageHisto = registerStatistic<SimTime_t>("hist_age_log2");
     evicts = registerStatistic<uint>("evicts");
 
+}
+cacheLineTrack::cacheLineTrack(Component* owner, Params& params) : CacheListener(owner, params) {
+    Output out("", 1, 0, Output::STDOUT);
+    out.fatal(CALL_INFO, -1, "%s, Error: SubComponent does not support legacy loadSubComponent call; use new calls (loadUserSubComponent or loadAnonymousSubComponent)\n", getName().c_str());
 }
 
 

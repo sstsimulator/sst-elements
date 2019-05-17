@@ -44,9 +44,9 @@ void MemHierarchyInterface::init(unsigned int phase) {
         region.end = (uint64_t) - 1;
         region.interleaveStep = 0;
         region.interleaveSize = 0;
-        link_->sendInitData(new MemEventInitRegion(parent->getName(), region, false));
+        link_->sendInitData(new MemEventInitRegion(getName(), region, false));
 
-        MemEventInitCoherence * event = new MemEventInitCoherence(parent->getName(), Endpoint::CPU, false, false, 0, false);
+        MemEventInitCoherence * event = new MemEventInitCoherence(getName(), Endpoint::CPU, false, false, 0, false);
         link_->sendInitData(event);
 
     }

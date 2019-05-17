@@ -59,11 +59,11 @@ CoherenceController::CoherenceController(Component * comp, Params &params) : Sub
     UnitAlgebra upLinkBW = UnitAlgebra(params.find<std::string>("response_link_width", "0B"));
 
     if (!packetSize.hasUnits("B"))
-        output->fatal(CALL_INFO, -1, "%s, Invalid param: min_packet_size - must have units of bytes (B), SI units OK. Ex: '8B'. You specified '%s'\n", parent->getName().c_str(), packetSize.toString().c_str());
+        output->fatal(CALL_INFO, -1, "%s, Invalid param: min_packet_size - must have units of bytes (B), SI units OK. Ex: '8B'. You specified '%s'\n", ownerName_.c_str(), packetSize.toString().c_str());
     if (!downLinkBW.hasUnits("B"))
-        output->fatal(CALL_INFO, -1, "%s, Invalid param: request_link_width - must have units of bytes (B), SI units OK. Ex: '64B'. You specified '%s'\n", parent->getName().c_str(), downLinkBW.toString().c_str());
+        output->fatal(CALL_INFO, -1, "%s, Invalid param: request_link_width - must have units of bytes (B), SI units OK. Ex: '64B'. You specified '%s'\n", ownerName_.c_str(), downLinkBW.toString().c_str());
     if (!upLinkBW.hasUnits("B"))
-        output->fatal(CALL_INFO, -1, "%s, Invalid param: response_link_width - must have units of bytes (B), SI units OK. Ex: '64B'. You specified '%s'\n", parent->getName().c_str(), upLinkBW.toString().c_str());
+        output->fatal(CALL_INFO, -1, "%s, Invalid param: response_link_width - must have units of bytes (B), SI units OK. Ex: '64B'. You specified '%s'\n", ownerName_.c_str(), upLinkBW.toString().c_str());
 
     maxBytesUp = upLinkBW.getRoundedValue();
     maxBytesDown = downLinkBW.getRoundedValue();
@@ -172,7 +172,7 @@ uint64_t CoherenceController::forwardMessage(MemEvent * event, Addr baseAddr, un
 
     if (data == NULL) forwardEvent->setPayload(0, NULL);
 
-    forwardEvent->setSrc(parent->getName());
+    forwardEvent->setSrc(ownerName_);
     forwardEvent->setDst(linkDown_->findTargetDestination(baseAddr));
     forwardEvent->setSize(requestSize);
 
@@ -195,7 +195,7 @@ uint64_t CoherenceController::forwardMessage(MemEvent * event, Addr baseAddr, un
 }
 
 uint64_t CoherenceController::forwardTowardsMem(MemEventBase * event) {
-    event->setSrc(parent->getName());
+    event->setSrc(ownerName_);
     event->setDst(linkDown_->findTargetDestination(event->getRoutingAddress()));
 
     Response fwdReq = {event, timestamp_ + 1, packetHeaderBytes + event->getPayloadSize()};
@@ -204,7 +204,7 @@ uint64_t CoherenceController::forwardTowardsMem(MemEventBase * event) {
 }
 
 uint64_t CoherenceController::forwardTowardsCPU(MemEventBase * event, std::string dst) {
-    event->setSrc(parent->getName());
+    event->setSrc(ownerName_);
     event->setDst(dst);
 
     Response fwdReq = {event, timestamp_ + 1, packetHeaderBytes + event->getPayloadSize()};
@@ -244,7 +244,7 @@ bool CoherenceController::sendOutgoingCommands(SimTime_t curTime) {
 
         if (is_debug_event(outgoingEvent)) {
             debug->debug(_L4_,"SEND (%s). time: (%" PRIu64 ", %" PRIu64 ") event: (%s)\n",
-                    parent->getName().c_str(), timestamp_, curTime, outgoingEvent->getBriefString().c_str());
+                    ownerName_.c_str(), timestamp_, curTime, outgoingEvent->getBriefString().c_str());
         }
 
         linkDown_->send(outgoingEvent);
@@ -268,7 +268,7 @@ bool CoherenceController::sendOutgoingCommands(SimTime_t curTime) {
 
         if (is_debug_event(outgoingEvent)) {
             debug->debug(_L4_,"SEND (%s). time: (%" PRIu64 ", %" PRIu64 ") event: (%s)\n",
-                    parent->getName().c_str(), timestamp_, curTime, outgoingEvent->getBriefString().c_str());
+                    ownerName_.c_str(), timestamp_, curTime, outgoingEvent->getBriefString().c_str());
         }
 
         linkUp_->send(outgoingEvent);

@@ -385,7 +385,7 @@ void Cache::handlePrefetchEvent(SST::Event* ev) {
 void Cache::processPrefetchEvent(SST::Event* ev) {
     MemEvent* event = static_cast<MemEvent*>(ev);
     event->setBaseAddr(toBaseAddr(event->getAddr()));
-    event->setRqstr(this->getName());
+    event->setRqstr(getName());
 
     if (!clockIsOn_) {
         turnClockOn();

@@ -186,6 +186,7 @@ void Cache::createCoherenceManager(Params &params) {
     coherenceMgr_->setMSHR(mshr_);
     coherenceMgr_->setCacheListener(listener_);
     coherenceMgr_->setDebug(DEBUG_ADDR);
+    coherenceMgr_->setOwnerName(getName());
 
 }
 
@@ -472,15 +473,18 @@ void Cache::createPrefetcher(Params &params, int mshrSize) {
         dropPrefetchLevel_ = mshrSize - 1; // Always have to leave one free for deadlock avoidance
     }
 
-    if (prefetcher.empty()) {
-	Params emptyParams;
-        listener_ = dynamic_cast<CacheListener*>(loadSubComponent("memHierarchy.emptyCacheListener", this, emptyParams));
-    } else {
-	Params prefetcherParams = params.find_prefix_params("prefetcher." );
-        listener_ = dynamic_cast<CacheListener*>(loadSubComponent(prefetcher, this, prefetcherParams));
+    listener_ = loadUserSubComponent<CacheListener>("prefetcher");
+    if (listener_ == nullptr) {
+        if (prefetcher.empty()) {
+        	Params emptyParams;
+                listener_ = loadAnonymousSubComponent<CacheListener>("memHierarchy.emptyCacheListener", "prefetcher", 0, ComponentInfo::INSERT_STATS, emptyParams);
+        } else {
+	    Params prefetcherParams = params.find_prefix_params("prefetcher." );
+            listener_ = loadAnonymousSubComponent<CacheListener>(prefetcher, "prefetcher", 0, ComponentInfo::INSERT_STATS, prefetcherParams);
 
-        statPrefetchRequest         = registerStatistic<uint64_t>("Prefetch_requests");
-        statPrefetchDrop            = registerStatistic<uint64_t>("Prefetch_drops");
+            statPrefetchRequest         = registerStatistic<uint64_t>("Prefetch_requests");
+            statPrefetchDrop            = registerStatistic<uint64_t>("Prefetch_drops");
+        }
     }
 
     listener_->registerResponseCallback(new Event::Handler<Cache>(this, &Cache::handlePrefetchEvent));
