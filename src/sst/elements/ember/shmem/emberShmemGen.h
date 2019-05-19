@@ -1,8 +1,8 @@
-// Copyright 2009-2018 NTESS. Under the terms
+// Copyright 2009-2019 NTESS. Under the terms
 
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2018, NTESS
+// Copyright (c) 2009-2019, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -18,7 +18,6 @@
 
 #include "embergen.h"
 
-#include <sst/core/elementinfo.h>
 #include <sst/elements/hermes/shmemapi.h>
 
 #include "embergettimeev.h"
@@ -55,6 +54,7 @@
 #include "emberFamGatherv_Ev.h"
 #include "emberFamGather_Ev.h"
 #include "emberFamAddEv.h"
+#include "emberFamCswapEv.h"
 
 using namespace Hermes;
 
@@ -133,8 +133,12 @@ protected:
 	inline void enQ_fam_gatherv_nonblocking( Queue&, Hermes::MemAddr dest, Shmem::Fam_Descriptor fd, uint64_t nblocks,
 			std::vector<uint64_t> indexes, uint64_t blockSize );
 
+
 	template <class TYPE>
-	inline void enQ_fam_add( Queue&, uint64_t offset, TYPE* );
+	inline void enQ_fam_add( Queue&, Shmem::Fam_Descriptor fd, uint64_t offset, TYPE* );
+	template <class TYPE>
+	inline void enQ_fam_compare_swap( Queue&, TYPE* result, Shmem::Fam_Descriptor fd, uint64_t offset, TYPE* oldValue, TYPE* newValue );
+
 
 #define declareOp( type, op) \
     inline void enQ_##type##_##op##_to_all( Queue&, Hermes::MemAddr dest, Hermes::MemAddr src, int nelmes, \
@@ -209,10 +213,15 @@ void EmberShmemGenerator::enQ_fam_initialize( Queue& q, std::string groupName ) 
 }
 
 template <class TYPE>
-void EmberShmemGenerator::enQ_fam_add( Queue& q, uint64_t offset, TYPE* value )
+void EmberShmemGenerator::enQ_fam_add( Queue& q, Shmem::Fam_Descriptor fd, uint64_t offset, TYPE* value )
 {
     verbose(CALL_INFO,2,0,"\n");
-    q.push( new EmberFamAddEvent( *shmem_cast(m_api), &getOutput(), offset, Hermes::Value(value) ) );
+    q.push( new EmberFamAddEvent( *shmem_cast(m_api), &getOutput(), fd, offset, Hermes::Value(value) ) );
+}
+template <class TYPE>
+void EmberShmemGenerator::enQ_fam_compare_swap( Queue& q, TYPE* result, Shmem::Fam_Descriptor fd, uint64_t offset, TYPE* oldValue, TYPE* newValue )
+{
+    q.push( new EmberFamCswapEvent( *shmem_cast(m_api), &getOutput(), Hermes::Value(result), fd, offset, Hermes::Value(oldValue), Hermes::Value(newValue) ) );
 }
 
 void EmberShmemGenerator::enQ_fam_get_nonblocking( Queue& q, Hermes::MemAddr dest, Shmem::Fam_Descriptor fd,

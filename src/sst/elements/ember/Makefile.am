@@ -39,12 +39,15 @@ libember_la_SOURCES = \
 	libs/miscEvents/emberGetNodeNumEvent.h \
 	libs/miscEvents/emberGetNumNodesEvent.h \
 	libs/miscEvents/emberMiscEvent.h \
+	mpi/embercancelev.h \
 	mpi/embermpigen.h \
 	mpi/embermpigen.cc \
 	mpi/emberrecvev.h \
 	mpi/embersendev.h \
 	mpi/emberfinalizeev.h \
-	mpi/emberinitev.h  \
+	mpi/emberinitev.h \
+	mpi/embertestanyev.h \
+	mpi/embertestev.h \
 	mpi/emberwaitev.h \
 	mpi/emberwaitanyev.h \
 	mpi/emberwaitallev.h \
@@ -67,6 +70,10 @@ libember_la_SOURCES = \
 	mpi/motifs/emberfini.h  \
 	mpi/motifs/ember3dcommdbl.h \
 	mpi/motifs/ember3dcommdbl.cc \
+	mpi/motifs/embersendrecv.h  \
+	mpi/motifs/emberwaitany.h  \
+	mpi/motifs/embertest.h  \
+	mpi/motifs/embertestany.h  \
 	mpi/motifs/embernull.h  \
 	mpi/motifs/emberhalo1d.h  \
 	mpi/motifs/emberhalo1d.cc  \
@@ -144,6 +151,7 @@ libember_la_SOURCES = \
 	sirius/include/sirius/siriusglobals.h \
 	shmem/emberFamEvent.h \
 	shmem/emberFamAddEv.h \
+	shmem/emberFamCswapEv.h \
 	shmem/emberFamPut_Ev.h \
 	shmem/emberFamGet_Ev.h \
 	shmem/emberFamScatterv_Ev.h \
@@ -207,6 +215,7 @@ libember_la_SOURCES = \
 	shmem/motifs/emberShmemFAM_Scatterv.h \
 	shmem/motifs/emberShmemFAM_Gatherv.h \
 	shmem/motifs/emberShmemFAM_AtomicInc.h \
+	shmem/motifs/emberShmemFAM_Cswap.h \
 	mpi/motifs/emberunstructured.h \
 	mpi/motifs/emberunstructured.cc
 

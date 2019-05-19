@@ -1,8 +1,8 @@
-// Copyright 2009-2018 NTESS. Under the terms
+// Copyright 2009-2019 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2018, NTESS
+// Copyright (c) 2009-2019, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -27,11 +27,11 @@ class EmberWaitallEvent : public EmberMPIEvent {
 public:
 	EmberWaitallEvent( MP::Interface& api, Output* output,
                       EmberEventTimeStatistic* stat,
-           int count, MessageRequest* m_req, MessageResponse** m_resp  ) :
+           int count, MessageRequest* req, MessageResponse** resp  ) :
         EmberMPIEvent( api, output, stat ),
         m_count(count),
-        m_req(m_req),
-        m_resp(m_resp)
+        m_req(req),
+        m_resp(resp)
     { }
 
 	~EmberWaitallEvent() {}

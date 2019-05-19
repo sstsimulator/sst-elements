@@ -45,6 +45,7 @@ typedef struct MessageResponse {
     uint32_t        tag;  
     RankID          src; 
     uint32_t        count;
+    uint32_t		dtypeSize;
     bool            status;
 } MessageResponse;
 
@@ -55,13 +56,25 @@ class MessageRequestBase {
 
 typedef MessageRequestBase* MessageRequest;
 
+enum ReductionOpType { Nop, Sum, Min, Max, Func };
 
-enum ReductionOperation {
-    NOP,
-    SUM,
-    MIN,
-    MAX
+typedef void (User_function)(void* a, void* b, int* len, PayloadDataType* );
+
+struct _ReductionOperation {
+	_ReductionOperation( ReductionOpType type ) : type(type) { }
+	_ReductionOperation( User_function* userFunction, int commute ) :
+			userFunction(userFunction), type(ReductionOpType::Func), commute(commute) { }
+	ReductionOpType  type;
+	User_function* userFunction;
+	int commute;
 };
+
+typedef _ReductionOperation* ReductionOperation; 
+
+static _ReductionOperation* NOP = new _ReductionOperation(ReductionOpType::Nop);
+static _ReductionOperation* SUM = new _ReductionOperation(ReductionOpType::Sum);
+static _ReductionOperation* MIN = new _ReductionOperation(ReductionOpType::Min);
+static _ReductionOperation* MAX = new _ReductionOperation(ReductionOpType::Max);
 
 typedef Arg_FunctorBase< int, bool > Functor; 
 
@@ -73,6 +86,14 @@ enum Retval {
     SUCCESS,
     FAILURE
 };
+
+inline ReductionOperation Op_create( User_function func, int commute ) {
+	return new _ReductionOperation( func, commute );
+}
+
+inline void Op_free( ReductionOperation op ) {
+	delete op;
+}
 
 class Interface : public Hermes::Interface {
     public:
@@ -151,16 +172,17 @@ class Interface : public Hermes::Interface {
     virtual void probe( int source, uint32_t tag, 
         Communicator group, MessageResponse* resp, Functor* ) {} 
 
-    virtual void wait( MessageRequest req, MessageResponse* resp,
-        Functor* ) {};
+    virtual void cancel( MessageRequest req, Functor* ) {};
 
-    virtual void waitany( int count, MessageRequest req[], int *index,
-                MessageResponse* resp, Functor* ) {};
+    virtual void wait( MessageRequest req, MessageResponse* resp, Functor* ) {};
 
-    virtual void waitall( int count, MessageRequest req[],
-                MessageResponse* resp[], Functor* ) {};
+    virtual void waitany( int count, MessageRequest req[], int *index, MessageResponse* resp, Functor* ) {};
 
-    virtual void test( MessageRequest* req, int& flag, MessageResponse* resp,
+    virtual void waitall( int count, MessageRequest req[], MessageResponse* resp[], Functor* ) {};
+
+    virtual void test( MessageRequest req, int* flag, MessageResponse* resp, Functor* ) {};
+
+    virtual void testany( int count, MessageRequest req[], int* indx, int* flag, MessageResponse* resp,
         Functor* ) {};
 
     virtual void comm_split( Communicator, int color, int key,

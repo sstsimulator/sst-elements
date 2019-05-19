@@ -18,6 +18,8 @@ ariel.addParams( {
  	"arieltool" : "<PUT YOUR SST ROOT OR ARIEL PATH HERE>sst/elements/ariel/tool/arieltool.so",
  	"memorylevels" : "2",
 	"arielinterceptcalls" : "0", 
+        "launchparamcount" : 1,
+        "launchparam0" : "-ifeellucky",
 	"defaultlevel" : "0"
 	} )
 

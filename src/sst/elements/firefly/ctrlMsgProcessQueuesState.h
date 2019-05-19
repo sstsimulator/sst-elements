@@ -1,8 +1,8 @@
-// Copyright 2009-2018 NTESS. Under the terms
+// Copyright 2009-2019 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2018, NTESS
+// Copyright (c) 2009-2019, NTESS
 // All rights reserved.
 // 
 // Portions are copyright of other developers:
@@ -19,7 +19,6 @@
 #include <functional>
 #include <stdint.h>
 #include "ctrlMsg.h"
-#include <sst/core/elementinfo.h>
 #include <sst/core/output.h>
 
 #include "info.h"
@@ -150,6 +149,8 @@ class ProcessQueuesState : public SubComponent
     void enterRecv( _CommReq*, uint64_t exitDelay = 0 );
     void enterWait( WaitReq*, uint64_t exitDelay = 0 );
     void enterMakeProgress( uint64_t exitDelay = 0 );
+    void enterCancel( MP::MessageRequest, uint64_t exitDelay = 0 );
+    void enterTest( WaitReq*, int* flag, uint64_t exitDelay = 0 );
 
     void needRecv( int, size_t );
 
@@ -307,12 +308,13 @@ class ProcessQueuesState : public SubComponent
 
     class WaitCtx : public FuncCtxBase {
       public:
-		WaitCtx( WaitReq* _req, VoidFunction callback ) :
-			FuncCtxBase( callback ), req( _req ) {}
+		WaitCtx( WaitReq* _req, VoidFunction callback, int* flag = NULL ) :
+			FuncCtxBase( callback ), req( _req ), flag(flag) {}
 
         ~WaitCtx() { delete req; }
 
         WaitReq*    req;
+        int* flag;
     };
 
     class ProcessLongGetFiniCtx : public FuncCtxBase {

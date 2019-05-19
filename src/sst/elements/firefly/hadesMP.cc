@@ -228,6 +228,13 @@ void HadesMP::probe(RankID source, uint32_t tag,
 	assert(0);
 }
 
+void HadesMP::cancel( MessageRequest req, Functor* retFunc )
+{
+    dbg().debug(CALL_INFO,1,1,"\n");
+    functionSM().start( FunctionSM::Cancel, retFunc,
+                             new CancelStartEvent( req ) );
+}
+
 void HadesMP::wait( MessageRequest req, MessageResponse* resp,
         Functor* retFunc )
 {
@@ -252,10 +259,20 @@ void HadesMP::waitall( int count, MessageRequest req[],
                              new WaitAllStartEvent( count, req, resp) );
 }
 
-void HadesMP::test(MessageRequest req, int& flag, MessageResponse* resp,
+void HadesMP::test(MessageRequest req, int* flag, MessageResponse* resp,
         Functor* retFunc)
 {
-	assert(0);
+    dbg().debug(CALL_INFO,1,1,"\n");
+    functionSM().start( FunctionSM::Test, retFunc,
+                             new TestStartEvent( req, flag, resp) );
+}
+
+void HadesMP::testany( int count, MP::MessageRequest req[], int* indx, int* flag,
+           MP::MessageResponse* resp, MP::Functor* retFunc )
+{
+    dbg().debug(CALL_INFO,1,1,"\n");
+    functionSM().start( FunctionSM::Testany, retFunc,
+                             new TestanyStartEvent( count, req, indx, flag, resp) );
 }
 
 void HadesMP::comm_split( Communicator oldComm, int color, int key,

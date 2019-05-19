@@ -125,6 +125,8 @@ ariel.addParams({
         "executable"          : str(os.environ['OMP_EXE']),
         "appargcount"         : "0",
         "arielinterceptcalls" : "1",
+        "launchparamcount"    : 1,
+        "launchparam0"        : "-ifeellucky",
        	"arielmode"           : "1",
         "corecount"           : groups * cores_per_group,
         "memmgr"              : "ariel.MemoryManagerMalloc",
