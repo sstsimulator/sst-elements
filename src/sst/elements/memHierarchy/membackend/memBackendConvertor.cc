@@ -73,6 +73,11 @@ MemBackendConvertor::MemBackendConvertor(Component *comp, Params& params ) :
     m_clockOn = true; /* Maybe parent should set this */
 }
 
+void MemBackendConvertor::setCallbackHandlers( std::function<void(Event::id_type,uint32_t)> responseCB, std::function<Cycle_t()> clockenable ) {
+    m_notifyResponse = responseCB;
+    m_enableClock = clockenable;
+}
+
 void MemBackendConvertor::handleMemEvent(  MemEvent* ev ) {
 
     ev->setDeliveryTime(m_cycleCount);
@@ -165,7 +170,7 @@ void MemBackendConvertor::doResponse( ReqId reqId, uint32_t flags ) {
 
     /* If clock is not on, turn it back on */
     if (!m_clockOn) {
-        Cycle_t cycle = static_cast<MemController*>(parent)->turnClockOn();
+        Cycle_t cycle = m_enableClock();
         turnClockOn(cycle);
     }
 
@@ -225,7 +230,7 @@ void MemBackendConvertor::doResponse( ReqId reqId, uint32_t flags ) {
 
 void MemBackendConvertor::sendResponse( SST::Event::id_type id, uint32_t flags ) {
 
-    static_cast<MemController*>(parent)->handleMemResponse( id, flags );
+    m_notifyResponse( id, flags );
 
 }
 

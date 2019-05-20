@@ -114,6 +114,9 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
         out.fatal(CALL_INFO, -1, "%s, Error - unable to load MemBackendConvertor.", getName().c_str());
     }
 
+    using std::placeholders::_1;
+    using std::placeholders::_2;
+    memBackendConvertor_->setCallbackHandlers(std::bind(&MemController::handleMemResponse, this, _1, _2), std::bind(&MemController::turnClockOn, this));
     memSize_ = memBackendConvertor_->getMemSize();
 
     const uint32_t listenerCount  = params.find<uint32_t>("listenercount", 0);

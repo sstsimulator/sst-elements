@@ -57,7 +57,6 @@ class MemBackendConvertor : public SubComponent {
             { "latency_GetX",                       "Total latency of handled GetX requests",           "cycles",   1 },\
             { "latency_PutM",                       "Total latency of handled PutM requests",           "cycles",   1 }
 
-
     typedef uint64_t ReqId;
 
     class BaseReq {
@@ -166,6 +165,8 @@ class MemBackendConvertor : public SubComponent {
 
         return m_pendingRequests[id]->getRqstr();
     }
+    
+    virtual void setCallbackHandlers(std::function<void(Event::id_type,uint32_t)> responseCB, std::function<Cycle_t()> clockenableCB);
 
     // generates a MemReq for the target custom command
     // this is utilized by inherited ExtMemBackendConvertor's
@@ -277,6 +278,10 @@ class MemBackendConvertor : public SubComponent {
     uint64_t m_cycleCount;
 
     bool m_clockOn;
+    
+    // Callback functions to parent component
+    std::function<Cycle_t()> m_enableClock; // Re-enable parent's clock
+    std::function<void(Event::id_type id, uint32_t)> m_notifyResponse; // notify parent of response
 
     uint32_t genReqId( ) { return ++m_reqId; }
 

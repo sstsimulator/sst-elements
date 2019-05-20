@@ -68,6 +68,10 @@ ScratchBackendConvertor::ScratchBackendConvertor(Component *comp, Params& params
 
 }
 
+void ScratchBackendConvertor::setCallbackHandler(std::function<void(Event::id_type)> respCB) {
+    m_notifyResponse = respCB;
+}
+
 void ScratchBackendConvertor::handleMemEvent(  MemEvent * ev ) {
 
     ev->setDeliveryTime(m_cycleCount);
@@ -120,7 +124,7 @@ bool ScratchBackendConvertor::doResponse( ReqId reqId, SST::Event::id_type & res
     bool sendResponse = false;
 
     if ( m_pendingRequests.find( id ) == m_pendingRequests.end() ) {
-        m_dbg.fatal(CALL_INFO, -1, "%s, memory request not found\n", parent->getName().c_str());
+        m_dbg.fatal(CALL_INFO, -1, "%s, memory request not found\n", getName().c_str());
     }
 
     MemReq* req = m_pendingRequests[id];
@@ -149,7 +153,7 @@ bool ScratchBackendConvertor::doResponse( ReqId reqId, SST::Event::id_type & res
 
 void ScratchBackendConvertor::notifyResponse( SST::Event::id_type id) {
 
-    static_cast<Scratchpad*>(parent)->handleScratchResponse( id );
+    m_notifyResponse(id);
 
 }
 

@@ -31,7 +31,7 @@ DelayBuffer::DelayBuffer(Component *comp, Params &params) : SimpleMemBackend(com
     UnitAlgebra delay = params.find<UnitAlgebra>("request_delay", UnitAlgebra("0ns"));
     
     if (!(delay.hasUnits("s"))) {
-        output->fatal(CALL_INFO, -1, "Invalid param(%s): request_delay - must have units of 's' (seconds). You specified %s.\n", comp->getName().c_str(), delay.toString().c_str());
+        output->fatal(CALL_INFO, -1, "Invalid param(%s): request_delay - must have units of 's' (seconds). You specified %s.\n", getName().c_str(), delay.toString().c_str());
     }
     
     // Create our backend & copy 'mem_size' through for now

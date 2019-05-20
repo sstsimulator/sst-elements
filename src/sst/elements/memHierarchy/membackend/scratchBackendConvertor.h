@@ -83,6 +83,8 @@ public:
         return m_pendingRequests[id]->getMemEvent()->getRqstr();
     }
 
+    virtual void setCallbackHandler(std::function<void(Event::id_type)> func);
+
   protected:
     ~ScratchBackendConvertor() {
         while ( m_requestQueue.size()) {
@@ -101,6 +103,8 @@ public:
 
     MemBackend* m_backend;
     uint32_t    m_backendRequestWidth;
+
+    std::function<void(Event::id_type)> m_notifyResponse;
 
   private:
     virtual bool issue(MemReq*) = 0;

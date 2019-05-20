@@ -29,7 +29,7 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 
 pagedMultiMemory::pagedMultiMemory(Component *comp, Params &params) : DRAMSimMemory(comp, params), pagesInFast(0), lastMin(0) {
-    dbg.init("@R:pagedMultiMemory::@p():@l " + comp->getName() + ": ", 0, 0, 
+    dbg.init("@R:pagedMultiMemory::@p():@l " + getName() + ": ", 0, 0, 
              (Output::output_location_t)params.find<int>("debug", 0));
     dbg.output(CALL_INFO, "making pagedMultiMemory controller\n");
 
@@ -45,7 +45,7 @@ pagedMultiMemory::pagedMultiMemory(Component *comp, Params &params) : DRAMSimMem
     dumpNum = 0;
 
     string clock_freq = params.find<std::string>("quantum", "5ms");
-    comp->registerClock(clock_freq, 
+    registerClock(clock_freq, 
                         new Clock::Handler<pagedMultiMemory>(this, 
                                                              &pagedMultiMemory::quantaClock));
 

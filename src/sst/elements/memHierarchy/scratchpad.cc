@@ -118,7 +118,10 @@ Scratchpad::Scratchpad(ComponentId_t id, Params &params) : Component(id) {
     
     // Create backend
     scratch_ = dynamic_cast<ScratchBackendConvertor*>(loadSubComponent(bkName, this, bkParams));
-    
+
+    using std::placeholders::_1;
+    scratch_->setCallbackHandler(std::bind( &Scratchpad::handleScratchResponse, this, _1 ));
+
     // Initialize scratchpad entries
     // Set up backing store if needed
     std::string backingType = params.find<std::string>("backing", "mmap", found); /* Default to using an mmap backing store, fall back on malloc */
