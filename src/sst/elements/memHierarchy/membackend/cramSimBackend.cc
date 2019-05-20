@@ -26,7 +26,7 @@ using namespace SST::CramSim;
 
 CramSimMemory::CramSimMemory(Component *comp, Params &params) : SimpleMemBackend(comp, params){
     std::string access_time = params.find<std::string>("access_time", "100 ns");
-    cramsim_link = comp->configureLink( "cube_link", access_time,
+    cramsim_link = configureLink( "cube_link", access_time,
             new Event::Handler<CramSimMemory>(this, &CramSimMemory::handleCramsimEvent));
 
     m_maxNumOutstandingReqs = params.find<int>("max_outstanding_requests",256);

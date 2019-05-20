@@ -28,7 +28,7 @@ using namespace SST::Interfaces;
 
 
 MemHierarchyInterface::MemHierarchyInterface(SST::Component *comp, Params &params) :
-    SimpleMem(comp, params), owner_(comp), recvHandler_(NULL), link_(NULL)
+    SimpleMem(comp, params), recvHandler_(NULL), link_(NULL)
 { 
     output.init("", 1, 0, Output::STDOUT);
     rqstr_ = "";
@@ -124,7 +124,7 @@ MemEventBase* MemHierarchyInterface::createMemEvent(SimpleMem::Request *req) con
 
     Addr baseAddr = (req->addrs[0]) & baseAddrMask_;
     
-    MemEvent *me = new MemEvent(owner_, req->addrs[0], baseAddr, cmd);
+    MemEvent *me = new MemEvent(getName(), req->addrs[0], baseAddr, cmd, getCurrentSimTimeNano());
     
     me->setRqstr(rqstr_);
     me->setDst(rqstr_);
@@ -210,7 +210,7 @@ SimpleMem::Request* MemHierarchyInterface::processIncoming(MemEventBase *ev){
             updateRequest(req, static_cast<MemEvent*>(ev));
         }
     } else {
-        output.fatal(CALL_INFO, -1, "(%s interface) Unable to find matching request. Event: %s\n", owner_->getName().c_str(), ev->getVerboseString().c_str());
+        output.fatal(CALL_INFO, -1, "(%s interface) Unable to find matching request. Event: %s\n", getName().c_str(), ev->getVerboseString().c_str());
     }
     return req;
 }
@@ -251,8 +251,8 @@ void MemHierarchyInterface::updateCustomRequest(SimpleMem::Request* req, MemEven
 
 bool MemHierarchyInterface::initialize(const std::string &linkName, HandlerBase *handler){
     recvHandler_ = handler;
-    if ( NULL == recvHandler_) link_ = owner_->configureLink(linkName);
-    else                       link_ = owner_->configureLink(linkName, new Event::Handler<MemHierarchyInterface>(this, &MemHierarchyInterface::handleIncoming));
+    if ( NULL == recvHandler_) link_ = configureLink(linkName);
+    else                       link_ = configureLink(linkName, new Event::Handler<MemHierarchyInterface>(this, &MemHierarchyInterface::handleIncoming));
 
     return (link_ != NULL);
 }

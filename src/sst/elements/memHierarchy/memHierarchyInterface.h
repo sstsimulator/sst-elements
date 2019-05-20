@@ -69,7 +69,6 @@ protected:
     /** Function to update a SimpleMem request with a custom memEvent response */
     virtual void updateCustomRequest(Interfaces::SimpleMem::Request* req, MemEventBase *ev) const;
     
-    Component*  owner_;
     Output      output;
     Addr        baseAddrMask_;
     std::string rqstr_;

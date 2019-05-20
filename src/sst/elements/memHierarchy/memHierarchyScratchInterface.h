@@ -79,7 +79,6 @@ private:
     MoveEvent* createMoveEvent(Interfaces::SimpleMem::Request* req) const;
     MemEvent* createMemEvent(Interfaces::SimpleMem::Request* req) const;
 
-    Component*      owner_;
     HandlerBase*    recvHandler_;
     SST::Link*      link_;
     std::map<SST::Event::id_type, Interfaces::SimpleMem::Request*> requests_;
