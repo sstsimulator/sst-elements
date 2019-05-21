@@ -281,10 +281,16 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     registerTimeBase("1 ns", true); // TODO - is this needed? We already registered a clock...
 
     /* Custom command handler */
-    if (nullptr == (customCommandHandler_ = dynamic_cast<CustomCmdMemHandler*>(loadNamedSubComponent("customCmdHandler")))) {
+    using std::placeholders::_3;
+    customCommandHandler_ = loadUserSubComponent<CustomCmdMemHandler>("customCmdHandler", 
+            std::bind(static_cast<void(MemController::*)(Addr,size_t,std::vector<uint8_t>&)>(&MemController::readData), this, _1, _2, _3), 
+            std::bind(static_cast<void(MemController::*)(Addr,std::vector<uint8_t>*)>(&MemController::writeData), this, _1, _2));
+    if (nullptr == customCommandHandler_) {
         std::string customHandlerName = params.find<std::string>("customCmdHandler", "");
         if (customHandlerName != "") {
-            customCommandHandler_ = dynamic_cast<CustomCmdMemHandler*>(loadSubComponent(customHandlerName, this, params));
+            customCommandHandler_ = loadAnonymousSubComponent<CustomCmdMemHandler>(customHandlerName, "customCmdHandler", 0, ComponentInfo::INSERT_STATS, params,
+                    std::bind(static_cast<void(MemController::*)(Addr,size_t,std::vector<uint8_t>&)>(&MemController::readData), this, _1, _2, _3), 
+                    std::bind(static_cast<void(MemController::*)(Addr,std::vector<uint8_t>*)>(&MemController::writeData), this, _1, _2));
         }
     }
 }

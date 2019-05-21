@@ -29,7 +29,7 @@ using namespace SST::Interfaces;
 
 MemHierarchyScratchInterface::MemHierarchyScratchInterface(SST::Component *comp, Params &params) :
     SimpleMem(comp, params), recvHandler_(NULL), link_(NULL)
-{ 
+{
     output.init("", 1, 0, Output::STDOUT); 
 
     bool found;
@@ -41,6 +41,29 @@ MemHierarchyScratchInterface::MemHierarchyScratchInterface(SST::Component *comp,
     remoteMemStart_ = size.getRoundedValue();
 
     initDone_ = false;
+
+}
+
+MemHierarchyScratchInterface::MemHierarchyScratchInterface(SST::ComponentId_t id, Params &params, HandlerBase* handler) :
+    SimpleMem(id, params) 
+{
+    output.init("", 1, 0, Output::STDOUT); 
+
+    bool found;
+    UnitAlgebra size = UnitAlgebra(params.find<std::string>("scratchpad_size", "0B", found));
+    if (!found) 
+        output.fatal(CALL_INFO, -1, "Param not specified (%s): scratchpad_size - size of scratchpad\n", getName().c_str());
+    if (!size.hasUnits("B"))
+        output.fatal(CALL_INFO, -1, "Invalid param (%s): scratchpad_size - must have units of 'B'. SI units ok. You specified '%s'\n", getName().c_str(), size.toString().c_str());
+    remoteMemStart_ = size.getRoundedValue();
+
+    initDone_ = false;
+    
+    recvHandler_ = handler;
+    if ( NULL == recvHandler_) 
+        link_ = configureLink("port");
+    else
+        link_ = configureLink("port", new Event::Handler<MemHierarchyScratchInterface>(this, &MemHierarchyScratchInterface::handleIncoming));
 }
 
 

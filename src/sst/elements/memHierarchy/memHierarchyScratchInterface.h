@@ -44,11 +44,16 @@ class MemHierarchyScratchInterface : public Interfaces::SimpleMem {
 
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT(MemHierarchyScratchInterface, "memHierarchy", "scratchInterface", SST_ELI_ELEMENT_VERSION(1,0,0),
-            "Interface to a scratchpad", "SST::Interfaces::SimpleMem")
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(MemHierarchyScratchInterface, "memHierarchy", "scratchInterface", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Interface to a scratchpad", SST::Interfaces::SimpleMem)
+    
+    SST_ELI_DOCUMENT_PARAMS( { "scratchpad_size", "Size of the scratchpad, with units" } )
+
+    SST_ELI_DOCUMENT_PORTS( {"port", "Port to memory hierarchy (caches/memory/etc.)", {}} )
 
 /* Begin class definition */
     MemHierarchyScratchInterface(SST::Component *comp, Params &params);
+    MemHierarchyScratchInterface(SST::ComponentId_t id, Params &params, HandlerBase *handler = NULL);
     
     /** Initialize the link to be used to connect with MemHierarchy */
     virtual bool initialize(const std::string &linkName, HandlerBase *handler = NULL);

@@ -98,7 +98,10 @@ class ArielCPU : public SST::Component {
         { "cycles",               "Statistic for counting cycles of the Ariel core.", "cycles", 1 },
         { "active_cycles",        "Statistic for counting active cycles (cycles not idle) of the Ariel core.", "cycles", 1 })
     
-    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(    {"memmgr", "Memory manager to translate virtual addresses to physical, handle malloc/free, etc.", "SST::ArielComponent::ArielMemoryManager"} )
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(    
+            {"memmgr", "Memory manager to translate virtual addresses to physical, handle malloc/free, etc.", "SST::ArielComponent::ArielMemoryManager"},
+            {"memory", "Interface to the memoryHierarchy (e.g., caches)", "SST::Interfaces::SimpleMem" }
+    )
 
         /* Ariel class */
         ArielCPU(ComponentId_t id, Params& params);
@@ -114,7 +117,7 @@ class ArielCPU : public SST::Component {
         SST::Output* output;
         ArielMemoryManager* memmgr;
         ArielCore** cpu_cores;
-        Interfaces::SimpleMem** cpu_to_cache_links;
+        std::vector<Interfaces::SimpleMem*> cpu_to_cache_links;
         pid_t child_pid;
 
         uint32_t core_count;

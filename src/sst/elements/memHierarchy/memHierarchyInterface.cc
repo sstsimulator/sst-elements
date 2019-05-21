@@ -35,6 +35,20 @@ MemHierarchyInterface::MemHierarchyInterface(SST::Component *comp, Params &param
     initDone_ = false;
 }
 
+MemHierarchyInterface::MemHierarchyInterface(SST::ComponentId_t id, Params &params, HandlerBase* handler) :
+    SimpleMem(id, params)
+{ 
+    output.init("", 1, 0, Output::STDOUT);
+    rqstr_ = "";
+    initDone_ = false;
+    recvHandler_ = handler;
+    std::string portname = params.find<std::string>("port", "port");
+    if ( NULL == recvHandler_) 
+        link_ = configureLink(portname);
+    else
+        link_ = configureLink(portname, new Event::Handler<MemHierarchyInterface>(this, &MemHierarchyInterface::handleIncoming));
+}
+
 
 void MemHierarchyInterface::init(unsigned int phase) {
     /* Send region message */

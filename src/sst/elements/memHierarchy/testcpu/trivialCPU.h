@@ -62,6 +62,8 @@ public:
 
     SST_ELI_DOCUMENT_STATISTICS( {"pendCycle", "Number of pending requests per cycle", "count", 1} )
 
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( { "memory", "Interface to memory hierarchy", "SST::Interfaces::SimpleMem" } )
+
 /* Begin class definition */
     trivialCPU(SST::ComponentId_t id, SST::Params& params);
     void init();

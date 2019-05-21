@@ -332,7 +332,6 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     /////////////////////////////////////////////////////////////////////////////////////
 
     output->verbose(CALL_INFO, 1, 0, "Creating core to cache links...\n");
-    cpu_to_cache_links = (SimpleMem**) malloc( sizeof(SimpleMem*) * core_count );
 
     output->verbose(CALL_INFO, 1, 0, "Creating processor cores and cache links...\n");
     cpu_cores = (ArielCore**) malloc( sizeof(ArielCore*) * core_count );
@@ -345,8 +344,29 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
         cpu_cores[i] = new ArielCore(tunnel, NULL, i, maxPendingTransCore, output,
                 maxIssuesPerCycle, maxCoreQueueLen, cacheLineSize, this,
                 memmgr, perform_checks, params);
-        cpu_to_cache_links[i] = dynamic_cast<Interfaces::SimpleMem*>(loadSubComponent("memHierarchy.memInterface", this, params));
-        cpu_to_cache_links[i]->initialize(link_buffer, new SimpleMem::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleEvent));
+
+        // Find all the components loaded into the "memory" slot
+        // Make sure all cores have a loaded subcomponent in their slot
+        SubComponentSlotInfo* mem = getSubComponentSlotInfo("memory");
+        if (mem) {
+            if (!mem->isAllPopulated())
+                output->fatal(CALL_INFO, -1, "%s, Error: loading 'memory' subcomponents. All subcomponent slots from 0 to core_count must be populated. Check your input config for non-populated slots\n", getName().c_str());
+    
+            if (mem->getMaxPopulatedSlotNumber() != core_count)
+                output->fatal(CALL_INFO, -1, "%s, Error: Loading 'memory' subcomponents and the number of subcomponents does not match the number of cores. Cores: %u, SubComps: %u. Check your input config.\n",
+                        getName().c_str(), core_count, mem->getMaxPopulatedSlotNumber());
+        
+            for (int i = 0; i < core_count; i++)
+                cpu_to_cache_links.push_back(mem->create<Interfaces::SimpleMem>(i, ComponentInfo::INSERT_STATS, new SimpleMem::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleEvent)));
+        } else {
+        // Load from here not the user one; let the subcomponent have our port (cache_link)
+            for (int i = 0; i < core_count; i++) {
+                Params par;
+                par.insert("port", "cache_link_" + std::to_string(i));
+                cpu_to_cache_links.push_back(loadAnonymousSubComponent<Interfaces::SimpleMem>("memHierarchy.memInterface", "memory", i, 
+                            ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, par, new SimpleMem::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleEvent)));
+            }
+        }
 
         // Set max number of instructions
         cpu_cores[i]->setMaxInsts(max_insts);

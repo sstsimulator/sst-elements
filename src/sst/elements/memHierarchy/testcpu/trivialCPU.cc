@@ -70,13 +70,12 @@ trivialCPU::trivialCPU(ComponentId_t id, Params& params) :
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
 
-    memory = dynamic_cast<Interfaces::SimpleMem*>(loadSubComponent("memHierarchy.memInterface", this, params));
-    if ( !memory ) {
-        out.fatal(CALL_INFO, -1, "Unable to load Module as memory\n");
+    memory = loadUserSubComponent<Interfaces::SimpleMem>("memory", new Interfaces::SimpleMem::Handler<trivialCPU>(this, &trivialCPU::handleEvent));
+    
+    if (!memory) {
+        out.fatal(CALL_INFO, -1, "Unable to load memHierarchy.memInterface subcomponent\n");
     }
-    memory->initialize("mem_link",
-			new Interfaces::SimpleMem::Handler<trivialCPU>(this, &trivialCPU::handleEvent) );
-
+    
     //set our clock
     std::string clockFreq = params.find<std::string>("clock", "1GHz");
     clockHandler = new Clock::Handler<trivialCPU>(this, &trivialCPU::clockTic);
