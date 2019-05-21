@@ -71,6 +71,10 @@ public:
 	{ "cache_link", "Link to the memHierarchy cache", { "memHierarchy.memEvent", "" } }
    )
 
+   SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+           {"memory", "Interface to the memory hierarchy (e.g., cache)", "SST::Interfaces::SimpleMem" }
+    )
+
 private:
   ProsperoComponent();                         // Serialization only
   ProsperoComponent(const ProsperoComponent&); // Do not impl.
