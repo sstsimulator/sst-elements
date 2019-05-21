@@ -22,6 +22,15 @@ using namespace SST::Miranda;
 
 STREAMBenchGenerator_CustomCmd::STREAMBenchGenerator_CustomCmd( Component* owner, Params& params ) :
 	RequestGenerator(owner, params) {
+            build(params);
+        }
+
+STREAMBenchGenerator_CustomCmd::STREAMBenchGenerator_CustomCmd( ComponentId_t id, Params& params ) :
+	RequestGenerator(id, params) {
+            build(params);
+        }
+
+void STREAMBenchGenerator_CustomCmd::build( Params& params ) {
 
 	const uint32_t verbose = params.find<uint32_t>("verbose", 0);
 

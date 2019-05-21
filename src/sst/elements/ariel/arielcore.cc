@@ -21,18 +21,18 @@ using namespace SST::ArielComponent;
 #define ARIEL_CORE_VERBOSE(LEVEL, OUTPUT) if(verbosity >= (LEVEL)) OUTPUT
 
 
-ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
+ArielCore::ArielCore(ComponentId_t id, ArielTunnel *tunnel,
             uint32_t thisCoreID, uint32_t maxPendTrans,
             Output* out, uint32_t maxIssuePerCyc,
-            uint32_t maxQLen, uint64_t cacheLineSz, SST::Component* own,
+            uint32_t maxQLen, uint64_t cacheLineSz,
             ArielMemoryManager* memMgr, const uint32_t perform_address_checks, Params& params) :
-            output(out), tunnel(tunnel), perform_checks(perform_address_checks),
+            ComponentExtension(id), output(out), tunnel(tunnel), 
+            perform_checks(perform_address_checks),
             verbosity(static_cast<uint32_t>(out->getVerboseLevel())) {
 
     // set both counters for flushes to 0
     output->verbose(CALL_INFO, 2, 0, "Creating core with ID %" PRIu32 ", maximum queue length=%" PRIu32 ", max issue is: %" PRIu32 "\n", thisCoreID, maxQLen, maxIssuePerCyc);
     inst_count = 0;
-    cacheLink = coreToCacheLink;
     coreID = thisCoreID;
     maxPendingTransactions = maxPendTrans;
     isHalted = false;
@@ -41,7 +41,6 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
     maxIssuePerCycle = maxIssuePerCyc;
     maxQLength = maxQLen;
     cacheLineSize = cacheLineSz;
-    owner = own;
     memmgr = memMgr;
 
     writePayloads = params.find<int>("writepayloadtrace") == 0 ? false : true;
@@ -53,30 +52,30 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
     char* subID = (char*) malloc(sizeof(char) * 32);
     sprintf(subID, "%" PRIu32, thisCoreID);
 
-    statReadRequests  = own->registerStatistic<uint64_t>( "read_requests", subID );
-    statWriteRequests = own->registerStatistic<uint64_t>( "write_requests", subID );
-    statReadRequestSizes = own->registerStatistic<uint64_t>( "read_request_sizes", subID );
-    statWriteRequestSizes = own->registerStatistic<uint64_t>( "write_request_sizes", subID );
-    statSplitReadRequests = own->registerStatistic<uint64_t>( "split_read_requests", subID );
-    statSplitWriteRequests = own->registerStatistic<uint64_t>( "split_write_requests", subID );
-    statFlushRequests = own->registerStatistic<uint64_t>( "flush_requests", subID);
-    statFenceRequests = own->registerStatistic<uint64_t>( "fence_requests", subID);
-    statNoopCount     = own->registerStatistic<uint64_t>( "no_ops", subID );
-    statInstructionCount = own->registerStatistic<uint64_t>( "instruction_count", subID );
-    statCycles = own->registerStatistic<uint64_t>( "cycles", subID );
-    statActiveCycles = own->registerStatistic<uint64_t>( "active_cycles", subID );
+    statReadRequests  = registerStatistic<uint64_t>( "read_requests", subID );
+    statWriteRequests = registerStatistic<uint64_t>( "write_requests", subID );
+    statReadRequestSizes = registerStatistic<uint64_t>( "read_request_sizes", subID );
+    statWriteRequestSizes = registerStatistic<uint64_t>( "write_request_sizes", subID );
+    statSplitReadRequests = registerStatistic<uint64_t>( "split_read_requests", subID );
+    statSplitWriteRequests = registerStatistic<uint64_t>( "split_write_requests", subID );
+    statFlushRequests = registerStatistic<uint64_t>( "flush_requests", subID);
+    statFenceRequests = registerStatistic<uint64_t>( "fence_requests", subID);
+    statNoopCount     = registerStatistic<uint64_t>( "no_ops", subID );
+    statInstructionCount = registerStatistic<uint64_t>( "instruction_count", subID );
+    statCycles = registerStatistic<uint64_t>( "cycles", subID );
+    statActiveCycles = registerStatistic<uint64_t>( "active_cycles", subID );
 
-    statFPSPIns = own->registerStatistic<uint64_t>("fp_sp_ins", subID);
-    statFPDPIns = own->registerStatistic<uint64_t>("fp_dp_ins", subID);
+    statFPSPIns = registerStatistic<uint64_t>("fp_sp_ins", subID);
+    statFPDPIns = registerStatistic<uint64_t>("fp_dp_ins", subID);
 
-    statFPSPSIMDIns = own->registerStatistic<uint64_t>("fp_sp_simd_ins", subID);
-    statFPDPSIMDIns = own->registerStatistic<uint64_t>("fp_dp_simd_ins", subID);
+    statFPSPSIMDIns = registerStatistic<uint64_t>("fp_sp_simd_ins", subID);
+    statFPDPSIMDIns = registerStatistic<uint64_t>("fp_dp_simd_ins", subID);
 
-    statFPSPScalarIns = own->registerStatistic<uint64_t>("fp_sp_scalar_ins", subID);
-    statFPDPScalarIns = own->registerStatistic<uint64_t>("fp_dp_scalar_ins", subID);
+    statFPSPScalarIns = registerStatistic<uint64_t>("fp_sp_scalar_ins", subID);
+    statFPDPScalarIns = registerStatistic<uint64_t>("fp_dp_scalar_ins", subID);
 
-    statFPSPOps = own->registerStatistic<uint64_t>("fp_sp_ops", subID);
-    statFPDPOps = own->registerStatistic<uint64_t>("fp_dp_ops", subID);
+    statFPSPOps = registerStatistic<uint64_t>("fp_sp_ops", subID);
+    statFPDPOps = registerStatistic<uint64_t>("fp_dp_ops", subID);
 
     free(subID);
 
@@ -88,12 +87,11 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
     // If we enabled tracing then open up the correct file.
     if(enableTracing) {
         Params interfaceParams = params.find_prefix_params("tracer.");
-        traceGen = dynamic_cast<ArielTraceGenerator*>( own->loadModuleWithComponent(traceGenName, own,
-                            interfaceParams) );
+        traceGen = dynamic_cast<ArielTraceGenerator*>( loadModule(traceGenName, interfaceParams) );
 
         if(NULL == traceGen) {
-                output->fatal(CALL_INFO, -1, "Unable to load tracing module: \"%s\"\n",
-                            traceGenName.c_str());
+            output->fatal(CALL_INFO, -1, "Unable to load tracing module: \"%s\"\n",
+                    traceGenName.c_str());
         }
 
         traceGen->setCoreID(coreID);
@@ -395,7 +393,7 @@ bool ArielCore::refillQueue() {
         // There is data on the pipe
         switch(ac.command) {
             case ARIEL_OUTPUT_STATS:
-                fprintf(stdout, "Performing statistics output at simulation time = %" PRIu64 "\n", owner->getCurrentSimTimeNano());
+                fprintf(stdout, "Performing statistics output at simulation time = %" PRIu64 " cycles\n", getCurrentSimTimeNano());
                 Simulation::getSimulation()->getStatisticsProcessingEngine()->performGlobalStatisticOutput();
                 break;
 

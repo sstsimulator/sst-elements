@@ -22,6 +22,15 @@ using namespace SST::Miranda;
 
 Stencil3DBenchGenerator::Stencil3DBenchGenerator( Component* owner, Params& params ) :
 	RequestGenerator(owner, params) {
+            build(params);
+        }
+
+Stencil3DBenchGenerator::Stencil3DBenchGenerator( ComponentId_t id, Params& params ) :
+	RequestGenerator(id, params) {
+            build(params);
+        }
+
+void Stencil3DBenchGenerator::build(Params& params) {
 
 	const uint32_t verbose = params.find<uint32_t>("verbose", 0);
 

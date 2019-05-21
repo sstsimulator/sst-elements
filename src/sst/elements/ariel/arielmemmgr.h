@@ -116,7 +116,6 @@ class ArielMemoryManager : public SubComponent {
 
     protected:
         Output* output;
-        SST::Component* owner;
 
         std::vector<InterruptHandlerBase*> interruptHandler;
 };

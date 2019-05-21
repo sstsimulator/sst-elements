@@ -58,7 +58,13 @@ streamCPU::streamCPU(ComponentId_t id, Params& params) :
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
 
-    memory = loadUserSubComponent<Interfaces::SimpleMem>("memory", new Interfaces::SimpleMem::Handler<streamCPU>(this, &streamCPU::handleEvent));
+    //set our clock
+    std::string clockFreq = params.find<std::string>("clock", "1GHz");
+    clockHandler = new Clock::Handler<streamCPU>(this, &streamCPU::clockTic);
+    clockTC = registerClock(clockFreq, clockHandler);
+    num_reads_issued = num_reads_returned = 0;
+    
+    memory = loadUserSubComponent<Interfaces::SimpleMem>("memory", clockTC, new Interfaces::SimpleMem::Handler<streamCPU>(this, &streamCPU::handleEvent));
     
     if (!memory) {
         out.fatal(CALL_INFO, -1, "Unable to load memHierarchy.memInterface subcomponent\n");
@@ -66,11 +72,6 @@ streamCPU::streamCPU(ComponentId_t id, Params& params) :
 
     addrOffset = params.find<uint64_t>("addressoffset", 0);
 
-    //set our clock
-    std::string clockFreq = params.find<std::string>("clock", "1GHz");
-    clockHandler = new Clock::Handler<streamCPU>(this, &streamCPU::clockTic);
-    clockTC = registerClock(clockFreq, clockHandler);
-    num_reads_issued = num_reads_returned = 0;
 
     // Start the next address from the offset
     nextAddr = addrOffset;

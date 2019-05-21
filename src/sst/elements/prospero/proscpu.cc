@@ -57,7 +57,7 @@ ProsperoComponent::ProsperoComponent(ComponentId_t id, Params& params) :
 
 	std::string prosClock = params.find<std::string>("clock", "2GHz");
 	// Register the clock
-	registerClock(prosClock, new Clock::Handler<ProsperoComponent>(this, &ProsperoComponent::tick));
+	TimeConverter* time = registerClock(prosClock, new Clock::Handler<ProsperoComponent>(this, &ProsperoComponent::tick));
 
 	output->verbose(CALL_INFO, 1, 0, "Configured Prospero clock for %s\n", prosClock.c_str());
 
@@ -74,13 +74,13 @@ ProsperoComponent::ProsperoComponent(ComponentId_t id, Params& params) :
 	output->verbose(CALL_INFO, 1, 0, "Configuring Prospero cache connection...\n");
 
         // Check for interface in the input config; if not, load an anonymous interface (must use our port instead of its own)
-        cache_link = loadUserSubComponent<Interfaces::SimpleMem>("memory", 
+        cache_link = loadUserSubComponent<Interfaces::SimpleMem>("memory", time, 
                 new SimpleMem::Handler<ProsperoComponent>(this, &ProsperoComponent::handleResponse));
         if (!cache_link) {
             Params par;
             par.insert("port", "cache_link");
             cache_link = loadAnonymousSubComponent<Interfaces::SimpleMem>("memHierarchy.memInterface", "memory", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, par,
-                    new SimpleMem::Handler<ProsperoComponent>(this, &ProsperoComponent::handleResponse));
+                    time, new SimpleMem::Handler<ProsperoComponent>(this, &ProsperoComponent::handleResponse));
         }
 	output->verbose(CALL_INFO, 1, 0, "Configuration of memory interface completed.\n");
 

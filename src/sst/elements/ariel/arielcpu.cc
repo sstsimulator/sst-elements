@@ -330,6 +330,13 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     execute_args[(pin_arg_count - 1) + app_argc] = NULL;
 
     /////////////////////////////////////////////////////////////////////////////////////
+    
+    std::string cpu_clock = params.find<std::string>("clock", "1GHz");
+    output->verbose(CALL_INFO, 1, 0, "Registering ArielCPU clock at %s\n", cpu_clock.c_str());
+
+    TimeConverter* timeconverter = registerClock( cpu_clock, new Clock::Handler<ArielCPU>(this, &ArielCPU::tick ) );
+
+    output->verbose(CALL_INFO, 1, 0, "Clocks registered.\n");
 
     output->verbose(CALL_INFO, 1, 0, "Creating core to cache links...\n");
 
@@ -341,9 +348,8 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     for(uint32_t i = 0; i < core_count; ++i) {
         sprintf(link_buffer, "cache_link_%" PRIu32, i);
 
-        cpu_cores[i] = new ArielCore(tunnel, NULL, i, maxPendingTransCore, output,
-                maxIssuesPerCycle, maxCoreQueueLen, cacheLineSize, this,
-                memmgr, perform_checks, params);
+        cpu_cores[i] = loadComponentExtension<ArielCore>(tunnel, i, maxPendingTransCore, output,
+                maxIssuesPerCycle, maxCoreQueueLen, cacheLineSize, memmgr, perform_checks, params);
 
         // Find all the components loaded into the "memory" slot
         // Make sure all cores have a loaded subcomponent in their slot
@@ -357,14 +363,14 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
                         getName().c_str(), core_count, mem->getMaxPopulatedSlotNumber());
         
             for (int i = 0; i < core_count; i++)
-                cpu_to_cache_links.push_back(mem->create<Interfaces::SimpleMem>(i, ComponentInfo::INSERT_STATS, new SimpleMem::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleEvent)));
+                cpu_to_cache_links.push_back(mem->create<Interfaces::SimpleMem>(i, ComponentInfo::INSERT_STATS, timeconverter, new SimpleMem::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleEvent)));
         } else {
         // Load from here not the user one; let the subcomponent have our port (cache_link)
             for (int i = 0; i < core_count; i++) {
                 Params par;
                 par.insert("port", "cache_link_" + std::to_string(i));
                 cpu_to_cache_links.push_back(loadAnonymousSubComponent<Interfaces::SimpleMem>("memHierarchy.memInterface", "memory", i, 
-                            ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, par, new SimpleMem::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleEvent)));
+                            ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, par, timeconverter, new SimpleMem::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleEvent)));
             }
         }
 
@@ -375,13 +381,6 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     }
 
     free(link_buffer);
-
-    std::string cpu_clock = params.find<std::string>("clock", "1GHz");
-    output->verbose(CALL_INFO, 1, 0, "Registering ArielCPU clock at %s\n", cpu_clock.c_str());
-
-    registerClock( cpu_clock, new Clock::Handler<ArielCPU>(this, &ArielCPU::tick ) );
-
-    output->verbose(CALL_INFO, 1, 0, "Clocks registered.\n");
 
     // Register us as an important component
     registerAsPrimaryComponent();

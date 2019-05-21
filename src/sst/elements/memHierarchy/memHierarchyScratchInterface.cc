@@ -44,9 +44,11 @@ MemHierarchyScratchInterface::MemHierarchyScratchInterface(SST::Component *comp,
 
 }
 
-MemHierarchyScratchInterface::MemHierarchyScratchInterface(SST::ComponentId_t id, Params &params, HandlerBase* handler) :
+MemHierarchyScratchInterface::MemHierarchyScratchInterface(SST::ComponentId_t id, Params &params, TimeConverter* time, HandlerBase* handler) :
     SimpleMem(id, params) 
 {
+    setDefaultTimeBase(time);
+
     output.init("", 1, 0, Output::STDOUT); 
 
     bool found;

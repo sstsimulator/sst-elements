@@ -53,7 +53,7 @@ public:
 
 /* Begin class definition */
     MemHierarchyScratchInterface(SST::Component *comp, Params &params);
-    MemHierarchyScratchInterface(SST::ComponentId_t id, Params &params, HandlerBase *handler = NULL);
+    MemHierarchyScratchInterface(SST::ComponentId_t id, Params &params, TimeConverter* time, HandlerBase *handler = NULL);
     
     /** Initialize the link to be used to connect with MemHierarchy */
     virtual bool initialize(const std::string &linkName, HandlerBase *handler = NULL);

@@ -69,17 +69,18 @@ trivialCPU::trivialCPU(ComponentId_t id, Params& params) :
     // tell the simulator not to end without us
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
-
-    memory = loadUserSubComponent<Interfaces::SimpleMem>("memory", new Interfaces::SimpleMem::Handler<trivialCPU>(this, &trivialCPU::handleEvent));
-    
-    if (!memory) {
-        out.fatal(CALL_INFO, -1, "Unable to load memHierarchy.memInterface subcomponent\n");
-    }
     
     //set our clock
     std::string clockFreq = params.find<std::string>("clock", "1GHz");
     clockHandler = new Clock::Handler<trivialCPU>(this, &trivialCPU::clockTic);
     clockTC = registerClock( clockFreq, clockHandler );
+    
+
+    memory = loadUserSubComponent<Interfaces::SimpleMem>("memory", clockTC, new Interfaces::SimpleMem::Handler<trivialCPU>(this, &trivialCPU::handleEvent));
+    
+    if (!memory) {
+        out.fatal(CALL_INFO, -1, "Unable to load memHierarchy.memInterface subcomponent\n");
+    }
     
     clock_ticks = 0;
     num_reads_issued = num_reads_returned = 0;

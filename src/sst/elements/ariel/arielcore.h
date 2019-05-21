@@ -19,7 +19,7 @@
 
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>
-#include <sst/core/component.h>
+#include <sst/core/componentExtension.h>
 #include <sst/core/link.h>
 #include <sst/core/output.h>
 #include <sst/core/interfaces/simpleMem.h>
@@ -59,14 +59,11 @@ namespace SST {
 namespace ArielComponent {
 
 
-class ArielCore {
+class ArielCore : public ComponentExtension {
 
     public:
-        ArielCore(ArielTunnel *tunnel, SimpleMem *coreToCacheLink,
-            uint32_t thisCoreID, uint32_t maxPendTans,
-            Output* out, uint32_t maxIssuePerCyc, uint32_t maxQLen,
-            uint64_t cacheLineSz, SST::Component* owner,
-                ArielMemoryManager* memMgr, const uint32_t perform_address_checks, Params& params);
+        ArielCore(ComponentId_t id, ArielTunnel *tunnel, uint32_t thisCoreID, uint32_t maxPendTans, Output* out,
+            uint32_t maxIssuePerCyc, uint32_t maxQLen, uint64_t cacheLineSz, ArielMemoryManager* memMgr, const uint32_t perform_address_checks, Params& params);
         ~ArielCore();
 
         bool isCoreHalted() const;
@@ -132,7 +129,6 @@ class ArielCore {
         uint32_t maxIssuePerCycle;
         uint32_t maxQLength;
         uint64_t cacheLineSize;
-        SST::Component* owner;
         ArielMemoryManager* memmgr;
         const uint32_t verbosity;
         const uint32_t perform_checks;

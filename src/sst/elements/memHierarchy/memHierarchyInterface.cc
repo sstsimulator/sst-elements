@@ -35,12 +35,15 @@ MemHierarchyInterface::MemHierarchyInterface(SST::Component *comp, Params &param
     initDone_ = false;
 }
 
-MemHierarchyInterface::MemHierarchyInterface(SST::ComponentId_t id, Params &params, HandlerBase* handler) :
+MemHierarchyInterface::MemHierarchyInterface(SST::ComponentId_t id, Params &params, TimeConverter * time, HandlerBase* handler) :
     SimpleMem(id, params)
 { 
+    setDefaultTimeBase(time); // Required for link since we no longer inherit it from our parent
+
     output.init("", 1, 0, Output::STDOUT);
     rqstr_ = "";
     initDone_ = false;
+    
     recvHandler_ = handler;
     std::string portname = params.find<std::string>("port", "port");
     if ( NULL == recvHandler_) 
