@@ -186,7 +186,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
         linkParams.insert("local_memory_size", opalSize);
         linkParams.insert("latency", link_lat, false);
         linkParams.insert("accept_region", "1", false);
-        link_ = dynamic_cast<MemLink*>(loadSubComponent("memHierarchy.MemLink", this, linkParams));
+        link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, linkParams);
         link_->setRecvHandler( new Event::Handler<MemController>(this, &MemController::handleEvent));
         clockLink_ = false;
     } else {
@@ -208,10 +208,10 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
             nicParams.insert("ack.port", "network_ack");
             nicParams.insert("fwd.port", "network_fwd");
             nicParams.insert("data.port", "network_data");
-            link_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemNICFour", this, nicParams)); 
+            link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNICFour", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams);
         } else {
             nicParams.insert("port", "network");
-            link_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams)); 
+            link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams);
         }
 
         link_->setRecvHandler( new Event::Handler<MemController>(this, &MemController::handleEvent) );

@@ -158,7 +158,8 @@ public:
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
             {"cpulink", "CPU-side link manager, for single-link caches, use this one only", "SST::MemHierarchy::MemLinkBase"},
-            {"memlink", "Memory-side link manager", "SST::MemHierarchy::MemLinkBase"})
+            {"memlink", "Memory-side link manager", "SST::MemHierarchy::MemLinkBase"},
+            {"coherence", "Coherence protocol", "SST::MemHierarchy::CoherenceController"} )
 
 /* Class definition */
     typedef CacheArray::CacheLine           CacheLine;

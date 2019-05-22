@@ -158,18 +158,18 @@ void Cache::createCoherenceManager(Params &params) {
     if (!L1_) {
         if (protocol_ != CoherenceProtocol::NONE) {
             if (type_ != "noninclusive_with_directory") {
-                coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("coherence", "memHierarchy.MESICoherenceController", 0, ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams);
+                coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.MESICoherenceController", "coherence", 0, ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams);
             } else {
-                coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("coherence", "memHierarchy.MESICacheDirectoryCoherenceController", 0, ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams);
+                coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.MESICacheDirectoryCoherenceController", "coherence", 0, ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams);
             }
         } else {
-            coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("coherence", "memHierarchy.IncoherentController", 0, ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams);
+            coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.IncoherentController", "coherence", 0, ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams);
         }
     } else {
         if (protocol_ != CoherenceProtocol::NONE) {
-            coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("coherence", "memHierarchy.L1CoherenceController", 0, ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams);
+            coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.L1CoherenceController", "coherence", 0, ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams);
         } else {
-            coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("coherence", "memHierarchy.L1IncoherentController", 0, ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams);
+            coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.L1IncoherentController", "coherence", 0, ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams);
         }
     }
     if (coherenceMgr_ == NULL) {
@@ -264,10 +264,11 @@ void Cache::configureLinks(Params &params) {
 
         d_->debug(_INFO_,"Configuring cache with a direct link above and below\n");
 
-        linkDown_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemLink", this, memlink));
+        linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "memlink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, memlink);
         linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
 
-        linkUp_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemLink", this, cpulink));
+
+        linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "cpulink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, cpulink);
         linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
         clockUpLink_ = clockDownLink_ = false;
         /* Region given to each should be identical so doesn't matter which we pull but force them to be identical */
@@ -290,17 +291,17 @@ void Cache::configureLinks(Params &params) {
             if (!found) nicParams.insert("fwd.port", "cache_fwd");
             nicParams.find<std::string>("data.port", "", found);
             if (!found) nicParams.insert("data.port", "cache_data");
-            linkDown_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemNICFour", this, nicParams));
+            linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNICFour", "memlink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, nicParams);
         } else {
             nicParams.find<std::string>("port", "", found);
             if (!found) nicParams.insert("port", "cache");
-            linkDown_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams));
+            linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "memlink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, nicParams);
         }
 
         linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
 
         // Configure high link
-        linkUp_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemLink", this, cpulink));
+        linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "cpulink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, cpulink);
         linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
         clockDownLink_ = true;
         clockUpLink_ = false;
@@ -323,17 +324,17 @@ void Cache::configureLinks(Params &params) {
             if (!found) nicParams.insert("fwd.port", "cache_fwd");
             nicParams.find<std::string>("data.port", "", found);
             if (!found) nicParams.insert("data.port", "cache_data");
-            linkUp_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemNICFour", this, nicParams));
+            linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNICFour", "cpulink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, nicParams);
         } else {
             nicParams.find<std::string>("port", "", found);
             if (!found) nicParams.insert("port", "cache");
-            linkUp_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams));
+            linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "cpulink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, nicParams);
         }
 
         linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
 
         // Configure high link
-        linkDown_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemLink", this, memlink));
+        linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "memlink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, memlink);
         linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
         clockUpLink_ = true;
         clockDownLink_ = false;
@@ -358,17 +359,17 @@ void Cache::configureLinks(Params &params) {
             if (!found) nicParams.insert("fwd.port", "directory_fwd");
             nicParams.find<std::string>("data.port", "", found);
             if (!found) nicParams.insert("data.port", "directory_data");
-            linkDown_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemNICFour", this, nicParams));
+            linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNICFour", "memlink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, nicParams);
         } else {
             nicParams.find<std::string>("port", "", found);
             if (!found) nicParams.insert("port", "directory");
-            linkDown_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams));
+            linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "memlink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, nicParams);
         }
         // Configure low link
         linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
 
         // Configure high link
-        linkUp_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemLink", this, cpulink));
+        linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "cpulink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, cpulink);
         linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
         clockDownLink_ = true;
         clockUpLink_ = false;
@@ -434,11 +435,11 @@ void Cache::configureLinks(Params &params) {
             if (!found) nicParams.insert("fwd.port", "directory_fwd");
             nicParams.find<std::string>("data.port", "", found);
             if (!found) nicParams.insert("data.port", "directory_data");
-            linkDown_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemNICFour", this, nicParams));
+            linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNICFour", "cpulink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, nicParams);
         } else {
             nicParams.find<std::string>("port", "", found);
             if (!found) nicParams.insert("port", "directory");
-            linkDown_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams));
+            linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "cpulink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, nicParams);
         }
 
         linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));

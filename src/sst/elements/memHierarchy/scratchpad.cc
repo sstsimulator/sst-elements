@@ -214,13 +214,13 @@ Scratchpad::Scratchpad(ComponentId_t id, Params &params) : Component(id) {
     if (cpuDirect) {
         Params cpulink = params.find_prefix_params("cpulink.");
         cpulink.insert("port", "cpu");
-        linkUp_ = dynamic_cast<MemLink*>(loadSubComponent("memHierarchy.MemLink", this, cpulink));
+        linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, cpulink);
         linkUp_->setRecvHandler(new Event::Handler<Scratchpad>(this, &Scratchpad::processIncomingCPUEvent));
     }
     if (memoryDirect) {
         Params memlink = params.find_prefix_params("memlink.");
         memlink.insert("port", "memory");
-        linkDown_ = dynamic_cast<MemLink*>(loadSubComponent("memHierarchy.MemLink", this, memlink));
+        linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "memlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, memlink);
         linkDown_->setRecvHandler(new Event::Handler<Scratchpad>(this, &Scratchpad::processIncomingRemoteEvent));
     }
 
@@ -245,14 +245,14 @@ Scratchpad::Scratchpad(ComponentId_t id, Params &params) : Component(id) {
         nicParams.insert("group", "3", false); // 3 is the default for anything that talks to memory but this can be set by user too so don't overwrite
        
         if (!memoryDirect) { /* Connect mem side to network */
-            linkDown_ = static_cast<MemNIC*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams));
+            linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "memlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams);
             linkDown_->setRecvHandler(new Event::Handler<Scratchpad>(this, &Scratchpad::processIncomingRemoteEvent));
             if (!cpuDirect) {
                 linkUp_ = linkDown_; /* Connect cpu side to same network */
                 linkDown_->setRecvHandler(new Event::Handler<Scratchpad>(this, &Scratchpad::processIncomingNetworkEvent));
             }
         } else {
-            linkUp_ = static_cast<MemNIC*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams));
+            linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams);
             linkUp_->setRecvHandler(new Event::Handler<Scratchpad>(this, &Scratchpad::processIncomingCPUEvent));
         }
     }

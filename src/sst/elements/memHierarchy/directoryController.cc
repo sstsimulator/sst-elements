@@ -169,10 +169,10 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
         nicParams.insert("ack.port", "network_ack");
         nicParams.insert("fwd.port", "network_fwd");
         nicParams.insert("data.port", "network_data");
-        network = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemNICFour", this, nicParams));
+        network = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNICFour", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams);
     } else {
         nicParams.insert("port", "network");
-        network = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams));
+        network = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams);
     }
 
     network->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
@@ -188,7 +188,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
         memParams.insert("addr_range_end", std::to_string(addrRangeEnd), false);
         memParams.insert("interleave_size", ilSize, false);
         memParams.insert("interleave_step", ilStep, false);
-        memLink = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemLink", this, memParams));
+        memLink = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "memlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, memParams);
         memLink->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
         if (!memLink) {
             dbg.fatal(CALL_INFO, -1, "%s, Error creating link to memory from directory controller\n", getName().c_str());

@@ -593,11 +593,7 @@ bool ArielCPU::tick( SST::Cycle_t cycle) {
 }
 
 ArielCPU::~ArielCPU() {
-    // Delete all of the cores
-    for(uint32_t i = 0; i < core_count; i++) {
-        delete cpu_cores[i];
-    }
-
+    // Everything loaded by calls to the core are deleted by the core (subcomponents, component extension, etc.)
     delete tunnel;
 }
 

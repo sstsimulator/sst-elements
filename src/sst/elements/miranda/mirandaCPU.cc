@@ -163,22 +163,7 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 }
 
 RequestGenCPU::~RequestGenCPU() {
-	delete cache_link;
 	delete out;
-
-//	delete statReadReqs;
-//	delete statWriteReqs;
-//	delete statSplitReadReqs;
-//	delete statSplitWriteReqs;
-//	delete statCyclesWithIssue;
-//	delete statCyclesWithoutIssue;
-//	delete statBytesRead;
-//	delete statBytesWritten;
-//	delete statReqLatency;
-//	delete statCyclesHitFence;
-//	delete statCyclesHitReorderLimit;
-//	delete statMaxIssuePerCycle;
-//	delete statCycles;
 }
 
 void RequestGenCPU::finish() {

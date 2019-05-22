@@ -37,6 +37,14 @@ using namespace SST::Interfaces;
 /******************************************************************/
 
 MemNICBase::MemNICBase(Component * parent, Params &params) : MemLinkBase(parent, params) {
+    build(params);
+}
+
+MemNICBase::MemNICBase(ComponentId_t id, Params &params) : MemLinkBase(id, params) {
+    build(params);
+}
+
+void MemNICBase::build(Params& params) {
     // Get source/destination parameters
     // Each NIC has a group ID and talks to those with IDs in sources and destinations
     // If no source/destination provided, source = group ID - 1, destination = group ID + 1
@@ -191,7 +199,15 @@ uint64_t MemNICBase::lookupNetworkAddress(const std::string & dst) const {
 
 /* Constructor */
 MemNIC::MemNIC(Component * parent, Params &params) : MemNICBase(parent, params) {
-    
+    build(params);
+}
+
+MemNIC::MemNIC(ComponentId_t id, Params &params) : MemNICBase(id, params) {
+    build(params);
+}
+
+void MemNIC::build(Params& params) {
+
     // Get network parameters and create link control
     std::string linkName = params.find<std::string>("port", "");
     if (linkName == "") 
@@ -207,7 +223,7 @@ MemNIC::MemNIC(Component * parent, Params &params) : MemNICBase(parent, params) 
 
     std::string link_control_class = params.find<std::string>("network_link_control", "merlin.linkcontrol");
 
-    link_control = (SimpleNetwork*)parent->loadSubComponent(link_control_class, parent, params); // But link control doesn't use params so manually initialize
+    link_control = (SimpleNetwork*)loadSubComponent(link_control_class, params); // But link control doesn't use params so manually initialize
     link_control->initialize(linkName, UnitAlgebra(linkBandwidth), num_vcs, UnitAlgebra(linkInbufSize), UnitAlgebra(linkOutbufSize));
 
     // Packet size
