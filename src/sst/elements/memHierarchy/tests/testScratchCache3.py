@@ -23,7 +23,8 @@ comp_cpu0.addParams({
     "verbose" : 1,
     "rngseed" : 8
 })
-iface0 = comp_cpu0.setSubComponent("memory", "memHierarchy.memInterface")
+iface0 = comp_cpu0.setSubComponent("memory", "memHierarchy.scratchInterface")
+iface0.addParams({ "scratchpad_size" : "64KiB" })
 
 comp_l1_0 = sst.Component("l1_0", "memHierarchy.Cache")
 comp_l1_0.addParams({
@@ -78,7 +79,8 @@ comp_scratch0.addParams({
     "memNIC.network_bw" : "50GB/s",
 })
 comp_cpu1 = sst.Component("cpu1", "memHierarchy.ScratchCPU")
-iface1 = comp_cpu1.setSubComponent("memory", "memHierarchy.memInterface")
+iface1 = comp_cpu1.setSubComponent("memory", "memHierarchy.scratchInterface")
+iface1.addParams({ "scratchpad_size" : "64KiB" })
 comp_cpu1.addParams({
     "scratchSize" : 65536,   # 64K scratch
     "maxAddr" : 2097152,       # 2M mem

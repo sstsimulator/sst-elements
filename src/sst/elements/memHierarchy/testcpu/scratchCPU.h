@@ -49,6 +49,8 @@ public:
 
     SST_ELI_DOCUMENT_PORTS( {"mem_link", "Connection to cache", { "memHierarchy.MemEventBase" } } )
 
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( {"memory", "Interface to memory (e.g., caches)", "SST::Interfaces::SimpleMem"} )
+
 /* Begin class definition */
     ScratchCPU(ComponentId_t id, Params& params);
     ~ScratchCPU() {}

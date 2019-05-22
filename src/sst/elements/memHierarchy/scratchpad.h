@@ -69,6 +69,8 @@ public:
             {"request_issued_scratch_read",     "Number of scratchpad reads issued to scratchpad", "count", 1},
             {"request_issued_scratch_write",    "Number of scratchpad writes issued to scratchpad", "count", 1} )
 
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( {"backendConvertor", "Convertor to interface to memory timing model (backend)", "SST::MemHierarchy::ScratchBackendConvertor" } )
+
 /* Begin class defintion */
     Scratchpad(ComponentId_t id, Params &params);
     void init(unsigned int);

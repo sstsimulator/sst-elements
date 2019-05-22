@@ -34,6 +34,13 @@ using namespace SST::MemHierarchy;
 CoherenceController::CoherenceController(Component * comp, Params &params) : SubComponent(comp) {
     /* Output stream */
     output = new Output("", 1, 0, SST::Output::STDOUT);
+    output->fatal(CALL_INFO, -1, "%s, Error: CohrenceController subcomponents do not support loading via legacy API\n", getName().c_str());
+}
+
+CoherenceController::CoherenceController(ComponentId_t id, Params &params, Params& ownerParams) : SubComponent(id) {
+    params.insert(ownerParams);
+    /* Output stream */
+    output = new Output("", 1, 0, SST::Output::STDOUT);
 
     /* Debug stream */
     debug = new Output("--->  ", params.find<int>("debug_level", 1), 0, (Output::output_location_t)params.find<int>("debug", SST::Output::NONE));
@@ -44,7 +51,7 @@ CoherenceController::CoherenceController(Component * comp, Params &params) : Sub
     accessLatency_ = params.find<uint64_t>("access_latency_cycles", 1, found);
     if (!found) {
         output->fatal(CALL_INFO, -1, "%s, Param not specified: access_latency_cycles - this is the access time in cycles for the cache; if tag_latency is also specified, this is the data array access time\n",
-                comp->getName().c_str());
+                getName().c_str());
     }
 
     tagLatency_ = params.find<uint64_t>("tag_access_latency_cycles", accessLatency_);

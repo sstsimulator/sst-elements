@@ -36,10 +36,13 @@ using namespace std;
 class CoherenceController : public SST::SubComponent {
 
 public:
+    SST_ELI_REGISTER_SUBCOMPONENT_API(SST::MemHierarchy::CoherenceController, Params&)
+
     typedef CacheArray::CacheLine CacheLine;
 
     /***** Constructor & destructor *****/
     CoherenceController(Component * comp, Params &params);
+    CoherenceController(ComponentId_t id, Params &params, Params& ownerParams);
     ~CoherenceController() {}
 
     /* Return whether a line access will be a miss and what kind (encoded in the int retval) */

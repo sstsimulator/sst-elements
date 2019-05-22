@@ -27,6 +27,8 @@ class MemBackend;
 
 class ScratchBackendConvertor : public SubComponent {
 public:
+    SST_ELI_REGISTER_SUBCOMPONENT_API(SST::MemHierarchy::ScratchBackendConvertor)
+
     typedef uint64_t ReqId; 
 
     class MemReq {
@@ -68,6 +70,8 @@ public:
 
     ScratchBackendConvertor();
     ScratchBackendConvertor(Component* comp, Params& params);
+    ScratchBackendConvertor(ComponentId_t id, Params& params);
+    void build(Params& params);
     void finish(void);
     virtual const std::string& getClockFreq();
     virtual size_t getMemSize();

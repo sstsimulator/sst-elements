@@ -13,12 +13,6 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-/*
- * File:   cacheFactory.cc
- * Author: Caesar De la Paz III
- */
-
-
 #include <sst_config.h>
 #include <sst/core/stringize.h>
 #include <sst/core/params.h>
@@ -164,18 +158,18 @@ void Cache::createCoherenceManager(Params &params) {
     if (!L1_) {
         if (protocol_ != CoherenceProtocol::NONE) {
             if (type_ != "noninclusive_with_directory") {
-                coherenceMgr_ = dynamic_cast<CoherenceController*>( loadSubComponent("memHierarchy.MESICoherenceController", this, coherenceParams));
+                coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("coherence", "memHierarchy.MESICoherenceController", 0, ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams);
             } else {
-                coherenceMgr_ = dynamic_cast<CoherenceController*>( loadSubComponent("memHierarchy.MESICacheDirectoryCoherenceController", this, coherenceParams));
+                coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("coherence", "memHierarchy.MESICacheDirectoryCoherenceController", 0, ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams);
             }
         } else {
-            coherenceMgr_ = dynamic_cast<CoherenceController*>( loadSubComponent("memHierarchy.IncoherentController", this, coherenceParams));
+            coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("coherence", "memHierarchy.IncoherentController", 0, ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams);
         }
     } else {
         if (protocol_ != CoherenceProtocol::NONE) {
-            coherenceMgr_ = dynamic_cast<CoherenceController*>( loadSubComponent("memHierarchy.L1CoherenceController", this, coherenceParams));
+            coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("coherence", "memHierarchy.L1CoherenceController", 0, ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams);
         } else {
-            coherenceMgr_ = dynamic_cast<CoherenceController*>( loadSubComponent("memHierarchy.L1IncoherentController", this, coherenceParams));
+            coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("coherence", "memHierarchy.L1IncoherentController", 0, ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams);
         }
     }
     if (coherenceMgr_ == NULL) {

@@ -13,7 +13,8 @@ core_clock = "2GHz"
 
 # Define the simulation components
 comp_cpu0 = sst.Component("cpu0", "memHierarchy.ScratchCPU")
-iface0 = comp_cpu0.setSubComponent("memory", "memHierarchy.memInterface")
+iface0 = comp_cpu0.setSubComponent("memory", "memHierarchy.scratchInterface")
+iface0.addParams({ "scratchpad_size" : "64KiB" })
 comp_cpu0.addParams({
     "scratchSize" : 65536,   # 64K scratch
     "maxAddr" : 2097152,       # 2M mem
@@ -43,7 +44,8 @@ comp_l1_0.addParams({
 
 
 comp_cpu1 = sst.Component("cpu1", "memHierarchy.ScratchCPU")
-iface1 = comp_cpu1.setSubComponent("memory", "memHierarchy.memInterface")
+iface1 = comp_cpu1.setSubComponent("memory", "memHierarchy.scratchInterface")
+iface1.addParams({ "scratchpad_size" : "64KiB" })
 comp_cpu1.addParams({
     "scratchSize" : 65536,   # 64K scratch
     "maxAddr" : 2097152,       # 2M mem
@@ -88,7 +90,8 @@ comp_l2_0.addParams({
     "memNIC.group" : 1,
 })
 comp_cpu2 = sst.Component("cpu2", "memHierarchy.ScratchCPU")
-iface2 = comp_cpu2.setSubComponent("memory", "memHierarchy.memInterface")
+iface2 = comp_cpu2.setSubComponent("memory", "memHierarchy.scratchInterface")
+iface2.addParams({ "scratchpad_size" : "64KiB" })
 comp_cpu2.addParams({
     "scratchSize" : 65536,   # 64K scratch
     "maxAddr" : 2097152,       # 2M mem
@@ -116,7 +119,8 @@ comp_l1_2.addParams({
     "replacement_policy" : "lru",
 })
 comp_cpu3 = sst.Component("cpu3", "memHierarchy.ScratchCPU")
-iface3 = comp_cpu3.setSubComponent("memory", "memHierarchy.memInterface")
+iface3 = comp_cpu3.setSubComponent("memory", "memHierarchy.scratchInterface")
+iface3.addParams({ "scratchpad_size" : "64KiB" })
 comp_cpu3.addParams({
     "scratchSize" : 65536,   # 64K scratch
     "maxAddr" : 2097152,       # 2M mem

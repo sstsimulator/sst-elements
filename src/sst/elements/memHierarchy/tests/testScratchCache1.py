@@ -23,7 +23,10 @@ comp_cpu0.addParams({
     "verbose" : 1,
     "rngseed" : 11
 })
-iface0 = comp_cpu0.setSubComponent("memory", "memHierarchy.memInterface")
+iface0 = comp_cpu0.setSubComponent("memory", "memHierarchy.scratchInterface")
+iface0.addParams({
+    "scratchpad_size" : "64KB"
+})
 
 comp_l1_0 = sst.Component("l1_0", "memHierarchy.Cache")
 comp_l1_0.addParams({
@@ -65,7 +68,10 @@ comp_cpu1.addParams({
     "verbose" : 1,
     "rngseed" : 1
 })
-iface1 = comp_cpu1.setSubComponent("memory", "memHierarchy.memInterface")
+iface1 = comp_cpu1.setSubComponent("memory", "memHierarchy.scratchInterface")
+iface1.addParams({
+    "scratchpad_size" : "64KB"
+})
 comp_l1_1 = sst.Component("l1_1", "memHierarchy.Cache")
 comp_l1_1.addParams({
     "debug" : debugL1 | debugCore1,

@@ -8,7 +8,8 @@ DEBUG_CORE1 = 0
 
 # Define the simulation components
 comp_cpu0 = sst.Component("cpu0", "memHierarchy.ScratchCPU")
-iface0 = comp_cpu0.setSubComponent("memory", "memHierarchy.memInterface")
+iface0 = comp_cpu0.setSubComponent("memory", "memHierarchy.scratchInterface")
+iface0.addParams({ "scratchpad_size" : "1KiB" })
 comp_cpu0.addParams({
     "scratchSize" : 1024,   # 1K scratch
     "maxAddr" : 4096,       # 4K mem
@@ -37,7 +38,8 @@ comp_scratch0.addParams({
     "memNIC.network_bw" : "50GB/s",
 })
 comp_cpu1 = sst.Component("cpu1", "memHierarchy.ScratchCPU")
-iface1 = comp_cpu1.setSubComponent("memory", "memHierarchy.memInterface")
+iface1 = comp_cpu1.setSubComponent("memory", "memHierarchy.scratchInterface")
+iface1.addParams({ "scratchpad_size" : "1KiB" })
 comp_cpu1.addParams({
     "scratchSize" : 1024,   # 1K scratch
     "maxAddr" : 4096,       # 4K mem

@@ -17,7 +17,8 @@ comp_cpu.addParams({
     "reqsToIssue" : 500,
     "verbose" : 1
 })
-iface = comp_cpu.setSubComponent("memory", "memHierarchy.memInterface")
+iface = comp_cpu.setSubComponent("memory", "memHierarchy.scratchInterface")
+iface.addParams({ "scratchpad_size" : "1KiB" })
 comp_scratch = sst.Component("scratch", "memHierarchy.Scratchpad")
 comp_scratch.addParams({
     "debug" : DEBUG_SCRATCH,

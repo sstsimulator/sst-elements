@@ -119,26 +119,30 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     memBackendConvertor_->setCallbackHandlers(std::bind(&MemController::handleMemResponse, this, _1, _2), std::bind(&MemController::turnClockOn, this));
     memSize_ = memBackendConvertor_->getMemSize();
 
-    const uint32_t listenerCount  = params.find<uint32_t>("listenercount", 0);
-    char* nextListenerName   = (char*) malloc(sizeof(char) * 64);
-    char* nextListenerParams = (char*) malloc(sizeof(char) * 64);
+    // Load listeners (profilers/tracers/etc.)
+    SubComponentSlotInfo* lists = getSubComponentSlotInfo("listener"); // Find all listeners specified in the configuration
+    if (lists)
+        lists->createAll<CacheListener>(listeners_, false, ComponentInfo::SHARE_NONE);
+    else { // Manually load via the old way of doing it
+        const uint32_t listenerCount  = params.find<uint32_t>("listenercount", 0);
+        char* nextListenerName   = (char*) malloc(sizeof(char) * 64);
+        char* nextListenerParams = (char*) malloc(sizeof(char) * 64);
+    
+        for (uint32_t i = 0; i < listenerCount; ++i) {
+            sprintf(nextListenerName, "listener%" PRIu32, i);
+            string listenerMod     = params.find<std::string>(nextListenerName, "");
 
-    for (uint32_t i = 0; i < listenerCount; ++i) {
-        sprintf(nextListenerName, "listener%" PRIu32, i);
-        string listenerMod     = params.find<std::string>(nextListenerName, "");
+            if (listenerMod != "") {
+                sprintf(nextListenerParams, "listener%" PRIu32 ".", i);
+                Params listenerParams = params.find_prefix_params(nextListenerParams);
 
-        if (listenerMod != "") {
-            sprintf(nextListenerParams, "listener%" PRIu32 ".", i);
-            Params listenerParams = params.find_prefix_params(nextListenerParams);
-
-            CacheListener* loadedListener = dynamic_cast<CacheListener*>(loadSubComponent(listenerMod, this, listenerParams));
-            listeners_.push_back(loadedListener);
+                CacheListener* loadedListener = loadAnonymousSubComponent<CacheListener>(listenerMod, "listener", i, ComponentInfo::INSERT_STATS, listenerParams);
+                listeners_.push_back(loadedListener);
+            }
         }
+        free(nextListenerName);
+        free(nextListenerParams);
     }
-
-    free(nextListenerName);
-    free(nextListenerParams);
-
 
     // Opal
     std::string opalNode = params.find<std::string>("node", "0");

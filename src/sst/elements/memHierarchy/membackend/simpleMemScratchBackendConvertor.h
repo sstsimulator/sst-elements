@@ -26,8 +26,8 @@ namespace MemHierarchy {
 class SimpleMemScratchBackendConvertor : public ScratchBackendConvertor {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT(SimpleMemScratchBackendConvertor, "memHierarchy", "simpleMemScratchBackendConvertor", SST_ELI_ELEMENT_VERSION(1,0,0),
-            "Convert a MemEventBase to a base MemBacked but uses a different interface than MemBackendConvertor", "SST::MemHierarchy::ScratchBackendConvertor")
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(SimpleMemScratchBackendConvertor, "memHierarchy", "simpleMemScratchBackendConvertor", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Convert a MemEventBase to a base MemBacked but uses a different interface than MemBackendConvertor", SST::MemHierarchy::ScratchBackendConvertor)
 
     SST_ELI_DOCUMENT_PARAMS(
             {"debug_level",     "(uint) Debugging level: 0 (no output) to 10 (all output). Output also requires that SST Core be compiled with '--enable-debug'", "0"},
@@ -51,6 +51,7 @@ public:
 
 /* Begin class definition */
     SimpleMemScratchBackendConvertor(Component *comp, Params &params);
+    SimpleMemScratchBackendConvertor(ComponentId_t id, Params &params);
 
     virtual bool issue( MemReq* req );
 

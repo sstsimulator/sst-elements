@@ -107,17 +107,21 @@ Scratchpad::Scratchpad(ComponentId_t id, Params &params) : Component(id) {
     // Remote address computation
     remoteAddrOffset_ = params.find<uint64_t>("memory_addr_offset", scratchSize_);
 
-    // Create backend which will handle the timing for scratchpad
-    std::string bkName = params.find<std::string>("backendConvertor", "memHierarchy.scratchBackendConvertor");
-
-    // Copy some parameters into the backend
-    Params bkParams = params.find_prefix_params("backendConvertor.");
-    bkParams.insert("backend.clock", clock_freq);
-    bkParams.insert("backend.request_width", std::to_string(scratchLineSize_));
-    bkParams.insert("backend.mem_size", size.toString()); 
-    
     // Create backend
-    scratch_ = dynamic_cast<ScratchBackendConvertor*>(loadSubComponent(bkName, this, bkParams));
+    scratch_ = loadUserSubComponent<ScratchBackendConvertor>("backendConvertor");
+
+    if (!scratch_) {
+        // Create backend which will handle the timing for scratchpad
+        std::string bkName = params.find<std::string>("backendConvertor", "memHierarchy.scratchBackendConvertor");
+    
+        // Copy some parameters into the backend
+        Params bkParams = params.find_prefix_params("backendConvertor.");
+        bkParams.insert("backend.clock", clock_freq);
+        bkParams.insert("backend.request_width", std::to_string(scratchLineSize_));
+        bkParams.insert("backend.mem_size", size.toString()); 
+
+        scratch_ = loadAnonymousSubComponent<ScratchBackendConvertor>(bkName, "backendConvertor", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, bkParams);
+    }
 
     using std::placeholders::_1;
     scratch_->setCallbackHandler(std::bind( &Scratchpad::handleScratchResponse, this, _1 ));

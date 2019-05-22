@@ -31,7 +31,12 @@ using namespace SST::MemHierarchy;
 
 ScratchBackendConvertor::ScratchBackendConvertor(Component *comp, Params& params ) : 
     SubComponent(comp), m_reqId(0)
-{
+{ build(params); }
+ScratchBackendConvertor::ScratchBackendConvertor(ComponentId_t id, Params& params ) : 
+    SubComponent(id), m_reqId(0)
+{ build(params); }
+
+void ScratchBackendConvertor::build(Params& params) {
     m_dbg.init("", 
             params.find<uint32_t>("debug_level", 0),
             params.find<uint32_t>("debug_mask", 0),
@@ -43,7 +48,7 @@ ScratchBackendConvertor::ScratchBackendConvertor(Component *comp, Params& params
     // extract backend parameters for memH.
     Params backendParams = params.find_prefix_params("backend.");
 
-    m_backend = dynamic_cast<MemBackend*>( comp->loadSubComponent( backendName, comp, backendParams ) );
+    m_backend = dynamic_cast<MemBackend*>( loadSubComponent( backendName, backendParams ) );
 
     using std::placeholders::_1;
     m_backend->setGetRequestorHandler( std::bind( &ScratchBackendConvertor::getRequestor, this, _1 )  );
