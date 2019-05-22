@@ -47,13 +47,13 @@ class LinkControl : public SST::Interfaces::SimpleNetwork {
 
 public:
 
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         LinkControl,
         "kingsley",
         "linkcontrol",
         SST_ELI_ELEMENT_VERSION(0,1,0),
         "Link Control module for building Kingsley-enabled NICs",
-        "SST::Interfaces::SimpleNetwork")
+        SST::Interfaces::SimpleNetwork)
     
     SST_ELI_DOCUMENT_PARAMS(
     )
@@ -123,6 +123,7 @@ private:
     
 public:
     LinkControl(Component* parent, Params &params);
+    LinkControl(ComponentId_t id, Params &params, int);
 
     ~LinkControl();
 
