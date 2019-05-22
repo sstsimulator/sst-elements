@@ -35,7 +35,8 @@ void RequestReorderSimple::build(Params& params) {
     std::string backendName = params.find<std::string>("backend", "memHierarchy.simpleDRAM");
     Params backendParams = params.find_prefix_params("backend.");
     backendParams.insert("mem_size", params.find<std::string>("mem_size"));
-    backend = dynamic_cast<SimpleMemBackend*>(loadSubComponent(backendName, backendParams));
+    backend = loadAnonymousSubComponent<SimpleMemBackend>(backendName, "backend", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, backendParams);
+    
     using std::placeholders::_1;
     backend->setResponseHandler( std::bind( &RequestReorderSimple::handleMemResponse, this, _1 )  );
 }

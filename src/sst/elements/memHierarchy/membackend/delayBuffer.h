@@ -34,6 +34,8 @@ public:
             {"verbose", "Sets the verbosity of the backend output", "0"},
             {"backend", "Backend memory system", "memHierarchy.simpleMem"},
             {"request_delay", "Constant delay to be added to requests with units (e.g., 1us)", "0ns"} )
+    
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( {"backend", "Backend memory model", "SST::MemHierarchy::SimpleMemBackend"} )
 
 /* Begin class definition */
     DelayBuffer();

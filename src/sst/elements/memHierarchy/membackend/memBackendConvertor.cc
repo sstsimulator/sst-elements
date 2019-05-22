@@ -43,13 +43,14 @@ void MemBackendConvertor::build(Params& params) {
             params.find<uint32_t>("debug_mask", 0),
             (Output::output_location_t)params.find<int>("debug_location", 0 ));
 
-    string backendName  = params.find<std::string>("backend", "memHierarchy.simpleMem");
 
-
-    // extract backend parameters for memH.
-    Params backendParams = params.find_prefix_params("backend.");
-
-    m_backend = dynamic_cast<MemBackend*>( loadSubComponent( backendName, backendParams ) );
+    m_backend = loadUserSubComponent<MemBackend>("backend");
+    if (!m_backend) {
+        // extract backend parameters for memH.
+        string backendName  = params.find<std::string>("backend", "memHierarchy.simpleMem");
+        Params backendParams = params.find_prefix_params("backend.");
+        m_backend = loadAnonymousSubComponent<MemBackend>(backendName, "backend", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, backendParams);
+    }
 
     using std::placeholders::_1;
     m_backend->setGetRequestorHandler( std::bind( &MemBackendConvertor::getRequestor, this, _1 )  );

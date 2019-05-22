@@ -29,6 +29,8 @@ class ScratchBackendConvertor : public SubComponent {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT_API(SST::MemHierarchy::ScratchBackendConvertor)
 
+#define SCRATCHBACKENDCONVERTOR_ELI_SLOTS {"backend", "Backend memory model", "SST::MemHierarchy::MemBackend"}
+
     typedef uint64_t ReqId; 
 
     class MemReq {

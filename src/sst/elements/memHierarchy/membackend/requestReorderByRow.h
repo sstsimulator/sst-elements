@@ -39,6 +39,8 @@ public:
             {"row_size",                    "Size of a row in bytes (B). Must be a power of 2.", "8KiB"},
             {"reorder_limit",               "Maximum number of request to reorder to a rwo before changing rows.", "1"},
             {"backend",                     "Backend memory system.", "memHierarchy.simpleDRAM"} )
+    
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( {"backend", "Backend memory model.", "SST::MemHierarchy::SimpleMemBackend"} )
 
 /* Begin class definition */
     RequestReorderRow();

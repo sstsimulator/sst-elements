@@ -35,6 +35,8 @@ public:
             {"max_issue_per_cycle", "Maximum number of requests to issue per cycle. 0 or negative is unlimited.", "-1"},
             {"search_window_size",  "Maximum number of requests to search each cycle. 0 or negative is unlimited.", "-1"},
             {"backend",             "Backend memory system", "memHierarchy.simpleDRAM"} )
+            
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS({"backend", "Backend memory model", "SST::MemHierarchy::SimpleMemBackend"} )
 
 /* Begin class definition */
     RequestReorderSimple();

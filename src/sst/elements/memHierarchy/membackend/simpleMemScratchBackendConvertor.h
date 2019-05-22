@@ -49,6 +49,8 @@ public:
             { "latency_GetX",                           "Total latency of handled GetX requests",           "cycles",   1 },
             { "latency_PutM",                           "Total latency of handled PutM requests",           "cycles",   1 } )
 
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(SCRATCHBACKENDCONVERTOR_ELI_SLOTS)
+
 /* Begin class definition */
     SimpleMemScratchBackendConvertor(Component *comp, Params &params);
     SimpleMemScratchBackendConvertor(ComponentId_t id, Params &params);

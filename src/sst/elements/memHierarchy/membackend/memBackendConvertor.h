@@ -56,6 +56,7 @@ class MemBackendConvertor : public SubComponent {
             { "latency_GetSX",                      "Total latency of handled GetSX requests",          "cycles",   1 },\
             { "latency_GetX",                       "Total latency of handled GetX requests",           "cycles",   1 },\
             { "latency_PutM",                       "Total latency of handled PutM requests",           "cycles",   1 }
+#define MEMBACKENDCONVERTOR_ELI_SLOTS {"backend", "Backend memory model", "SST::MemHierarchy::MemBackend"}
 
     SST_ELI_REGISTER_SUBCOMPONENT_API(SST::MemHierarchy::MemBackendConvertor)
 
