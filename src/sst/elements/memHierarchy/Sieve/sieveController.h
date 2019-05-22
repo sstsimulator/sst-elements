@@ -68,6 +68,9 @@ public:
             {"UnassociatedReadMisses", "Number of read misses that did not match a malloc", "count", 1},
             {"UnassociatedWriteMisses", "Number of write misses that did not match a malloc", "count", 1} )
 
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( {"profiler", "(string) Name of profiling subcomponent. Currently only configured to work with cassini.AddrHistogrammer.", "SST::MemHierarchy::CacheListener"} )
+
+
 /* Begin class definition */
     typedef CacheArray::CacheLine CacheLine;
     typedef unsigned int uint;

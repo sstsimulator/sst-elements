@@ -47,8 +47,10 @@ using namespace SST::MemHierarchy;
  */
 
 
-SimpleDRAM::SimpleDRAM(Component *comp, Params &params) : SimpleMemBackend(comp, params){
+SimpleDRAM::SimpleDRAM(Component *comp, Params &params) : SimpleMemBackend(comp, params){ build(params); }
+SimpleDRAM::SimpleDRAM(ComponentId_t id, Params &params) : SimpleMemBackend(id, params){ build(params); }
 
+void SimpleDRAM::build(Params& params) {
     // Get parameters
     tCAS = params.find<uint64_t>("tCAS", 9);
     tRCD = params.find<uint64_t>("tRCD", 9);
@@ -105,7 +107,7 @@ SimpleDRAM::SimpleDRAM(Component *comp, Params &params) : SimpleMemBackend(comp,
     }
 
     // Self link for timing requests
-    self_link = comp->configureSelfLink("Self", cycTime, new Event::Handler<SimpleDRAM>(this, &SimpleDRAM::handleSelfEvent));
+    self_link = configureSelfLink("Self", cycTime, new Event::Handler<SimpleDRAM>(this, &SimpleDRAM::handleSelfEvent));
 
     // Some statistics
     statRowHit = registerStatistic<uint64_t>("row_already_open");

@@ -22,7 +22,10 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 
 /*------------------------------- Simple Backend ------------------------------- */
-RequestReorderRow::RequestReorderRow(Component *comp, Params &params) : SimpleMemBackend(comp, params){
+RequestReorderRow::RequestReorderRow(Component *comp, Params &params) : SimpleMemBackend(comp, params){ build(params); }
+RequestReorderRow::RequestReorderRow(ComponentId_t id, Params &params) : SimpleMemBackend(id, params){ build(params); }
+
+void RequestReorderRow::build(Params& params) {
 
     fixupParams( params, "clock", "backend.clock" );
     

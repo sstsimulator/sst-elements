@@ -25,8 +25,8 @@ namespace MemHierarchy {
 class SimpleMemory : public SimpleMemBackend {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT(SimpleMemory, "memHierarchy", "simpleMem", SST_ELI_ELEMENT_VERSION(1,0,0),
-            "Basic constant-access-time memory timing model", "SST::MemHierarchy::MemBackend")
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(SimpleMemory, "memHierarchy", "simpleMem", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Basic constant-access-time memory timing model", SST::MemHierarchy::MemBackend)
 
     SST_ELI_DOCUMENT_PARAMS( MEMBACKEND_ELI_PARAMS,
             /* Own parameters */
@@ -35,8 +35,12 @@ public:
 /* Begin class definition */
     SimpleMemory();
     SimpleMemory(Component *comp, Params &params);
+    SimpleMemory(ComponentId_t id, Params &params);
     bool issueRequest(ReqId, Addr, bool, unsigned );
     virtual bool isClocked() { return false; }
+
+private:
+    void build(Params& params);
 
 public:
     class MemCtrlEvent : public SST::Event {

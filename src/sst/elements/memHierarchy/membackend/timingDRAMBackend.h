@@ -15,6 +15,8 @@
 
 #include <queue>
 
+#include <sst/core/componentExtension.h>
+
 #include "sst/elements/memHierarchy/membackend/simpleMemBackend.h"
 #include "sst/elements/memHierarchy/membackend/timingAddrMapper.h"
 #include "sst/elements/memHierarchy/membackend/timingTransaction.h"
@@ -28,8 +30,8 @@ using namespace  TimingDRAM_NS;
 class TimingDRAM : public SimpleMemBackend {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT(TimingDRAM, "memHierarchy", "timingDRAM", SST_ELI_ELEMENT_VERSION(1,0,0),
-            "Moderately-detailed timing model for DRAM", "SST::MemHierarchy::MemBackend")
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(TimingDRAM, "memHierarchy", "timingDRAM", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Moderately-detailed timing model for DRAM", SST::MemHierarchy::MemBackend)
 
     SST_ELI_DOCUMENT_PARAMS( MEMBACKEND_ELI_PARAMS,
             /* Own parameters */
@@ -49,19 +51,23 @@ public:
             {"channel.rank.bank.transactionQ", "Transaction queue model (subcomponent)", "memHierarchy.fifoTransactionQ"},
             {"channel.rank.bank.pagePolicy", "Policy subcomponent for managing row buffer", "memHierarchy.simplePagePolicy"})
 
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+            {"transactionQ", "Transaction queue model", "SST::MemHierarchy::TimingDRAM_NS::TransactionQ"},
+            {"pagePolicy", "Policy subcomponent for managing row buffer", "SST::MemHierarchy::TimingDRAM_NS::PagePolicy"} )
+
 /* Begin class definition */
 private:
     const uint64_t DBG_MASK = 0x1;
 
     class Cmd;
 
-    struct Bank {
+    class Bank : public ComponentExtension {
 
         static bool m_printConfig;
 
       public:
         static const uint64_t DBG_MASK = (1 << 3);
-        Bank( Component*, Params&, unsigned mc, unsigned chan, unsigned rank, unsigned bank, Output* );
+        Bank( ComponentId_t, Params&, unsigned mc, unsigned chan, unsigned rank, unsigned bank, Output* );
 
         void pushTrans( Transaction* trans ) {
             m_transQ->push(trans);
@@ -215,14 +221,14 @@ private:
         SimTime_t       m_dataBusAvailCycle;
     };
 
-    class Rank {
+    class Rank : public ComponentExtension {
 
         static bool m_printConfig;
 
       public:
         static const uint64_t DBG_MASK = (1 << 2);
 
-        Rank( Component*, Params&, unsigned mc, unsigned chan, unsigned rank, Output*, AddrMapper* );
+        Rank( ComponentId_t, Params&, unsigned mc, unsigned chan, unsigned rank, Output*, AddrMapper* );
 
         Cmd* popCmd( SimTime_t cycle, SimTime_t dataBusAvailCycle );
 
@@ -246,14 +252,14 @@ private:
         std::vector<Bank>   m_banks;
     };
 
-    class Channel {
+    class Channel : public ComponentExtension {
 
         static bool m_printConfig;
 
       public:
         static const uint64_t DBG_MASK = (1 << 1);
 
-        Channel( Component*, TimingDRAM* mem, Params&, unsigned mc, unsigned chan, Output*, AddrMapper* );
+        Channel( ComponentId_t, std::function<void(ReqId)>, Params&, unsigned mc, unsigned chan, Output*, AddrMapper* );
 
         bool issue( SimTime_t createTime, ReqId id, Addr addr, bool isWrite, unsigned numBytes ) {
 
@@ -277,7 +283,6 @@ private:
       private:
         Cmd* popCmd( SimTime_t cycle, SimTime_t dataBusAvailCycle );
         const char* prefix() { return m_pre.c_str(); }
-        TimingDRAM*            m_mem;
         Output*             m_output;
         AddrMapper*         m_mapper;
         std::string         m_pre;
@@ -291,6 +296,8 @@ private:
 
         std::list<Cmd*>     m_issuedCmds;
         std::queue<Transaction*> m_retiredTrans;
+
+        std::function<void(ReqId)> m_responseHandler;
     };
 
     static bool m_printConfig;
@@ -298,6 +305,7 @@ private:
 public:
     TimingDRAM();
     TimingDRAM(Component*, Params& );
+    TimingDRAM(ComponentId_t, Params& );
     virtual bool issueRequest( ReqId, Addr, bool, unsigned );
     void handleResponse(ReqId  id ) {
         output->verbose(CALL_INFO, 2, DBG_MASK, "req=%" PRIu64 "\n", id );
@@ -307,7 +315,7 @@ public:
     virtual void finish() {}
 
 private:
-
+    void build(Params&);
     std::vector<Channel> m_channels;
     AddrMapper* m_mapper;
     SimTime_t   m_cycle;

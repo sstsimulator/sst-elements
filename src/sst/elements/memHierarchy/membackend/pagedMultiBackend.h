@@ -148,8 +148,8 @@ struct pageInfo {
 class pagedMultiMemory : public DRAMSimMemory {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT(pagedMultiMemory, "memHierarchy", "pagedMulti", SST_ELI_ELEMENT_VERSION(1,0,0),
-            "DRAMSim-driven memory timings with a fixed timing multi-levle memory using paging", "SST::MemHierarchy::MemBackend")
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(pagedMultiMemory, "memHierarchy", "pagedMulti", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "DRAMSim-driven memory timings with a fixed timing multi-levle memory using paging", SST::MemHierarchy::MemBackend)
     
     SST_ELI_DOCUMENT_PARAMS( DRAMSIM_ELI_PARAMS,
             /* Own parameters */
@@ -177,15 +177,18 @@ public:
 
 /* Begin class definition */
     pagedMultiMemory(Component *comp, Params &params);
-	virtual bool issueRequest(ReqId, Addr, bool, unsigned );
+    pagedMultiMemory(ComponentId_t id, Params &params);
+    
+    virtual bool issueRequest(ReqId, Addr, bool, unsigned );
     virtual bool clock(Cycle_t cycle);
     virtual void finish();
 
 private:
+    void buld(Params& params);
     Output dbg;
     RNG::SSTRandom*  rng;
 
-	struct Req : public SST::Core::Serialization::serializable {
+    struct Req : public SST::Core::Serialization::serializable {
         Req( ReqId id, Addr addr, bool isWrite, unsigned numBytes ) :
             id(id), addr(addr), isWrite(isWrite), numBytes(numBytes)
         { }

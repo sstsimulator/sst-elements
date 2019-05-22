@@ -37,8 +37,8 @@ namespace MemHierarchy {
 class DRAMSimMemory : public SimpleMemBackend {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT(DRAMSimMemory, "memHierarchy", "dramsim", SST_ELI_ELEMENT_VERSION(1,0,0),
-            "DRAMSim-driven memory timings", "SST::MemHierarchy::MemBackend")
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(DRAMSimMemory, "memHierarchy", "dramsim", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "DRAMSim-driven memory timings", SST::MemHierarchy::MemBackend)
     
 #define DRAMSIM_ELI_PARAMS MEMBACKEND_ELI_PARAMS,\
             /* Own parameters */\
@@ -50,7 +50,9 @@ public:
 
 /* Begin class definition */
     DRAMSimMemory(Component *comp, Params &params);
-	virtual bool issueRequest(ReqId, Addr, bool, unsigned );
+    DRAMSimMemory(ComponentId_t id, Params &params);
+    
+    virtual bool issueRequest(ReqId, Addr, bool, unsigned );
     virtual bool clock(Cycle_t cycle);
     virtual void finish();
 
@@ -59,6 +61,9 @@ protected:
 
     DRAMSim::MultiChannelMemorySystem *memSystem;
     std::map<uint64_t, std::deque<ReqId> > dramReqs;
+
+private:
+    void build(Params& params);
 };
 
 }

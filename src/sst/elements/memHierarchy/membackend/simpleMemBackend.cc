@@ -24,9 +24,12 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 
 /*------------------------------- Simple Backend ------------------------------- */
-SimpleMemory::SimpleMemory(Component *comp, Params &params) : SimpleMemBackend(comp, params){
+SimpleMemory::SimpleMemory(Component *comp, Params &params) : SimpleMemBackend(comp, params){ build(params); }
+SimpleMemory::SimpleMemory(ComponentId_t id, Params &params) : SimpleMemBackend(id, params){ build(params); }
+
+void SimpleMemory::build(Params& params) {
     std::string access_time = params.find<std::string>("access_time", "100 ns");
-    self_link = comp->configureSelfLink("Self", access_time,
+    self_link = configureSelfLink("Self", access_time,
             new Event::Handler<SimpleMemory>(this, &SimpleMemory::handleSelfEvent));
 
     m_maxReqPerCycle = params.find<>("max_requests_per_cycle", 1);

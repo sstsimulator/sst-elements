@@ -23,8 +23,10 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 
 /*------------------------------- Simple Backend ------------------------------- */
-DelayBuffer::DelayBuffer(Component *comp, Params &params) : SimpleMemBackend(comp, params){
+DelayBuffer::DelayBuffer(Component *comp, Params &params) : SimpleMemBackend(comp, params){ build(params); }
+DelayBuffer::DelayBuffer(ComponentId_t id, Params &params) : SimpleMemBackend(id, params){ build(params); }
     
+void DelayBuffer::build(Params& params) {
     // Get parameters
     fixupParams( params, "clock", "backend.clock" ); 
     
@@ -45,7 +47,7 @@ DelayBuffer::DelayBuffer(Component *comp, Params &params) : SimpleMemBackend(com
 
     // Set up self links
     if (delay.getValue() != 0) {
-        delay_self_link = comp->configureSelfLink("DelaySelfLink", delay.toString(), new Event::Handler<DelayBuffer>(this, &DelayBuffer::handleNextRequest));
+        delay_self_link = configureSelfLink("DelaySelfLink", delay.toString(), new Event::Handler<DelayBuffer>(this, &DelayBuffer::handleNextRequest));
     } else {
         delay_self_link = NULL;
     }

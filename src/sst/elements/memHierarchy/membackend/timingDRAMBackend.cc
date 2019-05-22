@@ -22,7 +22,10 @@ bool TimingDRAM::Channel::m_printConfig = true;
 bool TimingDRAM::Rank::m_printConfig = true;
 bool TimingDRAM::Bank::m_printConfig = true;
 
-TimingDRAM::TimingDRAM(Component *comp, Params &params) : SimpleMemBackend(comp, params), m_cycle(0) {
+TimingDRAM::TimingDRAM(Component *comp, Params &params) : SimpleMemBackend(comp, params), m_cycle(0) { build(params); }
+TimingDRAM::TimingDRAM(ComponentId_t id, Params &params) : SimpleMemBackend(id, params), m_cycle(0) { build(params); }
+
+void TimingDRAM::build(Params& params) {
 
     int id = params.find<int>("id", -1);
     assert( id != -1 );
@@ -57,7 +60,9 @@ TimingDRAM::TimingDRAM(Component *comp, Params &params) : SimpleMemBackend(comp,
 
     tmpParams = params.find_prefix_params("channel." );
     for ( unsigned i=0; i < numChannels; i++ ) {
-        m_channels.push_back( Channel( comp, this, tmpParams, id, i, output, m_mapper ) );
+        using std::placeholders::_1;
+        Channel* chan = loadComponentExtension<Channel>( std::bind(&TimingDRAM::handleResponse, this, _1), tmpParams, id, i, output, m_mapper );
+        m_channels.push_back( *chan );
     }
 }
 
@@ -89,8 +94,8 @@ bool TimingDRAM::clock(Cycle_t cycle)
 // Channel 
 //==================================================================================
 
-TimingDRAM::Channel::Channel( Component* comp, TimingDRAM* mem, Params& params, unsigned mc, unsigned myNum, Output* output, AddrMapper* mapper ) :
-    m_mem(mem), m_output( output ), m_mapper( mapper ), m_nextRankUp(0), m_dataBusAvailCycle(0)
+TimingDRAM::Channel::Channel( ComponentId_t id, std::function<void(ReqId)> handler, Params& params, unsigned mc, unsigned myNum, Output* output, AddrMapper* mapper ) :
+    ComponentExtension(id), m_responseHandler(handler), m_output( output ), m_mapper( mapper ), m_nextRankUp(0), m_dataBusAvailCycle(0)
 {
     std::ostringstream tmp;
     tmp << "@t:TimingDRAM:Channel:@p():@l:mc=" << mc << ":chan=" << myNum << ": "; 
@@ -111,7 +116,7 @@ TimingDRAM::Channel::Channel( Component* comp, TimingDRAM* mem, Params& params, 
 
     Params tmpParams = params.find_prefix_params("rank." );
     for ( unsigned i=0; i<numRanks; i++ ) {
-        m_ranks.push_back( Rank( comp, tmpParams, mc, myNum, i, output, mapper ) );
+        m_ranks.push_back( *loadComponentExtension<Rank>( tmpParams, mc, myNum, i, output, mapper ) );
     } 
 }
 
@@ -142,7 +147,7 @@ void TimingDRAM::Channel::clock( SimTime_t cycle )
     if ( ! m_retiredTrans.empty() ) {
         m_output->verbosePrefix(prefix(),CALL_INFO, 3, DBG_MASK, "send response: reqId=%" PRIu64 " bank=%d addr=%#" PRIx64 ", createTime=%" PRIu64 "\n", m_retiredTrans.front()->id, m_retiredTrans.front()->bank, m_retiredTrans.front()->addr, m_retiredTrans.front()->createTime);
 
-        m_mem->handleResponse( m_retiredTrans.front()->id );
+        m_responseHandler(m_retiredTrans.front()->id);
         delete m_retiredTrans.front();
 
         m_retiredTrans.pop();
@@ -162,7 +167,7 @@ void TimingDRAM::Channel::clock( SimTime_t cycle )
 
 TimingDRAM::Cmd* TimingDRAM::Channel::popCmd( SimTime_t cycle, SimTime_t dataBusAvailCycle )
 {
-    Cmd* cmd = NULL;
+    Cmd* cmd = nullptr;
     unsigned current = m_nextRankUp;
     for ( unsigned i = 0; i < m_ranks.size(); i++ ) {
 
@@ -189,8 +194,8 @@ TimingDRAM::Cmd* TimingDRAM::Channel::popCmd( SimTime_t cycle, SimTime_t dataBus
 // Rank 
 //==================================================================================
 
-TimingDRAM::Rank::Rank( Component* comp, Params& params, unsigned mc, unsigned chan, unsigned myNum, Output* output, AddrMapper* mapper ) : 
-    m_output( output ), m_mapper( mapper ), m_nextBankUp(0)
+TimingDRAM::Rank::Rank( ComponentId_t id, Params& params, unsigned mc, unsigned chan, unsigned myNum, Output* output, AddrMapper* mapper ) : 
+    ComponentExtension(id), m_output( output ), m_mapper( mapper ), m_nextBankUp(0)
 {
     std::ostringstream tmp;
     tmp << "@t:TimingDRAM:Rank:@p():@l:mc=" << mc << ":chan=" << chan << ":rank=" << myNum <<": "; 
@@ -207,7 +212,7 @@ TimingDRAM::Rank::Rank( Component* comp, Params& params, unsigned mc, unsigned c
 
     Params tmpParams = params.find_prefix_params("bank." );
     for ( unsigned i=0; i<banks; i++ ) {
-        m_banks.push_back( Bank( comp, tmpParams, mc, chan, myNum, i, output ) );
+        m_banks.push_back( *loadComponentExtension<Bank>( tmpParams, mc, chan, myNum, i, output ) );
     } 
 }
 
@@ -231,15 +236,15 @@ TimingDRAM::Cmd* TimingDRAM::Rank::popCmd( SimTime_t cycle, SimTime_t dataBusAva
         ++current;
         current %= m_banks.size();
     }
-    return NULL;
+    return nullptr;
 }
 
 //==================================================================================
 // Bank
 //==================================================================================
 
-TimingDRAM::Bank::Bank( Component* comp, Params& params, unsigned mc, unsigned chan, unsigned rank, unsigned myNum, Output* output ) : 
-    m_output( output ), m_lastCmd(NULL), m_bank(myNum), m_rank(rank), m_row( -1 ) 
+TimingDRAM::Bank::Bank( ComponentId_t id, Params& params, unsigned mc, unsigned chan, unsigned rank, unsigned myNum, Output* output ) : 
+    ComponentExtension(id), m_output( output ), m_lastCmd(nullptr), m_bank(myNum), m_rank(rank), m_row( -1 ) 
 {
     std::ostringstream tmp;
     tmp << "@t:TimingDRAM:Bank:@p():@l:mc=" << mc << ":chan=" << chan << ":rank=" << rank << ":bank=" << myNum <<": "; 
@@ -253,11 +258,11 @@ TimingDRAM::Bank::Bank( Component* comp, Params& params, unsigned mc, unsigned c
 
     std::string name = params.find<std::string>("transactionQ", "memHierarchy.fifoTransactionQ");
     Params tmpParams = params.find_prefix_params("transactionQ." );
-    m_transQ = dynamic_cast<TransactionQ*>(comp->loadSubComponent( name, comp, tmpParams ) );
+    m_transQ = loadAnonymousSubComponent<TransactionQ>(name, "transactionQ", 0, ComponentInfo::INSERT_STATS, tmpParams);
 
     std::string ppName = params.find<std::string>("pagePolicy", "memHierarchy.simplePagePolicy");
     tmpParams = params.find_prefix_params("pagePolicy." );
-    m_pagePolicy = dynamic_cast<PagePolicy*>(comp->loadSubComponent( ppName, comp, tmpParams ) );
+    m_pagePolicy = loadAnonymousSubComponent<PagePolicy>(ppName, "pagePolicy", 0, ComponentInfo::INSERT_STATS, tmpParams);
 
     if ( m_printConfig ) {
         m_output->verbosePrefix(prefix(),CALL_INFO, 1, DBG_MASK, "CL:           %d\n",m_col_rd_lat);
@@ -277,7 +282,7 @@ TimingDRAM::Cmd* TimingDRAM::Bank::popCmd( SimTime_t cycle, SimTime_t dataBusAva
     m_output->verbosePrefix(prefix(),CALL_INFO, 4, DBG_MASK, "numCmds=%zu\n", m_cmdQ.size() );
     update( cycle );
 
-    Cmd* cmd = NULL;
+    Cmd* cmd = nullptr;
     if ( ! m_cmdQ.empty() && m_cmdQ.front()->canIssue( cycle, dataBusAvailCycle ) ) {
         cmd = m_cmdQ.front();
         m_output->verbosePrefix(prefix(),CALL_INFO, 2, DBG_MASK, "%s row=%d\n",cmd->getName().c_str(), cmd->getRow() );
@@ -288,7 +293,7 @@ TimingDRAM::Cmd* TimingDRAM::Bank::popCmd( SimTime_t cycle, SimTime_t dataBusAva
 
 void TimingDRAM::Bank::update( SimTime_t current )
 {
-    if ( NULL == m_lastCmd && m_row != -1 && m_pagePolicy->shouldClose( current ) ) {
+    if ( nullptr == m_lastCmd && m_row != -1 && m_pagePolicy->shouldClose( current ) ) {
         Cmd* cmd = new Cmd( this, Cmd::PRE, m_trp_lat ); 
         m_cmdQ.push_back(cmd);
         m_row = -1;

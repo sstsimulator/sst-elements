@@ -114,7 +114,7 @@ class GOBLINHMCSimBackend : public ExtMemBackend {
 
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT(GOBLINHMCSimBackend, "memHierarchy", "goblinHMCSim", SST_ELI_ELEMENT_VERSION(1,0,0), "GOBLIN HMC Simulator driven memory timings", "SST::MemHierarchy::MemBackend")
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(GOBLINHMCSimBackend, "memHierarchy", "goblinHMCSim", SST_ELI_ELEMENT_VERSION(1,0,0), "GOBLIN HMC Simulator driven memory timings", SST::MemHierarchy::MemBackend)
 
     SST_ELI_DOCUMENT_PARAMS( MEMBACKEND_ELI_PARAMS,
             /* Own parameters */
@@ -228,6 +228,7 @@ public:
 
 /* Class definition */
         GOBLINHMCSimBackend(Component* comp, Params& params);
+        GOBLINHMCSimBackend(ComponentId_t id, Params& params);
 	~GOBLINHMCSimBackend();
 	bool issueRequest(ReqId, Addr, bool,
                           std::vector<uint64_t>,
@@ -240,7 +241,7 @@ public:
 	virtual bool clock(Cycle_t cycle);
 
 private:
-	Component* owner;
+        void build(Params& params);
 	struct hmcsim_t the_hmc;
 
 	uint32_t hmc_link_count;

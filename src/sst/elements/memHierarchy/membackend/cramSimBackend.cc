@@ -24,14 +24,16 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 using namespace SST::CramSim;
 
-CramSimMemory::CramSimMemory(Component *comp, Params &params) : SimpleMemBackend(comp, params){
+CramSimMemory::CramSimMemory(Component *comp, Params &params) : SimpleMemBackend(comp, params){ build(params); }
+CramSimMemory::CramSimMemory(ComponentId_t id, Params &params) : SimpleMemBackend(id, params){ build(params); }
+
+void CramSimMemory::build(Params& params) {
     std::string access_time = params.find<std::string>("access_time", "100 ns");
     cramsim_link = configureLink( "cube_link", access_time,
             new Event::Handler<CramSimMemory>(this, &CramSimMemory::handleCramsimEvent));
 
     m_maxNumOutstandingReqs = params.find<int>("max_outstanding_requests",256);
     output= new Output("CramSimMemory[@p:@l]: ", 1, 0, Output::STDOUT);
-
 }
 
 

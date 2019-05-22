@@ -26,8 +26,8 @@ namespace MemHierarchy {
 class DelayBuffer : public SimpleMemBackend {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT(DelayBuffer, "memHierarchy", "DelayBuffer", SST_ELI_ELEMENT_VERSION(1,0,0),
-            "Delays requests by a specified time", "SST::MemHierarchy::MemBackend")
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(DelayBuffer, "memHierarchy", "DelayBuffer", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Delays requests by a specified time", SST::MemHierarchy::MemBackend)
     
     SST_ELI_DOCUMENT_PARAMS( MEMBACKEND_ELI_PARAMS,
             /* Own parameters */
@@ -38,7 +38,8 @@ public:
 /* Begin class definition */
     DelayBuffer();
     DelayBuffer(Component *comp, Params &params);
-	virtual bool issueRequest( ReqId, Addr, bool isWrite, unsigned numBytes );
+    DelayBuffer(ComponentId_t id, Params &params);
+    virtual bool issueRequest( ReqId, Addr, bool isWrite, unsigned numBytes );
     void handleNextRequest(SST::Event * ev);
     void setup();
     void finish();
@@ -47,6 +48,7 @@ public:
     virtual bool isClocked() { return backend->isClocked(); }
 
 private:
+    void build(Params& params);
     void handleMemReponse( ReqId id ) {
         SimpleMemBackend::handleMemResponse( id );
     }
