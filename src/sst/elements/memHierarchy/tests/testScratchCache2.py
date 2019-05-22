@@ -8,6 +8,7 @@ core_clock = "2GHz"
 
 # Define the simulation components
 comp_cpu0 = sst.Component("cpu0", "memHierarchy.ScratchCPU")
+iface0 = comp_cpu0.setSubComponent("memory", "memHierarchy.memInterface")
 comp_cpu0.addParams({
     "scratchSize" : 65536,   # 64K scratch
     "maxAddr" : 2097152,       # 2M mem
@@ -63,6 +64,7 @@ comp_scratch0.addParams({
     "memNIC.network_bw" : "50GB/s",
 })
 comp_cpu1 = sst.Component("cpu1", "memHierarchy.ScratchCPU")
+iface1 = comp_cpu1.setSubComponent("memory", "memHierarchy.memInterface")
 comp_cpu1.addParams({
     "scratchSize" : 65536,   # 64K scratch
     "maxAddr" : 2097152,       # 2M mem
@@ -165,9 +167,9 @@ sst.enableAllStatisticsForComponentType("memHierarchy.MemController")
 
 # Define the simulation links
 link_cpu0_l1 = sst.Link("link_cpu0_l1")
-link_cpu0_l1.connect( (comp_cpu0, "mem_link", "100ps"), (comp_l1_0, "high_network_0", "100ps") )
+link_cpu0_l1.connect( (iface0, "port", "100ps"), (comp_l1_0, "high_network_0", "100ps") )
 link_cpu1_l1 = sst.Link("link_cpu1_l1")
-link_cpu1_l1.connect( (comp_cpu1, "mem_link", "100ps"), (comp_l1_1, "high_network_0", "100ps") )
+link_cpu1_l1.connect( (iface1, "port", "100ps"), (comp_l1_1, "high_network_0", "100ps") )
 link_l1_l2_0 = sst.Link("link_l1_l2_0")
 link_l1_l2_0.connect( (comp_l1_0, "low_network_0", "100ps"), (comp_l2_0, "high_network_0", "100ps") )
 link_l1_l2_1 = sst.Link("link_l1_l2_1")

@@ -17,6 +17,7 @@ comp_cpu.addParams({
     "reqsToIssue" : 500,
     "verbose" : 1
 })
+iface = comp_cpu.setSubComponent("memory", "memHierarchy.memInterface")
 comp_scratch = sst.Component("scratch", "memHierarchy.Scratchpad")
 comp_scratch.addParams({
     "debug" : DEBUG_SCRATCH,
@@ -50,7 +51,7 @@ sst.enableAllStatisticsForComponentType("memHierarchy.MemController")
 
 # Define the simulation links
 link_cpu_scratch = sst.Link("link_cpu_scratch")
-link_cpu_scratch.connect( (comp_cpu, "mem_link", "1000ps"), (comp_scratch, "cpu", "1000ps") )
+link_cpu_scratch.connect( (iface, "port", "1000ps"), (comp_scratch, "cpu", "1000ps") )
 link_scratch_mem = sst.Link("link_scratch_mem")
 link_scratch_mem.connect( (comp_scratch, "memory", "100ps"), (comp_memory, "direct_link", "100ps") )
 # End of generated output.

@@ -40,6 +40,7 @@ for x in range(cores):
         "num_loadstore" : 1200,
         "memSize" : 1024*1024*1024
     })
+    iface = comp_cpu.setSubComponent("memory", "memHierarchy.memInterface")
 
     comp_l1cache = sst.Component("l1cache" + str(x), "memHierarchy.Cache")
     comp_l1cache.addParams({
@@ -58,7 +59,7 @@ for x in range(cores):
     })
 
     cpu_l1_link = sst.Link("link_cpu_cache_" + str(x))
-    cpu_l1_link.connect ( (comp_cpu, "mem_link", "500ps"), (comp_l1cache, "high_network_0", "500ps") )
+    cpu_l1_link.connect ( (iface, "port", "500ps"), (comp_l1cache, "high_network_0", "500ps") )
 
     l1_network_link = sst.Link("link_l1_network_" + str(x))
     l1_network_link.connect( (comp_l1cache, "cache", "100ps"), (comp_network, "port" + str(x), "100ps") )

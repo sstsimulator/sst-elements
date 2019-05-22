@@ -8,6 +8,7 @@ DEBUG_CORE1 = 0
 
 # Define the simulation components
 comp_cpu0 = sst.Component("cpu0", "memHierarchy.ScratchCPU")
+iface0 = comp_cpu0.setSubComponent("memory", "memHierarchy.memInterface")
 comp_cpu0.addParams({
     "scratchSize" : 1024,   # 1K scratch
     "maxAddr" : 4096,       # 4K mem
@@ -36,6 +37,7 @@ comp_scratch0.addParams({
     "memNIC.network_bw" : "50GB/s",
 })
 comp_cpu1 = sst.Component("cpu1", "memHierarchy.ScratchCPU")
+iface1 = comp_cpu1.setSubComponent("memory", "memHierarchy.memInterface")
 comp_cpu1.addParams({
     "scratchSize" : 1024,   # 1K scratch
     "maxAddr" : 4096,       # 4K mem
@@ -115,9 +117,9 @@ sst.enableAllStatisticsForComponentType("memHierarchy.MemController")
 
 # Define the simulation links
 link_cpu0_scratch0 = sst.Link("link_cpu0_scratch0")
-link_cpu0_scratch0.connect( (comp_cpu0, "mem_link", "1000ps"), (comp_scratch0, "cpu", "1000ps") )
+link_cpu0_scratch0.connect( (iface0, "port", "1000ps"), (comp_scratch0, "cpu", "1000ps") )
 link_cpu0_scratch1 = sst.Link("link_cpu1_scratch1")
-link_cpu0_scratch1.connect( (comp_cpu1, "mem_link", "1000ps"), (comp_scratch1, "cpu", "1000ps") )
+link_cpu0_scratch1.connect( (iface1, "port", "1000ps"), (comp_scratch1, "cpu", "1000ps") )
 link_scratch0_net = sst.Link("link_scratch0_net")
 link_scratch0_net.connect( (comp_scratch0, "network", "100ps"), (comp_net, "port0", "100ps") )
 link_scratch1_net = sst.Link("link_scratch1_net")

@@ -100,16 +100,16 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
         out.output("%s, ** Found deprecated parameter: direct_link ** The value of this parameter is now auto-detected by the link configuration in your input deck. Remove this parameter from your input deck to eliminate this message.\n", getName().c_str());
     }
 
-    std::string name        = params.find<std::string>("backendConvertor", "memHierarchy.simpleMemBackendConvertor");
 
     string link_lat         = params.find<std::string>("direct_link_latency", "10 ns");
 
-    if (nullptr == (memBackendConvertor_ = dynamic_cast<MemBackendConvertor*>(loadNamedSubComponent("backendConvertor")))) {
-        /* Load the old-fashioned way */
+    memBackendConvertor_ = loadUserSubComponent<MemBackendConvertor>("backendConvertor");
+    if (!memBackendConvertor_) {
         Params tmpParams = params.find_prefix_params("backendConvertor.");
-        memBackendConvertor_  = dynamic_cast<MemBackendConvertor*>(loadSubComponent(name, this, tmpParams));
+        std::string name = params.find<std::string>("backendConvertor", "memHierarchy.simpleMemBackendConvertor");
+        memBackendConvertor_ = loadAnonymousSubComponent<MemBackendConvertor>(name, "backendConvertor", 0, 
+                ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, tmpParams);
     }
-
     if (memBackendConvertor_ == nullptr) {
         out.fatal(CALL_INFO, -1, "%s, Error - unable to load MemBackendConvertor.", getName().c_str());
     }

@@ -10,13 +10,17 @@ sst.setProgramOption("stopAtCycle", "0 ns")
 comp_cpu = sst.Component("cpu", "miranda.BaseCPU")
 comp_cpu.addParams({
 	"verbose" : 0,
-	"generator" : "miranda.STREAMBenchGeneratorCustomCmd",
-	"generatorParams.verbose" : 0,
-	"generatorParams.startat" : 3,
-	"generatorParams.count" : 500000,
-	"generatorParams.max_address" : 512000,
-        "generatorParams.write_cmd" : 10,
 	"printStats" : 1,
+})
+
+iface = comp_cpu.setSubComponent("memory", "memHierarchy.memInterface")
+gen = comp_cpu.setSubComponent("generator", "miranda.STREAMBenchGeneratorCustomCmd")
+gen.addParams({
+	"verbose" : 0,
+	"startat" : 3,
+	"count" : 500000,
+	"max_address" : 512000,
+        "write_cmd" : 10,
 })
 
 # Tell SST what statistics handling we want
@@ -64,7 +68,7 @@ comp_memory.addParams({
 
 # Define the simulation links
 link_cpu_cache_link = sst.Link("link_cpu_cache_link")
-link_cpu_cache_link.connect( (comp_cpu, "cache_link", "1000ps"), (comp_l1cache, "high_network_0", "1000ps") )
+link_cpu_cache_link.connect( (iface, "port", "1000ps"), (comp_l1cache, "high_network_0", "1000ps") )
 link_cpu_cache_link.setNoCut()
 
 link_mem_bus_link = sst.Link("link_mem_bus_link")

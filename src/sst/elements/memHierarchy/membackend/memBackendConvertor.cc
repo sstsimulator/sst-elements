@@ -31,7 +31,13 @@ using namespace SST::MemHierarchy;
 
 MemBackendConvertor::MemBackendConvertor(Component *comp, Params& params ) : 
     SubComponent(comp), m_cycleCount(0), m_reqId(0)
-{
+{ build(params); }
+
+MemBackendConvertor::MemBackendConvertor(ComponentId_t id, Params& params ) :
+    SubComponent(id), m_cycleCount(0), m_reqId(0) 
+{ build(params); }
+
+void MemBackendConvertor::build(Params& params) {
     m_dbg.init("", 
             params.find<uint32_t>("debug_level", 0),
             params.find<uint32_t>("debug_mask", 0),
@@ -43,7 +49,7 @@ MemBackendConvertor::MemBackendConvertor(Component *comp, Params& params ) :
     // extract backend parameters for memH.
     Params backendParams = params.find_prefix_params("backend.");
 
-    m_backend = dynamic_cast<MemBackend*>( comp->loadSubComponent( backendName, comp, backendParams ) );
+    m_backend = dynamic_cast<MemBackend*>( loadSubComponent( backendName, backendParams ) );
 
     using std::placeholders::_1;
     m_backend->setGetRequestorHandler( std::bind( &MemBackendConvertor::getRequestor, this, _1 )  );

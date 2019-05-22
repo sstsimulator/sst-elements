@@ -57,6 +57,8 @@ class MemBackendConvertor : public SubComponent {
             { "latency_GetX",                       "Total latency of handled GetX requests",           "cycles",   1 },\
             { "latency_PutM",                       "Total latency of handled PutM requests",           "cycles",   1 }
 
+    SST_ELI_REGISTER_SUBCOMPONENT_API(SST::MemHierarchy::MemBackendConvertor)
+
     typedef uint64_t ReqId;
 
     class BaseReq {
@@ -146,6 +148,8 @@ class MemBackendConvertor : public SubComponent {
 
     MemBackendConvertor();
     MemBackendConvertor(Component* comp, Params& params);
+    MemBackendConvertor(ComponentId_t id, Params& params);
+    void build(Params& params);
     void finish(void);
     virtual const std::string& getClockFreq();
     virtual size_t getMemSize();

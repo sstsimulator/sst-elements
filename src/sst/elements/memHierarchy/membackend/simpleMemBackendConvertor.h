@@ -26,8 +26,10 @@ namespace MemHierarchy {
 class SimpleMemBackendConvertor : public MemBackendConvertor {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT(SimpleMemBackendConvertor, "memHierarchy", "simpleMemBackendConvertor", SST_ELI_ELEMENT_VERSION(1,0,0),
-            "Converts a MemEventBase* for base MemBackend", "SST::MemHierarchy::MemBackendConvertor")
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED_API(SST::MemHierarchy::SimpleMemBackendConvertor, SST::MemHierarchy::MemBackendConvertor)
+
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(SimpleMemBackendConvertor, "memHierarchy", "simpleMemBackendConvertor", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Converts a MemEventBase* for base MemBackend", SST::MemHierarchy::SimpleMemBackendConvertor)
 
     SST_ELI_DOCUMENT_PARAMS( MEMBACKENDCONVERTOR_ELI_PARAMS )
 
@@ -35,6 +37,7 @@ public:
 
 /* Begin class definition */
     SimpleMemBackendConvertor(Component *comp, Params &params);
+    SimpleMemBackendConvertor(ComponentId_t id, Params &params);
 
     virtual bool issue( BaseReq* req );
 
