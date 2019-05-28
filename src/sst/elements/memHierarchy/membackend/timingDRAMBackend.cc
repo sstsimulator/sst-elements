@@ -61,8 +61,7 @@ void TimingDRAM::build(Params& params) {
     tmpParams = params.find_prefix_params("channel." );
     for ( unsigned i=0; i < numChannels; i++ ) {
         using std::placeholders::_1;
-        Channel* chan = loadComponentExtension<Channel>( std::bind(&TimingDRAM::handleResponse, this, _1), tmpParams, id, i, output, m_mapper );
-        m_channels.push_back( *chan );
+        m_channels.push_back(loadComponentExtension<Channel>( std::bind(&TimingDRAM::handleResponse, this, _1), tmpParams, id, i, output, m_mapper ));
     }
 }
 
@@ -70,7 +69,7 @@ bool TimingDRAM::issueRequest( ReqId id, Addr addr, bool isWrite, unsigned numBy
 {
     unsigned chan = m_mapper->getChannel(addr);
 
-    bool ret = m_channels[chan].issue(m_cycle, id, addr, isWrite, numBytes );
+    bool ret = m_channels[chan]->issue(m_cycle, id, addr, isWrite, numBytes );
 
     if ( ret ) { 
         output->verbose(CALL_INFO, 2, DBG_MASK, "chan=%d reqId=%" PRIu64 " addr=%#" PRIx64 "\n",chan,id,addr);
@@ -84,7 +83,7 @@ bool TimingDRAM::clock(Cycle_t cycle)
 {
     output->verbose(CALL_INFO, 5, DBG_MASK, "cycle %" PRIu64 "\n",m_cycle);
     for ( unsigned i = 0; i < m_channels.size(); i++ ) {
-        m_channels[i].clock(m_cycle);
+        m_channels[i]->clock(m_cycle);
     }
     ++m_cycle;
     return false;
@@ -116,7 +115,7 @@ TimingDRAM::Channel::Channel( ComponentId_t id, std::function<void(ReqId)> handl
 
     Params tmpParams = params.find_prefix_params("rank." );
     for ( unsigned i=0; i<numRanks; i++ ) {
-        m_ranks.push_back( *loadComponentExtension<Rank>( tmpParams, mc, myNum, i, output, mapper ) );
+        m_ranks.push_back( loadComponentExtension<Rank>( tmpParams, mc, myNum, i, output, mapper ) );
     } 
 }
 
@@ -171,7 +170,7 @@ TimingDRAM::Cmd* TimingDRAM::Channel::popCmd( SimTime_t cycle, SimTime_t dataBus
     unsigned current = m_nextRankUp;
     for ( unsigned i = 0; i < m_ranks.size(); i++ ) {
 
-        cmd = m_ranks[current].popCmd( cycle, m_dataBusAvailCycle );
+        cmd = m_ranks[current]->popCmd( cycle, m_dataBusAvailCycle );
 
         if ( cmd ) {
 
@@ -212,7 +211,7 @@ TimingDRAM::Rank::Rank( ComponentId_t id, Params& params, unsigned mc, unsigned 
 
     Params tmpParams = params.find_prefix_params("bank." );
     for ( unsigned i=0; i<banks; i++ ) {
-        m_banks.push_back( *loadComponentExtension<Bank>( tmpParams, mc, chan, myNum, i, output ) );
+        m_banks.push_back( loadComponentExtension<Bank>( tmpParams, mc, chan, myNum, i, output ) );
     } 
 }
 
@@ -222,7 +221,7 @@ TimingDRAM::Cmd* TimingDRAM::Rank::popCmd( SimTime_t cycle, SimTime_t dataBusAva
 
     unsigned current = m_nextBankUp;
     for ( unsigned i = 0; i < m_banks.size(); i++ ) {
-        Cmd* cmd = m_banks[current].popCmd( cycle, dataBusAvailCycle );
+        Cmd* cmd = m_banks[current]->popCmd( cycle, dataBusAvailCycle );
 
         if ( cmd ) {
             if ( current == m_nextBankUp ) {

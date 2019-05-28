@@ -238,7 +238,7 @@ private:
             m_output->verbosePrefix(prefix(),CALL_INFO, 2, DBG_MASK,"bank=%d addr=%#" PRIx64 "\n",
                 bank,trans->addr);
 
-            m_banks[bank].pushTrans( trans );
+            m_banks[bank]->pushTrans( trans );
         }
 
       private:
@@ -249,7 +249,7 @@ private:
         std::string     m_pre;
 
         unsigned            m_nextBankUp;
-        std::vector<Bank>   m_banks;
+        std::vector<Bank*>  m_banks;
     };
 
     class Channel : public ComponentExtension {
@@ -274,7 +274,7 @@ private:
             Transaction* trans = new Transaction( createTime, id, addr, isWrite, numBytes, m_mapper->getBank(addr),
                                                 m_mapper->getRow(addr) );
             m_pendingCount++;
-            m_ranks[ rank ].pushTrans( trans );
+            m_ranks[ rank ]->pushTrans( trans );
             return true;
         }
 
@@ -288,7 +288,7 @@ private:
         std::string         m_pre;
 
         unsigned            m_nextRankUp;
-        std::vector<Rank>   m_ranks;
+        std::vector<Rank*>  m_ranks;
 
         unsigned            m_dataBusAvailCycle;
         unsigned            m_maxPendingTrans;
@@ -316,7 +316,7 @@ public:
 
 private:
     void build(Params&);
-    std::vector<Channel> m_channels;
+    std::vector<Channel*> m_channels;
     AddrMapper* m_mapper;
     SimTime_t   m_cycle;
 
