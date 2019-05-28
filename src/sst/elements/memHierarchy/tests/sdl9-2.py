@@ -305,7 +305,7 @@ link_c4l1cache_link.connect( (iface4, "port", "1000ps"), (comp_c4_l1cache, "high
 link_c4l1cache_bus = sst.Link("link_c4l1cache_bus")
 link_c4l1cache_bus.connect( (comp_c4_l1cache, "low_network_0", "10000ps"), (comp_n1_bus, "high_network_0", "10000ps") )
 link_c5l1cache_link = sst.Link("link_c5l1cache_link")
-link_c5l1cache_link.connect( (iface, "port", "1000ps"), (comp_c5_l1cache, "high_network_0", "1000ps") )
+link_c5l1cache_link.connect( (iface5, "port", "1000ps"), (comp_c5_l1cache, "high_network_0", "1000ps") )
 link_c5l1cache_bus = sst.Link("link_c5l1cache_bus")
 link_c5l1cache_bus.connect( (comp_c5_l1cache, "low_network_0", "10000ps"), (comp_n1_bus, "high_network_1", "10000ps") )
 link_c6l1cache_link = sst.Link("link_c6l1cache_link")
