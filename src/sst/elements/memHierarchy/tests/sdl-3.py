@@ -10,7 +10,7 @@ comp_cpu.addParams({
       "memSize" : "0x1000"
 })
 iface = comp_cpu.setSubComponent("memory", "memHierarchy.memInterface")
-comp_cpu.setSubComponent("memory", "memHierarchy.memInterface")
+
 comp_l1cache = sst.Component("l1cache", "memHierarchy.Cache")
 comp_l1cache.addParams({
       "access_latency_cycles" : "4",
