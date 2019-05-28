@@ -60,13 +60,13 @@ public:
     void registerResponseCallback(Event::HandlerBase *handler);
     void printStats(Output &out);
 
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         PalaPrefetcher,
             "cassini",
             "PalaPrefetcher",
             SST_ELI_ELEMENT_VERSION(1,0,0),
             "Stride Prefetcher [Palacharla 1994]",
-            "SST::Cassini::CacheListener"
+            SST::MemHierarchy::CacheListener
     )
 
     SST_ELI_DOCUMENT_PARAMS(
