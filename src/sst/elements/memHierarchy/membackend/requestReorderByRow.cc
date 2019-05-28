@@ -56,10 +56,13 @@ void RequestReorderRow::build(Params& params) {
     }
 
     // Create our backend & copy 'mem_size' through for now
-    std::string backendName = params.find<std::string>("backend", "memHierarchy.simpleDRAM");
-    Params backendParams = params.find_prefix_params("backend.");
-    backendParams.insert("mem_size", params.find<std::string>("mem_size"));
-    backend = dynamic_cast<SimpleMemBackend*>(loadSubComponent(backendName, backendParams));
+    backend = loadUserSubComponent<SimpleMemBackend>("backend");
+    if (!backend) {
+        std::string backendName = params.find<std::string>("backend", "memHierarchy.simpleDRAM");
+        Params backendParams = params.find_prefix_params("backend.");
+        backendParams.insert("mem_size", params.find<std::string>("mem_size"));
+        backend = loadAnonymousSubComponent<SimpleMemBackend>(backendName, "backend", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, backendParams);
+    }
     using std::placeholders::_1;
     backend->setResponseHandler( std::bind( &RequestReorderRow::handleMemResponse, this, _1 )  );
 

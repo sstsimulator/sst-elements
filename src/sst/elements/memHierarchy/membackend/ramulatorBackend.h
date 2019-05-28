@@ -33,7 +33,7 @@ class ramulatorMemory : public SimpleMemBackend {
 public:
 /* Element Library Info */
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(ramulatorMemory, "memHierarchy", "ramulator", SST_ELI_ELEMENT_VERSION(1,0,0),
-            "Ramulator-driven memory timings", SST::MemHierarchy::MemBackend)
+            "Ramulator-driven memory timings", SST::MemHierarchy::SimpleMemBackend)
     
     SST_ELI_DOCUMENT_PARAMS( MEMBACKEND_ELI_PARAMS,
             /* Own parameters */

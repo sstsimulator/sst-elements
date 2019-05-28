@@ -26,7 +26,7 @@ class Messier : public SimpleMemBackend {
 public:
 /* Element Library Info */
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(Messier, "memHierarchy", "Messier", SST_ELI_ELEMENT_VERSION(1,0,0),
-            "Messier memory timings", SST::MemHierarchy::MemBackend)
+            "Messier memory timings", SST::MemHierarchy::SimpleMemBackend)
     
     SST_ELI_DOCUMENT_PARAMS( MEMBACKEND_ELI_PARAMS,
             /* Own parameters */

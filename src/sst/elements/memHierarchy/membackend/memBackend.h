@@ -148,6 +148,7 @@ class SimpleMemBackend : public MemBackend {
 /* MemBackend - timing and passes request/response flags */
 class FlagMemBackend : public MemBackend {
   public:
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED_API(SST::MemHierarchy::FlagMemBackend, SST::MemHierarchy::MemBackend)
     FlagMemBackend(Component *comp, Params &params) : MemBackend(comp,params) {}  
     FlagMemBackend(ComponentId_t id, Params &params) : MemBackend(id,params) {}  
     virtual bool issueRequest( ReqId, Addr, bool isWrite, uint32_t flags, unsigned numBytes ) = 0;
@@ -166,7 +167,9 @@ class FlagMemBackend : public MemBackend {
 
 class ExtMemBackend : public MemBackend {
   public:
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED_API(SST::MemHierarchy::ExtMemBackend, SST::MemHierarchy::MemBackend)
     ExtMemBackend(Component *comp, Params &params) : MemBackend(comp,params) {}  
+    ExtMemBackend(ComponentId_t id, Params &params) : MemBackend(id,params) {}  
     virtual bool issueRequest( ReqId, Addr, bool isWrite,
                                std::vector<uint64_t> ins,
                                uint32_t flags, unsigned numBytes ) = 0;

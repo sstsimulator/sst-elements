@@ -26,7 +26,7 @@ class VaultSimMemory : public FlagMemBackend {
 public:
 /* Element Library Info */
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(VaultSimMemory, "memHierarchy", "vaultsim", SST_ELI_ELEMENT_VERSION(1,0,0),
-            "Backend to interface with VaultSimC, a generic vaulted memory model", SST::MemHierarchy::MemBackend)
+            "Backend to interface with VaultSimC, a generic vaulted memory model", SST::MemHierarchy::FlagMemBackend)
     
     SST_ELI_DOCUMENT_PARAMS( MEMBACKEND_ELI_PARAMS,
             /* Own parameters */

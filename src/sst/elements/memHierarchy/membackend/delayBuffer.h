@@ -27,7 +27,7 @@ class DelayBuffer : public SimpleMemBackend {
 public:
 /* Element Library Info */
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(DelayBuffer, "memHierarchy", "DelayBuffer", SST_ELI_ELEMENT_VERSION(1,0,0),
-            "Delays requests by a specified time", SST::MemHierarchy::MemBackend)
+            "Delays requests by a specified time", SST::MemHierarchy::SimpleMemBackend)
     
     SST_ELI_DOCUMENT_PARAMS( MEMBACKEND_ELI_PARAMS,
             /* Own parameters */

@@ -30,7 +30,7 @@ ramulatorMemory::ramulatorMemory(Component *comp, Params &params) :
     callBackFunc(std::bind(&ramulatorMemory::ramulatorDone, this, std::placeholders::_1))
 { build(params); }
 
-ramulatorMemory::ramulatorMemory(Component *comp, Params &params) : 
+ramulatorMemory::ramulatorMemory(ComponentId_t id, Params &params) : 
     SimpleMemBackend(comp, params),
     callBackFunc(std::bind(&ramulatorMemory::ramulatorDone, this, std::placeholders::_1))
 { build(params); }

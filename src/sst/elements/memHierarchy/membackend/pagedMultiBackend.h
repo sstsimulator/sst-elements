@@ -149,7 +149,7 @@ class pagedMultiMemory : public DRAMSimMemory {
 public:
 /* Element Library Info */
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(pagedMultiMemory, "memHierarchy", "pagedMulti", SST_ELI_ELEMENT_VERSION(1,0,0),
-            "DRAMSim-driven memory timings with a fixed timing multi-levle memory using paging", SST::MemHierarchy::MemBackend)
+            "DRAMSim-driven memory timings with a fixed timing multi-levle memory using paging", SST::MemHierarchy::SimpleMemBackend)
     
     SST_ELI_DOCUMENT_PARAMS( DRAMSIM_ELI_PARAMS,
             /* Own parameters */

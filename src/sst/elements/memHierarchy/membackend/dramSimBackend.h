@@ -38,7 +38,7 @@ class DRAMSimMemory : public SimpleMemBackend {
 public:
 /* Element Library Info */
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(DRAMSimMemory, "memHierarchy", "dramsim", SST_ELI_ELEMENT_VERSION(1,0,0),
-            "DRAMSim-driven memory timings", SST::MemHierarchy::MemBackend)
+            "DRAMSim-driven memory timings", SST::MemHierarchy::SimpleMemBackend)
     
 #define DRAMSIM_ELI_PARAMS MEMBACKEND_ELI_PARAMS,\
             /* Own parameters */\

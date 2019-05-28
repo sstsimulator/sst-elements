@@ -114,7 +114,7 @@ class GOBLINHMCSimBackend : public ExtMemBackend {
 
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(GOBLINHMCSimBackend, "memHierarchy", "goblinHMCSim", SST_ELI_ELEMENT_VERSION(1,0,0), "GOBLIN HMC Simulator driven memory timings", SST::MemHierarchy::MemBackend)
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(GOBLINHMCSimBackend, "memHierarchy", "goblinHMCSim", SST_ELI_ELEMENT_VERSION(1,0,0), "GOBLIN HMC Simulator driven memory timings", SST::MemHierarchy::ExtMemBackend)
 
     SST_ELI_DOCUMENT_PARAMS( MEMBACKEND_ELI_PARAMS,
             /* Own parameters */

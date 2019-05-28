@@ -44,7 +44,7 @@ namespace MemHierarchy {
 class HBMDRAMSimMemory : public SimpleMemBackend {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(HBMDRAMSimMemory, "memHierarchy", "HBMDRAMSimMemory", SST_ELI_ELEMENT_VERSION(1,0,0), "HBM DRAMSim-driven memory timings", SST::MemHierarchy::MemBackend)
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(HBMDRAMSimMemory, "memHierarchy", "HBMDRAMSimMemory", SST_ELI_ELEMENT_VERSION(1,0,0), "HBM DRAMSim-driven memory timings", SST::MemHierarchy::SimpleMemBackend)
 
 #define HBMDRAMSIMMEMORY_ELI_PARAMS MEMBACKEND_ELI_PARAMS,\
             /* Own parameters */\

@@ -31,7 +31,7 @@ class TimingDRAM : public SimpleMemBackend {
 public:
 /* Element Library Info */
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(TimingDRAM, "memHierarchy", "timingDRAM", SST_ELI_ELEMENT_VERSION(1,0,0),
-            "Moderately-detailed timing model for DRAM", SST::MemHierarchy::MemBackend)
+            "Moderately-detailed timing model for DRAM", SST::MemHierarchy::SimpleMemBackend)
 
     SST_ELI_DOCUMENT_PARAMS( MEMBACKEND_ELI_PARAMS,
             /* Own parameters */
