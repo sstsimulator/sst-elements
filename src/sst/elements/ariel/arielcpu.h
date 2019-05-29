@@ -116,7 +116,7 @@ class ArielCPU : public SST::Component {
     private:
         SST::Output* output;
         ArielMemoryManager* memmgr;
-        ArielCore** cpu_cores;
+        std::vector<ArielCore*> cpu_cores;
         std::vector<Interfaces::SimpleMem*> cpu_to_cache_links;
         pid_t child_pid;
 

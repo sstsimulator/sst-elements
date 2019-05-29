@@ -341,46 +341,43 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     output->verbose(CALL_INFO, 1, 0, "Creating core to cache links...\n");
 
     output->verbose(CALL_INFO, 1, 0, "Creating processor cores and cache links...\n");
-    cpu_cores = (ArielCore**) malloc( sizeof(ArielCore*) * core_count );
 
     output->verbose(CALL_INFO, 1, 0, "Configuring cores and cache links...\n");
-    char* link_buffer = (char*) malloc(sizeof(char) * 256);
     for(uint32_t i = 0; i < core_count; ++i) {
-        sprintf(link_buffer, "cache_link_%" PRIu32, i);
 
-        cpu_cores[i] = loadComponentExtension<ArielCore>(tunnel, i, maxPendingTransCore, output,
-                maxIssuesPerCycle, maxCoreQueueLen, cacheLineSize, memmgr, perform_checks, params);
-
-        // Find all the components loaded into the "memory" slot
-        // Make sure all cores have a loaded subcomponent in their slot
-        SubComponentSlotInfo* mem = getSubComponentSlotInfo("memory");
-        if (mem) {
-            if (!mem->isAllPopulated())
-                output->fatal(CALL_INFO, -1, "%s, Error: loading 'memory' subcomponents. All subcomponent slots from 0 to core_count must be populated. Check your input config for non-populated slots\n", getName().c_str());
-    
-            if (mem->getMaxPopulatedSlotNumber() != core_count)
-                output->fatal(CALL_INFO, -1, "%s, Error: Loading 'memory' subcomponents and the number of subcomponents does not match the number of cores. Cores: %u, SubComps: %u. Check your input config.\n",
-                        getName().c_str(), core_count, mem->getMaxPopulatedSlotNumber());
+        cpu_cores.push_back(loadComponentExtension<ArielCore>(tunnel, i, maxPendingTransCore, output,
+                maxIssuesPerCycle, maxCoreQueueLen, cacheLineSize, memmgr, perform_checks, params));
         
-            for (int i = 0; i < core_count; i++)
-                cpu_to_cache_links.push_back(mem->create<Interfaces::SimpleMem>(i, ComponentInfo::INSERT_STATS, timeconverter, new SimpleMem::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleEvent)));
-        } else {
-        // Load from here not the user one; let the subcomponent have our port (cache_link)
-            for (int i = 0; i < core_count; i++) {
-                Params par;
-                par.insert("port", "cache_link_" + std::to_string(i));
-                cpu_to_cache_links.push_back(loadAnonymousSubComponent<Interfaces::SimpleMem>("memHierarchy.memInterface", "memory", i, 
-                            ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, par, timeconverter, new SimpleMem::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleEvent)));
-            }
-        }
-
         // Set max number of instructions
         cpu_cores[i]->setMaxInsts(max_insts);
-
-        cpu_cores[i]->setCacheLink(cpu_to_cache_links[i]);
+    }
+    
+    // Find all the components loaded into the "memory" slot
+    // Make sure all cores have a loaded subcomponent in their slot
+    SubComponentSlotInfo* mem = getSubComponentSlotInfo("memory");
+    if (mem) {
+        if (!mem->isAllPopulated())
+            output->fatal(CALL_INFO, -1, "%s, Error: loading 'memory' subcomponents. All subcomponent slots from 0 to core_count must be populated. Check your input config for non-populated slots\n", getName().c_str());
+    
+        if (mem->getMaxPopulatedSlotNumber() != core_count-1)
+            output->fatal(CALL_INFO, -1, "%s, Error: Loading 'memory' subcomponents and the number of subcomponents does not match the number of cores. Cores: %u, SubComps: %u. Check your input config.\n",
+                    getName().c_str(), core_count, mem->getMaxPopulatedSlotNumber());
+        
+        for (int i = 0; i < core_count; i++) {
+            cpu_to_cache_links.push_back(mem->create<Interfaces::SimpleMem>(i, ComponentInfo::INSERT_STATS, timeconverter, new SimpleMem::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleEvent)));
+            cpu_cores[i]->setCacheLink(cpu_to_cache_links[i]);
+        }
+    } else {
+    // Load from here not the user one; let the subcomponent have our port (cache_link)
+        for (int i = 0; i < core_count; i++) {
+            Params par;
+            par.insert("port", "cache_link_" + std::to_string(i));
+            cpu_to_cache_links.push_back(loadAnonymousSubComponent<Interfaces::SimpleMem>("memHierarchy.memInterface", "memory", i, 
+                        ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, par, timeconverter, new SimpleMem::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleEvent)));
+            cpu_cores[i]->setCacheLink(cpu_to_cache_links[i]);
+        }
     }
 
-    free(link_buffer);
 
     // Register us as an important component
     registerAsPrimaryComponent();

@@ -164,7 +164,7 @@ link_n0_bus_l2cache.connect( (comp_n0_bus, "low_network_0", "10000ps"), (comp_n0
 link_n0_l2cache_l3cache = sst.Link("link_n0_l2cache_l3cache")
 link_n0_l2cache_l3cache.connect( (comp_n0_l2cache, "low_network_0", "10000ps"), (comp_n2_bus, "high_network_0", "10000ps") )
 link_cpu2_l1cache_link = sst.Link("link_cpu2_l1cache_link")
-link_cpu2_l1cache_link.connect( (iface, "port", "1000ps"), (comp_c2_l1cache, "high_network_0", "1000ps") )
+link_cpu2_l1cache_link.connect( (iface2, "port", "1000ps"), (comp_c2_l1cache, "high_network_0", "1000ps") )
 link_c2_l1cache_l2cache_link = sst.Link("link_c2_l1cache_l2cache_link")
 link_c2_l1cache_l2cache_link.connect( (comp_c2_l1cache, "low_network_0", "10000ps"), (comp_n1_bus, "high_network_0", "10000ps") )
 link_cpu3_l1cache_link = sst.Link("link_cpu3_l1cache_link")

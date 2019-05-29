@@ -25,8 +25,6 @@
 
 #include "bus.h"
 
-#include <csignal>
-
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>
 #include <sst/core/interfaces/stringEvent.h>
@@ -37,10 +35,6 @@ using namespace std;
 using namespace SST;
 using namespace SST::MemHierarchy;
 
-
-// Debug macros
-#define is_debug_addr(addr) (DEBUG_ADDR.empty() || DEBUG_ADDR.find(addr) != DEBUG_ADDR.end())
-#define is_debug_event(ev) (DEBUG_ADDR.empty() || ev->doDebug(DEBUG_ADDR))
 
 const Bus::key_t Bus::ANY_KEY = std::pair<uint64_t, int>((uint64_t)-1, -1);
 

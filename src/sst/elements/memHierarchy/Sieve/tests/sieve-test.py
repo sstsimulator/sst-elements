@@ -31,12 +31,18 @@ ariel.addParams({
     "pipetimeout" : 0,
     "corecount" : corecount,
     "arielmode" : 1,
-    "memmgr.pagecount0" : num_pages,
-    "memmgr.pagesize0" : pageSize * 1024,
     "arielstack" : 1,
     "arielinterceptcalls" : 1,
     "launchparamcount" : 1,
     "launchparam0" : "-ifeellucky"
+})
+
+memmgr = ariel.setSubComponent("memmgr", "memHierarchy.MemoryManagerSieve")
+pagemgr = memmgr.setSubComponent("memmgr", "ariel.MemoryManagerSimple")
+pagemgr.addParams({
+    "verbose" : 1,
+    "pagecount0" : num_pages,
+    "pagesize0" : pageSize * 1024,
 })
 
 sieveId = sst.Component("sieve", "memHierarchy.Sieve")
@@ -51,7 +57,7 @@ for x in range(corecount):
     arielL1Link = sst.Link("cpu_cache_link_%d"%x)
     arielL1Link.connect((ariel, "cache_link_%d"%x, busLat), (sieveId, "cpu_link_%d"%x, busLat))
     arielALink = sst.Link("cpu_alloc_link_%d"%x)
-    arielALink.connect((ariel, "alloc_link_%d"%x, busLat), (sieveId, "alloc_link_%d"%x, busLat))
+    arielALink.connect((memmgr, "alloc_link_%d"%x, busLat), (sieveId, "alloc_link_%d"%x, busLat))
 
 statoutputs = dict([(1,"sst.statOutputConsole"), (2,"sst.statOutputCSV"), (3,"sst.statOutputTXT")])
 
