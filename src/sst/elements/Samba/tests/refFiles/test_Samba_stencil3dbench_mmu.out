@@ -1,23 +1,20 @@
 0:cpu:RequestGenCPU[RequestGenCPU:42]: Configured CPU to allow 16 maximum Load requests to be memory to be outstanding.
 0:cpu:RequestGenCPU[RequestGenCPU:44]: Configured CPU to allow 16 maximum Store requests to be memory to be outstanding.
 0:cpu:RequestGenCPU[RequestGenCPU:46]: Configured CPU to allow 16 maximum Custom requests to be memory to be outstanding.
-0:cpu:RequestGenCPU[RequestGenCPU:50]: Memory interface to be loaded is: memHierarchy.memInterface
-0:cpu:RequestGenCPU[RequestGenCPU:61]: Loaded memory interface successfully.
-0:cpu:RequestGenCPU[RequestGenCPU:64]: Initializing memory interface...
-0:cpu:RequestGenCPU[RequestGenCPU:69]: Loaded memory initialize routine returned successfully.
-0:cpu:RequestGenCPU[RequestGenCPU:77]: Loaded memory interface successfully.
-0:cpu:RequestGenCPU[RequestGenCPU:84]: CPU clock configured for 2GHz
-0:cpu:RequestGenCPU[RequestGenCPU:118]: Request generator to be loaded is: miranda.Stencil3DBenchGenerator
-0:cpu:RequestGenCPU[RequestGenCPU:124]: Generator loaded successfully.
-0:cpu:RequestGenCPU[RequestGenCPU:165]: Miranda CPU Configuration:
-0:cpu:RequestGenCPU[RequestGenCPU:166]: - Max requests per cycle:         2
-0:cpu:RequestGenCPU[RequestGenCPU:167]: - Max reorder lookups             16
-0:cpu:RequestGenCPU[RequestGenCPU:168]: - Clock:                          2GHz
-0:cpu:RequestGenCPU[RequestGenCPU:169]: - Cache line size:                64 bytes
-0:cpu:RequestGenCPU[RequestGenCPU:170]: - Max Load requests pending:      16
-0:cpu:RequestGenCPU[RequestGenCPU:171]: - Max Store requests pending:     16
-0:cpu:RequestGenCPU[RequestGenCPU:172]: - Max Custom requests pending:     16
-0:cpu:RequestGenCPU[RequestGenCPU:173]: Configuration completed.
+0:cpu:RequestGenCPU[RequestGenCPU:53]: CPU clock configured for 2GHz
+0:cpu:RequestGenCPU[RequestGenCPU:58]: Memory interface to be loaded is: memHierarchy.memInterface
+0:cpu:RequestGenCPU[RequestGenCPU:71]: Loaded memory interface successfully.
+0:cpu:RequestGenCPU[RequestGenCPU:107]: Request generator to be loaded is: miranda.Stencil3DBenchGenerator
+0:cpu:RequestGenCPU[RequestGenCPU:113]: Generator loaded successfully.
+0:cpu:RequestGenCPU[RequestGenCPU:154]: Miranda CPU Configuration:
+0:cpu:RequestGenCPU[RequestGenCPU:155]: - Max requests per cycle:         2
+0:cpu:RequestGenCPU[RequestGenCPU:156]: - Max reorder lookups             16
+0:cpu:RequestGenCPU[RequestGenCPU:157]: - Clock:                          2GHz
+0:cpu:RequestGenCPU[RequestGenCPU:158]: - Cache line size:                64 bytes
+0:cpu:RequestGenCPU[RequestGenCPU:159]: - Max Load requests pending:      16
+0:cpu:RequestGenCPU[RequestGenCPU:160]: - Max Store requests pending:     16
+0:cpu:RequestGenCPU[RequestGenCPU:161]: - Max Custom requests pending:     16
+0:cpu:RequestGenCPU[RequestGenCPU:162]: Configuration completed.
 Initialized with 1 cores
 Before initialization 
 Assigning the PTW correctly

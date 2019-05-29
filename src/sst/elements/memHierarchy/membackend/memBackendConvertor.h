@@ -182,11 +182,6 @@ class MemBackendConvertor : public SubComponent {
             delete m_requestQueue.front();
             m_requestQueue.pop_front();
         }
-
-        PendingRequests::iterator iter = m_pendingRequests.begin();
-        for ( ; iter != m_pendingRequests.end(); ++ iter ) {
-            delete iter->second;
-        }
     }
 
     void doResponse( ReqId reqId, uint32_t flags = 0 );
