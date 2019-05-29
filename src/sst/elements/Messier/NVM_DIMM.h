@@ -21,12 +21,12 @@
 
 
 #include <sst_config.h>
-#include <sst/core/component.h>
+#include <sst/core/componentExtension.h>
 #include <sst/core/timeConverter.h>
 #include <sst/core/link.h>
 #include <sst/elements/memHierarchy/memEvent.h>
-#include<map>
-#include<list>
+#include <map>
+#include <list>
 #include "Rank.h"
 #include "WriteBuffer.h"
 #include "NVM_Params.h"
@@ -40,7 +40,7 @@ using namespace SST::MessierComponent;
 namespace SST { namespace MessierComponent{
 
 	// This class structure represents NVM-Based DIMM, including the NVM-DIMM controller
-	class NVM_DIMM
+	class NVM_DIMM : public ComponentExtension
 	{ 
 
 		bool enabled;
@@ -63,11 +63,18 @@ namespace SST { namespace MessierComponent{
 		// This is used to quickly track the number of reads complete at a specific cycle to remove them from the currently executed reads
 		std::map<long long int, int> READS_COMPLETE;
 
+                // Deterministic sort function for NVM_Request pointers
+                struct NVMReqPtrCompare {
+                    bool operator()(NVM_Request* ptrA, NVM_Request* ptrB) {
+                        return (ptrA->req_ID < ptrB->req_ID);
+                    }
+                };
+
 		// This is the queue of the ready requests 
-		std::map<NVM_Request *, long long int> ready_trans;
+		std::map<NVM_Request *, long long int, NVMReqPtrCompare> ready_trans;
 
 		// This tracks if a request is expected to be ready at the PCM
-		std::map<NVM_Request *, long long int> ready_at_NVM;
+		std::map<NVM_Request *, long long int, NVMReqPtrCompare> ready_at_NVM;
 
 		// This determines the completed requests and when they are completed
 		std::list<NVM_Request *> completed_requests;
@@ -96,16 +103,13 @@ namespace SST { namespace MessierComponent{
 
 		std::map<long long int, MemReqEvent *> NVM_EVENT_MAP;
 
-		std::map<NVM_Request *, long long int> TIME_STAMP;
+		std::map<NVM_Request *, long long int, NVMReqPtrCompare> TIME_STAMP;
 
 		// This keeps track of the squashed requests, as they hit in the cache
 		std::map<long long int, int> SQUASHED;
 
 		// This structure prevents returning data before checking the cache, to avoid any inconsistency issues
 		std::map<long long int, int> HOLD;
-
-		// This keeps track of the owner object
-		SST::Component * Owner;
 
 		// This defines the internal cache of the NVM-based DIMM
 		NVM_CACHE * cache;
@@ -117,7 +121,7 @@ namespace SST { namespace MessierComponent{
 		public: 
 
 		// This is the constructor for the NVM-based DIMM
-		NVM_DIMM(SST::Component * owner, NVM_PARAMS par); 
+		NVM_DIMM(SST::ComponentId_t id, NVM_PARAMS par); 
 
 		// This is the clock of the near memory controller
 		bool tick();
