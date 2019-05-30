@@ -29,7 +29,6 @@ EmberGenerator::EmberGenerator( Component* owner, Params& params,
 	EmberEngine* ee = static_cast<EmberEngine*>(owner);
     m_output = ee->getOutput();
     m_nodePerf = ee->getNodePerf();
-    m_api = ee->getAPI( params.find<std::string>("_apiName") );
     m_primary = params.find<bool>("primary",true);
 
     m_detailedCompute = ee->getDetailedCompute();

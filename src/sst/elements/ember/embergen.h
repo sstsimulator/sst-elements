@@ -34,7 +34,12 @@
 #include "emberconstdistrib.h"
 #include "embercomputeev.h"
 #include "emberdetailedcomputeev.h"
+#include "embergettimeev.h"
 #include "libs/emberLib.h"
+
+#define ENGINE_MASK (1<<0) 
+#define MOTIF_MASK (1<<1) 
+// #define EVENT_MASK (1<<2)  defined in emberevent.h"
 
 namespace SST {
 namespace Ember {
@@ -86,32 +91,13 @@ class EmberGenerator : public SubComponent {
                const char* format, ...)    const
                   __attribute__ ((format (printf, 6, 7))) ;
 
-    void setVerbosePrefix( int _rank = -1 ) {
-        if ( _rank == -1 ) {
-            _rank = rank(); 
-        }
+    void setVerbosePrefix( int rank = -1 ) {
         m_verbosePrefix.str(std::string());
-        m_verbosePrefix << "@t:" << getJobId() << ":" << _rank <<
+        m_verbosePrefix << "@t:" << getJobId() << ":" << rank <<
                     ":EmberEngine:" << getMotifName() << ":@p:@l: ";
     }
 
     std::string getMotifName() { return m_motifName; }
-    void setRank( int rank ) { m_api->setRank( rank ); }
-    void setSize( int size ) { m_api->setSize( size ); }
-    int rank() { 
-        if ( m_api ) {
-            return m_api->getRank(); 
-        } else {
-            return -1;
-        }
-    }
-    int size() { 
-        if ( m_api ) {
-            return m_api->getSize(); 
-        } else { 
-            return -1;
-        }
-    }
     int getJobId()    { return m_jobId; }
     int getMotifNum() { return m_motifNum; }
 
@@ -119,25 +105,21 @@ class EmberGenerator : public SubComponent {
 
     virtual void* memAlloc( size_t );
     virtual void memFree( void* );
-    virtual void* memAddr( void * addr ) {
-        return  m_dataMode == Backing ? addr : NULL;
-    }
+	virtual void memSetBacked() { m_dataMode = Backing; }
     bool haveDetailed() { return m_detailedCompute; }
 
-    Hermes::Interface*  	m_api;
     Thornhill::DetailedCompute*   m_detailedCompute;
     Thornhill::MemoryHeapLink*    m_memHeapLink;
 
+	inline void enQ_getTime( Queue&, uint64_t* time );
     inline void enQ_memAlloc( Queue&, Hermes::MemAddr* addr, size_t length  );
     inline void enQ_compute( Queue&, uint64_t nanoSecondDelay );
     inline void enQ_compute( Queue& q, std::function<uint64_t()> func );
     inline void enQ_detailedCompute( Queue& q, std::string, Params&, std::function<int()> func );
 
-    enum { NoBacking, Backing, BackingZeroed  } m_dataMode; 
-
   private:
-
     Output* 	        	m_output;
+    enum { NoBacking, Backing, BackingZeroed  } m_dataMode; 
     std::string				m_motifName;
     std::ostringstream      m_verbosePrefix;
     Hermes::NodePerf*       m_nodePerf;
@@ -146,6 +128,10 @@ class EmberGenerator : public SubComponent {
     bool                    m_primary;
     EmberComputeDistribution*           m_computeDistrib;
 };
+
+void EmberGenerator::enQ_getTime( Queue& q, uint64_t* time ) {
+	q.push( new EmberGetTimeEvent( &getOutput(), time ) );
+}
 
 void EmberGenerator::enQ_compute( Queue& q, uint64_t delay )
 {
