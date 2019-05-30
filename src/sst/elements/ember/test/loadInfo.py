@@ -12,6 +12,7 @@ class PartInfo:
 		self.numCores = int(numCores)
 		self.detailedModel = detailedModel
 		self.nicParams["num_vNics"] = numCores
+		self.nicParams["numCores"] = numCores
 
 class LoadInfo:
 
