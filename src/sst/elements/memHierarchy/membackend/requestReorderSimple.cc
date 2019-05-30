@@ -22,8 +22,10 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 
 /*------------------------------- Simple Backend ------------------------------- */
-RequestReorderSimple::RequestReorderSimple(Component *comp, Params &params) : SimpleMemBackend(comp, params){
+RequestReorderSimple::RequestReorderSimple(Component *comp, Params &params) : SimpleMemBackend(comp, params){ build(params); }
+RequestReorderSimple::RequestReorderSimple(ComponentId_t id, Params &params) : SimpleMemBackend(id, params){ build(params); }
     
+void RequestReorderSimple::build(Params& params) {
     fixupParams( params, "clock", "backend.clock" );
 
     reqsPerCycle = params.find<int>("max_issue_per_cycle", -1);
@@ -33,7 +35,8 @@ RequestReorderSimple::RequestReorderSimple(Component *comp, Params &params) : Si
     std::string backendName = params.find<std::string>("backend", "memHierarchy.simpleDRAM");
     Params backendParams = params.find_prefix_params("backend.");
     backendParams.insert("mem_size", params.find<std::string>("mem_size"));
-    backend = dynamic_cast<SimpleMemBackend*>(loadSubComponent(backendName, backendParams));
+    backend = loadAnonymousSubComponent<SimpleMemBackend>(backendName, "backend", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, backendParams);
+    
     using std::placeholders::_1;
     backend->setResponseHandler( std::bind( &RequestReorderSimple::handleMemResponse, this, _1 )  );
 }

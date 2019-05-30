@@ -28,7 +28,7 @@
 
 
 #include "sst/elements/memHierarchy/util.h"
-#include "sst/elements/ariel/arielalloctrackev.h"
+#include "alloctrackev.h"
 
 
 namespace SST { namespace MemHierarchy {
@@ -43,8 +43,8 @@ public:
             "Used to connect a processor to multiple sieves (e.g., for private/semi-private last-level cache modeling)", COMPONENT_CATEGORY_MEMORY)
 
     SST_ELI_DOCUMENT_PORTS(
-            {"cpu_alloc_link_%(port)d", "Link to CPU's allocation port", {"ariel.arielAllocTrackEvent"}},
-            {"sieve_alloc_link_%(port)d", "Link to sieve's allocation port", {"ariel.arielAllocTrackEvent"}} )
+            {"cpu_alloc_link_%(port)d", "Link to CPU's allocation port", {"memHierarchy.AllocTrackEvent"}},
+            {"sieve_alloc_link_%(port)d", "Link to sieve's allocation port", {"memHierarchy.AllocTrackEvent"}} )
 
 /* Begin class definiton */
     /** Constructor */

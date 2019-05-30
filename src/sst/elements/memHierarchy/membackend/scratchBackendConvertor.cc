@@ -31,19 +31,24 @@ using namespace SST::MemHierarchy;
 
 ScratchBackendConvertor::ScratchBackendConvertor(Component *comp, Params& params ) : 
     SubComponent(comp), m_reqId(0)
-{
+{ build(params); }
+ScratchBackendConvertor::ScratchBackendConvertor(ComponentId_t id, Params& params ) : 
+    SubComponent(id), m_reqId(0)
+{ build(params); }
+
+void ScratchBackendConvertor::build(Params& params) {
     m_dbg.init("", 
             params.find<uint32_t>("debug_level", 0),
             params.find<uint32_t>("debug_mask", 0),
             (Output::output_location_t)params.find<int>("debug_location", 0 ));
 
-    string backendName  = params.find<std::string>("backend", "memHierarchy.simpleMem");
-
-
-    // extract backend parameters for memH.
-    Params backendParams = params.find_prefix_params("backend.");
-
-    m_backend = dynamic_cast<MemBackend*>( comp->loadSubComponent( backendName, comp, backendParams ) );
+    m_backend = loadUserSubComponent<MemBackend>("backend");
+    if (!m_backend) {
+        // extract backend parameters for memH.
+        string backendName  = params.find<std::string>("backend", "memHierarchy.simpleMem");
+        Params backendParams = params.find_prefix_params("backend.");
+        m_backend = loadAnonymousSubComponent<MemBackend>(backendName, "backend", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, backendParams);
+    }
 
     using std::placeholders::_1;
     m_backend->setGetRequestorHandler( std::bind( &ScratchBackendConvertor::getRequestor, this, _1 )  );
@@ -66,6 +71,10 @@ ScratchBackendConvertor::ScratchBackendConvertor(Component *comp, Params& params
     stat_GetXLatency        = registerStatistic<uint64_t>("latency_GetX");
     stat_PutMLatency        = registerStatistic<uint64_t>("latency_PutM");
 
+}
+
+void ScratchBackendConvertor::setCallbackHandler(std::function<void(Event::id_type)> respCB) {
+    m_notifyResponse = respCB;
 }
 
 void ScratchBackendConvertor::handleMemEvent(  MemEvent * ev ) {
@@ -120,7 +129,7 @@ bool ScratchBackendConvertor::doResponse( ReqId reqId, SST::Event::id_type & res
     bool sendResponse = false;
 
     if ( m_pendingRequests.find( id ) == m_pendingRequests.end() ) {
-        m_dbg.fatal(CALL_INFO, -1, "%s, memory request not found\n", parent->getName().c_str());
+        m_dbg.fatal(CALL_INFO, -1, "%s, memory request not found\n", getName().c_str());
     }
 
     MemReq* req = m_pendingRequests[id];
@@ -149,7 +158,7 @@ bool ScratchBackendConvertor::doResponse( ReqId reqId, SST::Event::id_type & res
 
 void ScratchBackendConvertor::notifyResponse( SST::Event::id_type id) {
 
-    static_cast<Scratchpad*>(parent)->handleScratchResponse( id );
+    m_notifyResponse(id);
 
 }
 

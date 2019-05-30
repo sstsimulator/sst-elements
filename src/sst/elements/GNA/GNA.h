@@ -57,6 +57,8 @@ public:
 
     SST_ELI_DOCUMENT_PORTS( {"mem_link", "Connection to memory", { "memHierarchy.MemEventBase" } } )
 
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( {"memory", "Interface to memory (e.g., caches)", "SST::Interfaces::SimpleMem"} )
+
     /* Begin class definiton */
     GNA(SST::ComponentId_t id, SST::Params& params);
     void finish() {

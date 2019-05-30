@@ -44,6 +44,10 @@ class MemNICBase : public MemLinkBase {
         { "destinations",                "(comma-separated list of ints) List of group IDs that serve as destinations for this component. If not specified, defaults to 'group + 1'.", "group+1"}
 
         MemNICBase(Component * comp, Params &params);
+        MemNICBase(ComponentId_t id, Params &params);
+    private:
+        void build(Params &params);
+    public:
         ~MemNICBase() { }
 
         uint64_t lookupNetworkAddress(const std::string &dst) const;
@@ -164,8 +168,8 @@ public:
         { "port",                        "(string) Set by parent component. Name of port this NIC sits on.", ""}
 
     
-    SST_ELI_REGISTER_SUBCOMPONENT(MemNIC, "memHierarchy", "MemNIC", SST_ELI_ELEMENT_VERSION(1,0,0),
-            "Memory-oriented network interface", "SST::MemLinkBase")
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(MemNIC, "memHierarchy", "MemNIC", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Memory-oriented network interface", SST::MemHierarchy::MemLinkBase)
 
     SST_ELI_DOCUMENT_PARAMS( MEMNIC_ELI_PARAMS )
 
@@ -174,7 +178,11 @@ public:
 /* Begin class definition */    
     /* Constructor */
     MemNIC(Component * comp, Params &params);
-    
+    MemNIC(ComponentId_t id, Params &params);
+private:
+    void build(Params &params);
+public:
+
     /* Destructor */
     ~MemNIC() { }
 
@@ -199,7 +207,7 @@ public:
     void emergencyShutdownDebug(Output &out);
 
 private:
-
+    
     // Other parameters
     size_t packetHeaderBytes;
 

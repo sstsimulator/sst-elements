@@ -112,6 +112,10 @@ public:
             {"responses_sent_GetSResp",         "Number of GetSResp (data response to GetS or GetSX) responses sent to LLCs",       "responses",    1},
             {"responses_sent_GetXResp",         "Number of GetXResp (data response to GetX) responses sent to LLCs",                "responses",    1},
             {"MSHR_occupancy",                  "Number of events in MSHR each cycle",                                  "events",       1} )
+            
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+            {"cpulink", "CPU-side link manager, for single-link directories, use this one only", "SST::MemHierarchy::MemLinkBase"},
+            {"memlink", "Memory-side link manager", "SST::MemHierarchy::MemLinkBase"} )
 
 /* Begin class definition */
 private:

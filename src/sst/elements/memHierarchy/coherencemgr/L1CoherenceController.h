@@ -27,8 +27,8 @@ namespace SST { namespace MemHierarchy {
 class L1CoherenceController : public CoherenceController {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT(L1CoherenceController, "memHierarchy", "L1CoherenceController", SST_ELI_ELEMENT_VERSION(1,0,0), 
-            "Implements MESI or MSI coherence for an L1 cache", "SST::MemHierarchy::CoherenceController")
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(L1CoherenceController, "memHierarchy", "L1CoherenceController", SST_ELI_ELEMENT_VERSION(1,0,0), 
+            "Implements MESI or MSI coherence for an L1 cache", SST::MemHierarchy::CoherenceController)
 
     SST_ELI_DOCUMENT_STATISTICS(
         /* Event sends */
@@ -146,7 +146,9 @@ public:
 
 /* Class definition */
     /** Constructor for L1CoherenceController */
-    L1CoherenceController(Component* comp, Params& params) : CoherenceController(comp, params) {
+    L1CoherenceController(Component* comp, Params& params) : CoherenceController(comp, params) { }
+    L1CoherenceController(ComponentId_t id, Params& params, Params& ownerParams) : CoherenceController(id, params, ownerParams) {
+        params.insert(ownerParams);
         debug->debug(_INFO_,"--------------------------- Initializing [L1Controller] ... \n\n");
         
         snoopL1Invs_ = params.find<bool>("snoop_l1_invalidations", false);

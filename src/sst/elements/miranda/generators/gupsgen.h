@@ -31,19 +31,21 @@ namespace Miranda {
 class GUPSGenerator : public RequestGenerator {
 
 public:
+	GUPSGenerator( ComponentId_t id, Params& params );
 	GUPSGenerator( Component* owner, Params& params );
+        void build(Params &params);
 	~GUPSGenerator();
 	void generate(MirandaRequestQueue<GeneratorRequest*>* q);
 	bool isFinished();
 	void completed();
 
-	SST_ELI_REGISTER_SUBCOMPONENT(
+	SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
                	GUPSGenerator,
                	"miranda",
                 "GUPSGenerator",
                	SST_ELI_ELEMENT_VERSION(1,0,0),
 		"Creates a random stream of accesses to read-modify-write",
-                "SST::Miranda::RequestGenerator"
+                SST::Miranda::RequestGenerator
        	)
 
         SST_ELI_DOCUMENT_PARAMS(

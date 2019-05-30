@@ -19,9 +19,9 @@ ariel.addParams({
         "arielmode" : "1",
         "launchparamcount" : 1,
         "launchparam0" : "-ifeellucky",
-        "memmgr.memorylevels" : "1",
-        "memmgr.defaultlevel" : "0"
         })
+
+memmgr = ariel.setSubComponent("memmgr", "ariel.MemoryManagerSimple")
 
 corecount = 1;
 

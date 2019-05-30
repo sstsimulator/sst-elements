@@ -154,8 +154,15 @@ const HMCPacket __PACKETS[] = {
   { "EOL",        MD_RD,      0,    0,    0,  false}
 };
 
-GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : ExtMemBackend(comp, params),
-	owner(comp) {
+GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : ExtMemBackend(comp, params) {
+    build(params); 
+}
+
+GOBLINHMCSimBackend::GOBLINHMCSimBackend(ComponentId_t id, Params& params) : ExtMemBackend(id, params) {
+    build(params); 
+}
+
+void GOBLINHMCSimBackend::build(Params& params) {
 
 	int verbose = params.find<int>("verbose", 0);
 
@@ -735,7 +742,7 @@ bool GOBLINHMCSimBackend::issueMappedRequest(ReqId reqId, Addr addr, bool isWrit
 
     // Create the request entry which we keep in a table
     HMCSimBackEndReq* reqEntry = new HMCSimBackEndReq(reqId, addr,
-                                                      owner->getCurrentSimTimeNano(),
+                                                      getCurrentSimTimeNano(),
                                                       !isPosted);
 
     // Add the tag and request into our table of pending
@@ -867,7 +874,7 @@ bool GOBLINHMCSimBackend::issueCustomRequest(ReqId reqId, Addr addr, uint32_t cm
 
     // Create the request entry which we keep in a table
     HMCSimBackEndReq* reqEntry = new HMCSimBackEndReq(reqId, addr,
-                                                      owner->getCurrentSimTimeNano(),
+                                                      getCurrentSimTimeNano(),
                                                       !isPosted);
 
     // Add the tag and request into our table of pending
@@ -1095,7 +1102,7 @@ bool GOBLINHMCSimBackend::issueRequest(ReqId reqId, Addr addr, bool isWrite,
 
 		// Create the request entry which we keep in a table
 		HMCSimBackEndReq* reqEntry = new HMCSimBackEndReq(reqId, addr,
-                                                                  owner->getCurrentSimTimeNano(),
+                                                                  getCurrentSimTimeNano(),
                                                                   !isPosted);
 
 		// Add the tag and request into our table of pending
@@ -1257,7 +1264,7 @@ void GOBLINHMCSimBackend::processResponses() {
 
 						output->verbose(CALL_INFO, 4, 0, "Matched tag %" PRIu16 " to request for address: 0x%" PRIx64 ", processing time: %" PRIu64 "ns\n",
 							resp_tag, matchedReq->getAddr(),
-							owner->getCurrentSimTimeNano() - matchedReq->getStartTime());
+							getCurrentSimTimeNano() - matchedReq->getStartTime());
 
 						// Pass back to the controller to be handled, HMC sim is finished with it
 						handleMemResponse(matchedReq->getRequest(),flags);
@@ -1324,8 +1331,6 @@ GOBLINHMCSimBackend::~GOBLINHMCSimBackend() {
           HMCCMCConfig *c = *itr;
           delete c;
         }
-
-	delete output;
 }
 
 void GOBLINHMCSimBackend::registerStatistics() {

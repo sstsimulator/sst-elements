@@ -26,8 +26,8 @@ namespace MemHierarchy {
 class RequestReorderSimple : public SimpleMemBackend {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT(RequestReorderSimple, "memHierarchy", "reorderSimple", SST_ELI_ELEMENT_VERSION(1,0,0),
-            "Simple request re-orderer, issues the first N requests that are accepted by the backend", "SST::MemHierarchy::MemBackend")
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(RequestReorderSimple, "memHierarchy", "reorderSimple", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Simple request re-orderer, issues the first N requests that are accepted by the backend", SST::MemHierarchy::SimpleMemBackend)
     
     SST_ELI_DOCUMENT_PARAMS( MEMBACKEND_ELI_PARAMS,
             /* Own parameters */
@@ -35,10 +35,13 @@ public:
             {"max_issue_per_cycle", "Maximum number of requests to issue per cycle. 0 or negative is unlimited.", "-1"},
             {"search_window_size",  "Maximum number of requests to search each cycle. 0 or negative is unlimited.", "-1"},
             {"backend",             "Backend memory system", "memHierarchy.simpleDRAM"} )
+            
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS({"backend", "Backend memory model", "SST::MemHierarchy::SimpleMemBackend"} )
 
 /* Begin class definition */
     RequestReorderSimple();
     RequestReorderSimple(Component *comp, Params &params);
+    RequestReorderSimple(ComponentId_t id, Params &params);
 	virtual bool issueRequest( ReqId, Addr, bool isWrite, unsigned numBytes );
     void setup();
     void finish();
@@ -46,6 +49,8 @@ public:
     virtual const std::string& getClockFreq() { return backend->getClockFreq(); }
 
 private:
+    void build(Params& params);
+
     void handleMemReponse( ReqId id ) {
         SimpleMemBackend::handleMemResponse( id );
     }

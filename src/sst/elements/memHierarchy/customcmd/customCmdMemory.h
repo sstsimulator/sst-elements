@@ -78,6 +78,8 @@ class CustomCmdMemHandler : public SST::SubComponent {
 
 public:
 
+    SST_ELI_REGISTER_SUBCOMPONENT_API(SST::MemHierarchy::CustomCmdMemHandler, std::function<void(Addr,size_t,std::vector<uint8_t>&)>, std::function<void(Addr,std::vector<uint8_t>*)>)
+
     class MemEventInfo {
     public:
         std::set<Addr> addrs;   /* Cache line address(es) accessed by this instruction */
@@ -92,7 +94,12 @@ public:
 
 
     /* Constructor */
-    CustomCmdMemHandler(Component * comp, Params &params) : SubComponent(comp) {
+    CustomCmdMemHandler(Component * comp, Params &params) : SubComponent(comp) { 
+        dbg.init("", 1, 0, Output::STDOUT);
+        dbg.fatal(CALL_INFO, -1, "%s, Error: CustomCmdMemHandlers do not support loading via legacy loadSubComponent API - use loadUserSubComponent(...) or loadAnonymousSubComponent(...) instead", getName().c_str());
+    }
+    
+    CustomCmdMemHandler(ComponentId_t id, Params &params, std::function<void(Addr,size_t,std::vector<uint8_t>&)> read, std::function<void(Addr,std::vector<uint8_t>*)> write) : SubComponent(id) {
         /* Create debug output */
         int debugLevel = params.find<int>("debug_level", 0);
         int debugLoc = params.find<int>("debug", 0);
@@ -105,6 +112,9 @@ public:
             DEBUG_ADDR.insert(*it);
         }
 
+        // Calls to read & write data
+        readData = read;
+        writeData = write;
     }
 
     /* Destructor */
@@ -131,9 +141,9 @@ public:
     /* When the memBackendConvertor returns a response, the memController will call this function, including
      * the return flags. This function should return a response event or null if none needed. 
      * It should also call the following as needed:
-     *  parent->writeData(): Update the backing store if this custom command wrote data
-     *  parent->readData(): Read the backing store if the response needs data
-     *  parent->translateLocalT
+     *  writeData(): Update the backing store if this custom command wrote data
+     *  readData(): Read the backing store if the response needs data
+     *  translateLocalT
      */
     virtual MemEventBase* finish(MemEventBase *ev, uint32_t flags) =0;
 
@@ -142,6 +152,9 @@ protected:
     // Debug
     Output dbg;
     std::set<Addr> DEBUG_ADDR;
+
+    std::function<void(Addr,size_t,std::vector<uint8_t>&)> readData;
+    std::function<void(Addr,std::vector<uint8_t>*)> writeData;
 
 };
 

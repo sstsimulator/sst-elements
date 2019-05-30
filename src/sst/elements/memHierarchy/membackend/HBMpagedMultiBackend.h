@@ -150,8 +150,8 @@ struct HBMpageInfo {
 class HBMpagedMultiMemory : public HBMDRAMSimMemory {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT(HBMpagedMultiMemory, "memHierarchy", "HBMpagedMultiMemory", SST_ELI_ELEMENT_VERSION(1,0,0), 
-            "HBM DRAMSim-driven memory timings with a fixed timing multi-level memory using paging", "SST::MemHierarchy::MemBackend")
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(HBMpagedMultiMemory, "memHierarchy", "HBMpagedMultiMemory", SST_ELI_ELEMENT_VERSION(1,0,0), 
+            "HBM DRAMSim-driven memory timings with a fixed timing multi-level memory using paging", SST::MemHierarchy::SimpleMemBackend)
 
     SST_ELI_DOCUMENT_PARAMS( HBMDRAMSIMMEMORY_ELI_PARAMS,
             /* Own parameters */
@@ -179,11 +179,14 @@ public:
     
 /* Class definition */
     HBMpagedMultiMemory(Component *comp, Params &params);
+    HBMpagedMultiMemory(ComponentId_t id, Params &params);
     virtual bool issueRequest(ReqId, Addr, bool, unsigned );
     virtual bool clock(Cycle_t cycle);
     virtual void finish();
 
 private:
+    void build(Params& params);
+
     Output dbg;
     RNG::SSTRandom*  rng;
 

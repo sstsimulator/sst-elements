@@ -66,13 +66,11 @@ ScratchCPU::ScratchCPU(ComponentId_t id, Params& params) : Component(id), rng(id
     size += "B";
     params.insert("scratchpad_size", size);
 
-    memory = dynamic_cast<Interfaces::SimpleMem*>(loadSubComponent("memHierarchy.scratchInterface", this, params));
+    memory = loadUserSubComponent<Interfaces::SimpleMem>("memory", clockTC, new Interfaces::SimpleMem::Handler<ScratchCPU>(this, &ScratchCPU::handleEvent) );
+    
     if ( !memory ) {
         out.fatal(CALL_INFO, -1, "Unable to load scratchInterface subcomponent\n");
     }
-
-    memory->initialize("mem_link",
-			new Interfaces::SimpleMem::Handler<ScratchCPU>(this, &ScratchCPU::handleEvent) );
 
     // Initialize local variables
     timestamp = 0;

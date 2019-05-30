@@ -47,19 +47,20 @@ struct lineTrack {
 
 class cacheLineTrack : public SST::MemHierarchy::CacheListener {
 public:
-    cacheLineTrack(Component*, Params& params);
+    cacheLineTrack(Component*, Params& params); // Legacy
+    cacheLineTrack(ComponentId_t, Params& params);
     ~cacheLineTrack() {};
 
     void notifyAccess(const CacheListenerNotification& notify);
     void registerResponseCallback(Event::HandlerBase *handler);
 
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         cacheLineTrack,
             "cassini",
             "cacheLineTrack",
             SST_ELI_ELEMENT_VERSION(1,0,0),
             "Tracks cacheline usage before eviction",
-            "SST::Cassini::CacheListener"
+            SST::MemHierarchy::CacheListener
     )
 
     SST_ELI_DOCUMENT_PARAMS(

@@ -43,8 +43,8 @@ class MemLink : public MemLinkBase {
 
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT(MemLink, "memHierarchy", "MemLink", SST_ELI_ELEMENT_VERSION(1,0,0),
-            "Memory-oriented link interface", "SST::MemLinkBase")
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(MemLink, "memHierarchy", "MemLink", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Memory-oriented link interface", SST::MemHierarchy::MemLinkBase)
 
     /* Define params, inherit from base class */
 #define MEMLINK_ELI_PARAMS MEMLINKBASE_ELI_PARAMS, \
@@ -86,7 +86,11 @@ public:
 
     /* Constructor */
     MemLink(Component * comp, Params &params);
-    
+    MemLink(ComponentId_t id, Params &params);
+private:
+    void build(Params &params);
+public:
+
     /* Destructor */
     ~MemLink() { }
 

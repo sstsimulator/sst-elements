@@ -25,6 +25,8 @@ comp_cpu.addParams({
     "workPerCycle"   : "1000",
 })
 
+iface = comp_cpu.setSubComponent("memory", "memHierarchy.memInterface")
+
 comp_l1cache = sst.Component("l1cache", "memHierarchy.Cache")
 comp_l1cache.addParams({
     "access_latency_cycles" : "5",
@@ -77,7 +79,7 @@ comp_tracer.addParams({
 
 # define the simulation links
 link_cpu_l1cache = sst.Link("link_cpu_l1cache")
-link_cpu_l1cache.connect((comp_cpu, "mem_link", "100ps"),(comp_l1cache, "high_network_0", "100ps"))
+link_cpu_l1cache.connect((iface, "port", "100ps"),(comp_l1cache, "high_network_0", "100ps"))
 
 link_l1cache_l2cache = sst.Link("link_l1cache_l2cache")
 link_l1cache_l2cache.connect((comp_l1cache, "low_network_0", "100ps"), (comp_l2cache, "high_network_0", "100ps"))

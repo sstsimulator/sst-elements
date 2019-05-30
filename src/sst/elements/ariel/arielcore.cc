@@ -16,24 +16,23 @@
 #include <sst_config.h>
 #include "arielcore.h"
 
-using namespace SST::OpalComponent;
+using namespace SST::ArielComponent;
 
 #define ARIEL_CORE_VERBOSE(LEVEL, OUTPUT) if(verbosity >= (LEVEL)) OUTPUT
 
 
-ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
+ArielCore::ArielCore(ComponentId_t id, ArielTunnel *tunnel,
             uint32_t thisCoreID, uint32_t maxPendTrans,
             Output* out, uint32_t maxIssuePerCyc,
-            uint32_t maxQLen, uint64_t cacheLineSz, SST::Component* own,
+            uint32_t maxQLen, uint64_t cacheLineSz,
             ArielMemoryManager* memMgr, const uint32_t perform_address_checks, Params& params) :
-            output(out), tunnel(tunnel), perform_checks(perform_address_checks),
+            ComponentExtension(id), output(out), tunnel(tunnel), 
+            perform_checks(perform_address_checks),
             verbosity(static_cast<uint32_t>(out->getVerboseLevel())) {
 
     // set both counters for flushes to 0
     output->verbose(CALL_INFO, 2, 0, "Creating core with ID %" PRIu32 ", maximum queue length=%" PRIu32 ", max issue is: %" PRIu32 "\n", thisCoreID, maxQLen, maxIssuePerCyc);
     inst_count = 0;
-    cacheLink = coreToCacheLink;
-    allocLink = 0;
     coreID = thisCoreID;
     maxPendingTransactions = maxPendTrans;
     isHalted = false;
@@ -42,10 +41,8 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
     maxIssuePerCycle = maxIssuePerCyc;
     maxQLength = maxQLen;
     cacheLineSize = cacheLineSz;
-    owner = own;
     memmgr = memMgr;
 
-    opal_enabled = false;
     writePayloads = params.find<int>("writepayloadtrace") == 0 ? false : true;
 
     coreQ = new std::queue<ArielEvent*>();
@@ -55,32 +52,34 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
     char* subID = (char*) malloc(sizeof(char) * 32);
     sprintf(subID, "%" PRIu32, thisCoreID);
 
-    statReadRequests  = own->registerStatistic<uint64_t>( "read_requests", subID );
-    statWriteRequests = own->registerStatistic<uint64_t>( "write_requests", subID );
-    statReadRequestSizes = own->registerStatistic<uint64_t>( "read_request_sizes", subID );
-    statWriteRequestSizes = own->registerStatistic<uint64_t>( "write_request_sizes", subID );
-    statSplitReadRequests = own->registerStatistic<uint64_t>( "split_read_requests", subID );
-    statSplitWriteRequests = own->registerStatistic<uint64_t>( "split_write_requests", subID );
-    statFlushRequests = own->registerStatistic<uint64_t>( "flush_requests", subID);
-    statFenceRequests = own->registerStatistic<uint64_t>( "fence_requests", subID);
-    statNoopCount     = own->registerStatistic<uint64_t>( "no_ops", subID );
-    statInstructionCount = own->registerStatistic<uint64_t>( "instruction_count", subID );
-    statCycles = own->registerStatistic<uint64_t>( "cycles", subID );
-    statActiveCycles = own->registerStatistic<uint64_t>( "active_cycles", subID );
+    statReadRequests  = registerStatistic<uint64_t>( "read_requests", subID );
+    statWriteRequests = registerStatistic<uint64_t>( "write_requests", subID );
+    statReadRequestSizes = registerStatistic<uint64_t>( "read_request_sizes", subID );
+    statWriteRequestSizes = registerStatistic<uint64_t>( "write_request_sizes", subID );
+    statSplitReadRequests = registerStatistic<uint64_t>( "split_read_requests", subID );
+    statSplitWriteRequests = registerStatistic<uint64_t>( "split_write_requests", subID );
+    statFlushRequests = registerStatistic<uint64_t>( "flush_requests", subID);
+    statFenceRequests = registerStatistic<uint64_t>( "fence_requests", subID);
+    statNoopCount     = registerStatistic<uint64_t>( "no_ops", subID );
+    statInstructionCount = registerStatistic<uint64_t>( "instruction_count", subID );
+    statCycles = registerStatistic<uint64_t>( "cycles", subID );
+    statActiveCycles = registerStatistic<uint64_t>( "active_cycles", subID );
 
-    statFPSPIns = own->registerStatistic<uint64_t>("fp_sp_ins", subID);
-    statFPDPIns = own->registerStatistic<uint64_t>("fp_dp_ins", subID);
+    statFPSPIns = registerStatistic<uint64_t>("fp_sp_ins", subID);
+    statFPDPIns = registerStatistic<uint64_t>("fp_dp_ins", subID);
 
-    statFPSPSIMDIns = own->registerStatistic<uint64_t>("fp_sp_simd_ins", subID);
-    statFPDPSIMDIns = own->registerStatistic<uint64_t>("fp_dp_simd_ins", subID);
+    statFPSPSIMDIns = registerStatistic<uint64_t>("fp_sp_simd_ins", subID);
+    statFPDPSIMDIns = registerStatistic<uint64_t>("fp_dp_simd_ins", subID);
 
-    statFPSPScalarIns = own->registerStatistic<uint64_t>("fp_sp_scalar_ins", subID);
-    statFPDPScalarIns = own->registerStatistic<uint64_t>("fp_dp_scalar_ins", subID);
+    statFPSPScalarIns = registerStatistic<uint64_t>("fp_sp_scalar_ins", subID);
+    statFPDPScalarIns = registerStatistic<uint64_t>("fp_dp_scalar_ins", subID);
 
-    statFPSPOps = own->registerStatistic<uint64_t>("fp_sp_ops", subID);
-    statFPDPOps = own->registerStatistic<uint64_t>("fp_dp_ops", subID);
+    statFPSPOps = registerStatistic<uint64_t>("fp_sp_ops", subID);
+    statFPDPOps = registerStatistic<uint64_t>("fp_dp_ops", subID);
 
     free(subID);
+
+    memmgr->registerInterruptHandler(coreID, new ArielMemoryManager::InterruptHandler<ArielCore>(this, &ArielCore::handleInterrupt));
 
     std::string traceGenName = params.find<std::string>("tracegen", "");
     enableTracing = ("" != traceGenName);
@@ -88,12 +87,11 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
     // If we enabled tracing then open up the correct file.
     if(enableTracing) {
         Params interfaceParams = params.find_prefix_params("tracer.");
-        traceGen = dynamic_cast<ArielTraceGenerator*>( own->loadModuleWithComponent(traceGenName, own,
-                            interfaceParams) );
+        traceGen = dynamic_cast<ArielTraceGenerator*>( loadModule(traceGenName, interfaceParams) );
 
         if(NULL == traceGen) {
-                output->fatal(CALL_INFO, -1, "Unable to load tracing module: \"%s\"\n",
-                            traceGenName.c_str());
+            output->fatal(CALL_INFO, -1, "Unable to load tracing module: \"%s\"\n",
+                    traceGenName.c_str());
         }
 
         traceGen->setCoreID(coreID);
@@ -103,13 +101,6 @@ ArielCore::ArielCore(ArielTunnel *tunnel, SimpleMem* coreToCacheLink,
 }
 
 ArielCore::~ArielCore() {
-    //delete statReadRequests;
-    //delete statWriteRequests;
-    //delete statSplitReadRequests;
-    //delete statSplitWriteRequests;
-    //delete statNoopCount;
-    //delete statInstructionCount;
-
     if(NULL != cacheLink) {
         delete cacheLink;
     }
@@ -119,15 +110,8 @@ ArielCore::~ArielCore() {
     }
 }
 
-void ArielCore::setOpalLink(Link * opallink) {
-
-    OpalLink = opallink;
-
-}
-
-void ArielCore::setCacheLink(SimpleMem* newLink, Link* newAllocLink) {
+void ArielCore::setCacheLink(SimpleMem* newLink) {
     cacheLink = newLink;
-    allocLink = newAllocLink;
 }
 
 void ArielCore::printTraceEntry(const bool isRead,
@@ -239,35 +223,21 @@ void ArielCore::handleEvent(SimpleMem::Request* event) {
     delete event;
 }
 
-void ArielCore::ISR_Opal(OpalEvent *ev) {
-
-    ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " handling opal event.\n", coreID));
-
-    switch(ev->getType())
-    {
-        case SST::OpalComponent::EventType::SHOOTDOWN:
-            //maxIssuePerCycle=0; // This will stall the core by not executing anything
+bool ArielCore::handleInterrupt(ArielMemoryManager::InterruptAction action) {
+    
+    ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " received an interrupt.\n", coreID));
+    
+    switch (action) {
+        case ArielMemoryManager::InterruptAction::STALL:
             isStalled = true;
             break;
-
-        case SST::OpalComponent::EventType::SDACK:
-            //maxIssuePerCycle=storeMaxIssuePerCycle; // restore necessary information
+        case ArielMemoryManager::InterruptAction::UNSTALL:
             isStalled = false;
             break;
-
         default:
-            output->fatal(CALL_INFO, -4, "Opal event response to core: %" PRIu32 " was not valid.\n", coreID);
+            output->fatal(CALL_INFO, -4, "Received an unknown interrupt on core %" PRIu32 "\n", coreID);
     }
-
-}
-
-void ArielCore::handleInterruptEvent(SST::Event *event) {
-
-    ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " is interrupted.\n", coreID));
-
-    // for now only Opal can interrupt
-    OpalEvent * ev =  dynamic_cast<OpalComponent::OpalEvent*> (event);
-    ISR_Opal(ev);
+    return true; // Able to handle
 }
 
 void ArielCore::finishCore() {
@@ -423,16 +393,8 @@ bool ArielCore::refillQueue() {
         // There is data on the pipe
         switch(ac.command) {
             case ARIEL_OUTPUT_STATS:
-                fprintf(stdout, "Performing statistics output at simulation time = %" PRIu64 "\n", owner->getCurrentSimTimeNano());
+                fprintf(stdout, "Performing statistics output at simulation time = %" PRIu64 " cycles\n", getCurrentSimTimeNano());
                 Simulation::getSimulation()->getStatisticsProcessingEngine()->performGlobalStatisticOutput();
-                if (allocLink) {
-                        // tell the allocate montior to dump stats. We
-                        // optionally pass a marker number back in the instruction field
-                        arielAllocTrackEvent *e
-                            = new arielAllocTrackEvent(arielAllocTrackEvent::BUOY,
-                                        0, 0, 0, ac.instPtr);
-                        allocLink->send(e);
-                }
                 break;
 
             case ARIEL_START_INSTRUCTION:
@@ -503,7 +465,6 @@ bool ArielCore::refillQueue() {
                 createMmapEvent(ac.mlm_mmap.fileID, ac.mlm_mmap.vaddr, ac.mlm_mmap.alloc_len, ac.mlm_mmap.alloc_level, ac.instPtr);
                 break;
 
-
             case ARIEL_ISSUE_TLM_MAP:
                 createAllocateEvent(ac.mlm_map.vaddr, ac.mlm_map.alloc_len, ac.mlm_map.alloc_level, ac.instPtr);
                 break;
@@ -531,17 +492,9 @@ bool ArielCore::refillQueue() {
 }
 
 void ArielCore::handleFreeEvent(ArielFreeEvent* rFE) {
-    output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " processing a free event (for virtual address=%" PRIu64 ")\n", coreID, rFE->getVirtualAddress());
+    ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " processing a free event (for virtual address=%" PRIu64 ")\n", coreID, rFE->getVirtualAddress()));
 
     memmgr->freeMalloc(rFE->getVirtualAddress());
-
-    if (allocLink) {
-        // tell the allocate montior (e.g. mem sieve that a free has occured)
-        arielAllocTrackEvent *e =  new arielAllocTrackEvent(arielAllocTrackEvent::FREE,
-                            rFE->getVirtualAddress(), 0, 0, 0);
-
-        allocLink->send(e);
-    }
 }
 
 void ArielCore::handleReadRequest(ArielReadEvent* rEv) {
@@ -703,44 +656,15 @@ void ArielCore::handleWriteRequest(ArielWriteEvent* wEv) {
 
 
 void ArielCore::handleMmapEvent(ArielMmapEvent* aEv) {
-
-    if(opal_enabled) {
-        OpalEvent * tse = new OpalEvent(OpalComponent::EventType::MMAP);
-        tse->setHint(aEv->getAllocationLevel());
-        tse->setFileId(aEv->getFileID());
-        std::cout<<"Before sending to Opal.. file ID is : "<<tse->getFileId()<<std::endl;
-        // length should be in multiple of page size
-        tse->setResp(aEv->getVirtualAddress(), 0, aEv->getAllocationLength() );
-        OpalLink->send(tse);
-    }
-
+    memmgr->allocateMMAP(aEv->getAllocationLength(), aEv->getAllocationLevel(), aEv->getVirtualAddress(),
+            aEv->getInstructionPointer(), aEv->getFileID(), coreID);
 }
 
 void ArielCore::handleAllocationEvent(ArielAllocateEvent* aEv) {
     output->verbose(CALL_INFO, 2, 0, "Handling a memory allocation event, vAddr=%" PRIu64 ", length=%" PRIu64 ", at level=%" PRIu32 " with malloc ID=%" PRIu64 "\n",
                 aEv->getVirtualAddress(), aEv->getAllocationLength(), aEv->getAllocationLevel(), aEv->getInstructionPointer());
 
-    // If Opal is enabled, make sure you pass these requests to it
-    if(opal_enabled) {
-        OpalEvent * tse = new OpalEvent(OpalComponent::EventType::HINT);
-        tse->setHint(aEv->getAllocationLevel());
-        tse->setResp(aEv->getVirtualAddress(), 0, aEv->getAllocationLength() );
-        OpalLink->send(tse);
-    }
-
-    if (allocLink) {
-        output->verbose(CALL_INFO, 2, 0, " Sending memory allocation event to allocate monitor\n");
-        // tell the allocate montior (e.g. mem sieve that an
-        // allocation has occured)
-        arielAllocTrackEvent *e = new arielAllocTrackEvent(arielAllocTrackEvent::ALLOC,
-                            aEv->getVirtualAddress(),
-                            aEv->getAllocationLength(),
-                            aEv->getAllocationLevel(),
-                            aEv->getInstructionPointer());
-        allocLink->send(e);
-    } else {    // As a config convience, we're not supporting allocLink + allocate-on-malloc but there's no real reason not to
-        memmgr->allocateMalloc(aEv->getAllocationLength(), aEv->getAllocationLevel(), aEv->getVirtualAddress());
-    }
+    memmgr->allocateMalloc(aEv->getAllocationLength(), aEv->getAllocationLevel(), aEv->getVirtualAddress(), aEv->getInstructionPointer(), coreID);
 }
 
 void ArielCore::handleFlushEvent(ArielFlushEvent *flEv) {

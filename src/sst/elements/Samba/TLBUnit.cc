@@ -36,7 +36,7 @@ int abs_int(int x)
 
 
 // Not needed for now, probably will be removed soon, if doesn't cause any compaitability issues
-TLB::TLB(int Page_size, int Assoc, TLB * Next_level, int Size)
+TLB::TLB(ComponentId_t id, int Page_size, int Assoc, TLB * Next_level, int Size) : ComponentExtension(id)
 {
 
 }
@@ -44,10 +44,8 @@ TLB::TLB(int Page_size, int Assoc, TLB * Next_level, int Size)
 
 
 // The constructer mainly used when creating TLBUnits
-TLB::TLB(int tlb_id, TLB * Next_level, int Level, SST::Component * owner, SST::Params& params)
+TLB::TLB(ComponentId_t id, int tlb_id, TLB * Next_level, int Level, SST::Params& params) : ComponentExtension(id)
 {
-
-	Owner = owner;
 
 	coreId = tlb_id;
 
@@ -82,9 +80,9 @@ TLB::TLB(int tlb_id, TLB * Next_level, int Level, SST::Component * owner, SST::P
 
 
 	// The stats that will appear, not that these stats are going to be part of the Samba unit
-	statTLBHits = owner->registerStatistic<uint64_t>( "tlb_hits", subID);
-	statTLBMisses = owner->registerStatistic<uint64_t>( "tlb_misses", subID );
-	statTLBShootdowns = owner->registerStatistic<uint64_t>( "tlb_shootdown", subID );
+	statTLBHits = registerStatistic<uint64_t>( "tlb_hits", subID);
+	statTLBMisses = registerStatistic<uint64_t>( "tlb_misses", subID );
+	statTLBShootdowns = registerStatistic<uint64_t>( "tlb_shootdown", subID );
 
 	max_width = ((uint32_t) params.find<uint32_t>("max_width_L"+LEVEL, 4));
 
@@ -156,18 +154,12 @@ TLB::TLB(int tlb_id, TLB * Next_level, int Level, SST::Component * owner, SST::P
 
 }
 
-// This constructer is only used for creating the last-level TLB Unit, hence the PageTableWalker argument passed to it
-TLB::TLB(int tlb_id, PageTableWalker * Next_level, int level, SST::Component * owner, SST::Params& params)
-{
+// Used to set the PTW variable in the last-level TLB Unit
+void TLB::setPTW(PageTableWalker * Next_level) {
+    std::cout<<"Assigning the PTW correctly"<<std::endl;
 
-	std::cout<<"Assigning the PTW correctly"<<std::endl;
-
-	PTW=Next_level;
-
-	new (this) TLB(tlb_id, (TLB *) NULL, level, owner, params);
-
+    PTW=Next_level;
 }
-
 
 // This is the most important function, which works like the heart of the TLBUnit, called on every cycle to check if any completed requests or new requests at this cycle.
 bool TLB::tick(SST::Cycle_t x)
@@ -179,7 +171,7 @@ bool TLB::tick(SST::Cycle_t x)
 	{
 
 
-		SST::Event * ev = pushed_back.back();
+            MemHierarchy::MemEventBase * ev = pushed_back.back();
 
 		Address_t addr = ((MemEvent*) ev)->getVirtualAddress();
 
@@ -206,7 +198,7 @@ bool TLB::tick(SST::Cycle_t x)
 		}
 
 		// Deleting it from pending requests
-		std::vector<SST::Event *>::iterator st, en;
+		std::vector<SST::MemHierarchy::MemEventBase *>::iterator st, en;
 		st = pending_misses.begin();
 		en = pending_misses.end();
 
@@ -231,7 +223,7 @@ bool TLB::tick(SST::Cycle_t x)
 		// Check if there are other misses that were going to the same translation and waiting for the response of this miss
 		if((level==1) && (SAME_MISS.find(addr/4096)!=SAME_MISS.end()))
 		{
-		  std::map< SST::Event *, int>::iterator same_st, same_en; 
+		  std::map< MemHierarchy::MemEventBase*, int>::iterator same_st, same_en; 
 		  same_st = SAME_MISS[addr/4096].begin();
     		  same_en = SAME_MISS[addr/4096].end();
    		   while(same_st!=same_en)
@@ -254,7 +246,7 @@ bool TLB::tick(SST::Cycle_t x)
 
 
 	// The actual dipatching process... here we take a request and place it in the right queue based on being miss or hit and the number of pending misses
-	std::vector<SST::Event *>::iterator st_1,en_1;
+	std::vector<MemHierarchy::MemEventBase*>::iterator st_1,en_1;
 	st_1 = not_serviced.begin();
 	en_1 = not_serviced.end();
 
@@ -269,7 +261,7 @@ bool TLB::tick(SST::Cycle_t x)
 		if(dispatched > max_width)
 			break;
 
-		SST::Event * ev = *st_1; 
+                MemHierarchy::MemEventBase * ev = *st_1; 
 		Address_t addr = ((MemEvent*) ev)->getVirtualAddress();
 
 
@@ -333,7 +325,7 @@ bool TLB::tick(SST::Cycle_t x)
 
 					pending_misses.push_back(*st_1);
 					// Check if the last level TLB or not, if last-level, pass the request to the page table walker
-					if(next_level!=NULL)
+					if(next_level!=nullptr)
 					{
 
 						next_level->push_request(ev);
@@ -360,7 +352,7 @@ bool TLB::tick(SST::Cycle_t x)
 	}
 
 
-	std::map<SST::Event *, SST::Cycle_t>::iterator st, en;
+	std::map<MemHierarchy::MemEventBase *, SST::Cycle_t>::iterator st, en;
 	st = ready_by.begin();
 	en = ready_by.end();
 
@@ -403,7 +395,7 @@ bool TLB::tick(SST::Cycle_t x)
 
 
 			// Deleting it from pending requests
-			std::vector<SST::Event *>::iterator st2, en2;
+			std::vector<MemHierarchy::MemEventBase *>::iterator st2, en2;
 			st2 = pending_misses.begin();
 			en2 = pending_misses.end();
 
@@ -461,11 +453,11 @@ void TLB::invalidate(Address_t vadd)
 
 	for(int id=0; id<sizes; id++)
 	{
-		//std::cout << Owner->getName().c_str() << " TLB " << coreId << " id: " << id << " invalidate address: " << vadd << " index: " << vadd*page_size[0]/page_size[id] << std::endl;
+		//std::cout << getName().c_str() << " TLB " << coreId << " id: " << id << " invalidate address: " << vadd << " index: " << vadd*page_size[0]/page_size[id] << std::endl;
 		int set= abs_int((vadd*page_size[0]/page_size[id])%sets[id]);
 		for(int i=0; i<assoc[id]; i++) {
 			if(tags[id][set][i]==vadd*page_size[0]/page_size[id] && valid[id][set][i]) {
-				//std::cout << Owner->getName().c_str() << " TLB " << coreId << " invalidate address: " << vadd << " index: " << vadd*page_size[0]/page_size[id] << " found" << std::endl;
+				//std::cout << getName().c_str() << " TLB " << coreId << " invalidate address: " << vadd << " index: " << vadd*page_size[0]/page_size[id] << " found" << std::endl;
 				valid[id][set][i] = false;
 				break;
 			}

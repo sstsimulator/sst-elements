@@ -27,8 +27,8 @@ namespace MemHierarchy {
 class RequestReorderRow : public SimpleMemBackend {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT(RequestReorderRow, "memHierarchy", "reorderByRow", SST_ELI_ELEMENT_VERSION(1,0,0),
-            "Request re-orderer, groups requests by row", "SST::MemHierarchy::MemBackend")
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(RequestReorderRow, "memHierarchy", "reorderByRow", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Request re-orderer, groups requests by row", SST::MemHierarchy::SimpleMemBackend)
     
     SST_ELI_DOCUMENT_PARAMS( MEMBACKEND_ELI_PARAMS,
             /* Own parameters */
@@ -39,17 +39,23 @@ public:
             {"row_size",                    "Size of a row in bytes (B). Must be a power of 2.", "8KiB"},
             {"reorder_limit",               "Maximum number of request to reorder to a rwo before changing rows.", "1"},
             {"backend",                     "Backend memory system.", "memHierarchy.simpleDRAM"} )
+    
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( {"backend", "Backend memory model.", "SST::MemHierarchy::SimpleMemBackend"} )
 
 /* Begin class definition */
     RequestReorderRow();
     RequestReorderRow(Component *comp, Params &params);
-	virtual bool issueRequest( ReqId, Addr, bool isWrite, unsigned numBytes );
+    RequestReorderRow(ComponentId_t id, Params &params);
+	
+    virtual bool issueRequest( ReqId, Addr, bool isWrite, unsigned numBytes );
     void setup();
     void finish();
     bool clock(Cycle_t cycle);
     virtual const std::string& getClockFreq() { return backend->getClockFreq(); }
 
 private:
+    void build(Params& params);
+
     void handleMemReponse( ReqId id ) {
         SimpleMemBackend::handleMemResponse( id );
     }

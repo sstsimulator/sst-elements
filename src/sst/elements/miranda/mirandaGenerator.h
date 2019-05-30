@@ -218,7 +218,10 @@ public:
 class RequestGenerator : public SubComponent {
 
 public:
+    SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Miranda::RequestGenerator)
+
 	RequestGenerator( Component* owner, Params& params) : SubComponent(owner) {}
+	RequestGenerator( ComponentId_t id, Params& params) : SubComponent(id) {}
 	~RequestGenerator() {}
 	virtual void generate(MirandaRequestQueue<GeneratorRequest*>* q) { }
 	virtual bool isFinished() { return true; }

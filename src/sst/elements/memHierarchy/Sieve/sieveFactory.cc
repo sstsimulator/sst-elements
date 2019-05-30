@@ -116,13 +116,15 @@ void Sieve::configureLinks() {
 }
 
 void Sieve::createProfiler(const Params &params) {
-    string profiler = params.find<std::string>("profiler", "");
+    listener_ = loadUserSubComponent<CacheListener>("profiler");
+    if (listener_) return;
 
+    string profiler = params.find<std::string>("profiler", "");
     if (profiler.empty()) {
 	listener_ = 0;
     } else {
 	Params profilerParams = params.find_prefix_params("profiler." );
-        listener_ = dynamic_cast<CacheListener*>(loadSubComponent(profiler, this, profilerParams));
+        listener_ = loadAnonymousSubComponent<CacheListener>(profiler, "proifiler", 0, ComponentInfo::INSERT_STATS, profilerParams);
     }
 
 }

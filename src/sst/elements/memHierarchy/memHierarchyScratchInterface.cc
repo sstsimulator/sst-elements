@@ -28,8 +28,8 @@ using namespace SST::Interfaces;
 
 
 MemHierarchyScratchInterface::MemHierarchyScratchInterface(SST::Component *comp, Params &params) :
-    SimpleMem(comp, params), owner_(comp), recvHandler_(NULL), link_(NULL)
-{ 
+    SimpleMem(comp, params), recvHandler_(NULL), link_(NULL)
+{
     output.init("", 1, 0, Output::STDOUT); 
 
     bool found;
@@ -41,6 +41,31 @@ MemHierarchyScratchInterface::MemHierarchyScratchInterface(SST::Component *comp,
     remoteMemStart_ = size.getRoundedValue();
 
     initDone_ = false;
+
+}
+
+MemHierarchyScratchInterface::MemHierarchyScratchInterface(SST::ComponentId_t id, Params &params, TimeConverter* time, HandlerBase* handler) :
+    SimpleMem(id, params) 
+{
+    setDefaultTimeBase(time);
+
+    output.init("", 1, 0, Output::STDOUT); 
+
+    bool found;
+    UnitAlgebra size = UnitAlgebra(params.find<std::string>("scratchpad_size", "0B", found));
+    if (!found) 
+        output.fatal(CALL_INFO, -1, "Param not specified (%s): scratchpad_size - size of scratchpad\n", getName().c_str());
+    if (!size.hasUnits("B"))
+        output.fatal(CALL_INFO, -1, "Invalid param (%s): scratchpad_size - must have units of 'B'. SI units ok. You specified '%s'\n", getName().c_str(), size.toString().c_str());
+    remoteMemStart_ = size.getRoundedValue();
+
+    initDone_ = false;
+    
+    recvHandler_ = handler;
+    if ( NULL == recvHandler_) 
+        link_ = configureLink("port");
+    else
+        link_ = configureLink("port", new Event::Handler<MemHierarchyScratchInterface>(this, &MemHierarchyScratchInterface::handleIncoming));
 }
 
 
@@ -118,7 +143,7 @@ MemEvent * MemHierarchyScratchInterface::createMemEvent(SimpleMem::Request * req
 
     Addr baseAddr = req->addrs[0] & baseAddrMask_;
 
-    MemEvent * me = new MemEvent(owner_, req->addrs[0], baseAddr, cmd);
+    MemEvent * me = new MemEvent(getName(), req->addrs[0], baseAddr, cmd, getCurrentSimTimeNano());
    
     /* Set remote memory accesses to noncacheable so that any cache avoids trying to cache the response */
     if (me->getAddr() >= remoteMemStart_ || allNoncache_) {
@@ -149,7 +174,7 @@ MoveEvent* MemHierarchyScratchInterface::createMoveEvent(SimpleMem::Request *req
         default: output.fatal(CALL_INFO, -1, "Unknown req->cmd in createMoveEvent()\n");
     }
 
-    MoveEvent *me = new MoveEvent(parent->getName(), req->addrs[1], req->addrs[1], req->addrs[0], req->addrs[0], cmd);
+    MoveEvent *me = new MoveEvent(getName(), req->addrs[1], req->addrs[1], req->addrs[0], req->addrs[0], cmd);
 
     if (cmd == Command::Get) {
         me->setDstBaseAddr(req->addrs[0] & baseAddrMask_);
@@ -220,8 +245,8 @@ void MemHierarchyScratchInterface::updateRequest(SimpleMem::Request* req, MemEve
 
 bool MemHierarchyScratchInterface::initialize(const std::string &linkName, HandlerBase *handler){
     recvHandler_ = handler;
-    if ( NULL == recvHandler_) link_ = owner_->configureLink(linkName);
-    else                       link_ = owner_->configureLink(linkName, new Event::Handler<MemHierarchyScratchInterface>(this, &MemHierarchyScratchInterface::handleIncoming));
+    if ( NULL == recvHandler_) link_ = configureLink(linkName);
+    else                       link_ = configureLink(linkName, new Event::Handler<MemHierarchyScratchInterface>(this, &MemHierarchyScratchInterface::handleIncoming));
 
     return (link_ != NULL);
 }

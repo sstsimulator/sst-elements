@@ -20,8 +20,8 @@
 
 using namespace SST::ArielComponent;
 
-ArielMemoryManagerMalloc::ArielMemoryManagerMalloc(SST::Component* owner, Params& params) : 
-            ArielMemoryManager(owner, params) {
+ArielMemoryManagerMalloc::ArielMemoryManagerMalloc(ComponentId_t id, Params& params) : 
+            ArielMemoryManagerCache(id, params) {
     
     memoryLevels = (uint32_t) params.find<uint32_t>("memorylevels", 1);
     defaultLevel = (uint32_t) params.find<uint32_t>("defaultlevel", 0);
@@ -172,7 +172,7 @@ void ArielMemoryManagerMalloc::allocate(const uint64_t size, const uint32_t leve
  *
  *  Therefore, Ariel should immediately translate virtual to physical addresses and ALWAYS use physical addresses when computing offsets.
  */
-bool ArielMemoryManagerMalloc::allocateMalloc(const uint64_t size, const uint32_t level, const uint64_t virtualAddress) {
+bool ArielMemoryManagerMalloc::allocateMalloc(const uint64_t size, const uint32_t level, const uint64_t virtualAddress, const uint64_t instructionPointer, const uint32_t thread) {
     output->verbose(CALL_INFO, 4, 0, "Allocate malloc received. VA: %" PRIu64 ". Size: %" PRIu64 ". Level: %" PRIu32 ".\n", virtualAddress, size, level);
 
     // Check whether a malloc mapping already exists (i.e., we missed a free)

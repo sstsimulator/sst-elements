@@ -13,10 +13,12 @@ memory_mb = 1024
 comp_cpu = sst.Component("cpu", "miranda.BaseCPU")
 comp_cpu.addParams({
 	"verbose" : 0,
-	"generator" : "miranda.GUPSGenerator",
-	"generatorParams.verbose" : 0,
-	"generatorParams.count" : 10000,
-	"generatorParams.max_address" : ((memory_mb) / 2) * 1024 * 1024,
+})
+gen = comp_cpu.setSubComponent("generator", "miranda.GUPSGenerator")
+gen.addParams({
+	"verbose" : 0,
+	"count" : 10000,
+	"max_address" : ((memory_mb) / 2) * 1024 * 1024,
 })
 
 # Enable statistics outputs

@@ -116,6 +116,9 @@ libmemHierarchy_la_SOURCES = \
 	Sieve/sieveFactory.cc \
 	Sieve/broadcastShim.h \
 	Sieve/broadcastShim.cc \
+	Sieve/alloctrackev.h \
+	Sieve/memmgr_sieve.cc \
+	Sieve/memmgr_sieve.h \
 	memNetBridge.h \
 	memNetBridge.cc
 

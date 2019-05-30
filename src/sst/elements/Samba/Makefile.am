@@ -7,6 +7,7 @@ comp_LTLIBRARIES = libSamba.la
 
 libSamba_la_SOURCES = \
 	libSamba.cc \
+	utils.h \
 	Samba_Event.h \
 	Samba.cc \
 	Samba.h \
