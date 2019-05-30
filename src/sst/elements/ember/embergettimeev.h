@@ -17,10 +17,7 @@
 #ifndef _H_EMBER_GETTIME_EV
 #define _H_EMBER_GETTIME_EV
 
-#include <sst/elements/hermes/msgapi.h>
 #include "emberevent.h"
-
-using namespace SST::Hermes;
 
 namespace SST {
 namespace Ember {
@@ -38,7 +35,7 @@ public:
 
     virtual void issue( uint64_t time, FOO* functor ) 
     {
-        m_output->debug(CALL_INFO, 2, 0, "\n");
+        m_output->debug(CALL_INFO, 2, EVENT_MASK, "\n");
         EmberEvent::issue( time );
         *m_timePtr = time;
     }
