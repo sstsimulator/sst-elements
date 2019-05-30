@@ -14,7 +14,6 @@
 // distribution.
 
 #include <sst_config.h>
-#include <sst/core/component.h>
 
 #include "emberShmemGen.h"
 
@@ -25,13 +24,7 @@ EmberShmemGenerator::EmberShmemGenerator(
             Component* owner, Params& params, std::string name) :
     EmberGenerator(owner, params, name )
 {
-}
-
-EmberShmemGenerator::~EmberShmemGenerator()
-{
-}
-
-void EmberShmemGenerator::completed(const SST::Output* output,
-        uint64_t time )
-{
+    m_shmem = static_cast<EmberShmemLib*>(getLib("shmem"));
+    assert(m_shmem);
+    m_shmem->initOutput( &getOutput() );
 }
