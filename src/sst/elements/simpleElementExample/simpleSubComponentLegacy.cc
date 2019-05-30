@@ -18,13 +18,13 @@
 #include <sst/core/output.h>
 #include <sst/core/clock.h>
 
-#include "simpleSubComponent.h"
+#include "simpleSubComponentLegacy.h"
 #include "simpleMessage.h"
 
 #include <sst/core/timeConverter.h>
 
 using namespace SST;
-using namespace SST::SimpleSubComponent;
+using namespace SST::SimpleSubComponentLegacy;
 
 /************************************************************************
  *
@@ -46,17 +46,17 @@ SubComponentLoader::SubComponentLoader(ComponentId_t id, Params &params) :
     if ( unnamed_sub != "" ) {
         for ( int i = 0; i < num_subcomps; ++i ) {
             params.insert("port_name",std::string("port") + std::to_string(i));
-            SubCompInterface* sci = loadAnonymousSubComponent<SubCompInterface>(unnamed_sub, "mySubComp", i, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, params);
-            subComps.push_back(sci);
+            subComps.push_back(static_cast<SubCompInterface*>(loadSubComponent(unnamed_sub,this,params)));
         }
     }
     else {
+        // subComps.push_back(static_cast<SubCompInterface*>(loadNamedSubComponent("mySubComp")));
         SubComponentSlotInfo* info = getSubComponentSlotInfo("mySubComp");
         if ( !info ) {
             Output::getDefaultObject().fatal(CALL_INFO, -1, "Must specify at least one SubComponent for slot mySubComp.\n");
         }
         
-        info->createAll<SubCompInterface>(subComps, ComponentInfo::SHARE_STATS);
+        info->createAll(subComps);
     }
     
     registerAsPrimaryComponent();
@@ -78,8 +78,8 @@ bool SubComponentLoader::tick(Cycle_t cyc)
  *    SubCompSlot
  *
  ***********************************************************************/
-SubCompSlot::SubCompSlot(ComponentId_t id, Params &params) :
-    SubCompInterface(id)
+SubCompSlot::SubCompSlot(Component *owningComponent, Params &params) :
+    SubCompInterface(owningComponent)
 {
     std::string unnamed_sub = params.find<std::string>("unnamed_subcomponent","");
     int num_subcomps = params.find<int>("num_subcomps",1);
@@ -87,8 +87,7 @@ SubCompSlot::SubCompSlot(ComponentId_t id, Params &params) :
     if ( unnamed_sub != "" ) {
         for ( int i = 0; i < num_subcomps; ++i ) {
             params.insert("port_name",std::string("slot_port") + std::to_string(i));
-            SubCompInterface* sci = loadAnonymousSubComponent<SubCompInterface>(unnamed_sub, "mySubCompSlot", i, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, params);
-            subComps.push_back(sci);
+            subComps.push_back(static_cast<SubCompInterface*>(loadSubComponent(unnamed_sub,params)));
         }
     }
     else {
@@ -97,10 +96,9 @@ SubCompSlot::SubCompSlot(ComponentId_t id, Params &params) :
             Output::getDefaultObject().fatal(CALL_INFO, -1, "Must specify at least one SubComponent for slot mySubComp.\n");
         }
         
-        info->createAll<SubCompInterface>(subComps, ComponentInfo::SHARE_STATS);
+        info->createAll(subComps);
     }
 }
-
 
 void SubCompSlot::clock(Cycle_t cyc)
 {
@@ -114,16 +112,14 @@ void SubCompSlot::clock(Cycle_t cyc)
  *    SubCompSender
  *
  ***********************************************************************/
-SubCompSender::SubCompSender(ComponentId_t id, Params &params) :
-    SubCompInterface(id)
+SubCompSender::SubCompSender(Component *owningComponent, Params &params) :
+    SubCompInterface(owningComponent)
 {
     // Determine if I'm loading as a named or unmamed SubComponent
     std::string port_name;
-    if ( isUser() ) {
-        port_name = "sendPort";
-    }
+    if ( isUser() ) port_name = "sendPort";
     else port_name = params.find<std::string>("port_name");
-    
+
     registerTimeBase("2GHz",true);
     link = configureLink(port_name);
     if ( !link ) {
@@ -132,12 +128,7 @@ SubCompSender::SubCompSender(ComponentId_t id, Params &params) :
     }
 
     nMsgSent = registerStatistic<uint32_t>("numSent", "");
-    if ( isStatisticShared("totalSent") )  {
-        totalMsgSent = registerStatistic<uint32_t>("totalSent", "");
-    }
-    else {
-        totalMsgSent = NULL;
-    }
+    totalMsgSent = NULL;
     nToSend = params.find<uint32_t>("sendCount", 10);
 }
 
@@ -161,8 +152,8 @@ void SubCompSender::clock(Cycle_t cyc)
  *    SubCompReceiver
  *
  ***********************************************************************/
-SubCompReceiver::SubCompReceiver(ComponentId_t id, Params &params) :
-    SubCompInterface(id)
+SubCompReceiver::SubCompReceiver(Component *owningComponent, Params &params) :
+    SubCompInterface(owningComponent)
 {
     // Determine if I'm loading as a named or unmamed SubComponent
     std::string port_name;
