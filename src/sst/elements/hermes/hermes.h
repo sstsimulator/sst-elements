@@ -379,25 +379,19 @@ class OS : public SubComponent {
     virtual int  getRank() { assert(0); }
     virtual int  getNodeNum() { assert(0); }
     virtual void finish() {}
-    virtual NodePerf* getNodePerf() { assert(0); }
-    virtual Thornhill::DetailedCompute* getDetailedCompute() { assert(0); }
-	virtual Thornhill::MemoryHeapLink*  getMemHeapLink() { assert(0); }
+    virtual NodePerf* getNodePerf() { return NULL; }
+    virtual Thornhill::DetailedCompute* getDetailedCompute() { return NULL; }
+    virtual Thornhill::MemoryHeapLink*  getMemHeapLink() { return NULL; }
 };
 
 class Interface : public SubComponent {
   public:
-    Interface( Component* owner ) : SubComponent(owner), _rank(-1), _size(0) {}
+    Interface( Component* owner ) : SubComponent(owner) {}
     virtual void setup() {} 
     virtual void finish() {} 
     virtual void setOS( OS* ) { assert(0); }
     virtual std::string getName() { assert(0); }
-    void setSize(int val) { _size = val; }
-    void setRank(int val ) { _rank = val; }
-    int getSize() { return _size; }
-    int getRank() { return _rank; }
-  private:
-	int _rank;
-	int _size;
+	virtual std::string getType() { return ""; }
 };
 
 }
