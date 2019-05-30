@@ -19,14 +19,6 @@
 #include "emberlinearmap.h"
 #include "embercustommap.h" //NetworkSim: added custom rank map
 
-#include "mpi/motifs/emberinit.h"
-#include "mpi/motifs/emberfini.h"
-#include "mpi/motifs/embernull.h"
-#include "mpi/motifs/emberwaitany.h"
-#include "mpi/motifs/embertest.h"
-#include "mpi/motifs/embertestany.h"
-#include "mpi/motifs/embersendrecv.h"
-
 #include "shmem/motifs/emberShmemTest.h"
 #include "shmem/motifs/emberShmemWait.h"
 #include "shmem/motifs/emberShmemWaitUntil.h"
