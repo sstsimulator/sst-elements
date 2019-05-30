@@ -47,8 +47,8 @@ public:
         { "arbitration",            "Select the arbitration scheme", "roundrobin" },
         { "clock",                  "Clock Frequency for the crossbar", "1.0GHz" },
         { "queue_slots",            "Depth of input queue", "64" },
-        { "input_message_slots",    "Number of messages injested per cycle; -1 is unlimited", "1" },
-        { "output_message_slots",   "Number of messages ejected per cycle; -1 is unlimited", "1" },
+        { "in_msg_per_cycle",       "Number of messages injested per cycle; -1 is unlimited", "1" },
+        { "out_msg_per_cycle",      "Number of messages ejected per cycle; -1 is unlimited", "1" },
     )
 
     SST_ELI_DOCUMENT_STATISTICS(
@@ -90,6 +90,8 @@ private:
     void clearOutputs();
     void populateInputs();
     void emitOutputs();
+
+    uint64_t previousCycle;
 
     int32_t port_count;
     int32_t queue_slots;

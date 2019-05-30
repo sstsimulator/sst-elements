@@ -1,8 +1,8 @@
-// Copyright 2009-2018 NTESS. Under the terms
+// Copyright 2009-2019 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2018, NTESS
+// Copyright (c) 2009-2019, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -21,24 +21,44 @@
 #include "simpleSubComponent.h"
 #include "simpleMessage.h"
 
+#include <sst/core/timeConverter.h>
+
 using namespace SST;
 using namespace SST::SimpleSubComponent;
 
+/************************************************************************
+ *
+ *    SubComponentLoader
+ *
+ ***********************************************************************/
 
 SubComponentLoader::SubComponentLoader(ComponentId_t id, Params &params) :
     Component(id)
 {
-    SubComponentSlotInfo* info = getSubComponentSlotInfo("mySubComp");
-    if ( !info ) {
-        Output::getDefaultObject().fatal(CALL_INFO, -1, "Must specify at least one SubComponent for slot mySubComp.\n");
-    }
-
-    info->createAll(subComps);
-    
     std::string freq = params.find<std::string>("clock", "1GHz");
-    registerClock( freq,
-        new Clock::Handler<SubComponentLoader>(this, &SubComponentLoader::tick ));
 
+    registerClock( freq,
+                   new Clock::Handler<SubComponentLoader>(this, &SubComponentLoader::tick ));
+
+    std::string unnamed_sub = params.find<std::string>("unnamed_subcomponent","");
+    int num_subcomps = params.find<int>("num_subcomps",1);
+
+    if ( unnamed_sub != "" ) {
+        for ( int i = 0; i < num_subcomps; ++i ) {
+            params.insert("port_name",std::string("port") + std::to_string(i));
+            SubCompInterface* sci = loadAnonymousSubComponent<SubCompInterface>(unnamed_sub, "mySubComp", i, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, params);
+            subComps.push_back(sci);
+        }
+    }
+    else {
+        SubComponentSlotInfo* info = getSubComponentSlotInfo("mySubComp");
+        if ( !info ) {
+            Output::getDefaultObject().fatal(CALL_INFO, -1, "Must specify at least one SubComponent for slot mySubComp.\n");
+        }
+        
+        info->createAll<SubCompInterface>(subComps, ComponentInfo::SHARE_STATS);
+    }
+    
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
 }
@@ -53,23 +73,74 @@ bool SubComponentLoader::tick(Cycle_t cyc)
 }
 
 
-
-
-SubCompSender::SubCompSender(Component *owningComponent, Params &params) :
-    SubCompInterface(owningComponent)
+/************************************************************************
+ *
+ *    SubCompSlot
+ *
+ ***********************************************************************/
+SubCompSlot::SubCompSlot(ComponentId_t id, Params &params) :
+    SubCompInterface(id)
 {
-    nToSend = params.find<uint32_t>("sendCount", 10);
+    std::string unnamed_sub = params.find<std::string>("unnamed_subcomponent","");
+    int num_subcomps = params.find<int>("num_subcomps",1);
 
-    nMsgSent = registerStatistic<uint32_t>("numSent", "");
-
-    registerTimeBase("1GHz", true);
-
-    link = configureLink("sendPort");
-    if ( !link ) {
-        Output::getDefaultObject().fatal(CALL_INFO, -1,
-                "Failed to configure port 'sendPort'\n");
+    if ( unnamed_sub != "" ) {
+        for ( int i = 0; i < num_subcomps; ++i ) {
+            params.insert("port_name",std::string("slot_port") + std::to_string(i));
+            SubCompInterface* sci = loadAnonymousSubComponent<SubCompInterface>(unnamed_sub, "mySubCompSlot", i, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, params);
+            subComps.push_back(sci);
+        }
+    }
+    else {
+        SubComponentSlotInfo* info = getSubComponentSlotInfo("mySubCompSlot");
+        if ( !info ) {
+            Output::getDefaultObject().fatal(CALL_INFO, -1, "Must specify at least one SubComponent for slot mySubComp.\n");
+        }
+        
+        info->createAll<SubCompInterface>(subComps, ComponentInfo::SHARE_STATS);
     }
 }
+
+
+void SubCompSlot::clock(Cycle_t cyc)
+{
+    for ( auto sub : subComps ) {
+        sub->clock(cyc);
+    }
+}
+
+/************************************************************************
+ *
+ *    SubCompSender
+ *
+ ***********************************************************************/
+SubCompSender::SubCompSender(ComponentId_t id, Params &params) :
+    SubCompInterface(id)
+{
+    // Determine if I'm loading as a named or unmamed SubComponent
+    std::string port_name;
+    if ( isUser() ) {
+        port_name = "sendPort";
+    }
+    else port_name = params.find<std::string>("port_name");
+    
+    registerTimeBase("2GHz",true);
+    link = configureLink(port_name);
+    if ( !link ) {
+        Output::getDefaultObject().fatal(CALL_INFO, -1,
+                                         "Failed to configure port %s\n",port_name.c_str());
+    }
+
+    nMsgSent = registerStatistic<uint32_t>("numSent", "");
+    if ( isStatisticShared("totalSent") )  {
+        totalMsgSent = registerStatistic<uint32_t>("totalSent", "");
+    }
+    else {
+        totalMsgSent = NULL;
+    }
+    nToSend = params.find<uint32_t>("sendCount", 10);
+}
+
 
 void SubCompSender::clock(Cycle_t cyc)
 {
@@ -78,24 +149,34 @@ void SubCompSender::clock(Cycle_t cyc)
 
     if ( (cyc % 64) == 0 ) {
         link->send(new SimpleMessageGeneratorComponent::simpleMessage());
-        nMsgSent->addData(1);
+        if ( nMsgSent ) nMsgSent->addData(1);
+        if ( totalMsgSent ) totalMsgSent->addData(1);
         nToSend--;
     }
 }
 
 
-
-SubCompReceiver::SubCompReceiver(Component *owningComponent, Params &params) :
-    SubCompInterface(owningComponent)
+/************************************************************************
+ *
+ *    SubCompReceiver
+ *
+ ***********************************************************************/
+SubCompReceiver::SubCompReceiver(ComponentId_t id, Params &params) :
+    SubCompInterface(id)
 {
-    nMsgReceived = registerStatistic<uint32_t>("numRecv", "");
-    link = configureLink("recvPort",
+    // Determine if I'm loading as a named or unmamed SubComponent
+    std::string port_name;
+    if ( isUser() ) port_name = "recvPort";
+    else port_name = params.find<std::string>("port_name");
+
+    link = configureLink(port_name,
             new Event::Handler<SubCompReceiver>(this, &SubCompReceiver::handleEvent));
     if ( !link ) {
         Output::getDefaultObject().fatal(CALL_INFO, -1,
                 "Failed to configure port 'recvPort'\n");
     }
-    registerTimeBase("1GHz", true);
+    // registerTimeBase("1GHz", true);
+    nMsgReceived = registerStatistic<uint32_t>("numRecv", "");
 }
 
 void SubCompReceiver::clock(Cycle_t cyc)
@@ -105,5 +186,6 @@ void SubCompReceiver::clock(Cycle_t cyc)
 
 void SubCompReceiver::handleEvent(Event *ev)
 {
-    nMsgReceived->addData(1);
+    if ( nMsgReceived ) nMsgReceived->addData(1);
+    delete ev;
 }

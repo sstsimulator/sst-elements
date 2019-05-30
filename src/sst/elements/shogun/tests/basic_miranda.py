@@ -97,7 +97,7 @@ comp_dirctrl0 = sst.Component("dirctrl0", "memHierarchy.DirectoryController")
 comp_dirctrl0.addParams({
       "coherence_protocol" : "MESI",
       "entry_cache_size" : "1024",
-      "memNIC.network_link_control" : "shogun.ShogunNIC", 
+      "memNIC.network_link_control" : "shogun.ShogunNIC",
       "memNIC.network_bw" : "10GB/s",
       "memNIC.addr_range_start" : "0x00",
       "memNIC.addr_range_end" : (1024 * 1024 * 1024) - 64,
