@@ -37,12 +37,13 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 	// Get the level of verbosity the user is asking to print out, default is 1
 	// which means don't print much.
 	uint32_t verbosity = (uint32_t) params.find("verbose", 1);
+	uint32_t mask = (uint32_t) params.find("verboseMask", 0);
 	m_jobId = params.find("jobId", -1);
 
 	std::ostringstream prefix;
 	prefix << "@t:" << m_jobId << ":EmberEngine:@p:@l: ";
 
-	output.init( prefix.str(), verbosity, (uint32_t) 0, Output::STDOUT);
+	output.init( prefix.str(), verbosity, mask, Output::STDOUT);
 
     Params osParams = params.find_prefix_params("os.");
 
@@ -69,20 +70,19 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
         std::ostringstream logPrefix;
         logPrefix << motifLogFile << "-" << m_jobId << ".log";
         //logPrefix << motifLogFile << "-" << id << "-" << m_jobId << ".log";
-        output.verbose(CALL_INFO, 4, 0, "Motif log file will write to: %s\n", logPrefix.str().c_str());
+        output.verbose(CALL_INFO, 4, ENGINE_MASK, "Motif log file will write to: %s\n", logPrefix.str().c_str());
         m_motifLogger = new EmberMotifLog(logPrefix.str(), m_jobId);
     } else {
         m_motifLogger = NULL;
     }
+	output.verbose(CALL_INFO, 2, ENGINE_MASK, "\n");
 
 	// create a map of all the available API's
 	m_apiMap = createApiMap( m_os, this, params );
     assert( ! m_apiMap.empty() );
 
 	motifParams.resize( params.find("motif_count", 1) );
-//	output.verbose(CALL_INFO, 2, 0, "Identified %" PRIu64 " motifs "
-//                                    "to be simulated.\n", motifParams.size());
-	output.verbose(CALL_INFO, 2, 0, "Identified %ld motifs "
+	output.verbose(CALL_INFO, 2, ENGINE_MASK, "Identified %ld motifs "
                                     "to be simulated.\n", motifParams.size());
 	
 	for ( unsigned int i = 0;  i < motifParams.size(); i++ ) {
@@ -155,21 +155,32 @@ EmberEngine::ApiMap EmberEngine::createApiMap( OS* os,
 
         Params modParams = params.find_prefix_params( moduleName + "." );
 
-        Hermes::Interface* api = dynamic_cast<Interface*>(
-                        owner->loadSubComponent( 
-                            moduleName, owner, modParams ) );
+        output.verbose(CALL_INFO, 2, ENGINE_MASK, "moduleName=%s\n", moduleName.c_str());
+
+        Hermes::Interface* api = dynamic_cast<Interface*>( owner->loadSubComponent( moduleName, owner, modParams ) );
         assert( tmp.find( api->getName() ) == tmp.end() );
 
+        output.verbose(CALL_INFO, 2, ENGINE_MASK, "api name=%s type=%s\n",api->getName().c_str(), api->getType().c_str() );
         api->setOS( os );
 
-        tmp[ api->getName() ] = new ApiInfo;
-        tmp[ api->getName() ]->data = NULL;
-        tmp[ api->getName() ]->api = api;
-        tmp[ api->getName() ]->lib = NULL;
-        if ( 0 == api->getName().compare("HadesMisc") ) {
-            tmp[ api->getName() ]->lib = 
-                new EmberMiscLib( getOutput(), static_cast<Misc::Interface*>(api) );
-        } 
+        EmberLib* lib = NULL;
+
+        std::string type = api->getType();
+
+        if ( type.length() > 0 ) {
+            std::string emberLib = "ember." + type + "Lib";
+            output.verbose(CALL_INFO, 2, ENGINE_MASK, "lib=%s\n",emberLib.c_str() );
+            SST::Params x; 
+            lib = dynamic_cast<EmberLib*>( loadModule( emberLib, x ) );
+            assert(lib);
+
+            lib->initApi( api );
+        } else {
+            type = api->getName();
+		}
+        tmp[ type ] = new ApiInfo;
+        tmp[ type ]->api = api;
+        tmp[ type ]->lib = lib;
     }
 
     return tmp;
@@ -191,7 +202,7 @@ EmberGenerator* EmberEngine::initMotif( SST::Params params,
     // get the api the motif uses
     std::string api = params.find<std::string>("api" );
 
-	output.verbose(CALL_INFO, 2, 0, "api=`%s` motif=`%s`\n", 
+	output.verbose(CALL_INFO, 2, ENGINE_MASK, "api=`%s` motif=`%s`\n", 
 										api.c_str(), gentype.c_str());
 
 	if( gentype.empty()) {
@@ -256,7 +267,7 @@ void EmberEngine::setup() {
 
 void EmberEngine::issueNextEvent(uint64_t nanoDelay) {
 
-    output.debug(CALL_INFO, 8, 0, "Engine issuing next event with delay %" PRIu64 "\n", nanoDelay);
+    output.debug(CALL_INFO, 8, ENGINE_MASK, "Engine issuing next event with delay %" PRIu64 "\n", nanoDelay);
 
     while ( evQueue.empty() ) {
 
@@ -293,7 +304,7 @@ void EmberEngine::issueNextEvent(uint64_t nanoDelay) {
 
 bool EmberEngine::completeFunctor( int retval, EmberEvent* ev )
 {
-    output.debug(CALL_INFO, 2, 0, "%s %s Event\n", 
+    output.debug(CALL_INFO, 2, ENGINE_MASK, "%s %s Event\n", 
               ev->stateName( ev->state() ).c_str(), ev->getName().c_str());
 
     if ( ev->complete( getCurrentSimTimeNano(), retval ) ) {
@@ -311,7 +322,7 @@ void EmberEngine::handleEvent(Event* ev) {
 	// handlers we have created
 	EmberEvent* eEv = static_cast<EmberEvent*>(ev);
 
-    output.debug(CALL_INFO, 2, 0, "%s %s Event\n", 
+    output.debug(CALL_INFO, 2, ENGINE_MASK, "%s %s Event\n", 
               eEv->stateName( eEv->state() ).c_str(), eEv->getName().c_str());
 
     switch ( eEv->state() ) { 
@@ -331,6 +342,14 @@ void EmberEngine::handleEvent(Event* ev) {
       case EmberEvent::IssueCallback:
         eEv->issue( getCurrentSimTimeNano(), 
                     std::bind( &EmberEngine::completeCallback, this, eEv, std::placeholders::_1 ) );
+        break;
+
+      case EmberEvent::IssueCallbackPtr:
+		{
+		    Callback* callback = new Callback;
+		    *callback = std::bind( &EmberEngine::completeCallback, this, eEv, std::placeholders::_1 );
+            eEv->issue( getCurrentSimTimeNano(), callback );
+		}
         break;
 
       case EmberEvent::Complete:
