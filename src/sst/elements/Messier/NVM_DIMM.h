@@ -65,7 +65,7 @@ namespace SST { namespace MessierComponent{
 
                 // Deterministic sort function for NVM_Request pointers
                 struct NVMReqPtrCompare {
-                    bool operator()(NVM_Request* ptrA, NVM_Request* ptrB) {
+                    bool operator()(const NVM_Request* ptrA, const NVM_Request* ptrB) const {
                         return (ptrA->req_ID < ptrB->req_ID);
                     }
                 };

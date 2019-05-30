@@ -21,7 +21,7 @@ namespace SambaComponent {
 
     // Comparator for MemEventBase pointers for deterministic ordering when pointers are used as map keys
     struct MemEventPtrCompare {
-        bool operator()(MemHierarchy::MemEventBase* ptrA, MemHierarchy::MemEventBase* ptrB) {
+        bool operator()(const MemHierarchy::MemEventBase* ptrA, const MemHierarchy::MemEventBase* ptrB) const {
             if (ptrA->getID().second < ptrB->getID().second) { // Compare on rank
                 return true;
             } else {
