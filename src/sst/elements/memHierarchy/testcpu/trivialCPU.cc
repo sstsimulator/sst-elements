@@ -79,7 +79,11 @@ trivialCPU::trivialCPU(ComponentId_t id, Params& params) :
     memory = loadUserSubComponent<Interfaces::SimpleMem>("memory", clockTC, new Interfaces::SimpleMem::Handler<trivialCPU>(this, &trivialCPU::handleEvent));
     
     if (!memory) {
-        out.fatal(CALL_INFO, -1, "Unable to load memHierarchy.memInterface subcomponent\n");
+        Params interfaceParams;
+        interfaceParams.insert("port", "mem_link");
+        memory = loadAnonymousSubComponent<Interfaces::SimpleMem>("memHierarchy.memInterface", "memory", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS,
+                interfaceParams, clockTC, new Interfaces::SimpleMem::Handler<trivialCPU>(this, &trivialCPU::handleEvent));
+        //out.fatal(CALL_INFO, -1, "Unable to load memHierarchy.memInterface subcomponent\n");
     }
     
     clock_ticks = 0;
