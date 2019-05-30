@@ -35,7 +35,7 @@ class EmberMiscEvent : public EmberEvent {
             EmberEventTimeStatistic* stat = NULL ):
         EmberEvent( output, stat ), m_api( api )
     {
-        m_state = IssueCallback;
+        m_state = IssueCallbackPtr;
     }
 
   protected:

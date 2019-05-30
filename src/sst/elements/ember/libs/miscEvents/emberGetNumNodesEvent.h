@@ -36,7 +36,7 @@ public:
 
     std::string getName() { return "GetNumNodes"; }
 
-    virtual void issue( uint64_t time, Callback callback ) 
+    virtual void issue( uint64_t time, Callback* callback ) 
     {
         EmberEvent::issue( time );
         //m_output->verbose(CALL_INFO, 2, 0, "\n");
