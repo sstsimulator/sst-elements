@@ -1331,8 +1331,6 @@ GOBLINHMCSimBackend::~GOBLINHMCSimBackend() {
           HMCCMCConfig *c = *itr;
           delete c;
         }
-
-	delete output;
 }
 
 void GOBLINHMCSimBackend::registerStatistics() {
