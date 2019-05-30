@@ -13,8 +13,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef _SIMPLESUBCOMPONENT_H
-#define _SIMPLESUBCOMPONENT_H
+#ifndef _SIMPLESUBCOMPONENT_LEGACY_H
+#define _SIMPLESUBCOMPONENT_LEGACY_H
 
 #include<vector>
 
@@ -23,10 +23,9 @@
 #include <sst/core/link.h>
 
 namespace SST {
-namespace SimpleSubComponent {
+namespace SimpleSubComponentLegacy {
 
 /*
-
   SimpleSubComponent will test the various ways to use SubComponents.
   The SubComponents will be loadable as both named and unnamed
   SubComponets.  When an unname SubComponent is used, it inherits the
@@ -35,11 +34,8 @@ namespace SimpleSubComponent {
   BaseComponent higher in the call tree.
 
   Each BaseComponent will have a port(s) that may or may not be used
-  depending on the configuration.
-
-  Configurations to be supported:
-  
- */
+  depending on the configuration.  
+*/
 
 
 class SubCompInterface : public SST::SubComponent
@@ -48,39 +44,9 @@ public:
     SubCompInterface(Component *owningComponent) :
         SubComponent(owningComponent)
     { }
-    SubCompInterface(ComponentId_t id) :
-        SubComponent(id)
-    { }
-    SubCompInterface(ComponentId_t id, Params& params) :
-        SubComponent(id)
-    { }
-    SubCompInterface(Component* comp, Params& params) :
-        SubComponent(comp)
-    { }
     virtual ~SubCompInterface() {}
     virtual void clock(SST::Cycle_t) {}
 
-
-    // typedef std::tuple<int,int> ELI_CONSTRUCTOR_PARAMS;
-
-    // template <class... ARGS>
-    // static ELI_CONSTRUCTOR_PARAMS convert(ARGS... args) {
-    //     return std::make_tuple<ARGS...>(std::forward<ARGS>(args)...);
-    // }
-
-    SST_ELI_REGISTER_SUBCOMPONENT_API(SST::SimpleSubComponent::SubCompInterface)
-    // SST_ELI_DECLARE_NEW_BASE(SubComponent,SubCompInterface)
-    // SST_ELI_NEW_BASE_CTOR(ComponentId_t,Params&)
-
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
-        SubCompInterface,
-        "simpleElementExample",
-        "SubCompInterface",
-        SST_ELI_ELEMENT_VERSION(1,0,0),
-        "Default implementation of SubCompInterface",
-        SST::SimpleSubComponent::SubCompInterface
-    )
-    
 };
 
 /* Our trivial component */
@@ -90,7 +56,7 @@ public:
     // REGISTER THIS COMPONENT INTO THE ELEMENT LIBRARY
     SST_ELI_REGISTER_COMPONENT(SubComponentLoader,
                                "simpleElementExample",
-                               "SubComponentLoader",
+                               "SubComponentLoaderLegacy",
                                SST_ELI_ELEMENT_VERSION(1,0,0),
                                "Demonstrates subcomponents",
                                COMPONENT_CATEGORY_UNCATEGORIZED
@@ -112,7 +78,7 @@ public:
     )
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-        {"mySubComp", "Test slot", "SST::SimpleSubComponent::SubCompInterface" }
+        {"mySubComp", "Test slot", "SST::SimpleSubComponentLegacy::SubCompInterface" }
     )
 
     SubComponentLoader(ComponentId_t id, SST::Params& params);
@@ -121,6 +87,8 @@ private:
 
     bool tick(SST::Cycle_t);
     std::vector<SubCompInterface*> subComps;
+    bool use_legacy;
+    std::string use_direct;
 };
 
 
@@ -131,16 +99,16 @@ class SubCompSlot : public SubCompInterface
 {
 public:
 
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    // REGISTER THIS SUB-COMPONENT INTO THE ELEMENT LIBRARY
+    SST_ELI_REGISTER_SUBCOMPONENT(
         SubCompSlot,
         "simpleElementExample",
-        "SubCompSlot",
+        "SubCompSlotLegacy",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Subcomponent which is just a wrapper for the actual SubComponent to be used",
-        SST::SimpleSubComponent::SubCompInterface
+        "SST::SimpleSubComponent::SubCompInterface"
     )
 
-    
     SST_ELI_DOCUMENT_PARAMS(
         {"sendCount", "Number of Messages to Send", "10"},
         {"unnamed_subcomponent", "Unnamed SubComponent to load.  If empty, then a named subcomponent is loaded", ""},
@@ -156,22 +124,18 @@ public:
     )
     
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-        {"mySubCompSlot", "Test slot", "SST::SimpleSubComponent::SubCompInterface" }
+        {"mySubCompSlot", "Test slot", "SST::SimpleSubComponentLegacy::SubCompInterface" }
     )
 
     
 private:    
     std::vector<SubCompInterface*> subComps;
+    bool use_legacy;
     
 public:
     // Legacy API
     SubCompSlot(Component *owningComponent, Params &params);
-    // New API
-    SubCompSlot(ComponentId_t id, Params& params);
-    // Direct load
-    SubCompSlot(ComponentId_t id, std::string unnamed_sub);
 
-//SubCompSlot(ComponentId_t id) : SubCompInterface(id) {}
     ~SubCompSlot() {}
     void clock(Cycle_t);
 
@@ -185,15 +149,15 @@ class SubCompSender : public SubCompInterface
 public:
 
     // REGISTER THIS SUB-COMPONENT INTO THE ELEMENT LIBRARY
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         SubCompSender,
         "simpleElementExample",
-        "SubCompSender",
+        "SubCompSenderLegacy",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Sending Subcomponent",
-        SST::SimpleSubComponent::SubCompInterface
+        "SST::SimpleSubComponent::SubCompInterface"
     )
-
+    
     SST_ELI_DOCUMENT_PARAMS(
         {"port_name", "Name of port to connect to", ""},
         {"sendCount", "Number of Messages to Send", "10"},
@@ -219,10 +183,6 @@ private:
 public:
     // Legacy API
     SubCompSender(Component *owningComponent, Params &params);
-    // New API
-    SubCompSender(ComponentId_t id, Params &params);
-    // Direct API
-    SubCompSender(ComponentId_t id, uint32_t nToSend, const std::string& port_name);
     ~SubCompSender() {}
     void clock(Cycle_t);
 
@@ -235,15 +195,14 @@ class SubCompReceiver : public SubCompInterface
 public:
 
     // REGISTER THIS SUB-COMPONENT INTO THE ELEMENT LIBRARY
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+    SST_ELI_REGISTER_SUBCOMPONENT(
         SubCompReceiver,
         "simpleElementExample",
-        "SubCompReceiver",
+        "SubCompReceiverLegacy",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Receiving Subcomponent",
-        SST::SimpleSubComponent::SubCompInterface
+        "SST::SimpleSubComponent::SubCompInterface"
     )
-
 
     // Optional since there is nothing to document
     SST_ELI_DOCUMENT_PARAMS(
@@ -277,10 +236,10 @@ public:
 
 };
 
-} // namespace SimpleSubComponent
+} // namespace SimpleSubComponentLegacy
 } // namespace SST
 
 
 
 
-#endif /* _SIMPLESUBCOMPONENT_H */
+#endif /* _SIMPLESUBCOMPONENT_LEGACY_H */
