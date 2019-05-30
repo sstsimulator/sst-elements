@@ -39,7 +39,7 @@ void EmberUnstructuredGenerator::configure()
 {
 	//Check the type of the rankmapper: CustomMap or LinearMap
 	bool use_CustomRankMap;
-	EmberCustomRankMap* cm = dynamic_cast<EmberCustomRankMap*>(m_rankMap);
+	EmberCustomRankMap* cm = dynamic_cast<EmberCustomRankMap*>(getRankMap());
 	if(cm == NULL)
 		use_CustomRankMap = false;
 	else
