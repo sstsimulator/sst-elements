@@ -20,6 +20,7 @@
 using namespace SST::Ember;
 
 #define TAG 0xDEADBEEF
+#define DATA_TYPE CHAR 
 
 EmberRingGenerator::EmberRingGenerator(SST::Component* owner, Params& params) :
 	EmberMessagePassingGenerator(owner, params, "Ring"),
@@ -27,8 +28,8 @@ EmberRingGenerator::EmberRingGenerator(SST::Component* owner, Params& params) :
 {
 	m_messageSize = (uint32_t) params.find("arg.messagesize", 1024);
 	m_iterations = (uint32_t) params.find("arg.iterations", 1);
-    m_sendBuf = memAlloc(m_messageSize);
-    m_recvBuf = memAlloc(m_messageSize);
+    m_sendBuf = memAlloc(m_messageSize * sizeofDataType(DATA_TYPE) );
+    m_recvBuf = memAlloc(m_messageSize * sizeofDataType(DATA_TYPE) );
 }
 
 inline long mod( long a, long b )
@@ -43,14 +44,15 @@ bool EmberRingGenerator::generate( std::queue<EmberEvent*>& evQ)
         if ( 0 == rank()) {
             double totalTime = (double)(m_stopTime - m_startTime)/1000000000.0;
 
+			size_t nBytes = m_messageSize * sizeofDataType(DATA_TYPE);
             double latency = ((totalTime/m_iterations)/size());
-            double bandwidth = (double) m_messageSize / latency;
+            double bandwidth = (double) nBytes / latency;
 
-            output("%s total time %.3f us, loop %d, bufLen %d"
+            output("%s total time %.3f us, loop %d, bufLen %zu"
                     ", latency %.3f us. bandwidth %f GB/s\n", 
                                 getMotifName().c_str(),
                                 totalTime * 1000000.0, m_iterations,
-                                m_messageSize,
+								nBytes,
                                 latency * 1000000.0,
                                 bandwidth / 1000000000.0 );
         }
@@ -69,15 +71,21 @@ bool EmberRingGenerator::generate( std::queue<EmberEvent*>& evQ)
     int from = mod( (signed int) rank() - 1, size() );
     verbose( CALL_INFO, 2, 0, "to=%d from=%d\n",to,from);
 
+	if ( m_loopIndex ) {
+		int count;
+		get_count( &m_resp, CHAR, &count );
+		get_count( &m_resp, INT, &count );
+		get_count( &m_resp, LONG, &count );
+	}
     if ( 0 == rank() ) {
-        enQ_send( evQ, m_sendBuf, m_messageSize, CHAR, to, TAG,
+        enQ_send( evQ, m_sendBuf, m_messageSize, DATA_TYPE, to, TAG,
                                                 GroupWorld );
-	    enQ_recv( evQ, m_recvBuf, m_messageSize, CHAR, from, TAG, 
+	    enQ_recv( evQ, m_recvBuf, m_messageSize, DATA_TYPE, from, TAG, 
                                                 GroupWorld, &m_resp );
     } else {
-	    enQ_recv( evQ, m_recvBuf, m_messageSize, CHAR, from, TAG, 
+	    enQ_recv( evQ, m_recvBuf, m_messageSize, DATA_TYPE, from, TAG, 
                                                 GroupWorld, &m_resp );
-	   enQ_send( evQ, m_sendBuf, m_messageSize, CHAR, to, TAG,
+	    enQ_send( evQ, m_sendBuf, m_messageSize, DATA_TYPE, to, TAG,
                                                 GroupWorld );
     }
 
