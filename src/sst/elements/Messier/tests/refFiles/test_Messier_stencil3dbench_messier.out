@@ -15,15 +15,6 @@
 0:cpu:RequestGenCPU[RequestGenCPU:160]: - Max Store requests pending:     16
 0:cpu:RequestGenCPU[RequestGenCPU:161]: - Max Custom requests pending:     16
 0:cpu:RequestGenCPU[RequestGenCPU:162]: Configuration completed.
---->  --------------------------- Initializing [Set Associative Cache Array]... 
---->  Sets: 128 
---->  Lines: 512 
---->  Line size: 64 
---->  Associativity: 4 
-
---->  Configuring cache with a direct link above and below
---->  --------------------------- Initializing [L1Controller] ... 
-
 The value of tRCD is 300
 After initialization 
  cpu.read_reqs : Accumulator : Sum.u64 = 108864; SumSQ.u64 = 108864; Count.u64 = 108864; Min.u64 = 1; Max.u64 = 1; 
