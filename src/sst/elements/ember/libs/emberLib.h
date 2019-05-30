@@ -14,18 +14,25 @@
 // distribution.
 
 
-#ifndef _H_EMBER_EMBERLIB_NODE
-#define _H_EMBER_EMBERLIB_NODE
+#ifndef _H_EMBER_LIBS_EMBERLIB
+#define _H_EMBER_LIBS_EMBERLIB
 
-using namespace Hermes;
+#include <sst/core/subcomponent.h>
+#include "sst/elements/hermes/hermes.h"
 
 namespace SST {
 namespace Ember {
 
-class EmberLib {
-
+class EmberLib : public SST::Module {
   public:
-  private:
+	EmberLib() : m_output(NULL), m_api(NULL) {}
+
+	void initApi( Hermes::Interface* api ) { m_api = api; }	
+	void initOutput( SST::Output* output ) { m_output = output; }	
+
+  protected:
+	Output* m_output;
+	Hermes::Interface* m_api;
 };
 
 }
