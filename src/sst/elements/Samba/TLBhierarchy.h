@@ -21,7 +21,7 @@
 
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>
-#include <sst/core/component.h>
+#include <sst/core/componentExtension.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
 #include <sst/core/output.h>
@@ -29,6 +29,7 @@
 
 #include<string>
 
+#include "utils.h"
 #include "TLBentry.h"
 #include "TLBUnit.h"
 #include "PageTableWalker.h"
@@ -43,7 +44,7 @@
 
 namespace SST { namespace SambaComponent{
 
-	class TLBhierarchy 
+	class TLBhierarchy : public ComponentExtension 
 	{
 
 		// This keeps track of which core the TLB belongs to, here we assume typical private TLBs as in current x86 processor
@@ -53,9 +54,6 @@ namespace SST { namespace SambaComponent{
 		int levels;
 
 		Output * output;
-
-		// This is the link to propogate requests to the cache hierarchy
-		SST::Component * Owner;
 
 		// If faults are emulated
 	    int emulate_faults;
@@ -89,7 +87,7 @@ namespace SST { namespace SambaComponent{
 		SST::Cycle_t curr_time;
 
 		// This vector holds the current requests to be translated
-		std::vector<SST::Event *> mem_reqs;
+		std::vector<SST::MemHierarchy::MemEventBase *> mem_reqs;
 
 		// This tells TLB hierarchy to stall due to emulated page fault
 		int hold;
@@ -104,7 +102,7 @@ namespace SST { namespace SambaComponent{
 		std::list<Address_t> invalid_addrs;
 
 		// This vector holds the current requests to be translated
-		std::map<SST::Event *, long long int> mem_reqs_sizes;
+		std::map<SST::MemHierarchy::MemEventBase *, long long int, MemEventPtrCompare> mem_reqs_sizes;
 
 
 		// This mapping is used to track the time spent of translating each request
@@ -167,21 +165,20 @@ namespace SST { namespace SambaComponent{
                         PENDING_PAGE_FAULTS = pr;
                         PENDING_SHOOTDOWN_EVENTS = sr;
 
-			if(PTW!=NULL)
+			if(PTW!=nullptr)
 				PTW->setPageTablePointers(cr3, pgd, pud, pmd, pte, gb, mb, kb, pr, sr);
 
 		}
 		// Constructor for component
 		TLBhierarchy(ComponentId_t id, Params& params);
 		TLBhierarchy(ComponentId_t id, Params& params, int tlb_id);
-		TLBhierarchy(int tlb_id,SST::Component * owner);
-		TLBhierarchy(int tlb_id, int level, SST::Component * owner, Params& params);
+		TLBhierarchy(SST::ComponentId_t id, int tlb_id);
+		TLBhierarchy(SST::ComponentId_t id, int tlb_id, int level, Params& params);
 
 		PageTableWalker * getPTW(){return PTW;}
 
 		bool tick(SST::Cycle_t x);
 
-		TLBhierarchy() {};
 		// Doing the translation
 		Address_t translate(Address_t VA);
 

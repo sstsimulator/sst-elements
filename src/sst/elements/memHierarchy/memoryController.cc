@@ -100,42 +100,49 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
         out.output("%s, ** Found deprecated parameter: direct_link ** The value of this parameter is now auto-detected by the link configuration in your input deck. Remove this parameter from your input deck to eliminate this message.\n", getName().c_str());
     }
 
-    std::string name        = params.find<std::string>("backendConvertor", "memHierarchy.simpleMemBackendConvertor");
 
     string link_lat         = params.find<std::string>("direct_link_latency", "10 ns");
 
-    if (nullptr == (memBackendConvertor_ = dynamic_cast<MemBackendConvertor*>(loadNamedSubComponent("backendConvertor")))) {
-        /* Load the old-fashioned way */
+    memBackendConvertor_ = loadUserSubComponent<MemBackendConvertor>("backendConvertor");
+    if (!memBackendConvertor_) {
         Params tmpParams = params.find_prefix_params("backendConvertor.");
-        memBackendConvertor_  = dynamic_cast<MemBackendConvertor*>(loadSubComponent(name, this, tmpParams));
+        std::string name = params.find<std::string>("backendConvertor", "memHierarchy.simpleMemBackendConvertor");
+        memBackendConvertor_ = loadAnonymousSubComponent<MemBackendConvertor>(name, "backendConvertor", 0, 
+                ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, tmpParams);
     }
-
     if (memBackendConvertor_ == nullptr) {
         out.fatal(CALL_INFO, -1, "%s, Error - unable to load MemBackendConvertor.", getName().c_str());
     }
 
+    using std::placeholders::_1;
+    using std::placeholders::_2;
+    memBackendConvertor_->setCallbackHandlers(std::bind(&MemController::handleMemResponse, this, _1, _2), std::bind(&MemController::turnClockOn, this));
     memSize_ = memBackendConvertor_->getMemSize();
 
-    const uint32_t listenerCount  = params.find<uint32_t>("listenercount", 0);
-    char* nextListenerName   = (char*) malloc(sizeof(char) * 64);
-    char* nextListenerParams = (char*) malloc(sizeof(char) * 64);
+    // Load listeners (profilers/tracers/etc.)
+    SubComponentSlotInfo* lists = getSubComponentSlotInfo("listener"); // Find all listeners specified in the configuration
+    if (lists)
+        lists->createAll<CacheListener>(listeners_, false, ComponentInfo::SHARE_NONE);
+    else { // Manually load via the old way of doing it
+        const uint32_t listenerCount  = params.find<uint32_t>("listenercount", 0);
+        char* nextListenerName   = (char*) malloc(sizeof(char) * 64);
+        char* nextListenerParams = (char*) malloc(sizeof(char) * 64);
+    
+        for (uint32_t i = 0; i < listenerCount; ++i) {
+            sprintf(nextListenerName, "listener%" PRIu32, i);
+            string listenerMod     = params.find<std::string>(nextListenerName, "");
 
-    for (uint32_t i = 0; i < listenerCount; ++i) {
-        sprintf(nextListenerName, "listener%" PRIu32, i);
-        string listenerMod     = params.find<std::string>(nextListenerName, "");
+            if (listenerMod != "") {
+                sprintf(nextListenerParams, "listener%" PRIu32 ".", i);
+                Params listenerParams = params.find_prefix_params(nextListenerParams);
 
-        if (listenerMod != "") {
-            sprintf(nextListenerParams, "listener%" PRIu32 ".", i);
-            Params listenerParams = params.find_prefix_params(nextListenerParams);
-
-            CacheListener* loadedListener = dynamic_cast<CacheListener*>(loadSubComponent(listenerMod, this, listenerParams));
-            listeners_.push_back(loadedListener);
+                CacheListener* loadedListener = loadAnonymousSubComponent<CacheListener>(listenerMod, "listener", i, ComponentInfo::INSERT_STATS, listenerParams);
+                listeners_.push_back(loadedListener);
+            }
         }
+        free(nextListenerName);
+        free(nextListenerParams);
     }
-
-    free(nextListenerName);
-    free(nextListenerParams);
-
 
     // Opal
     std::string opalNode = params.find<std::string>("node", "0");
@@ -179,7 +186,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
         linkParams.insert("local_memory_size", opalSize);
         linkParams.insert("latency", link_lat, false);
         linkParams.insert("accept_region", "1", false);
-        link_ = dynamic_cast<MemLink*>(loadSubComponent("memHierarchy.MemLink", this, linkParams));
+        link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, linkParams);
         link_->setRecvHandler( new Event::Handler<MemController>(this, &MemController::handleEvent));
         clockLink_ = false;
     } else {
@@ -201,10 +208,10 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
             nicParams.insert("ack.port", "network_ack");
             nicParams.insert("fwd.port", "network_fwd");
             nicParams.insert("data.port", "network_data");
-            link_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemNICFour", this, nicParams)); 
+            link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNICFour", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams);
         } else {
             nicParams.insert("port", "network");
-            link_ = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams)); 
+            link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams);
         }
 
         link_->setRecvHandler( new Event::Handler<MemController>(this, &MemController::handleEvent) );
@@ -278,10 +285,16 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     registerTimeBase("1 ns", true); // TODO - is this needed? We already registered a clock...
 
     /* Custom command handler */
-    if (nullptr == (customCommandHandler_ = dynamic_cast<CustomCmdMemHandler*>(loadNamedSubComponent("customCmdHandler")))) {
+    using std::placeholders::_3;
+    customCommandHandler_ = loadUserSubComponent<CustomCmdMemHandler>("customCmdHandler", 
+            std::bind(static_cast<void(MemController::*)(Addr,size_t,std::vector<uint8_t>&)>(&MemController::readData), this, _1, _2, _3), 
+            std::bind(static_cast<void(MemController::*)(Addr,std::vector<uint8_t>*)>(&MemController::writeData), this, _1, _2));
+    if (nullptr == customCommandHandler_) {
         std::string customHandlerName = params.find<std::string>("customCmdHandler", "");
         if (customHandlerName != "") {
-            customCommandHandler_ = dynamic_cast<CustomCmdMemHandler*>(loadSubComponent(customHandlerName, this, params));
+            customCommandHandler_ = loadAnonymousSubComponent<CustomCmdMemHandler>(customHandlerName, "customCmdHandler", 0, ComponentInfo::INSERT_STATS, params,
+                    std::bind(static_cast<void(MemController::*)(Addr,size_t,std::vector<uint8_t>&)>(&MemController::readData), this, _1, _2, _3), 
+                    std::bind(static_cast<void(MemController::*)(Addr,std::vector<uint8_t>*)>(&MemController::writeData), this, _1, _2));
         }
     }
 }
@@ -330,7 +343,7 @@ void MemController::handleEvent(SST::Event* event) {
             {
                 MemEvent* put = NULL;
                 if ( ev->getPayloadSize() != 0 ) {
-                    put = new MemEvent(this, ev->getBaseAddr(), ev->getBaseAddr(), Command::PutM, ev->getPayload() );
+                    put = new MemEvent(getName(), ev->getBaseAddr(), ev->getBaseAddr(), Command::PutM, ev->getPayload(), getCurrentSimTimeNano());
                     put->setFlag(MemEvent::F_NORESPONSE);
                     outstandingEvents_.insert(std::make_pair(put->getID(), put));
                     notifyListeners(ev);

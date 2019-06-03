@@ -104,7 +104,8 @@ public:
 	)
 
 	SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-		{ "generator", "What address generator to load", "SST::Miranda::RequestGenerator" }
+		{ "generator", "What address generator to load", "SST::Miranda::RequestGenerator" },
+                { "memory",     "The memory interface to use (e.g., interface to caches)", "SST::Interfaces::SimpleMem" }
     	)
 
 private:

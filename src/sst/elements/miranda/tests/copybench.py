@@ -8,12 +8,15 @@ sst.setProgramOption("stopAtCycle", "0 ns")
 comp_cpu = sst.Component("cpu", "miranda.BaseCPU")
 comp_cpu.addParams({
 	"verbose" : 0,
-	"generator" : "miranda.CopyGenerator",
-	"generatorParams.verbose" : 0,
-        "generatorParams.read_start_address" : 0,
-	"generatorParams.request_width" : 16,
-	"generatorParams.request_count" : 65536,
 	"printStats" : 1,
+})
+
+# Put the miranda.CopyGenerator subcomponent into comp_cpu's 'generator' slot
+gen = comp_cpu.setSubComponent("generator", "miranda.CopyGenerator")
+gen.addParams({"verbose" : 0,
+    "read_start_address" : 0,
+    "request_width" : 16,
+    "request_count" : 65536,
 })
 
 # Tell SST what statistics handling we want

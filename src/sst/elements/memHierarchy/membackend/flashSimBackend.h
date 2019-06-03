@@ -37,8 +37,8 @@ namespace MemHierarchy {
 class FlashDIMMSimMemory : public SimpleMemBackend {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT(FlashDIMMSimMemory, "memHierarchy", "FlashDIMMSim", SST_ELI_ELEMENT_VERSION(1,0,0),
-            "Backend interface to FlashDIMM simulator for memory timings", "SST::MemHierarchy::MemBackend")
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(FlashDIMMSimMemory, "memHierarchy", "FlashDIMMSim", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Backend interface to FlashDIMM simulator for memory timings", SST::MemHierarchy::SimpleMemBackend)
     
     SST_ELI_DOCUMENT_PARAMS( MEMBACKEND_ELI_PARAMS,
             /* Own parameters */
@@ -49,11 +49,13 @@ public:
 
 /* Begin class definition */
     FlashDIMMSimMemory(Component *comp, Params &params);
+    FlashDIMMSimMemory(ComponentId_t id, Params &params);
     bool issueRequest(ReqId, Addr, bool, unsigned );
     virtual bool clock(Cycle_t cycle);
     void finish();
 
 private:
+    void build(Params& params);
     void FlashDIMMSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle);
     uint32_t pendingRequests;
     uint32_t maxPendingRequests;

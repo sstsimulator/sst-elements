@@ -25,8 +25,8 @@ namespace MemHierarchy {
 class Messier : public SimpleMemBackend {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT(Messier, "memHierarchy", "Messier", SST_ELI_ELEMENT_VERSION(1,0,0),
-            "Messier memory timings", "SST::MemHierarchy::MemBackend")
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(Messier, "memHierarchy", "Messier", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Messier memory timings", SST::MemHierarchy::SimpleMemBackend)
     
     SST_ELI_DOCUMENT_PARAMS( MEMBACKEND_ELI_PARAMS,
             /* Own parameters */
@@ -37,11 +37,13 @@ public:
 
 /* Begin class definition */
     Messier(Component *comp, Params &params);
+    Messier(ComponentId_t id, Params &params);
     virtual bool issueRequest( ReqId, Addr, bool isWrite, unsigned numBytes );
     void handleMessierResp(SST::Event *event);
     virtual bool isClocked() { return false; }
 
 private:
+    void build(Params& params);
     SST::Link *cube_link;
     std::set<ReqId> outToNVM;
     SST::Link *nvm_link;

@@ -50,6 +50,7 @@ def buildCPU(num, network):
         "memSize": mem_size - 1,
         "num_loadstore": niter,
         })
+    iface = cpu.setSubComponent("memory", "memHierarchy.memInterface")
 
     l1 = sst.Component("l1_%d"%num, "memHierarchy.Cache")
     l1.addParams({
@@ -65,7 +66,7 @@ def buildCPU(num, network):
         })
 
     cpuLink = sst.Link("cpu-cache-%d"%num)
-    cpuLink.connect( (cpu, "mem_link", "500ps"), (l1, "high_network_0", "500ps"))
+    cpuLink.connect( (iface, "port", "500ps"), (l1, "high_network_0", "500ps"))
 
     rtrLink = sst.Link("L1-net-%d"%num)
     rtrLink.connect( (l1, "directory", "500ps"), (network.rtr, "port%d"%netPort, "500ps") )

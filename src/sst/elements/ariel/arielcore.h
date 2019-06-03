@@ -19,7 +19,7 @@
 
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>
-#include <sst/core/component.h>
+#include <sst/core/componentExtension.h>
 #include <sst/core/link.h>
 #include <sst/core/output.h>
 #include <sst/core/interfaces/simpleMem.h>
@@ -47,11 +47,9 @@
 #include "arielflushev.h"
 #include "arielfenceev.h"
 #include "arielswitchpool.h"
-#include "arielalloctrackev.h"
 
 #include "ariel_shmem.h"
 #include "arieltracegen.h"
-#include <sst/elements/Opal/Opal_Event.h>
 
 using namespace SST;
 using namespace SST::Interfaces;
@@ -61,14 +59,11 @@ namespace SST {
 namespace ArielComponent {
 
 
-class ArielCore {
+class ArielCore : public ComponentExtension {
 
     public:
-        ArielCore(ArielTunnel *tunnel, SimpleMem *coreToCacheLink,
-            uint32_t thisCoreID, uint32_t maxPendTans,
-            Output* out, uint32_t maxIssuePerCyc, uint32_t maxQLen,
-            uint64_t cacheLineSz, SST::Component* owner,
-                ArielMemoryManager* memMgr, const uint32_t perform_address_checks, Params& params);
+        ArielCore(ComponentId_t id, ArielTunnel *tunnel, uint32_t thisCoreID, uint32_t maxPendTans, Output* out,
+            uint32_t maxIssuePerCyc, uint32_t maxQLen, uint64_t cacheLineSz, ArielMemoryManager* memMgr, const uint32_t perform_address_checks, Params& params);
         ~ArielCore();
 
         bool isCoreHalted() const;
@@ -92,7 +87,7 @@ class ArielCore {
         void createFenceEvent();
         void createSwitchPoolEvent(uint32_t pool);
 
-        void setCacheLink(SimpleMem* newCacheLink, Link* allocLink);
+        void setCacheLink(SimpleMem* newCacheLink);
 
         void handleEvent(SimpleMem::Request* event);
         void handleReadRequest(ArielReadEvent* wEv);
@@ -104,11 +99,8 @@ class ArielCore {
         void handleFlushEvent(ArielFlushEvent *flEv);
         void handleFenceEvent(ArielFenceEvent *fEv);
 
-        // interrupt handlers
-        void handleInterruptEvent(SST::Event *event);
-        void ISR_Opal(SST::OpalComponent::OpalEvent *ev);
-        void setOpal() { opal_enabled = true; }
-        void setOpalLink(Link * opallink);
+        // interrupt handler
+        bool handleInterrupt(ArielMemoryManager::InterruptAction action);
 
         void commitReadEvent(const uint64_t address, const uint64_t virtAddr, const uint32_t length);
         void commitWriteEvent(const uint64_t address, const uint64_t virtAddr, const uint32_t length, const uint8_t* payload);
@@ -123,7 +115,6 @@ class ArielCore {
     private:
         bool processNextEvent();
         bool refillQueue();
-        bool opal_enabled;
         bool writePayloads;
         uint32_t coreID;
         uint32_t maxPendingTransactions;
@@ -133,14 +124,11 @@ class ArielCore {
         bool isHalted;
         bool isFenced;
         SimpleMem* cacheLink;
-        Link* allocLink;
-        Link* OpalLink;
         ArielTunnel *tunnel;
         std::unordered_map<SimpleMem::Request::id_t, SimpleMem::Request*>* pendingTransactions;
         uint32_t maxIssuePerCycle;
         uint32_t maxQLength;
         uint64_t cacheLineSize;
-        SST::Component* owner;
         ArielMemoryManager* memmgr;
         const uint32_t verbosity;
         const uint32_t perform_checks;

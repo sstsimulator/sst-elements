@@ -28,11 +28,28 @@ using namespace SST::Interfaces;
 
 
 MemHierarchyInterface::MemHierarchyInterface(SST::Component *comp, Params &params) :
-    SimpleMem(comp, params), owner_(comp), recvHandler_(NULL), link_(NULL)
+    SimpleMem(comp, params), recvHandler_(NULL), link_(NULL)
 { 
     output.init("", 1, 0, Output::STDOUT);
     rqstr_ = "";
     initDone_ = false;
+}
+
+MemHierarchyInterface::MemHierarchyInterface(SST::ComponentId_t id, Params &params, TimeConverter * time, HandlerBase* handler) :
+    SimpleMem(id, params)
+{ 
+    setDefaultTimeBase(time); // Required for link since we no longer inherit it from our parent
+
+    output.init("", 1, 0, Output::STDOUT);
+    rqstr_ = "";
+    initDone_ = false;
+    
+    recvHandler_ = handler;
+    std::string portname = params.find<std::string>("port", "port");
+    if ( NULL == recvHandler_) 
+        link_ = configureLink(portname);
+    else
+        link_ = configureLink(portname, new Event::Handler<MemHierarchyInterface>(this, &MemHierarchyInterface::handleIncoming));
 }
 
 
@@ -44,9 +61,9 @@ void MemHierarchyInterface::init(unsigned int phase) {
         region.end = (uint64_t) - 1;
         region.interleaveStep = 0;
         region.interleaveSize = 0;
-        link_->sendInitData(new MemEventInitRegion(parent->getName(), region, false));
+        link_->sendInitData(new MemEventInitRegion(getName(), region, false));
 
-        MemEventInitCoherence * event = new MemEventInitCoherence(parent->getName(), Endpoint::CPU, false, false, 0, false);
+        MemEventInitCoherence * event = new MemEventInitCoherence(getName(), Endpoint::CPU, false, false, 0, false);
         link_->sendInitData(event);
 
     }
@@ -124,7 +141,7 @@ MemEventBase* MemHierarchyInterface::createMemEvent(SimpleMem::Request *req) con
 
     Addr baseAddr = (req->addrs[0]) & baseAddrMask_;
     
-    MemEvent *me = new MemEvent(owner_, req->addrs[0], baseAddr, cmd);
+    MemEvent *me = new MemEvent(getName(), req->addrs[0], baseAddr, cmd, getCurrentSimTimeNano());
     
     me->setRqstr(rqstr_);
     me->setDst(rqstr_);
@@ -210,7 +227,7 @@ SimpleMem::Request* MemHierarchyInterface::processIncoming(MemEventBase *ev){
             updateRequest(req, static_cast<MemEvent*>(ev));
         }
     } else {
-        output.fatal(CALL_INFO, -1, "(%s interface) Unable to find matching request. Event: %s\n", owner_->getName().c_str(), ev->getVerboseString().c_str());
+        output.fatal(CALL_INFO, -1, "(%s interface) Unable to find matching request. Event: %s\n", getName().c_str(), ev->getVerboseString().c_str());
     }
     return req;
 }
@@ -251,8 +268,8 @@ void MemHierarchyInterface::updateCustomRequest(SimpleMem::Request* req, MemEven
 
 bool MemHierarchyInterface::initialize(const std::string &linkName, HandlerBase *handler){
     recvHandler_ = handler;
-    if ( NULL == recvHandler_) link_ = owner_->configureLink(linkName);
-    else                       link_ = owner_->configureLink(linkName, new Event::Handler<MemHierarchyInterface>(this, &MemHierarchyInterface::handleIncoming));
+    if ( NULL == recvHandler_) link_ = configureLink(linkName);
+    else                       link_ = configureLink(linkName, new Event::Handler<MemHierarchyInterface>(this, &MemHierarchyInterface::handleIncoming));
 
     return (link_ != NULL);
 }

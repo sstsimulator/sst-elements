@@ -27,8 +27,8 @@ namespace SST { namespace MemHierarchy {
 
 class MESIInternalDirectory : public CoherenceController {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(MESIInternalDirectory, "memHierarchy", "MESICacheDirectoryCoherenceController", SST_ELI_ELEMENT_VERSION(1,0,0), 
-            "Implements MESI or MSI coherence for cache that is co-located with a directory, for noninclusive last-level caches", "SST::MemHierarchy::CoherenceController")
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(MESIInternalDirectory, "memHierarchy", "MESICacheDirectoryCoherenceController", SST_ELI_ELEMENT_VERSION(1,0,0), 
+            "Implements MESI or MSI coherence for cache that is co-located with a directory, for noninclusive last-level caches", SST::MemHierarchy::CoherenceController)
 
     SST_ELI_DOCUMENT_STATISTICS(
         /* Event sends */
@@ -271,7 +271,9 @@ public:
 
 /* Class definition */
     /** Constructor for MESIInternalDirectory. */
-    MESIInternalDirectory(Component * comp, Params& params) : CoherenceController(comp, params) {
+    MESIInternalDirectory(Component * comp, Params& params) : CoherenceController(comp, params) { }
+    MESIInternalDirectory(ComponentId_t id, Params& params, Params& ownerParams) : CoherenceController(id, params, ownerParams) {
+        params.insert(ownerParams);
         
         debug->debug(_INFO_,"--------------------------- Initializing [MESI + Directory Controller] ... \n\n");
         

@@ -32,7 +32,7 @@
 #include "sst/elements/memHierarchy/cacheListener.h"
 #include "sst/elements/memHierarchy/replacementManager.h"
 #include "sst/elements/memHierarchy/util.h"
-#include "sst/elements/ariel/arielalloctrackev.h"
+#include "alloctrackev.h"
 
 
 namespace SST { namespace MemHierarchy {
@@ -58,7 +58,7 @@ public:
 
     SST_ELI_DOCUMENT_PORTS(
             {"cpu_link_%(port)d", "Ports connected to the CPUs", {"memHierarchy.MemEventBase"}},
-            {"alloc_link_%(port)d", "Ports connected to the CPUs' allocation/free notification ports", {"ariel.arielAllocTrackEvent"}} )
+            {"alloc_link_%(port)d", "Ports connected to the CPUs' allocation/free notification ports", {"memHierarchy.AllocTrackEvent"}} )
 
     SST_ELI_DOCUMENT_STATISTICS(
             {"ReadHits",    "Number of read requests that hit in the sieve", "count", 1},
@@ -67,6 +67,9 @@ public:
             {"WriteMisses", "Number of write requests that missed in the sieve", "count", 1},
             {"UnassociatedReadMisses", "Number of read misses that did not match a malloc", "count", 1},
             {"UnassociatedWriteMisses", "Number of write misses that did not match a malloc", "count", 1} )
+
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( {"profiler", "(string) Name of profiling subcomponent. Currently only configured to work with cassini.AddrHistogrammer.", "SST::MemHierarchy::CacheListener"} )
+
 
 /* Begin class definition */
     typedef CacheArray::CacheLine CacheLine;

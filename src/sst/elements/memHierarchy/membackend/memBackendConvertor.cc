@@ -31,19 +31,26 @@ using namespace SST::MemHierarchy;
 
 MemBackendConvertor::MemBackendConvertor(Component *comp, Params& params ) : 
     SubComponent(comp), m_cycleCount(0), m_reqId(0)
-{
+{ build(params); }
+
+MemBackendConvertor::MemBackendConvertor(ComponentId_t id, Params& params ) :
+    SubComponent(id), m_cycleCount(0), m_reqId(0) 
+{ build(params); }
+
+void MemBackendConvertor::build(Params& params) {
     m_dbg.init("", 
             params.find<uint32_t>("debug_level", 0),
             params.find<uint32_t>("debug_mask", 0),
             (Output::output_location_t)params.find<int>("debug_location", 0 ));
 
-    string backendName  = params.find<std::string>("backend", "memHierarchy.simpleMem");
 
-
-    // extract backend parameters for memH.
-    Params backendParams = params.find_prefix_params("backend.");
-
-    m_backend = dynamic_cast<MemBackend*>( comp->loadSubComponent( backendName, comp, backendParams ) );
+    m_backend = loadUserSubComponent<MemBackend>("backend");
+    if (!m_backend) {
+        // extract backend parameters for memH.
+        string backendName  = params.find<std::string>("backend", "memHierarchy.simpleMem");
+        Params backendParams = params.find_prefix_params("backend.");
+        m_backend = loadAnonymousSubComponent<MemBackend>(backendName, "backend", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, backendParams);
+    }
 
     using std::placeholders::_1;
     m_backend->setGetRequestorHandler( std::bind( &MemBackendConvertor::getRequestor, this, _1 )  );
@@ -71,6 +78,11 @@ MemBackendConvertor::MemBackendConvertor(Component *comp, Params& params ) :
     stat_totalCycles = registerStatistic<uint64_t>( "total_cycles" );;
 
     m_clockOn = true; /* Maybe parent should set this */
+}
+
+void MemBackendConvertor::setCallbackHandlers( std::function<void(Event::id_type,uint32_t)> responseCB, std::function<Cycle_t()> clockenable ) {
+    m_notifyResponse = responseCB;
+    m_enableClock = clockenable;
 }
 
 void MemBackendConvertor::handleMemEvent(  MemEvent* ev ) {
@@ -165,7 +177,7 @@ void MemBackendConvertor::doResponse( ReqId reqId, uint32_t flags ) {
 
     /* If clock is not on, turn it back on */
     if (!m_clockOn) {
-        Cycle_t cycle = static_cast<MemController*>(parent)->turnClockOn();
+        Cycle_t cycle = m_enableClock();
         turnClockOn(cycle);
     }
 
@@ -225,7 +237,7 @@ void MemBackendConvertor::doResponse( ReqId reqId, uint32_t flags ) {
 
 void MemBackendConvertor::sendResponse( SST::Event::id_type id, uint32_t flags ) {
 
-    static_cast<MemController*>(parent)->handleMemResponse( id, flags );
+    m_notifyResponse( id, flags );
 
 }
 

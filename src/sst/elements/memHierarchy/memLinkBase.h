@@ -43,6 +43,8 @@ class MemLinkBase : public SST::SubComponent {
 
 public:
 
+    SST_ELI_REGISTER_SUBCOMPONENT_API(SST::MemHierarchy::MemLinkBase)
+
 #define MEMLINKBASE_ELI_PARAMS { "debug",              "(int) Where to print debug output. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},\
     { "debug_level",        "(int) Debug verbosity level. Between 0 and 10", "0"},\
     { "debug_addr",         "(comma separated uint) Address(es) to be debugged. Leave empty for all, otherwise specify one or more, comma-separated values. Start and end string with brackets",""},\
@@ -73,7 +75,16 @@ public:
     };
 
     /* Constructor */
-    MemLinkBase(Component * comp, Params &params) : SubComponent(comp) {
+    MemLinkBase(Component * comp, Params &params) : SubComponent(comp) { 
+        build(params);
+    }
+
+    MemLinkBase(ComponentId_t id, Params &params) : SubComponent(id) {
+        build(params);
+    }
+
+private:
+    void build(Params &params) {
         /* Create debug output */
         int debugLevel = params.find<int>("debug_level", 0);
         int debugLoc = params.find<int>("debug", 0);
@@ -123,7 +134,7 @@ public:
         sharedMemEnabled = params.find<bool>("shared_memory", false);
         localMemSize = params.find<uint64_t>("local_memory_size", 0);
     }
-
+public:
     /* Destructor */
     ~MemLinkBase() { }
 

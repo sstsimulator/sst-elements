@@ -26,16 +26,17 @@ class ProsperoBinaryTraceReader : public ProsperoTraceReader {
 
 public:
         ProsperoBinaryTraceReader( Component* owner, Params& params );
+        ProsperoBinaryTraceReader( ComponentId_t id, Params& params, Output* out );
         ~ProsperoBinaryTraceReader();
         ProsperoTraceEntry* readNextEntry();
 
- 	SST_ELI_REGISTER_SUBCOMPONENT(
+ 	SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         	ProsperoBinaryTraceReader,
         	"prospero",
         	"ProsperoBinaryTraceReader",
         	SST_ELI_ELEMENT_VERSION(1,0,0),
         	"Binary Trace Reader",
-        	"SST::Prospero::ProsperoTraceReader"
+        	SST::Prospero::ProsperoTraceReader
     	)
 
 	SST_ELI_DOCUMENT_PARAMS(

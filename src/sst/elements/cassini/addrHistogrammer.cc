@@ -28,7 +28,7 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 using namespace SST::Cassini;
 
-AddrHistogrammer::AddrHistogrammer(Component* owner, Params& params) : CacheListener(owner, params) {
+AddrHistogrammer::AddrHistogrammer(ComponentId_t id, Params& params) : CacheListener(id, params) {
     std::string cutoff_s = params.find<std::string>("addr_cutoff", "16GiB");
     UnitAlgebra cutoff_u(cutoff_s);
     cutoff = cutoff_u.getRoundedValue();
@@ -38,6 +38,11 @@ AddrHistogrammer::AddrHistogrammer(Component* owner, Params& params) : CacheList
     rdHisto = registerStatistic<Addr>("histogram_reads");
     wrHisto = registerStatistic<Addr>("histogram_writes");
 
+}
+
+AddrHistogrammer::AddrHistogrammer(Component* owner, Params& params) : CacheListener(owner, params) {
+    Output out("", 1, 0, Output::STDOUT);
+    out.fatal(CALL_INFO, -1, "%s, Error: SubComponent does not support legacy loadSubComponent call; use new calls (loadUserSubComponent or loadAnonymousSubComponent)\n", getName().c_str());
 }
 
 

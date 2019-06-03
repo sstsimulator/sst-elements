@@ -18,7 +18,7 @@
 
 using namespace SST::ArielComponent;
 
-ArielCompressedBinaryTraceGenerator::ArielCompressedBinaryTraceGenerator(Component* owner, Params& params) :
+ArielCompressedBinaryTraceGenerator::ArielCompressedBinaryTraceGenerator(Params& params) :
     ArielTraceGenerator() {
 
     tracePrefix = params.find<std::string>("trace_prefix", "ariel-core");

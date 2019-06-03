@@ -35,7 +35,7 @@ class ArielCompressedBinaryTraceGenerator : public ArielTraceGenerator {
 
         SST_ELI_DOCUMENT_PARAMS( { "trace_prefix", "Sets the prefix for the trace file", "ariel-core-" } )
 
-        ArielCompressedBinaryTraceGenerator(Component* owner, Params& params);
+        ArielCompressedBinaryTraceGenerator(Params& params);
 
         ~ArielCompressedBinaryTraceGenerator();
 

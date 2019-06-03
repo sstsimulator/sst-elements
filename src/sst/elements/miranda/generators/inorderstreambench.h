@@ -28,23 +28,25 @@ namespace Miranda {
 class InOrderSTREAMBenchGenerator : public RequestGenerator {
 
 public:
-	InOrderSTREAMBenchGenerator( Component* owner, Params& params ) :
-		RequestGenerator(owner, params) {
+	InOrderSTREAMBenchGenerator( Component* owner, Params& params ) : RequestGenerator(owner, params) { build(params); }
+        InOrderSTREAMBenchGenerator( ComponentId_t id, Params& params ) : RequestGenerator(id, params) { build(params); }
 
-		const uint32_t verbose = params.find<uint32_t>("verbose", 0);
-		out = new Output("InOrderSTREAMBench[@p:@l]: ", verbose, 0,
-			Output::STDOUT);
+	void build(Params& params) {
 
-		n = params.find<uint64_t>("n", 10000);
-		requestLen = params.find<uint64_t>("operandwidth", 8);
+	    const uint32_t verbose = params.find<uint32_t>("verbose", 0);
+	    out = new Output("InOrderSTREAMBench[@p:@l]: ", verbose, 0,
+		    Output::STDOUT);
 
-		start_a = params.find<uint64_t>("start_a", 0);
-		start_b = params.find<uint64_t>("start_b", start_a + (n * requestLen));
-		start_c = params.find<uint64_t>("start_c", start_b + (n * requestLen));
+	    n = params.find<uint64_t>("n", 10000);
+	    requestLen = params.find<uint64_t>("operandwidth", 8);
 
-		block_per_call = params.find<uint64_t>("block_per_call", 1);
+	    start_a = params.find<uint64_t>("start_a", 0);
+	    start_b = params.find<uint64_t>("start_b", start_a + (n * requestLen));
+	    start_c = params.find<uint64_t>("start_c", start_b + (n * requestLen));
 
-		i = 0;
+	    block_per_call = params.find<uint64_t>("block_per_call", 1);
+
+	    i = 0;
 	}
 
 	~InOrderSTREAMBenchGenerator() {
@@ -93,13 +95,13 @@ public:
 
 	void completed() {}
 
-       	SST_ELI_REGISTER_SUBCOMPONENT(
+       	SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
                	InOrderSTREAMBenchGenerator,
                 "miranda",
                 "InOrderSTREAMBenchGenerator",
                 SST_ELI_ELEMENT_VERSION(1,0,0),
 		"Creates a representation of the STREAM benchmark for in-order CPUs",
-                "SST::Miranda::RequestGenerator"
+                SST::Miranda::RequestGenerator
         )
 
 	SST_ELI_DOCUMENT_PARAMS(

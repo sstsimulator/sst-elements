@@ -24,7 +24,7 @@ namespace SST { namespace MemHierarchy {
 networkMemInspector::networkMemInspector(Component *parent, Params &params)
     : NetworkInspector(parent) {
     // should fix to have this be a param
-    dbg.init("@R:netMemInspect::@p():@l " + parent->getName() + ": ", 0, 0, 
+    dbg.init("@R:netMemInspect::@p():@l " + getName() + ": ", 0, 0, 
              Output::STDOUT);  
 
 }

@@ -27,8 +27,8 @@ namespace SST { namespace MemHierarchy {
 class L1IncoherentController : public CoherenceController {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT(L1IncoherentController, "memHierarchy", "L1IncoherentController", SST_ELI_ELEMENT_VERSION(1,0,0), 
-            "Implements an L1 cache without coherence", "SST::MemHierarchy::CoherenceController")
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(L1IncoherentController, "memHierarchy", "L1IncoherentController", SST_ELI_ELEMENT_VERSION(1,0,0), 
+            "Implements an L1 cache without coherence", SST::MemHierarchy::CoherenceController)
 
     SST_ELI_DOCUMENT_STATISTICS(
         /* Event sends */
@@ -100,7 +100,9 @@ public:
         
 /* Begin class definition */    
     /** Constructor for L1IncoherentController */
-    L1IncoherentController(Component* comp, Params& params) : CoherenceController(comp, params) {
+    L1IncoherentController(Component* comp, Params& params) : CoherenceController(comp, params) { }
+    L1IncoherentController(ComponentId_t id, Params& params, Params& ownerParams) : CoherenceController(id, params, ownerParams) {
+        params.insert(ownerParams);
         debug->debug(_INFO_,"--------------------------- Initializing [L1Controller] ... \n\n");
        
         /* Register statistics */

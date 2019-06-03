@@ -27,6 +27,10 @@ class MemBackend;
 
 class ScratchBackendConvertor : public SubComponent {
 public:
+    SST_ELI_REGISTER_SUBCOMPONENT_API(SST::MemHierarchy::ScratchBackendConvertor)
+
+#define SCRATCHBACKENDCONVERTOR_ELI_SLOTS {"backend", "Backend memory model", "SST::MemHierarchy::MemBackend"}
+
     typedef uint64_t ReqId; 
 
     class MemReq {
@@ -68,6 +72,8 @@ public:
 
     ScratchBackendConvertor();
     ScratchBackendConvertor(Component* comp, Params& params);
+    ScratchBackendConvertor(ComponentId_t id, Params& params);
+    void build(Params& params);
     void finish(void);
     virtual const std::string& getClockFreq();
     virtual size_t getMemSize();
@@ -82,6 +88,8 @@ public:
 
         return m_pendingRequests[id]->getMemEvent()->getRqstr();
     }
+
+    virtual void setCallbackHandler(std::function<void(Event::id_type)> func);
 
   protected:
     ~ScratchBackendConvertor() {
@@ -101,6 +109,8 @@ public:
 
     MemBackend* m_backend;
     uint32_t    m_backendRequestWidth;
+
+    std::function<void(Event::id_type)> m_notifyResponse;
 
   private:
     virtual bool issue(MemReq*) = 0;

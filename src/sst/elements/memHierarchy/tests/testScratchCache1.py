@@ -23,6 +23,10 @@ comp_cpu0.addParams({
     "verbose" : 1,
     "rngseed" : 11
 })
+iface0 = comp_cpu0.setSubComponent("memory", "memHierarchy.scratchInterface")
+iface0.addParams({
+    "scratchpad_size" : "64KB"
+})
 
 comp_l1_0 = sst.Component("l1_0", "memHierarchy.Cache")
 comp_l1_0.addParams({
@@ -63,6 +67,10 @@ comp_cpu1.addParams({
     "reqsToIssue" : 1000,
     "verbose" : 1,
     "rngseed" : 1
+})
+iface1 = comp_cpu1.setSubComponent("memory", "memHierarchy.scratchInterface")
+iface1.addParams({
+    "scratchpad_size" : "64KB"
 })
 comp_l1_1 = sst.Component("l1_1", "memHierarchy.Cache")
 comp_l1_1.addParams({
@@ -141,9 +149,9 @@ sst.enableAllStatisticsForComponentType("memHierarchy.MemController")
 
 # Define the simulation links
 link_cpu0_l1 = sst.Link("link_cpu0_l1")
-link_cpu0_l1.connect( (comp_cpu0, "mem_link", "100ps"), (comp_l1_0, "high_network_0", "100ps") )
+link_cpu0_l1.connect( (iface0, "port", "100ps"), (comp_l1_0, "high_network_0", "100ps") )
 link_cpu1_l1 = sst.Link("link_cpu1_l1")
-link_cpu1_l1.connect( (comp_cpu1, "mem_link", "100ps"), (comp_l1_1, "high_network_0", "100ps") )
+link_cpu1_l1.connect( (iface1, "port", "100ps"), (comp_l1_1, "high_network_0", "100ps") )
 link_l1_scratch0 = sst.Link("link_cpu0_scratch0")
 link_l1_scratch0.connect( (comp_l1_0, "low_network_0", "100ps"), (comp_scratch0, "cpu", "100ps") )
 link_l1_scratch1 = sst.Link("link_cpu1_scratch1")

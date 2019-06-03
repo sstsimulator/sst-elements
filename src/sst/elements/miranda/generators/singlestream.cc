@@ -22,6 +22,15 @@ using namespace SST::Miranda;
 
 SingleStreamGenerator::SingleStreamGenerator( Component* owner, Params& params ) :
 	RequestGenerator(owner, params) {
+            build(params);
+        }
+
+SingleStreamGenerator::SingleStreamGenerator( ComponentId_t id, Params& params ) :
+	RequestGenerator(id, params) {
+            build(params);
+        }
+
+void SingleStreamGenerator::build(Params& params) {
 
 	const uint32_t verbose = params.find<uint32_t>("verbose", 0);
 

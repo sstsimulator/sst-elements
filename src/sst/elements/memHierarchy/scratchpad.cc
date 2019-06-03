@@ -107,18 +107,25 @@ Scratchpad::Scratchpad(ComponentId_t id, Params &params) : Component(id) {
     // Remote address computation
     remoteAddrOffset_ = params.find<uint64_t>("memory_addr_offset", scratchSize_);
 
-    // Create backend which will handle the timing for scratchpad
-    std::string bkName = params.find<std::string>("backendConvertor", "memHierarchy.scratchBackendConvertor");
-
-    // Copy some parameters into the backend
-    Params bkParams = params.find_prefix_params("backendConvertor.");
-    bkParams.insert("backend.clock", clock_freq);
-    bkParams.insert("backend.request_width", std::to_string(scratchLineSize_));
-    bkParams.insert("backend.mem_size", size.toString()); 
-    
     // Create backend
-    scratch_ = dynamic_cast<ScratchBackendConvertor*>(loadSubComponent(bkName, this, bkParams));
+    scratch_ = loadUserSubComponent<ScratchBackendConvertor>("backendConvertor");
+
+    if (!scratch_) {
+        // Create backend which will handle the timing for scratchpad
+        std::string bkName = params.find<std::string>("backendConvertor", "memHierarchy.scratchBackendConvertor");
     
+        // Copy some parameters into the backend
+        Params bkParams = params.find_prefix_params("backendConvertor.");
+        bkParams.insert("backend.clock", clock_freq);
+        bkParams.insert("backend.request_width", std::to_string(scratchLineSize_));
+        bkParams.insert("backend.mem_size", size.toString()); 
+
+        scratch_ = loadAnonymousSubComponent<ScratchBackendConvertor>(bkName, "backendConvertor", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, bkParams);
+    }
+
+    using std::placeholders::_1;
+    scratch_->setCallbackHandler(std::bind( &Scratchpad::handleScratchResponse, this, _1 ));
+
     // Initialize scratchpad entries
     // Set up backing store if needed
     std::string backingType = params.find<std::string>("backing", "mmap", found); /* Default to using an mmap backing store, fall back on malloc */
@@ -207,13 +214,13 @@ Scratchpad::Scratchpad(ComponentId_t id, Params &params) : Component(id) {
     if (cpuDirect) {
         Params cpulink = params.find_prefix_params("cpulink.");
         cpulink.insert("port", "cpu");
-        linkUp_ = dynamic_cast<MemLink*>(loadSubComponent("memHierarchy.MemLink", this, cpulink));
+        linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, cpulink);
         linkUp_->setRecvHandler(new Event::Handler<Scratchpad>(this, &Scratchpad::processIncomingCPUEvent));
     }
     if (memoryDirect) {
         Params memlink = params.find_prefix_params("memlink.");
         memlink.insert("port", "memory");
-        linkDown_ = dynamic_cast<MemLink*>(loadSubComponent("memHierarchy.MemLink", this, memlink));
+        linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "memlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, memlink);
         linkDown_->setRecvHandler(new Event::Handler<Scratchpad>(this, &Scratchpad::processIncomingRemoteEvent));
     }
 
@@ -238,14 +245,14 @@ Scratchpad::Scratchpad(ComponentId_t id, Params &params) : Component(id) {
         nicParams.insert("group", "3", false); // 3 is the default for anything that talks to memory but this can be set by user too so don't overwrite
        
         if (!memoryDirect) { /* Connect mem side to network */
-            linkDown_ = static_cast<MemNIC*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams));
+            linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "memlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams);
             linkDown_->setRecvHandler(new Event::Handler<Scratchpad>(this, &Scratchpad::processIncomingRemoteEvent));
             if (!cpuDirect) {
                 linkUp_ = linkDown_; /* Connect cpu side to same network */
                 linkDown_->setRecvHandler(new Event::Handler<Scratchpad>(this, &Scratchpad::processIncomingNetworkEvent));
             }
         } else {
-            linkUp_ = static_cast<MemNIC*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams));
+            linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams);
             linkUp_->setRecvHandler(new Event::Handler<Scratchpad>(this, &Scratchpad::processIncomingCPUEvent));
         }
     }
@@ -516,7 +523,7 @@ void Scratchpad::handleScratchRead(MemEvent * ev) {
     if (caching_ && !ev->queryFlag(MemEvent::F_NONCACHEABLE)) // Send data in exclusive state to let caches decide what to do with it
         response->setCmd(Command::GetXResp);
 
-    MemEvent * read = new MemEvent(this, ev->getAddr(), ev->getBaseAddr(), Command::GetS, ev->getSize());
+    MemEvent * read = new MemEvent(getName(), ev->getAddr(), ev->getBaseAddr(), Command::GetS, ev->getSize(), getCurrentSimTimeNano());
     read->setRqstr(ev->getRqstr());
     read->setVirtualAddress(ev->getVirtualAddress());
     read->setInstructionPointer(ev->getInstructionPointer());
@@ -594,7 +601,7 @@ void Scratchpad::handleScratchWrite(MemEvent * ev) {
     MemEvent * response = nullptr;
     response = ev->makeResponse();
 
-    MemEvent * write = new MemEvent(this, ev->getAddr(), ev->getBaseAddr(), Command::PutM, ev->getPayload());
+    MemEvent * write = new MemEvent(getName(), ev->getAddr(), ev->getBaseAddr(), Command::PutM, ev->getPayload(), getCurrentSimTimeNano());
     write->setRqstr(ev->getRqstr());
     write->setVirtualAddress(ev->getVirtualAddress());
     write->setInstructionPointer(ev->getInstructionPointer());
@@ -665,7 +672,7 @@ void Scratchpad::handleScratchGet(MemEventBase * event) {
 
     // Issue remote read
     ev->setSrcBaseAddr((ev->getSrcAddr() - remoteAddrOffset_) & ~(remoteLineSize_ - 1));
-    MemEvent * remoteRead = new MemEvent(this, ev->getSrcAddr() - remoteAddrOffset_, ev->getSrcBaseAddr(), Command::GetS, ev->getSize());
+    MemEvent * remoteRead = new MemEvent(getName(), ev->getSrcAddr() - remoteAddrOffset_, ev->getSrcBaseAddr(), Command::GetS, ev->getSize(), getCurrentSimTimeNano());
     remoteRead->setFlag(MemEvent::F_NONCACHEABLE);
     remoteRead->setRqstr(ev->getRqstr());
     remoteRead->setVirtualAddress(ev->getSrcVirtualAddress());
@@ -719,7 +726,7 @@ void Scratchpad::handleScratchPut(MemEventBase * event) {
     MoveEvent * response = ev->makeResponse();
     ev->setDstBaseAddr((ev->getDstBaseAddr() - remoteAddrOffset_) & ~(remoteLineSize_ - 1));
     
-    MemEvent * remoteWrite = new MemEvent(this, ev->getDstAddr() - remoteAddrOffset_, ev->getDstBaseAddr(), Command::GetX, ev->getSize());
+    MemEvent * remoteWrite = new MemEvent(getName(), ev->getDstAddr() - remoteAddrOffset_, ev->getDstBaseAddr(), Command::GetX, ev->getSize(), getCurrentSimTimeNano());
     remoteWrite->setZeroPayload(ev->getSize());
     remoteWrite->setFlag(MemEvent::F_NONCACHEABLE);
     remoteWrite->setFlag(MemEvent::F_NORESPONSE);
@@ -829,7 +836,7 @@ void Scratchpad::handleAckInv(MemEventBase * event) {
 
         uint32_t size = deriveSize(addr, baseAddr, request->getSrcAddr(), request->getSize());
         
-        MemEvent * read = new MemEvent(this, addr, baseAddr, Command::GetS, size);
+        MemEvent * read = new MemEvent(getName(), addr, baseAddr, Command::GetS, size, getCurrentSimTimeNano());
         read->setRqstr(request->getRqstr());
         read->setVirtualAddress(request->getSrcVirtualAddress());
         read->setInstructionPointer(request->getInstructionPointer());
@@ -874,7 +881,7 @@ void Scratchpad::handleFetchResp(MemEventBase * event) {
 
     // Send a write to scratch if the line was dirty since we forcefully invalidated
     if (response->getDirty()) {
-        MemEvent * write = new MemEvent(this, response->getAddr(), baseAddr, Command::PutM, response->getPayload());
+        MemEvent * write = new MemEvent(getName(), response->getAddr(), baseAddr, Command::PutM, response->getPayload(), getCurrentSimTimeNano());
         write->setRqstr(put->getRqstr());
         write->setVirtualAddress(put->getSrcVirtualAddress());
         write->setInstructionPointer(put->getInstructionPointer());
@@ -955,7 +962,7 @@ void Scratchpad::handleRemoteRead(MemEvent * event) {
     stat_RemoteReadReceived->addData(1);
 
     event->setBaseAddr((event->getAddr() - remoteAddrOffset_) & ~(remoteLineSize_ - 1));
-    MemEvent * request = new MemEvent(this, event->getAddr() - remoteAddrOffset_, event->getBaseAddr(), Command::GetS, event->getSize());
+    MemEvent * request = new MemEvent(getName(), event->getAddr() - remoteAddrOffset_, event->getBaseAddr(), Command::GetS, event->getSize(), getCurrentSimTimeNano());
     request->setFlag(MemEvent::F_NONCACHEABLE); // Use byte not line address
     request->setRqstr(event->getRqstr());
     request->setVirtualAddress(event->getVirtualAddress());
@@ -982,7 +989,7 @@ void Scratchpad::handleRemoteWrite(MemEvent * event) {
     stat_RemoteWriteReceived->addData(1);
 
     event->setBaseAddr((event->getAddr() - remoteAddrOffset_) & ~(remoteLineSize_ - 1));
-    MemEvent * request = new MemEvent(this, event->getAddr() - remoteAddrOffset_, event->getBaseAddr(), Command::GetX, event->getPayload());
+    MemEvent * request = new MemEvent(getName(), event->getAddr() - remoteAddrOffset_, event->getBaseAddr(), Command::GetX, event->getPayload(), getCurrentSimTimeNano());
     request->setFlag(MemEvent::F_NORESPONSE);
     request->setFlag(MemEvent::F_NONCACHEABLE);
     request->setRqstr(event->getRqstr());
@@ -1024,7 +1031,7 @@ void Scratchpad::handleRemoteGetResponse(MemEvent * response, SST::Event::id_typ
         uint32_t size = (baseAddr + scratchLineSize_) - addr;
         if (size > bytesLeft) size = bytesLeft;
         std::vector<uint8_t> data(response->getPayload()[payloadOffset],response->getPayload()[payloadOffset+size]);
-        MemEvent * write = new MemEvent(this, addr, baseAddr, Command::PutM, data);
+        MemEvent * write = new MemEvent(getName(), addr, baseAddr, Command::PutM, data, getCurrentSimTimeNano());
         write->setRqstr(request->getRqstr());
         write->setVirtualAddress(request->getDstVirtualAddress());
         write->setInstructionPointer(request->getInstructionPointer());
@@ -1182,7 +1189,7 @@ void Scratchpad::sendResponse(MemEventBase * event) {
  */
 bool Scratchpad::startGet(Addr baseAddr, MoveEvent * get) {
     if (caching_ && cacheStatus_.at(baseAddr/scratchLineSize_) == true) {
-        MemEvent * inv = new MemEvent(this, baseAddr, baseAddr, Command::ForceInv, scratchLineSize_);
+        MemEvent * inv = new MemEvent(getName(), baseAddr, baseAddr, Command::ForceInv, scratchLineSize_, getCurrentSimTimeNano());
         inv->setRqstr(get->getRqstr());
         inv->setDst(linkUp_->getSources()->begin()->name);
         inv->setVirtualAddress(get->getDstVirtualAddress());
@@ -1201,7 +1208,7 @@ bool Scratchpad::startGet(Addr baseAddr, MoveEvent * get) {
  */
 bool Scratchpad::startPut(Addr baseAddr, MoveEvent * put) {
     if (caching_ && cacheStatus_.at(baseAddr/scratchLineSize_) == true) {
-        MemEvent * inv = new MemEvent(this, baseAddr, baseAddr, Command::FetchInv, scratchLineSize_);
+        MemEvent * inv = new MemEvent(getName(), baseAddr, baseAddr, Command::FetchInv, scratchLineSize_, getCurrentSimTimeNano());
         inv->setRqstr(put->getRqstr());
         inv->setDst(put->getSrc());
         inv->setVirtualAddress(put->getSrcVirtualAddress());
@@ -1216,7 +1223,7 @@ bool Scratchpad::startPut(Addr baseAddr, MoveEvent * put) {
             addr = put->getSrcAddr();
         uint32_t size = deriveSize(addr, baseAddr, put->getSrcAddr(), put->getSize());
 
-        MemEvent * read = new MemEvent(this, addr, baseAddr, Command::GetS, size);
+        MemEvent * read = new MemEvent(getName(), addr, baseAddr, Command::GetS, size, getCurrentSimTimeNano());
         read->setRqstr(put->getRqstr());
         read->setVirtualAddress(put->getSrcVirtualAddress());
         read->setInstructionPointer(put->getInstructionPointer());

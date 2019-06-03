@@ -51,7 +51,7 @@ int gs;
 int lg;
 
 
-NVM_DIMM::NVM_DIMM(SST::Component * owner, NVM_PARAMS par)
+NVM_DIMM::NVM_DIMM(ComponentId_t id, NVM_PARAMS par) : ComponentExtension(id)
 {
 
 	// Here we should do the assignment of parameters to the NVM_DIMM object
@@ -63,15 +63,14 @@ NVM_DIMM::NVM_DIMM(SST::Component * owner, NVM_PARAMS par)
 	cycles = 0;
 
 	enabled = false;
-	Owner = owner;
 
 	params = new NVM_PARAMS();
 
 	(*params) = par; 
 
-	histogram_idle = Owner->registerStatistic<uint64_t>( "histogram_idle");
-	reads = Owner->registerStatistic<uint64_t>( "reads");
-	writes = Owner->registerStatistic<uint64_t>( "writes");
+	histogram_idle = registerStatistic<uint64_t>( "histogram_idle");
+	reads = registerStatistic<uint64_t>( "reads");
+	writes = registerStatistic<uint64_t>( "writes");
 
 	WB = new NVM_WRITE_BUFFER(params->write_buffer_size, 0, 64 /*write buffer granularity, now assume 64B */, params->flush_th, params->flush_th_low);
 
@@ -196,7 +195,6 @@ bool NVM_DIMM::tick()
 		}
 		else
 		{
-			//	std::cout<<Owner->getName()<<" Tries to submit "<<std::endl;
 			submit_request_opt();
 			read_count++;
 		}
@@ -258,7 +256,7 @@ void NVM_DIMM::schedule_delivery()
 				(getBank(add))->set_last(true);
 				ready_trans[st_1->first] = cycles + params->tCMD + params->tCL + params->tBURST;
 				(st_1->first)->meta_data = EventType::READ_COMPLETION;
-				m_EventChan->send(params->tCMD + params->tCL + params->tBURST, new MessierEvent(st_1->first, EventType::READ_COMPLETION)); 
+                                m_EventChan->send(params->tCMD + params->tCL + params->tBURST, new MessierEvent(st_1->first, EventType::READ_COMPLETION)); 
 				ready_at_NVM.erase(st_1);
 				break;		
 			}
@@ -951,7 +949,6 @@ void NVM_DIMM::handleRequest(SST::Event* e)
 
 	tmp->Size = event->getNumBytes();
 	tmp->Address = event->getAddr() ;
-
 
 
 

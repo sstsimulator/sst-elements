@@ -1,15 +1,15 @@
-0:TimingDRAM::TimingDRAM():51:mc=0: number of channels: 3
-0:TimingDRAM::TimingDRAM():52:mc=0: address mapper:     memHierarchy.roundRobinAddrMapper
-0:TimingDRAM:Channel:Channel():107:mc=0:chan=0: max pending trans: 32
-0:TimingDRAM:Channel:Channel():108:mc=0:chan=0: number of ranks:   3
-0:TimingDRAM:Rank:Rank():204:mc=0:chan=0:rank=0: number of banks: 5
-0:TimingDRAM:Bank:Bank():263:mc=0:chan=0:rank=0:bank=0: CL:           14
-0:TimingDRAM:Bank:Bank():264:mc=0:chan=0:rank=0:bank=0: CL_WR:        12
-0:TimingDRAM:Bank:Bank():265:mc=0:chan=0:rank=0:bank=0: RCD:          14
-0:TimingDRAM:Bank:Bank():266:mc=0:chan=0:rank=0:bank=0: TRP:          14
-0:TimingDRAM:Bank:Bank():267:mc=0:chan=0:rank=0:bank=0: dataCycles:   2
-0:TimingDRAM:Bank:Bank():268:mc=0:chan=0:rank=0:bank=0: transactionQ: memHierarchy.reorderTransactionQ
-0:TimingDRAM:Bank:Bank():269:mc=0:chan=0:rank=0:bank=0: pagePolicy:   memHierarchy.simplePagePolicy
+0:TimingDRAM::build():54:mc=0: number of channels: 3
+0:TimingDRAM::build():55:mc=0: address mapper:     memHierarchy.roundRobinAddrMapper
+0:TimingDRAM:Channel:Channel():111:mc=0:chan=0: max pending trans: 32
+0:TimingDRAM:Channel:Channel():112:mc=0:chan=0: number of ranks:   3
+0:TimingDRAM:Rank:Rank():208:mc=0:chan=0:rank=0: number of banks: 5
+0:TimingDRAM:Bank:Bank():267:mc=0:chan=0:rank=0:bank=0: CL:           14
+0:TimingDRAM:Bank:Bank():268:mc=0:chan=0:rank=0:bank=0: CL_WR:        12
+0:TimingDRAM:Bank:Bank():269:mc=0:chan=0:rank=0:bank=0: RCD:          14
+0:TimingDRAM:Bank:Bank():270:mc=0:chan=0:rank=0:bank=0: TRP:          14
+0:TimingDRAM:Bank:Bank():271:mc=0:chan=0:rank=0:bank=0: dataCycles:   2
+0:TimingDRAM:Bank:Bank():272:mc=0:chan=0:rank=0:bank=0: transactionQ: memHierarchy.reorderTransactionQ
+0:TimingDRAM:Bank:Bank():273:mc=0:chan=0:rank=0:bank=0: pagePolicy:   memHierarchy.simplePagePolicy
 TrivialCPU: Test Completed Successfuly
 TrivialCPU: Test Completed Successfuly
 TrivialCPU: Test Completed Successfuly

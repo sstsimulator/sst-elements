@@ -37,6 +37,8 @@ for i in range(0,8):
     cpu.addParams({
         "rngseed" : rngseed,
         "commFreq" : (rngseed % 7) + 1 })
+
+    iface = cpu.setSubComponent("memory", "memHierarchy.memInterface")
     
     l1cache = sst.Component("c" + str(i) + ".l1cache", "memHierarchy.Cache")
     l1cache.addParams({
@@ -68,7 +70,7 @@ for i in range(0,8):
 
     # Connect
     link_cpu_l1 = sst.Link("link_cpu_l1_" + str(i))
-    link_cpu_l1.connect( (cpu, "mem_link", "500ps"), (l1cache, "high_network_0", "500ps") )
+    link_cpu_l1.connect( (iface, "port", "500ps"), (l1cache, "high_network_0", "500ps") )
 
     link_l1_l2 = sst.Link("link_l1_l2_" + str(i))
     link_l1_l2.connect( (l1cache, "low_network_0", "500ps"), (l2cache, "high_network_0", "500ps") )

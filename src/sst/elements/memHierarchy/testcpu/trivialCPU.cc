@@ -69,18 +69,22 @@ trivialCPU::trivialCPU(ComponentId_t id, Params& params) :
     // tell the simulator not to end without us
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
-
-    memory = dynamic_cast<Interfaces::SimpleMem*>(loadSubComponent("memHierarchy.memInterface", this, params));
-    if ( !memory ) {
-        out.fatal(CALL_INFO, -1, "Unable to load Module as memory\n");
-    }
-    memory->initialize("mem_link",
-			new Interfaces::SimpleMem::Handler<trivialCPU>(this, &trivialCPU::handleEvent) );
-
+    
     //set our clock
     std::string clockFreq = params.find<std::string>("clock", "1GHz");
     clockHandler = new Clock::Handler<trivialCPU>(this, &trivialCPU::clockTic);
     clockTC = registerClock( clockFreq, clockHandler );
+    
+
+    memory = loadUserSubComponent<Interfaces::SimpleMem>("memory", clockTC, new Interfaces::SimpleMem::Handler<trivialCPU>(this, &trivialCPU::handleEvent));
+    
+    if (!memory) {
+        Params interfaceParams;
+        interfaceParams.insert("port", "mem_link");
+        memory = loadAnonymousSubComponent<Interfaces::SimpleMem>("memHierarchy.memInterface", "memory", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS,
+                interfaceParams, clockTC, new Interfaces::SimpleMem::Handler<trivialCPU>(this, &trivialCPU::handleEvent));
+        //out.fatal(CALL_INFO, -1, "Unable to load memHierarchy.memInterface subcomponent\n");
+    }
     
     clock_ticks = 0;
     num_reads_issued = num_reads_returned = 0;

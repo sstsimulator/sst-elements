@@ -79,7 +79,7 @@ CacheAction MESIController::handleEviction(CacheLine* wbCacheLine, string rqstr,
                 return DONE;
             }
             if (wbCacheLine->numSharers() > 0) {
-                invalidateAllSharers(wbCacheLine, parent->getName(), false); 
+                invalidateAllSharers(wbCacheLine, ownerName_, false); 
                 wbCacheLine->setState(SI);
                 
                 if (is_debug_addr(wbBaseAddr)) debug->debug(_L7_, "Eviction requires invalidating sharers\n");
@@ -100,7 +100,7 @@ CacheAction MESIController::handleEviction(CacheLine* wbCacheLine, string rqstr,
                 return DONE;
             }
             if (wbCacheLine->numSharers() > 0) {
-                invalidateAllSharers(wbCacheLine, parent->getName(), false); 
+                invalidateAllSharers(wbCacheLine, ownerName_, false); 
                 wbCacheLine->setState(EI);
                 
                 if (is_debug_addr(wbBaseAddr)) debug->debug(_L7_, "Eviction requires invalidating sharers\n");
@@ -108,7 +108,7 @@ CacheAction MESIController::handleEviction(CacheLine* wbCacheLine, string rqstr,
                 return STALL;
             }
             if (wbCacheLine->ownerExists()) {
-                sendFetchInv(wbCacheLine, parent->getName(), false);
+                sendFetchInv(wbCacheLine, ownerName_, false);
                 mshr_->incrementAcksNeeded(wbBaseAddr);
                 wbCacheLine->setState(EI);
                 
@@ -130,7 +130,7 @@ CacheAction MESIController::handleEviction(CacheLine* wbCacheLine, string rqstr,
                 return DONE;
             }
             if (wbCacheLine->numSharers() > 0) {
-                invalidateAllSharers(wbCacheLine, parent->getName(), false); 
+                invalidateAllSharers(wbCacheLine, ownerName_, false); 
                 wbCacheLine->setState(MI);
                 
                 if (is_debug_addr(wbBaseAddr)) debug->debug(_L7_, "Eviction requires invalidating sharers\n");
@@ -138,7 +138,7 @@ CacheAction MESIController::handleEviction(CacheLine* wbCacheLine, string rqstr,
                 return STALL;
             }
             if (wbCacheLine->ownerExists()) {
-                sendFetchInv(wbCacheLine, parent->getName(), false);
+                sendFetchInv(wbCacheLine, ownerName_, false);
                 mshr_->incrementAcksNeeded(wbBaseAddr);
                 wbCacheLine->setState(MI);
                 
@@ -156,7 +156,7 @@ CacheAction MESIController::handleEviction(CacheLine* wbCacheLine, string rqstr,
             return STALL;
         default:
 	    debug->fatal(CALL_INFO,-1,"%s, Error: State is invalid during eviction: %s. Addr = 0x%" PRIx64 ". Time = %" PRIu64 "ns\n", 
-                    parent->getName().c_str(), StateString[state], wbCacheLine->getBaseAddr(), getCurrentSimTimeNano());
+                    ownerName_.c_str(), StateString[state], wbCacheLine->getBaseAddr(), getCurrentSimTimeNano());
     }
     return STALL; // Eliminate compiler warning
 }
@@ -178,7 +178,7 @@ CacheAction MESIController::handleRequest(MemEvent* event, CacheLine* cacheLine,
             return handleGetXRequest(event, cacheLine, replay);
         default:
 	    debug->fatal(CALL_INFO,-1,"%s, Error: Received an unrecognized request. Event = %s. Time = %" PRIu64 "ns\n", 
-                    parent->getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
+                    ownerName_.c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
     return STALL;    // Eliminate compiler warning
 }
@@ -202,7 +202,7 @@ CacheAction MESIController::handleReplacement(MemEvent* event, CacheLine* cacheL
             return handleFlushLineRequest(event, cacheLine, reqEvent, replay);
         default:
 	    debug->fatal(CALL_INFO,-1,"%s, Error: Received an unrecognized request. Event = %s. Time = %" PRIu64 "ns\n", 
-                    parent->getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
+                    ownerName_.c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
     return DONE;
 }
@@ -253,7 +253,7 @@ CacheAction MESIController::handleInvalidationRequest(MemEvent * event, CacheLin
             return handleForceInv(event, cacheLine, replay);
         default:
 	    debug->fatal(CALL_INFO,-1,"%s, Error: Received an unrecognized invalidation. Event = %s. Time = %" PRIu64 "ns\n", 
-                    parent->getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
+                    ownerName_.c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
     return STALL; // eliminate compiler warning
 }
@@ -285,7 +285,7 @@ CacheAction MESIController::handleResponse(MemEvent * respEvent, CacheLine * cac
             return DONE;
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: Received unrecognized response. Event = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), respEvent->getVerboseString().c_str(), getCurrentSimTimeNano());
+                    ownerName_.c_str(), respEvent->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
     return DONE;
 }
@@ -314,7 +314,7 @@ bool MESIController::isRetryNeeded(MemEvent* event, CacheLine* cacheLine) {
             if (cacheLine->getOwner() != event->getDst()) {
                 if (cacheLine->isSharer(event->getDst()) && cmd == Command::FetchInv) { // Got a downgrade from the owner but still need to invalidate
                     uint64_t deliveryTime = 0;
-                    MemEvent * inv = new MemEvent(parent, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::Inv);
+                    MemEvent * inv = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::Inv, getCurrentSimTimeNano());
                     inv->setDst(event->getDst());
                     inv->setRqstr(event->getRqstr());
                     inv->setSize(cacheLine->getSize());
@@ -336,7 +336,7 @@ bool MESIController::isRetryNeeded(MemEvent* event, CacheLine* cacheLine) {
             return true;
         default:
             debug->fatal(CALL_INFO,-1,"%s, Error: NACKed event is unrecognized. Event = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
+                    ownerName_.c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
     return true;
 }
@@ -354,7 +354,7 @@ int MESIController::isCoherenceMiss(MemEvent* event, CacheLine* cacheLine) {
     if (cmd == Command::GetSX) cmd = Command::GetX;  // for our purposes these are equal
 
     if (state == I) return 1;
-    if (event->isPrefetch() && event->getRqstr() == parent->getName()) return 0;
+    if (event->isPrefetch() && event->getRqstr() == ownerName_) return 0;
     if (state == S && lastLevel_) state = M;
     switch (state) {
         case S:
@@ -398,7 +398,7 @@ CacheAction MESIController::handleGetSRequest(MemEvent* event, CacheLine* cacheL
     if (is_debug_event(event)) printData(cacheLine->getData(), false);
     
     uint64_t sendTime = 0;
-    bool localPrefetch = event->isPrefetch() && (event->getRqstr() == parent->getName());
+    bool localPrefetch = event->isPrefetch() && (event->getRqstr() == ownerName_);
     recordStateEventCount(event->getCmd(), state);
     switch (state) {
         case I:
@@ -465,7 +465,7 @@ CacheAction MESIController::handleGetSRequest(MemEvent* event, CacheLine* cacheL
             return DONE;
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: No handler for event in state %s. Event = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
+                    ownerName_.c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
 
     }
     return STALL;    // eliminate compiler warning
@@ -544,7 +544,7 @@ CacheAction MESIController::handleGetXRequest(MemEvent* event, CacheLine* cacheL
             return STALL;   // retried this request too soon because we were checking for waiting invalidations
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: No handler for event in state %s. Event = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
+                    ownerName_.c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     /* Event/State combinations - Count how many times an event was seen in particular state */
     }
     return STALL; // Eliminate compiler warning
@@ -640,7 +640,7 @@ CacheAction MESIController::handleFlushLineRequest(MemEvent * event, CacheLine* 
                     return handleFetchInv(reqEvent, cacheLine, NULL, true);
                 } else if (!inclusive_) { // Need to forward dirty/M so we don't lose that info
                     debug->fatal(CALL_INFO, -1, "%s, Error: Handling not implemented because state not expected: noninclusive cache, state = %s, request = %s. Time = %" PRIu64 " ns\n",
-                            parent->getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
+                            ownerName_.c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
                 } else {
                     cacheLine->addSharer(reqEvent->getSrc());
                     sendTime = sendResponseUp(reqEvent, cacheLine->getData(), (event->getDirty()), cacheLine->getTimestamp());
@@ -651,7 +651,7 @@ CacheAction MESIController::handleFlushLineRequest(MemEvent * event, CacheLine* 
             } else return STALL;
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: No handler for event in state %s. Event = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
+                    ownerName_.c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
 
     forwardFlushLine(event->getBaseAddr(), event->getRqstr(), cacheLine, Command::FlushLine);
@@ -772,22 +772,22 @@ CacheAction MESIController::handleFlushLineInvRequest(MemEvent * event, CacheLin
                     return STALL; // Waiting for GetXResp
                 }
                 debug->fatal(CALL_INFO, -1, "%s, Error: Received event in state SM_Inv but case does not match an implemented handler. Event = %s, OrigEvent = %s. Time = %" PRIu64 "ns\n",
-                        parent->getName().c_str(), event->getVerboseString().c_str(), reqEvent->getVerboseString().c_str(), getCurrentSimTimeNano());
+                        ownerName_.c_str(), event->getVerboseString().c_str(), reqEvent->getVerboseString().c_str(), getCurrentSimTimeNano());
             }
             return STALL;
         case EI:
         case MI:
             if (mshr_->getAcksNeeded(event->getBaseAddr()) == 0) {
-                if (state == MI || event->getDirty()) sendWriteback(Command::PutM, cacheLine, true, parent->getName());
+                if (state == MI || event->getDirty()) sendWriteback(Command::PutM, cacheLine, true, ownerName_);
     /* Event/State combinations - Count how many times an event was seen in particular state */
-                else sendWriteback(Command::PutE, cacheLine, false, parent->getName());
+                else sendWriteback(Command::PutE, cacheLine, false, ownerName_);
                 if (expectWritebackAck_) mshr_->insertWriteback(cacheLine->getBaseAddr());
                 cacheLine->setState(I);
                 return DONE;
             } else return STALL;
         case SI:
             if (mshr_->getAcksNeeded(event->getBaseAddr()) == 0) {
-                sendWriteback(Command::PutS, cacheLine, false, parent->getName());
+                sendWriteback(Command::PutS, cacheLine, false, ownerName_);
                 if (expectWritebackAck_) mshr_->insertWriteback(cacheLine->getBaseAddr());
                 cacheLine->setState(I);
                 return DONE;
@@ -855,7 +855,7 @@ CacheAction MESIController::handleFlushLineInvRequest(MemEvent * event, CacheLin
             } else return STALL;
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: No handler for event in state %s. Event = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
+                    ownerName_.c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
 
     forwardFlushLine(event->getBaseAddr(), event->getRqstr(), cacheLine, Command::FlushLineInv);
@@ -891,7 +891,7 @@ CacheAction MESIController::handlePutSRequest(MemEvent* event, CacheLine* line, 
                 }
             } else {
                 debug->fatal(CALL_INFO, -1, "%s, Error: Received PutS for an unallocated line but reqEvent cmd is unhandled. Event = %s. ReqEvent = %s. Time = %" PRIu64 "ns\n",
-                        parent->getName().c_str(), event->getVerboseString().c_str(), reqEvent->getVerboseString().c_str(), getCurrentSimTimeNano());
+                        ownerName_.c_str(), event->getVerboseString().c_str(), reqEvent->getVerboseString().c_str(), getCurrentSimTimeNano());
             }
         }
         line->setData(event->getPayload(), 0);
@@ -930,17 +930,17 @@ CacheAction MESIController::handlePutSRequest(MemEvent* event, CacheLine* line, 
             return DONE;
         /* Races with evictions */
         case SI:
-            sendWriteback(Command::PutS, line, false, parent->getName());
+            sendWriteback(Command::PutS, line, false, ownerName_);
             if (expectWritebackAck_) mshr_->insertWriteback(line->getBaseAddr());
             line->setState(I);
             return DONE;
         case EI:
-            sendWriteback(Command::PutE, line, false, parent->getName());
+            sendWriteback(Command::PutE, line, false, ownerName_);
             if (expectWritebackAck_) mshr_->insertWriteback(line->getBaseAddr());
             line->setState(I);
             return DONE;
         case MI:
-            sendWriteback(Command::PutM, line, true, parent->getName());
+            sendWriteback(Command::PutM, line, true, ownerName_);
             if (expectWritebackAck_) mshr_->insertWriteback(line->getBaseAddr());
             line->setState(I);
             return DONE;
@@ -1018,7 +1018,7 @@ CacheAction MESIController::handlePutSRequest(MemEvent* event, CacheLine* line, 
             }
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: No handler for event in state %s. Event = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
+                    ownerName_.c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
     return IGNORE;   // eliminate compiler warning
 }
@@ -1045,7 +1045,7 @@ CacheAction MESIController::handlePutMRequest(MemEvent* event, CacheLine* cacheL
                 return IGNORE;
             } else {
                 debug->fatal(CALL_INFO, -1, "%s, Error: Received event for an unallocated line but conflicting event's command is unhandled. Event = %s. Conflicting event = %s. Time = %" PRIu64 "ns\n",
-                        parent->getName().c_str(), event->getVerboseString().c_str(), reqEvent->getVerboseString().c_str(), getCurrentSimTimeNano());
+                        ownerName_.c_str(), event->getVerboseString().c_str(), reqEvent->getVerboseString().c_str(), getCurrentSimTimeNano());
             }
         } else if (cacheLine->getState() == I) {
             if (mshr_->getAcksNeeded(event->getBaseAddr()) == 0) {
@@ -1078,15 +1078,15 @@ CacheAction MESIController::handlePutMRequest(MemEvent* event, CacheLine* cacheL
         /* Races with evictions */
         case EI:
             if (event->getCmd() == Command::PutM) {
-                sendWriteback(Command::PutM, cacheLine, true, parent->getName());
+                sendWriteback(Command::PutM, cacheLine, true, ownerName_);
             } else {
-                sendWriteback(Command::PutE, cacheLine, false, parent->getName());
+                sendWriteback(Command::PutE, cacheLine, false, ownerName_);
             }
 	    cacheLine->setState(I);    // wait for ack
             if (expectWritebackAck_) mshr_->insertWriteback(cacheLine->getBaseAddr());
             break;
         case MI:
-            sendWriteback(Command::PutM, cacheLine, true, parent->getName());
+            sendWriteback(Command::PutM, cacheLine, true, ownerName_);
 	    cacheLine->setState(I);    // wait for ack
             if (expectWritebackAck_) mshr_->insertWriteback(cacheLine->getBaseAddr());
             break;
@@ -1148,7 +1148,7 @@ CacheAction MESIController::handlePutMRequest(MemEvent* event, CacheLine* cacheL
             break;
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: No handler for event in state %s. Event = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
+                    ownerName_.c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
     return DONE;
 }
@@ -1206,7 +1206,7 @@ CacheAction MESIController::handleInv(MemEvent* event, CacheLine* cacheLine, boo
             return STALL;
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: No handler for event in state %s. Event = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
+                    ownerName_.c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
     return STALL;
 }
@@ -1290,7 +1290,7 @@ CacheAction MESIController::handleForceInv(MemEvent * event, CacheLine * cacheLi
             return BLOCK;
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: No handler for event in state %s. Event = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
+                    ownerName_.c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
     return STALL;
 }
@@ -1388,7 +1388,7 @@ CacheAction MESIController::handleFetchInv(MemEvent * event, CacheLine * cacheLi
             return BLOCK;
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: No handler for event in state %s. Event = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
+                    ownerName_.c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
     sendResponseDown(event, cacheLine, (state == M), replay);
     cacheLine->setState(I);
@@ -1437,7 +1437,7 @@ CacheAction MESIController::handleFetchInvX(MemEvent * event, CacheLine * cacheL
             return BLOCK;
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: No handler for event in state %s. Event = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
+                    ownerName_.c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
     sendResponseDown(event, cacheLine, (state == M), replay);
     cacheLine->setState(S);
@@ -1471,7 +1471,7 @@ CacheAction MESIController::handleFetch(MemEvent * event, CacheLine * cacheLine,
             return BLOCK;
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: No handler for event in state %s. Event = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
+                    ownerName_.c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
     return DONE; // Eliminate compiler warning
 }
@@ -1496,7 +1496,7 @@ CacheAction MESIController::handleDataResponse(MemEvent* responseEvent, CacheLin
     State state = cacheLine->getState();
     recordStateEventCount(responseEvent->getCmd(), state);
     
-    bool localPrefetch = origRequest->isPrefetch() && (origRequest->getRqstr() == parent->getName());
+    bool localPrefetch = origRequest->isPrefetch() && (origRequest->getRqstr() == ownerName_);
     
     uint64_t sendTime = 0;
     
@@ -1551,7 +1551,7 @@ CacheAction MESIController::handleDataResponse(MemEvent* responseEvent, CacheLin
             return STALL;
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: No handler for event in state %s. Event = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), StateString[state], responseEvent->getVerboseString().c_str(), getCurrentSimTimeNano());
+                    ownerName_.c_str(), StateString[state], responseEvent->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
     return DONE; // Eliminate compiler warning
 }
@@ -1581,20 +1581,20 @@ CacheAction MESIController::handleFetchResp(MemEvent * responseEvent, CacheLine*
             // Sanity check that this is a non-inclusive cache!
             if (inclusive_) {
                 debug->fatal(CALL_INFO, -1, "%s, Error: Inclusive cache received a FetchResp for a non-cached address. Event = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), responseEvent->getVerboseString().c_str(), getCurrentSimTimeNano());
+                    ownerName_.c_str(), responseEvent->getVerboseString().c_str(), getCurrentSimTimeNano());
             } else if (action != DONE) {
                 debug->fatal(CALL_INFO, -1, "%s, Error: Non-inclusive cache received a FetchResp for a non-cached address and is waiting for more acks. Event = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), responseEvent->getVerboseString().c_str(), getCurrentSimTimeNano());
+                    ownerName_.c_str(), responseEvent->getVerboseString().c_str(), getCurrentSimTimeNano());
             }
             sendResponseDownFromMSHR(responseEvent, reqEvent, responseEvent->getDirty());
             break;
         case EI:
-            sendWriteback(responseEvent->getDirty() ? Command::PutM : Command::PutE, cacheLine, responseEvent->getDirty(), parent->getName());
+            sendWriteback(responseEvent->getDirty() ? Command::PutM : Command::PutE, cacheLine, responseEvent->getDirty(), ownerName_);
 	    cacheLine->setState(I);    // wait for ack
             if (expectWritebackAck_) mshr_->insertWriteback(cacheLine->getBaseAddr());
             break;
         case MI:
-            sendWriteback(Command::PutM, cacheLine, true, parent->getName());
+            sendWriteback(Command::PutM, cacheLine, true, ownerName_);
 	    cacheLine->setState(I);    // wait for ack
             if (expectWritebackAck_) mshr_->insertWriteback(cacheLine->getBaseAddr());
             break;
@@ -1647,7 +1647,7 @@ CacheAction MESIController::handleFetchResp(MemEvent * responseEvent, CacheLine*
                 } else cacheLine->setState(E);
                 if (action != DONE) { // Sanity check...
                     debug->fatal(CALL_INFO, -1, "%s, Error: Received a FetchResp to a FlushLineInv but still waiting on more acks. Event = %s. Time = %" PRIu64 "ns\n",
-                        parent->getName().c_str(), responseEvent->getVerboseString().c_str(), getCurrentSimTimeNano()); 
+                        ownerName_.c_str(), responseEvent->getVerboseString().c_str(), getCurrentSimTimeNano()); 
                 }
                 action = handleFlushLineInvRequest(reqEvent, cacheLine, NULL, true);
                 break;
@@ -1700,7 +1700,7 @@ CacheAction MESIController::handleFetchResp(MemEvent * responseEvent, CacheLine*
                 cacheLine->setState(M);
                 if (action != DONE) { // Sanity check...
                     debug->fatal(CALL_INFO, -1, "%s, Error: Received a FetchResp to a FlushLineInv but still waiting on more acks. Event = %s. Time = %" PRIu64 "ns\n",
-                        parent->getName().c_str(), responseEvent->getVerboseString().c_str(), getCurrentSimTimeNano()); 
+                        ownerName_.c_str(), responseEvent->getVerboseString().c_str(), getCurrentSimTimeNano()); 
                 }
                 action = handleFlushLineInvRequest(reqEvent, cacheLine, NULL, true);
                 break;
@@ -1721,7 +1721,7 @@ CacheAction MESIController::handleFetchResp(MemEvent * responseEvent, CacheLine*
             break;
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: No handler for event in state %s. Event = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), StateString[state], responseEvent->getVerboseString().c_str(), getCurrentSimTimeNano());
+                    ownerName_.c_str(), StateString[state], responseEvent->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
     return action;
 }
@@ -1803,21 +1803,21 @@ CacheAction MESIController::handleAckInv(MemEvent * ack, CacheLine * line, MemEv
             return action;
         case SI:
             if (action == DONE) {
-                sendWriteback(Command::PutS, line, false, parent->getName());
+                sendWriteback(Command::PutS, line, false, ownerName_);
                 if (expectWritebackAck_) mshr_->insertWriteback(line->getBaseAddr());
                 line->setState(I);
             }
             return action;
         case EI:
             if (action == DONE) {
-                sendWriteback(Command::PutE, line, false, parent->getName());
+                sendWriteback(Command::PutE, line, false, ownerName_);
                 if (expectWritebackAck_) mshr_->insertWriteback(line->getBaseAddr());
                 line->setState(I);
             }
             return action;
         case MI:
             if (action == DONE) {
-                sendWriteback(Command::PutM, line, true, parent->getName());
+                sendWriteback(Command::PutM, line, true, ownerName_);
                 if (expectWritebackAck_) mshr_->insertWriteback(line->getBaseAddr());
                 line->setState(I);
             }
@@ -1868,13 +1868,13 @@ CacheAction MESIController::handleAckInv(MemEvent * ack, CacheLine * line, MemEv
                     action = handleFlushLineRequest(reqEvent, line, NULL, true);
                 } else {
                    debug->fatal(CALL_INFO, -1, "%s, Error: Received AckInv in M_InvX, but reqEvent is unhandled. Event = %s. reqEvent = %s. Time = %" PRIu64 "ns\n",
-                           parent->getName().c_str(), ack->getVerboseString().c_str(), reqEvent->getVerboseString().c_str(), getCurrentSimTimeNano());
+                           ownerName_.c_str(), ack->getVerboseString().c_str(), reqEvent->getVerboseString().c_str(), getCurrentSimTimeNano());
                 }
             }
             return action;
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: No handler for event in state %s. Event = %s. Time = %" PRIu64 "ns\n",
-                    parent->getName().c_str(), StateString[state], ack->getVerboseString().c_str(), getCurrentSimTimeNano());
+                    ownerName_.c_str(), StateString[state], ack->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
     return action;    // eliminate compiler warning
 }
@@ -1891,7 +1891,7 @@ void MESIController::invalidateAllSharers(CacheLine * cacheLine, string rqstr, b
     set<std::string> * sharers = cacheLine->getSharers();
     uint64_t deliveryTime = 0;
     for (set<std::string>::iterator it = sharers->begin(); it != sharers->end(); it++) {
-        MemEvent * inv = new MemEvent(parent, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::Inv);
+        MemEvent * inv = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::Inv, getCurrentSimTimeNano());
         inv->setDst(*it);
         inv->setRqstr(rqstr);
         inv->setSize(cacheLine->getSize());
@@ -1923,7 +1923,7 @@ bool MESIController::invalidateSharersExceptRequestor(CacheLine * cacheLine, str
     for (set<std::string>::iterator it = sharers->begin(); it != sharers->end(); it++) {
         if (*it == rqstr) continue;
 
-        MemEvent * inv = new MemEvent(parent, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::Inv);
+        MemEvent * inv = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::Inv, getCurrentSimTimeNano());
         inv->setDst(*it);
         inv->setRqstr(origRqstr);
         inv->setSize(cacheLine->getSize());
@@ -1950,7 +1950,7 @@ bool MESIController::invalidateSharersExceptRequestor(CacheLine * cacheLine, str
  *  Send FetchInv to owner of a block
  */
 void MESIController::sendFetchInv(CacheLine * cacheLine, string rqstr, bool replay) {
-    MemEvent * fetch = new MemEvent(parent, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::FetchInv);
+    MemEvent * fetch = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::FetchInv, getCurrentSimTimeNano());
     fetch->setDst(cacheLine->getOwner());
     fetch->setRqstr(rqstr);
     fetch->setSize(cacheLine->getSize());
@@ -1972,7 +1972,7 @@ void MESIController::sendFetchInv(CacheLine * cacheLine, string rqstr, bool repl
  *  Send FetchInv to owner of a block
  */
 void MESIController::sendFetchInvX(CacheLine * cacheLine, string rqstr, bool replay) {
-    MemEvent * fetch = new MemEvent(parent, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::FetchInvX);
+    MemEvent * fetch = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::FetchInvX, getCurrentSimTimeNano());
     fetch->setDst(cacheLine->getOwner());
     fetch->setRqstr(rqstr);
     fetch->setSize(cacheLine->getSize());
@@ -1994,7 +1994,7 @@ void MESIController::sendFetchInvX(CacheLine * cacheLine, string rqstr, bool rep
  *  Send ForceInv to block owner
  */
 void MESIController::sendForceInv(CacheLine * cacheLine, string rqstr, bool replay) {
-    MemEvent * inv = new MemEvent(parent, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::ForceInv);
+    MemEvent * inv = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::ForceInv, getCurrentSimTimeNano());
     inv->setDst(cacheLine->getOwner());
     inv->setRqstr(rqstr);
     inv->setSize(cacheLine->getSize());
@@ -2018,7 +2018,7 @@ void MESIController::sendForceInv(CacheLine * cacheLine, string rqstr, bool repl
  */
 void MESIController::forwardMessageUp(MemEvent* event) {
     MemEvent * forwardEvent = new MemEvent(*event);
-    forwardEvent->setSrc(parent->getName());
+    forwardEvent->setSrc(ownerName_);
     forwardEvent->setDst(getSrc());
     
     uint64_t deliveryTime = timestamp_ + tagLatency_;
@@ -2079,7 +2079,7 @@ void MESIController::sendResponseDownFromMSHR(MemEvent * respEvent, MemEvent * r
  *  Latency: cache access + tag to read data that is being written back and update coherence state
  */
 void MESIController::sendWriteback(Command cmd, CacheLine* cacheLine, bool dirty, string rqstr) {
-    MemEvent* newCommandEvent = new MemEvent(parent, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), cmd);
+    MemEvent* newCommandEvent = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), cmd, getCurrentSimTimeNano());
     newCommandEvent->setDst(getDestination(cacheLine->getBaseAddr()));
     newCommandEvent->setSize(cacheLine->getSize());
     bool hasData = false;
@@ -2108,7 +2108,7 @@ void MESIController::sendWriteback(Command cmd, CacheLine* cacheLine, bool dirty
  *  Send a writeback ack. Mostly used by non-inclusive caches.
  */
 void MESIController::sendWritebackAck(MemEvent * event) {
-    MemEvent * ack = new MemEvent(parent, event->getBaseAddr(), event->getBaseAddr(), Command::AckPut);
+    MemEvent * ack = new MemEvent(ownerName_, event->getBaseAddr(), event->getBaseAddr(), Command::AckPut, getCurrentSimTimeNano());
     ack->setDst(event->getSrc());
     ack->setRqstr(event->getSrc());
     ack->setSize(event->getSize());
@@ -2143,7 +2143,7 @@ void MESIController::sendAckInv(MemEvent * inv) {
  *  Forward a flush line request, with or without data
  */
 void MESIController::forwardFlushLine(Addr baseAddr, string origRqstr, CacheLine * cacheLine, Command cmd) {
-    MemEvent * flush = new MemEvent(parent, baseAddr, baseAddr, cmd);
+    MemEvent * flush = new MemEvent(ownerName_, baseAddr, baseAddr, cmd, getCurrentSimTimeNano());
     flush->setDst(getDestination(baseAddr));
     flush->setRqstr(origRqstr);
     flush->setSize(lineSize_);

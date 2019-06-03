@@ -60,8 +60,8 @@ public:
         { "clock",                          "(string) Units for latency statistics", "1GHz"}
 
     
-    SST_ELI_REGISTER_SUBCOMPONENT(MemNICFour, "memHierarchy", "MemNICFour", SST_ELI_ELEMENT_VERSION(1,0,0),
-            "Memory-oriented network interface for split networks", "SST::MemLinkBase")
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(MemNICFour, "memHierarchy", "MemNICFour", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Memory-oriented network interface for split networks", SST::MemHierarchy::MemLinkBase)
 
     SST_ELI_DOCUMENT_PARAMS( MEMNICFOUR_ELI_PARAMS )
 
@@ -83,7 +83,10 @@ public:
     enum NetType { REQ, ACK, FWD, DATA };
     /* Constructor */
     MemNICFour(Component * comp, Params &params);
-    
+    MemNICFour(ComponentId_t id, Params &params);
+private:
+    void build(Params& params);
+public:
     /* Destructor */
     ~MemNICFour() { }
 

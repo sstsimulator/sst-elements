@@ -9,12 +9,15 @@ comp_cpu = sst.Component("cpu", "miranda.BaseCPU")
 comp_cpu.addParams({
 	"verbose" : 0,
 	"clock" : "2GHz",
-	"generator" : "miranda.ReverseSingleStreamGenerator",
-	"generatorParams.verbose" : 1,
-        "generatorParams.start_at" : 65536,
-        "generatorParams.stop_at" : 0,
-        "generatorParams.stride" : 8,
 	"printStats" : 1,
+})
+
+gen = comp_cpu.setSubComponent("generator", "miranda.ReverseSingleStreamGenerator")
+gen.addParams({
+	"verbose" : 1,
+        "start_at" : 65536,
+        "stop_at" : 0,
+        "stride" : 8,
 })
 
 # Tell SST what statistics handling we want

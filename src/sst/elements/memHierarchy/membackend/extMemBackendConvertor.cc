@@ -37,7 +37,14 @@ ExtMemBackendConvertor::ExtMemBackendConvertor(Component *comp, Params &params) 
     using std::placeholders::_1;
     using std::placeholders::_2;
     static_cast<ExtMemBackend*>(m_backend)->setResponseHandler( std::bind( &ExtMemBackendConvertor::handleMemResponse, this, _1,_2 ) );
+}
 
+ExtMemBackendConvertor::ExtMemBackendConvertor(ComponentId_t id, Params &params) :
+    MemBackendConvertor(id,params)
+{
+    using std::placeholders::_1;
+    using std::placeholders::_2;
+    static_cast<ExtMemBackend*>(m_backend)->setResponseHandler( std::bind( &ExtMemBackendConvertor::handleMemResponse, this, _1,_2 ) );
 }
 
 bool ExtMemBackendConvertor::issue( BaseReq *req ) {
