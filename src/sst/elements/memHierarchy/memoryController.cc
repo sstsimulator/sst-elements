@@ -121,9 +121,13 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
 
     // Load listeners (profilers/tracers/etc.)
     SubComponentSlotInfo* lists = getSubComponentSlotInfo("listener"); // Find all listeners specified in the configuration
-    if (lists)
-        lists->createAll<CacheListener>(listeners_, false, ComponentInfo::SHARE_NONE);
-    else { // Manually load via the old way of doing it
+    if (lists) {
+        for (int i = 0; i < lists->getMaxPopulatedSlotNumber(); i++) {
+            if (lists->isPopulated(i))
+                listeners_.push_back(lists->create<CacheListener>(i, ComponentInfo::SHARE_NONE));
+        }
+        //lists->createAll<CacheListener>(listeners_, false, ComponentInfo::SHARE_NONE);
+    } else { // Manually load via the old way of doing it
         const uint32_t listenerCount  = params.find<uint32_t>("listenercount", 0);
         char* nextListenerName   = (char*) malloc(sizeof(char) * 64);
         char* nextListenerParams = (char*) malloc(sizeof(char) * 64);
@@ -286,7 +290,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
 
     /* Custom command handler */
     using std::placeholders::_3;
-    customCommandHandler_ = loadUserSubComponent<CustomCmdMemHandler>("customCmdHandler", 
+    customCommandHandler_ = loadUserSubComponent<CustomCmdMemHandler>("customCmdHandler", ComponentInfo::SHARE_NONE,
             std::bind(static_cast<void(MemController::*)(Addr,size_t,std::vector<uint8_t>&)>(&MemController::readData), this, _1, _2, _3), 
             std::bind(static_cast<void(MemController::*)(Addr,std::vector<uint8_t>*)>(&MemController::writeData), this, _1, _2));
     if (nullptr == customCommandHandler_) {
