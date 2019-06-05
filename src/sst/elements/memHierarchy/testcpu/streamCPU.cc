@@ -64,7 +64,7 @@ streamCPU::streamCPU(ComponentId_t id, Params& params) :
     clockTC = registerClock(clockFreq, clockHandler);
     num_reads_issued = num_reads_returned = 0;
     
-    memory = loadUserSubComponent<Interfaces::SimpleMem>("memory", clockTC, new Interfaces::SimpleMem::Handler<streamCPU>(this, &streamCPU::handleEvent));
+    memory = loadUserSubComponent<Interfaces::SimpleMem>("memory", ComponentInfo::SHARE_NONE, clockTC, new Interfaces::SimpleMem::Handler<streamCPU>(this, &streamCPU::handleEvent));
     
     if (!memory) {
         Params interfaceParams;

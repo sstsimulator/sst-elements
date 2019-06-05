@@ -76,7 +76,7 @@ trivialCPU::trivialCPU(ComponentId_t id, Params& params) :
     clockTC = registerClock( clockFreq, clockHandler );
     
 
-    memory = loadUserSubComponent<Interfaces::SimpleMem>("memory", clockTC, new Interfaces::SimpleMem::Handler<trivialCPU>(this, &trivialCPU::handleEvent));
+    memory = loadUserSubComponent<Interfaces::SimpleMem>("memory", ComponentInfo::SHARE_NONE, clockTC, new Interfaces::SimpleMem::Handler<trivialCPU>(this, &trivialCPU::handleEvent));
     
     if (!memory) {
         Params interfaceParams;

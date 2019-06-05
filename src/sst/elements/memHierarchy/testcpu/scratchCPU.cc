@@ -66,7 +66,7 @@ ScratchCPU::ScratchCPU(ComponentId_t id, Params& params) : Component(id), rng(id
     size += "B";
     params.insert("scratchpad_size", size);
 
-    memory = loadUserSubComponent<Interfaces::SimpleMem>("memory", clockTC, new Interfaces::SimpleMem::Handler<ScratchCPU>(this, &ScratchCPU::handleEvent) );
+    memory = loadUserSubComponent<Interfaces::SimpleMem>("memory", ComponentInfo::SHARE_NONE, clockTC, new Interfaces::SimpleMem::Handler<ScratchCPU>(this, &ScratchCPU::handleEvent) );
     
     if ( !memory ) {
         out.fatal(CALL_INFO, -1, "Unable to load scratchInterface subcomponent\n");
