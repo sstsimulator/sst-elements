@@ -52,7 +52,7 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 
 	out->verbose(CALL_INFO, 1, 0, "CPU clock configured for %s\n", cpuClock.c_str());
 
-        cache_link = loadUserSubComponent<Interfaces::SimpleMem>("memory", timeConverter, new SimpleMem::Handler<RequestGenCPU>(this, &RequestGenCPU::handleEvent) );
+        cache_link = loadUserSubComponent<Interfaces::SimpleMem>("memory", ComponentInfo::SHARE_NONE, timeConverter, new SimpleMem::Handler<RequestGenCPU>(this, &RequestGenCPU::handleEvent) );
         if (!cache_link) {
 	    std::string interfaceName = params.find<std::string>("memoryinterface", "memHierarchy.memInterface");
 	    out->verbose(CALL_INFO, 1, 0, "Memory interface to be loaded is: %s\n", interfaceName.c_str());

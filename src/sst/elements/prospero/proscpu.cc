@@ -32,7 +32,7 @@ ProsperoComponent::ProsperoComponent(ComponentId_t id, Params& params) :
 	output = new SST::Output("Prospero[@p:@l]: ", output_level, 0, SST::Output::STDOUT);
 
         // Load Reader the new way
-        reader = loadUserSubComponent<ProsperoTraceReader>("reader", output);
+        reader = loadUserSubComponent<ProsperoTraceReader>("reader", ComponentInfo::SHARE_NONE, output);
 
         // Load Reader the old way
         if (!reader) {
@@ -74,7 +74,7 @@ ProsperoComponent::ProsperoComponent(ComponentId_t id, Params& params) :
 	output->verbose(CALL_INFO, 1, 0, "Configuring Prospero cache connection...\n");
 
         // Check for interface in the input config; if not, load an anonymous interface (must use our port instead of its own)
-        cache_link = loadUserSubComponent<Interfaces::SimpleMem>("memory", time, 
+        cache_link = loadUserSubComponent<Interfaces::SimpleMem>("memory", ComponentInfo::SHARE_NONE, time, 
                 new SimpleMem::Handler<ProsperoComponent>(this, &ProsperoComponent::handleResponse));
         if (!cache_link) {
             Params par;

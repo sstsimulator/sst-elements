@@ -63,7 +63,7 @@ GNA::GNA(ComponentId_t id, Params& params) :
     primaryComponentDoNotEndSim();
 
     // init memory
-    memory = loadUserSubComponent<Interfaces::SimpleMem>("memory", clockTC, new Interfaces::SimpleMem::Handler<GNA>(this, &GNA::handleEvent));
+    memory = loadUserSubComponent<Interfaces::SimpleMem>("memory", ComponentInfo::SHARE_NONE, clockTC, new Interfaces::SimpleMem::Handler<GNA>(this, &GNA::handleEvent));
     if (!memory) {
         params.insert("port", "mem_link");
         memory = loadAnonymousSubComponent<Interfaces::SimpleMem>("memHierarchy.memInterface", "memory", 0, 
