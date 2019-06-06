@@ -17,38 +17,38 @@
 #ifndef _H_ARIEL_MEM_MANAGER_SIMPLE
 #define _H_ARIEL_MEM_MANAGER_SIMPLE
 
-#include <sst/core/component.h>
 #include <sst/core/output.h>
-
-#include "arielmemmgr.h"
 
 #include <stdint.h>
 #include <deque>
 #include <vector>
 #include <unordered_map>
 
+#include "arielmemmgr_cache.h"
+
 using namespace SST;
 
 namespace SST {
 namespace ArielComponent {
 
-class ArielMemoryManagerSimple : public ArielMemoryManager {
+class ArielMemoryManagerSimple : public ArielMemoryManagerCache {
 
     public:
         /* SST ELI */
-        SST_ELI_REGISTER_SUBCOMPONENT(ArielMemoryManagerSimple, "ariel", "MemoryManagerSimple", SST_ELI_ELEMENT_VERSION(1,0,0),
-                "Simple allocate-on-first touch memory manager", "SST::ArielComponent::ArielMemoryManager")
+        SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(ArielMemoryManagerSimple, "ariel", "MemoryManagerSimple", SST_ELI_ELEMENT_VERSION(1,0,0),
+                "Simple allocate-on-first touch memory manager", SST::ArielComponent::ArielMemoryManager)
 
-#define MEMMGR_SIMPLE_ELI_PARAMS ARIEL_ELI_MEMMGR_PARAMS,\
+#define MEMMGR_SIMPLE_ELI_PARAMS ARIEL_ELI_MEMMGR_CACHE_PARAMS,\
             {"pagesize0", "Page size", "4096"},\
             {"pagecount0", "Page count", "131072"},\
-            {"page_populate_0", "Pre-populate/partially pre-poulate the page table, this is the file to read in.", ""}
+            {"page_populate_0", "Pre-populate/partially pre-populate the page table, this is the file to read in.", ""}
 
         SST_ELI_DOCUMENT_PARAMS( MEMMGR_SIMPLE_ELI_PARAMS )
-        SST_ELI_DOCUMENT_STATISTICS( ARIEL_ELI_MEMMGR_STATS )
+        SST_ELI_DOCUMENT_STATISTICS( ARIEL_ELI_MEMMGR_CACHE_STATS )
 
         /* ArielMemoryManagerSimple */
-        ArielMemoryManagerSimple(SST::Component* owner, Params& params);
+        ArielMemoryManagerSimple(ComponentId_t id, Params& params); 
+        ArielMemoryManagerSimple(Component* comp, Params& params) : ArielMemoryManagerCache(comp, params) { }  // Legacy
         ~ArielMemoryManagerSimple();
 
         uint64_t translateAddress(uint64_t virtAddr);

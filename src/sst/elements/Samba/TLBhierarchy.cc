@@ -31,10 +31,8 @@ using namespace SST;
 using namespace SST::SambaComponent;
 
 
-TLBhierarchy::TLBhierarchy(int tlb_id, SST::Component * owner)
+TLBhierarchy::TLBhierarchy(ComponentId_t id, int tlb_id) : ComponentExtension(id)
 {
-
-	Owner = owner;
 
 	coreID=tlb_id;
 
@@ -44,13 +42,12 @@ TLBhierarchy::TLBhierarchy(int tlb_id, SST::Component * owner)
 }
 
 
-TLBhierarchy::TLBhierarchy(int tlb_id, int Levels, SST::Component * owner, Params& params)
+TLBhierarchy::TLBhierarchy(ComponentId_t id, int tlb_id, int Levels, Params& params) : ComponentExtension(id)
 {
 
 	output = new SST::Output("OpalComponent[@f:@l:@p] ", 1, 0, SST::Output::STDOUT);
 
 	levels = Levels;
-	Owner = owner;
 	coreID=tlb_id;
 
 	hold = 0;  // Hold is set to 1 by the page table walker due to fault or shootdown, note that since we don't execute page fault handler or TLB shootdown routine on the core, we just stall TLB hierarchy to emulate the performance effect
@@ -75,7 +72,7 @@ TLBhierarchy::TLBhierarchy(int tlb_id, int Levels, SST::Component * owner, Param
 
 		bool found;
 		std::string mem_size = ((std::string) params.find<std::string>("memory", "", found));
-		if (!found) output->fatal(CALL_INFO, -1, "%s, Param not specified: memory_size\n", Owner->getName().c_str());
+		if (!found) output->fatal(CALL_INFO, -1, "%s, Param not specified: memory_size\n", getName().c_str());
 
 		trim(mem_size);
 		size_t pos;
@@ -88,7 +85,7 @@ TLBhierarchy::TLBhierarchy(int tlb_id, int Levels, SST::Component * owner, Param
 		}
 		UnitAlgebra ua(mem_size);
 		memory_size = ua.getRoundedValue();
-		//std::cout<< Owner->getName().c_str() << " Core: " << coreID << std::hex << " Memory size: " << memory_size << std::endl;
+		//std::cout<< getName().c_str() << " Core: " << coreID << std::hex << " Memory size: " << memory_size << std::endl;
 
 	}
 
@@ -97,16 +94,17 @@ TLBhierarchy::TLBhierarchy(int tlb_id, int Levels, SST::Component * owner, Param
 	char* subID = (char*) malloc(sizeof(char) * 32);
 	sprintf(subID, "%" PRIu32, coreID);
 
-	PTW = new PageTableWalker(coreID, NULL, 0, owner, params);
+	PTW = loadComponentExtension<PageTableWalker>(coreID, nullptr, 0, params);
 
-	total_waiting = owner->registerStatistic<uint64_t>( "total_waiting", subID );	
+	total_waiting = registerStatistic<uint64_t>( "total_waiting", subID );	
 
 	// Initiating all levels of this hierarcy
-	TLB_CACHE[levels] = new TLB(coreID, PTW, levels, owner, params);
+	TLB_CACHE[levels] = loadComponentExtension<TLB>(coreID, nullptr, levels, params);
+        TLB_CACHE[levels]->setPTW(PTW);
 	TLB * prev=TLB_CACHE[levels];
 	for(int level=levels-1; level >= 1; level--)
 	{
-		TLB_CACHE[level] = new TLB(coreID, (TLB *) prev, level, owner, params);
+		TLB_CACHE[level] = loadComponentExtension<TLB>(coreID, (TLB *) prev, level, params);
 		prev = TLB_CACHE[level];
 
 	}
@@ -136,7 +134,7 @@ TLBhierarchy::TLBhierarchy(int tlb_id, int Levels, SST::Component * owner, Param
 
 
 
-TLBhierarchy::TLBhierarchy(ComponentId_t id, Params& params, int tlb_id) 
+TLBhierarchy::TLBhierarchy(ComponentId_t id, Params& params, int tlb_id) : ComponentExtension(id) 
 {
 
 	coreID=tlb_id;
@@ -162,7 +160,8 @@ void TLBhierarchy::handleEvent_CPU(SST::Event* event)
 {
 	// Push the request to the L1 TLB and time-stamp it
 	time_tracker[event]= curr_time;
-	TLB_CACHE[1]->push_request(event);
+        MemEventBase* mEvent = static_cast<MemEventBase*>(event);
+	TLB_CACHE[1]->push_request(mEvent);
 
 
 }
@@ -215,7 +214,7 @@ bool TLBhierarchy::tick(SST::Cycle_t x)
 	// Step 1, check if not empty, then propogate it to L1 cache
 	while(!mem_reqs.empty() && !shootdown && !hold)
 	{
-		SST::Event * event= mem_reqs.back();
+            MemHierarchy::MemEventBase * event= mem_reqs.back();
 
 		if(time_tracker.find(event) == time_tracker.end())
 		{ 
@@ -236,7 +235,7 @@ bool TLBhierarchy::tick(SST::Cycle_t x)
 			((MemEvent*) event)->setBaseAddr((((*PTE)[vaddr / 4096] + vaddr % 4096) / 64) * 64);
 
 			if(page_migration && page_migration_policy == PageMigrationType::FTP) {
-				//std::cout<< Owner->getName().c_str() << " Core: " << coreID << " vaddress: " << std::hex << vaddr << " paddress: " << (*PTE)[vaddr / 4096] << " Memory size: " << memory_size << std::endl;
+				//std::cout<< getName().c_str() << " Core: " << coreID << " vaddress: " << std::hex << vaddr << " paddress: " << (*PTE)[vaddr / 4096] << " Memory size: " << memory_size << std::endl;
 				if((*PTE)[vaddr / 4096] >= memory_size) {
 					PTW->initaitePageMigration(vaddr, (*PTE)[vaddr / 4096]);
 					return false;

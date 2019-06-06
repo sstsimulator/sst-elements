@@ -11,12 +11,15 @@ sst.setStatisticLoadLevel(4)
 comp_cpu = sst.Component("cpu", "miranda.BaseCPU")
 comp_cpu.addParams({
 	"verbose" : 0,
-	"generator" : "miranda.STREAMBenchGenerator",
 	"clock" : "2.4GHz",
-	"generatorParams.verbose" : 0,
-	"generatorParams.n" : 10000,
-        "generatorParams.operandwidth" : 16,
 	"printStats" : 1,
+})
+
+gen = comp_cpu.setSubComponent("generator", "miranda.STREAMBenchGenerator")
+gen.addParams({
+	"verbose" : 0,
+	"n" : 10000,
+        "operandwidth" : 16,
 })
 
 # Enable statistics outputs

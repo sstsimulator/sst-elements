@@ -169,10 +169,10 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
         nicParams.insert("ack.port", "network_ack");
         nicParams.insert("fwd.port", "network_fwd");
         nicParams.insert("data.port", "network_data");
-        network = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemNICFour", this, nicParams));
+        network = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNICFour", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams);
     } else {
         nicParams.insert("port", "network");
-        network = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemNIC", this, nicParams));
+        network = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams);
     }
 
     network->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
@@ -188,7 +188,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
         memParams.insert("addr_range_end", std::to_string(addrRangeEnd), false);
         memParams.insert("interleave_size", ilSize, false);
         memParams.insert("interleave_step", ilStep, false);
-        memLink = dynamic_cast<MemLinkBase*>(loadSubComponent("memHierarchy.MemLink", this, memParams));
+        memLink = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "memlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, memParams);
         memLink->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
         if (!memLink) {
             dbg.fatal(CALL_INFO, -1, "%s, Error creating link to memory from directory controller\n", getName().c_str());
@@ -1510,7 +1510,7 @@ void DirectoryController::issueInvalidates(MemEvent * ev, DirEntry * entry, Comm
 
 /* Send Fetch to owner */
 void DirectoryController::issueFetch(MemEvent * ev, DirEntry * entry, Command cmd) {
-    MemEvent * fetch = new MemEvent(this, ev->getAddr(), ev->getBaseAddr(), cmd, cacheLineSize);
+    MemEvent * fetch = new MemEvent(getName(), ev->getAddr(), ev->getBaseAddr(), cmd, cacheLineSize, getCurrentSimTimeNano());
     fetch->setDst(nodeid_to_name[entry->getOwner()]);
     entry->lastRequest = fetch->getID();
     profileRequestSent(fetch);
@@ -1567,7 +1567,7 @@ void DirectoryController::getDirEntryFromMemory(DirEntry * entry) {
     }
 
     Addr entryAddr       = 0; /* Dummy addr reused for dir cache misses */
-    MemEvent *me         = new MemEvent(this, entryAddr, entryAddr, Command::GetS, cacheLineSize);
+    MemEvent *me         = new MemEvent(getName(), entryAddr, entryAddr, Command::GetS, cacheLineSize, getCurrentSimTimeNano());
     me->setAddrGlobal(false);
     me->setSize(entrySize);
     me->setDst(memoryName);
@@ -1649,7 +1649,7 @@ DirectoryController::DirEntry* DirectoryController::getDirEntry(Addr baseAddr){
 
 
 void DirectoryController::sendInvalidate(int target, MemEvent * reqEv, DirEntry* entry, Command cmd){
-    MemEvent *me = new MemEvent(this, entry->getBaseAddr(), entry->getBaseAddr(), cmd, cacheLineSize);
+    MemEvent *me = new MemEvent(getName(), entry->getBaseAddr(), entry->getBaseAddr(), cmd, cacheLineSize, getCurrentSimTimeNano());
     me->setDst(nodeid_to_name[target]);
     me->setRqstr(reqEv->getRqstr());
 
@@ -1676,7 +1676,7 @@ void DirectoryController::sendAckPut(MemEvent * event) {
 
 
 void DirectoryController::forwardFlushRequest(MemEvent * event) {
-    MemEvent *reqEv     = new MemEvent(this, event->getAddr(), event->getBaseAddr(), Command::FlushLine, cacheLineSize);
+    MemEvent *reqEv     = new MemEvent(getName(), event->getAddr(), event->getBaseAddr(), Command::FlushLine, cacheLineSize, getCurrentSimTimeNano());
     reqEv->setRqstr(event->getRqstr());
     reqEv->setVirtualAddress(event->getVirtualAddress());
     reqEv->setInstructionPointer(event->getInstructionPointer());
@@ -1767,7 +1767,7 @@ void DirectoryController::updateCache(DirEntry *entry){
 
 void DirectoryController::sendEntryToMemory(DirEntry *entry){
     Addr entryAddr = 0; // Always use local address 0 for directory entries
-    MemEvent *me   = new MemEvent(this, entryAddr, entryAddr, Command::PutE, cacheLineSize); // MemController discards PutE's without writeback so this is safe
+    MemEvent *me   = new MemEvent(getName(), entryAddr, entryAddr, Command::PutE, cacheLineSize, getCurrentSimTimeNano()); // MemController discards PutE's without writeback so this is safe
     me->setSize(entrySize);
     profileRequestSent(me);
 
@@ -1780,7 +1780,7 @@ void DirectoryController::sendEntryToMemory(DirEntry *entry){
 
 
 MemEvent::id_type DirectoryController::writebackData(MemEvent *data_event, Command wbCmd) {
-    MemEvent *ev       = new MemEvent(this, data_event->getBaseAddr(), data_event->getBaseAddr(), wbCmd, cacheLineSize);
+    MemEvent *ev       = new MemEvent(getName(), data_event->getBaseAddr(), data_event->getBaseAddr(), wbCmd, cacheLineSize, getCurrentSimTimeNano());
 
     if(data_event->getPayload().size() != cacheLineSize) {
 	dbg.fatal(CALL_INFO, -1, "%s, Error: Writing back data request but payload does not match cache line size of %uB. Event: %s. Time = %" PRIu64 "ns\n",

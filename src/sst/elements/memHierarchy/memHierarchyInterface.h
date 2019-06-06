@@ -44,11 +44,16 @@ class MemHierarchyInterface : public Interfaces::SimpleMem {
 
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT(MemHierarchyInterface, "memHierarchy", "memInterface", SST_ELI_ELEMENT_VERSION(1,0,0),
-            "Interface to memory hierarchy. Converts SimpleMem requests into MemEventBases.", "SST::Interfaces::SimpleMem")
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(MemHierarchyInterface, "memHierarchy", "memInterface", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Interface to memory hierarchy. Converts SimpleMem requests into MemEventBases.", SST::Interfaces::SimpleMem)
+
+    SST_ELI_DOCUMENT_PARAMS( {"port", "Optional, specify the owning component's port to used (not needed if this subcomponent is loaded in the input config)", ""} )
+
+    SST_ELI_DOCUMENT_PORTS( {"port", "Port to memory hierarchy (caches/memory/etc.)", {}} )
 
 /* Begin class definition */
     MemHierarchyInterface(SST::Component *comp, Params &params);
+    MemHierarchyInterface(SST::ComponentId_t id, Params &params, TimeConverter* time, HandlerBase* handler = NULL);
     
     /** Initialize the link to be used to connect with MemHierarchy */
     virtual bool initialize(const std::string &linkName, HandlerBase *handler = NULL);
@@ -69,7 +74,6 @@ protected:
     /** Function to update a SimpleMem request with a custom memEvent response */
     virtual void updateCustomRequest(Interfaces::SimpleMem::Request* req, MemEventBase *ev) const;
     
-    Component*  owner_;
     Output      output;
     Addr        baseAddrMask_;
     std::string rqstr_;

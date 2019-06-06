@@ -35,7 +35,14 @@ FlagMemBackendConvertor::FlagMemBackendConvertor(Component *comp, Params &params
     using std::placeholders::_1;
     using std::placeholders::_2;
     static_cast<FlagMemBackend*>(m_backend)->setResponseHandler( std::bind( &FlagMemBackendConvertor::handleMemResponse, this, _1,_2 ) );
+}
 
+FlagMemBackendConvertor::FlagMemBackendConvertor(ComponentId_t id, Params &params) :
+    MemBackendConvertor(id,params) 
+{
+    using std::placeholders::_1;
+    using std::placeholders::_2;
+    static_cast<FlagMemBackend*>(m_backend)->setResponseHandler( std::bind( &FlagMemBackendConvertor::handleMemResponse, this, _1,_2 ) );
 }
 
 bool FlagMemBackendConvertor::issue( BaseReq *breq ) {

@@ -43,6 +43,9 @@ class Stake : public RequestGenerator {
 
 public:
 	Stake( Component* owner, Params& params );
+	Stake( ComponentId_t id, Params& params );
+        void build(Params& params); // Temporary while legacy constructor is getting deprecated
+
 	~Stake();
 	void generate(MirandaRequestQueue<GeneratorRequest*>* q);
 	bool isFinished();
@@ -52,13 +55,13 @@ public:
                           bool Read, bool Write, bool Atomic, bool Custom,
                           uint32_t Code );
 
-	SST_ELI_REGISTER_SUBCOMPONENT(
+	SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
                 Stake,
                 "miranda",
                 "Stake",
                 SST_ELI_ELEMENT_VERSION(1,0,0),
 		"Instantiates a RISC-V Spike instance to drive memory traffic",
-               	"SST::Miranda::RequestGenerator"
+               	SST::Miranda::RequestGenerator
        	)
 
        	SST_ELI_DOCUMENT_PARAMS(

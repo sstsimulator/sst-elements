@@ -22,6 +22,15 @@ using namespace SST::Miranda;
 
 ReverseSingleStreamGenerator::ReverseSingleStreamGenerator( Component* owner, Params& params ) :
 	RequestGenerator(owner, params) {
+            build(params);
+        }
+
+ReverseSingleStreamGenerator::ReverseSingleStreamGenerator( ComponentId_t id, Params& params ) :
+	RequestGenerator(id, params) {
+            build(params);
+        }
+
+void ReverseSingleStreamGenerator::build(Params& params) {
 
 	const uint32_t verbose = params.find<uint32_t>("verbose", 0);
 

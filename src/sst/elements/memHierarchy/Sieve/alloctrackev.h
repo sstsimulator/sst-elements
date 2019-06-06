@@ -1,8 +1,8 @@
-// Copyright 2016-2018 NTESS. Under the terms
+// Copyright 2016-2019 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2016-2018, NTESS
+// Copyright (c) 2016-2019, NTESS
 // All rights reserved.
 // 
 // Portions are copyright of other developers:
@@ -13,38 +13,38 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef _ARIELALLOCTRACKEV_H
-#define _ARIELALLOCTRACKEV_H
+#ifndef _MEMH_SIEVE_ALLOCTRACKEV_H
+#define _MEMH_SIEVE_ALLOCTRACKEV_H
 
 namespace SST {
-namespace ArielComponent {
+namespace MemHierarchy {
 
-class arielAllocTrackEvent : public SST::Event 
+class AllocTrackEvent : public SST::Event 
 {
     public:
-        enum arielAllocTrackType {
+        enum AllocTrackType {
             ALLOC,
             FREE,
             BUOY
         };
 
-        arielAllocTrackEvent(arielAllocTrackType t, uint64_t va, uint64_t len, uint32_t lev, uint64_t ip) :
+        AllocTrackEvent(AllocTrackType t, uint64_t va, uint64_t len, uint32_t lev, uint64_t ip) :
             SST::Event(), type(t), virtualAddress(va), allocateLength(len), level(lev), instPtr(ip) { }
 
-        arielAllocTrackType getType() const {return type;}
+        AllocTrackType getType() const {return type;}
         uint64_t getVirtualAddress() const {return virtualAddress;}
         uint64_t getAllocateLength() const {return allocateLength;}
         uint32_t getLevel() const {return level;}
         uint64_t getInstructionPointer() const {return instPtr;}
 
     private:
-        arielAllocTrackType type;
+        AllocTrackType type;
         uint64_t virtualAddress;
         uint64_t allocateLength;
         uint32_t level;
         uint64_t instPtr;
 
-        arielAllocTrackEvent() {} // For serialization only
+        AllocTrackEvent() {} // For serialization only
 
     public:
         void serialize_order(SST::Core::Serialization::serializer &ser)  override {
@@ -55,10 +55,10 @@ class arielAllocTrackEvent : public SST::Event
             ser & level;
         }
 
-        ImplementSerializable(SST::ArielComponent::arielAllocTrackEvent);
+        ImplementSerializable(SST::MemHierarchy::AllocTrackEvent);
 };
 
-} // namespace ArielComponent
+} // namespace MemHierarchy
 } // namespace SST
 
-#endif /* ARIELALLOCTRACKEV_H */
+#endif /* MEMHIERARCHY_ALLOCTRACKEV_H */

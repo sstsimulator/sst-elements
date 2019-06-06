@@ -9,12 +9,15 @@ comp_cpu = sst.Component("cpu", "miranda.BaseCPU")
 comp_cpu.addParams({
 	"verbose" : 0,
 	"clock" : "2GHz",
-	"generator" : "miranda.Stencil3DBenchGenerator",
-	"generatorParams.verbose" : 0,
-	"generatorParams.nx" : 30,
-	"generatorParams.ny" : 20,
-	"generatorParams.nz" : 10,
 	"printStats" : 1,
+})
+
+gen = comp_cpu.setSubComponent("generator", "miranda.Stencil3DBenchGenerator")
+gen.addParams({
+	"verbose" : 0,
+	"nx" : 30,
+	"ny" : 20,
+	"nz" : 10,
 })
 
 # Tell SST what statistics handling we want

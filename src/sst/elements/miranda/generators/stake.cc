@@ -24,7 +24,15 @@ Stake *__GStake;
 
 Stake::Stake( Component* owner, Params& params ) :
 	RequestGenerator(owner, params) {
+            build(params);
+        }
 
+Stake::Stake( Component* owner, Params& params ) :
+	RequestGenerator(owner, params) {
+            build(params);
+        }
+
+void Stake::build(Params &params) {
         // default parameters
         spike = NULL;
         rtn = 0;

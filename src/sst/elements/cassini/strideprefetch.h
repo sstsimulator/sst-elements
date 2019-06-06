@@ -39,19 +39,20 @@ namespace Cassini {
 class StridePrefetcher : public SST::MemHierarchy::CacheListener {
 public:
     StridePrefetcher(Component* owner, Params& params);
+    StridePrefetcher(ComponentId_t id, Params& params);
     ~StridePrefetcher();
 
     void notifyAccess(const CacheListenerNotification& notify);
     void registerResponseCallback(Event::HandlerBase *handler);
     void printStats(Output &out);
 
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         StridePrefetcher,
             "cassini",
             "StridePrefetcher",
             SST_ELI_ELEMENT_VERSION(1,0,0),
             "Stride Detection Prefetcher",
-            "SST::Cassini::CacheListener"
+            SST::MemHierarchy::CacheListener
     )
 
     SST_ELI_DOCUMENT_PARAMS(

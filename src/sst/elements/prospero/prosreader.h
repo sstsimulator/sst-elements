@@ -57,7 +57,13 @@ private:
 class ProsperoTraceReader : public SubComponent {
 
 public:
-	ProsperoTraceReader( Component* owner, Params& params ) : SubComponent(owner) {};
+        SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Prospero::ProsperoTraceReader, Output*)
+
+	ProsperoTraceReader( Component* owner, Params& params ) : SubComponent(owner) {}
+	ProsperoTraceReader( ComponentId_t id, Params& params, Output* out) : SubComponent(id) {
+            output = out;
+        }
+
 	~ProsperoTraceReader() { };
 	virtual ProsperoTraceEntry* readNextEntry() { return NULL; };
 	void setOutput(Output* out) { output = out; }

@@ -45,7 +45,6 @@ Samba::Samba(SST::ComponentId_t id, SST::Params& params): Component(id) {
 
 	int  page_walk_latency = ((uint32_t) params.find<uint32_t>("page_walk_latency", 50));
 
-	TLB = new TLBhierarchy*[core_count];
 	std::cout<<"Initialized with "<<core_count<<" cores"<<std::endl;
 
 
@@ -74,7 +73,7 @@ Samba::Samba(SST::ComponentId_t id, SST::Params& params): Component(id) {
 
 
 
-		TLB[i]= new TLBhierarchy(i, levels /* level */, (SST::Component *) this,params);
+		TLB.push_back(loadComponentExtension<TLBhierarchy>(i, levels /* level */, params));
 
 
 		SST::Link * link2 = configureLink(link_buffer, "0ps", new Event::Handler<TLBhierarchy>(TLB[i], &TLBhierarchy::handleEvent_CPU));

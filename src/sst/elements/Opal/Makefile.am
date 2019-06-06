@@ -10,7 +10,9 @@ libOpal_la_SOURCES = \
 	mempool.cpp \
 	Opal.cc \
 	Opal.h \
-        Opal_Event.h 	
+        Opal_Event.h \
+	arielmemmgr_opal.h \
+	arielmemmgr_opal.cc
 
 
 libOpal_la_CPPFLAGS = \

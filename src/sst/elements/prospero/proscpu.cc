@@ -31,17 +31,23 @@ ProsperoComponent::ProsperoComponent(ComponentId_t id, Params& params) :
 	const uint32_t output_level = (uint32_t) params.find<uint32_t>("verbose", 0);
 	output = new SST::Output("Prospero[@p:@l]: ", output_level, 0, SST::Output::STDOUT);
 
-	std::string traceModule = params.find<std::string>("reader", "prospero.ProsperoTextTraceReader");
-	output->verbose(CALL_INFO, 1, 0, "Reader module is: %s\n", traceModule.c_str());
+        // Load Reader the new way
+        reader = loadUserSubComponent<ProsperoTraceReader>("reader", ComponentInfo::SHARE_NONE, output);
 
-	Params readerParams = params.find_prefix_params("readerParams.");
-	reader = dynamic_cast<ProsperoTraceReader*>( loadSubComponent(traceModule, this, readerParams) );
+        // Load Reader the old way
+        if (!reader) {
+	    std::string traceModule = params.find<std::string>("reader", "prospero.ProsperoTextTraceReader");
+	    output->verbose(CALL_INFO, 1, 0, "Reader module is: %s\n", traceModule.c_str());
 
-	if(NULL == reader) {
-		output->fatal(CALL_INFO, -1, "Failed to load reader module: %s\n", traceModule.c_str());
+	    Params readerParams = params.find_prefix_params("readerParams.");
+	    reader = loadAnonymousSubComponent<ProsperoTraceReader>(traceModule, "reader", 0, ComponentInfo::INSERT_STATS, readerParams, output);
+
 	}
 
-	reader->setOutput(output);
+	if (NULL == reader)
+	    output->fatal(CALL_INFO, -1, "%s, Fatal: Failed to load reader module\n", getName().c_str());
+	
+        reader->setOutput(output);
 
 	pageSize = (uint64_t) params.find<uint64_t>("pagesize", 4096);
 	output->verbose(CALL_INFO, 1, 0, "Configured Prospero page size for %" PRIu64 " bytes.\n", pageSize);
@@ -51,7 +57,7 @@ ProsperoComponent::ProsperoComponent(ComponentId_t id, Params& params) :
 
 	std::string prosClock = params.find<std::string>("clock", "2GHz");
 	// Register the clock
-	registerClock(prosClock, new Clock::Handler<ProsperoComponent>(this, &ProsperoComponent::tick));
+	TimeConverter* time = registerClock(prosClock, new Clock::Handler<ProsperoComponent>(this, &ProsperoComponent::tick));
 
 	output->verbose(CALL_INFO, 1, 0, "Configured Prospero clock for %s\n", prosClock.c_str());
 
@@ -66,9 +72,16 @@ ProsperoComponent::ProsperoComponent(ComponentId_t id, Params& params) :
   	primaryComponentDoNotEndSim();
 
 	output->verbose(CALL_INFO, 1, 0, "Configuring Prospero cache connection...\n");
-	cache_link = dynamic_cast<SimpleMem*>(loadSubComponent("memHierarchy.memInterface", this, params));
-  	cache_link->initialize("cache_link", new SimpleMem::Handler<ProsperoComponent>(this,
-		&ProsperoComponent::handleResponse) );
+
+        // Check for interface in the input config; if not, load an anonymous interface (must use our port instead of its own)
+        cache_link = loadUserSubComponent<Interfaces::SimpleMem>("memory", ComponentInfo::SHARE_NONE, time, 
+                new SimpleMem::Handler<ProsperoComponent>(this, &ProsperoComponent::handleResponse));
+        if (!cache_link) {
+            Params par;
+            par.insert("port", "cache_link");
+            cache_link = loadAnonymousSubComponent<Interfaces::SimpleMem>("memHierarchy.memInterface", "memory", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, par,
+                    time, new SimpleMem::Handler<ProsperoComponent>(this, &ProsperoComponent::handleResponse));
+        }
 	output->verbose(CALL_INFO, 1, 0, "Configuration of memory interface completed.\n");
 
 	output->verbose(CALL_INFO, 1, 0, "Reading first entry from the trace reader...\n");

@@ -43,11 +43,14 @@ struct Transaction {
 class TransactionQ : public SST::SubComponent {
   public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT(TransactionQ, "memHierarchy", "fifoTransactionQ", SST_ELI_ELEMENT_VERSION(1,0,0),
-            "fifo transaction queue", "SST::MemHierarchy::TransactionQ")
+    SST_ELI_REGISTER_SUBCOMPONENT_API(SST::MemHierarchy::TimingDRAM_NS::TransactionQ)
+
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(TransactionQ, "memHierarchy", "fifoTransactionQ", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "fifo transaction queue", SST::MemHierarchy::TimingDRAM_NS::TransactionQ)
 
 /* Begin class definition */
-    TransactionQ( Component* owner, Params& params ) : SubComponent( owner)  {}
+    TransactionQ( Component* owner, Params& params ) : SubComponent( owner )  {}
+    TransactionQ( ComponentId_t id, Params& params ) : SubComponent( id )  {}
 
     virtual void push( Transaction* trans ) {
         m_transQ.push_back( trans );
@@ -70,13 +73,17 @@ class ReorderTransactionQ : public TransactionQ {
 
   public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT(ReorderTransactionQ, "memHierarchy", "reorderTransactionQ", SST_ELI_ELEMENT_VERSION(1,0,0),
-            "reorder transaction queue", "SST::MemHierarchy::TransactionQ")
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(ReorderTransactionQ, "memHierarchy", "reorderTransactionQ", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "reorder transaction queue", SST::MemHierarchy::TimingDRAM_NS::TransactionQ)
 
     SST_ELI_DOCUMENT_PARAMS( {"windowCycles", "Reorder window in cycles", "10" } )
 
 /* Begin class definition */
     ReorderTransactionQ( Component* owner, Params& params ) : TransactionQ( owner, params ) {
+        windowCycles = params.find<unsigned int>("windowCycles", 10);
+    }
+    
+    ReorderTransactionQ( ComponentId_t id, Params& params ) : TransactionQ( id, params ) {
         windowCycles = params.find<unsigned int>("windowCycles", 10);
     }
 

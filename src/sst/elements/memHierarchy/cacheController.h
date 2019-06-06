@@ -156,6 +156,11 @@ public:
             {"Inv_recv",                "Event received: Inv", "count", 2},
             {"NACK_recv",               "Event: NACK received", "count", 2})
 
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+            {"cpulink", "CPU-side link manager, for single-link caches, use this one only", "SST::MemHierarchy::MemLinkBase"},
+            {"memlink", "Memory-side link manager", "SST::MemHierarchy::MemLinkBase"},
+            {"coherence", "Coherence protocol", "SST::MemHierarchy::CoherenceController"} )
+
 /* Class definition */
     typedef CacheArray::CacheLine           CacheLine;
     typedef CacheArray::DataLine            DataLine;

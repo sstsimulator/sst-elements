@@ -19,7 +19,7 @@
 #define _H_SST_PTW
 
 #include <sst_config.h>
-#include <sst/core/component.h>
+#include <sst/core/componentExtension.h>
 #include <sst/core/timeConverter.h>
 #include <sst/elements/memHierarchy/memEvent.h>
 #include <sst/core/interfaces/simpleMem.h>
@@ -28,6 +28,9 @@
 #include<map>
 #include<vector>
 #include <sst/core/sst_types.h>
+
+#include "utils.h"
+
 // This file defines the page table walker and 
 
 typedef std::pair<uint64_t, int> id_type;
@@ -40,7 +43,7 @@ using namespace SST;
 
 namespace SST { namespace SambaComponent{
 
-	class PageTableWalker
+	class PageTableWalker : public ComponentExtension
 	{
 
 		Output* output;
@@ -144,21 +147,21 @@ namespace SST { namespace SambaComponent{
 
 		int parallel_mode; // very specific case for L1 PageTableWalker in case of overlapping with accessing the cache
 
-		std::vector<SST::Event *> * service_back; // This is used to pass ready requests back to the previous level
+		std::vector<MemHierarchy::MemEventBase *> * service_back; // This is used to pass ready requests back to the previous level
 
-		std::map<SST::Event *, long long int> * service_back_size; // This is used to pass the size of the  requests back to the previous level
+		std::map<MemHierarchy::MemEventBase *, long long int, MemEventPtrCompare> * service_back_size; // This is used to pass the size of the  requests back to the previous level
 
-		std::map<SST::Event *, SST::Cycle_t > ready_by; // this one is used to keep track of requests that are delayed inside this structure, compensating for latency
+		std::map<MemHierarchy::MemEventBase *, SST::Cycle_t, MemEventPtrCompare > ready_by; // this one is used to keep track of requests that are delayed inside this structure, compensating for latency
 
-		std::map<SST::Event *, long long int> ready_by_size; // this one is used to keep track of requests' sizes inside this structure
+		std::map<MemHierarchy::MemEventBase *, long long int, MemEventPtrCompare> ready_by_size; // this one is used to keep track of requests' sizes inside this structure
 
-		std::vector<SST::Event *> pushed_back; // This is what we got returned from other structures
+		std::vector<MemHierarchy::MemEventBase *> pushed_back; // This is what we got returned from other structures
 
-		std::map<SST::Event *, long long int> pushed_back_size; // This is the sizes of the translations we got returned from other structures
+		std::map<MemHierarchy::MemEventBase *, long long int, MemEventPtrCompare> pushed_back_size; // This is the sizes of the translations we got returned from other structures
 
-		std::vector<SST::Event *> pending_misses; // This the number of pending misses, only erased when pushed back from next level
+		std::vector<MemHierarchy::MemEventBase *> pending_misses; // This the number of pending misses, only erased when pushed back from next level
 
-		std::vector<SST::Event *> not_serviced; // This holds those accesses not serviced yet
+		std::vector<MemHierarchy::MemEventBase *> not_serviced; // This holds those accesses not serviced yet
 
 
 		int self_connected; // his parameter indidicates if the PTW is self-connected or actually connected to the memory hierarchy
@@ -167,15 +170,12 @@ namespace SST { namespace SambaComponent{
 
 		SST::Cycle_t currTime;
 
-		SST::Component * Owner;
-
 		uint64_t line_size; // For setting base address of MemEvents
 
 		public: 
 
-		PageTableWalker() {} // For serialization
-		PageTableWalker(int page_size, int assoc, PageTableWalker * next_level, int size);
-		PageTableWalker(int tlb_id, PageTableWalker * Next_level,int level, SST::Component * owner, SST::Params& params);
+		PageTableWalker(ComponentId_t id, int page_size, int assoc, PageTableWalker * next_level, int size);
+		PageTableWalker(ComponentId_t id, int tlb_id, PageTableWalker * Next_level,int level, SST::Params& params);
 
 		void setPageTablePointers( Address_t * cr3, std::map<Address_t, Address_t> * pgd,  std::map<Address_t, Address_t> * pud,  std::map<Address_t, Address_t> * pmd, std::map<Address_t, Address_t> * pte,
 				std::map<Address_t,int> * gb,  std::map<Address_t,int> * mb,  std::map<Address_t,int> * kb, std::map<Address_t,int> * pr, std::map<Address_t,int> * sr)
@@ -220,7 +220,7 @@ namespace SST { namespace SambaComponent{
 		// To insert the translaiton
 		int find_victim_way(Address_t vadd, int struct_id);
 
-		void setServiceBack( std::vector<SST::Event *> * x) { service_back = x;}
+		void setServiceBack( std::vector<MemHierarchy::MemEventBase *> * x) { service_back = x;}
 
 		void setHold(int * tmp) { hold = tmp; }
 
@@ -234,18 +234,18 @@ namespace SST { namespace SambaComponent{
 
 		void recvOpal(SST::Event* event);
 
-		void setServiceBackSize( std::map<SST::Event *, long long int> * x) { service_back_size = x;}
+		void setServiceBackSize( std::map<MemHierarchy::MemEventBase *, long long int, MemEventPtrCompare> * x) { service_back_size = x;}
 
-		std::vector<SST::Event *> * getPushedBack(){return & pushed_back;}
+		std::vector<MemHierarchy::MemEventBase *> * getPushedBack(){return & pushed_back;}
 
-		std::map<SST::Event *, long long int> * getPushedBackSize(){return & pushed_back_size;}
+		std::map<MemHierarchy::MemEventBase *, long long int, MemEventPtrCompare> * getPushedBackSize(){return & pushed_back_size;}
 
 		std::map<long long int, int> WSR_COUNT;
 		std::map<long long int, bool> WSR_READY;
 
 		std::map<long long int, Address_t> WID_Add;
 
-		std::map<long long int, SST::Event *> WID_EV;
+		std::map<long long int, MemHierarchy::MemEventBase*> WID_EV;
 		std::map<id_type, long long int> MEM_REQ;
 
 		void update_lru(Address_t vaddr, int struct_id);
@@ -263,7 +263,7 @@ namespace SST { namespace SambaComponent{
 		void insert_way(Address_t vaddr, int way, int struct_id);
 
 		// This one is to push a request to this structure
-		void push_request(SST::Event * x) {not_serviced.push_back(x);}
+		void push_request(MemHierarchy::MemEventBase * x) {not_serviced.push_back(x);}
 
 		bool tick(SST::Cycle_t x);
 

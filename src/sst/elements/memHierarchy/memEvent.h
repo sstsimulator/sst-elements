@@ -41,6 +41,7 @@ using namespace std;
 class MemEvent : public MemEventBase  {
 public:
     
+    /****** Old calls will now throw deprecated warnings since parent pointer is not available *************/
     /** Creates a new MemEvent - Generic */
     MemEvent(const Component *src, Addr addr, Addr baseAddr, Command cmd) : MemEventBase(src->getName(), cmd) {
         initialize();
@@ -66,6 +67,30 @@ public:
         initTime_ = src->getCurrentSimTimeNano();
         setPayload(data); // Also sets size_ field
     }
+
+    /************ New calls - use these! *****************/
+    MemEvent(std::string src, Addr addr, Addr baseAddr, Command cmd, uint64_t timeInNano) : MemEventBase(src, cmd) {
+        initialize();
+        addr_ = addr;
+        baseAddr_ = baseAddr;
+        initTime_ = timeInNano;
+    }
+    MemEvent(std::string src, Addr addr, Addr baseAddr, Command cmd, uint32_t size, uint64_t timeInNano) : MemEventBase(src, cmd) {
+        initialize();
+        addr_ = addr;
+        baseAddr_ = baseAddr;
+        initTime_ = timeInNano;
+        size_ = size;
+    }
+    MemEvent(std::string src, Addr addr, Addr baseAddr, Command cmd, std::vector<uint8_t>& data, uint64_t timeInNano) : MemEventBase(src, cmd) {
+        initialize();
+        addr_ = addr;
+        baseAddr_ = baseAddr;
+        initTime_ = timeInNano;
+        setPayload(data);
+    }
+
+
 
     /** Create a new MemEvent instance, pre-configured to act as a NACK response */
     MemEvent* makeNACKResponse(MemEvent* NACKedEvent, SimTime_t timeInNano) {

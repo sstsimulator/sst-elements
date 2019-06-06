@@ -28,5 +28,4 @@ link.connect((sub0_0, "sendPort", "5ns"), (sub1_0, "recvPort", "5ns"))
 link = sst.Link("myLink2")
 link.connect((sub1_1, "sendPort", "5ns"), (sub0_1, "recvPort", "5ns"))
 
-sst.enableAllStatisticsForAllComponents()
 sst.setStatisticLoadLevel(1)

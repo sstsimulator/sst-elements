@@ -36,12 +36,15 @@ namespace MemHierarchy {
 class AMOCustomCmdMemHandler : public CustomCmdMemHandler {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT(AMOCustomCmdMemHandler, "memHierarchy", "amoCustomCmdHandler", SST_ELI_ELEMENT_VERSION(1,0,0),
-            "Custom command handler for atomics (AMO)", "SST::MemHierarchy::CustomCmdMemHandler")
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(AMOCustomCmdMemHandler, "memHierarchy", "amoCustomCmdHandler", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Custom command handler for atomics (AMO)", SST::MemHierarchy::CustomCmdMemHandler)
 
 /* Begin class defintion */
   AMOCustomCmdMemHandler(Component * comp, Params &params)
     : CustomCmdMemHandler(comp,params) {}
+  
+  AMOCustomCmdMemHandler(ComponentId_t id, Params &params, std::function<void(Addr,size_t,std::vector<uint8_t>&)> read, std::function<void(Addr,std::vector<uint8_t>*)> write)
+    : CustomCmdMemHandler(id, params, read, write) {}
 
   ~AMOCustomCmdMemHandler() {}
 

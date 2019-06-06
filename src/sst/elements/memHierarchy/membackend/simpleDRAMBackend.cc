@@ -47,8 +47,10 @@ using namespace SST::MemHierarchy;
  */
 
 
-SimpleDRAM::SimpleDRAM(Component *comp, Params &params) : SimpleMemBackend(comp, params){
+SimpleDRAM::SimpleDRAM(Component *comp, Params &params) : SimpleMemBackend(comp, params){ build(params); }
+SimpleDRAM::SimpleDRAM(ComponentId_t id, Params &params) : SimpleMemBackend(id, params){ build(params); }
 
+void SimpleDRAM::build(Params& params) {
     // Get parameters
     tCAS = params.find<uint64_t>("tCAS", 9);
     tRCD = params.find<uint64_t>("tRCD", 9);
@@ -66,7 +68,7 @@ SimpleDRAM::SimpleDRAM(Component *comp, Params &params) : SimpleMemBackend(comp,
     // Check parameters
     // Supported policies are 'open', 'closed' or 'dynamic'
     if (policyStr != "closed" && policyStr != "open") {
-        output->fatal(CALL_INFO, -1, "Invalid param(%s): row_policy - must be 'closed' or 'open'. You specified '%s'.\n", comp->getName().c_str(), policyStr.c_str());
+        output->fatal(CALL_INFO, -1, "Invalid param(%s): row_policy - must be 'closed' or 'open'. You specified '%s'.\n", getName().c_str(), policyStr.c_str());
     }
 
     if (policyStr == "closed") policy = RowPolicy::CLOSED;
@@ -74,25 +76,25 @@ SimpleDRAM::SimpleDRAM(Component *comp, Params &params) : SimpleMemBackend(comp,
 
     // banks needs to be a power of 2 -> use to set bank mask
     if (!isPowerOfTwo(banks)) {
-        output->fatal(CALL_INFO, -1, "Invalid param(%s): banks - must be a power of two. You specified %" PRIu64 ".\n", comp->getName().c_str(), banks);
+        output->fatal(CALL_INFO, -1, "Invalid param(%s): banks - must be a power of two. You specified %" PRIu64 ".\n", getName().c_str(), banks);
     }
     bankMask = banks - 1;
 
     // line size needs to be a power of 2 and have units of bytes
     if (!(lineSize.hasUnits("B"))) {
-        output->fatal(CALL_INFO, -1, "Invalid param(%s): cache_line_size_in_bytes - must have units of 'B' (bytes). The units you specified were '%s'.\n", comp->getName().c_str(), lineSize.toString().c_str());
+        output->fatal(CALL_INFO, -1, "Invalid param(%s): cache_line_size_in_bytes - must have units of 'B' (bytes). The units you specified were '%s'.\n", getName().c_str(), lineSize.toString().c_str());
     }
     if (!isPowerOfTwo(lineSize.getRoundedValue())) {
-        output->fatal(CALL_INFO, -1, "Invalid param(%s): cache_line_size_in_bytes - must be a power of two. You specified %s.\n", comp->getName().c_str(), lineSize.toString().c_str());
+        output->fatal(CALL_INFO, -1, "Invalid param(%s): cache_line_size_in_bytes - must be a power of two. You specified %s.\n", getName().c_str(), lineSize.toString().c_str());
     }
     lineOffset = log2Of(lineSize.getRoundedValue());
 
     // row size (# columns) needs to be power of 2 and have units of bytes
     if (!(rowSize.hasUnits("B"))) {
-        output->fatal(CALL_INFO, -1, "Invalid param(%s): row_size - must have units of 'B' (bytes). You specified %s.\n", comp->getName().c_str(), rowSize.toString().c_str());
+        output->fatal(CALL_INFO, -1, "Invalid param(%s): row_size - must have units of 'B' (bytes). You specified %s.\n", getName().c_str(), rowSize.toString().c_str());
     }
     if (!isPowerOfTwo(rowSize.getRoundedValue())) {
-        output->fatal(CALL_INFO, -1, "Invalid param(%s): row_size - must be a power of two. You specified %s.\n", comp->getName().c_str(), rowSize.toString().c_str());
+        output->fatal(CALL_INFO, -1, "Invalid param(%s): row_size - must be a power of two. You specified %s.\n", getName().c_str(), rowSize.toString().c_str());
     }
     rowOffset = log2Of(rowSize.getRoundedValue());
 
@@ -105,7 +107,7 @@ SimpleDRAM::SimpleDRAM(Component *comp, Params &params) : SimpleMemBackend(comp,
     }
 
     // Self link for timing requests
-    self_link = comp->configureSelfLink("Self", cycTime, new Event::Handler<SimpleDRAM>(this, &SimpleDRAM::handleSelfEvent));
+    self_link = configureSelfLink("Self", cycTime, new Event::Handler<SimpleDRAM>(this, &SimpleDRAM::handleSelfEvent));
 
     // Some statistics
     statRowHit = registerStatistic<uint64_t>("row_already_open");
@@ -142,7 +144,7 @@ bool SimpleDRAM::issueRequest( ReqId reqId, Addr addr, bool isWrite, unsigned nu
 
 #ifdef __SST_DEBUG_OUTPUT__
     output->debug(_L10_, "SimpleDRAM (%s) received request for address %" PRIx64 " which maps to bank: %d, row: %d. Bank status: %s, open row is %d\n",
-           parent->getName().c_str(), addr, bank, row, (busy[bank] ? "busy" : "idle"), openRow[bank]);
+           getName().c_str(), addr, bank, row, (busy[bank] ? "busy" : "idle"), openRow[bank]);
 #endif
 
     // If bank is busy -> return false;

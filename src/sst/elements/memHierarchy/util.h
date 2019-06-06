@@ -31,6 +31,15 @@ using namespace std;
 namespace SST {
 namespace MemHierarchy {
 
+/* Debug macros */
+#ifdef __SST_DEBUG_OUTPUT__ /* From sst-core, enable with --enable-debug */
+#define is_debug_addr(addr) (DEBUG_ADDR.empty() || DEBUG_ADDR.find(addr) != DEBUG_ADDR.end())
+#define is_debug_event(ev) (DEBUG_ADDR.empty() || ev->doDebug(DEBUG_ADDR))
+#else
+#define is_debug_addr(addr) false
+#define is_debug_event(ev) false
+#endif
+
 #define _INFO_ CALL_INFO,1,0
 #define _L2_ CALL_INFO,2,0     //Important messages:  incoming requests, state changes, etc
 #define _L3_ CALL_INFO,3,0     //Important messages:  incoming requests, state changes, etc
@@ -42,6 +51,7 @@ namespace MemHierarchy {
 #define _L9_ CALL_INFO,9,0     //MSHR messages
 #define _L10_ CALL_INFO,10,0   //Directory controller, Bus, Memory Controller
 
+// Type conversions - TODO are these used anywhere?
 const unsigned int kibi = 1024;
 const unsigned int mebi = kibi * 1024;
 const unsigned int gibi = mebi * 1024;

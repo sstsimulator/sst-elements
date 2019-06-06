@@ -180,12 +180,14 @@ ddr_mem_timing_params = {
 thread_iters = 1000
 cpu_params = {
     "verbose" : 0,
-    "generator" : "miranda.STREAMBenchGenerator",
     "clock" : core_clock,
-    "generatorParams.verbose" : 0,
-    "generatorParams.n" : thread_iters,
-    "generatorParams.operandWidth" : 8,
     "printStats" : 1
+}
+
+gen_params = {
+    "verbose" : 0,
+    "n" : thread_iters,
+    "operandWidth" : 8,
 }
 
 class DDRBuilder:
@@ -317,17 +319,20 @@ class TileBuilder:
         mirandaL1 = sst.Component("thread_" + str(self.next_core_id + 18), "miranda.BaseCPU")
         mirandaL0.addParams(cpu_params)
         mirandaL1.addParams(cpu_params)
+        genL0 = mirandaL0.setSubComponent("generator", "miranda.STREAMBenchGenerator")
+        genL1 = mirandaL1.setSubComponent("generator", "miranda.STREAMBenchGenerator")
+        genL0.addParams(gen_params)
+        genL1.addParams(gen_params)
 
-
-        mirandaL0.addParams({
-            "generatorParams.start_a" : self.base_a + self.next_core_id * thread_iters * 8,
-            "generatorParams.start_b" : self.base_b + self.next_core_id * thread_iters * 8,
-            "generatorParams.start_c" : self.base_c + self.next_core_id * thread_iters * 8
+        genL0.addParams({
+            "start_a" : self.base_a + self.next_core_id * thread_iters * 8,
+            "start_b" : self.base_b + self.next_core_id * thread_iters * 8,
+            "start_c" : self.base_c + self.next_core_id * thread_iters * 8
             })
-        mirandaL1.addParams({
-            "generatorParams.start_a" : self.base_a + (self.next_core_id + 18) * thread_iters * 8,
-            "generatorParams.start_b" : self.base_b + (self.next_core_id + 18) * thread_iters * 8,
-            "generatorParams.start_c" : self.base_c + (self.next_core_id + 18) * thread_iters * 8
+        genL1.addParams({
+            "start_a" : self.base_a + (self.next_core_id + 18) * thread_iters * 8,
+            "start_b" : self.base_b + (self.next_core_id + 18) * thread_iters * 8,
+            "start_c" : self.base_c + (self.next_core_id + 18) * thread_iters * 8
             })
 
         # Thread 0
@@ -371,17 +376,21 @@ class TileBuilder:
         mirandaR1 = sst.Component("thread_" + str(self.next_core_id + 18), "miranda.BaseCPU")
         mirandaR0.addParams(cpu_params)
         mirandaR1.addParams(cpu_params)
+        genR0 = mirandaR0.setSubComponent("generator", "miranda.STREAMBenchGenerator")
+        genR1 = mirandaR1.setSubComponent("generator", "miranda.STREAMBenchGenerator")
+        
+        genR0.addParams(gen_params)
+        genR1.addParams(gen_params)
 
-
-        mirandaR0.addParams({
-            "generatorParams.start_a" : self.base_a + self.next_core_id * thread_iters * 8,
-            "generatorParams.start_b" : self.base_b + self.next_core_id * thread_iters * 8,
-            "generatorParams.start_c" : self.base_c + self.next_core_id * thread_iters * 8
+        genR0.addParams({
+            "start_a" : self.base_a + self.next_core_id * thread_iters * 8,
+            "start_b" : self.base_b + self.next_core_id * thread_iters * 8,
+            "start_c" : self.base_c + self.next_core_id * thread_iters * 8
             })
-        mirandaR1.addParams({
-            "generatorParams.start_a" : self.base_a + (self.next_core_id + 18) * thread_iters * 8,
-            "generatorParams.start_b" : self.base_b + (self.next_core_id + 18) * thread_iters * 8,
-            "generatorParams.start_c" : self.base_c + (self.next_core_id + 18) * thread_iters * 8
+        genR1.addParams({
+            "start_a" : self.base_a + (self.next_core_id + 18) * thread_iters * 8,
+            "start_b" : self.base_b + (self.next_core_id + 18) * thread_iters * 8,
+            "start_c" : self.base_c + (self.next_core_id + 18) * thread_iters * 8
             })
 
         # Thread 0

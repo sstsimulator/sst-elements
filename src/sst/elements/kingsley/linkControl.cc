@@ -38,6 +38,20 @@ LinkControl::LinkControl(Component* parent, Params &params) :
     output(Simulation::getSimulation()->getSimulationOutput())
 {
 }
+
+LinkControl::LinkControl(ComponentId_t id, Params &params, int) :
+    SST::Interfaces::SimpleNetwork(id),
+    init_state(0),
+    rtr_link(NULL), output_timing(NULL),
+    req_vns(0), id(-1),
+    input_buf(NULL), output_buf(NULL),
+    rtr_credits(NULL), in_ret_credits(NULL),
+    waiting(true), have_packets(false),
+    receiveFunctor(NULL), sendFunctor(NULL),
+    network_initialized(false),
+    output(Simulation::getSimulation()->getSimulationOutput())
+{
+}
     
 bool
 LinkControl::initialize(const std::string& port_name, const UnitAlgebra& link_bw_in,
@@ -292,7 +306,7 @@ bool LinkControl::send(SimpleNetwork::Request* req, int vn) {
     
     if ( ev->getTraceType() != SimpleNetwork::Request::NONE ) {
         output.output("TRACE(%d): %" PRIu64 " ns: Send on LinkControl in NIC: %s\n",ev->getTraceID(),
-                      parent->getCurrentSimTimeNano(), parent->getName().c_str());
+                      getCurrentSimTimeNano(), getName().c_str());
     }
     
     return true;
@@ -330,10 +344,10 @@ SST::Interfaces::SimpleNetwork::Request* LinkControl::recv(int vn) {
     
     // if ( event->getTraceType() != SimpleNetwork::Request::NONE ) {
     //     output.output("TRACE(%d): %" PRIu64 " ns: recv called on LinkControl in NIC: %s\n",event->getTraceID(),
-    //                   parent->getCurrentSimTimeNano(), parent->getName().c_str());
-    //     // std::cout << "TRACE(" << event->getTraceID() << "): " << parent->getCurrentSimTimeNano()
+    //                   getCurrentSimTimeNano(), getName().c_str());
+    //     // std::cout << "TRACE(" << event->getTraceID() << "): " << getCurrentSimTimeNano()
     //     //           << " ns: recv called on LinkControl in NIC: "
-    //     //           << parent->getName() << std::endl;
+    //     //           << getName() << std::endl;
     // }
 
     SST::Interfaces::SimpleNetwork::Request* ret = event->request;
@@ -395,12 +409,12 @@ void LinkControl::handle_input(Event* ev)
             output.output("TRACE(%d): %" PRIu64 " ns: Received an event on LinkControl in NIC: %s"
                           " on VN %d from src %" PRIu64 "\n",
                           event->request->getTraceID(),
-                          parent->getCurrentSimTimeNano(),
-                          parent->getName().c_str(),
+                          getCurrentSimTimeNano(),
+                          getName().c_str(),
                           event->request->vn,
                           event->request->src);
         }
-        SimTime_t lat = parent->getCurrentSimTimeNano() - event->getInjectionTime();
+        SimTime_t lat = getCurrentSimTimeNano() - event->getInjectionTime();
         packet_latency->addData(lat);
 
         if ( receiveFunctor != NULL ) {
@@ -452,7 +466,7 @@ void LinkControl::handle_output(Event* ev)
         output_timing->send(size,NULL);
         
         // // Add in inject time so we can track latencies
-        send_event->setInjectionTime(parent->getCurrentSimTimeNano());
+        send_event->setInjectionTime(getCurrentSimTimeNano());
         
         // Subtract credits
         rtr_credits[vn] -= size;
@@ -467,8 +481,8 @@ void LinkControl::handle_output(Event* ev)
             output.output("TRACE(%d): %" PRIu64 " ns: Sent an event to router from LinkControl"
                           " in NIC: %s on VN %d to dest %" PRIu64 ".\n",
                           send_event->getTraceID(),
-                          parent->getCurrentSimTimeNano(),
-                          parent->getName().c_str(),
+                          getCurrentSimTimeNano(),
+                          getName().c_str(),
                           send_event->request->vn,
                           send_event->request->dest);
         }
@@ -489,7 +503,7 @@ void LinkControl::handle_output(Event* ev)
 void
 LinkControl::printStatus(Output& out)
 {
-    out.output("Start LinkControl for Component %s:\n", parent->getName().c_str());
+    out.output("Start LinkControl for Component %s:\n", getName().c_str());
 
     out.output("  Router credits = %d\n",rtr_credits[0]);
     out.output("  Output Buffer credits = %d\n",outbuf_credits[0]);
@@ -505,7 +519,7 @@ LinkControl::printStatus(Output& out)
                    event->getSizeInFlits());
     }
     
-    out.output("End LinkControl for Component %s\n", parent->getName().c_str());
+    out.output("End LinkControl for Component %s\n", getName().c_str());
 }
 
 } // namespace Merlin

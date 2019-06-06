@@ -34,7 +34,7 @@ class ArielTextTraceGenerator : public ArielTraceGenerator {
 
         SST_ELI_DOCUMENT_PARAMS( { "trace_prefix", "Sets the prefix for the trace file", "ariel-core-" } )
 
-        ArielTextTraceGenerator(Component* owner, Params& params);
+        ArielTextTraceGenerator(Params& params);
 
         ~ArielTextTraceGenerator();
 

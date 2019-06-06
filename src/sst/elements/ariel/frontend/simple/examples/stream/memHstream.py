@@ -57,7 +57,6 @@ ariel.addParams({
    "maxissuepercycle"    : "2",
    "pipetimeout"         : "0",
    "executable" : sst_root + "/sst-elements/src/sst/elements/ariel/frontend/simple/examples/stream/stream",
-   "memorylevels"        : "1",
    "arielinterceptcalls" : "1",
    "launchparamcount"    : 1,
    "launchparam0"        : "-ifeellucky",
@@ -65,7 +64,9 @@ ariel.addParams({
    "corecount"           : corecount,
    "defaultlevel"        : defaultLevel,
 })
- 
+
+ariel.setSubComponent("memmgr", "ariel.MemoryManagerSimple")
+
 ## MemHierarchy 
 
 def genMemHierarchy(cores):
@@ -120,7 +121,8 @@ def genMemHierarchy(cores):
             "debug"                 : memDebug,  
             "debug_level"           : memDebugLevel, 
             "verbose"               : 2,
-            "mshr_num_entries"      : "16",
+            "mshr_num_entries"      : 16,
+            "mshr_latency_cycles"   : 2,
        })
        
        ## SST Links
@@ -146,6 +148,7 @@ def genMemHierarchy(cores):
         "debug"                 : memDebug,  
         "debug_level"           : memDebugLevel, 
         "mshr_num_entries"      : "16",
+        "mshr_latency_cycles"   : 2,
         "verbose"               : 2,
    })
 

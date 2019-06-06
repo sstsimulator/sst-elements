@@ -32,6 +32,7 @@ comp_network.addParams({
 
 for x in range(cores):
     comp_cpu = sst.Component("cpu" + str(x), "memHierarchy.streamCPU")
+    iface = comp_cpu.setSubComponent("memory", "memHierarchy.memInterface")
     comp_cpu.addParams({
         "clock" : coreclock,
         "commFreq" : 4, # issue request every 4th cycle
@@ -83,7 +84,7 @@ for x in range(cores):
     })
 
     cpu_l1_link = sst.Link("link_cpu_cache_" + str(x))
-    cpu_l1_link.connect ( (comp_cpu, "mem_link", "500ps"), (comp_l1cache, "high_network_0", "500ps") )
+    cpu_l1_link.connect ( (iface, "port", "500ps"), (comp_l1cache, "high_network_0", "500ps") )
     
     l1_l2_link = sst.Link("link_l1_l2_" + str(x))
     l1_l2_link.connect( (comp_l1cache, "low_network_0", "100ps"), (comp_l2cache, "high_network_0", "100ps") )
