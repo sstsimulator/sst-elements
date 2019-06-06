@@ -38,6 +38,8 @@ namespace MemHierarchy {
 class MemBackend : public SubComponent {
 public:
 
+    SST_ELI_REGISTER_SUBCOMPONENT_API(SST::MemHierarchy::MemBackend)
+
 #define MEMBACKEND_ELI_PARAMS {"debug_level",     "(uint) Debugging level: 0 (no output) to 10 (all output). Output also requires that SST Core be compiled with '--enable-debug'", "0"},\
             {"debug_mask",      "(uint) Mask on debug_level", "0"},\
             {"debug_location",  "(uint) 0: No debugging, 1: STDOUT, 2: STDERR, 3: FILE", "0"},\
@@ -49,7 +51,9 @@ public:
     typedef MemBackendConvertor::ReqId ReqId;
     MemBackend();
 
-    MemBackend(Component *comp, Params &params) : SubComponent(comp)
+    MemBackend(Component *comp, Params &params) : SubComponent(comp) { build(params); }
+    MemBackend(ComponentId_t id, Params &params) : SubComponent(id) { build(params); }
+    void build(Params& params) 
     {
     	output = new SST::Output("@t:MemoryBackend[@p:@l]: ", 
                 params.find<uint32_t>("debug_level", 0),
@@ -121,8 +125,11 @@ protected:
 /* MemBackend - timing only */
 class SimpleMemBackend : public MemBackend {
   public:
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED_API(SST::MemHierarchy::SimpleMemBackend, SST::MemHierarchy::MemBackend)
+
     SimpleMemBackend() : MemBackend() {} 
     SimpleMemBackend(Component *comp, Params &params) : MemBackend(comp,params) {}  
+    SimpleMemBackend(ComponentId_t id, Params &params) : MemBackend(id,params) {}  
 
     virtual bool issueRequest( ReqId, Addr, bool isWrite, unsigned numBytes ) = 0; 
 
@@ -141,7 +148,9 @@ class SimpleMemBackend : public MemBackend {
 /* MemBackend - timing and passes request/response flags */
 class FlagMemBackend : public MemBackend {
   public:
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED_API(SST::MemHierarchy::FlagMemBackend, SST::MemHierarchy::MemBackend)
     FlagMemBackend(Component *comp, Params &params) : MemBackend(comp,params) {}  
+    FlagMemBackend(ComponentId_t id, Params &params) : MemBackend(id,params) {}  
     virtual bool issueRequest( ReqId, Addr, bool isWrite, uint32_t flags, unsigned numBytes ) = 0;
 
     void handleMemResponse( ReqId id, uint32_t flags ) {
@@ -158,7 +167,9 @@ class FlagMemBackend : public MemBackend {
 
 class ExtMemBackend : public MemBackend {
   public:
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED_API(SST::MemHierarchy::ExtMemBackend, SST::MemHierarchy::MemBackend)
     ExtMemBackend(Component *comp, Params &params) : MemBackend(comp,params) {}  
+    ExtMemBackend(ComponentId_t id, Params &params) : MemBackend(id,params) {}  
     virtual bool issueRequest( ReqId, Addr, bool isWrite,
                                std::vector<uint64_t> ins,
                                uint32_t flags, unsigned numBytes ) = 0;

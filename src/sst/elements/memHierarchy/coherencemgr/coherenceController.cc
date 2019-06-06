@@ -34,6 +34,13 @@ using namespace SST::MemHierarchy;
 CoherenceController::CoherenceController(Component * comp, Params &params) : SubComponent(comp) {
     /* Output stream */
     output = new Output("", 1, 0, SST::Output::STDOUT);
+    output->fatal(CALL_INFO, -1, "%s, Error: CohrenceController subcomponents do not support loading via legacy API\n", getName().c_str());
+}
+
+CoherenceController::CoherenceController(ComponentId_t id, Params &params, Params& ownerParams) : SubComponent(id) {
+    params.insert(ownerParams);
+    /* Output stream */
+    output = new Output("", 1, 0, SST::Output::STDOUT);
 
     /* Debug stream */
     debug = new Output("--->  ", params.find<int>("debug_level", 1), 0, (Output::output_location_t)params.find<int>("debug", SST::Output::NONE));
@@ -44,7 +51,7 @@ CoherenceController::CoherenceController(Component * comp, Params &params) : Sub
     accessLatency_ = params.find<uint64_t>("access_latency_cycles", 1, found);
     if (!found) {
         output->fatal(CALL_INFO, -1, "%s, Param not specified: access_latency_cycles - this is the access time in cycles for the cache; if tag_latency is also specified, this is the data array access time\n",
-                comp->getName().c_str());
+                getName().c_str());
     }
 
     tagLatency_ = params.find<uint64_t>("tag_access_latency_cycles", accessLatency_);
@@ -59,11 +66,11 @@ CoherenceController::CoherenceController(Component * comp, Params &params) : Sub
     UnitAlgebra upLinkBW = UnitAlgebra(params.find<std::string>("response_link_width", "0B"));
 
     if (!packetSize.hasUnits("B"))
-        output->fatal(CALL_INFO, -1, "%s, Invalid param: min_packet_size - must have units of bytes (B), SI units OK. Ex: '8B'. You specified '%s'\n", parent->getName().c_str(), packetSize.toString().c_str());
+        output->fatal(CALL_INFO, -1, "%s, Invalid param: min_packet_size - must have units of bytes (B), SI units OK. Ex: '8B'. You specified '%s'\n", ownerName_.c_str(), packetSize.toString().c_str());
     if (!downLinkBW.hasUnits("B"))
-        output->fatal(CALL_INFO, -1, "%s, Invalid param: request_link_width - must have units of bytes (B), SI units OK. Ex: '64B'. You specified '%s'\n", parent->getName().c_str(), downLinkBW.toString().c_str());
+        output->fatal(CALL_INFO, -1, "%s, Invalid param: request_link_width - must have units of bytes (B), SI units OK. Ex: '64B'. You specified '%s'\n", ownerName_.c_str(), downLinkBW.toString().c_str());
     if (!upLinkBW.hasUnits("B"))
-        output->fatal(CALL_INFO, -1, "%s, Invalid param: response_link_width - must have units of bytes (B), SI units OK. Ex: '64B'. You specified '%s'\n", parent->getName().c_str(), upLinkBW.toString().c_str());
+        output->fatal(CALL_INFO, -1, "%s, Invalid param: response_link_width - must have units of bytes (B), SI units OK. Ex: '64B'. You specified '%s'\n", ownerName_.c_str(), upLinkBW.toString().c_str());
 
     maxBytesUp = upLinkBW.getRoundedValue();
     maxBytesDown = downLinkBW.getRoundedValue();
@@ -172,7 +179,7 @@ uint64_t CoherenceController::forwardMessage(MemEvent * event, Addr baseAddr, un
 
     if (data == NULL) forwardEvent->setPayload(0, NULL);
 
-    forwardEvent->setSrc(parent->getName());
+    forwardEvent->setSrc(ownerName_);
     forwardEvent->setDst(linkDown_->findTargetDestination(baseAddr));
     forwardEvent->setSize(requestSize);
 
@@ -195,7 +202,7 @@ uint64_t CoherenceController::forwardMessage(MemEvent * event, Addr baseAddr, un
 }
 
 uint64_t CoherenceController::forwardTowardsMem(MemEventBase * event) {
-    event->setSrc(parent->getName());
+    event->setSrc(ownerName_);
     event->setDst(linkDown_->findTargetDestination(event->getRoutingAddress()));
 
     Response fwdReq = {event, timestamp_ + 1, packetHeaderBytes + event->getPayloadSize()};
@@ -204,7 +211,7 @@ uint64_t CoherenceController::forwardTowardsMem(MemEventBase * event) {
 }
 
 uint64_t CoherenceController::forwardTowardsCPU(MemEventBase * event, std::string dst) {
-    event->setSrc(parent->getName());
+    event->setSrc(ownerName_);
     event->setDst(dst);
 
     Response fwdReq = {event, timestamp_ + 1, packetHeaderBytes + event->getPayloadSize()};
@@ -244,7 +251,7 @@ bool CoherenceController::sendOutgoingCommands(SimTime_t curTime) {
 
         if (is_debug_event(outgoingEvent)) {
             debug->debug(_L4_,"SEND (%s). time: (%" PRIu64 ", %" PRIu64 ") event: (%s)\n",
-                    parent->getName().c_str(), timestamp_, curTime, outgoingEvent->getBriefString().c_str());
+                    ownerName_.c_str(), timestamp_, curTime, outgoingEvent->getBriefString().c_str());
         }
 
         linkDown_->send(outgoingEvent);
@@ -268,7 +275,7 @@ bool CoherenceController::sendOutgoingCommands(SimTime_t curTime) {
 
         if (is_debug_event(outgoingEvent)) {
             debug->debug(_L4_,"SEND (%s). time: (%" PRIu64 ", %" PRIu64 ") event: (%s)\n",
-                    parent->getName().c_str(), timestamp_, curTime, outgoingEvent->getBriefString().c_str());
+                    ownerName_.c_str(), timestamp_, curTime, outgoingEvent->getBriefString().c_str());
         }
 
         linkUp_->send(outgoingEvent);

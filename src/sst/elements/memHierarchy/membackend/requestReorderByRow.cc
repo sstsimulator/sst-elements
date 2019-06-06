@@ -22,7 +22,10 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 
 /*------------------------------- Simple Backend ------------------------------- */
-RequestReorderRow::RequestReorderRow(Component *comp, Params &params) : SimpleMemBackend(comp, params){
+RequestReorderRow::RequestReorderRow(Component *comp, Params &params) : SimpleMemBackend(comp, params){ build(params); }
+RequestReorderRow::RequestReorderRow(ComponentId_t id, Params &params) : SimpleMemBackend(id, params){ build(params); }
+
+void RequestReorderRow::build(Params& params) {
 
     fixupParams( params, "clock", "backend.clock" );
     
@@ -36,27 +39,30 @@ RequestReorderRow::RequestReorderRow(Component *comp, Params &params) : SimpleMe
 
     // Check parameters
     if (banks == 0) {
-        output->fatal(CALL_INFO, -1, "Invalid param(%s): banks - must be at least 1. You specified '0'.\n", comp->getName().c_str());
+        output->fatal(CALL_INFO, -1, "Invalid param(%s): banks - must be at least 1. You specified '0'.\n", getName().c_str());
     }
     if (!(rowSize.hasUnits("B"))) {
-        output->fatal(CALL_INFO, -1, "Invalid param(%s): row_size - must have units of 'B' (bytes). You specified %s.\n", comp->getName().c_str(), rowSize.toString().c_str());
+        output->fatal(CALL_INFO, -1, "Invalid param(%s): row_size - must have units of 'B' (bytes). You specified %s.\n", getName().c_str(), rowSize.toString().c_str());
     }
     if (!isPowerOfTwo(rowSize.getRoundedValue())) {
-        output->fatal(CALL_INFO, -1, "Invalid param(%s): row_size - must be a power of two. You specified %s.\n", comp->getName().c_str(), rowSize.toString().c_str());
+        output->fatal(CALL_INFO, -1, "Invalid param(%s): row_size - must be a power of two. You specified %s.\n", getName().c_str(), rowSize.toString().c_str());
     }
     if (maxReqsPerRow == 0) maxReqsPerRow = 1;
     if (!(requestSize.hasUnits("B"))) {
-        output->fatal(CALL_INFO, -1, "Invalid param(%s): bank_interleave_granularity - must have units of 'B' (bytes). You specified '%s'.\n", comp->getName().c_str(), requestSize.toString().c_str());
+        output->fatal(CALL_INFO, -1, "Invalid param(%s): bank_interleave_granularity - must have units of 'B' (bytes). You specified '%s'.\n", getName().c_str(), requestSize.toString().c_str());
     }
     if (!isPowerOfTwo(requestSize.getRoundedValue())) {
-        output->fatal(CALL_INFO, -1, "Invalid param(%s): bank_interleave_granularity - must be a power of two. You specified '%s'.\n", comp->getName().c_str(), requestSize.toString().c_str());
+        output->fatal(CALL_INFO, -1, "Invalid param(%s): bank_interleave_granularity - must be a power of two. You specified '%s'.\n", getName().c_str(), requestSize.toString().c_str());
     }
 
     // Create our backend & copy 'mem_size' through for now
-    std::string backendName = params.find<std::string>("backend", "memHierarchy.simpleDRAM");
-    Params backendParams = params.find_prefix_params("backend.");
-    backendParams.insert("mem_size", params.find<std::string>("mem_size"));
-    backend = dynamic_cast<SimpleMemBackend*>(loadSubComponent(backendName, backendParams));
+    backend = loadUserSubComponent<SimpleMemBackend>("backend");
+    if (!backend) {
+        std::string backendName = params.find<std::string>("backend", "memHierarchy.simpleDRAM");
+        Params backendParams = params.find_prefix_params("backend.");
+        backendParams.insert("mem_size", params.find<std::string>("mem_size"));
+        backend = loadAnonymousSubComponent<SimpleMemBackend>(backendName, "backend", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, backendParams);
+    }
     using std::placeholders::_1;
     backend->setResponseHandler( std::bind( &RequestReorderRow::handleMemResponse, this, _1 )  );
 

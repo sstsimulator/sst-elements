@@ -172,7 +172,7 @@ Messier::Messier(SST::ComponentId_t id, SST::Params& params): Component(id) {
 
 
 	// Instantiating the NVM-DIMM with the provided parameters 
-	DIMM = new NVM_DIMM((SST::Component *) this, *nvm_params);
+	DIMM = loadComponentExtension<NVM_DIMM>(*nvm_params);
 
         m_memChan = configureLink(link_buffer, "1ns", new Event::Handler<NVM_DIMM>(DIMM, &NVM_DIMM::handleRequest));
 

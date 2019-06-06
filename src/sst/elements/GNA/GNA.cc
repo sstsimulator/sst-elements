@@ -53,23 +53,24 @@ GNA::GNA(ComponentId_t id, Params& params) :
         out.fatal(CALL_INFO, -1,"MaxOutMem invalid\n");
     }    
 
-
+    //set our clock
+    std::string clockFreq = params.find<std::string>("clock", "1GHz");
+    clockHandler = new Clock::Handler<GNA>(this, &GNA::clockTic);
+    clockTC = registerClock(clockFreq, clockHandler);
 
     // tell the simulator not to end without us
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
 
     // init memory
-    memory = dynamic_cast<Interfaces::SimpleMem*>(loadSubComponent("memHierarchy.memInterface", this, params));
+    memory = loadUserSubComponent<Interfaces::SimpleMem>("memory", ComponentInfo::SHARE_NONE, clockTC, new Interfaces::SimpleMem::Handler<GNA>(this, &GNA::handleEvent));
     if (!memory) {
-        out.fatal(CALL_INFO, -1, "Unable to load memHierarchy.memInterface subcomponent\n");
+        params.insert("port", "mem_link");
+        memory = loadAnonymousSubComponent<Interfaces::SimpleMem>("memHierarchy.memInterface", "memory", 0, 
+                ComponentInfo::SHARE_PORTS, params, clockTC, new Interfaces::SimpleMem::Handler<GNA>(this, &GNA::handleEvent));
     }
-    memory->initialize("mem_link", new Interfaces::SimpleMem::Handler<GNA> (this, &GNA::handleEvent));
-
-    //set our clock
-    std::string clockFreq = params.find<std::string>("clock", "1GHz");
-    clockHandler = new Clock::Handler<GNA>(this, &GNA::clockTic);
-    clockTC = registerClock(clockFreq, clockHandler);
+    if (!memory) 
+        out.fatal(CALL_INFO, -1, "Unable to load memHierarchy.memInterface subcomponent\n");
 }
 
 GNA::GNA() : Component(-1)

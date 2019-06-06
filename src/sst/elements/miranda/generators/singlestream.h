@@ -29,18 +29,20 @@ class SingleStreamGenerator : public RequestGenerator {
 
 public:
 	SingleStreamGenerator( Component* owner, Params& params );
+	SingleStreamGenerator( ComponentId_t id, Params& params );
+        void build(Params& params);
 	~SingleStreamGenerator();
 	void generate(MirandaRequestQueue<GeneratorRequest*>* q);
 	bool isFinished();
 	void completed();
 
-	SST_ELI_REGISTER_SUBCOMPONENT(
+	SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
 		SingleStreamGenerator,
                 "miranda",
                 "SingleStreamGenerator",
                 SST_ELI_ELEMENT_VERSION(1,0,0),
 		"Creates a single reverse ordering stream of accesses to/from memory",
-                "SST::Miranda::RequestGenerator"
+                SST::Miranda::RequestGenerator
         )
 
 	SST_ELI_DOCUMENT_PARAMS(

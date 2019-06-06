@@ -29,18 +29,20 @@ class STREAMBenchGenerator_CustomCmd : public RequestGenerator {
 
 public:
 	STREAMBenchGenerator_CustomCmd( Component* owner, Params& params );
+	STREAMBenchGenerator_CustomCmd( ComponentId_t id, Params& params );
+        void build(Params& params);
 	~STREAMBenchGenerator_CustomCmd();
 	void generate(MirandaRequestQueue<GeneratorRequest*>* q);
 	bool isFinished();
 	void completed();
 
-	SST_ELI_REGISTER_SUBCOMPONENT(
+	SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
                 STREAMBenchGenerator_CustomCmd,
                 "miranda",
 		"STREAMBenchGeneratorCustomCmd",
                 SST_ELI_ELEMENT_VERSION(1,0,0),
 		"Creates a representation of the STREAM benchmark using custom memory commands",
-                "SST::Miranda::RequestGenerator"
+                SST::Miranda::RequestGenerator
         )
 
 	SST_ELI_DOCUMENT_PARAMS(

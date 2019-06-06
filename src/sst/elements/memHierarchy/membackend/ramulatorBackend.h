@@ -32,8 +32,8 @@ namespace MemHierarchy {
 class ramulatorMemory : public SimpleMemBackend {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT(ramulatorMemory, "memHierarchy", "ramulator", SST_ELI_ELEMENT_VERSION(1,0,0),
-            "Ramulator-driven memory timings", "SST::MemHierarchy::MemBackend")
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(ramulatorMemory, "memHierarchy", "ramulator", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Ramulator-driven memory timings", SST::MemHierarchy::SimpleMemBackend)
     
     SST_ELI_DOCUMENT_PARAMS( MEMBACKEND_ELI_PARAMS,
             /* Own parameters */
@@ -42,6 +42,7 @@ public:
 
 /* Begin class definition */
     ramulatorMemory(Component *comp, Params &params);
+    ramulatorMemory(ComponentId_t id, Params &params);
     bool issueRequest(ReqId, Addr, bool, unsigned );
     //virtual bool issueRequest(DRAMReq *req);
     virtual bool clock(Cycle_t cycle);
@@ -56,6 +57,9 @@ protected:
     std::set<ReqId> writes;
 
     void ramulatorDone(ramulator::Request& req);
+
+private:
+    void build(Params& params);
 };
 
 }

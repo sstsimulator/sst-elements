@@ -31,6 +31,7 @@ for next_core_id in range(config.total_cores):
 
     cpu = sst.Component("cpu%d"%(next_core_id), "miranda.BaseCPU")
     cpu.addParams(config.getCoreConfig(next_core_id))
+    iface = cpu.setSubComponent("memory", "memHierarchy.memInterface")
 
     l1 = sst.Component("l1cache_%d"%(next_core_id), "memHierarchy.Cache")
     l1.addParams(config.getL1Params())
@@ -39,7 +40,7 @@ for next_core_id in range(config.total_cores):
     l2.addParams(config.getL2Params())
 
     connect("cpu_cache_link_%d"%next_core_id,
-            cpu, "cache_link",
+            iface, "port",
             l1, "high_network_0",
             config.ring_latency).setNoCut()
 

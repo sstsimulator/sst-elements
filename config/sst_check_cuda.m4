@@ -23,7 +23,7 @@ AC_DEFUN([SST_CHECK_CUDA],
             CUDA_LIBS=
          ])
 
-   WANT_CUDA_VERSION=8100
+   WANT_CUDA_VERSION=8000
 
    AC_MSG_CHECKING([CUDA version is acceptable for SST])
    AC_LANG_PUSH(C++)

@@ -30,7 +30,11 @@ namespace Miranda {
 class SPMVGenerator : public RequestGenerator {
 
 public:
-	SPMVGenerator( Component* owner, Params& params ) : RequestGenerator(owner, params) {
+	SPMVGenerator( Component* owner, Params& params ) : RequestGenerator(owner, params) { build(params); }
+	
+        SPMVGenerator( ComponentId_t id, Params& params ) : RequestGenerator(id, params) { build(params); }
+        
+        void build(Params& params) {
 		const uint32_t verbose = params.find<uint32_t>("verbose", 0);
 		out = new Output("SPMVGenerator[@p:@l]: ", verbose, 0, Output::STDOUT);
 
@@ -126,13 +130,13 @@ public:
 
 	void completed() {}
 
-	SST_ELI_REGISTER_SUBCOMPONENT(
+	SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
                 SPMVGenerator,
                 "miranda",
                 "SPMVGenerator",
                 SST_ELI_ELEMENT_VERSION(1,0,0),
 		"Creates a diagonal matrix access pattern",
-                "SST::Miranda::RequestGenerator"
+                SST::Miranda::RequestGenerator
         )
 
 	SST_ELI_DOCUMENT_PARAMS(

@@ -46,14 +46,13 @@ class ArielCPU : public SST::Component {
     SST_ELI_DOCUMENT_PARAMS(
         {"verbose", "Verbosity for debugging. Increased numbers for increased verbosity.", "0"},
         {"profilefunctions", "Profile functions for Ariel execution, 0 = none, >0 = enable", "0" },
-        {"alloctracker", "Use an allocation tracker (e.g. memSieve)", "0"},
         {"corecount", "Number of CPU cores to emulate", "1"},
         {"checkaddresses", "Verify that addresses are valid with respect to cache lines", "0"},
         {"maxissuepercycle", "Maximum number of requests to issue per cycle, per core", "1"},
         {"maxcorequeue", "Maximum queue depth per core", "64"},
         {"maxtranscore", "Maximum number of pending transactions", "16"},
         {"pipetimeout", "Read timeout between Ariel and traced application", "10"},
-        {"cachelinesize", "Line size of the attached caching strucutre", "64"},
+        {"cachelinesize", "Line size of the attached caching structure", "64"},
         {"arieltool", "Path to the Ariel PIN-tool shared library", ""},
         {"launcher", "Specify the launcher to be used for instrumentation, default is path to PIN", STRINGIZE(PINTOOL_EXECUTABLE)},
         {"executable", "Executable to trace", ""},
@@ -72,14 +71,9 @@ class ArielCPU : public SST::Component {
         {"clock", "Clock rate at which events are generated and processed", "1GHz"},
         {"tracegen", "Select the trace generator for Ariel (which records traced memory operations", ""},
         {"memmgr", "Memory manager to use for address translation", "ariel.MemoryManagerSimple"},
-        {"writepayloadtrace", "Trace write payloads and put real memory contents into the memory system", "0"},
-        {"opal_enabled", "If enabled, MLM allocation hints will be communicated to the centralized memory manager", "0"},
-	{"opal_latency", "latency to communicate to the centralized memory manager", "32ps"})
+        {"writepayloadtrace", "Trace write payloads and put real memory contents into the memory system", "0"})
 
-    SST_ELI_DOCUMENT_PORTS(
-        {"cache_link_%(corecount)d", "Each core's link to its cache", {}},
-        {"alloc_link_%(corecount)d", "Each core's link to an allocation tracker (e.g. memSieve)", {"ariel.arielAllocTrackEvent"}},
-        {"opal_link_%(corecount)d", "Each core's link to a centralized memory manager (Opal)", {}})
+    SST_ELI_DOCUMENT_PORTS( {"cache_link_%(corecount)d", "Each core's link to its cache", {}} )
     
     SST_ELI_DOCUMENT_STATISTICS(
         { "read_requests",        "Statistic counts number of read requests", "requests", 1},   // Name, Desc, Enable Level 
@@ -103,7 +97,12 @@ class ArielCPU : public SST::Component {
         { "fp_sp_ops",            "Statistic for counting SP-FP operations (inst * SIMD width)", "instructions", 1 },
         { "cycles",               "Statistic for counting cycles of the Ariel core.", "cycles", 1 },
         { "active_cycles",        "Statistic for counting active cycles (cycles not idle) of the Ariel core.", "cycles", 1 })
-        
+    
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(    
+            {"memmgr", "Memory manager to translate virtual addresses to physical, handle malloc/free, etc.", "SST::ArielComponent::ArielMemoryManager"},
+            {"memory", "Interface to the memoryHierarchy (e.g., caches)", "SST::Interfaces::SimpleMem" }
+    )
+
         /* Ariel class */
         ArielCPU(ComponentId_t id, Params& params);
         ~ArielCPU();
@@ -117,20 +116,14 @@ class ArielCPU : public SST::Component {
     private:
         SST::Output* output;
         ArielMemoryManager* memmgr;
-        ArielCore** cpu_cores;
-        Interfaces::SimpleMem** cpu_to_cache_links;
-        SST::Link **cpu_to_alloc_tracker_links;
-
-        SST::Link **cpu_to_opal_links;
-
+        std::vector<ArielCore*> cpu_cores;
+        std::vector<Interfaces::SimpleMem*> cpu_to_cache_links;
         pid_t child_pid;
 
         uint32_t core_count;
         ArielTunnel* tunnel;
         bool stopTicking;
-        bool opal_enabled;
         std::string appLauncher;
-        bool useAllocTracker;
 
         char **execute_args;
         std::map<std::string, std::string> execute_env;

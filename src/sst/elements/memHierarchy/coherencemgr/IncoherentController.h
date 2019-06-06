@@ -26,8 +26,8 @@ namespace SST { namespace MemHierarchy {
 
 class IncoherentController : public CoherenceController{
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(IncoherentController, "memHierarchy", "IncoherentController", SST_ELI_ELEMENT_VERSION(1,0,0), 
-            "Implements an second level or greater cache without coherence", "SST::MemHierarchy::CoherenceController")
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(IncoherentController, "memHierarchy", "IncoherentController", SST_ELI_ELEMENT_VERSION(1,0,0), 
+            "Implements an second level or greater cache without coherence", SST::MemHierarchy::CoherenceController)
 
     SST_ELI_DOCUMENT_STATISTICS(
         /* Event sends */
@@ -111,7 +111,9 @@ public:
 
 /* Class definition */
     /** Constructor for IncoherentController. */
-    IncoherentController(SST::Component* comp, Params& params) : CoherenceController (comp, params) {
+    IncoherentController(SST::Component* comp, Params& params) : CoherenceController (comp, params) { }
+    IncoherentController(SST::ComponentId_t id, Params& params, Params& ownerParams) : CoherenceController(id, params, ownerParams) {
+        params.insert(ownerParams);
         debug->debug(_INFO_,"--------------------------- Initializing [Incoherent Controller] ... \n\n");
         inclusive_ = params.find<bool>("inclusive", true);
     

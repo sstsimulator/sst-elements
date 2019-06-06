@@ -38,38 +38,6 @@ Creating L3 cache block: 2 in group: 3
 Creating L3 cache block: 3 in group: 3
 Creating L3 cache block: 4 in group: 3
 Completed configuring the SST Sandy Bridge model
-l2cache_0: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
-l2cache_1: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
-l2cache_2: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
-l3cache0: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
-l3cache1: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
-l3cache2: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
-l3cache3: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
-l3cache4: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
-l2cache_3: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
-l2cache_4: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
-l2cache_5: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
-l3cache5: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
-l3cache6: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
-l3cache7: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
-l3cache8: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
-l3cache9: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
-l2cache_6: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
-l2cache_7: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
-l2cache_8: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
-l3cache10: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
-l3cache11: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
-l3cache12: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
-l3cache13: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
-l3cache14: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
-l2cache_9: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
-l2cache_10: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
-l2cache_11: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
-l3cache15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
-l3cache16: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
-l3cache17: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
-l3cache18: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
-l3cache19: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
 SSTARIEL: Function profiling is disabled.
 11 Performing iteration 0
 2 Performing iteration 0

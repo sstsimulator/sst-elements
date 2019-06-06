@@ -130,7 +130,7 @@ namespace SST {
 
 				SST::Link ** cpu_to_mmu;
 
-				TLBhierarchy ** TLB;
+                                std::vector<TLBhierarchy*> TLB;
 
 				int emulate_faults; // This indicates if Opal is used or not
 				
@@ -146,7 +146,7 @@ namespace SST {
 				std::string user_binary;
 				Output* output;
 
-				TLBhierarchy ** cores;
+                                std::vector<TLBhierarchy*> cores;
 				uint32_t core_count;
 				SST::Link** Samba_link;
 

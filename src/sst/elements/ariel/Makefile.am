@@ -16,6 +16,7 @@ libariel_la_SOURCES = \
 	arielcore.cc \
 	arielcore.h \
 	arielmemmgr.h \
+	arielmemmgr_cache.h \
 	arielmemmgr_simple.cc \
 	arielmemmgr_simple.h \
 	arielmemmgr_malloc.cc \
@@ -29,7 +30,6 @@ libariel_la_SOURCES = \
 	arielevent.h \
 	arielnoop.h \
 	arielallocev.h \
-	arielalloctrackev.h \
 	arielfreeev.h \
 	ariel_inst_class.h \
 	arielswitchpool.h \
@@ -73,7 +73,8 @@ libariel_la_CPPFLAGS = \
 sstdir = $(includedir)/sst/elements/ariel
 nobase_sst_HEADERS = \
 	ariel_shmem.h \
-	arieltracegen.h
+	arieltracegen.h \
+	arielmemmgr.h
 
 libexec_PROGRAMS =
 

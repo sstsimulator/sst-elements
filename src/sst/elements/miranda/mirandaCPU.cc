@@ -45,46 +45,31 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 		maxRequestsPending[WRITE]);
 	out->verbose(CALL_INFO, 1, 0, "Configured CPU to allow %" PRIu32 " maximum Custom requests to be memory to be outstanding.\n",
 		maxRequestsPending[CUSTOM]);
-
-	std::string interfaceName = params.find<std::string>("memoryinterface", "memHierarchy.memInterface");
-	out->verbose(CALL_INFO, 1, 0, "Memory interface to be loaded is: %s\n", interfaceName.c_str());
-
-	Params interfaceParams = params.find_prefix_params("memoryinterfaceparams.");
-	cache_link = dynamic_cast<Interfaces::SimpleMem*>( loadSubComponent(interfaceName,
-		this, interfaceParams) );
-
-	maxOpLookup = params.find<uint64_t>("max_reorder_lookups", 16);
-
-	if(NULL == cache_link) {
-		out->fatal(CALL_INFO, -1, "Error loading memory interface module.\n");
-	} else {
-		out->verbose(CALL_INFO, 1, 0, "Loaded memory interface successfully.\n");
-	}
-
-	out->verbose(CALL_INFO, 1, 0, "Initializing memory interface...\n");
-
-	bool init_success = cache_link->initialize("cache_link", new SimpleMem::Handler<RequestGenCPU>(this, &RequestGenCPU::handleEvent) );
-
-	if(init_success) {
-		out->verbose(CALL_INFO, 1, 0, "Loaded memory initialize routine returned successfully.\n");
-	} else {
-		out->fatal(CALL_INFO, -1, "Failed to initialize interface: %s\n", interfaceName.c_str());
-	}
-
-	if(NULL == cache_link) {
-		out->fatal(CALL_INFO, -1, "Failed to load interface: %s\n", interfaceName.c_str());
-	} else {
-		out->verbose(CALL_INFO, 1, 0, "Loaded memory interface successfully.\n");
-	}
-
-	std::string cpuClock = params.find<std::string>("clock", "2GHz");
+	
+        std::string cpuClock = params.find<std::string>("clock", "2GHz");
 	clockHandler = new Clock::Handler<RequestGenCPU>(this, &RequestGenCPU::clockTick);
 	timeConverter = registerClock(cpuClock, clockHandler );
 
 	out->verbose(CALL_INFO, 1, 0, "CPU clock configured for %s\n", cpuClock.c_str());
 
-	std::string reqGenModName = params.find<std::string>("generator", "");
-	
+        cache_link = loadUserSubComponent<Interfaces::SimpleMem>("memory", ComponentInfo::SHARE_NONE, timeConverter, new SimpleMem::Handler<RequestGenCPU>(this, &RequestGenCPU::handleEvent) );
+        if (!cache_link) {
+	    std::string interfaceName = params.find<std::string>("memoryinterface", "memHierarchy.memInterface");
+	    out->verbose(CALL_INFO, 1, 0, "Memory interface to be loaded is: %s\n", interfaceName.c_str());
+
+	    Params interfaceParams = params.find_prefix_params("memoryinterfaceparams.");
+            interfaceParams.insert("port", "cache_link");
+	    cache_link = loadAnonymousSubComponent<Interfaces::SimpleMem>(interfaceName, "memory", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, 
+                    interfaceParams, timeConverter, new SimpleMem::Handler<RequestGenCPU>(this, &RequestGenCPU::handleEvent));
+            
+            if (!cache_link)
+                out->fatal(CALL_INFO, -1, "%s, Error loading memory interface\n", getName().c_str());
+        }
+
+	maxOpLookup = params.find<uint64_t>("max_reorder_lookups", 16);
+
+	out->verbose(CALL_INFO, 1, 0, "Loaded memory interface successfully.\n");
+
 	cacheLine = params.find<uint64_t>("cache_line_size", 64);
 	const uint64_t pageSize  = params.find<uint64_t>("pagesize", 4096);
 	const uint64_t pageCount = params.find<uint64_t>("pagecount", 4194304);
@@ -108,37 +93,41 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 	
 	memMgr = new MirandaMemoryManager(out, pageSize, pageCount, policy);
 
-    if ( NULL != (reqGen = dynamic_cast<RequestGenerator*>(loadNamedSubComponent("generator"))) ) {
-        out->verbose(CALL_INFO, 1, 0, "Generator loaded successfully.\n");
+        reqGen = loadUserSubComponent<RequestGenerator>("generator");
+        if (reqGen) {
+            out->verbose(CALL_INFO, 1, 0, "Generator loaded successfully.\n");
 	    registerAsPrimaryComponent();
 	    primaryComponentDoNotEndSim();
-
-    } else if ( ! reqGenModName.empty() ) {
+        
+        } else {
+	    std::string reqGenModName = params.find<std::string>("generator", "");
+            
+            if ( ! reqGenModName.empty() ) {
 
 		out->verbose(CALL_INFO, 1, 0, "Request generator to be loaded is: %s\n", reqGenModName.c_str());
 		Params genParams = params.find_prefix_params("generatorParams.");
-		reqGen = dynamic_cast<RequestGenerator*>( loadSubComponent(reqGenModName, this, genParams) );
+		reqGen = loadAnonymousSubComponent<RequestGenerator>( reqGenModName, "generator", 0, ComponentInfo::INSERT_STATS, genParams);
 		if(NULL == reqGen) {
 			out->fatal(CALL_INFO, -1, "Failed to load generator: %s\n", reqGenModName.c_str());
 		} else {
 			out->verbose(CALL_INFO, 1, 0, "Generator loaded successfully.\n");
 		}
 
-	    registerAsPrimaryComponent();
-	    primaryComponentDoNotEndSim();
+	        registerAsPrimaryComponent();
+	        primaryComponentDoNotEndSim();
 
-	} else if ( isPortConnected("src") ) {
-
+	    } else if ( isPortConnected("src") ) {
+                // TODO create a generator that gets data from a port
 		out->verbose(CALL_INFO, 1, 0, "getting generators from a link\n");
 		srcLink = configureLink( "src", "50ps", new Event::Handler<RequestGenCPU>(this, &RequestGenCPU::handleSrcEvent));
 		if ( NULL == srcLink ) {
 			out->fatal(CALL_INFO, -1, "Failed to configure src link\n");
 		}
 
-	} else {
+	    } else {
 		out->fatal(CALL_INFO, -1, "Failed to find a generator or src port\n");
-	}
-
+	    }
+        }
 
         statReqs[READ]            = registerStatistic<uint64_t>( "read_reqs" );
 	statReqs[WRITE]		  = registerStatistic<uint64_t>( "write_reqs" );
@@ -174,22 +163,7 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 }
 
 RequestGenCPU::~RequestGenCPU() {
-	delete cache_link;
 	delete out;
-
-//	delete statReadReqs;
-//	delete statWriteReqs;
-//	delete statSplitReadReqs;
-//	delete statSplitWriteReqs;
-//	delete statCyclesWithIssue;
-//	delete statCyclesWithoutIssue;
-//	delete statBytesRead;
-//	delete statBytesWritten;
-//	delete statReqLatency;
-//	delete statCyclesHitFence;
-//	delete statCyclesHitReorderLimit;
-//	delete statMaxIssuePerCycle;
-//	delete statCycles;
 }
 
 void RequestGenCPU::finish() {
@@ -225,10 +199,10 @@ void RequestGenCPU::loadGenerator( const std::string& name, SST::Params& params)
 
 	out->verbose(CALL_INFO, 1, 0, "generator to be loaded is: %s\n", name.c_str());
 
-	reqGen = dynamic_cast<RequestGenerator*>( loadSubComponent( name, this, params ) );
+	reqGen = loadAnonymousSubComponent<RequestGenerator>( name, "generator", 0, ComponentInfo::SHARE_NONE, params );
 
 	if(NULL == reqGen) {
-		out->fatal(CALL_INFO, -1, "Failed to load generator: %s\n", name.c_str());
+	    out->fatal(CALL_INFO, -1, "Failed to load generator: %s\n", name.c_str());
 	}
 }
 

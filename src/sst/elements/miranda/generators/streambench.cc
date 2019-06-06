@@ -22,7 +22,15 @@ using namespace SST::Miranda;
 
 STREAMBenchGenerator::STREAMBenchGenerator( Component* owner, Params& params ) :
 	RequestGenerator(owner, params) {
+            build(params);
+        }
 
+STREAMBenchGenerator::STREAMBenchGenerator( ComponentId_t id, Params& params ) :
+    RequestGenerator(id, params) {
+        build(params);
+    }
+
+void STREAMBenchGenerator::build(Params& params) {
 	const uint32_t verbose = params.find<uint32_t>("verbose", 0);
 
 	out = new Output("STREAMBenchGenerator[@p:@l]: ", verbose, 0, Output::STDOUT);

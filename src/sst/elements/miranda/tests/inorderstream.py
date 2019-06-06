@@ -8,12 +8,15 @@ sst.setProgramOption("stopAtCycle", "0 ns")
 comp_cpu = sst.Component("cpu", "miranda.BaseCPU")
 comp_cpu.addParams({
 	"verbose" : 0,
-	"generator" : "miranda.InOrderSTREAMBenchGenerator",
-	"generatorParams.verbose" : 0,
-	"generatorParams.startat" : 3,
-	"generatorParams.count" : 500000,
-	"generatorParams.max_address" : 512000,
 	"printStats" : 1,
+})
+
+gen = comp_cpu.setSubComponent("generator", "miranda.InOrderSTREAMBenchGenerator")
+gen.addParams({
+	"verbose" : 0,
+	"startat" : 3,
+	"count" : 500000,
+	"max_address" : 512000,
 })
 
 # Tell SST what statistics handling we want
