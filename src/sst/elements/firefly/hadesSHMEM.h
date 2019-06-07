@@ -421,6 +421,7 @@ class HadesSHMEM : public Shmem::Interface
     virtual void setup();
     virtual void finish() {}
     virtual std::string getName() { return "HadesSHMEM"; }
+    virtual std::string getType() { return "shmem"; }
 
     virtual void setOS( OS* os ) {
         m_os = static_cast<Hades*>(os);
