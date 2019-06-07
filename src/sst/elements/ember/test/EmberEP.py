@@ -27,7 +27,12 @@ class EmberEP( EndPoint ):
 
     def build( self, nodeID, extraKeys ):
 
-        nic = sst.Component( "nic" + str(nodeID), "firefly.nic" )
+        nicComponentName = "firefly.nic"
+        if 'nicComponent' in self.nicParams:
+            nicComponentName = self.nicParams['nicComponent']
+
+        nic = sst.Component( "nic" + str(nodeID), nicComponentName )
+
         nic.addParams( self.nicParams )
         nic.addParams( extraKeys)
         nic.addParam( "nid", nodeID )
@@ -98,17 +103,16 @@ class EmberEP( EndPoint ):
                     print "printStats for node {0}".format(id)
                     ep.addParams( {'motif1.printStats': 1} )
 
-            ep.addParams( {'hermesParams.netId': nodeID } )
-            ep.addParams( {'hermesParams.netMapId': self.nidMap[ nodeID ] } ) 
-            ep.addParams( {'hermesParams.netMapSize': self.numNids } ) 
-            ep.addParams( {'hermesParams.coreId': x } ) 
+            osName = self.driverParams['os.name']
+            ep.addParams( {osName + '.netId': nodeID } )
+            ep.addParams( {osName + '.netMapId': self.nidMap[ nodeID ] } )
+            ep.addParams( {osName + '.netMapSize': self.numNids } )
+            ep.addParams( {osName + '.coreId': x } )
 
-            nicLink = sst.Link( "nic" + str(nodeID) + "core" + str(x) +
-                                            "_Link"  )
+            nicLink = sst.Link( "nic" + str(nodeID) + "core" + str(x) + "_Link"  )
             nicLink.setNoCut()
 
-            loopLink = sst.Link( "loop" + str(nodeID) + "core" + str(x) +
-                                            "_Link"  )
+            loopLink = sst.Link( "loop" + str(nodeID) + "core" + str(x) + "_Link"  )
             loopLink.setNoCut() 
 
             #ep.addLink(nicLink, "nic", self.nicParams["nic2host_lat"] )

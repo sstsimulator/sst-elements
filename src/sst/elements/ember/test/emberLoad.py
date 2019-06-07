@@ -366,8 +366,10 @@ if rndmPlacement and bgPercentage > 0:
         jobid += 1
         count += 1
 
-nicParams['verboseLevel'] = debug
-nicParams['verboseMask'] = 1
+if 'verboseLevel' not in nicParams: 
+    nicParams['verboseLevel'] = debug
+if 'verboseMaskl' not in nicParams: 
+    nicParams['verboseMask'] = 1
 if useSimpleMemoryModel:
 	nicParams['useSimpleMemoryModel'] = 1
 hermesParams['hermesParams.verboseLevel'] = debug
@@ -377,7 +379,7 @@ hermesParams['hermesParams.ctrlMsg.verboseLevel'] = debug
 hermesParams['hermesParams.ctrlMsg.pqs.verboseLevel'] = debug 
 hermesParams['hermesParams.ctrlMsg.pqs.verboseMask'] = 1
 emberParams['verbose'] = emberVerbose
-hermesParams['hermesParams.numNodes'] = topoInfo.getNumNodes() 
+hermesParams[ emberParams['os.name'] + '.numNodes'] = topoInfo.getNumNodes() 
 
 if embermotifLog:
     emberParams['motifLog'] = embermotifLog

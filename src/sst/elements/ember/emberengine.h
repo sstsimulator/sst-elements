@@ -34,7 +34,6 @@ namespace SST {
 namespace Ember {
 
 class EmberEvent;
-class EmberGeneratorData;
 
 class EmberEngine : public SST::Component {
 public:
@@ -136,7 +135,9 @@ public:
 	}
 
     EmberLib* getLib( std::string name ) {
-        assert( m_apiMap.find( name ) != m_apiMap.end() );
+        if( m_apiMap.find( name ) == m_apiMap.end() ) {
+            output.fatal(CALL_INFO, -1, "Error: could not find %s\n",name.c_str() ); 
+        }
         return m_apiMap[name]->lib; 
     }
 
@@ -164,7 +165,6 @@ private:
 
     struct ApiInfo {
         Hermes::Interface* api;
-        EmberGeneratorData* data;
         EmberLib*           lib;
     };
 
