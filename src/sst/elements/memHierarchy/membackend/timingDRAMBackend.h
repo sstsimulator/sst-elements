@@ -21,6 +21,7 @@
 #include "sst/elements/memHierarchy/membackend/timingAddrMapper.h"
 #include "sst/elements/memHierarchy/membackend/timingTransaction.h"
 #include "sst/elements/memHierarchy/membackend/timingPagePolicy.h"
+#include "sst/elements/memHierarchy/util.h"
 
 namespace SST {
 namespace MemHierarchy {
@@ -235,8 +236,9 @@ private:
         void pushTrans( Transaction* trans ) {
             unsigned bank = m_mapper->getBank( trans->addr);
 
-            m_output->verbosePrefix(prefix(),CALL_INFO, 2, DBG_MASK,"bank=%d addr=%#" PRIx64 "\n",
-                bank,trans->addr);
+            if (is_debug)
+                m_output->verbosePrefix(prefix(),CALL_INFO, 2, DBG_MASK,"bank=%d addr=%#" PRIx64 "\n",
+                    bank,trans->addr);
 
             m_banks[bank]->pushTrans( trans );
         }
@@ -269,7 +271,8 @@ private:
 
             unsigned rank = m_mapper->getRank( addr);
 
-            m_output->verbosePrefix(prefix(),CALL_INFO, 3, DBG_MASK,"reqId=%" PRIu64 " rank=%d addr=%#" PRIx64 ", createTime=%" PRIu64 "\n", id, rank, addr, createTime );
+            if (is_debug)
+                m_output->verbosePrefix(prefix(),CALL_INFO, 3, DBG_MASK,"reqId=%" PRIu64 " rank=%d addr=%#" PRIx64 ", createTime=%" PRIu64 "\n", id, rank, addr, createTime );
 
             Transaction* trans = new Transaction( createTime, id, addr, isWrite, numBytes, m_mapper->getBank(addr),
                                                 m_mapper->getRow(addr) );
