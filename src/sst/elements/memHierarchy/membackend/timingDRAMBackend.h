@@ -98,6 +98,10 @@ private:
             m_output->verbosePrefix( prefix(), line,"",func, 2, DBG_MASK, "%s", buf );
         }
 
+        bool isIdle() {
+            return (m_row == -1 || !m_pagePolicy->canClose()) && m_cmdQ.empty() && m_transQ->empty();
+        }
+
         unsigned getRank() { return m_rank; }
         unsigned getBank() { return m_bank; }
 
@@ -149,7 +153,7 @@ private:
             m_bank->clearLastCmd();
         }
 
-        unsigned issue() {
+        SimTime_t issue() {
 
             m_bank->setLastCmd(this);
 
@@ -243,6 +247,12 @@ private:
                     bank,trans->addr);
 
             m_banks[bank]->pushTrans( trans );
+
+            m_banksActive.insert(bank);
+        }
+
+        bool hasActiveBanks() {
+            return !m_banksActive.empty();
         }
 
       private:
@@ -254,6 +264,7 @@ private:
 
         unsigned            m_nextBankUp;
         std::vector<Bank*>  m_banks;
+        std::set<unsigned>  m_banksActive;
     };
 
     class Channel : public ComponentExtension {

@@ -178,18 +178,20 @@ TimingDRAM::Cmd* TimingDRAM::Channel::popCmd( SimTime_t cycle, SimTime_t dataBus
     unsigned current = m_nextRankUp;
     for ( unsigned i = 0; i < m_ranks.size(); i++ ) {
 
-        cmd = m_ranks[current]->popCmd( cycle, m_dataBusAvailCycle );
+        if (m_ranks[current]->hasActiveBanks()) {
+            cmd = m_ranks[current]->popCmd( cycle, m_dataBusAvailCycle );
 
-        if ( cmd ) {
+            if ( cmd ) {
 
-            if ( current == m_nextRankUp ) {
-                ++m_nextRankUp;
-                m_nextRankUp %= m_ranks.size();
-                if (is_debug)
-                    m_output->verbosePrefix(prefix(),CALL_INFO, 3, DBG_MASK, "rank %d next up\n",m_nextRankUp);
-            }
+                if ( current == m_nextRankUp ) {
+                    ++m_nextRankUp;
+                    m_nextRankUp %= m_ranks.size();
+                    if (is_debug)
+                        m_output->verbosePrefix(prefix(),CALL_INFO, 3, DBG_MASK, "rank %d next up\n",m_nextRankUp);
+                }
             
-            break;
+                break;
+            }
         }
 
         ++current;
@@ -231,16 +233,21 @@ TimingDRAM::Cmd* TimingDRAM::Rank::popCmd( SimTime_t cycle, SimTime_t dataBusAva
 
     unsigned current = m_nextBankUp;
     for ( unsigned i = 0; i < m_banks.size(); i++ ) {
-        Cmd* cmd = m_banks[current]->popCmd( cycle, dataBusAvailCycle );
+        if (m_banksActive.find(current) != m_banksActive.end()) {
+            Cmd* cmd = m_banks[current]->popCmd( cycle, dataBusAvailCycle );
 
-        if ( cmd ) {
-            if ( current == m_nextBankUp ) {
-                ++m_nextBankUp;
-                m_nextBankUp %= m_banks.size();
-                if (is_debug)
-                    m_output->verbosePrefix(prefix(),CALL_INFO, 3, DBG_MASK, "rank %d next up\n",m_nextBankUp);
+            if (m_banks[current]->isIdle())
+                m_banksActive.erase(current);
+
+            if ( cmd ) {
+                if ( current == m_nextBankUp ) {
+                    ++m_nextBankUp;
+                    m_nextBankUp %= m_banks.size();
+                    if (is_debug)
+                        m_output->verbosePrefix(prefix(),CALL_INFO, 3, DBG_MASK, "rank %d next up\n",m_nextBankUp);
+                }
+                return cmd;
             }
-            return cmd;
         }
 
         ++current;
