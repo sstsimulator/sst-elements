@@ -57,36 +57,36 @@ void Bus::processIncomingEvent(SST::Event* ev) {
 
 bool Bus::clockTick(Cycle_t time) {
 
-   if (eventQueue_.empty() && busOn_)
-      idleCount_++;
+    if (eventQueue_.empty())
+        idleCount_++;
 
-   if (idleCount_ > idleMax_) {
-      busOn_ = false;
-      idleCount_ = 0;
-      return true;
-   }
+    if (idleCount_ > idleMax_) {
+        busOn_ = false;
+        idleCount_ = 0;
+        return true;
+    }
 
-   while (!eventQueue_.empty()) {
-      SST::Event* event = eventQueue_.front();
+    while (!eventQueue_.empty()) {
+        SST::Event* event = eventQueue_.front();
 
-      if (broadcast_)
-         broadcastEvent(event);
-      else
-         sendSingleEvent(event);
+        if (broadcast_)
+            broadcastEvent(event);
+        else
+            sendSingleEvent(event);
 
-      eventQueue_.pop();
-      idleCount_ = 0;
+        eventQueue_.pop();
+        idleCount_ = 0;
 
-      if (drain_ == 0 )
-         break;
-   }
+        if (drain_ == 0 )
+            break;
+    }
 
     return false;
 }
 
 
 void Bus::broadcastEvent(SST::Event* ev) {
-    MemEventBase* memEvent = dynamic_cast<MemEventBase*>(ev);
+    MemEventBase* memEvent = static_cast<MemEventBase*>(ev);
     LinkId_t srcLinkId = lookupNode(memEvent->getSrc());
     SST::Link* srcLink = linkIdMap_[srcLinkId];
 

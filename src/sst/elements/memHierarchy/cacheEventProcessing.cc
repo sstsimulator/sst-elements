@@ -436,7 +436,7 @@ void Cache::init(unsigned int phase) {
                 if (!eventC->getInclusive()) {
                     lowerIsNoninclusive = true; // TODO better checking if multiple caches below us
                 }
-                if (eventC->getWBAck()) {
+                if (eventC->getSendWBAck()) {
                     expectWritebackAcks = true;
                 }
             }
@@ -483,7 +483,7 @@ void Cache::init(unsigned int phase) {
                 if (!eventC->getInclusive()) {
                     lowerIsNoninclusive = true; // TODO better checking if multiple caches below us
                 }
-                if (eventC->getWBAck()) {
+                if (eventC->getSendWBAck()) {
                     expectWritebackAcks = true;
                 }
 
