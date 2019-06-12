@@ -58,8 +58,10 @@ Sieve::Sieve(ComponentId_t id, Params &params) : Component(id) {
     uint64_t numLines = cacheSize/lineSize;
 
     /* ---------------- Initialization ----------------- */
-    HashFunction* ht = new PureIdHashFunction;
-    ReplacementMgr* replManager = new LRUReplacementMgr(output_, numLines, associativity, true);
+    HashFunction* ht = loadAnonymousSubComponent<HashFunction>("memHierarchy.hash.none", "hash", 0, ComponentInfo::SHARE_NONE, params);
+    ReplacementPolicy* replManager = loadUserSubComponent<ReplacementPolicy>("replacement", ComponentInfo::SHARE_NONE, numLines, associativity);
+    if (!replManager)
+        replManager = loadAnonymousSubComponent<ReplacementPolicy>("memHierarchy.replacement.lru", "replacement", 0, ComponentInfo::SHARE_NONE, params, numLines, associativity);
     cacheArray_ = new SetAssociativeArray(output_, numLines, lineSize, associativity, replManager, ht, false);
 
     output_->debug(_INFO_,"--------------------------- Initializing [Sieve]: %s... \n", this->Component::getName().c_str());
@@ -124,7 +126,7 @@ void Sieve::createProfiler(const Params &params) {
 	listener_ = 0;
     } else {
 	Params profilerParams = params.find_prefix_params("profiler." );
-        listener_ = loadAnonymousSubComponent<CacheListener>(profiler, "proifiler", 0, ComponentInfo::INSERT_STATS, profilerParams);
+        listener_ = loadAnonymousSubComponent<CacheListener>(profiler, "profiler", 0, ComponentInfo::INSERT_STATS, profilerParams);
     }
 
 }

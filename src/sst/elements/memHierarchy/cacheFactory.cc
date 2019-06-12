@@ -550,18 +550,14 @@ CacheArray* Cache::createCacheArray(Params &params) {
     uint64_t assoc = params.find<uint64_t>("associativity", -1, found); // uint64_t to match cache size in case we have a fully associative cache
     if (!found) out_->fatal(CALL_INFO, -1, "%s, Param not specified: associativity\n", getName().c_str());
 
-    std::string replacement = params.find<std::string>("replacement_policy", "lru");
-    std::string dReplacement = params.find<std::string>("noninclusive_directory_repl", "lru");
+    
     uint64_t dEntries = params.find<uint64_t>("noninclusive_directory_entries", 0);
     uint64_t dAssoc = params.find<uint64_t>("noninclusive_directory_associativity", 1);
 
-    int hashFunc = params.find<int>("hash_function", 0);
 
     /* Error check parameters and compute derived parameters */
     /* Fix up parameters */
     fixByteUnits(sizeStr);
-    to_lower(replacement);
-    to_lower(dReplacement);
 
     UnitAlgebra ua(sizeStr);
     if (!ua.hasUnits("B")) {
@@ -590,38 +586,59 @@ CacheArray* Cache::createCacheArray(Params &params) {
     }
 
     /* Build cache array */
-    ReplacementMgr* rmgr = constructReplacementManager(replacement, lines, assoc);
+    SubComponentSlotInfo* rslots = getSubComponentSlotInfo("replacement"); // May be multiple slots filled depending on how many arrays this cache manages
+    ReplacementPolicy* rmgr;
+    if (rslots && rslots->isPopulated(0))
+        rmgr = rslots->create<ReplacementPolicy>(0, ComponentInfo::SHARE_NONE, lines, assoc);
+    else { // Backwards compatability - user didn't declare policy in the input config
+        std::string replacement = params.find<std::string>("replacement_policy", "lru");
+        to_lower(replacement);
+        rmgr = constructReplacementManager(replacement, lines, assoc, 0);
+    }
 
-    HashFunction * ht;
-    if (hashFunc == 1)      ht = new LinearHashFunction;
-    else if (hashFunc == 2) ht = new XorHashFunction;
-    else                    ht = new PureIdHashFunction;
+
+    HashFunction * ht = loadUserSubComponent<HashFunction>("hash");
+    if (!ht) {
+        Params hparams;
+        int hashFunc = params.find<int>("hash_function", 0);
+        if (hashFunc == 1)      ht = loadAnonymousSubComponent<HashFunction>("memHierarchy.hash.linear", "hash", 0, ComponentInfo::SHARE_NONE, hparams);
+        else if (hashFunc == 2) ht = loadAnonymousSubComponent<HashFunction>("memHierarchy.hash.xor", "hash", 0, ComponentInfo::SHARE_NONE, hparams);
+        else                    ht = loadAnonymousSubComponent<HashFunction>("memHierarchy.hash.none", "hash", 0, ComponentInfo::SHARE_NONE, hparams);
+    }
 
     if (type_ == "inclusive" || type_ == "noninclusive") {
         return new SetAssociativeArray(d_, lines, lineSize, assoc, rmgr, ht, !L1_);
     } else { //type_ == "noninclusive_with_directory" --> Already checked that this string is valid
         /* Construct */
-        ReplacementMgr* drmgr = constructReplacementManager(dReplacement, dEntries, dAssoc);
+        ReplacementPolicy* drmgr;
+        if (rslots && rslots->isPopulated(1))
+            drmgr = rslots->create<ReplacementPolicy>(1, ComponentInfo::SHARE_NONE, dEntries, dAssoc);
+        else { // Backwards compatibility - user didn't declare policy in the input config
+            std::string dReplacement = params.find<std::string>("noninclusive_directory_repl", "lru");
+            to_lower(dReplacement);
+            drmgr = constructReplacementManager(dReplacement, dEntries, dAssoc, 1);
+        }
         return new DualSetAssociativeArray(d_, lineSize, ht, true, dEntries, dAssoc, drmgr, lines, assoc, rmgr);
     }
 }
 
 /* Create a replacement manager */
-ReplacementMgr* Cache::constructReplacementManager(std::string policy, uint64_t lines, uint64_t associativity) {
+ReplacementPolicy* Cache::constructReplacementManager(std::string policy, uint64_t lines, uint64_t assoc, int slot) {
+    Params params;
     if (SST::strcasecmp(policy, "lru"))
-        return new LRUReplacementMgr(d_, lines, associativity, true);
+        return loadAnonymousSubComponent<ReplacementPolicy>("memHierarchy.replacement.lru", "replacement", slot, ComponentInfo::SHARE_NONE, params, lines, assoc);
 
     if (SST::strcasecmp(policy, "lfu"))
-        return new LFUReplacementMgr(d_, lines, associativity);
+        return loadAnonymousSubComponent<ReplacementPolicy>("memHierarchy.replacement.lfu", "replacement", slot, ComponentInfo::SHARE_NONE, params, lines, assoc);
 
     if (SST::strcasecmp(policy, "random"))
-        return new RandomReplacementMgr(d_, associativity);
+        return loadAnonymousSubComponent<ReplacementPolicy>("memHierarchy.replacement.rand", "replacement", slot, ComponentInfo::SHARE_NONE, params, lines, assoc);
 
     if (SST::strcasecmp(policy, "mru"))
-        return new MRUReplacementMgr(d_, lines, associativity, true);
+        return loadAnonymousSubComponent<ReplacementPolicy>("memHierarchy.replacement.mru", "replacement", slot, ComponentInfo::SHARE_NONE, params, lines, assoc);
 
     if (SST::strcasecmp(policy, "nmru"))
-        return new NMRUReplacementMgr(d_, lines, associativity);
+        return loadAnonymousSubComponent<ReplacementPolicy>("memHierarchy.replacement.nmru", "replacement", slot, ComponentInfo::SHARE_NONE, params, lines, assoc);
 
     out_->fatal(CALL_INFO, -1, "%s, Invalid param: (directory_)replacement_policy - supported policies are 'lru', 'lfu', 'random', 'mru', and 'nmru'. You specified '%s'.\n",
             getName().c_str(), policy.c_str());

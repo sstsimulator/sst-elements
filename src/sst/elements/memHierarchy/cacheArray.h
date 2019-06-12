@@ -33,7 +33,7 @@ using namespace std;
 
 namespace SST { namespace MemHierarchy {
 
-class ReplacementMgr;
+class ReplacementPolicy;
 
 class CacheArray {
 public:
@@ -334,7 +334,7 @@ protected:
     unsigned int    associativity_;
     unsigned int    lineSize_;
     unsigned int    lineOffset_;
-    ReplacementMgr* replacementMgr_;
+    ReplacementPolicy* replacementMgr_;
     HashFunction*   hash_;
     bool            sharersAware_;
     Addr            sliceSize_;
@@ -343,7 +343,7 @@ protected:
     vector<CacheLine *> lines_; // The actual cache
 
     CacheArray(Output* dbg, unsigned int numLines, unsigned int associativity, unsigned int lineSize,
-               ReplacementMgr* replacementMgr, HashFunction* hash, bool sharersAware, bool cache) : dbg_(dbg), 
+               ReplacementPolicy* replacementMgr, HashFunction* hash, bool sharersAware, bool cache) : dbg_(dbg), 
                numLines_(numLines), associativity_(associativity), lineSize_(lineSize),
                replacementMgr_(replacementMgr), hash_(hash) {
         dbg_->debug(_INFO_,"--------------------------- Initializing [Set Associative Cache Array]... \n");
@@ -372,7 +372,7 @@ class SetAssociativeArray : public CacheArray {
 public:
 
     SetAssociativeArray(Output* dbg, unsigned int numLines, unsigned int lineSize, unsigned int associativity,
-                        ReplacementMgr* rp, HashFunction* hf, bool sharersAware);
+                        ReplacementPolicy* rp, HashFunction* hf, bool sharersAware);
     
 
     ~SetAssociativeArray();
@@ -396,8 +396,8 @@ public:
  */
 class DualSetAssociativeArray : public CacheArray {
 public:
-    DualSetAssociativeArray(Output * dbg, unsigned int lineSize, HashFunction * hf, bool sharersAware, unsigned int dirNumLines, unsigned int dirAssociativity, ReplacementMgr* dirRp, 
-            unsigned int cacheNumLines, unsigned int cacheAssociativity, ReplacementMgr * cacheRp);
+    DualSetAssociativeArray(Output * dbg, unsigned int lineSize, HashFunction * hf, bool sharersAware, unsigned int dirNumLines, unsigned int dirAssociativity, ReplacementPolicy* dirRp, 
+            unsigned int cacheNumLines, unsigned int cacheAssociativity, ReplacementPolicy * cacheRp);
 
     CacheLine * lookup(Addr baseAddr, bool updateReplacement);
     CacheLine * findReplacementCandidate(Addr baseAddr, bool cache);
@@ -416,7 +416,7 @@ public:
 
 private:
     /* For our separate data cache */
-    ReplacementMgr* cacheReplacementMgr_;
+    ReplacementPolicy* replacementPolicy_;
     unsigned int    cacheNumSets_;
     unsigned int    cacheNumLines_;
     unsigned int    cacheAssociativity_;
