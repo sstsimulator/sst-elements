@@ -372,7 +372,9 @@ class NodePerf : public Module {
 
 class OS : public SubComponent {
   public:
+
 	OS( Component *owner ) : SubComponent( owner ) {}
+	OS( ComponentId_t id ) : SubComponent( id ) {}
     virtual void _componentInit( unsigned int phase ) {}
     virtual void _componentSetup( void ) {}
     virtual void printStatus( Output& ) {}
