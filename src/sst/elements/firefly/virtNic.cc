@@ -23,7 +23,8 @@
 using namespace SST::Firefly;
 using namespace SST;
 
-VirtNic::VirtNic( Component* owner, Params& params ) :
+VirtNic::VirtNic( ComponentId_t id, Params& params ) :
+	SubComponent(id),
     m_realNicId(-1),
     m_notifyGetDone(NULL),
     m_notifySendPioDone(NULL),
@@ -38,7 +39,7 @@ VirtNic::VirtNic( Component* owner, Params& params ) :
         Output::STDOUT );
     m_maxNicQdepth = params.find<int>("m_maxNicQdepth",32);
 
-    m_toNicLink = owner->configureLink( params.find<std::string>("portName","nic"), 
+    m_toNicLink = configureLink( params.find<std::string>("portName","nic"), 
 			"1 ns", new Event::Handler<VirtNic>(this,&VirtNic::handleEvent) );
 
     assert( m_toNicLink );

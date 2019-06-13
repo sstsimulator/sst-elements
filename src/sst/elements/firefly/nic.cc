@@ -133,8 +133,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
             output_buf_size.toString().c_str(),
 			link_bw.toString().c_str(), packetSizeInBytes);
 
-    m_linkControl = (SimpleNetwork*)loadSubComponent(
-                    params.find<std::string>("module"), this, params);
+    m_linkControl = loadUserSubComponent<Interfaces::SimpleNetwork>( "router", ComponentInfo::SHARE_NONE, 0 );
     assert( m_linkControl );
 
 	m_linkControl->initialize(params.find<std::string>("rtrPortName","rtr"),
@@ -233,7 +232,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
 		tmp << m_unitPool->getTotal();
 		smmParams.insert( "numNicUnits", tmp.str(), true );
 
-        m_memoryModel = dynamic_cast<MemoryModel*>(loadSubComponent( "firefly.SimpleMemory",this, smmParams ));
+        m_memoryModel = loadAnonymousSubComponent<MemoryModel>( "firefly.SimpleMemory","", 0, ComponentInfo::SHARE_NONE, smmParams );
     }
     if ( params.find<int>( "useTrivialMemoryModel", 0 ) ) {
 		if ( m_memoryModel ) {
@@ -276,8 +275,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
 
         dtldParams.insert( "portName", "read", true );
         Thornhill::DetailedCompute* detailed;
-        detailed = dynamic_cast<Thornhill::DetailedCompute*>( loadSubComponent(
-                            dtldName, this, dtldParams ) );
+        detailed = loadUserSubComponent<Thornhill::DetailedCompute>( dtldName );
 
         assert( detailed );
         if ( ! detailed->isConnected() ) {
@@ -287,8 +285,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
         }
 
         dtldParams.insert( "portName", "write", true );
-        detailed = dynamic_cast<Thornhill::DetailedCompute*>( loadSubComponent(
-                            dtldName, this, dtldParams ) );
+        detailed = loadUserSubComponent<Thornhill::DetailedCompute>( dtldName );
 
         assert( detailed );
         if ( ! detailed->isConnected() ) {

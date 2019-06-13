@@ -17,9 +17,8 @@
 #ifndef COMPONENTS_FIREFLY_VIRTNIC_H
 #define COMPONENTS_FIREFLY_VIRTNIC_H
 
-#include <sst/core/module.h>
 #include <sst/core/output.h>
-#include <sst/core/component.h>
+#include <sst/core/subcomponent.h>
 #include "sst/elements/hermes/shmemapi.h"
 
 #include "ioVec.h"
@@ -30,16 +29,18 @@ namespace Firefly {
 class NicRespEvent;
 class NicShmemRespBaseEvent;
 
-class VirtNic : public SST::Module {
+class VirtNic : public SST::SubComponent {
 
   public:
-    SST_ELI_REGISTER_MODULE(
+	SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Firefly::VirtNic)
+
+	SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         VirtNic,
         "firefly",
         "VirtNic",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "",
-        "SST::Firefly::VirtNic"
+        SST::Firefly::VirtNic
     )
 
     SST_ELI_DOCUMENT_PARAMS(
@@ -134,7 +135,8 @@ class VirtNic : public SST::Module {
     };
 
 
-    VirtNic( Component* owner, Params&);
+    VirtNic( Component* owner, Params&) : SubComponent(owner) {}
+    VirtNic( ComponentId_t id, Params&);
     ~VirtNic();
     void init( unsigned int );
 

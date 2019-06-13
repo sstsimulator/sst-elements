@@ -43,11 +43,10 @@ class DriverEvent : public SST::Event {
     NotSerializable(DriverEvent)
 };
 
-FunctionSM::FunctionSM( SST::Params& params, SST::Component* obj,
-        ProtocolAPI* proto ) :
+FunctionSM::FunctionSM( ComponentId_t id, SST::Params& params, ProtocolAPI* proto ) :
+	SubComponent(id),
     m_sm( NULL ),
     m_params( params ),
-    m_owner( obj ),
     m_proto( proto )
 {
 
@@ -56,14 +55,14 @@ FunctionSM::FunctionSM( SST::Params& params, SST::Component* obj,
             0,
             Output::STDOUT );
 
-    m_toDriverLink = obj->configureSelfLink("ToDriver", "1 ps",
+    m_toDriverLink = configureSelfLink("ToDriver", "1 ps",
         new Event::Handler<FunctionSM>(this,&FunctionSM::handleToDriver));
 
-    m_fromDriverLink = obj->configureSelfLink("FromDriver", "1 ps",
+    m_fromDriverLink = configureSelfLink("FromDriver", "1 ps",
         new Event::Handler<FunctionSM>(this,&FunctionSM::handleStartEvent));
     assert( m_fromDriverLink );
 
-    m_toMeLink = obj->configureSelfLink("ToMe", "1 ns",
+    m_toMeLink = configureSelfLink("ToMe", "1 ns",
         new Event::Handler<FunctionSM>(this,&FunctionSM::handleEnterEvent));
     assert( m_toMeLink );
 }
@@ -106,12 +105,12 @@ void FunctionSM::setup( Info* info )
         std::string name = functionName( (FunctionEnum) i );
         Params tmp = m_params.find_prefix_params( name + "." );  
         defaultParams.insert( "name", name, true );
-        initFunction( m_owner, info, (FunctionEnum) i,
+        initFunction( info, (FunctionEnum) i,
                                         name, defaultParams, tmp ); 
     }
 }
 
-void FunctionSM::initFunction( SST::Component* obj, Info* info,
+void FunctionSM::initFunction( Info* info,
     FunctionEnum num, std::string name, Params& defaultParams, Params& params)
 {
     std::string module = params.find<std::string>("module"); 
@@ -140,7 +139,7 @@ void FunctionSM::initFunction( SST::Component* obj, Info* info,
 
     params.insert( "nodeId", defaultParams.find<std::string>( "nodeId" ), true );
 
-    m_smV[ num ] = (FunctionSMInterface*)obj->loadModule( module + "." + name,
+    m_smV[ num ] = (FunctionSMInterface*)loadModule( module + "." + name,
                              params );
 
     assert( m_smV[ Init ] );

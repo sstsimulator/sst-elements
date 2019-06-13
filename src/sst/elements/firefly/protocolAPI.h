@@ -28,14 +28,9 @@ class VirtNic;
 class ProtocolAPI : public SST::SubComponent 
 {
   public:
-
-    ProtocolAPI( Component* parent ) : SubComponent( parent ) {}
+    ProtocolAPI( Component* comp ) : SubComponent( comp ) {}
+    ProtocolAPI( ComponentId_t id ) : SubComponent( id ) {}
     virtual ~ProtocolAPI() {}
-#if 0
-    virtual void printStatus( Output& ) {}
-    virtual void setup() {};
-    virtual void finish() {};
-#endif
     virtual void setVars( Info*, VirtNic*, Thornhill::MemoryHeapLink*, Link* ) = 0;  
     virtual std::string name() = 0;
 };

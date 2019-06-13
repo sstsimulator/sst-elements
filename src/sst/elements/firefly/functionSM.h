@@ -58,7 +58,7 @@ class ProtocolAPI;
 #define GENERATE_ENUM(ENUM) ENUM,
 #define GENERATE_STRING(STRING) #STRING,
 
-class FunctionSM  {
+class FunctionSM : public SubComponent {
 
     typedef FunctionSMInterface::Retval Retval;
 	typedef CtrlMsg::Functor_0<FunctionSM, bool> Functor;
@@ -66,6 +66,17 @@ class FunctionSM  {
     static const char *m_functionName[];
 
   public:
+
+    SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Firefly::FunctionSM,ProtocolAPI*)
+
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+        FunctionSM,
+        "firefly",
+        "functionSM",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "",
+        SST::Firefly::FunctionSM
+    )
     typedef std::function<void()> Callback;
 
     enum FunctionEnum{
@@ -74,8 +85,10 @@ class FunctionSM  {
 
     const char *functionName( FunctionEnum x) {return m_functionName[x]; }
 
-    FunctionSM( SST::Params& params, SST::Component*, ProtocolAPI* );
+    FunctionSM( Component* comp, Params& params ) : SubComponent(comp) {}
+    FunctionSM( ComponentId_t, Params& params, ProtocolAPI* );
     ~FunctionSM();
+
     void printStatus( Output& );
 
     Link* getRetLink() { return m_toMeLink; } 
@@ -90,7 +103,7 @@ class FunctionSM  {
     void handleEnterEvent( SST::Event* );
     void processRetval( Retval& );
     
-    void initFunction( SST::Component*, Info*, FunctionEnum,
+    void initFunction( Info*, FunctionEnum,
                                     std::string, Params&, Params& );
 
     std::vector<FunctionSMInterface*>  m_smV; 
@@ -103,7 +116,6 @@ class FunctionSM  {
     SST::Link*          m_toMeLink;
     Output              m_dbg;
     SST::Params         m_params;
-    SST::Component*     m_owner;
     ProtocolAPI*	m_proto;
 };
 

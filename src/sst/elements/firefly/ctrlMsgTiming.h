@@ -23,11 +23,22 @@ namespace SST {
 namespace Firefly {
 namespace CtrlMsg { 
 
-class MsgTiming {
+class MsgTiming : public SubComponent{
   public:
 
-    MsgTiming( Component* comp, Params& params, Output& dbg );
-    ~MsgTiming();
+    SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Firefly::CtrlMsg::MsgTiming)
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+        MsgTiming,
+        "firefly",
+        "msgTiming",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Default implementation of SubCompInterface",
+        SST::Firefly::CtrlMsg::MsgTiming
+    )
+
+	MsgTiming( Component* comp, Params& params) : SubComponent(comp) {}
+    inline MsgTiming( ComponentId_t id, Params& params );
+    inline ~MsgTiming();
 
     virtual uint64_t txDelay( size_t bytes ) {
         return m_txSetupMod->getLatency( bytes );
@@ -56,7 +67,6 @@ class MsgTiming {
     }        
 
   private:
-    Output& m_dbg;
     size_t m_shortMsgLength;
     int    m_sendAckDelay;
     LatencyMod* m_txSetupMod;
@@ -67,7 +77,8 @@ class MsgTiming {
 
 };
 
-inline MsgTiming::MsgTiming( Component* comp, Params& params, Output& dbg ) :  m_dbg(dbg), m_rxPostMod(NULL) {
+MsgTiming::MsgTiming( ComponentId_t id, Params& params ) :
+			SubComponent(id), m_rxPostMod(NULL) {
 
     m_shortMsgLength = params.find<size_t>( "shortMsgLength", 4096 );
     m_sendAckDelay = params.find<int>( "sendAckDelay_ns", 0 );
@@ -75,36 +86,36 @@ inline MsgTiming::MsgTiming( Component* comp, Params& params, Output& dbg ) :  m
     std::string tmpName = params.find<std::string>("txSetupMod");
     Params tmpParams = params.find_prefix_params("txSetupModParams.");
     m_txSetupMod = dynamic_cast<LatencyMod*>(
-            comp->loadModule( tmpName, tmpParams ) );
+            loadModule( tmpName, tmpParams ) );
     assert( m_txSetupMod );
 
     tmpName = params.find<std::string>("rxSetupMod");
     tmpParams = params.find_prefix_params("rxSetupModParams.");
     m_rxSetupMod = dynamic_cast<LatencyMod*>(
-            comp->loadModule( tmpName, tmpParams ) );
+            loadModule( tmpName, tmpParams ) );
     assert( m_rxSetupMod );
 
     tmpName = params.find<std::string>("rxPostMod");
     if ( ! tmpName.empty() ) {
         tmpParams = params.find_prefix_params("rxPostModParams.");
         m_rxPostMod = dynamic_cast<LatencyMod*>(
-            comp->loadModule( tmpName, tmpParams ) );
+            loadModule( tmpName, tmpParams ) );
     }
 
     tmpName = params.find<std::string>("txFiniMod","firefly.LatencyMod");
     tmpParams = params.find_prefix_params("txFiniModParams.");
     m_txFiniMod = dynamic_cast<LatencyMod*>(
-            comp->loadModule( tmpName, tmpParams ) );
+            loadModule( tmpName, tmpParams ) );
     assert( m_txFiniMod );
 
     tmpName = params.find<std::string>("rxFiniMod","firefly.LatencyMod");
     tmpParams = params.find_prefix_params("rxFiniModParams.");
     m_rxFiniMod = dynamic_cast<LatencyMod*>(
-            comp->loadModule( tmpName, tmpParams ) );
+            loadModule( tmpName, tmpParams ) );
     assert( m_rxFiniMod );
 }
 
-inline MsgTiming::~MsgTiming()
+MsgTiming::~MsgTiming()
 {
     delete m_txSetupMod;
     delete m_rxSetupMod;

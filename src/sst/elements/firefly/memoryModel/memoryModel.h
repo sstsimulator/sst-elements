@@ -20,11 +20,14 @@ class MemoryModel : public SubComponent {
 
 public:
 
+	SST_ELI_REGISTER_SUBCOMPONENT_API(MemoryModel)
+
    typedef std::function<void()> Callback;
 
 #include "memOp.h"
 
     MemoryModel( Component* comp ) : SubComponent(comp) {}
+    MemoryModel( ComponentId_t id ) : SubComponent(id) {}
 
     virtual void printStatus( Output& out, int id ) { }
 	virtual void schedHostCallback( int core, std::vector< MemOp >* ops, Callback callback ) = 0;

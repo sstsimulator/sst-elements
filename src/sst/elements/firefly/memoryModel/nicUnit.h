@@ -15,21 +15,35 @@
 
     class NicUnit : public Unit {
       public:
-        NicUnit( SimpleMemoryModel& model, Output& dbg, int id ) : Unit( model, dbg ) {
+        SST_ELI_REGISTER_SUBCOMPONENT_API(SimpleMemoryModel::NicUnit, SimpleMemoryModel*, Output*, int )
+        SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+            NicUnit,
+            "firefly",
+            "simpleMemory.nicUnit",
+            SST_ELI_ELEMENT_VERSION(1,0,0),
+            "",
+            SimpleMemoryModel::NicUnit
+        )
+
+        NicUnit( Component* comp, Params& ) : Unit( comp, NULL, NULL) {}
+        NicUnit( ComponentId_t compId, Params& ) : Unit( compId, NULL, NULL) {}
+
+        NicUnit( Component* comp, Params&, SimpleMemoryModel* model, Output* dbg, int id ) : Unit( comp, NULL, NULL ) {}
+        NicUnit( ComponentId_t compId, Params&, SimpleMemoryModel* model, Output* dbg, int id ) : Unit( compId, model, dbg ) {
             m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::NicUnit::@p():@l ";
         }
 
         bool storeCB( UnitBase* src, MemReq* req, Callback* callback ) {
-            m_dbg.verbosePrefix(prefix(), CALL_INFO,1,1,"\n");
-            m_model.schedCallback( 0, callback );
+            dbg().verbosePrefix(prefix(), CALL_INFO,1,1,"\n");
+            model().schedCallback( 0, callback );
 
 			delete req;
 			return false;
         }
         bool load( UnitBase* src, MemReq* req, Callback* callback ) {
-            m_dbg.verbosePrefix(prefix(), CALL_INFO,1,1,"\n");
+            dbg().verbosePrefix(prefix(), CALL_INFO,1,1,"\n");
 
-            m_model.schedCallback( 0, callback );
+            model().schedCallback( 0, callback );
 			delete req;
 			return false;
         }

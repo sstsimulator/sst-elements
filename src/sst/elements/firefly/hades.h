@@ -26,7 +26,7 @@
 #include "sst/elements/thornhill/memoryHeapLink.h"
 #include "group.h"
 #include "info.h"
-#include "protocolAPI.h"
+#include "ctrlMsg.h"
 
 namespace SST {
 namespace Firefly {
@@ -38,13 +38,15 @@ class VirtNic;
 class Hades : public OS 
 {
   public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Firefly::Hades)
+
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         Hades,
         "firefly",
         "hades",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "",
-        ""
+       	SST::Firefly::Hades 
     )
 
     SST_ELI_DOCUMENT_PARAMS(
@@ -64,7 +66,8 @@ class Hades : public OS
         {"nodePerf", "Sets the node performance module ", "1"},
     )
 
-    Hades(Component*, Params&);
+    Hades(Component* comp, Params&) : OS(comp) {}
+    Hades(ComponentId_t id, Params& params);
     ~Hades();
     virtual void _componentInit(unsigned int phase );
     virtual void _componentSetup();

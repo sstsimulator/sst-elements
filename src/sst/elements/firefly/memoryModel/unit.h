@@ -25,10 +25,14 @@
     };  
 #endif
 
-	class UnitBase {
+	class UnitBase : public SubComponent {
 	  public:
 
-		UnitBase() : m_pendingWrite(0) {}
+		SST_ELI_REGISTER_SUBCOMPONENT_API(SimpleMemoryModel::UnitBase)
+
+		UnitBase( Component* comp ) : SubComponent(comp) {}
+		UnitBase( ComponentId_t id ) : SubComponent(id), m_pendingWrite(0) {}
+
 		virtual void resume( UnitBase* src = NULL ) { assert(0); }
 		virtual std::string& name() { assert(0); }
 		virtual ~UnitBase() {}
@@ -51,16 +55,21 @@
 
     class Unit : public UnitBase {
       public:
-        Unit( SimpleMemoryModel& model, Output& dbg ) : m_model( model ), m_dbg(dbg) {}
+		SST_ELI_REGISTER_SUBCOMPONENT_API(SimpleMemoryModel::Unit)
+        Unit( Component* comp, SimpleMemoryModel* model, Output* dbg ) : UnitBase(comp) {}
+        Unit( ComponentId_t id, SimpleMemoryModel* model, Output* dbg ) : UnitBase(id), m_model(model), m_dbg(dbg) {}
 
         virtual bool load( UnitBase* src, MemReq*, Callback* callback ) { assert(0); }
         virtual bool store( UnitBase* src, MemReq* ) { assert(0); }
         virtual bool storeCB( UnitBase* src, MemReq*, Callback* callback = NULL ) { assert(0); }
 
       protected:
+		Output& dbg() { return *m_dbg; }
+        SimpleMemoryModel& model() { return *m_model; }
         const char* prefix() { return m_prefix.c_str(); }
-
-        Output& m_dbg;
-        SimpleMemoryModel& m_model;
         std::string m_prefix;
+
+      private:
+        SimpleMemoryModel* m_model;
+        Output* m_dbg;
     };

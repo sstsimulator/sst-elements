@@ -39,7 +39,19 @@ class Memory : public MemoryBase {
     };
 
   public:
-    Memory( Component* comp, Params& params );
+
+    SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Firefly::CtrlMsg::Memory)
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+        Memory,
+        "firefly",
+        "ctrMsgMemory",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "",
+        SST::Firefly::CtrlMsg::Memory
+    )
+
+    Memory( Component* comp, Params& params ) : MemoryBase(comp) {}
+    Memory( ComponentId_t id, Params& params );
     ~Memory();
     void setOutput( Output* output ) {
         m_dbg = output;
@@ -137,7 +149,7 @@ class Memory : public MemoryBase {
     Link*       m_delayLink;
 };
 
-inline Memory::Memory( Component* comp, Params& params ) : MemoryBase(comp)  
+inline Memory::Memory( ComponentId_t id, Params& params ) : MemoryBase(id)  
 {
     std::stringstream ss;
     ss << this;
@@ -148,14 +160,12 @@ inline Memory::Memory( Component* comp, Params& params ) : MemoryBase(comp)
 
     std::string tmpName = params.find<std::string>("txMemcpyMod");
     Params tmpParams = params.find_prefix_params("txMemcpyModParams.");
-    m_txMemcpyMod = dynamic_cast<LatencyMod*>(
-            comp->loadModule( tmpName, tmpParams ) );
+    m_txMemcpyMod = dynamic_cast<LatencyMod*>( loadModule( tmpName, tmpParams ) );
     assert( m_txMemcpyMod );
 
     tmpName = params.find<std::string>("rxMemcpyMod");
     tmpParams = params.find_prefix_params("rxMemcpyModParams.");
-    m_rxMemcpyMod = dynamic_cast<LatencyMod*>(
-            comp->loadModule( tmpName, tmpParams ) );
+    m_rxMemcpyMod = dynamic_cast<LatencyMod*>( loadModule( tmpName, tmpParams ) );
     assert( m_rxMemcpyMod );
 
     m_regRegionBaseDelay_ns = params.find<int>( "regRegionBaseDelay_ns", 0 );

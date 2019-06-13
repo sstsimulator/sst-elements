@@ -24,8 +24,25 @@ class LoadUnit : public Unit {
 	std::string m_name;
 
   public:
-    LoadUnit( SimpleMemoryModel& model, Output& dbg, int id, int thread_id, Unit* cache, int numSlots, std::string name ) :
-        Unit( model, dbg ),  m_qSize(numSlots), m_cache(cache),  m_blocked(false), m_scheduled(false), 
+
+    SST_ELI_REGISTER_SUBCOMPONENT_API(SimpleMemoryModel::LoadUnit, SimpleMemoryModel*, Output*, int, int, Unit*, int, std::string )
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+        LoadUnit,
+        "firefly",
+        "simpleMemory.loadUnit",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "",
+        SimpleMemoryModel::LoadUnit
+    )
+
+    LoadUnit( Component* comp, Params& ) : Unit( comp, NULL, NULL) {}
+    LoadUnit( ComponentId_t compId, Params& ) : Unit( compId, NULL, NULL) {}
+
+    LoadUnit( Component* comp, Params&, SimpleMemoryModel*, Output*, int, int, Unit*, int, std::string ) :
+        Unit( comp, NULL, NULL) {}
+
+    LoadUnit( ComponentId_t compId, Params&, SimpleMemoryModel* model, Output* dbg, int id, int thread_id, Unit* cache, int numSlots, std::string name ) :
+        Unit( compId, model, dbg ),  m_qSize(numSlots), m_cache(cache),  m_blocked(false), m_scheduled(false), 
 			m_blockedSrc(NULL) , m_numPending(0)//, m_name(name)
 	{
 		std::stringstream tmp;
@@ -33,9 +50,9 @@ class LoadUnit : public Unit {
 		m_name = tmp.str();
 
         m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::" + name + "LoadUnit::@p():@l ";
-        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,LOAD_MASK,"maxPending=%d\n",m_qSize);
-		m_pendingQdepth = model.registerStatistic<uint64_t>(name + "_load_pending_Q_depth",std::to_string(thread_id));
-		m_latency = model.registerStatistic<uint64_t>(name + "_load_latency",std::to_string(thread_id));
+        dbg->verbosePrefix(prefix(),CALL_INFO,1,LOAD_MASK,"maxPending=%d\n",m_qSize);
+		m_pendingQdepth = model->registerStatistic<uint64_t>(name + "_load_pending_Q_depth",std::to_string(thread_id));
+		m_latency = model->registerStatistic<uint64_t>(name + "_load_latency",std::to_string(thread_id));
     }
 
 
@@ -43,9 +60,9 @@ class LoadUnit : public Unit {
 
     bool load( UnitBase* src, MemReq* req, Callback* callback ) {
 
-        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,LOAD_MASK,"addr=%#" PRIx64 " length=%lu pending=%lu\n",req->addr, req->length, m_pendingQ.size() );
+        dbg().verbosePrefix(prefix(),CALL_INFO,1,LOAD_MASK,"addr=%#" PRIx64 " length=%lu pending=%lu\n",req->addr, req->length, m_pendingQ.size() );
 
-		m_pendingQ.push( Entry( req, callback, m_model.getCurrentSimTimeNano() ) );
+		m_pendingQ.push( Entry( req, callback, model().getCurrentSimTimeNano() ) );
 		++m_numPending; 
 		m_pendingQdepth->addData( m_numPending );
 
@@ -53,13 +70,13 @@ class LoadUnit : public Unit {
             if ( ! m_blocked && ! m_scheduled ) {
 				Callback* cb = new Callback;
 				*cb = std::bind( &LoadUnit::process, this );
-                m_model.schedCallback( 0, cb );
+                model().schedCallback( 0, cb );
                 m_scheduled = true;
             }
 		}
 
        	if ( m_numPending == m_qSize  ) {
-			m_dbg.verbosePrefix(prefix(),CALL_INFO,2,LOAD_MASK,"blocking src\n");
+			dbg().verbosePrefix(prefix(),CALL_INFO,2,LOAD_MASK,"blocking src\n");
             m_blockedSrc = src;
             return true;
         } else {
@@ -71,12 +88,12 @@ class LoadUnit : public Unit {
 	void process() {
 		assert( ! m_pendingQ.empty() );
         Entry& entry = m_pendingQ.front();
-     	m_dbg.verbosePrefix(prefix(),CALL_INFO,3,LOAD_MASK,"addr=%#" PRIx64 " length=%lu pending=%lu\n",entry.req->addr,entry.req->length,m_pendingQ.size() );
+     	dbg().verbosePrefix(prefix(),CALL_INFO,3,LOAD_MASK,"addr=%#" PRIx64 " length=%lu pending=%lu\n",entry.req->addr,entry.req->length,m_pendingQ.size() );
 
         assert( m_blocked == false );
         m_scheduled = false;
 
-        SimTime_t issueTime = m_model.getCurrentSimTimeNano();
+        SimTime_t issueTime = model().getCurrentSimTimeNano();
 
 		Hermes::Vaddr addr = entry.req->addr;
 		size_t length = entry.req->length;
@@ -84,44 +101,44 @@ class LoadUnit : public Unit {
 		Callback* cb = new Callback;
 		*cb = [=]() {
 
-				SimTime_t currentTime = m_model.getCurrentSimTimeNano();
+				SimTime_t currentTime = model().getCurrentSimTimeNano();
                 SimTime_t latency = currentTime - issueTime;
 
 				if ( currentTime - postTime ) {
 					m_latency->addData( currentTime - postTime );
 				}
-        		m_dbg.verbosePrefix(prefix(),CALL_INFO_LAMBDA,"process",1,LOAD_MASK," complete, latency=%" PRIu64 " addr=%#" PRIx64 " length=%lu pending=%lu\n",
+        		dbg().verbosePrefix(prefix(),CALL_INFO_LAMBDA,"process",1,LOAD_MASK," complete, latency=%" PRIu64 " addr=%#" PRIx64 " length=%lu pending=%lu\n",
 													latency,addr,length,m_pendingQ.size() );
 
 				--m_numPending;
 				if ( entry.callback ) {
-					m_dbg.verbosePrefix(prefix(),CALL_INFO_LAMBDA,"process",3,LOAD_MASK,"tell src load is complete\n");
-					m_model.schedCallback( 0, entry.callback );
+					dbg().verbosePrefix(prefix(),CALL_INFO_LAMBDA,"process",3,LOAD_MASK,"tell src load is complete\n");
+					model().schedCallback( 0, entry.callback );
 				}
 
         		if ( m_blockedSrc ) {
-					m_dbg.verbosePrefix(prefix(),CALL_INFO_LAMBDA,"process",2,LOAD_MASK,"unblock src\n");
-					m_model.schedResume( 0, m_blockedSrc, this );
+					dbg().verbosePrefix(prefix(),CALL_INFO_LAMBDA,"process",2,LOAD_MASK,"unblock src\n");
+					model().schedResume( 0, m_blockedSrc, this );
             		m_blockedSrc = NULL;
         		}
 
-        		m_dbg.verbosePrefix(prefix(),CALL_INFO_LAMBDA,"process",3,LOAD_MASK,"%s\n",m_blocked? "blocked" : "not blocked");
+        		dbg().verbosePrefix(prefix(),CALL_INFO_LAMBDA,"process",3,LOAD_MASK,"%s\n",m_blocked? "blocked" : "not blocked");
 
         		if ( ! m_blocked && ! m_scheduled && ! m_pendingQ.empty() ) {
 					Callback* cb = new Callback;
 					*cb = std::bind( &LoadUnit::process, this );
-            		m_model.schedCallback( 0, cb );
+            		model().schedCallback( 0, cb );
             		m_scheduled = true;
         		}
 			};
        	m_blocked = m_cache->load( this, entry.req, cb );
-        m_dbg.verbosePrefix(prefix(),CALL_INFO,3,LOAD_MASK,"%s\n",m_blocked? "blocked" : " not blocked");
+        dbg().verbosePrefix(prefix(),CALL_INFO,3,LOAD_MASK,"%s\n",m_blocked? "blocked" : " not blocked");
 		assert( ! m_pendingQ.empty() );
        	m_pendingQ.pop();
 	}
 
     void resume( UnitBase* src = NULL ) {
-        m_dbg.verbosePrefix(prefix(),CALL_INFO,3,LOAD_MASK,"pending=%lu\n",m_pendingQ.size());
+        dbg().verbosePrefix(prefix(),CALL_INFO,3,LOAD_MASK,"pending=%lu\n",m_pendingQ.size());
 
         assert( m_blocked == true );
         m_blocked = false;
