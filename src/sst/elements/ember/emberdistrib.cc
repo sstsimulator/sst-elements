@@ -23,7 +23,7 @@
 using namespace SST;
 using namespace SST::Ember;
 
-EmberComputeDistribution::EmberComputeDistribution(Component* owner, Params& params) :
+EmberComputeDistribution::EmberComputeDistribution(Params& params) :
 	Module() {
 
 }

@@ -40,7 +40,7 @@ EmberMessagePassingGenerator::EmberMessagePassingGenerator(
     //end->NetworkSim
 
     m_rankMap = dynamic_cast<EmberRankMap*>(
-			owner->loadModuleWithComponent(rankMapModule, owner, mapParams));
+			owner->loadModule(rankMapModule,mapParams));
 		
     if(NULL == m_rankMap) {
         std::cerr << "Error: Unable to load rank map scheme: \'"
@@ -52,5 +52,4 @@ EmberMessagePassingGenerator::EmberMessagePassingGenerator(
 EmberMessagePassingGenerator::~EmberMessagePassingGenerator()
 {
     verbose(CALL_INFO, 2, 0, "\n");
-	delete m_rankMap;
 }

@@ -24,8 +24,8 @@
 using namespace SST::Ember;
 using namespace SST::RNG;
 
-EmberGaussianDistribution::EmberGaussianDistribution(Component* owner, Params& params) :
-	EmberComputeDistribution(owner, params) {
+EmberGaussianDistribution::EmberGaussianDistribution(Params& params) :
+	EmberComputeDistribution(params) {
 
 	const double mean = (double) params.find("mean", 1.0);
 	const double stddev = (double) params.find("stddev", 0.25);

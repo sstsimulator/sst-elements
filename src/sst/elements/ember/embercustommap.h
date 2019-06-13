@@ -44,7 +44,7 @@ public:
 
 public:
 
-	EmberCustomRankMap(Component* owner, Params& params) : EmberRankMap(owner, params) 
+	EmberCustomRankMap(Params& params) : EmberRankMap(params) 
         {
                 jobId    = params.find<std::string>("_mapjobId", "-1");
                 //std::cout << "EmberCustommap: mapjobId: " << jobId << std::endl;

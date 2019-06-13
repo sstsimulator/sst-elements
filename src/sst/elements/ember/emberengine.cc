@@ -57,8 +57,8 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
     tmp << m_jobId;
     modParams.insert("netMapName", "Ember" + tmp.str(), true);
 
-    m_os  = dynamic_cast<OS*>( loadSubComponent(
-                            osModuleName, this, modParams ) );
+	assert(0);// fix me
+    m_os  = dynamic_cast<OS*>( loadSubComponent( osModuleName, this, modParams ) );
     assert( m_os );
 
     m_nodePerf = m_os->getNodePerf();

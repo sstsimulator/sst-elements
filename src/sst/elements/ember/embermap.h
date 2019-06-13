@@ -26,7 +26,7 @@ namespace Ember {
 class EmberRankMap : public Module {
 
 public:
-	EmberRankMap(Component* owner, Params& params) {}
+	EmberRankMap(Params& params) {}
 	~EmberRankMap() {}
 	virtual void setEnvironment(const uint32_t rank, const uint32_t worldSize) = 0;
 	virtual uint32_t mapRank(const uint32_t input) = 0;

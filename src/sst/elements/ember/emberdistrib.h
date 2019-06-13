@@ -26,7 +26,7 @@ namespace Ember {
 class EmberComputeDistribution : public SST::Module {
 
 public:
-	EmberComputeDistribution(Component* owner, Params& params);
+	EmberComputeDistribution(Params& params);
 	~EmberComputeDistribution();
 	virtual double sample(uint64_t now) = 0;
 
