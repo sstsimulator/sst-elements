@@ -56,6 +56,11 @@ public:
         "SST::Interfaces::SimpleNetwork")
     
     SST_ELI_DOCUMENT_PARAMS(
+        {"port_name",          "Port name to connect to.  Only used when loaded anonymously",""},
+        {"link_bw",            "Bandwidth of the links specified in either b/s or B/s (can include SI prefix)."},
+        {"input_buf_size",     "Size of input buffers specified in b or B (can include SI prefix)."},
+        {"output_buf_size",    "Size of output buffers specified in b or B (can include SI prefix)."},
+        // {"network_inspectors", "Comma separated list of network inspectors to put on output ports.", ""},
         {"checkerboard",     "Number of actual virtual networks to use per virtual network seen by endpoint", "1"},
         {"checkerboard_alg", "Algorithm to use to spead traffic across checkerboarded VNs [deterministic | roundrobin]", "deterministic" }
     )
@@ -65,6 +70,10 @@ public:
         { "send_bit_count",     "Count number of bits sent on link", "bits", 1},
         { "output_port_stalls", "Time output port is stalled (in units of core timebase)", "time in stalls", 1},
         { "idle_time",          "Number of (in unites of core timebas) that port was idle", "time spent idle", 1},
+    )
+
+    SST_ELI_DOCUMENT_PORTS(
+        {"rtr_port", "Port that connects to router", { "merlin.RtrEvent", "merlin.credit_event", "" } },
     )
 
     
@@ -148,6 +157,7 @@ private:
     
 public:
     LinkControl(Component* parent, Params &params);
+    LinkControl(ComponentId_t cid, Params &params, int vns);
 
     ~LinkControl();
 
