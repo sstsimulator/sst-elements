@@ -13,8 +13,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef _SCRATCHPAD_H
-#define _SCRATCHPAD_H
+#ifndef MEMHIERARCHY_SCRATCHPAD_H
+#define MEMHIERARCHY_SCRATCHPAD_H
 
 
 #include <sst/core/event.h>

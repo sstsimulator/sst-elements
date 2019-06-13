@@ -194,7 +194,7 @@ private:
     ReplacementPolicy* constructReplacementManager(std::string policy, uint64_t lines, uint64_t associativity, int slot);
     CacheArray* createCacheArray(Params &params);
     int createMSHR(Params &params);
-    void createPrefetcher(Params &params, int mshrSize);
+    void createListeners(Params &params, int mshrSize);
     void createClock(Params &params);
     void registerStatistics();
     void createCoherenceManager(Params &params);
@@ -356,7 +356,7 @@ private:
 
     /* Cache structures */
     CacheArray*             cacheArray_;
-    CacheListener*          listener_;
+    std::vector<CacheListener*> listeners_;
     MemLinkBase*            linkUp_;
     MemLinkBase*            linkDown_;
     Link*                   prefetchLink_;

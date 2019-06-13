@@ -17,8 +17,8 @@
  * Author: Caesar De la Paz III
  */
 
-#ifndef CACHEARRAY_H
-#define CACHEARRAY_H
+#ifndef MEMHIERARCHY_CACHEARRAY_H
+#define MEMHIERARCHY_CACHEARRAY_H
 
 #include <vector>
 

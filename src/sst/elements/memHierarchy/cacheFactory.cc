@@ -104,8 +104,8 @@ Cache::Cache(ComponentId_t id, Params &params) : Component(id) {
     /* Create MSHR */
     int mshrSize = createMSHR(params);
 
-    /* Load prefetcher if any */
-    createPrefetcher(params, mshrSize);
+    /* Load prefetcher, listeners, if any */
+    createListeners(params, mshrSize);
 
 
     allNoncacheableRequests_    = params.find<bool>("force_noncacheable_reqs", false);
@@ -178,7 +178,7 @@ void Cache::createCoherenceManager(Params &params) {
 
     coherenceMgr_->setLinks(linkUp_, linkDown_);
     coherenceMgr_->setMSHR(mshr_);
-    coherenceMgr_->setCacheListener(listener_);
+    coherenceMgr_->setCacheListener(listeners_);
     coherenceMgr_->setDebug(DEBUG_ADDR);
     coherenceMgr_->setOwnerName(getName());
 
@@ -457,9 +457,14 @@ void Cache::configureLinks(Params &params) {
 
 }
 
-void Cache::createPrefetcher(Params &params, int mshrSize) {
+/* 
+ * Listeners can be prefetchers, but could also be for statistic collection, trace generation, monitoring, etc. 
+ * Prefetchers load into the 'prefetcher slot', listeners into the 'listener' slot
+ */
+void Cache::createListeners(Params &params, int mshrSize) {
+
+    /* Configure prefetcher(s) */
     bool found;
-    string prefetcher           = params.find<std::string>("prefetcher", "");
     maxOutstandingPrefetch_     = params.find<uint64_t>("max_outstanding_prefetch", mshrSize / 2, found);
     dropPrefetchLevel_          = params.find<uint64_t>("drop_prefetch_mshr_level", mshrSize - 2, found);
     if (!found && mshrSize == 2) { // MSHR min size is 2
@@ -468,28 +473,48 @@ void Cache::createPrefetcher(Params &params, int mshrSize) {
         dropPrefetchLevel_ = mshrSize - 1; // Always have to leave one free for deadlock avoidance
     }
 
-    listener_ = loadUserSubComponent<CacheListener>("prefetcher");
-    if (listener_ == nullptr) {
-        if (prefetcher.empty()) {
-        	Params emptyParams;
-                listener_ = loadAnonymousSubComponent<CacheListener>("memHierarchy.emptyCacheListener", "prefetcher", 0, ComponentInfo::INSERT_STATS, emptyParams);
-        } else {
-	    Params prefetcherParams = params.find_prefix_params("prefetcher." );
-            listener_ = loadAnonymousSubComponent<CacheListener>(prefetcher, "prefetcher", 0, ComponentInfo::INSERT_STATS, prefetcherParams);
-
-            statPrefetchRequest         = registerStatistic<uint64_t>("Prefetch_requests");
-            statPrefetchDrop            = registerStatistic<uint64_t>("Prefetch_drops");
+    SubComponentSlotInfo * lists = getSubComponentSlotInfo("prefetcher");
+    if (lists) {
+        int k = 0;
+        for (int i = 0; i < lists->getMaxPopulatedSlotNumber(); i++) {
+            if (lists->isPopulated(i)) {
+                listeners_.push_back(lists->create<CacheListener>(i, ComponentInfo::SHARE_NONE));
+                listeners_[k]->registerResponseCallback(new Event::Handler<Cache>(this, &Cache::handlePrefetchEvent));
+                k++;
+            }
+        }
+    } else {
+        std::string prefetcher = params.find<std::string>("prefetcher", "");
+        Params prefParams;
+        if (!prefetcher.empty()) {
+            prefParams = params.find_prefix_params("prefetcher.");
+            listeners_.push_back(loadAnonymousSubComponent<CacheListener>(prefetcher, "prefetcher", 0, ComponentInfo::INSERT_STATS, prefParams));
+            listeners_[0]->registerResponseCallback(new Event::Handler<Cache>(this, &Cache::handlePrefetchEvent));
+            statPrefetchRequest = registerStatistic<uint64_t>("Prefetch_requests");
+            statPrefetchDrop = registerStatistic<uint64_t>("Prefetch_drops");
         }
     }
+    
+    if (!listeners_.empty()) { // Have at least one prefetcher
+        // Configure self link for prefetch/listener events
+        // Delay prefetches by a cycle TODO parameterize - let user specify prefetch delay
+        std::string frequency = params.find<std::string>("cache_frequency", "", found);
+        prefetchDelay_ = params.find<SimTime_t>("prefetch_delay_cycles", 1);
 
-    listener_->registerResponseCallback(new Event::Handler<Cache>(this, &Cache::handlePrefetchEvent));
+        prefetchLink_ = configureSelfLink("Self", frequency, new Event::Handler<Cache>(this, &Cache::processPrefetchEvent));
+    }
 
-    // Configure self link for prefetch/listener events
-    // Delay prefetches by a cycle TODO parameterize - let user specify prefetch delay
-    std::string frequency = params.find<std::string>("cache_frequency", "", found);
-    prefetchDelay_ = params.find<SimTime_t>("prefetch_delay_cycles", 1);
-
-    prefetchLink_ = configureSelfLink("Self", frequency, new Event::Handler<Cache>(this, &Cache::processPrefetchEvent));
+    /* Configure listener(s) */
+    lists = getSubComponentSlotInfo("listener");
+    if (lists) {
+        for (int i = 0; i < lists->getMaxPopulatedSlotNumber(); i++) {
+            if (lists->isPopulated(i))
+                listeners_.push_back(lists->create<CacheListener>(i, ComponentInfo::SHARE_NONE));
+        }
+    } else if (listeners_.empty()) {
+        Params emptyParams;
+        listeners_.push_back(loadAnonymousSubComponent<CacheListener>("memHierarchy.emptyCacheListener", "listener", 0, ComponentInfo::SHARE_NONE, emptyParams));
+    }
 }
 
 int Cache::createMSHR(Params &params) {

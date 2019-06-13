@@ -72,6 +72,7 @@ void AddrHistogrammer::notifyAccess(const CacheListenerNotification& notify) {
         wrHisto->addData(vaddr);
         return;
     case EVICT:
+    case PREFETCH:
         return;
     }
 }

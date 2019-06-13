@@ -321,11 +321,14 @@ void CoherenceController::addToOutgoingQueueUp(Response& resp) {
 
 /* Call back to listener */
 void CoherenceController::notifyListenerOfAccess(MemEvent * event, NotifyAccessType accessT, NotifyResultType resultT) {
-    if (!event->isPrefetch()) {
-        CacheListenerNotification notify(event->getAddr(), event->getBaseAddr(), event->getVirtualAddress(),
-                event->getInstructionPointer(), event->getSize(), accessT, resultT);
-        listener_->notifyAccess(notify);
-    }
+    if (event->isPrefetch())
+        accessT = NotifyAccessType::PREFETCH;
+
+    CacheListenerNotification notify(event->getAddr(), event->getBaseAddr(), event->getVirtualAddress(),
+            event->getInstructionPointer(), event->getSize(), accessT, resultT);
+
+    for (int i = 0; i < listeners_.size(); i++)
+        listeners_[i]->notifyAccess(notify);
 }
 
 /**************************************/

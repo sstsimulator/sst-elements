@@ -532,7 +532,8 @@ void Cache::finish() {
     if (!clockIsOn_) { // Correct statistics
         turnClockOn();
     }
-    listener_->printStats(*d_);
+    for (int i = 0; i < listeners_.size(); i++)
+        listeners_[i]->printStats(*d_);
     linkDown_->finish();
     if (linkUp_ != linkDown_) linkUp_->finish();
 }

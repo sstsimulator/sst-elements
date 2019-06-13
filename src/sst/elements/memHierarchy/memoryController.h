@@ -13,8 +13,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef _MEMORYCONTROLLER_H
-#define _MEMORYCONTROLLER_H
+#ifndef MEMHIERARCHY_MEMORYCONTROLLER_H
+#define MEMHIERARCHY_MEMORYCONTROLLER_H
 
 #include <sst/core/sst_types.h>
 

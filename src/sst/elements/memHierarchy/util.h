@@ -13,14 +13,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-/*
- * File:   util.h
- * Author: Caesar De la Paz III
- * Email:  caesar.sst@gmail.com
- */
-
-#ifndef UTIL_H
-#define	UTIL_H
+#ifndef MEMHIERARCHY_UTIL_H
+#define	MEMHIERARCHY_UTIL_H
 
 #include <sst/core/stringize.h>
 #include <sst/core/params.h>

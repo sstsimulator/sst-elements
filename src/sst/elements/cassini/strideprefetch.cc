@@ -32,7 +32,7 @@ void StridePrefetcher::notifyAccess(const CacheListenerNotification& notify) {
     const NotifyResultType notifyResType = notify.getResultType();
     const Addr addr = notify.getPhysicalAddress();
 
-    if (notifyType == EVICT)  // ignore evictions
+    if (notifyType != READ && notifyType != WRITE)
         return;
 
     // Put address into our recent address list
