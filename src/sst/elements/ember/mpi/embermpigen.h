@@ -57,12 +57,15 @@ class EmberMessagePassingGenerator : public EmberGenerator {
 
 public:
 
-	EmberMessagePassingGenerator( Component* owner, Params& params, std::string name = "" );
+	EmberMessagePassingGenerator( Component* comp, Params& params, std::string name = "" ) : EmberGenerator(comp,params,name) {}
+	EmberMessagePassingGenerator( ComponentId_t id, Params& params, std::string name = "" );
 	~EmberMessagePassingGenerator();
 
     virtual void completed( const SST::Output* output, uint64_t time ) {
 		mpi().completed(output,time,getMotifName(),getMotifNum());
 	};
+
+	void setup();
 
 protected:
 

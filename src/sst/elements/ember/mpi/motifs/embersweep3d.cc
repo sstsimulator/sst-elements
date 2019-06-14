@@ -23,8 +23,8 @@
 
 using namespace SST::Ember;
 
-EmberSweep3DGenerator::EmberSweep3DGenerator(SST::Component* owner, Params& params) :
-	EmberMessagePassingGenerator(owner, params, "Sweep3D"),
+EmberSweep3DGenerator::EmberSweep3DGenerator(SST::ComponentId_t id, Params& params) :
+	EmberMessagePassingGenerator(id, params, "Sweep3D"),
     m_loopIndex(0),
     m_InnerLoopIndex(0)
 {

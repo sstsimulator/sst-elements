@@ -52,7 +52,14 @@ class EmberGenerator : public SubComponent {
 
     typedef std::queue<EmberEvent*> Queue;
 
-    EmberGenerator( Component* owner, Params& params, std::string name ="" );
+	SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Ember::EmberGenerator)
+
+    EmberGenerator( Component* owner, Params& params ) : SubComponent(owner)  { assert(0); }
+    EmberGenerator( ComponentId_t id, Params& params ) : SubComponent(id) { assert(0); }
+    EmberGenerator( Component* owner, Params& params, std::string name ="" ) : SubComponent(owner) { assert(0); }
+    EmberGenerator( ComponentId_t id, Params& params, std::string name ="" );
+
+	void setEngine( EmberEngine* );
 
 	~EmberGenerator(){ };
     

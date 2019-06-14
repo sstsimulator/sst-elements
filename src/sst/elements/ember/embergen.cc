@@ -19,37 +19,37 @@
 
 using namespace SST::Ember;
 
-EmberGenerator::EmberGenerator( Component* owner, Params& params,
-		std::string name ) :
-    SubComponent(owner),
+EmberGenerator::EmberGenerator( ComponentId_t id, Params& params, std::string name ) :
+    SubComponent(id),
     m_detailedCompute( NULL ),
     m_dataMode( NoBacking ),
     m_motifName( name )
 {
-	m_ee = static_cast<EmberEngine*>(owner);
-    m_output = m_ee->getOutput();
-    m_nodePerf = m_ee->getNodePerf();
     m_primary = params.find<bool>("primary",true);
-
-    m_detailedCompute = m_ee->getDetailedCompute();
-	m_memHeapLink = m_ee->getMemHeapLink();
-
     m_motifNum = params.find<int>( "_motifNum", -1 );	
     m_jobId = params.find<int>( "_jobId", -1 );	
-
     setVerbosePrefix();
-    
-    Params distribParams = params.find_prefix_params("distribParams.");
-    std::string distribModule = params.find<std::string>("distribModule",
-                                                "ember.ConstDistrib");
 
-    m_computeDistrib = dynamic_cast<EmberComputeDistribution*>( owner->loadModule(distribModule, distribParams));
+    Params distribParams = params.find_prefix_params("distribParams.");
+    std::string distribModule = params.find<std::string>("distribModule", "ember.ConstDistrib");
+
+	m_computeDistrib = dynamic_cast<EmberComputeDistribution*>( loadModule(distribModule, distribParams) );
 
     if(NULL == m_computeDistrib) {
         std::cerr << "Error: Unable to load compute distribution: \'"
                                     << distribModule << "\'" << std::endl;
         exit(-1);
     } 
+}
+
+
+void EmberGenerator::setEngine( EmberEngine* ee ) { 
+
+	m_ee = ee;
+    m_output = m_ee->getOutput();
+    m_nodePerf = m_ee->getNodePerf();
+    m_detailedCompute = m_ee->getDetailedCompute();
+	m_memHeapLink = m_ee->getMemHeapLink();
 }
 
 EmberLib* EmberGenerator::getLib(std::string name )

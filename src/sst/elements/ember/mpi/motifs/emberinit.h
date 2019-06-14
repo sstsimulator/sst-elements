@@ -25,13 +25,13 @@ namespace Ember {
 class EmberInitGenerator : public EmberMessagePassingGenerator {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberInitGenerator,
         "ember",
         "InitMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Performs a communication Initialization Motif",
-        "SST::Ember::EmberGenerator"
+        SST::Ember::EmberInitGenerator
     )
 
     SST_ELI_DOCUMENT_PARAMS(
@@ -63,8 +63,10 @@ public:
 
 public:
 
-    EmberInitGenerator(SST::Component* owner, Params& params) :
-            EmberMessagePassingGenerator(owner, params, "Init" ),
+    EmberInitGenerator(SST::Component* owner, Params& params) : EmberMessagePassingGenerator(owner,params,"") {} 
+
+    EmberInitGenerator(SST::ComponentId_t id, Params& params) :
+            EmberMessagePassingGenerator(id, params, "Init" ),
 			m_rank(-1),
 			m_size(0)
     { }

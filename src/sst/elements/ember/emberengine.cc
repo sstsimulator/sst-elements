@@ -55,10 +55,8 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
     Params modParams = params.find_prefix_params( osName + "." );
     std::ostringstream tmp;
     tmp << m_jobId;
-    modParams.insert("netMapName", "Ember" + tmp.str(), true);
 
-	assert(0);// fix me
-    m_os  = dynamic_cast<OS*>( loadSubComponent( osModuleName, this, modParams ) );
+    m_os  = loadUserSubComponent<OS>( "OS" );
     assert( m_os );
 
     m_nodePerf = m_os->getNodePerf();
@@ -157,7 +155,7 @@ EmberEngine::ApiMap EmberEngine::createApiMap( OS* os,
 
         output.verbose(CALL_INFO, 2, ENGINE_MASK, "moduleName=%s\n", moduleName.c_str());
 
-        Hermes::Interface* api = dynamic_cast<Interface*>( owner->loadSubComponent( moduleName, owner, modParams ) );
+        Hermes::Interface* api = loadAnonymousSubComponent<Interface>( moduleName, "", 0, ComponentInfo::SHARE_NONE, modParams );
         assert( tmp.find( api->getName() ) == tmp.end() );
 
         output.verbose(CALL_INFO, 2, ENGINE_MASK, "api name=%s type=%s\n",api->getName().c_str(), api->getType().c_str() );
@@ -213,8 +211,9 @@ EmberGenerator* EmberEngine::initMotif( SST::Params params,
 		params.insert("_motifNum", SST::to_string( motifNum ), true);
 		params.insert("_apiName", api, true);
 
-		gen = dynamic_cast<EmberGenerator*>(
-                loadSubComponent(gentype, this, params ) );
+		gen = loadAnonymousSubComponent<EmberGenerator>( gentype, "", 0, ComponentInfo::SHARE_NONE, params );
+		gen->setEngine(this);
+		gen->setup();
 
 		if(NULL == gen) {
 			output.fatal(CALL_INFO, -1, "Error: Could not load the "
