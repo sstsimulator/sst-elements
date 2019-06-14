@@ -51,7 +51,7 @@ Hades::Hades( ComponentId_t id, Params& params ) :
 
     Params tmpParams = params.find_prefix_params("ctrlMsg.");
 
-    m_proto = loadAnonymousSubComponent<CtrlMsg::API>( "firefly.CtrlMsgProto", "", 0, ComponentInfo::SHARE_NONE, tmpParams );
+    m_proto = loadUserSubComponent<CtrlMsg::API>( "proto" );
 
     Params funcParams = params.find_prefix_params("functionSM.");
 

@@ -54,12 +54,10 @@ ProcessQueuesState::ProcessQueuesState( ComponentId_t id, Params& params ) :
                         "ProcessQueuesStateSelfLink." + ss.str(), "1 ns",
                                 new Event::Handler<ProcessQueuesState>(this,&ProcessQueuesState::delayHandler));
 
-#if 0
     m_loopLink = configureLink(
             params.find<std::string>("loopBackPortName", "loop"), "1 ns",
             new Event::Handler<ProcessQueuesState>(this,&ProcessQueuesState::loopHandler) );
     assert(m_loopLink);
-#endif
 }
 
 
