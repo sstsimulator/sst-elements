@@ -32,11 +32,12 @@ class EmberEP( EndPoint ):
             nicComponentName = self.nicParams['nicComponent']
 
         nic = sst.Component( "nic" + str(nodeID), nicComponentName )
+        rtrLink = nic.setSubComponent( "rtrLink", "merlin.linkcontrol" )
 
         nic.addParams( self.nicParams )
         nic.addParams( extraKeys)
         nic.addParam( "nid", nodeID )
-        retval = (nic, "rtr", sst.merlin._params["link_lat"] )
+        retval = (rtrLink, "rtr", sst.merlin._params["link_lat"] )
  
         built = False 
         if self.detailedModel:
@@ -60,6 +61,14 @@ class EmberEP( EndPoint ):
         for x in xrange(self.numCores):
             ep = sst.Component("nic" + str(nodeID) + "core" + str(x) +
                                             "_EmberEP", "ember.EmberEngine")
+
+            os = ep.setSubComponent( "OS", "firefly.hades" )
+            for key, value in self.driverParams.items():
+                if key.startswith("hermesParams."):
+                    key = key[key.find('.')+1:] 
+                    os.addParam( key,value)
+
+            virtNic = os.setSubComponent( "virtNic", "firefly.VirtNic" )
 
             ep.addParams(self.motifs)
             if built:
@@ -103,11 +112,11 @@ class EmberEP( EndPoint ):
                     print "printStats for node {0}".format(id)
                     ep.addParams( {'motif1.printStats': 1} )
 
-            osName = self.driverParams['os.name']
-            ep.addParams( {osName + '.netId': nodeID } )
-            ep.addParams( {osName + '.netMapId': self.nidMap[ nodeID ] } )
-            ep.addParams( {osName + '.netMapSize': self.numNids } )
-            ep.addParams( {osName + '.coreId': x } )
+            os.addParams( {'netMapName': 'Ember' + str(self.driverParams['jobId']) } )
+            os.addParams( {'netId': nodeID } )
+            os.addParams( {'netMapId': self.nidMap[ nodeID ] } )
+            os.addParams( {'netMapSize': self.numNids } )
+            os.addParams( {'coreId': x } )
 
             nicLink = sst.Link( "nic" + str(nodeID) + "core" + str(x) + "_Link"  )
             nicLink.setNoCut()
@@ -117,8 +126,7 @@ class EmberEP( EndPoint ):
 
             #ep.addLink(nicLink, "nic", self.nicParams["nic2host_lat"] )
             #nic.addLink(nicLink, "core" + str(x), self.nicParams["nic2host_lat"] )
-            ep.addLink(nicLink, "nic", "1ns" )
-            nic.addLink(nicLink, "core" + str(x), "1ns" )
+            nicLink.connect( (virtNic,'nic','1ns' ),(nic,'core'+str(x),'1ns'))
 
             ep.addLink(loopLink, "loop", "1ns")
             loopBack.addLink(loopLink, "core" + str(x), "1ns")
