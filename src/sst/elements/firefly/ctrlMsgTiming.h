@@ -23,16 +23,17 @@ namespace SST {
 namespace Firefly {
 namespace CtrlMsg { 
 
-class MsgTiming : public SubComponent{
+class MsgTiming : public SubComponent {
   public:
 
     SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Firefly::CtrlMsg::MsgTiming)
+
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         MsgTiming,
         "firefly",
         "msgTiming",
         SST_ELI_ELEMENT_VERSION(1,0,0),
-        "Default implementation of SubCompInterface",
+        "",
         SST::Firefly::CtrlMsg::MsgTiming
     )
 
@@ -85,33 +86,28 @@ MsgTiming::MsgTiming( ComponentId_t id, Params& params ) :
 
     std::string tmpName = params.find<std::string>("txSetupMod");
     Params tmpParams = params.find_prefix_params("txSetupModParams.");
-    m_txSetupMod = dynamic_cast<LatencyMod*>(
-            loadModule( tmpName, tmpParams ) );
+    m_txSetupMod = dynamic_cast<LatencyMod*>( loadModule( tmpName, tmpParams ) );
     assert( m_txSetupMod );
 
     tmpName = params.find<std::string>("rxSetupMod");
     tmpParams = params.find_prefix_params("rxSetupModParams.");
-    m_rxSetupMod = dynamic_cast<LatencyMod*>(
-            loadModule( tmpName, tmpParams ) );
+    m_rxSetupMod = dynamic_cast<LatencyMod*>( loadModule( tmpName, tmpParams ) );
     assert( m_rxSetupMod );
 
     tmpName = params.find<std::string>("rxPostMod");
     if ( ! tmpName.empty() ) {
         tmpParams = params.find_prefix_params("rxPostModParams.");
-        m_rxPostMod = dynamic_cast<LatencyMod*>(
-            loadModule( tmpName, tmpParams ) );
+        m_rxPostMod = dynamic_cast<LatencyMod*>( loadModule( tmpName, tmpParams ) );
     }
 
     tmpName = params.find<std::string>("txFiniMod","firefly.LatencyMod");
     tmpParams = params.find_prefix_params("txFiniModParams.");
-    m_txFiniMod = dynamic_cast<LatencyMod*>(
-            loadModule( tmpName, tmpParams ) );
+    m_txFiniMod = dynamic_cast<LatencyMod*>( loadModule( tmpName, tmpParams ) );
     assert( m_txFiniMod );
 
     tmpName = params.find<std::string>("rxFiniMod","firefly.LatencyMod");
     tmpParams = params.find_prefix_params("rxFiniModParams.");
-    m_rxFiniMod = dynamic_cast<LatencyMod*>(
-            loadModule( tmpName, tmpParams ) );
+    m_rxFiniMod = dynamic_cast<LatencyMod*>( loadModule( tmpName, tmpParams ) );
     assert( m_rxFiniMod );
 }
 

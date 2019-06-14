@@ -44,7 +44,7 @@ class Memory : public MemoryBase {
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         Memory,
         "firefly",
-        "ctrMsgMemory",
+        "ctrlMsgMemory",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "",
         SST::Firefly::CtrlMsg::Memory

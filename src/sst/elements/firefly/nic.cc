@@ -133,7 +133,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
             output_buf_size.toString().c_str(),
 			link_bw.toString().c_str(), packetSizeInBytes);
 
-    m_linkControl = loadUserSubComponent<Interfaces::SimpleNetwork>( "router", ComponentInfo::SHARE_NONE, 0 );
+    m_linkControl = loadUserSubComponent<Interfaces::SimpleNetwork>( "rtrLink", ComponentInfo::SHARE_NONE, 0 );
     assert( m_linkControl );
 
 	m_linkControl->initialize(params.find<std::string>("rtrPortName","rtr"),
@@ -277,20 +277,14 @@ Nic::Nic(ComponentId_t id, Params &params) :
         Thornhill::DetailedCompute* detailed;
         detailed = loadUserSubComponent<Thornhill::DetailedCompute>( dtldName );
 
-        assert( detailed );
-        if ( ! detailed->isConnected() ) {
-            delete detailed;
-        } else {
+        if ( detailed ) {
             m_detailedCompute[0] = detailed;
         }
 
         dtldParams.insert( "portName", "write", true );
         detailed = loadUserSubComponent<Thornhill::DetailedCompute>( dtldName );
 
-        assert( detailed );
-        if ( ! detailed->isConnected() ) {
-            delete detailed;
-        } else {
+        if ( detailed ) {
             m_detailedCompute[1] = detailed;
         }
 

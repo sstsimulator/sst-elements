@@ -37,7 +37,7 @@ VirtNic::VirtNic( ComponentId_t id, Params& params ) :
         params.find<uint32_t>("verboseLevel",0),
         0,
         Output::STDOUT );
-    m_maxNicQdepth = params.find<int>("m_maxNicQdepth",32);
+    m_maxNicQdepth = params.find<int>("maxNicQdepth",32);
 
     m_toNicLink = configureLink( params.find<std::string>("portName","nic"), 
 			"1 ns", new Event::Handler<VirtNic>(this,&VirtNic::handleEvent) );

@@ -39,7 +39,7 @@ using namespace SST::Firefly;
 using namespace SST;
 
 Hades::Hades( ComponentId_t id, Params& params ) :
-    OS( id ),	
+    OS( id, params ),	
     m_virtNic(NULL),
     m_detailedCompute(NULL),
     m_memHeapLink(NULL)
@@ -63,11 +63,10 @@ Hades::Hades( ComponentId_t id, Params& params ) :
 
     std::string moduleName = params.find<std::string>("nicModule"); 
 
-    m_virtNic = loadUserSubComponent<VirtNic>(0, ComponentInfo::SHARE_NONE);
+    m_virtNic = loadUserSubComponent<VirtNic>("virtNic", ComponentInfo::SHARE_NONE);
 
     if ( !m_virtNic ) {
-        m_dbg.fatal(CALL_INFO,0," Unable to find nic module'%s'\n",
-                                        moduleName.c_str());
+        m_dbg.fatal(CALL_INFO,0," Unable to find nic SubComponent '%s'\n", moduleName.c_str());
     }
 
     moduleName = params.find<std::string>("nodePerf", "firefly.SimpleNodePerf");
@@ -83,30 +82,18 @@ Hades::Hades( ComponentId_t id, Params& params ) :
     Params dtldParams = params.find_prefix_params( "detailedCompute." );
     std::string dtldName =  dtldParams.find<std::string>( "name" );
 
+#if 0
     if ( ! dtldName.empty() ) {
-
-        m_detailedCompute = 
-		loadUserSubComponent<Thornhill::DetailedCompute>("foobar", ComponentInfo::SHARE_NONE);
-
-        assert( m_detailedCompute );
-        if ( ! m_detailedCompute->isConnected() ) {
-            delete m_detailedCompute;
-            m_detailedCompute = NULL;
-        }
+        m_detailedCompute = loadUserSubComponent<Thornhill::DetailedCompute>("", ComponentInfo::SHARE_NONE);
     }
 
     Params memParams = params.find_prefix_params( "memoryHeapLink." );
     std::string memName =  memParams.find<std::string>( "name" );
 
     if ( ! memName.empty() ) {
-
         m_memHeapLink = loadUserSubComponent<Thornhill::MemoryHeapLink>( memName );
-
-        if ( ! m_memHeapLink->isConnected() ) {
-            delete m_memHeapLink;
-            m_memHeapLink = NULL;
-        }
     }
+#endif
 
     m_netMapSize = params.find<int>("netMapSize",-1);
     assert(m_netMapSize > -1 );
