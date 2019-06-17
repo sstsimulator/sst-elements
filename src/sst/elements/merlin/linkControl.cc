@@ -104,19 +104,19 @@ LinkControl::LinkControl(ComponentId_t cid, Params &params, int vns) :
     outbuf_credits = new int[req_vns];
 
     // Get the buffer sizes
-    UnitAlgebra in_buf_size = params.find<UnitAlgebra>("in_buf_size","1kB");
-    if ( !in_buf_size.hasUnits("b") && !in_buf_size.hasUnits("B") ) {
+    inbuf_size = params.find<UnitAlgebra>("in_buf_size","1kB");
+    if ( !inbuf_size.hasUnits("b") && !inbuf_size.hasUnits("B") ) {
         merlin_abort.fatal(CALL_INFO,-1,"in_buf_size must be specified in either "
-                           "bits or bytes: %s\n",in_buf_size.toStringBestSI().c_str());
+                           "bits or bytes: %s\n",inbuf_size.toStringBestSI().c_str());
     }
     if ( inbuf_size.hasUnits("B") ) inbuf_size *= UnitAlgebra("8b/B");
 
-    UnitAlgebra out_buf_size = params.find<UnitAlgebra>("out_buf_size","1kB");
-    if ( !out_buf_size.hasUnits("b") && !out_buf_size.hasUnits("B") ) {
+    outbuf_size = params.find<UnitAlgebra>("out_buf_size","1kB");
+    if ( !outbuf_size.hasUnits("b") && !outbuf_size.hasUnits("B") ) {
         merlin_abort.fatal(CALL_INFO,-1,"out_buf_size must be specified in either "
-                           "bits or bytes: %s\n",out_buf_size.toStringBestSI().c_str());
+                           "bits or bytes: %s\n",outbuf_size.toStringBestSI().c_str());
     }
-    if ( out_buf_size.hasUnits("B") ) out_buf_size *= UnitAlgebra("8b/B");
+    if ( outbuf_size.hasUnits("B") ) outbuf_size *= UnitAlgebra("8b/B");
 
     // The output credits are set to zero and the other side of the
     // link will send the number of tokens.
