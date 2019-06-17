@@ -33,7 +33,7 @@ MemLink::MemLink(ComponentId_t id, Params &params) : MemLinkBase(id, params) {
 void MemLink::build(Params &params) {
     // Configure link
     std::string latency = params.find<std::string>("latency", "50ps");
-    std::string port = params.find<std::string>("port", "");
+    std::string port = params.find<std::string>("port", "port");
 
     link = configureLink(port, latency, new Event::Handler<MemLink>(this, &MemLink::recvNotify));
    
@@ -52,7 +52,7 @@ void MemLink::init(unsigned int phase) {
 
     SST::Event * ev;
     while ((ev = link->recvInitData())) {
-        MemEventInit * mEv = dynamic_cast<MemEventInit*>(ev);
+        MemEventInit * mEv = static_cast<MemEventInit*>(ev);
         if (mEv) {
             if (mEv->getInitCmd() == MemEventInit::InitCommand::Region) {
                 MemEventInitRegion * mEvRegion = static_cast<MemEventInitRegion*>(mEv);
@@ -62,12 +62,8 @@ void MemLink::init(unsigned int phase) {
                 epInfo.name = mEvRegion->getSrc();
                 epInfo.addr = 0;
                 epInfo.id = 0;
-                epInfo.node = node;
                 epInfo.region = mEvRegion->getRegion();
-                //sourceEndpointInfo.insert(epInfo);
-                //destEndpointInfo.insert(epInfo);
-                addSource(epInfo);
-                addDest(epInfo);
+                addRemote(epInfo);
 
                 if (mEvRegion->getSetRegion() && acceptRegion) {
                     dbg.debug(_L10_, "\tUpdating local region\n");
@@ -102,6 +98,25 @@ MemEventInit * MemLink::recvInitData() {
     return me;
 }
 
+void MemLink::addRemote(EndpointInfo info) { 
+    remotes.insert(info);
+}
+
+bool MemLink::isDest(std::string UNUSED(str)) {
+    return true;
+}
+
+bool MemLink::isSource(std::string UNUSED(str)) {
+    return true;
+}
+
+std::set<MemLinkBase::EndpointInfo>* MemLink::getSources() {
+    return &remotes;
+}
+
+std::set<MemLinkBase::EndpointInfo>* MemLink::getDests() {
+    return &remotes;
+}
 
 /**
  * send event on link
@@ -115,10 +130,26 @@ void MemLink::send(MemEventBase *ev) {
  */
 MemEventBase * MemLink::recv() {
     SST::Event * ev = link->recv();
-    MemEventBase * mEv = dynamic_cast<MemEventBase*>(ev);
+    MemEventBase * mEv = static_cast<MemEventBase*>(ev);
     if (mEv) return mEv;
 
     if (ev) delete ev;
 
     return nullptr;
 }
+
+std::string MemLink::findTargetDestination(Addr addr) {
+    for (std::set<EndpointInfo>::const_iterator it = remotes.begin(); it != remotes.end(); it++) {
+        if (it->region.contains(addr)) return it->name;
+    }
+
+    stringstream error;
+    error << getName() + " (MemLink) cannot find a destination for address " << addr << endl;
+    error << "Known destinations: " << endl;
+    for (std::set<EndpointInfo>::const_iterator it = remotes.begin(); it != remotes.end(); it++) {
+        error << it->name << " " << it->region.toString() << endl;
+    }
+    dbg.fatal(CALL_INFO, -1, "%s", error.str().c_str());
+    return "";
+}
+

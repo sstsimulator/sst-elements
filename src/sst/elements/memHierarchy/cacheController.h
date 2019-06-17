@@ -78,7 +78,6 @@ public:
                 "(uint) Latency (in cycles) to access tag portion only of cache. Paid by misses and coherence requests that don't need data. If not specified, defaults to access_latency_cycles","access_latency_cycles"},
             {"mshr_latency_cycles",
                 "(uint) Latency (in cycles) to process responses in the cache and replay requests. Paid on the return/response path for misses instead of access_latency_cycles. If not specified, simple intrapolation is used based on the cache access latency", "1"},
-            {"prefetcher",              "(string) Name of prefetcher subcomponent", ""},
             {"prefetch_delay_cycles",   "(uint) Delay prefetches from prefetcher by this number of cycles.", "1"},
             {"max_outstanding_prefetch","(uint) Maximum number of prefetch misses that can be outstanding, additional prefetches will be dropped/NACKed. Default is 1/2 of MSHR entries.", "0.5*mshr_num_entries"},
             {"drop_prefetch_mshr_level","(uint) Drop/NACK prefetches if the number of in-use mshrs is greater than or equal to this number. Default is mshr_num_entries - 2.", "mshr_num_entries-2"},
@@ -100,6 +99,7 @@ public:
             {"network_bw",                  "MOVED - Now a member of the MemNIC subcomponent.", "80GiB/s"}, // Remove 9.0
             {"network_input_buffer_size",   "MOVED - Now a member of the MemNIC subcomponent.", "1KiB"}, // Remove 9.0
             {"network_output_buffer_size",  "MOVED - Now a member of the MemNIC subcomponent.", "1KiB"}, // Remove 9.0
+            {"prefetcher",                  "MOVED - Prefetcher subcomponent, instead specify by putting it in the 'prefetcher' subcomponent slot", ""},
             {"replacement_policy",          "MOVED - Cache replacement policy, now a subcomponent so specify by putting in the index 0 of the 'replacement' subcomponent slot in the input config", ""},
             {"noninclusive_directory_repl", "MOVED - Replacement policy for noninclusive directory, now a subcomponent, specify by putting in the index 1 of the 'replacement' subcomponent slot in the input config", ""},
             {"hash_function",               "MOVED - Hash function for mapping addresses to cache lines, now a subcomponent, specify by filling the 'hash' slot (default/unfilled is none)", ""})
@@ -161,6 +161,8 @@ public:
             {"memlink", "Memory-side link manager", "SST::MemHierarchy::MemLinkBase"},
             {"replacement", "Replacement policies, slot 0 is for cache, slot 1 is for directory (if it exists)", "SST::MemHierarchy::ReplacementPolicy"},
             {"coherence", "Coherence protocol", "SST::MemHierarchy::CoherenceController"},
+            {"prefetcher", "Prefetcher(s)", "SST::MemHierarchy::CacheListener"},
+            {"listener", "Cache listener(s) for statistics, tracing, etc. In contrast to prefetcher, cannot send events to cache", "SST::MemHierarchy::CacheListener"},
             {"hash", "Hash function for mapping addresses to cache lines", "SST::MemHierarchy::HashFunction"} )
 
 /* Class definition */
