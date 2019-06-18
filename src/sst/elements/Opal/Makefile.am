@@ -11,9 +11,11 @@ libOpal_la_SOURCES = \
 	Opal.cc \
 	Opal.h \
         Opal_Event.h \
+	arielmemmgr_opal.cc \
 	arielmemmgr_opal.h \
-	arielmemmgr_opal.cc
-
+	opalMemNIC.cc \
+	opalMemNIC.h
+	
 
 libOpal_la_CPPFLAGS = \
 	-I$(top_srcdir)/src \

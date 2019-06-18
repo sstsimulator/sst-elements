@@ -125,83 +125,92 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     accessLatency   = params.find<uint64_t>("access_latency_cycles", 0);
     mshrLatency     = params.find<uint64_t>("mshr_latency_cycles", 0);
 
-    /* Set up links/network to cache & memory */
-    /* First, fixup nic parameters and warn that we're doing it */
-    if (fixupParam(params, "network_bw", "memNIC.network_bw"))
-        out.output(CALL_INFO, "Note (%s): Changed 'network_bw' to 'memNIC.network_bw' in params. Change your input file to remove this notice.\n", getName().c_str());
-    if (fixupParam(params, "network_input_buffer_size", "memNIC.network_input_buffer_size"))
-        out.output(CALL_INFO, "Note (%s): Changed 'network_input_buffer_size' to 'memNIC.network_input_buffer_size' in params. Change your input file to remove this notice.\n", getName().c_str());
-    if (fixupParam(params, "network_output_buffer_size", "memNIC.network_output_buffer_size"))
-        out.output(CALL_INFO, "Note (%s): Changed 'network_output_buffer_size' to 'memNIC.network_output_buffer_size' in params. Change your input file to remove this notice.\n", getName().c_str());
-    if (fixupParam(params, "addr_range_start", "memNIC.addr_range_start"))
-        out.output(CALL_INFO, "Note (%s): Changed 'addr_range_start' to 'memNIC.addr_range_start' in params. Change your input file to remove this notice.\n", getName().c_str());
-    if (fixupParam(params, "addr_range_end", "memNIC.addr_range_end"))
-        out.output(CALL_INFO, "Note (%s): Changed 'addr_range_end' to 'memNIC.addr_range_end' in params. Change your input file to remove this notice.\n", getName().c_str());
-    if (fixupParam(params, "interleave_size", "memNIC.interleave_size"))
-        out.output(CALL_INFO, "Note (%s): Changed 'interleave_size' to 'memNIC.interleave_size' in params. Change your input file to remove this notice.\n", getName().c_str());
-    if (fixupParam(params, "interleave_step", "memNIC.interleave_step"))
-        out.output(CALL_INFO, "Note (%s): Changed 'interleave_step' to 'memNIC.interleave_step' in params. Change your input file to remove this notice.\n", getName().c_str());
-    if (fixupParam(params, "min_packet_size", "memNIC.min_packet_size"))
-        out.output(CALL_INFO, "Note (%s): Changed 'min_packet_size' to 'memNIC.min_packet_size' in params. Change your input file to remove this notice.\n", getName().c_str());
 
-    Params nicParams = params.find_prefix_params("memNIC.");
-
-    nicParams.insert("group", "3", false);
-    int cl = nicParams.find<int>("group");
-    nicParams.insert("sources", std::to_string(cl - 1), false);
-    nicParams.insert("destinations", std::to_string(cl + 1), false);
-
-    // Opal
-    std::string node = params.find<std::string>("node", "0");
-    std::string shmem = params.find<std::string>("shared_memory", "0");
-    std::string localsize = params.find<std::string>("local_memory_size", "0");
-    nicParams.insert("node", node);
-    nicParams.insert("shared_memory", shmem);
-    nicParams.insert("local_memory_size", localsize);
-
-    // Determine which ports are connected
-    unsigned int portCount = 1;
-    if (isPortConnected("network_ack")) portCount++;
-    if (isPortConnected("network_fwd")) portCount++;
-    if (isPortConnected("network_data")) portCount++;
-    if (portCount == 4) {
-        nicParams.insert("req.port", "network");
-        nicParams.insert("ack.port", "network_ack");
-        nicParams.insert("fwd.port", "network_fwd");
-        nicParams.insert("data.port", "network_data");
-        network = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNICFour", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams);
-    } else {
-        nicParams.insert("port", "network");
-        network = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams);
-    }
-
-    network->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
-
-    if (isPortConnected("memory")) {
-        Params memParams = params.find_prefix_params("memlink.");
-        memParams.insert("port", "memory");
-        memParams.insert("node", node);
-        memParams.insert("shared_memory", shmem);
-        memParams.insert("local_memory_size", localsize);
-        memParams.insert("latency", "1ns");
-        memParams.insert("addr_range_start", std::to_string(addrRangeStart), false);
-        memParams.insert("addr_range_end", std::to_string(addrRangeEnd), false);
-        memParams.insert("interleave_size", ilSize, false);
-        memParams.insert("interleave_step", ilStep, false);
-        memLink = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "memlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, memParams);
-        memLink->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
-        if (!memLink) {
-            dbg.fatal(CALL_INFO, -1, "%s, Error creating link to memory from directory controller\n", getName().c_str());
+    network = loadUserSubComponent<MemLinkBase>("cpulink");
+    memLink = loadUserSubComponent<MemLinkBase>("memlink");
+    if (network || memLink) {
+        if (!network) {
+            network = memLink;
+            memLink = nullptr;
         }
+
+        network->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
         memoryName = "";
+        if (!memLink) { // Need a memory name
+            dbg.verbose(_INFO_, "%s, Detected user defined subcomponent for either the cpu or mem link but not both. Assuming this component has just one link.\n", getName().c_str());
+            memoryName  = params.find<std::string>("net_memory_name", "");
+            if (memoryName == "")
+                dbg.fatal(CALL_INFO,-1,"Param not specified(%s): net_memory_name - name of the memory owned by this directory controller. If you intended to have a direct link to memory, please declare both a cpulink and memlink in your input configuration and ignore this parameter.\n", getName().c_str());
+        } else {
+            memLink->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
+        }
     } else {
-        memoryName  = params.find<std::string>("net_memory_name", "");
-        if (memoryName == "")
-            dbg.fatal(CALL_INFO,-1,"Param not specified(%s): net_memory_name - name of the memory owned by this directory controller. If you did not intend to connect to memory over the network, please connect memory to the 'memory' port and ignore this parameter.\n", getName().c_str());
-        memLink = NULL;
+        /* Set up links/network to cache & memory */
+        /* First, fixup nic parameters and warn that we're doing it */
+        if (fixupParam(params, "network_bw", "memNIC.network_bw"))
+            out.output(CALL_INFO, "Note (%s): Changed 'network_bw' to 'memNIC.network_bw' in params. Change your input file to remove this notice.\n", getName().c_str());
+        if (fixupParam(params, "network_input_buffer_size", "memNIC.network_input_buffer_size"))
+            out.output(CALL_INFO, "Note (%s): Changed 'network_input_buffer_size' to 'memNIC.network_input_buffer_size' in params. Change your input file to remove this notice.\n", getName().c_str());
+        if (fixupParam(params, "network_output_buffer_size", "memNIC.network_output_buffer_size"))
+            out.output(CALL_INFO, "Note (%s): Changed 'network_output_buffer_size' to 'memNIC.network_output_buffer_size' in params. Change your input file to remove this notice.\n", getName().c_str());
+        if (fixupParam(params, "addr_range_start", "memNIC.addr_range_start"))
+            out.output(CALL_INFO, "Note (%s): Changed 'addr_range_start' to 'memNIC.addr_range_start' in params. Change your input file to remove this notice.\n", getName().c_str());
+        if (fixupParam(params, "addr_range_end", "memNIC.addr_range_end"))
+            out.output(CALL_INFO, "Note (%s): Changed 'addr_range_end' to 'memNIC.addr_range_end' in params. Change your input file to remove this notice.\n", getName().c_str());
+        if (fixupParam(params, "interleave_size", "memNIC.interleave_size"))
+            out.output(CALL_INFO, "Note (%s): Changed 'interleave_size' to 'memNIC.interleave_size' in params. Change your input file to remove this notice.\n", getName().c_str());
+        if (fixupParam(params, "interleave_step", "memNIC.interleave_step"))
+            out.output(CALL_INFO, "Note (%s): Changed 'interleave_step' to 'memNIC.interleave_step' in params. Change your input file to remove this notice.\n", getName().c_str());
+        if (fixupParam(params, "min_packet_size", "memNIC.min_packet_size"))
+            out.output(CALL_INFO, "Note (%s): Changed 'min_packet_size' to 'memNIC.min_packet_size' in params. Change your input file to remove this notice.\n", getName().c_str());
 
+        Params nicParams = params.find_prefix_params("memNIC.");
+
+        nicParams.insert("group", "3", false);
+        int cl = nicParams.find<int>("group");
+        nicParams.insert("sources", std::to_string(cl - 1), false);
+        nicParams.insert("destinations", std::to_string(cl + 1), false);
+
+        // Determine which ports are connected
+        unsigned int portCount = 1;
+        if (isPortConnected("network_ack")) portCount++;
+        if (isPortConnected("network_fwd")) portCount++;
+        if (isPortConnected("network_data")) portCount++;
+        if (portCount == 4) {
+            nicParams.insert("req.port", "network");
+            nicParams.insert("ack.port", "network_ack");
+            nicParams.insert("fwd.port", "network_fwd");
+            nicParams.insert("data.port", "network_data");
+            network = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNICFour", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams);
+        } else {
+            nicParams.insert("port", "network");
+            network = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams);
+        }
+
+        network->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
+
+        if (isPortConnected("memory")) {
+            Params memParams = params.find_prefix_params("memlink.");
+            memParams.insert("port", "memory");
+            memParams.insert("latency", "1ns");
+            memParams.insert("addr_range_start", std::to_string(addrRangeStart), false);
+            memParams.insert("addr_range_end", std::to_string(addrRangeEnd), false);
+            memParams.insert("interleave_size", ilSize, false);
+            memParams.insert("interleave_step", ilStep, false);
+            memLink = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "memlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, memParams);
+            memLink->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
+            if (!memLink) {
+                dbg.fatal(CALL_INFO, -1, "%s, Error creating link to memory from directory controller\n", getName().c_str());
+            }
+            memoryName = "";
+        } else {
+            memoryName  = params.find<std::string>("net_memory_name", "");
+            if (memoryName == "")
+                dbg.fatal(CALL_INFO,-1,"Param not specified(%s): net_memory_name - name of the memory owned by this directory controller. If you did not intend to connect to memory over the network, please connect memory to the 'memory' port and ignore this parameter.\n", getName().c_str());
+            memLink = NULL;
+
+        }
     }
-
     clockHandler = new Clock::Handler<DirectoryController>(this, &DirectoryController::clock);
     defaultTimeBase = registerClock(params.find<std::string>("clock", "1GHz"), clockHandler);
     clockOn = true;

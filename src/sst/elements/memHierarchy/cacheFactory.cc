@@ -196,6 +196,63 @@ void Cache::createCoherenceManager(Params &params) {
  *      cache & low_network_0           : connected to network above talking to a cache and core/cache/bus below
  */
 void Cache::configureLinks(Params &params) {
+    linkUp_ = loadUserSubComponent<MemLinkBase>("cpulink");
+    if (linkUp_)
+        linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
+
+    linkDown_ = loadUserSubComponent<MemLinkBase>("memlink");
+    if (linkDown_)
+        linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
+
+    if (linkUp_ || linkDown_) {
+        if (!linkUp_ || !linkDown_)
+            out_->verbose(_INFO_, "%s, Detected user defined subcomponent for either the cpu or mem link but not both. Assuming this component has just one link.\n", getName().c_str());
+        if (!linkUp_)
+            linkUp_ = linkDown_;
+        if (!linkDown_)
+            linkDown_ = linkUp_;
+
+        // Check for cache slices and assign the NIC an appropriate region -> overrides the given one
+        uint64_t sliceCount         = params.find<uint64_t>("num_cache_slices", 1);
+        uint64_t sliceID            = params.find<uint64_t>("slice_id", 0);
+        std::string slicePolicy     = params.find<std::string>("slice_allocation_policy", "rr");
+        if (sliceCount == 1)
+            sliceID = 0;
+        else if (sliceCount > 1) {
+            if (sliceID >= sliceCount) 
+                out_->fatal(CALL_INFO,-1, "%s, Invalid param: slice_id - should be between 0 and num_cache_slices-1. You specified %" PRIu64 ".\n",
+                        getName().c_str(), sliceID);
+            if (slicePolicy != "rr") 
+                out_->fatal(CALL_INFO,-1, "%s, Invalid param: slice_allocation_policy - supported policy is 'rr' (round-robin). You specified '%s'.\n",
+                        getName().c_str(), slicePolicy.c_str());
+        } else {
+            d2_->fatal(CALL_INFO, -1, "%s, Invalid param: num_cache_slices - should be 1 or greater. You specified %" PRIu64 ".\n",
+                    getName().c_str(), sliceCount);
+        }
+
+        if (sliceCount > 1) {
+            region_.setDefault();
+            int lineSize = params.find<int>("cache_line_size", 64);
+            if (slicePolicy == "rr") {
+                region_.start = sliceID*lineSize;
+                region_.end = (uint64_t) - 1;
+                region_.interleaveSize = lineSize;
+                region_.interleaveStep = sliceCount*lineSize;
+            }
+            cacheArray_->setSliceAware(region_.interleaveSize, region_.interleaveStep);
+            linkDown_->setRegion(region_);
+        }
+
+        clockUpLink_ = linkUp_->isClocked();
+        clockDownLink_ = linkDown_->isClocked();
+        
+        region_ = linkDown_->getRegion();
+        linkUp_->setRegion(region_);
+
+        return;
+    }
+
+    
     bool highNetExists  = false;    // high_network_0 is connected -> direct link toward CPU (to bus or directly to other component)
     bool lowCacheExists = false;    // cache is connected -> direct link towards memory to cache
     bool lowDirExists   = false;    // directory is connected -> network link towards memory to directory

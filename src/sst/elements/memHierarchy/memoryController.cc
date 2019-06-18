@@ -182,28 +182,21 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     region_.interleaveSize = UnitAlgebra(ilSize).getRoundedValue();
     region_.interleaveStep = UnitAlgebra(ilStep).getRoundedValue();
 
-    if (isPortConnected("direct_link")) {
+    link_ = loadUserSubComponent<MemLinkBase>("cpulink");
+
+    if (!link_ && isPortConnected("direct_link")) {
         Params linkParams = params.find_prefix_params("cpulink.");
         linkParams.insert("port", "direct_link");
-        linkParams.insert("node", opalNode);
-        linkParams.insert("shared_memory", opalShMem);
-        linkParams.insert("local_memory_size", opalSize);
         linkParams.insert("latency", link_lat, false);
         linkParams.insert("accept_region", "1", false);
         link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, linkParams);
-        link_->setRecvHandler( new Event::Handler<MemController>(this, &MemController::handleEvent));
-        clockLink_ = false;
-    } else {
+    } else if (!link_) {
 
         if (!isPortConnected("network")) {
             out.fatal(CALL_INFO,-1,"%s, Error: No connected port detected. Connect 'direct_link' or 'network' port.\n", getName().c_str());
         }
 
         Params nicParams = params.find_prefix_params("memNIC.");
-        nicParams.insert("node", opalNode);
-        nicParams.insert("shared_memory", opalShMem);
-        nicParams.insert("local_memory_size", opalSize);
-        
         nicParams.insert("group", "4", false);
         nicParams.insert("accept_region", "1", false);
 
@@ -217,10 +210,10 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
             nicParams.insert("port", "network");
             link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams);
         }
-
-        link_->setRecvHandler( new Event::Handler<MemController>(this, &MemController::handleEvent) );
-        clockLink_ = true;
     }
+        
+    clockLink_ = link_->isClocked();
+    link_->setRecvHandler( new Event::Handler<MemController>(this, &MemController::handleEvent));
    
     if (gotRegion) 
         link_->setRegion(region_);

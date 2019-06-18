@@ -181,7 +181,8 @@ private:
         info.region.end = addrEnd;
         info.region.interleaveSize = UnitAlgebra(ilSize).getRoundedValue();
         info.region.interleaveStep = UnitAlgebra(ilStep).getRoundedValue();
-        info.name = getName();
+        std::size_t pos = getName().find(":");
+        info.name = getName().substr(0,pos);
         info.addr = 0;
         info.id = 0;
 
