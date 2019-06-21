@@ -60,7 +60,7 @@ libariel_la_LIBADD = $(SHM_LIB)
 if USE_LIBZ
 libariel_la_LDFLAGS += $(LIBZ_LDFLAGS)
 libariel_la_LIBADD += $(LIBZ_LIB)
-AM_CPPFLAGS += $(LIBZ_CPPFLAGS)
+AM_CPPFLAGS += $(LIBZ_CPPFLAGS) $(CUDA_CPPFLAGS)
 libariel_la_SOURCES += arielgzbintracegen.h arielgzbintracegen.cc
 endif
 
