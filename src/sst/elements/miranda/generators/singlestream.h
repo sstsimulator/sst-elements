@@ -46,11 +46,12 @@ public:
          )
 
       SST_ELI_DOCUMENT_PARAMS(
-            { "startat",      "Sets the start *index* for this generator", "2048" },
-            { "stopat",       "Sets the stop *index* for this generator, stop < start", "0" },
             { "verbose",      "Sets the verbosity of the output", "0" },
-            { "datawidth",    "Sets the width of the memory operation", "8" },
-            { "stride",       "Sets the stride", "1" }
+            { "count",        "Total number of requests", "1000" },
+            { "length",       "Sets the length of the request", "8" },
+            { "startat",      "Sets the start address of the array", "0" },
+            { "max_address",  "Maximum address allowed for generation", "524288" },
+            { "memOp",        "All reqeusts will be of this type, [Read/Write]", "Read" },
          )
 
    private:
