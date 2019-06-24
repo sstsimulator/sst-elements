@@ -46,11 +46,11 @@ public:
          )
 
       SST_ELI_DOCUMENT_PARAMS(
-            { "startat",         "Sets the start *index* for this generator", "2048" },
-            { "stopat",          "Sets the stop *index* for this generator, stop < start", "0" },
-            { "verbose",          "Sets the verbosity of the output", "0" },
-            { "datawidth",        "Sets the width of the memory operation", "8" },
-            { "stride",           "Sets the stride, since this is a reverse stream this is subtracted per iteration, def=1", "1" }
+            { "startat",      "Sets the start *index* for this generator", "2048" },
+            { "stopat",       "Sets the stop *index* for this generator, stop < start", "0" },
+            { "verbose",      "Sets the verbosity of the output", "0" },
+            { "datawidth",    "Sets the width of the memory operation", "8" },
+            { "stride",       "Sets the stride", "1" }
          )
 
    private:
@@ -59,7 +59,7 @@ public:
       uint64_t issueCount;
       uint64_t nextAddr;
       uint64_t startAddr;
-      
+
       Output*  out;
       ReqOperation memOp;
 
