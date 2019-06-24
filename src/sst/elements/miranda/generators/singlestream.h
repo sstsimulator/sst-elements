@@ -41,7 +41,7 @@ public:
             "miranda",
             "SingleStreamGenerator",
             SST_ELI_ELEMENT_VERSION(1,0,0),
-            "Creates a single reverse ordering stream of accesses to/from memory",
+            "Creates a single ordered stream of accesses to/from memory",
             SST::Miranda::RequestGenerator
          )
 
