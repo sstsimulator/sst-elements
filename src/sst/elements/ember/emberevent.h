@@ -25,6 +25,8 @@
 namespace SST {
 namespace Ember {
 
+#define EVENT_MASK (1<<2)
+
 typedef Hermes::MP::Functor FOO;
 typedef Hermes::Callback Callback;
 
@@ -33,6 +35,7 @@ typedef Hermes::Callback Callback;
     NAME( Issue ) \
     NAME( IssueFunctor ) \
     NAME( IssueCallback ) \
+    NAME( IssueCallbackPtr ) \
     NAME( Complete ) \
 
 #define GENERATE_ENUM(ENUM) ENUM,
@@ -49,10 +52,13 @@ public:
     } m_state;
 
 	EmberEvent( Output* output, EmberEventTimeStatistic* stat = NULL) :
-        m_state(Issue), m_output(output), m_evStat(stat), m_completeDelayNS(0)
+        m_state(Issue), m_output(output), m_evStat(stat), m_completeDelayNS(0), m_retvalPtr(NULL)
+	{}
+	EmberEvent( Output* output, int* retval) :
+        m_state(Issue), m_output(output), m_evStat(NULL), m_completeDelayNS(0), m_retvalPtr(retval)
 	{}
 	EmberEvent( ) : 
-        m_state(Issue), m_output(NULL), m_evStat(NULL), m_completeDelayNS(0) {}
+        m_state(Issue), m_output(NULL), m_evStat(NULL), m_completeDelayNS(0), m_retvalPtr(NULL) {}
 	~EmberEvent() {} 
 
 	virtual std::string getName() { return "?????"; };
@@ -62,7 +68,7 @@ public:
 
     virtual void issue( uint64_t time, FOO* = NULL ) {
         if ( m_output ) {
-            m_output->debug(CALL_INFO, 3, 0, "%s\n",getName().c_str());
+            m_output->debug(CALL_INFO, 3, EVENT_MASK, "%s\n",getName().c_str());
         }
         m_issueTime = time;
         m_state = Complete;
@@ -70,7 +76,15 @@ public:
 
     virtual void issue( uint64_t time, Callback ) {
         if ( m_output ) {
-            m_output->debug(CALL_INFO, 3, 0, "%s\n",getName().c_str());
+            m_output->debug(CALL_INFO, 3, EVENT_MASK, "%s\n",getName().c_str());
+        }
+        m_issueTime = time;
+        m_state = Complete;
+    }
+
+    virtual void issue( uint64_t time, Callback* ) {
+        if ( m_output ) {
+            m_output->debug(CALL_INFO, 3, EVENT_MASK, "%s\n",getName().c_str());
         }
         m_issueTime = time;
         m_state = Complete;
@@ -79,7 +93,11 @@ public:
     virtual bool complete( uint64_t time, int retval = 0 ) {
 
         if ( m_output ) {
-            m_output->debug(CALL_INFO, 3, 0, "%s\n",getName().c_str());
+            m_output->debug(CALL_INFO, 3, EVENT_MASK, "%s\n",getName().c_str());
+        }
+
+        if ( m_retvalPtr ) {
+            *m_retvalPtr = retval;
         }
         
         if ( m_evStat ) {
@@ -89,7 +107,7 @@ public:
     }
 
     virtual uint64_t completeDelayNS() {
-        m_output->debug(CALL_INFO, 2, 0, "delay=%" PRIu64 " ns\n",
+        m_output->debug(CALL_INFO, 2, EVENT_MASK, "delay=%" PRIu64 " ns\n",
                                                 m_completeDelayNS);
         return m_completeDelayNS;
     }
@@ -101,6 +119,7 @@ public:
     EmberEventTimeStatistic*  m_evStat;
     uint64_t            m_completeDelayNS;
     uint64_t            m_issueTime;
+    int*                m_retvalPtr;
     
     NotSerializable(EmberEvent)
 };

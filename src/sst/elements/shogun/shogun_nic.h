@@ -176,7 +176,7 @@ namespace Shogun {
      * initialized.
      * @return Link bandwidth of associated link
      */
-        virtual const UnitAlgebra& getLinkBW() const;
+        virtual const UnitAlgebra& getLinkBW() const override;
 
     private:
         SST::Output* output;
@@ -194,6 +194,8 @@ namespace Shogun {
         void reconfigureNIC(ShogunInitEvent* initEv);
 
         std::vector<Request*> initReqs;
+
+        UnitAlgebra bw;
     };
 
 }

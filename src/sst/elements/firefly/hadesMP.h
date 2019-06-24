@@ -54,6 +54,7 @@ class HadesMP : public MP::Interface
     ~HadesMP() {}
 
     virtual std::string getName() { return "HadesMP"; } 
+    virtual std::string getType() { return "mpi"; } 
 
 	virtual void setup() {} 
 	virtual void finish() {} 

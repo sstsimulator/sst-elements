@@ -21,6 +21,7 @@
 #include "libs/emberLib.h"
 #include "libs/miscEvents/emberGetNodeNumEvent.h"
 #include "libs/miscEvents/emberGetNumNodesEvent.h"
+#include "libs/miscEvents/emberMallocEvent.h"
 
 using namespace Hermes;
 
@@ -30,20 +31,32 @@ namespace Ember {
 class EmberMiscLib : public EmberLib {
 
   public:
-    EmberMiscLib( Output* output, Misc::Interface* api ) : m_output(output), m_api(api) {
-    }
+
+    SST_ELI_REGISTER_MODULE(
+        EmberMiscLib,
+        "Ember",
+        "Misc",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "",
+        "SST::Ember::EmberMiscLib"
+    )
+
+    EmberMiscLib( Params& params ) {}
 
     void getNodeNum( EmberGenerator::Queue& q, int* ptr ) {
-        q.push( new EmberGetNodeNumEvent( *m_api, m_output, ptr ) ); 
+        q.push( new EmberGetNodeNumEvent( api(), m_output, ptr ) ); 
     }
 
     void getNumNodes( EmberGenerator::Queue& q, int* ptr ) {
-        q.push( new EmberGetNumNodesEvent( *m_api, m_output, ptr ) ); 
+        q.push( new EmberGetNumNodesEvent( api(), m_output, ptr ) ); 
+    }
+
+    void malloc( EmberGenerator::Queue& q, Hermes::MemAddr* addr, size_t length, bool backed = false ) {
+        q.push( new EmberMallocEvent( api(), m_output, addr, length, backed ) ); 
     }
 
   private:
-    Output* m_output;
-    Misc::Interface* m_api;
+	Misc::Interface& api() { return *static_cast<Misc::Interface*>(m_api); }
 };
 
 }

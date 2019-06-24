@@ -35,9 +35,11 @@ namespace MemHierarchy {
 #ifdef __SST_DEBUG_OUTPUT__ /* From sst-core, enable with --enable-debug */
 #define is_debug_addr(addr) (DEBUG_ADDR.empty() || DEBUG_ADDR.find(addr) != DEBUG_ADDR.end())
 #define is_debug_event(ev) (DEBUG_ADDR.empty() || ev->doDebug(DEBUG_ADDR))
+#define is_debug true
 #else
 #define is_debug_addr(addr) false
 #define is_debug_event(ev) false
+#define is_debug false
 #endif
 
 #define _INFO_ CALL_INFO,1,0

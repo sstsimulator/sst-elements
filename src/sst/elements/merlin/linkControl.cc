@@ -53,6 +53,96 @@ LinkControl::LinkControl(Component* parent, Params &params) :
     }
 }
     
+LinkControl::LinkControl(ComponentId_t cid, Params &params, int vns) :
+    SST::Interfaces::SimpleNetwork(cid),
+    rtr_link(NULL), output_timing(NULL),
+    req_vns(vns), total_vns(0), checker_board_factor(1), id(-1),
+    rr(0), input_buf(NULL), output_buf(NULL),
+    rtr_credits(NULL), in_ret_credits(NULL),
+    curr_out_vn(0), waiting(true), have_packets(false), start_block(0),
+    idle_start(0),
+    is_idle(true),
+    receiveFunctor(NULL), sendFunctor(NULL),
+    network_initialized(false),
+    output(Simulation::getSimulation()->getSimulationOutput())
+{
+    // Get the checkerboard factor
+    checker_board_factor = params.find<int>("checkerboard", 1);
+    std::string checkerboard_alg = params.find<std::string>("checkerboard_alg","deterministic");
+    if ( checkerboard_alg == "roundrobin" ) {
+        cb_alg = ROUNDROBIN;
+    }
+    else if ( checkerboard_alg == "deterministic" ) {
+        cb_alg = DETERMINISTIC;
+    }
+    else {
+        merlin_abort.fatal(CALL_INFO,-1,"Unknown checkerboard_alg requested: %s\n",checkerboard_alg.c_str());
+    }
+
+    total_vns = vns * checker_board_factor;
+
+    // Get the link bandwidth
+    link_bw = params.find<UnitAlgebra>("link_bw");
+    if ( !link_bw.hasUnits("B/s") && !link_bw.hasUnits("b/s") ) {
+        merlin_abort.fatal(CALL_INFO,1,"Error: link_bw must be specified in either B/s or b/s (SI prefix also allowed)\n");
+    }
+
+    if ( link_bw.hasUnits("B/s") ) {
+        link_bw *= UnitAlgebra("8b/B");
+    }
+
+    // Input and output buffers
+    input_buf = new network_queue_t[req_vns];
+    output_buf = new network_queue_t[total_vns];
+
+    // Initialize credit arrays.  Credits are in flits, and we don't
+    // yet know the flit size, so can't initialize in_ret_credits and
+    // outbuf_credits yet.  Will initialize them after we get the
+    // flit_size
+    rtr_credits = new int[total_vns];
+    in_ret_credits = new int[total_vns];
+    outbuf_credits = new int[req_vns];
+
+    // Get the buffer sizes
+    inbuf_size = params.find<UnitAlgebra>("in_buf_size","1kB");
+    if ( !inbuf_size.hasUnits("b") && !inbuf_size.hasUnits("B") ) {
+        merlin_abort.fatal(CALL_INFO,-1,"in_buf_size must be specified in either "
+                           "bits or bytes: %s\n",inbuf_size.toStringBestSI().c_str());
+    }
+    if ( inbuf_size.hasUnits("B") ) inbuf_size *= UnitAlgebra("8b/B");
+
+    outbuf_size = params.find<UnitAlgebra>("out_buf_size","1kB");
+    if ( !outbuf_size.hasUnits("b") && !outbuf_size.hasUnits("B") ) {
+        merlin_abort.fatal(CALL_INFO,-1,"out_buf_size must be specified in either "
+                           "bits or bytes: %s\n",outbuf_size.toStringBestSI().c_str());
+    }
+    if ( outbuf_size.hasUnits("B") ) outbuf_size *= UnitAlgebra("8b/B");
+
+    // The output credits are set to zero and the other side of the
+    // link will send the number of tokens.
+    for ( int i = 0; i < total_vns; i++ ) rtr_credits[i] = 0;
+
+    // Configure the links
+    // For now give it a fake timebase.  Will give it the real timebase during init
+
+    // Need to get the right port_name
+    std::string port_name("rtr_port");
+    if ( isAnonymous() ) {
+        port_name = params.find<std::string>("port_name");
+    }
+    
+    rtr_link = configureLink(port_name, std::string("1GHz"), new Event::Handler<LinkControl>(this,&LinkControl::handle_input));
+
+    output_timing = configureSelfLink(port_name + "_output_timing", "1GHz",
+            new Event::Handler<LinkControl>(this,&LinkControl::handle_output));
+
+    // Register statistics
+    packet_latency = registerStatistic<uint64_t>("packet_latency");
+    send_bit_count = registerStatistic<uint64_t>("send_bit_count");
+    output_port_stalls = registerStatistic<uint64_t>("output_port_stalls");
+    idle_time = registerStatistic<uint64_t>("idle_time");
+}
+    
 bool
 LinkControl::initialize(const std::string& port_name, const UnitAlgebra& link_bw_in,
                         int vns, const UnitAlgebra& in_buf_size,
@@ -183,7 +273,7 @@ void LinkControl::init(unsigned int phase)
         
         // std::cout << link_clock.toStringBestSI() << std::endl;
         
-        TimeConverter* tc = parent->getTimeConverter(link_clock);
+        TimeConverter* tc = getTimeConverter(link_clock);
         output_timing->setDefaultTimeBase(tc);
         
         // Initialize links
@@ -337,14 +427,11 @@ bool LinkControl::send(SimpleNetwork::Request* req, int vn) {
         waiting = false;
     }
 
-    ev->setInjectionTime(parent->getCurrentSimTimeNano());
+    ev->setInjectionTime(getCurrentSimTimeNano());
 
     if ( ev->getTraceType() != SimpleNetwork::Request::NONE ) {
         output.output("TRACE(%d): %" PRIu64 " ns: Send on LinkControl in NIC: %s\n",ev->getTraceID(),
-                      parent->getCurrentSimTimeNano(), parent->getName().c_str());
-        // std::cout << "TRACE(" << ev->getTraceID() << "): " << parent->getCurrentSimTimeNano()
-        //           << " ns: Sent on LinkControl in NIC: "
-        //           << parent->getName() << std::endl;
+                      getCurrentSimTimeNano(), getName().c_str());
     }
     return true;
 }
@@ -381,10 +468,7 @@ SST::Interfaces::SimpleNetwork::Request* LinkControl::recv(int vn) {
     
     if ( event->getTraceType() != SimpleNetwork::Request::NONE ) {
         output.output("TRACE(%d): %" PRIu64 " ns: recv called on LinkControl in NIC: %s\n",event->getTraceID(),
-                      parent->getCurrentSimTimeNano(), parent->getName().c_str());
-        // std::cout << "TRACE(" << event->getTraceID() << "): " << parent->getCurrentSimTimeNano()
-        //           << " ns: recv called on LinkControl in NIC: "
-        //           << parent->getName() << std::endl;
+                      getCurrentSimTimeNano(), getName().c_str());
     }
 
     SST::Interfaces::SimpleNetwork::Request* ret = event->request;
@@ -466,17 +550,12 @@ void LinkControl::handle_input(Event* ev)
             output.output("TRACE(%d): %" PRIu64 " ns: Received and event on LinkControl in NIC: %s"
                           " on VN %d from src %" PRIu64 "\n",
                           event->request->getTraceID(),
-                          parent->getCurrentSimTimeNano(),
-                          parent->getName().c_str(),
+                          getCurrentSimTimeNano(),
+                          getName().c_str(),
                           event->request->vn,
                           event->request->src);
-
-            // std::cout << "TRACE(" << event->request->getTraceID() << "): " << parent->getCurrentSimTimeNano()
-            //           << " ns: Received an event on LinkControl in NIC: "
-            //           << parent->getName() << " on VN " << event->request->vn << " from src " << event->request->src
-            //           << "." << std::endl;
         }
-        SimTime_t lat = parent->getCurrentSimTimeNano() - event->getInjectionTime();
+        SimTime_t lat = getCurrentSimTimeNano() - event->getInjectionTime();
         packet_latency->addData(lat);
         // stats.insertPacketLatency(lat);
         // std::cout << "Exit handle_input" << std::endl;
@@ -548,7 +627,7 @@ void LinkControl::handle_output(Event* ev)
         if ( curr_out_vn == total_vns ) curr_out_vn = 0;
 
         // Add in inject time so we can track latencies
-        send_event->setInjectionTime(parent->getCurrentSimTimeNano());
+        send_event->setInjectionTime(getCurrentSimTimeNano());
         
         // Subtract credits
         rtr_credits[vn_to_send] -= size;
@@ -567,15 +646,10 @@ void LinkControl::handle_output(Event* ev)
             output.output("TRACE(%d): %" PRIu64 " ns: Sent an event to router from LinkControl"
                           " in NIC: %s on VN %d to dest %" PRIu64 ".\n",
                           send_event->getTraceID(),
-                          parent->getCurrentSimTimeNano(),
-                          parent->getName().c_str(),
+                          getCurrentSimTimeNano(),
+                          getName().c_str(),
                           send_event->request->vn,
                           send_event->request->dest);
-
-            // std::cout << "TRACE(" << send_event->getTraceID() << "): " << parent->getCurrentSimTimeNano()
-            //           << " ns: Sent an event to router from LinkControl in NIC: "
-            //           << parent->getName() << " on VN " << send_event->request->vn << " to dest " << send_event->request->dest
-            //           << "." << std::endl;
         }
         send_bit_count->addData(send_event->request->size_in_bits);
         if (sendFunctor != NULL ) {

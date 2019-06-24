@@ -21,6 +21,7 @@
 #include "sst/elements/memHierarchy/membackend/timingAddrMapper.h"
 #include "sst/elements/memHierarchy/membackend/timingTransaction.h"
 #include "sst/elements/memHierarchy/membackend/timingPagePolicy.h"
+#include "sst/elements/memHierarchy/util.h"
 
 namespace SST {
 namespace MemHierarchy {
@@ -97,6 +98,10 @@ private:
             m_output->verbosePrefix( prefix(), line,"",func, 2, DBG_MASK, "%s", buf );
         }
 
+        bool isIdle() {
+            return (m_row == -1 || !m_pagePolicy->canClose()) && m_cmdQ.empty() && m_transQ->empty();
+        }
+
         unsigned getRank() { return m_rank; }
         unsigned getBank() { return m_bank; }
 
@@ -139,15 +144,16 @@ private:
                 m_name = "COL";
                 break;
             }
-            m_bank->verbose(__LINE__,__FUNCTION__,"new %s for rank=%d bank=%d row=%d\n",
-                    getName().c_str(), getRank(), getBank(), getRow());
+            if (is_debug)
+                m_bank->verbose(__LINE__,__FUNCTION__,"new %s for rank=%d bank=%d row=%d\n",
+                        getName().c_str(), getRank(), getBank(), getRow());
         }
 
         ~Cmd() {
             m_bank->clearLastCmd();
         }
 
-        unsigned issue() {
+        SimTime_t issue() {
 
             m_bank->setLastCmd(this);
 
@@ -188,7 +194,7 @@ private:
                 m_finiTime += m_dataCycles;
                 m_dataBusAvailCycle = m_finiTime;
                 ret = true;
-            } else {
+            } else if (is_debug) {
                 m_bank->verbose(__LINE__,__FUNCTION__,"bus not ready\n");
             }
 
@@ -197,7 +203,8 @@ private:
 
         bool isDone( SimTime_t now ) {
 
-            m_bank->verbose(__LINE__,__FUNCTION__,"%lu %lu\n",now,m_finiTime);
+            if (is_debug)
+                m_bank->verbose(__LINE__,__FUNCTION__,"%lu %lu\n",now,m_finiTime);
             return ( now >= m_finiTime );
         }
 
@@ -235,10 +242,17 @@ private:
         void pushTrans( Transaction* trans ) {
             unsigned bank = m_mapper->getBank( trans->addr);
 
-            m_output->verbosePrefix(prefix(),CALL_INFO, 2, DBG_MASK,"bank=%d addr=%#" PRIx64 "\n",
-                bank,trans->addr);
+            if (is_debug)
+                m_output->verbosePrefix(prefix(),CALL_INFO, 2, DBG_MASK,"bank=%d addr=%#" PRIx64 "\n",
+                    bank,trans->addr);
 
             m_banks[bank]->pushTrans( trans );
+
+            m_banksActive.insert(bank);
+        }
+
+        bool hasActiveBanks() {
+            return !m_banksActive.empty();
         }
 
       private:
@@ -250,6 +264,7 @@ private:
 
         unsigned            m_nextBankUp;
         std::vector<Bank*>  m_banks;
+        std::set<unsigned>  m_banksActive;
     };
 
     class Channel : public ComponentExtension {
@@ -269,7 +284,8 @@ private:
 
             unsigned rank = m_mapper->getRank( addr);
 
-            m_output->verbosePrefix(prefix(),CALL_INFO, 3, DBG_MASK,"reqId=%" PRIu64 " rank=%d addr=%#" PRIx64 ", createTime=%" PRIu64 "\n", id, rank, addr, createTime );
+            if (is_debug)
+                m_output->verbosePrefix(prefix(),CALL_INFO, 3, DBG_MASK,"reqId=%" PRIu64 " rank=%d addr=%#" PRIx64 ", createTime=%" PRIu64 "\n", id, rank, addr, createTime );
 
             Transaction* trans = new Transaction( createTime, id, addr, isWrite, numBytes, m_mapper->getBank(addr),
                                                 m_mapper->getRow(addr) );
