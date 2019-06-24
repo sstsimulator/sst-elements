@@ -36,8 +36,8 @@ void ReverseSingleStreamGenerator::build(Params& params) {
 
 	out = new Output("ReverseSingleStreamGenerator[@p:@l]: ", verbose, 0, Output::STDOUT);
 
-	stopIndex   = params.find<uint64_t>("stop_at", 0);
-	startIndex  = params.find<uint64_t>("start_at", 1024);
+	stopIndex   = params.find<uint64_t>("stopat", 0);
+	startIndex  = params.find<uint64_t>("startat", 1024);
 	datawidth   = params.find<uint64_t>("datawidth", 8);
 	stride      = params.find<uint64_t>("stride", 1);
 
