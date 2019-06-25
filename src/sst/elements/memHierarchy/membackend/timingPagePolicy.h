@@ -26,6 +26,7 @@ class PagePolicy : public SST::SubComponent {
     PagePolicy( Component* owner, Params& params ) : SubComponent( owner )  { }
     PagePolicy( ComponentId_t id, Params& params ) : SubComponent( id )  { }
     virtual bool shouldClose( SimTime_t current ) = 0;
+    virtual bool canClose() = 0 ;
 };
 
 class SimplePagePolicy : public PagePolicy {
@@ -47,6 +48,11 @@ class SimplePagePolicy : public PagePolicy {
     bool shouldClose( SimTime_t current ) {
         return m_close;
     }
+
+    bool canClose() {
+        return m_close; 
+    }
+
   protected:
     bool m_close;
 };
@@ -79,6 +85,10 @@ class TimeoutPagePolicy : public PagePolicy {
         m_lastCycle = current;
 
         return (m_numCyclesLeft == 0);
+    }
+
+    bool canClose() {
+        return true;
     }
 
   protected:

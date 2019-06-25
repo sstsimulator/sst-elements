@@ -2,14 +2,14 @@
 0:TimingDRAM::build():55:mc=0: address mapper:     memHierarchy.simpleAddrMapper
 0:TimingDRAM:Channel:Channel():111:mc=0:chan=0: max pending trans: 32
 0:TimingDRAM:Channel:Channel():112:mc=0:chan=0: number of ranks:   2
-0:TimingDRAM:Rank:Rank():208:mc=0:chan=0:rank=0: number of banks: 16
-0:TimingDRAM:Bank:Bank():267:mc=0:chan=0:rank=0:bank=0: CL:           15
-0:TimingDRAM:Bank:Bank():268:mc=0:chan=0:rank=0:bank=0: CL_WR:        12
-0:TimingDRAM:Bank:Bank():269:mc=0:chan=0:rank=0:bank=0: RCD:          15
-0:TimingDRAM:Bank:Bank():270:mc=0:chan=0:rank=0:bank=0: TRP:          15
-0:TimingDRAM:Bank:Bank():271:mc=0:chan=0:rank=0:bank=0: dataCycles:   4
-0:TimingDRAM:Bank:Bank():272:mc=0:chan=0:rank=0:bank=0: transactionQ: memHierarchy.reorderTransactionQ
-0:TimingDRAM:Bank:Bank():273:mc=0:chan=0:rank=0:bank=0: pagePolicy:   memHierarchy.simplePagePolicy
+0:TimingDRAM:Rank:Rank():219:mc=0:chan=0:rank=0: number of banks: 16
+0:TimingDRAM:Bank:Bank():285:mc=0:chan=0:rank=0:bank=0: CL:           15
+0:TimingDRAM:Bank:Bank():286:mc=0:chan=0:rank=0:bank=0: CL_WR:        12
+0:TimingDRAM:Bank:Bank():287:mc=0:chan=0:rank=0:bank=0: RCD:          15
+0:TimingDRAM:Bank:Bank():288:mc=0:chan=0:rank=0:bank=0: TRP:          15
+0:TimingDRAM:Bank:Bank():289:mc=0:chan=0:rank=0:bank=0: dataCycles:   4
+0:TimingDRAM:Bank:Bank():290:mc=0:chan=0:rank=0:bank=0: transactionQ: memHierarchy.reorderTransactionQ
+0:TimingDRAM:Bank:Bank():291:mc=0:chan=0:rank=0:bank=0: pagePolicy:   memHierarchy.simplePagePolicy
  krtr_req_0.send_bit_count.north : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  krtr_req_0.output_port_stalls.north : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  krtr_req_0.xbar_stalls.north : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
