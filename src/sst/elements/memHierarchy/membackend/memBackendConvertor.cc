@@ -31,31 +31,23 @@ using namespace SST::MemHierarchy;
 
 MemBackendConvertor::MemBackendConvertor(Component *comp, Params& params ) : 
     SubComponent(comp), m_cycleCount(0), m_reqId(0)
-{ build(params); }
+{
+    m_dbg.init("", 0, 0, Output::STDOUT);
+    m_dbg.fatal(CALL_INFO, -1, "%s, Error: MembackendConvertor does not support loading as legacy subcomponent\n", getName().c_str());
+}
 
-MemBackendConvertor::MemBackendConvertor(ComponentId_t id, Params& params ) :
-    SubComponent(id), m_cycleCount(0), m_reqId(0) 
-{ build(params); }
-
-void MemBackendConvertor::build(Params& params) {
+MemBackendConvertor::MemBackendConvertor(ComponentId_t id, Params& params, MemBackend* backend, uint32_t request_width) :
+    SubComponent(id), m_cycleCount(0), m_reqId(0), m_backend(backend) 
+{
     m_dbg.init("", 
             params.find<uint32_t>("debug_level", 0),
             params.find<uint32_t>("debug_mask", 0),
             (Output::output_location_t)params.find<int>("debug_location", 0 ));
 
-
-    m_backend = loadUserSubComponent<MemBackend>("backend");
-    if (!m_backend) {
-        // extract backend parameters for memH.
-        string backendName  = params.find<std::string>("backend", "memHierarchy.simpleMem");
-        Params backendParams = params.find_prefix_params("backend.");
-        m_backend = loadAnonymousSubComponent<MemBackend>(backendName, "backend", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, backendParams);
-    }
-
     using std::placeholders::_1;
     m_backend->setGetRequestorHandler( std::bind( &MemBackendConvertor::getRequestor, this, _1 )  );
 
-    m_frontendRequestWidth =  params.find<uint32_t>("request_width",64);
+    m_frontendRequestWidth =  request_width;
     m_backendRequestWidth = static_cast<SimpleMemBackend*>(m_backend)->getRequestWidth();
     if ( m_backendRequestWidth > m_frontendRequestWidth ) {
         m_backendRequestWidth = m_frontendRequestWidth;
@@ -64,12 +56,12 @@ void MemBackendConvertor::build(Params& params) {
     m_clockBackend = m_backend->isClocked();
     
     stat_GetSReqReceived    = registerStatistic<uint64_t>("requests_received_GetS");
-    stat_GetSXReqReceived  = registerStatistic<uint64_t>("requests_received_GetSX");
+    stat_GetSXReqReceived   = registerStatistic<uint64_t>("requests_received_GetSX");
     stat_GetXReqReceived    = registerStatistic<uint64_t>("requests_received_GetX");
     stat_PutMReqReceived    = registerStatistic<uint64_t>("requests_received_PutM");
     stat_outstandingReqs    = registerStatistic<uint64_t>("outstanding_requests");
     stat_GetSLatency        = registerStatistic<uint64_t>("latency_GetS");
-    stat_GetSXLatency      = registerStatistic<uint64_t>("latency_GetSX");
+    stat_GetSXLatency       = registerStatistic<uint64_t>("latency_GetSX");
     stat_GetXLatency        = registerStatistic<uint64_t>("latency_GetX");
     stat_PutMLatency        = registerStatistic<uint64_t>("latency_PutM");
 
@@ -244,10 +236,6 @@ void MemBackendConvertor::sendResponse( SST::Event::id_type id, uint32_t flags )
 void MemBackendConvertor::finish(void) {
     stat_totalCycles->addData(m_cycleCount);
     m_backend->finish();
-}
-
-const std::string& MemBackendConvertor::getClockFreq() {
-    return m_backend->getClockFreq();
 }
 
 size_t MemBackendConvertor::getMemSize() {

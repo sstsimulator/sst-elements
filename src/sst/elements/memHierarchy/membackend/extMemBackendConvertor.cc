@@ -39,8 +39,8 @@ ExtMemBackendConvertor::ExtMemBackendConvertor(Component *comp, Params &params) 
     static_cast<ExtMemBackend*>(m_backend)->setResponseHandler( std::bind( &ExtMemBackendConvertor::handleMemResponse, this, _1,_2 ) );
 }
 
-ExtMemBackendConvertor::ExtMemBackendConvertor(ComponentId_t id, Params &params) :
-    MemBackendConvertor(id,params)
+ExtMemBackendConvertor::ExtMemBackendConvertor(ComponentId_t id, Params &params, MemBackend * backend, uint32_t reqWidth) :
+    MemBackendConvertor(id, params, backend, reqWidth)
 {
     using std::placeholders::_1;
     using std::placeholders::_2;

@@ -1,5 +1,6 @@
 # Automatically generated SST Python input
 import sst
+from mhlib import componentlist
 
 # Define the simulation components
 comp_cpu0 = sst.Component("cpu0", "memHierarchy.trivialCPU")
@@ -124,19 +125,24 @@ comp_n2_bus = sst.Component("n2.bus", "memHierarchy.Bus")
 comp_n2_bus.addParams({
       "bus_frequency" : "2GHz"
 })
-comp_l3cache = sst.Component("l3cache", "memHierarchy.Cache")
-comp_l3cache.addParams({
-      "access_latency_cycles" : "19",
-      "cache_frequency" : "2GHz",
-      "replacement_policy" : "nmru",
-      "coherence_protocol" : "MESI",
-      "associativity" : "16",
-      "cache_line_size" : "64",
-      "cache_size" : "64KiB",
-      "debug" : "0",
-      "memNIC.network_bw" : "40GB/s",
-      "memNIC.input_buffer_size" : "2KiB",
-      "memNIC.output_buffer_size" : "2KiB",
+l3cache = sst.Component("l3cache", "memHierarchy.Cache")
+l3cache.addParams({
+    "access_latency_cycles" : "19",
+    "cache_frequency" : "2GHz",
+    "replacement_policy" : "nmru",
+    "coherence_protocol" : "MESI",
+    "associativity" : "16",
+    "cache_line_size" : "64",
+    "cache_size" : "64KiB",
+    "debug" : "0",
+})
+l3tol2 = l3cache.setSubComponent("cpulink", "memHierarchy.MemLink")
+l3NIC = l3cache.setSubComponent("memlink", "memHierarchy.MemNIC")
+l3NIC.addParams({
+    "group" : 1,
+    "network_bw" : "40GB/s",
+    "input_buffer_size" : "2KiB",
+    "output_buffer_size" : "2KiB",
 })
 comp_chiprtr = sst.Component("chiprtr", "merlin.hr_router")
 comp_chiprtr.addParams({
@@ -149,42 +155,50 @@ comp_chiprtr.addParams({
       "id" : "0",
       "topology" : "merlin.singlerouter"
 })
-comp_dirctrl = sst.Component("dirctrl", "memHierarchy.DirectoryController")
-comp_dirctrl.addParams({
+dirctrl = sst.Component("dirctrl", "memHierarchy.DirectoryController")
+dirctrl.addParams({
       "clock" : "1.5GHz",
       "coherence_protocol" : "MESI",
       "debug" : "0",
       "entry_cache_size" : "16384",
-      "memNIC.addr_range_end" : "0x1F000000",
-      "memNIC.addr_range_start" : "0x0",
-      "memNIC.network_bw" : "40GB/s",
-      "memNIC.input_buffer_size" : "2KiB",
-      "memNIC.output_buffer_size" : "2KiB",
 })
-comp_memory = sst.Component("memory", "memHierarchy.MemController")
-comp_memory.addParams({
-    "backend.mem_size" : "512MiB",
+dirtoM = dirctrl.setSubComponent("memlink", "memHierarchy.MemLink")
+dirNIC = dirctrl.setSubComponent("cpulink", "memHierarchy.MemNIC")
+dirNIC.addParams({
+    "group" : 2,
+    "addr_range_end" : "0x1F000000",
+    "addr_range_start" : "0x0",
+    "network_bw" : "40GB/s",
+    "input_buffer_size" : "2KiB",
+    "output_buffer_size" : "2KiB",
+})
+memctrl = sst.Component("memory", "memHierarchy.MemController")
+memctrl.addParams({
     "clock" : "500MHz",
-    "max_requests_per_cycle" : 50,
     "backing" : "none",
-    "backend" : "memHierarchy.reorderByRow",
-    "backend.max_issue_per_cycle" : 2,
-    "backend.reorder_limit" : "20",
-    "backend.backend" : "memHierarchy.simpleDRAM",
-    "backend.backend.tCAS" : 3, # 11@800MHz roughly coverted to 200MHz
-    "backend.backend.tRCD" : 3,
-    "backend.backend.tRP" : 3,
-    "backend.backend.cycle_time" : "5ns",
-    "backend.backend.row_size" : "8KiB",
-    "backend.backend.row_policy" : "open"
+})
+memreorder = memctrl.setSubComponent("backend", "memHierarchy.reorderByRow")
+memreorder.addParams({
+    "max_requests_per_cycle" : 50,  # Num requests the backend can accept per cycle
+    "max_issue_per_cycle" : 2,      # Num requests the backend can send per cycle
+    "reorder_limit" : "20",
+})
+memory = memreorder.setSubComponent("backend", "memHierarchy.simpleDRAM")
+memory.addParams({
+    "mem_size" : "512MiB",
+    "tCAS" : 3, # 11@800MHz roughly coverted to 200MHz
+    "tRCD" : 3,
+    "tRP" : 3,
+    "cycle_time" : "5ns",
+    "row_size" : "8KiB",
+    "row_policy" : "open"
 })
 
 # Enable statistics
 sst.setStatisticLoadLevel(7)
 sst.setStatisticOutput("sst.statOutputConsole")
-sst.enableAllStatisticsForComponentType("memHierarchy.Cache")
-sst.enableAllStatisticsForComponentType("memHierarchy.MemController")
-sst.enableAllStatisticsForComponentType("memHierarchy.DirectoryController")
+for a in componentlist:
+    sst.enableAllStatisticsForComponentType(a)
 
 
 # Define the simulation links
@@ -213,11 +227,11 @@ link_bus_n1L2cache.connect( (comp_n1_bus, "low_network_0", "200ps"), (comp_n1_l2
 link_n1L2cache_bus = sst.Link("link_n1L2cache_bus")
 link_n1L2cache_bus.connect( (comp_n1_l2cache, "low_network_0", "200ps"), (comp_n2_bus, "high_network_1", "200ps") )
 link_bus_l3cache = sst.Link("link_bus_l3cache")
-link_bus_l3cache.connect( (comp_n2_bus, "low_network_0", "200ps"), (comp_l3cache, "high_network_0", "200ps") )
+link_bus_l3cache.connect( (comp_n2_bus, "low_network_0", "200ps"), (l3tol2, "port", "200ps") )
 link_cache_net_0 = sst.Link("link_cache_net_0")
-link_cache_net_0.connect( (comp_l3cache, "directory", "200ps"), (comp_chiprtr, "port1", "150ps") )
+link_cache_net_0.connect( (l3NIC, "port", "200ps"), (comp_chiprtr, "port1", "150ps") )
 link_dir_net_0 = sst.Link("link_dir_net_0")
-link_dir_net_0.connect( (comp_chiprtr, "port0", "150ps"), (comp_dirctrl, "network", "150ps") )
+link_dir_net_0.connect( (comp_chiprtr, "port0", "150ps"), (dirNIC, "port", "150ps") )
 link_dir_mem_link = sst.Link("link_dir_mem_link")
-link_dir_mem_link.connect( (comp_dirctrl, "memory", "200ps"), (comp_memory, "direct_link", "200ps") )
+link_dir_mem_link.connect( (dirtoM, "port", "200ps"), (memctrl, "direct_link", "200ps") )
 # End of generated output.

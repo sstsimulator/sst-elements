@@ -126,6 +126,8 @@ public:
     EndpointInfo getEndpointInfo() { return info; }
     void setEndpointInfo(EndpointInfo i) { info = i; }
 
+    void setName(std::string name) { info.name = name; }
+
 protected:
 
     // Debug stuff

@@ -42,7 +42,7 @@ public:
             {"clock",               "(string) Clock frequency of controller", NULL},\
             {"backendConvertor",    "(string) Backend convertor to load", "memHierarchy.simpleMembackendConvertor"},\
             {"backend",             "(string) Backend memory model to use for timing.  Defaults to simpleMem", "memHierarchy.simpleMem"},\
-            {"max_requests_per_cycle",  "(int) Maximum number of requests to accept per cycle. 0 or negative is unlimited. Default is 1 for simpleMem backend, unlimited otherwise.", "1"},\
+            {"request_width",       "(uint) Max request width to the backend", "64"},\
             {"trace_file",          "(string) File name (optional) of a trace-file to generate.", ""},\
             {"verbose",             "(uint) Output verbosity for warnings/errors. 0[fatal error only], 1[warnings], 2[full state dump on fatal error]","1"},\
             {"debug_level",         "(uint) Debugging level: 0 to 10. Must configure sst-core with '--enable-debug'. 1=info, 2-10=debug output", "0"},\
@@ -57,18 +57,7 @@ public:
             {"addr_range_end",      "(uint) Highest address handled by this memory.", "uint64_t-1"},\
             {"interleave_size",     "(string) Size of interleaved chunks. E.g., to interleave 8B chunks among 3 memories, set size=8B, step=24B", "0B"},\
             {"interleave_step",     "(string) Distance between interleaved chunks. E.g., to interleave 8B chunks among 3 memories, set size=8B, step=24B", "0B"},\
-            {"customCmdMemHandler", "(string) Name of the custom command handler to load", ""},\
-            {"node",		    "Node number in multinode environment"},\
-            /* Old parameters - deprecated or moved */\
-            {"do_not_back",         "DEPRECATED. Use parameter 'backing' instead.", "0"}, /* Remove 9.0 */\
-            {"network_num_vc",      "DEPRECATED. Number of virtual channels (VCs) on the on-chip network. memHierarchy only uses one VC.", "1"}, /* Remove 9.0 */\
-            {"coherence_protocol",  "DEPRECATED. No longer needed. Coherence protocol.  Supported: MESI (default), MSI. Only used when a directory controller is not present.", "MESI"}, /* Remove 9.0 */\
-            {"network_address",     "DEPRECATED - Now auto-detected by link control."}, /* Remove 9.0 */\
-            {"network_bw",          "MOVED. Now a member of the MemNIC subcomponent.", NULL}, /* Remove 9.0 */\
-            {"network_input_buffer_size",   "MOVED. Now a member of the MemNIC subcomponent.", "1KiB"}, /* Remove 9.0 */\
-            {"network_output_buffer_size",  "MOVED. Now a member of the MemNIC subcomponent.", "1KiB"}, /* Remove 9.0 */\
-            {"direct_link_latency", "MOVED. Now a member of the MemLink subcomponent.", "10 ns"}, /* Remove 9.0 */\
-            {"request_width",       "MOVED. Now a member of the backendConvertor subcomponent", "64"} /* Remove 9.0 */
+            {"customCmdMemHandler", "(string) Name of the custom command handler to load", ""}
 
     SST_ELI_DOCUMENT_PARAMS( MEMCONTROLLER_ELI_PARAMS )
 
@@ -82,10 +71,10 @@ public:
     SST_ELI_DOCUMENT_PORTS( MEMCONTROLLER_ELI_PORTS )
     
 
-#define MEMCONTROLLER_ELI_SUBCOMPONENTSLOTS {"backendConvertor", "Convertor to translate incoming memory events for the backend", "SST::MemHierarchy::MemBackendConvertor"},\
+#define MEMCONTROLLER_ELI_SUBCOMPONENTSLOTS {"backend", "Backend memory model to use for timing. Defaults to simpleMem", "SST::MemHierarchy::MemBackend"},\
             {"customCmdHandler", "Optional handler for custom command types", "SST::MemHierarchy::CustomCmdMemHandler"}, \
             {"listener", "Optional listeners to gather statistics, create traces, etc. Multiple listeners supported.", "SST::MemHierarchy::CacheListener"}, \
-            {"cpulink", "CPU-side link manager (e.g., to caches/cpu)", "SST::MemHierarchy::MemLinkBase"}
+            {"cpulink", "CPU-side link manager (e.g., to caches/cpu). Defaults to MemLink.", "SST::MemHierarchy::MemLinkBase"}
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( MEMCONTROLLER_ELI_SUBCOMPONENTSLOTS )
 

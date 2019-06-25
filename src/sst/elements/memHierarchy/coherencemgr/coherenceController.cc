@@ -37,7 +37,7 @@ CoherenceController::CoherenceController(Component * comp, Params &params) : Sub
     output->fatal(CALL_INFO, -1, "%s, Error: CohrenceController subcomponents do not support loading via legacy API\n", getName().c_str());
 }
 
-CoherenceController::CoherenceController(ComponentId_t id, Params &params, Params& ownerParams) : SubComponent(id) {
+CoherenceController::CoherenceController(ComponentId_t id, Params &params, Params& ownerParams, bool prefetch) : SubComponent(id) {
     params.insert(ownerParams);
     /* Output stream */
     output = new Output("", 1, 0, SST::Output::STDOUT);

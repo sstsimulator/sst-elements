@@ -112,7 +112,7 @@ public:
 /* Class definition */
     /** Constructor for IncoherentController. */
     IncoherentController(SST::Component* comp, Params& params) : CoherenceController (comp, params) { }
-    IncoherentController(SST::ComponentId_t id, Params& params, Params& ownerParams) : CoherenceController(id, params, ownerParams) {
+    IncoherentController(SST::ComponentId_t id, Params& params, Params& ownerParams, bool prefetch) : CoherenceController(id, params, ownerParams, prefetch) {
         params.insert(ownerParams);
         debug->debug(_INFO_,"--------------------------- Initializing [Incoherent Controller] ... \n\n");
         inclusive_ = params.find<bool>("inclusive", true);
@@ -174,7 +174,7 @@ public:
         stat_eventSent_FlushLineResp    = registerStatistic<uint64_t>("eventSent_FlushLineResp");
         stat_eventSent_NACK_up          = registerStatistic<uint64_t>("eventSent_NACK_up");
         
-        if (!params.find<std::string>("prefetcher", "").empty()) {
+        if (prefetch) {
             statPrefetchEvict = registerStatistic<uint64_t>("prefetch_evict");
             statPrefetchHit = registerStatistic<uint64_t>("prefetch_useful");
             statPrefetchRedundant = registerStatistic<uint64_t>("prefetch_redundant");

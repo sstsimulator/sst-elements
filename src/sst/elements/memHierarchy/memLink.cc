@@ -36,7 +36,10 @@ void MemLink::build(Params &params) {
     std::string port = params.find<std::string>("port", "port");
 
     link = configureLink(port, latency, new Event::Handler<MemLink>(this, &MemLink::recvNotify));
-   
+    
+    if (!link)
+        dbg.fatal(CALL_INFO, -1, "%s, Error: unable to configure link on port '%s'\n", getName().c_str(), port.c_str());
+
     dbg.debug(_L10_, "%s memLink info is: Name: %s, addr: %" PRIu64 ", id: %" PRIu32 "\n",
             getName().c_str(), info.name.c_str(), info.addr, info.id);
 
@@ -45,7 +48,7 @@ void MemLink::build(Params &params) {
 /* init function */
 void MemLink::init(unsigned int phase) {
     if (!phase) {
-        MemEventInitRegion * ev = new MemEventInitRegion(getName(), info.region, false);
+        MemEventInitRegion * ev = new MemEventInitRegion(info.name, info.region, false);
         dbg.debug(_L10_, "%s sending region init message: %s\n", getName().c_str(), ev->getVerboseString().c_str());
         link->sendInitData(ev);
     }

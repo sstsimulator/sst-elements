@@ -1,4 +1,5 @@
 import sst
+from mhlib import componentlist
 
 num_cpu = 2
 num_mem = 2
@@ -79,10 +80,12 @@ def buildMem(num, network):
     mem.addParams({
         "debug": debug,
         "debug_level" : debug_level,
-        "backend" : "memHierarchy.simpleMem",
-        "backend.mem_size" : 1,
         "clock" : "1GHz"
         })
+    memback = mem.setSubComponent("backend", "memHierarchy.simpleMem")
+    memback.addParams({
+        "mem_size" : "1MiB"
+    })
 
     dc = sst.Component("dc%d"%num, "memHierarchy.DirectoryController")
     dc.addParams({

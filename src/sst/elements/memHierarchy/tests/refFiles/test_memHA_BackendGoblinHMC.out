@@ -6,6 +6,7 @@ TrivialCPU cpu0 Finished after 1000 issued reads, 1000 returned (474026 clocks)
 TrivialCPU cpu1 Finished after 1000 issued reads, 1000 returned (472154 clocks)
 TrivialCPU cpu2 Finished after 1000 issued reads, 1000 returned (469994 clocks)
 TrivialCPU cpu3 Finished after 1000 issued reads, 1000 returned (473594 clocks)
+ cpu0.pendCycle : Accumulator : Sum.u64 = 4620830; SumSQ.u64 = 45234696; Count.u64 = 474026; Min.u64 = 0; Max.u64 = 10; 
  c0.l1cache.TotalEventsReceived : Accumulator : Sum.u64 = 1999; SumSQ.u64 = 1999; Count.u64 = 1999; Min.u64 = 1; Max.u64 = 1; 
  c0.l1cache.TotalEventsReplayed : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c0.l1cache.TotalNoncacheableEventsReceived : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -131,6 +132,7 @@ TrivialCPU cpu3 Finished after 1000 issued reads, 1000 returned (473594 clocks)
  c0.l1cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c0.l1cache.eventSent_PutS : Accumulator : Sum.u64 = 838; SumSQ.u64 = 838; Count.u64 = 838; Min.u64 = 1; Max.u64 = 1; 
  c0.l1cache.eventSent_PutE : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ cpu1.pendCycle : Accumulator : Sum.u64 = 4588933; SumSQ.u64 = 44841501; Count.u64 = 472154; Min.u64 = 0; Max.u64 = 10; 
  c1.l1cache.TotalEventsReceived : Accumulator : Sum.u64 = 2001; SumSQ.u64 = 2001; Count.u64 = 2001; Min.u64 = 1; Max.u64 = 1; 
  c1.l1cache.TotalEventsReplayed : Accumulator : Sum.u64 = 3; SumSQ.u64 = 3; Count.u64 = 3; Min.u64 = 1; Max.u64 = 1; 
  c1.l1cache.TotalNoncacheableEventsReceived : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -446,6 +448,7 @@ TrivialCPU cpu3 Finished after 1000 issued reads, 1000 returned (473594 clocks)
  n0.l2cache.eventSent_Inv : Accumulator : Sum.u64 = 3; SumSQ.u64 = 3; Count.u64 = 3; Min.u64 = 1; Max.u64 = 1; 
  n0.l2cache.eventSent_NACK_up : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  n0.l2cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ cpu2.pendCycle : Accumulator : Sum.u64 = 4555049; SumSQ.u64 = 44411543; Count.u64 = 469994; Min.u64 = 0; Max.u64 = 10; 
  c2.l1cache.TotalEventsReceived : Accumulator : Sum.u64 = 1995; SumSQ.u64 = 1995; Count.u64 = 1995; Min.u64 = 1; Max.u64 = 1; 
  c2.l1cache.TotalEventsReplayed : Accumulator : Sum.u64 = 3; SumSQ.u64 = 3; Count.u64 = 3; Min.u64 = 1; Max.u64 = 1; 
  c2.l1cache.TotalNoncacheableEventsReceived : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -571,6 +574,7 @@ TrivialCPU cpu3 Finished after 1000 issued reads, 1000 returned (473594 clocks)
  c2.l1cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c2.l1cache.eventSent_PutS : Accumulator : Sum.u64 = 843; SumSQ.u64 = 843; Count.u64 = 843; Min.u64 = 1; Max.u64 = 1; 
  c2.l1cache.eventSent_PutE : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ cpu3.pendCycle : Accumulator : Sum.u64 = 4600373; SumSQ.u64 = 44929957; Count.u64 = 473594; Min.u64 = 0; Max.u64 = 10; 
  c3.l1cache.TotalEventsReceived : Accumulator : Sum.u64 = 1998; SumSQ.u64 = 1998; Count.u64 = 1998; Min.u64 = 1; Max.u64 = 1; 
  c3.l1cache.TotalEventsReplayed : Accumulator : Sum.u64 = 4; SumSQ.u64 = 4; Count.u64 = 4; Min.u64 = 1; Max.u64 = 1; 
  c3.l1cache.TotalNoncacheableEventsReceived : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -886,10 +890,10 @@ TrivialCPU cpu3 Finished after 1000 issued reads, 1000 returned (473594 clocks)
  n1.l2cache.eventSent_Inv : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; Min.u64 = 1; Max.u64 = 1; 
  n1.l2cache.eventSent_NACK_up : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  n1.l2cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l3cache.packet_latency : Accumulator : Sum.u64 = 591840; SumSQ.u64 = 53265600; Count.u64 = 6576; Min.u64 = 90; Max.u64 = 90; 
- l3cache.send_bit_count : Accumulator : Sum.u64 = 563200; SumSQ.u64 = 118030336; Count.u64 = 6576; Min.u64 = 64; Max.u64 = 576; 
- l3cache.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l3cache.idle_time : Accumulator : Sum.u64 = 290000; SumSQ.u64 = 60674500000; Count.u64 = 2; Min.u64 = 48500; Max.u64 = 241500; 
+ l3cache:memlink.packet_latency : Accumulator : Sum.u64 = 591840; SumSQ.u64 = 53265600; Count.u64 = 6576; Min.u64 = 90; Max.u64 = 90; 
+ l3cache:memlink.send_bit_count : Accumulator : Sum.u64 = 563200; SumSQ.u64 = 118030336; Count.u64 = 6576; Min.u64 = 64; Max.u64 = 576; 
+ l3cache:memlink.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l3cache:memlink.idle_time : Accumulator : Sum.u64 = 290000; SumSQ.u64 = 60674500000; Count.u64 = 2; Min.u64 = 48500; Max.u64 = 241500; 
  l3cache.TotalEventsReceived : Accumulator : Sum.u64 = 13382; SumSQ.u64 = 13382; Count.u64 = 13382; Min.u64 = 1; Max.u64 = 1; 
  l3cache.TotalEventsReplayed : Accumulator : Sum.u64 = 12; SumSQ.u64 = 12; Count.u64 = 12; Min.u64 = 1; Max.u64 = 1; 
  l3cache.TotalNoncacheableEventsReceived : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -1080,10 +1084,10 @@ TrivialCPU cpu3 Finished after 1000 issued reads, 1000 returned (473594 clocks)
  l3cache.eventSent_Inv : Accumulator : Sum.u64 = 9; SumSQ.u64 = 9; Count.u64 = 9; Min.u64 = 1; Max.u64 = 1; 
  l3cache.eventSent_NACK_up : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 2769; SumSQ.u64 = 2769; Count.u64 = 2769; Min.u64 = 1; Max.u64 = 1; 
- dirctrl.packet_latency : Accumulator : Sum.u64 = 795696; SumSQ.u64 = 96279216; Count.u64 = 6576; Min.u64 = 121; Max.u64 = 121; 
- dirctrl.send_bit_count : Accumulator : Sum.u64 = 2362880; SumSQ.u64 = 1269825536; Count.u64 = 6576; Min.u64 = 64; Max.u64 = 576; 
- dirctrl.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- dirctrl.idle_time : Accumulator : Sum.u64 = 428000; SumSQ.u64 = 135400000000; Count.u64 = 2; Min.u64 = 66000; Max.u64 = 362000; 
+ dirctrl:cpulink.packet_latency : Accumulator : Sum.u64 = 795696; SumSQ.u64 = 96279216; Count.u64 = 6576; Min.u64 = 121; Max.u64 = 121; 
+ dirctrl:cpulink.send_bit_count : Accumulator : Sum.u64 = 2362880; SumSQ.u64 = 1269825536; Count.u64 = 6576; Min.u64 = 64; Max.u64 = 576; 
+ dirctrl:cpulink.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ dirctrl:cpulink.idle_time : Accumulator : Sum.u64 = 428000; SumSQ.u64 = 135400000000; Count.u64 = 2; Min.u64 = 66000; Max.u64 = 362000; 
  dirctrl.replacement_request_latency : Accumulator : Sum.u64 = 2769; SumSQ.u64 = 2769; Count.u64 = 2769; Min.u64 = 1; Max.u64 = 1; 
  dirctrl.get_request_latency : Accumulator : Sum.u64 = 201043; SumSQ.u64 = 10654551; Count.u64 = 3807; Min.u64 = 1; Max.u64 = 53; 
  dirctrl.directory_cache_hits : Accumulator : Sum.u64 = 6576; SumSQ.u64 = 6576; Count.u64 = 6576; Min.u64 = 1; Max.u64 = 1; 

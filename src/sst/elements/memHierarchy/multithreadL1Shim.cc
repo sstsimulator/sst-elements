@@ -47,6 +47,8 @@ MultiThreadL1::MultiThreadL1(ComponentId_t id, Params &params) : Component(id) {
     /* Setup links */
     if (isPortConnected("cache")) {
         cacheLink = configureLink("cache", "50ps", new Event::Handler<MultiThreadL1>(this, &MultiThreadL1::handleResponse));
+        if (!cacheLink)
+            output.fatal(CALL_INFO, -1, "%s, Error: unable to configure link on port 'cache'\n", getName().c_str());
     } else {
         output.fatal(CALL_INFO, -1, "%s, Error: no connected cache port. Please connect a cache to port 'cache'\n", getName().c_str());
     }
@@ -56,6 +58,8 @@ MultiThreadL1::MultiThreadL1(ComponentId_t id, Params &params) : Component(id) {
     int linkid = 0;
     while (isPortConnected(linkname)) {
         SST::Link * link = configureLink(linkname, "50ps", new Event::Handler<MultiThreadL1, unsigned int>(this, &MultiThreadL1::handleRequest, linkid));
+        if (!link)
+            output.fatal(CALL_INFO, -1, "%s, Error: unable to configure link on port '%s'\n", getName().c_str(), linkname.c_str());
         threadLinks.push_back(link);
         linkid++;
         linkname = "thread" + std::to_string(linkid);

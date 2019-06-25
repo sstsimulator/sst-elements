@@ -1,5 +1,6 @@
 TrivialCPU: Test Completed Successfuly
 TrivialCPU cpu Finished after 1000 issued reads, 1000 returned (108400 clocks)
+ cpu.pendCycle : Accumulator : Sum.u64 = 564738; SumSQ.u64 = 3469834; Count.u64 = 108400; Min.u64 = 0; Max.u64 = 10; 
  l1cache.TotalEventsReceived : Accumulator : Sum.u64 = 1517; SumSQ.u64 = 1517; Count.u64 = 1517; Min.u64 = 1; Max.u64 = 1; 
  l1cache.TotalEventsReplayed : Accumulator : Sum.u64 = 81; SumSQ.u64 = 81; Count.u64 = 81; Min.u64 = 1; Max.u64 = 1; 
  l1cache.TotalNoncacheableEventsReceived : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 

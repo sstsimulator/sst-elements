@@ -158,6 +158,8 @@ void Bus::configureLinks() {
     std::string linkname = linkprefix + "0";
     while (isPortConnected(linkname)) {
         link = configureLink(linkname, "50 ps", new Event::Handler<Bus>(this, &Bus::processIncomingEvent));
+        if (!link)
+            dbg_.fatal(CALL_INFO, -1, "%s, Error: unable to configure link on port '%s'\n", getName().c_str(), linkname.c_str());
         highNetPorts_.push_back(link);
         linkIdMap_[highNetPorts_[numHighNetPorts_]->getId()] = highNetPorts_[numHighNetPorts_];
         dbg_.output(CALL_INFO, "Port %d = Link %d\n", numHighNetPorts_, highNetPorts_[numHighNetPorts_]->getId());
@@ -169,6 +171,8 @@ void Bus::configureLinks() {
     linkname = linkprefix + "0";
     while (isPortConnected(linkname)) {
         link = configureLink(linkname, "50 ps", new Event::Handler<Bus>(this, &Bus::processIncomingEvent));
+        if (!link)
+            dbg_.fatal(CALL_INFO, -1, "%s, Error: unable to configure link on port '%s'\n", getName().c_str(), linkname.c_str());
         lowNetPorts_.push_back(link);
         linkIdMap_[lowNetPorts_[numLowNetPorts_]->getId()] = lowNetPorts_[numLowNetPorts_];
         dbg_.output(CALL_INFO, "Port %d = Link %d\n", numLowNetPorts_, lowNetPorts_[numLowNetPorts_]->getId());

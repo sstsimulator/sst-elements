@@ -1,5 +1,6 @@
 import os
 import sst
+from mhlib import componentlist
 
 quiet = True
 
@@ -70,10 +71,14 @@ l1_cache_params = {
     "debug_level"        : debugLev,
 }
 
+#l2_prefetch_params = {
+#    "prefetcher" : "cassini.StridePrefetcher",
+#    "prefetcher.reach" : 16,
+#    "prefetcher.detect_range" : 1
+#}
 l2_prefetch_params = {
-    "prefetcher" : "cassini.StridePrefetcher",
-    "prefetcher.reach" : 16,
-    "prefetcher.detect_range" : 1
+    "reach" : 16,
+    "detect_range" : 1
 }
 
 l2_cache_params = {
@@ -90,51 +95,43 @@ l2_cache_params = {
     "mshr_latency_cycles" : 4,
     #"request_link_width" : "72B",
     "response_link_width" : "72B",
-    "memNIC.req.linkcontrol" : "kingsley.linkcontrol",
-    "memNIC.ack.linkcontrol" : "kingsley.linkcontrol",
-    "memNIC.fwd.linkcontrol" : "kingsley.linkcontrol",
-    "memNIC.data.linkcontrol" : "kingsley.linkcontrol",
-    "memNIC.req.network_bw" : ctrl_mesh_link_bw,
-    "memNIC.ack.network_bw" : ctrl_mesh_link_bw,
-    "memNIC.fwd.network_bw" : ctrl_mesh_link_bw,
-    "memNIC.data.network_bw" : data_mesh_link_bw,
-    "memNIC.req.network_input_buffer_size" : ctrl_network_buffers,
-    "memNIC.ack.network_input_buffer_size" : ctrl_network_buffers,
-    "memNIC.fwd.network_input_buffer_size" : ctrl_network_buffers,
-    "memNIC.data.network_input_buffer_size" : data_network_buffers,
-    "memNIC.req.network_output_buffer_size" : ctrl_network_buffers,
-    "memNIC.ack.network_output_buffer_size" : ctrl_network_buffers,
-    "memNIC.fwd.network_output_buffer_size" : ctrl_network_buffers,
-    "memNIC.data.network_output_buffer_size" : data_network_buffers,
-    "memNIC.debug" : debugNIC,
-    "memNIC.debug_level" : debugLev,
     "verbose" : verbose,
     "debug"              : debugL2,
     "debug_level"        : debugLev
 }
 
+l2_nic_params = {
+    "group" : 1,
+    "debug" : debugNIC,
+    "debug_level" : debugLev,
+}
+
+ctrl_net_params = {
+    "link_bw" : ctrl_mesh_link_bw,
+    "in_buf_size" : ctrl_network_buffers,
+    "out_buf_size" : ctrl_network_buffers
+}
+
+data_net_params = {
+    "link_bw" : data_mesh_link_bw,
+    "in_buf_size" : data_network_buffers,
+    "out_buf_size" : data_network_buffers
+}
+
 ###### DDR Directory #######
 ddr_dc_params = {
     "coherence_protocol": coherence_protocol,
-    "memNIC.req.network_bw" : ctrl_mesh_link_bw,
-    "memNIC.ack.network_bw" : ctrl_mesh_link_bw,
-    "memNIC.fwd.network_bw" : ctrl_mesh_link_bw,
-    "memNIC.data.network_bw" : data_mesh_link_bw,
     "clock"             : str(mesh_clock) + "MHz",
     "entry_cache_size"  : 256*1024*1024, #Entry cache size of mem/blocksize
     "mshr_num_entries"  : 128,
     "access_latency_cycles" : 2,
-    "memNIC.req.network_input_buffer_size" : ctrl_network_buffers,
-    "memNIC.req.network_output_buffer_size" : ctrl_network_buffers,
-    "memNIC.ack.network_input_buffer_size" : ctrl_network_buffers,
-    "memNIC.ack.network_output_buffer_size" : ctrl_network_buffers,
-    "memNIC.fwd.network_input_buffer_size" : ctrl_network_buffers,
-    "memNIC.fwd.network_output_buffer_size" : ctrl_network_buffers,
-    "memNIC.data.network_input_buffer_size" : data_network_buffers,
-    "memNIC.data.network_output_buffer_size" : data_network_buffers,
     "verbose" : verbose,
     "debug"             : debugDDRDC,
     "debug_level"       : debugLev
+}
+
+dc_nic_params = {
+    "group" : 2,
 }
 
 ##### TimingDRAM #####
@@ -142,37 +139,28 @@ ddr_dc_params = {
 ddr_mem_timing_params = {
     "verbose" : verbose,
     "backing" : "none",
-    "backend" : "memHierarchy.timingDRAM",
-    "backend.clock" : "1200MHz",
-    "backend.id" : 0,
-    "backend.addrMapper" : "memHierarchy.simpleAddrMapper",
-    "backend.channel.transaction_Q_size" : 32,
-    "backend.channel.numRanks" : 2,
-    "backend.channel.rank.numBanks" : 16,
-    "backend.channel.rank.bank.CL" : 15,
-    "backend.channel.rank.bank.CL_WR" : 12,
-    "backend.channel.rank.bank.RCD" : 15,
-    "backend.channel.rank.bank.TRP" : 15,
-    "backend.channel.rank.bank.dataCycles" : 4,
-    "backend.channel.rank.bank.pagePolicy" : "memHierarchy.simplePagePolicy",
-    "backend.channel.rank.bank.transactionQ" : "memHierarchy.reorderTransactionQ",
-    "backend.channel.rank.bank.pagePolicy.close" : 0,
-    "memNIC.req.linkcontrol" : "kingsley.linkcontrol",
-    "memNIC.ack.linkcontrol" : "kingsley.linkcontrol",
-    "memNIC.fwd.linkcontrol" : "kingsley.linkcontrol",
-    "memNIC.data.linkcontrol" : "kingsley.linkcontrol",
-    "memNIC.req.network_bw" : ctrl_mesh_link_bw,
-    "memNIC.ack.network_bw" : ctrl_mesh_link_bw,
-    "memNIC.fwd.network_bw" : ctrl_mesh_link_bw,
-    "memNIC.data.network_bw" : data_mesh_link_bw,
-    "memNIC.req.network_input_buffer_size" : ctrl_network_buffers,
-    "memNIC.ack.network_input_buffer_size" : ctrl_network_buffers,
-    "memNIC.fwd.network_input_buffer_size" : ctrl_network_buffers,
-    "memNIC.data.network_input_buffer_size" : data_network_buffers,
-    "memNIC.req.network_output_buffer_size" : ctrl_network_buffers,
-    "memNIC.ack.network_output_buffer_size" : ctrl_network_buffers,
-    "memNIC.fwd.network_output_buffer_size" : ctrl_network_buffers,
-    "memNIC.data.network_output_buffer_size" : data_network_buffers,
+    "clock"   : "1200MHz",
+}
+
+ddr_backend_params = {
+    "id" : 0,
+    "addrMapper" : "memHierarchy.simpleAddrMapper",
+    "channel.transaction_Q_size" : 32,
+    "channel.numRanks" : 2,
+    "channel.rank.numBanks" : 16,
+    "channel.rank.bank.CL" : 15,
+    "channel.rank.bank.CL_WR" : 12,
+    "channel.rank.bank.RCD" : 15,
+    "channel.rank.bank.TRP" : 15,
+    "channel.rank.bank.dataCycles" : 4,
+    "channel.rank.bank.pagePolicy" : "memHierarchy.simplePagePolicy",
+    "channel.rank.bank.transactionQ" : "memHierarchy.reorderTransactionQ",
+    "channel.rank.bank.pagePolicy.close" : 0,
+}
+
+ddr_nic_params = {
+    "group" : 3,
+    "accept_region" : 0,
 }
 
 
@@ -202,28 +190,30 @@ class DDRBuilder:
 
         mem = sst.Component("ddr_" + str(self.next_ddr_id), "memHierarchy.MemController")
         mem.addParams(ddr_mem_timing_params)
-        mem.addParams({
-                "backend.mem_size" : str(self.mem_capacity / 4) + "B",
-            })
+        
+        membk = mem.setSubComponent("backend", "memHierarchy.timingDRAM")
+        membk.addParams({ "mem_size" : str(self.mem_capacity / 4) + "B" })
+        membk.addParams(ddr_backend_params)
+        
+        memNIC = mem.setSubComponent("cpulink", "memHierarchy.MemNICFour")
+        memNIC.addParams(ddr_nic_params)
+        memdata = memNIC.setSubComponent("data", "kingsley.linkcontrol")
+        memreq = memNIC.setSubComponent("req", "kingsley.linkcontrol")
+        memack = memNIC.setSubComponent("ack", "kingsley.linkcontrol")
+        memfwd = memNIC.setSubComponent("fwd", "kingsley.linkcontrol")
+        memdata.addParams(data_net_params)
+        memreq.addParams(ctrl_net_params)
+        memfwd.addParams(ctrl_net_params)
+        memack.addParams(ctrl_net_params)
 
-
         mem.addParams({
-            "memNIC.req.linkcontrol" : "kingsley.linkcontrol",
-            "memNIC.ack.linkcontrol" : "kingsley.linkcontrol",
-            "memNIC.fwd.linkcontrol" : "kingsley.linkcontrol",
-            "memNIC.data.linkcontrol" : "kingsley.linkcontrol",
-            "memNIC.req.network_bw" : ctrl_mesh_link_bw,
-            "memNIC.ack.network_bw" : ctrl_mesh_link_bw,
-            "memNIC.fwd.network_bw" : ctrl_mesh_link_bw,
-            "memNIC.data.network_bw" : data_mesh_link_bw,
-            "memNIC.addr_range_start" : (64 * self.next_ddr_id),
-            "memNIC.addr_range_end" : (self.mem_capacity - (64 * self.next_ddr_id)),
-            "memNIC.interleave_step" : str(4 * 64) + "B",
-            "memNIC.interleave_size" : "64B",
-            "memNIC.accept_region" : 0,
+            "addr_range_start" : (64 * self.next_ddr_id),
+            "addr_range_end" : (self.mem_capacity - (64 * self.next_ddr_id)),
+            "interleave_step" : str(4 * 64) + "B",
+            "interleave_size" : "64B",
         })
         self.next_ddr_id = self.next_ddr_id + 1
-        return (mem, "network", mesh_link_latency), (mem, "network_ack", mesh_link_latency), (mem, "network_fwd", mesh_link_latency), (mem, "network_data", mesh_link_latency)
+        return (memreq, "rtr_port", mesh_link_latency), (memack, "rtr_port", mesh_link_latency), (memfwd, "rtr_port", mesh_link_latency), (memdata, "rtr_port", mesh_link_latency)
 
 
 class DDRDCBuilder:
@@ -255,19 +245,26 @@ class DDRDCBuilder:
         dc.addParams(ddr_dc_params)
 
         dc.addParams({
-            "memNIC.req.linkcontrol" : "kingsley.linkcontrol",
-            "memNIC.ack.linkcontrol" : "kingsley.linkcontrol",
-            "memNIC.fwd.linkcontrol" : "kingsley.linkcontrol",
-            "memNIC.data.linkcontrol" : "kingsley.linkcontrol",
-            "memNIC.addr_range_start" : myStart,
-            "memNIC.addr_range_end" : myEnd,
-            "memNIC.interleave_step" : str(8 * 64) + "B",
-            "memNIC.interleave_size" : "64B",
+            "addr_range_start" : myStart,
+            "addr_range_end" : myEnd,
+            "interleave_step" : str(8 * 64) + "B",
+            "interleave_size" : "64B",
             "net_memory_name" : "ddr_" + str(memId),
         })
+        # Create NIC on to interface to NoC from directory
+        dcNIC = dc.setSubComponent("cpulink", "memHierarchy.MemNICFour")
+        dcNIC.addParams(dc_nic_params)
+        dcdata = dcNIC.setSubComponent("data", "kingsley.linkcontrol")
+        dcreq = dcNIC.setSubComponent("req", "kingsley.linkcontrol")
+        dcfwd = dcNIC.setSubComponent("fwd", "kingsley.linkcontrol")
+        dcack = dcNIC.setSubComponent("ack", "kingsley.linkcontrol")
+        dcreq.addParams(ctrl_net_params)
+        dcfwd.addParams(ctrl_net_params)
+        dcack.addParams(ctrl_net_params)
+        dcdata.addParams(data_net_params)
 
         self.next_ddr_dc_id = self.next_ddr_dc_id + 1
-        return (dc, "network", mesh_link_latency), (dc, "network_ack", mesh_link_latency), (dc, "network_fwd", mesh_link_latency), (dc, "network_data", mesh_link_latency)
+        return (dcreq, "rtr_port", mesh_link_latency), (dcack, "rtr_port", mesh_link_latency), (dcfwd, "rtr_port", mesh_link_latency), (dcdata, "rtr_port", mesh_link_latency)
 
 
 class TileBuilder:
@@ -283,18 +280,30 @@ class TileBuilder:
         # L2
         tileL2cache = sst.Component("l2cache_" + str(self.next_tile_id), "memHierarchy.Cache")
         tileL2cache.addParams(l2_cache_params)
-        tileL2cache.addParams(l2_prefetch_params)
-        tileL2cache.addParams({
-            })
+        # l2 prefetcher
+        l2pre = tileL2cache.setSubComponent("prefetcher", "cassini.StridePrefetcher")
+        l2pre.addParams(l2_prefetch_params)
+        # l2 bus link
+        l2tol1 = tileL2cache.setSubComponent("cpulink", "memHierarchy.MemLink")
+        # l2 NIC
+        l2NIC = tileL2cache.setSubComponent("memlink", "memHierarchy.MemNICFour")
+        l2data = l2NIC.setSubComponent("data", "kingsley.linkcontrol")
+        l2req = l2NIC.setSubComponent("req", "kingsley.linkcontrol")
+        l2fwd = l2NIC.setSubComponent("fwd", "kingsley.linkcontrol")
+        l2ack = l2NIC.setSubComponent("ack", "kingsley.linkcontrol")
+        l2NIC.addParams(l2_nic_params)
+        l2data.addParams(data_net_params)
+        l2req.addParams(ctrl_net_params)
+        l2fwd.addParams(ctrl_net_params)
+        l2ack.addParams(ctrl_net_params)
 
+        # Bus (from l1s to l2)
         l2bus = sst.Component("l2cachebus_" + str(self.next_tile_id), "memHierarchy.Bus")
-        l2bus.addParams({
-            "bus_frequency" : core_clock,
-            })
+        l2bus.addParams({ "bus_frequency" : core_clock })
 
         l2busLink = sst.Link("l2bus_link_" + str(self.next_tile_id))
         l2busLink.connect( (l2bus, "low_network_0", mesh_link_latency),
-            (tileL2cache, "high_network_0", mesh_link_latency))
+            (l2tol1, "port", mesh_link_latency))
         l2busLink.setNoCut()
 
         self.next_tile_id = self.next_tile_id + 1
@@ -414,7 +423,7 @@ class TileBuilder:
 
         self.next_core_id = self.next_core_id + 1
 
-        return (tileL2cache, "directory", mesh_link_latency), (tileL2cache, "directory_ack", mesh_link_latency), (tileL2cache, "directory_fwd", mesh_link_latency), (tileL2cache, "directory_data", mesh_link_latency)
+        return (l2req, "rtr_port", mesh_link_latency), (l2ack, "rtr_port", mesh_link_latency), (l2fwd, "rtr_port", mesh_link_latency), (l2data, "rtr_port", mesh_link_latency)
 
 
 tileBuilder = TileBuilder()

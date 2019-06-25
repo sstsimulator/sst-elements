@@ -153,23 +153,29 @@ void Cache::createCoherenceManager(Params &params) {
     coherenceParams.insert("request_link_width", params.find<std::string>("request_link_width", "0B"));
     coherenceParams.insert("response_link_width", params.find<std::string>("response_link_width", "0B"));
     coherenceParams.insert("min_packet_size", params.find<std::string>("min_packet_size", "8B"));
-    coherenceParams.insert("prefetcher", params.find<std::string>("prefetcher", ""));
+
+    bool prefetch = statPrefetchRequest != nullptr;
 
     if (!L1_) {
         if (protocol_ != CoherenceProtocol::NONE) {
             if (type_ != "noninclusive_with_directory") {
-                coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.MESICoherenceController", "coherence", 0, ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams);
+                coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.MESICoherenceController", "coherence", 0, 
+                        ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_STATS, coherenceParams, coherenceParams, prefetch);
             } else {
-                coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.MESICacheDirectoryCoherenceController", "coherence", 0, ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams);
+                coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.MESICacheDirectoryCoherenceController", "coherence", 0, 
+                        ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_STATS, coherenceParams, coherenceParams, prefetch);
             }
         } else {
-            coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.IncoherentController", "coherence", 0, ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams);
+            coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.IncoherentController", "coherence", 0, 
+                    ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_STATS, coherenceParams, coherenceParams, prefetch);
         }
     } else {
         if (protocol_ != CoherenceProtocol::NONE) {
-            coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.L1CoherenceController", "coherence", 0, ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams);
+            coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.L1CoherenceController", "coherence", 0, 
+                    ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_STATS, coherenceParams, coherenceParams, prefetch);
         } else {
-            coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.L1IncoherentController", "coherence", 0, ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams);
+            coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.L1IncoherentController", "coherence", 0, 
+                    ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_STATS, coherenceParams, coherenceParams, prefetch);
         }
     }
     if (coherenceMgr_ == NULL) {
@@ -206,7 +212,7 @@ void Cache::configureLinks(Params &params) {
 
     if (linkUp_ || linkDown_) {
         if (!linkUp_ || !linkDown_)
-            out_->verbose(_INFO_, "%s, Detected user defined subcomponent for either the cpu or mem link but not both. Assuming this component has just one link.\n", getName().c_str());
+            out_->verbose(_L3_, "%s, Detected user defined subcomponent for either the cpu or mem link but not both. Assuming this component has just one link.\n", getName().c_str());
         if (!linkUp_)
             linkUp_ = linkDown_;
         if (!linkDown_)
@@ -249,6 +255,10 @@ void Cache::configureLinks(Params &params) {
         region_ = linkDown_->getRegion();
         linkUp_->setRegion(region_);
 
+        cacheArray_->setSliceAware(region_.interleaveSize, region_.interleaveStep);
+        linkUp_->setName(getName());
+        linkDown_->setName(getName());
+        
         return;
     }
 
@@ -509,6 +519,9 @@ void Cache::configureLinks(Params &params) {
         region_ = linkDown_->getRegion();
         linkUp_->setRegion(region_);
     }
+        
+    linkUp_->setName(getName());
+    linkDown_->setName(getName());
    
     cacheArray_->setSliceAware(region_.interleaveSize, region_.interleaveStep);
 
@@ -533,7 +546,7 @@ void Cache::createListeners(Params &params, int mshrSize) {
     SubComponentSlotInfo * lists = getSubComponentSlotInfo("prefetcher");
     if (lists) {
         int k = 0;
-        for (int i = 0; i < lists->getMaxPopulatedSlotNumber(); i++) {
+        for (int i = 0; i <= lists->getMaxPopulatedSlotNumber(); i++) {
             if (lists->isPopulated(i)) {
                 listeners_.push_back(lists->create<CacheListener>(i, ComponentInfo::SHARE_NONE));
                 listeners_[k]->registerResponseCallback(new Event::Handler<Cache>(this, &Cache::handlePrefetchEvent));
@@ -547,9 +560,11 @@ void Cache::createListeners(Params &params, int mshrSize) {
             prefParams = params.find_prefix_params("prefetcher.");
             listeners_.push_back(loadAnonymousSubComponent<CacheListener>(prefetcher, "prefetcher", 0, ComponentInfo::INSERT_STATS, prefParams));
             listeners_[0]->registerResponseCallback(new Event::Handler<Cache>(this, &Cache::handlePrefetchEvent));
-            statPrefetchRequest = registerStatistic<uint64_t>("Prefetch_requests");
-            statPrefetchDrop = registerStatistic<uint64_t>("Prefetch_drops");
         }
+    }
+    if (!listeners_.empty()) {
+        statPrefetchRequest = registerStatistic<uint64_t>("Prefetch_requests");
+        statPrefetchDrop = registerStatistic<uint64_t>("Prefetch_drops");
     }
     
     if (!listeners_.empty()) { // Have at least one prefetcher
