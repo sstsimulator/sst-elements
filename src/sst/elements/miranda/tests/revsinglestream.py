@@ -7,17 +7,17 @@ sst.setProgramOption("stopAtCycle", "0 ns")
 # Define the simulation components
 comp_cpu = sst.Component("cpu", "miranda.BaseCPU")
 comp_cpu.addParams({
-	"verbose" : 0,
-	"clock" : "2GHz",
-	"printStats" : 1,
+      "verbose" : 0,
+      "clock" : "2GHz",
+      "printStats" : 1,
 })
 
 gen = comp_cpu.setSubComponent("generator", "miranda.ReverseSingleStreamGenerator")
 gen.addParams({
-	"verbose" : 1,
-        "start_at" : 65536,
-        "stop_at" : 0,
-        "stride" : 8,
+      "verbose" : 1,
+      "startat" : 65536,
+      "stopat" : 0,
+      "stride" : 8,
 })
 
 # Tell SST what statistics handling we want
@@ -35,7 +35,7 @@ comp_l1cache.addParams({
       "associativity" : "4",
       "cache_line_size" : "64",
       "prefetcher" : "cassini.StridePrefetcher",
-      "debug" : "1",
+      "debug" : "0",
       "L1" : "1",
       "cache_size" : "2KB"
 })
