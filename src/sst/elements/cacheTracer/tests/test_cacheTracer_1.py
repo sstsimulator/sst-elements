@@ -54,13 +54,12 @@ comp_l2cache.addParams({
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
     "clock"                 : "2 Ghz",
-    "range_start"           : "0",
-    "backend.mem_size"      : "1024MiB",
-    "coherence_protocol"    : "MSI",
     "request_width"         : "64",
     "debug"                 : "0",
-    "backend"               : "memHierarchy.simpleMem"
 })
+    
+backend = comp_memory.setSubComponent("backend", "memHierarchy.simpleMem")
+backend.addParams({ "mem_size"      : "1024MiB" })
 
 comp_tracer = sst.Component("tracer", "cacheTracer.cacheTracer")
 comp_tracer.addParams({

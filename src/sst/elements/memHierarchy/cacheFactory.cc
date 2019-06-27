@@ -154,28 +154,28 @@ void Cache::createCoherenceManager(Params &params) {
     coherenceParams.insert("response_link_width", params.find<std::string>("response_link_width", "0B"));
     coherenceParams.insert("min_packet_size", params.find<std::string>("min_packet_size", "8B"));
 
-    bool prefetch = statPrefetchRequest != nullptr;
+    bool prefetch = (statPrefetchRequest != nullptr);
 
     if (!L1_) {
         if (protocol_ != CoherenceProtocol::NONE) {
             if (type_ != "noninclusive_with_directory") {
                 coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.MESICoherenceController", "coherence", 0, 
-                        ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_STATS, coherenceParams, coherenceParams, prefetch);
+                        ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams, prefetch);
             } else {
                 coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.MESICacheDirectoryCoherenceController", "coherence", 0, 
-                        ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_STATS, coherenceParams, coherenceParams, prefetch);
+                        ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams, prefetch);
             }
         } else {
             coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.IncoherentController", "coherence", 0, 
-                    ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_STATS, coherenceParams, coherenceParams, prefetch);
+                    ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams, prefetch);
         }
     } else {
         if (protocol_ != CoherenceProtocol::NONE) {
             coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.L1CoherenceController", "coherence", 0, 
-                    ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_STATS, coherenceParams, coherenceParams, prefetch);
+                    ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams, prefetch);
         } else {
             coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.L1IncoherentController", "coherence", 0, 
-                    ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_STATS, coherenceParams, coherenceParams, prefetch);
+                    ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams, prefetch);
         }
     }
     if (coherenceMgr_ == NULL) {
@@ -236,8 +236,31 @@ void Cache::configureLinks(Params &params) {
                     getName().c_str(), sliceCount);
         }
 
-        if (sliceCount > 1) {
-            region_.setDefault();
+        bool gotRegion = false;
+        bool found;
+        region_.setDefault();
+        region_.start = params.find<uint64_t>("addr_range_start", region_.start, found);
+        gotRegion |= found;
+        region_.end = params.find<uint64_t>("addr_range_end", region_.end, found);
+        gotRegion |= found;
+        std::string isize = params.find<std::string>("interleave_size", "0B", found);
+        gotRegion |= found;
+        std::string istep = params.find<std::string>("interleave_step", "0B", found);
+        gotRegion |= found;
+
+        if (!UnitAlgebra(isize).hasUnits("B")) {
+            d2_->fatal(CALL_INFO, -1, "Invalid param(%s): interleave_size - must be specified in bytes with units (SI units OK). For example, '1KiB'. You specified '%s'\n",
+                    getName().c_str(), isize.c_str());
+        }
+        if (!UnitAlgebra(istep).hasUnits("B")) {
+            d2_->fatal(CALL_INFO, -1, "Invalid param(%s): interleave_step - must be specified in bytes with units (SI units OK). For example, '1KiB'. You specified '%s'\n",
+                    getName().c_str(), istep.c_str());
+        }
+        region_.interleaveSize = UnitAlgebra(isize).getRoundedValue();
+        region_.interleaveStep = UnitAlgebra(istep).getRoundedValue();
+
+        if (!found && sliceCount > 1) {
+            gotRegion = true;
             int lineSize = params.find<int>("cache_line_size", 64);
             if (slicePolicy == "rr") {
                 region_.start = sliceID*lineSize;
@@ -245,17 +268,21 @@ void Cache::configureLinks(Params &params) {
                 region_.interleaveSize = lineSize;
                 region_.interleaveStep = sliceCount*lineSize;
             }
-            cacheArray_->setSliceAware(region_.interleaveSize, region_.interleaveStep);
-            linkDown_->setRegion(region_);
         }
+        
+        if (gotRegion) {
+            linkDown_->setRegion(region_);
+            linkUp_->setRegion(region_);
+        } else {
+            region_ = linkDown_->getRegion();
+            linkUp_->setRegion(region_);
+        }
+        
+        cacheArray_->setSliceAware(region_.interleaveSize, region_.interleaveStep);
 
         clockUpLink_ = linkUp_->isClocked();
         clockDownLink_ = linkDown_->isClocked();
         
-        region_ = linkDown_->getRegion();
-        linkUp_->setRegion(region_);
-
-        cacheArray_->setSliceAware(region_.interleaveSize, region_.interleaveStep);
         linkUp_->setName(getName());
         linkDown_->setName(getName());
         
@@ -565,6 +592,9 @@ void Cache::createListeners(Params &params, int mshrSize) {
     if (!listeners_.empty()) {
         statPrefetchRequest = registerStatistic<uint64_t>("Prefetch_requests");
         statPrefetchDrop = registerStatistic<uint64_t>("Prefetch_drops");
+    } else {
+        statPrefetchRequest = nullptr;
+        statPrefetchDrop = nullptr;
     }
     
     if (!listeners_.empty()) { // Have at least one prefetcher

@@ -186,7 +186,8 @@ EXTRA_DIST = \
 	tests/ddr_system.ini \
 	tests/hbm_device.ini \
 	tests/hbm_system.ini \
-	tests/utils.py
+	tests/utils.py \
+	tests/mhlib.py
 
 sstdir = $(includedir)/sst/elements/memHierarchy
 nobase_sst_HEADERS = \

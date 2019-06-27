@@ -36,12 +36,12 @@ comp_l1cache.addParams({
 comp_l1cache.enableAllStatistics({"type":"sst.AccumulatorStatistic"})
 
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
-comp_memory.addParams({
-      "backend.access_time" : "1000ns",
-      "backend.mem_size" : "512MiB",
-      "clock" : "1GHz"
+comp_memory.addParams({ "clock" : "1GHz" })
+backend = comp_memory.setSubComponent("backend", "memHierarchy.simpleMem")
+backend.addParams({
+      "access_time" : "1000ns",
+      "mem_size" : "512MiB",
 })
-
 
 # Define the simulation links
 link_cpu_cache_link = sst.Link("link_cpu_cache_link")
