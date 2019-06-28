@@ -170,7 +170,7 @@ memctrl1.addParams({
     "interleave_size" : "64B",
     "interleave_step" : "128B",
 })
-memtoD1 = memctrl1.setSubComponent("cpulink", "memHierarchy.memLink")
+memtoD1 = memctrl1.setSubComponent("cpulink", "memHierarchy.MemLink")
 memory1 = memctrl1.setSubComponent("backend", "memHierarchy.dramsim")
 memory1.addParams({
     "mem_size" : "512MiB",
@@ -189,7 +189,7 @@ memctrl0.addParams({
     "interleave_size" : "64B",
     "interleave_step" : "128B",
 })
-memtoD0 = memctrl0.setSubComponent("cpulink", "memHierarchy.memLink")
+memtoD0 = memctrl0.setSubComponent("cpulink", "memHierarchy.MemLink")
 memory0 = memctrl0.setSubComponent("backend", "memHierarchy.HBMDRAMSimMemory")
 memory0.addParams({
     "mem_size" : "512MiB",
