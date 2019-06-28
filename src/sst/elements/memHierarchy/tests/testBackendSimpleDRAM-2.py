@@ -166,6 +166,8 @@ dirctrl.addParams({
       "debug" : "0",
       "entry_cache_size" : "32768",
       "net_memory_name" : "memory",
+    "addr_range_end" : "0x1F000000",
+    "addr_range_start" : "0x0",
 })
 dirNIC = dirctrl.setSubComponent("cpulink", "memHierarchy.MemNIC")
 dirNIC.addParams({
@@ -173,8 +175,6 @@ dirNIC.addParams({
     "network_bw" : "25GB/s",
     "network_input_buffer_size" : "2KiB",
     "network_output_buffer_size" : "2KiB",
-    "addr_range_end" : "0x1F000000",
-    "addr_range_start" : "0x0",
 #   "debug" : 1,
     "debug_level" : 10,
 })

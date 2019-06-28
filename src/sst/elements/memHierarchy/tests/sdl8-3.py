@@ -216,12 +216,12 @@ dirctrl.addParams({
       "debug" : DEBUG_DIR,
       "debug_level" : 10,
       "entry_cache_size" : "32768",
+      "addr_range_end" : "0x1F000000",
+      "addr_range_start" : "0x0",
 })
 dirNIC = dirctrl.setSubComponent("cpulink", "memHierarchy.MemNIC")
 dirNIC.addParams({
       "network_bw" : "25GB/s",
-      "addr_range_end" : "0x1F000000",
-      "addr_range_start" : "0x0",
       "group" : 2,
 })
 dirLink = dirctrl.setSubComponent("memlink", "memHierarchy.MemLink")

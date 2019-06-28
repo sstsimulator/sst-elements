@@ -108,15 +108,15 @@ for x in range(memories):
         # Debug parameters
         "debug" : DEBUG_DIR,
         "debug_level" : 10,
+        "interleave_size" : "64B",    # Interleave at line granularity between memories
+        "interleave_step" : str(memories * 64) + "B",
+        "addr_range_start" : x*64,
+        "addr_range_end" :  1024*1024*1024 - ((memories - x) * 64) + 63,
     })
     dirNIC = dirctrl.setSubComponent("cpulink", "memHierarchy.MemNIC")
     dirNIC.addParams({
         "group" : 3,
-        "interleave_size" : "64B",    # Interleave at line granularity between memories
-        "interleave_step" : str(memories * 64) + "B",
         "network_bw" : network_bw,
-        "addr_range_start" : x*64,
-        "addr_range_end" :  1024*1024*1024 - ((memories - x) * 64) + 63,
         "network_input_buffer_size" : "2KiB",
         "network_output_buffer_size" : "2KiB",
         #"debug" : 1,

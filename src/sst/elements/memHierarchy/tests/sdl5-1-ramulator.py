@@ -140,7 +140,7 @@ memctrl.addParams({
       "clock" : "1GHz",
 })
 
-memory = memctrl.setSubComponent("membackend", "memHierarchy.ramulator")
+memory = memctrl.setSubComponent("backend", "memHierarchy.ramulator")
 memory.addParams({
       "mem_size" : "512MiB",
       "configFile" : "ramulator-ddr3.cfg",

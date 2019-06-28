@@ -157,17 +157,17 @@ comp_chiprtr.addParams({
 })
 dirctrl = sst.Component("dirctrl", "memHierarchy.DirectoryController")
 dirctrl.addParams({
-      "clock" : "1.5GHz",
-      "coherence_protocol" : "MESI",
-      "debug" : "0",
-      "entry_cache_size" : "16384",
+    "clock" : "1.5GHz",
+    "coherence_protocol" : "MESI",
+    "debug" : "0",
+    "entry_cache_size" : "16384",
+    "addr_range_end" : "0x1F000000",
+    "addr_range_start" : "0x0",
 })
 dirtoM = dirctrl.setSubComponent("memlink", "memHierarchy.MemLink")
 dirNIC = dirctrl.setSubComponent("cpulink", "memHierarchy.MemNIC")
 dirNIC.addParams({
     "group" : 2,
-    "addr_range_end" : "0x1F000000",
-    "addr_range_start" : "0x0",
     "network_bw" : "40GB/s",
     "input_buffer_size" : "2KiB",
     "output_buffer_size" : "2KiB",

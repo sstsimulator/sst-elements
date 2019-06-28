@@ -2531,11 +2531,6 @@ TrivialCPU cpu5 Finished after 1500 issued reads, 1500 returned (9461 clocks)
  l3cache0.eventSent_FetchInvX : Accumulator : Sum.u64 = 269; SumSQ.u64 = 269; Count.u64 = 269; Min.u64 = 1; Max.u64 = 1; 
  l3cache0.eventSent_Inv : Accumulator : Sum.u64 = 987; SumSQ.u64 = 987; Count.u64 = 987; Min.u64 = 1; Max.u64 = 1; 
  l3cache0.eventSent_NACK_up : Accumulator : Sum.u64 = 195; SumSQ.u64 = 195; Count.u64 = 195; Min.u64 = 1; Max.u64 = 1; 
- l3cache0.prefetch_evict : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l3cache0.prefetch_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l3cache0.prefetch_useful : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l3cache0.prefetch_coherence_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l3cache0.prefetch_redundant : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache0.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache0.evict_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache0.evict_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -2777,11 +2772,6 @@ TrivialCPU cpu5 Finished after 1500 issued reads, 1500 returned (9461 clocks)
  l3cache1.eventSent_FetchInvX : Accumulator : Sum.u64 = 266; SumSQ.u64 = 266; Count.u64 = 266; Min.u64 = 1; Max.u64 = 1; 
  l3cache1.eventSent_Inv : Accumulator : Sum.u64 = 969; SumSQ.u64 = 969; Count.u64 = 969; Min.u64 = 1; Max.u64 = 1; 
  l3cache1.eventSent_NACK_up : Accumulator : Sum.u64 = 112; SumSQ.u64 = 112; Count.u64 = 112; Min.u64 = 1; Max.u64 = 1; 
- l3cache1.prefetch_evict : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l3cache1.prefetch_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l3cache1.prefetch_useful : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l3cache1.prefetch_coherence_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l3cache1.prefetch_redundant : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache1.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache1.evict_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache1.evict_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -3023,11 +3013,6 @@ TrivialCPU cpu5 Finished after 1500 issued reads, 1500 returned (9461 clocks)
  l3cache2.eventSent_FetchInvX : Accumulator : Sum.u64 = 290; SumSQ.u64 = 290; Count.u64 = 290; Min.u64 = 1; Max.u64 = 1; 
  l3cache2.eventSent_Inv : Accumulator : Sum.u64 = 1056; SumSQ.u64 = 1056; Count.u64 = 1056; Min.u64 = 1; Max.u64 = 1; 
  l3cache2.eventSent_NACK_up : Accumulator : Sum.u64 = 398; SumSQ.u64 = 398; Count.u64 = 398; Min.u64 = 1; Max.u64 = 1; 
- l3cache2.prefetch_evict : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l3cache2.prefetch_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l3cache2.prefetch_useful : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l3cache2.prefetch_coherence_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l3cache2.prefetch_redundant : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache2.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache2.evict_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache2.evict_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 

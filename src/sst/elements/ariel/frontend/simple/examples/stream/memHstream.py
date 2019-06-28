@@ -155,7 +155,7 @@ def genMemHierarchy(cores):
    BusL3Link = sst.Link("bus_L3")
    BusL3Link.connect((membus, "low_network_0", busLat), (l3, "high_network_0", busLat))
    L3MemCtrlLink = sst.Link("L3MemCtrl")
-   L3MemCtrlLink.connect((l3, "low_network_0", busLat), (memory, "direct_link", busLat))
+   L3MemCtrlLink.connect((l3, "low_network_0", busLat), (memctrl, "direct_link", busLat))
 
 genMemHierarchy(corecount)        
 

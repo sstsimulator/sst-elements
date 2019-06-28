@@ -88,12 +88,12 @@ comp_dirctrl.addParams({
       "debug" : DEBUG_DIR,
       "debug_level" : "10",
       "entry_cache_size" : "16384",
+      "addr_range_end" : "0x1F000000",
+      "addr_range_start" : "0x0",
 })
 dirNIC = comp_dirctrl.setSubComponent("cpulink", "memHierarchy.MemNIC")
 dirNIC.addParams({
       "network_bw" : "25GB/s",
-      "addr_range_end" : "0x1F000000",
-      "addr_range_start" : "0x0",
       "group" : 2,
       #"debug" : 1,
       #"debug_level" : 10,

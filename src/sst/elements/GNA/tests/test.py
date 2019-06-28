@@ -40,15 +40,17 @@ comp_l1cache.addParams({
     "cache_size" : "%dKiB"%options.cacheSz
 })
 
-comp_memory = sst.Component("memory", "memHierarchy.MemController")
-comp_memory.addParams({
-      "debug" : 1,
-      "coherence_protocol" : "MSI",
+comp_memctrl = sst.Component("memory", "memHierarchy.MemController")
+comp_memctrl.addParams({
+      "debug" : 0,
       "debug_level" : 10,
-      "backend.access_time" : "200 ns",
       "backing" : "malloc", 
       "clock" : "1GHz",
-      "backend.mem_size" : "512MiB"
+})
+memory = comp_memctrl.setSubComponent("backend", "memHierarchy.simpleMem")
+memory.addParams({
+    "mem_size" : "512MiB",
+    "access_time" : "200 ns",
 })
 
 # Enable statistics
@@ -61,5 +63,5 @@ sst.enableAllStatisticsForComponentType("memHierarchy.Cache")
 link_gna_cache = sst.Link("link_gna_mem")
 link_gna_cache.connect( (comp_gna, "mem_link", "1000ps"), (comp_l1cache, "high_network_0", "1000ps") )
 link_mem_bus_link = sst.Link("link_mem_bus_link")
-link_mem_bus_link.connect( (comp_l1cache, "low_network_0", "50ps"), (comp_memory, "direct_link", "50ps") )
+link_mem_bus_link.connect( (comp_l1cache, "low_network_0", "50ps"), (comp_memctrl, "direct_link", "50ps") )
 

@@ -135,17 +135,17 @@ for x in range(memories):
         "coherence_protocol" : coherence,
         "entry_cache_size" : 32768,
         "mshr_num_entries" : 16,
+        "interleave_size" : "64B",    # Interleave at line granularity between memories
+        "interleave_step" : str(memories * 64) + "B",
+        "addr_range_start" : x*64,
+        "addr_range_end" :  1024*1024*1024 - ((memories - x) * 64) + 63,
     })
     dirtoM = dirctrl.setSubComponent("memlink", "memHierarchy.MemLink")
     dirNIC = dirctrl.setSubComponent("cpulink", "memHierarchy.MemNIC")
     dirNIC.addParams({
         "group" : 3,
         # MemNIC parameters
-        "interleave_size" : "64B",    # Interleave at line granularity between memories
-        "interleave_step" : str(memories * 64) + "B",
         "network_bw" : network_bw,
-        "addr_range_start" : x*64,
-        "addr_range_end" :  1024*1024*1024 - ((memories - x) * 64) + 63,
         "network_input_buffer_size" : "2KiB",
         "network_output_buffer_size" : "2KiB",
     })

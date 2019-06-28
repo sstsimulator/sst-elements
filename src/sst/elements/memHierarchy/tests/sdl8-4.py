@@ -172,13 +172,13 @@ dirctrl.addParams({
       "entry_cache_size" : "1024",
       "debug" : DEBUG_DIR,
       "debug_level" : 10,
+      "addr_range_start" : "0x0",
+      "addr_range_end" : "0x1F000000",
 })
 dirtoM = dirctrl.setSubComponent("memlink", "memHierarchy.MemLink")
 dirNIC = dirctrl.setSubComponent("cpulink", "memHierarchy.MemNIC")
 dirNIC.addParams({
       "network_bw" : "25GB/s",
-      "addr_range_start" : "0x0",
-      "addr_range_end" : "0x1F000000",
       "group" : 2,
 })
 memctrl = sst.Component("memory", "memHierarchy.MemController")

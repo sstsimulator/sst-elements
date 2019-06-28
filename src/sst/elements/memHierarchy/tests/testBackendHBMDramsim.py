@@ -123,39 +123,39 @@ comp_chiprtr.addParams({
 })
 dirctrl0 = sst.Component("dirctrl0", "memHierarchy.DirectoryController")
 dirctrl0.addParams({
-      "coherence_protocol" : "MSI",
-      "debug" : 0,
-      "debug_level" : 10,
-      "entry_cache_size" : "1024",
+    "coherence_protocol" : "MSI",
+    "debug" : 0,
+    "debug_level" : 10,
+    "entry_cache_size" : "1024",
+    "addr_range_start" : "0x0",
+    "addr_range_end" : "0x1EFFFFC0",
+    "interleave_size" : "64B",
+    "interleave_step" : "128B",
 })
 dirtoM0 = dirctrl0.setSubComponent("memlink", "memHierarchy.MemLink")
 dirNIC0 = dirctrl0.setSubComponent("cpulink", "memHierarchy.MemNIC")
 dirNIC0.addParams({
     "group" : 2,
     "network_bw" : netBW,
-    "addr_range_start" : "0x0",
-    "addr_range_end" : "0x1EFFFFC0",
-    "interleave_size" : "64B",
-    "interleave_step" : "128B",
     "debug" : 0,
     "debug_level" : 10,
 })
 dirctrl1 = sst.Component("dirctrl1", "memHierarchy.DirectoryController")
 dirctrl1.addParams({
-      "coherence_protocol" : "MSI",
-      "debug" : debug,
-      "debug_level" : 10,
-      "entry_cache_size" : "1024",
+    "coherence_protocol" : "MSI",
+    "debug" : debug,
+    "debug_level" : 10,
+    "entry_cache_size" : "1024",
+    "addr_range_start" : "0x40",
+    "addr_range_end" : "0x1F000000",
+    "interleave_size" : "64B",
+    "interleave_step" : "128B",
 })
 dirtoM1 = dirctrl1.setSubComponent("memlink", "memHierarchy.MemLink")
 dirNIC1 = dirctrl1.setSubComponent("cpulink", "memHierarchy.MemNIC")
 dirNIC1.addParams({
     "group" : 2,
     "network_bw" : netBW,
-    "addr_range_start" : "0x40",
-    "addr_range_end" : "0x1F000000",
-    "interleave_size" : "64B",
-    "interleave_step" : "128B",
     "debug" : 0,
     "debug_level" : 10,
 })
