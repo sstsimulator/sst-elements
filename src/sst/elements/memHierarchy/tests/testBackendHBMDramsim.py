@@ -239,4 +239,4 @@ link_dir0_mem_link.connect( (dirtoM0, "port", "500ps"), (memtoD0, "port", "500ps
 link_dir_net_1 = sst.Link("link_dir_net_1")
 link_dir_net_1.connect( (comp_chiprtr, "port1", "200ps"), (dirNIC1, "port", "200ps") )
 link_dir1_mem_link = sst.Link("link_dir1_mem_link")
-link_dir1_mem_link.connect( (dirtoM, "port", "500ps"), (memtoD, "port", "500ps") )
+link_dir1_mem_link.connect( (dirtoM1, "port", "500ps"), (memtoD, "port", "500ps") )

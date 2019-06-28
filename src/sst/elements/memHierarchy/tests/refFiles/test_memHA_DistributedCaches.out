@@ -1,11 +1,7 @@
 l2cache0: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
-l2cache0, Detected user defined subcomponent for either the cpu or mem link but not both. Assuming this component has just one link.
 l2cache1: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
-l2cache1, Detected user defined subcomponent for either the cpu or mem link but not both. Assuming this component has just one link.
 l2cache2: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
-l2cache2, Detected user defined subcomponent for either the cpu or mem link but not both. Assuming this component has just one link.
 l2cache3: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
-l2cache3, Detected user defined subcomponent for either the cpu or mem link but not both. Assuming this component has just one link.
 TrivialCPU: Test Completed Successfuly
 TrivialCPU: Test Completed Successfuly
 TrivialCPU: Test Completed Successfuly

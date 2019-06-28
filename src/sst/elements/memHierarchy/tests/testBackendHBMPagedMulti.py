@@ -143,7 +143,7 @@ l3cache.addParams({
       "debug" : "0",
 })
 l3tol2 = l3cache.setSubComponent("cpulink", "memHierarchy.MemLink")
-l3NIC = l3cache.setSubComponent("memlink", "memHierarchy.memNIC")
+l3NIC = l3cache.setSubComponent("memlink", "memHierarchy.MemNIC")
 l3NIC.addParams({
     "group" : 1,
     "network_bw" : "25GB/s",

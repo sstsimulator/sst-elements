@@ -1,5 +1,6 @@
 # Automatically generated SST Python input
 import sst
+from mhlib import componentlist
 
 # Define the simulation components
 comp_cpu0 = sst.Component("cpu0", "memHierarchy.trivialCPU")

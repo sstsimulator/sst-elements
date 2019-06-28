@@ -85,6 +85,7 @@ for x in range(caches):
         # Debug parameters
         "debug" : DEBUG_L2,
         "debug_level" : 10,
+        "verbose" : 2,
     })
     l2NIC = l2cache.setSubComponent("cpulink", "memHierarchy.MemNIC")
     l2NIC.addParams({
