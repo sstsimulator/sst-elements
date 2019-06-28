@@ -170,7 +170,7 @@ dirctrl.addParams({
 dirtoM = dirctrl.setSubComponent("memlink", "memHierarchy.MemLink")
 dirNIC = dirctrl.setSubComponent("cpulink", "memHierarchy.MemNIC")
 dirNIC.addParams({
-    "group" : 1,
+    "group" : 2,
     "network_bw" : "25GB/s",
 })
 memctrl = sst.Component("memory", "memHierarchy.MemController")
