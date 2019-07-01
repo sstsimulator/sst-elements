@@ -13,14 +13,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-/*
- * File:   util.h
- * Author: Caesar De la Paz III
- * Email:  caesar.sst@gmail.com
- */
-
-#ifndef UTIL_H
-#define	UTIL_H
+#ifndef MEMHIERARCHY_UTIL_H
+#define	MEMHIERARCHY_UTIL_H
 
 #include <sst/core/stringize.h>
 #include <sst/core/params.h>
@@ -52,6 +46,7 @@ namespace MemHierarchy {
 #define _L8_ CALL_INFO,8,0     //Atomics
 #define _L9_ CALL_INFO,9,0     //MSHR messages
 #define _L10_ CALL_INFO,10,0   //Directory controller, Bus, Memory Controller
+#define _L20_ CALL_INFO,20,0   //Debug at function call granularity
 
 // Type conversions - TODO are these used anywhere?
 const unsigned int kibi = 1024;
@@ -124,8 +119,9 @@ inline void fixupParams( Params& params, const std::string oldKey, const std::st
  *  DONE - this request finished, should retry
  *  STALL - this request is being handled and should be stalled in the MSHRs
  *  BLOCK - this request is blocked by a current outstanding request and should stall in the MSHRs
+ *  REJECT - this request cannot be handled
  */
-typedef enum {IGNORE, DONE, STALL, BLOCK } CacheAction;
+typedef enum {IGNORE, DONE, STALL, BLOCK, REJECT} CacheAction;
 
 enum class CoherenceProtocol {MSI, MESI, NONE};
 

@@ -34,7 +34,7 @@ Messier::Messier(ComponentId_t id, Params &params) : SimpleMemBackend(id,params)
 
 void Messier::build(Params& params) {
 	std::string access_time = "1ns"; //params.find<std::string>("access_time", "1 ns");
-	nvm_link = configureLink( "cube_link", access_time,
+	nvm_link = configureLink( "nvm_link", access_time,
 			new Event::Handler<Messier>(this, &Messier::handleMessierResp));
 
 //	using std::placeholders::_1;

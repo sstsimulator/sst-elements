@@ -66,6 +66,9 @@ MemHierarchyScratchInterface::MemHierarchyScratchInterface(SST::ComponentId_t id
         link_ = configureLink("port");
     else
         link_ = configureLink("port", new Event::Handler<MemHierarchyScratchInterface>(this, &MemHierarchyScratchInterface::handleIncoming));
+        
+    if (!link_)
+        output.fatal(CALL_INFO, -1, "%s, Error: unable to configure link on port 'port'\n", getName().c_str());
 }
 
 

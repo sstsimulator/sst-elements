@@ -1,4 +1,5 @@
 import sst
+from mhlib import componentlist
 
 # Global variables
 debugScratch = 0
@@ -52,8 +53,8 @@ comp_l2_0.addParams({
     "associativity" : 8,
     "replacement_policy" : "mru",
 })
-comp_l3_0 = sst.Component("l3_0", "memHierarchy.Cache")
-comp_l3_0.addParams({
+l3_0 = sst.Component("l3_0", "memHierarchy.Cache")
+l3_0.addParams({
     "debug" : debugL3 | debugCore0,
     "debug_level" : 10,
     "cache_frequency" : core_clock,
@@ -119,8 +120,8 @@ comp_l2_1.addParams({
     "associativity" : 8,
     "replacement_policy" : "mru",
 })
-comp_l3_1 = sst.Component("l3_1", "memHierarchy.Cache")
-comp_l3_1.addParams({
+l3_1 = sst.Component("l3_1", "memHierarchy.Cache")
+l3_1.addParams({
     "debug" : debugL3 | debugCore1,
     "debug_level" : 10,
     "cache_frequency" : core_clock,
@@ -160,8 +161,8 @@ comp_net.addParams({
     "num_ports" : 4
 })
 
-comp_memory0 = sst.Component("memory0", "memHierarchy.MemController")
-comp_memory0.addParams({
+memctrl0 = sst.Component("memory0", "memHierarchy.MemController")
+memctrl0.addParams({
     #"debug" : "1",
     #"debug_level" : 10,
     "backing" : "none",
@@ -176,8 +177,8 @@ comp_memory0.addParams({
     "memNIC.interleave_step" : "256B",
 })
 
-comp_memory1 = sst.Component("memory1", "memHierarchy.MemController")
-comp_memory1.addParams({
+memctrl1 = sst.Component("memory1", "memHierarchy.MemController")
+memctrl1.addParams({
     #"debug" : "1",
     #"debug_level" : 10,
     "backing" : "none",
@@ -192,8 +193,8 @@ comp_memory1.addParams({
 # Enable statistics
 sst.setStatisticLoadLevel(7)
 sst.setStatisticOutput("sst.statOutputConsole")
-sst.enableAllStatisticsForComponentType("memHierarchy.Scratchpad")
-sst.enableAllStatisticsForComponentType("memHierarchy.MemController")
+for a in componentlist:
+    sst.enableAllStatisticsForComponentType(a)
 
 
 # Define the simulation links
@@ -206,19 +207,19 @@ link_l1_l2_0.connect( (comp_l1_0, "low_network_0", "100ps"), (comp_l2_0, "high_n
 link_l1_l2_1 = sst.Link("link_l1_l2_1")
 link_l1_l2_1.connect( (comp_l1_1, "low_network_0", "100ps"), (comp_l2_1, "high_network_0", "100ps") )
 link_l2_l3_0 = sst.Link("link_l2_l3_0")
-link_l2_l3_0.connect( (comp_l2_0, "low_network_0", "100ps"), (comp_l3_0, "high_network_0", "100ps") )
+link_l2_l3_0.connect( (comp_l2_0, "low_network_0", "100ps"), (l3_0, "high_network_0", "100ps") )
 link_l2_l3_1 = sst.Link("link_l2_l3_1")
-link_l2_l3_1.connect( (comp_l2_1, "low_network_0", "100ps"), (comp_l3_1, "high_network_0", "100ps") )
+link_l2_l3_1.connect( (comp_l2_1, "low_network_0", "100ps"), (l3_1, "high_network_0", "100ps") )
 link_l2_scratch0 = sst.Link("link_cpu0_scratch0")
-link_l2_scratch0.connect( (comp_l3_0, "low_network_0", "100ps"), (comp_scratch0, "cpu", "100ps") )
+link_l2_scratch0.connect( (l3_0, "low_network_0", "100ps"), (comp_scratch0, "cpu", "100ps") )
 link_l2_scratch1 = sst.Link("link_cpu1_scratch1")
-link_l2_scratch1.connect( (comp_l3_1, "low_network_0", "100ps"), (comp_scratch1, "cpu", "100ps") )
+link_l2_scratch1.connect( (l3_1, "low_network_0", "100ps"), (comp_scratch1, "cpu", "100ps") )
 link_scratch0_net = sst.Link("link_scratch0_net")
 link_scratch0_net.connect( (comp_scratch0, "network", "100ps"), (comp_net, "port0", "100ps") )
 link_scratch1_net = sst.Link("link_scratch1_net")
 link_scratch1_net.connect( (comp_scratch1, "network", "100ps"), (comp_net, "port1", "100ps") )
 link_mem0_net = sst.Link("link_mem0_net")
-link_mem0_net.connect( (comp_memory0, "network", "100ps"), (comp_net, "port2", "100ps") )
+link_mem0_net.connect( (memctrl0, "network", "100ps"), (comp_net, "port2", "100ps") )
 link_mem1_net = sst.Link("link_mem1_net")
-link_mem1_net.connect( (comp_memory1, "network", "100ps"), (comp_net, "port3", "100ps") )
+link_mem1_net.connect( (memctrl1, "network", "100ps"), (comp_net, "port3", "100ps") )
 # End of generated output.

@@ -36,7 +36,7 @@ class Output;
 
 namespace MemHierarchy {
 
-    enum NotifyAccessType{ READ, WRITE, EVICT };
+    enum NotifyAccessType{ READ, WRITE, EVICT, PREFETCH };
     enum NotifyResultType{ HIT, MISS, NA };
 
 class CacheListenerNotification {

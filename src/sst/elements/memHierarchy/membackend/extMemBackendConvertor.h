@@ -32,11 +32,9 @@ public:
 
     SST_ELI_DOCUMENT_STATISTICS( MEMBACKENDCONVERTOR_ELI_STATS )
     
-    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( MEMBACKENDCONVERTOR_ELI_SLOTS )
-
 /* Class definition */
     ExtMemBackendConvertor(Component *comp, Params &params);
-    ExtMemBackendConvertor(ComponentId_t id, Params &params);
+    ExtMemBackendConvertor(ComponentId_t id, Params &params, MemBackend* backend, uint32_t reqWidth);
 
     virtual bool issue( BaseReq* req );
     virtual void handleMemResponse( ReqId reqId, uint32_t flags  ) {

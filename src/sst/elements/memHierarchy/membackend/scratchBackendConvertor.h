@@ -75,7 +75,6 @@ public:
     ScratchBackendConvertor(ComponentId_t id, Params& params);
     void build(Params& params);
     void finish(void);
-    virtual const std::string& getClockFreq();
     virtual size_t getMemSize();
     virtual bool clock( Cycle_t cycle );
     virtual void handleMemEvent(  MemEvent* );

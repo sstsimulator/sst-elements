@@ -35,22 +35,22 @@ l1cache.addParams({
         "debug" : "0",
 	})
 
-memory = sst.Component("memory", "memHierarchy.MemController")
-memory.addParams({
-        "coherence_protocol" : "MSI",
-        "backend.access_time" : "10ns",
-        "backend.mem_size" : "2048MiB",
+memctrl = sst.Component("memory", "memHierarchy.MemController")
+memctrl.addParams({
         "clock" : "1GHz",
-        "use_dramsim" : "0",
-        "device_ini" : "DDR3_micron_32M_8B_x4_sg125.ini",
-        "system_ini" : "system.ini"
-        })
+})
+
+memory = memctrl.setSubComponent("backend", "memHierarchy.simpleMem")
+memory.addParams({
+        "access_time" : "10ns",
+        "mem_size" : "2048MiB",
+})
 
 cpu_cache_link = sst.Link("cpu_cache_link")
 cpu_cache_link.connect( (ariel, "cache_link_0", "50ps"), (l1cache, "high_network_0", "50ps") )
 
 memory_link = sst.Link("mem_bus_link")
-memory_link.connect( (l1cache, "low_network_0", "50ps"), (memory, "direct_link", "50ps") )
+memory_link.connect( (l1cache, "low_network_0", "50ps"), (memctrl, "direct_link", "50ps") )
 
 
 # Set the Statistic Load Level; Statistics with Enable Levels (set in

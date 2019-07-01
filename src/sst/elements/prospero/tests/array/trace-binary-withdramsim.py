@@ -24,20 +24,22 @@ comp_l1cache.addParams({
       "L1" : "1",
       "cache_size" : "64 KB"
 })
-comp_memory = sst.Component("memory", "memHierarchy.MemController")
-comp_memory.addParams({
-      "coherence_protocol" : "MESI",
+comp_memctrl = sst.Component("memory", "memHierarchy.MemController")
+comp_memctrl.addParams({
       "clock" : "1GHz",
-      "backend.access_time" : "1000 ns",
-      "backend.device_ini" : "DDR3_micron_32M_8B_x4_sg125.ini",
-      "backend.system_ini" : "system.ini",
-      "backend.mem_size" : "512MiB",
-      "backend" : "memHierarchy.dramsim"
+})
+
+memory = comp_memctrl.setSubComponent("backend", "memHierarchy.dramsim")
+memory.addParams({
+      "access_time" : "1000 ns",
+      "device_ini" : "DDR3_micron_32M_8B_x4_sg125.ini",
+      "system_ini" : "system.ini",
+      "mem_size" : "512MiB",
 })
 
 # Define the simulation links
 link_cpu_cache_link = sst.Link("link_cpu_cache_link")
 link_cpu_cache_link.connect( (comp_cpu, "cache_link", "1000ps"), (comp_l1cache, "high_network_0", "1000ps") )
 link_mem_bus_link = sst.Link("link_mem_bus_link")
-link_mem_bus_link.connect( (comp_l1cache, "low_network_0", "50ps"), (comp_memory, "direct_link", "50ps") )
+link_mem_bus_link.connect( (comp_l1cache, "low_network_0", "50ps"), (comp_memctrl, "direct_link", "50ps") )
 # End of generated output.

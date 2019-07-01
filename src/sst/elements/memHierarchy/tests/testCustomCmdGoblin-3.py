@@ -2,6 +2,7 @@ import sst
 import sys
 import ConfigParser, argparse
 from utils import *
+from mhlib import componentlist
 
 
 # Parse commandline arguments
@@ -55,14 +56,16 @@ for next_core_id in range(config.total_cores):
             config.ring_latency)
 
 # Connect Memory and Memory Controller to the ring
-mem = sst.Component("memory", "memHierarchy.CoherentMemController")
-mem.addParams(config.getMemParams())
+memctrl = sst.Component("memory", "memHierarchy.CoherentMemController")
+memctrl.addParams(config.getMemCtrlParams())
+memory = memctrl.setSubComponent("backend", "memHierarchy.goblinHMCSim")
+memory.addParams(config.getMemParams())
 
 dc = sst.Component("dc", "memHierarchy.DirectoryController")
 dc.addParams(config.getDCParams(0))
 
 connect("mem_link_0",
-        mem, "direct_link",
+        memctrl, "direct_link",
         dc, "memory",
         config.ring_latency)
 

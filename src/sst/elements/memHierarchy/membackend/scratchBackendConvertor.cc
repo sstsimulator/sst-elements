@@ -166,10 +166,6 @@ void ScratchBackendConvertor::finish(void) {
     m_backend->finish();
 }
 
-const std::string& ScratchBackendConvertor::getClockFreq() {
-    return m_backend->getClockFreq();
-}
-
 size_t ScratchBackendConvertor::getMemSize() {
     return m_backend->getMemSize();
 }

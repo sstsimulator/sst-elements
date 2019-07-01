@@ -1,5 +1,6 @@
 # Automatically generated SST Python input
 import sst
+from mhlib import componentlist
 
 # Test timingDRAM with transactionQ = fifoTransactionQ and AddrMapper=roundRobinAddrMapper and pagepolicy=simplePagePolicy(closed)
 
@@ -27,7 +28,12 @@ l3cache.addParams({
     "cache_line_size" : "64",
     "cache_size" : "64 KB",
     "debug" : "0",
-    "memNIC.network_bw" : "25GB/s",
+})
+l3tol2 = l3cache.setSubComponent("cpulink", "memHierarchy.MemLink")
+l3NIC = l3cache.setSubComponent("memlink", "memHierarchy.MemNIC")
+l3NIC.addParams({
+    "group" : 1,
+    "network_bw" : "25GB/s",
 })
 
 for i in range(0,8):
@@ -90,58 +96,65 @@ comp_chiprtr.addParams({
       "id" : "0",
       "topology" : "merlin.singlerouter"
 })
-comp_dirctrl = sst.Component("dirctrl", "memHierarchy.DirectoryController")
-comp_dirctrl.addParams({
+dirctrl = sst.Component("dirctrl", "memHierarchy.DirectoryController")
+dirctrl.addParams({
     "coherence_protocol" : "MESI",
     "debug" : "0",
     "verbose" : 2,
     "entry_cache_size" : "32768",
-    "memNIC.network_bw" : "25GB/s",
-    "memNIC.addr_range_end" : "0x1F000000",
-    "memNIC.addr_range_start" : "0x0"
+    "addr_range_end" : "0x1F000000",
+    "addr_range_start" : "0x0"
 })
-comp_memory = sst.Component("memory", "memHierarchy.MemController")
-comp_memory.addParams({
+dirtoM = dirctrl.setSubComponent("memlink", "memHierarchy.MemLink")
+dirNIC = dirctrl.setSubComponent("cpulink", "memHierarchy.MemNIC")
+dirNIC.addParams({
+    "group" : 2,
+    "network_bw" : "25GB/s",
+})
+memctrl = sst.Component("memory", "memHierarchy.MemController")
+memctrl.addParams({
     "backing" : "none",
-    "backend" : "memHierarchy.timingDRAM",
-    "backend.id" : 0,
-    "backend.addrMapper" : "memHierarchy.roundRobinAddrMapper",
-    "backend.addrMapper.interleave_size" : "64B",
-    "backend.addrMapper.row_size" : "1KiB",
-    "backend.clock" : "1.2GHz",
-    "backend.mem_size" : "512MiB",
-    "backend.channels" : 2,
-    "backend.channel.numRanks" : 2,
-    "backend.channel.rank.numBanks" : 16,
-    "backend.channel.transaction_Q_size" : 32,
-    "backend.channel.rank.bank.CL" : 14,
-    "backend.channel.rank.bank.CL_WR" : 12,
-    "backend.channel.rank.bank.RCD" : 14,
-    "backend.channel.rank.bank.TRP" : 14,
-    "backend.channel.rank.bank.dataCycles" : 2,
-    "backend.channel.rank.bank.pagePolicy" : "memHierarchy.simplePagePolicy",
-    "backend.channel.rank.bank.transactionQ" : "memHierarchy.fifoTransactionQ",
-    "backend.channel.rank.bank.pagePolicy.close" : 1,
     "verbose" : 2,
     "debug" : 0,
-    "debug_level" : 5
+    "debug_level" : 5,
+    "clock" : "1.2GHz",
+})
+memory = memctrl.setSubComponent("backend", "memHierarchy.timingDRAM")
+memory.addParams({
+    "id" : 0,
+    "addrMapper" : "memHierarchy.roundRobinAddrMapper",
+    "addrMapper.interleave_size" : "64B",
+    "addrMapper.row_size" : "1KiB",
+    "clock" : "1.2GHz",
+    "mem_size" : "512MiB",
+    "channels" : 2,
+    "channel.numRanks" : 2,
+    "channel.rank.numBanks" : 16,
+    "channel.transaction_Q_size" : 32,
+    "channel.rank.bank.CL" : 14,
+    "channel.rank.bank.CL_WR" : 12,
+    "channel.rank.bank.RCD" : 14,
+    "channel.rank.bank.TRP" : 14,
+    "channel.rank.bank.dataCycles" : 2,
+    "channel.rank.bank.pagePolicy" : "memHierarchy.simplePagePolicy",
+    "channel.rank.bank.transactionQ" : "memHierarchy.fifoTransactionQ",
+    "channel.rank.bank.pagePolicy.close" : 1,
 })
 
 # Do lower memory hierarchy links
 link_bus_l3 = sst.Link("link_bus_l3")
-link_bus_l3.connect( (bus, "low_network_0", "500ps"), (l3cache, "high_network_0", "500ps") )
+link_bus_l3.connect( (bus, "low_network_0", "500ps"), (l3tol2, "port", "500ps") )
 
 link_l3_net = sst.Link("link_l3_net")
-link_l3_net.connect( (l3cache, "directory", "10000ps"), (comp_chiprtr, "port1", "2000ps") )
+link_l3_net.connect( (l3NIC, "port", "10000ps"), (comp_chiprtr, "port1", "2000ps") )
 link_dir_net = sst.Link("link_dir_net")
-link_dir_net.connect( (comp_chiprtr, "port0", "2000ps"), (comp_dirctrl, "network", "2000ps") )
+link_dir_net.connect( (comp_chiprtr, "port0", "2000ps"), (dirNIC, "port", "2000ps") )
 link_dir_mem = sst.Link("link_dir_mem")
-link_dir_mem.connect( (comp_dirctrl, "memory", "10000ps"), (comp_memory, "direct_link", "10000ps") )
+link_dir_mem.connect( (dirtoM, "port", "10000ps"), (memctrl, "direct_link", "10000ps") )
 
 # Enable statistics
 sst.setStatisticLoadLevel(7)
 sst.setStatisticOutput("sst.statOutputConsole")
-sst.enableAllStatisticsForComponentType("memHierarchy.Cache")
-sst.enableAllStatisticsForComponentType("memHierarchy.MemController")
-sst.enableAllStatisticsForComponentType("memHierarchy.DirectoryController")
+for a in componentlist:
+    sst.enableAllStatisticsForComponentType(a)
 

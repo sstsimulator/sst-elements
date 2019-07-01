@@ -15,9 +15,10 @@
 
 #include <array>
 #include <sst_config.h>
-#include "sst/elements/memHierarchy/memNICFour.h"
 
 #include <sst/core/simulation.h>
+
+#include "sst/elements/memHierarchy/memNICFour.h"
 
 using namespace SST;
 using namespace SST::MemHierarchy;
@@ -46,42 +47,34 @@ void MemNICFour::build(Params& params) {
     std::array<std::string,4> pref = {"req", "ack", "fwd", "data"};
 
     for (int i = 0; i < 4; i++) {
-        std::string linkName = params.find<std::string>(pref[i] + ".port", "");
-        
-        if (linkName == "") 
-            dbg.fatal(CALL_INFO, -1, "Param not specified(%s): %s.port - the name of the port that the MemNIC's %s network is attached to. This should be set internally by components creating the memNIC.\n",
-                    getName().c_str(), pref[i].c_str(), pref[i].c_str());
+        link_control[i] = loadUserSubComponent<SST::Interfaces::SimpleNetwork>(pref[i], ComponentInfo::SHARE_NONE, 1);
+        if (link_control[i] == nullptr) {
 
-        // Error checking for much of this is done by the link control
-        std::string linkBandwidth = params.find<std::string>(pref[i] + ".network_bw", "80GiB/s");
-        int num_vcs = 1; // MemNIC does not use VCs
-        std::string linkInbufSize = params.find<std::string>(pref[i] + ".network_input_buffer_size", "1KiB");
-        std::string linkOutbufSize = params.find<std::string>(pref[i] + ".network_output_buffer_size", "1KiB");
+            std::string lctype = params.find<std::string>(pref[i] + ".linkcontrol", "kingsley.linkcontrol"); 
+            Params lcparams;
+            lcparams.insert("link_bw", params.find<std::string>(pref[i] + ".network_bw", "80GiB/s"));
+            lcparams.insert("in_buf_size", params.find<std::string>(pref[i] + ".network_input_buffer_size", "1KiB"));
+            lcparams.insert("out_buf_size", params.find<std::string>(pref[i] + ".network_output_buffer_size", "1KiB"));
+            lcparams.insert("port_name", params.find<std::string>(pref[i] + ".port", ""));
 
-        link_control[i] = (SimpleNetwork*)loadSubComponent(params.find<std::string>(pref[i] + ".linkcontrol", "kingsley.linkcontrol"), params); 
-        // But link control doesn't use params so manually initialize
-        link_control[i]->initialize(linkName, UnitAlgebra(linkBandwidth), num_vcs, UnitAlgebra(linkInbufSize), UnitAlgebra(linkOutbufSize));
-    
-        // Packet size
-        UnitAlgebra packetSize = UnitAlgebra(params.find<std::string>(pref[i] + ".min_packet_size", "8B"));
-        if (!packetSize.hasUnits("B"))
-            dbg.fatal(CALL_INFO, -1, "Invalid param(%s): %s.min_packet_size - must have units of bytes (B). SI units OK. You specified '%s'\n.",
-                    getName().c_str(), pref[i].c_str(), packetSize.toString().c_str());
+            link_control[i] = loadAnonymousSubComponent<SimpleNetwork>(lctype, pref[i], 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, lcparams, 1);
+        }
 
-        packetHeaderBytes[i] = packetSize.getRoundedValue();
+        packetHeaderBytes[i] = extractPacketHeaderSize(params, pref[i] + ".min_packet_size");
     }
     
     // Set link control to call recvNotify on event receive
-    link_control[DATA]->setNotifyOnReceive(new SimpleNetwork::Handler<MemNICFour>(this, &MemNICFour::recvNotifyData));
+    
     link_control[REQ]->setNotifyOnReceive(new SimpleNetwork::Handler<MemNICFour>(this, &MemNICFour::recvNotifyReq));
     link_control[ACK]->setNotifyOnReceive(new SimpleNetwork::Handler<MemNICFour>(this, &MemNICFour::recvNotifyAck));
     link_control[FWD]->setNotifyOnReceive(new SimpleNetwork::Handler<MemNICFour>(this, &MemNICFour::recvNotifyFwd));
+    link_control[DATA]->setNotifyOnReceive(new SimpleNetwork::Handler<MemNICFour>(this, &MemNICFour::recvNotifyData));
     
     // Register statistics
-    stat_oooEvent[DATA] = registerStatistic<uint64_t>("outoforder_data_events");
     stat_oooEvent[REQ] = registerStatistic<uint64_t>("outoforder_req_events");
     stat_oooEvent[ACK] = registerStatistic<uint64_t>("outoforder_ack_events");
     stat_oooEvent[FWD] = registerStatistic<uint64_t>("outoforder_fwd_events");
+    stat_oooEvent[DATA] = registerStatistic<uint64_t>("outoforder_data_events");
     stat_oooDepth = registerStatistic<uint64_t>("outoforder_depth_at_event_receive");
     stat_oooDepthSrc = registerStatistic<uint64_t>("outoforder_depth_at_event_receive_src");
     stat_orderLatency = registerStatistic<uint64_t>("ordering_latency");
@@ -128,39 +121,13 @@ bool MemNICFour::clock() {
     if (sendQueue[REQ].empty() && sendQueue[ACK].empty() && sendQueue[FWD].empty() && sendQueue[DATA].empty() && recvQueue.empty()) return true;
 
     // Attempt send on the control network
-    for (int i = 0; i < 4; i++) {
-        while (!sendQueue[i].empty()) {
-            SimpleNetwork::Request *head = sendQueue[i].front();
-/* Debug info - record before we attempt send so that if send destroys anything we have it */
-#ifdef __SST_DEBUG_OUTPUT__
-            MemEventBase * ev = (static_cast<MemRtrEvent*>(head->inspectPayload()))->event;
-            std::string debugEvStr;
-            uint64_t dst = head->dest;
-            bool doDebug = false;
-            if (ev) { 
-                debugEvStr = ev->getBriefString();
-                doDebug = is_debug_event(ev);
-            }
-#endif
-            if (link_control[i]->spaceToSend(0, head->size_in_bits) && link_control[i]->send(head, 0)) {
-#ifdef __SST_DEBUG_OUTPUT__
-                if (!debugEvStr.empty() && doDebug) {
-                    dbg.debug(_L9_, "%s (memNIC), Sending message %s to dst addr %" PRIu64 " on link control %s\n",
-                            getName().c_str(), debugEvStr.c_str(), dst, (i == REQ) ? "req" : "data");
-                }
-#endif
-                sendQueue[i].pop();
-            } else {
-                break;
-            }
-        }
-    }
+    for (int i = 0; i < 4; i++)
+        drainQueue(&sendQueue[i], link_control[i]);
 
     if (!recvQueue.empty()) {
         recvNotify(recvQueue.front());
         recvQueue.pop();
     }
-    
 
     return false;
 }

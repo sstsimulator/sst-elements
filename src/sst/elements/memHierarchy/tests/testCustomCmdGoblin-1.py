@@ -1,4 +1,5 @@
 import sst
+from mhlib import componentlist
 
 debug = 0
 
@@ -46,23 +47,23 @@ comp_l1cache.addParams({
 # Enable statistics outputs
 comp_l1cache.enableAllStatistics({"type":"sst.AccumulatorStatistic"})
 
-comp_memory = sst.Component("memory", "memHierarchy.CoherentMemController")
-comp_memory.addParams({
-      "coherence_protocol" : "MESI",
-      "backend.access_time" : "1000 ns",
-      "backend.mem_size" : "512MiB",
+comp_memctrl = sst.Component("memory", "memHierarchy.CoherentMemController")
+comp_memctrl.addParams({
       "clock" : "1GHz",
       "customCmdHandler" : "memHierarchy.amoCustomCmdHandler",
-      "backendConvertor" : "memHierarchy.extMemBackendConvertor",
-      "backend" : "memHierarchy.goblinHMCSim",
-      "backend.verbose" : "0",
-      "backend.trace-banks" : "1",
-      "backend.trace-queue" : "1",
-      "backend.trace-cmds" : "1",
-      "backend.trace-latency" : "1",
-      "backend.trace-stalls" : "1",
+})
 
-      "backend.cmd-map" : "[CUSTOM:10:64:WR64]"
+comp_memory = comp_memctrl.setSubComponent("backend", "memHierarchy.goblinHMCSim")
+comp_memory.addParams({
+    "verbose" : "0",
+    "trace-banks" : "1",
+    "trace-queue" : "1",
+    "trace-cmds" : "1",
+    "trace-latency" : "1",
+    "trace-stalls" : "1",
+    "cmd-map" : "[CUSTOM:10:64:WR64]",
+    "access_time" : "1000 ns",
+    "mem_size" : "512MiB",
 })
 
 
@@ -72,4 +73,4 @@ link_cpu_cache_link.connect( (iface, "port", "1000ps"), (comp_l1cache, "high_net
 link_cpu_cache_link.setNoCut()
 
 link_mem_bus_link = sst.Link("link_mem_bus_link")
-link_mem_bus_link.connect( (comp_l1cache, "low_network_0", "50ps"), (comp_memory, "direct_link", "50ps") )
+link_mem_bus_link.connect( (comp_l1cache, "low_network_0", "50ps"), (comp_memctrl, "direct_link", "50ps") )

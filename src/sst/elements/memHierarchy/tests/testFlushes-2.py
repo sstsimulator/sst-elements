@@ -68,8 +68,8 @@ for x in range(cores):
         "verbose" : verbose,
     })
 
-    comp_l2cache = sst.Component("l2cache" + str(x), "memHierarchy.Cache")
-    comp_l2cache.addParams({
+    l2cache = sst.Component("l2cache" + str(x), "memHierarchy.Cache")
+    l2cache.addParams({
         "cache_frequency" : coreclock,
         "access_latency_cycles" : 9,
         "tag_access_latency_cycles" : 2,
@@ -81,26 +81,31 @@ for x in range(cores):
         "max_requests_per_cycle" : 1,
         "mshr_num_entries" : 8,
         # MemNIC parameters
-        "memNIC.network_bw" : network_bw,
-        "memNIC.network_input_buffer_size" : "2KiB",
-        "memNIC.network_output_buffer_size" : "2KiB",
         "verbose" : verbose,
         "debug" : DEBUG_L2,
         "debug_level" : 10,
+    })
+    l2tol1 = l2cache.setSubComponent("cpulink", "memHierarchy.MemLink")
+    l2NIC = l2cache.setSubComponent("memlink", "memHierarchy.MemNIC")
+    l2NIC.addParams({
+        "group" : 1,
+        "network_bw" : network_bw,
+        "network_input_buffer_size" : "2KiB",
+        "network_output_buffer_size" : "2KiB",
     })
 
     cpu_l1_link = sst.Link("link_cpu_cache_" + str(x))
     cpu_l1_link.connect ( (iface, "port", "500ps"), (comp_l1cache, "high_network_0", "500ps") )
     
     l1_l2_link = sst.Link("link_l1_l2_" + str(x))
-    l1_l2_link.connect( (comp_l1cache, "low_network_0", "100ps"), (comp_l2cache, "high_network_0", "100ps") )
+    l1_l2_link.connect( (comp_l1cache, "low_network_0", "100ps"), (l2tol1, "port", "100ps") )
 
     l2_network_link = sst.Link("link_l2_network_" + str(x))
-    l2_network_link.connect( (comp_l2cache, "cache", "100ps"), (comp_network, "port" + str(x), "100ps") )
+    l2_network_link.connect( (l2NIC, "port", "100ps"), (comp_network, "port" + str(x), "100ps") )
 
 for x in range(caches):
-    comp_l3cache = sst.Component("l3cache" + str(x), "memHierarchy.Cache")
-    comp_l3cache.addParams({
+    l3cache = sst.Component("l3cache" + str(x), "memHierarchy.Cache")
+    l3cache.addParams({
         "cache_frequency" : uncoreclock,
         "access_latency_cycles" : 14,
         "tag_access_latency_cycles" : 6,
@@ -115,63 +120,78 @@ for x in range(caches):
         "slice_allocation_policy" : "rr", # Round-robin
         "slice_id" : x,
         # MemNIC parameters
-        "memNIC.network_bw" : network_bw,
-        "memNIC.network_input_buffer_size" : "2KiB",
-        "memNIC.network_output_buffer_size" : "2KiB",
         "verbose" : verbose,
         "debug" : DEBUG_L3,
         "debug_level" : 10,
     })
 
+    l3NIC = l3cache.setSubComponent("cpulink", "memHierarchy.MemNIC")
+    l3NIC.addParams({
+        "group" : 2,
+        "network_bw" : network_bw,
+        "network_input_buffer_size" : "2KiB",
+        "network_output_buffer_size" : "2KiB",
+    })
+
     portid = x + cores
     l3_network_link = sst.Link("link_l3_network_" + str(x))
-    l3_network_link.connect( (comp_l3cache, "directory", "100ps"), (comp_network, "port" + str(portid), "100ps") )
+    l3_network_link.connect( (l3NIC, "port", "100ps"), (comp_network, "port" + str(portid), "100ps") )
 
 for x in range(memories):
-    comp_directory = sst.Component("directory" + str(x), "memHierarchy.DirectoryController")
-    comp_directory.addParams({
+    directory = sst.Component("directory" + str(x), "memHierarchy.DirectoryController")
+    directory.addParams({
         "clock" : uncoreclock,
         "coherence_protocol" : coherence,
         "entry_cache_size" : 32768,
         "mshr_num_entries" : 16,
         # MemNIC parameters
-        "memNIC.interleave_size" : "64B",    # Interleave at line granularity between memories
-        "memNIC.interleave_step" : str(memories * 64) + "B",
-        "memNIC.network_bw" : network_bw,
-        "memNIC.addr_range_start" : x*64,
-        "memNIC.addr_range_end" :  1024*1024*1024 - ((memories - x) * 64) + 63,
-        "memNIC.network_input_buffer_size" : "2KiB",
-        "memNIC.network_output_buffer_size" : "2KiB",
         "verbose" : verbose,
         "debug" : DEBUG_DIR,
         "debug_level" : 10,
+        "interleave_size" : "64B",    # Interleave at line granularity between memories
+        "interleave_step" : str(memories * 64) + "B",
+        "addr_range_start" : x*64,
+        "addr_range_end" :  1024*1024*1024 - ((memories - x) * 64) + 63,
     })
 
-    comp_memory = sst.Component("memory" + str(x), "memHierarchy.MemController")
-    comp_memory.addParams({
+    dirtoM = directory.setSubComponent("memlink", "memHierarchy.MemLink")
+    dirNIC = directory.setSubComponent("cpulink", "memHierarchy.MemNIC")
+    dirNIC.addParams({
+        "group" : 3,
+        "group" : 3, # L2 = 1, L3 = 2, dir = 3
+        "network_bw" : network_bw,
+        "network_input_buffer_size" : "2KiB",
+        "network_output_buffer_size" : "2KiB",
+    })
+
+    memctrl = sst.Component("memory" + str(x), "memHierarchy.MemController")
+    memctrl.addParams({
         "clock" : "500MHz",
-        "max_requests_per_cycle" : 2,
         "backing" : "none",
         # Backend parameters
-        "backend" : "memHierarchy.simpleDRAM",
-        "backend.mem_size" : "512MiB",
-        "backend.tCAS" : 2,
-        "backend.tRCD" : 2,
-        "backend.tRP" : 3,
-        "backend.cycle_time" : "3ns",
-        "backend.row_size" : "4KiB",
-        "backend.row_policy" : "closed",
         "verbose" : verbose,
         "debug" : DEBUG_MEM,
         "debug_level" : 10,
     })
 
+    memory = memctrl.setSubComponent("backend", "memHierarchy.simpleDRAM")
+    memory.addParams({
+        "mem_size" : "512MiB",
+        "tCAS" : 2,
+        "tRCD" : 2,
+        "tRP" : 3,
+        "cycle_time" : "3ns",
+        "row_size" : "4KiB",
+        "row_policy" : "closed",
+        "max_requests_per_cycle" : 2,
+    })
+
     portid = x + caches + cores
     link_directory_network = sst.Link("link_directory_network_" + str(x))
-    link_directory_network.connect( (comp_directory, "network", "100ps"), (comp_network, "port" + str(portid), "100ps") )
+    link_directory_network.connect( (dirNIC, "port", "100ps"), (comp_network, "port" + str(portid), "100ps") )
     
     link_directory_memory_network = sst.Link("link_directory_memory_" + str(x))
-    link_directory_memory_network.connect( (comp_directory, "memory", "400ps"), (comp_memory, "direct_link", "400ps") )
+    link_directory_memory_network.connect( (dirtoM, "port", "400ps"), (memctrl, "direct_link", "400ps") )
 
 # Enable statistics
 sst.setStatisticLoadLevel(7)

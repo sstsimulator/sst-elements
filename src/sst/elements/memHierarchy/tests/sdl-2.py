@@ -1,52 +1,69 @@
 # Automatically generated SST Python input
 import sst
+from mhlib import componentlist
+
+DEBUG_L1 = 0
+DEBUG_MEM = 0
+DEBUG_LEVEL = 10
 
 # Define the simulation components
-comp_cpu = sst.Component("cpu", "memHierarchy.trivialCPU")
-comp_cpu.addParams({
+cpu = sst.Component("cpu", "memHierarchy.trivialCPU")
+cpu.addParams({
       "do_write" : "1",
       "num_loadstore" : "1000",
       "commFreq" : "100",
       "memSize" : "0x1000"
 })
-iface = comp_cpu.setSubComponent("memory", "memHierarchy.memInterface")
+iface = cpu.setSubComponent("memory", "memHierarchy.memInterface")
 
-comp_l1cache = sst.Component("l1cache", "memHierarchy.Cache")
-comp_l1cache.addParams({
+l1cache = sst.Component("l1cache", "memHierarchy.Cache")
+l1cache.addParams({
       "access_latency_cycles" : "4",
       "cache_frequency" : "2 Ghz",
       "replacement_policy" : "lru",
       "coherence_protocol" : "MSI",
       "associativity" : "4",
       "cache_line_size" : "32",
-      "debug" : "0",
+      "debug" : DEBUG_L1,
+      "debug_level" : DEBUG_LEVEL,
       "L1" : "1",
       "cache_size" : "2 KB"
 })
-comp_memory = sst.Component("memory", "memHierarchy.MemController")
-comp_memory.addParams({
+
+# Explicitly set the link subcomponents instead of having cache figure them out based on connected port names
+l1toC = l1cache.setSubComponent("cpulink", "memHierarchy.MemLink")
+l1toM = l1cache.setSubComponent("memlink", "memHierarchy.MemLink")
+
+# Memory controller
+memctrl = sst.Component("memory", "memHierarchy.MemController")
+memctrl.addParams({
       "coherence_protocol" : "MSI",
       "debug" : "0",
-      "system_ini" : "system.ini",
       "clock" : "1GHz",
-      "backend.access_time" : "100 ns",
-      "backend.device_ini" : "DDR3_micron_32M_8B_x4_sg125.ini",
-      "backend.system_ini" : "system.ini",
-      "backend.mem_size" : "512MiB",
       "request_width" : "32",
-      "backend" : "memHierarchy.dramsim"
+      "debug" : DEBUG_MEM,
+      "debug_level" : DEBUG_LEVEL,
+})
+Mtol1 = memctrl.setSubComponent("cpulink", "memHierarchy.MemLink")
+
+# Memory model
+memory = memctrl.setSubComponent("backend", "memHierarchy.simpleMem")
+memory.addParams({
+      "access_time" : "20ns",
+      "mem_size" : "512MiB",
 })
 
 # Enable statistics
 sst.setStatisticLoadLevel(7)
 sst.setStatisticOutput("sst.statOutputConsole")
-sst.enableAllStatisticsForComponentType("memHierarchy.Cache")
-sst.enableAllStatisticsForComponentType("memHierarchy.MemController")
+for a in componentlist:
+    sst.enableAllStatisticsForComponentType(a)
 
 
 # Define the simulation links
 link_cpu_cache_link = sst.Link("link_cpu_cache_link")
-link_cpu_cache_link.connect( (iface, "port", "1000ps"), (comp_l1cache, "high_network_0", "1000ps") )
+link_cpu_cache_link.connect( (iface, "port", "1000ps"), (l1toC, "port", "1000ps") )
 link_mem_bus_link = sst.Link("link_mem_bus_link")
-link_mem_bus_link.connect( (comp_l1cache, "low_network_0", "50ps"), (comp_memory, "direct_link", "50ps") )
+link_mem_bus_link.connect( (l1toM, "port", "50ps"), (Mtol1, "port", "50ps") )
+
 # End of generated output.
