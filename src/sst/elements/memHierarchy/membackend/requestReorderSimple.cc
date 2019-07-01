@@ -32,13 +32,16 @@ void RequestReorderSimple::build(Params& params) {
     searchWindowSize = params.find<int>("search_window_size", -1);
 
     // Create our backend & copy 'mem_size' through for now
-    std::string backendName = params.find<std::string>("backend", "memHierarchy.simpleDRAM");
-    Params backendParams = params.find_prefix_params("backend.");
-    backendParams.insert("mem_size", params.find<std::string>("mem_size"));
-    backend = loadAnonymousSubComponent<SimpleMemBackend>(backendName, "backend", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, backendParams);
-    
+    backend = loadUserSubComponent<SimpleMemBackend>("backend");
+    if (!backend) {
+        std::string backendName = params.find<std::string>("backend", "memHierarchy.simpleDRAM");
+        Params backendParams = params.find_prefix_params("backend.");
+        backendParams.insert("mem_size", params.find<std::string>("mem_size"));
+        backend = loadAnonymousSubComponent<SimpleMemBackend>(backendName, "backend", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, backendParams);
+    }
     using std::placeholders::_1;
     backend->setResponseHandler( std::bind( &RequestReorderSimple::handleMemResponse, this, _1 )  );
+    m_memSize = backend->getMemSize(); // inherit from backend
 }
 
 bool RequestReorderSimple::issueRequest(ReqId id, Addr addr, bool isWrite, unsigned numBytes ) {

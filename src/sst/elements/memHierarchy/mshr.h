@@ -13,8 +13,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef _MSHR_H_
-#define _MSHR_H_
+#ifndef MEMHIERARCHY_MSHR_H_
+#define MEMHIERARCHY_MSHR_H_
 
 #include <map>
 #include <string>

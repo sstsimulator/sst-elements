@@ -27,6 +27,30 @@ ShogunNIC::ShogunNIC(SST::Component* component, Params& params)
     onRecvFunctor = nullptr;
 }
 
+ShogunNIC::ShogunNIC(SST::ComponentId_t id, Params& params, int vns = 1)
+    : SimpleNetwork(id)
+    , netID(-1), bw(UnitAlgebra("1GB/s")) {
+
+    const int verbosity = params.find<uint32_t>("verbose", 0);
+
+    //TODO: output = new ...
+    output = new SST::Output("ShogunNIC-Startup ", verbosity, 0, Output::STDOUT);
+    reqQ = nullptr;
+    remote_input_slots = -1;
+
+    onSendFunctor = nullptr;
+    onRecvFunctor = nullptr;
+    
+    std::string portName = params.find<std::string>("port_name", "port");
+    
+    output->verbose(CALL_INFO, 4, 0, "Configuring port %s...\n", portName.c_str());
+
+    link = configureLink(portName, "1ps", new Event::Handler<ShogunNIC>(this, &ShogunNIC::recvLinkEvent));
+    
+    if (!link)
+        output->fatal(CALL_INFO, -1, "%s, Error: attempt to configure link on port '%s' was unsuccessful.\n", getName().c_str(), portName.c_str());
+}
+
 ShogunNIC::~ShogunNIC()
 {
     delete output;

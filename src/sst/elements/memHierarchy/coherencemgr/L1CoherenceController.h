@@ -147,7 +147,7 @@ public:
 /* Class definition */
     /** Constructor for L1CoherenceController */
     L1CoherenceController(Component* comp, Params& params) : CoherenceController(comp, params) { }
-    L1CoherenceController(ComponentId_t id, Params& params, Params& ownerParams) : CoherenceController(id, params, ownerParams) {
+    L1CoherenceController(ComponentId_t id, Params& params, Params& ownerParams, bool prefetch) : CoherenceController(id, params, ownerParams, prefetch) {
         params.insert(ownerParams);
         debug->debug(_INFO_,"--------------------------- Initializing [L1Controller] ... \n\n");
         
@@ -245,7 +245,7 @@ public:
         }
 
         /* Prefetch statistics */
-        if (!params.find<std::string>("prefetcher", "").empty()) {
+        if (prefetch) {
             statPrefetchEvict = registerStatistic<uint64_t>("prefetch_evict");
             statPrefetchInv = registerStatistic<uint64_t>("prefetch_inv");
             statPrefetchHit = registerStatistic<uint64_t>("prefetch_useful");

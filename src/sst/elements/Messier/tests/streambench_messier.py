@@ -8,12 +8,14 @@ import sst
 comp_cpu = sst.Component("cpu", "miranda.BaseCPU")
 comp_cpu.addParams({
         "verbose" : 0,
-        "generator" : "miranda.STREAMBenchGenerator",
         "clock" : "2.4GHz",
-        "generatorParams.verbose" : 0,
-        "generatorParams.n" : 10000,
-        "generatorParams.operandwidth" : 16,
         "printStats" : 1,
+})
+cpugen = comp_cpu.setSubComponent("generator", "miranda.STREAMBenchGenerator")
+cpugen.addParams({
+        "verbose" : 0,
+        "n" : 10000,
+        "operandwidth" : 16,
 })
 
 # Tell SST what statistics handling we want
@@ -42,16 +44,15 @@ comp_l1cache.enableAllStatistics({"type":"sst.AccumulatorStatistic"})
 
                                                                                                              
 nvm_memory = sst.Component("memory", "memHierarchy.MemController")
+nvm_memory_backend = nvm_memory.setSubComponent("backend", "memHierarchy.Messier")
 
 nvm_mem_params = {
     "clock" : "1024 MHz",
-   # "network_bw" : mesh_link_bw,
-   # "max_requests_per_cycle" : 1,
-    "backend.mem_size" : "4096MB", 
     "backing" : "none",
-    "backend" : "memHierarchy.Messier",
-    "backendConvertor.backend" : "memHierarchy.Messier",
-    "backend.clock" : "1024 MHz",
+}
+nvm_backend_params = {
+   # "max_requests_per_cycle" : 1,
+    "mem_size" : "4096MB", 
     #"backendConvertor.backend.clock" : "1024 MHz",
     #"backendConvertor" : "memHierarchy.MemBackendConvertor", 
    # "backend.device_count" : 1,
@@ -67,6 +68,7 @@ nvm_mem_params = {
 }
 
 nvm_memory.addParams(nvm_mem_params)
+nvm_memory_backend.addParams(nvm_backend_params)
 
 messier_inst = sst.Component("NVMmemory", "Messier")
 
@@ -93,7 +95,7 @@ messier_inst.addParams({
 
 
 link_nvm_bus_link = sst.Link("link_nvm_bus_link")
-link_nvm_bus_link.connect( (messier_inst, "bus", "50ps"), (nvm_memory, "cube_link", "50ps") )
+link_nvm_bus_link.connect( (messier_inst, "bus", "50ps"), (nvm_memory_backend, "nvm_link", "50ps") )
 
 # Define the simulation links
 link_cpu_cache_link = sst.Link("link_cpu_cache_link")

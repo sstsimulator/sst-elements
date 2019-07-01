@@ -25,7 +25,7 @@ namespace MemHierarchy {
 class FlagMemBackendConvertor : public MemBackendConvertor {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED_API(SST::MemHierarchy::FlagMemBackendConvertor, SST::MemHierarchy::MemBackendConvertor)
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED_API(SST::MemHierarchy::FlagMemBackendConvertor, SST::MemHierarchy::MemBackendConvertor, MemBackend*, uint32_t)
 
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(FlagMemBackendConvertor, "memHierarchy", "flagMemBackendConvertor", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Convert MemEventBase* for a FlagMemBackend - accepts and returns the 'flags' field", SST::MemHierarchy::MemBackendConvertor)
@@ -34,11 +34,9 @@ public:
 
     SST_ELI_DOCUMENT_STATISTICS( MEMBACKENDCONVERTOR_ELI_STATS )
     
-    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( MEMBACKENDCONVERTOR_ELI_SLOTS )
-
 /* Begin class definition */
     FlagMemBackendConvertor(Component *comp, Params &params);
-    FlagMemBackendConvertor(ComponentId_t id, Params &params);
+    FlagMemBackendConvertor(ComponentId_t id, Params &params, MemBackend* backend, uint32_t request_width);
 
     virtual bool issue( BaseReq* req );
     virtual void handleMemResponse( ReqId reqId, uint32_t flags  ) {

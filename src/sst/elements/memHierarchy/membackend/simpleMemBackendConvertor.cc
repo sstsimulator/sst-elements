@@ -30,8 +30,8 @@ SimpleMemBackendConvertor::SimpleMemBackendConvertor(Component *comp, Params &pa
     static_cast<SimpleMemBackend*>(m_backend)->setResponseHandler( std::bind( &SimpleMemBackendConvertor::handleMemResponse, this, _1 ) );
 }
 
-SimpleMemBackendConvertor::SimpleMemBackendConvertor(ComponentId_t id, Params &params) :
-        MemBackendConvertor(id,params) 
+SimpleMemBackendConvertor::SimpleMemBackendConvertor(ComponentId_t id, Params &params, MemBackend* backend, uint32_t reqWidth) :
+        MemBackendConvertor(id, params, backend, reqWidth) 
 {
     using std::placeholders::_1;
     static_cast<SimpleMemBackend*>(m_backend)->setResponseHandler( std::bind( &SimpleMemBackendConvertor::handleMemResponse, this, _1 ) );

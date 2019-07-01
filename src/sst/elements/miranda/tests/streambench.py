@@ -34,7 +34,7 @@ comp_l1cache.addParams({
       "associativity" : "4",
       "cache_line_size" : "64",
       "prefetcher" : "cassini.StridePrefetcher",
-      "debug" : "1",
+      "debug" : "0",
       "L1" : "1",
       "cache_size" : "32KB"
 })
@@ -42,12 +42,14 @@ comp_l1cache.addParams({
 # Enable statistics outputs
 comp_l1cache.enableAllStatistics({"type":"sst.AccumulatorStatistic"})
 
-comp_memory = sst.Component("memory", "memHierarchy.MemController")
-comp_memory.addParams({
-      "coherence_protocol" : "MESI",
-      "backend.access_time" : "100 ns",
-      "backend.mem_size" : "4096MiB",
+comp_memctrl = sst.Component("memory", "memHierarchy.MemController")
+comp_memctrl.addParams({
       "clock" : "1GHz"
+})
+memory = comp_memctrl.setSubComponent("backend", "memHierarchy.simpleMem")
+memory.addParams({
+      "access_time" : "100 ns",
+      "mem_size" : "4096MiB",
 })
 
 # Define the simulation links
@@ -56,4 +58,4 @@ link_cpu_cache_link.connect( (comp_cpu, "cache_link", "1000ps"), (comp_l1cache, 
 link_cpu_cache_link.setNoCut()
 
 link_mem_bus_link = sst.Link("link_mem_bus_link")
-link_mem_bus_link.connect( (comp_l1cache, "low_network_0", "50ps"), (comp_memory, "direct_link", "50ps") )
+link_mem_bus_link.connect( (comp_l1cache, "low_network_0", "50ps"), (comp_memctrl, "direct_link", "50ps") )

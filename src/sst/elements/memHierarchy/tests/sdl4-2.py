@@ -1,5 +1,6 @@
 # Automatically generated SST Python input
 import sst
+from mhlib import componentlist
 
 DEBUG_L1 = 0
 DEBUG_L2 = 0
@@ -66,24 +67,26 @@ comp_l2cache.addParams({
       "debug" : DEBUG_L2,
       "debug_level" : 10,
 })
-comp_memory = sst.Component("memory", "memHierarchy.MemController")
-comp_memory.addParams({
-      "coherence_protocol" : "MSI",
+memctrl = sst.Component("memory", "memHierarchy.MemController")
+memctrl.addParams({
       "debug" : DEBUG_MEM,
       "debug_level" : 10,
       "clock" : "1GHz",
-      "backend.mem_size" : "512MiB",
-      "backend.access_time" : "100 ns",
-      "backend.system_ini" : "system.ini",
-      "backend.device_ini" : "DDR3_micron_32M_8B_x4_sg125.ini",
-      "backend" : "memHierarchy.dramsim"
+})
+
+memory = memctrl.setSubComponent("backend", "memHierarchy.dramsim")
+memory.addParams({
+      "mem_size" : "512MiB",
+      "access_time" : "100 ns",
+      "system_ini" : "system.ini",
+      "device_ini" : "DDR3_micron_32M_8B_x4_sg125.ini",
 })
 
 # Enable statistics
 sst.setStatisticLoadLevel(7)
 sst.setStatisticOutput("sst.statOutputConsole")
-sst.enableAllStatisticsForComponentType("memHierarchy.Cache")
-sst.enableAllStatisticsForComponentType("memHierarchy.MemController")
+for a in componentlist:
+    sst.enableAllStatisticsForComponentType(a)
 
 # Define the simulation links
 link_cpu0_l1cache_link = sst.Link("link_cpu0_l1cache_link")
@@ -97,5 +100,5 @@ link_c1_l1_l2_link.connect( (comp_c1_l1cache, "low_network_0", "1000ps"), (comp_
 link_bus_l2cache = sst.Link("link_bus_l2cache")
 link_bus_l2cache.connect( (comp_bus, "low_network_0", "10000ps"), (comp_l2cache, "high_network_0", "1000ps") )
 link_mem_bus_link = sst.Link("link_mem_bus_link")
-link_mem_bus_link.connect( (comp_l2cache, "low_network_0", "10000ps"), (comp_memory, "direct_link", "10000ps") )
+link_mem_bus_link.connect( (comp_l2cache, "low_network_0", "10000ps"), (memctrl, "direct_link", "10000ps") )
 # End of generated output.

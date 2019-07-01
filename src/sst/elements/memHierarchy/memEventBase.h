@@ -78,6 +78,12 @@ public:
         memFlags_ = event->memFlags_;
     }
 
+    virtual void copyMetadata(MemEventBase* ev) {
+        rqstr_ = ev->rqstr_;
+        flags_ = ev->flags_;
+        memFlags_ = ev->memFlags_;
+    }
+
     /** @return  Unique ID of this MemEvent */
     id_type getID(void) const { return eventID_; }
 
@@ -164,25 +170,19 @@ public:
     /** Get verbose print of the event */
     virtual std::string getVerboseString() {
         std::ostringstream idstring;
-        idstring << "ID: <" << eventID_.first << "," << eventID_.second << ">";
-        if (BasicCommandClassArr[(int)cmd_] == BasicCommandClass::Response) {
-            idstring << " RespID: <" << responseToID_.first << "," << responseToID_.second << ">";
-        }
+        idstring << "<" << eventID_.first << "," << eventID_.second << "> ";
         std::string cmdStr(CommandString[(int)cmd_]);
         std::ostringstream str;
-        str << " Flags: " << getFlagString() << " MemFlags: 0x" << std::hex << memFlags_;
-        return idstring.str() + " Cmd: " + cmdStr + " Src: " + src_ + " Dst: " + dst_ + " Rqstr: " + rqstr_ + str.str();
+        str << " Flags: " << getFlagString();
+        return idstring.str() + cmdStr + " Src: " + src_ + " Dst: " + dst_ + " Rq: " + rqstr_ + str.str();
     }
 
     /** Get brief print of the event */
     virtual std::string getBriefString() {
         std::string cmdStr(CommandString[(int)cmd_]);
         std::ostringstream idstring;
-        idstring << "ID: <" << eventID_.first << "," << eventID_.second << ">";
-        if (BasicCommandClassArr[(int)cmd_] == BasicCommandClass::Response) {
-            idstring << " RespID: <" << responseToID_.first << "," << responseToID_.second << ">";
-        }
-        return idstring.str() + " Cmd: " + cmdStr + " Src: " + src_ + " Dst: " + dst_;
+        idstring << "<" << eventID_.first << "," << eventID_.second << "> ";
+        return idstring.str() + cmdStr + " Src: " + src_ + " Dst: " + dst_;
     }
 
     virtual bool doDebug(std::set<Addr> &UNUSED(addr)) {
@@ -307,12 +307,22 @@ class MemEventInitCoherence : public MemEventInit  {
 public:
     
     /* Init events for coordintating coherence policies */
-    MemEventInitCoherence(std::string src, Endpoint type, bool inclusive, bool WBAck, Addr lineSize, bool tracksPresence) : 
-        MemEventInit(src, InitCommand::Coherence), type_(type), inclusive_(inclusive), needWBAck_(WBAck), lineSize_(lineSize), tracksPresence_(tracksPresence) { }
+    /*
+     * type: cache, memory, scratchpad, etc.
+     * inclusive: inclusive (true) or noninclusive (false)
+     * sendWBAck: the component always sends WB Acks (if false, the component *can* send them if another component needs it)
+     * recvWBAck: the component expects to receive WB Acks (if false, the component *can* expect to receive them if another component sends them)
+     * lineSize: number of bytes in a line
+     * tracksPresence: whether the component keeps track of whether a line is present elsewhere. Affects whether clean evictions need to happen or not.
+     *
+     */
+    MemEventInitCoherence(std::string src, Endpoint type, bool inclusive, bool sendWBAck, Addr lineSize, bool tracksPresence) : 
+        MemEventInit(src, InitCommand::Coherence), type_(type), inclusive_(inclusive), sendWBAck_(sendWBAck), recvWBAck_(false), lineSize_(lineSize), tracksPresence_(tracksPresence) { }
 
     Endpoint getType() { return type_; }
     bool getInclusive() { return inclusive_; }
-    bool getWBAck() { return needWBAck_; }
+    bool getSendWBAck() { return sendWBAck_; }
+    bool getRecvWBAck() { return recvWBAck_; }
     Addr getLineSize() { return lineSize_; }
     bool getTracksPresence() { return tracksPresence_; }
 
@@ -330,7 +340,8 @@ public:
 private:
     Endpoint type_;     // Type of endpoint
     bool inclusive_;    // Whether endpoint is inclusive
-    bool needWBAck_;    // Whether endpoint expects writeback acks
+    bool sendWBAck_;    // Whether endpoint expects writeback acks -> should we send WB acks to the sender?
+    bool recvWBAck_;    // Whether endpoint sends writeback acks -> will we receive WB acks from the sender?
     Addr lineSize_;     // Endpoint's linesize
     bool tracksPresence_;     // Endpoint manages or tracks coherence
 
@@ -341,7 +352,8 @@ public:
         MemEventInit::serialize_order(ser);
         ser & type_;
         ser & inclusive_;
-        ser & needWBAck_;
+        ser & sendWBAck_;
+        ser & recvWBAck_;
         ser & lineSize_;
         ser & tracksPresence_;
     }

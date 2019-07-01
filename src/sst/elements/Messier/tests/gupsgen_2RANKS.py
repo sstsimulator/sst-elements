@@ -13,10 +13,12 @@ memory_mb = 128
 comp_cpu = sst.Component("cpu", "miranda.BaseCPU")
 comp_cpu.addParams({
 	"verbose" : 0,
-	"generator" : "miranda.GUPSGenerator",
-	"generatorParams.verbose" : 0,
-	"generatorParams.count" : 10000,
-	"generatorParams.max_address" : ((memory_mb) / 2) * 1024 * 1024,
+})
+cpugen = comp_cpu.setSubComponent("generator", "miranda.GUPSGenerator")
+cpugen.addParams({
+	"verbose" : 0,
+	"count" : 10000,
+	"max_address" : ((memory_mb) / 2) * 1024 * 1024,
 })
 
 # Enable statistics outputs
@@ -40,18 +42,15 @@ comp_l1cache.addParams({
 comp_l1cache.enableAllStatistics({"type":"sst.AccumulatorStatistic"})
 
 nvm_memory = sst.Component("memory", "memHierarchy.MemController")
-
-nvm_mem_params = {
+nvm_mem_backend = nvm_memory.setSubComponent("backend", "memHierarchy.Messier")
+nvm_memctrl_params = {
     "clock" : "1024 MHz",
-   # "network_bw" : mesh_link_bw,
-   # "max_requests_per_cycle" : 1,
-    "backend.mem_size" : "1024MB", 
     "backing" : "none",
-    "backend" : "memHierarchy.Messier",
-    "backendConvertor.backend" : "memHierarchy.Messier",
-    "backend.clock" : "1024 MHz",
-    #"backendConvertor.backend.clock" : "1024 MHz",
-    #"backendConvertor" : "memHierarchy.MemBackendConvertor", 
+}
+
+nvm_mem_backend_params = {
+    "mem_size" : "1024MB", 
+   # "max_requests_per_cycle" : 1,
    # "backend.device_count" : 1,
    # "backend.link_count" : 4,
    # "backend.vault_count" : 16,
@@ -64,7 +63,8 @@ nvm_mem_params = {
    # "backend.tag_count" : 512,
 }
 
-nvm_memory.addParams(nvm_mem_params)
+nvm_memory.addParams(nvm_memctrl_params)
+nvm_mem_backend.addParams(nvm_mem_backend_params)
 
 messier_inst = sst.Component("NVMmemory", "Messier")
 
@@ -101,7 +101,7 @@ messier_inst.addParams({
 #nvm_memory.addParams(nvm_mem_params)
 
 link_nvm_bus_link = sst.Link("link_nvm_bus_link")
-link_nvm_bus_link.connect( (messier_inst, "bus", "50ps"), (nvm_memory, "cube_link", "50ps") )
+link_nvm_bus_link.connect( (messier_inst, "bus", "50ps"), (nvm_mem_backend, "nvm_link", "50ps") )
 
 # Define the simulation links
 link_cpu_cache_link = sst.Link("link_cpu_cache_link")

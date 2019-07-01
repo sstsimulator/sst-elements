@@ -13,10 +13,12 @@ memory_mb = 1024
 comp_cpu = sst.Component("cpu", "miranda.BaseCPU")
 comp_cpu.addParams({
 	"verbose" : 1,
-	"generator" : "miranda.GUPSGenerator",
-	"generatorParams.verbose" : 0,
-	"generatorParams.count" : 10000,
-	"generatorParams.max_address" : ((memory_mb) / 2) * 1024 *1024,
+})
+cpugen = comp_cpu.setSubComponent("generator", "miranda.GUPSGenerator")
+cpugen.addParams({
+	"verbose" : 0,
+	"count" : 10000,
+	"max_address" : ((memory_mb) / 2) * 1024 *1024,
 })
 
 # Enable statistics outputs
@@ -33,7 +35,6 @@ comp_l1cache.addParams({
       "prefetcher" : "cassini.StridePrefetcher",
       "L1" : "1",
       "cache_size" : "8KB",
-      "do_not_back" : 1
 })
 
 # Enable statistics outputs
@@ -41,12 +42,13 @@ comp_l1cache.enableAllStatistics({"type":"sst.AccumulatorStatistic"})
 
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
-      "coherence_protocol" : "MESI",
-      "backend.access_time" : "50 ns",
-      "backend.mem_size" : str(memory_mb  * 1024) + "B",
       "clock" : "1GHz"
 })
-
+mem = comp_memory.setSubComponent("backend", "memHierarchy.simpleMem")
+mem.addParams({
+      "access_time" : "50 ns",
+      "mem_size" : str(memory_mb  * 1024) + "B",
+})
 
 mmu = sst.Component("mmu0", "Samba")
 mmu.addParams({

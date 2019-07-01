@@ -36,7 +36,7 @@ public:
             {"max_outstanding_requests", "Maximum number of outstanding requests", "256"} )
 
     SST_ELI_DOCUMENT_PORTS(
-            {"cube_link",   "Link to CramSim",  {"CramSim.MemReqEvent", "CramSim.MemRespEvent"} } )
+            {"cramsim_link",   "Link to CramSim",  {"CramSim.MemReqEvent", "CramSim.MemRespEvent"} } )
 
 /* Begin class definition */
     CramSimMemory(Component *comp, Params &params);

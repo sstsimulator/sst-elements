@@ -21,6 +21,7 @@
 #include "util.h"
 
 #include "membackend/memBackendConvertor.h"
+#include "membackend/memBackend.h"
 #include "memEventBase.h"
 #include "memEvent.h"
 #include "bus.h"
@@ -59,9 +60,10 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
 
     fixupParam( params, "backend", "backendConvertor.backend" );
     fixupParams( params, "backend.", "backendConvertor.backend." );
-    fixupParams( params, "clock", "backendConvertor.backend.clock" );
     fixupParams( params, "request_width", "backendConvertor.request_width" );
     fixupParams( params, "max_requests_per_cycle", "backendConvertor.backend.max_requests_per_cycle" );
+    
+    uint32_t requestWidth = params.find<uint32_t>("backendConvertor.request_width", 64);
 
     // Output for debug
     dbg.init("", debugLevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
@@ -79,15 +81,11 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     out.init("", params.find<int>("verbose", 1), 0, Output::STDOUT);
     
     // Check for deprecated parameters and warn/fatal
-    // Currently deprecated - mem_size (replaced by backend.mem_size), network_num_vc, statistic, direct_link 
+    // Currently deprecated - network_num_vc, statistic, direct_link 
     bool found;
     params.find<int>("statistics", 0, found);
     if (found) {
         out.output("%s, **WARNING** ** Found deprecated parameter: statistics **  memHierarchy statistics have been moved to the Statistics API. Please see sst-info to view available statistics and update your input deck accordingly.\nNO statistics will be printed otherwise! Remove this parameter from your deck to eliminate this message.\n", getName().c_str());
-    }
-    params.find<int>("mem_size", 0, found);
-    if (found) {
-        out.fatal(CALL_INFO, -1, "%s, Error - you specified memory size by the \"mem_size\" parameter, this must now be backend.mem_size, change the parameter name in your input deck.\n", getName().c_str());
     }
 
     params.find<int>("network_num_vc", 0, found);
@@ -103,13 +101,30 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
 
     string link_lat         = params.find<std::string>("direct_link_latency", "10 ns");
 
-    memBackendConvertor_ = loadUserSubComponent<MemBackendConvertor>("backendConvertor");
-    if (!memBackendConvertor_) {
-        Params tmpParams = params.find_prefix_params("backendConvertor.");
-        std::string name = params.find<std::string>("backendConvertor", "memHierarchy.simpleMemBackendConvertor");
-        memBackendConvertor_ = loadAnonymousSubComponent<MemBackendConvertor>(name, "backendConvertor", 0, 
-                ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, tmpParams);
+    /* MemController supports multiple ways of loading in backends:
+     *  Legacy:
+     *      Define backend and/or backendConvertor in the memcontroller's parameter set
+     *  Better way:
+     *      Fill backend slot with backend and memcontroller loads the compatible convertor
+     *
+     */
+
+    MemBackend * memory = loadUserSubComponent<MemBackend>("backend");
+    if (!memory) {  /* Try to load from our parameters (legacy mode 1) */
+        out.output("%s, WARNING: loading backend in legacy mode (from parameter set). Instead, load backend into this controller's 'backend' slot via ctrl.setSubComponent() in configuration.\n", getName().c_str());
+        Params tmpParams = params.find_prefix_params("backendConvertor.backend.");
+        std::string name = params.find<std::string>("backendConvertor.backend", "memHierarchy.simpleMem");
+        memory = loadAnonymousSubComponent<MemBackend>(name, "backend", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, tmpParams);
+        if (!memory) {
+            out.fatal(CALL_INFO, -1, "%s, Error: unable to load backend '%s'. Use setSubComponent() on this controller to specify backend in your input configuration; check for valid backend name.\n",
+                    getName().c_str(), name.c_str());
+        }
     }
+    
+    std::string convertortype = memory->getBackendConvertorType();
+    Params tmpParams = params.find_prefix_params("backendConvertor.");
+    memBackendConvertor_ = loadAnonymousSubComponent<MemBackendConvertor>(convertortype, "backendConvertor", 0, ComponentInfo::INSERT_STATS, tmpParams, memory, requestWidth);
+    
     if (memBackendConvertor_ == nullptr) {
         out.fatal(CALL_INFO, -1, "%s, Error - unable to load MemBackendConvertor.", getName().c_str());
     }
@@ -118,6 +133,8 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     using std::placeholders::_2;
     memBackendConvertor_->setCallbackHandlers(std::bind(&MemController::handleMemResponse, this, _1, _2), std::bind(&MemController::turnClockOn, this));
     memSize_ = memBackendConvertor_->getMemSize();
+    if (memSize_ == 0)
+        out.fatal(CALL_INFO, -1, "%s, Error - tried to get memory size from backend but size is 0B. Either backend is missing 'mem_size' parameter or value is invalid.\n", getName().c_str());
 
     // Load listeners (profilers/tracers/etc.)
     SubComponentSlotInfo* lists = getSubComponentSlotInfo("listener"); // Find all listeners specified in the configuration
@@ -148,11 +165,6 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
         free(nextListenerParams);
     }
 
-    // Opal
-    std::string opalNode = params.find<std::string>("node", "0");
-    std::string opalShMem = params.find<std::string>("shared_memory", "0");
-    std::string opalSize = params.find<std::string>("local_memory_size", "0");
-
     // Memory region - overwrite with what we got if we got some
     bool gotRegion = false;
     uint64_t addrStart = params.find<uint64_t>("addr_range_start", 0, gotRegion);
@@ -182,28 +194,21 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     region_.interleaveSize = UnitAlgebra(ilSize).getRoundedValue();
     region_.interleaveStep = UnitAlgebra(ilStep).getRoundedValue();
 
-    if (isPortConnected("direct_link")) {
+    link_ = loadUserSubComponent<MemLinkBase>("cpulink");
+
+    if (!link_ && isPortConnected("direct_link")) {
         Params linkParams = params.find_prefix_params("cpulink.");
         linkParams.insert("port", "direct_link");
-        linkParams.insert("node", opalNode);
-        linkParams.insert("shared_memory", opalShMem);
-        linkParams.insert("local_memory_size", opalSize);
         linkParams.insert("latency", link_lat, false);
         linkParams.insert("accept_region", "1", false);
         link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, linkParams);
-        link_->setRecvHandler( new Event::Handler<MemController>(this, &MemController::handleEvent));
-        clockLink_ = false;
-    } else {
+    } else if (!link_) {
 
         if (!isPortConnected("network")) {
             out.fatal(CALL_INFO,-1,"%s, Error: No connected port detected. Connect 'direct_link' or 'network' port.\n", getName().c_str());
         }
 
         Params nicParams = params.find_prefix_params("memNIC.");
-        nicParams.insert("node", opalNode);
-        nicParams.insert("shared_memory", opalShMem);
-        nicParams.insert("local_memory_size", opalSize);
-        
         nicParams.insert("group", "4", false);
         nicParams.insert("accept_region", "1", false);
 
@@ -217,10 +222,11 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
             nicParams.insert("port", "network");
             link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams);
         }
-
-        link_->setRecvHandler( new Event::Handler<MemController>(this, &MemController::handleEvent) );
-        clockLink_ = true;
     }
+        
+    clockLink_ = link_->isClocked();
+    link_->setRecvHandler( new Event::Handler<MemController>(this, &MemController::handleEvent));
+    link_->setName(getName());
    
     if (gotRegion) 
         link_->setRegion(region_);
@@ -282,11 +288,14 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     }
 
     /* Clock Handler */
+    std::string clockfreq = params.find<std::string>("clock");
+    UnitAlgebra clock_ua(clockfreq);
+    if (!(clock_ua.hasUnits("Hz") || clock_ua.hasUnits("s")) || clock_ua.getRoundedValue() <= 0) {
+        out.fatal(CALL_INFO, -1, "%s, Error - Invalid param: clock. Must have units of Hz or s and be > 0. (SI prefixes ok). You specified '%s'\n", getName().c_str(), clockfreq.c_str());
+    }
     clockHandler_ = new Clock::Handler<MemController>(this, &MemController::clock);
-    clockTimeBase_ = registerClock(memBackendConvertor_->getClockFreq(), clockHandler_);
+    clockTimeBase_ = registerClock(clockfreq, clockHandler_);
     clockOn_ = true;
-
-    registerTimeBase("1 ns", true); // TODO - is this needed? We already registered a clock...
 
     /* Custom command handler */
     using std::placeholders::_3;
@@ -331,6 +340,8 @@ void MemController::handleEvent(SST::Event* event) {
 
 
     // Notify our listeners that we have received an event
+    notifyListeners( ev );
+
     switch (cmd) {
         case Command::PutM:
             ev->setFlag(MemEvent::F_NORESPONSE);
@@ -338,7 +349,6 @@ void MemController::handleEvent(SST::Event* event) {
         case Command::GetX:
         case Command::GetSX:
             outstandingEvents_.insert(std::make_pair(ev->getID(), ev));
-            notifyListeners( ev );
             memBackendConvertor_->handleMemEvent( ev );
             break;
 
@@ -350,7 +360,6 @@ void MemController::handleEvent(SST::Event* event) {
                     put = new MemEvent(getName(), ev->getBaseAddr(), ev->getBaseAddr(), Command::PutM, ev->getPayload(), getCurrentSimTimeNano());
                     put->setFlag(MemEvent::F_NORESPONSE);
                     outstandingEvents_.insert(std::make_pair(put->getID(), put));
-                    notifyListeners(ev);
                     memBackendConvertor_->handleMemEvent( put );
                 }
                 

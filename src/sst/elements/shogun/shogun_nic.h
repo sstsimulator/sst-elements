@@ -18,18 +18,22 @@ namespace Shogun {
     class ShogunNIC : public SST::Interfaces::SimpleNetwork {
 
     public:
-        SST_ELI_REGISTER_SUBCOMPONENT(
+        SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
             ShogunNIC,
             "shogun",
             "ShogunNIC",
             SST_ELI_ELEMENT_VERSION(1, 0, 0),
             "Shogun X-Bar Interface for Memory Crossbars",
-            "SST::Interfaces::SimpleNetwork");
+            SST::Interfaces::SimpleNetwork);
 
         SST_ELI_DOCUMENT_PARAMS(
-            { "verbose", "Level of output verbosity, higher is more output, 0 is	no output", 0 })
+            { "verbose", "Level of output verbosity, higher is more output, 0 is no output", "0"},
+            { "port_name", "If loaded anonymously, port to use (otherwise will use own port)", "port"})
+
+        SST_ELI_DOCUMENT_PORTS( {"port", "Port into network", {"shogun.ShogunCreditEvent", "shogun.ShogunEvent"} } )
 
         ShogunNIC(SST::Component* component, Params& params);
+        ShogunNIC(SST::ComponentId_t id, Params& params, int vns);
         ~ShogunNIC();
 
         /** Second half of building the interface.

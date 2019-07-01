@@ -1,4 +1,5 @@
 import sst
+from mhlib import componentlist
 
 # Global variables
 debugScratch = 0
@@ -131,8 +132,8 @@ comp_net.addParams({
     "num_ports" : 4
 })
 
-comp_memory0 = sst.Component("memory0", "memHierarchy.MemController")
-comp_memory0.addParams({
+memctrl0 = sst.Component("memory0", "memHierarchy.MemController")
+memctrl0.addParams({
       #"debug" : "1",
       #"debug_level" : 10,
       "backing" : "none",
@@ -146,8 +147,8 @@ comp_memory0.addParams({
       "memNIC.interleave_size" : "128B",
       "memNIC.interleave_step" : "256B",
 })
-comp_memory1 = sst.Component("memory1", "memHierarchy.MemController")
-comp_memory1.addParams({
+memctrl1 = sst.Component("memory1", "memHierarchy.MemController")
+memctrl1.addParams({
       #"debug" : "1",
       #"debug_level" : 10,
       "backing" : "none",
@@ -163,8 +164,8 @@ comp_memory1.addParams({
 # Enable statistics
 sst.setStatisticLoadLevel(7)
 sst.setStatisticOutput("sst.statOutputConsole")
-sst.enableAllStatisticsForComponentType("memHierarchy.Scratchpad")
-sst.enableAllStatisticsForComponentType("memHierarchy.MemController")
+for a in componentlist:
+    sst.enableAllStatisticsForComponentType(a)
 
 
 # Define the simulation links
@@ -185,7 +186,7 @@ link_scratch0_net.connect( (comp_scratch0, "network", "100ps"), (comp_net, "port
 link_scratch1_net = sst.Link("link_scratch1_net")
 link_scratch1_net.connect( (comp_scratch1, "network", "100ps"), (comp_net, "port1", "100ps") )
 link_mem0_net = sst.Link("link_mem0_net")
-link_mem0_net.connect( (comp_memory0, "network", "100ps"), (comp_net, "port2", "100ps") )
+link_mem0_net.connect( (memctrl0, "network", "100ps"), (comp_net, "port2", "100ps") )
 link_mem1_net = sst.Link("link_mem1_net")
-link_mem1_net.connect( (comp_memory1, "network", "100ps"), (comp_net, "port3", "100ps") )
+link_mem1_net.connect( (memctrl1, "network", "100ps"), (comp_net, "port3", "100ps") )
 # End of generated output.

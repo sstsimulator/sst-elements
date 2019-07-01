@@ -50,6 +50,9 @@ MemHierarchyInterface::MemHierarchyInterface(SST::ComponentId_t id, Params &para
         link_ = configureLink(portname);
     else
         link_ = configureLink(portname, new Event::Handler<MemHierarchyInterface>(this, &MemHierarchyInterface::handleIncoming));
+
+    if (!link_)
+        output.fatal(CALL_INFO, -1, "%s, Error: unable to configure link on port '%s'\n", getName().c_str(), portname.c_str());
 }
 
 

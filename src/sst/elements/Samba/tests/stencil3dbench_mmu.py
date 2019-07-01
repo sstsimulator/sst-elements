@@ -9,12 +9,14 @@ comp_cpu = sst.Component("cpu", "miranda.BaseCPU")
 comp_cpu.addParams({
 	"verbose" : 1,
 	"clock" : "2GHz",
-	"generator" : "miranda.Stencil3DBenchGenerator",
-	"generatorParams.verbose" : 1,
-	"generatorParams.nx" : 30,
-	"generatorParams.ny" : 20,
-	"generatorParams.nz" : 10,
 	"printStats" : 1,
+})
+cpugen = comp_cpu.setSubComponent("generator", "miranda.Stencil3DBenchGenerator")
+cpugen.addParams({
+        "verbose" : 1,
+        "nx" : 30,
+        "ny" : 20,
+        "nz" : 10,
 })
 
 # Tell SST what statistics handling we want
@@ -32,7 +34,7 @@ comp_l1cache.addParams({
       "associativity" : "4",
       "cache_line_size" : "64",
       "prefetcher" : "cassini.StridePrefetcher",
-      "debug" : "1",
+      "debug" : "0",
       "L1" : "1",
       "cache_size" : "32KB"
 })
@@ -42,10 +44,12 @@ comp_l1cache.enableAllStatistics({"type":"sst.AccumulatorStatistic"})
 
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
-      "coherence_protocol" : "MESI",
-      "backend.access_time" : "100 ns",
-      "backend.mem_size" : "4096MiB",
       "clock" : "1GHz"
+})
+mem = comp_memory.setSubComponent("backend", "memHierarchy.simpleMem")
+mem.addParams({
+      "access_time" : "100 ns",
+      "mem_size" : "4096MiB",
 })
 
 mmu = sst.Component("mmu0", "Samba")

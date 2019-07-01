@@ -49,9 +49,11 @@ public:
     /* Define params, inherit from base class */
 #define MEMLINK_ELI_PARAMS MEMLINKBASE_ELI_PARAMS, \
     { "latency",            "(string) Link latency. Prefix 'cpulink' for up-link towards CPU or 'memlink' for down-link towards memory", "50ps"},\
-    { "port",               "(string) Set by parent component. Name of port this memLink sits on.", ""}
+    { "port",               "(string) Set by parent component. Name of port this memLink sits on.", "port"}
 
     SST_ELI_DOCUMENT_PARAMS( { MEMLINK_ELI_PARAMS }  )
+
+    SST_ELI_DOCUMENT_PORTS( { "port", "Port to another memory component", {"memHierarchy.MemEventBase"} } )
 
 /* Begin class definition */
     class MemEventLinkInit : public MemEventBase {
@@ -87,16 +89,20 @@ public:
     /* Constructor */
     MemLink(Component * comp, Params &params);
     MemLink(ComponentId_t id, Params &params);
-private:
-    void build(Params &params);
-public:
 
     /* Destructor */
-    ~MemLink() { }
+    virtual ~MemLink() { }
 
     /* Initialization functions for parent */
     virtual void init(unsigned int phase);
 
+    /* Remote endpoint info management */
+    virtual std::set<EndpointInfo>* getSources();
+    virtual std::set<EndpointInfo>* getDests();
+    virtual bool isDest(std::string UNUSED(str));
+    virtual bool isSource(std::string UNUSED(str));
+    virtual std::string findTargetDestination(Addr addr);
+    
     /* Send and receive functions for MemLink */
     virtual void sendInitData(MemEventInit * ev);
     virtual MemEventInit* recvInitData();
@@ -109,9 +115,16 @@ public:
     }
 
 protected:
-    
+    void addRemote(EndpointInfo info);
+
     // Link
     SST::Link* link;
+
+    // Data structures
+    std::set<EndpointInfo> remotes;
+
+private:
+    void build(Params &params);
 };
 
 } //namespace memHierarchy

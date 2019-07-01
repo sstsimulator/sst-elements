@@ -34,7 +34,6 @@ comp_l1cache.addParams({
     "associativity"         : "4",
     "cache_line_size"       : "64",
     "debug_level"           : "8",
-    "statistics"            : "1",
     "L1"                    : "1",
     "debug"                 : "0",
     "cache_size"            : "4 KB",
@@ -49,7 +48,6 @@ comp_l2cache.addParams({
     "associativity"         : "4",
     "cache_line_size"       : "64",
     "debug_level"           : "8",
-    "statistics"            : "1",
     "L1"                    : "0",
     "debug"                 : "0",
     "cache_size"            : "64 KB",
@@ -58,13 +56,12 @@ comp_l2cache.addParams({
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
     "clock"                 : "2 Ghz",
-    "range_start"           : "0",
-    "mem_size"              : "1024",
-    "coherence_protocol"    : "MSI",
     "request_width"         : "64",
     "debug"                 : "0",
-    "statistics"            : "1",
-    "backend"               : "memHierarchy.simpleMem"
+})
+backend = comp_memory.setSubComponent("backend", "memHierarchy.simpleMem")
+backend.addParams({
+    "mem_size"              : "1024MiB",
 })
 
 comp_tracer = sst.Component("tracer", "simpleElementExample.simpleTracerComponent")

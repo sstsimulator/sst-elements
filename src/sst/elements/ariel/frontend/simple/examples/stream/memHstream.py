@@ -76,20 +76,19 @@ def genMemHierarchy(cores):
        "bus_frequency" : cacheFrequency,
    })
 
-   memory = sst.Component("memory", "memHierarchy.MemController")
-   memory.addParams({
-        "range_start"           : "0",
-        "coherence_protocol"    : coherenceProtocol,
+   memctrl = sst.Component("memory", "memHierarchy.MemController")
+   memctrl.addParams({
         "debug"                 : memDebug,
         "clock"                 : "1Ghz",
         "verbose"               : 2,
-        "backend.device_ini"    : "DDR3_micron_32M_8B_x4_sg125.ini",
-        "backend.system_ini"    : "system.ini",
-        "backend.mem_size"      : "512MiB",
         "request_width"         : cacheLineSize,
-        "backend"               : "memHierarchy.dramsim",
-        "device_ini"            : "DDR3_micron_32M_8B_x4_sg125.ini",
-        "system_ini"            : "system.ini"
+   })
+
+   memory = memctrl.setSubComponent("backend", "memHierarchy.dramsim")
+   memory.addParams({
+        "device_ini"    : "DDR3_micron_32M_8B_x4_sg125.ini",
+        "system_ini"    : "system.ini",
+        "mem_size"      : "512MiB",
    })
 
    for core in range (cores):
@@ -156,7 +155,7 @@ def genMemHierarchy(cores):
    BusL3Link = sst.Link("bus_L3")
    BusL3Link.connect((membus, "low_network_0", busLat), (l3, "high_network_0", busLat))
    L3MemCtrlLink = sst.Link("L3MemCtrl")
-   L3MemCtrlLink.connect((l3, "low_network_0", busLat), (memory, "direct_link", busLat))
+   L3MemCtrlLink.connect((l3, "low_network_0", busLat), (memctrl, "direct_link", busLat))
 
 genMemHierarchy(corecount)        
 

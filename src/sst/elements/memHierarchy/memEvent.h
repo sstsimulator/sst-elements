@@ -129,6 +129,13 @@ public:
         return me;
     }
 
+    void copyMetadata(MemEventBase* ev) override {
+        MemEventBase::copyMetadata(ev);
+        MemEvent * ev1 = static_cast<MemEvent*>(ev);
+        vAddr_ = ev1->getVirtualAddress();
+        instPtr_ = ev1->getInstructionPointer();
+    }
+
     void initialize() {
         addr_               = 0;
         baseAddr_           = 0;
@@ -144,6 +151,7 @@ public:
 	instPtr_	    = 0;
 	vAddr_		    = 0;
         inProgress_         = false;
+        isEvict_            = false;
     }
 
     /** return the original event that caused a NACK */
@@ -257,6 +265,8 @@ public:
     /** Returns true if this is a CPU-side event (i.e., sent from CPU side of hierarchy) */
     bool isCPUSideEvent(void) const { return CommandCPUSide[(int)cmd_]; }
 
+    void setEvict(bool status) { isEvict_ = status; }
+    bool getEvict() { return isEvict_; }
 
     void setDirty(bool status) { dirty_ = status; }
     bool getDirty() { return dirty_; }
@@ -267,21 +277,31 @@ public:
 
     virtual std::string getVerboseString() override {
         std::ostringstream str;
-        str << std::hex << " Addr: 0x" << addr_ << " BaseAddr: 0x" << baseAddr_;
-        str << (addrGlobal_ ? " (Global)" : " (Local)");
+        if (addr_ != baseAddr_)
+            str << std::hex << " Addr: 0x" << baseAddr_ << "/0x" << addr_;
+        else
+            str << std::hex << " Addr: 0x" << baseAddr_;
+        str << (addrGlobal_ ? " (G)" : " (L)");
+        str << " Data: " << (payload_.empty() ? "F" : "T");
         str << " VA: 0x" << vAddr_ << " IP: 0x" << instPtr_;
         str << std::dec << " Size: " << size_;
-        str << " Prefetch: " << (prefetch_ ? "true" : "false");
+        str << " Prf: " << (prefetch_ ? "T" : "F");
         return MemEventBase::getVerboseString() + str.str();
     }
 
     virtual std::string getBriefString() override {
         std::ostringstream str;
-        str << " Addr: 0x" << std::hex << addr_ << " BaseAddr: 0x" << baseAddr_ << std::dec << " Size: " << size_;
+        if (addr_ != baseAddr_)
+            str << std::hex << " Addr: 0x" << baseAddr_ << "/0x" << addr_;
+        else
+            str << std::hex << " Addr: 0x" << baseAddr_;
+        str << std::dec << " Size: " << size_;
         return MemEventBase::getBriefString() + str.str();
     }
     
     virtual bool doDebug(std::set<Addr> &addr) override {
+        if (cmd_ == Command::NULLCMD && addr.find(addr_) != addr.end())
+            return true;
         return (addr.find(baseAddr_) != addr.end());
     }
 
@@ -301,6 +321,7 @@ private:
     bool            blocked_;           // Whether this request blocked for another pending request (for profiling) TODO move to mshrs
     SimTime_t       initTime_;          // Timestamp when event was created, for detecting timeouts TODO move to mshrs
     bool            dirty_;             // For a replacement, whether the data is dirty or not
+    bool            isEvict_;           // Whether an event is an eviction
     Addr	    instPtr_;           // Instruction pointer associated with the request
     Addr 	    vAddr_;             // Virtual address associated with the request
     bool            inProgress_;        // Whether this request is currently being handled, if in MSHR TODO move to mshrs
@@ -321,6 +342,7 @@ public:
         ser & blocked_;
         ser & initTime_;
         ser & dirty_;
+        ser & isEvict_;
         ser & instPtr_;
         ser & vAddr_;
         ser & inProgress_;

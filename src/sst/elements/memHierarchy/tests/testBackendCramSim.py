@@ -1,5 +1,6 @@
 # Automatically generated SST Python input
 import sst
+from mhlib import componentlist
 
 
 def read_arguments():
@@ -205,8 +206,8 @@ comp_n2_bus = sst.Component("n2.bus", "memHierarchy.Bus")
 comp_n2_bus.addParams({
       "bus_frequency" : "2 Ghz"
 })
-comp_l3cache = sst.Component("l3cache", "memHierarchy.Cache")
-comp_l3cache.addParams({
+l3cache = sst.Component("l3cache", "memHierarchy.Cache")
+l3cache.addParams({
       "access_latency_cycles" : "100",
       "cache_frequency" : "2 Ghz",
       "replacement_policy" : "lru",
@@ -237,15 +238,16 @@ comp_dirctrl.addParams({
       "addr_range_end" : "0x1F000000",
       "addr_range_start" : "0x0"
 })
-comp_memory = sst.Component("memory", "memHierarchy.MemController")
-comp_memory.addParams({
-      "coherence_protocol" : "MSI",
+comp_memctrl = sst.Component("memory", "memHierarchy.MemController")
+comp_memctrl.addParams({
       "debug" : "0",
-      "backend" : "memHierarchy.cramsim",
-      "backend.access_time" : "2 ns",   # Phy latency
-      "backend.mem_size" : "512MiB",
       "clock" : "1GHz",
       "request_width" : "64"
+})
+comp_memory = comp_memctrl.setSubComponent("backend", "memHierarchy.cramsim")
+comp_memory.addParams({
+    "access_time" : "2 ns",   # Phy latency
+    "mem_size" : "512MiB",
 })
 
 # txn gen <--> memHierarchy Bridge
@@ -278,9 +280,8 @@ comp_dimm0.addParams(g_params)
 # Enable statistics
 sst.setStatisticLoadLevel(7)
 sst.setStatisticOutput("sst.statOutputConsole")
-sst.enableAllStatisticsForComponentType("memHierarchy.Cache")
-sst.enableAllStatisticsForComponentType("memHierarchy.MemController")
-sst.enableAllStatisticsForComponentType("memHierarchy.DirectoryController")
+for a in componentlist:
+    sst.enableAllStatisticsForComponentType(a)
 
 
 # Define the simulation links
@@ -309,17 +310,17 @@ link_bus_n1L2cache.connect( (comp_n1_bus, "low_network_0", "10000ps"), (comp_n1_
 link_n1L2cache_bus = sst.Link("link_n1L2cache_bus")
 link_n1L2cache_bus.connect( (comp_n1_l2cache, "low_network_0", "10000ps"), (comp_n2_bus, "high_network_1", "10000ps") )
 link_bus_l3cache = sst.Link("link_bus_l3cache")
-link_bus_l3cache.connect( (comp_n2_bus, "low_network_0", "10000ps"), (comp_l3cache, "high_network_0", "10000ps") )
+link_bus_l3cache.connect( (comp_n2_bus, "low_network_0", "10000ps"), (l3cache, "high_network_0", "10000ps") )
 link_cache_net_0 = sst.Link("link_cache_net_0")
-link_cache_net_0.connect( (comp_l3cache, "directory", "10000ps"), (comp_chiprtr, "port1", "2000ps") )
+link_cache_net_0.connect( (l3cache, "directory", "10000ps"), (comp_chiprtr, "port1", "2000ps") )
 link_dir_net_0 = sst.Link("link_dir_net_0")
 link_dir_net_0.connect( (comp_chiprtr, "port0", "2000ps"), (comp_dirctrl, "network", "2000ps") )
 link_dir_mem_link = sst.Link("link_dir_mem_link")
-link_dir_mem_link.connect( (comp_dirctrl, "memory", "10000ps"), (comp_memory, "direct_link", "10000ps") )
+link_dir_mem_link.connect( (comp_dirctrl, "memory", "10000ps"), (comp_memctrl, "direct_link", "10000ps") )
 
 
 link_dir_cramsim_link = sst.Link("link_dir_cramsim_link")
-link_dir_cramsim_link.connect( (comp_memory, "cube_link", "2ns"), (comp_memhBridge, "cpuLink", "2ns") )
+link_dir_cramsim_link.connect( (comp_memory, "cramsim_link", "2ns"), (comp_memhBridge, "cpuLink", "2ns") )
 
 # memhBridge(=TxnGen) <-> Memory Controller 
 memHLink = sst.Link("memHLink_1")

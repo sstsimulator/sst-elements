@@ -4,6 +4,7 @@ TrivialCPU: Test Completed Successfuly
 TrivialCPU cpu Finished after 10000 issued reads, 10000 returned (1004898 clocks)
 	5 Noncacheable Reads
 	1 Noncacheable Writes
+ cpu.pendCycle : Accumulator : Sum.u64 = 2340189; SumSQ.u64 = 7760491; Count.u64 = 1004898; Min.u64 = 0; Max.u64 = 10; 
  l1cache.TotalEventsReceived : Accumulator : Sum.u64 = 19953; SumSQ.u64 = 19953; Count.u64 = 19953; Min.u64 = 1; Max.u64 = 1; 
  l1cache.TotalEventsReplayed : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; Min.u64 = 1; Max.u64 = 1; 
  l1cache.TotalNoncacheableEventsReceived : Accumulator : Sum.u64 = 12; SumSQ.u64 = 12; Count.u64 = 12; Min.u64 = 1; Max.u64 = 1; 
@@ -509,16 +510,16 @@ TrivialCPU cpu Finished after 10000 issued reads, 10000 returned (1004898 clocks
  l3cache.eventSent_Inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache.eventSent_NACK_up : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- memory.requests_received_GetS : Accumulator : Sum.u64 = 8456; SumSQ.u64 = 8456; Count.u64 = 8456; Min.u64 = 1; Max.u64 = 1; 
- memory.requests_received_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- memory.requests_received_GetX : Accumulator : Sum.u64 = 960; SumSQ.u64 = 960; Count.u64 = 960; Min.u64 = 1; Max.u64 = 1; 
- memory.requests_received_PutM : Accumulator : Sum.u64 = 904; SumSQ.u64 = 904; Count.u64 = 904; Min.u64 = 1; Max.u64 = 1; 
- memory.outstanding_requests : Accumulator : Sum.u64 = 1043230; SumSQ.u64 = 2302038; Count.u64 = 1004898; Min.u64 = 0; Max.u64 = 8; 
- memory.latency_GetS : Accumulator : Sum.u64 = 854854; SumSQ.u64 = 86421652; Count.u64 = 8456; Min.u64 = 101; Max.u64 = 103; 
- memory.latency_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- memory.latency_GetX : Accumulator : Sum.u64 = 97071; SumSQ.u64 = 9815493; Count.u64 = 960; Min.u64 = 101; Max.u64 = 102; 
- memory.latency_PutM : Accumulator : Sum.u64 = 91305; SumSQ.u64 = 9221907; Count.u64 = 904; Min.u64 = 101; Max.u64 = 102; 
- memory.cycles_with_issue : Accumulator : Sum.u64 = 10320; SumSQ.u64 = 10320; Count.u64 = 10320; Min.u64 = 1; Max.u64 = 1; 
- memory.cycles_attempted_issue_but_rejected : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- memory.total_cycles : Accumulator : Sum.u64 = 1004898; SumSQ.u64 = 1009819990404; Count.u64 = 1; Min.u64 = 1004898; Max.u64 = 1004898; 
+ memctrl.requests_received_GetS : Accumulator : Sum.u64 = 8456; SumSQ.u64 = 8456; Count.u64 = 8456; Min.u64 = 1; Max.u64 = 1; 
+ memctrl.requests_received_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ memctrl.requests_received_GetX : Accumulator : Sum.u64 = 960; SumSQ.u64 = 960; Count.u64 = 960; Min.u64 = 1; Max.u64 = 1; 
+ memctrl.requests_received_PutM : Accumulator : Sum.u64 = 904; SumSQ.u64 = 904; Count.u64 = 904; Min.u64 = 1; Max.u64 = 1; 
+ memctrl.outstanding_requests : Accumulator : Sum.u64 = 1043230; SumSQ.u64 = 2302038; Count.u64 = 1004898; Min.u64 = 0; Max.u64 = 8; 
+ memctrl.latency_GetS : Accumulator : Sum.u64 = 854854; SumSQ.u64 = 86421652; Count.u64 = 8456; Min.u64 = 101; Max.u64 = 103; 
+ memctrl.latency_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ memctrl.latency_GetX : Accumulator : Sum.u64 = 97071; SumSQ.u64 = 9815493; Count.u64 = 960; Min.u64 = 101; Max.u64 = 102; 
+ memctrl.latency_PutM : Accumulator : Sum.u64 = 91305; SumSQ.u64 = 9221907; Count.u64 = 904; Min.u64 = 101; Max.u64 = 102; 
+ memctrl.cycles_with_issue : Accumulator : Sum.u64 = 10320; SumSQ.u64 = 10320; Count.u64 = 10320; Min.u64 = 1; Max.u64 = 1; 
+ memctrl.cycles_attempted_issue_but_rejected : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ memctrl.total_cycles : Accumulator : Sum.u64 = 1004898; SumSQ.u64 = 1009819990404; Count.u64 = 1; Min.u64 = 1004898; Max.u64 = 1004898; 
 Simulation is complete, simulated time: 1.0049 ms
