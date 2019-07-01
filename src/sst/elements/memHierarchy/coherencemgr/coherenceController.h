@@ -62,7 +62,8 @@ public:
     virtual CacheAction handleEviction(CacheLine * line, string rqstr, bool fromDataCache=false) =0;
 
     /* Handle a response - AckInv, GetSResp, etc. */
-    virtual CacheAction handleResponse(MemEvent * event, CacheLine * line, MemEvent * request) =0;
+    virtual CacheAction handleCacheResponse(MemEvent * event, CacheLine * line, MemEvent * request) =0;
+    virtual CacheAction handleFetchResponse(MemEvent * event, CacheLine * line, MemEvent * request) =0;
 
     /* Determine whether an event needs to be retried after a NACK */
     virtual bool isRetryNeeded(MemEvent * event, CacheLine * line) =0;
@@ -138,6 +139,9 @@ public:
 
     /**** Debug support *****/
     void printStatus(Output& out);
+
+    /**** Temporary ********/
+    void setCacheArray(CacheArray* arrayptr) { }
 
 protected:
     struct Response {

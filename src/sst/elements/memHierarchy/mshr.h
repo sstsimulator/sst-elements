@@ -54,12 +54,14 @@ public:
 };
 
 /* MSHRs hold both events and pointers to events (e.g., the address of an event to replay when the current event resolves) */
-struct mshrType {
-    AddrEventVariant elem;
-    // boost::variant<Addr, MemEvent*> elem;
-    MemEvent * event;
-    mshrType(MemEvent* ev) : elem(ev), event(ev) {}
-    mshrType(Addr addr) : elem(addr) {}
+class mshrType {
+    public:
+        AddrEventVariant elem;
+        // boost::variant<Addr, MemEvent*> elem;
+        MemEvent * event;
+        SimTime_t initTime;
+        mshrType(MemEvent* ev) : elem(ev), event(ev), initTime(Simulation::getSimulation()->getCurrentSimCycle()) {}
+        mshrType(Addr addr) : elem(addr), initTime(Simulation::getSimulation()->getCurrentSimCycle()) {}
 };
 
 /* An MSHR entry has a vector of mshrTypes (events & pointers) along with some bookkeeping for outstanding requests 
@@ -102,7 +104,7 @@ public:
     bool elementIsHit(Addr baseAddr, MemEvent *event);
     bool isFull();                                          // external
     bool isAlmostFull();                                    // external
-    MemEvent* getOldestRequest() const;                     // external
+    const mshrType* getOldestRequest() const;                     // external
     bool pendingWriteback(Addr baseAddr);
     unsigned int getSize(){ return size_; }                 
     unsigned int getPrefetchCount() { return prefetchCount_; }

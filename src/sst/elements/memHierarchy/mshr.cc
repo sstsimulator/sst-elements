@@ -326,22 +326,19 @@ bool MSHR::insertInv(Addr baseAddr, mshrType entry, bool inProgress) {
 
 
 
-
-
-MemEvent* MSHR::getOldestRequest() const {
-    MemEvent *ev = NULL;
+const mshrType* MSHR::getOldestRequest() const {
+    const mshrType* entry = nullptr;
     for ( mshrTable::const_iterator it = map_.begin() ; it != map_.end() ; ++it ) {
         for ( vector<mshrType>::const_iterator jt = (it->second).mshrQueue.begin() ; jt != (it->second).mshrQueue.end() ; jt++ ) {
             if ( jt->elem.isEvent() ) {
-                MemEvent *me = (jt->elem).getEvent();
-                if ( !ev || ( me->getInitializationTime() < ev->getInitializationTime() ) ) {
-                    ev = me;
+                if ( !entry || ( jt->initTime < entry->initTime)) {
+                    entry = &*jt;
                 }
             }
         }
     }
 
-    return ev;
+    return entry;
 }
 
 vector<mshrType>* MSHR::getAll(Addr baseAddr) {

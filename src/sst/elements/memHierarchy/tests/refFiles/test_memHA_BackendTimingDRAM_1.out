@@ -76,6 +76,7 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  l3cache.latency_GetSX_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache.latency_GetSX_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache.latency_GetSX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l3cache.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache.evict_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache.evict_SInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -210,7 +211,7 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  l3cache.eventSent_FetchResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache.eventSent_FetchXResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache.eventSent_AckInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l3cache.eventSent_NACK_down : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l3cache.eventSent_NACK : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache.eventSent_GetSResp : Accumulator : Sum.u64 = 23215; SumSQ.u64 = 23215; Count.u64 = 23215; Min.u64 = 1; Max.u64 = 1; 
  l3cache.eventSent_GetXResp : Accumulator : Sum.u64 = 16448; SumSQ.u64 = 16448; Count.u64 = 16448; Min.u64 = 1; Max.u64 = 1; 
  l3cache.eventSent_FlushLineResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -218,7 +219,6 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  l3cache.eventSent_FetchInv : Accumulator : Sum.u64 = 16272; SumSQ.u64 = 16272; Count.u64 = 16272; Min.u64 = 1; Max.u64 = 1; 
  l3cache.eventSent_FetchInvX : Accumulator : Sum.u64 = 111; SumSQ.u64 = 111; Count.u64 = 111; Min.u64 = 1; Max.u64 = 1; 
  l3cache.eventSent_Inv : Accumulator : Sum.u64 = 22207; SumSQ.u64 = 22207; Count.u64 = 22207; Min.u64 = 1; Max.u64 = 1; 
- l3cache.eventSent_NACK_up : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 36475; SumSQ.u64 = 36475; Count.u64 = 36475; Min.u64 = 1; Max.u64 = 1; 
  l3cache.evict_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache.evict_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -314,9 +314,7 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c0.l1cache.latency_GetSX_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c0.l1cache.latency_GetSX_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c0.l1cache.latency_GetSX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- c0.l1cache.EventStalledForLockedCacheline : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- c0.l1cache.evict_S : Accumulator : Sum.u64 = 2815; SumSQ.u64 = 2815; Count.u64 = 2815; Min.u64 = 1; Max.u64 = 1; 
- c0.l1cache.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c0.l1cache.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c0.l1cache.stateEvent_GetS_I : Accumulator : Sum.u64 = 4459; SumSQ.u64 = 4459; Count.u64 = 4459; Min.u64 = 1; Max.u64 = 1; 
  c0.l1cache.stateEvent_GetS_S : Accumulator : Sum.u64 = 15; SumSQ.u64 = 15; Count.u64 = 15; Min.u64 = 1; Max.u64 = 1; 
  c0.l1cache.stateEvent_GetS_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -381,7 +379,7 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c0.l1cache.eventSent_GetX : Accumulator : Sum.u64 = 521; SumSQ.u64 = 521; Count.u64 = 521; Min.u64 = 1; Max.u64 = 1; 
  c0.l1cache.eventSent_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c0.l1cache.eventSent_PutM : Accumulator : Sum.u64 = 31; SumSQ.u64 = 31; Count.u64 = 31; Min.u64 = 1; Max.u64 = 1; 
- c0.l1cache.eventSent_NACK_down : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c0.l1cache.eventSent_NACK : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c0.l1cache.eventSent_FlushLine : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c0.l1cache.eventSent_FlushLineInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c0.l1cache.eventSent_FetchResp : Accumulator : Sum.u64 = 1817; SumSQ.u64 = 1817; Count.u64 = 1817; Min.u64 = 1; Max.u64 = 1; 
@@ -390,6 +388,9 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c0.l1cache.eventSent_GetSResp : Accumulator : Sum.u64 = 4479; SumSQ.u64 = 4479; Count.u64 = 4479; Min.u64 = 1; Max.u64 = 1; 
  c0.l1cache.eventSent_GetXResp : Accumulator : Sum.u64 = 521; SumSQ.u64 = 521; Count.u64 = 521; Min.u64 = 1; Max.u64 = 1; 
  c0.l1cache.eventSent_FlushLineResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c0.l1cache.EventStalledForLockedCacheline : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c0.l1cache.evict_S : Accumulator : Sum.u64 = 2815; SumSQ.u64 = 2815; Count.u64 = 2815; Min.u64 = 1; Max.u64 = 1; 
+ c0.l1cache.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c0.l1cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c0.l1cache.eventSent_PutS : Accumulator : Sum.u64 = 2815; SumSQ.u64 = 2815; Count.u64 = 2815; Min.u64 = 1; Max.u64 = 1; 
  c0.l1cache.eventSent_PutE : Accumulator : Sum.u64 = 159; SumSQ.u64 = 159; Count.u64 = 159; Min.u64 = 1; Max.u64 = 1; 
@@ -446,6 +447,7 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c0.l2cache.latency_GetSX_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c0.l2cache.latency_GetSX_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c0.l2cache.latency_GetSX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c0.l2cache.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c0.l2cache.evict_S : Accumulator : Sum.u64 = 3; SumSQ.u64 = 3; Count.u64 = 3; Min.u64 = 1; Max.u64 = 1; 
  c0.l2cache.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c0.l2cache.evict_SInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -580,7 +582,7 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c0.l2cache.eventSent_FetchResp : Accumulator : Sum.u64 = 2001; SumSQ.u64 = 2001; Count.u64 = 2001; Min.u64 = 1; Max.u64 = 1; 
  c0.l2cache.eventSent_FetchXResp : Accumulator : Sum.u64 = 14; SumSQ.u64 = 14; Count.u64 = 14; Min.u64 = 1; Max.u64 = 1; 
  c0.l2cache.eventSent_AckInv : Accumulator : Sum.u64 = 2820; SumSQ.u64 = 2820; Count.u64 = 2820; Min.u64 = 1; Max.u64 = 1; 
- c0.l2cache.eventSent_NACK_down : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c0.l2cache.eventSent_NACK : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c0.l2cache.eventSent_GetSResp : Accumulator : Sum.u64 = 2963; SumSQ.u64 = 2963; Count.u64 = 2963; Min.u64 = 1; Max.u64 = 1; 
  c0.l2cache.eventSent_GetXResp : Accumulator : Sum.u64 = 2017; SumSQ.u64 = 2017; Count.u64 = 2017; Min.u64 = 1; Max.u64 = 1; 
  c0.l2cache.eventSent_FlushLineResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -588,7 +590,6 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c0.l2cache.eventSent_FetchInv : Accumulator : Sum.u64 = 1817; SumSQ.u64 = 1817; Count.u64 = 1817; Min.u64 = 1; Max.u64 = 1; 
  c0.l2cache.eventSent_FetchInvX : Accumulator : Sum.u64 = 10; SumSQ.u64 = 10; Count.u64 = 10; Min.u64 = 1; Max.u64 = 1; 
  c0.l2cache.eventSent_Inv : Accumulator : Sum.u64 = 115; SumSQ.u64 = 115; Count.u64 = 115; Min.u64 = 1; Max.u64 = 1; 
- c0.l2cache.eventSent_NACK_up : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c0.l2cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c0.l2cache.evict_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c0.l2cache.evict_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -684,9 +685,7 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c1.l1cache.latency_GetSX_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c1.l1cache.latency_GetSX_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c1.l1cache.latency_GetSX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- c1.l1cache.EventStalledForLockedCacheline : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- c1.l1cache.evict_S : Accumulator : Sum.u64 = 2755; SumSQ.u64 = 2755; Count.u64 = 2755; Min.u64 = 1; Max.u64 = 1; 
- c1.l1cache.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c1.l1cache.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c1.l1cache.stateEvent_GetS_I : Accumulator : Sum.u64 = 4514; SumSQ.u64 = 4514; Count.u64 = 4514; Min.u64 = 1; Max.u64 = 1; 
  c1.l1cache.stateEvent_GetS_S : Accumulator : Sum.u64 = 21; SumSQ.u64 = 21; Count.u64 = 21; Min.u64 = 1; Max.u64 = 1; 
  c1.l1cache.stateEvent_GetS_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -751,7 +750,7 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c1.l1cache.eventSent_GetX : Accumulator : Sum.u64 = 465; SumSQ.u64 = 465; Count.u64 = 465; Min.u64 = 1; Max.u64 = 1; 
  c1.l1cache.eventSent_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c1.l1cache.eventSent_PutM : Accumulator : Sum.u64 = 25; SumSQ.u64 = 25; Count.u64 = 25; Min.u64 = 1; Max.u64 = 1; 
- c1.l1cache.eventSent_NACK_down : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c1.l1cache.eventSent_NACK : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c1.l1cache.eventSent_FlushLine : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c1.l1cache.eventSent_FlushLineInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c1.l1cache.eventSent_FetchResp : Accumulator : Sum.u64 = 1847; SumSQ.u64 = 1847; Count.u64 = 1847; Min.u64 = 1; Max.u64 = 1; 
@@ -760,6 +759,9 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c1.l1cache.eventSent_GetSResp : Accumulator : Sum.u64 = 4535; SumSQ.u64 = 4535; Count.u64 = 4535; Min.u64 = 1; Max.u64 = 1; 
  c1.l1cache.eventSent_GetXResp : Accumulator : Sum.u64 = 465; SumSQ.u64 = 465; Count.u64 = 465; Min.u64 = 1; Max.u64 = 1; 
  c1.l1cache.eventSent_FlushLineResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c1.l1cache.EventStalledForLockedCacheline : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c1.l1cache.evict_S : Accumulator : Sum.u64 = 2755; SumSQ.u64 = 2755; Count.u64 = 2755; Min.u64 = 1; Max.u64 = 1; 
+ c1.l1cache.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c1.l1cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c1.l1cache.eventSent_PutS : Accumulator : Sum.u64 = 2755; SumSQ.u64 = 2755; Count.u64 = 2755; Min.u64 = 1; Max.u64 = 1; 
  c1.l1cache.eventSent_PutE : Accumulator : Sum.u64 = 171; SumSQ.u64 = 171; Count.u64 = 171; Min.u64 = 1; Max.u64 = 1; 
@@ -816,6 +818,7 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c1.l2cache.latency_GetSX_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c1.l2cache.latency_GetSX_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c1.l2cache.latency_GetSX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c1.l2cache.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c1.l2cache.evict_S : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; Min.u64 = 1; Max.u64 = 1; 
  c1.l2cache.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c1.l2cache.evict_SInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -950,7 +953,7 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c1.l2cache.eventSent_FetchResp : Accumulator : Sum.u64 = 2034; SumSQ.u64 = 2034; Count.u64 = 2034; Min.u64 = 1; Max.u64 = 1; 
  c1.l2cache.eventSent_FetchXResp : Accumulator : Sum.u64 = 17; SumSQ.u64 = 17; Count.u64 = 17; Min.u64 = 1; Max.u64 = 1; 
  c1.l2cache.eventSent_AckInv : Accumulator : Sum.u64 = 2754; SumSQ.u64 = 2754; Count.u64 = 2754; Min.u64 = 1; Max.u64 = 1; 
- c1.l2cache.eventSent_NACK_down : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c1.l2cache.eventSent_NACK : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c1.l2cache.eventSent_GetSResp : Accumulator : Sum.u64 = 2909; SumSQ.u64 = 2909; Count.u64 = 2909; Min.u64 = 1; Max.u64 = 1; 
  c1.l2cache.eventSent_GetXResp : Accumulator : Sum.u64 = 2070; SumSQ.u64 = 2070; Count.u64 = 2070; Min.u64 = 1; Max.u64 = 1; 
  c1.l2cache.eventSent_FlushLineResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -958,7 +961,6 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c1.l2cache.eventSent_FetchInv : Accumulator : Sum.u64 = 1847; SumSQ.u64 = 1847; Count.u64 = 1847; Min.u64 = 1; Max.u64 = 1; 
  c1.l2cache.eventSent_FetchInvX : Accumulator : Sum.u64 = 10; SumSQ.u64 = 10; Count.u64 = 10; Min.u64 = 1; Max.u64 = 1; 
  c1.l2cache.eventSent_Inv : Accumulator : Sum.u64 = 139; SumSQ.u64 = 139; Count.u64 = 139; Min.u64 = 1; Max.u64 = 1; 
- c1.l2cache.eventSent_NACK_up : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c1.l2cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c1.l2cache.evict_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c1.l2cache.evict_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -1054,9 +1056,7 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c2.l1cache.latency_GetSX_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c2.l1cache.latency_GetSX_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c2.l1cache.latency_GetSX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- c2.l1cache.EventStalledForLockedCacheline : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- c2.l1cache.evict_S : Accumulator : Sum.u64 = 2757; SumSQ.u64 = 2757; Count.u64 = 2757; Min.u64 = 1; Max.u64 = 1; 
- c2.l1cache.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c2.l1cache.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c2.l1cache.stateEvent_GetS_I : Accumulator : Sum.u64 = 4467; SumSQ.u64 = 4467; Count.u64 = 4467; Min.u64 = 1; Max.u64 = 1; 
  c2.l1cache.stateEvent_GetS_S : Accumulator : Sum.u64 = 12; SumSQ.u64 = 12; Count.u64 = 12; Min.u64 = 1; Max.u64 = 1; 
  c2.l1cache.stateEvent_GetS_M : Accumulator : Sum.u64 = 2; SumSQ.u64 = 2; Count.u64 = 2; Min.u64 = 1; Max.u64 = 1; 
@@ -1121,7 +1121,7 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c2.l1cache.eventSent_GetX : Accumulator : Sum.u64 = 519; SumSQ.u64 = 519; Count.u64 = 519; Min.u64 = 1; Max.u64 = 1; 
  c2.l1cache.eventSent_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c2.l1cache.eventSent_PutM : Accumulator : Sum.u64 = 27; SumSQ.u64 = 27; Count.u64 = 27; Min.u64 = 1; Max.u64 = 1; 
- c2.l1cache.eventSent_NACK_down : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c2.l1cache.eventSent_NACK : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c2.l1cache.eventSent_FlushLine : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c2.l1cache.eventSent_FlushLineInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c2.l1cache.eventSent_FetchResp : Accumulator : Sum.u64 = 1881; SumSQ.u64 = 1881; Count.u64 = 1881; Min.u64 = 1; Max.u64 = 1; 
@@ -1130,6 +1130,9 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c2.l1cache.eventSent_GetSResp : Accumulator : Sum.u64 = 4481; SumSQ.u64 = 4481; Count.u64 = 4481; Min.u64 = 1; Max.u64 = 1; 
  c2.l1cache.eventSent_GetXResp : Accumulator : Sum.u64 = 519; SumSQ.u64 = 519; Count.u64 = 519; Min.u64 = 1; Max.u64 = 1; 
  c2.l1cache.eventSent_FlushLineResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c2.l1cache.EventStalledForLockedCacheline : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c2.l1cache.evict_S : Accumulator : Sum.u64 = 2757; SumSQ.u64 = 2757; Count.u64 = 2757; Min.u64 = 1; Max.u64 = 1; 
+ c2.l1cache.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c2.l1cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c2.l1cache.eventSent_PutS : Accumulator : Sum.u64 = 2757; SumSQ.u64 = 2757; Count.u64 = 2757; Min.u64 = 1; Max.u64 = 1; 
  c2.l1cache.eventSent_PutE : Accumulator : Sum.u64 = 147; SumSQ.u64 = 147; Count.u64 = 147; Min.u64 = 1; Max.u64 = 1; 
@@ -1186,6 +1189,7 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c2.l2cache.latency_GetSX_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c2.l2cache.latency_GetSX_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c2.l2cache.latency_GetSX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c2.l2cache.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c2.l2cache.evict_S : Accumulator : Sum.u64 = 3; SumSQ.u64 = 3; Count.u64 = 3; Min.u64 = 1; Max.u64 = 1; 
  c2.l2cache.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c2.l2cache.evict_SInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -1320,7 +1324,7 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c2.l2cache.eventSent_FetchResp : Accumulator : Sum.u64 = 2051; SumSQ.u64 = 2051; Count.u64 = 2051; Min.u64 = 1; Max.u64 = 1; 
  c2.l2cache.eventSent_FetchXResp : Accumulator : Sum.u64 = 13; SumSQ.u64 = 13; Count.u64 = 13; Min.u64 = 1; Max.u64 = 1; 
  c2.l2cache.eventSent_AckInv : Accumulator : Sum.u64 = 2753; SumSQ.u64 = 2753; Count.u64 = 2753; Min.u64 = 1; Max.u64 = 1; 
- c2.l2cache.eventSent_NACK_down : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c2.l2cache.eventSent_NACK : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c2.l2cache.eventSent_GetSResp : Accumulator : Sum.u64 = 2920; SumSQ.u64 = 2920; Count.u64 = 2920; Min.u64 = 1; Max.u64 = 1; 
  c2.l2cache.eventSent_GetXResp : Accumulator : Sum.u64 = 2066; SumSQ.u64 = 2066; Count.u64 = 2066; Min.u64 = 1; Max.u64 = 1; 
  c2.l2cache.eventSent_FlushLineResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -1328,7 +1332,6 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c2.l2cache.eventSent_FetchInv : Accumulator : Sum.u64 = 1881; SumSQ.u64 = 1881; Count.u64 = 1881; Min.u64 = 1; Max.u64 = 1; 
  c2.l2cache.eventSent_FetchInvX : Accumulator : Sum.u64 = 9; SumSQ.u64 = 9; Count.u64 = 9; Min.u64 = 1; Max.u64 = 1; 
  c2.l2cache.eventSent_Inv : Accumulator : Sum.u64 = 132; SumSQ.u64 = 132; Count.u64 = 132; Min.u64 = 1; Max.u64 = 1; 
- c2.l2cache.eventSent_NACK_up : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c2.l2cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c2.l2cache.evict_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c2.l2cache.evict_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -1424,9 +1427,7 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c3.l1cache.latency_GetSX_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c3.l1cache.latency_GetSX_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c3.l1cache.latency_GetSX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- c3.l1cache.EventStalledForLockedCacheline : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- c3.l1cache.evict_S : Accumulator : Sum.u64 = 2788; SumSQ.u64 = 2788; Count.u64 = 2788; Min.u64 = 1; Max.u64 = 1; 
- c3.l1cache.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c3.l1cache.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c3.l1cache.stateEvent_GetS_I : Accumulator : Sum.u64 = 4505; SumSQ.u64 = 4505; Count.u64 = 4505; Min.u64 = 1; Max.u64 = 1; 
  c3.l1cache.stateEvent_GetS_S : Accumulator : Sum.u64 = 12; SumSQ.u64 = 12; Count.u64 = 12; Min.u64 = 1; Max.u64 = 1; 
  c3.l1cache.stateEvent_GetS_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -1491,7 +1492,7 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c3.l1cache.eventSent_GetX : Accumulator : Sum.u64 = 481; SumSQ.u64 = 481; Count.u64 = 481; Min.u64 = 1; Max.u64 = 1; 
  c3.l1cache.eventSent_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c3.l1cache.eventSent_PutM : Accumulator : Sum.u64 = 33; SumSQ.u64 = 33; Count.u64 = 33; Min.u64 = 1; Max.u64 = 1; 
- c3.l1cache.eventSent_NACK_down : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c3.l1cache.eventSent_NACK : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c3.l1cache.eventSent_FlushLine : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c3.l1cache.eventSent_FlushLineInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c3.l1cache.eventSent_FetchResp : Accumulator : Sum.u64 = 1839; SumSQ.u64 = 1839; Count.u64 = 1839; Min.u64 = 1; Max.u64 = 1; 
@@ -1500,6 +1501,9 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c3.l1cache.eventSent_GetSResp : Accumulator : Sum.u64 = 4519; SumSQ.u64 = 4519; Count.u64 = 4519; Min.u64 = 1; Max.u64 = 1; 
  c3.l1cache.eventSent_GetXResp : Accumulator : Sum.u64 = 481; SumSQ.u64 = 481; Count.u64 = 481; Min.u64 = 1; Max.u64 = 1; 
  c3.l1cache.eventSent_FlushLineResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c3.l1cache.EventStalledForLockedCacheline : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c3.l1cache.evict_S : Accumulator : Sum.u64 = 2788; SumSQ.u64 = 2788; Count.u64 = 2788; Min.u64 = 1; Max.u64 = 1; 
+ c3.l1cache.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c3.l1cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c3.l1cache.eventSent_PutS : Accumulator : Sum.u64 = 2788; SumSQ.u64 = 2788; Count.u64 = 2788; Min.u64 = 1; Max.u64 = 1; 
  c3.l1cache.eventSent_PutE : Accumulator : Sum.u64 = 153; SumSQ.u64 = 153; Count.u64 = 153; Min.u64 = 1; Max.u64 = 1; 
@@ -1556,6 +1560,7 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c3.l2cache.latency_GetSX_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c3.l2cache.latency_GetSX_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c3.l2cache.latency_GetSX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c3.l2cache.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c3.l2cache.evict_S : Accumulator : Sum.u64 = 5; SumSQ.u64 = 5; Count.u64 = 5; Min.u64 = 1; Max.u64 = 1; 
  c3.l2cache.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c3.l2cache.evict_SInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -1690,7 +1695,7 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c3.l2cache.eventSent_FetchResp : Accumulator : Sum.u64 = 2021; SumSQ.u64 = 2021; Count.u64 = 2021; Min.u64 = 1; Max.u64 = 1; 
  c3.l2cache.eventSent_FetchXResp : Accumulator : Sum.u64 = 15; SumSQ.u64 = 15; Count.u64 = 15; Min.u64 = 1; Max.u64 = 1; 
  c3.l2cache.eventSent_AckInv : Accumulator : Sum.u64 = 2805; SumSQ.u64 = 2805; Count.u64 = 2805; Min.u64 = 1; Max.u64 = 1; 
- c3.l2cache.eventSent_NACK_down : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c3.l2cache.eventSent_NACK : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c3.l2cache.eventSent_GetSResp : Accumulator : Sum.u64 = 2950; SumSQ.u64 = 2950; Count.u64 = 2950; Min.u64 = 1; Max.u64 = 1; 
  c3.l2cache.eventSent_GetXResp : Accumulator : Sum.u64 = 2036; SumSQ.u64 = 2036; Count.u64 = 2036; Min.u64 = 1; Max.u64 = 1; 
  c3.l2cache.eventSent_FlushLineResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -1698,7 +1703,6 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c3.l2cache.eventSent_FetchInv : Accumulator : Sum.u64 = 1839; SumSQ.u64 = 1839; Count.u64 = 1839; Min.u64 = 1; Max.u64 = 1; 
  c3.l2cache.eventSent_FetchInvX : Accumulator : Sum.u64 = 11; SumSQ.u64 = 11; Count.u64 = 11; Min.u64 = 1; Max.u64 = 1; 
  c3.l2cache.eventSent_Inv : Accumulator : Sum.u64 = 130; SumSQ.u64 = 130; Count.u64 = 130; Min.u64 = 1; Max.u64 = 1; 
- c3.l2cache.eventSent_NACK_up : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c3.l2cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c3.l2cache.evict_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c3.l2cache.evict_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -1794,9 +1798,7 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c4.l1cache.latency_GetSX_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c4.l1cache.latency_GetSX_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c4.l1cache.latency_GetSX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- c4.l1cache.EventStalledForLockedCacheline : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- c4.l1cache.evict_S : Accumulator : Sum.u64 = 2797; SumSQ.u64 = 2797; Count.u64 = 2797; Min.u64 = 1; Max.u64 = 1; 
- c4.l1cache.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c4.l1cache.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c4.l1cache.stateEvent_GetS_I : Accumulator : Sum.u64 = 4469; SumSQ.u64 = 4469; Count.u64 = 4469; Min.u64 = 1; Max.u64 = 1; 
  c4.l1cache.stateEvent_GetS_S : Accumulator : Sum.u64 = 10; SumSQ.u64 = 10; Count.u64 = 10; Min.u64 = 1; Max.u64 = 1; 
  c4.l1cache.stateEvent_GetS_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -1861,7 +1863,7 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c4.l1cache.eventSent_GetX : Accumulator : Sum.u64 = 520; SumSQ.u64 = 520; Count.u64 = 520; Min.u64 = 1; Max.u64 = 1; 
  c4.l1cache.eventSent_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c4.l1cache.eventSent_PutM : Accumulator : Sum.u64 = 27; SumSQ.u64 = 27; Count.u64 = 27; Min.u64 = 1; Max.u64 = 1; 
- c4.l1cache.eventSent_NACK_down : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c4.l1cache.eventSent_NACK : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c4.l1cache.eventSent_FlushLine : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c4.l1cache.eventSent_FlushLineInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c4.l1cache.eventSent_FetchResp : Accumulator : Sum.u64 = 1822; SumSQ.u64 = 1822; Count.u64 = 1822; Min.u64 = 1; Max.u64 = 1; 
@@ -1870,6 +1872,9 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c4.l1cache.eventSent_GetSResp : Accumulator : Sum.u64 = 4480; SumSQ.u64 = 4480; Count.u64 = 4480; Min.u64 = 1; Max.u64 = 1; 
  c4.l1cache.eventSent_GetXResp : Accumulator : Sum.u64 = 520; SumSQ.u64 = 520; Count.u64 = 520; Min.u64 = 1; Max.u64 = 1; 
  c4.l1cache.eventSent_FlushLineResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c4.l1cache.EventStalledForLockedCacheline : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c4.l1cache.evict_S : Accumulator : Sum.u64 = 2797; SumSQ.u64 = 2797; Count.u64 = 2797; Min.u64 = 1; Max.u64 = 1; 
+ c4.l1cache.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c4.l1cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c4.l1cache.eventSent_PutS : Accumulator : Sum.u64 = 2797; SumSQ.u64 = 2797; Count.u64 = 2797; Min.u64 = 1; Max.u64 = 1; 
  c4.l1cache.eventSent_PutE : Accumulator : Sum.u64 = 168; SumSQ.u64 = 168; Count.u64 = 168; Min.u64 = 1; Max.u64 = 1; 
@@ -1926,6 +1931,7 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c4.l2cache.latency_GetSX_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c4.l2cache.latency_GetSX_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c4.l2cache.latency_GetSX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c4.l2cache.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c4.l2cache.evict_S : Accumulator : Sum.u64 = 3; SumSQ.u64 = 3; Count.u64 = 3; Min.u64 = 1; Max.u64 = 1; 
  c4.l2cache.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c4.l2cache.evict_SInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -2060,7 +2066,7 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c4.l2cache.eventSent_FetchResp : Accumulator : Sum.u64 = 2011; SumSQ.u64 = 2011; Count.u64 = 2011; Min.u64 = 1; Max.u64 = 1; 
  c4.l2cache.eventSent_FetchXResp : Accumulator : Sum.u64 = 11; SumSQ.u64 = 11; Count.u64 = 11; Min.u64 = 1; Max.u64 = 1; 
  c4.l2cache.eventSent_AckInv : Accumulator : Sum.u64 = 2723; SumSQ.u64 = 2723; Count.u64 = 2723; Min.u64 = 1; Max.u64 = 1; 
- c4.l2cache.eventSent_NACK_down : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c4.l2cache.eventSent_NACK : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c4.l2cache.eventSent_GetSResp : Accumulator : Sum.u64 = 2924; SumSQ.u64 = 2924; Count.u64 = 2924; Min.u64 = 1; Max.u64 = 1; 
  c4.l2cache.eventSent_GetXResp : Accumulator : Sum.u64 = 2065; SumSQ.u64 = 2065; Count.u64 = 2065; Min.u64 = 1; Max.u64 = 1; 
  c4.l2cache.eventSent_FlushLineResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -2068,7 +2074,6 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c4.l2cache.eventSent_FetchInv : Accumulator : Sum.u64 = 1822; SumSQ.u64 = 1822; Count.u64 = 1822; Min.u64 = 1; Max.u64 = 1; 
  c4.l2cache.eventSent_FetchInvX : Accumulator : Sum.u64 = 8; SumSQ.u64 = 8; Count.u64 = 8; Min.u64 = 1; Max.u64 = 1; 
  c4.l2cache.eventSent_Inv : Accumulator : Sum.u64 = 114; SumSQ.u64 = 114; Count.u64 = 114; Min.u64 = 1; Max.u64 = 1; 
- c4.l2cache.eventSent_NACK_up : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c4.l2cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c4.l2cache.evict_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c4.l2cache.evict_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -2164,9 +2169,7 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c5.l1cache.latency_GetSX_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c5.l1cache.latency_GetSX_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c5.l1cache.latency_GetSX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- c5.l1cache.EventStalledForLockedCacheline : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- c5.l1cache.evict_S : Accumulator : Sum.u64 = 2769; SumSQ.u64 = 2769; Count.u64 = 2769; Min.u64 = 1; Max.u64 = 1; 
- c5.l1cache.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c5.l1cache.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c5.l1cache.stateEvent_GetS_I : Accumulator : Sum.u64 = 4511; SumSQ.u64 = 4511; Count.u64 = 4511; Min.u64 = 1; Max.u64 = 1; 
  c5.l1cache.stateEvent_GetS_S : Accumulator : Sum.u64 = 8; SumSQ.u64 = 8; Count.u64 = 8; Min.u64 = 1; Max.u64 = 1; 
  c5.l1cache.stateEvent_GetS_M : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; Min.u64 = 1; Max.u64 = 1; 
@@ -2231,7 +2234,7 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c5.l1cache.eventSent_GetX : Accumulator : Sum.u64 = 476; SumSQ.u64 = 476; Count.u64 = 476; Min.u64 = 1; Max.u64 = 1; 
  c5.l1cache.eventSent_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c5.l1cache.eventSent_PutM : Accumulator : Sum.u64 = 35; SumSQ.u64 = 35; Count.u64 = 35; Min.u64 = 1; Max.u64 = 1; 
- c5.l1cache.eventSent_NACK_down : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c5.l1cache.eventSent_NACK : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c5.l1cache.eventSent_FlushLine : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c5.l1cache.eventSent_FlushLineInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c5.l1cache.eventSent_FetchResp : Accumulator : Sum.u64 = 1839; SumSQ.u64 = 1839; Count.u64 = 1839; Min.u64 = 1; Max.u64 = 1; 
@@ -2240,6 +2243,9 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c5.l1cache.eventSent_GetSResp : Accumulator : Sum.u64 = 4524; SumSQ.u64 = 4524; Count.u64 = 4524; Min.u64 = 1; Max.u64 = 1; 
  c5.l1cache.eventSent_GetXResp : Accumulator : Sum.u64 = 476; SumSQ.u64 = 476; Count.u64 = 476; Min.u64 = 1; Max.u64 = 1; 
  c5.l1cache.eventSent_FlushLineResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c5.l1cache.EventStalledForLockedCacheline : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c5.l1cache.evict_S : Accumulator : Sum.u64 = 2769; SumSQ.u64 = 2769; Count.u64 = 2769; Min.u64 = 1; Max.u64 = 1; 
+ c5.l1cache.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c5.l1cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c5.l1cache.eventSent_PutS : Accumulator : Sum.u64 = 2769; SumSQ.u64 = 2769; Count.u64 = 2769; Min.u64 = 1; Max.u64 = 1; 
  c5.l1cache.eventSent_PutE : Accumulator : Sum.u64 = 172; SumSQ.u64 = 172; Count.u64 = 172; Min.u64 = 1; Max.u64 = 1; 
@@ -2296,6 +2302,7 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c5.l2cache.latency_GetSX_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c5.l2cache.latency_GetSX_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c5.l2cache.latency_GetSX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c5.l2cache.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c5.l2cache.evict_S : Accumulator : Sum.u64 = 12; SumSQ.u64 = 12; Count.u64 = 12; Min.u64 = 1; Max.u64 = 1; 
  c5.l2cache.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c5.l2cache.evict_SInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -2430,7 +2437,7 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c5.l2cache.eventSent_FetchResp : Accumulator : Sum.u64 = 2040; SumSQ.u64 = 2040; Count.u64 = 2040; Min.u64 = 1; Max.u64 = 1; 
  c5.l2cache.eventSent_FetchXResp : Accumulator : Sum.u64 = 11; SumSQ.u64 = 11; Count.u64 = 11; Min.u64 = 1; Max.u64 = 1; 
  c5.l2cache.eventSent_AckInv : Accumulator : Sum.u64 = 2795; SumSQ.u64 = 2795; Count.u64 = 2795; Min.u64 = 1; Max.u64 = 1; 
- c5.l2cache.eventSent_NACK_down : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c5.l2cache.eventSent_NACK : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c5.l2cache.eventSent_GetSResp : Accumulator : Sum.u64 = 2935; SumSQ.u64 = 2935; Count.u64 = 2935; Min.u64 = 1; Max.u64 = 1; 
  c5.l2cache.eventSent_GetXResp : Accumulator : Sum.u64 = 2052; SumSQ.u64 = 2052; Count.u64 = 2052; Min.u64 = 1; Max.u64 = 1; 
  c5.l2cache.eventSent_FlushLineResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -2438,7 +2445,6 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c5.l2cache.eventSent_FetchInv : Accumulator : Sum.u64 = 1839; SumSQ.u64 = 1839; Count.u64 = 1839; Min.u64 = 1; Max.u64 = 1; 
  c5.l2cache.eventSent_FetchInvX : Accumulator : Sum.u64 = 5; SumSQ.u64 = 5; Count.u64 = 5; Min.u64 = 1; Max.u64 = 1; 
  c5.l2cache.eventSent_Inv : Accumulator : Sum.u64 = 123; SumSQ.u64 = 123; Count.u64 = 123; Min.u64 = 1; Max.u64 = 1; 
- c5.l2cache.eventSent_NACK_up : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c5.l2cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c5.l2cache.evict_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c5.l2cache.evict_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -2534,9 +2540,7 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c6.l1cache.latency_GetSX_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c6.l1cache.latency_GetSX_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c6.l1cache.latency_GetSX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- c6.l1cache.EventStalledForLockedCacheline : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- c6.l1cache.evict_S : Accumulator : Sum.u64 = 2738; SumSQ.u64 = 2738; Count.u64 = 2738; Min.u64 = 1; Max.u64 = 1; 
- c6.l1cache.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c6.l1cache.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c6.l1cache.stateEvent_GetS_I : Accumulator : Sum.u64 = 4466; SumSQ.u64 = 4466; Count.u64 = 4466; Min.u64 = 1; Max.u64 = 1; 
  c6.l1cache.stateEvent_GetS_S : Accumulator : Sum.u64 = 12; SumSQ.u64 = 12; Count.u64 = 12; Min.u64 = 1; Max.u64 = 1; 
  c6.l1cache.stateEvent_GetS_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -2601,7 +2605,7 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c6.l1cache.eventSent_GetX : Accumulator : Sum.u64 = 519; SumSQ.u64 = 519; Count.u64 = 519; Min.u64 = 1; Max.u64 = 1; 
  c6.l1cache.eventSent_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c6.l1cache.eventSent_PutM : Accumulator : Sum.u64 = 35; SumSQ.u64 = 35; Count.u64 = 35; Min.u64 = 1; Max.u64 = 1; 
- c6.l1cache.eventSent_NACK_down : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c6.l1cache.eventSent_NACK : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c6.l1cache.eventSent_FlushLine : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c6.l1cache.eventSent_FlushLineInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c6.l1cache.eventSent_FetchResp : Accumulator : Sum.u64 = 1879; SumSQ.u64 = 1879; Count.u64 = 1879; Min.u64 = 1; Max.u64 = 1; 
@@ -2610,6 +2614,9 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c6.l1cache.eventSent_GetSResp : Accumulator : Sum.u64 = 4481; SumSQ.u64 = 4481; Count.u64 = 4481; Min.u64 = 1; Max.u64 = 1; 
  c6.l1cache.eventSent_GetXResp : Accumulator : Sum.u64 = 519; SumSQ.u64 = 519; Count.u64 = 519; Min.u64 = 1; Max.u64 = 1; 
  c6.l1cache.eventSent_FlushLineResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c6.l1cache.EventStalledForLockedCacheline : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c6.l1cache.evict_S : Accumulator : Sum.u64 = 2738; SumSQ.u64 = 2738; Count.u64 = 2738; Min.u64 = 1; Max.u64 = 1; 
+ c6.l1cache.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c6.l1cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c6.l1cache.eventSent_PutS : Accumulator : Sum.u64 = 2738; SumSQ.u64 = 2738; Count.u64 = 2738; Min.u64 = 1; Max.u64 = 1; 
  c6.l1cache.eventSent_PutE : Accumulator : Sum.u64 = 152; SumSQ.u64 = 152; Count.u64 = 152; Min.u64 = 1; Max.u64 = 1; 
@@ -2666,6 +2673,7 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c6.l2cache.latency_GetSX_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c6.l2cache.latency_GetSX_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c6.l2cache.latency_GetSX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c6.l2cache.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c6.l2cache.evict_S : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c6.l2cache.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c6.l2cache.evict_SInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -2800,7 +2808,7 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c6.l2cache.eventSent_FetchResp : Accumulator : Sum.u64 = 2062; SumSQ.u64 = 2062; Count.u64 = 2062; Min.u64 = 1; Max.u64 = 1; 
  c6.l2cache.eventSent_FetchXResp : Accumulator : Sum.u64 = 15; SumSQ.u64 = 15; Count.u64 = 15; Min.u64 = 1; Max.u64 = 1; 
  c6.l2cache.eventSent_AckInv : Accumulator : Sum.u64 = 2762; SumSQ.u64 = 2762; Count.u64 = 2762; Min.u64 = 1; Max.u64 = 1; 
- c6.l2cache.eventSent_NACK_down : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c6.l2cache.eventSent_NACK : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c6.l2cache.eventSent_GetSResp : Accumulator : Sum.u64 = 2906; SumSQ.u64 = 2906; Count.u64 = 2906; Min.u64 = 1; Max.u64 = 1; 
  c6.l2cache.eventSent_GetXResp : Accumulator : Sum.u64 = 2079; SumSQ.u64 = 2079; Count.u64 = 2079; Min.u64 = 1; Max.u64 = 1; 
  c6.l2cache.eventSent_FlushLineResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -2808,7 +2816,6 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c6.l2cache.eventSent_FetchInv : Accumulator : Sum.u64 = 1879; SumSQ.u64 = 1879; Count.u64 = 1879; Min.u64 = 1; Max.u64 = 1; 
  c6.l2cache.eventSent_FetchInvX : Accumulator : Sum.u64 = 13; SumSQ.u64 = 13; Count.u64 = 13; Min.u64 = 1; Max.u64 = 1; 
  c6.l2cache.eventSent_Inv : Accumulator : Sum.u64 = 133; SumSQ.u64 = 133; Count.u64 = 133; Min.u64 = 1; Max.u64 = 1; 
- c6.l2cache.eventSent_NACK_up : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c6.l2cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c6.l2cache.evict_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c6.l2cache.evict_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -2904,9 +2911,7 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c7.l1cache.latency_GetSX_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c7.l1cache.latency_GetSX_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c7.l1cache.latency_GetSX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- c7.l1cache.EventStalledForLockedCacheline : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- c7.l1cache.evict_S : Accumulator : Sum.u64 = 2767; SumSQ.u64 = 2767; Count.u64 = 2767; Min.u64 = 1; Max.u64 = 1; 
- c7.l1cache.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c7.l1cache.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c7.l1cache.stateEvent_GetS_I : Accumulator : Sum.u64 = 4500; SumSQ.u64 = 4500; Count.u64 = 4500; Min.u64 = 1; Max.u64 = 1; 
  c7.l1cache.stateEvent_GetS_S : Accumulator : Sum.u64 = 16; SumSQ.u64 = 16; Count.u64 = 16; Min.u64 = 1; Max.u64 = 1; 
  c7.l1cache.stateEvent_GetS_M : Accumulator : Sum.u64 = 3; SumSQ.u64 = 3; Count.u64 = 3; Min.u64 = 1; Max.u64 = 1; 
@@ -2971,7 +2976,7 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c7.l1cache.eventSent_GetX : Accumulator : Sum.u64 = 480; SumSQ.u64 = 480; Count.u64 = 480; Min.u64 = 1; Max.u64 = 1; 
  c7.l1cache.eventSent_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c7.l1cache.eventSent_PutM : Accumulator : Sum.u64 = 43; SumSQ.u64 = 43; Count.u64 = 43; Min.u64 = 1; Max.u64 = 1; 
- c7.l1cache.eventSent_NACK_down : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c7.l1cache.eventSent_NACK : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c7.l1cache.eventSent_FlushLine : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c7.l1cache.eventSent_FlushLineInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c7.l1cache.eventSent_FetchResp : Accumulator : Sum.u64 = 1842; SumSQ.u64 = 1842; Count.u64 = 1842; Min.u64 = 1; Max.u64 = 1; 
@@ -2980,6 +2985,9 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c7.l1cache.eventSent_GetSResp : Accumulator : Sum.u64 = 4520; SumSQ.u64 = 4520; Count.u64 = 4520; Min.u64 = 1; Max.u64 = 1; 
  c7.l1cache.eventSent_GetXResp : Accumulator : Sum.u64 = 480; SumSQ.u64 = 480; Count.u64 = 480; Min.u64 = 1; Max.u64 = 1; 
  c7.l1cache.eventSent_FlushLineResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c7.l1cache.EventStalledForLockedCacheline : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c7.l1cache.evict_S : Accumulator : Sum.u64 = 2767; SumSQ.u64 = 2767; Count.u64 = 2767; Min.u64 = 1; Max.u64 = 1; 
+ c7.l1cache.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c7.l1cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c7.l1cache.eventSent_PutS : Accumulator : Sum.u64 = 2767; SumSQ.u64 = 2767; Count.u64 = 2767; Min.u64 = 1; Max.u64 = 1; 
  c7.l1cache.eventSent_PutE : Accumulator : Sum.u64 = 172; SumSQ.u64 = 172; Count.u64 = 172; Min.u64 = 1; Max.u64 = 1; 
@@ -3036,6 +3044,7 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c7.l2cache.latency_GetSX_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c7.l2cache.latency_GetSX_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c7.l2cache.latency_GetSX_M : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c7.l2cache.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c7.l2cache.evict_S : Accumulator : Sum.u64 = 3; SumSQ.u64 = 3; Count.u64 = 3; Min.u64 = 1; Max.u64 = 1; 
  c7.l2cache.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c7.l2cache.evict_SInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -3170,7 +3179,7 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c7.l2cache.eventSent_FetchResp : Accumulator : Sum.u64 = 2052; SumSQ.u64 = 2052; Count.u64 = 2052; Min.u64 = 1; Max.u64 = 1; 
  c7.l2cache.eventSent_FetchXResp : Accumulator : Sum.u64 = 15; SumSQ.u64 = 15; Count.u64 = 15; Min.u64 = 1; Max.u64 = 1; 
  c7.l2cache.eventSent_AckInv : Accumulator : Sum.u64 = 2795; SumSQ.u64 = 2795; Count.u64 = 2795; Min.u64 = 1; Max.u64 = 1; 
- c7.l2cache.eventSent_NACK_down : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c7.l2cache.eventSent_NACK : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c7.l2cache.eventSent_GetSResp : Accumulator : Sum.u64 = 2913; SumSQ.u64 = 2913; Count.u64 = 2913; Min.u64 = 1; Max.u64 = 1; 
  c7.l2cache.eventSent_GetXResp : Accumulator : Sum.u64 = 2067; SumSQ.u64 = 2067; Count.u64 = 2067; Min.u64 = 1; Max.u64 = 1; 
  c7.l2cache.eventSent_FlushLineResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -3178,7 +3187,6 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15889104 clocks
  c7.l2cache.eventSent_FetchInv : Accumulator : Sum.u64 = 1842; SumSQ.u64 = 1842; Count.u64 = 1842; Min.u64 = 1; Max.u64 = 1; 
  c7.l2cache.eventSent_FetchInvX : Accumulator : Sum.u64 = 10; SumSQ.u64 = 10; Count.u64 = 10; Min.u64 = 1; Max.u64 = 1; 
  c7.l2cache.eventSent_Inv : Accumulator : Sum.u64 = 104; SumSQ.u64 = 104; Count.u64 = 104; Min.u64 = 1; Max.u64 = 1; 
- c7.l2cache.eventSent_NACK_up : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c7.l2cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c7.l2cache.evict_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c7.l2cache.evict_EInvX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 

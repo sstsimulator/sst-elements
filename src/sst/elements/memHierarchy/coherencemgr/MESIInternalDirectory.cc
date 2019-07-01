@@ -56,7 +56,7 @@ CacheAction MESIInternalDirectory::handleEviction(CacheLine* replacementLine, st
 
     // Check if there is a stalled replacement to the block we are attempting to replace. 
     // If so, we should handle it immediately to avoid deadlocks (A waiting for B to evict, B waiting for A to handle its eviction)
-    MemEvent * waitingEvent = (mshr_->isHit(wbBaseAddr)) ? mshr_->lookupFront(wbBaseAddr) : NULL;
+    MemEvent * waitingEvent = (mshr_->isHit(wbBaseAddr)) ? static_cast<MemEvent*>(mshr_->lookupFront(wbBaseAddr)) : nullptr;
     bool collision = (waitingEvent != NULL && (waitingEvent->getCmd() == Command::PutS || waitingEvent->getCmd() == Command::PutE || waitingEvent->getCmd() == Command::PutM));
     if (collision) {    // Note that 'collision' and 'fromDataCache' cannot both be true, don't need to handle that case
         if (state == E && waitingEvent->getDirty()) replacementLine->setState(M);
@@ -242,12 +242,28 @@ CacheAction MESIInternalDirectory::handleInvalidationRequest(MemEvent * event, C
  *  whether it should continue waiting for more responses (STALL or IGNORE)
  *
  */
-CacheAction MESIInternalDirectory::handleResponse(MemEvent * respEvent, CacheLine * dirLine, MemEvent * reqEvent) {
+CacheAction MESIInternalDirectory::handleCacheResponse(MemEvent * respEvent, CacheLine * dirLine, MemEvent * reqEvent) {
     Command cmd = respEvent->getCmd();
     switch (cmd) {
         case Command::GetSResp:
         case Command::GetXResp:
             return handleDataResponse(respEvent, dirLine, reqEvent);
+        case Command::FlushLineResp:
+            recordStateEventCount(respEvent->getCmd(), dirLine ? dirLine->getState() : I);
+            sendFlushResponse(reqEvent, respEvent->success());
+            if (dirLine && dirLine->getState() == S_B) dirLine->setState(S);
+            else if (dirLine) dirLine->setState(I);
+            return DONE;
+        default:
+            debug->fatal(CALL_INFO, -1, "%s (dir), Error: Received unrecognized response: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
+                    ownerName_.c_str(), CommandString[(int)cmd], respEvent->getBaseAddr(), respEvent->getSrc().c_str(), getCurrentSimTimeNano());
+    }
+    return DONE;    // Eliminate compiler warning
+}
+
+CacheAction MESIInternalDirectory::handleFetchResponse(MemEvent * respEvent, CacheLine * dirLine, MemEvent * reqEvent) {
+    Command cmd = respEvent->getCmd();
+    switch (cmd) {
         case Command::FetchResp:
         case Command::FetchXResp:
             return handleFetchResp(respEvent, dirLine, reqEvent);
@@ -258,12 +274,6 @@ CacheAction MESIInternalDirectory::handleResponse(MemEvent * respEvent, CacheLin
             recordStateEventCount(respEvent->getCmd(), I);
             mshr_->removeWriteback(respEvent->getBaseAddr());
             return DONE;    // Retry any events that were stalled for ack
-        case Command::FlushLineResp:
-            recordStateEventCount(respEvent->getCmd(), dirLine ? dirLine->getState() : I);
-            sendFlushResponse(reqEvent, respEvent->success());
-            if (dirLine && dirLine->getState() == S_B) dirLine->setState(S);
-            else if (dirLine) dirLine->setState(I);
-            return DONE;
         default:
             debug->fatal(CALL_INFO, -1, "%s (dir), Error: Received unrecognized response: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
                     ownerName_.c_str(), CommandString[(int)cmd], respEvent->getBaseAddr(), respEvent->getSrc().c_str(), getCurrentSimTimeNano());
@@ -1272,7 +1282,7 @@ CacheAction MESIInternalDirectory::handleInv(MemEvent* event, CacheLine* dirLine
                         mshr_->decrementAcksNeeded(event->getBaseAddr());
                         mshr_->removeElement(event->getBaseAddr(), collisionEvent);   
                         delete collisionEvent;
-                        collisionEvent = (mshr_->isHit(event->getBaseAddr())) ? mshr_->lookupFront(event->getBaseAddr()) : NULL;
+                        collisionEvent = (mshr_->isHit(event->getBaseAddr())) ? static_cast<MemEvent*>(mshr_->lookupFront(event->getBaseAddr())) : nullptr;
                         if (collisionEvent && collisionEvent->getCmd() != Command::PutS) collisionEvent = NULL;
                     } else collisionEvent = NULL;
                 }
@@ -1291,7 +1301,7 @@ CacheAction MESIInternalDirectory::handleInv(MemEvent* event, CacheLine* dirLine
                         mshr_->decrementAcksNeeded(event->getBaseAddr());
                         mshr_->removeFront(event->getBaseAddr());   // We've sent an inv to them so no need for AckPut
                         delete collisionEvent;
-                        collisionEvent = (mshr_->isHit(event->getBaseAddr())) ? mshr_->lookupFront(event->getBaseAddr()) : NULL;
+                        collisionEvent = (mshr_->isHit(event->getBaseAddr())) ? static_cast<MemEvent*>(mshr_->lookupFront(event->getBaseAddr())) : nullptr;
                         if (collisionEvent == NULL || collisionEvent->getCmd() != Command::PutS) collisionEvent = NULL;
                     } else collisionEvent = NULL;
                 }
@@ -1337,7 +1347,7 @@ CacheAction MESIInternalDirectory::handleForceInv(MemEvent * event, CacheLine * 
         sendWritebackAck(collisionEvent);
         mshr_->removeFront(dirLine->getBaseAddr());
         delete collisionEvent;
-        collisionEvent = (mshr_->isHit(event->getBaseAddr())) ? mshr_->lookupFront(event->getBaseAddr()) : nullptr;
+        collisionEvent = (mshr_->isHit(event->getBaseAddr())) ? static_cast<MemEvent*>(mshr_->lookupFront(event->getBaseAddr())) : nullptr;
     }
 
     switch(state) {
@@ -2181,7 +2191,7 @@ void MESIInternalDirectory::sendResponseDown(MemEvent* event, CacheLine * cacheL
 
 
 void MESIInternalDirectory::sendResponseDownFromMSHR(MemEvent * event, bool dirty) {
-    MemEvent * requestEvent = mshr_->lookupFront(event->getBaseAddr());
+    MemEvent * requestEvent = static_cast<MemEvent*>(mshr_->lookupFront(event->getBaseAddr()));
     MemEvent * responseEvent = requestEvent->makeResponse();
     responseEvent->setPayload(event->getPayload());
     responseEvent->setSize(event->getSize());
@@ -2392,308 +2402,14 @@ void MESIInternalDirectory::recordEvictionState(State state) {
 
 
 void MESIInternalDirectory::recordStateEventCount(Command cmd, State state) {
-    switch (cmd) {
-        case Command::GetS:
-            if (state == I) stat_stateEvent_GetS_I->addData(1);
-            else if (state == S) stat_stateEvent_GetS_S->addData(1);
-            else if (state == E) stat_stateEvent_GetS_E->addData(1);
-            else if (state == M) stat_stateEvent_GetS_M->addData(1);
-            break;
-        case Command::GetX:
-            if (state == I) stat_stateEvent_GetX_I->addData(1);
-            else if (state == S) stat_stateEvent_GetX_S->addData(1);
-            else if (state == E) stat_stateEvent_GetX_E->addData(1);
-            else if (state == M) stat_stateEvent_GetX_M->addData(1);
-            //else if (state == SM) Only because we retried too early
-            break;
-        case Command::GetSX:
-            if (state == I) stat_stateEvent_GetSX_I->addData(1);
-            else if (state == S) stat_stateEvent_GetSX_S->addData(1);
-            else if (state == E) stat_stateEvent_GetSX_E->addData(1);
-            else if (state == M) stat_stateEvent_GetSX_M->addData(1);
-            //else if (state == SM) Only because we retried too early
-            break;
-        case Command::GetSResp:
-            if (state == IS) stat_stateEvent_GetSResp_IS->addData(1);
-            break;
-        case Command::GetXResp:
-            if (state == IS) stat_stateEvent_GetXResp_IS->addData(1);
-            else if (state == IM) stat_stateEvent_GetXResp_IM->addData(1);
-            else if (state == SM) stat_stateEvent_GetXResp_SM->addData(1);
-            else if (state == SM_Inv) stat_stateEvent_GetXResp_SMInv->addData(1);
-            break;
-        case Command::PutS:
-            if (state == I) stat_stateEvent_PutS_I->addData(1);
-            else if (state == S) stat_stateEvent_PutS_S->addData(1);
-            else if (state == E) stat_stateEvent_PutS_E->addData(1);
-            else if (state == M) stat_stateEvent_PutS_M->addData(1);
-            else if (state == M_Inv) stat_stateEvent_PutS_MInv->addData(1);
-            else if (state == E_Inv) stat_stateEvent_PutS_EInv->addData(1);
-            else if (state == E_InvX) stat_stateEvent_PutS_EInvX->addData(1);
-            else if (state == S_Inv) stat_stateEvent_PutS_SInv->addData(1);
-            else if (state == SM_Inv) stat_stateEvent_PutS_SMInv->addData(1);
-            else if (state == MI) stat_stateEvent_PutS_MI->addData(1);
-            else if (state == EI) stat_stateEvent_PutS_EI->addData(1);
-            else if (state == SI) stat_stateEvent_PutS_SI->addData(1);
-            else if (state == I_B) stat_stateEvent_PutS_IB->addData(1);
-            else if (state == S_B) stat_stateEvent_PutS_SB->addData(1);
-            else if (state == SB_Inv) stat_stateEvent_PutS_SBInv->addData(1);
-            else if (state == S_D) stat_stateEvent_PutS_SD->addData(1);
-            else if (state == E_D) stat_stateEvent_PutS_ED->addData(1);
-            else if (state == M_D) stat_stateEvent_PutS_MD->addData(1);
-            else if (state == SM_D) stat_stateEvent_PutS_SMD->addData(1);
-            break;
-        case Command::PutE:
-            if (state == I) stat_stateEvent_PutE_I->addData(1);
-            else if (state == E) stat_stateEvent_PutE_E->addData(1);
-            else if (state == M) stat_stateEvent_PutE_M->addData(1);
-            else if (state == M_Inv) stat_stateEvent_PutE_MInv->addData(1);
-            else if (state == M_InvX) stat_stateEvent_PutE_MInvX->addData(1);
-            else if (state == E_Inv) stat_stateEvent_PutE_EInv->addData(1);
-            else if (state == E_InvX) stat_stateEvent_PutE_EInvX->addData(1);
-            else if (state == MI) stat_stateEvent_PutE_MI->addData(1);
-            else if (state == EI) stat_stateEvent_PutE_EI->addData(1);
-            break;
-        case Command::PutM:
-            if (state == I) stat_stateEvent_PutM_I->addData(1);
-            else if (state == E) stat_stateEvent_PutM_E->addData(1);
-            else if (state == M) stat_stateEvent_PutM_M->addData(1);
-            else if (state == M_Inv) stat_stateEvent_PutM_MInv->addData(1);
-            else if (state == M_InvX) stat_stateEvent_PutM_MInvX->addData(1);
-            else if (state == E_Inv) stat_stateEvent_PutM_EInv->addData(1);
-            else if (state == E_InvX) stat_stateEvent_PutM_EInvX->addData(1);
-            else if (state == MI) stat_stateEvent_PutM_MI->addData(1);
-            else if (state == EI) stat_stateEvent_PutM_EI->addData(1);
-            break;
-        case Command::Inv:
-            if (state == I) stat_stateEvent_Inv_I->addData(1);
-            else if (state == S) stat_stateEvent_Inv_S->addData(1);
-            else if (state == SM) stat_stateEvent_Inv_SM->addData(1);
-            else if (state == M_Inv) stat_stateEvent_Inv_MInv->addData(1);
-            else if (state == M_InvX) stat_stateEvent_Inv_MInvX->addData(1);
-            else if (state == E_Inv) stat_stateEvent_Inv_EInv->addData(1);
-            else if (state == E_InvX) stat_stateEvent_Inv_EInvX->addData(1);
-            else if (state == S_Inv) stat_stateEvent_Inv_SInv->addData(1);
-            else if (state == SM_Inv) stat_stateEvent_Inv_SMInv->addData(1);
-            else if (state == SI) stat_stateEvent_Inv_SI->addData(1);
-            else if (state == EI) stat_stateEvent_Inv_EI->addData(1);
-            else if (state == MI) stat_stateEvent_Inv_MI->addData(1);
-            else if (state == S_B) stat_stateEvent_Inv_SB->addData(1);
-            else if (state == I_B) stat_stateEvent_Inv_IB->addData(1);
-            else if (state == S_D) stat_stateEvent_Inv_SD->addData(1);
-            else if (state == E_D) stat_stateEvent_Inv_ED->addData(1);
-            else if (state == M_D) stat_stateEvent_Inv_MD->addData(1);
-            break;
-        case Command::FetchInvX:
-            if (state == I) stat_stateEvent_FetchInvX_I->addData(1);
-            else if (state == E) stat_stateEvent_FetchInvX_E->addData(1);
-            else if (state == M) stat_stateEvent_FetchInvX_M->addData(1);
-            else if (state == IS) stat_stateEvent_FetchInvX_IS->addData(1);
-            else if (state == IM) stat_stateEvent_FetchInvX_IM->addData(1);
-            else if (state == I_B) stat_stateEvent_FetchInvX_IB->addData(1);
-            else if (state == S_B) stat_stateEvent_FetchInvX_SB->addData(1);
-            break;
-        case Command::Fetch:
-            if (state == I) stat_stateEvent_Fetch_I->addData(1);
-            else if (state == S) stat_stateEvent_Fetch_S->addData(1);
-            else if (state == IS) stat_stateEvent_Fetch_IS->addData(1);
-            else if (state == IM) stat_stateEvent_Fetch_IM->addData(1);
-            else if (state == SM) stat_stateEvent_Fetch_SM->addData(1);
-            else if (state == S_D) stat_stateEvent_Fetch_SD->addData(1);
-            else if (state == S_Inv) stat_stateEvent_Fetch_SInv->addData(1);
-            else if (state == SI) stat_stateEvent_Fetch_SI->addData(1);
-            break;
-        case Command::FetchInv:
-            if (state == I) stat_stateEvent_FetchInv_I->addData(1);
-            else if (state == E) stat_stateEvent_FetchInv_E->addData(1);
-            else if (state == M) stat_stateEvent_FetchInv_M->addData(1);
-            else if (state == IS) stat_stateEvent_FetchInv_IS->addData(1);
-            else if (state == IM) stat_stateEvent_FetchInv_IM->addData(1);
-            else if (state == M_Inv) stat_stateEvent_FetchInv_MInv->addData(1);
-            else if (state == M_InvX) stat_stateEvent_FetchInv_MInvX->addData(1);
-            else if (state == E_Inv) stat_stateEvent_FetchInv_EInv->addData(1);
-            else if (state == E_InvX) stat_stateEvent_FetchInv_EInvX->addData(1);
-            else if (state == MI) stat_stateEvent_FetchInv_MI->addData(1);
-            else if (state == EI) stat_stateEvent_FetchInv_EI->addData(1);
-            else if (state == I_B) stat_stateEvent_FetchInv_IB->addData(1);
-            else if (state == S_D) stat_stateEvent_FetchInv_SD->addData(1);
-            else if (state == E_D) stat_stateEvent_FetchInv_ED->addData(1);
-            else if (state == M_D) stat_stateEvent_FetchInv_MD->addData(1);
-            break;
-        case Command::FetchResp:
-            if (state == M_Inv) stat_stateEvent_FetchResp_MInv->addData(1);
-            else if (state == M_InvX) stat_stateEvent_FetchResp_MInvX->addData(1);
-            else if (state == E_Inv) stat_stateEvent_FetchResp_EInv->addData(1);
-            else if (state == E_InvX) stat_stateEvent_FetchResp_EInvX->addData(1);
-            else if (state == S_D) stat_stateEvent_FetchResp_SD->addData(1);
-            else if (state == E_D) stat_stateEvent_FetchResp_ED->addData(1);
-            else if (state == M_D) stat_stateEvent_FetchResp_MD->addData(1);
-            else if (state == SM_D) stat_stateEvent_FetchResp_SMD->addData(1);
-            else if (state == S_Inv) stat_stateEvent_FetchResp_SInv->addData(1);
-            else if (state == SM_Inv) stat_stateEvent_FetchResp_SMInv->addData(1);
-            else if (state == MI) stat_stateEvent_FetchResp_MI->addData(1);
-            else if (state == EI) stat_stateEvent_FetchResp_EI->addData(1);
-            else if (state == SI) stat_stateEvent_FetchResp_SI->addData(1);
-            break;
-        case Command::FetchXResp:
-            if (state == M_Inv) stat_stateEvent_FetchXResp_MInv->addData(1);
-            else if (state == M_InvX) stat_stateEvent_FetchXResp_MInvX->addData(1);
-            else if (state == E_Inv) stat_stateEvent_FetchXResp_EInv->addData(1);
-            else if (state == E_InvX) stat_stateEvent_FetchXResp_EInvX->addData(1);
-            else if (state == S_D) stat_stateEvent_FetchXResp_SD->addData(1);
-            else if (state == E_D) stat_stateEvent_FetchXResp_ED->addData(1);
-            else if (state == M_D) stat_stateEvent_FetchXResp_MD->addData(1);
-            else if (state == SM_D) stat_stateEvent_FetchXResp_SMD->addData(1);
-            else if (state == S_Inv) stat_stateEvent_FetchXResp_SInv->addData(1);
-            else if (state == SM_Inv) stat_stateEvent_FetchXResp_SMInv->addData(1);
-            else if (state == MI) stat_stateEvent_FetchXResp_MI->addData(1);
-            else if (state == EI) stat_stateEvent_FetchXResp_EI->addData(1);
-            else if (state == SI) stat_stateEvent_FetchXResp_SI->addData(1);
-            break;
-        case Command::AckInv:
-            if (state == I) stat_stateEvent_AckInv_I->addData(1);
-            else if (state == M_Inv) stat_stateEvent_AckInv_MInv->addData(1);
-            else if (state == E_Inv) stat_stateEvent_AckInv_EInv->addData(1);
-            else if (state == S_Inv) stat_stateEvent_AckInv_SInv->addData(1);
-            else if (state == SM_Inv) stat_stateEvent_AckInv_SMInv->addData(1);
-            else if (state == MI) stat_stateEvent_AckInv_MI->addData(1);
-            else if (state == EI) stat_stateEvent_AckInv_EI->addData(1);
-            else if (state == SI) stat_stateEvent_AckInv_SI->addData(1);
-            else if (state == SB_Inv) stat_stateEvent_AckInv_SBInv->addData(1);
-            break;
-        case Command::AckPut:
-            if (state == I) stat_stateEvent_AckPut_I->addData(1);
-            break;
-        case Command::FlushLine:
-            if (state == I) stat_stateEvent_FlushLine_I->addData(1);
-            else if (state == S) stat_stateEvent_FlushLine_S->addData(1);
-            else if (state == E) stat_stateEvent_FlushLine_E->addData(1);
-            else if (state == M) stat_stateEvent_FlushLine_M->addData(1);
-            else if (state == IS) stat_stateEvent_FlushLine_IS->addData(1);
-            else if (state == IM) stat_stateEvent_FlushLine_IM->addData(1);
-            else if (state == SM) stat_stateEvent_FlushLine_SM->addData(1);
-            else if (state == M_Inv) stat_stateEvent_FlushLine_MInv->addData(1);
-            else if (state == M_InvX) stat_stateEvent_FlushLine_MInvX->addData(1);
-            else if (state == E_Inv) stat_stateEvent_FlushLine_EInv->addData(1);
-            else if (state == E_InvX) stat_stateEvent_FlushLine_EInvX->addData(1);
-            else if (state == S_Inv) stat_stateEvent_FlushLine_SInv->addData(1);
-            else if (state == SM_Inv) stat_stateEvent_FlushLine_SMInv->addData(1);
-            else if (state == S_D) stat_stateEvent_FlushLine_SD->addData(1);
-            else if (state == E_D) stat_stateEvent_FlushLine_ED->addData(1);
-            else if (state == M_D) stat_stateEvent_FlushLine_MD->addData(1);
-            else if (state == SM_D) stat_stateEvent_FlushLine_SMD->addData(1);
-            else if (state == MI) stat_stateEvent_FlushLine_MI->addData(1);
-            else if (state == EI) stat_stateEvent_FlushLine_EI->addData(1);
-            else if (state == SI) stat_stateEvent_FlushLine_SI->addData(1);
-            else if (state == I_B) stat_stateEvent_FlushLine_IB->addData(1);
-            else if (state == S_B) stat_stateEvent_FlushLine_SB->addData(1);
-            break;
-        case Command::FlushLineInv:
-            if (state == I) stat_stateEvent_FlushLineInv_I->addData(1);
-            else if (state == S) stat_stateEvent_FlushLineInv_S->addData(1);
-            else if (state == E) stat_stateEvent_FlushLineInv_E->addData(1);
-            else if (state == M) stat_stateEvent_FlushLineInv_M->addData(1);
-            else if (state == IS) stat_stateEvent_FlushLineInv_IS->addData(1);
-            else if (state == IM) stat_stateEvent_FlushLineInv_IM->addData(1);
-            else if (state == SM) stat_stateEvent_FlushLineInv_SM->addData(1);
-            else if (state == M_Inv) stat_stateEvent_FlushLineInv_MInv->addData(1);
-            else if (state == M_InvX) stat_stateEvent_FlushLineInv_MInvX->addData(1);
-            else if (state == E_Inv) stat_stateEvent_FlushLineInv_EInv->addData(1);
-            else if (state == E_InvX) stat_stateEvent_FlushLineInv_EInvX->addData(1);
-            else if (state == S_Inv) stat_stateEvent_FlushLineInv_SInv->addData(1);
-            else if (state == SM_Inv) stat_stateEvent_FlushLineInv_SMInv->addData(1);
-            else if (state == S_D) stat_stateEvent_FlushLineInv_SD->addData(1);
-            else if (state == E_D) stat_stateEvent_FlushLineInv_ED->addData(1);
-            else if (state == M_D) stat_stateEvent_FlushLineInv_MD->addData(1);
-            else if (state == SM_D) stat_stateEvent_FlushLineInv_SMD->addData(1);
-            else if (state == MI) stat_stateEvent_FlushLineInv_MI->addData(1);
-            else if (state == EI) stat_stateEvent_FlushLineInv_EI->addData(1);
-            else if (state == SI) stat_stateEvent_FlushLineInv_SI->addData(1);
-            break;
-        case Command::FlushLineResp:
-            if (state == I) stat_stateEvent_FlushLineResp_I->addData(1);
-            else if (state == I_B) stat_stateEvent_FlushLineResp_IB->addData(1);
-            else if (state == S_B) stat_stateEvent_FlushLineResp_SB->addData(1);
-            break;
-        default:
-            break;
-    }
+    stat_eventState[(int)cmd][state]->addData(1);
 }
 
 void MESIInternalDirectory::recordEventSentDown(Command cmd) {
-    switch(cmd) {
-        case Command::GetS:
-            stat_eventSent_GetS->addData(1);
-            break;
-        case Command::GetX:
-            stat_eventSent_GetX->addData(1);
-            break;
-        case Command::GetSX:
-            stat_eventSent_GetSX->addData(1);
-            break;
-        case Command::PutS:
-            stat_eventSent_PutS->addData(1);
-            break;
-        case Command::PutE:
-            stat_eventSent_PutE->addData(1);
-            break;
-        case Command::PutM:
-            stat_eventSent_PutM->addData(1);
-            break;
-        case Command::FlushLine:
-            stat_eventSent_FlushLine->addData(1);
-            break;
-        case Command::FlushLineInv:
-            stat_eventSent_FlushLineInv->addData(1);
-            break;
-        case Command::FetchResp:
-            stat_eventSent_FetchResp->addData(1);
-            break;
-        case Command::FetchXResp:
-            stat_eventSent_FetchXResp->addData(1);
-            break;
-        case Command::AckInv:
-            stat_eventSent_AckInv->addData(1);
-            break;
-        case Command::NACK:
-            stat_eventSent_NACK_down->addData(1);
-            break;
-        default:
-            break;
-    }
+    stat_eventSent[(int)cmd]->addData(1);
 }
 
 
 void MESIInternalDirectory::recordEventSentUp(Command cmd) {
-    switch (cmd) {
-        case Command::GetSResp:
-            stat_eventSent_GetSResp->addData(1);
-            break;
-        case Command::GetXResp:
-            stat_eventSent_GetXResp->addData(1);
-            break;
-        case Command::FlushLineResp:
-            stat_eventSent_FlushLineResp->addData(1);
-            break;
-        case Command::Inv:
-            stat_eventSent_Inv->addData(1);
-            break;
-        case Command::Fetch:
-            stat_eventSent_Fetch->addData(1);
-            break;
-        case Command::FetchInv:
-            stat_eventSent_FetchInv->addData(1);
-            break;
-        case Command::FetchInvX:
-            stat_eventSent_FetchInvX->addData(1);
-            break;
-        case Command::AckPut:
-            stat_eventSent_AckPut->addData(1);
-            break;
-        case Command::NACK:
-            stat_eventSent_NACK_up->addData(1);
-            break;
-        default:
-            break;
-    }
+    stat_eventSent[(int)cmd]->addData(1);
 }

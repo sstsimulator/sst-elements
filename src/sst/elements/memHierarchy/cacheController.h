@@ -317,25 +317,15 @@ private:
     }
 
     void checkMaxWait(void) const {
-        SimTime_t curTime = getCurrentSimTimeNano();
-        MemEvent *oldReq = NULL;
-        MemEvent *oldCacheReq = mshr_->getOldestRequest();
+        SimTime_t curTime = Simulation::getSimulation()->getCurrentSimCycle();
+        const mshrType *oldEntry = mshr_->getOldestRequest();
 
-        /*if ( oldCacheReq && oldUnCacheReq ) {
-            oldReq = (oldCacheReq->getInitializationTime() < oldUnCacheReq->getInitializationTime()) ? oldCacheReq : oldUnCacheReq;
-        } else if ( oldCacheReq ) {
-            oldReq = oldCacheReq;
-        } else {
-            oldReq = oldUnCacheReq;
-        }*/
-        oldReq = oldCacheReq;
-
-        if ( oldReq ) {
-            SimTime_t waitTime = curTime - oldReq->getInitializationTime();
+        if ( oldEntry ) {
+            SimTime_t waitTime = curTime - oldEntry->initTime;
             if ( waitTime > maxWaitTime_ ) {
-                out_->fatal(CALL_INFO, 1, "%s, Error: Maximum Cache Request time reached!\n"
-                        "Event: %s 0x%" PRIx64 " from %s. Time = %" PRIu64 " ns\n",
-                        getName().c_str(), CommandString[(int)oldReq->getCmd()], oldReq->getAddr(), oldReq->getSrc().c_str(), curTime);
+                out_->fatal(CALL_INFO, 1, "%s, Error: Maximum Cache Request time reached - potential deadlock or other error. "
+                        "Event: %s. Current time: (%" PRIu64 " cycles, %" PRIu64 " ns). Event start time: %" PRIu64 "cycles.\n",
+                    getName().c_str(), (oldEntry->elem).getEvent()->getVerboseString().c_str(), curTime, getCurrentSimTimeNano(), oldEntry->initTime);
             }
         }
     }
@@ -346,6 +336,7 @@ private:
     bool                    L1_;
     bool                    allNoncacheableRequests_;
     SimTime_t               maxWaitTime_;
+    SimTime_t               maxWaitTimeNano_;
     unsigned int            maxBytesUpPerCycle_;
     unsigned int            maxBytesDownPerCycle_;
     uint64_t                accessLatency_;
@@ -401,6 +392,9 @@ private:
     bool                    maxWaitWakeupExists_;       // Whether a timeout wakeup exists
     bool                    clockUpLink_; // Whether link actually needs clock() called or not
     bool                    clockDownLink_; // Whether link actually needs clock() called or not
+
+    // Temporary
+    bool doInCoherenceMgr_;
 
     /*
      * Statistics API stats

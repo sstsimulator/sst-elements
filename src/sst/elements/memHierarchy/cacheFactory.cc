@@ -16,6 +16,7 @@
 #include <sst_config.h>
 #include <sst/core/stringize.h>
 #include <sst/core/params.h>
+#include <sst/core/timeLord.h>
 
 #include "hash.h"
 #include "cacheController.h"
@@ -155,11 +156,15 @@ void Cache::createCoherenceManager(Params &params) {
     coherenceParams.insert("min_packet_size", params.find<std::string>("min_packet_size", "8B"));
 
     bool prefetch = (statPrefetchRequest != nullptr);
+    doInCoherenceMgr_ = false;
 
     if (!L1_) {
         if (protocol_ != CoherenceProtocol::NONE) {
-            if (type_ != "noninclusive_with_directory") {
+            if (type_ == "inclusive") { 
                 coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.MESICoherenceController", "coherence", 0, 
+                        ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams, prefetch);
+            } else if (type_ == "noninclusive") {
+                coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.coherence.mesi_private_noninclusive", "coherence", 0, 
                         ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams, prefetch);
             } else {
                 coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.MESICacheDirectoryCoherenceController", "coherence", 0, 
@@ -173,6 +178,7 @@ void Cache::createCoherenceManager(Params &params) {
         if (protocol_ != CoherenceProtocol::NONE) {
             coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.L1CoherenceController", "coherence", 0, 
                     ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams, prefetch);
+            doInCoherenceMgr_ = true;
         } else {
             coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.L1IncoherentController", "coherence", 0, 
                     ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams, prefetch);
@@ -187,6 +193,7 @@ void Cache::createCoherenceManager(Params &params) {
     coherenceMgr_->setCacheListener(listeners_);
     coherenceMgr_->setDebug(DEBUG_ADDR);
     coherenceMgr_->setOwnerName(getName());
+    coherenceMgr_->setCacheArray(cacheArray_);
 
 }
 
@@ -789,10 +796,11 @@ void Cache::createClock(Params &params) {
     timestamp_ = 0;
 
     // Deadlock timeout
-    maxWaitTime_ = params.find<SimTime_t>("maxRequestDelay", 0);  // Nanoseconds
-    checkMaxWaitInterval_ = maxWaitTime_ / 4;
+    SimTime_t maxNano = params.find<SimTime_t>("maxRequestDelay", 0);
+    maxWaitTime_ = (Simulation::getSimulation()->getTimeLord()->getNano())->convertToCoreTime(maxNano); // Figure out how many core cycles maxNano is
+    checkMaxWaitInterval_ = maxNano / 4;
     // Doubtful that this corner case will occur but just in case...
-    if (maxWaitTime_ > 0 && checkMaxWaitInterval_ == 0) checkMaxWaitInterval_ = maxWaitTime_;
+    if (maxNano > 0 && checkMaxWaitInterval_ == 0) checkMaxWaitInterval_ = maxNano;
     if (maxWaitTime_ > 0) {
         ostringstream oss;
         oss << checkMaxWaitInterval_;

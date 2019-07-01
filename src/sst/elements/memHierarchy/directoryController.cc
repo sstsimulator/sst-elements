@@ -230,7 +230,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
             memoryName  = params.find<std::string>("net_memory_name", "");
             if (memoryName == "")
                 dbg.fatal(CALL_INFO,-1,"Param not specified(%s): net_memory_name - name of the memory owned by this directory controller. If you did not intend to connect to memory over the network, please connect memory to the 'memory' port and ignore this parameter.\n", getName().c_str());
-            memLink = NULL;
+            memLink = nullptr;
 
         }
         network->setName(getName());
@@ -816,12 +816,12 @@ void DirectoryController::handlePutE(MemEvent * ev) {
             break;
         case M_Inv:     /* If PutE comes with data then we can handle this immediately but otherwise */
             entry->setState(IM);
-            issueMemoryRequest(mshr->lookupFront(ev->getBaseAddr()), entry);
+            issueMemoryRequest(static_cast<MemEvent*>(mshr->lookupFront(ev->getBaseAddr())), entry);
             postRequestProcessing(ev, entry, false);  // profile & delete ev
             break;
         case M_InvX:
             entry->setState(IS);
-            issueMemoryRequest(mshr->lookupFront(ev->getBaseAddr()), entry);
+            issueMemoryRequest(static_cast<MemEvent*>(mshr->lookupFront(ev->getBaseAddr())), entry);
             postRequestProcessing(ev, entry, false);  // profile & delete ev
             break;
         default:
@@ -1121,7 +1121,7 @@ void DirectoryController::handleFetchResp(MemEvent * ev, bool keepEvent) {
     /* Clear previous owner state and writeback block. */
     entry->clearOwner();
 
-    MemEvent * respEv = NULL;
+    MemEvent * respEv = nullptr;
     State state = entry->getState();
 
     /* Handle request */
@@ -1427,7 +1427,7 @@ void DirectoryController::handleDataResponse(MemEvent * ev) {
     if (is_debug_event(ev)) dbg.debug(_L10_, "\t%s\tMSHR remove event <%s, %" PRIx64 ">\n", getName().c_str(), CommandString[(int)reqEv->getCmd()], reqEv->getBaseAddr());
     //dbg.debug(_L9_, "\t%s\tHandling stalled event: %s, %s\n", CommandString[(int)reqEv->getCmd()], reqEv->getSrc().c_str());
 
-    MemEvent * respEv = NULL;
+    MemEvent * respEv = nullptr;
     switch (state) {
         case IS:
         case S_D:
@@ -1516,7 +1516,7 @@ void DirectoryController::handleDirEntryMemoryResponse(MemEvent * ev) {
             dbg.fatal(CALL_INFO, -1, "Directory Controller %s: DirEntry response received for addr 0x%" PRIx64 " but state is %s. Event: %s\n",
                     getName().c_str(), entry->getBaseAddr(), StateString[st], ev->getVerboseString().c_str());
     }
-    MemEvent * reqEv = mshr->lookupFront(dirAddr);
+    MemEvent * reqEv = static_cast<MemEvent*>(mshr->lookupFront(dirAddr));
     processPacket(reqEv, true);
 }
 

@@ -93,6 +93,8 @@ libmemHierarchy_la_SOURCES = \
 	coherencemgr/L1IncoherentController.cc \
 	coherencemgr/L1CoherenceController.h \
 	coherencemgr/L1CoherenceController.cc \
+	coherencemgr/MESI_Private_Noninclusive.cc \
+	coherencemgr/MESI_Private_Noninclusive.h \
 	multithreadL1Shim.h \
 	multithreadL1Shim.cc \
 	cacheArray.cc \

@@ -159,7 +159,7 @@ CacheAction IncoherentController::handleInvalidationRequest(MemEvent * event, Ca
 /**
  *  Handle data responses.
  */
-CacheAction IncoherentController::handleResponse(MemEvent * respEvent, CacheLine * cacheLine, MemEvent * reqEvent) {
+CacheAction IncoherentController::handleCacheResponse(MemEvent * respEvent, CacheLine * cacheLine, MemEvent * reqEvent) {
     Command cmd = respEvent->getCmd();
     switch (cmd) {
         case Command::GetSResp:
@@ -178,6 +178,12 @@ CacheAction IncoherentController::handleResponse(MemEvent * respEvent, CacheLine
     return DONE;
 }
 
+CacheAction IncoherentController::handleFetchResponse(MemEvent * respEvent, CacheLine * cacheLine, MemEvent * reqEvent) {
+    Command cmd = respEvent->getCmd(); 
+    debug->fatal(CALL_INFO, -1, "%s, Error: Received unrecognized response: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
+                ownerName_.c_str(), CommandString[(int)cmd], respEvent->getBaseAddr(), respEvent->getSrc().c_str(), getCurrentSimTimeNano());
+    return DONE;
+}
 
 /* Incoherent caches always retry NACKs since there are not Inv/Fetch's to race
  * with and resolve transactions early
@@ -526,122 +532,14 @@ void IncoherentController::printData(vector<uint8_t> * data, bool set) {
 
 
 void IncoherentController::recordStateEventCount(Command cmd, State state) {
-    switch (cmd) {
-        case Command::GetS:
-            if (state == I) stat_stateEvent_GetS_I->addData(1);
-            else if (state == E) stat_stateEvent_GetS_E->addData(1);
-            else if (state == M) stat_stateEvent_GetS_M->addData(1);
-            break;
-        case Command::GetX:    
-            if (state == I) stat_stateEvent_GetX_I->addData(1);
-            else if (state == E) stat_stateEvent_GetX_E->addData(1);
-            else if (state == M) stat_stateEvent_GetX_M->addData(1);
-            break;
-        case Command::GetSX:    
-            if (state == I) stat_stateEvent_GetSX_I->addData(1);
-            else if (state == E) stat_stateEvent_GetSX_E->addData(1);
-            else if (state == M) stat_stateEvent_GetSX_M->addData(1);
-            break;
-        case Command::GetSResp:
-            if (state == IS) stat_stateEvent_GetSResp_IS->addData(1);
-            break;
-        case Command::GetXResp:
-            if (state == IM) stat_stateEvent_GetXResp_IM->addData(1);
-            else if (state == IS) stat_stateEvent_GetXResp_IS->addData(1);
-            break;
-        case Command::PutE:
-            if (state == I) stat_stateEvent_PutE_I->addData(1);
-            else if (state == E) stat_stateEvent_PutE_E->addData(1);
-            else if (state == M) stat_stateEvent_PutE_M->addData(1);
-            else if (state == IS) stat_stateEvent_PutE_IS->addData(1);
-            else if (state == IM) stat_stateEvent_PutE_IM->addData(1);
-            else if (state == I_B) stat_stateEvent_PutE_IB->addData(1);
-            else if (state == S_B) stat_stateEvent_PutE_SB->addData(1);
-            break;
-        case Command::PutM:
-            if (state == I) stat_stateEvent_PutM_I->addData(1);
-            else if (state == E) stat_stateEvent_PutM_E->addData(1);
-            else if (state == M) stat_stateEvent_PutM_M->addData(1);
-            else if (state == IS) stat_stateEvent_PutM_IS->addData(1);
-            else if (state == IM) stat_stateEvent_PutM_IM->addData(1);
-            else if (state == I_B) stat_stateEvent_PutM_IB->addData(1);
-            else if (state == S_B) stat_stateEvent_PutM_SB->addData(1);
-            break;
-        case Command::FlushLine:
-            if (state == I) stat_stateEvent_FlushLine_I->addData(1);
-            else if (state == E) stat_stateEvent_FlushLine_E->addData(1);
-            else if (state == M) stat_stateEvent_FlushLine_M->addData(1);
-            else if (state == IS) stat_stateEvent_FlushLine_IS->addData(1);
-            else if (state == IM) stat_stateEvent_FlushLine_IM->addData(1);
-            else if (state == I_B) stat_stateEvent_FlushLine_IB->addData(1);
-            else if (state == S_B) stat_stateEvent_FlushLine_SB->addData(1);
-            break;
-        case Command::FlushLineInv:
-            if (state == I) stat_stateEvent_FlushLineInv_I->addData(1);
-            else if (state == E) stat_stateEvent_FlushLineInv_E->addData(1);
-            else if (state == M) stat_stateEvent_FlushLineInv_M->addData(1);
-            else if (state == IS) stat_stateEvent_FlushLineInv_IS->addData(1);
-            else if (state == IM) stat_stateEvent_FlushLineInv_IM->addData(1);
-            else if (state == I_B) stat_stateEvent_FlushLineInv_IB->addData(1);
-            else if (state == S_B) stat_stateEvent_FlushLineInv_SB->addData(1);
-            break;
-        case Command::FlushLineResp:
-            if (state == I) stat_stateEvent_FlushLineResp_I->addData(1);
-            else if (state == I_B) stat_stateEvent_FlushLineResp_IB->addData(1);
-            else if (state == S_B) stat_stateEvent_FlushLineResp_SB->addData(1);
-            break;
-        default:
-            break;
-    }
+    stat_eventState[(int)cmd][state]->addData(1);
 }
 
 
 void IncoherentController::recordEventSentDown(Command cmd) {
-    switch(cmd) {
-        case Command::GetS:
-            stat_eventSent_GetS->addData(1);
-            break;
-        case Command::GetX:
-            stat_eventSent_GetX->addData(1);
-            break;
-        case Command::GetSX:
-            stat_eventSent_GetSX->addData(1);
-            break;
-        case Command::PutE:
-            stat_eventSent_PutE->addData(1);
-            break;
-        case Command::PutM:
-            stat_eventSent_PutM->addData(1);
-            break;
-        case Command::FlushLine:
-            stat_eventSent_FlushLine->addData(1);
-            break;
-        case Command::FlushLineInv:
-            stat_eventSent_FlushLineInv->addData(1);
-            break;
-        case Command::NACK:
-            stat_eventSent_NACK_down->addData(1);
-            break;
-        default:
-            break;
-    }
+    stat_eventSent[(int)cmd]->addData(1);
 }
 
 void IncoherentController::recordEventSentUp(Command cmd) {
-    switch (cmd) {
-        case Command::GetSResp:
-            stat_eventSent_GetSResp->addData(1);
-            break;
-        case Command::GetXResp:
-            stat_eventSent_GetXResp->addData(1);
-            break;
-        case Command::FlushLineResp:
-            stat_eventSent_FlushLineResp->addData(1);
-            break;
-        case Command::NACK:
-            stat_eventSent_NACK_up->addData(1);
-            break;
-        default:
-            break;
-    }   
+    stat_eventSent[(int)cmd]->addData(1);
 }

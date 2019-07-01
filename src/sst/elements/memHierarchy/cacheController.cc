@@ -182,7 +182,8 @@ void Cache::processCacheReplacement(MemEvent* event, Command cmd, Addr baseAddr,
 
     // Attempt replacement, also handle any racing requests
     MemEvent * origRequest = NULL;
-    if (mshr_->exists(baseAddr)) origRequest = mshr_->lookupFront(baseAddr);
+    if (mshr_->exists(baseAddr)) 
+        origRequest = static_cast<MemEvent*>(mshr_->lookupFront(baseAddr));
     CacheAction action = coherenceMgr_->handleReplacement(event, line, origRequest, replay);
     
     if (is_debug_addr(baseAddr)) printLine(baseAddr);
@@ -209,7 +210,8 @@ void Cache::processCacheInvalidate(MemEvent* event, Addr baseAddr, bool replay) 
     }
     
     MemEvent * collisionEvent = NULL;
-    if (mshr_->exists(baseAddr)) collisionEvent = mshr_->lookupFront(baseAddr);
+    if (mshr_->exists(baseAddr)) 
+        collisionEvent = static_cast<MemEvent*>(mshr_->lookupFront(baseAddr));
     CacheLine * line = cacheArray_->lookup(baseAddr, false);
     CacheAction action = coherenceMgr_->handleInvalidationRequest(event, line, collisionEvent, replay);
         
@@ -250,7 +252,7 @@ void Cache::processCacheFlush(MemEvent* event, Addr baseAddr, bool replay) {
     
 
     MemEvent * origRequest = NULL;
-    if (mshr_->exists(baseAddr)) origRequest = mshr_->lookupFront(baseAddr);
+    if (mshr_->exists(baseAddr)) origRequest = static_cast<MemEvent*>(mshr_->lookupFront(baseAddr));
     
     // Generally we should not nack this request without checking for races
     // But if no possible races and handling this will fill MSHR, nack it
@@ -297,7 +299,7 @@ void Cache::processCacheResponse(MemEvent* responseEvent, Addr baseAddr) {
 
     MemEvent* origRequest = getOrigReq(mshr_->lookup(baseAddr));
     CacheLine * line = cacheArray_->lookup(baseAddr, false);
-    CacheAction action = coherenceMgr_->handleResponse(responseEvent, line, origRequest);
+    CacheAction action = coherenceMgr_->handleCacheResponse(responseEvent, line, origRequest);
 
     if (action == DONE) {
         if (responseEvent->getCmd() != Command::AckPut) {
@@ -319,9 +321,9 @@ void Cache::processFetchResp(MemEvent * event, Addr baseAddr) {
     if (is_debug_addr(baseAddr)) printLine(baseAddr);
 
     MemEvent * origRequest = NULL;
-    if (mshr_->exists(baseAddr)) origRequest = mshr_->lookupFront(baseAddr); /* Note that 'exists' returns true if there is a waiting MemEvent for this addr, ignores waiting evictions */
+    if (mshr_->exists(baseAddr)) origRequest = static_cast<MemEvent*>(mshr_->lookupFront(baseAddr)); /* Note that 'exists' returns true if there is a waiting MemEvent for this addr, ignores waiting evictions */
     CacheLine * line = cacheArray_->lookup(baseAddr, false);
-    CacheAction action = coherenceMgr_->handleResponse(event, line, origRequest);
+    CacheAction action = coherenceMgr_->handleFetchResponse(event, line, origRequest);
 
     delete event;
     
@@ -502,7 +504,7 @@ void Cache::activatePrevEvents(Addr baseAddr) {
                                 this->getName().c_str(), pointerAddr, getCurrentSimTimeNano());
                     }
                 }
-                cont = activatePrevEvent(((*it2).elem).getEvent(), pointerEntries, pointerAddr, it2, i);
+                cont = activatePrevEvent(static_cast<MemEvent*>(((*it2).elem).getEvent()), pointerEntries, pointerAddr, it2, i);
                 if (!cont) break;
             }
             entries.erase(it);  // Erase processed pointer
@@ -511,7 +513,7 @@ void Cache::activatePrevEvents(Addr baseAddr) {
             if (mshr_->isHit(baseAddr)) {
                 bool stop = false;
                 if (entries.begin()->elem.isEvent()) {
-                    MemEvent * front = ((entries.begin())->elem).getEvent();
+                    MemEvent * front = static_cast<MemEvent*>(((entries.begin())->elem).getEvent());
                     if (front->getCmd() != Command::Inv && front->getCmd() != Command::FetchInv && front->getCmd() != Command::FetchInvX && front->getCmd() != Command::ForceInv) {
                         stop = true;
                     }
@@ -533,7 +535,7 @@ void Cache::activatePrevEvents(Addr baseAddr) {
                     writebackInProgress = false;
                 }
             } 
-            cont = activatePrevEvent(((*it).elem).getEvent(), entries, baseAddr, it, i);
+            cont = activatePrevEvent(static_cast<MemEvent*>(((*it).elem).getEvent()), entries, baseAddr, it, i);
             if (!cont) break;
         }
     }
@@ -560,7 +562,7 @@ bool Cache::activatePrevEvent(MemEvent* event, vector<mshrType>& entries, Addr a
     if (mshr_->isHit(addr)) {
         bool stop = false;
         if (entries.begin()->elem.isEvent()) {
-            MemEvent * front = ((entries.begin())->elem).getEvent();
+            MemEvent * front = static_cast<MemEvent*>(((entries.begin())->elem).getEvent());
             if (front->getCmd() != Command::Inv && front->getCmd() != Command::FetchInv && front->getCmd() != Command::FetchInvX && front->getCmd() != Command::ForceInv) 
                 stop = true;
         } else {
@@ -575,7 +577,7 @@ bool Cache::activatePrevEvent(MemEvent* event, vector<mshrType>& entries, Addr a
 }
 
 void Cache::recordLatency(MemEvent* event) {
-    uint64 issueTime = (startTimeList_.find(event))->second;
+    uint64_t issueTime = (startTimeList_.find(event))->second;
     if (missTypeList_.find(event) != missTypeList_.end()) {
         int missType = missTypeList_.find(event)->second;
         switch (missType) {
@@ -657,7 +659,7 @@ MemEvent* Cache::getOrigReq(const vector<mshrType> entries) {
                 this->getName().c_str(), getCurrentSimTimeNano());
     }
 
-    return (entries.front().elem).getEvent();
+    return static_cast<MemEvent*>((entries.front().elem).getEvent());
 }
 
 bool Cache::processRequestInMSHR(Addr baseAddr, MemEvent* event) {

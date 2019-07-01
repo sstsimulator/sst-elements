@@ -47,7 +47,6 @@ public:
         initialize();
         addr_ = addr;
         baseAddr_ = baseAddr;
-        initTime_ = src->getCurrentSimTimeNano();
     }
 
     /** MemEvent constructor - Reads */
@@ -55,7 +54,6 @@ public:
         initialize();
         addr_ = addr;
         baseAddr_ = baseAddr;
-        initTime_ = src->getCurrentSimTimeNano();
         size_ = size;
     }
 
@@ -64,7 +62,6 @@ public:
         initialize();
         addr_ = addr;
         baseAddr_ = baseAddr;
-        initTime_ = src->getCurrentSimTimeNano();
         setPayload(data); // Also sets size_ field
     }
 
@@ -73,20 +70,17 @@ public:
         initialize();
         addr_ = addr;
         baseAddr_ = baseAddr;
-        initTime_ = timeInNano;
     }
     MemEvent(std::string src, Addr addr, Addr baseAddr, Command cmd, uint32_t size, uint64_t timeInNano) : MemEventBase(src, cmd) {
         initialize();
         addr_ = addr;
         baseAddr_ = baseAddr;
-        initTime_ = timeInNano;
         size_ = size;
     }
     MemEvent(std::string src, Addr addr, Addr baseAddr, Command cmd, std::vector<uint8_t>& data, uint64_t timeInNano) : MemEventBase(src, cmd) {
         initialize();
         addr_ = addr;
         baseAddr_ = baseAddr;
-        initTime_ = timeInNano;
         setPayload(data);
     }
 
@@ -96,11 +90,10 @@ public:
     MemEvent* makeNACKResponse(MemEvent* NACKedEvent, SimTime_t timeInNano) {
         MemEvent *me      = new MemEvent(*this);
         me->setResponse(this);
-        me->NACKedEvent_  = NACKedEvent;
-        me->cmd_          = Command::NACK;
-        me->initTime_     = timeInNano;
-        me->instPtr_      = instPtr_;
-        me->vAddr_        = vAddr_;
+        me->NACKedEvent_    = NACKedEvent;
+        me->cmd_            = Command::NACK;
+        me->instPtr_        = instPtr_;
+        me->vAddr_          = vAddr_;
         return me;
     }
 
@@ -145,7 +138,6 @@ public:
         NACKedEvent_        = nullptr;
         retries_            = 0;
         blocked_            = false;
-        initTime_           = 0;
         payload_.clear();
         dirty_              = false;
 	instPtr_	    = 0;
@@ -181,9 +173,6 @@ public:
     void setInstructionPointer(Addr newIP) { instPtr_ = newIP; }
     /** Get the instruction pointer of that caused this MemEvent */
     uint64_t getInstructionPointer() const { return instPtr_; }
-
-    /** Returns the time (in nanoseconds) when this event was created */
-    SimTime_t getInitializationTime(void) const { return initTime_; }
 
     /** @return  the size in bytes that this MemEvent represents */
     uint32_t getSize(void) const { return size_; }
@@ -319,7 +308,6 @@ private:
     dataVec         payload_;           // Data
     bool            prefetch_;          // Whether this request came from a prefetcher
     bool            blocked_;           // Whether this request blocked for another pending request (for profiling) TODO move to mshrs
-    SimTime_t       initTime_;          // Timestamp when event was created, for detecting timeouts TODO move to mshrs
     bool            dirty_;             // For a replacement, whether the data is dirty or not
     bool            isEvict_;           // Whether an event is an eviction
     Addr	    instPtr_;           // Instruction pointer associated with the request
@@ -340,7 +328,6 @@ public:
         ser & payload_;
         ser & prefetch_;
         ser & blocked_;
-        ser & initTime_;
         ser & dirty_;
         ser & isEvict_;
         ser & instPtr_;

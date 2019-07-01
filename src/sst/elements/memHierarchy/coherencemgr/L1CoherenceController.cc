@@ -198,18 +198,12 @@ CacheAction L1CoherenceController::handleInvalidationRequest(MemEvent * event, C
 }
 
 
-
-
-CacheAction L1CoherenceController::handleResponse(MemEvent * respEvent, CacheLine * cacheLine, MemEvent * reqEvent) {
+CacheAction L1CoherenceController::handleCacheResponse(MemEvent * respEvent, CacheLine * cacheLine, MemEvent * reqEvent) {
     Command cmd = respEvent->getCmd();
     switch (cmd) {
         case Command::GetSResp:
         case Command::GetXResp:
             handleDataResponse(respEvent, cacheLine, reqEvent);
-            break;
-        case Command::AckPut:
-            recordStateEventCount(respEvent->getCmd(), I);
-            mshr_->removeWriteback(respEvent->getBaseAddr());
             break;
         case Command::FlushLineResp:
             recordStateEventCount(respEvent->getCmd(), cacheLine ? cacheLine->getState() : I);
@@ -219,6 +213,20 @@ CacheAction L1CoherenceController::handleResponse(MemEvent * respEvent, CacheLin
                 cacheLine->atomicEnd();
             }
             sendFlushResponse(reqEvent, respEvent->success(), timestamp_, true);
+            break;
+        default:
+            debug->fatal(CALL_INFO, -1, "%s, Error: Received unrecognized response: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
+                    ownerName_.c_str(), CommandString[(int)cmd], respEvent->getBaseAddr(), respEvent->getSrc().c_str(), getCurrentSimTimeNano());
+    }
+    return DONE;
+}
+
+CacheAction L1CoherenceController::handleFetchResponse(MemEvent * respEvent, CacheLine * cacheLine, MemEvent * reqEvent) {
+    Command cmd = respEvent->getCmd();
+    switch (cmd) {
+        case Command::AckPut:
+            recordStateEventCount(respEvent->getCmd(), I);
+            mshr_->removeWriteback(respEvent->getBaseAddr());
             break;
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: Received unrecognized response: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
@@ -896,12 +904,12 @@ void L1CoherenceController::sendFlushResponse(MemEvent * requestEvent, bool succ
  *---------------------------------------------------------------------------------------------------------------------*/
 void L1CoherenceController::addToOutgoingQueue(Response& resp) {
     CoherenceController::addToOutgoingQueue(resp);
-    recordEventSentDown(resp.event->getCmd());
+    recordEventSent(resp.event->getCmd());
 }
 
 void L1CoherenceController::addToOutgoingQueueUp(Response& resp) {
     CoherenceController::addToOutgoingQueueUp(resp);
-    recordEventSentUp(resp.event->getCmd());
+    recordEventSent(resp.event->getCmd());
 }
 
 /********************
@@ -958,168 +966,12 @@ void L1CoherenceController::recordEvictionState(State state) {
 
 
 void L1CoherenceController::recordStateEventCount(Command cmd, State state) {
-    switch(cmd) {
-        case Command::GetS:
-            if (state == I) stat_stateEvent_GetS_I->addData(1);
-            else if (state == S) stat_stateEvent_GetS_S->addData(1);
-            else if (state == E) stat_stateEvent_GetS_E->addData(1);
-            else if (state == M) stat_stateEvent_GetS_M->addData(1);
-            break;
-        case Command::GetX:
-            if (state == I) stat_stateEvent_GetX_I->addData(1);
-            else if (state == S) stat_stateEvent_GetX_S->addData(1);
-            else if (state == E) stat_stateEvent_GetX_E->addData(1);
-            else if (state == M) stat_stateEvent_GetX_M->addData(1);
-            break;
-        case Command::GetSX:
-            if (state == I) stat_stateEvent_GetSX_I->addData(1);
-            else if (state == S) stat_stateEvent_GetSX_S->addData(1);
-            else if (state == E) stat_stateEvent_GetSX_E->addData(1);
-            else if (state == M) stat_stateEvent_GetSX_M->addData(1);
-            break;
-        case Command::GetSResp:
-            if (state == IS) stat_stateEvent_GetSResp_IS->addData(1);
-            break;
-        case Command::GetXResp:
-            if (state == IS) stat_stateEvent_GetXResp_IS->addData(1);
-            else if (state == IM) stat_stateEvent_GetXResp_IM->addData(1);
-            else if (state == SM) stat_stateEvent_GetXResp_SM->addData(1);
-            break;
-        case Command::Inv:
-            if (state == I) stat_stateEvent_Inv_I->addData(1);
-            else if (state == S) stat_stateEvent_Inv_S->addData(1);
-            else if (state == IS) stat_stateEvent_Inv_IS->addData(1);
-            else if (state == IM) stat_stateEvent_Inv_IM->addData(1);
-            else if (state == SM) stat_stateEvent_Inv_SM->addData(1);
-            else if (state == S_B) stat_stateEvent_Inv_SB->addData(1);
-            else if (state == I_B) stat_stateEvent_Inv_IB->addData(1);
-            break;
-        case Command::FetchInvX:
-            if (state == I) stat_stateEvent_FetchInvX_I->addData(1);
-            else if (state == E) stat_stateEvent_FetchInvX_E->addData(1);
-            else if (state == M) stat_stateEvent_FetchInvX_M->addData(1);
-            else if (state == IS) stat_stateEvent_FetchInvX_IS->addData(1);
-            else if (state == IM) stat_stateEvent_FetchInvX_IM->addData(1);
-            else if (state == S_B) stat_stateEvent_FetchInvX_SB->addData(1);
-            else if (state == I_B) stat_stateEvent_FetchInvX_IB->addData(1);
-            break;
-        case Command::Fetch:
-            if (state == I) stat_stateEvent_Fetch_I->addData(1);
-            else if (state == S) stat_stateEvent_Fetch_S->addData(1);
-            else if (state == IS) stat_stateEvent_Fetch_IS->addData(1);
-            else if (state == IM) stat_stateEvent_Fetch_IM->addData(1);
-            else if (state == SM) stat_stateEvent_Fetch_SM->addData(1);
-            else if (state == I_B) stat_stateEvent_Fetch_IB->addData(1);
-            else if (state == S_B) stat_stateEvent_Fetch_SB->addData(1);
-            break;
-        case Command::FetchInv:
-            if (state == I) stat_stateEvent_FetchInv_I->addData(1);
-            else if (state == S) stat_stateEvent_FetchInv_S->addData(1);
-            else if (state == E) stat_stateEvent_FetchInv_E->addData(1);
-            else if (state == M) stat_stateEvent_FetchInv_M->addData(1);
-            else if (state == IS) stat_stateEvent_FetchInv_IS->addData(1);
-            else if (state == IM) stat_stateEvent_FetchInv_IM->addData(1);
-            else if (state == SM) stat_stateEvent_FetchInv_SM->addData(1);
-            else if (state == S_B) stat_stateEvent_FetchInv_SB->addData(1);
-            else if (state == I_B) stat_stateEvent_FetchInv_IB->addData(1);
-            break;
-        case Command::AckPut:
-            if (state == I) stat_stateEvent_AckPut_I->addData(1);
-            break;
-        case Command::FlushLine:
-            if (state == I) stat_stateEvent_FlushLine_I->addData(1);
-            else if (state == S) stat_stateEvent_FlushLine_S->addData(1);
-            else if (state == E) stat_stateEvent_FlushLine_E->addData(1);
-            else if (state == M) stat_stateEvent_FlushLine_M->addData(1);
-            else if (state == IS) stat_stateEvent_FlushLine_IS->addData(1);
-            else if (state == IM) stat_stateEvent_FlushLine_IM->addData(1);
-            else if (state == SM) stat_stateEvent_FlushLine_SM->addData(1);
-            else if (state == I_B) stat_stateEvent_FlushLine_IB->addData(1);
-            else if (state == S_B) stat_stateEvent_FlushLine_SB->addData(1);
-            break;
-        case Command::FlushLineInv:
-            if (state == I) stat_stateEvent_FlushLineInv_I->addData(1);
-            else if (state == S) stat_stateEvent_FlushLineInv_S->addData(1);
-            else if (state == E) stat_stateEvent_FlushLineInv_E->addData(1);
-            else if (state == M) stat_stateEvent_FlushLineInv_M->addData(1);
-            else if (state == IS) stat_stateEvent_FlushLineInv_IS->addData(1);
-            else if (state == IM) stat_stateEvent_FlushLineInv_IM->addData(1);
-            else if (state == SM) stat_stateEvent_FlushLineInv_SM->addData(1);
-            else if (state == I_B) stat_stateEvent_FlushLineInv_IB->addData(1);
-            else if (state == S_B) stat_stateEvent_FlushLineInv_SB->addData(1);
-            break;
-        case Command::FlushLineResp:
-            if (state == I) stat_stateEvent_FlushLineResp_I->addData(1);
-            else if (state == I_B) stat_stateEvent_FlushLineResp_IB->addData(1);
-            else if (state == S_B) stat_stateEvent_FlushLineResp_SB->addData(1);
-            break;
-        default:
-            break;
-
-    }
+    stat_eventState[(int)cmd][state]->addData(1);
 }
 
 
 /* Record how many times each event type was sent down */
-void L1CoherenceController::recordEventSentDown(Command cmd) {
-    switch (cmd) {
-        case Command::GetS:
-            stat_eventSent_GetS->addData(1);
-            break;
-        case Command::GetX:
-            stat_eventSent_GetX->addData(1);
-            break;
-        case Command::GetSX:
-            stat_eventSent_GetSX->addData(1);
-            break;
-        case Command::PutS:
-            stat_eventSent_PutS->addData(1);
-            break;
-        case Command::PutE:
-            stat_eventSent_PutE->addData(1);
-            break;
-        case Command::PutM:
-            stat_eventSent_PutM->addData(1);
-            break;
-        case Command::NACK:
-            stat_eventSent_NACK_down->addData(1);
-            break;
-        case Command::FlushLine:
-            stat_eventSent_FlushLine->addData(1);
-            break;
-        case Command::FlushLineInv:
-            stat_eventSent_FlushLineInv->addData(1);
-            break;
-        case Command::FetchResp:
-            stat_eventSent_FetchResp->addData(1);
-            break;
-        case Command::FetchXResp:
-            stat_eventSent_FetchXResp->addData(1);
-            break;
-        case Command::AckInv:
-            stat_eventSent_AckInv->addData(1);
-            break;
-        default:
-            break;
-    }
+void L1CoherenceController::recordEventSent(Command cmd) {
+    stat_eventSent[(int)cmd]->addData(1);
 }
 
-
-void L1CoherenceController::recordEventSentUp(Command cmd) {
-    switch (cmd) {
-        case Command::GetSResp:
-            stat_eventSent_GetSResp->addData(1);
-            break;
-        case Command::GetXResp:
-            stat_eventSent_GetXResp->addData(1);
-            break;
-        case Command::FlushLineResp:
-            stat_eventSent_FlushLineResp->addData(1);
-            break;
-        case Command::Inv:
-            stat_eventSent_Inv->addData(1);
-            break;
-        default:
-            break;
-    }
-}
