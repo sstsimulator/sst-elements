@@ -116,7 +116,6 @@ class ArielCPU : public SST::Component {
         virtual bool tick( SST::Cycle_t );
         int forkPINChild(const char* app, char** args, std::map<std::string, std::string>& app_env);
 
-        void moo(char** myArray, int size);
     private:
         SST::Output* output;
         ArielMemoryManager* memmgr;

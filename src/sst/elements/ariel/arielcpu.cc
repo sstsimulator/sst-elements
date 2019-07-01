@@ -309,7 +309,6 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     execute_args[arg++] = const_cast<char*>("--");
     execute_args[arg++] = (char*) malloc(sizeof(char) * (executable.size() + 1));
     strcpy(execute_args[arg-1], executable.c_str());
-    moo(execute_args, pin_arg_count + app_argc - 1);
     char* argv_buffer = (char*) malloc(sizeof(char) * 256);
     for(uint32_t aa = 0; aa < app_argc ; ++aa) {
         sprintf(argv_buffer, "apparg%" PRIu32, aa);
@@ -407,7 +406,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
                cpu_cores[i]->setGpuLink(cpu_to_gpu_links[i]);
                cpu_cores[i]->setGpu();
             }
-            
+
             cpu_cores[i]->setFilePath(executable);
         }
     }
@@ -421,12 +420,6 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 
     output->verbose(CALL_INFO, 1, 0, "Completed initialization of the Ariel CPU.\n");
     fflush(stdout);
-}
-
-void ArielCPU::moo(char** myArray, int size)
-{
-   for(int i = 0; i < size; i++)
-      printf("%d:  %s\n", i, myArray[i]);
 }
 
 void ArielCPU::init(unsigned int phase)
