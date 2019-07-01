@@ -148,6 +148,13 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     uint32_t maxPendingTransCore = (uint32_t) params.find<uint32_t>("maxtranscore", 16);
     uint64_t cacheLineSize       = (uint64_t) params.find<uint32_t>("cachelinesize", 64);
 
+    int gpu_e = (uint32_t) params.find<uint32_t>("gpu_enabled", 0);
+
+    if(gpu_e == 1)
+        gpu_enabled = true;
+    else
+        gpu_enabled = false;
+
     /////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -201,10 +208,18 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     std::string shmem_region_name = tunnel->getRegionName();
     output->verbose(CALL_INFO, 1, 0, "Base pipe name: %s\n", shmem_region_name.c_str());
 
+    tunnelR = new GpuReturnTunnel(id, core_count, maxCoreQueueLen);
+    std::string shmem_region_name2 = tunnelR->getRegionName();
+    output->verbose(CALL_INFO, 1, 0, "Base pipe name: %s\n", shmem_region_name2.c_str());
+
+    tunnelD = new GpuDataTunnel(id, core_count, maxCoreQueueLen);
+    std::string shmem_region_name3 = tunnelD->getRegionName();
+    output->verbose(CALL_INFO, 1, 0, "Base pipe name: %s\n", shmem_region_name3.c_str());
+
     appLauncher = params.find<std::string>("launcher", PINTOOL_EXECUTABLE);
 
     const uint32_t launch_param_count = (uint32_t) params.find<uint32_t>("launchparamcount", 0);
-    const uint32_t pin_arg_count = 29 + launch_param_count;
+    const uint32_t pin_arg_count = 35 + launch_param_count;
 
     execute_args = (char**) malloc(sizeof(char*) * (pin_arg_count + app_argc));
 
@@ -220,6 +235,10 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     execute_args[arg++] = const_cast<char*>("-pause_tool");
     execute_args[arg++] = const_cast<char*>("15");
 #endif
+
+    execute_args[arg++] = const_cast<char*>("-injection");
+    execute_args[arg++] = const_cast<char*>("child");
+
     execute_args[arg++] = const_cast<char*>("-follow_execv");
 
     char* param_name_buffer = (char*) malloc(sizeof(char) * 512);
@@ -246,14 +265,20 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     execute_args[arg++] = const_cast<char*>("-w");
 
     if( params.find<int>("writepayloadtrace") == 0 ) {
-    	execute_args[arg++] = const_cast<char*>("0");
+        execute_args[arg++] = const_cast<char*>("0");
     } else {
-    	execute_args[arg++] = const_cast<char*>("1");
+        execute_args[arg++] = const_cast<char*>("1");
     }
 
     execute_args[arg++] = const_cast<char*>("-p");
     execute_args[arg++] = (char*) malloc(sizeof(char) * (shmem_region_name.length() + 1));
     strcpy(execute_args[arg-1], shmem_region_name.c_str());
+    execute_args[arg++] = const_cast<char*>("-g");
+    execute_args[arg++] = (char*) malloc(sizeof(char) * (shmem_region_name2.length() + 1));
+    strcpy(execute_args[arg-1], shmem_region_name2.c_str());
+    execute_args[arg++] = const_cast<char*>("-x");
+    execute_args[arg++] = (char*) malloc(sizeof(char) * (shmem_region_name3.length() + 1));
+    strcpy(execute_args[arg-1], shmem_region_name3.c_str());
     execute_args[arg++] = const_cast<char*>("-v");
     execute_args[arg++] = (char*) malloc(sizeof(char) * 8);
     sprintf(execute_args[arg-1], "%d", verbosity);
@@ -284,7 +309,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     execute_args[arg++] = const_cast<char*>("--");
     execute_args[arg++] = (char*) malloc(sizeof(char) * (executable.size() + 1));
     strcpy(execute_args[arg-1], executable.c_str());
-
+    moo(execute_args, pin_arg_count + app_argc - 1);
     char* argv_buffer = (char*) malloc(sizeof(char) * 256);
     for(uint32_t aa = 0; aa < app_argc ; ++aa) {
         sprintf(argv_buffer, "apparg%" PRIu32, aa);
@@ -330,7 +355,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     execute_args[(pin_arg_count - 1) + app_argc] = NULL;
 
     /////////////////////////////////////////////////////////////////////////////////////
-    
+
     std::string cpu_clock = params.find<std::string>("clock", "1GHz");
     output->verbose(CALL_INFO, 1, 0, "Registering ArielCPU clock at %s\n", cpu_clock.c_str());
 
@@ -344,37 +369,46 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 
     output->verbose(CALL_INFO, 1, 0, "Configuring cores and cache links...\n");
     for(uint32_t i = 0; i < core_count; ++i) {
-
-        cpu_cores.push_back(loadComponentExtension<ArielCore>(tunnel, i, maxPendingTransCore, output,
+        cpu_cores.push_back(loadComponentExtension<ArielCore>(tunnel, tunnelR, tunnelD, i, maxPendingTransCore, output,
                 maxIssuesPerCycle, maxCoreQueueLen, cacheLineSize, memmgr, perform_checks, params));
-        
+
         // Set max number of instructions
         cpu_cores[i]->setMaxInsts(max_insts);
     }
-    
+
     // Find all the components loaded into the "memory" slot
     // Make sure all cores have a loaded subcomponent in their slot
     SubComponentSlotInfo* mem = getSubComponentSlotInfo("memory");
     if (mem) {
         if (!mem->isAllPopulated())
             output->fatal(CALL_INFO, -1, "%s, Error: loading 'memory' subcomponents. All subcomponent slots from 0 to core_count must be populated. Check your input config for non-populated slots\n", getName().c_str());
-    
+
         if (mem->getMaxPopulatedSlotNumber() != core_count-1)
             output->fatal(CALL_INFO, -1, "%s, Error: Loading 'memory' subcomponents and the number of subcomponents does not match the number of cores. Cores: %u, SubComps: %u. Check your input config.\n",
                     getName().c_str(), core_count, mem->getMaxPopulatedSlotNumber());
-        
+
         for (int i = 0; i < core_count; i++) {
             cpu_to_cache_links.push_back(mem->create<Interfaces::SimpleMem>(i, ComponentInfo::INSERT_STATS, timeconverter, new SimpleMem::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleEvent)));
             cpu_cores[i]->setCacheLink(cpu_to_cache_links[i]);
         }
     } else {
     // Load from here not the user one; let the subcomponent have our port (cache_link)
+        char* link_buffer = (char*) malloc(sizeof(char) * 256);
         for (int i = 0; i < core_count; i++) {
             Params par;
             par.insert("port", "cache_link_" + std::to_string(i));
-            cpu_to_cache_links.push_back(loadAnonymousSubComponent<Interfaces::SimpleMem>("memHierarchy.memInterface", "memory", i, 
+            cpu_to_cache_links.push_back(loadAnonymousSubComponent<Interfaces::SimpleMem>("memHierarchy.memInterface", "memory", i,
                         ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, par, timeconverter, new SimpleMem::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleEvent)));
             cpu_cores[i]->setCacheLink(cpu_to_cache_links[i]);
+
+            if(gpu_enabled) {
+               sprintf(link_buffer, "gpu_link_%" PRIu32, i);
+               cpu_to_gpu_links.push_back(configureLink(link_buffer, new Event::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleGpuAckEvent)));
+               cpu_cores[i]->setGpuLink(cpu_to_gpu_links[i]);
+               cpu_cores[i]->setGpu();
+            }
+            
+            cpu_cores[i]->setFilePath(executable);
         }
     }
 
@@ -389,6 +423,11 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     fflush(stdout);
 }
 
+void ArielCPU::moo(char** myArray, int size)
+{
+   for(int i = 0; i < size; i++)
+      printf("%d:  %s\n", i, myArray[i]);
+}
 
 void ArielCPU::init(unsigned int phase)
 {
@@ -452,7 +491,7 @@ int ArielCPU::forkPINChild(const char* app, char** args, std::map<std::string, s
 
     full_execute_line[next_line_index] = '\0';
 
-    output->verbose(CALL_INFO, 2, 0, "Executing PIN command: %s\n", full_execute_line);
+    output->verbose(CALL_INFO, 1, 0, "Executing PIN command: %s\n", full_execute_line);
     free(full_execute_line);
 
     pid_t the_child;
@@ -592,6 +631,9 @@ bool ArielCPU::tick( SST::Cycle_t cycle) {
 ArielCPU::~ArielCPU() {
     // Everything loaded by calls to the core are deleted by the core (subcomponents, component extension, etc.)
     delete tunnel;
+    delete tunnelR;
+    delete tunnelD;
+
 }
 
 void ArielCPU::emergencyShutdown() {

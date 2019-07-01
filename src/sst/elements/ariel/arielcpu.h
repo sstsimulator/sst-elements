@@ -42,7 +42,7 @@ class ArielCPU : public SST::Component {
 
     /* SST ELI */
     SST_ELI_REGISTER_COMPONENT(ArielCPU, "ariel", "ariel", SST_ELI_ELEMENT_VERSION(1,0,0), "PIN-based CPU model", COMPONENT_CATEGORY_PROCESSOR)
-   
+
     SST_ELI_DOCUMENT_PARAMS(
         {"verbose", "Verbosity for debugging. Increased numbers for increased verbosity.", "0"},
         {"profilefunctions", "Profile functions for Ariel execution, 0 = none, >0 = enable", "0" },
@@ -71,20 +71,23 @@ class ArielCPU : public SST::Component {
         {"clock", "Clock rate at which events are generated and processed", "1GHz"},
         {"tracegen", "Select the trace generator for Ariel (which records traced memory operations", ""},
         {"memmgr", "Memory manager to use for address translation", "ariel.MemoryManagerSimple"},
-        {"writepayloadtrace", "Trace write payloads and put real memory contents into the memory system", "0"})
+        {"writepayloadtrace", "Trace write payloads and put real memory contents into the memory system", "0"},
+        {"gpu_enabled", "If enabled, gpu links will be set up", "0"})
 
-    SST_ELI_DOCUMENT_PORTS( {"cache_link_%(corecount)d", "Each core's link to its cache", {}} )
-    
+    SST_ELI_DOCUMENT_PORTS( {"cache_link_%(corecount)d", "Each core's link to its cache", {}},
+       {"gpu_link_%(corecount)d", "Each core's link to the GPU", {}})
+
+
     SST_ELI_DOCUMENT_STATISTICS(
-        { "read_requests",        "Statistic counts number of read requests", "requests", 1},   // Name, Desc, Enable Level 
+        { "read_requests",        "Statistic counts number of read requests", "requests", 1},   // Name, Desc, Enable Level
         { "write_requests",       "Statistic counts number of write requests", "requests", 1},
-        { "read_request_sizes",   "Statistic for size of read requests", "bytes", 1},   // Name, Desc, Enable Level 
+        { "read_request_sizes",   "Statistic for size of read requests", "bytes", 1},   // Name, Desc, Enable Level
         { "write_request_sizes",  "Statistic for size of write requests", "bytes", 1},
         { "split_read_requests",  "Statistic counts number of split read requests (requests which come from multiple lines)", "requests", 1},
         { "split_write_requests", "Statistic counts number of split write requests (requests which are split over multiple lines)", "requests", 1},
         { "no_ops",               "Statistic counts instructions which do not execute a memory operation", "instructions", 1},
-	{ "flush_requests",       "Statistic counts instructions which perform flushes", "requests", 1},
-	{ "fence_requests",       "Statistic counts instructions which perform fences", "requests", 1},
+	    { "flush_requests",       "Statistic counts instructions which perform flushes", "requests", 1},
+	    { "fence_requests",       "Statistic counts instructions which perform fences", "requests", 1},
         { "instruction_count",    "Statistic for counting instructions", "instructions", 1 },
         { "max_insts", "Maximum number of instructions reached by a thread",	"instructions", 0},
         { "fp_dp_ins",            "Statistic for counting DP-floating point instructions", "instructions", 1 },
@@ -97,8 +100,8 @@ class ArielCPU : public SST::Component {
         { "fp_sp_ops",            "Statistic for counting SP-FP operations (inst * SIMD width)", "instructions", 1 },
         { "cycles",               "Statistic for counting cycles of the Ariel core.", "cycles", 1 },
         { "active_cycles",        "Statistic for counting active cycles (cycles not idle) of the Ariel core.", "cycles", 1 })
-    
-    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(    
+
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
             {"memmgr", "Memory manager to translate virtual addresses to physical, handle malloc/free, etc.", "SST::ArielComponent::ArielMemoryManager"},
             {"memory", "Interface to the memoryHierarchy (e.g., caches)", "SST::Interfaces::SimpleMem" }
     )
@@ -113,16 +116,23 @@ class ArielCPU : public SST::Component {
         virtual bool tick( SST::Cycle_t );
         int forkPINChild(const char* app, char** args, std::map<std::string, std::string>& app_env);
 
+        void moo(char** myArray, int size);
     private:
         SST::Output* output;
         ArielMemoryManager* memmgr;
+
         std::vector<ArielCore*> cpu_cores;
         std::vector<Interfaces::SimpleMem*> cpu_to_cache_links;
+        std::vector<SST::Link*> cpu_to_gpu_links;
+
         pid_t child_pid;
 
         uint32_t core_count;
         ArielTunnel* tunnel;
+        GpuReturnTunnel* tunnelR;
+        GpuDataTunnel* tunnelD;
         bool stopTicking;
+        bool gpu_enabled;
         std::string appLauncher;
 
         char **execute_args;
