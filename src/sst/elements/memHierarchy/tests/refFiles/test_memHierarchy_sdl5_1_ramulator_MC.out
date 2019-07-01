@@ -9,6 +9,10 @@ TrivialCPU cpu2 Finished after 1000 issued reads, 1000 returned (104054 clocks)
 TrivialCPU cpu1 Finished after 1000 issued reads, 1000 returned (104054 clocks)
 TrivialCPU cpu0 Finished after 1000 issued reads, 1000 returned (104054 clocks)
 TrivialCPU cpu3 Finished after 1000 issued reads, 1000 returned (104054 clocks)
+ cpu0.pendCycle : Accumulator : Sum.u64 = 55329; SumSQ.u64 = 90825; Count.u64 = 104054; Min.u64 = 0; Max.u64 = 4; 
+ cpu1.pendCycle : Accumulator : Sum.u64 = 58952; SumSQ.u64 = 98452; Count.u64 = 104054; Min.u64 = 0; Max.u64 = 5; 
+ cpu2.pendCycle : Accumulator : Sum.u64 = 58881; SumSQ.u64 = 97249; Count.u64 = 104054; Min.u64 = 0; Max.u64 = 5; 
+ cpu3.pendCycle : Accumulator : Sum.u64 = 56251; SumSQ.u64 = 91769; Count.u64 = 104054; Min.u64 = 0; Max.u64 = 5; 
  c0.l1cache.TotalEventsReceived : Accumulator : Sum.u64 = 1336; SumSQ.u64 = 1336; Count.u64 = 1336; Min.u64 = 1; Max.u64 = 1; 
  c0.l1cache.TotalEventsReplayed : Accumulator : Sum.u64 = 6; SumSQ.u64 = 6; Count.u64 = 6; Min.u64 = 1; Max.u64 = 1; 
  c0.l1cache.TotalNoncacheableEventsReceived : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
