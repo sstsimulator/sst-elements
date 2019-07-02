@@ -1995,7 +1995,7 @@ void MESIInternalDirectory::invalidateAllSharers(CacheLine * dirLine, string rqs
     uint64_t deliveryTime = (replay) ? baseTime + mshrLatency_ : baseTime + tagLatency_;
     bool invSent = false;
     for (set<std::string>::iterator it = sharers->begin(); it != sharers->end(); it++) {
-        MemEvent * inv = new MemEvent(ownerName_, dirLine->getBaseAddr(), dirLine->getBaseAddr(), Command::Inv, getCurrentSimTimeNano());
+        MemEvent * inv = new MemEvent(ownerName_, dirLine->getBaseAddr(), dirLine->getBaseAddr(), Command::Inv);
         inv->setDst(*it);
         inv->setRqstr(rqstr);
     
@@ -2023,9 +2023,9 @@ void MESIInternalDirectory::invalidateAllSharersAndFetch(CacheLine * cacheLine, 
 
     for (set<std::string>::iterator it = sharers->begin(); it != sharers->end(); it++) {
         MemEvent * inv;
-        if (fetched) inv = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::Inv, getCurrentSimTimeNano());
+        if (fetched) inv = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::Inv);
         else {
-            inv = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::FetchInv, getCurrentSimTimeNano());
+            inv = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::FetchInv);
             fetched = true;
         }
         inv->setDst(*it);
@@ -2064,10 +2064,10 @@ bool MESIInternalDirectory::invalidateSharersExceptRequestor(CacheLine * cacheLi
         if (*it == rqstr) continue;
         MemEvent * inv;
         if (needFetch) {
-            inv = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::FetchInv, getCurrentSimTimeNano());
+            inv = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::FetchInv);
             needFetch = false;
         } else {
-            inv = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::Inv, getCurrentSimTimeNano());
+            inv = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::Inv);
         }
         inv->setDst(*it);
         inv->setRqstr(origRqstr);
@@ -2091,7 +2091,7 @@ bool MESIInternalDirectory::invalidateSharersExceptRequestor(CacheLine * cacheLi
 
 
 void MESIInternalDirectory::sendFetchInv(CacheLine * cacheLine, string rqstr, bool replay) {
-    MemEvent * fetch = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::FetchInv, getCurrentSimTimeNano());
+    MemEvent * fetch = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::FetchInv);
     if (!(cacheLine->getOwner()).empty()) fetch->setDst(cacheLine->getOwner());
     else fetch->setDst(*(cacheLine->getSharers()->begin()));
     fetch->setRqstr(rqstr);
@@ -2111,7 +2111,7 @@ void MESIInternalDirectory::sendFetchInv(CacheLine * cacheLine, string rqstr, bo
 
 
 void MESIInternalDirectory::sendFetchInvX(CacheLine * cacheLine, string rqstr, bool replay) {
-    MemEvent * fetch = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::FetchInvX, getCurrentSimTimeNano());
+    MemEvent * fetch = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::FetchInvX);
     fetch->setDst(cacheLine->getOwner());
     fetch->setRqstr(rqstr);
     fetch->setSize(cacheLine->getSize());
@@ -2130,7 +2130,7 @@ void MESIInternalDirectory::sendFetchInvX(CacheLine * cacheLine, string rqstr, b
 
 
 void MESIInternalDirectory::sendFetch(CacheLine * cacheLine, string rqstr, bool replay) {
-    MemEvent * fetch = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::Fetch, getCurrentSimTimeNano());
+    MemEvent * fetch = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::Fetch);
     fetch->setDst(*((cacheLine->getSharers())->begin()));
     fetch->setRqstr(rqstr);
     
@@ -2148,7 +2148,7 @@ void MESIInternalDirectory::sendFetch(CacheLine * cacheLine, string rqstr, bool 
 
 
 void MESIInternalDirectory::sendForceInv(CacheLine * cacheLine, string rqstr, bool replay) {
-    MemEvent * inv = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::ForceInv, getCurrentSimTimeNano());
+    MemEvent * inv = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::ForceInv);
     inv->setDst(cacheLine->getOwner());
     inv->setRqstr(rqstr);
     inv->setSize(cacheLine->getSize());
@@ -2220,7 +2220,7 @@ void MESIInternalDirectory::sendAckInv(MemEvent * event) {
 
 
 void MESIInternalDirectory::sendWritebackAck(MemEvent * event) {
-    MemEvent * ack = new MemEvent(ownerName_, event->getBaseAddr(), event->getBaseAddr(), Command::AckPut, getCurrentSimTimeNano());
+    MemEvent * ack = new MemEvent(ownerName_, event->getBaseAddr(), event->getBaseAddr(), Command::AckPut);
     ack->setDst(event->getSrc());
     ack->setRqstr(event->getSrc());
     ack->setSize(event->getSize());
@@ -2233,7 +2233,7 @@ void MESIInternalDirectory::sendWritebackAck(MemEvent * event) {
 }
 
 void MESIInternalDirectory::sendWritebackFromCache(Command cmd, CacheLine * dirLine, string rqstr) {
-    MemEvent * writeback = new MemEvent(ownerName_, dirLine->getBaseAddr(), dirLine->getBaseAddr(), cmd, getCurrentSimTimeNano());
+    MemEvent * writeback = new MemEvent(ownerName_, dirLine->getBaseAddr(), dirLine->getBaseAddr(), cmd);
     writeback->setDst(getDestination(dirLine->getBaseAddr()));
     writeback->setSize(dirLine->getSize());
     if (cmd == Command::PutM || writebackCleanBlocks_) {
@@ -2251,7 +2251,7 @@ void MESIInternalDirectory::sendWritebackFromCache(Command cmd, CacheLine * dirL
 }
 
 void MESIInternalDirectory::sendWritebackFromMSHR(Command cmd, CacheLine * dirLine, string rqstr, vector<uint8_t> * data) {
-    MemEvent * writeback = new MemEvent(ownerName_, dirLine->getBaseAddr(), dirLine->getBaseAddr(), cmd, getCurrentSimTimeNano());
+    MemEvent * writeback = new MemEvent(ownerName_, dirLine->getBaseAddr(), dirLine->getBaseAddr(), cmd);
     writeback->setDst(getDestination(dirLine->getBaseAddr()));
     writeback->setSize(dirLine->getSize());
     if (cmd == Command::PutM || writebackCleanBlocks_) {
@@ -2284,7 +2284,7 @@ void MESIInternalDirectory::sendFlushResponse(MemEvent * requestEvent, bool succ
  *  Forward a flush line request, with or without data
  */
 void MESIInternalDirectory::forwardFlushLine(MemEvent * origFlush, CacheLine * dirLine, bool dirty, Command cmd) {
-    MemEvent * flush = new MemEvent(ownerName_, origFlush->getBaseAddr(), origFlush->getBaseAddr(), cmd, getCurrentSimTimeNano());
+    MemEvent * flush = new MemEvent(ownerName_, origFlush->getBaseAddr(), origFlush->getBaseAddr(), cmd);
     flush->setDst(getDestination(origFlush->getBaseAddr()));
     flush->setRqstr(origFlush->getRqstr());
     flush->setSize(lineSize_);

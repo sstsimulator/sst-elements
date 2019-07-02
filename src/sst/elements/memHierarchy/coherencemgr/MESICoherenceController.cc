@@ -300,7 +300,7 @@ bool MESIController::isRetryNeeded(MemEvent* event, CacheLine* cacheLine) {
             if (cacheLine->getOwner() != event->getDst()) {
                 if (cacheLine->isSharer(event->getDst()) && cmd == Command::FetchInv) { // Got a downgrade from the owner but still need to invalidate
                     uint64_t deliveryTime = 0;
-                    MemEvent * inv = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::Inv, getCurrentSimTimeNano());
+                    MemEvent * inv = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::Inv);
                     inv->setDst(event->getDst());
                     inv->setRqstr(event->getRqstr());
                     inv->setSize(cacheLine->getSize());
@@ -1774,7 +1774,7 @@ void MESIController::invalidateAllSharers(CacheLine * cacheLine, string rqstr, b
     set<std::string> * sharers = cacheLine->getSharers();
     uint64_t deliveryTime = 0;
     for (set<std::string>::iterator it = sharers->begin(); it != sharers->end(); it++) {
-        MemEvent * inv = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::Inv, getCurrentSimTimeNano());
+        MemEvent * inv = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::Inv);
         inv->setDst(*it);
         inv->setRqstr(rqstr);
         inv->setSize(cacheLine->getSize());
@@ -1806,7 +1806,7 @@ bool MESIController::invalidateSharersExceptRequestor(CacheLine * cacheLine, str
     for (set<std::string>::iterator it = sharers->begin(); it != sharers->end(); it++) {
         if (*it == rqstr) continue;
 
-        MemEvent * inv = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::Inv, getCurrentSimTimeNano());
+        MemEvent * inv = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::Inv);
         inv->setDst(*it);
         inv->setRqstr(origRqstr);
         inv->setSize(cacheLine->getSize());
@@ -1833,7 +1833,7 @@ bool MESIController::invalidateSharersExceptRequestor(CacheLine * cacheLine, str
  *  Send FetchInv to owner of a block
  */
 void MESIController::sendFetchInv(CacheLine * cacheLine, string rqstr, bool replay) {
-    MemEvent * fetch = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::FetchInv, getCurrentSimTimeNano());
+    MemEvent * fetch = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::FetchInv);
     fetch->setDst(cacheLine->getOwner());
     fetch->setRqstr(rqstr);
     fetch->setSize(cacheLine->getSize());
@@ -1855,7 +1855,7 @@ void MESIController::sendFetchInv(CacheLine * cacheLine, string rqstr, bool repl
  *  Send FetchInv to owner of a block
  */
 void MESIController::sendFetchInvX(CacheLine * cacheLine, string rqstr, bool replay) {
-    MemEvent * fetch = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::FetchInvX, getCurrentSimTimeNano());
+    MemEvent * fetch = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::FetchInvX);
     fetch->setDst(cacheLine->getOwner());
     fetch->setRqstr(rqstr);
     fetch->setSize(cacheLine->getSize());
@@ -1877,7 +1877,7 @@ void MESIController::sendFetchInvX(CacheLine * cacheLine, string rqstr, bool rep
  *  Send ForceInv to block owner
  */
 void MESIController::sendForceInv(CacheLine * cacheLine, string rqstr, bool replay) {
-    MemEvent * inv = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::ForceInv, getCurrentSimTimeNano());
+    MemEvent * inv = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::ForceInv);
     inv->setDst(cacheLine->getOwner());
     inv->setRqstr(rqstr);
     inv->setSize(cacheLine->getSize());
@@ -1962,7 +1962,7 @@ void MESIController::sendResponseDownFromMSHR(MemEvent * respEvent, MemEvent * r
  *  Latency: cache access + tag to read data that is being written back and update coherence state
  */
 void MESIController::sendWriteback(Command cmd, CacheLine* cacheLine, bool dirty, string rqstr) {
-    MemEvent* newCommandEvent = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), cmd, getCurrentSimTimeNano());
+    MemEvent* newCommandEvent = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), cmd);
     newCommandEvent->setDst(getDestination(cacheLine->getBaseAddr()));
     newCommandEvent->setSize(cacheLine->getSize());
     bool hasData = false;
@@ -1991,7 +1991,7 @@ void MESIController::sendWriteback(Command cmd, CacheLine* cacheLine, bool dirty
  *  Send a writeback ack. Mostly used by non-inclusive caches.
  */
 void MESIController::sendWritebackAck(MemEvent * event) {
-    MemEvent * ack = new MemEvent(ownerName_, event->getBaseAddr(), event->getBaseAddr(), Command::AckPut, getCurrentSimTimeNano());
+    MemEvent * ack = new MemEvent(ownerName_, event->getBaseAddr(), event->getBaseAddr(), Command::AckPut);
     ack->setDst(event->getSrc());
     ack->setRqstr(event->getSrc());
     ack->setSize(event->getSize());
@@ -2026,7 +2026,7 @@ void MESIController::sendAckInv(MemEvent * inv) {
  *  Forward a flush line request, with or without data
  */
 void MESIController::forwardFlushLine(Addr baseAddr, string origRqstr, CacheLine * cacheLine, Command cmd) {
-    MemEvent * flush = new MemEvent(ownerName_, baseAddr, baseAddr, cmd, getCurrentSimTimeNano());
+    MemEvent * flush = new MemEvent(ownerName_, baseAddr, baseAddr, cmd);
     flush->setDst(getDestination(baseAddr));
     flush->setRqstr(origRqstr);
     flush->setSize(lineSize_);

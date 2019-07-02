@@ -144,7 +144,7 @@ MemEventBase* MemHierarchyInterface::createMemEvent(SimpleMem::Request *req) con
 
     Addr baseAddr = (req->addrs[0]) & baseAddrMask_;
     
-    MemEvent *me = new MemEvent(getName(), req->addrs[0], baseAddr, cmd, getCurrentSimTimeNano());
+    MemEvent *me = new MemEvent(getName(), req->addrs[0], baseAddr, cmd);
     
     me->setRqstr(rqstr_);
     me->setDst(rqstr_);

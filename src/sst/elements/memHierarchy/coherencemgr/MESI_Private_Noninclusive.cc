@@ -296,7 +296,7 @@ bool MESIPrivNoninclusive::isRetryNeeded(MemEvent* event, CacheLine* cacheLine) 
             if (cacheLine->getOwner() != event->getDst()) {
                 if (cacheLine->isSharer(event->getDst()) && cmd == Command::FetchInv) { // Got a downgrade from the owner but still need to invalidate
                     uint64_t deliveryTime = 0;
-                    MemEvent * inv = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::Inv, getCurrentSimTimeNano());
+                    MemEvent * inv = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::Inv);
                     inv->setDst(event->getDst());
                     inv->setRqstr(event->getRqstr());
                     inv->setSize(cacheLine->getSize());
@@ -1817,7 +1817,7 @@ void MESIPrivNoninclusive::invalidateAllSharers(CacheLine * cacheLine, string rq
     set<std::string> * sharers = cacheLine->getSharers();
     uint64_t deliveryTime = 0;
     for (set<std::string>::iterator it = sharers->begin(); it != sharers->end(); it++) {
-        MemEvent * inv = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::Inv, getCurrentSimTimeNano());
+        MemEvent * inv = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::Inv);
         inv->setDst(*it);
         inv->setRqstr(rqstr);
         inv->setSize(cacheLine->getSize());
@@ -1849,7 +1849,7 @@ bool MESIPrivNoninclusive::invalidateSharersExceptRequestor(CacheLine * cacheLin
     for (set<std::string>::iterator it = sharers->begin(); it != sharers->end(); it++) {
         if (*it == rqstr) continue;
 
-        MemEvent * inv = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::Inv, getCurrentSimTimeNano());
+        MemEvent * inv = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::Inv);
         inv->setDst(*it);
         inv->setRqstr(origRqstr);
         inv->setSize(cacheLine->getSize());
@@ -1876,7 +1876,7 @@ bool MESIPrivNoninclusive::invalidateSharersExceptRequestor(CacheLine * cacheLin
  *  Send FetchInv to owner of a block
  */
 void MESIPrivNoninclusive::sendFetchInv(CacheLine * cacheLine, string rqstr, bool replay) {
-    MemEvent * fetch = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::FetchInv, getCurrentSimTimeNano());
+    MemEvent * fetch = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::FetchInv);
     fetch->setDst(cacheLine->getOwner());
     fetch->setRqstr(rqstr);
     fetch->setSize(cacheLine->getSize());
@@ -1898,7 +1898,7 @@ void MESIPrivNoninclusive::sendFetchInv(CacheLine * cacheLine, string rqstr, boo
  *  Send FetchInv to owner of a block
  */
 void MESIPrivNoninclusive::sendFetchInvX(CacheLine * cacheLine, string rqstr, bool replay) {
-    MemEvent * fetch = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::FetchInvX, getCurrentSimTimeNano());
+    MemEvent * fetch = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::FetchInvX);
     fetch->setDst(cacheLine->getOwner());
     fetch->setRqstr(rqstr);
     fetch->setSize(cacheLine->getSize());
@@ -1920,7 +1920,7 @@ void MESIPrivNoninclusive::sendFetchInvX(CacheLine * cacheLine, string rqstr, bo
  *  Send ForceInv to block owner
  */
 void MESIPrivNoninclusive::sendForceInv(CacheLine * cacheLine, string rqstr, bool replay) {
-    MemEvent * inv = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::ForceInv, getCurrentSimTimeNano());
+    MemEvent * inv = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::ForceInv);
     inv->setDst(cacheLine->getOwner());
     inv->setRqstr(rqstr);
     inv->setSize(cacheLine->getSize());
@@ -2005,7 +2005,7 @@ void MESIPrivNoninclusive::sendResponseDownFromMSHR(MemEvent * respEvent, MemEve
  *  Latency: cache access + tag to read data that is being written back and update coherence state
  */
 void MESIPrivNoninclusive::sendWriteback(Command cmd, CacheLine* cacheLine, bool dirty, string rqstr) {
-    MemEvent* newCommandEvent = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), cmd, getCurrentSimTimeNano());
+    MemEvent* newCommandEvent = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), cmd);
     newCommandEvent->setDst(getDestination(cacheLine->getBaseAddr()));
     newCommandEvent->setSize(cacheLine->getSize());
     bool hasData = false;
@@ -2034,7 +2034,7 @@ void MESIPrivNoninclusive::sendWriteback(Command cmd, CacheLine* cacheLine, bool
  *  Send a writeback ack. Mostly used by non-inclusive caches.
  */
 void MESIPrivNoninclusive::sendWritebackAck(MemEvent * event) {
-    MemEvent * ack = new MemEvent(ownerName_, event->getBaseAddr(), event->getBaseAddr(), Command::AckPut, getCurrentSimTimeNano());
+    MemEvent * ack = new MemEvent(ownerName_, event->getBaseAddr(), event->getBaseAddr(), Command::AckPut);
     ack->setDst(event->getSrc());
     ack->setRqstr(event->getSrc());
     ack->setSize(event->getSize());
@@ -2069,7 +2069,7 @@ void MESIPrivNoninclusive::sendAckInv(MemEvent * inv) {
  *  Forward a flush line request, with or without data
  */
 void MESIPrivNoninclusive::forwardFlushLine(Addr baseAddr, string origRqstr, CacheLine * cacheLine, Command cmd) {
-    MemEvent * flush = new MemEvent(ownerName_, baseAddr, baseAddr, cmd, getCurrentSimTimeNano());
+    MemEvent * flush = new MemEvent(ownerName_, baseAddr, baseAddr, cmd);
     flush->setDst(getDestination(baseAddr));
     flush->setRqstr(origRqstr);
     flush->setSize(lineSize_);

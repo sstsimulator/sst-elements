@@ -107,8 +107,8 @@ CoherenceController::CoherenceController(ComponentId_t id, Params &params, Param
 /**************************************/
 
 /* Send a NACK in response to a request. Could be virtual if needed. */
-void CoherenceController::sendNACK(MemEvent * event, bool up, SimTime_t timeInNano) {
-    MemEvent *NACKevent = event->makeNACKResponse(event, timeInNano);
+void CoherenceController::sendNACK(MemEvent * event, bool up) {
+    MemEvent *NACKevent = event->makeNACKResponse(event);
 
     uint64_t deliveryTime = timestamp_ + tagLatency_;
     Response resp = {NACKevent, deliveryTime, packetHeaderBytes};
@@ -229,7 +229,7 @@ std::string CoherenceController::getSrc() {
 
 
 /* Send outgoing commands to port manager */
-bool CoherenceController::sendOutgoingCommands(SimTime_t curTime) {
+bool CoherenceController::sendOutgoingCommands() {
     // Update timestamp
     timestamp_++;
 
@@ -251,7 +251,7 @@ bool CoherenceController::sendOutgoingCommands(SimTime_t curTime) {
 
         if (is_debug_event(outgoingEvent)) {
             debug->debug(_L4_,"SEND (%s). time: (%" PRIu64 ", %" PRIu64 ") event: (%s)\n",
-                    ownerName_.c_str(), timestamp_, curTime, outgoingEvent->getBriefString().c_str());
+                    ownerName_.c_str(), timestamp_, getCurrentSimTimeNano(), outgoingEvent->getBriefString().c_str());
         }
 
         linkDown_->send(outgoingEvent);
@@ -275,7 +275,7 @@ bool CoherenceController::sendOutgoingCommands(SimTime_t curTime) {
 
         if (is_debug_event(outgoingEvent)) {
             debug->debug(_L4_,"SEND (%s). time: (%" PRIu64 ", %" PRIu64 ") event: (%s)\n",
-                    ownerName_.c_str(), timestamp_, curTime, outgoingEvent->getBriefString().c_str());
+                    ownerName_.c_str(), timestamp_, getCurrentSimTimeNano(), outgoingEvent->getBriefString().c_str());
         }
 
         linkUp_->send(outgoingEvent);

@@ -75,7 +75,7 @@ public:
     /***** Functions for sending events *****/
 
     /* Send a NACK event. Used by child classes and cache controller */
-    void sendNACK(MemEvent * event, bool up, SimTime_t timeInNano);
+    void sendNACK(MemEvent * event, bool up);
 
     /* Resend an event after a NACK */
     void resendEvent(MemEvent * event, bool towardsCPU);
@@ -109,7 +109,7 @@ public:
     /***** Manage outgoing event queuest *****/
 
     /* Send commands when their timestamp expires. Return whether queue is empty or not. */
-    virtual bool sendOutgoingCommands(SimTime_t curTime);
+    virtual bool sendOutgoingCommands();
 
 
     /***** Setup and initialization functions *****/

@@ -66,18 +66,18 @@ public:
     }
 
     /************ New calls - use these! *****************/
-    MemEvent(std::string src, Addr addr, Addr baseAddr, Command cmd, uint64_t timeInNano) : MemEventBase(src, cmd) {
+    MemEvent(std::string src, Addr addr, Addr baseAddr, Command cmd) : MemEventBase(src, cmd) {
         initialize();
         addr_ = addr;
         baseAddr_ = baseAddr;
     }
-    MemEvent(std::string src, Addr addr, Addr baseAddr, Command cmd, uint32_t size, uint64_t timeInNano) : MemEventBase(src, cmd) {
+    MemEvent(std::string src, Addr addr, Addr baseAddr, Command cmd, uint32_t size) : MemEventBase(src, cmd) {
         initialize();
         addr_ = addr;
         baseAddr_ = baseAddr;
         size_ = size;
     }
-    MemEvent(std::string src, Addr addr, Addr baseAddr, Command cmd, std::vector<uint8_t>& data, uint64_t timeInNano) : MemEventBase(src, cmd) {
+    MemEvent(std::string src, Addr addr, Addr baseAddr, Command cmd, std::vector<uint8_t>& data) : MemEventBase(src, cmd) {
         initialize();
         addr_ = addr;
         baseAddr_ = baseAddr;
@@ -87,7 +87,7 @@ public:
 
 
     /** Create a new MemEvent instance, pre-configured to act as a NACK response */
-    MemEvent* makeNACKResponse(MemEvent* NACKedEvent, SimTime_t timeInNano) {
+    MemEvent* makeNACKResponse(MemEvent* NACKedEvent) {
         MemEvent *me      = new MemEvent(*this);
         me->setResponse(this);
         me->NACKedEvent_    = NACKedEvent;

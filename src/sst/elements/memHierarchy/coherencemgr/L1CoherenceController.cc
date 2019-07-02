@@ -161,7 +161,7 @@ CacheAction L1CoherenceController::handleInvalidationRequest(MemEvent * event, C
 
     /* L1 specific code for gem5 integration */
     if (snoopL1Invs_) {
-        MemEvent* snoop = new MemEvent(ownerName_, event->getAddr(), event->getBaseAddr(), Command::Inv, getCurrentSimTimeNano());
+        MemEvent* snoop = new MemEvent(ownerName_, event->getAddr(), event->getBaseAddr(), Command::Inv);
         uint64_t baseTime = timestamp_ > cacheLine->getTimestamp() ? timestamp_ : cacheLine->getTimestamp();
         uint64_t deliveryTime = (replay) ? baseTime + mshrLatency_ : baseTime + tagLatency_;
         Response resp = {snoop, deliveryTime, packetHeaderBytes};
@@ -805,7 +805,7 @@ uint64_t L1CoherenceController::sendResponseUp(MemEvent * event, std::vector<uin
  *  Latency: cache access + tag to read data that is being written back and update coherence state
  */
 void L1CoherenceController::sendWriteback(Command cmd, CacheLine* cacheLine, bool dirty, string origRqstr) {
-    MemEvent* writeback = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), cmd, getCurrentSimTimeNano());
+    MemEvent* writeback = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), cmd);
     writeback->setDst(getDestination(cacheLine->getBaseAddr()));
     writeback->setSize(cacheLine->getSize());
     uint64_t latency = tagLatency_;
@@ -857,7 +857,7 @@ void L1CoherenceController::sendAckInv(MemEvent * request, CacheLine * cacheLine
 
 
 void L1CoherenceController::forwardFlushLine(Addr baseAddr, Command cmd, string origRqstr, CacheLine * cacheLine) {
-    MemEvent * flush = new MemEvent(ownerName_, baseAddr, baseAddr, cmd, getCurrentSimTimeNano());
+    MemEvent * flush = new MemEvent(ownerName_, baseAddr, baseAddr, cmd);
     flush->setDst(getDestination(baseAddr));
     flush->setRqstr(origRqstr);
     flush->setSize(lineSize_);

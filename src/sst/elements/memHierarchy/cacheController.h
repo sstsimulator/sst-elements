@@ -201,8 +201,11 @@ private:
     void registerStatistics();
     void createCoherenceManager(Params &params);
 
-    /** Handler for incoming link events.  Add incoming event to 'incoming event queue'. */
-    void processIncomingEvent(SST::Event *event);
+    /** Handle incoming events -> prepare to process */
+    void handleEvent(SST::Event *event);
+
+    /** Handle incoming prefetching events -> prepare to process */
+    void handlePrefetchEvent(SST::Event *event);
 
     /** Process an incoming event that is not meant for the cache */
     void processNoncacheable(MemEventBase* event);
@@ -212,9 +215,6 @@ private:
 
     /** Configure this component's links */
     void configureLinks(Params &params);
-
-    /** Handler for incoming prefetching events. */
-    void handlePrefetchEvent(SST::Event *event);
 
     /** Self-Event prefetch handler for this component */
     void processPrefetchEvent(SST::Event *event);
@@ -371,6 +371,11 @@ private:
     uint64_t                timestamp_;
     int                     requestsThisCycle_;
     std::map<SST::Event::id_type, std::string> responseDst_;
+
+    std::list<MemEventBase*> eventBuffer_;      // Buffer incoming events until clock tick
+    std::list<MemEventBase*> retryBuffer_;      // Events that need to be retried
+    std::queue<MemEventBase*> prefetchBuffer_;  // Prefetch events; purged every cycle
+    
     std::queue<MemEventBase*>       requestBuffer_;                 // Buffer requests that can't be processed due to port limits
     std::vector< std::queue<MemEventBase*> > bankConflictBuffer_;   // Buffer requests that have bank conflicts
     std::map<MemEvent*,uint64>      startTimeList_;

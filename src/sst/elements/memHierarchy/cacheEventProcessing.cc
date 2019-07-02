@@ -524,13 +524,13 @@ void Cache::finish() {
 }
 
 /* Main handler for links to upper and lower caches/cores/buses/etc */
-void Cache::processIncomingEvent(SST::Event* ev) {
+void Cache::handleEvent(SST::Event* ev) {
     MemEventBase* event = static_cast<MemEventBase*>(ev);
     if (!clockIsOn_) {
         turnClockOn();
     }
 
-//    eventBuffer_.push_back(event);
+    //eventBuffer_.push_back(event);
 
     if (requestsThisCycle_ == maxRequestsPerCycle_) {
         requestBuffer_.push(event);
@@ -550,15 +550,14 @@ void Cache::processIncomingEvent(SST::Event* ev) {
 bool Cache::clockTick(Cycle_t time) {
     timestamp_++;
     
-    bool queuesEmpty = coherenceMgr_->sendOutgoingCommands(getCurrentSimTimeNano());
+    // Drain any outgoing messages
+    bool idle = coherenceMgr_->sendOutgoingCommands();
         
-    bool upIdle = true;
-    bool downIdle = true;
     if (clockUpLink_) {
-        upIdle = linkUp_->clock();
+        idle &= linkUp_->clock();
     }
     if (clockDownLink_) {
-        downIdle = linkDown_->clock();
+        idle &= linkDown_->clock();
     }
 
     // MSHR occupancy
@@ -582,6 +581,7 @@ bool Cache::clockTick(Cycle_t time) {
     // Accept any incoming requests that were delayed because of port limits
     requestsThisCycle_ = 0;
     std::queue<MemEventBase*>   tmpBuffer;
+    bool queuesEmpty = true;
     while (!requestBuffer_.empty()) {
         if (requestsThisCycle_ == maxRequestsPerCycle_) {
             break;
@@ -605,7 +605,7 @@ bool Cache::clockTick(Cycle_t time) {
         requestBuffer_.swap(tmpBuffer);
     }
     // Disable lower-level cache clocks if they're idle
-    if (queuesEmpty && upIdle && downIdle && clockIsOn_ && !conflicts) {
+    if (queuesEmpty && idle && clockIsOn_ && !conflicts) {
         turnClockOff();
         return true;
     }

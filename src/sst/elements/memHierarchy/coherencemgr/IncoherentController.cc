@@ -427,7 +427,7 @@ CacheAction IncoherentController::handleDataResponse(MemEvent* responseEvent, Ca
  *  Latency: cache access + tag to read data that is being written back and update coherence state
  */
 void IncoherentController::sendWriteback(Command cmd, CacheLine* cacheLine, string origRqstr){
-    MemEvent* newCommandEvent = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), cmd, getCurrentSimTimeNano());
+    MemEvent* newCommandEvent = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), cmd);
     newCommandEvent->setDst(getDestination(cacheLine->getBaseAddr()));
     newCommandEvent->setSize(cacheLine->getSize());
     if (cmd == Command::PutM || writebackCleanBlocks_) {
@@ -450,7 +450,7 @@ void IncoherentController::sendWriteback(Command cmd, CacheLine* cacheLine, stri
  *  Forward a flush line request, with or without data
  */
 void IncoherentController::forwardFlushLine(Addr baseAddr, string origRqstr, CacheLine * cacheLine, Command cmd) {
-    MemEvent * flush = new MemEvent(ownerName_, baseAddr, baseAddr, cmd, getCurrentSimTimeNano());
+    MemEvent * flush = new MemEvent(ownerName_, baseAddr, baseAddr, cmd);
     flush->setDst(getDestination(baseAddr));
     flush->setRqstr(origRqstr);
     flush->setSize(lineSize_);

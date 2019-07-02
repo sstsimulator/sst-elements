@@ -357,7 +357,7 @@ void MemController::handleEvent(SST::Event* event) {
             {
                 MemEvent* put = NULL;
                 if ( ev->getPayloadSize() != 0 ) {
-                    put = new MemEvent(getName(), ev->getBaseAddr(), ev->getBaseAddr(), Command::PutM, ev->getPayload(), getCurrentSimTimeNano());
+                    put = new MemEvent(getName(), ev->getBaseAddr(), ev->getBaseAddr(), Command::PutM, ev->getPayload());
                     put->setFlag(MemEvent::F_NORESPONSE);
                     outstandingEvents_.insert(std::make_pair(put->getID(), put));
                     memBackendConvertor_->handleMemEvent( put );

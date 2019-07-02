@@ -684,9 +684,9 @@ bool Cache::processInvRequestInMSHR(Addr baseAddr, MemEvent* event, bool inProgr
 
 void Cache::sendNACK(MemEvent* event) {
     if (event->isCPUSideEvent()) {
-        coherenceMgr_->sendNACK(event, true, getCurrentSimTimeNano());
+        coherenceMgr_->sendNACK(event, true);
     } else {
-        coherenceMgr_->sendNACK(event, false, getCurrentSimTimeNano());
+        coherenceMgr_->sendNACK(event, false);
     }
 }
 

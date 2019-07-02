@@ -451,7 +451,7 @@ void PageTableWalker::recvResp(SST::Event * event)
 
 		}
 		Address_t dummy_base_add = dummy_add & ~(line_size - 1);
-		MemEvent *e = new MemEvent(getName(), dummy_add, dummy_base_add, Command::GetS, getCurrentSimTimeNano());
+		MemEvent *e = new MemEvent(getName(), dummy_add, dummy_base_add, Command::GetS);
 
 		WSR_COUNT[pw_id]--;
 		MEM_REQ[e->getID()]=pw_id;
@@ -590,7 +590,7 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 					}
 
 					Address_t dummy_base_add = dummy_add & ~(line_size - 1);
-					MemEvent *e = new MemEvent(getName(), dummy_add, dummy_base_add, Command::GetS, getCurrentSimTimeNano());
+					MemEvent *e = new MemEvent(getName(), dummy_add, dummy_base_add, Command::GetS);
 
 
 
