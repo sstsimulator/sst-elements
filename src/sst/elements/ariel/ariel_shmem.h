@@ -21,6 +21,13 @@
 #include <sst/core/interprocess/ipctunnel.h>
 #include "ariel_inst_class.h"
 
+#include "gpu_enum.h"
+
+#include "host_defines.h"
+#include "builtin_types.h"
+#include "driver_types.h"
+#include "cuda_runtime_api.h"
+
 #define ARIEL_MAX_PAYLOAD_SIZE 64
 
 namespace SST {
@@ -42,8 +49,67 @@ enum ArielShmemCmd_t {
     ARIEL_SWITCH_POOL = 110,
     ARIEL_NOOP = 128,
     ARIEL_OUTPUT_STATS = 140,
+    ARIEL_ISSUE_CUDA = 144,
     ARIEL_FLUSHLINE_INSTRUCTION = 154,
     ARIEL_FENCE_INSTRUCTION = 155,
+};
+
+struct CudaArguments {
+    union {
+        char file_name[256];
+        uint64_t free_address;
+        struct {
+            unsigned fat_cubin_handle;
+            uint64_t host_fun;
+            char device_fun[512];
+        } register_function;
+        struct {
+            void **dev_ptr;
+            size_t size;
+        } cuda_malloc;
+        struct {
+            uint64_t dst;
+            uint64_t src;
+            size_t count;
+            cudaMemcpyKind kind;
+            uint8_t data[64];
+        } cuda_memcpy;
+        struct {
+            unsigned int gdx;
+            unsigned int gdy;
+            unsigned int gdz;
+            unsigned int bdx;
+            unsigned int bdy;
+            unsigned int bdz;
+            size_t sharedMem;
+            cudaStream_t stream;
+        } cfg_call;
+        struct {
+            uint64_t address;
+            uint8_t value[200];
+            size_t size;
+            size_t offset;
+        } set_arg;
+        struct {
+            uint64_t func;
+        } cuda_launch;
+        struct {
+            unsigned fatCubinHandle;
+            uint64_t hostVar; //pointer to...something
+            char deviceName[256]; //name of variable
+            int ext;
+            int size;
+            int constant;
+            int global; 
+        } register_var;
+        struct {
+            int numBlock;
+            uint64_t hostFunc;
+            int blockSize;
+            size_t dynamicSMemSize;
+            int flags;
+        } max_active_block;
+    };
 };
 
 struct ArielCommand {
@@ -55,7 +121,7 @@ struct ArielCommand {
             uint64_t addr;
             uint32_t instClass;
             uint32_t simdElemCount;
-	    	uint8_t  payload[ARIEL_MAX_PAYLOAD_SIZE];
+            uint8_t  payload[ARIEL_MAX_PAYLOAD_SIZE];
         } inst;
         struct {
             uint64_t vaddr;
@@ -91,9 +157,12 @@ struct ArielCommand {
         struct {
             uint64_t vaddr;
         } flushline;
+        struct {
+            GpuApi_t name;
+            CudaArguments CA;
+        } API;
     };
 };
-
 
 struct ArielSharedData {
     size_t numCores;
@@ -102,9 +171,6 @@ struct ArielSharedData {
     volatile uint32_t child_attached;
     uint8_t __pad[ 256 - sizeof(uint32_t) - sizeof(size_t) - sizeof(uint64_t) - sizeof(uint64_t)];
 };
-
-
-
 
 class ArielTunnel : public SST::Core::Interprocess::IPCTunnel<ArielSharedData, ArielCommand>
 {
@@ -119,7 +185,6 @@ public:
         sharedData->cycles = 0;
         sharedData->child_attached = 0;
     }
-
 
     /**
      * Attach to an existing Ariel Tunnel (Created in another process
@@ -162,6 +227,89 @@ public:
         tp->tv_nsec = cTime - (tp->tv_sec * 1e9);
     }
 
+};
+
+struct GpuSharedData {
+    size_t numCores;
+    volatile uint32_t child_attached;
+    uint8_t __pad[ 256 - sizeof(uint32_t) - sizeof(size_t)];
+};
+
+struct GpuCommand {
+    uint64_t ptr_address;
+    unsigned fat_cubin_handle;
+    int num_block;
+    union {
+        struct {
+            GpuApi_t name;
+        } API;
+        struct {
+            GpuApi_t name;
+        } API_Return;
+    };
+};
+
+class GpuReturnTunnel : public SST::Core::Interprocess::IPCTunnel<GpuSharedData, GpuCommand>
+{
+public:
+    /**
+     * Create a new Gpu Tunnel
+     */
+    GpuReturnTunnel(uint32_t comp_id, size_t numCores, size_t bufferSize) :
+        SST::Core::Interprocess::IPCTunnel<GpuSharedData, GpuCommand>(comp_id, numCores, bufferSize)
+    {
+        sharedData->numCores = numCores;
+        sharedData->child_attached = 0;
+    }
+
+    /**
+     * Attach to an existing Gpu Tunnel (Created in another process)
+     */
+    GpuReturnTunnel(const std::string &region_name) :
+        SST::Core::Interprocess::IPCTunnel<GpuSharedData, GpuCommand>(region_name)
+    {
+        /* Ideally, this would be done atomically, but we'll only have 1 child */
+        sharedData->child_attached++;
+    }
+
+    void waitForChild(void)
+    {
+        while ( sharedData->child_attached == 0 );
+    }
+};
+
+struct GpuDataCommand {
+    size_t count;
+    uint8_t page_4k[1<<12];
+};
+
+class GpuDataTunnel : public SST::Core::Interprocess::IPCTunnel<GpuSharedData, GpuDataCommand>
+{
+public:
+    /**
+     * Create a new Gpu Tunnel
+     */
+    GpuDataTunnel(uint32_t comp_id, size_t numCores, size_t bufferSize) :
+        SST::Core::Interprocess::IPCTunnel<GpuSharedData, GpuDataCommand>(comp_id, numCores, bufferSize)
+    {
+        sharedData->numCores = numCores;
+        sharedData->child_attached = 0;
+    }
+
+    /**
+     * Attach to an existing Gpu Tunnel (Created in another process)
+     */
+    GpuDataTunnel(const std::string &region_name) :
+        SST::Core::Interprocess::IPCTunnel<GpuSharedData, GpuDataCommand>(region_name)
+    {
+        /* Ideally, this would be done atomically, but we'll only have 1 child */
+        sharedData->child_attached++;
+    }
+
+    void waitForChild(void)
+    {
+        while ( sharedData->child_attached == 0 ) ;
+    }
 };
 
 
