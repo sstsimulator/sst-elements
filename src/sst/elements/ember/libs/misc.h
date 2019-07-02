@@ -34,8 +34,8 @@ class EmberMiscLib : public EmberLib {
 
     SST_ELI_REGISTER_MODULE(
         EmberMiscLib,
-        "Ember",
-        "Misc",
+        "ember",
+        "miscLib",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "",
         "SST::Ember::EmberMiscLib"
