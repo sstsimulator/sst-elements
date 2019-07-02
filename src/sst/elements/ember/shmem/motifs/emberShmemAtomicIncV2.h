@@ -64,8 +64,6 @@ public:
 		m_randAddr = params.find<int>("arg.randAddr", 1);
 		m_run4ever = params.find<bool>("arg.run4ever", false);
         
-        m_miscLib = static_cast<EmberMiscLib*>(getLib("HadesMisc"));
-        assert(m_miscLib);
 #if USE_SST_RNG
         m_rng = new SST::RNG::XORShiftRNG();
 #endif
@@ -364,7 +362,6 @@ public:
 #endif
     }
 
-    EmberMiscLib* m_miscLib;
 	int m_loopCnt;
 	std::vector<double> m_times;
 

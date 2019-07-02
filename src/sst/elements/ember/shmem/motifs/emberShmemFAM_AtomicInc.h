@@ -51,8 +51,6 @@ public:
         
         m_numFamNodes = (int) params.find<int>("arg.numFamNodes",0);
 
-        m_miscLib = static_cast<EmberMiscLib*>(getLib("HadesMisc"));
-        assert(m_miscLib);
 #if USE_SST_RNG
         m_rng = new SST::RNG::XORShiftRNG();
 #endif
@@ -213,7 +211,6 @@ public:
 	uint64_t m_totalBytes;
 	std::string m_groupName;
 
-    EmberMiscLib* m_miscLib;
 	int m_outLoop;
 	std::vector<double> m_times;
 

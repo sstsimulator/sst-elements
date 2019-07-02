@@ -60,8 +60,6 @@ public:
 		for ( int i = 0; i < m_numBlocks; i++ ) {
 			m_indexes[i] = i;
 		} 
-        m_miscLib = static_cast<EmberMiscLib*>(getLib("HadesMisc"));
-        assert(m_miscLib);
 	}
 
     bool generate( std::queue<EmberEvent*>& evQ) 
@@ -146,7 +144,6 @@ public:
 
 	std::string m_groupName;
 	Shmem::Fam_Descriptor m_fd;
-	EmberMiscLib* m_miscLib;
 
     enum { Init, Alloc, Work, Fini } m_phase;
 
