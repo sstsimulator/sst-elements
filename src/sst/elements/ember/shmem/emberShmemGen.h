@@ -18,6 +18,7 @@
 
 #include "embergen.h"
 #include "libs/emberShmemLib.h"
+#include "libs/misc.h"
 
 #define enQ_init shmem().init
 #define enQ_n_pes shmem().n_pes
@@ -113,6 +114,8 @@ public:
 
 protected:
 	EmberShmemLib& shmem() { return *m_shmem; };
+
+	EmberMiscLib* m_miscLib;
 
 private:
 	EmberShmemLib* m_shmem;
