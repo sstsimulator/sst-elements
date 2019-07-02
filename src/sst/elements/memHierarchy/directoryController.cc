@@ -1857,7 +1857,7 @@ void DirectoryController::postRequestProcessing(MemEvent * ev, DirEntry * entry,
 
 void DirectoryController::replayWaitingEvents(Addr addr) {
     if (mshr->isHit(addr)) {
-        vector<mshrType> * replayEntries = mshr->getAll(addr);
+        list<MSHREntry> * replayEntries = mshr->getAll(addr);
         if (replayEntries->begin()->elem.isEvent()) {
             MemEvent *ev = (replayEntries->begin()->elem).getEvent();
 

@@ -207,7 +207,10 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
     // Debug
     if (is_debug_event(ev)) {
         if (replay) {
-            d_->debug(_L3_, "Replay. Name: %s. Cycles: %" PRIu64 ". Event: (%s)\n", this->getName().c_str(), timestamp_, ev->getVerboseString().c_str());
+            d_->debug(_L3_, "Replay. Name: %s. Cycles: %" PRIu64 ". Event: (%s)\n", 
+                    getName().c_str(), 
+                    timestamp_, 
+                    ev->getVerboseString().c_str());
         } else {
             d2_->debug(_L3_,"\n\n-------------------------------------------------------------------------------------------------------------------------------------------------------------------\n"); 
             d_->debug(_L3_,"New Event. Name: %s. Cycles: %" PRIu64 ", Event: (%s)\n", this->getName().c_str(), timestamp_, ev->getVerboseString().c_str());
@@ -393,6 +396,7 @@ void Cache::processPrefetchEvent(SST::Event* ev) {
 
     // Record received prefetch
     statPrefetchRequest->addData(1);
+    //prefetchBuffer_.push(event);
 
     // Drop prefetch if we can't handle it immediately or handling it would violate maxOustandingPrefetch or dropPrefetchLevel
     if (requestsThisCycle_ != maxRequestsPerCycle_) {
@@ -502,6 +506,10 @@ void Cache::setup() {
     if (linkUp_ != linkDown_) linkDown_->setup();
 
     coherenceMgr_->setupLowerStatus(silentEvict, isLL, expectWritebackAcks, lowerIsNoninclusive);
+    
+    // Enqueue the first wakeup event to check for deadlock
+    if (maxWaitTime_ != 0)
+        maxWaitSelfLink_->send(1, nullptr);
 }
 
 
@@ -522,6 +530,8 @@ void Cache::processIncomingEvent(SST::Event* ev) {
         turnClockOn();
     }
 
+//    eventBuffer_.push_back(event);
+
     if (requestsThisCycle_ == maxRequestsPerCycle_) {
         requestBuffer_.push(event);
     } else {
@@ -539,6 +549,7 @@ void Cache::processIncomingEvent(SST::Event* ev) {
 /* Clock handler */
 bool Cache::clockTick(Cycle_t time) {
     timestamp_++;
+    
     bool queuesEmpty = coherenceMgr_->sendOutgoingCommands(getCurrentSimTimeNano());
         
     bool upIdle = true;
@@ -550,8 +561,6 @@ bool Cache::clockTick(Cycle_t time) {
         downIdle = linkDown_->clock();
     }
 
-    if (checkMaxWaitInterval_ > 0 && timestamp_ % checkMaxWaitInterval_ == 0) checkMaxWait();
-        
     // MSHR occupancy
     statMSHROccupancy->addData(mshr_->getSize());
         
@@ -618,8 +627,4 @@ void Cache::turnClockOn() {
 void Cache::turnClockOff() {
     clockIsOn_ = false;
     lastActiveClockCycle_ = timestamp_;
-    if (!maxWaitWakeupExists_) {
-        maxWaitWakeupExists_ = true;
-        maxWaitSelfLink_->send(1, NULL);
-    }
 }

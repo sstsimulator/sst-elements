@@ -462,7 +462,7 @@ void Cache::activatePrevEvents(Addr baseAddr) {
     //mshr_->printTable();
     if (!mshr_->isHit(baseAddr)) return;
     
-    vector<mshrType> entries = mshr_->removeAll(baseAddr);
+    list<MSHREntry> entries = mshr_->removeAll(baseAddr);
     bool cont;
     int i = 0;
     
@@ -476,21 +476,21 @@ void Cache::activatePrevEvents(Addr baseAddr) {
         writebackInProgress = true;
     }
 
-    for (vector<mshrType>::iterator it = entries.begin(); it != entries.end(); i++) {
+    for (list<MSHREntry>::iterator it = entries.begin(); it != entries.end(); i++) {
         if ((*it).elem.isAddr()) {                          /* Pointer Type */
             Addr pointerAddr = ((*it).elem).getAddr();
             
             if (is_debug_addr(baseAddr)) d_->debug(_L6_,"Pointer Addr: %" PRIx64 "\n", pointerAddr);
             
             if (!mshr_->isHit(pointerAddr)) {                     /* Entry has been already been processed, delete mshr entry */
-                entries.erase(it);
+                it = entries.erase(it);
                 continue;
             }
             
             // Reactivate entries for address that was waiting for baseAddr
             // This entry list shouldn't include pointers unless a writeback occured (and even then...)
-            vector<mshrType> pointerEntries = mshr_->removeAll(pointerAddr);    
-            for (vector<mshrType>::iterator it2 = pointerEntries.begin(); it2 != pointerEntries.end(); i++) {
+            list<MSHREntry> pointerEntries = mshr_->removeAll(pointerAddr);    
+            for (list<MSHREntry>::iterator it2 = pointerEntries.begin(); it2 != pointerEntries.end(); i++) {
                 if ((*it2).elem.isAddr()) {
                     Addr elemAddr = ((*it2).elem).getAddr();
                     if (elemAddr == pointerAddr) {
@@ -507,7 +507,7 @@ void Cache::activatePrevEvents(Addr baseAddr) {
                 cont = activatePrevEvent(static_cast<MemEvent*>(((*it2).elem).getEvent()), pointerEntries, pointerAddr, it2, i);
                 if (!cont) break;
             }
-            entries.erase(it);  // Erase processed pointer
+            it = entries.erase(it);  // Erase processed pointer
 
             // Check if we need to stop because a new event is in our mshr thanks to the processing of the pointer events?
             if (mshr_->isHit(baseAddr)) {
@@ -546,22 +546,21 @@ void Cache::activatePrevEvents(Addr baseAddr) {
 
 
 
-bool Cache::activatePrevEvent(MemEvent* event, vector<mshrType>& entries, Addr addr, vector<mshrType>::iterator it, int index) {
+bool Cache::activatePrevEvent(MemEvent* event, list<MSHREntry>& entries, Addr addr, list<MSHREntry>::iterator& it, int index) {
     if (is_debug_addr(addr)) d_->debug(_L3_,"Replaying event #%i, cmd = %s, bsAddr: %" PRIx64 ", addr: %" PRIx64 ", dst: %s\n",
                   index, CommandString[(int)event->getCmd()], toBaseAddr(event->getAddr()), event->getAddr(), event->getDst().c_str());
     if (is_debug_addr(addr)) d_->debug(_L3_,"--------------------------------------\n");
     
-    this->processEvent(event, true);
+    processEvent(event, true);
     
     if (is_debug_addr(addr)) d_->debug(_L3_,"--------------------------------------\n");
     
-    entries.erase(it);
-    
+    it = entries.erase(it);
     /* If the event we just ran 'blocked', then there is not reason to activate other events. */
     /* However we do need to replay requests from lower levels! (Like Inv) Otherwise deadlock! */
     if (mshr_->isHit(addr)) {
         bool stop = false;
-        if (entries.begin()->elem.isEvent()) {
+        if (!entries.empty() && entries.begin()->elem.isEvent()) {
             MemEvent * front = static_cast<MemEvent*>(((entries.begin())->elem).getEvent());
             if (front->getCmd() != Command::Inv && front->getCmd() != Command::FetchInv && front->getCmd() != Command::FetchInvX && front->getCmd() != Command::ForceInv) 
                 stop = true;
@@ -653,7 +652,7 @@ void Cache::reActivateEventWaitingForUserLock(CacheLine* cacheLine) {
 /* ---------------------------------------
    Extras
    --------------------------------------- */
-MemEvent* Cache::getOrigReq(const vector<mshrType> entries) {
+MemEvent* Cache::getOrigReq(const list<MSHREntry> entries) {
     if (entries.front().elem.isAddr()) {
         out_->fatal(CALL_INFO, -1, "%s, Error: Request at front of the mshr is not of type MemEvent. Time = %" PRIu64 "\n",
                 this->getName().c_str(), getCurrentSimTimeNano());
@@ -740,7 +739,7 @@ void Cache::printLine(Addr addr) {
 }
 
 
-bool operator== ( const mshrType& n1, const mshrType& n2) {
+bool operator== ( const MSHREntry& n1, const MSHREntry& n2) {
     if (n1.elem.isAddr()) return false;
     return((n1.elem).getEvent() == (n2.elem).getEvent());
 }

@@ -168,7 +168,7 @@ public:
 /* Class definition */
     typedef CacheArray::CacheLine           CacheLine;
     typedef CacheArray::DataLine            DataLine;
-    typedef map<Addr, mshrEntry>            mshrTable;
+    typedef map<Addr, MSHRRegister>            mshrTable;
     typedef unsigned int                    uint;
     typedef uint64_t                        uint64;
 
@@ -252,7 +252,7 @@ private:
     /** This function re-processes a signle previous request.  In hardware, the MSHR would be looked up,
         the MSHR entry would be modified and the response would be sent directly without reading the cache
         array and tag.  In SST, we just rerun the request to avoid complexity */
-    inline bool activatePrevEvent(MemEvent* event, vector<mshrType>& entries, Addr addr, vector<mshrType>::iterator it, int i);
+    inline bool activatePrevEvent(MemEvent* event, list<MSHREntry>& entries, Addr addr, list<MSHREntry>::iterator& it, int i);
 
     inline void postRequestProcessing(MemEvent* event, CacheLine* cacheLine, bool mshrHit);
 
@@ -290,7 +290,7 @@ private:
     void recordLatency(MemEvent * event);
 
     /** Get the front element of a MSHR entry */
-    MemEvent* getOrigReq(const vector<mshrType> entries);
+    MemEvent* getOrigReq(const list<MSHREntry> entries);
 
     /** Print cache line for debugging */
     void printLine(Addr addr);
@@ -313,19 +313,19 @@ private:
 
     void maxWaitWakeup(SST::Event * ev) {
         checkMaxWait();
-        maxWaitSelfLink_->send(1, NULL);
+        maxWaitSelfLink_->send(1, nullptr);
     }
 
     void checkMaxWait(void) const {
         SimTime_t curTime = Simulation::getSimulation()->getCurrentSimCycle();
-        const mshrType *oldEntry = mshr_->getOldestRequest();
+        const MSHREntry *oldEntry = mshr_->getOldestRequest();
 
         if ( oldEntry ) {
-            SimTime_t waitTime = curTime - oldEntry->initTime;
+            SimTime_t waitTime = curTime - oldEntry->getInsertionTime();
             if ( waitTime > maxWaitTime_ ) {
                 out_->fatal(CALL_INFO, 1, "%s, Error: Maximum Cache Request time reached - potential deadlock or other error. "
                         "Event: %s. Current time: (%" PRIu64 " cycles, %" PRIu64 " ns). Event start time: %" PRIu64 "cycles.\n",
-                    getName().c_str(), (oldEntry->elem).getEvent()->getVerboseString().c_str(), curTime, getCurrentSimTimeNano(), oldEntry->initTime);
+                    getName().c_str(), (oldEntry->elem).getEvent()->getVerboseString().c_str(), curTime, getCurrentSimTimeNano(), oldEntry->getInsertionTime());
             }
         }
     }
