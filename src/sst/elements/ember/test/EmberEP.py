@@ -45,6 +45,7 @@ class EmberEP( EndPoint ):
 
         memory = None
         if built:
+            print "detailedModel", nodeID
             nic.addLink( self.detailedModel.getNicLink( ), "detailed", "1ps" )
             memory = sst.Component("memory" + str(nodeID), "thornhill.MemoryHeap")
             memory.addParam( "nid", nodeID )
@@ -59,22 +60,35 @@ class EmberEP( EndPoint ):
         # end
 
         for x in xrange(self.numCores):
-            ep = sst.Component("nic" + str(nodeID) + "core" + str(x) +
-                                            "_EmberEP", "ember.EmberEngine")
+            ep = sst.Component("nic" + str(nodeID) + "core" + str(x) + "_EmberEP", "ember.EmberEngine")
 
             os = ep.setSubComponent( "OS", "firefly.hades" )
             for key, value in self.driverParams.items():
                 if key.startswith("hermesParams."):
                     key = key[key.find('.')+1:] 
+                    #print key, value
                     os.addParam( key,value)
 
             virtNic = os.setSubComponent( "virtNic", "firefly.VirtNic" )
+
+            #ml = os.setSubComponent( "memoryHeap", "thornhill.MemoryHeapLink" )
+            proto = os.setSubComponent( "proto", "firefly.CtrlMsgProto" )
+            process = proto.setSubComponent( "process", "firefly.ctrlMsg" )
+
+            prefix = "hermesParams.ctrlMsg."
+            for key, value in self.driverParams.items():
+                if key.startswith(prefix):
+                    key = key[len(prefix):] 
+                    #print key, value
+                    proto.addParam( key,value)
+                    process.addParam( key,value)
 
             ep.addParams(self.motifs)
             if built:
                 links = self.detailedModel.getThreadLinks( x )
                 cpuNum = 0
                 for link in links: 
+                    dc = os.setSubComponent( "detailedCompute", "thornhill.SingleThread" )
                     ep.addLink(link,"detailed"+str(cpuNum),"1ps")
                     cpuNum = cpuNum + 1
 
@@ -128,8 +142,7 @@ class EmberEP( EndPoint ):
             #nic.addLink(nicLink, "core" + str(x), self.nicParams["nic2host_lat"] )
             nicLink.connect( (virtNic,'nic','1ns' ),(nic,'core'+str(x),'1ns'))
 
-            ep.addLink(loopLink, "loop", "1ns")
-            loopBack.addLink(loopLink, "core" + str(x), "1ns")
+            loopLink.connect( (process,'loop','1ns' ),(loopBack,'core'+str(x),'1ns'))
 
             if built:
                 memoryLink = sst.Link( "memory" + str(nodeID) + "core" + str(x) + "_Link"  )
