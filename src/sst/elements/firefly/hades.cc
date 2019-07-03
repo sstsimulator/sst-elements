@@ -82,18 +82,24 @@ Hades::Hades( ComponentId_t id, Params& params ) :
     Params dtldParams = params.find_prefix_params( "detailedCompute." );
     std::string dtldName =  dtldParams.find<std::string>( "name" );
 
-#if 0
     if ( ! dtldName.empty() ) {
-        m_detailedCompute = loadUserSubComponent<Thornhill::DetailedCompute>("", ComponentInfo::SHARE_NONE);
+        m_detailedCompute = loadUserSubComponent<Thornhill::DetailedCompute>("detailedCompute", ComponentInfo::SHARE_NONE);
     }
+	if ( m_detailedCompute ) {
+		printf("using detailed compute\n");
+	}
+
 
     Params memParams = params.find_prefix_params( "memoryHeapLink." );
     std::string memName =  memParams.find<std::string>( "name" );
 
     if ( ! memName.empty() ) {
-        m_memHeapLink = loadUserSubComponent<Thornhill::MemoryHeapLink>( memName );
+        m_memHeapLink = loadUserSubComponent<Thornhill::MemoryHeapLink>( "memoryHeap", ComponentInfo::SHARE_NONE );
     }
-#endif
+	if ( m_memHeapLink ) {
+		printf("using mem heap\n");
+	}
+
 
     m_netMapSize = params.find<int>("netMapSize",-1);
     assert(m_netMapSize > -1 );
