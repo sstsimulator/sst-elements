@@ -71,7 +71,6 @@ class EmberEP( EndPoint ):
 
             virtNic = os.setSubComponent( "virtNic", "firefly.VirtNic" )
 
-            #ml = os.setSubComponent( "memoryHeap", "thornhill.MemoryHeapLink" )
             proto = os.setSubComponent( "proto", "firefly.CtrlMsgProto" )
             process = proto.setSubComponent( "process", "firefly.ctrlMsg" )
 
@@ -89,7 +88,7 @@ class EmberEP( EndPoint ):
                 cpuNum = 0
                 for link in links: 
                     dc = os.setSubComponent( "detailedCompute", "thornhill.SingleThread" )
-                    ep.addLink(link,"detailed"+str(cpuNum),"1ps")
+                    dc.addLink(link,"detailed"+str(cpuNum),"1ps")
                     cpuNum = cpuNum + 1
 
             # Create a motif log only for the desired list of nodes (endpoints)
@@ -148,7 +147,7 @@ class EmberEP( EndPoint ):
                 memoryLink = sst.Link( "memory" + str(nodeID) + "core" + str(x) + "_Link"  )
                 memoryLink.setNoCut()
 
-                ep.addLink(memoryLink, "memoryHeap", "0 ps")
-                memory.addLink(memoryLink, "detailed" + str(x), "0 ns")
+                ml = os.setSubComponent( "memoryHeap", "thornhill.MemoryHeapLink" )
+                memoryLink.connect( (memory,"detailed" + str(x), "0 ns" ),(ml,"memoryHeap", "0 ps"))
 
         return retval
