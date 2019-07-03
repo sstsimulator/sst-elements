@@ -89,7 +89,6 @@ Hades::Hades( ComponentId_t id, Params& params ) :
 		printf("using detailed compute\n");
 	}
 
-
     Params memParams = params.find_prefix_params( "memoryHeapLink." );
     std::string memName =  memParams.find<std::string>( "name" );
 
@@ -99,7 +98,6 @@ Hades::Hades( ComponentId_t id, Params& params ) :
 	if ( m_memHeapLink ) {
 		printf("using mem heap\n");
 	}
-
 
     m_netMapSize = params.find<int>("netMapSize",-1);
     assert(m_netMapSize > -1 );
