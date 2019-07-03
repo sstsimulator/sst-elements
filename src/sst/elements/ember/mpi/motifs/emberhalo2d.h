@@ -25,13 +25,13 @@ namespace Ember {
 class EmberHalo2DGenerator : public EmberMessagePassingGenerator {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberHalo2DGenerator,
         "ember",
          "Halo2DMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Performs a 2D halo exchange Motif",
-        "SST::Ember::EmberGenerator"
+        SST::Ember::EmberGenerator
     )
 
     SST_ELI_DOCUMENT_PARAMS(
@@ -70,7 +70,8 @@ public:
 
 
 public:
-	EmberHalo2DGenerator(SST::Component* owner, Params& params);
+	EmberHalo2DGenerator(SST::Component* owner, Params& params) : EmberMessagePassingGenerator(owner,params,"") {};
+	EmberHalo2DGenerator(SST::ComponentId_t id, Params& params);
 	void configure();
     bool generate( std::queue<EmberEvent*>& evQ);
 	void completed(const SST::Output* output, uint64_t );

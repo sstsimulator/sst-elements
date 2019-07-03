@@ -21,8 +21,8 @@ using namespace SST::Ember;
 
 #define TAG 0xDEADBEEF
 
-EmberDetailedRingGenerator::EmberDetailedRingGenerator(SST::Component* owner, Params& params) :
-	EmberMessagePassingGenerator(owner, params, "DetailedRing"),
+EmberDetailedRingGenerator::EmberDetailedRingGenerator(SST::ComponentId_t id, Params& params) :
+	EmberMessagePassingGenerator(id, params, "DetailedRing"),
     m_loopIndex(-1), m_computeFunc( NULL )
 {
 	m_messageSize = params.find<uint32_t>("arg.messagesize", 1024);

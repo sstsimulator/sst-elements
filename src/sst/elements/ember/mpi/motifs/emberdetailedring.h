@@ -25,13 +25,13 @@ namespace Ember {
 class EmberDetailedRingGenerator : public EmberMessagePassingGenerator {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberDetailedRingGenerator,
         "ember",
         "DetailedRingMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Performs a Ring Motif with detailed model",
-        "SST::Ember::EmberGenerator"
+        SST::Ember::EmberGenerator
     )
 
     SST_ELI_DOCUMENT_PARAMS(
@@ -64,7 +64,8 @@ public:
     )
 
 public:
-	EmberDetailedRingGenerator(SST::Component* owner, Params& params);
+	EmberDetailedRingGenerator(SST::Component* owner, Params& params) : EmberMessagePassingGenerator(owner,params,"") {}
+	EmberDetailedRingGenerator(SST::ComponentId_t, Params& params);
     bool generate( std::queue<EmberEvent*>& evQ);
 	std::string getComputeModelName(); 
 
