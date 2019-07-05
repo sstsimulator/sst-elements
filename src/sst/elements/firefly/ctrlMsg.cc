@@ -51,7 +51,6 @@ API::API( Component* owner, Params& params ) :
 
 API::~API()
 {
-    if ( m_processQueuesState) delete m_processQueuesState;
     delete m_mem;
 }
 
