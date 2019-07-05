@@ -121,7 +121,6 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 EmberEngine::~EmberEngine() {
 	ApiMap::iterator iter = m_apiMap.begin();
 	for ( ; iter != m_apiMap.end(); ++ iter ) {
-		delete iter->second->api;
 		delete iter->second;
 	}
 
