@@ -14,7 +14,7 @@
 // distribution.
 
 #ifndef SST_ARIEL_SHMEM_H
-#define SST_ARIEL_SHMEM_H 1
+#define SST_ARIEL_SHMEM_H 
 
 #include <inttypes.h>
 
@@ -57,7 +57,6 @@ enum ArielShmemCmd_t {
 };
 
 #ifdef HAVE_CUDA
-
 struct CudaArguments {
     union {
         char file_name[256];
@@ -115,7 +114,6 @@ struct CudaArguments {
         } max_active_block;
     };
 };
-
 #endif
 
 struct ArielCommand {

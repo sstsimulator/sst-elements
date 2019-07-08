@@ -16,6 +16,7 @@
 
 #include <sst_config.h>
 #include <sst/core/simulation.h>
+
 #include "arielcpu.h"
 
 #include <signal.h>
@@ -218,9 +219,6 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     tunnelD = new GpuDataTunnel(id, core_count, maxCoreQueueLen);
     std::string shmem_region_name3 = tunnelD->getRegionName();
     output->verbose(CALL_INFO, 1, 0, "Base pipe name: %s\n", shmem_region_name3.c_str());
-#else
-    std::string shmem_region_name2 = "";
-    std::string shmem_region_name3 = "";
 #endif
 
     appLauncher = params.find<std::string>("launcher", PINTOOL_EXECUTABLE);
@@ -283,14 +281,14 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     execute_args[arg++] = const_cast<char*>("-p");
     execute_args[arg++] = (char*) malloc(sizeof(char) * (shmem_region_name.length() + 1));
     strcpy(execute_args[arg-1], shmem_region_name.c_str());
-//#ifdef HAVE_CUDA
+#ifdef HAVE_CUDA
     execute_args[arg++] = const_cast<char*>("-g");
     execute_args[arg++] = (char*) malloc(sizeof(char) * (shmem_region_name2.length() + 1));
     strcpy(execute_args[arg-1], shmem_region_name2.c_str());
     execute_args[arg++] = const_cast<char*>("-x");
     execute_args[arg++] = (char*) malloc(sizeof(char) * (shmem_region_name3.length() + 1));
     strcpy(execute_args[arg-1], shmem_region_name3.c_str());
-//#endif
+#endif
     execute_args[arg++] = const_cast<char*>("-v");
     execute_args[arg++] = (char*) malloc(sizeof(char) * 8);
     sprintf(execute_args[arg-1], "%d", verbosity);

@@ -16,8 +16,12 @@
 #include <sst_config.h>
 #include "arielcore.h"
 
-using namespace SST::ArielComponent;
+#ifdef HAVE_CUDA
+#include <../Gpgpusim/Gpgpusim_Event.h>
 using namespace SST::GpgpusimComponent;
+#endif
+
+using namespace SST::ArielComponent;
 
 #define ARIEL_CORE_VERBOSE(LEVEL, OUTPUT) if(verbosity >= (LEVEL)) OUTPUT
 
