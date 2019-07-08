@@ -60,8 +60,12 @@ libariel_la_LIBADD = $(SHM_LIB)
 if USE_LIBZ
 libariel_la_LDFLAGS += $(LIBZ_LDFLAGS)
 libariel_la_LIBADD += $(LIBZ_LIB)
-AM_CPPFLAGS += $(LIBZ_CPPFLAGS) $(CUDA_CPPFLAGS)
+AM_CPPFLAGS += $(LIBZ_CPPFLAGS)
 libariel_la_SOURCES += arielgzbintracegen.h arielgzbintracegen.cc
+endif
+
+if USE_CUDA
+AM_CPPFLAGS += $(CUDA_CPPFLAGS)
 endif
 
 libariel_la_CPPFLAGS = \
@@ -100,13 +104,13 @@ all-local: frontend/simple/fesimple.cc
 	-fomit-frame-pointer -fno-stack-protector \
 	-Wl,-exported_symbols_list \
 	-Wl,$(PINTOOL_DIR)/source/include/pin/pintool.exp \
-	$(CUDA_LDFLAGS) \
+	$(CUDA_LIBS) \
 	-L$(PINTOOL_DIR)/intel64/lib \
 	-L$(PINTOOL_DIR)/intel64/lib-ext \
 	-L$(PINTOOL_DIR)/extras/xed-intel64/lib \
 	-o fesimple.dylib $(top_srcdir)/src/sst/elements/ariel/frontend/simple/fesimple.cc \
 	-stdlib=libstdc++ \
-	-lpin -lxed -lpindwarf -lpthread $(LIBZ_LDFLAGS) $(LIBZ_LIB)
+	-lpin -lxed -lpindwarf -lpthread $(LIBZ_LDFLAGS) $(LIBZ_LIB) $(CUDA_LDFLAGS)
 
 install-exec-hook:
 	$(MKDIR_P) $(libexecdir)
@@ -136,8 +140,9 @@ all-local:
 	-L$(PINTOOL_DIR)/intel64/lib-ext \
 	-L$(PINTOOL_DIR)/intel64/runtime/glibc \
 	-L$(PINTOOL_DIR)/extras/xed-intel64/lib \
+	$(CUDA_LIBS) \
 	-o fesimple.so $(top_srcdir)/src/sst/elements/ariel/frontend/simple/fesimple.cc \
-	-ldl -lpin -lxed -lpindwarf -ldl -lpthread -lrt $(LIBZ_LDFLAGS) $(LIBZ_LIB)
+	-ldl -lpin -lxed -lpindwarf -ldl -lpthread -lrt $(LIBZ_LDFLAGS) $(LIBZ_LIB) $(CUDA_LDFLAGS)
 
 
 install-exec-hook:
