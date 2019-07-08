@@ -34,8 +34,10 @@
 #include <set>
 #include <sst_config.h>
 
+#ifdef HAVE_CUDA
 #include "host_defines.h"
 #include "builtin_types.h"
+#endif
 
 #ifdef HAVE_LIBZ
 
@@ -105,8 +107,10 @@ UINT32 core_count;
 UINT32 default_pool;
 UINT32 instrument_instructions;
 ArielTunnel *tunnel = NULL;
+#ifdef HAVE_CUDA
 GpuReturnTunnel *tunnelR = NULL;
 GpuDataTunnel *tunnelD = NULL;
+#endif
 bool enable_output;
 std::vector<void*> allocated_list;
 PIN_LOCK mainLock;
@@ -297,8 +301,10 @@ VOID Fini(INT32 code, VOID* v)
     tunnel->writeMessage(0, ac);
 
     delete tunnel;
+#ifdef HAVE_CUDA
     delete tunnelR;
     delete tunnelD;
+#endif
 
     if(funcProfileLevel > 0) {
         FILE* funcProfileOutput = fopen("func.profile", "wt");
@@ -1029,6 +1035,7 @@ VOID ariel_postmalloc_instrument(ADDRINT allocLocation)
     }
 }
 
+#ifdef HAVE_CUDA
 #define GLOBAL_HEAP_START 0xC0000000
 size_t limit_size = 0;
 __host__ cudaError_t CUDARTAPI cudaMalloc(void **devPtr, size_t size){
@@ -1489,6 +1496,7 @@ __host__ cudaError_t CUDARTAPI __maxActiveBlock(
     tunnelR->clearBuffer(thr);
     return cudaSuccess;
 }
+#endif
 
 VOID ariel_postfree_instrument(ADDRINT allocLocation)
 {
@@ -1637,6 +1645,7 @@ VOID InstrumentRoutine(RTN rtn, VOID* args)
         return;
     } else if (RTN_Name(rtn) == "ariel_munmap_mlm" || RTN_Name(rtn) == "_ariel_munmap_mlm") {
         return;
+#ifdef HAVE_CUDA
     } else if(RTN_Name(rtn) == "__cudaRegisterFatBinary") {
     fprintf(stderr, "Identified routine: __cudaRegisterFatBinary, replacing with GPGPU-Sim equivilant...\n");
     AFUNPTR ret = RTN_Replace(rtn, (AFUNPTR) __cudaRegisterFatBinary);
@@ -1692,6 +1701,7 @@ VOID InstrumentRoutine(RTN rtn, VOID* args)
     AFUNPTR ret = RTN_Replace(rtn, (AFUNPTR) __maxActiveBlock);
     fprintf(stderr,"Replacement complete. (%p)\n", ret);
     return;
+#endif
     } else if (UseMallocMap.Value() != "") {
         if (RTN_Name(rtn) == "ariel_malloc_flag" || RTN_Name(rtn) == "_ariel_malloc_flag") {
 
@@ -1783,8 +1793,10 @@ int main(int argc, char *argv[])
     instrument_instructions = InstrumentInstructions.Value();
 
     tunnel = new ArielTunnel(SSTNamedPipe.Value());
+#ifdef HAVE_CUDA
     tunnelR = new GpuReturnTunnel(SSTNamedPipe2.Value());
     tunnelD = new GpuDataTunnel(SSTNamedPipe3.Value());
+#endif
     
     lastMallocSize = (UINT64*) malloc(sizeof(UINT64) * core_count);
     lastMallocLoc = (UINT64*) malloc(sizeof(UINT64) * core_count);

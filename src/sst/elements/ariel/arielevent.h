@@ -71,6 +71,7 @@ class GpgpusimEvent : public SST::Event {
    public:
       typedef std::vector<uint64_t> dataVec;
       dataVec payload;
+#ifdef HAVE_CUDA
       struct CudaArguments {
             union {
                char file_name[256];
@@ -135,6 +136,7 @@ class GpgpusimEvent : public SST::Event {
       CudaArguments CA;
       GpuApi_t API;
       GpgpusimEvent(EventType y) : SST::Event(){ ev = y; }
+#endif
 
       void setType(int ev1) { ev = static_cast<EventType>(ev1);}
       int getType() { return ev; }

@@ -128,10 +128,14 @@ class ArielCPU : public SST::Component {
 
         uint32_t core_count;
         ArielTunnel* tunnel;
+        bool stopTicking;
+
+#ifdef HAVE_CUDA
         GpuReturnTunnel* tunnelR;
         GpuDataTunnel* tunnelD;
-        bool stopTicking;
         bool gpu_enabled;
+#endif
+
         std::string appLauncher;
 
         char **execute_args;
