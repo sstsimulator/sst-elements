@@ -90,7 +90,7 @@ KNOB<string> SSTNamedPipe2(KNOB_MODE_WRITEONCE, "pintool",
 KNOB<string> SSTNamedPipe3(KNOB_MODE_WRITEONCE, "pintool",
     "x", "", "Named pipe to connect to SST simulator");
 KNOB<UINT32> InstrumentInstructions(KNOB_MODE_WRITEONCE, "pintool",
-    "E", "0", "Named pipe to connect to SST simulator");
+    "E", "1", "Enable instruction instrumentation");
 
 #define ARIEL_MAX(a,b) \
    ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
