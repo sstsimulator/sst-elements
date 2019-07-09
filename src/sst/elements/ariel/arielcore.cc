@@ -253,13 +253,15 @@ void ArielCore::handleEvent(SimpleMem::Request* event) {
         // Update total ACK and Page ACK
         setAckTransfer(getAckTransfer() + event->data.size());
         setPageAckTransfer(getPageAckTransfer() + event->data.size());
-        printf("CUDA total ACK %d page ACK %d\n", getAckTransfer(), getPageAckTransfer());
+        output->verbose(CALL_INFO, 16, 0, "CUDA: Total ACK %" PRIu32 ", Page ACK %" PRIu32"\n",
+                        getAckTransfer(), getPageAckTransfer());
         if(getKind() == cudaMemcpyHostToDevice){
             if((getPageAckTransfer() == getPageTransfer())){
                 if(getAckTransfer() == getTotalTransfer()){
                     // Received all the data for this cudaMemcpy
                     setBaseAddress(getCurrentAddress() - getTotalTransfer());
-                    printf("CUDA progress to GPU stage %p\n", getBaseAddress());
+                    output->verbose(CALL_INFO, 16, 0, "CUDA: Moving to GPU stage %" PRIu32 "\n",
+                                    getBaseAddress());
                     GpgpusimEvent * tse = new GpgpusimEvent(GpgpusimComponent::EventType::REQUEST);
                     tse->API = GPU_MEMCPY;
                     tse->payload = physicalAddresses;
@@ -271,7 +273,7 @@ void ArielCore::handleEvent(SimpleMem::Request* event) {
                     // Continue fesimple to wait for ACK from GPU now
                     GpuCommand gc;
                     gc.API_Return.name = GPU_MEMCPY_RET;
-                    printf("CUDA ariel send an ACK\n");
+                    output->verbose(CALL_INFO, 16, 0, "CUDA: Ariel sent ACK\n");
                     tunnelR->writeMessage(coreID, gc);
 
                     // Send the message to the GPU to start reading out the data
@@ -282,11 +284,13 @@ void ArielCore::handleEvent(SimpleMem::Request* event) {
                     free(getDataAddress());
                 }else {
                     // Received ACK for an entire page, but there is still pending data
-                    printf("CUDA wrote page, still outstanding data\n");
-                    printf("CUDA page data: ");
-                    for(int i = 0; i < getPageTransfer(); i++)
-                        printf("%d ", getDataAddress()[i]);
-                    printf("\n");
+                    output->verbose(CALL_INFO, 16, 0, "CUDA: page data:\n");
+                    if( verbosity >= 16) {
+	                for(int i = 0; i < getPageTransfer(); i++)
+                            output->verbose(CALL_INFO, 16, 0, "%" PRIu32 ", ",
+                                getDataAddress()[i]);
+                        output->verbose(CALL_INFO, 16, 0, "\n");
+                    }
 
                     // Update variables and clear local data we've committed
                     setRemainingTransfer(getRemainingTransfer() - getPageTransfer());
@@ -299,7 +303,7 @@ void ArielCore::handleEvent(SimpleMem::Request* event) {
                     GpuCommand gc;
                     GpuDataCommand gd;
                     gc.API_Return.name = GPU_MEMCPY_RET;
-                    printf("CUDA ariel send an ACK\n");
+                    output->verbose(CALL_INFO, 16, 0, "CUDA: Ariel sent ACK\n");                    
                     tunnelR->writeMessage(coreID, gc);
                     bool avail = false;
 
@@ -313,10 +317,13 @@ void ArielCore::handleEvent(SimpleMem::Request* event) {
                     data = (uint8_t *) malloc(sizeof(uint8_t) * current_transfer);
                     memcpy(data, gd.page_4k, current_transfer);
 
-                    printf("CUDA new paga data of size %d total: ", current_transfer);
-                    for(int i = 0; i < current_transfer; i++)
-                        printf("%d ", data[i]);
-                    printf("\n");
+                    output->verbose(CALL_INFO, 16, 0, "CUDA: New page data with total size %" PRIu32 ":", current_transfer);
+                    if( verbosity >= 16) {
+                        for(int i = 0; i < current_transfer; i++)
+                            output->verbose(CALL_INFO, 16, 0, "%" PRIu32 ", ",
+                                data[i]);
+                        output->verbose(CALL_INFO, 16, 0, "\n");
+                    }
 
                     // Updated Page related variables, remove from tunnel, point to new data
                     setPageTransfer(gd.count);
@@ -337,10 +344,13 @@ void ArielCore::handleEvent(SimpleMem::Request* event) {
                     index = getCurrentAddress() - getBaseAddress();
                     current_transfer = (getRemainingPageTransfer() > 64) ? 64 : getRemainingPageTransfer();
 
-                    printf("CUDA transfer of size %d to index %d: ", current_transfer, index);
-                    for(int i = 0; i < current_transfer; i++)
-                        printf("%d ", getDataAddress()[index + i]);
-                    printf("\n");
+                    output->verbose(CALL_INFO, 16, 0, "CUDA: Transfer of  %" PRIu32 " to index %" PRIu64, current_transfer, index);
+                    if( verbosity >= 16) {
+                        for(int i = 0; i < current_transfer; i++)
+                            output->verbose(CALL_INFO, 16, 0, "%" PRIu32 ", ",
+                                getDataAddress()[index + i]);
+                        output->verbose(CALL_INFO, 16, 0, "\n");
+                    }
 
                     ArielWriteEvent* awe;
                     awe = new ArielWriteEvent(getCurrentAddress(), current_transfer, &getDataAddress()[index]);
@@ -353,28 +363,38 @@ void ArielCore::handleEvent(SimpleMem::Request* event) {
             }
         } else if(getKind() == cudaMemcpyDeviceToHost){
             int index = event->getVirtualAddress() - getBaseAddress();
-            if((getAckTransfer() == getTotalTransfer())){
-                printf("CUDA progress to fesimple (D2H)\n");
+            if((getAckTransfer() == getTotalTransfer())) {
                 // Add the data at the correct address
                 for(int i = 0; i < event->data.size(); i++)
                     getDataAddress()[index+i] = event->data[i];
 
-                printf("CUDA data return to fesimple of size %d: ", getTotalTransfer());
-                for(int i = 0; i < getTotalTransfer(); i++)
-                    printf("%d ", getDataAddress()[i]);
-                printf("\n");
+                output->verbose(CALL_INFO, 16, 0, "CUDA: Data returned to fesimple of size %" PRIu32 ":", getTotalTransfer());
+                if( verbosity >= 16) {
+                    for(int i = 0; i < getTotalTransfer(); i++)
+                        output->verbose(CALL_INFO, 16, 0, "%" PRIu32 ", ",
+                            getDataAddress()[i]);
+                    output->verbose(CALL_INFO, 16, 0, "\n");
+                }
+
+                output->verbose(CALL_INFO, 16, 0, "CUDA: Data returned to fesimple of size %" PRIu32 ":", getTotalTransfer());
+                if( verbosity >= 16) {
+                    for(int i = 0; i < getTotalTransfer(); i++)
+                        output->verbose(CALL_INFO, 16, 0, "%" PRIu32 ", ",
+                               getDataAddress()[i]);
+                    output->verbose(CALL_INFO, 16, 0, "\n");
+                }
 
                 GpuDataCommand gd;
                 GpuCommand gc;
 
-                if(getTotalTransfer() <= (1<<12)){
+                if(getTotalTransfer() <= (1<<12)) {
                     // Small data can be sent back in one chunk
                     memcpy(gd.page_4k, getDataAddress(), getTotalTransfer());
                     tunnelD->writeMessage(coreID, gd);
                     gc.API_Return.name = GPU_MEMCPY_RET;
-                    printf("CUDA ariel send an ACK\n");
+                    output->verbose(CALL_INFO, 16, 0, "CUDA: Ariel sent ACK\n");
                     tunnelR->writeMessage(coreID, gc);
-                }else{
+                } else {
                     // Larger data, and must be sent back in chunks
                     size_t remainder = getTotalTransfer() % (1<<12);
                     size_t pages = getTotalTransfer() - remainder;
@@ -383,20 +403,28 @@ void ArielCore::handleEvent(SimpleMem::Request* event) {
 
                     // Sending if there are full pages or small trailing data
                     while((pages != 0) || (remainder != 0)){
-                        if(pages != 0){
-                            printf("CUDA ariel ");
-                            for(int i = 0; i < (1<<12) ; i++)
-                                printf("%d ", getDataAddress()[i+offset]);
-                            printf("\n");
+                        if( pages != 0 ) {
+                            output->verbose(CALL_INFO, 16, 0, "CUDA: Ariel");
+                            if( verbosity >= 16 ) {
+                                for(int i = 0; i < (1 << 12); i++)
+                                    output->verbose(CALL_INFO, 16, 0, "%" PRIu64 " ",
+                                            getDataAddress()[i + offset]);
+                                output->verbose(CALL_INFO, 16, 0, "\n");
+                            }
+
                             memcpy(gd.page_4k, &(getDataAddress()[offset]), (1<<12));
                             tunnelD->writeMessage(coreID, gd);
                             pages -= (1<<12);
                             offset += (1<<12);
                         } else {
-                            printf("CUDA ariel ");
-                            for(int i = 0; i < remainder ; i++)
-                                printf("%d ", getDataAddress()[i+offset]);
-                            printf("\n");
+                            output->verbose(CALL_INFO, 16, 0, "CUDA: Ariel");
+                            if( verbosity >= 16 ) {
+                                for(int i = 0; i < remainder; i++)
+                                    output->verbose(CALL_INFO, 16, 0, "%" PRIu64 " ",
+                                            getDataAddress()[i + offset]);
+                                output->verbose(CALL_INFO, 16, 0, "\n");
+                            }
+
                             memcpy(gd.page_4k, &(getDataAddress()[offset]), remainder);
                             tunnelD->writeMessage(coreID, gd);
                             remainder = 0;
@@ -406,7 +434,7 @@ void ArielCore::handleEvent(SimpleMem::Request* event) {
                         do {
                             avail = tunnelR->readMessageNB(coreID, &gc);
                         } while (!avail);
-                        printf("CUDA fesimple sent page ACK\n");
+                        output->verbose(CALL_INFO, 16, 0, "CUDA: fesimple sent page ACK\n");
                         tunnelR->clearBuffer(coreID);
                         avail = false;
                     }
@@ -1110,7 +1138,7 @@ void ArielCore::handleGpuEvent(ArielGpuEvent* gEv){
                         do {
                             avail = tunnelD->readMessageNB(coreID, &gd);
                         } while (!avail);
-                        printf("CUDA D2H received first page from tunnel\n");
+                        output->verbose(CALL_INFO, 16, 0, "CUDA: D2H received first page from tunnel\n");
 
                         // Take 4k (max) from tunnelD at a time
                         size_t page_transfer = (getTotalTransfer() <= (1<<12)) ? getTotalTransfer() : (1<<12);
@@ -1129,10 +1157,13 @@ void ArielCore::handleGpuEvent(ArielGpuEvent* gEv){
                             index = getCurrentAddress() - getBaseAddress();
                             current_transfer = (getRemainingPageTransfer() > 64) ? 64 : getRemainingPageTransfer();
 
-                            printf("CUDA transfer of size %d to index %d: ", current_transfer, index);
-                            for(int i = 0; i < current_transfer; i++)
-                                printf("%d ", getDataAddress()[index + i]);
-                            printf("\n");
+                            output->verbose(CALL_INFO, 16, 0, "CUDA: Transfer of %" PRIu32 " to index %" PRIu64 ":", current_transfer, index);
+                            if( verbosity >= 16) {
+                                for(int i = 0; i < current_transfer; i++)
+                                    output->verbose(CALL_INFO, 16, 0, "%" PRIu64 " ",
+                                            getDataAddress()[index + i]);
+                                output->verbose(CALL_INFO, 16, 0, "\n");
+                            }
 
                             ArielWriteEvent* awe;
                             awe = new ArielWriteEvent(getCurrentAddress(), current_transfer, &getDataAddress()[index]);
@@ -1249,8 +1280,8 @@ void ArielCore::handleGpuAckEvent(SST::Event* e){
                 }
                 handleReadRequest(are);
             }
-        } else{
-            printf("CUDA ariel received ACK from GPU\n");
+        } else {
+            output->verbose(CALL_INFO, 16, 0, "CUDA: Ariel recieved ACK\n");
             std::cout << "Received ACK response" << std::endl;
             isStalled = false;
             isGpu = false;
@@ -1259,7 +1290,7 @@ void ArielCore::handleGpuAckEvent(SST::Event* e){
             if(ev->API == GPU_MALLOC_RET){
                 // cudaMalloc needs the address of GPU memory
                 gc.ptr_address = ev->CA.cuda_malloc.ptr_address;
-                printf("CUDA passed back address %p\n", gc.ptr_address);
+                output->verbose(CALL_INFO, 16, 0, "CUDA: GPU address %" PRIu64 "\n", gc.ptr_address);
             } else if (ev->API == GPU_REG_FAT_BINARY_RET) {
                 // cudaRegisterFatBinary needs the handler
                 gc.fat_cubin_handle = ev->CA.register_fatbin.fat_cubin_handle;
@@ -1268,7 +1299,7 @@ void ArielCore::handleGpuAckEvent(SST::Event* e){
                 gc.num_block = ev->CA.max_active_block.numBlock;
                 std::cout << "Received ACK numblock response " << gc.num_block << std::endl;
             }
-            printf("CUDA ariel send an ACK\n");
+            output->verbose(CALL_INFO, 16, 0, "CUDA: Ariel sent ACK\n");
             tunnelR->writeMessage(coreID, gc);
         }
     }
