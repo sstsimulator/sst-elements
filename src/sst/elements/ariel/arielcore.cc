@@ -16,18 +16,28 @@
 #include <sst_config.h>
 #include "arielcore.h"
 
-using namespace SST::ArielComponent;
+#ifdef HAVE_CUDA
+#include <../Gpgpusim/Gpgpusim_Event.h>
 using namespace SST::GpgpusimComponent;
+#endif
+
+using namespace SST::ArielComponent;
 
 #define ARIEL_CORE_VERBOSE(LEVEL, OUTPUT) if(verbosity >= (LEVEL)) OUTPUT
 
 
-ArielCore::ArielCore(ComponentId_t id, ArielTunnel *tunnel, GpuReturnTunnel *tunnelR, GpuDataTunnel *tunnelD,
+ArielCore::ArielCore(ComponentId_t id, ArielTunnel *tunnel,
+#ifdef HAVE_CUDA
+            GpuReturnTunnel *tunnelR, GpuDataTunnel *tunnelD,
+#endif
             uint32_t thisCoreID, uint32_t maxPendTrans,
             Output* out, uint32_t maxIssuePerCyc,
             uint32_t maxQLen, uint64_t cacheLineSz,
             ArielMemoryManager* memMgr, const uint32_t perform_address_checks, Params& params) :
-            ComponentExtension(id), output(out), tunnel(tunnel), tunnelR(tunnelR), tunnelD(tunnelD),
+            ComponentExtension(id), output(out), tunnel(tunnel), 
+#ifdef HAVE_CUDA
+            tunnelR(tunnelR), tunnelD(tunnelD),
+#endif
             perform_checks(perform_address_checks),
             verbosity(static_cast<uint32_t>(out->getVerboseLevel())) {
 
@@ -49,6 +59,7 @@ ArielCore::ArielCore(ComponentId_t id, ArielTunnel *tunnel, GpuReturnTunnel *tun
     pendingTransactions = new std::unordered_map<SimpleMem::Request::id_t, SimpleMem::Request*>();
     pending_transaction_count = 0;
 
+#ifdef HAVE_CUDA
     midTransfer = false;
     remainingTransfer = 0;
     remainingPageTransfer = 0;
@@ -59,6 +70,7 @@ ArielCore::ArielCore(ComponentId_t id, ArielTunnel *tunnel, GpuReturnTunnel *tun
 
     pendingGpuTransactions = new std::unordered_map<SimpleMem::Request::id_t, SimpleMem::Request*>();
     pending_gpu_transaction_count = 0;
+#endif
 
     char* subID = (char*) malloc(sizeof(char) * 32);
     sprintf(subID, "%" PRIu32, thisCoreID);
@@ -125,10 +137,12 @@ void ArielCore::setCacheLink(SimpleMem* newLink) {
     cacheLink = newLink;
 }
 
+#ifdef HAVE_CUDA
 void ArielCore::setGpuLink(Link* gpulink) {
 
    GpuLink = gpulink;
 }
+#endif
 
 void ArielCore::printTraceEntry(const bool isRead,
             const uint64_t address, const uint32_t length) {
@@ -147,13 +161,17 @@ void ArielCore::commitReadEvent(const uint64_t address,
     if(length > 0) {
         SimpleMem::Request *req = new SimpleMem::Request(SimpleMem::Request::Read, address, length);
         req->setVirtualAddress(virtAddress);
+#ifdef HAVE_CUDA
         if(isGpuEx()){
             pending_transaction_count++;
             pendingGpuTransactions->insert( std::pair<SimpleMem::Request::id_t, SimpleMem::Request*>(req->id, req) );
         }else {
+#endif
             pending_transaction_count++;
             pendingTransactions->insert( std::pair<SimpleMem::Request::id_t, SimpleMem::Request*>(req->id, req) );
+#ifdef HAVE_CUDA
         }
+#endif
         if(enableTracing) {
                 printTraceEntry(true, (const uint64_t) req->addrs[0], (const uint32_t) length);
         }
@@ -186,13 +204,17 @@ void ArielCore::commitWriteEvent(const uint64_t address,
             }
             req->setPayload( (uint8_t*) payload, length );
         }
+#ifdef HAVE_CUDA
         if(isGpuEx()){
             pending_transaction_count++;
             pendingGpuTransactions->insert( std::pair<SimpleMem::Request::id_t, SimpleMem::Request*>(req->id, req) );
         } else{
+#endif
             pending_transaction_count++;
             pendingTransactions->insert( std::pair<SimpleMem::Request::id_t, SimpleMem::Request*>(req->id, req) );
+#ifdef HAVE_CUDA
         }
+#endif
         if(enableTracing) {
             printTraceEntry(false, (const uint64_t) req->addrs[0], (const uint32_t) length);
         }
@@ -225,6 +247,8 @@ void ArielCore::handleEvent(SimpleMem::Request* event) {
     ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " handling a memory event.\n", coreID));
     SimpleMem::Request::id_t mev_id = event->id;
     auto find_entry = pendingTransactions->find(mev_id);
+
+#ifdef HAVE_CUDA
     if(pendingGpuTransactions->find(mev_id) != pendingGpuTransactions->end()){
         // Update total ACK and Page ACK
         setAckTransfer(getAckTransfer() + event->data.size());
@@ -421,6 +445,9 @@ void ArielCore::handleEvent(SimpleMem::Request* event) {
             }
         }
     }else if(find_entry != pendingTransactions->end()) {
+#else
+    if(find_entry != pendingTransactions->end()) {
+#endif
         ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Correctly identified event in pending transactions, removing from list, before there are: %" PRIu32 " transactions pending.\n",
                             (uint32_t) pendingTransactions->size()));
         pendingTransactions->erase(find_entry);
@@ -466,6 +493,7 @@ void ArielCore::stall(){
     isStalled = true;
 }
 
+#ifdef HAVE_CUDA
 void ArielCore::setKind(cudaMemcpyKind memcpyKind){
     kind = memcpyKind;
 }
@@ -541,6 +569,7 @@ void ArielCore::setDataAddress(uint8_t* virtAddress){
 void ArielCore::setBaseDataAddress(uint8_t* virtAddress){
     baseDataAddress = virtAddress;
 }
+#endif
 
 void ArielCore::fence(){
     ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core: %" PRIu32 " FENCE:  Current pending transaction count: %" PRIu32 " (%" PRIu32 ")\n", coreID, pending_transaction_count, maxPendingTransactions));
@@ -637,23 +666,24 @@ void ArielCore::createExitEvent() {
     ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Generated an EXIT event.\n"));
 }
 
+bool ArielCore::isCoreHalted() const {
+    return isHalted;
+}
+
+bool ArielCore::isCoreStalled() const {
+    return isStalled;
+}
+
+#ifdef HAVE_CUDA
 void ArielCore::createGpuEvent(GpuApi_t API, CudaArguments CA) {
-    ArielGpuEvent* gEv = new ArielGpuEvent(API, CA);
+    ArielGpuEvent* gEv = new ArielGpuEvent(API, CA); 
     coreQ->push(gEv);
 
     ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Generated a CUDA event.\n"));
 }
 
-bool ArielCore::isCoreHalted() const {
-    return isHalted;
-}
-
 cudaMemcpyKind ArielCore::getKind() const {
     return kind;
-}
-
-bool ArielCore::isCoreStalled() const {
-    return isStalled;
 }
 
 bool ArielCore::isGpuEx() const {
@@ -707,6 +737,7 @@ uint8_t* ArielCore::getBaseDataAddress() const {
 int ArielCore::getOpenTransactions() const {
     return maxPendingTransactions - pendingTransactions->size() - pendingGpuTransactions->size();
 }
+#endif
 
 bool ArielCore::isCoreFenced() const {
     // returns true iff isFenced is true
@@ -828,10 +859,11 @@ bool ArielCore::refillQueue() {
             case ARIEL_PERFORM_EXIT:
                 createExitEvent();
                 break;
-
+#ifdef HAVE_CUDA
             case ARIEL_ISSUE_CUDA:
                 createGpuEvent(ac.API.name, ac.API.CA);
                 break;
+#endif
             default:
                 // Not sure what this is
                 output->fatal(CALL_INFO, -1, "Error: Ariel did not understand command (%d) provided during instruction queue refill.\n", (int)(ac.command));
@@ -942,11 +974,13 @@ void ArielCore::handleWriteRequest(ArielWriteEvent* wEv) {
 
     // We do not need to perform a split operation
     if((addr_offset + writeLength) <= cacheLineSize) {
+#ifdef HAVE_CUDA
         if(isGpuEx()){
             // Save only the first physical address. Assume contiguous physical memory.
             if((getTotalTransfer()) == (getRemainingTransfer()))
                 physicalAddresses.push_back(physAddr);
         }
+#endif
         ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Core %" PRIu32 " generating a non-split write request: Addr=%" PRIu64 " Length=%" PRIu64 "\n",
                             coreID, writeAddress, writeLength));
 
@@ -1041,6 +1075,7 @@ void ArielCore::handleFenceEvent(ArielFenceEvent *fEv) {
     statFenceRequests->addData(1);
 }
 
+#ifdef HAVE_CUDA
 // Create an event to send to the GPU Component
 void ArielCore::handleGpuEvent(ArielGpuEvent* gEv){
     if(gpu_enabled) {
@@ -1238,6 +1273,7 @@ void ArielCore::handleGpuAckEvent(SST::Event* e){
         }
     }
 }
+#endif
 
 void ArielCore::printCoreStatistics() {
 }
@@ -1367,6 +1403,7 @@ bool ArielCore::processNextEvent() {
                 }
                 removeEvent = true;
                 break;
+#ifdef HAVE_CUDA
         case GPU:
             ARIEL_CORE_VERBOSE(8, output->verbose(CALL_INFO, 8, 0, "Core %" PRIu32 "next event is GPU (CUDA call)\n", coreID));
             removeEvent = true;
@@ -1374,7 +1411,7 @@ bool ArielCore::processNextEvent() {
             gpu();
             handleGpuEvent(dynamic_cast<ArielGpuEvent*>(nextEvent));
             break;
-
+#endif
         default:
                 output->fatal(CALL_INFO, -4, "Unknown event type has arrived on core %" PRIu32 "\n", coreID);
                 break;

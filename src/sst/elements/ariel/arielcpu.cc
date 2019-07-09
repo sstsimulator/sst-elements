@@ -16,6 +16,7 @@
 
 #include <sst_config.h>
 #include <sst/core/simulation.h>
+
 #include "arielcpu.h"
 
 #include <signal.h>
@@ -150,10 +151,12 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 
     int gpu_e = (uint32_t) params.find<uint32_t>("gpu_enabled", 0);
 
+#ifdef HAVE_CUDA
     if(gpu_e == 1)
         gpu_enabled = true;
     else
         gpu_enabled = false;
+#endif
 
     /////////////////////////////////////////////////////////////////////////////////////
 
@@ -208,6 +211,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     std::string shmem_region_name = tunnel->getRegionName();
     output->verbose(CALL_INFO, 1, 0, "Base pipe name: %s\n", shmem_region_name.c_str());
 
+#ifdef HAVE_CUDA
     tunnelR = new GpuReturnTunnel(id, core_count, maxCoreQueueLen);
     std::string shmem_region_name2 = tunnelR->getRegionName();
     output->verbose(CALL_INFO, 1, 0, "Base pipe name: %s\n", shmem_region_name2.c_str());
@@ -215,6 +219,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     tunnelD = new GpuDataTunnel(id, core_count, maxCoreQueueLen);
     std::string shmem_region_name3 = tunnelD->getRegionName();
     output->verbose(CALL_INFO, 1, 0, "Base pipe name: %s\n", shmem_region_name3.c_str());
+#endif
 
     appLauncher = params.find<std::string>("launcher", PINTOOL_EXECUTABLE);
 
@@ -231,13 +236,16 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     execute_args[0] = (char*) malloc(sizeof(char) * (appLauncher.size() + 2));
     sprintf(execute_args[0], "%s", appLauncher.c_str());
     arg++;
+
 #if 0
     execute_args[arg++] = const_cast<char*>("-pause_tool");
     execute_args[arg++] = const_cast<char*>("15");
 #endif
 
+#ifdef HAVE_CUDA
     execute_args[arg++] = const_cast<char*>("-injection");
     execute_args[arg++] = const_cast<char*>("child");
+#endif
 
     execute_args[arg++] = const_cast<char*>("-follow_execv");
 
@@ -273,12 +281,14 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     execute_args[arg++] = const_cast<char*>("-p");
     execute_args[arg++] = (char*) malloc(sizeof(char) * (shmem_region_name.length() + 1));
     strcpy(execute_args[arg-1], shmem_region_name.c_str());
+#ifdef HAVE_CUDA
     execute_args[arg++] = const_cast<char*>("-g");
     execute_args[arg++] = (char*) malloc(sizeof(char) * (shmem_region_name2.length() + 1));
     strcpy(execute_args[arg-1], shmem_region_name2.c_str());
     execute_args[arg++] = const_cast<char*>("-x");
     execute_args[arg++] = (char*) malloc(sizeof(char) * (shmem_region_name3.length() + 1));
     strcpy(execute_args[arg-1], shmem_region_name3.c_str());
+#endif
     execute_args[arg++] = const_cast<char*>("-v");
     execute_args[arg++] = (char*) malloc(sizeof(char) * 8);
     sprintf(execute_args[arg-1], "%d", verbosity);
@@ -368,8 +378,12 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 
     output->verbose(CALL_INFO, 1, 0, "Configuring cores and cache links...\n");
     for(uint32_t i = 0; i < core_count; ++i) {
-        cpu_cores.push_back(loadComponentExtension<ArielCore>(tunnel, tunnelR, tunnelD, i, maxPendingTransCore, output,
-                maxIssuesPerCycle, maxCoreQueueLen, cacheLineSize, memmgr, perform_checks, params));
+        cpu_cores.push_back(loadComponentExtension<ArielCore>(tunnel, 
+#ifdef HAVE_CUDA
+                 tunnelR, tunnelD,
+#endif
+                 i, maxPendingTransCore, output, maxIssuesPerCycle, maxCoreQueueLen,
+                 cacheLineSize, memmgr, perform_checks, params));
 
         // Set max number of instructions
         cpu_cores[i]->setMaxInsts(max_insts);
@@ -400,6 +414,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
                         ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, par, timeconverter, new SimpleMem::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleEvent)));
             cpu_cores[i]->setCacheLink(cpu_to_cache_links[i]);
 
+#ifdef HAVE_CUDA
             if(gpu_enabled) {
                sprintf(link_buffer, "gpu_link_%" PRIu32, i);
                cpu_to_gpu_links.push_back(configureLink(link_buffer, new Event::Handler<ArielCore>(cpu_cores[i], &ArielCore::handleGpuAckEvent)));
@@ -408,6 +423,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
             }
 
             cpu_cores[i]->setFilePath(executable);
+#endif
         }
     }
 
@@ -624,9 +640,10 @@ bool ArielCPU::tick( SST::Cycle_t cycle) {
 ArielCPU::~ArielCPU() {
     // Everything loaded by calls to the core are deleted by the core (subcomponents, component extension, etc.)
     delete tunnel;
+#ifdef HAVE_CUDA
     delete tunnelR;
     delete tunnelD;
-
+#endif
 }
 
 void ArielCPU::emergencyShutdown() {

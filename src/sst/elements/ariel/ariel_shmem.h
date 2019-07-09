@@ -14,19 +14,21 @@
 // distribution.
 
 #ifndef SST_ARIEL_SHMEM_H
-#define SST_ARIEL_SHMEM_H 1
+#define SST_ARIEL_SHMEM_H 
 
 #include <inttypes.h>
 
 #include <sst/core/interprocess/ipctunnel.h>
 #include "ariel_inst_class.h"
 
+#ifdef HAVE_CUDA
 #include "gpu_enum.h"
 
 #include "host_defines.h"
 #include "builtin_types.h"
 #include "driver_types.h"
 #include "cuda_runtime_api.h"
+#endif
 
 #define ARIEL_MAX_PAYLOAD_SIZE 64
 
@@ -54,6 +56,7 @@ enum ArielShmemCmd_t {
     ARIEL_FENCE_INSTRUCTION = 155,
 };
 
+#ifdef HAVE_CUDA
 struct CudaArguments {
     union {
         char file_name[256];
@@ -111,6 +114,7 @@ struct CudaArguments {
         } max_active_block;
     };
 };
+#endif
 
 struct ArielCommand {
     ArielShmemCmd_t command;
@@ -157,10 +161,12 @@ struct ArielCommand {
         struct {
             uint64_t vaddr;
         } flushline;
+#ifdef HAVE_CUDA
         struct {
             GpuApi_t name;
             CudaArguments CA;
         } API;
+#endif
     };
 };
 
@@ -229,6 +235,7 @@ public:
 
 };
 
+#ifdef HAVE_CUDA
 struct GpuSharedData {
     size_t numCores;
     volatile uint32_t child_attached;
@@ -311,7 +318,7 @@ public:
         while ( sharedData->child_attached == 0 ) ;
     }
 };
-
+#endif
 
 }
 }
