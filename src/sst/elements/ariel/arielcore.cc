@@ -364,6 +364,7 @@ void ArielCore::handleEvent(SimpleMem::Request* event) {
         } else if(getKind() == cudaMemcpyDeviceToHost){
             int index = event->getVirtualAddress() - getBaseAddress();
             if((getAckTransfer() == getTotalTransfer())) {
+                output->verbose(CALL_INFO, 16, 0, "CUDA: Progress to fesimple (D2H)\n");
                 // Add the data at the correct address
                 for(int i = 0; i < event->data.size(); i++)
                     getDataAddress()[index+i] = event->data[i];
