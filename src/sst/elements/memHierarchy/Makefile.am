@@ -61,6 +61,7 @@ libmemHierarchy_la_SOURCES = \
 	memEvent.h \
 	moveEvent.h \
 	memLinkBase.h \
+	memNICBase.h \
 	memLink.h \
 	memLink.cc \
 	memNIC.h \
@@ -185,12 +186,14 @@ EXTRA_DIST = \
 	tests/ddr_system.ini \
 	tests/hbm_device.ini \
 	tests/hbm_system.ini \
-	tests/utils.py
+	tests/utils.py \
+	tests/mhlib.py
 
 sstdir = $(includedir)/sst/elements/memHierarchy
 nobase_sst_HEADERS = \
 	memEventBase.h \
 	memEvent.h \
+	memNICBase.h \
 	memNIC.h \
 	memNICFour.h \
 	memLink.h \

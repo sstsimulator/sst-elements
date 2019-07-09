@@ -42,10 +42,9 @@ namespace Miranda {
 class Stake : public RequestGenerator {
 
 public:
-	Stake( Component* owner, Params& params );
-	Stake( ComponentId_t id, Params& params );
+        Stake( ComponentId_t id, Params& params );
+        Stake( Component* owner, Params& params );
         void build(Params& params); // Temporary while legacy constructor is getting deprecated
-
 	~Stake();
 	void generate(MirandaRequestQueue<GeneratorRequest*>* q);
 	bool isFinished();

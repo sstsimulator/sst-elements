@@ -39,11 +39,11 @@ LinkControl::LinkControl(Component* parent, Params &params) :
 {
 }
 
-LinkControl::LinkControl(ComponentId_t id, Params &params, int) :
+LinkControl::LinkControl(ComponentId_t id, Params &params, int vns) :
     SST::Interfaces::SimpleNetwork(id),
     init_state(0),
     rtr_link(NULL), output_timing(NULL),
-    req_vns(0), id(-1),
+    req_vns(vns), id(-1),
     input_buf(NULL), output_buf(NULL),
     rtr_credits(NULL), in_ret_credits(NULL),
     waiting(true), have_packets(false),
@@ -51,6 +51,62 @@ LinkControl::LinkControl(ComponentId_t id, Params &params, int) :
     network_initialized(false),
     output(Simulation::getSimulation()->getSimulationOutput())
 {
+    link_bw = params.find<UnitAlgebra>("link_bw");
+    if ( link_bw.hasUnits("B/s") ) {
+        link_bw *= UnitAlgebra("8b/B");
+    }
+    
+    // Input and output buffers
+    input_buf = new network_queue_t[req_vns];
+    output_buf = new network_queue_t[req_vns];
+    
+    // Initialize credit arrays.  Credits are in flits, and we don't
+    // yet know the flit size, so can't initialize in_ret_credits and
+    // outbuf_credits yet.  Will initialize them after we get the
+    // flit_size
+    rtr_credits = new int[req_vns];
+    in_ret_credits = new int[req_vns];
+    outbuf_credits = new int[req_vns];
+
+    inbuf_size = params.find<UnitAlgebra>("in_buf_size", "1kB");
+    if ( !inbuf_size.hasUnits("b") && !inbuf_size.hasUnits("B") ) {
+        output.fatal(CALL_INFO,-1,"in_buf_size must be specified in either "
+                           "bits or bytes: %s\n",inbuf_size.toStringBestSI().c_str());
+    }
+    if ( inbuf_size.hasUnits("B") ) inbuf_size *= UnitAlgebra("8b/B");
+
+
+    outbuf_size = params.find<UnitAlgebra>("out_buf_size", "1kB");
+    if ( !outbuf_size.hasUnits("b") && !outbuf_size.hasUnits("B") ) {
+        output.fatal(CALL_INFO,-1,"out_buf_size must be specified in either "
+                           "bits or bytes: %s\n",outbuf_size.toStringBestSI().c_str());
+    }
+    if ( outbuf_size.hasUnits("B") ) outbuf_size *= UnitAlgebra("8b/B");
+    
+    // The output credits are set to zero and the other side of the
+    // link will send the number of tokens.
+    for ( int i = 0; i < req_vns; i++ ) rtr_credits[i] = 0;
+
+    // Configure the links
+    // For now give it a fake timebase.  Will give it the real timebase during init
+    std::string port_name("rtr_port");
+    if ( isAnonymous())
+        port_name = params.find<std::string>("port_name");
+
+    rtr_link = configureLink(port_name, std::string("1GHz"), new Event::Handler<LinkControl>(this,&LinkControl::handle_input));
+    
+    if (!rtr_link)
+        output.fatal(CALL_INFO, -1, "%s, unable to configure link for port '%s'. Check port validity and subcomponent sharing flags\n",
+                getName().c_str(), port_name.c_str());
+
+    output_timing = configureSelfLink(port_name + "_output_timing", "1GHz",
+            new Event::Handler<LinkControl>(this,&LinkControl::handle_output));
+
+    // Register statistics
+    packet_latency = registerStatistic<uint64_t>("packet_latency");
+    // send_bit_count = registerStatistic<uint64_t>("send_bit_count");
+    // output_port_stalls = registerStatistic<uint64_t>("output_port_stalls");
+    // idle_time = registerStatistic<uint64_t>("idle_time");
 }
     
 bool

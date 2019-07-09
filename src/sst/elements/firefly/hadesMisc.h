@@ -28,7 +28,6 @@ namespace Firefly {
 class HadesMisc : public Misc::Interface
 {
   public:
-  public:
     SST_ELI_REGISTER_SUBCOMPONENT(
         HadesMisc,
         "firefly",
@@ -44,18 +43,21 @@ class HadesMisc : public Misc::Interface
     virtual void setup() {}
     virtual void finish() {}
     virtual std::string getName() { return "HadesMisc"; }
+	virtual std::string getType() { return "misc"; }
 
     virtual void setOS( OS* os ) {
         m_os = static_cast<Hades*>(os);
     }
-    void getNumNodes( int* ptr, Callback callback) { 
+    void getNumNodes( int* ptr, Callback* callback) { 
         *ptr = m_os->getNumNodes();
-        callback(0);
+        (*callback)(0);
+		delete callback;
     }
 
-    void getNodeNum( int* ptr, Callback callback) { 
+    void getNodeNum( int* ptr, Callback* callback) { 
         *ptr = m_os->getNodeNum();
-        callback(0);
+        (*callback)(0);
+		delete callback;
     }
   private:
     Hades*      m_os;

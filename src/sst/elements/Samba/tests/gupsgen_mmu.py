@@ -13,10 +13,12 @@ memory_mb = 1024
 comp_cpu = sst.Component("cpu", "miranda.BaseCPU")
 comp_cpu.addParams({
 	"verbose" : 1,
-	"generator" : "miranda.GUPSGenerator",
-	"generatorParams.verbose" : 0,
-	"generatorParams.count" : 10000,
-	"generatorParams.max_address" : ((memory_mb) / 2) * 1024 * 1024,
+})
+cpugen = comp_cpu.setSubComponent("generator", "miranda.GUPSGenerator")
+cpugen.addParams({
+	"verbose" : 0,
+	"count" : 10000,
+	"max_address" : ((memory_mb) / 2) * 1024 * 1024,
 })
 
 # Enable statistics outputs
@@ -38,12 +40,14 @@ comp_l1cache.addParams({
 # Enable statistics outputs
 comp_l1cache.enableAllStatistics({"type":"sst.AccumulatorStatistic"})
 
-comp_memory = sst.Component("memory", "memHierarchy.MemController")
-comp_memory.addParams({
-      "coherence_protocol" : "MESI",
-      "backend.access_time" : "50 ns",
-      "backend.mem_size" : str(memory_mb * 1024 * 1024) + "B",
+comp_memctrl = sst.Component("memory", "memHierarchy.MemController")
+comp_memctrl.addParams({
       "clock" : "1GHz"
+})
+memory = comp_memctrl.setSubComponent("backend", "memHierarchy.simpleMem")
+memory.addParams({
+    "access_time" : "50 ns",
+    "mem_size" : str(memory_mb * 1024 * 1024) + "B",
 })
 
 
@@ -125,4 +129,4 @@ link_mmu_cache_link.setNoCut()
 
 
 link_mem_bus_link = sst.Link("link_mem_bus_link")
-link_mem_bus_link.connect( (comp_l1cache, "low_network_0", "50ps"), (comp_memory, "direct_link", "50ps") )
+link_mem_bus_link.connect( (comp_l1cache, "low_network_0", "50ps"), (comp_memctrl, "direct_link", "50ps") )

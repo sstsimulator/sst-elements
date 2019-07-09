@@ -20,26 +20,40 @@
  */
 
 
-#ifndef HASH_H
-#define	HASH_H
+#ifndef MEMHIERARCHY_HASH_H
+#define	MEMHIERARCHY_HASH_H
 
 #include <sst_config.h>
 #include <stdint.h>
+#include <sst/core/subcomponent.h>
 
+namespace SST { 
+namespace MemHierarchy {
 
-namespace SST{ namespace MemHierarchy{
-
-class HashFunction{
+class HashFunction : public SubComponent {
 public:
-    HashFunction() {};
-    virtual ~HashFunction() {};
+    SST_ELI_REGISTER_SUBCOMPONENT_API(SST::MemHierarchy::HashFunction)
+
+    HashFunction(Component* comp, Params& params) : SubComponent(comp) {
+        Output out("", 1, 0, Output::STDOUT);
+        out.fatal(CALL_INFO, -1, "%s, Error: HashFunctions do not support loading as legacy subcomponents\n");
+    }
+    
+    HashFunction(ComponentId_t id, Params& params) : SubComponent(id) {}
+    virtual ~HashFunction() {}
 
     virtual uint64_t hash(uint32_t ID, uint64_t value) = 0;
 };
 
-/* Simplest ID hashing */
-class PureIdHashFunction : public HashFunction {
+/* Default hash function - none */
+class NoHashFunction : public HashFunction {
 public:
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(NoHashFunction, "memHierarchy", "hash.none", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Default hash function - none, returns unmodified value", SST::MemHierarchy::HashFunction)
+
+    NoHashFunction(Component* comp, Params& params) : HashFunction(comp, params) {}
+    NoHashFunction(ComponentId_t id, Params& params) : HashFunction(id, params) {}
+
     inline uint64_t hash(uint32_t ID, uint64_t value) {
         return value;
     }
@@ -49,28 +63,40 @@ public:
    each input to an output. */
 class LinearHashFunction : public HashFunction {
 public:
-  uint64_t hash(uint32_t ID, uint64_t x) {
-      return 1103515245*x + 12345;
-  }
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(LinearHashFunction, "memHierarchy", "hash.linear", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Linear hash from C99 standard's RNG function", SST::MemHierarchy::HashFunction)
+
+    LinearHashFunction(Component* comp, Params& params) : HashFunction(comp, params) {}
+    LinearHashFunction(ComponentId_t id, Params& params) : HashFunction(id, params) {}
+
+    uint64_t hash(uint32_t ID, uint64_t x) {
+        return 1103515245*x + 12345;
+    }
 };
 
 /* Just a simple xor-based hash. */
 class XorHashFunction : public HashFunction {
 public:
-  uint64_t hash(uint32_t ID, uint64_t x) {
-    unsigned char b[8];
-    for (unsigned i = 0; i < 8; ++i)
-      b[i] = (x >> (i*8))&0xff;
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(XorHashFunction, "memHierarchy", "hash.xor", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "Simple XOR hash", SST::MemHierarchy::HashFunction)
 
-    for (unsigned i = 0; i < 7; ++i)
-      b[i] ^= b[i + 1];
-
-    uint64_t result = 0;
-    for (unsigned i = 0; i < 8; ++i)
-      result |= (b[i]<<(i*8));
+    XorHashFunction(Component* comp, Params& params) : HashFunction(comp, params) {}
+    XorHashFunction(ComponentId_t id, Params& params) : HashFunction(id, params) {}
     
-    return result;
-  }
+    uint64_t hash(uint32_t ID, uint64_t x) {
+        unsigned char b[8];
+        for (unsigned i = 0; i < 8; ++i)
+            b[i] = (x >> (i*8))&0xff;
+
+        for (unsigned i = 0; i < 7; ++i)
+            b[i] ^= b[i + 1];
+
+        uint64_t result = 0;
+        for (unsigned i = 0; i < 8; ++i)
+            result |= (b[i]<<(i*8));
+    
+        return result;
+    }
 };
 
 }}

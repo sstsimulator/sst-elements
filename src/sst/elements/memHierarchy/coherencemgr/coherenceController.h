@@ -36,13 +36,14 @@ using namespace std;
 class CoherenceController : public SST::SubComponent {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_API(SST::MemHierarchy::CoherenceController, Params&)
+    /* Args: Params& extraParams, bool prefetch */
+    SST_ELI_REGISTER_SUBCOMPONENT_API(SST::MemHierarchy::CoherenceController, Params&, bool)
 
     typedef CacheArray::CacheLine CacheLine;
 
     /***** Constructor & destructor *****/
     CoherenceController(Component * comp, Params &params);
-    CoherenceController(ComponentId_t id, Params &params, Params& ownerParams);
+    CoherenceController(ComponentId_t id, Params &params, Params& ownerParams, bool prefetch);
     ~CoherenceController() {}
 
     /* Return whether a line access will be a miss and what kind (encoded in the int retval) */
@@ -118,7 +119,7 @@ public:
     void setOwnerName(std::string name) { ownerName_ = name; }
 
     /* Setup pointers to other subcomponents/cache structures */
-    void setCacheListener(CacheListener* ptr) { listener_ = ptr; }
+    void setCacheListener(std::vector<CacheListener*>& lists) { listeners_ = lists; }
     void setMSHR(MSHR* ptr) { mshr_ = ptr; }
     void setLinks(MemLinkBase * linkUp, MemLinkBase * linkDown) {
         linkUp_ = linkUp;
@@ -148,7 +149,7 @@ protected:
     std::string ownerName_; // Owning component name
 
     /* Pointers to other subcomponents and cache structures */
-    CacheListener*  listener_;
+    std::vector<CacheListener*> listeners_;
     MSHR *          mshr_;              // Pointer to cache's MSHR, coherence controllers are responsible for managing writeback acks
 
     /* Latency and timing related parameters */

@@ -203,7 +203,6 @@ void Cache::profileEvent(MemEvent* event, Command cmd, bool replay, bool canStal
 
 bool Cache::processEvent(MemEventBase* ev, bool replay) {
     
-    
     // Debug
     if (is_debug_event(ev)) {
         if (replay) {
@@ -231,6 +230,14 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
     /* Start handling cache events */
     MemEvent * event = static_cast<MemEvent*>(ev);
     Command cmd     = event->getCmd();
+    std::string gpu ("gpu0");
+    if((event->getSrc().compare(gpu))==0){
+        if(event->getAddr() % cacheArray_->getLineSize()==0){
+            event->setBaseAddr(event->getAddr());
+        } else {
+            event->setBaseAddr(event->getAddr()-(event->getAddr() % cacheArray_->getLineSize()));
+        }
+    }
     Addr baseAddr   = event->getBaseAddr();
     // TODO this is a temporary check while we ensure that the source sets baseAddr correctly
     if (baseAddr % cacheArray_->getLineSize() != 0) {
@@ -436,7 +443,7 @@ void Cache::init(unsigned int phase) {
                 if (!eventC->getInclusive()) {
                     lowerIsNoninclusive = true; // TODO better checking if multiple caches below us
                 }
-                if (eventC->getWBAck()) {
+                if (eventC->getSendWBAck()) {
                     expectWritebackAcks = true;
                 }
             }
@@ -483,7 +490,7 @@ void Cache::init(unsigned int phase) {
                 if (!eventC->getInclusive()) {
                     lowerIsNoninclusive = true; // TODO better checking if multiple caches below us
                 }
-                if (eventC->getWBAck()) {
+                if (eventC->getSendWBAck()) {
                     expectWritebackAcks = true;
                 }
 
@@ -497,30 +504,7 @@ void Cache::init(unsigned int phase) {
 
 void Cache::setup() {
     // Check that our sources and destinations exist or configure if needed
-    
-    std::set<MemLinkBase::EndpointInfo> * names = linkUp_->getSources();
-
-    if (names->empty()) {
-        std::set<MemLinkBase::EndpointInfo> srcNames;
-        if (upperLevelCacheNames_.empty()) upperLevelCacheNames_.push_back(""); // TODO is this a carry over from the old init or is it needed to avoid segfaults still?
-        for (int i = 0; i < upperLevelCacheNames_.size(); i++) {
-            MemLinkBase::EndpointInfo info;
-            info.name = upperLevelCacheNames_[i];
-            info.addr = 0;
-            info.id = 0;
-            info.region.setDefault();
-            srcNames.insert(info);
-        }
-        linkUp_->setSources(srcNames);
-    }
-    names = linkUp_->getSources();
-    if (names->empty()) 
-        out_->fatal(CALL_INFO, -1,"%s did not find any sources\n", getName().c_str());
-
-    names = linkDown_->getDests();
-    if (names->empty())
-        out_->fatal(CALL_INFO, -1, "%s did not find any destinations\n", getName().c_str());
-
+   
     linkUp_->setup();
     if (linkUp_ != linkDown_) linkDown_->setup();
 
@@ -532,7 +516,8 @@ void Cache::finish() {
     if (!clockIsOn_) { // Correct statistics
         turnClockOn();
     }
-    listener_->printStats(*d_);
+    for (int i = 0; i < listeners_.size(); i++)
+        listeners_[i]->printStats(*d_);
     linkDown_->finish();
     if (linkUp_ != linkDown_) linkUp_->finish();
 }

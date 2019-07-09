@@ -27,4 +27,6 @@ EmberShmemGenerator::EmberShmemGenerator(
     m_shmem = static_cast<EmberShmemLib*>(getLib("shmem"));
     assert(m_shmem);
     m_shmem->initOutput( &getOutput() );
+    m_miscLib = static_cast<EmberMiscLib*>(getLib("misc"));
+    assert(m_miscLib);
 }

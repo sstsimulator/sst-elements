@@ -66,14 +66,11 @@ public:
             {"node",			"(uint) Node number in multinode evnironment"},
             /* Not required */
             {"cache_line_size",         "(uint) Size of a cache line (aka cache block) in bytes.", "64"},
-            {"hash_function",           "(int) 0 - none (default), 1 - linear, 2 - XOR", "0"},
             {"coherence_protocol",      "(string) Coherence protocol. Options: MESI, MSI, NONE", "MESI"},
-            {"replacement_policy",      "(string) Replacement policy of the cache array. Options:  LRU[least-recently-used], LFU[least-frequently-used], Random, MRU[most-recently-used], or NMRU[not-most-recently-used]. ", "lru"},
             {"cache_type",              "(string) - Cache type. Options: inclusive cache ('inclusive', required for L1s), non-inclusive cache ('noninclusive') or non-inclusive cache with a directory ('noninclusive_with_directory', required for non-inclusive caches with multiple upper level caches directly above them),", "inclusive"},
             {"max_requests_per_cycle",  "(int) Maximum number of requests to accept per cycle. 0 or negative is unlimited.", "-1"},
             {"request_link_width",      "(string) Limits number of request bytes sent per cycle. Use 'B' units. '0B' is unlimited.", "0B"},
             {"response_link_width",     "(string) Limits number of response bytes sent per cycle. Use 'B' units. '0B' is unlimited.", "0B"},
-            {"noninclusive_directory_repl",    "(string) If non-inclusive directory exists, its replacement policy. LRU, LFU, MRU, NMRU, or RANDOM. (not case-sensitive).", "LRU"},
             {"noninclusive_directory_entries", "(uint) Number of entries in the directory. Must be at least 1 if the non-inclusive directory exists.", "0"},
             {"noninclusive_directory_associativity", "(uint) For a set-associative directory, number of ways.", "1"},
             {"mshr_num_entries",        "(int) Number of MSHR entries. Not valid for L1s because L1 MSHRs assumed to be sized for the CPU's load/store queue. Setting this to -1 will create a very large MSHR.", "-1"},
@@ -81,7 +78,6 @@ public:
                 "(uint) Latency (in cycles) to access tag portion only of cache. Paid by misses and coherence requests that don't need data. If not specified, defaults to access_latency_cycles","access_latency_cycles"},
             {"mshr_latency_cycles",
                 "(uint) Latency (in cycles) to process responses in the cache and replay requests. Paid on the return/response path for misses instead of access_latency_cycles. If not specified, simple intrapolation is used based on the cache access latency", "1"},
-            {"prefetcher",              "(string) Name of prefetcher subcomponent", ""},
             {"prefetch_delay_cycles",   "(uint) Delay prefetches from prefetcher by this number of cycles.", "1"},
             {"max_outstanding_prefetch","(uint) Maximum number of prefetch misses that can be outstanding, additional prefetches will be dropped/NACKed. Default is 1/2 of MSHR entries.", "0.5*mshr_num_entries"},
             {"drop_prefetch_mshr_level","(uint) Drop/NACK prefetches if the number of in-use mshrs is greater than or equal to this number. Default is mshr_num_entries - 2.", "mshr_num_entries-2"},
@@ -102,7 +98,11 @@ public:
             {"network_address",             "DEPRECATED - Now auto-detected by link control."}, // Remove 9.0
             {"network_bw",                  "MOVED - Now a member of the MemNIC subcomponent.", "80GiB/s"}, // Remove 9.0
             {"network_input_buffer_size",   "MOVED - Now a member of the MemNIC subcomponent.", "1KiB"}, // Remove 9.0
-            {"network_output_buffer_size",  "MOVED - Now a member of the MemNIC subcomponent.", "1KiB"}) // Remove 9.0
+            {"network_output_buffer_size",  "MOVED - Now a member of the MemNIC subcomponent.", "1KiB"}, // Remove 9.0
+            {"prefetcher",                  "MOVED - Prefetcher subcomponent, instead specify by putting it in the 'prefetcher' subcomponent slot", ""},
+            {"replacement_policy",          "MOVED - Cache replacement policy, now a subcomponent so specify by putting in the index 0 of the 'replacement' subcomponent slot in the input config", ""},
+            {"noninclusive_directory_repl", "MOVED - Replacement policy for noninclusive directory, now a subcomponent, specify by putting in the index 1 of the 'replacement' subcomponent slot in the input config", ""},
+            {"hash_function",               "MOVED - Hash function for mapping addresses to cache lines, now a subcomponent, specify by filling the 'hash' slot (default/unfilled is none)", ""})
 
     SST_ELI_DOCUMENT_PORTS(
             {"low_network_0",   "Port connected to lower level caches (closer to main memory)",                     {"memHierarchy.MemEventBase"} },
@@ -159,7 +159,11 @@ public:
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
             {"cpulink", "CPU-side link manager, for single-link caches, use this one only", "SST::MemHierarchy::MemLinkBase"},
             {"memlink", "Memory-side link manager", "SST::MemHierarchy::MemLinkBase"},
-            {"coherence", "Coherence protocol", "SST::MemHierarchy::CoherenceController"} )
+            {"replacement", "Replacement policies, slot 0 is for cache, slot 1 is for directory (if it exists)", "SST::MemHierarchy::ReplacementPolicy"},
+            {"coherence", "Coherence protocol", "SST::MemHierarchy::CoherenceController"},
+            {"prefetcher", "Prefetcher(s)", "SST::MemHierarchy::CacheListener"},
+            {"listener", "Cache listener(s) for statistics, tracing, etc. In contrast to prefetcher, cannot send events to cache", "SST::MemHierarchy::CacheListener"},
+            {"hash", "Hash function for mapping addresses to cache lines", "SST::MemHierarchy::HashFunction"} )
 
 /* Class definition */
     typedef CacheArray::CacheLine           CacheLine;
@@ -189,10 +193,10 @@ public:
 private:
     /** Constructor helper methods */
     void checkDeprecatedParams(Params &params);
-    ReplacementMgr* constructReplacementManager(std::string policy, uint64_t lines, uint64_t associativity);
+    ReplacementPolicy* constructReplacementManager(std::string policy, uint64_t lines, uint64_t associativity, int slot);
     CacheArray* createCacheArray(Params &params);
     int createMSHR(Params &params);
-    void createPrefetcher(Params &params, int mshrSize);
+    void createListeners(Params &params, int mshrSize);
     void createClock(Params &params);
     void registerStatistics();
     void createCoherenceManager(Params &params);
@@ -354,7 +358,7 @@ private:
 
     /* Cache structures */
     CacheArray*             cacheArray_;
-    CacheListener*          listener_;
+    std::vector<CacheListener*> listeners_;
     MemLinkBase*            linkUp_;
     MemLinkBase*            linkDown_;
     Link*                   prefetchLink_;
@@ -458,7 +462,7 @@ private:
 
         - Replacement Manager:  Class handles work related to the replacement policy of the cache.
         Similar to Cache Array, this class is OO-based so different replacement policies are simply
-        subclasses of the main based abstrac class (ReplacementMgr), therefore they need to implement
+        subclasses of the main based abstrac class (ReplacementPolicy), therefore they need to implement
         certain functions in order for them to work properly. Implemented policies are: least-recently-used (lru),
         least-frequently-used (lfu), most-recently-used (mru), random, and not-most-recently-used (nmru).
 

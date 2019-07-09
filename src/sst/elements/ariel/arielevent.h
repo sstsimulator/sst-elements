@@ -34,7 +34,10 @@ enum ArielEventType {
     FREE,
     SWITCH_POOL,
     FLUSH,
-    FENCE
+    FENCE,
+#ifdef HAVE_CUDA
+    GPU
+#endif
 };
 
 class ArielEvent {

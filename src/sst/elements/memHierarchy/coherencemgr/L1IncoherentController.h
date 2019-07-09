@@ -101,7 +101,7 @@ public:
 /* Begin class definition */    
     /** Constructor for L1IncoherentController */
     L1IncoherentController(Component* comp, Params& params) : CoherenceController(comp, params) { }
-    L1IncoherentController(ComponentId_t id, Params& params, Params& ownerParams) : CoherenceController(id, params, ownerParams) {
+    L1IncoherentController(ComponentId_t id, Params& params, Params& ownerParams, bool prefetch) : CoherenceController(id, params, ownerParams, prefetch) {
         params.insert(ownerParams);
         debug->debug(_INFO_,"--------------------------- Initializing [L1Controller] ... \n\n");
        
@@ -150,7 +150,7 @@ public:
         stat_eventSent_PutE =           registerStatistic<uint64_t>("eventSent_PutE");
         
         /* Prefetch statistics */
-        if (!params.find<std::string>("prefetcher", "").empty()) {
+        if (prefetch) {
             statPrefetchEvict = registerStatistic<uint64_t>("prefetch_evict");
             statPrefetchHit = registerStatistic<uint64_t>("prefetch_useful");
             statPrefetchRedundant = registerStatistic<uint64_t>("prefetch_redundant");

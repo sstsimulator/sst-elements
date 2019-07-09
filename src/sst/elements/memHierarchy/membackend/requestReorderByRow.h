@@ -51,7 +51,6 @@ public:
     void setup();
     void finish();
     bool clock(Cycle_t cycle);
-    virtual const std::string& getClockFreq() { return backend->getClockFreq(); }
 
 private:
     void build(Params& params);
