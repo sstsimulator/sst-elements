@@ -44,154 +44,74 @@ using namespace SST::MemHierarchy;
 
 
 void Cache::profileEvent(MemEvent* event, Command cmd, bool replay, bool canStall) {
-    if (!replay) {
-        switch (cmd) {
-            case Command::GetS:
-                statGetS_recv->addData(1);
-                break;
-            case Command::GetX:
-                statGetX_recv->addData(1);
-                break;
-            case Command::GetSX:
-                statGetSX_recv->addData(1);
-                break;
-            case Command::GetSResp:
-                statGetSResp_recv->addData(1);
-                break;
-            case Command::GetXResp:
-                statGetXResp_recv->addData(1);
-                break;
-            case Command::PutS:
-                statPutS_recv->addData(1);
-                return;
-            case Command::PutE:
-                statPutE_recv->addData(1);
-                return;
-            case Command::PutM:
-                statPutM_recv->addData(1);
-                return;
-            case Command::FetchInv:
-                statFetchInv_recv->addData(1);
-                return;
-            case Command::FetchInvX:
-                statFetchInvX_recv->addData(1);
-                return;
-            case Command::Inv:
-                statInv_recv->addData(1);
-                return;
-            case Command::NACK:
-                statNACK_recv->addData(1);
-                return;
-            default:
-                return;
-        }
-    }
     if (cmd != Command::GetS && cmd != Command::GetX && cmd != Command::GetSX) return;
 
     // Data request profiling only
     if (mshr_->isHit(event->getBaseAddr()) && canStall) return;   // will block this event, profile it later
-    int cacheHit = isCacheHit(event, cmd, event->getBaseAddr());
+    bool cacheHit = coherenceMgr_->isCacheHit(event);
     bool wasBlocked = event->blocked();                             // Event was blocked, now we're starting to handle it
     if (wasBlocked) event->setBlocked(false);
     if (cmd == Command::GetS || cmd == Command::GetX || cmd == Command::GetSX) {
-        if (mshr_->isFull() || (!L1_ && !replay && mshr_->isAlmostFull()  && !(cacheHit == 0))) { 
-                return; // profile later, this event is getting NACKed 
+        if (mshr_->isFull() || (!L1_ && !replay && mshr_->isAlmostFull()  && !cacheHit)) { 
+            return; // profile later, this event is getting NACKed 
         }
     }
 
     switch(cmd) {
         case Command::GetS:
             if (!replay) {                // New event
-                if (cacheHit == 0) {
+                if (cacheHit) {
                     statCacheHits->addData(1);
                     statGetSHitOnArrival->addData(1);
                 } else {
                     statCacheMisses->addData(1);
                     statGetSMissOnArrival->addData(1);
-                    if (cacheHit == 1 || cacheHit == 2) {
-                        missTypeList_.insert(std::pair<MemEvent*,int>(event, 0));
-                    } else if (cacheHit == 3) {
-                        missTypeList_.insert(std::pair<MemEvent*,int>(event, 1));
-                    }
                 }
             } else if (wasBlocked) {        // Blocked event, now unblocked
-                if (cacheHit == 0) {
+                if (cacheHit) {
                     statCacheHits->addData(1);
                     statGetSHitAfterBlocked->addData(1);
                 } else {
                     statCacheMisses->addData(1);
                     statGetSMissAfterBlocked->addData(1);
-                    if (cacheHit == 1 || cacheHit == 2) {
-                        missTypeList_.insert(std::pair<MemEvent*,int>(event, 0));
-                    } else if (cacheHit == 3) {
-                        missTypeList_.insert(std::pair<MemEvent*,int>(event, 1));
-                    }
                 }
             }
             break;
         case Command::GetX:
             if (!replay) {                // New event
-                if (cacheHit == 0) {
+                if (cacheHit) {
                     statCacheHits->addData(1);
                     statGetXHitOnArrival->addData(1);
                 } else {
                     statCacheMisses->addData(1);
                     statGetXMissOnArrival->addData(1);
-                    if (cacheHit == 1) {
-                        missTypeList_.insert(std::pair<MemEvent*,int>(event, 2));
-                    } else if (cacheHit == 2) {
-                        missTypeList_.insert(std::pair<MemEvent*,int>(event, 3));
-                    } else if (cacheHit == 3) {
-                        missTypeList_.insert(std::pair<MemEvent*,int>(event, 4));
-                    }
                 }
             } else if (wasBlocked) {        // Blocked event, now unblocked
-                if (cacheHit == 0) {
+                if (cacheHit) {
                     statCacheHits->addData(1);
                     statGetXHitAfterBlocked->addData(1);
                 } else {
                     statCacheMisses->addData(1);
                     statGetXMissAfterBlocked->addData(1);
-                    if (cacheHit == 1) {
-                        missTypeList_.insert(std::pair<MemEvent*,int>(event, 2));
-                    } else if (cacheHit == 2) {
-                        missTypeList_.insert(std::pair<MemEvent*,int>(event, 3));
-                    } else if (cacheHit == 3) {
-                        missTypeList_.insert(std::pair<MemEvent*,int>(event, 4));
-                    }
                 }
             }
             break;
         case Command::GetSX:
             if (!replay) {                // New event
-                if (cacheHit == 0) {
+                if (cacheHit) {
                     statCacheHits->addData(1);
                     statGetSXHitOnArrival->addData(1);
                 } else {
                     statCacheMisses->addData(1);
                     statGetSXMissOnArrival->addData(1);
-                    if (cacheHit == 1) {
-                        missTypeList_.insert(std::pair<MemEvent*,int>(event, 5));
-                    } else if (cacheHit == 2) { 
-                        missTypeList_.insert(std::pair<MemEvent*,int>(event, 6));
-                    } else if (cacheHit == 3) {
-                        missTypeList_.insert(std::pair<MemEvent*,int>(event, 7));
-                    }
                 }
             } else if (wasBlocked) {        // Blocked event, now unblocked
-                if (cacheHit == 0) {
+                if (cacheHit) {
                     statCacheHits->addData(1);
                     statGetSXMissAfterBlocked->addData(1);
                 } else {
                     statCacheMisses->addData(1);
                     statGetSXMissAfterBlocked->addData(1);
-                    if (cacheHit == 1) {
-                        missTypeList_.insert(std::pair<MemEvent*,int>(event, 5));
-                    } else if (cacheHit == 2) {
-                        missTypeList_.insert(std::pair<MemEvent*,int>(event, 6));
-                    } else if (cacheHit == 3) {
-                        missTypeList_.insert(std::pair<MemEvent*,int>(event, 7));
-                    }
                 }
             }
             break;
@@ -276,6 +196,7 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
             if (!replay && mshr_->isAlmostFull()) { 
                 // Requests can cause deadlock because requests and fwd requests (inv, fetch, etc) share mshrs -> always leave one mshr free for fwd requests
                 if (!L1_) {
+                    stat_eventRecv[(int)cmd]->addData(1);
                     profileEvent(event, cmd, replay, canStall);
                     sendNACK(event);
                     break;
@@ -285,6 +206,9 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
                 }
             }
             
+            if (!replay) {
+                stat_eventRecv[(int)cmd]->addData(1);
+            }
             profileEvent(event, cmd, replay, canStall);
             
             if (mshr_->isHit(baseAddr) && canStall) {
@@ -293,6 +217,7 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
                     if (is_debug_addr(baseAddr))
                         d_->debug(_L6_, "Drop prefetch: cache hit\n");
                     statPrefetchDrop->addData(1);
+                    coherenceMgr_->removeRequestRecord(event->getID());
                     delete event;
                     break;
                 }
@@ -302,17 +227,7 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
                     
                     event->setBlocked(true);
                 }
-                // track times in our separate queue
-                if (startTimeList_.find(event) == startTimeList_.end()) {
-                    startTimeList_.insert(std::pair<MemEvent*,uint64>(event, timestamp_));
-                }
-
                 break;
-            }
-            
-            // track times in our separate queue
-            if (startTimeList_.find(event) == startTimeList_.end()) {
-                startTimeList_.insert(std::pair<MemEvent*,uint64>(event, timestamp_));
             }
             
             processCacheRequest(event, cmd, baseAddr, replay);
@@ -320,19 +235,24 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
         case Command::GetSResp:
         case Command::GetXResp:
         case Command::FlushLineResp:
-            profileEvent(event, cmd, replay, canStall);
+            if (!replay) {
+                stat_eventRecv[(int)cmd]->addData(1);
+            }
             processCacheResponse(event, baseAddr);
             break;
         case Command::PutS:
         case Command::PutM:
         case Command::PutE:
-            profileEvent(event, cmd, replay, canStall);
+            if (!replay) {
+                stat_eventRecv[(int)cmd]->addData(1);
+            }
             processCacheReplacement(event, cmd, baseAddr, replay);
             break;
         case Command::NACK:
-            profileEvent(event, cmd, replay, canStall);
-            origEvent = event->getNACKedEvent();
-            processIncomingNACK(origEvent);
+            if (!replay) {
+                stat_eventRecv[(int)cmd]->addData(1);
+            }
+            coherenceMgr_->handleNACK(event, replay);
             delete event;
             break;
         case Command::FetchInv:
@@ -340,19 +260,26 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
         case Command::FetchInvX:
         case Command::Inv:
         case Command::ForceInv:
-            profileEvent(event, cmd, replay, canStall);
-            processCacheInvalidate(event, baseAddr, replay);
+            if (!replay) {
+                stat_eventRecv[(int)cmd]->addData(1);
+            }
+            if (coherenceMgr_->handleInvalidationRequest(event, replay) == DONE)
+                activatePrevEvents(baseAddr);
             break;
         case Command::AckPut:
         case Command::AckInv:
         case Command::FetchResp:
         case Command::FetchXResp:
-            profileEvent(event, cmd, replay, canStall);
+            if (!replay) {
+                stat_eventRecv[(int)cmd]->addData(1);
+            }
             processFetchResp(event, baseAddr);
             break;
         case Command::FlushLine:
         case Command::FlushLineInv:
-            profileEvent(event, cmd, replay, canStall);
+            if (!replay) {
+                stat_eventRecv[(int)cmd]->addData(1);
+            }
             processCacheFlush(event, baseAddr, replay);
             break;
         default:
@@ -402,6 +329,7 @@ void Cache::processPrefetchEvent(SST::Event* ev) {
     if (requestsThisCycle_ != maxRequestsPerCycle_) {
         if (event->getCmd() != Command::NULLCMD && mshr_->getSize() < dropPrefetchLevel_ && mshr_->getPrefetchCount() < maxOutstandingPrefetch_) { 
             requestsThisCycle_++;
+            coherenceMgr_->recordIncomingRequest(event);
             processEvent(event, false);
         } else {
             statPrefetchDrop->addData(1);
@@ -529,6 +457,11 @@ void Cache::handleEvent(SST::Event* ev) {
     if (!clockIsOn_) {
         turnClockOn();
     }
+
+    // Track latency by tracking from the time we get a request until we send a response
+    // NOTE: this can include time while a request is being nacked, invs are forwarded, etc.
+    if (CommandClassArr[(int)event->getCmd()] == CommandClass::Request && !CommandWriteback[(int)event->getCmd()]) 
+        coherenceMgr_->recordIncomingRequest(event);
 
     //eventBuffer_.push_back(event);
 

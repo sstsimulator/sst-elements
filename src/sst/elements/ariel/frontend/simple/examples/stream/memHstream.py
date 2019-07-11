@@ -34,6 +34,9 @@ os.environ['SIM_DESC'] = 'EIGHT_CORES'
 os.environ['OMP_NUM_THREADS'] = str(corecount)
 
 sst_root = os.getenv( "SST_ROOT" )
+app = sst_root + "/sst-elements/src/sst/elements/ariel/frontend/simple/examples/stream/stream"
+if not os.path.exists(app):
+    app = os.getenv( "OMP_EXE" )
 
 ## Application Info:
 ## Executable  -> exe_file
@@ -56,7 +59,7 @@ ariel.addParams({
    "maxcorequeue"        : "256",
    "maxissuepercycle"    : "2",
    "pipetimeout"         : "0",
-   "executable" : sst_root + "/sst-elements/src/sst/elements/ariel/frontend/simple/examples/stream/stream",
+   "executable"          : app,
    "arielinterceptcalls" : "1",
    "launchparamcount"    : 1,
    "launchparam0"        : "-ifeellucky",
@@ -84,11 +87,26 @@ def genMemHierarchy(cores):
         "request_width"         : cacheLineSize,
    })
 
-   memory = memctrl.setSubComponent("backend", "memHierarchy.dramsim")
+   memory = memctrl.setSubComponent("backend", "memHierarchy.timingDRAM")
    memory.addParams({
-        "device_ini"    : "DDR3_micron_32M_8B_x4_sg125.ini",
-        "system_ini"    : "system.ini",
         "mem_size"      : "512MiB",
+        "id" : 0,
+        "addrMapper" : "memHierarchy.simpleAddrMapper",
+        "addrMapper.interleave_size" : "64B",
+        "addrMapper.row_size" : "1KiB",
+        "clock" : "1GHz",
+        "channels" : 1,
+        "channel.numRanks" : 2,
+        "channel.rank.numBanks" : 8,
+        "channel.transaction_Q_size" : 32,
+        "channel.rank.bank.CL" : 10,
+        "channel.rank.bank.CL_WR" : 12,
+        "channel.rank.bank.RCD" : 10,
+        "channel.rank.bank.TRP" : 14,
+        "channel.rank.bank.dataCycles" : 2,
+        "channel.rank.bank.pagePolicy" : "memHierarchy.simplePagePolicy",
+        "channel.rank.bank.transactionQ" : "memHierarchy.reorderTransactionQ",
+        "channel.rank.bank.pagePolicy.close" : 1,
    })
 
    for core in range (cores):

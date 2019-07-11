@@ -212,6 +212,8 @@ static const std::string NONE = "None";
 
 }}
 
+// Define status types used internally to classify event handling resutls
+enum class MemEventStatus { OK, Stall, Reject };
 
 /* Define an address region by start/end & interleaving */
 struct MemRegion {

@@ -116,6 +116,12 @@ public:
         
     // used externally
     MSHR(Output* dbg, int maxSize, string cacheName, std::set<Addr> debugAddr);
+    
+    // Member getters
+    int getMaxSize();
+    int getSize();
+    unsigned int getSize(Addr addr);
+    
     bool exists(Addr baseAddr);                             
     list<MSHREntry>* getAll(Addr);                       
     
@@ -137,7 +143,6 @@ public:
     bool isAlmostFull();                                    // external
     const MSHREntry* getOldestRequest() const;                     // external
     bool pendingWriteback(Addr baseAddr);
-    unsigned int getSize(){ return size_; }                 
     unsigned int getPrefetchCount() { return prefetchCount_; }
 
     // Bookkeeping getters/setters
@@ -167,7 +172,7 @@ public:
     void printTable();
 
 private:
-    mshrTable map_;
+    mshrTable mshr_;
     Output* d_;
     Output* d2_;
     int size_;

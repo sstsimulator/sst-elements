@@ -43,6 +43,7 @@ public:
         {"eventSent_Fetch",         "Number of Fetch requests sent", "events", 2},
         {"eventSent_FetchInv",      "Number of FetchInv requests sent", "events", 2},
         {"eventSent_FetchInvX",     "Number of FetchInvX requests sent", "events", 2},
+        {"eventSent_ForceInv",      "Number of ForceInv requests sent", "events", 2},
         {"eventSent_FetchResp",     "Number of FetchResp requests sent", "events", 2},
         {"eventSent_FetchXResp",    "Number of FetchXResp requests sent", "events", 2},
         {"eventSent_AckInv",        "Number of AckInvs sent", "events", 2},
@@ -51,6 +52,12 @@ public:
         {"eventSent_FlushLine",     "Number of FlushLine requests sent", "events", 2},
         {"eventSent_FlushLineInv",  "Number of FlushLineInv requests sent", "events", 2},
         {"eventSent_FlushLineResp", "Number of FlushLineResp responses sent", "events", 2},
+        {"eventSent_Put",           "Number of Put requests sent", "events", 6},
+        {"eventSent_Get",           "Number of Get requests sent", "events", 6},
+        {"eventSent_AckMove",       "Number of AckMove responses sent", "events", 6},
+        {"eventSent_CustomReq",     "Number of CustomReq requests sent", "events", 4},
+        {"eventSent_CustomResp",    "Number of CustomResp responses sent", "events", 4},
+        {"eventSent_CustomAck",     "Number of CustomAck responses sent", "events", 4},
         /* Event/State combinations - Count how many times an event was seen in particular state */
         {"stateEvent_GetS_I",           "Event/State: Number of times a GetS was seen in state I (Miss)", "count", 3},
         {"stateEvent_GetS_S",           "Event/State: Number of times a GetS was seen in state S (Hit)", "count", 3},
@@ -232,14 +239,19 @@ public:
         {"evict_IB",                "Eviction: Attempted to evict a block in state S_B", "count", 3},
         {"evict_SB",                "Eviction: Attempted to evict a block in state I_B", "count", 3},
         /* Latency for different kinds of misses*/
-        {"latency_GetS_IS",         "Latency for read misses in I state", "cycles", 1},
-        {"latency_GetS_M",          "Latency for read misses that find the block owned by another cache in M state", "cycles", 1},
-        {"latency_GetX_IM",         "Latency for write misses in I state", "cycles", 1},
-        {"latency_GetX_SM",         "Latency for write misses in S state", "cycles", 1},
-        {"latency_GetX_M",          "Latency for write misses that find the block owned by another cache in M state", "cycles", 1},
-        {"latency_GetSX_IM",        "Latency for read-exclusive misses in I state", "cycles", 1},
-        {"latency_GetSX_SM",        "Latency for read-exclusive misses in S state", "cycles", 1},
-        {"latency_GetSX_M",         "Latency for read-exclusive misses that find the block owned by another cache in M state", "cycles", 1},
+        {"latency_GetS_hit",        "Latency for read hits", "cycles", 1},
+        {"latency_GetS_miss",       "Latency for read misses, block not present", "cycles", 1},
+        {"latency_GetS_inv",        "Latency for read misses, required fetch/inv from owner", "cycles", 1},
+        {"latency_GetX_hit",        "Latency for write hits", "cycles", 1},
+        {"latency_GetX_miss",       "Latency for write misses, block not present", "cycles", 1},
+        {"latency_GetX_inv",        "Latency for write misses, block present but required invalidation/fetch", "cycles", 1},
+        {"latency_GetX_upgrade",    "Latency for write misses, block present but in Shared state (includes invs in S)", "cycles", 1},
+        {"latency_GetSX_hit",       "Latency for read-exclusive hits", "cycles", 1},
+        {"latency_GetSX_miss",      "Latency for read-exclusive misses, block not present", "cycles", 1},
+        {"latency_GetSX_inv",       "Latency for read-exclusive misses, block present but required invalidation/fetch", "cycles", 1},
+        {"latency_GetSX_upgrade",   "Latency for read-exclusive misses, block present but in Shared state (includes invs in S)", "cycles", 1},
+        {"latency_FlushLine",       "Latency for flush requests", "cycles", 1},
+        {"latency_FlushLineInv",    "Latency for flush+invalidate requests", "cycles", 1},
         /* Track what happens to prefetched blocks */
         {"prefetch_useful",         "Prefetched block had a subsequent hit (useful prefetch)", "count", 2},
         {"prefetch_evict",          "Prefetched block was evicted/flushed before being accessed", "count", 2},
@@ -406,8 +418,28 @@ public:
         stat_eventSent[(int)Command::FlushLineResp] = registerStatistic<uint64_t>("eventSent_FlushLineResp");
         stat_eventSent[(int)Command::Fetch]         = registerStatistic<uint64_t>("eventSent_Fetch");
         stat_eventSent[(int)Command::FetchInv]      = registerStatistic<uint64_t>("eventSent_FetchInv");
+        stat_eventSent[(int)Command::ForceInv]      = registerStatistic<uint64_t>("eventSent_ForceInv");
         stat_eventSent[(int)Command::FetchInvX]     = registerStatistic<uint64_t>("eventSent_FetchInvX");
         stat_eventSent[(int)Command::Inv]           = registerStatistic<uint64_t>("eventSent_Inv");
+        stat_eventSent[(int)Command::Put]           = registerStatistic<uint64_t>("eventSent_Put");
+        stat_eventSent[(int)Command::Get]           = registerStatistic<uint64_t>("eventSent_Get");
+        stat_eventSent[(int)Command::AckMove]       = registerStatistic<uint64_t>("eventSent_AckMove");
+        stat_eventSent[(int)Command::CustomReq]     = registerStatistic<uint64_t>("eventSent_CustomReq");
+        stat_eventSent[(int)Command::CustomResp]    = registerStatistic<uint64_t>("eventSent_CustomResp");
+        stat_eventSent[(int)Command::CustomAck]     = registerStatistic<uint64_t>("eventSent_CustomAck");
+        stat_latencyGetS[LatType::HIT]       = registerStatistic<uint64_t>("latency_GetS_hit");
+        stat_latencyGetS[LatType::MISS]      = registerStatistic<uint64_t>("latency_GetS_miss");
+        stat_latencyGetS[LatType::INV]       = registerStatistic<uint64_t>("latency_GetS_inv");
+        stat_latencyGetX[LatType::HIT]       = registerStatistic<uint64_t>("latency_GetX_hit");
+        stat_latencyGetX[LatType::MISS]      = registerStatistic<uint64_t>("latency_GetX_miss");
+        stat_latencyGetX[LatType::INV]       = registerStatistic<uint64_t>("latency_GetX_inv");
+        stat_latencyGetX[LatType::UPGRADE]   = registerStatistic<uint64_t>("latency_GetX_upgrade");
+        stat_latencyGetSX[LatType::HIT]      = registerStatistic<uint64_t>("latency_GetSX_hit");
+        stat_latencyGetSX[LatType::MISS]     = registerStatistic<uint64_t>("latency_GetSX_miss");
+        stat_latencyGetSX[LatType::INV]      = registerStatistic<uint64_t>("latency_GetSX_inv");
+        stat_latencyGetSX[LatType::UPGRADE]  = registerStatistic<uint64_t>("latency_GetSX_upgrade");
+        stat_latencyFlushLine       = registerStatistic<uint64_t>("latency_FlushLine");
+        stat_latencyFlushLineInv    = registerStatistic<uint64_t>("latency_FlushLineInv");
         
         /* Prefetch statistics */
         if (prefetch) {
@@ -489,11 +521,13 @@ public:
     CacheAction handleReplacement(MemEvent* event, CacheLine* cacheLine, MemEvent * reqEvent, bool replay);
     
     /** Process invalidation requests - Inv, FetchInv, FetchInvX */
-    CacheAction handleInvalidationRequest(MemEvent *event, CacheLine* cacheLine, MemEvent * collisionEvent, bool replay);
+    CacheAction handleInvalidationRequest(MemEvent *event, bool inMSHR);
 
     /** Process responses - GetSResp, GetXResp, FetchResp */
-    CacheAction handleCacheResponse(MemEvent* responseEvent, CacheLine* cacheLine, MemEvent* origRequest);
-    CacheAction handleFetchResponse(MemEvent* responseEvent, CacheLine* cacheLine, MemEvent* origRequest);
+    CacheAction handleCacheResponse(MemEvent* event, bool inMSHR);
+    CacheAction handleFetchResponse(MemEvent* event, bool inMSHR);
+    
+    bool handleNACK(MemEvent* event, bool inMSHR);
 
 /* Message send */
     void forwardMessageUp(MemEvent* event);
@@ -504,11 +538,8 @@ public:
 
 /* Miscellaneous */
     /** Determine in advance if a request will miss (and what kind of miss). Used for stats */
-    int isCoherenceMiss(MemEvent* event, CacheLine* cacheLine);
+    bool isCacheHit(MemEvent* event);
     
-    /** Determine whether a NACKed event should be retried */
-    bool isRetryNeeded(MemEvent * event, CacheLine * cacheLine);
-   
 /* Temporary */
     void setCacheArray(CacheArray* arrayptr) { cacheArray_ = arrayptr; }
 
@@ -529,6 +560,11 @@ private:
     Statistic<uint64_t>* stat_evict_SI;
     Statistic<uint64_t>* stat_eventSent[(int)Command::LAST_CMD];
     std::array<std::array<Statistic<uint64_t>*, LAST_STATE>, (int)Command::LAST_CMD> stat_eventState;
+    Statistic<uint64_t>* stat_latencyGetS[3];
+    Statistic<uint64_t>* stat_latencyGetX[4];
+    Statistic<uint64_t>* stat_latencyGetSX[4];
+    Statistic<uint64_t>* stat_latencyFlushLine;
+    Statistic<uint64_t>* stat_latencyFlushLineInv;
 
 /* Private event handlers */
     /** Handle GetX request. Request upgrade if needed */
@@ -572,7 +608,7 @@ private:
     
     /** Handle Ack */
     CacheAction handleAckInv(MemEvent * responseEvent, CacheLine* cacheLine, MemEvent * reqEvent);
-
+    
 /* Private methods for sending events */
     /** Send response to lower level cache */
     void sendResponseDown(MemEvent* event, CacheLine* cacheLine, bool dirty, bool replay);
@@ -618,6 +654,7 @@ private:
     void recordEvictionState(State state);
     void recordEventSentUp(Command cmd);
     void recordEventSentDown(Command cmd);
+    void recordLatency(Command cmd, int type, uint64_t latency);
 };
 
 

@@ -14,6 +14,13 @@ uncoreclock = "1.4GHz"
 coherence = "MESI"
 network_bw = "60GB/s"
 
+DEBUG_L1 = 0
+DEBUG_L2 = 0
+DEBUG_L3 = 0
+DEBUG_DIR = 0
+DEBUG_MEM = 0
+DEBUG_LEV = 10
+
 # Create merlin network - this is just simple single router
 comp_network = sst.Component("network", "merlin.hr_router")
 comp_network.addParams({
@@ -50,6 +57,8 @@ for x in range(cores):
         "cache_size" : "2KiB",  # super tiny for lots of traffic
         "associativity" : 2,
         "L1" : 1,
+        "debug" : DEBUG_L1,
+        "debug_level" : DEBUG_LEV,
     })
 
     l2cache = sst.Component("l2cache" + str(x), "memHierarchy.Cache")
@@ -65,6 +74,8 @@ for x in range(cores):
         "cache_type" : "noninclusive",
         "max_requests_per_cycle" : 1,
         "mshr_num_entries" : 4,
+        "debug" : DEBUG_L2,
+        "debug_level" : DEBUG_LEV,
     })
     
     l2tl1 = l2cache.setSubComponent("cpulink", "memHierarchy.MemLink")
@@ -102,6 +113,8 @@ for x in range(caches):
         "num_cache_slices" : caches,
         "slice_allocation_policy" : "rr", # Round-robin
         "slice_id" : x,
+        "debug" : DEBUG_L3,
+        "debug_level" : DEBUG_LEV,
     })
     l3nic = l3cache.setSubComponent("cpulink", "memHierarchy.MemNIC")
     l3nic.addParams({
@@ -126,6 +139,8 @@ for x in range(memories):
         "interleave_step" : str(memories * 64) + "B",
         "addr_range_start" : x*64,
         "addr_range_end" :  1024*1024*1024 - ((memories - x) * 64) + 63,
+        "debug" : DEBUG_DIR,
+        "debug_level" : DEBUG_LEV,
     })
     dirtoM = directory.setSubComponent("memlink", "memHierarchy.MemLink")
     dirnic = directory.setSubComponent("cpulink", "memHierarchy.MemNIC")
@@ -140,6 +155,8 @@ for x in range(memories):
     memctrl.addParams({
         "clock" : "500MHz",
         "backing" : "none",
+        "debug" : DEBUG_MEM,
+        "debug_level" : DEBUG_LEV,
     })
     memory = memctrl.setSubComponent("backend", "memHierarchy.simpleDRAM")
     memory.addParams({

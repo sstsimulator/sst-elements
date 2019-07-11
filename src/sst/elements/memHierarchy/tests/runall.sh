@@ -1,7 +1,8 @@
 #!/bin/bash
 
-# clean up from previous
-rm dramsim*.log
+# clean up from previous 
+# Commented out since we're not running the dramsim tests
+# rm dramsim*.log
 
 # Create array of all tests
 declare -a sdl_arr=(sdl-1.py
@@ -130,7 +131,7 @@ do
     echo "Running ${arr[$i]}"
     if timeout 60 sst ${arr[$i]} > log; then
         if grep -q "Simulation is complete, simulated time" log; then
-            if diff log ${refarr[$i]}; then
+            if cmp -s log ${refarr[$i]}; then
                 echo "  Complete"
             else
                 cp log diffed_${arr[$i]}.log

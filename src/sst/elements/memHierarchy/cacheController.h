@@ -152,9 +152,25 @@ public:
             {"PutS_recv",               "Event received: PutS", "count", 2},
             {"PutE_recv",               "Event received: PutE", "count", 2},
             {"FetchInv_recv",           "Event received: FetchInv", "count", 2},
+            {"Fetch_recv",              "Event received: Fetch", "count", 2},
             {"FetchInvX_recv",          "Event received: FetchInvX", "count", 2},
+            {"ForceInv_recv",           "Event received: ForceInv", "count", 2},
             {"Inv_recv",                "Event received: Inv", "count", 2},
-            {"NACK_recv",               "Event: NACK received", "count", 2})
+            {"FetchResp_recv",          "Event received: FetchResp", "count", 2},
+            {"FetchXResp_recv",         "Event received: FetchXResp", "count", 2},
+            {"AckInv_recv",             "Event received: AckInv", "count", 2},
+            {"AckPut_recv",             "Event received: AckPut", "count", 2},
+            {"FlushLine_recv",          "Event received: FlushLine", "count", 2},
+            {"FlushLineInv_recv",       "Event received: FlushLineInv", "count", 2},
+            {"FlushLineResp_recv",      "Event received: FlushLineResp", "count", 2},
+            {"NACK_recv",               "Event: NACK received", "count", 2},
+            {"Get_recv",                "Event: Get received", "count", 6},
+            {"Put_recv",                "Event: Put received", "count", 6},
+            {"AckMove_recv",            "Event: AckMove received", "count", 6},
+            {"CustomReq_recv",          "Event: CustomReq received", "count", 4},
+            {"CustomResp_recv",         "Event: CustomResp received", "count", 4},
+            {"CustomAck_recv",          "Event: CustomAck received", "count", 4},
+            {"default_stat",            "Default statistic used for unexpected events/cases/etc. Should be 0, if not, check for missing statistic registerations.", "none", 7})
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
             {"cpulink", "CPU-side link manager, for single-link caches, use this one only", "SST::MemHierarchy::MemLinkBase"},
@@ -247,14 +263,14 @@ private:
 
     /** Function attempts to send all responses for previous events that 'blocked' due to an outstanding request.
         If response blocks cache line the remaining responses go to MSHR till new outstanding request finishes  */
-    inline void activatePrevEvents(Addr baseAddr);
+    void activatePrevEvents(Addr baseAddr);
 
     /** This function re-processes a signle previous request.  In hardware, the MSHR would be looked up,
         the MSHR entry would be modified and the response would be sent directly without reading the cache
         array and tag.  In SST, we just rerun the request to avoid complexity */
     inline bool activatePrevEvent(MemEvent* event, list<MSHREntry>& entries, Addr addr, list<MSHREntry>::iterator& it, int i);
 
-    inline void postRequestProcessing(MemEvent* event, CacheLine* cacheLine, bool mshrHit);
+    inline void postRequestProcessing(MemEvent* event, CacheLine* cacheLine);
 
     inline void postReplacementProcessing(MemEvent* event, CacheAction action, bool mshrHit);
 
@@ -262,23 +278,14 @@ private:
         and need to be reactivated */
     inline void reActivateEventWaitingForUserLock(CacheLine* cacheLine);
 
-    /** Check whether this request will hit or miss in the cache - including correct coherence permission */
-    int isCacheHit(MemEvent* event, Command cmd, Addr baseAddr);
-
     /** Insert to MSHR wrapper */
     inline bool insertToMSHR(Addr baseAddr, MemEvent* event);
 
     /** Try to insert request to MSHR.  If not sucessful, function send a NACK to requestor */
     bool processRequestInMSHR(Addr baseAddr, MemEvent* event);
-    bool processInvRequestInMSHR(Addr baseAddr, MemEvent* event, bool inProgress);
 
     /** Determines what CC will send the NACK. */
     void sendNACK(MemEvent* event);
-
-    /** In charge of processng incoming NACK.
-        Currently, it simply retries event */
-    void processIncomingNACK(MemEvent* _origReqEvent);
-
 
     /** Verify that input parameters are valid */
     void errorChecking();
@@ -421,18 +428,7 @@ private:
     Statistic<uint64_t>* statGetXMissAfterBlocked;
     Statistic<uint64_t>* statGetSXMissAfterBlocked;
     // Events received
-    Statistic<uint64_t>* statGetS_recv;
-    Statistic<uint64_t>* statGetX_recv;
-    Statistic<uint64_t>* statGetSX_recv;
-    Statistic<uint64_t>* statGetSResp_recv;
-    Statistic<uint64_t>* statGetXResp_recv;
-    Statistic<uint64_t>* statPutS_recv;
-    Statistic<uint64_t>* statPutM_recv;
-    Statistic<uint64_t>* statPutE_recv;
-    Statistic<uint64_t>* statFetchInv_recv;
-    Statistic<uint64_t>* statFetchInvX_recv;
-    Statistic<uint64_t>* statInv_recv;
-    Statistic<uint64_t>* statNACK_recv;
+    Statistic<uint64_t>* stat_eventRecv[(int)Command::LAST_CMD];
     Statistic<uint64_t>* statTotalEventsReceived;
     Statistic<uint64_t>* statTotalEventsReplayed;   // Used to be "MSHR Hits" but this makes more sense because incoming events may be an MSHR hit but will be counted as "event received"
     Statistic<uint64_t>* statNoncacheableEventsReceived; // Counts any non-cache events that are received and forwarded

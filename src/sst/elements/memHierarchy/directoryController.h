@@ -283,7 +283,7 @@ private:
     void handleBackInv(MemEvent * ev);
 
     /** Request dir entry from memory */
-    void getDirEntryFromMemory(DirEntry * entry);
+    void retrieveDirEntry(DirEntry* entry, MemEvent* event, bool inMSHR);
 
     /** NACK incoming request because there are no available MSHRs */
     void mshrNACKRequest(MemEvent * event, bool toMem = false);
@@ -313,6 +313,8 @@ private:
 
     /** Sends MemEventBase to a memory */
     inline void sendEventToMem(MemEventBase *ev);
+
+    void sendOutgoingEvents();
 
     /** Writes data packet to Memory. Returns the MemEvent ID of the data written to memory */
     MemEvent::id_type writebackData(MemEvent *data_event, Command wbCmd);

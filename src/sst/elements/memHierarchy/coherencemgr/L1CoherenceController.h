@@ -47,6 +47,12 @@ public:
         {"eventSent_FlushLine",     "Number of FlushLine requests sent", "events", 2},
         {"eventSent_FlushLineInv",  "Number of FlushLineInv requests sent", "events", 2},
         {"eventSent_FlushLineResp", "Number of FlushLineResp responses sent", "events", 2},
+        {"eventSent_Put",           "Number of Put requests sent", "events", 6},
+        {"eventSent_Get",           "Number of Get requests sent", "events", 6},
+        {"eventSent_AckMove",       "Number of AckMove responses sent", "events", 6},
+        {"eventSent_CustomReq",     "Number of CustomReq requests sent", "events", 4},
+        {"eventSent_CustomResp",    "Number of CustomResp responses sent", "events", 4},
+        {"eventSent_CustomAck",     "Number of CustomAck responses sent", "events", 4},
         /* Event/State combinations - Count how many times an event was seen in particular state */
         {"stateEvent_GetS_I",           "Event/State: Number of times a GetS was seen in state I (Miss)", "count", 3},
         {"stateEvent_GetS_S",           "Event/State: Number of times a GetS was seen in state S (Hit)", "count", 3},
@@ -127,14 +133,18 @@ public:
         {"evict_IB",                "Eviction: Attempted to evict a block in state S_B", "count", 3},
         {"evict_SB",                "Eviction: Attempted to evict a block in state I_B", "count", 3},
         /* Latency for different kinds of misses*/
-        {"latency_GetS_IS",         "Latency for read misses in I state", "cycles", 1},
-        {"latency_GetS_M",          "Latency for read misses that find the block owned by another cache in M state", "cycles", 1},
-        {"latency_GetX_IM",         "Latency for write misses in I state", "cycles", 1},
-        {"latency_GetX_SM",         "Latency for write misses in S state", "cycles", 1},
-        {"latency_GetX_M",          "Latency for write misses that find the block owned by another cache in M state", "cycles", 1},
-        {"latency_GetSX_IM",        "Latency for read-exclusive misses in I state", "cycles", 1},
-        {"latency_GetSX_SM",        "Latency for read-exclusive misses in S state", "cycles", 1},
-        {"latency_GetSX_M",         "Latency for read-exclusive misses that find the block owned by another cache in M state", "cycles", 1},
+        {"latency_GetS_miss",           "Latency for read misses", "cycles", 1},
+        {"latency_GetS_hit",            "Latency for read hits", "cycles", 1},
+        {"latency_GetX_miss",           "Latency for write misses (block not present)", "cycles", 1},
+        {"latency_GetX_upgrade",        "Latency for write misses, block present but in Shared state", "cycles", 1},
+        {"latency_GetX_hit",            "Latency for write hits", "cycles", 1},
+        {"latency_GetSX_miss",          "Latency for read-exclusive misses (block not present)", "cycles", 2},
+        {"latency_GetSX_upgrade",       "Latency for read-exclusive misses, block present but in Shared state", "cycles", 2},
+        {"latency_GetSX_hit",           "Latency for read-exclusive hits", "cycles", 2},
+        {"latency_FlushLine",           "Latency for Flush requests", "cycles", 2},
+        {"latency_FlushLine_fail",      "Latency for Flush requests that failed (e.g., line was locked)", "cycles", 2},
+        {"latency_FlushLineInv",        "Latency for Flush and Invalidate requests", "cycles", 2},
+        {"latency_FlushLineInv_fail",   "Latency for Flush and Invalidate requests that failed (e.g., line was locked)", "cycles", 2},
         /* Track what happens to prefetched blocks */
         {"prefetch_useful",         "Prefetched block had a subsequent hit (useful prefetch)", "count", 2},
         {"prefetch_evict",          "Prefetched block was evicted/flushed before being accessed", "count", 2},
@@ -238,9 +248,27 @@ public:
         stat_eventSent[(int)Command::GetSResp] =        registerStatistic<uint64_t>("eventSent_GetSResp");
         stat_eventSent[(int)Command::GetXResp] =        registerStatistic<uint64_t>("eventSent_GetXResp");
         stat_eventSent[(int)Command::FlushLineResp] =   registerStatistic<uint64_t>("eventSent_FlushLineResp");
+        stat_eventSent[(int)Command::Put]           = registerStatistic<uint64_t>("eventSent_Put");
+        stat_eventSent[(int)Command::Get]           = registerStatistic<uint64_t>("eventSent_Get");
+        stat_eventSent[(int)Command::AckMove]       = registerStatistic<uint64_t>("eventSent_AckMove");
+        stat_eventSent[(int)Command::CustomReq]     = registerStatistic<uint64_t>("eventSent_CustomReq");
+        stat_eventSent[(int)Command::CustomResp]    = registerStatistic<uint64_t>("eventSent_CustomResp");
+        stat_eventSent[(int)Command::CustomAck]     = registerStatistic<uint64_t>("eventSent_CustomAck");
         stat_eventStalledForLock =      registerStatistic<uint64_t>("EventStalledForLockedCacheline");
         stat_evict_S =                  registerStatistic<uint64_t>("evict_S");
         stat_evict_SM =                 registerStatistic<uint64_t>("evict_SM");
+        stat_latencyGetS[LatType::HIT]          = registerStatistic<uint64_t>("latency_GetS_hit");
+        stat_latencyGetS[LatType::MISS]         = registerStatistic<uint64_t>("latency_GetS_miss");
+        stat_latencyGetX[LatType::HIT]          = registerStatistic<uint64_t>("latency_GetX_hit");
+        stat_latencyGetX[LatType::MISS]         = registerStatistic<uint64_t>("latency_GetX_miss");
+        stat_latencyGetX[LatType::UPGRADE]      = registerStatistic<uint64_t>("latency_GetX_upgrade");
+        stat_latencyGetSX[LatType::HIT]         = registerStatistic<uint64_t>("latency_GetSX_hit");
+        stat_latencyGetSX[LatType::MISS]        = registerStatistic<uint64_t>("latency_GetSX_miss");
+        stat_latencyGetSX[LatType::UPGRADE]     = registerStatistic<uint64_t>("latency_GetSX_upgrade");
+        stat_latencyFlushLine[LatType::HIT]     = registerStatistic<uint64_t>("latency_FlushLine");
+        stat_latencyFlushLine[LatType::MISS]    = registerStatistic<uint64_t>("latency_FlushLine_fail");
+        stat_latencyFlushLineInv[LatType::HIT]  = registerStatistic<uint64_t>("latency_FlushLineInv");
+        stat_latencyFlushLineInv[LatType::MISS] = registerStatistic<uint64_t>("latency_FlushLineInv_fail");
    
         /* Only for caches that expect writeback acks but don't know yet and can't register statistics later. Always enabled for now. */
         stat_eventState[(int)Command::AckPut][I] = registerStatistic<uint64_t>("stateEvent_AckPut_I");
@@ -280,8 +308,8 @@ public:
     /** Used to determine in advance if an event will be a miss (and which kind of miss)
      * Used for statistics only
      */
-    int isCoherenceMiss(MemEvent* event, CacheLine* cacheLine);
-    
+    bool isCacheHit(MemEvent* event);
+
     /* Event handlers called by cache controller */
     /** Send cache line data to the lower level caches */
     CacheAction handleEviction(CacheLine* wbCacheLine, string origRqstr, bool ignoredParam=false);
@@ -293,12 +321,13 @@ public:
     CacheAction handleReplacement(MemEvent* event, CacheLine* cacheLine, MemEvent * origRequest, bool replay);
     
     /** Process Inv */
-    CacheAction handleInvalidationRequest(MemEvent *event, CacheLine* cacheLine, MemEvent * collisionEvent, bool replay);
+    CacheAction handleInvalidationRequest(MemEvent *event, bool inMSHR);
 
     /** Process responses */
-    CacheAction handleCacheResponse(MemEvent* responseEvent, CacheLine* cacheLine, MemEvent* origRequest);
-    CacheAction handleFetchResponse(MemEvent* responseEvent, CacheLine* cacheLine, MemEvent* origRequest);
+    CacheAction handleCacheResponse(MemEvent* responseEvent, bool inMSHR);
+    CacheAction handleFetchResponse(MemEvent* responseEvent, bool inMSHR);
 
+    bool handleNACK(MemEvent* event, bool inMSHR);
 
     /* Methods for sending events, called by cache controller */
     /** Send response up (to processor) */
@@ -309,15 +338,13 @@ public:
     void addToOutgoingQueueUp(Response& resp);
 
 /* Miscellaneous */
-    /** Determine whether a retry of a NACKed event is needed */
-    bool isRetryNeeded(MemEvent * event, CacheLine * cacheLine);
-
     void printData(vector<uint8_t> * data, bool set);
 
 /* Temporary */
     void setCacheArray(CacheArray* arrayptr) { cacheArray_ = arrayptr; }
 
 private:
+        
     bool        protocol_;  // True for MESI, false for MSI
     bool        snoopL1Invs_;
     CacheArray* cacheArray_;
@@ -327,7 +354,16 @@ private:
     Statistic<uint64_t>* stat_evict_S;
     Statistic<uint64_t>* stat_evict_SM;
     Statistic<uint64_t>* stat_eventSent[(int)Command::LAST_CMD];
+    Statistic<uint64_t>* stat_latencyGetS[2];
+    Statistic<uint64_t>* stat_latencyGetX[4];
+    Statistic<uint64_t>* stat_latencyGetSX[4];
+    Statistic<uint64_t>* stat_latencyFlushLine[2];
+    Statistic<uint64_t>* stat_latencyFlushLineInv[2];
     std::array<std::array<Statistic<uint64_t>*, LAST_STATE>, (int)Command::LAST_CMD> stat_eventState;
+    
+    void printLine(Addr addr, CacheLine* line);
+
+    void recordLatency(Command cmd, int type, uint64_t timestamp);
 
     /* Private event handlers */
     /** Handle GetX request. Request upgrade if needed */

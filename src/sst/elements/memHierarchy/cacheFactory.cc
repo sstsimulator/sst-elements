@@ -835,6 +835,10 @@ void Cache::checkDeprecatedParams(Params &params) {
 }
 
 void Cache::registerStatistics() {
+    Statistic<uint64_t>* def_stat = registerStatistic<uint64_t>("default_stat");
+    for (int i = 0; i < (int)Command::LAST_CMD; i++)
+        stat_eventRecv[i] = def_stat;
+
     statTotalEventsReceived         = registerStatistic<uint64_t>("TotalEventsReceived");
     statTotalEventsReplayed         = registerStatistic<uint64_t>("TotalEventsReplayed");
     statNoncacheableEventsReceived  = registerStatistic<uint64_t>("TotalNoncacheableEventsReceived");
@@ -852,18 +856,33 @@ void Cache::registerStatistics() {
     statGetSMissAfterBlocked        = registerStatistic<uint64_t>("GetSMiss_Blocked");
     statGetXMissAfterBlocked        = registerStatistic<uint64_t>("GetXMiss_Blocked");
     statGetSXMissAfterBlocked       = registerStatistic<uint64_t>("GetSXMiss_Blocked");
-    statGetS_recv                   = registerStatistic<uint64_t>("GetS_recv");
-    statGetX_recv                   = registerStatistic<uint64_t>("GetX_recv");
-    statGetSX_recv                  = registerStatistic<uint64_t>("GetSX_recv");
-    statGetSResp_recv               = registerStatistic<uint64_t>("GetSResp_recv");
-    statGetXResp_recv               = registerStatistic<uint64_t>("GetXResp_recv");
-    statPutS_recv                   = registerStatistic<uint64_t>("PutS_recv");
-    statPutM_recv                   = registerStatistic<uint64_t>("PutM_recv");
-    statPutE_recv                   = registerStatistic<uint64_t>("PutE_recv");
-    statFetchInv_recv               = registerStatistic<uint64_t>("FetchInv_recv");
-    statFetchInvX_recv              = registerStatistic<uint64_t>("FetchInvX_recv");
-    statInv_recv                    = registerStatistic<uint64_t>("Inv_recv");
-    statNACK_recv                   = registerStatistic<uint64_t>("NACK_recv");
+    stat_eventRecv[(int)Command::GetS]      = registerStatistic<uint64_t>("GetS_recv");
+    stat_eventRecv[(int)Command::GetX]      = registerStatistic<uint64_t>("GetX_recv");
+    stat_eventRecv[(int)Command::GetSX]     = registerStatistic<uint64_t>("GetSX_recv");
+    stat_eventRecv[(int)Command::GetSResp]  = registerStatistic<uint64_t>("GetSResp_recv");
+    stat_eventRecv[(int)Command::GetXResp]  = registerStatistic<uint64_t>("GetXResp_recv");
+    stat_eventRecv[(int)Command::PutS]      = registerStatistic<uint64_t>("PutS_recv");
+    stat_eventRecv[(int)Command::PutM]      = registerStatistic<uint64_t>("PutM_recv");
+    stat_eventRecv[(int)Command::PutE]      = registerStatistic<uint64_t>("PutE_recv");
+    stat_eventRecv[(int)Command::Fetch]     = registerStatistic<uint64_t>("Fetch_recv");
+    stat_eventRecv[(int)Command::FetchInv]  = registerStatistic<uint64_t>("FetchInv_recv");
+    stat_eventRecv[(int)Command::FetchInvX] = registerStatistic<uint64_t>("FetchInvX_recv");
+    stat_eventRecv[(int)Command::ForceInv]  = registerStatistic<uint64_t>("ForceInv_recv");
+    stat_eventRecv[(int)Command::Inv]       = registerStatistic<uint64_t>("Inv_recv");
+    stat_eventRecv[(int)Command::NACK]      = registerStatistic<uint64_t>("NACK_recv");
+    stat_eventRecv[(int)Command::AckInv]    = registerStatistic<uint64_t>("AckInv_recv");
+    stat_eventRecv[(int)Command::AckPut]    = registerStatistic<uint64_t>("AckPut_recv");
+    stat_eventRecv[(int)Command::FetchResp] = registerStatistic<uint64_t>("FetchResp_recv");
+    stat_eventRecv[(int)Command::FetchXResp] = registerStatistic<uint64_t>("FetchXResp_recv");
+    stat_eventRecv[(int)Command::CustomReq] = registerStatistic<uint64_t>("CustomReq_recv");
+    stat_eventRecv[(int)Command::CustomResp] = registerStatistic<uint64_t>("CustomResp_recv");
+    stat_eventRecv[(int)Command::CustomAck] = registerStatistic<uint64_t>("CustomAck_recv");
+    stat_eventRecv[(int)Command::FlushLine] = registerStatistic<uint64_t>("FlushLine_recv");
+    stat_eventRecv[(int)Command::FlushLineInv] = registerStatistic<uint64_t>("FlushLineInv_recv");
+    stat_eventRecv[(int)Command::FlushLineResp] = registerStatistic<uint64_t>("FlushLineResp_recv");
+    stat_eventRecv[(int)Command::Put] = registerStatistic<uint64_t>("Put_recv");
+    stat_eventRecv[(int)Command::Get] = registerStatistic<uint64_t>("Get_recv");
+    stat_eventRecv[(int)Command::AckMove] = registerStatistic<uint64_t>("AckMove_recv");
     statMSHROccupancy               = registerStatistic<uint64_t>("MSHR_occupancy");
     statBankConflicts               = registerStatistic<uint64_t>("Bank_conflicts");
 }

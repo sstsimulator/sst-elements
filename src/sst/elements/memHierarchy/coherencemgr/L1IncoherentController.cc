@@ -44,7 +44,6 @@ using namespace SST::MemHierarchy;
  *      handleResponse
  *      handleReplacement (not relevant for L1s)
  *      handleInvalidationRequest
- *      isRetryNeeded 
  */
   
 CacheAction L1IncoherentController::handleEviction(CacheLine* wbCacheLine, string origRqstr, bool ignoredParam) {
@@ -138,7 +137,7 @@ CacheAction L1IncoherentController::handleReplacement(MemEvent* event, CacheLine
  *  Handle invalidation - Inv, FetchInv, or FetchInvX
  *  Return: whether Inv was successful (true) or we are waiting on further actions (false). L1 returns true (no sharers/owners).
  */
-CacheAction L1IncoherentController::handleInvalidationRequest(MemEvent * event, CacheLine * cacheLine, MemEvent * collisonEvent, bool replay) {
+CacheAction L1IncoherentController::handleInvalidationRequest(MemEvent * event, bool inMSHR) {
     debug->fatal(CALL_INFO,-1,"%s, Error: Received an unrecognized request: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n", 
             ownerName_.c_str(), CommandString[(int)event->getCmd()], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
     return IGNORE;
@@ -147,41 +146,55 @@ CacheAction L1IncoherentController::handleInvalidationRequest(MemEvent * event, 
 
 
 
-CacheAction L1IncoherentController::handleCacheResponse(MemEvent * respEvent, CacheLine * cacheLine, MemEvent * reqEvent) {
-    Command cmd = respEvent->getCmd();
+CacheAction L1IncoherentController::handleCacheResponse(MemEvent * event, bool inMSHR) {
+    Addr bAddr = event->getBaseAddr();
+    CacheLine* line = cacheArray_->lookup(bAddr, false);
+    
+    if (is_debug_addr(bAddr))
+        printLine(bAddr, line);
+
+    MemEvent* reqEvent = mshr_->lookupFront(bAddr);
+    
+    Command cmd = event->getCmd();
     switch (cmd) {
         case Command::GetSResp:
         case Command::GetXResp:
-            handleDataResponse(respEvent, cacheLine, reqEvent);
+            handleDataResponse(event, line, reqEvent);
             break;
         case Command::FlushLineResp:
-            recordStateEventCount(respEvent->getCmd(), cacheLine ? cacheLine->getState() : I);
-            if (cacheLine && cacheLine->getState() == S_B) cacheLine->setState(E);
-            else if (cacheLine && cacheLine->getState() == I_B){
-                cacheLine->setState(I);
-                cacheLine->atomicEnd();
+            recordStateEventCount(event->getCmd(), line ? line->getState() : I);
+            if (line && line->getState() == S_B) 
+                line->setState(E);
+            else if (line && line->getState() == I_B) {
+                line->setState(I);
+                line->atomicEnd();
             }
-            sendFlushResponse(reqEvent, respEvent->success(), timestamp_, true);
+            sendFlushResponse(reqEvent, event->success(), timestamp_, true);
             break;
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: Received unrecognized response: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
-                    ownerName_.c_str(), CommandString[(int)cmd], respEvent->getBaseAddr(), respEvent->getSrc().c_str(), getCurrentSimTimeNano());
+                    ownerName_.c_str(), CommandString[(int)cmd], bAddr, event->getSrc().c_str(), getCurrentSimTimeNano());
     }
+
+    mshr_->removeFront(bAddr);
+
+    if (is_debug_addr(bAddr))
+        printLine(bAddr, line);
+    
+    delete event;
+    delete reqEvent;
+
     return DONE;
 }
 
-CacheAction L1IncoherentController::handleFetchResponse(MemEvent * respEvent, CacheLine * cacheLine, MemEvent * reqEvent) {
-    Command cmd = respEvent->getCmd();
+CacheAction L1IncoherentController::handleFetchResponse(MemEvent * event, bool inMSHR) {
+    Command cmd = event->getCmd();
     debug->fatal(CALL_INFO, -1, "%s, Error: Received unrecognized response: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
-            ownerName_.c_str(), CommandString[(int)cmd], respEvent->getBaseAddr(), respEvent->getSrc().c_str(), getCurrentSimTimeNano());
+            ownerName_.c_str(), CommandString[(int)cmd], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
     return DONE;
 }
 
 
-
-bool L1IncoherentController::isRetryNeeded(MemEvent * event, CacheLine * cacheLine) {
-    return true;    // No coherence races to resolve a request
-}
 
 
 /*------------------------------------------------------------------------------------------------
@@ -193,7 +206,7 @@ bool L1IncoherentController::isRetryNeeded(MemEvent * event, CacheLine * cacheLi
  *------------------------------------------------------------------------------------------------*/
 
 
-CacheAction L1IncoherentController::handleGetSRequest(MemEvent* event, CacheLine* cacheLine, bool replay){
+CacheAction L1IncoherentController::handleGetSRequest(MemEvent* event, CacheLine* cacheLine, bool replay) {
     State state = cacheLine->getState();
     vector<uint8_t>* data = cacheLine->getData();
     
@@ -207,12 +220,14 @@ CacheAction L1IncoherentController::handleGetSRequest(MemEvent* event, CacheLine
             forwardMessage(event, cacheLine->getBaseAddr(), cacheLine->getSize(), 0, NULL);
             notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::MISS);
             cacheLine->setState(IS);
+            recordLatencyType(event->getID(), LatType::MISS);
             return STALL;
         case E:
         case M:
             notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
             if (localPrefetch) {
                 statPrefetchRedundant->addData(1);
+                recordPrefetchLatency(event->getID(), LatType::HIT);
                 return DONE;
             }
             if (cacheLine->getPrefetch()) {
@@ -222,6 +237,7 @@ CacheAction L1IncoherentController::handleGetSRequest(MemEvent* event, CacheLine
             if (event->isLoadLink()) cacheLine->atomicStart();
             sendTime = sendResponseUp(event, data, replay, cacheLine->getTimestamp());
             cacheLine->setTimestamp(sendTime);
+            recordLatencyType(event->getID(), LatType::HIT);
             return DONE;
         default:
             debug->fatal(CALL_INFO,-1,"%s, Error: Handling a GetS request but coherence state is not valid and stable. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, State = %s. Time = %" PRIu64 "ns\n",
@@ -251,6 +267,7 @@ CacheAction L1IncoherentController::handleGetXRequest(MemEvent* event, CacheLine
             notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::MISS);
             forwardMessage(event, cacheLine->getBaseAddr(), cacheLine->getSize(), 0, NULL);
             cacheLine->setState(IM);
+            recordLatencyType(event->getID(), LatType::MISS);
             return STALL;
         case E:
             cacheLine->setState(M);
@@ -283,6 +300,7 @@ CacheAction L1IncoherentController::handleGetXRequest(MemEvent* event, CacheLine
             cacheLine->setTimestamp(sendTime);
 
             notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::HIT);
+            recordLatencyType(event->getID(), LatType::HIT);
             return DONE;
          default:
             debug->fatal(CALL_INFO, -1, "%s, Error: Received %s int unhandled state %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
@@ -307,6 +325,7 @@ CacheAction L1IncoherentController::handleFlushLineRequest(MemEvent * event, Cac
     // If line is locked, return failure
     if (state != I && cacheLine->isLocked()) {
         sendFlushResponse(event, false, cacheLine->getTimestamp(), replay);
+        recordLatencyType(event->getID(), LatType::MISS);
         return DONE;
     }
     
@@ -314,6 +333,7 @@ CacheAction L1IncoherentController::handleFlushLineRequest(MemEvent * event, Cac
             
     if (cacheLine != NULL && state != I) cacheLine->setState(S_B);
     else if (cacheLine != NULL) cacheLine->setState(I_B);
+    recordLatencyType(event->getID(), LatType::HIT);
     return STALL;   // wait for response
 }
 
@@ -332,6 +352,7 @@ CacheAction L1IncoherentController::handleFlushLineInvRequest(MemEvent * event, 
     // If line is locked, return failure
     if (state != I && cacheLine->isLocked()) {
         sendFlushResponse(event, false, cacheLine->getTimestamp(), replay);
+        recordLatencyType(event->getID(), LatType::MISS);
         return DONE;
     }
 
@@ -342,7 +363,10 @@ CacheAction L1IncoherentController::handleFlushLineInvRequest(MemEvent * event, 
         statPrefetchEvict->addData(1);
     }
     
-    if (cacheLine != NULL) cacheLine->setState(I_B);
+    if (cacheLine != NULL) 
+        cacheLine->setState(I_B);
+    
+    recordLatencyType(event->getID(), LatType::HIT);
     return STALL;   // wait for response
 }
 
@@ -364,6 +388,7 @@ void L1IncoherentController::handleDataResponse(MemEvent* responseEvent, CacheLi
             notifyListenerOfAccess(origRequest, NotifyAccessType::READ, NotifyResultType::HIT);
             if (localPrefetch) {
                 cacheLine->setPrefetch(true);
+                recordPrefetchLatency(origRequest->getID(), LatType::MISS);
                 break;
             }
             if (origRequest->isLoadLink()) cacheLine->atomicStart();
@@ -402,19 +427,24 @@ void L1IncoherentController::handleDataResponse(MemEvent* responseEvent, CacheLi
     }
 }
 
+bool L1IncoherentController::handleNACK(MemEvent* event, bool inMSHR) {
+    MemEvent* nackedEvent = event->getNACKedEvent();
+    if (is_debug_event(nackedEvent)) debug->debug(_L3_, "NACK received.\n");
+    resendEvent(nackedEvent, false);    // Always resend
+
+    return true;
+}
+
 /*---------------------------------------------------------------------------------------------------
  * Helper Functions
  *--------------------------------------------------------------------------------------------------*/
-/*
- *  Return type of coherence miss
- *  0:  Hit
- *  1:  NP/I
- */
-int L1IncoherentController::isCoherenceMiss(MemEvent* event, CacheLine* cacheLine) {
-    State state = cacheLine->getState();
-
-    if (state == I) return 1;
-    return 0;
+    
+bool L1IncoherentController::isCacheHit(MemEvent* event) {
+    CacheLine* line = cacheArray_->lookup(event->getBaseAddr(), false);
+    if (!line || line->getState() == I)
+        return false;
+    else
+        return true;
 }
 
 
@@ -549,6 +579,10 @@ void L1IncoherentController::printData(vector<uint8_t> * data, bool set) {
     printf("\n"); */
 }
 
+void L1IncoherentController::printLine(Addr addr, CacheLine* line) {
+    State state = (line == nullptr) ? NP : line->getState();
+    debug->debug(_L8_, "0x%" PRIx64 ": %s\n", addr, StateString[state]);
+}
 
 /***********************
  * Statistics functions
@@ -566,4 +600,29 @@ void L1IncoherentController::recordEventSentDown(Command cmd) {
 
 void L1IncoherentController::recordEventSentUp(Command cmd) {
     stat_eventSent[(int)cmd]->addData(1);
+}
+
+void L1IncoherentController::recordLatency(Command cmd, int type, uint64_t latency) {
+    if (type == -1)
+        return;
+    
+    switch (cmd) {
+        case Command::GetS:
+            stat_latencyGetS[type]->addData(latency);
+            break;
+        case Command::GetX:
+            stat_latencyGetX[type]->addData(latency);
+            break;
+        case Command::GetSX:
+            stat_latencyGetSX[type]->addData(latency);
+            break;
+        case Command::FlushLine:
+            stat_latencyFlushLine[type]->addData(latency);
+            break;
+        case Command::FlushLineInv:
+            stat_latencyFlushLineInv[type]->addData(latency);
+            break;
+        default:
+            break;
+    }
 }

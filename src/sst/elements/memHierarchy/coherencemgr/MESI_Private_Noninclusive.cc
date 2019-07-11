@@ -187,141 +187,173 @@ CacheAction MESIPrivNoninclusive::handleReplacement(MemEvent* event, CacheLine* 
  *  Special cases exist when the invalidation races with a writeback that is queued in the MSHR.
  *  Non-inclusive caches which miss locally simply forward the request to the next higher cache
  */
-CacheAction MESIPrivNoninclusive::handleInvalidationRequest(MemEvent * event, CacheLine * cacheLine, MemEvent * collisionEvent, bool replay) {
+CacheAction MESIPrivNoninclusive::handleInvalidationRequest(MemEvent * event, bool replay) {
+    Addr bAddr = event->getBaseAddr();
+    CacheLine* cacheLine = cacheArray_->lookup(bAddr, false);
+
+    if (is_debug_addr(bAddr))
+        printLine(bAddr, cacheLine);
+
+    if (!mshr_->pendingWriteback(bAddr) && mshr_->isFull()) {
+        processInvRequestInMSHR(bAddr, event, false);
+        return STALL;
+    }
+
     /*
      *  Possible races: 
      *  Received Inv/FetchInv/FetchInvX and am waiting on AckPut or have stalled Put* for another eviction (only for noninclusive), or am waiting on a FlushResp (to FlushLineInv or FlushLine)
      */
+    MemEvent* collisionEvent = nullptr;
+    if (mshr_->exists(bAddr))
+        collisionEvent = static_cast<MemEvent*>(mshr_->lookupFront(bAddr));
+
     if (!cacheLine || cacheLine->getState() == I) { // Either raced with another request or the block is present in an upper level cache (non-inclusive only)
         recordStateEventCount(event->getCmd(), I);
 
         // Was waiting for AckPut, treat Inv/FetchInv/FetchInvX as AckPut and do not respond
-        if (mshr_->pendingWriteback(event->getBaseAddr())) {
-            mshr_->removeWriteback(event->getBaseAddr());
+        if (mshr_->pendingWriteback(bAddr)) {
+            mshr_->removeWriteback(bAddr);
+            delete event;
             return DONE;
         }
         
-        if (collisionEvent && collisionEvent->isWriteback()) return BLOCK; // We are waiting for an open cache line for a Put
-        else if (collisionEvent && (collisionEvent->getCmd() == Command::FlushLineInv || (collisionEvent->getCmd() == Command::FlushLine && event->getCmd() == Command::FetchInvX))) return IGNORE; // Our FlushLine will serve as the Inv response
-        else { // Line is just cached elsewhere
+        if (collisionEvent && collisionEvent->isWriteback()) {
+            processInvRequestInMSHR(bAddr, event, true);
+            return BLOCK; // We are waiting for an open cache line for a Put
+        } else if (collisionEvent && (collisionEvent->getCmd() == Command::FlushLineInv || (collisionEvent->getCmd() == Command::FlushLine && event->getCmd() == Command::FetchInvX))) {
+            delete event;
+            return IGNORE; // Our FlushLine will serve as the Inv response
+        } else { // Line is just cached elsewhere
             forwardMessageUp(event);
-            mshr_->setAcksNeeded(event->getBaseAddr(), 1);
+            mshr_->setAcksNeeded(bAddr, 1);
             event->setInProgress(true);
+            processInvRequestInMSHR(bAddr, event, false);
             return STALL;
         }
     }
 
     Command cmd = event->getCmd();
+    CacheAction action = STALL;
     switch (cmd) {
         case Command::Inv: 
-            return handleInv(event, cacheLine, replay);
+            action = handleInv(event, cacheLine, replay);
+            break;
         case Command::Fetch:
-            return handleFetch(event, cacheLine, replay);
+            action = handleFetch(event, cacheLine, replay);
+            break;
         case Command::FetchInv:
-            return handleFetchInv(event, cacheLine, collisionEvent, replay);
+            action = handleFetchInv(event, cacheLine, collisionEvent, replay);
+            break;
         case Command::FetchInvX:
-            return handleFetchInvX(event, cacheLine, collisionEvent, replay);
+            action = handleFetchInvX(event, cacheLine, collisionEvent, replay);
+            break;
         case Command::ForceInv:
-            return handleForceInv(event, cacheLine, replay);
+            action = handleForceInv(event, cacheLine, replay);
+            break;
         default:
 	    debug->fatal(CALL_INFO,-1,"%s, Error: Received an unrecognized invalidation. Event = %s. Time = %" PRIu64 "ns\n", 
                     ownerName_.c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
-    return STALL; // eliminate compiler warning
+
+    if (is_debug_addr(bAddr))
+        printLine(bAddr, cacheLine);
+    
+    if (action == STALL)
+        processInvRequestInMSHR(bAddr, event, false);
+    else if (action == BLOCK)
+        processInvRequestInMSHR(bAddr, event, true);
+    else
+        delete event;
+
+    return action;
 }
 
 
 /**
  *  Handle responses including data (GetSResp, GetXResp), Inv/Fetch (FetchResp, FetchXResp, AckInv) and writeback acks (AckPut)
  */
-CacheAction MESIPrivNoninclusive::handleCacheResponse(MemEvent * respEvent, CacheLine * cacheLine, MemEvent * reqEvent) {
-    Command cmd = respEvent->getCmd();
+CacheAction MESIPrivNoninclusive::handleCacheResponse(MemEvent * event, bool inMSHR) {
+    Addr bAddr = event->getBaseAddr();
+    CacheLine* line = cacheArray_->lookup(bAddr, false);
+
+    if (is_debug_addr(bAddr))
+        printLine(bAddr, line);
+
+    MemEvent* reqEvent = mshr_->lookupFront(bAddr);
+
+    Command cmd = event->getCmd();
+    CacheAction action = DONE;
     switch (cmd) {
         case Command::GetSResp:
         case Command::GetXResp:
-            return handleDataResponse(respEvent, cacheLine, reqEvent);
+            action = handleDataResponse(event, line, reqEvent);
+            break;
         case Command::FlushLineResp:
-            recordStateEventCount(respEvent->getCmd(), cacheLine ? cacheLine->getState() : I);
-            if (cacheLine && cacheLine->getState() == S_B) cacheLine->setState(S);
-            else if (cacheLine && cacheLine->getState() == I_B) cacheLine->setState(I);
-            sendFlushResponse(reqEvent, respEvent->success());
-            return DONE;
+            recordStateEventCount(event->getCmd(), line ? line->getState() : I);
+            if (line && line->getState() == S_B) line->setState(S);
+            else if (line && line->getState() == I_B) line->setState(I);
+            sendFlushResponse(reqEvent, event->success());
+            action = DONE;
+            break;
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: Received unrecognized response. Event = %s. Time = %" PRIu64 "ns\n",
-                    ownerName_.c_str(), respEvent->getVerboseString().c_str(), getCurrentSimTimeNano());
+                    ownerName_.c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
-    return DONE;
+
+    if (is_debug_addr(bAddr)) printLine(bAddr, line);
+    
+    if (action == DONE) {
+        mshr_->removeFront(bAddr);
+        delete reqEvent;
+    }
+    
+    delete event;
+
+    return action;
 }
 
-CacheAction MESIPrivNoninclusive::handleFetchResponse(MemEvent * respEvent, CacheLine * cacheLine, MemEvent * reqEvent) {
-    Command cmd = respEvent->getCmd();
+CacheAction MESIPrivNoninclusive::handleFetchResponse(MemEvent * event, bool inMSHR) {
+    Addr bAddr = event->getBaseAddr();
+    CacheLine* line = cacheArray_->lookup(bAddr, false);
+    
+    if (is_debug_addr(bAddr))
+        printLine(bAddr, line);
+
+    MemEvent* reqEvent = mshr_->exists(bAddr) ? mshr_->lookupFront(bAddr) : nullptr;
+    
+    CacheAction action = DONE;
+    Command cmd = event->getCmd();
     switch (cmd) {
         case Command::FetchResp:
         case Command::FetchXResp:
-            return handleFetchResp(respEvent, cacheLine, reqEvent);
+            action = handleFetchResp(event, line, reqEvent);
+            break;
         case Command::AckInv:
-            return handleAckInv(respEvent, cacheLine, reqEvent);
+            action = handleAckInv(event, line, reqEvent);
+            break;
         case Command::AckPut:
-            recordStateEventCount(respEvent->getCmd(), I);
-            mshr_->removeWriteback(respEvent->getBaseAddr());
-            return DONE;    // Retry any events that were stalled for ack
+            recordStateEventCount(event->getCmd(), I);
+            mshr_->removeWriteback(bAddr);
+            action = DONE;    // Retry any events that were stalled for ack
+            break;
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: Received unrecognized response. Event = %s. Time = %" PRIu64 "ns\n",
-                    ownerName_.c_str(), respEvent->getVerboseString().c_str(), getCurrentSimTimeNano());
-    }
-    return DONE;
-}
-
-
-bool MESIPrivNoninclusive::isRetryNeeded(MemEvent* event, CacheLine* cacheLine) {
-    Command cmd = event->getCmd();
-    State state = cacheLine ? cacheLine->getState() : I;
-    
-    switch (cmd) {
-        case Command::GetS:
-        case Command::GetX:
-        case Command::GetSX:
-        case Command::FlushLine:
-        case Command::FlushLineInv:
-            return true;
-        case Command::PutS:
-        case Command::PutE:
-        case Command::PutM:
-            if (expectWritebackAck_ && !mshr_->pendingWriteback(cacheLine->getBaseAddr())) 
-                return false;
-            return true;
-        case Command::FetchInv:
-        case Command::FetchInvX:
-            if (state == I) return false;   // Already resolved the request, don't resend
-            if (cacheLine->getOwner() != event->getDst()) {
-                if (cacheLine->isSharer(event->getDst()) && cmd == Command::FetchInv) { // Got a downgrade from the owner but still need to invalidate
-                    uint64_t deliveryTime = 0;
-                    MemEvent * inv = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::Inv);
-                    inv->setDst(event->getDst());
-                    inv->setRqstr(event->getRqstr());
-                    inv->setSize(cacheLine->getSize());
-                    deliveryTime = timestamp_  + mshrLatency_;
-                    Response resp = {inv, deliveryTime, packetHeaderBytes};
-                    addToOutgoingQueueUp(resp);
-        
-                    if (is_debug_addr(cacheLine->getBaseAddr())) {
-                        debug->debug(_L7_,"Re-sending FetchInv as Inv: Addr = 0x%" PRIx64 ", Dst = %s @ cycles = %" PRIu64 ".\n", 
-                                cacheLine->getBaseAddr(), event->getDst().c_str(), deliveryTime);
-                    }
-                }
-                return false;    // Must have gotten a replacement/downgrade from this owner
-            }
-            return true;
-        case Command::Inv:
-            if (state == I) return false;   // Already resolved the request, don't resend
-            if (!cacheLine->isSharer(event->getDst())) return false;    // Must have gotten a replacement from this sharer
-            return true;
-        default:
-            debug->fatal(CALL_INFO,-1,"%s, Error: NACKed event is unrecognized. Event = %s. Time = %" PRIu64 "ns\n",
                     ownerName_.c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
-    return true;
+
+    if (is_debug_addr(bAddr))
+        printLine(bAddr, line);
+
+    delete event;
+
+    if (action == DONE && reqEvent) {
+        mshr_->removeFront(bAddr);
+        delete reqEvent;
+    }
+
+    return action;
 }
+
 
 /**
  *  Return type of miss. Used for profiling incoming requests at the cacheController
@@ -330,26 +362,25 @@ bool MESIPrivNoninclusive::isRetryNeeded(MemEvent* event, CacheLine* cacheLine) 
  *  2:  Wrong state (e.g., S but GetX request)
  *  3:  Right state but owners/sharers need to be invalidated or line is in transition
  */
-int MESIPrivNoninclusive::isCoherenceMiss(MemEvent* event, CacheLine* cacheLine) {
+bool MESIPrivNoninclusive::isCacheHit(MemEvent* event) {
+    CacheLine* line = cacheArray_->lookup(event->getBaseAddr(), false);
     Command cmd = event->getCmd();
-    State state = cacheLine->getState();
+    State state = line ? line->getState() : I;
     if (cmd == Command::GetSX) cmd = Command::GetX;  // for our purposes these are equal
 
-    if (state == I) return 1;
-    if (event->isPrefetch() && event->getRqstr() == ownerName_) return 0;
+    if (state == I) return false;
+    if (event->isPrefetch() && event->getRqstr() == ownerName_) return true;
     if (state == S && lastLevel_) state = M;
     switch (state) {
         case S:
-            if (cmd == Command::GetS) return 0;
-            return 2;
+            if (cmd == Command::GetS) return true;
+            return false;
         case E:
         case M:
-            if (cacheLine->ownerExists()) return 3;
-            if (cmd == Command::GetS) return 0;  // hit
-            if (cmd == Command::GetX) {
-                if (cacheLine->isShareless() || (cacheLine->isSharer(event->getSrc()) && cacheLine->numSharers() == 1)) return 0; // Hit
-            }
-            return 3;
+            if (line->ownerExists()) return false;
+            if (cmd == Command::GetS) return true;  // hit
+            if (line->isShareless() || (line->isSharer(event->getSrc()) && line->numSharers() == 1)) return true; // Hit
+            return false;
         case IS:
         case IM:
         case SM:
@@ -360,9 +391,9 @@ int MESIPrivNoninclusive::isCoherenceMiss(MemEvent* event, CacheLine* cacheLine)
         case SM_Inv:
         case E_InvX:
         case M_InvX:
-            return 3;
+            return false;
         default:
-            return 0;   // this is profiling so don't die on unhandled state
+            return true;   // this is profiling so don't die on unhandled state
     }
 }
 
@@ -388,11 +419,13 @@ CacheAction MESIPrivNoninclusive::handleGetSRequest(MemEvent* event, CacheLine* 
             cacheLine->setTimestamp(sendTime);
             notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::MISS);
             cacheLine->setState(IS);
+            recordLatencyType(event->getID(), LatType::MISS);
             return STALL;
         case S:
             notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
             if (localPrefetch) {
                 statPrefetchRedundant->addData(1);
+                recordPrefetchLatency(event->getID(), LatType::HIT);
                 return DONE;
             }
             if (cacheLine->getPrefetch()) {
@@ -402,12 +435,14 @@ CacheAction MESIPrivNoninclusive::handleGetSRequest(MemEvent* event, CacheLine* 
             cacheLine->addSharer(event->getSrc());
             sendTime = sendResponseUp(event, data, replay, cacheLine->getTimestamp());
             cacheLine->setTimestamp(sendTime);
+            recordLatencyType(event->getID(), LatType::HIT);
             return DONE;
         case E:
         case M:
             notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
             if (localPrefetch) {
                 statPrefetchRedundant->addData(1);
+                recordPrefetchLatency(event->getID(), LatType::HIT);
                 return DONE;
             }
             if (cacheLine->getPrefetch()) {
@@ -420,6 +455,7 @@ CacheAction MESIPrivNoninclusive::handleGetSRequest(MemEvent* event, CacheLine* 
             sendTime = sendResponseUp(event, Command::GetXResp, data, state == M, replay, cacheLine->getTimestamp());
             cacheLine->setTimestamp(sendTime);
             cacheLine->setOwner(event->getSrc());
+            recordLatencyType(event->getID(), LatType::HIT);
             return DONE;
 
         default:
@@ -452,6 +488,7 @@ CacheAction MESIPrivNoninclusive::handleGetXRequest(MemEvent* event, CacheLine* 
             sendTime = forwardMessage(event, cacheLine->getBaseAddr(), cacheLine->getSize(), 0, NULL);
             cacheLine->setState(IM);
             cacheLine->setTimestamp(sendTime);
+            recordLatencyType(event->getID(), LatType::MISS);
             return STALL;
         case S:
             notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::MISS);
@@ -469,6 +506,7 @@ CacheAction MESIPrivNoninclusive::handleGetXRequest(MemEvent* event, CacheLine* 
                 cacheLine->setTimestamp(sendTime);
             }
             
+            recordLatencyType(event->getID(), LatType::UPGRADE);
             return STALL;
         case E:
             cacheLine->setState(M);
@@ -482,6 +520,7 @@ CacheAction MESIPrivNoninclusive::handleGetXRequest(MemEvent* event, CacheLine* 
             if (!cacheLine->isShareless()) {
                 if (invalidateSharersExceptRequestor(cacheLine, event->getSrc(), event->getRqstr(), replay)) {
                     cacheLine->setState(M_Inv);
+                    recordLatencyType(event->getID(), LatType::INV);
                     return STALL;
                 }
             }
@@ -489,6 +528,7 @@ CacheAction MESIPrivNoninclusive::handleGetXRequest(MemEvent* event, CacheLine* 
                 sendFetchInv(cacheLine, event->getRqstr(), replay);
                 mshr_->incrementAcksNeeded(event->getBaseAddr());
                 cacheLine->setState(M_Inv);
+                recordLatencyType(event->getID(), LatType::INV);
                 return STALL;
             }
             cacheLine->setOwner(event->getSrc());
@@ -498,6 +538,7 @@ CacheAction MESIPrivNoninclusive::handleGetXRequest(MemEvent* event, CacheLine* 
             
             if (is_debug_event(event)) printData(cacheLine->getData(), false);
             
+            recordLatencyType(event->getID(), LatType::HIT);
             return DONE;
         case SM:
             return STALL;   // retried this request too soon because we were checking for waiting invalidations
@@ -520,7 +561,9 @@ CacheAction MESIPrivNoninclusive::handleFlushLineRequest(MemEvent * event, Cache
 
     CacheAction reqEventAction;
     uint64_t sendTime = 0;
-    
+        
+    recordLatencyType(event->getID(), LatType::HIT);
+
     // Handle flush at local level
     switch (state) {
         case I:
@@ -625,6 +668,7 @@ CacheAction MESIPrivNoninclusive::handleFlushLineInvRequest(MemEvent * event, Ca
     if (cacheLine != NULL) state = cacheLine->getState();
     if (!replay) recordStateEventCount(event->getCmd(), state);
     
+    recordLatencyType(event->getID(), LatType::HIT);
     // Apply incoming flush -> remove if sharer/owner & update data if dirty
     
     if (cacheLine) {
@@ -1439,9 +1483,9 @@ CacheAction MESIPrivNoninclusive::handleDataResponse(MemEvent* responseEvent, Ca
             if (responseEvent->getCmd() == Command::GetXResp && responseEvent->getDirty()) cacheLine->setState(M);
             else if (protocol_ && responseEvent->getCmd() == Command::GetXResp) cacheLine->setState(E);
             else cacheLine->setState(S);
-            notifyListenerOfAccess(origRequest, NotifyAccessType::READ, NotifyResultType::HIT);
             if (localPrefetch) {
                 cacheLine->setPrefetch(true);
+                recordPrefetchLatency(origRequest->getID(), LatType::MISS);
                 return DONE;     
             }
             
@@ -1469,7 +1513,6 @@ CacheAction MESIPrivNoninclusive::handleDataResponse(MemEvent* responseEvent, Ca
             cacheLine->setState(M);
             cacheLine->setOwner(origRequest->getSrc());
             if (cacheLine->isSharer(origRequest->getSrc())) cacheLine->removeSharer(origRequest->getSrc());
-            notifyListenerOfAccess(origRequest, NotifyAccessType::WRITE, NotifyResultType::HIT);
             sendTime = sendResponseUp(origRequest, cacheLine->getData(), true, cacheLine->getTimestamp());
             cacheLine->setTimestamp(sendTime);
             
@@ -1805,6 +1848,73 @@ CacheAction MESIPrivNoninclusive::handleAckInv(MemEvent * ack, CacheLine * line,
     return action;    // eliminate compiler warning
 }
 
+
+bool MESIPrivNoninclusive::handleNACK(MemEvent* event, bool inMSHR) {
+    MemEvent* nackedEvent = event->getNACKedEvent();
+
+    CacheLine* line = cacheArray_->lookup(nackedEvent->getBaseAddr(), false);
+    Command cmd = nackedEvent->getCmd();
+    State state = line ? line->getState() : I;
+
+    bool resend = false;
+    switch (cmd) {
+        case Command::GetS:
+        case Command::GetX:
+        case Command::GetSX:
+        case Command::FlushLine:
+        case Command::FlushLineInv:
+            resend = true;
+            break;
+        case Command::PutS:
+        case Command::PutE:
+        case Command::PutM:
+            if (expectWritebackAck_ && !mshr_->pendingWriteback(line->getBaseAddr())) 
+                resend = false;
+            else
+                resend = true;
+            break;
+        case Command::FetchInv:
+        case Command::FetchInvX:
+            if (state == I) 
+                resend = false;   // Already resolved the request, don't resend
+            else if (line->getOwner() != nackedEvent->getDst()) {
+                if (line->isSharer(nackedEvent->getDst()) && cmd == Command::FetchInv) { // Got a downgrade from the owner but still need to invalidate
+                    uint64_t deliveryTime = 0;
+                    MemEvent * inv = new MemEvent(ownerName_, line->getBaseAddr(), line->getBaseAddr(), Command::Inv);
+                    inv->setDst(nackedEvent->getDst());
+                    inv->setRqstr(nackedEvent->getRqstr());
+                    inv->setSize(line->getSize());
+                    deliveryTime = timestamp_  + mshrLatency_;
+                    Response resp = {inv, deliveryTime, packetHeaderBytes};
+                    addToOutgoingQueueUp(resp);
+        
+                    if (is_debug_addr(line->getBaseAddr())) {
+                        debug->debug(_L7_,"Re-sending FetchInv as Inv: Addr = 0x%" PRIx64 ", Dst = %s @ cycles = %" PRIu64 ".\n", 
+                                line->getBaseAddr(), nackedEvent->getDst().c_str(), deliveryTime);
+                    }
+                }
+                resend = false;    // Must have gotten a replacement/downgrade from this owner
+            } else
+                resend = true;
+            break;
+        case Command::Inv:
+            if (state == I || !line->isSharer(nackedEvent->getDst())) 
+                resend = false;
+            else
+                resend = true;
+            break;
+        default:
+            debug->fatal(CALL_INFO,-1,"%s, Error: NACKed event is unrecognized. Event = %s. Time = %" PRIu64 "ns\n",
+                    ownerName_.c_str(), nackedEvent->getVerboseString().c_str(), getCurrentSimTimeNano());
+    }
+
+    if (resend)
+        resendEvent(nackedEvent, nackedEvent->fromHighNetNACK());
+    else
+        delete nackedEvent;
+
+    return true;
+}
 
 /*----------------------------------------------------------------------------------------------------------------------
  *  Functions for sending events. Some of these are part of the external interface 
@@ -2213,4 +2323,29 @@ void MESIPrivNoninclusive::recordEventSentDown(Command cmd) {
 
 void MESIPrivNoninclusive::recordEventSentUp(Command cmd) {
     stat_eventSent[(int)cmd]->addData(1);
+}
+
+void MESIPrivNoninclusive::recordLatency(Command cmd, int type, uint64_t latency) {
+    if (type == -1)
+        return;
+
+    switch (cmd) {
+        case Command::GetS:
+            stat_latencyGetS[type]->addData(latency);
+            break;
+        case Command::GetX:
+            stat_latencyGetX[type]->addData(latency);
+            break;
+        case Command::GetSX:
+            stat_latencyGetSX[type]->addData(latency);
+            break;
+        case Command::FlushLine:
+            stat_latencyFlushLine->addData(latency);
+            break;
+        case Command::FlushLineInv:
+            stat_latencyFlushLineInv->addData(latency);
+            break;
+        default:
+            break;
+    }
 }

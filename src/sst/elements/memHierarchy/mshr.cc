@@ -63,6 +63,32 @@ MSHR::MSHR(Output* debug, int maxSize, string cacheName, std::set<Addr> debugAdd
     DEBUG_ADDR = debugAddr;
 }
 
+// Get the size limit for the MSHR
+int MSHR::getMaxSize() {
+    return maxSize_;
+}
+
+// Get total number of entries in the MSHR, measured by 'size_'
+int MSHR::getSize() {
+    return size_;
+}
+
+// Get size of 'entries' list for address 'addr'
+unsigned int MSHR::getSize(Addr addr) {
+    if (mshr_.find(addr) == mshr_.end())
+        return 0;
+    else
+        return mshr_.find(addr)->second.entries.size();
+}
+
+bool MSHR::exists(Addr baseAddr) {
+    mshrTable::iterator it = mshr_.find(baseAddr);
+    if (it == mshr_.end()) return false;
+    list<MSHREntry> * queue = &((it->second).entries);
+    list<MSHREntry>::iterator frontEntry = queue->begin();
+    if (frontEntry == queue->end()) return false;
+    return (frontEntry->elem.isEvent());
+}
 
 bool MSHR::isAlmostFull() {
     if (size_ >= (maxSize_-1)) {
@@ -77,17 +103,16 @@ bool MSHR::isFull() {
     }
     return false;
 }
-
 int MSHR::getAcksNeeded(Addr baseAddr) {
-    mshrTable::iterator it = map_.find(baseAddr);
-    if (it == map_.end()) return 0;
+    mshrTable::iterator it = mshr_.find(baseAddr);
+    if (it == mshr_.end()) return 0;
     return (it->second).acksNeeded;
 }
 
 
 void MSHR::setAcksNeeded(Addr baseAddr, int acksNeeded, MemEvent * event) {
-    mshrTable::iterator it = map_.find(baseAddr);
-    if (it == map_.end()) {
+    mshrTable::iterator it = mshr_.find(baseAddr);
+    if (it == mshr_.end()) {
         if (is_debug_addr(baseAddr)) d_->debug(_L6_, "\tCreating new MSHR holder for acks\n");
         
         MSHRRegister reg;
@@ -95,77 +120,69 @@ void MSHR::setAcksNeeded(Addr baseAddr, int acksNeeded, MemEvent * event) {
         reg.dataBuffer.clear();
         if (event != nullptr)
             reg.entries.push_back(MSHREntry(event));
-        map_[baseAddr] = reg;
+        mshr_[baseAddr] = reg;
         return;
     }
     (it->second).acksNeeded = acksNeeded;
 }
 
 void MSHR::incrementAcksNeeded(Addr baseAddr) {
-    mshrTable::iterator it = map_.find(baseAddr);
-    if (it == map_.end()) {
+    mshrTable::iterator it = mshr_.find(baseAddr);
+    if (it == mshr_.end()) {
         MSHRRegister reg;
         reg.acksNeeded = 1;
-        map_[baseAddr] = reg;
+        mshr_[baseAddr] = reg;
     } else {
         (it->second).acksNeeded++;
     }
 }
 
 void MSHR::decrementAcksNeeded(Addr baseAddr) {
-    mshrTable::iterator it = map_.find(baseAddr);
-    if (it == map_.end()) return;
+    mshrTable::iterator it = mshr_.find(baseAddr);
+    if (it == mshr_.end()) return;
     (it->second).acksNeeded--;
     if (((it->second).acksNeeded == 0) && (it->second).dataBuffer.empty() && (it->second).entries.empty()) {
         if (is_debug_addr(baseAddr)) d_->debug(_L9_, "\tMSHR erasing 0x%" PRIx64 "\n", baseAddr);
         
-        map_.erase(it);
+        mshr_.erase(it);
     }
 }
 
 void MSHR::setDataBuffer(Addr baseAddr, vector<uint8_t>& data) {
-    mshrTable::iterator it = map_.find(baseAddr);
-    if (it == map_.end()) d2_->fatal(CALL_INFO,-1, "%s (MSHR), Error: No pending request for response event. Addr = 0x%" PRIx64 "\n", ownerName_.c_str(), baseAddr);
+    mshrTable::iterator it = mshr_.find(baseAddr);
+    if (it == mshr_.end()) d2_->fatal(CALL_INFO,-1, "%s (MSHR), Error: No pending request for response event. Addr = 0x%" PRIx64 "\n", ownerName_.c_str(), baseAddr);
     (it->second).dataBuffer = data;
 }
 
 vector<uint8_t> * MSHR::getDataBuffer(Addr baseAddr) {
-    mshrTable::iterator it = map_.find(baseAddr);
-    if (it == map_.end()) return NULL;
+    mshrTable::iterator it = mshr_.find(baseAddr);
+    if (it == mshr_.end()) return NULL;
     return &((it->second).dataBuffer);
 }
 
 void MSHR::clearDataBuffer(Addr baseAddr) {
-    mshrTable::iterator it = map_.find(baseAddr);
-    if (it != map_.end()) (it->second).dataBuffer.clear();
+    mshrTable::iterator it = mshr_.find(baseAddr);
+    if (it != mshr_.end()) (it->second).dataBuffer.clear();
     if (((it->second).acksNeeded == 0) && (it->second).dataBuffer.empty() && (it->second).entries.empty()) {
         if (is_debug_addr(baseAddr)) d_->debug(_L9_, "\tMSHR erasing 0x%" PRIx64 "\n", baseAddr);
         
-        map_.erase(it);
+        mshr_.erase(it);
     }
 }
 
 bool MSHR::isDataBufferValid(Addr baseAddr) {
-    mshrTable::iterator it = map_.find(baseAddr);
-    if (it != map_.end()) (it->second).dataBuffer.clear();
+    mshrTable::iterator it = mshr_.find(baseAddr);
+    if (it != mshr_.end()) (it->second).dataBuffer.clear();
     return false;
 }
 
-bool MSHR::exists(Addr baseAddr) {
-    mshrTable::iterator it = map_.find(baseAddr);
-    if (it == map_.end()) return false;
-    list<MSHREntry> * queue = &((it->second).entries);
-    list<MSHREntry>::iterator frontEntry = queue->begin();
-    if (frontEntry == queue->end()) return false;
-    return (frontEntry->elem.isEvent());
-}
 
-bool MSHR::isHit(Addr baseAddr) { return (map_.find(baseAddr) != map_.end()) && (map_.find(baseAddr)->second.entries.size() > 0); }
+bool MSHR::isHit(Addr baseAddr) { return (mshr_.find(baseAddr) != mshr_.end()) && (mshr_.find(baseAddr)->second.entries.size() > 0); }
 
 bool MSHR::pendingWriteback(Addr baseAddr) {
     MSHREntry entry = MSHREntry(baseAddr);
-    mshrTable::iterator it = map_.find(baseAddr);
-    if (it == map_.end()) return false;
+    mshrTable::iterator it = mshr_.find(baseAddr);
+    if (it == mshr_.end()) return false;
 
     list<MSHREntry>& res = (it->second).entries;
     list<MSHREntry>::iterator itv = std::find_if(res.begin(), res.end(), MSHREntryCompare(&entry));
@@ -173,8 +190,8 @@ bool MSHR::pendingWriteback(Addr baseAddr) {
 }
 
 const list<MSHREntry> MSHR::lookup(Addr baseAddr) {
-    mshrTable::iterator it = map_.find(baseAddr);
-    if (it == map_.end()) {
+    mshrTable::iterator it = mshr_.find(baseAddr);
+    if (it == mshr_.end()) {
         d2_->fatal(CALL_INFO,-1, "%s (MSHR), Error: mshr did not find entry with address 0x%" PRIx64 "\n", ownerName_.c_str(), baseAddr);
     }
     list<MSHREntry> res = (it->second).entries;
@@ -183,8 +200,8 @@ const list<MSHREntry> MSHR::lookup(Addr baseAddr) {
 
 
 MemEvent* MSHR::lookupFront(Addr baseAddr) {
-    mshrTable::iterator it = map_.find(baseAddr);
-    if (it == map_.end()) {
+    mshrTable::iterator it = mshr_.find(baseAddr);
+    if (it == mshr_.end()) {
         d2_->fatal(CALL_INFO,-1, "%s (MSHR), Error: mshr did not find entry with address 0x%" PRIx64 "\n", ownerName_.c_str(), baseAddr);
     }
     list<MSHREntry> queue = (it->second).entries;
@@ -214,7 +231,7 @@ bool MSHR::insert(Addr baseAddr, MemEvent* event) {
     
     if (is_debug_addr(baseAddr)) {
         d_->debug(_L9_, "\tMSHR: Event Inserted. Key addr = %" PRIx64 ", event Addr = %" PRIx64 ", Cmd = %s, MSHR Size = %u, Entry Size = %zu\n", 
-                baseAddr, event->getAddr(), CommandString[(int)event->getCmd()], size_, map_[baseAddr].entries.size());
+                baseAddr, event->getAddr(), CommandString[(int)event->getCmd()], size_, mshr_[baseAddr].entries.size());
     }
 
     return true;
@@ -238,16 +255,16 @@ bool MSHR::insertWriteback(Addr keyAddr) {
     
     MSHREntry mshrElement = MSHREntry(keyAddr);
 
-    mshrTable::iterator it = map_.find(keyAddr);
-    if (it == map_.end()) {
+    mshrTable::iterator it = mshr_.find(keyAddr);
+    if (it == mshr_.end()) {
         MSHRRegister reg;
         reg.acksNeeded = 0;
         reg.dataBuffer.clear();
-        map_[keyAddr] = reg;
+        mshr_[keyAddr] = reg;
     }
 
-    list<MSHREntry>::iterator itv = map_[keyAddr].entries.begin();
-    map_[keyAddr].entries.insert(itv, mshrElement);
+    list<MSHREntry>::iterator itv = mshr_[keyAddr].entries.begin();
+    mshr_[keyAddr].entries.insert(itv, mshrElement);
     //printTable();
     
     return true;
@@ -259,7 +276,7 @@ bool MSHR::insertInv(Addr baseAddr, MemEvent* event, bool inProgress) {
     if (LIKELY(ret)) {
         if (is_debug_addr(baseAddr)) {
             d_->debug(_L9_, "\tMSHR: Event Inserted. Key addr = %" PRIx64 ", event Addr = %" PRIx64 ", Cmd = %s, MSHR Size = %u, Entry Size = %zu\n", 
-                    baseAddr, event->getAddr(), CommandString[(int)event->getCmd()], size_, map_[baseAddr].entries.size());
+                    baseAddr, event->getAddr(), CommandString[(int)event->getCmd()], size_, mshr_[baseAddr].entries.size());
         }
     } else if (is_debug_addr(baseAddr)) d_->debug(_L9_, "\tMSHR Full.  Event could not be inserted.\n");
     
@@ -268,15 +285,15 @@ bool MSHR::insertInv(Addr baseAddr, MemEvent* event, bool inProgress) {
 
 bool MSHR::insertAll(Addr baseAddr, list<MSHREntry>& events) {
     if (events.empty()) return false;
-    mshrTable::iterator it = map_.find(baseAddr);
+    mshrTable::iterator it = mshr_.find(baseAddr);
     
-    if (it != map_.end()) (it->second).entries.insert((it->second).entries.end(), events.begin(), events.end());
+    if (it != mshr_.end()) (it->second).entries.insert((it->second).entries.end(), events.begin(), events.end());
     else {
         MSHRRegister reg;
         reg.entries = events;
         reg.acksNeeded = 0;
         reg.dataBuffer.clear();
-        map_[baseAddr] = reg;
+        mshr_[baseAddr] = reg;
     }
     
     int trueSize = 0;
@@ -298,14 +315,14 @@ bool MSHR::insertAll(Addr baseAddr, list<MSHREntry>& events) {
 
 /* Private insertion methods called by public inserts */
 bool MSHR::insert(Addr baseAddr, MSHREntry entry) {
-    mshrTable::iterator it = map_.find(baseAddr);
-    if (it == map_.end()) {
+    mshrTable::iterator it = mshr_.find(baseAddr);
+    if (it == mshr_.end()) {
         MSHRRegister reg;
         reg.acksNeeded = 0;
         reg.dataBuffer.clear();
-        map_[baseAddr] = reg;
+        mshr_[baseAddr] = reg;
     }
-    map_[baseAddr].entries.push_back(entry);
+    mshr_[baseAddr].entries.push_back(entry);
     //printTable();
     
     return true;
@@ -314,9 +331,9 @@ bool MSHR::insert(Addr baseAddr, MSHREntry entry) {
 bool MSHR::insertInv(Addr baseAddr, MSHREntry entry, bool inProgress) {
     if (size_ >= maxSize_) return false;
     
-    list<MSHREntry>::iterator it = map_[baseAddr].entries.begin();
-    if (inProgress && map_[baseAddr].entries.size() > 0) it++;
-    map_[baseAddr].entries.insert(it, entry);
+    list<MSHREntry>::iterator it = mshr_[baseAddr].entries.begin();
+    if (inProgress && mshr_[baseAddr].entries.size() > 0) it++;
+    mshr_[baseAddr].entries.insert(it, entry);
     if (entry.elem.isEvent()) size_++;
     //printTable();
     return true;
@@ -328,7 +345,7 @@ bool MSHR::insertInv(Addr baseAddr, MSHREntry entry, bool inProgress) {
 
 const MSHREntry* MSHR::getOldestRequest() const {
     const MSHREntry* entry = nullptr;
-    for ( mshrTable::const_iterator it = map_.begin() ; it != map_.end() ; ++it ) {
+    for ( mshrTable::const_iterator it = mshr_.begin() ; it != mshr_.end() ; ++it ) {
         for ( list<MSHREntry>::const_iterator jt = (it->second).entries.begin() ; jt != (it->second).entries.end() ; jt++ ) {
             if ( jt->elem.isEvent() ) {
                 if ( !entry || ( jt->getInsertionTime() < entry->getInsertionTime())) {
@@ -342,8 +359,8 @@ const MSHREntry* MSHR::getOldestRequest() const {
 }
 
 list<MSHREntry>* MSHR::getAll(Addr baseAddr) {
-    mshrTable::iterator it = map_.find(baseAddr);
-    if (it == map_.end()) {
+    mshrTable::iterator it = mshr_.find(baseAddr);
+    if (it == mshr_.end()) {
         d2_->fatal(CALL_INFO,-1, "%s (MSHR), Error: mshr did not find entry with address 0x%" PRIx64 "\n", ownerName_.c_str(), baseAddr);
     }
     return &((it->second).entries); 
@@ -351,15 +368,15 @@ list<MSHREntry>* MSHR::getAll(Addr baseAddr) {
 
 
 list<MSHREntry> MSHR::removeAll(Addr baseAddr) {
-    mshrTable::iterator it = map_.find(baseAddr);
-    if (it == map_.end()) {
+    mshrTable::iterator it = mshr_.find(baseAddr);
+    if (it == mshr_.end()) {
         d2_->fatal(CALL_INFO,-1, "%s (MSHR), Error: mshr did not find entry with address 0x%" PRIx64 "\n", ownerName_.c_str(), baseAddr);
     }
     list<MSHREntry> res = (it->second).entries;
     if ((it->second).acksNeeded == 0 && (it->second).dataBuffer.empty()) {
         if (is_debug_addr(baseAddr)) d_->debug(_L9_, "\tMSHR erasing 0x%" PRIx64 "\n", baseAddr);
         
-        map_.erase(it);
+        mshr_.erase(it);
     } else {
         (it->second).entries.clear();
     }
@@ -382,8 +399,8 @@ list<MSHREntry> MSHR::removeAll(Addr baseAddr) {
 }
 
 MemEvent* MSHR::removeFront(Addr baseAddr) {
-    mshrTable::iterator it = map_.find(baseAddr);
-    if (it == map_.end()) {
+    mshrTable::iterator it = mshr_.find(baseAddr);
+    if (it == mshr_.end()) {
         d2_->fatal(CALL_INFO,-1, "%s (MSHR), Error: mshr did not find entry with address 0x%" PRIx64 "\n", ownerName_.c_str(), baseAddr);
     }
     //if (it->second.empty()) {
@@ -401,7 +418,7 @@ MemEvent* MSHR::removeFront(Addr baseAddr) {
     (it->second).entries.erase(it->second.entries.begin());
     if (((it->second).acksNeeded == 0) && (it->second).dataBuffer.empty() && (it->second).entries.empty()) {
         if (is_debug_addr(baseAddr)) d_->debug(_L9_, "\tMSHR erasing 0x%" PRIx64 "\n", baseAddr);
-        map_.erase(it);
+        mshr_.erase(it);
     }
     
     size_--;
@@ -433,8 +450,8 @@ void MSHR::removeElement(Addr baseAddr, Addr pointer) {
 
 bool MSHR::removeElement(Addr baseAddr, MSHREntry entry) {
 
-    mshrTable::iterator it = map_.find(baseAddr);
-    if (it == map_.end()) return false;    
+    mshrTable::iterator it = mshr_.find(baseAddr);
+    if (it == mshr_.end()) return false;    
    
     if (is_debug_addr(baseAddr)) d_->debug(_L9_,"\tMSHR Entry size = %zu\n", it->second.entries.size());
     
@@ -447,7 +464,7 @@ bool MSHR::removeElement(Addr baseAddr, MSHREntry entry) {
     if (((it->second).acksNeeded == 0) && (it->second).dataBuffer.empty() && (it->second).entries.empty()) {
         if (is_debug_addr(baseAddr)) d_->debug(_L9_, "\tMSHR erasing 0x%" PRIx64 "\n", baseAddr);
         
-        map_.erase(it);
+        mshr_.erase(it);
     }
     
     if (is_debug_addr(baseAddr)) d_->debug(_L9_, "\tMSHR Removed Event\n");
@@ -464,8 +481,8 @@ void MSHR::removeWriteback(Addr baseAddr) {
 bool MSHR::elementIsHit(Addr baseAddr, MemEvent *event) {
     MSHREntry entry = MSHREntry(event);
 
-    mshrTable::iterator it = map_.find(baseAddr);
-    if (it == map_.end()) return false;    
+    mshrTable::iterator it = mshr_.find(baseAddr);
+    if (it == mshr_.end()) return false;    
     
     if (is_debug_addr(baseAddr)) d_->debug(_L9_,"\tMSHR Entry size = %zu\n", it->second.entries.size());
     
@@ -478,7 +495,7 @@ bool MSHR::elementIsHit(Addr baseAddr, MemEvent *event) {
 
 
 void MSHR::printTable() {
-    for (mshrTable::iterator it = map_.begin(); it != map_.end(); it++) {
+    for (mshrTable::iterator it = mshr_.begin(); it != mshr_.end(); it++) {
         list<MSHREntry> entries = (it->second).entries;
         d_->debug(_L9_, "\tMSHR: Addr = 0x%" PRIx64 "\n", (it->first));
         for (list<MSHREntry>::iterator it2 = entries.begin(); it2 != entries.end(); it2++) {
@@ -496,10 +513,10 @@ void MSHR::printTable() {
 
 
 /*void MSHR::printEntry(Addr baseAddr) {
-    mshrTable::iterator it = map_.find(baseAddr);
-    if (it == map_.end()) return;
+    mshrTable::iterator it = mshr_.find(baseAddr);
+    if (it == mshr_.end()) return;
     int i = 0;
-    for (vector<MemEvent*>::iterator it = map_[baseAddr].begin(); it != map_[baseAddr].end(); ++it, ++i) {
+    for (vector<MemEvent*>::iterator it = mshr_[baseAddr].begin(); it != mshr_[baseAddr].end(); ++it, ++i) {
         MemEvent* event = (MemEvent*)(*it);
         d_->debug(C,L5,0, "Entry %i:  Key Addr: %#016lllx, Event Addr: %#016lllx, Event Cmd = %s\n", i, baseAddr, event->getAddr(), CommandString[(int)event->getCmd()]);
     }
@@ -507,7 +524,7 @@ void MSHR::printTable() {
 
 void MSHR::printStatus(Output &out) {
     out.output("    MSHR Status for %s. Size: %u. Prefetches: %u\n", ownerName_.c_str(), size_, prefetchCount_);
-    for (mshrTable::iterator it = map_.begin(); it != map_.end(); it++) {
+    for (mshrTable::iterator it = mshr_.begin(); it != mshr_.end(); it++) {
         list<MSHREntry> entries = (it->second).entries;
         out.output("      Entry: Addr = 0x%" PRIx64 " Acks needed: %d\n", (it->first), it->second.acksNeeded);
         for (list<MSHREntry>::iterator it2 = entries.begin(); it2 != entries.end(); it2++) {
