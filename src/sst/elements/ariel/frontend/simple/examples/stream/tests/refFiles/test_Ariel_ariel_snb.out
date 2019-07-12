@@ -34,18 +34,153 @@ Creating L3 cache block: 3 in group: 3
 Creating L3 cache block: 4 in group: 3
 Completed configuring the SST Sandy Bridge model
 SSTARIEL: Function profiling is disabled.
-Allocating arrays of size 2000 elements.
-Done allocating arrays.
-Perfoming the fast_c compute loop...
-Sum of arrays is: 6999500.000000
-Freeing arrays...
-Done.
+ARIEL-SST: Did not find ARIEL_OVERRIDE_POOL in the environment, no override applies.
+ARIEL-SST PIN tool activating with 8 threads
+ARIEL: Default memory pool set to 0
+ARIEL: Tool is configured to begin with profiling immediately.
+ARIEL: Starting program.
+Identified routine: malloc/_malloc, replacing with Ariel equivalent...
+Identified routine: malloc/_malloc, replacing with Ariel equivalent...
+Identified routine: free/_free, replacing with Ariel equivalent...
+Identified routine: malloc/_malloc, replacing with Ariel equivalent...
+Identified routine: free/_free, replacing with Ariel equivalent...
+Identified routine: malloc/_malloc, replacing with Ariel equivalent...
+Identified routine: clock_gettime, replacing with Ariel equivalent...
+Replacement complete.
+0 Performing iteration 0
+5 Performing iteration 0
+2 Performing iteration 0
+7 Performing iteration 0
+4 Performing iteration 0
+1 Performing iteration 0
+6 Performing iteration 0
+3 Performing iteration 0
+0 Performing iteration 1
+4 Performing iteration 1
+6 Performing iteration 1
+7 Performing iteration 1
+2 Performing iteration 1
+5 Performing iteration 1
+1 Performing iteration 1
+3 Performing iteration 1
+4 Performing iteration 2
+0 Performing iteration 2
+1 Performing iteration 2
+3 Performing iteration 2
+5 Performing iteration 2
+7 Performing iteration 2
+6 Performing iteration 2
+2 Performing iteration 2
+6 Performing iteration 3
+4 Performing iteration 3
+5 Performing iteration 3
+1 Performing iteration 3
+7 Performing iteration 3
+3 Performing iteration 3
+0 Performing iteration 3
+2 Performing iteration 3
+1 Performing iteration 4
+6 Performing iteration 4
+2 Performing iteration 4
+7 Performing iteration 4
+5 Performing iteration 4
+4 Performing iteration 4
+0 Performing iteration 4
+3 Performing iteration 4
+2 Performing iteration 5
+5 Performing iteration 5
+7 Performing iteration 5
+4 Performing iteration 5
+0 Performing iteration 5
+6 Performing iteration 5
+3 Performing iteration 5
+1 Performing iteration 5
+4 Performing iteration 6
+1 Performing iteration 6
+5 Performing iteration 6
+6 Performing iteration 6
+0 Performing iteration 6
+3 Performing iteration 6
+2 Performing iteration 6
+7 Performing iteration 6
+7 Performing iteration 7
+1 Performing iteration 7
+0 Performing iteration 7
+3 Performing iteration 7
+4 Performing iteration 7
+2 Performing iteration 7
+6 Performing iteration 7
+5 Performing iteration 7
+1 Performing iteration 8
+6 Performing iteration 8
+0 Performing iteration 8
+4 Performing iteration 8
+3 Performing iteration 8
+7 Performing iteration 8
+2 Performing iteration 8
+5 Performing iteration 8
+0 Performing iteration 9
+4 Performing iteration 9
+6 Performing iteration 9
+5 Performing iteration 9
+1 Performing iteration 9
+7 Performing iteration 9
+3 Performing iteration 9
+2 Performing iteration 9
+6 Performing iteration 10
+2 Performing iteration 10
+7 Performing iteration 10
+0 Performing iteration 10
+1 Performing iteration 10
+4 Performing iteration 10
+5 Performing iteration 10
+3 Performing iteration 10
+7 Performing iteration 11
+4 Performing iteration 11
+5 Performing iteration 11
+0 Performing iteration 11
+3 Performing iteration 11
+6 Performing iteration 11
+1 Performing iteration 11
+2 Performing iteration 11
+3 Performing iteration 12
+0 Performing iteration 12
+6 Performing iteration 12
+7 Performing iteration 12
+4 Performing iteration 12
+1 Performing iteration 12
+5 Performing iteration 12
+2 Performing iteration 12
+6 Performing iteration 13
+0 Performing iteration 13
+2 Performing iteration 13
+1 Performing iteration 13
+7 Performing iteration 13
+3 Performing iteration 13
+5 Performing iteration 13
+4 Performing iteration 13
+0 Performing iteration 14
+6 Performing iteration 14
+7 Performing iteration 14
+5 Performing iteration 14
+3 Performing iteration 14
+1 Performing iteration 14
+2 Performing iteration 14
+4 Performing iteration 14
+5 Performing iteration 15
+2 Performing iteration 15
+1 Performing iteration 15
+6 Performing iteration 15
+3 Performing iteration 15
+7 Performing iteration 15
+4 Performing iteration 15
+0 Performing iteration 15
 CORE ID: 0 PROCESSED AN EXIT EVENT
 
 Ariel Memory Management Statistics:
 ---------------------------------------------------------------------
 Page Table Sizes:
-- Map entries         252
+- Map entries         240
 Page Table Coverages:
-- Bytes               1032192
-Simulation is complete, simulated time: 999.307 us
+- Bytes               983040
+Simulation is complete, simulated time: 983.728 us

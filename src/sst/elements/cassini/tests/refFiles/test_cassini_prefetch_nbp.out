@@ -1,12 +1,3 @@
---->  --------------------------- Initializing [Set Associative Cache Array]... 
---->  Sets: 32 
---->  Lines: 128 
---->  Line size: 64 
---->  Associativity: 4 
-
---->  Configuring cache with a direct link above and below
---->  --------------------------- Initializing [L1Controller] ... 
-
 streamCPU Finished after 100000 issued reads, 100000 returned
 Completed @ 11127977 ns
  l1cache.prefetches_issued : Accumulator : Sum.u64 = 6250; SumSQ.u64 = 6250; Count.u64 = 6250; Min.u64 = 1; Max.u64 = 1; 

@@ -1,6 +1,14 @@
 n0.l2cache: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 5 cycles.
 n1.l2cache: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 5 cycles.
 l3cache: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 32 cycles.
+== Loading device model file 'DDR3_micron_32M_8B_x4_sg125.ini' == 
+== Loading system model file 'system.ini' == 
+WARNING: UNKNOWN KEY 'DEBUG_TRANS_FLOW' IN INI FILE
+===== MemorySystem 0 =====
+CH. 0 TOTAL_STORAGE : 2048MB | 1 Ranks | 16 Devices per rank
+===== MemorySystem 1 =====
+CH. 1 TOTAL_STORAGE : 2048MB | 1 Ranks | 16 Devices per rank
+DRAMSim2 Clock Frequency =1Hz, CPU Clock Frequency=1Hz
 TrivialCPU: Test Completed Successfuly
 TrivialCPU: Test Completed Successfuly
 TrivialCPU: Test Completed Successfuly

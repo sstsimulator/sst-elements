@@ -1,5 +1,7 @@
 import sst
 
+DEBUG_L1 = 0
+
 # Define SST core options
 sst.setProgramOption("timebase", "1ps")
 sst.setProgramOption("stopAtCycle", "0 ns")
@@ -29,7 +31,7 @@ comp_l1cache.addParams({
       "associativity" : "4",
       "cache_line_size" : "64",
       "prefetcher" : "cassini.NextBlockPrefetcher",
-      "debug" : "1",
+      "debug" : DEBUG_L1,
       "L1" : "1",
       "cache_size" : "8 KB"
 })
