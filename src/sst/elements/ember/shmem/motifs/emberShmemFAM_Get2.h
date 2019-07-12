@@ -67,9 +67,6 @@ public:
 		m_numBlocks = m_totalBytes/m_blockSize;
 		m_numBlocksPerPartition = m_partitionSize/m_blockSize;
 
-        m_miscLib = static_cast<EmberMiscLib*>(getLib("HadesMisc"));
-        assert(m_miscLib);
-
 		if ( m_randCompute || m_randomGet ) {
 			m_rng = new SST::RNG::XORShiftRNG();
         	struct timeval start;
@@ -269,7 +266,6 @@ public:
 	uint64_t m_regionSize;
 	std::string m_groupName;
 	Shmem::Fam_Descriptor m_fd;
-	EmberMiscLib* m_miscLib;
 
 	int m_stream_n;
 	bool m_backed;

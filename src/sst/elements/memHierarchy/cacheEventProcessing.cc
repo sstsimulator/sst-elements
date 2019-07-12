@@ -123,7 +123,6 @@ void Cache::profileEvent(MemEvent* event, Command cmd, bool replay, bool canStal
 
 bool Cache::processEvent(MemEventBase* ev, bool replay) {
     
-    
     // Debug
     if (is_debug_event(ev)) {
         if (replay) {
@@ -154,6 +153,14 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
     /* Start handling cache events */
     MemEvent * event = static_cast<MemEvent*>(ev);
     Command cmd     = event->getCmd();
+    std::string gpu ("gpu0");
+    if((event->getSrc().compare(gpu))==0){
+        if(event->getAddr() % cacheArray_->getLineSize()==0){
+            event->setBaseAddr(event->getAddr());
+        } else {
+            event->setBaseAddr(event->getAddr()-(event->getAddr() % cacheArray_->getLineSize()));
+        }
+    }
     Addr baseAddr   = event->getBaseAddr();
     // TODO this is a temporary check while we ensure that the source sets baseAddr correctly
     if (baseAddr % cacheArray_->getLineSize() != 0) {
