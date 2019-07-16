@@ -320,11 +320,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
 
 Nic::~Nic()
 {
-    if ( m_memoryModel ) {
-        delete m_memoryModel;
-    }  
 	delete m_shmem;
-	delete m_linkControl;
 	delete m_unitPool;
  	delete m_linkSendWidget;
 	delete m_linkRecvWidget;

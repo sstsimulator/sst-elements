@@ -142,8 +142,6 @@ Hades::Hades( Component* owner, Params& params ) :
 
 Hades::~Hades()
 {
-    if ( m_virtNic ) delete m_virtNic;
-    delete m_proto;
     delete m_functionSM;
 }
 void Hades::finish(  )

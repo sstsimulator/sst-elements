@@ -51,7 +51,9 @@
 #include "ariel_shmem.h"
 #include "arieltracegen.h"
 
+#ifdef HAVE_CUDA
 #include "arielgpuev.h"
+#endif
 
 using namespace SST;
 using namespace SST::Interfaces;
@@ -64,12 +66,18 @@ namespace ArielComponent {
 class ArielCore : public ComponentExtension {
 
     public:
-        ArielCore(ComponentId_t id, ArielTunnel *tunnel, GpuReturnTunnel *tunnelR, GpuDataTunnel *tunnelD, uint32_t thisCoreID, uint32_t maxPendTans, Output* out,
-            uint32_t maxIssuePerCyc, uint32_t maxQLen, uint64_t cacheLineSz, ArielMemoryManager* memMgr, const uint32_t perform_address_checks, Params& params);
+        ArielCore(ComponentId_t id, ArielTunnel *tunnel, 
+#ifdef HAVE_CUDA
+            GpuReturnTunnel *tunnelR, GpuDataTunnel *tunnelD,
+#endif
+            uint32_t thisCoreID, uint32_t maxPendTans, Output* out,
+            uint32_t maxIssuePerCyc, uint32_t maxQLen, uint64_t cacheLineSz,
+            ArielMemoryManager* memMgr, const uint32_t perform_address_checks, Params& params);
         ~ArielCore();
 
         bool isCoreHalted() const;
         bool isCoreStalled() const;
+#ifdef HAVE_CUDA
         cudaMemcpyKind getKind() const;
         bool getMidTransfer() const;
         size_t getTotalTransfer() const;
@@ -97,12 +105,13 @@ class ArielCore : public ComponentExtension {
         void setBaseDataAddress(uint8_t* virtAddress);
         void setPhysicalAddresses(SST::Event *ev);
         bool isGpuEx() const;
+        void gpu();
+#endif
         bool isCoreFenced() const;
         bool hasDrainCompleted() const;
         void tick();
         void halt();
         void stall();
-        void gpu();
         void fence();
         void unfence();
         void finishCore();
@@ -128,9 +137,11 @@ class ArielCore : public ComponentExtension {
 
         void setCacheLink(SimpleMem* newCacheLink);
 
+#ifdef HAVE_CUDA
         void createGpuEvent(GpuApi_t API, CudaArguments CA);
         void setGpu() { gpu_enabled = true; }
         void setGpuLink(Link* gpulink);
+#endif
 
         void handleEvent(SimpleMem::Request* event);
         void handleReadRequest(ArielReadEvent* wEv);
@@ -142,9 +153,11 @@ class ArielCore : public ComponentExtension {
         void handleFlushEvent(ArielFlushEvent *flEv);
         void handleFenceEvent(ArielFenceEvent *fEv);
 
+#ifdef HAVE_CUDA
         void handleGpuEvent(ArielGpuEvent* gEv);
         void handleGpuAckEvent(SST::Event* e);
         void handleGpuMemcpy(ArielGpuEvent* gEv);
+#endif
 
         // interrupt handlers
         bool handleInterrupt(ArielMemoryManager::InterruptAction action);
@@ -163,12 +176,13 @@ class ArielCore : public ComponentExtension {
         bool processNextEvent();
         bool refillQueue();
 
-        bool gpu_enabled;
-
         bool writePayloads;
         uint32_t coreID;
         uint32_t maxPendingTransactions;
+
+#ifdef HAVE_CUDA
         size_t totalTransfer;
+        bool gpu_enabled;
         size_t pageTransfer;
         size_t ackTransfer;
         size_t pageAckTransfer;
@@ -178,25 +192,29 @@ class ArielCore : public ComponentExtension {
         uint64_t currentAddress;
         uint8_t* dataAddress;
         uint8_t* baseDataAddress;
-        Output* output;
-        std::queue<ArielEvent*>* coreQ;
-        bool isStalled;
         bool midTransfer;
         std::vector<uint64_t> physicalAddresses;
         cudaMemcpyKind kind;
         bool isGpu;
+#endif
+
+        Output* output;
+        std::queue<ArielEvent*>* coreQ;
+        bool isStalled;
         bool isHalted;
         bool isFenced;
+
         SimpleMem* cacheLink;
-
-        Link* GpuLink;
-
         ArielTunnel *tunnel;
+
+#ifdef HAVE_CUDA
+        Link* GpuLink;
         GpuReturnTunnel *tunnelR;
         GpuDataTunnel *tunnelD;
+        std::unordered_map<SimpleMem::Request::id_t, SimpleMem::Request*>* pendingGpuTransactions;
+#endif
 
         std::unordered_map<SimpleMem::Request::id_t, SimpleMem::Request*>* pendingTransactions;
-        std::unordered_map<SimpleMem::Request::id_t, SimpleMem::Request*>* pendingGpuTransactions;
         uint32_t maxIssuePerCycle;
         uint32_t maxQLength;
         uint64_t cacheLineSize;

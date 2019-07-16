@@ -34,8 +34,10 @@
 #include <set>
 #include <sst_config.h>
 
+#ifdef HAVE_CUDA
 #include "host_defines.h"
 #include "builtin_types.h"
+#endif
 
 #ifdef HAVE_LIBZ
 
@@ -88,7 +90,7 @@ KNOB<string> SSTNamedPipe2(KNOB_MODE_WRITEONCE, "pintool",
 KNOB<string> SSTNamedPipe3(KNOB_MODE_WRITEONCE, "pintool",
     "x", "", "Named pipe to connect to SST simulator");
 KNOB<UINT32> InstrumentInstructions(KNOB_MODE_WRITEONCE, "pintool",
-    "E", "0", "Named pipe to connect to SST simulator");
+    "E", "1", "Enable instruction instrumentation");
 
 #define ARIEL_MAX(a,b) \
    ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
@@ -105,8 +107,10 @@ UINT32 core_count;
 UINT32 default_pool;
 UINT32 instrument_instructions;
 ArielTunnel *tunnel = NULL;
+#ifdef HAVE_CUDA
 GpuReturnTunnel *tunnelR = NULL;
 GpuDataTunnel *tunnelD = NULL;
+#endif
 bool enable_output;
 std::vector<void*> allocated_list;
 PIN_LOCK mainLock;
@@ -221,7 +225,7 @@ VOID ariel_print_stack(UINT32 thr, UINT64 allocSize, UINT64 allocAddr, UINT64 al
         string file;
         int line;
         PIN_LockClient();
-            PIN_GetSourceLocation(*it, NULL, &line, &file);
+        PIN_GetSourceLocation(*it, NULL, &line, &file);
         PIN_UnlockClient();
         BT_PRINTF("MAP: 0x%" PRIx64 ", %s:%d\n", *it, file.c_str(), line);
 
@@ -297,8 +301,10 @@ VOID Fini(INT32 code, VOID* v)
     tunnel->writeMessage(0, ac);
 
     delete tunnel;
+#ifdef HAVE_CUDA
     delete tunnelR;
     delete tunnelD;
+#endif
 
     if(funcProfileLevel > 0) {
         FILE* funcProfileOutput = fopen("func.profile", "wt");
@@ -1029,10 +1035,13 @@ VOID ariel_postmalloc_instrument(ADDRINT allocLocation)
     }
 }
 
+#ifdef HAVE_CUDA
 #define GLOBAL_HEAP_START 0xC0000000
 size_t limit_size = 0;
 __host__ cudaError_t CUDARTAPI cudaMalloc(void **devPtr, size_t size){
+#ifdef ARIEL_DEBUG
     printf("Call cudaMalloc.\n");
+#endif
     THREADID currentThread = PIN_ThreadId();
     UINT32 thr = (UINT32) currentThread;
     tunnelR->clearBuffer(thr);
@@ -1053,7 +1062,9 @@ __host__ cudaError_t CUDARTAPI cudaMalloc(void **devPtr, size_t size){
         avail = tunnelR->readMessageNB(thr, &gc);
     } while (!avail);
 
+#ifdef ARIEL_DEBUG
     printf("CUDA fesimple updated address %p\n", gc.ptr_address);
+#endif
 
     //Set the devPtr to the malloc'd address
     *devPtr = (void *)gc.ptr_address;
@@ -1064,7 +1075,9 @@ __host__ cudaError_t CUDARTAPI cudaMalloc(void **devPtr, size_t size){
 }
 
 void** CUDARTAPI __cudaRegisterFatBinary(void *fatCubin) {
+#ifdef ARIEL_DEBUG
     printf("Call __cudaRegisterFatBinary.\n");
+#endif
     THREADID currentThread = PIN_ThreadId();
     UINT32 thr = (UINT32) currentThread;
 
@@ -1080,7 +1093,9 @@ void** CUDARTAPI __cudaRegisterFatBinary(void *fatCubin) {
     } while (!avail);
 
     void** handle = (void **)gc.fat_cubin_handle;
+#ifdef ARIEL_DEBUG
     printf("CUDA fesimple return from __cudaRegisterFatBinary with handle %d\n", gc.fat_cubin_handle);
+#endif
     std::cout << gc.API_Return.name << std::endl;
     tunnelR->clearBuffer(thr);
     return handle;
@@ -1098,7 +1113,9 @@ void CUDARTAPI __cudaRegisterFunction(
     dim3        *gDim,
     int         *wSize
 ){
+#ifdef ARIEL_DEBUG
     printf("Call __cudaRegisterFunction\n");
+#endif
     THREADID currentThread = PIN_ThreadId();
     UINT32 thr = (UINT32) currentThread;
 
@@ -1116,7 +1133,9 @@ void CUDARTAPI __cudaRegisterFunction(
         avail = tunnelR->readMessageNB(thr, &gc);
     } while (!avail);
 
+#ifdef ARIEL_DEBUG
     printf("CUDA fesimple return from __cudaRegisterFunction\n");
+#endif
     std::cout << gc.API_Return.name << std::endl;
     tunnelR->clearBuffer(thr);
 }
@@ -1154,13 +1173,15 @@ __host__ cudaError_t CUDARTAPI cudaMemcpy(void *dst, const void *src, size_t cou
                 final_kind = cudaMemcpyHostToDevice;
             } else {
                 //host to host not supported
-                printf("Error: cudaMemcpy host to host not suppoorted!\n");
-                fflush(stdout);
+                fprintf(stderr, "Error: cudaMemcpy host to host not suppoorted!\n");
+                fflush(stderr);
                 exit(-5);
             }
         }
+#ifdef ARIEL_DEBUG
         printf("Copy with cudaMemcpyDefault under implementing %d!\n", final_kind);
         fflush(stdout);
+#endif
     }
     ArielCommand ac;
     ac.command = ARIEL_ISSUE_CUDA;
@@ -1181,8 +1202,6 @@ __host__ cudaError_t CUDARTAPI cudaMemcpy(void *dst, const void *src, size_t cou
             do {
                 avail = tunnelR->readMessageNB(thr, &gc);
             } while (!avail);
-            printf("CUDA fesimple return from <=4k page transfer (%d)\n", count);
-            fflush(stdout);
         }else {
             // Multiple transfers (>4k)
             size_t remainder = count % (1<<12);
@@ -1207,15 +1226,15 @@ __host__ cudaError_t CUDARTAPI cudaMemcpy(void *dst, const void *src, size_t cou
                 do {
                     avail = tunnelR->readMessageNB(thr, &gc);
                 } while (!avail);
-                printf("CUDA fesimple return from mutli page tx H2D (%d)\n", gd.count);
-                fflush(stdout);
 
                 // Clear flags and buffers for next page transfer
                 avail = false;
                 tunnelR->clearBuffer(thr);
             }
+#ifdef ARIEL_DEBUG
             printf("CUDA Transferred all Data\n");
             fflush(stdout);
+#endif
         }
     } else if(final_kind==cudaMemcpyDeviceToHost) {
         if(count <= max_page_size){
@@ -1227,8 +1246,6 @@ __host__ cudaError_t CUDARTAPI cudaMemcpy(void *dst, const void *src, size_t cou
                 avail = tunnelD->readMessageNB(thr, &gd);
             } while (!avail);
             bytes_copied = PIN_SafeCopy((uint8_t*)dst, gd.page_4k, count);
-            printf("CUDA fesimple return from <=4k page rec (%d)\n", count);
-            fflush(stdout);
         } else {
             /// Multiple transfers (>4k)
             size_t remainder = count % (1<<12);
@@ -1241,8 +1258,7 @@ __host__ cudaError_t CUDARTAPI cudaMemcpy(void *dst, const void *src, size_t cou
                     do {
                         avail = tunnelD->readMessageNB(thr, &gd);
                     } while (!avail);
-                    printf("CUDA fesimple return from mutli page rec D2H (%d)\n", (1<<12));
-                    fflush(stdout);
+
                     memcpy(data+offset, gd.page_4k, (1<<12));
                     pages = pages - (1<<12);
                     offset = offset + (1<<12);
@@ -1251,8 +1267,7 @@ __host__ cudaError_t CUDARTAPI cudaMemcpy(void *dst, const void *src, size_t cou
                     do {
                         avail = tunnelD->readMessageNB(thr, &gd);
                     } while (!avail);
-                    printf("CUDA fesimple return from mutli page rec D2H (%d)\n", (remainder));
-                    fflush(stdout);
+
                     memcpy(data+offset, gd.page_4k, remainder);
                     remainder = 0;
                 }
@@ -1266,25 +1281,29 @@ __host__ cudaError_t CUDARTAPI cudaMemcpy(void *dst, const void *src, size_t cou
     } else if (final_kind==cudaMemcpyDeviceToDevice) {
         //TODO: should Device-to-Device transfer do anything here?
     } else {
-        printf("Error: Unsupported cudaMemcpyKind %d!\n", kind);
-        fflush(stdout);
+        fprintf(stderr, "Error: Unsupported cudaMemcpyKind %d!\n", kind);
         exit(-7);
     }
 
+#ifdef ARIEL_DEBUG
     printf("CUDA sent/rec data. Wait for ACK\n");
     fflush(stdout);
+#endif
+
     do {
         avail = tunnelR->readMessageNB(thr, &gc);
     } while (!avail);
+
+#ifdef ARIEL_DEBUG
     printf("CUDA sent/rec data. Continuing to next transfer\n");
     std::cout << gc.API_Return.name << std::endl;
     fflush(stdout);
+#endif
     tunnelR->clearBuffer(thr);
     return cudaSuccess;
 }
 
 __host__ cudaError_t CUDARTAPI cudaConfigureCall(dim3 gridDim, dim3 blockDim, size_t sharedMem, cudaStream_t stream){
-    printf("Call cudaConfigureCall.\n");
     THREADID currentThread = PIN_ThreadId();
     UINT32 thr = (UINT32) currentThread;
 
@@ -1324,18 +1343,26 @@ __host__ cudaError_t CUDARTAPI cudaSetupArgument(const void *arg, size_t size, s
     uint8_t value[200] = {0};
     if(size == 8){
         ac.API.CA.set_arg.address = reinterpret_cast<uint64_t>(*((void**)arg));
+#ifdef ARIEL_DEBUG
         printf("CUDA ADDRESS ARG %p\n",ac.API.CA.set_arg.address);
+#endif
     } else{
         ac.API.CA.set_arg.address = NULL;
         PIN_SafeCopy(&value, arg, size);
         memcpy(ac.API.CA.set_arg.value, value, size);
+#ifdef ARIEL_DEBUG
         printf("CUDA VALUE ARG ");
         for(int i = 0; i < size; i++)
             printf("%d ", value[i]);
         printf("\n");
+#endif
     }
+
+#ifdef ARIEL_DEBUG
     printf("CUDA SIZE %d\n", size);
     printf("CUDA OFFSET %d\n", offset);
+#endif
+
     ac.API.CA.set_arg.size = size;
     ac.API.CA.set_arg.offset = offset;
     ac.command = ARIEL_ISSUE_CUDA;
@@ -1355,7 +1382,9 @@ __host__ cudaError_t CUDARTAPI cudaSetupArgument(const void *arg, size_t size, s
 }
 
 __host__ cudaError_t CUDARTAPI cudaLaunch(const void *func){
+#ifdef ARIEL_DEBUG
     printf("Call cudaLaunch.\n");
+#endif
     THREADID currentThread = PIN_ThreadId();
     UINT32 thr = (UINT32) currentThread;
 
@@ -1377,7 +1406,9 @@ __host__ cudaError_t CUDARTAPI cudaLaunch(const void *func){
 }
 
 __host__ cudaError_t CUDARTAPI cudaFree(void *devPtr){
+#ifdef ARIEL_DEBUG
     printf("Call cudaFree. %p\n", devPtr);
+#endif
     THREADID currentThread = PIN_ThreadId();
     UINT32 thr = (UINT32) currentThread;
 
@@ -1400,7 +1431,9 @@ __host__ cudaError_t CUDARTAPI cudaFree(void *devPtr){
 }
 
 __host__ __cudart_builtin__ cudaError_t CUDARTAPI cudaGetLastError(void){
+#ifdef ARIEL_DEBUG
     printf("Call cudaGetLastError.\n");
+#endif
     THREADID currentThread = PIN_ThreadId();
     UINT32 thr = (UINT32) currentThread;
     ArielCommand ac;
@@ -1429,7 +1462,9 @@ void CUDARTAPI __cudaRegisterVar(
 		int constant,
 		int global ) 
 {
+#ifdef ARIEL_DEBUG
     printf("Call __cudaRegisterVar.\n");
+#endif
     THREADID currentThread = PIN_ThreadId();
     UINT32 thr = (UINT32) currentThread;
 
@@ -1451,8 +1486,10 @@ void CUDARTAPI __cudaRegisterVar(
         avail = tunnelR->readMessageNB(thr, &gc);
     } while (!avail);
 
+#ifdef ARIEL_DEBUG
     printf("CUDA fesimple return from __cudaRegisterVar\n");
     std::cout << gc.API_Return.name << std::endl;
+#endif
     tunnelR->clearBuffer(thr);
 }
 
@@ -1463,8 +1500,10 @@ __host__ cudaError_t CUDARTAPI __maxActiveBlock(
         size_t dynamicSMemSize,
         unsigned int flags)
 {
+#ifdef ARIEL_DEBUG
     printf("Call cudaOccupancyMaxActiveBlocksPerMultiprocessorWithFlags %p\n", hostFunc);
     fflush(stdout);
+#endif
     THREADID currentThread = PIN_ThreadId();
     UINT32 thr = (UINT32) currentThread;
 
@@ -1484,11 +1523,14 @@ __host__ cudaError_t CUDARTAPI __maxActiveBlock(
     } while (!avail);
 
     *numBlocks = gc.num_block;
+#ifdef ARIEL_DEBUG
     printf("CUDA fesimple return from cudaOccupancyMaxActiveBlocksPerMultiprocessorWithFlags with numBlock %d\n", gc.num_block);
     std::cout << gc.API_Return.name << std::endl;
+#endif
     tunnelR->clearBuffer(thr);
     return cudaSuccess;
 }
+#endif
 
 VOID ariel_postfree_instrument(ADDRINT allocLocation)
 {
@@ -1637,6 +1679,7 @@ VOID InstrumentRoutine(RTN rtn, VOID* args)
         return;
     } else if (RTN_Name(rtn) == "ariel_munmap_mlm" || RTN_Name(rtn) == "_ariel_munmap_mlm") {
         return;
+#ifdef HAVE_CUDA
     } else if(RTN_Name(rtn) == "__cudaRegisterFatBinary") {
     fprintf(stderr, "Identified routine: __cudaRegisterFatBinary, replacing with GPGPU-Sim equivilant...\n");
     AFUNPTR ret = RTN_Replace(rtn, (AFUNPTR) __cudaRegisterFatBinary);
@@ -1692,6 +1735,7 @@ VOID InstrumentRoutine(RTN rtn, VOID* args)
     AFUNPTR ret = RTN_Replace(rtn, (AFUNPTR) __maxActiveBlock);
     fprintf(stderr,"Replacement complete. (%p)\n", ret);
     return;
+#endif
     } else if (UseMallocMap.Value() != "") {
         if (RTN_Name(rtn) == "ariel_malloc_flag" || RTN_Name(rtn) == "_ariel_malloc_flag") {
 
@@ -1783,8 +1827,10 @@ int main(int argc, char *argv[])
     instrument_instructions = InstrumentInstructions.Value();
 
     tunnel = new ArielTunnel(SSTNamedPipe.Value());
+#ifdef HAVE_CUDA
     tunnelR = new GpuReturnTunnel(SSTNamedPipe2.Value());
     tunnelD = new GpuDataTunnel(SSTNamedPipe3.Value());
+#endif
     
     lastMallocSize = (UINT64*) malloc(sizeof(UINT64) * core_count);
     lastMallocLoc = (UINT64*) malloc(sizeof(UINT64) * core_count);
