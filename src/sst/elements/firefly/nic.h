@@ -144,7 +144,8 @@ class Nic : public SST::Component  {
         {"read", "Port connected to the detailed model", {}},
         {"write", "Port connected to the detailed model", {}},
         {"core%(num_vNics)d", "Ports connected to the network driver", {}},
-        {"detailed", "Port connected to the detailed model", {"memHierarchy.memEvent" , ""}},
+        {"nicDetailedRead", "Port connected to the detailed model", {"memHierarchy.memEvent" , ""}},
+        {"nicDetailedWrite", "Port connected to the detailed model", {"memHierarchy.memEvent" , ""}},
     ) 
 
   private:
