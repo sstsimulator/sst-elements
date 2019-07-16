@@ -16,6 +16,7 @@
 #ifndef _H_THORNHILL_SINGLE_THREAD
 #define _H_THORNHILL_SINGLE_THREAD
 
+#include <queue>
 #include "detailedCompute.h"
 
 namespace SST {
@@ -43,9 +44,22 @@ class SingleThread : public DetailedCompute {
 
     ~SingleThread(){};
 
-    virtual void start( const std::deque< 
-						std::pair< std::string, SST::Params > >&, 
-                 std::function<int()>, std::function<int()> );
+	struct Pending {
+		Pending( std::deque< std::pair< std::string, SST::Params > >& work,
+                 std::function<int()> retHandler, std::function<int()> finiHandler) : work(work), retHandler(retHandler), finiHandler(finiHandler) {}
+    	std::deque< std::pair< std::string, SST::Params > > work; 
+        std::function<int()> retHandler;
+		std::function<int()> finiHandler; 
+	};
+    virtual void start( std::deque< std::pair< std::string, SST::Params > >& work, 
+                 std::function<int()> retHandler, std::function<int()> finiHandler ) 
+	{
+		if ( ! m_busy ) {
+			start2( work, retHandler, finiHandler ); 
+		} else {
+			m_pendingQ.push( Pending( work, retHandler, finiHandler ) ); 
+		}
+	}
     virtual bool isConnected() { return ( m_link ); }
 	
 	virtual std::string getModelName() {
@@ -53,9 +67,12 @@ class SingleThread : public DetailedCompute {
 	}
 
   private:
+	bool m_busy;
+	std::queue<Pending> m_pendingQ;
     void eventHandler( SST::Event* ev ); 
+    void start2( const std::deque< std::pair< std::string, SST::Params > >&, 
+                 std::function<int()>, std::function<int()> ); 
     Link*  m_link;
-	Entry* m_entry;
 };
 
 

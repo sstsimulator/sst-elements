@@ -127,8 +127,6 @@ EmberEngine::~EmberEngine() {
 	if(NULL != m_motifLogger) {
 		delete m_motifLogger;
 	}
-
-	delete m_os;
 }
 
 EmberEngine::ApiMap EmberEngine::createApiMap( OS* os, 

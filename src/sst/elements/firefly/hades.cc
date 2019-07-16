@@ -102,8 +102,11 @@ Hades::Hades( Component* owner, Params& params ) :
         m_memHeapLink = dynamic_cast<Thornhill::MemoryHeapLink*>( loadSubComponent(
                             memName, memParams ) );
 
+        if ( ! m_memHeapLink ) {
+            m_dbg.fatal(CALL_INFO,0,"could not load subComponent %s\n", memName.c_str() );
+        }
+
         if ( ! m_memHeapLink->isConnected() ) {
-            delete m_memHeapLink;
             m_memHeapLink = NULL;
         }
     }
@@ -179,6 +182,13 @@ void Hades::_componentSetup()
 
     m_proto->setVars( getInfo(), getNic(), getMemHeapLink(), m_functionSM->getRetLink() );
     m_functionSM->setup(getInfo() );
+
+    if (  m_detailedCompute ) {
+        m_dbg.verbose(CALL_INFO, 1, 0,"detailed compute connected\n");
+    }
+    if ( m_memHeapLink ) {
+        m_dbg.verbose(CALL_INFO, 1, 0,"memHeap connected\n");
+    }
 }
 
 void Hades::_componentInit(unsigned int phase )

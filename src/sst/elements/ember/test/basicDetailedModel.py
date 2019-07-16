@@ -46,7 +46,7 @@ class BasicDetailedModel(DetailedModel):
             
             link = sst.Link( name + "l1_bus_link")
             link.setNoCut();
-            link.connect( ( l1, "low_network_0", "50ps" ) , (bus,"high_network_" + str(i+1),"1000ps") )
+            link.connect( ( l1, "low_network_0", "50ps" ) , (bus,"high_network_" + str(i+2),"1000ps") )
 
             link = sst.Link( name + "src_link" )
             link.setNoCut();
@@ -55,8 +55,8 @@ class BasicDetailedModel(DetailedModel):
 
         return links
 
-    def createNic( self, prefix, bus, cpu_params, l1_params ):
-        name = prefix + "nic_"
+    def createNic( self, prefix, op, bus, cpu_params, l1_params ):
+        name = prefix + "nic_" + op + "_"
         #print "createNic() ", name
 
         cpu = sst.Component( name + "cpu", "miranda.BaseCPU")
@@ -70,7 +70,11 @@ class BasicDetailedModel(DetailedModel):
 
         link = sst.Link( name + "l1_bus_link")
         link.setNoCut();
-        link.connect( ( l1, "low_network_0", "50ps" ) , (bus,"high_network_0","1000ps") )
+        if op == 'read':
+            link.connect( ( l1, "low_network_0", "50ps" ) , (bus,"high_network_0","1000ps") )
+
+        if op == 'write':
+            link.connect( ( l1, "low_network_0", "50ps" ) , (bus,"high_network_1","1000ps") )
 
         link = sst.Link( name + "src_link" )
         link.setNoCut();
@@ -114,7 +118,9 @@ class BasicDetailedModel(DetailedModel):
                                     self.params['cpu_params'], \
                                     self.params['l1_params']  ) )
             
-        self.nicLink = self.createNic( prefix, bus, self.params['nic_cpu_params'],\
+        self.nicReadLink = self.createNic( prefix, 'read', bus, self.params['nic_cpu_params'],\
+                                    self.params['nic_l1_params'] )
+        self.nicWriteLink = self.createNic( prefix, 'write', bus, self.params['nic_cpu_params'],\
                                     self.params['nic_l1_params'] )
 
         return True 
@@ -123,9 +129,13 @@ class BasicDetailedModel(DetailedModel):
         #print 'BasicDetailedModel.getThreadLinks( {0} )'.format(core) 
         return self.links[core]
 
-    def getNicLink(self ):
+    def getNicReadLink(self ):
         #print 'BasicDetailedModel.getNicLink()' 
-        return self.nicLink 
+        return self.nicReadLink 
+
+    def getNicWriteLink(self ):
+        #print 'BasicDetailedModel.getNicLink()' 
+        return self.nicWriteLink 
 
 def getModel(params,nodeList):
     return BasicDetailedModel(params,nodeList)
