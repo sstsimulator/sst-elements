@@ -33,6 +33,7 @@ class EmberEP( EndPoint ):
 
         nic = sst.Component( "nic" + str(nodeID), nicComponentName )
         rtrLink = nic.setSubComponent( "rtrLink", "merlin.linkcontrol" )
+        rtrLink.addParams( self.nicParams )
 
         nic.addParams( self.nicParams )
         nic.addParams( extraKeys)
