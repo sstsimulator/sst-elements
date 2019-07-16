@@ -16,8 +16,8 @@
 # distribution.
 
 
-clock = "4000MHz"
-memory_clock = "4000MHz"
+clock = "100MHz"
+memory_clock = "100MHz"
 coherence_protocol = "MSI"
 
 
