@@ -273,18 +273,27 @@ Nic::Nic(ComponentId_t id, Params &params) :
 
     if ( ! dtldName.empty() ) {
 
-        dtldParams.insert( "portName", "read", true );
         Thornhill::DetailedCompute* detailed;
+
+        dtldParams.insert( "portName", "nicDetailedRead", true );
         detailed = loadUserSubComponent<Thornhill::DetailedCompute>( dtldName );
 
-        if ( detailed ) {
+        assert( detailed );
+        if ( ! detailed->isConnected() ) {
+            delete detailed;
+        } else {
+            m_dbg.verbose( CALL_INFO, 1, 0,"detailed read connected\n");
             m_detailedCompute[0] = detailed;
         }
 
-        dtldParams.insert( "portName", "write", true );
+        dtldParams.insert( "portName", "nicDetailedWrite", true );
         detailed = loadUserSubComponent<Thornhill::DetailedCompute>( dtldName );
 
-        if ( detailed ) {
+        assert( detailed );
+        if ( ! detailed->isConnected() ) {
+            delete detailed;
+        } else {
+            m_dbg.verbose( CALL_INFO, 1, 0,"detailed write connected\n" );
             m_detailedCompute[1] = detailed;
         }
 
@@ -309,11 +318,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
 
 Nic::~Nic()
 {
-    if ( m_memoryModel ) {
-        delete m_memoryModel;
-    }  
 	delete m_shmem;
-	delete m_linkControl;
 	delete m_unitPool;
  	delete m_linkSendWidget;
 	delete m_linkRecvWidget;

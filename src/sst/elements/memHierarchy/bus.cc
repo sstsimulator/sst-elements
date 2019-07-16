@@ -57,36 +57,36 @@ void Bus::processIncomingEvent(SST::Event* ev) {
 
 bool Bus::clockTick(Cycle_t time) {
 
-   if (eventQueue_.empty() && busOn_)
-      idleCount_++;
+    if (eventQueue_.empty())
+        idleCount_++;
 
-   if (idleCount_ > idleMax_) {
-      busOn_ = false;
-      idleCount_ = 0;
-      return true;
-   }
+    if (idleCount_ > idleMax_) {
+        busOn_ = false;
+        idleCount_ = 0;
+        return true;
+    }
 
-   while (!eventQueue_.empty()) {
-      SST::Event* event = eventQueue_.front();
+    while (!eventQueue_.empty()) {
+        SST::Event* event = eventQueue_.front();
 
-      if (broadcast_)
-         broadcastEvent(event);
-      else
-         sendSingleEvent(event);
+        if (broadcast_)
+            broadcastEvent(event);
+        else
+            sendSingleEvent(event);
 
-      eventQueue_.pop();
-      idleCount_ = 0;
+        eventQueue_.pop();
+        idleCount_ = 0;
 
-      if (drain_ == 0 )
-         break;
-   }
+        if (drain_ == 0 )
+            break;
+    }
 
     return false;
 }
 
 
 void Bus::broadcastEvent(SST::Event* ev) {
-    MemEventBase* memEvent = dynamic_cast<MemEventBase*>(ev);
+    MemEventBase* memEvent = static_cast<MemEventBase*>(ev);
     LinkId_t srcLinkId = lookupNode(memEvent->getSrc());
     SST::Link* srcLink = linkIdMap_[srcLinkId];
 
@@ -158,6 +158,8 @@ void Bus::configureLinks() {
     std::string linkname = linkprefix + "0";
     while (isPortConnected(linkname)) {
         link = configureLink(linkname, "50 ps", new Event::Handler<Bus>(this, &Bus::processIncomingEvent));
+        if (!link)
+            dbg_.fatal(CALL_INFO, -1, "%s, Error: unable to configure link on port '%s'\n", getName().c_str(), linkname.c_str());
         highNetPorts_.push_back(link);
         linkIdMap_[highNetPorts_[numHighNetPorts_]->getId()] = highNetPorts_[numHighNetPorts_];
         dbg_.output(CALL_INFO, "Port %d = Link %d\n", numHighNetPorts_, highNetPorts_[numHighNetPorts_]->getId());
@@ -169,6 +171,8 @@ void Bus::configureLinks() {
     linkname = linkprefix + "0";
     while (isPortConnected(linkname)) {
         link = configureLink(linkname, "50 ps", new Event::Handler<Bus>(this, &Bus::processIncomingEvent));
+        if (!link)
+            dbg_.fatal(CALL_INFO, -1, "%s, Error: unable to configure link on port '%s'\n", getName().c_str(), linkname.c_str());
         lowNetPorts_.push_back(link);
         linkIdMap_[lowNetPorts_[numLowNetPorts_]->getId()] = lowNetPorts_[numLowNetPorts_];
         dbg_.output(CALL_INFO, "Port %d = Link %d\n", numLowNetPorts_, lowNetPorts_[numLowNetPorts_]->getId());

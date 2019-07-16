@@ -48,7 +48,6 @@ API::API( ComponentId_t id, Params& params ) :
 
 API::~API()
 {
-    if ( m_processQueuesState) delete m_processQueuesState;
     delete m_mem;
 }
 

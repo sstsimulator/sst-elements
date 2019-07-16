@@ -44,17 +44,17 @@ comp_l1cache.addParams({
 # Enable statistics outputs
 comp_l1cache.enableAllStatistics({"type":"sst.AccumulatorStatistic"})
 
-comp_memory = sst.Component("memory", "memHierarchy.MemController")
-comp_memory.addParams({
-      "coherence_protocol" : "MESI",
-      "backend.access_time" : "100 ns",
-      "backend.mem_size" : "4096MiB",
+comp_memctrl = sst.Component("memory", "memHierarchy.MemController")
+comp_memctrl.addParams({
       "clock" : "1GHz",
       "customCmdHandler" : "memHierarchy.amoCustomCmdHandler",
-      "backendConvertor" : "memHierarchy.extMemBackendConvertor",
-      "backend" : "memHierarchy.goblinHMCSim",
-      "backend.cmd-map" : "[CUSTOM:20:64:RD64,CUSTOM:10:64:WR64]",
-      "backend.verbose" : 1
+})
+memory = comp_memctrl.setSubComponent("backend", "memHierarchy.goblinHMCSim")
+memory.addParams({
+      "access_time" : "100 ns",
+      "mem_size" : "4096MiB",
+      "cmd-map" : "[CUSTOM:20:64:RD64,CUSTOM:10:64:WR64]",
+      "verbose" : 1
 })
 
 
@@ -64,4 +64,4 @@ link_cpu_cache_link.connect( (comp_cpu, "cache_link", "1000ps"), (comp_l1cache, 
 link_cpu_cache_link.setNoCut()
 
 link_mem_bus_link = sst.Link("link_mem_bus_link")
-link_mem_bus_link.connect( (comp_l1cache, "low_network_0", "50ps"), (comp_memory, "direct_link", "50ps") )
+link_mem_bus_link.connect( (comp_l1cache, "low_network_0", "50ps"), (comp_memctrl, "direct_link", "50ps") )

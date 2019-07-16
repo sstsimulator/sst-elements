@@ -22,15 +22,15 @@ using namespace SST::Miranda;
 
 Stake *__GStake;
 
-Stake::Stake( Component* owner, Params& params ) :
-	RequestGenerator(owner, params) {
-            build(params);
-        }
+Stake::Stake( ComponentId_t id, Params& params )
+  : RequestGenerator(id, params) {
+    build(params);
+}
 
-Stake::Stake( Component* owner, Params& params ) :
-	RequestGenerator(owner, params) {
-            build(params);
-        }
+Stake::Stake( Component* owner, Params& params )
+  : RequestGenerator(owner, params) {
+    build(params);
+}
 
 void Stake::build(Params &params) {
         // default parameters

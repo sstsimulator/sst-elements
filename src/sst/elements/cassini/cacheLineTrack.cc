@@ -121,7 +121,8 @@ void cacheLineTrack::notifyAccess(const CacheListenerNotification& notify) {
                 // couldn't find record?
                 printf("Not sure what to do here. Couldn't find record\n");
             }
-        } 
+        }
+    case PREFETCH:
         break;
     default:
         printf("Invalid notify Type\n");

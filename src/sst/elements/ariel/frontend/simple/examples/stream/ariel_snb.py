@@ -96,13 +96,13 @@ l3_params = {
       	"slice_allocation_policy" : "rr"
 }
 
-mem_params = {
-	"coherence_protocol" : coherence_protocol,
+memctrl_params = {
 	"backing" : "none",
-	"backend.access_time" : "30ns",
-	"rangeStart" : 0,
-	"backend.mem_size" : str(memory_capacity / (groups * memory_controllers_per_group)) + "MiB",
 	"clock" : memory_clock,
+}
+memory_params = {
+	"access_time" : "30ns",
+	"mem_size" : str(memory_capacity / (groups * memory_controllers_per_group)) + "MiB",
 }
 
 dc_params = {
@@ -235,8 +235,10 @@ for next_group in range(groups):
 	for next_mem_ctrl in range(memory_controllers_per_group):	
 		local_size = memory_capacity / (groups * memory_controllers_per_group)
 
-		mem = sst.Component("memory_" + str(next_memory_ctrl_id), "memHierarchy.MemController")
-		mem.addParams(mem_params)
+		memctrl = sst.Component("memory_" + str(next_memory_ctrl_id), "memHierarchy.MemController")
+		memctrl.addParams(memctrl_params)
+                memory = memctrl.setSubComponent("backend", "memHierarchy.simpleMem")
+                memory.addParams(memory_params)
 
 		dc = sst.Component("dc_" + str(next_memory_ctrl_id), "memHierarchy.DirectoryController")
 		dc.addParams({
@@ -246,7 +248,7 @@ for next_group in range(groups):
 		dc.addParams(dc_params)
 
 		memLink = sst.Link("mem_link_" + str(next_memory_ctrl_id))
-		memLink.connect((mem, "direct_link", ring_latency), (dc, "memory", ring_latency))
+		memLink.connect((memctrl, "direct_link", ring_latency), (dc, "memory", ring_latency))
 
 		netLink = sst.Link("dc_link_" + str(next_memory_ctrl_id))
 		netLink.connect((dc, "network", ring_latency), (router_map["rtr." + str(next_network_id)], "port2", ring_latency))

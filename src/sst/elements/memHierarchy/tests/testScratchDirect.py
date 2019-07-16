@@ -1,5 +1,6 @@
 # Automatically generated SST Python input
 import sst
+from mhlib import componentlist
 
 DEBUG_SCRATCH = 0
 DEBUG_MEM = 0
@@ -34,8 +35,8 @@ comp_scratch.addParams({
     "backendConvertor.debug_location" : 1,
     "backendConvertor.debug_level" : 10,
 })
-comp_memory = sst.Component("memory", "memHierarchy.MemController")
-comp_memory.addParams({
+memctrl = sst.Component("memory", "memHierarchy.MemController")
+memctrl.addParams({
       "debug" : DEBUG_MEM,
       "debug_level" : 10,
       "backend.access_time" : "1000 ns",
@@ -46,13 +47,13 @@ comp_memory.addParams({
 # Enable statistics
 sst.setStatisticLoadLevel(7)
 sst.setStatisticOutput("sst.statOutputConsole")
-sst.enableAllStatisticsForComponentType("memHierarchy.Scratchpad")
-sst.enableAllStatisticsForComponentType("memHierarchy.MemController")
+for a in componentlist:
+    sst.enableAllStatisticsForComponentType(a)
 
 
 # Define the simulation links
 link_cpu_scratch = sst.Link("link_cpu_scratch")
 link_cpu_scratch.connect( (iface, "port", "1000ps"), (comp_scratch, "cpu", "1000ps") )
 link_scratch_mem = sst.Link("link_scratch_mem")
-link_scratch_mem.connect( (comp_scratch, "memory", "100ps"), (comp_memory, "direct_link", "100ps") )
+link_scratch_mem.connect( (comp_scratch, "memory", "100ps"), (memctrl, "direct_link", "100ps") )
 # End of generated output.

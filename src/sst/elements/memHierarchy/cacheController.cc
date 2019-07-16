@@ -428,13 +428,13 @@ bool Cache::allocateDirCacheLine(MemEvent * event, Addr baseAddr, CacheLine * di
 
 void Cache::notifyListenerOfEvict(const MemEvent *event, 
                                   const CacheLine *replaceLine) {
-    if (listener_) {
+    for (int i = 0; i < listeners_.size(); i++) {
         CacheListenerNotification notify(replaceLine->getBaseAddr(), 
                                          replaceLine->getBaseAddr(), 
                                          0,
                                          event->getInstructionPointer(),
                                          replaceLine->getSize(), EVICT, NA);
-        listener_->notifyAccess(notify);
+        listeners_[i]->notifyAccess(notify);
     }
 }
 

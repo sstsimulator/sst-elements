@@ -220,7 +220,7 @@ Scratchpad::Scratchpad(ComponentId_t id, Params &params) : Component(id) {
     if (memoryDirect) {
         Params memlink = params.find_prefix_params("memlink.");
         memlink.insert("port", "memory");
-        linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "memlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, memlink);
+        linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "memlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, memlink);
         linkDown_->setRecvHandler(new Event::Handler<Scratchpad>(this, &Scratchpad::processIncomingRemoteEvent));
     }
 
@@ -295,15 +295,6 @@ void Scratchpad::init(unsigned int phase) {
                     directory_ = true;
                     cacheStatus_.resize(scratchSize_/scratchLineSize_, false);
                 }
-                if (linkUp_->getSources()->empty()) { /* Network isn't getting these, we should */
-                    dbg.debug(_L10_, "\tinserting into sources\n");
-                    MemLink::EndpointInfo info;
-                    info.name =initEvC->getSrc();
-                    info.addr = 0;
-                    info.id = 0;
-                    info.region.setDefault();
-                    linkUp_->addSource(info);
-                }
             }
         } else { // Not a NULLCMD
             MemEventInit * memRequest = new MemEventInit(getName(), initEv->getCmd(), initEv->getAddr() - remoteAddrOffset_, initEv->getPayload());
@@ -316,15 +307,6 @@ void Scratchpad::init(unsigned int phase) {
     while (MemEventInit *initEv = linkDown_->recvInitData()) {
         if (initEv->getCmd() == Command::NULLCMD) {
             dbg.debug(_L10_, "%s received init event: %s\n", getName().c_str(), initEv->getBriefString().c_str());
-
-            if (linkDown_->getDests()->empty()) { /* Network isn't getting these, we should */
-                MemLink::EndpointInfo info;
-                info.name = initEv->getSrc();
-                info.addr = 0;
-                info.id = 0;
-                info.region.setDefault();
-                linkDown_->addDest(info);
-            }
         }
         delete initEv;
     }

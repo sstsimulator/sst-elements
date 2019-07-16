@@ -46,7 +46,8 @@ class EmberEP( EndPoint ):
         memory = None
         if built:
             print "detailedModel", nodeID
-            nic.addLink( self.detailedModel.getNicLink( ), "detailed", "1ps" )
+            nic.addLink( self.detailedModel.getNicReadLink( ), "nicDetailedRead", "1ps" )
+            nic.addLink( self.detailedModel.getNicWriteLink( ), "nicDetailedWrite", "1ps" )
             memory = sst.Component("memory" + str(nodeID), "thornhill.MemoryHeap")
             memory.addParam( "nid", nodeID )
             #memory.addParam( "verboseLevel", 1 )

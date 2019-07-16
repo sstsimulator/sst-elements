@@ -104,8 +104,8 @@ Cache::Cache(ComponentId_t id, Params &params) : Component(id) {
     /* Create MSHR */
     int mshrSize = createMSHR(params);
 
-    /* Load prefetcher if any */
-    createPrefetcher(params, mshrSize);
+    /* Load prefetcher, listeners, if any */
+    createListeners(params, mshrSize);
 
 
     allNoncacheableRequests_    = params.find<bool>("force_noncacheable_reqs", false);
@@ -153,23 +153,29 @@ void Cache::createCoherenceManager(Params &params) {
     coherenceParams.insert("request_link_width", params.find<std::string>("request_link_width", "0B"));
     coherenceParams.insert("response_link_width", params.find<std::string>("response_link_width", "0B"));
     coherenceParams.insert("min_packet_size", params.find<std::string>("min_packet_size", "8B"));
-    coherenceParams.insert("prefetcher", params.find<std::string>("prefetcher", ""));
+
+    bool prefetch = (statPrefetchRequest != nullptr);
 
     if (!L1_) {
         if (protocol_ != CoherenceProtocol::NONE) {
             if (type_ != "noninclusive_with_directory") {
-                coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.MESICoherenceController", "coherence", 0, ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams);
+                coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.MESICoherenceController", "coherence", 0, 
+                        ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams, prefetch);
             } else {
-                coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.MESICacheDirectoryCoherenceController", "coherence", 0, ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams);
+                coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.MESICacheDirectoryCoherenceController", "coherence", 0, 
+                        ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams, prefetch);
             }
         } else {
-            coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.IncoherentController", "coherence", 0, ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams);
+            coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.IncoherentController", "coherence", 0, 
+                    ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams, prefetch);
         }
     } else {
         if (protocol_ != CoherenceProtocol::NONE) {
-            coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.L1CoherenceController", "coherence", 0, ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams);
+            coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.L1CoherenceController", "coherence", 0, 
+                    ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams, prefetch);
         } else {
-            coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.L1IncoherentController", "coherence", 0, ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams);
+            coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.L1IncoherentController", "coherence", 0, 
+                    ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams, prefetch);
         }
     }
     if (coherenceMgr_ == NULL) {
@@ -178,7 +184,7 @@ void Cache::createCoherenceManager(Params &params) {
 
     coherenceMgr_->setLinks(linkUp_, linkDown_);
     coherenceMgr_->setMSHR(mshr_);
-    coherenceMgr_->setCacheListener(listener_);
+    coherenceMgr_->setCacheListener(listeners_);
     coherenceMgr_->setDebug(DEBUG_ADDR);
     coherenceMgr_->setOwnerName(getName());
 
@@ -196,6 +202,94 @@ void Cache::createCoherenceManager(Params &params) {
  *      cache & low_network_0           : connected to network above talking to a cache and core/cache/bus below
  */
 void Cache::configureLinks(Params &params) {
+    linkUp_ = loadUserSubComponent<MemLinkBase>("cpulink");
+    if (linkUp_)
+        linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
+
+    linkDown_ = loadUserSubComponent<MemLinkBase>("memlink");
+    if (linkDown_)
+        linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
+
+    if (linkUp_ || linkDown_) {
+        if (!linkUp_ || !linkDown_)
+            out_->verbose(_L3_, "%s, Detected user defined subcomponent for either the cpu or mem link but not both. Assuming this component has just one link.\n", getName().c_str());
+        if (!linkUp_)
+            linkUp_ = linkDown_;
+        if (!linkDown_)
+            linkDown_ = linkUp_;
+
+        // Check for cache slices and assign the NIC an appropriate region -> overrides the given one
+        uint64_t sliceCount         = params.find<uint64_t>("num_cache_slices", 1);
+        uint64_t sliceID            = params.find<uint64_t>("slice_id", 0);
+        std::string slicePolicy     = params.find<std::string>("slice_allocation_policy", "rr");
+        if (sliceCount == 1)
+            sliceID = 0;
+        else if (sliceCount > 1) {
+            if (sliceID >= sliceCount) 
+                out_->fatal(CALL_INFO,-1, "%s, Invalid param: slice_id - should be between 0 and num_cache_slices-1. You specified %" PRIu64 ".\n",
+                        getName().c_str(), sliceID);
+            if (slicePolicy != "rr") 
+                out_->fatal(CALL_INFO,-1, "%s, Invalid param: slice_allocation_policy - supported policy is 'rr' (round-robin). You specified '%s'.\n",
+                        getName().c_str(), slicePolicy.c_str());
+        } else {
+            d2_->fatal(CALL_INFO, -1, "%s, Invalid param: num_cache_slices - should be 1 or greater. You specified %" PRIu64 ".\n",
+                    getName().c_str(), sliceCount);
+        }
+
+        bool gotRegion = false;
+        bool found;
+        region_.setDefault();
+        region_.start = params.find<uint64_t>("addr_range_start", region_.start, found);
+        gotRegion |= found;
+        region_.end = params.find<uint64_t>("addr_range_end", region_.end, found);
+        gotRegion |= found;
+        std::string isize = params.find<std::string>("interleave_size", "0B", found);
+        gotRegion |= found;
+        std::string istep = params.find<std::string>("interleave_step", "0B", found);
+        gotRegion |= found;
+
+        if (!UnitAlgebra(isize).hasUnits("B")) {
+            d2_->fatal(CALL_INFO, -1, "Invalid param(%s): interleave_size - must be specified in bytes with units (SI units OK). For example, '1KiB'. You specified '%s'\n",
+                    getName().c_str(), isize.c_str());
+        }
+        if (!UnitAlgebra(istep).hasUnits("B")) {
+            d2_->fatal(CALL_INFO, -1, "Invalid param(%s): interleave_step - must be specified in bytes with units (SI units OK). For example, '1KiB'. You specified '%s'\n",
+                    getName().c_str(), istep.c_str());
+        }
+        region_.interleaveSize = UnitAlgebra(isize).getRoundedValue();
+        region_.interleaveStep = UnitAlgebra(istep).getRoundedValue();
+
+        if (!found && sliceCount > 1) {
+            gotRegion = true;
+            int lineSize = params.find<int>("cache_line_size", 64);
+            if (slicePolicy == "rr") {
+                region_.start = sliceID*lineSize;
+                region_.end = (uint64_t) - 1;
+                region_.interleaveSize = lineSize;
+                region_.interleaveStep = sliceCount*lineSize;
+            }
+        }
+        
+        if (gotRegion) {
+            linkDown_->setRegion(region_);
+            linkUp_->setRegion(region_);
+        } else {
+            region_ = linkDown_->getRegion();
+            linkUp_->setRegion(region_);
+        }
+        
+        cacheArray_->setSliceAware(region_.interleaveSize, region_.interleaveStep);
+
+        clockUpLink_ = linkUp_->isClocked();
+        clockDownLink_ = linkDown_->isClocked();
+        
+        linkUp_->setName(getName());
+        linkDown_->setName(getName());
+        
+        return;
+    }
+
+    
     bool highNetExists  = false;    // high_network_0 is connected -> direct link toward CPU (to bus or directly to other component)
     bool lowCacheExists = false;    // cache is connected -> direct link towards memory to cache
     bool lowDirExists   = false;    // directory is connected -> network link towards memory to directory
@@ -452,14 +546,22 @@ void Cache::configureLinks(Params &params) {
         region_ = linkDown_->getRegion();
         linkUp_->setRegion(region_);
     }
+        
+    linkUp_->setName(getName());
+    linkDown_->setName(getName());
    
     cacheArray_->setSliceAware(region_.interleaveSize, region_.interleaveStep);
 
 }
 
-void Cache::createPrefetcher(Params &params, int mshrSize) {
+/* 
+ * Listeners can be prefetchers, but could also be for statistic collection, trace generation, monitoring, etc. 
+ * Prefetchers load into the 'prefetcher slot', listeners into the 'listener' slot
+ */
+void Cache::createListeners(Params &params, int mshrSize) {
+
+    /* Configure prefetcher(s) */
     bool found;
-    string prefetcher           = params.find<std::string>("prefetcher", "");
     maxOutstandingPrefetch_     = params.find<uint64_t>("max_outstanding_prefetch", mshrSize / 2, found);
     dropPrefetchLevel_          = params.find<uint64_t>("drop_prefetch_mshr_level", mshrSize - 2, found);
     if (!found && mshrSize == 2) { // MSHR min size is 2
@@ -468,28 +570,53 @@ void Cache::createPrefetcher(Params &params, int mshrSize) {
         dropPrefetchLevel_ = mshrSize - 1; // Always have to leave one free for deadlock avoidance
     }
 
-    listener_ = loadUserSubComponent<CacheListener>("prefetcher");
-    if (listener_ == nullptr) {
-        if (prefetcher.empty()) {
-        	Params emptyParams;
-                listener_ = loadAnonymousSubComponent<CacheListener>("memHierarchy.emptyCacheListener", "prefetcher", 0, ComponentInfo::INSERT_STATS, emptyParams);
-        } else {
-	    Params prefetcherParams = params.find_prefix_params("prefetcher." );
-            listener_ = loadAnonymousSubComponent<CacheListener>(prefetcher, "prefetcher", 0, ComponentInfo::INSERT_STATS, prefetcherParams);
-
-            statPrefetchRequest         = registerStatistic<uint64_t>("Prefetch_requests");
-            statPrefetchDrop            = registerStatistic<uint64_t>("Prefetch_drops");
+    SubComponentSlotInfo * lists = getSubComponentSlotInfo("prefetcher");
+    if (lists) {
+        int k = 0;
+        for (int i = 0; i <= lists->getMaxPopulatedSlotNumber(); i++) {
+            if (lists->isPopulated(i)) {
+                listeners_.push_back(lists->create<CacheListener>(i, ComponentInfo::SHARE_NONE));
+                listeners_[k]->registerResponseCallback(new Event::Handler<Cache>(this, &Cache::handlePrefetchEvent));
+                k++;
+            }
+        }
+    } else {
+        std::string prefetcher = params.find<std::string>("prefetcher", "");
+        Params prefParams;
+        if (!prefetcher.empty()) {
+            prefParams = params.find_prefix_params("prefetcher.");
+            listeners_.push_back(loadAnonymousSubComponent<CacheListener>(prefetcher, "prefetcher", 0, ComponentInfo::INSERT_STATS, prefParams));
+            listeners_[0]->registerResponseCallback(new Event::Handler<Cache>(this, &Cache::handlePrefetchEvent));
         }
     }
+    if (!listeners_.empty()) {
+        statPrefetchRequest = registerStatistic<uint64_t>("Prefetch_requests");
+        statPrefetchDrop = registerStatistic<uint64_t>("Prefetch_drops");
+    } else {
+        statPrefetchRequest = nullptr;
+        statPrefetchDrop = nullptr;
+    }
+    
+    if (!listeners_.empty()) { // Have at least one prefetcher
+        // Configure self link for prefetch/listener events
+        // Delay prefetches by a cycle TODO parameterize - let user specify prefetch delay
+        std::string frequency = params.find<std::string>("cache_frequency", "", found);
+        prefetchDelay_ = params.find<SimTime_t>("prefetch_delay_cycles", 1);
 
-    listener_->registerResponseCallback(new Event::Handler<Cache>(this, &Cache::handlePrefetchEvent));
+        prefetchLink_ = configureSelfLink("Self", frequency, new Event::Handler<Cache>(this, &Cache::processPrefetchEvent));
+    }
 
-    // Configure self link for prefetch/listener events
-    // Delay prefetches by a cycle TODO parameterize - let user specify prefetch delay
-    std::string frequency = params.find<std::string>("cache_frequency", "", found);
-    prefetchDelay_ = params.find<SimTime_t>("prefetch_delay_cycles", 1);
-
-    prefetchLink_ = configureSelfLink("Self", frequency, new Event::Handler<Cache>(this, &Cache::processPrefetchEvent));
+    /* Configure listener(s) */
+    lists = getSubComponentSlotInfo("listener");
+    if (lists) {
+        for (int i = 0; i < lists->getMaxPopulatedSlotNumber(); i++) {
+            if (lists->isPopulated(i))
+                listeners_.push_back(lists->create<CacheListener>(i, ComponentInfo::SHARE_NONE));
+        }
+    } else if (listeners_.empty()) {
+        Params emptyParams;
+        listeners_.push_back(loadAnonymousSubComponent<CacheListener>("memHierarchy.emptyCacheListener", "listener", 0, ComponentInfo::SHARE_NONE, emptyParams));
+    }
 }
 
 int Cache::createMSHR(Params &params) {
@@ -550,18 +677,14 @@ CacheArray* Cache::createCacheArray(Params &params) {
     uint64_t assoc = params.find<uint64_t>("associativity", -1, found); // uint64_t to match cache size in case we have a fully associative cache
     if (!found) out_->fatal(CALL_INFO, -1, "%s, Param not specified: associativity\n", getName().c_str());
 
-    std::string replacement = params.find<std::string>("replacement_policy", "lru");
-    std::string dReplacement = params.find<std::string>("noninclusive_directory_repl", "lru");
+    
     uint64_t dEntries = params.find<uint64_t>("noninclusive_directory_entries", 0);
     uint64_t dAssoc = params.find<uint64_t>("noninclusive_directory_associativity", 1);
 
-    int hashFunc = params.find<int>("hash_function", 0);
 
     /* Error check parameters and compute derived parameters */
     /* Fix up parameters */
     fixByteUnits(sizeStr);
-    to_lower(replacement);
-    to_lower(dReplacement);
 
     UnitAlgebra ua(sizeStr);
     if (!ua.hasUnits("B")) {
@@ -590,38 +713,59 @@ CacheArray* Cache::createCacheArray(Params &params) {
     }
 
     /* Build cache array */
-    ReplacementMgr* rmgr = constructReplacementManager(replacement, lines, assoc);
+    SubComponentSlotInfo* rslots = getSubComponentSlotInfo("replacement"); // May be multiple slots filled depending on how many arrays this cache manages
+    ReplacementPolicy* rmgr;
+    if (rslots && rslots->isPopulated(0))
+        rmgr = rslots->create<ReplacementPolicy>(0, ComponentInfo::SHARE_NONE, lines, assoc);
+    else { // Backwards compatability - user didn't declare policy in the input config
+        std::string replacement = params.find<std::string>("replacement_policy", "lru");
+        to_lower(replacement);
+        rmgr = constructReplacementManager(replacement, lines, assoc, 0);
+    }
 
-    HashFunction * ht;
-    if (hashFunc == 1)      ht = new LinearHashFunction;
-    else if (hashFunc == 2) ht = new XorHashFunction;
-    else                    ht = new PureIdHashFunction;
+
+    HashFunction * ht = loadUserSubComponent<HashFunction>("hash");
+    if (!ht) {
+        Params hparams;
+        int hashFunc = params.find<int>("hash_function", 0);
+        if (hashFunc == 1)      ht = loadAnonymousSubComponent<HashFunction>("memHierarchy.hash.linear", "hash", 0, ComponentInfo::SHARE_NONE, hparams);
+        else if (hashFunc == 2) ht = loadAnonymousSubComponent<HashFunction>("memHierarchy.hash.xor", "hash", 0, ComponentInfo::SHARE_NONE, hparams);
+        else                    ht = loadAnonymousSubComponent<HashFunction>("memHierarchy.hash.none", "hash", 0, ComponentInfo::SHARE_NONE, hparams);
+    }
 
     if (type_ == "inclusive" || type_ == "noninclusive") {
         return new SetAssociativeArray(d_, lines, lineSize, assoc, rmgr, ht, !L1_);
     } else { //type_ == "noninclusive_with_directory" --> Already checked that this string is valid
         /* Construct */
-        ReplacementMgr* drmgr = constructReplacementManager(dReplacement, dEntries, dAssoc);
+        ReplacementPolicy* drmgr;
+        if (rslots && rslots->isPopulated(1))
+            drmgr = rslots->create<ReplacementPolicy>(1, ComponentInfo::SHARE_NONE, dEntries, dAssoc);
+        else { // Backwards compatibility - user didn't declare policy in the input config
+            std::string dReplacement = params.find<std::string>("noninclusive_directory_repl", "lru");
+            to_lower(dReplacement);
+            drmgr = constructReplacementManager(dReplacement, dEntries, dAssoc, 1);
+        }
         return new DualSetAssociativeArray(d_, lineSize, ht, true, dEntries, dAssoc, drmgr, lines, assoc, rmgr);
     }
 }
 
 /* Create a replacement manager */
-ReplacementMgr* Cache::constructReplacementManager(std::string policy, uint64_t lines, uint64_t associativity) {
+ReplacementPolicy* Cache::constructReplacementManager(std::string policy, uint64_t lines, uint64_t assoc, int slot) {
+    Params params;
     if (SST::strcasecmp(policy, "lru"))
-        return new LRUReplacementMgr(d_, lines, associativity, true);
+        return loadAnonymousSubComponent<ReplacementPolicy>("memHierarchy.replacement.lru", "replacement", slot, ComponentInfo::SHARE_NONE, params, lines, assoc);
 
     if (SST::strcasecmp(policy, "lfu"))
-        return new LFUReplacementMgr(d_, lines, associativity);
+        return loadAnonymousSubComponent<ReplacementPolicy>("memHierarchy.replacement.lfu", "replacement", slot, ComponentInfo::SHARE_NONE, params, lines, assoc);
 
     if (SST::strcasecmp(policy, "random"))
-        return new RandomReplacementMgr(d_, associativity);
+        return loadAnonymousSubComponent<ReplacementPolicy>("memHierarchy.replacement.rand", "replacement", slot, ComponentInfo::SHARE_NONE, params, lines, assoc);
 
     if (SST::strcasecmp(policy, "mru"))
-        return new MRUReplacementMgr(d_, lines, associativity, true);
+        return loadAnonymousSubComponent<ReplacementPolicy>("memHierarchy.replacement.mru", "replacement", slot, ComponentInfo::SHARE_NONE, params, lines, assoc);
 
     if (SST::strcasecmp(policy, "nmru"))
-        return new NMRUReplacementMgr(d_, lines, associativity);
+        return loadAnonymousSubComponent<ReplacementPolicy>("memHierarchy.replacement.nmru", "replacement", slot, ComponentInfo::SHARE_NONE, params, lines, assoc);
 
     out_->fatal(CALL_INFO, -1, "%s, Invalid param: (directory_)replacement_policy - supported policies are 'lru', 'lfu', 'random', 'mru', and 'nmru'. You specified '%s'.\n",
             getName().c_str(), policy.c_str());

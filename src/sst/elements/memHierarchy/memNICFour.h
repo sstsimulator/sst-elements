@@ -78,6 +78,12 @@ public:
             { "outoforder_depth_at_event_receive_src", "Depth of re-order buffer for the sender of an event at event receive", "count", 1},
             { "ordering_latency", "For events that arrived out of order, cycles spent in buffer. Cycles in units determined by 'clock' parameter (default 1GHz)", "cycles", 1})
 
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+            {"data", "Link control subcomponent to data network", "SST::Interfaces::SimpleNetwork"},
+            {"req", "Link control subcomponent to request network", "SST::Interfaces::SimpleNetwork"},
+            {"ack", "Link control subcomponent to acknowledgement network", "SST::Interfaces::SimpleNetwork"},
+            {"fwd", "Link control subcomponent to forwarded request network", "SST::Interfaces::SimpleNetwork"})
+
 /* Begin class definition */    
 
     enum NetType { REQ, ACK, FWD, DATA };
@@ -149,7 +155,7 @@ private:
     size_t packetHeaderBytes[4];
 
     // Handlers and network
-    SST::Interfaces::SimpleNetwork * link_control[4];
+    std::array<SST::Interfaces::SimpleNetwork*, 4> link_control;
 
     // Event queues
     std::queue<SST::Interfaces::SimpleNetwork::Request*> sendQueue[4];

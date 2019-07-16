@@ -1,5 +1,6 @@
 # Automatically generated SST Python input
 import sst
+from mhlib import componentlist
 
 # Testing
 # Different simpleDRAM parameters from simpleDRAM tests
@@ -8,9 +9,9 @@ import sst
 # DelayBuffer backend 
 
 # Define the simulation components
-comp_cpu0 = sst.Component("cpu0", "memHierarchy.trivialCPU")
-iface0 = comp_cpu0.setSubComponent("memory", "memHierarchy.memInterface")
-comp_cpu0.addParams({
+cpu0 = sst.Component("cpu0", "memHierarchy.trivialCPU")
+iface0 = cpu0.setSubComponent("memory", "memHierarchy.memInterface")
+cpu0.addParams({
       "commFreq" : "100",
       "rngseed" : "1",
       "do_write" : "1",
@@ -30,9 +31,9 @@ comp_c0_l1cache.addParams({
       "L1" : "1",
       "debug" : "0"
 })
-comp_cpu1 = sst.Component("cpu1", "memHierarchy.trivialCPU")
-iface1 = comp_cpu1.setSubComponent("memory", "memHierarchy.memInterface")
-comp_cpu1.addParams({
+cpu1 = sst.Component("cpu1", "memHierarchy.trivialCPU")
+iface1 = cpu1.setSubComponent("memory", "memHierarchy.memInterface")
+cpu1.addParams({
       "commFreq" : "100",
       "rngseed" : "301",
       "do_write" : "1",
@@ -67,9 +68,9 @@ comp_n0_l2cache.addParams({
       "cache_size" : "32 KB",
       "debug" : "0"
 })
-comp_cpu2 = sst.Component("cpu2", "memHierarchy.trivialCPU")
-iface2 = comp_cpu2.setSubComponent("memory", "memHierarchy.memInterface")
-comp_cpu2.addParams({
+cpu2 = sst.Component("cpu2", "memHierarchy.trivialCPU")
+iface2 = cpu2.setSubComponent("memory", "memHierarchy.memInterface")
+cpu2.addParams({
       "commFreq" : "100",
       "rngseed" : "501",
       "do_write" : "1",
@@ -89,9 +90,9 @@ comp_c2_l1cache.addParams({
       "L1" : "1",
       "debug" : "0"
 })
-comp_cpu3 = sst.Component("cpu3", "memHierarchy.trivialCPU")
-iface3 = comp_cpu3.setSubComponent("memory", "memHierarchy.memInterface")
-comp_cpu3.addParams({
+cpu3 = sst.Component("cpu3", "memHierarchy.trivialCPU")
+iface3 = cpu3.setSubComponent("memory", "memHierarchy.memInterface")
+cpu3.addParams({
       "commFreq" : "100",
       "rngseed" : "701",
       "do_write" : "1",
@@ -99,8 +100,8 @@ comp_cpu3.addParams({
       "memSize" : "0x100000",
       "verbose" : 0
 })
-comp_c3_l1cache = sst.Component("c3.l1cache", "memHierarchy.Cache")
-comp_c3_l1cache.addParams({
+c3_l1cache = sst.Component("c3.l1cache", "memHierarchy.Cache")
+c3_l1cache.addParams({
       "access_latency_cycles" : "1",
       "cache_frequency" : "2Ghz",
       "replacement_policy" : "mru",
@@ -130,8 +131,8 @@ comp_n2_bus = sst.Component("n2.bus", "memHierarchy.Bus")
 comp_n2_bus.addParams({
       "bus_frequency" : "2Ghz"
 })
-comp_l3cache = sst.Component("l3cache", "memHierarchy.Cache")
-comp_l3cache.addParams({
+l3cache = sst.Component("l3cache", "memHierarchy.Cache")
+l3cache.addParams({
       "access_latency_cycles" : "24",
       "cache_frequency" : "2Ghz",
       "replacement_policy" : "nmru",
@@ -140,7 +141,12 @@ comp_l3cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "64 KB",
       "debug" : "0",
-      "memNIC.network_bw" : "25GB/s",
+})
+l3tol2 = l3cache.setSubComponent("cpulink", "memHierarchy.MemLink")
+l3NIC = l3cache.setSubComponent("memlink", "memHierarchy.MemNIC")
+l3NIC.addParams({
+    "group" : 1,
+    "network_bw" : "25GB/s",
 })
 comp_chiprtr = sst.Component("chiprtr", "merlin.hr_router")
 comp_chiprtr.addParams({
@@ -153,42 +159,48 @@ comp_chiprtr.addParams({
       "id" : "0",
       "topology" : "merlin.singlerouter"
 })
-comp_dirctrl = sst.Component("dirctrl", "memHierarchy.DirectoryController")
-comp_dirctrl.addParams({
-      "coherence_protocol" : "MESI",
-      "debug" : "0",
-      "entry_cache_size" : "16384",
-      "memNIC.network_bw" : "25GB/s",
-      "memNIC.addr_range_end" : "0x1F000000",
-      "memNIC.addr_range_start" : "0x0"
+dirctrl = sst.Component("dirctrl", "memHierarchy.DirectoryController")
+dirctrl.addParams({
+    "coherence_protocol" : "MESI",
+    "debug" : "0",
+    "entry_cache_size" : "16384",
+    "addr_range_end" : "0x1F000000",
+    "addr_range_start" : "0x0"
 })
-comp_memory = sst.Component("memory", "memHierarchy.MemController")
-comp_memory.addParams({
-    "backend.mem_size" : "512MiB",
+dirtoM = dirctrl.setSubComponent("memlink", "memHierarchy.MemLink")
+dirNIC = dirctrl.setSubComponent("cpulink", "memHierarchy.MemNIC")
+dirNIC.addParams({
+    "group" : 2,
+    "network_bw" : "25GB/s",
+})
+memctrl = sst.Component("memory", "memHierarchy.MemController")
+memctrl.addParams({
     "clock" : "500MHz",
-    "max_requests_per_cycle" : 1,
     "backing" : "none",
-    "backend" : "memHierarchy.HBMpagedMultiMemory",
-    "backend.device_ini" : "hbm_device.ini",
-    "backend.system_ini" : "hbm_system.ini",
-    "backend.access_time" : "30ns",
-    "backend.dramBackpressure" : "1",
-    "backend.max_fast_pages" : 4,
-    "backend.quantum" : "30us", # Test runs ~1.7ms
-    "backend.page_shift" : "10",
-    "backend.collect_stats" : "0",
-    "backend.transfer_delay" : "0",
-    "backend.threshold" : 1,
-    "backend.page_add_strategy": "RAND",
-    "backend.page_replace_strategy": "FIFO",
+})
+memory = memctrl.setSubComponent("backend", "memHierarchy.HBMpagedMultiMemory")
+memory.addParams({
+    "max_requests_per_cycle" : 1,
+    "mem_size" : "512MiB",
+    "device_ini" : "hbm_device.ini",
+    "system_ini" : "hbm_system.ini",
+    "access_time" : "30ns",
+    "dramBackpressure" : "1",
+    "max_fast_pages" : 4,
+    "quantum" : "30us", # Test runs ~1.7ms
+    "page_shift" : "10",
+    "collect_stats" : "0",
+    "transfer_delay" : "0",
+    "threshold" : 1,
+    "page_add_strategy": "RAND",
+    "page_replace_strategy": "FIFO",
 })
 
 # Enable statistics
 sst.setStatisticLoadLevel(7)
 sst.setStatisticOutput("sst.statOutputConsole")
-sst.enableAllStatisticsForComponentType("memHierarchy.Cache")
-sst.enableAllStatisticsForComponentType("memHierarchy.MemController")
-sst.enableAllStatisticsForComponentType("memHierarchy.DirectoryController")
+for a in componentlist:
+    sst.enableAllStatisticsForComponentType(a)
 
 
 # Define the simulation links
@@ -209,19 +221,19 @@ link_c2_l1cache.connect( (iface2, "port", "500ps"), (comp_c2_l1cache, "high_netw
 link_c2L1cache_bus = sst.Link("link_c2L1cache_bus")
 link_c2L1cache_bus.connect( (comp_c2_l1cache, "low_network_0", "1000ps"), (comp_n1_bus, "high_network_0", "1000ps") )
 link_c3_l1cache = sst.Link("link_c3_l1cache")
-link_c3_l1cache.connect( (iface3, "port", "500ps"), (comp_c3_l1cache, "high_network_0", "500ps") )
+link_c3_l1cache.connect( (iface3, "port", "500ps"), (c3_l1cache, "high_network_0", "500ps") )
 link_c3L1cache_bus = sst.Link("link_c3L1cache_bus")
-link_c3L1cache_bus.connect( (comp_c3_l1cache, "low_network_0", "1000ps"), (comp_n1_bus, "high_network_1", "1000ps") )
+link_c3L1cache_bus.connect( (c3_l1cache, "low_network_0", "1000ps"), (comp_n1_bus, "high_network_1", "1000ps") )
 link_bus_n1L2cache = sst.Link("link_bus_n1L2cache")
 link_bus_n1L2cache.connect( (comp_n1_bus, "low_network_0", "1000ps"), (comp_n1_l2cache, "high_network_0", "1000ps") )
 link_n1L2cache_bus = sst.Link("link_n1L2cache_bus")
 link_n1L2cache_bus.connect( (comp_n1_l2cache, "low_network_0", "1000ps"), (comp_n2_bus, "high_network_1", "1000ps") )
 link_bus_l3cache = sst.Link("link_bus_l3cache")
-link_bus_l3cache.connect( (comp_n2_bus, "low_network_0", "1000ps"), (comp_l3cache, "high_network_0", "1000ps") )
+link_bus_l3cache.connect( (comp_n2_bus, "low_network_0", "1000ps"), (l3tol2, "port", "1000ps") )
 link_cache_net_0 = sst.Link("link_cache_net_0")
-link_cache_net_0.connect( (comp_l3cache, "directory", "1000ps"), (comp_chiprtr, "port1", "1000ps") )
+link_cache_net_0.connect( (l3NIC, "port", "1000ps"), (comp_chiprtr, "port1", "1000ps") )
 link_dir_net_0 = sst.Link("link_dir_net_0")
-link_dir_net_0.connect( (comp_chiprtr, "port0", "1000ps"), (comp_dirctrl, "network", "1000ps") )
+link_dir_net_0.connect( (comp_chiprtr, "port0", "1000ps"), (dirNIC, "port", "1000ps") )
 link_dir_mem_link = sst.Link("link_dir_mem_link")
-link_dir_mem_link.connect( (comp_dirctrl, "memory", "1000ps"), (comp_memory, "direct_link", "1000ps") )
+link_dir_mem_link.connect( (dirtoM, "port", "1000ps"), (memctrl, "direct_link", "1000ps") )
 # End of generated output.

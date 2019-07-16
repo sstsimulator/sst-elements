@@ -26,7 +26,7 @@
 namespace SST { namespace MemHierarchy {
 
 /* Set Associative Array Class */
-SetAssociativeArray::SetAssociativeArray(Output* dbg, unsigned int numLines, unsigned int lineSize, unsigned int associativity, ReplacementMgr* rm, HashFunction* hf, bool sharersAware) :
+SetAssociativeArray::SetAssociativeArray(Output* dbg, unsigned int numLines, unsigned int lineSize, unsigned int associativity, ReplacementPolicy* rm, HashFunction* hf, bool sharersAware) :
     CacheArray(dbg, numLines, associativity, lineSize, rm, hf, sharersAware, true) 
     { 
         setStates = new State[associativity];
@@ -89,13 +89,13 @@ void SetAssociativeArray::deallocate(unsigned int index) {
 
 /* Dual Set Associative Array Class */
 DualSetAssociativeArray::DualSetAssociativeArray(Output* dbg, unsigned int lineSize, HashFunction * hf, bool sharersAware, unsigned int dirNumLines, 
-        unsigned int dirAssociativity, ReplacementMgr * dirRp, unsigned int cacheNumLines, unsigned int cacheAssociativity, ReplacementMgr * cacheRp) :
+        unsigned int dirAssociativity, ReplacementPolicy * dirRp, unsigned int cacheNumLines, unsigned int cacheAssociativity, ReplacementPolicy * cacheRp) :
         CacheArray(dbg, dirNumLines, dirAssociativity, lineSize, dirRp, hf, sharersAware, false)
     {
         // Set up data cache
         cacheNumLines_  = cacheNumLines;
         cacheAssociativity_ = cacheAssociativity;
-        cacheReplacementMgr_ = cacheRp;
+        replacementPolicy_ = cacheRp;
         cacheNumSets_   = cacheNumLines_ / cacheAssociativity_;
         dataLines_.resize(cacheNumLines_);
         for (unsigned int i = 0; i < cacheNumLines_; i++) {
@@ -122,7 +122,7 @@ CacheArray::CacheLine* DualSetAssociativeArray::lookup(const Addr baseAddr, bool
             if (update) {
                 replacementMgr_->update(i);
                 if (lines_[i]->getDataLine() != NULL) {
-                    cacheReplacementMgr_->update(lines_[i]->getDataLine()->getIndex());
+                    replacementPolicy_->update(lines_[i]->getDataLine()->getIndex());
                 }
             }
             return lines_[i];
@@ -172,14 +172,14 @@ void DualSetAssociativeArray::replace(const Addr baseAddr, CacheArray::CacheLine
         replacementMgr_->update(index); 
     } else {
         unsigned int dIndex = dataCandidate->getIndex();
-        cacheReplacementMgr_->replaced(dIndex);
+        replacementPolicy_->replaced(dIndex);
         
         if (dataCandidate->getDirLine() != nullptr) {   // break existing dir->data link
             dataCandidate->getDirLine()->setDataLine(nullptr);
         }
         dataCandidate->setDirLine(candidate); // set new dir->data link
         candidate->setDataLine(dataCandidate);
-        cacheReplacementMgr_->update(dIndex);
+        replacementPolicy_->update(dIndex);
     }
 }
 
@@ -200,11 +200,11 @@ unsigned int DualSetAssociativeArray::preReplaceCache(const Addr baseAddr) {
             cacheSetOwned[id]   = lines_[dirIndex]->ownerExists();
         }
     }
-    return cacheReplacementMgr_->findBestCandidate(setBegin, cacheSetStates, cacheSetSharers, cacheSetOwned, sharersAware_);
+    return replacementPolicy_->findBestCandidate(setBegin, cacheSetStates, cacheSetSharers, cacheSetOwned, sharersAware_);
 }
 
 void DualSetAssociativeArray::deallocateCache(unsigned int index) {
-    cacheReplacementMgr_->replaced(index);
+    replacementPolicy_->replaced(index);
     dataLines_[index]->setDirLine(nullptr);
 }
 

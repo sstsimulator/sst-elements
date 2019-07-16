@@ -65,6 +65,10 @@ class TransactionQ : public SST::SubComponent {
         return trans;
     }
 
+    virtual bool empty() {
+        return m_transQ.empty();
+    }
+
   protected:
     std::list<Transaction*> m_transQ;
 };

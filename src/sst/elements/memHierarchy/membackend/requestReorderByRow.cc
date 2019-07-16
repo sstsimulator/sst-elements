@@ -65,6 +65,7 @@ void RequestReorderRow::build(Params& params) {
     }
     using std::placeholders::_1;
     backend->setResponseHandler( std::bind( &RequestReorderRow::handleMemResponse, this, _1 )  );
+    m_memSize = backend->getMemSize(); // inherit from backend
 
     // Set up local variables
     nextBank = 0;

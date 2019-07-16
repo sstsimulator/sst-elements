@@ -151,15 +151,21 @@ class Config:
             #"replacement_policy": "lru",
             })
 
+    def getMemCtrlParams(self):
+        return dict({
+            "backing" : "none",
+            "debug" : "1",
+            "clock" : "1GHz",
+            #"clock" : self.memory_clock,
+            "customCmdHandler" : "memHierarchy.amoCustomCmdHandler",
+
+            })
     def getMemParams(self):
         return dict({
             #"backend" : "memHierarchy.simpleMem",
             #"backend.access_time" : "30ns",
             #"memNIC.network_bw": self.ring_bandwidth,
-            "backend.mem_size" : self.memory_capacity,
-            "backend.clock" : self.memory_clock,
-            "backing" : "none",
-            "debug" : "1",
+            "mem_size" : self.memory_capacity,
             #"system_ini" : "system.ini",
             #"clock" : "1Ghz",
             #"backend.access_time" : "100 ns",
@@ -167,21 +173,15 @@ class Config:
             #"backend.system_ini" : "HBMSystem.ini",
             #"backend.tracing" : "1",
             #"backend" : "memHierarchy.hbmdramsim",
-
-            "coherence_protocol" : "MESI",
-            "backend.access_time" : "1000 ns",
-            "backend.mem_size" : "512MiB",
-            "clock" : "1GHz",
-            "customCmdHandler" : "memHierarchy.amoCustomCmdHandler",
-            "backendConvertor" : "memHierarchy.extMemBackendConvertor",
-            "backend" : "memHierarchy.goblinHMCSim",
-            "backend.verbose" : "0",
-            "backend.trace-banks" : "1",
-            "backend.trace-queue" : "1",
-            "backend.trace-cmds" : "1",
-            "backend.trace-latency" : "1",
-            "backend.trace-stalls" : "1",
-            "backend.cmd-map" : "[CUSTOM:10:64:WR64]"
+            "clock" : self.memory_clock,
+            "access_time" : "1000 ns",
+            "verbose" : "0",
+            "trace-banks" : "1",
+            "trace-queue" : "1",
+            "trace-cmds" : "1",
+            "trace-latency" : "1",
+            "trace-stalls" : "1",
+            "cmd-map" : "[CUSTOM:10:64:WR64]"
             })
 
     def getDCParams(self, dc_id):

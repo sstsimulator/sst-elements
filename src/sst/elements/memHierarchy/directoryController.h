@@ -132,10 +132,7 @@ private:
     uint32_t    cacheLineSize;
 
     /* Range of addresses supported by this directory */
-    Addr        addrRangeStart;
-    Addr        addrRangeEnd;
-    Addr        interleaveSize;
-    Addr        interleaveStep;
+    MemRegion   region;
     Addr        memOffset; // Stack addresses if multiple DCs handle the same memory
 
     CoherenceProtocol protocol;

@@ -28,121 +28,10 @@
 #include "sst/elements/memHierarchy/memEventBase.h"
 #include "sst/elements/memHierarchy/util.h"
 #include "sst/elements/memHierarchy/memLinkBase.h"
+#include "sst/elements/memHierarchy/memNICBase.h"
 
 namespace SST {
 namespace MemHierarchy {
-
-/* MemNIC Base class
- *  Base class to handle initialization and endpoint management for different NICs
- */
-class MemNICBase : public MemLinkBase {
-    public:
-
-#define MEMNICBASE_ELI_PARAMS MEMLINKBASE_ELI_PARAMS, \
-        { "group",                       "(int) Group ID. See params 'sources' and 'destinations'. If not specified, the parent component will guess.", "1"},\
-        { "sources",                     "(comma-separated list of ints) List of group IDs that serve as sources for this component. If not specified, defaults to 'group - 1'.", "group-1"},\
-        { "destinations",                "(comma-separated list of ints) List of group IDs that serve as destinations for this component. If not specified, defaults to 'group + 1'.", "group+1"}
-
-        MemNICBase(Component * comp, Params &params);
-        MemNICBase(ComponentId_t id, Params &params);
-    private:
-        void build(Params &params);
-    public:
-        ~MemNICBase() { }
-
-        uint64_t lookupNetworkAddress(const std::string &dst) const;
-
-        // Router events 
-        class MemRtrEvent : public SST::Event {
-            public:
-                MemEventBase * event;
-                MemRtrEvent() : Event(), event(nullptr) { }
-                MemRtrEvent(MemEventBase * ev) : Event(), event(ev) { }
-            
-                virtual Event* clone(void) override {
-                    MemRtrEvent *mre = new MemRtrEvent(*this);
-                    if (this->event != nullptr)
-                        mre->event = this->event->clone();
-                    else
-                        mre->event = nullptr;
-                    return mre;
-                }
-
-                virtual bool hasClientData() const { return true; }
-    
-                void serialize_order(SST::Core::Serialization::serializer &ser) override {
-                    Event::serialize_order(ser);
-                    ser & event;
-                }
-    
-                ImplementSerializable(SST::MemHierarchy::MemNICBase::MemRtrEvent);
-        };
-
-        class InitMemRtrEvent : public MemRtrEvent {
-            public:
-                EndpointInfo info;
-
-                InitMemRtrEvent() {}
-                InitMemRtrEvent(EndpointInfo info) : MemRtrEvent(), info(info) { }
-
-                virtual Event* clone(void) override {
-                    InitMemRtrEvent * imre = new InitMemRtrEvent(*this);
-                    if (this->event != nullptr)
-                        imre->event = this->event->clone();
-                    else
-                        imre->event = nullptr;
-                    return imre;
-                }
-
-                virtual bool hasClientData() const override { return false; }
-
-                void serialize_order(SST::Core::Serialization::serializer & ser) override {
-                    MemRtrEvent::serialize_order(ser);
-                    ser & info.name;
-                    ser & info.addr;
-                    ser & info.id;
-                    ser & info.node;
-                    ser & info.region.start;
-                    ser & info.region.end;
-                    ser & info.region.interleaveSize;
-                    ser & info.region.interleaveStep;
-                }
-    
-                ImplementSerializable(SST::MemHierarchy::MemNICBase::InitMemRtrEvent);
-        };
-
-        // Init functions
-        void sendInitData(MemEventInit * ev);
-        MemEventInit* recvInitData();
-
-        bool isSource(std::string str) { /* Note this is only used during init so doesn't need to be fast */
-            for (std::set<EndpointInfo>::iterator it = sourceEndpointInfo.begin(); it != sourceEndpointInfo.end(); it++) {
-                if (it->name == str) return true;   
-            }
-            return false;
-        }
-
-        bool isDest(std::string str) { /* Note this is only used during init so doesn't need to be fast */
-            for (std::set<EndpointInfo>::iterator it = destEndpointInfo.begin(); it != destEndpointInfo.end(); it++) {
-                if (it->name == str) return true;   
-            }
-            return false;
-        }
-    
-    protected:
-        void nicInit(SST::Interfaces::SimpleNetwork * linkcontrol, unsigned int phase);
-        bool initMsgSent;
-
-        // Data structures
-        std::unordered_map<std::string,uint64_t> networkAddressMap; // Map of name -> address for each network endpoint
-        
-        // Init queues
-        std::queue<MemRtrEvent*> initQueue; // Queue for received init events
-        std::queue<SST::Interfaces::SimpleNetwork::Request*> initSendQueue; // Queue of events waiting to be sent after network (linkcontrol) initializes
-};
-/***** End MemHierarchy::MemNICBase *****/
-
-
 
 /*
  *  MemNIC provides a simpleNetwork (from SST core) network interface for memory components
@@ -175,16 +64,15 @@ public:
 
     SST_ELI_DOCUMENT_PORTS( {"port", "Link to network", { "memHierarchy.MemRtrEvent" } } )
 
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( { "linkcontrol", "Network interface"} )
+
 /* Begin class definition */    
     /* Constructor */
     MemNIC(Component * comp, Params &params);
     MemNIC(ComponentId_t id, Params &params);
-private:
-    void build(Params &params);
-public:
-
+    
     /* Destructor */
-    ~MemNIC() { }
+    virtual ~MemNIC() { }
 
     /* Functions called by parent for handling events */
     bool clock();
@@ -216,6 +104,10 @@ private:
 
     // Event queues
     std::queue<SST::Interfaces::SimpleNetwork::Request*> sendQueue; // Queue of events waiting to be sent (sent on clock)
+
+private:
+
+    void build(Params &params);
 };
 
 } //namespace memHierarchy

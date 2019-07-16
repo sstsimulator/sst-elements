@@ -23,22 +23,26 @@ using namespace SST::Ember;
 
 EmberDetailedRingGenerator::EmberDetailedRingGenerator(SST::ComponentId_t id, Params& params) :
 	EmberMessagePassingGenerator(id, params, "DetailedRing"),
-    m_loopIndex(-1), m_computeFunc( NULL )
+    m_loopIndex(-1), m_computeFunc( NULL ), m_computeTime(0)
 {
 	m_messageSize = params.find<uint32_t>("arg.messagesize", 1024);
 	m_iterations = params.find<int32_t>("arg.iterations", 1);
 	m_stream_n = params.find<int32_t>("arg.stream_n", 1000);
 	m_printRank = params.find<int32_t>("arg.printRank", 0);
 
-	if ( 1 == params.find<int32_t>("arg.doCompute", 1) ) {
+	std::string rankList = params.find<std::string>("arg.detailedCompute","");
+
+
+	if ( ! rankList.empty() && findNum( rank(), rankList ) ) {
+		printf("Rank %d using detailed compute\n",rank());
+		m_computeFunc = &EmberDetailedRingGenerator::computeDetailed;
+    } else {
+        m_loopIndex = 0;
+        m_sendBuf = MemAddr( 0x1000, NULL );
+        m_recvBuf = MemAddr( 0x1000 + m_messageSize, NULL);
+        m_computeFunc = &EmberDetailedRingGenerator::computeSimple;
 	    m_computeTime = params.find<int32_t>("arg.computeTime", 0);
 	    m_computeWindow = params.find<int32_t>("arg.computeWindow", m_computeTime);
-          
-        if ( m_computeTime ) {
-            m_computeFunc = &EmberDetailedRingGenerator::computeSimple;
-        } else {
-            m_computeFunc = &EmberDetailedRingGenerator::computeDetailed;
-        }
     }
 }
 
@@ -73,7 +77,7 @@ bool EmberDetailedRingGenerator::generate( std::queue<EmberEvent*>& evQ)
             if (m_computeFunc) {
                 double computeTime = (double)(m_stopCompute - m_startCompute)/1000000000.0;
 
-                output("%s rank %d, `%s` total compute %.3f us\n", getMotifName().c_str(), rank(),
+                output("%s rank %d, `%s` compute %.3f us time per iteration\n", getMotifName().c_str(), rank(),
                     m_computeFunc == &EmberDetailedRingGenerator::computeSimple  ? "Simple": "Detailed" ,
                     computeTime * 1000000.0 );
             }
@@ -181,3 +185,41 @@ void EmberDetailedRingGenerator::computeDetailed( std::queue<EmberEvent*>& evQ)
 	}
 }
 
+bool EmberDetailedRingGenerator::findNum( int num, std::string list ) {
+
+    if ( 0 == list.compare( "all" ) ) {
+        return true;
+    }
+
+    if ( list.empty() ) {
+        return false;
+    }
+
+    size_t pos = 0;
+    size_t end = 0;
+    do {
+        end = list.find( ",", pos );
+        if ( end == std::string::npos ) {
+            end = list.length();
+        }
+        std::string tmp = list.substr(pos,end-pos);
+
+        if ( tmp.length() == 1 ) {
+            int val = atoi( tmp.c_str() );
+            if ( num == val ) {
+                return true;
+            }
+        } else {
+            size_t dash = tmp.find( "-" );
+            int first = atoi(tmp.substr(0,dash).c_str()) ;
+            int last = atoi(tmp.substr(dash+1).c_str());
+            if ( num >= first && num <= last ) {
+                return true;
+            }
+        }
+
+        pos = end + 1;
+    } while ( end < list.length() );
+
+    return false;
+}

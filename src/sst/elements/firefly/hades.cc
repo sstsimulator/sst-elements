@@ -94,10 +94,15 @@ Hades::Hades( ComponentId_t id, Params& params ) :
 
     if ( ! memName.empty() ) {
         m_memHeapLink = loadUserSubComponent<Thornhill::MemoryHeapLink>( "memoryHeap", ComponentInfo::SHARE_NONE );
+
+        if ( ! m_memHeapLink ) {
+            m_dbg.fatal(CALL_INFO,0,"could not load subComponent %s\n", memName.c_str() );
+        }
+
+        if ( ! m_memHeapLink->isConnected() ) {
+            m_memHeapLink = NULL;
+        }
     }
-	if ( m_memHeapLink ) {
-		printf("using mem heap\n");
-	}
 
     m_netMapSize = params.find<int>("netMapSize",-1);
     assert(m_netMapSize > -1 );
@@ -130,8 +135,6 @@ Hades::Hades( ComponentId_t id, Params& params ) :
 
 Hades::~Hades()
 {
-    if ( m_virtNic ) delete m_virtNic;
-    delete m_proto;
     delete m_functionSM;
 }
 void Hades::finish(  )
@@ -172,6 +175,13 @@ void Hades::_componentSetup()
 
     m_proto->setVars( getInfo(), getNic(), getMemHeapLink(), m_functionSM->getRetLink() );
     m_functionSM->setup(getInfo() );
+
+    if (  m_detailedCompute ) {
+        m_dbg.verbose(CALL_INFO, 1, 0,"detailed compute connected\n");
+    }
+    if ( m_memHeapLink ) {
+        m_dbg.verbose(CALL_INFO, 1, 0,"memHeap connected\n");
+    }
 }
 
 void Hades::_componentInit(unsigned int phase )

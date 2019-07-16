@@ -40,9 +40,7 @@ class MemBackendConvertor : public SubComponent {
 /* ELI definitions for subclasses */
 #define MEMBACKENDCONVERTOR_ELI_PARAMS {"debug_level",     "(uint) Debugging level: 0 (no output) to 10 (all output). Output also requires that SST Core be compiled with '--enable-debug'", "0"},\
             {"debug_mask",      "(uint) Mask on debug_level", "0"},\
-            {"debug_location",  "(uint) 0: No debugging, 1: STDOUT, 2: STDERR, 3: FILE", "0"},\
-            {"request_width",   "(uint) Max size of a request that can be accepted by the memory controller", "64"},\
-            {"backend",         "Backend memory model to use for timing. Defaults to 'simpleMem'", "memHierarchy.simpleMem"}
+            {"debug_location",  "(uint) 0: No debugging, 1: STDOUT, 2: STDERR, 3: FILE", "0"}
 
 #define MEMBACKENDCONVERTOR_ELI_STATS { "cycles_with_issue",                  "Total cycles with successful issue to back end",   "cycles",   1 },\
             { "cycles_attempted_issue_but_rejected","Total cycles where an attempt to issue to backend was rejected (indicates backend full)", "cycles", 1 },\
@@ -56,9 +54,8 @@ class MemBackendConvertor : public SubComponent {
             { "latency_GetSX",                      "Total latency of handled GetSX requests",          "cycles",   1 },\
             { "latency_GetX",                       "Total latency of handled GetX requests",           "cycles",   1 },\
             { "latency_PutM",                       "Total latency of handled PutM requests",           "cycles",   1 }
-#define MEMBACKENDCONVERTOR_ELI_SLOTS {"backend", "Backend memory model", "SST::MemHierarchy::MemBackend"}
 
-    SST_ELI_REGISTER_SUBCOMPONENT_API(SST::MemHierarchy::MemBackendConvertor)
+    SST_ELI_REGISTER_SUBCOMPONENT_API(SST::MemHierarchy::MemBackendConvertor, MemBackend*, uint32_t)
 
     typedef uint64_t ReqId;
 
@@ -147,12 +144,10 @@ class MemBackendConvertor : public SubComponent {
 
   public:
 
-    MemBackendConvertor();
     MemBackendConvertor(Component* comp, Params& params);
-    MemBackendConvertor(ComponentId_t id, Params& params);
+    MemBackendConvertor(ComponentId_t id, Params& params, MemBackend* backend, uint32_t request_width);
     void build(Params& params);
     void finish(void);
-    virtual const std::string& getClockFreq();
     virtual size_t getMemSize();
     virtual bool clock( Cycle_t cycle );
     virtual void turnClockOff();
@@ -177,7 +172,7 @@ class MemBackendConvertor : public SubComponent {
     // this is utilized by inherited ExtMemBackendConvertor's
     // such that all the requests are consolidated in one place
   protected:
-    ~MemBackendConvertor() {
+    virtual ~MemBackendConvertor() {
         while ( m_requestQueue.size()) {
             delete m_requestQueue.front();
             m_requestQueue.pop_front();
@@ -278,18 +273,18 @@ class MemBackendConvertor : public SubComponent {
     uint64_t m_cycleCount;
 
     bool m_clockOn;
-    
+
     // Callback functions to parent component
     std::function<Cycle_t()> m_enableClock; // Re-enable parent's clock
     std::function<void(Event::id_type id, uint32_t)> m_notifyResponse; // notify parent of response
 
     uint32_t genReqId( ) { return ++m_reqId; }
 
-    uint32_t    m_reqId;
+    uint32_t m_reqId;
 
-    typedef std::map<uint32_t,BaseReq*>    PendingRequests;
+    typedef std::map<uint32_t,BaseReq*> PendingRequests;
 
-    std::deque<BaseReq*>     m_requestQueue;
+    std::deque<BaseReq*>    m_requestQueue;
     PendingRequests         m_pendingRequests;
     uint32_t                m_frontendRequestWidth;
 

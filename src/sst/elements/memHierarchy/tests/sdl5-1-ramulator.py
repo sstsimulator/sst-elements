@@ -1,5 +1,6 @@
 # Automatically generated SST Python input
 import sst
+from mhlib import componentlist
 
 # Define the simulation components
 comp_cpu0 = sst.Component("cpu0", "memHierarchy.trivialCPU")
@@ -122,8 +123,8 @@ comp_n2_bus = sst.Component("n2.bus", "memHierarchy.Bus")
 comp_n2_bus.addParams({
       "bus_frequency" : "2 Ghz"
 })
-comp_l3cache = sst.Component("l3cache", "memHierarchy.Cache")
-comp_l3cache.addParams({
+l3cache = sst.Component("l3cache", "memHierarchy.Cache")
+l3cache.addParams({
       "access_latency_cycles" : "100",
       "cache_frequency" : "2 Ghz",
       "replacement_policy" : "lru",
@@ -134,21 +135,23 @@ comp_l3cache.addParams({
       "debug" : "0",
       "cache_size" : "64 KB"
 })
-comp_memory = sst.Component("memory", "memHierarchy.MemController")
-comp_memory.addParams({
-      "coherence_protocol" : "MSI",
+memctrl = sst.Component("memory", "memHierarchy.MemController")
+memctrl.addParams({
       "debug" : "0",
       "clock" : "1GHz",
-      "backend.mem_size" : "512MiB",
-      "backend.configFile" : "ramulator-ddr3.cfg",
-      "backend" : "memHierarchy.ramulator"
+})
+
+memory = memctrl.setSubComponent("backend", "memHierarchy.ramulator")
+memory.addParams({
+      "mem_size" : "512MiB",
+      "configFile" : "ramulator-ddr3.cfg",
 })
 
 # Enable statistics
 sst.setStatisticLoadLevel(7)
 sst.setStatisticOutput("sst.statOutputConsole")
-sst.enableAllStatisticsForComponentType("memHierarchy.Cache")
-sst.enableAllStatisticsForComponentType("memHierarchy.MemController")
+for a in componentlist:
+    sst.enableAllStatisticsForComponentType(a)
 
 # Define the simulation links
 link_cpu0_l1cache_link = sst.Link("link_cpu0_l1cache_link")
@@ -176,7 +179,7 @@ link_n1_bus_l2cache.connect( (comp_n1_bus, "low_network_0", "10000ps"), (comp_n1
 link_n1_l2cache_l3cache = sst.Link("link_n1_l2cache_l3cache")
 link_n1_l2cache_l3cache.connect( (comp_n1_l2cache, "low_network_0", "10000ps"), (comp_n2_bus, "high_network_1", "10000ps") )
 link_bus_l3cache = sst.Link("link_bus_l3cache")
-link_bus_l3cache.connect( (comp_n2_bus, "low_network_0", "10000ps"), (comp_l3cache, "high_network_0", "10000ps") )
+link_bus_l3cache.connect( (comp_n2_bus, "low_network_0", "10000ps"), (l3cache, "high_network_0", "10000ps") )
 link_mem_bus_link = sst.Link("link_mem_bus_link")
-link_mem_bus_link.connect( (comp_l3cache, "low_network_0", "10000ps"), (comp_memory, "direct_link", "10000ps") )
+link_mem_bus_link.connect( (l3cache, "low_network_0", "10000ps"), (memctrl, "direct_link", "10000ps") )
 # End of generated output.

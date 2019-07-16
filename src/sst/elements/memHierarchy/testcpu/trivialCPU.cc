@@ -148,7 +148,7 @@ bool trivialCPU::clockTic( Cycle_t )
                 uint32_t instNum = rng.generateNextUInt32() % 20;
                 uint64_t size = 4;
                 std::string cmdString = "Read";
-                if ((do_write && 0 == instNum) || 1 == instNum) {
+                if (do_write && instNum < 2) {
                     cmd = Interfaces::SimpleMem::Request::Write;
                     cmdString = "Write";
                     addr = ((addr % maxAddr)>>2) << 2;

@@ -9,6 +9,7 @@ TrivialCPU cpu0 Finished after 1000 issued reads, 1000 returned (104054 clocks)
 TrivialCPU cpu1 Finished after 1000 issued reads, 1000 returned (104054 clocks)
 TrivialCPU cpu2 Finished after 1000 issued reads, 1000 returned (104054 clocks)
 TrivialCPU cpu3 Finished after 1000 issued reads, 1000 returned (104054 clocks)
+ cpu0.pendCycle : Accumulator : Sum.u64 = 56254; SumSQ.u64 = 94268; Count.u64 = 104054; Min.u64 = 0; Max.u64 = 5; 
  c0.l1cache.TotalEventsReceived : Accumulator : Sum.u64 = 1336; SumSQ.u64 = 1336; Count.u64 = 1336; Min.u64 = 1; Max.u64 = 1; 
  c0.l1cache.TotalEventsReplayed : Accumulator : Sum.u64 = 6; SumSQ.u64 = 6; Count.u64 = 6; Min.u64 = 1; Max.u64 = 1; 
  c0.l1cache.TotalNoncacheableEventsReceived : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -134,6 +135,7 @@ TrivialCPU cpu3 Finished after 1000 issued reads, 1000 returned (104054 clocks)
  c0.l1cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c0.l1cache.eventSent_PutS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c0.l1cache.eventSent_PutE : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ cpu1.pendCycle : Accumulator : Sum.u64 = 59876; SumSQ.u64 = 101916; Count.u64 = 104054; Min.u64 = 0; Max.u64 = 5; 
  c1.l1cache.TotalEventsReceived : Accumulator : Sum.u64 = 1417; SumSQ.u64 = 1417; Count.u64 = 1417; Min.u64 = 1; Max.u64 = 1; 
  c1.l1cache.TotalEventsReplayed : Accumulator : Sum.u64 = 94; SumSQ.u64 = 94; Count.u64 = 94; Min.u64 = 1; Max.u64 = 1; 
  c1.l1cache.TotalNoncacheableEventsReceived : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -449,6 +451,7 @@ TrivialCPU cpu3 Finished after 1000 issued reads, 1000 returned (104054 clocks)
  n0.l2cache.eventSent_Inv : Accumulator : Sum.u64 = 87; SumSQ.u64 = 87; Count.u64 = 87; Min.u64 = 1; Max.u64 = 1; 
  n0.l2cache.eventSent_NACK_up : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  n0.l2cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ cpu2.pendCycle : Accumulator : Sum.u64 = 59805; SumSQ.u64 = 100815; Count.u64 = 104054; Min.u64 = 0; Max.u64 = 5; 
  c2.l1cache.TotalEventsReceived : Accumulator : Sum.u64 = 1423; SumSQ.u64 = 1423; Count.u64 = 1423; Min.u64 = 1; Max.u64 = 1; 
  c2.l1cache.TotalEventsReplayed : Accumulator : Sum.u64 = 93; SumSQ.u64 = 93; Count.u64 = 93; Min.u64 = 1; Max.u64 = 1; 
  c2.l1cache.TotalNoncacheableEventsReceived : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -574,6 +577,7 @@ TrivialCPU cpu3 Finished after 1000 issued reads, 1000 returned (104054 clocks)
  c2.l1cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c2.l1cache.eventSent_PutS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c2.l1cache.eventSent_PutE : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ cpu3.pendCycle : Accumulator : Sum.u64 = 57177; SumSQ.u64 = 95283; Count.u64 = 104054; Min.u64 = 0; Max.u64 = 5; 
  c3.l1cache.TotalEventsReceived : Accumulator : Sum.u64 = 1327; SumSQ.u64 = 1327; Count.u64 = 1327; Min.u64 = 1; Max.u64 = 1; 
  c3.l1cache.TotalEventsReplayed : Accumulator : Sum.u64 = 93; SumSQ.u64 = 93; Count.u64 = 93; Min.u64 = 1; Max.u64 = 1; 
  c3.l1cache.TotalNoncacheableEventsReceived : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 

@@ -4,8 +4,7 @@
 0:cpu:RequestGenCPU[RequestGenCPU:53]: CPU clock configured for 2GHz
 0:cpu:RequestGenCPU[RequestGenCPU:58]: Memory interface to be loaded is: memHierarchy.memInterface
 0:cpu:RequestGenCPU[RequestGenCPU:71]: Loaded memory interface successfully.
-0:cpu:RequestGenCPU[RequestGenCPU:107]: Request generator to be loaded is: miranda.GUPSGenerator
-0:cpu:RequestGenCPU[RequestGenCPU:113]: Generator loaded successfully.
+0:cpu:RequestGenCPU[RequestGenCPU:98]: Generator loaded successfully.
 0:cpu:RequestGenCPU[RequestGenCPU:154]: Miranda CPU Configuration:
 0:cpu:RequestGenCPU[RequestGenCPU:155]: - Max requests per cycle:         2
 0:cpu:RequestGenCPU[RequestGenCPU:156]: - Max reorder lookups             16
