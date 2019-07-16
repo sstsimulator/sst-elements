@@ -278,10 +278,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
         dtldParams.insert( "portName", "nicDetailedRead", true );
         detailed = loadUserSubComponent<Thornhill::DetailedCompute>( dtldName );
 
-        assert( detailed );
-        if ( ! detailed->isConnected() ) {
-            delete detailed;
-        } else {
+        if ( detailed && detailed->isConnected() ) {
             m_dbg.verbose( CALL_INFO, 1, 0,"detailed read connected\n");
             m_detailedCompute[0] = detailed;
         }
@@ -289,10 +286,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
         dtldParams.insert( "portName", "nicDetailedWrite", true );
         detailed = loadUserSubComponent<Thornhill::DetailedCompute>( dtldName );
 
-        assert( detailed );
-        if ( ! detailed->isConnected() ) {
-            delete detailed;
-        } else {
+        if ( detailed && detailed->isConnected() ) {
             m_dbg.verbose( CALL_INFO, 1, 0,"detailed write connected\n" );
             m_detailedCompute[1] = detailed;
         }
