@@ -85,21 +85,13 @@ Hades::Hades( ComponentId_t id, Params& params ) :
     if ( ! dtldName.empty() ) {
         m_detailedCompute = loadUserSubComponent<Thornhill::DetailedCompute>("detailedCompute", ComponentInfo::SHARE_NONE);
     }
-	if ( m_detailedCompute ) {
-		printf("using detailed compute\n");
-	}
 
-    Params memParams = params.find_prefix_params( "memoryHeapLink." );
-    std::string memName =  memParams.find<std::string>( "name" );
+    std::string memName = params.find_prefix_params( "memoryHeapLink." ).find<std::string>( "name" );
 
     if ( ! memName.empty() ) {
         m_memHeapLink = loadUserSubComponent<Thornhill::MemoryHeapLink>( "memoryHeap", ComponentInfo::SHARE_NONE );
 
-        if ( ! m_memHeapLink ) {
-            m_dbg.fatal(CALL_INFO,0,"could not load subComponent %s\n", memName.c_str() );
-        }
-
-        if ( ! m_memHeapLink->isConnected() ) {
+        if ( m_memHeapLink && ! m_memHeapLink->isConnected() ) {
             m_memHeapLink = NULL;
         }
     }
@@ -182,6 +174,8 @@ void Hades::_componentSetup()
     if ( m_memHeapLink ) {
         m_dbg.verbose(CALL_INFO, 1, 0,"memHeap connected\n");
     }
+	printf("%d %s\n",m_virtNic->getNodeId(),m_detailedCompute?"have detailedCompute":" ");
+	printf("%d %s\n",m_virtNic->getNodeId(),m_memHeapLink?"have memHeap":" ");
 }
 
 void Hades::_componentInit(unsigned int phase )
