@@ -32,7 +32,6 @@ EmberDetailedRingGenerator::EmberDetailedRingGenerator(SST::ComponentId_t id, Pa
 
 	std::string rankList = params.find<std::string>("arg.detailedCompute","");
 
-
 	if ( ! rankList.empty() && findNum( rank(), rankList ) ) {
 		printf("Rank %d using detailed compute\n",rank());
 		m_computeFunc = &EmberDetailedRingGenerator::computeDetailed;
