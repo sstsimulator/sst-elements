@@ -73,7 +73,6 @@ public:
 
     bool generate( std::queue<EmberEvent*>& evQ )
     {
-
 		if ( 0 == m_size ) {
 			verbose(CALL_INFO, 1, 0, "\n");
         	enQ_init( evQ );
