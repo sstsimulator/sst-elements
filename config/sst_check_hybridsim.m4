@@ -31,6 +31,14 @@ AC_DEFUN([SST_CHECK_HYBRIDSIM], [
   LDFLAGS="$LDFLAGS_saved"
   LIBS="$LIBS_saved"
 
+  AC_REQUIRE([SST_CHECK_NVDIMMSIM])
+  AS_IF([test "$sst_check_nvdimmsim_happy" = "no"],
+        [AC_MSG_ERROR([NVDIMMSim required for HybridSim])])
+
+  AC_REQUIRE([SST_CHECK_DRAMSIM])
+  AS_IF([test "$sst_check_dramsim_happy" = "no"],
+        [AC_MSG_ERROR([DRAMSim required for HybridSim])])
+
   AC_SUBST([HYBRIDSIM_CPPFLAGS])
   AC_SUBST([HYBRIDSIM_LDFLAGS])
   AC_SUBST([HYBRIDSIM_LIB])
