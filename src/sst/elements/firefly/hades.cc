@@ -174,8 +174,6 @@ void Hades::_componentSetup()
     if ( m_memHeapLink ) {
         m_dbg.verbose(CALL_INFO, 1, 0,"memHeap connected\n");
     }
-	printf("%d %s\n",m_virtNic->getNodeId(),m_detailedCompute?"have detailedCompute":" ");
-	printf("%d %s\n",m_virtNic->getNodeId(),m_memHeapLink?"have memHeap":" ");
 }
 
 void Hades::_componentInit(unsigned int phase )
