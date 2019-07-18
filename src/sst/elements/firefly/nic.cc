@@ -271,7 +271,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
     Params dtldParams = params.find_prefix_params( "detailedCompute." );
     std::string dtldName =  dtldParams.find<std::string>( "name" );
 
-    if ( ! dtldName.empty() ) {
+    if ( ! params.find<int>( "useSimpleMemoryModel", 0 ) && ! dtldName.empty() ) {
 
         Thornhill::DetailedCompute* detailed;
 
