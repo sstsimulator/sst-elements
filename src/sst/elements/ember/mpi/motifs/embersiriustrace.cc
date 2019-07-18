@@ -23,9 +23,9 @@
 
 using namespace SST::Ember;
 
-EmberSIRIUSTraceGenerator::EmberSIRIUSTraceGenerator(SST::Component* owner,
+EmberSIRIUSTraceGenerator::EmberSIRIUSTraceGenerator(SST::ComponentId_t id,
                                             Params& params) :
-	EmberMessagePassingGenerator(owner, params, "SIRIUSTrace")
+	EmberMessagePassingGenerator(id, params, "SIRIUSTrace")
 {
 	std::string trace_prefix = params.find<std::string>("arg.traceprefix", "");
 

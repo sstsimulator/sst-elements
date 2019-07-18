@@ -16,8 +16,8 @@
 
 using namespace SST::Ember;
 
-EmberUnstructuredGenerator::EmberUnstructuredGenerator(SST::Component* owner, Params& params) :
-	EmberMessagePassingGenerator(owner, params, "Unstructured"), 
+EmberUnstructuredGenerator::EmberUnstructuredGenerator(SST::ComponentId_t id, Params& params) :
+	EmberMessagePassingGenerator(id, params, "Unstructured"), 
 	m_loopIndex(0)
 {
 	graphFile  = params.find<std::string>("arg.graphfile", "-1");

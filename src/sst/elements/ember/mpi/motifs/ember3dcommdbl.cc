@@ -19,8 +19,8 @@
 
 using namespace SST::Ember;
 
-Ember3DCommDoublingGenerator::Ember3DCommDoublingGenerator(SST::Component* owner, Params& params) :
-	EmberMessagePassingGenerator(owner, params, "3DCommDoubling"), 
+Ember3DCommDoublingGenerator::Ember3DCommDoublingGenerator(SST::ComponentId_t id, Params& params) :
+	EmberMessagePassingGenerator(id, params, "3DCommDoubling"), 
 	phase(0)
 {
 	peX = (uint32_t) params.find("arg.pex", 0);

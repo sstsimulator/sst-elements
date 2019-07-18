@@ -20,8 +20,8 @@
 using namespace SST::Ember;
 
 
-EmberLQCDGenerator::EmberLQCDGenerator(SST::Component* owner, Params& params) :
-	EmberMessagePassingGenerator(owner, params, "LQCD"), 
+EmberLQCDGenerator::EmberLQCDGenerator(SST::ComponentId_t id, Params& params) :
+	EmberMessagePassingGenerator(id, params, "LQCD"), 
 	m_loopIndex(0)
 {
 	nx  = (uint32_t) params.find("arg.nx", 64);

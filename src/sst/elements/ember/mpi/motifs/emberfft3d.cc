@@ -22,8 +22,8 @@
 
 using namespace SST::Ember;
 
-EmberFFT3DGenerator::EmberFFT3DGenerator(SST::Component* owner, Params& params) :
-	EmberMessagePassingGenerator(owner, params, "FFT3D"), 
+EmberFFT3DGenerator::EmberFFT3DGenerator(SST::ComponentId_t id, Params& params) :
+	EmberMessagePassingGenerator(id, params, "FFT3D"), 
     m_fwdTime(3,0),
     m_bwdTime(3,0),
 	m_loopIndex(-1),

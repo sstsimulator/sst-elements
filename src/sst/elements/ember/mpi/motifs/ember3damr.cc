@@ -27,8 +27,8 @@ using namespace SST::Hermes::MP;
 
 static std::map<uint32_t, int32_t>  blockToNodeMap;
 
-Ember3DAMRGenerator::Ember3DAMRGenerator(SST::Component* owner, Params& params) :
-	EmberMessagePassingGenerator(owner, params, "3DAMR")
+Ember3DAMRGenerator::Ember3DAMRGenerator(SST::ComponentId_t id, Params& params) :
+	EmberMessagePassingGenerator(id, params, "3DAMR")
 {
 	int verbose = params.find("arg.verbose", 0);
 	out = new Output("AMR3D [@p:@l]: ", verbose, 0, Output::STDOUT);

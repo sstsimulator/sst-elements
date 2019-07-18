@@ -19,9 +19,9 @@
 
 using namespace SST::Ember;
 
-EmberReduceGenerator::EmberReduceGenerator(SST::Component* owner,
+EmberReduceGenerator::EmberReduceGenerator(SST::ComponentId_t id,
                                     Params& params) :
-	EmberMessagePassingGenerator(owner, params, "Reduce"),
+	EmberMessagePassingGenerator(id, params, "Reduce"),
     m_loopIndex(0)
 {
 	m_iterations = (uint32_t) params.find("arg.iterations", 1);

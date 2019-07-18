@@ -29,8 +29,8 @@
 
 using namespace SST::Ember;
 
-EmberCMT2DGenerator::EmberCMT2DGenerator(SST::Component* owner, Params& params) :
-	EmberMessagePassingGenerator(owner, params, "CMT2D"), 
+EmberCMT2DGenerator::EmberCMT2DGenerator(SST::ComponentId_t id, Params& params) :
+	EmberMessagePassingGenerator(id, params, "CMT2D"), 
 	    m_loopIndex(0),
 	    x_pos(-1), x_neg(-1),
         y_pos(-1), y_neg(-1),

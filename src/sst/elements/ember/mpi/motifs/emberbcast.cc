@@ -19,9 +19,9 @@
 
 using namespace SST::Ember;
 
-EmberBcastGenerator::EmberBcastGenerator(SST::Component* owner,
+EmberBcastGenerator::EmberBcastGenerator(SST::ComponentId_t id,
                                     Params& params) :
-	EmberMessagePassingGenerator(owner, params, "Bcast"),
+	EmberMessagePassingGenerator(id, params, "Bcast"),
     m_loopIndex(0)
 {
 	m_iterations = (uint32_t) params.find("arg.iterations", 1);

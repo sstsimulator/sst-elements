@@ -24,9 +24,9 @@ static void test(void* a, void* b, int* len, PayloadDataType* ) {
 	printf("%s() len=%d\n",__func__,*len);
 }
 
-EmberAllreduceGenerator::EmberAllreduceGenerator(SST::Component* owner,
+EmberAllreduceGenerator::EmberAllreduceGenerator(SST::ComponentId_t id,
                                             Params& params) :
-	EmberMessagePassingGenerator(owner, params, "Allreduce"),
+	EmberMessagePassingGenerator(id, params, "Allreduce"),
     m_loopIndex(0)
 {
 

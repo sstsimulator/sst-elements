@@ -25,13 +25,13 @@ namespace Ember {
 class EmberNASLUGenerator : public EmberMessagePassingGenerator {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberNASLUGenerator,
         "ember",
         "NASLUMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Performs a NAS-LU communication motif from 2 (opposite) vertices",
-        "SST::Ember::EmberGenerator"
+        SST::Ember::EmberGenerator
     )
 
     SST_ELI_DOCUMENT_PARAMS(
@@ -71,7 +71,8 @@ public:
 
 
 public:
-	EmberNASLUGenerator(SST::Component* owner, Params& params);
+	EmberNASLUGenerator(SST::Component* owner, Params& params) : EmberMessagePassingGenerator(owner,params,"") {}
+	EmberNASLUGenerator(SST::ComponentId_t, Params& params);
 	void configure();
     bool generate( std::queue<EmberEvent*>& evQ );
 

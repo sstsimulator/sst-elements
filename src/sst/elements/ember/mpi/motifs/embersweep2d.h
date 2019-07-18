@@ -24,13 +24,13 @@ namespace Ember {
 
 class EmberSweep2DGenerator : public EmberMessagePassingGenerator {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberSweep2DGenerator,
         "ember",
         "Sweep2DMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Performs a 2D sweep exchange Motif with multiple vertex communication ordering",
-        "SST::Ember::EmberGenerator"
+        SST::Ember::EmberGenerator
     )
 
     SST_ELI_DOCUMENT_PARAMS(
@@ -66,7 +66,8 @@ public:
     )
 
 public:
-	EmberSweep2DGenerator(SST::Component* owner, Params& params);
+	EmberSweep2DGenerator(SST::Component* owner, Params& params) : EmberMessagePassingGenerator(owner,params,"") {}
+	EmberSweep2DGenerator(SST::ComponentId_t, Params& params);
 	void configure();
     bool generate( std::queue<EmberEvent*>& evQ );
 

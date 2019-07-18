@@ -22,9 +22,9 @@ using namespace SST::Ember;
 
 #define TAG 0xDEADBEEF
 
-EmberTrafficGenGenerator::EmberTrafficGenGenerator(SST::Component* owner, 
+EmberTrafficGenGenerator::EmberTrafficGenGenerator(SST::ComponentId_t id, 
                                                     Params& params) :
-	EmberMessagePassingGenerator(owner, params, "TrafficGen")
+	EmberMessagePassingGenerator(id, params, "TrafficGen")
 {
 	m_messageSize = (uint32_t) params.find("arg.messageSize", 1024);
 

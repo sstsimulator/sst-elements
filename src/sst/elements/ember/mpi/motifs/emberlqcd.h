@@ -57,13 +57,13 @@ namespace Ember {
 class EmberLQCDGenerator : public EmberMessagePassingGenerator {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberLQCDGenerator,
         "ember",
         "LQCDMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "CG portion of Lattice QCD (MILC) with Naik Gathers.",
-        "SST::Ember::EmberGenerator"
+        SST::Ember::EmberGenerator
     )
 
     SST_ELI_DOCUMENT_PARAMS(
@@ -102,7 +102,8 @@ public:
     )
 
 public:
-	EmberLQCDGenerator(SST::Component* owner, Params& params);
+	EmberLQCDGenerator(SST::Component* owner, Params& params) : EmberMessagePassingGenerator(owner,params,"") {}
+	EmberLQCDGenerator(SST::ComponentId_t, Params& params);
 	~EmberLQCDGenerator() {}
 	void configure();
 	bool generate( std::queue<EmberEvent*>& evQ );
