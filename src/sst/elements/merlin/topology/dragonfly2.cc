@@ -155,6 +155,109 @@ topo_dragonfly2::topo_dragonfly2(Component* comp, Params &p) :
 }
 
 
+/*
+ * Port Layout:
+ * [0, params.p)                    // Hosts 0 -> params.p
+ * [params.p, params.p+params.a-1)  // Routers within this group
+ * [params.p+params.a-1, params.k)  // Other groups
+ */
+topo_dragonfly2::topo_dragonfly2(ComponentId_t cid, Params &p, int num_ports, int rtr_id) :
+    Topology(cid)
+{
+    params.p = p.find<uint32_t>("hosts_per_router");
+    params.a = p.find<uint32_t>("routers_per_group");
+    params.k = num_ports;
+    params.h = p.find<uint32_t>("intergroup_per_router");
+    params.g = p.find<uint32_t>("num_groups");
+    params.n = p.find<uint32_t>("intergroup_links");
+
+    std::string global_route_mode_s = p.find<std::string>("global_route_mode","absolute");
+    if ( global_route_mode_s == "absolute" ) global_route_mode = ABSOLUTE;
+    else if ( global_route_mode_s == "relative" ) global_route_mode = RELATIVE;
+    else {
+        output.fatal(CALL_INFO, -1, "Invalid global_route_mode specified: %s.\n",global_route_mode_s.c_str());        
+    }
+    
+    std::string route_algo = p.find<std::string>("algorithm", "minimal");
+
+    adaptive_threshold = p.find<double>("adaptive_threshold",2.0);
+    
+    // Get the global link map
+    std::vector<int64_t> global_link_map;
+
+    // For now, parse array ourselves so as not to create a dependency
+    // on new core features.  Once we want to use new core features,
+    // delete code below and uncomment line above (can also get rid of
+    // #include <sstream> above).
+    std::string array = p.find<std::string>("global_link_map");
+    if ( array != "" ) {
+        array = array.substr(1,array.size()-2);
+    
+        std::stringstream ss(array);
+    
+        while( ss.good() ) {
+            std::string substr;
+            getline( ss, substr, ',' );
+            global_link_map.push_back(strtol(substr.c_str(), NULL, 0));
+        }
+    }
+    // End parse array on our own
+    
+    // Get a shared region
+    SharedRegion* sr = Simulation::getSharedRegionManager()->getGlobalSharedRegion("group_to_global_port",
+                                                                                  ((params.g-1) * params.n) * sizeof(RouterPortPair2),
+                                                                                   new SharedRegionMerger());
+    // Set up the RouteToGroup object
+    group_to_global_port.init(sr, params.g, params.n);
+
+    // Fill in the shared region using the RouteToGroupObject (if
+    // vector for param global_link_map is empty, then
+    // nothing will be intialized.
+    for ( int i = 0; i < global_link_map.size(); i++ ) {
+        // Figure out all the mappings
+        int64_t value = global_link_map[i];
+        if ( value == -1 ) continue;
+        
+        int group = value % (params.g - 1);
+        int route_num = value / (params.g - 1);
+        int router = i / params.h;
+        int port = (i % params.h) + params.p + params.a - 1;
+        
+        RouterPortPair2 rpp;
+        rpp.router = router;
+        rpp.port = port;
+        group_to_global_port.setRouterPortPair(group, route_num, rpp);
+    }
+
+    
+    // Publish the shared region to make sure everyone has the data.
+    sr->publish();
+    
+    if ( !route_algo.compare("valiant") ) {
+        if ( params.g <= 2 ) {
+            /* 2 or less groups... no point in valiant */
+            algorithm = MINIMAL;
+        } else {
+            algorithm = VALIANT;
+        }
+    }
+    else if ( !route_algo.compare("adaptive-local") ) {
+        algorithm = ADAPTIVE_LOCAL;
+    }
+    else {
+        algorithm = MINIMAL;
+    }
+
+    group_id = rtr_id / params.a;
+    router_id = rtr_id % params.a;
+
+    rng = new RNG::XORShiftRNG(rtr_id+1);
+
+    output.verbose(CALL_INFO, 1, 1, "%u:%u:  ID: %u   Params:  p = %u  a = %u  k = %u  h = %u  g = %u\n",
+            group_id, router_id, rtr_id, params.p, params.a, params.k, params.h, params.g);
+}
+
+
 topo_dragonfly2::~topo_dragonfly2()
 {
 }

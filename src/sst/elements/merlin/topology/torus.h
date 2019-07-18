@@ -72,18 +72,22 @@ class topo_torus: public Topology {
 
 public:
 
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         topo_torus,
         "merlin",
         "torus",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Multi-dimensional torus topology object",
-        "SST::Merlin::Topology")
+        SST::Merlin::Topology)
     
     SST_ELI_DOCUMENT_PARAMS(
         {"torus:shape",        "Shape of the torus specified as the number of routers in each dimension, where each dimension is separated by an x.  For example, 4x4x2x2.  Any number of dimensions is supported."},
         {"torus:width",        "Number of links between routers in each dimension, specified in same manner as for shape.  For example, 2x2x1 denotes 2 links in the x and y dimensions and one in the z dimension."},
         {"torus:local_ports",  "Number of endpoints attached to each router."},
+
+        {"shape",        "Shape of the torus specified as the number of routers in each dimension, where each dimension is separated by an x.  For example, 4x4x2x2.  Any number of dimensions is supported."},
+        {"width",        "Number of links between routers in each dimension, specified in same manner as for shape.  For example, 2x2x1 denotes 2 links in the x and y dimensions and one in the z dimension."},
+        {"local_ports",  "Number of endpoints attached to each router."},
     )
 
     
@@ -102,6 +106,7 @@ private:
 
 public:
     topo_torus(Component* comp, Params& params);
+    topo_torus(ComponentId_t cid, Params& params, int num_ports, int rtr_id);
     ~topo_torus();
 
     virtual void route(int port, int vc, internal_router_event* ev);

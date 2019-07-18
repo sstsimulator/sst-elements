@@ -81,6 +81,11 @@ public:
         {"port%(num_ports)d",  "Ports which connect to endpoints or other routers.", { "merlin.RtrEvent", "merlin.internal_router_event", "merlin.topologyevent", "merlin.credit_event" } }
     )
 
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+        {"topology", "Topology object to control routing", "SST::Merlin::Topology" },
+        {"XbarArb", "Crossbar arbitration", "SST::Merlin::XbarArbitration" }
+    )
+    
 private:
     static int num_routers;
     static int print_debug;

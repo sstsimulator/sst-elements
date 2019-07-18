@@ -75,17 +75,48 @@ nic::nic(ComponentId_t cid, Params& params) :
     if ( message_size.hasUnits("B") ) message_size  *= UnitAlgebra("8b/B");
     msg_size = message_size.getRoundedValue();
 
-    std::string linkcontrol_type = params.find<std::string>("linkcontrol_type","merlin.linkcontrol");
-    // Create a LinkControl object
-    // NOTE:  This MUST be the same length as 'num_vns'
-    link_control = (SimpleNetwork*)loadSubComponent(linkcontrol_type, this, params);
+    // First see if it is defined in the python
+    link_control = loadUserSubComponent<SST::Interfaces::SimpleNetwork>
+        ("networkIF", ComponentInfo::SHARE_NONE, 1 /* vns */);
+
+    if ( !link_control ) {
+        // Not defined in python code.  See if this uses the legacy
+        // API.  If so, load it with loadSubComponent.  Otherwise, use
+        // the default linkcontrol (merlin.linkcontrol) loaded with
+        // the new API.
+        bool found;
+
+        // Get the link control to be used
+        std::string linkcontrol_type = params.find<std::string>("linkcontrol_type",found);
+
+        if ( found ) {
+            // Legacy
+DISABLE_WARN_DEPRECATED_DECLARATION
+            link_control = (SimpleNetwork*)loadSubComponent(linkcontrol_type, this, params);
+REENABLE_WARNING
     
-    UnitAlgebra in_buf_size = params.find<UnitAlgebra>("in_buf_size","1kB");
-    UnitAlgebra out_buf_size = params.find<UnitAlgebra>("out_buf_size","1kB");
+            UnitAlgebra in_buf_size = params.find<UnitAlgebra>("in_buf_size","1kB");
+            UnitAlgebra out_buf_size = params.find<UnitAlgebra>("out_buf_size","1kB");
 
     
-    link_control->initialize("rtr", link_bw, num_vns, in_buf_size, out_buf_size);
+            link_control->initialize("rtr", link_bw, num_vns, in_buf_size, out_buf_size);            
+        }
+        else {
+            // Just load the default
+            Params if_params;
 
+            if_params.insert("link_bw",params.find<std::string>("link_bw"));
+            if_params.insert("input_buf_size",params.find<std::string>("in_buf_size","1kB"));
+            if_params.insert("output_buf_size",params.find<std::string>("out_buf_size","1kB"));            
+            if_params.insert("port_name","rtr");
+        
+            link_control = loadAnonymousSubComponent<SST::Interfaces::SimpleNetwork>
+                ("merlin.linkcontrol", "networkIF", 0,
+                 ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, if_params, 1 /* vns */);
+        }
+    }
+
+    
     last_target = id;
     next_seq = new int[num_peers];
     for ( int i = 0 ; i < num_peers ; i++ )

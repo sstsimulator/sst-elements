@@ -32,18 +32,22 @@ class topo_fattree: public Topology {
 
 public:
 
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         topo_fattree,
         "merlin",
         "fattree",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Fattree topology object",
-        "SST::Merlin::Topology")
+        SST::Merlin::Topology)
     
     SST_ELI_DOCUMENT_PARAMS(
         {"fattree:shape",               "Shape of the fattree"},
         {"fattree:routing_alg",         "Routing algorithm to use. [deterministic | adaptive]","deterministic"},
-        {"fattree:adaptive_threshold",  "Threshold used to determine if a packet will adaptively route."}
+        {"fattree:adaptive_threshold",  "Threshold used to determine if a packet will adaptively route."},
+
+        {"shape",               "Shape of the fattree"},
+        {"routing_alg",         "Routing algorithm to use. [deterministic | adaptive]","deterministic"},
+        {"adaptive_threshold",  "Threshold used to determine if a packet will adaptively route."}
     )
 
     
@@ -74,6 +78,7 @@ private:
     
 public:
     topo_fattree(Component* comp, Params& params);
+    topo_fattree(ComponentId_t cid, Params& params, int num_ports, int rtr_id);
     ~topo_fattree();
 
     virtual void route(int port, int vc, internal_router_event* ev);

@@ -122,6 +122,97 @@ topo_hyperx::topo_hyperx(Component* comp, Params& params) :
     
 }
 
+topo_hyperx::topo_hyperx(ComponentId_t cid, Params& params, int num_ports, int rtr_id) :
+    Topology(cid),
+    router_id(rtr_id)
+{
+
+    // Get the various parameters
+    std::string shape;
+    shape = params.find<std::string>("shape");
+    if ( !shape.compare("") ) {
+    }
+
+    // Need to parse the shape string to get the number of dimensions
+    // and the size of each dimension
+    dimensions = std::count(shape.begin(),shape.end(),'x') + 1;
+
+    dim_size = new int[dimensions];
+    dim_width = new int[dimensions];
+    port_start = new int[dimensions];
+
+    parseDimString(shape, dim_size);
+
+    std::string width = params.find<std::string>("width", "");
+    if ( width.compare("") == 0 ) {
+        for ( int i = 0 ; i < dimensions ; i++ )
+            dim_width[i] = 1;
+    } else {
+        parseDimString(width, dim_width);
+    }
+
+    int next_port = 0;
+    for ( int d = 0 ; d < dimensions ; d++ ) {
+        port_start[d] = next_port;
+        next_port += dim_width[d] * (dim_size[d] - 1);
+        // std::cout << next_port << std::endl;
+    }
+    // std::cout << std::endl;
+
+    num_local_ports = params.find<int>("local_ports", 1);
+    local_port_start = next_port; // Local delivery is on the last ports
+    // output.output("Local port start = %d\n",local_port_start);
+    // std::cout << local_port_start << std::endl;
+    // std::cout << num_local_ports << std::endl;
+    
+
+    int needed_ports = local_port_start + num_local_ports;
+    // std::cout << needed_ports << std::endl;
+
+    if ( num_ports < needed_ports ) {
+        output.fatal(CALL_INFO, -1, "Number of ports should be at least %d for this configuration\n", needed_ports);
+    }
+
+    id_loc = new int[dimensions];
+    idToLocation(router_id, id_loc);
+
+
+    // Get the routing algorithm
+    std::string route_algo = params.find<std::string>("algorithm", "DOR");
+
+    if ( !route_algo.compare("DOAL") ) {
+        // std::cout << "Setting algorithm to DOAL" << std::endl;
+        algorithm = DOAL;
+    }
+    else if ( !route_algo.compare("valiant") ) {
+        algorithm = VALIANT;
+    }
+    else if ( !route_algo.compare("VDAL") ) {
+        algorithm = VDAL;
+    }
+    else if ( !route_algo.compare("DOR-ND") ) {
+        algorithm = DORND;
+    }
+    else if ( !route_algo.compare("DOR") ) {
+        algorithm = DOR;
+    }
+    else if ( !route_algo.compare("MIN-A") ) {
+        algorithm = MINA;
+    }
+    else {
+        output.fatal(CALL_INFO,-1,"Unknown routing mode specified: %s\n",route_algo.c_str());
+    }
+
+    rng = new RNG::XORShiftRNG(router_id+1);
+    rng_func = new RNGFunc(rng);
+    
+    total_routers = 1;
+    for (int i = 0; i < dimensions; ++i ) {
+        total_routers *= dim_size[i];
+    }
+    
+}
+
 topo_hyperx::~topo_hyperx()
 {
     delete [] id_loc;

@@ -33,13 +33,13 @@ class topo_singlerouter: public Topology {
 
 public:
 
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         topo_singlerouter,
         "merlin",
         "singlerouter",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Simple, single-router topology object",
-        "SST::Merlin::Topology")
+        SST::Merlin::Topology)
     
     
 private:
@@ -47,6 +47,7 @@ private:
 
 public:
     topo_singlerouter(Component* comp, Params& params);
+    topo_singlerouter(ComponentId_t cid, Params& params, int num_ports, int rtr_id);
     ~topo_singlerouter();
 
     virtual void route(int port, int vc, internal_router_event* ev);

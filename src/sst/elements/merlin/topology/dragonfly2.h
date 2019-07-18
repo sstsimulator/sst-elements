@@ -70,13 +70,13 @@ class topo_dragonfly2: public Topology {
 
 public:
 
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         topo_dragonfly2,
         "merlin",
         "dragonfly2",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Dragonfly2 topology object.  Implements a dragonfly with a single all to all pattern within the group.",
-        "SST::Merlin::Topology")
+        SST::Merlin::Topology)
     
     SST_ELI_DOCUMENT_PARAMS(
         {"dragonfly:hosts_per_router",      "Number of hosts connected to each router."},
@@ -88,6 +88,16 @@ public:
         {"dragonfly:adaptive_threshold",    "Threshold to use when make adaptive routing decisions.", "2.0"},
         {"dragonfly:global_link_map",       "Array specifying connectivity of global links in each dragonfly group."},
         {"dragonfly:global_route_mode",     "Mode for intepreting global link map [absolute (default) | relative].","absolute"},
+
+        {"hosts_per_router",      "Number of hosts connected to each router."},
+        {"routers_per_group",     "Number of links used to connect to routers in same group."},
+        {"intergroup_per_router", "Number of links per router connected to other groups."},
+        {"intergroup_links",      "Number of links between each pair of groups."},
+        {"num_groups",            "Number of groups in network."},
+        {"algorithm",             "Routing algorithm to use [minmal (default) | valiant].", "minimal"},
+        {"adaptive_threshold",    "Threshold to use when make adaptive routing decisions.", "2.0"},
+        {"global_link_map",       "Array specifying connectivity of global links in each dragonfly group."},
+        {"global_route_mode",     "Mode for intepreting global link map [absolute (default) | relative].","absolute"},
     )
 
     /* Assumed connectivity of each router:
@@ -137,6 +147,7 @@ public:
     };
 
     topo_dragonfly2(Component* comp, Params& p);
+    topo_dragonfly2(ComponentId_t cid, Params& p, int num_ports, int rtr_id);
     ~topo_dragonfly2();
 
     virtual void route(int port, int vc, internal_router_event* ev);

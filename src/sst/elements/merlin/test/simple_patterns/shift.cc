@@ -79,11 +79,32 @@ shift_nic::shift_nic(ComponentId_t cid, Params& params) :
     // remap = params.find<int>("remap", 0);
     // id = (net_id + remap) % num_peers;
     
+
     // Create a LinkControl object
-    link_control = (SimpleNetwork*)loadSubComponent("merlin.reorderlinkcontrol", this, params);
+    // First see if it is defined in the python
+    link_control = loadUserSubComponent<SST::Interfaces::SimpleNetwork>
+        ("networkIF", ComponentInfo::SHARE_NONE, 1 /* vns */);
+
+    if ( !link_control ) {
+        // Not defined in python code. Just use default (merlin.reorderlinkcontrol)
     
-    UnitAlgebra buf_size("1kB");
-    link_control->initialize("rtr", link_bw, 1, buf_size, buf_size);
+        UnitAlgebra buf_size("1kB");
+        link_control->initialize("rtr", link_bw, 1, buf_size, buf_size);
+
+        Params if_params;
+        
+        if_params.insert("networkIF","merlin.linkcontrol");
+        if_params.insert("networkIF::link_bw",params.find<std::string>("link_bw","2GB/s"));
+        if_params.insert("networkIF::input_buf_size","1kB");
+        if_params.insert("networkIF::output_buf_size","1kB");           
+        if_params.insert("networkIF::port_name","rtr");
+        
+        link_control = loadAnonymousSubComponent<SST::Interfaces::SimpleNetwork>
+            ("merlin.reorderlinkcontrol", "networkIF", 0,
+             ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, if_params, 1 /* vns */);
+    }
+
+
 
     // Register a clock
     registerClock( "1GHz", new Clock::Handler<shift_nic>(this,&shift_nic::clock_handler), false);
