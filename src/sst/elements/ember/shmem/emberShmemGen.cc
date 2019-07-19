@@ -21,8 +21,11 @@ using namespace SST;
 using namespace SST::Ember;
 
 EmberShmemGenerator::EmberShmemGenerator( 
-            Component* owner, Params& params, std::string name) :
-    EmberGenerator(owner, params, name )
+            ComponentId_t id, Params& params, std::string name) :
+    EmberGenerator(id, params, name )
+{ }
+
+void EmberShmemGenerator::setup() 
 {
     m_shmem = static_cast<EmberShmemLib*>(getLib("shmem"));
     assert(m_shmem);
