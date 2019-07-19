@@ -196,11 +196,7 @@ EmberGenerator* EmberEngine::initMotif( SST::Params params,
         m_motifLogger->logMotifStart(gentype, motifNum);
     }
 
-    // get the api the motif uses
-    std::string api = params.find<std::string>("api" );
-
-	output.verbose(CALL_INFO, 2, ENGINE_MASK, "api=`%s` motif=`%s`\n", 
-										api.c_str(), gentype.c_str());
+	output.verbose(CALL_INFO, 2, ENGINE_MASK, "motif=`%s`\n", gentype.c_str());
 
 	if( gentype.empty()) {
 		output.fatal(CALL_INFO, -1, "Error: You did not specify a generator" 
@@ -208,7 +204,6 @@ EmberGenerator* EmberEngine::initMotif( SST::Params params,
 	} else {
 		params.insert("_jobId", SST::to_string( jobId ), true);
 		params.insert("_motifNum", SST::to_string( motifNum ), true);
-		params.insert("_apiName", api, true);
 
 		gen = dynamic_cast<EmberGenerator*>(
                 loadSubComponent(gentype, this, params ) );

@@ -18,7 +18,7 @@ class LoadInfo:
 
 	def __init__(self,numNics, baseNicParams, defaultEmberParams):
 		self.numNics = int(numNics)
-		nullMotif = { 'motif0.api': '', 'motif0.name' : 'ember.NullMotif', 'motif0.printStats' : 0, 'motif0.spyplotmode': 0 }
+		nullMotif = { 'motif0.name' : 'ember.NullMotif', 'motif0.printStats' : 0, 'motif0.spyplotmode': 0 }
 
 		self.parts = {} 
 		ep = EmberEP( -1 , defaultEmberParams, baseNicParams, nullMotif, 1,1,[],'Null',1,[],None)
