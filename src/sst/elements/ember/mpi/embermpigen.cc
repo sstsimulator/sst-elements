@@ -24,7 +24,6 @@ EmberMessagePassingGenerator::EmberMessagePassingGenerator(
             ComponentId_t id, Params& params, std::string name ) :
     EmberGenerator(id, params, name )
 { 
-
     Params mapParams = params.find_prefix_params("rankmap.");
     std::string rankMapModule = params.find<std::string>("rankmapper", "ember.LinearMap");
 
