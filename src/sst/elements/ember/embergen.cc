@@ -23,7 +23,8 @@ EmberGenerator::EmberGenerator( ComponentId_t id, Params& params, std::string na
     SubComponent(id),
     m_detailedCompute( NULL ),
     m_dataMode( NoBacking ),
-    m_motifName( name )
+    m_motifName( name ),
+    m_ee(NULL)
 {
     m_primary = params.find<bool>("primary",true);
     m_motifNum = params.find<int>( "_motifNum", -1 );	
