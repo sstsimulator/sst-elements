@@ -31,7 +31,6 @@ class ParseLoadFile:
             if key == '[JOB_ID]':
                 self.stuff = self.stuff + [{ 'jobid': int(value) }]
                 self.stuff[-1]['motifs'] = [] 
-                self.stuff[-1]['motif_api'] = '' 
                 self.stuff[-1]['params'] = {} 
             elif key == '[NID_LIST]':
                 value = ''.join(value.split())
@@ -52,12 +51,10 @@ class ParseLoadFile:
                     self.stuff[-1]['params'][key] = self.generateNidList( value )
                 else:
                     self.stuff[-1]['params'][key] = value
-            elif key == '[MOTIF_API]':
-                self.stuff[-1]['motif_api'] = value.strip()
             elif key == '[MOTIF]':
                 self.stuff[-1]['motifs'] = self.stuff[-1]['motifs'] + [value] 
             else:
-                sys.exit('ERROR: unknown key {0}'.format(key))
+                print('Warning: unknown key {0}'.format(key))
 
         self.fp.close() 
 
@@ -84,10 +81,9 @@ class ParseLoadFile:
             if 'num_cores' in self.stuff[0]:
                 numCores = self.stuff[0]['num_cores']
             params = self.stuff[0]['params']
-            motif_api = self.stuff[0]['motif_api']
             motifs = self.stuff[0]['motifs']
             self.stuff.pop(0)
-            return jobid, nidlist, numCores, params, motif_api, motifs 
+            return jobid, nidlist, numCores, params, motifs 
 
     def substitute( self, line, variables ):
         retval = ''
