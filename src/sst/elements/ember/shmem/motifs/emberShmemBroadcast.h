@@ -28,8 +28,9 @@ template< class TYPE >
 class EmberShmemBroadcastGenerator : public EmberShmemGenerator {
 
 public:
-	EmberShmemBroadcastGenerator(SST::Component* owner, Params& params) :
-		EmberShmemGenerator(owner, params, "ShmemBroadcast" ), m_phase(0) 
+	EmberShmemBroadcastGenerator(SST::Component* owner, Params& params) : EmberShmemGenerator(owner, params, "" ) {}
+	EmberShmemBroadcastGenerator(SST::ComponentId_t id, Params& params) :
+		EmberShmemGenerator(id, params, "ShmemBroadcast" ), m_phase(0) 
 	{ 
 		m_printResults = params.find<bool>("arg.printResults", false );
 		m_nelems = params.find<int>("arg.nelems", 1 );
@@ -132,40 +133,42 @@ public:
 
 class EmberShmemBroadcast32Generator : public EmberShmemBroadcastGenerator<uint32_t> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemBroadcast32Generator,
         "ember",
         "ShmemBroadcast32Motif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM broadcasts32",
-        "SST::Ember::EmberGenerator"
+        SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS(
-    )
+    SST_ELI_DOCUMENT_PARAMS()
 
 public:
     EmberShmemBroadcast32Generator(SST::Component* owner, Params& params) :
-    EmberShmemBroadcastGenerator( owner, params) {}
+    	EmberShmemBroadcastGenerator( owner, params) {}
+    EmberShmemBroadcast32Generator(SST::ComponentId_t id, Params& params) :
+    	EmberShmemBroadcastGenerator( id, params) {}
 };
 
 class EmberShmemBroadcast64Generator : public EmberShmemBroadcastGenerator<uint64_t> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemBroadcast64Generator,
         "ember",
         "ShmemBroadcast64Motif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM broadcasts64",
-        "SST::Ember::EmberGenerator"
+        SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS(
-    )
+    SST_ELI_DOCUMENT_PARAMS()
 
 public:
     EmberShmemBroadcast64Generator(SST::Component* owner, Params& params) :
-    EmberShmemBroadcastGenerator( owner, params) {}
+    	EmberShmemBroadcastGenerator( owner, params) {}
+    EmberShmemBroadcast64Generator(SST::ComponentId_t id, Params& params) :
+    	EmberShmemBroadcastGenerator( id, params) {}
 };
 }
 }

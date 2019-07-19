@@ -28,8 +28,9 @@ template< class TYPE >
 class EmberShmemGetNBIGenerator : public EmberShmemGenerator {
 
 public:
-	EmberShmemGetNBIGenerator(SST::Component* owner, Params& params) :
-		EmberShmemGenerator(owner, params, "ShmemGetNBI" ), m_phase(0)
+	EmberShmemGetNBIGenerator(SST::Component* owner, Params& params) : EmberShmemGenerator(owner, params, "" ) {}
+	EmberShmemGetNBIGenerator(SST::ComponentId_t id, Params& params) :
+		EmberShmemGenerator(id, params, "ShmemGetNBI" ), m_phase(0)
 	{ 
         m_nelems = params.find<int>("arg.nelems", 1);
         m_i = m_count = params.find<int>("arg.count", 1);
@@ -120,82 +121,82 @@ public:
 
 class EmberShmemGetNBIIntGenerator : public EmberShmemGetNBIGenerator<int> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemGetNBIIntGenerator,
         "ember",
         "ShmemGetNBIIntMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM get int",
-        "SST::Ember::EmberGenerator"
-
+        SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS(
-    )
+    SST_ELI_DOCUMENT_PARAMS()
 
 public:
     EmberShmemGetNBIIntGenerator( SST::Component* owner, Params& params ) :
         EmberShmemGetNBIGenerator(owner,  params) { }
+    EmberShmemGetNBIIntGenerator( SST::ComponentId_t id, Params& params ) :
+        EmberShmemGetNBIGenerator(id,  params) { }
 };
 
 class EmberShmemGetNBILongGenerator : public EmberShmemGetNBIGenerator<long> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemGetNBILongGenerator,
         "ember",
         "ShmemGetNBILongMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM get long",
-        "SST::Ember::EmberGenerator"
-
+        SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS(
-    )
+    SST_ELI_DOCUMENT_PARAMS()
 
 public:
     EmberShmemGetNBILongGenerator( SST::Component* owner, Params& params ) :
         EmberShmemGetNBIGenerator(owner,  params) { }
+    EmberShmemGetNBILongGenerator( SST::ComponentId_t id, Params& params ) :
+        EmberShmemGetNBIGenerator(id,  params) { }
 };
 
 class EmberShmemGetNBIDoubleGenerator : public EmberShmemGetNBIGenerator<double> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemGetNBIDoubleGenerator,
         "ember",
         "ShmemGetNBIDoubleMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM get double",
-        "SST::Ember::EmberGenerator"
-
+        SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS(
-    )
+    SST_ELI_DOCUMENT_PARAMS()
 
 public:
     EmberShmemGetNBIDoubleGenerator( SST::Component* owner, Params& params ) :
         EmberShmemGetNBIGenerator(owner,  params) { }
+    EmberShmemGetNBIDoubleGenerator( SST::ComponentId_t id, Params& params ) :
+        EmberShmemGetNBIGenerator(id,  params) { }
 };
 
 class EmberShmemGetNBIFloatGenerator : public EmberShmemGetNBIGenerator<float> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemGetNBIFloatGenerator,
         "ember",
         "ShmemGetNBIFloatMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM get float",
-        "SST::Ember::EmberGenerator"
-
+        SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS(
-    )
+    SST_ELI_DOCUMENT_PARAMS()
 
 public:
     EmberShmemGetNBIFloatGenerator( SST::Component* owner, Params& params ) :
         EmberShmemGetNBIGenerator(owner,  params) { }
+    EmberShmemGetNBIFloatGenerator( SST::ComponentId_t id, Params& params ) :
+        EmberShmemGetNBIGenerator(id,  params) { }
 };
 }
 }

@@ -28,8 +28,9 @@ template< class TYPE >
 class EmberShmemCswapGenerator : public EmberShmemGenerator {
 
 public:
-    EmberShmemCswapGenerator(SST::Component* owner, Params& params) :
-		EmberShmemGenerator(owner, params, "ShmemCswap" ), m_phase(0) 
+    EmberShmemCswapGenerator(SST::Component* owner, Params& params) : EmberShmemGenerator(owner, params, "" ) {}
+    EmberShmemCswapGenerator(SST::ComponentId_t id, Params& params) :
+		EmberShmemGenerator(id, params, "ShmemCswap" ), m_phase(0) 
 	{ 
         int status;
         std::string tname = typeid(TYPE).name();
@@ -106,82 +107,83 @@ public:
 
 class EmberShmemCswapIntGenerator : public EmberShmemCswapGenerator<int> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemCswapIntGenerator,
         "ember",
         "ShmemCswapIntMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM cswap int",
-        "SST::Ember::EmberGenerator"
-
+        SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS(
-    )
+    SST_ELI_DOCUMENT_PARAMS()
 
 public:
     EmberShmemCswapIntGenerator( SST::Component* owner, Params& params ) :
         EmberShmemCswapGenerator(owner,  params) { }
+    EmberShmemCswapIntGenerator( SST::ComponentId_t id, Params& params ) :
+        EmberShmemCswapGenerator(id,  params) { }
 };
 
 class EmberShmemCswapLongGenerator : public EmberShmemCswapGenerator<long> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemCswapLongGenerator,
         "ember",
         "ShmemCswapLongMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM cswap long",
-        "SST::Ember::EmberGenerator"
+        SST::Ember::EmberGenerator
 
     )
 
-    SST_ELI_DOCUMENT_PARAMS(
-    )
+    SST_ELI_DOCUMENT_PARAMS() 
 
 public:
     EmberShmemCswapLongGenerator( SST::Component* owner, Params& params ) :
         EmberShmemCswapGenerator(owner,  params) { }
+    EmberShmemCswapLongGenerator( SST::ComponentId_t id, Params& params ) :
+        EmberShmemCswapGenerator(id,  params) { }
 };
 
 class EmberShmemCswapDoubleGenerator : public EmberShmemCswapGenerator<double> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemCswapDoubleGenerator,
         "ember",
         "ShmemCswapDoubleMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM cswap double",
-        "SST::Ember::EmberGenerator"
-
+        SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS(
-    )
+    SST_ELI_DOCUMENT_PARAMS()
 
 public:
     EmberShmemCswapDoubleGenerator( SST::Component* owner, Params& params ) :
         EmberShmemCswapGenerator(owner,  params) { }
+    EmberShmemCswapDoubleGenerator( SST::ComponentId_t id, Params& params ) :
+        EmberShmemCswapGenerator(id,  params) { }
 };
 
 class EmberShmemCswapFloatGenerator : public EmberShmemCswapGenerator<float> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemCswapFloatGenerator,
         "ember",
         "ShmemCswapFloatMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM cswap float",
-        "SST::Ember::EmberGenerator"
-
+        SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS(
-    )
+    SST_ELI_DOCUMENT_PARAMS()
 
 public:
     EmberShmemCswapFloatGenerator( SST::Component* owner, Params& params ) :
         EmberShmemCswapGenerator(owner,  params) { }
+    EmberShmemCswapFloatGenerator( SST::ComponentId_t id, Params& params ) :
+        EmberShmemCswapGenerator(id,  params) { }
 };
 
 }

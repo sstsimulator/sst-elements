@@ -28,8 +28,9 @@ template <class TYPE>
 class EmberShmemWaitUntilGenerator : public EmberShmemGenerator {
 
 public:
-	EmberShmemWaitUntilGenerator(SST::Component* owner, Params& params) :
-		EmberShmemGenerator(owner, params, "ShmemWaitUntil" ), m_phase(0) 
+	EmberShmemWaitUntilGenerator(SST::Component* owner, Params& params) : EmberShmemGenerator(owner, params, "" ) {}
+	EmberShmemWaitUntilGenerator(SST::ComponentId_t id, Params& params) :
+		EmberShmemGenerator(id, params, "ShmemWaitUntil" ), m_phase(0) 
 	{ 
         m_opName = params.find<std::string>("arg.op", "NE");
 
@@ -130,42 +131,42 @@ public:
 
 class EmberShmemWaitUntilIntGenerator : public EmberShmemWaitUntilGenerator<int> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemWaitUntilIntGenerator,
         "ember",
         "ShmemWaitUntilIntMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM wait_until int",
-        "SST::Ember::EmberGenerator"
-
+        SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS(
-    )
+    SST_ELI_DOCUMENT_PARAMS()
 
 public:
     EmberShmemWaitUntilIntGenerator( SST::Component* owner, Params& params ) :
-        EmberShmemWaitUntilGenerator(owner,  params) { }
+        EmberShmemWaitUntilGenerator(owner, params) { }
+    EmberShmemWaitUntilIntGenerator( SST::ComponentId_t id, Params& params ) :
+        EmberShmemWaitUntilGenerator(id, params) { }
 };
 
 class EmberShmemWaitUntilLongGenerator : public EmberShmemWaitUntilGenerator<long> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemWaitUntilLongGenerator,
         "ember",
         "ShmemWaitUntilLongMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM wait_until long",
-        "SST::Ember::EmberGenerator"
-
+        SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS(
-    )
+    SST_ELI_DOCUMENT_PARAMS()
 
 public:
     EmberShmemWaitUntilLongGenerator( SST::Component* owner, Params& params ) :
         EmberShmemWaitUntilGenerator(owner,  params) { }
+    EmberShmemWaitUntilLongGenerator( SST::ComponentId_t id, Params& params ) :
+        EmberShmemWaitUntilGenerator(id,  params) { }
 };
 }
 }

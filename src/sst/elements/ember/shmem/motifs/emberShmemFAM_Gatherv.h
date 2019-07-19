@@ -32,22 +32,21 @@ namespace Ember {
 class EmberShmemFAM_GathervGenerator : public EmberShmemGenerator {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemFAM_GathervGenerator,
         "ember",
         "ShmemFAM_GathervMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM FAM_Gatherv",
-        "SST::Ember::EmberGenerator"
-
+        SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS(
-    )
+    SST_ELI_DOCUMENT_PARAMS()
 
 public:
-	EmberShmemFAM_GathervGenerator(SST::Component* owner, Params& params) :
-		EmberShmemGenerator(owner, params, "ShmemFAM_Gatherv" ), m_phase(Init), m_groupName("MyApplication")
+	EmberShmemFAM_GathervGenerator(SST::Component* owner, Params& params) : EmberShmemGenerator(owner, params, "" ) {}
+	EmberShmemFAM_GathervGenerator(SST::ComponentId_t id, Params& params) :
+		EmberShmemGenerator(id, params, "ShmemFAM_Gatherv" ), m_phase(Init), m_groupName("MyApplication")
 	{ 
 		m_blocking		= params.find<bool>("arg.blocking", false);
 		m_blockSize	    = params.find<int>("arg.blockSize", 4096);

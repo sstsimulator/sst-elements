@@ -26,17 +26,16 @@ namespace Ember {
 class EmberShmemTestGenerator : public EmberShmemGenerator {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemTestGenerator,
         "ember",
         "ShmemTestMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM test",
-        "SST::Ember::EmberGenerator"
+        SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS(
-    )
+    SST_ELI_DOCUMENT_PARAMS()
 
     SST_ELI_DOCUMENT_STATISTICS(
         { "time-Init", "Time spent in Init event",          "ns",  0},
@@ -63,8 +62,9 @@ public:
     )
 
 public:
-	EmberShmemTestGenerator(SST::Component* owner, Params& params) :
-		EmberShmemGenerator(owner, params, "ShmemTest" ), m_phase(0) 
+	EmberShmemTestGenerator(SST::Component* owner, Params& params) : EmberShmemGenerator(owner, params, "" ) {}
+	EmberShmemTestGenerator(SST::ComponentId_t id, Params& params) :
+		EmberShmemGenerator(id, params, "ShmemTest" ), m_phase(0) 
 	{ }
 
     bool generate( std::queue<EmberEvent*>& evQ) 

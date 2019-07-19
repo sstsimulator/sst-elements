@@ -28,8 +28,9 @@ template< class TYPE >
 class EmberShmemFaddGenerator : public EmberShmemGenerator {
 
 public:
-	EmberShmemFaddGenerator(SST::Component* owner, Params& params) :
-		EmberShmemGenerator(owner, params, "ShmemFadd" ), m_phase(0) 
+	EmberShmemFaddGenerator(SST::Component* owner, Params& params) : EmberShmemGenerator(owner, params, "" ) {}
+	EmberShmemFaddGenerator(SST::ComponentId_t id, Params& params) :
+		EmberShmemGenerator(id, params, "ShmemFadd" ), m_phase(0) 
 	{ 
         int status;
         std::string tname = typeid(TYPE).name();
@@ -105,82 +106,82 @@ public:
 
 class EmberShmemFaddIntGenerator : public EmberShmemFaddGenerator<int> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemFaddIntGenerator,
         "ember",
         "ShmemFaddIntMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM fadd int",
-        "SST::Ember::EmberGenerator"
-
+        SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS(
-    )
+    SST_ELI_DOCUMENT_PARAMS()
 
 public:
     EmberShmemFaddIntGenerator( SST::Component* owner, Params& params ) :
         EmberShmemFaddGenerator(owner,  params) { }
+    EmberShmemFaddIntGenerator( SST::ComponentId_t id, Params& params ) :
+        EmberShmemFaddGenerator(id,  params) { }
 };
 
 class EmberShmemFaddLongGenerator : public EmberShmemFaddGenerator<long> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemFaddLongGenerator,
         "ember",
         "ShmemFaddLongMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM fadd long",
-        "SST::Ember::EmberGenerator"
-
+        SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS(
-    )
+    SST_ELI_DOCUMENT_PARAMS()
 
 public:
     EmberShmemFaddLongGenerator( SST::Component* owner, Params& params ) :
         EmberShmemFaddGenerator(owner,  params) { }
+    EmberShmemFaddLongGenerator( SST::ComponentId_t id, Params& params ) :
+        EmberShmemFaddGenerator(id,  params) { }
 };
 
 class EmberShmemFaddDoubleGenerator : public EmberShmemFaddGenerator<double> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemFaddDoubleGenerator,
         "ember",
         "ShmemFaddDoubleMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM fadd double",
-        "SST::Ember::EmberGenerator"
-
+        SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS(
-    )
+    SST_ELI_DOCUMENT_PARAMS()
 
 public:
     EmberShmemFaddDoubleGenerator( SST::Component* owner, Params& params ) :
         EmberShmemFaddGenerator(owner,  params) { }
+    EmberShmemFaddDoubleGenerator( SST::ComponentId_t id, Params& params ) :
+        EmberShmemFaddGenerator(id,  params) { }
 };
 
 class EmberShmemFaddFloatGenerator : public EmberShmemFaddGenerator<float> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemFaddFloatGenerator,
         "ember",
         "ShmemFaddFloatMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM fadd float",
-        "SST::Ember::EmberGenerator"
-
+        SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS(
-    )
+    SST_ELI_DOCUMENT_PARAMS()
 
 public:
     EmberShmemFaddFloatGenerator( SST::Component* owner, Params& params ) :
         EmberShmemFaddGenerator(owner,  params) { }
+    EmberShmemFaddFloatGenerator( SST::ComponentId_t id, Params& params ) :
+        EmberShmemFaddGenerator(id,  params) { }
 };
 
 }

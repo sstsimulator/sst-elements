@@ -28,8 +28,9 @@ template <class TYPE>
 class EmberShmemAlltoallsGenerator : public EmberShmemGenerator {
 
 public:
-	EmberShmemAlltoallsGenerator(SST::Component* owner, Params& params) :
-		EmberShmemGenerator(owner, params, "ShmemAlltoalls" ), m_phase(0) 
+	EmberShmemAlltoallsGenerator(SST::Component* owner, Params& params) : EmberShmemGenerator(owner, params, "" ) {}
+	EmberShmemAlltoallsGenerator(SST::ComponentId_t id, Params& params) :
+		EmberShmemGenerator(id, params, "ShmemAlltoalls" ), m_phase(0) 
 	{ 
         m_nelems = params.find<int>("arg.nelems", 1 );
         m_dst = params.find<int>("arg.dst", 1 );
@@ -145,13 +146,13 @@ public:
 
 class EmberShmemAlltoalls32Generator : public EmberShmemAlltoallsGenerator<uint32_t> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemAlltoalls32Generator,
         "ember",
         "ShmemAlltoalls32Motif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM alltoalls32",
-        "SST::Ember::EmberGenerator"
+        SST::Ember::EmberGenerator
     )
 
     SST_ELI_DOCUMENT_PARAMS(
@@ -159,18 +160,20 @@ public:
 
 public:
 	EmberShmemAlltoalls32Generator(SST::Component* owner, Params& params) :
-	EmberShmemAlltoallsGenerator( owner, params) {} 
+		EmberShmemAlltoallsGenerator( owner, params) {} 
+	EmberShmemAlltoalls32Generator(SST::ComponentId_t id, Params& params) :
+		EmberShmemAlltoallsGenerator( id, params) {} 
 };
 
 class EmberShmemAlltoalls64Generator : public EmberShmemAlltoallsGenerator<uint64_t> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemAlltoalls64Generator,
         "ember",
         "ShmemAlltoalls64Motif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM alltoalls64",
-        "SST::Ember::EmberGenerator"
+        SST::Ember::EmberGenerator
     )
 
     SST_ELI_DOCUMENT_PARAMS(
@@ -178,7 +181,9 @@ public:
 
 public:
 	EmberShmemAlltoalls64Generator(SST::Component* owner, Params& params) :
-	EmberShmemAlltoallsGenerator( owner, params) {} 
+		EmberShmemAlltoallsGenerator( owner, params) {} 
+	EmberShmemAlltoalls64Generator(SST::ComponentId_t id, Params& params) :
+		EmberShmemAlltoallsGenerator( id, params) {} 
 };
 
 }
