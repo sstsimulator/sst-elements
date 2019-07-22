@@ -72,6 +72,7 @@ class ArielCPU : public SST::Component {
         {"tracegen", "Select the trace generator for Ariel (which records traced memory operations", ""},
         {"memmgr", "Memory manager to use for address translation", "ariel.MemoryManagerSimple"},
         {"writepayloadtrace", "Trace write payloads and put real memory contents into the memory system", "0"},
+        {"instrument_instructions", "turn on or off instruction instrumentation in fesimple", "1"},
         {"gpu_enabled", "If enabled, gpu links will be set up", "0"})
 
     SST_ELI_DOCUMENT_PORTS( {"cache_link_%(corecount)d", "Each core's link to its cache", {}},

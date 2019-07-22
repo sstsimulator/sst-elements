@@ -28,7 +28,7 @@ using namespace SST::Thornhill;
 
 SingleThread::SingleThread( Component* owner, 
         Params& params )
-        : DetailedCompute( owner ), m_link(NULL)
+        : DetailedCompute( owner ), m_link(NULL), m_busy(false)
 {
     std::string portName = params.find<std::string>( "portName", "detailed0" );
     
@@ -47,12 +47,19 @@ void SingleThread::eventHandler( SST::Event* ev )
 	Entry* entry = static_cast<Entry*>((void*)event->key);
 	entry->finiHandler();
 	delete entry;
+	m_busy = false;
+	if ( ! m_pendingQ.empty() ){
+		Pending& pending =  m_pendingQ.front();
+		start2( pending.work, pending.retHandler, pending.finiHandler );
+		m_pendingQ.pop();  
+	}
 }
 
-void SingleThread::start( const std::deque< std::pair< std::string, SST::Params> >& generators,
+void SingleThread::start2( const std::deque< std::pair< std::string, SST::Params> >& generators,
                  std::function<int()> retHandler, std::function<int()> finiHandler )
 {
-    MirandaReqEvent* event = new MirandaReqEvent;
+	m_busy = true;
+	MirandaReqEvent* event = new MirandaReqEvent;
 	
 	if ( finiHandler ) {
 		retHandler();

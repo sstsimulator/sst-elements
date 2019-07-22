@@ -72,6 +72,7 @@ private:
     void computeDetailed( std::queue<EmberEvent*>& evQ);
     void computeSimple( std::queue<EmberEvent*>& evQ);
     void (EmberDetailedRingGenerator::*m_computeFunc)( std::queue<EmberEvent*>& evQ );
+    bool findNum( int num, std::string list );
     
     MessageRequest  m_req[2];
 	uint32_t m_messageSize;

@@ -5,7 +5,6 @@ def getWorkFlow( defaults ):
     workFlow = []
     motif = dict.copy( defaults )
     motif['cmd'] = "ShmemCollect32 nelems=1000 printResults=0"
-    motif['api'] = "HadesSHMEM"
     workFlow.append( motif )
 
 	# numNodes = 0 implies use all nodes on network
