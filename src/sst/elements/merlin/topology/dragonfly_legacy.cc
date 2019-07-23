@@ -59,6 +59,41 @@ topo_dragonfly_legacy::topo_dragonfly_legacy(Component* comp, Params &p) :
             group_id, router_id, id, params.p, params.a, params.k, params.h, params.g);
 }
 
+/*
+ * Port Layout:
+ * [0, params.p)                    // Hosts 0 -> params.p
+ * [params.p, params.p+params.a-1)  // Routers within this group
+ * [params.p+params.a-1, params.k)  // Other groups
+ */
+
+topo_dragonfly_legacy::topo_dragonfly_legacy(ComponentId_t cid, Params &p, int num_ports, int rtr_id) :
+    Topology(cid)
+{
+    params.p = (uint32_t)p.find<int>("dragonfly:hosts_per_router");
+    params.a = (uint32_t)p.find<int>("dragonfly:routers_per_group");
+    params.k = (uint32_t)num_ports;
+    params.h = (uint32_t)p.find<int>("dragonfly:intergroup_per_router");
+    params.g = (uint32_t)p.find<int>("dragonfly:num_groups");
+
+    std::string route_algo = p.find<std::string>("dragonfly:algorithm", "minimal");
+
+    if ( !route_algo.compare("valiant") ) {
+        if ( params.g <= 2 ) {
+            /* 2 or less groups... no point in valiant */
+            algorithm = MINIMAL;
+        } else {
+            algorithm = VALIANT;
+        }
+    } else {
+        algorithm = MINIMAL;
+    }
+
+    group_id = rtr_id / params.a;
+    router_id = rtr_id % params.a;
+    output.verbose(CALL_INFO, 1, 1, "%u:%u:  ID: %u   Params:  p = %u  a = %u  k = %u  h = %u  g = %u\n",
+            group_id, router_id, rtr_id, params.p, params.a, params.k, params.h, params.g);
+}
+
 
 topo_dragonfly_legacy::~topo_dragonfly_legacy()
 {

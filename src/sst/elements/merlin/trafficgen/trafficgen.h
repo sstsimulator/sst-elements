@@ -104,6 +104,11 @@ public:
     )
 
 
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+        {"networkIF", "Network interface", "SST::Interfaces::SimpleNetwork" }
+    )
+
+
 private:
 
 #if ENABLE_FINISH_HACK
@@ -328,8 +333,8 @@ private:
 
     bool done;
 
-    LinkControl* link_control;
-    LinkControl::Handler<TrafficGen>* send_notify_functor;
+    SST::Interfaces::SimpleNetwork* link_control;
+    SST::Interfaces::SimpleNetwork::Handler<TrafficGen>* send_notify_functor;
     Clock::Handler<TrafficGen>* clock_functor;
     TimeConverter* clock_tc;
     

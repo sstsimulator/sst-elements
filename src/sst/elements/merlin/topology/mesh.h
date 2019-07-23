@@ -99,18 +99,22 @@ class topo_mesh: public Topology {
 
 public:
 
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         topo_mesh,
         "merlin",
         "mesh",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Multi-dimensional mesh topology object",
-        "SST::Merlin::Topology")
+        SST::Merlin::Topology)
     
     SST_ELI_DOCUMENT_PARAMS(
         {"mesh:shape",        "Shape of the mesh specified as the number of routers in each dimension, where each dimension is separated by a colon.  For example, 4x4x2x2.  Any number of dimensions is supported."},
         {"mesh:width",        "Number of links between routers in each dimension, specified in same manner as for shape.  For example, 2x2x1 denotes 2 links in the x and y dimensions and one in the z dimension."},
-        {"mesh:local_ports",  "Number of endpoints attached to each router."}
+        {"mesh:local_ports",  "Number of endpoints attached to each router."},
+
+        {"shape",        "Shape of the mesh specified as the number of routers in each dimension, where each dimension is separated by a colon.  For example, 4x4x2x2.  Any number of dimensions is supported."},
+        {"width",        "Number of links between routers in each dimension, specified in same manner as for shape.  For example, 2x2x1 denotes 2 links in the x and y dimensions and one in the z dimension."},
+        {"local_ports",  "Number of endpoints attached to each router."}
     )
 
 
@@ -129,6 +133,7 @@ private:
 
 public:
     topo_mesh(Component* comp, Params& params);
+    topo_mesh(ComponentId_t cid, Params& params, int num_ports, int rtr_id);
     ~topo_mesh();
 
     virtual void route(int port, int vc, internal_router_event* ev);

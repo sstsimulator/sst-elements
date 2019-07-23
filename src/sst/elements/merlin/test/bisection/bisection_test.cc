@@ -65,11 +65,44 @@ bisection_test::bisection_test(ComponentId_t cid, Params& params) :
     string buffer_size_s = params.find<std::string>("buffer_size","128B");
     buffer_size = UnitAlgebra(buffer_size_s);
 
-    // Create a LinkControl object
-    std::string networkIF = params.find<std::string>("networkIF","merlin.linkcontrol");
-    link_control = (SST::Interfaces::SimpleNetwork*)loadSubComponent(networkIF, this, params);
 
-    link_control->initialize("rtr", link_bw, num_vns, buffer_size, buffer_size);
+    // Create a LinkControl object
+    // First see if it is defined in the python
+    link_control = loadUserSubComponent<SST::Interfaces::SimpleNetwork>
+        ("networkIF", ComponentInfo::SHARE_NONE, 1 /* vns */);
+
+    if ( !link_control ) {
+        // Not defined in python code.  See if this uses the legacy
+        // API.  If so, load it with loadSubComponent.  Otherwise, use
+        // the default linkcontrol (merlin.linkcontrol) loaded with
+        // the new API.
+        bool found;
+
+        // Get the link control to be used
+        std::string networkIF = params.find<std::string>("networkIF",found);
+        if ( found ) {
+            // Legacy
+DISABLE_WARN_DEPRECATED_DECLARATION
+            link_control = (SST::Interfaces::SimpleNetwork*)loadSubComponent(networkIF, this, params);
+REENABLE_WARNING
+            link_control->initialize("rtr", link_bw, num_vns, buffer_size, buffer_size);
+        }
+        else {
+            // Just load the default
+            Params if_params;
+
+            if_params.insert("link_bw",params.find<std::string>("link_bw","2GB/s"));
+            if_params.insert("input_buf_size",params.find<std::string>("buffer_size","128B"));
+            if_params.insert("output_buf_size",params.find<std::string>("buffer_size","128B"));            
+            if_params.insert("port_name","rtr");
+        
+            link_control = loadAnonymousSubComponent<SST::Interfaces::SimpleNetwork>
+                ("merlin.linkcontrol", "networkIF", 0,
+                 ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, if_params, 1 /* vns */);
+        }
+    }
+
+
 
     // Set up a receive functor that will handle all incoming packets
     link_control->setNotifyOnReceive(new SST::Interfaces::SimpleNetwork::Handler<bisection_test>(this,&bisection_test::receive_handler));
