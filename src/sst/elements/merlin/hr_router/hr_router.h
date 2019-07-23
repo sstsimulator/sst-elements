@@ -35,7 +35,7 @@ using namespace SST;
 namespace SST {
 namespace Merlin {
 
-class PortControl;
+class PortControlBase;
 
 class hr_router : public Router {
 
@@ -83,7 +83,8 @@ public:
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
         {"topology", "Topology object to control routing", "SST::Merlin::Topology" },
-        {"XbarArb", "Crossbar arbitration", "SST::Merlin::XbarArbitration" }
+        {"XbarArb", "Crossbar arbitration", "SST::Merlin::XbarArbitration" },
+        {"portcontrol", "PortControl blocks", "SST::Merlin::PortControlBase" }
     )
     
 private:
@@ -98,7 +99,7 @@ private:
     Topology* topo;
     XbarArbitration* arb;
     
-    PortControl** ports;
+    PortControlBase** ports;
     internal_router_event** vc_heads;
     int* xbar_in_credits;
     int* output_queue_lengths;

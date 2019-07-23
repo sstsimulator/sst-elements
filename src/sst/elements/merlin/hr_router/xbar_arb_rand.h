@@ -153,9 +153,9 @@ public:
     // out_port_busy is >0 if that xbar port being read.
     void arbitrate(
 #if VERIFY_DECLOCKING
-                   PortControl** ports, int* in_port_busy, int* out_port_busy, int* progress_vc, bool clocking
+                   PortControlBase** ports, int* in_port_busy, int* out_port_busy, int* progress_vc, bool clocking
 #else
-                   PortControl** ports, int* in_port_busy, int* out_port_busy, int* progress_vc
+                   PortControlBase** ports, int* in_port_busy, int* out_port_busy, int* progress_vc
 #endif
                    )
     {

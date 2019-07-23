@@ -131,23 +131,19 @@ PortControl::recv(int vc)
 #endif
     return event;
 }
-// time_base is a frequency which represents the bandwidth of the link in flits/second.
-// PortControl::PortControl(Router* rif, int rtr_id, std::string link_port_name,
-//                          int port_number, TimeConverter* time_base, Topology *topo, 
-//                          SimTime_t input_latency_cycles, std::string input_latency_timebase,
-//                          SimTime_t output_latency_cycles, std::string output_latency_timebase) :
-PortControl::PortControl(Router* rif, int rtr_id, std::string link_port_name,
-                         int port_number, const UnitAlgebra& link_bw, const UnitAlgebra& flit_size,
-                         Topology *topo, 
-                         SimTime_t input_latency_cycles, std::string input_latency_timebase,
-                         SimTime_t output_latency_cycles, std::string output_latency_timebase,
-                         const UnitAlgebra& in_buf_size, const UnitAlgebra& out_buf_size,
-                         std::vector<std::string>& inspector_names,
-						 const float dlink_thresh, bool oql_track_port, bool oql_track_remote) :
+
+PortControl::PortControl(Component* parent, Params& params) :
+    PortControlBase(parent),
+    output(Simulation::getSimulation()->getSimulationOutput())
+{
+    merlin_abort.fatal(CALL_INFO_LONG,1,"Old style subcomponent loading not supported for PortControl.");
+}
+
+
+PortControl::PortControl(ComponentId_t cid, Params& params,  Router* rif, int rtr_id, int port_number, Topology *topo) :
+    PortControlBase(cid),
     rtr_id(rtr_id),
     num_vcs(-1),
-    link_bw(link_bw),
-    flit_size(flit_size),
     topo(topo),
     port_number(port_number),
     remote_rdy_for_credits(false),
@@ -159,11 +155,8 @@ PortControl::PortControl(Router* rif, int rtr_id, std::string link_port_name,
     port_out_credits(NULL),
     idle_start(0),
 	sai_win_start(0),
-	dlink_thresh(dlink_thresh),
 	sai_port_disabled(false),
 	ongoing_transmit(false),
-    oql_track_port(oql_track_port),
-    oql_track_remote(oql_track_remote),
     is_idle(true),
 	is_active(false),
     waiting(true),
@@ -172,25 +165,65 @@ PortControl::PortControl(Router* rif, int rtr_id, std::string link_port_name,
     parent(rif),
     output(Simulation::getSimulation()->getSimulationOutput())
 {
+
+    // Process the parameters
+
+    // Get the port name.  For now, we only load anonymously, but when
+    // user loading is enabled, this will have to check to see which
+    // way it is being loaded
+    std::string link_port_name = params.find<std::string>("port_name");
+
+    // Bool to see if parameters are found
+    bool found;
+
+    // Link bandwidth
+    link_bw = params.find<UnitAlgebra>("link_bw", found);
+    if ( !found ) {
+        merlin_abort.fatal(CALL_INFO_LONG, 1, "link_bw must be specified\n");
+    }
+    if ( !link_bw.hasUnits("b/s") && !link_bw.hasUnits("B/s") ) {
+        merlin_abort.fatal(CALL_INFO,-1,"link_bw must be specified in either "
+                           "b/s or B/s: %s\n",link_bw.toStringBestSI().c_str());
+    }
+    if ( link_bw.hasUnits("B/s") ) {
+        link_bw *= UnitAlgebra("8b/B");
+    }
+    
+    // Flit size
+    flit_size = params.find<UnitAlgebra>("flit_size", found);
+    if ( !found ) {
+        merlin_abort.fatal(CALL_INFO_LONG, 1, "flit_size must be specified\n");
+    }
+    if ( !flit_size.hasUnits("b") && !flit_size.hasUnits("B") ) {
+        merlin_abort.fatal(CALL_INFO,-1,"flit_size must be specified in either "
+                           "bits (b) or bytes (B): %s\n",flit_size.toStringBestSI().c_str());
+    }
+    if ( flit_size.hasUnits("B") ) {
+        flit_size *= UnitAlgebra("8b");
+    }
+    
+    std::string output_latency_timebase = params.find<std::string>("output_latency","0ns");
+    
+
     // Configure the links.  output_timing will have a temporary time bases.  It will be
     // changed once the final link BW is set.
     switch ( topo->getPortState(port_number) ) {
     case Topology::R2N:
         host_port = true;
-        port_link = rif->configureLink(link_port_name, output_latency_timebase,
-                                       new Event::Handler<PortControl>(this,&PortControl::handle_input_n2r));
+        port_link = configureLink(link_port_name, output_latency_timebase,
+                                   new Event::Handler<PortControl>(this,&PortControl::handle_input_n2r));
         if ( port_link != NULL ) {
-            output_timing = rif->configureSelfLink(link_port_name + "_output_timing", "1GHz",
-                                                   new Event::Handler<PortControl>(this,&PortControl::handle_output_n2r));
+            output_timing = configureSelfLink(link_port_name + "_output_timing", "1GHz",
+                                              new Event::Handler<PortControl>(this,&PortControl::handle_output_n2r));
         }
         break;
     case Topology::R2R:
         host_port = false;
-        port_link = rif->configureLink(link_port_name, output_latency_timebase,
-                                       new Event::Handler<PortControl>(this,&PortControl::handle_input_r2r));
+        port_link = configureLink(link_port_name, output_latency_timebase,
+                                  new Event::Handler<PortControl>(this,&PortControl::handle_input_r2r));
         if ( port_link != NULL ) {
-            output_timing = rif->configureSelfLink(link_port_name + "_output_timing", "1GHz",
-                                                   new Event::Handler<PortControl>(this,&PortControl::handle_output_r2r));
+            output_timing = configureSelfLink(link_port_name + "_output_timing", "1GHz",
+                                              new Event::Handler<PortControl>(this,&PortControl::handle_output_r2r));
         }
         break;
     default:
@@ -201,25 +234,48 @@ PortControl::PortControl(Router* rif, int rtr_id, std::string link_port_name,
     
 	// This is the self link to enable the logic for adaptive link widths.
 	// The initial call to the handler dynlink_timing->send is made in setup.
-	dynlink_timing = rif->configureSelfLink(link_port_name + "_dynlink_timing", "10us",
-													new Event::Handler<PortControl>(this,&PortControl::handleSAIWindow));
+	dynlink_timing = configureSelfLink(link_port_name + "_dynlink_timing", "10us",
+                                       new Event::Handler<PortControl>(this,&PortControl::handleSAIWindow));
 
-	disable_timing = rif->configureSelfLink(link_port_name + "_disable_timing", "1us",
-													new Event::Handler<PortControl>(this,&PortControl::reenablePort));
+	disable_timing = configureSelfLink(link_port_name + "_disable_timing", "1us",
+                                       new Event::Handler<PortControl>(this,&PortControl::reenablePort));
     connected = true;
 
     if ( port_link == NULL ) {
         connected = false;
         return;
     }
-
-    input_buf_size = in_buf_size;
-    output_buf_size = out_buf_size;
-
-    if ( port_link && input_latency_timebase != "" ) {
-        // std::cout << "Adding extra latency" << std::endl;
-        port_link->addRecvLatency(input_latency_cycles,input_latency_timebase);
+    
+    input_buf_size = params.find<UnitAlgebra>("input_buf_size",found);
+    if ( !found ) {
+        merlin_abort.fatal(CALL_INFO_LONG, 1, "input_buf_size must be specified\n");
     }
+    if ( input_buf_size.hasUnits("b") && !input_buf_size.hasUnits("B") ) {
+        merlin_abort.fatal(CALL_INFO,-1,"input_buf_size must be specified in either "
+                           "bits (b) or bytes (B): %s\n",input_buf_size.toStringBestSI().c_str());
+    }
+    if ( input_buf_size.hasUnits("B") ) {
+        input_buf_size *= UnitAlgebra("8b");
+    }
+    
+    output_buf_size = params.find<UnitAlgebra>("output_buf_size",found);
+    if ( !found ) {
+        merlin_abort.fatal(CALL_INFO_LONG, 1, "output_buf_size must be specified\n");
+    }
+    if ( output_buf_size.hasUnits("b") && !output_buf_size.hasUnits("B") ) {
+        merlin_abort.fatal(CALL_INFO,-1,"output_buf_size must be specified in either "
+                           "bits (b) or bytes (B): %s\n",output_buf_size.toStringBestSI().c_str());
+    }
+    if ( output_buf_size.hasUnits("B") ) {
+        output_buf_size *= UnitAlgebra("8b");
+    }
+    
+    std::string input_latency_timebase = params.find<std::string>("input_latency",found);
+    if ( port_link && found ) {
+        // std::cout << "Adding extra latency" << std::endl;
+        port_link->addRecvLatency(1,input_latency_timebase);
+    }
+    
     
     
     // output_timing = rif->configureSelfLink(link_port_name + "_output_timing", time_base,
@@ -251,16 +307,24 @@ PortControl::PortControl(Router* rif, int rtr_id, std::string link_port_name,
 	max_link_width = 4;
 	cur_link_width = max_link_width;
 
+    std::vector<std::string> inspector_names;
+    params.find_array<std::string>("network_inspectors",inspector_names);
+
     // Create any NetworkInspectors
     for ( unsigned int i = 0; i < inspector_names.size(); i++ ) {
         Params empty;
-        SimpleNetwork::NetworkInspector* ni = dynamic_cast<SimpleNetwork::NetworkInspector*>(rif->loadSubComponent(inspector_names[i], rif, empty));
+        SimpleNetwork::NetworkInspector* ni = loadAnonymousSubComponent<SimpleNetwork::NetworkInspector>
+            (inspector_names[i], "inspector_slot", i, ComponentInfo::INSERT_STATS, empty, port_name);
         if ( ni == NULL ) {
             merlin_abort.fatal(CALL_INFO,1,"NetworkInspector: %s, not found.\n",inspector_names[i].c_str());
         }
-        ni->initialize(port_name);
+        if ( ni->wasLoadedWithLegacyAPI() ) ni->initialize(port_name);
         network_inspectors.push_back(ni);
     }
+
+    dlink_thresh = params.find<float>("dlink_thresh",-1.0);
+    oql_track_port = params.find<bool>("oql_track_port",false);
+    oql_track_remote = params.find<bool>("oql_track_remote",false);
 }
 
 
@@ -304,18 +368,18 @@ PortControl::initVCs(int vcs, internal_router_event** vc_heads_in, int* xbar_in_
     UnitAlgebra ibs = input_buf_size;
     UnitAlgebra obs = output_buf_size;
 
-    if ( !ibs.hasUnits("b") && !ibs.hasUnits("B") ) {
-        merlin_abort.fatal(CALL_INFO,-1,"input_buf_size must be specified in either "
-                           "bits or bytes: %s\n",ibs.toStringBestSI().c_str());
-    }
+    // if ( !ibs.hasUnits("b") && !ibs.hasUnits("B") ) {
+    //     merlin_abort.fatal(CALL_INFO,-1,"input_buf_size must be specified in either "
+    //                        "bits or bytes: %s\n",ibs.toStringBestSI().c_str());
+    // }
     
-    if ( !obs.hasUnits("b") && !obs.hasUnits("B") ) {
-        merlin_abort.fatal(CALL_INFO,-1,"output_buf_size must be specified in either "
-                           "bits or bytes: %s\n",obs.toStringBestSI().c_str());
-    }
+    // if ( !obs.hasUnits("b") && !obs.hasUnits("B") ) {
+    //     merlin_abort.fatal(CALL_INFO,-1,"output_buf_size must be specified in either "
+    //                        "bits or bytes: %s\n",obs.toStringBestSI().c_str());
+    // }
 
-    if ( ibs.hasUnits("B") ) ibs *= UnitAlgebra("8b/B");
-    if ( obs.hasUnits("B") ) obs *= UnitAlgebra("8b/B");
+    // if ( ibs.hasUnits("B") ) ibs *= UnitAlgebra("8b/B");
+    // if ( obs.hasUnits("B") ) obs *= UnitAlgebra("8b/B");
 
 
     ibs /= flit_size;
