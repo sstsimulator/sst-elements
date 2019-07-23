@@ -30,6 +30,12 @@ topo_singlerouter::topo_singlerouter(Component* comp, Params& params) :
     num_ports = params.find<int>("num_ports");
 }
 
+topo_singlerouter::topo_singlerouter(ComponentId_t cid, Params& params, int num_ports, int rtr_id) :
+    Topology(cid),
+    num_ports(num_ports)
+{
+}
+
 topo_singlerouter::~topo_singlerouter()
 {
 }

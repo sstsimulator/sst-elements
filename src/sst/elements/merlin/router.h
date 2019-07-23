@@ -341,8 +341,13 @@ private:
 
 class Topology : public SubComponent {
 public:
+
+    // Parameters are:  num_ports, id
+    SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Merlin::Topology, int, int)
+    
     enum PortState {R2R, R2N, UNCONNECTED};
     Topology(Component* comp) : SubComponent(comp), output(Simulation::getSimulation()->getSimulationOutput()) {}
+    Topology(ComponentId_t cid) : SubComponent(cid), output(Simulation::getSimulation()->getSimulationOutput()) {}
     virtual ~Topology() {}
 
     virtual void route(int port, int vc, internal_router_event* ev) = 0;
@@ -385,8 +390,14 @@ class PortControl;
 
 class XbarArbitration : public SubComponent {
 public:
+
+    SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Merlin::XbarArbitration)
+    
     XbarArbitration(Component* parent) :
         SubComponent(parent)
+    {}
+    XbarArbitration(ComponentId_t cid) :
+        SubComponent(cid)
     {}
     virtual ~XbarArbitration() {}
 

@@ -140,7 +140,11 @@ public:
     SST_ELI_DOCUMENT_PORTS(
         {"rtr",  "Port that hooks up to router.", { "merlin.RtrEvent", "merlin.credit_event" } }
     )
-
+ 
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+        {"networkIF", "Network interface", "SST::Interfaces::SimpleNetwork" },
+        {"pattern_gen", "Target address generator", "SST::Merlin::TargetGenerator" }
+    )
 
 
 private:
@@ -148,6 +152,8 @@ private:
     std::vector<double> offered_load;
     UnitAlgebra link_bw;
 
+    Params* pattern_params;
+    
     UnitAlgebra serialization_time;
     
     SimTime_t next_time;

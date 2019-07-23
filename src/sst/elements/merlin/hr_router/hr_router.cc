@@ -145,19 +145,25 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
     }
 
     // Get the topology
-    std::string topology = params.find<std::string>("topology");
+    topo = loadUserSubComponent<SST::Merlin::Topology>
+        ("topology", ComponentInfo::SHARE_NONE, num_ports, id);
 
-    if ( topology == "" ) {
-        merlin_abort.fatal(CALL_INFO, -1, "hr_router requires topology to be specified\n");
-    }
-
-    topo = dynamic_cast<Topology*>(loadSubComponent(topology,this,params));
     if ( !topo ) {
-        merlin_abort.fatal(CALL_INFO, -1, "Unable to find topology '%s'\n", topology.c_str());
+        // Backward compatibility
+        std::string topology = params.find<std::string>("topology");
+
+        if ( topology == "" ) {
+            merlin_abort.fatal(CALL_INFO, -1, "hr_router requires topology to be specified\n");
+        }
+        
+DISABLE_WARN_DEPRECATED_DECLARATION
+        topo = dynamic_cast<Topology*>(loadSubComponent(topology,this,params));
+REENABLE_WARNING
+        if ( !topo ) {
+            merlin_abort.fatal(CALL_INFO, -1, "Unable to find topology '%s'\n", topology.c_str());
+        }
     }
 
-    std::string xbar_arb = params.find<std::string>("xbar_arb","merlin.xbar_arb_lru");
-    
     // Parse all the timing parameters
 
     // Flit size
@@ -255,8 +261,12 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
     params.enableVerify(true);
     
     // Get the Xbar arbitration
+    std::string xbar_arb = params.find<std::string>("xbar_arb","merlin.xbar_arb_lru");
+    
     Params empty_params; // Empty params sent to subcomponents
-    arb = static_cast<XbarArbitration*>(loadSubComponent(xbar_arb, this, empty_params));
+    // arb = static_cast<XbarArbitration*>(loadSubComponent(xbar_arb, this, empty_params));
+    arb =
+        loadAnonymousSubComponent<XbarArbitration>(xbar_arb, "XbarArb", 0, ComponentInfo::INSERT_STATS, empty_params);
     
     // if ( params.find_integer("debug", 0) ) {
     //     if ( num_routers == 0 ) {

@@ -66,30 +66,29 @@ TrafficGen::TrafficGen(ComponentId_t cid, Params& params) :
     // }
     num_vns = 1;
     
-    std::string link_bw_s = params.find<std::string>("link_bw");
-    if ( link_bw_s == "" ) {
-        out.fatal(CALL_INFO, -1, "link_bw must be set!\n");
-    }
-    // TimeConverter* tc = Simulation::getSimulation()->getTimeLord()->getTimeConverter(link_bw);
-
-    UnitAlgebra link_bw(link_bw_s);
-
     addressMode = SEQUENTIAL;
 
     // Create a LinkControl object
+    // First see if it is defined in the python
+    link_control = loadUserSubComponent<SST::Interfaces::SimpleNetwork>
+        ("networkIF", ComponentInfo::SHARE_NONE, num_vns );
 
-    std::string buf_len = params.find<std::string>("buffer_length", "1kB");
-    // NOTE:  This MUST be the same length as 'num_vns'
-    // int *buf_size = new int[num_vns];
-    // for ( int i = 0 ; i < num_vns ; i++ ) {
-    //     buf_size[i] = buf_len;
-    // }
+    if ( !link_control ) {
+        
+        // Just load the default
+        Params if_params;
+        
+        if_params.insert("link_bw",params.find<std::string>("link_bw"));
+        if_params.insert("input_buf_size",params.find<std::string>("buffer_length","1kB"));
+        if_params.insert("output_buf_size",params.find<std::string>("buffer_length","1kB"));            
+        if_params.insert("port_name","rtr");
+        
+        link_control = loadAnonymousSubComponent<SST::Interfaces::SimpleNetwork>
+            ("merlin.linkcontrol", "networkIF", 0,
+             ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, if_params, num_vns /* vns */);
+    }
 
-    UnitAlgebra buf_size(buf_len);
-    
-    link_control = (Merlin::LinkControl*)loadSubComponent("merlin.linkcontrol", this, params);
-    link_control->initialize("rtr", link_bw, num_vns, buf_len, buf_len);
-    // delete [] buf_size;
+
 
     packets_to_send = params.find<uint64_t>("packets_to_send", 1000);
 

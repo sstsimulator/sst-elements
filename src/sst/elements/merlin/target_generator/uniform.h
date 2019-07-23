@@ -33,13 +33,13 @@ class UniformDist : public TargetGenerator {
 
 public:
 
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         UniformDist,
         "merlin",
         "targetgen.uniform",
         SST_ELI_ELEMENT_VERSION(0,0,1),
         "Generates a uniform random set of target IDs.",
-        "SST::Merlin::DestGenerator")
+        SST::Merlin::TargetGenerator)
     
     SST_ELI_DOCUMENT_PARAMS(
         {"min",   "Minimum address to generate","0"},
@@ -59,6 +59,19 @@ public:
     {
         min = params.find<int>("min",-1);
         max = params.find<int>("max",-1);        
+    }
+    
+    UniformDist(ComponentId_t cid, Params &params, int id, int num_peers) :
+        TargetGenerator(cid)
+    {
+        min = params.find<int>("min",0);
+        max = params.find<int>("max",num_peers - 1);        
+
+        gen = new MersenneRNG(id);
+
+        int dist_size = std::max(1, max-min);
+        dist = new SSTUniformDistribution(dist_size, gen);
+
     }
     
     ~UniformDist() {

@@ -28,9 +28,11 @@ Bridge::Bridge(SST::ComponentId_t id, SST::Params &params) :
             debugLevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
 
     Params transParams = params.find_prefix_params("translator.");
-    translator = dynamic_cast<Translator*>(loadSubComponent(
-                params.find<std::string>("translator"),
-                this, transParams));
+    // translator = dynamic_cast<Translator*>(loadSubComponent(
+    //             params.find<std::string>("translator"),
+    //             this, transParams));
+    translator = loadAnonymousSubComponent<Translator>(params.find<std::string>("translator"),"translator",0,
+                                                       ComponentInfo::SHARE_NONE, transParams, this);
     if ( !translator ) dbg.fatal(CALL_INFO, 1, "Must specify a 'translator' subcomponent.");
 
     configureNIC(0, params);
@@ -51,12 +53,25 @@ void Bridge::configureNIC(uint8_t id, SST::Params &params)
 {
     dbg.debug(CALL_INFO, 2, 0, "Initializing network interface %d\n", id);
     Nic_t &nic = interfaces[id];
-    nic.nic = (SimpleNetwork*)loadSubComponent("merlin.linkcontrol", this, params);
-    nic.nic->initialize( "network" + std::to_string(id),
-            params.find<SST::UnitAlgebra>("network_bw", SST::UnitAlgebra("80GiB/s")),
-            1, /* should be num VN */
-            params.find<SST::UnitAlgebra>("network_input_buffer_size", SST::UnitAlgebra("1KiB")),
-            params.find<SST::UnitAlgebra>("network_output_buffer_size", SST::UnitAlgebra("1KiB")));
+
+    Params if_params;
+    
+    if_params.insert("link_bw",params.find<std::string>("network_bw","80GiB/s"));
+    if_params.insert("input_buf_size",params.find<std::string>("network_input_buffer_size", "1KiB"));
+    if_params.insert("output_buf_size",params.find<std::string>("network_output_buffer_size", "1KiB"));            
+    if_params.insert("port_name","network" + std::to_string(id));
+    
+    nic.nic = loadAnonymousSubComponent<SST::Interfaces::SimpleNetwork>
+        ("merlin.linkcontrol", "networkIF", id,
+         ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, if_params, 1 /* vns */);
+    
+
+    // nic.nic = (SimpleNetwork*)loadSubComponent("merlin.linkcontrol", this, params);
+    // nic.nic->initialize( "network" + std::to_string(id),
+    //         params.find<SST::UnitAlgebra>("network_bw", SST::UnitAlgebra("80GiB/s")),
+    //         1, /* should be num VN */
+    //         params.find<SST::UnitAlgebra>("network_input_buffer_size", SST::UnitAlgebra("1KiB")),
+    //         params.find<SST::UnitAlgebra>("network_output_buffer_size", SST::UnitAlgebra("1KiB")));
 
     nic.nic->setNotifyOnReceive(new SimpleNetwork::Handler<Bridge, uint8_t>(this, &Bridge::handleIncoming, id));
     nic.nic->setNotifyOnSend(new SimpleNetwork::Handler<Bridge, uint8_t>(this, &Bridge::spaceAvailable, id));

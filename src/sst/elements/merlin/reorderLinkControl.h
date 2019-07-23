@@ -114,18 +114,26 @@ struct ReorderInfo {
 class ReorderLinkControl : public SST::Interfaces::SimpleNetwork {
 public:
 
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         ReorderLinkControl,
         "merlin",
         "reorderlinkcontrol",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Link Control module that can handle out of order packet arrival. Events are sequenced and order is reconstructed on receive.",
-        "SST::Interfaces::SimpleNetwork")
+        SST::Interfaces::SimpleNetwork)
     
     SST_ELI_DOCUMENT_PARAMS(
-        {"rlc:networkIF","SimpleNetwork subcomponent to be used for connecting to network", "merlin.linkcontrol"}
+        {"rlc:networkIF","SimpleNetwork subcomponent to be used for connecting to network", "merlin.linkcontrol"},
+        {"networkIF","SimpleNetwork subcomponent to be used for connecting to network", "merlin.linkcontrol"}
     )
 
+    SST_ELI_DOCUMENT_PORTS(
+        {"rtr_port", "Port that connects to router", { "merlin.RtrEvent", "merlin.credit_event", "" } },
+    )
+
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+        {"networkIF", "Network interface", "SST::Interfaces::SimpleNetwork" }
+    )
     
     typedef std::queue<SST::Interfaces::SimpleNetwork::Request*> request_queue_t;
     
@@ -152,6 +160,7 @@ private:
     
 public:
     ReorderLinkControl(Component* parent, Params &params);
+    ReorderLinkControl(ComponentId_t cid, Params &params, int vns);
 
     ~ReorderLinkControl();
 
