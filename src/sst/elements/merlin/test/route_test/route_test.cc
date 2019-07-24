@@ -46,18 +46,25 @@ route_test::route_test(ComponentId_t cid, Params& params) :
     if ( num_peers == -1 ) {
     }
 
-    std::string link_bw_s = params.find<std::string>("link_bw");
-    if ( link_bw_s == "" ) {
-    }
-    UnitAlgebra link_bw(link_bw_s);
-        
     // Create a LinkControl object
-    // NOTE:  This MUST be the same length as 'num_vns'
-    link_control = (SimpleNetwork*)loadSubComponent("merlin.linkcontrol", this, params);
+    // First see if it is defined in the python
+    link_control = loadUserSubComponent<SST::Interfaces::SimpleNetwork>
+        ("networkIF", ComponentInfo::SHARE_NONE, 1 /* vns */);
 
-    int num_vns = 1;
-    UnitAlgebra buf_size("1kB");
-    link_control->initialize("rtr", link_bw, num_vns, buf_size, buf_size);
+    if ( !link_control ) {
+        // Just use the default linkcontrol (merlin.linkcontrol)
+        Params if_params;
+        
+        if_params.insert("link_bw",params.find<std::string>("link_bw"));
+        if_params.insert("input_buf_size","1kB");
+        if_params.insert("output_buf_size","1kB");
+        if_params.insert("port_name","rtr");
+        
+        link_control = loadAnonymousSubComponent<SST::Interfaces::SimpleNetwork>
+            ("merlin.linkcontrol", "networkIF", 0,
+             ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, if_params, 1 /* vns */);
+    }
+
 
     // // Register a clock
     // registerClock( "1GHz", new Clock::Handler<route_test>(this,&route_test::clock_handler), false);

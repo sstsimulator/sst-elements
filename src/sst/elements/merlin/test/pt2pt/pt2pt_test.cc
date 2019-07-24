@@ -56,13 +56,45 @@ pt2pt_test::pt2pt_test(ComponentId_t cid, Params& params) :
         merlin_abort.fatal(CALL_INFO,-1,"buffer_size must be greater than or equal to packet_size\n");
     }
     
-    std::string link_control_name = params.find<std::string>("linkcontrol","merlin.linkcontrol");
-
     // Create a LinkControl object
-    link_control = (SimpleNetwork*)loadSubComponent(link_control_name, this, params);
+    // First see if it is defined in the python
+    link_control = loadUserSubComponent<SST::Interfaces::SimpleNetwork>
+        ("networkIF", ComponentInfo::SHARE_NONE, 1 /* vns */);
 
-    link_control->initialize("rtr", link_bw, 1, buffer_size, buffer_size);
+    if ( !link_control ) {
+        // Not defined in python code.  See if this uses the legacy
+        // API.  If so, load it with loadSubComponent.  Otherwise, use
+        // the default linkcontrol (merlin.linkcontrol) loaded with
+        // the new API.
+        bool found;
+
+        // Get the link control to be used
+        std::string link_control_name = params.find<std::string>("linkcontrol",found);
+        if ( found ) {
+            // Legacy
+DISABLE_WARN_DEPRECATED_DECLARATION
+            link_control = (SimpleNetwork*)loadSubComponent(link_control_name, this, params);
+REENABLE_WARNING
+            link_control->initialize("rtr", link_bw, 1, buffer_size, buffer_size);
+        }
+        else {
+            // Just load the default
+            Params if_params;
+
+            if_params.insert("link_bw",params.find<std::string>("link_bw","2GB/s"));
+            if_params.insert("input_buf_size",params.find<std::string>("bufffer_size","128B"));
+            if_params.insert("output_buf_size",params.find<std::string>("buffer_size","128B"));            
+            if_params.insert("port_name","rtr");
+        
+            link_control = loadAnonymousSubComponent<SST::Interfaces::SimpleNetwork>
+                ("merlin.linkcontrol", "networkIF", 0,
+                 ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, if_params, 1 /* vns */);
+        }
+    }
     
+
+
+
     // // Register a clock
     // registerClock( "1GHz", new Clock::Handler<pt2pt_test>(this,&pt2pt_test::clock_handler), false);
     
