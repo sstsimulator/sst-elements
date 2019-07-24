@@ -45,23 +45,26 @@ private:
 	enum Op { Read, Write };
 	struct Entry {
 
-		Entry( Op op, MemReq* memReq, MemoryModel::Callback* callback = NULL ) :
+		Entry( Op op, MemReq* memReq, uint64_t num, MemoryModel::Callback* callback = NULL ) :
                 op(op), memReq(memReq), callback( callback )
             { }
             Op op;
             MemReq* memReq;
             MemoryModel::Callback* callback;
             SimTime_t issueTime;
+            uint64_t num;
         };
 
-	std::vector<uint32_t> m_maxRequestsPending;
-	std::vector<uint32_t> m_requestsPending;
-	std::queue<PTR*> m_blockedSrc;
+    uint64_t m_cnt;
+    std::vector< std::queue< Entry* > > m_pendingReqQ;
+    std::vector<uint32_t> m_maxRequestsPending;
+    std::vector<uint32_t> m_inFlightCnt;
+    std::vector<PTR*> m_blockedSrc;
 
   public:
 
     DetailedInterface( Component* comp, Params& ) : SubComponent( comp ) {} 
-    DetailedInterface( ComponentId_t id, Params& params ) : SubComponent( id ), m_maxRequestsPending(2), m_requestsPending(2,0) 
+    DetailedInterface( ComponentId_t id, Params& params ) : SubComponent( id ), m_maxRequestsPending(2), m_pendingReqQ(2), m_blockedSrc(2,NULL), m_inFlightCnt(2,0), m_cnt(0)
     {
     	char buffer[100];
     	snprintf(buffer,100,"@t:%d:DetailedInterface::@p():@l ",params.find<int>("id",-1));
@@ -87,8 +90,6 @@ private:
 			m_dbg.fatal(CALL_INFO, -1, "Error loading memory interface module.\n");
     	}
 
-		m_maxPending = params.find<int>( "maxPending", 16 );
-
 		m_reqCnt.resize(2);
 		m_reqCnt[Read] = registerStatistic<uint64_t>( "detailed_num_reads" );
 		m_reqCnt[Write] = registerStatistic<uint64_t>( "detailed_num_writes" );
@@ -109,28 +110,29 @@ private:
     bool store( PTR* src, MemReq* req ) {
         m_dbg.verbose(CALL_INFO,1,MY_MASK,"addr=%#" PRIx64 " length=%lu\n",req->addr, req->length);
 
-		if ( m_pendingQ.size() < m_maxPending ) {
+		if ( m_inFlightCnt[Write] + m_pendingReqQ[Write].size() < m_maxRequestsPending[Write] - 1 ) {
 			src = NULL;
 		} else {
-			m_blockedSrc.push( src );
+            assert( m_blockedSrc[Write] == NULL );
+            m_blockedSrc[Write] = src;
 		}
-		//m_reqCnt[Write]->addData(1);
-		m_pendingQ.push( new Entry( Write, req ) );
+		m_reqCnt[Write]->addData(1);
+		m_pendingReqQ[Write].push( new Entry( Write, req, m_cnt++ ) );
 
 		return src;
     }
 
     bool load( PTR* src, MemReq* req, MemoryModel::Callback* callback ) {
         m_dbg.verbose(CALL_INFO,1,MY_MASK,"addr=%#" PRIx64 " length=%lu\n",req->addr,req->length);
-
-		if ( m_pendingQ.size() < m_maxPending ) {
-			src = NULL;
-		} else {
-			m_blockedSrc.push( src );
-		}
-		//m_reqCnt[Read]->addData(1);
-		m_pendingQ.push( new Entry( Read, req, callback ) );
-		return src;
+       if ( m_inFlightCnt[Read] + m_pendingReqQ[Read].size() < m_maxRequestsPending[Read] - 1 ) {
+            src = NULL;
+        } else {
+            assert( m_blockedSrc[Read] == NULL );
+            m_blockedSrc[Read] = src;
+        }
+        m_reqCnt[Read]->addData(1);
+        m_pendingReqQ[Read].push( new Entry( Read, req, m_cnt++, callback ) );
+        return src;
 	}
 
 	void init( unsigned int phase ) {
@@ -150,52 +152,81 @@ private:
 			Entry* entry = reqFind->second;
 			m_reqLatency->addData( getCurrentSimTimeNano() - entry->issueTime );
 			m_inFlightAddr.erase( entry->memReq->addr );
-			--m_requestsPending[entry->op];
-        	m_dbg.verbose(CALL_INFO,1,MY_MASK,"id=%" PRIu64 ", inflight=%zu blockedSrc=%zu addr=%" PRIx64 " pendingQ=%zu\n",
-							reqID, m_inflight.size(), m_blockedSrc.size(), entry->memReq->addr, m_pendingQ.size());
+			--m_inFlightCnt[entry->op];
+			m_dbg.verbose(CALL_INFO,1,MY_MASK,"id=%" PRIu64 ", addr=%" PRIx64 " acked\n", reqID, entry->memReq->addr);
 			if ( entry->callback ) {
 				m_callback(entry->callback);
 			}
 			m_inflight.erase( ev->id );
+            if ( m_blockedSrc[entry->op] ) {
+                m_dbg.verbose(CALL_INFO,2,MY_MASK,"resume\n" );
+				m_resume(m_blockedSrc[entry->op] ); 
+                m_blockedSrc[entry->op] = NULL;
+            }
 			delete entry;
 			delete ev;
 		}
 	}
 
-	bool clock_handler(Cycle_t cycle) {
-        m_dbg.verbose(CALL_INFO,2,MY_MASK,"pending=%zu\n", m_pendingQ.size() );
+    Entry* nextEntry() {
+        Entry* entry = NULL;
+        if ( ! m_pendingReqQ[Read].empty() && ! m_pendingReqQ[Write].empty() ) {
+            if ( m_pendingReqQ[Read].front()->num < m_pendingReqQ[Write].front()->num ) {
+                entry = m_pendingReqQ[Read].front();
+            } else {
+                entry = m_pendingReqQ[Write].front();
+            }
+        } else if ( ! m_pendingReqQ[Read].empty() ) {
+            entry = m_pendingReqQ[Read].front();
+        } else if ( ! m_pendingReqQ[Write].empty() ) {
+            entry = m_pendingReqQ[Write].front();
+        }
 
-		if ( ! m_pendingQ.empty() ) {
-			Entry* entry = m_pendingQ.front();
+        return entry;
+    }
+
+    void popEntry() {
+        if ( ! m_pendingReqQ[Read].empty() && ! m_pendingReqQ[Write].empty() ) {
+            if ( m_pendingReqQ[Read].front()->num < m_pendingReqQ[Write].front()->num ) {
+                m_pendingReqQ[Read].pop();
+            } else {
+                m_pendingReqQ[Write].pop();
+            }
+        } else if ( ! m_pendingReqQ[Read].empty() ) {
+            m_pendingReqQ[Read].pop();
+        } else if ( ! m_pendingReqQ[Write].empty() ) {
+            m_pendingReqQ[Write].pop();
+        }
+    }
+
+	bool clock_handler(Cycle_t cycle) {
+        m_dbg.verbose(CALL_INFO,2,MY_MASK,"pendingWrite=%zu pendingRea%zu\n", m_pendingReqQ[Write].size(), m_pendingReqQ[Read].size() );
+
+        Entry* entry;
+        if ( ( entry = nextEntry() ) ) {
 
 			if ( m_inFlightAddr.find( entry->memReq->addr ) != m_inFlightAddr.end() ) {
 				return false;	
 			}
 
-			if ( m_requestsPending[entry->op] <  m_maxRequestsPending[entry->op] ) {
+			popEntry();
+
+			if ( m_inFlightCnt[entry->op] < m_maxRequestsPending[entry->op] ) {
 				SST::Interfaces::SimpleMem::Request* req = NULL;
-				++m_requestsPending[entry->op];
+				++m_inFlightCnt[entry->op];
 				req = new Interfaces::SimpleMem::Request(
                     entry->op == Read ? Interfaces::SimpleMem::Request::Read : Interfaces::SimpleMem::Request::Write,
                     entry->memReq->addr, entry->memReq->length);
 				m_inflight[req->id] = entry; 
-        		m_dbg.verbose(CALL_INFO,1,MY_MASK,"id=%" PRIu64 ", addr=%" PRIx64 ", length=%d reqPending=%d\n",
-									req->id, req->addr, entry->memReq->length, m_requestsPending[entry->op]);
+				m_dbg.verbose(CALL_INFO,1,MY_MASK,"id=%" PRIu64 ", addr=%" PRIx64 ", %s inFlightCnt=%d\n",
+                                    req->id, req->addr, entry->op == Write ? "Write":"Read", m_inFlightCnt[entry->op]);
 				entry->issueTime = getCurrentSimTimeNano();
 				m_mem_link->sendRequest( req );
-				m_pendingQ.pop();
 				m_inFlightAddr.insert( entry->memReq->addr );
-				if ( ! m_blockedSrc.empty() ) {
-
-        			m_dbg.verbose(CALL_INFO,2,MY_MASK,"resume\n" );
-					m_resume(m_blockedSrc.front()); 
-					m_blockedSrc.pop();
-				}
 			} else {
 				assert(0);
 			}	
 		}
-        m_dbg.verbose(CALL_INFO,2,MY_MASK,"\n" );
 		return false;
 	}
 
@@ -203,8 +234,6 @@ private:
 	TimeConverter* 					m_clock;
 	Interfaces::SimpleMem* 			m_mem_link;
 
-	int m_maxPending;
-	std::queue< Entry* > m_pendingQ;
 	std::map< Interfaces::SimpleMem::Request::id_t, Entry* > m_inflight;
 	std::set< uint64_t > m_inFlightAddr; 
 	Output m_dbg;
