@@ -41,7 +41,8 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_memoryModel(NULL),
     m_nic2host_base_lat_ns(0),
     m_respKey(1),
-	m_predNetIdleTime(0)
+	m_predNetIdleTime(0),
+	m_detailedInterface(NULL)
 {
     m_myNodeId = params.find<int>("nid", -1);
     assert( m_myNodeId != -1 );
@@ -213,6 +214,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
         
 		if ( isdigit( useDetailed[0] ) ) {
 			if ( findNid( m_myNodeId, useDetailed ) ) {
+ 				m_detailedInterface = loadUserSubComponent<DetailedInterface>( "detailedInterface", ComponentInfo::SHARE_STATS );
         		smmParams.insert( "useDetailedModel",  "yes", true );
 			} else {
         		smmParams.insert( "useDetailedModel",  "no", true );
@@ -233,6 +235,10 @@ Nic::Nic(ComponentId_t id, Params &params) :
 		smmParams.insert( "numNicUnits", tmp.str(), true );
 
         m_memoryModel = loadAnonymousSubComponent<MemoryModel>( "firefly.SimpleMemory","", 0, ComponentInfo::SHARE_NONE, smmParams );
+
+		if ( m_detailedInterface ) {
+			static_cast<SimpleMemoryModel*>(m_memoryModel)->setDetailedInterface( m_detailedInterface );
+		}
     }
     if ( params.find<int>( "useTrivialMemoryModel", 0 ) ) {
 		if ( m_memoryModel ) {
@@ -275,17 +281,13 @@ Nic::Nic(ComponentId_t id, Params &params) :
 
         Thornhill::DetailedCompute* detailed;
 
-        dtldParams.insert( "portName", "nicDetailedRead", true );
-        detailed = loadUserSubComponent<Thornhill::DetailedCompute>( dtldName );
-
+        detailed = loadUserSubComponent<Thornhill::DetailedCompute>( "nicDetailedRead" );
         if ( detailed && detailed->isConnected() ) {
             m_dbg.verbose( CALL_INFO, 1, 0,"detailed read connected\n");
             m_detailedCompute[0] = detailed;
         }
 
-        dtldParams.insert( "portName", "nicDetailedWrite", true );
-        detailed = loadUserSubComponent<Thornhill::DetailedCompute>( dtldName );
-
+        detailed = loadUserSubComponent<Thornhill::DetailedCompute>( "nicDetailedWrite" );
         if ( detailed && detailed->isConnected() ) {
             m_dbg.verbose( CALL_INFO, 1, 0,"detailed write connected\n" );
             m_detailedCompute[1] = detailed;
@@ -351,6 +353,9 @@ void Nic::init( unsigned int phase )
 	if ( m_memoryModel ) {
 		m_memoryModel->init(phase);
 	}
+	if ( m_detailedInterface) {
+		m_detailedInterface->init(phase);
+	} 
 }
 
 void Nic::handleVnicEvent( Event* ev, int id )
