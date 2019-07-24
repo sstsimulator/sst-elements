@@ -26,8 +26,14 @@ namespace Merlin {
 
 class TargetGenerator : public SubComponent {
 public:
+
+    SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Merlin::TargetGenerator, int, int)
+    
     TargetGenerator(Component* parent) :
         SubComponent(parent) {}
+
+    TargetGenerator(ComponentId_t cid) :
+        SubComponent(cid) {}
 
     ~TargetGenerator() {}
     

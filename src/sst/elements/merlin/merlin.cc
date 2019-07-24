@@ -42,7 +42,7 @@ public:
     MerlinPyModule(std::string library) :
         SSTElementPythonModule(library)
     {
-        addPrimaryModule(pymerlin);
+        createPrimaryModule(pymerlin);
     }
 
     SST_ELI_REGISTER_PYTHON_MODULE(

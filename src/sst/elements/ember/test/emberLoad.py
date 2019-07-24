@@ -66,7 +66,6 @@ motifDefaults = {
 	'cmd' : "",
 	'printStats' : 0, 
 	'spyplotmode': 0,
-	'api': motifAPI, 
 }
 
 
@@ -75,9 +74,9 @@ try:
 		"simConfig=","platParams=",",debug=","platform=","numNodes=",
 		"numCores=","loadFile=","loadFileVar=","cmdLine=","printStats=","randomPlacement=",
 		"emberVerbose=","netBW=","netPktSize=","netFlitSize=",
-		"rtrArb=","embermotifLog=",	"rankmapper=","motifAPI=",
+		"rtrArb=","embermotifLog=","rankmapper=", "motifAPI=",
 		"bgPercentage=","bgMean=","bgStddev=","bgMsgSize=","netInspect=",
-        "detailedModelName=","detailedModelParams=","detailedModelNodes=",
+                "detailedModelName=","detailedModelParams=","detailedModelNodes=",
 		"useSimpleMemoryModel","param=","paramDir=","statsModule=","statsFile="])
 
 except getopt.GetoptError as err:
@@ -103,11 +102,10 @@ for o, a in opts:
         key,value = a.split("=",1)
         loadFileVars[key] = value  
     elif o in ("--motifAPI"):
-		motifAPI= a
+        motifAPI= a
     elif o in ("--cmdLine"):
     	motif = dict.copy(motifDefaults)
     	motif['cmd'] = a 
-    	motif['api'] = motifAPI 
     	workFlow.append( motif )
     elif o in ("--topo"):
         netTopo = a
@@ -470,7 +468,7 @@ baseNicParams = {
 loadInfo = LoadInfo( topoInfo.getNumNodes(), baseNicParams, epParams)
 
 if len(loadFile) > 0:
-    for jobid, nidlist, numCores, params, api, motifs in ParseLoadFile( loadFile, loadFileVars ):
+    for jobid, nidlist, numCores, params, motifs in ParseLoadFile( loadFile, loadFileVars ):
 
         workList = []
         workFlow = []
@@ -484,8 +482,6 @@ if len(loadFile) > 0:
 
         for motif in motifs:
             tmp = dict.copy( motifDefaults )
-            if len(api):
-                tmp['api'] = api
             tmp['cmd'] = motif
             workFlow.append( tmp )
 

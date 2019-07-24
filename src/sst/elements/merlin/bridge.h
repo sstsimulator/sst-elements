@@ -63,6 +63,12 @@ public:
         {"network1",     "Network Link",  {} },
     )
 
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+        {"translator", "Element to translate between the two networks.", "SST::Merlin::Bridge::Translator" },
+        {"networkIF", "Element to interface to networks.  There are two IFs that need to be loaded (index 0 and 1).",
+         "SST::Interfaces::SimpleNetwork" }
+    )
+
     Bridge(SST::ComponentId_t id, SST::Params &params);
     ~Bridge();
     void init(unsigned int);
@@ -72,8 +78,13 @@ public:
     SimpleNetwork::nid_t getAddrForNetwork(uint8_t netID) { return interfaces[netID].getAddr(); }
 
     class Translator : public SST::SubComponent {
+        Bridge* bridge;
     public:
-        Translator(SST::Component *bridge, Params &params) : SubComponent(bridge) { }
+
+        SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Merlin::Bridge::Translator, Bridge*)
+
+        Translator(SST::Component *bridge, Params &params) : SubComponent(bridge), bridge((Bridge*) bridge) { }
+        Translator(SST::ComponentId_t cid, Params &params, Bridge* bridge) : SubComponent(cid), bridge(bridge) { }
         virtual void init(unsigned int) { }
         virtual void setup(void) { }
         virtual void finish(void) { }
@@ -96,7 +107,7 @@ public:
         virtual SimpleNetwork::Request* initTranslate(SimpleNetwork::Request* req, uint8_t fromNetwork) = 0;
 
         SimpleNetwork::nid_t getAddrForNetwork(uint8_t netID) {
-            return static_cast<Bridge*>(parent)->getAddrForNetwork(netID);
+            return bridge->getAddrForNetwork(netID);
         }
     };
 

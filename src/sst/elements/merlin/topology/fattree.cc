@@ -150,6 +150,97 @@ topo_fattree::topo_fattree(Component* comp, Params& params) :
 }
 
 
+topo_fattree::topo_fattree(ComponentId_t cid, Params& params, int num_ports, int rtr_id) :
+    Topology(cid),
+    id(rtr_id),
+    num_ports(num_ports),
+    num_vcs(-1),
+    allow_adaptive(false)
+{
+    string shape = params.find<std::string>("shape");
+
+    string routing_alg = params.find<std::string>("routing_alg", "deterministic");
+    if ( routing_alg == "adaptive" ) {
+        allow_adaptive = true;
+    }
+
+    adaptive_threshold = params.find<double>("adaptive_threshold", 0.5);
+    // std::cout << "routing_alg: " << routing_alg << std::endl;
+    // std::cout << "adaptive_threshold: " << adaptive_threshold << std::endl;
+    
+    int levels = std::count(shape.begin(), shape.end(), ':') + 1;
+    int* ups = new int[levels];
+    int* downs= new int[levels];
+
+    // cout << "shape: " << shape << endl;
+    // cout << "levels: " << levels << endl;
+    parseShape(shape, downs, ups);
+    // for ( int i = 0; i < levels; i++ ) {
+    //     cout << "Level " << i << ": down = " << downs[i] << ", up = " << ups[i] << endl;
+    // }
+
+    int total_hosts = 1;
+    for ( int i = 0; i < levels; i++ ) {
+        total_hosts *= downs[i];
+    }
+    // cout << "total_hosts = " << total_hosts << endl;
+
+    int* routers_per_level = new int[levels];
+    routers_per_level[0] = total_hosts / downs[0];
+
+    for ( int i = 1; i < levels; i++ ) {
+        routers_per_level[i] = routers_per_level[i-1] * ups[i-1] / downs[i];
+    }
+
+    // for ( int i = 0; i < levels; i++ ) {
+    //     cout << "Level " << i << " routers = " << routers_per_level[i] << endl;
+    // }
+
+    int count = 0;
+    rtr_level = -1;
+    int routers_per_level_group = 1;
+    for ( int i = 0; i < levels; i++ ) {
+        int lid = id - count;
+        count += routers_per_level[i];
+        // cout << i << " " << count << " " << id << " " << lid << endl;
+        if ( id < count ) {
+            rtr_level = i;
+            level_id = lid;
+            level_group = lid / routers_per_level_group;
+            break;
+        }
+        routers_per_level_group *= ups[i];
+    }
+
+    // cout << "my router level = " << rtr_level << ", level id = " << level_id <<
+    //     ", level_group = " << level_group << endl;
+    down_ports = downs[rtr_level];
+    up_ports = ups[rtr_level];
+    
+    // Compute reachable IDs
+    int rid = 1;
+    for ( int i = 0; i <= rtr_level; i++ ) {
+        rid *= downs[i];
+    }
+    down_route_factor = rid / downs[rtr_level];
+
+    low_host = level_group * rid;
+    high_host = low_host + rid - 1;
+    
+    // cout << "low host = " << low_host << ", high host = " << high_host <<
+    //     ", down_route_factor = " << down_route_factor << endl;
+
+    // cout << "Routing Table:" << endl;
+    // RtrEvent* rev = new RtrEvent();
+    // internal_router_event* ev = new internal_router_event(rev);
+    // for ( int i = 0; i < total_hosts; i++ ) {
+    //     ev->getEncapsulatedEvent()->dest = i;
+    //     route(0, 0, ev);
+    //     cout << "  " << i << "   " << ev->getNextPort() << endl; 
+    // }
+}
+
+
 topo_fattree::~topo_fattree()
 {
 }

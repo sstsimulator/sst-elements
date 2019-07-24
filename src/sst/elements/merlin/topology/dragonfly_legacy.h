@@ -34,13 +34,13 @@ class topo_dragonfly_legacy: public Topology {
 
 public:
 
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         topo_dragonfly_legacy,
         "merlin",
         "dragonfly_legacy",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Legacy dragonfly topology object.  No longer supported.",
-        "SST::Merlin::Topology")
+        SST::Merlin::Topology)
     
     SST_ELI_DOCUMENT_PARAMS(
         {"dragonfly:hosts_per_router",      "Number of hosts connected to each router."},
@@ -85,6 +85,7 @@ public:
     };
 
     topo_dragonfly_legacy(Component* comp, Params& p);
+    topo_dragonfly_legacy(ComponentId_t cid, Params& p, int num_ports, int rtr_id);
     ~topo_dragonfly_legacy();
 
     virtual void route(int port, int vc, internal_router_event* ev);

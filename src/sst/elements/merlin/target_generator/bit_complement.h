@@ -29,13 +29,13 @@ class BitComplementDist : public TargetGenerator {
 
 public:
 
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         BitComplementDist,
         "merlin",
         "targetgen.bit_complement",
         SST_ELI_ELEMENT_VERSION(0,0,1),
         "Generates a generalized bit complement pattern.  Returns the same value of num_peers - 1 - id.",
-        "SST::Merlin::DestGenerator")
+        SST::Merlin::TargetGenerator)
     
     SST_ELI_DOCUMENT_PARAMS(
     )
@@ -46,6 +46,12 @@ public:
     BitComplementDist(Component* parent, Params &params) :
         TargetGenerator(parent)
     {
+    }
+    
+    BitComplementDist(ComponentId_t cid, Params &params, int id, int num_peers) :
+        TargetGenerator(cid)
+    {
+        dest = num_peers - 1 - id;
     }
     
     ~BitComplementDist() {
