@@ -16,39 +16,22 @@
 class StoreUnit : public Unit {
 	std::string m_name;
   public:
-
-    SST_ELI_REGISTER_SUBCOMPONENT_API(SimpleMemoryModel::StoreUnit, SimpleMemoryModel*, Output*, int, int, Unit*, int, std::string )
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
-        StoreUnit,
-        "firefly",
-        "simpleMemory.storeUnit",
-        SST_ELI_ELEMENT_VERSION(1,0,0),
-        "",
-        SimpleMemoryModel::StoreUnit
-    )
-
-    StoreUnit( Component* comp, Params& ) : Unit( comp, NULL, NULL) {}
-    StoreUnit( ComponentId_t compId, Params& ) : Unit( compId, NULL, NULL) {}
-
-    StoreUnit( Component* comp, Params&, SimpleMemoryModel*, Output*, int, int, Unit*, int, std::string ) :
-        Unit( comp, NULL, NULL) {}
-
-    StoreUnit( ComponentId_t compId, Params&, SimpleMemoryModel* model, Output* dbg, int id, int thread_id, Unit* cache, int numSlots, std::string name ) :
-        Unit( compId, model, dbg ), m_qSize(numSlots), m_cache(cache), m_blocked(false), m_blockedSrc(NULL), m_scheduled(false), m_name(name) {
+    StoreUnit( SimpleMemoryModel& model, Output& dbg, int id, int thread_id, Unit* cache, int numSlots, std::string name ) :
+        Unit( model, dbg ), m_qSize(numSlots), m_cache(cache), m_blocked(false), m_blockedSrc(NULL), m_scheduled(false), m_name(name) {
         m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::"+ name + "StoreUnit::@p():@l ";
 
         std::stringstream tmp;
         tmp << "_" << name << "_" << id << "_"<< thread_id;
         m_name = tmp.str();
 
-        m_pendingQdepth = model->registerStatistic<uint64_t>(name + "_store_pending_Q_depth",std::to_string(thread_id));
+        m_pendingQdepth = model.registerStatistic<uint64_t>(name + "_store_pending_Q_depth",std::to_string(thread_id));
     }
 
 	std::string& name() { return m_name; }
 
     bool storeCB( UnitBase* src, MemReq* req, Callback* callback = NULL ) {
 
-        dbg().verbosePrefix(prefix(),CALL_INFO,1,STORE_MASK,"addr=%#" PRIx64 " length=%lu pending=%lu\n",req->addr,req->length,m_pendingQ.size());
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,STORE_MASK,"addr=%#" PRIx64 " length=%lu pending=%lu\n",req->addr,req->length,m_pendingQ.size());
 		assert( NULL == m_blockedSrc );
 		m_pendingQ.push( std::make_pair(req, callback) );
 		m_pendingQdepth->addData( m_pendingQ.size() );
@@ -57,13 +40,13 @@ class StoreUnit : public Unit {
 			if ( ! m_blocked && ! m_scheduled ) {
 				Callback* cb = new Callback;
 				*cb = std::bind( &StoreUnit::process, this ); 
-				model().schedCallback( 0, cb );
+				m_model.schedCallback( 0, cb );
 				m_scheduled = true;
 			}
 		}
 
         if ( m_pendingQ.size() == m_qSize  ) {
-            dbg().verbosePrefix(prefix(),CALL_INFO,1,STORE_MASK,"blocking src\n");
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,STORE_MASK,"blocking src\n");
             m_blockedSrc = src;
             return true;
         } else {
@@ -75,33 +58,33 @@ class StoreUnit : public Unit {
 
 	void process( ) {
 		std::pair<MemReq*,Callback*>& front = m_pendingQ.front();
-        dbg().verbosePrefix(prefix(),CALL_INFO,1,STORE_MASK,"addr=%#" PRIx64 " length=%lu\n",front.first->addr,front.first->length);
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,STORE_MASK,"addr=%#" PRIx64 " length=%lu\n",front.first->addr,front.first->length);
 
 		assert( m_blocked == false );
 		m_scheduled = false;
 
         m_blocked = m_cache->store( this, front.first );
         if ( front.second ) {
-            model().schedCallback( 0, front.second );
+            m_model.schedCallback( 0, front.second );
         }
 		m_pendingQ.pop();
 
 		if ( m_blockedSrc ) {
-        	dbg().verbosePrefix(prefix(),CALL_INFO,1,STORE_MASK,"unblock src\n");
-			model().schedResume( 0, m_blockedSrc, this );
+        	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,STORE_MASK,"unblock src\n");
+			m_model.schedResume( 0, m_blockedSrc, this );
 			m_blockedSrc = NULL;
 		}
 
 		if ( ! m_blocked && ! m_pendingQ.empty() ) {
 			Callback* cb = new Callback;
 			*cb = std::bind( &StoreUnit::process, this ); 
-			model().schedCallback( 0, cb );
+			m_model.schedCallback( 0, cb );
 			m_scheduled = true;
 		}
 	}
 
     void resume( UnitBase* src = NULL ) {
-        dbg().verbosePrefix(prefix(),CALL_INFO,1,STORE_MASK,"pending=%lu\n",m_pendingQ.size());
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,STORE_MASK,"pending=%lu\n",m_pendingQ.size());
 		
 		assert( m_blocked == true );
 		m_blocked = false;

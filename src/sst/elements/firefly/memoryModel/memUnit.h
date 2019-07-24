@@ -16,42 +16,26 @@
     class MemUnit : public Unit {
         enum Op { Read, Write };
       public:
-
-        SST_ELI_REGISTER_SUBCOMPONENT_API(SimpleMemoryModel::MemUnit, SimpleMemoryModel*, Output*, int, int, int,int )
-        SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
-            MemUnit,
-            "firefly",
-            "simpleMemory.memUnit",
-            SST_ELI_ELEMENT_VERSION(1,0,0),
-            "",
-            SimpleMemoryModel::MemUnit
-        )
-
-        MemUnit( ComponentId_t id, Params& ) : Unit( id, NULL, NULL ) {}
-        MemUnit( Component* comp, Params& ) : Unit( comp, NULL, NULL ) {}
-
-        MemUnit( Component* comp, Params&, SimpleMemoryModel*, Output*, int, int, int, int ) : Unit( comp, NULL, NULL ) {}
-
-        MemUnit( ComponentId_t compId, Params&, SimpleMemoryModel* model, Output* dbg, int id, int readLat_ns, int writeLat_ns, int numSlots ) :
-            Unit( compId, model, dbg ), m_pending(0), m_readLat_ns(readLat_ns), m_writeLat_ns(writeLat_ns), m_numSlots(numSlots)
+        MemUnit( SimpleMemoryModel& model, Output& dbg, int id, int readLat_ns, int writeLat_ns, int numSlots ) :
+            Unit( model, dbg ), m_pending(0), m_readLat_ns(readLat_ns), m_writeLat_ns(writeLat_ns), m_numSlots(numSlots)
         {
             m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::MemUnit::@p():@l ";
-			m_latency = model->registerStatistic<uint64_t>("mem_blocked_time");
-			m_loads = model->registerStatistic<uint64_t>("mem_num_loads");
-			m_stores = model->registerStatistic<uint64_t>("mem_num_stores");
-			m_addrs = model->registerStatistic<uint64_t>("mem_addrs");
+			m_latency = model.registerStatistic<uint64_t>("mem_blocked_time");
+			m_loads = model.registerStatistic<uint64_t>("mem_num_loads");
+			m_stores = model.registerStatistic<uint64_t>("mem_num_stores");
+			m_addrs = model.registerStatistic<uint64_t>("mem_addrs");
         }
 
         bool store( UnitBase* src, MemReq* req ) {
-            dbg().verbosePrefix(prefix(),CALL_INFO,1,MEM_MASK,"addr=%#" PRIx64 " length=%lu\n",req->addr, req->length);
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MEM_MASK,"addr=%#" PRIx64 " length=%lu\n",req->addr, req->length);
 			m_stores->addData( 1 );
-            return work( m_writeLat_ns, Write, req, src, model().getCurrentSimTimeNano() );
+            return work( m_writeLat_ns, Write, req, src, m_model.getCurrentSimTimeNano() );
         }
 
         bool load( UnitBase* src, MemReq* req, Callback* callback ) {
-            dbg().verbosePrefix(prefix(),CALL_INFO,1,MEM_MASK,"addr=%#" PRIx64 " length=%lu\n",req->addr,req->length);
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MEM_MASK,"addr=%#" PRIx64 " length=%lu\n",req->addr,req->length);
 			m_loads->addData( 1 );
-            return work( m_readLat_ns, Read, req, src, model().getCurrentSimTimeNano(), callback );
+            return work( m_readLat_ns, Read, req, src, m_model.getCurrentSimTimeNano(), callback );
         }
 
       private:
@@ -74,9 +58,9 @@
 			m_addrs->addData( req->addr  );
             if ( m_pending == m_numSlots ) {
 
-				dbg().verbosePrefix(prefix(),CALL_INFO,1,MEM_MASK,"blocking src\n");
-				m_blocked.push( Entry( delay, op, req, src, callback, model().getCurrentSimTimeNano() ) );
-				m_blockedTime = model().getCurrentSimTimeNano();
+				m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MEM_MASK,"blocking src\n");
+				m_blocked.push( Entry( delay, op, req, src, callback, m_model.getCurrentSimTimeNano() ) );
+				m_blockedTime = m_model.getCurrentSimTimeNano();
                 return true;
             }
 
@@ -84,38 +68,38 @@
 		
 			Callback* cb = new Callback;
 
-            SimTime_t issueTime  = model().getCurrentSimTimeNano();
+            SimTime_t issueTime  = m_model.getCurrentSimTimeNano();
 
             *cb = [=]()
                 {
                     --m_pending;
 
-                    SimTime_t latency = model().getCurrentSimTimeNano() - issueTime;
+                    SimTime_t latency = m_model.getCurrentSimTimeNano() - issueTime;
 
-                    dbg().verbosePrefix(prefix(),CALL_INFO,1,MEM_MASK,"%s complete latency=%" PRIu64 " qLatency=%" PRIu64 " addr=%#" PRIx64 " length=%lu\n",
+                    m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MEM_MASK,"%s complete latency=%" PRIu64 " qLatency=%" PRIu64 " addr=%#" PRIx64 " length=%lu\n",
                                                         op == Read ? "Read":"Write" ,latency, issueTime-qTime, req->addr, req->length);
 
                     if ( callback ) {
-                        model().schedCallback( 0, callback);
+                        m_model.schedCallback( 0, callback);
                     }
 
 					delete req;
 
                     if ( ! m_blocked.empty() ) {
 		
-						SimTime_t latency = model().getCurrentSimTimeNano() - m_blockedTime;
+						SimTime_t latency = m_model.getCurrentSimTimeNano() - m_blockedTime;
 						if ( latency ) {
 							m_latency->addData( latency );
 						}
 						Entry& entry = m_blocked.front( );
 
                         work( entry.delay, entry.op, entry.memReq, entry.src, entry.qTime, entry.callback );
-                		model().schedResume( 0, entry.src );
+                		m_model.schedResume( 0, entry.src );
 						m_blocked.pop();
                     }
                 };
 
-            model().schedCallback( delay, cb ); 
+            m_model.schedCallback( delay, cb ); 
 
 			return false;
         }

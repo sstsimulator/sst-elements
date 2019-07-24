@@ -25,24 +25,8 @@ class SharedTlbUnit : public Unit {
     
     std::string m_name;
   public:
-
-    SST_ELI_REGISTER_SUBCOMPONENT_API(SimpleMemoryModel::SharedTlbUnit, SimpleMemoryModel*, Output*, int, std::string, SharedTlb*, Unit*, Unit*, int, int )
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
-        SharedTlbUnit,
-        "firefly",
-        "simpleMemory.sharedTlbUnit",
-        SST_ELI_ELEMENT_VERSION(1,0,0),
-        "",
-        SimpleMemoryModel::SharedTlbUnit
-    )
-
-    SharedTlbUnit( Component* comp, Params& ) : Unit( comp, NULL, NULL) {}
-    SharedTlbUnit( ComponentId_t compId, Params& ) : Unit( compId, NULL, NULL) {}
-
-    SharedTlbUnit( Component* comp, Params&, SimpleMemoryModel*, Output*, int, std::string, SharedTlb*, Unit*, Unit*, int, int ) : Unit( comp, NULL, NULL ) {}
-
-    SharedTlbUnit( ComponentId_t compId, Params&, SimpleMemoryModel* model, Output* dbg, int id, std::string name, SharedTlb* tlb, Unit* load, Unit* store, int maxStores, int maxLoads ) :
-        Unit( compId, model, dbg ),
+    SharedTlbUnit( SimpleMemoryModel& model, Output& dbg, int id, std::string name, SharedTlb* tlb, Unit* load, Unit* store, int maxStores, int maxLoads ) :
+        Unit( model, dbg ),
         m_name(name),
         m_tlb(tlb),
         m_load(load), 
@@ -73,7 +57,7 @@ class SharedTlbUnit : public Unit {
     void resume( UnitBase* unit ) {
 
         if ( unit == m_store ) {
-            dbg().verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"store unblocked\n");
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"store unblocked\n");
             assert( m_storeBlocked );
             m_storeBlocked = false;
             while( ! m_storeBlocked && ! m_readyStores.empty() ) {
@@ -83,7 +67,7 @@ class SharedTlbUnit : public Unit {
         }
 
         if ( unit == m_load ) {
-            dbg().verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"load unblocked\n");
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"load unblocked\n");
             assert( m_loadBlocked );
             m_loadBlocked= false;
             while( ! m_loadBlocked && ! m_readyLoads.empty() ) {
@@ -99,15 +83,15 @@ class SharedTlbUnit : public Unit {
                     std::bind(&SharedTlbUnit::storeAddrResolved, this, callback, std::placeholders::_1, std::placeholders::_2 ) );
         if ( -1 == addr ) {
             ++m_pendingLookups;
-            dbg().verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"Miss, pid %d, req Addr %#" PRIx64 " pendingLookups=%d\n", 
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"Miss, pid %d, req Addr %#" PRIx64 " pendingLookups=%d\n", 
                                                 req->pid, req->addr, m_pendingLookups );
         } else {
-            dbg().verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"Hit, pid %d, req Addr %#" PRIx64 "\n", req->pid, req->addr );
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"Hit, pid %d, req Addr %#" PRIx64 "\n", req->pid, req->addr );
             storeAddrResolved2( callback, req, addr );
         }
 
         if ( blockedStore() ) {
-            dbg().verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"Blocking source, pid %d, req Addr %#" PRIx64 "\n", req->pid, req->addr );
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"Blocking source, pid %d, req Addr %#" PRIx64 "\n", req->pid, req->addr );
             assert( ! m_blockedStoreSrc );
             m_blockedStoreSrc = src;
             return true;
@@ -122,14 +106,14 @@ class SharedTlbUnit : public Unit {
                     std::bind(&SharedTlbUnit::loadAddrResolved, this, callback, std::placeholders::_1, std::placeholders::_2 ) );
         if ( -1 == addr ) {
             ++m_pendingLookups;
-            dbg().verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"Miss, pid %d, req Addr %#" PRIx64 " pendingLookups=%d\n", 
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"Miss, pid %d, req Addr %#" PRIx64 " pendingLookups=%d\n", 
                                                 req->pid, req->addr, m_pendingLookups );
         } else {
-            dbg().verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"Hit, pid %d, req Addr %#" PRIx64 "\n", req->pid, req->addr );
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"Hit, pid %d, req Addr %#" PRIx64 "\n", req->pid, req->addr );
             loadAddrResolved2( callback, req, addr );
         }
         if ( blockedLoad() ) {
-            dbg().verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"Blocking source, pid %d, req Addr %#" PRIx64 "\n", req->pid, req->addr );
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"Blocking source, pid %d, req Addr %#" PRIx64 "\n", req->pid, req->addr );
             assert( ! m_blockedLoadSrc );
             m_blockedLoadSrc = src;
             return true;
@@ -140,28 +124,28 @@ class SharedTlbUnit : public Unit {
 
   private:
    bool passUpLoad( Entry* entry ) {
-        dbg().verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK," req addr=%#" PRIx64 "\n",entry->req->addr);
-        dbg().verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"call load %#" PRIx64 "\n", entry->req->addr );
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK," req addr=%#" PRIx64 "\n",entry->req->addr);
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"call load %#" PRIx64 "\n", entry->req->addr );
         bool retval = m_load->load( this, entry->req, entry->callback );
         delete entry;
 
         if ( m_blockedLoadSrc && m_readyLoads.size() == m_maxPendingLoads ) {
-            dbg().verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"schedule resume\n");
-            model().schedResume( 0, m_blockedLoadSrc );
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"schedule resume\n");
+            m_model.schedResume( 0, m_blockedLoadSrc );
             m_blockedLoadSrc = NULL;
         }
         return retval;
     }
 
     bool passUpStore( Entry* entry ) {
-        dbg().verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"req addr=%#" PRIx64 "\n",entry->req->addr);
-        dbg().verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"call storeCB %#" PRIx64 "\n", entry->req->addr );
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"req addr=%#" PRIx64 "\n",entry->req->addr);
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"call storeCB %#" PRIx64 "\n", entry->req->addr );
         bool retval = m_store->storeCB( this, entry->req, entry->callback );
         delete entry;
 
         if ( m_blockedStoreSrc && m_readyStores.size() == m_maxPendingStores ) {
-            dbg().verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"schedule resume\n");
-            model().schedResume( 0, m_blockedStoreSrc );
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"schedule resume\n");
+            m_model.schedResume( 0, m_blockedStoreSrc );
             m_blockedStoreSrc = NULL;
         }
 
@@ -169,11 +153,11 @@ class SharedTlbUnit : public Unit {
     }
 
     bool blockedTlb() { 
-        dbg().verbosePrefix(prefix(),CALL_INFO,2,TLB_MASK,"pendingLookups=%d\n", m_pendingLookups );
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,2,TLB_MASK,"pendingLookups=%d\n", m_pendingLookups );
         return m_pendingLookups == m_maxPendingLookups; 
     } 
     bool blockedStore() {
-        dbg().verbosePrefix(prefix(),CALL_INFO,2,TLB_MASK,"pendingLookups=%d\n", m_pendingLookups );
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,2,TLB_MASK,"pendingLookups=%d\n", m_pendingLookups );
         return blockedTlb() || m_readyStores.size() >= m_maxPendingStores; 
     }
     bool blockedLoad() {
@@ -184,8 +168,8 @@ class SharedTlbUnit : public Unit {
         bool flag = true;
         if ( m_blockedLoadSrc ) {
             if ( m_readyLoads.size() < m_maxPendingLoads ) { 
-                dbg().verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"schedule resume\n");
-                model().schedResume( 0, m_blockedLoadSrc );
+                m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"schedule resume\n");
+                m_model.schedResume( 0, m_blockedLoadSrc );
                 m_blockedLoadSrc = NULL;
                 flag = false;
             } 
@@ -193,8 +177,8 @@ class SharedTlbUnit : public Unit {
 
         if ( flag && m_blockedStoreSrc ) {
             if ( m_readyStores.size() < m_maxPendingStores  ) { 
-                dbg().verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"schedule resume\n");
-                model().schedResume( 0, m_blockedStoreSrc );
+                m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"schedule resume\n");
+                m_model.schedResume( 0, m_blockedStoreSrc );
                 m_blockedStoreSrc = NULL;
             }
         } 
@@ -202,7 +186,7 @@ class SharedTlbUnit : public Unit {
 
     void storeAddrResolved( Callback* callback, MemReq* req, uint64_t addr ) {
 
-        dbg().verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"addr=%#" PRIx64 " -> %#" PRIx64 " pendingLookups=%d\n",
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"addr=%#" PRIx64 " -> %#" PRIx64 " pendingLookups=%d\n",
                                          req->addr, addr, m_pendingLookups);
 
         checkBlockedSrcs();
@@ -214,20 +198,20 @@ class SharedTlbUnit : public Unit {
     }
 
     void storeAddrResolved2( Callback* callback, MemReq* req, uint64_t addr ) {
-        dbg().verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"addr=%#" PRIx64 " -> %#" PRIx64 "\n", req->addr, addr);
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"addr=%#" PRIx64 " -> %#" PRIx64 "\n", req->addr, addr);
         req->addr = addr;
         if ( m_storeBlocked ) {
-            dbg().verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"addr=%#" PRIx64 " -> %#" PRIx64 "\n", req->addr, addr);
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"addr=%#" PRIx64 " -> %#" PRIx64 "\n", req->addr, addr);
             m_readyStores.push( new Entry( req, callback ) );
         } else {
-            dbg().verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"call storeCB %#" PRIx64 "\n", req->addr );
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"call storeCB %#" PRIx64 "\n", req->addr );
             m_storeBlocked = m_store->storeCB( this, req, callback );
         }
     }
 
     void loadAddrResolved( Callback* callback, MemReq* req, uint64_t addr ) {
 
-        dbg().verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"addr=%#" PRIx64 " -> %#" PRIx64 " pendingLookups=%d\n",
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"addr=%#" PRIx64 " -> %#" PRIx64 " pendingLookups=%d\n",
                                          req->addr, addr, m_pendingLookups);
         checkBlockedSrcs();
 
@@ -238,14 +222,14 @@ class SharedTlbUnit : public Unit {
     }
 
     void loadAddrResolved2( Callback* callback, MemReq* req, uint64_t addr ) {
-        dbg().verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"addr=%#" PRIx64 " -> %#" PRIx64 "\n", req->addr, addr);
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"addr=%#" PRIx64 " -> %#" PRIx64 "\n", req->addr, addr);
 
         req->addr = addr;
         if ( m_loadBlocked ) {
-            dbg().verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"addr=%#" PRIx64"\n", req->addr);
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"addr=%#" PRIx64"\n", req->addr);
             m_readyLoads.push( new Entry( req, callback ) );
         } else {
-            dbg().verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"call load %#" PRIx64 "\n", req->addr );
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"call load %#" PRIx64 "\n", req->addr );
             m_loadBlocked = m_load->load( this, req, callback );
         }
     }

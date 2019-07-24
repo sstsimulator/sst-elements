@@ -94,41 +94,21 @@ class Thread : public UnitBase {
     std::string m_name;
 
   public:	  
-
-    SST_ELI_REGISTER_SUBCOMPONENT_API(SimpleMemoryModel::Thread, SimpleMemoryModel*, std::string, Output*,  int, int, int, Unit*, Unit* )
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
-        Thread,
-        "firefly",
-        "simpleMemory.threaddUnit",
-        SST_ELI_ELEMENT_VERSION(1,0,0),
-        "",
-        SimpleMemoryModel::Thread
-    )
-
-    Thread( Component* comp, Params& ) : UnitBase(comp) {}
-    Thread( ComponentId_t compId, Params& ) : UnitBase(compId) {}
-
-     Thread( Component* comp, Params&, SimpleMemoryModel*, std::string, Output&, int, int, int, Unit*, Unit*) : 
-			UnitBase(comp) {}
-
-     Thread( ComponentId_t compId, Params&, SimpleMemoryModel* model, std::string name, Output* output, int id, int thread_id , int accessSize, Unit* load, Unit* store ) : 
-			UnitBase(compId),
+     Thread( SimpleMemoryModel& model, std::string name, Output& output, int id, int thread_id , int accessSize, Unit* load, Unit* store ) : 
 			m_model(model), m_name(name), m_dbg(output), m_id(id), m_loadUnit(load), m_storeUnit(store), 
 			m_maxAccessSize( accessSize ), m_nextOp(NULL), m_waitingOnOp(NULL), m_blocked(false), m_curWorkNum(0),m_lastDelete(0)
 	{
 		m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::" + name +"::@p():@l ";
-        m_dbg->verbosePrefix( prefix(), CALL_INFO,1,THREAD_MASK,"this=%p\n",this );
-		m_workQdepth = model->registerStatistic<uint64_t>(name + "_thread_work_Q_depth",std::to_string(thread_id));
+        m_dbg.verbosePrefix( prefix(), CALL_INFO,1,THREAD_MASK,"this=%p\n",this );
+		m_workQdepth = model.registerStatistic<uint64_t>(name + "_thread_work_Q_depth",std::to_string(thread_id));
 	}
 
 
     ~Thread() {
-#if 0
         delete m_loadUnit;
         if ( m_loadUnit != m_storeUnit ) {
             delete m_storeUnit;
         }
-#endif
     }
 
     void printStatus( Output& out, int id ) {
@@ -153,22 +133,22 @@ class Thread : public UnitBase {
     }
 
 	void addWork( Work* work ) { 
-		dbg().verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"work=%p numOps=%lu workSize=%lu blocked=%d\n",
+		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"work=%p numOps=%lu workSize=%lu blocked=%d\n",
 														work, work->getNumOps(), m_workQ.size(), (int) m_blocked );
         work->m_workNum = m_curWorkNum++;
 		m_workQ.push_back( work ); 
 
-        work->print(dbg(),prefix());
+        work->print(m_dbg,prefix());
 		m_workQdepth->addData( m_workQ.size() );
 
 		if ( ! m_blocked && ! m_nextOp ) {
-			dbg().verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"prime pump\n");		
+			m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"prime pump\n");		
 			process( );
         }
 	}
 
 	void resume( UnitBase* src = NULL ) {
-        dbg().verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"work=%lu\n", m_workQ.size() );
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"work=%lu\n", m_workQ.size() );
 		
 		m_blocked = false;
         if ( m_waitingOnOp ) { return; } 
@@ -194,7 +174,7 @@ class Thread : public UnitBase {
         size_t length = op->getCurrentLength( m_maxAccessSize );
 		op->incOffset( length );
 
-        dbg().verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"op=%s op.length=%lu offset=%lu addr=%#" PRIx64 " length=%lu\n",
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"op=%s op.length=%lu offset=%lu addr=%#" PRIx64 " length=%lu\n",
                             op->getName(), op->length, op->offset, addr, length );
 
         int pid = work->getPid();
@@ -216,19 +196,19 @@ class Thread : public UnitBase {
 
         switch( op->getOp() ) {
           case MemOp::NoOp:
-	        model().schedCallback( 0, callback );
+	        m_model.schedCallback( 0, callback );
             break;
 
 		  case MemOp::HostBusWrite:
-            m_blocked = model().busUnitWrite( this, new MemReq( addr, length ), callback );
+            m_blocked = m_model.busUnitWrite( this, new MemReq( addr, length ), callback );
 		    break;
 
           case MemOp::LocalLoad:
-			m_blocked = model().nicUnit().load( this, new MemReq( 0, 0), callback );
+			m_blocked = m_model.nicUnit().load( this, new MemReq( 0, 0), callback );
             break;
 
           case MemOp::LocalStore:
-			m_blocked = model().nicUnit().storeCB( this, new MemReq( 0, 0), callback );
+			m_blocked = m_model.nicUnit().storeCB( this, new MemReq( 0, 0), callback );
             break;
 
           case MemOp::HostStore:
@@ -264,24 +244,24 @@ class Thread : public UnitBase {
 
         m_waitingOnOp = NULL;
         if ( m_nextOp && op->getOp() != m_nextOp->getOp() ) { 
-            dbg().verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"stalled on Op %p\n",op);
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"stalled on Op %p\n",op);
             m_waitingOnOp = op;
         }
 
 		if ( m_blocked ) {
-        	dbg().verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"blocked\n");
+        	m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"blocked\n");
             // resume() will be called
             // the OP callback will also be called
 		} else if ( m_nextOp && ! m_waitingOnOp ) { 
-            dbg().verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"schedule process()\n");
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"schedule process()\n");
 			Callback* cb = new Callback;
 			*cb = std::bind(&Thread::process, this, m_nextOp ); 
-		    model().schedCallback( 0, cb );
+		    m_model.schedCallback( 0, cb );
         }
     }
 
     void opCallback( Work* work, MemOp* op, bool deleteWork ) {
-        dbg().verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"opPtr=%p %s waitingOnOp=%p\n",op,op->getName(),m_waitingOnOp);
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"opPtr=%p %s waitingOnOp=%p\n",op,op->getName(),m_waitingOnOp);
         op->decPending();
 
         if ( op->canBeRetired() ) {
@@ -291,19 +271,19 @@ class Thread : public UnitBase {
                     work->m_pendingCallbacks.pop();
                 }
                 if ( op->callback ) {
-                    dbg().verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"do op callback\n");
+                    m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"do op callback\n");
                     op->callback();
                 }
 
                 if ( deleteWork ) {
-                    dbg().verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"delete work=%p %d\n",work, work->m_workNum);
+                    m_dbg.verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"delete work=%p %d\n",work, work->m_workNum);
                     delete work;
                     ++m_lastDelete;
                     while ( ! m_OOOwork.empty() ) {
-                        dbg().verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"check OOO, looking for %d\n",m_lastDelete);
+                        m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"check OOO, looking for %d\n",m_lastDelete);
                         if ( m_OOOwork.find( m_lastDelete ) != m_OOOwork.end() ) {
                             work = m_OOOwork[ m_lastDelete ];
-                            dbg().verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"delete OOO work %p\n",m_OOOwork[m_lastDelete]);
+                            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"delete OOO work %p\n",m_OOOwork[m_lastDelete]);
                             while ( ! work->m_pendingCallbacks.empty() ) {
                                 work->m_pendingCallbacks.front()();
                                 work->m_pendingCallbacks.pop();
@@ -316,7 +296,7 @@ class Thread : public UnitBase {
                     }
                 }
             } else {
-                dbg().verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"OOO work %p %d\n",work,work->m_workNum);
+                m_dbg.verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"OOO work %p %d\n",work,work->m_workNum);
                 if ( deleteWork ) {
                     m_OOOwork[work->m_workNum] = work;
                 }
@@ -327,7 +307,7 @@ class Thread : public UnitBase {
         }
 
         if ( op == m_waitingOnOp ) {
-            dbg().verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"issue the stalled Op\n");
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"issue the stalled Op\n");
             m_waitingOnOp = NULL;
             if ( ! m_blocked ) {
                 assert( m_nextOp );
@@ -342,15 +322,12 @@ class Thread : public UnitBase {
 	MemOp*  m_waitingOnOp;
 	bool    m_blocked;
 	
-	SimpleMemoryModel&  model() { return *m_model; }
-	Output& 		    dbg() { return *m_dbg; }
-
 	std::string         m_prefix;
-	SimpleMemoryModel*  m_model;
+	SimpleMemoryModel&  m_model;
     std::deque<Work*>   m_workQ;
     Unit*               m_loadUnit;
     Unit*               m_storeUnit;
-    Output* 		    m_dbg;
+    Output& 		    m_dbg;
     int 		        m_maxAccessSize;
     int                 m_curWorkNum;
     int                 m_lastDelete;

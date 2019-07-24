@@ -25,26 +25,9 @@ class Tlb : public Unit {
     };
     
   public:
-
-    SST_ELI_REGISTER_SUBCOMPONENT_API(SimpleMemoryModel::Tlb, SimpleMemoryModel*, Output*, int, std::string, Unit*, Unit*, int, int, int, int, int, int )
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
-        Tlb,
-        "firefly",
-        "simpleMemory.tlbUnit",
-        SST_ELI_ELEMENT_VERSION(1,0,0),
-        "",
-        SimpleMemoryModel::Tlb
-    )
-
-    Tlb( Component* comp, Params& ) : Unit( comp, NULL, NULL), m_cache( 0 ) {}
-    Tlb( ComponentId_t compId, Params& ) : Unit( compId, NULL, NULL), m_cache( 0 ) {}
-
-    Tlb( Component* comp, Params&, SimpleMemoryModel*, Output*, int, std::string, Unit*, Unit*, int, int, int, int, int, int ) :
-        Unit( comp, NULL, NULL ),  m_cache( 0 ) {}
-
-    Tlb( ComponentId_t compId, Params&, SimpleMemoryModel* model, Output* dbg, int id, std::string name, Unit* load, Unit* store, int size, int pageSize, int tlbMissLat_ns,
+    Tlb( SimpleMemoryModel& model, Output& dbg, int id, std::string name, Unit* load, Unit* store, int size, int pageSize, int tlbMissLat_ns,
             int numWalkers, int maxStores, int maxLoads ) :
-        Unit( compId, model, dbg ), m_curPid(-1), m_cache( size ), m_cacheSize( size), m_pageMask( ~(pageSize - 1) ),
+        Unit( model, dbg ), m_curPid(-1), m_cache( size ), m_cacheSize( size), m_pageMask( ~(pageSize - 1) ),
         m_load(load), 
         m_store(store),
         m_storeBlocked( false ), 
@@ -64,13 +47,13 @@ class Tlb : public Unit {
         m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::"+name+"TlbUnit::@p():@l ";
         stats = std::to_string(id) + ":SimpleMemoryModel::" + name + "TlbUnit:: ";
 
-        dbg->verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"tlbSize=%d, pageMask=%#" PRIx64 ", numWalkers=%d\n",
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"tlbSize=%d, pageMask=%#" PRIx64 ", numWalkers=%d\n",
                         size, m_pageMask, numWalkers );
     }
 
     ~Tlb() {
         if ( 0 && m_total ) {
-            dbg().output("%s total requests %" PRIu64 " %f percent hits,  %f percent flushes\n",
+            m_dbg.output("%s total requests %" PRIu64 " %f percent hits,  %f percent flushes\n",
                     stats.c_str(), m_total, (float)m_hitCnt/(float)m_total, (float)m_flush/(float)m_total);
         }
     }
@@ -81,10 +64,10 @@ class Tlb : public Unit {
     uint64_t m_flush;
 
     void resume( UnitBase* unit ) {
-        dbg().verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"\n");
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"\n");
 
         if ( unit == m_store ) {
-            dbg().verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"store unblocked\n");
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"store unblocked\n");
             assert( m_storeBlocked );
             m_storeBlocked = false;
             while( ! m_storeBlocked && ! m_readyStores.empty() ) {
@@ -94,7 +77,7 @@ class Tlb : public Unit {
         }
 
         if ( unit == m_load ) {
-            dbg().verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"load unblocked\n");
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"load unblocked\n");
             assert( m_loadBlocked );
             m_loadBlocked= false;
             while( ! m_loadBlocked && ! m_readyLoads.empty() ) {
@@ -108,7 +91,7 @@ class Tlb : public Unit {
 
         req->addr |= (uint64_t) req->pid << 56; 
         Hermes::Vaddr addr = getPageAddr(req->addr);
-        dbg().verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"req Addr %#" PRIx64 ", page Addr %#" PRIx64 "\n", addr, req->addr );
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"req Addr %#" PRIx64 ", page Addr %#" PRIx64 "\n", addr, req->addr );
 
         if ( lookup( req->pid, addr ) ) {
             if ( m_storeBlocked ) {
@@ -124,7 +107,7 @@ class Tlb : public Unit {
 
         if ( m_numPendingStores == m_maxPendingStores ) {
             m_blockedStoreSrc = src;
-            dbg().verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"blocking source\n" );
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"blocking source\n" );
             return true;
         } else { 
             return false;
@@ -134,7 +117,7 @@ class Tlb : public Unit {
     bool load( UnitBase* src, MemReq* req, Callback* callback ) {
         req->addr |= (uint64_t) req->pid << 56; 
         Hermes::Vaddr addr = getPageAddr(req->addr);
-        dbg().verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"%#" PRIx64 " %#" PRIx64 "\n", addr, req->addr );
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"%#" PRIx64 " %#" PRIx64 "\n", addr, req->addr );
 
         if ( lookup( req->pid, addr ) ) {
             if ( m_loadBlocked ) {
@@ -150,7 +133,7 @@ class Tlb : public Unit {
 
         if ( m_numPendingLoads == m_maxPendingLoads ) {
             m_blockedLoadSrc = src;
-            dbg().verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"blocking source\n" );
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"blocking source\n" );
             return true;
         } else { 
             return false;
@@ -167,14 +150,14 @@ class Tlb : public Unit {
 
     bool tlbMiss2( Entry* entry ) {
         Hermes::Vaddr addr = getPageAddr(entry->req->addr);
-        dbg().verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"addr=%#" PRIx64 "\n",addr);
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"addr=%#" PRIx64 "\n",addr);
 
         bool retval = false;
         if ( m_pendingWalkList.find(addr) != m_pendingWalkList.end() ) {
-            dbg().verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"add pending, page addr=%#" PRIx64 "\n",addr);
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"add pending, page addr=%#" PRIx64 "\n",addr);
             m_pendingWalkList[addr].push(entry);
         } else if ( m_pendingWalks < m_numWalkers ) {
-            dbg().verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"walk, page addr=%#" PRIx64 "\n",addr);
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"walk, page addr=%#" PRIx64 "\n",addr);
             walk( entry->req->pid, addr, std::bind(&Tlb::processMissComplete, this, addr ) );
             m_pendingWalkList[addr].push(entry);
             ++m_pendingWalks;
@@ -195,7 +178,7 @@ class Tlb : public Unit {
     }
 
     void processMissComplete( uint64_t addr ) {
-        dbg().verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"page addr=%#" PRIx64 "\n",addr);
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"page addr=%#" PRIx64 "\n",addr);
         --m_pendingWalks;
 
         while ( ! m_pendingWalkList[addr].empty() ) {
@@ -206,14 +189,14 @@ class Tlb : public Unit {
             if ( entry->type == Entry::Store ) {
                 if ( m_storeBlocked ) {
                     m_readyStores.push( entry );
-                    dbg().verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"store blocked, page addr=%#" PRIx64 "\n",addr);
+                    m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"store blocked, page addr=%#" PRIx64 "\n",addr);
                 } else {
                     m_storeBlocked = passUpStore( entry );
                 }
             } else {
                 if ( m_loadBlocked ) {
                     m_readyLoads.push( entry );
-                    dbg().verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"load blocked, page addr=%#" PRIx64 "\n",addr);
+                    m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"load blocked, page addr=%#" PRIx64 "\n",addr);
                 } else {
                     m_loadBlocked = passUpLoad( entry );
                 }
@@ -225,26 +208,26 @@ class Tlb : public Unit {
     }
 
     bool passUpLoad( Entry* entry ) {
-        dbg().verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK," req addr=%#" PRIx64 "\n",entry->req->addr);
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK," req addr=%#" PRIx64 "\n",entry->req->addr);
         bool retval = m_load->load( this, entry->req, entry->callback );
         delete entry;
 
         if ( m_numPendingLoads-- == m_maxPendingLoads ) {
             assert( m_blockedLoadSrc );
-            model().schedResume( 0, m_blockedLoadSrc );
+            m_model.schedResume( 0, m_blockedLoadSrc );
             m_blockedLoadSrc = NULL;
         }
         return retval;
     }
 
     bool passUpStore( Entry* entry ) {
-        dbg().verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"req addr=%#" PRIx64 "\n",entry->req->addr);
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"req addr=%#" PRIx64 "\n",entry->req->addr);
         bool retval = m_store->storeCB( this, entry->req, entry->callback );
         delete entry;
 
         if ( m_numPendingStores-- == m_maxPendingStores ) {
             assert( m_blockedStoreSrc );
-            model().schedResume( 0, m_blockedStoreSrc );
+            m_model.schedResume( 0, m_blockedStoreSrc );
             m_blockedStoreSrc = NULL;
         }
         return retval;
@@ -253,13 +236,13 @@ class Tlb : public Unit {
 
     void walk( int pid, uint64_t addr, Callback callback ) {
         Hermes::Vaddr evictAddr = m_cache.evict();
-        dbg().verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"pid=%d addr=%#" PRIx64 " evictAddr=%#" PRIx64 "\n",pid, addr, evictAddr );
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"pid=%d addr=%#" PRIx64 " evictAddr=%#" PRIx64 "\n",pid, addr, evictAddr );
 		Callback* cb = new Callback;
 		*cb = [=](){               
                 		m_cache.insert( addr );
                 		callback();
             		};
-        model().schedCallback( m_tlbMissLat_ns,cb );
+        m_model.schedCallback( m_tlbMissLat_ns,cb );
     }
 
     bool lookup( int pid, uint64_t addr  ) {
@@ -284,7 +267,7 @@ class Tlb : public Unit {
         } else {
             retval = false;
         }
-        dbg().verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"pid=%d addr=%#" PRIx64 " %s\n",pid, addr, retval ? "hit":"miss" );
+        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"pid=%d addr=%#" PRIx64 " %s\n",pid, addr, retval ? "hit":"miss" );
         return retval;
     }
 

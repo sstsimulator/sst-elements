@@ -29,21 +29,9 @@ class TrivialMemoryModel : public MemoryModel {
 
 public:
 
-   SST_ELI_REGISTER_SUBCOMPONENT_API(TrivialMemoryModel)
-
-   SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
-        TrivialMemoryModel,
-        "firefly",
-        "TrivialMemory",
-        SST_ELI_ELEMENT_VERSION(1,0,0),
-        "",
-        TrivialMemoryModel
-    )
-
-    TrivialMemoryModel( Component* comp, Params& params ) : MemoryModel(comp)  {}
-    TrivialMemoryModel( ComponentId_t id, Params& params ) : MemoryModel(id) 
+    TrivialMemoryModel( Component* comp, Params& params ) : MemoryModel(comp) 
 	{
-		m_selfLink = configureSelfLink("Nic::TrivialMemoryModel", "1 ns",
+		m_selfLink = comp->configureSelfLink("Nic::TrivialMemoryModel", "1 ns",
         new Event::Handler<TrivialMemoryModel>(this,&TrivialMemoryModel::handleSelfEvent));
 	} 
     virtual void printStatus( Output& out, int id ) { }

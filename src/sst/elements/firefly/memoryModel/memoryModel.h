@@ -22,7 +22,7 @@ public:
 
 	SST_ELI_REGISTER_SUBCOMPONENT_API(MemoryModel)
 
-   typedef std::function<void()> Callback;
+    typedef std::function<void()> Callback;
 
 #include "memOp.h"
 

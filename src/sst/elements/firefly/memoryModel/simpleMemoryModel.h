@@ -20,6 +20,8 @@
 #include <sst/core/interfaces/simpleMem.h>
 #include "ioVec.h"
 #include "memoryModel/memoryModel.h"
+#include "memoryModel/detailedInterface.h"
+#include "memReq.h"
 
 #include <queue>
 #include "../thingHeap.h"
@@ -30,9 +32,6 @@
 class SimpleMemoryModel : public MemoryModel {
 
 public:
-
-   SST_ELI_REGISTER_SUBCOMPONENT_API(SimpleMemoryModel)
-
    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         SimpleMemoryModel,
         "firefly",
@@ -72,9 +71,6 @@ public:
         { "mem_num_loads",                     "total number of loads", "count", 1},
         { "mem_num_stores",                    "total number of stores", "count", 1},
         { "mem_addrs",                         "addresses accesed", "value", 1},
-        { "detailed_num_reads",                "total number of loads", "count", 1},
-        { "detailed_num_writes",               "total number of stores", "count", 1},
-        { "detailed_req_latency",              "Running total of all latency for all requests", "count", 1},
 	)
 
 
@@ -92,7 +88,6 @@ public:
 #define DETAILED_MASK   1<<12
 
 #include "cache.h"
-#include "memReq.h"
 #include "sharedTlb.h"
 #include "unit.h"
 #include "thread.h"
@@ -105,6 +100,7 @@ public:
 #include "memUnit.h"
 #include "cacheUnit.h"
 #include "detailedUnit.h"
+
 
     class SelfEvent : public SST::Event {
       public:
@@ -124,8 +120,7 @@ public:
   public:
 	enum NIC_Thread { Send, Recv };
 
-    SimpleMemoryModel( Component* comp, Params& params ) : MemoryModel(comp) {}
-
+	SimpleMemoryModel( Component* comp, Params& params ) : MemoryModel(comp) { assert(0); }
     SimpleMemoryModel( ComponentId_t compId, Params& params ) :
 		MemoryModel( compId ), m_hostCacheUnit(NULL), m_busBridgeUnit(NULL)
 	{
@@ -179,9 +174,7 @@ public:
 		m_detailedUnit = NULL;
 		tmp = params.find<std::string>( "useDetailedModel", "no" );
 		if ( 0 == tmp.compare("yes" ) ) {
-			Params detailedParams = params.find_prefix_params("detailedModel.");
-			m_detailedUnit = loadAnonymousSubComponent<DetailedUnit>( "firefly.simpleMemory.detailedUnit","",0,
-					ComponentInfo::SHARE_NONE, detailedParams, this, &m_dbg, id );
+			m_detailedUnit = new DetailedUnit( *this, m_dbg, id );
 			useHostCache = false;
 		}
 
@@ -200,36 +193,24 @@ public:
 		}
 
 		if ( ! m_detailedUnit ) {
-			Params tmp;
-			m_memUnit = loadAnonymousSubComponent<MemUnit>( "firefly.simpleMemory.memUnit","",0,
-					ComponentInfo::SHARE_NONE, tmp, this, &m_dbg, id, memReadLat_ns, memWriteLat_ns, memNumSlots );
+			m_memUnit = new MemUnit( *this, m_dbg, id, memReadLat_ns, memWriteLat_ns, memNumSlots );
 		} else {
 			m_memUnit = static_cast<MemUnit*>(m_detailedUnit);
 		}
 
 		MuxUnit* nicMuxUnit;
         if ( useHostCache ) {
-            Params tmp;
-		    m_hostCacheUnit = loadAnonymousSubComponent<CacheUnit>( "firefly.simpleMemory.cacheUnit","",0,
-					ComponentInfo::SHARE_NONE, tmp, this, &m_dbg, id, m_memUnit, hostCacheUnitSize, hostCacheLineSize, hostCacheNumMSHR,  "host" );
-		  	 
-	        m_muxUnit = loadAnonymousSubComponent<MuxUnit>( "firefly.simpleMemory.muxUnit","",0, 
-					ComponentInfo::SHARE_NONE, tmp, this, &m_dbg, id, m_hostCacheUnit, "hostCache" );
+		    m_hostCacheUnit = new CacheUnit( *this, m_dbg, id, m_memUnit, hostCacheUnitSize, hostCacheLineSize, hostCacheNumMSHR,  "host" );
+	        m_muxUnit = new MuxUnit( *this, m_dbg, id, m_hostCacheUnit, "hostCache" );
         } else {
-            Params tmp;
-	        m_muxUnit = loadAnonymousSubComponent<MuxUnit>( "firefly.simpleMemory.muxUnit","",0, 
-					ComponentInfo::SHARE_NONE, tmp, this, &m_dbg, id, m_memUnit, "hostCache" );
+	        m_muxUnit = new MuxUnit( *this, m_dbg, id, m_memUnit, "hostCache" );
         }
 
         if ( useBusBridge ) {
 
-			Params tmp;
-			m_busBridgeUnit = loadAnonymousSubComponent<BusBridgeUnit>( "firefly.simpleMemory.busBridgeUnit","",0,
-					ComponentInfo::SHARE_NONE, tmp, this, &m_dbg, id, m_muxUnit, busBandwidth, busNumLinks, busLatency,
-					TLP_overhead, DLL_bytes, hostCacheLineSize, widgetSlots );
-
-	    	nicMuxUnit = loadAnonymousSubComponent<MuxUnit>( "firefly.simpleMemory.muxUnit","",0,
-					ComponentInfo::SHARE_NONE, tmp, this, &m_dbg, id, m_busBridgeUnit, "nic" );
+			m_busBridgeUnit = new BusBridgeUnit( *this, m_dbg, id, m_muxUnit, busBandwidth, busNumLinks, busLatency,
+                                                                TLP_overhead, DLL_bytes, hostCacheLineSize, widgetSlots );
+	    	nicMuxUnit = new MuxUnit( *this, m_dbg, id, m_busBridgeUnit, "nic" );
 
 		} else {
 	    	nicMuxUnit = m_muxUnit;
@@ -237,39 +218,34 @@ public:
 
         m_sharedTlb = new SharedTlb( *this, m_dbg, id, tlbSize, tlbPageSize, tlbMissLat_ns, numWalkers );
 		
-		Params x;
-		m_nicUnit = loadAnonymousSubComponent<NicUnit>( "firefly.simpleMemory.nicUnit","",0,
-					ComponentInfo::SHARE_NONE, x, this, &m_dbg, id );
+		m_nicUnit = new NicUnit( *this, m_dbg, id );
 
 		std::stringstream tlbName;
 		std::stringstream threadName; 
 		for ( int i = 0; i < m_numNicThreads; i++ ) {
 		
-			Unit* loadUnit = loadAnonymousSubComponent<LoadUnit>( "firefly.simpleMemory.loadUnit","",0, 
-							ComponentInfo::SHARE_NONE, x, this, &m_dbg, id, i, nicMuxUnit, nicNumLoadSlots, "nic_thread" );
+            SharedTlbUnit* tlb = new SharedTlbUnit( *this, m_dbg, id, "nic_thread", m_sharedTlb, 
+					new LoadUnit( *this, m_dbg, id, i,
+                        nicMuxUnit,
+						nicNumLoadSlots, "nic_thread" ),
 
-			Unit* storeUnit = loadAnonymousSubComponent<StoreUnit>( "firefly.simpleMemory.storeUnit","",0, 
-							ComponentInfo::SHARE_NONE, x, this, &m_dbg, id, i, nicMuxUnit, nicNumStoreSlots, "nic_thread" );
-
-            SharedTlbUnit* tlb = loadAnonymousSubComponent<SharedTlbUnit>( "firefly.simpleMemory.sharedTlbUnit","",0,
-							ComponentInfo::SHARE_NONE, x, this, &m_dbg, id, "nic_thread", m_sharedTlb, loadUnit, storeUnit, numTlbSlots, numTlbSlots );
+					new StoreUnit( *this, m_dbg, id, i,
+                        nicMuxUnit,
+						nicNumStoreSlots, "nic_thread" ),
+                        numTlbSlots, numTlbSlots 
+                        );
 
 			m_threads.push_back( 
-				loadAnonymousSubComponent<Thread>( "firefly.simpleMemory.threadUnit","",0, 
-						ComponentInfo::SHARE_NONE, x, this, "nic", &m_dbg, id, i, nicToHostMTU, tlb, tlb )	
-			);
+				new Thread( *this, "nic", m_dbg, id, i, nicToHostMTU, tlb, tlb )	
+ 			); 
 		}
 		for ( int i = 0; i < numCores; i++ ) {
 
-			Params tmp;
-			Unit* loadUnit = loadAnonymousSubComponent<LoadUnit>( "firefly.simpleMemory.loadUnit","",0, 
-						ComponentInfo::SHARE_NONE, x, this, &m_dbg,	id, i, m_muxUnit, hostNumLoadSlots, "host_thread" );
-			Unit* storeUnit = loadAnonymousSubComponent<StoreUnit>( "firefly.simpleMemory.storeUnit","",0, 
-						ComponentInfo::SHARE_NONE, x, this, &m_dbg, id, i, 	m_muxUnit, hostNumStoreSlots, "host_thread" );
-
 			m_threads.push_back( 
-				loadAnonymousSubComponent<Thread>( "firefly.simpleMemory.threadUnit","",0, 
-						ComponentInfo::SHARE_NONE, tmp, this, "host", &m_dbg, id, 64, nicToHostMTU, loadUnit, storeUnit )	
+				new Thread( *this, "host", m_dbg, id, i, 64,
+						new LoadUnit( *this, m_dbg, id, i, m_muxUnit, hostNumLoadSlots, "host_thread" ),
+						new StoreUnit( *this, m_dbg, id, i, m_muxUnit, hostNumStoreSlots, "host_thread" ) 
+				) 
 			);
 		}
 
@@ -278,7 +254,6 @@ public:
 	}
 
     virtual ~SimpleMemoryModel() {
-#if 0
         if ( m_hostCacheUnit ) {
             delete m_hostCacheUnit;
         }
@@ -287,10 +262,14 @@ public:
         }
 		delete m_sharedTlb;
 		delete m_nicUnit;
-#endif
     }
 
 	ThingHeap<SelfEvent> m_eventHeap;
+
+	void setDetailedInterface( SST::Firefly::DetailedInterface* ptr ) {
+		assert( m_detailedUnit ); 
+		static_cast<DetailedUnit*>(m_detailedUnit)->setDetailedInterface( ptr );
+	}
 
 	void schedCallback( SimTime_t delay, Callback* callback ){
 		SelfEvent* ev = m_eventHeap.alloc( );	
