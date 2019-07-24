@@ -165,7 +165,6 @@ PortControl::PortControl(ComponentId_t cid, Params& params,  Router* rif, int rt
     parent(rif),
     output(Simulation::getSimulation()->getSimulationOutput())
 {
-
     // Process the parameters
 
     // Get the port name.  For now, we only load anonymously, but when
@@ -430,7 +429,7 @@ PortControl::~PortControl() {
 
 void
 PortControl::setup() {
-	
+    if ( !connected ) return;
 	if (dlink_thresh >= 0) dynlink_timing->send(1,NULL);
     while ( init_events.size() ) {
         delete init_events.front();
@@ -440,6 +439,7 @@ PortControl::setup() {
 
 void
 PortControl::finish() {
+    if ( !connected ) return;
 
 	//std::cerr << "Link was adjusted " << width_adj_count->getCollectionCount() << " times.\n";
     // Any links that ended in an idle state need to add stats
@@ -471,6 +471,7 @@ PortControl::finish() {
 
 void
 PortControl::init(unsigned int phase) {
+    if ( !connected ) return;
     // if ( topo->getPortState(port_number) == Topology::UNCONNECTED ) return;
     if ( !connected ) return;
     Event *ev;
@@ -1274,7 +1275,6 @@ PortControl::reenablePort(Event* ev) {
 // This resets SAI metrics and calls increase/decreaseLinkWidth
 void 
 PortControl::handleSAIWindow(Event* ev) {
-	
 	SimTime_t cur_time = Simulation::getSimulation()->getCurrentSimCycle();
 	// If we are in the middle of an active state.
 	
@@ -1323,21 +1323,20 @@ PortControl::handleSAIWindow(Event* ev) {
 // TODO add delay on port, before it can transmit data again. 
 bool
 PortControl::decreaseLinkWidth() {
-// We don't want to reduce the link width below 1
-if ( cur_link_width == max_link_width )
-{
-	cur_link_width = cur_link_width/2;
-	link_bw = link_bw/2;
-	UnitAlgebra link_clock = link_bw / flit_size;
-	TimeConverter* tc = parent->getTimeConverter(link_clock);
-	output_timing->setDefaultTimeBase(tc);
-	width_adj_count->addData(1);
-	// I need to add a delay before messages can transmit on the link
-	disable_timing->send(1,NULL);
-	sai_port_disabled = true;
-	return true;
-}
-else return false;
+    // We don't want to reduce the link width below 1
+    if ( cur_link_width == max_link_width ) {
+        cur_link_width = cur_link_width/2;
+        link_bw = link_bw/2;
+        UnitAlgebra link_clock = link_bw / flit_size;
+        TimeConverter* tc = parent->getTimeConverter(link_clock);
+        output_timing->setDefaultTimeBase(tc);
+        width_adj_count->addData(1);
+        // I need to add a delay before messages can transmit on the link
+        disable_timing->send(1,NULL);
+        sai_port_disabled = true;
+        return true;
+    }
+    else return false;
 
 }
 
