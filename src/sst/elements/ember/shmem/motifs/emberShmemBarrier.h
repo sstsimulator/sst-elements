@@ -53,7 +53,7 @@ public:
             enQ_malloc( evQ, &m_addr, sizeof(long) );
         } else if ( m_phase == -1 ) {
             if ( 1 == m_my_pe ) {
-                printf("%d:%s: m_count=%d\n",m_my_pe,getMotifName().c_str(),m_count);
+                printf("%d:%s: numPes=%d m_count=%d\n",m_my_pe,getMotifName().c_str(),m_num_pes,m_count);
             }
             m_addr.at<long>(0) = 0;
             enQ_barrier_all( evQ );
