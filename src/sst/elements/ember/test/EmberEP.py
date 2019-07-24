@@ -42,15 +42,25 @@ class EmberEP( EndPoint ):
  
         built = False 
         if self.detailedModel:
+            #print nodeID,  "use detailed"
             built = self.detailedModel.build( nodeID, self.numCores )
 
         memory = None
         if built:
             if self.nicParams["useSimpleMemoryModel"] == 0 :
-                nic.addLink( self.detailedModel.getNicReadLink( ), "nicDetailedRead", "1ps" )
-                nic.addLink( self.detailedModel.getNicWriteLink( ), "nicDetailedWrite", "1ps" )
+                #print nodeID,  "addLink  detailed"
+
+                nicDetailedRead = nic.setSubComponent(  "nicDetailedRead", self.nicParams['detailedCompute.name']  )
+                nicDetailedRead.addLink( self.detailedModel.getNicReadLink(), "detailed0", "1ps" )
+
+                nicDetailedWrite = nic.setSubComponent(  "nicDetailedWrite", self.nicParams['detailedCompute.name']  )
+                nicDetailedWrite.addLink( self.detailedModel.getNicWriteLink(), "detailed0", "1ps" )
             else:
-                nic.addLink( self.detailedModel.getNicLink( ), "detailed", "1ps" )
+                nicDetailedInterface = nic.setSubComponent(  "detailedInterface", self.nicParams['simpleMemoryModel.detailedModel.name']  )
+                nicDetailedInterface.addParam("id",nodeID);
+                memIF=nicDetailedInterface.setSubComponent("memInterface", "memHierarchy.memInterface")
+                memIF.addParam("port","detailed")
+                memIF.addLink( self.detailedModel.getNicLink( ), "detailed", "1ps" )
 
             memory = sst.Component("memory" + str(nodeID), "thornhill.MemoryHeap")
             memory.addParam( "nid", nodeID )
@@ -92,7 +102,7 @@ class EmberEP( EndPoint ):
                 links = self.detailedModel.getThreadLinks( x )
                 cpuNum = 0
                 for link in links: 
-                    dc = os.setSubComponent( "detailedCompute", "thornhill.SingleThread" )
+                    dc = os.setSubComponent( "detailedCompute", self.driverParams["hermesParams.detailedCompute.name"] )
                     dc.addLink(link,"detailed"+str(cpuNum),"1ps")
                     cpuNum = cpuNum + 1
 
