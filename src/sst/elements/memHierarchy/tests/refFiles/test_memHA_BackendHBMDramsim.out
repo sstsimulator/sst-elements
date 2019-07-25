@@ -1,11 +1,3 @@
-== Loading device model file 'ddr_device.ini' == 
-== Loading system model file 'ddr_system.ini' == 
-WARNING: UNKNOWN KEY 'DEBUG_TRANS_FLOW' IN INI FILE
-===== MemorySystem 0 =====
-CH. 0 TOTAL_STORAGE : 2048MB | 1 Ranks | 16 Devices per rank
-===== MemorySystem 1 =====
-CH. 1 TOTAL_STORAGE : 2048MB | 1 Ranks | 16 Devices per rank
-DRAMSim2 Clock Frequency =1Hz, CPU Clock Frequency=1Hz
 Channel 0 statistics
  Total Return Transactions: 32 (1024 bytes) aggregate average bandwidth 0.046GB/s
  Rank 0 -  Reads: 32 (1024 bytes) Writes: 0 (0 bytes)
