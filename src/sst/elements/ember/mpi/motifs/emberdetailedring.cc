@@ -30,19 +30,10 @@ EmberDetailedRingGenerator::EmberDetailedRingGenerator(SST::ComponentId_t id, Pa
 	m_stream_n = params.find<int32_t>("arg.stream_n", 1000);
 	m_printRank = params.find<int32_t>("arg.printRank", 0);
 
-	std::string rankList = params.find<std::string>("arg.detailedCompute","");
+	m_rankList = params.find<std::string>("arg.detailedCompute","");
+    m_computeTime = params.find<int32_t>("arg.computeTime", 0);
+    m_computeWindow = params.find<int32_t>("arg.computeWindow", m_computeTime);
 
-	if ( ! rankList.empty() && findNum( rank(), rankList ) ) {
-		printf("Rank %d using detailed compute\n",rank());
-		m_computeFunc = &EmberDetailedRingGenerator::computeDetailed;
-    } else {
-        m_loopIndex = 0;
-        m_sendBuf = MemAddr( 0x1000, NULL );
-        m_recvBuf = MemAddr( 0x1000 + m_messageSize, NULL);
-        m_computeFunc = &EmberDetailedRingGenerator::computeSimple;
-	    m_computeTime = params.find<int32_t>("arg.computeTime", 0);
-	    m_computeWindow = params.find<int32_t>("arg.computeWindow", m_computeTime);
-    }
 }
 
 std::string EmberDetailedRingGenerator::getComputeModelName()
@@ -85,14 +76,21 @@ bool EmberDetailedRingGenerator::generate( std::queue<EmberEvent*>& evQ)
     }
 
     if ( -1 == m_loopIndex ) {
-        verbose( CALL_INFO, 1, 0, "rank=%d size=%d\n", rank(), size());
-		enQ_memAlloc( evQ, &m_sendBuf, m_messageSize );
-		enQ_memAlloc( evQ, &m_recvBuf, m_messageSize );
-		enQ_memAlloc( evQ, &m_streamBuf, m_stream_n * 8 * 3);
 		++m_loopIndex;
-		return false;
+		if ( ! m_rankList.empty() && findNum( rank(), m_rankList ) ) {
+			printf("Rank %d using detailed compute\n",rank());
+			m_computeFunc = &EmberDetailedRingGenerator::computeDetailed;
+        	verbose( CALL_INFO, 1, 0, "rank=%d size=%d\n", rank(), size());
+			enQ_memAlloc( evQ, &m_sendBuf, m_messageSize );
+			enQ_memAlloc( evQ, &m_recvBuf, m_messageSize );
+			enQ_memAlloc( evQ, &m_streamBuf, m_stream_n * 8 * 3);
+			return false;
+    	} else {
+        	m_sendBuf = MemAddr( 0x1000, NULL );
+        	m_recvBuf = MemAddr( 0x1000 + m_messageSize, NULL);
+        	m_computeFunc = &EmberDetailedRingGenerator::computeSimple;
+    	}
 	}
-
 
 	verbose( CALL_INFO, 2, 1, "sendbuff=%" PRIx64 "\n",m_sendBuf.getSimVAddr());
 	verbose( CALL_INFO, 2, 1, "recvbuff=%" PRIx64 "\n",m_recvBuf.getSimVAddr());

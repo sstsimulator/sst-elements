@@ -76,6 +76,7 @@ private:
     bool findNum( int num, std::string list );
     
     MessageRequest  m_req[2];
+	std::string m_rankList;
 	uint32_t m_messageSize;
 	uint32_t m_iterations;
     uint32_t m_loopIndex;
