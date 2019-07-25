@@ -178,10 +178,10 @@ PortControl::PortControl(ComponentId_t cid, Params& params,  Router* rif, int rt
     // Link bandwidth
     link_bw = params.find<UnitAlgebra>("link_bw", found);
     if ( !found ) {
-        merlin_abort.fatal(CALL_INFO_LONG, 1, "link_bw must be specified\n");
+        merlin_abort.fatal(CALL_INFO_LONG, 1, "PortControl: link_bw must be specified\n");
     }
     if ( !link_bw.hasUnits("b/s") && !link_bw.hasUnits("B/s") ) {
-        merlin_abort.fatal(CALL_INFO,-1,"link_bw must be specified in either "
+        merlin_abort.fatal(CALL_INFO,-1,"PortControl: link_bw must be specified in either "
                            "b/s or B/s: %s\n",link_bw.toStringBestSI().c_str());
     }
     if ( link_bw.hasUnits("B/s") ) {
@@ -191,10 +191,10 @@ PortControl::PortControl(ComponentId_t cid, Params& params,  Router* rif, int rt
     // Flit size
     flit_size = params.find<UnitAlgebra>("flit_size", found);
     if ( !found ) {
-        merlin_abort.fatal(CALL_INFO_LONG, 1, "flit_size must be specified\n");
+        merlin_abort.fatal(CALL_INFO_LONG, 1, "PortControl: flit_size must be specified\n");
     }
     if ( !flit_size.hasUnits("b") && !flit_size.hasUnits("B") ) {
-        merlin_abort.fatal(CALL_INFO,-1,"flit_size must be specified in either "
+        merlin_abort.fatal(CALL_INFO,-1,"PortControl: flit_size must be specified in either "
                            "bits (b) or bytes (B): %s\n",flit_size.toStringBestSI().c_str());
     }
     if ( flit_size.hasUnits("B") ) {
@@ -247,10 +247,10 @@ PortControl::PortControl(ComponentId_t cid, Params& params,  Router* rif, int rt
     
     input_buf_size = params.find<UnitAlgebra>("input_buf_size",found);
     if ( !found ) {
-        merlin_abort.fatal(CALL_INFO_LONG, 1, "input_buf_size must be specified\n");
+        merlin_abort.fatal(CALL_INFO_LONG, 1, "PortContol: input_buf_size must be specified\n");
     }
-    if ( input_buf_size.hasUnits("b") && !input_buf_size.hasUnits("B") ) {
-        merlin_abort.fatal(CALL_INFO,-1,"input_buf_size must be specified in either "
+    if ( !input_buf_size.hasUnits("b") && !input_buf_size.hasUnits("B") ) {
+        merlin_abort.fatal(CALL_INFO,-1,"PortControl: input_buf_size must be specified in either "
                            "bits (b) or bytes (B): %s\n",input_buf_size.toStringBestSI().c_str());
     }
     if ( input_buf_size.hasUnits("B") ) {
@@ -259,10 +259,10 @@ PortControl::PortControl(ComponentId_t cid, Params& params,  Router* rif, int rt
     
     output_buf_size = params.find<UnitAlgebra>("output_buf_size",found);
     if ( !found ) {
-        merlin_abort.fatal(CALL_INFO_LONG, 1, "output_buf_size must be specified\n");
+        merlin_abort.fatal(CALL_INFO_LONG, 1, "PortControl: output_buf_size must be specified\n");
     }
     if ( output_buf_size.hasUnits("b") && !output_buf_size.hasUnits("B") ) {
-        merlin_abort.fatal(CALL_INFO,-1,"output_buf_size must be specified in either "
+        merlin_abort.fatal(CALL_INFO,-1,"PortControl: output_buf_size must be specified in either "
                            "bits (b) or bytes (B): %s\n",output_buf_size.toStringBestSI().c_str());
     }
     if ( output_buf_size.hasUnits("B") ) {
