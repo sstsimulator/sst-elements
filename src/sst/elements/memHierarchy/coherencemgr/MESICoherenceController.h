@@ -17,7 +17,7 @@
 #define MESICOHERENCECONTROLLER_H
 
 #include <iostream>
-
+#include <array>
 
 #include "sst/elements/memHierarchy/coherencemgr/coherenceController.h"
 

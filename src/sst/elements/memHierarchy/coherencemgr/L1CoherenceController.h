@@ -13,13 +13,14 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef L1COHERENCECONTROLLER_H
-#define L1COHERENCECONTROLLER_H
+#ifndef MEMHIERARCHY_L1COHERENCECONTROLLER_H
+#define MEMHIERARCHY_L1COHERENCECONTROLLER_H
 
 #include <iostream>
-
+#include <array>
 
 #include "sst/elements/memHierarchy/coherencemgr/coherenceController.h"
+#include "sst/elements/memHierarchy/memTypes.h"
 
 
 namespace SST { namespace MemHierarchy {

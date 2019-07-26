@@ -48,7 +48,7 @@ public:
     /***** Constructor & destructor *****/
     CoherenceController(Component * comp, Params &params);
     CoherenceController(ComponentId_t id, Params &params, Params& ownerParams, bool prefetch);
-    ~CoherenceController() {}
+    virtual ~CoherenceController() {}
 
     /* Return whether a line access will be a hit */
     virtual bool isCacheHit(MemEvent* event) =0;
