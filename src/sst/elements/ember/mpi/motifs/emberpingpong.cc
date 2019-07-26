@@ -39,17 +39,11 @@ EmberPingPongGenerator::EmberPingPongGenerator(SST::ComponentId_t id, Params& pa
     m_blockingRecv = (uint32_t) params.find("arg.blockingRecv", true);;
     m_waitall = (uint32_t) params.find("arg.waitall", false);
 
-    if ( 0 == rank() )  {
-        output("rank2=%d messageSize=%d iterations=%d\n",m_rank2, m_messageSize, m_iterations);
-    }
-    if ( ! ( 0 == rank() || m_rank2 == rank() )  ) {
-        m_loopIndex = m_iterations;
-    } 
 }
 
 bool EmberPingPongGenerator::generate( std::queue<EmberEvent*>& evQ)
 { 
-    if ( m_loopIndex == m_iterations ) {
+    if ( m_loopIndex == m_iterations || ! ( 0 == rank() || m_rank2 == rank() ) ) {
         if ( 0 == rank()) {
             double totalTime = (double)(m_stopTime - m_startTime)/1000000000.0;
 
@@ -71,6 +65,7 @@ bool EmberPingPongGenerator::generate( std::queue<EmberEvent*>& evQ)
         verbose(CALL_INFO, 1, 0, "rank=%d size=%d\n", rank(), size());
 
         if ( 0 == rank() ) {
+        	output("rank2=%d messageSize=%d iterations=%d\n",m_rank2, m_messageSize, m_iterations);
             enQ_getTime( evQ, &m_startTime );
         }
     }

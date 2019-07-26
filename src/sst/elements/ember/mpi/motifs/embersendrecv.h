@@ -67,14 +67,14 @@ public:
         EmberMessagePassingGenerator(id, params, "Null" ), m_phase(Init)
 	{
 			m_messageSize = 1024;
-		    m_sendBuf = memAlloc(m_messageSize * sizeofDataType(DATA_TYPE) );
-    		m_recvBuf = memAlloc(m_messageSize * sizeofDataType(DATA_TYPE) );
    	}
 
     bool generate( std::queue<EmberEvent*>& evQ){
 		assert( size() == 2 );
 		switch ( m_phase ) {
 			case Init:
+		    	m_sendBuf = memAlloc(m_messageSize * sizeofDataType(DATA_TYPE) );
+    			m_recvBuf = memAlloc(m_messageSize * sizeofDataType(DATA_TYPE) );
 				enQ_sendrecv( evQ, 
 							m_sendBuf, m_messageSize, DATA_TYPE, destRank(), 0xdeadbeef,
 							m_recvBuf, m_messageSize, DATA_TYPE, srcRank(),  0xdeadbeef,

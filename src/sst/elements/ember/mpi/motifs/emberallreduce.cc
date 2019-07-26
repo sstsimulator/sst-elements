@@ -38,9 +38,6 @@ EmberAllreduceGenerator::EmberAllreduceGenerator(SST::ComponentId_t id,
 	} else {
 		m_op = Hermes::MP::SUM;
 	}	
-	memSetBacked();
-	m_sendBuf = memAlloc(sizeofDataType(DOUBLE));
-	m_recvBuf = memAlloc(sizeofDataType(DOUBLE));
 }
 
 bool EmberAllreduceGenerator::generate( std::queue<EmberEvent*>& evQ) {
@@ -55,6 +52,9 @@ bool EmberAllreduceGenerator::generate( std::queue<EmberEvent*>& evQ) {
         return true;
     }
     if ( 0 == m_loopIndex ) {
+		memSetBacked();
+		m_sendBuf = memAlloc(sizeofDataType(DOUBLE));
+		m_recvBuf = memAlloc(sizeofDataType(DOUBLE));
         enQ_getTime( evQ, &m_startTime );
     }
 

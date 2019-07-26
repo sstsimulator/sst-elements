@@ -57,7 +57,7 @@ EmberSweep3DGenerator::EmberSweep3DGenerator(SST::ComponentId_t id, Params& para
 
 	assert(nsCompute != 0);
 
-	configure();
+	//configure();
 }
 
 void EmberSweep3DGenerator::configure()
@@ -98,6 +98,7 @@ void EmberSweep3DGenerator::configure()
 bool EmberSweep3DGenerator::generate( std::queue<EmberEvent*>& evQ) {
 
 	if( 0 == m_loopIndex && 0 == m_InnerLoopIndex ) {
+		configure();
 		verbose(CALL_INFO, 2, 0, "rank=%d size=%d\n", rank(), size());
 	}
 
