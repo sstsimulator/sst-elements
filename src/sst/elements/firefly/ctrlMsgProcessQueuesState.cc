@@ -87,6 +87,7 @@ void ProcessQueuesState::setVars( VirtNic* nic, Info* info, MemoryBase* mem,
     snprintf(buffer,100,"@t:%d:%d:CtrlMsg::ProcessQueuesState::@p():@l ",
                             m_nic->getRealNodeId(), m_info->worldRank());
     dbg().setPrefix(buffer);
+    dbg().debug(CALL_INFO,1,1,"%s\n",m_memHeapLink ? "use memHeap":"\n");
 }
 
 void ProcessQueuesState:: finish() {
@@ -96,21 +97,23 @@ void ProcessQueuesState:: finish() {
 
 void ProcessQueuesState::enterInit( bool haveGlobalMemHeap )
 {
+    dbg().debug(CALL_INFO,1,1,"%s\n",haveGlobalMemHeap?"use global memory heap":"");
+
     size_t length = 0;
     length += MaxPostedShortBuffers * (sizeof(MatchHdr) + 16 ) & ~15;
     length += MaxPostedShortBuffers * (shortMsgLength() + 16 ) & ~15;
     length += MaxPostedShortBuffers * (sizeof(MatchHdr) + 16 ) & ~15;
     length += MaxPostedShortBuffers * (shortMsgLength() + 16 ) & ~15;
 
-    std::function<void(uint64_t)> callback = [=](uint64_t value){
-		enterInit_1( value, length );      
+    std::function<void(uint64_t)> callback = [=](uint64_t addr){
+		enterInit_1( addr, length );      
         return 0;
     };
 
     if ( haveGlobalMemHeap ) {
         memHeapAlloc( length, callback );
     } else {
-        enterInit_1( 0x1000, length );
+        enterInit_1( 0xf0000000, length );
     }
 }
 
@@ -204,7 +207,6 @@ void ProcessQueuesState::processSend_2( _CommReq* req )
         req->hdr().key = genGetKey();
 
         GetInfo* info = new GetInfo;
-
 
         info->req = req;
 
