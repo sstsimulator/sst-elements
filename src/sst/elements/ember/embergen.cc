@@ -24,7 +24,8 @@ EmberGenerator::EmberGenerator( Component* owner, Params& params,
     SubComponent(owner),
     m_detailedCompute( NULL ),
     m_dataMode( NoBacking ),
-    m_motifName( name )
+    m_motifName( name ),
+    m_curVirtAddr( 0x1000 )
 {
 	EmberEngine* ee = static_cast<EmberEngine*>(owner);
     m_output = ee->getOutput();
