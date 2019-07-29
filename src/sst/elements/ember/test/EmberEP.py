@@ -32,23 +32,35 @@ class EmberEP( EndPoint ):
             nicComponentName = self.nicParams['nicComponent']
 
         nic = sst.Component( "nic" + str(nodeID), nicComponentName )
+        rtrLink = nic.setSubComponent( "rtrLink", "merlin.linkcontrol" )
+        rtrLink.addParams( self.nicParams )
 
         nic.addParams( self.nicParams )
         nic.addParams( extraKeys)
         nic.addParam( "nid", nodeID )
-        retval = (nic, "rtr", sst.merlin._params["link_lat"] )
+        retval = (rtrLink, "rtr", sst.merlin._params["link_lat"] )
  
         built = False 
         if self.detailedModel:
+            #print nodeID,  "use detailed"
             built = self.detailedModel.build( nodeID, self.numCores )
 
         memory = None
         if built:
             if self.nicParams["useSimpleMemoryModel"] == 0 :
-                nic.addLink( self.detailedModel.getNicReadLink( ), "nicDetailedRead", "1ps" )
-                nic.addLink( self.detailedModel.getNicWriteLink( ), "nicDetailedWrite", "1ps" )
+                #print nodeID,  "addLink  detailed"
+
+                nicDetailedRead = nic.setSubComponent(  "nicDetailedRead", self.nicParams['detailedCompute.name']  )
+                nicDetailedRead.addLink( self.detailedModel.getNicReadLink(), "detailed0", "1ps" )
+
+                nicDetailedWrite = nic.setSubComponent(  "nicDetailedWrite", self.nicParams['detailedCompute.name']  )
+                nicDetailedWrite.addLink( self.detailedModel.getNicWriteLink(), "detailed0", "1ps" )
             else:
-                nic.addLink( self.detailedModel.getNicLink( ), "detailed", "1ps" )
+                nicDetailedInterface = nic.setSubComponent(  "detailedInterface", self.nicParams['simpleMemoryModel.detailedModel.name']  )
+                nicDetailedInterface.addParam("id",nodeID);
+                memIF=nicDetailedInterface.setSubComponent("memInterface", "memHierarchy.memInterface")
+                memIF.addParam("port","detailed")
+                memIF.addLink( self.detailedModel.getNicLink( ), "detailed", "1ps" )
 
             memory = sst.Component("memory" + str(nodeID), "thornhill.MemoryHeap")
             memory.addParam( "nid", nodeID )
@@ -63,15 +75,35 @@ class EmberEP( EndPoint ):
         # end
 
         for x in xrange(self.numCores):
-            ep = sst.Component("nic" + str(nodeID) + "core" + str(x) +
-                                            "_EmberEP", "ember.EmberEngine")
+            ep = sst.Component("nic" + str(nodeID) + "core" + str(x) + "_EmberEP", "ember.EmberEngine")
+
+            os = ep.setSubComponent( "OS", "firefly.hades" )
+            for key, value in self.driverParams.items():
+                if key.startswith("hermesParams."):
+                    key = key[key.find('.')+1:] 
+                    #print key, value
+                    os.addParam( key,value)
+
+            virtNic = os.setSubComponent( "virtNic", "firefly.VirtNic" )
+
+            proto = os.setSubComponent( "proto", "firefly.CtrlMsgProto" )
+            process = proto.setSubComponent( "process", "firefly.ctrlMsg" )
+
+            prefix = "hermesParams.ctrlMsg."
+            for key, value in self.driverParams.items():
+                if key.startswith(prefix):
+                    key = key[len(prefix):] 
+                    #print key, value
+                    proto.addParam( key,value)
+                    process.addParam( key,value)
 
             ep.addParams(self.motifs)
             if built:
                 links = self.detailedModel.getThreadLinks( x )
                 cpuNum = 0
                 for link in links: 
-                    ep.addLink(link,"detailed"+str(cpuNum),"1ps")
+                    dc = os.setSubComponent( "detailedCompute", self.driverParams["hermesParams.detailedCompute.name"] )
+                    dc.addLink(link,"detailed"+str(cpuNum),"1ps")
                     cpuNum = cpuNum + 1
 
             # Create a motif log only for the desired list of nodes (endpoints)
@@ -108,11 +140,11 @@ class EmberEP( EndPoint ):
                     print "printStats for node {0}".format(id)
                     ep.addParams( {'motif1.printStats': 1} )
 
-            osName = self.driverParams['os.name']
-            ep.addParams( {osName + '.netId': nodeID } )
-            ep.addParams( {osName + '.netMapId': self.nidMap[ nodeID ] } )
-            ep.addParams( {osName + '.netMapSize': self.numNids } )
-            ep.addParams( {osName + '.coreId': x } )
+            os.addParams( {'netMapName': 'Ember' + str(self.driverParams['jobId']) } )
+            os.addParams( {'netId': nodeID } )
+            os.addParams( {'netMapId': self.nidMap[ nodeID ] } )
+            os.addParams( {'netMapSize': self.numNids } )
+            os.addParams( {'coreId': x } )
 
             nicLink = sst.Link( "nic" + str(nodeID) + "core" + str(x) + "_Link"  )
             nicLink.setNoCut()
@@ -122,17 +154,15 @@ class EmberEP( EndPoint ):
 
             #ep.addLink(nicLink, "nic", self.nicParams["nic2host_lat"] )
             #nic.addLink(nicLink, "core" + str(x), self.nicParams["nic2host_lat"] )
-            ep.addLink(nicLink, "nic", "1ns" )
-            nic.addLink(nicLink, "core" + str(x), "1ns" )
+            nicLink.connect( (virtNic,'nic','1ns' ),(nic,'core'+str(x),'1ns'))
 
-            ep.addLink(loopLink, "loop", "1ns")
-            loopBack.addLink(loopLink, "core" + str(x), "1ns")
+            loopLink.connect( (process,'loop','1ns' ),(loopBack,'core'+str(x),'1ns'))
 
             if built:
                 memoryLink = sst.Link( "memory" + str(nodeID) + "core" + str(x) + "_Link"  )
                 memoryLink.setNoCut()
 
-                ep.addLink(memoryLink, "memoryHeap", "0 ps")
-                memory.addLink(memoryLink, "detailed" + str(x), "0 ns")
+                ml = os.setSubComponent( "memoryHeap", "thornhill.MemoryHeapLink" )
+                memoryLink.connect( (memory,"detailed" + str(x), "0 ns" ),(ml,"memoryHeap", "0 ps"))
 
         return retval

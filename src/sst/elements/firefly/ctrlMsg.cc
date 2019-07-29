@@ -26,21 +26,18 @@ using namespace SST::Firefly;
 using namespace SST;
 using namespace SST::Firefly::CtrlMsg;
 
-API::API( Component* owner, Params& params ) : 
-    ProtocolAPI( owner ), m_memHeapLink(NULL)
+API::API( ComponentId_t id, Params& params ) : 
+    ProtocolAPI( id ), m_memHeapLink(NULL)
 {
 
     m_dbg_level = params.find<uint32_t>("verboseLevel",0);
     m_dbg_mask = params.find<int32_t>("verboseMask",-1);
 
-    m_dbg.init("@t:CtrlMsg::@p():@l ",
-        m_dbg_level,
-        m_dbg_mask,
-        Output::STDOUT );
+    m_dbg.init("@t:CtrlMsg::@p():@l ", m_dbg_level, m_dbg_mask, Output::STDOUT );
 
-    m_processQueuesState = dynamic_cast<ProcessQueuesState*>( owner->loadSubComponent( "firefly.ctrlMsg", owner, params) );
+    m_processQueuesState = loadUserSubComponent<ProcessQueuesState>( "process");
 
-    m_mem = new Memory( owner, params );
+    m_mem = loadAnonymousSubComponent<Memory>( "firefly.ctrlMsgMemory", "", 0, ComponentInfo::SHARE_NONE, params );
     static_cast<Memory*>(m_mem)->setOutput( &m_dbg );
 
     m_sendStateDelay = params.find<uint64_t>( "sendStateDelay_ps", 0 );

@@ -30,8 +30,8 @@
 
 using namespace SST::Ember;
 
-EmberCMT1DGenerator::EmberCMT1DGenerator(SST::Component* owner, Params& params) :
-	EmberMessagePassingGenerator(owner, params, "CMT1D"), 
+EmberCMT1DGenerator::EmberCMT1DGenerator(SST::ComponentId_t id, Params& params) :
+	EmberMessagePassingGenerator(id, params, "CMT1D"), 
 	m_loopIndex(0)
 {
     	iterations = (uint32_t) params.find("arg.iterations", 1);

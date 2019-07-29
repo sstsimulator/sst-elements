@@ -19,8 +19,8 @@
 
 using namespace SST::Ember;
 
-EmberHalo3DSVGenerator::EmberHalo3DSVGenerator(SST::Component* owner, Params& params) :
-	EmberMessagePassingGenerator(owner, params, "Halo3DSV"),
+EmberHalo3DSVGenerator::EmberHalo3DSVGenerator(SST::ComponentId_t id, Params& params) :
+	EmberMessagePassingGenerator(id, params, "Halo3DSV"),
 	m_loopIndex(0)
 {
 	nx  = (uint32_t) params.find("arg.nx", 100);

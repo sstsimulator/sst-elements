@@ -24,9 +24,9 @@ static void test(void* a, void* b, int* len, PayloadDataType* ) {
 	printf("%s() len=%d\n",__func__,*len);
 }
 
-EmberAllreduceGenerator::EmberAllreduceGenerator(SST::Component* owner,
+EmberAllreduceGenerator::EmberAllreduceGenerator(SST::ComponentId_t id,
                                             Params& params) :
-	EmberMessagePassingGenerator(owner, params, "Allreduce"),
+	EmberMessagePassingGenerator(id, params, "Allreduce"),
     m_loopIndex(0)
 {
 
@@ -38,9 +38,6 @@ EmberAllreduceGenerator::EmberAllreduceGenerator(SST::Component* owner,
 	} else {
 		m_op = Hermes::MP::SUM;
 	}	
-	memSetBacked();
-	m_sendBuf = memAlloc(sizeofDataType(DOUBLE));
-	m_recvBuf = memAlloc(sizeofDataType(DOUBLE));
 }
 
 bool EmberAllreduceGenerator::generate( std::queue<EmberEvent*>& evQ) {
@@ -55,6 +52,9 @@ bool EmberAllreduceGenerator::generate( std::queue<EmberEvent*>& evQ) {
         return true;
     }
     if ( 0 == m_loopIndex ) {
+		memSetBacked();
+		m_sendBuf = memAlloc(sizeofDataType(DOUBLE));
+		m_recvBuf = memAlloc(sizeofDataType(DOUBLE));
         enQ_getTime( evQ, &m_startTime );
     }
 

@@ -25,21 +25,21 @@ namespace Ember {
 
 class EmberShmemBarrierGenerator : public EmberShmemGenerator {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemBarrierGenerator,
         "ember",
         "ShmemBarrierMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM barrier",
-        "SST::Ember::EmberGenerator"
+        SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS(
-    )
+    SST_ELI_DOCUMENT_PARAMS()
 
 public:
-	EmberShmemBarrierGenerator(SST::Component* owner, Params& params) :
-		EmberShmemGenerator(owner, params, "ShmemBarrier" ), m_phase(-2) 
+	EmberShmemBarrierGenerator(SST::Component* owner, Params& params) : EmberShmemGenerator(owner, params, "" ) {}
+	EmberShmemBarrierGenerator(SST::ComponentId_t id, Params& params) :
+		EmberShmemGenerator(id, params, "ShmemBarrier" ), m_phase(-2) 
 	{ 
         m_count = (uint32_t) params.find("arg.iterations", 1);
     }
@@ -53,7 +53,7 @@ public:
             enQ_malloc( evQ, &m_addr, sizeof(long) );
         } else if ( m_phase == -1 ) {
             if ( 1 == m_my_pe ) {
-                printf("%d:%s: m_count=%d\n",m_my_pe,getMotifName().c_str(),m_count);
+                printf("%d:%s: numPes=%d m_count=%d\n",m_my_pe,getMotifName().c_str(),m_num_pes,m_count);
             }
             m_addr.at<long>(0) = 0;
             enQ_barrier_all( evQ );

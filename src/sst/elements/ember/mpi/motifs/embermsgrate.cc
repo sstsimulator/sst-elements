@@ -21,8 +21,8 @@
 
 using namespace SST::Ember;
 
-EmberMsgRateGenerator::EmberMsgRateGenerator(SST::Component* owner, Params& params) :
-	EmberMessagePassingGenerator(owner, params, "MsgRate"),
+EmberMsgRateGenerator::EmberMsgRateGenerator(SST::ComponentId_t id, Params& params) :
+	EmberMessagePassingGenerator(id, params, "MsgRate"),
     m_startTime( 0 ),
     m_stopTime( 0 ),
     m_totalTime( 0 ),

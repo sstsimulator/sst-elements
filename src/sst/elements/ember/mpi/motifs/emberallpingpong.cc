@@ -21,9 +21,9 @@ using namespace SST::Ember;
 
 #define TAG 0xDEADBEEF
 
-EmberAllPingPongGenerator::EmberAllPingPongGenerator(SST::Component* owner,
+EmberAllPingPongGenerator::EmberAllPingPongGenerator(SST::ComponentId_t id,
                                             Params& params) :
-	EmberMessagePassingGenerator(owner, params, "AllPingPong"),
+	EmberMessagePassingGenerator(id, params, "AllPingPong"),
     m_loopIndex(0)
 {
 	m_iterations = (uint32_t) params.find("arg.iterations", 1);

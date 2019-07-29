@@ -25,13 +25,13 @@ namespace Ember {
 class EmberNullGenerator : public EmberMessagePassingGenerator {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberNullGenerator,
         "ember",
         "NullMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Performs an idle on the node, no traffic can be generated.",
-        "SST::Ember::EmberGenerator"
+        SST::Ember::EmberGenerator
     )
 
     SST_ELI_DOCUMENT_PARAMS(
@@ -64,6 +64,9 @@ public:
 public:
 	EmberNullGenerator(SST::Component* owner, Params& params) :
 		EmberMessagePassingGenerator(owner, params, "Null" ) 
+	{ }
+	EmberNullGenerator(SST::ComponentId_t id, Params& params) :
+		EmberMessagePassingGenerator(id, params, "Null" ) 
 	{ }
 
     bool generate( std::queue<EmberEvent*>& evQ) 

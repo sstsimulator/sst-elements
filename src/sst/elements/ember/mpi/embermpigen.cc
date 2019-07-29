@@ -21,15 +21,9 @@ using namespace SST;
 using namespace SST::Ember;
 
 EmberMessagePassingGenerator::EmberMessagePassingGenerator( 
-            Component* owner, Params& params, std::string name ) :
-    EmberGenerator(owner, params, name )
-{
-	m_mpi = static_cast<EmberMpiLib*>(getLib("mpi"));
-	assert(m_mpi);
-	m_mpi->initOutput( &getOutput() );
-
-	setVerbosePrefix( rank() );
-    
+            ComponentId_t id, Params& params, std::string name ) :
+    EmberGenerator(id, params, name )
+{ 
     Params mapParams = params.find_prefix_params("rankmap.");
     std::string rankMapModule = params.find<std::string>("rankmapper", "ember.LinearMap");
 
@@ -39,8 +33,7 @@ EmberMessagePassingGenerator::EmberMessagePassingGenerator(
     }
     //end->NetworkSim
 
-    m_rankMap = dynamic_cast<EmberRankMap*>(
-			owner->loadModuleWithComponent(rankMapModule, owner, mapParams));
+    m_rankMap = dynamic_cast<EmberRankMap*>( loadModule(rankMapModule,mapParams) );
 		
     if(NULL == m_rankMap) {
         std::cerr << "Error: Unable to load rank map scheme: \'"
@@ -49,8 +42,14 @@ EmberMessagePassingGenerator::EmberMessagePassingGenerator(
     }
 }
 
+void EmberMessagePassingGenerator::setup() {
+	m_mpi = static_cast<EmberMpiLib*>( getLib("mpi") );
+	assert(m_mpi);
+	m_mpi->initOutput( &getOutput() );
+	setVerbosePrefix( rank() );
+}
+
 EmberMessagePassingGenerator::~EmberMessagePassingGenerator()
 {
     verbose(CALL_INFO, 2, 0, "\n");
-	delete m_rankMap;
 }

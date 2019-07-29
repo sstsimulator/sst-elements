@@ -57,13 +57,14 @@ class MemoryBase;
 class ProcessQueuesState : public SubComponent
 {
   public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_API( SST::Firefly::CtrlMsg::ProcessQueuesState )
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         ProcessQueuesState,
         "firefly",
         "ctrlMsg",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "",
-        ""
+        SST::Firefly::CtrlMsg::ProcessQueuesState
     )
 
     SST_ELI_DOCUMENT_PARAMS(
@@ -136,7 +137,8 @@ class ProcessQueuesState : public SubComponent
 
 
   public:
-    ProcessQueuesState( Component* owner, Params& params );
+    ProcessQueuesState( Component* comp, Params& params ) : SubComponent(comp) {} 
+    ProcessQueuesState( ComponentId_t id, Params& params );
     ~ProcessQueuesState();
     void setup() {}
     void finish();

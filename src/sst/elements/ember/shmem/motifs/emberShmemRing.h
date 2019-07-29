@@ -28,8 +28,9 @@ template< class TYPE >
 class EmberShmemRingGenerator : public EmberShmemGenerator {
 
 public:
-	EmberShmemRingGenerator(SST::Component* owner, Params& params) :
-		EmberShmemGenerator(owner, params, "ShmemRing" ), m_phase(-2) 
+	EmberShmemRingGenerator(SST::Component* owner, Params& params) :  EmberShmemGenerator(owner, params, "" ) {}
+	EmberShmemRingGenerator(SST::ComponentId_t id, Params& params) : 
+		EmberShmemGenerator(id, params, "ShmemRing" ), m_phase(-2) 
 	{ 
 		m_iterations = (uint32_t) params.find("arg.iterations", 1);
 		m_count = (uint32_t) params.find("arg.count", 1) - 1;
@@ -107,22 +108,22 @@ public:
 };
 class EmberShmemRingIntGenerator : public EmberShmemRingGenerator<int> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemRingIntGenerator,
         "ember",
         "ShmemRingIntMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM ring2 int",
-        "SST::Ember::EmberGenerator"
-
+        SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS(
-    )
+    SST_ELI_DOCUMENT_PARAMS()
 
 public:
     EmberShmemRingIntGenerator( SST::Component* owner, Params& params ) :
         EmberShmemRingGenerator(owner,  params) { }
+    EmberShmemRingIntGenerator( SST::ComponentId_t id, Params& params ) :
+        EmberShmemRingGenerator(id,  params) { }
 };
 
 }

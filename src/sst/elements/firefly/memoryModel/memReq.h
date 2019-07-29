@@ -12,6 +12,10 @@
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
+//
+
+#ifndef COMPONENTS_FIREFLY_SIMPLE_MEMORY_MODEL_MEM_REQ_H
+#define COMPONENTS_FIREFLY_SIMPLE_MEMORY_MODEL_MEM_REQ_H
 
 struct MemReq {
     MemReq( Hermes::Vaddr addr, size_t length, int pid = -1) :
@@ -21,3 +25,5 @@ struct MemReq {
 	size_t length;
     int     pid;
 };
+
+#endif

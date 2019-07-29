@@ -23,8 +23,8 @@ using namespace SST::Firefly;
 using namespace SST;
 
 
-ProcessQueuesState::ProcessQueuesState( Component* owner, Params& params ) : 
-        SubComponent( owner ),
+ProcessQueuesState::ProcessQueuesState( ComponentId_t id, Params& params ) : 
+        SubComponent( id ),
 
         m_getKey( 0 ),
         m_rspKey( 0 ),
@@ -45,7 +45,7 @@ ProcessQueuesState::ProcessQueuesState( Component* owner, Params& params ) :
     m_statPstdRcv = registerStatistic<uint64_t>("posted_receive_list");
     m_statRcvdMsg = registerStatistic<uint64_t>("received_msg_list");
 
-    m_msgTiming = new MsgTiming( parent, params, m_dbg );
+    m_msgTiming = loadAnonymousSubComponent< MsgTiming >( "firefly.msgTiming", "", 0, ComponentInfo::SHARE_NONE, params );
 
     std::stringstream ss;
     ss << this;

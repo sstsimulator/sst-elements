@@ -19,8 +19,8 @@
 
 using namespace SST::Ember;
 
-EmberDetailedStreamGenerator::EmberDetailedStreamGenerator(SST::Component* owner, Params& params) :
-	EmberMessagePassingGenerator(owner, params, "DetailedStream"),
+EmberDetailedStreamGenerator::EmberDetailedStreamGenerator(SST::ComponentId_t id, Params& params) :
+	EmberMessagePassingGenerator(id, params, "DetailedStream"),
     m_loopIndex(-1), m_numLoops(2), m_startTime(2), m_stopTime(2)
 {
 	m_benchSize = {  2*8, 3*8 };

@@ -44,17 +44,24 @@
 namespace SST {
 namespace Ember {
 
+class EmberEngine;
+
 class EmberGenerator : public SubComponent {
 
   public:
 
     typedef std::queue<EmberEvent*> Queue;
 
-    EmberGenerator( Component* owner, Params& params, std::string name ="" );
+	SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Ember::EmberGenerator)
 
-	~EmberGenerator(){
-		delete m_computeDistrib;
-	};
+    EmberGenerator( Component* owner, Params& params ) : SubComponent(owner)  { assert(0); }
+    EmberGenerator( ComponentId_t id, Params& params ) : SubComponent(id) { assert(0); }
+    EmberGenerator( Component* owner, Params& params, std::string name ="" ) : SubComponent(owner) { assert(0); }
+    EmberGenerator( ComponentId_t id, Params& params, std::string name ="" );
+
+	void setEngine( EmberEngine* );
+
+	~EmberGenerator(){ };
     
     virtual void generate( const SST::Output* output, const uint32_t phase,
         std::queue<EmberEvent*>* evQ ) {
@@ -118,6 +125,7 @@ class EmberGenerator : public SubComponent {
     inline void enQ_detailedCompute( Queue& q, std::string, Params&, std::function<int()> func );
 
   private:
+    EmberEngine*            m_ee;
     Output* 	        	m_output;
     enum { NoBacking, Backing, BackingZeroed  } m_dataMode; 
     std::string				m_motifName;

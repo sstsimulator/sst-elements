@@ -40,8 +40,9 @@ class EmberShmemReductionGenerator : public EmberShmemGenerator {
     enum Op { AND, OR, XOR, SUM, PROD, MAX, MIN } m_op;
 	enum Type { Int, Long, LongLong, Float, Double } m_type;
 public:
-	EmberShmemReductionGenerator(SST::Component* owner, Params& params) :
-		EmberShmemGenerator(owner, params, "ShmemReduction" ), m_phase(0) 
+	EmberShmemReductionGenerator(SST::Component* owner, Params& params) : EmberShmemGenerator(owner, params, "" ) {}
+	EmberShmemReductionGenerator(SST::ComponentId_t id, Params& params) :
+		EmberShmemGenerator(id, params, "ShmemReduction" ), m_phase(0) 
 	{ 
         m_printResults = params.find<bool>("arg.printResults", false );
         m_nelems = params.find<int>("arg.nelems", 1 );
@@ -383,102 +384,102 @@ public:
 
 class EmberShmemReductionIntGenerator : public EmberShmemReductionGenerator<int> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemReductionIntGenerator,
         "ember",
         "ShmemReductionIntMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM reduction int",
-        "SST::Ember::EmberGenerator"
-
+        SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS(
-    ) 
+    SST_ELI_DOCUMENT_PARAMS() 
 
 public:
     EmberShmemReductionIntGenerator( SST::Component* owner, Params& params ) : 
         EmberShmemReductionGenerator(owner,  params) { } 
+    EmberShmemReductionIntGenerator( SST::ComponentId_t id, Params& params ) : 
+        EmberShmemReductionGenerator(id,  params) { } 
 };
 
 class EmberShmemReductionLongGenerator : public EmberShmemReductionGenerator<long> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemReductionLongGenerator,
         "ember",
         "ShmemReductionLongMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM reduction long",
-        "SST::Ember::EmberGenerator"
-
+        SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS(
-    ) 
+    SST_ELI_DOCUMENT_PARAMS() 
 
 public:
     EmberShmemReductionLongGenerator( SST::Component* owner, Params& params ) : 
         EmberShmemReductionGenerator(owner,  params) { } 
+    EmberShmemReductionLongGenerator( SST::ComponentId_t id, Params& params ) : 
+        EmberShmemReductionGenerator(id,  params) { } 
 };
 
 class EmberShmemReductionLongLongGenerator : public EmberShmemReductionGenerator<long long> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemReductionLongLongGenerator,
         "ember",
         "ShmemReductionLongLongMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM reduction long long",
-        "SST::Ember::EmberGenerator"
-
+        SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS(
-    ) 
+    SST_ELI_DOCUMENT_PARAMS() 
 
 public:
     EmberShmemReductionLongLongGenerator( SST::Component* owner, Params& params ) : 
         EmberShmemReductionGenerator(owner,  params) { } 
+    EmberShmemReductionLongLongGenerator( SST::ComponentId_t id, Params& params ) : 
+        EmberShmemReductionGenerator(id,  params) { } 
 };
 
 class EmberShmemReductionDoubleGenerator : public EmberShmemReductionGenerator<double> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemReductionDoubleGenerator,
         "ember",
         "ShmemReductionDoubleMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM reduction double",
-        "SST::Ember::EmberGenerator"
-
+        SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS(
-    ) 
+    SST_ELI_DOCUMENT_PARAMS() 
 
 public:
     EmberShmemReductionDoubleGenerator( SST::Component* owner, Params& params ) : 
         EmberShmemReductionGenerator(owner,  params) { } 
+    EmberShmemReductionDoubleGenerator( SST::ComponentId_t id, Params& params ) : 
+        EmberShmemReductionGenerator(id,  params) { } 
 };
 
 class EmberShmemReductionFloatGenerator : public EmberShmemReductionGenerator<float> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemReductionFloatGenerator,
         "ember",
         "ShmemReductionFloatMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM reduction float",
-        "SST::Ember::EmberGenerator"
-
+        SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS(
-    ) 
+    SST_ELI_DOCUMENT_PARAMS() 
 
 public:
     EmberShmemReductionFloatGenerator( SST::Component* owner, Params& params ) : 
         EmberShmemReductionGenerator(owner,  params) { } 
+    EmberShmemReductionFloatGenerator( SST::ComponentId_t id, Params& params ) : 
+        EmberShmemReductionGenerator(id,  params) { } 
 };
 
 }

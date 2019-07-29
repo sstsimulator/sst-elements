@@ -20,6 +20,8 @@
 #include <sst/core/interfaces/simpleMem.h>
 #include "ioVec.h"
 #include "memoryModel/memoryModel.h"
+#include "memoryModel/detailedInterface.h"
+#include "memReq.h"
 
 #include <queue>
 #include "../thingHeap.h"
@@ -30,13 +32,13 @@
 class SimpleMemoryModel : public MemoryModel {
 
 public:
-   SST_ELI_REGISTER_SUBCOMPONENT(
+   SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         SimpleMemoryModel,
         "firefly",
         "SimpleMemory",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "",
-        ""
+       	SimpleMemoryModel 
     )
 
     SST_ELI_DOCUMENT_PARAMS(
@@ -69,9 +71,6 @@ public:
         { "mem_num_loads",                     "total number of loads", "count", 1},
         { "mem_num_stores",                    "total number of stores", "count", 1},
         { "mem_addrs",                         "addresses accesed", "value", 1},
-        { "detailed_num_reads",                "total number of loads", "count", 1},
-        { "detailed_num_writes",               "total number of stores", "count", 1},
-        { "detailed_req_latency",              "Running total of all latency for all requests", "count", 1},
 	)
 
 
@@ -89,7 +88,6 @@ public:
 #define DETAILED_MASK   1<<12
 
 #include "cache.h"
-#include "memReq.h"
 #include "sharedTlb.h"
 #include "unit.h"
 #include "thread.h"
@@ -122,8 +120,9 @@ public:
   public:
 	enum NIC_Thread { Send, Recv };
 
-    SimpleMemoryModel( Component* comp, Params& params ) :
-		MemoryModel( comp ), m_hostCacheUnit(NULL), m_busBridgeUnit(NULL)
+	SimpleMemoryModel( Component* comp, Params& params ) : MemoryModel(comp) { assert(0); }
+    SimpleMemoryModel( ComponentId_t compId, Params& params ) :
+		MemoryModel( compId ), m_hostCacheUnit(NULL), m_busBridgeUnit(NULL)
 	{
 		int id = params.find<int32_t>( "id", -1 );
 		assert( id > -1 );
@@ -175,8 +174,7 @@ public:
 		m_detailedUnit = NULL;
 		tmp = params.find<std::string>( "useDetailedModel", "no" );
 		if ( 0 == tmp.compare("yes" ) ) {
-			Params detailedParams = params.find_prefix_params("detailedModel.");
-			m_detailedUnit = new DetailedUnit( *this, m_dbg, id, detailedParams );
+			m_detailedUnit = new DetailedUnit( *this, m_dbg, id );
 			useHostCache = false;
 		}
 
@@ -251,7 +249,7 @@ public:
 			);
 		}
 
-		m_selfLink = comp->configureSelfLink("Nic::SimpleMemoryModel", "1 ns",
+		m_selfLink = configureSelfLink("Nic::SimpleMemoryModel", "1 ns",
         new Event::Handler<SimpleMemoryModel>(this,&SimpleMemoryModel::handleSelfEvent));
 	}
 
@@ -267,6 +265,11 @@ public:
     }
 
 	ThingHeap<SelfEvent> m_eventHeap;
+
+	void setDetailedInterface( SST::Firefly::DetailedInterface* ptr ) {
+		assert( m_detailedUnit ); 
+		static_cast<DetailedUnit*>(m_detailedUnit)->setDetailedInterface( ptr );
+	}
 
 	void schedCallback( SimTime_t delay, Callback* callback ){
 		SelfEvent* ev = m_eventHeap.alloc( );	

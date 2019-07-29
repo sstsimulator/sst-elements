@@ -35,8 +35,9 @@ template < class TYPE, int VAL >
 class EmberShmemFAM_CswapBaseGenerator : public EmberShmemGenerator {
 
 public:
-	EmberShmemFAM_CswapBaseGenerator(SST::Component* owner, Params& params, std::string name) :
-		EmberShmemGenerator(owner, params, name ), m_phase(-3), m_numFamNodes(0), m_oldValue(0), m_newValue(1)
+	EmberShmemFAM_CswapBaseGenerator(SST::Component* owner, Params& params, std::string name) : EmberShmemGenerator(owner, params, "" ) {}
+	EmberShmemFAM_CswapBaseGenerator(SST::ComponentId_t id, Params& params, std::string name) :
+		EmberShmemGenerator(id, params, name ), m_phase(-3), m_numFamNodes(0), m_oldValue(0), m_newValue(1)
 	{ 
         m_computeTime = params.find<int>("arg.computeTime", 0 );
 		m_totalBytes = (uint64_t) params.find<SST::UnitAlgebra>("arg.totalBytes").getRoundedValue();
@@ -241,53 +242,60 @@ template < class TYPE, int VAL >
 class EmberShmemFAM_CswapGenerator : public EmberShmemFAM_CswapBaseGenerator<TYPE,VAL> {
 public:
     EmberShmemFAM_CswapGenerator(SST::Component* owner, Params& params, std::string name ) :
-	    EmberShmemFAM_CswapBaseGenerator<TYPE,VAL>(owner, params, name) {
-        } 
+	    EmberShmemFAM_CswapBaseGenerator<TYPE,VAL>(owner, params, name) { } 
+
+    EmberShmemFAM_CswapGenerator(SST::ComponentId_t id, Params& params, std::string name ) :
+	    EmberShmemFAM_CswapBaseGenerator<TYPE,VAL>(id, params, name) { } 
 };
 
 template < class TYPE >
 class EmberShmemFAM_CswapGenerator<TYPE,1> : public EmberShmemFAM_CswapBaseGenerator<TYPE,1> {
 public:
 	EmberShmemFAM_CswapGenerator(SST::Component* owner, Params& params, std::string name ) :
-	    EmberShmemFAM_CswapBaseGenerator<TYPE,1>(owner, params, name) {
-        } 
+	    EmberShmemFAM_CswapBaseGenerator<TYPE,1>(owner, params, name) { } 
+
+	EmberShmemFAM_CswapGenerator(SST::ComponentId_t id, Params& params, std::string name ) :
+	    EmberShmemFAM_CswapBaseGenerator<TYPE,1>(id, params, name) { } 
 };
 
 template < class TYPE >
 class EmberShmemFAM_CswapGenerator<TYPE,2> : public EmberShmemFAM_CswapBaseGenerator<TYPE,2> {
 public:
 	EmberShmemFAM_CswapGenerator(SST::Component* owner, Params& params, std::string name ) :
-	    EmberShmemFAM_CswapBaseGenerator<TYPE,2>(owner, params, name ) {
-        } 
+	    EmberShmemFAM_CswapBaseGenerator<TYPE,2>(owner, params, name ) { } 
+
+	EmberShmemFAM_CswapGenerator(SST::ComponentId_t id, Params& params, std::string name ) :
+	    EmberShmemFAM_CswapBaseGenerator<TYPE,2>(id, params, name ) { } 
 };
 
 class EmberShmemFAM_CswapIntGenerator : public EmberShmemFAM_CswapGenerator<int, 0> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemFAM_CswapIntGenerator,
         "ember",
         "ShmemFAM_CswapIntMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM atomic inc int",
-        "SST::Ember::EmberGenerator"
+        SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS(
-    )
+    SST_ELI_DOCUMENT_PARAMS()
 public:
 	EmberShmemFAM_CswapIntGenerator(SST::Component* owner, Params& params) :
 	    EmberShmemFAM_CswapGenerator(owner, params, "ShmemFAM_CswapInt" ) { } 
+	EmberShmemFAM_CswapIntGenerator(SST::ComponentId_t id, Params& params) :
+	    EmberShmemFAM_CswapGenerator(id, params, "ShmemFAM_CswapInt" ) { } 
 };
 
 class EmberShmemFAM_CswapLongGenerator : public EmberShmemFAM_CswapGenerator<long, 0 > {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemFAM_CswapLongGenerator,
         "ember",
         "ShmemFAM_CswapLongMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM atomic inc long",
-        "SST::Ember::EmberGenerator"
+        SST::Ember::EmberGenerator
     )
 
     SST_ELI_DOCUMENT_PARAMS(
@@ -295,6 +303,8 @@ public:
 public:
 	EmberShmemFAM_CswapLongGenerator(SST::Component* owner, Params& params) :
 	    EmberShmemFAM_CswapGenerator(owner, params, "ShmemFAM_CswapLong") {} 
+	EmberShmemFAM_CswapLongGenerator(SST::ComponentId_t id, Params& params) :
+	    EmberShmemFAM_CswapGenerator(id, params, "ShmemFAM_CswapLong") {} 
 };
 
 }

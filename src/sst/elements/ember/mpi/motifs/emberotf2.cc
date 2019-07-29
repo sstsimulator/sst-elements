@@ -288,8 +288,8 @@ static OTF2_CallbackCode EmberOTF2RegisterLocation( void* userData,
 	return OTF2_CALLBACK_SUCCESS;
 }
 
-EmberOTF2Generator::EmberOTF2Generator(SST::Component* owner, Params& params) :
-	EmberMessagePassingGenerator(owner, params, "OTF2"),
+EmberOTF2Generator::EmberOTF2Generator(SST::ComponentId_T id, Params& params) :
+	EmberMessagePassingGenerator(id, params, "OTF2"),
 	traceLocationCount(0), currentLocation(0), currentTime(0)
 {
 	std::string tracePrefix = params.find<std::string>("arg.tracePrefix", "");

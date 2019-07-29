@@ -39,7 +39,7 @@ public:
 
 public:
 
-	EmberLinearRankMap(Component* owner, Params& params) : EmberRankMap(owner, params) {}
+	EmberLinearRankMap(Params& params) : EmberRankMap(params) {}
 	~EmberLinearRankMap() {}
 
 	void setEnvironment(const uint32_t rank, const uint32_t worldSize) {};

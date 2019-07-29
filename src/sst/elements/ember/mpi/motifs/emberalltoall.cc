@@ -19,9 +19,9 @@
 
 using namespace SST::Ember;
 
-EmberAlltoallGenerator::EmberAlltoallGenerator(SST::Component* owner,
+EmberAlltoallGenerator::EmberAlltoallGenerator(SST::ComponentId_t id,
                                             Params& params) :
-	EmberMessagePassingGenerator(owner, params, "Alltoall"),
+	EmberMessagePassingGenerator(id, params, "Alltoall"),
     m_loopIndex(0)
 {
 	m_iterations = (uint32_t) params.find("arg.iterations", 1);

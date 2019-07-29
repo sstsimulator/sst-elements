@@ -27,13 +27,13 @@ namespace Ember {
 class EmberTrafficGenGenerator : public EmberMessagePassingGenerator {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberTrafficGenGenerator,
         "ember",
         "TrafficGenMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Models network traffic",
-        "SST::Ember::EmberGenerator"
+        SST::Ember::EmberGenerator
     )
 
     SST_ELI_DOCUMENT_PARAMS(
@@ -69,7 +69,8 @@ public:
 
 
 public:
-	EmberTrafficGenGenerator(SST::Component* owner, Params& params);
+	EmberTrafficGenGenerator(SST::Component* owner, Params& params) : EmberMessagePassingGenerator(owner,params,"") {}
+	EmberTrafficGenGenerator(SST::ComponentId_t, Params& params);
     bool generate( std::queue<EmberEvent*>& evQ);
     bool primary( ) {
         return false;

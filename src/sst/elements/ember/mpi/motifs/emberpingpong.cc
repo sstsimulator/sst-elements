@@ -21,9 +21,8 @@ using namespace SST::Ember;
 
 #define TAG 0xDEADBEEF
 
-EmberPingPongGenerator::EmberPingPongGenerator(SST::Component* owner, 
-                                            			Params& params ) :
-	EmberMessagePassingGenerator(owner, params, "PingPong"),
+EmberPingPongGenerator::EmberPingPongGenerator(SST::ComponentId_t id, Params& params ) :
+	EmberMessagePassingGenerator(id, params, "PingPong"),
     m_loopIndex(0),
     m_rank2(1),
     m_blockingSend( true ),
@@ -40,17 +39,11 @@ EmberPingPongGenerator::EmberPingPongGenerator(SST::Component* owner,
     m_blockingRecv = (uint32_t) params.find("arg.blockingRecv", true);;
     m_waitall = (uint32_t) params.find("arg.waitall", false);
 
-    if ( 0 == rank() )  {
-        output("rank2=%d messageSize=%d iterations=%d\n",m_rank2, m_messageSize, m_iterations);
-    }
-    if ( ! ( 0 == rank() || m_rank2 == rank() )  ) {
-        m_loopIndex = m_iterations;
-    } 
 }
 
 bool EmberPingPongGenerator::generate( std::queue<EmberEvent*>& evQ)
 { 
-    if ( m_loopIndex == m_iterations ) {
+    if ( m_loopIndex == m_iterations || ! ( 0 == rank() || m_rank2 == rank() ) ) {
         if ( 0 == rank()) {
             double totalTime = (double)(m_stopTime - m_startTime)/1000000000.0;
 
@@ -72,6 +65,7 @@ bool EmberPingPongGenerator::generate( std::queue<EmberEvent*>& evQ)
         verbose(CALL_INFO, 1, 0, "rank=%d size=%d\n", rank(), size());
 
         if ( 0 == rank() ) {
+        	output("rank2=%d messageSize=%d iterations=%d\n",m_rank2, m_messageSize, m_iterations);
             enQ_getTime( evQ, &m_startTime );
         }
     }
