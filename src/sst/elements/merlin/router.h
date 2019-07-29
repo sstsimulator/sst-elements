@@ -386,7 +386,7 @@ protected:
     Output &output;
 };
 
-class PortControl;
+class PortControlBase;
 
 class XbarArbitration : public SubComponent {
 public:
@@ -402,9 +402,9 @@ public:
     virtual ~XbarArbitration() {}
 
 #if VERIFY_DECLOCKING
-    virtual void arbitrate(PortControl** ports, int* port_busy, int* out_port_busy, int* progress_vc, bool clocking) = 0;
+    virtual void arbitrate(PortControlBase** ports, int* port_busy, int* out_port_busy, int* progress_vc, bool clocking) = 0;
 #else
-    virtual void arbitrate(PortControl** ports, int* port_busy, int* out_port_busy, int* progress_vc) = 0;
+    virtual void arbitrate(PortControlBase** ports, int* port_busy, int* out_port_busy, int* progress_vc) = 0;
 #endif
     virtual void setPorts(int num_ports, int num_vcs) = 0;
     virtual bool isOkayToPauseClock() { return true; }

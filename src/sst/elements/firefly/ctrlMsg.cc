@@ -64,6 +64,7 @@ void API::finish() {
 void API::setVars( Info* info, VirtNic* nic, Thornhill::MemoryHeapLink* mem, Link* retLink )
 {
     m_info = info;
+    m_memHeapLink = mem;
 
     nic->setNotifyOnGetDone(
         new VirtNic::Handler<API,void*>(this, &API::notifyGetDone )
@@ -84,6 +85,7 @@ void API::setVars( Info* info, VirtNic* nic, Thornhill::MemoryHeapLink* mem, Lin
     snprintf(buffer,100,"@t:%d:%d:CtrlMsg::API::@p():@l ", nic->getRealNodeId(), m_info->worldRank());
     m_dbg.setPrefix(buffer);
 
+    m_dbg.debug(CALL_INFO,1,1,"\n");
     m_processQueuesState->setVars( nic, m_info, m_mem, m_memHeapLink, retLink );
 }
 
@@ -92,6 +94,7 @@ void API::makeProgress() {
 }
 
 void API::initMsgPassing() {
+	m_dbg.debug(CALL_INFO,1,1,"\n");
 	m_processQueuesState->enterInit((m_memHeapLink));
 }
 
