@@ -135,6 +135,7 @@ class EmberGenerator : public SubComponent {
     int                     m_motifNum;
     bool                    m_primary;
     EmberComputeDistribution*           m_computeDistrib;
+    uint64_t m_curVirtAddr;
 };
 
 void EmberGenerator::enQ_getTime( Queue& q, uint64_t* time ) {
@@ -160,9 +161,18 @@ void EmberGenerator::enQ_detailedCompute( Queue& q, std::string name,
 
 void EmberGenerator::enQ_memAlloc( Queue& q, Hermes::MemAddr* addr, size_t length )
 {
-    assert( m_memHeapLink );
-    addr->setBacking( memAlloc(length) );
-    q.push( new EmberMemAllocEvent( *m_memHeapLink, &getOutput(), addr, length  ) );
+    if ( m_memHeapLink ) {
+        addr->setBacking( memAlloc(length) );
+        q.push( new EmberMemAllocEvent( *m_memHeapLink, &getOutput(), addr, length  ) );
+    } else {
+        if ( length % 16 ) {
+            length += 16;
+            length &= ~(16-1);
+        }
+        *addr = Hermes::MemAddr( m_curVirtAddr, memAlloc( length ) );
+        m_curVirtAddr += length; 
+        q.push( new EmberComputeEvent( &getOutput(), 0, m_computeDistrib ) );
+    }
 }
 
 }

@@ -31,9 +31,8 @@ EmberDetailedRingGenerator::EmberDetailedRingGenerator(SST::ComponentId_t id, Pa
 	m_printRank = params.find<int32_t>("arg.printRank", 0);
 
 	m_rankList = params.find<std::string>("arg.detailedCompute","");
-    m_computeTime = params.find<int32_t>("arg.computeTime", 0);
-    m_computeWindow = params.find<int32_t>("arg.computeWindow", m_computeTime);
-
+	m_computeTime = params.find<int32_t>("arg.computeTime", 0);
+	m_computeWindow = params.find<int32_t>("arg.computeWindow", m_computeTime);
 }
 
 std::string EmberDetailedRingGenerator::getComputeModelName()
@@ -77,24 +76,17 @@ bool EmberDetailedRingGenerator::generate( std::queue<EmberEvent*>& evQ)
 
     if ( -1 == m_loopIndex ) {
 		++m_loopIndex;
+		enQ_memAlloc( evQ, &m_sendBuf, m_messageSize );
+		enQ_memAlloc( evQ, &m_recvBuf, m_messageSize );
 		if ( ! m_rankList.empty() && findNum( rank(), m_rankList ) ) {
 			printf("Rank %d using detailed compute\n",rank());
 			m_computeFunc = &EmberDetailedRingGenerator::computeDetailed;
-        	verbose( CALL_INFO, 1, 0, "rank=%d size=%d\n", rank(), size());
-			enQ_memAlloc( evQ, &m_sendBuf, m_messageSize );
-			enQ_memAlloc( evQ, &m_recvBuf, m_messageSize );
 			enQ_memAlloc( evQ, &m_streamBuf, m_stream_n * 8 * 3);
-			return false;
-    	} else {
-        	m_sendBuf = MemAddr( 0x1000, NULL );
-        	m_recvBuf = MemAddr( 0x1000 + m_messageSize, NULL);
-        	m_computeFunc = &EmberDetailedRingGenerator::computeSimple;
-    	}
+		} else {
+			m_computeFunc = &EmberDetailedRingGenerator::computeSimple;
+		}
+		return false;
 	}
-
-	verbose( CALL_INFO, 2, 1, "sendbuff=%" PRIx64 "\n",m_sendBuf.getSimVAddr());
-	verbose( CALL_INFO, 2, 1, "recvbuff=%" PRIx64 "\n",m_recvBuf.getSimVAddr());
-	verbose( CALL_INFO, 2, 1, "streambuff=%" PRIx64 "\n",m_streamBuf.getSimVAddr());
 
     int to = mod( rank() + 1, size());
     int from = mod( (signed int) rank() - 1, size() );
@@ -103,6 +95,10 @@ bool EmberDetailedRingGenerator::generate( std::queue<EmberEvent*>& evQ)
     if ( 0 == m_loopIndex ) {
         verbose( CALL_INFO, 1, 0, "rank=%d size=%d\n", rank(), size());
 
+		verbose( CALL_INFO, 2, 0, "sendbuff=%" PRIx64 "\n",m_sendBuf.getSimVAddr());
+		verbose( CALL_INFO, 2, 0, "recvbuff=%" PRIx64 "\n",m_recvBuf.getSimVAddr());
+		verbose( CALL_INFO, 2, 0, "streambuff=%" PRIx64 "\n",m_streamBuf.getSimVAddr());
+
         if ( m_printRank == rank() || -1 == m_printRank ) {
             if ( m_computeTime ) {
                 output("%s rank %d, 'Simple' computeTime=%" PRIu64" computeWindow=%" PRIu64 "\n",
@@ -110,7 +106,6 @@ bool EmberDetailedRingGenerator::generate( std::queue<EmberEvent*>& evQ)
             }
         }
         enQ_getTime( evQ, &m_startTime );
-
     }
 
     if ( 0 == rank() ) {
