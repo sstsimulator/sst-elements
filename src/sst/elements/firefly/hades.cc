@@ -38,8 +38,8 @@
 using namespace SST::Firefly;
 using namespace SST;
 
-Hades::Hades( Component* owner, Params& params ) :
-    OS( owner ),	
+Hades::Hades( ComponentId_t id, Params& params ) :
+    OS( id, params ),	
     m_virtNic(NULL),
     m_detailedCompute(NULL),
     m_memHeapLink(NULL)
@@ -50,29 +50,29 @@ Hades::Hades( Component* owner, Params& params ) :
         Output::STDOUT );
 
     Params tmpParams = params.find_prefix_params("ctrlMsg.");
-    m_proto = dynamic_cast<ProtocolAPI*>(owner->loadSubComponent(
-                                    "firefly.CtrlMsgProto", owner, tmpParams ) );
+
+    m_proto = loadUserSubComponent<CtrlMsg::API>( "proto" );
 
     Params funcParams = params.find_prefix_params("functionSM.");
 
     m_numNodes = params.find<int>("numNodes",0); 
-    m_functionSM = new FunctionSM( funcParams, owner, m_proto );
+
+    m_functionSM = loadAnonymousSubComponent<FunctionSM>( "firefly.functionSM","", 0, ComponentInfo::SHARE_NONE, funcParams, m_proto );
 
     tmpParams = params.find_prefix_params("nicParams." );
 
     std::string moduleName = params.find<std::string>("nicModule"); 
 
-    m_virtNic = dynamic_cast<VirtNic*>(owner->loadModuleWithComponent( 
-                        moduleName, owner, tmpParams ) );
+    m_virtNic = loadUserSubComponent<VirtNic>("virtNic", ComponentInfo::SHARE_NONE);
+
     if ( !m_virtNic ) {
-        m_dbg.fatal(CALL_INFO,0," Unable to find nic module'%s'\n",
-                                        moduleName.c_str());
+        m_dbg.fatal(CALL_INFO,0," Unable to find nic SubComponent '%s'\n", moduleName.c_str());
     }
 
     moduleName = params.find<std::string>("nodePerf", "firefly.SimpleNodePerf");
 
     tmpParams = params.find_prefix_params("nodePerf." );
-    m_nodePerf = dynamic_cast<NodePerf*>(owner->loadModule( 
+    m_nodePerf = dynamic_cast<NodePerf*>(loadModule( 
                                         moduleName, tmpParams ) );
     if ( !m_nodePerf ) {
         m_dbg.fatal(CALL_INFO,0," Unable to find nodePerf module'%s'\n",
@@ -83,27 +83,15 @@ Hades::Hades( Component* owner, Params& params ) :
     std::string dtldName =  dtldParams.find<std::string>( "name" );
 
     if ( ! dtldName.empty() ) {
-
-        m_detailedCompute = dynamic_cast<Thornhill::DetailedCompute*>( loadSubComponent(
-                            dtldName, dtldParams ) );
-
-        assert( m_detailedCompute );
-        if ( ! m_detailedCompute->isConnected() ) {
-            delete m_detailedCompute;
-            m_detailedCompute = NULL;
-        }
+        m_detailedCompute = loadUserSubComponent<Thornhill::DetailedCompute>("detailedCompute", ComponentInfo::SHARE_NONE);
     }
 
-    Params memParams = params.find_prefix_params( "memoryHeapLink." );
-    std::string memName =  memParams.find<std::string>( "name" );
+    std::string memName = params.find_prefix_params( "memoryHeapLink." ).find<std::string>( "name" );
 
     if ( ! memName.empty() ) {
+        m_memHeapLink = loadUserSubComponent<Thornhill::MemoryHeapLink>( "memoryHeap", ComponentInfo::SHARE_NONE );
 
-        m_memHeapLink = dynamic_cast<Thornhill::MemoryHeapLink*>( loadSubComponent(
-                            memName, memParams ) );
-
-        if ( ! m_memHeapLink->isConnected() ) {
-            delete m_memHeapLink;
+        if ( m_memHeapLink && ! m_memHeapLink->isConnected() ) {
             m_memHeapLink = NULL;
         }
     }
@@ -179,6 +167,13 @@ void Hades::_componentSetup()
 
     m_proto->setVars( getInfo(), getNic(), getMemHeapLink(), m_functionSM->getRetLink() );
     m_functionSM->setup(getInfo() );
+
+    if (  m_detailedCompute ) {
+        m_dbg.verbose(CALL_INFO, 1, 0,"detailed compute connected\n");
+    }
+    if ( m_memHeapLink ) {
+        m_dbg.verbose(CALL_INFO, 1, 0,"memHeap connected\n");
+    }
 }
 
 void Hades::_componentInit(unsigned int phase )

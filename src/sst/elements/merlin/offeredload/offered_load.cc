@@ -70,11 +70,46 @@ OfferedLoad::OfferedLoad(ComponentId_t cid, Params& params) :
     send_interval = interval.getRoundedValue();
     
     // Load the specified SimpleNetwork object
-    std::string link_if_str = params.find<std::string>("linkcontrol","merlin.linkcontrol");
-    link_if = static_cast<SST::Interfaces::SimpleNetwork*>(loadSubComponent(link_if_str, this, params));
 
-    UnitAlgebra buf_size = params.find<UnitAlgebra>("buffer_size", "1kB");
-    link_if->initialize("rtr", link_bw, 1 /* num_vns */, buf_size, buf_size);
+    // First see if it is defined in the python
+    link_if = loadUserSubComponent<SST::Interfaces::SimpleNetwork>
+        ("networkIF", ComponentInfo::SHARE_NONE, 1 /* vns */);
+
+    if ( !link_if ) {
+        // Not defined in python code.  See if this uses the legacy
+        // API.  If so, load it with loadSubComponent.  Otherwise, use
+        // the default linkcontrol (merlin.linkcontrol) loaded with
+        // the new API.
+        bool found;
+
+        // Get the link control to be used
+        std::string link_if_str = params.find<std::string>("linkcontrol",found);
+
+        if ( found ) {
+            // Legacy
+DISABLE_WARN_DEPRECATED_DECLARATION
+            link_if = static_cast<SST::Interfaces::SimpleNetwork*>(loadSubComponent(link_if_str, this, params));
+REENABLE_WARNING
+            
+            UnitAlgebra buf_size = params.find<UnitAlgebra>("buffer_size", "1kB");
+            link_if->initialize("rtr", link_bw, 1 /* num_vns */, buf_size, buf_size);            
+        }
+        else {
+            // Just load the default
+            Params if_params;
+
+            if_params.insert("link_bw",params.find<std::string>("link_bw"));
+            if_params.insert("input_buf_size",params.find<std::string>("buffer_size"));
+            if_params.insert("output_buf_size",params.find<std::string>("buffer_size"));            
+            if_params.insert("port_name","rtr");
+        
+            link_if = loadAnonymousSubComponent<SST::Interfaces::SimpleNetwork>
+                ("merlin.linkcontrol", "networkIF", 0,
+                 ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, if_params, 1 /* vns */);
+        }
+    }
+    
+
 
     // Register functors for the SimpleNetwork IF
     send_notify_functor = new SST::Interfaces::SimpleNetwork::Handler<OfferedLoad>(this, &OfferedLoad::send_notify);
@@ -90,8 +125,11 @@ OfferedLoad::OfferedLoad(ComponentId_t cid, Params& params) :
         out.fatal(CALL_INFO, -1, "pattern must be set!\n");
     }
 
-    packetDestGen = static_cast<TargetGenerator*>(loadSubComponent(pattern, this, params));
-
+    pattern_params = new Params();
+    // packetDestGen = static_cast<TargetGenerator*>(loadSubComponent(pattern, this, params));
+    pattern_params->insert(params.find_prefix_params("pattern"));
+    pattern_params->insert("pattern_gen",pattern);
+    
     UnitAlgebra warmup_time_ua = params.find<UnitAlgebra>("warmup_time","5us");
     if ( !warmup_time_ua.hasUnits("s") ) {
         out.fatal(CALL_INFO,-1,"warmup_time must specified in seconds");
@@ -194,7 +232,11 @@ OfferedLoad::init(unsigned int phase) {
     link_if->init(phase);
     if ( id == -1 && link_if->isNetworkInitialized() ) {
         id = link_if->getEndpointID();
-        packetDestGen->initialize(id, num_peers);
+        std::string pattern = pattern_params->find<std::string>("pattern_gen");
+        // packetDestGen = static_cast<TargetGenerator*>(loadSubComponent(pattern, this, *pattern_params));
+        packetDestGen = loadAnonymousSubComponent<TargetGenerator>(pattern, "pattern_gen", 0, ComponentInfo::SHARE_NONE, *pattern_params, id, num_peers);
+        if ( packetDestGen->wasLoadedWithLegacyAPI() ) packetDestGen->initialize(id, num_peers);
+        delete pattern_params;
     }
         
 }

@@ -53,18 +53,22 @@ class API : public ProtocolAPI {
     typedef std::function<void(nid_t, uint32_t, size_t)> Callback2;
 
   public:
-   SST_ELI_REGISTER_SUBCOMPONENT(
+
+	SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Firefly::CtrlMsg::API)
+
+	SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         API,
         "firefly",
         "CtrlMsgProto",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "",
-        ""
+        SST::Firefly::CtrlMsg::API 
     )
 
-    SST_ELI_DOCUMENT_PARAMS(
-    )
-    API( Component* owner, Params& );
+    SST_ELI_DOCUMENT_PARAMS()
+
+    API( Component* comp, Params& ) : ProtocolAPI(comp) {}
+    API( ComponentId_t id, Params& );
     ~API();
 
     virtual void setup();

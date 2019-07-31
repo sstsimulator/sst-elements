@@ -26,13 +26,13 @@ namespace Ember {
 class EmberWaitanyGenerator : public EmberMessagePassingGenerator {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberWaitanyGenerator,
         "ember",
         "WaitanyMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Performs a Waitany Motif",
-        "SST::Ember::EmberGenerator"
+        SST::Ember::EmberGenerator
     )
     SST_ELI_DOCUMENT_STATISTICS(
         { "time-Init", "Time spent in Init event",          "ns",  0},
@@ -59,8 +59,9 @@ public:
     )
 
 public:
-	EmberWaitanyGenerator(SST::Component* owner, Params& params): 
-        EmberMessagePassingGenerator(owner, params, "Null" ), m_phase(Init)
+	EmberWaitanyGenerator(SST::Component* owner, Params& params):  EmberMessagePassingGenerator(owner,params,"") {}
+	EmberWaitanyGenerator(SST::ComponentId_t id , Params& params): 
+        EmberMessagePassingGenerator(id, params, "Null" ), m_phase(Init)
 	{
 		m_rng = new SST::RNG::XORShiftRNG();
 	}

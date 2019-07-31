@@ -90,6 +90,66 @@ topo_torus::topo_torus(Component* comp, Params& params) :
     idToLocation(router_id, id_loc);
 }
 
+topo_torus::topo_torus(ComponentId_t cid, Params& params, int num_ports, int rtr_id) :
+    Topology(cid),
+    router_id(rtr_id)
+{
+
+    // Get the various parameters
+    std::string shape;
+    shape = params.find<std::string>("shape");
+    if ( !shape.compare("") ) {
+    }
+
+    // Need to parse the shape string to get the number of dimensions
+    // and the size of each dimension
+    dimensions = std::count(shape.begin(),shape.end(),'x') + 1;
+
+    dim_size = new int[dimensions];
+    dim_width = new int[dimensions];
+    port_start = new int[dimensions][2];
+
+    parseDimString(shape, dim_size);
+
+    std::string width = params.find<std::string>("width", "");
+    if ( width.compare("") == 0 ) {
+        for ( int i = 0 ; i < dimensions ; i++ )
+            dim_width[i] = 1;
+    } else {
+        parseDimString(width, dim_width);
+    }
+
+    int next_port = 0;
+    for ( int d = 0 ; d < dimensions ; d++ ) {
+        for ( int i = 0 ; i < 2 ; i++ ) {
+            port_start[d][i] = next_port;
+            next_port += dim_width[d];
+        }
+    }
+
+    num_local_ports = params.find<int>("local_ports", 1);
+
+    // int n_vc = params.find<int>("num_vcs");
+    // if ( n_vc < 2 || (n_vc & 1) ) {
+    //     output.fatal(CALL_INFO, -1, "Number of VC's must be a multiple of two for a torus\n");
+    // }
+
+    int needed_ports = 0;
+    for ( int i = 0 ; i < dimensions ; i++ ) {
+        needed_ports += 2 * dim_width[i];
+    }
+
+
+    if ( num_ports < (needed_ports+num_local_ports) ) {
+        output.fatal(CALL_INFO, -1, "Number of ports should be %d for this configuration\n", needed_ports+num_local_ports);
+    }
+
+    local_port_start = needed_ports;// Local delivery is on the last ports
+
+    id_loc = new int[dimensions];
+    idToLocation(router_id, id_loc);
+}
+
 topo_torus::~topo_torus()
 {
     delete [] id_loc;

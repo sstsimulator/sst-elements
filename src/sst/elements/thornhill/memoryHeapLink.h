@@ -28,13 +28,14 @@ namespace Thornhill {
 class MemoryHeapLink : public SubComponent {
 
   public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Thornhill::MemoryHeapLink)
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         MemoryHeapLink,
         "thornhill",
         "MemoryHeapLink",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "",
-        ""
+		SST::Thornhill::MemoryHeapLink
     )
 
 	struct Entry {
@@ -43,9 +44,8 @@ class MemoryHeapLink : public SubComponent {
 	};
 
   public:
-    MemoryHeapLink( Component* owner, Params& params, 
-                                            std::string name ="" ) :
-		SubComponent(owner )
+    MemoryHeapLink( Component* comp, Params& params ) : SubComponent(comp) {} 
+    MemoryHeapLink( ComponentId_t id, Params& params ) : SubComponent(id)
 	{
 		m_link = configureLink( "memoryHeap", "0ps",
             new Event::Handler<MemoryHeapLink>(

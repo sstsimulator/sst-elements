@@ -25,13 +25,13 @@ namespace Ember {
 class EmberMsgRateGenerator : public EmberMessagePassingGenerator {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberMsgRateGenerator,
         "ember",
         "MsgRateMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Performs a message rate test.",
-        "SST::Ember::EmberGenerator"
+        SST::Ember::EmberGenerator
     )
 
     SST_ELI_DOCUMENT_PARAMS(
@@ -65,7 +65,8 @@ public:
     )
 
 public:
-	EmberMsgRateGenerator(SST::Component* owner, Params& params);
+	EmberMsgRateGenerator(SST::Component* owner, Params& params) : EmberMessagePassingGenerator(owner,params,"") {}
+	EmberMsgRateGenerator(SST::ComponentId_t, Params& params);
     bool generate( std::queue<EmberEvent*>& evQ);
 
 private:

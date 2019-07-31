@@ -57,6 +57,8 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     uint32_t perform_checks = (uint32_t) params.find<uint32_t>("checkaddresses", 0);
     output->verbose(CALL_INFO, 1, 0, "Configuring for check addresses = %s\n", (perform_checks > 0) ? "yes" : "no");
 
+    int instrument_instructions = params.find<int>("instrument_instructions", 1);
+
 /** This section of code preserves backward compability from the old memorymanager parameters to the new subcomponent structure. */
     // Warn about the parameters that have moved to the subcomponent
     bool found;
@@ -224,7 +226,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     appLauncher = params.find<std::string>("launcher", PINTOOL_EXECUTABLE);
 
     const uint32_t launch_param_count = (uint32_t) params.find<uint32_t>("launchparamcount", 0);
-    const uint32_t pin_arg_count = 35 + launch_param_count;
+    const uint32_t pin_arg_count = 37 + launch_param_count;
 
     execute_args = (char**) malloc(sizeof(char*) * (pin_arg_count + app_argc));
 
@@ -278,6 +280,9 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
         execute_args[arg++] = const_cast<char*>("1");
     }
 
+    execute_args[arg++] = const_cast<char*>("-E");
+    execute_args[arg++] = (char*) malloc(sizeof(char) * 8);
+    sprintf(execute_args[arg-1], "%d", instrument_instructions);
     execute_args[arg++] = const_cast<char*>("-p");
     execute_args[arg++] = (char*) malloc(sizeof(char) * (shmem_region_name.length() + 1));
     strcpy(execute_args[arg-1], shmem_region_name.c_str());

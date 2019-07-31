@@ -19,9 +19,9 @@
 
 using namespace SST::Ember;
 
-EmberStopGenerator::EmberStopGenerator(SST::Component* owner,
+EmberStopGenerator::EmberStopGenerator(SST::ComponentId_t id,
                                                 Params& params) :
-	EmberMessagePassingGenerator(owner, params, "Stop"),
+	EmberMessagePassingGenerator(id, params, "Stop"),
     m_loopIndex(0)
 {
 	m_iterations = (uint32_t) params.find("arg.iterations", 1);

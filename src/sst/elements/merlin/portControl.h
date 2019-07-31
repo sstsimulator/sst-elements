@@ -43,7 +43,100 @@ typedef std::queue<TopologyEvent*> topo_queue_t;
 
 // Class to manage link between NIC and router.  A single NIC can have
 // more than one link_control (and thus link to router).
-class PortControl {
+class PortControlBase : public SubComponent{
+
+    
+public:
+
+    // params are: parent router, router id, port number, topology object
+    SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Merlin::PortControlBase, Router*, int, int, Topology*)
+
+    virtual void sendTopologyEvent(TopologyEvent* ev) = 0;
+    // Returns true if there is space in the output buffer and false
+    // otherwise.
+    virtual void send(internal_router_event* ev, int vc) = 0;
+    // Returns true if there is space in the output buffer and false
+    // otherwise.
+    virtual bool spaceToSend(int vc, int flits) = 0;
+    // Returns NULL if no event in input_buf[vc]. Otherwise, returns
+    // the next event.
+    virtual internal_router_event* recv(int vc) = 0;
+    virtual internal_router_event** getVCHeads() = 0;
+    
+    // time_base is a frequency which represents the bandwidth of the link in flits/second.
+    PortControlBase(ComponentId_t cid) :
+        SubComponent(cid)
+        {}
+
+    PortControlBase(Component* parent) :
+        SubComponent(parent)
+        {}
+
+    virtual void initVCs(int vcs, internal_router_event** vc_heads, int* xbar_in_credits, int* output_queue_lengths) = 0;
+
+
+    virtual ~PortControlBase() {}
+    // void setup();
+    // void finish();
+    // void init(unsigned int phase);
+    // void complete(unsigned int phase);
+    
+
+    virtual void sendInitData(Event *ev) = 0;
+    virtual Event* recvInitData() = 0;
+    virtual void sendUntimedData(Event *ev) = 0;
+    virtual Event* recvUntimedData() = 0;
+    
+    virtual void dumpState(std::ostream& stream) {}
+    virtual void printStatus(Output& out, int out_port_busy, int in_port_busy) {}
+    
+    // void setupVCs(int vcs, internal_router_event** vc_heads
+	virtual bool decreaseLinkWidth() = 0;
+	virtual bool increaseLinkWidth() = 0; 
+};
+
+// Class to manage link between NIC and router.  A single NIC can have
+// more than one link_control (and thus link to router).
+class PortControl : public PortControlBase {
+public:
+
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+        PortControl,
+        "merlin",
+        "portcontrol",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Port Control module for use by hr_router",
+        SST::Merlin::PortControlBase)
+    
+    SST_ELI_DOCUMENT_PARAMS(
+        {"port_name",          "Port name to connect to.  Only used when loaded anonymously",""},
+        {"link_bw",            "Bandwidth of the links specified in either b/s or B/s (can include SI prefix)."},
+        {"flit_size",          "Size of a flit in either b or B (can include SI prefix)."},
+        {"input_latency",       "", "0ns"},
+        {"output_latency",      "", "0ns"},
+        {"input_buf_size",     "Size of input buffers specified in b or B (can include SI prefix)."},
+        {"output_buf_size",    "Size of output buffers specified in b or B (can include SI prefix)."},
+        {"network_inspectors", "Comma separated list of network inspectors to put on output ports.", ""},
+        {"dlink_thresh",       ""},
+        {"oql_track_port",     ""},
+        {"oql_track_remote",   ""}
+    )
+
+    // SST_ELI_DOCUMENT_STATISTICS(
+    //     { "packet_latency",     "Histogram of latencies for received packets", "latency", 1},
+    //     { "send_bit_count",     "Count number of bits sent on link", "bits", 1},
+    //     { "output_port_stalls", "Time output port is stalled (in units of core timebase)", "time in stalls", 1},
+    //     { "idle_time",          "Number of (in unites of core timebas) that port was idle", "time spent idle", 1},
+    // )
+
+    // SST_ELI_DOCUMENT_PORTS(
+    //     {"rtr_port", "Port that connects to router", { "merlin.RtrEvent", "merlin.credit_event", "" } },
+    // )
+
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+        {"inspector_slot", "Network inspectors", "SST::Interfaces::SimpleNetwork::NetworkInspector" }
+    )
+
 private:
     // Link to NIC or other router
     Link* port_link;
@@ -206,14 +299,8 @@ public:
     }
     
     // time_base is a frequency which represents the bandwidth of the link in flits/second.
-    PortControl(Router* rif, int rtr_id, std::string link_port_name,
-                int port_number, const UnitAlgebra& link_bw, const UnitAlgebra& flit_size,
-                Topology *topo, 
-                SimTime_t input_latency_cycles, std::string input_latency_timebase,
-                SimTime_t output_latency_cycles, std::string output_latency_timebase,
-                const UnitAlgebra& in_buf_size, const UnitAlgebra& out_buf_size,
-                std::vector<std::string>& inspector_names,
-				const float dlink_thresh, bool oql_track_port, bool oql_track_remote);
+    PortControl(Component* parent, Params& params);
+    PortControl(ComponentId_t cid, Params& params, Router* rif, int rtr_id, int port_number, Topology *topo); 
 
     void initVCs(int vcs, internal_router_event** vc_heads, int* xbar_in_credits, int* output_queue_lengths);
 

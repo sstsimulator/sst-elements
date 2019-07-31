@@ -26,6 +26,7 @@ class MemoryBase : public SubComponent {
     typedef uint64_t MemAddr;
 
     MemoryBase( Component* comp ) : SubComponent( comp ) {}
+    MemoryBase( ComponentId_t id ) : SubComponent( id ) {}
     virtual ~MemoryBase() {}
     virtual void copy( Callback, MemAddr to, MemAddr from, size_t ) = 0;
     virtual void write( Callback, MemAddr to, size_t ) = 0;

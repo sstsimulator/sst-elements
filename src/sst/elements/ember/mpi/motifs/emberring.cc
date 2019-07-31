@@ -22,14 +22,12 @@ using namespace SST::Ember;
 #define TAG 0xDEADBEEF
 #define DATA_TYPE CHAR 
 
-EmberRingGenerator::EmberRingGenerator(SST::Component* owner, Params& params) :
-	EmberMessagePassingGenerator(owner, params, "Ring"),
+EmberRingGenerator::EmberRingGenerator(SST::ComponentId_t id, Params& params) :
+	EmberMessagePassingGenerator(id, params, "Ring"),
     m_loopIndex(0)
 {
 	m_messageSize = (uint32_t) params.find("arg.messagesize", 1024);
 	m_iterations = (uint32_t) params.find("arg.iterations", 1);
-    m_sendBuf = memAlloc(m_messageSize * sizeofDataType(DATA_TYPE) );
-    m_recvBuf = memAlloc(m_messageSize * sizeofDataType(DATA_TYPE) );
 }
 
 inline long mod( long a, long b )
@@ -61,6 +59,8 @@ bool EmberRingGenerator::generate( std::queue<EmberEvent*>& evQ)
 
     if ( 0 == m_loopIndex ) {
         verbose( CALL_INFO, 1, 0, "rank=%d size=%d\n", rank(), size());
+    	m_sendBuf = memAlloc(m_messageSize * sizeofDataType(DATA_TYPE) );
+    	m_recvBuf = memAlloc(m_messageSize * sizeofDataType(DATA_TYPE) );
 
         if ( 0 == rank() ) {
             enQ_getTime( evQ, &m_startTime );

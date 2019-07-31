@@ -40,8 +40,9 @@ class EmberShmemPutvGenerator : public EmberShmemGenerator {
     }
 
 public:
-	EmberShmemPutvGenerator(SST::Component* owner, Params& params) :
-		EmberShmemGenerator(owner, params, "ShmemPutv" ), m_phase(-2) 
+	EmberShmemPutvGenerator(SST::Component* owner, Params& params) : EmberShmemGenerator(owner, params, "" ) {}
+	EmberShmemPutvGenerator(SST::ComponentId_t id, Params& params) :
+		EmberShmemGenerator(id, params, "ShmemPutv" ), m_phase(-2) 
 	{ 
         m_printResults = params.find<bool>("arg.printResults", false );
 		m_iterations = (uint32_t) params.find("arg.iterations", 1);
@@ -123,82 +124,82 @@ public:
 
 class EmberShmemPutvIntGenerator : public EmberShmemPutvGenerator<int> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemPutvIntGenerator,
         "ember",
         "ShmemPutvIntMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM putv int",
-        "SST::Ember::EmberGenerator"
-
+        SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS(
-    )
+    SST_ELI_DOCUMENT_PARAMS()
 
 public:
     EmberShmemPutvIntGenerator( SST::Component* owner, Params& params ) :
         EmberShmemPutvGenerator(owner,  params) { }
+    EmberShmemPutvIntGenerator( SST::ComponentId_t id, Params& params ) :
+        EmberShmemPutvGenerator(id,  params) { }
 };
 
 class EmberShmemPutvLongGenerator : public EmberShmemPutvGenerator<long> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemPutvLongGenerator,
         "ember",
         "ShmemPutvLongMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM putv long",
-        "SST::Ember::EmberGenerator"
-
+        SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS(
-    )
+    SST_ELI_DOCUMENT_PARAMS()
 
 public:
     EmberShmemPutvLongGenerator( SST::Component* owner, Params& params ) :
         EmberShmemPutvGenerator(owner,  params) { }
+    EmberShmemPutvLongGenerator( SST::ComponentId_t id, Params& params ) :
+        EmberShmemPutvGenerator(id,  params) { }
 };
 
 class EmberShmemPutvDoubleGenerator : public EmberShmemPutvGenerator<double> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemPutvDoubleGenerator,
         "ember",
         "ShmemPutvDoubleMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM putv double",
-        "SST::Ember::EmberGenerator"
-
+        SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS(
-    )
+    SST_ELI_DOCUMENT_PARAMS()
 
 public:
     EmberShmemPutvDoubleGenerator( SST::Component* owner, Params& params ) :
         EmberShmemPutvGenerator(owner,  params) { }
+    EmberShmemPutvDoubleGenerator( SST::ComponentId_t id, Params& params ) :
+        EmberShmemPutvGenerator(id,  params) { }
 };
 
 class EmberShmemPutvFloatGenerator : public EmberShmemPutvGenerator<float> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemPutvFloatGenerator,
         "ember",
         "ShmemPutvFloatMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM putv float",
-        "SST::Ember::EmberGenerator"
-
+        SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS(
-    )
+    SST_ELI_DOCUMENT_PARAMS()
 
 public:
     EmberShmemPutvFloatGenerator( SST::Component* owner, Params& params ) :
         EmberShmemPutvGenerator(owner,  params) { }
+    EmberShmemPutvFloatGenerator( SST::ComponentId_t id, Params& params ) :
+        EmberShmemPutvGenerator(id,  params) { }
 };
 
 }

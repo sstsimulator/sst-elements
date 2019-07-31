@@ -36,13 +36,13 @@ class xbar_arb_rr : public XbarArbitration {
 
 public:
 
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         xbar_arb_rr,
         "merlin",
         "xbar_arb_rr",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Round robin arbitration unit for hr_router",
-        "SST::Merlin::XbarArbitration")
+        SST::Merlin::XbarArbitration)
     
     
 private:
@@ -63,6 +63,12 @@ private:
 public:
     xbar_arb_rr(Component* parent, Params& params) :
         XbarArbitration(parent),
+        rr_vcs(NULL)
+    {
+    }
+
+    xbar_arb_rr(ComponentId_t cid, Params& params) :
+        XbarArbitration(cid),
         rr_vcs(NULL)
     {
     }
@@ -92,9 +98,9 @@ public:
     // out_port_busy is >0 if that xbar port being read.
     void arbitrate(
 #if VERIFY_DECLOCKING
-                   PortControl** ports, int* in_port_busy, int* out_port_busy, int* progress_vc, bool clocking
+                   PortControlBase** ports, int* in_port_busy, int* out_port_busy, int* progress_vc, bool clocking
 #else
-                   PortControl** ports, int* in_port_busy, int* out_port_busy, int* progress_vc
+                   PortControlBase** ports, int* in_port_busy, int* out_port_busy, int* progress_vc
 #endif
                    )
     {

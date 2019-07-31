@@ -23,8 +23,8 @@
 
 using namespace SST::Ember;
 
-EmberSweep2DGenerator::EmberSweep2DGenerator(SST::Component* owner, Params& params) :
-	EmberMessagePassingGenerator(owner, params, "Sweep2D"),
+EmberSweep2DGenerator::EmberSweep2DGenerator(SST::ComponentId_t id, Params& params) :
+	EmberMessagePassingGenerator(id, params, "Sweep2D"),
 	m_loopIndex(0) 
 {
 	nsCompute = (uint64_t) params.find("arg.computetime", 1000);

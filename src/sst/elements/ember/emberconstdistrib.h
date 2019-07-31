@@ -38,7 +38,7 @@ public:
     )
 
 public:
-	EmberConstDistribution(Component* owner, Params& params);
+	EmberConstDistribution(Params& params);
 	~EmberConstDistribution();
 	double sample(uint64_t now);
 

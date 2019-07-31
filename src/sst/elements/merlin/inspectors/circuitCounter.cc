@@ -41,7 +41,13 @@ void CircNetworkInspector::initialize(string id) {
         mapLock.lock();
         
         // use router name as the key
-        const string &key = parent->getName();
+        // Get router name from my name
+        string fullname = getName();
+
+        // Nmae of router is the name before the first :
+        int index = fullname.find(":");
+        
+        const string &key = index == string::npos ? fullname : fullname.substr(0,index);
         // look up our key
         setMap_t::iterator iter = setMap.find(key);
         if (iter == setMap.end()) {

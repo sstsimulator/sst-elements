@@ -41,7 +41,8 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_memoryModel(NULL),
     m_nic2host_base_lat_ns(0),
     m_respKey(1),
-	m_predNetIdleTime(0)
+	m_predNetIdleTime(0),
+	m_detailedInterface(NULL)
 {
     m_myNodeId = params.find<int>("nid", -1);
     assert( m_myNodeId != -1 );
@@ -133,8 +134,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
             output_buf_size.toString().c_str(),
 			link_bw.toString().c_str(), packetSizeInBytes);
 
-    m_linkControl = (SimpleNetwork*)loadSubComponent(
-                    params.find<std::string>("module"), this, params);
+    m_linkControl = loadUserSubComponent<Interfaces::SimpleNetwork>( "rtrLink", ComponentInfo::SHARE_NONE, 0 );
     assert( m_linkControl );
 
 	m_linkControl->initialize(params.find<std::string>("rtrPortName","rtr"),
@@ -214,6 +214,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
         
 		if ( isdigit( useDetailed[0] ) ) {
 			if ( findNid( m_myNodeId, useDetailed ) ) {
+ 				m_detailedInterface = loadUserSubComponent<DetailedInterface>( "detailedInterface", ComponentInfo::SHARE_STATS );
         		smmParams.insert( "useDetailedModel",  "yes", true );
 			} else {
         		smmParams.insert( "useDetailedModel",  "no", true );
@@ -233,7 +234,11 @@ Nic::Nic(ComponentId_t id, Params &params) :
 		tmp << m_unitPool->getTotal();
 		smmParams.insert( "numNicUnits", tmp.str(), true );
 
-        m_memoryModel = dynamic_cast<MemoryModel*>(loadSubComponent( "firefly.SimpleMemory",this, smmParams ));
+        m_memoryModel = loadAnonymousSubComponent<MemoryModel>( "firefly.SimpleMemory","", 0, ComponentInfo::SHARE_NONE, smmParams );
+
+		if ( m_detailedInterface ) {
+			static_cast<SimpleMemoryModel*>(m_memoryModel)->setDetailedInterface( m_detailedInterface );
+		}
     }
     if ( params.find<int>( "useTrivialMemoryModel", 0 ) ) {
 		if ( m_memoryModel ) {
@@ -272,28 +277,19 @@ Nic::Nic(ComponentId_t id, Params &params) :
     Params dtldParams = params.find_prefix_params( "detailedCompute." );
     std::string dtldName =  dtldParams.find<std::string>( "name" );
 
-    if ( ! dtldName.empty() ) {
+    if ( ! params.find<int>( "useSimpleMemoryModel", 0 ) && ! dtldName.empty() ) {
 
-        dtldParams.insert( "portName", "read", true );
         Thornhill::DetailedCompute* detailed;
-        detailed = dynamic_cast<Thornhill::DetailedCompute*>( loadSubComponent(
-                            dtldName, this, dtldParams ) );
 
-        assert( detailed );
-        if ( ! detailed->isConnected() ) {
-            delete detailed;
-        } else {
+        detailed = loadUserSubComponent<Thornhill::DetailedCompute>( "nicDetailedRead" );
+        if ( detailed && detailed->isConnected() ) {
+            m_dbg.verbose( CALL_INFO, 1, 0,"detailed read connected\n");
             m_detailedCompute[0] = detailed;
         }
 
-        dtldParams.insert( "portName", "write", true );
-        detailed = dynamic_cast<Thornhill::DetailedCompute*>( loadSubComponent(
-                            dtldName, this, dtldParams ) );
-
-        assert( detailed );
-        if ( ! detailed->isConnected() ) {
-            delete detailed;
-        } else {
+        detailed = loadUserSubComponent<Thornhill::DetailedCompute>( "nicDetailedWrite" );
+        if ( detailed && detailed->isConnected() ) {
+            m_dbg.verbose( CALL_INFO, 1, 0,"detailed write connected\n" );
             m_detailedCompute[1] = detailed;
         }
 
@@ -357,6 +353,9 @@ void Nic::init( unsigned int phase )
 	if ( m_memoryModel ) {
 		m_memoryModel->init(phase);
 	}
+	if ( m_detailedInterface) {
+		m_detailedInterface->init(phase);
+	} 
 }
 
 void Nic::handleVnicEvent( Event* ev, int id )

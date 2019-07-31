@@ -36,13 +36,13 @@ class xbar_arb_age : public XbarArbitration {
 
 public:
 
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         xbar_arb_age,
         "merlin",
         "xbar_arb_age",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Age based arbitration unit for hr_router",
-        "SST::Merlin::XbarArbitration")
+        SST::Merlin::XbarArbitration)
     
 private:
     /**
@@ -128,11 +128,16 @@ public:
     {
     }
 
+    xbar_arb_age(ComponentId_t cid, Params& params) :
+        XbarArbitration(cid)
+    {
+    }
+
     ~xbar_arb_age() {
         delete[] entries;
     }
 
-    void setPorts(int num_ports_s, int num_vcs_s) {
+     void setPorts(int num_ports_s, int num_vcs_s) {
         num_ports = num_ports_s;
         num_vcs = num_vcs_s;
 
@@ -154,9 +159,9 @@ public:
     // out_port_busy is >0 if that xbar port being read.
     void arbitrate(
 #if VERIFY_DECLOCKING
-                   PortControl** ports, int* in_port_busy, int* out_port_busy, int* progress_vc, bool clocking
+                   PortControlBase** ports, int* in_port_busy, int* out_port_busy, int* progress_vc, bool clocking
 #else
-                   PortControl** ports, int* in_port_busy, int* out_port_busy, int* progress_vc
+                   PortControlBase** ports, int* in_port_busy, int* out_port_busy, int* progress_vc
 #endif
                    )
     {

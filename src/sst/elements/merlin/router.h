@@ -341,8 +341,13 @@ private:
 
 class Topology : public SubComponent {
 public:
+
+    // Parameters are:  num_ports, id
+    SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Merlin::Topology, int, int)
+    
     enum PortState {R2R, R2N, UNCONNECTED};
     Topology(Component* comp) : SubComponent(comp), output(Simulation::getSimulation()->getSimulationOutput()) {}
+    Topology(ComponentId_t cid) : SubComponent(cid), output(Simulation::getSimulation()->getSimulationOutput()) {}
     virtual ~Topology() {}
 
     virtual void route(int port, int vc, internal_router_event* ev) = 0;
@@ -381,19 +386,25 @@ protected:
     Output &output;
 };
 
-class PortControl;
+class PortControlBase;
 
 class XbarArbitration : public SubComponent {
 public:
+
+    SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Merlin::XbarArbitration)
+    
     XbarArbitration(Component* parent) :
         SubComponent(parent)
+    {}
+    XbarArbitration(ComponentId_t cid) :
+        SubComponent(cid)
     {}
     virtual ~XbarArbitration() {}
 
 #if VERIFY_DECLOCKING
-    virtual void arbitrate(PortControl** ports, int* port_busy, int* out_port_busy, int* progress_vc, bool clocking) = 0;
+    virtual void arbitrate(PortControlBase** ports, int* port_busy, int* out_port_busy, int* progress_vc, bool clocking) = 0;
 #else
-    virtual void arbitrate(PortControl** ports, int* port_busy, int* out_port_busy, int* progress_vc) = 0;
+    virtual void arbitrate(PortControlBase** ports, int* port_busy, int* out_port_busy, int* progress_vc) = 0;
 #endif
     virtual void setPorts(int num_ports, int num_vcs) = 0;
     virtual bool isOkayToPauseClock() { return true; }

@@ -31,6 +31,7 @@
 #include "merlinEvent.h"
 #include "memoryModel/trivialMemoryModel.h"
 #include "memoryModel/simpleMemoryModel.h"
+#include "memoryModel/detailedInterface.h"
 
 #define CALL_INFO_LAMBDA     __LINE__, __FILE__
 
@@ -62,7 +63,8 @@ class Nic : public SST::Component  {
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "",
         COMPONENT_CATEGORY_SYSTEM
-        )
+    )
+
     SST_ELI_DOCUMENT_PARAMS(
         { "nid", "node id on network", "-1"},
         { "verboseLevel", "Sets the output verbosity of the component", "0"},
@@ -125,6 +127,7 @@ class Nic : public SST::Component  {
         { "simpleMemoryModel.tlbMissLat_ns","Sets the latency for a TLB miss","0"},
         { "simpleMemoryModel.numWalkers","Sets the number of outsanding TLB misses","1"},
         { "simpleMemoryModel.numTlbSlots","Sets the number of requests the TLB will queue","1"},
+
     )
 
    SST_ELI_DOCUMENT_STATISTICS(
@@ -137,6 +140,10 @@ class Nic : public SST::Component  {
 
         { "recvStreamPending",   "number of pending receive stream memory operations", "depth", 1},
         { "sendStreamPending",   "number of pending send stream memory operations", "depth", 1},
+
+        { "detailed_num_reads",                "total number of loads", "count", 1},
+        { "detailed_num_writes",               "total number of stores", "count", 1},
+        { "detailed_req_latency",              "Running total of all latency for all requests", "count", 1},
     )
 
     SST_ELI_DOCUMENT_PORTS(
@@ -144,6 +151,8 @@ class Nic : public SST::Component  {
         {"read", "Port connected to the detailed model", {}},
         {"write", "Port connected to the detailed model", {}},
         {"core%(num_vNics)d", "Ports connected to the network driver", {}},
+        {"nicDetailedRead", "Port connected to the detailed model", {"memHierarchy.memEvent" , ""}},
+        {"nicDetailedWrite", "Port connected to the detailed model", {"memHierarchy.memEvent" , ""}},
         {"detailed", "Port connected to the detailed model", {"memHierarchy.memEvent" , ""}},
     ) 
 
@@ -494,6 +503,7 @@ struct X {
     Output                  m_dbg;
     std::vector<VirtNic*>   m_vNicV;
     std::vector<Thornhill::DetailedCompute*> m_detailedCompute;
+	DetailedInterface* m_detailedInterface;
 	bool m_useDetailedCompute;
     Shmem* m_shmem;
 	SimTime_t m_nic2host_lat_ns;

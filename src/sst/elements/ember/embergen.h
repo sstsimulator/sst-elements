@@ -44,17 +44,24 @@
 namespace SST {
 namespace Ember {
 
+class EmberEngine;
+
 class EmberGenerator : public SubComponent {
 
   public:
 
     typedef std::queue<EmberEvent*> Queue;
 
-    EmberGenerator( Component* owner, Params& params, std::string name ="" );
+	SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Ember::EmberGenerator)
 
-	~EmberGenerator(){
-		delete m_computeDistrib;
-	};
+    EmberGenerator( Component* owner, Params& params ) : SubComponent(owner)  { assert(0); }
+    EmberGenerator( ComponentId_t id, Params& params ) : SubComponent(id) { assert(0); }
+    EmberGenerator( Component* owner, Params& params, std::string name ="" ) : SubComponent(owner) { assert(0); }
+    EmberGenerator( ComponentId_t id, Params& params, std::string name ="" );
+
+	void setEngine( EmberEngine* );
+
+	~EmberGenerator(){ };
     
     virtual void generate( const SST::Output* output, const uint32_t phase,
         std::queue<EmberEvent*>* evQ ) {
@@ -118,6 +125,7 @@ class EmberGenerator : public SubComponent {
     inline void enQ_detailedCompute( Queue& q, std::string, Params&, std::function<int()> func );
 
   private:
+    EmberEngine*            m_ee;
     Output* 	        	m_output;
     enum { NoBacking, Backing, BackingZeroed  } m_dataMode; 
     std::string				m_motifName;
@@ -127,6 +135,7 @@ class EmberGenerator : public SubComponent {
     int                     m_motifNum;
     bool                    m_primary;
     EmberComputeDistribution*           m_computeDistrib;
+    uint64_t m_curVirtAddr;
 };
 
 void EmberGenerator::enQ_getTime( Queue& q, uint64_t* time ) {
@@ -152,9 +161,18 @@ void EmberGenerator::enQ_detailedCompute( Queue& q, std::string name,
 
 void EmberGenerator::enQ_memAlloc( Queue& q, Hermes::MemAddr* addr, size_t length )
 {
-    assert( m_memHeapLink );
-    addr->setBacking( memAlloc(length) );
-    q.push( new EmberMemAllocEvent( *m_memHeapLink, &getOutput(), addr, length  ) );
+    if ( m_memHeapLink ) {
+        addr->setBacking( memAlloc(length) );
+        q.push( new EmberMemAllocEvent( *m_memHeapLink, &getOutput(), addr, length  ) );
+    } else {
+        if ( length % 16 ) {
+            length += 16;
+            length &= ~(16-1);
+        }
+        *addr = Hermes::MemAddr( m_curVirtAddr, memAlloc( length ) );
+        m_curVirtAddr += length; 
+        q.push( new EmberComputeEvent( &getOutput(), 0, m_computeDistrib ) );
+    }
 }
 
 }

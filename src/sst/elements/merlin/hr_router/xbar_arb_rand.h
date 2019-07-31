@@ -37,13 +37,13 @@ class xbar_arb_rand : public XbarArbitration {
 
 public:
 
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         xbar_arb_rand,
         "merlin",
         "xbar_arb_rand",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Random arbitration unit for hr_router",
-        "SST::Merlin::XbarArbitration")
+        SST::Merlin::XbarArbitration)
     
 
 private:
@@ -121,6 +121,12 @@ public:
         rng = new RNG::XORShiftRNG(69);
     }
 
+    xbar_arb_rand(ComponentId_t cid, Params& params) :
+        XbarArbitration(cid)
+    {
+        rng = new RNG::XORShiftRNG(69);
+    }
+
     ~xbar_arb_rand() {
         delete[] entries;
     }
@@ -147,9 +153,9 @@ public:
     // out_port_busy is >0 if that xbar port being read.
     void arbitrate(
 #if VERIFY_DECLOCKING
-                   PortControl** ports, int* in_port_busy, int* out_port_busy, int* progress_vc, bool clocking
+                   PortControlBase** ports, int* in_port_busy, int* out_port_busy, int* progress_vc, bool clocking
 #else
-                   PortControl** ports, int* in_port_busy, int* out_port_busy, int* progress_vc
+                   PortControlBase** ports, int* in_port_busy, int* out_port_busy, int* progress_vc
 #endif
                    )
     {

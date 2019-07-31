@@ -29,12 +29,41 @@ using namespace Interfaces;
 namespace Merlin {
 
 ReorderLinkControl::ReorderLinkControl(Component* parent, Params &params) :
-    SST::Interfaces::SimpleNetwork(parent),
+    SimpleNetwork(parent),
     receiveFunctor(NULL)
 {
     std::string networkIF = params.find<std::string>("rlc:networkIF", "merlin.linkcontrol");
-    link_control = static_cast<SST::Interfaces::SimpleNetwork*>(loadSubComponent(networkIF, params));
+DISABLE_WARN_DEPRECATED_DECLARATION
+    link_control = static_cast<SimpleNetwork*>(loadSubComponent(networkIF, params));
+REENABLE_WARNING
 }
+
+ReorderLinkControl::ReorderLinkControl(ComponentId_t cid, Params &params, int vns) :
+    SimpleNetwork(cid),
+    receiveFunctor(NULL)
+{
+    if ( isUser() ) {
+        // Need to see if the network_if was loaded as a user subcomponent
+        link_control = loadUserSubComponent<SimpleNetwork>("networkIF", ComponentInfo::SHARE_NONE, vns);
+        // If the load was successful, we can return
+        if ( link_control ) return;
+    }
+
+    // NetworkIF not loaded as user subcomponent, try anonymous
+    std::string networkIF = params.find<std::string>("networkIF", "merlin.linkcontrol");
+
+    // Get the params for the child
+    Params childParams = params.find_prefix_params("networkIF");
+
+    // If this was loaded as a user subcomponent, need to tell the
+    // child what port to connect to
+    if ( isUser() ) childParams.insert("port_name","rtr_port");
+    
+    link_control =
+        loadAnonymousSubComponent<SimpleNetwork>(networkIF, "networkIF", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, childParams, vns);
+    
+}
+
 
 ReorderLinkControl::~ReorderLinkControl() {
     delete [] input_buf;
@@ -45,6 +74,10 @@ ReorderLinkControl::initialize(const std::string& port_name, const UnitAlgebra& 
                                int vns, const UnitAlgebra& in_buf_size,
                                const UnitAlgebra& out_buf_size)
 {
+    if ( !wasLoadedWithLegacyAPI() ) {
+        merlin_abort.fatal(CALL_INFO_LONG,1,"reorderLinkControl::initializae() was called on instance that was loaded using new APIs.  This method can only be called when loaded with the legacy API.  Use wasLoadedWithLegacyAPI() to check load status.");
+        return false;
+    }
     this->vns = vns;
     
     // Don't need output buffers, sends will go directly to
@@ -66,13 +99,13 @@ ReorderLinkControl::setup()
     //     delete init_events.front();
     //     init_events.pop_front();
     // }
-    link_control->setNotifyOnReceive(new SST::Interfaces::SimpleNetwork::Handler<ReorderLinkControl>(this,&ReorderLinkControl::handle_event));
+    link_control->setNotifyOnReceive(new SimpleNetwork::Handler<ReorderLinkControl>(this,&ReorderLinkControl::handle_event));
 }
 
 void ReorderLinkControl::init(unsigned int phase)
 {
     if ( phase == 0 ) {
-        link_control->setNotifyOnReceive(new SST::Interfaces::SimpleNetwork::Handler<ReorderLinkControl>(this,&ReorderLinkControl::handle_event));
+        link_control->setNotifyOnReceive(new SimpleNetwork::Handler<ReorderLinkControl>(this,&ReorderLinkControl::handle_event));
     }
     link_control->init(phase);
     if (link_control->isNetworkInitialized()) {
@@ -141,7 +174,7 @@ bool ReorderLinkControl::spaceToSend(int vn, int bits) {
 SST::Interfaces::SimpleNetwork::Request* ReorderLinkControl::recv(int vn) {
     if ( input_buf[vn].size() == 0 ) return NULL;
 
-    SST::Interfaces::SimpleNetwork::Request* req = input_buf[vn].front();
+    SimpleNetwork::Request* req = input_buf[vn].front();
     input_buf[vn].pop();
     return req;
 }

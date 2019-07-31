@@ -25,13 +25,13 @@ namespace Ember {
 class EmberReduceGenerator : public EmberMessagePassingGenerator {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberReduceGenerator,
         "ember",
         "ReduceMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Performs a reduction operation with type set to float64 and operation SUM from a user-specified reduction-tree root",
-        "SST::Ember::EmberGenerator"
+        SST::Ember::EmberGenerator
     )
 
     SST_ELI_DOCUMENT_PARAMS(
@@ -66,7 +66,8 @@ public:
     )
 
 public:
-	EmberReduceGenerator(SST::Component* owner, Params& params);
+	EmberReduceGenerator(SST::Component* owner, Params& params) : EmberMessagePassingGenerator(owner,params,"") {}
+	EmberReduceGenerator(SST::ComponentId_t, Params& params);
     bool generate( std::queue<EmberEvent*>& evQ);
 
 private:

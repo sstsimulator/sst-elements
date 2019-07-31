@@ -26,21 +26,21 @@ namespace Ember {
 class EmberShmemBarrierAllGenerator : public EmberShmemGenerator {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemBarrierAllGenerator,
         "ember",
         "ShmemBarrierAllMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM barrier_all",
-        "SST::Ember::EmberGenerator"
+        SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS(
-    )
+    SST_ELI_DOCUMENT_PARAMS()
 
 public:
-	EmberShmemBarrierAllGenerator(SST::Component* owner, Params& params) :
-		EmberShmemGenerator(owner, params, "ShmemBarrierAll" ), m_phase(-1) 
+	EmberShmemBarrierAllGenerator(SST::Component* owner, Params& params) : EmberShmemGenerator(owner, params, "" ) {}
+	EmberShmemBarrierAllGenerator(SST::ComponentId_t id, Params& params) :
+		EmberShmemGenerator(id, params, "ShmemBarrierAll" ), m_phase(-1) 
 	{ 
         m_count = (uint32_t) params.find("arg.iterations", 1);
     }

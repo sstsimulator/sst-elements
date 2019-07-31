@@ -372,7 +372,12 @@ class NodePerf : public Module {
 
 class OS : public SubComponent {
   public:
-	OS( Component *owner ) : SubComponent( owner ) {}
+
+	SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Hermes::OS)
+
+	OS( Component *owner, Params& ) : SubComponent( owner ) {}
+	OS( ComponentId_t id, Params& ) : SubComponent( id ) {}
+
     virtual void _componentInit( unsigned int phase ) {}
     virtual void _componentSetup( void ) {}
     virtual void printStatus( Output& ) {}
@@ -386,6 +391,8 @@ class OS : public SubComponent {
 
 class Interface : public SubComponent {
   public:
+	SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Hermes::Interface)
+    Interface( ComponentId_t id ) : SubComponent(id) {}
     Interface( Component* owner ) : SubComponent(owner) {}
     virtual void setup() {} 
     virtual void finish() {} 

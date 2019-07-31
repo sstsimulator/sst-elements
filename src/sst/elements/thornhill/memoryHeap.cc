@@ -66,7 +66,7 @@ void MemoryHeap::eventHandler( Event* ev, int src ) {
       case MemoryHeapEvent::Alloc:
         event->addr = m_currentVaddr;
         m_output.verbose(CALL_INFO,1,1,
-			"Alloc length=%zu addr=%" PRIx64 "\n",
+			"Alloc length=%zu addr=0x%" PRIx64 "\n",
 									event->length,event->addr);
         m_currentVaddr += event->length;
         break; 

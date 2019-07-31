@@ -40,7 +40,7 @@ public:
     )    
 
 public:
-	EmberGaussianDistribution(Component* owner, Params& params);
+	EmberGaussianDistribution(Params& params);
 	~EmberGaussianDistribution();
 	double sample(uint64_t now);
 

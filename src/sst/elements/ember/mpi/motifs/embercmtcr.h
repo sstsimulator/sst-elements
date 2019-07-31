@@ -26,13 +26,13 @@ namespace Ember {
 class EmberCMTCRGenerator : public EmberMessagePassingGenerator {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberCMTCRGenerator,
         "ember",
         "CMTCRMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Performs all-to-all communication using Crystal Router",
-        "SST::Ember::EmberGenerator"
+        SST::Ember::EmberGenerator
     )
 
     SST_ELI_DOCUMENT_PARAMS(
@@ -77,7 +77,8 @@ public:
     )
 
 public:
-	EmberCMTCRGenerator(SST::Component* owner, Params& params);
+	EmberCMTCRGenerator(SST::Component* owner, Params& params): EmberMessagePassingGenerator(owner,params,"") {} 
+	EmberCMTCRGenerator(SST::ComponentId_t, Params& params); 
 //	~EmberCMT3DGenerator();
 	void configure();
 	bool generate( std::queue<EmberEvent*>& evQ);

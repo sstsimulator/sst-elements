@@ -98,6 +98,8 @@ inline void Op_free( ReductionOperation op ) {
 class Interface : public Hermes::Interface {
     public:
 
+    SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Hermes::MP::Interface)
+
     Interface( Component* parent ) : Hermes::Interface( parent )  {}
     virtual ~Interface() {}
 

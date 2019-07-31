@@ -32,13 +32,13 @@ namespace Ember {
 class Ember3DAMRGenerator : public EmberMessagePassingGenerator {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         Ember3DAMRGenerator,
         "ember",
         "3DAMRMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Models an adaptive refinement step from MiniAMR",
-        "SST::Ember::EmberGenerator"
+        SST::Ember::EmberGenerator
     )
 
     SST_ELI_DOCUMENT_PARAMS(
@@ -79,7 +79,8 @@ public:
 
 
 public:
-	Ember3DAMRGenerator(SST::Component* owner, Params& params);
+	Ember3DAMRGenerator(SST::Component* owner, Params& params) : EmberMessagePassingGenerator(owner,params,"") {}
+	Ember3DAMRGenerator(SST::ComponentId_t, Params& params);
 	~Ember3DAMRGenerator();
 	void configure();
         bool generate( std::queue<EmberEvent*>& evQ );

@@ -32,13 +32,13 @@ namespace Ember {
 class EmberShmemFAM_ScattervGenerator : public EmberShmemGenerator {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemFAM_ScattervGenerator,
         "ember",
         "ShmemFAM_ScattervMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM FAM_Scatterv",
-        "SST::Ember::EmberGenerator"
+        SST::Ember::EmberGenerator
 
     )
 
@@ -46,8 +46,9 @@ public:
     )
 
 public:
-	EmberShmemFAM_ScattervGenerator(SST::Component* owner, Params& params) :
-		EmberShmemGenerator(owner, params, "ShmemFAM_Scatterv" ), m_phase(Init), m_groupName("MyApplication")
+	EmberShmemFAM_ScattervGenerator(SST::Component* owner, Params& params) : EmberShmemGenerator(owner, params, "" ) {}
+	EmberShmemFAM_ScattervGenerator(SST::ComponentId_t id, Params& params) :
+		EmberShmemGenerator(id, params, "ShmemFAM_Scatterv" ), m_phase(Init), m_groupName("MyApplication")
 	{ 
 		m_blocking      = params.find<bool>("arg.blocking", false);
 		m_blockSize	    = params.find<int>("arg.blockSize", 4096);

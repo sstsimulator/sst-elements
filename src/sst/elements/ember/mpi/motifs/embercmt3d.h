@@ -26,13 +26,13 @@ namespace Ember {
 class EmberCMT3DGenerator : public EmberMessagePassingGenerator {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberCMT3DGenerator,
         "ember",
         "CMT3DMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Performs nearest neighbor exchange over a 3D machine decomposition",
-        "SST::Ember::EmberGenerator"
+        SST::Ember::EmberGenerator
     )
 
     SST_ELI_DOCUMENT_PARAMS(
@@ -77,7 +77,8 @@ public:
     )
 
 public:
-	EmberCMT3DGenerator(SST::Component* owner, Params& params);
+	EmberCMT3DGenerator(SST::Component* owner, Params& params) : EmberMessagePassingGenerator(owner,params,"") {}
+	EmberCMT3DGenerator(SST::ComponentId_t, Params& params);
 //	~EmberCMT3DGenerator();
 	void configure();
 	bool generate( std::queue<EmberEvent*>& evQ);

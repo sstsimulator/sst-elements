@@ -25,16 +25,20 @@ class DetailedCompute : public SubComponent {
 
   public:
 
+    SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Thornhill::DetailedCompute)
+
 	struct Generator {
 		std::string name;
 		SST::Params params;
 	};
 
-    DetailedCompute( SST::Component* owner ) : SubComponent( owner ) {}
+    DetailedCompute( ComponentId_t id ) : SubComponent( id ) {}
+    DetailedCompute( Component* owner ) : SubComponent( owner ) {}
+    DetailedCompute( ComponentId_t id, Params& ) : SubComponent( id ) {}
+    DetailedCompute( Component* owner, Params& ) : SubComponent( owner ) {}
 
     virtual ~DetailedCompute(){};
-    virtual void start( const std::deque< 
-								std::pair< std::string, SST::Params > >&,
+    virtual void start( std::deque< std::pair< std::string, SST::Params > >&,
                  std::function<int()> retFunc, std::function<int()> finiFunc) = 0;
     virtual bool isConnected() = 0;
 	virtual std::string getModelName() = 0;

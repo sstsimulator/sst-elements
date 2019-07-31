@@ -25,13 +25,13 @@ namespace Ember {
 class Ember3DCommDoublingGenerator : public EmberMessagePassingGenerator {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         Ember3DCommDoublingGenerator,
         "ember",
         "CommDoubleMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Performs a communication doubling pattern based on a research scientific analytics problem",
-        "SST::Ember::EmberGenerator"
+        SST::Ember::EmberGenerator
     )
 
     SST_ELI_DOCUMENT_PARAMS(
@@ -68,7 +68,8 @@ public:
     )
 
 public:
-	Ember3DCommDoublingGenerator(SST::Component* owner, Params& params);
+	Ember3DCommDoublingGenerator(SST::Component* owner, Params& params) : EmberMessagePassingGenerator(owner,params,"") {}
+	Ember3DCommDoublingGenerator(SST::ComponentId_t, Params& params);
 	~Ember3DCommDoublingGenerator() {}
 	void configure();
     bool generate( std::queue<EmberEvent*>& evQ );

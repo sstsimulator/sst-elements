@@ -29,8 +29,8 @@
 
 using namespace SST::Ember;
 
-EmberCMTCRGenerator::EmberCMTCRGenerator(SST::Component* owner, Params& params) :
-	EmberMessagePassingGenerator(owner, params, "CMTCR"),
+EmberCMTCRGenerator::EmberCMTCRGenerator(SST::ComponentId_t id, Params& params) :
+	EmberMessagePassingGenerator(id, params, "CMTCR"),
 	m_loopIndex(0)
 {
 	iterations = (uint32_t) params.find("arg.iterations", 1);
