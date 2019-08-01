@@ -461,7 +461,7 @@ void Cache::activatePrevEvents(Addr baseAddr) {
             // Check if we need to stop because a new event is in our mshr thanks to the processing of the pointer events?
             if (mshr_->isHit(baseAddr)) {
                 bool stop = false;
-                if (entries.begin()->elem.isEvent()) {
+                if (entries.size() != 0 && entries.begin()->elem.isEvent()) {
                     MemEvent * front = static_cast<MemEvent*>(((entries.begin())->elem).getEvent());
                     if (front->getCmd() != Command::Inv && front->getCmd() != Command::FetchInv && front->getCmd() != Command::FetchInvX && front->getCmd() != Command::ForceInv) {
                         stop = true;
