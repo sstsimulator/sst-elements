@@ -26,13 +26,13 @@ using namespace SST;
 using namespace SST::Miranda;
 using namespace SST::Thornhill;
 
-SingleThread::SingleThread( Component* owner, 
+SingleThread::SingleThread( ComponentId_t id, 
         Params& params )
-        : DetailedCompute( owner ), m_link(NULL), m_busy(false)
+        : DetailedCompute( id ), m_link(NULL), m_busy(false)
 {
     std::string portName = params.find<std::string>( "portName", "detailed0" );
     
-    if ( owner->isPortConnected( portName.c_str() ) ) {
+    if ( isPortConnected( portName.c_str() ) ) {
         m_link = configureLink( portName.c_str(), "0ps", 
             new Event::Handler<SingleThread>(
                     this,&SingleThread::eventHandler ) ); 

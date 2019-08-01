@@ -25,13 +25,13 @@ namespace Ember {
 class EmberDetailedStreamGenerator : public EmberMessagePassingGenerator {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberDetailedStreamGenerator,
         "ember",
         "DetailedStreamMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Performs a Stream Motif with detailed model",
-        "SST::Ember::EmberGenerator"
+        SST::Ember::EmberGenerator
     )
 
     SST_ELI_DOCUMENT_PARAMS(
@@ -62,7 +62,8 @@ public:
     )
 
 public:
-	EmberDetailedStreamGenerator(SST::Component* owner, Params& params);
+	EmberDetailedStreamGenerator(SST::Component* owner, Params& params) : EmberMessagePassingGenerator(owner,params,"") {}
+	EmberDetailedStreamGenerator(SST::ComponentId_t, Params& params);
     bool generate( std::queue<EmberEvent*>& evQ);
 	std::string getComputeModelName(); 
 

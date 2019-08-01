@@ -25,13 +25,13 @@ namespace Ember {
 class EmberFFT3DGenerator : public EmberMessagePassingGenerator {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberFFT3DGenerator,
         "ember",
         "FFT3DMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Models an FFT",
-        "SST::Ember::EmberGenerator"
+        SST::Ember::EmberGenerator
     )
 
     SST_ELI_DOCUMENT_PARAMS(
@@ -74,7 +74,8 @@ public:
     )
 
 public:
-	EmberFFT3DGenerator(SST::Component* owner, Params& params);
+	EmberFFT3DGenerator(SST::Component* owner, Params& params) : EmberMessagePassingGenerator(owner,params,"") {}
+	EmberFFT3DGenerator(SST::ComponentId_t, Params& params);
 	~EmberFFT3DGenerator() {}
 	void configure();
 	bool generate( std::queue<EmberEvent*>& evQ );

@@ -26,13 +26,13 @@ namespace Ember {
 class EmberTestGenerator : public EmberMessagePassingGenerator {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberTestGenerator,
         "ember",
         "TestMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Performs a Test Motif",
-        "SST::Ember::EmberGenerator"
+        SST::Ember::EmberGenerator
     )
     SST_ELI_DOCUMENT_STATISTICS(
         { "time-Init", "Time spent in Init event",          "ns",  0},
@@ -60,8 +60,10 @@ public:
     )
 
 public:
-	EmberTestGenerator(SST::Component* owner, Params& params): 
-        EmberMessagePassingGenerator(owner, params, "Null" ), m_phase(Init)
+	EmberTestGenerator(SST::Component* owner, Params& params):EmberMessagePassingGenerator(owner,params,"") {} 
+
+	EmberTestGenerator(SST::ComponentId_t id, Params& params): 
+        EmberMessagePassingGenerator(id, params, "Null" ), m_phase(Init)
 	{
 		m_rng = new SST::RNG::XORShiftRNG();
 	}

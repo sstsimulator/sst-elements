@@ -32,13 +32,13 @@ namespace Ember {
 class EmberShmemFAM_Get2Generator : public EmberShmemGenerator {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemFAM_Get2Generator,
         "ember",
         "ShmemFAM_Get2Motif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM FAM_Get2",
-        "SST::Ember::EmberGenerator"
+        SST::Ember::EmberGenerator
 
     )
 
@@ -46,8 +46,9 @@ public:
     )
 
 public:
-	EmberShmemFAM_Get2Generator(SST::Component* owner, Params& params) :
-		EmberShmemGenerator(owner, params, "ShmemFAM_Get2" ), m_phase(Init), m_groupName("MyApplication"),m_curBlock(0),m_rng(NULL)
+	EmberShmemFAM_Get2Generator(SST::Component* owner, Params& params) : EmberShmemGenerator(owner, params, "" ) {}
+	EmberShmemFAM_Get2Generator(SST::ComponentId_t id, Params& params) :
+		EmberShmemGenerator(id, params, "ShmemFAM_Get2" ), m_phase(Init), m_groupName("MyApplication"),m_curBlock(0),m_rng(NULL)
 	{ 
 		m_totalBytes = (size_t) params.find<SST::UnitAlgebra>("arg.totalBytes").getRoundedValue(); 
 		m_getLoop       = params.find<int>("arg.getLoop", 1);

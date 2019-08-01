@@ -57,6 +57,7 @@ nicParams = {
 
 	"simpleMemoryModel.busBandwidth_Gbs" : 7.8,
 	"simpleMemoryModel.busNumLinks" : 8,
+	"simpleMemoryModel.detailedModel.name" : "firefly.detailedInterface",
 	"maxRecvMachineQsize" : 100,
 	"maxSendMachineQsize" : 100,
 }

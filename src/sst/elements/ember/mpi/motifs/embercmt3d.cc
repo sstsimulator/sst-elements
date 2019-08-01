@@ -30,8 +30,8 @@
 
 using namespace SST::Ember;
 
-EmberCMT3DGenerator::EmberCMT3DGenerator(SST::Component* owner, Params& params) :
-	EmberMessagePassingGenerator(owner, params, "CMT3D"), 
+EmberCMT3DGenerator::EmberCMT3DGenerator(SST::ComponentId_t id, Params& params) :
+	EmberMessagePassingGenerator(id, params, "CMT3D"), 
         m_loopIndex(0),
         x_pos(-1), x_neg(-1),
         y_pos(-1), y_neg(-1),

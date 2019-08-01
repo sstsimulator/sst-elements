@@ -28,8 +28,9 @@ template <class TYPE>
 class EmberShmemWaitGenerator : public EmberShmemGenerator {
 
 public:
-	EmberShmemWaitGenerator(SST::Component* owner, Params& params) :
-		EmberShmemGenerator(owner, params, "ShmemWait" ), m_phase(0) 
+	EmberShmemWaitGenerator(SST::Component* owner, Params& params) : EmberShmemGenerator(owner, params, "" ) {}
+	EmberShmemWaitGenerator(SST::ComponentId_t id, Params& params) :
+		EmberShmemGenerator(id, params, "ShmemWait" ), m_phase(0) 
 	{ 
         int status;
         std::string tname = typeid(TYPE).name();
@@ -94,42 +95,42 @@ public:
 
 class EmberShmemWaitIntGenerator : public EmberShmemWaitGenerator<int> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemWaitIntGenerator,
         "ember",
         "ShmemWaitIntMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM wait int",
-        "SST::Ember::EmberGenerator"
-
+        SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS(
-    )
+    SST_ELI_DOCUMENT_PARAMS()
 
 public:
     EmberShmemWaitIntGenerator( SST::Component* owner, Params& params ) :
         EmberShmemWaitGenerator(owner,  params) { }
+    EmberShmemWaitIntGenerator( SST::ComponentId_t id, Params& params ) :
+        EmberShmemWaitGenerator(id,  params) { }
 };
 
 class EmberShmemWaitLongGenerator : public EmberShmemWaitGenerator<long> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemWaitLongGenerator,
         "ember",
         "ShmemWaitLongMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM wait long",
-        "SST::Ember::EmberGenerator"
-
+        SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS(
-    )
+    SST_ELI_DOCUMENT_PARAMS()
 
 public:
     EmberShmemWaitLongGenerator( SST::Component* owner, Params& params ) :
         EmberShmemWaitGenerator(owner,  params) { }
+    EmberShmemWaitLongGenerator( SST::ComponentId_t id, Params& params ) :
+        EmberShmemWaitGenerator(id,  params) { }
 };
 
 }

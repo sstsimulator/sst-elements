@@ -28,13 +28,13 @@ namespace Ember {
 class EmberSendrecvGenerator : public EmberMessagePassingGenerator {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberSendrecvGenerator,
         "ember",
         "SendrecvMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Performs a Sendrecv Motif",
-        "SST::Ember::EmberGenerator"
+        SST::Ember::EmberGenerator
     )
     SST_ELI_DOCUMENT_STATISTICS(
         { "time-Init", "Time spent in Init event",          "ns",  0},
@@ -62,18 +62,19 @@ public:
     )
 
 public:
-	EmberSendrecvGenerator(SST::Component* owner, Params& params): 
-        EmberMessagePassingGenerator(owner, params, "Null" ), m_phase(Init)
+	EmberSendrecvGenerator(SST::Component* owner, Params& params): EmberMessagePassingGenerator(owner,params,"") {} 
+	EmberSendrecvGenerator(SST::ComponentId_t id, Params& params): 
+        EmberMessagePassingGenerator(id, params, "Null" ), m_phase(Init)
 	{
 			m_messageSize = 1024;
-		    m_sendBuf = memAlloc(m_messageSize * sizeofDataType(DATA_TYPE) );
-    		m_recvBuf = memAlloc(m_messageSize * sizeofDataType(DATA_TYPE) );
    	}
 
     bool generate( std::queue<EmberEvent*>& evQ){
 		assert( size() == 2 );
 		switch ( m_phase ) {
 			case Init:
+		    	m_sendBuf = memAlloc(m_messageSize * sizeofDataType(DATA_TYPE) );
+    			m_recvBuf = memAlloc(m_messageSize * sizeofDataType(DATA_TYPE) );
 				enQ_sendrecv( evQ, 
 							m_sendBuf, m_messageSize, DATA_TYPE, destRank(), 0xdeadbeef,
 							m_recvBuf, m_messageSize, DATA_TYPE, srcRank(),  0xdeadbeef,

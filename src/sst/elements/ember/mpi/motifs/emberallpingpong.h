@@ -25,13 +25,13 @@ namespace Ember {
 class EmberAllPingPongGenerator : public EmberMessagePassingGenerator {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberAllPingPongGenerator,
         "ember",
         "AllPingPongMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Performs a All Ping Pong Motif",
-        "SST::Ember::EmberGenerator"
+        SST::Ember::EmberGenerator
     )
 
     SST_ELI_DOCUMENT_PARAMS(
@@ -65,7 +65,8 @@ public:
     )
 
 public:
-	EmberAllPingPongGenerator(SST::Component* owner, Params& params);
+	EmberAllPingPongGenerator(SST::Component* owner, Params& params) : EmberMessagePassingGenerator(owner,params,"") {} 
+	EmberAllPingPongGenerator(SST::ComponentId_t, Params& params);
     bool generate( std::queue<EmberEvent*>& evQ);
 
 private:

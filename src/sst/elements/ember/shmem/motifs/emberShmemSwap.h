@@ -28,8 +28,9 @@ template <class TYPE>
 class EmberShmemSwapGenerator : public EmberShmemGenerator {
 
 public:
-    EmberShmemSwapGenerator(SST::Component* owner, Params& params) :
-		EmberShmemGenerator(owner, params, "ShmemSwap" ), m_phase(0) 
+    EmberShmemSwapGenerator(SST::Component* owner, Params& params) : EmberShmemGenerator(owner, params, "" ) {}
+    EmberShmemSwapGenerator(SST::ComponentId_t id, Params& params) :
+		EmberShmemGenerator(id, params, "ShmemSwap" ), m_phase(0) 
 	{ 
         int status;
         std::string tname = typeid(TYPE).name();
@@ -101,42 +102,43 @@ public:
 
 class EmberShmemSwapIntGenerator : public EmberShmemSwapGenerator<int> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemSwapIntGenerator,
         "ember",
         "ShmemSwapIntMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM swap int",
-        "SST::Ember::EmberGenerator"
-
+        SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS(
-    )
+    SST_ELI_DOCUMENT_PARAMS()
 
 public:
     EmberShmemSwapIntGenerator( SST::Component* owner, Params& params ) :
         EmberShmemSwapGenerator(owner,  params) { }
+    EmberShmemSwapIntGenerator( SST::ComponentId_t id, Params& params ) :
+        EmberShmemSwapGenerator(id,  params) { }
 };
 
 class EmberShmemSwapLongGenerator : public EmberShmemSwapGenerator<long> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemSwapLongGenerator,
         "ember",
         "ShmemSwapLongMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM swap long",
-        "SST::Ember::EmberGenerator"
+        SST::Ember::EmberGenerator
 
     )
 
-    SST_ELI_DOCUMENT_PARAMS(
-    )
+    SST_ELI_DOCUMENT_PARAMS()
 
 public:
     EmberShmemSwapLongGenerator( SST::Component* owner, Params& params ) :
         EmberShmemSwapGenerator(owner,  params) { }
+    EmberShmemSwapLongGenerator( SST::ComponentId_t id, Params& params ) :
+        EmberShmemSwapGenerator(id,  params) { }
 };
 
 }

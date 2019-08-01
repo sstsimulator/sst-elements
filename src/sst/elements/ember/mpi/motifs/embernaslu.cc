@@ -23,8 +23,8 @@
 
 using namespace SST::Ember;
 
-EmberNASLUGenerator::EmberNASLUGenerator(SST::Component* owner, Params& params) :
-	EmberMessagePassingGenerator(owner, params, "NASLU"),
+EmberNASLUGenerator::EmberNASLUGenerator(SST::ComponentId_t id, Params& params) :
+	EmberMessagePassingGenerator(id, params, "NASLU"),
 	m_loopIndex(0) 
 {
 	nsCompute = (uint64_t) params.find("arg.computetime", 1000);

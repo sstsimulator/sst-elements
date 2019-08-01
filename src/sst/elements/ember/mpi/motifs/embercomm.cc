@@ -21,8 +21,8 @@
 
 using namespace SST::Ember;
 
-EmberCommGenerator::EmberCommGenerator(SST::Component* owner, Params& params) :
-	EmberMessagePassingGenerator(owner, params, "Comm"),
+EmberCommGenerator::EmberCommGenerator(SST::ComponentId_t id, Params& params) :
+	EmberMessagePassingGenerator(id, params, "Comm"),
     m_workPhase(0),
     m_loopIndex(0)
 {

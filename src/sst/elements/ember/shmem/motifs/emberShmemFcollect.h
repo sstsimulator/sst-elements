@@ -28,8 +28,9 @@ template <class TYPE>
 class EmberShmemFcollectGenerator : public EmberShmemGenerator {
 
 public:
-	EmberShmemFcollectGenerator(SST::Component* owner, Params& params) :
-		EmberShmemGenerator(owner, params, "ShmemFcollect" ), m_phase(0) 
+	EmberShmemFcollectGenerator(SST::Component* owner, Params& params) : EmberShmemGenerator(owner, params, "" ) {}
+	EmberShmemFcollectGenerator(SST::ComponentId_t id, Params& params) :
+		EmberShmemGenerator(id, params, "ShmemFcollect" ), m_phase(0) 
 	{ 
         m_nelems = params.find<int>("arg.nelems", 1 );
         m_printResults = params.find<bool>("arg.printResults", false );
@@ -132,40 +133,42 @@ public:
 
 class EmberShmemFcollect32Generator : public EmberShmemFcollectGenerator<uint32_t> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemFcollect32Generator,
         "ember",
         "ShmemFcollect32Motif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM fcollects32",
-        "SST::Ember::EmberGenerator"
+        SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS(
-    )
+    SST_ELI_DOCUMENT_PARAMS()
 
 public:
     EmberShmemFcollect32Generator(SST::Component* owner, Params& params) :
-    EmberShmemFcollectGenerator( owner, params) {}
+    	EmberShmemFcollectGenerator( owner, params) {}
+    EmberShmemFcollect32Generator(SST::ComponentId_t id, Params& params) :
+    	EmberShmemFcollectGenerator( id, params) {}
 };
 
 class EmberShmemFcollect64Generator : public EmberShmemFcollectGenerator<uint64_t> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemFcollect64Generator,
         "ember",
         "ShmemFcollect64Motif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM fcollects64",
-        "SST::Ember::EmberGenerator"
+        SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS(
-    )
+    SST_ELI_DOCUMENT_PARAMS()
 
 public:
     EmberShmemFcollect64Generator(SST::Component* owner, Params& params) :
-    EmberShmemFcollectGenerator( owner, params) {}
+    	EmberShmemFcollectGenerator( owner, params) {}
+    EmberShmemFcollect64Generator(SST::ComponentId_t id, Params& params) :
+    	EmberShmemFcollectGenerator( id, params) {}
 };
 
 }

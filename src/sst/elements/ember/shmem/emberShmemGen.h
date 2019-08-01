@@ -108,9 +108,11 @@ class EmberShmemGenerator : public EmberGenerator {
 
 public:
 
-	EmberShmemGenerator( Component* owner, Params& params, std::string name );
+	EmberShmemGenerator( Component* owner, Params& params, std::string name ="") : EmberGenerator(owner,params,name) {}
+	EmberShmemGenerator( ComponentId_t, Params& params, std::string name ="");
 	~EmberShmemGenerator() {}
     virtual void completed( const SST::Output*, uint64_t time ) {}
+	virtual void setup();
 
 protected:
 	EmberShmemLib& shmem() { return *m_shmem; };

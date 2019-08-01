@@ -25,13 +25,13 @@ namespace Ember {
 class EmberHalo3D26Generator : public EmberMessagePassingGenerator {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberHalo3D26Generator,
         "ember",
         "Halo3D26Motif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Performs a 3D 26-non-blocking motif",
-        "SST::Ember::EmberGenerator"
+        SST::Ember::EmberGenerator
     )
 
     SST_ELI_DOCUMENT_PARAMS(
@@ -77,7 +77,8 @@ public:
 
 
 public:
-	EmberHalo3D26Generator(SST::Component* owner, Params& params);
+	EmberHalo3D26Generator(SST::Component* owner, Params& params) : EmberMessagePassingGenerator(owner,params,"") {}
+	EmberHalo3D26Generator(SST::ComponentId_t, Params& params);
 	~EmberHalo3D26Generator() {}
     bool generate( std::queue<EmberEvent*>& evQ);
 

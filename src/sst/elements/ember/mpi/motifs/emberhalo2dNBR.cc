@@ -23,8 +23,8 @@
 
 using namespace SST::Ember;
 
-EmberHalo2DNBRGenerator::EmberHalo2DNBRGenerator(SST::Component* owner, Params& params) :
-	EmberMessagePassingGenerator(owner, params, "Halo2DNBR"),
+EmberHalo2DNBRGenerator::EmberHalo2DNBRGenerator(SST::ComponentId_t id, Params& params) :
+	EmberMessagePassingGenerator(id, params, "Halo2DNBR"),
 	m_loopIndex(0)
 {
 	iterations = (uint32_t) params.find("arg.iterations", 10);

@@ -32,13 +32,13 @@ namespace Ember {
 class EmberShmemFAM_PutGenerator : public EmberShmemGenerator {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemFAM_PutGenerator,
         "ember",
         "ShmemFAM_PutMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM FAM_Put",
-        "SST::Ember::EmberGenerator"
+        SST::Ember::EmberGenerator
 
     )
 
@@ -46,8 +46,9 @@ public:
     )
 
 public:
-	EmberShmemFAM_PutGenerator(SST::Component* owner, Params& params) :
-		EmberShmemGenerator(owner, params, "ShmemFAM_Put" ), m_phase(Init), m_groupName("MyApplication"),m_curBlock(0),m_rng(NULL)
+	EmberShmemFAM_PutGenerator(SST::Component* owner, Params& params) : EmberShmemGenerator(owner, params, "" ) {}
+	EmberShmemFAM_PutGenerator(SST::ComponentId_t id, Params& params) :
+		EmberShmemGenerator(id, params, "ShmemFAM_Put" ), m_phase(Init), m_groupName("MyApplication"),m_curBlock(0),m_rng(NULL)
 	{ 
 		m_totalBytes = (size_t) params.find<SST::UnitAlgebra>("arg.totalBytes").getRoundedValue(); 
 		m_getLoop       = params.find<int>("arg.getLoop", 1);

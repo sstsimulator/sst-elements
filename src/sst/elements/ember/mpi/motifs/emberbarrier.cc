@@ -19,9 +19,8 @@
 
 using namespace SST::Ember;
 
-EmberBarrierGenerator::EmberBarrierGenerator(SST::Component* owner,
-                                                Params& params) :
-	EmberMessagePassingGenerator(owner, params, "Barrier"),
+EmberBarrierGenerator::EmberBarrierGenerator(SST::ComponentId_t id, Params& params) :
+	EmberMessagePassingGenerator(id, params, "Barrier"),
     m_loopIndex(0)
 {
 	m_iterations = (uint32_t) params.find("arg.iterations", 1);

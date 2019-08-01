@@ -25,13 +25,13 @@ namespace Ember {
 class EmberAlltoallGenerator : public EmberMessagePassingGenerator {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberAlltoallGenerator,
         "ember",
         "AlltoallMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Performs a Alltoall operation with type set to float64 and operation SUM",
-        "SST::Ember::EmberGenerator"
+        SST::Ember::EmberGenerator
     )
 
     SST_ELI_DOCUMENT_PARAMS(
@@ -65,7 +65,8 @@ public:
     )
 
 public:
-	EmberAlltoallGenerator(SST::Component* owner, Params& params);
+	EmberAlltoallGenerator(SST::Component* owner, Params& params) : EmberMessagePassingGenerator(owner,params,"") {} 
+	EmberAlltoallGenerator(SST::ComponentId_t, Params& params);
     bool generate( std::queue<EmberEvent*>& evQ);
 
 private:

@@ -28,13 +28,13 @@ namespace Ember {
 class EmberSIRIUSTraceGenerator : public EmberMessagePassingGenerator {
 
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberSIRIUSTraceGenerator,
         "ember",
         "SIRIUSTraceMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Performs a SIRIUS trace-based execution",
-        "SST::Ember::EmberGenerator"
+        SST::Ember::EmberGenerator
     )
 
     SST_ELI_DOCUMENT_PARAMS(
@@ -66,7 +66,8 @@ public:
     )
 
 public:
-	EmberSIRIUSTraceGenerator(SST::Component* owner, Params& params);
+	EmberSIRIUSTraceGenerator(SST::Component* owner, Params& params) : EmberMessagePassingGenerator(owner,params,"") {}
+	EmberSIRIUSTraceGenerator(SST::ComponentId_t, Params& params);
 	~EmberSIRIUSTraceGenerator();
     	bool generate( std::queue<EmberEvent*>& evQ );
 

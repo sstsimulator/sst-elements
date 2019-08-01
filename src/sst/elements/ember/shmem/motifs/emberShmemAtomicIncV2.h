@@ -37,8 +37,9 @@ class EmberShmemAtomicIncV2BaseGenerator : public EmberShmemGenerator {
     enum { Add, Fadd, Putv, Getv } m_op;
     std::string m_opStr;
 public:
-	EmberShmemAtomicIncV2BaseGenerator(SST::Component* owner, Params& params, std::string name) :
-		EmberShmemGenerator(owner, params, name ), m_phase(Init1), m_one(1), m_curUpdate(0), m_loopCnt(0), m_detailedDone(false)
+	EmberShmemAtomicIncV2BaseGenerator(SST::Component* owner, Params& params, std::string name) : EmberShmemGenerator(owner, params, "" ) {}
+	EmberShmemAtomicIncV2BaseGenerator(SST::ComponentId_t id, Params& params, std::string name) :
+		EmberShmemGenerator(id, params, name ), m_phase(Init1), m_one(1), m_curUpdate(0), m_loopCnt(0), m_detailedDone(false)
 	{ 
         m_computeTime = params.find<int>("arg.computeTime", 0 );
         m_dataSize = params.find<int>("arg.dataSize", 32*1024*1024 );
@@ -400,16 +401,20 @@ template < class TYPE, int VAL >
 class EmberShmemAtomicIncV2Generator : public EmberShmemAtomicIncV2BaseGenerator<TYPE,VAL> {
 public:
     EmberShmemAtomicIncV2Generator(SST::Component* owner, Params& params, std::string name ) :
-	    EmberShmemAtomicIncV2BaseGenerator<TYPE,VAL>(owner, params, name) {
-        } 
+	    EmberShmemAtomicIncV2BaseGenerator<TYPE,VAL>(owner, params, name) { } 
+
+    EmberShmemAtomicIncV2Generator(SST::ComponentId_t id, Params& params, std::string name ) :
+	    EmberShmemAtomicIncV2BaseGenerator<TYPE,VAL>(id, params, name) { } 
 };
 
 template < class TYPE >
 class EmberShmemAtomicIncV2Generator<TYPE,1> : public EmberShmemAtomicIncV2BaseGenerator<TYPE,1> {
 public:
 	EmberShmemAtomicIncV2Generator(SST::Component* owner, Params& params, std::string name ) :
-	    EmberShmemAtomicIncV2BaseGenerator<TYPE,1>(owner, params, name) {
-        } 
+	    EmberShmemAtomicIncV2BaseGenerator<TYPE,1>(owner, params, name) { } 
+
+	EmberShmemAtomicIncV2Generator(SST::ComponentId_t id, Params& params, std::string name ) :
+	    EmberShmemAtomicIncV2BaseGenerator<TYPE,1>(id, params, name) { } 
 
 private:   
     int calcDestPe() {
@@ -430,8 +435,10 @@ template < class TYPE >
 class EmberShmemAtomicIncV2Generator<TYPE,2> : public EmberShmemAtomicIncV2BaseGenerator<TYPE,2> {
 public:
 	EmberShmemAtomicIncV2Generator(SST::Component* owner, Params& params, std::string name ) :
-	    EmberShmemAtomicIncV2BaseGenerator<TYPE,2>(owner, params, name ) {
-        } 
+	    EmberShmemAtomicIncV2BaseGenerator<TYPE,2>(owner, params, name ) { } 
+
+	EmberShmemAtomicIncV2Generator(SST::ComponentId_t id, Params& params, std::string name ) :
+	    EmberShmemAtomicIncV2BaseGenerator<TYPE,2>(id, params, name ) { } 
 
 private:   
     int calcDestPe() {
@@ -459,85 +466,93 @@ private:
 
 class EmberShmemAtomicIncV2IntGenerator : public EmberShmemAtomicIncV2Generator<int, 0> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemAtomicIncV2IntGenerator,
         "ember",
         "ShmemAtomicIncV2IntMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM atomic inc int",
-        "SST::Ember::EmberGenerator"
+        SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS(
-    )
+    SST_ELI_DOCUMENT_PARAMS()
+
 public:
 	EmberShmemAtomicIncV2IntGenerator(SST::Component* owner, Params& params) :
 	    EmberShmemAtomicIncV2Generator(owner, params, "ShmemAtomicIncV2Int" ) { } 
+	EmberShmemAtomicIncV2IntGenerator(SST::ComponentId_t id, Params& params) :
+	    EmberShmemAtomicIncV2Generator(id, params, "ShmemAtomicIncV2Int" ) { } 
 };
 
 class EmberShmemNSAtomicIncV2IntGenerator : public EmberShmemAtomicIncV2Generator<int, 1> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemNSAtomicIncV2IntGenerator,
         "ember",
         "ShmemNSAtomicIncV2IntMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM not same nmode atomic inc int",
-        "SST::Ember::EmberGenerator"
+        SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS(
-    )
+    SST_ELI_DOCUMENT_PARAMS()
+
 public:
 	EmberShmemNSAtomicIncV2IntGenerator(SST::Component* owner, Params& params) :
 	    EmberShmemAtomicIncV2Generator(owner, params, "ShmemNSAtomicIncV2Int") { } 
+	EmberShmemNSAtomicIncV2IntGenerator(SST::ComponentId_t id, Params& params) :
+	    EmberShmemAtomicIncV2Generator(id, params, "ShmemNSAtomicIncV2Int") { } 
 };
 
 class EmberShmemHotAtomicIncV2IntGenerator : public EmberShmemAtomicIncV2Generator<int, 2> {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemHotAtomicIncV2IntGenerator,
         "ember",
         "ShmemHotAtomicIncV2IntMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM hot spot atomic inc int",
-        "SST::Ember::EmberGenerator"
+        SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS(
-    )
+    SST_ELI_DOCUMENT_PARAMS()
+
 public:
 	EmberShmemHotAtomicIncV2IntGenerator(SST::Component* owner, Params& params) :
 	    EmberShmemAtomicIncV2Generator(owner, params, "ShmemHotAtomicIncV2Int") { } 
+	EmberShmemHotAtomicIncV2IntGenerator(SST::ComponentId_t id, Params& params) :
+	    EmberShmemAtomicIncV2Generator(id, params, "ShmemHotAtomicIncV2Int") { } 
 };
     
 class EmberShmemAtomicIncV2LongGenerator : public EmberShmemAtomicIncV2Generator<long, 0 > {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemAtomicIncV2LongGenerator,
         "ember",
         "ShmemAtomicIncV2LongMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM atomic inc long",
-        "SST::Ember::EmberGenerator"
+        SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS(
-    )
+    SST_ELI_DOCUMENT_PARAMS()
+
 public:
 	EmberShmemAtomicIncV2LongGenerator(SST::Component* owner, Params& params) :
 	    EmberShmemAtomicIncV2Generator(owner, params, "ShmemAtomicIncV2Long") {} 
+	EmberShmemAtomicIncV2LongGenerator(SST::ComponentId_t id, Params& params) :
+	    EmberShmemAtomicIncV2Generator(id, params, "ShmemAtomicIncV2Long") {} 
 };
 
 class EmberShmemHotAtomicIncV2LongGenerator : public EmberShmemAtomicIncV2Generator<long, 1 > {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         EmberShmemHotAtomicIncV2LongGenerator,
         "ember",
         "ShmemHotAtomicIncV2LongMotif",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "SHMEM hot spot atomic inc long",
-        "SST::Ember::EmberGenerator"
+        SST::Ember::EmberGenerator
     )
 
     SST_ELI_DOCUMENT_PARAMS(
@@ -545,6 +560,8 @@ public:
 public:
 	EmberShmemHotAtomicIncV2LongGenerator(SST::Component* owner, Params& params) :
 	    EmberShmemAtomicIncV2Generator(owner, params, "ShmemHotAtomicIncV2Long") {} 
+	EmberShmemHotAtomicIncV2LongGenerator(SST::ComponentId_t id, Params& params) :
+	    EmberShmemAtomicIncV2Generator(id, params, "ShmemHotAtomicIncV2Long") {} 
 };
     
 }

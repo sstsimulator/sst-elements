@@ -21,9 +21,9 @@ using namespace SST::Ember;
 
 #define TAG 0xDEADBEEF
 
-EmberBiPingPongGenerator::EmberBiPingPongGenerator(SST::Component* owner, 
+EmberBiPingPongGenerator::EmberBiPingPongGenerator(SST::ComponentId_t id, 
                                                     Params& params) :
-	EmberMessagePassingGenerator(owner, params, "BiPingPong"),
+	EmberMessagePassingGenerator(id, params, "BiPingPong"),
     m_loopIndex(0) 
 {
 	m_messageSize = (uint32_t) params.find("arg.messageSize", 1024);

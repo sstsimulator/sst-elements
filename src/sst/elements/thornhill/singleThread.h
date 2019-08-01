@@ -25,13 +25,14 @@ namespace Thornhill {
 class SingleThread : public DetailedCompute {
 
   public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         SingleThread,
         "thornhill",
         "SingleThread",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "",
-        ""
+       	SST::Thornhill::SingleThread 
     )
 	struct Entry {
       Entry( std::function<int()>& _finiHandler ) : finiHandler( _finiHandler ) {}
@@ -40,7 +41,8 @@ class SingleThread : public DetailedCompute {
 
   public:
 
-    SingleThread( Component* owner, Params& params );
+    SingleThread( Component* owner, Params& params ) : DetailedCompute(owner) {}
+    SingleThread( ComponentId_t id, Params& params );
 
     ~SingleThread(){};
 
