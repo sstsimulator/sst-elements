@@ -146,7 +146,7 @@ MemEvent * MemHierarchyScratchInterface::createMemEvent(SimpleMem::Request * req
 
     Addr baseAddr = req->addrs[0] & baseAddrMask_;
 
-    MemEvent * me = new MemEvent(getName(), req->addrs[0], baseAddr, cmd, getCurrentSimTimeNano());
+    MemEvent * me = new MemEvent(getName(), req->addrs[0], baseAddr, cmd);
    
     /* Set remote memory accesses to noncacheable so that any cache avoids trying to cache the response */
     if (me->getAddr() >= remoteMemStart_ || allNoncache_) {

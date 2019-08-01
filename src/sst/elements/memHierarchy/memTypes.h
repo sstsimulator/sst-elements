@@ -81,7 +81,8 @@ enum class MemEventType { Cache, Move, Custom };                    // For parsi
      */\
     X(CustomReq,        CustomResp,     Request,    Request,        1, 0,   Custom) \
     X(CustomResp,       NULLCMD,        Response,   Data,           0, 0,   Custom) \
-    X(CustomAck,        NULLCMD,        Response,   Ack,            0, 0,   Custom)
+    X(CustomAck,        NULLCMD,        Response,   Ack,            0, 0,   Custom) \
+    X(Evict,            NULLCMD,        Request,    Request,        0, 0,   Cache)
 
 /** Valid commands for the MemEvent */
 enum class Command {
@@ -189,6 +190,7 @@ typedef enum {
 #define X(a,b) a,
     STATE_TYPES
 #undef X
+    LAST_STATE
 } State;
 
 /** Array of the stringify'd version of the MemEvent Commands.  Useful for printing. */
@@ -210,6 +212,8 @@ static const std::string NONE = "None";
 
 }}
 
+// Define status types used internally to classify event handling resutls
+enum class MemEventStatus { OK, Stall, Reject };
 
 /* Define an address region by start/end & interleaving */
 struct MemRegion {

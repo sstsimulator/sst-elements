@@ -33,6 +33,10 @@
 namespace SST { namespace MemHierarchy {
 using namespace std;
 
+namespace LatType {        
+    enum { HIT, MISS, INV, UPGRADE };
+};
+
 class CoherenceController : public SST::SubComponent {
 
 public:
@@ -44,10 +48,10 @@ public:
     /***** Constructor & destructor *****/
     CoherenceController(Component * comp, Params &params);
     CoherenceController(ComponentId_t id, Params &params, Params& ownerParams, bool prefetch);
-    ~CoherenceController() {}
+    virtual ~CoherenceController() {}
 
-    /* Return whether a line access will be a miss and what kind (encoded in the int retval) */
-    virtual int isCoherenceMiss(MemEvent * event, CacheLine * line) =0;
+    /* Return whether a line access will be a hit */
+    virtual bool isCacheHit(MemEvent* event) =0;
 
     /* Handle a cache request - GetS, GetX, etc. */
     virtual CacheAction handleRequest(MemEvent * event, CacheLine * line, bool replay) =0;
@@ -56,16 +60,16 @@ public:
     virtual CacheAction handleReplacement(MemEvent * event, CacheLine * line, MemEvent * reqEvent, bool replay) =0;
 
     /* Handle a cache invalidation - Inv, FetchInv, etc. */
-    virtual CacheAction handleInvalidationRequest(MemEvent * event, CacheLine * line, MemEvent * collisionEvent, bool replay) =0;
+    virtual CacheAction handleInvalidationRequest(MemEvent * event, bool replay) =0;
 
     /* Handle an eviction */
     virtual CacheAction handleEviction(CacheLine * line, string rqstr, bool fromDataCache=false) =0;
 
     /* Handle a response - AckInv, GetSResp, etc. */
-    virtual CacheAction handleResponse(MemEvent * event, CacheLine * line, MemEvent * request) =0;
+    virtual CacheAction handleCacheResponse(MemEvent * event, bool inMSHR) =0;
+    virtual CacheAction handleFetchResponse(MemEvent * event, bool inMSHR) =0;
 
-    /* Determine whether an event needs to be retried after a NACK */
-    virtual bool isRetryNeeded(MemEvent * event, CacheLine * line) =0;
+    virtual bool handleNACK(MemEvent* event, bool inMSHR) =0;
 
     /* Update timestamp in lockstep with parent */
     void updateTimestamp(uint64_t newTS) { timestamp_ = newTS; }
@@ -74,7 +78,7 @@ public:
     /***** Functions for sending events *****/
 
     /* Send a NACK event. Used by child classes and cache controller */
-    void sendNACK(MemEvent * event, bool up, SimTime_t timeInNano);
+    void sendNACK(MemEvent * event, bool up);
 
     /* Resend an event after a NACK */
     void resendEvent(MemEvent * event, bool towardsCPU);
@@ -108,7 +112,7 @@ public:
     /***** Manage outgoing event queuest *****/
 
     /* Send commands when their timestamp expires. Return whether queue is empty or not. */
-    virtual bool sendOutgoingCommands(SimTime_t curTime);
+    virtual bool sendOutgoingCommands();
 
 
     /***** Setup and initialization functions *****/
@@ -132,12 +136,18 @@ public:
     }
 
     /***** Statistics *****/
-    virtual void recordLatency(Command cmd, State state, uint64_t latency);
+    virtual void recordLatency(Command cmd, int type, uint64_t latency) =0;
     virtual void recordEventSentUp(Command cmd) =0;
     virtual void recordEventSentDown(Command cmd) =0;
+    virtual void recordIncomingRequest(MemEventBase* event);
+    virtual void removeRequestRecord(SST::Event::id_type id);
+    virtual void recordMiss(SST::Event::id_type id);
 
     /**** Debug support *****/
     void printStatus(Output& out);
+
+    /**** Temporary ********/
+    virtual void setCacheArray(CacheArray* arrayptr) { }
 
 protected:
     struct Response {
@@ -183,6 +193,16 @@ protected:
     uint64_t maxBytesDown;
     uint64_t packetHeaderBytes;
 
+    /* Statistic tracking */
+    struct LatencyStat{
+        uint64_t time;
+        Command cmd;
+        int missType;
+        LatencyStat(uint64_t t, Command c, int m) : time(t), cmd(c), missType(m) { }
+    };
+    std::map<SST::Event::id_type, LatencyStat> startTimes_;
+
+    
     /***** Functions used by child classes *****/
 
     /* Add a new event to the outgoing command queue towards memory */
@@ -191,13 +211,19 @@ protected:
     /* Add a new event to the outgoing command queue towards the CPU */
     virtual void addToOutgoingQueueUp(Response& resp);
 
+    /* MSHR insertion */
+    bool processInvRequestInMSHR(Addr addr, MemEvent* event, bool blocks);
+
     /* Statistics */
     virtual void recordStateEventCount(Command cmd, State state);
     virtual void recordEvictionState(State state);
+    virtual void recordLatencyType(SST::Event::id_type id, int latencytype);
+    virtual void recordPrefetchLatency(SST::Event::id_type, int latencytype);
 
     /* Listener callback */
     virtual void notifyListenerOfAccess(MemEvent * event, NotifyAccessType accessT, NotifyResultType resultT);
 
+    virtual void printLine(Addr addr, CacheLine* line);
 
     // Eviction statistics, count how many times we attempted to evict a block in a particular state
     Statistic<uint64_t>* stat_evict_I;
@@ -207,16 +233,6 @@ protected:
     Statistic<uint64_t>* stat_evict_IM;
     Statistic<uint64_t>* stat_evict_IB;
     Statistic<uint64_t>* stat_evict_SB;
-
-    /* Latency statistics */
-    Statistic<uint64_t>* stat_latency_GetS_IS;
-    Statistic<uint64_t>* stat_latency_GetS_M;
-    Statistic<uint64_t>* stat_latency_GetX_IM;
-    Statistic<uint64_t>* stat_latency_GetX_SM;
-    Statistic<uint64_t>* stat_latency_GetX_M;
-    Statistic<uint64_t>* stat_latency_GetSX_IM;
-    Statistic<uint64_t>* stat_latency_GetSX_SM;
-    Statistic<uint64_t>* stat_latency_GetSX_M;
 
     /* Prefetch statistics */
     Statistic<uint64_t>* statPrefetchEvict;

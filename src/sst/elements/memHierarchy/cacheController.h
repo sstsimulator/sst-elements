@@ -152,9 +152,25 @@ public:
             {"PutS_recv",               "Event received: PutS", "count", 2},
             {"PutE_recv",               "Event received: PutE", "count", 2},
             {"FetchInv_recv",           "Event received: FetchInv", "count", 2},
+            {"Fetch_recv",              "Event received: Fetch", "count", 2},
             {"FetchInvX_recv",          "Event received: FetchInvX", "count", 2},
+            {"ForceInv_recv",           "Event received: ForceInv", "count", 2},
             {"Inv_recv",                "Event received: Inv", "count", 2},
-            {"NACK_recv",               "Event: NACK received", "count", 2})
+            {"FetchResp_recv",          "Event received: FetchResp", "count", 2},
+            {"FetchXResp_recv",         "Event received: FetchXResp", "count", 2},
+            {"AckInv_recv",             "Event received: AckInv", "count", 2},
+            {"AckPut_recv",             "Event received: AckPut", "count", 2},
+            {"FlushLine_recv",          "Event received: FlushLine", "count", 2},
+            {"FlushLineInv_recv",       "Event received: FlushLineInv", "count", 2},
+            {"FlushLineResp_recv",      "Event received: FlushLineResp", "count", 2},
+            {"NACK_recv",               "Event: NACK received", "count", 2},
+            {"Get_recv",                "Event: Get received", "count", 6},
+            {"Put_recv",                "Event: Put received", "count", 6},
+            {"AckMove_recv",            "Event: AckMove received", "count", 6},
+            {"CustomReq_recv",          "Event: CustomReq received", "count", 4},
+            {"CustomResp_recv",         "Event: CustomResp received", "count", 4},
+            {"CustomAck_recv",          "Event: CustomAck received", "count", 4},
+            {"default_stat",            "Default statistic used for unexpected events/cases/etc. Should be 0, if not, check for missing statistic registerations.", "none", 7})
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
             {"cpulink", "CPU-side link manager, for single-link caches, use this one only", "SST::MemHierarchy::MemLinkBase"},
@@ -168,7 +184,7 @@ public:
 /* Class definition */
     typedef CacheArray::CacheLine           CacheLine;
     typedef CacheArray::DataLine            DataLine;
-    typedef map<Addr, mshrEntry>            mshrTable;
+    typedef map<Addr, MSHRRegister>            mshrTable;
     typedef unsigned int                    uint;
     typedef uint64_t                        uint64;
 
@@ -201,8 +217,11 @@ private:
     void registerStatistics();
     void createCoherenceManager(Params &params);
 
-    /** Handler for incoming link events.  Add incoming event to 'incoming event queue'. */
-    void processIncomingEvent(SST::Event *event);
+    /** Handle incoming events -> prepare to process */
+    void handleEvent(SST::Event *event);
+
+    /** Handle incoming prefetching events -> prepare to process */
+    void handlePrefetchEvent(SST::Event *event);
 
     /** Process an incoming event that is not meant for the cache */
     void processNoncacheable(MemEventBase* event);
@@ -212,9 +231,6 @@ private:
 
     /** Configure this component's links */
     void configureLinks(Params &params);
-
-    /** Handler for incoming prefetching events. */
-    void handlePrefetchEvent(SST::Event *event);
 
     /** Self-Event prefetch handler for this component */
     void processPrefetchEvent(SST::Event *event);
@@ -247,14 +263,14 @@ private:
 
     /** Function attempts to send all responses for previous events that 'blocked' due to an outstanding request.
         If response blocks cache line the remaining responses go to MSHR till new outstanding request finishes  */
-    inline void activatePrevEvents(Addr baseAddr);
+    void activatePrevEvents(Addr baseAddr);
 
     /** This function re-processes a signle previous request.  In hardware, the MSHR would be looked up,
         the MSHR entry would be modified and the response would be sent directly without reading the cache
         array and tag.  In SST, we just rerun the request to avoid complexity */
-    inline bool activatePrevEvent(MemEvent* event, vector<mshrType>& entries, Addr addr, vector<mshrType>::iterator it, int i);
+    inline bool activatePrevEvent(MemEvent* event, list<MSHREntry>& entries, Addr addr, list<MSHREntry>::iterator& it, int i);
 
-    inline void postRequestProcessing(MemEvent* event, CacheLine* cacheLine, bool mshrHit);
+    inline void postRequestProcessing(MemEvent* event, CacheLine* cacheLine);
 
     inline void postReplacementProcessing(MemEvent* event, CacheAction action, bool mshrHit);
 
@@ -262,23 +278,14 @@ private:
         and need to be reactivated */
     inline void reActivateEventWaitingForUserLock(CacheLine* cacheLine);
 
-    /** Check whether this request will hit or miss in the cache - including correct coherence permission */
-    int isCacheHit(MemEvent* event, Command cmd, Addr baseAddr);
-
     /** Insert to MSHR wrapper */
     inline bool insertToMSHR(Addr baseAddr, MemEvent* event);
 
     /** Try to insert request to MSHR.  If not sucessful, function send a NACK to requestor */
     bool processRequestInMSHR(Addr baseAddr, MemEvent* event);
-    bool processInvRequestInMSHR(Addr baseAddr, MemEvent* event, bool inProgress);
 
     /** Determines what CC will send the NACK. */
     void sendNACK(MemEvent* event);
-
-    /** In charge of processng incoming NACK.
-        Currently, it simply retries event */
-    void processIncomingNACK(MemEvent* _origReqEvent);
-
 
     /** Verify that input parameters are valid */
     void errorChecking();
@@ -290,7 +297,7 @@ private:
     void recordLatency(MemEvent * event);
 
     /** Get the front element of a MSHR entry */
-    MemEvent* getOrigReq(const vector<mshrType> entries);
+    MemEvent* getOrigReq(const list<MSHREntry> entries);
 
     /** Print cache line for debugging */
     void printLine(Addr addr);
@@ -313,29 +320,19 @@ private:
 
     void maxWaitWakeup(SST::Event * ev) {
         checkMaxWait();
-        maxWaitSelfLink_->send(1, NULL);
+        maxWaitSelfLink_->send(1, nullptr);
     }
 
     void checkMaxWait(void) const {
-        SimTime_t curTime = getCurrentSimTimeNano();
-        MemEvent *oldReq = NULL;
-        MemEvent *oldCacheReq = mshr_->getOldestRequest();
+        SimTime_t curTime = Simulation::getSimulation()->getCurrentSimCycle();
+        const MSHREntry *oldEntry = mshr_->getOldestRequest();
 
-        /*if ( oldCacheReq && oldUnCacheReq ) {
-            oldReq = (oldCacheReq->getInitializationTime() < oldUnCacheReq->getInitializationTime()) ? oldCacheReq : oldUnCacheReq;
-        } else if ( oldCacheReq ) {
-            oldReq = oldCacheReq;
-        } else {
-            oldReq = oldUnCacheReq;
-        }*/
-        oldReq = oldCacheReq;
-
-        if ( oldReq ) {
-            SimTime_t waitTime = curTime - oldReq->getInitializationTime();
+        if ( oldEntry ) {
+            SimTime_t waitTime = curTime - oldEntry->getInsertionTime();
             if ( waitTime > maxWaitTime_ ) {
-                out_->fatal(CALL_INFO, 1, "%s, Error: Maximum Cache Request time reached!\n"
-                        "Event: %s 0x%" PRIx64 " from %s. Time = %" PRIu64 " ns\n",
-                        getName().c_str(), CommandString[(int)oldReq->getCmd()], oldReq->getAddr(), oldReq->getSrc().c_str(), curTime);
+                out_->fatal(CALL_INFO, 1, "%s, Error: Maximum Cache Request time reached - potential deadlock or other error. "
+                        "Event: %s. Current time: (%" PRIu64 " cycles, %" PRIu64 " ns). Event start time: %" PRIu64 "cycles.\n",
+                    getName().c_str(), (oldEntry->elem).getEvent()->getVerboseString().c_str(), curTime, getCurrentSimTimeNano(), oldEntry->getInsertionTime());
             }
         }
     }
@@ -346,6 +343,7 @@ private:
     bool                    L1_;
     bool                    allNoncacheableRequests_;
     SimTime_t               maxWaitTime_;
+    SimTime_t               maxWaitTimeNano_;
     unsigned int            maxBytesUpPerCycle_;
     unsigned int            maxBytesDownPerCycle_;
     uint64_t                accessLatency_;
@@ -380,6 +378,11 @@ private:
     uint64_t                timestamp_;
     int                     requestsThisCycle_;
     std::map<SST::Event::id_type, std::string> responseDst_;
+
+    std::list<MemEventBase*> eventBuffer_;      // Buffer incoming events until clock tick
+    std::list<MemEventBase*> retryBuffer_;      // Events that need to be retried
+    std::queue<MemEventBase*> prefetchBuffer_;  // Prefetch events; purged every cycle
+    
     std::queue<MemEventBase*>       requestBuffer_;                 // Buffer requests that can't be processed due to port limits
     std::vector< std::queue<MemEventBase*> > bankConflictBuffer_;   // Buffer requests that have bank conflicts
     std::map<MemEvent*,uint64>      startTimeList_;
@@ -402,6 +405,9 @@ private:
     bool                    clockUpLink_; // Whether link actually needs clock() called or not
     bool                    clockDownLink_; // Whether link actually needs clock() called or not
 
+    // Temporary
+    bool doInCoherenceMgr_;
+
     /*
      * Statistics API stats
      */
@@ -422,18 +428,7 @@ private:
     Statistic<uint64_t>* statGetXMissAfterBlocked;
     Statistic<uint64_t>* statGetSXMissAfterBlocked;
     // Events received
-    Statistic<uint64_t>* statGetS_recv;
-    Statistic<uint64_t>* statGetX_recv;
-    Statistic<uint64_t>* statGetSX_recv;
-    Statistic<uint64_t>* statGetSResp_recv;
-    Statistic<uint64_t>* statGetXResp_recv;
-    Statistic<uint64_t>* statPutS_recv;
-    Statistic<uint64_t>* statPutM_recv;
-    Statistic<uint64_t>* statPutE_recv;
-    Statistic<uint64_t>* statFetchInv_recv;
-    Statistic<uint64_t>* statFetchInvX_recv;
-    Statistic<uint64_t>* statInv_recv;
-    Statistic<uint64_t>* statNACK_recv;
+    Statistic<uint64_t>* stat_eventRecv[(int)Command::LAST_CMD];
     Statistic<uint64_t>* statTotalEventsReceived;
     Statistic<uint64_t>* statTotalEventsReplayed;   // Used to be "MSHR Hits" but this makes more sense because incoming events may be an MSHR hit but will be counted as "event received"
     Statistic<uint64_t>* statNoncacheableEventsReceived; // Counts any non-cache events that are received and forwarded

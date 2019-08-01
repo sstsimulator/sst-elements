@@ -2,6 +2,11 @@
 import sst
 from mhlib import componentlist
 
+DEBUG_L1 = 0
+DEBUG_L2 = 0
+DEBUG_MEM = 0
+DEBUG_LEV = 10
+
 # Define the simulation components
 comp_cpu = sst.Component("cpu", "memHierarchy.trivialCPU")
 comp_cpu.addParams({
@@ -21,12 +26,13 @@ comp_l1cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "2 KB",
       "L1" : "1",
-      #"debug" : "1",
-      "debug_level" : "10"
+      "debug" : DEBUG_L1,
+      "debug_level" : DEBUG_LEV
 })
 comp_l2cache = sst.Component("l2cache", "memHierarchy.Cache")
 comp_l2cache.addParams({
       "access_latency_cycles" : "10",
+      "mshr_latency_cycles" : 2,
       "cache_frequency" : "2 Ghz",
       "replacement_policy" : "lru",
       "coherence_protocol" : "none",
@@ -34,13 +40,15 @@ comp_l2cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "16 KB",
       "cache_type" : "noninclusive",
-      #"debug" : "1",
-      "debug_level" : "10"
+      "debug" : DEBUG_L2,
+      "debug_level" : DEBUG_LEV
 })
 memctrl = sst.Component("memory", "memHierarchy.MemController")
 memctrl.addParams({
       "debug" : "0",
       "clock" : "1GHz",
+      "debug" : DEBUG_MEM,
+      "debug_level" : DEBUG_LEV
 })
 memory = memctrl.setSubComponent("backend", "memHierarchy.simpleMem")
 memory.addParams({
