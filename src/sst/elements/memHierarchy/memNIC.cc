@@ -54,6 +54,11 @@ void MemNIC::build(Params& params) {
         netparams.insert("out_buf_size", params.find<std::string>("network_output_buffer_size", "1KiB"));
         netparams.insert("link_bw", params.find<std::string>("network_bw", "80GiB/s"));
         std::string link_control_class = params.find<std::string>("network_link_control", "merlin.linkcontrol");
+        
+        if (link_control_class != "merlin.linkcontrol")
+            dbg.output("%s, Warning: use of the 'network_link_control' parameter is deprecated in favor of specifying a named 'linkcontrol' subcomponent in the input configuration.\n",
+                    getName().c_str());
+
         link_control = loadAnonymousSubComponent<SimpleNetwork>(link_control_class, "linkcontrol", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, netparams, 1);
     }
     link_control->setNotifyOnReceive(new SimpleNetwork::Handler<MemNIC>(this, &MemNIC::recvNotify));

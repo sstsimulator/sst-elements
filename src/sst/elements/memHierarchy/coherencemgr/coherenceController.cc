@@ -159,6 +159,15 @@ uint64_t CoherenceController::sendResponseUp(MemEvent * event, Command cmd, vect
     return sendResponseUp(event, cmd, data, false, replay, baseTime, atomic);
 }
 
+/* Allocate an MSHR entry for an event */
+bool CoherenceController::allocateMSHR(Addr addr, MemEvent * event) {
+    if (mshr_->insert(addr, event)) {
+        return true;
+    } else {
+        sendNACK(event, event->isCPUSideEvent());
+        return false;
+    }
+}
 
 /* Resend an event that was NACKed
  * Add backoff latency to avoid too much traffic
@@ -343,6 +352,17 @@ void CoherenceController::notifyListenerOfAccess(MemEvent * event, NotifyAccessT
 
     for (int i = 0; i < listeners_.size(); i++)
         listeners_[i]->notifyAccess(notify);
+}
+
+void CoherenceController::notifyListenerOfEvict(const MemEvent *event, const CacheLine *replaceLine) {
+    CacheListenerNotification notify(replaceLine->getBaseAddr(), 
+                                     replaceLine->getBaseAddr(), 
+                                     0,
+                                     event->getInstructionPointer(),
+                                     replaceLine->getSize(), EVICT, NA);
+    for (int i = 0; i < listeners_.size(); i++) {
+        listeners_[i]->notifyAccess(notify);
+    }
 }
 
 void CoherenceController::printLine(Addr addr, CacheLine* line) {

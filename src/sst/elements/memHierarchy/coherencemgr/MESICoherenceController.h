@@ -515,10 +515,11 @@ public:
     CacheAction handleEviction(CacheLine* wbCacheLine, string origRqstr, bool ignoredParam=false);
 
     /** Process cache request:  GetX, GetS, GetSX */
-    CacheAction handleRequest(MemEvent* event, CacheLine* cacheLine, bool replay);
+    CacheAction handleRequest(MemEvent* event, bool replay);
     
     /** Process replacement request - PutS, PutE, PutM */
-    CacheAction handleReplacement(MemEvent* event, CacheLine* cacheLine, MemEvent * reqEvent, bool replay);
+    CacheAction handleReplacement(MemEvent* event, bool replay);
+    CacheAction handleFlush(MemEvent* event, CacheLine* cacheLine, MemEvent* reqEvent, bool replay);
     
     /** Process invalidation requests - Inv, FetchInv, FetchInvX */
     CacheAction handleInvalidationRequest(MemEvent *event, bool inMSHR);
@@ -542,6 +543,8 @@ public:
     
 /* Temporary */
     void setCacheArray(CacheArray* arrayptr) { cacheArray_ = arrayptr; }
+    
+    void printLine(Addr addr);
 
 private:
 /* Private data members */
@@ -609,6 +612,9 @@ private:
     /** Handle Ack */
     CacheAction handleAckInv(MemEvent * responseEvent, CacheLine* cacheLine, MemEvent * reqEvent);
     
+/* Private methods for managing data structures */
+    bool allocateLine(Addr addr, MemEvent* event);
+
 /* Private methods for sending events */
     /** Send response to lower level cache */
     void sendResponseDown(MemEvent* event, CacheLine* cacheLine, bool dirty, bool replay);

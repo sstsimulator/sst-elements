@@ -155,7 +155,27 @@ CacheAction MESIInternalDirectory::handleEviction(CacheLine* replacementLine, st
 
 
 /** Handle data requests */
-CacheAction MESIInternalDirectory::handleRequest(MemEvent * event, CacheLine * dirLine, bool replay) {
+CacheAction MESIInternalDirectory::handleRequest(MemEvent * event, bool replay) {
+    Addr addr = event->getBaseAddr();
+    
+    CacheLine * dirLine = cacheArray_->lookup(addr, !replay); 
+    
+    if (!dirLine && (is_debug_addr(addr))) debug->debug(_L3_, "-- Miss --\n");
+
+    if (dirLine && dirLine->inTransition()) {
+        allocateMSHR(addr, event);
+        return STALL;
+    }
+
+    if (dirLine == nullptr) {
+        if (!allocateLine(addr, event)) {
+            allocateMSHR(addr, event);
+            recordMiss(event->getID());
+            return STALL;
+        }
+        dirLine = cacheArray_->lookup(addr, false);
+    }
+
     Command cmd = event->getCmd();
     switch(cmd) {
         case Command::GetS:
@@ -175,24 +195,64 @@ CacheAction MESIInternalDirectory::handleRequest(MemEvent * event, CacheLine * d
 /**
  *  Handle replacement (Put*) requests
  */
-CacheAction MESIInternalDirectory::handleReplacement(MemEvent* event, CacheLine* dirLine, MemEvent * reqEvent, bool replay) {
+CacheAction MESIInternalDirectory::handleReplacement(MemEvent* event, bool replay) {
+    Addr addr = event->getBaseAddr();
+    CacheLine* dirLine = cacheArray_->lookup(addr, false);
+
+    // Need a line for this
+    if (dirLine->getDataLine() == nullptr) {
+        if (is_debug_addr(addr)) debug->debug(_L3_, "-- Cache Miss --\n");
+
+        // Avoid some deadlocks by not stalling Put* requests to lines in transtion, attempt replacement but don't force
+        if (!allocateDirCacheLine(event, addr, dirLine, dirLine->inTransition()) && !dirLine->inTransition()) {
+            allocateMSHR(addr, event);
+            return STALL;
+        }
+    }
+
+    MemEvent * reqEvent = mshr_->exists(addr) ? static_cast<MemEvent*>(mshr_->lookupFront(addr)) : nullptr;
+
+    CacheAction action = DONE;
     Command cmd = event->getCmd();
     switch (cmd) {
         case Command::PutS:
-            return handlePutSRequest(event, dirLine, reqEvent);
+            action = handlePutSRequest(event, dirLine, reqEvent);
+            break;
         case Command::PutE:
         case Command::PutM:
-            return handlePutMRequest(event, dirLine, reqEvent);
+            action = handlePutMRequest(event, dirLine, reqEvent);
+            break;
+        default:
+	    debug->fatal(CALL_INFO,-1,"%s (dir), Error: Received an unrecognized replacement: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n", 
+                    ownerName_.c_str(), CommandString[(int)cmd], addr, event->getSrc().c_str(), getCurrentSimTimeNano());
+    }
+    if ((action == DONE || action == STALL) && reqEvent != nullptr) {
+        mshr_->removeFront(addr);
+        delete reqEvent;
+    }
+    if (action == STALL || action == BLOCK)
+        allocateMSHR(addr, event);
+
+    return action;
+}
+
+
+CacheAction MESIInternalDirectory::handleFlush(MemEvent* event, CacheLine* dirLine, MemEvent* reqEvent, bool replay) {
+    CacheAction action = DONE;
+    Command cmd = event->getCmd();
+    switch (cmd) {
         case Command::FlushLineInv:
-            return handleFlushLineInvRequest(event, dirLine, reqEvent, replay);
+            action = handleFlushLineInvRequest(event, dirLine, reqEvent, replay);
+            break;
         case Command::FlushLine:
-            return handleFlushLineRequest(event, dirLine, reqEvent, replay);
+            action = handleFlushLineRequest(event, dirLine, reqEvent, replay);
+            break;
         default:
 	    debug->fatal(CALL_INFO,-1,"%s (dir), Error: Received an unrecognized replacement: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n", 
                     ownerName_.c_str(), CommandString[(int)cmd], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
     }
-    
-    return DONE;    // Eliminate compiler warning
+
+    return action;
 }
 
 
@@ -415,9 +475,21 @@ bool MESIInternalDirectory::isCacheHit(MemEvent* event) {
  *  Non-inclusive so GetS hits don't deallocate the locally cached block.
  */
 CacheAction MESIInternalDirectory::handleGetSRequest(MemEvent* event, CacheLine* dirLine, bool replay) {
+    Addr addr = event->getBaseAddr();
     State state = dirLine->getState();
     
     bool localPrefetch = event->isPrefetch() && (event->getRqstr() == ownerName_);
+
+    /* Special case for prefetches -> allocate line */
+    if (localPrefetch && dirLine->getDataLine() == nullptr && dirLine->getState() == I) {
+        if (!allocateDirCacheLine(event, addr, dirLine, false)) {
+            if (is_debug_addr(addr)) debug->debug(_L3_, "-- Data Cache Miss -- \n");
+            allocateMSHR(addr, event);
+            recordMiss(event->getID());
+            return STALL;
+        }
+    }
+
     recordStateEventCount(event->getCmd(), state);    
     bool isCached = dirLine->getDataLine() != NULL;
     uint64_t sendTime = 0;
@@ -428,6 +500,7 @@ CacheAction MESIInternalDirectory::handleGetSRequest(MemEvent* event, CacheLine*
             dirLine->setState(IS);
             dirLine->setTimestamp(sendTime);
             recordLatencyType(event->getID(), LatType::MISS);
+            allocateMSHR(addr, event); 
             return STALL;
         case S:
             notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
@@ -452,6 +525,7 @@ CacheAction MESIInternalDirectory::handleGetSRequest(MemEvent* event, CacheLine*
             mshr_->incrementAcksNeeded(event->getBaseAddr());
             dirLine->setState(S_D);     // Fetch in progress, block incoming invalidates/fetches/etc.
             recordLatencyType(event->getID(), LatType::INV);
+            allocateMSHR(addr, event); 
             return STALL;
         case E:
         case M:
@@ -471,6 +545,7 @@ CacheAction MESIInternalDirectory::handleGetSRequest(MemEvent* event, CacheLine*
                 if (state == E) dirLine->setState(E_InvX);
                 else dirLine->setState(M_InvX);
                 recordLatencyType(event->getID(), LatType::INV);
+                allocateMSHR(addr, event); 
                 return STALL;
             } else if (isCached) {
                 if (protocol_ && dirLine->numSharers() == 0) {
@@ -490,6 +565,7 @@ CacheAction MESIInternalDirectory::handleGetSRequest(MemEvent* event, CacheLine*
                 if (state == E) dirLine->setState(E_D);
                 else dirLine->setState(M_D);
                 recordLatencyType(event->getID(), LatType::INV);
+                allocateMSHR(addr, event); 
                 return STALL;
             }
         default:
@@ -507,6 +583,7 @@ CacheAction MESIInternalDirectory::handleGetSRequest(MemEvent* event, CacheLine*
  *  Deallocate on hits
  */
 CacheAction MESIInternalDirectory::handleGetXRequest(MemEvent* event, CacheLine* dirLine, bool replay) {
+    Addr addr = event->getBaseAddr();
     State state = dirLine->getState();
     Command cmd = event->getCmd();
     if (state != SM) recordStateEventCount(event->getCmd(), state);    
@@ -529,6 +606,7 @@ CacheAction MESIInternalDirectory::handleGetXRequest(MemEvent* event, CacheLine*
             dirLine->setState(IM);
             dirLine->setTimestamp(sendTime);
             recordLatencyType(event->getID(), LatType::MISS);
+            allocateMSHR(addr, event); 
             return STALL;
         case S:
             notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::MISS);
@@ -544,6 +622,7 @@ CacheAction MESIInternalDirectory::handleGetXRequest(MemEvent* event, CacheLine*
                 dirLine->setTimestamp(sendTime);
             }
             recordLatencyType(event->getID(), LatType::UPGRADE);
+            allocateMSHR(addr, event); 
             return STALL;
         case E:
             dirLine->setState(M);
@@ -564,6 +643,7 @@ CacheAction MESIInternalDirectory::handleGetXRequest(MemEvent* event, CacheLine*
                 mshr_->incrementAcksNeeded(event->getBaseAddr());
                 dirLine->setState(M_Inv);
                 recordLatencyType(event->getID(), LatType::INV);
+                allocateMSHR(addr, event); 
                 return STALL;
             }
             dirLine->setOwner(event->getSrc());
@@ -575,6 +655,7 @@ CacheAction MESIInternalDirectory::handleGetXRequest(MemEvent* event, CacheLine*
             recordLatencyType(event->getID(), LatType::HIT);
             return DONE;
         case SM:
+            allocateMSHR(addr, event); 
             return STALL;   // retried this request too soon (TODO fix so we don't even attempt retry)!
         default:
             debug->fatal(CALL_INFO, -1, "%s (dir), Error: Received %s int unhandled state %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
@@ -2100,6 +2181,61 @@ bool MESIInternalDirectory::handleNACK(MemEvent* event, bool inMSHR) {
 }
 
 /*----------------------------------------------------------------------------------------------------------------------
+ *  Manage data structures
+ *---------------------------------------------------------------------------------------------------------------------*/
+
+bool MESIInternalDirectory::allocateLine(Addr addr, MemEvent* event) {
+    CacheLine* replacementLine = cacheArray_->findReplacementCandidate(addr, true);
+
+    if (replacementLine->valid() && is_debug_addr(addr)) {
+        debug->debug(_L6_, "Evicting 0x%" PRIx64 "\n", replacementLine->getBaseAddr());
+    }
+
+    if (replacementLine->valid()) {
+        if (replacementLine->inTransition()) {
+            mshr_->insertPointer(replacementLine->getBaseAddr(), event->getBaseAddr());
+            return false;
+        }
+
+        CacheAction action = handleEviction(replacementLine, getName(), false);
+        if (action == STALL) {
+            mshr_->insertPointer(replacementLine->getBaseAddr(), event->getBaseAddr());
+            return false;
+        }
+    }
+
+    notifyListenerOfEvict(event, replacementLine);
+    cacheArray_->replace(addr, replacementLine);
+    return true;
+}
+
+bool MESIInternalDirectory::allocateDirCacheLine(MemEvent * event, Addr addr, CacheLine * dirLine, bool noStall) {
+    CacheLine* replacementDirLine = cacheArray_->findReplacementCandidate(addr, false);
+    CacheArray::DataLine * replacementDataLine = replacementDirLine->getDataLine();
+    if (dirLine == replacementDirLine) {
+        cacheArray_->replace(addr, dirLine, replacementDataLine);
+        return true;
+    }
+
+    if (replacementDirLine->valid() && (is_debug_addr(addr) || is_debug_addr(replacementDirLine->getBaseAddr()))) {
+        debug->debug(_L6_, "Evicting 0x%" PRIx64 " from cache\n", replacementDirLine->getBaseAddr());
+    }
+
+    if (replacementDirLine->valid()) {
+        if (replacementDirLine->inTransition()) {
+            if (noStall) return false;
+            mshr_->insertPointer(replacementDirLine->getBaseAddr(), addr);
+            return false;
+        }
+
+        handleEviction(replacementDirLine, getName(), true);
+    }
+
+    cacheArray_->replace(addr, dirLine, replacementDataLine);
+    return true;
+}
+
+/*----------------------------------------------------------------------------------------------------------------------
  *  Functions for sending events. Some of these are part of the external interface (public)
  *---------------------------------------------------------------------------------------------------------------------*/
 
@@ -2568,4 +2704,15 @@ void MESIInternalDirectory::recordLatency(Command cmd, int type, uint64_t latenc
         default:
             break;
     }
+}
+
+void MESIInternalDirectory::printLine(Addr addr) {
+    if (!is_debug_addr(addr)) return;
+    CacheLine* line = cacheArray_->lookup(addr, false);
+    State state = line ? line->getState() : NP;
+    bool isCached = line ? line->getDataLine() != nullptr : false;
+    unsigned int sharers = line ? line->numSharers() : 0;
+    std::string owner = line ? line->getOwner() : "";
+    debug->debug(_L8_, "0x%" PRIx64 ": %s, %u, \"%s\" %d\n",
+            addr, StateString[state], sharers, owner.c_str(), isCached);
 }

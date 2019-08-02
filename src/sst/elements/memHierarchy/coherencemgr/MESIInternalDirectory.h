@@ -555,10 +555,11 @@ public:
     CacheAction handleEviction(CacheLine* replacementLine, string origRqstr, bool fromDataCache);
 
     /** Process cache request:  GetX, GetS, GetSX */
-    CacheAction handleRequest(MemEvent* event, CacheLine* dirLine, bool replay);
+    CacheAction handleRequest(MemEvent* event, bool replay);
     
     /** Process replacement request - PutS, PutE, PutM. May also resolve an outstanding/racing request event */
-    CacheAction handleReplacement(MemEvent* event, CacheLine* dirLine, MemEvent * reqEvent, bool replay);
+    CacheAction handleReplacement(MemEvent* event, bool replay);
+    CacheAction handleFlush(MemEvent* event, CacheLine* dirLine, MemEvent* reqEvent, bool replay);
     
     /** Process invalidation requests - Inv, FetchInv, FetchInvX */
     CacheAction handleInvalidationRequest(MemEvent *event, bool inMSHR);
@@ -580,6 +581,8 @@ public:
 
 /* Temporary */
     void setCacheArray(CacheArray* arrayptr) { cacheArray_ = arrayptr; }
+
+    void printLine(Addr addr);
 
 private:
 /* Private data members */
@@ -649,6 +652,10 @@ private:
     CacheAction handleAckInv(MemEvent * responseEvent, CacheLine* dirLine, MemEvent * reqEvent);
 
     void printLine(Addr addr, CacheLine * line);
+
+/* Private data structure handling */
+    bool allocateLine(Addr addr, MemEvent * event);
+    bool allocateDirCacheLine(MemEvent * event, Addr addr, CacheLine * dirLine, bool noStall);
 
 /* Private methods for sending events */
     void sendResponseDown(MemEvent* event, CacheLine* dirLine, std::vector<uint8_t>* data, bool dirty, bool replay);

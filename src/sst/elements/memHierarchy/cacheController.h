@@ -241,25 +241,9 @@ private:
     void processCacheReplacement(MemEvent *event, Command cmd, Addr baseAddr, bool mshrHit);
     void processCacheFlush(MemEvent * event, Addr baseAddr, bool mshrHit);
 
-    /** Function processes incomming invalidate messages.  Redirects message
-        to Top and Bottom controllers appropriately  */
-    void processCacheInvalidate(MemEvent *event, Addr baseAddr, bool mshrHit);
-
     /** Function processes incomming GetS/GetX responses.
         Redirects message to Top Controller */
     void processCacheResponse(MemEvent* ackEvent, Addr baseAddr);
-
-    void processFetchResp(MemEvent* event, Addr baseAddr);
-
-    /** Find replacement for the current request.  If the replacement candidate is
-        valid then a writeback is needed.  If replacemenent candidate is transitioning, we
-        need to wait (stall) until the replacement is in a 'stable' state */
-    inline bool allocateLine(MemEvent *event, Addr baseAddr);
-    inline bool allocateCacheLine(MemEvent *event, Addr baseAddr);
-    inline bool allocateDirCacheLine(MemEvent *event, Addr baseAddr, CacheLine * dirLine, bool noStall);
-
-    /** Notify any listers that an eviction has occured */
-    void notifyListenerOfEvict(const MemEvent *event, const CacheLine *replaceLine);
 
     /** Function attempts to send all responses for previous events that 'blocked' due to an outstanding request.
         If response blocks cache line the remaining responses go to MSHR till new outstanding request finishes  */
@@ -270,7 +254,7 @@ private:
         array and tag.  In SST, we just rerun the request to avoid complexity */
     inline bool activatePrevEvent(MemEvent* event, list<MSHREntry>& entries, Addr addr, list<MSHREntry>::iterator& it, int i);
 
-    inline void postRequestProcessing(MemEvent* event, CacheLine* cacheLine);
+    inline void postRequestProcessing(MemEvent* event);
 
     inline void postReplacementProcessing(MemEvent* event, CacheAction action, bool mshrHit);
 
@@ -293,14 +277,8 @@ private:
     /** Print input members/parameters */
     void pMembers();
 
-    /** Update the latency stats */
-    void recordLatency(MemEvent * event);
-
     /** Get the front element of a MSHR entry */
     MemEvent* getOrigReq(const list<MSHREntry> entries);
-
-    /** Print cache line for debugging */
-    void printLine(Addr addr);
 
     /** Timestamp getter */
     uint64 getTimestamp(){ return timestamp_; }
@@ -385,8 +363,6 @@ private:
     
     std::queue<MemEventBase*>       requestBuffer_;                 // Buffer requests that can't be processed due to port limits
     std::vector< std::queue<MemEventBase*> > bankConflictBuffer_;   // Buffer requests that have bank conflicts
-    std::map<MemEvent*,uint64>      startTimeList_;
-    std::map<MemEvent*,int>         missTypeList_;
     std::vector<bool>               bankStatus_;    // TODO change if we want multiported banks
     MemRegion                       region_; // Memory region handled by this cache
 

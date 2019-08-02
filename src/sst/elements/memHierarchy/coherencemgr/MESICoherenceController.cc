@@ -153,9 +153,29 @@ CacheAction MESIController::handleEviction(CacheLine* wbCacheLine, string rqstr,
  *  Obtain block if a cache miss
  *  Obtain needed coherence permission from lower level cache/memory if coherence miss
  */
-CacheAction MESIController::handleRequest(MemEvent* event, CacheLine* cacheLine, bool replay) {
-    Command cmd = event->getCmd();
+CacheAction MESIController::handleRequest(MemEvent* event, bool replay) {
+    Addr addr = event->getBaseAddr();
+    
+    CacheLine * cacheLine = cacheArray_->lookup(addr, !replay);
+    
+    if (!cacheLine && (is_debug_addr(addr))) debug->debug(_L3_, "-- Miss --\n");
+    
+    if (cacheLine && cacheLine->inTransition()) {
+        allocateMSHR(addr, event);
+        return STALL;
+    }
 
+    if (!cacheLine) {
+        if (!allocateLine(addr, event)) {
+            allocateMSHR(addr, event);
+            recordMiss(event->getID());
+            return STALL;
+        }
+        cacheLine = cacheArray_->lookup(addr, false);
+    }
+    
+    
+    Command cmd = event->getCmd();
     switch(cmd) {
         case Command::GetS:
             return handleGetSRequest(event, cacheLine, replay);
@@ -173,24 +193,55 @@ CacheAction MESIController::handleRequest(MemEvent* event, CacheLine* cacheLine,
 /**
  *  Handle replacement
  */
-CacheAction MESIController::handleReplacement(MemEvent* event, CacheLine* cacheLine, MemEvent * reqEvent, bool replay) {
-    Command cmd = event->getCmd();
+CacheAction MESIController::handleReplacement(MemEvent* event, bool replay) {
+    Addr addr = event->getBaseAddr();
+    CacheLine * cacheLine = cacheArray_->lookup(addr, false);
 
+    MemEvent* reqEvent = nullptr;
+    if (mshr_->exists(addr))
+        reqEvent = static_cast<MemEvent*>(mshr_->lookupFront(addr));
+    
+    CacheAction action = DONE;
+    Command cmd = event->getCmd();
     switch(cmd) {
         case Command::PutS:
-            return handlePutSRequest(event, cacheLine, reqEvent);
+            action = handlePutSRequest(event, cacheLine, reqEvent);
+            break;
         case Command::PutM:
         case Command::PutE:
-            return handlePutMRequest(event, cacheLine, reqEvent);
-        case Command::FlushLineInv:
-            return handleFlushLineInvRequest(event, cacheLine, reqEvent, replay);
-        case Command::FlushLine:
-            return handleFlushLineRequest(event, cacheLine, reqEvent, replay);
+            action = handlePutMRequest(event, cacheLine, reqEvent);
+            break;
         default:
 	    debug->fatal(CALL_INFO,-1,"%s, Error: Received an unrecognized request. Event = %s. Time = %" PRIu64 "ns\n", 
                     ownerName_.c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
-    return DONE;
+
+    if ((action == DONE || action == STALL) && reqEvent != nullptr) {
+        mshr_->removeFront(addr);
+        delete reqEvent;
+    }
+    if (action == STALL || action == BLOCK)
+        allocateMSHR(addr, event);
+    return action;
+}
+
+
+CacheAction MESIController::handleFlush(MemEvent* event, CacheLine* cacheLine, MemEvent* reqEvent, bool replay) {
+    Command cmd = event->getCmd();
+    CacheAction action = DONE;
+    switch(cmd) {
+        case Command::FlushLineInv:
+            action = handleFlushLineInvRequest(event, cacheLine, reqEvent, replay);
+            break;
+        case Command::FlushLine:
+            action = handleFlushLineRequest(event, cacheLine, reqEvent, replay);
+            break;
+        default:
+	    debug->fatal(CALL_INFO,-1,"%s, Error: Received an unrecognized request. Event = %s. Time = %" PRIu64 "ns\n", 
+                    ownerName_.c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
+    }
+
+    return action;
 }
 
 
@@ -403,6 +454,7 @@ bool MESIController::isCacheHit(MemEvent* event) {
 
 /** Handle GetS request */
 CacheAction MESIController::handleGetSRequest(MemEvent* event, CacheLine* cacheLine, bool replay) {
+    Addr addr = event->getBaseAddr();
     State state = cacheLine->getState();
     vector<uint8_t>* data = cacheLine->getData();
     
@@ -418,6 +470,7 @@ CacheAction MESIController::handleGetSRequest(MemEvent* event, CacheLine* cacheL
             notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::MISS);
             cacheLine->setState(IS);
             recordLatencyType(event->getID(), LatType::MISS);
+            allocateMSHR(addr, event); 
             return STALL;
         case S:
             notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
@@ -465,6 +518,7 @@ CacheAction MESIController::handleGetSRequest(MemEvent* event, CacheLine* cacheL
                 if (state == E) cacheLine->setState(E_InvX);
                 else cacheLine->setState(M_InvX);
                 recordLatencyType(event->getID(), LatType::INV);
+                allocateMSHR(addr, event); 
                 return STALL;
             }
             cacheLine->addSharer(event->getSrc());
@@ -483,6 +537,7 @@ CacheAction MESIController::handleGetSRequest(MemEvent* event, CacheLine* cacheL
 
 /** Handle GetX or GetSX (Read-lock) */
 CacheAction MESIController::handleGetXRequest(MemEvent* event, CacheLine* cacheLine, bool replay) {
+    Addr addr = event->getBaseAddr();
     State state = cacheLine->getState();
     Command cmd = event->getCmd();
     if (state != SM) recordStateEventCount(event->getCmd(), state);
@@ -503,6 +558,7 @@ CacheAction MESIController::handleGetXRequest(MemEvent* event, CacheLine* cacheL
             cacheLine->setState(IM);
             cacheLine->setTimestamp(sendTime);
             recordLatencyType(event->getID(), LatType::MISS);
+            allocateMSHR(addr, event); 
             return STALL;
         case S:
             notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::MISS);
@@ -521,6 +577,7 @@ CacheAction MESIController::handleGetXRequest(MemEvent* event, CacheLine* cacheL
             }
             
             recordLatencyType(event->getID(), LatType::UPGRADE);
+            allocateMSHR(addr, event); 
             return STALL;
         case E:
             cacheLine->setState(M);
@@ -535,6 +592,7 @@ CacheAction MESIController::handleGetXRequest(MemEvent* event, CacheLine* cacheL
                 if (invalidateSharersExceptRequestor(cacheLine, event->getSrc(), event->getRqstr(), replay)) {
                     cacheLine->setState(M_Inv);
                     recordLatencyType(event->getID(), LatType::INV);
+                    allocateMSHR(addr, event); 
                     return STALL;
                 }
             }
@@ -543,6 +601,7 @@ CacheAction MESIController::handleGetXRequest(MemEvent* event, CacheLine* cacheL
                 mshr_->incrementAcksNeeded(event->getBaseAddr());
                 cacheLine->setState(M_Inv);
                 recordLatencyType(event->getID(), LatType::INV);
+                allocateMSHR(addr, event); 
                 return STALL;
             }
             cacheLine->setOwner(event->getSrc());
@@ -555,6 +614,7 @@ CacheAction MESIController::handleGetXRequest(MemEvent* event, CacheLine* cacheL
             recordLatencyType(event->getID(), LatType::HIT);
             return DONE;
         case SM:
+            allocateMSHR(addr, event); 
             return STALL;   // retried this request too soon because we were checking for waiting invalidations
         default:
             debug->fatal(CALL_INFO, -1, "%s, Error: No handler for event in state %s. Event = %s. Time = %" PRIu64 "ns\n",
@@ -1869,6 +1929,34 @@ bool MESIController::handleNACK(MemEvent* event, bool inMSHR) {
 }
 
 /*----------------------------------------------------------------------------------------------------------------------
+ *  Functions for managing data structures
+ *---------------------------------------------------------------------------------------------------------------------*/
+bool MESIController::allocateLine(Addr addr, MemEvent* event) {
+    CacheLine* replacementLine = cacheArray_->findReplacementCandidate(addr, true);
+
+    if (replacementLine->valid() && is_debug_addr(addr)) {
+        debug->debug(_L6_, "Evicting 0x%" PRIx64 "\n", replacementLine->getBaseAddr());
+    }
+
+    if (replacementLine->valid()) {
+        if (replacementLine->inTransition()) {
+            mshr_->insertPointer(replacementLine->getBaseAddr(), event->getBaseAddr());
+            return false;
+        }
+
+        CacheAction action = handleEviction(replacementLine, getName(), false);
+        if (action == STALL) {
+            mshr_->insertPointer(replacementLine->getBaseAddr(), event->getBaseAddr());
+            return false;
+        }
+    }
+
+    notifyListenerOfEvict(event, replacementLine);
+    cacheArray_->replace(addr, replacementLine);
+    return true;
+}
+
+/*----------------------------------------------------------------------------------------------------------------------
  *  Functions for sending events. Some of these are part of the external interface 
  *---------------------------------------------------------------------------------------------------------------------*/
 
@@ -2300,4 +2388,13 @@ void MESIController::recordLatency(Command cmd, int type, uint64_t latency) {
         default:
             break;
     }
+}
+
+void MESIController::printLine(Addr addr) {
+    if (!is_debug_addr(addr)) return;
+    CacheLine * line = cacheArray_->lookup(addr, false);
+    State state = line ? line->getState() : NP;
+    unsigned int sharers = line ? line->numSharers() : 0;
+    string owner = line ? line->getOwner() : "";
+    debug->debug(_L8_, "0x%" PRIx64 ": %s, %u, \"%s\"\n", addr, StateSTring[state], sharers, owner.c_str());
 }

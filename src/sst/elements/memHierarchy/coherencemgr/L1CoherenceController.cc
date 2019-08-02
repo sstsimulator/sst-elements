@@ -104,7 +104,26 @@ CacheAction L1CoherenceController::handleEviction(CacheLine* wbCacheLine, string
  *  Obtain block if a cache miss
  *  Obtain needed coherence permission from lower level cache/memory if coherence miss
  */
-CacheAction L1CoherenceController::handleRequest(MemEvent* event, CacheLine* cacheLine, bool replay){
+CacheAction L1CoherenceController::handleRequest(MemEvent* event, bool replay) {
+    Addr addr = event->getBaseAddr();
+    
+    CacheLine * cacheLine = cacheArray_->lookup(addr, !replay); 
+    
+    if (!cacheLine && (is_debug_addr(addr))) debug->debug(_L3_, "-- Miss --\n");
+
+    if (cacheLine && cacheLine->inTransition()) {
+        allocateMSHR(addr, event);
+        return STALL;
+    }
+
+    if (!cacheLine) {
+        if (!allocateLine(addr, event)) {
+            allocateMSHR(addr, event);
+            recordMiss(event->getID());
+            return STALL;
+        }
+        cacheLine = cacheArray_->lookup(addr, false);
+    }
     
     Command cmd = event->getCmd();
 
@@ -116,7 +135,7 @@ CacheAction L1CoherenceController::handleRequest(MemEvent* event, CacheLine* cac
             return handleGetXRequest(event, cacheLine, replay);
         default:
 	    debug->fatal(CALL_INFO,-1,"%s, Error: Received an unrecognized request: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n", 
-                    ownerName_.c_str(), CommandString[(int)cmd], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
+                    ownerName_.c_str(), CommandString[(int)cmd], addr, event->getSrc().c_str(), getCurrentSimTimeNano());
     }
     return STALL;    // Eliminate compiler warning
 }
@@ -126,16 +145,24 @@ CacheAction L1CoherenceController::handleRequest(MemEvent* event, CacheLine* cac
 /**
  *  Handle replacement - Not relevant for L1s but required to implement 
  */
-CacheAction L1CoherenceController::handleReplacement(MemEvent* event, CacheLine* cacheLine, MemEvent * reqEvent, bool replay) {
+CacheAction L1CoherenceController::handleReplacement(MemEvent* event, bool replay) {
+    debug->fatal(CALL_INFO,-1,"%s, Error: Received an unrecognized request: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n", 
+            ownerName_.c_str(), CommandString[(int)event->getCmd()], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
+
+    return IGNORE;
+}
+CacheAction L1CoherenceController::handleFlush(MemEvent* event, CacheLine* cacheLine, MemEvent* reqEvent, bool replay) {
+    CacheAction action = IGNORE;
     if (event->getCmd() == Command::FlushLineInv) {    
-            return handleFlushLineInvRequest(event, cacheLine, reqEvent, replay);
+        action = handleFlushLineInvRequest(event, cacheLine, reqEvent, replay);
     } else if (event->getCmd() == Command::FlushLine) {
-            return handleFlushLineRequest(event, cacheLine, reqEvent, replay);
+        action = handleFlushLineRequest(event, cacheLine, reqEvent, replay);
     } else {
         debug->fatal(CALL_INFO,-1,"%s, Error: Received an unrecognized request: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n", 
                 ownerName_.c_str(), CommandString[(int)event->getCmd()], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
     }
-    return IGNORE;
+
+    return action;
 }
 
 
@@ -293,6 +320,7 @@ CacheAction L1CoherenceController::handleFetchResponse(MemEvent * event, bool in
 
 
 CacheAction L1CoherenceController::handleGetSRequest(MemEvent* event, CacheLine* cacheLine, bool replay){
+    Addr addr = event->getBaseAddr();
     State state = cacheLine->getState();
     vector<uint8_t>* data = cacheLine->getData();
     
@@ -306,6 +334,7 @@ CacheAction L1CoherenceController::handleGetSRequest(MemEvent* event, CacheLine*
             cacheLine->setState(IS);
             cacheLine->setTimestamp(sendTime);
             recordLatencyType(event->getID(), LatType::MISS);
+            allocateMSHR(addr, event); 
             return STALL;
         case S:
         case E:
@@ -337,6 +366,7 @@ CacheAction L1CoherenceController::handleGetSRequest(MemEvent* event, CacheLine*
  *  Return: whether event was handled or is waiting for further responses
  */
 CacheAction L1CoherenceController::handleGetXRequest(MemEvent* event, CacheLine* cacheLine, bool replay) {
+    Addr addr = event->getBaseAddr();
     State state = cacheLine->getState();
     Command cmd = event->getCmd();
     vector<uint8_t>* data = cacheLine->getData();
@@ -360,6 +390,7 @@ CacheAction L1CoherenceController::handleGetXRequest(MemEvent* event, CacheLine*
             cacheLine->setState(IM);
             cacheLine->setTimestamp(sendTime);
             recordLatencyType(event->getID(), LatType::MISS);
+            allocateMSHR(addr, event); 
             return STALL;
         case S:
             notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::MISS);
@@ -371,6 +402,7 @@ CacheAction L1CoherenceController::handleGetXRequest(MemEvent* event, CacheLine*
             }
             cacheLine->setTimestamp(sendTime);
             recordLatencyType(event->getID(), LatType::UPGRADE);
+            allocateMSHR(addr, event); 
             return STALL;
         case E:
             cacheLine->setState(M);
@@ -433,7 +465,8 @@ CacheAction L1CoherenceController::handleFlushLineRequest(MemEvent * event, Cach
 
     if (state != I && cacheLine->inTransition()) return STALL;
 
-    if (reqEvent != NULL) return STALL;
+    if (reqEvent != nullptr) 
+        return STALL;
 
     // If line is locked, return failure
     if (state != I && cacheLine->isLocked()) {
@@ -460,7 +493,8 @@ CacheAction L1CoherenceController::handleFlushLineInvRequest(MemEvent * event, C
    
     if (state != I && cacheLine->inTransition()) return STALL;
 
-    if (reqEvent != NULL) return STALL;
+    if (reqEvent != nullptr) 
+        return STALL;
 
     // If line is locked, return failure
     if (state != I && cacheLine->isLocked()) {
@@ -757,6 +791,33 @@ bool L1CoherenceController::handleNACK(MemEvent* event, bool inMSHR) {
     return true;
 }
 
+/*----------------------------------------------------------------------------------------------------------------------
+ *  Functions for managing data structures
+ *---------------------------------------------------------------------------------------------------------------------*/
+bool L1CoherenceController::allocateLine(Addr addr, MemEvent* event) {
+    CacheLine* replacementLine = cacheArray_->findReplacementCandidate(addr, true);
+
+    if (replacementLine->valid() && is_debug_addr(addr)) {
+        debug->debug(_L6_, "Evicting 0x%" PRIx64 "\n", replacementLine->getBaseAddr());
+    }
+
+    if (replacementLine->valid()) {
+        if (replacementLine->inTransition()) {
+            mshr_->insertPointer(replacementLine->getBaseAddr(), event->getBaseAddr());
+            return false;
+        }
+
+        CacheAction action = handleEviction(replacementLine, getName(), false);
+        if (action == STALL) {
+            mshr_->insertPointer(replacementLine->getBaseAddr(), event->getBaseAddr());
+            return false;
+        }
+    }
+
+    notifyListenerOfEvict(event, replacementLine);
+    cacheArray_->replace(addr, replacementLine);
+    return true;
+}
 
 /*---------------------------------------------------------------------------------------------------
  * Helper Functions
@@ -1066,3 +1127,11 @@ void L1CoherenceController::recordEventSent(Command cmd) {
     stat_eventSent[(int)cmd]->addData(1);
 }
 
+void L1CoherenceController::printLine(Addr addr) {
+    if (!is_debug_addr(addr))
+        return;
+
+    CacheLine* line = cacheArray_->lookup(addr, false);
+    State state = line ? line->getState();
+    debug->debug(_L8_, "0x%" PRIx64 ": %s\n", addr, StateString[state]);
+}

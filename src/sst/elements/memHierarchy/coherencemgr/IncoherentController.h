@@ -221,10 +221,11 @@ public:
     CacheAction handleEviction(CacheLine* _wbCacheLine, string _origRqstr, bool ignoredParameter=false);
 
     /** Process cache request:  GetX, GetS, GetSX */
-    CacheAction handleRequest(MemEvent* event, CacheLine* cacheLine, bool replay);
+    CacheAction handleRequest(MemEvent* event, bool replay);
     
     /** Process replacement request - PutS, PutE, PutM */
-    CacheAction handleReplacement(MemEvent* event, CacheLine* cacheLine, MemEvent * reqEvent, bool replay);
+    CacheAction handleReplacement(MemEvent* event, bool replay);
+    CacheAction handleFlush(MemEvent* event, CacheLine* cacheLine, MemEvent* reqEvent, bool replay);
     
     /** Process invalidation requests - Inv, FetchInv, FetchInvX */
     CacheAction handleInvalidationRequest(MemEvent *event, bool inMSHR);
@@ -244,6 +245,8 @@ public:
     void addToOutgoingQueueUp(Response& resp);
 
     void setCacheArray(CacheArray* ptr) { cacheArray_ = ptr; }
+
+    void printLine(Addr addr);
 
 private:
 /* Private data members */
@@ -278,6 +281,9 @@ private:
     /** Process GetSResp/GetXResp.  Update the cache line */
     CacheAction handleDataResponse(MemEvent* responseEvent, CacheLine * cacheLine, MemEvent * reqEvent);
     
+/* Private methods for managing data structures */
+    bool allocateLine(Addr addr, MemEvent* event);
+
 /* Private methods for sending events */
     /** Send writeback request to lower level caches */
     void sendWriteback(Command cmd, CacheLine* cacheLine, string origRqstr);

@@ -280,7 +280,9 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
             if (!replay) {
                 stat_eventRecv[(int)cmd]->addData(1);
             }
-            processFetchResp(event, baseAddr);
+            if (coherenceMgr_->handleFetchResponse(event, true)) {
+                activatePrevEvents(baseAddr);
+            }
             break;
         case Command::FlushLine:
         case Command::FlushLineInv:

@@ -54,10 +54,11 @@ public:
     virtual bool isCacheHit(MemEvent* event) =0;
 
     /* Handle a cache request - GetS, GetX, etc. */
-    virtual CacheAction handleRequest(MemEvent * event, CacheLine * line, bool replay) =0;
+    virtual CacheAction handleRequest(MemEvent * event, bool replay) =0;
 
     /* Handle a cache replacement - PutS, PutM, etc. */
-    virtual CacheAction handleReplacement(MemEvent * event, CacheLine * line, MemEvent * reqEvent, bool replay) =0;
+    virtual CacheAction handleReplacement(MemEvent * event, bool replay) =0;
+    virtual CacheAction handleFlush(MemEvent * event, CacheLine * line, MemEvent* reqEvent, bool replay) =0;
 
     /* Handle a cache invalidation - Inv, FetchInv, etc. */
     virtual CacheAction handleInvalidationRequest(MemEvent * event, bool replay) =0;
@@ -149,6 +150,8 @@ public:
     /**** Temporary ********/
     virtual void setCacheArray(CacheArray* arrayptr) { }
 
+    virtual void printLine(Addr addr) { }
+
 protected:
     struct Response {
         MemEventBase* event;
@@ -212,6 +215,7 @@ protected:
     virtual void addToOutgoingQueueUp(Response& resp);
 
     /* MSHR insertion */
+    bool allocateMSHR(Addr addr, MemEvent * event);
     bool processInvRequestInMSHR(Addr addr, MemEvent* event, bool blocks);
 
     /* Statistics */
@@ -222,6 +226,7 @@ protected:
 
     /* Listener callback */
     virtual void notifyListenerOfAccess(MemEvent * event, NotifyAccessType accessT, NotifyResultType resultT);
+    virtual void notifyListenerOfEvict(const MemEvent *event, const CacheLine *replaceLine);
 
     virtual void printLine(Addr addr, CacheLine* line);
 

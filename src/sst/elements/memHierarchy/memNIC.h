@@ -49,12 +49,12 @@ class MemNIC : public MemNICBase {
 public:
 /* Element Library Info */
 #define MEMNIC_ELI_PARAMS MEMNICBASE_ELI_PARAMS, \
-        { "network_link_control",        "(string) Link control for network", "merlin.linkcontrol" },\
-        { "network_bw",                  "(string) Network bandwidth", "80GiB/s" },\
-        { "network_input_buffer_size",   "(string) Size of input buffer", "1KiB"},\
-        { "network_output_buffer_size",  "(string) Size of output buffer", "1KiB"},\
         { "min_packet_size",             "(string) Size of a packet without a payload (e.g., control message size)", "8B"},\
-        { "port",                        "(string) Set by parent component. Name of port this NIC sits on.", ""}
+        { "network_bw",                  "(string) Network bandwidth. Not used if linkcontrol subcomponent slot is filled.", "80GiB/s" },\
+        { "network_input_buffer_size",   "(string) Size of input buffer. Not used if linkcontrol subcomponent slot is filled", "1KiB"},\
+        { "network_output_buffer_size",  "(string) Size of output buffer. Not used if linkcontrol subcomponent slot is filled.", "1KiB"},\
+        { "port",                        "Deprecated. Used by parent component if the NIC is not loaded as a named subcomponent.", ""}, \
+        { "network_link_control",        "Deprecated. Specify link control type by using named subcomponents", "merlin.linkcontrol" }
 
     
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(MemNIC, "memHierarchy", "MemNIC", SST_ELI_ELEMENT_VERSION(1,0,0),
