@@ -178,7 +178,7 @@ CacheAction L1IncoherentController::handleCacheResponse(MemEvent * event, bool i
     CacheLine* line = cacheArray_->lookup(bAddr, false);
     
     if (is_debug_addr(bAddr))
-        printLine(bAddr, line);
+        printLine(bAddr);
 
     MemEvent* reqEvent = mshr_->lookupFront(bAddr);
     
@@ -206,7 +206,7 @@ CacheAction L1IncoherentController::handleCacheResponse(MemEvent * event, bool i
     mshr_->removeFront(bAddr);
 
     if (is_debug_addr(bAddr))
-        printLine(bAddr, line);
+        printLine(bAddr);
     
     delete event;
     delete reqEvent;
@@ -692,6 +692,6 @@ void L1IncoherentController::printLine(Addr addr) {
         return;
 
     CacheLine* line = cacheArray_->lookup(addr, false);
-    State state = line ? line->getState();
+    State state = line ? line->getState() : NP;
     debug->debug(_L8_, "0x%" PRIx64 ": %s\n", addr, StateString[state]);
 }

@@ -228,8 +228,6 @@ protected:
     virtual void notifyListenerOfAccess(MemEvent * event, NotifyAccessType accessT, NotifyResultType resultT);
     virtual void notifyListenerOfEvict(const MemEvent *event, const CacheLine *replaceLine);
 
-    virtual void printLine(Addr addr, CacheLine* line);
-
     // Eviction statistics, count how many times we attempted to evict a block in a particular state
     Statistic<uint64_t>* stat_evict_I;
     Statistic<uint64_t>* stat_evict_E;

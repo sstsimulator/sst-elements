@@ -280,7 +280,7 @@ bool Cache::processEvent(MemEventBase* ev, bool replay) {
             if (!replay) {
                 stat_eventRecv[(int)cmd]->addData(1);
             }
-            if (coherenceMgr_->handleFetchResponse(event, true)) {
+            if (coherenceMgr_->handleFetchResponse(event, true) == DONE) {
                 activatePrevEvents(baseAddr);
             }
             break;
@@ -332,10 +332,10 @@ void Cache::processPrefetchEvent(SST::Event* ev) {
 
     // Record received prefetch
     statPrefetchRequest->addData(1);
-    //prefetchBuffer_.push(event);
+    prefetchBuffer_.push(event);
 
     // Drop prefetch if we can't handle it immediately or handling it would violate maxOustandingPrefetch or dropPrefetchLevel
-    if (requestsThisCycle_ != maxRequestsPerCycle_) {
+   /* if (requestsThisCycle_ != maxRequestsPerCycle_) {
         if (event->getCmd() != Command::NULLCMD && mshr_->getSize() < dropPrefetchLevel_ && mshr_->getPrefetchCount() < maxOutstandingPrefetch_) { 
             requestsThisCycle_++;
             coherenceMgr_->recordIncomingRequest(event);
@@ -348,6 +348,7 @@ void Cache::processPrefetchEvent(SST::Event* ev) {
         statPrefetchDrop->addData(1);
         delete event;
     }
+    */
 }
 
 
@@ -472,9 +473,9 @@ void Cache::handleEvent(SST::Event* ev) {
     if (CommandClassArr[(int)event->getCmd()] == CommandClass::Request && !CommandWriteback[(int)event->getCmd()]) 
         coherenceMgr_->recordIncomingRequest(event);
 
-    //eventBuffer_.push_back(event);
+    eventBuffer_.push_back(event);
 
-    if (requestsThisCycle_ == maxRequestsPerCycle_) {
+   /* if (requestsThisCycle_ == maxRequestsPerCycle_) {
         requestBuffer_.push(event);
     } else {
         if ((event->getCmd() == Command::GetS || event->getCmd() == Command::GetX) && !requestBuffer_.empty()) {
@@ -485,7 +486,7 @@ void Cache::handleEvent(SST::Event* ev) {
                 requestBuffer_.push(event);   
             }
         }
-    }
+    }*/
 }
 
 /* Clock handler */
@@ -521,36 +522,42 @@ bool Cache::clockTick(Cycle_t time) {
     }
 
     // Accept any incoming requests that were delayed because of port limits
-    requestsThisCycle_ = 0;
-    std::queue<MemEventBase*>   tmpBuffer;
-    bool queuesEmpty = true;
-    while (!requestBuffer_.empty()) {
-        if (requestsThisCycle_ == maxRequestsPerCycle_) {
+    int accepted = 0;
+    std::list<MemEventBase*>::iterator it = eventBuffer_.begin();
+    bool queuesEmpty = eventBuffer_.empty() && prefetchBuffer_.empty();
+    
+    // Issue waiting events
+    while (it != eventBuffer_.end()) {
+        if (accepted == maxRequestsPerCycle_)
             break;
-        }
         
-        bool wasProcessed = processEvent(requestBuffer_.front(), false);
-        if (wasProcessed) {
-            requestsThisCycle_++;
+        // Other has some stat updates & debug print right here TODO
+
+        if (processEvent(*it, false)) {
+            accepted++;
+            it = eventBuffer_.erase(it);
         } else {
-            tmpBuffer.push(requestBuffer_.front());
+            it++;
         }
-            
-        requestBuffer_.pop();
-        queuesEmpty = false;
     }
-    if (!tmpBuffer.empty()) {
-        while (!requestBuffer_.empty()) {
-            tmpBuffer.push(requestBuffer_.front());
-            requestBuffer_.pop();
+
+    // Issue waiting prefetches (if possible)
+    while (!prefetchBuffer_.empty()) {
+        if (accepted != maxRequestsPerCycle_ && processEvent(prefetchBuffer_.front(), false)) {
+            accepted++;
+        } else {
+            statPrefetchDrop->addData(1);
         }
-        requestBuffer_.swap(tmpBuffer);
+        prefetchBuffer_.pop();
     }
+
     // Disable lower-level cache clocks if they're idle
     if (queuesEmpty && idle && clockIsOn_ && !conflicts) {
         turnClockOff();
         return true;
     }
+
+    // Keep the clock on
     return false;
 }
 

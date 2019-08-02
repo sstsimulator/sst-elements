@@ -255,7 +255,7 @@ CacheAction MESIController::handleInvalidationRequest(MemEvent * event, bool rep
     CacheLine* cacheLine = cacheArray_->lookup(event->getBaseAddr(), false);
 
     if (is_debug_addr(bAddr))
-        printLine(bAddr, cacheLine);
+        printLine(bAddr);
 
     if (!mshr_->pendingWriteback(bAddr) && mshr_->isFull()) {
         processInvRequestInMSHR(bAddr, event, false);
@@ -305,7 +305,7 @@ CacheAction MESIController::handleInvalidationRequest(MemEvent * event, bool rep
     }
     
     if (is_debug_addr(bAddr))
-        printLine(bAddr, cacheLine);
+        printLine(bAddr);
 
     if (action == STALL)
         processInvRequestInMSHR(bAddr, event, false);
@@ -326,7 +326,7 @@ CacheAction MESIController::handleCacheResponse(MemEvent * event, bool inMSHR) {
     CacheLine* line = cacheArray_->lookup(bAddr, false);
 
     if (is_debug_addr(bAddr))
-        printLine(bAddr, line);
+        printLine(bAddr);
 
     MemEvent* reqEvent = mshr_->lookupFront(bAddr);
 
@@ -350,7 +350,7 @@ CacheAction MESIController::handleCacheResponse(MemEvent * event, bool inMSHR) {
     }
     
     if (is_debug_addr(bAddr))
-        printLine(bAddr, line);
+        printLine(bAddr);
 
     if (action == DONE) {
         mshr_->removeFront(bAddr);
@@ -367,7 +367,7 @@ CacheAction MESIController::handleFetchResponse(MemEvent * event, bool inMSHR) {
     CacheLine* line = cacheArray_->lookup(bAddr, false);
 
     if (is_debug_addr(bAddr))
-        printLine(bAddr, line);
+        printLine(bAddr);
 
     MemEvent* reqEvent = mshr_->exists(bAddr) ? mshr_->lookupFront(bAddr) : nullptr;
 
@@ -392,7 +392,7 @@ CacheAction MESIController::handleFetchResponse(MemEvent * event, bool inMSHR) {
     }
     
     if (is_debug_addr(bAddr))
-        printLine(bAddr, line);
+        printLine(bAddr);
 
     delete event;
 
@@ -1554,7 +1554,8 @@ CacheAction MESIController::handleFetchResp(MemEvent * responseEvent, CacheLine*
     State state = (cacheLine == NULL) ? I : cacheLine->getState();
     
     // Check acks needed
-    if (mshr_->getAcksNeeded(responseEvent->getBaseAddr()) > 0) mshr_->decrementAcksNeeded(responseEvent->getBaseAddr());
+    if (mshr_->getAcksNeeded(responseEvent->getBaseAddr()) > 0) 
+        mshr_->decrementAcksNeeded(responseEvent->getBaseAddr());
     CacheAction action = (mshr_->getAcksNeeded(responseEvent->getBaseAddr()) == 0) ? DONE : IGNORE;
 
     // Update data
@@ -2396,5 +2397,5 @@ void MESIController::printLine(Addr addr) {
     State state = line ? line->getState() : NP;
     unsigned int sharers = line ? line->numSharers() : 0;
     string owner = line ? line->getOwner() : "";
-    debug->debug(_L8_, "0x%" PRIx64 ": %s, %u, \"%s\"\n", addr, StateSTring[state], sharers, owner.c_str());
+    debug->debug(_L8_, "0x%" PRIx64 ": %s, %u, \"%s\"\n", addr, StateString[state], sharers, owner.c_str());
 }

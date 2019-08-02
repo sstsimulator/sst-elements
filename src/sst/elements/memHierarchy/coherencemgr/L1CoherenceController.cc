@@ -175,7 +175,7 @@ CacheAction L1CoherenceController::handleInvalidationRequest(MemEvent * event, b
     CacheLine* cacheLine = cacheArray_->lookup(bAddr, false);
 
     if (is_debug_addr(bAddr))
-        printLine(bAddr, cacheLine);
+        printLine(bAddr);
 
     // Handle case where an inv raced with a replacement -> assumes non-silent replacements
     if (cacheLine == NULL) {
@@ -233,7 +233,7 @@ CacheAction L1CoherenceController::handleInvalidationRequest(MemEvent * event, b
     }
 
     if (is_debug_addr(bAddr))
-        printLine(bAddr, cacheLine);
+        printLine(bAddr);
 
     delete event;
 
@@ -269,7 +269,7 @@ CacheAction L1CoherenceController::handleCacheResponse(MemEvent * event, bool in
     mshr_->removeFront(bAddr);
 
     if (is_debug_addr(bAddr))
-        printLine(bAddr, line);
+        printLine(bAddr);
 
     delete event;
     delete reqEvent;
@@ -283,7 +283,7 @@ CacheAction L1CoherenceController::handleFetchResponse(MemEvent * event, bool in
     CacheLine* line = nullptr;
     if (is_debug_addr(bAddr)) {
         line = cacheArray_->lookup(bAddr, false);
-        printLine(bAddr, line);
+        printLine(bAddr);
     }
 
     Command cmd = event->getCmd();
@@ -300,7 +300,7 @@ CacheAction L1CoherenceController::handleFetchResponse(MemEvent * event, bool in
     delete event;
     
     if (is_debug_addr(bAddr))
-        printLine(bAddr, line);
+        printLine(bAddr);
 
     return DONE;
 }
@@ -1132,6 +1132,6 @@ void L1CoherenceController::printLine(Addr addr) {
         return;
 
     CacheLine* line = cacheArray_->lookup(addr, false);
-    State state = line ? line->getState();
+    State state = line ? line->getState() : NP;
     debug->debug(_L8_, "0x%" PRIx64 ": %s\n", addr, StateString[state]);
 }

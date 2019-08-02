@@ -269,7 +269,7 @@ CacheAction MESIInternalDirectory::handleInvalidationRequest(MemEvent * event, b
     CacheLine* dirLine = cacheArray_->lookup(bAddr, false);
 
     if (is_debug_addr(bAddr))
-        printLine(bAddr, dirLine);
+        printLine(bAddr);
 
     if (!mshr_->pendingWriteback(bAddr) && mshr_->isFull()) {
         processInvRequestInMSHR(bAddr, event, false);
@@ -314,7 +314,7 @@ CacheAction MESIInternalDirectory::handleInvalidationRequest(MemEvent * event, b
     }
     
     if (is_debug_addr(bAddr))
-        printLine(bAddr, dirLine);
+        printLine(bAddr);
 
     if (action == STALL)
         processInvRequestInMSHR(bAddr, event, false);
@@ -338,7 +338,7 @@ CacheAction MESIInternalDirectory::handleCacheResponse(MemEvent * event, bool in
     CacheLine* dLine = cacheArray_->lookup(bAddr, false);
 
     if (is_debug_addr(bAddr))
-        printLine(bAddr, dLine);
+        printLine(bAddr);
 
     MemEvent* reqEvent = mshr_->lookupFront(bAddr);
 
@@ -363,7 +363,7 @@ CacheAction MESIInternalDirectory::handleCacheResponse(MemEvent * event, bool in
     }
     
     if (is_debug_addr(bAddr))
-        printLine(bAddr, dLine);
+        printLine(bAddr);
     
     if (action == DONE) {
         mshr_->removeFront(bAddr);
@@ -380,7 +380,7 @@ CacheAction MESIInternalDirectory::handleFetchResponse(MemEvent * event, bool in
     CacheLine* dLine = cacheArray_->lookup(bAddr, false);
 
     if (is_debug_addr(bAddr))
-        printLine(bAddr, dLine);
+        printLine(bAddr);
 
     MemEvent* reqEvent = mshr_->exists(bAddr) ? mshr_->lookupFront(bAddr) : nullptr;
 
@@ -405,7 +405,7 @@ CacheAction MESIInternalDirectory::handleFetchResponse(MemEvent * event, bool in
     }
     
     if (is_debug_addr(bAddr))
-        printLine(bAddr, dLine);
+        printLine(bAddr);
 
     delete event;
 

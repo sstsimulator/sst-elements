@@ -248,7 +248,7 @@ CacheAction IncoherentController::handleCacheResponse(MemEvent * event, bool inM
     MemEvent* reqEvent = static_cast<MemEvent*>(mshr_->lookupFront(bAddr));
 
     if (is_debug_addr(bAddr))
-        printLine(bAddr, line);
+        printLine(bAddr);
 
     CacheAction action = DONE;
     Command cmd = event->getCmd();
@@ -270,7 +270,7 @@ CacheAction IncoherentController::handleCacheResponse(MemEvent * event, bool inM
     }
     
     if (is_debug_addr(bAddr))
-        printLine(bAddr, line);
+        printLine(bAddr);
     
     if (action == DONE) {
         mshr_->removeFront(bAddr);
@@ -713,5 +713,5 @@ void IncoherentController::printLine(Addr addr) {
     State state = line ? line->getState() : NP;
     unsigned int sharers = line ? line->numSharers() : 0;
     string owner = line ? line->getOwner() : "";
-    debug->debug(_L8_, "0x%" PRIx64 ": %s, %u, \"%s\"\n", addr, StateSTring[state], sharers, owner.c_str());
+    debug->debug(_L8_, "0x%" PRIx64 ": %s, %u, \"%s\"\n", addr, StateString[state], sharers, owner.c_str());
 }

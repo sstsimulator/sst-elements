@@ -257,7 +257,7 @@ CacheAction MESIPrivNoninclusive::handleInvalidationRequest(MemEvent * event, bo
     CacheLine* cacheLine = cacheArray_->lookup(bAddr, false);
 
     if (is_debug_addr(bAddr))
-        printLine(bAddr, cacheLine);
+        printLine(bAddr);
 
     if (!mshr_->pendingWriteback(bAddr) && mshr_->isFull()) {
         processInvRequestInMSHR(bAddr, event, false);
@@ -321,7 +321,7 @@ CacheAction MESIPrivNoninclusive::handleInvalidationRequest(MemEvent * event, bo
     }
 
     if (is_debug_addr(bAddr))
-        printLine(bAddr, cacheLine);
+        printLine(bAddr);
     
     if (action == STALL)
         processInvRequestInMSHR(bAddr, event, false);
@@ -342,7 +342,7 @@ CacheAction MESIPrivNoninclusive::handleCacheResponse(MemEvent * event, bool inM
     CacheLine* line = cacheArray_->lookup(bAddr, false);
 
     if (is_debug_addr(bAddr))
-        printLine(bAddr, line);
+        printLine(bAddr);
 
     MemEvent* reqEvent = mshr_->lookupFront(bAddr);
 
@@ -365,7 +365,7 @@ CacheAction MESIPrivNoninclusive::handleCacheResponse(MemEvent * event, bool inM
                     ownerName_.c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
 
-    if (is_debug_addr(bAddr)) printLine(bAddr, line);
+    if (is_debug_addr(bAddr)) printLine(bAddr);
     
     if (action == DONE) {
         mshr_->removeFront(bAddr);
@@ -382,7 +382,7 @@ CacheAction MESIPrivNoninclusive::handleFetchResponse(MemEvent * event, bool inM
     CacheLine* line = cacheArray_->lookup(bAddr, false);
     
     if (is_debug_addr(bAddr))
-        printLine(bAddr, line);
+        printLine(bAddr);
 
     MemEvent* reqEvent = mshr_->exists(bAddr) ? mshr_->lookupFront(bAddr) : nullptr;
     
@@ -407,7 +407,7 @@ CacheAction MESIPrivNoninclusive::handleFetchResponse(MemEvent * event, bool inM
     }
 
     if (is_debug_addr(bAddr))
-        printLine(bAddr, line);
+        printLine(bAddr);
 
     delete event;
 
@@ -2448,11 +2448,11 @@ void MESIPrivNoninclusive::recordLatency(Command cmd, int type, uint64_t latency
     }
 }
 
-void MESIPrivNoninclusiveController::printLine(Addr addr) {
+void MESIPrivNoninclusive::printLine(Addr addr) {
     if (!is_debug_addr(addr)) return;
     CacheLine * line = cacheArray_->lookup(addr, false);
     State state = line ? line->getState() : NP;
     unsigned int sharers = line ? line->numSharers() : 0;
     string owner = line ? line->getOwner() : "";
-    debug->debug(_L8_, "0x%" PRIx64 ": %s, %u, \"%s\"\n", addr, StateSTring[state], sharers, owner.c_str());
+    debug->debug(_L8_, "0x%" PRIx64 ": %s, %u, \"%s\"\n", addr, StateString[state], sharers, owner.c_str());
 }

@@ -365,20 +365,6 @@ void CoherenceController::notifyListenerOfEvict(const MemEvent *event, const Cac
     }
 }
 
-void CoherenceController::printLine(Addr addr, CacheLine* line) {
-    if (!is_debug_addr(addr))
-        return;
-    State state = NP;
-    unsigned int sharers = 0;
-    std::string owner = "";
-    if (line) {
-        state = line->getState();
-        sharers = line->numSharers();
-        owner = line->getOwner();
-    }
-    debug->debug(_L8_, "0x%" PRIx64 ": %s, %u, \"%s\"\n", addr, StateString[state], sharers, owner.c_str());
-}
-
 /**************************************/
 /******** Statistics handling *********/
 /**************************************/

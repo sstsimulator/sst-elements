@@ -127,8 +127,6 @@ void Cache::processCacheFlush(MemEvent* event, Addr baseAddr, bool replay) {
         return;
     }
 
-    
-
     MemEvent * origRequest = NULL;
     if (mshr_->exists(baseAddr)) origRequest = static_cast<MemEvent*>(mshr_->lookupFront(baseAddr));
     
