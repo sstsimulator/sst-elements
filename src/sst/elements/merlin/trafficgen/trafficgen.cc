@@ -23,8 +23,6 @@
 #include <sst/core/simulation.h>
 #include <sst/core/timeLord.h>
 
-#include "sst/elements/merlin/linkControl.h"
-
 using namespace SST::Merlin;
 using namespace SST::Interfaces;
 
@@ -134,8 +132,8 @@ TrafficGen::TrafficGen(ComponentId_t cid, Params& params) :
     clock_tc = registerClock( params.find<std::string>("message_rate", "1GHz"), clock_functor, false);
 
     // Register a receive handler which will simply strip the events as they arrive
-    link_control->setNotifyOnReceive(new LinkControl::Handler<TrafficGen>(this,&TrafficGen::handle_receives));
-    send_notify_functor = new LinkControl::Handler<TrafficGen>(this,&TrafficGen::send_notify);
+    link_control->setNotifyOnReceive(new SST::Interfaces::SimpleNetwork::Handler<TrafficGen>(this,&TrafficGen::handle_receives));
+    send_notify_functor = new SST::Interfaces::SimpleNetwork::Handler<TrafficGen>(this,&TrafficGen::send_notify);
 }
 
 

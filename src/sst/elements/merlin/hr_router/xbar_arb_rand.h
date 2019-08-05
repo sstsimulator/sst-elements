@@ -27,7 +27,7 @@
 #include <queue>
 
 #include "sst/elements/merlin/router.h"
-#include "sst/elements/merlin/portControl.h"
+#include "sst/elements/merlin/interfaces/portControl.h"
 
 namespace SST {
 namespace Merlin {
