@@ -15,7 +15,7 @@
 
 #include <sst_config.h>
 #include <vector>
-#include "coherencemgr/MESIInternalDirectory.h"
+#include "coherencemgr/MESI_Shared_Noninclusive.h"
 
 using namespace SST;
 using namespace SST::MemHierarchy;
@@ -45,7 +45,7 @@ using namespace SST::MemHierarchy;
  *  Directory evictions will also trigger a cache eviction if the block is locally cached
  *  Return whether the eviction is complete (DONE) or not (STALL)
  */
-CacheAction MESIInternalDirectory::handleEviction(CacheLine* replacementLine, string origRqstr, bool fromDataCache) {
+CacheAction MESISharNoninclusive::handleEviction(CacheLine* replacementLine, string origRqstr, bool fromDataCache) {
     State state = replacementLine->getState();
     
     recordEvictionState(state);
@@ -155,7 +155,7 @@ CacheAction MESIInternalDirectory::handleEviction(CacheLine* replacementLine, st
 
 
 /** Handle data requests */
-CacheAction MESIInternalDirectory::handleRequest(MemEvent * event, bool replay) {
+CacheAction MESISharNoninclusive::handleRequest(MemEvent * event, bool replay) {
     Addr addr = event->getBaseAddr();
     
     CacheLine * dirLine = cacheArray_->lookup(addr, !replay); 
@@ -195,7 +195,7 @@ CacheAction MESIInternalDirectory::handleRequest(MemEvent * event, bool replay) 
 /**
  *  Handle replacement (Put*) requests
  */
-CacheAction MESIInternalDirectory::handleReplacement(MemEvent* event, bool replay) {
+CacheAction MESISharNoninclusive::handleReplacement(MemEvent* event, bool replay) {
     Addr addr = event->getBaseAddr();
     CacheLine* dirLine = cacheArray_->lookup(addr, false);
 
@@ -237,7 +237,7 @@ CacheAction MESIInternalDirectory::handleReplacement(MemEvent* event, bool repla
 }
 
 
-CacheAction MESIInternalDirectory::handleFlush(MemEvent* event, CacheLine* dirLine, MemEvent* reqEvent, bool replay) {
+CacheAction MESISharNoninclusive::handleFlush(MemEvent* event, CacheLine* dirLine, MemEvent* reqEvent, bool replay) {
     CacheAction action = DONE;
     Command cmd = event->getCmd();
     switch (cmd) {
@@ -264,7 +264,7 @@ CacheAction MESIInternalDirectory::handleFlush(MemEvent* event, CacheLine* dirLi
  *  Special case for when an inv races with a replacement -> 
  *  treat Inv request as the AckPut (the Put request will likewise be treated as the AckInv/FetchResp)
  */
-CacheAction MESIInternalDirectory::handleInvalidationRequest(MemEvent * event, bool replay) {
+CacheAction MESISharNoninclusive::handleInvalidationRequest(MemEvent * event, bool replay) {
     Addr bAddr = event->getBaseAddr();
     CacheLine* dirLine = cacheArray_->lookup(bAddr, false);
 
@@ -333,7 +333,7 @@ CacheAction MESIInternalDirectory::handleInvalidationRequest(MemEvent * event, b
  *  whether it should continue waiting for more responses (STALL or IGNORE)
  *
  */
-CacheAction MESIInternalDirectory::handleCacheResponse(MemEvent * event, bool inMSHR) {
+CacheAction MESISharNoninclusive::handleCacheResponse(MemEvent * event, bool inMSHR) {
     Addr bAddr = event->getBaseAddr();
     CacheLine* dLine = cacheArray_->lookup(bAddr, false);
 
@@ -375,7 +375,7 @@ CacheAction MESIInternalDirectory::handleCacheResponse(MemEvent * event, bool in
     return action;
 }
 
-CacheAction MESIInternalDirectory::handleFetchResponse(MemEvent * event, bool inMSHR) {
+CacheAction MESISharNoninclusive::handleFetchResponse(MemEvent * event, bool inMSHR) {
     Addr bAddr = event->getBaseAddr();
     CacheLine* dLine = cacheArray_->lookup(bAddr, false);
 
@@ -428,7 +428,7 @@ CacheAction MESIInternalDirectory::handleFetchResponse(MemEvent * event, bool in
  *  3:  Right state but owners/sharers need to be invalidated or line is in transition
  */
 
-bool MESIInternalDirectory::isCacheHit(MemEvent* event) {
+bool MESISharNoninclusive::isCacheHit(MemEvent* event) {
     CacheLine* line = cacheArray_->lookup(event->getBaseAddr(), false);
     Command cmd = event->getCmd();
     State state = line ? line->getState() : I;
@@ -474,7 +474,7 @@ bool MESIInternalDirectory::isCacheHit(MemEvent* event) {
  *  Handle GetS requests. 
  *  Non-inclusive so GetS hits don't deallocate the locally cached block.
  */
-CacheAction MESIInternalDirectory::handleGetSRequest(MemEvent* event, CacheLine* dirLine, bool replay) {
+CacheAction MESISharNoninclusive::handleGetSRequest(MemEvent* event, CacheLine* dirLine, bool replay) {
     Addr addr = event->getBaseAddr();
     State state = dirLine->getState();
     
@@ -582,7 +582,7 @@ CacheAction MESIInternalDirectory::handleGetSRequest(MemEvent* event, CacheLine*
  *  Handle GetX and GetSX (read-lock) requests
  *  Deallocate on hits
  */
-CacheAction MESIInternalDirectory::handleGetXRequest(MemEvent* event, CacheLine* dirLine, bool replay) {
+CacheAction MESISharNoninclusive::handleGetXRequest(MemEvent* event, CacheLine* dirLine, bool replay) {
     Addr addr = event->getBaseAddr();
     State state = dirLine->getState();
     Command cmd = event->getCmd();
@@ -668,7 +668,7 @@ CacheAction MESIInternalDirectory::handleGetXRequest(MemEvent* event, CacheLine*
 /* Handle PutS at the cache 
  * ReqEvent is only populated if this replacement raced with another request
  */
-CacheAction MESIInternalDirectory::handlePutSRequest(MemEvent * event, CacheLine * dirLine, MemEvent * reqEvent) {
+CacheAction MESISharNoninclusive::handlePutSRequest(MemEvent * event, CacheLine * dirLine, MemEvent * reqEvent) {
     State state = dirLine->getState();
     recordStateEventCount(event->getCmd(), state);
 
@@ -868,7 +868,7 @@ CacheAction MESIInternalDirectory::handlePutSRequest(MemEvent * event, CacheLine
 
 
 /* CacheAction return value indicates whether the racing action completed (reqEvent). PutMs always complete! */
-CacheAction MESIInternalDirectory::handlePutMRequest(MemEvent * event, CacheLine * dirLine, MemEvent * reqEvent) {
+CacheAction MESISharNoninclusive::handlePutMRequest(MemEvent * event, CacheLine * dirLine, MemEvent * reqEvent) {
     State state = dirLine->getState();
     recordStateEventCount(event->getCmd(), state);
 
@@ -978,7 +978,7 @@ CacheAction MESIInternalDirectory::handlePutMRequest(MemEvent * event, CacheLine
 
 
 
-CacheAction MESIInternalDirectory::handleFlushLineRequest(MemEvent * event, CacheLine * dirLine, MemEvent * reqEvent, bool replay) {
+CacheAction MESISharNoninclusive::handleFlushLineRequest(MemEvent * event, CacheLine * dirLine, MemEvent * reqEvent, bool replay) {
     State state = dirLine ? dirLine->getState() : I;
     if (!replay) recordStateEventCount(event->getCmd(), state);
                 
@@ -1093,7 +1093,7 @@ CacheAction MESIInternalDirectory::handleFlushLineRequest(MemEvent * event, Cach
  * Forward
  */
 
-CacheAction MESIInternalDirectory::handleFlushLineInvRequest(MemEvent * event, CacheLine * dirLine, MemEvent * reqEvent, bool replay) {
+CacheAction MESISharNoninclusive::handleFlushLineInvRequest(MemEvent * event, CacheLine * dirLine, MemEvent * reqEvent, bool replay) {
     State state = dirLine ? dirLine->getState() : I;
     if (!replay) recordStateEventCount(event->getCmd(), state);
     
@@ -1399,7 +1399,7 @@ CacheAction MESIInternalDirectory::handleFlushLineInvRequest(MemEvent * event, C
  *  Invalidate sharers if needed
  *  Send AckInv if no sharers exist
  */
-CacheAction MESIInternalDirectory::handleInv(MemEvent* event, CacheLine* dirLine, bool replay, MemEvent * collisionEvent) {
+CacheAction MESISharNoninclusive::handleInv(MemEvent* event, CacheLine* dirLine, bool replay, MemEvent * collisionEvent) {
     
     State state = dirLine->getState();
     recordStateEventCount(event->getCmd(), state);    
@@ -1471,7 +1471,7 @@ CacheAction MESIInternalDirectory::handleInv(MemEvent* event, CacheLine* dirLine
  * Invalidate block regardless of whether it is dirty or not and send an ack
  * Do not forward dirty data with ack
  */
-CacheAction MESIInternalDirectory::handleForceInv(MemEvent * event, CacheLine * dirLine, bool replay, MemEvent * collisionEvent) {
+CacheAction MESISharNoninclusive::handleForceInv(MemEvent * event, CacheLine * dirLine, bool replay, MemEvent * collisionEvent) {
     State state = dirLine->getState();
     recordStateEventCount(event->getCmd(), state);    
     
@@ -1566,7 +1566,7 @@ CacheAction MESIInternalDirectory::handleForceInv(MemEvent * event, CacheLine * 
  *  Handler for Fetch requests
  *  Forward to sharer with data
  */
-CacheAction MESIInternalDirectory::handleFetch(MemEvent * event, CacheLine * dirLine, bool replay, MemEvent * collisionEvent) {
+CacheAction MESISharNoninclusive::handleFetch(MemEvent * event, CacheLine * dirLine, bool replay, MemEvent * collisionEvent) {
     State state = dirLine->getState();
     recordStateEventCount(event->getCmd(), state);    
 
@@ -1608,7 +1608,7 @@ CacheAction MESIInternalDirectory::handleFetch(MemEvent * event, CacheLine * dir
  *  Send FetchResp if no further invalidations are needed
  *  Collision can be a Put waiting for an AckPut or a Flush waiting for a FlushResp
  */
-CacheAction MESIInternalDirectory::handleFetchInv(MemEvent * event, CacheLine * dirLine, bool replay, MemEvent * collisionEvent) {
+CacheAction MESISharNoninclusive::handleFetchInv(MemEvent * event, CacheLine * dirLine, bool replay, MemEvent * collisionEvent) {
     State state = dirLine->getState();
     recordStateEventCount(event->getCmd(), state);    
     
@@ -1736,7 +1736,7 @@ CacheAction MESIInternalDirectory::handleFetchInv(MemEvent * event, CacheLine * 
  *  Downgrade owner if needed
  *  Send FetchXResp if no further downgrades are needed
  */
-CacheAction MESIInternalDirectory::handleFetchInvX(MemEvent * event, CacheLine * dirLine, bool replay, MemEvent * collisionEvent) {
+CacheAction MESISharNoninclusive::handleFetchInvX(MemEvent * event, CacheLine * dirLine, bool replay, MemEvent * collisionEvent) {
     State state = dirLine->getState();
     recordStateEventCount(event->getCmd(), state);    
     
@@ -1832,7 +1832,7 @@ CacheAction MESIInternalDirectory::handleFetchInvX(MemEvent * event, CacheLine *
  *  Update coherence state and forward response to requestor, if any
  *  (Prefetch requests originated by this entity do not get forwarded)
  */
-CacheAction MESIInternalDirectory::handleDataResponse(MemEvent* responseEvent, CacheLine* dirLine, MemEvent* origRequest) {
+CacheAction MESISharNoninclusive::handleDataResponse(MemEvent* responseEvent, CacheLine* dirLine, MemEvent* origRequest) {
     
     State state = dirLine->getState();
     recordStateEventCount(responseEvent->getCmd(), state);    
@@ -1887,7 +1887,7 @@ CacheAction MESIInternalDirectory::handleDataResponse(MemEvent* responseEvent, C
 }
 
 
-CacheAction MESIInternalDirectory::handleFetchResp(MemEvent * responseEvent, CacheLine* dirLine, MemEvent * reqEvent) {
+CacheAction MESISharNoninclusive::handleFetchResp(MemEvent * responseEvent, CacheLine* dirLine, MemEvent * reqEvent) {
     State state = dirLine->getState();
     
     // Check acks needed
@@ -2025,7 +2025,7 @@ CacheAction MESIInternalDirectory::handleFetchResp(MemEvent * responseEvent, Cac
 }
 
 
-CacheAction MESIInternalDirectory::handleAckInv(MemEvent * ack, CacheLine * dirLine, MemEvent * reqEvent) {
+CacheAction MESISharNoninclusive::handleAckInv(MemEvent * ack, CacheLine * dirLine, MemEvent * reqEvent) {
     State state = dirLine->getState();
     recordStateEventCount(ack->getCmd(), state);
 
@@ -2125,7 +2125,7 @@ CacheAction MESIInternalDirectory::handleAckInv(MemEvent * ack, CacheLine * dirL
     return action;    // eliminate compiler warning
 }
 
-bool MESIInternalDirectory::handleNACK(MemEvent* event, bool inMSHR) {
+bool MESISharNoninclusive::handleNACK(MemEvent* event, bool inMSHR) {
     MemEvent* nackedEvent = event->getNACKedEvent();
     if (is_debug_event(nackedEvent)) debug->debug(_L3_, "NACK received.\n");
     
@@ -2184,7 +2184,7 @@ bool MESIInternalDirectory::handleNACK(MemEvent* event, bool inMSHR) {
  *  Manage data structures
  *---------------------------------------------------------------------------------------------------------------------*/
 
-bool MESIInternalDirectory::allocateLine(Addr addr, MemEvent* event) {
+bool MESISharNoninclusive::allocateLine(Addr addr, MemEvent* event) {
     CacheLine* replacementLine = cacheArray_->findReplacementCandidate(addr, true);
 
     if (replacementLine->valid() && is_debug_addr(addr)) {
@@ -2209,7 +2209,7 @@ bool MESIInternalDirectory::allocateLine(Addr addr, MemEvent* event) {
     return true;
 }
 
-bool MESIInternalDirectory::allocateDirCacheLine(MemEvent * event, Addr addr, CacheLine * dirLine, bool noStall) {
+bool MESISharNoninclusive::allocateDirCacheLine(MemEvent * event, Addr addr, CacheLine * dirLine, bool noStall) {
     CacheLine* replacementDirLine = cacheArray_->findReplacementCandidate(addr, false);
     CacheArray::DataLine * replacementDataLine = replacementDirLine->getDataLine();
     if (dirLine == replacementDirLine) {
@@ -2240,7 +2240,7 @@ bool MESIInternalDirectory::allocateDirCacheLine(MemEvent * event, Addr addr, Ca
  *---------------------------------------------------------------------------------------------------------------------*/
 
 
-void MESIInternalDirectory::invalidateAllSharers(CacheLine * dirLine, string rqstr, bool replay) {
+void MESISharNoninclusive::invalidateAllSharers(CacheLine * dirLine, string rqstr, bool replay) {
     set<std::string> * sharers = dirLine->getSharers();
     
     uint64_t baseTime = (timestamp_ > dirLine->getTimestamp()) ? timestamp_ : dirLine->getTimestamp();
@@ -2265,7 +2265,7 @@ void MESIInternalDirectory::invalidateAllSharers(CacheLine * dirLine, string rqs
 }
 
 
-void MESIInternalDirectory::invalidateAllSharersAndFetch(CacheLine * cacheLine, string rqstr, bool replay) {
+void MESISharNoninclusive::invalidateAllSharersAndFetch(CacheLine * cacheLine, string rqstr, bool replay) {
     set<std::string> * sharers = cacheLine->getSharers();
     bool fetched = false;
     
@@ -2304,7 +2304,7 @@ void MESIInternalDirectory::invalidateAllSharersAndFetch(CacheLine * cacheLine, 
  * If checkFetch is true -> block is not cached
  * Then, if requestor is not already a sharer, we need data!
  */
-bool MESIInternalDirectory::invalidateSharersExceptRequestor(CacheLine * cacheLine, string rqstr, string origRqstr, bool replay, bool uncached) {
+bool MESISharNoninclusive::invalidateSharersExceptRequestor(CacheLine * cacheLine, string rqstr, string origRqstr, bool replay, bool uncached) {
     bool sentInv = false;
     set<std::string> * sharers = cacheLine->getSharers();
     bool needFetch = uncached && (sharers->find(rqstr) == sharers->end());
@@ -2342,7 +2342,7 @@ bool MESIInternalDirectory::invalidateSharersExceptRequestor(CacheLine * cacheLi
 }
 
 
-void MESIInternalDirectory::sendFetchInv(CacheLine * cacheLine, string rqstr, bool replay) {
+void MESISharNoninclusive::sendFetchInv(CacheLine * cacheLine, string rqstr, bool replay) {
     MemEvent * fetch = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::FetchInv);
     if (!(cacheLine->getOwner()).empty()) fetch->setDst(cacheLine->getOwner());
     else fetch->setDst(*(cacheLine->getSharers()->begin()));
@@ -2362,7 +2362,7 @@ void MESIInternalDirectory::sendFetchInv(CacheLine * cacheLine, string rqstr, bo
 }
 
 
-void MESIInternalDirectory::sendFetchInvX(CacheLine * cacheLine, string rqstr, bool replay) {
+void MESISharNoninclusive::sendFetchInvX(CacheLine * cacheLine, string rqstr, bool replay) {
     MemEvent * fetch = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::FetchInvX);
     fetch->setDst(cacheLine->getOwner());
     fetch->setRqstr(rqstr);
@@ -2381,7 +2381,7 @@ void MESIInternalDirectory::sendFetchInvX(CacheLine * cacheLine, string rqstr, b
 }
 
 
-void MESIInternalDirectory::sendFetch(CacheLine * cacheLine, string rqstr, bool replay) {
+void MESISharNoninclusive::sendFetch(CacheLine * cacheLine, string rqstr, bool replay) {
     MemEvent * fetch = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::Fetch);
     fetch->setDst(*((cacheLine->getSharers())->begin()));
     fetch->setRqstr(rqstr);
@@ -2399,7 +2399,7 @@ void MESIInternalDirectory::sendFetch(CacheLine * cacheLine, string rqstr, bool 
 }
 
 
-void MESIInternalDirectory::sendForceInv(CacheLine * cacheLine, string rqstr, bool replay) {
+void MESISharNoninclusive::sendForceInv(CacheLine * cacheLine, string rqstr, bool replay) {
     MemEvent * inv = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::ForceInv);
     inv->setDst(cacheLine->getOwner());
     inv->setRqstr(rqstr);
@@ -2422,7 +2422,7 @@ void MESIInternalDirectory::sendForceInv(CacheLine * cacheLine, string rqstr, bo
  *  Handles: responses to fetch invalidates
  *  Latency: cache access to read data for payload  
  */
-void MESIInternalDirectory::sendResponseDown(MemEvent* event, CacheLine * cacheLine, std::vector<uint8_t>* data, bool dirty, bool replay){
+void MESISharNoninclusive::sendResponseDown(MemEvent* event, CacheLine * cacheLine, std::vector<uint8_t>* data, bool dirty, bool replay){
     MemEvent *responseEvent = event->makeResponse();
     responseEvent->setPayload(*data);
     if (is_debug_event(event)) printData(data, false);
@@ -2442,7 +2442,7 @@ void MESIInternalDirectory::sendResponseDown(MemEvent* event, CacheLine * cacheL
 }
 
 
-void MESIInternalDirectory::sendResponseDownFromMSHR(MemEvent * event, bool dirty) {
+void MESISharNoninclusive::sendResponseDownFromMSHR(MemEvent * event, bool dirty) {
     MemEvent * requestEvent = static_cast<MemEvent*>(mshr_->lookupFront(event->getBaseAddr()));
     MemEvent * responseEvent = requestEvent->makeResponse();
     responseEvent->setPayload(event->getPayload());
@@ -2458,7 +2458,7 @@ void MESIInternalDirectory::sendResponseDownFromMSHR(MemEvent * event, bool dirt
     }
 }
 
-void MESIInternalDirectory::sendAckInv(MemEvent * event) {
+void MESISharNoninclusive::sendAckInv(MemEvent * event) {
     MemEvent * ack = event->makeResponse();
     ack->setCmd(Command::AckInv); // Just in case this wasn't an Inv/ForceInv/etc.
     ack->setDst(getDestination(event->getBaseAddr()));
@@ -2471,7 +2471,7 @@ void MESIInternalDirectory::sendAckInv(MemEvent * event) {
 }
 
 
-void MESIInternalDirectory::sendWritebackAck(MemEvent * event) {
+void MESISharNoninclusive::sendWritebackAck(MemEvent * event) {
     MemEvent * ack = new MemEvent(ownerName_, event->getBaseAddr(), event->getBaseAddr(), Command::AckPut);
     ack->setDst(event->getSrc());
     ack->setRqstr(event->getSrc());
@@ -2484,7 +2484,7 @@ void MESIInternalDirectory::sendWritebackAck(MemEvent * event) {
     if (is_debug_event(event)) debug->debug(_L3_, "Sending AckPut at cycle = %" PRIu64 "\n", deliveryTime);
 }
 
-void MESIInternalDirectory::sendWritebackFromCache(Command cmd, CacheLine * dirLine, string rqstr) {
+void MESISharNoninclusive::sendWritebackFromCache(Command cmd, CacheLine * dirLine, string rqstr) {
     MemEvent * writeback = new MemEvent(ownerName_, dirLine->getBaseAddr(), dirLine->getBaseAddr(), cmd);
     writeback->setDst(getDestination(dirLine->getBaseAddr()));
     writeback->setSize(dirLine->getSize());
@@ -2502,7 +2502,7 @@ void MESIInternalDirectory::sendWritebackFromCache(Command cmd, CacheLine * dirL
     if (is_debug_addr(dirLine->getBaseAddr())) debug->debug(_L3_, "Sending writeback at cycle = %" PRIu64 ", Cmd = %s. From cache\n", deliveryTime, CommandString[(int)cmd]);
 }
 
-void MESIInternalDirectory::sendWritebackFromMSHR(Command cmd, CacheLine * dirLine, string rqstr, vector<uint8_t> * data) {
+void MESISharNoninclusive::sendWritebackFromMSHR(Command cmd, CacheLine * dirLine, string rqstr, vector<uint8_t> * data) {
     MemEvent * writeback = new MemEvent(ownerName_, dirLine->getBaseAddr(), dirLine->getBaseAddr(), cmd);
     writeback->setDst(getDestination(dirLine->getBaseAddr()));
     writeback->setSize(dirLine->getSize());
@@ -2518,7 +2518,7 @@ void MESIInternalDirectory::sendWritebackFromMSHR(Command cmd, CacheLine * dirLi
     if (is_debug_addr(dirLine->getBaseAddr())) debug->debug(_L3_, "Sending writeback at cycle = %" PRIu64 ", Cmd = %s. From MSHR\n", deliveryTime, CommandString[(int)cmd]);
 }
 
-void MESIInternalDirectory::sendFlushResponse(MemEvent * requestEvent, bool success) {
+void MESISharNoninclusive::sendFlushResponse(MemEvent * requestEvent, bool success) {
     MemEvent * flushResponse = requestEvent->makeResponse();
     flushResponse->setSuccess(success);
     flushResponse->setDst(requestEvent->getSrc());
@@ -2535,7 +2535,7 @@ void MESIInternalDirectory::sendFlushResponse(MemEvent * requestEvent, bool succ
 /**
  *  Forward a flush line request, with or without data
  */
-void MESIInternalDirectory::forwardFlushLine(MemEvent * origFlush, CacheLine * dirLine, bool dirty, Command cmd) {
+void MESISharNoninclusive::forwardFlushLine(MemEvent * origFlush, CacheLine * dirLine, bool dirty, Command cmd) {
     MemEvent * flush = new MemEvent(ownerName_, origFlush->getBaseAddr(), origFlush->getBaseAddr(), cmd);
     flush->setDst(getDestination(origFlush->getBaseAddr()));
     flush->setRqstr(origFlush->getRqstr());
@@ -2564,12 +2564,12 @@ void MESIInternalDirectory::forwardFlushLine(MemEvent * origFlush, CacheLine * d
 /*----------------------------------------------------------------------------------------------------------------------
  *  Override message send functions with versions that record statistics & call parent class
  *---------------------------------------------------------------------------------------------------------------------*/
-void MESIInternalDirectory::addToOutgoingQueue(Response& resp) {
+void MESISharNoninclusive::addToOutgoingQueue(Response& resp) {
     CoherenceController::addToOutgoingQueue(resp);
     recordEventSentDown(resp.event->getCmd());
 }
 
-void MESIInternalDirectory::addToOutgoingQueueUp(Response& resp) {
+void MESISharNoninclusive::addToOutgoingQueueUp(Response& resp) {
     CoherenceController::addToOutgoingQueueUp(resp);
     recordEventSentUp(resp.event->getCmd());
 }
@@ -2579,7 +2579,7 @@ void MESIInternalDirectory::addToOutgoingQueueUp(Response& resp) {
  *--------------------------------------------------------------------------------------------------*/
 
 
-void MESIInternalDirectory::printData(vector<uint8_t> * data, bool set) {
+void MESISharNoninclusive::printData(vector<uint8_t> * data, bool set) {
 /*    if (set)    printf("Setting data (%zu): 0x", data->size());
     else        printf("Getting data (%zu): 0x", data->size());
     
@@ -2590,7 +2590,7 @@ void MESIInternalDirectory::printData(vector<uint8_t> * data, bool set) {
 */ 
 }
 
-void MESIInternalDirectory::printLine(Addr addr, CacheLine* line) {
+void MESISharNoninclusive::printLine(Addr addr, CacheLine* line) {
     State state = NP;
     bool isCached = false;
     unsigned int sharers = 0;
@@ -2612,7 +2612,7 @@ void MESIInternalDirectory::printLine(Addr addr, CacheLine* line) {
 
 
 /* Record state of a line at attempted eviction */
-void MESIInternalDirectory::recordEvictionState(State state) {
+void MESISharNoninclusive::recordEvictionState(State state) {
     switch (state) {
         case I: 
             stat_evict_I->addData(1);
@@ -2668,20 +2668,20 @@ void MESIInternalDirectory::recordEvictionState(State state) {
 }
 
 
-void MESIInternalDirectory::recordStateEventCount(Command cmd, State state) {
+void MESISharNoninclusive::recordStateEventCount(Command cmd, State state) {
     stat_eventState[(int)cmd][state]->addData(1);
 }
 
-void MESIInternalDirectory::recordEventSentDown(Command cmd) {
+void MESISharNoninclusive::recordEventSentDown(Command cmd) {
     stat_eventSent[(int)cmd]->addData(1);
 }
 
 
-void MESIInternalDirectory::recordEventSentUp(Command cmd) {
+void MESISharNoninclusive::recordEventSentUp(Command cmd) {
     stat_eventSent[(int)cmd]->addData(1);
 }
 
-void MESIInternalDirectory::recordLatency(Command cmd, int type, uint64_t latency) {
+void MESISharNoninclusive::recordLatency(Command cmd, int type, uint64_t latency) {
     if (type == -1)
         return;
 
@@ -2706,7 +2706,7 @@ void MESIInternalDirectory::recordLatency(Command cmd, int type, uint64_t latenc
     }
 }
 
-void MESIInternalDirectory::printLine(Addr addr) {
+void MESISharNoninclusive::printLine(Addr addr) {
     if (!is_debug_addr(addr)) return;
     CacheLine* line = cacheArray_->lookup(addr, false);
     State state = line ? line->getState() : NP;

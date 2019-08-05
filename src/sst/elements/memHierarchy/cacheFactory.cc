@@ -23,8 +23,6 @@
 #include "util.h"
 #include "cacheListener.h"
 #include "mshr.h"
-#include "coherencemgr/L1CoherenceController.h"
-#include "coherencemgr/L1IncoherentController.h"
 #include "memLinkBase.h"
 
 using namespace SST::MemHierarchy;
@@ -161,26 +159,26 @@ void Cache::createCoherenceManager(Params &params) {
     if (!L1_) {
         if (protocol_ != CoherenceProtocol::NONE) {
             if (type_ == "inclusive") { 
-                coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.MESICoherenceController", "coherence", 0, 
+                coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.coherence.mesi_inclusive", "coherence", 0, 
                         ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams, prefetch);
             } else if (type_ == "noninclusive") {
                 coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.coherence.mesi_private_noninclusive", "coherence", 0, 
                         ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams, prefetch);
             } else {
-                coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.MESICacheDirectoryCoherenceController", "coherence", 0, 
+                coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.coherence.mesi_shared_noninclusive", "coherence", 0, 
                         ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams, prefetch);
             }
         } else {
-            coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.IncoherentController", "coherence", 0, 
+            coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.coherence.incoherent", "coherence", 0, 
                     ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams, prefetch);
         }
     } else {
         if (protocol_ != CoherenceProtocol::NONE) {
-            coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.L1CoherenceController", "coherence", 0, 
+            coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.coherence.mesi_l1", "coherence", 0, 
                     ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams, prefetch);
             doInCoherenceMgr_ = true;
         } else {
-            coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.L1IncoherentController", "coherence", 0, 
+            coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.coherence.incoherent_l1", "coherence", 0, 
                     ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams, prefetch);
         }
     }

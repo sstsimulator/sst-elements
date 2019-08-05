@@ -15,7 +15,7 @@
 
 #include <sst_config.h>
 #include <vector>
-#include "coherencemgr/L1CoherenceController.h"
+#include "coherencemgr/MESI_L1.h"
 
 using namespace SST;
 using namespace SST::MemHierarchy;
@@ -42,7 +42,7 @@ using namespace SST::MemHierarchy;
  *      handleInvalidationRequest
  */
   
-CacheAction L1CoherenceController::handleEviction(CacheLine* wbCacheLine, string origRqstr, bool ignoredParam) {
+CacheAction MESIL1::handleEviction(CacheLine* wbCacheLine, string origRqstr, bool ignoredParam) {
     State state = wbCacheLine->getState();
    
     /* L1 specific code */
@@ -104,7 +104,7 @@ CacheAction L1CoherenceController::handleEviction(CacheLine* wbCacheLine, string
  *  Obtain block if a cache miss
  *  Obtain needed coherence permission from lower level cache/memory if coherence miss
  */
-CacheAction L1CoherenceController::handleRequest(MemEvent* event, bool replay) {
+CacheAction MESIL1::handleRequest(MemEvent* event, bool replay) {
     Addr addr = event->getBaseAddr();
     
     CacheLine * cacheLine = cacheArray_->lookup(addr, !replay); 
@@ -145,13 +145,13 @@ CacheAction L1CoherenceController::handleRequest(MemEvent* event, bool replay) {
 /**
  *  Handle replacement - Not relevant for L1s but required to implement 
  */
-CacheAction L1CoherenceController::handleReplacement(MemEvent* event, bool replay) {
+CacheAction MESIL1::handleReplacement(MemEvent* event, bool replay) {
     debug->fatal(CALL_INFO,-1,"%s, Error: Received an unrecognized request: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n", 
             ownerName_.c_str(), CommandString[(int)event->getCmd()], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
 
     return IGNORE;
 }
-CacheAction L1CoherenceController::handleFlush(MemEvent* event, CacheLine* cacheLine, MemEvent* reqEvent, bool replay) {
+CacheAction MESIL1::handleFlush(MemEvent* event, CacheLine* cacheLine, MemEvent* reqEvent, bool replay) {
     CacheAction action = IGNORE;
     if (event->getCmd() == Command::FlushLineInv) {    
         action = handleFlushLineInvRequest(event, cacheLine, reqEvent, replay);
@@ -170,7 +170,7 @@ CacheAction L1CoherenceController::handleFlush(MemEvent* event, CacheLine* cache
  *  Handle invalidation - Inv, FetchInv, or FetchInvX
  *  Return: whether Inv was successful (true) or we are waiting on further actions (false). L1 returns true (no sharers/owners).
  */
-CacheAction L1CoherenceController::handleInvalidationRequest(MemEvent * event, bool replay) {
+CacheAction MESIL1::handleInvalidationRequest(MemEvent * event, bool replay) {
     Addr bAddr = event->getBaseAddr();
     CacheLine* cacheLine = cacheArray_->lookup(bAddr, false);
 
@@ -241,7 +241,7 @@ CacheAction L1CoherenceController::handleInvalidationRequest(MemEvent * event, b
 }
 
 
-CacheAction L1CoherenceController::handleCacheResponse(MemEvent * event, bool inMSHR) {
+CacheAction MESIL1::handleCacheResponse(MemEvent * event, bool inMSHR) {
     Addr bAddr = event->getBaseAddr();
     CacheLine* line = cacheArray_->lookup(bAddr, false);
     MemEvent* reqEvent = mshr_->lookupFront(bAddr);
@@ -277,7 +277,7 @@ CacheAction L1CoherenceController::handleCacheResponse(MemEvent * event, bool in
     return DONE;
 }
 
-CacheAction L1CoherenceController::handleFetchResponse(MemEvent * event, bool inMSHR) {
+CacheAction MESIL1::handleFetchResponse(MemEvent * event, bool inMSHR) {
     Addr bAddr = event->getBaseAddr();
     
     CacheLine* line = nullptr;
@@ -319,7 +319,7 @@ CacheAction L1CoherenceController::handleFetchResponse(MemEvent * event, bool in
  *------------------------------------------------------------------------------------------------*/
 
 
-CacheAction L1CoherenceController::handleGetSRequest(MemEvent* event, CacheLine* cacheLine, bool replay){
+CacheAction MESIL1::handleGetSRequest(MemEvent* event, CacheLine* cacheLine, bool replay){
     Addr addr = event->getBaseAddr();
     State state = cacheLine->getState();
     vector<uint8_t>* data = cacheLine->getData();
@@ -365,7 +365,7 @@ CacheAction L1CoherenceController::handleGetSRequest(MemEvent* event, CacheLine*
 /*
  *  Return: whether event was handled or is waiting for further responses
  */
-CacheAction L1CoherenceController::handleGetXRequest(MemEvent* event, CacheLine* cacheLine, bool replay) {
+CacheAction MESIL1::handleGetXRequest(MemEvent* event, CacheLine* cacheLine, bool replay) {
     Addr addr = event->getBaseAddr();
     State state = cacheLine->getState();
     Command cmd = event->getCmd();
@@ -458,7 +458,7 @@ CacheAction L1CoherenceController::handleGetXRequest(MemEvent* event, CacheLine*
 /** 
  * Handle a FlushLine request by writing back and forwarding request 
  */
-CacheAction L1CoherenceController::handleFlushLineRequest(MemEvent * event, CacheLine * cacheLine, MemEvent * reqEvent, bool replay) {
+CacheAction MESIL1::handleFlushLineRequest(MemEvent * event, CacheLine * cacheLine, MemEvent * reqEvent, bool replay) {
     State state = I;
     if (cacheLine != NULL) state = cacheLine->getState();
     recordStateEventCount(event->getCmd(), state);
@@ -487,7 +487,7 @@ CacheAction L1CoherenceController::handleFlushLineRequest(MemEvent * event, Cach
 /**
  *  Handle a FlushLineInv request by writing back/invalidating line and forwarding request if needed
  */
-CacheAction L1CoherenceController::handleFlushLineInvRequest(MemEvent * event, CacheLine* cacheLine, MemEvent * reqEvent, bool replay) {
+CacheAction MESIL1::handleFlushLineInvRequest(MemEvent * event, CacheLine* cacheLine, MemEvent * reqEvent, bool replay) {
     State state = cacheLine ? cacheLine->getState() : I;
     recordStateEventCount(event->getCmd(), state);
    
@@ -518,7 +518,7 @@ CacheAction L1CoherenceController::handleFlushLineInvRequest(MemEvent * event, C
 /**
  *  Handle a GetXResp or GetSResp from a lower level in the hierarchy
  */
-void L1CoherenceController::handleDataResponse(MemEvent* responseEvent, CacheLine* cacheLine, MemEvent* origRequest){
+void MESIL1::handleDataResponse(MemEvent* responseEvent, CacheLine* cacheLine, MemEvent* origRequest){
     
     bool localPrefetch = origRequest->isPrefetch() && (origRequest->getRqstr() == ownerName_);
     
@@ -595,7 +595,7 @@ void L1CoherenceController::handleDataResponse(MemEvent* responseEvent, CacheLin
     }
 }
 
-CacheAction L1CoherenceController::handleInv(MemEvent* event, CacheLine* cacheLine, bool replay) {
+CacheAction MESIL1::handleInv(MemEvent* event, CacheLine* cacheLine, bool replay) {
     State state = cacheLine->getState();
     recordStateEventCount(event->getCmd(), state);
 
@@ -630,7 +630,7 @@ CacheAction L1CoherenceController::handleInv(MemEvent* event, CacheLine* cacheLi
 }
 
 
-CacheAction L1CoherenceController::handleForceInv(MemEvent * event, CacheLine * cacheLine, bool replay) {
+CacheAction MESIL1::handleForceInv(MemEvent * event, CacheLine * cacheLine, bool replay) {
     State state = cacheLine->getState();
     recordStateEventCount(event->getCmd(), state);
 
@@ -667,7 +667,7 @@ CacheAction L1CoherenceController::handleForceInv(MemEvent * event, CacheLine * 
 }
 
 
-CacheAction L1CoherenceController::handleFetchInv(MemEvent * event, CacheLine * cacheLine, bool replay) {
+CacheAction MESIL1::handleFetchInv(MemEvent * event, CacheLine * cacheLine, bool replay) {
     State state = cacheLine->getState();
     recordStateEventCount(event->getCmd(), state);
     
@@ -704,7 +704,7 @@ CacheAction L1CoherenceController::handleFetchInv(MemEvent * event, CacheLine * 
     return STALL;
 }
 
-CacheAction L1CoherenceController::handleFetchInvX(MemEvent * event, CacheLine * cacheLine, bool replay) {
+CacheAction MESIL1::handleFetchInvX(MemEvent * event, CacheLine * cacheLine, bool replay) {
     State state = cacheLine->getState();
     recordStateEventCount(event->getCmd(), state);
     
@@ -729,7 +729,7 @@ CacheAction L1CoherenceController::handleFetchInvX(MemEvent * event, CacheLine *
 }
 
 
-CacheAction L1CoherenceController::handleFetch(MemEvent * event, CacheLine * cacheLine, bool replay) {
+CacheAction MESIL1::handleFetch(MemEvent * event, CacheLine * cacheLine, bool replay) {
     State state = cacheLine->getState();
     recordStateEventCount(event->getCmd(), state);
     
@@ -752,7 +752,7 @@ CacheAction L1CoherenceController::handleFetch(MemEvent * event, CacheLine * cac
 }
 
 // L1 always resends NACKed events
-bool L1CoherenceController::handleNACK(MemEvent* event, bool inMSHR) {
+bool MESIL1::handleNACK(MemEvent* event, bool inMSHR) {
     MemEvent* nackedEvent = event->getNACKedEvent();
     CacheLine* line = cacheArray_->lookup(nackedEvent->getBaseAddr(), false);
     State state = line ? line->getState() : I;
@@ -794,7 +794,7 @@ bool L1CoherenceController::handleNACK(MemEvent* event, bool inMSHR) {
 /*----------------------------------------------------------------------------------------------------------------------
  *  Functions for managing data structures
  *---------------------------------------------------------------------------------------------------------------------*/
-bool L1CoherenceController::allocateLine(Addr addr, MemEvent* event) {
+bool MESIL1::allocateLine(Addr addr, MemEvent* event) {
     CacheLine* replacementLine = cacheArray_->findReplacementCandidate(addr, true);
 
     if (replacementLine->valid() && is_debug_addr(addr)) {
@@ -829,7 +829,7 @@ bool L1CoherenceController::allocateLine(Addr addr, MemEvent* event) {
  *  2:  Wrong state (e.g., S but GetX request)
  *  3:  Right state but owners/sharers need to be invalidated or line is in transition
  */
-void L1CoherenceController::recordLatency(Command cmd, int type, uint64_t latency) {
+void MESIL1::recordLatency(Command cmd, int type, uint64_t latency) {
     if (type == -1)
         return; // Never set a hit/miss status
     switch (cmd) {
@@ -853,7 +853,7 @@ void L1CoherenceController::recordLatency(Command cmd, int type, uint64_t latenc
     }
 }
 
-bool L1CoherenceController::isCacheHit(MemEvent* event) {
+bool MESIL1::isCacheHit(MemEvent* event) {
     CacheLine* line = cacheArray_->lookup(event->getBaseAddr(), false);
     Command cmd = event->getCmd();
     State state = line ? line->getState() : I;
@@ -885,7 +885,7 @@ bool L1CoherenceController::isCacheHit(MemEvent* event) {
  *  Handles: responses to fetch invalidates
  *  Latency: cache access to read data for payload or mshr access if we just got the data from elsewhere
  */
-void L1CoherenceController::sendResponseDown(MemEvent* event, CacheLine* cacheLine, bool replay){
+void MESIL1::sendResponseDown(MemEvent* event, CacheLine* cacheLine, bool replay){
     MemEvent *responseEvent = event->makeResponse();
     responseEvent->setPayload(*cacheLine->getData());
 
@@ -909,7 +909,7 @@ void L1CoherenceController::sendResponseDown(MemEvent* event, CacheLine* cacheLi
 }
 
 
-uint64_t L1CoherenceController::sendResponseUp(MemEvent * event, std::vector<uint8_t>* data, bool replay, uint64_t baseTime, bool finishedAtomically) {
+uint64_t MESIL1::sendResponseUp(MemEvent * event, std::vector<uint8_t>* data, bool replay, uint64_t baseTime, bool finishedAtomically) {
     Command cmd = event->getCmd();
     MemEvent * responseEvent = event->makeResponse();
     responseEvent->setDst(event->getSrc());
@@ -952,7 +952,7 @@ uint64_t L1CoherenceController::sendResponseUp(MemEvent * event, std::vector<uin
  *  Handles: sending writebacks
  *  Latency: cache access + tag to read data that is being written back and update coherence state
  */
-void L1CoherenceController::sendWriteback(Command cmd, CacheLine* cacheLine, bool dirty, string origRqstr) {
+void MESIL1::sendWriteback(Command cmd, CacheLine* cacheLine, bool dirty, string origRqstr) {
     MemEvent* writeback = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), cmd);
     writeback->setDst(getDestination(cacheLine->getBaseAddr()));
     writeback->setSize(cacheLine->getSize());
@@ -988,7 +988,7 @@ void L1CoherenceController::sendWriteback(Command cmd, CacheLine* cacheLine, boo
  *  Handles: sending AckInv responses
  *  Latency: cache access + tag to update coherence state
  */
-void L1CoherenceController::sendAckInv(MemEvent * request, CacheLine * cacheLine) {
+void MESIL1::sendAckInv(MemEvent * request, CacheLine * cacheLine) {
     MemEvent* ack = request->makeResponse();
     ack->setCmd(Command::AckInv);
     ack->setDst(getDestination(ack->getBaseAddr()));
@@ -1004,7 +1004,7 @@ void L1CoherenceController::sendAckInv(MemEvent * request, CacheLine * cacheLine
 }
 
 
-void L1CoherenceController::forwardFlushLine(Addr baseAddr, Command cmd, string origRqstr, CacheLine * cacheLine) {
+void MESIL1::forwardFlushLine(Addr baseAddr, Command cmd, string origRqstr, CacheLine * cacheLine) {
     MemEvent * flush = new MemEvent(ownerName_, baseAddr, baseAddr, cmd);
     flush->setDst(getDestination(baseAddr));
     flush->setRqstr(origRqstr);
@@ -1031,7 +1031,7 @@ void L1CoherenceController::forwardFlushLine(Addr baseAddr, Command cmd, string 
 }
 
 
-void L1CoherenceController::sendFlushResponse(MemEvent * requestEvent, bool success, uint64_t baseTime, bool replay) {
+void MESIL1::sendFlushResponse(MemEvent * requestEvent, bool success, uint64_t baseTime, bool replay) {
     MemEvent * flushResponse = requestEvent->makeResponse();
     flushResponse->setSuccess(success);
     flushResponse->setDst(requestEvent->getSrc());
@@ -1050,12 +1050,12 @@ void L1CoherenceController::sendFlushResponse(MemEvent * requestEvent, bool succ
 /*----------------------------------------------------------------------------------------------------------------------
  *  Override message send functions with versions that record statistics & call parent class
  *---------------------------------------------------------------------------------------------------------------------*/
-void L1CoherenceController::addToOutgoingQueue(Response& resp) {
+void MESIL1::addToOutgoingQueue(Response& resp) {
     CoherenceController::addToOutgoingQueue(resp);
     recordEventSent(resp.event->getCmd());
 }
 
-void L1CoherenceController::addToOutgoingQueueUp(Response& resp) {
+void MESIL1::addToOutgoingQueueUp(Response& resp) {
     CoherenceController::addToOutgoingQueueUp(resp);
     recordEventSent(resp.event->getCmd());
 }
@@ -1064,7 +1064,7 @@ void L1CoherenceController::addToOutgoingQueueUp(Response& resp) {
  * Helper functions
  ********************/
 
-void L1CoherenceController::printData(vector<uint8_t> * data, bool set) {
+void MESIL1::printData(vector<uint8_t> * data, bool set) {
 /*    if (set)    printf("Setting data (%zu): 0x", data->size());
     else        printf("Getting data (%zu): 0x", data->size());
     
@@ -1074,7 +1074,7 @@ void L1CoherenceController::printData(vector<uint8_t> * data, bool set) {
     printf("\n");*/
 }
 
-void L1CoherenceController::printLine(Addr addr, CacheLine* line) {
+void MESIL1::printLine(Addr addr, CacheLine* line) {
     State state = (line == nullptr) ? NP : line->getState();
     debug->debug(_L8_, "0x%" PRIx64 ": %s\n", addr, StateString[state]);
 }
@@ -1082,7 +1082,7 @@ void L1CoherenceController::printLine(Addr addr, CacheLine* line) {
 /***********************
  * Statistics functions
  ***********************/
-void L1CoherenceController::recordEvictionState(State state) {
+void MESIL1::recordEvictionState(State state) {
     switch(state) {
         case I:
             stat_evict_I->addData(1);
@@ -1117,17 +1117,17 @@ void L1CoherenceController::recordEvictionState(State state) {
 }
 
 
-void L1CoherenceController::recordStateEventCount(Command cmd, State state) {
+void MESIL1::recordStateEventCount(Command cmd, State state) {
     stat_eventState[(int)cmd][state]->addData(1);
 }
 
 
 /* Record how many times each event type was sent down */
-void L1CoherenceController::recordEventSent(Command cmd) {
+void MESIL1::recordEventSent(Command cmd) {
     stat_eventSent[(int)cmd]->addData(1);
 }
 
-void L1CoherenceController::printLine(Addr addr) {
+void MESIL1::printLine(Addr addr) {
     if (!is_debug_addr(addr))
         return;
 

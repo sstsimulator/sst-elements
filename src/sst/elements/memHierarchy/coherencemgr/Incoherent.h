@@ -13,8 +13,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef L1INCOHERENTCONTROLLER_H
-#define L1INCOHERENTCONTROLLER_H
+#ifndef INCOHERENTCONTROLLER_H
+#define INCOHERENTCONTROLLER_H
 
 #include <iostream>
 #include <array>
@@ -24,11 +24,10 @@
 
 namespace SST { namespace MemHierarchy {
 
-class L1IncoherentController : public CoherenceController {
+class Incoherent : public CoherenceController{
 public:
-/* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(L1IncoherentController, "memHierarchy", "L1IncoherentController", SST_ELI_ELEMENT_VERSION(1,0,0), 
-            "Implements an L1 cache without coherence", SST::MemHierarchy::CoherenceController)
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(Incoherent, "memHierarchy", "coherence.incoherent", SST_ELI_ELEMENT_VERSION(1,0,0), 
+            "Implements an second level or greater cache without coherence", SST::MemHierarchy::CoherenceController)
 
     SST_ELI_DOCUMENT_STATISTICS(
         /* Event sends */
@@ -39,10 +38,10 @@ public:
         {"eventSent_GetXResp",      "Number of GetXResp responses sent", "events", 2},
         {"eventSent_PutE",          "Number of PutE requests sent", "events", 2},
         {"eventSent_PutM",          "Number of PutM requests sent", "events", 2},
+        {"eventSent_NACK",          "Number of NACKs sent", "events", 2},
         {"eventSent_FlushLine",     "Number of FlushLine requests sent", "events", 2},
         {"eventSent_FlushLineInv",  "Number of FlushLineInv requests sent", "events", 2},
         {"eventSent_FlushLineResp", "Number of FlushLineResp responses sent", "events", 2},
-        {"eventSent_NACK",          "Number of NACKs sent", "events", 2},
         {"eventSent_Put",           "Number of Put requests sent", "events", 6},
         {"eventSent_Get",           "Number of Get requests sent", "events", 6},
         {"eventSent_AckMove",       "Number of AckMove responses sent", "events", 6},
@@ -60,7 +59,22 @@ public:
         {"stateEvent_GetSX_E",          "Event/State: Number of times a GetSX was seen in state E (Hit)", "count", 3},
         {"stateEvent_GetSX_M",          "Event/State: Number of times a GetSX was seen in state M (Hit)", "count", 3},
         {"stateEvent_GetSResp_IS",      "Event/State: Number of times a GetSResp was seen in state IS", "count", 3},
+        {"stateEvent_GetXResp_IS",      "Event/State: Number of times a GetXResp was seen in state IS", "count", 3},
         {"stateEvent_GetXResp_IM",      "Event/State: Number of times a GetXResp was seen in state IM", "count", 3},
+        {"stateEvent_PutE_I",           "Event/State: Number of times a PutE was seen in state I", "count", 3},
+        {"stateEvent_PutE_E",           "Event/State: Number of times a PutE was seen in state E", "count", 3},
+        {"stateEvent_PutE_M",           "Event/State: Number of times a PutE was seen in state M", "count", 3},
+        {"stateEvent_PutE_IM",          "Event/State: Number of times a PutE was seen in state IM", "count", 3},
+        {"stateEvent_PutE_IS",          "Event/State: Number of times a PutE was seen in state IS", "count", 3},
+        {"stateEvent_PutE_IB",          "Event/State: Number of times a PutE was seen in state I_B", "count", 3},
+        {"stateEvent_PutE_SB",          "Event/State: Number of times a PutE was seen in state S_B", "count", 3},
+        {"stateEvent_PutM_I",           "Event/State: Number of times a PutM was seen in state I", "count", 3},
+        {"stateEvent_PutM_E",           "Event/State: Number of times a PutM was seen in state E", "count", 3},
+        {"stateEvent_PutM_M",           "Event/State: Number of times a PutM was seen in state M", "count", 3},
+        {"stateEvent_PutM_IS",          "Event/State: Number of times a PutM was seen in state IS", "count", 3},
+        {"stateEvent_PutM_IM",          "Event/State: Number of times a PutM was seen in state IM", "count", 3},
+        {"stateEvent_PutM_IB",          "Event/State: Number of times a PutM was seen in state I_B", "count", 3},
+        {"stateEvent_PutM_SB",          "Event/State: Number of times a PutM was seen in state S_B", "count", 3},
         {"stateEvent_FlushLine_I",      "Event/State: Number of times a FlushLine was seen in state I", "count", 3},
         {"stateEvent_FlushLine_E",      "Event/State: Number of times a FlushLine was seen in state E", "count", 3},
         {"stateEvent_FlushLine_M",      "Event/State: Number of times a FlushLine was seen in state M", "count", 3},
@@ -94,9 +108,7 @@ public:
         {"latency_GetSX_miss",          "Latency for read-exclusive misses", "cycles", 1},
         {"latency_GetSX_hit",           "Latency for read-exclusive hits", "cycles", 1},
         {"latency_FlushLine",           "Latency for Flush requests", "cycles", 1},
-        {"latency_FlushLine_fail",      "Latency for Flush requests that failed", "cycles", 1},
         {"latency_FlushLineInv",        "Latency for Flush and Invalidate requests", "cycles", 1},
-        {"latency_FlushLineInv_fail",   "Latency for Flush and Invalidate requests that failed", "cycles", 1},
         /* Track what happens to prefetched blocks */
         {"prefetch_useful",         "Prefetched block had a subsequent hit (useful prefetch)", "count", 2},
         {"prefetch_evict",          "Prefetched block was evicted/flushed before being accessed", "count", 2},
@@ -104,21 +116,20 @@ public:
         {"default_stat",            "Default statistic used for unexpected events/states/etc. Should be 0, if not, check for missing statistic registerations.", "none", 7})
 
 /* Class definition */
-    
-        
-/* Begin class definition */    
-    /** Constructor for L1IncoherentController */
-    L1IncoherentController(Component* comp, Params& params) : CoherenceController(comp, params) { }
-    L1IncoherentController(ComponentId_t id, Params& params, Params& ownerParams, bool prefetch) : CoherenceController(id, params, ownerParams, prefetch) {
+    /** Constructor for Incoherent. */
+    Incoherent(SST::Component* comp, Params& params) : CoherenceController (comp, params) { }
+    Incoherent(SST::ComponentId_t id, Params& params, Params& ownerParams, bool prefetch) : CoherenceController(id, params, ownerParams, prefetch) {
         params.insert(ownerParams);
-        debug->debug(_INFO_,"--------------------------- Initializing [L1Controller] ... \n\n");
-
+        debug->debug(_INFO_,"--------------------------- Initializing [Incoherent Controller] ... \n\n");
+        inclusive_ = params.find<bool>("inclusive", true);
+    
         /* Register statistics */
         Statistic<uint64_t>* defStat = registerStatistic<uint64_t>("default_stat");
         for (int i = 0; i < (int)Command::LAST_CMD; i++) {
             stat_eventSent[i] = defStat;
-            for (int j = 0; j < LAST_STATE; j++)
+            for (int j = 0; j < LAST_STATE; j++) {
                 stat_eventState[i][j] = defStat;
+            }
         }
 
         stat_eventState[(int)Command::GetS][I] = registerStatistic<uint64_t>("stateEvent_GetS_I");
@@ -131,7 +142,22 @@ public:
         stat_eventState[(int)Command::GetSX][E] = registerStatistic<uint64_t>("stateEvent_GetSX_E");
         stat_eventState[(int)Command::GetSX][M] = registerStatistic<uint64_t>("stateEvent_GetSX_M");
         stat_eventState[(int)Command::GetSResp][IS] = registerStatistic<uint64_t>("stateEvent_GetSResp_IS");
+        stat_eventState[(int)Command::GetXResp][IS] = registerStatistic<uint64_t>("stateEvent_GetXResp_IS");
         stat_eventState[(int)Command::GetXResp][IM] = registerStatistic<uint64_t>("stateEvent_GetXResp_IM");
+        stat_eventState[(int)Command::PutE][I] = registerStatistic<uint64_t>("stateEvent_PutE_I");
+        stat_eventState[(int)Command::PutE][E] = registerStatistic<uint64_t>("stateEvent_PutE_E");
+        stat_eventState[(int)Command::PutE][M] = registerStatistic<uint64_t>("stateEvent_PutE_M");
+        stat_eventState[(int)Command::PutE][IS] = registerStatistic<uint64_t>("stateEvent_PutE_IS");
+        stat_eventState[(int)Command::PutE][IM] = registerStatistic<uint64_t>("stateEvent_PutE_IM");
+        stat_eventState[(int)Command::PutE][I_B] = registerStatistic<uint64_t>("stateEvent_PutE_IB");
+        stat_eventState[(int)Command::PutE][S_B] = registerStatistic<uint64_t>("stateEvent_PutE_SB");
+        stat_eventState[(int)Command::PutM][I] = registerStatistic<uint64_t>("stateEvent_PutM_I");
+        stat_eventState[(int)Command::PutM][E] = registerStatistic<uint64_t>("stateEvent_PutM_E");
+        stat_eventState[(int)Command::PutM][M] = registerStatistic<uint64_t>("stateEvent_PutM_M");
+        stat_eventState[(int)Command::PutM][IS] = registerStatistic<uint64_t>("stateEvent_PutM_IS");
+        stat_eventState[(int)Command::PutM][IM] = registerStatistic<uint64_t>("stateEvent_PutM_IM");
+        stat_eventState[(int)Command::PutM][I_B] = registerStatistic<uint64_t>("stateEvent_PutM_IB");
+        stat_eventState[(int)Command::PutM][S_B] = registerStatistic<uint64_t>("stateEvent_PutM_SB");
         stat_eventState[(int)Command::FlushLine][I] = registerStatistic<uint64_t>("stateEvent_FlushLine_I");
         stat_eventState[(int)Command::FlushLine][E] = registerStatistic<uint64_t>("stateEvent_FlushLine_E");
         stat_eventState[(int)Command::FlushLine][M] = registerStatistic<uint64_t>("stateEvent_FlushLine_M");
@@ -149,37 +175,32 @@ public:
         stat_eventState[(int)Command::FlushLineResp][I] = registerStatistic<uint64_t>("stateEvent_FlushLineResp_I");
         stat_eventState[(int)Command::FlushLineResp][I_B] = registerStatistic<uint64_t>("stateEvent_FlushLineResp_IB");
         stat_eventState[(int)Command::FlushLineResp][S_B] = registerStatistic<uint64_t>("stateEvent_FlushLineResp_SB");
-        stat_eventSent[(int)Command::GetS] =           registerStatistic<uint64_t>("eventSent_GetS");
-        stat_eventSent[(int)Command::GetX] =           registerStatistic<uint64_t>("eventSent_GetX");
-        stat_eventSent[(int)Command::GetSX] =         registerStatistic<uint64_t>("eventSent_GetSX");
-        stat_eventSent[(int)Command::PutM] =           registerStatistic<uint64_t>("eventSent_PutM");
-        stat_eventSent[(int)Command::NACK] =      registerStatistic<uint64_t>("eventSent_NACK");
-        stat_eventSent[(int)Command::FlushLine] =      registerStatistic<uint64_t>("eventSent_FlushLine");
-        stat_eventSent[(int)Command::FlushLineInv] =   registerStatistic<uint64_t>("eventSent_FlushLineInv");
-        stat_eventSent[(int)Command::GetSResp] =       registerStatistic<uint64_t>("eventSent_GetSResp");
-        stat_eventSent[(int)Command::GetXResp] =       registerStatistic<uint64_t>("eventSent_GetXResp");
-        stat_eventSent[(int)Command::FlushLineResp] =  registerStatistic<uint64_t>("eventSent_FlushLineResp");
+        stat_eventSent[(int)Command::GetS]             = registerStatistic<uint64_t>("eventSent_GetS");
+        stat_eventSent[(int)Command::GetX]             = registerStatistic<uint64_t>("eventSent_GetX");
+        stat_eventSent[(int)Command::GetSX]           = registerStatistic<uint64_t>("eventSent_GetSX");
+        stat_eventSent[(int)Command::PutE]             = registerStatistic<uint64_t>("eventSent_PutE");
+        stat_eventSent[(int)Command::PutM]             = registerStatistic<uint64_t>("eventSent_PutM");
+        stat_eventSent[(int)Command::FlushLine]        = registerStatistic<uint64_t>("eventSent_FlushLine");
+        stat_eventSent[(int)Command::FlushLineInv]     = registerStatistic<uint64_t>("eventSent_FlushLineInv");
+        stat_eventSent[(int)Command::NACK]           = registerStatistic<uint64_t>("eventSent_NACK");
+        stat_eventSent[(int)Command::GetSResp]         = registerStatistic<uint64_t>("eventSent_GetSResp");
+        stat_eventSent[(int)Command::GetXResp]         = registerStatistic<uint64_t>("eventSent_GetXResp");
+        stat_eventSent[(int)Command::FlushLineResp]    = registerStatistic<uint64_t>("eventSent_FlushLineResp");
         stat_eventSent[(int)Command::Put]           = registerStatistic<uint64_t>("eventSent_Put");
         stat_eventSent[(int)Command::Get]           = registerStatistic<uint64_t>("eventSent_Get");
         stat_eventSent[(int)Command::AckMove]       = registerStatistic<uint64_t>("eventSent_AckMove");
         stat_eventSent[(int)Command::CustomReq]     = registerStatistic<uint64_t>("eventSent_CustomReq");
         stat_eventSent[(int)Command::CustomResp]    = registerStatistic<uint64_t>("eventSent_CustomResp");
         stat_eventSent[(int)Command::CustomAck]     = registerStatistic<uint64_t>("eventSent_CustomAck");
-        stat_latencyGetS[LatType::HIT]  = registerStatistic<uint64_t>("latency_GetS_hit");
+        stat_latencyGetS[LatType::HIT] = registerStatistic<uint64_t>("latency_GetS_hit");
         stat_latencyGetS[LatType::MISS] = registerStatistic<uint64_t>("latency_GetS_miss");
-        stat_latencyGetX[LatType::HIT]  = registerStatistic<uint64_t>("latency_GetX_hit");
+        stat_latencyGetX[LatType::HIT] = registerStatistic<uint64_t>("latency_GetX_hit");
         stat_latencyGetX[LatType::MISS] = registerStatistic<uint64_t>("latency_GetX_miss");
-        stat_latencyGetSX[LatType::HIT]  = registerStatistic<uint64_t>("latency_GetSX_hit");
+        stat_latencyGetSX[LatType::HIT] = registerStatistic<uint64_t>("latency_GetSX_hit");
         stat_latencyGetSX[LatType::MISS] = registerStatistic<uint64_t>("latency_GetSX_miss");
-        stat_latencyFlushLine[LatType::HIT] = registerStatistic<uint64_t>("latency_FlushLine");
-        stat_latencyFlushLine[LatType::MISS] = registerStatistic<uint64_t>("latency_FlushLine_fail");
-        stat_latencyFlushLineInv[LatType::HIT] = registerStatistic<uint64_t>("latency_FlushLineInv");
-        stat_latencyFlushLineInv[LatType::MISS] = registerStatistic<uint64_t>("latency_FlushLineInv_fail");
-    
-        /* Only for caches that write back clean blocks (i.e., lower cache is non-inclusive and may need the data) but don't know yet and can't register statistics later. Always enabled for now. */
-        stat_eventSent[(int)Command::PutE] =           registerStatistic<uint64_t>("eventSent_PutE");
+        stat_latencyFlushLine = registerStatistic<uint64_t>("latency_FlushLine");
+        stat_latencyFlushLineInv = registerStatistic<uint64_t>("latency_FlushLineInv");
         
-        /* Prefetch statistics */
         if (prefetch) {
             statPrefetchEvict = registerStatistic<uint64_t>("prefetch_evict");
             statPrefetchHit = registerStatistic<uint64_t>("prefetch_useful");
@@ -187,99 +208,101 @@ public:
         }
     }
 
-    ~L1IncoherentController() {}
+    ~Incoherent() {}
     
-    
-    /** Used to determine in advance if an event will be a miss (and which kind of miss)
-     * Used for statistics only
-     */
-    bool isCacheHit(MemEvent* event);
-    
-    /* Event handlers called by cache controller */
-    /** Send cache line data to the lower level caches */
-    CacheAction handleEviction(CacheLine* wbCacheLine, string origRqstr, bool ignoredParam=false);
+ 
+/*----------------------------------------------------------------------------------------------------------------------
+ *  Public functions form external interface to the coherence controller
+ *---------------------------------------------------------------------------------------------------------------------*/    
 
-    /** Process new cache request:  GetX, GetS, GetSX */
+/* Event handlers */
+    /* Public event handlers called by cache controller */
+    /** Send cache line data to the lower level caches */
+    CacheAction handleEviction(CacheLine* _wbCacheLine, string _origRqstr, bool ignoredParameter=false);
+
+    /** Process cache request:  GetX, GetS, GetSX */
     CacheAction handleRequest(MemEvent* event, bool replay);
-   
-    /** Process replacement - implemented for compatibility with CoherenceController but L1s do not receive replacements */
+    
+    /** Process replacement request - PutS, PutE, PutM */
     CacheAction handleReplacement(MemEvent* event, bool replay);
     CacheAction handleFlush(MemEvent* event, CacheLine* cacheLine, MemEvent* reqEvent, bool replay);
     
-    /** Process Inv */
+    /** Process invalidation requests - Inv, FetchInv, FetchInvX */
     CacheAction handleInvalidationRequest(MemEvent *event, bool inMSHR);
 
-    /** Process responses */
+    /** Process responses - GetSResp, GetXResp, FetchResp */
     CacheAction handleCacheResponse(MemEvent* event, bool inMSHR);
     CacheAction handleFetchResponse(MemEvent* event, bool inMSHR);
-
+   
     bool handleNACK(MemEvent* event, bool inMSHR);
 
-    /* Methods for sending events, called by cache controller */
-    /** Send response up (to processor) */
-    uint64_t sendResponseUp(MemEvent * event, vector<uint8_t>* data, bool replay, uint64_t baseTime, bool atomic = false);
+/* Miscellaneous */
+
+    /** Determine in advance if a request will miss (and what kind of miss). Used for stats */
+    bool isCacheHit(MemEvent* event);
     
-    /** Call through to coherenceController with statistic recording */
     void addToOutgoingQueue(Response& resp);
     void addToOutgoingQueueUp(Response& resp);
 
-/* Miscellaneous */
-    void printData(vector<uint8_t> * data, bool set);
-
-/* Temporary */
-    void setCacheArray(CacheArray* arrayptr) { cacheArray_ = arrayptr; }
+    void setCacheArray(CacheArray* ptr) { cacheArray_ = ptr; }
 
     void printLine(Addr addr);
 
 private:
+/* Private data members */
+    bool        inclusive_;
     CacheArray* cacheArray_;
 
-    /* Statistics */
+/* Statistics */
     std::array<std::array<Statistic<uint64_t>*, LAST_STATE>, (int)Command::LAST_CMD> stat_eventState;
     Statistic<uint64_t>* stat_eventSent[(int)Command::LAST_CMD];
     Statistic<uint64_t>* stat_latencyGetS[2];
     Statistic<uint64_t>* stat_latencyGetX[2];
     Statistic<uint64_t>* stat_latencyGetSX[2];
-    Statistic<uint64_t>* stat_latencyFlushLine[2];
-    Statistic<uint64_t>* stat_latencyFlushLineInv[2];
-
-    void printLine(Addr addr, CacheLine* line);
-
-    /* Private event handlers */
-    /** Handle GetX request. Request upgrade if needed */
-    CacheAction handleGetXRequest(MemEvent* event, CacheLine* cacheLine, bool replay);
+    Statistic<uint64_t>* stat_latencyFlushLine;
+    Statistic<uint64_t>* stat_latencyFlushLineInv;
     
+/* Private event handlers */
+    /** Handle GetX request. Request upgrade if needed */
+    CacheAction handleGetXRequest(MemEvent* event, CacheLine* _cacheLine, bool replay);
+
     /** Handle GetS request. Request block if needed */
     CacheAction handleGetSRequest(MemEvent* event, CacheLine* cacheLine, bool replay);
     
-    /** Handle FlushLine request. */
-    CacheAction handleFlushLineRequest(MemEvent *event, CacheLine* cacheLine, MemEvent* reqEvent, bool replay);
+    /** Handle PutM request. Write data to cache line.  Update E->M state if necessary */
+    CacheAction handlePutMRequest(MemEvent* event, CacheLine* cacheLine);
     
-    /** Handle FlushLineInv request */
-    CacheAction handleFlushLineInvRequest(MemEvent *event, CacheLine* cacheLine, MemEvent* reqEvent, bool replay);
+    /** Handle FlushLine request. Forward if needed */
+    CacheAction handleFlushLineRequest(MemEvent * event, CacheLine * cacheLine, MemEvent * reqEvent, bool replay);
 
-    /** Handle data response - GetSResp or GetXResp */
-    void handleDataResponse(MemEvent* responseEvent, CacheLine * cacheLine, MemEvent * reqEvent);
+    /** Handle FlushLineInv request. Forward if needed */
+    CacheAction handleFlushLineInvRequest(MemEvent * event, CacheLine * cacheLine, MemEvent * reqEvent, bool replay);
 
+    /** Process GetSResp/GetXResp.  Update the cache line */
+    CacheAction handleDataResponse(MemEvent* responseEvent, CacheLine * cacheLine, MemEvent * reqEvent);
+    
 /* Private methods for managing data structures */
     bool allocateLine(Addr addr, MemEvent* event);
 
-    
-    /* Methods for sending events */
+/* Private methods for sending events */
     /** Send writeback request to lower level caches */
     void sendWriteback(Command cmd, CacheLine* cacheLine, string origRqstr);
-
-    /** Forward a flush line request, with or without data */
-    void forwardFlushLine(Addr baseAddr, Command cmd, string origRqstr, CacheLine * cacheLine);
     
-    /** Send response to a flush request */
-    void sendFlushResponse(MemEvent * requestEvent, bool success, uint64_t baseTime, bool replay);
+    /** Send a flush response */
+    void sendFlushResponse(MemEvent * reqEent, bool success);
+    
+    /** Forward a FlushLine request with or without data */
+    void forwardFlushLine(Addr baseAddr, string origRqstr, CacheLine * cacheLine, Command cmd);
 
-    /* Statistics recording */
+/* Helper methods */
+   
+    void printData(vector<uint8_t> * data, bool set);
+
+/* Statistics */
     void recordStateEventCount(Command cmd, State state);
     void recordEventSentDown(Command cmd);
     void recordEventSentUp(Command cmd);
-    void recordLatency(Command cmd, int type, uint64_t timestamp);
+    void recordLatency(Command cmd, int type, uint64_t latency);
 };
 
 

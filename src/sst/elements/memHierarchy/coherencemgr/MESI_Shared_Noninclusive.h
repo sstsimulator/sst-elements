@@ -25,9 +25,9 @@
 
 namespace SST { namespace MemHierarchy {
 
-class MESIInternalDirectory : public CoherenceController {
+class MESISharNoninclusive : public CoherenceController {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(MESIInternalDirectory, "memHierarchy", "MESICacheDirectoryCoherenceController", SST_ELI_ELEMENT_VERSION(1,0,0), 
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(MESISharNoninclusive, "memHierarchy", "coherence.mesi_shared_noninclusive", SST_ELI_ELEMENT_VERSION(1,0,0), 
             "Implements MESI or MSI coherence for cache that is co-located with a directory, for noninclusive last-level caches", SST::MemHierarchy::CoherenceController)
 
     SST_ELI_DOCUMENT_STATISTICS(
@@ -281,9 +281,9 @@ public:
         {"default_stat",            "Default statistic used for unexpected events/states/etc. Should be 0, if not, check for missing statistic registerations.", "none", 7})
 
 /* Class definition */
-    /** Constructor for MESIInternalDirectory. */
-    MESIInternalDirectory(Component * comp, Params& params) : CoherenceController(comp, params) { }
-    MESIInternalDirectory(ComponentId_t id, Params& params, Params& ownerParams, bool prefetch) : CoherenceController(id, params, ownerParams, prefetch) {
+    /** Constructor for MESISharNoninclusive. */
+    MESISharNoninclusive(Component * comp, Params& params) : CoherenceController(comp, params) { }
+    MESISharNoninclusive(ComponentId_t id, Params& params, Params& ownerParams, bool prefetch) : CoherenceController(id, params, ownerParams, prefetch) {
         params.insert(ownerParams);
         
         debug->debug(_INFO_,"--------------------------- Initializing [MESI + Directory Controller] ... \n\n");
@@ -544,7 +544,7 @@ public:
         }
     }
 
-    ~MESIInternalDirectory() {}
+    ~MESISharNoninclusive() {}
     
 /*----------------------------------------------------------------------------------------------------------------------
  *  Public functions form external interface to the coherence controller

@@ -25,10 +25,10 @@
 
 namespace SST { namespace MemHierarchy {
 
-class L1CoherenceController : public CoherenceController {
+class MESIL1 : public CoherenceController {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(L1CoherenceController, "memHierarchy", "L1CoherenceController", SST_ELI_ELEMENT_VERSION(1,0,0), 
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(MESIL1, "memHierarchy", "coherence.mesi_l1", SST_ELI_ELEMENT_VERSION(1,0,0), 
             "Implements MESI or MSI coherence for an L1 cache", SST::MemHierarchy::CoherenceController)
 
     SST_ELI_DOCUMENT_STATISTICS(
@@ -157,9 +157,9 @@ public:
         {"default_stat",            "Default statistic used for unexpected events/states/etc. Should be 0, if not, check for missing statistic registerations.", "none", 7})
 
 /* Class definition */
-    /** Constructor for L1CoherenceController */
-    L1CoherenceController(Component* comp, Params& params) : CoherenceController(comp, params) { }
-    L1CoherenceController(ComponentId_t id, Params& params, Params& ownerParams, bool prefetch) : CoherenceController(id, params, ownerParams, prefetch) {
+    /** Constructor for MESIL1 */
+    MESIL1(Component* comp, Params& params) : CoherenceController(comp, params) { }
+    MESIL1(ComponentId_t id, Params& params, Params& ownerParams, bool prefetch) : CoherenceController(id, params, ownerParams, prefetch) {
         params.insert(ownerParams);
         debug->debug(_INFO_,"--------------------------- Initializing [L1Controller] ... \n\n");
         
@@ -304,7 +304,7 @@ public:
         }
     }
 
-    ~L1CoherenceController() {}
+    ~MESIL1() {}
     
     /** Used to determine in advance if an event will be a miss (and which kind of miss)
      * Used for statistics only

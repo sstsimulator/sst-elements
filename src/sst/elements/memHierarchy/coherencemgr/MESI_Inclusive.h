@@ -24,9 +24,9 @@
 
 namespace SST { namespace MemHierarchy {
 
-class MESIController : public CoherenceController {
+class MESIInclusive : public CoherenceController {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(MESIController, "memHierarchy", "MESICoherenceController", SST_ELI_ELEMENT_VERSION(1,0,0), 
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(MESIInclusive, "memHierarchy", "coherence.mesi_inclusive", SST_ELI_ELEMENT_VERSION(1,0,0), 
             "Implements MESI or MSI coherence for a second level or greater cache", SST::MemHierarchy::CoherenceController)
 
     SST_ELI_DOCUMENT_STATISTICS(
@@ -261,9 +261,9 @@ public:
         {"default_stat",            "Default statistic used for unexpected events/states/etc. Should be 0, if not, check for missing statistic registerations.", "none", 7})
 
 /* Class definition */
-    /** Constructor for MESIController. Note that MESIController handles both MESI & MSI protocols */
-    MESIController(SST::Component* comp, Params& params) : CoherenceController(comp, params) { }
-    MESIController(SST::ComponentId_t id, Params& params, Params& ownerParams, bool prefetch) : CoherenceController(id, params, ownerParams, prefetch) {
+    /** Constructor for MESIInclusive. Note that MESIInclusive handles both MESI & MSI protocols */
+    MESIInclusive(SST::Component* comp, Params& params) : CoherenceController(comp, params) { }
+    MESIInclusive(SST::ComponentId_t id, Params& params, Params& ownerParams, bool prefetch) : CoherenceController(id, params, ownerParams, prefetch) {
         params.insert(ownerParams);
         debug->debug(_INFO_,"--------------------------- Initializing [MESI Controller] ... \n\n");
         
@@ -504,7 +504,7 @@ public:
             stat_eventSent[(int)Command::PutE] = registerStatistic<uint64_t>("eventSent_PutE");
         }
     }
-    ~MESIController() {}
+    ~MESIInclusive() {}
     
 /*----------------------------------------------------------------------------------------------------------------------
  *  Public functions form external interface to the coherence controller

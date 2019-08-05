@@ -16,7 +16,7 @@
 
 #include <sst_config.h>
 #include <vector>
-#include "coherencemgr/IncoherentController.h"
+#include "coherencemgr/Incoherent.h"
 
 using namespace SST;
 using namespace SST::MemHierarchy;
@@ -45,7 +45,7 @@ using namespace SST::MemHierarchy;
 /**
  *  Handle eviction. Stall if eviction candidate is in transition.
  */
-CacheAction IncoherentController::handleEviction(CacheLine* wbCacheLine, string origRqstr, bool ignoredParam) {
+CacheAction Incoherent::handleEviction(CacheLine* wbCacheLine, string origRqstr, bool ignoredParam) {
     State state = wbCacheLine->getState();
     recordEvictionState(state);
     
@@ -88,7 +88,7 @@ CacheAction IncoherentController::handleEviction(CacheLine* wbCacheLine, string 
  *  Obtain block if a cache miss
  *  Obtain needed coherence permission from lower level cache/memory if coherence miss
  */
-CacheAction IncoherentController::handleRequest(MemEvent* event, bool replay) {
+CacheAction Incoherent::handleRequest(MemEvent* event, bool replay) {
     Addr addr = event->getBaseAddr();
 
     CacheLine * cacheLine = cacheArray_->lookup(addr, !replay);
@@ -138,7 +138,7 @@ CacheAction IncoherentController::handleRequest(MemEvent* event, bool replay) {
 /**
  *  Handle replacement. 
  */
-CacheAction IncoherentController::handleReplacement(MemEvent* event, bool replay) {
+CacheAction Incoherent::handleReplacement(MemEvent* event, bool replay) {
     Addr addr = event->getBaseAddr();
     CacheLine* cacheLine = cacheArray_->lookup(addr, true);
     if (cacheLine == nullptr) {
@@ -191,7 +191,7 @@ CacheAction IncoherentController::handleReplacement(MemEvent* event, bool replay
     return action;
 }
 
-CacheAction IncoherentController::handleFlush(MemEvent* event, CacheLine* cacheLine, MemEvent* reqEvent, bool replay) {
+CacheAction Incoherent::handleFlush(MemEvent* event, CacheLine* cacheLine, MemEvent* reqEvent, bool replay) {
     // May need to update state since we just allocated
     if (reqEvent != nullptr && cacheLine && cacheLine->getState() == I) {
         if (reqEvent->getCmd() == Command::GetS) cacheLine->setState(IS);
@@ -231,7 +231,7 @@ CacheAction IncoherentController::handleFlush(MemEvent* event, CacheLine* cacheL
  *  Handle invalidation request.
  *  Invalidations do not exist for incoherent caches but function must be implemented.
  */
-CacheAction IncoherentController::handleInvalidationRequest(MemEvent * event, bool inMSHR) {
+CacheAction Incoherent::handleInvalidationRequest(MemEvent * event, bool inMSHR) {
     debug->fatal(CALL_INFO, -1, "%s, Error: Received an invalidation request: %s, but incoherent protocol does not support invalidations. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n", 
             ownerName_.c_str(), CommandString[(int)event->getCmd()], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
     
@@ -242,7 +242,7 @@ CacheAction IncoherentController::handleInvalidationRequest(MemEvent * event, bo
 /**
  *  Handle data responses.
  */
-CacheAction IncoherentController::handleCacheResponse(MemEvent * event, bool inMSHR) {
+CacheAction Incoherent::handleCacheResponse(MemEvent * event, bool inMSHR) {
     Addr bAddr = event->getBaseAddr();
     CacheLine* line = cacheArray_->lookup(bAddr, false);
     MemEvent* reqEvent = static_cast<MemEvent*>(mshr_->lookupFront(bAddr));
@@ -282,14 +282,14 @@ CacheAction IncoherentController::handleCacheResponse(MemEvent * event, bool inM
     return action;
 }
 
-CacheAction IncoherentController::handleFetchResponse(MemEvent * event, bool inMSHR) {
+CacheAction Incoherent::handleFetchResponse(MemEvent * event, bool inMSHR) {
     Command cmd = event->getCmd(); 
     debug->fatal(CALL_INFO, -1, "%s, Error: Received unrecognized response: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
                 ownerName_.c_str(), CommandString[(int)cmd], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
     return DONE;
 }
 
-bool IncoherentController::isCacheHit(MemEvent* event) {
+bool Incoherent::isCacheHit(MemEvent* event) {
     CacheLine * line = cacheArray_->lookup(event->getBaseAddr(), false);
     if (!line || line->getState() == I)
         return false;
@@ -306,7 +306,7 @@ bool IncoherentController::isCacheHit(MemEvent* event) {
  *  Handle GetS requests
  *  Return hit if block is present, otherwise forward request to lower level cache
  */
-CacheAction IncoherentController::handleGetSRequest(MemEvent* event, CacheLine* cacheLine, bool replay) {
+CacheAction Incoherent::handleGetSRequest(MemEvent* event, CacheLine* cacheLine, bool replay) {
     Addr addr = event->getBaseAddr();
     State state = cacheLine->getState();
     vector<uint8_t>* data = cacheLine->getData();
@@ -356,7 +356,7 @@ CacheAction IncoherentController::handleGetSRequest(MemEvent* event, CacheLine* 
  *  Handle GetX request
  *  Return hit if block is present, otherwise forward request to lower level cache
  */
-CacheAction IncoherentController::handleGetXRequest(MemEvent* event, CacheLine* cacheLine, bool replay) {
+CacheAction Incoherent::handleGetXRequest(MemEvent* event, CacheLine* cacheLine, bool replay) {
     Addr addr = event->getBaseAddr();
     State state = cacheLine->getState();
     Command cmd = event->getCmd();
@@ -401,7 +401,7 @@ CacheAction IncoherentController::handleGetXRequest(MemEvent* event, CacheLine* 
  *  Handle PutM
  *  Incoherent caches only replace dirty data
  */
-CacheAction IncoherentController::handlePutMRequest(MemEvent* event, CacheLine* cacheLine) {
+CacheAction Incoherent::handlePutMRequest(MemEvent* event, CacheLine* cacheLine) {
     State state = cacheLine->getState();
 
     recordStateEventCount(event->getCmd(), state);
@@ -436,7 +436,7 @@ CacheAction IncoherentController::handlePutMRequest(MemEvent* event, CacheLine* 
 }
 
 
-CacheAction IncoherentController::handleFlushLineRequest(MemEvent * event, CacheLine * cacheLine, MemEvent * reqEvent, bool replay) {
+CacheAction Incoherent::handleFlushLineRequest(MemEvent * event, CacheLine * cacheLine, MemEvent * reqEvent, bool replay) {
     State state = cacheLine ? cacheLine->getState() : I;
     recordStateEventCount(event->getCmd(), state);
     
@@ -452,7 +452,7 @@ CacheAction IncoherentController::handleFlushLineRequest(MemEvent * event, Cache
 }
 
 
-CacheAction IncoherentController::handleFlushLineInvRequest(MemEvent * event, CacheLine * cacheLine, MemEvent * reqEvent, bool replay) {
+CacheAction Incoherent::handleFlushLineInvRequest(MemEvent * event, CacheLine * cacheLine, MemEvent * reqEvent, bool replay) {
     State state = cacheLine ? cacheLine->getState() : I;
     recordStateEventCount(event->getCmd(), state);
 
@@ -475,7 +475,7 @@ CacheAction IncoherentController::handleFlushLineInvRequest(MemEvent * event, Ca
 /**
  * Handles data responses (GetSResp, GetXResp)
  */
-CacheAction IncoherentController::handleDataResponse(MemEvent* responseEvent, CacheLine* cacheLine, MemEvent* origRequest){
+CacheAction Incoherent::handleDataResponse(MemEvent* responseEvent, CacheLine* cacheLine, MemEvent* origRequest){
     
     if (!inclusive_ && (cacheLine == NULL || cacheLine->getState() == I)) {
         sendResponseUp(origRequest, &responseEvent->getPayload(), true, 0);
@@ -517,7 +517,7 @@ CacheAction IncoherentController::handleDataResponse(MemEvent* responseEvent, Ca
 }
 
 
-bool IncoherentController::handleNACK(MemEvent* event, bool inMSHR) {
+bool Incoherent::handleNACK(MemEvent* event, bool inMSHR) {
     MemEvent* nackedEvent = event->getNACKedEvent();
     if (is_debug_event(nackedEvent)) debug->debug(_L3_, "NACK received.\n");
 
@@ -529,7 +529,7 @@ bool IncoherentController::handleNACK(MemEvent* event, bool inMSHR) {
 /*----------------------------------------------------------------------------------------------------------------------
  *  Functions for managing data structures
  *---------------------------------------------------------------------------------------------------------------------*/
-bool IncoherentController::allocateLine(Addr addr, MemEvent* event) {
+bool Incoherent::allocateLine(Addr addr, MemEvent* event) {
     CacheLine* replacementLine = cacheArray_->findReplacementCandidate(addr, true);
 
     if (replacementLine->valid() && is_debug_addr(addr)) {
@@ -564,7 +564,7 @@ bool IncoherentController::allocateLine(Addr addr, MemEvent* event) {
  *  Send writeback to lower level cache
  *  Latency: cache access + tag to read data that is being written back and update coherence state
  */
-void IncoherentController::sendWriteback(Command cmd, CacheLine* cacheLine, string origRqstr){
+void Incoherent::sendWriteback(Command cmd, CacheLine* cacheLine, string origRqstr){
     MemEvent* newCommandEvent = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), cmd);
     newCommandEvent->setDst(getDestination(cacheLine->getBaseAddr()));
     newCommandEvent->setSize(cacheLine->getSize());
@@ -587,7 +587,7 @@ void IncoherentController::sendWriteback(Command cmd, CacheLine* cacheLine, stri
 /**
  *  Forward a flush line request, with or without data
  */
-void IncoherentController::forwardFlushLine(Addr baseAddr, string origRqstr, CacheLine * cacheLine, Command cmd) {
+void Incoherent::forwardFlushLine(Addr baseAddr, string origRqstr, CacheLine * cacheLine, Command cmd) {
     MemEvent * flush = new MemEvent(ownerName_, baseAddr, baseAddr, cmd);
     flush->setDst(getDestination(baseAddr));
     flush->setRqstr(origRqstr);
@@ -615,7 +615,7 @@ void IncoherentController::forwardFlushLine(Addr baseAddr, string origRqstr, Cac
 /**
  *  Send a flush response up
  */
-void IncoherentController::sendFlushResponse(MemEvent * requestEvent, bool success) {
+void Incoherent::sendFlushResponse(MemEvent * requestEvent, bool success) {
     MemEvent * flushResponse = requestEvent->makeResponse();
     flushResponse->setSuccess(success);
     flushResponse->setDst(requestEvent->getSrc());
@@ -633,12 +633,12 @@ void IncoherentController::sendFlushResponse(MemEvent * requestEvent, bool succe
 /*----------------------------------------------------------------------------------------------------------------------
  *  Override message send functions with versions that record statistics & call parent class
  *---------------------------------------------------------------------------------------------------------------------*/
-void IncoherentController::addToOutgoingQueue(Response& resp) {
+void Incoherent::addToOutgoingQueue(Response& resp) {
     CoherenceController::addToOutgoingQueue(resp);
     recordEventSentDown(resp.event->getCmd());
 }
 
-void IncoherentController::addToOutgoingQueueUp(Response& resp) {
+void Incoherent::addToOutgoingQueueUp(Response& resp) {
     CoherenceController::addToOutgoingQueueUp(resp);
     recordEventSentUp(resp.event->getCmd());
 
@@ -652,7 +652,7 @@ void IncoherentController::addToOutgoingQueueUp(Response& resp) {
 /*
  *  Print data values for debugging
  */
-void IncoherentController::printData(vector<uint8_t> * data, bool set) {
+void Incoherent::printData(vector<uint8_t> * data, bool set) {
     /*if (set)    printf("Setting data (%zu): 0x", data->size());
     else        printf("Getting data (%zu): 0x", data->size());
     
@@ -669,20 +669,20 @@ void IncoherentController::printData(vector<uint8_t> * data, bool set) {
  *---------------------------------------------------------------------------------------------------------------------*/
 
 
-void IncoherentController::recordStateEventCount(Command cmd, State state) {
+void Incoherent::recordStateEventCount(Command cmd, State state) {
     stat_eventState[(int)cmd][state]->addData(1);
 }
 
 
-void IncoherentController::recordEventSentDown(Command cmd) {
+void Incoherent::recordEventSentDown(Command cmd) {
     stat_eventSent[(int)cmd]->addData(1);
 }
 
-void IncoherentController::recordEventSentUp(Command cmd) {
+void Incoherent::recordEventSentUp(Command cmd) {
     stat_eventSent[(int)cmd]->addData(1);
 }
 
-void IncoherentController::recordLatency(Command cmd, int type, uint64_t latency) {
+void Incoherent::recordLatency(Command cmd, int type, uint64_t latency) {
     if (type == -1)
         return;
 
@@ -707,7 +707,7 @@ void IncoherentController::recordLatency(Command cmd, int type, uint64_t latency
     }
 }
 
-void IncoherentController::printLine(Addr addr) {
+void Incoherent::printLine(Addr addr) {
     if (!is_debug_addr(addr)) return;
     CacheLine * line = cacheArray_->lookup(addr, false);
     State state = line ? line->getState() : NP;
