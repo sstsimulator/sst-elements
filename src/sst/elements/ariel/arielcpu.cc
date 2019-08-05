@@ -162,6 +162,9 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 
     /////////////////////////////////////////////////////////////////////////////////////
 
+	std::string auto_launch_type = params.find<std::string>("autolaunch", "pin");
+	
+	if( auto_launch_type == "pin" ) {
 
     char* tool_path = (char*) malloc(sizeof(char) * 1024);
 
@@ -226,6 +229,16 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 #endif
 
     appLauncher = params.find<std::string>("launcher", PINTOOL_EXECUTABLE);
+
+    if( appLauncher == "" ) {
+    	output->fatal(CALL_INFO, -1, "Model requested \"pin\" automatic configuration, but no launcher (PIN engine is found). %s\n",
+#ifdef SST_HAVE_PINTOOL
+			"Configured with PIN but launcher string is empty."
+#else
+			"Not configured with PIN, user must manually specify the PIN launcher to use."
+#endif
+			);
+    }
 
     const uint32_t launch_param_count = (uint32_t) params.find<uint32_t>("launchparamcount", 0);
     const uint32_t pin_arg_count = 37 + launch_param_count;
@@ -364,6 +377,38 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 
     // Remember that the list of arguments must be NULL terminated for execution
     execute_args[(pin_arg_count - 1) + app_argc] = NULL;
+    } else if ( auto_launch_type == "generic" ) {
+    	std::string executable = params.find<std::string>("executable", "");
+    	
+    	if( executable == "" ) {
+    		output->fatal(CALL_INFO, -1, "Error, specified generic launcher, but executable is not specified.\n");
+    	} else {
+    		const uint32_t launch_param_count = (uint32_t) params.find<uint32_t>("launchparamcount", 0);
+    		execute_args = (char**) malloc(sizeof(char*) * (launch_param_count + 2));
+    		
+    		execute_args[0] = (char*) malloc( sizeof(char) * (executable.size() + 1) );
+    		strcpy( execute_args[0], executable.c_str() );
+    		
+    		char* param_name_buffer = (char*) malloc(sizeof(char) * 512);
+
+    		for(uint32_t aa = 0; aa < launch_param_count; aa++) {
+        		sprintf(param_name_buffer, "launchparam%" PRIu32, aa);
+        		std::string launch_p = params.find<std::string>(param_name_buffer, "");
+
+        		if("" == launch_p) {
+            		output->fatal(CALL_INFO, -1, "Error: launch parameter %" PRId32 " is empty string, this must be set to a value.\n", aa);
+        		}
+
+       		 	execute_args[aa+1] = (char*) malloc( sizeof(char) * (launch_p.size() + 1) );
+        		strcpy(execute_args[aa], launch_p.c_str());
+    		}
+
+    		free(param_name_buffer);
+    		execute_args[launch_param_count + 1] = NULL;
+    	}
+    } else {
+    	output->fatal(CALL_INFO, -1, "Ariel has no launcher specified. Unable to start up a child.\n");
+    }
 
     /////////////////////////////////////////////////////////////////////////////////////
 

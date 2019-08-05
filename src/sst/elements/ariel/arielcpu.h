@@ -41,7 +41,7 @@ class ArielCPU : public SST::Component {
     public:
 
     /* SST ELI */
-    SST_ELI_REGISTER_COMPONENT(ArielCPU, "ariel", "ariel", SST_ELI_ELEMENT_VERSION(1,0,0), "PIN-based CPU model", COMPONENT_CATEGORY_PROCESSOR)
+    SST_ELI_REGISTER_COMPONENT(ArielCPU, "ariel", "ariel", SST_ELI_ELEMENT_VERSION(1,0,0), "CPU model", COMPONENT_CATEGORY_PROCESSOR)
 
     SST_ELI_DOCUMENT_PARAMS(
         {"verbose", "Verbosity for debugging. Increased numbers for increased verbosity.", "0"},
@@ -73,7 +73,8 @@ class ArielCPU : public SST::Component {
         {"memmgr", "Memory manager to use for address translation", "ariel.MemoryManagerSimple"},
         {"writepayloadtrace", "Trace write payloads and put real memory contents into the memory system", "0"},
         {"instrument_instructions", "turn on or off instruction instrumentation in fesimple", "1"},
-        {"gpu_enabled", "If enabled, gpu links will be set up", "0"})
+        {"gpu_enabled", "If enabled, gpu links will be set up", "0"},
+        {"autolaunch", "Set automatic launch processing of arguments choices are: pin or none, default is pin", "pin"} )
 
     SST_ELI_DOCUMENT_PORTS( {"cache_link_%(corecount)d", "Each core's link to its cache", {}},
        {"gpu_link_%(corecount)d", "Each core's link to the GPU", {}})
