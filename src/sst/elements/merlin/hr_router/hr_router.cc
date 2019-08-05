@@ -26,7 +26,6 @@
 #include <signal.h>
 
 #include "merlin.h"
-#include "portControl.h"
 
 using namespace SST::Merlin;
 using namespace SST::Interfaces;
@@ -209,7 +208,7 @@ REENABLE_WARNING
 
 
     // Create all the PortControl blocks
-    ports = new PortControlBase*[num_ports];
+    ports = new PortInterface*[num_ports];
 
     std::string input_buf_size = params.find<std::string>("input_buf_size", "0");
     std::string output_buf_size = params.find<std::string>("output_buf_size", "0");
@@ -231,13 +230,13 @@ REENABLE_WARNING
     
     params.enableVerify(false);
 
-    Params pc_params;
+    Params pc_params = params.find_prefix_params("portcontrol");
 
     pc_params.insert("flit_size", flit_size.toStringBestSI());
     if (pc_params.contains("network_inspectors")) pc_params.insert("network_inspectors", params.find<std::string>("network_inspectors", ""));
     pc_params.insert("oql_track_port", params.find<std::string>("oql_track_port","false"));
     pc_params.insert("oql_track_remote", params.find<std::string>("oql_track_remote","false"));
-        
+
     for ( int i = 0; i < num_ports; i++ ) {
         in_port_busy[i] = 0;
         out_port_busy[i] = 0;
@@ -250,8 +249,6 @@ REENABLE_WARNING
         // For each port, some default parameters can be overwritten
          // by logical group parameters (link_bw, input_buf_size,
         // output_buf_size, input_latency, output_latency).
-
-
 
         pc_params.insert("port_name", port_name.str());
         pc_params.insert("link_bw", getLogicalGroupParam(params,topo,i,"link_bw") );
@@ -272,7 +269,7 @@ REENABLE_WARNING
 		// 						   std::stof(getLogicalGroupParam(params,topo,i,"dlink_thresh", "-1")),
         //                            oql_track_port,oql_track_remote);
 
-        ports[i] = loadAnonymousSubComponent<PortControlBase>
+        ports[i] = loadAnonymousSubComponent<PortInterface>
             ("merlin.portcontrol","portcontrol", i, ComponentInfo::SHARE_PORTS | ComponentInfo::SHARE_STATS | ComponentInfo::INSERT_STATS,
              pc_params,this,id,i,topo);
         

@@ -84,7 +84,7 @@ public:
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
         {"topology", "Topology object to control routing", "SST::Merlin::Topology" },
         {"XbarArb", "Crossbar arbitration", "SST::Merlin::XbarArbitration" },
-        {"portcontrol", "PortControl blocks", "SST::Merlin::PortControlBase" }
+        {"portcontrol", "PortControl blocks", "SST::Merlin::PortInterface" }
     )
     
 private:
@@ -99,7 +99,7 @@ private:
     Topology* topo;
     XbarArbitration* arb;
     
-    PortControlBase** ports;
+    PortInterface** ports;
     internal_router_event** vc_heads;
     int* xbar_in_credits;
     int* output_queue_lengths;
