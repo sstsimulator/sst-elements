@@ -136,7 +136,7 @@ PortControl::recv(int vc)
 }
 
 PortControl::PortControl(Component* parent, Params& params) :
-    PortControlBase(parent),
+    PortInterface(parent),
     output(Simulation::getSimulation()->getSimulationOutput())
 {
     merlin_abort.fatal(CALL_INFO_LONG,1,"Old style subcomponent loading not supported for PortControl.");
@@ -144,7 +144,7 @@ PortControl::PortControl(Component* parent, Params& params) :
 
 
 PortControl::PortControl(ComponentId_t cid, Params& params,  Router* rif, int rtr_id, int port_number, Topology *topo) :
-    PortControlBase(cid),
+    PortInterface(cid),
     rtr_id(rtr_id),
     num_vcs(-1),
     topo(topo),

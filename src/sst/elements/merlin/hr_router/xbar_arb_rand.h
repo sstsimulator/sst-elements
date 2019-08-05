@@ -27,7 +27,6 @@
 #include <queue>
 
 #include "sst/elements/merlin/router.h"
-#include "sst/elements/merlin/interfaces/portControl.h"
 
 namespace SST {
 namespace Merlin {
@@ -153,9 +152,9 @@ public:
     // out_port_busy is >0 if that xbar port being read.
     void arbitrate(
 #if VERIFY_DECLOCKING
-                   PortControlBase** ports, int* in_port_busy, int* out_port_busy, int* progress_vc, bool clocking
+                   PortInterface** ports, int* in_port_busy, int* out_port_busy, int* progress_vc, bool clocking
 #else
-                   PortControlBase** ports, int* in_port_busy, int* out_port_busy, int* progress_vc
+                   PortInterface** ports, int* in_port_busy, int* out_port_busy, int* progress_vc
 #endif
                    )
     {

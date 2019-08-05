@@ -26,7 +26,6 @@
 #include <signal.h>
 
 #include "merlin.h"
-#include "interfaces/portControl.h"
 
 using namespace SST::Merlin;
 using namespace SST::Interfaces;
@@ -209,7 +208,7 @@ REENABLE_WARNING
 
 
     // Create all the PortControl blocks
-    ports = new PortControlBase*[num_ports];
+    ports = new PortInterface*[num_ports];
 
     std::string input_buf_size = params.find<std::string>("input_buf_size", "0");
     std::string output_buf_size = params.find<std::string>("output_buf_size", "0");
@@ -270,7 +269,7 @@ REENABLE_WARNING
 		// 						   std::stof(getLogicalGroupParam(params,topo,i,"dlink_thresh", "-1")),
         //                            oql_track_port,oql_track_remote);
 
-        ports[i] = loadAnonymousSubComponent<PortControlBase>
+        ports[i] = loadAnonymousSubComponent<PortInterface>
             ("merlin.portcontrol","portcontrol", i, ComponentInfo::SHARE_PORTS | ComponentInfo::SHARE_STATS | ComponentInfo::INSERT_STATS,
              pc_params,this,id,i,topo);
         

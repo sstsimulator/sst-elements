@@ -28,7 +28,6 @@
 
 #include <sst/core/statapi/stataccumulator.h>
 
-#include <queue>
 #include <cstring>
 
 #include "sst/elements/merlin/router.h"
@@ -38,68 +37,9 @@ using namespace SST;
 namespace SST {
 namespace Merlin {
 
-typedef std::queue<internal_router_event*> port_queue_t;
-typedef std::queue<TopologyEvent*> topo_queue_t;
-
 // Class to manage link between NIC and router.  A single NIC can have
 // more than one link_control (and thus link to router).
-class PortControlBase : public SubComponent{
-
-    
-public:
-
-    // params are: parent router, router id, port number, topology object
-    SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Merlin::PortControlBase, Router*, int, int, Topology*)
-
-    virtual void sendTopologyEvent(TopologyEvent* ev) = 0;
-    // Returns true if there is space in the output buffer and false
-    // otherwise.
-    virtual void send(internal_router_event* ev, int vc) = 0;
-    // Returns true if there is space in the output buffer and false
-    // otherwise.
-    virtual bool spaceToSend(int vc, int flits) = 0;
-    // Returns NULL if no event in input_buf[vc]. Otherwise, returns
-    // the next event.
-    virtual internal_router_event* recv(int vc) = 0;
-    virtual internal_router_event** getVCHeads() = 0;
-    
-    // time_base is a frequency which represents the bandwidth of the link in flits/second.
-    PortControlBase(ComponentId_t cid) :
-        SubComponent(cid)
-        {}
-
-    PortControlBase(Component* parent) :
-        SubComponent(parent)
-        {}
-
-    virtual void initVCs(int vcs, internal_router_event** vc_heads, int* xbar_in_credits, int* output_queue_lengths) = 0;
-
-
-    virtual ~PortControlBase() {}
-    // void setup();
-    // void finish();
-    // void init(unsigned int phase);
-    // void complete(unsigned int phase);
-    
-
-    virtual void sendInitData(Event *ev) = 0;
-    virtual Event* recvInitData() = 0;
-    virtual void sendUntimedData(Event *ev) = 0;
-    virtual Event* recvUntimedData() = 0;
-    
-    virtual void dumpState(std::ostream& stream) {}
-    virtual void printStatus(Output& out, int out_port_busy, int in_port_busy) {}
-    
-    // void setupVCs(int vcs, internal_router_event** vc_heads
-	virtual bool decreaseLinkWidth() = 0;
-	virtual bool increaseLinkWidth() = 0; 
-};
-
-class OutputArbitration;
-
-// Class to manage link between NIC and router.  A single NIC can have
-// more than one link_control (and thus link to router).
-class PortControl : public PortControlBase {
+class PortControl : public PortInterface {
 public:
 
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
@@ -108,7 +48,7 @@ public:
         "portcontrol",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Port Control module for use by hr_router",
-        SST::Merlin::PortControlBase)
+        SST::Merlin::PortInterface)
     
     SST_ELI_DOCUMENT_PARAMS(
         {"port_name",          "Port name to connect to.  Only used when loaded anonymously",""},
@@ -285,7 +225,7 @@ private:
 
     Output& output;
 
-    OutputArbitration* output_arb;
+    PortInterface::OutputArbitration* output_arb;
     
 public:
 
@@ -345,25 +285,6 @@ private:
 
 	uint64_t increaseActive();
 
-};
-
-class OutputArbitration : public SubComponent {
-public:
-
-    SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Merlin::OutputArbitration)
-    
-    OutputArbitration(Component* parent) :
-        SubComponent(parent)
-    {}
-    OutputArbitration(ComponentId_t cid) :
-        SubComponent(cid)
-    {}
-    virtual ~OutputArbitration() {}
-
-    virtual void setVCs(int num_vcs) = 0;
-    virtual int arbitrate(port_queue_t* out_q, int* port_out_credits, bool isHostPort, bool& have_packets) = 0;
-    virtual void dumpState(std::ostream& stream) {};
-	
 };
 
 

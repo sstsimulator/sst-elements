@@ -19,15 +19,13 @@
 #ifndef COMPONENTS_MERLIN_ARBITRATION_OUTPUT_ARB_BASIC_H
 #define COMPONENTS_MERLIN_ARBITRATION_OUTPUT_ARB_BASIC_H
 
-#include <sst/elements/merlin/interfaces/portControl.h>
+#include <sst/elements/merlin/router.h>
 #include <sst/elements/merlin/arbitration/single_arb.h>
 
 namespace SST {
 namespace Merlin {
 
-
-
-class output_arb_basic : public OutputArbitration {
+class output_arb_basic : public PortInterface::OutputArbitration {
 
 public:
 
@@ -37,7 +35,7 @@ public:
         "arb.output.basic",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Basic output arbitration for PortControl",
-        SST::Merlin::OutputArbitration)
+        SST::Merlin::PortInterface::OutputArbitration)
     
     SST_ELI_DOCUMENT_PARAMS(
         {"arb",    "Tyoe of arbitration to use","merlin.arb.base.single.roundrobin"},
@@ -72,7 +70,7 @@ public:
         arb = loadModule<SingleArbitration>(arb_name,empty,n_vcs);
     }
 
-    int arbitrate(port_queue_t* out_q, int* port_out_credits, bool isHostPort, bool& have_packets) {
+    int arbitrate(PortInterface::port_queue_t* out_q, int* port_out_credits, bool isHostPort, bool& have_packets) {
         int vc_to_send = -1;
         bool found = false;
         internal_router_event* send_event = NULL;

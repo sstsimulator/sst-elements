@@ -66,6 +66,7 @@ libmerlin_la_SOURCES = \
 	interfaces/portControl.cc \
 	interfaces/reorderLinkControl.h \
 	interfaces/reorderLinkControl.cc \
+	interfaces/output_arb_basic.h \
 	arbitration/single_arb.h \
 	arbitration/single_lru.h \
 	arbitration/single_rr.h \
