@@ -28,6 +28,9 @@
 #include "hr_router/xbar_arb_rand.h"
 #include "hr_router/xbar_arb_lru_infx.h"
 
+#include "arbitration/single_arb_rr.h"
+#include "arbitration/single_arb_lru.h"
+
 /*
   Install the python library
  */
