@@ -115,7 +115,7 @@ class ArielCPU : public SST::Component {
         virtual void setup() {}
         virtual void finish();
         virtual bool tick( SST::Cycle_t );
-        int forkPINChild(const char* app, char** args, std::map<std::string, std::string>& app_env);
+        int forkLauncherChild(const char* app, char** args, std::map<std::string, std::string>& app_env);
 
     private:
         SST::Output* output;

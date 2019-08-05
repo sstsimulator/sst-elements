@@ -445,9 +445,9 @@ void ArielCPU::init(unsigned int phase)
     if ( phase == 0 ) {
         output->verbose(CALL_INFO, 1, 0, "Launching PIN...\n");
         // Init the child_pid = 0, this prevents problems in emergencyShutdown()
-        // if forkPINChild() calls fatal (i.e. the child_pid would not be set)
+        // if forkLauncherChild() calls fatal (i.e. the child_pid would not be set)
         child_pid = 0;
-        child_pid = forkPINChild(appLauncher.c_str(), execute_args, execute_env);
+        child_pid = forkLauncherChild(appLauncher.c_str(), execute_args, execute_env);
         output->verbose(CALL_INFO, 1, 0, "Returned from launching PIN.  Waiting for child to attach.\n");
 
         tunnel->waitForChild();
@@ -474,7 +474,7 @@ void ArielCPU::finish() {
     memmgr->printStats();
 }
 
-int ArielCPU::forkPINChild(const char* app, char** args, std::map<std::string, std::string>& app_env) {
+int ArielCPU::forkLauncherChild(const char* app, char** args, std::map<std::string, std::string>& app_env) {
     // If user only wants to init the simulation then we do NOT fork the binary
     if(Simulation::getSimulation()->getSimulationMode() == Simulation::INIT)
         return 0;
