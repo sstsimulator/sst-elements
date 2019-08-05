@@ -107,6 +107,9 @@ CacheAction MESIL1::handleEviction(CacheLine* wbCacheLine, string origRqstr, boo
 CacheAction MESIL1::handleRequest(MemEvent* event, bool replay) {
     Addr addr = event->getBaseAddr();
     
+    if (is_debug_addr(addr))
+        printLine(addr);
+
     CacheLine * cacheLine = cacheArray_->lookup(addr, !replay); 
     
     if (!cacheLine && (is_debug_addr(addr))) debug->debug(_L3_, "-- Miss --\n");
@@ -127,17 +130,27 @@ CacheAction MESIL1::handleRequest(MemEvent* event, bool replay) {
     
     Command cmd = event->getCmd();
 
+    CacheAction action = STALL;
     switch(cmd) {
         case Command::GetS:
-            return handleGetSRequest(event, cacheLine, replay);
+            action = handleGetSRequest(event, cacheLine, replay);
+            break;
         case Command::GetX:
         case Command::GetSX:
-            return handleGetXRequest(event, cacheLine, replay);
+            action = handleGetXRequest(event, cacheLine, replay);
+            break;
         default:
 	    debug->fatal(CALL_INFO,-1,"%s, Error: Received an unrecognized request: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n", 
                     ownerName_.c_str(), CommandString[(int)cmd], addr, event->getSrc().c_str(), getCurrentSimTimeNano());
     }
-    return STALL;    // Eliminate compiler warning
+
+    if (is_debug_addr(addr))
+        printLine(addr);
+
+    if (action == DONE)
+        delete event;
+
+    return action;
 }
 
 

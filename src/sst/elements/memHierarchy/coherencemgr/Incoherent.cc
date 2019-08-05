@@ -91,10 +91,14 @@ CacheAction Incoherent::handleEviction(CacheLine* wbCacheLine, string origRqstr,
 CacheAction Incoherent::handleRequest(MemEvent* event, bool replay) {
     Addr addr = event->getBaseAddr();
 
+    if (is_debug_addr(addr))
+        printLine(addr);
+
     CacheLine * cacheLine = cacheArray_->lookup(addr, !replay);
     
     if (cacheLine && cacheLine->inTransition()) {
         allocateMSHR(addr, event);
+    
         return STALL;
     }
 
@@ -113,6 +117,7 @@ CacheAction Incoherent::handleRequest(MemEvent* event, bool replay) {
         forwardMessage(event, addr, event->getSize(), 0, data);
         event->setInProgress(true);
         recordMiss(event->getID());
+    
         return STALL;
     }
     
@@ -121,17 +126,27 @@ CacheAction Incoherent::handleRequest(MemEvent* event, bool replay) {
 
     Command cmd = event->getCmd();
 
+    CacheAction action = STALL;
     switch(cmd) {
         case Command::GetS:
-            return handleGetSRequest(event, cacheLine, replay);
+            action = handleGetSRequest(event, cacheLine, replay);
+            break;
         case Command::GetX:
         case Command::GetSX:
-            return handleGetXRequest(event, cacheLine, replay);
+            action = handleGetXRequest(event, cacheLine, replay);
+            break;
         default:
 	    debug->fatal(CALL_INFO,-1,"%s, Error: Received an unrecognized request: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n", 
                     ownerName_.c_str(), CommandString[(int)cmd], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
     }
-    return STALL;    // Eliminate compiler warning
+    
+    if (is_debug_addr(addr))
+        printLine(addr);
+
+    if (action == DONE)
+        delete event;
+
+    return action;
 }
 
 
@@ -140,6 +155,10 @@ CacheAction Incoherent::handleRequest(MemEvent* event, bool replay) {
  */
 CacheAction Incoherent::handleReplacement(MemEvent* event, bool replay) {
     Addr addr = event->getBaseAddr();
+    
+    if (is_debug_addr(addr))
+        printLine(addr);
+    
     CacheLine* cacheLine = cacheArray_->lookup(addr, true);
     if (cacheLine == nullptr) {
         if (is_debug_addr(addr)) debug->debug(_L3_, "-- Cache Miss --\n");
@@ -187,6 +206,11 @@ CacheAction Incoherent::handleReplacement(MemEvent* event, bool replay) {
     }
     if (action == STALL || action == BLOCK)
         allocateMSHR(addr, event);
+    else
+        delete event;
+    
+    if (is_debug_addr(addr))
+        printLine(addr);
 
     return action;
 }

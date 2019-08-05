@@ -158,6 +158,9 @@ CacheAction MESISharNoninclusive::handleEviction(CacheLine* replacementLine, str
 CacheAction MESISharNoninclusive::handleRequest(MemEvent * event, bool replay) {
     Addr addr = event->getBaseAddr();
     
+    if (is_debug_addr(addr))
+        printLine(addr);
+
     CacheLine * dirLine = cacheArray_->lookup(addr, !replay); 
     
     if (!dirLine && (is_debug_addr(addr))) debug->debug(_L3_, "-- Miss --\n");
@@ -176,18 +179,28 @@ CacheAction MESISharNoninclusive::handleRequest(MemEvent * event, bool replay) {
         dirLine = cacheArray_->lookup(addr, false);
     }
 
+    CacheAction action = STALL;
     Command cmd = event->getCmd();
     switch(cmd) {
         case Command::GetS:
-            return handleGetSRequest(event, dirLine, replay);
+            action = handleGetSRequest(event, dirLine, replay);
+            break;
         case Command::GetX:
         case Command::GetSX:
-            return handleGetXRequest(event, dirLine, replay);
+            action = handleGetXRequest(event, dirLine, replay);
+            break;
         default:
             debug->fatal(CALL_INFO, -1, "%s (dir), Errror: Received an unrecognized request: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
                     ownerName_.c_str(), CommandString[(int)cmd], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
     }
-    return STALL; // Eliminate compiler warning
+    
+    if (is_debug_addr(addr))
+        printLine(addr);
+
+    if (action == DONE)
+        delete event;
+
+    return action;
 
 }
 
@@ -197,6 +210,10 @@ CacheAction MESISharNoninclusive::handleRequest(MemEvent * event, bool replay) {
  */
 CacheAction MESISharNoninclusive::handleReplacement(MemEvent* event, bool replay) {
     Addr addr = event->getBaseAddr();
+    
+    if (is_debug_addr(addr))
+        printLine(addr);
+    
     CacheLine* dirLine = cacheArray_->lookup(addr, false);
 
     // Need a line for this
@@ -232,7 +249,12 @@ CacheAction MESISharNoninclusive::handleReplacement(MemEvent* event, bool replay
     }
     if (action == STALL || action == BLOCK)
         allocateMSHR(addr, event);
+    else
+        delete event;
 
+    if (is_debug_addr(addr))
+        printLine(addr);
+    
     return action;
 }
 

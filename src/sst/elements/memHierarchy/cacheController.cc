@@ -13,24 +13,15 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-/*
- * File:   cache.cc
- * Author: Caesar De la Paz III
- */
-
-
 #include <sst_config.h>
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>
 #include <sst/core/interfaces/stringEvent.h>
 
-#include <csignal>
-
 #include "cacheController.h"
 #include "memEvent.h"
 #include "mshr.h"
 #include "coherencemgr/coherenceController.h"
-#include "hash.h"
 
 
 using namespace SST;
@@ -69,23 +60,18 @@ using namespace SST::MemHierarchy;
  *  5. Send response to requestor
  */
 void Cache::processCacheRequest(MemEvent* event, Command cmd, Addr baseAddr, bool replay) {
-    if (is_debug_addr(baseAddr)) coherenceMgr_->printLine(baseAddr);
     CacheAction action = coherenceMgr_->handleRequest(event, replay);
-    if (is_debug_addr(baseAddr)) coherenceMgr_->printLine(baseAddr);
     
     // Post-request processing and/or stall
     if (action == DONE) {
-        Addr addr = event->getBaseAddr();
-        delete event;
-    
         /* For atomic requests handled by the cache itself, GetX unlocks the cache line.  Therefore,
            we possibly need to 'replay' events that blocked due to an locked cacheline */
         if (L1_) {
-            CacheLine* cacheLine = cacheArray_->lookup(addr, false);
+            CacheLine* cacheLine = cacheArray_->lookup(baseAddr, false);
             if( cacheLine->getEventsWaitingForLock() && !cacheLine->isLocked()) reActivateEventWaitingForUserLock(cacheLine);
         }
 
-        if (mshr_->isHit(addr)) activatePrevEvents(addr);   // Replay any waiting events that blocked for this one
+        if (mshr_->isHit(baseAddr)) activatePrevEvents(baseAddr);   // Replay any waiting events that blocked for this one
     }
 }
 
@@ -96,15 +82,12 @@ void Cache::processCacheRequest(MemEvent* event, Command cmd, Addr baseAddr, boo
  *  If Put conflicts with existing request, will still call handleReplacement to resolve any races
  */
 void Cache::processCacheReplacement(MemEvent* event, Command cmd, Addr baseAddr, bool replay) {
-    if (is_debug_addr(baseAddr)) coherenceMgr_->printLine(baseAddr);
-
     // Attempt replacement, also handle any racing requests
     CacheAction action = coherenceMgr_->handleReplacement(event, replay);
     
-    if (is_debug_addr(baseAddr)) coherenceMgr_->printLine(baseAddr);
-    
-    if (action != STALL && action != BLOCK)
-        postReplacementProcessing(event, action, replay);
+    /* Got a writeback, check if waiting events can proceed now */
+    if (action == DONE) 
+        activatePrevEvents(baseAddr);
 }
 
 
@@ -319,13 +302,6 @@ bool Cache::activatePrevEvent(MemEvent* event, list<MSHREntry>& entries, Addr ad
 }
 
 void Cache::postReplacementProcessing(MemEvent * event, CacheAction action, bool replay) {
-    Addr baseAddr = event->getBaseAddr();
-
-    /* Got a writeback, check if waiting events can proceed now */
-    if (action == DONE) activatePrevEvents(baseAddr);
-    
-    /* Clean up */
-    delete event;
 }
 
 

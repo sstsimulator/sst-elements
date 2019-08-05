@@ -143,9 +143,12 @@ CacheAction MESIPrivNoninclusive::handleEviction(CacheLine* wbCacheLine, string 
  */
 CacheAction MESIPrivNoninclusive::handleRequest(MemEvent* event, bool replay) {
     Addr addr = event->getBaseAddr();
+
+    if (is_debug_addr(addr))
+        printLine(addr);
+
     CacheLine * cacheLine = cacheArray_->lookup(addr, !replay);
     
-
     if (cacheLine && cacheLine->inTransition()) {
         allocateMSHR(addr, event);
         return STALL;
@@ -166,18 +169,28 @@ CacheAction MESIPrivNoninclusive::handleRequest(MemEvent* event, bool replay) {
         return STALL;
     }
 
+    CacheAction action = STALL;
     Command cmd = event->getCmd();
     switch(cmd) {
         case Command::GetS:
-            return handleGetSRequest(event, cacheLine, replay);
+            action = handleGetSRequest(event, cacheLine, replay);
+            break;
         case Command::GetX:
         case Command::GetSX:
-            return handleGetXRequest(event, cacheLine, replay);
+            action = handleGetXRequest(event, cacheLine, replay);
+            break;
         default:
 	    debug->fatal(CALL_INFO,-1,"%s, Error: Received an unrecognized request. Event = %s. Time = %" PRIu64 "ns\n", 
                     ownerName_.c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
-    return STALL;    // Eliminate compiler warning
+
+    if (is_debug_addr(addr))
+        printLine(addr);
+
+    if (action == DONE)
+        delete event;
+
+    return action;
 }
 
 
@@ -186,6 +199,10 @@ CacheAction MESIPrivNoninclusive::handleRequest(MemEvent* event, bool replay) {
  */
 CacheAction MESIPrivNoninclusive::handleReplacement(MemEvent* event, bool replay) {
     Addr addr = event->getBaseAddr();
+    
+    if (is_debug_addr(addr))
+        printLine(addr);
+    
     CacheLine* cacheLine = cacheArray_->lookup(addr, true);
     if (cacheLine == nullptr) {
         if (is_debug_addr(addr)) debug->debug(_L3_, "-- Cache Miss --\n");
@@ -224,6 +241,11 @@ CacheAction MESIPrivNoninclusive::handleReplacement(MemEvent* event, bool replay
     }
     if (action == STALL || action == BLOCK)
         allocateMSHR(addr, event);
+    else
+        delete event;
+   
+    if (is_debug_addr(addr))
+        printLine(addr);
     
     return action;
 }

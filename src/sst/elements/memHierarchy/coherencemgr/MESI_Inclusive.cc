@@ -156,6 +156,9 @@ CacheAction MESIInclusive::handleEviction(CacheLine* wbCacheLine, string rqstr, 
 CacheAction MESIInclusive::handleRequest(MemEvent* event, bool replay) {
     Addr addr = event->getBaseAddr();
     
+    if (is_debug_addr(addr))
+        printLine(addr);
+
     CacheLine * cacheLine = cacheArray_->lookup(addr, !replay);
     
     if (!cacheLine && (is_debug_addr(addr))) debug->debug(_L3_, "-- Miss --\n");
@@ -174,19 +177,28 @@ CacheAction MESIInclusive::handleRequest(MemEvent* event, bool replay) {
         cacheLine = cacheArray_->lookup(addr, false);
     }
     
-    
+    CacheAction action = STALL;
     Command cmd = event->getCmd();
     switch(cmd) {
         case Command::GetS:
-            return handleGetSRequest(event, cacheLine, replay);
+            action = handleGetSRequest(event, cacheLine, replay);
+            break;
         case Command::GetX:
         case Command::GetSX:
-            return handleGetXRequest(event, cacheLine, replay);
+            action = handleGetXRequest(event, cacheLine, replay);
+            break;
         default:
 	    debug->fatal(CALL_INFO,-1,"%s, Error: Received an unrecognized request. Event = %s. Time = %" PRIu64 "ns\n", 
                     ownerName_.c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
-    return STALL;    // Eliminate compiler warning
+    
+    if (is_debug_addr(addr))
+        printLine(addr);
+    
+    if (action == DONE)
+        delete event;
+
+    return action;
 }
 
 
@@ -195,6 +207,10 @@ CacheAction MESIInclusive::handleRequest(MemEvent* event, bool replay) {
  */
 CacheAction MESIInclusive::handleReplacement(MemEvent* event, bool replay) {
     Addr addr = event->getBaseAddr();
+
+    if (is_debug_addr(addr))
+        printLine(addr);
+
     CacheLine * cacheLine = cacheArray_->lookup(addr, false);
 
     MemEvent* reqEvent = nullptr;
@@ -222,6 +238,12 @@ CacheAction MESIInclusive::handleReplacement(MemEvent* event, bool replay) {
     }
     if (action == STALL || action == BLOCK)
         allocateMSHR(addr, event);
+    else
+        delete event;
+
+    if (is_debug_addr(addr))
+        printLine(addr);
+
     return action;
 }
 
