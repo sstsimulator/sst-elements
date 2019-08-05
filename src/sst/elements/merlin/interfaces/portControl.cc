@@ -216,7 +216,7 @@ PortControl::PortControl(ComponentId_t cid, Params& params,  Router* rif, int rt
                                    new Event::Handler<PortControl>(this,&PortControl::handle_input_n2r));
         if ( port_link != NULL ) {
             output_timing = configureSelfLink(link_port_name + "_output_timing", "1GHz",
-                                              new Event::Handler<PortControl>(this,&PortControl::handle_output_r2r));
+                                              new Event::Handler<PortControl>(this,&PortControl::handle_output));
         }
         break;
     case Topology::R2R:
@@ -225,7 +225,7 @@ PortControl::PortControl(ComponentId_t cid, Params& params,  Router* rif, int rt
                                   new Event::Handler<PortControl>(this,&PortControl::handle_input_r2r));
         if ( port_link != NULL ) {
             output_timing = configureSelfLink(link_port_name + "_output_timing", "1GHz",
-                                              new Event::Handler<PortControl>(this,&PortControl::handle_output_r2r));
+                                              new Event::Handler<PortControl>(this,&PortControl::handle_output));
         }
         break;
     default:
@@ -279,12 +279,6 @@ PortControl::PortControl(ComponentId_t cid, Params& params,  Router* rif, int rt
     }
     
     
-    
-    // output_timing = rif->configureSelfLink(link_port_name + "_output_timing", time_base,
-    //                                        new Event::Handler<PortControl>(this,&PortControl::handle_output));
-    
-    curr_out_vc = 0;
-
     // Register statistics
     std::string port_name("port");
     port_name = port_name + std::to_string(port_number);
@@ -686,7 +680,6 @@ PortControl::dumpState(std::ostream& stream)
         stream << "Time since last active = " << (Simulation::getSimulation()->getCurrentSimCycle() - idle_start) << std::endl;
     stream << "  have_packets = " << have_packets << std::endl;
     stream << "  start_block = " << start_block << std::endl;
-	stream << "  curr_out_vc = " << curr_out_vc << std::endl;
 	for ( int i = 0; i < num_vcs; i++ ) {
 	    stream << "  VC " << i << " Information:" << std::endl;
 	    stream << "    xbar_in_credits = " << xbar_in_credits[i] << std::endl;
@@ -710,7 +703,6 @@ PortControl::printStatus(Output& out, int out_port_busy, int in_port_busy)
 	out.output("  Waiting = %u\n", waiting);
     out.output("  have_packets = %u\n", have_packets);
     out.output("  start_block = %" PRIu64 "\n", start_block);
-    out.output("  curr_out_vc = %d\n", curr_out_vc);
 	for ( int i = 0; i < num_vcs; i++ ) {
 	    out.output("  Start VC %d\n", i);
 	    out.output("    xbar_in_credits = %d\n", xbar_in_credits[i]);
@@ -942,185 +934,8 @@ PortControl::handle_input_r2r(Event* ev)
 #endif
 }
 
-// void
-// PortControl::handle_output_r2r(Event* ev) {
-//     // TraceFunction trace (CALL_INFO_LONG);
-// #if TRACK
-//     if ( rtr_id == TRACK_ID && port_number == TRACK_PORT ) {
-//         printStatus(Simulation::getSimulation()->getSimulationOutput(),0,0);
-//     }
-// #endif
-// 	// The event is an empty event used just for timing.
-
-// 	// ***** Need to add in logic for when to return credits *****
-// 	// For now just done automatically when events are pulled out
-// 	// of the block
-    
-// 	// If there is data in the topo_queue, it takes priority
-// 	if ( !topo_queue.empty() ) {
-// 	    TopologyEvent* event = topo_queue.front();
-// 	    // Send an event to wake up again after packet is done
-// 	    output_timing->send(event->getSizeInFlits(),NULL);
-        
-// 	    // Send event
-// 	    port_link->send(1,event);
-//         // trace.getOutput().output(CALL_INFO, "after\n");
-// 	    return;
-// 	}
-//     // trace.getOutput().output(CALL_INFO, "Got to here 1\n");
-    
-// 	// We do a round robin scheduling.  If the current vc has no
-// 	// data, find one that does.
-// 	int vc_to_send = -1;
-// 	bool found = false;
-// 	internal_router_event* send_event = NULL;
-//     have_packets = false;
-//     // trace.getOutput().output(CALL_INFO, "Got to here 2\n");
-    
-// 	if (!sai_port_disabled){
-// 		for ( int i = curr_out_vc; i < num_vcs; i++ ) {
-// 			if ( output_buf[i].empty() ) continue;
-// 			have_packets = true;
-// 			send_event = output_buf[i].front();
-// 			// Check to see if the needed VC has enough space
-// 			if ( port_out_credits[i] < send_event->getFlitCount() ) continue;
-// 			vc_to_send = i;
-// 			output_buf[i].pop();
-// 			found = true;
-// 			break;
-// 		}
-// 		// trace.getOutput().output(CALL_INFO, "Got to here 3\n");
-			
-// 		if (!found)  {
-// 			for ( int i = 0; i < curr_out_vc; i++ ) {
-// 				if ( output_buf[i].empty() ) continue;
-// 				have_packets = true;
-// 				send_event = output_buf[i].front();
-// 				// Check to see if the needed VC has enough space
-// 				if ( port_out_credits[i] < send_event->getFlitCount() ) continue;
-// 				vc_to_send = i;
-// 				output_buf[i].pop();
-// 				found = true;
-// 				break;
-// 			}
-// 		}
-// 	}
-//     // trace.getOutput().output(CALL_INFO, "Got to here 4\n");
-	
-// 	// If we found an event to send, go ahead and send it
-// 	if ( found ) {
-// 	    // std::cout << "Found an event to send on output port " << port_number << std::endl;
-// 	    // Send the output to the network.
-// 	    // First set the virtual channel.
-
-//         // If this is a host port, then we return it to the VN instead of the VC
-//         send_event->setVC(vc_to_send);
-        
-// 	    // Need to return credits to the output buffer
-// 	    int size = send_event->getFlitCount();
-// 	    xbar_in_credits[vc_to_send] += size;
-//         if ( !oql_track_remote ) {
-//             if ( oql_track_port ) {
-//                 for ( int i = 0; i < num_vcs; ++i ) {
-//                     output_queue_lengths[i] -= size;
-//                 }
-//             }
-//             else {
-//                 output_queue_lengths[vc_to_send] -= size;
-//             }
-//         }
-        
-// 	    // Send an event to wake up again after this packet is sent.
-// 	    output_timing->send(size,NULL); 
-	    
-// 	    // Take care of the round variable
-// 	    curr_out_vc = vc_to_send + 1;
-// 	    if ( curr_out_vc == num_vcs ) curr_out_vc = 0;
-        
-// 	    // Subtract credits
-// 	    port_out_credits[vc_to_send] -= size;
-// 	    output_buf_count[vc_to_send]++;
-
-//         if (is_idle) {
-//             idle_time->addData(Simulation::getSimulation()->getCurrentSimCycle() - idle_start);
-//             is_idle = false;
-//         }
-        
-// 	    if ( send_event->getTraceType() == SimpleNetwork::Request::FULL ) {
-//             output.output("TRACE(%d): %" PRIu64 " ns: Sent and event to router from PortControl in router: %d"
-//                           " (%s) on VC %d from src %d to dest %d.\n",
-//                           send_event->getTraceID(),
-//                           parent->getCurrentSimTimeNano(),
-//                           rtr_id,
-//                           parent->getName().c_str(),
-//                           send_event->getVC(),
-//                           send_event->getSrc(),
-//                           send_event->getDest());
-
-//             // std::cout << "TRACE(" << send_event->getTraceID() << "): " << parent->getCurrentSimTimeNano()
-//             //           << " ns: Sent an event to router from PortControl in router: " << rtr_id
-//             //           << " (" << parent->getName() << ") on VC " << send_event->getVC()
-//             //           << " from src " << send_event->getSrc()
-//             //           << " to dest " << send_event->getDest()
-//             //           << "." << std::endl;
-// 	    }
-//         send_bit_count->addData(send_event->getEncapsulatedEvent()->request->size_in_bits);
-//         send_packet_count->addData(1);
-
-//         // Send the request to all the registered NetworkInspectors
-//         for ( unsigned int i = 0; i < network_inspectors.size(); i++ ) {
-//             network_inspectors[i]->inspectNetworkData(send_event->getEncapsulatedEvent()->request);
-//         }
-
-// 	    if ( host_port ) {
-//             // std::cout << "Found an event to send on host port " << port_number << std::endl;
-//             // trace.getOutput().output(CALL_INFO, "before\n");
-//             port_link->send(1,send_event->getEncapsulatedEvent()); 
-//             // trace.getOutput().output(CALL_INFO, "after\n");
-//             send_event->setEncapsulatedEvent(NULL);
-//             delete send_event;
-// 	    }
-// 	    else {
-//             // trace.getOutput().output(CALL_INFO, "before\n");
-//             port_link->send(1,send_event); 
-//             // trace.getOutput().output(CALL_INFO, "after\n");
-// 	    }
-// 	}
-// 	else {
-// 	    // What do we do if there's nothing to send??  It could be
-// 	    // because everything is empty or because there's not
-// 	    // enough room in the router buffers.  Either way, we
-// 	    // don't send a wakeup event.  We will send a wake up when
-// 	    // we either get something new in the output buffers or
-// 	    // receive credits back from the router.  However, we need
-// 	    // to know that we got to this state.
-//         start_block = Simulation::getSimulation()->getCurrentSimCycle();
-// 	    waiting = true;
-//         // Begin counting the amount of time this port was idle
-//         if (!have_packets && !is_idle) {
-//             idle_start = Simulation::getSimulation()->getCurrentSimCycle();
-//             is_idle = true;
-//         }
-// 		// Should be in a stalled state rather than idle
-// 		// This should also be triggered when a link is temporarily disabled due to
-// 		// adjusting the link width
-// 		if (have_packets && is_idle){
-//             idle_time->addData(Simulation::getSimulation()->getCurrentSimCycle() - idle_start);
-//             is_idle = false;
-//         }
-// 		if (sai_port_disabled){
-// 			output_timing->send(1,NULL); 
-// 		}
-// 	}
-// #if TRACK
-//     if ( rtr_id == TRACK_ID && port_number == TRACK_PORT ) {
-//         printStatus(Simulation::getSimulation()->getSimulationOutput(),0,0);
-//     }
-// #endif
-// }
-
 void
-PortControl::handle_output_r2r(Event* ev) {
+PortControl::handle_output(Event* ev) {
 #if TRACK
     if ( rtr_id == TRACK_ID && port_number == TRACK_PORT ) {
         printStatus(Simulation::getSimulation()->getSimulationOutput(),0,0);
@@ -1242,127 +1057,6 @@ PortControl::handle_output_r2r(Event* ev) {
 #endif
 }
 
-void
-PortControl::handle_output_n2r(Event* ev) {
-    // TraceFunction trace(CALL_INFO_LONG);
-	// The event is an empty event used just for timing.
-
-	// ***** Need to add in logic for when to return credits *****
-	// For now just done automatically when events are pulled out
-	// of the block
-    
-	// If there is data in the topo_queue, it takes priority
-	if ( !topo_queue.empty() ) {
-	    TopologyEvent* event = topo_queue.front();
-	    // Send an event to wake up again after packet is done
-	    output_timing->send(event->getSizeInFlits(),NULL);
-        
-	    // Send event
-	    port_link->send(1,event);
-	    return;
-	}
-	
-	// We do a round robin scheduling.  If the current vc has no
-	// data, find one that does.
-    int vc_to_send = -1;
-    if ( !sai_port_disabled ) 
-        vc_to_send = output_arb->arbitrate(output_buf, port_out_credits, host_port, have_packets);
-
-    // If we found an event to send, go ahead and send it
-	if ( vc_to_send != -1 ) {
-        //  We found something to send
-        internal_router_event* send_event = output_buf[vc_to_send].front();
-        output_buf[vc_to_send].pop();
-
-	    // Send the output to the network.
-	    // First set the virtual channel.
-
-        // If this is a host port, then we return it to the VN instead of the VC
-        // send_event->setVC(vc_to_send);
-        
-	    // Need to return credits to the output buffer
-	    int size = send_event->getFlitCount();
-	    xbar_in_credits[vc_to_send] += size;
-        if ( !oql_track_remote ) {
-            if ( oql_track_port ) {
-                for ( int i = 0; i < num_vcs; ++i ) {
-                    output_queue_lengths[i] -= size;
-                }
-            }
-            else {
-                output_queue_lengths[vc_to_send] -= size;
-            }
-        }
-        
-	    // Send an event to wake up again after this packet is sent.
-	    output_timing->send(size,NULL); 
-	    
-	    // Subtract credits
-	    port_out_credits[host_port ? send_event->getVN() : vc_to_send] -= size;
-	    output_buf_count[vc_to_send]++;
-
-        if (is_idle) {
-            idle_time->addData(Simulation::getSimulation()->getCurrentSimCycle() - idle_start);
-            is_idle = false;
-        }
-        
-	    if ( send_event->getTraceType() == SimpleNetwork::Request::FULL ) {
-            output.output("TRACE(%d): %" PRIu64 " ns: Sent and event to router from PortControl in router: %d"
-                          " (%s) on VC %d from src %d to dest %d.\n",
-                          send_event->getTraceID(),
-                          parent->getCurrentSimTimeNano(),
-                          rtr_id,
-                          parent->getName().c_str(),
-                          send_event->getVC(),
-                          send_event->getSrc(),
-                          send_event->getDest());
-	    }
-        send_bit_count->addData(send_event->getEncapsulatedEvent()->request->size_in_bits);
-        send_packet_count->addData(1);
-
-        // Send the request to all the registered NetworkInspectors
-        for ( unsigned int i = 0; i < network_inspectors.size(); i++ ) {
-            network_inspectors[i]->inspectNetworkData(send_event->getEncapsulatedEvent()->request);
-        }
-
-	    if ( host_port ) {
-            // std::cout << "Found an event to send on host port " << port_number << std::endl;
-            port_link->send(1,send_event->getEncapsulatedEvent()); 
-            send_event->setEncapsulatedEvent(NULL);
-            delete send_event;
-	    }
-	    else {
-            port_link->send(1,send_event); 
-	    }   
-	}
-	// TLG -- need to think about how to count a disabled link, is it stalled?
-	else {
-	    // What do we do if there's nothing to send??  It could be
-	    // because everything is empty or because there's not
-	    // enough room in the router buffers.  Either way, we
-	    // don't send a wakeup event.  We will send a wake up when
-	    // we either get something new in the output buffers or
-	    // receive credits back from the router.  However, we need
-	    // to know that we got to this state.
-        start_block = Simulation::getSimulation()->getCurrentSimCycle();
-	    waiting = true;
-        // Begin counting the amount of time this port was idle
-        if (!have_packets && !is_idle) {
-            idle_start = Simulation::getSimulation()->getCurrentSimCycle();
-            is_idle = true;
-        }
-		// Should be in a stalled state rather than idle
-		// This should also be triggered when a link is temporarily disabled due to
-		// adjusting the link width
-		if (have_packets && is_idle){
-            idle_time->addData(Simulation::getSimulation()->getCurrentSimCycle() - idle_start);
-            is_idle = false;
-        }
-		if (sai_port_disabled){
-			output_timing->send(1,NULL); 
-		}
-	}
-}
 
 // This is the handler for an event that disables a port
 // from sending or receiving data for sai_adj_delay time 

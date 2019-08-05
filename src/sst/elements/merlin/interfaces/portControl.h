@@ -166,10 +166,6 @@ private:
     int* port_ret_credits;
     int* port_out_credits;
     
-    // Doing a round robin on the output.  Need to keep track of the
-    // current virtual channel.
-    int curr_out_vc;
-
     // Represents the start of when a port was idle
     // If the buffer was empty we instantiate this to the current time
     SimTime_t idle_start;
@@ -278,8 +274,7 @@ private:
     
     void handle_input_n2r(Event* ev);
     void handle_input_r2r(Event* ev);
-    void handle_output_n2r(Event* ev);
-    void handle_output_r2r(Event* ev);
+    void handle_output(Event* ev);
 	void handleSAIWindow(Event* ev);
 	void reenablePort(Event* ev);
 
