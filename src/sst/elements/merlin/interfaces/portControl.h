@@ -95,6 +95,8 @@ public:
 	virtual bool increaseLinkWidth() = 0; 
 };
 
+class OutputArbitration;
+
 // Class to manage link between NIC and router.  A single NIC can have
 // more than one link_control (and thus link to router).
 class PortControl : public PortControlBase {
@@ -134,7 +136,8 @@ public:
     // )
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-        {"inspector_slot", "Network inspectors", "SST::Interfaces::SimpleNetwork::NetworkInspector" }
+        {"inspector_slot", "Network inspectors", "SST::Interfaces::SimpleNetwork::NetworkInspector" },
+        {"arbitration", "Arbitration unit to use for output", "SST::Merlin::OutputArbitration" }
     )
 
 private:
@@ -281,6 +284,8 @@ private:
 	uint64_t time_active_nano_remaining;
 
     Output& output;
+
+    OutputArbitration* output_arb;
     
 public:
 
@@ -341,6 +346,26 @@ private:
 	uint64_t increaseActive();
 
 };
+
+class OutputArbitration : public SubComponent {
+public:
+
+    SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Merlin::OutputArbitration)
+    
+    OutputArbitration(Component* parent) :
+        SubComponent(parent)
+    {}
+    OutputArbitration(ComponentId_t cid) :
+        SubComponent(cid)
+    {}
+    virtual ~OutputArbitration() {}
+
+    virtual void setVCs(int num_vcs) = 0;
+    virtual int arbitrate(port_queue_t* out_q, int* port_out_credits, bool isHostPort, bool& have_packets) = 0;
+    virtual void dumpState(std::ostream& stream) {};
+	
+};
+
 
 }  // Namespace merlin
 }  // Namespace sst
