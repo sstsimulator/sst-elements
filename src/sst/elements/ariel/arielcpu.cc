@@ -165,10 +165,12 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 
     char* tool_path = (char*) malloc(sizeof(char) * 1024);
 
+#ifdef SST_HAVE_PINTOOL
 #ifdef SST_COMPILE_MACOSX
     sprintf(tool_path, "%s/fesimple.dylib", ARIEL_STRINGIZE(ARIEL_TOOL_DIR));
 #else
     sprintf(tool_path, "%s/fesimple.so", ARIEL_STRINGIZE(ARIEL_TOOL_DIR));
+#endif
 #endif
 
     std::string ariel_tool = params.find<std::string>("arieltool", tool_path);
@@ -238,11 +240,6 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     execute_args[0] = (char*) malloc(sizeof(char) * (appLauncher.size() + 2));
     sprintf(execute_args[0], "%s", appLauncher.c_str());
     arg++;
-
-#if 0
-    execute_args[arg++] = const_cast<char*>("-pause_tool");
-    execute_args[arg++] = const_cast<char*>("15");
-#endif
 
 #ifdef HAVE_CUDA
     execute_args[arg++] = const_cast<char*>("-injection");

@@ -13,6 +13,6 @@ AC_DEFUN([SST_ariel_CONFIG], [
   # Use LIBZ
   SST_CHECK_LIBZ()
 
-  AS_IF( [test "$have_pin" = 1], [sst_check_ariel="yes"], [sst_check_ariel="no"] )
+  # Process Ariel for main configure, we always build the core now
   AS_IF([test "$sst_check_ariel" = "yes"], [$1], [$2])
 ])

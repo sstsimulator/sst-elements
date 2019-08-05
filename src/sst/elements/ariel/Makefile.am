@@ -71,8 +71,12 @@ endif
 libariel_la_CPPFLAGS = \
 	-DARIEL_TRACE_LIB=$(libdir)/sst \
         -DARIEL_TOOL_DIR="$(libexecdir)" \
-	-DPINTOOL_EXECUTABLE="$(PINTOOL_RUNTIME)" \
 	$(CPPFLAGS) $(AM_CPPFLAGS)
+
+if HAVE_PINTOOL
+libariel_la_CPPFLAGS += \
+	-DPINTOOL_EXECUTABLE="$(PINTOOL_RUNTIME)"
+endif
 
 sstdir = $(includedir)/sst/elements/ariel
 nobase_sst_HEADERS = \
@@ -83,6 +87,7 @@ nobase_sst_HEADERS = \
 libexec_PROGRAMS =
 
 
+if HAVE_PINTOOL
 if SST_COMPILE_OSX
 
 all-local: frontend/simple/fesimple.cc
@@ -149,4 +154,5 @@ install-exec-hook:
 	$(MKDIR_P) $(libexecdir)
 	$(INSTALL) fesimple.so $(libexecdir)/fesimple.so
 
+endif
 endif

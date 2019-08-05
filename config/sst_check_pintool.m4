@@ -16,7 +16,7 @@ AC_DEFUN([SST_CHECK_PINTOOL],
     AS_IF([test ! -z "$with_pin" -a "$with_pin" != "yes"],
       [PINTOOL_PATH="$with_pin:$PATH"
        PINTOOL_DIR="$with_pin"
-       PINTOOL_CPPFLAGS="-I$with_pin/source/include -DHAVE_PIN=1"
+       PINTOOL_CPPFLAGS="-I$with_pin/source/include -DHAVE_PIN=1 -DSST_HAVE_PINTOOL=1"
        CPPFLAGS="$PINTOOL_CPPFLAGS $CPPFLAGS"
        PINTOOL_LDFLAGS="-L$with_pin/intel64/runtime -L$with_pin/intel64/lib -L$with_pin/intel/lib-ext"
        LDFLAGS="$PINTOOL_LDFLAGS $PINTOOL_LDFLAGS $LDFLAGS -lm"],
