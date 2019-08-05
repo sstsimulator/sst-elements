@@ -66,6 +66,9 @@ libmerlin_la_SOURCES = \
 	inspectors/circuitCounter.cc \
 	inspectors/testInspector.cc \
 	inspectors/testInspector.h \
+	arbitration/single_arb.h \
+	arbitration/single_lru.h \
+	arbitration/single_rr.h \
 	pymodule.h \
 	pymodule.c \
 	pymerlin.py
