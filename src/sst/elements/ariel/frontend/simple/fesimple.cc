@@ -94,7 +94,7 @@ KNOB<UINT32> InstrumentInstructions(KNOB_MODE_WRITEONCE, "pintool",
 
 #define ARIEL_MAX(a,b) \
    ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
-   
+
 #define ARIEL_MIN(a,b) \
    ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a < _b ? _a : _b; })
 
@@ -389,7 +389,7 @@ VOID WriteInstructionWrite(ADDRINT* address, UINT32 writeSize, THREADID thr, ADD
     ac.inst.size = writeSize;
     ac.inst.instClass = instClass;
     ac.inst.simdElemCount = simdOpWidth;
-    
+
     if( writeTrace ) {
 //      if( writeSize > ARIEL_MAX_PAYLOAD_SIZE ) {
 //          fprintf(stderr, "Error: Payload exceeds maximum size (%d > %d)\n",
@@ -624,12 +624,12 @@ void mapped_ariel_enable()
     /* LOCK */
     THREADID thr = PIN_ThreadId();
     PIN_GetLock(&mainLock, thr);
-    
+
     if (enable_output) {
         PIN_ReleaseLock(&mainLock);
         return;
     }
-    
+
     // Setup timers to count start time + elapsed simulated time
     struct timeval tvsim;
     gettimeofday(&offset_tv, nullptr);
@@ -664,7 +664,7 @@ uint64_t mapped_ariel_cycles()
     return tunnel->getCycles();
 }
 
-/* 
+/*
  * Override gettimeofday to return simulated time
  * If ariel_enable is false, returns system gettimeofday value
  * If ariel_enable is true, returns system gettimeofday when ariel was enabled + elapsed simulated time since ariel was enabled
@@ -706,7 +706,7 @@ int mapped_clockgettime(clockid_t clock, struct timespec *tp)
         tp->tv_sec += offset_tp_real.tv_sec;
         tp->tv_nsec += offset_tp_real.tv_nsec;
     }
-    
+
     return 0;
 }
 #endif
@@ -1347,7 +1347,7 @@ __host__ cudaError_t CUDARTAPI cudaSetupArgument(const void *arg, size_t size, s
         printf("CUDA ADDRESS ARG %p\n",ac.API.CA.set_arg.address);
 #endif
     } else{
-        ac.API.CA.set_arg.address = NULL;
+        ac.API.CA.set_arg.address = 0x00;
         PIN_SafeCopy(&value, arg, size);
         memcpy(ac.API.CA.set_arg.value, value, size);
 #ifdef ARIEL_DEBUG
@@ -1460,7 +1460,7 @@ void CUDARTAPI __cudaRegisterVar(
 		int ext,
 		int size,
 		int constant,
-		int global ) 
+		int global )
 {
 #ifdef ARIEL_DEBUG
     printf("Call __cudaRegisterVar.\n");
@@ -1812,11 +1812,11 @@ int main(int argc, char *argv[])
     } else {
         fprintf(stderr, "ARIEL-SST: Did not find ARIEL_OVERRIDE_POOL in the environment, no override applies.\n");
     }
-    
+
     if(PerformWriteTrace.Value() > 0) {
         writeTrace = true;
     }
-    
+
     if( writeTrace ) {
         if( SSTVerbosity.Value() > 0 ) {
             printf("SSTARIEL: Performing write tracing (this is an expensive operation.)\n");
@@ -1831,7 +1831,7 @@ int main(int argc, char *argv[])
     tunnelR = new GpuReturnTunnel(SSTNamedPipe2.Value());
     tunnelD = new GpuDataTunnel(SSTNamedPipe3.Value());
 #endif
-    
+
     lastMallocSize = (UINT64*) malloc(sizeof(UINT64) * core_count);
     lastMallocLoc = (UINT64*) malloc(sizeof(UINT64) * core_count);
     mallocIndex = 0;
