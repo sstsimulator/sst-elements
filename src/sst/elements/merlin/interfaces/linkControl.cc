@@ -159,6 +159,11 @@ LinkControl::initialize(const std::string& port_name, const UnitAlgebra& link_bw
     input_buf = new network_queue_t[req_vns];
     output_buf = new network_queue_t[total_vns];
 
+
+    // For now, credit arrays need to be initalized in init after we
+    // get the total number.  This makes it simplier to deal with VN
+    // remapping.
+    
     // Initialize credit arrays.  Credits are in flits, and we don't
     // yet know the flit size, so can't initialize in_ret_credits and
     // outbuf_credits yet.  Will initialize them after we get the
@@ -228,22 +233,22 @@ void LinkControl::init(unsigned int phase)
     RtrInitEvent* init_ev;
     switch ( phase ) {
     case 0:
-        {
-            // Negotiate link speed.  We will take the min of the two link speeds
-            init_ev = new RtrInitEvent();
-            init_ev->command = RtrInitEvent::REPORT_BW;
-            init_ev->ua_value = link_bw;
-            rtr_link->sendUntimedData(init_ev);
-
-            // In phase zero, send the number of VNs
-            RtrInitEvent* ev = new RtrInitEvent();
-            ev->command = RtrInitEvent::REQUEST_VNS;
-            ev->int_value = total_vns;
-            rtr_link->sendUntimedData(ev);
-        }
+    {
+        // Negotiate link speed.  We will take the min of the two link speeds
+        init_ev = new RtrInitEvent();
+        init_ev->command = RtrInitEvent::REPORT_BW;
+        init_ev->ua_value = link_bw;
+        rtr_link->sendUntimedData(init_ev);
+        
+        // In phase zero, send the number of VNs
+        RtrInitEvent* ev = new RtrInitEvent();
+        ev->command = RtrInitEvent::REQUEST_VNS;
+        ev->int_value = total_vns;
+        rtr_link->sendUntimedData(ev);
+    }
         break;
     case 1:
-        {
+    {
         // Get the link speed from the other side.  Actual link speed
         // will be the minumum the two sides
         ev = rtr_link->recvInitData();
@@ -254,7 +259,7 @@ void LinkControl::init(unsigned int phase)
         // Get the flit size from the router
         ev = rtr_link->recvInitData();
         init_ev = dynamic_cast<RtrInitEvent*>(ev);
-        UnitAlgebra flit_size_ua = init_ev->ua_value;
+        flit_size_ua = init_ev->ua_value;
         flit_size = flit_size_ua.getRoundedValue();
         delete ev;
         
@@ -271,7 +276,6 @@ void LinkControl::init(unsigned int phase)
             outbuf_credits[i] = (outbuf_size / flit_size_ua).getRoundedValue();
         }
         
-        // std::cout << link_clock.toStringBestSI() << std::endl;
         
         TimeConverter* tc = getTimeConverter(link_clock);
         output_timing->setDefaultTimeBase(tc);
@@ -295,12 +299,39 @@ void LinkControl::init(unsigned int phase)
         // init_ev->print("LC: ",Simulation::getSimulation()->getSimulationOutput());
         delete ev;
         
-        // Need to send available credits to other side of link
-        for ( int i = 0; i < total_vns; i++ ) {
-            rtr_link->sendUntimedData(new credit_event(i,in_ret_credits[i]));
-            in_ret_credits[i] = 0;
+        }
+        break;
+    case 2:
+        {
+        // Will receive information about total vns used and the
+        // mapping of my VNs to all of them
+        ev = rtr_link->recvInitData();
+        init_ev = dynamic_cast<RtrInitEvent*>(ev);
+        int actual_vns = init_ev->int_value;
+        delete ev;
+
+        vn_remap_out = new int[total_vns];
+        vn_remap_in = new int[actual_vns];
+        for ( int i = 0; i < actual_vns; ++i ) {
+            vn_remap_in[i] = -1;
+        }
+
+        // Will receive a message for each of my requested vns
+        for ( int i = 0; i < total_vns; ++i ) {
+            ev = rtr_link->recvInitData();
+            init_ev = dynamic_cast<RtrInitEvent*>(ev);
+            int vn = init_ev->int_value;
+            vn_remap_out[i] = vn;
+            vn_remap_in[vn] = i;
+            delete ev;
         }
         network_initialized = true;
+
+        // Need to send available credits to other side of link
+        for ( int i = 0; i < total_vns; i++ ) {
+            rtr_link->sendUntimedData(new credit_event(vn_remap_out[i],in_ret_credits[i]));
+            in_ret_credits[i] = 0;
+        }
         }
         break;
     default:
@@ -311,14 +342,14 @@ void LinkControl::init(unsigned int phase)
             BaseRtrEvent* bev = static_cast<BaseRtrEvent*>(ev);
             switch (bev->getType()) {
             case BaseRtrEvent::CREDIT:
-                {
+            {
                 credit_event* ce = static_cast<credit_event*>(bev);
-                if ( ce->vc < total_vns ) {  // Ignore credit events for VNs I don't have
-                    rtr_credits[ce->vc] += ce->credits;
+                if ( vn_remap_in[ce->vc] != -1 ) {  // Ignore credit events for VNs I don't have
+                    rtr_credits[vn_remap_in[ce->vc]] += ce->credits;
                 }
                 delete ev;
-                }
-                break;
+            }
+            break;
             case BaseRtrEvent::PACKET:
                 init_events.push_back(static_cast<RtrEvent*>(ev));
                 break;
@@ -416,11 +447,7 @@ bool LinkControl::send(SimpleNetwork::Request* req, int vn) {
         vn_offset = 0;
     }    
     ev->request->vn = vn * checker_board_factor + vn_offset;
-    
-    
-    // printf("%d: Send message to %llu on VN: %d, which is actually VN:%d --> %llu",id,req->dest,vn,req->vn,req->dest+req->src);
-    // std::cout << std::endl;
-    
+        
     output_buf[ev->request->vn].push(ev);
     if ( waiting && !have_packets ) {
         output_timing->send(1,NULL);
@@ -460,12 +487,11 @@ SST::Interfaces::SimpleNetwork::Request* LinkControl::recv(int vn) {
     // For now, we're just going to send the credits back to the
     // other side.  The required BW to do this will not be taken
     // into account.
-    rtr_link->send(1,new credit_event(event->request->vn,in_ret_credits[event->request->vn]));
-    in_ret_credits[event->request->vn] = 0;
+    // rtr_link->send(1,new credit_event(event->request->vn,in_ret_credits[event->request->vn]));
+    // in_ret_credits[event->request->vn] = 0;
+    rtr_link->send(1,new credit_event(event->request->vn,in_ret_credits[vn]));
+    in_ret_credits[vn] = 0;
 
-    // printf("%d: Returning credits on VN: %d for packet from %llu",id, event->request->vn, event->request->src);
-    // std::cout << std::endl;
-    
     if ( event->getTraceType() != SimpleNetwork::Request::NONE ) {
         output.output("TRACE(%d): %" PRIu64 " ns: recv called on LinkControl in NIC: %s\n",event->getTraceID(),
                       getCurrentSimTimeNano(), getName().c_str());
@@ -514,8 +540,7 @@ void LinkControl::handle_input(Event* ev)
     BaseRtrEvent* base_event = static_cast<BaseRtrEvent*>(ev);
     if ( base_event->getType() == BaseRtrEvent::CREDIT ) {
     	credit_event* ce = static_cast<credit_event*>(ev);
-        rtr_credits[ce->vc] += ce->credits;
-        // std::cout << "Got " << ce->credits << " credits for VN: " << ce->vc << ".  Current credits: " << rtr_credits[ce->vc] << std::endl;
+        rtr_credits[vn_remap_in[ce->vc]] += ce->credits;
         delete ev;
 
         // If we're waiting, we need to send a wakeup event to the
@@ -531,15 +556,10 @@ void LinkControl::handle_input(Event* ev)
         }
     }
     else {
-        // std::cout << "Enter handle_input" << std::endl;
-        // std::cout << "LinkControl received an event" << std::endl;
         RtrEvent* event = static_cast<RtrEvent*>(ev);
         // Simply put the event into the right virtual network queue
-        int actual_vn = event->request->vn / checker_board_factor;
-        // std::cout << event->request->vn << ", " << actual_vn << std::endl;
-
-        // printf("%d: Received event from %llu on VN: %d, which is actually %d\n", id, event->request->src, event->request->vn, actual_vn);
-        // std::cout << std::endl;
+        // int actual_vn = event->request->vn / checker_board_factor;
+        int actual_vn = vn_remap_in[event->request->vn] / checker_board_factor;
 
         input_buf[actual_vn].push(event);
         if (is_idle) {
@@ -558,7 +578,6 @@ void LinkControl::handle_input(Event* ev)
         SimTime_t lat = getCurrentSimTimeNano() - event->getInjectionTime();
         packet_latency->addData(lat);
         // stats.insertPacketLatency(lat);
-        // std::cout << "Exit handle_input" << std::endl;
         if ( receiveFunctor != NULL ) {
             bool keep = (*receiveFunctor)(actual_vn);
             if ( !keep) receiveFunctor = NULL;
@@ -608,12 +627,12 @@ void LinkControl::handle_output(Event* ev)
         }
     }
 
-
     // If we found an event to send, go ahead and send it
     if ( found ) {
         // Send the output to the network.
         // First set the virtual channel.
-        send_event->request->vn = vn_to_send;
+        int actual_vn = vn_remap_out[vn_to_send];
+        send_event->request->vn = actual_vn;
 
         // Need to return credits to the output buffer
         int size = send_event->getSizeInFlits();
@@ -636,11 +655,8 @@ void LinkControl::handle_output(Event* ev)
             idle_time->addData(Simulation::getSimulation()->getCurrentSimCycle() - idle_start);
             is_idle = false;
         }
-        // printf("%d: Sending packet to %llu on VN: %d",id, send_event->request->dest, send_event->request->vn);
-        // std::cout << std::endl;
 
         rtr_link->send(send_event);
-        // std::cout << "Sent packet on vn " << vn_to_send << ", credits remaining: " << rtr_credits[vn_to_send] << std::endl;
         
         if ( send_event->getTraceType() == SimpleNetwork::Request::FULL ) {
             output.output("TRACE(%d): %" PRIu64 " ns: Sent an event to router from LinkControl"
@@ -665,7 +681,6 @@ void LinkControl::handle_output(Event* ev)
         // we either get something new in the output buffers or
         // receive credits back from the router.  However, we need
         // to know that we got to this state.
-        // std::cout << "Waiting ..." << std::endl;
         start_block = Simulation::getSimulation()->getCurrentSimCycle();
         waiting = true;
         // Begin counting the amount of time this port was idle

@@ -19,6 +19,7 @@
 
 #include "output_arb_basic.h"
 
+#include <sst/core/sharedRegion.h>
 
 #define TRACK 0
 #define TRACK_ID 131
@@ -325,6 +326,18 @@ PortControl::PortControl(ComponentId_t cid, Params& params,  Router* rif, int rt
     Params arb_params;
     output_arb = loadAnonymousSubComponent<OutputArbitration>
         ("merlin.arb.output.basic","output_arb",0,ComponentInfo::SHARE_NONE, arb_params);
+
+    // See if number of VNs was set explicitly and if so, see if there is a VN remapping
+    num_vns = params.find<int>("num_vns",-1);
+    if ( num_vns != -1 ) {
+        vn_remap_shm = params.find<std::string>("vn_remap_shm","");
+        if ( vn_remap_shm != "" ) {
+            int size = params.find<int>("vn_remap_shm_size",-1);
+            shared_region = Simulation::getSharedRegionManager()->
+                getGlobalSharedRegion(vn_remap_shm, size, new SharedRegionMerger());
+            shared_region->publish();
+        }
+    }
 }
 
 
@@ -475,23 +488,9 @@ PortControl::finish() {
 void
 PortControl::init(unsigned int phase) {
     if ( !connected ) return;
-    // if ( topo->getPortState(port_number) == Topology::UNCONNECTED ) return;
-    if ( !connected ) return;
     Event *ev;
     RtrInitEvent* init_ev;
 
-	//if (link_bw.hasUnits("GB"))
-	//	printf("Has units GBytes\n");
-	//if (link_bw.hasUnits("B"))
-	//	printf("Has units Bytes\n");
-	//if (link_bw.hasUnits("B/s"))
-	//	printf("Has units Bytes per second\n");
-	//if (link_bw.hasUnits("b"))
-	//	printf("Has units Bits\n");
-	//if (link_bw.hasUnits("b/s"))
-	//	printf("Has units Bits per second\n");
-	//else
-	//	printf("Bandwidth is: %s\n", link_bw.toString().c_str());
     switch ( phase ) {
     case 0:
         // Negotiate link speed.  We will take the min of the two link speeds
@@ -500,19 +499,16 @@ PortControl::init(unsigned int phase) {
         init_ev->ua_value = link_bw;
         port_link->sendInitData(init_ev);
         
-        // std::cout << "FLIT - isHostPort(" << port_number << "): " << topo->isHostPort(port_number) << std::endl;
         // If this is a host port, send the endpoint ID to the LinkControl
         if ( topo->isHostPort(port_number) ) {
             init_ev = new RtrInitEvent();
             init_ev->command = RtrInitEvent::REPORT_FLIT_SIZE;
             init_ev->ua_value = flit_size;
             port_link->sendInitData(init_ev);
-            // std::cout << "FLIT_SIZE: " << flit_size.toStringBestSI() << std::endl;
         
             RtrInitEvent* ev = new RtrInitEvent();
             ev->command = RtrInitEvent::REPORT_ID;
             ev->int_value = topo->getEndpointID(port_number);
-            // ev->print("PC: ", Simulation::getSimulation()->getSimulationOutput());
             port_link->sendInitData(ev);
         }
         else {
@@ -548,6 +544,8 @@ PortControl::init(unsigned int phase) {
         if ( topo->isHostPort(port_number) ) {
             ev = port_link->recvInitData();
             init_ev = dynamic_cast<RtrInitEvent*>(ev);
+            int req_vns = init_ev->int_value;
+            if ( num_vns == -1 ) num_vns = req_vns;
             // Need to notify the router about the number of VNs requested
             parent->reportRequestedVNs(port_number,init_ev->int_value);
             remote_rdy_for_credits = true;
@@ -557,6 +555,33 @@ PortControl::init(unsigned int phase) {
             // indicating this is a host port
             remote_rtr_id = -1;
             remote_port_number = -1;
+
+            // Need to report back the actual number of VNs, then the VN mapping
+            init_ev = new RtrInitEvent();
+            init_ev->command = RtrInitEvent::REQUEST_VNS;
+            init_ev->int_value = num_vns;
+            port_link->sendInitData(init_ev);
+
+            for ( int i = 0; i < req_vns; ++i ) {
+                init_ev = new RtrInitEvent();
+                init_ev->command = RtrInitEvent::REQUEST_VNS;
+                if ( vn_remap_shm == "" ) {
+                    // No remap, just send the same value back
+                    init_ev->int_value = i;
+                }
+                else {
+                    int* map = (int*)shared_region->getRawPtr();
+                    int endpoint_id = topo->getEndpointID(port_number);
+                    for ( int j = 0; j < num_vns; ++j ) {
+                        if ( map[endpoint_id*num_vns + j] == i ) {
+                            init_ev->int_value = j;
+                            break;
+                        }
+                    }
+                }
+                port_link->sendInitData(init_ev);
+            }
+            
         } else {
             // If not a host port, the other side sent us their rtr_id
             // and port_number
@@ -572,27 +597,34 @@ PortControl::init(unsigned int phase) {
         }
         }
         break;
-    // case 2:
-    //     // If I'm a host port, I can send my credit events now.
-    //     // VCs should now be initialized, send over the credit events
-    //     if ( host_port ) {
-    //         for ( int i = 0; i < num_vcs; i++ ) {
-    //             port_link->sendInitData(new credit_event(i,port_ret_credits[i]));
-    //             port_ret_credits[i] = 0;
-    //         }
-    //     }
-        // break;
 
     default:
-        // If my VCs have been initialized and the remote side is
-        // ready to receive credits, send the credit events.
-        if ( num_vcs != -1 && remote_rdy_for_credits ) {
-            // std::cout << "Sending credit events (port = " << port_number << "), num_vcs = " << num_vcs << std::endl;
-            for ( int i = 0; i < num_vcs; i++ ) {
-                port_link->sendInitData(new credit_event(i,port_ret_credits[i]));
-                port_ret_credits[i] = 0;
+        if ( host_port ) {
+            // Only send to vc 0 for each VN
+            // Get the number of VCs per VN
+            if ( num_vcs != -1 && remote_rdy_for_credits ) {
+                int vcs_per_vn = topo->computeNumVCs(1);
+                for ( int i = 0; i < num_vcs; ++i ) {
+                    if ( i % vcs_per_vn == 0 ) {
+                        // Only send over for vc 0 in vn
+                        port_link->sendInitData(new credit_event(i/vcs_per_vn, port_ret_credits[i]));
+                    }
+                    port_ret_credits[i] = 0;
+                }
+                remote_rdy_for_credits = false;
             }
-            remote_rdy_for_credits = false;
+            
+        }
+        else {
+            // If my VCs have been initialized and the remote side is
+            // ready to receive credits, send the credit events.
+            if ( num_vcs != -1 && remote_rdy_for_credits ) {
+                for ( int i = 0; i < num_vcs; i++ ) {
+                    port_link->sendInitData(new credit_event(i,port_ret_credits[i]));
+                    port_ret_credits[i] = 0;
+                }
+                remote_rdy_for_credits = false;
+            }
         }
         
         // Need to recv the credits send from the other side
@@ -602,7 +634,6 @@ PortControl::init(unsigned int phase) {
                 if ( ce->vc >= num_vcs ) {
                     // _abort(PortControl, "Received Credit Event for VC %d.  I only know of VCS[0-%d]\n", ce->vc, num_vcs-1);
                 }
-                // std::cout << "Received credit_event (port = " << port_number << ")" << std::endl;
                 port_out_credits[ce->vc] += ce->credits;
                 delete ev;
             }
@@ -754,7 +785,7 @@ PortControl::handle_input_n2r(Event* ev)
 	// credit_event* ce = dynamic_cast<credit_event*>(ev);
 	// if ( ce != NULL ) {
 	BaseRtrEvent* base_event = static_cast<BaseRtrEvent*>(ev);
-    
+
 	switch (base_event->getType()) {
 	case BaseRtrEvent::CREDIT:
     {
