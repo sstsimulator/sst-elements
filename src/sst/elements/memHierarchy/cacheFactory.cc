@@ -16,6 +16,7 @@
 #include <sst_config.h>
 #include <sst/core/stringize.h>
 #include <sst/core/params.h>
+#include <sst/core/timeLord.h>
 
 #include "hash.h"
 #include "cacheController.h"
@@ -155,11 +156,15 @@ void Cache::createCoherenceManager(Params &params) {
     coherenceParams.insert("min_packet_size", params.find<std::string>("min_packet_size", "8B"));
 
     bool prefetch = (statPrefetchRequest != nullptr);
+    doInCoherenceMgr_ = false;
 
     if (!L1_) {
         if (protocol_ != CoherenceProtocol::NONE) {
-            if (type_ != "noninclusive_with_directory") {
+            if (type_ == "inclusive") { 
                 coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.MESICoherenceController", "coherence", 0, 
+                        ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams, prefetch);
+            } else if (type_ == "noninclusive") {
+                coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.coherence.mesi_private_noninclusive", "coherence", 0, 
                         ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams, prefetch);
             } else {
                 coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.MESICacheDirectoryCoherenceController", "coherence", 0, 
@@ -173,6 +178,7 @@ void Cache::createCoherenceManager(Params &params) {
         if (protocol_ != CoherenceProtocol::NONE) {
             coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.L1CoherenceController", "coherence", 0, 
                     ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams, prefetch);
+            doInCoherenceMgr_ = true;
         } else {
             coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.L1IncoherentController", "coherence", 0, 
                     ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams, prefetch);
@@ -187,6 +193,7 @@ void Cache::createCoherenceManager(Params &params) {
     coherenceMgr_->setCacheListener(listeners_);
     coherenceMgr_->setDebug(DEBUG_ADDR);
     coherenceMgr_->setOwnerName(getName());
+    coherenceMgr_->setCacheArray(cacheArray_);
 
 }
 
@@ -204,11 +211,11 @@ void Cache::createCoherenceManager(Params &params) {
 void Cache::configureLinks(Params &params) {
     linkUp_ = loadUserSubComponent<MemLinkBase>("cpulink");
     if (linkUp_)
-        linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
+        linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::handleEvent));
 
     linkDown_ = loadUserSubComponent<MemLinkBase>("memlink");
     if (linkDown_)
-        linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
+        linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::handleEvent));
 
     if (linkUp_ || linkDown_) {
         if (!linkUp_ || !linkDown_)
@@ -359,11 +366,11 @@ void Cache::configureLinks(Params &params) {
         d_->debug(_INFO_,"Configuring cache with a direct link above and below\n");
 
         linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "memlink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, memlink);
-        linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
+        linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::handleEvent));
 
 
         linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "cpulink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, cpulink);
-        linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
+        linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::handleEvent));
         clockUpLink_ = clockDownLink_ = false;
         /* Region given to each should be identical so doesn't matter which we pull but force them to be identical */
         region_ = linkDown_->getRegion();
@@ -392,11 +399,11 @@ void Cache::configureLinks(Params &params) {
             linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "memlink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, nicParams);
         }
 
-        linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
+        linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::handleEvent));
 
         // Configure high link
         linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "cpulink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, cpulink);
-        linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
+        linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::handleEvent));
         clockDownLink_ = true;
         clockUpLink_ = false;
         
@@ -425,11 +432,11 @@ void Cache::configureLinks(Params &params) {
             linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "cpulink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, nicParams);
         }
 
-        linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
+        linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::handleEvent));
 
         // Configure high link
         linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "memlink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, memlink);
-        linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
+        linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::handleEvent));
         clockUpLink_ = true;
         clockDownLink_ = false;
         
@@ -460,11 +467,11 @@ void Cache::configureLinks(Params &params) {
             linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "memlink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, nicParams);
         }
         // Configure low link
-        linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
+        linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::handleEvent));
 
         // Configure high link
         linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "cpulink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, cpulink);
-        linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
+        linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::handleEvent));
         clockDownLink_ = true;
         clockUpLink_ = false;
         
@@ -536,7 +543,7 @@ void Cache::configureLinks(Params &params) {
             linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "cpulink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, nicParams);
         }
 
-        linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::processIncomingEvent));
+        linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::handleEvent));
 
         // Configure high link
         linkUp_ = linkDown_;
@@ -789,10 +796,11 @@ void Cache::createClock(Params &params) {
     timestamp_ = 0;
 
     // Deadlock timeout
-    maxWaitTime_ = params.find<SimTime_t>("maxRequestDelay", 0);  // Nanoseconds
-    checkMaxWaitInterval_ = maxWaitTime_ / 4;
+    SimTime_t maxNano = params.find<SimTime_t>("maxRequestDelay", 0);
+    maxWaitTime_ = (Simulation::getSimulation()->getTimeLord()->getNano())->convertToCoreTime(maxNano); // Figure out how many core cycles maxNano is
+    checkMaxWaitInterval_ = maxNano / 4;
     // Doubtful that this corner case will occur but just in case...
-    if (maxWaitTime_ > 0 && checkMaxWaitInterval_ == 0) checkMaxWaitInterval_ = maxWaitTime_;
+    if (maxNano > 0 && checkMaxWaitInterval_ == 0) checkMaxWaitInterval_ = maxNano;
     if (maxWaitTime_ > 0) {
         ostringstream oss;
         oss << checkMaxWaitInterval_;
@@ -827,6 +835,10 @@ void Cache::checkDeprecatedParams(Params &params) {
 }
 
 void Cache::registerStatistics() {
+    Statistic<uint64_t>* def_stat = registerStatistic<uint64_t>("default_stat");
+    for (int i = 0; i < (int)Command::LAST_CMD; i++)
+        stat_eventRecv[i] = def_stat;
+
     statTotalEventsReceived         = registerStatistic<uint64_t>("TotalEventsReceived");
     statTotalEventsReplayed         = registerStatistic<uint64_t>("TotalEventsReplayed");
     statNoncacheableEventsReceived  = registerStatistic<uint64_t>("TotalNoncacheableEventsReceived");
@@ -844,18 +856,33 @@ void Cache::registerStatistics() {
     statGetSMissAfterBlocked        = registerStatistic<uint64_t>("GetSMiss_Blocked");
     statGetXMissAfterBlocked        = registerStatistic<uint64_t>("GetXMiss_Blocked");
     statGetSXMissAfterBlocked       = registerStatistic<uint64_t>("GetSXMiss_Blocked");
-    statGetS_recv                   = registerStatistic<uint64_t>("GetS_recv");
-    statGetX_recv                   = registerStatistic<uint64_t>("GetX_recv");
-    statGetSX_recv                  = registerStatistic<uint64_t>("GetSX_recv");
-    statGetSResp_recv               = registerStatistic<uint64_t>("GetSResp_recv");
-    statGetXResp_recv               = registerStatistic<uint64_t>("GetXResp_recv");
-    statPutS_recv                   = registerStatistic<uint64_t>("PutS_recv");
-    statPutM_recv                   = registerStatistic<uint64_t>("PutM_recv");
-    statPutE_recv                   = registerStatistic<uint64_t>("PutE_recv");
-    statFetchInv_recv               = registerStatistic<uint64_t>("FetchInv_recv");
-    statFetchInvX_recv              = registerStatistic<uint64_t>("FetchInvX_recv");
-    statInv_recv                    = registerStatistic<uint64_t>("Inv_recv");
-    statNACK_recv                   = registerStatistic<uint64_t>("NACK_recv");
+    stat_eventRecv[(int)Command::GetS]      = registerStatistic<uint64_t>("GetS_recv");
+    stat_eventRecv[(int)Command::GetX]      = registerStatistic<uint64_t>("GetX_recv");
+    stat_eventRecv[(int)Command::GetSX]     = registerStatistic<uint64_t>("GetSX_recv");
+    stat_eventRecv[(int)Command::GetSResp]  = registerStatistic<uint64_t>("GetSResp_recv");
+    stat_eventRecv[(int)Command::GetXResp]  = registerStatistic<uint64_t>("GetXResp_recv");
+    stat_eventRecv[(int)Command::PutS]      = registerStatistic<uint64_t>("PutS_recv");
+    stat_eventRecv[(int)Command::PutM]      = registerStatistic<uint64_t>("PutM_recv");
+    stat_eventRecv[(int)Command::PutE]      = registerStatistic<uint64_t>("PutE_recv");
+    stat_eventRecv[(int)Command::Fetch]     = registerStatistic<uint64_t>("Fetch_recv");
+    stat_eventRecv[(int)Command::FetchInv]  = registerStatistic<uint64_t>("FetchInv_recv");
+    stat_eventRecv[(int)Command::FetchInvX] = registerStatistic<uint64_t>("FetchInvX_recv");
+    stat_eventRecv[(int)Command::ForceInv]  = registerStatistic<uint64_t>("ForceInv_recv");
+    stat_eventRecv[(int)Command::Inv]       = registerStatistic<uint64_t>("Inv_recv");
+    stat_eventRecv[(int)Command::NACK]      = registerStatistic<uint64_t>("NACK_recv");
+    stat_eventRecv[(int)Command::AckInv]    = registerStatistic<uint64_t>("AckInv_recv");
+    stat_eventRecv[(int)Command::AckPut]    = registerStatistic<uint64_t>("AckPut_recv");
+    stat_eventRecv[(int)Command::FetchResp] = registerStatistic<uint64_t>("FetchResp_recv");
+    stat_eventRecv[(int)Command::FetchXResp] = registerStatistic<uint64_t>("FetchXResp_recv");
+    stat_eventRecv[(int)Command::CustomReq] = registerStatistic<uint64_t>("CustomReq_recv");
+    stat_eventRecv[(int)Command::CustomResp] = registerStatistic<uint64_t>("CustomResp_recv");
+    stat_eventRecv[(int)Command::CustomAck] = registerStatistic<uint64_t>("CustomAck_recv");
+    stat_eventRecv[(int)Command::FlushLine] = registerStatistic<uint64_t>("FlushLine_recv");
+    stat_eventRecv[(int)Command::FlushLineInv] = registerStatistic<uint64_t>("FlushLineInv_recv");
+    stat_eventRecv[(int)Command::FlushLineResp] = registerStatistic<uint64_t>("FlushLineResp_recv");
+    stat_eventRecv[(int)Command::Put] = registerStatistic<uint64_t>("Put_recv");
+    stat_eventRecv[(int)Command::Get] = registerStatistic<uint64_t>("Get_recv");
+    stat_eventRecv[(int)Command::AckMove] = registerStatistic<uint64_t>("AckMove_recv");
     statMSHROccupancy               = registerStatistic<uint64_t>("MSHR_occupancy");
     statBankConflicts               = registerStatistic<uint64_t>("Bank_conflicts");
 }

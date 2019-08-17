@@ -36,7 +36,8 @@ public:
 
     HashFunction(Component* comp, Params& params) : SubComponent(comp) {
         Output out("", 1, 0, Output::STDOUT);
-        out.fatal(CALL_INFO, -1, "%s, Error: HashFunctions do not support loading as legacy subcomponents\n");
+        out.fatal(CALL_INFO, -1, "%s, Error: HashFunctions do not support loading as legacy subcomponents\n",
+                getName().c_str());
     }
     
     HashFunction(ComponentId_t id, Params& params) : SubComponent(id) {}

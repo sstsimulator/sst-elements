@@ -4,6 +4,10 @@ import os
 sst.setProgramOption("timebase", "1ps")
 
 sst_root = os.getenv( "SST_ROOT" )
+app = sst_root + "/sst-elements/src/sst/elements/ariel/frontend/simple/examples/stream/stream"
+
+if not os.path.exists(app):
+    app = os.getenv( "OMP_EXE" )
 
 l2PrefetchParams = {
         "prefetcher": "cassini.StridePrefetcher",
@@ -16,7 +20,7 @@ ariel.addParams({
         "maxcorequeue" : "256",
         "maxissuepercycle" : "2",
         "pipetimeout" : "0",
-        "executable" : sst_root + "/sst-elements/src/sst/elements/ariel/frontend/simple/examples/stream/stream",
+        "executable" : app,
         "arielmode" : "1",
         "launchparamcount" : 1,
         "launchparam0" : "-ifeellucky",

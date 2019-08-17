@@ -1,23 +1,22 @@
+SSTARIEL: Function profiling is disabled.
 Allocating arrays of size 2000 elements.
 Done allocating arrays.
 Perfoming the fast_c compute loop...
 Sum of arrays is: 6999500.000000
 Freeing arrays...
 Done.
-ARIEL: Created a malloc of size: 32816 in Ariel
-ARIEL: Created a malloc of size: 8 in Ariel
-ARIEL: Created a malloc of size: 16000 in Ariel
-ARIEL: Created a malloc of size: 16000 in Ariel
-ARIEL: Created a malloc of size: 16000 in Ariel
-ARIEL: Created a malloc of size: 4288 in Ariel
-ARIEL: Created a malloc of size: 192 in Ariel
-ARIEL: Created a malloc of size: 136 in Ariel
 CORE ID: 0 PROCESSED AN EXIT EVENT
 
 Ariel Memory Management Statistics:
 ---------------------------------------------------------------------
 Page Table Sizes:
-- Map entries at level 0         284
+- Map entries         375
 Page Table Coverages:
-- Bytes at level 0              1163264
-Simulation is complete, simulated time: 5.3332 ms
+- Bytes               1536000
+ a0.read_requests.0 : Accumulator : Sum.u64 = 358751; SumSQ.u64 = 358751; Count.u64 = 358751; Min.u64 = 1; Max.u64 = 1; 
+ a0.write_requests.0 : Accumulator : Sum.u64 = 163938; SumSQ.u64 = 163938; Count.u64 = 163938; Min.u64 = 1; Max.u64 = 1; 
+ a0.instruction_count.0 : Accumulator : Sum.u64 = 1509429; SumSQ.u64 = 1509429; Count.u64 = 1509429; Min.u64 = 1; Max.u64 = 1; 
+ a0.cycles.0 : Accumulator : Sum.u64 = 17352092; SumSQ.u64 = 17352092; Count.u64 = 17352092; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.CacheHits : Accumulator : Sum.u64 = 509580; SumSQ.u64 = 509580; Count.u64 = 509580; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.CacheMisses : Accumulator : Sum.u64 = 13257; SumSQ.u64 = 13257; Count.u64 = 13257; Min.u64 = 1; Max.u64 = 1; 
+Simulation is complete, simulated time: 17.3521 ms

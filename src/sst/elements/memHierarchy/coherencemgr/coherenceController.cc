@@ -88,27 +88,35 @@ CoherenceController::CoherenceController(ComponentId_t id, Params &params, Param
     stat_evict_IM =     registerStatistic<uint64_t>("evict_IM");
     stat_evict_IB =     registerStatistic<uint64_t>("evict_IB");
     stat_evict_SB =     registerStatistic<uint64_t>("evict_SB");
+}
 
-    // TODO should these be here or part of cache controller?
-    stat_latency_GetS_IS =      registerStatistic<uint64_t>("latency_GetS_IS");
-    stat_latency_GetS_M =       registerStatistic<uint64_t>("latency_GetS_M");
-    stat_latency_GetX_IM =      registerStatistic<uint64_t>("latency_GetX_IM");
-    stat_latency_GetX_SM =      registerStatistic<uint64_t>("latency_GetX_SM");
-    stat_latency_GetX_M =       registerStatistic<uint64_t>("latency_GetX_M");
-    stat_latency_GetSX_IM =     registerStatistic<uint64_t>("latency_GetSX_IM");
-    stat_latency_GetSX_SM =     registerStatistic<uint64_t>("latency_GetSX_SM");
-    stat_latency_GetSX_M =      registerStatistic<uint64_t>("latency_GetSX_M");
+/*******************************************************************************
+ * Event handlers - one per event type
+ * Handlers return whether event was accepted (true) or rejected (false)
+ *******************************************************************************/
+bool CoherenceController::handleNACK(MemEvent* event, bool inMSHR) {
+    debug->fatal(CALL_INFO, -1, "%s, Error: NACK events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns,\n",
+            getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
+    return false;
 }
 
 
+// MSHR
+bool CoherenceController::processInvRequestInMSHR(Addr addr, MemEvent* event, bool blocks) {
+    if (mshr_->insertInv(addr, event, blocks)) 
+        return true;
+
+    sendNACK(event, event->isCPUSideEvent());
+    return false;
+}
 
 /**************************************/
 /****** Functions to send events ******/
 /**************************************/
 
 /* Send a NACK in response to a request. Could be virtual if needed. */
-void CoherenceController::sendNACK(MemEvent * event, bool up, SimTime_t timeInNano) {
-    MemEvent *NACKevent = event->makeNACKResponse(event, timeInNano);
+void CoherenceController::sendNACK(MemEvent * event, bool up) {
+    MemEvent *NACKevent = event->makeNACKResponse(event);
 
     uint64_t deliveryTime = timestamp_ + tagLatency_;
     Response resp = {NACKevent, deliveryTime, packetHeaderBytes};
@@ -229,7 +237,7 @@ std::string CoherenceController::getSrc() {
 
 
 /* Send outgoing commands to port manager */
-bool CoherenceController::sendOutgoingCommands(SimTime_t curTime) {
+bool CoherenceController::sendOutgoingCommands() {
     // Update timestamp
     timestamp_++;
 
@@ -251,7 +259,7 @@ bool CoherenceController::sendOutgoingCommands(SimTime_t curTime) {
 
         if (is_debug_event(outgoingEvent)) {
             debug->debug(_L4_,"SEND (%s). time: (%" PRIu64 ", %" PRIu64 ") event: (%s)\n",
-                    ownerName_.c_str(), timestamp_, curTime, outgoingEvent->getBriefString().c_str());
+                    ownerName_.c_str(), timestamp_, getCurrentSimTimeNano(), outgoingEvent->getBriefString().c_str());
         }
 
         linkDown_->send(outgoingEvent);
@@ -275,7 +283,13 @@ bool CoherenceController::sendOutgoingCommands(SimTime_t curTime) {
 
         if (is_debug_event(outgoingEvent)) {
             debug->debug(_L4_,"SEND (%s). time: (%" PRIu64 ", %" PRIu64 ") event: (%s)\n",
-                    ownerName_.c_str(), timestamp_, curTime, outgoingEvent->getBriefString().c_str());
+                    ownerName_.c_str(), timestamp_, getCurrentSimTimeNano(), outgoingEvent->getBriefString().c_str());
+        }
+
+        if (startTimes_.find(outgoingEvent->getResponseToID()) != startTimes_.end()) {
+            LatencyStat stat = startTimes_.find(outgoingEvent->getResponseToID())->second;
+            recordLatency(stat.cmd, stat.missType, timestamp_ - stat.time);
+            startTimes_.erase(outgoingEvent->getResponseToID());
         }
 
         linkUp_->send(outgoingEvent);
@@ -331,34 +345,52 @@ void CoherenceController::notifyListenerOfAccess(MemEvent * event, NotifyAccessT
         listeners_[i]->notifyAccess(notify);
 }
 
+void CoherenceController::printLine(Addr addr, CacheLine* line) {
+    if (!is_debug_addr(addr))
+        return;
+    State state = NP;
+    unsigned int sharers = 0;
+    std::string owner = "";
+    if (line) {
+        state = line->getState();
+        sharers = line->numSharers();
+        owner = line->getOwner();
+    }
+    debug->debug(_L8_, "0x%" PRIx64 ": %s, %u, \"%s\"\n", addr, StateString[state], sharers, owner.c_str());
+}
+
 /**************************************/
 /******** Statistics handling *********/
 /**************************************/
 
-/* Record latency TODO should probably move to port manager */
-void CoherenceController::recordLatency(Command cmd, State state, uint64_t latency) {
-    switch (state) {
-        case IS:
-            stat_latency_GetS_IS->addData(latency);
-            break;
-        case IM:
-            if (cmd == Command::GetX) stat_latency_GetX_IM->addData(latency);
-            else stat_latency_GetSX_IM->addData(latency);
-            break;
-        case SM:
-            if (cmd == Command::GetX) stat_latency_GetX_SM->addData(latency);
-            else stat_latency_GetSX_SM->addData(latency);
-            break;
-        case M:
-            if (cmd == Command::GetS) stat_latency_GetS_M->addData(latency);
-            else if (cmd == Command::GetX) stat_latency_GetX_M->addData(latency);
-            else stat_latency_GetSX_M->addData(latency);
-            break;
-        default:
-            break;
-    }
+void CoherenceController::recordIncomingRequest(MemEventBase* event) {
+    // Default type is -1
+    LatencyStat lat(timestamp_, event->getCmd(), -1);
+    startTimes_.insert(std::make_pair(event->getID(), lat));
+}
+    
+void CoherenceController::removeRequestRecord(SST::Event::id_type id) {
+    if (startTimes_.find(id) != startTimes_.end())
+        startTimes_.erase(id);
 }
 
+void CoherenceController::recordLatencyType(Event::id_type id, int type) {
+    if (startTimes_.find(id) != startTimes_.end())
+        startTimes_.find(id)->second.missType = type;
+}
+
+void CoherenceController::recordMiss(Event::id_type id) {
+    if (startTimes_.find(id) != startTimes_.end())
+        startTimes_.find(id)->second.missType = LatType::MISS;
+}
+
+void CoherenceController::recordPrefetchLatency(Event::id_type id, int type) {
+    if (startTimes_.find(id) != startTimes_.end()) {
+        LatencyStat stat = startTimes_.find(id)->second;
+        recordLatency(stat.cmd, type, timestamp_ - stat.time);
+        startTimes_.erase(id);
+    }
+}
 
 /* Record the number of times an event arrived in a given state */
 void CoherenceController::recordStateEventCount(Command cmd, State state) { }

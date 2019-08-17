@@ -20,7 +20,6 @@
 #include <sst/core/unitAlgebra.h>
 
 #include "sst/elements/merlin/merlin.h"
-#include "sst/elements/merlin/linkControl.h"
 #include "sst/elements/merlin/test/pt2pt/pt2pt_test.h"
 
 using namespace std;

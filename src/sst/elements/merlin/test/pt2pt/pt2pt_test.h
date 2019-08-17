@@ -29,8 +29,6 @@
 namespace SST {
 namespace Merlin {
 
-class LinkControl;
-
 class pt2pt_test : public Component {
 
 public:

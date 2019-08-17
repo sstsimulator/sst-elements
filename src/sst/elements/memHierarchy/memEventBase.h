@@ -200,7 +200,7 @@ public:
     virtual MemEventBase* clone(void) override {
         return new MemEventBase(*this);
     }
-
+    
 protected:
     id_type         eventID_;           // Unique ID for this event
     id_type         responseToID_;      // For responses, holds the ID to which this event matches
