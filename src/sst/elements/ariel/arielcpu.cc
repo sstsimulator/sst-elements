@@ -41,8 +41,8 @@
 using namespace SST::ArielComponent;
 
 ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
-            Component(id) {
-
+    Component(id)
+{
     int verbosity = params.find<int>("verbose", 0);
     output = new SST::Output("ArielComponent[@f:@l:@p] ", verbosity, 0, SST::Output::STDOUT);
 
@@ -425,12 +425,14 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 
     output->verbose(CALL_INFO, 1, 0, "Configuring cores and cache links...\n");
     for(uint32_t i = 0; i < core_count; ++i) {
+        std::string linkName = "notify_empty_link" + std::to_string(i);
+        SST::Link* notifyLink = configureLink(linkName, new Event::Handler<ArielCPU>(this, &ArielCPU::neverCalled));
         cpu_cores.push_back(loadComponentExtension<ArielCore>(tunnel, 
 #ifdef HAVE_CUDA
                  tunnelR, tunnelD,
 #endif
                  i, maxPendingTransCore, output, maxIssuesPerCycle, maxCoreQueueLen,
-                 cacheLineSize, memmgr, perform_checks, params));
+                 cacheLineSize, memmgr, perform_checks, notifyLink, params));
 
         // Set max number of instructions
         cpu_cores[i]->setMaxInsts(max_insts);
@@ -669,8 +671,7 @@ bool ArielCPU::tick( SST::Cycle_t cycle) {
     // Keep ticking unless one of the cores says it is time to stop.
     for(uint32_t i = 0; i < core_count; ++i) {
         cpu_cores[i]->tick();
-
-        if(cpu_cores[i]->isCoreHalted()) {
+        if (cpu_cores[i]->isCoreHalted()) {
                 stopTicking = true;
                 break;
         }
@@ -704,4 +705,9 @@ void ArielCPU::emergencyShutdown() {
     for(uint32_t i = 0; i < core_count; ++i) {
         cpu_cores[i]->finishCore();
     }
+}
+
+void ArielCPU::neverCalled(SST::Event* ev)
+{
+  output->fatal(CALL_INFO, -1, "Somehow calling Ariel CPU handler that should never be called");
 }

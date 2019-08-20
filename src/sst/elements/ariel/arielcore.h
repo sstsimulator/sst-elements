@@ -72,7 +72,8 @@ class ArielCore : public ComponentExtension {
 #endif
             uint32_t thisCoreID, uint32_t maxPendTans, Output* out,
             uint32_t maxIssuePerCyc, uint32_t maxQLen, uint64_t cacheLineSz,
-            ArielMemoryManager* memMgr, const uint32_t perform_address_checks, Params& params);
+            ArielMemoryManager* memMgr, const uint32_t perform_address_checks,
+            SST::Link* notifyEmptyLink, Params& params);
         ~ArielCore();
 
         bool isCoreHalted() const;
@@ -258,6 +259,8 @@ class ArielCore : public ComponentExtension {
 
         uint32_t pending_transaction_count;
         uint32_t pending_gpu_transaction_count;
+
+        SST::Link* m_notifyEmptyLink;
 
 };
 

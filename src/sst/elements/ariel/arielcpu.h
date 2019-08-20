@@ -77,7 +77,10 @@ class ArielCPU : public SST::Component {
         {"autolaunch", "Set automatic launch processing of arguments choices are: pin or none, default is pin", "pin"} )
 
     SST_ELI_DOCUMENT_PORTS( {"cache_link_%(corecount)d", "Each core's link to its cache", {}},
-       {"gpu_link_%(corecount)d", "Each core's link to the GPU", {}})
+       {"gpu_link_%(corecount)d", "Each core's link to the GPU", {}},
+       {"notify_empty_link%(corecount)d", "An optional link for notifying another component when pending transactions is zero", {}}
+    )
+
 
 
     SST_ELI_DOCUMENT_STATISTICS(
@@ -116,6 +119,10 @@ class ArielCPU : public SST::Component {
         virtual void setup() {}
         virtual void finish();
         virtual bool tick( SST::Cycle_t );
+
+        //used for creating send-only links
+        void neverCalled(SST::Event* ev);
+
         int forkLauncherChild(const char* app, char** args, std::map<std::string, std::string>& app_env);
 
     private:

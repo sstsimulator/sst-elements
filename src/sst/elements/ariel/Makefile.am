@@ -81,6 +81,7 @@ endif
 sstdir = $(includedir)/sst/elements/ariel
 nobase_sst_HEADERS = \
 	ariel_shmem.h \
+  arielnotify.h \
 	arieltracegen.h \
 	arielmemmgr.h
 

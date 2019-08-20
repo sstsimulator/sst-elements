@@ -14,6 +14,7 @@
 // distribution.
 
 #include <sst_config.h>
+#include <sst/elements/ariel/arielnotify.h>
 #include "arielcore.h"
 
 #ifdef HAVE_CUDA
@@ -33,8 +34,10 @@ ArielCore::ArielCore(ComponentId_t id, ArielTunnel *tunnel,
             uint32_t thisCoreID, uint32_t maxPendTrans,
             Output* out, uint32_t maxIssuePerCyc,
             uint32_t maxQLen, uint64_t cacheLineSz,
-            ArielMemoryManager* memMgr, const uint32_t perform_address_checks, Params& params) :
+            ArielMemoryManager* memMgr, const uint32_t perform_address_checks,
+            SST::Link* notifyEmptyLink, Params& params) :
             ComponentExtension(id), output(out), tunnel(tunnel), 
+            m_notifyEmptyLink(notifyEmptyLink),
 #ifdef HAVE_CUDA
             tunnelR(tunnelR), tunnelD(tunnelD),
 #endif
@@ -483,8 +486,10 @@ void ArielCore::handleEvent(SimpleMem::Request* event) {
         pending_transaction_count--;
         if(isCoreFenced() && pending_transaction_count == 0)
             unfence();
+        } else if (m_notifyEmptyLink && pending_transaction_count == 0){
+          m_notifyEmptyLink->send(new NotifyEvent(coreID));
         } else {
-                output->fatal(CALL_INFO, -4, "Memory event response to core: %" PRIu32 " was not found in pending list.\n", coreID);
+          output->fatal(CALL_INFO, -4, "Memory event response to core: %" PRIu32 " was not found in pending list.\n", coreID);
         }
     delete event;
 }
