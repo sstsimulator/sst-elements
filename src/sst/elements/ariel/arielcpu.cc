@@ -32,6 +32,7 @@
 #include <stdio.h>
 
 #include <time.h>
+#include <sst/elements/ariel/arielnotify.h>
 
 #include <string.h>
 
@@ -490,6 +491,14 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 void ArielCPU::init(unsigned int phase)
 {
     if ( phase == 0 ) {
+        ArielCore* core0 = cpu_cores[0];
+        if (core0->hasNotifyLink()){
+          //there is another process
+          SST::Link* link = core0->notifyLink();
+          NameEvent* ev = new NameEvent(tunnel->getRegionName());
+          link->sendInitData(ev);
+        }
+
         output->verbose(CALL_INFO, 1, 0, "Launching PIN...\n");
         // Init the child_pid = 0, this prevents problems in emergencyShutdown()
         // if forkLauncherChild() calls fatal (i.e. the child_pid would not be set)

@@ -76,6 +76,14 @@ class ArielCore : public ComponentExtension {
             SST::Link* notifyEmptyLink, Params& params);
         ~ArielCore();
 
+        bool hasNotifyLink() const {
+          return m_notifyEmptyLink;
+        }
+
+        SST::Link* notifyLink() const {
+          return m_notifyEmptyLink;
+        }
+
         bool isCoreHalted() const;
         bool isCoreStalled() const;
 #ifdef HAVE_CUDA

@@ -30,6 +30,7 @@ class NotifyEvent : public Event {
   }
 
   void serialize_order(Core::Serialization::serializer &ser) override {
+    Event::serialize_order(ser);
     ser & core_;
   }
   
@@ -41,6 +42,31 @@ class NotifyEvent : public Event {
   NotifyEvent(){} //for serialization
 
   int core_;
+};
+
+class NameEvent : public Event {
+
+  ImplementSerializable(NameEvent)
+
+ public:
+  NameEvent(const std::string& name) :
+    name_(name)
+  {
+  }
+
+  void serialize_order(Core::Serialization::serializer &ser) override {
+    Event::serialize_order(ser);
+    ser & name_;
+  }
+
+  std::string name() const {
+    return name_;
+  }
+
+ private:
+  NameEvent(){} //for serialization
+
+  std::string name_;
 };
 
 }
