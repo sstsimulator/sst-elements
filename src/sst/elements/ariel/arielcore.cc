@@ -484,13 +484,16 @@ void ArielCore::handleEvent(SimpleMem::Request* event) {
                             (uint32_t) pendingTransactions->size()));
         pendingTransactions->erase(find_entry);
         pending_transaction_count--;
-        if(isCoreFenced() && pending_transaction_count == 0)
+        if(isCoreFenced() && pending_transaction_count == 0){
             unfence();
-        } else if (m_notifyEmptyLink && pending_transaction_count == 0){
-          m_notifyEmptyLink->send(new NotifyEvent(coreID));
-        } else {
-          output->fatal(CALL_INFO, -4, "Memory event response to core: %" PRIu32 " was not found in pending list.\n", coreID);
         }
+        if (m_notifyEmptyLink && pending_transaction_count == 0){
+          std::cout << "notifying empty" << std::endl;
+          m_notifyEmptyLink->send(new NotifyEvent(coreID));
+        }
+    } else {
+      output->fatal(CALL_INFO, -4, "Memory event response to core: %" PRIu32 " was not found in pending list.\n", coreID);
+    }
     delete event;
 }
 

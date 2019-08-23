@@ -386,7 +386,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     	} else {
     		const uint32_t launch_param_count = (uint32_t) params.find<uint32_t>("launchparamcount", 0);
     		execute_args = (char**) malloc(sizeof(char*) * (launch_param_count + 2));
-    		
+
     		execute_args[0] = (char*) malloc( sizeof(char) * (executable.size() + 1) );
     		strcpy( execute_args[0], executable.c_str() );
     		
@@ -400,13 +400,39 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
             		output->fatal(CALL_INFO, -1, "Error: launch parameter %" PRId32 " is empty string, this must be set to a value.\n", aa);
         		}
 
-       		 	execute_args[aa+1] = (char*) malloc( sizeof(char) * (launch_p.size() + 1) );
+            execute_args[aa+1] = (char*) malloc( sizeof(char) * (launch_p.size() + 1) );
         		strcpy(execute_args[aa], launch_p.c_str());
     		}
 
     		free(param_name_buffer);
     		execute_args[launch_param_count + 1] = NULL;
-    	}
+      }
+    } else if (auto_launch_type == "native") {
+      tunnel = new ArielTunnel(id, core_count, maxCoreQueueLen);
+      appLauncher = params.find<std::string>("executable", "");
+      bool pass_name = params.find<bool>("pass_name", false);
+      std::vector<std::string> argv;
+      params.find_array("argv", argv);
+      int nargs = argv.size();
+      if (pass_name){
+        nargs++;
+      }
+      execute_args = new char*[nargs + 2];
+      execute_args[0] = new char[appLauncher.size() + 1];
+      ::strcpy(execute_args[0], appLauncher.c_str());
+
+      int idx = 1;
+      if (pass_name){
+        execute_args[idx] = new char[tunnel->getRegionName().size() + 1];
+        ::strcpy(execute_args[idx], tunnel->getRegionName().c_str());
+        ++idx;
+      }
+
+      for (auto&& str : argv){
+        execute_args[idx] = new char[str.size() + 1];
+        ::strcpy(execute_args[idx], str.c_str());
+      }
+      execute_args[idx] = NULL;
     } else {
     	output->fatal(CALL_INFO, -1, "Ariel has no launcher specified. Unable to start up a child.\n");
     }
@@ -630,6 +656,7 @@ int ArielCPU::forkLauncherChild(const char* app, char** args, std::map<std::stri
         prctl(PR_SET_PTRACER, getppid(), 0, 0 ,0);
 #endif // End of HAVE_SET_PTRACER
 #endif // End SST_COMPILE_MACOSX (else branch)
+
             int ret_code = execvp(app, args);
             perror("execve");
 
