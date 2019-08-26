@@ -106,7 +106,7 @@ bool AllgatherFuncSM::setup( Retval& retval )
                     m_sendStartChunk[ m_setupState.stage], 
                     recvStartChunk, m_numChunks[m_setupState.stage] );
 
-        initIoVec( ioVec, recvStartChunk, m_numChunks[m_setupState.stage] );
+        initIoVec( ioVec, recvStartChunk, m_numChunks[m_setupState.stage], m_event->recvbuf.getBacking() != NULL );
 
         proto()->irecvv( ioVec, src, genTag() + m_setupState.stage + 1, 
                             &m_recvReqV[m_setupState.stage] );
@@ -121,7 +121,9 @@ bool AllgatherFuncSM::setup( Retval& retval )
 
       case SetupState::SendStartMsg:
 
-        memcpy( chunkPtr(m_rank), m_event->sendbuf.getBacking(), chunkSize(m_rank) );
+		if ( m_event->sendbuf.getBacking() ) {
+        	memcpy( chunkPtr(m_rank), m_event->sendbuf.getBacking(), chunkSize(m_rank) );
+		}
 
         m_dbg.debug(CALL_INFO,1,0,"send ready message to %d\n",
 						m_info->getGroup(m_event->group)->getMapping(m_dest[0]));
@@ -153,7 +155,7 @@ void AllgatherFuncSM::handleEnterEvent( Retval& retval )
 
     case SendData:
         initIoVec( ioVec, m_sendStartChunk[m_currentStage],
-                            m_numChunks[m_currentStage] );
+                            m_numChunks[m_currentStage], m_event->sendbuf.getBacking() != NULL );
 
         m_dbg.debug(CALL_INFO,1,0,"send stage %d, dest %d\n",
                         m_currentStage,m_info->getGroup(m_event->group)->getMapping(m_dest[m_currentStage]) );
@@ -182,7 +184,7 @@ void AllgatherFuncSM::handleEnterEvent( Retval& retval )
 }
 
 void AllgatherFuncSM::initIoVec( std::vector<IoVec>& ioVec,
-                    int startChunk, int numChunks  )
+                    int startChunk, int numChunks, bool backed )
 {
     int currentChunk = startChunk;
     int nextChunk = ( currentChunk + 1 ) % m_size; 
@@ -195,7 +197,9 @@ void AllgatherFuncSM::initIoVec( std::vector<IoVec>& ioVec,
         --countDown;
         IoVec jjj;
 		jjj.addr.setSimVAddr( 1 );
-        jjj.addr.setBacking( chunkPtr( currentChunk ) ); 
+		if ( backed ) {
+			jjj.addr.setBacking( chunkPtr( currentChunk ) ); 
+		}
         jjj.len = chunkSize( currentChunk );
         
         m_dbg.debug(CALL_INFO,2,0,"currentChunk=%d ptr=%p len=%lu\n",
