@@ -28,6 +28,8 @@
 #include "mpi/emberfinalizeev.h"
 #include "mpi/emberalltoallvev.h"
 #include "mpi/emberalltoallev.h"
+#include "mpi/emberallgatherev.h"
+#include "mpi/emberallgathervev.h"
 #include "mpi/emberbarrierev.h"
 #include "mpi/emberrankev.h"
 #include "mpi/embersizeev.h"
@@ -228,6 +230,21 @@ class EmberMpiLib : public EmberLib {
 
     void bcast( Queue& q, const Hermes::MemAddr& mydata, uint32_t count, PayloadDataType dtype, int root, Communicator group ) {
 		q.push( new EmberBcastEvent( api(), m_output, m_Stats[Reduce], mydata, count, dtype, root, group ) );
+	}
+
+    void allgather( Queue& q, const Hermes::MemAddr& sendData, int sendCnts, PayloadDataType senddtype,
+        const Hermes::MemAddr& recvData, int recvCnts, PayloadDataType recvdtype, Communicator group ) 
+	{
+		q.push( new EmberAllgatherEvent( api(), m_output, m_Stats[Alltoall], sendData, sendCnts, senddtype, recvData, recvCnts, recvdtype, group ) );
+	}
+
+    void allgatherv( Queue& q, const Hermes::MemAddr& sendData, int sendCnts, PayloadDataType senddtype,
+        const Hermes::MemAddr& recvData, Addr recvCnts, Addr recvDsp, PayloadDataType recvdtype, Communicator group ) 
+	{
+    	q.push( new EmberAllgathervEvent( api(), m_output, m_Stats[Alltoallv],
+			sendData, sendCnts, senddtype,
+			recvData, recvCnts, recvDsp, recvdtype,
+			group ) );
 	}
 
 
