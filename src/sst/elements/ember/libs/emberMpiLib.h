@@ -241,7 +241,7 @@ class EmberMpiLib : public EmberLib {
     void allgatherv( Queue& q, const Hermes::MemAddr& sendData, int sendCnts, PayloadDataType senddtype,
         const Hermes::MemAddr& recvData, Addr recvCnts, Addr recvDsp, PayloadDataType recvdtype, Communicator group ) 
 	{
-    	q.push( new EmberAllgathervEvent( api(), m_output, m_Stats[Alltoallv],
+		q.push( new EmberAllgathervEvent( api(), m_output, m_Stats[Alltoallv],
 			sendData, sendCnts, senddtype,
 			recvData, recvCnts, recvDsp, recvdtype,
 			group ) );
