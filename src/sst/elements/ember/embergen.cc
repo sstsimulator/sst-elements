@@ -30,6 +30,11 @@ EmberGenerator::EmberGenerator( ComponentId_t id, Params& params, std::string na
     m_primary = params.find<bool>("primary",true);
     m_motifNum = params.find<int>( "_motifNum", -1 );	
     m_jobId = params.find<int>( "_jobId", -1 );	
+    uint64_t parentPtr = params.find<uint64_t>("_enginePtr",0 );
+    assert( parentPtr != 0 );
+
+    setEngine( reinterpret_cast< EmberEngine* >( parentPtr ) );
+
     setVerbosePrefix();
 
     Params distribParams = params.find_prefix_params("distribParams.");
