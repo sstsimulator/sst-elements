@@ -80,7 +80,7 @@ class AllgatherFuncSM :  public FunctionSMInterface
   private:
 
     bool setup( Retval& );
-    void initIoVec(std::vector<IoVec>& ioVec, int startChunk, int numChunks);
+    void initIoVec(std::vector<IoVec>& ioVec, int startChunk, int numChunks, bool backed );
 
     std::string stateName( StateEnum i ) { return m_enumName[i]; }
 
@@ -109,14 +109,14 @@ class AllgatherFuncSM :  public FunctionSMInterface
 
     size_t  chunkSize( int rank ) {
         size_t size;
+		int count;
         if ( m_event->recvcntPtr ) {
-            size = m_info->sizeofDataType( m_event->recvtype ) *
-                        ((int*)m_event->recvcntPtr)[rank]; 
+			count = ((int*)m_event->recvcntPtr)[rank]; 
         } else {
-            size = m_info->sizeofDataType( m_event->recvtype ) *
-                                                m_event->recvcnt;
+			count = m_event->recvcnt;
         } 
-        m_dbg.debug(CALL_INFO,2,0,"rank %d, size %lu\n",rank,size);
+        size = m_info->sizeofDataType( m_event->recvtype ) * count;
+        m_dbg.debug(CALL_INFO,2,0,"rank %d, size %lu count %d\n",rank,size,count);
         return size;
     }
 
