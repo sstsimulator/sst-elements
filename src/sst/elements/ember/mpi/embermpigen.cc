@@ -40,9 +40,7 @@ EmberMessagePassingGenerator::EmberMessagePassingGenerator(
 								 << rankMapModule << "\'" << std::endl;
         exit(-1);
     }
-}
 
-void EmberMessagePassingGenerator::setup() {
 	m_mpi = static_cast<EmberMpiLib*>( getLib("mpi") );
 	assert(m_mpi);
 	m_mpi->initOutput( &getOutput() );

@@ -202,9 +202,10 @@ EmberGenerator* EmberEngine::initMotif( SST::Params params,
 	} else {
 		params.insert("_jobId", SST::to_string( jobId ), true);
 		params.insert("_motifNum", SST::to_string( motifNum ), true);
+		assert( sizeof(this) == sizeof(uint64_t) ); 
+		params.insert("_enginePtr", SST::to_string( reinterpret_cast<uint64_t>( this ) ), true);
 
 		gen = loadAnonymousSubComponent<EmberGenerator>( gentype, "", 0, ComponentInfo::SHARE_NONE, params );
-		gen->setEngine(this);
 		gen->setup();
 
 		if(NULL == gen) {
