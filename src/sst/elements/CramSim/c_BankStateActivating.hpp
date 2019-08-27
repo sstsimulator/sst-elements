@@ -41,7 +41,7 @@
 
 
 namespace SST {
-namespace n_Bank {
+namespace CramSim {
 
 // class c_BankStateActive;
 

@@ -38,7 +38,7 @@
 #include "c_HashedAddress.hpp"
 
 using namespace SST;
-using namespace SST::n_Bank;
+using namespace SST::CramSim;
 
 c_Controller::c_Controller(ComponentId_t id, Params &params) :
         Component(id){
@@ -51,44 +51,66 @@ c_Controller::c_Controller(ComponentId_t id, Params &params) :
 
     /** Get subcomponent parameters*/
     bool l_found;
+    std::string l_subCompName;
 
     // set device controller
-    std::string l_subCompName  = params.find<std::string>("DeviceDriver", "CramSim.c_DeviceDriver",l_found);
-    if(!l_found){
-        output->output("Device Controller is not specified... c_DeviceDriver (default) will be used\n");
+    using std::placeholders::_1;
+    m_deviceDriver = loadUserSubComponent<c_DeviceDriver>("DeviceDriver", ComponentInfo::SHARE_NONE, output, std::bind(&SST::CramSim::c_Controller::sendCommand, this, _1));
+    if (!m_deviceDriver) {
+        l_subCompName  = params.find<std::string>("DeviceDriver", "CramSim.c_DeviceDriver",l_found);
+        if(l_found){
+            output->output("%s, Warning: loading DeviceDriver subcomponent from params. In the future use 'DeviceDriver' subcomponent slot instead\n", getName().c_str());
+        }
+        m_deviceDriver = loadAnonymousSubComponent<c_DeviceDriver>(l_subCompName, "DeviceDriver", 0, ComponentInfo::INSERT_STATS, params,
+                output, std::bind(&SST::CramSim::c_Controller::sendCommand, this, _1));
     }
-    m_deviceDriver= dynamic_cast<c_DeviceDriver*>(loadSubComponent(l_subCompName.c_str(),this,params));
 
     // set cmd schduler
-    l_subCompName = params.find<std::string>("CmdScheduler", "CramSim.c_CmdScheduler",l_found);
-    if(!l_found){
-        output->output("Command Scheduler is not specified... c_CmdScheduler (default) will be used\n");
+    m_cmdScheduler = loadUserSubComponent<c_CmdScheduler>("CmdScheduler", ComponentInfo::SHARE_NONE, output, m_deviceDriver);
+    if (!m_cmdScheduler) {
+        l_subCompName = params.find<std::string>("CmdScheduler", "CramSim.c_CmdScheduler", l_found);
+        if (l_found) {
+            output->output("%s, Warning: loading CmdScheduler subcomponent from params. In the future use 'CmdScheduler' subcomponent slot instead\n", getName().c_str());
+        }
+        m_cmdScheduler = loadAnonymousSubComponent<c_CmdScheduler>(l_subCompName, "CmdScheduler", 0, ComponentInfo::INSERT_STATS, params, output, m_deviceDriver);
     }
-
-    m_cmdScheduler= dynamic_cast<c_CmdScheduler*>(loadSubComponent(l_subCompName.c_str(),this,params));
 
     // set transaction converter
-    l_subCompName = params.find<std::string>("TxnConverter", "CramSim.c_TxnConverter",l_found);
-    if(!l_found){
-        output->output("Transaction Converter is not specified... c_TxnConverter (default) will be used\n");
+    m_txnConverter = loadUserSubComponent<c_TxnConverter>("TxnConverter", ComponentInfo::SHARE_NONE, output, m_deviceDriver->getTotalNumBank(), m_cmdScheduler);
+    if (!m_txnConverter) {
+        l_subCompName = params.find<std::string>("TxnConverter", "CramSim.c_TxnConverter",l_found);
+        if(l_found){
+            output->output("%s, Warning: loading TxnConverter subcomponent from params. In the future use 'TxnConverter' subcomponent slot instead\n", getName().c_str());
+        }
+        m_txnConverter = loadAnonymousSubComponent<c_TxnConverter>(l_subCompName, "TxnConverter", 0, ComponentInfo::INSERT_STATS, params, output,
+                m_deviceDriver->getTotalNumBank(), m_cmdScheduler);
     }
-    m_txnConverter= dynamic_cast<c_TxnConverter*>(loadSubComponent(l_subCompName.c_str(),this,params));
-
 
     // set transaction scheduler
-    l_subCompName = params.find<std::string>("TxnScheduler", "CramSim.c_TxnScheduler",l_found);
-    if(!l_found){
-        output->output("Transaction Scheduler is not specified... c_TxnScheduler (default) will be used\n");
+    m_txnScheduler = loadUserSubComponent<c_TxnScheduler>("TxnScheduler", ComponentInfo::SHARE_NONE, output, m_deviceDriver->getNumChannel(),
+            m_txnConverter, m_cmdScheduler);
+    if (!m_txnScheduler) {
+        l_subCompName = params.find<std::string>("TxnScheduler", "CramSim.c_TxnScheduler",l_found);
+        if(l_found){
+            output->output("%s, Warning: loading TxnScheduler subcomponent from params. In the future use 'TxnScheduler' subcomponent slot instead\n", getName().c_str());
+        }
+        m_txnScheduler = loadAnonymousSubComponent<c_TxnScheduler>(l_subCompName, "TxnScheduler", 0, ComponentInfo::INSERT_STATS, params, output,
+                m_deviceDriver->getNumChannel(), m_txnConverter, m_cmdScheduler);
     }
-    m_txnScheduler= dynamic_cast<c_TxnScheduler*>(loadSubComponent(l_subCompName.c_str(), this, params));
 
     // set address hasher
-    l_subCompName = params.find<std::string>("AddrMapper", "CramSim.c_AddressHasher",l_found);
-    if(!l_found){
-        output->output("AddrMapper is not specified... AddressHasher (default) will be used\n");
+    m_addrHasher = loadUserSubComponent<c_AddressHasher>("AddrMapper", ComponentInfo::SHARE_NONE, output, m_deviceDriver->getNumChannel(), 
+            m_deviceDriver->getNumRanksPerChannel(), m_deviceDriver->getNumBankGroupsPerRank(), m_deviceDriver->getNumBanksPerBankGroup(), 
+            m_deviceDriver->getNumRowsPerBank(), m_deviceDriver->getNumColPerBank(), m_deviceDriver->getNumPChPerChannel());
+    if (!m_addrHasher) {
+        l_subCompName = params.find<std::string>("AddrMapper", "CramSim.c_AddressHasher",l_found);
+        if(l_found){
+            output->output("%s, Warning: loading AddrMapper subcomponent from params. In the future use 'AddrMapper' subcomponent slot instead\n", getName().c_str());
+        }
+        m_addrHasher = loadAnonymousSubComponent<c_AddressHasher>(l_subCompName, "AddrMapper", 0, ComponentInfo::INSERT_STATS, params, output,
+                m_deviceDriver->getNumChannel(), m_deviceDriver->getNumRanksPerChannel(), m_deviceDriver->getNumBankGroupsPerRank(),
+                m_deviceDriver->getNumBanksPerBankGroup(), m_deviceDriver->getNumRowsPerBank(), m_deviceDriver->getNumColPerBank(), m_deviceDriver->getNumPChPerChannel());
     }
-    m_addrHasher= dynamic_cast<c_AddressHasher*>(loadSubComponent(l_subCompName.c_str(),this,params));
-
 
     k_enableQuickResponse = (uint32_t)params.find<uint32_t>("boolEnableQuickRes", 0,l_found);
     if (!l_found) {
@@ -138,7 +160,7 @@ bool c_Controller::clockTic(SST::Cycle_t clock) {
     sendResponse();
 
     // 0. update device driver
-    m_deviceDriver->update();
+    m_deviceDriver->update(m_simCycle);
 
     // 1. Convert physical address to device address
     // 2. Push transactions to the transaction queue
@@ -188,13 +210,13 @@ bool c_Controller::clockTic(SST::Cycle_t clock) {
     }
 
     // 3. run transaction Scheduler
-    m_txnScheduler->run();
+    m_txnScheduler->run(m_simCycle);
 
     // 4. run transaction converter
-    m_txnConverter->run();
+    m_txnConverter->run(m_simCycle);
 
     // 5, run command scheduler
-    m_cmdScheduler->run();
+    m_cmdScheduler->run(m_simCycle);
 
     // 6. run device driver
     m_deviceDriver->run();

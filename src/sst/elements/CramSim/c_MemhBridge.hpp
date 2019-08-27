@@ -31,7 +31,7 @@
 #include "c_TxnGen.hpp"
 
 namespace SST {
-namespace n_Bank {
+namespace CramSim {
     
 #if defined(__clang__)
 #pragma clang diagnostic push
@@ -78,7 +78,7 @@ public:
 
 private:
 	void createTxn();
-	void readResponse(); //read from res q to output
+	bool readResponse(); //read from res q to output
 
         void printTxn(bool isWrite, uint64_t addr);
 	
@@ -104,7 +104,7 @@ private:
 #pragma clang diagnostic pop
 #endif
 
-} // namespace n_Bank
+} // namespace CramSim
 } // namespace SST
 
 #endif  /* _TXNGENRAND_H */

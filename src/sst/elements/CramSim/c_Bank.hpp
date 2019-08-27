@@ -43,7 +43,7 @@
 //#include "c_BankCommand.hpp"
 
 namespace SST {
-namespace n_Bank {
+namespace CramSim {
 
   class c_BankCommand;
   class c_BankStatistics;
@@ -233,7 +233,7 @@ private:
   // Statistics
   c_BankStatistics *m_bankStats;
 };
-} // n_Bank
+} // CramSim
 } // namespace SST
 
 #endif // C_BANK_HPP

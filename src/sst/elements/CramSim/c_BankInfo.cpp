@@ -39,7 +39,7 @@
 #include "c_BankGroup.hpp"
 
 using namespace SST;
-using namespace SST::n_Bank;
+using namespace SST::CramSim;
 
 c_BankInfo::c_BankInfo() :
 		m_bankState(new c_BankStateIdle(nullptr)) {

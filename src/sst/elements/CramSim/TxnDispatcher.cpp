@@ -32,7 +32,7 @@
 
 using namespace std;
 using namespace SST;
-using namespace SST::n_Bank;
+using namespace SST::CramSim;
 
 c_TxnDispatcher::c_TxnDispatcher(ComponentId_t id, Params &params) {
     //*------ get parameters ----*//

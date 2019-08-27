@@ -37,7 +37,7 @@
 #include "c_TxnResEvent.hpp"
 
 namespace SST{
-    namespace n_Bank{
+    namespace CramSim{
 
          class c_TxnDispatcher : public SST::Component {
          public:

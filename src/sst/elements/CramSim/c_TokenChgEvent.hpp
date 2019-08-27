@@ -34,7 +34,7 @@
 #define C_TOKENCHGEVENT_HPP_
 
 namespace SST {
-namespace n_Bank {
+namespace CramSim {
 // This event passes between components the change in tokens for a resource
 class c_TokenChgEvent: public SST::Event {
 public:
@@ -48,7 +48,7 @@ public:
 		ser & m_payload;
 	}
 
-	ImplementSerializable (SST::n_Bank::c_TokenChgEvent);
+	ImplementSerializable (SST::CramSim::c_TokenChgEvent);
 
 };
 
