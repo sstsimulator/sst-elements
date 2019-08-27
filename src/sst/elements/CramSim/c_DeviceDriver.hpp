@@ -53,7 +53,7 @@
 typedef unsigned long ulong;
 
 namespace SST {
-namespace n_Bank{
+namespace CramSim{
 
 	class c_Controller;
 	enum class e_BankCommandType;
@@ -61,13 +61,15 @@ namespace n_Bank{
 class c_DeviceDriver: public SubComponent{
 public:
 
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_API(SST::CramSim::c_DeviceDriver, Output*, std::function<void(c_BankCommand*)>)
+
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         c_DeviceDriver,
         "CramSim",
         "c_DeviceDriver",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Dram Control Unit",
-        "SST::CramSim::Controller::DeviceDriver"
+        SST::CramSim::c_DeviceDriver
     )
 
     SST_ELI_DOCUMENT_PARAMS(
@@ -125,43 +127,45 @@ public:
     SST_ELI_DOCUMENT_STATISTICS(
     )
 
-	c_DeviceDriver(Component *comp, Params& x_params);
-	~c_DeviceDriver();
+    c_DeviceDriver(Component *comp, Params& x_params);
+    c_DeviceDriver(ComponentId_t id, Params& x_params, Output* out, std::function<void(c_BankCommand*)> sendFunc);
+    void build(Params& x_params);
+    virtual ~c_DeviceDriver();
 
-	virtual void run();
-	virtual bool push(c_BankCommand* x_cmd);
-	virtual bool isCmdAllowed(c_BankCommand* x_bankCommandPtr);
-	virtual c_BankInfo* getBankInfo(unsigned x_bankId);
-	void update();
+    virtual void run();
+    virtual bool push(c_BankCommand* x_cmd);
+    virtual bool isCmdAllowed(c_BankCommand* x_bankCommandPtr);
+    virtual c_BankInfo* getBankInfo(unsigned x_bankId);
+    void update(SimTime_t simCycle);
 
-	unsigned getNumChannel(){return k_numChannels;}
-	unsigned getNumPChPerChannel(){return k_numPChannelsPerChannel;}
-	unsigned getNumRanksPerChannel(){return k_numRanksPerChannel;}
-	unsigned getNumBankGroupsPerRank(){return k_numBankGroupsPerRank;}
-	unsigned getNumBanksPerBankGroup(){return k_numBanksPerBankGroup;}
-	unsigned getNumRowsPerBank(){return k_numRowsPerBank;}
-	unsigned getNumColPerBank(){return k_numColsPerBank;}
-	unsigned getTotalNumBank() {return m_numBanks;}
+    unsigned getNumChannel(){return k_numChannels;}
+    unsigned getNumPChPerChannel(){return k_numPChannelsPerChannel;}
+    unsigned getNumRanksPerChannel(){return k_numRanksPerChannel;}
+    unsigned getNumBankGroupsPerRank(){return k_numBankGroupsPerRank;}
+    unsigned getNumBanksPerBankGroup(){return k_numBanksPerBankGroup;}
+    unsigned getNumRowsPerBank(){return k_numRowsPerBank;}
+    unsigned getNumColPerBank(){return k_numColsPerBank;}
+    unsigned getTotalNumBank() {return m_numBanks;}
 
 private:
 
-	c_DeviceDriver(); // for serialization only
-	bool sendRefresh(unsigned rank);
+    c_DeviceDriver(); // for serialization only
+    bool sendRefresh(unsigned rank);
 
-	void sendRequest(); // send request function that models close bank policy
-	bool sendCommand(c_BankCommand* x_bankCommandPtr, c_BankInfo* x_bank); // helper method to sendRequest
+    void sendRequest(); // send request function that models close bank policy
+    bool sendCommand(c_BankCommand* x_bankCommandPtr, c_BankInfo* x_bank); // helper method to sendRequest
 
-	/// helper methods to check if channel (command bus) is available
-	bool isCommandBusAvailable(c_BankCommand* x_BankCommandPtr);
-	///Set the occupancy of command bus
-	bool occupyCommandBus(c_BankCommand *x_cmdPtr);
-	///Release the occupancy of command bus
-	void releaseCommandBus();
+    /// helper methods to check if channel (command bus) is available
+    bool isCommandBusAvailable(c_BankCommand* x_BankCommandPtr);
+    ///Set the occupancy of command bus
+    bool occupyCommandBus(c_BankCommand *x_cmdPtr);
+    ///Release the occupancy of command bus
+    void releaseCommandBus();
 
-	void initACTFAWTracker();
-	void initRefresh();
-	unsigned getNumIssuedACTinFAW(unsigned x_rankid);
-	void createRefreshCmds(unsigned x_rank);
+    void initACTFAWTracker();
+    void initRefresh();
+    unsigned getNumIssuedACTinFAW(unsigned x_rankid);
+    void createRefreshCmds(unsigned x_rank);
     bool isRefreshing(const c_HashedAddress *x_addr);
 
 	c_Controller *m_Owner;
@@ -185,6 +189,7 @@ private:
 	std::vector<bool> m_isACTIssued;
 	bool m_issuedACT;
 
+        std::function<void(c_BankCommand* cmd)> m_sendCmdFunc; // send command via parent
 
 	// params
 	int k_numChannels;
@@ -219,6 +224,8 @@ private:
 	std::streambuf *m_cmdTraceStreamBuf;
 	std::ofstream m_cmdTraceOFStream;
 	std::ostream *m_cmdTraceStream;
+
+        SimTime_t m_simCycle;
 
 	//debug
 	Output *output;

@@ -41,7 +41,7 @@
 #include "c_BankCommand.hpp"
 
 using namespace SST;
-using namespace SST::n_Bank;
+using namespace SST::CramSim;
 
 
 unsigned c_Bank::k_banks = 0;

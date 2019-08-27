@@ -38,7 +38,7 @@
 #include "c_Rank.hpp"
 
 using namespace SST;
-using namespace SST::n_Bank;
+using namespace SST::CramSim;
 
 c_Channel::c_Channel(std::map<std::string, unsigned>* x_bankParams) {
 	m_bankParams = x_bankParams;

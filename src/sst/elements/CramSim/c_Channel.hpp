@@ -44,7 +44,7 @@
 //#include "c_BankCommand.hpp"
 
 namespace SST {
-namespace n_Bank {
+namespace CramSim {
 
 class c_Rank;
 class c_BankCommand;
@@ -85,6 +85,6 @@ private:
 
 };
 
-} // end n_Bank
+} // end CramSim
 } // end SST
 #endif /* C_CHANNEL_HPP_ */

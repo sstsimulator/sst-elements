@@ -64,15 +64,18 @@ for chid in range(numLanes):
 	# controller
 	comp_controller = sst.Component("MemController"+str(chid), "CramSim.c_Controller")
 	comp_controller.addParams(g_params)
-	comp_controller.addParams({
-			"TxnScheduler" : "CramSim.c_TxnScheduler",
-			"TxnConverter" : "CramSim.c_TxnConverter",
-			"AddrMapper" : "CramSim.c_AddressHasher",
-			"CmdScheduler" : "CramSim.c_CmdScheduler" ,
-			"DeviceDriver" : "CramSim.c_DeviceDriver"
-			})
-
-	# device
+	c0 = comp_controller.setSubComponent("TxnScheduler", "CramSim.c_TxnScheduler")
+	c1 = comp_controller.setSubComponent("TxnConverter", "CramSim.c_TxnConverter")
+	c2 = comp_controller.setSubComponent("AddrMapper", "CramSim.c_AddressHasher")
+	c3 = comp_controller.setSubComponent("CmdScheduler", "CramSim.c_CmdScheduler")
+	c4 = comp_controller.setSubComponent("DeviceDriver", "CramSim.c_DeviceDriver")
+        c0.addParams(g_params)
+        c1.addParams(g_params)
+        c2.addParams(g_params)
+        c3.addParams(g_params)
+        c4.addParams(g_params)
+	
+        # device
 	comp_dimm = sst.Component("Dimm"+str(chid), "CramSim.c_Dimm")
 	comp_dimm.addParams(g_params)
 

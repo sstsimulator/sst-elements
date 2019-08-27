@@ -30,7 +30,7 @@
 
 
 using namespace SST;
-using namespace SST::n_Bank;
+using namespace SST::CramSim;
 
 c_TxnGenBase::c_TxnGenBase(ComponentId_t x_id, Params& x_params) :
         Component(x_id) {
@@ -145,24 +145,29 @@ bool c_TxnGenBase::clockTic(Cycle_t) {
     m_simCycle++;
 
     createTxn();
-
+    
     for(int i=0;i<k_numTxnPerCycle;i++) {
-        if(k_maxOutstandingReqs==0 || m_numOutstandingReqs<k_maxOutstandingReqs) {
-
-            readResponse();
-            
-            if(sendRequest()==false)
-                break;
-            
-            m_numOutstandingReqs++;
-            m_numTxns++;
-        } else
+        if (!readResponse())
             break;
+        
+        m_numTxns++;
 
         if(k_maxTxns>0 && m_numTxns>=k_maxTxns) {
             primaryComponentOKToEndSim();
             return true;
         }
+    }
+    
+    for(int i=0;i<k_numTxnPerCycle;i++) {
+        if(k_maxOutstandingReqs==0 || m_numOutstandingReqs<k_maxOutstandingReqs) {
+
+            if(sendRequest()==false)
+                break;
+            
+            m_numOutstandingReqs++;
+        } else
+            break;
+
     }
     return false;
 }
@@ -271,7 +276,7 @@ bool c_TxnGenBase::sendRequest()
 }
 
 
-void c_TxnGenBase::readResponse() {
+bool c_TxnGenBase::readResponse() {
 	if (m_txnResQ.size() > 0) {
 		c_Transaction* l_txn = m_txnResQ.front();
 		delete l_txn;
@@ -279,9 +284,11 @@ void c_TxnGenBase::readResponse() {
 		m_txnResQ.pop_front();
 		// std::cout << "TxnGen::readResponse() Transaction printed: Addr-"
 		// 		<< l_txn->getAddress() << std::endl;
+                return true;
 	} else {
 		// std::cout << "TxnGen::readResponse(): No transactions in res q to read"
 		// 		<< std::endl;
+                return false;
 	}
 }
 

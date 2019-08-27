@@ -49,7 +49,7 @@
 #include "c_Controller.hpp"
 
 namespace SST {
-namespace n_Bank {
+namespace CramSim {
 	class c_CmdScheduler;
 	class c_Controller;
 
@@ -58,20 +58,23 @@ class c_TxnConverter: public SubComponent{
 
 public:
 
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_API(SST::CramSim::c_TxnConverter, Output*, unsigned, c_CmdScheduler*)
+
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         c_TxnConverter,
         "CramSim",
         "c_TxnConverter",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Transaction Converter",
-        "SST::CramSim::Controller::TxnConverter"
+        SST::CramSim::c_TxnConverter
     )
 
     SST_ELI_DOCUMENT_PARAMS(
 		{"relCommandWidth", "Relative width of each command", NULL},
-		{"bankPolicy", "Select which bank policy to model", NULL},
+		{"bankPolicy", "Select which bank policy to model", "CLOSE"},
 		{"boolUseReadA", "Whether to use READ or READA Cmds", NULL},
 		{"boolUseWriteA", "Whether to use WRITE or WRITEA Cmds", NULL},
+                {"bankCloseTime", "", NULL},
     )
 
     SST_ELI_DOCUMENT_PORTS(
@@ -85,12 +88,14 @@ public:
         {"resQueueSize", "Total size of the response queue over time", "transactions", 1},
     )
 
-	c_TxnConverter(SST::Component * comp, SST::Params& x_params);
-	~c_TxnConverter();
+    c_TxnConverter(SST::Component * comp, SST::Params& x_params);
+    c_TxnConverter(SST::ComponentId_t id, SST::Params& x_params, Output* out, unsigned banks, c_CmdScheduler* scheduler);
+    void build(SST::Params& x_params, unsigned l_bankNum);
+    ~c_TxnConverter();
 
-    void run();
+    void run(SimTime_t simCycle);
     void push(c_Transaction* newTxn); // receive txns from txnGen into req q
-	c_BankInfo* getBankInfo(unsigned x_bankId);
+    c_BankInfo* getBankInfo(unsigned x_bankId);
 
 private:
 
@@ -103,7 +108,6 @@ private:
 	void printQueues();
 
 	c_CmdScheduler *m_cmdScheduler;
-	c_Controller *m_owner;
 
 	std::vector<c_BankInfo*> m_bankInfo;
 	unsigned m_bankNums;

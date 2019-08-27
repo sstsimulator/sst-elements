@@ -38,18 +38,26 @@
 #include "c_TxnScheduler.hpp"
 
 using namespace SST;
-using namespace SST::n_Bank;
+using namespace SST::CramSim;
 using namespace std;
 
 c_TxnScheduler::c_TxnScheduler(SST::Component *owner, SST::Params& x_params) : SubComponent(owner) {
-    m_controller = dynamic_cast<c_Controller *>(owner);
+    c_Controller* m_controller = dynamic_cast<c_Controller *>(owner);
     m_txnConverter = m_controller->getTxnConverter();
     m_cmdScheduler = m_controller->getCmdScheduler();
 
     output = m_controller->getOutput();
-
-    //initialize member variables
     m_numChannels = m_controller->getDeviceDriver()->getNumChannel();
+    build(x_params);
+}
+
+c_TxnScheduler::c_TxnScheduler(SST::ComponentId_t id, SST::Params& x_params, Output* out, unsigned channels, c_TxnConverter* converter, c_CmdScheduler* scheduler) : 
+    SubComponent(id), output(out), m_numChannels(channels), m_txnConverter(converter), m_cmdScheduler(scheduler) {
+    build(x_params);
+}
+
+void c_TxnScheduler::build(Params& x_params) {
+    //initialize member variables
     assert(m_numChannels>0);
 
     bool l_found=false;
@@ -104,7 +112,7 @@ c_TxnScheduler::c_TxnScheduler(SST::Component *owner, SST::Params& x_params) : S
 
         k_minPendingWriteThreshold = (float) x_params.find<float>("minPendingWriteThreshold", 0.2, l_found);
         if (!l_found) {
-            std::cout << "minPendingWriteThreshold value is missing... it will be 1.0 (default)" << std::endl;
+            std::cout << "minPendingWriteThreshold value is missing... it will be 0.2 (default)" << std::endl;
         } else {
             if (k_minPendingWriteThreshold > k_maxPendingWriteThreshold) {
                 std::cout << "minPendingWriteThreshold value should be smaller than maxPendingWriteThreshold"
@@ -124,7 +132,7 @@ c_TxnScheduler::~c_TxnScheduler() {
 }
 
 
-void c_TxnScheduler::run(){
+void c_TxnScheduler::run(SimTime_t simCycle){
 
 
     for(int l_channelID=0; l_channelID<m_numChannels; l_channelID++) {
@@ -172,7 +180,7 @@ void c_TxnScheduler::run(){
                 m_txnConverter->push(l_nextTxn);
 
                 #ifdef __SST_DEBUG_OUTPUT__
-                l_nextTxn->print(output, "[c_TxnScheduler]",m_controller->getSimCycle());
+                l_nextTxn->print(output, "[c_TxnScheduler]",simCycle);
                 #endif
 
                 // pop it from inputQ

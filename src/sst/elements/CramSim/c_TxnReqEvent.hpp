@@ -37,7 +37,7 @@
 #include "c_Transaction.hpp"
 
 namespace SST {
-namespace n_Bank {
+namespace CramSim {
 class c_TxnReqEvent: public SST::Event {
 public:
 	c_Transaction *m_payload; // FIXME: change this pointer to a unique_ptr
@@ -51,7 +51,7 @@ public:
 		ser & m_payload;
 	}
 
-	ImplementSerializable (SST::n_Bank::c_TxnReqEvent);
+	ImplementSerializable (SST::CramSim::c_TxnReqEvent);
 
 };
 

@@ -55,7 +55,7 @@
 
 
 using namespace SST;
-using namespace SST::n_Bank;
+using namespace SST::CramSim;
 
 
 
@@ -66,247 +66,220 @@ using namespace SST::n_Bank;
  */
 c_DeviceDriver::c_DeviceDriver(Component *owner, Params& params) : SubComponent(owner) {
 
-	m_Owner = dynamic_cast<c_Controller *>(owner);
+    m_Owner = dynamic_cast<c_Controller *>(owner);
     output = m_Owner->getOutput();
+    using std::placeholders::_1;
+    m_sendCmdFunc = std::bind(&c_Controller::sendCommand, m_Owner, _1);
+    build(params);
+}
 
+c_DeviceDriver::c_DeviceDriver(ComponentId_t id, Params& params, Output* out, std::function<void(c_BankCommand*)> sendFunc) : SubComponent(id), output(out), m_sendCmdFunc(sendFunc) {
+    build(params);
+}
+
+void c_DeviceDriver::build(Params& params) {
 	// read params here
 	bool l_found = false;
 
-
 	k_useDualCommandBus = (uint32_t) params.find<uint32_t>("boolDualCommandBus", 0, l_found);
 	if (!l_found) {
-		std::cout << "boolDualCommandBus value is missing... disabled" << std::endl;
+            output->output("boolDualCommandBus value is missing... disabled\n");
 	}
 
 	k_multiCycleACT = (uint32_t) params.find<uint32_t>("boolMultiCycleACT", 0, l_found);
 	if (!l_found) {
-		std::cout << "boolMultiCycleACT value is missing... disabled" << std::endl;
+	    output->output("boolMultiCycleACT value is missing... disabled\n");
 	}
 
 	//set system configuration
 	k_numChannels = (uint32_t) params.find<uint32_t>("numChannels", 1, l_found);
 	if (!l_found) {
-		std::cout << "numChannels value is missing... exiting" << std::endl;
-		exit(-1);
+	    output->fatal(CALL_INFO, -1, "numChannels value is missing... exiting\n");
 	}
 
 	k_numPChannelsPerChannel= (uint32_t) params.find<uint32_t>("numPChannelsPerChannel", 1, l_found);
 	if (!l_found) {
-		std::cout << "numPChannelsPerChannel value is missing... disabled" << std::endl;
-		//exit(-1);
+	    output->output("numPChannelsPerChannel value is missing... disabled\n");
 	}
 
 	k_numRanksPerChannel = (uint32_t) params.find<uint32_t>("numRanksPerChannel", 2, l_found);
 	if (!l_found) {
-		std::cout << "numRanksPerChannel value is missing... exiting" << std::endl;
-		exit(-1);
+	    output->fatal(CALL_INFO, -1, "numRanksPerChannel value is missing... exiting\n");
 	}
 
 	k_numBankGroupsPerRank = (uint32_t) params.find<uint32_t>("numBankGroupsPerRank", 100, l_found);
 	if (!l_found) {
-		std::cout << "numBankGroupsPerRank value is missing... exiting" << std::endl;
-		exit(-1);
+	    output->fatal(CALL_INFO, -1, "numBankGroupsPerRank value is missing... exiting\n");
 	}
 
 	k_numBanksPerBankGroup = (uint32_t) params.find<uint32_t>("numBanksPerBankGroup", 100, l_found);
 	if (!l_found) {
-		std::cout << "numBanksPerBankGroup value is missing... exiting" << std::endl;
-		exit(-1);
+            output->fatal(CALL_INFO, -1, "numBanksPerBankGroup value is missing... exiting\n");
 	}
 
 	k_numColsPerBank = (uint32_t) params.find<uint32_t>("numColsPerBank", 100, l_found);
 	if (!l_found) {
-		std::cout << "numColsPerBank value is missing... exiting" << std::endl;
-		exit(-1);
+            output->fatal(CALL_INFO, -1, "numColsPerBank value is missing... exiting\n");
 	}
 
 	k_numRowsPerBank = (uint32_t) params.find<uint32_t>("numRowsPerBank", 100, l_found);
 	if (!l_found) {
-		std::cout << "numRowsPerBank value is missing... exiting" << std::endl;
-		exit(-1);
+            output->fatal(CALL_INFO, -1, "numRowsPerBank value is missing... exiting\n");
 	}
 
 	k_useRefresh = (uint32_t) params.find<uint32_t>("boolUseRefresh", 0, l_found);
 	if (!l_found) {
-		std::cout << "boolUseRefresh param value is missing... disabled" << std::endl;
+            output->output("boolUseRefresh param value is missing... disabled\n");
 	}
 
 	k_useSBRefresh = (uint32_t) params.find<uint32_t>("boolUseSBRefresh", 0, l_found);
 	if (!l_found) {
-		std::cout << "boolUseSBRefresh (single bank refresh) param value is missing... disabled" << std::endl;
+	    output->output("boolUseSBRefresh (single bank refresh) param value is missing... disabled\n");
 	}
 
 	/* Device timing parameters*/
     //FIXME: Move this param reading to inside of c_BankInfo
     m_bankParams["nRC"] = (uint32_t) params.find<uint32_t>("nRC", 55, l_found);
     if (!l_found) {
-        std::cout << "nRC value is missing ... exiting" << std::endl;
-        exit(-1);
+        output->fatal(CALL_INFO, -1, "nRC value is missing ... exiting\n");
     }
 
     m_bankParams["nRRD"] = (uint32_t) params.find<uint32_t>("nRRD", 4, l_found);
     if (!l_found) {
-        std::cout << "nRRD value is missing ... exiting" << std::endl;
-        exit(-1);
+        output->fatal(CALL_INFO, -1, "nRRD value is missing ... exiting\n");
     }
 
     m_bankParams["nRRD_L"] = (uint32_t) params.find<uint32_t>("nRRD_L", 6, l_found);
     if (!l_found) {
-        std::cout << "nRRD_L value is missing ... exiting" << std::endl;
-        exit(-1);
+        output->fatal(CALL_INFO, -1, "nRRD_L value is missing ... exiting\n");
     }
 
     m_bankParams["nRRD_S"] = (uint32_t) params.find<uint32_t>("nRRD_S", 4, l_found);
     if (!l_found) {
-        std::cout << "nRRD_S value is missing ... exiting" << std::endl;
-        exit(-1);
+        output->fatal(CALL_INFO, -1, "nRRD_S value is missing ... exiting\n");
     }
 
     m_bankParams["nRCD"] = (uint32_t) params.find<uint32_t>("nRCD", 16, l_found);
     if (!l_found) {
-        std::cout << "nRRD_L value is missing ... exiting" << std::endl;
-        exit(-1);
+        output->fatal(CALL_INFO, -1, "nRRD_L value is missing ... exiting\n");
     }
 
     m_bankParams["nCCD"] = (uint32_t) params.find<uint32_t>("nCCD", 4, l_found);
     if (!l_found) {
-        std::cout << "nCCD value is missing ... exiting" << std::endl;
-        exit(-1);
+        output->fatal(CALL_INFO, -1, "nCCD value is missing ... exiting\n");
     }
 
     m_bankParams["nCCD_L"] = (uint32_t) params.find<uint32_t>("nCCD_L", 5, l_found);
     if (!l_found) {
-        std::cout << "nCCD_L value is missing ... exiting" << std::endl;
-        exit(-1);
+        output->fatal(CALL_INFO, -1, "nCCD_L value is missing ... exiting\n");
     }
 
     m_bankParams["nCCD_L_WR"] = (uint32_t) params.find<uint32_t>("nCCD_L_WR", 1, l_found);
     if (!l_found) {
-        std::cout << "nCCD_L_WR value is missing ... exiting" << std::endl;
-        exit(-1);
+        output->fatal(CALL_INFO, -1, "nCCD_L_WR value is missing ... exiting\n");
     }
 
     m_bankParams["nCCD_S"] = (uint32_t) params.find<uint32_t>("nCCD_S", 4, l_found);
     if (!l_found) {
-        std::cout << "nCCD_S value is missing ... exiting" << std::endl;
-        exit(-1);
+        output->fatal(CALL_INFO, -1, "nCCD_S value is missing ... exiting\n");
     }
 
     m_bankParams["nAL"] = (uint32_t) params.find<uint32_t>("nAL", 15, l_found);
     if (!l_found) {
-        std::cout << "nAL value is missing ... exiting" << std::endl;
-        exit(-1);
+        output->fatal(CALL_INFO, -1, "nAL value is missing ... exiting\n");
     }
 
     m_bankParams["nCL"] = (uint32_t) params.find<uint32_t>("nCL", 16, l_found);
     if (!l_found) {
-        std::cout << "nCL value is missing ... exiting" << std::endl;
-        exit(-1);
+        output->fatal(CALL_INFO, -1, "nCL value is missing ... exiting\n");
     }
 
     m_bankParams["nCWL"] = (uint32_t) params.find<uint32_t>("nCWL", 16, l_found);
     if (!l_found) {
-        std::cout << "nCWL value is missing ... exiting" << std::endl;
-        exit(-1);
+        output->fatal(CALL_INFO, -1, "nCWL value is missing ... exiting\n");
     }
 
     m_bankParams["nWR"] = (uint32_t) params.find<uint32_t>("nWR", 16, l_found);
     if (!l_found) {
-        std::cout << "nWR value is missing ... exiting" << std::endl;
-        exit(-1);
+        output->fatal(CALL_INFO, -1, "nWR value is missing ... exiting\n");
     }
 
     m_bankParams["nWTR"] = (uint32_t) params.find<uint32_t>("nWTR", 3, l_found);
     if (!l_found) {
-        std::cout << "nWTR value is missing ... exiting" << std::endl;
-        exit(-1);
+        output->fatal(CALL_INFO, -1, "nWTR value is missing ... exiting\n");
     }
 
     m_bankParams["nWTR_L"] = (uint32_t) params.find<uint32_t>("nWTR_L", 9, l_found);
     if (!l_found) {
-        std::cout << "nWTR_L value is missing ... exiting" << std::endl;
-        exit(-1);
+        output->fatal(CALL_INFO, -1, "nWTR_L value is missing ... exiting\n");
     }
 
     m_bankParams["nWTR_S"] = (uint32_t) params.find<uint32_t>("nWTR_S", 3, l_found);
     if (!l_found) {
-        std::cout << "nWTR_S value is missing ... exiting" << std::endl;
-        exit(-1);
+        output->fatal(CALL_INFO, -1, "nWTR_S value is missing ... exiting\n");
     }
 
     m_bankParams["nRTW"] = (uint32_t) params.find<uint32_t>("nRTW", 4, l_found);
     if (!l_found) {
-        std::cout << "nRTW value is missing ... exiting" << std::endl;
-        exit(-1);
+        output->fatal(CALL_INFO, -1, "nRTW value is missing ... exiting\n");
     }
 
     m_bankParams["nEWTR"] = (uint32_t) params.find<uint32_t>("nEWTR", 6, l_found);
     if (!l_found) {
-        std::cout << "nEWTR value is missing ... exiting" << std::endl;
-        exit(-1);
+        output->fatal(CALL_INFO, -1, "nEWTR value is missing ... exiting\n");
     }
 
     m_bankParams["nERTW"] = (uint32_t) params.find<uint32_t>("nERTW", 6, l_found);
     if (!l_found) {
-        std::cout << "nERTW value is missing ... exiting" << std::endl;
-        exit(-1);
+        output->fatal(CALL_INFO, -1, "nERTW value is missing ... exiting\n");
     }
 
     m_bankParams["nEWTW"] = (uint32_t) params.find<uint32_t>("nEWTW", 6, l_found);
     if (!l_found) {
-        std::cout << "nEWTW value is missing ... exiting" << std::endl;
-        exit(-1);
+        output->fatal(CALL_INFO, -1, "nEWTW value is missing ... exiting\n");
     }
 
     m_bankParams["nERTR"] = (uint32_t) params.find<uint32_t>("nERTR", 6, l_found);
     if (!l_found) {
-        std::cout << "nERTR value is missing ... exiting" << std::endl;
-        exit(-1);
+        output->fatal(CALL_INFO, -1, "nERTR value is missing ... exiting\n");
     }
 
     m_bankParams["nRAS"] = (uint32_t) params.find<uint32_t>("nRAS", 39, l_found);
     if (!l_found) {
-        std::cout << "nRAS value is missing ... exiting" << std::endl;
-        exit(-1);
+        output->fatal(CALL_INFO, -1, "nRAS value is missing ... exiting\n");
     }
 
     m_bankParams["nRTP"] = (uint32_t) params.find<uint32_t>("nRTP", 9, l_found);
     if (!l_found) {
-        std::cout << "nRTP value is missing ... exiting" << std::endl;
-        exit(-1);
+        output->fatal(CALL_INFO, -1, "nRTP value is missing ... exiting\n");
     }
 
     m_bankParams["nRP"] = (uint32_t) params.find<uint32_t>("nRP", 16, l_found);
     if (!l_found) {
-        std::cout << "nRP value is missing ... exiting" << std::endl;
-        exit(-1);
+        output->fatal(CALL_INFO, -1, "nRP value is missing ... exiting\n");
     }
 
     m_bankParams["nRFC"] = (uint32_t) params.find<uint32_t>("nRFC", 420, l_found);
     if (!l_found) {
-        std::cout << "nRFC value is missing ... exiting" << std::endl;
-        exit(-1);
+        output->fatal(CALL_INFO, -1, "nRFC value is missing ... exiting\n");
     }
 
     m_bankParams["nREFI"] = (uint32_t) params.find<uint32_t>("nREFI", 9360, l_found);
     if (!l_found) {
-        std::cout << "nREFI value is missing ... exiting" << std::endl;
-        exit(-1);
+        output->fatal(CALL_INFO, -1, "nREFI value is missing ... exiting\n");
     }
 
     m_bankParams["nFAW"] = (uint32_t) params.find<uint32_t>("nFAW", 16, l_found);
     if (!l_found) {
-        std::cout << "nFAW value is missing ... exiting" << std::endl;
-        exit(-1);
+        output->fatal(CALL_INFO, -1, "nFAW value is missing ... exiting\n");
     }
 
     m_bankParams["nBL"] = (uint32_t) params.find<uint32_t>("nBL", 4, l_found);
     if (!l_found) {
-        std::cout << "nBL value is missing ... exiting" << std::endl;
-        exit(-1);
+        output->fatal(CALL_INFO, -1, "nBL value is missing ... exiting\n");
     }
 
-
+    m_simCycle = 0;
 
 	// configure the memory hierarchy
 	m_numChannels =  k_numChannels;
@@ -468,12 +441,14 @@ void c_DeviceDriver::run() {
 			{
 				if(l_cmdPtr->getSeqNum()==l_cmdPtr->getBankIdVec().front())
 				{
-					m_Owner->sendCommand(l_cmdPtr);
+                                    m_sendCmdFunc(l_cmdPtr);
+					//m_Owner->sendCommand(l_cmdPtr);
 				} else
 					delete l_cmdPtr;
 			}
 			else
-				m_Owner->sendCommand(l_cmdPtr);
+                            m_sendCmdFunc(l_cmdPtr);
+				//m_Owner->sendCommand(l_cmdPtr);
 
 			l_cmdPtrItr=m_outputQ.erase(l_cmdPtrItr);
 		}
@@ -486,10 +461,13 @@ void c_DeviceDriver::run() {
 /*!
  *
  */
-void c_DeviceDriver::update() {
+void c_DeviceDriver::update(SimTime_t simCycle) {
+
+    m_simCycle = simCycle;
+
 	for (int l_i = 0; l_i != m_banks.size(); ++l_i) {
 
-		m_banks.at(l_i)->clockTic(m_Owner->getSimCycle());
+		m_banks.at(l_i)->clockTic(m_simCycle);
 		// m_banks.at(l_i)->printState();
 	}
 	//update ACTFAWTracker info
@@ -520,7 +498,7 @@ void c_DeviceDriver::update() {
  */
 bool c_DeviceDriver::isCmdAllowed(c_BankCommand* x_bankCommandPtr)
 {
-	SimTime_t l_time = m_Owner->getSimCycle();
+	SimTime_t l_time = m_simCycle;
 	// get count of ACT cmds issued in the FAW
 	unsigned l_bankId=x_bankCommandPtr->getHashedAddress()->getBankId();
 
@@ -669,12 +647,12 @@ void c_DeviceDriver::sendRequest() {
 						assert((m_lastDataCmdType != ((l_cmdPtr))->getCommandMnemonic()) ||
 							   (m_lastPseudoChannel != (l_cmdPtr->getHashedAddress()->getPChannel())) ||
 							   (m_lastChannel !=(l_cmdPtr->getHashedAddress()->getChannel())) ||
-							   (m_Owner->getSimCycle() - m_lastDataCmdIssueCycle) >=
+							   (m_simCycle - m_lastDataCmdIssueCycle) >=
 							   (std::min(m_bankParams.at("nBL"),
 										 std::max(m_bankParams.at("nCCD_L"), m_bankParams.at("nCCD_S")))));
 
 						m_lastChannel = ((l_cmdPtr))->getHashedAddress()->getChannel();
-						m_lastDataCmdIssueCycle = m_Owner->getSimCycle();
+						m_lastDataCmdIssueCycle = m_simCycle;
 						m_lastDataCmdType = ((l_cmdPtr))->getCommandMnemonic();
 						m_lastPseudoChannel = ((l_cmdPtr))->getHashedAddress()->getPChannel();
 					}
@@ -709,7 +687,7 @@ bool c_DeviceDriver::sendRefresh(unsigned x_requester) {
 	std::vector<c_BankCommand*> &cmdQ=m_refreshCmdQ[x_requester];
 
 	c_BankCommand* l_cmdPtr = cmdQ.front();
-    SimTime_t l_time = m_Owner->getSimCycle();
+    SimTime_t l_time = m_simCycle;
 	std::vector<unsigned>& l_bankIdVec = l_cmdPtr->getBankIdVec();
 
 	//check if the target banks are ready for the current command
@@ -842,7 +820,7 @@ void c_DeviceDriver::releaseCommandBus() {
  */
 bool c_DeviceDriver::sendCommand(c_BankCommand* x_bankCommandPtr,
 		c_BankInfo* x_bank) {
-    SimTime_t l_time = m_Owner->getSimCycle();
+    SimTime_t l_time = m_simCycle;
 
 	if (x_bank->isCommandAllowed(x_bankCommandPtr, l_time)) {
 	  if(k_printCmdTrace) {
@@ -855,14 +833,14 @@ bool c_DeviceDriver::sendCommand(c_BankCommand* x_bankCommandPtr,
 			  l_bankId=x_bankCommandPtr->getBankId();
 	    if(x_bankCommandPtr->isRefreshType()) {
 				(*m_cmdTraceStream) << "@" << std::dec
-									<< m_Owner->getSimCycle()
+									<< m_simCycle
 									<< " " << (x_bankCommandPtr)->getCommandString()
 									<< " " << std::dec << (x_bankCommandPtr)->getSeqNum()
 									<< " " << std::dec << l_bankId
 									<< std::endl;
 	    } else {
 	      (*m_cmdTraceStream) << "@" << std::dec
-				  << m_Owner->getSimCycle()
+				  << m_simCycle
 				  << " " << (x_bankCommandPtr)->getCommandString()
 				  << " " << std::dec << (x_bankCommandPtr)->getSeqNum()
 				  << " 0x" << std::hex << (x_bankCommandPtr)->getAddress()
@@ -881,7 +859,7 @@ bool c_DeviceDriver::sendCommand(c_BankCommand* x_bankCommandPtr,
 
 		#ifdef __SST_DEBUG_OUTPUT__
 				output->verbose(CALL_INFO,1,0,"Cycle:%lld Cmd:%s CH:%d PCH:%d Rank:%d BG:%d B:%d Row:%d Col:%d BankId:%d CmdSeq:%lld\n",
-				    m_Owner->getSimCycle(),
+				    m_simCycle,
 				     x_bankCommandPtr->getCommandString().c_str(),
 				     x_bankCommandPtr->getHashedAddress()->getChannel(),
 				     x_bankCommandPtr->getHashedAddress()->getPChannel(),

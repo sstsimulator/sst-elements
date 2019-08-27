@@ -39,7 +39,7 @@
 #include "c_BankInfo.hpp"
 
 namespace SST {
-namespace n_Bank {
+namespace CramSim {
 
 class c_BankStateIdle;
 

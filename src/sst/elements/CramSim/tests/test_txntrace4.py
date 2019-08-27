@@ -144,14 +144,16 @@ comp_txnGen0 = setup_txn_generator(g_params)
 # controller
 comp_controller0 = sst.Component("MemController0", "CramSim.c_Controller")
 comp_controller0.addParams(g_params)
-comp_controller0.addParams({
-		"TxnScheduler" : "CramSim.c_TxnScheduler",
-		"TxnConverter" : "CramSim.c_TxnConverter",
-		"AddrMapper" : "CramSim.c_AddressHasher",
-		"CmdScheduler" : "CramSim.c_CmdScheduler" ,
-		"DeviceDriver" : "CramSim.c_DeviceDriver"
-		})
-
+c0 = comp_controller0.setSubComponent("TxnScheduler", "CramSim.c_TxnScheduler")
+c1 = comp_controller0.setSubComponent("TxnConverter", "CramSim.c_TxnConverter")
+c2 = comp_controller0.setSubComponent("AddrMapper", "CramSim.c_AddressHasher")
+c3 = comp_controller0.setSubComponent("CmdScheduler", "CramSim.c_CmdScheduler")
+c4 = comp_controller0.setSubComponent("DeviceDriver", "CramSim.c_DeviceDriver")
+c0.addParams(g_params)
+c1.addParams(g_params)
+c2.addParams(g_params)
+c3.addParams(g_params)
+c4.addParams(g_params)
 
 
 # bank receiver
