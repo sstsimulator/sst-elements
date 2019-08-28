@@ -39,16 +39,24 @@
 #include "c_DeviceDriver.hpp"
 
 using namespace SST;
-using namespace SST::n_Bank;
+using namespace SST::CramSim;
 
-c_CmdScheduler::c_CmdScheduler(Component *comp, Params &x_params) : SubComponent(comp){
-    m_owner = dynamic_cast<c_Controller*>(comp);
+c_CmdScheduler::c_CmdScheduler(Component *comp, Params &x_params) : SubComponent(comp) {
+    c_Controller* m_owner = dynamic_cast<c_Controller*>(comp);
     m_deviceController=m_owner->getDeviceDriver();
     output=dynamic_cast<c_Controller*>(comp)->getOutput();
     //create command queue
-    m_numBanks=m_owner->getDeviceDriver()->getTotalNumBank();
-    m_numChannels=m_owner->getDeviceDriver()->getNumChannel();
-    m_numRanksPerChannel=m_owner->getDeviceDriver()->getNumRanksPerChannel();
+    build(x_params);
+}
+
+c_CmdScheduler::c_CmdScheduler(ComponentId_t id, Params &x_params, Output* out, c_DeviceDriver* driver) : SubComponent(id), output(out), m_deviceController(driver) {
+    build(x_params);
+}
+
+void c_CmdScheduler::build(Params &x_params) {
+    m_numBanks=m_deviceController->getTotalNumBank();
+    m_numChannels=m_deviceController->getNumChannel();
+    m_numRanksPerChannel=m_deviceController->getNumRanksPerChannel();
     m_numBanksPerChannel=m_numBanks/m_numChannels;
     m_numBanksPerRank = m_numBanks/m_numRanksPerChannel;
 
@@ -91,11 +99,11 @@ c_CmdScheduler::~c_CmdScheduler(){
 
 
 
-void c_CmdScheduler::run(){
+void c_CmdScheduler::run(SimTime_t simCycle){
 
     bool isSuccess = false;
     c_BankCommand *l_cmdPtr= nullptr;
-    SimTime_t  l_time=m_owner->getSimCycle();
+    SimTime_t  l_time=simCycle;
 
     for(unsigned l_ch=0;l_ch<m_numChannels;l_ch++) {
 
@@ -112,7 +120,7 @@ void c_CmdScheduler::run(){
                         l_cmdQueue.pop_front();
 
 #ifdef __SST_DEBUG_OUTPUT__
-                        l_cmdPtr->print(output, "[c_CmdScheduler]",m_owner->getSimCycle());
+                        l_cmdPtr->print(output, "[c_CmdScheduler]", simCycle);
 #endif
                     }
                 }

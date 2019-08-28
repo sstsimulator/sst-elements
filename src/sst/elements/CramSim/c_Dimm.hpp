@@ -42,7 +42,7 @@
 #include "c_Bank.hpp"
 
 namespace SST {
-namespace n_Bank {
+namespace CramSim {
 
   class c_BankCommand;
 

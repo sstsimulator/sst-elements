@@ -29,7 +29,7 @@
 #include "c_TxnGen.hpp"
 
 using namespace SST;
-using namespace SST::n_Bank;
+using namespace SST::CramSim;
 using namespace CramSim;
 
 c_MemhBridge::c_MemhBridge(ComponentId_t x_id, Params& x_params) :
@@ -107,7 +107,7 @@ void c_MemhBridge::createTxn() {
 }
 
 
-void c_MemhBridge::readResponse() {
+bool c_MemhBridge::readResponse() {
 	if (m_txnResQ.size() > 0) {
                 c_Transaction* l_txn = m_txnResQ.front();
                 
@@ -119,7 +119,10 @@ void c_MemhBridge::readResponse() {
 		delete l_txn;
 
                 m_txnResQ.pop_front();
+
+                return true;
 	}
+        return false;
 }
 
 

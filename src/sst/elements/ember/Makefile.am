@@ -58,6 +58,8 @@ libember_la_SOURCES = \
 	libs/mpi/emberallredev.h \
 	libs/mpi/emberalltoallvev.h \
 	libs/mpi/emberalltoallev.h \
+	libs/mpi/emberallgathervev.h \
+	libs/mpi/emberallgatherev.h \
 	libs/mpi/emberredev.h \
 	libs/mpi/emberbcastev.h \
 	libs/mpi/emberMPIEvent.h \
@@ -112,6 +114,10 @@ libember_la_SOURCES = \
 	mpi/motifs/emberallpingpong.h \
 	mpi/motifs/emberallreduce.cc \
 	mpi/motifs/emberallreduce.h \
+	mpi/motifs/emberallgatherv.cc \
+	mpi/motifs/emberallgatherv.h \
+	mpi/motifs/emberallgather.cc \
+	mpi/motifs/emberallgather.h \
 	mpi/motifs/emberalltoall.cc \
 	mpi/motifs/emberalltoall.h \
 	mpi/motifs/emberalltoallv.cc \

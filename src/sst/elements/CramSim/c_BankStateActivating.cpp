@@ -39,7 +39,7 @@
 #include "c_BankStateActivating.hpp"
 
 using namespace SST;
-using namespace SST::n_Bank;
+using namespace SST::CramSim;
 
 c_BankStateActivating::c_BankStateActivating(std::map<std::string, unsigned>* x_bankParams) :
 	m_receivedCommandPtr(nullptr) {

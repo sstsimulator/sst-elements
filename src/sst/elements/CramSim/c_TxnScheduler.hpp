@@ -37,7 +37,7 @@
 
 
 namespace SST {
-    namespace n_Bank {
+    namespace CramSim {
         class c_AddressHasher;
         class c_TxnConverter;
         class c_Controller;
@@ -48,18 +48,23 @@ namespace SST {
         class c_TxnScheduler: public SubComponent{
         public:
 
-            SST_ELI_REGISTER_SUBCOMPONENT(
+            SST_ELI_REGISTER_SUBCOMPONENT_API(SST::CramSim::c_TxnScheduler, Output*, unsigned, c_TxnConverter*, c_CmdScheduler*)
+            
+            SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
                 c_TxnScheduler,
                 "CramSim",
                 "c_TxnScheduler",
                 SST_ELI_ELEMENT_VERSION(1,0,0),
                 "Transaction Scheduler",
-                "SST::CramSim::Controller::TxnScheduler"
+                SST::CramSim::c_TxnScheduler
             )
 
             SST_ELI_DOCUMENT_PARAMS(
-                {"txnSchedulingPolicy", "Transaction scheduling policy", NULL},
-                {"numTxnQEntries", "The number of transaction queue entries", NULL},
+                {"txnSchedulingPolicy", "Transaction scheduling policy", "FCFS"},
+                {"numTxnQEntries", "The number of transaction queue entries", "32"},
+                {"boolReadFirstTxnScheduling", "", "0"},
+                {"maxPendingWriteThreshold", "", "1.0"},
+                {"minPendingWriteThreshold", "", "0.2"},
             )
 
             SST_ELI_DOCUMENT_PORTS(
@@ -68,10 +73,12 @@ namespace SST {
             SST_ELI_DOCUMENT_STATISTICS(
             )
 
-            c_TxnScheduler(SST::Component *comp, SST::Params &x_params);
+            c_TxnScheduler(SST::Component *comp, SST::Params &x_params); // Temporary
+            c_TxnScheduler(SST::ComponentId_t id, SST::Params &x_params, Output* out, unsigned channels, c_TxnConverter* converter, c_CmdScheduler* scheduler);
+            void build(Params &x_params); // Temporary
             ~c_TxnScheduler();
 
-            virtual void run();
+            virtual void run(SimTime_t simCycle);
             virtual bool push(c_Transaction* newTxn);
             virtual bool isHit(c_Transaction* newTxn);
 
@@ -81,8 +88,6 @@ namespace SST {
             virtual bool hasDependancy(c_Transaction* x_txn, int x_ch);
             virtual void popTxn(TxnQueue& x_queue, c_Transaction* x_txn);
 
-            //**Controller
-            c_Controller * m_controller;
             //**transaction converter
             c_TxnConverter* m_txnConverter;
             //**command Scheduler

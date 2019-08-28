@@ -37,17 +37,24 @@
 #include "c_CmdResEvent.hpp"
 
 using namespace SST;
-using namespace SST::n_Bank;
+using namespace SST::CramSim;
 using namespace std;
 
 c_TxnConverter::c_TxnConverter(SST::Component *owner, SST::Params& x_params) : SubComponent(owner) {
 
-	m_owner = dynamic_cast<c_Controller *>(owner);
+	c_Controller* m_owner = dynamic_cast<c_Controller *>(owner);
 	m_cmdScheduler= m_owner->getCmdScheduler();
-	m_cmdSeqNum=0;
 	output = m_owner->getOutput();
-
 	unsigned l_bankNum=m_owner->getDeviceDriver()->getTotalNumBank();
+        build(x_params, l_bankNum);
+}
+c_TxnConverter::c_TxnConverter(SST::ComponentId_t id, SST::Params& x_params, Output* out, unsigned banks, c_CmdScheduler* scheduler) : SubComponent(id), output(out), m_cmdScheduler(scheduler) {
+    build(x_params, banks);
+}
+
+void c_TxnConverter::build(SST::Params& x_params, unsigned l_bankNum) {
+	m_cmdSeqNum=0;
+
 	assert(l_bankNum>0);
 	for(unsigned i=0; i<l_bankNum;i++)
 	{
@@ -129,7 +136,7 @@ c_TxnConverter::~c_TxnConverter() {
 
 
 
-void c_TxnConverter::run(){
+void c_TxnConverter::run(SimTime_t simCycle){
 
 	for (std::deque<c_Transaction*>::iterator l_it=m_inputQ.begin(); l_it!=m_inputQ.end();) {
 		c_Transaction* l_reqTxn=*l_it;
@@ -145,7 +152,7 @@ void c_TxnConverter::run(){
 				for (auto &it : l_cmdPkg) {
 					c_BankCommand* l_cmd = it;
 					bool isSuccess = m_cmdScheduler->push(l_cmd);
-					l_cmd->print(output, "[c_TxnConverter]", m_owner->getSimCycle());
+					l_cmd->print(output, "[c_TxnConverter]", simCycle);
 					assert(isSuccess);
 				}
 				updateBankInfo(l_reqTxn);
@@ -161,7 +168,7 @@ void c_TxnConverter::run(){
 	if(k_bankPolicy==2) {
 		for (auto &it:m_bankInfo)
 			if(it->isRowOpen())
-				it->clockTic(m_owner->getSimCycle());
+				it->clockTic(simCycle);
 	}
 	assert(m_inputQ.empty());
 }

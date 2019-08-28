@@ -46,7 +46,7 @@
 typedef unsigned long ulong;
 
 namespace SST {
-namespace n_Bank {
+namespace CramSim {
 
 class c_Transaction;
 
@@ -142,7 +142,7 @@ public:
 
 }; // class c_BankCommand
 
-} // namespace n_Bank
+} // namespace CramSim
 
 } // namespace SST
 #endif // C_BANKCOMMAND_HPP

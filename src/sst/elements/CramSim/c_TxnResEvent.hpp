@@ -37,7 +37,7 @@
 //#include "c_Transaction.hpp"
 
 namespace SST {
-namespace n_Bank {
+namespace CramSim {
 
   class c_Transaction;
   
@@ -54,7 +54,7 @@ public:
 		ser & m_payload;
 	}
 
-	ImplementSerializable (SST::n_Bank::c_TxnResEvent);
+	ImplementSerializable (SST::CramSim::c_TxnResEvent);
 
 };
 

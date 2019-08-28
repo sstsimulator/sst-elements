@@ -39,7 +39,7 @@
 #include "c_BankGroup.hpp"
 
 using namespace SST;
-using namespace SST::n_Bank;
+using namespace SST::CramSim;
 
 c_Rank::c_Rank(std::map<std::string, unsigned>* x_bankParams) {
 	m_channelPtr = nullptr;
