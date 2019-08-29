@@ -309,7 +309,7 @@ void LinkControl::init(unsigned int phase)
         init_ev = dynamic_cast<RtrInitEvent*>(ev);
         int actual_vns = init_ev->int_value;
         delete ev;
-
+        
         vn_remap_out = new int[total_vns];
         vn_remap_in = new int[actual_vns];
         for ( int i = 0; i < actual_vns; ++i ) {
@@ -322,9 +322,19 @@ void LinkControl::init(unsigned int phase)
             init_ev = dynamic_cast<RtrInitEvent*>(ev);
             int vn = init_ev->int_value;
             vn_remap_out[i] = vn;
-            vn_remap_in[vn] = i;
+            if ( vn >= 0 ) vn_remap_in[vn] = i;
             delete ev;
         }
+        // std::cout << "ID = " << id << "\n";
+        // std::cout << "vn_remap_out:\n";
+        // for ( int i = 0; i < total_vns; ++i ) {
+        //     std::cout << "    " << i << " : " << vn_remap_out[i] << "\n";
+        // }
+        // std::cout << "vn_remap_in:\n";
+        // for ( int i = 0; i < actual_vns; ++i ) {
+        //     std::cout << "    " << i << " : " << vn_remap_in[i] << "\n";
+        // }
+        // std::cout << std::endl;
         network_initialized = true;
 
         // Need to send available credits to other side of link
@@ -447,7 +457,7 @@ bool LinkControl::send(SimpleNetwork::Request* req, int vn) {
         vn_offset = 0;
     }    
     ev->request->vn = vn * checker_board_factor + vn_offset;
-        
+    
     output_buf[ev->request->vn].push(ev);
     if ( waiting && !have_packets ) {
         output_timing->send(1,NULL);
@@ -482,7 +492,7 @@ SST::Interfaces::SimpleNetwork::Request* LinkControl::recv(int vn) {
 
     // Figure out how many credits to return
     int flits = event->getSizeInFlits();
-    in_ret_credits[event->request->vn] += flits;
+    in_ret_credits[vn] += flits;
 
     // For now, we're just going to send the credits back to the
     // other side.  The required BW to do this will not be taken
@@ -600,7 +610,6 @@ void LinkControl::handle_output(Event* ev)
     bool found = false;
     RtrEvent* send_event = NULL;
     have_packets = false;
-
     for ( int i = curr_out_vn; i < total_vns; i++ ) {
         if ( output_buf[i].empty() ) continue;
         have_packets = true;
@@ -626,7 +635,6 @@ void LinkControl::handle_output(Event* ev)
             break;
         }
     }
-
     // If we found an event to send, go ahead and send it
     if ( found ) {
         // Send the output to the network.
