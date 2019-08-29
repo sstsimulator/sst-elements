@@ -19,7 +19,7 @@ def updateDict( name, params, key, value ):
 
 def updateParams( params, merlinParams, nicParams, emberParams ):
     for key, value in params.items(): 
-        prefix, suffix = key.split(':')
+        prefix, suffix = key.split(':',1)
 
         if prefix == 'nic':
             updateDict( 'nicParams', nicParams, suffix, value ) 
