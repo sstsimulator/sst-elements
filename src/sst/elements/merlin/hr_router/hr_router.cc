@@ -245,8 +245,8 @@ REENABLE_WARNING
     
     params.enableVerify(false);
 
-    Params pc_params = params.find_prefix_params("portcontrol");
-
+    Params pc_params = params.find_prefix_params("portcontrol:");
+    
     pc_params.insert("flit_size", flit_size.toStringBestSI());
     if (pc_params.contains("network_inspectors")) pc_params.insert("network_inspectors", params.find<std::string>("network_inspectors", ""));
     pc_params.insert("oql_track_port", params.find<std::string>("oql_track_port","false"));
@@ -636,15 +636,17 @@ hr_router::reportRequestedVNs(int port, int vns)
         num_vcs = topo->computeNumVCs(num_vns);
     }
     else if ( num_vcs == -1 ) {
+        num_vns = vns;
         num_vcs = topo->computeNumVCs(vns);
     }
 }
 
 void
-hr_router::reportSetVCs(int port, int vcs)
+hr_router::reportSetVNs(int port, int vns)
 {
-    if ( num_vcs == -1 ) {
-        num_vcs = vcs;
+    if ( num_vns == -1 ) {
+        num_vns = vns;
+        num_vcs = topo->computeNumVCs(vns);
     }
 }
 
@@ -678,7 +680,6 @@ hr_router::reportSetVCs(int port, int vcs)
 void
 hr_router::init_vcs()
 {
-
     // int in_buf_sizes[num_vcs];
     // int out_buf_sizes[num_vcs];
 
@@ -696,9 +697,16 @@ hr_router::init_vcs()
         output_queue_lengths[i] = 0;
     }
     
-    for ( int i = 0; i < num_ports; i++ ) {
-        ports[i]->initVCs(num_vcs,&vc_heads[i*num_vcs],&xbar_in_credits[i*num_vcs],&output_queue_lengths[i*num_vcs]);
+    int* vcs_per_vn = new int[num_vns];
+    // For now, all VNs have the same number of VCs
+    int vpv = topo->computeNumVCs(1);
+    for ( int i = 0; i < num_vns; ++i ) {
+        vcs_per_vn[i] = vpv;
     }
+    for ( int i = 0; i < num_ports; i++ ) {
+        ports[i]->initVCs(num_vns,vcs_per_vn,&vc_heads[i*num_vcs],&xbar_in_credits[i*num_vcs],&output_queue_lengths[i*num_vcs]);
+    }
+    delete[] vcs_per_vn;
 
     topo->setOutputBufferCreditArray(xbar_in_credits, num_vcs);
     topo->setOutputQueueLengthsArray(output_queue_lengths, num_vcs);

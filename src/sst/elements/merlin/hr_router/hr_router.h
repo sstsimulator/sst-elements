@@ -155,7 +155,7 @@ public:
     void recvTopologyEvent(int port, TopologyEvent* ev);
     
     void reportRequestedVNs(int port, int vns);
-    void reportSetVCs(int port, int vcs);
+    void reportSetVNs(int port, int vns);
     
     void dumpState(std::ostream& stream);
     void printStatus(Output& out);
