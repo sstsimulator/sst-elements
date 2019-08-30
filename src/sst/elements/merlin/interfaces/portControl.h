@@ -68,7 +68,8 @@ public:
         {"vn_remap_shm",       "Name of shared memory region for vn remapping.  If empty, no remapping is done", ""},
         {"vn_remap_shm_size",  "Size of shared memory region for vn remapping.  If empty, no remapping is done", "-1"},
         {"oql_track_port",     ""},
-        {"oql_track_remote",   ""}
+        {"oql_track_remote",   ""},
+        {"output_arb",         "Arbitration unit to be used for port output", "merlin.arb.output.basic"}
     )
 
     // SST_ELI_DOCUMENT_STATISTICS(
@@ -93,6 +94,7 @@ private:
     // Self link for timing output.  This is how we manage bandwidth
     // usage
     Link* output_timing;
+    TimeConverter* flit_cycle;
 
 	// Self link for dynamic link additions
 	Link* dynlink_timing;
@@ -256,7 +258,7 @@ public:
     PortControl(Component* parent, Params& params);
     PortControl(ComponentId_t cid, Params& params, Router* rif, int rtr_id, int port_number, Topology *topo); 
 
-    void initVCs(int vcs, internal_router_event** vc_heads, int* xbar_in_credits, int* output_queue_lengths);
+    void initVCs(int vns, int* vcs_per_vn, internal_router_event** vc_heads, int* xbar_in_credits, int* output_queue_lengths);
 
 
     ~PortControl();

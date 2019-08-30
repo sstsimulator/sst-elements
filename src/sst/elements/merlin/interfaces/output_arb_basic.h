@@ -64,13 +64,17 @@ public:
         delete arb;
     }
     
-    void setVCs(int n_vcs) {
-        num_vcs = n_vcs;
+    void setVCs(int n_vns, int* vcs_per_vn) {
+        num_vcs = 0;
+        for ( int i = 0; i < n_vns; ++i ) {
+            num_vcs += vcs_per_vn[i];
+        }
         Params empty;
-        arb = loadModule<SingleArbitration>(arb_name,empty,n_vcs);
+        arb = loadModule<SingleArbitration>(arb_name,empty,num_vcs);
+        
     }
 
-    int arbitrate(PortInterface::port_queue_t* out_q, int* port_out_credits, bool isHostPort, bool& have_packets) {
+    int arbitrate(Cycle_t UNUSED(cycle), PortInterface::port_queue_t* out_q, int* port_out_credits, bool isHostPort, bool& have_packets) {
         int vc_to_send = -1;
         bool found = false;
         internal_router_event* send_event = NULL;

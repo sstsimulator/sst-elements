@@ -18,6 +18,7 @@
 #include "merlin.h"
 
 #include "output_arb_basic.h"
+#include "output_arb_qos_multi.h"
 
 #include <sst/core/sharedRegion.h>
 
@@ -323,9 +324,11 @@ PortControl::PortControl(ComponentId_t cid, Params& params,  Router* rif, int rt
     oql_track_port = params.find<bool>("oql_track_port",false);
     oql_track_remote = params.find<bool>("oql_track_remote",false);
 
-    Params arb_params;
+    Params arb_params = params.find_prefix_params("arbitration:");
+
+    std::string output_arb_name = params.find<std::string>("output_arb","merlin.arb.output.basic");
     output_arb = loadAnonymousSubComponent<OutputArbitration>
-        ("merlin.arb.output.basic","output_arb",0,ComponentInfo::SHARE_NONE, arb_params);
+        (output_arb_name,"arbitration",0,ComponentInfo::SHARE_NONE, arb_params);
 
     // See if number of VNs was set explicitly and if so, see if there is a VN remapping
     num_vns = params.find<int>("num_vns",-1);
@@ -342,27 +345,34 @@ PortControl::PortControl(ComponentId_t cid, Params& params,  Router* rif, int rt
 
 
 void
-PortControl::initVCs(int vcs, internal_router_event** vc_heads_in, int* xbar_in_credits_in, int* output_queue_lengths_in)
+PortControl::initVCs(int vns, int* vcs_per_vn, internal_router_event** vc_heads_in, int* xbar_in_credits_in, int* output_queue_lengths_in)
 {
     vc_heads = vc_heads_in;
+    num_vns = vns;
+    
+    // num_vcs = vcs;
+    num_vcs = 0;
+    for ( int i = 0; i < vns; ++i ) {
+        num_vcs += vcs_per_vn[i];
+    }
+
     // If the port is not connected, we still need to initialize
     // vc_heads entries to NULL
     if ( !connected ) {
-        for ( int i = 0; i < vcs; i++ ) {
+        for ( int i = 0; i < num_vcs; i++ ) {
             vc_heads[i] = NULL;
         }
         return;
     }
-    num_vcs = vcs;
     xbar_in_credits = xbar_in_credits_in;
     output_queue_lengths = output_queue_lengths_in;
     
     // Input and output buffers
-    input_buf = new port_queue_t[vcs];
-    output_buf = new port_queue_t[vcs];
+    input_buf = new port_queue_t[num_vcs];
+    output_buf = new port_queue_t[num_vcs];
     
-    input_buf_count = new int[vcs];
-    output_buf_count = new int[vcs];
+    input_buf_count = new int[num_vcs];
+    output_buf_count = new int[num_vcs];
 	
     for ( int i = 0; i < num_vcs; i++ ) {
         input_buf_count[i] = 0;
@@ -372,8 +382,8 @@ PortControl::initVCs(int vcs, internal_router_event** vc_heads_in, int* xbar_in_
 	
     // Initialize credit arrays
     // xbar_in_credits = new int[vcs];
-    port_ret_credits = new int[vcs];
-    port_out_credits = new int[vcs];
+    port_ret_credits = new int[num_vcs];
+    port_out_credits = new int[num_vcs];
     
     // Figure out how large the buffers are in flits
 
@@ -398,7 +408,7 @@ PortControl::initVCs(int vcs, internal_router_event** vc_heads_in, int* xbar_in_
     ibs /= flit_size;
     obs /= flit_size;
     
-    for ( int i = 0; i < vcs; i++ ) {
+    for ( int i = 0; i < num_vcs; i++ ) {
         port_ret_credits[i] = ibs.getRoundedValue();
         xbar_in_credits[i] = obs.getRoundedValue();
         port_out_credits[i] = 0;
@@ -419,15 +429,15 @@ PortControl::initVCs(int vcs, internal_router_event** vc_heads_in, int* xbar_in_
     // request from.
     if ( !host_port && port_link ) {
         RtrInitEvent* init_ev = new RtrInitEvent();
-        init_ev->command = RtrInitEvent::SET_VCS;
-        init_ev->int_value = vcs;
+        init_ev->command = RtrInitEvent::SET_VNS;
+        init_ev->int_value = num_vns;
         port_link->sendInitData(init_ev);
     }
     // Need to start the timer for links that never send data
     idle_start = Simulation::getSimulation()->getCurrentSimCycle();
     is_idle = true;
 
-    output_arb->setVCs(num_vcs);
+    output_arb->setVCs(num_vns, vcs_per_vn);
 }
 
 PortControl::~PortControl() {
@@ -536,8 +546,8 @@ PortControl::init(unsigned int phase) {
         // right BW).
         UnitAlgebra link_clock = link_bw / flit_size;
         // std::cout << link_clock.toStringBestSI() << std::endl;
-        TimeConverter* tc = parent->getTimeConverter(link_clock);
-        output_timing->setDefaultTimeBase(tc);
+        flit_cycle = parent->getTimeConverter(link_clock);
+        output_timing->setDefaultTimeBase(flit_cycle);
         delete ev;
         
         // Get initialization event from endpoint, but only if I am a host port
@@ -548,6 +558,10 @@ PortControl::init(unsigned int phase) {
             if ( num_vns == -1 ) num_vns = req_vns;
             // Need to notify the router about the number of VNs requested
             parent->reportRequestedVNs(port_number,init_ev->int_value);
+            // if ( num_vns == -1 ) {
+            //     // Need to notify the router about the number of VNs requested
+            //     parent->reportRequestedVNs(port_number,init_ev->int_value);
+            // }
             remote_rdy_for_credits = true;
             delete ev;
 
@@ -642,9 +656,9 @@ PortControl::init(unsigned int phase) {
                 if ( init_ev != NULL ) {
                     // std::cout << "Received RtrInitEvent (port = " << port_number << ")" << std::endl;
                     remote_rdy_for_credits = true;
-                    if ( num_vcs == -1 ) {
+                    if ( num_vns == -1 ) {
                         // I have not yet been intiialized, so report VCs to router
-                        parent->reportSetVCs(port_number,init_ev->int_value);
+                        parent->reportSetVNs(port_number,init_ev->int_value);
                     }
                     delete init_ev;
                 }
@@ -987,7 +1001,7 @@ PortControl::handle_output(Event* ev) {
     // Use the output_arb to find VC to send
     int vc_to_send = -1;
     if ( !sai_port_disabled )
-        vc_to_send = output_arb->arbitrate(output_buf, port_out_credits, host_port, have_packets);
+        vc_to_send = output_arb->arbitrate(getCurrentSimTime(flit_cycle),output_buf, port_out_credits, host_port, have_packets);
 
     if ( vc_to_send != -1 ) {
         //  We found something to send
