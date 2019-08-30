@@ -88,6 +88,7 @@ private:
     UnitAlgebra inbuf_size;
     UnitAlgebra outbuf_size;
     int flit_size; // in bits
+    UnitAlgebra flit_size_ua;
     
     std::deque<RtrEvent*> init_events;
     
@@ -96,6 +97,9 @@ private:
     int total_vns;
     int checker_board_factor;
 
+    int* vn_remap_out;
+    int* vn_remap_in;
+    
     int id;
     int rr;
 
@@ -115,9 +119,15 @@ private:
     // the credits available for your next buffer, as well as track
     // the credits you need to return to the buffer sending data to
     // you,
+
+    // Number of credits available to the host in each VN (size = req_vns)
     int* outbuf_credits;
 
+    // Number of credits available in the router input buffers for VC0
+    // of each VN (size = total_vns)
     int* rtr_credits;
+
+    // Number of credits to return to the router (size = total_vns)
     int* in_ret_credits;
 
     // Doing a round robin on the output.  Need to keep track of the

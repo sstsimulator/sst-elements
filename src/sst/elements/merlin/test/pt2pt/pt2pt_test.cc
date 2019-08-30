@@ -105,6 +105,24 @@ REENABLE_WARNING
         merlin_abort.fatal(CALL_INFO,-1,"pt2pt_test: must specify params \"src\" and \"dest\" and they must be the same length arrays\n");
     }
 
+    params.find_array<UnitAlgebra>("stream_delays",delays);
+    
+    if ( delays.size() == 0 ) {
+        for ( int i = 0; i < src.size(); ++i ) {
+            delays.emplace_back("0ns");
+        }
+    }
+
+    if ( delays.size() != src.size() ) {
+        merlin_abort.fatal(CALL_INFO,-1,"pt2pt_test: stream_delays array must be same length as \"src\" and \"dest\" arrays\n");
+    }
+
+    self_link = configureSelfLink("start_timing", "1ns",
+                                  new Event::Handler<pt2pt_test>(this,&pt2pt_test::start));
+    
+    report_timing = configureSelfLink("report_timing", "1ns",
+                                  new Event::Handler<pt2pt_test>(this,&pt2pt_test::report_bw));
+    
     // if ( id == 1 ) {
     //     // self_link = configureSelfLink("complete_link", link_bw_s,
 	// 	// 		      new Event::Handler<pt2pt_test>(this,&pt2pt_test::handle_complete));
@@ -122,6 +140,11 @@ REENABLE_WARNING
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
 
+    report_interval = params.find<UnitAlgebra>("report_interval","0ns");
+    out.output("report_interval = %s\n",report_interval.toStringBestSI().c_str());
+    pkts_in_interval = 0;
+    last_pkt_recd = 0;
+    interval_start_bw = "0b/s";
 }
 
 void pt2pt_test::finish()
@@ -130,8 +153,13 @@ void pt2pt_test::finish()
 
     // Compute bandwidths and write out report
     for ( auto& x : my_recvs ) {
+        if ( x.second.end_arrival == 0 ) {
+            // Ended early, compute using current sim time
+            x.second.end_arrival = Simulation::getSimulation()->getEndSimCycle();
+        }
         // Compute bandwidth in bits/core time quantum
-        UnitAlgebra bits_sent = UnitAlgebra("1b") * packets_to_send * packet_size;
+        // UnitAlgebra bits_sent = UnitAlgebra("1b") * packets_to_send * packet_size;
+        UnitAlgebra bits_sent = UnitAlgebra("1b") * x.second.packets_recd * packet_size;
         UnitAlgebra start_time = Simulation::getSimulation()->getTimeLord()->getTimeBase() * x.second.first_arrival;
         UnitAlgebra end_time = Simulation::getSimulation()->getTimeLord()->getTimeBase() * x.second.end_arrival;
         // TODO: Still need to tweak to account for serialization latency of the last packet
@@ -152,26 +180,65 @@ void pt2pt_test::finish()
     }
 }
 
+void pt2pt_test::start(Event* ev)
+{
+    while ( link_control->spaceToSend(0,packet_size) && packets_sent < packets_to_send ) {
+        SimpleNetwork::Request* req = new SimpleNetwork::Request();
+        
+        req->dest = my_dest;
+        req->src = id;
+        req->vn = 0;
+        req->size_in_bits = packet_size;
+        link_control->send(req,0);
+        ++packets_sent;
+    }
+}
+
 void pt2pt_test::setup()
 {
+    TraceFunction trace(CALL_INFO_LONG);
+    trace.output("id = %d\n",id);
     link_control->setup();
 
     if ( my_dest != -1 ) {
+        trace.output("I'm a sender\n");
         link_control->setNotifyOnSend(new SimpleNetwork::Handler<pt2pt_test>(this,&pt2pt_test::send_handler));
-        while ( link_control->spaceToSend(0,packet_size) && packets_sent < packets_to_send ) {
-            SimpleNetwork::Request* req = new SimpleNetwork::Request();
-
-            req->dest = my_dest;
-            req->src = id;
-            req->vn = 0;
-            req->size_in_bits = packet_size;
-            link_control->send(req,0);
-            ++packets_sent;
-        }
+        // Compute delay in nanoseconds
+        UnitAlgebra delay_in_ns = my_delay / UnitAlgebra("1ns");
+        self_link->send(delay_in_ns.getRoundedValue(),NULL);
     }
 
     if ( !my_recvs.empty() ) {
+        trace.output("I'm a receiver\n");
         link_control->setNotifyOnReceive(new SimpleNetwork::Handler<pt2pt_test>(this,&pt2pt_test::recv_handler));
+    }
+
+    // If I am a receiver and report_interval is not zero, set up
+    // bandwidth reporting
+    if ( !my_recvs.empty() && (report_interval > UnitAlgebra("0ns")) ) {
+        trace.output("Setting up report interval of %s\n",report_interval.toStringBestSI().c_str());
+        // First compute the serialization time of a packet
+        const UnitAlgebra& bw = link_control->getLinkBW();
+        UnitAlgebra pkt_size("1b");
+        pkt_size *= packet_size;
+
+        UnitAlgebra ser_time = pkt_size / bw;
+        pkt_ser_cycles = (ser_time / Simulation::getSimulation()->getTimeLord()->getTimeBase()).getRoundedValue();
+
+        // Create a number that when multiplied by the number of
+        // packets received in the interval, will give the bandwidth
+        bw_multiplier = pkt_size / report_interval;
+
+        // For packets that don't finish serializing in the reporting
+        // window, we'll have to compute the contribution to the
+        // bandwidth as a percentage of packet that arrived in the
+        // window.
+        bw_multiplier_partial = (pkt_size / report_interval) / pkt_ser_cycles;
+
+        // Now, send a wake-up to do the reporting.  First, we need to
+        // set the timebase to be the interval time
+        report_timing->setDefaultTimeBase(getTimeConverter(report_interval));
+        report_timing->send(1,NULL);
     }
     
     // if ( id == 1 ) {
@@ -203,6 +270,7 @@ pt2pt_test::init(unsigned int phase)
                     merlin_abort.fatal(CALL_INFO,-1,"Multiple destinations specified for id %d, can only specify one\n",id);
                 }
                 my_dest = dest[i];
+                my_delay = delays[i];
             }
         }
 
@@ -239,7 +307,7 @@ pt2pt_test::send_handler(int vn) {
     }
 
     if ( packets_sent == packets_to_send ) {
-        primaryComponentOKToEndSim();
+        // primaryComponentOKToEndSim();
         return false; // remove myself from the handler list
     }
     return true;
@@ -266,6 +334,9 @@ pt2pt_test::recv_handler(int vn) {
     
     data.packets_recd++;
     packets_recd++;
+
+    pkts_in_interval++;
+    last_pkt_recd = Simulation::getSimulation()->getCurrentSimCycle();
     
     if ( data.packets_recd == packets_to_send ) {
         data.end_arrival = Simulation::getSimulation()->getCurrentSimCycle();
@@ -279,6 +350,36 @@ pt2pt_test::recv_handler(int vn) {
     delete req;
     
     return true;
+}
+
+void pt2pt_test::report_bw(Event* ev) {
+
+    // Figure out if we have a partial packet at the end of the window
+    SimTime_t curr_cycle = Simulation::getSimulation()->getCurrentSimCycle();
+    UnitAlgebra bw = interval_start_bw;
+    if ( last_pkt_recd + pkt_ser_cycles > curr_cycle ) {
+        // Partial packet
+        SimTime_t in_window = curr_cycle - last_pkt_recd;
+        SimTime_t after_window = pkt_ser_cycles - in_window;
+
+        bw += (bw_multiplier * (pkts_in_interval-1)) + (bw_multiplier_partial * in_window);
+        interval_start_bw = bw_multiplier_partial * after_window;
+    }
+    else {
+        // No partial packet
+        bw += bw_multiplier * pkts_in_interval;
+        interval_start_bw = "0b/s";
+    }
+
+    bw += interval_start_bw;
+    // out.output("%d, %" PRIu64 ", %s\n",id,curr_cycle,bw.toStringBestSI().c_str());
+    out.output("%d, %" PRIu64 ", %s\n",id,curr_cycle,(bw/UnitAlgebra("1Gb/s")).toString().c_str());
+
+    // Reset the interval variables
+    pkts_in_interval = 0;
+
+    // Send event for next reporting interval
+    report_timing->send(1,NULL);
 }
 
 /*

@@ -48,6 +48,8 @@ public:
         {"buffer_size",      "Size of input and output buffers specified in b or B (can include SI prefix)."},
         {"src",              "Array of IDs of NICs that will send data."},
         {"dest",             "Array of IDs of NICs to send data to."},
+        {"stream_delays",    "Array of times before starting each of the streams.  Default is to start all of them at simulation start."},
+        {"report_interval",  "Intefval to report bandwidth numbers.  Default is to only print at the end", "0ns"},
         {"linkcontrol",      "SimpleNetwork class to use to talk to network."}
     )
 
@@ -67,15 +69,22 @@ private:
         SimTime_t first_arrival;
         SimTime_t end_arrival;
         int packets_recd;
+
+        recv_data():
+            first_arrival(0),
+            end_arrival(0),
+            packets_recd(0) {}
     };
     
     int id;
 
     std::vector<int> src;
     std::vector<int> dest;
-
+    std::vector<UnitAlgebra> delays;
+    
     int my_dest;
-
+    UnitAlgebra my_delay;
+    
     std::map<int,recv_data> my_recvs;    
     
     int packets_sent;
@@ -90,13 +99,27 @@ private:
     
     SST::Interfaces::SimpleNetwork* link_control;
     Link* self_link;
+    Link* report_timing;
+    
+    void start(Event* ev);
 
+    // Variables need to print out bandwidth in intervals
+    UnitAlgebra bw_multiplier;
+    UnitAlgebra bw_multiplier_partial;
+    UnitAlgebra report_interval;
+    UnitAlgebra interval_start_bw;
+    SimTime_t last_pkt_recd;
+    SimTime_t pkt_ser_cycles;
+    int pkts_in_interval;
+
+    void report_bw(Event* ev);
+    
 public:
     pt2pt_test(ComponentId_t cid, Params& params);
     ~pt2pt_test() {}
 
     void init(unsigned int phase);
-    void setup(); 
+    void setup();
     void finish();
 
 
