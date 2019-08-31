@@ -69,7 +69,12 @@ nic::nic(ComponentId_t cid, Params& params) :
     num_msg = params.find<int>("num_messages",10);
     
     remap = params.find<int>("remap", 0);
-    id = (net_id + remap) % num_peers;
+
+    group_offset = params.find<int>("group_offset", 0); 
+    group_peers = params.find<int>("group_peers", num_peers);
+
+    id = (net_id - group_offset + remap) % group_peers;
+
 
     UnitAlgebra message_size = params.find<std::string>("message_size","64b");
     if ( message_size.hasUnits("B") ) message_size  *= UnitAlgebra("8b/B");
@@ -118,8 +123,8 @@ REENABLE_WARNING
 
     
     last_target = id;
-    next_seq = new int[num_peers];
-    for ( int i = 0 ; i < num_peers ; i++ )
+    next_seq = new int[group_peers];
+    for ( int i = 0 ; i < group_peers ; i++ )
         next_seq[i] = 0;
 
     // Register a clock
@@ -148,7 +153,7 @@ void nic::finish()
     }
 
     link_control->finish();
-    output.output("Nic %d had %d stalled cycles.\n",id,stalled_cycles);
+    output.output("Nic %d had %d stalled cycles.\n",net_id,stalled_cycles);
 }
 
 void nic::setup()
@@ -166,6 +171,7 @@ void nic::setup()
     if ( init_broadcast_count != (num_peers -1 ) ) {
         output.output("NIC %d didn't receive all init broadcast messages.  Only recieved %d\n",net_id,init_broadcast_count);
     }
+    last_target = id;
 }
 
 void nic::complete(unsigned int phase) {
@@ -192,13 +198,12 @@ void nic::complete(unsigned int phase) {
 void
 nic::init(unsigned int phase) {
     link_control->init(phase);
-
     init_complete(phase);
 }
 
 void
 nic::init_complete(unsigned int phase) {
-    
+    // For init and complete, use all the endpoints
     switch ( init_state ) {
     case 0:
     {
@@ -450,11 +455,13 @@ private:
 bool
 nic::clock_handler(Cycle_t cycle)
 {
+    // For run phase of simulation, only use my group (my group
+    // defaults to everyone if nothing is specified)
     static const int send_vc = 0;
-    expected_recv_count = num_peers*num_msg;
+    expected_recv_count = group_peers * num_msg;
 
     if ( !done && (packets_recd >= expected_recv_count) ) {
-        output.output("%" PRIu64 ": NIC %d received all packets (total of %d)!\n", cycle, id, expected_recv_count);
+        output.output("%" PRIu64 ": NIC %d received all packets (total of %d)!\n", cycle, net_id, expected_recv_count);
         primaryComponentOKToEndSim();
         done = true;
     }
@@ -463,13 +470,13 @@ nic::clock_handler(Cycle_t cycle)
     if ( packets_sent < expected_recv_count ) {
         if ( link_control->spaceToSend(send_vc,msg_size) ) {
             last_target++;
-            last_target %= num_peers;
+            last_target %= group_peers;
             
-            MyRtrEvent* ev = new MyRtrEvent(packets_sent/num_peers);
+            MyRtrEvent* ev = new MyRtrEvent(packets_sent/group_peers);
             SimpleNetwork::Request* req = new SimpleNetwork::Request();
             
             // req->dest = net_map[last_target];
-            req->dest = last_target;
+            req->dest = last_target + group_offset;
             req->src = net_id;
 
             req->vn = send_vc;
@@ -484,7 +491,7 @@ nic::clock_handler(Cycle_t cycle)
 
             if ( packets_sent == expected_recv_count ) {
                 output.output("%" PRIu64 ":  %d Finished sending packets (total of %d)\n",
-                              cycle, id, num_msg);
+                              cycle, net_id, num_msg);
             }
         }
         else {
@@ -510,13 +517,13 @@ nic::clock_handler(Cycle_t cycle)
 
             
 #if 0
-            if ( next_seq[src] != ev->seq ) {
+            if ( next_seq[src-group_offset] != ev->seq ) {
                 output.output("%d received packet %d from %d Expected sequence number %d\n",
-                              id, ev->seq, ev->src, next_seq[ev->src]);
+                              net_id, ev->seq, ev->src, next_seq[ev->src-group_offset]);
                 assert(false);
             }
 #endif
-            next_seq[src]++;
+            next_seq[src-group_offset]++;
             //std::cout << cycle << ": " << id << " Received an event on vn " << rec_ev->vn << " from " << rec_ev->src << " (packet "<<packets_recd<<" )"<< std::endl;
             delete ev;
             delete req;

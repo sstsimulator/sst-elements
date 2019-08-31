@@ -18,7 +18,9 @@
 #include "merlin.h"
 
 #include "output_arb_basic.h"
+#include "output_arb_qos_multi.h"
 
+#include <sst/core/sharedRegion.h>
 
 #define TRACK 0
 #define TRACK_ID 131
@@ -322,34 +324,55 @@ PortControl::PortControl(ComponentId_t cid, Params& params,  Router* rif, int rt
     oql_track_port = params.find<bool>("oql_track_port",false);
     oql_track_remote = params.find<bool>("oql_track_remote",false);
 
-    Params arb_params;
+    Params arb_params = params.find_prefix_params("arbitration:");
+
+    std::string output_arb_name = params.find<std::string>("output_arb","merlin.arb.output.basic");
     output_arb = loadAnonymousSubComponent<OutputArbitration>
-        ("merlin.arb.output.basic","output_arb",0,ComponentInfo::SHARE_NONE, arb_params);
+        (output_arb_name,"arbitration",0,ComponentInfo::SHARE_NONE, arb_params);
+
+    // See if number of VNs was set explicitly and if so, see if there is a VN remapping
+    num_vns = params.find<int>("num_vns",-1);
+    if ( num_vns != -1 ) {
+        vn_remap_shm = params.find<std::string>("vn_remap_shm","");
+        if ( vn_remap_shm != "" ) {
+            int size = params.find<int>("vn_remap_shm_size",-1);
+            shared_region = Simulation::getSharedRegionManager()->
+                getGlobalSharedRegion(vn_remap_shm, size, new SharedRegionMerger());
+            shared_region->publish();
+        }
+    }
 }
 
 
 void
-PortControl::initVCs(int vcs, internal_router_event** vc_heads_in, int* xbar_in_credits_in, int* output_queue_lengths_in)
+PortControl::initVCs(int vns, int* vcs_per_vn, internal_router_event** vc_heads_in, int* xbar_in_credits_in, int* output_queue_lengths_in)
 {
     vc_heads = vc_heads_in;
+    num_vns = vns;
+    
+    // num_vcs = vcs;
+    num_vcs = 0;
+    for ( int i = 0; i < vns; ++i ) {
+        num_vcs += vcs_per_vn[i];
+    }
+
     // If the port is not connected, we still need to initialize
     // vc_heads entries to NULL
     if ( !connected ) {
-        for ( int i = 0; i < vcs; i++ ) {
+        for ( int i = 0; i < num_vcs; i++ ) {
             vc_heads[i] = NULL;
         }
         return;
     }
-    num_vcs = vcs;
     xbar_in_credits = xbar_in_credits_in;
     output_queue_lengths = output_queue_lengths_in;
     
     // Input and output buffers
-    input_buf = new port_queue_t[vcs];
-    output_buf = new port_queue_t[vcs];
+    input_buf = new port_queue_t[num_vcs];
+    output_buf = new port_queue_t[num_vcs];
     
-    input_buf_count = new int[vcs];
-    output_buf_count = new int[vcs];
+    input_buf_count = new int[num_vcs];
+    output_buf_count = new int[num_vcs];
 	
     for ( int i = 0; i < num_vcs; i++ ) {
         input_buf_count[i] = 0;
@@ -359,8 +382,8 @@ PortControl::initVCs(int vcs, internal_router_event** vc_heads_in, int* xbar_in_
 	
     // Initialize credit arrays
     // xbar_in_credits = new int[vcs];
-    port_ret_credits = new int[vcs];
-    port_out_credits = new int[vcs];
+    port_ret_credits = new int[num_vcs];
+    port_out_credits = new int[num_vcs];
     
     // Figure out how large the buffers are in flits
 
@@ -385,7 +408,7 @@ PortControl::initVCs(int vcs, internal_router_event** vc_heads_in, int* xbar_in_
     ibs /= flit_size;
     obs /= flit_size;
     
-    for ( int i = 0; i < vcs; i++ ) {
+    for ( int i = 0; i < num_vcs; i++ ) {
         port_ret_credits[i] = ibs.getRoundedValue();
         xbar_in_credits[i] = obs.getRoundedValue();
         port_out_credits[i] = 0;
@@ -406,15 +429,15 @@ PortControl::initVCs(int vcs, internal_router_event** vc_heads_in, int* xbar_in_
     // request from.
     if ( !host_port && port_link ) {
         RtrInitEvent* init_ev = new RtrInitEvent();
-        init_ev->command = RtrInitEvent::SET_VCS;
-        init_ev->int_value = vcs;
+        init_ev->command = RtrInitEvent::SET_VNS;
+        init_ev->int_value = num_vns;
         port_link->sendInitData(init_ev);
     }
     // Need to start the timer for links that never send data
     idle_start = Simulation::getSimulation()->getCurrentSimCycle();
     is_idle = true;
 
-    output_arb->setVCs(num_vcs);
+    output_arb->setVCs(num_vns, vcs_per_vn);
 }
 
 PortControl::~PortControl() {
@@ -475,23 +498,9 @@ PortControl::finish() {
 void
 PortControl::init(unsigned int phase) {
     if ( !connected ) return;
-    // if ( topo->getPortState(port_number) == Topology::UNCONNECTED ) return;
-    if ( !connected ) return;
     Event *ev;
     RtrInitEvent* init_ev;
 
-	//if (link_bw.hasUnits("GB"))
-	//	printf("Has units GBytes\n");
-	//if (link_bw.hasUnits("B"))
-	//	printf("Has units Bytes\n");
-	//if (link_bw.hasUnits("B/s"))
-	//	printf("Has units Bytes per second\n");
-	//if (link_bw.hasUnits("b"))
-	//	printf("Has units Bits\n");
-	//if (link_bw.hasUnits("b/s"))
-	//	printf("Has units Bits per second\n");
-	//else
-	//	printf("Bandwidth is: %s\n", link_bw.toString().c_str());
     switch ( phase ) {
     case 0:
         // Negotiate link speed.  We will take the min of the two link speeds
@@ -500,19 +509,16 @@ PortControl::init(unsigned int phase) {
         init_ev->ua_value = link_bw;
         port_link->sendInitData(init_ev);
         
-        // std::cout << "FLIT - isHostPort(" << port_number << "): " << topo->isHostPort(port_number) << std::endl;
         // If this is a host port, send the endpoint ID to the LinkControl
         if ( topo->isHostPort(port_number) ) {
             init_ev = new RtrInitEvent();
             init_ev->command = RtrInitEvent::REPORT_FLIT_SIZE;
             init_ev->ua_value = flit_size;
             port_link->sendInitData(init_ev);
-            // std::cout << "FLIT_SIZE: " << flit_size.toStringBestSI() << std::endl;
         
             RtrInitEvent* ev = new RtrInitEvent();
             ev->command = RtrInitEvent::REPORT_ID;
             ev->int_value = topo->getEndpointID(port_number);
-            // ev->print("PC: ", Simulation::getSimulation()->getSimulationOutput());
             port_link->sendInitData(ev);
         }
         else {
@@ -540,16 +546,22 @@ PortControl::init(unsigned int phase) {
         // right BW).
         UnitAlgebra link_clock = link_bw / flit_size;
         // std::cout << link_clock.toStringBestSI() << std::endl;
-        TimeConverter* tc = parent->getTimeConverter(link_clock);
-        output_timing->setDefaultTimeBase(tc);
+        flit_cycle = parent->getTimeConverter(link_clock);
+        output_timing->setDefaultTimeBase(flit_cycle);
         delete ev;
         
         // Get initialization event from endpoint, but only if I am a host port
         if ( topo->isHostPort(port_number) ) {
             ev = port_link->recvInitData();
             init_ev = dynamic_cast<RtrInitEvent*>(ev);
+            int req_vns = init_ev->int_value;
+            if ( num_vns == -1 ) num_vns = req_vns;
             // Need to notify the router about the number of VNs requested
             parent->reportRequestedVNs(port_number,init_ev->int_value);
+            // if ( num_vns == -1 ) {
+            //     // Need to notify the router about the number of VNs requested
+            //     parent->reportRequestedVNs(port_number,init_ev->int_value);
+            // }
             remote_rdy_for_credits = true;
             delete ev;
 
@@ -557,6 +569,33 @@ PortControl::init(unsigned int phase) {
             // indicating this is a host port
             remote_rtr_id = -1;
             remote_port_number = -1;
+
+            // Need to report back the actual number of VNs, then the VN mapping
+            init_ev = new RtrInitEvent();
+            init_ev->command = RtrInitEvent::REQUEST_VNS;
+            init_ev->int_value = num_vns;
+            port_link->sendInitData(init_ev);
+
+            for ( int i = 0; i < req_vns; ++i ) {
+                init_ev = new RtrInitEvent();
+                init_ev->command = RtrInitEvent::REQUEST_VNS;
+                if ( vn_remap_shm == "" ) {
+                    // No remap, just send the same value back
+                    init_ev->int_value = i;
+                }
+                else {
+                    int* map = (int*)shared_region->getRawPtr();
+                    int endpoint_id = topo->getEndpointID(port_number);
+                    for ( int j = 0; j < num_vns; ++j ) {
+                        if ( map[endpoint_id*num_vns + j] == i ) {
+                            init_ev->int_value = j;
+                            break;
+                        }
+                    }
+                }
+                port_link->sendInitData(init_ev);
+            }
+            
         } else {
             // If not a host port, the other side sent us their rtr_id
             // and port_number
@@ -572,27 +611,34 @@ PortControl::init(unsigned int phase) {
         }
         }
         break;
-    // case 2:
-    //     // If I'm a host port, I can send my credit events now.
-    //     // VCs should now be initialized, send over the credit events
-    //     if ( host_port ) {
-    //         for ( int i = 0; i < num_vcs; i++ ) {
-    //             port_link->sendInitData(new credit_event(i,port_ret_credits[i]));
-    //             port_ret_credits[i] = 0;
-    //         }
-    //     }
-        // break;
 
     default:
-        // If my VCs have been initialized and the remote side is
-        // ready to receive credits, send the credit events.
-        if ( num_vcs != -1 && remote_rdy_for_credits ) {
-            // std::cout << "Sending credit events (port = " << port_number << "), num_vcs = " << num_vcs << std::endl;
-            for ( int i = 0; i < num_vcs; i++ ) {
-                port_link->sendInitData(new credit_event(i,port_ret_credits[i]));
-                port_ret_credits[i] = 0;
+        if ( host_port ) {
+            // Only send to vc 0 for each VN
+            // Get the number of VCs per VN
+            if ( num_vcs != -1 && remote_rdy_for_credits ) {
+                int vcs_per_vn = topo->computeNumVCs(1);
+                for ( int i = 0; i < num_vcs; ++i ) {
+                    if ( i % vcs_per_vn == 0 ) {
+                        // Only send over for vc 0 in vn
+                        port_link->sendInitData(new credit_event(i/vcs_per_vn, port_ret_credits[i]));
+                    }
+                    port_ret_credits[i] = 0;
+                }
+                remote_rdy_for_credits = false;
             }
-            remote_rdy_for_credits = false;
+            
+        }
+        else {
+            // If my VCs have been initialized and the remote side is
+            // ready to receive credits, send the credit events.
+            if ( num_vcs != -1 && remote_rdy_for_credits ) {
+                for ( int i = 0; i < num_vcs; i++ ) {
+                    port_link->sendInitData(new credit_event(i,port_ret_credits[i]));
+                    port_ret_credits[i] = 0;
+                }
+                remote_rdy_for_credits = false;
+            }
         }
         
         // Need to recv the credits send from the other side
@@ -602,7 +648,6 @@ PortControl::init(unsigned int phase) {
                 if ( ce->vc >= num_vcs ) {
                     // _abort(PortControl, "Received Credit Event for VC %d.  I only know of VCS[0-%d]\n", ce->vc, num_vcs-1);
                 }
-                // std::cout << "Received credit_event (port = " << port_number << ")" << std::endl;
                 port_out_credits[ce->vc] += ce->credits;
                 delete ev;
             }
@@ -611,9 +656,9 @@ PortControl::init(unsigned int phase) {
                 if ( init_ev != NULL ) {
                     // std::cout << "Received RtrInitEvent (port = " << port_number << ")" << std::endl;
                     remote_rdy_for_credits = true;
-                    if ( num_vcs == -1 ) {
+                    if ( num_vns == -1 ) {
                         // I have not yet been intiialized, so report VCs to router
-                        parent->reportSetVCs(port_number,init_ev->int_value);
+                        parent->reportSetVNs(port_number,init_ev->int_value);
                     }
                     delete init_ev;
                 }
@@ -754,7 +799,7 @@ PortControl::handle_input_n2r(Event* ev)
 	// credit_event* ce = dynamic_cast<credit_event*>(ev);
 	// if ( ce != NULL ) {
 	BaseRtrEvent* base_event = static_cast<BaseRtrEvent*>(ev);
-    
+
 	switch (base_event->getType()) {
 	case BaseRtrEvent::CREDIT:
     {
@@ -956,7 +1001,7 @@ PortControl::handle_output(Event* ev) {
     // Use the output_arb to find VC to send
     int vc_to_send = -1;
     if ( !sai_port_disabled )
-        vc_to_send = output_arb->arbitrate(output_buf, port_out_credits, host_port, have_packets);
+        vc_to_send = output_arb->arbitrate(getCurrentSimTime(flit_cycle),output_buf, port_out_credits, host_port, have_packets);
 
     if ( vc_to_send != -1 ) {
         //  We found something to send

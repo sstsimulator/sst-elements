@@ -54,6 +54,8 @@ public:
         {"out_buf_size", "Size of linkcontrol output buffer specified in either b/s or B/s (can include SI prefix).", "1kB"},
         {"topology",     "Name of the topology subcomponent that should be loaded to control routing."},
         {"remap",        "Creates a logical to physical mapping shifted by remap amount.", "0"},
+        {"group_offset",   "If dividing network into multiple groups of test nics, this is offset for this group.", "0"},
+        {"group_peers",   "If dividing network into multiple groups of test nics, this is offset for this group.", "0"},
         {"linkcontrol_type","Set the SimpleNetwork ", "merlin.linkcontrol"}
     )
 
@@ -77,6 +79,8 @@ private:
     int num_peers;
     int msg_size;
     int num_msg;
+    int group_offset;
+    int group_peers;
     
     int packets_sent;
     int packets_recd;

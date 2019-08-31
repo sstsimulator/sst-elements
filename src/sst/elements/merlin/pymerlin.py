@@ -63,7 +63,7 @@ class topoSimple(Topo):
     def __init__(self):
         Topo.__init__(self)
         self.topoKeys.extend(["topology", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw","input_latency","output_latency","input_buf_size","output_buf_size"])
-        self.topoOptKeys.extend(["xbar_arb"])
+        self.topoOptKeys.extend(["xbar_arb","num_vns","vn_remap","vn_remap_shm","portcontrol:output_arb","portcontrol:arbitration:qos_settings","portcontrol:arbitration:arb_vns","portcontrol:arbitration:arb_vcs"])
     def getName(self):
         return "Simple"
     def prepParams(self):
@@ -73,7 +73,6 @@ class topoSimple(Topo):
         _params["debug"] = debug
         _params["num_ports"] = int(_params["router_radix"])
         _params["num_peers"] = int(_params["router_radix"])
-        _params["num_vns"] = 1
 
     def build(self):
         rtr = sst.Component("router", "merlin.hr_router")
@@ -96,7 +95,7 @@ class topoTorus(Topo):
     def __init__(self):
         Topo.__init__(self)
         self.topoKeys.extend(["topology", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw", "torus:shape", "torus:width", "torus:local_ports","input_latency","output_latency","input_buf_size","output_buf_size"])
-        self.topoOptKeys.extend(["xbar_arb"])
+        self.topoOptKeys.extend(["xbar_arb","num_vns","vn_remap","vn_remap_shm","portcontrol:output_arb","portcontrol:arbitration:qos_settings","portcontrol:arbitration:arb_vns","portcontrol:arbitration:arb_vcs"])
     def getName(self):
         return "Torus"
     def prepParams(self):
@@ -136,7 +135,6 @@ class topoTorus(Topo):
         _params["topology"] = _params["topology"] = "merlin.torus"
         _params["debug"] = debug
         _params["num_ports"] = _params["router_radix"] = radix
-        _params["num_vns"] = 2
         _params["torus:local_ports"] = local_ports
 
     def formatShape(self, arr):
@@ -208,7 +206,7 @@ class topoMesh(Topo):
     def __init__(self):
         Topo.__init__(self)
         self.topoKeys = ["topology", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw", "mesh:shape", "mesh:width", "mesh:local_ports","input_latency","output_latency","input_buf_size","output_buf_size"]
-        self.topoOptKeys = ["xbar_arb"]
+        self.topoOptKeys = ["xbar_arb","num_vns","vn_remap","vn_remap_shm","portcontrol:output_arb","portcontrol:arbitration:qos_settings","portcontrol:arbitration:arb_vns","portcontrol:arbitration:arb_vcs"]
     def getName(self):
         return "Mesh"
     def prepParams(self):
@@ -248,7 +246,6 @@ class topoMesh(Topo):
         _params["topology"] = _params["topology"] = "merlin.mesh"
         _params["debug"] = debug
         _params["num_ports"] = _params["router_radix"] = radix
-        _params["num_vns"] = 2
         _params["mesh:local_ports"] = local_ports
 
     def formatShape(self, arr):
@@ -325,7 +322,7 @@ class topoHyperX(Topo):
     def __init__(self):
         Topo.__init__(self)
         self.topoKeys = ["topology", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw", "hyperx:shape", "hyperx:width", "hyperx:local_ports","input_latency","output_latency","input_buf_size","output_buf_size"]
-        self.topoOptKeys = ["xbar_arb"]
+        self.topoOptKeys = ["xbar_arb","num_vns","vn_remap","vn_remap_shm","portcontrol:output_arb","portcontrol:arbitration:qos_settings","portcontrol:arbitration:arb_vns","portcontrol:arbitration:arb_vcs"]
     def getName(self):
         return "HyperX"
     def prepParams(self):
@@ -367,7 +364,6 @@ class topoHyperX(Topo):
         _params["topology"] = _params["topology"] = "merlin.hyperx"
         _params["debug"] = debug
         _params["num_ports"] = _params["router_radix"] = radix
-        _params["num_vns"] = 2
         _params["hyperx:local_ports"] = local_ports
 
     def formatShape(self, arr):
@@ -448,7 +444,7 @@ class topoFatTree(Topo):
     def __init__(self):
         Topo.__init__(self)
         self.topoKeys = ["topology", "debug", "flit_size", "link_bw", "xbar_bw","input_latency","output_latency","input_buf_size","output_buf_size", "fattree:shape"]
-        self.topoOptKeys = ["xbar_arb", "fattree:routing_alg", "fattree:adaptive_threshold"]
+        self.topoOptKeys = ["xbar_arb", "fattree:routing_alg", "fattree:adaptive_threshold","num_vns","vn_remap","vn_remap_shm","portcontrol:output_arb","portcontrol:arbitration:qos_settings","portcontrol:arbitration:arb_vns","portcontrol:arbitration:arb_vcs"]
         self.nicKeys = ["link_bw"]
         self.ups = []
         self.downs = []
@@ -635,7 +631,7 @@ class topoDragonFly(Topo):
     def __init__(self):
         Topo.__init__(self)
         self.topoKeys = ["topology", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw", "dragonfly:hosts_per_router", "dragonfly:routers_per_group", "dragonfly:intergroup_per_router", "dragonfly:num_groups","dragonfly:intergroup_links","input_latency","output_latency","input_buf_size","output_buf_size","dragonfly:global_route_mode"]
-        self.topoOptKeys = ["xbar_arb","link_bw:host","link_bw:group","link_bw:global","input_latency:host","input_latency:group","input_latency:global","output_latency:host","output_latency:group","output_latency:global","input_buf_size:host","input_buf_size:group","input_buf_size:global","output_buf_size:host","output_buf_size:group","output_buf_size:global"]
+        self.topoOptKeys = ["xbar_arb","link_bw:host","link_bw:group","link_bw:global","input_latency:host","input_latency:group","input_latency:global","output_latency:host","output_latency:group","output_latency:global","input_buf_size:host","input_buf_size:group","input_buf_size:global","output_buf_size:host","output_buf_size:group","output_buf_size:global","num_vns","vn_remap","vn_remap_shm","portcontrol:output_arb","portcontrol:arbitration:qos_settings","portcontrol:arbitration:arb_vns","portcontrol:arbitration:arb_vcs"]
         self.global_link_map = None
         self.global_routes = "absolute"
 
@@ -647,7 +643,6 @@ class topoDragonFly(Topo):
 #            _params["xbar_arb"] = "merlin.xbar_arb_lru"
         _params["topology"] = "merlin.dragonfly"
         _params["debug"] = debug
-        _params["num_vns"] = 1
 #        _params["router_radix"] = int(_params["router_radix"])
         _params["dragonfly:hosts_per_router"] = int(_params["dragonfly:hosts_per_router"])
         _params["dragonfly:routers_per_group"] = int(_params["dragonfly:routers_per_group"])
@@ -809,7 +804,6 @@ class topoDragonFlyLegacy(Topo):
 #            _params["xbar_arb"] = "merlin.xbar_arb_lru"
         _params["topology"] = "merlin.dragonfly_legacy"
         _params["debug"] = debug
-        _params["num_vns"] = 1
         _params["router_radix"] = int(_params["router_radix"])
         _params["num_ports"] = int(_params["router_radix"])
         _params["dragonfly:hosts_per_router"] = int(_params["dragonfly:hosts_per_router"])
@@ -881,7 +875,7 @@ class topoDragonFly2(Topo):
     def __init__(self):
         Topo.__init__(self)
         self.topoKeys = ["topology", "debug", "num_ports", "flit_size", "link_bw", "xbar_bw", "dragonfly:hosts_per_router", "dragonfly:routers_per_group", "dragonfly:intergroup_per_router", "dragonfly:num_groups","dragonfly:intergroup_links","input_latency","output_latency","input_buf_size","output_buf_size","dragonfly:global_route_mode"]
-        self.topoOptKeys = ["xbar_arb","link_bw:host","link_bw:group","link_bw:global","input_latency:host","input_latency:group","input_latency:global","output_latency:host","output_latency:group","output_latency:global","input_buf_size:host","input_buf_size:group","input_buf_size:global","output_buf_size:host","output_buf_size:group","output_buf_size:global"]
+        self.topoOptKeys = ["xbar_arb","link_bw:host","link_bw:group","link_bw:global","input_latency:host","input_latency:group","input_latency:global","output_latency:host","output_latency:group","output_latency:global","input_buf_size:host","input_buf_size:group","input_buf_size:global","output_buf_size:host","output_buf_size:group","output_buf_size:global","num_vns","vn_remap","vn_remap_shm","portcontrol:output_arb","portcontrol:arbitration:qos_settings","portcontrol:arbitration:arb_vns","portcontrol:arbitration:arb_vcs"]
         self.global_link_map = None
         self.global_routes = "absolute"
 
@@ -893,7 +887,6 @@ class topoDragonFly2(Topo):
 #            _params["xbar_arb"] = "merlin.xbar_arb_lru"
         _params["topology"] = "merlin.dragonfly2"
         _params["debug"] = debug
-        _params["num_vns"] = 1
 #        _params["router_radix"] = int(_params["router_radix"])
         _params["dragonfly:hosts_per_router"] = int(_params["dragonfly:hosts_per_router"])
         _params["dragonfly:routers_per_group"] = int(_params["dragonfly:routers_per_group"])
@@ -1068,6 +1061,11 @@ class TestEndPoint(EndPoint):
         #self.nicKeys = ["topology", "num_peers", "num_messages", "link_bw", "checkerboard"]
         self.epKeys.extend(["topology", "num_peers", "link_bw"])
         self.epOptKeys.extend(["checkerboard", "num_messages"])
+        self.split = 1
+        self.group_array = None
+
+    def divide(self,split):
+        self.split = split
 
     def getName(self):
         return "Test End Point"
@@ -1080,10 +1078,31 @@ class TestEndPoint(EndPoint):
         pass
 
     def build(self, nID, extraKeys):
+        # Copmute group size and offset
+        if self.group_array is None:
+            num_ep = sst.merlin._params["num_peers"]
+            min_per_group = num_ep / self.split
+            self.group_array = [min_per_group] * self.split
+            num_ep = num_ep - ( min_per_group * self.split )
+            for i in xrange(num_ep):
+                self.group_array[i] = self.group_array[i] + 1
+
+        
         nic = sst.Component("testNic.%d"%nID, "merlin.test_nic")
         nic.addParams(_params.subset(self.epKeys, self.epOptKeys))
         nic.addParams(_params.subset(extraKeys))
         nic.addParam("id", nID)
+        if self.split is not 1:
+            # Need to figure out what group I'm in
+            limit = 0
+            offset = 0
+            for i in xrange(self.split):
+                limit = limit + self.group_array[i]
+                if nID < limit:
+                    nic.addParam("group_peers",self.group_array[i])
+                    nic.addParam("group_offset",offset)
+                    break
+                offset = offset + self.group_array[i]
         if self.enableAllStats:
             nic.enableAllStatistics({"type":"sst.AccumulatorStatistic","rate":self.statInterval})
         return (nic, "rtr", _params["link_lat"])
@@ -1128,7 +1147,7 @@ class Pt2ptEndPoint(EndPoint):
         #self.enableAllStats = False;
         #self.statInterval = "0"
         self.epKeys.extend(["link_bw", "packet_size", "packets_to_send", "buffer_size", "src", "dest"])
-        self.epOptKeys.extend(["linkcontrol"])
+        self.epOptKeys.extend(["linkcontrol","stream_delays","report_interval"])
 
     def getName(self):
         return "pt2pt Test End Point"

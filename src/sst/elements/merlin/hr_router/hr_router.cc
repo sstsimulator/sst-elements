@@ -19,6 +19,7 @@
 #include <sst/core/simulation.h>
 #include <sst/core/timeLord.h>
 #include <sst/core/unitAlgebra.h>
+#include <sst/core/sharedRegion.h>
 
 #include <sstream>
 #include <string>
@@ -132,15 +133,29 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
 
     num_ports = params.find<int>("num_ports",-1);
     if ( num_ports == -1 ) {
-        merlin_abort.fatal(CALL_INFO, -1, "hr_router requires num_poorts to be specified\n");
+        merlin_abort.fatal(CALL_INFO, -1, "hr_router requires num_ports to be specified\n");
     }
 
-    num_vcs = params.find<int>("num_vcs",-1);
-    if ( num_vcs != -1 ) {
-        // merlin_abort.fatal(CALL_INFO,-1,"ERROR: hr_router requires num_vcs to be specified\n");
-        merlin_abort.output("WARNING: hr_router no longer uses parameter num_vcs,\n"
-                             "the number of VCs is derived from the number of VNs the\n"
-                             "endpoint requests.\n");
+    // Get the number of VNs
+    num_vns = params.find<int>("num_vns",-1);
+    // If num VNs is specified, we also need to check to see if remap is on
+    vn_remap_shm = params.find<std::string>("vn_remap_shm","");
+    if ( vn_remap_shm != "" ) {
+        // If I'm id 0, create the shared region
+        std::vector<int> vec;
+        params.find_array<int>("vn_remap",vec);
+        if ( vec.size() == 0 ) {
+            merlin_abort.fatal(CALL_INFO, 1, "if vn_remap_shm is specified, a map must be supplied using vn_remap\n");
+        }
+        vn_remap_shm_size = vec.size() * sizeof(int);
+        if ( id == 0 ) {
+            SharedRegion* sr = Simulation::getSharedRegionManager()->
+                getGlobalSharedRegion(vn_remap_shm, vn_remap_shm_size, new SharedRegionMerger());
+            for ( int i = 0; i < vec.size(); ++i ) {
+                sr->modifyArray(i,vec[i]);
+            }
+            sr->publish();
+        }
     }
 
     // Get the topology
@@ -230,8 +245,8 @@ REENABLE_WARNING
     
     params.enableVerify(false);
 
-    Params pc_params = params.find_prefix_params("portcontrol");
-
+    Params pc_params = params.find_prefix_params("portcontrol:");
+    
     pc_params.insert("flit_size", flit_size.toStringBestSI());
     if (pc_params.contains("network_inspectors")) pc_params.insert("network_inspectors", params.find<std::string>("network_inspectors", ""));
     pc_params.insert("oql_track_port", params.find<std::string>("oql_track_port","false"));
@@ -257,7 +272,10 @@ REENABLE_WARNING
         pc_params.insert("input_buf_size", getLogicalGroupParam(params,topo,i,"input_buf_size"));
         pc_params.insert("output_buf_size", getLogicalGroupParam(params,topo,i,"output_buf_size"));
         pc_params.insert("dlink_thresh", getLogicalGroupParam(params,topo,i,"dlink_thresh", "-1"));
-
+        pc_params.insert("vn_remap_shm", vn_remap_shm);
+        pc_params.insert("vn_remap_shm_size", std::to_string(vn_remap_shm_size));
+        pc_params.insert("num_vns", std::to_string(num_vns));
+        
         // ports[i] = new PortControl(this, id, port_name.str(), i,
         //                            getLogicalGroupParamUA(params,topo,i,"link_bw"),
         //                            flit_size, topo,
@@ -396,6 +414,7 @@ hr_router::printStatus(Output& out)
 bool
 hr_router::clock_handler(Cycle_t cycle)
 {
+    // TraceFunction trace(CALL_INFO_LONG);
     // If there are no events in the input queues, then we can remove
     // ourselves from the clock queue, as long as the arbitration unit
     // says it's okay.
@@ -613,16 +632,21 @@ hr_router::reportRequestedVNs(int port, int vns)
 
     // For now all the vn requests need to be identical.  Will work on
     // making it more flexible later.
-    if ( num_vcs == -1 ) {
+    if ( num_vns != -1 && num_vcs == -1 ) {
+        num_vcs = topo->computeNumVCs(num_vns);
+    }
+    else if ( num_vcs == -1 ) {
+        num_vns = vns;
         num_vcs = topo->computeNumVCs(vns);
     }
 }
 
 void
-hr_router::reportSetVCs(int port, int vcs)
+hr_router::reportSetVNs(int port, int vns)
 {
-    if ( num_vcs == -1 ) {
-        num_vcs = vcs;
+    if ( num_vns == -1 ) {
+        num_vns = vns;
+        num_vcs = topo->computeNumVCs(vns);
     }
 }
 
@@ -656,7 +680,6 @@ hr_router::reportSetVCs(int port, int vcs)
 void
 hr_router::init_vcs()
 {
-
     // int in_buf_sizes[num_vcs];
     // int out_buf_sizes[num_vcs];
 
@@ -674,9 +697,16 @@ hr_router::init_vcs()
         output_queue_lengths[i] = 0;
     }
     
-    for ( int i = 0; i < num_ports; i++ ) {
-        ports[i]->initVCs(num_vcs,&vc_heads[i*num_vcs],&xbar_in_credits[i*num_vcs],&output_queue_lengths[i*num_vcs]);
+    int* vcs_per_vn = new int[num_vns];
+    // For now, all VNs have the same number of VCs
+    int vpv = topo->computeNumVCs(1);
+    for ( int i = 0; i < num_vns; ++i ) {
+        vcs_per_vn[i] = vpv;
     }
+    for ( int i = 0; i < num_ports; i++ ) {
+        ports[i]->initVCs(num_vns,vcs_per_vn,&vc_heads[i*num_vcs],&xbar_in_credits[i*num_vcs],&output_queue_lengths[i*num_vcs]);
+    }
+    delete[] vcs_per_vn;
 
     topo->setOutputBufferCreditArray(xbar_in_credits, num_vcs);
     topo->setOutputQueueLengthsArray(output_queue_lengths, num_vcs);
