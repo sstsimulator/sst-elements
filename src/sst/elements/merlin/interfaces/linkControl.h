@@ -100,7 +100,7 @@ private:
     int* vn_remap_out;
     int* vn_remap_in;
     
-    int id;
+    nid_t id;
     int rr;
 
     typedef enum {

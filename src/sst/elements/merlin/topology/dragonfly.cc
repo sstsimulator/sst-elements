@@ -508,8 +508,8 @@ internal_router_event* topo_dragonfly::process_input(RtrEvent* ev)
     td_ev->src_group = group_id;
     td_ev->setEncapsulatedEvent(ev);
     td_ev->setVC(ev->request->vn * 3);
-    td_ev->global_slice = ev->request->src % params.n;
-    td_ev->global_slice_shadow = ev->request->src % params.n;
+    td_ev->global_slice = ev->getTrustedSrc() % params.n;
+    td_ev->global_slice_shadow = ev->getTrustedSrc() % params.n;
 
     if ( td_ev->getTraceType() != SST::Interfaces::SimpleNetwork::Request::NONE ) {
         output.output("TRACE(%d): process_input():"

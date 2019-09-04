@@ -429,7 +429,7 @@ void LinkControl::finish(void)
 bool LinkControl::send(SimpleNetwork::Request* req, int vn) {
     if ( vn >= req_vns ) return false;
     req->vn = vn;
-    RtrEvent* ev = new RtrEvent(req);
+    RtrEvent* ev = new RtrEvent(req,id);
     int flits = (ev->request->size_in_bits + (flit_size - 1)) / flit_size;
     ev->setSizeInFlits(flits);
 
@@ -516,7 +516,7 @@ SST::Interfaces::SimpleNetwork::Request* LinkControl::recv(int vn) {
 
 void LinkControl::sendUntimedData(SST::Interfaces::SimpleNetwork::Request* req)
 {
-    rtr_link->sendUntimedData(new RtrEvent(req));
+    rtr_link->sendUntimedData(new RtrEvent(req,id));
 }
 
 SST::Interfaces::SimpleNetwork::Request* LinkControl::recvUntimedData()
