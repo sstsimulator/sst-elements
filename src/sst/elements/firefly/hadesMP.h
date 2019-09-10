@@ -108,6 +108,16 @@ class HadesMP : public MP::Interface
         uint32_t count, MP::PayloadDataType dtype, MP::RankID root,
         MP::Communicator group, MP::Functor*);
 
+    void scatter(
+        const Hermes::MemAddr& sendBuf, uint32_t sendcnt, MP::PayloadDataType sendtype,
+        const Hermes::MemAddr& recvBuf, uint32_t recvcnt, MP::PayloadDataType recvType,
+        MP::RankID root, MP::Communicator group, MP::Functor*);
+
+    void scatterv(
+        const Hermes::MemAddr& sendBuf, int* sendcnt, int* displs, MP::PayloadDataType sendtype,
+        const Hermes::MemAddr& recvBuf, int recvcnt, MP::PayloadDataType recvType,
+        MP::RankID root, MP::Communicator group, MP::Functor*);
+
     virtual void allgather( const Hermes::MemAddr&, uint32_t sendcnt, 
         MP::PayloadDataType sendtype,
         const Hermes::MemAddr&, uint32_t recvcnt, 
