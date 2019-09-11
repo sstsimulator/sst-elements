@@ -42,6 +42,8 @@ libember_la_SOURCES = \
 	libs/miscEvents/emberMiscEvent.h \
 	libs/emberMpiLib.h \
 	libs/emberMpiLib.cc \
+	libs/mpi/emberscatterev.h \
+	libs/mpi/emberscattervev.h \
 	libs/mpi/embercancelev.h \
 	libs/mpi/emberrecvev.h \
 	libs/mpi/embersendev.h \
