@@ -20,7 +20,7 @@
 using namespace SST;
 using namespace SST::Firefly;
 
-static void print( Output& dbg, char* buf, int len )
+static void print( Output& dbg, const char* buf, int len )
 {
     std::string tmp;
     dbg.debug(CALL_INFO,4,NIC_DBG_RECV_MACHINE,"addr=%p len=%d\n",buf,len);
@@ -116,6 +116,7 @@ void Nic::EntryBase::copyOut( Output& dbg, int numBytes,
             vec.push_back( MemOp( ioVec()[currentVec()].addr.getSimVAddr() + currentPos(), len, MemOp::Op::BusDmaFromHost ) );
 
             if ( ioVec()[currentVec()].addr.getBacking()) {
+                print( dbg, from, len );
                 event.bufAppend( from, len );
             } else {
                 event.bufAppend( NULL, len );

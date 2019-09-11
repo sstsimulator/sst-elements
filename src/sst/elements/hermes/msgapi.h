@@ -139,6 +139,16 @@ class Interface : public Hermes::Interface {
         PayloadDataType dtype, RankID root, 
         Communicator group, Functor*) { assert(0); }
 
+    virtual void scatter(
+        const Hermes::MemAddr& sendBuf, uint32_t sendcnt, PayloadDataType sendtype, 
+        const Hermes::MemAddr& recvBuf, uint32_t recvcnt, PayloadDataType recvType, 
+        RankID root, Communicator group, Functor*) { assert(0); }
+
+    virtual void scatterv(
+        const Hermes::MemAddr& sendBuf, int* sendcnt, int* displs, PayloadDataType sendtype, 
+        const Hermes::MemAddr& recvBuf, int recvcnt, PayloadDataType recvType, 
+        RankID root, Communicator group, Functor*) { assert(0); }
+
     virtual void allgather(
         const Hermes::MemAddr&, uint32_t sendcnt, PayloadDataType sendtype,
         const Hermes::MemAddr&, uint32_t recvcnt, PayloadDataType recvtype,

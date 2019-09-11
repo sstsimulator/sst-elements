@@ -42,6 +42,8 @@ libember_la_SOURCES = \
 	libs/miscEvents/emberMiscEvent.h \
 	libs/emberMpiLib.h \
 	libs/emberMpiLib.cc \
+	libs/mpi/emberscatterev.h \
+	libs/mpi/emberscattervev.h \
 	libs/mpi/embercancelev.h \
 	libs/mpi/emberrecvev.h \
 	libs/mpi/embersendev.h \
@@ -125,6 +127,10 @@ libember_la_SOURCES = \
 	mpi/motifs/emberreduce.cc \
 	mpi/motifs/emberbcast.h \
 	mpi/motifs/emberbcast.cc \
+	mpi/motifs/emberscatter.h \
+	mpi/motifs/emberscatter.cc \
+	mpi/motifs/emberscatterv.h \
+	mpi/motifs/emberscatterv.cc \
 	mpi/motifs/emberreduce.h \
 	mpi/motifs/emberhalo3d.h \
 	mpi/motifs/emberhalo3d.cc \

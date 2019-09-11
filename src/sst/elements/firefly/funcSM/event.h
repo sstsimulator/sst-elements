@@ -187,6 +187,55 @@ class CollectiveStartEvent : public Event {
     NotSerializable(CollectiveStartEvent)
 };
 
+class ScattervStartEvent : public Event {
+
+  public:
+    ScattervStartEvent(
+               const Hermes::MemAddr& sendBuf, int sendCnt, MP::PayloadDataType sendType,
+               const Hermes::MemAddr& recvBuf, int recvCnt, MP::PayloadDataType recvType,
+               MP::RankID root, MP::Communicator group ) :
+        sendBuf(sendBuf),
+        sendCnt(sendCnt),
+        sendType(sendType),
+        sendCntPtr(0),
+        sendDisplsPtr(0),
+        recvBuf(recvBuf),
+        recvCnt(recvCnt),
+        recvType(recvType),
+        root(root),
+        group(group)
+    {}
+
+    ScattervStartEvent(
+               const Hermes::MemAddr& sendBuf, int* sendCntPtr, int* displs, MP::PayloadDataType sendType,
+               const Hermes::MemAddr& recvBuf, int recvCnt, MP::PayloadDataType recvType,
+               MP::RankID root, MP::Communicator group ) :
+        sendBuf(sendBuf),
+        sendCntPtr(sendCntPtr),
+        sendDisplsPtr(displs),
+        sendType(sendType),
+        recvBuf(recvBuf),
+        recvCnt(recvCnt),
+        recvType(recvType),
+        root(root),
+        group(group)
+    {}
+    
+    Hermes::MemAddr sendBuf;
+    Hermes::MemAddr recvBuf;
+    uint32_t sendCnt;
+    uint32_t recvCnt;
+    MP::PayloadDataType sendType;
+    MP::PayloadDataType recvType;
+    MP::RankID  root;
+    MP::Communicator group;
+
+    int* sendCntPtr;
+    int* sendDisplsPtr;
+    
+    NotSerializable(ScattervStartEvent)
+};
+
 class GatherBaseStartEvent : public Event {
 
   public:
