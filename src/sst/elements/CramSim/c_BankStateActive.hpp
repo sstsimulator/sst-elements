@@ -36,7 +36,7 @@
 #include "c_BankCommand.hpp"
 
 namespace SST {
-namespace n_Bank {
+namespace CramSim {
 
 class c_BankStateRead;
 class c_BankStateReadA;
@@ -70,7 +70,7 @@ private:
 	SimTime_t m_timer;
 
 };
-} // namespace n_Bank
+} // namespace CramSim
 } // namespace SST
 
 #endif // C_BANKSTATEACTIVE_HPP

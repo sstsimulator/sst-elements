@@ -50,7 +50,7 @@
 #include <cmath>
 
 using namespace SST;
-using namespace SST::n_Bank;
+using namespace SST::CramSim;
 
 c_Dimm::c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params) :
 		Component(x_id) {

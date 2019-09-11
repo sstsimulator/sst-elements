@@ -35,7 +35,11 @@
 using namespace SST;
 
 namespace SST {
+
+class SharedRegion;
+
 namespace Merlin {
+
 
 // Class to manage link between NIC and router.  A single NIC can have
 // more than one link_control (and thus link to router).
@@ -60,8 +64,12 @@ public:
         {"output_buf_size",    "Size of output buffers specified in b or B (can include SI prefix)."},
         {"network_inspectors", "Comma separated list of network inspectors to put on output ports.", ""},
         {"dlink_thresh",       ""},
+        {"num_vns",            "Number of VNs set in router or python file (-1 if not set in the parent router)."},
+        {"vn_remap_shm",       "Name of shared memory region for vn remapping.  If empty, no remapping is done", ""},
+        {"vn_remap_shm_size",  "Size of shared memory region for vn remapping.  If empty, no remapping is done", "-1"},
         {"oql_track_port",     ""},
-        {"oql_track_remote",   ""}
+        {"oql_track_remote",   ""},
+        {"output_arb",         "Arbitration unit to be used for port output", "merlin.arb.output.basic"}
     )
 
     // SST_ELI_DOCUMENT_STATISTICS(
@@ -86,6 +94,7 @@ private:
     // Self link for timing output.  This is how we manage bandwidth
     // usage
     Link* output_timing;
+    TimeConverter* flit_cycle;
 
 	// Self link for dynamic link additions
 	Link* dynlink_timing;
@@ -102,6 +111,10 @@ private:
     // Number of virtual channels
     int num_vcs;
 
+    int num_vns;
+    std::string vn_remap_shm;
+    int vn_remap_shm_size;
+    
 	int max_link_width;
 	int cur_link_width;
 
@@ -222,6 +235,8 @@ private:
     Output& output;
 
     PortInterface::OutputArbitration* output_arb;
+
+    SharedRegion* shared_region;
     
 public:
 
@@ -243,7 +258,7 @@ public:
     PortControl(Component* parent, Params& params);
     PortControl(ComponentId_t cid, Params& params, Router* rif, int rtr_id, int port_number, Topology *topo); 
 
-    void initVCs(int vcs, internal_router_event** vc_heads, int* xbar_in_credits, int* output_queue_lengths);
+    void initVCs(int vns, int* vcs_per_vn, internal_router_event** vc_heads, int* xbar_in_credits, int* output_queue_lengths);
 
 
     ~PortControl();

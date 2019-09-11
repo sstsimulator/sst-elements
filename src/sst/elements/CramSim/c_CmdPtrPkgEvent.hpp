@@ -37,7 +37,7 @@
 #include "c_BankCommand.hpp"
 
 namespace SST {
-namespace n_Bank {
+namespace CramSim {
   
 class c_CmdPtrPkgEvent: public SST::Event {
 public:
@@ -51,7 +51,7 @@ public:
 		ser & m_payload;
 	}
 
-	ImplementSerializable (SST::n_Bank::c_CmdPtrPkgEvent);
+	ImplementSerializable (SST::CramSim::c_CmdPtrPkgEvent);
 
 };
 }

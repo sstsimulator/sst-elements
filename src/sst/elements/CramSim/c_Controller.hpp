@@ -43,7 +43,7 @@
 
 // local includes
 namespace SST {
-    namespace n_Bank {
+    namespace CramSim {
         class c_AddressHasher;
         class c_TxnScheduler;
         class c_DeviceDriver;
@@ -64,16 +64,21 @@ namespace SST {
             )
 
             SST_ELI_DOCUMENT_PARAMS(
-                {"AddrMapper", "address hasher", "CramSim.c_AddressHasher"},
-                {"TxnScheduler", "Transaction Scheduler", "CramSim.c_TxnScheduler"},
-                {"TxnConverter", "Transaction Converter", "CramSim.c_TxnConverter"},
-                {"CmdScheduler", "Command Scheduler", "CramSim.c_CmdScheduler"},
-                {"DeviceDriver", "device driver", "CramSim.c_DeviceDriver"},
+                {"verbose", "Output verbosity", "0"},
+                {"strControllerClockFrequency", "Controller clock frequency, with units", "1GHz" }
             )
 
             SST_ELI_DOCUMENT_PORTS(
                 {"txngenLink", "link to txn generator / txn dispatcher", {"c_txnGenReqEvent"} },
                 {"memLink", "link to memory", {"c_DeviceResEvent"} },
+            )
+            
+            SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+                {"AddrMapper", "address hasher. Default: CramSim.c_AddressHasher", "SST::CramSim::c_AddressHasher"},
+                {"TxnScheduler", "Transaction Scheduler. Default: CramSim.c_TxnScheduler", "SST::CramSim::c_TxnScheduler"},
+                {"TxnConverter", "Transaction Converter. Default: CramSim.c_TxnConverter", "SST::CramSim::c_TxnConverter"},
+                {"CmdScheduler", "Command Scheduler. Default: CramSim.c_CmdScheduler", "SST::CramSim::c_CmdScheduler"},
+                {"DeviceDriver", "device driver. Default: CramSim.c_DeviceDriver", "SST::CramSim::c_DeviceDriver"}
             )
 
             c_Controller(SST::ComponentId_t id, SST::Params &params);

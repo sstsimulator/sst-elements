@@ -77,7 +77,7 @@ public:
     virtual void recvTopologyEvent(int port, TopologyEvent* ev) = 0;
 
     virtual void reportRequestedVNs(int port, int vns) = 0;
-    virtual void reportSetVCs(int port, int vcs) = 0;
+    virtual void reportSetVNs(int port, int vns) = 0;
 };
 
 #define MERLIN_ENABLE_TRACE
@@ -236,7 +236,7 @@ private:
 class RtrInitEvent : public BaseRtrEvent {
 public:
 
-    enum Commands { REQUEST_VNS, SET_VCS, REPORT_ID, REPORT_BW, REPORT_FLIT_SIZE, REPORT_PORT };
+    enum Commands { REQUEST_VNS, SET_VNS, REPORT_ID, REPORT_BW, REPORT_FLIT_SIZE, REPORT_PORT };
 
     // int num_vns;
     // int id;
@@ -419,7 +419,7 @@ public:
         SubComponent(parent)
         {}
 
-    virtual void initVCs(int vcs, internal_router_event** vc_heads, int* xbar_in_credits, int* output_queue_lengths) = 0;
+    virtual void initVCs(int vns, int* vcs_per_vn, internal_router_event** vc_heads, int* xbar_in_credits, int* output_queue_lengths) = 0;
 
 
     virtual ~PortInterface() {}
@@ -455,8 +455,8 @@ public:
         {}
         virtual ~OutputArbitration() {}
 
-        virtual void setVCs(int num_vcs) = 0;
-        virtual int arbitrate(PortInterface::port_queue_t* out_q, int* port_out_credits, bool isHostPort, bool& have_packets) = 0;
+        virtual void setVCs(int num_vns, int* vcs_per_vn) = 0;
+        virtual int arbitrate(Cycle_t cycle, PortInterface::port_queue_t* out_q, int* port_out_credits, bool isHostPort, bool& have_packets) = 0;
         virtual void dumpState(std::ostream& stream) {};
 };
 
