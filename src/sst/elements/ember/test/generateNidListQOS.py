@@ -25,6 +25,21 @@ def _random( args ):
     _nids = _nids[size:]
     return nid_list
 
+def _random_linear( args ):
+    # args: size [seed]
+    global _nids
+    size = int(args[0])
+
+    if len(args) is 2 :
+        random.seed(int(args[1]))
+    
+    random.shuffle(_nids)
+
+    nid_list = _nids[0:size]
+    _nids = _nids[size:]
+    nid_list.sort()
+    return nid_list
+
 
 def _linear( args ):
     # args: size
@@ -39,8 +54,40 @@ def _linear( args ):
     #return ','.join(str(num) for num in nid_list)
 
 
+def _interval( args ):
+    # args: start_index interval [count]
+    
+    # if count is not specified, it will go through the end.  If count
+    # takes you beyond the end, it will stop at the end of the nid
+    # list
+    global _nids
+    start_index = int(args[0])
+    interval = int(args[1])
+    if len(args) >= 3:
+        count = int(args[2])
+    else:
+        count = sys.maxint
+        
+    # Start with a sorted nid space
+    _nids.sort()
+
+    nid_list = []
+    index = start_index
+    for i in xrange(0,count):
+        if ( index < len(_nids) ):
+            nid_list.append( _nids.pop(index) )
+            index = index + interval - 1 # -1 because we popped a value
+        else:
+            break
+            
+    return nid_list
+
+
+
 _functions = { "random" : _random,
-               "linear" : _linear }
+               "random-linear" : _random_linear,
+               "linear" : _linear,
+               "interval" : _interval }
 
 def _finalize_qos_config(total_nodes) :
     # Using the _apps array, create the qos merlin variables and put
@@ -105,7 +152,6 @@ def generate( args ):
     _apps.append(app)
 
     if len(_nids) is 0 :
-        print "All nids allocated"
         _finalize_qos_config(total_nodes)
     
     return ','.join(str(num) for num in nid_list)
