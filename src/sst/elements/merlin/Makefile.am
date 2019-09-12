@@ -15,6 +15,8 @@ libmerlin_la_SOURCES = \
 	router.h \
 	bridge.h \
 	bridge.cc \
+	background_traffic/background_traffic.h \
+	background_traffic/background_traffic.cc \
 	offeredload/offered_load.h \
 	offeredload/offered_load.cc \
 	target_generator/target_generator.h \
