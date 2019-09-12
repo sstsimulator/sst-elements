@@ -14,8 +14,8 @@ AC_DEFUN([SST_CHECK_CUDA],
          [CUDA_CPPFLAGS="-I$with_cuda/include -DHAVE_CUDA=1"
             CPPFLAGS="$CUDA_CPPFLAGS $CPPFLAGS"
             CUDA_LDFLAGS=""
-            CUDA_LIBDIR="$with_cuda/lib"
-            CUDA_LIBS="-L$with_cuda/lib"
+            CUDA_LIBDIR="$with_cuda/lib64"
+            CUDA_LIBS="-L$CUDA_LIBDIR"
             LDFLAGS="$CUDA_LDFLAGS $LDFLAGS"],
          [CUDA_CPPFLAGS=
             CUDA_LDFLAGS=
