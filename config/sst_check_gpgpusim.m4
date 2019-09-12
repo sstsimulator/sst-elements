@@ -10,9 +10,17 @@ AC_DEFUN([SST_CHECK_GPGPUSIM],
    LDFLAGS_saved="$LDFLAGS"
    LIBS_saved="$LIBS"
 
+   #Need Cuda
+   AS_IF([test "$sst_check_gpgpusim_happy" = "no"],
+      [],
+      [
+      AS_IF([test "$sst_check_cuda_happy" = "no"],
+            [AC_MSG_ERROR([Valid Cuda required for GPGPU-Sim])])
+   ])
+   
    #Need compiler versions
-   CC_VERSION=$(gcc -dumpversion)
-   CUDA_VERSION_STRING=$(nvcc --version | grep -o "release .*" | sed 's/ *,.*//' | sed 's/release //g' | sed 's/\./ /g' | awk '{printf("%02u%02u", 10*int(@S|@1), 10*@S|@2);}')
+   CC_VERSION=$(gcc -dumpversion) 
+   CUDA_VERSION_STRING=$(nvcc --version | grep -o "release .*" | sed 's/ *,.*//' | sed 's/release //g' | sed 's/\./ /g' | $AWK '{printf("%02u%02u", 10*int(@S|@1), 10*@S|@2);}')
    GPGPUSIM_LIB_DIR=lib/gcc-$CC_VERSION/cuda-$CUDA_VERSION_STRING/release
 
    AS_IF([test ! -z "$with_gpgpusim" -a "$with_gpgpusim" != "yes"],
@@ -25,13 +33,6 @@ AC_DEFUN([SST_CHECK_GPGPUSIM],
             GPGPUSIM_LDFLAGS=
             GPGPUSIM_LIBDIR=
             GPGPUSIM_LIB=
-   ])
-
-   AS_IF([test "$sst_check_gpgpusim_happy" = "no"],
-      [],
-      [
-      AS_IF([test "$sst_check_cuda_happy" = "no"],
-            [AC_MSG_ERROR([Valid Cuda required for GPGPU-Sim])])
    ])
 
    AC_MSG_CHECKING([for cudart_mod in $GPGPUSIM_LIBDIR])
