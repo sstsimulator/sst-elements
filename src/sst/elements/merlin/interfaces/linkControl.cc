@@ -19,6 +19,7 @@
 #include "linkControl.h"
 
 #include <sst/core/simulation.h>
+#include <sst/core/sharedRegion.h>
 
 #include "merlin.h"
 
@@ -31,6 +32,7 @@ LinkControl::LinkControl(Component* parent, Params &params) :
     SST::Interfaces::SimpleNetwork(parent),
     rtr_link(NULL), output_timing(NULL),
     req_vns(0), total_vns(0), checker_board_factor(1), id(-1),
+    logical_nid(-1), nid_map_shm(nullptr), nid_map(nullptr),
     rr(0), input_buf(NULL), output_buf(NULL),
     rtr_credits(NULL), in_ret_credits(NULL),
     curr_out_vn(0), waiting(true), have_packets(false), start_block(0),
@@ -57,6 +59,7 @@ LinkControl::LinkControl(ComponentId_t cid, Params &params, int vns) :
     SST::Interfaces::SimpleNetwork(cid),
     rtr_link(NULL), output_timing(NULL),
     req_vns(vns), total_vns(0), checker_board_factor(1), id(-1),
+    logical_nid(-1), nid_map_shm(nullptr), nid_map(nullptr),
     rr(0), input_buf(NULL), output_buf(NULL),
     rtr_credits(NULL), in_ret_credits(NULL),
     curr_out_vn(0), waiting(true), have_packets(false), start_block(0),
@@ -136,6 +139,23 @@ LinkControl::LinkControl(ComponentId_t cid, Params &params, int vns) :
     output_timing = configureSelfLink(port_name + "_output_timing", "1GHz",
             new Event::Handler<LinkControl>(this,&LinkControl::handle_output));
 
+
+    // See if we need to set up a nid map
+    std::string nid_map_name = params.find<std::string>("nid_map_name",std::string());
+    if ( !nid_map_name.empty() ) {
+        int logical_peers = params.find<int>("logical_peers",-1);
+        if ( logical_peers == -1 ) {
+            merlin_abort.fatal(CALL_INFO,1,"LinkControl: logical_peers must be set if nid_map_name is set\n");
+        }
+        logical_nid = params.find<nid_t>("logical_nid",-1);
+        if ( logical_peers == -1 ) {
+            merlin_abort.fatal(CALL_INFO,1,"LinkControl: logical_nid must be set if nid_map_name is set\n");
+        }
+        nid_map_shm = Simulation::getSharedRegionManager()->
+            getGlobalSharedRegion(nid_map_name, logical_peers * sizeof(nid_t), new SharedRegionMerger());
+    }
+
+    
     // Register statistics
     packet_latency = registerStatistic<uint64_t>("packet_latency");
     send_bit_count = registerStatistic<uint64_t>("send_bit_count");
@@ -296,6 +316,13 @@ void LinkControl::init(unsigned int phase)
         }
 
         id = init_ev->int_value;
+        if ( logical_nid == -1 ) logical_nid = id;
+        // If we have a nid_map, fill in my mapping
+        if ( nid_map_shm ) {
+            nid_map_shm->modifyArray(logical_nid,id);
+            nid_map_shm->publish();
+            nid_map = nid_map_shm->getPtr<const nid_t*>();
+        }
         // init_ev->print("LC: ",Simulation::getSimulation()->getSimulationOutput());
         delete ev;
         
@@ -429,6 +456,7 @@ void LinkControl::finish(void)
 bool LinkControl::send(SimpleNetwork::Request* req, int vn) {
     if ( vn >= req_vns ) return false;
     req->vn = vn;
+    if ( nid_map ) req->dest = nid_map[req->dest];
     RtrEvent* ev = new RtrEvent(req,id);
     int flits = (ev->request->size_in_bits + (flit_size - 1)) / flit_size;
     ev->setSizeInFlits(flits);
@@ -509,6 +537,7 @@ SST::Interfaces::SimpleNetwork::Request* LinkControl::recv(int vn) {
 
     SST::Interfaces::SimpleNetwork::Request* ret = event->request;
     ret->vn = ret->vn / checker_board_factor;
+    if ( nid_map ) ret->dest = logical_nid;
     event->request = NULL;
     delete event;
     return ret;
