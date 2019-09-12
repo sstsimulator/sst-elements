@@ -40,11 +40,12 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 	uint32_t mask = (uint32_t) params.find("verboseMask", 0);
 	m_jobId = params.find("jobId", -1);
 
+        
 	std::ostringstream prefix;
 	prefix << "@t:" << m_jobId << ":EmberEngine:@p:@l: ";
 
 	output.init( prefix.str(), verbosity, mask, Output::STDOUT);
-
+    
     Params osParams = params.find_prefix_params("os.");
 
     std::string osName = osParams.find<std::string>("name");
@@ -269,6 +270,7 @@ void EmberEngine::issueNextEvent(uint64_t nanoDelay) {
 
         // if the event Queue is empty after a refill the motif is done
         if (  evQueue.empty() ) {
+            output.verbose(CALL_INFO, 1, MOTIF_START_STOP_MASK, "Motif finished: %s\n",m_generator->getMotifName().c_str());
             m_generator->completed( &output, getCurrentSimTimeNano() );
             if ( m_generator->primary() ) {	
 	            primaryComponentOKToEndSim();
@@ -281,6 +283,7 @@ void EmberEngine::issueNextEvent(uint64_t nanoDelay) {
                 m_generator = initMotif( motifParams[currentMotif],
 								m_apiMap, m_jobId, currentMotif, m_nodePerf );
                 assert( m_generator );
+                output.verbose(CALL_INFO, 1, MOTIF_START_STOP_MASK, "Motif starting: %s\n",m_generator->getMotifName().c_str());
 
                 m_motifDone = refillQueue();
             }

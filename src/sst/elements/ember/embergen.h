@@ -38,7 +38,8 @@
 #include "libs/emberLib.h"
 
 #define ENGINE_MASK (1<<0) 
-#define MOTIF_MASK (1<<1) 
+#define MOTIF_MASK (1<<1)
+#define MOTIF_START_STOP_MASK (1<<2)
 // #define EVENT_MASK (1<<2)  defined in emberevent.h"
 
 namespace SST {

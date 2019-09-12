@@ -119,9 +119,10 @@ public:
         injectionTime(0)
     {}
 
-    RtrEvent(SST::Interfaces::SimpleNetwork::Request* req) :
+    RtrEvent(SST::Interfaces::SimpleNetwork::Request* req, SST::Interfaces::SimpleNetwork::nid_t trusted_src) :
         BaseRtrEvent(BaseRtrEvent::PACKET),
         request(req),
+        trusted_src(trusted_src),
         injectionTime(0)
     {}
 
@@ -146,15 +147,18 @@ public:
     inline void setSizeInFlits(int size ) {size_in_flits = size; }
     inline int getSizeInFlits() { return size_in_flits; }
 
+    inline SST::Interfaces::SimpleNetwork::nid_t getTrustedSrc() { return trusted_src; }
+    
     virtual void print(const std::string& header, Output &out) const  override {
-        out.output("%s RtrEvent to be delivered at %" PRIu64 " with priority %d. src = %lld, dest = %lld\n",
-                   header.c_str(), getDeliveryTime(), getPriority(), request->src, request->dest);
+        out.output("%s RtrEvent to be delivered at %" PRIu64 " with priority %d. src = %lld (logical: %lld), dest = %lld\n",
+                   header.c_str(), getDeliveryTime(), getPriority(), trusted_src, request->src, request->dest);
         if ( request->inspectPayload() != NULL) request->inspectPayload()->print("  -> ", out);
     }
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         BaseRtrEvent::serialize_order(ser);
         ser & request;
+        ser & trusted_src;
         ser & size_in_flits;
         ser & injectionTime;
     }
@@ -162,6 +166,7 @@ public:
 private:
     // TraceType trace;
     // int traceID;
+    SST::Interfaces::SimpleNetwork::nid_t trusted_src;
     SimTime_t injectionTime;
     int size_in_flits;
 
@@ -315,7 +320,7 @@ public:
     inline RtrEvent* getEncapsulatedEvent() {return encap_ev;}
 
     inline int getDest() const {return encap_ev->request->dest;}
-    inline int getSrc() const {return encap_ev->request->src;}
+    inline int getSrc() const {return encap_ev->getTrustedSrc();}
 
     inline SST::Interfaces::SimpleNetwork::Request::TraceType getTraceType() {return encap_ev->getTraceType();}
     inline int getTraceID() {return encap_ev->getTraceID();}
