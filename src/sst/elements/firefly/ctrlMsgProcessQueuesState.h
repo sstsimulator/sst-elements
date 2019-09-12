@@ -372,7 +372,7 @@ class ProcessQueuesState : public SubComponent
 
     void postShortRecvBuffer();
 
-    void pioSendFiniVoid( void*, uint64_t );
+    void pioSendFiniVoid( std::vector<void*>, uint64_t );
     void pioSendFiniCtrlHdr( CtrlHdr*, uint64_t );
     void getFini( _CommReq* );
     void dmaRecvFiniGI( GetInfo*, uint64_t, nid_t, uint32_t, size_t );

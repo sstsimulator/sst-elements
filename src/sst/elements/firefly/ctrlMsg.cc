@@ -29,7 +29,6 @@ using namespace SST::Firefly::CtrlMsg;
 API::API( ComponentId_t id, Params& params ) : 
     ProtocolAPI( id ), m_memHeapLink(NULL)
 {
-
     m_dbg_level = params.find<uint32_t>("verboseLevel",0);
     m_dbg_mask = params.find<int32_t>("verboseMask",-1);
 
@@ -144,6 +143,12 @@ void API::send( const Hermes::MemAddr& addr, size_t len, MP::RankID dest, uint64
     sendv_common( ioVec, MP::CHAR, dest, tag, grp, NULL );
 }
 
+void API::isend( void* ptr, size_t len, nid_t dest, uint64_t tag, MP::Communicator grp, CommReq* req)
+{
+	MemAddr addr( 1, ptr );
+	isend( addr, len, dest, tag, grp, req );
+}
+
 void API::isend( const Hermes::MemAddr& addr, size_t len, nid_t dest, uint64_t tag, CommReq* req)
 {
     std::vector<IoVec> ioVec(1);
@@ -168,6 +173,11 @@ void API::isend( const Hermes::MemAddr& addr, size_t len, nid_t dest, uint64_t t
 void API::sendv(std::vector<IoVec>& ioVec, nid_t dest, uint64_t tag )
 {
     sendv_common( ioVec, MP::CHAR, dest, tag, MP::GroupWorld, NULL );
+}
+
+void API::isendv(std::vector<IoVec>& ioVec, nid_t dest, uint64_t tag, MP::Communicator group, CommReq* req ) 
+{
+    sendv_common( ioVec, MP::CHAR, dest, tag, group, req );
 }
 
 void API::recvv_common( std::vector<IoVec>& ioVec,
@@ -196,6 +206,12 @@ void API::recv( const Hermes::MemAddr& addr, size_t len, nid_t src, uint64_t tag
     ioVec[0].addr = addr; 
     ioVec[0].len = len;
     recvv_common( ioVec, MP::CHAR, src, tag, MP::GroupWorld, NULL );
+}
+
+void API::recv( void* ptr, size_t len, nid_t src, uint64_t tag, MP::Communicator group)
+{
+	MemAddr addr( 1, ptr ); 
+	recv( addr, len, src, tag, group );
 }
 
 void API::recv( const Hermes::MemAddr& addr, size_t len, nid_t src, uint64_t tag,
@@ -234,11 +250,26 @@ void API::irecvv(std::vector<IoVec>& ioVec, nid_t src, uint64_t tag,
     recvv_common( ioVec, MP::CHAR, src, tag, MP::GroupWorld, req );
 }
 
+void API::irecvv(std::vector<IoVec>& ioVec, nid_t src, uint64_t tag,
+                            MP::Communicator grp, CommReq* req  )
+{
+    recvv_common( ioVec, MP::CHAR, src, tag, grp, req );
+}
+
 void API::wait( CommReq* req )
 {
     std::vector<CommReq*> tmp; 
     tmp.push_back( req );
     waitAll( tmp );
+}
+
+void API::waitAll( std::vector<CommReq>& reqs )
+{
+    std::vector<CommReq*> tmp(reqs.size());
+    for ( unsigned i = 0; i < reqs.size(); i++ ) {
+        tmp[i] = &reqs[i];
+    }
+	waitAll( tmp );
 }
 
 void API::waitAll( std::vector<CommReq*>& reqs )

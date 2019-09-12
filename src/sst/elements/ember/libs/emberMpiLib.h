@@ -48,6 +48,8 @@
 #include "mpi/emberCommDestroyEv.h"
 #include "mpi/emberallredev.h"
 #include "mpi/emberbcastev.h"
+#include "mpi/emberscatterev.h"
+#include "mpi/emberscattervev.h"
 #include "mpi/emberredev.h"
 
 using namespace Hermes;
@@ -77,6 +79,8 @@ namespace Ember {
     NAME( Allreduce ) \
     NAME( Reduce ) \
     NAME( Bcast) \
+    NAME( Scatter) \
+    NAME( Scatterv) \
     NAME( Gettime ) \
     NAME( Commsplit ) \
     NAME( Commcreate ) \
@@ -229,7 +233,17 @@ class EmberMpiLib : public EmberLib {
 	}
 
     void bcast( Queue& q, const Hermes::MemAddr& mydata, uint32_t count, PayloadDataType dtype, int root, Communicator group ) {
-		q.push( new EmberBcastEvent( api(), m_output, m_Stats[Reduce], mydata, count, dtype, root, group ) );
+		q.push( new EmberBcastEvent( api(), m_output, m_Stats[Bcast], mydata, count, dtype, root, group ) );
+	}
+
+    void scatter( Queue& q, const Hermes::MemAddr& senddata, uint32_t sendCnt, PayloadDataType sendType,
+			const Hermes::MemAddr& recvdata, uint32_t recvCnt, PayloadDataType recvType, int root, Communicator group ) {
+		q.push( new EmberScatterEvent( api(), m_output, m_Stats[Scatter], senddata, sendCnt, sendType, recvdata, recvCnt, recvType, root, group ) );
+	}
+
+    void scatterv( Queue& q, const Hermes::MemAddr& senddata, int* sendCnts, int* displs, PayloadDataType sendType,
+			const Hermes::MemAddr& recvdata, uint32_t recvCnt, PayloadDataType recvType, int root, Communicator group ) {
+		q.push( new EmberScattervEvent( api(), m_output, m_Stats[Scatterv], senddata, sendCnts, displs, sendType, recvdata, recvCnt, recvType, root, group ) );
 	}
 
     void allgather( Queue& q, const Hermes::MemAddr& sendData, int sendCnts, PayloadDataType senddtype,
@@ -246,7 +260,6 @@ class EmberMpiLib : public EmberLib {
 			recvData, recvCnts, recvDsp, recvdtype,
 			group ) );
 	}
-
 
     void alltoall( Queue& q, const Hermes::MemAddr& sendData, int sendCnts, PayloadDataType senddtype,
         const Hermes::MemAddr& recvData, int recvCnts, PayloadDataType recvdtype, Communicator group ) 

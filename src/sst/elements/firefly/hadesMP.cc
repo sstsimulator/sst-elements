@@ -145,6 +145,28 @@ void HadesMP::bcast(const Hermes::MemAddr& mydata, uint32_t count,
                             CollectiveStartEvent::Bcast) );
 }
 
+void HadesMP::scatter(
+        const Hermes::MemAddr& sendBuf, uint32_t sendcnt, MP::PayloadDataType sendtype,
+        const Hermes::MemAddr& recvBuf, uint32_t recvcnt, MP::PayloadDataType recvType,
+        MP::RankID root, MP::Communicator group, MP::Functor* retFunc)
+{
+    dbg().debug(CALL_INFO,1,1,"sendcnt=%d recvcnt=%d\n",sendcnt,recvcnt);
+
+    functionSM().start( FunctionSM::Scatterv, retFunc,
+        new ScattervStartEvent(sendBuf, sendcnt, sendtype, recvBuf, recvcnt, recvType, root, group ) );
+}
+
+void HadesMP::scatterv(
+        const Hermes::MemAddr& sendBuf, int* sendcnt, int* displs, MP::PayloadDataType sendtype,
+        const Hermes::MemAddr& recvBuf, int recvcnt, MP::PayloadDataType recvType,
+        MP::RankID root, MP::Communicator group, MP::Functor* retFunc)
+{
+    dbg().debug(CALL_INFO,1,1,"\n");
+
+    functionSM().start( FunctionSM::Scatterv, retFunc,
+        new ScattervStartEvent(sendBuf, sendcnt, displs, sendtype, recvBuf, recvcnt, recvType, root, group ) );
+}
+
 void HadesMP::allgather( const Hermes::MemAddr& sendbuf, uint32_t sendcnt, PayloadDataType sendtype,
         const Hermes::MemAddr& recvbuf, uint32_t recvcnt, PayloadDataType recvtype,
         Communicator group, Functor* retFunc)
