@@ -33,9 +33,8 @@ void TimingDRAM::build(Params& params) {
     std::ostringstream tmp;
     tmp << "@t:TimingDRAM::@p():@l:mc=" << id << ": "; 
     
-    int dbg_level = params.find<uint32_t>("dbg_level", 1);
-    int dbg_mask = params.find<uint32_t>("dbg_mask", -1);
-
+    int dbg_level = params.find<int>("dbg_level", 1);
+    int dbg_mask = params.find<int>("dbg_mask", -1);
     output = new Output(tmp.str().c_str(), dbg_level, dbg_mask, Output::STDOUT);
 
     std::string addrMapper = params.find<std::string>("addrMapper","memHierarchy.simpleAddrMapper");
@@ -50,6 +49,8 @@ void TimingDRAM::build(Params& params) {
 
     int numChannels = params.find<int>("channels", 1);
 
+    if (m_printConfig)
+        m_printConfig = params.find<bool>("printconfig", true);
     if ( m_printConfig ) {
         output->verbose(CALL_INFO, 1, DBG_MASK, "number of channels: %d\n",numChannels);
         output->verbose(CALL_INFO, 1, DBG_MASK, "address mapper:     %s\n",addrMapper.c_str());
@@ -107,6 +108,8 @@ TimingDRAM::Channel::Channel( ComponentId_t id, std::function<void(ReqId)> handl
     
     m_mapper->setNumRanks( numRanks );
 
+    if (m_printConfig)
+        m_printConfig = params.find<bool>("printconfig", true);
     if ( m_printConfig ) {
         m_output->verbosePrefix(prefix(),CALL_INFO, 1, DBG_MASK, "max pending trans: %d\n",m_maxPendingTrans);
         m_output->verbosePrefix(prefix(),CALL_INFO, 1, DBG_MASK, "number of ranks:   %d\n",numRanks);
@@ -214,7 +217,9 @@ TimingDRAM::Rank::Rank( ComponentId_t id, Params& params, unsigned mc, unsigned 
     int banks = params.find<int>("numBanks", 8);
 
     m_mapper->setNumBanks( banks );
-
+    
+    if (m_printConfig)
+        m_printConfig = params.find<bool>("printconfig", true);
     if ( m_printConfig ) {
         m_output->verbosePrefix(prefix(),CALL_INFO, 1, DBG_MASK, "number of banks: %d\n",banks);
         m_printConfig = false;
@@ -281,6 +286,8 @@ TimingDRAM::Bank::Bank( ComponentId_t id, Params& params, unsigned mc, unsigned 
     tmpParams = params.find_prefix_params("pagePolicy." );
     m_pagePolicy = loadAnonymousSubComponent<PagePolicy>(ppName, "pagePolicy", 0, ComponentInfo::INSERT_STATS, tmpParams);
 
+    if (m_printConfig)
+        m_printConfig = params.find<bool>("printconfig", true);
     if ( m_printConfig ) {
         m_output->verbosePrefix(prefix(),CALL_INFO, 1, DBG_MASK, "CL:           %d\n",m_col_rd_lat);
         m_output->verbosePrefix(prefix(),CALL_INFO, 1, DBG_MASK, "CL_WR:        %d\n",m_col_wr_lat);

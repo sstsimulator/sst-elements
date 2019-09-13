@@ -20,6 +20,8 @@ libmemHierarchy_la_SOURCES = \
 	bus.cc \
 	memoryController.h \
 	memoryController.cc \
+	memoryCacheController.h \
+	memoryCacheController.cc \
 	coherentMemoryController.h \
 	coherentMemoryController.cc \
 	membackend/timingDRAMBackend.cc \

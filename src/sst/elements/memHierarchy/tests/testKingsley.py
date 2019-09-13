@@ -156,6 +156,10 @@ ddr_backend_params = {
     "channel.rank.bank.pagePolicy" : "memHierarchy.simplePagePolicy",
     "channel.rank.bank.transactionQ" : "memHierarchy.reorderTransactionQ",
     "channel.rank.bank.pagePolicy.close" : 0,
+    "printconfig" : 0,
+    "channel.printconfig" : 0,
+    "channel.rank.printconfig" : 0,
+    "channel.rank.bank.printconfig" : 0,
 }
 
 ddr_nic_params = {
