@@ -140,6 +140,10 @@ memory.addParams({
     "channel.rank.bank.pagePolicy" : "memHierarchy.simplePagePolicy",
     "channel.rank.bank.transactionQ" : "memHierarchy.reorderTransactionQ",
     "channel.rank.bank.pagePolicy.close" : 1,
+    "printconfig" : 0,
+    "channel.printconfig" : 0,
+    "channel.rank.printconfig" : 0,
+    "channel.rank.bank.printconfig" : 0,
 })
 
 # Do lower memory hierarchy links

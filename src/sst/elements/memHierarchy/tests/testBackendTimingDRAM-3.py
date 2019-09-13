@@ -139,6 +139,10 @@ memory.addParams({
     "channel.rank.bank.pagePolicy" : "memHierarchy.timeoutPagePolicy",
     "channel.rank.bank.transactionQ" : "memHierarchy.reorderTransactionQ",
     "channel.rank.bank.pagePolicy.timeoutCycles" : 50,
+    "printconfig" : 0,
+    "channel.printconfig" : 0,
+    "channel.rank.printconfig" : 0,
+    "channel.rank.bank.printconfig" : 0,
 })
 
 # Do lower memory hierarchy links
