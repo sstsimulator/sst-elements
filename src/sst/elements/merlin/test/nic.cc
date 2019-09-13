@@ -70,6 +70,9 @@ nic::nic(ComponentId_t cid, Params& params) :
     
     remap = params.find<int>("remap", 0);
 
+    send_untimed_data = params.find<bool>("send_untimed_data","true");
+
+    
     group_offset = params.find<int>("group_offset", 0); 
     group_peers = params.find<int>("group_peers", num_peers);
 
@@ -144,14 +147,16 @@ nic::~nic()
 
 void nic::finish()
 {
-    if ( init_count != num_peers ) {
-        output.output("NIC %d didn't receive all complete point-to-point messages.  Only recieved %d\n",net_id,init_count);
+    if ( send_untimed_data ) {
+        if ( init_count != num_peers ) {
+            output.output("NIC %d didn't receive all complete point-to-point messages.  Only recieved %d\n",net_id,init_count);
+        }
+        
+        if ( init_broadcast_count != (num_peers -1 ) ) {
+            output.output("NIC %d didn't receive all complete broadcast messages.  Only recieved %d\n",net_id,init_broadcast_count);
+        }
     }
-
-    if ( init_broadcast_count != (num_peers -1 ) ) {
-        output.output("NIC %d didn't receive all complete broadcast messages.  Only recieved %d\n",net_id,init_broadcast_count);
-    }
-
+    
     link_control->finish();
     output.output("Nic %d had %d stalled cycles.\n",net_id,stalled_cycles);
 }
@@ -164,6 +169,7 @@ void nic::setup()
 		(int64_t) net_id, (int64_t) link_control->getEndpointID());
     }
 
+    if ( !send_untimed_data ) return;
     if ( init_count != num_peers ) {
         output.output("NIC %d didn't receive all init point-to-point messages.  Only recieved %d\n",net_id,init_count);
     }
@@ -203,6 +209,7 @@ nic::init(unsigned int phase) {
 
 void
 nic::init_complete(unsigned int phase) {
+    if ( !send_untimed_data && init_state != 0 ) return;
     // For init and complete, use all the endpoints
     switch ( init_state ) {
     case 0:
@@ -464,6 +471,7 @@ nic::clock_handler(Cycle_t cycle)
         output.output("%" PRIu64 ": NIC %d received all packets (total of %d)!\n", cycle, net_id, expected_recv_count);
         primaryComponentOKToEndSim();
         done = true;
+        return true;
     }
 
     // Send packets

@@ -99,7 +99,7 @@ bool EmberSweep3DGenerator::generate( std::queue<EmberEvent*>& evQ) {
 
 	if( 0 == m_loopIndex && 0 == m_InnerLoopIndex ) {
 		configure();
-		verbose(CALL_INFO, 2, 0, "rank=%d size=%d\n", rank(), size());
+		verbose(CALL_INFO, 2, MOTIF_MASK, "rank=%d size=%d\n", rank(), size());
 	}
 
 	//for(uint32_t repeat = 0; repeat < 2; ++repeat) {
