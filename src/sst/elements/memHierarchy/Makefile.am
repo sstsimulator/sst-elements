@@ -177,6 +177,7 @@ EXTRA_DIST = \
 	tests/testHashXor.py \
 	tests/testIncoherent.py \
 	tests/testKingsley.py \
+	tests/testMemoryCache.py \
 	tests/testNoninclusive-1.py \
 	tests/testNoninclusive-2.py \
 	tests/testPrefetchParams.py \
