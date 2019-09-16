@@ -135,7 +135,6 @@ BackgroundTraffic::init(unsigned int phase) {
 
         // Set up send interval based on bandwidth
         UnitAlgebra link_bw = link_if->getLinkBW();
-        std::cout << "link_bw = " << link_bw.toStringBestSI() << std::endl;
 
         // Compute the send interval.  We do this by computing time to
         // serialize one packet and dividing by the offered_load.
