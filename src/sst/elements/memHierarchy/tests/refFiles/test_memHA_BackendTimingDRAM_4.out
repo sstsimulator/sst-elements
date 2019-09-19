@@ -1,15 +1,3 @@
-0:TimingDRAM::build():54:mc=0: number of channels: 2
-0:TimingDRAM::build():55:mc=0: address mapper:     memHierarchy.roundRobinAddrMapper
-0:TimingDRAM:Channel:Channel():111:mc=0:chan=0: max pending trans: 32
-0:TimingDRAM:Channel:Channel():112:mc=0:chan=0: number of ranks:   2
-0:TimingDRAM:Rank:Rank():219:mc=0:chan=0:rank=0: number of banks: 16
-0:TimingDRAM:Bank:Bank():285:mc=0:chan=0:rank=0:bank=0: CL:           14
-0:TimingDRAM:Bank:Bank():286:mc=0:chan=0:rank=0:bank=0: CL_WR:        12
-0:TimingDRAM:Bank:Bank():287:mc=0:chan=0:rank=0:bank=0: RCD:          14
-0:TimingDRAM:Bank:Bank():288:mc=0:chan=0:rank=0:bank=0: TRP:          14
-0:TimingDRAM:Bank:Bank():289:mc=0:chan=0:rank=0:bank=0: dataCycles:   2
-0:TimingDRAM:Bank:Bank():290:mc=0:chan=0:rank=0:bank=0: transactionQ: memHierarchy.fifoTransactionQ
-0:TimingDRAM:Bank:Bank():291:mc=0:chan=0:rank=0:bank=0: pagePolicy:   memHierarchy.simplePagePolicy
 TrivialCPU: Test Completed Successfuly
 TrivialCPU: Test Completed Successfuly
 TrivialCPU: Test Completed Successfuly

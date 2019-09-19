@@ -20,6 +20,8 @@ libmemHierarchy_la_SOURCES = \
 	bus.cc \
 	memoryController.h \
 	memoryController.cc \
+	memoryCacheController.h \
+	memoryCacheController.cc \
 	coherentMemoryController.h \
 	coherentMemoryController.cc \
 	membackend/timingDRAMBackend.cc \
@@ -175,6 +177,7 @@ EXTRA_DIST = \
 	tests/testHashXor.py \
 	tests/testIncoherent.py \
 	tests/testKingsley.py \
+	tests/testMemoryCache.py \
 	tests/testNoninclusive-1.py \
 	tests/testNoninclusive-2.py \
 	tests/testPrefetchParams.py \

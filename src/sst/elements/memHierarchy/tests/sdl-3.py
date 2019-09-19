@@ -61,6 +61,10 @@ memory.addParams({
     "channel.rank.bank.dataCycles" : 2,
     "channel.rank.bank.pagePolicy" : "memHierarchy.simplePagePolicy",
     "channel.rank.bank.transactionQ" : "memHierarchy.reorderTransactionQ",
+    "printconfig" : 0,
+    "channel.printconfig" : 0,
+    "channel.rank.printconfig" : 0,
+    "channel.rank.bank.printconfig" : 0,
 })
 memory.setSubComponent("transactionQ", "memHierarchy.reorderTransactionQ")
 pp = memory.setSubComponent("pagePolicy", "memHierarchy.simplePagePolicy")
