@@ -75,7 +75,8 @@ public:
      		{ "memoryinterface",  "Sets the memory interface module to use", "memHierarchy.memInterface" },
      		{ "pagecount", "Sets the number of pages the system can allocate", "4194304" },
      		{ "pagesize", "Sets the size of the page in the system, MUST be a multiple of cache_line_size", "4096" },
-     		{ "pagemap", "Mapping scheme, string set to LINEAR or RANDOMIZED, default is LINEAR (virtual==physical), RANDOMIZED randomly shuffles virtual to physical map.", "LINEAR" }
+     		{ "pagemap", "Mapping scheme, string set to LINEAR or RANDOMIZED, default is LINEAR (virtual==physical), RANDOMIZED randomly shuffles virtual to physical map.", "LINEAR" },
+                { "pagemapname", "Name of the shared memory region to keep page mapping in", "miranda"},
     	)
 
 	SST_ELI_DOCUMENT_STATISTICS(
@@ -133,6 +134,8 @@ private:
 
 	MirandaRequestQueue<GeneratorRequest*> pendingRequests;
 	MirandaMemoryManager* memMgr;
+        
+        SharedRegion * addrMap;
 
         uint32_t maxRequestsPending[OPCOUNT];
 	uint32_t requestsPending[OPCOUNT];
