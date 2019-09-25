@@ -51,8 +51,7 @@ public:
 
 		
                 if (mapRegion->getLocalShareID() == 0) { // First sharer, we're in charge
-		    std::vector<uint64_t> pageArr;
-                    pageArr.resize(pageCount);
+		    uint64_t * pageArr = (uint64_t*) malloc(pageCount * sizeof(uint64_t));
 		    // Allocate pages into their standard linear mapping scheme
         	    for(uint64_t i = 0; i < pageCount; ++i) {
 	    	        pageArr[i] = i *pageSize;
@@ -91,10 +90,10 @@ public:
 			
 			    break;
 		    }
+
+                    mapRegion->modifyRegion(0, pageCount * sizeof(uint64_t), pageArr);
+                    free(pageArr);
 		
-                    for (uint64_t i = 0; i < pageCount; i++) {
-                        mapRegion->modifyArray(i, pageArr[i]);
-                    }
                 } // End mapping by 'first' sharer
 	}
 	
