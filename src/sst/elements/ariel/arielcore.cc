@@ -17,8 +17,8 @@
 #include "arielcore.h"
 
 #ifdef HAVE_CUDA
-#include <../Gpgpusim/Gpgpusim_Event.h>
-using namespace SST::GpgpusimComponent;
+#include <../balar/balar_event.h>
+using namespace SST::BalarComponent;
 #endif
 
 using namespace SST::ArielComponent;
@@ -262,7 +262,7 @@ void ArielCore::handleEvent(SimpleMem::Request* event) {
                     setBaseAddress(getCurrentAddress() - getTotalTransfer());
                     output->verbose(CALL_INFO, 16, 0, "CUDA: Moving to GPU stage %" PRIu32 "\n",
                                     getBaseAddress());
-                    GpgpusimEvent * tse = new GpgpusimEvent(GpgpusimComponent::EventType::REQUEST);
+                    BalarEvent * tse = new BalarEvent(BalarComponent::EventType::REQUEST);
                     tse->API = GPU_MEMCPY;
                     tse->payload = physicalAddresses;
                     tse->CA.cuda_memcpy.dst = getBaseAddress();
@@ -534,7 +534,7 @@ void ArielCore::gpu(){
 // Function to generate physical addresses for GPGPU-Sim Component
 // Handles split-write/read
 void ArielCore::setPhysicalAddresses(SST::Event *ev){
-    GpgpusimEvent * gEv =  dynamic_cast<GpgpusimComponent::GpgpusimEvent*> (ev);
+    BalarEvent * gEv =  dynamic_cast<BalarComponent::BalarEvent*> (ev);
     uint64_t phy_addr;
     uint64_t addr_offset;
     uint64_t current_transfer;
@@ -1108,7 +1108,7 @@ void ArielCore::handleFenceEvent(ArielFenceEvent *fEv) {
 // Create an event to send to the GPU Component
 void ArielCore::handleGpuEvent(ArielGpuEvent* gEv){
     if(gpu_enabled) {
-        GpgpusimEvent * tse = new GpgpusimEvent(GpgpusimComponent::EventType::REQUEST);
+        BalarEvent * tse = new BalarEvent(BalarComponent::EventType::REQUEST);
         std::cout << "Add payload.." << std::endl;
         switch(gEv->getGpuApi()){
             case GPU_REG_FAT_BINARY:
@@ -1265,8 +1265,8 @@ void ArielCore::handleGpuEvent(ArielGpuEvent* gEv){
 }
 
 void ArielCore::handleGpuAckEvent(SST::Event* e){
-    GpgpusimEvent * ev = dynamic_cast<GpgpusimComponent::GpgpusimEvent*>(e);
-    if (ev->getType() == GpgpusimComponent::EventType::RESPONSE){
+    BalarEvent * ev = dynamic_cast<BalarComponent::BalarEvent*>(e);
+    if (ev->getType() == BalarComponent::EventType::RESPONSE){
         if((ev->API == GPU_MEMCPY_RET)&&(ev->CA.cuda_memcpy.kind == cudaMemcpyDeviceToHost)){
             // Device to Host still needs us to get the data for fesimple
             ArielReadEvent *are;
