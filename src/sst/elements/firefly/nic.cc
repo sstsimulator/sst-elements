@@ -42,6 +42,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_nic2host_base_lat_ns(0),
     m_respKey(1),
 	m_predNetIdleTime(0),
+    m_linkBytesPerSec(0),
 	m_detailedInterface(NULL)
 {
     m_myNodeId = params.find<int>("nid", -1);
@@ -122,23 +123,9 @@ Nic::Nic(ComponentId_t id, Params &params) :
     int minPktPayload = 32;
     assert( ( packetSizeInBytes - packetOverhead ) >= minPktPayload );
 
-	UnitAlgebra input_buf_size = params.find<SST::UnitAlgebra>("input_buf_size" );
-	UnitAlgebra output_buf_size = params.find<SST::UnitAlgebra>("output_buf_size" );
-	UnitAlgebra link_bw = params.find<SST::UnitAlgebra>("link_bw" );
-
-	m_linkBytesPerSec = link_bw.getRoundedValue()/8;
-
-    m_dbg.verbose(CALL_INFO,1,1,"id=%d input_buf_size=%s output_buf_size=%s link_bw=%s "
-			"packetSize=%d\n", m_myNodeId, 
-            input_buf_size.toString().c_str(),
-            output_buf_size.toString().c_str(),
-			link_bw.toString().c_str(), packetSizeInBytes);
-
-    m_linkControl = loadUserSubComponent<Interfaces::SimpleNetwork>( "rtrLink", ComponentInfo::SHARE_NONE, 0 );
+    // Set up the linkcontrol
+    m_linkControl = loadUserSubComponent<Interfaces::SimpleNetwork>( "rtrLink", ComponentInfo::SHARE_NONE, 2 );
     assert( m_linkControl );
-
-	m_linkControl->initialize(params.find<std::string>("rtrPortName","rtr"),
-                              link_bw, 2, input_buf_size, output_buf_size);
 
     m_recvNotifyFunctor =
         new SimpleNetwork::Handler<Nic>(this,&Nic::recvNotify );
@@ -355,7 +342,10 @@ void Nic::init( unsigned int phase )
 	}
 	if ( m_detailedInterface) {
 		m_detailedInterface->init(phase);
-	} 
+	}
+    if ( m_linkBytesPerSec == 0 && m_linkControl->isNetworkInitialized() ) {
+        m_linkBytesPerSec = m_linkControl->getLinkBW().getRoundedValue()/8;
+    }
 }
 
 void Nic::handleVnicEvent( Event* ev, int id )
