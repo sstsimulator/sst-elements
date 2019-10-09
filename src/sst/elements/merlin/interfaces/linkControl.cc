@@ -107,14 +107,14 @@ LinkControl::LinkControl(ComponentId_t cid, Params &params, int vns) :
     outbuf_credits = new int[req_vns];
 
     // Get the buffer sizes
-    inbuf_size = params.find<UnitAlgebra>("in_buf_size","1kB");
+    inbuf_size = params.find<UnitAlgebra>("input_buf_size","1kB");
     if ( !inbuf_size.hasUnits("b") && !inbuf_size.hasUnits("B") ) {
         merlin_abort.fatal(CALL_INFO,-1,"in_buf_size must be specified in either "
                            "bits or bytes: %s\n",inbuf_size.toStringBestSI().c_str());
     }
     if ( inbuf_size.hasUnits("B") ) inbuf_size *= UnitAlgebra("8b/B");
 
-    outbuf_size = params.find<UnitAlgebra>("out_buf_size","1kB");
+    outbuf_size = params.find<UnitAlgebra>("output_buf_size","1kB");
     if ( !outbuf_size.hasUnits("b") && !outbuf_size.hasUnits("B") ) {
         merlin_abort.fatal(CALL_INFO,-1,"out_buf_size must be specified in either "
                            "bits or bytes: %s\n",outbuf_size.toStringBestSI().c_str());
@@ -135,7 +135,7 @@ LinkControl::LinkControl(ComponentId_t cid, Params &params, int vns) :
     }
     
     rtr_link = configureLink(port_name, std::string("1GHz"), new Event::Handler<LinkControl>(this,&LinkControl::handle_input));
-
+    
     output_timing = configureSelfLink(port_name + "_output_timing", "1GHz",
             new Event::Handler<LinkControl>(this,&LinkControl::handle_output));
 
@@ -168,13 +168,16 @@ LinkControl::initialize(const std::string& port_name, const UnitAlgebra& link_bw
                         int vns, const UnitAlgebra& in_buf_size,
                         const UnitAlgebra& out_buf_size)
 {    
+    if ( !wasLoadedWithLegacyAPI() ) {
+        merlin_abort.fatal(CALL_INFO_LONG,1,"LinkControl::initializae() was called on instance that was loaded using new APIs.  This method can only be called when loaded with the legacy API.  Use wasLoadedWithLegacyAPI() to check load status.");
+        return false;
+    }
     req_vns = vns;
     total_vns = vns * checker_board_factor;
     link_bw = link_bw_in;
     if ( link_bw.hasUnits("B/s") ) {
         link_bw *= UnitAlgebra("8b/B");
     }
-    
     // Input and output buffers
     input_buf = new network_queue_t[req_vns];
     output_buf = new network_queue_t[total_vns];
@@ -213,10 +216,7 @@ LinkControl::initialize(const std::string& port_name, const UnitAlgebra& link_bw
 
     // Configure the links
     // For now give it a fake timebase.  Will give it the real timebase during init
-    // rtr_link = rif->configureLink(port_name, time_base, new Event::Handler<LinkControl>(this,&LinkControl::handle_input));
     rtr_link = configureLink(port_name, std::string("1GHz"), new Event::Handler<LinkControl>(this,&LinkControl::handle_input));
-    // output_timing = rif->configureSelfLink(port_name + "_output_timing", time_base,
-    //         new Event::Handler<LinkControl>(this,&LinkControl::handle_output));
     output_timing = configureSelfLink(port_name + "_output_timing", "1GHz",
             new Event::Handler<LinkControl>(this,&LinkControl::handle_output));
 
