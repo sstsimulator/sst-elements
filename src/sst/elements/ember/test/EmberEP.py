@@ -41,7 +41,7 @@ class EmberEP( EndPoint ):
             element,slot = element.split(":",1)
 
             ep = sst.Component( "nic" + str(nodeID), element)
-            sc = ep.setSubComponent(slot, "merlin.linkcontrol")
+            sc = ep.setSubComponent(slot, self.nicParams["module"])
             retval = (sc, "rtr_port", sst.merlin._params["link_lat"] )
             
             # Add paramters to the component
@@ -66,14 +66,20 @@ class EmberEP( EndPoint ):
             nicComponentName = self.nicParams['nicComponent']
 
         nic = sst.Component( "nic" + str(nodeID), nicComponentName )
-        rtrLink = nic.setSubComponent( "rtrLink", "merlin.linkcontrol" )
-        rtrLink.addParams( self.nicParams )
+        rtrLink = nic.setSubComponent( "rtrLink", self.nicParams["module"] )
+        #rtrLink.addParams( self.nicParams )
+        if "link_bw" in self.nicParams:
+            rtrLink.addParam("link_bw",self.nicParams["link_bw"])
+        if "input_buf_size" in self.nicParams:
+            rtrLink.addParam("input_buf_size",self.nicParams["input_buf_size"])
+        if "output_buf_size" in self.nicParams:
+            rtrLink.addParam("output_buf_size",self.nicParams["output_buf_size"])
 
         nic.addParams( self.nicParams )
         nic.addParams( extraKeys)
         nic.addParam( "nid", nodeID )
-        retval = (rtrLink, "rtr", sst.merlin._params["link_lat"] )
- 
+        retval = (rtrLink, "rtr_port", sst.merlin._params["link_lat"] )
+        
         built = False 
         if self.detailedModel:
             #print nodeID,  "use detailed"
