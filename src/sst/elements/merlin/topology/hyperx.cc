@@ -27,7 +27,6 @@ using namespace SST::Merlin;
 topo_hyperx::topo_hyperx(Component* comp, Params& params) :
     Topology(comp)
 {
-
     // Get the various parameters
     router_id = params.find<int>("id",-1);
     if ( router_id == -1 ) {
@@ -38,6 +37,7 @@ topo_hyperx::topo_hyperx(Component* comp, Params& params) :
     if ( !shape.compare("") ) {
     }
 
+    
     // Need to parse the shape string to get the number of dimensions
     // and the size of each dimension
     dimensions = std::count(shape.begin(),shape.end(),'x') + 1;
@@ -126,7 +126,7 @@ topo_hyperx::topo_hyperx(ComponentId_t cid, Params& params, int num_ports, int r
     Topology(cid),
     router_id(rtr_id)
 {
-
+    TraceFunction trace(CALL_INFO_LONG);
     // Get the various parameters
     std::string shape;
     shape = params.find<std::string>("shape");
@@ -439,12 +439,12 @@ topo_hyperx::computeNumVCs(int vns)
     case VDAL:
         return 2 * dimensions * vns;
     case MINA:
-        return dimensions;
+        return dimensions * vns;
     case DOR:
     case DORND:
-        return 1;
+        return vns;
     default:
-        return 2; 
+        return 2 * vns; 
     }
 }
 
