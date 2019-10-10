@@ -40,7 +40,8 @@ REENABLE_WARNING
 
 ReorderLinkControl::ReorderLinkControl(ComponentId_t cid, Params &params, int vns) :
     SimpleNetwork(cid),
-    receiveFunctor(NULL)
+    receiveFunctor(NULL),
+    vns(vns)
 {
     if ( isUser() ) {
         // Need to see if the network_if was loaded as a user subcomponent
@@ -54,14 +55,20 @@ ReorderLinkControl::ReorderLinkControl(ComponentId_t cid, Params &params, int vn
 
     // Get the params for the child
     Params childParams = params.find_prefix_params("networkIF");
-
+    if ( childParams.size() == 0 ) {
+        // Not using new method of passing through parameters, just
+        // send all params to child
+        childParams = params;
+    }
+    
     // If this was loaded as a user subcomponent, need to tell the
     // child what port to connect to
     if ( isUser() ) childParams.insert("port_name","rtr_port");
     
+    input_buf = new request_queue_t[vns];
+
     link_control =
         loadAnonymousSubComponent<SimpleNetwork>(networkIF, "networkIF", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, childParams, vns);
-    
 }
 
 
@@ -137,7 +144,6 @@ void ReorderLinkControl::finish(void)
 bool ReorderLinkControl::send(SimpleNetwork::Request* req, int vn) {
     if ( vn >= vns ) return false;
     if ( !link_control->spaceToSend(vn, req->size_in_bits) ) return false;
-    
     ReorderRequest* my_req = new ReorderRequest(req);
     delete req;
     
@@ -233,13 +239,13 @@ bool ReorderLinkControl::handle_event(int vn) {
     // See if this is the expected sequence number, if not, put it
     // into the ReorderInfo.queue.
     if ( my_req->seq == info->recv ) {
-        input_buf[my_req->vn].push(my_req);
+        input_buf[vn].push(my_req);
         info->recv++;
         // Need to also see if we have any other fragments which are
         // now ready to be delivered
         my_req = info->queue.top();
         while ( my_req->seq == info->recv ) {
-            input_buf[my_req->vn].push(my_req);
+            input_buf[vn].push(my_req);
             info->queue.pop();
             my_req = info->queue.top();
             info->recv++;

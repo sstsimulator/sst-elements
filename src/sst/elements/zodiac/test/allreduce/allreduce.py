@@ -158,7 +158,7 @@ class EmberEP(EndPoint):
 		rtrLink = nic.setSubComponent( "rtrLink", "merlin.linkcontrol" )
 		rtrLink.addParams( nicParams )
 
-		retval = (rtrLink, "rtr", sst.merlin._params["link_lat"] )
+		retval = (rtrLink, "rtr_port", sst.merlin._params["link_lat"] )
 
 		loopBack = sst.Component("loopBack" + str(nodeID), "firefly.loopBack")
 		loopBack.addParam("numCores", num_vNics)
