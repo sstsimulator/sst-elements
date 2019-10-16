@@ -192,6 +192,7 @@ private:
     int const* output_credits;
     int const* output_queue_lengths;
     int num_vcs;
+    int vcs_per_vn;
     
     RouteAlgo algorithm;
     RNG::SSTRandom* rng;
