@@ -24,9 +24,8 @@ class ShmemStream : public StreamBase {
   protected:
     void processFirstPkt( FireflyNetworkEvent* ev ) {
         m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_STREAM,"\n");
+        processPktHdr(ev);
         m_blocked = false;
-        m_ctx->schedCallback( m_wakeupCallback );
-        m_wakeupCallback = NULL;
     }
     void processPktHdr( FireflyNetworkEvent* ev ) {
         m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_STREAM,"\n");

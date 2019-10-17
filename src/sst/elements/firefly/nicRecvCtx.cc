@@ -36,8 +36,6 @@ bool Nic::RecvMachine::Ctx::processCtrlPkt( FireflyNetworkEvent* ev ) {
 
     m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_CTX,"got a control message\n");
     StreamBase* stream = newStream( ev );
-
-    stream->processPkt( ev );
     return false;
 }
 
@@ -60,6 +58,7 @@ bool Nic::RecvMachine::Ctx::processStdPkt( FireflyNetworkEvent* ev ) {
             m_streamMap[srcKey] = stream;
         }
 
+        return false;
     } else { 
         assert ( m_streamMap.find(srcKey) != m_streamMap.end() ); 
 
@@ -71,22 +70,23 @@ bool Nic::RecvMachine::Ctx::processStdPkt( FireflyNetworkEvent* ev ) {
         } else {
             m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_CTX,"body packet stream=%p\n",stream );
         }
-    }
 
-    if ( stream->isBlocked() ) {
-        m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_CTX,"stream is blocked stream=%p\n",stream );
-        stream->setWakeup( 
-            [=]() {
-                m_dbg.verbosePrefix(prefix(),CALL_INFO_LAMBDA,"processStdPkt",2,NIC_DBG_RECV_CTX,"stream is unblocked stream=%p\n",stream );
-                stream->processPkt( ev );
-                m_rm.checkNetworkForData(); 
-            }
-        );
-        return true;
-    } else {
-        stream->processPkt(ev);
-        return false;
-    } 
+        if ( stream->isBlocked() ) {
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_CTX,"stream is blocked stream=%p\n",stream );
+            stream->setWakeup( 
+                [=]() {
+                    m_dbg.verbosePrefix(prefix(),CALL_INFO_LAMBDA,"processStdPkt",2,NIC_DBG_RECV_CTX,"stream is unblocked stream=%p\n",stream );
+                    stream->processPkt( ev );
+                    m_rm.checkNetworkForData(); 
+                }
+            );
+            return true;
+        } else {
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_CTX,"\n" );
+            stream->processPkt(ev);
+            return false;
+        } 
+    }
 }
 
 Nic::RecvMachine::StreamBase* Nic::RecvMachine::Ctx::newStream( FireflyNetworkEvent* ev )
