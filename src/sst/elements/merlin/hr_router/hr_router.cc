@@ -125,6 +125,7 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
     vcs_initialized(false),
     output(Simulation::getSimulation()->getSimulationOutput())
 {
+   
     // Get the options for the router
     id = params.find<int>("id",-1);
     if ( id == -1 ) {
@@ -136,27 +137,6 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
         merlin_abort.fatal(CALL_INFO, -1, "hr_router requires num_ports to be specified\n");
     }
 
-    // Get the number of VNs
-    num_vns = params.find<int>("num_vns",-1);
-    // If num VNs is specified, we also need to check to see if remap is on
-    vn_remap_shm = params.find<std::string>("vn_remap_shm","");
-    if ( vn_remap_shm != "" ) {
-        // If I'm id 0, create the shared region
-        std::vector<int> vec;
-        params.find_array<int>("vn_remap",vec);
-        if ( vec.size() == 0 ) {
-            merlin_abort.fatal(CALL_INFO, 1, "if vn_remap_shm is specified, a map must be supplied using vn_remap\n");
-        }
-        vn_remap_shm_size = vec.size() * sizeof(int);
-        if ( id == 0 ) {
-            SharedRegion* sr = Simulation::getSharedRegionManager()->
-                getGlobalSharedRegion(vn_remap_shm, vn_remap_shm_size, new SharedRegionMerger());
-            for ( int i = 0; i < vec.size(); ++i ) {
-                sr->modifyArray(i,vec[i]);
-            }
-            sr->publish();
-        }
-    }
 
     // Get the topology
     topo = loadUserSubComponent<SST::Merlin::Topology>
@@ -175,6 +155,31 @@ DISABLE_WARN_DEPRECATED_DECLARATION
 REENABLE_WARNING
         if ( !topo ) {
             merlin_abort.fatal(CALL_INFO, -1, "Unable to find topology '%s'\n", topology.c_str());
+        }
+    }
+
+    // Get the number of VNs
+    num_vns = params.find<int>("num_vns",-1);
+    if ( num_vns != -1 ) {
+        num_vcs = topo->computeNumVCs(num_vns);
+    }
+    // If num VNs is specified, we also need to check to see if remap is on
+    vn_remap_shm = params.find<std::string>("vn_remap_shm","");
+    if ( vn_remap_shm != "" ) {
+        // If I'm id 0, create the shared region
+        std::vector<int> vec;
+        params.find_array<int>("vn_remap",vec);
+        if ( vec.size() == 0 ) {
+            merlin_abort.fatal(CALL_INFO, 1, "if vn_remap_shm is specified, a map must be supplied using vn_remap\n");
+        }
+        vn_remap_shm_size = vec.size() * sizeof(int);
+        if ( id == 0 ) {
+            SharedRegion* sr = Simulation::getSharedRegionManager()->
+                getGlobalSharedRegion(vn_remap_shm, vn_remap_shm_size, new SharedRegionMerger());
+            for ( int i = 0; i < vec.size(); ++i ) {
+                sr->modifyArray(i,vec[i]);
+            }
+            sr->publish();
         }
     }
 
@@ -687,7 +692,6 @@ hr_router::init_vcs()
     //     in_buf_sizes[i] = input_buf_size;
     //     out_buf_sizes[i] = output_buf_size;
     // }
-
     vc_heads = new internal_router_event*[num_ports*num_vcs];
     xbar_in_credits = new int[num_ports*num_vcs];
     output_queue_lengths = new int[num_ports*num_vcs];
