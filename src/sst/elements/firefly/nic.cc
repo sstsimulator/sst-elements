@@ -221,7 +221,8 @@ Nic::Nic(ComponentId_t id, Params &params) :
 		tmp << m_unitPool->getTotal();
 		smmParams.insert( "numNicUnits", tmp.str(), true );
 
-        m_memoryModel = loadAnonymousSubComponent<MemoryModel>( "firefly.SimpleMemory","", 0, ComponentInfo::SHARE_NONE, smmParams );
+        m_memoryModel = loadAnonymousSubComponent<MemoryModel>( "firefly.SimpleMemory","", 0,
+                       ComponentInfo::SHARE_STATS|ComponentInfo::INSERT_STATS, smmParams );
 
 		if ( m_detailedInterface ) {
 			static_cast<SimpleMemoryModel*>(m_memoryModel)->setDetailedInterface( m_detailedInterface );
