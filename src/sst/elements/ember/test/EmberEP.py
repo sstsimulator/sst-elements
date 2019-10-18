@@ -125,6 +125,10 @@ class EmberEP( EndPoint ):
                     os.addParam( key,value)
 
             virtNic = os.setSubComponent( "virtNic", "firefly.VirtNic" )
+            for key, value in self.driverParams.items():
+                if key.startswith(self.driverParams['os.name']+'.virtNic'):
+                    key = key[key.rfind('.')+1:]
+                    virtNic.addParam( key,value)
 
             proto = os.setSubComponent( "proto", "firefly.CtrlMsgProto" )
             process = proto.setSubComponent( "process", "firefly.ctrlMsg" )

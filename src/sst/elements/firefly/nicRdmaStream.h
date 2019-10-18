@@ -16,6 +16,10 @@
 class RdmaStream : public StreamBase {
   public:
     RdmaStream( Output&, Ctx*, int srcNode, int srcPid, int destPid, FireflyNetworkEvent* ); 
+    bool isBlocked() {
+        return  StreamBase::isBlocked() || m_blocked;
+    }
   protected:
     void processPktHdr( FireflyNetworkEvent* ev );
+	bool m_blocked;
 };
