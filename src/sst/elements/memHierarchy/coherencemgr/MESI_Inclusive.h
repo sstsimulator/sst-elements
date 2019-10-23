@@ -20,6 +20,8 @@
 #include <array>
 
 #include "sst/elements/memHierarchy/coherencemgr/coherenceController.h"
+#include "sst/elements/memHierarchy/cacheTempl.h"
+#include "sst/elements/memHierarchy/lineTypes.h"
 
 
 namespace SST { namespace MemHierarchy {
@@ -259,6 +261,10 @@ public:
         {"prefetch_coherence_miss", "Prefetched block incurred a coherence miss (upgrade) on its first access", "count", 2},
         {"prefetch_redundant",      "Prefetch issued for a block that was already in cache", "count", 2},
         {"default_stat",            "Default statistic used for unexpected events/states/etc. Should be 0, if not, check for missing statistic registerations.", "none", 7})
+    
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+            {"replacement", "Replacement policies, slot 0 is for cache, slot 1 is for directory (if it exists)", "SST::MemHierarchy::ReplacementPolicy"},
+            {"hash", "Hash function for mapping addresses to cache lines", "SST::MemHierarchy::HashFunction"} )
 
 /* Class definition */
     /** Constructor for MESIInclusive. Note that MESIInclusive handles both MESI & MSI protocols */
@@ -268,23 +274,28 @@ public:
         debug->debug(_INFO_,"--------------------------- Initializing [MESI Controller] ... \n\n");
         
         protocol_ = params.find<bool>("protocol", 1);
+        if (protocol_)
+            protocolState_ = E;
+        else
+            protocolState_ = S;
+
+        // Cache Array
+        uint64_t lines = params.find<uint64_t>("lines");
+        uint64_t assoc = params.find<uint64_t>("associativity");
+
+        ReplacementPolicy * rmgr = createReplacementPolicy(lines, assoc, params, false);
+        HashFunction * ht = createHashFunction(params);
+        cacheArray_ = new CacheArray<SharedCacheLine>(debug, lines, assoc, lineSize_, rmgr, ht);
+        cacheArray_->setBanked(params.find<uint64_t>("banks", 0));
       
         /* Statistics */
-        Statistic<uint64_t>* defStat = registerStatistic<uint64_t>("default_stat");
-        for (int i = 0; i < (int)Command::LAST_CMD; i++) {
-            stat_eventSent[i] = defStat;
-            for (int j = 0; j < LAST_STATE; j++) {
-                stat_eventState[i][j] = defStat;
-            }
-        }
-
-        stat_evict_S =      registerStatistic<uint64_t>("evict_S");
-        stat_evict_SM =     registerStatistic<uint64_t>("evict_SM");
-        stat_evict_SInv =   registerStatistic<uint64_t>("evict_SInv");
-        stat_evict_MInv =   registerStatistic<uint64_t>("evict_MInv");
-        stat_evict_SMInv =  registerStatistic<uint64_t>("evict_SMInv");
-        stat_evict_MInvX =  registerStatistic<uint64_t>("evict_MInvX");
-        stat_evict_SI =     registerStatistic<uint64_t>("evict_SI");
+        stat_evict[S] =         registerStatistic<uint64_t>("evict_S");
+        stat_evict[SM] =        registerStatistic<uint64_t>("evict_SM");
+        stat_evict[S_Inv] =     registerStatistic<uint64_t>("evict_SInv");
+        stat_evict[M_Inv] =     registerStatistic<uint64_t>("evict_MInv");
+        stat_evict[SM_Inv] =    registerStatistic<uint64_t>("evict_SMInv");
+        stat_evict[M_InvX] =    registerStatistic<uint64_t>("evict_MInvX");
+        stat_evict[SI] =        registerStatistic<uint64_t>("evict_SI");
         stat_eventState[(int)Command::GetS][I] =    registerStatistic<uint64_t>("stateEvent_GetS_I");
         stat_eventState[(int)Command::GetS][S] =    registerStatistic<uint64_t>("stateEvent_GetS_S");
         stat_eventState[(int)Command::GetS][M] =    registerStatistic<uint64_t>("stateEvent_GetS_M");
@@ -455,8 +466,8 @@ public:
         
         /* MESI-specific statistics (as opposed to MSI) */
         if (protocol_) {
-            stat_evict_EInv =   registerStatistic<uint64_t>("evict_EInv");
-            stat_evict_EInvX =  registerStatistic<uint64_t>("evict_EInvX");
+            stat_evict[E_Inv] =     registerStatistic<uint64_t>("evict_EInv");
+            stat_evict[E_InvX] =    registerStatistic<uint64_t>("evict_EInvX");
             stat_eventState[(int)Command::GetS][E] =        registerStatistic<uint64_t>("stateEvent_GetS_E");
             stat_eventState[(int)Command::GetX][E] =        registerStatistic<uint64_t>("stateEvent_GetX_E");
             stat_eventState[(int)Command::GetSX][E] =       registerStatistic<uint64_t>("stateEvent_GetSX_E");
@@ -506,161 +517,132 @@ public:
     }
     ~MESIInclusive() {}
     
-/*----------------------------------------------------------------------------------------------------------------------
- *  Public functions form external interface to the coherence controller
- *---------------------------------------------------------------------------------------------------------------------*/  
+    /** Event handlers **/
+    virtual bool handleGetS(MemEvent * event, bool inMSHR);
+    virtual bool handleGetX(MemEvent * event, bool inMSHR);
+    virtual bool handleGetSX(MemEvent * event, bool inMSHR);
+    virtual bool handleFlushLine(MemEvent * event, bool inMSHR);
+    virtual bool handleFlushLineInv(MemEvent * event, bool inMSHR);
+    virtual bool handlePutS(MemEvent * event, bool inMSHR);
+    virtual bool handlePutX(MemEvent * event, bool inMSHR);
+    virtual bool handlePutE(MemEvent * event, bool inMSHR);
+    virtual bool handlePutM(MemEvent * event, bool inMSHR);
+    virtual bool handleInv(MemEvent * event, bool inMSHR);
+    virtual bool handleForceInv(MemEvent * event, bool inMSHR);
+    virtual bool handleFetch(MemEvent * event, bool inMSHR);
+    virtual bool handleFetchInv(MemEvent * event, bool inMSHR);
+    virtual bool handleFetchInvX(MemEvent * event, bool inMSHR);
+    virtual bool handleGetSResp(MemEvent * event, bool inMSHR);
+    virtual bool handleGetXResp(MemEvent * event, bool inMSHR);
+    virtual bool handleFlushLineResp(MemEvent * event, bool inMSHR);
+    virtual bool handleFetchResp(MemEvent * event, bool inMSHR);
+    virtual bool handleFetchXResp(MemEvent * event, bool inMSHR);
+    virtual bool handleAckInv(MemEvent * event, bool inMSHR);
+    virtual bool handleAckPut(MemEvent * event, bool inMSHR);
+    virtual bool handleNACK(MemEvent * event, bool inMSHR);
+    virtual bool handleNULLCMD(MemEvent * event, bool inMSHR);
 
-/* Event handlers */
-    /** Send cacheline data to the lower level caches */
-    CacheAction handleEviction(CacheLine* wbCacheLine, string origRqstr, bool ignoredParam=false);
+    /** Cache interface **/
+    virtual Addr getBank(Addr addr) { cacheArray_->getBank(addr); }
+    virtual void setSliceAware(uint64_t size, uint64_t step) { cacheArray_->setSliceAware(size, step); }
 
-    /** Process cache request:  GetX, GetS, GetSX */
-    CacheAction handleRequest(MemEvent* event, bool replay);
-    
-    /** Process replacement request - PutS, PutE, PutM */
-    CacheAction handleReplacement(MemEvent* event, bool replay);
-    CacheAction handleFlush(MemEvent* event, CacheLine* cacheLine, MemEvent* reqEvent, bool replay);
-    
-    /** Process invalidation requests - Inv, FetchInv, FetchInvX */
-    CacheAction handleInvalidationRequest(MemEvent *event, bool inMSHR);
+    /** Initialization **/
+    MemEventInitCoherence * getInitCoherenceEvent();
 
-    /** Process responses - GetSResp, GetXResp, FetchResp */
-    CacheAction handleCacheResponse(MemEvent* event, bool inMSHR);
-    CacheAction handleFetchResponse(MemEvent* event, bool inMSHR);
-    
-    bool handleNACK(MemEvent* event, bool inMSHR);
+    std::set<Command> getValidReceiveEvents() {
+        std::set<Command> cmds = { Command::GetS,
+            Command::GetX,
+            Command::GetSX,
+            Command::FlushLine,
+            Command::FlushLineInv,
+            Command::PutS,
+            Command::PutE,
+            Command::PutX,
+            Command::PutM,
+            Command::Inv,
+            Command::ForceInv,
+            Command::Fetch,
+            Command::FetchInv,
+            Command::FetchInvX,
+            Command::NULLCMD,
+            Command::GetSResp,
+            Command::GetXResp,
+            Command::FlushLineResp,
+            Command::FetchResp,
+            Command::FetchXResp,
+            Command::AckInv,
+            Command::AckPut,
+            Command::NACK };
+        return cmds;
+    }
 
-/* Message send */
-    void forwardMessageUp(MemEvent* event);
-    
+    void printStatus(Output &out);
+
+private:
+
+    MemEventStatus processCacheMiss(MemEvent * event, SharedCacheLine * line, bool inMSHR);
+    SharedCacheLine * allocateLine(MemEvent * event, SharedCacheLine * line);
+    bool handleEviction(Addr addr, SharedCacheLine *& line);
+    void cleanUpAfterRequest(MemEvent * event, bool inMSHR);
+    void cleanUpAfterResponse(MemEvent * event, bool inMSHR);
+    void cleanUpEvent(MemEvent * event, bool inMSHR);
+    void retry(Addr addr);
+
+    /** Invalidation **/
+    bool invalidateExceptRequestor(MemEvent * event, SharedCacheLine * line, bool inMSHR);
+    bool invalidateAll(MemEvent * event, SharedCacheLine * line, bool inMSHR, Command cmd = Command::NULLCMD);
+    uint64_t invalidateSharer(std::string shr, MemEvent * event, SharedCacheLine * line, bool inMSHR, Command cmd = Command::Inv);
+    bool invalidateOwner(MemEvent * event, SharedCacheLine * line, bool inMSHR, Command cmd = Command::FetchInv);
+
+    /** Forward flush line request, with or without data */
+    void forwardFlush(MemEvent * event, SharedCacheLine * line, bool data);
+
+    /** Send response up (towards processor) */
+    SimTime_t sendResponseUp(MemEvent * event, vector<uint8_t>* data, bool inMSHR, uint64_t time, Command cmd = Command::NULLCMD, bool success = false);
+
+    /** Send response down (towards memory) */
+    void sendResponseDown(MemEvent * event, SharedCacheLine * line, bool data, bool evict);
+
+    /** Send writeback */
+    void sendWriteback(Command cmd, SharedCacheLine * line, bool dirty);
+
+    /** Send AckPut */
+    void sendAckPut(MemEvent * event);
+
+    /** Downgrade request */
+    void downgradeOwner(MemEvent * event, SharedCacheLine * line, bool inMSHR);
+
+    /** Evict a block */
+    State doEviction(MemEvent * event, SharedCacheLine * line, State state);
+
     /** Call through to coherenceController with statistic recording */
     void addToOutgoingQueue(Response& resp);
     void addToOutgoingQueueUp(Response& resp);
 
-/* Miscellaneous */
-    /** Determine in advance if a request will miss (and what kind of miss). Used for stats */
-    bool isCacheHit(MemEvent* event);
+/* Miscellaneous functions */
+    /* Record prefetch statistics. Line cannot be null. */
+    void recordPrefetchResult(SharedCacheLine * line, Statistic<uint64_t> * stat);
     
-/* Temporary */
-    void setCacheArray(CacheArray* arrayptr) { cacheArray_ = arrayptr; }
-    
+    /* Record latency */
+    void recordLatency(Command cmd, int type, uint64_t latency);
+
+    void printData(vector<uint8_t> * data, bool set);
     void printLine(Addr addr);
 
-private:
-/* Private data members */
-    bool        protocol_;  // True for MESI, false for MSI
-    CacheArray* cacheArray_;
+/* Variables */
+    CacheArray<SharedCacheLine> * cacheArray_;
+    State protocolState_;       // State to transition to on exclusive response to read/shared request
+    bool protocol_;             // True for MESI, false for MSI
 
-/* Statistics */
-    Statistic<uint64_t>* stat_evict_S;
-    Statistic<uint64_t>* stat_evict_SM;
-    Statistic<uint64_t>* stat_evict_SInv;
-    Statistic<uint64_t>* stat_evict_EInv;
-    Statistic<uint64_t>* stat_evict_MInv;
-    Statistic<uint64_t>* stat_evict_SMInv;
-    Statistic<uint64_t>* stat_evict_EInvX;
-    Statistic<uint64_t>* stat_evict_MInvX;
-    Statistic<uint64_t>* stat_evict_SI;
-    Statistic<uint64_t>* stat_eventSent[(int)Command::LAST_CMD];
-    std::array<std::array<Statistic<uint64_t>*, LAST_STATE>, (int)Command::LAST_CMD> stat_eventState;
-    Statistic<uint64_t>* stat_latencyGetS[3];
+    std::map<Addr, std::map<std::string, MemEvent::id_type> > responses;
+
+    /* Statistics */
+    Statistic<uint64_t>* stat_latencyGetS[3]; // HIT, MISS, INV
     Statistic<uint64_t>* stat_latencyGetX[4];
     Statistic<uint64_t>* stat_latencyGetSX[4];
     Statistic<uint64_t>* stat_latencyFlushLine;
     Statistic<uint64_t>* stat_latencyFlushLineInv;
 
-/* Private event handlers */
-    /** Handle GetX request. Request upgrade if needed */
-    CacheAction handleGetXRequest(MemEvent* event, CacheLine* cacheLine, bool replay);
-
-    /** Handle GetS request. Request block if needed */
-    CacheAction handleGetSRequest(MemEvent* event, CacheLine* cacheLine, bool replay);
-    
-    /** Handle FlushLine request. Forward if needed */
-    CacheAction handleFlushLineRequest(MemEvent * event, CacheLine * cacheLine, MemEvent * reqEvent, bool replay);
-
-    /** Handle FlushLineInv request. Forward if needed */
-    CacheAction handleFlushLineInvRequest(MemEvent * event, CacheLine * cacheLine, MemEvent * reqEvent, bool replay);
-
-    /** Handle PutM request. Write data to cache line.  Update E->M state if necessary */
-    CacheAction handlePutMRequest(MemEvent* event, CacheLine* cacheLine, MemEvent * reqEvent);
-    
-    /** Handle PutS requesst. Update sharer state */ 
-    CacheAction handlePutSRequest(MemEvent* event, CacheLine* cacheLine, MemEvent * reqEvent);
-    
-    /** Handle Inv */
-    CacheAction handleInv(MemEvent * event, CacheLine * cacheLine, bool replay);
-    
-    /** Handle ForceInv */
-    CacheAction handleForceInv(MemEvent * event, CacheLine * cacheLine, bool replay);
-    
-    /** Handle Fetch */
-    CacheAction handleFetch(MemEvent * event, CacheLine * cacheLine, bool replay);
-    
-    /** Handle FetchInv */
-    CacheAction handleFetchInv(MemEvent * event, CacheLine * cacheLine, MemEvent * collisionEvent, bool replay);
-    
-    /** Handle FetchInvX */
-    CacheAction handleFetchInvX(MemEvent * event, CacheLine * cacheLine, MemEvent * collisionEvent, bool replay);
-
-    /** Process GetSResp/GetXResp.  Update the cache line */
-    CacheAction handleDataResponse(MemEvent* responseEvent, CacheLine * cacheLine, MemEvent * reqEvent);
-    
-    /** Handle FetchResp */
-    CacheAction handleFetchResp(MemEvent * responseEvent, CacheLine* cacheLine, MemEvent * reqEvent);
-    
-    /** Handle Ack */
-    CacheAction handleAckInv(MemEvent * responseEvent, CacheLine* cacheLine, MemEvent * reqEvent);
-    
-/* Private methods for managing data structures */
-    bool allocateLine(Addr addr, MemEvent* event);
-
-/* Private methods for sending events */
-    /** Send response to lower level cache */
-    void sendResponseDown(MemEvent* event, CacheLine* cacheLine, bool dirty, bool replay);
-    
-    /** Send response to lower level cache, address is not cached */
-    void sendResponseDownFromMSHR(MemEvent* response, MemEvent * request, bool dirty);
-
-    /** Send writeback request to lower level caches */
-    void sendWriteback(Command cmd, CacheLine* cacheLine, bool dirty, string origRqstr);
-    
-    /** Send AckPut to upper level cache */
-    void sendWritebackAck(MemEvent * event);
-
-    /** Send AckInv to lower level cache */
-    void sendAckInv(MemEvent * event);
-
-    /** Fetch data from owner and invalidate their copy of the line */
-    void sendFetchInv(CacheLine * cacheLine, string rqstr, bool replay);
-    
-    /** Fetch data from owner and downgrade owner to sharer */
-    void sendFetchInvX(CacheLine * cacheLine, string rqstr, bool replay);
-
-    /** Force invalidation of line from owner, do not request data */
-    void sendForceInv(CacheLine * cacheLine, string rqstr, bool replay);
-    /** Invalidate all sharers of a block. Used for invalidations and evictions */
-    void invalidateAllSharers(CacheLine * cacheLine, string rqstr, bool replay);
-    
-    /** Invalidate all sharers of a block except the requestor (rqstr). Used for upgrade requests. */
-    bool invalidateSharersExceptRequestor(CacheLine * cacheLine, string rqstr, string origRqstr, bool replay);
-    
-    /** Send a flush response */
-    void sendFlushResponse(MemEvent * reqEent, bool success);
-    
-    /** Forward a FlushLine request with or without data */
-    void forwardFlushLine(Addr baseAddr, string origRqstr, CacheLine * cacheLine, Command cmd);
-
-/* Helper methods */
-   
-    void printData(vector<uint8_t> * data, bool set);
-
-/* Statistics */
-    void recordStateEventCount(Command cmd, State state);
-    void recordEvictionState(State state);
-    void recordEventSentUp(Command cmd);
-    void recordEventSentDown(Command cmd);
-    void recordLatency(Command cmd, int type, uint64_t latency);
 };
 
 

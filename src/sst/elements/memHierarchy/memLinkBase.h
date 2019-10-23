@@ -160,11 +160,11 @@ private:
         uint64_t addrStart = params.find<uint64_t>("addr_range_start", 0, found);
         foundany = found;
         uint64_t addrEnd = params.find<uint64_t>("addr_range_end", (uint64_t) - 1, found);
-        foundany != found;
+        foundany |= found;
         string ilSize = params.find<std::string>("interleave_size", "0B", found);
-        foundany != found;
+        foundany |= found;
         string ilStep = params.find<std::string>("interleave_step", "0B", found);
-        foundany != found;
+        foundany |= found;
         if (foundany) {
             dbg.output("%s, Warning: Region parameters given to link managers (addr_range_start/end, interleave_size/step) will be overwritten if the component sets them; specify region via component to eliminate this message\n",
                     getName().c_str());

@@ -26,6 +26,42 @@ using namespace std;
 namespace SST {
 namespace MemHierarchy {
 
+/* 
+ * Generic/extendable class for passing information between a cache line & a replacement policy 
+ * To date the coherence policies in memHierarchy only use cache line state and sometimes owned/shared information
+ * but other components are able to extend this to pass arbitrary information as needed
+ */
+class ReplacementInfo {
+    public:
+        ReplacementInfo(unsigned int i, State s) : index(i), state(s) { }
+        virtual ~ReplacementInfo() { }
+
+        unsigned int getIndex() { return index; }
+        void setIndex(unsigned int i) { index = i; }
+
+        State getState() { return state; }
+        void setState(State s) { state = s; }
+
+    protected:
+        unsigned int index;
+        State state;
+};
+
+class CoherenceReplacementInfo : public ReplacementInfo {
+    public:
+        CoherenceReplacementInfo(unsigned int i, State s, bool sh, bool o) : shared(sh), owned(o), ReplacementInfo(i, s) { }
+        virtual ~CoherenceReplacementInfo() { }
+
+        bool getOwned() { return owned; }
+        bool getShared() { return shared; }
+        void setOwned(bool o) { owned = o; }
+        void setShared(bool s) { shared = s; }
+    protected:
+        bool owned;
+        bool shared;
+};
+
+
 class ReplacementPolicy : public SubComponent{
     public:
         SST_ELI_REGISTER_SUBCOMPONENT_API(SST::MemHierarchy::ReplacementPolicy, uint64_t, uint64_t)
@@ -36,14 +72,17 @@ class ReplacementPolicy : public SubComponent{
         }
         ReplacementPolicy(ComponentId_t id, Params& params, uint64_t lines, uint64_t associativity) : SubComponent(id) { }
         virtual ~ReplacementPolicy(){}
+
+        /* Since we don't dynamic cast ReplacementInfo, do a check here to make sure the type provided by the cache line & the type the replacement policy expects are compatible */
+        virtual bool checkCompatibility(ReplacementInfo * rInfo) = 0;
         
         // Update state
-        virtual void update(uint64_t id) = 0;
+        virtual void update(uint64_t id, ReplacementInfo * rInfo) = 0;
         virtual void replaced(uint64_t id) = 0;
         
         // Get replacement candidates
         virtual uint64_t getBestCandidate() = 0;
-        virtual uint64_t findBestCandidate(uint64_t setBegin, State * state, unsigned int * sharers, bool * owned, bool sharersAware) = 0;
+        virtual uint64_t findBestCandidate(std::vector<ReplacementInfo*> &rInfo) = 0;
 };
 
 /* ------------------------------------------------------------------------------------------
@@ -58,32 +97,37 @@ public:
 
     LRU(ComponentId_t id, Params& params, uint64_t lines, uint64_t associativity) : ReplacementPolicy(id, params, lines, associativity), timestamp(1), bestCandidate(0) {
         ways = associativity;
-        
         array.resize(lines, 0);
     }
 
     virtual ~LRU() {}
-    
+
+    /* Too expensive to constantly dynamic_cast. Check once during construction instead. */
+    bool checkCompatibility(ReplacementInfo * rInfo) { return true; } // No cast
+
     /* Record recently used line */
-    void update(uint64_t id) { array[id] = timestamp++; }
+    void update(uint64_t id, ReplacementInfo * rInfo) { array[id] = timestamp++; }
 
     /* Record replaced line */
     void replaced(uint64_t id) { array[id] = 0; }
-    
-    uint64_t findBestCandidate(uint64_t setBegin, State * state, unsigned int * sharers, bool * owned, bool sharersAware) {
-        uint64_t setEnd = setBegin + ways;
-        bestCandidate = setBegin;
-        Rank bestRank = {array[setBegin], (sharersAware)? sharers[0] : 0, (sharersAware)? owned[0] : false, state[0]};
-        if (state[0] == I) 
+   
+    /** Lines are selected for replacement according to the following criteria (and in this order):
+     * 1. If invalid (alwasy replace these)
+     * 2. If owned, try to keep
+     * 3. If shared, try to keep
+     * 4. If timestamp is the oldest (smallest), then evict
+     */
+    uint64_t findBestCandidate(std::vector<ReplacementInfo*> &rInfo) {
+        bestCandidate = rInfo[0]->getIndex();
+        Rank bestRank = {array[rInfo[0]->getIndex()], rInfo[0]->getState() };
+        if (rInfo[0]->getState() == I) 
             return bestCandidate;
-        setBegin++;
-        int i = 1;
-        for (uint64_t id = setBegin; id < setEnd; id++) {
-            Rank candRank = {array[id], (sharersAware)? sharers[i] : 0, (sharersAware)? owned[i] : false, state[i]};
+        for (int i = 1; i < rInfo.size(); i++) {
+            Rank candRank = {array[rInfo[i]->getIndex()], rInfo[i]->getState() };
             if (candRank.lessThan(bestRank)) {
                 bestRank = candRank;
-                bestCandidate = id;
-                if (state[i] == I) 
+                bestCandidate = rInfo[i]->getIndex();
+                if (rInfo[i]->getState() == I)
                     return bestCandidate;
             }
             i++;
@@ -101,24 +145,107 @@ private:
     std::vector<uint64_t> array;
 
     struct Rank {
-        uint64_t        timestamp;
-        unsigned int    sharers;
-        bool            owned;
-        State           state;
+        uint64_t    timestamp;
+        State       state;
 
         void reset() {
             state       = I;
-            sharers     = 0;
+            timestamp   = 0;
+        }
+
+        inline bool lessThan(const Rank& other) const {
+            if(state == I)  return true;
+            else            return timestamp < other.timestamp;
+        }
+    };
+};
+
+
+class LRUOpt : public ReplacementPolicy {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(LRUOpt, "memHierarchy", "replacement.lru-opt", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "least-recently-used replacement policy with consideration for coherence state", SST::MemHierarchy::ReplacementPolicy);
+    
+    LRUOpt(Component* comp, Params& params) : ReplacementPolicy(comp, params) { }
+
+    LRUOpt(ComponentId_t id, Params& params, uint64_t lines, uint64_t associativity) : ReplacementPolicy(id, params, lines, associativity), timestamp(1), bestCandidate(0) {
+        ways = associativity;
+        array.resize(lines, 0);
+    }
+
+    virtual ~LRUOpt() {}
+
+    /* Too expensive to constantly dynamic_cast. Check once during construction instead. */
+    bool checkCompatibility(ReplacementInfo * rInfo) {
+        if (dynamic_cast<CoherenceReplacementInfo*>(rInfo))
+            return true;
+        return false;
+    }
+    
+    /* Record recently used line */
+    void update(uint64_t id, ReplacementInfo * rInfo) { array[id] = timestamp++; }
+
+    /* Record replaced line */
+    void replaced(uint64_t id) { array[id] = 0; }
+   
+    /** Lines are selected for replacement according to the following criteria (and in this order):
+     * 1. If invalid (alwasy replace these)
+     * 2. If owned, try to keep
+     * 3. If shared, try to keep
+     * 4. If timestamp is the oldest (smallest), then evict
+     */
+    uint64_t findBestCandidate(std::vector<ReplacementInfo*> &rInfo) {
+        bestCandidate = rInfo[0]->getIndex();
+        Rank bestRank = {array[rInfo[0]->getIndex()], 
+            static_cast<CoherenceReplacementInfo*>(rInfo[0])->getShared(), 
+            static_cast<CoherenceReplacementInfo*>(rInfo[0])->getOwned(),
+            rInfo[0]->getState() };
+        if (rInfo[0]->getState() == I) 
+            return bestCandidate;
+        for (int i = 1; i < rInfo.size(); i++) {
+            Rank candRank = {array[rInfo[i]->getIndex()], 
+                static_cast<CoherenceReplacementInfo*>(rInfo[i])->getShared(), 
+                static_cast<CoherenceReplacementInfo*>(rInfo[i])->getOwned(), 
+                rInfo[i]->getState() };
+
+            if (candRank.lessThan(bestRank)) {
+                bestRank = candRank;
+                bestCandidate = rInfo[i]->getIndex();
+                if (rInfo[i]->getState() == I)
+                    return bestCandidate;
+            }
+            i++;
+        }
+        return bestCandidate;
+    }
+
+    uint64_t getBestCandidate() { return bestCandidate; }
+
+private:
+    uint64_t timestamp;
+    uint64_t bestCandidate;
+    uint64_t ways;
+    
+    std::vector<uint64_t> array;
+
+    struct Rank {
+        uint64_t    timestamp;
+        bool        shared;
+        bool        owned;
+        State       state;
+
+        void reset() {
+            state       = I;
+            shared      = false;
             timestamp   = 0;
             owned       = false;
         }
 
         inline bool lessThan(const Rank& other) const {
             if(state == I) return true;
-            //if(!CacheArray::CacheLine::inTransition(state) && CacheArray::CacheLine::inTransition(other.state)) return true;
             else{
-                if (sharers == 0 && other.sharers > 0) return true;
-                else if (sharers > 0 && other.sharers == 0) return false;
+                if (!shared && other.shared) return true;
+                else if (shared && !other.shared) return false;
                 else if (!owned && other.owned) return true;
                 else if (owned && !other.owned) return false;
                 else return timestamp < other.timestamp;
@@ -145,29 +272,31 @@ public:
 
     virtual ~LFU() { }
         
+    /* Too expensive to constantly dynamic_cast. Check once during construction instead. */
+    bool checkCompatibility(ReplacementInfo * rInfo) { return true; } // No cast
+    
     // timestamp = (total accesses * timestamp + timestamp) / (accesses + 1)
     // timestamp increments by 1000 every time to make sure there's sufficient space between timestamps
-    void update(uint64_t id) {
+    void update(uint64_t id, ReplacementInfo * rInfo) {
         array[id].ts = (array[id].acc*array[id].ts + timestamp)/(array[id].acc + 1);
         array[id].acc++;
         timestamp += 1000;
     }
 
-    uint64_t findBestCandidate(uint64_t setBegin, State * state, unsigned int * sharers, bool * owned, bool sharersAware) {
-        uint64_t setEnd = setBegin + ways;
-        bestCandidate = setBegin;
-        Rank bestRank = {array[setBegin], (sharersAware)? sharers[0] : 0, (sharersAware)? owned[0] : false, state[0] };
-        if (state[0] == I) 
+    uint64_t findBestCandidate(vector<ReplacementInfo*> &rInfo) {
+        bestCandidate = rInfo[0]->getIndex();
+        Rank bestRank = {array[rInfo[0]->getIndex()], rInfo[0]->getState() };
+        
+        if (rInfo[0]->getState() == I) 
             return bestCandidate; 
         
-        setBegin++;
-        int i = 1;
-        for (uint64_t id = setBegin; id < setEnd; id++) {
-            Rank candRank = {array[id], (sharersAware)? sharers[i] : 0, (sharersAware)? owned[i] : false, state[i]};
+        for (int i = 1; i < rInfo.size(); i++) {
+            Rank candRank = {array[rInfo[i]->getIndex()], rInfo[i]->getState() };
+            
             if (candRank.lessThan(bestRank, timestamp)) {
-                   bestRank = candRank;
-                bestCandidate = id;
-                if (state[i] == I) 
+                bestRank = candRank;
+                bestCandidate = rInfo[i]->getIndex();
+                if (rInfo[i]->getState() == I) 
                     return bestCandidate;
             }
             i++;
@@ -193,23 +322,114 @@ private:
 
     struct Rank {
         LFUInfo lfuInfo;
-        unsigned int sharers;
+        State state;
+
+        void reset() {
+            state = I;
+            lfuInfo = (LFUInfo){0, 0};
+        }
+
+        inline bool lessThan(const Rank& other, const uint64_t curTs) const {
+            if(state == I) return true;
+            if (lfuInfo.acc == 0) return true;
+            if (other.lfuInfo.acc == 0) return false;
+            uint64_t ownInvFreq = (curTs - lfuInfo.ts)/lfuInfo.acc; //inverse frequency, lower is better
+            uint64_t otherInvFreq = (curTs - other.lfuInfo.ts)/other.lfuInfo.acc;
+            return ownInvFreq > otherInvFreq;
+            return false;
+        }
+    };
+};
+
+class LFUOpt : public ReplacementPolicy {
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(LFUOpt, "memHierarchy", "replacement.lfu-opt", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "least-frequently-used replacement policy, recently used accesses are more heavily weighted. Also considers coherence state in replacement decision", SST::MemHierarchy::ReplacementPolicy);
+    
+    LFUOpt(Component* comp, Params& params) : ReplacementPolicy(comp, params) { }
+
+    LFUOpt(ComponentId_t id, Params& params, uint64_t lines, uint64_t associativity) : ReplacementPolicy(id, params, lines, associativity), timestamp(1), bestCandidate(0) {
+        ways = associativity;
+
+        array.resize(lines, (LFUInfo){0,0});
+    }
+
+    virtual ~LFUOpt() { }
+        
+    /* Too expensive to constantly dynamic_cast. Check once during construction instead. */
+    bool checkCompatibility(ReplacementInfo * rInfo) {
+        if (dynamic_cast<CoherenceReplacementInfo*>(rInfo))
+            return true;
+        return false;
+    }
+    
+    // timestamp = (total accesses * timestamp + timestamp) / (accesses + 1)
+    // timestamp increments by 1000 every time to make sure there's sufficient space between timestamps
+    void update(uint64_t id, ReplacementInfo * rInfo) {
+        array[id].ts = (array[id].acc*array[id].ts + timestamp)/(array[id].acc + 1);
+        array[id].acc++;
+        timestamp += 1000;
+    }
+
+    uint64_t findBestCandidate(vector<ReplacementInfo*> &rInfo) {
+        bestCandidate = rInfo[0]->getIndex();
+        Rank bestRank = {array[rInfo[0]->getIndex()], 
+            static_cast<CoherenceReplacementInfo*>(rInfo[0])->getShared(), 
+            static_cast<CoherenceReplacementInfo*>(rInfo[0])->getOwned(), 
+            rInfo[0]->getState() };
+        if (rInfo[0]->getState() == I) 
+            return bestCandidate; 
+        
+        for (int i = 1; i < rInfo.size(); i++) {
+            Rank candRank = {array[rInfo[i]->getIndex()], 
+                static_cast<CoherenceReplacementInfo*>(rInfo[i])->getShared(),
+                static_cast<CoherenceReplacementInfo*>(rInfo[i])->getOwned(),
+                rInfo[i]->getState() };
+            if (candRank.lessThan(bestRank, timestamp)) {
+                bestRank = candRank;
+                bestCandidate = rInfo[i]->getIndex();
+                if (rInfo[i]->getState() == I) 
+                    return bestCandidate;
+            }
+            i++;
+        }
+        return bestCandidate;
+    }
+
+    uint64_t getBestCandidate() { return bestCandidate; }
+
+    void replaced(uint64_t id) { array[id].acc = 0; }
+private:
+        
+    struct LFUInfo {
+        uint64_t ts;    // timestamp, function of accesses with more recent ones being more heavily weighted
+        uint64_t acc;   // accesses
+    };
+
+    std::vector<LFUInfo> array;
+    uint64_t ways;
+        
+    uint64_t timestamp;
+    uint64_t bestCandidate;
+
+    struct Rank {
+        LFUInfo lfuInfo;
+        bool shared;
         bool owned;
         State state;
 
         void reset() {
             state = I;
-            sharers = 0;
+            shared = false;
             owned = false;
             lfuInfo = (LFUInfo){0, 0};
         }
 
         inline bool lessThan(const Rank& other, const uint64_t curTs) const {
             if(state == I) return true;
-            //else if (valid == other.valid) {
-            if (sharers == 0 && other.sharers > 0) {
+            if (!shared && other.shared) {
                 return true;
-            } else if (sharers > 0 && other.sharers == 0) {
+            } else if (shared && !other.shared) {
                 return false;
             } else if (!owned && other.owned) {
                 return true;
@@ -222,7 +442,6 @@ private:
                 uint64_t otherInvFreq = (curTs - other.lfuInfo.ts)/other.lfuInfo.acc;
                 return ownInvFreq > otherInvFreq;
             }
-            // }
             return false;
         }
     };
@@ -238,30 +457,22 @@ private:
     uint64_t                timestamp;
     int32_t                 bestCandidate;
     std::vector<uint64_t>   array;
-    uint64_t                  ways;
+    uint64_t                ways;
 
     struct Rank {
         uint64_t  timestamp;
-        uint      sharers;
-        bool      owned;
         State     state;
 
         void reset() {
             state       = I;
-            sharers     = 0;
-            owned       = false;
             timestamp   = 0;
         }
 
         inline bool biggerThan(const Rank& other) const {
-            if(state == I) return true;
-            else{
-                if (sharers == 0 && other.sharers > 0) return true;
-                else if (sharers > 0 && other.sharers == 0) return false;
-                else if (owned && !other.owned) return false;
-                else if (!owned && other.owned) return true;
-                else return timestamp > other.timestamp;
-            }
+            if (state == I) 
+                return true;
+            else
+                return timestamp > other.timestamp;
         }
     };
 
@@ -279,25 +490,113 @@ public:
 
     virtual ~MRU() { }
 
-    void update(uint64_t id) { array[id] = timestamp++; }
+    /* Too expensive to constantly dynamic_cast. Check once during construction instead. */
+    bool checkCompatibility(ReplacementInfo * rInfo) { return true; } // No cast
+    
+    void update(uint64_t id, ReplacementInfo * rInfo) { array[id] = timestamp++; }
     
     void replaced(uint64_t id) { array[id] = 0; }
 
-    uint64_t findBestCandidate(uint64_t setBegin, State * state, uint * sharers, bool * owned, bool sharersAware) {
-        uint64_t setEnd = setBegin + ways;
-        bestCandidate = setBegin;
-        Rank bestRank = {array[setBegin], (sharersAware)? sharers[0] : 0, (sharersAware)? owned[0] : false, state[0] };
-        if (state[0] == I) 
+    uint64_t findBestCandidate(vector<ReplacementInfo*> &rInfo) {
+        bestCandidate = rInfo[0]->getIndex();
+        Rank bestRank = {array[rInfo[0]->getIndex()], rInfo[0]->getState() };
+        if (rInfo[0]->getState() == I) 
             return bestCandidate; 
         
-        setBegin++;
-        int i = 1;
-        for (uint64_t id = setBegin; id < setEnd; id++) {
-            Rank candRank = {array[id], (sharersAware)? sharers[i]: 0, (sharersAware)? owned[i] : false, state[i]};
+        for (int i = 1; i < rInfo.size(); i++) {
+            Rank candRank = {array[rInfo[i]->getIndex()], rInfo[i]->getState() };
             if (candRank.biggerThan(bestRank)) {
                 bestRank = candRank;
-                bestCandidate = id;
-                if (state[i] == I) 
+                bestCandidate = rInfo[i]->getIndex();
+                if (rInfo[i]->getState() == I) 
+                    return bestCandidate;
+            }
+            i++;
+        }
+        return 
+            bestCandidate;
+    }
+
+    uint64_t getBestCandidate() { return bestCandidate;}
+
+};
+
+
+class MRUOpt : public ReplacementPolicy {
+private:
+    uint64_t                timestamp;
+    int32_t                 bestCandidate;
+    std::vector<uint64_t>   array;
+    uint64_t                ways;
+
+    struct Rank {
+        uint64_t  timestamp;
+        bool      shared;
+        bool      owned;
+        State     state;
+
+        void reset() {
+            state       = I;
+            shared      = false;
+            owned       = false;
+            timestamp   = 0;
+        }
+
+        inline bool biggerThan(const Rank& other) const {
+            if(state == I) return true;
+            else{
+                if (!shared && other.shared) return true;
+                else if (shared && !other.shared) return false;
+                else if (owned && !other.owned) return false;
+                else if (!owned && other.owned) return true;
+                else return timestamp > other.timestamp;
+            }
+        }
+    };
+
+public:
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(MRUOpt, "memHierarchy", "replacement.mru-opt", SST_ELI_ELEMENT_VERSION(1,0,0),
+            "most-recently-used replacement policy, with consideration for coherence state", SST::MemHierarchy::ReplacementPolicy);
+    
+    MRUOpt(Component* comp, Params& params) : ReplacementPolicy(comp, params) { }
+
+    MRUOpt(ComponentId_t id, Params& params, uint64_t lines, uint64_t associativity) : ReplacementPolicy(id, params, lines, associativity), timestamp(1), bestCandidate(0) {
+        ways = associativity;
+
+        array.resize(lines, 0);
+    }
+
+    virtual ~MRUOpt() { }
+
+    /* Too expensive to constantly dynamic_cast. Check once during construction instead. */
+    bool checkCompatibility(ReplacementInfo * rInfo) {
+        if (dynamic_cast<CoherenceReplacementInfo*>(rInfo))
+            return true;
+        return false;
+    }
+    
+    void update(uint64_t id, ReplacementInfo * rInfo) { array[id] = timestamp++; }
+    
+    void replaced(uint64_t id) { array[id] = 0; }
+
+    uint64_t findBestCandidate(vector<ReplacementInfo*> &rInfo) {
+        bestCandidate = rInfo[0]->getIndex();
+        Rank bestRank = {array[rInfo[0]->getIndex()], 
+            static_cast<CoherenceReplacementInfo*>(rInfo[0])->getShared(), 
+            static_cast<CoherenceReplacementInfo*>(rInfo[0])->getOwned(), 
+            rInfo[0]->getState() };
+        if (rInfo[0]->getState() == I) 
+            return bestCandidate; 
+        
+        for (int i = 1; i < rInfo.size(); i++) {
+            Rank candRank = {array[rInfo[i]->getIndex()], 
+                static_cast<CoherenceReplacementInfo*>(rInfo[i])->getShared(), 
+                static_cast<CoherenceReplacementInfo*>(rInfo[i])->getOwned(), 
+                rInfo[i]->getState() };
+            if (candRank.biggerThan(bestRank)) {
+                bestRank = candRank;
+                bestCandidate = rInfo[i]->getIndex();
+                if (rInfo[i]->getState() == I) 
                     return bestCandidate;
             }
             i++;
@@ -336,20 +635,26 @@ public:
     virtual ~Random() {
         delete gen;
     }
+    
+    /* Too expensive to constantly dynamic_cast. Check once during construction instead. */
+    bool checkCompatibility(ReplacementInfo * rInfo) {
+        return true; // No cast
+    }
+    
 
-    void update(uint64_t id){}
+    void update(uint64_t id, ReplacementInfo * rInfo){}
     void replaced(uint64_t id){}
        
     // Return an empty slot if one exists, otherwise return a random candidate
-    uint64_t findBestCandidate(uint64_t setBegin, State * state, unsigned int * sharers, bool * owned, bool sharersAware) {
+    uint64_t findBestCandidate(std::vector<ReplacementInfo*> &rInfo) {
         // Check for empty line
-        for (uint64_t i = 0; i < ways; i++) {
-            if (state[i] == I) {
-                bestCandidate = setBegin + i;
+        for (uint64_t i = 0; i < rInfo.size(); i++) {
+            if (rInfo[i]->getState() == I) {
+                bestCandidate = rInfo[i]->getIndex();
                 return bestCandidate;
             }
         }
-        bestCandidate = (gen->generateNextUInt64() % ways) + setBegin;
+        bestCandidate = rInfo[(gen->generateNextUInt64() % ways)]->getIndex();
         return bestCandidate;
     }
 
@@ -365,6 +670,7 @@ private:
 
 /* ------------------------------------------------------------------------------------------
  *  Not most recently used (nmru)
+ *  - Replacement algorithm assumes indices are contiguous for the set
  * ------------------------------------------------------------------------------------------*/
 
 class NMRU : public ReplacementPolicy {
@@ -398,17 +704,23 @@ public:
         delete gen; 
     }
 
-    void update(uint64_t id) {  array[id/ways] = id % ways;  }
+    /* Too expensive to constantly dynamic_cast. Check once during construction instead. */
+    bool checkCompatibility(ReplacementInfo * rInfo) {
+        return true; // No cast
+    }
+    
+    void update(uint64_t id, ReplacementInfo * rInfo) {  array[id/ways] = id % ways;  }
     void replaced(uint64_t id) {}
 
     // Return an empty slot if one exists, otherwise return any slot that is not the most-recently used in the set
-    uint64_t findBestCandidate(uint64_t setBegin, State * state, unsigned int * sharers, bool * owned, bool sharersAware) {
+    uint64_t findBestCandidate(std::vector<ReplacementInfo*> &rInfo) {
         for (uint64_t i = 0; i < ways; i++) {
-            if (state[i] == I) {
-                bestCandidate = setBegin + i;
+            if (rInfo[i]->getState() == I) {
+                bestCandidate = rInfo[i]->getIndex();
                 return bestCandidate;
             }
         }
+        uint64_t setBegin = rInfo[0]->getIndex();
         uint64_t index = gen->generateNextUInt64() % (ways-1);
         if (index < array[setBegin/ways]) 
             bestCandidate = setBegin + index;

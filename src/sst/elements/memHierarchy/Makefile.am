@@ -12,7 +12,6 @@ libmemHierarchy_la_SOURCES = \
 	hash.h \
 	cacheListener.h \
 	cacheController.h \
-	cacheEventProcessing.cc \
 	cacheController.cc \
 	cacheFactory.cc \
 	replacementManager.h \
@@ -83,22 +82,22 @@ libmemHierarchy_la_SOURCES = \
 	memHierarchyInterface.h \
 	memHierarchyScratchInterface.cc \
 	memHierarchyScratchInterface.h \
-	coherencemgr/MESI_Shared_Noninclusive.h \
-	coherencemgr/MESI_Shared_Noninclusive.cc \
-	coherencemgr/MESI_Inclusive.h \
-	coherencemgr/MESI_Inclusive.cc \
-	coherencemgr/Incoherent.h \
-	coherencemgr/Incoherent.cc \
-	coherencemgr/Incoherent_L1.h \
-	coherencemgr/Incoherent_L1.cc \
 	coherencemgr/MESI_L1.h \
 	coherencemgr/MESI_L1.cc \
-	coherencemgr/MESI_Private_Noninclusive.cc \
+	coherencemgr/MESI_Inclusive.h \
+	coherencemgr/MESI_Inclusive.cc \
 	coherencemgr/MESI_Private_Noninclusive.h \
+	coherencemgr/MESI_Private_Noninclusive.cc \
+	coherencemgr/MESI_Shared_Noninclusive.h \
+	coherencemgr/MESI_Shared_Noninclusive.cc \
+	coherencemgr/Incoherent_L1.h \
+	coherencemgr/Incoherent_L1.cc \
+	coherencemgr/Incoherent.h \
+	coherencemgr/Incoherent.cc \
 	multithreadL1Shim.h \
 	multithreadL1Shim.cc \
-	cacheArray.cc \
-	cacheArray.h \
+	lineTypes.h \
+	cacheTempl.h \
 	mshr.h \
 	mshr.cc \
 	testcpu/trivialCPU.h \

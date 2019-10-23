@@ -20,2586 +20,2903 @@
 using namespace SST;
 using namespace SST::MemHierarchy;
 
-/* Debug macros */
-#ifdef __SST_DEBUG_OUTPUT__ /* From sst-core, enable with --enable-debug */
-#define is_debug_addr(addr) (DEBUG_ADDR.empty() || DEBUG_ADDR.find(addr) != DEBUG_ADDR.end())
-#define is_debug_event(ev) (DEBUG_ADDR.empty() || ev->doDebug(DEBUG_ADDR))
-#else
-#define is_debug_addr(addr) false
-#define is_debug_event(ev) false
-#endif
-
 /*----------------------------------------------------------------------------------------------------------------------
- * MESI Internal Directory for Non-inclusive Caches with Multiple Children 
- * (e.g., a non-inclusive private L2 with split L1I/D above or a non-inclusive shared LLC)
- * *All* non-inclusive caches with multiple children must either use this directory OR implement snooping
- * The directory holds information about all blocks, this coherence entity handles both locally cached and uncached blocks
+ * MESI or MSI NonInclusive Coherence Controller for shared caches
+ * - Has an inclusive tag directory & noninclusive data array
+ * - Unlike the private noninclusive protocol, this one supports prefetchers due to the inclusive tag directory
  *---------------------------------------------------------------------------------------------------------------------*/
 
-/*----------------------------------------------------------------------------------------------------------------------
- *  External interface functions for routing events from cache controller to appropriate coherence handlers
- *---------------------------------------------------------------------------------------------------------------------*/
+/***********************************************************************************************************
+ * Event handlers
+ ***********************************************************************************************************/
 
-/**
- *  Evict block from directory (fromDataCache=false) or from cache (fromDataCache=true)
- *  Directory evictions will also trigger a cache eviction if the block is locally cached
- *  Return whether the eviction is complete (DONE) or not (STALL)
- */
-CacheAction MESISharNoninclusive::handleEviction(CacheLine* replacementLine, string origRqstr, bool fromDataCache) {
-    State state = replacementLine->getState();
-    
-    recordEvictionState(state);
-    
-    Addr wbBaseAddr = replacementLine->getBaseAddr();
-    bool isCached = replacementLine->getDataLine() != NULL;
+/* Handle GetS (load/read) requests */
+bool MESISharNoninclusive::handleGetS(MemEvent* event, bool inMSHR) {
+    Addr addr = event->getBaseAddr();
+    DirectoryLine * tag = dirArray_->lookup(addr, true);
+    State state = tag ? tag->getState() : I;
+    DataLine * data = (tag) ? dataArray_->lookup(addr, true) : nullptr;
+    if (data && data->getTag() != tag) data = nullptr;
 
+    bool localPrefetch = event->isPrefetch() && (event->getRqstr() == cachename_);
+    uint64_t sendTime = 0;
+    MemEventStatus status = MemEventStatus::OK;
+    Command respcmd;
 
-    // Check if there is a stalled replacement to the block we are attempting to replace. 
-    // If so, we should handle it immediately to avoid deadlocks (A waiting for B to evict, B waiting for A to handle its eviction)
-    MemEvent * waitingEvent = (mshr_->isHit(wbBaseAddr)) ? static_cast<MemEvent*>(mshr_->lookupFront(wbBaseAddr)) : nullptr;
-    bool collision = (waitingEvent != NULL && (waitingEvent->getCmd() == Command::PutS || waitingEvent->getCmd() == Command::PutE || waitingEvent->getCmd() == Command::PutM));
-    if (collision) {    // Note that 'collision' and 'fromDataCache' cannot both be true, don't need to handle that case
-        if (state == E && waitingEvent->getDirty()) replacementLine->setState(M);
-        if (replacementLine->isSharer(waitingEvent->getSrc())) replacementLine->removeSharer(waitingEvent->getSrc());
-        else if (replacementLine->ownerExists()) replacementLine->clearOwner();
-        mshr_->setDataBuffer(waitingEvent->getBaseAddr(), waitingEvent->getPayload());
-        mshr_->removeFront(waitingEvent->getBaseAddr());
-        delete waitingEvent;
-    }
+    if (is_debug_event(event))
+        eventDI.prefill(event->getID(), Command::GetS, localPrefetch, addr, state);
+
     switch (state) {
         case I:
-            return DONE;
+        case IA:
+            status = processDirectoryMiss(event, tag, inMSHR);
+
+            if (status == MemEventStatus::OK) {
+                recordLatencyType(event->getID(), LatType::MISS);
+                tag = dirArray_->lookup(addr, false);
+
+                if (localPrefetch) { // Also need a data line
+                    if (processDataMiss(event, tag, data, true) != MemEventStatus::OK) {
+                        tag->setState(IA); // Don't let anyone steal this line, mark that we're waiting for a data line allocation
+                        break;
+                    } // Status is now inaccurate but it won't be Reject which is the only thing we're checking for
+                }
+
+                if (!mshr_->getProfiled(addr)) {
+                    stat_eventState[(int)Command::GetS][state]->addData(1);
+                    notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::MISS);
+                    mshr_->setProfiled(addr);
+                }
+
+                sendTime = forwardMessage(event, lineSize_, 0, nullptr);
+                tag->setState(IS);
+                tag->setTimestamp(sendTime);
+                mshr_->setInProgress(addr);
+
+                if (is_debug_event(event))
+                    eventDI.reason = "miss";
+            }
+            break;
         case S:
-            if (replacementLine->getPrefetch()) {
-                replacementLine->setPrefetch(false);
-                statPrefetchEvict->addData(1);
+            if (!inMSHR || !mshr_->getProfiled(addr)) {
+                stat_eventState[(int)Command::GetS][state]->addData(1);
+                notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
+                if (inMSHR) mshr_->setProfiled(addr);
             }
-            if (replacementLine->numSharers() > 0 && !fromDataCache) {
-                if (isCached || collision) invalidateAllSharers(replacementLine, ownerName_, false);
-                else invalidateAllSharersAndFetch(replacementLine, ownerName_, false);    // Fetch needed for PutS
-                replacementLine->setState(SI);
-                return STALL;
+
+            if (is_debug_event(event))
+                eventDI.reason = "hit";
+
+            if (localPrefetch) {
+                statPrefetchRedundant->addData(1);
+                recordPrefetchLatency(event->getID(), LatType::HIT);
+                if (is_debug_event(event))
+                    eventDI.action = "Done";
+                cleanUpAfterRequest(event, inMSHR);
+                break;
             }
-            if (!isCached && !collision) debug->fatal(CALL_INFO, -1, "%s (dir), Error: evicting uncached block with no sharers. Addr = 0x%" PRIx64 ", State = %s\n", ownerName_.c_str(), replacementLine->getBaseAddr(), StateString[state]);
-            if (fromDataCache && replacementLine->numSharers() > 0) return DONE; // lazy deallocation - we don't need to do anything if the block exists elsewhere
-            if (isCached) sendWritebackFromCache(Command::PutS, replacementLine, origRqstr);
-            else sendWritebackFromMSHR(Command::PutS, replacementLine, origRqstr, mshr_->getDataBuffer(wbBaseAddr));
-            if (replacementLine->numSharers() == 0) replacementLine->setState(I); 
-            if (expectWritebackAck_) mshr_->insertWriteback(wbBaseAddr);
-            return DONE;
-        case E:
-            if (replacementLine->getPrefetch()) {
-                replacementLine->setPrefetch(false);
-                statPrefetchEvict->addData(1);
-            }
-            if (replacementLine->numSharers() > 0 && !fromDataCache) { // May or may not be cached
-                if (isCached || collision) invalidateAllSharers(replacementLine, ownerName_, false);
-                else invalidateAllSharersAndFetch(replacementLine, ownerName_, false);
-                replacementLine->setState(EI);
-                return STALL;
-            } else if (replacementLine->ownerExists() && !fromDataCache) { // Not cached
-                sendFetchInv(replacementLine, ownerName_, false);
-                mshr_->incrementAcksNeeded(wbBaseAddr);
-                replacementLine->setState(EI);
-                return STALL;
-            } else { // Must be cached
-                if (!isCached && !collision) 
-                    debug->fatal(CALL_INFO, -1, "%s (dir), Error: evicting uncached block with no sharers or owner. Addr = 0x%" PRIx64 ", State = %s\n", ownerName_.c_str(), replacementLine->getBaseAddr(), StateString[state]);
-                if (fromDataCache && (replacementLine->numSharers() > 0 || replacementLine->ownerExists())) return DONE; // lazy deallocation - we don't need to do anything if the block exists elsewhere
-                if (isCached) sendWritebackFromCache(Command::PutE, replacementLine, origRqstr);
-                else sendWritebackFromMSHR(Command::PutE, replacementLine, origRqstr, mshr_->getDataBuffer(wbBaseAddr));
-                if (replacementLine->numSharers() == 0 && !replacementLine->ownerExists()) replacementLine->setState(I);
-                if (expectWritebackAck_) mshr_->insertWriteback(wbBaseAddr);
-                return DONE;
-            }
-        case M:
-            if (replacementLine->getPrefetch()) {
-                replacementLine->setPrefetch(false);
-                statPrefetchEvict->addData(1);
-            }
-            if (replacementLine->numSharers() > 0 && !fromDataCache) {
-                if (isCached || collision) invalidateAllSharers(replacementLine, ownerName_, false);
-                else invalidateAllSharersAndFetch(replacementLine, ownerName_, false);
-                replacementLine->setState(MI);
-                return STALL;
-            } else if (replacementLine->ownerExists() && !fromDataCache) {
-                sendFetchInv(replacementLine, ownerName_, false);
-                mshr_->incrementAcksNeeded(wbBaseAddr);
-                replacementLine->setState(MI);
-                return STALL;
+
+            recordPrefetchResult(tag, statPrefetchHit);
+
+            if (data || mshr_->hasData(addr)) {
+                tag->addSharer(event->getSrc());
+                if (mshr_->hasData(addr))
+                    sendTime = sendResponseUp(event, &(mshr_->getData(addr)), inMSHR, tag->getTimestamp());
+                else
+                    sendTime = sendResponseUp(event, data->getData(), inMSHR, tag->getTimestamp());
+                tag->setTimestamp(sendTime-1);
+                recordLatencyType(event->getID(), LatType::HIT);
+                cleanUpAfterRequest(event, inMSHR);
             } else {
-                if (!isCached && !collision) 
-                    debug->fatal(CALL_INFO, -1, "%s (dir), Error: evicting uncached block with no sharers or owner. Addr = 0x%" PRIx64 ", State = %s\n", ownerName_.c_str(), replacementLine->getBaseAddr(), StateString[state]);
-                if (fromDataCache && (replacementLine->numSharers() > 0 || replacementLine->ownerExists())) return DONE; // lazy deallocation - we don't need to do anything if the block exists elsewhere
-                if (isCached) sendWritebackFromCache(Command::PutM, replacementLine, origRqstr);
-                else sendWritebackFromMSHR(Command::PutM, replacementLine, origRqstr, mshr_->getDataBuffer(wbBaseAddr));
-                if (replacementLine->numSharers() == 0 && !replacementLine->ownerExists()) replacementLine->setState(I);
-                if (expectWritebackAck_) mshr_->insertWriteback(wbBaseAddr);
-                return DONE;
+                if (!inMSHR) {
+                    status = allocateMSHR(event, false);
+                    if (status != MemEventStatus::Reject)
+                        mshr_->setProfiled(addr, event->getID());
+                }
+                if (status == MemEventStatus::OK) {
+                    recordLatencyType(event->getID(), LatType::INV);
+                    sendTime = sendFetch(Command::Fetch, event, *(tag->getSharers()->begin()), inMSHR, tag->getTimestamp());
+                    tag->setState(S_D);
+                    tag->setTimestamp(sendTime - 1);
+                    if (is_debug_event(event))
+                        eventDI.reason = "data miss";
+                }
             }
-        case SI:
-        case S_Inv:
-        case E_Inv:
-        case M_Inv:
-        case SM_Inv:
-        case E_InvX:
-        case S_B:
-        case I_B:
-            return STALL;
+            break;
+        case E:
+        case M:
+            if (!inMSHR || !mshr_->getProfiled(addr)) {
+                stat_eventState[(int)Command::GetS][state]->addData(1);
+                notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
+                if (inMSHR) mshr_->setProfiled(addr);
+            }
+
+            if (is_debug_event(event))
+                eventDI.reason = "hit";
+
+            if (localPrefetch) {
+                statPrefetchRedundant->addData(1);
+                recordPrefetchLatency(event->getID(), LatType::HIT);
+                cleanUpAfterRequest(event, inMSHR);
+                break;
+            }
+
+            recordPrefetchResult(tag, statPrefetchHit);
+
+            if (tag->hasOwner()) {
+                if (!inMSHR) {
+                    status = allocateMSHR(event, false);
+                    if (status != MemEventStatus::Reject)
+                        mshr_->setProfiled(addr, event->getID());
+                }
+                if (status == MemEventStatus::OK) {
+                    sendTime = sendFetch(Command::FetchInvX, event, tag->getOwner(), inMSHR, tag->getTimestamp());
+                    state == E ? tag->setState(E_InvX) : tag->setState(M_InvX);
+                    tag->setTimestamp(sendTime - 1);
+                    recordLatencyType(event->getID(), LatType::INV);
+                }
+            } else if (data || mshr_->hasData(addr)) {
+                recordLatencyType(event->getID(), LatType::HIT);
+                if (tag->hasSharers()) {
+                    respcmd = Command::GetSResp;
+                    tag->addSharer(event->getSrc());
+                } else {
+                    respcmd = Command::GetXResp;
+                    tag->setOwner(event->getSrc());
+                }
+                if (mshr_->hasData(addr))
+                    sendTime = sendResponseUp(event, &(mshr_->getData(addr)), inMSHR, tag->getTimestamp(), respcmd);
+                else
+                    sendTime = sendResponseUp(event, data->getData(), inMSHR, tag->getTimestamp(), respcmd);
+                tag->setTimestamp(sendTime - 1);
+                cleanUpAfterRequest(event, inMSHR);
+            } else {
+                if (!inMSHR) {
+                    status = allocateMSHR(event, false);
+                    if (status != MemEventStatus::Reject)
+                        mshr_->setProfiled(addr, event->getID());
+                }
+                if (status == MemEventStatus::OK) {
+                    sendTime = sendFetch(Command::Fetch, event, *(tag->getSharers()->begin()), inMSHR, tag->getTimestamp());
+                    state == E ? tag->setState(E_D) : tag->setState(M_D);
+                    tag->setTimestamp(sendTime - 1);
+                    if (is_debug_event(event))
+                        eventDI.reason = "data miss";
+                    recordLatencyType(event->getID(), LatType::INV);
+                }
+            }
+            break;
         default:
-	    debug->fatal(CALL_INFO,-1,"%s (dir), Error: State is invalid during eviction: %s. Addr = 0x%" PRIx64 ". Time = %" PRIu64 "ns\n", 
-                    ownerName_.c_str(), StateString[state], replacementLine->getBaseAddr(), getCurrentSimTimeNano());
+            if (!inMSHR)
+                status = allocateMSHR(event, false);
+            break;
     }
-    return STALL; // Eliminate compiler warning
+    
+    if (is_debug_addr(addr) && tag) {
+        eventDI.newst = tag->getState();
+        eventDI.verboseline = tag->getString();
+        if (data)
+            eventDI.verboseline += "/" + data->getString();
+    }
+
+    if (status == MemEventStatus::Reject) {
+        if (localPrefetch)
+            return false;
+        else
+            sendNACK(event);
+    }
+
+    return true;
 }
+  
 
-
-/** Handle data requests */
-CacheAction MESISharNoninclusive::handleRequest(MemEvent * event, bool replay) {
+bool MESISharNoninclusive::handleGetX(MemEvent * event, bool inMSHR) {
     Addr addr = event->getBaseAddr();
-    
-    if (is_debug_addr(addr))
-        printLine(addr);
+    DirectoryLine * tag = dirArray_->lookup(addr, true);
+    State state = tag ? tag->getState() : I;
+    DataLine * data = (tag) ? dataArray_->lookup(addr, true) : nullptr;
+    if (data && data->getTag() != tag) data = nullptr;
 
-    CacheLine * dirLine = cacheArray_->lookup(addr, !replay); 
-    
-    if (!dirLine && (is_debug_addr(addr))) debug->debug(_L3_, "-- Miss --\n");
+    uint64_t sendTime = 0;
+    MemEventStatus status = MemEventStatus::OK;
+    Command respcmd;
 
-    if (dirLine && dirLine->inTransition()) {
-        allocateMSHR(addr, event);
-        return STALL;
-    }
+    if (is_debug_event(event))
+        eventDI.prefill(event->getID(), event->getCmd(), false, addr, state);
 
-    if (dirLine == nullptr) {
-        if (!allocateLine(addr, event)) {
-            allocateMSHR(addr, event);
-            recordMiss(event->getID());
-            return STALL;
-        }
-        dirLine = cacheArray_->lookup(addr, false);
-    }
+    switch (state) {
+        case I:
+            status = processDirectoryMiss(event, tag, inMSHR);
 
-    CacheAction action = STALL;
-    Command cmd = event->getCmd();
-    switch(cmd) {
-        case Command::GetS:
-            action = handleGetSRequest(event, dirLine, replay);
+            if (status == MemEventStatus::OK) {
+                recordLatencyType(event->getID(), LatType::MISS);
+                tag = dirArray_->lookup(addr, false);
+
+                if (!mshr_->getProfiled(addr)) {
+                    stat_eventState[(int)event->getCmd()][state]->addData(1);
+                    notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::MISS);
+                    mshr_->setProfiled(addr);
+                }
+                sendTime = forwardMessage(event, lineSize_, 0, nullptr);
+                tag->setState(IM);
+                tag->setTimestamp(sendTime);
+                mshr_->setInProgress(addr);
+                if (is_debug_event(event))
+                    eventDI.reason = "miss";
+            }
             break;
-        case Command::GetX:
-        case Command::GetSX:
-            action = handleGetXRequest(event, dirLine, replay);
+        case S:
+            if (!lastLevel_) { // If last level, upgrade silently by falling through to next case
+                status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, false);
+
+                if (status == MemEventStatus::OK) {
+                    if (!mshr_->getProfiled(addr)) {
+                        stat_eventState[(int)event->getCmd()][state]->addData(1);
+                        notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::HIT);
+                        mshr_->setProfiled(addr);
+                    }
+                    recordPrefetchResult(tag, statPrefetchUpgradeMiss);
+                    recordLatencyType(event->getID(), LatType::UPGRADE);
+
+                    sendTime = forwardMessage(event, lineSize_, 0, nullptr);
+
+                    if (invalidateExceptRequestor(event, tag, inMSHR, data == nullptr)) {
+                        tag->setState(SM_Inv);
+                    } else {
+                        tag->setState(SM);
+                        tag->setTimestamp(sendTime);
+                    }
+                    mshr_->setInProgress(addr);
+
+                    if (is_debug_event(event))
+                        eventDI.reason = "miss";
+                }
+                break;
+            }
+        case E:
+        case M:
+            if (!tag->hasOtherSharers(event->getSrc()) && !tag->hasOwner()) {
+                if (is_debug_event(event))
+                    eventDI.reason = "hit";
+                if (!inMSHR || mshr_->getProfiled(addr)) {
+                    notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::HIT);
+                    stat_eventState[(int)event->getCmd()][state]->addData(1);
+                }
+                tag->setOwner(event->getSrc());
+                if (tag->isSharer(event->getSrc())) {
+                    tag->removeSharer(event->getSrc());
+                    sendTime = sendResponseUp(event, nullptr, inMSHR, tag->getTimestamp(), Command::GetXResp);
+                } else if (mshr_->hasData(addr))
+                    sendTime = sendResponseUp(event, &(mshr_->getData(addr)), inMSHR, tag->getTimestamp(), Command::GetXResp);
+                else
+                    sendTime = sendResponseUp(event, data->getData(), inMSHR, tag->getTimestamp(), Command::GetXResp);
+                tag->setTimestamp(sendTime - 1);
+                recordLatencyType(event->getID(), LatType::HIT);
+                cleanUpAfterRequest(event, inMSHR);
+                break;
+            }
+            if (!inMSHR)
+                status = allocateMSHR(event, false);
+            if (status == MemEventStatus::OK) {
+                if (!mshr_->getProfiled(addr)) {
+                    notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::HIT);
+                    stat_eventState[(int)event->getCmd()][state]->addData(1);
+                    mshr_->setProfiled(addr);
+                }
+                recordLatencyType(event->getID(), LatType::INV);
+                if (tag->hasOtherSharers(event->getSrc())) {
+                    invalidateExceptRequestor(event, tag, inMSHR, !data && !tag->isSharer(event->getSrc()));
+                } else {
+                    invalidateOwner(event, tag, inMSHR, Command::FetchInv);
+                }
+                tag->setState(M_Inv);
+            }
             break;
         default:
-            debug->fatal(CALL_INFO, -1, "%s (dir), Errror: Received an unrecognized request: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
-                    ownerName_.c_str(), CommandString[(int)cmd], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
+            if (!inMSHR)
+                status = allocateMSHR(event, false);
+            else if (is_debug_event(event))
+                eventDI.action == "Stall";
     }
+
+    if (is_debug_addr(addr) && tag) {
+        eventDI.newst = tag->getState();
+        eventDI.verboseline = tag->getString();
+        if (data)
+            eventDI.verboseline += "/" + data->getString();
+    }
+
+    if (status == MemEventStatus::Reject)
+        sendNACK(event);
     
-    if (is_debug_addr(addr))
-        printLine(addr);
-
-    if (action == DONE)
-        delete event;
-
-    return action;
+    return true;
 
 }
 
 
-/**
- *  Handle replacement (Put*) requests
- */
-CacheAction MESISharNoninclusive::handleReplacement(MemEvent* event, bool replay) {
+bool MESISharNoninclusive::handleGetSX(MemEvent * event, bool inMSHR) {
+    return handleGetX(event, inMSHR);
+}
+
+
+/* Flush a line from the cache but retain a clean copy */
+bool MESISharNoninclusive::handleFlushLine(MemEvent* event, bool inMSHR) {
     Addr addr = event->getBaseAddr();
+    DirectoryLine * tag = dirArray_->lookup(addr, false);
+    State state = tag ? tag->getState() : I;
+    DataLine * data = (tag) ? dataArray_->lookup(addr, false) : nullptr;
+    if (data && data->getTag() != tag) data = nullptr;
     
-    if (is_debug_addr(addr))
-        printLine(addr);
-    
-    CacheLine* dirLine = cacheArray_->lookup(addr, false);
+    if (is_debug_event(event))
+        eventDI.prefill(event->getID(), Command::FlushLine, false, addr, state);
 
-    // Need a line for this
-    if (dirLine->getDataLine() == nullptr) {
-        if (is_debug_addr(addr)) debug->debug(_L3_, "-- Cache Miss --\n");
-
-        // Avoid some deadlocks by not stalling Put* requests to lines in transtion, attempt replacement but don't force
-        if (!allocateDirCacheLine(event, addr, dirLine, dirLine->inTransition()) && !dirLine->inTransition()) {
-            allocateMSHR(addr, event);
-            return STALL;
+    // Always need an MSHR for a flush
+    MemEventStatus status = MemEventStatus::OK;
+    if (inMSHR) {
+        if (mshr_->getFrontEvent(addr) != event) {
+            if (is_debug_event(event))
+                eventDI.action = "Stall";
+            status = MemEventStatus::Stall;
         }
-    }
-
-    MemEvent * reqEvent = mshr_->exists(addr) ? static_cast<MemEvent*>(mshr_->lookupFront(addr)) : nullptr;
-
-    CacheAction action = DONE;
-    Command cmd = event->getCmd();
-    switch (cmd) {
-        case Command::PutS:
-            action = handlePutSRequest(event, dirLine, reqEvent);
-            break;
-        case Command::PutE:
-        case Command::PutM:
-            action = handlePutMRequest(event, dirLine, reqEvent);
-            break;
-        default:
-	    debug->fatal(CALL_INFO,-1,"%s (dir), Error: Received an unrecognized replacement: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n", 
-                    ownerName_.c_str(), CommandString[(int)cmd], addr, event->getSrc().c_str(), getCurrentSimTimeNano());
-    }
-    if ((action == DONE || action == STALL) && reqEvent != nullptr) {
-        mshr_->removeFront(addr);
-        delete reqEvent;
-    }
-    if (action == STALL || action == BLOCK)
-        allocateMSHR(addr, event);
-    else
-        delete event;
-
-    if (is_debug_addr(addr))
-        printLine(addr);
-    
-    return action;
-}
-
-
-CacheAction MESISharNoninclusive::handleFlush(MemEvent* event, CacheLine* dirLine, MemEvent* reqEvent, bool replay) {
-    CacheAction action = DONE;
-    Command cmd = event->getCmd();
-    switch (cmd) {
-        case Command::FlushLineInv:
-            action = handleFlushLineInvRequest(event, dirLine, reqEvent, replay);
-            break;
-        case Command::FlushLine:
-            action = handleFlushLineRequest(event, dirLine, reqEvent, replay);
-            break;
-        default:
-	    debug->fatal(CALL_INFO,-1,"%s (dir), Error: Received an unrecognized replacement: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n", 
-                    ownerName_.c_str(), CommandString[(int)cmd], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
-    }
-
-    return action;
-}
-
-
-/**
- *  Handle invalidations (Inv, FetchInv, FetchInvX) by sending to the appropriate handler
- *  Return whether the invalidation completed (DONE), completed but a pending request in the MSHR should not be 
- *  replayed immediately (IGNORE), is on-going (STALL), or must wait for an existing request to complete (BLOCK)
- *
- *  Special case for when an inv races with a replacement -> 
- *  treat Inv request as the AckPut (the Put request will likewise be treated as the AckInv/FetchResp)
- */
-CacheAction MESISharNoninclusive::handleInvalidationRequest(MemEvent * event, bool replay) {
-    Addr bAddr = event->getBaseAddr();
-    CacheLine* dirLine = cacheArray_->lookup(bAddr, false);
-
-    if (is_debug_addr(bAddr))
-        printLine(bAddr);
-
-    if (!mshr_->pendingWriteback(bAddr) && mshr_->isFull()) {
-        processInvRequestInMSHR(bAddr, event, false);
-        return STALL;
-    }
-    
-    MemEvent* collisionEvent = nullptr;
-    if (mshr_->exists(bAddr))
-        collisionEvent = static_cast<MemEvent*>(mshr_->lookupFront(bAddr));
-
-    bool collision = false;
-    if (mshr_->pendingWriteback(bAddr)) {
-        // Case 1: Inv raced with a Put -> treat Inv as the AckPut
-        mshr_->removeWriteback(bAddr);
-        delete event;
-        return DONE;
     } else {
-        collision = (collisionEvent != NULL && (collisionEvent->getCmd() == Command::PutS || collisionEvent->getCmd() == Command::PutE || collisionEvent->getCmd() == Command::PutM));
+        status = allocateMSHR(event, false);
     }
 
-    Command cmd = event->getCmd();
-    CacheAction action = STALL;
-    switch (cmd) {
-        case Command::Inv: 
-            action = handleInv(event, dirLine, replay, collisionEvent);
-            break;
-        case Command::Fetch:
-            action = handleFetch(event, dirLine, replay, collision ? collisionEvent : NULL);
-            break;
-        case Command::FetchInv:
-            action = handleFetchInv(event, dirLine, replay, collisionEvent);
-            break;
-        case Command::FetchInvX:
-            action = handleFetchInvX(event, dirLine, replay, collisionEvent);
-            break;
-        case Command::ForceInv:
-            action = handleForceInv(event, dirLine, replay, collisionEvent);
-            break;
-        default:
-	    debug->fatal(CALL_INFO,-1,"%s (dir), Error: Received an unrecognized invalidation: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n", 
-                    ownerName_.c_str(), CommandString[(int)cmd], bAddr, event->getSrc().c_str(), getCurrentSimTimeNano());
-    }
-    
-    if (is_debug_addr(bAddr))
-        printLine(bAddr);
+    recordLatencyType(event->getID(), LatType::HIT);
 
-    if (action == STALL)
-        processInvRequestInMSHR(bAddr, event, false);
-    else if (action == BLOCK)
-        processInvRequestInMSHR(bAddr, event, true);
-    else
-        delete event;
-
-    return action;
-}
-
-
-/**
- *  Handle responses to outstanding requests by sending to the appropriate handler
- *  Return whether the request completed as a result of this response (DONE),
- *  whether it should continue waiting for more responses (STALL or IGNORE)
- *
- */
-CacheAction MESISharNoninclusive::handleCacheResponse(MemEvent * event, bool inMSHR) {
-    Addr bAddr = event->getBaseAddr();
-    CacheLine* dLine = cacheArray_->lookup(bAddr, false);
-
-    if (is_debug_addr(bAddr))
-        printLine(bAddr);
-
-    MemEvent* reqEvent = mshr_->lookupFront(bAddr);
-
-    CacheAction action = DONE;
-
-    Command cmd = event->getCmd();
-    switch (cmd) {
-        case Command::GetSResp:
-        case Command::GetXResp:
-            action = handleDataResponse(event, dLine, reqEvent);
-            break;
-        case Command::FlushLineResp:
-            recordStateEventCount(event->getCmd(), dLine ? dLine->getState() : I);
-            sendFlushResponse(reqEvent, event->success());
-            if (dLine && dLine->getState() == S_B) dLine->setState(S);
-            else if (dLine) dLine->setState(I);
-            action = DONE;
-            break;
-        default:
-            debug->fatal(CALL_INFO, -1, "%s (dir), Error: Received unrecognized response: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
-                    ownerName_.c_str(), CommandString[(int)cmd], bAddr, event->getSrc().c_str(), getCurrentSimTimeNano());
-    }
-    
-    if (is_debug_addr(bAddr))
-        printLine(bAddr);
-    
-    if (action == DONE) {
-        mshr_->removeFront(bAddr);
-        delete reqEvent;
-    }
-
-    delete event;
-
-    return action;
-}
-
-CacheAction MESISharNoninclusive::handleFetchResponse(MemEvent * event, bool inMSHR) {
-    Addr bAddr = event->getBaseAddr();
-    CacheLine* dLine = cacheArray_->lookup(bAddr, false);
-
-    if (is_debug_addr(bAddr))
-        printLine(bAddr);
-
-    MemEvent* reqEvent = mshr_->exists(bAddr) ? mshr_->lookupFront(bAddr) : nullptr;
-
-    CacheAction action = DONE;
-    Command cmd = event->getCmd();
-    switch (cmd) {
-        case Command::FetchResp:
-        case Command::FetchXResp:
-            action = handleFetchResp(event, dLine, reqEvent);
-            break;
-        case Command::AckInv:
-            action = handleAckInv(event, dLine, reqEvent);
-            break;
-        case Command::AckPut:
-            recordStateEventCount(event->getCmd(), I);
-            mshr_->removeWriteback(bAddr);
-            action = DONE;    // Retry any events that were stalled for ack
-            break;
-        default:
-            debug->fatal(CALL_INFO, -1, "%s (dir), Error: Received unrecognized response: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
-                    ownerName_.c_str(), CommandString[(int)cmd], bAddr, event->getSrc().c_str(), getCurrentSimTimeNano());
-    }
-    
-    if (is_debug_addr(bAddr))
-        printLine(bAddr);
-
-    delete event;
-
-    if (action == DONE && reqEvent) {
-        mshr_->removeFront(bAddr);
-        delete reqEvent;
-    }
-
-    return action;
-}
-
-
-
-
-/*
- *  Return type of miss. Used by cacheController for profiling incoming events
- *  0:  Hit
- *  1:  NP/I
- *  2:  Wrong state (e.g., S but GetX request)
- *  3:  Right state but owners/sharers need to be invalidated or line is in transition
- */
-
-bool MESISharNoninclusive::isCacheHit(MemEvent* event) {
-    CacheLine* line = cacheArray_->lookup(event->getBaseAddr(), false);
-    Command cmd = event->getCmd();
-    State state = line ? line->getState() : I;
-    if (cmd == Command::GetSX) cmd = Command::GetX;  // for our purposes these are equal
-
-    if (state == I) return false;
-    if (event->isPrefetch() && event->getRqstr() == ownerName_) return true;
-    if (state == S && lastLevel_) state = M;
     switch (state) {
+        case I:
+            if (status == MemEventStatus::OK) {
+                if (!mshr_->getProfiled(addr)) {
+                    stat_eventState[(int)Command::FlushLine][state]->addData(1);
+                    mshr_->setProfiled(addr);
+                }
+                // event, evict, *data, dirty, time)
+                forwardFlush(event, false, nullptr, false, 0);
+                mshr_->setInProgress(addr);
+            }
+            break;
         case S:
-            if (cmd == Command::GetS) return true;
-            return false;
+            if (status == MemEventStatus::OK) {
+                if (!mshr_->getProfiled(addr)) {
+                    stat_eventState[(int)Command::FlushLine][state]->addData(1);
+                    mshr_->setProfiled(addr);
+                }
+                forwardFlush(event, false, nullptr, false, tag->getTimestamp());
+                tag->setState(S_B);
+                mshr_->setInProgress(addr);
+            }
+            break;
         case E:
         case M:
-            if (line->ownerExists()) return false;
-            if (cmd == Command::GetS) return true; 
-            if (cmd == Command::GetX) {
-                if (line->isShareless() || (line->isSharer(event->getSrc()) && line->numSharers() == 1)) return true; // Hit
+            if (status == MemEventStatus::OK) {
+                if (!mshr_->getProfiled(addr)) {
+                    stat_eventState[(int)Command::FlushLine][state]->addData(1);
+                    mshr_->setProfiled(addr);
+                }
+                if (event->getEvict()) {
+                    removeOwnerViaInv(event, tag, data, false);
+                    tag->addSharer(event->getSrc());
+                    event->setEvict(false); // Don't stall
+                } else if (tag->hasOwner()) {
+                    uint64_t sendTime = sendFetch(Command::FetchInvX, event, tag->getOwner(), inMSHR, tag->getTimestamp());
+                    tag->setTimestamp(sendTime - 1);
+                    state == E ? tag->setState(E_InvX) : tag->setState(M_InvX);
+                    break;
+                }
+                if (data)
+                    forwardFlush(event, true, data->getData(), tag->getState() == M, tag->getTimestamp());
+                else
+                    forwardFlush(event, true, &(mshr_->getData(addr)), tag->getState() == M, tag->getTimestamp());
+                tag->getState() == E ? tag->setState(E_B) : tag->setState(M_B);
+                mshr_->setInProgress(addr);
             }
-            return false;
-        case IS:
-        case IM:
-        case SM:
-        case S_Inv:
-        case E_Inv:
-        case M_Inv:
-        case SM_Inv:
+            break;
         case E_InvX:
         case M_InvX:
-            return false;
-        default:
-            return true;   // this is profiling so don't die on unhandled state
-    }
-}
-
-
-/*----------------------------------------------------------------------------------------------------------------------
- *  Internal event handlers
- *---------------------------------------------------------------------------------------------------------------------*/
-
-
-/**
- *  Handle GetS requests. 
- *  Non-inclusive so GetS hits don't deallocate the locally cached block.
- */
-CacheAction MESISharNoninclusive::handleGetSRequest(MemEvent* event, CacheLine* dirLine, bool replay) {
-    Addr addr = event->getBaseAddr();
-    State state = dirLine->getState();
-    
-    bool localPrefetch = event->isPrefetch() && (event->getRqstr() == ownerName_);
-
-    /* Special case for prefetches -> allocate line */
-    if (localPrefetch && dirLine->getDataLine() == nullptr && dirLine->getState() == I) {
-        if (!allocateDirCacheLine(event, addr, dirLine, false)) {
-            if (is_debug_addr(addr)) debug->debug(_L3_, "-- Data Cache Miss -- \n");
-            allocateMSHR(addr, event);
-            recordMiss(event->getID());
-            return STALL;
-        }
-    }
-
-    recordStateEventCount(event->getCmd(), state);    
-    bool isCached = dirLine->getDataLine() != NULL;
-    uint64_t sendTime = 0;
-    switch (state) {
-        case I:
-            sendTime = forwardMessage(event, dirLine->getBaseAddr(), lineSize_, 0, NULL);
-            notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::MISS);
-            dirLine->setState(IS);
-            dirLine->setTimestamp(sendTime);
-            recordLatencyType(event->getID(), LatType::MISS);
-            allocateMSHR(addr, event); 
-            return STALL;
-        case S:
-            notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
-            if (localPrefetch) {
-                statPrefetchRedundant->addData(1);
-                recordPrefetchLatency(event->getID(), LatType::HIT);
-                return DONE;
-            }
-            if (dirLine->getPrefetch()) { /* Since prefetch gets unset if data replaced, we shouldn't have an issue with isCached=false */
-                dirLine->setPrefetch(false);
-                statPrefetchHit->addData(1);
-            }
-            
-            if (isCached) {
-                dirLine->addSharer(event->getSrc());
-                sendTime = sendResponseUp(event, dirLine->getDataLine()->getData(), replay, dirLine->getTimestamp());
-                dirLine->setTimestamp(sendTime);
-                recordLatencyType(event->getID(), LatType::HIT);
-                return DONE;
-            } 
-            sendFetch(dirLine, event->getRqstr(), replay);
-            mshr_->incrementAcksNeeded(event->getBaseAddr());
-            dirLine->setState(S_D);     // Fetch in progress, block incoming invalidates/fetches/etc.
-            recordLatencyType(event->getID(), LatType::INV);
-            allocateMSHR(addr, event); 
-            return STALL;
-        case E:
-        case M:
-            notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
-            if (localPrefetch) {
-                statPrefetchRedundant->addData(1);
-                recordPrefetchLatency(event->getID(), LatType::HIT);
-                return DONE;
-            }
-            if (dirLine->getPrefetch()) {
-                dirLine->setPrefetch(false);
-                statPrefetchHit->addData(1);
-            }
-            if (dirLine->ownerExists()) {
-                sendFetchInvX(dirLine, event->getRqstr(), replay);
-                mshr_->incrementAcksNeeded(event->getBaseAddr());
-                if (state == E) dirLine->setState(E_InvX);
-                else dirLine->setState(M_InvX);
-                recordLatencyType(event->getID(), LatType::INV);
-                allocateMSHR(addr, event); 
-                return STALL;
-            } else if (isCached) {
-                if (protocol_ && dirLine->numSharers() == 0) {
-                    sendTime = sendResponseUp(event, Command::GetXResp, dirLine->getDataLine()->getData(), replay, dirLine->getTimestamp());
-                    dirLine->setOwner(event->getSrc());
-                    dirLine->setTimestamp(sendTime);
-                } else {
-                    sendTime = sendResponseUp(event, dirLine->getDataLine()->getData(), replay, dirLine->getTimestamp());
-                    dirLine->addSharer(event->getSrc());
-                    dirLine->setTimestamp(sendTime);
-                }
-                recordLatencyType(event->getID(), LatType::HIT);
-                return DONE;
-            } else {
-                sendFetch(dirLine, event->getRqstr(), replay);
-                mshr_->incrementAcksNeeded(event->getBaseAddr());
-                if (state == E) dirLine->setState(E_D);
-                else dirLine->setState(M_D);
-                recordLatencyType(event->getID(), LatType::INV);
-                allocateMSHR(addr, event); 
-                return STALL;
-            }
-        default:
-            debug->fatal(CALL_INFO,-1,"%s (dir), Error: Handling a GetS request but coherence state is not valid and stable. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, State = %s. Time = %" PRIu64 "ns\n",
-                    ownerName_.c_str(), event->getBaseAddr(), CommandString[(int)event->getCmd()], event->getSrc().c_str(), 
-                    StateString[state], getCurrentSimTimeNano());
-
-    }
-    return STALL;    // eliminate compiler warning
-}
-
-
-/**
- *  Handle GetX and GetSX (read-lock) requests
- *  Deallocate on hits
- */
-CacheAction MESISharNoninclusive::handleGetXRequest(MemEvent* event, CacheLine* dirLine, bool replay) {
-    Addr addr = event->getBaseAddr();
-    State state = dirLine->getState();
-    Command cmd = event->getCmd();
-    if (state != SM) recordStateEventCount(event->getCmd(), state);    
-    
-    bool isCached = dirLine->getDataLine() != NULL;
-    uint64_t sendTime = 0;
-    
-    /* Special case - if this is the last coherence level (e.g., just mem below), 
-     * can upgrade without forwarding request */
-    if (state == S && lastLevel_) {
-        state = M;
-        dirLine->setState(M);
-    }
-    
-
-    switch (state) {
-        case I:
-            notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::MISS);
-            sendTime = forwardMessage(event, dirLine->getBaseAddr(), lineSize_, 0, &event->getPayload());
-            dirLine->setState(IM);
-            dirLine->setTimestamp(sendTime);
-            recordLatencyType(event->getID(), LatType::MISS);
-            allocateMSHR(addr, event); 
-            return STALL;
-        case S:
-            notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::MISS);
-            if (dirLine->getPrefetch()) {
-                dirLine->setPrefetch(false);
-                statPrefetchUpgradeMiss->addData(1);
-            }
-            sendTime = forwardMessage(event, dirLine->getBaseAddr(), lineSize_, dirLine->getTimestamp(), &event->getPayload());
-            if (invalidateSharersExceptRequestor(dirLine, event->getSrc(), event->getRqstr(), replay, false)) {
-                dirLine->setState(SM_Inv);
-            } else {
-                dirLine->setState(SM);
-                dirLine->setTimestamp(sendTime);
-            }
-            recordLatencyType(event->getID(), LatType::UPGRADE);
-            allocateMSHR(addr, event); 
-            return STALL;
-        case E:
-            dirLine->setState(M);
-        case M:
-            notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::HIT);
-            if (dirLine->getPrefetch()) {
-                dirLine->setPrefetch(false);
-                statPrefetchHit->addData(1);
-            }
-
-            if (invalidateSharersExceptRequestor(dirLine, event->getSrc(), event->getRqstr(), replay, !isCached)) {
-                dirLine->setState(M_Inv);
-                recordLatencyType(event->getID(), LatType::INV);
-                return STALL;
-            }
-            if (dirLine->ownerExists()) {
-                sendFetchInv(dirLine, event->getRqstr(), replay);
-                mshr_->incrementAcksNeeded(event->getBaseAddr());
-                dirLine->setState(M_Inv);
-                recordLatencyType(event->getID(), LatType::INV);
-                allocateMSHR(addr, event); 
-                return STALL;
-            }
-            dirLine->setOwner(event->getSrc());
-            if (dirLine->isSharer(event->getSrc())) dirLine->removeSharer(event->getSrc());
-            if (isCached) sendTime = sendResponseUp(event, dirLine->getDataLine()->getData(), replay, dirLine->getTimestamp());  // is an upgrade request, requestor has data already
-            else sendTime = sendResponseUp(event, NULL, replay, dirLine->getTimestamp());
-            dirLine->setTimestamp(sendTime);
-            // TODO DEALLOCATE dataline
-            recordLatencyType(event->getID(), LatType::HIT);
-            return DONE;
-        case SM:
-            allocateMSHR(addr, event); 
-            return STALL;   // retried this request too soon (TODO fix so we don't even attempt retry)!
-        default:
-            debug->fatal(CALL_INFO, -1, "%s (dir), Error: Received %s int unhandled state %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
-                    ownerName_.c_str(), CommandString[(int)cmd], StateString[state], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
-    }
-    return STALL; // Eliminate compiler warning
-}
-
-
-/* Handle PutS at the cache 
- * ReqEvent is only populated if this replacement raced with another request
- */
-CacheAction MESISharNoninclusive::handlePutSRequest(MemEvent * event, CacheLine * dirLine, MemEvent * reqEvent) {
-    State state = dirLine->getState();
-    recordStateEventCount(event->getCmd(), state);
-
-    if (state == S_D || state == E_D || state == SM_D || state == M_D) {
-        if (*(dirLine->getSharers()->begin()) == event->getSrc()) {    // Put raced with Fetch
-            mshr_->decrementAcksNeeded(event->getBaseAddr());
-        }
-    } else if (mshr_->getAcksNeeded(event->getBaseAddr()) > 0) mshr_->decrementAcksNeeded(event->getBaseAddr());
-
-    if (dirLine->isSharer(event->getSrc())) {
-        dirLine->removeSharer(event->getSrc());
-    }
-    // Set data, either to cache or to MSHR
-    if (dirLine->getDataLine() != NULL) {
-        dirLine->getDataLine()->setData(event->getPayload(), 0);
-        printData(dirLine->getDataLine()->getData(), true);
-    } else if (mshr_->isHit(dirLine->getBaseAddr())) mshr_->setDataBuffer(dirLine->getBaseAddr(), event->getPayload());
-    
-    uint64_t sendTime = 0;
-
-    CacheAction action = (mshr_->getAcksNeeded(event->getBaseAddr()) == 0) ? DONE : IGNORE;
-    if (action == IGNORE) return action;
-    switch(state) {
-        case I:
-        case S:
-        case E:
-        case M:
-        case S_B:
-            sendWritebackAck(event);
-            return DONE;
-        case SI:
-            sendWritebackFromMSHR(Command::PutS, dirLine, reqEvent->getRqstr(), &event->getPayload());
-            if (expectWritebackAck_) mshr_->insertWriteback(event->getBaseAddr());
-            dirLine->setState(I);
-            return DONE;
-        case EI:
-            sendWritebackFromMSHR(Command::PutE, dirLine, reqEvent->getRqstr(), &event->getPayload());
-            if (expectWritebackAck_) mshr_->insertWriteback(event->getBaseAddr());
-            dirLine->setState(I);
-            return DONE;
-        case MI:
-            sendWritebackFromMSHR(Command::PutM, dirLine, reqEvent->getRqstr(), &event->getPayload());
-            if (expectWritebackAck_) mshr_->insertWriteback(event->getBaseAddr());
-            dirLine->setState(I);
-            return DONE;
-        case S_Inv: // PutS raced with Inv or FetchInv request
-            if (reqEvent->getCmd() == Command::Inv) {
-                sendAckInv(reqEvent);
-            } else {
-                sendResponseDownFromMSHR(event, false);
-            }
-            dirLine->setState(I);
-            return DONE;
-        case SB_Inv:
-            sendAckInv(reqEvent);
-            dirLine->setState(I_B);
-            return DONE;
-        case S_D: // PutS raced with Fetch
-            dirLine->setState(S);
-            if (reqEvent->getCmd() == Command::Fetch) {
-                if (dirLine->getDataLine() == NULL && dirLine->numSharers() == 0) {
-                    sendWritebackFromMSHR(Command::PutS, dirLine, reqEvent->getRqstr(), &event->getPayload());
-                    dirLine->setState(I);
-                } else {
-                    sendResponseDownFromMSHR(event, false);
-                }
-            } else if (reqEvent->getCmd() == Command::GetS) {    // GetS
-                notifyListenerOfAccess(reqEvent, NotifyAccessType::READ, NotifyResultType::HIT);
-                dirLine->addSharer(reqEvent->getSrc());
-                sendTime = sendResponseUp(reqEvent, &event->getPayload(), true, dirLine->getTimestamp());
-                dirLine->setTimestamp(sendTime);
-                if (is_debug_event(event)) printData(&event->getPayload(), false);
-            } else {
-                debug->fatal(CALL_INFO, -1, "%s (dir), Error: Received PutS in state %s but stalled request has command %s. Addr = 0x%" PRIx64 ". Time = %" PRIu64 "ns\n",
-                        ownerName_.c_str(), StateString[state], CommandString[(int)reqEvent->getCmd()], event->getBaseAddr(), getCurrentSimTimeNano());
-            }
-            return DONE;
-        case E_Inv:
-            if (reqEvent->getCmd() == Command::FetchInv) {
-                sendResponseDown(reqEvent, dirLine, &event->getPayload(), event->getDirty(), true);
-                dirLine->setState(I);
-            }
-            return DONE;
-        case E_D: // PutS raced with Fetch from GetS
-            dirLine->setState(E);
-            if (reqEvent->getCmd() == Command::Fetch) {
-                if (dirLine->getDataLine() == NULL && dirLine->numSharers() == 0) {
-                    sendWritebackFromMSHR(Command::PutE, dirLine, reqEvent->getRqstr(), &event->getPayload());
-                    dirLine->setState(I);
-                } else {
-                    sendResponseDownFromMSHR(event, false);
-                }
-            } else if (reqEvent->getCmd() == Command::GetS) {
-                notifyListenerOfAccess(reqEvent, NotifyAccessType::READ, NotifyResultType::HIT);
-                if (dirLine->numSharers() == 0) {
-                    dirLine->setOwner(reqEvent->getSrc());
-                    sendTime = sendResponseUp(reqEvent, Command::GetXResp, &event->getPayload(), true, dirLine->getTimestamp());
-                    dirLine->setTimestamp(sendTime);
-                } else {
-                    dirLine->addSharer(reqEvent->getSrc());
-                    sendTime = sendResponseUp(reqEvent, &event->getPayload(), true, dirLine->getTimestamp());
-                    dirLine->setTimestamp(sendTime);
-                }
-                if (is_debug_event(event)) printData(&event->getPayload(), false);
-            } else {
-                debug->fatal(CALL_INFO, -1, "%s (dir), Error: Received PutS in state %s but stalled request has command %s. Addr = 0x%" PRIx64 ". Time = %" PRIu64 "ns\n",
-                        ownerName_.c_str(), StateString[state], CommandString[(int)reqEvent->getCmd()], event->getBaseAddr(), getCurrentSimTimeNano());
-            }
-            return DONE;
-        case E_InvX: // PutS raced with Fetch from FetchInvX
-            dirLine->setState(S);
-            if (reqEvent->getCmd() == Command::FetchInvX) {
-                if (dirLine->getDataLine() == NULL && dirLine->numSharers() == 0) {
-                    sendWritebackFromMSHR(Command::PutE, dirLine, reqEvent->getRqstr(), &event->getPayload());
-                    dirLine->setState(I);
-                } else {
-                    sendResponseDownFromMSHR(event, false);
-                }
-            } else {
-                debug->fatal(CALL_INFO, -1, "%s (dir), Error: Received PutS in state %s but stalled request has command %s. Addr = 0x%" PRIx64 ". Time = %" PRIu64 "ns\n",
-                        ownerName_.c_str(), StateString[state], CommandString[(int)reqEvent->getCmd()], event->getBaseAddr(), getCurrentSimTimeNano());
-            }
-            return DONE;
-        case M_Inv: // PutS raced with AckInv from GetX, PutS raced with AckInv from FetchInv
-            if (reqEvent->getCmd() == Command::FetchInv) {
-                sendResponseDown(reqEvent, dirLine, &event->getPayload(), true, true);
-                dirLine->setState(I);
-            } else {
-                notifyListenerOfAccess(reqEvent, NotifyAccessType::WRITE, NotifyResultType::HIT);
-                dirLine->setOwner(reqEvent->getSrc());
-                if (dirLine->isSharer(reqEvent->getSrc())) dirLine->removeSharer(reqEvent->getSrc());
-                sendTime = sendResponseUp(reqEvent, &event->getPayload(), true, dirLine->getTimestamp());
-                dirLine->setTimestamp(sendTime);
-                if (is_debug_event(reqEvent)) printData(&event->getPayload(), false);
-                dirLine->setState(M);
-            }
-            return DONE;
-        case M_D:   // PutS raced with Fetch from GetS
-            dirLine->setState(M);
-            if (reqEvent->getCmd() == Command::Fetch) {
-                if (dirLine->getDataLine() == NULL && dirLine->numSharers() == 0) {
-                    sendWritebackFromMSHR(Command::PutM, dirLine, reqEvent->getRqstr(), &event->getPayload());
-                    dirLine->setState(I);
-                } else {
-                    sendResponseDownFromMSHR(event, false);
-                }
-            } else if (reqEvent->getCmd() == Command::GetS) {
-                notifyListenerOfAccess(reqEvent, NotifyAccessType::READ, NotifyResultType::HIT);
-                if (dirLine->numSharers() == 0) {
-                    dirLine->setOwner(reqEvent->getSrc());
-                    sendTime = sendResponseUp(reqEvent, Command::GetXResp, &event->getPayload(), true, dirLine->getTimestamp());
-                    dirLine->setTimestamp(sendTime);
-                } else {
-                    dirLine->addSharer(reqEvent->getSrc());
-                    sendTime = sendResponseUp(reqEvent, &event->getPayload(), true, dirLine->getTimestamp());
-                    dirLine->setTimestamp(sendTime);
-                }
-                if (is_debug_event(event)) printData(&event->getPayload(), false);
-            } else {
-                debug->fatal(CALL_INFO, -1, "%s (dir), Error: Received PutS in state %s but stalled request has command %s. Addr = 0x%" PRIx64 ". Time = %" PRIu64 "ns\n",
-                        ownerName_.c_str(), StateString[state], CommandString[(int)reqEvent->getCmd()], event->getBaseAddr(), getCurrentSimTimeNano());
-            }
-            return DONE;
-        case SM_Inv:
-            if (reqEvent->getCmd() == Command::Inv) {    // Completed Inv so handle
-                if (dirLine->numSharers() > 0) {
-                    invalidateAllSharers(dirLine, event->getRqstr(), true);
-                    return IGNORE;
-                }
-                sendAckInv(reqEvent);
-                dirLine->setState(IM);
-            } else if (reqEvent->getCmd() == Command::FetchInv) {
-                if (dirLine->numSharers() > 0) {
-                    invalidateAllSharers(dirLine, event->getRqstr(), true);
-                    return IGNORE;
-                }
-                sendResponseDownFromMSHR(event, false);
-                dirLine->setState(IM);
-            } else {    // Waiting on data for upgrade
-                dirLine->setState(SM);
-                action = IGNORE;
-            }
-            return DONE;
-        case SM_D:
-            if (reqEvent->getCmd() == Command::Fetch) {
-                sendResponseDownFromMSHR(event, false);
-                dirLine->setState(SM);
-            } 
-            return DONE;
-        default:
-            debug->fatal(CALL_INFO, -1, "%s, Error: Received PutS in unhandled state. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, State = %s. Time = %" PRIu64 "ns\n",
-                    ownerName_.c_str(), event->getBaseAddr(), CommandString[(int)event->getCmd()], event->getSrc().c_str(),
-                    StateString[state], getCurrentSimTimeNano());
-    }
-    return action; // eliminate compiler warning
-}
-
-
-/* CacheAction return value indicates whether the racing action completed (reqEvent). PutMs always complete! */
-CacheAction MESISharNoninclusive::handlePutMRequest(MemEvent * event, CacheLine * dirLine, MemEvent * reqEvent) {
-    State state = dirLine->getState();
-    recordStateEventCount(event->getCmd(), state);
-
-    bool isCached = dirLine->getDataLine() != NULL;
-    if (isCached) dirLine->getDataLine()->setData(event->getPayload(), 0);
-    else if (mshr_->isHit(dirLine->getBaseAddr())) mshr_->setDataBuffer(dirLine->getBaseAddr(), event->getPayload());
-
-    if (mshr_->getAcksNeeded(event->getBaseAddr()) > 0) mshr_->decrementAcksNeeded(event->getBaseAddr());
-
-    uint64_t sendTime = 0;
-
-    switch (state) {
-        case E:
-            if (event->getDirty()) dirLine->setState(M);
-        case M:
-            dirLine->clearOwner();
-            sendWritebackAck(event);
-            if (!isCached) {
-                sendWritebackFromMSHR(((dirLine->getState() == E) ? Command::PutE : Command::PutM), dirLine, event->getRqstr(), &event->getPayload());
-                if (expectWritebackAck_) mshr_->insertWriteback(dirLine->getBaseAddr());
-                dirLine->setState(I);
-            }
-            break;
-        case EI:    // Evicting this block anyways
-            if (event->getDirty()) dirLine->setState(MI);
-        case MI:
-            dirLine->clearOwner();
-            sendWritebackFromMSHR(((dirLine->getState() == EI) ? Command::PutE : Command::PutM), dirLine, ownerName_, &event->getPayload());
-            if (expectWritebackAck_) mshr_->insertWriteback(dirLine->getBaseAddr());
-            dirLine->setState(I);
-            break;
-        case E_InvX:
-            dirLine->clearOwner();
-            if (reqEvent->getCmd() == Command::FetchInvX) {
-                if (!isCached) {
-                    sendWritebackFromMSHR(event->getDirty() ? Command::PutM : Command::PutE, dirLine, event->getRqstr(), &event->getPayload());
-                    dirLine->setState(I);
-                    if (expectWritebackAck_) mshr_->insertWriteback(event->getBaseAddr());
-                } else {
-                    sendResponseDownFromMSHR(event, (event->getCmd() == Command::PutM));
-                    dirLine->setState(S);
-                }
-            } else {
-                notifyListenerOfAccess(reqEvent, NotifyAccessType::READ, NotifyResultType::HIT);
-                if (protocol_) {
-                    sendTime = sendResponseUp(reqEvent, Command::GetXResp, &event->getPayload(), true, dirLine->getTimestamp());
-                    dirLine->setTimestamp(sendTime);
-                    dirLine->setOwner(reqEvent->getSrc());
-                } else {
-                    sendTime = sendResponseUp(reqEvent, &event->getPayload(), true, dirLine->getTimestamp());
-                    dirLine->setTimestamp(sendTime);
-                    dirLine->addSharer(reqEvent->getSrc());
-                }
-                if (is_debug_event(event)) printData(&event->getPayload(), false);
-                if (event->getDirty()) dirLine->setState(M);
-                else dirLine->setState(E);
-            }
-            return DONE;
-        case M_InvX:
-            dirLine->clearOwner();
-            if (reqEvent->getCmd() == Command::FetchInvX) {
-                if (!isCached) {
-                    sendWritebackFromMSHR(Command::PutM, dirLine, event->getRqstr(), &event->getPayload());
-                    dirLine->setState(I);
-                    if (expectWritebackAck_) mshr_->insertWriteback(event->getBaseAddr());
-                } else {
-                    sendResponseDownFromMSHR(event, true);
-                    dirLine->setState(S);
-                }
-            } else {
-                notifyListenerOfAccess(reqEvent, NotifyAccessType::READ, NotifyResultType::HIT);
-                dirLine->setState(M);
-                if (protocol_) {
-                    sendTime = sendResponseUp(reqEvent, Command::GetXResp, &event->getPayload(), true, dirLine->getTimestamp());
-                    dirLine->setTimestamp(sendTime);
-                    dirLine->setOwner(reqEvent->getSrc());
-                } else {
-                    sendTime = sendResponseUp(reqEvent, &event->getPayload(), true, dirLine->getTimestamp());
-                    dirLine->setTimestamp(sendTime);
-                    dirLine->addSharer(reqEvent->getSrc());
-                }
-                if (is_debug_event(event)) printData(&event->getPayload(), false);
-            }
-            return DONE;
-        case E_Inv:
-            if (event->getCmd() == Command::PutM) dirLine->setState(M_Inv);
-        case M_Inv: // PutM raced with FetchInv to owner
-            dirLine->clearOwner();
-            if (reqEvent->getCmd() == Command::GetX || reqEvent->getCmd() == Command::GetSX) {
-                notifyListenerOfAccess(reqEvent, NotifyAccessType::WRITE, NotifyResultType::HIT);
-                dirLine->setState(M);
-                sendTime = sendResponseUp(reqEvent, &event->getPayload(), true, dirLine->getTimestamp());
-                dirLine->setTimestamp(sendTime);
-                dirLine->setOwner(reqEvent->getSrc());
-                if (is_debug_event(event)) printData(&event->getPayload(), false);
-            } else { /* Cmd == Fetch */
-                sendResponseDownFromMSHR(event, (dirLine->getState() == M_Inv));
-                dirLine->setState(I);
-            }
-            return DONE;
-        default:
-    	    debug->fatal(CALL_INFO, -1, "%s, Error: Updating data but cache is not in E or M state. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, State = %s. Time = %" PRIu64 "ns\n", 
-                    ownerName_.c_str(), event->getBaseAddr(), CommandString[(int)event->getCmd()], event->getSrc().c_str(), StateString[state], getCurrentSimTimeNano());
-    }
-    return DONE;
-}
-
-
-
-CacheAction MESISharNoninclusive::handleFlushLineRequest(MemEvent * event, CacheLine * dirLine, MemEvent * reqEvent, bool replay) {
-    State state = dirLine ? dirLine->getState() : I;
-    if (!replay) recordStateEventCount(event->getCmd(), state);
+            if (event->getEvict()) {
+                removeOwnerViaInv(event, tag, data, true);
+                tag->addSharer(event->getSrc());
                 
-    recordLatencyType(event->getID(), LatType::HIT);
-
-    bool isCached = dirLine && dirLine->getDataLine() != NULL;
-    if (event->getPayloadSize() != 0) {
-        if (isCached) dirLine->getDataLine()->setData(event->getPayload(), 0);
-        else if (mshr_->isHit(event->getBaseAddr())) mshr_->setDataBuffer(event->getBaseAddr(), event->getPayload());
-    }
-
-    CacheAction reqEventAction; // What to do with the reqEvent
-    uint64_t sendTime = 0;
-    // Handle flush at local level
-    switch (state) {
-        case I:
-        case S:
-        case I_B:
-        case S_B:
-            if (reqEvent != NULL) return STALL;
-            break;
-        case E:
-        case M:
-            if (dirLine->getOwner() == event->getSrc()) {
-                dirLine->clearOwner();
-                dirLine->addSharer(event->getSrc());
-                if (event->getDirty()) {
-                    dirLine->setState(M);
-                }
-            }
-            if (dirLine->ownerExists()) {
-                sendFetchInvX(dirLine, event->getRqstr(), replay);
-                mshr_->incrementAcksNeeded(event->getBaseAddr());
-                state == E ? dirLine->setState(E_InvX) : dirLine->setState(M_InvX);
-                return STALL;
-            }
-            break;
-        case IM:
-        case IS:
-        case SM:
-            return STALL; // Wait for the Get* request to finish
-        case SM_D:
-        case S_D:
-        case E_D:
-        case M_D:
-            return STALL; // Flush raced with Fetch 
-        case S_Inv:
-        case SI:
-            return STALL; // Flush raced with Inv
-        case SM_Inv:
-            return STALL; // Flush raced with Inv
-        case MI:
-        case EI:
-        case M_Inv:
-        case E_Inv:
-            if (dirLine->getOwner() == event->getSrc()) {
-                dirLine->clearOwner();
-                dirLine->addSharer(event->getSrc()); // Other cache will treat FetchInv as Inv
-            }
-            if (event->getDirty()) {
-                if (state == EI) dirLine->setState(MI);
-                else if (state == E_Inv) dirLine->setState(M_Inv);
-            }
-            return STALL;
-        case M_InvX:
-        case E_InvX:
-            if (dirLine->getOwner() == event->getSrc()) {
-                dirLine->clearOwner();
-                dirLine->addSharer(event->getSrc());
-                mshr_->decrementAcksNeeded(event->getBaseAddr());
-                if (event->getDirty()) {
-                    dirLine->setState(M_InvX);
-                    state = M_InvX;
-                }
-            }
-            if (mshr_->getAcksNeeded(event->getBaseAddr()) == 0) {
-                if (reqEvent->getCmd() == Command::FetchInvX) {
-                    sendResponseDownFromMSHR(event, state == M_InvX);
-                    dirLine->setState(S);
-                } else if (reqEvent->getCmd() == Command::FlushLine) {
-                    dirLine->setState(NextState[state]);
-                    return handleFlushLineRequest(reqEvent, dirLine, NULL, true);
-                } else if (reqEvent->getCmd() == Command::FetchInv) {
-                    dirLine->setState(NextState[state]);
-                    return handleFetchInv(reqEvent, dirLine, true, NULL);
-                } else {
-                    notifyListenerOfAccess(reqEvent, NotifyAccessType::READ, NotifyResultType::HIT);
-                    dirLine->addSharer(reqEvent->getSrc());
-                    sendTime = sendResponseUp(reqEvent, (isCached ? dirLine->getDataLine()->getData() : mshr_->getDataBuffer(event->getBaseAddr())), true, dirLine->getTimestamp());
-                    dirLine->setTimestamp(sendTime);
-                    dirLine->setState(NextState[state]);
-                }
-                return DONE;
-            } else return STALL;
-        default:
-            debug->fatal(CALL_INFO, -1, "%s, Error: Received %s in unhandled state %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
-                    ownerName_.c_str(), CommandString[(int)event->getCmd()], StateString[state], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
-    }
-
-    forwardFlushLine(event, dirLine, dirLine && dirLine->getState() == M, Command::FlushLine);
-    if (dirLine && dirLine->getState() != I) dirLine->setState(S_B);
-    else if (dirLine) dirLine->setState(I_B);
-    event->setInProgress(true);
-    return STALL;   // wait for response
-}
-
-
-/**
- * Handler for cache line flush requests
- * Invalidate owner/sharers
- * Invalidate local
- * Forward
- */
-
-CacheAction MESISharNoninclusive::handleFlushLineInvRequest(MemEvent * event, CacheLine * dirLine, MemEvent * reqEvent, bool replay) {
-    State state = dirLine ? dirLine->getState() : I;
-    if (!replay) recordStateEventCount(event->getCmd(), state);
-    
-    recordLatencyType(event->getID(), LatType::HIT);
-
-    bool isCached = dirLine && dirLine->getDataLine() != NULL;
-    if (event->getPayloadSize() != 0) {
-        if (isCached) dirLine->getDataLine()->setData(event->getPayload(), 0);
-        else if (mshr_->isHit(event->getBaseAddr())) mshr_->setDataBuffer(event->getBaseAddr(), event->getPayload());
-    }
-
-    // Apply incoming flush -> remove if owner
-    if (state == M || state == E) {
-        if (dirLine->getOwner() == event->getSrc()) {
-            dirLine->clearOwner();
-            if (event->getDirty()) {
-                dirLine->setState(M);
-                state = M;
-            }
-        }
-    }
-
-    CacheAction reqEventAction; // What to do with the reqEvent
-    uint64_t sendTime = 0;
-    // Handle flush at local level
-    switch (state) {
-        case I:
-            if (reqEvent != NULL) return STALL;
-            break;
-        case S:
-            if (dirLine->getPrefetch()) {
-                dirLine->setPrefetch(false);
-                statPrefetchEvict->addData(1);
-            }
-
-            if (dirLine->isSharer(event->getSrc())) dirLine->removeSharer(event->getSrc());
-            if (dirLine->numSharers() > 0) {
-                invalidateAllSharers(dirLine, event->getRqstr(), replay);
-                dirLine->setState(S_Inv);
-                return STALL;
-            }
-            break;
-        case E:
-        case M:
-            if (dirLine->getPrefetch()) {
-                dirLine->setPrefetch(false);
-                statPrefetchEvict->addData(1);
-            }
-
-            if (dirLine->isSharer(event->getSrc())) dirLine->removeSharer(event->getSrc());
-            if (dirLine->ownerExists()) {
-                sendFetchInv(dirLine, event->getRqstr(), replay);
-                mshr_->incrementAcksNeeded(event->getBaseAddr());
-                state == E ? dirLine->setState(E_Inv) : dirLine->setState(M_Inv);
-                return STALL;
-            }
-            if (dirLine->numSharers() > 0) {
-                invalidateAllSharers(dirLine, event->getRqstr(), replay);
-                state == E ? dirLine->setState(E_Inv) : dirLine->setState(M_Inv);
-                return STALL;
-            }
-            break;
-        case IM:
-        case IS:
-        case SM:
-            return STALL; // Wait for the Get* request to finish
-        case SM_D:
-            if (*(dirLine->getSharers()->begin()) == event->getSrc()) { // Flush raced with Fetch
-                mshr_->decrementAcksNeeded(event->getBaseAddr());
-            }
-            if (mshr_->getAcksNeeded(event->getBaseAddr()) == 0) {
-                if (reqEvent->getCmd() == Command::Fetch) {
-                    dirLine->setState(SM);
-                    sendResponseDownFromMSHR(event, false);
-                    return DONE;
-                }
-            } 
-            return STALL;
+                mshr_->decrementAcksNeeded(addr);
+                tag->setState(NextState[tag->getState()]);
         
-        case S_D:
-        case E_D:
-        case M_D:
-            if (*(dirLine->getSharers()->begin()) == event->getSrc()) {
-                mshr_->decrementAcksNeeded(event->getBaseAddr()); 
+                retry(addr);
+                event->setEvict(false); // Don't replay the eviction part of this flush
             }
-            if (dirLine->isSharer(event->getSrc())) {
-                dirLine->removeSharer(event->getSrc());
-            }
-            if (mshr_->getAcksNeeded(event->getBaseAddr()) == 0) {
-                dirLine->setState(NextState[state]);
-                if (reqEvent->getCmd() == Command::Fetch) {
-                    if (dirLine->getDataLine() == NULL && dirLine->numSharers() == 0) {
-                        if (state == M_D || event->getDirty()) sendWritebackFromMSHR(Command::PutM, dirLine, reqEvent->getRqstr(), &event->getPayload());
-                        else if (state == E_D) sendWritebackFromMSHR(Command::PutE, dirLine, reqEvent->getRqstr(), &event->getPayload());
-                        else if (state == S_D) sendWritebackFromMSHR(Command::PutS, dirLine, reqEvent->getRqstr(), &event->getPayload());
-                        dirLine->setState(I);
-                    } else {
-                        sendResponseDownFromMSHR(event, (state == M_D || event->getDirty()) ? true : false);
-                    }
-                } else if (reqEvent->getCmd() == Command::GetS) {
-                    notifyListenerOfAccess(reqEvent, NotifyAccessType::READ, NotifyResultType::HIT);
-                    if (dirLine->numSharers() > 0 || state == S_D) {
-                        dirLine->addSharer(reqEvent->getSrc());
-                        sendTime = sendResponseUp(reqEvent, &event->getPayload(), true, dirLine->getTimestamp());
-                        dirLine->setTimestamp(sendTime);
-                    } else {
-                        dirLine->setOwner(reqEvent->getSrc());
-                        sendTime = sendResponseUp(reqEvent, Command::GetXResp, &event->getPayload(), true, dirLine->getTimestamp());
-                        dirLine->setTimestamp(sendTime);
-                    }
-                    if (is_debug_event(event)) printData(&event->getPayload(), false);
-                } else {
-                    debug->fatal(CALL_INFO, -1, "%s (dir), Error: Received FlushLineInv in state %s but stalled request has command %s. Addr = 0x%" PRIx64 ". Time = %" PRIu64 "ns\n",
-                            ownerName_.c_str(), StateString[state], CommandString[(int)reqEvent->getCmd()], event->getBaseAddr(), getCurrentSimTimeNano());
-                }
-                return DONE;
-            }
-            return STALL;
-        case S_Inv:
-            if (dirLine->isSharer(event->getSrc())) {
-                dirLine->removeSharer(event->getSrc());
-                mshr_->decrementAcksNeeded(event->getBaseAddr());
-            }
-            reqEventAction = (mshr_->getAcksNeeded(event->getBaseAddr()) == 0) ? DONE : STALL;
-            if (reqEventAction == DONE) {
-                if (reqEvent->getCmd() == Command::Inv) {
-                    sendAckInv(reqEvent);
-                    dirLine->setState(I);
-                } else if (reqEvent->getCmd() == Command::Fetch || reqEvent->getCmd() == Command::FetchInv || reqEvent->getCmd() == Command::FetchInvX) {
-                    sendResponseDownFromMSHR(event, false);
-                    dirLine->setState(I);
-                } else if (reqEvent->getCmd() == Command::FlushLineInv) {
-                    forwardFlushLine(reqEvent, dirLine, false, Command::FlushLineInv);
-                    reqEventAction = STALL;
-                    dirLine->setState(I_B);
-                }
-            }
-            return reqEventAction;
-        case SM_Inv:
-            if (dirLine->isSharer(event->getSrc())) {
-                dirLine->removeSharer(event->getSrc());
-                mshr_->decrementAcksNeeded(event->getBaseAddr());
-            }
-            if (mshr_->getAcksNeeded(event->getBaseAddr()) == 0) {
-                if (reqEvent->getCmd() == Command::Inv) {
-                    if (dirLine->numSharers() > 0) {  // May not have invalidated GetX requestor -> cannot also be the FlushLine requestor since that one is in I and blocked on flush
-                        invalidateAllSharers(dirLine, reqEvent->getRqstr(), true);
-                        return STALL;
-                    } else {
-                        sendAckInv(reqEvent);
-                        dirLine->setState(IM);
-                        return DONE;
-                    }
-                } else if (reqEvent->getCmd() == Command::GetXResp) {
-                    dirLine->setState(SM);
-                    return STALL; // Waiting for GetXResp
-                }
-                debug->fatal(CALL_INFO, -1, "%s, Error: Received %s in state SM_Inv but case does not match an implemented handler. Addr = 0x%" PRIx64 ", Src = %s, OrigEvent = %s. Time = %" PRIu64 "ns\n",
-                        ownerName_.c_str(), CommandString[(int)event->getCmd()], event->getBaseAddr(), event->getSrc().c_str(), CommandString[(int)reqEvent->getCmd()], getCurrentSimTimeNano());
-            }
-            return STALL;
-        case MI:
-            if (dirLine->getOwner() == event->getSrc()) {
-                dirLine->clearOwner();
-                mshr_->decrementAcksNeeded(event->getBaseAddr());
-            } else if (dirLine->isSharer(event->getSrc())) {
-                dirLine->removeSharer(event->getSrc());
-                mshr_->decrementAcksNeeded(event->getBaseAddr());
-            }
-            if (mshr_->getAcksNeeded(event->getBaseAddr()) == 0) {
-                if (isCached) sendWritebackFromCache(Command::PutM, dirLine, ownerName_);
-                else sendWritebackFromMSHR(Command::PutM, dirLine, ownerName_, mshr_->getDataBuffer(event->getBaseAddr()));
-                if (expectWritebackAck_) mshr_->insertWriteback(dirLine->getBaseAddr());
-                dirLine->setState(NextState[state]);
-                return DONE;
-            } else return STALL;
-        case EI:
-            if (dirLine->getOwner() == event->getSrc()) {
-                dirLine->clearOwner();
-                mshr_->decrementAcksNeeded(event->getBaseAddr());
-            } else if (dirLine->isSharer(event->getSrc())) {
-                dirLine->removeSharer(event->getSrc());
-                mshr_->decrementAcksNeeded(event->getBaseAddr());
-            }
-            if (event->getDirty()) dirLine->setState(MI);
-            if (mshr_->getAcksNeeded(event->getBaseAddr()) == 0) {
-                if (isCached && event->getDirty()) sendWritebackFromCache(Command::PutM, dirLine, ownerName_);
-                else if (isCached) sendWritebackFromCache(Command::PutE, dirLine, ownerName_);
-                else if (event->getDirty()) sendWritebackFromMSHR(Command::PutM, dirLine, ownerName_, mshr_->getDataBuffer(event->getBaseAddr()));
-                else sendWritebackFromMSHR(Command::PutE, dirLine, ownerName_, mshr_->getDataBuffer(event->getBaseAddr()));
-                if (expectWritebackAck_) mshr_->insertWriteback(dirLine->getBaseAddr());
-                dirLine->setState(NextState[state]);
-                return DONE;
-            } else return STALL;
-        case SI:
-            if (dirLine->isSharer(event->getSrc())) {
-                dirLine->removeSharer(event->getSrc());
-                mshr_->decrementAcksNeeded(event->getBaseAddr());
-            }
-            if (mshr_->getAcksNeeded(event->getBaseAddr()) == 0) {
-                if (isCached) sendWritebackFromCache(Command::PutS, dirLine, ownerName_);
-                else sendWritebackFromMSHR(Command::PutS, dirLine, ownerName_, mshr_->getDataBuffer(event->getBaseAddr()));
-                if (expectWritebackAck_) mshr_->insertWriteback(dirLine->getBaseAddr());
-                dirLine->setState(I);
-                return DONE;
-            } else return STALL;
-        case M_Inv:
-            if (dirLine->isSharer(event->getSrc())) {
-                dirLine->removeSharer(event->getSrc());
-                mshr_->decrementAcksNeeded(event->getBaseAddr());
-            } else if (dirLine->getOwner() == event->getSrc()) {
-                dirLine->clearOwner();
-                mshr_->decrementAcksNeeded(event->getBaseAddr());
-            }
-            if (mshr_->getAcksNeeded(event->getBaseAddr()) == 0) {
-                if (reqEvent->getCmd() == Command::FetchInv) {
-                    sendResponseDown(reqEvent, dirLine, &event->getPayload(), true, true);
-                    dirLine->setState(I);
-                    return DONE;
-                } else if (reqEvent->getCmd() == Command::GetX || reqEvent->getCmd() == Command::GetSX) {
-                    dirLine->setOwner(reqEvent->getSrc());
-                    if (dirLine->isSharer(reqEvent->getSrc())) dirLine->removeSharer(reqEvent->getSrc());
-                    sendTime = sendResponseUp(reqEvent, (isCached ? dirLine->getDataLine()->getData() : mshr_->getDataBuffer(event->getBaseAddr())), true, dirLine->getTimestamp());
-                    dirLine->setTimestamp(sendTime);
-                    dirLine->setState(M);
-                    return DONE;
-                } else if (reqEvent->getCmd() == Command::FlushLineInv) {
-                    forwardFlushLine(reqEvent, dirLine, true, Command::FlushLineInv);
-                    dirLine->setState(I_B);
-                    return STALL;
-                }
-            } else return STALL;
+            break;
         case E_Inv:
-            if (dirLine->isSharer(event->getSrc())) {
-                dirLine->removeSharer(event->getSrc());
-                mshr_->decrementAcksNeeded(event->getBaseAddr());
-            } else if (dirLine->getOwner() == event->getSrc()) {
-                dirLine->clearOwner();
-                mshr_->decrementAcksNeeded(event->getBaseAddr());
+        case M_Inv:
+            if (event->getEvict()) {
+                removeOwnerViaInv(event, tag, data, false);
+                tag->addSharer(event->getSrc());
+                event->setEvict(false);
             }
-            if (mshr_->getAcksNeeded(event->getBaseAddr()) == 0) {
-                if (reqEvent->getCmd() == Command::FetchInv) {
-                    sendResponseDown(reqEvent, dirLine, &event->getPayload(), event->getDirty(), true);
-                    dirLine->setState(I);
-                    return DONE;
-                } else if (reqEvent->getCmd() == Command::FlushLineInv) {
-                    forwardFlushLine(reqEvent, dirLine, reqEvent->getDirty(), Command::FlushLineInv);
-                    dirLine->setState(I_B);
-                    return STALL;
-
-                }
-            } else return STALL;
-        case M_InvX:
-        case E_InvX:
-            if (dirLine->getPrefetch()) {
-                dirLine->setPrefetch(false);
-                statPrefetchEvict->addData(1);
-            }
-            if (dirLine->getOwner() == event->getSrc()) {
-                mshr_->decrementAcksNeeded(event->getBaseAddr());
-                dirLine->clearOwner();
-            }
-            if (mshr_->getAcksNeeded(event->getBaseAddr()) == 0) {
-                if (reqEvent->getCmd() == Command::FetchInvX) {
-                    if (!isCached) {
-                        sendWritebackFromMSHR((event->getDirty() || state == M_InvX) ? Command::PutM : Command::PutE, dirLine, event->getRqstr(), &event->getPayload());
-                        dirLine->setState(I);
-                        if (expectWritebackAck_) mshr_->insertWriteback(event->getBaseAddr());
-                    } else {
-                        sendResponseDownFromMSHR(event, (state == M_InvX || event->getDirty()));
-                        dirLine->setState(S);
-                    }   
-                } else {
-                    notifyListenerOfAccess(reqEvent, NotifyAccessType::READ, NotifyResultType::HIT);
-                    if (protocol_) {
-                        sendTime = sendResponseUp(reqEvent, Command::GetXResp, &event->getPayload(), true, dirLine->getTimestamp());
-                        dirLine->setTimestamp(sendTime);
-                        dirLine->addSharer(reqEvent->getSrc());
-                    } else {
-                        sendTime = sendResponseUp(reqEvent, &event->getPayload(), true, dirLine->getTimestamp());
-                        dirLine->setTimestamp(sendTime);
-                        dirLine->addSharer(reqEvent->getSrc());
-                    }
-                    if (is_debug_event(event)) printData(&event->getPayload(), false);
-                }
-
-                (state == M_InvX || event->getDirty()) ? dirLine->setState(M) : dirLine->setState(E);
-                return DONE;
-            } else return STALL;
+            break;
         default:
-            debug->fatal(CALL_INFO, -1, "%s, Error: Received %s in unhandled state %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
-                    ownerName_.c_str(), CommandString[(int)event->getCmd()], StateString[state], event->getBaseAddr(), event->getSrc().c_str(), getCurrentSimTimeNano());
+            break;
     }
-
-    forwardFlushLine(event, dirLine, dirLine && dirLine->getState() == M, Command::FlushLineInv);
-    if (dirLine) dirLine->setState(I_B);
-    return STALL;   // wait for response
+    
+    if (is_debug_addr(addr) && tag) {
+        eventDI.newst = tag->getState();
+        eventDI.verboseline = tag->getString();
+        if (data)
+            eventDI.verboseline += "/" + data->getString();
+    }
+    
+    if (status == MemEventStatus::Reject)
+        sendNACK(event);
+    
+    return true;
 }
 
 
-/**
- *  Handler for 'Inv' requests
- *  Invalidate sharers if needed
- *  Send AckInv if no sharers exist
- */
-CacheAction MESISharNoninclusive::handleInv(MemEvent* event, CacheLine* dirLine, bool replay, MemEvent * collisionEvent) {
-    
-    State state = dirLine->getState();
-    recordStateEventCount(event->getCmd(), state);    
-    
-    if (dirLine->getPrefetch()) {
-        dirLine->setPrefetch(false);
-        statPrefetchInv->addData(1);
-    }
+/* Flush a line from cache & invalidate it */
+bool MESISharNoninclusive::handleFlushLineInv(MemEvent* event, bool inMSHR) {
+    Addr addr = event->getBaseAddr();
+    DirectoryLine * tag = dirArray_->lookup(addr, false);
+    State state = tag ? tag->getState() : I;
+    DataLine * data = (tag) ? dataArray_->lookup(addr, false) : nullptr;
+    if (data && data->getTag() != tag) data = nullptr;
+    MemEventStatus status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, false);
+  
+    if (is_debug_event(event))
+        eventDI.prefill(event->getID(), Command::FlushLineInv, false, addr, state);
 
-    switch(state) {
-        case I_B:   // Already forwarded our flush
-            return DONE;
-        case S_B:
-        case S:
-            if (dirLine->numSharers() > 0) {
-                invalidateAllSharers(dirLine, event->getRqstr(), replay);
-                state == S_B ? dirLine->setState(SB_Inv) : dirLine->setState(S_Inv);
-                // Resolve races with waiting PutS requests
-                while (collisionEvent != NULL) {
-                    if (collisionEvent->getCmd() == Command::PutS) {
-                        dirLine->removeSharer(collisionEvent->getSrc());
-                        mshr_->decrementAcksNeeded(event->getBaseAddr());
-                        mshr_->removeElement(event->getBaseAddr(), collisionEvent);   
-                        delete collisionEvent;
-                        collisionEvent = (mshr_->isHit(event->getBaseAddr())) ? static_cast<MemEvent*>(mshr_->lookupFront(event->getBaseAddr())) : nullptr;
-                        if (collisionEvent && collisionEvent->getCmd() != Command::PutS) collisionEvent = NULL;
-                    } else collisionEvent = NULL;
-                }
-                if (mshr_->getAcksNeeded(event->getBaseAddr()) > 0) return STALL;
-            }
-            sendAckInv(event);
-            state == S_B ? dirLine->setState(I_B) : dirLine->setState(I);
-            return DONE;
-        case SM:
-            if (dirLine->numSharers() > 0) {
-                invalidateAllSharers(dirLine, event->getRqstr(), replay);
-                dirLine->setState(SM_Inv);
-                while (collisionEvent != NULL) {
-                    if (collisionEvent->getCmd() == Command::PutS) {
-                        dirLine->removeSharer(collisionEvent->getSrc());
-                        mshr_->decrementAcksNeeded(event->getBaseAddr());
-                        mshr_->removeFront(event->getBaseAddr());   // We've sent an inv to them so no need for AckPut
-                        delete collisionEvent;
-                        collisionEvent = (mshr_->isHit(event->getBaseAddr())) ? static_cast<MemEvent*>(mshr_->lookupFront(event->getBaseAddr())) : nullptr;
-                        if (collisionEvent == NULL || collisionEvent->getCmd() != Command::PutS) collisionEvent = NULL;
-                    } else collisionEvent = NULL;
-                }
-                if (mshr_->getAcksNeeded(event->getBaseAddr()) > 0) return STALL;
-            }
-            sendAckInv(event);
-            dirLine->setState(IM);
-            return DONE;
-        case SI:
-        case S_Inv: // PutS in progress, stall this Inv for that
-        case S_D:   // Waiting for a GetS to resolve, stall until it does
-            return BLOCK;
-        case SM_Inv:    // Waiting on GetSResp, stall this Inv until invacks come back
-            return STALL;
-        default:
-	    debug->fatal(CALL_INFO,-1,"%s (dir), Error: Received an invalidation in an unhandled state: %s. Addr = 0x%" PRIx64 ", Src = %s, State = %s. Time = %" PRIu64 "ns\n", 
-                    ownerName_.c_str(), CommandString[(int)event->getCmd()], event->getBaseAddr(), event->getSrc().c_str(), StateString[state], getCurrentSimTimeNano());
-    }
-    return STALL;
-}
+    vector<uint8_t>* datavec = nullptr; 
 
-
-/**
- * Handle ForceInv requests
- * Invalidate block regardless of whether it is dirty or not and send an ack
- * Do not forward dirty data with ack
- */
-CacheAction MESISharNoninclusive::handleForceInv(MemEvent * event, CacheLine * dirLine, bool replay, MemEvent * collisionEvent) {
-    State state = dirLine->getState();
-    recordStateEventCount(event->getCmd(), state);    
-    
-    bool isCached = dirLine->getDataLine() != NULL;
-    
-    if (dirLine->getPrefetch()) {
-        dirLine->setPrefetch(false);
-        statPrefetchInv->addData(1);
-    }
-
-    /* Handle mshr collisions with replacements - treat as having already occured, however AckPut needs to get returned */
-    while (collisionEvent && collisionEvent->isWriteback()) {
-        if (dirLine->isSharer(collisionEvent->getSrc())) dirLine->removeSharer(collisionEvent->getSrc());
-        if (dirLine->ownerExists()) dirLine->clearOwner();
-        sendWritebackAck(collisionEvent);
-        mshr_->removeFront(dirLine->getBaseAddr());
-        delete collisionEvent;
-        collisionEvent = (mshr_->isHit(event->getBaseAddr())) ? static_cast<MemEvent*>(mshr_->lookupFront(event->getBaseAddr())) : nullptr;
-    }
-
-    switch(state) {
-        /* Already sent some message indicating invalid to the next level so that will serve as AckInv */
+    switch (state) {
         case I:
-        case IS:
-        case IM:
-        case I_B:
-            return IGNORE; 
-        /* Cases where we are in shared - send any invalidations that need to go out */
-        case S:
-        case S_B:
-        case SM:
-            if (dirLine->numSharers() > 0) {
-                invalidateAllSharers(dirLine, event->getRqstr(), replay);
-                if (state == S) dirLine->setState(S_Inv);
-                else if (state == S_B) dirLine->setState(SB_Inv);
-                else dirLine->setState(SM_Inv);
-                if (mshr_->getAcksNeeded(event->getBaseAddr()) > 0) return STALL;
+            if (status == MemEventStatus::OK) {
+                forwardFlush(event, false, nullptr, false, 0);
+                mshr_->setInProgress(addr);
             }
-            sendAckInv(event);
-            if (state == S) dirLine->setState(I);
-            else if (state == S_B) dirLine->setState(I_B);
-            else dirLine->setState(IM);
-            return DONE;
+            break;
+        case S:
+            if (status == MemEventStatus::OK) {
+                if (event->getEvict()) {
+                    removeSharerViaInv(event, tag, data, false);
+                    event->setEvict(false); // Don't replay eviction
+                }
+                if (tag->hasSharers()) {
+                    invalidateSharers(event, tag, inMSHR, !data && !mshr_->hasData(addr), Command::Inv);
+                    tag->setState(S_Inv);
+                    break;
+                }
+
+                if (data)
+                    forwardFlush(event, true, data->getData(), false, tag->getTimestamp());
+                else
+                    forwardFlush(event, true, &(mshr_->getData(addr)), false, tag->getTimestamp());
+                mshr_->setInProgress(addr);
+                tag->setState(I_B);
+            }
+            break;
         case E:
         case M:
-            if (dirLine->ownerExists()) {
-                sendForceInv(dirLine, event->getRqstr(), replay);
-                mshr_->incrementAcksNeeded(event->getBaseAddr());
-                state == E ? dirLine->setState(E_Inv) : dirLine->setState(M_Inv);
-                return STALL;
+            if (status == MemEventStatus::OK) {
+                if (event->getEvict()) {
+                    if (tag->hasOwner())
+                        removeOwnerViaInv(event, tag, data, false);
+                    else
+                        removeSharerViaInv(event, tag, data, false);
+                    event->setEvict(false);
+                }
+
+                if (tag->hasOwner()) {
+                    invalidateOwner(event, tag, inMSHR, Command::FetchInv);
+                    tag->getState() == E ? tag->setState(E_Inv) : tag->setState(M_Inv);
+                } else if (tag->hasSharers()) {
+                    invalidateSharers(event, tag, inMSHR, !data && !mshr_->hasData(addr), Command::Inv);
+                    tag->getState() == E ? tag->setState(E_Inv) : tag->setState(M_Inv);
+                } else {
+                    if (data)
+                        forwardFlush(event, true, data->getData(), tag->getState() == M, tag->getTimestamp());
+                    else
+                        forwardFlush(event, true, &(mshr_->getData(addr)), tag->getState() == M, tag->getTimestamp());
+                    mshr_->setInProgress(addr);
+                    tag->setState(I_B);
+                }
             }
-            if (dirLine->numSharers() > 0) {
-                invalidateAllSharers(dirLine, event->getRqstr(), replay);
-                state == E ? dirLine->setState(E_Inv) : dirLine->setState(M_Inv);
-                return STALL;
+            break;
+        case SM_Inv:
+        case S_Inv:
+        case E_Inv:
+        case M_Inv:
+        case E_InvX:
+        case M_InvX:
+            if (event->getEvict()) {
+                if (tag->hasOwner())
+                    removeOwnerViaInv(event, tag, data, true);
+                else
+                    removeSharerViaInv(event, tag, data, true);
+                event->setEvict(false);
+                
+                if (mshr_->decrementAcksNeeded(addr)) {
+                    tag->setState(NextState[tag->getState()]);
+                    retry(addr);
+                }
             }
-            sendAckInv(event);
-            dirLine->setState(I);
-            return DONE;
-        case SI:
-            dirLine->setState(S_Inv);
-            return STALL;
-        case EI:
-            dirLine->setState(E_Inv);
-            return STALL;
-        case MI:
-            dirLine->setState(M_Inv);
-            return STALL;
+            break;
         case S_D:
         case E_D:
         case M_D:
         case SM_D:
-        case E_InvX:
-        case M_InvX:
-        case M_Inv:
+        case SB_D:
+            if (event->getEvict()) {
+                if (*(tag->getSharers()->begin()) == event->getSrc()) {
+                    removeSharerViaInv(event, tag, data, true);
+                    mshr_->decrementAcksNeeded(addr);
+                    tag->setState(NextState[tag->getState()]);
+                    retry(addr);
+                } else 
+                    removeSharerViaInv(event, tag, data, false);
+                event->setEvict(false);
+            }
+            break;
+        default:
+            break;
+    }
+
+    if (is_debug_addr(addr) && tag) {
+        eventDI.newst = tag->getState();
+        eventDI.verboseline = tag->getString();
+        if (data)
+            eventDI.verboseline += "/" + data->getString();
+    }
+
+    if (status == MemEventStatus::Reject)
+        sendNACK(event);
+
+    return true;
+}
+
+
+bool MESISharNoninclusive::handlePutS(MemEvent * event, bool inMSHR) {
+    Addr addr = event->getBaseAddr();
+    DirectoryLine * tag = dirArray_->lookup(addr, false);
+    State state = tag ? tag->getState() : I;
+    DataLine * data = (tag) ? dataArray_->lookup(addr, false) : nullptr;
+    if (data && data->getTag() != tag) data = nullptr;
+    MemEventStatus status = MemEventStatus::OK;
+
+    if (is_debug_event(event))
+        eventDI.prefill(event->getID(), Command::PutS, false, addr, state);
+
+    MemEventBase* entry;
+
+    switch (state) {
+        case S:
+        case E:
+        case M:
+            if (!data && tag->numSharers() == 1) { // Need to allocate line
+                status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, false, -1);
+                if (status != MemEventStatus::OK)
+                    break;
+                status = processDataMiss(event, tag, data, true);
+                if (status != MemEventStatus::OK) {
+                    if (state == S) tag->setState(SA);
+                    else if (state == E) tag->setState(EA);
+                    else tag->setState(MA);
+                    break;
+                }
+                data = dataArray_->lookup(addr, true);
+                data->setData(event->getPayload(), 0);
+                inMSHR = true;
+            }
+            tag->removeSharer(event->getSrc());
+            sendWritebackAck(event);
+            cleanUpAfterRequest(event, inMSHR);
+            break;
         case S_Inv:
         case E_Inv:
+        case M_Inv:
         case SM_Inv:
-        case SB_Inv:
-            if (collisionEvent->getCmd() == Command::FlushLine || collisionEvent->getCmd() == Command::FlushLineInv) return STALL;
-            return BLOCK;
+            removeSharerViaInv(event, tag, data, true);
+            if (mshr_->decrementAcksNeeded(addr))
+                tag->setState(NextState[state]);
+            sendWritebackAck(event);
+            cleanUpAfterRequest(event, inMSHR);
+            break;
+        case S_B:
+        case E_B:
+        case M_B:
+            if (!data && tag->numSharers() == 1) {
+                status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, false, 1);   // Put just after the Flush, will handle next
+                break;
+            }
+            tag->removeSharer(event->getSrc());
+            sendWritebackAck(event);
+            cleanUpEvent(event, inMSHR);
+            break;
+        case S_D:
+        case E_D:
+        case M_D:
+        case SB_D:
+            if (event->getSrc() == *(tag->getSharers()->begin())) { // Sent fetch to this requestor
+                // Retry the pending fetch
+                mshr_->decrementAcksNeeded(addr);
+                mshr_->setData(addr, event->getPayload());
+                responses.find(addr)->second.erase(event->getSrc());
+                if (responses.find(addr)->second.empty())
+                    responses.erase(addr);
+                tag->setState(NextState[state]);
+                retry(addr);
+
+                // Handle PutS now if we can, later if not
+                if (tag->numSharers() > 1) {
+                    tag->removeSharer(event->getSrc());
+                    sendWritebackAck(event);
+                    cleanUpEvent(event, inMSHR);
+                } else {
+                    if (inMSHR)
+                        mshr_->removeFront(addr); // Need to reinsert after the conflicting request
+                    entry = mshr_->getEntryEvent(addr, 1);
+                    if (entry && (CommandClassArr[(int)entry->getCmd()] == CommandClass::ForwardRequest || mshr_->getEntry(addr, 1).getInProgress()))
+                        status = allocateMSHR(event, false, 2); // Retry the waiting event and waiting forward request, then handle this replacement
+                    else 
+                        status = allocateMSHR(event, false, 1); // Retry the waiting event, then handle this replacement
+                }
+                break;
+            }
+            tag->removeSharer(event->getSrc());
+            sendWritebackAck(event);
+            cleanUpEvent(event, inMSHR);
+            break;
         default:
-            debug->fatal(CALL_INFO, -1, "%s (dir), Error: No handler for event in state %s. Event = %s. Time = %" PRIu64 "ns.\n",
+            debug->fatal(CALL_INFO,-1,"%s, Error: Received PutS in unhandled state '%s'. Event: %s. Time = %" PRIu64 "ns\n",
                     getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
-    return STALL;
+
+    if (is_debug_addr(addr) && tag) {
+        eventDI.newst = tag->getState();
+        eventDI.verboseline = tag->getString();
+        if (data)
+            eventDI.verboseline += "/" + data->getString();
+    }
+    
+    if (status == MemEventStatus::Reject)
+        sendNACK(event);
+
+    return true;
 }
 
 
-
-/**
- *  Handler for Fetch requests
- *  Forward to sharer with data
- */
-CacheAction MESISharNoninclusive::handleFetch(MemEvent * event, CacheLine * dirLine, bool replay, MemEvent * collisionEvent) {
-    State state = dirLine->getState();
-    recordStateEventCount(event->getCmd(), state);    
+bool MESISharNoninclusive::handlePutE(MemEvent * event, bool inMSHR) {
+    Addr addr = event->getBaseAddr();
+    DirectoryLine * tag = dirArray_->lookup(addr, false);
+    State state = tag ? tag->getState() : I;
+    DataLine * data = (tag) ? dataArray_->lookup(addr, false) : nullptr;
+    if (data && data->getTag() != tag) data = nullptr;
+    
+    MemEventStatus status = MemEventStatus::OK;
+    if (is_debug_event(event))
+        eventDI.prefill(event->getID(), Command::PutE, false, addr, state);
 
     switch (state) {
-        case I:
-        case IS:
-        case IM:
-            return IGNORE;
+        case E:
+        case M:
+            if (!data) { // Need to allocate line
+                status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, false, -1);
+                if (status != MemEventStatus::OK)
+                    break;
+                status = processDataMiss(event, tag, data, true);
+                if (status != MemEventStatus::OK) {
+                    state == E ? tag->setState(EA) : tag->setState(MA);
+                    break;
+                }
+                data = dataArray_->lookup(addr, true);
+                data->setData(event->getPayload(), 0);
+                inMSHR = true;
+            }
+            tag->removeOwner();
+            sendWritebackAck(event);
+            cleanUpAfterRequest(event, inMSHR);
+            break;
+        case E_InvX:
+        case M_InvX:
+            tag->removeOwner();
+            mshr_->decrementAcksNeeded(addr);
+            if (!data && !mshr_->hasData(addr))
+                mshr_->setData(addr, event->getPayload());
+            responses.find(addr)->second.erase(event->getSrc());
+            if (responses.find(addr)->second.empty())
+                responses.erase(addr);
+            tag->setState(NextState[state]);
+            // Handle PutE now if possible, later if not
+            if (data) {
+                sendWritebackAck(event);
+                cleanUpEvent(event, inMSHR);
+            } else {
+                tag->addSharer(event->getSrc());
+                event->setCmd(Command::PutS);
+                if (inMSHR)
+                    mshr_->removeFront(addr); // Need to reinsert after the conflicting request
+                MemEventBase* entry = mshr_->getEntryEvent(addr, 1);
+                if (entry && (CommandClassArr[(int)entry->getCmd()] == CommandClass::ForwardRequest || mshr_->getEntry(addr, 1).getInProgress()))
+                    status = allocateMSHR(event, false, 2); // Retry the waiting event and waiting forward request, then handle this replacement
+                else 
+                    status = allocateMSHR(event, false, 1); // Retry the waiting event, then handle this replacement
+                retry(addr);
+            }
+            break;
+        case E_Inv:
+        case M_Inv:
+            tag->removeOwner();
+            mshr_->decrementAcksNeeded(addr);
+            if (!data && !mshr_->hasData(addr))
+                mshr_->setData(addr, event->getPayload());
+            responses.find(addr)->second.erase(event->getSrc());
+            if (responses.find(addr)->second.empty())
+                responses.erase(addr);
+            sendWritebackAck(event);
+            tag->setState(NextState[state]);
+            cleanUpAfterRequest(event, inMSHR);
+            break;
+        default:
+            debug->fatal(CALL_INFO,-1,"%s, Error: Received PutE in unhandled state '%s'. Event: %s. Time = %" PRIu64 "ns\n",
+                    getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
+    }
+
+    if (is_debug_addr(addr) && tag) {
+        eventDI.newst = tag->getState();
+        eventDI.verboseline = tag->getString();
+        if (data)
+            eventDI.verboseline += "/" + data->getString();
+    }
+    if (status == MemEventStatus::Reject)
+        sendNACK(event);
+
+    return true;
+}
+
+bool MESISharNoninclusive::handlePutM(MemEvent * event, bool inMSHR) {
+    Addr addr = event->getBaseAddr();
+    DirectoryLine * tag = dirArray_->lookup(addr, false);
+    State state = tag ? tag->getState() : I;
+    DataLine * data = (tag) ? dataArray_->lookup(addr, false) : nullptr;
+    if (data && data->getTag() != tag) data = nullptr;
+    
+    MemEventStatus status = MemEventStatus::OK;
+    if (is_debug_event(event))
+        eventDI.prefill(event->getID(), Command::PutM, false, addr, state);
+
+    switch (state) {
+        case E:
+        case M:
+            if (!data) { // Need to allocate line
+                status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, false, -1);
+                if (status != MemEventStatus::OK)
+                    break;
+                status = processDataMiss(event, tag, data, true);
+                if (status != MemEventStatus::OK) {
+                    tag->setState(MA);
+                    break;
+                }
+                data = dataArray_->lookup(addr, true);
+                data->setData(event->getPayload(), 0);
+                inMSHR = true;
+            }
+            if (is_debug_event(event))
+                eventDI.reason = "hit";
+   
+            tag->removeOwner();
+            tag->setState(M);
+            sendWritebackAck(event);
+            cleanUpAfterRequest(event, inMSHR);
+            break;
+        case E_InvX:
+        case M_InvX:
+            tag->removeOwner();
+            mshr_->decrementAcksNeeded(addr);
+            responses.find(addr)->second.erase(event->getSrc());
+            if (responses.find(addr)->second.empty())
+                responses.erase(addr);
+            tag->setState(M);
+            
+            // Handle PutM now if possible, later if not
+            if (data) {
+                data->setData(event->getPayload(), 0);
+                sendWritebackAck(event);
+                cleanUpEvent(event, inMSHR);
+            } else {
+                tag->addSharer(event->getSrc());
+                event->setCmd(Command::PutS);
+                mshr_->setData(addr, event->getPayload());
+                if (inMSHR)
+                    mshr_->removeFront(addr); // Need to reinsert after the conflicting request
+                MemEventBase* entry = mshr_->getEntryEvent(addr, 1);
+                if (entry && (CommandClassArr[(int)entry->getCmd()] == CommandClass::ForwardRequest || mshr_->getEntry(addr, 1).getInProgress()))
+                    status = allocateMSHR(event, false, 2); // Retry the waiting event and waiting forward request, then handle this replacement
+                else 
+                    status = allocateMSHR(event, false, 1); // Retry the waiting event, then handle this replacement
+                
+                retry(addr);
+            }
+            break;
+        case E_Inv:
+        case M_Inv:
+            // Handle the coherence state part and buffer the data in the MSHR, we won't need a line because we're either losing the data or one of our children wants it
+            tag->removeOwner();
+            mshr_->decrementAcksNeeded(addr);
+            if (!data && !mshr_->hasData(addr))
+                mshr_->setData(addr, event->getPayload());
+            responses.find(addr)->second.erase(event->getSrc());
+            if (responses.find(addr)->second.empty())
+                responses.erase(addr);
+            sendWritebackAck(event);
+            tag->setState(M);
+            cleanUpAfterRequest(event, inMSHR);
+            break;
+        default:
+            debug->fatal(CALL_INFO,-1,"%s, Error: Received PutM in unhandled state '%s'. Event: %s. Time = %" PRIu64 "ns\n",
+                    getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
+    }
+
+    if (is_debug_addr(addr) && tag) {
+        eventDI.newst = tag->getState();
+        eventDI.verboseline = tag->getString();
+        if (data)
+            eventDI.verboseline += "/" + data->getString();
+    }
+    if (status == MemEventStatus::Reject)
+        sendNACK(event);
+
+    return true;
+}
+
+bool MESISharNoninclusive::handlePutX(MemEvent * event, bool inMSHR) {
+    Addr addr = event->getBaseAddr();
+    DirectoryLine * tag = dirArray_->lookup(addr, false);
+    State state = tag ? tag->getState() : I;
+    DataLine * data = (tag) ? dataArray_->lookup(addr, false) : nullptr;
+    if (data && data->getTag() != tag) data = nullptr;
+    
+    if (is_debug_event(event))
+        eventDI.prefill(event->getID(), Command::PutX, false, addr, state);
+            
+    tag->removeOwner();
+    tag->addSharer(event->getSrc());
+            
+    sendWritebackAck(event);
+
+    switch (state) {
+        case E:
+        case M:
+            if (event->getDirty())
+                tag->setState(M);
+            
+            if (data)
+                data->setData(event->getPayload(), 0);
+    
+            cleanUpAfterRequest(event, inMSHR);
+            break;
+        case E_InvX:
+        case M_InvX:
+            if (event->getDirty() || state == M_InvX)
+                tag->setState(M);
+            else
+                tag->setState(E);
+            
+            if (data)
+                data->setData(event->getPayload(), 0);
+            else
+                mshr_->setData(addr, event->getPayload());
+            
+            mshr_->decrementAcksNeeded(addr);
+            cleanUpAfterRequest(event, inMSHR);
+            break;
+        case E_Inv:
+        case M_Inv:
+            if (event->getDirty())
+                tag->setState(M_Inv);
+            
+            if (data)
+                data->setData(event->getPayload(), 0);
+            else 
+                mshr_->setData(addr, event->getPayload());
+            
+            cleanUpEvent(event, inMSHR);
+            break;
+        default:
+            debug->fatal(CALL_INFO,-1,"%s, Error: Received PutX in unhandled state '%s'. Event: %s. Time = %" PRIu64 "ns\n",
+                    getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
+    }
+
+    if (is_debug_addr(addr) && tag) {
+        eventDI.newst = tag->getState();
+        eventDI.verboseline = tag->getString();
+        if (data)
+            eventDI.verboseline += "/" + data->getString();
+    }
+
+    return true;
+
+}
+
+bool MESISharNoninclusive::handleFetch(MemEvent * event, bool inMSHR) {
+    Addr addr = event->getBaseAddr();
+    DirectoryLine * tag = dirArray_->lookup(addr, false);
+    State state = tag ? tag->getState() : I;
+    DataLine * data = (tag) ? dataArray_->lookup(addr, false) : nullptr;
+    if (data && data->getTag() != tag) data = nullptr;
+    
+    MemEventStatus status = MemEventStatus::OK;
+    if (is_debug_event(event))
+        eventDI.prefill(event->getID(), Command::Fetch, false, addr, state);
+    
+    uint64_t sendTime;
+    MemEvent* put;
+    switch (state) {
+        case I: // Happens if we replaced and are waiting for a writeback ack or we are replaying the event after an eviction -> drop the fetch
+        case I_B: // Happens if we sent a FlushLineInv and it raced with a Fetch
+        case E_B: // Happens if we sent a FlushLine and it raced with Fetch
+        case M_B: // Happens if we sent a FlushLine and it raced with Fetch
+            delete event;
+            break;
         case S:
+            if (data) {
+                sendResponseDown(event, data->getData(), false, false);
+                cleanUpEvent(event, inMSHR);
+            } else if (mshr_->hasData(addr)) {
+                sendResponseDown(event, &(mshr_->getData(addr)), false, false);
+                cleanUpEvent(event, inMSHR);
+            } else {
+                status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, true, 0);
+                if (status == MemEventStatus::OK) {
+                    tag->setState(S_D);
+                    if (!applyPendingReplacement(addr))
+                        sendTime = sendFetch(Command::Fetch, event, *(tag->getSharers()->begin()), inMSHR, tag->getTimestamp());
+                }
+            }
+            break;
+        case SA:
+            //Look for a PutS in the MSHR
+            put = static_cast<MemEvent*>(mshr_->getFirstEventEntry(addr, Command::PutS)); 
+            sendResponseDown(event, &(put->getPayload()), false, false);
+            cleanUpEvent(event, inMSHR);
+            break;
         case SM:
-            if (dirLine->getDataLine() != NULL) {
-                sendResponseDown(event, dirLine, dirLine->getDataLine()->getData(), false, replay);
-                return DONE;
+            if (data) {
+                sendResponseDown(event, data->getData(), false, false);
+                cleanUpEvent(event, inMSHR);
+            } else if (mshr_->hasData(addr)) {
+                sendResponseDown(event, &(mshr_->getData(addr)), false, false);
+                cleanUpEvent(event, inMSHR);
+            } else {
+                status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, true, 0);
+                if (status == MemEventStatus::OK) {
+                    tag->setState(SM_D);
+                    sendTime = sendFetch(Command::Fetch, event, *(tag->getSharers()->begin()), inMSHR, tag->getTimestamp());
+                }
             }
-            if (collisionEvent != NULL) {
-                sendResponseDown(event, dirLine, &collisionEvent->getPayload(), false, replay);
-                return DONE;
-            }
-            sendFetch(dirLine, event->getRqstr(), replay);
-            mshr_->incrementAcksNeeded(event->getBaseAddr());
-            if (state == S) dirLine->setState(S_D);
-            else dirLine->setState(SM_D);
-            return STALL;
+            break;
+        case S_D:
         case S_Inv:
-        case SI:
-        case S_D:
-            return BLOCK; // Block while current request completes
+            if (!inMSHR)
+                status = allocateMSHR(event, true, 1);
+            break;
+        case S_B:
+            if (data) {
+                sendResponseDown(event, data->getData(), false, false);
+                cleanUpEvent(event, inMSHR);
+            } else if (mshr_->hasData(addr)) {
+                sendResponseDown(event, &(mshr_->getData(addr)), false, false);
+                cleanUpEvent(event, inMSHR);
+            } else {
+                status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, true, 0);
+                if (status == MemEventStatus::OK) {
+                    tag->setState(SB_D);
+                    sendTime = sendFetch(Command::Fetch, event, *(tag->getSharers()->begin()), inMSHR, tag->getTimestamp());
+                }
+            }
+            break;
         default:
-            debug->fatal(CALL_INFO,-1,"%s (dir), Error: Received Fetch but state is unhandled. Addr = 0x%" PRIx64 ", Src = %s, State = %s. Time = %" PRIu64 "ns\n", 
-                        ownerName_.c_str(), event->getAddr(), event->getSrc().c_str(), StateString[state], getCurrentSimTimeNano());
+            debug->fatal(CALL_INFO,-1,"%s, Error: Received Fetch in unhandled state '%s'. Event: %s. Time = %" PRIu64 "ns\n",
+                    getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
-    return STALL; // Eliminate compiler warning
+    
+    //stat_eventState[(int)Command::Fetch][state]->addData(1);
+    if (is_debug_addr(addr) && tag) {
+        eventDI.newst = tag->getState();
+        eventDI.verboseline = tag->getString();
+        if (data)
+            eventDI.verboseline += "/" + data->getString();
+    }
+
+    if (status == MemEventStatus::Reject)
+        sendNACK(event);
+
+    return true;
 }
 
 
-/**
- *  Handler for FetchInv requests
- *  Invalidate owner and/or sharers if needed
- *  Send FetchResp if no further invalidations are needed
- *  Collision can be a Put waiting for an AckPut or a Flush waiting for a FlushResp
- */
-CacheAction MESISharNoninclusive::handleFetchInv(MemEvent * event, CacheLine * dirLine, bool replay, MemEvent * collisionEvent) {
-    State state = dirLine->getState();
-    recordStateEventCount(event->getCmd(), state);    
+bool MESISharNoninclusive::handleInv(MemEvent * event, bool inMSHR) {
+    Addr addr = event->getBaseAddr();
+    DirectoryLine * tag = dirArray_->lookup(addr, false);
+    State state = tag ? tag->getState() : I;
+    DataLine * data = (tag) ? dataArray_->lookup(addr, false) : nullptr;
+    if (data && data->getTag() != tag) data = nullptr;
+    MemEventStatus status = MemEventStatus::OK;
+
+    if (is_debug_event(event))
+        eventDI.prefill(event->getID(), Command::Inv, false, addr, state);
     
-    if (dirLine->getPrefetch()) {
-        dirLine->setPrefetch(false);
-        statPrefetchInv->addData(1);
-    }
-
-    bool isCached = dirLine->getDataLine() != NULL;
-    bool collision = false;
-    // If colliding event is a replacement, treat the replacement as if it had aleady occured/raced with an earlier FetchInv
-    if (collisionEvent && collisionEvent->isWriteback()) {
-        collision = true;
-        if (dirLine->isSharer(collisionEvent->getSrc())) dirLine->removeSharer(collisionEvent->getSrc());
-        if (dirLine->ownerExists()) dirLine->clearOwner();
-        mshr_->setDataBuffer(collisionEvent->getBaseAddr(), collisionEvent->getPayload());
-        if (state == E && collisionEvent->getDirty()) dirLine->setState(M);
-        state = M;
-        sendWritebackAck(collisionEvent);
-        mshr_->removeFront(dirLine->getBaseAddr());
-        delete collisionEvent;
-    } 
-
+    MemEvent * put;
     switch (state) {
-        case I:
-        case IS:
-        case IM:
         case I_B:
-            return IGNORE;
+            dirArray_->deallocate(tag);
+            if (data)
+                dataArray_->deallocate(data);
+        case I:
+            delete event;
+            break;
         case S:
-            if (dirLine->numSharers() > 0) {
-                if (isCached || collision) invalidateAllSharers(dirLine, event->getRqstr(), replay);
-                else invalidateAllSharersAndFetch(dirLine, event->getRqstr(), replay);
-                dirLine->setState(S_Inv);
-                return STALL;
+            if (tag->hasSharers() && !inMSHR)
+                status = allocateMSHR(event, true, 0);
+
+            if (status == MemEventStatus::OK) {
+                if (tag->hasSharers()) {
+                    if (!applyPendingReplacement(addr))
+                        invalidateSharers(event, tag, inMSHR, false, Command::Inv);
+                    tag->setState(S_Inv);
+                } else {
+                    sendResponseDown(event, nullptr, false, true);
+                    dirArray_->deallocate(tag);
+                    if (data)
+                        dataArray_->deallocate(data);
+                    cleanUpAfterRequest(event, inMSHR);
+                    if (mshr_->hasData(addr))
+                        mshr_->clearData(addr);
+                }
             }
-            if (dirLine->getDataLine() == NULL && !collision) debug->fatal(CALL_INFO, -1, "Error: (%s) An uncached block must have either owners or sharers. Addr = 0x%" PRIx64 ", detected at FetchInv, State = %s\n", 
-                    ownerName_.c_str(), event->getAddr(), StateString[state]);
-            sendResponseDown(event, dirLine, collision ? mshr_->getDataBuffer(dirLine->getBaseAddr()) : dirLine->getDataLine()->getData(), false, replay);
-            dirLine->setState(I);
-            return DONE;
-        case SM:
-            if (dirLine->numSharers() > 0) {
-                if (isCached || collision) invalidateAllSharers(dirLine, event->getRqstr(), replay);
-                else invalidateAllSharersAndFetch(dirLine, event->getRqstr(), replay);
-                dirLine->setState(SM_Inv);
-                return STALL;
-            }
-            if (dirLine->getDataLine() == NULL) debug->fatal(CALL_INFO, -1, "Error: (%s) An uncached block must have either owners or sharers. Addr = 0x%" PRIx64 ", detected at FetchInv, State = %s\n", 
-                    ownerName_.c_str(), event->getAddr(), StateString[state]);
-            sendResponseDown(event, dirLine, collision ? mshr_->getDataBuffer(dirLine->getBaseAddr()) : dirLine->getDataLine()->getData(), false, replay);
-            dirLine->setState(IM);
-            return DONE;
-        case S_B:
-            if (dirLine->numSharers() > 0) {
-                invalidateAllSharers(dirLine, event->getRqstr(), replay);
-                dirLine->setState(SB_Inv);
-                return STALL;
-            }
-            sendAckInv(event);
-            dirLine->setState(I_B);
-            return DONE;
-        case E:
-            if (dirLine->ownerExists()) {
-                sendFetchInv(dirLine, event->getRqstr(), replay);
-                mshr_->incrementAcksNeeded(event->getBaseAddr());
-                dirLine->setState(E_Inv);
-                return STALL;
-            }
-            if (dirLine->numSharers() > 0) {
-                if (isCached || collision) invalidateAllSharers(dirLine, event->getRqstr(), replay);
-                else invalidateAllSharersAndFetch(dirLine, event->getRqstr(), replay);
-                dirLine->setState(E_Inv);
-                return STALL;
-            }
-            if (dirLine->getDataLine() == NULL && !collision) debug->fatal(CALL_INFO, -1, "Error: (%s) An uncached block must have either owners or sharers. Addr = 0x%" PRIx64 ", detected at FetchInv, State = %s\n", 
-                    ownerName_.c_str(), event->getAddr(), StateString[state]);
-            sendResponseDown(event, dirLine, collision ? mshr_->getDataBuffer(dirLine->getBaseAddr()) : dirLine->getDataLine()->getData(), false, replay);
-            dirLine->setState(I);
-            return DONE;
-        case M:
-            if (dirLine->ownerExists()) {
-                sendFetchInv(dirLine, event->getRqstr(), replay);
-                mshr_->incrementAcksNeeded(event->getBaseAddr());
-                dirLine->setState(M_Inv);
-                return STALL;
-            }
-            if (dirLine->numSharers() > 0) {
-                if (isCached || collision) invalidateAllSharers(dirLine, event->getRqstr(), replay);
-                else invalidateAllSharersAndFetch(dirLine, event->getRqstr(), replay);
-                dirLine->setState(M_Inv);
-                return STALL;
-            }
-            if (dirLine->getDataLine() == NULL && !collision) debug->fatal(CALL_INFO, -1, "Error: (%s) An uncached block must have either owners or sharers. Addr = 0x%" PRIx64 ", detected at FetchInv, State = %s\n", 
-                    ownerName_.c_str(), event->getAddr(), StateString[state]);
-            sendResponseDown(event, dirLine, collision ? mshr_->getDataBuffer(dirLine->getBaseAddr()) : dirLine->getDataLine()->getData(), true, replay);
-            dirLine->setState(I);
-            return DONE;
-        case EI:
-            dirLine->setState(E_Inv);
-            return STALL;
-        case MI:
-            dirLine->setState(M_Inv);
-            return STALL;
+            break;
+        case SA: // Merge with PutS and drop 
+            // TODO make sure the pending eviction won't mess anything up when it tries to replay
+            put = static_cast<MemEvent*>(mshr_->getFrontEvent(addr));
+            sendWritebackAck(put);
+            sendResponseDown(event, nullptr, false, true);
+            dirArray_->deallocate(tag);
+            if (mshr_->hasData(addr))
+                mshr_->clearData(addr);
+            cleanUpEvent(event, inMSHR);
+            cleanUpAfterRequest(put, true);
+            break;
         case S_D:
-        case E_D:
-        case M_D:
-        case E_Inv:
-        case E_InvX:
-        case M_Inv:
-        case M_InvX:
-            // Handle incoming Inv before a pending flushline to avoid deadlock
-            if (collisionEvent->getCmd() == Command::FlushLine || collisionEvent->getCmd() == Command::FlushLineInv) return STALL;
-            return BLOCK;
+            if (!inMSHR)
+                status = allocateMSHR(event, true, 1);
+            break;
+        case S_Inv: // Evict
+            if (!inMSHR)
+                status = allocateMSHR(event, true, 0);
+            break;
+        case SM:
+            if (tag->hasSharers() && !inMSHR)
+                status = allocateMSHR(event, true, 0);
+
+            if (status == MemEventStatus::OK) {
+                if (tag->hasSharers()) {
+                    invalidateSharers(event, tag, inMSHR, false, Command::Inv);
+                    tag->setState(SM_Inv);
+                } else {
+                    sendResponseDown(event, nullptr, false, true);
+                    tag->setState(IM);
+                    cleanUpAfterRequest(event, inMSHR);
+                    if (mshr_->hasData(addr))
+                        mshr_->clearData(addr);
+                }
+            }
+            break;
+        case SM_Inv:
+            if (!inMSHR)
+                status = allocateMSHR(event, true, 0);
+            break;
+        case S_B:
+            if (tag->hasSharers() && !inMSHR)
+                status = allocateMSHR(event, true, 0);
+
+            if (status == MemEventStatus::OK) {
+                if (tag->hasSharers()) {
+                    invalidateSharers(event, tag, inMSHR, false, Command::Inv);
+                    tag->setState(SB_Inv);
+                } else {
+                    sendResponseDown(event, nullptr, false, true);
+                    dirArray_->deallocate(tag);
+                    if (data)
+                        dataArray_->deallocate(data);
+                    if (mshr_->hasData(addr))
+                        mshr_->clearData(addr);
+                    cleanUpAfterRequest(event, inMSHR);
+                }
+            }
+            break;
         default:
-            debug->fatal(CALL_INFO,-1,"%s (dir), Error: Received FetchInv but state is unhandled. Addr = 0x%" PRIx64 ", Src = %s, State = %s. Time = %" PRIu64 "ns\n", 
-                        ownerName_.c_str(), event->getAddr(), event->getSrc().c_str(), StateString[state], getCurrentSimTimeNano());
+            debug->fatal(CALL_INFO,-1,"%s, Error: Received Inv in unhandled state '%s'. Event: %s. Time = %" PRIu64 "ns\n",
+                    getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
-    return DONE;
+
+    //stat_eventState[(int)Command::Inv][state]->addData(1);
+
+    if (is_debug_addr(addr) && tag) {
+        eventDI.newst = tag->getState();
+        eventDI.verboseline = tag->getString();
+        if (data)
+            eventDI.verboseline += "/" + data->getString();
+    }
+    
+    if (status == MemEventStatus::Reject) 
+        sendNACK(event);
+
+    return true;
 }
 
 
-/**
- *  Handler for FetchInvX requests
- *  Downgrade owner if needed
- *  Send FetchXResp if no further downgrades are needed
- */
-CacheAction MESISharNoninclusive::handleFetchInvX(MemEvent * event, CacheLine * dirLine, bool replay, MemEvent * collisionEvent) {
-    State state = dirLine->getState();
-    recordStateEventCount(event->getCmd(), state);    
+bool MESISharNoninclusive::handleForceInv(MemEvent * event, bool inMSHR) {
+    Addr addr = event->getBaseAddr();
+    DirectoryLine * tag = dirArray_->lookup(addr, false);
+    State state = tag ? tag->getState() : I;
+    DataLine * data = (tag) ? dataArray_->lookup(addr, false) : nullptr;
+    if (data && data->getTag() != tag) data = nullptr;
+    MemEventStatus status = MemEventStatus::OK;
     
-    bool isCached = dirLine->getDataLine() != NULL;
-    bool collision = collisionEvent && collisionEvent->isWriteback();
-    if (collision) {   // Treat the replacement as if it had already occured/raced with an earlier FetchInv
-        if (state == E && collisionEvent->getDirty()) dirLine->setState(M);
-        state = M;
+    if (is_debug_event(event))
+        eventDI.prefill(event->getID(), Command::ForceInv, false, addr, state);
+    MemEvent * put;
+    switch (state) {
+        case I_B:
+            dirArray_->deallocate(tag);
+            if (data)
+                dataArray_->deallocate(data);
+        case I:
+            delete event;
+            break;
+        case S:
+            if (tag->hasSharers() && !inMSHR)
+                status = allocateMSHR(event, true, 0);
+
+            if (status == MemEventStatus::OK) {
+                if (tag->hasSharers()) {
+                    if (!applyPendingReplacement(addr))
+                        invalidateSharers(event, tag, inMSHR, false, Command::ForceInv);
+                    tag->setState(S_Inv);
+                } else {
+                    sendResponseDown(event, nullptr, false, true);
+                    dirArray_->deallocate(tag);
+                    if (data) {
+                        dataArray_->deallocate(data);
+                    }
+                    cleanUpAfterRequest(event, inMSHR);
+                    if (mshr_->hasData(addr))
+                        mshr_->clearData(addr);
+                }
+            }
+            break;
+        case E:
+        case M:
+            if ((tag->hasSharers() || tag->hasOwner()) && !inMSHR)
+                status = allocateMSHR(event, true, 0);
+
+            if (status == MemEventStatus::OK) {
+                if (tag->hasSharers()) {
+                    if (!applyPendingReplacement(addr)) 
+                        invalidateSharers(event, tag, inMSHR, false, Command::ForceInv);
+                    state == E ? tag->setState(E_Inv) : tag->setState(M_Inv);
+                } else if (tag->hasOwner()) {
+                    if (!applyPendingReplacement(addr))
+                        invalidateOwner(event, tag, inMSHR, Command::ForceInv);
+                    state == E ? tag->setState(E_Inv) : tag->setState(M_Inv);
+                } else {
+                    sendResponseDown(event, nullptr, false, true);
+                    dirArray_->deallocate(tag);
+                    if (data) {
+                        dataArray_->deallocate(data);
+                    }
+                    cleanUpAfterRequest(event, inMSHR);
+                    if (mshr_->hasData(addr))
+                        mshr_->clearData(addr);
+                }
+            }
+            break;
+        case S_B:
+        case E_B:
+        case M_B:
+            if ((tag->hasSharers() || tag->hasOwner()) && !inMSHR)
+                status = allocateMSHR(event, true, 0);
+
+            if (status == MemEventStatus::OK) {
+                if (tag->hasSharers()) {
+                    invalidateSharers(event, tag, inMSHR, false, Command::ForceInv);
+                    tag->setState(SB_Inv);
+                } else {
+                    sendResponseDown(event, nullptr, false, true);
+                    dirArray_->deallocate(tag);
+                    if (data)
+                        dataArray_->deallocate(data);
+                    if (mshr_->hasData(addr))
+                        mshr_->clearData(addr);
+                    cleanUpAfterRequest(event, inMSHR);
+                }
+            }
+            break;
+        case S_D:
+        case E_D:
+        case M_D:
+        case E_InvX:
+        case M_InvX:
+            if (!inMSHR)
+                status = allocateMSHR(event, true, 1);
+            break;
+        case S_Inv:     // Evict
+        case E_Inv:     // Evict
+        case M_Inv:     // Evict, Internal GetX
+            if (mshr_->getFrontType(addr) == MSHREntryType::Evict && !inMSHR) {
+                allocateMSHR(event, true, 0);
+            } else if (!inMSHR) {
+                allocateMSHR(event, true, 0);
+            } else if (!inMSHR) {
+                allocateMSHR(event, true, 1);
+            }
+            break;
+        case SM:
+            if (!tag->hasSharers()) {
+                sendResponseDown(event, nullptr, false, true);
+                tag->setState(IM);
+                cleanUpEvent(event, inMSHR);
+            } else {
+                if (!inMSHR)
+                    status = allocateMSHR(event, true, 0);
+                if (status == MemEventStatus::OK) {
+                    invalidateSharers(event, tag, inMSHR, false, Command::Inv);
+                    tag->setState(SM_Inv);
+                }
+            }
+            break;
+        case SM_Inv:
+            if (!inMSHR)
+                status = allocateMSHR(event, true, 0);
+            break;
+        case SA:
+        case EA:
+        case MA:
+            // TODO make sure the pending eviction won't mess anything up when it tries to replay
+            put = static_cast<MemEvent*>(mshr_->getFrontEvent(addr));
+            sendWritebackAck(put);
+            sendResponseDown(event, nullptr, state == MA, true);
+            dirArray_->deallocate(tag);
+            if (mshr_->hasData(addr))
+                mshr_->clearData(addr);
+            cleanUpEvent(event, inMSHR);
+            cleanUpAfterRequest(put, true);
+            break;
+        default:
+            debug->fatal(CALL_INFO,-1,"%s, Error: Received ForceInv in unhandled state '%s'. Event: %s. Time = %" PRIu64 "ns\n",
+                    getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
+    
+    if (is_debug_addr(addr) && tag) {
+        eventDI.newst = tag->getState();
+        eventDI.verboseline = tag->getString();
+        if (data)
+            eventDI.verboseline += "/" + data->getString();
+    }
+    
+    //stat_eventState[(int)Command::ForceInv][state]->addData(1);
+    if (status == MemEventStatus::Reject) 
+        sendNACK(event);
+
+    return true;
+}
+
+
+bool MESISharNoninclusive::handleFetchInv(MemEvent * event, bool inMSHR){
+    Addr addr = event->getBaseAddr();
+    DirectoryLine * tag = dirArray_->lookup(addr, false);
+    State state = tag ? tag->getState() : I;
+    DataLine * data = (tag) ? dataArray_->lookup(addr, false) : nullptr;
+    if (data && data->getTag() != tag) data = nullptr;
+    MemEventStatus status = MemEventStatus::OK;
+
+    if (is_debug_event(event))
+        eventDI.prefill(event->getID(), Command::FetchInv, false, addr, state);
+    MemEvent * put;
+    switch (state) {
+        case I:
+            delete event;
+            break;
+        case S:
+            if (tag->hasSharers() && !inMSHR)
+                status = allocateMSHR(event, true, 0);
+
+            if (status == MemEventStatus::OK) {
+                if (tag->hasSharers()) {
+                    tag->setState(S_Inv);
+                    if (!applyPendingReplacement(addr))
+                        invalidateSharers(event, tag, inMSHR, !(data || mshr_->hasData(addr)), Command::Inv);
+                } else {
+                    if (data)
+                        sendResponseDown(event, data->getData(), false, true);
+                    else {
+                        sendResponseDown(event, &(mshr_->getData(addr)), false, true);
+                        mshr_->clearData(addr);
+                    }
+                    dirArray_->deallocate(tag);
+                    if (data) {
+                        dataArray_->deallocate(data);
+                    }
+                    cleanUpAfterRequest(event, inMSHR);
+                }
+            }
+            break;
+        case E:
+        case M:
+            if ((tag->hasSharers() || tag->hasOwner())&& !inMSHR)
+                status = allocateMSHR(event, true, 0);
+
+            if (status == MemEventStatus::OK) {
+                if (applyPendingReplacement(addr)) {
+                    state == E ? tag->setState(E_Inv) : tag->setState(M_Inv);
+                } else if (tag->hasSharers()) {
+                    invalidateSharers(event, tag, inMSHR, !data, Command::Inv);
+                    state == E ? tag->setState(E_Inv) : tag->setState(M_Inv);
+                } else if (tag->hasOwner()) {
+                    invalidateOwner(event, tag, inMSHR, Command::FetchInv);
+                    state == E ? tag->setState(E_Inv) : tag->setState(M_Inv);
+                } else {
+                    if (data)
+                        sendResponseDown(event, data->getData(), state == M, true);
+                    else {
+                        sendResponseDown(event, &(mshr_->getData(addr)), state == M, true);
+                        mshr_->clearData(addr);
+                    }
+                    dirArray_->deallocate(tag);
+                    if (data) {
+                        dataArray_->deallocate(data);
+                    }
+                    cleanUpAfterRequest(event, inMSHR);
+                }
+            }
+            break;
+        case S_B:
+        case E_B:
+        case M_B:
+            if (tag->hasSharers() && !inMSHR)
+                status = allocateMSHR(event, true, 0);
+
+            if (status == MemEventStatus::OK) {
+                if (tag->hasSharers()) {
+                    invalidateSharers(event, tag, inMSHR, !data, Command::Inv);
+                    tag->setState(SB_Inv);
+                } else {
+                    if (data) {
+                        sendResponseDown(event, data->getData(), false, true);
+                        dataArray_->deallocate(data);
+                    } else {
+                        sendResponseDown(event, &(mshr_->getData(addr)), false, true);
+                        mshr_->clearData(addr);
+                    }
+                    dirArray_->deallocate(tag);
+                    cleanUpAfterRequest(event, inMSHR);
+                }
+            }
+            break;
+        case S_D:
+        case E_D:
+        case M_D:
+            if (!inMSHR)
+                status = allocateMSHR(event, true, 1);
+            break;
+        case SA:
+        case EA:
+        case MA:
+            // TODO make sure the pending eviction won't mess anything up when it tries to replay
+            put = static_cast<MemEvent*>(mshr_->getFrontEvent(addr));
+            sendWritebackAck(put);
+            sendResponseDown(event, &(put->getPayload()), state == MA, true);
+            dirArray_->deallocate(tag);
+            if (mshr_->hasData(addr))
+                mshr_->clearData(addr);
+            cleanUpEvent(event, inMSHR);
+            cleanUpAfterRequest(put, true);
+            break;
+        case SM:
+            if (!tag->hasSharers()) {
+                tag->setState(IM);
+                if (data)
+                    sendResponseDown(event, data->getData(), false, true);
+                else
+                    sendResponseDown(event, &(mshr_->getData(addr)), false, true);
+                tag->setState(IM);
+                if (mshr_->hasData(addr))
+                    mshr_->clearData(addr);
+                cleanUpEvent(event, inMSHR);
+                break;
+            }
+            if (!inMSHR)
+                status = allocateMSHR(event, true, 0);
+            if (status == MemEventStatus::OK) {
+                if (tag->hasSharers()) {
+                    invalidateSharers(event, tag, inMSHR, !data && !mshr_->hasData(addr), Command::Inv);
+                    tag->setState(SM_Inv);
+                    break;
+                }
+            }
+            break;
+        case SM_Inv:
+            if (!inMSHR)
+                status = allocateMSHR(event, true, 0);
+            break;
+        case S_Inv:
+        case E_Inv:
+        case M_Inv:
+            if (mshr_->getFrontType(addr) == MSHREntryType::Evict) {
+                allocateMSHR(event, true, 0);
+            } else if (!inMSHR) {
+                allocateMSHR(event, true, 1);
+            }
+            break;
+        case E_InvX:
+        case M_InvX:
+            if (!inMSHR)
+                status = allocateMSHR(event, true, 1);
+            break;
+        default:
+            debug->fatal(CALL_INFO,-1,"%s, Error: Received FetchInv in unhandled state '%s'. Event: %s. Time = %" PRIu64 "ns\n",
+                    getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
+    }
+
+    //stat_eventState[(int)Command::FetchInv][state]->addData(1);
+    if (is_debug_addr(addr) && tag) {
+        eventDI.newst = tag->getState();
+        eventDI.verboseline = tag->getString();
+        if (data)
+            eventDI.verboseline += "/" + data->getString();
+    }
+
+    if (status == MemEventStatus::Reject) 
+        sendNACK(event);
+
+    return true;
+}
+
+
+bool MESISharNoninclusive::handleFetchInvX(MemEvent * event, bool inMSHR) {
+    Addr addr = event->getBaseAddr();
+    DirectoryLine * tag = dirArray_->lookup(addr, false);
+    State state = tag ? tag->getState() : I;
+    DataLine * data = (tag) ? dataArray_->lookup(addr, false) : nullptr;
+    if (data && data->getTag() != tag) data = nullptr;
+    MemEventStatus status = MemEventStatus::OK;
+
+    if (is_debug_event(event))
+        eventDI.prefill(event->getID(), Command::FetchInvX, false, addr, state);
+    uint64_t sendTime;
+    
+    MemEvent * req;
+            
+    switch (state) {
+        case I_B:
+            dirArray_->deallocate(tag);
+            if (data) dataArray_->deallocate(data);
+        case I:
+            delete event;
+            break;
+        case E_B:
+        case M_B:
+            tag->setState(S_B);
+            delete event;
+            break;
+        case E:
+        case M:
+            if ((tag->hasOwner()|| (!data && !mshr_->hasData(addr))) && !inMSHR)
+                status = allocateMSHR(event, true, 0);
+            if (status != MemEventStatus::OK)
+                break;
+            if (tag->hasOwner()) { // Get data from owner
+                if (!applyPendingReplacement(addr)) {
+                    sendTime = sendFetch(Command::FetchInvX, event, tag->getOwner(), inMSHR, tag->getTimestamp());
+                    tag->setTimestamp(sendTime-1);
+                }
+                state == E ? tag->setState(E_InvX) : tag->setState(M_InvX);
+            } else if (!data && !mshr_->hasData(addr)) {
+                if (!applyPendingReplacement(addr)) {
+                    sendTime = sendFetch(Command::Fetch, event, *(tag->getSharers()->begin()), inMSHR, tag->getTimestamp()); 
+                    tag->setTimestamp(sendTime-1); 
+                }
+                state == E ? tag->setState(E_D) : tag->setState(M_D);
+            } else {
+                if (data)
+                    sendResponseDown(event, data->getData(), state == M, true); // TODO Double check that a downgrade counts as an evict
+                else {
+                    sendResponseDown(event, &(mshr_->getData(addr)), state == M, true);
+                }
+                cleanUpAfterRequest(event, inMSHR);
+            }
+            break;
+        case EA:
+        case MA:
+            req = static_cast<MemEvent*>(mshr_->getFrontEvent(addr));
+            sendResponseDown(event, &(req->getPayload()), state == M, true); // TODO Double check that a downgrade counts as an evict
+            // Clean up so that when we replay the replacement we get the right downgraded state
+            req->setCmd(Command::PutS);
+            tag->removeOwner();
+            tag->addSharer(req->getSrc());
+            tag->setState(SA);
+            delete event;
+            break;
+        case E_InvX:
+        case M_InvX:
+        case E_D:
+        case M_D:
+        case E_Inv:
+        case M_Inv:
+            if (!inMSHR)
+                status = allocateMSHR(event, true, 1);
+            break;
+        default:
+            debug->fatal(CALL_INFO,-1,"%s, Error: Received FetchInvX in unhandled state '%s'. Event: %s. Time = %" PRIu64 "ns\n",
+                    getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
+    }
+
+    //stat_eventState[(int)Command::FetchInvX][state]->addData(1);
+
+    if (is_debug_addr(addr) && tag) {
+        eventDI.newst = tag->getState();
+        eventDI.verboseline = tag->getString();
+        if (data)
+            eventDI.verboseline += "/" + data->getString();
+    }
+    
+    if (status == MemEventStatus::Reject) 
+        sendNACK(event);
+
+    return true;
+}
+
+bool MESISharNoninclusive::handleGetSResp(MemEvent * event, bool inMSHR) {
+    Addr addr = event->getBaseAddr();
+    DirectoryLine * tag = dirArray_->lookup(addr, false);
+    State state = tag ? tag->getState() : I;
+    DataLine * data = (tag) ? dataArray_->lookup(addr, false) : nullptr;
+    if (data && data->getTag() != tag) data = nullptr;
+
+    // Find matching request in MSHR
+    MemEvent * req = static_cast<MemEvent*>(mshr_->getFrontEvent(addr));
+    
+    bool localPrefetch = req->isPrefetch() && (req->getRqstr() == cachename_);   
+    req->setFlags(event->getMemFlags());
+    
+    if (is_debug_event(event))
+        eventDI.prefill(event->getID(), Command::GetSResp, localPrefetch, addr, state);
+   
+    tag->setState(S);
+    if (data)
+        data->setData(event->getPayload(), 0);
+    
+    if (localPrefetch) {
+        tag->setPrefetch(true);
+        if (is_debug_event(event))
+            eventDI.action = "Done";
+    } else {
+        tag->addSharer(req->getSrc());
+        uint64_t sendTime = sendResponseUp(req, &(event->getPayload()), true, tag->getTimestamp(), Command::GetSResp);
+        tag->setTimestamp(sendTime-1);
+    }
+    
+    cleanUpAfterResponse(event, inMSHR);
+    
+    if (is_debug_addr(addr) && tag) {
+        eventDI.newst = tag->getState();
+        eventDI.verboseline = tag->getString();
+        if (data)
+            eventDI.verboseline += "/" + data->getString();
+    }
+    
+    return true;
+}
+
+
+bool MESISharNoninclusive::handleGetXResp(MemEvent * event, bool inMSHR) {
+    Addr addr = event->getBaseAddr();
+    DirectoryLine * tag = dirArray_->lookup(addr, false);
+    State state = tag ? tag->getState() : I;
+    DataLine * data = (tag) ? dataArray_->lookup(addr, false) : nullptr;
+    if (data && data->getTag() != tag) data = nullptr;
+
+    // Get matching request
+    MemEvent * req = static_cast<MemEvent*>(mshr_->getFrontEvent(event->getBaseAddr()));
+    
+    bool localPrefetch = req->isPrefetch() && (req->getRqstr() == cachename_);   
+    req->setFlags(event->getMemFlags());
+    
+    if (is_debug_event(event))
+        eventDI.prefill(event->getID(), Command::GetXResp, localPrefetch, addr, state);
+            
+    if (data)
+        data->setData(event->getPayload(), 0);
+   
+    switch (state) {
+        case IS:
+        {
+            // Update state
+            if (event->getDirty())
+                tag->setState(M);
+            else
+                tag->setState(protocolState_); // E for MESI, S for MSI
+            
+            if (localPrefetch) {
+                tag->setPrefetch(true);
+                if (is_debug_event(event))
+                    eventDI.action = "Done";
+            } else {
+                if (tag->getState() == S || !protocol_ || mshr_->getSize(addr) > 1) {
+                    tag->addSharer(req->getSrc());
+                    uint64_t sendTime = sendResponseUp(req, &(event->getPayload()), true, tag->getTimestamp(), Command::GetSResp);
+                    tag->setTimestamp(sendTime - 1);
+                } else {
+                    tag->setOwner(req->getSrc());
+                    uint64_t sendTime = sendResponseUp(req, &(event->getPayload()), true, tag->getTimestamp(), Command::GetXResp);
+                    tag->setTimestamp(sendTime - 1);
+                }
+            }
+            
+            cleanUpAfterResponse(event, inMSHR);
+            break;
+        }
+        case IM:
+        case SM:
+        {
+            tag->setState(M);
+            tag->setOwner(req->getSrc());
+            uint64_t sendTime = 0;
+            if (tag->isSharer(req->getSrc())) {
+                tag->removeSharer(req->getSrc());
+                sendTime = sendResponseUp(req, nullptr, true, tag->getTimestamp(), Command::GetXResp); 
+            } else if (event->getPayloadSize() != 0) {
+                sendTime = sendResponseUp(req, &(event->getPayload()), true, tag->getTimestamp(), Command::GetXResp);
+            } else {
+                sendTime = sendResponseUp(req, &(mshr_->getData(addr)), true, tag->getTimestamp(), Command::GetXResp);
+            }
+            tag->setTimestamp(sendTime - 1);
+            
+            if (mshr_->hasData(addr))
+                mshr_->clearData(addr);
+            
+            cleanUpAfterResponse(event, inMSHR);
+            break;
+        }
+        case SM_Inv:
+            tag->setState(M_Inv);
+            mshr_->setInProgress(addr, false);
+            if (!data && event->getPayloadSize() != 0)
+                mshr_->setData(addr, event->getPayload());
+            if (is_debug_event(event)) {
+                eventDI.action = "Stall";
+                eventDI.reason = "Acks needed";
+            }
+            cleanUpEvent(event, inMSHR);
+            break; 
+        default:
+            debug->fatal(CALL_INFO,-1,"%s, Error: Received GetXResp in unhandled state '%s'. Event: %s. Time = %" PRIu64 "ns\n",
+                    getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
+    }
+
+    //stat_eventState[(int)Command::GetXResp][state]->addData(1);
+    if (is_debug_addr(addr) && tag) {
+        eventDI.newst = tag->getState();
+        eventDI.verboseline = tag->getString();
+        if (data)
+            eventDI.verboseline += "/" + data->getString();
+    }
+    return true;
+}
+            
+
+bool MESISharNoninclusive::handleFlushLineResp(MemEvent * event, bool inMSHR) {
+    Addr addr = event->getBaseAddr();
+    DirectoryLine * tag = dirArray_->lookup(addr, false);
+    State state = tag ? tag->getState() : I;
+    DataLine * data = (tag) ? dataArray_->lookup(addr, false) : nullptr;
+    if (data && data->getTag() != tag) data = nullptr;
+    
+    if (is_debug_event(event))
+        eventDI.prefill(event->getID(), Command::FlushLineResp, false, addr, state);
+
+    //stat_eventState[(int)Command::FlushLineResp][state]->addData(1);
+
+    MemEvent * req = static_cast<MemEvent*>(mshr_->getFrontEvent(event->getBaseAddr()));
 
     switch (state) {
         case I:
-        case IS:
-        case IM:
+            break;
         case I_B:
+            dirArray_->deallocate(tag);
+            if (data)  {
+                dataArray_->deallocate(data);
+            }
+            break;
         case S_B:
-            return IGNORE;
-        case E:
-            if (collision) {
-                if (dirLine->ownerExists()) {
-                    dirLine->clearOwner();
-                    dirLine->addSharer(collisionEvent->getSrc());
-                    collisionEvent->setCmd(Command::PutS);   // TODO there's probably a cleaner way to do this...and a safer/better way!
-                }
-                dirLine->setState(S);
-                sendResponseDown(event, dirLine, &collisionEvent->getPayload(), collisionEvent->getDirty(), replay);
-                return DONE;
-            }
-            if (dirLine->ownerExists()) {
-                sendFetchInvX(dirLine, event->getRqstr(), replay);
-                mshr_->incrementAcksNeeded(event->getBaseAddr());
-                dirLine->setState(E_InvX);
-                return STALL;
-            }
-            if (isCached) {
-                sendResponseDown(event, dirLine, dirLine->getDataLine()->getData(), false, replay);
-                dirLine->setState(S);
-                return DONE;
-            }
-            // Otherwise shared and not cached
-            sendFetch(dirLine, event->getRqstr(), replay);
-            mshr_->incrementAcksNeeded(event->getBaseAddr());
-            dirLine->setState(E_InvX);
-            return STALL;
-        case M:
-           if (collision) {
-                if (dirLine->ownerExists()) {
-                    dirLine->clearOwner();
-                    dirLine->addSharer(collisionEvent->getSrc());
-                    collisionEvent->setCmd(Command::PutS);   // TODO there's probably a cleaner way to do this...and a safer/better way!
-                }
-                dirLine->setState(S);
-                sendResponseDown(event, dirLine, &collisionEvent->getPayload(), true, replay);
-                return DONE;
-            }
-            if (dirLine->ownerExists()) {
-                sendFetchInvX(dirLine, event->getRqstr(), replay);
-                mshr_->incrementAcksNeeded(event->getBaseAddr());
-                dirLine->setState(M_InvX);
-                return STALL;
-            }
-            if (isCached) {
-                sendResponseDown(event, dirLine, dirLine->getDataLine()->getData(), true, replay);
-                dirLine->setState(S);
-                return DONE;
-            }
-            // Otherwise shared and not cached
-            sendFetch(dirLine, event->getRqstr(), replay);
-            mshr_->incrementAcksNeeded(event->getBaseAddr());
-            dirLine->setState(M_InvX);
-            return STALL;
-        case E_D:
-        case M_D:
-        case EI:
-        case MI:
-        case E_Inv:
-        case E_InvX:
-        case M_Inv:
-        case M_InvX:
-            // Handle incoming Inv before FlushLine to avoid deadlock
-            if (collisionEvent->getCmd() == Command::FlushLine || collisionEvent->getCmd() == Command::FlushLineInv) return STALL;
-            return BLOCK;
+        case E_B:
+        case M_B:
+            tag->setState(S);
+            break;
         default:
-            debug->fatal(CALL_INFO,-1,"%s (dir), Error: Received FetchInvX but state is unhandled. Addr = 0x%" PRIx64 ", Src = %s, State = %s. Time = %" PRIu64 "ns\n", 
-                        ownerName_.c_str(), event->getAddr(), event->getSrc().c_str(), StateString[state], getCurrentSimTimeNano());
+            debug->fatal(CALL_INFO,-1,"%s, Error: Received FlushLineResp in unhandled state '%s'. Event: %s. Time = %" PRIu64 "ns\n",
+                    getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
-    return DONE;
+
+    sendResponseUp(req, nullptr, true, timestamp_, Command::FlushLineResp, event->success());
+    
+    if (is_debug_addr(addr) && tag) {
+        eventDI.newst = tag->getState();
+        eventDI.verboseline = tag->getString();
+        if (data)
+            eventDI.verboseline += "/" + data->getString();
+    }
+    cleanUpAfterResponse(event, inMSHR);
+    return true;
 }
 
 
-/**
- *  Handle Get responses
- *  Update coherence state and forward response to requestor, if any
- *  (Prefetch requests originated by this entity do not get forwarded)
- */
-CacheAction MESISharNoninclusive::handleDataResponse(MemEvent* responseEvent, CacheLine* dirLine, MemEvent* origRequest) {
+bool MESISharNoninclusive::handleFetchResp(MemEvent * event, bool inMSHR) {
+    Addr addr = event->getBaseAddr();
+    DirectoryLine * tag = dirArray_->lookup(addr, false);
+    State state = tag ? tag->getState() : I;
+    DataLine * data = (tag) ? dataArray_->lookup(addr, false) : nullptr;
+    if (data && data->getTag() != tag) data = nullptr;
     
-    State state = dirLine->getState();
-    recordStateEventCount(responseEvent->getCmd(), state);    
-    
-    origRequest->setMemFlags(responseEvent->getMemFlags());
+    if (is_debug_event(event))
+        eventDI.prefill(event->getID(), Command::FetchResp, false, addr, state);
 
-    bool localPrefetch = origRequest->isPrefetch() && (origRequest->getRqstr() == ownerName_);
-    bool isCached = dirLine->getDataLine() != NULL;
-    uint64_t sendTime = 0;
-    switch (state) {
-        case IS:
-            if (responseEvent->getCmd() == Command::GetXResp && protocol_) dirLine->setState(E);
-            else dirLine->setState(S);
-            notifyListenerOfAccess(origRequest, NotifyAccessType::READ, NotifyResultType::HIT);
-            if (isCached) dirLine->getDataLine()->setData(responseEvent->getPayload(), 0);
-            if (localPrefetch) {
-                dirLine->setPrefetch(true);
-                recordPrefetchLatency(origRequest->getID(), LatType::MISS);
-                return DONE;
-            }
-            if (dirLine->getState() == E) {
-                dirLine->setOwner(origRequest->getSrc());
-                sendTime = sendResponseUp(origRequest, Command::GetXResp, &responseEvent->getPayload(), true, dirLine->getTimestamp());
-            } else {
-                dirLine->addSharer(origRequest->getSrc());
-                sendTime = sendResponseUp(origRequest, &responseEvent->getPayload(), true, dirLine->getTimestamp());
-            }
-            dirLine->setTimestamp(sendTime);
-            if (is_debug_event(responseEvent)) printData(&responseEvent->getPayload(), false);
-            return DONE;
-        case IM:
-            if (isCached) dirLine->getDataLine()->setData(responseEvent->getPayload(), 0);
-        case SM:
-            dirLine->setState(M);
-            dirLine->setOwner(origRequest->getSrc());
-            if (dirLine->isSharer(origRequest->getSrc())) dirLine->removeSharer(origRequest->getSrc());
-            notifyListenerOfAccess(origRequest, NotifyAccessType::WRITE, NotifyResultType::HIT);
-            sendTime = sendResponseUp(origRequest, (isCached ? dirLine->getDataLine()->getData() : &responseEvent->getPayload()), true, dirLine->getTimestamp());
-            dirLine->setTimestamp(sendTime);
-            if (is_debug_event(responseEvent)) printData(&responseEvent->getPayload(), false);
-            return DONE;
-        case SM_Inv:
-            mshr_->setDataBuffer(responseEvent->getBaseAddr(), responseEvent->getPayload());  // TODO this might be a problem if we try to use it
-            dirLine->setState(M_Inv);
-            return STALL;
-        default:
-            debug->fatal(CALL_INFO, -1, "%s (dir), Error: Response received but state is not handled. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, State = %s. Time = %" PRIu64 "ns\n",
-                    ownerName_.c_str(), responseEvent->getBaseAddr(), CommandString[(int)responseEvent->getCmd()], 
-                    responseEvent->getSrc().c_str(), StateString[state], getCurrentSimTimeNano());
-    }
-    return DONE; // Eliminate compiler warning
-}
-
-
-CacheAction MESISharNoninclusive::handleFetchResp(MemEvent * responseEvent, CacheLine* dirLine, MemEvent * reqEvent) {
-    State state = dirLine->getState();
-    
     // Check acks needed
-    if (mshr_->getAcksNeeded(responseEvent->getBaseAddr()) > 0) mshr_->decrementAcksNeeded(responseEvent->getBaseAddr());
-    CacheAction action = (mshr_->getAcksNeeded(responseEvent->getBaseAddr()) == 0) ? DONE : IGNORE;
+    bool done = mshr_->decrementAcksNeeded(addr);
+
+    // Remove response from expected response list & extract payload
+    responses.find(addr)->second.erase(event->getSrc());
+    if (responses.find(addr)->second.empty()) 
+        responses.erase(addr);
     
-    bool isCached = dirLine->getDataLine() != NULL;
-    if (isCached) dirLine->getDataLine()->setData(responseEvent->getPayload(), 0);    // Update local data if needed
-    recordStateEventCount(responseEvent->getCmd(), state);
-    
-    uint64_t sendTime = 0; 
+    if (data)
+        data->setData(event->getPayload(), 0);
+    else
+        mshr_->setData(addr, event->getPayload());
+
     switch (state) {
         case S_D:
-            dirLine->setState(S);
-        case SM_D:
-            if (state == SM_D) dirLine->setState(SM);
         case E_D:
-            if (state == E_D) dirLine->setState(E);
         case M_D:
-            if (state == M_D) dirLine->setState(M);
-            if (reqEvent->getCmd() == Command::Fetch) {
-                sendResponseDownFromMSHR(responseEvent, (state == M));
-            } else if (reqEvent->getCmd() == Command::GetS) {    // GetS
-                notifyListenerOfAccess(reqEvent, NotifyAccessType::READ, NotifyResultType::HIT);
-                dirLine->addSharer(reqEvent->getSrc());
-                sendTime = sendResponseUp(reqEvent, &responseEvent->getPayload(), true, dirLine->getTimestamp());
-                dirLine->setTimestamp(sendTime);
-                if (is_debug_event(responseEvent)) printData(&responseEvent->getPayload(), false);
-            } else {
-                debug->fatal(CALL_INFO, -1, "%s (dir), Error: Received FetchResp in state %s but stalled request has command %s. Addr = 0x%" PRIx64 ". Time = %" PRIu64 "ns\n",
-                        ownerName_.c_str(), StateString[state], CommandString[(int)reqEvent->getCmd()], responseEvent->getBaseAddr(), getCurrentSimTimeNano());
-            }
+        case SM_D:
+        case SB_D:
+            tag->setState(NextState[state]); // S or E or M or SM or S_B
+            retry(addr);
             break;
-        case SI:
-            dirLine->removeSharer(responseEvent->getSrc());
-            mshr_->setDataBuffer(responseEvent->getBaseAddr(), responseEvent->getPayload());
-            if (action == DONE) {
-                sendWritebackFromMSHR(Command::PutS, dirLine, reqEvent->getRqstr(), &responseEvent->getPayload());
-                if (expectWritebackAck_) mshr_->insertWriteback(dirLine->getBaseAddr());
-                dirLine->setState(I);
-            }
-            break;
-        case EI:
-            if (responseEvent->getDirty()) dirLine->setState(MI);
-        case MI:
-            if (dirLine->getOwner() == responseEvent->getSrc()) dirLine->clearOwner();
-            if (dirLine->isSharer(responseEvent->getSrc())) dirLine->removeSharer(responseEvent->getSrc());
-            if (action == DONE) {
-                sendWritebackFromMSHR(((dirLine->getState() == EI) ? Command::PutE : Command::PutM), dirLine, ownerName_, &responseEvent->getPayload());
-                if (expectWritebackAck_) mshr_->insertWriteback(dirLine->getBaseAddr());
-                dirLine->setState(I);
-            }
-            break;
-        case E_InvX:    // FetchXResp for a GetS, FetchInvX, or FlushLine
-        case M_InvX:    // FetchXResp for a GetS, FetchInvX, or FlushLine
-            if (dirLine->getOwner() == responseEvent->getSrc()) {
-                dirLine->clearOwner();
-                dirLine->addSharer(responseEvent->getSrc());
-            }
-            if (!isCached) mshr_->setDataBuffer(responseEvent->getBaseAddr(), responseEvent->getPayload());
-            if (reqEvent->getCmd() == Command::FetchInvX) {
-                sendResponseDownFromMSHR(responseEvent, (state == M_InvX || responseEvent->getDirty()));
-                dirLine->setState(S);
-            } else if (reqEvent->getCmd() == Command::FetchInv) {    // External FetchInv raced with our FlushLine, handle it first
-                if (dirLine->numSharers() > 0) {
-                    invalidateAllSharers(dirLine, reqEvent->getRqstr(), true);
-                    (state == M_InvX || responseEvent->getDirty())?  dirLine->setState(M_Inv) : dirLine->setState(E_Inv);
-                    return STALL;
-                }
-                (state == M_InvX || responseEvent->getDirty()) ? dirLine->setState(M) : dirLine->setState(E);
-                sendResponseDownFromMSHR(responseEvent, (state == M_InvX || responseEvent->getDirty()));
-            } else if (reqEvent->getCmd() == Command::FlushLine) {
-                (state == M_InvX || responseEvent->getDirty()) ? dirLine->setState(M) : dirLine->setState(E);
-                action = handleFlushLineRequest(reqEvent, dirLine, NULL, true);
-            } else {
-                notifyListenerOfAccess(reqEvent, NotifyAccessType::READ, NotifyResultType::HIT);
-                dirLine->addSharer(reqEvent->getSrc());
-                sendTime = sendResponseUp(reqEvent, &responseEvent->getPayload(), true, dirLine->getTimestamp());
-                dirLine->setTimestamp(sendTime);
-                if (is_debug_event(responseEvent)) printData(&responseEvent->getPayload(), false);
-                if (responseEvent->getDirty() || state == M_InvX) dirLine->setState(M);
-                else dirLine->setState(E);
-            }
-            break;
-        case E_Inv: // FetchResp for FetchInv/flush, may also be waiting for acks
-        case M_Inv: // FetchResp for FetchInv/flush or GetX, may also be waiting for acks
-            if (dirLine->isSharer(responseEvent->getSrc())) dirLine->removeSharer(responseEvent->getSrc());
-            if (dirLine->getOwner() == responseEvent->getSrc()) dirLine->clearOwner();
-            if (action != DONE) {
-                if (responseEvent->getDirty()) dirLine->setState(M_Inv);
-                mshr_->setDataBuffer(responseEvent->getBaseAddr(), responseEvent->getPayload());
-            } else {
-                if (reqEvent->getCmd() == Command::GetX || reqEvent->getCmd() == Command::GetSX) {
-                    notifyListenerOfAccess(reqEvent, NotifyAccessType::WRITE, NotifyResultType::HIT);
-                    if (dirLine->isSharer(reqEvent->getSrc())) dirLine->removeSharer(reqEvent->getSrc());
-                    dirLine->setOwner(reqEvent->getSrc());
-                    sendTime = sendResponseUp(reqEvent, &responseEvent->getPayload(), true, dirLine->getTimestamp());
-                    dirLine->setTimestamp(sendTime);
-                    dirLine->setState(M);
-                } else if (reqEvent->getCmd() == Command::FlushLineInv) {
-                    if (responseEvent->getDirty()) {
-                        if (dirLine->getDataLine() != NULL) dirLine->getDataLine()->setData(responseEvent->getPayload(), 0);
-                        else mshr_->setDataBuffer(responseEvent->getBaseAddr(), responseEvent->getPayload());
-                    }
-                    if (responseEvent->getDirty() || state == M_Inv) dirLine->setState(M);
-                    else dirLine->setState(E);
-                    if (action != DONE) { // Sanity check...
-                        debug->fatal(CALL_INFO, -1, "%s, Error: Received a FetchResp to a FlushLineInv but still waiting on more acks. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s. Time = %" PRIu64 "ns\n",
-                            ownerName_.c_str(), responseEvent->getBaseAddr(), CommandString[(int)responseEvent->getCmd()], responseEvent->getSrc().c_str(), getCurrentSimTimeNano()); 
-                    }
-                    action = handleFlushLineInvRequest(reqEvent, dirLine, NULL, true);
-                } else {
-                    sendResponseDownFromMSHR(responseEvent, (state == M_Inv || responseEvent->getDirty()));
-                    dirLine->setState(I);
-                }
-            }
-            break;
-        case S_Inv:     // Received a FetchInv in S state
-        case SM_Inv:    // Received a FetchInv in SM state
-            if (dirLine->isSharer(responseEvent->getSrc())) dirLine->removeSharer(responseEvent->getSrc());
-            if (action != DONE) {
-                mshr_->setDataBuffer(responseEvent->getBaseAddr(), responseEvent->getPayload());
-            } else {
-                sendResponseDownFromMSHR(responseEvent, false);
-                (state == S_Inv) ? dirLine->setState(I) : dirLine->setState(IM);
-            }
-            break;
-
-        default:
-            debug->fatal(CALL_INFO, -1, "%s (dir), Error: Received a FetchResp and state is unhandled. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, State = %s. Time = %" PRIu64 "ns\n",
-                    ownerName_.c_str(), responseEvent->getBaseAddr(), CommandString[(int)responseEvent->getCmd()], 
-                    responseEvent->getSrc().c_str(), StateString[state], getCurrentSimTimeNano());
-    }
-    return action;
-}
-
-
-CacheAction MESISharNoninclusive::handleAckInv(MemEvent * ack, CacheLine * dirLine, MemEvent * reqEvent) {
-    State state = dirLine->getState();
-    recordStateEventCount(ack->getCmd(), state);
-
-    if (dirLine->isSharer(ack->getSrc())) {
-        dirLine->removeSharer(ack->getSrc());
-    }
-    if (is_debug_event(ack)) debug->debug(_L6_, "Received AckInv for 0x%" PRIx64 ", acks needed: %d\n", ack->getBaseAddr(), mshr_->getAcksNeeded(ack->getBaseAddr()));
-    if (mshr_->getAcksNeeded(ack->getBaseAddr()) > 0) mshr_->decrementAcksNeeded(ack->getBaseAddr());
-    CacheAction action = (mshr_->getAcksNeeded(ack->getBaseAddr()) == 0) ? DONE : IGNORE;
-    bool isCached = dirLine->getDataLine() != NULL;
-    vector<uint8_t> * data = isCached ? dirLine->getDataLine()->getData() : mshr_->getDataBuffer(reqEvent->getBaseAddr());
-    uint64_t sendTime = 0; 
-    switch (state) {
-        case S_Inv: // AckInv for Inv
-            if (action == DONE) {
-                if (reqEvent->getCmd() == Command::FetchInv) {
-                    sendResponseDown(reqEvent, dirLine, data, false, true);
-                } else {
-                    sendAckInv(reqEvent);
-                }
-                dirLine->setState(I);
-            }
-            return action;
-        case E_Inv: // AckInv for FetchInv, possibly waiting on FetchResp too
-        case M_Inv: // AckInv for FetchInv or GetX, possibly on FetchResp or GetXResp too
-            if (action == DONE) {
-                if (reqEvent->getCmd() == Command::FetchInv) {
-                    sendResponseDown(reqEvent, dirLine, data, (state == E_Inv), true);
-                    dirLine->setState(I);
-                } else if (reqEvent->getCmd() == Command::ForceInv) {
-                    sendAckInv(reqEvent);
-                    dirLine->setState(I);
-                } else {
-                    notifyListenerOfAccess(reqEvent, NotifyAccessType::WRITE, NotifyResultType::HIT);
-                    dirLine->setOwner(reqEvent->getSrc());
-                    if (dirLine->isSharer(reqEvent->getSrc())) dirLine->removeSharer(reqEvent->getSrc());
-                    sendTime = sendResponseUp(reqEvent, data, true, dirLine->getTimestamp());
-                    dirLine->setTimestamp(sendTime);
-                    if (is_debug_event(reqEvent)) printData(data, false);
-                    dirLine->setState(M);
-                }
-                mshr_->clearDataBuffer(reqEvent->getBaseAddr());
-            }
-            return action;
-        case SM_Inv:
-            if (action == DONE) {
-                if (reqEvent->getCmd() == Command::Inv || reqEvent->getCmd() == Command::ForceInv) {    // Completed Inv so handle
-                    if (dirLine->numSharers() > 0) {
-                        invalidateAllSharers(dirLine, reqEvent->getRqstr(), true);
-                        return STALL;
-                    }
-                    sendAckInv(reqEvent);
-                    dirLine->setState(IM);
-                } else if (reqEvent->getCmd() == Command::FetchInv) {
-                    sendResponseDown(reqEvent, dirLine, data, false, true);
-                    dirLine->setState(IM);
-                } else { // Waiting on data for upgrade
-                    dirLine->setState(SM);
-                    action = IGNORE;
-                }
-            }
-            return action;  
+        case S_Inv:
         case SB_Inv:
-            if (action == DONE) {
-                if (dirLine->numSharers() > 0) {
-                    invalidateAllSharers(dirLine, reqEvent->getRqstr(), true);
-                    return IGNORE;
-                }
-                sendAckInv(reqEvent);
-                dirLine->setState(I_B);
+            tag->removeSharer(event->getSrc());
+            if (done) {
+                tag->setState(S);
+                retry(addr);
             }
-            return action;
-        case SI:
-            if (action == DONE) {
-                sendWritebackFromMSHR(Command::PutS, dirLine, reqEvent->getRqstr(), data);
-                if (expectWritebackAck_) mshr_->insertWriteback(ack->getBaseAddr());
-                dirLine->setState(I);
+            break;
+        case SM_Inv:
+            tag->removeSharer(event->getSrc());
+            if (done) {
+                tag->setState(SM);
             }
-        case EI:
-            if (action == DONE) {
-                sendWritebackFromMSHR(Command::PutE, dirLine, reqEvent->getRqstr(), data);
-                if (expectWritebackAck_) mshr_->insertWriteback(ack->getBaseAddr());
-                dirLine->setState(I);
+            break;
+        case E_InvX:
+        case M_InvX:
+            tag->removeOwner();
+            tag->addSharer(event->getSrc());
+            tag->setState(NextState[state]); // E or M
+            retry(addr);
+            break;
+        case E_Inv:
+        case M_Inv:
+            if (tag->hasOwner())
+                tag->removeOwner();
+            else
+                tag->removeSharer(event->getSrc());
+            if (done) {
+                tag->setState(NextState[state]);    // E or M
+                retry(addr);
             }
-        case MI:
-            if (action == DONE) {
-                sendWritebackFromMSHR(Command::PutM, dirLine, reqEvent->getRqstr(), data);
-                if (expectWritebackAck_) mshr_->insertWriteback(ack->getBaseAddr());
-                dirLine->setState(I);
-            }
+            break;
         default:
-            debug->fatal(CALL_INFO,-1,"%s (dir), Error: Received AckInv in unhandled state. Addr = 0x%" PRIx64 ", Cmd = %s, Src = %s, State = %s. Time = %" PRIu64 "ns\n",
-                    ownerName_.c_str(), ack->getBaseAddr(), CommandString[(int)ack->getCmd()], ack->getSrc().c_str(), 
-                    StateString[state], getCurrentSimTimeNano());
-
+            debug->fatal(CALL_INFO,-1,"%s, Error: Received FetchResp in unhandled state '%s'. Event: %s. Time = %" PRIu64 "ns\n",
+                    getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
-    return action;    // eliminate compiler warning
+    
+    if (is_debug_event(event)) {
+        eventDI.action = done ? "Retry" : "Stall";
+        if (tag) {
+            eventDI.newst = tag->getState();
+            eventDI.verboseline = tag->getString();
+            if (data)
+                eventDI.verboseline += "/" + data->getString();
+        }
+    }
+    
+    delete event;
+
+    return true;
 }
+
+
+bool MESISharNoninclusive::handleFetchXResp(MemEvent * event, bool inMSHR) {
+    Addr addr = event->getBaseAddr();
+    DirectoryLine * tag = dirArray_->lookup(addr, false);
+    State state = tag ? tag->getState() : I;
+    DataLine * data = (tag) ? dataArray_->lookup(addr, false) : nullptr;
+    if (data && data->getTag() != tag) data = nullptr;
+    
+    if (is_debug_event(event)) {
+        eventDI.prefill(event->getID(), Command::FetchXResp, false, addr, state);
+        eventDI.action = "Retry";
+    }
+    mshr_->decrementAcksNeeded(addr);
+
+    // Clear expected responses
+    responses.find(addr)->second.erase(event->getSrc());
+    if (responses.find(addr)->second.empty()) responses.erase(addr);
+    
+    // Update coherence state
+    tag->removeOwner();
+    tag->addSharer(event->getSrc());
+
+    if (state == M_InvX || event->getDirty())
+        tag->setState(M);
+    else
+        tag->setState(E);
+    
+    // Save data
+    if (data) 
+        data->setData(event->getPayload(), 0);
+    else
+        mshr_->setData(addr, event->getPayload());
+
+    // Clean up and retry
+    retry(addr);
+    delete event;
+    
+    if (is_debug_addr(addr) && tag) {
+        eventDI.newst = tag->getState();
+        eventDI.verboseline = tag->getString();
+        if (data)
+            eventDI.verboseline += "/" + data->getString();
+    }
+    return true;
+}
+
+
+bool MESISharNoninclusive::handleAckInv(MemEvent * event, bool inMSHR) {
+    Addr addr = event->getAddr();
+    DirectoryLine * tag = dirArray_->lookup(addr, false);
+    State state = tag ? tag->getState() : I;
+    DataLine * data = (tag) ? dataArray_->lookup(addr, false) : nullptr;
+    if (data && data->getTag() != tag) data = nullptr;
+    if (is_debug_event(event))
+        eventDI.prefill(event->getID(), Command::AckInv, false, addr, state);
+   
+
+    if (tag->isSharer(event->getSrc()))
+        tag->removeSharer(event->getSrc());
+    else 
+        tag->removeOwner();
+    
+    responses.find(addr)->second.erase(event->getSrc());
+    if (responses.find(addr)->second.empty()) responses.erase(addr);
+   
+    bool done = mshr_->decrementAcksNeeded(addr);
+
+    if (done) {
+        tag->setState(NextState[state]); 
+        retry(addr); 
+    }
+    
+    if (is_debug_addr(addr)) {
+        eventDI.action = done ? "Retry" : "DecAcks";
+        if (tag) {
+            eventDI.newst = tag->getState();
+            eventDI.verboseline = tag->getString();
+            if (data)
+                eventDI.verboseline += "/" + data->getString();
+        }
+    }
+
+    delete event;
+    return true;
+}
+
+
+bool MESISharNoninclusive::handleAckPut(MemEvent * event, bool inMSHR) {
+    //stat_eventState[(int)Command::AckPut][state]->addData(1);
+    if (is_debug_event(event)) {
+        DirectoryLine * tag = dirArray_->lookup(event->getBaseAddr(), false);
+        State state = tag ? tag->getState() : I;
+        eventDI.prefill(event->getID(), Command::AckPut, false, event->getBaseAddr(), state);
+        eventDI.action = "Done";
+        if (tag)
+            eventDI.verboseline = tag->getString();
+    }
+
+    cleanUpAfterResponse(event, inMSHR);
+    return true;
+}
+
+
+/* We're using NULLCMD to signal an internally generated event - in this case an eviction */
+bool MESISharNoninclusive::handleNULLCMD(MemEvent* event, bool inMSHR) {
+    Addr oldAddr = event->getAddr();
+    Addr newAddr = event->getBaseAddr();
+
+    // Is this a data eviction or directory eviction?
+    bool dirEvict = evictionType_.find(std::make_pair(oldAddr,newAddr))->second;
+    bool evicted;
+    
+    // Tag/directory array eviction
+    if (dirEvict) {
+        DirectoryLine * tag = dirArray_->lookup(oldAddr, false);
+        if (is_debug_event(event))
+            eventDI.prefill(event->getID(), Command::NULLCMD, false, tag->getAddr(), evictDI.oldst);
+
+        evicted = handleDirEviction(newAddr, tag);
+        if (evicted) {
+            notifyListenerOfEvict(tag->getAddr(), lineSize_, event->getInstructionPointer());
+            retryBuffer_.push_back(mshr_->getFrontEvent(newAddr));
+            if (mshr_->removeEvictPointer(oldAddr, newAddr))
+                retry(oldAddr);
+            evictionType_.erase(std::make_pair(oldAddr, newAddr));
+            if (is_debug_event(event))
+                eventDI.action = "Retry";
+        } else {
+            if (is_debug_event(event)) {
+                eventDI.action = "Stall";
+                eventDI.reason = "Dir evict failed";
+            }
+            if (oldAddr != tag->getAddr()) { // Now evicting a different address than we were before
+                if (is_debug_event(event)) {
+                    std::stringstream reason;
+                    reason << "New dir evict targ: 0x" << std::hex << tag->getAddr();
+                    eventDI.reason = reason.str();
+                }
+                if (mshr_->removeEvictPointer(oldAddr, newAddr))
+                    retry(oldAddr);
+                evictionType_.erase(std::make_pair(oldAddr, newAddr));
+                std::pair<Addr,Addr> evictpair = std::make_pair(tag->getAddr(),newAddr);
+                if (evictionType_.find(evictpair) == evictionType_.end()) {
+                    mshr_->insertEviction(tag->getAddr(), newAddr);
+                    evictionType_.insert(std::make_pair(evictpair, true));
+                } else {
+                    evictionType_[evictpair] = true;
+                }
+            }
+        }
+    // Data array eviction
+    // Races can mean that this eviction is no longer neccessary but we can't tell if we haven't started the eviction
+    // or if we're finishing. So finish it, but only replace if we currently need an eviction 
+    // (the event waiting for eviction now and the one that triggered this eviction might not be the same)
+    } else {
+        DirectoryLine * tag = dirArray_->lookup(newAddr, false);
+        DataLine * data = dataArray_->lookup(oldAddr, false);
+        evicted = handleDataEviction(newAddr, data);
+        if (is_debug_event(event)) {
+            eventDI.prefill(event->getID(), Command::NULLCMD, false, data->getAddr(), evictDI.oldst);
+        }
+        if (evicted) {
+            if (tag && (tag->getState() == IA || tag->getState() == SA || tag->getState() == EA || tag->getState() == MA)) {
+                dataArray_->replace(newAddr, data);
+                if (is_debug_addr(newAddr))
+                    printDebugAlloc(true, newAddr, "Data");
+            
+                data->setTag(tag);
+                if (tag->getState() == IA)
+                    tag->setState(I);
+                else if (tag->getState() == SA)
+                    tag->setState(S);
+                else if (tag->getState() == EA)
+                    tag->setState(E);
+                else if (tag->getState() == MA)
+                    tag->setState(M);
+                retryBuffer_.push_back(mshr_->getFrontEvent(newAddr));
+            } else {
+                dataArray_->deallocate(data);
+            }
+
+            if (mshr_->removeEvictPointer(oldAddr, newAddr))
+                retry(oldAddr);
+            evictionType_.erase(std::make_pair(oldAddr, newAddr));
+            
+            if (is_debug_event(event)) {
+                eventDI.action = "Retry";
+                eventDI.newst = data->getState();
+            }
+        } else {
+            if (is_debug_event(event)) {
+                eventDI.action = "Stall";
+                eventDI.reason = "Data evict failed";
+            }
+            if (oldAddr != data->getAddr()) { // Now evicting a different address than we were before
+                if (is_debug_event(event) || is_debug_addr(data->getAddr())) {
+                    std::stringstream reason;
+                    reason << "New data evict targ: 0x" << std::hex << data->getAddr();
+                    eventDI.reason = reason.str();
+                }
+                
+                if (mshr_->removeEvictPointer(oldAddr, newAddr))
+                    retry(oldAddr);
+                evictionType_.erase(std::make_pair(oldAddr, newAddr));
+                std::pair<Addr,Addr> evictpair = std::make_pair(data->getAddr(), newAddr);
+                if (evictionType_.find(evictpair) == evictionType_.end()) {
+                    mshr_->insertEviction(data->getAddr(), newAddr);
+                    evictionType_.insert(std::make_pair(evictpair, false));
+                } else {
+                    evictionType_[evictpair] = false;
+                }
+            }
+        }
+    }
+
+    delete event;
+    return true;
+}
+
 
 bool MESISharNoninclusive::handleNACK(MemEvent* event, bool inMSHR) {
-    MemEvent* nackedEvent = event->getNACKedEvent();
-    if (is_debug_event(nackedEvent)) debug->debug(_L3_, "NACK received.\n");
-    
+    MemEvent * nackedEvent = event->getNACKedEvent();
     Command cmd = nackedEvent->getCmd();
-    CacheLine* dLine = cacheArray_->lookup(nackedEvent->getBaseAddr(), false);
-    State state = dLine ? dLine->getState() : I;
+    Addr addr = nackedEvent->getBaseAddr();
     
-    bool resend = false;
+    if (is_debug_event(event) || is_debug_event(nackedEvent)) {
+        DirectoryLine * tag = dirArray_->lookup(addr, false);
+        eventDI.prefill(event->getID(), Command::NACK, false, addr, tag ? tag->getState() : I);
+    }
+
+    delete event;
+
     switch (cmd) {
         case Command::GetS:
         case Command::GetX:
         case Command::GetSX:
-            resend = true;
-            break;
+        case Command::FlushLine:
+        case Command::FlushLineInv:
         case Command::PutS:
         case Command::PutE:
         case Command::PutM:
-            if (expectWritebackAck_ && !mshr_->pendingWriteback(nackedEvent->getBaseAddr())) 
-                resend = false;
-            else
-                resend = true;
-            break;
-        case Command::FetchInvX:
-            if (state == I || dLine->getOwner() != nackedEvent->getDst()) 
-                resend = false;
-            else
-                resend = true;
+            resendEvent(nackedEvent, false); // Resend towards memory
             break;
         case Command::FetchInv:
-            if (state == I || ((dLine->getOwner() != nackedEvent->getDst()) && !dLine->isSharer(nackedEvent->getDst()))) 
-                resend = false;
-            else
-                resend = true;
-            break;
+        case Command::FetchInvX:
         case Command::Fetch:
         case Command::Inv:
-            if (state == I || !dLine->isSharer(nackedEvent->getDst())) 
-                resend = false;
-            else
-                resend = true;
+        case Command::ForceInv:
+            if (is_debug_addr(addr)) {
+            }
+            if (responses.find(addr) != responses.end() 
+                    && responses.find(addr)->second.find(nackedEvent->getDst()) != responses.find(addr)->second.end() 
+                    && responses.find(addr)->second.find(nackedEvent->getDst())->second == nackedEvent->getID()) {
+
+                resendEvent(nackedEvent, true); // Resend towards CPU
+            } else {
+                if (is_debug_event(nackedEvent))
+                    eventDI.action = "Drop";
+                delete nackedEvent;
+            }
             break;
         default:
-            debug->fatal(CALL_INFO, -1, "%s (dir), Error: Received NACK for unrecognized event: %s. Addr = 0x%" PRIx64 ", Src = %s. Time = %" PRIu64 "ns\n",
-                    ownerName_.c_str(), CommandString[(int)cmd], nackedEvent->getBaseAddr(), nackedEvent->getSrc().c_str(), getCurrentSimTimeNano());
-    }
-    
-    if (resend)
-        resendEvent(nackedEvent, nackedEvent->fromHighNetNACK());
-    else
-        delete nackedEvent;
-
+            debug->fatal(CALL_INFO,-1,"%s, Error: Received NACK with unhandled command type. Event: %s. Time = %" PRIu64 "ns\n",
+                    getName().c_str(), nackedEvent->getVerboseString().c_str(), getCurrentSimTimeNano());
+    }   
     return true;
 }
 
-/*----------------------------------------------------------------------------------------------------------------------
- *  Manage data structures
- *---------------------------------------------------------------------------------------------------------------------*/
-
-bool MESISharNoninclusive::allocateLine(Addr addr, MemEvent* event) {
-    CacheLine* replacementLine = cacheArray_->findReplacementCandidate(addr, true);
-
-    if (replacementLine->valid() && is_debug_addr(addr)) {
-        debug->debug(_L6_, "Evicting 0x%" PRIx64 "\n", replacementLine->getBaseAddr());
-    }
-
-    if (replacementLine->valid()) {
-        if (replacementLine->inTransition()) {
-            mshr_->insertPointer(replacementLine->getBaseAddr(), event->getBaseAddr());
-            return false;
-        }
-
-        CacheAction action = handleEviction(replacementLine, getName(), false);
-        if (action == STALL) {
-            mshr_->insertPointer(replacementLine->getBaseAddr(), event->getBaseAddr());
-            return false;
-        }
-    }
-
-    notifyListenerOfEvict(event, replacementLine);
-    cacheArray_->replace(addr, replacementLine);
-    return true;
-}
-
-bool MESISharNoninclusive::allocateDirCacheLine(MemEvent * event, Addr addr, CacheLine * dirLine, bool noStall) {
-    CacheLine* replacementDirLine = cacheArray_->findReplacementCandidate(addr, false);
-    CacheArray::DataLine * replacementDataLine = replacementDirLine->getDataLine();
-    if (dirLine == replacementDirLine) {
-        cacheArray_->replace(addr, dirLine, replacementDataLine);
-        return true;
-    }
-
-    if (replacementDirLine->valid() && (is_debug_addr(addr) || is_debug_addr(replacementDirLine->getBaseAddr()))) {
-        debug->debug(_L6_, "Evicting 0x%" PRIx64 " from cache\n", replacementDirLine->getBaseAddr());
-    }
-
-    if (replacementDirLine->valid()) {
-        if (replacementDirLine->inTransition()) {
-            if (noStall) return false;
-            mshr_->insertPointer(replacementDirLine->getBaseAddr(), addr);
-            return false;
-        }
-
-        handleEviction(replacementDirLine, getName(), true);
-    }
-
-    cacheArray_->replace(addr, dirLine, replacementDataLine);
-    return true;
-}
-
-/*----------------------------------------------------------------------------------------------------------------------
- *  Functions for sending events. Some of these are part of the external interface (public)
- *---------------------------------------------------------------------------------------------------------------------*/
-
-
-void MESISharNoninclusive::invalidateAllSharers(CacheLine * dirLine, string rqstr, bool replay) {
-    set<std::string> * sharers = dirLine->getSharers();
-    
-    uint64_t baseTime = (timestamp_ > dirLine->getTimestamp()) ? timestamp_ : dirLine->getTimestamp();
-    uint64_t deliveryTime = (replay) ? baseTime + mshrLatency_ : baseTime + tagLatency_;
-    bool invSent = false;
-    for (set<std::string>::iterator it = sharers->begin(); it != sharers->end(); it++) {
-        MemEvent * inv = new MemEvent(ownerName_, dirLine->getBaseAddr(), dirLine->getBaseAddr(), Command::Inv);
-        inv->setDst(*it);
-        inv->setRqstr(rqstr);
-    
-        Response resp = {inv, deliveryTime, packetHeaderBytes};
-        addToOutgoingQueueUp(resp);
-
-        mshr_->incrementAcksNeeded(dirLine->getBaseAddr());
-        invSent = true;
-        if (is_debug_addr(dirLine->getBaseAddr())) {
-            debug->debug(_L7_,"Sending inv: Addr = 0x%" PRIx64 ", Dst = %s @ cycles = %" PRIu64 ".\n", 
-                dirLine->getBaseAddr(), (*it).c_str(), deliveryTime);
-        }
-    }
-    if (invSent) dirLine->setTimestamp(deliveryTime);
-}
-
-
-void MESISharNoninclusive::invalidateAllSharersAndFetch(CacheLine * cacheLine, string rqstr, bool replay) {
-    set<std::string> * sharers = cacheLine->getSharers();
-    bool fetched = false;
-    
-    uint64_t baseTime = (timestamp_ > cacheLine->getTimestamp()) ? timestamp_ : cacheLine->getTimestamp();
-    uint64_t deliveryTime = (replay) ? timestamp_ + mshrLatency_ : timestamp_ + tagLatency_;
-    bool invSent = false;
-
-    for (set<std::string>::iterator it = sharers->begin(); it != sharers->end(); it++) {
-        MemEvent * inv;
-        if (fetched) inv = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::Inv);
-        else {
-            inv = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::FetchInv);
-            fetched = true;
-        }
-        inv->setDst(*it);
-        inv->setRqstr(rqstr);
-        inv->setSize(cacheLine->getSize());
-    
-        Response resp = {inv, deliveryTime, packetHeaderBytes};
-        addToOutgoingQueueUp(resp);
-        invSent = true;
-
-        mshr_->incrementAcksNeeded(cacheLine->getBaseAddr());
-
-        if (is_debug_addr(cacheLine->getBaseAddr())) {
-            debug->debug(_L7_,"Sending inv: Addr = 0x%" PRIx64 ", Dst = %s @ cycles = %" PRIu64 ".\n", 
-                cacheLine->getBaseAddr(), (*it).c_str(), deliveryTime);
-        }
-    }
-    
-    if (invSent) cacheLine->setTimestamp(deliveryTime);
-}
-
-
-/*
- * If checkFetch is true -> block is not cached
- * Then, if requestor is not already a sharer, we need data!
- */
-bool MESISharNoninclusive::invalidateSharersExceptRequestor(CacheLine * cacheLine, string rqstr, string origRqstr, bool replay, bool uncached) {
-    bool sentInv = false;
-    set<std::string> * sharers = cacheLine->getSharers();
-    bool needFetch = uncached && (sharers->find(rqstr) == sharers->end());
-    
-    uint64_t baseTime = (timestamp_ > cacheLine->getTimestamp()) ? timestamp_ : cacheLine->getTimestamp();
-    uint64_t deliveryTime = (replay) ? baseTime + mshrLatency_ : baseTime + tagLatency_;
-    
-    for (set<std::string>::iterator it = sharers->begin(); it != sharers->end(); it++) {
-        if (*it == rqstr) continue;
-        MemEvent * inv;
-        if (needFetch) {
-            inv = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::FetchInv);
-            needFetch = false;
-        } else {
-            inv = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::Inv);
-        }
-        inv->setDst(*it);
-        inv->setRqstr(origRqstr);
-        inv->setSize(cacheLine->getSize());
-
-        Response resp = {inv, deliveryTime, packetHeaderBytes};
-        addToOutgoingQueueUp(resp);
-        sentInv = true;
-
-        
-        mshr_->incrementAcksNeeded(cacheLine->getBaseAddr());
-        
-        if (is_debug_addr(cacheLine->getBaseAddr())) {
-            debug->debug(_L7_,"Sending inv: Addr = 0x%" PRIx64 ", Dst = %s @ cycles = %" PRIu64 ".\n", 
-                cacheLine->getBaseAddr(), (*it).c_str(), deliveryTime);
-        }
-    }
-    if (sentInv) cacheLine->setTimestamp(deliveryTime);
-    return sentInv;
-}
-
-
-void MESISharNoninclusive::sendFetchInv(CacheLine * cacheLine, string rqstr, bool replay) {
-    MemEvent * fetch = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::FetchInv);
-    if (!(cacheLine->getOwner()).empty()) fetch->setDst(cacheLine->getOwner());
-    else fetch->setDst(*(cacheLine->getSharers()->begin()));
-    fetch->setRqstr(rqstr);
-    fetch->setSize(cacheLine->getSize());
-    
-    uint64_t baseTime = (timestamp_ > cacheLine->getTimestamp()) ? timestamp_ : cacheLine->getTimestamp();
-    uint64_t deliveryTime = (replay) ? timestamp_ + mshrLatency_ : timestamp_ + tagLatency_;
-    Response resp = {fetch, deliveryTime, packetHeaderBytes};
-    addToOutgoingQueueUp(resp);
-    cacheLine->setTimestamp(deliveryTime);
-   
-    if (is_debug_addr(cacheLine->getBaseAddr())) {
-        debug->debug(_L7_, "Sending FetchInv: Addr = 0x%" PRIx64 ", Dst = %s @ cycles = %" PRIu64 ".\n", 
-            cacheLine->getBaseAddr(), cacheLine->getOwner().c_str(), deliveryTime);
-    }
-}
-
-
-void MESISharNoninclusive::sendFetchInvX(CacheLine * cacheLine, string rqstr, bool replay) {
-    MemEvent * fetch = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::FetchInvX);
-    fetch->setDst(cacheLine->getOwner());
-    fetch->setRqstr(rqstr);
-    fetch->setSize(cacheLine->getSize());
-    
-    uint64_t baseTime = (timestamp_ > cacheLine->getTimestamp()) ? timestamp_ : cacheLine->getTimestamp();
-    uint64_t deliveryTime = (replay) ? baseTime + mshrLatency_ : baseTime + tagLatency_;
-    Response resp = {fetch, deliveryTime, packetHeaderBytes};
-    addToOutgoingQueueUp(resp);
-    cacheLine->setTimestamp(deliveryTime);
-    
-    if (is_debug_addr(cacheLine->getBaseAddr())) {
-        debug->debug(_L7_, "Sending FetchInvX: Addr = 0x%" PRIx64 ", Dst = %s @ cycles = %" PRIu64 ".\n", 
-            cacheLine->getBaseAddr(), cacheLine->getOwner().c_str(), deliveryTime);
-    }
-}
-
-
-void MESISharNoninclusive::sendFetch(CacheLine * cacheLine, string rqstr, bool replay) {
-    MemEvent * fetch = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::Fetch);
-    fetch->setDst(*((cacheLine->getSharers())->begin()));
-    fetch->setRqstr(rqstr);
-    
-    uint64_t baseTime = (timestamp_ > cacheLine->getTimestamp()) ? timestamp_ : cacheLine->getTimestamp();
-    uint64_t deliveryTime = baseTime + tagLatency_;
-    Response resp = {fetch, deliveryTime, packetHeaderBytes};
-    addToOutgoingQueueUp(resp);
-    cacheLine->setTimestamp(deliveryTime);
-    
-    if (is_debug_addr(cacheLine->getBaseAddr())) {
-        debug->debug(_L7_, "Sending Fetch: Addr = 0x%" PRIx64 ", Dst = %s @ cycles = %" PRIu64 ".\n", 
-            cacheLine->getBaseAddr(), cacheLine->getOwner().c_str(), deliveryTime);
-    }
-}
-
-
-void MESISharNoninclusive::sendForceInv(CacheLine * cacheLine, string rqstr, bool replay) {
-    MemEvent * inv = new MemEvent(ownerName_, cacheLine->getBaseAddr(), cacheLine->getBaseAddr(), Command::ForceInv);
-    inv->setDst(cacheLine->getOwner());
-    inv->setRqstr(rqstr);
-    inv->setSize(cacheLine->getSize());
-
-    uint64_t baseTime = timestamp_ > cacheLine->getTimestamp() ? timestamp_ : cacheLine->getTimestamp();
-    uint64_t deliveryTime = (replay) ? baseTime + mshrLatency_ : baseTime + tagLatency_;
-    Response resp = {inv, deliveryTime, packetHeaderBytes};
-    addToOutgoingQueueUp(resp);
-    cacheLine->setTimestamp(deliveryTime);
-    
-    if (is_debug_addr(cacheLine->getBaseAddr())) {
-        debug->debug(_L7_, "Sending ForceInv: Addr = 0x%" PRIx64 ", Dst = %s @ cycles = %" PRIu64 ".\n", 
-            cacheLine->getBaseAddr(), cacheLine->getOwner().c_str(), deliveryTime);
-    }
-}
-
-
-/*
- *  Handles: responses to fetch invalidates
- *  Latency: cache access to read data for payload  
- */
-void MESISharNoninclusive::sendResponseDown(MemEvent* event, CacheLine * cacheLine, std::vector<uint8_t>* data, bool dirty, bool replay){
-    MemEvent *responseEvent = event->makeResponse();
-    responseEvent->setPayload(*data);
-    if (is_debug_event(event)) printData(data, false);
-    responseEvent->setSize(data->size());
-
-    responseEvent->setDirty(dirty);
-
-    uint64_t baseTime = (timestamp_ > cacheLine->getTimestamp()) ? timestamp_ : cacheLine->getTimestamp();
-    uint64_t deliveryTime = replay ? baseTime + mshrLatency_ : baseTime + accessLatency_;
-    Response resp  = {responseEvent, deliveryTime, packetHeaderBytes + responseEvent->getPayloadSize()};
-    addToOutgoingQueue(resp);
-    cacheLine->setTimestamp(deliveryTime);
-    
-    if (is_debug_event(event)) { 
-        debug->debug(_L3_,"Sending Response at cycle = %" PRIu64 ", Cmd = %s, Src = %s\n", deliveryTime, CommandString[(int)responseEvent->getCmd()], responseEvent->getSrc().c_str());
-    }
-}
-
-
-void MESISharNoninclusive::sendResponseDownFromMSHR(MemEvent * event, bool dirty) {
-    MemEvent * requestEvent = static_cast<MemEvent*>(mshr_->lookupFront(event->getBaseAddr()));
-    MemEvent * responseEvent = requestEvent->makeResponse();
-    responseEvent->setPayload(event->getPayload());
-    responseEvent->setSize(event->getSize());
-    responseEvent->setDirty(dirty);
-
-    uint64_t deliveryTime = timestamp_ + mshrLatency_;
-    Response resp = {responseEvent, deliveryTime, packetHeaderBytes + responseEvent->getPayloadSize()};
-    addToOutgoingQueue(resp);
-    
-    if (is_debug_event(event)) {
-        debug->debug(_L3_,"Sending Response from MSHR at cycle = %" PRIu64 ", Cmd = %s, Src = %s\n", deliveryTime, CommandString[(int)responseEvent->getCmd()], responseEvent->getSrc().c_str());
-    }
-}
-
-void MESISharNoninclusive::sendAckInv(MemEvent * event) {
-    MemEvent * ack = event->makeResponse();
-    ack->setCmd(Command::AckInv); // Just in case this wasn't an Inv/ForceInv/etc.
-    ack->setDst(getDestination(event->getBaseAddr()));
-    
-    uint64_t deliveryTime = timestamp_ + tagLatency_;
-    Response resp = {ack, deliveryTime, packetHeaderBytes};
-    addToOutgoingQueue(resp);
-    
-    if (is_debug_event(ack)) debug->debug(_L3_,"Sending AckInv at cycle = %" PRIu64 "\n", deliveryTime);
-}
-
-
-void MESISharNoninclusive::sendWritebackAck(MemEvent * event) {
-    MemEvent * ack = new MemEvent(ownerName_, event->getBaseAddr(), event->getBaseAddr(), Command::AckPut);
-    ack->setDst(event->getSrc());
-    ack->setRqstr(event->getSrc());
-    ack->setSize(event->getSize());
-
-    uint64_t deliveryTime = timestamp_ + tagLatency_;
-    Response resp = {ack, deliveryTime, packetHeaderBytes};
-    addToOutgoingQueueUp(resp);
-    
-    if (is_debug_event(event)) debug->debug(_L3_, "Sending AckPut at cycle = %" PRIu64 "\n", deliveryTime);
-}
-
-void MESISharNoninclusive::sendWritebackFromCache(Command cmd, CacheLine * dirLine, string rqstr) {
-    MemEvent * writeback = new MemEvent(ownerName_, dirLine->getBaseAddr(), dirLine->getBaseAddr(), cmd);
-    writeback->setDst(getDestination(dirLine->getBaseAddr()));
-    writeback->setSize(dirLine->getSize());
-    if (cmd == Command::PutM || writebackCleanBlocks_) {
-        writeback->setPayload(*(dirLine->getDataLine()->getData()));
-    }
-    writeback->setRqstr(rqstr);
-    if (cmd == Command::PutM) writeback->setDirty(true);
-    uint64_t baseTime = (timestamp_ > dirLine->getTimestamp()) ? timestamp_ : dirLine->getTimestamp();
-    uint64_t deliveryTime = baseTime + accessLatency_;
-    Response resp = {writeback, deliveryTime, packetHeaderBytes + writeback->getPayloadSize()};
-    addToOutgoingQueue(resp);
-    dirLine->setTimestamp(deliveryTime);
-    
-    if (is_debug_addr(dirLine->getBaseAddr())) debug->debug(_L3_, "Sending writeback at cycle = %" PRIu64 ", Cmd = %s. From cache\n", deliveryTime, CommandString[(int)cmd]);
-}
-
-void MESISharNoninclusive::sendWritebackFromMSHR(Command cmd, CacheLine * dirLine, string rqstr, vector<uint8_t> * data) {
-    MemEvent * writeback = new MemEvent(ownerName_, dirLine->getBaseAddr(), dirLine->getBaseAddr(), cmd);
-    writeback->setDst(getDestination(dirLine->getBaseAddr()));
-    writeback->setSize(dirLine->getSize());
-    if (cmd == Command::PutM || writebackCleanBlocks_) {
-        writeback->setPayload(*data);
-    }
-    writeback->setRqstr(rqstr);
-    if (cmd == Command::PutM) writeback->setDirty(true);
-    uint64_t deliveryTime = timestamp_ + accessLatency_;
-    Response resp = {writeback, deliveryTime, packetHeaderBytes + writeback->getPayloadSize()};
-    addToOutgoingQueue(resp);
-    
-    if (is_debug_addr(dirLine->getBaseAddr())) debug->debug(_L3_, "Sending writeback at cycle = %" PRIu64 ", Cmd = %s. From MSHR\n", deliveryTime, CommandString[(int)cmd]);
-}
-
-void MESISharNoninclusive::sendFlushResponse(MemEvent * requestEvent, bool success) {
-    MemEvent * flushResponse = requestEvent->makeResponse();
-    flushResponse->setSuccess(success);
-    flushResponse->setDst(requestEvent->getSrc());
-
-    uint64_t deliveryTime = timestamp_ + mshrLatency_;
-    Response resp = {flushResponse, deliveryTime, packetHeaderBytes};
-    addToOutgoingQueueUp(resp);
-    
-    if (is_debug_event(requestEvent)) { 
-        debug->debug(_L3_,"Sending Flush Response at cycle = %" PRIu64 ", Cmd = %s, Src = %s\n", deliveryTime, CommandString[(int)flushResponse->getCmd()], flushResponse->getSrc().c_str());
-    }
-}
+/***********************************************************************************************************
+ * MSHR & CacheArray management
+ ***********************************************************************************************************/
 
 /**
- *  Forward a flush line request, with or without data
+ * Handle a cache miss
  */
-void MESISharNoninclusive::forwardFlushLine(MemEvent * origFlush, CacheLine * dirLine, bool dirty, Command cmd) {
-    MemEvent * flush = new MemEvent(ownerName_, origFlush->getBaseAddr(), origFlush->getBaseAddr(), cmd);
-    flush->setDst(getDestination(origFlush->getBaseAddr()));
-    flush->setRqstr(origFlush->getRqstr());
-    flush->setSize(lineSize_);
-    uint64_t latency = tagLatency_;
-    if (dirty) flush->setDirty(true);
-    // Always forward data if available
-    if (dirLine) {
-        if (dirLine->getDataLine() != NULL) flush->setPayload(*dirLine->getDataLine()->getData());
-        else if (mshr_->isHit(origFlush->getBaseAddr())) flush->setPayload(*mshr_->getDataBuffer(origFlush->getBaseAddr()));
-        else if (origFlush->getPayloadSize() != 0) flush->setPayload(origFlush->getPayload());
+MemEventStatus MESISharNoninclusive::processDirectoryMiss(MemEvent * event, DirectoryLine * tag, bool inMSHR) {
+    MemEventStatus status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, false); // Miss means we need an MSHR entry
+    if (inMSHR && mshr_->getFrontEvent(event->getBaseAddr()) != event) {
+        if (is_debug_event(event))
+            eventDI.action = "Stall";
+        return MemEventStatus::Stall;
     }
-    uint64_t baseTime = timestamp_;
-    if (dirLine && dirLine->getTimestamp() > baseTime) baseTime = dirLine->getTimestamp();
+    if (status == MemEventStatus::OK && !tag) { // Need a cache line too
+        tag = allocateDirLine(event, tag);
+        status = tag ? MemEventStatus::OK : MemEventStatus::Stall;
+    }
+    return status;
+}
+
+MemEventStatus MESISharNoninclusive::processDataMiss(MemEvent * event, DirectoryLine * tag, DataLine * data, bool inMSHR) {
+    // Evict a data line, if that requires evicting a dirline, evict a dirline too
+    bool evicted = handleDataEviction(event->getBaseAddr(), data);
+   
+    if (evicted) {
+        if (is_debug_event(event))
+            printDebugAlloc(true, event->getBaseAddr(), "Data");
+        dataArray_->replace(event->getBaseAddr(), data);
+        data->setTag(tag);
+        return MemEventStatus::OK;
+    } else {
+        if (is_debug_event(event)) {
+            eventDI.action = "Stall";
+            std::stringstream reason;
+            reason << "evict data 0x" << std::hex << tag->getAddr();
+            eventDI.reason = reason.str();
+        }
+        std::pair<Addr,Addr> evictpair = std::make_pair(data->getAddr(), event->getBaseAddr());
+        if (evictionType_.find(evictpair) == evictionType_.end()) {
+            mshr_->insertEviction(data->getAddr(), event->getBaseAddr());
+            evictionType_.insert(std::make_pair(evictpair, false));
+        } else {
+            evictionType_[evictpair] = false;
+        }
+        return MemEventStatus::Stall;
+    }
+}
+
+
+/**
+ * Allocate a new directory line
+ */
+DirectoryLine* MESISharNoninclusive::allocateDirLine(MemEvent * event, DirectoryLine * tag) {
+    bool evicted = handleDirEviction(event->getBaseAddr(), tag);
+    if (evicted) {
+        notifyListenerOfEvict(tag->getAddr(), lineSize_, event->getInstructionPointer());
+        dirArray_->replace(event->getBaseAddr(), tag);
+        if (is_debug_event(event))
+            printDebugAlloc(true, event->getBaseAddr(), "Dir");
+        return tag;
+    } else {
+        if (is_debug_event(event)) {
+            eventDI.action = "Stall";
+            stringstream reason;
+            reason << "evict dir 0x" << std::hex << tag->getAddr();
+            eventDI.reason = reason.str();
+        }
+
+        std::pair<Addr,Addr> evictpair = std::make_pair(tag->getAddr(), event->getBaseAddr());
+        if (evictionType_.find(evictpair) == evictionType_.end()) {
+            mshr_->insertEviction(tag->getAddr(), event->getBaseAddr());
+            evictionType_.insert(std::make_pair(evictpair, true));
+        } else {
+            evictionType_[evictpair] = true;
+        }
+        return nullptr;
+    }
+}
+
+bool MESISharNoninclusive::handleDirEviction(Addr addr, DirectoryLine*& tag) {
+    if (!tag)
+        tag = dirArray_->findReplacementCandidate(addr);
+    State state = tag->getState();
+    
+    if (is_debug_addr(tag->getAddr()))
+        evictDI.oldst = tag->getState();
+
+    stat_evict[state]->addData(1);
+
+    bool evict = false;
+    bool wbSent = false;
+    DataLine * data;
+    switch (state) {
+        case I:
+            return true;
+        case S:
+            data = dataArray_->lookup(tag->getAddr(), false);
+            if (invalidateAll(nullptr, tag, false)) {
+                evict = false;
+                tag->setState(S_Inv);
+                if (is_debug_addr(tag->getAddr()))
+                    printDebugAlloc(false, tag->getAddr(), "Dir, InProg, S_Inv");
+                break;
+            } else if (!silentEvictClean_) {
+                if (data) {
+                    sendWritebackFromCache(Command::PutS, tag, data, false);
+                } else {
+                    sendWritebackFromMSHR(Command::PutS, tag, false);
+                }
+                wbSent = true;
+                if (is_debug_addr(tag->getAddr()))
+                    printDebugAlloc(false, tag->getAddr(), "Dir, Writeback");
+            } else if (is_debug_addr(tag->getAddr()))
+                printDebugAlloc(false, tag->getAddr(), "Dir, Drop");
+            if (data) {
+                if (is_debug_addr(data->getAddr()))
+                    printDebugAlloc(false, data->getAddr(), "Data");
+                dataArray_->deallocate(data);
+            }
+            tag->setState(I);
+            evict = true;
+            break;
+        case E:
+            data = dataArray_->lookup(tag->getAddr(), false);
+            if (invalidateAll(nullptr, tag, false)) {
+                evict = false;
+                tag->setState(E_Inv);
+                if (is_debug_addr(tag->getAddr()))
+                    printDebugAlloc(false, tag->getAddr(), "Dir, InProg, E_Inv");
+                break;
+            } else if (!silentEvictClean_) {
+                if (data) {
+                    sendWritebackFromCache(Command::PutE, tag, data, false);
+                } else {
+                    sendWritebackFromMSHR(Command::PutE, tag, false);
+                }
+                wbSent = true;
+                if (is_debug_addr(tag->getAddr()))
+                    printDebugAlloc(false, tag->getAddr(), "Dir, Writeback");
+            } else if (is_debug_addr(tag->getAddr()))
+                printDebugAlloc(false, tag->getAddr(), "Dir, Drop");
+            tag->setState(I);
+            
+            if (data) {
+                if (is_debug_addr(data->getAddr()))
+                    printDebugAlloc(false, data->getAddr(), "Data");
+                dataArray_->deallocate(data);
+            }
+            evict = true;
+            break;
+        case M:
+            if (invalidateAll(nullptr, tag, false)) {
+                evict = false; 
+                tag->setState(M_Inv);
+                if (is_debug_addr(tag->getAddr()))
+                    printDebugAlloc(false, tag->getAddr(), "Dir, InProg, M_Inv");
+            } else {
+                if (is_debug_addr(tag->getAddr()))
+                    printDebugAlloc(false, tag->getAddr(), "Dir, Writeback");
+                data = dataArray_->lookup(tag->getAddr(), false);
+                if (data) {
+                    sendWritebackFromCache(Command::PutM, tag, data, true);
+                   if (is_debug_addr(data->getAddr()))
+                       printDebugAlloc(false, data->getAddr(), "Data");
+                    dataArray_->deallocate(data);
+                } else {
+                    sendWritebackFromMSHR(Command::PutM, tag, true);
+                }
+                wbSent = true;
+                tag->setState(I);
+                evict = true;
+            }
+            break;
+        default:
+            if (is_debug_addr(tag->getAddr())) {
+                std::stringstream note;
+                note << "InProg, " << StateString[state];
+                printDebugAlloc(false, tag->getAddr(), note.str());
+            }
+            return false;
+    }
+
+    if (wbSent && recvWritebackAck_) {
+        mshr_->insertWriteback(tag->getAddr(), false);
+    }
+
+    recordPrefetchResult(tag, statPrefetchEvict);
+    return evict;
+}
+
+bool MESISharNoninclusive::handleDataEviction(Addr addr, DataLine *&data) {
+    bool evict = false;
+    
+    if (!data)
+        data = dataArray_->findReplacementCandidate(addr);
+    State state = data->getState();
+    
+    if (is_debug_addr(data->getAddr()))
+        evictDI.oldst = data->getState();
+    
+    DirectoryLine* tag;
+        
+    switch (state) {
+        case I:
+            return true;
+        case S:
+            tag = data->getTag();
+            if (!(tag->hasSharers())) {
+                if (is_debug_addr(data->getAddr())) {
+                    printDebugAlloc(false, tag->getAddr(), "Dir, Writeback");
+                    printDebugAlloc(false, data->getAddr(), "Data"); 
+                }
+                sendWritebackFromCache(Command::PutS, tag, data, false);
+                if (recvWritebackAck_)
+                    mshr_->insertWriteback(tag->getAddr(), false);
+                recordPrefetchResult(tag, statPrefetchEvict);
+                notifyListenerOfEvict(data->getAddr(), lineSize_, 0);
+                tag->setState(I);
+                dirArray_->deallocate(tag);
+            } else if (is_debug_addr(data->getAddr())) {
+                printDebugAlloc(false, data->getAddr(), "Data, Drop");
+            }
+            return true;
+        case E:
+            tag = data->getTag();
+            if (!(tag->hasOwner() || tag->hasSharers())) {
+                if (is_debug_addr(data->getAddr())) {
+                    printDebugAlloc(false, tag->getAddr(), "Dir, Writeback");
+                    printDebugAlloc(false, data->getAddr(), "Data"); 
+                }
+                sendWritebackFromCache(Command::PutE, tag, data, false);
+                if (recvWritebackAck_)
+                    mshr_->insertWriteback(tag->getAddr(), false);
+                recordPrefetchResult(tag, statPrefetchEvict);
+                notifyListenerOfEvict(data->getAddr(), lineSize_, 0);
+                tag->setState(I);
+                dirArray_->deallocate(tag);
+            } else if (is_debug_addr(data->getAddr())) {
+                printDebugAlloc(false, data->getAddr(), "Data, Drop");
+            }
+            return true;
+        case M:
+            tag = data->getTag();
+            if (!(tag->hasOwner() || tag->hasSharers())) {
+                if (is_debug_addr(data->getAddr())) {
+                    printDebugAlloc(false, tag->getAddr(), "Dir, Writeback");
+                    printDebugAlloc(false, data->getAddr(), "Data"); 
+                }
+                sendWritebackFromCache(Command::PutM, tag, data, false);
+                if (recvWritebackAck_)
+                    mshr_->insertWriteback(tag->getAddr(), false);
+                recordPrefetchResult(tag, statPrefetchEvict);
+                notifyListenerOfEvict(data->getAddr(), lineSize_, 0);
+                tag->setState(I);
+                dirArray_->deallocate(tag);
+            } else if (is_debug_addr(data->getAddr())) {
+                printDebugAlloc(false, data->getAddr(), "Data, Drop");
+            }
+            return true;
+        default:
+            if (is_debug_addr(data->getAddr())) {
+                std::stringstream reason;
+                reason << "InProg, " << StateString[state];
+                printDebugAlloc(false, data->getAddr(), reason.str());
+            }
+            return false;
+    }
+
+    return false;
+}
+
+
+void MESISharNoninclusive::cleanUpEvent(MemEvent* event, bool inMSHR) {
+    Addr addr = event->getBaseAddr();
+    Command cmd = event->getCmd();
+
+    /* Remove from MSHR */ 
+    if (inMSHR) {
+        mshr_->removeFront(addr);
+    }
+
+    delete event;
+}
+
+
+void MESISharNoninclusive::cleanUpAfterRequest(MemEvent* event, bool inMSHR) {
+    Addr addr = event->getBaseAddr();
+    Command cmd = event->getCmd();
+   
+    cleanUpEvent(event, inMSHR);
+
+    /* Replay any waiting events */
+    if (mshr_->exists(addr)) {
+        if (mshr_->getFrontType(addr) == MSHREntryType::Event) {
+            if (!mshr_->getInProgress(addr) && mshr_->getAcksNeeded(addr) == 0) {
+                retryBuffer_.push_back(mshr_->getFrontEvent(addr));
+            }
+        } else { // Pointer -> either we're waiting for a writeback ACK or another address is waiting for this one
+            if (mshr_->getFrontType(addr) == MSHREntryType::Evict && mshr_->getAcksNeeded(addr) == 0) {
+                std::list<Addr>* evictPointers = mshr_->getEvictPointers(addr);
+                for (std::list<Addr>::iterator it = evictPointers->begin(); it != evictPointers->end(); it++) {
+                    MemEvent * ev = new MemEvent(cachename_, addr, *it, Command::NULLCMD);
+                    retryBuffer_.push_back(ev);
+                }
+            }
+        }
+    }
+}
+
+
+void MESISharNoninclusive::cleanUpAfterResponse(MemEvent* event, bool inMSHR) {
+    Addr addr = event->getBaseAddr();
+
+    /* Clean up MSHR */
+    MemEvent * req = nullptr;
+    if (mshr_->getFrontType(addr) == MSHREntryType::Event) {
+        req = static_cast<MemEvent*>(mshr_->getFrontEvent(addr));
+    }
+    
+    mshr_->removeFront(addr);
+    delete event;
+    
+    if (req)
+        delete req;
+
+    if (mshr_->exists(addr)) {
+        if (mshr_->getFrontType(addr) == MSHREntryType::Event) {
+            if (!mshr_->getInProgress(addr) && mshr_->getAcksNeeded(addr) == 0) { 
+                retryBuffer_.push_back(mshr_->getFrontEvent(addr));
+            }
+        } else {
+            if (mshr_->getAcksNeeded(addr) == 0) {
+                std::list<Addr>* evictPointers = mshr_->getEvictPointers(addr);
+                for (std::list<Addr>::iterator it = evictPointers->begin(); it != evictPointers->end(); it++) {
+                    MemEvent * ev = new MemEvent(cachename_, addr, *it, Command::NULLCMD);
+                    retryBuffer_.push_back(ev);
+                }
+            }
+        }
+    }
+}
+
+
+void MESISharNoninclusive::retry(Addr addr) {
+    if (mshr_->exists(addr)) {
+        if (mshr_->getFrontType(addr) == MSHREntryType::Event) {
+            retryBuffer_.push_back(mshr_->getFrontEvent(addr));
+            if (is_debug_addr(addr)) {
+                if (eventDI.reason != "")
+                    eventDI.reason = eventDI.reason + ",retry";
+                else
+                    eventDI.reason = "retry";
+            }
+        } else if (!(mshr_->pendingWriteback(addr))) {
+            std::list<Addr>* evictPointers = mshr_->getEvictPointers(addr);
+            for (std::list<Addr>::iterator it = evictPointers->begin(); it != evictPointers->end(); it++) {
+                MemEvent * ev = new MemEvent(cachename_, addr, *it, Command::NULLCMD);
+                retryBuffer_.push_back(ev);
+            }
+            if (is_debug_addr(addr)) {
+                if (eventDI.reason != "")
+                    eventDI.reason = eventDI.reason + ",retry";
+                else
+                    eventDI.reason = "retry";
+            }
+        }
+    }
+}
+
+
+/***********************************************************************************************************
+ * Protocol helper functions
+ ***********************************************************************************************************/
+
+uint64_t MESISharNoninclusive::sendResponseUp(MemEvent * event, vector<uint8_t> * data, bool inMSHR, uint64_t time, Command cmd, bool success) {
+    MemEvent * responseEvent = event->makeResponse();
+    if (cmd != Command::NULLCMD)
+        responseEvent->setCmd(cmd);
+
+    /* Only return the desired word */
+    if (data) {
+        responseEvent->setPayload(*data);
+        responseEvent->setSize(data->size()); // Return size that was written
+        if (is_debug_event(event)) {
+            printData(data, false);
+        }
+    }
+
+    if (success)
+        responseEvent->setSuccess(true);
+    
+    // Compute latency, accounting for serialization of requests to the address
+    if (time < timestamp_) time = timestamp_;
+    uint64_t deliveryTime = time + (inMSHR ? mshrLatency_ : accessLatency_);
+    Response resp = {responseEvent, deliveryTime, packetHeaderBytes + responseEvent->getPayloadSize()};
+    addToOutgoingQueueUp(resp);
+    
+    if (is_debug_event(event))
+        eventDI.action = "Respond";
+
+    return deliveryTime;
+}
+
+void MESISharNoninclusive::sendResponseDown(MemEvent * event, std::vector<uint8_t> * data, bool dirty, bool evict) {
+    MemEvent * responseEvent = event->makeResponse();
+
+    if (data) {
+        responseEvent->setPayload(*data);
+        responseEvent->setDirty(dirty);
+    }
+
+    responseEvent->setEvict(evict);
+
+    responseEvent->setSize(lineSize_);
+
+    uint64_t deliverTime = timestamp_ + (data ? accessLatency_ : tagLatency_);
+    Response resp = {responseEvent, deliverTime, packetHeaderBytes + responseEvent->getPayloadSize() };
+    addToOutgoingQueue(resp);
+
+    if (is_debug_event(event))
+        eventDI.action = "Respond";
+}
+
+
+uint64_t MESISharNoninclusive::forwardFlush(MemEvent * event, bool evict, std::vector<uint8_t>* data, bool dirty, uint64_t time) {
+    MemEvent * flush = new MemEvent(*event);
+
+    flush->setSrc(cachename_);
+    flush->setDst(getDestination(event->getBaseAddr()));
+
+    uint64_t latency = tagLatency_;
+    if (evict) {
+        flush->setEvict(true);
+        // TODO only send payload when needed
+        flush->setPayload(*data);
+        flush->setDirty(dirty);
+        latency = accessLatency_;
+    } else {
+        flush->setPayload(0, nullptr);
+    }
+    
+    uint64_t baseTime = (time > timestamp_) ? time : timestamp_;
     uint64_t deliveryTime = baseTime + latency;
     Response resp = {flush, deliveryTime, packetHeaderBytes + flush->getPayloadSize()};
     addToOutgoingQueue(resp);
-    if (dirLine) dirLine->setTimestamp(deliveryTime-1);
     
-    if (is_debug_event(origFlush)) {
-        debug->debug(_L3_,"Forwarding %s at cycle = %" PRIu64 ", Cmd = %s, Src = %s\n", CommandString[(int)cmd], deliveryTime, CommandString[(int)flush->getCmd()], flush->getSrc().c_str());
-    }
-}
-
-
-/*----------------------------------------------------------------------------------------------------------------------
- *  Override message send functions with versions that record statistics & call parent class
- *---------------------------------------------------------------------------------------------------------------------*/
-void MESISharNoninclusive::addToOutgoingQueue(Response& resp) {
-    CoherenceController::addToOutgoingQueue(resp);
-    recordEventSentDown(resp.event->getCmd());
-}
-
-void MESISharNoninclusive::addToOutgoingQueueUp(Response& resp) {
-    CoherenceController::addToOutgoingQueueUp(resp);
-    recordEventSentUp(resp.event->getCmd());
+    if (is_debug_event(event))
+        eventDI.action = "Forward";
+    
+    return deliveryTime-1;
 }
 
 /*---------------------------------------------------------------------------------------------------
  * Helper Functions
  *--------------------------------------------------------------------------------------------------*/
 
+/*********************************************
+ *  Methods for sending & receiving messages
+ *********************************************/
+
+/*
+ *  Handles: sending writebacks
+ *  Latency: cache access + tag to read data that is being written back and update coherence state
+ */
+void MESISharNoninclusive::sendWritebackFromCache(Command cmd, DirectoryLine* tag, DataLine* data, bool dirty) {
+    MemEvent* writeback = new MemEvent(cachename_, tag->getAddr(), tag->getAddr(), cmd);
+    writeback->setDst(getDestination(tag->getAddr()));
+    writeback->setSize(lineSize_);
+
+    uint64_t latency = tagLatency_;
+
+    /* Writeback data */
+    if (dirty || writebackCleanBlocks_) {
+        writeback->setPayload(*(data->getData()));
+        writeback->setDirty(dirty);
+
+        if (is_debug_addr(tag->getAddr())) {
+            printData(data->getData(), false);
+        }
+        
+        latency = accessLatency_;
+    }
+        
+    writeback->setRqstr(cachename_);
+
+    uint64_t baseTime = (timestamp_ > tag->getTimestamp()) ? timestamp_ : tag->getTimestamp();
+    uint64_t deliveryTime = baseTime + latency;
+    Response resp = {writeback, deliveryTime, packetHeaderBytes + writeback->getPayloadSize()};
+    addToOutgoingQueue(resp);
+    tag->setTimestamp(deliveryTime-1);
+    
+}
+
+void MESISharNoninclusive::sendWritebackFromMSHR(Command cmd, DirectoryLine* tag, bool dirty) {
+    MemEvent* writeback = new MemEvent(cachename_, tag->getAddr(), tag->getAddr(), cmd);
+    writeback->setDst(getDestination(tag->getAddr()));
+    writeback->setSize(lineSize_);
+
+    uint64_t latency = tagLatency_;
+
+    /* Writeback data */
+    if (dirty || writebackCleanBlocks_) {
+        writeback->setPayload(mshr_->getData(tag->getAddr()));
+        writeback->setDirty(dirty);
+
+        if (is_debug_addr(tag->getAddr())) {
+            printData(&(mshr_->getData(tag->getAddr())), false);
+        }
+        
+        latency = accessLatency_;
+    }
+        
+    writeback->setRqstr(cachename_);
+
+    uint64_t baseTime = (timestamp_ > tag->getTimestamp()) ? timestamp_ : tag->getTimestamp();
+    uint64_t deliveryTime = baseTime + latency;
+    Response resp = {writeback, deliveryTime, packetHeaderBytes + writeback->getPayloadSize()};
+    addToOutgoingQueue(resp);
+    tag->setTimestamp(deliveryTime-1);
+    
+}
+
+
+void MESISharNoninclusive::sendWritebackAck(MemEvent * event) {
+    MemEvent * ack = event->makeResponse();
+    ack->setDst(event->getSrc());
+    ack->setRqstr(event->getSrc());
+    ack->setSize(event->getSize());
+
+    uint64_t deliveryTime = timestamp_ + tagLatency_;
+
+    Response resp = {ack, deliveryTime, packetHeaderBytes};
+    addToOutgoingQueueUp(resp);
+
+    if (is_debug_event(event))
+        eventDI.action = "Ack";
+}
+
+uint64_t MESISharNoninclusive::sendFetch(Command cmd, MemEvent * event, std::string dst, bool inMSHR, uint64_t ts) {
+    Addr addr = event->getBaseAddr();
+    MemEvent * fetch = new MemEvent(cachename_, addr, addr, cmd);
+    fetch->copyMetadata(event);
+    fetch->setDst(dst);
+    fetch->setSize(event->getSize());
+
+    mshr_->incrementAcksNeeded(addr);
+    
+    if (responses.find(addr) != responses.end()) {
+        responses.find(addr)->second.insert(std::make_pair(dst, fetch->getID())); // Record events we're waiting for to avoid trying to figure out what happened if we get a NACK
+    } else {
+        std::map<std::string,MemEvent::id_type> respid;
+        respid.insert(std::make_pair(dst, fetch->getID()));
+        responses.insert(std::make_pair(addr, respid));
+    }
+
+    uint64_t baseTime = timestamp_ > ts ? timestamp_ : ts;
+    uint64_t deliveryTime = (inMSHR) ? baseTime + mshrLatency_ : baseTime + tagLatency_;
+    Response resp = {fetch, deliveryTime, packetHeaderBytes};
+    addToOutgoingQueueUp(resp);
+    
+    if (is_debug_addr(event->getBaseAddr())) {
+        eventDI.action = "Stall";
+        eventDI.reason = (cmd == Command::Fetch) ? "fetch data" : "Dgr owner";
+    }
+    return deliveryTime;
+}
+
+
+bool MESISharNoninclusive::invalidateExceptRequestor(MemEvent * event, DirectoryLine * tag, bool inMSHR, bool needData) {
+    uint64_t deliveryTime = 0;
+    std::string rqstr = event->getSrc();
+
+    bool getData = needData;
+    if (getData && tag->isSharer(event->getSrc()))
+        getData = false;
+
+    for (set<std::string>::iterator it = tag->getSharers()->begin(); it != tag->getSharers()->end(); it++) {
+        if (*it == rqstr) continue;
+
+        if (getData) { // FetchInv
+            getData = false; 
+            deliveryTime =  invalidateSharer(*it, event, tag, inMSHR, Command::FetchInv);
+        } else { // Inv
+            deliveryTime =  invalidateSharer(*it, event, tag, inMSHR);
+        }
+    }
+
+    if (deliveryTime != 0) tag->setTimestamp(deliveryTime);
+    
+    return deliveryTime != 0;
+}
+
+
+bool MESISharNoninclusive::invalidateAll(MemEvent * event, DirectoryLine * tag, bool inMSHR, Command cmd) {
+    uint64_t deliveryTime = 0;
+    if (invalidateOwner(event, tag, inMSHR, (cmd == Command::NULLCMD ? Command::FetchInv : cmd))) {
+        return true;
+    } else {
+        if (cmd == Command::NULLCMD)
+            cmd = Command::Inv;
+        for (std::set<std::string>::iterator it = tag->getSharers()->begin(); it != tag->getSharers()->end(); it++) {
+            deliveryTime = invalidateSharer(*it, event, tag, inMSHR, cmd); 
+        }
+        if (deliveryTime != 0) {
+            tag->setTimestamp(deliveryTime);
+            return true;
+        }
+    }
+    return false;
+}
+
+void MESISharNoninclusive::invalidateSharers(MemEvent * event, DirectoryLine * tag, bool inMSHR, bool needData, Command cmd) {
+    uint64_t deliveryTime = 0;
+    for (std::set<std::string>::iterator it = tag->getSharers()->begin(); it != tag->getSharers()->end(); it++) {
+        if (needData) {
+            deliveryTime = invalidateSharer(*it, event, tag, inMSHR, Command::FetchInv);
+            needData = false;
+        } else {
+            deliveryTime = invalidateSharer(*it, event, tag, inMSHR, cmd);
+        }
+    }
+    tag->setTimestamp(deliveryTime);
+    
+}
+
+uint64_t MESISharNoninclusive::invalidateSharer(std::string shr, MemEvent * event, DirectoryLine * tag, bool inMSHR, Command cmd) {
+    if (tag->isSharer(shr)) {
+        Addr addr = tag->getAddr();
+        MemEvent * inv = new MemEvent(cachename_, addr, addr, cmd);
+        if (event) {
+            inv->copyMetadata(event);
+            inv->setRqstr(event->getRqstr());
+        } else {
+            inv->setRqstr(cachename_);
+        }
+        inv->setDst(shr);
+        inv->setSize(lineSize_);
+        if (responses.find(addr) != responses.end()) {
+            responses.find(addr)->second.insert(std::make_pair(shr, inv->getID())); // Record events we're waiting for to avoid trying to figure out what happened if we get a NACK
+        } else {
+            std::map<std::string,MemEvent::id_type> respid;
+            respid.insert(std::make_pair(shr, inv->getID()));
+            responses.insert(std::make_pair(addr, respid));
+        }
+
+        if (is_debug_addr(addr)) {
+            eventDI.action = "Stall";
+            eventDI.reason = "Inv sharer(s)";
+        }
+
+        uint64_t baseTime = timestamp_ > tag->getTimestamp() ? timestamp_ : tag->getTimestamp();
+        uint64_t deliveryTime = (inMSHR) ? baseTime + mshrLatency_ : baseTime + tagLatency_;
+        Response resp = {inv, deliveryTime, packetHeaderBytes};
+        addToOutgoingQueueUp(resp);
+        
+        mshr_->incrementAcksNeeded(addr);
+        
+        return deliveryTime;
+    }
+    return 0;
+}
+
+
+bool MESISharNoninclusive::invalidateOwner(MemEvent * metaEvent, DirectoryLine * tag, bool inMSHR, Command cmd) {
+    Addr addr = tag->getAddr();
+    if (tag->getOwner() == "")
+        return false;
+
+    if (is_debug_addr(addr)) {
+        eventDI.action = "Stall";
+        eventDI.reason = "Inv owner";
+    }
+
+    MemEvent * inv = new MemEvent(cachename_, addr, addr, cmd);
+    if (metaEvent) {
+        inv->copyMetadata(metaEvent);
+        inv->setRqstr(metaEvent->getRqstr());
+    } else {
+        inv->setRqstr(cachename_);
+    }
+    inv->setDst(tag->getOwner());
+    inv->setSize(lineSize_);
+
+    mshr_->incrementAcksNeeded(addr);
+
+    // Record events we're waiting for to avoid trying to figure out what happened if we get a NACK
+    if (responses.find(addr) != responses.end()) {
+        responses.find(addr)->second.insert(std::make_pair(inv->getDst(), inv->getID()));
+    } else {
+        std::map<std::string,MemEvent::id_type> respid;
+        respid.insert(std::make_pair(inv->getDst(), inv->getID()));
+        responses.insert(std::make_pair(addr,respid));
+    }
+
+    uint64_t baseTime = timestamp_ > tag->getTimestamp() ? timestamp_ : tag->getTimestamp();
+    uint64_t deliveryTime = (inMSHR) ? baseTime + mshrLatency_ : baseTime + tagLatency_;
+    Response resp = {inv, deliveryTime, packetHeaderBytes};
+    addToOutgoingQueueUp(resp);
+    tag->setTimestamp(deliveryTime);
+    
+    return true;
+}
+
+            
+// Search MSHR for a stalled replacement, move it to the front, and retry
+// It'll be retried in the context of whatever request is currently stalled
+bool MESISharNoninclusive::applyPendingReplacement(Addr addr) {
+    for (int i = mshr_->getSize(addr) - 1; i > 0; i--) {
+        MemEventBase * evb = mshr_->getEntryEvent(addr, i);
+        if (evb && CommandWriteback[(int)(evb->getCmd())]) {
+            mshr_->incrementAcksNeeded(addr);
+            mshr_->moveEntryToFront(addr, i);
+            if (responses.find(addr) != responses.end()) {
+                responses.find(addr)->second.insert(std::make_pair(evb->getSrc(), evb->getID()));
+            } else {
+                std::map<std::string,MemEvent::id_type> respid;
+                respid.insert(std::make_pair(evb->getSrc(), evb->getID()));
+                responses.insert(std::make_pair(addr,respid));
+            }
+            retry(addr);
+            return true;
+        }
+    }
+    return false;
+}
+
+/*----------------------------------------------------------------------------------------------------------------------
+ *  Override message send functions with versions that record statistics & call parent class
+ *---------------------------------------------------------------------------------------------------------------------*/
+void MESISharNoninclusive::addToOutgoingQueue(Response& resp) {
+    stat_eventSent[(int)resp.event->getCmd()]->addData(1);
+    CoherenceController::addToOutgoingQueue(resp);
+}
+
+void MESISharNoninclusive::addToOutgoingQueueUp(Response& resp) {
+    stat_eventSent[(int)resp.event->getCmd()]->addData(1);
+    CoherenceController::addToOutgoingQueueUp(resp);
+}
+
+/********************
+ * Helper functions
+ ********************/
+
+
+void MESISharNoninclusive::removeSharerViaInv(MemEvent * event, DirectoryLine * tag, DataLine * data, bool remove) {
+    Addr addr = event->getBaseAddr();
+    tag->removeSharer(event->getSrc());
+    if (!data && !mshr_->hasData(addr))
+        mshr_->setData(addr, event->getPayload());
+
+    if (remove) { 
+        responses.find(addr)->second.erase(event->getSrc());
+        if (responses.find(addr)->second.empty())
+            responses.erase(addr);
+    }
+}
+
+void MESISharNoninclusive::removeOwnerViaInv(MemEvent * event, DirectoryLine * tag, DataLine * data, bool remove) {
+    Addr addr = event->getBaseAddr();
+    tag->removeOwner();
+    if (data)   
+        data->setData(event->getPayload(), 0);
+    else
+        mshr_->setData(addr, event->getPayload());
+
+    if (event->getDirty()) {
+        if (tag->getState() == E)             
+            tag->setState(M); 
+        else if (tag->getState() == E_Inv)    
+            tag->setState(M_Inv);
+        else if (tag->getState() == E_InvX)   
+            tag->setState(M_InvX);
+    }
+
+    if (remove) {
+        responses.find(addr)->second.erase(event->getSrc());
+        if (responses.find(addr)->second.empty())
+            responses.erase(addr);
+    }
+}
+
+void MESISharNoninclusive::recordPrefetchResult(DirectoryLine * tag, Statistic<uint64_t> * stat) {
+    if (tag->getPrefetch()) {
+        stat->addData(1);
+        tag->setPrefetch(false);
+    }
+}
+
+MemEventInitCoherence* MESISharNoninclusive::getInitCoherenceEvent() {
+    // Source, Endpoint type, inclusive, sends WB Acks, line size, tracks block presence
+    return new MemEventInitCoherence(cachename_, Endpoint::Cache, false, true, false, lineSize_, true);
+}
+
+void MESISharNoninclusive::printLine(Addr addr) {
+    return;
+    if (!is_debug_addr(addr)) return;
+    DirectoryLine * tag = dirArray_->lookup(addr, false);
+    DataLine * data = dataArray_->lookup(addr, false);
+    std::string state = (tag == nullptr) ? "NP" : tag->getString();
+    debug->debug(_L8_, "  Line 0x%" PRIx64 ": %s Data Present: (%s)\n", addr, state.c_str(), data && data->getTag() ? "Y" : "N");
+    if (data && data->getTag() && data->getTag() != tag) {
+        if (data->getTag() != tag) {
+            debug->fatal(CALL_INFO, -1, "Error: Data has a tag but it does not match the tag found in the directory. Addr 0x%" PRIx64 ". Data = (%" PRIu64 ",0x%" PRIx64 "), Tag = (%" PRIu64 ",0x%" PRIx64 ")\n", 
+                    addr, data->getIndex(), data->getAddr(), tag->getIndex(), tag->getAddr());
+        }
+    }
+}
 
 void MESISharNoninclusive::printData(vector<uint8_t> * data, bool set) {
 /*    if (set)    printf("Setting data (%zu): 0x", data->size());
@@ -2608,100 +2925,9 @@ void MESISharNoninclusive::printData(vector<uint8_t> * data, bool set) {
     for (unsigned int i = 0; i < data->size(); i++) {
         printf("%02x", data->at(i));
     }
-    printf("\n");
-*/ 
+    printf("\n");*/
 }
 
-void MESISharNoninclusive::printLine(Addr addr, CacheLine* line) {
-    State state = NP;
-    bool isCached = false;
-    unsigned int sharers = 0;
-    std::string owner = "";
-    if (line) {
-        state = line->getState();
-        isCached = line->getDataLine() != nullptr;
-        sharers = line->numSharers();
-        owner = line->getOwner();
-    }
-    debug->debug(_L8_, "0x%" PRIx64 ": %s, %u, \"%s\" %d\n",
-            addr, StateString[state], sharers, owner.c_str(), isCached);
-}
-
-
-/*----------------------------------------------------------------------------------------------------------------------
- *  Statistics recording
- *---------------------------------------------------------------------------------------------------------------------*/
-
-
-/* Record state of a line at attempted eviction */
-void MESISharNoninclusive::recordEvictionState(State state) {
-    switch (state) {
-        case I: 
-            stat_evict_I->addData(1);
-            break;
-        case S:
-            stat_evict_S->addData(1); 
-            break;
-        case E:
-            stat_evict_E->addData(1); 
-            break;
-        case M:
-            stat_evict_M->addData(1); 
-            break;
-        case IS:
-            stat_evict_IS->addData(1); 
-            break;
-        case IM:
-            stat_evict_IM->addData(1); 
-            break;
-        case SM:
-            stat_evict_SM->addData(1); 
-            break;
-        case S_Inv:
-            stat_evict_SInv->addData(1); 
-            break;
-        case E_Inv:
-            stat_evict_EInv->addData(1); 
-            break;
-        case M_Inv:
-            stat_evict_MInv->addData(1); 
-            break;
-        case SM_Inv:
-            stat_evict_SMInv->addData(1); 
-            break;
-        case E_InvX:
-            stat_evict_EInvX->addData(1); 
-            break;
-        case M_InvX:
-            stat_evict_MInvX->addData(1); 
-            break;
-        case SI:
-            stat_evict_SI->addData(1); 
-            break;
-        case I_B:
-            stat_evict_IB->addData(1);
-            break;
-        case S_B:
-            stat_evict_SB->addData(1);
-            break;
-        default:
-            break; // No error, statistic handling
-    }
-}
-
-
-void MESISharNoninclusive::recordStateEventCount(Command cmd, State state) {
-    stat_eventState[(int)cmd][state]->addData(1);
-}
-
-void MESISharNoninclusive::recordEventSentDown(Command cmd) {
-    stat_eventSent[(int)cmd]->addData(1);
-}
-
-
-void MESISharNoninclusive::recordEventSentUp(Command cmd) {
-    stat_eventSent[(int)cmd]->addData(1);
-}
 
 void MESISharNoninclusive::recordLatency(Command cmd, int type, uint64_t latency) {
     if (type == -1)
@@ -2726,15 +2952,4 @@ void MESISharNoninclusive::recordLatency(Command cmd, int type, uint64_t latency
         default:
             break;
     }
-}
-
-void MESISharNoninclusive::printLine(Addr addr) {
-    if (!is_debug_addr(addr)) return;
-    CacheLine* line = cacheArray_->lookup(addr, false);
-    State state = line ? line->getState() : NP;
-    bool isCached = line ? line->getDataLine() != nullptr : false;
-    unsigned int sharers = line ? line->numSharers() : 0;
-    std::string owner = line ? line->getOwner() : "";
-    debug->debug(_L8_, "0x%" PRIx64 ": %s, %u, \"%s\" %d\n",
-            addr, StateString[state], sharers, owner.c_str(), isCached);
 }

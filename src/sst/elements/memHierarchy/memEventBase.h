@@ -318,6 +318,8 @@ public:
      */
     MemEventInitCoherence(std::string src, Endpoint type, bool inclusive, bool sendWBAck, Addr lineSize, bool tracksPresence) : 
         MemEventInit(src, InitCommand::Coherence), type_(type), inclusive_(inclusive), sendWBAck_(sendWBAck), recvWBAck_(false), lineSize_(lineSize), tracksPresence_(tracksPresence) { }
+    MemEventInitCoherence(std::string src, Endpoint type, bool inclusive, bool sendWBAck, bool recvWBAck, Addr lineSize, bool tracksPresence) : 
+        MemEventInit(src, InitCommand::Coherence), type_(type), inclusive_(inclusive), sendWBAck_(sendWBAck), recvWBAck_(recvWBAck), lineSize_(lineSize), tracksPresence_(tracksPresence) { }
 
     Endpoint getType() { return type_; }
     bool getInclusive() { return inclusive_; }

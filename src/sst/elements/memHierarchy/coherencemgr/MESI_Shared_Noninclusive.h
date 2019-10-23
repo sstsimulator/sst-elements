@@ -21,7 +21,8 @@
 #include <array>
 
 #include "sst/elements/memHierarchy/coherencemgr/coherenceController.h"
-
+#include "sst/elements/memHierarchy/lineTypes.h"
+#include "sst/elements/memHierarchy/cacheTempl.h"
 
 namespace SST { namespace MemHierarchy {
 
@@ -40,6 +41,7 @@ public:
         {"eventSent_PutS",          "Number of PutS requests sent", "events", 2},
         {"eventSent_PutE",          "Number of PutE requests sent", "events", 2},
         {"eventSent_PutM",          "Number of PutM requests sent", "events", 2},
+        {"eventSent_PutX",          "Number of PutX requests sent", "events", 2},
         {"eventSent_Inv",           "Number of Inv requests sent", "events", 2},
         {"eventSent_Fetch",         "Number of Fetch requests sent", "events", 2},
         {"eventSent_FetchInv",      "Number of FetchInv requests sent", "events", 2},
@@ -279,6 +281,10 @@ public:
         {"prefetch_coherence_miss", "Prefetched block incurred a coherence miss (upgrade) on its first access", "count", 2},
         {"prefetch_redundant",      "Prefetch issued for a block that was already in cache", "count", 2},
         {"default_stat",            "Default statistic used for unexpected events/states/etc. Should be 0, if not, check for missing statistic registerations.", "none", 7})
+    
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+            {"replacement", "Replacement policies, slot 0 is for cache, slot 1 is for directory (if it exists)", "SST::MemHierarchy::ReplacementPolicy"},
+            {"hash", "Hash function for mapping addresses to cache lines", "SST::MemHierarchy::HashFunction"} )
 
 /* Class definition */
     /** Constructor for MESISharNoninclusive. */
@@ -289,23 +295,35 @@ public:
         debug->debug(_INFO_,"--------------------------- Initializing [MESI + Directory Controller] ... \n\n");
         
         protocol_ = params.find<bool>("protocol", 1);
+        if (protocol_)
+            protocolState_ = E;
+        else
+            protocolState_ = S;
         
-        /* Statistics */
-        Statistic<uint64_t>* defStat = registerStatistic<uint64_t>("default_stat");
-        for (int i = 0; i < (int)Command::LAST_CMD; i++) {
-            stat_eventSent[i] = defStat;
-            for (int j = 0; j < LAST_STATE; j++) {
-                stat_eventState[i][j] = defStat;
-            }
-        }
+        // Data (cache) Array
+        uint64_t lines = params.find<uint64_t>("lines");
+        uint64_t assoc = params.find<uint64_t>("associativity");
 
-        stat_evict_S =      registerStatistic<uint64_t>("evict_S");
-        stat_evict_SM =     registerStatistic<uint64_t>("evict_SM");
-        stat_evict_SInv =   registerStatistic<uint64_t>("evict_SInv");
-        stat_evict_MInv =   registerStatistic<uint64_t>("evict_MInv");
-        stat_evict_SMInv =  registerStatistic<uint64_t>("evict_SMInv");
-        stat_evict_MInvX =  registerStatistic<uint64_t>("evict_MInvX");
-        stat_evict_SI =     registerStatistic<uint64_t>("evict_SI");
+        ReplacementPolicy * rmgr = createReplacementPolicy(lines, assoc, params, false);
+        HashFunction * ht = createHashFunction(params);
+        dataArray_ = new CacheArray<DataLine>(debug, lines, assoc, lineSize_, rmgr, ht);
+        dataArray_->setBanked(params.find<uint64_t>("banks", 0));
+        
+        uint64_t dLines = params.find<uint64_t>("dlines");
+        uint64_t dAssoc = params.find<uint64_t>("dassoc");
+        params.insert("replacement_policy", params.find<std::string>("drpolicy", "lru"));
+        ReplacementPolicy *drmgr = createReplacementPolicy(dLines, dAssoc, params, 1, false);
+        dirArray_ = new CacheArray<DirectoryLine>(debug, dLines, dAssoc, lineSize_, drmgr, ht);
+        dirArray_->setBanked(params.find<uint64_t>("banks", 0));
+
+        /* Statistics */
+        stat_evict[S] =         registerStatistic<uint64_t>("evict_S");
+        stat_evict[SM] =        registerStatistic<uint64_t>("evict_SM");
+        stat_evict[S_Inv] =     registerStatistic<uint64_t>("evict_SInv");
+        stat_evict[M_Inv] =     registerStatistic<uint64_t>("evict_MInv");
+        stat_evict[SM_Inv] =    registerStatistic<uint64_t>("evict_SMInv");
+        stat_evict[M_InvX] =    registerStatistic<uint64_t>("evict_MInvX");
+        stat_evict[SI] =        registerStatistic<uint64_t>("evict_SI");
         stat_eventState[(int)Command::GetS][I] =    registerStatistic<uint64_t>("stateEvent_GetS_I");
         stat_eventState[(int)Command::GetS][S] =    registerStatistic<uint64_t>("stateEvent_GetS_S");
         stat_eventState[(int)Command::GetS][M] =    registerStatistic<uint64_t>("stateEvent_GetS_M");
@@ -487,8 +505,8 @@ public:
 
         /* MESI-specific statistics (as opposed to MSI) */
         if (protocol_) {
-            stat_evict_EInv =   registerStatistic<uint64_t>("evict_EInv");
-            stat_evict_EInvX =  registerStatistic<uint64_t>("evict_EInvX");
+            stat_evict[E_Inv] =   registerStatistic<uint64_t>("evict_EInv");
+            stat_evict[E_InvX] =  registerStatistic<uint64_t>("evict_EInvX");
             stat_eventState[(int)Command::GetS][E] =        registerStatistic<uint64_t>("stateEvent_GetS_E");
             stat_eventState[(int)Command::GetX][E] =        registerStatistic<uint64_t>("stateEvent_GetX_E");
             stat_eventState[(int)Command::GetSX][E] =       registerStatistic<uint64_t>("stateEvent_GetSX_E");
@@ -546,61 +564,134 @@ public:
 
     ~MESISharNoninclusive() {}
     
-/*----------------------------------------------------------------------------------------------------------------------
- *  Public functions form external interface to the coherence controller
- *---------------------------------------------------------------------------------------------------------------------*/  
+    /** Event handlers */
+    virtual bool handleGetS(MemEvent* event, bool inMSHR);
+    virtual bool handleGetX(MemEvent* event, bool inMSHR);
+    virtual bool handleGetSX(MemEvent* event, bool inMSHR);
+    virtual bool handleFlushLine(MemEvent* event, bool inMSHR);
+    virtual bool handleFlushLineInv(MemEvent* event, bool inMSHR);
+    virtual bool handlePutS(MemEvent* event, bool inMSHR);
+    virtual bool handlePutE(MemEvent* event, bool inMSHR);
+    virtual bool handlePutX(MemEvent* event, bool inMSHR);
+    virtual bool handlePutM(MemEvent* event, bool inMSHR);
+    virtual bool handleInv(MemEvent * event, bool inMSHR);
+    virtual bool handleForceInv(MemEvent * event, bool inMSHR);
+    virtual bool handleFetch(MemEvent * event, bool inMSHR);
+    virtual bool handleFetchInv(MemEvent * event, bool inMSHR);
+    virtual bool handleFetchInvX(MemEvent * event, bool inMSHR);
+    virtual bool handleNULLCMD(MemEvent* event, bool inMSHR);
+    virtual bool handleGetSResp(MemEvent* event, bool inMSHR);
+    virtual bool handleGetXResp(MemEvent* event, bool inMSHR);
+    virtual bool handleFlushLineResp(MemEvent* event, bool inMSHR);
+    virtual bool handleFetchResp(MemEvent* event, bool inMSHR);
+    virtual bool handleFetchXResp(MemEvent* event, bool inMSHR);
+    virtual bool handleAckInv(MemEvent* event, bool inMSHR);
+    virtual bool handleAckPut(MemEvent* event, bool inMSHR);
+    virtual bool handleNACK(MemEvent* event, bool inMSHR);
 
-/* Event handlers */
-    /** Send cache line data to the lower level caches */
-    CacheAction handleEviction(CacheLine* replacementLine, string origRqstr, bool fromDataCache);
-
-    /** Process cache request:  GetX, GetS, GetSX */
-    CacheAction handleRequest(MemEvent* event, bool replay);
+    // Initialization event
+    MemEventInitCoherence* getInitCoherenceEvent();
     
-    /** Process replacement request - PutS, PutE, PutM. May also resolve an outstanding/racing request event */
-    CacheAction handleReplacement(MemEvent* event, bool replay);
-    CacheAction handleFlush(MemEvent* event, CacheLine* dirLine, MemEvent* reqEvent, bool replay);
-    
-    /** Process invalidation requests - Inv, FetchInv, FetchInvX */
-    CacheAction handleInvalidationRequest(MemEvent *event, bool inMSHR);
+    virtual Addr getBank(Addr addr) { dirArray_->getBank(addr); }
+    virtual void setSliceAware(uint64_t size, uint64_t step) { 
+        dirArray_->setSliceAware(size, step);
+        dataArray_->setSliceAware(size, step); 
+    }
 
-    /** Process responses - GetSResp, GetXResp, FetchResp */
-    CacheAction handleCacheResponse(MemEvent* responseEvent, bool inMSHR);
-    CacheAction handleFetchResponse(MemEvent* responseEvent, bool inMSHR);
-    
-    bool handleNACK(MemEvent* event, bool inMSHR);
+    std::set<Command> getValidReceiveEvents() {
+        std::set<Command> cmds = { Command::GetS,
+            Command::GetX,
+            Command::GetSX,
+            Command::FlushLine,
+            Command::FlushLineInv,
+            Command::PutS,
+            Command::PutE,
+            Command::PutM,
+            Command::PutX,
+            Command::Inv,
+            Command::ForceInv,
+            Command::Fetch,
+            Command::FetchInv,
+            Command::FetchInvX,
+            Command::NULLCMD,
+            Command::GetSResp,
+            Command::GetXResp,
+            Command::FlushLineResp,
+            Command::FetchResp,
+            Command::FetchXResp,
+            Command::AckInv,
+            Command::AckPut,
+            Command::NACK };
+        return cmds;
+    }
 
-/* Miscellaneous */
+private:
+    MemEventStatus processDirectoryMiss(MemEvent * event, DirectoryLine * line, bool inMSHR);
+    MemEventStatus processDataMiss(MemEvent * event, DirectoryLine * tag, DataLine * data, bool inMSHR);
+    DirectoryLine * allocateDirLine(MemEvent * event, DirectoryLine * line);
+    DataLine * allocateDataLine(MemEvent * event, DataLine * line);
+    bool handleDirEviction(Addr addr, DirectoryLine* &line);
+    bool handleDataEviction(Addr addr, DataLine* &line);
+    void cleanUpAfterRequest(MemEvent * event, bool inMSHR);
+    void cleanUpAfterResponse(MemEvent * event, bool inMSHR);
+    void cleanUpEvent(MemEvent * event, bool inMSHR);
+    void retry(Addr addr);
     
-    /** Determine in advance if a request will miss (and what kind of miss). Used for stats */
-    bool isCacheHit(MemEvent* event);
+    /** Invalidate sharers and/or owner; returns either the new line timestamp (or 0 if no invalidation) or a bool indicating whether anything was invalidated */
+    bool invalidateExceptRequestor(MemEvent * event, DirectoryLine * line, bool inMSHR, bool needData);
+    bool invalidateAll(MemEvent * event, DirectoryLine * line, bool inMSHR, Command cmd = Command::NULLCMD);
+    uint64_t invalidateSharer(std::string shr, MemEvent * event, DirectoryLine * line, bool inMSHR, Command cmd = Command::Inv);
+    void invalidateSharers(MemEvent * event, DirectoryLine * line, bool inMSHR, bool needData, Command cmd);
+    bool invalidateOwner(MemEvent * event, DirectoryLine * line, bool inMSHR, Command cmd = Command::FetchInv);
+    
+    /** Forward a flush line request, with or without data */
+    uint64_t forwardFlush(MemEvent* event, bool evict, std::vector<uint8_t>* data, bool dirty, uint64_t time);
 
-    /** Message send: Call through to coherenceController with statistic recording */
+    /** Send response up (to processor) */
+    uint64_t sendResponseUp(MemEvent * event, vector<uint8_t>* data, bool inMSHR, uint64_t baseTime, Command cmd = Command::NULLCMD, bool success = false);
+    
+    /** Send response down (towards memory) */
+    void sendResponseDown(MemEvent* event, std::vector<uint8_t>* data, bool dirty, bool evict);
+    
+    /** Send writeback request to lower level caches */
+    void sendWritebackFromCache(Command cmd, DirectoryLine* tag, DataLine* data, bool dirty);
+    void sendWritebackFromMSHR(Command cmd, DirectoryLine* tag, bool dirty);
+    void sendWritebackAck(MemEvent* event);
+    
+    uint64_t sendFetch(Command cmd, MemEvent * event, std::string dst, bool inMSHR, uint64_t ts);
+    
+    /** Call through to coherenceController with statistic recording */
     void addToOutgoingQueue(Response& resp);
     void addToOutgoingQueueUp(Response& resp);
 
-/* Temporary */
-    void setCacheArray(CacheArray* arrayptr) { cacheArray_ = arrayptr; }
 
+    /** Helpers */
+    void removeSharerViaInv(MemEvent* event, DirectoryLine * tag, DataLine * data, bool remove);
+    void removeOwnerViaInv(MemEvent* event, DirectoryLine * tag, DataLine * data, bool remove);
+
+    bool applyPendingReplacement(Addr addr);
+
+/* Miscellaneous */
+    void printData(vector<uint8_t> * data, bool set);
     void printLine(Addr addr);
 
-private:
+/* Statistics */
+    void recordLatency(Command cmd, int type, uint64_t latency);
+    void recordPrefetchResult(DirectoryLine * line, Statistic<uint64_t> * stat);
+
 /* Private data members */
+    CacheArray<DataLine>* dataArray_;
+    CacheArray<DirectoryLine>* dirArray_;
+
     bool protocol_;  // True for MESI, false for MSI
-    CacheArray* cacheArray_;
+    State protocolState_;
+
+    std::map<Addr, std::map<std::string, MemEvent::id_type> > responses;
+
+    // Map an outstanding eviction (key = replaceAddr,newAddr) to whether it is a directory eviction (true) or data eviction (false)
+    std::map<std::pair<Addr,Addr>, bool> evictionType_;
 
 /* Statistics */
-    Statistic<uint64_t>* stat_evict_S;
-    Statistic<uint64_t>* stat_evict_SM;
-    Statistic<uint64_t>* stat_evict_SInv;
-    Statistic<uint64_t>* stat_evict_EInv;
-    Statistic<uint64_t>* stat_evict_MInv;
-    Statistic<uint64_t>* stat_evict_SMInv;
-    Statistic<uint64_t>* stat_evict_EInvX;
-    Statistic<uint64_t>* stat_evict_MInvX;
-    Statistic<uint64_t>* stat_evict_SI;
-    std::array<std::array<Statistic<uint64_t>*, LAST_STATE>, (int)Command::LAST_CMD> stat_eventState;
-    Statistic<uint64_t>* stat_eventSent[(int)Command::LAST_CMD];
     Statistic<uint64_t>* stat_latencyGetS[3];
     Statistic<uint64_t>* stat_latencyGetX[4];
     Statistic<uint64_t>* stat_latencyGetSX[4];
@@ -608,115 +699,6 @@ private:
     Statistic<uint64_t>* stat_latencyFlushLineInv;
 
 
-/* Private event handlers */
-    /** Handle GetX request. Request upgrade if needed */
-    CacheAction handleGetXRequest(MemEvent* event, CacheLine* dirLine, bool replay);
-
-    /** Handle GetS request. Request block if needed */
-    CacheAction handleGetSRequest(MemEvent* event, CacheLine* dirLine, bool replay);
-    
-    /** Handle PutS request. Possibly complete a waiting request if it raced with the PutS */
-    CacheAction handlePutSRequest(MemEvent* event, CacheLine * dirLine, MemEvent * origReq);
-    
-    /** Handle PutM request. Possibly complete a waiting request if it raced with the PutM */
-    CacheAction handlePutMRequest(MemEvent* event, CacheLine * dirLine, MemEvent * origReq);
-
-    /** Handle FlushLine request. */
-    CacheAction handleFlushLineRequest(MemEvent* event, CacheLine * dirLine, MemEvent * origReq, bool replay);
-
-    /** Handle FlushLineInv request. */
-    CacheAction handleFlushLineInvRequest(MemEvent* event, CacheLine * dirLine, MemEvent * origReq, bool replay);
-
-    /** Handle Inv */
-    CacheAction handleInv(MemEvent * event, CacheLine * dirLine, bool replay, MemEvent * collisionEvent);
-    
-    /** Handle ForceInv */
-    CacheAction handleForceInv(MemEvent * event, CacheLine * dirLine, bool replay, MemEvent * collisionEvent);
-    
-    /** Handle Fetch */
-    CacheAction handleFetch(MemEvent * event, CacheLine * dirLine, bool replay, MemEvent * collisionEvent);
-    
-    /** Handle FetchInv */
-    CacheAction handleFetchInv(MemEvent * event, CacheLine * dirLine, bool replay, MemEvent * collisionEvent);
-    
-    /** Handle FetchInvX */
-    CacheAction handleFetchInvX(MemEvent * event, CacheLine * dirLine, bool replay, MemEvent * collisionEvent);
-
-    /** Process GetSResp/GetXResp */
-    CacheAction handleDataResponse(MemEvent* responseEvent, CacheLine * dirLine, MemEvent * reqEvent);
-    
-    /** Handle FetchResp */
-    CacheAction handleFetchResp(MemEvent * responseEvent, CacheLine* dirLine, MemEvent * reqEvent);
-    
-    /** Handle Ack */
-    CacheAction handleAckInv(MemEvent * responseEvent, CacheLine* dirLine, MemEvent * reqEvent);
-
-    void printLine(Addr addr, CacheLine * line);
-
-/* Private data structure handling */
-    bool allocateLine(Addr addr, MemEvent * event);
-    bool allocateDirCacheLine(MemEvent * event, Addr addr, CacheLine * dirLine, bool noStall);
-
-/* Private methods for sending events */
-    void sendResponseDown(MemEvent* event, CacheLine* dirLine, std::vector<uint8_t>* data, bool dirty, bool replay);
-   
-    /** Send response to lower level cache using 'event' instead of dirLine */
-    void sendResponseDownFromMSHR(MemEvent* event, bool dirty);
-
-    /** Send writeback request to lower level caches */
-    void sendWriteback(Command cmd, CacheLine* dirLine, string origRqstr);
-    
-    /** Send writeback request to lower level cache using data from cache */
-    void sendWritebackFromCache(Command cmd, CacheLine* dirLine, string origRqstr);
-
-    /** Send writeback request to lower level cache using data from MSHR */
-    void sendWritebackFromMSHR(Command cmd, CacheLine* dirLine, string origRqstr, std::vector<uint8_t>* data);
-    
-    /** Send writeback ack */
-    void sendWritebackAck(MemEvent * event);
-
-    /** Send AckInv to lower level cache */
-    void sendAckInv(MemEvent * event);
-
-    /** Fetch data from owner and invalidate their copy of the line */
-    void sendFetchInv(CacheLine * dirLine, string rqstr, bool replay);
-    
-    /** Fetch data from owner and downgrade owner to sharer */
-    void sendFetchInvX(CacheLine * dirLine, string rqstr, bool replay);
-
-    /** Fetch data from sharer */
-    void sendFetch(CacheLine * dirLine, string rqstr, bool replay);
-
-    /** Send ForceInv to owner */
-    void sendForceInv(CacheLine * dirLine, string rqstr, bool replay);
-
-    /** Send a flush response */
-    void sendFlushResponse(MemEvent * reqEvent, bool success);
-    
-    /** Forward a FlushLine request with or without data */
-    void forwardFlushLine(MemEvent * origFlush, CacheLine * dirLine, bool dirty, Command cmd);
-
-    /** Invalidate all sharers of a block. Used for invalidations and evictions */
-    void invalidateAllSharers(CacheLine * dirLine, string rqstr, bool replay);
-    
-    /** Invalidate all sharers of a block and fetch block from one of them. Used for invalidations and evictions */
-    void invalidateAllSharersAndFetch(CacheLine * dirLine, string rqstr, bool replay);
-    
-    /** Invalidate all sharers of a block except the requestor (rqstr). If requestor is not a sharer, may fetch data from a sharer. Used for upgrade requests. */
-    bool invalidateSharersExceptRequestor(CacheLine * dirLine, string rqstr, string origRqstr, bool replay, bool checkFetch);
-
-
-/* Miscellaneous */
-   
-    void printData(vector<uint8_t> * data, bool set);
-
-/* Statistics */
-    //void recordStateEventCount(Command cmd, State state);
-    void recordEvictionState(State state);
-    void recordStateEventCount(Command cmd, State state);
-    void recordEventSentDown(Command cmd);
-    void recordEventSentUp(Command cmd);
-    void recordLatency(Command cmd, int type, uint64_t latency);
 };
 
 

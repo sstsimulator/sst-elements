@@ -40,14 +40,14 @@ Sieve::Sieve(ComponentId_t id, Params &params) : Component(id) {
 
     /* --------------- Get Parameters --------------- */
     // LRU - default replacement policy
-    int associativity           = params.find<int>("associativity", -1);
-    string sizeStr              = params.find<std::string>("cache_size", "");              //Bytes
-    uint64_t lineSize           = params.find<uint64_t>("cache_line_size", -1);            //Bytes
+    int associativity   = params.find<int>("associativity", -1);
+    string sizeStr      = params.find<std::string>("cache_size", "");              //Bytes
+    lineSize_           = params.find<uint64_t>("cache_line_size", -1);            //Bytes
 
     /* Check user specified all required fields */
     if(-1 >= associativity)         output_->fatal(CALL_INFO, -1, "Param not specified: associativity\n");
     if(sizeStr.empty())             output_->fatal(CALL_INFO, -1, "Param not specified: cache_size\n");
-    if(-1 == lineSize)              output_->fatal(CALL_INFO, -1, "Param not specified: cache_line_size - number of bytes in a cacheline (block size)\n");
+    if(-1 == lineSize_)             output_->fatal(CALL_INFO, -1, "Param not specified: cache_line_size - number of bytes in a cacheline (block size)\n");
 
     fixByteUnits(sizeStr);
     UnitAlgebra ua(sizeStr);
@@ -55,14 +55,14 @@ Sieve::Sieve(ComponentId_t id, Params &params) : Component(id) {
         output_->fatal(CALL_INFO, -1, "Invalid param: cache_size - must have units of bytes (e.g., B, KB,etc.)\n");
     }
     uint64_t cacheSize = ua.getRoundedValue();
-    uint64_t numLines = cacheSize/lineSize;
+    uint64_t numLines = cacheSize/lineSize_;
 
     /* ---------------- Initialization ----------------- */
     HashFunction* ht = loadAnonymousSubComponent<HashFunction>("memHierarchy.hash.none", "hash", 0, ComponentInfo::SHARE_NONE, params);
     ReplacementPolicy* replManager = loadUserSubComponent<ReplacementPolicy>("replacement", ComponentInfo::SHARE_NONE, numLines, associativity);
     if (!replManager)
         replManager = loadAnonymousSubComponent<ReplacementPolicy>("memHierarchy.replacement.lru", "replacement", 0, ComponentInfo::SHARE_NONE, params, numLines, associativity);
-    cacheArray_ = new SetAssociativeArray(output_, numLines, lineSize, associativity, replManager, ht, false);
+    cacheArray_ = new CacheArray<SharedCacheLine>(output_, numLines, associativity, lineSize_, replManager, ht);
 
     output_->debug(_INFO_,"--------------------------- Initializing [Sieve]: %s... \n", this->Component::getName().c_str());
 

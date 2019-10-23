@@ -13,14 +13,15 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef L1INCOHERENTCONTROLLER_H
-#define L1INCOHERENTCONTROLLER_H
+#ifndef MEMHIERARCHY_L1INCOHERENTCONTROLLER_H
+#define MEMHIERRACHY_L1INCOHERENTCONTROLLER_H
 
 #include <iostream>
 #include <array>
 
 #include "sst/elements/memHierarchy/coherencemgr/coherenceController.h"
-
+#include "sst/elements/memHierarchy/lineTypes.h"
+#include "sst/elements/memHierarchy/cacheTempl.h"
 
 namespace SST { namespace MemHierarchy {
 
@@ -103,9 +104,11 @@ public:
         {"prefetch_redundant",      "Prefetch issued for a block that was already in cache", "count", 2},
         {"default_stat",            "Default statistic used for unexpected events/states/etc. Should be 0, if not, check for missing statistic registerations.", "none", 7})
 
-/* Class definition */
-    
-        
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+            {"replacement", "Replacement policies, slot 0 is for cache, slot 1 is for directory (if it exists)", "SST::MemHierarchy::ReplacementPolicy"},
+            {"hash", "Hash function for mapping addresses to cache lines", "SST::MemHierarchy::HashFunction"} )
+
+
 /* Begin class definition */    
     /** Constructor for IncoherentL1 */
     IncoherentL1(Component* comp, Params& params) : CoherenceController(comp, params) { }
@@ -113,13 +116,14 @@ public:
         params.insert(ownerParams);
         debug->debug(_INFO_,"--------------------------- Initializing [L1Controller] ... \n\n");
 
-        /* Register statistics */
-        Statistic<uint64_t>* defStat = registerStatistic<uint64_t>("default_stat");
-        for (int i = 0; i < (int)Command::LAST_CMD; i++) {
-            stat_eventSent[i] = defStat;
-            for (int j = 0; j < LAST_STATE; j++)
-                stat_eventState[i][j] = defStat;
-        }
+        // Cache Array
+        uint64_t lines = params.find<uint64_t>("lines");
+        uint64_t assoc = params.find<uint64_t>("associativity");
+        ReplacementPolicy * rmgr = createReplacementPolicy(lines, assoc, params, true);
+        HashFunction * ht = createHashFunction(params);
+
+        cacheArray_ = new CacheArray<L1CacheLine>(debug, lines, assoc, lineSize_, rmgr, ht);
+        cacheArray_->setBanked(params.find<uint64_t>("banks", 0));
 
         stat_eventState[(int)Command::GetS][I] = registerStatistic<uint64_t>("stateEvent_GetS_I");
         stat_eventState[(int)Command::GetS][E] = registerStatistic<uint64_t>("stateEvent_GetS_E");
@@ -189,97 +193,82 @@ public:
 
     ~IncoherentL1() {}
     
-    
-    /** Used to determine in advance if an event will be a miss (and which kind of miss)
-     * Used for statistics only
-     */
-    bool isCacheHit(MemEvent* event);
-    
-    /* Event handlers called by cache controller */
-    /** Send cache line data to the lower level caches */
-    CacheAction handleEviction(CacheLine* wbCacheLine, string origRqstr, bool ignoredParam=false);
+    bool handleGetS(MemEvent * event, bool inMSHR);
+    bool handleGetX(MemEvent * event, bool inMSHR);
+    bool handleGetSX(MemEvent * event, bool inMSHR);
+    bool handleFlushLine(MemEvent * event, bool inMSHR);
+    bool handleFlushLineInv(MemEvent * event, bool inMSHR);
+    bool handleNULLCMD(MemEvent * event, bool inMSHR);
+    bool handleGetSResp(MemEvent * event, bool inMSHR);
+    bool handleGetXResp(MemEvent * event, bool inMSHR);
+    bool handleFlushLineResp(MemEvent * event, bool inMSHR);
+    bool handleNACK(MemEvent * event, bool inMSHR);
 
-    /** Process new cache request:  GetX, GetS, GetSX */
-    CacheAction handleRequest(MemEvent* event, bool replay);
-   
-    /** Process replacement - implemented for compatibility with CoherenceController but L1s do not receive replacements */
-    CacheAction handleReplacement(MemEvent* event, bool replay);
-    CacheAction handleFlush(MemEvent* event, CacheLine* cacheLine, MemEvent* reqEvent, bool replay);
-    
-    /** Process Inv */
-    CacheAction handleInvalidationRequest(MemEvent *event, bool inMSHR);
+    virtual Addr getBank(Addr addr) { cacheArray_->getBank(addr); }
+    virtual void setSliceAware(uint64_t size, uint64_t step) { cacheArray_->setSliceAware(size, step); }
 
-    /** Process responses */
-    CacheAction handleCacheResponse(MemEvent* event, bool inMSHR);
-    CacheAction handleFetchResponse(MemEvent* event, bool inMSHR);
+    MemEventInitCoherence * getInitCoherenceEvent();
 
-    bool handleNACK(MemEvent* event, bool inMSHR);
+    std::set<Command> getValidReceiveEvents() {
+        std::set<Command> cmds = { Command::GetS,
+            Command::GetX,
+            Command::GetSX,
+            Command::FlushLine,
+            Command::FlushLineInv,
+            Command::NULLCMD,
+            Command::GetSResp,
+            Command::GetXResp,
+            Command::FlushLineResp,
+            Command::NACK };
+        return cmds;
+    }
 
-    /* Methods for sending events, called by cache controller */
+private:
+
+    MemEventStatus processCacheMiss(MemEvent * event, L1CacheLine * line, bool inMSHR);
+    MemEventStatus allocateMSHR(MemEvent * event, bool fwdReq, int pos = -1);
+    L1CacheLine * allocateLine(MemEvent * event, L1CacheLine * line);
+    bool handleEviction (Addr addr, L1CacheLine*& line);
+    void cleanUpAfterRequest(MemEvent * event, bool inMSHR);
+    void cleanUpAfterResponse(MemEvent * event, bool inMSHR);
+    void retry(Addr addr);
+
+    /** Forward a flush line request, with or without data */
+    void forwardFlush(MemEvent * event, L1CacheLine * line, bool data);
+
     /** Send response up (to processor) */
-    uint64_t sendResponseUp(MemEvent * event, vector<uint8_t>* data, bool replay, uint64_t baseTime, bool atomic = false);
-    
+    uint64_t sendResponseUp(MemEvent * event, vector<uint8_t>* data, bool inMSHR, uint64_t baseTime, bool success = false);
+
+    /** Send response down (towards memory) */
+    void sendResponseDown(MemEvent * event, L1CacheLine * line, bool data);
+
+    /** Send writeback request to lower level caches */
+    void sendWriteback(Command cmd, L1CacheLine * line, bool dirty);
+
     /** Call through to coherenceController with statistic recording */
     void addToOutgoingQueue(Response& resp);
     void addToOutgoingQueueUp(Response& resp);
 
 /* Miscellaneous */
+   
+    /* Statistics recording */
+    void recordPrefetchResult(L1CacheLine * line, Statistic<uint64_t> * stat);
+    void recordLatency(Command cmd, int type, uint64_t timestamp);
+    void eventProfileAndNotify(MemEvent * event, State state, NotifyAccessType type, NotifyResultType result, bool inMSHR);
+
+    /* Debug output */
     void printData(vector<uint8_t> * data, bool set);
-
-/* Temporary */
-    void setCacheArray(CacheArray* arrayptr) { cacheArray_ = arrayptr; }
-
     void printLine(Addr addr);
 
-private:
-    CacheArray* cacheArray_;
+    CacheArray<L1CacheLine>* cacheArray_;
 
     /* Statistics */
-    std::array<std::array<Statistic<uint64_t>*, LAST_STATE>, (int)Command::LAST_CMD> stat_eventState;
-    Statistic<uint64_t>* stat_eventSent[(int)Command::LAST_CMD];
     Statistic<uint64_t>* stat_latencyGetS[2];
     Statistic<uint64_t>* stat_latencyGetX[2];
     Statistic<uint64_t>* stat_latencyGetSX[2];
     Statistic<uint64_t>* stat_latencyFlushLine[2];
     Statistic<uint64_t>* stat_latencyFlushLineInv[2];
 
-    void printLine(Addr addr, CacheLine* line);
-
-    /* Private event handlers */
-    /** Handle GetX request. Request upgrade if needed */
-    CacheAction handleGetXRequest(MemEvent* event, CacheLine* cacheLine, bool replay);
-    
-    /** Handle GetS request. Request block if needed */
-    CacheAction handleGetSRequest(MemEvent* event, CacheLine* cacheLine, bool replay);
-    
-    /** Handle FlushLine request. */
-    CacheAction handleFlushLineRequest(MemEvent *event, CacheLine* cacheLine, MemEvent* reqEvent, bool replay);
-    
-    /** Handle FlushLineInv request */
-    CacheAction handleFlushLineInvRequest(MemEvent *event, CacheLine* cacheLine, MemEvent* reqEvent, bool replay);
-
-    /** Handle data response - GetSResp or GetXResp */
-    void handleDataResponse(MemEvent* responseEvent, CacheLine * cacheLine, MemEvent * reqEvent);
-
-/* Private methods for managing data structures */
-    bool allocateLine(Addr addr, MemEvent* event);
-
-    
-    /* Methods for sending events */
-    /** Send writeback request to lower level caches */
-    void sendWriteback(Command cmd, CacheLine* cacheLine, string origRqstr);
-
-    /** Forward a flush line request, with or without data */
-    void forwardFlushLine(Addr baseAddr, Command cmd, string origRqstr, CacheLine * cacheLine);
-    
-    /** Send response to a flush request */
-    void sendFlushResponse(MemEvent * requestEvent, bool success, uint64_t baseTime, bool replay);
-
-    /* Statistics recording */
-    void recordStateEventCount(Command cmd, State state);
-    void recordEventSentDown(Command cmd);
-    void recordEventSentUp(Command cmd);
-    void recordLatency(Command cmd, int type, uint64_t timestamp);
 };
 
 

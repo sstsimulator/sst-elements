@@ -35,7 +35,7 @@ namespace SST { namespace MemHierarchy {
 
 class ReplacementPolicy;
 
-class CacheArray {
+class CacheArrayOld {
 public:
 
     class CacheLine; // Forward declaration so DataLine/CacheLine can point to each other
@@ -48,7 +48,7 @@ public:
         Output * dbg_;
 
         vector<uint8_t> data_;
-        CacheArray::CacheLine * dirLine_;
+        CacheArrayOld::CacheLine * dirLine_;
     public:
         DataLine(unsigned int size, int index, Output * dbg) : size_(size), index_(index), dbg_(dbg), dirLine_(nullptr) {
             data_.resize(size_/sizeof(uint8_t));
@@ -67,8 +67,8 @@ public:
         }
 
         // dirIndex getter/setter
-        void setDirLine(CacheArray::CacheLine * dirLine) { dirLine_ = dirLine; }
-        CacheArray::CacheLine* getDirLine() { return dirLine_; }
+        void setDirLine(CacheArrayOld::CacheLine * dirLine) { dirLine_ = dirLine; }
+        CacheArrayOld::CacheLine* getDirLine() { return dirLine_; }
         
         // index getter
         int getIndex() { return index_; }
@@ -150,6 +150,7 @@ public:
         void setBaseAddr(Addr addr) { baseAddr_ = addr; }
         /** Getter for line address */
         Addr getBaseAddr() const { return baseAddr_; }
+        Addr getAddr() const { return baseAddr_; }
 
         /** Setter for line state */
         virtual void setState(State state) { 
@@ -170,6 +171,8 @@ public:
 
         /** Getter for sharer field - return whether sharer field is empty */
         bool isShareless() { return sharers_.empty(); }
+        bool hasSharers() { return !sharers_.empty(); }
+        bool hasOtherSharers(std::string shr) { return !(sharers_.empty() || (sharers_.size() == 1 && sharers_.find(shr) != sharers_.end())); }
         /** Getter for sharer field */
         set<std::string>* getSharers() { return &sharers_; }
         /** Getter for sharer field - return number of sharers in set*/
@@ -199,8 +202,10 @@ public:
         void setOwner(std::string owner) { owner_ = owner; }
         /** Getter for owner field */
         std::string getOwner() { return owner_; }
+        bool hasOwner() { return !owner_.empty(); }
         /** Setter for owner field - clear field */
         void clearOwner() { owner_.clear(); }
+        void removeOwner() { owner_.clear(); }
         /** Getter for owner field - return whether field is set */
         bool ownerExists() { return !owner_.empty(); }
 
@@ -265,18 +270,20 @@ public:
 
     };
 
-    typedef CacheArray::CacheLine CacheLine;
-    typedef CacheArray::DataLine DataLine;
+    typedef CacheArrayOld::CacheLine CacheLine;
+    typedef CacheArrayOld::DataLine DataLine;
 
     /** Function returns the cacheline tag's ID if its valid (-1 if unvalid).
         If updateReplacement is set, the replacement stats are updated */
     virtual CacheLine * lookup(Addr baseAddr, bool updateReplacement) = 0;
 
     /** Determine a replacement candidate using the replacement manager */
-    virtual CacheLine * findReplacementCandidate(Addr baseAddr, bool cache) = 0;
+    virtual CacheLine * findReplacementCandidate(Addr baseAddr, bool cache = true) = 0;
     
     /** Replace cache line */
-    virtual void replace(Addr baseAddr, CacheArray::CacheLine * candidate, CacheArray::DataLine * dataCandidate=nullptr) = 0;
+    virtual void replace(Addr baseAddr, CacheArrayOld::CacheLine * candidate, CacheArrayOld::DataLine * dataCandidate=nullptr) = 0;
+
+    virtual void deallocate(CacheArrayOld::CacheLine * line) { }
 
     /** Get line size.  Should not change at runtime */
     Addr getLineSize() { return lineSize_; }
@@ -295,7 +302,7 @@ public:
     Addr getBank(Addr addr) { return (toLineAddr(addr) % banks_); }
 
     /** Destructor - Delete all cache line objects */
-    virtual ~CacheArray() {
+    virtual ~CacheArrayOld() {
         for (unsigned int i = 0; i < lines_.size(); i++)
             delete lines_[i];
         delete replacementMgr_;
@@ -316,7 +323,7 @@ public:
         banks_ = numBanks;
     }
 
-    void printCacheArray(Output &out) {
+    void printCacheArrayOld(Output &out) {
         for (unsigned int i = 0; i < numLines_; i++) {
             out.output("   %u %s\n", i, lines_[i]->getString().c_str());
         }
@@ -342,7 +349,7 @@ protected:
     unsigned int    banks_;
     vector<CacheLine *> lines_; // The actual cache
 
-    CacheArray(Output* dbg, unsigned int numLines, unsigned int associativity, unsigned int lineSize,
+    CacheArrayOld(Output* dbg, unsigned int numLines, unsigned int associativity, unsigned int lineSize,
                ReplacementPolicy* replacementMgr, HashFunction* hash, bool sharersAware, bool cache) : dbg_(dbg), 
                numLines_(numLines), associativity_(associativity), lineSize_(lineSize),
                replacementMgr_(replacementMgr), hash_(hash) {
@@ -368,7 +375,7 @@ protected:
  * Set-associative cache array 
  * Used for arrays where data/coherence state are always held together (e.g., inclusive caches)
  */
-class SetAssociativeArray : public CacheArray {
+class SetAssociativeArray : public CacheArrayOld {
 public:
 
     SetAssociativeArray(Output* dbg, unsigned int numLines, unsigned int lineSize, unsigned int associativity,
@@ -378,10 +385,11 @@ public:
     ~SetAssociativeArray();
 
     CacheLine * lookup(Addr baseAddr, bool updateReplacement);
-    CacheLine * findReplacementCandidate(Addr baseAddr, bool cache);
+    CacheLine * findReplacementCandidate(Addr baseAddr, bool cache = true);
     void replace(Addr baseAddr, CacheLine * candidate_id, DataLine * dataCandidate);
     unsigned int preReplace(Addr baseAddr);
     void deallocate(unsigned int index);
+    void deallocate(CacheLine * line) { deallocate(line->getIndex()); }
     State * setStates;
     unsigned int * setSharers;
     bool * setOwned;
@@ -394,13 +402,13 @@ public:
  *  Used for arrays where data/coherence state are not neccessarily both cached at the same time (e.g., exclusive caches)
  *
  */
-class DualSetAssociativeArray : public CacheArray {
+class DualSetAssociativeArray : public CacheArrayOld {
 public:
     DualSetAssociativeArray(Output * dbg, unsigned int lineSize, HashFunction * hf, bool sharersAware, unsigned int dirNumLines, unsigned int dirAssociativity, ReplacementPolicy* dirRp, 
             unsigned int cacheNumLines, unsigned int cacheAssociativity, ReplacementPolicy * cacheRp);
 
     CacheLine * lookup(Addr baseAddr, bool updateReplacement);
-    CacheLine * findReplacementCandidate(Addr baseAddr, bool cache);
+    CacheLine * findReplacementCandidate(Addr baseAddr, bool cache = true);
     void replace(Addr baseAddr, CacheLine * candidate, DataLine * dataCandidate);
     unsigned int preReplaceDir(Addr baseAddr);
     unsigned int preReplaceCache(Addr baseAddr);
