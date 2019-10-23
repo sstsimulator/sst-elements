@@ -130,18 +130,18 @@ def genMemHierarchy(cores):
 
    memory = sst.Component("memory", "memHierarchy.MemController")
    memory.addParams({
-       "range_start"           : "0",
-       "coherence_protocol"    : coherenceProtocol,
        "debug"                 : memDebug,
        "clock"                 : "1Ghz",
-      "backend" : "memHierarchy.cramsim",
-      "backend.access_time" : "2 ns",   # Phy latency
-      "backend.mem_size" : "512MiB",
-      "backend.max_outstanding_requests" : 256,
-	"backend.verbose" : 1,
        "request_width"         : cacheLineSize
    })
-
+   backend = memory.setSubComponent("backend", "memHierarchy.cramsim")
+   backend.addParams({
+      "access_time" : "2 ns",   # Phy latency
+      "mem_size" : "512MiB",
+      "max_outstanding_requests" : 256,
+      "verbose" : 1,
+   })
+   
    for core in range (cores):
        l1 = sst.Component("l1cache_%d"%core, "memHierarchy.Cache")
        l1.addParams({
@@ -217,12 +217,15 @@ def genMemHierarchy(cores):
    comp_controller0.addParams(g_params)
    comp_controller0.addParams({
                         "verbose" : "0",
-			"TxnConverter" : "CramSim.c_TxnConverter",
-			"AddrMapper" : "CramSim.c_AddressHasher",
-			"CmdScheduler" : "CramSim.c_CmdScheduler" ,
-			"DeviceController" : "CramSim.c_DeviceController"
 			})
-
+   c0 = comp_controller0.setSubComponent("TxnConverter","CramSim.c_TxnConverter")
+   c1 = comp_controller0.setSubComponent("AddrMapper", "CramSim.c_AddressHasher")
+   c2 = comp_controller0.setSubComponent("CmdScheduler", "CramSim.c_CmdScheduler")
+   c3 = comp_controller0.setSubComponent("DeviceController", "CramSim.c_DeviceController")
+   c0.addParams(g_params)
+   c1.addParams(g_params)
+   c2.addParams(g_params)
+   c3.addParams(g_params)
 
 		# bank receiver
    comp_dimm0 = sst.Component("Dimm0", "CramSim.c_Dimm")
@@ -230,7 +233,7 @@ def genMemHierarchy(cores):
 
 
    link_dir_cramsim_link = sst.Link("link_dir_cramsim_link")
-   link_dir_cramsim_link.connect( (memory, "cube_link", "2ns"), (comp_memhBridge, "cpuLink", "2ns") )
+   link_dir_cramsim_link.connect( (backend, "cramsim_link", "2ns"), (comp_memhBridge, "cpuLink", "2ns") )
 
    # memhBridge(=TxnGen) <-> Memory Controller 
    memHLink = sst.Link("memHLink_1")

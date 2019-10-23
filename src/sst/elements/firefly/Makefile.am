@@ -43,6 +43,8 @@ libfirefly_la_SOURCES = \
 	funcSM/size.h \
 	funcSM/alltoallv.h \
 	funcSM/alltoallv.cc \
+	funcSM/scatterv.h \
+	funcSM/scatterv.cc \
 	funcSM/gatherv.h \
 	funcSM/gatherv.cc \
 	funcSM/allgather.cc \

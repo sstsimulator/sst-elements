@@ -27,19 +27,59 @@ class EmberEP( EndPoint ):
 
     def build( self, nodeID, extraKeys ):
 
+        
+        # See if this endpoints is not an ember endpoint
+        if self.motifs["motif0.name"].startswith("<"):
+            # This is a non ember endpoint. Find the element name.
+            # The name will also include the slot to put the
+            # linkcontrol into.  So the format is:
+            # lib.element:slot_name
+            element = self.motifs["motif0.name"]
+            element = element[1:-1]
+            
+            # parse out the slot
+            element,slot = element.split(":",1)
+
+            ep = sst.Component( "nic" + str(nodeID), element)
+            sc = ep.setSubComponent(slot, self.nicParams["module"])
+            retval = (sc, "rtr_port", sst.merlin._params["link_lat"] )
+            
+            # Add paramters to the component
+            ep.addParams(self.motifs["params"])
+
+            ep.addParam("num_peers",self.numNids)
+            
+            # Add parameters to the linkcontrol
+            sc.addParam("link_bw",sst.merlin._params["link_bw"]);
+            sc.addParam("input_buf_size",sst.merlin._params["input_buf_size"]);
+            sc.addParam("output_buf_size",sst.merlin._params["output_buf_size"]);
+            sc.addParam("logical_nid",self.nidMap[nodeID])
+            sc.addParam("logical_peers",self.numNids)
+            sc.addParam("nid_map_name","nid_map_jobid_%d"%self.driverParams["jobId"])
+            return retval
+
+        
+        
+        # Regular ember motif processing
         nicComponentName = "firefly.nic"
         if 'nicComponent' in self.nicParams:
             nicComponentName = self.nicParams['nicComponent']
 
         nic = sst.Component( "nic" + str(nodeID), nicComponentName )
-        rtrLink = nic.setSubComponent( "rtrLink", "merlin.linkcontrol" )
-        rtrLink.addParams( self.nicParams )
+        rtrLink = nic.setSubComponent( "rtrLink", self.nicParams["module"] )
+        #rtrLink.addParams( self.nicParams )
+        if "link_bw" in self.nicParams:
+            rtrLink.addParam("link_bw",self.nicParams["link_bw"])
+        if "input_buf_size" in self.nicParams:
+            rtrLink.addParam("input_buf_size",self.nicParams["input_buf_size"])
+        if "output_buf_size" in self.nicParams:
+            rtrLink.addParam("output_buf_size",self.nicParams["output_buf_size"])
 
         nic.addParams( self.nicParams )
         nic.addParams( extraKeys)
         nic.addParam( "nid", nodeID )
-        retval = (rtrLink, "rtr", sst.merlin._params["link_lat"] )
- 
+        retval = (rtrLink, "rtr_port", sst.merlin._params["link_lat"] )
+        
         built = False 
         if self.detailedModel:
             #print nodeID,  "use detailed"
@@ -85,6 +125,10 @@ class EmberEP( EndPoint ):
                     os.addParam( key,value)
 
             virtNic = os.setSubComponent( "virtNic", "firefly.VirtNic" )
+            for key, value in self.driverParams.items():
+                if key.startswith(self.driverParams['os.name']+'.virtNic'):
+                    key = key[key.rfind('.')+1:]
+                    virtNic.addParam( key,value)
 
             proto = os.setSubComponent( "proto", "firefly.CtrlMsgProto" )
             process = proto.setSubComponent( "process", "firefly.ctrlMsg" )

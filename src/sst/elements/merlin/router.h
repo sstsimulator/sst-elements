@@ -27,7 +27,7 @@
 #include <sst/core/unitAlgebra.h>
 #include <sst/core/interfaces/simpleNetwork.h>
 
-using namespace SST;
+#include <queue>
 
 namespace SST {
 namespace Merlin {
@@ -77,7 +77,7 @@ public:
     virtual void recvTopologyEvent(int port, TopologyEvent* ev) = 0;
 
     virtual void reportRequestedVNs(int port, int vns) = 0;
-    virtual void reportSetVCs(int port, int vcs) = 0;
+    virtual void reportSetVNs(int port, int vns) = 0;
 };
 
 #define MERLIN_ENABLE_TRACE
@@ -119,9 +119,10 @@ public:
         injectionTime(0)
     {}
 
-    RtrEvent(SST::Interfaces::SimpleNetwork::Request* req) :
+    RtrEvent(SST::Interfaces::SimpleNetwork::Request* req, SST::Interfaces::SimpleNetwork::nid_t trusted_src) :
         BaseRtrEvent(BaseRtrEvent::PACKET),
         request(req),
+        trusted_src(trusted_src),
         injectionTime(0)
     {}
 
@@ -146,15 +147,18 @@ public:
     inline void setSizeInFlits(int size ) {size_in_flits = size; }
     inline int getSizeInFlits() { return size_in_flits; }
 
+    inline SST::Interfaces::SimpleNetwork::nid_t getTrustedSrc() { return trusted_src; }
+    
     virtual void print(const std::string& header, Output &out) const  override {
-        out.output("%s RtrEvent to be delivered at %" PRIu64 " with priority %d. src = %lld, dest = %lld\n",
-                   header.c_str(), getDeliveryTime(), getPriority(), request->src, request->dest);
+        out.output("%s RtrEvent to be delivered at %" PRIu64 " with priority %d. src = %lld (logical: %lld), dest = %lld\n",
+                   header.c_str(), getDeliveryTime(), getPriority(), trusted_src, request->src, request->dest);
         if ( request->inspectPayload() != NULL) request->inspectPayload()->print("  -> ", out);
     }
 
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         BaseRtrEvent::serialize_order(ser);
         ser & request;
+        ser & trusted_src;
         ser & size_in_flits;
         ser & injectionTime;
     }
@@ -162,6 +166,7 @@ public:
 private:
     // TraceType trace;
     // int traceID;
+    SST::Interfaces::SimpleNetwork::nid_t trusted_src;
     SimTime_t injectionTime;
     int size_in_flits;
 
@@ -236,7 +241,7 @@ private:
 class RtrInitEvent : public BaseRtrEvent {
 public:
 
-    enum Commands { REQUEST_VNS, SET_VCS, REPORT_ID, REPORT_BW, REPORT_FLIT_SIZE, REPORT_PORT };
+    enum Commands { REQUEST_VNS, SET_VNS, REPORT_ID, REPORT_BW, REPORT_FLIT_SIZE, REPORT_PORT };
 
     // int num_vns;
     // int id;
@@ -315,7 +320,7 @@ public:
     inline RtrEvent* getEncapsulatedEvent() {return encap_ev;}
 
     inline int getDest() const {return encap_ev->request->dest;}
-    inline int getSrc() const {return encap_ev->request->src;}
+    inline int getSrc() const {return encap_ev->getTrustedSrc();}
 
     inline SST::Interfaces::SimpleNetwork::Request::TraceType getTraceType() {return encap_ev->getTraceType();}
     inline int getTraceID() {return encap_ev->getTraceID();}
@@ -386,7 +391,84 @@ protected:
     Output &output;
 };
 
-class PortControlBase;
+// Class to manage link between NIC and router.  A single NIC can have
+// more than one link_control (and thus link to router).
+class PortInterface : public SubComponent{
+
+public:
+
+    // params are: parent router, router id, port number, topology object
+    SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Merlin::PortInterface, Router*, int, int, Topology*)
+
+    typedef std::queue<internal_router_event*> port_queue_t;
+    typedef std::queue<TopologyEvent*> topo_queue_t;
+
+    virtual void sendTopologyEvent(TopologyEvent* ev) = 0;
+    // Returns true if there is space in the output buffer and false
+    // otherwise.
+    virtual void send(internal_router_event* ev, int vc) = 0;
+    // Returns true if there is space in the output buffer and false
+    // otherwise.
+    virtual bool spaceToSend(int vc, int flits) = 0;
+    // Returns NULL if no event in input_buf[vc]. Otherwise, returns
+    // the next event.
+    virtual internal_router_event* recv(int vc) = 0;
+    virtual internal_router_event** getVCHeads() = 0;
+    
+    // time_base is a frequency which represents the bandwidth of the link in flits/second.
+    PortInterface(ComponentId_t cid) :
+        SubComponent(cid)
+        {}
+
+    PortInterface(Component* parent) :
+        SubComponent(parent)
+        {}
+
+    virtual void initVCs(int vns, int* vcs_per_vn, internal_router_event** vc_heads, int* xbar_in_credits, int* output_queue_lengths) = 0;
+
+
+    virtual ~PortInterface() {}
+    // void setup();
+    // void finish();
+    // void init(unsigned int phase);
+    // void complete(unsigned int phase);
+    
+
+    virtual void sendInitData(Event *ev) = 0;
+    virtual Event* recvInitData() = 0;
+    virtual void sendUntimedData(Event *ev) = 0;
+    virtual Event* recvUntimedData() = 0;
+    
+    virtual void dumpState(std::ostream& stream) {}
+    virtual void printStatus(Output& out, int out_port_busy, int in_port_busy) {}
+    
+    // void setupVCs(int vcs, internal_router_event** vc_heads
+	virtual bool decreaseLinkWidth() = 0;
+	virtual bool increaseLinkWidth() = 0; 
+
+
+    class OutputArbitration : public SubComponent {
+    public:
+
+        SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Merlin::PortInterface::OutputArbitration)
+    
+        OutputArbitration(Component* parent) :
+            SubComponent(parent)
+        {}
+        OutputArbitration(ComponentId_t cid) :
+            SubComponent(cid)
+        {}
+        virtual ~OutputArbitration() {}
+
+        virtual void setVCs(int num_vns, int* vcs_per_vn) = 0;
+        virtual int arbitrate(Cycle_t cycle, PortInterface::port_queue_t* out_q, int* port_out_credits, bool isHostPort, bool& have_packets) = 0;
+        virtual void dumpState(std::ostream& stream) {};
+};
+
+
+
+};
+
 
 class XbarArbitration : public SubComponent {
 public:
@@ -402,9 +484,9 @@ public:
     virtual ~XbarArbitration() {}
 
 #if VERIFY_DECLOCKING
-    virtual void arbitrate(PortControlBase** ports, int* port_busy, int* out_port_busy, int* progress_vc, bool clocking) = 0;
+    virtual void arbitrate(PortInterface** ports, int* port_busy, int* out_port_busy, int* progress_vc, bool clocking) = 0;
 #else
-    virtual void arbitrate(PortControlBase** ports, int* port_busy, int* out_port_busy, int* progress_vc) = 0;
+    virtual void arbitrate(PortInterface** ports, int* port_busy, int* out_port_busy, int* progress_vc) = 0;
 #endif
     virtual void setPorts(int num_ports, int num_vcs) = 0;
     virtual bool isOkayToPauseClock() { return true; }

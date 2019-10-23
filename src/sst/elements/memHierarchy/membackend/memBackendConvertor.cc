@@ -222,8 +222,8 @@ void MemBackendConvertor::doResponse( ReqId reqId, uint32_t flags ) {
                 }
                 m_dependentRequests.erase(evID);
             }
-            delete req;
         }
+        delete req;
     }
 }
 

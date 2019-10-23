@@ -108,7 +108,7 @@ EmberHalo3D26Generator::EmberHalo3D26Generator(SST::ComponentId_t id, Params& pa
 
                                                 if(varNew <= varExisting) {
                                                         if(0 == rank()) {
-                                                                verbose(CALL_INFO, 2, 0, "Found an improved decomposition solution: %" PRIu32 " x %" PRIu32 " x %" PRIu32 "\n",
+                                                                verbose(CALL_INFO, 2, MOTIF_MASK, "Found an improved decomposition solution: %" PRIu32 " x %" PRIu32 " x %" PRIu32 "\n",
                                                                         i, j, k);
                                                         }
 
@@ -141,7 +141,7 @@ EmberHalo3D26Generator::EmberHalo3D26Generator(SST::ComponentId_t id, Params& pa
 
 	assert( peX * peY * peZ == (unsigned) size() );
 
-	verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", using decomposition: %" PRIu32 "x%" PRIu32 "x%" PRIu32 ".\n",
+	verbose(CALL_INFO, 2, MOTIF_MASK, "Rank: %" PRIu32 ", using decomposition: %" PRIu32 "x%" PRIu32 "x%" PRIu32 ".\n",
 		rank(), peX, peY, peZ);
 
 	int32_t my_Z = 0;
@@ -213,26 +213,26 @@ EmberHalo3D26Generator::EmberHalo3D26Generator(SST::ComponentId_t id, Params& pa
 	requestLength += (corner_g > -1) ? 1 : 0;
 	requestLength += (corner_h > -1) ? 1 : 0;
 
-	verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", World=%" PRId32 ", X=%" PRId32 ", Y=%" PRId32 ", Z=%" PRId32 ", Px=%" PRId32 ", Py=%" PRId32 ", Pz=%" PRId32 "\n", 
+	verbose(CALL_INFO, 2, MOTIF_MASK, "Rank: %" PRIu32 ", World=%" PRId32 ", X=%" PRId32 ", Y=%" PRId32 ", Z=%" PRId32 ", Px=%" PRId32 ", Py=%" PRId32 ", Pz=%" PRId32 "\n", 
 		rank(), size(), my_X, my_Y, my_Z, peX, peY, peZ);
-	verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", Total communication partners: %d\n", rank(), (int) requestLength);
-	verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", X+: %" PRId32 ", X-: %" PRId32 "\n", rank(), xface_up, xface_down);
-	verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", Y+: %" PRId32 ", Y-: %" PRId32 "\n", rank(), yface_up, yface_down);
-	verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", Z+: %" PRId32 ", Z-: %" PRId32 "\n", rank(), zface_up, zface_down);
-	verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", LA: %" PRId32 ", LB: %" PRId32 ", LC: %" PRId32 ", LD: %" PRId32 "\n", rank(), line_a, line_b, line_c, line_d);
-	verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", LE: %" PRId32 ", LF: %" PRId32 ", LG: %" PRId32 ", LH: %" PRId32 "\n", rank(), line_e, line_f, line_g, line_h);
-	verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", LI: %" PRId32 ", LJ: %" PRId32 ", LK: %" PRId32 ", LL: %" PRId32 "\n", rank(), line_i, line_j, line_k, line_l);
-	verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", CA: %" PRId32 ", CB: %" PRId32 ", CC: %" PRId32 ", CD: %" PRId32 "\n", rank(),
+	verbose(CALL_INFO, 2, MOTIF_MASK, "Rank: %" PRIu32 ", Total communication partners: %d\n", rank(), (int) requestLength);
+	verbose(CALL_INFO, 2, MOTIF_MASK, "Rank: %" PRIu32 ", X+: %" PRId32 ", X-: %" PRId32 "\n", rank(), xface_up, xface_down);
+	verbose(CALL_INFO, 2, MOTIF_MASK, "Rank: %" PRIu32 ", Y+: %" PRId32 ", Y-: %" PRId32 "\n", rank(), yface_up, yface_down);
+	verbose(CALL_INFO, 2, MOTIF_MASK, "Rank: %" PRIu32 ", Z+: %" PRId32 ", Z-: %" PRId32 "\n", rank(), zface_up, zface_down);
+	verbose(CALL_INFO, 2, MOTIF_MASK, "Rank: %" PRIu32 ", LA: %" PRId32 ", LB: %" PRId32 ", LC: %" PRId32 ", LD: %" PRId32 "\n", rank(), line_a, line_b, line_c, line_d);
+	verbose(CALL_INFO, 2, MOTIF_MASK, "Rank: %" PRIu32 ", LE: %" PRId32 ", LF: %" PRId32 ", LG: %" PRId32 ", LH: %" PRId32 "\n", rank(), line_e, line_f, line_g, line_h);
+	verbose(CALL_INFO, 2, MOTIF_MASK, "Rank: %" PRIu32 ", LI: %" PRId32 ", LJ: %" PRId32 ", LK: %" PRId32 ", LL: %" PRId32 "\n", rank(), line_i, line_j, line_k, line_l);
+	verbose(CALL_INFO, 2, MOTIF_MASK, "Rank: %" PRIu32 ", CA: %" PRId32 ", CB: %" PRId32 ", CC: %" PRId32 ", CD: %" PRId32 "\n", rank(),
 		corner_a, corner_b, corner_c, corner_d);
-	verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", CE: %" PRId32 ", CF: %" PRId32 ", CG: %" PRId32 ", CH: %" PRId32 "\n", rank(),
+	verbose(CALL_INFO, 2, MOTIF_MASK, "Rank: %" PRIu32 ", CE: %" PRId32 ", CF: %" PRId32 ", CG: %" PRId32 ", CH: %" PRId32 "\n", rank(),
 		corner_e, corner_f, corner_g, corner_h);
 
-	verbose(CALL_INFO, 4, 0, "Allocating request entries...\n");
+	verbose(CALL_INFO, 4, MOTIF_MASK, "Allocating request entries...\n");
 	requests.resize( requestLength * 2 );
 }
 
 bool EmberHalo3D26Generator::generate( std::queue<EmberEvent*>& evQ) {
-	verbose(CALL_INFO, 1, 0, "Iteration on rank %" PRId32 "\n", rank());
+	verbose(CALL_INFO, 1, MOTIF_MASK, "Iteration on rank %" PRId32 "\n", rank());
 
 		enQ_compute( evQ, compute_the_time );
 
@@ -503,7 +503,7 @@ bool EmberHalo3D26Generator::generate( std::queue<EmberEvent*>& evQ) {
 		// Enqueue a wait all for all the communications we have set up
 		enQ_waitall( evQ, nextRequest, &requests[0], NULL );
 
-		verbose(CALL_INFO, 1, 0, "Iteration on rank %" PRId32 " completed generation, %d events in queue\n",
+		verbose(CALL_INFO, 1, MOTIF_MASK, "Iteration on rank %" PRId32 " completed generation, %d events in queue\n",
 			rank(), (int)evQ.size());
 
     if ( ++m_loopIndex == iterations ) {

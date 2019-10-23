@@ -27,7 +27,6 @@ using namespace SST::Merlin;
 topo_hyperx::topo_hyperx(Component* comp, Params& params) :
     Topology(comp)
 {
-
     // Get the various parameters
     router_id = params.find<int>("id",-1);
     if ( router_id == -1 ) {
@@ -38,6 +37,7 @@ topo_hyperx::topo_hyperx(Component* comp, Params& params) :
     if ( !shape.compare("") ) {
     }
 
+    
     // Need to parse the shape string to get the number of dimensions
     // and the size of each dimension
     dimensions = std::count(shape.begin(),shape.end(),'x') + 1;
@@ -92,21 +92,27 @@ topo_hyperx::topo_hyperx(Component* comp, Params& params) :
     if ( !route_algo.compare("DOAL") ) {
         // std::cout << "Setting algorithm to DOAL" << std::endl;
         algorithm = DOAL;
+        vcs_per_vn = 2;
     }
     else if ( !route_algo.compare("valiant") ) {
         algorithm = VALIANT;
+        vcs_per_vn = 1;
     }
     else if ( !route_algo.compare("VDAL") ) {
         algorithm = VDAL;
+        vcs_per_vn = 2 * dimensions;
     }
     else if ( !route_algo.compare("DOR-ND") ) {
         algorithm = DORND;
+        vcs_per_vn = 1;
     }
     else if ( !route_algo.compare("DOR") ) {
         algorithm = DOR;
+        vcs_per_vn = 1;
     }
     else if ( !route_algo.compare("MIN-A") ) {
         algorithm = MINA;
+        vcs_per_vn = dimensions;
     }
     else {
         output.fatal(CALL_INFO,-1,"Unknown routing mode specified: %s\n",route_algo.c_str());
@@ -126,7 +132,6 @@ topo_hyperx::topo_hyperx(ComponentId_t cid, Params& params, int num_ports, int r
     Topology(cid),
     router_id(rtr_id)
 {
-
     // Get the various parameters
     std::string shape;
     shape = params.find<std::string>("shape");
@@ -276,7 +281,7 @@ topo_hyperx::process_input(RtrEvent* ev)
 {
     topo_hyperx_event* tt_ev = new topo_hyperx_event(dimensions);
     tt_ev->setEncapsulatedEvent(ev);
-    tt_ev->setVC(num_vcs * ev->request->vn);
+    tt_ev->setVC(vcs_per_vn * ev->request->vn);
     if ( algorithm == VALIANT ) {
         int mid;
         do {
@@ -435,17 +440,7 @@ topo_hyperx::choose_multipath(int start_port, int num_ports)
 int
 topo_hyperx::computeNumVCs(int vns)
 {
-    switch ( algorithm ) {
-    case VDAL:
-        return 2 * dimensions * vns;
-    case MINA:
-        return dimensions;
-    case DOR:
-    case DORND:
-        return 1;
-    default:
-        return 2; 
-    }
+    return vcs_per_vn * vns;
 }
 
 int
@@ -736,7 +731,7 @@ topo_hyperx::routeVDAL(int port, int vc, topo_hyperx_event* ev) {
     // trace.getOutput().output("%llu: udims.size = %lu, remaining_vcs = %d\n",ev->id.first,udims.size(),num_vcs - start_vc - 1 );
     // Check to see if there are extra VCs for misroutes.  If not,
     // simply fall back to MIN-A routing
-    if ( udims.size() == num_vcs - start_vc - 1 ) {
+    if ( udims.size() == vcs_per_vn - start_vc - 1 ) {
         // trace.getOutput().output("Falling back to MIN-A, udims.size = %lu, remaining_vcs = %d\n",udims.size(),num_vcs - start_vc - 1 );
         return routeMINA(port,vc,ev);
     }

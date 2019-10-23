@@ -44,10 +44,14 @@ namespace Ember {
 
 #define enQ_barrier mpi().barrier
 #define enQ_bcast mpi().bcast
+#define enQ_scatter mpi().scatter
+#define enQ_scatterv mpi().scatterv
 #define enQ_reduce mpi().reduce
 #define enQ_allreduce mpi().allreduce
 #define enQ_alltoall mpi().alltoall
 #define enQ_alltoallv mpi().alltoallv
+#define enQ_allgather mpi().allgather
+#define enQ_allgatherv mpi().allgatherv
 
 #define enQ_commSplit mpi().commSplit
 #define enQ_commCreate mpi().commCreate
@@ -64,8 +68,6 @@ public:
     virtual void completed( const SST::Output* output, uint64_t time ) {
 		mpi().completed(output,time,getMotifName(),getMotifNum());
 	};
-
-	void setup();
 
 protected:
 

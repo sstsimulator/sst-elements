@@ -13,14 +13,10 @@ libmerlin_la_SOURCES = \
 	merlin.h \
 	merlin.cc \
 	router.h \
-	linkControl.h \
-	linkControl.cc \
-	portControl.h \
-	portControl.cc \
-	reorderLinkControl.h \
-	reorderLinkControl.cc \
 	bridge.h \
 	bridge.cc \
+	background_traffic/background_traffic.h \
+	background_traffic/background_traffic.cc \
 	offeredload/offered_load.h \
 	offeredload/offered_load.cc \
 	target_generator/target_generator.h \
@@ -66,6 +62,17 @@ libmerlin_la_SOURCES = \
 	inspectors/circuitCounter.cc \
 	inspectors/testInspector.cc \
 	inspectors/testInspector.h \
+	interfaces/linkControl.h \
+	interfaces/linkControl.cc \
+	interfaces/portControl.h \
+	interfaces/portControl.cc \
+	interfaces/reorderLinkControl.h \
+	interfaces/reorderLinkControl.cc \
+	interfaces/output_arb_basic.h \
+	interfaces/output_arb_qos_multi.h \
+	arbitration/single_arb.h \
+	arbitration/single_arb_lru.h \
+	arbitration/single_arb_rr.h \
 	pymodule.h \
 	pymodule.c \
 	pymerlin.py
@@ -81,7 +88,6 @@ EXTRA_DIST = \
 
 sstdir = $(includedir)/sst/elements/merlin
 nobase_sst_HEADERS = \
-	linkControl.h \
 	router.h
 
 libmerlin_la_LDFLAGS = -module -avoid-version $(PYTHON_LDFLAGS)

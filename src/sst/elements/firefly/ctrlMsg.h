@@ -35,6 +35,7 @@ static const uint64_t AlltoallvTag  = 0x20000000;
 static const uint64_t CollectiveTag = 0x30000000;
 static const uint64_t GathervTag    = 0x40000000;
 static const uint64_t LongProtoTag  = 0x50000000;
+static const uint64_t ScattervTag  =  0x60000000;
 static const uint64_t TagMask       = 0xf0000000;
 
 class MemoryBase;
@@ -85,15 +86,20 @@ class API : public ProtocolAPI {
     void isend( const Hermes::MemAddr&, size_t len, nid_t dest, uint64_t tag, CommReq* );
     void isend( const Hermes::MemAddr&, size_t len, nid_t dest, uint64_t tag,
 							MP::Communicator, CommReq* );
+    void isend( void*, size_t len, nid_t dest, uint64_t tag, MP::Communicator, CommReq* );
     void sendv( std::vector<IoVec>&, nid_t dest, uint64_t tag );
+    void isendv( std::vector<IoVec>&, nid_t dest, uint64_t tag, MP::Communicator, CommReq* );
     void recv( const Hermes::MemAddr&, size_t len, nid_t src, uint64_t tag );
     void recv( const Hermes::MemAddr&, size_t len, nid_t src, uint64_t tag, MP::Communicator grp );
+    void recv( void*, size_t len, nid_t src, uint64_t tag, MP::Communicator grp );
     void irecv( const Hermes::MemAddr&, size_t len, nid_t src, uint64_t tag, CommReq* );
     void irecv( const Hermes::MemAddr&, size_t len, MP::RankID src, uint64_t tag, 
                 MP::Communicator grp, CommReq* );
     void irecvv( std::vector<IoVec>&, nid_t src, uint64_t tag, CommReq* );
+    void irecvv( std::vector<IoVec>&, nid_t src, uint64_t tag, MP::Communicator grp, CommReq* );
     void wait( CommReq* );
     void waitAll( std::vector<CommReq*>& );
+    void waitAll( std::vector<CommReq>& );
 
 	void send( const Hermes::MemAddr& buf, uint32_t count, 
 		MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,

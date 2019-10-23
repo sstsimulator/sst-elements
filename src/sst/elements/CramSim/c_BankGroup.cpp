@@ -40,7 +40,7 @@
 #include "c_Rank.hpp"
 
 using namespace SST;
-using namespace SST::n_Bank;
+using namespace SST::CramSim;
 
 c_BankGroup::c_BankGroup(std::map<std::string, unsigned>* x_bankParams, unsigned x_Id) {
 	m_rankPtr = nullptr;

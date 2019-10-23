@@ -34,7 +34,7 @@
 #include "c_BankCommand.hpp"
 
 namespace SST {
-namespace n_Bank {
+namespace CramSim {
   class c_CmdReqEvent : public SST::Event {
   public:
     c_BankCommand *m_payload; // FIXME: change this pointer to a unique_ptr
@@ -46,7 +46,7 @@ namespace n_Bank {
         ser & m_payload;
     }
     
-    ImplementSerializable(SST::n_Bank::c_CmdReqEvent);     
+    ImplementSerializable(SST::CramSim::c_CmdReqEvent);     
 
   };
 

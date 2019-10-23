@@ -52,8 +52,10 @@ public:
         {"link_bw",      "Bandwidth of the router link specified in either b/s or B/s (can include SI prefix)."},
         {"in_buf_size",  "Size of linkcontrol input buffer specified in either b/s or B/s (can include SI prefix).", "1kB"},
         {"out_buf_size", "Size of linkcontrol output buffer specified in either b/s or B/s (can include SI prefix).", "1kB"},
-        {"topology",     "Name of the topology subcomponent that should be loaded to control routing."},
+        {"send_untimed_data",   "Controls whether data is sent in init and complete.","true"},
         {"remap",        "Creates a logical to physical mapping shifted by remap amount.", "0"},
+        {"group_offset",   "If dividing network into multiple groups of test nics, this is offset for this group.", "0"},
+        {"group_peers",   "If dividing network into multiple groups of test nics, this is offset for this group.", "0"},
         {"linkcontrol_type","Set the SimpleNetwork ", "merlin.linkcontrol"}
     )
 
@@ -77,6 +79,8 @@ private:
     int num_peers;
     int msg_size;
     int num_msg;
+    int group_offset;
+    int group_peers;
     
     int packets_sent;
     int packets_recd;
@@ -88,6 +92,8 @@ private:
     int init_state;
     int init_count;
     int init_broadcast_count;
+
+    bool send_untimed_data;
     
     SST::Interfaces::SimpleNetwork* link_control;
 

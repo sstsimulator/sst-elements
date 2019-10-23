@@ -30,7 +30,7 @@
 
 //using namespace std;
 using namespace SST;
-using namespace n_Bank;
+using namespace CramSim;
 
 c_TraceFileReader::c_TraceFileReader(SST::ComponentId_t x_id, SST::Params& x_params):c_TxnGenBase(x_id,x_params)
 {

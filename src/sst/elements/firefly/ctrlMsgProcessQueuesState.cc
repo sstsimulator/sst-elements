@@ -174,9 +174,9 @@ void ProcessQueuesState::processSend_1( _CommReq* req )
 
 void ProcessQueuesState::processSend_2( _CommReq* req )
 {
-    void* hdrPtr = NULL;
     size_t length = req->getLength( );
 
+	std::vector<void*> ptrs;
     IoVec hdrVec;   
     hdrVec.len = sizeof( req->hdr() ); 
 
@@ -184,7 +184,7 @@ void ProcessQueuesState::processSend_2( _CommReq* req )
 
     if ( length <= shortMsgLength() ) {
 		hdrVec.addr.setBacking( malloc( hdrVec.len ) );
-        hdrPtr = hdrVec.addr.getBacking();
+		ptrs.push_back ( hdrVec.addr.getBacking() );
         memcpy( hdrVec.addr.getBacking(), &req->hdr(), hdrVec.len );
     } else {
         hdrVec.addr.setBacking( &req->hdr() ); 
@@ -197,8 +197,16 @@ void ProcessQueuesState::processSend_2( _CommReq* req )
 
     if ( length <= shortMsgLength() ) {
         dbg().debug(CALL_INFO,2,DBG_MSK_PQS_APP_SIDE,"Short %lu bytes dest %#x\n",length,nid); 
-        vec.insert( vec.begin() + 1, req->ioVec().begin(), 
-                                        req->ioVec().end() );
+		for ( int i = 0; i < req->ioVec().size(); i++ ) {
+			size_t len = req->ioVec()[i].len;	
+			MemAddr& addr =	req->ioVec()[i].addr;
+			void* backing = NULL;
+			if ( addr.getBacking() ) {
+				backing = malloc( len );
+				memcpy( backing, addr.getBacking(), len );
+			}
+			vec.push_back( IoVec( MemAddr( addr.getSimVAddr(), backing),len ) );
+		} 
         req->setDone( sendReqFiniDelay( length ) );
         ++m_numSent;
 
@@ -229,7 +237,7 @@ void ProcessQueuesState::processSend_2( _CommReq* req )
     }
 
     VoidFunction* callback = new VoidFunction;
-    *callback = std::bind( &ProcessQueuesState::pioSendFiniVoid, this, hdrPtr, hdrVec.addr.getSimVAddr() );
+    *callback = std::bind( &ProcessQueuesState::pioSendFiniVoid, this, ptrs, hdrVec.addr.getSimVAddr() );
 
     m_nic->pioSend( nid, ShortMsgQ, vec, callback);
 
@@ -776,12 +784,12 @@ void ProcessQueuesState::leaveInterruptCtx( Stack* stack )
     }
 }
 
-void ProcessQueuesState::pioSendFiniVoid( void* hdr, uint64_t simVAddr )
+void ProcessQueuesState::pioSendFiniVoid( std::vector<void*> ptrs, uint64_t simVAddr )
 {
-    dbg().debug(CALL_INFO,1,DBG_MSK_PQS_CB,"hdr=%p\n", hdr );
-    if ( hdr ) {
-        free( hdr );
-    }
+	for ( int i = 0; i < ptrs.size(); i++ ) {
+    	dbg().debug(CALL_INFO,1,DBG_MSK_PQS_CB,"ptr=%p\n", ptrs[0] );
+		free( ptrs[i] );
+	}
     m_simVAddrs->free( simVAddr );
 }
 

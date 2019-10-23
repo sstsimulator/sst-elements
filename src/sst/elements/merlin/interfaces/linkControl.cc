@@ -19,6 +19,7 @@
 #include "linkControl.h"
 
 #include <sst/core/simulation.h>
+#include <sst/core/sharedRegion.h>
 
 #include "merlin.h"
 
@@ -31,6 +32,7 @@ LinkControl::LinkControl(Component* parent, Params &params) :
     SST::Interfaces::SimpleNetwork(parent),
     rtr_link(NULL), output_timing(NULL),
     req_vns(0), total_vns(0), checker_board_factor(1), id(-1),
+    logical_nid(-1), nid_map_shm(nullptr), nid_map(nullptr),
     rr(0), input_buf(NULL), output_buf(NULL),
     rtr_credits(NULL), in_ret_credits(NULL),
     curr_out_vn(0), waiting(true), have_packets(false), start_block(0),
@@ -57,6 +59,7 @@ LinkControl::LinkControl(ComponentId_t cid, Params &params, int vns) :
     SST::Interfaces::SimpleNetwork(cid),
     rtr_link(NULL), output_timing(NULL),
     req_vns(vns), total_vns(0), checker_board_factor(1), id(-1),
+    logical_nid(-1), nid_map_shm(nullptr), nid_map(nullptr),
     rr(0), input_buf(NULL), output_buf(NULL),
     rtr_credits(NULL), in_ret_credits(NULL),
     curr_out_vn(0), waiting(true), have_packets(false), start_block(0),
@@ -104,14 +107,14 @@ LinkControl::LinkControl(ComponentId_t cid, Params &params, int vns) :
     outbuf_credits = new int[req_vns];
 
     // Get the buffer sizes
-    inbuf_size = params.find<UnitAlgebra>("in_buf_size","1kB");
+    inbuf_size = params.find<UnitAlgebra>("input_buf_size","1kB");
     if ( !inbuf_size.hasUnits("b") && !inbuf_size.hasUnits("B") ) {
         merlin_abort.fatal(CALL_INFO,-1,"in_buf_size must be specified in either "
                            "bits or bytes: %s\n",inbuf_size.toStringBestSI().c_str());
     }
     if ( inbuf_size.hasUnits("B") ) inbuf_size *= UnitAlgebra("8b/B");
 
-    outbuf_size = params.find<UnitAlgebra>("out_buf_size","1kB");
+    outbuf_size = params.find<UnitAlgebra>("output_buf_size","1kB");
     if ( !outbuf_size.hasUnits("b") && !outbuf_size.hasUnits("B") ) {
         merlin_abort.fatal(CALL_INFO,-1,"out_buf_size must be specified in either "
                            "bits or bytes: %s\n",outbuf_size.toStringBestSI().c_str());
@@ -132,10 +135,27 @@ LinkControl::LinkControl(ComponentId_t cid, Params &params, int vns) :
     }
     
     rtr_link = configureLink(port_name, std::string("1GHz"), new Event::Handler<LinkControl>(this,&LinkControl::handle_input));
-
+    
     output_timing = configureSelfLink(port_name + "_output_timing", "1GHz",
             new Event::Handler<LinkControl>(this,&LinkControl::handle_output));
 
+
+    // See if we need to set up a nid map
+    std::string nid_map_name = params.find<std::string>("nid_map_name",std::string());
+    if ( !nid_map_name.empty() ) {
+        int logical_peers = params.find<int>("logical_peers",-1);
+        if ( logical_peers == -1 ) {
+            merlin_abort.fatal(CALL_INFO,1,"LinkControl: logical_peers must be set if nid_map_name is set\n");
+        }
+        logical_nid = params.find<nid_t>("logical_nid",-1);
+        if ( logical_peers == -1 ) {
+            merlin_abort.fatal(CALL_INFO,1,"LinkControl: logical_nid must be set if nid_map_name is set\n");
+        }
+        nid_map_shm = Simulation::getSharedRegionManager()->
+            getGlobalSharedRegion(nid_map_name, logical_peers * sizeof(nid_t), new SharedRegionMerger());
+    }
+
+    
     // Register statistics
     packet_latency = registerStatistic<uint64_t>("packet_latency");
     send_bit_count = registerStatistic<uint64_t>("send_bit_count");
@@ -148,17 +168,25 @@ LinkControl::initialize(const std::string& port_name, const UnitAlgebra& link_bw
                         int vns, const UnitAlgebra& in_buf_size,
                         const UnitAlgebra& out_buf_size)
 {    
+    if ( !wasLoadedWithLegacyAPI() ) {
+        merlin_abort.fatal(CALL_INFO_LONG,1,"LinkControl::initializae() was called on instance that was loaded using new APIs.  This method can only be called when loaded with the legacy API.  Use wasLoadedWithLegacyAPI() to check load status.");
+        return false;
+    }
     req_vns = vns;
     total_vns = vns * checker_board_factor;
     link_bw = link_bw_in;
     if ( link_bw.hasUnits("B/s") ) {
         link_bw *= UnitAlgebra("8b/B");
     }
-    
     // Input and output buffers
     input_buf = new network_queue_t[req_vns];
     output_buf = new network_queue_t[total_vns];
 
+
+    // For now, credit arrays need to be initalized in init after we
+    // get the total number.  This makes it simplier to deal with VN
+    // remapping.
+    
     // Initialize credit arrays.  Credits are in flits, and we don't
     // yet know the flit size, so can't initialize in_ret_credits and
     // outbuf_credits yet.  Will initialize them after we get the
@@ -188,10 +216,7 @@ LinkControl::initialize(const std::string& port_name, const UnitAlgebra& link_bw
 
     // Configure the links
     // For now give it a fake timebase.  Will give it the real timebase during init
-    // rtr_link = rif->configureLink(port_name, time_base, new Event::Handler<LinkControl>(this,&LinkControl::handle_input));
     rtr_link = configureLink(port_name, std::string("1GHz"), new Event::Handler<LinkControl>(this,&LinkControl::handle_input));
-    // output_timing = rif->configureSelfLink(port_name + "_output_timing", time_base,
-    //         new Event::Handler<LinkControl>(this,&LinkControl::handle_output));
     output_timing = configureSelfLink(port_name + "_output_timing", "1GHz",
             new Event::Handler<LinkControl>(this,&LinkControl::handle_output));
 
@@ -228,22 +253,22 @@ void LinkControl::init(unsigned int phase)
     RtrInitEvent* init_ev;
     switch ( phase ) {
     case 0:
-        {
-            // Negotiate link speed.  We will take the min of the two link speeds
-            init_ev = new RtrInitEvent();
-            init_ev->command = RtrInitEvent::REPORT_BW;
-            init_ev->ua_value = link_bw;
-            rtr_link->sendUntimedData(init_ev);
-
-            // In phase zero, send the number of VNs
-            RtrInitEvent* ev = new RtrInitEvent();
-            ev->command = RtrInitEvent::REQUEST_VNS;
-            ev->int_value = total_vns;
-            rtr_link->sendUntimedData(ev);
-        }
+    {
+        // Negotiate link speed.  We will take the min of the two link speeds
+        init_ev = new RtrInitEvent();
+        init_ev->command = RtrInitEvent::REPORT_BW;
+        init_ev->ua_value = link_bw;
+        rtr_link->sendUntimedData(init_ev);
+        
+        // In phase zero, send the number of VNs
+        RtrInitEvent* ev = new RtrInitEvent();
+        ev->command = RtrInitEvent::REQUEST_VNS;
+        ev->int_value = total_vns;
+        rtr_link->sendUntimedData(ev);
+    }
         break;
     case 1:
-        {
+    {
         // Get the link speed from the other side.  Actual link speed
         // will be the minumum the two sides
         ev = rtr_link->recvInitData();
@@ -254,7 +279,7 @@ void LinkControl::init(unsigned int phase)
         // Get the flit size from the router
         ev = rtr_link->recvInitData();
         init_ev = dynamic_cast<RtrInitEvent*>(ev);
-        UnitAlgebra flit_size_ua = init_ev->ua_value;
+        flit_size_ua = init_ev->ua_value;
         flit_size = flit_size_ua.getRoundedValue();
         delete ev;
         
@@ -271,7 +296,6 @@ void LinkControl::init(unsigned int phase)
             outbuf_credits[i] = (outbuf_size / flit_size_ua).getRoundedValue();
         }
         
-        // std::cout << link_clock.toStringBestSI() << std::endl;
         
         TimeConverter* tc = getTimeConverter(link_clock);
         output_timing->setDefaultTimeBase(tc);
@@ -292,15 +316,59 @@ void LinkControl::init(unsigned int phase)
         }
 
         id = init_ev->int_value;
+        if ( logical_nid == -1 ) logical_nid = id;
+        // If we have a nid_map, fill in my mapping
+        if ( nid_map_shm ) {
+            nid_map_shm->modifyArray(logical_nid,id);
+            nid_map_shm->publish();
+            nid_map = nid_map_shm->getPtr<const nid_t*>();
+        }
         // init_ev->print("LC: ",Simulation::getSimulation()->getSimulationOutput());
         delete ev;
         
+        }
+        break;
+    case 2:
+        {
+        // Will receive information about total vns used and the
+        // mapping of my VNs to all of them
+        ev = rtr_link->recvInitData();
+        init_ev = dynamic_cast<RtrInitEvent*>(ev);
+        int actual_vns = init_ev->int_value;
+        delete ev;
+        
+        vn_remap_out = new int[total_vns];
+        vn_remap_in = new int[actual_vns];
+        for ( int i = 0; i < actual_vns; ++i ) {
+            vn_remap_in[i] = -1;
+        }
+
+        // Will receive a message for each of my requested vns
+        for ( int i = 0; i < total_vns; ++i ) {
+            ev = rtr_link->recvInitData();
+            init_ev = dynamic_cast<RtrInitEvent*>(ev);
+            int vn = init_ev->int_value;
+            vn_remap_out[i] = vn;
+            if ( vn >= 0 ) vn_remap_in[vn] = i;
+            delete ev;
+        }
+        // std::cout << "ID = " << id << "\n";
+        // std::cout << "vn_remap_out:\n";
+        // for ( int i = 0; i < total_vns; ++i ) {
+        //     std::cout << "    " << i << " : " << vn_remap_out[i] << "\n";
+        // }
+        // std::cout << "vn_remap_in:\n";
+        // for ( int i = 0; i < actual_vns; ++i ) {
+        //     std::cout << "    " << i << " : " << vn_remap_in[i] << "\n";
+        // }
+        // std::cout << std::endl;
+        network_initialized = true;
+
         // Need to send available credits to other side of link
         for ( int i = 0; i < total_vns; i++ ) {
-            rtr_link->sendUntimedData(new credit_event(i,in_ret_credits[i]));
+            rtr_link->sendUntimedData(new credit_event(vn_remap_out[i],in_ret_credits[i]));
             in_ret_credits[i] = 0;
         }
-        network_initialized = true;
         }
         break;
     default:
@@ -311,14 +379,14 @@ void LinkControl::init(unsigned int phase)
             BaseRtrEvent* bev = static_cast<BaseRtrEvent*>(ev);
             switch (bev->getType()) {
             case BaseRtrEvent::CREDIT:
-                {
+            {
                 credit_event* ce = static_cast<credit_event*>(bev);
-                if ( ce->vc < total_vns ) {  // Ignore credit events for VNs I don't have
-                    rtr_credits[ce->vc] += ce->credits;
+                if ( vn_remap_in[ce->vc] != -1 ) {  // Ignore credit events for VNs I don't have
+                    rtr_credits[vn_remap_in[ce->vc]] += ce->credits;
                 }
                 delete ev;
-                }
-                break;
+            }
+            break;
             case BaseRtrEvent::PACKET:
                 init_events.push_back(static_cast<RtrEvent*>(ev));
                 break;
@@ -388,7 +456,8 @@ void LinkControl::finish(void)
 bool LinkControl::send(SimpleNetwork::Request* req, int vn) {
     if ( vn >= req_vns ) return false;
     req->vn = vn;
-    RtrEvent* ev = new RtrEvent(req);
+    if ( nid_map ) req->dest = nid_map[req->dest];
+    RtrEvent* ev = new RtrEvent(req,id);
     int flits = (ev->request->size_in_bits + (flit_size - 1)) / flit_size;
     ev->setSizeInFlits(flits);
 
@@ -416,10 +485,6 @@ bool LinkControl::send(SimpleNetwork::Request* req, int vn) {
         vn_offset = 0;
     }    
     ev->request->vn = vn * checker_board_factor + vn_offset;
-    
-    
-    // printf("%d: Send message to %llu on VN: %d, which is actually VN:%d --> %llu",id,req->dest,vn,req->vn,req->dest+req->src);
-    // std::cout << std::endl;
     
     output_buf[ev->request->vn].push(ev);
     if ( waiting && !have_packets ) {
@@ -455,17 +520,16 @@ SST::Interfaces::SimpleNetwork::Request* LinkControl::recv(int vn) {
 
     // Figure out how many credits to return
     int flits = event->getSizeInFlits();
-    in_ret_credits[event->request->vn] += flits;
+    in_ret_credits[vn] += flits;
 
     // For now, we're just going to send the credits back to the
     // other side.  The required BW to do this will not be taken
     // into account.
-    rtr_link->send(1,new credit_event(event->request->vn,in_ret_credits[event->request->vn]));
-    in_ret_credits[event->request->vn] = 0;
+    // rtr_link->send(1,new credit_event(event->request->vn,in_ret_credits[event->request->vn]));
+    // in_ret_credits[event->request->vn] = 0;
+    rtr_link->send(1,new credit_event(event->request->vn,in_ret_credits[vn]));
+    in_ret_credits[vn] = 0;
 
-    // printf("%d: Returning credits on VN: %d for packet from %llu",id, event->request->vn, event->request->src);
-    // std::cout << std::endl;
-    
     if ( event->getTraceType() != SimpleNetwork::Request::NONE ) {
         output.output("TRACE(%d): %" PRIu64 " ns: recv called on LinkControl in NIC: %s\n",event->getTraceID(),
                       getCurrentSimTimeNano(), getName().c_str());
@@ -473,6 +537,7 @@ SST::Interfaces::SimpleNetwork::Request* LinkControl::recv(int vn) {
 
     SST::Interfaces::SimpleNetwork::Request* ret = event->request;
     ret->vn = ret->vn / checker_board_factor;
+    if ( nid_map ) ret->dest = logical_nid;
     event->request = NULL;
     delete event;
     return ret;
@@ -480,7 +545,7 @@ SST::Interfaces::SimpleNetwork::Request* LinkControl::recv(int vn) {
 
 void LinkControl::sendUntimedData(SST::Interfaces::SimpleNetwork::Request* req)
 {
-    rtr_link->sendUntimedData(new RtrEvent(req));
+    rtr_link->sendUntimedData(new RtrEvent(req,id));
 }
 
 SST::Interfaces::SimpleNetwork::Request* LinkControl::recvUntimedData()
@@ -514,8 +579,7 @@ void LinkControl::handle_input(Event* ev)
     BaseRtrEvent* base_event = static_cast<BaseRtrEvent*>(ev);
     if ( base_event->getType() == BaseRtrEvent::CREDIT ) {
     	credit_event* ce = static_cast<credit_event*>(ev);
-        rtr_credits[ce->vc] += ce->credits;
-        // std::cout << "Got " << ce->credits << " credits for VN: " << ce->vc << ".  Current credits: " << rtr_credits[ce->vc] << std::endl;
+        rtr_credits[vn_remap_in[ce->vc]] += ce->credits;
         delete ev;
 
         // If we're waiting, we need to send a wakeup event to the
@@ -531,15 +595,10 @@ void LinkControl::handle_input(Event* ev)
         }
     }
     else {
-        // std::cout << "Enter handle_input" << std::endl;
-        // std::cout << "LinkControl received an event" << std::endl;
         RtrEvent* event = static_cast<RtrEvent*>(ev);
         // Simply put the event into the right virtual network queue
-        int actual_vn = event->request->vn / checker_board_factor;
-        // std::cout << event->request->vn << ", " << actual_vn << std::endl;
-
-        // printf("%d: Received event from %llu on VN: %d, which is actually %d\n", id, event->request->src, event->request->vn, actual_vn);
-        // std::cout << std::endl;
+        // int actual_vn = event->request->vn / checker_board_factor;
+        int actual_vn = vn_remap_in[event->request->vn] / checker_board_factor;
 
         input_buf[actual_vn].push(event);
         if (is_idle) {
@@ -558,7 +617,6 @@ void LinkControl::handle_input(Event* ev)
         SimTime_t lat = getCurrentSimTimeNano() - event->getInjectionTime();
         packet_latency->addData(lat);
         // stats.insertPacketLatency(lat);
-        // std::cout << "Exit handle_input" << std::endl;
         if ( receiveFunctor != NULL ) {
             bool keep = (*receiveFunctor)(actual_vn);
             if ( !keep) receiveFunctor = NULL;
@@ -581,7 +639,6 @@ void LinkControl::handle_output(Event* ev)
     bool found = false;
     RtrEvent* send_event = NULL;
     have_packets = false;
-
     for ( int i = curr_out_vn; i < total_vns; i++ ) {
         if ( output_buf[i].empty() ) continue;
         have_packets = true;
@@ -607,13 +664,12 @@ void LinkControl::handle_output(Event* ev)
             break;
         }
     }
-
-
     // If we found an event to send, go ahead and send it
     if ( found ) {
         // Send the output to the network.
         // First set the virtual channel.
-        send_event->request->vn = vn_to_send;
+        int actual_vn = vn_remap_out[vn_to_send];
+        send_event->request->vn = actual_vn;
 
         // Need to return credits to the output buffer
         int size = send_event->getSizeInFlits();
@@ -636,11 +692,8 @@ void LinkControl::handle_output(Event* ev)
             idle_time->addData(Simulation::getSimulation()->getCurrentSimCycle() - idle_start);
             is_idle = false;
         }
-        // printf("%d: Sending packet to %llu on VN: %d",id, send_event->request->dest, send_event->request->vn);
-        // std::cout << std::endl;
 
         rtr_link->send(send_event);
-        // std::cout << "Sent packet on vn " << vn_to_send << ", credits remaining: " << rtr_credits[vn_to_send] << std::endl;
         
         if ( send_event->getTraceType() == SimpleNetwork::Request::FULL ) {
             output.output("TRACE(%d): %" PRIu64 " ns: Sent an event to router from LinkControl"
@@ -665,7 +718,6 @@ void LinkControl::handle_output(Event* ev)
         // we either get something new in the output buffers or
         // receive credits back from the router.  However, we need
         // to know that we got to this state.
-        // std::cout << "Waiting ..." << std::endl;
         start_block = Simulation::getSimulation()->getCurrentSimCycle();
         waiting = true;
         // Begin counting the amount of time this port was idle

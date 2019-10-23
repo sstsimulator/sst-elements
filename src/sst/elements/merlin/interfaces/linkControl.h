@@ -62,7 +62,11 @@ public:
         {"output_buf_size",    "Size of output buffers specified in b or B (can include SI prefix)."},
         // {"network_inspectors", "Comma separated list of network inspectors to put on output ports.", ""},
         {"checkerboard",     "Number of actual virtual networks to use per virtual network seen by endpoint", "1"},
-        {"checkerboard_alg", "Algorithm to use to spead traffic across checkerboarded VNs [deterministic | roundrobin]", "deterministic" }
+        {"checkerboard_alg", "Algorithm to use to spead traffic across checkerboarded VNs [deterministic | roundrobin]", "deterministic" },
+        {"total_endpoints",    "Number of endpoints on the network (only used if logical nids are used.",""},
+        {"logical_nid",        "My logical NID", "" },
+        {"logical_peers",      "Number of peers in my logical mapping.",""},
+        {"nid_map_name",       "Base name of shared region where my NID map will be located.  If empty, no NID map will be used.",""}
     )
 
     SST_ELI_DOCUMENT_STATISTICS(
@@ -88,6 +92,7 @@ private:
     UnitAlgebra inbuf_size;
     UnitAlgebra outbuf_size;
     int flit_size; // in bits
+    UnitAlgebra flit_size_ua;
     
     std::deque<RtrEvent*> init_events;
     
@@ -96,7 +101,13 @@ private:
     int total_vns;
     int checker_board_factor;
 
-    int id;
+    int* vn_remap_out;
+    int* vn_remap_in;
+    
+    nid_t id;
+    nid_t logical_nid;
+    SharedRegion* nid_map_shm;
+    const nid_t* nid_map;
     int rr;
 
     typedef enum {
@@ -115,9 +126,15 @@ private:
     // the credits available for your next buffer, as well as track
     // the credits you need to return to the buffer sending data to
     // you,
+
+    // Number of credits available to the host in each VN (size = req_vns)
     int* outbuf_credits;
 
+    // Number of credits available in the router input buffers for VC0
+    // of each VN (size = total_vns)
     int* rtr_credits;
+
+    // Number of credits to return to the router (size = total_vns)
     int* in_ret_credits;
 
     // Doing a round robin on the output.  Need to keep track of the
@@ -200,7 +217,8 @@ public:
     inline void setNotifyOnSend(HandlerBase* functor) { sendFunctor = functor; }
 
     inline bool isNetworkInitialized() const { return network_initialized; }
-    inline nid_t getEndpointID() const { return id; }
+    // inline nid_t getEndpointID() const { return id; }
+    inline nid_t getEndpointID() const { return logical_nid; }
     inline const UnitAlgebra& getLinkBW() const { return link_bw; }
 
     

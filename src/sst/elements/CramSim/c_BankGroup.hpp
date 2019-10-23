@@ -40,7 +40,7 @@
 #include <sst/core/link.h>
 
 namespace SST {
-namespace n_Bank {
+namespace CramSim {
 
 class c_BankInfo;
 class c_Rank;
@@ -73,6 +73,6 @@ private:
 
 };
 
-} // end n_Bank
+} // end CramSim
 } // end SST
 #endif /* C_BANKGROUP_HPP_ */

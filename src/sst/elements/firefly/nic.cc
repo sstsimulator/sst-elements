@@ -42,6 +42,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_nic2host_base_lat_ns(0),
     m_respKey(1),
 	m_predNetIdleTime(0),
+    m_linkBytesPerSec(0),
 	m_detailedInterface(NULL)
 {
     m_myNodeId = params.find<int>("nid", -1);
@@ -80,7 +81,6 @@ Nic::Nic(ComponentId_t id, Params &params) :
 
     m_tracedNode =     params.find<int>( "tracedNode", -1 );
     m_tracedPkt  =     params.find<int>( "tracedPkt", -1 );
-    int numShmemCmdSlots =    params.find<int>( "numShmemCmdSlots", 32 );
     int maxSendMachineQsize = params.find<int>( "maxSendMachineQsize", 1 );
     int maxRecvMachineQsize = params.find<int>( "maxRecvMachineQsize", 1 );
     Nic::ShmemSendMove::m_alignment = params.find<int>("shmemSendAlignment",64);
@@ -122,23 +122,9 @@ Nic::Nic(ComponentId_t id, Params &params) :
     int minPktPayload = 32;
     assert( ( packetSizeInBytes - packetOverhead ) >= minPktPayload );
 
-	UnitAlgebra input_buf_size = params.find<SST::UnitAlgebra>("input_buf_size" );
-	UnitAlgebra output_buf_size = params.find<SST::UnitAlgebra>("output_buf_size" );
-	UnitAlgebra link_bw = params.find<SST::UnitAlgebra>("link_bw" );
-
-	m_linkBytesPerSec = link_bw.getRoundedValue()/8;
-
-    m_dbg.verbose(CALL_INFO,1,1,"id=%d input_buf_size=%s output_buf_size=%s link_bw=%s "
-			"packetSize=%d\n", m_myNodeId, 
-            input_buf_size.toString().c_str(),
-            output_buf_size.toString().c_str(),
-			link_bw.toString().c_str(), packetSizeInBytes);
-
-    m_linkControl = loadUserSubComponent<Interfaces::SimpleNetwork>( "rtrLink", ComponentInfo::SHARE_NONE, 0 );
+    // Set up the linkcontrol
+    m_linkControl = loadUserSubComponent<Interfaces::SimpleNetwork>( "rtrLink", ComponentInfo::SHARE_NONE, 2 );
     assert( m_linkControl );
-
-	m_linkControl->initialize(params.find<std::string>("rtrPortName","rtr"),
-                              link_bw, 2, input_buf_size, output_buf_size);
 
     m_recvNotifyFunctor =
         new SimpleNetwork::Handler<Nic>(this,&Nic::recvNotify );
@@ -174,7 +160,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
     }
 
 	Params shmemParams = params.find_prefix_params( "shmem." ); 
-    m_shmem = new Shmem( *this, shmemParams, m_myNodeId, m_num_vNics, m_dbg, numShmemCmdSlots, getDelay_ns(), getDelay_ns() );
+    m_shmem = new Shmem( *this, shmemParams, m_myNodeId, m_num_vNics, m_dbg, getDelay_ns(), getDelay_ns() );
 	size_t FAM_memSizeBytes = params.find<SST::UnitAlgebra>("FAM_memSize" ).getRoundedValue();
 	if ( FAM_memSizeBytes ) {
 		if ( printConfig ) {
@@ -234,7 +220,8 @@ Nic::Nic(ComponentId_t id, Params &params) :
 		tmp << m_unitPool->getTotal();
 		smmParams.insert( "numNicUnits", tmp.str(), true );
 
-        m_memoryModel = loadAnonymousSubComponent<MemoryModel>( "firefly.SimpleMemory","", 0, ComponentInfo::SHARE_NONE, smmParams );
+        m_memoryModel = loadAnonymousSubComponent<MemoryModel>( "firefly.SimpleMemory","", 0,
+                       ComponentInfo::SHARE_STATS|ComponentInfo::INSERT_STATS, smmParams );
 
 		if ( m_detailedInterface ) {
 			static_cast<SimpleMemoryModel*>(m_memoryModel)->setDetailedInterface( m_detailedInterface );
@@ -355,7 +342,10 @@ void Nic::init( unsigned int phase )
 	}
 	if ( m_detailedInterface) {
 		m_detailedInterface->init(phase);
-	} 
+	}
+    if ( m_linkBytesPerSec == 0 && m_linkControl->isNetworkInitialized() ) {
+        m_linkBytesPerSec = m_linkControl->getLinkBW().getRoundedValue()/8;
+    }
 }
 
 void Nic::handleVnicEvent( Event* ev, int id )

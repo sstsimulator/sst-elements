@@ -124,11 +124,11 @@ class ParseLoadFile:
         rem = '' 
         try: 
             tag, rem = self.lastLine.split(' ',1);
-            rem = rem.replace('\n', '')
+            rem = rem.replace('\n', ' ')
         except ValueError:
             tag = self.lastLine
 
-        tag = tag.replace('\n', '')
+        tag = tag.replace('\n', ' ')
        
         value = value + rem
         while True:
@@ -139,7 +139,7 @@ class ParseLoadFile:
             if self.lastLine[0] == '[':
                 break
             else:
-                value = value + self.lastLine.replace('\n','') 
+                value = value + self.lastLine.replace('\n',' ') 
 
         return tag, value
 

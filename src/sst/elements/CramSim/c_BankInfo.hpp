@@ -38,7 +38,7 @@
 #include "c_BankState.hpp"
 
 namespace SST {
-namespace n_Bank {
+namespace CramSim {
 
 class c_BankGroup;
 class c_BankCommand;

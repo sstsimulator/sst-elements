@@ -32,16 +32,14 @@
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
 #include <sst/core/output.h>
+#include <sst/core/interfaces/simpleNetwork.h>
 
 #include "sst/elements/merlin/merlin.h"
-#include "sst/elements/merlin/linkControl.h"
 
 #define ENABLE_FINISH_HACK 0
 
 namespace SST {
 namespace Merlin {
-
-class LinkControl;
 
 class TrafficGen : public Component {
 

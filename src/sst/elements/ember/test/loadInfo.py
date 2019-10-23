@@ -64,6 +64,7 @@ class LoadInfo:
 		
 		jobid = workList[0][0]
 		work = workList[0][1]
+                
 		ep = self.createEP( jobid, nidList, self.parts[nidList].numCores, self.readWorkList( jobid, nidList, work ), statNodes, self.parts[nidList].detailedModel ) 
 		self.setEndpoint( nidList, ep )
 
@@ -107,13 +108,26 @@ class LoadInfo:
 	def parseCmd(self, motifPrefix, motifSuffix, cmdList, cmdNum ):
 		motif = {} 
 
+                key = 'motif' + str(cmdNum) + '.name'
+                # Check to see if this is for a non-ember endpoint
+                if cmdList[0].find("<") is 0:
+                        motif[key] = cmdList[0]
+                        params = {}
+                        cmdList.pop(0)
+                        for x in cmdList:
+                                y = x.split("=",1)
+                                params[y[0]] = y[1]
+                                
+                        motif["params"] = params
+                        return motif
+
+                #For ember enpoints
 		tmp = cmdList[0].split('.')
-		if  len(tmp) == 2:
+                if  len(tmp) >= 2:
 			motifPrefix = tmp[0] + '.'
 			cmdList[0] = tmp[1]
 
-		tmp = 'motif' + str(cmdNum) + '.name'
-		motif[ tmp ] = motifPrefix + cmdList[0] + motifSuffix
+		motif[ key ] = motifPrefix + cmdList[0] + motifSuffix
 		cmdList.pop(0)
 		for x in cmdList:
 			y = x.split("=")

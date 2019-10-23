@@ -41,6 +41,7 @@ class ProtocolAPI;
         NAME(Allreduce)   \
         NAME(Allgather)   \
         NAME(Gatherv)   \
+        NAME(Scatterv)   \
         NAME(Alltoallv)   \
         NAME(Send)   \
         NAME(Recv)   \

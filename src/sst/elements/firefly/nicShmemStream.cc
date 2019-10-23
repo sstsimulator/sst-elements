@@ -34,6 +34,8 @@ Nic::RecvMachine::ShmemStream::ShmemStream( Output& output, Ctx* ctx,
     if ( m_shmemHdr.op != ShmemMsgHdr::Ack  ) {
         m_ctx->nic().schedCallback( std::bind( &Nic::RecvMachine::ShmemStream::processFirstPkt, this, ev ),  
             m_ctx->nic().getShmemRxDelay_ns() );
+    } else {
+        processPktHdr(ev);
     }
 }
 

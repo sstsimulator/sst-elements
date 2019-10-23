@@ -42,6 +42,8 @@ libember_la_SOURCES = \
 	libs/miscEvents/emberMiscEvent.h \
 	libs/emberMpiLib.h \
 	libs/emberMpiLib.cc \
+	libs/mpi/emberscatterev.h \
+	libs/mpi/emberscattervev.h \
 	libs/mpi/embercancelev.h \
 	libs/mpi/emberrecvev.h \
 	libs/mpi/embersendev.h \
@@ -58,6 +60,8 @@ libember_la_SOURCES = \
 	libs/mpi/emberallredev.h \
 	libs/mpi/emberalltoallvev.h \
 	libs/mpi/emberalltoallev.h \
+	libs/mpi/emberallgathervev.h \
+	libs/mpi/emberallgatherev.h \
 	libs/mpi/emberredev.h \
 	libs/mpi/emberbcastev.h \
 	libs/mpi/emberMPIEvent.h \
@@ -112,6 +116,10 @@ libember_la_SOURCES = \
 	mpi/motifs/emberallpingpong.h \
 	mpi/motifs/emberallreduce.cc \
 	mpi/motifs/emberallreduce.h \
+	mpi/motifs/emberallgatherv.cc \
+	mpi/motifs/emberallgatherv.h \
+	mpi/motifs/emberallgather.cc \
+	mpi/motifs/emberallgather.h \
 	mpi/motifs/emberalltoall.cc \
 	mpi/motifs/emberalltoall.h \
 	mpi/motifs/emberalltoallv.cc \
@@ -119,6 +127,10 @@ libember_la_SOURCES = \
 	mpi/motifs/emberreduce.cc \
 	mpi/motifs/emberbcast.h \
 	mpi/motifs/emberbcast.cc \
+	mpi/motifs/emberscatter.h \
+	mpi/motifs/emberscatter.cc \
+	mpi/motifs/emberscatterv.h \
+	mpi/motifs/emberscatterv.cc \
 	mpi/motifs/emberreduce.h \
 	mpi/motifs/emberhalo3d.h \
 	mpi/motifs/emberhalo3d.cc \
@@ -128,6 +140,8 @@ libember_la_SOURCES = \
 	mpi/motifs/emberhalo3dsv.cc \
 	mpi/motifs/emberhalo3d26.h \
 	mpi/motifs/emberhalo3d26.cc \
+	mpi/motifs/emberincast.h \
+	mpi/motifs/emberincast.cc \
 	mpi/motifs/embersweep3d.h \
 	mpi/motifs/embersweep3d.cc \
 	mpi/motifs/embernaslu.h \

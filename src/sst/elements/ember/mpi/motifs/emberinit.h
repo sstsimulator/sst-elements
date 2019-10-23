@@ -74,13 +74,13 @@ public:
     bool generate( std::queue<EmberEvent*>& evQ )
     {
 		if ( 0 == m_size ) {
-			verbose(CALL_INFO, 1, 0, "\n");
+			verbose(CALL_INFO, 1, MOTIF_MASK, "\n");
         	enQ_init( evQ );
         	enQ_rank( evQ, GroupWorld, &m_rank );
         	enQ_size( evQ, GroupWorld, &m_size );
 			return false;
 		} else {
-			verbose(CALL_INFO, 1, 0, "size=%d rank=%d\n",m_size,m_rank);
+			verbose(CALL_INFO, 1, MOTIF_MASK, "size=%d rank=%d\n",m_size,m_rank);
 			setRank(m_rank);
 			setSize(m_size);
         	return true;

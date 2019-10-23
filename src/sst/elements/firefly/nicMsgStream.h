@@ -25,8 +25,7 @@ class MsgStream : public StreamBase {
   protected:
     void processFirstPkt( FireflyNetworkEvent* ev ) {
         m_blocked = false;
-        m_ctx->schedCallback( m_wakeupCallback );
-        m_wakeupCallback = NULL;
+        processPkt(ev);
     }
   private:
     bool m_blocked;

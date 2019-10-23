@@ -39,6 +39,7 @@ public:
             {"id", "ID number for this TimingDRAM instance", NULL},
             {"dbg_level", "Output verbosity for debug", "1"},
             {"dbg_mask", "Mask on dbg_level", "-1"},
+            {"printconfig", "Print configuration at start", "true"},
             {"addrMapper", "Address map subcomponent", "memHierarchy.simpleAddrMapper"},
             {"channels", "Number of channels", "1"},
             {"channel.numRanks", "Number of ranks per channel", "1"},

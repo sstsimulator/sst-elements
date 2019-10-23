@@ -52,7 +52,6 @@ public:
     SST_ELI_DOCUMENT_PARAMS(
         {"id",                 "ID of the router."},
         {"num_ports",          "Number of ports that the router has"},
-        {"num_vcs",            "DEPRECATED", ""},
         {"topology",           "Name of the topology subcomponent that should be loaded to control routing."},
         {"xbar_arb",           "Arbitration unit to be used for crossbar.","merlin.xbar_arb_lru"},
         {"link_bw",            "Bandwidth of the links specified in either b/s or B/s (can include SI prefix)."},
@@ -65,6 +64,9 @@ public:
         {"network_inspectors", "Comma separated list of network inspectors to put on output ports.", ""},
         {"oql_track_port",     "Set to true to track output queue length for an entire port.  False tracks per VC.", "false"},
         {"oql_track_remote",   "Set to true to track output queue length including remote input queue.  False tracks only local queue.", "false"},
+        {"num_vns",            "Number of VNs.  Will default to number reqeusted by endpoints if not set.  Must be set in order to use VN remapping."},
+        {"vn_remap",           "Array that specifies the vn remapping for each node in the systsm."},
+        {"vn_remap_shm",       "Name of shared memory region for vn remapping.  If empty, no remapping is done", ""},
         {"debug",              "Turn on debugging for router. Set to 1 for on, 0 for off.", "0"}
     )
 
@@ -84,7 +86,7 @@ public:
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
         {"topology", "Topology object to control routing", "SST::Merlin::Topology" },
         {"XbarArb", "Crossbar arbitration", "SST::Merlin::XbarArbitration" },
-        {"portcontrol", "PortControl blocks", "SST::Merlin::PortControlBase" }
+        {"portcontrol", "PortControl blocks", "SST::Merlin::PortInterface" }
     )
     
 private:
@@ -93,13 +95,16 @@ private:
     int id;
     int num_ports;
 //    int requested_vns;
+    int num_vns;
+    std::string vn_remap_shm;
+    int vn_remap_shm_size;
     int num_vcs;
     bool vcs_initialized;
         
     Topology* topo;
     XbarArbitration* arb;
     
-    PortControlBase** ports;
+    PortInterface** ports;
     internal_router_event** vc_heads;
     int* xbar_in_credits;
     int* output_queue_lengths;
@@ -150,7 +155,7 @@ public:
     void recvTopologyEvent(int port, TopologyEvent* ev);
     
     void reportRequestedVNs(int port, int vns);
-    void reportSetVCs(int port, int vcs);
+    void reportSetVNs(int port, int vns);
     
     void dumpState(std::ostream& stream);
     void printStatus(Output& out);
