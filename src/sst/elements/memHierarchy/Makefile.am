@@ -99,7 +99,7 @@ libmemHierarchy_la_SOURCES = \
 	multithreadL1Shim.h \
 	multithreadL1Shim.cc \
 	lineTypes.h \
-	cacheTempl.h \
+	cacheArray.h \
 	mshr.h \
 	mshr.cc \
 	testcpu/trivialCPU.h \

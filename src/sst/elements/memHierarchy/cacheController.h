@@ -41,7 +41,7 @@ namespace SST { namespace MemHierarchy {
 using namespace std;
 
 /*
- * Component: memHirearchy.Cache
+ * Component: memHierarchy.Cache
  *
  * Cache controller
  */
@@ -203,9 +203,6 @@ private:
 
     // Check for deprecated params and warn
     void checkDeprecatedParams(Params &params);
-
-    // Construct replacement manager for cache array
-    ReplacementPolicy* constructReplacementManager(std::string policy, uint64_t lines, uint64_t associativity, int slot);
 
     // Create the cache array
     void createCacheArray(Params &params);

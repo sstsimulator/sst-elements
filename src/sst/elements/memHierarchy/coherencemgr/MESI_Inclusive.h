@@ -20,7 +20,7 @@
 #include <array>
 
 #include "sst/elements/memHierarchy/coherencemgr/coherenceController.h"
-#include "sst/elements/memHierarchy/cacheTempl.h"
+#include "sst/elements/memHierarchy/cacheArray.h"
 #include "sst/elements/memHierarchy/lineTypes.h"
 
 

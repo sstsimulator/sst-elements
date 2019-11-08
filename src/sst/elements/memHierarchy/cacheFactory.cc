@@ -148,6 +148,7 @@ void Cache::createCoherenceManager(Params &params) {
     coherenceParams.insert("banks", params.find<std::string>("banks", "0"));
     coherenceParams.insert("associativity", params.find<std::string>("associativity", "-1"));
     coherenceParams.insert("lines", params.find<std::string>("lines", "0"));
+    coherenceParams.insert("replacement_policy", params.find<std::string>("replacement_policy", "lru"));
     coherenceParams.insert("dlines", params.find<std::string>("noninclusive_directory_entries", "0"));
     coherenceParams.insert("dassoc", params.find<std::string>("noninclusive_directory_associativity", "0"));
     coherenceParams.insert("drpolicy", params.find<std::string>("noninclusive_directory_repl", "lru"));
@@ -276,7 +277,7 @@ void Cache::configureLinks(Params &params) {
         region_.interleaveSize = UnitAlgebra(isize).getRoundedValue();
         region_.interleaveStep = UnitAlgebra(istep).getRoundedValue();
 
-        if (!found && sliceCount > 1) {
+        if (!gotRegion && sliceCount > 1) {
             gotRegion = true;
             int lineSize = params.find<int>("cache_line_size", 64);
             if (slicePolicy == "rr") {
@@ -285,6 +286,19 @@ void Cache::configureLinks(Params &params) {
                 region_.interleaveSize = lineSize;
                 region_.interleaveStep = sliceCount*lineSize;
             }
+        }
+
+        // Little bit of error checking
+        if (region_.end < region_.start) {
+            out_->fatal(CALL_INFO, -1, "Invalid params(%s): addr_range_start and addr_range_end - addr_range_end is less than addr_range start. You specified start = %" PRIu64 " and end = %" PRIu64 ".\n",
+                    getName().c_str(), region_.start, region_.end);
+        }
+
+        if (region_.interleaveStep < region_.interleaveSize) {
+            out_->fatal(CALL_INFO, -1, "Invalid params(%s): interleave_size and interleave_step - interleave_size is larger than interleave_step. \n"
+                    "interleave_size should be the granuarity of interleaving, and interleave_step should be the distance between chunks (components to interleave across * interleave_size).\n"
+                    "For example, to interleave 64B lines across 3 caches, specify interleave_size=64B and interleave_step=192B. You specified size = %" PRIu64 " and step = %" PRIu64 ".\n",
+                    getName().c_str(), region_.interleaveSize, region_.interleaveStep);
         }
         
         if (gotRegion) {
@@ -706,78 +720,6 @@ void Cache::createCacheArray(Params &params) {
     uint64_t lines = cacheSize / lineSize_;
     params.insert("lines", std::to_string(lines));
     return;
-
-    if (assoc < 1 || assoc > lines)
-        out_->fatal(CALL_INFO, -1, "%s, Invalid param: associativity - must be at least 1 (direct mapped) and less than or equal to the number of cache lines (cache_size / cache_line_size). You specified '%" PRIu64 "'\n",
-                getName().c_str(), assoc);
-
-    if (type_ == "noninclusive_with_directory") { /* Error check dir params */
-        if (dAssoc < 1 || dAssoc > dEntries)
-            out_->fatal(CALL_INFO, -1, "%s, Invalid param: noninclusive_directory_associativity - must be at least 1 (direct mapped) and less than or equal to noninclusive_directory_entries. You specified '%" PRIu64 "'\n",
-                    getName().c_str(), dAssoc);
-        if (dEntries < 1)
-            out_->fatal(CALL_INFO, -1, "%s, Invalid param: noninclusive_directory_entries - must be at least 1 if cache_type is noninclusive_with_directory. You specified '%" PRIu64 "'.\n", getName().c_str(), dEntries);
-    }
-
-    /* Build cache array */
-    SubComponentSlotInfo* rslots = getSubComponentSlotInfo("replacement"); // May be multiple slots filled depending on how many arrays this cache manages
-    ReplacementPolicy* rmgr;
-    if (rslots && rslots->isPopulated(0))
-        rmgr = rslots->create<ReplacementPolicy>(0, ComponentInfo::SHARE_NONE, lines, assoc);
-    else { // Backwards compatability - user didn't declare policy in the input config
-        std::string replacement = params.find<std::string>("replacement_policy", "lru");
-        to_lower(replacement);
-        rmgr = constructReplacementManager(replacement, lines, assoc, 0);
-    }
-
-
-    HashFunction * ht = loadUserSubComponent<HashFunction>("hash");
-    if (!ht) {
-        Params hparams;
-        int hashFunc = params.find<int>("hash_function", 0);
-        if (hashFunc == 1)      ht = loadAnonymousSubComponent<HashFunction>("memHierarchy.hash.linear", "hash", 0, ComponentInfo::SHARE_NONE, hparams);
-        else if (hashFunc == 2) ht = loadAnonymousSubComponent<HashFunction>("memHierarchy.hash.xor", "hash", 0, ComponentInfo::SHARE_NONE, hparams);
-        else                    ht = loadAnonymousSubComponent<HashFunction>("memHierarchy.hash.none", "hash", 0, ComponentInfo::SHARE_NONE, hparams);
-    }
-
-    if (type_ == "inclusive" || type_ == "noninclusive") {
-        //return new SetAssociativeArray(dbg_, lines, lineSize_, assoc, rmgr, ht, !L1_);
-    } else { //type_ == "noninclusive_with_directory" --> Already checked that this string is valid
-        /* Construct */
-        ReplacementPolicy* drmgr;
-        if (rslots && rslots->isPopulated(1))
-            drmgr = rslots->create<ReplacementPolicy>(1, ComponentInfo::SHARE_NONE, dEntries, dAssoc);
-        else { // Backwards compatibility - user didn't declare policy in the input config
-            std::string dReplacement = params.find<std::string>("noninclusive_directory_repl", "lru");
-            to_lower(dReplacement);
-            drmgr = constructReplacementManager(dReplacement, dEntries, dAssoc, 1);
-        }
-        //return new DualSetAssociativeArray(dbg_, lineSize_, ht, true, dEntries, dAssoc, drmgr, lines, assoc, rmgr);
-    }
-}
-
-/* Create a replacement manager */
-ReplacementPolicy* Cache::constructReplacementManager(std::string policy, uint64_t lines, uint64_t assoc, int slot) {
-    Params params;
-    if (SST::strcasecmp(policy, "lru"))
-        return loadAnonymousSubComponent<ReplacementPolicy>("memHierarchy.replacement.lru", "replacement", slot, ComponentInfo::SHARE_NONE, params, lines, assoc);
-
-    if (SST::strcasecmp(policy, "lfu"))
-        return loadAnonymousSubComponent<ReplacementPolicy>("memHierarchy.replacement.lfu", "replacement", slot, ComponentInfo::SHARE_NONE, params, lines, assoc);
-
-    if (SST::strcasecmp(policy, "random"))
-        return loadAnonymousSubComponent<ReplacementPolicy>("memHierarchy.replacement.rand", "replacement", slot, ComponentInfo::SHARE_NONE, params, lines, assoc);
-
-    if (SST::strcasecmp(policy, "mru"))
-        return loadAnonymousSubComponent<ReplacementPolicy>("memHierarchy.replacement.mru", "replacement", slot, ComponentInfo::SHARE_NONE, params, lines, assoc);
-
-    if (SST::strcasecmp(policy, "nmru"))
-        return loadAnonymousSubComponent<ReplacementPolicy>("memHierarchy.replacement.nmru", "replacement", slot, ComponentInfo::SHARE_NONE, params, lines, assoc);
-
-    out_->fatal(CALL_INFO, -1, "%s, Invalid param: (directory_)replacement_policy - supported policies are 'lru', 'lfu', 'random', 'mru', and 'nmru'. You specified '%s'.\n",
-            getName().c_str(), policy.c_str());
-
-    return nullptr;
 }
 
 void Cache::createClock(Params &params) {

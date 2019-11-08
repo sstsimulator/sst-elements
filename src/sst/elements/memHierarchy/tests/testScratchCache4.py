@@ -2,14 +2,15 @@ import sst
 from mhlib import componentlist
 
 # Global variables
-debugScratch = 0
-debugL1 = 0
-debugL2 = 0
-debugL3 = 0
-debugBus = 0
-debugDir = 0
-debugCore0 = 0
-debugCore1 = 0
+DEBUG_SCRATCH = 0
+DEBUG_L1 = 0
+DEBUG_L2 = 0
+DEBUG_L3 = 0
+DEBUG_BUS = 0
+DEBUG_DIR = 0
+DEBUG_MEM = 0
+DEBUG_CORE0 = 0
+DEBUG_CORE1 = 0
 core_clock = "2GHz"
 
 # Define the simulation components
@@ -30,7 +31,7 @@ comp_cpu0.addParams({
 })
 comp_l1_0 = sst.Component("l1_0", "memHierarchy.Cache")
 comp_l1_0.addParams({
-    "debug" : debugL1 | debugCore0,
+    "debug" : DEBUG_L1 | DEBUG_CORE0,
     "debug_level" : 9,
     "verbose" : 2,
     "cache_frequency" : core_clock,
@@ -61,7 +62,7 @@ comp_cpu1.addParams({
 })
 comp_l1_1 = sst.Component("l1_1", "memHierarchy.Cache")
 comp_l1_1.addParams({
-    "debug" : debugL1 | debugCore0,
+    "debug" : DEBUG_L1 | DEBUG_CORE0,
     "debug_level" : 9,
     "verbose" : 2,
     "cache_frequency" : core_clock,
@@ -76,9 +77,8 @@ comp_l1_1.addParams({
 
 comp_l2_0 = sst.Component("l2_0", "memHierarchy.Cache")
 comp_l2_0.addParams({
-    "debug" : debugL2 | debugCore0,
+    "debug" : DEBUG_L2 | DEBUG_CORE0,
     "debug_level" : 10,
-    "debug_addr" : "[0x1340]",
     "verbose" : 2,
     "cache_frequency" : core_clock,
     "cache_size" : "16KiB",
@@ -107,7 +107,7 @@ comp_cpu2.addParams({
 })
 comp_l1_2 = sst.Component("l1_2", "memHierarchy.Cache")
 comp_l1_2.addParams({
-    "debug" : debugL1 | debugCore1,
+    "debug" : DEBUG_L1 | DEBUG_CORE1,
     "debug_level" : 9,
     "verbose" : 2,
     "cache_frequency" : core_clock,
@@ -136,7 +136,7 @@ comp_cpu3.addParams({
 })
 comp_l1_3 = sst.Component("l1_3", "memHierarchy.Cache")
 comp_l1_3.addParams({
-    "debug" : debugL1 | debugCore1,
+    "debug" : DEBUG_L1 | DEBUG_CORE1,
     "debug_level" : 9,
     "verbose" : 2,
     "cache_frequency" : core_clock,
@@ -150,9 +150,8 @@ comp_l1_3.addParams({
 })
 comp_l2_1 = sst.Component("l2_1", "memHierarchy.Cache")
 comp_l2_1.addParams({
-    "debug" : debugL2 | debugCore1,
+    "debug" : DEBUG_L2 | DEBUG_CORE1,
     "debug_level" : 10,
-    "debug_addr" : "[0x1340]",
     "verbose" : 2,
     "cache_frequency" : core_clock,
     "cache_size" : "16KiB",
@@ -166,9 +165,8 @@ comp_l2_1.addParams({
 })
 comp_dir = sst.Component("dir", "memHierarchy.DirectoryController")
 comp_dir.addParams({
-    "debug" : debugDir | debugCore0 | debugCore1,
+    "debug" : DEBUG_DIR | DEBUG_CORE0 | DEBUG_CORE1,
     "debug_level" : 10,
-    "debug_addr" : "[0x1340]",
     "verbose" : 2,
     "entry_cache_size" : 1024,
     "coherence_protocol" : "MESI",
@@ -177,11 +175,10 @@ comp_dir.addParams({
     "memNIC.group" : 2,
     "net_memory_name" : "scratch"
 })
-comp_scratch = sst.Component("scratch", "memHierarchy.Scratchpad")
-comp_scratch.addParams({
-    "debug" : debugScratch | debugCore0 | debugCore1,
+scratch = sst.Component("scratch", "memHierarchy.Scratchpad")
+scratch.addParams({
+    "debug" : DEBUG_SCRATCH | DEBUG_CORE0 | DEBUG_CORE1,
     "debug_level" : 10,
-    "debug_addr" : "[0x1340]",
     "verbose" : 2,
     "clock" : core_clock,
     "size" : "64KiB",
@@ -208,48 +205,63 @@ comp_net.addParams({
 
 memctrl0 = sst.Component("memory0", "memHierarchy.MemController")
 memctrl0.addParams({
-      #"debug" : "1",
-      #"debug_level" : 10,
+      "debug" : DEBUG_MEM,
+      "debug_level" : 10,
       "backing" : "none",
       "clock" : "1GHz",
       "verbose" : 2,
-      #"backendConvertor.debug_location" : 1,
-      #"backendConvertor.debug_level" : 10,
-      "backend.access_time" : "50ns",
-      "backend.mem_size" : "512MiB",
-      "memNIC.network_bw" : "50GB/s",
-      "memNIC.addr_range_start" : 0,
-      "memNIC.interleave_size" : "128B",
-      "memNIC.interleave_step" : "256B",
-      "memNIC.group" : 4,
 })
+
+memnic0 = memctrl0.setSubComponent("cpulink", "memHierarchy.MemNIC")
+memnic0.addParams({
+    "network_bw" : "50GB/s",
+    "addr_range_start" : 0,
+    "interleave_size" : "128B",
+    "interleave_step" : "256B",
+    "group" : 4,
+})
+
+mem0 = memctrl0.setSubComponent("backend", "memHierarchy.simpleMem")
+mem0.addParams({
+    "access_time" : "50ns",
+    "mem_size" : "512MiB",
+})
+
 memctrl1 = sst.Component("memory1", "memHierarchy.MemController")
 memctrl1.addParams({
-      #"debug" : "1",
-      #"debug_level" : 10,
-      "backing" : "none",
-      "backend.access_time" : "50ns",
-      "clock" : "1GHz",
-      "verbose" : 2,
-      "backend.mem_size" : "512MiB",
-      "memNIC.network_bw" : "50GB/s",
-      "memNIC.addr_range_start" : 128,
-      "memNIC.interleave_size" : "128B",
-      "memNIC.interleave_step" : "256B",
-      "memNIC.group" : 4,
+    "debug" : DEBUG_MEM,
+    "debug_level" : 10,
+    "backing" : "none",
+    "clock" : "1GHz",
+    "verbose" : 2,
+})
+
+memnic1 = memctrl1.setSubComponent("cpulink", "memHierarchy.MemNIC")
+memnic1.addParams({
+    "network_bw" : "50GB/s",
+    "addr_range_start" : 128,
+    "interleave_size" : "128B",
+    "interleave_step" : "256B",
+    "group" : 4,
+})
+
+mem1 = memctrl1.setSubComponent("backend", "memHierarchy.simpleMem")
+mem1.addParams({
+    "access_time" : "50ns",
+    "mem_size" : "512MiB",
 })
 
 comp_bus_0 = sst.Component("bus_0", "memHierarchy.Bus")
 comp_bus_0.addParams({
-        "bus_frequency" : "2GHz",
-        "debug" : debugBus,
-        "debug_level" : 5,
+    "bus_frequency" : "2GHz",
+    "debug" : DEBUG_BUS,
+    "debug_level" : 5,
 })
 comp_bus_1 = sst.Component("bus_1", "memHierarchy.Bus")
 comp_bus_1.addParams({
-        "bus_frequency" : "2GHz",
-        "debug" : debugBus,
-        "debug_level" : 5,
+    "bus_frequency" : "2GHz",
+    "debug" : DEBUG_BUS,
+    "debug_level" : 5,
 })
 
 # Enable statistics
@@ -300,11 +312,11 @@ link_dir_net = sst.Link("link_dir_net")
 link_dir_net.connect( (comp_dir, "network", "100ps"), (comp_net, "port2", "100ps") )
 
 link_scratch_net = sst.Link("link_scratch_net")
-link_scratch_net.connect( (comp_scratch, "network", "100ps"), (comp_net, "port3", "100ps") )
+link_scratch_net.connect( (scratch, "network", "100ps"), (comp_net, "port3", "100ps") )
 
 link_mem0_net = sst.Link("link_mem0_net")
-link_mem0_net.connect( (memctrl0, "network", "100ps"), (comp_net, "port4", "100ps") )
+link_mem0_net.connect( (memnic0, "port", "100ps"), (comp_net, "port4", "100ps") )
 
 link_mem1_net = sst.Link("link_mem1_net")
-link_mem1_net.connect( (memctrl1, "network", "100ps"), (comp_net, "port5", "100ps") )
+link_mem1_net.connect( (memnic1, "port", "100ps"), (comp_net, "port5", "100ps") )
 # End of generated output.

@@ -128,6 +128,7 @@ ReplacementPolicy* CoherenceController::createReplacementPolicy(uint64_t lines, 
     Params emptyparams;
     std::string policy = params.find<std::string>("replacement_policy", "lru");
     to_lower(policy);
+    
     if (policy == "lru") {
         if (L1) return loadAnonymousSubComponent<ReplacementPolicy>("memHierarchy.replacement.lru", "replacement", slotnum, ComponentInfo::SHARE_NONE, emptyparams, lines, assoc);
         else    return loadAnonymousSubComponent<ReplacementPolicy>("memHierarchy.replacement.lru-opt", "replacement", slotnum, ComponentInfo::SHARE_NONE, emptyparams, lines, assoc);

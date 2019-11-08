@@ -29,7 +29,7 @@
 #include <unordered_map>
 
 #include "sst/elements/memHierarchy/lineTypes.h"
-#include "sst/elements/memHierarchy/cacheTempl.h"
+#include "sst/elements/memHierarchy/cacheArray.h"
 #include "sst/elements/memHierarchy/cacheListener.h"
 #include "sst/elements/memHierarchy/replacementManager.h"
 #include "sst/elements/memHierarchy/util.h"

@@ -418,8 +418,8 @@ void Cache::init(unsigned int phase) {
 
         while(MemEventInit *event = linkDown_->recvInitData()) {
             if (event->getCmd() == Command::NULLCMD) {
-                dbg_->debug(_L10_, "%s received init event: %s\n", 
-                        this->getName().c_str(), event->getVerboseString().c_str());
+                dbg_->debug(_L10_, "I: %-20s   Event:Init      (%s)\n", 
+                        getName().c_str(), event->getVerboseString().c_str());
             }
             /* If event is from one of our destinations, update parameters - link only returns events from destinations */
             if (event->getInitCmd() == MemEventInit::InitCommand::Coherence) {
@@ -442,14 +442,16 @@ void Cache::init(unsigned int phase) {
 
     while (MemEventInit * memEvent = linkUp_->recvInitData()) {
         if (memEvent->getCmd() == Command::NULLCMD) {
-            dbg_->debug(_L10_, "%s received init event %s\n", getName().c_str(), memEvent->getVerboseString().c_str());
+            dbg_->debug(_L10_, "I: %-20s   Event:Init      (%s)\n", 
+                    getName().c_str(), memEvent->getVerboseString().c_str());
             coherenceMgr_->hasUpperLevelCacheName(memEvent->getSrc());
             if (memEvent->getInitCmd() == MemEventInit::InitCommand::Coherence) {
                 MemEventInitCoherence * eventC = static_cast<MemEventInitCoherence*>(memEvent);
                 processInitCoherenceEvent(eventC, true);
             }
         } else {
-            dbg_->debug(_L10_, "%s received init event %s\n", getName().c_str(), memEvent->getVerboseString().c_str());
+            dbg_->debug(_L10_, "I: %-20s   Event:Init      (%s)\n", 
+                    getName().c_str(), memEvent->getVerboseString().c_str());
             MemEventInit * mEv = memEvent->clone();
             mEv->setSrc(getName());
             mEv->setDst(linkDown_->findTargetDestination(mEv->getRoutingAddress()));
@@ -460,7 +462,8 @@ void Cache::init(unsigned int phase) {
     
     while (MemEventInit * memEvent = linkDown_->recvInitData()) {
         if (memEvent->getCmd() == Command::NULLCMD) {
-            dbg_->debug(_L10_, "%s received init event %s\n", getName().c_str(), memEvent->getVerboseString().c_str());
+            dbg_->debug(_L10_, "I: %-20s   Event:Init      (%s)\n", 
+                    getName().c_str(), memEvent->getVerboseString().c_str());
             
             if (linkDown_->isDest(memEvent->getSrc()) && memEvent->getInitCmd() == MemEventInit::InitCommand::Coherence) {
                 MemEventInitCoherence * eventC = static_cast<MemEventInitCoherence*>(memEvent);

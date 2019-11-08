@@ -70,7 +70,8 @@ class ReplacementPolicy : public SubComponent{
             Output out("", 1, 0, Output::STDOUT);
             out.fatal(CALL_INFO, -1, 0, "%s, Error: ReplacementPolicy subcomponents do not support loading via legacy API\n", getName().c_str());
         }
-        ReplacementPolicy(ComponentId_t id, Params& params, uint64_t lines, uint64_t associativity) : SubComponent(id) { }
+        ReplacementPolicy(ComponentId_t id, Params& params, uint64_t lines, uint64_t associativity) : SubComponent(id) { 
+        }
         virtual ~ReplacementPolicy(){}
 
         /* Since we don't dynamic cast ReplacementInfo, do a check here to make sure the type provided by the cache line & the type the replacement policy expects are compatible */
@@ -119,18 +120,20 @@ public:
      */
     uint64_t findBestCandidate(std::vector<ReplacementInfo*> &rInfo) {
         bestCandidate = rInfo[0]->getIndex();
-        Rank bestRank = {array[rInfo[0]->getIndex()], rInfo[0]->getState() };
-        if (rInfo[0]->getState() == I) 
+        uint64_t bestTS = array[rInfo[0]->getIndex()];
+        if (rInfo[0]->getState() == I) {
             return bestCandidate;
+        }
         for (int i = 1; i < rInfo.size(); i++) {
-            Rank candRank = {array[rInfo[i]->getIndex()], rInfo[i]->getState() };
-            if (candRank.lessThan(bestRank)) {
-                bestRank = candRank;
+            if (rInfo[i]->getState() == I) {
                 bestCandidate = rInfo[i]->getIndex();
-                if (rInfo[i]->getState() == I)
-                    return bestCandidate;
+                return bestCandidate;
             }
-            i++;
+            uint64_t candTS = array[rInfo[i]->getIndex()];
+            if (candTS < bestTS) {
+                bestTS = candTS;
+                bestCandidate = rInfo[i]->getIndex();
+            }
         }
         return bestCandidate;
     }
@@ -144,20 +147,6 @@ private:
     
     std::vector<uint64_t> array;
 
-    struct Rank {
-        uint64_t    timestamp;
-        State       state;
-
-        void reset() {
-            state       = I;
-            timestamp   = 0;
-        }
-
-        inline bool lessThan(const Rank& other) const {
-            if(state == I)  return true;
-            else            return timestamp < other.timestamp;
-        }
-    };
 };
 
 
@@ -186,6 +175,7 @@ public:
     void update(uint64_t id, ReplacementInfo * rInfo) { array[id] = timestamp++; }
 
     /* Record replaced line */
+    //void replaced(uint64_t id) { array[id] = 0; }
     void replaced(uint64_t id) { array[id] = 0; }
    
     /** Lines are selected for replacement according to the following criteria (and in this order):
@@ -200,9 +190,14 @@ public:
             static_cast<CoherenceReplacementInfo*>(rInfo[0])->getShared(), 
             static_cast<CoherenceReplacementInfo*>(rInfo[0])->getOwned(),
             rInfo[0]->getState() };
-        if (rInfo[0]->getState() == I) 
+        if (rInfo[0]->getState() == I)
             return bestCandidate;
+        
         for (int i = 1; i < rInfo.size(); i++) {
+            if (rInfo[i]->getState() == I) {
+                bestCandidate = rInfo[i]->getIndex();
+                return bestCandidate;
+            }
             Rank candRank = {array[rInfo[i]->getIndex()], 
                 static_cast<CoherenceReplacementInfo*>(rInfo[i])->getShared(), 
                 static_cast<CoherenceReplacementInfo*>(rInfo[i])->getOwned(), 
@@ -211,10 +206,7 @@ public:
             if (candRank.lessThan(bestRank)) {
                 bestRank = candRank;
                 bestCandidate = rInfo[i]->getIndex();
-                if (rInfo[i]->getState() == I)
-                    return bestCandidate;
             }
-            i++;
         }
         return bestCandidate;
     }
@@ -242,14 +234,11 @@ private:
         }
 
         inline bool lessThan(const Rank& other) const {
-            if(state == I) return true;
-            else{
-                if (!shared && other.shared) return true;
-                else if (shared && !other.shared) return false;
-                else if (!owned && other.owned) return true;
-                else if (owned && !other.owned) return false;
-                else return timestamp < other.timestamp;
-            }
+            if (!shared && other.shared) return true;
+            else if (shared && !other.shared) return false;
+            else if (!owned && other.owned) return true;
+            else if (owned && !other.owned) return false;
+            else return timestamp < other.timestamp;
         }
     };
 };
@@ -285,33 +274,43 @@ public:
 
     uint64_t findBestCandidate(vector<ReplacementInfo*> &rInfo) {
         bestCandidate = rInfo[0]->getIndex();
-        Rank bestRank = {array[rInfo[0]->getIndex()], rInfo[0]->getState() };
+        LFUInfo bestLFU = array[rInfo[0]->getIndex()];
         
-        if (rInfo[0]->getState() == I) 
-            return bestCandidate; 
+        if (rInfo[0]->getState() == I) { return bestCandidate; }
         
         for (int i = 1; i < rInfo.size(); i++) {
-            Rank candRank = {array[rInfo[i]->getIndex()], rInfo[i]->getState() };
-            
-            if (candRank.lessThan(bestRank, timestamp)) {
-                bestRank = candRank;
+            if (rInfo[i]->getState() == I)  {
                 bestCandidate = rInfo[i]->getIndex();
-                if (rInfo[i]->getState() == I) 
-                    return bestCandidate;
+                return bestCandidate;
             }
-            i++;
+            LFUInfo candLFU = array[rInfo[i]->getIndex()];
+            
+            if (candLFU.lessThan(bestLFU, timestamp)) {
+                bestLFU = candLFU;
+                bestCandidate = rInfo[i]->getIndex();
+            }
         }
         return bestCandidate;
     }
 
     uint64_t getBestCandidate() { return bestCandidate; }
 
-    void replaced(uint64_t id) { array[id].acc = 0; }
+    //void replaced(uint64_t id) { array[id].acc = 0; }
+    void replaced(uint64_t id) { array[id].acc = 0; } 
 private:
         
     struct LFUInfo {
         uint64_t ts;    // timestamp, function of accesses with more recent ones being more heavily weighted
         uint64_t acc;   // accesses
+
+        inline bool lessThan(LFUInfo& other, const uint64_t curTs) {
+            if (acc == 0) return true;
+            if (other.acc == 0) return false;
+            uint64_t ownInvFreq = (curTs - ts)/acc; //inverse frequency, lower is better
+            uint64_t otherInvFreq = (curTs - other.ts)/other.acc;
+            return ownInvFreq > otherInvFreq;
+            return false;
+        }
     };
 
     std::vector<LFUInfo> array;
@@ -320,25 +319,6 @@ private:
     uint64_t timestamp;
     uint64_t bestCandidate;
 
-    struct Rank {
-        LFUInfo lfuInfo;
-        State state;
-
-        void reset() {
-            state = I;
-            lfuInfo = (LFUInfo){0, 0};
-        }
-
-        inline bool lessThan(const Rank& other, const uint64_t curTs) const {
-            if(state == I) return true;
-            if (lfuInfo.acc == 0) return true;
-            if (other.lfuInfo.acc == 0) return false;
-            uint64_t ownInvFreq = (curTs - lfuInfo.ts)/lfuInfo.acc; //inverse frequency, lower is better
-            uint64_t otherInvFreq = (curTs - other.lfuInfo.ts)/other.lfuInfo.acc;
-            return ownInvFreq > otherInvFreq;
-            return false;
-        }
-    };
 };
 
 class LFUOpt : public ReplacementPolicy {
@@ -377,10 +357,14 @@ public:
             static_cast<CoherenceReplacementInfo*>(rInfo[0])->getShared(), 
             static_cast<CoherenceReplacementInfo*>(rInfo[0])->getOwned(), 
             rInfo[0]->getState() };
-        if (rInfo[0]->getState() == I) 
+        if (rInfo[0]->getState() == I)
             return bestCandidate; 
-        
+
         for (int i = 1; i < rInfo.size(); i++) {
+            if (rInfo[i]->getState() == I) {
+                bestCandidate = rInfo[i]->getIndex();
+                return bestCandidate;
+            }
             Rank candRank = {array[rInfo[i]->getIndex()], 
                 static_cast<CoherenceReplacementInfo*>(rInfo[i])->getShared(),
                 static_cast<CoherenceReplacementInfo*>(rInfo[i])->getOwned(),
@@ -388,16 +372,14 @@ public:
             if (candRank.lessThan(bestRank, timestamp)) {
                 bestRank = candRank;
                 bestCandidate = rInfo[i]->getIndex();
-                if (rInfo[i]->getState() == I) 
-                    return bestCandidate;
             }
-            i++;
         }
         return bestCandidate;
     }
 
     uint64_t getBestCandidate() { return bestCandidate; }
 
+    //void replaced(uint64_t id) { array[id].acc = 0; }
     void replaced(uint64_t id) { array[id].acc = 0; }
 private:
         
@@ -495,26 +477,27 @@ public:
     
     void update(uint64_t id, ReplacementInfo * rInfo) { array[id] = timestamp++; }
     
+    //void replaced(uint64_t id) { array[id] = 0; }
     void replaced(uint64_t id) { array[id] = 0; }
 
     uint64_t findBestCandidate(vector<ReplacementInfo*> &rInfo) {
         bestCandidate = rInfo[0]->getIndex();
         Rank bestRank = {array[rInfo[0]->getIndex()], rInfo[0]->getState() };
-        if (rInfo[0]->getState() == I) 
+        if (rInfo[0]->getState() == I)
             return bestCandidate; 
         
         for (int i = 1; i < rInfo.size(); i++) {
+            if (rInfo[i]->getState() == I) {
+                bestCandidate = rInfo[i]->getIndex();
+                return bestCandidate;
+            }
             Rank candRank = {array[rInfo[i]->getIndex()], rInfo[i]->getState() };
             if (candRank.biggerThan(bestRank)) {
                 bestRank = candRank;
                 bestCandidate = rInfo[i]->getIndex();
-                if (rInfo[i]->getState() == I) 
-                    return bestCandidate;
             }
-            i++;
         }
-        return 
-            bestCandidate;
+        return bestCandidate;
     }
 
     uint64_t getBestCandidate() { return bestCandidate;}
@@ -577,6 +560,7 @@ public:
     
     void update(uint64_t id, ReplacementInfo * rInfo) { array[id] = timestamp++; }
     
+    //void replaced(uint64_t id) { array[id] = 0; }
     void replaced(uint64_t id) { array[id] = 0; }
 
     uint64_t findBestCandidate(vector<ReplacementInfo*> &rInfo) {
@@ -585,10 +569,14 @@ public:
             static_cast<CoherenceReplacementInfo*>(rInfo[0])->getShared(), 
             static_cast<CoherenceReplacementInfo*>(rInfo[0])->getOwned(), 
             rInfo[0]->getState() };
-        if (rInfo[0]->getState() == I) 
+        if (rInfo[0]->getState() == I)
             return bestCandidate; 
         
         for (int i = 1; i < rInfo.size(); i++) {
+            if (rInfo[i]->getState() == I) {
+                bestCandidate = rInfo[i]->getIndex();
+                return bestCandidate;
+            }
             Rank candRank = {array[rInfo[i]->getIndex()], 
                 static_cast<CoherenceReplacementInfo*>(rInfo[i])->getShared(), 
                 static_cast<CoherenceReplacementInfo*>(rInfo[i])->getOwned(), 
@@ -596,16 +584,12 @@ public:
             if (candRank.biggerThan(bestRank)) {
                 bestRank = candRank;
                 bestCandidate = rInfo[i]->getIndex();
-                if (rInfo[i]->getState() == I) 
-                    return bestCandidate;
             }
-            i++;
         }
-        return 
-            bestCandidate;
+        return bestCandidate;
     }
 
-    uint64_t getBestCandidate() { return bestCandidate;}
+    uint64_t getBestCandidate() { return bestCandidate; }
 
 };
 
@@ -616,7 +600,7 @@ public:
  * ------------------------------------------------------------------------------------------*/
 class Random : public ReplacementPolicy {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(Random, "memHierarchy", "replacement.rand", SST_ELI_ELEMENT_VERSION(1,0,0),
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(Random, "memHierarchy", "replacement.random", SST_ELI_ELEMENT_VERSION(1,0,0),
             "random replacement policy", SST::MemHierarchy::ReplacementPolicy);
     
     SST_ELI_DOCUMENT_PARAMS( 
@@ -658,9 +642,7 @@ public:
         return bestCandidate;
     }
 
-    uint64_t getBestCandidate() {
-        return bestCandidate;
-    }
+    uint64_t getBestCandidate() { return bestCandidate; }
 
 private:
     uint64_t bestCandidate;
@@ -709,8 +691,9 @@ public:
         return true; // No cast
     }
     
-    void update(uint64_t id, ReplacementInfo * rInfo) {  array[id/ways] = id % ways;  }
-    void replaced(uint64_t id) {}
+    void update(uint64_t id, ReplacementInfo * rInfo) { array[id/ways] = id % ways; }
+    //void replaced(uint64_t id) {}
+    void replaced(uint64_t id) { }
 
     // Return an empty slot if one exists, otherwise return any slot that is not the most-recently used in the set
     uint64_t findBestCandidate(std::vector<ReplacementInfo*> &rInfo) {
@@ -730,7 +713,7 @@ public:
         return bestCandidate;
     }
 
-    uint64_t getBestCandidate() { return bestCandidate;}
+    uint64_t getBestCandidate() { return bestCandidate; }
 };
 
 

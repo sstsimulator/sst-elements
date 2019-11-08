@@ -364,8 +364,6 @@ private:
     void sendAckPut(MemEvent* event);
     void sendNACK(MemEvent* event);
 
-    void printEntry(DirEntry * entry);
-
     MSHR * mshr;
     std::unordered_map<Addr, DirEntry*> directory; // Master list of all directory entries, including noncached ones
 
