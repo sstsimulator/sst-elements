@@ -113,30 +113,12 @@ public:
 
     SST_ELI_DOCUMENT_STATISTICS(
             /* Cache hits and misses */
-            {"CacheHits",               "Total number of cache hits", "count", 1},
-            {"CacheMisses",             "Total number of cache misses", "count", 1},
-            {"GetSHit_Arrival",         "GetS was handled at arrival and was a cache hit", "count", 1},
-            {"GetSHit_Blocked",         "GetS was blocked in MSHR at arrival and later was a cache hit", "count", 1},
-            {"GetXHit_Arrival",         "GetX was handled at arrival and was a cache hit", "count", 1},
-            {"GetXHit_Blocked",         "GetX was blocked in MSHR at arrival and  later was a cache hit", "count", 1},
-            {"GetSXHit_Arrival",        "GetSX was handled at arrival and was a cache hit", "count", 1},
-            {"GetSXHit_Blocked",        "GetSX was blocked in MSHR at arrival and  later was a cache hit", "count", 1},
-            {"GetSMiss_Arrival",        "GetS was handled at arrival and was a cache miss", "count", 1},
-            {"GetSMiss_Blocked",        "GetS was blocked in MSHR at arrival and later was a cache miss", "count", 1},
-            {"GetXMiss_Arrival",        "GetX was handled at arrival and was a cache miss", "count", 1},
-            {"GetXMiss_Blocked",        "GetX was blocked in MSHR at arrival and  later was a cache miss", "count", 1},
-            {"GetSXMiss_Arrival",       "GetSX was handled at arrival and was a cache miss", "count", 1},
-            {"GetSXMiss_Blocked",       "GetSX was blocked in MSHR at arrival and  later was a cache miss", "count", 1},
             {"TotalEventsReceived",     "Total number of events received by this cache", "events", 1},
             {"TotalEventsReplayed",     "Total number of events that were initially blocked and then were replayed", "events", 1},
-            {"TotalNoncacheableEventsReceived", "Total number of non-cache or noncacheable cache events that were received by this cache and forward", "events", 1},
             {"MSHR_occupancy",          "Number of events in MSHR each cycle", "events", 1},
             {"Bank_conflicts",          "Total number of bank conflicts detected", "count", 1},
             {"Prefetch_requests",       "Number of prefetches received from prefetcher at this cache", "events", 1},
             {"Prefetch_drops",          "Number of prefetches that were cancelled. Reasons: too many prefetches outstanding, cache can't handle prefetch this cycle, currently handling another event for the address.", "events", 1},
-            /* Coherence events - break down GetS between S/E */
-            {"SharedReadResponse",      "Coherence: Received shared response to a GetS request", "count", 2},
-            {"ExclusiveReadResponse",   "Coherence: Received exclusive response to a GetS request", "count", 2},
             /*Event receives */
             {"GetS_recv",               "Event received: GetS", "count", 2},
             {"GetX_recv",               "Event received: GetX", "count", 2},
@@ -162,7 +144,7 @@ public:
             {"NACK_recv",               "Event: NACK received", "count", 2},
             {"NULLCMD_recv",            "Event: NULLCMD received", "count", 2},
             {"Get_uncache_recv",        "Noncacheable Event: Get received", "count", 6},
-            {"Put_uncache_recv",        "Nonacheable Event: Put received", "count", 6},
+            {"Put_uncache_recv",        "Noncacheable Event: Put received", "count", 6},
             {"AckMove_uncache_recv",    "Noncacheable Event: AckMove received", "count", 6},
             {"CustomReq_uncache_recv",  "Noncacheable Event: CustomReq received", "count", 4},
             {"CustomResp_uncache_recv", "Noncacheable Event: CustomResp received", "count", 4},
@@ -172,7 +154,7 @@ public:
             {"GetSX_uncache_recv",      "Noncacheable Event: GetSX received", "count", 4},
             {"GetSResp_uncache_recv",   "Noncacheable Event: GetSResp received", "count", 4},
             {"GetXResp_uncache_recv",   "Noncacheable Event: GetXResp received", "count", 4},
-            {"default_stat",            "Default statistic used for unexpected events/cases/etc. Should be 0, if not, check for missing statistic registerations.", "none", 7})
+            {"default_stat",            "Default statistic used for unexpected events/cases/etc. Should be 0, if not, check for missing statistic registrations.", "none", 7})
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
             {"cpulink", "CPU-side link manager, for single-link caches, use this one only", "SST::MemHierarchy::MemLinkBase"},
@@ -208,7 +190,7 @@ private:
     void createCacheArray(Params &params);
 
     // Construct MSHR
-    void createMSHR(Params &params);
+    uint64_t createMSHR(Params &params, uint64_t accessLatency, bool L1);
 
     // Construct cache listeners
     void createListeners(Params &params);
@@ -276,22 +258,15 @@ private:
     CoherenceController* coherenceMgr_;     // Coherence protocol - where most of the event handling happens
     
     /** Latencies **************************************************************/
-    uint64_t    accessLatency_;
-    uint64_t    tagLatency_;
-    uint64_t    mshrLatency_;
     SimTime_t   prefetchDelay_;
 
     /** Cache configuration ****************************************************/
-    bool                L1_;
-    CoherenceProtocol   protocol_;
     uint64_t            lineSize_;
-    std::string         type_;
     bool                allNoncacheableRequests_;
     int                 maxRequestsPerCycle_;
     MemRegion           region_; // Memory region handled by this cache
     SimTime_t           timeout_;
     uint64_t            maxOutstandingPrefetch_;
-    uint64_t            dropPrefetchLevel_;
     bool                banked_;
 
     /** Clocks *****************************************************************/
@@ -319,23 +294,6 @@ private:
     std::set<Addr>          DEBUG_ADDR;
 
     /** Statistics *************************************************************/
-    // Cache hits
-    Statistic<uint64_t>* statCacheHits;
-    Statistic<uint64_t>* statGetSHitOnArrival;
-    Statistic<uint64_t>* statGetXHitOnArrival;
-    Statistic<uint64_t>* statGetSXHitOnArrival;
-    Statistic<uint64_t>* statGetSHitAfterBlocked;
-    Statistic<uint64_t>* statGetXHitAfterBlocked;
-    Statistic<uint64_t>* statGetSXHitAfterBlocked;
-    // Cache misses
-    Statistic<uint64_t>* statCacheMisses;
-    Statistic<uint64_t>* statGetSMissOnArrival;
-    Statistic<uint64_t>* statGetXMissOnArrival;
-    Statistic<uint64_t>* statGetSXMissOnArrival;
-    Statistic<uint64_t>* statGetSMissAfterBlocked;
-    Statistic<uint64_t>* statGetXMissAfterBlocked;
-    Statistic<uint64_t>* statGetSXMissAfterBlocked;
-    
     Statistic<uint64_t>* statMSHROccupancy;
     Statistic<uint64_t>* statBankConflicts;
 

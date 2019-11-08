@@ -65,6 +65,7 @@ bool MESIL1::handleGetS(MemEvent * event, bool inMSHR) {
                 if (!mshr_->getProfiled(addr)) {
                     recordLatencyType(event->getID(), LatType::MISS);
                     stat_eventState[(int)Command::GetS][I]->addData(1);
+                    stat_miss[0][inMSHR]->addData(1);
                     notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::MISS);
                     mshr_->setProfiled(addr);
                 }
@@ -83,6 +84,7 @@ bool MESIL1::handleGetS(MemEvent * event, bool inMSHR) {
             if (!inMSHR || !mshr_->getProfiled(addr)) {
                 recordLatencyType(event->getID(), LatType::HIT);
                 stat_eventState[(int)Command::GetS][state]->addData(1);
+                stat_hit[0][inMSHR]->addData(1);
                 notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
             }
 
@@ -152,6 +154,7 @@ bool MESIL1::handleGetX(MemEvent* event, bool inMSHR) {
                 if (!mshr_->getProfiled(addr)) {
                     notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::MISS);
                     stat_eventState[(int)Command::GetX][I]->addData(1);
+                    stat_miss[1][inMSHR]->addData(1);
                     recordLatencyType(event->getID(), LatType::MISS);
                     mshr_->setProfiled(addr);
                 }
@@ -173,6 +176,7 @@ bool MESIL1::handleGetX(MemEvent* event, bool inMSHR) {
                     notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::MISS);
                     recordLatencyType(event->getID(), LatType::UPGRADE);
                     stat_eventState[(int)Command::GetX][S]->addData(1);
+                    stat_miss[1][inMSHR]->addData(1);
                     mshr_->setProfiled(addr);
                 }
                 recordPrefetchResult(line, statPrefetchUpgradeMiss);
@@ -193,6 +197,7 @@ bool MESIL1::handleGetX(MemEvent* event, bool inMSHR) {
                 notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::HIT);
                 recordLatencyType(event->getID(), LatType::HIT);
                 stat_eventState[(int)Command::GetX][state]->addData(1);
+                stat_hit[1][inMSHR]->addData(1);
             }
             
             if (!event->isStoreConditional() || line->isAtomic()) { // Don't write on a non-atomic SC
@@ -259,6 +264,7 @@ bool MESIL1::handleGetSX(MemEvent* event, bool inMSHR) {
                 if (!mshr_->getProfiled(addr)) {
                     notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::MISS);
                     stat_eventState[(int)Command::GetSX][I]->addData(1);
+                    stat_miss[2][inMSHR]->addData(1);
                     recordLatencyType(event->getID(), LatType::MISS);
                     mshr_->setProfiled(addr);
                 }
@@ -280,6 +286,7 @@ bool MESIL1::handleGetSX(MemEvent* event, bool inMSHR) {
                     notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::MISS);
                     recordLatencyType(event->getID(), LatType::UPGRADE);
                     stat_eventState[(int)Command::GetSX][S]->addData(1);
+                    stat_miss[2][inMSHR]->addData(1);
                     mshr_->setProfiled(addr);
                 }
                 recordPrefetchResult(line, statPrefetchUpgradeMiss);
@@ -300,6 +307,7 @@ bool MESIL1::handleGetSX(MemEvent* event, bool inMSHR) {
                 notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
                 recordLatencyType(event->getID(), LatType::HIT);
                 stat_eventState[(int)Command::GetSX][state]->addData(1);
+                stat_hit[2][inMSHR]->addData(1);
             }
             line->incLock();
             std::copy(line->getData()->begin() + (event->getAddr() - event->getBaseAddr()), line->getData()->begin() + (event->getAddr() - event->getBaseAddr()) + event->getSize(), data.begin());
