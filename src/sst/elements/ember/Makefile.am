@@ -279,7 +279,11 @@ EXTRA_DIST = \
 	test/chamaOpenIBParams.py \
 	test/chamaPSMParams.py \
 	test/bgqParams.py \
-	test/runFAMloadfile
+	test/runFAMloadfile \
+	tests/qos-dragonfly.sh \
+	tests/qos-fattree.sh \
+	tests/qos-hyperx.sh \
+	tests/qos.load
 
 if USE_EMBER_CONTEXTS
 libember_la_SOURCES += \
