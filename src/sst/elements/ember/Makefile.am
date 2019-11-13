@@ -280,6 +280,12 @@ EXTRA_DIST = \
 	test/chamaPSMParams.py \
 	test/bgqParams.py \
 	test/runFAMloadfile \
+	test/generateNidListQOS.py \
+	test/generateNidListRange.py \
+	test/generateNidListQOS.pyc \
+	test/generateNidListGroup.py \
+	test/generateNidListInterval.py \
+	test/generateNidListRandom.py \
 	tests/qos-dragonfly.sh \
 	tests/qos-fattree.sh \
 	tests/qos-hyperx.sh \
