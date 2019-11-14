@@ -56,6 +56,7 @@ bool MESIInclusive::handleGetS(MemEvent * event, bool inMSHR) {
                 line = cacheArray_->lookup(addr, false);
                 if (!mshr_->getProfiled(addr)) {
                     stat_eventState[(int)Command::GetS][I]->addData(1);
+                    stat_miss[0][inMSHR]->addData(1);
                     notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::MISS);
                     recordLatencyType(event->getID(), LatType::MISS);
                     mshr_->setProfiled(addr);
@@ -72,6 +73,7 @@ bool MESIInclusive::handleGetS(MemEvent * event, bool inMSHR) {
         case S:
             if (!inMSHR || !mshr_->getProfiled(addr)) {
                 stat_eventState[(int)Command::GetS][S]->addData(1);
+                stat_hit[0][inMSHR]->addData(1);
                 notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
                 if (localPrefetch) {
                     statPrefetchRedundant->addData(1);
@@ -108,6 +110,7 @@ bool MESIInclusive::handleGetS(MemEvent * event, bool inMSHR) {
             if (localPrefetch) {
                 if (!inMSHR || !mshr_->getProfiled(addr)) {
                     stat_eventState[(int)Command::GetS][state]->addData(1);
+                    stat_hit[0][inMSHR]->addData(1);
                     notifyListenerOfAccess(event, NotifyAccessType::PREFETCH, NotifyResultType::HIT);
                     statPrefetchRedundant->addData(1);
                     recordPrefetchLatency(event->getID(), LatType::HIT);
@@ -127,6 +130,7 @@ bool MESIInclusive::handleGetS(MemEvent * event, bool inMSHR) {
                 if (status == MemEventStatus::OK) {
                     if (!mshr_->getProfiled(addr)) {
                         stat_eventState[(int)Command::GetS][state]->addData(1);
+                        stat_hit[0][inMSHR]->addData(1);
                         notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
                         recordLatencyType(event->getID(), LatType::INV);
                         mshr_->setProfiled(addr);
@@ -141,6 +145,7 @@ bool MESIInclusive::handleGetS(MemEvent * event, bool inMSHR) {
             } else {
                 if (!inMSHR || !mshr_->getProfiled(addr)) {
                     stat_eventState[(int)Command::GetS][state]->addData(1);
+                    stat_hit[0][inMSHR]->addData(1);
                     notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
                     recordLatencyType(event->getID(), LatType::HIT);
                     if (inMSHR) mshr_->setProfiled(addr);
@@ -201,6 +206,7 @@ bool MESIInclusive::handleGetX(MemEvent * event, bool inMSHR) {
                     recordMiss(event->getID());
                     recordLatencyType(event->getID(), LatType::MISS);
                     stat_eventState[(int)event->getCmd()][I]->addData(1);
+                    stat_miss[(event->getCmd() == Command::GetX ? 1 : 2)][inMSHR]->addData(1);
                     notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::MISS);
                     mshr_->setProfiled(addr);
                 }
@@ -218,6 +224,7 @@ bool MESIInclusive::handleGetX(MemEvent * event, bool inMSHR) {
                 if (status == MemEventStatus::OK) {
                     if (!mshr_->getProfiled(addr)) {
                         stat_eventState[(int)event->getCmd()][state]->addData(1);
+                        stat_miss[(event->getCmd() == Command::GetX ? 1 : 2)][inMSHR]->addData(1);
                         notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::MISS);
                         mshr_->setProfiled(addr);
                     }
@@ -244,6 +251,7 @@ bool MESIInclusive::handleGetX(MemEvent * event, bool inMSHR) {
             if (!inMSHR || !mshr_->getProfiled(addr)) {
                 notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::HIT);
                 stat_eventState[(int)event->getCmd()][state]->addData(1);
+                stat_hit[(event->getCmd() == Command::GetX ? 1 : 2)][inMSHR]->addData(1);
                 if (inMSHR)
                     mshr_->setProfiled(addr);
             }
@@ -421,7 +429,6 @@ bool MESIInclusive::handleFlushLineInv(MemEvent * event, bool inMSHR) {
     
     // Always need an MSHR entry
     if (!inMSHR) {
-        stat_eventState[(int)Command::FlushLineInv][state]->addData(1);
         status = allocateMSHR(event, false);
     }
     
@@ -508,6 +515,10 @@ bool MESIInclusive::handleFlushLineInv(MemEvent * event, bool inMSHR) {
     }
 
     if (status == MemEventStatus::OK) {
+        if (!mshr_->getProfiled(addr)) {
+            stat_eventState[(int)Command::FlushLineInv][state]->addData(1);
+            mshr_->setProfiled(addr);
+        }
         mshr_->setInProgress(addr);
         if (line)
             recordPrefetchResult(line, statPrefetchEvict);
@@ -868,19 +879,19 @@ bool MESIInclusive::handleInv(MemEvent * event, bool inMSHR) {
             if (is_debug_event(event))
                 eventDI.action = "Drop";
             cleanUpEvent(event, inMSHR); // No replay since state doesn't change
+            stat_eventState[(int)Command::Inv][state]->addData(1);
             break;
         default:
             debug->fatal(CALL_INFO,-1,"%s, Error: Received Inv in unhandled state '%s'. Event: %s. Time = %" PRIu64 "ns\n",
                     getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
 
-    if (!inMSHR) {
-        stat_eventState[(int)Command::Inv][state]->addData(1);
-        if (line) 
-            recordPrefetchResult(line, statPrefetchInv);
-    }
-
     if (handle) {
+        if (!inMSHR || mshr_->getProfiled(addr)) {
+            stat_eventState[(int)Command::Inv][state]->addData(1);
+            recordPrefetchResult(line, statPrefetchInv);
+            if (inMSHR) mshr_->setProfiled(addr);
+        }
         if (line->hasSharers() && !inMSHR)
             status = allocateMSHR(event, true, 0);
         if (status != MemEventStatus::Reject) {
@@ -917,6 +928,7 @@ bool MESIInclusive::handleForceInv(MemEvent * event, bool inMSHR) {
         eventDI.prefill(event->getID(), Command::ForceInv, false, addr, state);
     
     bool handle = false;
+    bool profile = false;
     State state1, state2;
     switch (state) {
         case S: // Ack if unshared, else forward ForceInv and S_Inv
@@ -948,6 +960,7 @@ bool MESIInclusive::handleForceInv(MemEvent * event, bool inMSHR) {
         case E_Inv: // in mshr & stall
             status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, true, 0);
             if (status != MemEventStatus::Reject) {
+                profile = true;
                 status = MemEventStatus::Stall;
             }
             break;
@@ -959,22 +972,25 @@ bool MESIInclusive::handleForceInv(MemEvent * event, bool inMSHR) {
                 status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, true, 1);
             } else {
                 status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, true, 0);
+                profile = true;
             }
             if (status != MemEventStatus::Reject) {
                 status = MemEventStatus::Stall;
-            }
+            } else profile = false;
             break;
         case I_B:
             line->setState(I);
         case IS:
         case IM:
         case I:
+            stat_eventState[(int)Command::ForceInv][state]->addData(1);
             cleanUpEvent(event, inMSHR); // No replay since state doesn't change
             break;
         case SM_Inv: { // ForceInv if there's an un-inv'd sharer, else in mshr & stall
             std::string src = mshr_->getFrontEvent(addr)->getSrc();
             status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, true, 0);
             if (status != MemEventStatus::Reject) {
+                profile = true;
                 if (line->isSharer(src)) {
                     line->setTimestamp(invalidateSharer(src, event, line, inMSHR, Command::ForceInv));
                 } 
@@ -986,11 +1002,11 @@ bool MESIInclusive::handleForceInv(MemEvent * event, bool inMSHR) {
             debug->fatal(CALL_INFO,-1,"%s, Error: Received ForceInv in unhandled state '%s'. Event: %s. Time = %" PRIu64 "ns\n",
                     getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
-    
-    if (!inMSHR) {
+   
+    if ((handle || profile) && (!inMSHR || !mshr_->getProfiled(addr))) {
         stat_eventState[(int)Command::ForceInv][state]->addData(1);
-        if (line) 
-            recordPrefetchResult(line, statPrefetchInv);
+        recordPrefetchResult(line, statPrefetchInv);
+        if (inMSHR || profile) mshr_->setProfiled(addr);
     }
 
     if (handle) {
@@ -1001,6 +1017,7 @@ bool MESIInclusive::handleForceInv(MemEvent * event, bool inMSHR) {
                 invalidateAll(event, line, inMSHR, Command::ForceInv);
                 line->setState(state1);
                 status = MemEventStatus::Stall;
+                mshr_->setProfiled(addr);
             }
         } else {
             sendResponseDown(event, line, false, true);
@@ -1009,13 +1026,11 @@ bool MESIInclusive::handleForceInv(MemEvent * event, bool inMSHR) {
         }
     }
 
-    //printLine(addr);
     if (is_debug_addr(addr) && line) {
         eventDI.newst = line->getState();
         eventDI.verboseline = line->getString();
     }
     
-    //stat_eventState[(int)Command::ForceInv][state]->addData(1);
     if (status == MemEventStatus::Reject)
         sendNACK(event);
 
@@ -1034,6 +1049,7 @@ bool MESIInclusive::handleFetchInv(MemEvent * event, bool inMSHR) {
     
     State state1, state2;
     bool handle = false;
+    bool profile = false;
     switch (state) {
         case I_B:
             line->setState(I);
@@ -1043,6 +1059,7 @@ bool MESIInclusive::handleFetchInv(MemEvent * event, bool inMSHR) {
             if (is_debug_event(event))
                 eventDI.action = "Drop";
             cleanUpEvent(event, inMSHR); // No replay since state doesn't change
+            stat_eventState[(int)Command::FetchInv][state]->addData(1);
             break;
         case S:
             state1 = S_Inv;
@@ -1083,13 +1100,16 @@ bool MESIInclusive::handleFetchInv(MemEvent * event, bool inMSHR) {
                 status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, true, 1);
             } else {
                 status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, true, 0);
+                profile = true;
             }
             if (status != MemEventStatus::Reject)
                 status = MemEventStatus::Stall;
+            else profile = false;
             break;
         case SM_Inv:
             status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, true, 0);
             if (status != MemEventStatus::Reject) {
+                profile = true;
                 std::string shr = mshr_->getFrontEvent(addr)->getSrc();
                 if (line->isSharer(shr)) {
                     invalidateSharer(shr, event, line, inMSHR);
@@ -1102,20 +1122,20 @@ bool MESIInclusive::handleFetchInv(MemEvent * event, bool inMSHR) {
                     getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
 
-    if (!inMSHR) {
+    if ((handle || profile) && (!inMSHR || !mshr_->getProfiled(addr))) {
         stat_eventState[(int)Command::FetchInv][state]->addData(1);
-        if (line)
-            recordPrefetchResult(line, statPrefetchInv);
-
+        recordPrefetchResult(line, statPrefetchInv);
+        if (inMSHR || profile) mshr_->setProfiled(addr);
     }
 
     if (handle) {
         if (line->hasSharers() || line->hasOwner()) {
             status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, true, 0);
             if (status != MemEventStatus::Reject) {
-               invalidateAll(event, line, inMSHR);
+                invalidateAll(event, line, inMSHR);
                 line->setState(state1);
-               status = MemEventStatus::Stall;
+                status = MemEventStatus::Stall;
+                mshr_->setProfiled(addr);
             }
         } else {
             sendResponseDown(event, line, true, true);
@@ -1145,9 +1165,6 @@ bool MESIInclusive::handleFetchInvX(MemEvent * event, bool inMSHR) {
     if (is_debug_event(event))
         eventDI.prefill(event->getID(), Command::FetchInvX, false, addr, state);
    
-    if (!inMSHR)
-        stat_eventState[(int)Command::FetchInvX][state]->addData(1);
-
     switch (state) {
         case E:
         case M:
@@ -1158,12 +1175,15 @@ bool MESIInclusive::handleFetchInvX(MemEvent * event, bool inMSHR) {
                     mshr_->setInProgress(addr);
                     state == E ? line->setState(E_InvX) : line->setState(M_InvX);
                     status = MemEventStatus::Stall;
+                    mshr_->setProfiled(addr);
+                    stat_eventState[(int)Command::FetchInvX][state]->addData(1);
                 }
                 break;
             }
             sendResponseDown(event, line, true, true);
             line->setState(S);
             cleanUpAfterRequest(event, inMSHR);
+            stat_eventState[(int)Command::FetchInvX][state]->addData(1);
             break;
         case M_Inv:
         case E_Inv:
@@ -1175,12 +1195,15 @@ bool MESIInclusive::handleFetchInvX(MemEvent * event, bool inMSHR) {
                 status = inMSHR ? MemEventStatus::Stall : allocateMSHR(event, true, 1);
             } else if (line->hasOwner()) {
                 status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, true, 0);
+                stat_eventState[(int)Command::FetchInvX][state]->addData(1);
+                mshr_->setProfiled(addr);
                 if (status != MemEventStatus::Reject)
                     status = MemEventStatus::Stall;
             } else { // E_InvX/M_InvX never reach this bit
                 line->setState(S_Inv);
                 sendResponseDown(event, line, true, true);
                 cleanUpAfterRequest(event, inMSHR);
+                stat_eventState[(int)Command::FetchInvX][state]->addData(1);
             }
             break;
         case S_B:
@@ -1191,6 +1214,7 @@ bool MESIInclusive::handleFetchInvX(MemEvent * event, bool inMSHR) {
             if (is_debug_event(event))
                 eventDI.action = "Drop";
             cleanUpEvent(event, inMSHR); // No replay since state doesn't change
+            stat_eventState[(int)Command::FetchInvX][state]->addData(1);
             break;
         default:
             debug->fatal(CALL_INFO,-1,"%s, Error: Received FetchInvX in unhandled state '%s'. Event: %s. Time = %" PRIu64 "ns\n",
@@ -1216,8 +1240,7 @@ bool MESIInclusive::handleGetSResp(MemEvent * event, bool inMSHR) {
     if (is_debug_event(event))
         eventDI.prefill(event->getID(), Command::GetSResp, false, addr, state);
 
-    if (!inMSHR)
-        stat_eventState[(int)Command::GetSResp][state]->addData(1);
+    stat_eventState[(int)Command::GetSResp][state]->addData(1);
 
     // Find matching request in MSHR
     MemEvent * req = static_cast<MemEvent*>(mshr_->getFrontEvent(event->getBaseAddr()));
@@ -1270,8 +1293,7 @@ bool MESIInclusive::handleGetXResp(MemEvent * event, bool inMSHR) {
     if (is_debug_event(event))
         eventDI.prefill(event->getID(), Command::GetXResp, false, addr, state);
 
-    if (!inMSHR)
-        stat_eventState[(int)Command::GetXResp][state]->addData(1);
+    stat_eventState[(int)Command::GetXResp][state]->addData(1);
 
     // Get matching request
     MemEvent * req = static_cast<MemEvent*>(mshr_->getFrontEvent(event->getBaseAddr()));

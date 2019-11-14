@@ -55,6 +55,7 @@ bool MESIPrivNoninclusive::handleGetS(MemEvent* event, bool inMSHR) {
             if (status == MemEventStatus::OK) {
                 if (!mshr_->getProfiled(addr)) {
                     stat_eventState[(int)Command::GetS][I]->addData(1);
+                    stat_miss[0][inMSHR]->addData(1);
                     notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::MISS);
                     mshr_->setProfiled(addr);
                 }
@@ -68,7 +69,8 @@ bool MESIPrivNoninclusive::handleGetS(MemEvent* event, bool inMSHR) {
             break;
         case S:
             if (!inMSHR || !mshr_->getProfiled(addr)) {
-                stat_eventState[(int)Command::GetS][state]->addData(1);
+                stat_eventState[(int)Command::GetS][S]->addData(1);
+                stat_hit[0][inMSHR]->addData(1);
                 notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
             }
             line->setShared(true);
@@ -83,6 +85,7 @@ bool MESIPrivNoninclusive::handleGetS(MemEvent* event, bool inMSHR) {
         case M:
             if (!inMSHR || !mshr_->getProfiled(addr)) {
                 stat_eventState[(int)Command::GetS][state]->addData(1);
+                stat_hit[0][inMSHR]->addData(1);
                 notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
             }
             if (is_debug_event(event))
@@ -141,6 +144,7 @@ bool MESIPrivNoninclusive::handleGetX(MemEvent* event, bool inMSHR) {
             if (status == MemEventStatus::OK) {
                 if (!mshr_->getProfiled(addr)) {
                     stat_eventState[(int)event->getCmd()][state]->addData(1);
+                    stat_miss[(event->getCmd() == Command::GetX ? 1 : 2)][inMSHR]->addData(1);
                     notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::MISS);
                     mshr_->setProfiled(addr);
                 }
@@ -162,6 +166,7 @@ bool MESIPrivNoninclusive::handleGetX(MemEvent* event, bool inMSHR) {
         case M:
             if (!inMSHR || !mshr_->getProfiled(addr)) {
                 stat_eventState[(int)event->getCmd()][state]->addData(1);
+                stat_hit[(event->getCmd() == Command::GetX ? 1 : 2)][inMSHR]->addData(1);
                 notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::HIT);
             }
             line->setOwned(true);
@@ -206,8 +211,6 @@ bool MESIPrivNoninclusive::handleFlushLine(MemEvent * event, bool inMSHR) {
         eventDI.prefill(event->getID(), Command::FlushLine, false, addr, state);
 
     MemEventStatus status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, false);
-    if (!inMSHR)
-        stat_eventState[(int)Command::FlushLine][state]->addData(1);
 
     recordLatencyType(event->getID(), LatType::HIT);
     
@@ -219,6 +222,10 @@ bool MESIPrivNoninclusive::handleFlushLine(MemEvent * event, bool inMSHR) {
                 forwardFlush(event, event->getEvict(), &(event->getPayload()), event->getDirty(), 0);
                 event->setEvict(false);
                 mshr_->setInProgress(addr);
+                if (!mshr_->getProfiled(addr)) {
+                    stat_eventState[(int)Command::FlushLine][I]->addData(1);
+                    mshr_->setProfiled(addr);
+                }
             } else if (mshr_->getAcksNeeded(addr) != 0 && event->getEvict()) {
                 mshr_->setData(addr, event->getPayload(), event->getDirty());
                 event->setEvict(false);
@@ -235,6 +242,10 @@ bool MESIPrivNoninclusive::handleFlushLine(MemEvent * event, bool inMSHR) {
                 line->setTimestamp(sendTime);
                 line->setState(S_B);
                 mshr_->setInProgress(addr);
+                if (!mshr_->getProfiled(addr)) {
+                    stat_eventState[(int)Command::FlushLine][S]->addData(1);
+                    mshr_->setProfiled(addr);
+                }
             }
             break;
         case E:
@@ -251,6 +262,10 @@ bool MESIPrivNoninclusive::handleFlushLine(MemEvent * event, bool inMSHR) {
                 forwardFlush(event, true, line->getData(), (state == M || event->getDirty()), line->getTimestamp());
                 line->setState(S_B);
                 mshr_->setInProgress(addr);
+                if (!mshr_->getProfiled(addr)) {
+                    stat_eventState[(int)Command::FlushLine][state]->addData(1);
+                    mshr_->setProfiled(addr);
+                }
             }
             break;
         case E_Inv:
@@ -304,8 +319,6 @@ bool MESIPrivNoninclusive::handleFlushLineInv(MemEvent * event, bool inMSHR) {
         eventDI.prefill(event->getID(), Command::FlushLineInv, false, addr, state);
 
     MemEventStatus status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, false);
-    if (!inMSHR)
-        stat_eventState[(int)Command::FlushLineInv][state]->addData(1);
     
     recordLatencyType(event->getID(), LatType::HIT);
 
@@ -318,6 +331,10 @@ bool MESIPrivNoninclusive::handleFlushLineInv(MemEvent * event, bool inMSHR) {
             if (status == MemEventStatus::OK) {
                 forwardFlush(event, event->getEvict(), &(event->getPayload()), event->getDirty(), 0); // No need to evict since we didn't race
                 mshr_->setInProgress(addr);
+                if (!mshr_->getProfiled(addr)) {
+                    stat_eventState[(int)Command::FlushLineInv][I]->addData(1);
+                    mshr_->setProfiled(addr);
+                }
             } else if (event->getEvict()) {
                 MemEventBase * race;
                 if (mshr_->getFrontEvent(addr)) { // There's an event with raced with
@@ -354,6 +371,10 @@ bool MESIPrivNoninclusive::handleFlushLineInv(MemEvent * event, bool inMSHR) {
                 line->setState(I_B);
                 forwardFlush(event, true, line->getData(), false, line->getTimestamp());
                 mshr_->setInProgress(addr);
+                if (!mshr_->getProfiled(addr)) {
+                    stat_eventState[(int)Command::FlushLineInv][S]->addData(1);
+                    mshr_->setProfiled(addr);
+                }
             }
             break;
         case E:
@@ -370,6 +391,10 @@ bool MESIPrivNoninclusive::handleFlushLineInv(MemEvent * event, bool inMSHR) {
                 forwardFlush(event, true, line->getData(), line->getState() == M, line->getTimestamp());
                 line->setState(I_B);
                 mshr_->setInProgress(addr);
+                if (!mshr_->getProfiled(addr)) {
+                    stat_eventState[(int)Command::FlushLineInv][state]->addData(1);
+                    mshr_->setProfiled(addr);
+                }
             }
             break;
         case S_Inv:
@@ -773,8 +798,6 @@ bool MESIPrivNoninclusive::handlePutX(MemEvent * event, bool inMSHR) {
                     getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
 
-    //printLine(addr);
-    
     if (status == MemEventStatus::Reject)
         sendNACK(event);
     
@@ -957,8 +980,6 @@ bool MESIPrivNoninclusive::handleInv(MemEvent * event, bool inMSHR) {
         }
     }
 
-    //printLine(addr);
-    
     if (status == MemEventStatus::Reject) 
         sendNACK(event);
     
@@ -976,8 +997,6 @@ bool MESIPrivNoninclusive::handleForceInv(MemEvent * event, bool inMSHR) {
     PrivateCacheLine * line = cacheArray_->lookup(addr, false);
     State state = line ? line->getState() : I;
     MemEventStatus status = MemEventStatus::OK;
-    
-    //printLine(addr);
     
     if (is_debug_event(event))
         eventDI.prefill(event->getID(), Command::ForceInv, false, addr, state);
@@ -1107,8 +1126,6 @@ bool MESIPrivNoninclusive::handleForceInv(MemEvent * event, bool inMSHR) {
         }
     }
 
-    //printLine(addr);
-    
     if (status == MemEventStatus::Reject) 
         sendNACK(event);
     
@@ -1175,6 +1192,7 @@ bool MESIPrivNoninclusive::handleFetchInv(MemEvent * event, bool inMSHR){
                     }
                 }
                 // Stall the event until the writeback ack returns (don't actually have to but it makes the tracking simpler)
+                // Since we profiled this event in I above, that means we're going to have slightly imprecise statistics (will eventually be correct) TODO fix this maybe?
                 status = allocateMSHR(event, true, 1);
             } else if (mshr_->pendingWriteback(addr) || (mshr_->exists(addr) && mshr_->getFrontEvent(addr)->getCmd() == Command::FlushLineInv)) {
                 if (mshr_->hasData(addr)) mshr_->clearData(addr);
@@ -1275,8 +1293,6 @@ bool MESIPrivNoninclusive::handleFetchInvX(MemEvent * event, bool inMSHR) {
     State state = line ? line->getState() : I;
     MemEventStatus status = MemEventStatus::OK;
 
-    //printLine(addr);
-    
     if (!inMSHR)
         stat_eventState[(int)Command::FetchInvX][state]->addData(1);
 
@@ -1375,7 +1391,6 @@ bool MESIPrivNoninclusive::handleGetSResp(MemEvent * event, bool inMSHR) {
     Addr addr = event->getBaseAddr();
     PrivateCacheLine * line = cacheArray_->lookup(addr, false);
     State state = line ? line->getState() : I;
-    //printLine(addr);
     
     if (is_debug_event(event))
         eventDI.prefill(event->getID(), Command::GetSResp, false, addr, state);
@@ -1384,8 +1399,6 @@ bool MESIPrivNoninclusive::handleGetSResp(MemEvent * event, bool inMSHR) {
 
     // Find matching request in MSHR
     MemEvent * req = static_cast<MemEvent*>(mshr_->getFrontEvent(addr));
-    //if (is_debug_event(req))
-    //    debug->debug(_L5_, "    Request: %s\n", req->getBriefString().c_str());
     req->setFlags(event->getMemFlags());
    
     if (is_debug_event(req))
@@ -1403,8 +1416,6 @@ bool MESIPrivNoninclusive::handleGetSResp(MemEvent * event, bool inMSHR) {
     
     cleanUpAfterResponse(event, inMSHR);
     
-    //printLine(addr);
-    
     if (is_debug_addr(addr) && line) {
         eventDI.newst = line->getState();
         eventDI.verboseline = line->getString();
@@ -1419,14 +1430,11 @@ bool MESIPrivNoninclusive::handleGetXResp(MemEvent * event, bool inMSHR) {
     PrivateCacheLine * line = cacheArray_->lookup(addr, false);
     State state = line ? line->getState() : I;
     
-    //printLine(addr);
     if (is_debug_event(event))
         eventDI.prefill(event->getID(), Command::GetXResp, false, addr, state);
     
     // Get matching request
     MemEvent * req = static_cast<MemEvent*>(mshr_->getFrontEvent(addr));
-    //if (is_debug_addr(addr))
-    //    debug->debug(_L5_, "    Request: %s\n", req->getBriefString().c_str());
     req->setFlags(event->getMemFlags());
    
     std::vector<uint8_t> data;
@@ -1457,7 +1465,6 @@ bool MESIPrivNoninclusive::handleGetXResp(MemEvent * event, bool inMSHR) {
     }
 
     stat_eventState[(int)Command::GetXResp][state]->addData(1);
-    //printLine(addr);
     
     if (is_debug_addr(addr) && line) {
         eventDI.newst = line->getState();
@@ -1498,7 +1505,6 @@ bool MESIPrivNoninclusive::handleFlushLineResp(MemEvent * event, bool inMSHR) {
 
     sendResponseUp(req, nullptr, true, timestamp_, Command::FlushLineResp, event->success());
     
-    //printLine(addr);
     if (is_debug_event(event) && line) {
         eventDI.newst = line->getState();
         eventDI.verboseline = line->getString();
@@ -1559,7 +1565,6 @@ bool MESIPrivNoninclusive::handleFetchXResp(MemEvent * event, bool inMSHR) {
     Addr addr = event->getBaseAddr();
     PrivateCacheLine * line = cacheArray_->lookup(addr, false);
     State state = line ? line->getState() : I;
-    //printLine(addr);
     
     if (is_debug_event(event))
         eventDI.prefill(event->getID(), Command::FetchXResp, false, addr, state);
@@ -1603,7 +1608,6 @@ bool MESIPrivNoninclusive::handleAckInv(MemEvent * event, bool inMSHR) {
     Addr addr = event->getAddr();
     PrivateCacheLine * line = cacheArray_->lookup(addr, false);
     State state = line ? line->getState() : I;
-    //printLine(addr);
     
     if (is_debug_event(event))
         eventDI.prefill(event->getID(), Command::AckInv, false, addr, state);
@@ -1667,7 +1671,6 @@ bool MESIPrivNoninclusive::handleAckInv(MemEvent * event, bool inMSHR) {
 
 
 bool MESIPrivNoninclusive::handleAckPut(MemEvent * event, bool inMSHR) {
-    //printLine(event->getBaseAddr());
     stat_eventState[(int)Command::AckPut][I]->addData(1);
     
     if (is_debug_event(event)) {
@@ -1685,7 +1688,6 @@ bool MESIPrivNoninclusive::handleNULLCMD(MemEvent* event, bool inMSHR) {
     Addr newAddr = event->getBaseAddr();
 
     PrivateCacheLine * line = cacheArray_->lookup(oldAddr, false);
-    //printLine(newAddr);
     
     if (is_debug_addr(oldAddr))
         eventDI.prefill(event->getID(), Command::Evict, false, oldAddr, (line ? line->getState() : I));
@@ -1712,15 +1714,11 @@ bool MESIPrivNoninclusive::handleNULLCMD(MemEvent* event, bool inMSHR) {
                 eventDI.reason = reason.str();
                 eventDI.action = "Stall";
             }
-           //     debug->debug(_L8_, "\tAddr 0x%" PRIx64 " now waiting for 0x%" PRIx64 " instead of 0x%" PRIx64 "\n",
-           //             oldAddr, line->getAddr(), newAddr);
             mshr_->insertEviction(line->getAddr(), newAddr);
             if (mshr_->removeEvictPointer(oldAddr, newAddr))
                 retry(oldAddr);
         }
     }
-    
-    //printLine(newAddr);
     
     if (is_debug_event(event) && line) {
         eventDI.newst = line->getState();
@@ -1798,7 +1796,6 @@ bool MESIPrivNoninclusive::handleNACK(MemEvent* event, bool inMSHR) {
  * Allocate a new cache line
  */
 MemEventStatus MESIPrivNoninclusive::allocateLine(MemEvent * event, PrivateCacheLine* &line, bool inMSHR) {
-    //debug->debug(_L3_, "%s, allocateLine for 0x%" PRIx64 "\n", cachename_.c_str(), event->getBaseAddr());
     
     evictDI.prefill(event->getID(), Command::Evict, false, 0, I);
     
@@ -1812,20 +1809,12 @@ MemEventStatus MESIPrivNoninclusive::allocateLine(MemEvent * event, PrivateCache
     }
 
     if (evicted) {
-        //if (is_debug_event(event) || is_debug_addr(line->getAddr()))
-        //    debug->debug(_L5_, "    Successful eviction\n");
         notifyListenerOfEvict(line->getAddr(), lineSize_, event->getInstructionPointer());
         cacheArray_->replace(event->getBaseAddr(), line);
         if (is_debug_addr(event->getBaseAddr()))
             printDebugAlloc(true, event->getBaseAddr(), "");
-        //if (is_debug_event(event) || is_debug_addr(line->getAddr())) {
-        //    printDebugInfo(&evictDI);
-        //}
         return MemEventStatus::OK;
     } else {
-        //if (is_debug_event(event) || is_debug_addr(line->getAddr()))
-        //    debug->debug(_L5_, "    Unsuccessful eviction\n");
-        
         if (inMSHR || mshr_->insertEvent(event->getBaseAddr(), event, -1, false, true) != -1) {
             mshr_->insertEviction(line->getAddr(), event->getBaseAddr()); // Since we're private we never start an eviction (e.g., send invs) so it's safe to ignore an attempted eviction
             if (inMSHR)
@@ -1997,7 +1986,7 @@ void MESIPrivNoninclusive::cleanUpAfterRequest(MemEvent* event, bool inMSHR) {
     /* Replay any waiting events */
     if (mshr_->exists(addr)) {
         if (mshr_->getFrontType(addr) == MSHREntryType::Event) {
-            if (!mshr_->getInProgress(addr) && mshr_->getAcksNeeded(addr) == 0) {
+            if (!mshr_->getInProgress(addr) && !mshr_->getStalledForEvict(addr) && mshr_->getAcksNeeded(addr) == 0) {
                 retryBuffer_.push_back(mshr_->getFrontEvent(addr));
             }
         } else { // Pointer -> either we're waiting for a writeback ACK or another address is waiting for this one

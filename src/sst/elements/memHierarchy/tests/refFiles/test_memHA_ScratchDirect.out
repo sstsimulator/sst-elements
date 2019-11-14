@@ -1,0 +1,34 @@
+memory, WARNING: loading backend in legacy mode (from parameter set). Instead, load backend into this controller's 'backend' slot via ctrl.setSubComponent() in configuration.
+ScratchCPU cpu Finished after 500 issued memory events, 500 returned, 13248 cycles
+ scratch.cycles_with_issue : Accumulator : Sum.u64 = 326; SumSQ.u64 = 326; Count.u64 = 326; Min.u64 = 1; Max.u64 = 1; 
+ scratch.cycles_attempted_issue_but_rejected : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ scratch.total_cycles : Accumulator : Sum.u64 = 26496; SumSQ.u64 = 26496; Count.u64 = 26496; Min.u64 = 1; Max.u64 = 1; 
+ scratch.requests_received_GetS : Accumulator : Sum.u64 = 161; SumSQ.u64 = 161; Count.u64 = 161; Min.u64 = 1; Max.u64 = 1; 
+ scratch.requests_received_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ scratch.requests_received_GetX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ scratch.requests_received_PutM : Accumulator : Sum.u64 = 165; SumSQ.u64 = 165; Count.u64 = 165; Min.u64 = 1; Max.u64 = 1; 
+ scratch.latency_GetS : Accumulator : Sum.u64 = 3440; SumSQ.u64 = 73570; Count.u64 = 161; Min.u64 = 21; Max.u64 = 24; 
+ scratch.latency_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ scratch.latency_GetX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ scratch.latency_PutM : Accumulator : Sum.u64 = 3502; SumSQ.u64 = 74366; Count.u64 = 165; Min.u64 = 21; Max.u64 = 23; 
+ scratch.request_received_scratch_read : Accumulator : Sum.u64 = 80; SumSQ.u64 = 80; Count.u64 = 80; Min.u64 = 1; Max.u64 = 1; 
+ scratch.request_received_scratch_write : Accumulator : Sum.u64 = 87; SumSQ.u64 = 87; Count.u64 = 87; Min.u64 = 1; Max.u64 = 1; 
+ scratch.request_received_remote_read : Accumulator : Sum.u64 = 74; SumSQ.u64 = 74; Count.u64 = 74; Min.u64 = 1; Max.u64 = 1; 
+ scratch.request_received_remote_write : Accumulator : Sum.u64 = 100; SumSQ.u64 = 100; Count.u64 = 100; Min.u64 = 1; Max.u64 = 1; 
+ scratch.request_received_scratch_get : Accumulator : Sum.u64 = 78; SumSQ.u64 = 78; Count.u64 = 78; Min.u64 = 1; Max.u64 = 1; 
+ scratch.request_received_scratch_put : Accumulator : Sum.u64 = 81; SumSQ.u64 = 81; Count.u64 = 81; Min.u64 = 1; Max.u64 = 1; 
+ scratch.request_issued_scratch_read : Accumulator : Sum.u64 = 161; SumSQ.u64 = 161; Count.u64 = 161; Min.u64 = 1; Max.u64 = 1; 
+ scratch.request_issued_scratch_write : Accumulator : Sum.u64 = 165; SumSQ.u64 = 165; Count.u64 = 165; Min.u64 = 1; Max.u64 = 1; 
+ memory.requests_received_GetS : Accumulator : Sum.u64 = 152; SumSQ.u64 = 152; Count.u64 = 152; Min.u64 = 1; Max.u64 = 1; 
+ memory.requests_received_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ memory.requests_received_GetX : Accumulator : Sum.u64 = 181; SumSQ.u64 = 181; Count.u64 = 181; Min.u64 = 1; Max.u64 = 1; 
+ memory.requests_received_PutM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ memory.outstanding_requests : Accumulator : Sum.u64 = 332410; SumSQ.u64 = 8703164; Count.u64 = 13248; Min.u64 = 0; Max.u64 = 33; 
+ memory.latency_GetS : Accumulator : Sum.u64 = 152181; SumSQ.u64 = 152362247; Count.u64 = 152; Min.u64 = 1001; Max.u64 = 1003; 
+ memory.latency_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ memory.latency_GetX : Accumulator : Sum.u64 = 177199; SumSQ.u64 = 177398247; Count.u64 = 177; Min.u64 = 1001; Max.u64 = 1003; 
+ memory.latency_PutM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ memory.cycles_with_issue : Accumulator : Sum.u64 = 333; SumSQ.u64 = 333; Count.u64 = 333; Min.u64 = 1; Max.u64 = 1; 
+ memory.cycles_attempted_issue_but_rejected : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ memory.total_cycles : Accumulator : Sum.u64 = 13248; SumSQ.u64 = 175509504; Count.u64 = 1; Min.u64 = 13248; Max.u64 = 13248; 
+Simulation is complete, simulated time: 13.248 us

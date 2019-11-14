@@ -180,7 +180,6 @@ dirctrl.addParams({
     "debug" : DEBUG_DIR,
     "debug_level" : DEBUG_LEVEL,
     "entry_cache_size" : "32768",
-    "net_memory_name" : "memory",
     "addr_range_end" : "0x1F000000",
     "addr_range_start" : "0x0",
 })
@@ -199,6 +198,8 @@ memctrl.addParams({
     "backing" : "none",
     "debug" : DEBUG_MEM,
     "debug_level" : DEBUG_LEVEL,
+    "addr_range_end" : "0x1F000000",
+    "addr_range_start" : "0x0",
 })
 memory = memctrl.setSubComponent("backend", "memHierarchy.simpleDRAM")
 memory.addParams({

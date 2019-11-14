@@ -64,6 +64,7 @@ bool MESISharNoninclusive::handleGetS(MemEvent* event, bool inMSHR) {
 
                 if (!mshr_->getProfiled(addr)) {
                     stat_eventState[(int)Command::GetS][state]->addData(1);
+                    stat_miss[0][inMSHR]->addData(1);
                     notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::MISS);
                     mshr_->setProfiled(addr);
                 }
@@ -79,7 +80,8 @@ bool MESISharNoninclusive::handleGetS(MemEvent* event, bool inMSHR) {
             break;
         case S:
             if (!inMSHR || !mshr_->getProfiled(addr)) {
-                stat_eventState[(int)Command::GetS][state]->addData(1);
+                stat_eventState[(int)Command::GetS][S]->addData(1);
+                stat_hit[0][inMSHR]->addData(1);
                 notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
                 if (inMSHR) mshr_->setProfiled(addr);
             }
@@ -127,6 +129,7 @@ bool MESISharNoninclusive::handleGetS(MemEvent* event, bool inMSHR) {
         case M:
             if (!inMSHR || !mshr_->getProfiled(addr)) {
                 stat_eventState[(int)Command::GetS][state]->addData(1);
+                stat_hit[0][inMSHR]->addData(1);
                 notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
                 if (inMSHR) mshr_->setProfiled(addr);
             }
@@ -233,7 +236,8 @@ bool MESISharNoninclusive::handleGetX(MemEvent * event, bool inMSHR) {
                 tag = dirArray_->lookup(addr, false);
 
                 if (!mshr_->getProfiled(addr)) {
-                    stat_eventState[(int)event->getCmd()][state]->addData(1);
+                    stat_eventState[(int)event->getCmd()][I]->addData(1);
+                    stat_miss[(event->getCmd() == Command::GetX ? 1 : 2)][inMSHR]->addData(1);
                     notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::MISS);
                     mshr_->setProfiled(addr);
                 }
@@ -251,8 +255,9 @@ bool MESISharNoninclusive::handleGetX(MemEvent * event, bool inMSHR) {
 
                 if (status == MemEventStatus::OK) {
                     if (!mshr_->getProfiled(addr)) {
-                        stat_eventState[(int)event->getCmd()][state]->addData(1);
-                        notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::HIT);
+                        stat_eventState[(int)event->getCmd()][S]->addData(1);
+                        stat_miss[(event->getCmd() == Command::GetX ? 1 : 2)][inMSHR]->addData(1);
+                        notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::MISS);
                         mshr_->setProfiled(addr);
                     }
                     recordPrefetchResult(tag, statPrefetchUpgradeMiss);
@@ -278,9 +283,10 @@ bool MESISharNoninclusive::handleGetX(MemEvent * event, bool inMSHR) {
             if (!tag->hasOtherSharers(event->getSrc()) && !tag->hasOwner()) {
                 if (is_debug_event(event))
                     eventDI.reason = "hit";
-                if (!inMSHR || mshr_->getProfiled(addr)) {
+                if (!inMSHR || !mshr_->getProfiled(addr)) {
                     notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::HIT);
                     stat_eventState[(int)event->getCmd()][state]->addData(1);
+                    stat_hit[(event->getCmd() == Command::GetX ? 1 : 2)][inMSHR]->addData(1);
                 }
                 tag->setOwner(event->getSrc());
                 if (tag->isSharer(event->getSrc())) {
@@ -301,6 +307,7 @@ bool MESISharNoninclusive::handleGetX(MemEvent * event, bool inMSHR) {
                 if (!mshr_->getProfiled(addr)) {
                     notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::HIT);
                     stat_eventState[(int)event->getCmd()][state]->addData(1);
+                    stat_hit[(event->getCmd() == Command::GetX ? 1 : 2)][inMSHR]->addData(1);
                     mshr_->setProfiled(addr);
                 }
                 recordLatencyType(event->getID(), LatType::INV);
@@ -464,16 +471,25 @@ bool MESISharNoninclusive::handleFlushLineInv(MemEvent* event, bool inMSHR) {
         eventDI.prefill(event->getID(), Command::FlushLineInv, false, addr, state);
 
     vector<uint8_t>* datavec = nullptr; 
+    recordLatencyType(event->getID(), LatType::HIT);
 
     switch (state) {
         case I:
             if (status == MemEventStatus::OK) {
                 forwardFlush(event, false, nullptr, false, 0);
                 mshr_->setInProgress(addr);
+                if (!mshr_->getProfiled(addr)) {
+                    stat_eventState[(int)Command::FlushLineInv][I]->addData(1);
+                    mshr_->setProfiled(addr);
+                }
             }
             break;
         case S:
             if (status == MemEventStatus::OK) {
+                if (!mshr_->getProfiled(addr)) {
+                    stat_eventState[(int)Command::FlushLineInv][S]->addData(1);
+                    mshr_->setProfiled(addr);
+                }
                 if (event->getEvict()) {
                     removeSharerViaInv(event, tag, data, false);
                     event->setEvict(false); // Don't replay eviction
@@ -495,6 +511,10 @@ bool MESISharNoninclusive::handleFlushLineInv(MemEvent* event, bool inMSHR) {
         case E:
         case M:
             if (status == MemEventStatus::OK) {
+                if (!mshr_->getProfiled(addr)) {
+                    stat_eventState[(int)Command::FlushLineInv][state]->addData(1);
+                    mshr_->setProfiled(addr);
+                }
                 if (event->getEvict()) {
                     if (tag->hasOwner())
                         removeOwnerViaInv(event, tag, data, false);
@@ -591,10 +611,15 @@ bool MESISharNoninclusive::handlePutS(MemEvent * event, bool inMSHR) {
         case M:
             if (!data && tag->numSharers() == 1) { // Need to allocate line
                 status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, false, -1);
-                if (status != MemEventStatus::OK)
+                if (status != MemEventStatus::OK) {
                     break;
+                }
                 status = processDataMiss(event, tag, data, true);
                 if (status != MemEventStatus::OK) {
+                    if (!mshr_->getProfiled(addr)) {
+                        stat_eventState[(int)Command::PutS][I]->addData(1);
+                        mshr_->setProfiled(addr);
+                    }
                     if (state == S) tag->setState(SA);
                     else if (state == E) tag->setState(EA);
                     else tag->setState(MA);
@@ -603,6 +628,9 @@ bool MESISharNoninclusive::handlePutS(MemEvent * event, bool inMSHR) {
                 data = dataArray_->lookup(addr, true);
                 data->setData(event->getPayload(), 0);
                 inMSHR = true;
+            }
+            if (!inMSHR || !mshr_->getProfiled(addr)) {
+                stat_eventState[(int)Command::PutS][I]->addData(1);
             }
             tag->removeSharer(event->getSrc());
             sendWritebackAck(event);
@@ -616,6 +644,9 @@ bool MESISharNoninclusive::handlePutS(MemEvent * event, bool inMSHR) {
             if (mshr_->decrementAcksNeeded(addr))
                 tag->setState(NextState[state]);
             sendWritebackAck(event);
+            if (inMSHR || !mshr_->getProfiled(addr)) {
+                stat_eventState[(int)Command::PutS][state]->addData(1);
+            }
             cleanUpAfterRequest(event, inMSHR);
             break;
         case S_B:
@@ -627,6 +658,9 @@ bool MESISharNoninclusive::handlePutS(MemEvent * event, bool inMSHR) {
             }
             tag->removeSharer(event->getSrc());
             sendWritebackAck(event);
+            if (inMSHR || !mshr_->getProfiled(addr)) {
+                stat_eventState[(int)Command::PutS][state]->addData(1);
+            }
             cleanUpEvent(event, inMSHR);
             break;
         case S_D:
@@ -647,6 +681,9 @@ bool MESISharNoninclusive::handlePutS(MemEvent * event, bool inMSHR) {
                 if (tag->numSharers() > 1) {
                     tag->removeSharer(event->getSrc());
                     sendWritebackAck(event);
+                    if (inMSHR || !mshr_->getProfiled(addr)) {
+                        stat_eventState[(int)Command::PutS][state]->addData(1);
+                    }
                     cleanUpEvent(event, inMSHR);
                 } else {
                     if (inMSHR)
@@ -661,6 +698,9 @@ bool MESISharNoninclusive::handlePutS(MemEvent * event, bool inMSHR) {
             }
             tag->removeSharer(event->getSrc());
             sendWritebackAck(event);
+            if (inMSHR || !mshr_->getProfiled(addr)) {
+                stat_eventState[(int)Command::PutS][state]->addData(1);
+            }
             cleanUpEvent(event, inMSHR);
             break;
         default:
@@ -702,6 +742,10 @@ bool MESISharNoninclusive::handlePutE(MemEvent * event, bool inMSHR) {
                     break;
                 status = processDataMiss(event, tag, data, true);
                 if (status != MemEventStatus::OK) {
+                    if (!inMSHR || !mshr_->getProfiled(addr)) {
+                        stat_eventState[(int)Command::PutE][state]->addData(1);
+                        mshr_->setProfiled(addr);
+                    }
                     state == E ? tag->setState(EA) : tag->setState(MA);
                     break;
                 }
@@ -711,6 +755,9 @@ bool MESISharNoninclusive::handlePutE(MemEvent * event, bool inMSHR) {
             }
             tag->removeOwner();
             sendWritebackAck(event);
+            if (!inMSHR || !mshr_->getProfiled(addr)) {
+                stat_eventState[(int)Command::PutE][state]->addData(1);
+            }
             cleanUpAfterRequest(event, inMSHR);
             break;
         case E_InvX:
@@ -727,6 +774,9 @@ bool MESISharNoninclusive::handlePutE(MemEvent * event, bool inMSHR) {
             if (data) {
                 sendWritebackAck(event);
                 cleanUpEvent(event, inMSHR);
+                if (!inMSHR || !mshr_->getProfiled(addr)) {
+                    stat_eventState[(int)Command::PutE][state]->addData(1);
+                }
             } else {
                 tag->addSharer(event->getSrc());
                 event->setCmd(Command::PutS);
@@ -752,6 +802,9 @@ bool MESISharNoninclusive::handlePutE(MemEvent * event, bool inMSHR) {
             sendWritebackAck(event);
             tag->setState(NextState[state]);
             cleanUpAfterRequest(event, inMSHR);
+            if (!inMSHR || !mshr_->getProfiled(addr)) {
+                stat_eventState[(int)Command::PutE][state]->addData(1);
+            }
             break;
         default:
             debug->fatal(CALL_INFO,-1,"%s, Error: Received PutE in unhandled state '%s'. Event: %s. Time = %" PRIu64 "ns\n",
@@ -788,6 +841,10 @@ bool MESISharNoninclusive::handlePutM(MemEvent * event, bool inMSHR) {
                 status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, false, -1);
                 if (status != MemEventStatus::OK)
                     break;
+                if (!inMSHR || !mshr_->getProfiled(addr)) {
+                    stat_eventState[(int)Command::PutM][state]->addData(1);
+                    mshr_->setProfiled(addr);
+                }
                 status = processDataMiss(event, tag, data, true);
                 if (status != MemEventStatus::OK) {
                     tag->setState(MA);
@@ -796,6 +853,8 @@ bool MESISharNoninclusive::handlePutM(MemEvent * event, bool inMSHR) {
                 data = dataArray_->lookup(addr, true);
                 data->setData(event->getPayload(), 0);
                 inMSHR = true;
+            } else if (!inMSHR || !mshr_->getProfiled(addr)) {
+                stat_eventState[(int)Command::PutM][state]->addData(1);
             }
             if (is_debug_event(event))
                 eventDI.reason = "hit";
@@ -816,6 +875,9 @@ bool MESISharNoninclusive::handlePutM(MemEvent * event, bool inMSHR) {
             
             // Handle PutM now if possible, later if not
             if (data) {
+                if (!inMSHR || !mshr_->getProfiled(addr)) {
+                    stat_eventState[(int)Command::PutM][state]->addData(1);
+                }
                 data->setData(event->getPayload(), 0);
                 sendWritebackAck(event);
                 cleanUpEvent(event, inMSHR);
@@ -836,6 +898,9 @@ bool MESISharNoninclusive::handlePutM(MemEvent * event, bool inMSHR) {
             break;
         case E_Inv:
         case M_Inv:
+            if (!inMSHR || !mshr_->getProfiled(addr)) {
+                stat_eventState[(int)Command::PutM][state]->addData(1);
+            }
             // Handle the coherence state part and buffer the data in the MSHR, we won't need a line because we're either losing the data or one of our children wants it
             tag->removeOwner();
             mshr_->decrementAcksNeeded(addr);
@@ -879,6 +944,10 @@ bool MESISharNoninclusive::handlePutX(MemEvent * event, bool inMSHR) {
     tag->addSharer(event->getSrc());
             
     sendWritebackAck(event);
+            
+    if (!inMSHR || !mshr_->getProfiled(addr)) {
+        stat_eventState[(int)Command::PutX][state]->addData(1);
+    }
 
     switch (state) {
         case E:
@@ -904,6 +973,7 @@ bool MESISharNoninclusive::handlePutX(MemEvent * event, bool inMSHR) {
                 mshr_->setData(addr, event->getPayload());
             
             mshr_->decrementAcksNeeded(addr);
+            
             cleanUpAfterRequest(event, inMSHR);
             break;
         case E_Inv:
@@ -952,9 +1022,13 @@ bool MESISharNoninclusive::handleFetch(MemEvent * event, bool inMSHR) {
         case I_B: // Happens if we sent a FlushLineInv and it raced with a Fetch
         case E_B: // Happens if we sent a FlushLine and it raced with Fetch
         case M_B: // Happens if we sent a FlushLine and it raced with Fetch
+            stat_eventState[(int)Command::Fetch][state]->addData(1);
             delete event;
             break;
         case S:
+            if (!inMSHR || !mshr_->getProfiled(addr)) {
+                stat_eventState[(int)Command::Fetch][state]->addData(1);
+            }
             if (data) {
                 sendResponseDown(event, data->getData(), false, false);
                 cleanUpEvent(event, inMSHR);
@@ -964,6 +1038,7 @@ bool MESISharNoninclusive::handleFetch(MemEvent * event, bool inMSHR) {
             } else {
                 status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, true, 0);
                 if (status == MemEventStatus::OK) {
+                    mshr_->setProfiled(addr);
                     tag->setState(S_D);
                     if (!applyPendingReplacement(addr))
                         sendTime = sendFetch(Command::Fetch, event, *(tag->getSharers()->begin()), inMSHR, tag->getTimestamp());
@@ -974,9 +1049,13 @@ bool MESISharNoninclusive::handleFetch(MemEvent * event, bool inMSHR) {
             //Look for a PutS in the MSHR
             put = static_cast<MemEvent*>(mshr_->getFirstEventEntry(addr, Command::PutS)); 
             sendResponseDown(event, &(put->getPayload()), false, false);
+            stat_eventState[(int)Command::Fetch][state]->addData(1);
             cleanUpEvent(event, inMSHR);
             break;
         case SM:
+            if (!inMSHR || !mshr_->getProfiled(addr)) {
+                stat_eventState[(int)Command::Fetch][state]->addData(1);
+            }
             if (data) {
                 sendResponseDown(event, data->getData(), false, false);
                 cleanUpEvent(event, inMSHR);
@@ -986,6 +1065,7 @@ bool MESISharNoninclusive::handleFetch(MemEvent * event, bool inMSHR) {
             } else {
                 status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, true, 0);
                 if (status == MemEventStatus::OK) {
+                    mshr_->setProfiled(addr);
                     tag->setState(SM_D);
                     sendTime = sendFetch(Command::Fetch, event, *(tag->getSharers()->begin()), inMSHR, tag->getTimestamp());
                 }
@@ -997,6 +1077,9 @@ bool MESISharNoninclusive::handleFetch(MemEvent * event, bool inMSHR) {
                 status = allocateMSHR(event, true, 1);
             break;
         case S_B:
+            if (!inMSHR || !mshr_->getProfiled(addr)) {
+                stat_eventState[(int)Command::Fetch][state]->addData(1);
+            }
             if (data) {
                 sendResponseDown(event, data->getData(), false, false);
                 cleanUpEvent(event, inMSHR);
@@ -1006,6 +1089,7 @@ bool MESISharNoninclusive::handleFetch(MemEvent * event, bool inMSHR) {
             } else {
                 status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, true, 0);
                 if (status == MemEventStatus::OK) {
+                    mshr_->setProfiled(addr);
                     tag->setState(SB_D);
                     sendTime = sendFetch(Command::Fetch, event, *(tag->getSharers()->begin()), inMSHR, tag->getTimestamp());
                 }
@@ -1016,7 +1100,6 @@ bool MESISharNoninclusive::handleFetch(MemEvent * event, bool inMSHR) {
                     getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
     
-    //stat_eventState[(int)Command::Fetch][state]->addData(1);
     if (is_debug_addr(addr) && tag) {
         eventDI.newst = tag->getState();
         eventDI.verboseline = tag->getString();
@@ -1049,6 +1132,7 @@ bool MESISharNoninclusive::handleInv(MemEvent * event, bool inMSHR) {
             if (data)
                 dataArray_->deallocate(data);
         case I:
+            stat_eventState[(int)Command::Inv][state]->addData(1);
             delete event;
             break;
         case S:
@@ -1056,6 +1140,12 @@ bool MESISharNoninclusive::handleInv(MemEvent * event, bool inMSHR) {
                 status = allocateMSHR(event, true, 0);
 
             if (status == MemEventStatus::OK) {
+                if (!mshr_->getProfiled(addr)) {
+                    recordPrefetchResult(tag, statPrefetchInv);
+                    stat_eventState[(int)Command::Inv][state]->addData(1);
+                    mshr_->setProfiled(addr);
+                }
+
                 if (tag->hasSharers()) {
                     if (!applyPendingReplacement(addr))
                         invalidateSharers(event, tag, inMSHR, false, Command::Inv);
@@ -1079,6 +1169,9 @@ bool MESISharNoninclusive::handleInv(MemEvent * event, bool inMSHR) {
             dirArray_->deallocate(tag);
             if (mshr_->hasData(addr))
                 mshr_->clearData(addr);
+            if (!inMSHR || !mshr_->getProfiled(addr)) {
+                stat_eventState[(int)Command::Inv][state]->addData(1);
+            }
             cleanUpEvent(event, inMSHR);
             cleanUpAfterRequest(put, true);
             break;
@@ -1087,17 +1180,26 @@ bool MESISharNoninclusive::handleInv(MemEvent * event, bool inMSHR) {
                 status = allocateMSHR(event, true, 1);
             break;
         case S_Inv: // Evict
-            if (!inMSHR)
+            if (!inMSHR) {
                 status = allocateMSHR(event, true, 0);
+                if (status == MemEventStatus::OK) {
+                    mshr_->setProfiled(addr);
+                    stat_eventState[(int)Command::Inv][state]->addData(1);
+                }
+            }
             break;
         case SM:
             if (tag->hasSharers() && !inMSHR)
                 status = allocateMSHR(event, true, 0);
 
             if (status == MemEventStatus::OK) {
+                if (!inMSHR || !mshr_->getProfiled(addr)) {
+                    stat_eventState[(int)Command::Inv][state]->addData(1);
+                }
                 if (tag->hasSharers()) {
                     invalidateSharers(event, tag, inMSHR, false, Command::Inv);
                     tag->setState(SM_Inv);
+                    mshr_->setProfiled(addr);
                 } else {
                     sendResponseDown(event, nullptr, false, true);
                     tag->setState(IM);
@@ -1108,17 +1210,26 @@ bool MESISharNoninclusive::handleInv(MemEvent * event, bool inMSHR) {
             }
             break;
         case SM_Inv:
-            if (!inMSHR)
+            if (!inMSHR) {
                 status = allocateMSHR(event, true, 0);
+                if (status == MemEventStatus::OK) {
+                    mshr_->setProfiled(addr);
+                    stat_eventState[(int)Command::Inv][state]->addData(1);
+                }
+            }
             break;
         case S_B:
             if (tag->hasSharers() && !inMSHR)
                 status = allocateMSHR(event, true, 0);
 
             if (status == MemEventStatus::OK) {
+                if (!inMSHR || !mshr_->getProfiled(addr)) {
+                    stat_eventState[(int)Command::Inv][state]->addData(1);
+                }
                 if (tag->hasSharers()) {
                     invalidateSharers(event, tag, inMSHR, false, Command::Inv);
                     tag->setState(SB_Inv);
+                    mshr_->setProfiled(addr);
                 } else {
                     sendResponseDown(event, nullptr, false, true);
                     dirArray_->deallocate(tag);
@@ -1134,8 +1245,6 @@ bool MESISharNoninclusive::handleInv(MemEvent * event, bool inMSHR) {
             debug->fatal(CALL_INFO,-1,"%s, Error: Received Inv in unhandled state '%s'. Event: %s. Time = %" PRIu64 "ns\n",
                     getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
-
-    //stat_eventState[(int)Command::Inv][state]->addData(1);
 
     if (is_debug_addr(addr) && tag) {
         eventDI.newst = tag->getState();
@@ -1168,6 +1277,7 @@ bool MESISharNoninclusive::handleForceInv(MemEvent * event, bool inMSHR) {
             if (data)
                 dataArray_->deallocate(data);
         case I:
+            stat_eventState[(int)Command::ForceInv][state]->addData(1);
             delete event;
             break;
         case S:
@@ -1175,6 +1285,11 @@ bool MESISharNoninclusive::handleForceInv(MemEvent * event, bool inMSHR) {
                 status = allocateMSHR(event, true, 0);
 
             if (status == MemEventStatus::OK) {
+                if (!inMSHR || !mshr_->getProfiled(addr)) {
+                    recordPrefetchResult(tag, statPrefetchInv);
+                    stat_eventState[(int)Command::ForceInv][state]->addData(1);
+                    if (tag->hasSharers()) mshr_->setProfiled(addr);
+                }
                 if (tag->hasSharers()) {
                     if (!applyPendingReplacement(addr))
                         invalidateSharers(event, tag, inMSHR, false, Command::ForceInv);
@@ -1197,14 +1312,20 @@ bool MESISharNoninclusive::handleForceInv(MemEvent * event, bool inMSHR) {
                 status = allocateMSHR(event, true, 0);
 
             if (status == MemEventStatus::OK) {
+                if (!inMSHR || !mshr_->getProfiled(addr)) {
+                    stat_eventState[(int)Command::ForceInv][state]->addData(1);
+                    recordPrefetchResult(tag, statPrefetchInv);
+                }
                 if (tag->hasSharers()) {
                     if (!applyPendingReplacement(addr)) 
                         invalidateSharers(event, tag, inMSHR, false, Command::ForceInv);
                     state == E ? tag->setState(E_Inv) : tag->setState(M_Inv);
+                    mshr_->setProfiled(addr);
                 } else if (tag->hasOwner()) {
                     if (!applyPendingReplacement(addr))
                         invalidateOwner(event, tag, inMSHR, Command::ForceInv);
                     state == E ? tag->setState(E_Inv) : tag->setState(M_Inv);
+                    mshr_->setProfiled(addr);
                 } else {
                     sendResponseDown(event, nullptr, false, true);
                     dirArray_->deallocate(tag);
@@ -1224,9 +1345,13 @@ bool MESISharNoninclusive::handleForceInv(MemEvent * event, bool inMSHR) {
                 status = allocateMSHR(event, true, 0);
 
             if (status == MemEventStatus::OK) {
+                if (!inMSHR || !mshr_->getProfiled(addr))  {
+                    stat_eventState[(int)Command::ForceInv][state]->addData(1);
+                }
                 if (tag->hasSharers()) {
                     invalidateSharers(event, tag, inMSHR, false, Command::ForceInv);
                     tag->setState(SB_Inv);
+                    mshr_->setProfiled(addr);
                 } else {
                     sendResponseDown(event, nullptr, false, true);
                     dirArray_->deallocate(tag);
@@ -1246,18 +1371,25 @@ bool MESISharNoninclusive::handleForceInv(MemEvent * event, bool inMSHR) {
             if (!inMSHR)
                 status = allocateMSHR(event, true, 1);
             break;
-        case S_Inv:     // Evict
-        case E_Inv:     // Evict
-        case M_Inv:     // Evict, Internal GetX
-            if (mshr_->getFrontType(addr) == MSHREntryType::Evict && !inMSHR) {
-                allocateMSHR(event, true, 0);
-            } else if (!inMSHR) {
-                allocateMSHR(event, true, 0);
-            } else if (!inMSHR) {
-                allocateMSHR(event, true, 1);
+        case S_Inv:     // Evict, FlushLineInv
+        case E_Inv:     // Evict, FlushLineInv
+        case M_Inv:     // Evict, FlushlIneInv, Internal GetX
+            if (!inMSHR) {
+                if (mshr_->getFrontType(addr) == MSHREntryType::Evict || mshr_->getFrontEvent(addr)->getCmd() == Command::FlushLineInv) {
+                    status = allocateMSHR(event, true, 0);
+                    if (status == MemEventStatus::OK) {
+                        mshr_->setProfiled(addr);
+                        stat_eventState[(int)Command::ForceInv][state]->addData(1);
+                    }
+                } else { // In a race with GetX/GetSX, let the other event complete first since it always can and this will avoid repeatedly losing the block before the Get* can complete
+                    status = allocateMSHR(event, true, 1);
+                }
             }
             break;
         case SM:
+            if (!inMSHR || !mshr_->getProfiled(addr)) {
+                stat_eventState[(int)Command::ForceInv][state]->addData(1);
+            }
             if (!tag->hasSharers()) {
                 sendResponseDown(event, nullptr, false, true);
                 tag->setState(IM);
@@ -1268,16 +1400,24 @@ bool MESISharNoninclusive::handleForceInv(MemEvent * event, bool inMSHR) {
                 if (status == MemEventStatus::OK) {
                     invalidateSharers(event, tag, inMSHR, false, Command::Inv);
                     tag->setState(SM_Inv);
+                    mshr_->setProfiled(addr);
                 }
             }
             break;
         case SM_Inv:
             if (!inMSHR)
                 status = allocateMSHR(event, true, 0);
+            if (status == MemEventStatus::OK) {
+                stat_eventState[(int)Command::ForceInv][state]->addData(1);
+                mshr_->setProfiled(addr);
+            }
             break;
         case SA:
         case EA:
         case MA:
+            if (!inMSHR || !mshr_->getProfiled(addr)) {
+                stat_eventState[(int)Command::ForceInv][state]->addData(1);
+            }
             // TODO make sure the pending eviction won't mess anything up when it tries to replay
             put = static_cast<MemEvent*>(mshr_->getFrontEvent(addr));
             sendWritebackAck(put);
@@ -1300,7 +1440,6 @@ bool MESISharNoninclusive::handleForceInv(MemEvent * event, bool inMSHR) {
             eventDI.verboseline += "/" + data->getString();
     }
     
-    //stat_eventState[(int)Command::ForceInv][state]->addData(1);
     if (status == MemEventStatus::Reject) 
         sendNACK(event);
 
@@ -1321,6 +1460,7 @@ bool MESISharNoninclusive::handleFetchInv(MemEvent * event, bool inMSHR){
     MemEvent * put;
     switch (state) {
         case I:
+            stat_eventState[(int)Command::FetchInv][state]->addData(1);
             delete event;
             break;
         case S:
@@ -1328,6 +1468,11 @@ bool MESISharNoninclusive::handleFetchInv(MemEvent * event, bool inMSHR){
                 status = allocateMSHR(event, true, 0);
 
             if (status == MemEventStatus::OK) {
+                if (!inMSHR || !mshr_->getProfiled(addr)) {
+                    recordPrefetchResult(tag, statPrefetchInv);
+                    stat_eventState[(int)Command::FetchInv][state]->addData(1);
+                    if (tag->hasSharers()) mshr_->setProfiled(addr);
+                }
                 if (tag->hasSharers()) {
                     tag->setState(S_Inv);
                     if (!applyPendingReplacement(addr))
@@ -1353,6 +1498,11 @@ bool MESISharNoninclusive::handleFetchInv(MemEvent * event, bool inMSHR){
                 status = allocateMSHR(event, true, 0);
 
             if (status == MemEventStatus::OK) {
+                if (!inMSHR || !mshr_->getProfiled(addr)) {
+                    stat_eventState[(int)Command::FetchInv][state]->addData(1);
+                    if (tag->hasOwner() || tag->hasSharers()) mshr_->setProfiled(addr);
+                    recordPrefetchResult(tag, statPrefetchInv);
+                }
                 if (applyPendingReplacement(addr)) {
                     state == E ? tag->setState(E_Inv) : tag->setState(M_Inv);
                 } else if (tag->hasSharers()) {
@@ -1383,6 +1533,10 @@ bool MESISharNoninclusive::handleFetchInv(MemEvent * event, bool inMSHR){
                 status = allocateMSHR(event, true, 0);
 
             if (status == MemEventStatus::OK) {
+                if (!inMSHR || !mshr_->getProfiled(addr)) {
+                    stat_eventState[(int)Command::FetchInv][state]->addData(1);
+                    if (tag->hasSharers()) mshr_->setProfiled(addr);
+                }
                 if (tag->hasSharers()) {
                     invalidateSharers(event, tag, inMSHR, !data, Command::Inv);
                     tag->setState(SB_Inv);
@@ -1408,6 +1562,9 @@ bool MESISharNoninclusive::handleFetchInv(MemEvent * event, bool inMSHR){
         case SA:
         case EA:
         case MA:
+            if (!inMSHR || !mshr_->getProfiled(addr)) {
+                stat_eventState[(int)Command::FetchInv][state]->addData(1);
+            }
             // TODO make sure the pending eviction won't mess anything up when it tries to replay
             put = static_cast<MemEvent*>(mshr_->getFrontEvent(addr));
             sendWritebackAck(put);
@@ -1420,6 +1577,9 @@ bool MESISharNoninclusive::handleFetchInv(MemEvent * event, bool inMSHR){
             break;
         case SM:
             if (!tag->hasSharers()) {
+                if (!inMSHR || !mshr_->getProfiled(addr)) {
+                    stat_eventState[(int)Command::FetchInv][state]->addData(1);
+                }
                 tag->setState(IM);
                 if (data)
                     sendResponseDown(event, data->getData(), false, true);
@@ -1434,6 +1594,10 @@ bool MESISharNoninclusive::handleFetchInv(MemEvent * event, bool inMSHR){
             if (!inMSHR)
                 status = allocateMSHR(event, true, 0);
             if (status == MemEventStatus::OK) {
+                if (!inMSHR || !mshr_->getProfiled(addr)) {
+                    mshr_->setProfiled(addr);
+                    stat_eventState[(int)Command::FetchInv][state]->addData(1);
+                }
                 if (tag->hasSharers()) {
                     invalidateSharers(event, tag, inMSHR, !data && !mshr_->hasData(addr), Command::Inv);
                     tag->setState(SM_Inv);
@@ -1442,16 +1606,25 @@ bool MESISharNoninclusive::handleFetchInv(MemEvent * event, bool inMSHR){
             }
             break;
         case SM_Inv:
-            if (!inMSHR)
+            if (!inMSHR) {
                 status = allocateMSHR(event, true, 0);
+                if (status == MemEventStatus::OK) {
+                    mshr_->setProfiled(addr);
+                    stat_eventState[(int)Command::FetchInv][state]->addData(1);
+                }
+            }
             break;
         case S_Inv:
         case E_Inv:
         case M_Inv:
-            if (mshr_->getFrontType(addr) == MSHREntryType::Evict) {
-                allocateMSHR(event, true, 0);
+            if (mshr_->getFrontType(addr) == MSHREntryType::Evict || mshr_->getFrontEvent(addr)->getCmd() == Command::FlushLineInv) {
+                status = allocateMSHR(event, true, 0);
+                if (status == MemEventStatus::OK) {
+                    mshr_->setProfiled(addr);
+                    stat_eventState[(int)Command::FetchInv][state]->addData(1);
+                }
             } else if (!inMSHR) {
-                allocateMSHR(event, true, 1);
+                status = allocateMSHR(event, true, 1);
             }
             break;
         case E_InvX:
@@ -1464,7 +1637,6 @@ bool MESISharNoninclusive::handleFetchInv(MemEvent * event, bool inMSHR){
                     getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
 
-    //stat_eventState[(int)Command::FetchInv][state]->addData(1);
     if (is_debug_addr(addr) && tag) {
         eventDI.newst = tag->getState();
         eventDI.verboseline = tag->getString();
@@ -1498,11 +1670,17 @@ bool MESISharNoninclusive::handleFetchInvX(MemEvent * event, bool inMSHR) {
             dirArray_->deallocate(tag);
             if (data) dataArray_->deallocate(data);
         case I:
+            if (!inMSHR || !mshr_->getProfiled(addr)) {
+                stat_eventState[(int)Command::FetchInvX][state]->addData(1);
+            }
             delete event;
             break;
         case E_B:
         case M_B:
             tag->setState(S_B);
+            if (!inMSHR || !mshr_->getProfiled(addr)) {
+                stat_eventState[(int)Command::FetchInvX][state]->addData(1);
+            }
             delete event;
             break;
         case E:
@@ -1511,18 +1689,23 @@ bool MESISharNoninclusive::handleFetchInvX(MemEvent * event, bool inMSHR) {
                 status = allocateMSHR(event, true, 0);
             if (status != MemEventStatus::OK)
                 break;
+            if (!inMSHR || !mshr_->getProfiled(addr)) {
+                stat_eventState[(int)Command::FetchInvX][state]->addData(1);
+            }
             if (tag->hasOwner()) { // Get data from owner
                 if (!applyPendingReplacement(addr)) {
                     sendTime = sendFetch(Command::FetchInvX, event, tag->getOwner(), inMSHR, tag->getTimestamp());
                     tag->setTimestamp(sendTime-1);
                 }
                 state == E ? tag->setState(E_InvX) : tag->setState(M_InvX);
+                mshr_->setProfiled(addr);
             } else if (!data && !mshr_->hasData(addr)) {
                 if (!applyPendingReplacement(addr)) {
                     sendTime = sendFetch(Command::Fetch, event, *(tag->getSharers()->begin()), inMSHR, tag->getTimestamp()); 
                     tag->setTimestamp(sendTime-1); 
                 }
                 state == E ? tag->setState(E_D) : tag->setState(M_D);
+                mshr_->setProfiled(addr);
             } else {
                 if (data)
                     sendResponseDown(event, data->getData(), state == M, true); // TODO Double check that a downgrade counts as an evict
@@ -1534,6 +1717,9 @@ bool MESISharNoninclusive::handleFetchInvX(MemEvent * event, bool inMSHR) {
             break;
         case EA:
         case MA:
+            if (!inMSHR || mshr_->getProfiled(addr)) {
+                stat_eventState[(int)Command::FetchInvX][state]->addData(1);
+            }
             req = static_cast<MemEvent*>(mshr_->getFrontEvent(addr));
             sendResponseDown(event, &(req->getPayload()), state == M, true); // TODO Double check that a downgrade counts as an evict
             // Clean up so that when we replay the replacement we get the right downgraded state
@@ -1556,8 +1742,6 @@ bool MESISharNoninclusive::handleFetchInvX(MemEvent * event, bool inMSHR) {
             debug->fatal(CALL_INFO,-1,"%s, Error: Received FetchInvX in unhandled state '%s'. Event: %s. Time = %" PRIu64 "ns\n",
                     getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
-
-    //stat_eventState[(int)Command::FetchInvX][state]->addData(1);
 
     if (is_debug_addr(addr) && tag) {
         eventDI.newst = tag->getState();
@@ -1587,6 +1771,8 @@ bool MESISharNoninclusive::handleGetSResp(MemEvent * event, bool inMSHR) {
     
     if (is_debug_event(event))
         eventDI.prefill(event->getID(), Command::GetSResp, localPrefetch, addr, state);
+
+    stat_eventState[(int)Command::GetSResp][state]->addData(1);
    
     tag->setState(S);
     if (data)
@@ -1634,6 +1820,8 @@ bool MESISharNoninclusive::handleGetXResp(MemEvent * event, bool inMSHR) {
     if (data)
         data->setData(event->getPayload(), 0);
    
+    stat_eventState[(int)Command::GetXResp][state]->addData(1);
+    
     switch (state) {
         case IS:
         {
@@ -1700,7 +1888,6 @@ bool MESISharNoninclusive::handleGetXResp(MemEvent * event, bool inMSHR) {
                     getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
 
-    //stat_eventState[(int)Command::GetXResp][state]->addData(1);
     if (is_debug_addr(addr) && tag) {
         eventDI.newst = tag->getState();
         eventDI.verboseline = tag->getString();
@@ -1721,7 +1908,7 @@ bool MESISharNoninclusive::handleFlushLineResp(MemEvent * event, bool inMSHR) {
     if (is_debug_event(event))
         eventDI.prefill(event->getID(), Command::FlushLineResp, false, addr, state);
 
-    //stat_eventState[(int)Command::FlushLineResp][state]->addData(1);
+    stat_eventState[(int)Command::FlushLineResp][state]->addData(1);
 
     MemEvent * req = static_cast<MemEvent*>(mshr_->getFrontEvent(event->getBaseAddr()));
 
@@ -1780,6 +1967,8 @@ bool MESISharNoninclusive::handleFetchResp(MemEvent * event, bool inMSHR) {
     else
         mshr_->setData(addr, event->getPayload());
 
+    stat_eventState[(int)Command::FetchResp][state]->addData(1);
+    
     switch (state) {
         case S_D:
         case E_D:
@@ -1853,6 +2042,9 @@ bool MESISharNoninclusive::handleFetchXResp(MemEvent * event, bool inMSHR) {
         eventDI.prefill(event->getID(), Command::FetchXResp, false, addr, state);
         eventDI.action = "Retry";
     }
+    
+    stat_eventState[(int)Command::FetchXResp][state]->addData(1);
+    
     mshr_->decrementAcksNeeded(addr);
 
     // Clear expected responses
@@ -1897,6 +2089,7 @@ bool MESISharNoninclusive::handleAckInv(MemEvent * event, bool inMSHR) {
     if (is_debug_event(event))
         eventDI.prefill(event->getID(), Command::AckInv, false, addr, state);
    
+    stat_eventState[(int)Command::AckInv][state]->addData(1);
 
     if (tag->isSharer(event->getSrc()))
         tag->removeSharer(event->getSrc());
@@ -1929,10 +2122,10 @@ bool MESISharNoninclusive::handleAckInv(MemEvent * event, bool inMSHR) {
 
 
 bool MESISharNoninclusive::handleAckPut(MemEvent * event, bool inMSHR) {
-    //stat_eventState[(int)Command::AckPut][state]->addData(1);
+    DirectoryLine * tag = dirArray_->lookup(event->getBaseAddr(), false);
+    State state = tag ? tag->getState() : I;
+    stat_eventState[(int)Command::AckPut][state]->addData(1);
     if (is_debug_event(event)) {
-        DirectoryLine * tag = dirArray_->lookup(event->getBaseAddr(), false);
-        State state = tag ? tag->getState() : I;
         eventDI.prefill(event->getID(), Command::AckPut, false, event->getBaseAddr(), state);
         eventDI.action = "Done";
         if (tag)

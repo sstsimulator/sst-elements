@@ -139,7 +139,6 @@ bool Cache::clockTick(Cycle_t time) {
         if (processEvent(*it, false)) {
             accepted++;
             statRecvEvents->addData(1);
-            statCacheRecv[(int)cmd]->addData(1);
             it = eventBuffer_.erase(it);
         } else {
             it++;
@@ -218,6 +217,8 @@ bool Cache::processEvent(MemEventBase* ev, bool inMSHR) {
         processNoncacheable(ev);
         return true;
     }
+            
+    statCacheRecv[(int)ev->getCmd()]->addData(1);
 
     /* Handle cache events */
     MemEvent * event = static_cast<MemEvent*>(ev);

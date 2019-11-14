@@ -173,7 +173,6 @@ comp_dir.addParams({
     "memNIC.network_bw" : "80GiB/s",
     "memNIC.addr_range_start" : 0,
     "memNIC.group" : 2,
-    "net_memory_name" : "scratch"
 })
 scratch = sst.Component("scratch", "memHierarchy.Scratchpad")
 scratch.addParams({

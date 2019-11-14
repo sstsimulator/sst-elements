@@ -154,7 +154,7 @@ class Config:
     def getMemCtrlParams(self):
         return dict({
             "backing" : "none",
-            "debug" : "1",
+            "debug" : "0",
             "clock" : "1GHz",
             #"clock" : self.memory_clock,
             "customCmdHandler" : "memHierarchy.amoCustomCmdHandler",

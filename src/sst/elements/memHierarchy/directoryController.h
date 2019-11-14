@@ -83,36 +83,59 @@ public:
             {"network_data","For split networks, link to data network",             { "memHierarchy.MemRtrEvent" } })
 
     SST_ELI_DOCUMENT_STATISTICS(
-            {"replacement_request_latency",     "Total latency in ns of all replacement (put*) requests handled",       "nanoseconds",  1},
-            {"get_request_latency",             "Total latency in ns of all get* requests handled",                     "nanoseconds",  1},
-            {"directory_cache_hits",            "Number of requests that hit in the directory cache",                   "requests",     1},
-            {"mshr_hits",                       "Number of requests that hit in the MSHRs",                             "requests",     1},
-            {"requests_received_GetS",          "Number of GetS (read-shared) requests received",                       "requests",     1},
-            {"requests_received_GetX",          "Number of GetX (write-exclusive) requests received",                   "requests",     1},
-            {"requests_received_GetSX",        "Number of GetSX (read-exclusive) requests received",                    "requests",     1},
-            {"requests_received_PutS",          "Number of PutS (shared replacement) requests received",                "requests",     1},
-            {"requests_received_PutE",          "Number of PutE (clean exclusive replacement) requests received",       "requests",     1},
-            {"requests_received_PutM",          "Number of PutM (dirty exclusive replacement) requests received",       "requests",     1},
-            {"requests_received_noncacheable",  "Number of noncacheable requests that were received and forwarded",     "requests",     1},
-            {"requests_received_custom",        "Number of custom requests that were received and forwarded",           "requests",     1},
-            {"responses_received_NACK",         "Number of NACK responses received",                                    "responses",    1},
-            {"responses_received_FetchResp",    "Number of FetchResp responses received (response to FetchInv/Fetch)",  "responses",    1},
-            {"responses_received_FetchXResp",   "Number of FetchXResp responses received (response to FetchXInv) ",     "responses",    1},
-            {"responses_received_PutS",         "Number of PutS (shared replacement) requests received that raced with an Inv/Fetch* and were treated as a response to that Inv/Fetch*",   "requests",     1},
-            {"responses_received_PutE",         "Number of PutE (clean exclusive replacement) requests received that raced with a Fetch* and were treated as a response to that Fetch*",   "requests",     1},
-            {"responses_received_PutM",         "Number of PutM (dirty exclusive replacement) requests received that raced with a Fetch* and were treated as a response to that Fetch*",   "requests",     1},
-            {"memory_requests_directory_entry_read", "Number of read requests for a directory entry sent to memory",    "requests",     1},
-            {"memory_requests_directory_entry_write","Number of write requests for a directory entry sent to memory",   "requests",     1},
-            {"memory_requests_data_read",       "Number of read requests for data sent to memory",                      "requests",     1},
-            {"memory_requests_data_write",      "Number of write requests for data sent to memory",                     "requests",     1},
-            {"requests_sent_Inv",               "Number of Inv (invalidate) requests sent to LLCs",                     "requests",     1},
-            {"requests_sent_FetchInv",          "Number of FetchInv (invalidate and fetch exclusive data) requests sent to LLCs",   "requests",     1},
-            {"requests_sent_FetchInvX",         "Number of FetchInvX (fetch exclusive data and downgrade) requests sent to LLCs",   "requests",     1},
-            {"responses_sent_NACK",             "Number of NACK responses sent to LLCs",                                            "responses",    1},
-            {"responses_sent_GetSResp",         "Number of GetSResp (data response to GetS or GetSX) responses sent to LLCs",       "responses",    1},
-            {"responses_sent_GetXResp",         "Number of GetXResp (data response to GetX) responses sent to LLCs",                "responses",    1},
-            {"MSHR_occupancy",                  "Number of events in MSHR each cycle",                                  "events",       1},
-            {"default_stat",                    "Default statistic. If not 0 then a statistic is missing", "", 1})
+            {"replacement_request_latency", "Total latency in ns of all replacement (put*) requests handled",   "nanoseconds",  1},
+            {"get_request_latency",         "Total latency in ns of all get* requests handled",                 "nanoseconds",  1},
+            {"directory_cache_hits",        "Number of requests that hit in the directory cache",               "requests",     1},
+            {"mshr_hits",                   "Number of requests that hit in the MSHRs",                         "requests",     1},
+            /* Event received */
+            {"GetS_recv",           "Event received: GetS (read-shared)", "count", 1},
+            {"GetX_recv",           "Event received: GetX (write-exclusive)", "count", 1},
+            {"GetSX_recv",          "Event received: GetSX (read-exclusive)", "count", 1},
+            {"GetSResp_recv",       "Event received: GetSResp (shared data)", "count", 1}, 
+            {"GetXResp_recv",       "Event received: GetXResp (exclusive data)", "count", 1},
+            {"PutS_recv",           "Event received: PutS (shared replacement)", "count", 2},
+            {"PutE_recv",           "Event received: PutE (clean exclusive replacement)", "count", 2},
+            {"PutM_recv",           "Event received: PutM (dirty exclusive replacement)", "count", 2},
+            {"PutX_recv",           "Event received: PutX (downgrade exclusive to shared)", "count", 2},
+            {"ForceInv_recv",       "Event received: ForceInv (invalidate & drop data)",    "count", 2},
+            {"FetchInv_recv",       "Event received: FetchInv (invalidate & return data)",  "count", 2},
+            {"FetchResp_recv",      "Event received: FetchResp (response to FetchInv/Fetch)", "count", 2},
+            {"FetchXResp_recv",     "Event received: FetchXResp (response to FetchInvX)", "count", 2},
+            {"AckInv_recv",         "Event received: AckInv (response to Inv/FetchInv/ForceInv)", "count", 2},
+            {"FlushLine_recv",      "Event received: FlushLine (flush, don't invalidate)", "count", 2},
+            {"FlushLineInv_recv",   "Event received: FlushLineInv (flush and invalidate)", "count", 2},
+            {"FlushLineResp_recv",  "Event received: FlushLineResp (response to FlushLine/Inv)", "count", 2},
+            {"NACK_recv",           "Event received: NACK", "count", 2},
+            {"GetS_uncache_recv",   "Noncacheable Event: GetS received", "count", 4},
+            {"GetX_uncache_recv",   "Noncacheable Event: GetX received", "count", 4},
+            {"GetSX_uncache_recv",  "Noncacheable Event: GetSX received", "count", 4},
+            {"GetSResp_uncache_recv",   "Noncacheable Event: GetSResp received", "count", 4},
+            {"GetXResp_uncache_recv",   "Noncacheable Event: GetXResp received", "count", 4},
+            {"CustomReq_uncache_recv",  "Noncacheable Event: CustomReq received", "count", 4},
+            {"CustomResp_uncache_recv", "Noncacheable Event: CustomResp received", "count", 4},
+            {"CustomAck_uncache_recv",  "Noncacheable Event: CustomAck received", "count", 4},
+            /* Event sends */
+            {"eventSent_read_directory_entry",  "Event sent: Read (GetS) a directory entry from memory", "count", 2},
+            {"eventSent_write_directory_entry", "Event sent: Write (PutM) a directory entry to memory", "count", 2},
+            {"eventSent_GetS",          "Event sent: GetS", "count", 1},
+            {"eventSent_GetX",          "Event sent: GetX", "count", 1},
+            {"eventSent_GetSX",         "Event sent: GetX", "count", 1},
+            {"eventSent_PutM",          "Event sent: PutM", "count", 1},
+            {"eventSent_Inv",           "Event sent: Inv", "count", 2},
+            {"eventSent_FetchInv",      "Event sent: FetchInv", "count", 2},
+            {"eventSent_FetchInvX",     "Event sent: FetchInvX","count", 2},
+            {"eventSent_ForceInv",      "Event sent: ForceInv", "count", 2},
+            {"eventSent_NACK",          "Event sent: NACK", "count", 2},
+            {"eventSent_GetSResp",      "Event sent: GetSResp (shared data response)", "count", 1},
+            {"eventSent_GetXResp",      "Event sent: GetXResp (exclusive data response)", "count", 1},
+            {"eventSent_FetchResp",     "Event sent: FetchResp", "count", 2},
+            {"eventSent_AckInv",        "Event sent: AckInv", "count", 2},
+            {"eventSent_AckPut",        "Event sent: AckPut", "count", 2},
+            {"eventSent_FlushLine",     "Event sent: FlushLine", "count", 2},
+            {"eventSent_FlushLineInv",  "Event sent: FlushLineInv", "count", 2},
+            {"eventSent_FlushLineResp", "Event sent: FlushLineResp", "count", 2},
+            {"MSHR_occupancy",          "Number of events in MSHR each cycle",  "events",       1},
+            {"default_stat",            "Default statistic. If not 0 then a statistic is missing", "", 1})
             
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
             {"cpulink", "CPU-side link manager, for single-link directories, use this one only", "SST::MemHierarchy::MemLinkBase"},
@@ -140,27 +163,21 @@ private:
     TimeConverter* defaultTimeBase;
     SimTime_t   lastActiveClockCycle;
 
+    std::map<SST::Event::id_type, uint64_t> startTimes;
+
     /* Statistics counters for profiling DC */
     Statistic<uint64_t> * stat_replacementRequestLatency;   // totalReplProcessTime
     Statistic<uint64_t> * stat_getRequestLatency;           // totalGetReqProcessTime;
     Statistic<uint64_t> * stat_cacheHits;                   // numCacheHits;
     Statistic<uint64_t> * stat_mshrHits;                    // mshrHits;
-    // Received events - from caches
+    // Received events
     Statistic<uint64_t> * stat_eventRecv[(int)Command::LAST_CMD];
-    Statistic<uint64_t> * stat_NoncacheReceived;
-    Statistic<uint64_t> * stat_CustomReceived;
-    // Sent events - to mem
-    Statistic<uint64_t> * stat_dataReads;
-    Statistic<uint64_t> * stat_dataWrites;
+    Statistic<uint64_t> * stat_noncacheRecv[(int)Command::LAST_CMD];
+    // Sent events
+    Statistic<uint64_t> * stat_eventSent[(int)Command::LAST_CMD];
     Statistic<uint64_t> * stat_dirEntryReads;
     Statistic<uint64_t> * stat_dirEntryWrites;
-    // Sent events - to caches
-    Statistic<uint64_t> * stat_NACKRespSent;
-    Statistic<uint64_t> * stat_InvSent;
-    Statistic<uint64_t> * stat_FetchInvSent;
-    Statistic<uint64_t> * stat_FetchInvXSent;
-    Statistic<uint64_t> * stat_GetSRespSent;
-    Statistic<uint64_t> * stat_GetXRespSent;
+    
     Statistic<uint64_t> * stat_MSHROccupancy;
 
     /* Queue of packets to work on */
@@ -180,6 +197,7 @@ private:
 
     void turnClockOn();
 
+    inline void recordStartLatency(MemEventBase* ev);
     inline void profileRequestSent(MemEvent* event);
     inline void profileResponseSent(MemEvent* event);
 
@@ -367,8 +385,19 @@ private:
     MSHR * mshr;
     std::unordered_map<Addr, DirEntry*> directory; // Master list of all directory entries, including noncached ones
 
+    
+    struct MemMsg { 
+        MemEventBase * event;
+        bool dirAccess;
+
+        MemMsg(MemEventBase * ev, bool da) {
+            event = ev;
+            dirAccess = da;
+        }
+    };
+
     std::multimap<uint64_t,MemEventBase*>   cpuMsgQueue;
-    std::multimap<uint64_t,MemEventBase*>   memMsgQueue;
+    std::multimap<uint64_t,MemMsg>   memMsgQueue;
 
     uint64_t    entryCacheMaxSize;
     uint64_t    entryCacheSize;

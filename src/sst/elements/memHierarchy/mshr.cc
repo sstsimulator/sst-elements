@@ -197,8 +197,6 @@ MemEventBase* MSHR::getFirstEventEntry(Addr addr, Command cmd) {
 }
 
 std::list<Addr>* MSHR::getEvictPointers(Addr addr) {
-//    if (is_debug_addr(addr))
-//        d_->debug(_L20_, "    MSHR::getEvictPointers(0x%" PRIx64 ")\n", addr);
     if (getFrontType(addr) != MSHREntryType::Evict)
         d_->fatal(CALL_INFO, -1, "%s, Error: MSHR::getEvictPointers(0x%" PRIx64 "). Entry type is not Evict.\n", ownerName_.c_str(), addr);
 
@@ -207,8 +205,6 @@ std::list<Addr>* MSHR::getEvictPointers(Addr addr) {
 
 // Return whether we should retry a new event or not
 bool MSHR::removeEvictPointer(Addr addr, Addr addrPtr) {
-//    if (is_debug_addr(addr))
-//        d_->debug(_L10_, "    MSHR::removeEvictPointer(0x%" PRIx64 ", 0x%" PRIx64 ")\n", addr, addrPtr);
     if (getFrontType(addr) == MSHREntryType::Event)
         d_->fatal(CALL_INFO, -1, "%s, Error: MSHR::removeEvictPointer(0x%" PRIx64 ", 0x%" PRIx64 "). Front entry type is not Evict or Writeback.\n", ownerName_.c_str(), addr, addrPtr);
         
@@ -250,16 +246,12 @@ bool MSHR::pendingWritebackIsDowngrade(Addr addr) {
 }
 
 int MSHR::insertEvent(Addr addr, MemEventBase* event, int pos, bool fwdRequest, bool stallEvict) {
-    //if (is_debug_addr(addr))
-    //    d_->debug(_L10_, "    MSHR::insertEvent(0x%" PRIx64 "). Size: %d\n", addr, size_);
     if ((size_ == maxSize_) || (!fwdRequest && (size_ == maxSize_-1))) {
         if (is_debug_addr(addr)) {
             stringstream reason;
             reason << "<" << event->getID().first << "," << event->getID().second << "> FAILED " << (fwdRequest ? "fwd, " : "") << "maxsz: " << maxSize_;
             printDebug(10, "InsEv", addr, reason.str());
         }
-//        if (is_debug_addr(addr))
-//            d_->debug(_L10_, "    MSHR::insertEvent, unable to insert (fwdRequest ? %s). size: %d. maxSize_: %d\n", fwdRequest ? "T" : "F", size_, maxSize_);
         return -1;
     }
 
@@ -395,8 +387,6 @@ void MSHR::setInProgress(Addr addr, bool value) {
 }
 
 bool MSHR::getInProgress(Addr addr) {
-//    if (is_debug_addr(addr))
-//        d_->debug(_L20_, "    MSHR::getInProgress(0x%" PRIx64 ")\n", addr);
     if (mshr_.find(addr) == mshr_.end()) {
         d_->fatal(CALL_INFO, -1, "%s, Error: MSHR::getInProgress(0x%" PRIx64 "). Address does not exist in MSHR.\n", ownerName_.c_str(), addr);
     }
@@ -407,8 +397,6 @@ bool MSHR::getInProgress(Addr addr) {
 }
 
 void MSHR::setStalledForEvict(Addr addr, bool set) {
-//    if (is_debug_addr(addr))
-//        d_->debug(_L10_, "    MSHR::setStalledForEvict(0x%" PRIx64 ")\n", addr);
     if (is_debug_addr(addr)) {
         if (set)
             printDebug(20, "Stall", addr, "");
@@ -426,8 +414,6 @@ void MSHR::setStalledForEvict(Addr addr, bool set) {
 }
 
 bool MSHR::getStalledForEvict(Addr addr) {
-//    if (is_debug_addr(addr))
-//        d_->debug(_L20_, "    MSHR::getStalledForEvict(0x%" PRIx64 ")\n", addr);
     if (mshr_.find(addr) == mshr_.end()) {
         return false;
     }
@@ -438,8 +424,6 @@ bool MSHR::getStalledForEvict(Addr addr) {
 }
 
 void MSHR::setProfiled(Addr addr) {
-//    if (is_debug_addr(addr))
-//        d_->debug(_L10_, "    MSHR::setProfiled(0x%" PRIx64 ")\n", addr);
     if (is_debug_addr(addr))
         printDebug(20, "Profile", addr, "");
     
