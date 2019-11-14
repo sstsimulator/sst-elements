@@ -1,7 +1,5 @@
 EMBER: using param directory: paramFiles
 EMBER: platform: default
-8x8
-8
 EMBER: network: topology=hyperx shape=8x8
 EMBER: numNodes=512 numNics=512
 EMBER: network: BW=4GB/s pktSize=2048B flitSize=8B

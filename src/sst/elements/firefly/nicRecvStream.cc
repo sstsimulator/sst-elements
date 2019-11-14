@@ -94,7 +94,7 @@ void Nic::RecvMachine::StreamBase::ready( bool finished, uint64_t pktNum ) {
     }
     if ( m_wakeupCallback ) {
         m_dbg.verbosePrefix(prefix(),CALL_INFO,1,NIC_DBG_RECV_STREAM, "wakeup recv machine\n");
-        m_wakeupCallback( );
+        m_ctx->schedCallback( m_wakeupCallback );
         m_wakeupCallback = NULL;
     }
 }
