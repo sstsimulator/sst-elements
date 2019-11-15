@@ -16,6 +16,8 @@
 #ifndef MEMHIERARCHY_COHERENCECONTROLLER_H
 #define MEMHIERARCHY_COHERENCECONTROLLER_H
 
+#include <array>
+
 #include <sst/core/sst_config.h>
 #include <sst/core/subcomponent.h>
 #include <sst/core/event.h>

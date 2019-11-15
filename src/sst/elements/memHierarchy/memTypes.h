@@ -59,7 +59,7 @@ enum class MemEventType { Cache, Move, Custom };                    // For parsi
     X(PutS,             AckPut,         Request,    Request,        1, 1,   Cache)   /* Clean replacement from S->I:      Remove sharer */\
     X(PutM,             AckPut,         Request,    Request,        1, 1,   Cache)   /* Dirty replacement from M/O->I:    Remove owner and writeback data */\
     X(PutE,             AckPut,         Request,    Request,        1, 1,   Cache)   /* Clean replacement from E->I:      Remove owner but don't writeback data */\
-    X(PutX,             AckPut,         Request,    Request,        1, 1,   Cache)   /* Clean downgrade from E->S:        Remove owner, add as sharer, don't writeback data */\ 
+    X(PutX,             AckPut,         Request,    Request,        1, 1,   Cache)   /* Clean downgrade from E->S:        Remove owner, add as sharer, don't writeback data */\
     /* Invalidations*/\
     X(Inv,              AckInv,         Request,    ForwardRequest, 0, 0,   Cache)   /* Other write request:  Invalidate cache line */\
     X(ForceInv,         AckInv,         Request,    ForwardRequest, 0, 0,   Cache)   /* Force invalidation even if line is modified */ \
