@@ -284,7 +284,6 @@ EXTRA_DIST = \
 	test/generateNidListRange.py \
 	test/generateNidListGroup.py \
 	test/generateNidListInterval.py \
-	test/generateNidListQOS.pyc \
 	test/generateNidListRandom.py \
 	tests/qos-dragonfly.sh \
 	tests/qos-fattree.sh \
