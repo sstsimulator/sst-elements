@@ -3352,7 +3352,7 @@ TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15837221 clocks
  memory.requests_received_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  memory.requests_received_GetX : Accumulator : Sum.u64 = 3682; SumSQ.u64 = 3682; Count.u64 = 3682; Min.u64 = 1; Max.u64 = 1; 
  memory.requests_received_PutM : Accumulator : Sum.u64 = 3796; SumSQ.u64 = 3796; Count.u64 = 3796; Min.u64 = 1; Max.u64 = 1; 
- memory.outstanding_requests : Accumulator : Sum.u64 = 1273328; SumSQ.u64 = 1273328; Count.u64 = 6398677; Min.u64 = 0; Max.u64 = 1; 
+ memory.outstanding_requests : Accumulator : Sum.u64 = 1273328; SumSQ.u64 = 1273328; Count.u64 = 6398678; Min.u64 = 0; Max.u64 = 1; 
  memory.latency_GetS : Accumulator : Sum.u64 = 1049102; SumSQ.u64 = 32522162; Count.u64 = 33842; Min.u64 = 31; Max.u64 = 31; 
  memory.latency_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  memory.latency_GetX : Accumulator : Sum.u64 = 114142; SumSQ.u64 = 3538402; Count.u64 = 3682; Min.u64 = 31; Max.u64 = 31; 
