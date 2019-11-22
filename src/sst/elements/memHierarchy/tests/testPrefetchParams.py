@@ -17,6 +17,9 @@ coherence = "MESI"
 network_bw = "60GB/s"
 
 DEBUG_L1 = 0
+DEBUG_L2 = 0
+DEBUG_L3 = 0
+DEBUG_DIR = 0
 
 # Create merlin network - this is just simple single router
 network = sst.Component("network", "merlin.hr_router")
@@ -56,6 +59,7 @@ for x in range(cores):
         "associativity" : 2,
         "L1" : 1,
         "debug" : DEBUG_L1,
+        #"debug_addr" : "[1152]",
         "debug_level" : 10,
         "max_outstanding_prefetch" : 2, # No more than 2 outstanding prefetches at a time; only set since L1 mshr is unlimited in size (otherwise defaults to 1/2 mshr size)
     })
@@ -74,6 +78,9 @@ for x in range(cores):
         "max_requests_per_cycle" : 1,
         "mshr_num_entries" : 8,
         "drop_prefetch_mshr_level" : 5, # Drop prefetch when total misses > 5
+        "debug" : DEBUG_L2,
+        #"debug_addr" : "[1152]",
+        "debug_level" : 10,
     })
     l2cache.setSubComponent("prefetcher", "cassini.NextBlockPrefetcher")
     l2tl1 = l2cache.setSubComponent("cpulink", "memHierarchy.MemLink")
@@ -110,6 +117,9 @@ for x in range(caches):
         "num_cache_slices" : caches,
         "slice_allocation_policy" : "rr", # Round-robin
         "slice_id" : x,
+        "debug" : DEBUG_L3,
+        #"debug_addr" : "[1152]",
+        "debug_level" : 10,
     })
     l3nic = l3cache.setSubComponent("cpulink", "memHierarchy.MemNIC")
     l3nic.addParams({
@@ -134,6 +144,9 @@ for x in range(memories):
         "interleave_step" : str(memories * 64) + "B",
         "addr_range_start" : x*64,
         "addr_range_end" :  1024*1024*1024 - ((memories - x) * 64) + 63,
+        "debug" : DEBUG_DIR,
+        #"debug_addr" : "[1152]",
+        "debug_level" : 10,
     })
     dirtoM = directory.setSubComponent("memlink", "memHierarchy.MemLink")
     dirnic = directory.setSubComponent("cpulink", "memHierarchy.MemNIC")

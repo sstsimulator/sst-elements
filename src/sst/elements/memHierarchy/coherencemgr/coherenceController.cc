@@ -61,11 +61,11 @@ CoherenceController::CoherenceController(ComponentId_t id, Params &params, Param
     UnitAlgebra upLinkBW = UnitAlgebra(params.find<std::string>("response_link_width", "0B"));
 
     if (!packetSize.hasUnits("B"))
-        output->fatal(CALL_INFO, -1, "%s, Invalid param: min_packet_size - must have units of bytes (B), SI units OK. Ex: '8B'. You specified '%s'\n", cachename_.c_str(), packetSize.toString().c_str());
+        output->fatal(CALL_INFO, -1, "%s, Invalid param: min_packet_size - must have units of bytes (B), SI units OK. Ex: '8B'. You specified '%s'\n", getName().c_str(), packetSize.toString().c_str());
     if (!downLinkBW.hasUnits("B"))
-        output->fatal(CALL_INFO, -1, "%s, Invalid param: request_link_width - must have units of bytes (B), SI units OK. Ex: '64B'. You specified '%s'\n", cachename_.c_str(), downLinkBW.toString().c_str());
+        output->fatal(CALL_INFO, -1, "%s, Invalid param: request_link_width - must have units of bytes (B), SI units OK. Ex: '64B'. You specified '%s'\n", getName().c_str(), downLinkBW.toString().c_str());
     if (!upLinkBW.hasUnits("B"))
-        output->fatal(CALL_INFO, -1, "%s, Invalid param: response_link_width - must have units of bytes (B), SI units OK. Ex: '64B'. You specified '%s'\n", cachename_.c_str(), upLinkBW.toString().c_str());
+        output->fatal(CALL_INFO, -1, "%s, Invalid param: response_link_width - must have units of bytes (B), SI units OK. Ex: '64B'. You specified '%s'\n", getName().c_str(), upLinkBW.toString().c_str());
 
     maxBytesUp = upLinkBW.getRoundedValue();
     maxBytesDown = downLinkBW.getRoundedValue();
@@ -73,13 +73,22 @@ CoherenceController::CoherenceController(ComponentId_t id, Params &params, Param
 
     /* Initialize variables */
     timestamp_ = 0;
+    outstandingPrefetches_ = 0;
 
     /* Default values for cache parameters */
+    // May be updated during init()
     lastLevel_ = true;
     silentEvictClean_ = true;
     writebackCleanBlocks_ = false;
     recvWritebackAck_ = false;
     sendWritebackAck_ = false;
+
+    // The following cache parameters are set by the cache controller in its constructor
+    // Just in case, we give an initial value here
+    dropPrefetchLevel_ = ((size_t) - 1);
+    maxOutstandingPrefetch_ = ((size_t) - 2);
+    cachename_ = getName().c_str();
+
 
     // Register statistics - only those that are common across all coherence managers
     // Give  all array entries a default statistic so we don't end up with segfaults during execution
@@ -573,10 +582,16 @@ MemEventStatus CoherenceController::allocateMSHR(MemEvent * event, bool fwdReq, 
     //      - Maximum number of outstanding prefetches
     //      - MSHR too full to accept prefetches
     if (event->isPrefetch() && event->getRqstr() == cachename_) {
-        if (dropPrefetchLevel_ <= mshr_->getSize())
+        if (dropPrefetchLevel_ <= mshr_->getSize()) {
+            eventDI.action = "Reject";
+            eventDI.reason = "Prefetch drop level";
             return MemEventStatus::Reject;
-        if (maxOutstandingPrefetch_ <= outstandingPrefetches_)
+        }
+        if (maxOutstandingPrefetch_ <= outstandingPrefetches_) {
+            eventDI.action = "Reject";
+            eventDI.reason = "Max outstanding prefetches";
             return MemEventStatus::Reject;
+        }
     }
 
     int end_pos = mshr_->insertEvent(event->getBaseAddr(), event, pos, fwdReq, stallEvict);
