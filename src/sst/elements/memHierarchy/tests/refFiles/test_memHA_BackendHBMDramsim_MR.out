@@ -1317,3 +1317,5 @@ Channel 7 statistics
  hbm.cycles_attempted_issue_but_rejected : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  hbm.total_cycles : Accumulator : Sum.u64 = 10380; SumSQ.u64 = 107744400; Count.u64 = 1; Min.u64 = 10380; Max.u64 = 10380; 
 Simulation is complete, simulated time: 10.3805 us
+== Loading device model file 'ddr_device.ini' ==
+== Loading system model file 'ddr_system.ini' ==
