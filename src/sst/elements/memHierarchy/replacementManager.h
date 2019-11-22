@@ -68,7 +68,7 @@ class ReplacementPolicy : public SubComponent{
 
         ReplacementPolicy(Component* comp, Params& params) : SubComponent(comp) {
             Output out("", 1, 0, Output::STDOUT);
-            out.fatal(CALL_INFO, -1, 0, "%s, Error: ReplacementPolicy subcomponents do not support loading via legacy API\n", getName().c_str());
+            out.fatal(CALL_INFO, -1, "%s, Error: ReplacementPolicy subcomponents do not support loading via legacy API\n", getName().c_str());
         }
         ReplacementPolicy(ComponentId_t id, Params& params, uint64_t lines, uint64_t associativity) : SubComponent(id) { 
         }
