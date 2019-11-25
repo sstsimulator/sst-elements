@@ -1893,9 +1893,8 @@ State MESIInclusive::doEviction(MemEvent * event, SharedCacheLine * line, State 
             case E_InvX:    
                 nState = M_InvX;    
                 break;
-            default:
-                debug->fatal(CALL_INFO,-1,"%s, Error: Evicting line in unhandled state '%s'. Time = %" PRIu64 "ns\n",
-                        getName().c_str(), StateString[state], getCurrentSimTimeNano());
+            default: // Already in a dirty state
+                break; 
         }
     }
     if (line->getOwner() == event->getSrc()) 
