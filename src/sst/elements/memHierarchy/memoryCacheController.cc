@@ -189,7 +189,7 @@ MemCacheController::MemCacheController(ComponentId_t id, Params &params) : Compo
     /* Initialize cache */
     uint64_t cachesize = memSize_ / lineSize_;
     if (memSize_ % lineSize_ != 0)
-        out.fatal(CALL_INFO, -1, "%s, Error - memory size must be a multiple of line size. Memory size is %" PRIu64 " bytes and line size is %" PRIu64 " bytes\n",
+        out.fatal(CALL_INFO, -1, "%s, Error - memory size must be a multiple of line size. Memory size is %zu bytes and line size is %" PRIu64 " bytes\n",
                 getName().c_str(), memSize_, lineSize_);
     cache_.resize(cachesize, CacheState(0,I));
 

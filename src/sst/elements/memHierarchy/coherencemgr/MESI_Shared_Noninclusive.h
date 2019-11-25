@@ -534,7 +534,7 @@ public:
     // Initialization event
     MemEventInitCoherence* getInitCoherenceEvent();
     
-    virtual Addr getBank(Addr addr) { dirArray_->getBank(addr); }
+    virtual Addr getBank(Addr addr) { return dirArray_->getBank(addr); }
     virtual void setSliceAware(uint64_t size, uint64_t step) { 
         dirArray_->setSliceAware(size, step);
         dataArray_->setSliceAware(size, step); 

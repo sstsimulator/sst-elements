@@ -493,7 +493,7 @@ public:
     virtual bool handleNULLCMD(MemEvent * event, bool inMSHR);
 
     /** Cache interface **/
-    virtual Addr getBank(Addr addr) { cacheArray_->getBank(addr); }
+    virtual Addr getBank(Addr addr) { return cacheArray_->getBank(addr); }
     virtual void setSliceAware(uint64_t size, uint64_t step) { cacheArray_->setSliceAware(size, step); }
 
     /** Initialization **/
