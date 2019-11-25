@@ -2,6 +2,13 @@
 import sst
 from mhlib import componentlist
 
+DEBUG_L1 = 0
+DEBUG_L2 = 0
+DEBUG_L3 = 0
+DEBUG_DIR = 0
+DEBUG_MEM = 0
+DEBUG_LEVEL = 10
+
 # Define the simulation components
 comp_cpu0 = sst.Component("cpu0", "memHierarchy.trivialCPU")
 comp_cpu0.addParams({
@@ -23,7 +30,8 @@ comp_c0_l1cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "4 KB",
       "L1" : "1",
-      "debug" : "0"
+      "debug" : DEBUG_L1,
+      "debug_level" : DEBUG_LEVEL
 })
 comp_cpu1 = sst.Component("cpu1", "memHierarchy.trivialCPU")
 comp_cpu1.addParams({
@@ -45,7 +53,8 @@ comp_c1_l1cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "4 KB",
       "L1" : "1",
-      "debug" : "0"
+      "debug" : DEBUG_L1,
+      "debug_level" : DEBUG_LEVEL
 })
 comp_n0_bus = sst.Component("n0.bus", "memHierarchy.Bus")
 comp_n0_bus.addParams({
@@ -60,7 +69,8 @@ comp_n0_l2cache.addParams({
       "associativity" : "8",
       "cache_line_size" : "64",
       "cache_size" : "32 KB",
-      "debug" : "0"
+      "debug" : DEBUG_L2,
+      "debug_level" : DEBUG_LEVEL
 })
 comp_cpu2 = sst.Component("cpu2", "memHierarchy.trivialCPU")
 comp_cpu2.addParams({
@@ -82,7 +92,8 @@ comp_c2_l1cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "4 KB",
       "L1" : "1",
-      "debug" : "0"
+      "debug" : DEBUG_L1,
+      "debug_level" : DEBUG_LEVEL
 })
 comp_cpu3 = sst.Component("cpu3", "memHierarchy.trivialCPU")
 comp_cpu3.addParams({
@@ -104,7 +115,8 @@ comp_c3_l1cache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "4 KB",
       "L1" : "1",
-      "debug" : "0"
+      "debug" : DEBUG_L1,
+      "debug_level" : DEBUG_LEVEL
 })
 comp_n1_bus = sst.Component("n1.bus", "memHierarchy.Bus")
 comp_n1_bus.addParams({
@@ -119,7 +131,8 @@ comp_n1_l2cache.addParams({
       "associativity" : "8",
       "cache_line_size" : "64",
       "cache_size" : "32 KB",
-      "debug" : "0"
+      "debug" : DEBUG_L2,
+      "debug_level" : DEBUG_LEVEL
 })
 comp_n2_bus = sst.Component("n2.bus", "memHierarchy.Bus")
 comp_n2_bus.addParams({
@@ -134,7 +147,8 @@ l3cache.addParams({
       "associativity" : "16",
       "cache_line_size" : "64",
       "cache_size" : "64KiB",
-      "debug" : "0",
+      "debug" : DEBUG_L3,
+      "debug_level" : DEBUG_LEVEL
 })
 
 l3tol2 = l3cache.setSubComponent("cpulink", "memHierarchy.MemLink")
@@ -161,7 +175,8 @@ dirctrl = sst.Component("dirctrl", "memHierarchy.DirectoryController")
 dirctrl.addParams({
     "clock" : "1.5GHz",
     "coherence_protocol" : "MESI",
-    "debug" : "0",
+    "debug" : DEBUG_DIR,
+    "debug_level" : DEBUG_LEVEL,
     "entry_cache_size" : "16384",
     "addr_range_end" : "0x1F000000",
     "addr_range_start" : "0x0",
@@ -178,6 +193,8 @@ memctrl = sst.Component("memory", "memHierarchy.MemController")
 memctrl.addParams({
     "clock" : "500MHz",
     "backing" : "none",
+    "debug" : DEBUG_MEM,
+    "debug_level" : DEBUG_LEVEL
 })
 
 # Backends: delay -> reorder -> simpleDRAM

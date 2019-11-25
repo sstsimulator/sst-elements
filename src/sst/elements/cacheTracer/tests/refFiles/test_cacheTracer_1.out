@@ -32,22 +32,22 @@ Address_Range: Count
 
 Access Latency Distribution (ns):
 -----------------------------------------------------------------
-Min-Latency(ns): 3  Max-Latency(ns): 125  #Bins: 10
+Min-Latency(ns): 4  Max-Latency(ns): 234  #Bins: 10
 -----------------------------------------------------------------
 Latency Range(ns): Count
-- [0-12]: 63
-- [13-25]: 320
-- [26-38]: 0
-- [39-51]: 0
-- [52-64]: 0
-- [65-77]: 0
-- [78-90]: 0
-- [91-103]: 0
-- [104-116]: 0
-- [117-129]: 617
+- [0-23]: 352
+- [24-47]: 0
+- [48-71]: 0
+- [72-95]: 0
+- [96-119]: 0
+- [120-143]: 647
+- [144-167]: 0
+- [168-191]: 0
+- [192-215]: 0
+- [216-239]: 1
 -----------------------------------------------------------------
 - Total_Events_Latency: 1000
 -----------------------------------------------------------------
 
-TrivialCPU cpu0 Finished after 1000 issued reads, 1000 returned (104053 clocks)
-Simulation is complete, simulated time: 104.053 us
+TrivialCPU cpu0 Finished after 1000 issued reads, 1000 returned (104054 clocks)
+Simulation is complete, simulated time: 104.054 us

@@ -28,6 +28,7 @@
 
 #include <unordered_map>
 
+#include "sst/elements/memHierarchy/lineTypes.h"
 #include "sst/elements/memHierarchy/cacheArray.h"
 #include "sst/elements/memHierarchy/cacheListener.h"
 #include "sst/elements/memHierarchy/replacementManager.h"
@@ -72,7 +73,6 @@ public:
 
 
 /* Begin class definition */
-    typedef CacheArray::CacheLine CacheLine;
     typedef unsigned int uint;
     typedef uint64_t uint64;
     
@@ -84,7 +84,7 @@ public:
     
     /** Computes the 'Base Address' of the requests.  The base address point the first address of the cache line */
     Addr toBaseAddr(Addr addr){
-        Addr baseAddr = (addr) & ~(cacheArray_->getLineSize() - 1);  //Remove the block offset bits
+        Addr baseAddr = (addr) & ~(lineSize_ - 1);  //Remove the block offset bits
         return baseAddr;
     }
     
@@ -131,12 +131,13 @@ private:
     void outputStats(int marker);
     bool resetStatsOnOutput;
 
-    CacheArray*         cacheArray_;
+    CacheArray<SharedCacheLine>* cacheArray_;
     Output*             output_;
     vector<SST::Link*>  cpuLinks_;
     uint32_t            cpuLinkCount_;
     vector<SST::Link*>  allocLinks_;
     CacheListener*      listener_;
+    uint64_t            lineSize_;
 
     /* Statistics */
     Statistic<uint64_t>* statReadHits;

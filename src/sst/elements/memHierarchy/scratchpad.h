@@ -198,7 +198,29 @@ private:
                 return str.str();
             }
     };
-    
+
+    struct dbgin {
+        SST::Event::id_type id;
+        Command cmd;
+        Addr addr;
+        std::string action;
+        std::string reason;
+        std::string verboseline;
+
+        void prefill(SST::Event::id_type i, Command c, Addr a) {
+            id = i;
+            cmd = c;
+            addr = a;
+            action = "";
+            reason = "";
+            verboseline = "";
+        }
+
+        void fill(std::string act, std::string rea) {
+            action = act;
+            reason = rea;
+        }
+    } eventDI;
 
     std::map<SST::Event::id_type,SST::Event::id_type> responseIDMap_;   // Map a forwarded request ID to a original request ID
     std::map<SST::Event::id_type,Addr> responseIDAddrMap_;              // Map an outstanding scratch request ID to the request's baseAddr

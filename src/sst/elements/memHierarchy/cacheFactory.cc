@@ -23,8 +23,6 @@
 #include "util.h"
 #include "cacheListener.h"
 #include "mshr.h"
-#include "coherencemgr/L1CoherenceController.h"
-#include "coherencemgr/L1IncoherentController.h"
 #include "memLinkBase.h"
 
 using namespace SST::MemHierarchy;
@@ -37,11 +35,8 @@ Cache::Cache(ComponentId_t id, Params &params) : Component(id) {
     out_ = new Output();
     out_->init("", params.find<int>("verbose", 1), 0, Output::STDOUT);
 
-    d_ = new Output();
-    d_->init("--->  ", params.find<int>("debug_level", 1), 0,(Output::output_location_t)params.find<int>("debug", 0));
-
-    d2_ = new Output();
-    d2_->init("", params.find<int>("debug_level", 1), 0,(Output::output_location_t)params.find<int>("debug", SST::Output::NONE));
+    dbg_ = new Output();
+    dbg_->init("", params.find<int>("debug_level", 1), 0,(Output::output_location_t)params.find<int>("debug", 0));
 
     /* Debug filtering */
     std::vector<Addr> addrArr;
@@ -55,58 +50,18 @@ Cache::Cache(ComponentId_t id, Params &params) : Component(id) {
     checkDeprecatedParams(params);
 
     /* Pull out parameters that the cache keeps - the rest will be pulled as needed */
-    // L1
-    L1_ = params.find<bool>("L1", false);
-
-    // Protocol
-    std::string protStr = params.find<std::string>("coherence_protocol", "mesi");
-    to_lower(protStr);
-    if (protStr == "mesi") protocol_ = CoherenceProtocol::MESI;
-    else if (protStr == "msi") protocol_ = CoherenceProtocol::MSI;
-    else if (protStr == "none") protocol_ = CoherenceProtocol::NONE;
-    else out_->fatal(CALL_INFO,-1, "%s, Invalid param: coherence_protocol - must be 'msi', 'mesi', or 'none'.\n", getName().c_str());
-
-    // Type
-    type_ = params.find<std::string>("cache_type", "inclusive");
-    to_lower(type_);
-    if (type_ != "inclusive" && type_ != "noninclusive" && type_ != "noninclusive_with_directory")
-        out_->fatal(CALL_INFO, -1, "%s, Invalid param: cache_type - valid options are 'inclusive' or 'noninclusive' or 'noninclusive_with_directory'. You specified '%s'.\n", getName().c_str(), type_.c_str());
-
-    // Latency
-    accessLatency_ = params.find<uint64_t>("access_latency_cycles", 0, found);
-    if (!found) out_->fatal(CALL_INFO, -1, "%s, Param not specified: access_latency_cycles - access time for cache.\n", getName().c_str());
-
-    tagLatency_ = params.find<uint64_t>("tag_access_latency_cycles", accessLatency_);
-
-
-    // Error check parameter combinations
-    if (accessLatency_ < 1) out_->fatal(CALL_INFO,-1, "%s, Invalid param: access_latency_cycles - must be at least 1. You specified %" PRIu64 "\n",
-            this->Component::getName().c_str(), accessLatency_);
-
-    if (L1_ && type_ != "inclusive") {
-        out_->fatal(CALL_INFO, -1, "%s, Invalid param: cache_type - must be 'inclusive' for an L1. You specified '%s'.\n", getName().c_str(), type_.c_str());
-    } else if (!L1_ && protocol_ == CoherenceProtocol::NONE && type_ != "noninclusive") {
-        out_->fatal(CALL_INFO, -1, "%s, Invalid param combo: cache_type and coherence_protocol - non-coherent caches are noninclusive. You specified: cache_type = '%s', coherence_protocol = '%s'\n",
-                getName().c_str(), type_.c_str(), protStr.c_str());
-    }
+    lineSize_ = params.find<uint64_t>("cache_line_size", 64);
 
     /* Construct cache structures */
-    cacheArray_ = createCacheArray(params);
+    createCacheArray(params);
 
     /* Banks */
     uint64_t banks = params.find<uint64_t>("banks", 0);
     bankStatus_.resize(banks, false);
-    bankConflictBuffer_.resize(banks);
-    cacheArray_->setBanked(banks);
+    banked_ = banks;
 
     /* Create clock, deadlock timeout, etc. */
     createClock(params);
-
-    /* Create MSHR */
-    int mshrSize = createMSHR(params);
-
-    /* Load prefetcher, listeners, if any */
-    createListeners(params, mshrSize);
 
 
     allNoncacheableRequests_    = params.find<bool>("force_noncacheable_reqs", false);
@@ -126,74 +81,132 @@ Cache::Cache(ComponentId_t id, Params &params) : Component(id) {
     /* Configure links */
     configureLinks(params);
 
+    createCoherenceManager(params);
+    
     /* Register statistics */
     registerStatistics();
 
-    createCoherenceManager(params);
 }
 
 
 void Cache::createCoherenceManager(Params &params) {
+    bool found = false;
+
+    // Latency
+    uint64_t accessLatency = params.find<uint64_t>("access_latency_cycles", 0, found);
+    if (!found) out_->fatal(CALL_INFO, -1, "%s, Param not specified: access_latency_cycles - access time for cache.\n", getName().c_str());
+
+    if (accessLatency < 1) out_->fatal(CALL_INFO,-1, "%s, Invalid param: access_latency_cycles - must be at least 1. You specified %" PRIu64 "\n",
+            this->Component::getName().c_str(), accessLatency);
+    uint64_t tagLatency = params.find<uint64_t>("tag_access_latency_cycles", accessLatency);
+    
+    // Protocol
+    std::string protStr = params.find<std::string>("coherence_protocol", "mesi");
+    to_lower(protStr);
+    CoherenceProtocol protocol = CoherenceProtocol::NONE;
+    if (protStr == "mesi") protocol = CoherenceProtocol::MESI;
+    else if (protStr == "msi") protocol = CoherenceProtocol::MSI;
+    else if (protStr == "none") protocol = CoherenceProtocol::NONE;
+    else out_->fatal(CALL_INFO,-1, "%s, Invalid param: coherence_protocol - must be 'msi', 'mesi', or 'none'.\n", getName().c_str());
+    
+    // L1
+    bool L1 = params.find<bool>("L1", false);
+    
+    // Type
+    std::string itype = params.find<std::string>("cache_type", "inclusive");
+    to_lower(itype);
+    if (itype != "inclusive" && itype != "noninclusive" && itype != "noninclusive_with_directory")
+        out_->fatal(CALL_INFO, -1, "%s, Invalid param: cache_type - valid options are 'inclusive' or 'noninclusive' or 'noninclusive_with_directory'. You specified '%s'.\n", getName().c_str(), itype.c_str());
+
+
+    if (L1 && itype != "inclusive") {
+        out_->fatal(CALL_INFO, -1, "%s, Invalid param: cache_type - must be 'inclusive' for an L1. You specified '%s'.\n", getName().c_str(), itype.c_str());
+    } else if (!L1 && protocol == CoherenceProtocol::NONE && itype != "noninclusive") {
+        out_->fatal(CALL_INFO, -1, "%s, Invalid param combo: cache_type and coherence_protocol - non-coherent caches are noninclusive. You specified: cache_type = '%s', coherence_protocol = '%s'\n",
+                getName().c_str(), itype.c_str(), protStr.c_str());
+    }
+
+    /* Create MSHR */
+    uint64_t mshrLatency = createMSHR(params, accessLatency, L1);
+    
+    /* Load prefetcher, listeners, if any : Requires MSHR since drop levels depend on MSHR size*/
+    createListeners(params);
+
     coherenceMgr_ = NULL;
-    std::string inclusive = (type_ == "inclusive") ? "true" : "false";
-    std::string protocol = (protocol_ == CoherenceProtocol::MESI) ? "true" : "false";
-    isLL = true;
-    silentEvict = true;
-    lowerIsNoninclusive = false;
-    expectWritebackAcks = false;
+    std::string inclusive = (itype == "inclusive") ? "true" : "false";
+    std::string mesi = (protocol == CoherenceProtocol::MESI) ? "true" : "false";
     Params coherenceParams;
     coherenceParams.insert("debug_level", params.find<std::string>("debug_level", "1"));
     coherenceParams.insert("debug", params.find<std::string>("debug", "0"));
-    coherenceParams.insert("access_latency_cycles", std::to_string(accessLatency_));
-    coherenceParams.insert("mshr_latency_cycles", std::to_string(mshrLatency_));
-    coherenceParams.insert("tag_access_latency_cycles", std::to_string(tagLatency_));
+    coherenceParams.insert("access_latency_cycles", std::to_string(accessLatency));
+    coherenceParams.insert("mshr_latency_cycles", std::to_string(mshrLatency));
+    coherenceParams.insert("tag_access_latency_cycles", std::to_string(tagLatency));
     coherenceParams.insert("cache_line_size", params.find<std::string>("cache_line_size", "64"));
-    coherenceParams.insert("protocol", protocol);   // Not used by all managers
+    coherenceParams.insert("protocol", mesi);   // Not used by all managers
     coherenceParams.insert("inclusive", inclusive); // Not used by all managers
     coherenceParams.insert("snoop_l1_invalidations", params.find<std::string>("snoop_l1_invalidations", "false")); // Not used by all managers
     coherenceParams.insert("request_link_width", params.find<std::string>("request_link_width", "0B"));
     coherenceParams.insert("response_link_width", params.find<std::string>("response_link_width", "0B"));
     coherenceParams.insert("min_packet_size", params.find<std::string>("min_packet_size", "8B"));
+    coherenceParams.insert("banks", params.find<std::string>("banks", "0"));
+    coherenceParams.insert("associativity", params.find<std::string>("associativity", "-1"));
+    coherenceParams.insert("lines", params.find<std::string>("lines", "0"));
+    coherenceParams.insert("replacement_policy", params.find<std::string>("replacement_policy", "lru"));
+    coherenceParams.insert("dlines", params.find<std::string>("noninclusive_directory_entries", "0"));
+    coherenceParams.insert("dassoc", params.find<std::string>("noninclusive_directory_associativity", "0"));
+    coherenceParams.insert("drpolicy", params.find<std::string>("noninclusive_directory_repl", "lru"));
 
     bool prefetch = (statPrefetchRequest != nullptr);
-    doInCoherenceMgr_ = false;
 
-    if (!L1_) {
-        if (protocol_ != CoherenceProtocol::NONE) {
-            if (type_ == "inclusive") { 
-                coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.MESICoherenceController", "coherence", 0, 
+    if (!L1) {
+        if (protocol != CoherenceProtocol::NONE) {
+            if (itype == "inclusive") { 
+                coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.coherence.mesi_inclusive", "coherence", 0, 
                         ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams, prefetch);
-            } else if (type_ == "noninclusive") {
+            } else if (itype == "noninclusive") {
                 coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.coherence.mesi_private_noninclusive", "coherence", 0, 
                         ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams, prefetch);
             } else {
-                coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.MESICacheDirectoryCoherenceController", "coherence", 0, 
+                coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.coherence.mesi_shared_noninclusive", "coherence", 0, 
                         ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams, prefetch);
             }
         } else {
-            coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.IncoherentController", "coherence", 0, 
+            coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.coherence.incoherent", "coherence", 0, 
                     ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams, prefetch);
         }
     } else {
-        if (protocol_ != CoherenceProtocol::NONE) {
-            coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.L1CoherenceController", "coherence", 0, 
+        if (protocol != CoherenceProtocol::NONE) {
+            coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.coherence.mesi_l1", "coherence", 0, 
                     ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams, prefetch);
-            doInCoherenceMgr_ = true;
         } else {
-            coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.L1IncoherentController", "coherence", 0, 
+            coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.coherence.incoherent_l1", "coherence", 0, 
                     ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams, prefetch);
         }
     }
     if (coherenceMgr_ == NULL) {
         out_->fatal(CALL_INFO, -1, "%s, Failed to load CoherenceController.\n", this->Component::getName().c_str());
     }
+   
+    int mshrSize = mshr_->getMaxSize(); 
+    size_t maxOutstandingPrefetch = params.find<size_t>("max_outstanding_prefetch", mshrSize / 2, found);
+    if (!found && mshrSize < 0)
+        maxOutstandingPrefetch = (size_t) - 2; // Basically no limit if MSHR size is unlimited as well
+    
+    size_t dropPrefetchLevel = params.find<size_t>("drop_prefetch_mshr_level", mshrSize - 2, found);
+    if (!found && mshrSize < 0) {          // Unlimited MSHR
+        dropPrefetchLevel = (size_t) - 2;
+    } else if (!found && mshrSize == 2) {   // MSHR min size is 2
+        dropPrefetchLevel = mshrSize - 1;
+    } else if (found && dropPrefetchLevel >= mshrSize) { // Specified dropPrefetchLevel is bigger than MSHR size
+        dropPrefetchLevel = mshrSize - 1;
+    }
 
     coherenceMgr_->setLinks(linkUp_, linkDown_);
     coherenceMgr_->setMSHR(mshr_);
-    coherenceMgr_->setCacheListener(listeners_);
+    coherenceMgr_->setCacheListener(listeners_, dropPrefetchLevel, maxOutstandingPrefetch);
     coherenceMgr_->setDebug(DEBUG_ADDR);
-    coherenceMgr_->setOwnerName(getName());
-    coherenceMgr_->setCacheArray(cacheArray_);
+    coherenceMgr_->setName(getName());
+    coherenceMgr_->setSliceAware(region_.interleaveSize, region_.interleaveStep);
 
 }
 
@@ -239,7 +252,7 @@ void Cache::configureLinks(Params &params) {
                 out_->fatal(CALL_INFO,-1, "%s, Invalid param: slice_allocation_policy - supported policy is 'rr' (round-robin). You specified '%s'.\n",
                         getName().c_str(), slicePolicy.c_str());
         } else {
-            d2_->fatal(CALL_INFO, -1, "%s, Invalid param: num_cache_slices - should be 1 or greater. You specified %" PRIu64 ".\n",
+            out_->fatal(CALL_INFO, -1, "%s, Invalid param: num_cache_slices - should be 1 or greater. You specified %" PRIu64 ".\n",
                     getName().c_str(), sliceCount);
         }
 
@@ -256,25 +269,37 @@ void Cache::configureLinks(Params &params) {
         gotRegion |= found;
 
         if (!UnitAlgebra(isize).hasUnits("B")) {
-            d2_->fatal(CALL_INFO, -1, "Invalid param(%s): interleave_size - must be specified in bytes with units (SI units OK). For example, '1KiB'. You specified '%s'\n",
+            out_->fatal(CALL_INFO, -1, "Invalid param(%s): interleave_size - must be specified in bytes with units (SI units OK). For example, '1KiB'. You specified '%s'\n",
                     getName().c_str(), isize.c_str());
         }
         if (!UnitAlgebra(istep).hasUnits("B")) {
-            d2_->fatal(CALL_INFO, -1, "Invalid param(%s): interleave_step - must be specified in bytes with units (SI units OK). For example, '1KiB'. You specified '%s'\n",
+            out_->fatal(CALL_INFO, -1, "Invalid param(%s): interleave_step - must be specified in bytes with units (SI units OK). For example, '1KiB'. You specified '%s'\n",
                     getName().c_str(), istep.c_str());
         }
         region_.interleaveSize = UnitAlgebra(isize).getRoundedValue();
         region_.interleaveStep = UnitAlgebra(istep).getRoundedValue();
 
-        if (!found && sliceCount > 1) {
+        if (!gotRegion && sliceCount > 1) {
             gotRegion = true;
-            int lineSize = params.find<int>("cache_line_size", 64);
             if (slicePolicy == "rr") {
-                region_.start = sliceID*lineSize;
+                region_.start = sliceID*lineSize_;
                 region_.end = (uint64_t) - 1;
-                region_.interleaveSize = lineSize;
-                region_.interleaveStep = sliceCount*lineSize;
+                region_.interleaveSize = lineSize_;
+                region_.interleaveStep = sliceCount*lineSize_;
             }
+        }
+
+        // Little bit of error checking
+        if (region_.end < region_.start) {
+            out_->fatal(CALL_INFO, -1, "Invalid params(%s): addr_range_start and addr_range_end - addr_range_end is less than addr_range start. You specified start = %" PRIu64 " and end = %" PRIu64 ".\n",
+                    getName().c_str(), region_.start, region_.end);
+        }
+
+        if (region_.interleaveStep < region_.interleaveSize) {
+            out_->fatal(CALL_INFO, -1, "Invalid params(%s): interleave_size and interleave_step - interleave_size is larger than interleave_step. \n"
+                    "interleave_size should be the granuarity of interleaving, and interleave_step should be the distance between chunks (components to interleave across * interleave_size).\n"
+                    "For example, to interleave 64B lines across 3 caches, specify interleave_size=64B and interleave_step=192B. You specified size = %" PRIu64 " and step = %" PRIu64 ".\n",
+                    getName().c_str(), region_.interleaveSize, region_.interleaveStep);
         }
         
         if (gotRegion) {
@@ -285,8 +310,6 @@ void Cache::configureLinks(Params &params) {
             linkUp_->setRegion(region_);
         }
         
-        cacheArray_->setSliceAware(region_.interleaveSize, region_.interleaveStep);
-
         clockUpLink_ = linkUp_->isClocked();
         clockDownLink_ = linkDown_->isClocked();
         
@@ -363,7 +386,7 @@ void Cache::configureLinks(Params &params) {
     /* Finally configure the links */
     if (highNetExists && lowNetExists) {
 
-        d_->debug(_INFO_,"Configuring cache with a direct link above and below\n");
+        dbg_->debug(_INFO_,"Configuring cache with a direct link above and below\n");
 
         linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "memlink", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, memlink);
         linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::handleEvent));
@@ -378,7 +401,7 @@ void Cache::configureLinks(Params &params) {
 
     } else if (highNetExists && lowCacheExists) {
 
-        d_->debug(_INFO_,"Configuring cache with a direct link above and a network link to a cache below\n");
+        dbg_->debug(_INFO_,"Configuring cache with a direct link above and a network link to a cache below\n");
 
         nicParams.find<std::string>("group", "", found);
         if (!found) nicParams.insert("group", "1");
@@ -411,7 +434,7 @@ void Cache::configureLinks(Params &params) {
         linkUp_->setRegion(region_);
 
     } else if (lowCacheExists && lowNetExists) { // "lowCache" is really "highCache" now
-        d_->debug(_INFO_,"Configuring cache with a network link to a cache above and a direct link below\n");
+        dbg_->debug(_INFO_,"Configuring cache with a network link to a cache above and a direct link below\n");
 
         nicParams.find<std::string>("group", "", found);
         if (!found) nicParams.insert("group", "1");
@@ -446,7 +469,7 @@ void Cache::configureLinks(Params &params) {
 
     } else if (highNetExists && lowDirExists) {
 
-        d_->debug(_INFO_,"Configuring cache with a direct link above and a network link to a directory below\n");
+        dbg_->debug(_INFO_,"Configuring cache with a direct link above and a network link to a directory below\n");
 
         nicParams.find<std::string>("group", "", found);
         if (!found) nicParams.insert("group", "2");
@@ -480,7 +503,7 @@ void Cache::configureLinks(Params &params) {
 
     } else {    // lowDirExists
 
-        d_->debug(_INFO_, "Configuring cache with a network to talk to both a cache above and a directory below\n");
+        dbg_->debug(_INFO_, "Configuring cache with a network to talk to both a cache above and a directory below\n");
 
         nicParams.find<std::string>("group", "", found);
         if (!found) nicParams.insert("group", "2");
@@ -500,7 +523,7 @@ void Cache::configureLinks(Params &params) {
             if (sliceAllocPolicy != "rr") out_->fatal(CALL_INFO,-1, "%s, Invalid param: slice_allocation_policy - supported policy is 'rr' (round-robin). You specified '%s'.\n",
                     getName().c_str(), sliceAllocPolicy.c_str());
         } else {
-            d2_->fatal(CALL_INFO, -1, "%s, Invalid param: num_cache_slices - should be 1 or greater. You specified %" PRIu64 ".\n",
+            out_->fatal(CALL_INFO, -1, "%s, Invalid param: num_cache_slices - should be 1 or greater. You specified %" PRIu64 ".\n",
                     getName().c_str(), cacheSliceCount);
         }
 
@@ -510,11 +533,10 @@ void Cache::configureLinks(Params &params) {
         uint64_t interleaveStep = 0;
 
         if (cacheSliceCount > 1) {
-            uint64_t lineSize = params.find<uint64_t>("cache_line_size", 64);
             if (sliceAllocPolicy == "rr") {
-                addrRangeStart = sliceID*lineSize;
-                interleaveSize = lineSize;
-                interleaveStep = cacheSliceCount*lineSize;
+                addrRangeStart = sliceID*lineSize_;
+                interleaveSize = lineSize_;
+                interleaveStep = cacheSliceCount*lineSize_;
             }
         }
         // Set region parameters
@@ -556,26 +578,16 @@ void Cache::configureLinks(Params &params) {
         
     linkUp_->setName(getName());
     linkDown_->setName(getName());
-   
-    cacheArray_->setSliceAware(region_.interleaveSize, region_.interleaveStep);
-
 }
 
 /* 
  * Listeners can be prefetchers, but could also be for statistic collection, trace generation, monitoring, etc. 
  * Prefetchers load into the 'prefetcher slot', listeners into the 'listener' slot
  */
-void Cache::createListeners(Params &params, int mshrSize) {
-
+void Cache::createListeners(Params &params) {
+    uint64_t mshrSize = mshr_->getMaxSize(); // Either negative (unlimited) or 2+ (limited but can't be 0 or 1)
     /* Configure prefetcher(s) */
     bool found;
-    maxOutstandingPrefetch_     = params.find<uint64_t>("max_outstanding_prefetch", mshrSize / 2, found);
-    dropPrefetchLevel_          = params.find<uint64_t>("drop_prefetch_mshr_level", mshrSize - 2, found);
-    if (!found && mshrSize == 2) { // MSHR min size is 2
-        dropPrefetchLevel_ = mshrSize - 1;
-    } else if (found && dropPrefetchLevel_ >= mshrSize) {
-        dropPrefetchLevel_ = mshrSize - 1; // Always have to leave one free for deadlock avoidance
-    }
 
     SubComponentSlotInfo * lists = getSubComponentSlotInfo("prefetcher");
     if (lists) {
@@ -610,7 +622,7 @@ void Cache::createListeners(Params &params, int mshrSize) {
         std::string frequency = params.find<std::string>("cache_frequency", "", found);
         prefetchDelay_ = params.find<SimTime_t>("prefetch_delay_cycles", 1);
 
-        prefetchLink_ = configureSelfLink("Self", frequency, new Event::Handler<Cache>(this, &Cache::processPrefetchEvent));
+        prefetchSelfLink_ = configureSelfLink("prefetchlink", frequency, new Event::Handler<Cache>(this, &Cache::processPrefetchEvent));
     }
 
     /* Configure listener(s) */
@@ -626,60 +638,59 @@ void Cache::createListeners(Params &params, int mshrSize) {
     }
 }
 
-int Cache::createMSHR(Params &params) {
+uint64_t Cache::createMSHR(Params &params, uint64_t accessLatency, bool L1) {
     bool found;
     uint64_t defaultMshrLatency = 1;
     int mshrSize = params.find<int>("mshr_num_entries", -1);           //number of entries
-    mshrLatency_ = params.find<uint64_t>("mshr_latency_cycles", defaultMshrLatency, found);
+    uint64_t mshrLatency = params.find<uint64_t>("mshr_latency_cycles", defaultMshrLatency, found);
 
-    if (mshrSize == -1) mshrSize = HUGE_MSHR; // Set in mshr.h
-    if (mshrSize < 2) out_->fatal(CALL_INFO, -1, "Invalid param: mshr_num_entries - MSHR requires at least 2 entries to avoid deadlock. You specified %d\n", mshrSize);
+    if (mshrSize == 1 || mshrSize == 0)
+        out_->fatal(CALL_INFO, -1, "Invalid param: mshr_num_entries - MSHR requires at least 2 entries to avoid deadlock. You specified %d\n", mshrSize);
 
-    mshr_ = new MSHR(d_, mshrSize, this->getName(), DEBUG_ADDR);
+    mshr_ = new MSHR(dbg_, mshrSize, getName(), DEBUG_ADDR);
 
-    if (mshrLatency_ > 0 && found) return mshrSize;
+    if (mshrLatency > 0 && found) 
+        return mshrLatency;
 
-    if (L1_) {
-        mshrLatency_ = 1;
+    if (L1) {
+        mshrLatency = 1;
     } else {
         // Otherwise if mshrLatency isn't set or is 0, intrapolate from cache latency
-        uint64 N = 200; // max cache latency supported by the intrapolation method
+        uint64_t N = 200; // max cache latency supported by the intrapolation method
         int y[N];
 
         /* L2 */
         y[0] = 0;
         y[1] = 1;
-        for(uint64 idx = 2;  idx < 12; idx++) y[idx] = 2;
-        for(uint64 idx = 12; idx < 16; idx++) y[idx] = 3;
-        for(uint64 idx = 16; idx < 26; idx++) y[idx] = 5;
+        for(uint64_t idx = 2;  idx < 12; idx++) y[idx] = 2;
+        for(uint64_t idx = 12; idx < 16; idx++) y[idx] = 3;
+        for(uint64_t idx = 16; idx < 26; idx++) y[idx] = 5;
 
         /* L3 */
-        for(uint64 idx = 26; idx < 46; idx++) y[idx] = 19;
-        for(uint64 idx = 46; idx < 68; idx++) y[idx] = 26;
-        for(uint64 idx = 68; idx < N;  idx++) y[idx] = 32;
+        for(uint64_t idx = 26; idx < 46; idx++) y[idx] = 19;
+        for(uint64_t idx = 46; idx < 68; idx++) y[idx] = 26;
+        for(uint64_t idx = 68; idx < N;  idx++) y[idx] = 32;
 
-        if (accessLatency_ > N) {
+        if (accessLatency > N) {
             out_->fatal(CALL_INFO, -1, "%s, Error: cannot intrapolate MSHR latency if cache latency > 200. Set 'mshr_latency_cycles' or reduce cache latency. Cache latency: %" PRIu64 "\n",
-                    getName().c_str(), accessLatency_);
+                    getName().c_str(), accessLatency);
         }
-        mshrLatency_ = y[accessLatency_];
+        mshrLatency = y[accessLatency];
     }
 
-    if (mshrLatency_ != defaultMshrLatency) {
+    if (mshrLatency != defaultMshrLatency) {
         Output out("", 1, 0, Output::STDOUT);
-        out.verbose(CALL_INFO, 1, 0, "%s: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to %" PRIu64 " cycles.\n", getName().c_str(), mshrLatency_);
+        out.verbose(CALL_INFO, 1, 0, "%s: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to %" PRIu64 " cycles.\n", getName().c_str(), mshrLatency);
     }
-    return mshrSize;
+    return mshrLatency;
 }
 
 /* Create the cache array */
-CacheArray* Cache::createCacheArray(Params &params) {
+void Cache::createCacheArray(Params &params) {
     /* Get parameters and error check */
     bool found;
     std::string sizeStr = params.find<std::string>("cache_size", "", found);
     if (!found) out_->fatal(CALL_INFO, -1, "%s, Param not specified: cache_size\n", getName().c_str());
-
-    uint64_t lineSize = params.find<uint64_t>("cache_line_size", 64);
 
     uint64_t assoc = params.find<uint64_t>("associativity", -1, found); // uint64_t to match cache size in case we have a fully associative cache
     if (!found) out_->fatal(CALL_INFO, -1, "%s, Param not specified: associativity\n", getName().c_str());
@@ -700,84 +711,14 @@ CacheArray* Cache::createCacheArray(Params &params) {
 
     uint64_t cacheSize = ua.getRoundedValue();
 
-    if (lineSize > cacheSize)
+    if (lineSize_ > cacheSize)
         out_->fatal(CALL_INFO, -1, "%s, Invalid param combo: cache_line_size cannot be greater than cache_size. You specified: cache_size = '%s', cache_line_size = '%" PRIu64 "'\n", 
-                getName().c_str(), sizeStr.c_str(), lineSize);
-    if (!isPowerOfTwo(lineSize)) out_->fatal(CALL_INFO, -1, "%s, cache_line_size - must be a power of 2. You specified '%" PRIu64 "'.\n", getName().c_str(), lineSize);
+                getName().c_str(), sizeStr.c_str(), lineSize_);
+    if (!isPowerOfTwo(lineSize_)) out_->fatal(CALL_INFO, -1, "%s, cache_line_size - must be a power of 2. You specified '%" PRIu64 "'.\n", getName().c_str(), lineSize_);
 
-    uint64_t lines = cacheSize / lineSize;
-
-    if (assoc < 1 || assoc > lines)
-        out_->fatal(CALL_INFO, -1, "%s, Invalid param: associativity - must be at least 1 (direct mapped) and less than or equal to the number of cache lines (cache_size / cache_line_size). You specified '%" PRIu64 "'\n",
-                getName().c_str(), assoc);
-
-    if (type_ == "noninclusive_with_directory") { /* Error check dir params */
-        if (dAssoc < 1 || dAssoc > dEntries)
-            out_->fatal(CALL_INFO, -1, "%s, Invalid param: noninclusive_directory_associativity - must be at least 1 (direct mapped) and less than or equal to noninclusive_directory_entries. You specified '%" PRIu64 "'\n",
-                    getName().c_str(), dAssoc);
-        if (dEntries < 1)
-            out_->fatal(CALL_INFO, -1, "%s, Invalid param: noninclusive_directory_entries - must be at least 1 if cache_type is noninclusive_with_directory. You specified '%" PRIu64 "'.\n", getName().c_str(), dEntries);
-    }
-
-    /* Build cache array */
-    SubComponentSlotInfo* rslots = getSubComponentSlotInfo("replacement"); // May be multiple slots filled depending on how many arrays this cache manages
-    ReplacementPolicy* rmgr;
-    if (rslots && rslots->isPopulated(0))
-        rmgr = rslots->create<ReplacementPolicy>(0, ComponentInfo::SHARE_NONE, lines, assoc);
-    else { // Backwards compatability - user didn't declare policy in the input config
-        std::string replacement = params.find<std::string>("replacement_policy", "lru");
-        to_lower(replacement);
-        rmgr = constructReplacementManager(replacement, lines, assoc, 0);
-    }
-
-
-    HashFunction * ht = loadUserSubComponent<HashFunction>("hash");
-    if (!ht) {
-        Params hparams;
-        int hashFunc = params.find<int>("hash_function", 0);
-        if (hashFunc == 1)      ht = loadAnonymousSubComponent<HashFunction>("memHierarchy.hash.linear", "hash", 0, ComponentInfo::SHARE_NONE, hparams);
-        else if (hashFunc == 2) ht = loadAnonymousSubComponent<HashFunction>("memHierarchy.hash.xor", "hash", 0, ComponentInfo::SHARE_NONE, hparams);
-        else                    ht = loadAnonymousSubComponent<HashFunction>("memHierarchy.hash.none", "hash", 0, ComponentInfo::SHARE_NONE, hparams);
-    }
-
-    if (type_ == "inclusive" || type_ == "noninclusive") {
-        return new SetAssociativeArray(d_, lines, lineSize, assoc, rmgr, ht, !L1_);
-    } else { //type_ == "noninclusive_with_directory" --> Already checked that this string is valid
-        /* Construct */
-        ReplacementPolicy* drmgr;
-        if (rslots && rslots->isPopulated(1))
-            drmgr = rslots->create<ReplacementPolicy>(1, ComponentInfo::SHARE_NONE, dEntries, dAssoc);
-        else { // Backwards compatibility - user didn't declare policy in the input config
-            std::string dReplacement = params.find<std::string>("noninclusive_directory_repl", "lru");
-            to_lower(dReplacement);
-            drmgr = constructReplacementManager(dReplacement, dEntries, dAssoc, 1);
-        }
-        return new DualSetAssociativeArray(d_, lineSize, ht, true, dEntries, dAssoc, drmgr, lines, assoc, rmgr);
-    }
-}
-
-/* Create a replacement manager */
-ReplacementPolicy* Cache::constructReplacementManager(std::string policy, uint64_t lines, uint64_t assoc, int slot) {
-    Params params;
-    if (SST::strcasecmp(policy, "lru"))
-        return loadAnonymousSubComponent<ReplacementPolicy>("memHierarchy.replacement.lru", "replacement", slot, ComponentInfo::SHARE_NONE, params, lines, assoc);
-
-    if (SST::strcasecmp(policy, "lfu"))
-        return loadAnonymousSubComponent<ReplacementPolicy>("memHierarchy.replacement.lfu", "replacement", slot, ComponentInfo::SHARE_NONE, params, lines, assoc);
-
-    if (SST::strcasecmp(policy, "random"))
-        return loadAnonymousSubComponent<ReplacementPolicy>("memHierarchy.replacement.rand", "replacement", slot, ComponentInfo::SHARE_NONE, params, lines, assoc);
-
-    if (SST::strcasecmp(policy, "mru"))
-        return loadAnonymousSubComponent<ReplacementPolicy>("memHierarchy.replacement.mru", "replacement", slot, ComponentInfo::SHARE_NONE, params, lines, assoc);
-
-    if (SST::strcasecmp(policy, "nmru"))
-        return loadAnonymousSubComponent<ReplacementPolicy>("memHierarchy.replacement.nmru", "replacement", slot, ComponentInfo::SHARE_NONE, params, lines, assoc);
-
-    out_->fatal(CALL_INFO, -1, "%s, Invalid param: (directory_)replacement_policy - supported policies are 'lru', 'lfu', 'random', 'mru', and 'nmru'. You specified '%s'.\n",
-            getName().c_str(), policy.c_str());
-
-    return nullptr;
+    uint64_t lines = cacheSize / lineSize_;
+    params.insert("lines", std::to_string(lines));
+    return;
 }
 
 void Cache::createClock(Params &params) {
@@ -790,25 +731,18 @@ void Cache::createClock(Params &params) {
     clockHandler_       = new Clock::Handler<Cache>(this, &Cache::clockTick);
     defaultTimeBase_    = registerClock(frequency, clockHandler_);
 
-    registerTimeBase("2 ns", true);       //  TODO:  Is this right?
-
     clockIsOn_ = true;
     timestamp_ = 0;
+    lastActiveClockCycle_ = 0;
 
     // Deadlock timeout
-    SimTime_t maxNano = params.find<SimTime_t>("maxRequestDelay", 0);
-    maxWaitTime_ = (Simulation::getSimulation()->getTimeLord()->getNano())->convertToCoreTime(maxNano); // Figure out how many core cycles maxNano is
-    checkMaxWaitInterval_ = maxNano / 4;
-    // Doubtful that this corner case will occur but just in case...
-    if (maxNano > 0 && checkMaxWaitInterval_ == 0) checkMaxWaitInterval_ = maxNano;
-    if (maxWaitTime_ > 0) {
+    timeout_ = params.find<SimTime_t>("maxRequestDelay", 0);
+    if (timeout_ > 0) {
+        SimTime_t checkInterval = timeout_ / 2; // An event might go nearly 1.5X the maxNano before detection but not more than that. Checking isn't cheap and failing is unlikely -> don't do it often
         ostringstream oss;
-        oss << checkMaxWaitInterval_;
+        oss << checkInterval;
         string interval = oss.str() + "ns";
-        maxWaitWakeupExists_ = false;
-        maxWaitSelfLink_ = configureSelfLink("maxWait", interval, new Event::Handler<Cache>(this, &Cache::maxWaitWakeup));
-    } else {
-        maxWaitWakeupExists_ = true;
+        timeoutSelfLink_ = configureSelfLink("timeout", interval, new Event::Handler<Cache>(this, &Cache::timeoutWakeup));
     }
 }
 
@@ -836,53 +770,35 @@ void Cache::checkDeprecatedParams(Params &params) {
 
 void Cache::registerStatistics() {
     Statistic<uint64_t>* def_stat = registerStatistic<uint64_t>("default_stat");
-    for (int i = 0; i < (int)Command::LAST_CMD; i++)
-        stat_eventRecv[i] = def_stat;
+    for (int i = 0; i < (int)Command::LAST_CMD; i++) {
+        statCacheRecv[i] = def_stat;
+        statUncacheRecv[i] = def_stat;
+    }
 
-    statTotalEventsReceived         = registerStatistic<uint64_t>("TotalEventsReceived");
-    statTotalEventsReplayed         = registerStatistic<uint64_t>("TotalEventsReplayed");
-    statNoncacheableEventsReceived  = registerStatistic<uint64_t>("TotalNoncacheableEventsReceived");
-    statCacheHits                   = registerStatistic<uint64_t>("CacheHits");
-    statGetSHitOnArrival            = registerStatistic<uint64_t>("GetSHit_Arrival");
-    statGetXHitOnArrival            = registerStatistic<uint64_t>("GetXHit_Arrival");
-    statGetSXHitOnArrival           = registerStatistic<uint64_t>("GetSXHit_Arrival");
-    statGetSHitAfterBlocked         = registerStatistic<uint64_t>("GetSHit_Blocked");
-    statGetXHitAfterBlocked         = registerStatistic<uint64_t>("GetXHit_Blocked");
-    statGetSXHitAfterBlocked        = registerStatistic<uint64_t>("GetSXHit_Blocked");
-    statCacheMisses                 = registerStatistic<uint64_t>("CacheMisses");
-    statGetSMissOnArrival           = registerStatistic<uint64_t>("GetSMiss_Arrival");
-    statGetXMissOnArrival           = registerStatistic<uint64_t>("GetXMiss_Arrival");
-    statGetSXMissOnArrival          = registerStatistic<uint64_t>("GetSXMiss_Arrival");
-    statGetSMissAfterBlocked        = registerStatistic<uint64_t>("GetSMiss_Blocked");
-    statGetXMissAfterBlocked        = registerStatistic<uint64_t>("GetXMiss_Blocked");
-    statGetSXMissAfterBlocked       = registerStatistic<uint64_t>("GetSXMiss_Blocked");
-    stat_eventRecv[(int)Command::GetS]      = registerStatistic<uint64_t>("GetS_recv");
-    stat_eventRecv[(int)Command::GetX]      = registerStatistic<uint64_t>("GetX_recv");
-    stat_eventRecv[(int)Command::GetSX]     = registerStatistic<uint64_t>("GetSX_recv");
-    stat_eventRecv[(int)Command::GetSResp]  = registerStatistic<uint64_t>("GetSResp_recv");
-    stat_eventRecv[(int)Command::GetXResp]  = registerStatistic<uint64_t>("GetXResp_recv");
-    stat_eventRecv[(int)Command::PutS]      = registerStatistic<uint64_t>("PutS_recv");
-    stat_eventRecv[(int)Command::PutM]      = registerStatistic<uint64_t>("PutM_recv");
-    stat_eventRecv[(int)Command::PutE]      = registerStatistic<uint64_t>("PutE_recv");
-    stat_eventRecv[(int)Command::Fetch]     = registerStatistic<uint64_t>("Fetch_recv");
-    stat_eventRecv[(int)Command::FetchInv]  = registerStatistic<uint64_t>("FetchInv_recv");
-    stat_eventRecv[(int)Command::FetchInvX] = registerStatistic<uint64_t>("FetchInvX_recv");
-    stat_eventRecv[(int)Command::ForceInv]  = registerStatistic<uint64_t>("ForceInv_recv");
-    stat_eventRecv[(int)Command::Inv]       = registerStatistic<uint64_t>("Inv_recv");
-    stat_eventRecv[(int)Command::NACK]      = registerStatistic<uint64_t>("NACK_recv");
-    stat_eventRecv[(int)Command::AckInv]    = registerStatistic<uint64_t>("AckInv_recv");
-    stat_eventRecv[(int)Command::AckPut]    = registerStatistic<uint64_t>("AckPut_recv");
-    stat_eventRecv[(int)Command::FetchResp] = registerStatistic<uint64_t>("FetchResp_recv");
-    stat_eventRecv[(int)Command::FetchXResp] = registerStatistic<uint64_t>("FetchXResp_recv");
-    stat_eventRecv[(int)Command::CustomReq] = registerStatistic<uint64_t>("CustomReq_recv");
-    stat_eventRecv[(int)Command::CustomResp] = registerStatistic<uint64_t>("CustomResp_recv");
-    stat_eventRecv[(int)Command::CustomAck] = registerStatistic<uint64_t>("CustomAck_recv");
-    stat_eventRecv[(int)Command::FlushLine] = registerStatistic<uint64_t>("FlushLine_recv");
-    stat_eventRecv[(int)Command::FlushLineInv] = registerStatistic<uint64_t>("FlushLineInv_recv");
-    stat_eventRecv[(int)Command::FlushLineResp] = registerStatistic<uint64_t>("FlushLineResp_recv");
-    stat_eventRecv[(int)Command::Put] = registerStatistic<uint64_t>("Put_recv");
-    stat_eventRecv[(int)Command::Get] = registerStatistic<uint64_t>("Get_recv");
-    stat_eventRecv[(int)Command::AckMove] = registerStatistic<uint64_t>("AckMove_recv");
+    statRecvEvents  = registerStatistic<uint64_t>("TotalEventsReceived");
+    statRetryEvents = registerStatistic<uint64_t>("TotalEventsReplayed");
+
+    statUncacheRecv[(int)Command::Put]      = registerStatistic<uint64_t>("Put_uncache_recv");
+    statUncacheRecv[(int)Command::Get]      = registerStatistic<uint64_t>("Get_uncache_recv");
+    statUncacheRecv[(int)Command::AckMove]  = registerStatistic<uint64_t>("AckMove_uncache_recv");
+    statUncacheRecv[(int)Command::GetS]     = registerStatistic<uint64_t>("GetS_uncache_recv");
+    statUncacheRecv[(int)Command::GetX]     = registerStatistic<uint64_t>("GetX_uncache_recv");
+    statUncacheRecv[(int)Command::GetSX]    = registerStatistic<uint64_t>("GetSX_uncache_recv");
+    statUncacheRecv[(int)Command::GetSResp] = registerStatistic<uint64_t>("GetSResp_uncache_recv");
+    statUncacheRecv[(int)Command::GetXResp] = registerStatistic<uint64_t>("GetXResp_uncache_recv");
+    statUncacheRecv[(int)Command::CustomReq]  = registerStatistic<uint64_t>("CustomReq_uncache_recv");
+    statUncacheRecv[(int)Command::CustomResp] = registerStatistic<uint64_t>("CustomResp_uncache_recv");
+    statUncacheRecv[(int)Command::CustomAck]  = registerStatistic<uint64_t>("CustomAck_uncache_recv");
+
+    // Valid cache commands depend on coherence manager
+    std::set<Command> validrecv = coherenceMgr_->getValidReceiveEvents();
+
+    for (std::set<Command>::iterator it = validrecv.begin(); it != validrecv.end(); it++) {
+        std::string stat = CommandString[(int)(*it)];
+        stat.append("_recv");
+        statCacheRecv[(int)(*it)] = registerStatistic<uint64_t>(stat);
+    }
+
     statMSHROccupancy               = registerStatistic<uint64_t>("MSHR_occupancy");
     statBankConflicts               = registerStatistic<uint64_t>("Bank_conflicts");
 }

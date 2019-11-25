@@ -6,7 +6,7 @@ num_mem = 2
 mem_size = 0x40000
 niter = 1000
 netBW = "80GiB/s"
-debug = 2
+debug = 0
 debug_level = 0
 
 
@@ -32,7 +32,7 @@ class Network:
             "output_latency" : "10ns",
             "input_buf_size" : "1KB",
             "output_buf_size" : "1KB",
-            "debug" : 1,
+            "debug" : 0,
             })
 
 

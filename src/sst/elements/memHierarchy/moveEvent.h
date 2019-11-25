@@ -106,8 +106,14 @@ public:
     virtual std::string getVerboseString() override {
         std::ostringstream str;
         str << std::hex;
-        str << " SrcAddr: 0x" << srcAddr_ << " SrcBaseAddr: 0x" << srcBaseAddr_;
-        str << " DstAddr: 0x" << dstAddr_ << " DstBaseAddr: 0x" << dstBaseAddr_;
+        if (srcAddr_ != srcBaseAddr_)
+            str << std::hex << " SrcAddr: 0x" << srcBaseAddr_ << "/0x" << srcAddr_;
+        else
+            str << std::hex << " SrcAddr: 0x" << srcBaseAddr_;
+        if (dstAddr_ != dstBaseAddr_)
+            str << std::hex << " DstAddr: 0x" << dstBaseAddr_ << "/0x" << dstAddr_;
+        else
+            str << std::hex << " DstAddr: 0x" << dstBaseAddr_;
         str << " SrcVA: 0x" << srcVAddr_ << " DstVA: 0x" << dstVAddr_ << " IP: 0x" << iPtr_;
         str << std::dec;
         str << " Size: " << size_;
@@ -117,8 +123,14 @@ public:
     virtual std::string getBriefString() override {
         std::ostringstream str;
         str << std::hex;
-        str << " SrcAddr: 0x" << srcAddr_ << " SrcBaseAddr: 0x" << srcBaseAddr_;
-        str << " DstAddr: 0x" << dstAddr_ << " DstBaseAddr: 0x" << dstBaseAddr_;
+        if (srcAddr_ != srcBaseAddr_)
+            str << std::hex << " SrcAddr: 0x" << srcBaseAddr_ << "/0x" << srcAddr_;
+        else
+            str << std::hex << " SrcAddr: 0x" << srcBaseAddr_;
+        if (dstAddr_ != dstBaseAddr_)
+            str << std::hex << " DstAddr: 0x" << dstBaseAddr_ << "/0x" << dstAddr_;
+        else
+            str << std::hex << " DstAddr: 0x" << dstBaseAddr_;
         str << std::dec;
         str << " Size: " << size_;
         return MemEventBase::getBriefString() + str.str();

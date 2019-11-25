@@ -13,8 +13,10 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef COHERENCECONTROLLER_H
-#define COHERENCECONTROLLER_H
+#ifndef MEMHIERARCHY_COHERENCECONTROLLER_H
+#define MEMHIERARCHY_COHERENCECONTROLLER_H
+
+#include <array>
 
 #include <sst/core/sst_config.h>
 #include <sst/core/subcomponent.h>
@@ -26,9 +28,10 @@
 
 #include "util.h"
 #include "sst/elements/memHierarchy/cacheListener.h"
-#include "sst/elements/memHierarchy/cacheArray.h"
 #include "sst/elements/memHierarchy/mshr.h"
 #include "sst/elements/memHierarchy/memLinkBase.h"
+#include "sst/elements/memHierarchy/replacementManager.h"
+#include "sst/elements/memHierarchy/hash.h"
 
 namespace SST { namespace MemHierarchy {
 using namespace std;
@@ -43,167 +46,260 @@ public:
     /* Args: Params& extraParams, bool prefetch */
     SST_ELI_REGISTER_SUBCOMPONENT_API(SST::MemHierarchy::CoherenceController, Params&, bool)
 
-    typedef CacheArray::CacheLine CacheLine;
-
     /***** Constructor & destructor *****/
     CoherenceController(Component * comp, Params &params);
     CoherenceController(ComponentId_t id, Params &params, Params& ownerParams, bool prefetch);
     virtual ~CoherenceController() {}
 
-    /* Return whether a line access will be a hit */
-    virtual bool isCacheHit(MemEvent* event) =0;
+    /*********************************************************************************
+     * Event handlers - one per event type
+     * Handlers return whether the event was accepted (true) or rejected (false)
+     *********************************************************************************/
+    virtual bool handleNULLCMD(MemEvent * event, bool inMSHR);
+    virtual bool handleGetS(MemEvent * event, bool inMSHR);
+    virtual bool handleGetX(MemEvent * event, bool inMSHR);
+    virtual bool handleGetSX(MemEvent * event, bool inMSHR);
+    virtual bool handlePutS(MemEvent * event, bool inMSHR);
+    virtual bool handlePutX(MemEvent * event, bool inMSHR);
+    virtual bool handlePutE(MemEvent * event, bool inMSHR);
+    virtual bool handlePutM(MemEvent * event, bool inMSHR);
+    virtual bool handleFlushLine(MemEvent * event, bool inMSHR);
+    virtual bool handleFlushLineInv(MemEvent * event, bool inMSHR);
+    virtual bool handleFetch(MemEvent * event, bool inMSHR);
+    virtual bool handleInv(MemEvent * event, bool inMSHR);
+    virtual bool handleFetchInvX(MemEvent * event, bool inMSHR);
+    virtual bool handleFetchInv(MemEvent * event, bool inMSHR);
+    virtual bool handleForceInv(MemEvent * event, bool inMSHR);
+    virtual bool handleGetSResp(MemEvent * event, bool inMSHR);
+    virtual bool handleGetXResp(MemEvent * event, bool inMSHR);
+    virtual bool handleFlushLineResp(MemEvent * event, bool inMSHR);
+    virtual bool handleAckPut(MemEvent * event, bool inMSHR);
+    virtual bool handleAckInv(MemEvent * event, bool inMSHR);
+    virtual bool handleFetchResp(MemEvent * event, bool inMSHR);
+    virtual bool handleFetchXResp(MemEvent * event, bool inMSHR);
+    virtual bool handleNACK(MemEvent * event, bool inMSHR);
 
-    /* Handle a cache request - GetS, GetX, etc. */
-    virtual CacheAction handleRequest(MemEvent * event, CacheLine * line, bool replay) =0;
+    
+    /*********************************************************************************
+     * Send outgoing events
+     *********************************************************************************/
 
-    /* Handle a cache replacement - PutS, PutM, etc. */
-    virtual CacheAction handleReplacement(MemEvent * event, CacheLine * line, MemEvent * reqEvent, bool replay) =0;
+    /* Send commands when their timestamp expires. Return whether queue is empty or not */
+    virtual bool sendOutgoingEvents();
 
-    /* Handle a cache invalidation - Inv, FetchInv, etc. */
-    virtual CacheAction handleInvalidationRequest(MemEvent * event, bool replay) =0;
-
-    /* Handle an eviction */
-    virtual CacheAction handleEviction(CacheLine * line, string rqstr, bool fromDataCache=false) =0;
-
-    /* Handle a response - AckInv, GetSResp, etc. */
-    virtual CacheAction handleCacheResponse(MemEvent * event, bool inMSHR) =0;
-    virtual CacheAction handleFetchResponse(MemEvent * event, bool inMSHR) =0;
-
-    virtual bool handleNACK(MemEvent* event, bool inMSHR) =0;
-
-    /* Update timestamp in lockstep with parent */
-    void updateTimestamp(uint64_t newTS) { timestamp_ = newTS; }
-
-
-    /***** Functions for sending events *****/
-
-    /* Send a NACK event. Used by child classes and cache controller */
-    void sendNACK(MemEvent * event, bool up);
-
-    /* Resend an event after a NACK */
-    void resendEvent(MemEvent * event, bool towardsCPU);
-
-    /* Send a response event up (towards CPU). L1s need to implement their own to split out requested bytes. */
-    uint64_t sendResponseUp(MemEvent * event, vector<uint8_t>* data, bool replay, uint64_t baseTime, bool atomic=false);
-
-    /* Send a response event up (towards CPU). L1s need to implement their own to split out requested bytes. */
-    uint64_t sendResponseUp(MemEvent * event, Command cmd, vector<uint8_t>* data, bool replay, uint64_t baseTime, bool atomic=false);
-
-    /* Send a response event up (towards CPU). L1s need to implement their own to split out requested bytes. */
-    uint64_t sendResponseUp(MemEvent * event, Command cmd, vector<uint8_t>* data, bool dirty, bool replay, uint64_t baseTime, bool atomic=false);
-
-
-    /* Forward a message to a lower memory level (towards memory) */
-    uint64_t forwardMessage(MemEvent * event, Addr baseAddr, unsigned int requestSize, uint64_t baseTime, vector<uint8_t>* data);
-
-    /* Forward a generic message towards memory */
+    /* Forward an event towards memory. Return expected send time */
     uint64_t forwardTowardsMem(MemEventBase * event);
 
-    /* Forward a generic message towards CPU */
+    /* Forward an event towards processor. Return expected send time */
     uint64_t forwardTowardsCPU(MemEventBase * event, std::string dst);
 
-    /* Return the name of the source for this cache */
-    std::string getSrc();
+    /* Send a NACK event */
+    void sendNACK(MemEvent * event);
 
-    /* Return the destination for a given address - for sliced/distributed caches */
-    std::string getDestination(Addr addr) { return linkDown_->findTargetDestination(addr); }
+    
+    /*********************************************************************************
+     * Miscellaneous functions used by parent
+     *********************************************************************************/
+
+    /* For clock handling = parent updates timestamp when the clock is re-enabled */
+    void updateTimestamp(uint64_t newTS) { timestamp_ = newTS; }
+
+    /* Check whether the event queues are empty/subcomponent is doing anything */
+    bool checkIdle();
+
+    /* Get which bank an address maps to (call through to cache array) */
+    virtual Addr getBank(Addr addr) = 0;
 
 
-    /***** Manage outgoing event queuest *****/
+    /*********************************************************************************
+     * Initialization/finish functions used by parent
+     *********************************************************************************/
 
-    /* Send commands when their timestamp expires. Return whether queue is empty or not. */
-    virtual bool sendOutgoingCommands();
+    /* 
+     * Get the InitCoherenceEvent 
+     * Event contains information about the protocol configuration and so is generated by coherence managers
+     */
+    virtual MemEventInitCoherence * getInitCoherenceEvent() = 0;
 
+    /* Parse an incoming InitCoherence event */
+    virtual void processInitCoherenceEvent(MemEventInitCoherence * event, bool source);
 
-    /***** Setup and initialization functions *****/
+    /* Some managers care, others don't */
+    virtual void hasUpperLevelCacheName(std::string cachename) {}
 
-    /* Initialize variables that tell this coherence controller how to interact with the cache below it */
-    void setupLowerStatus(bool silentEvict, bool isLastLevel, bool isNoninclusive, bool isDir);
-
-    void setOwnerName(std::string name) { ownerName_ = name; }
-
-    /* Setup pointers to other subcomponents/cache structures */
-    void setCacheListener(std::vector<CacheListener*>& lists) { listeners_ = lists; }
+    /* Setup array of cache listeners */
+    void setCacheListener(std::vector<CacheListener*> &ptr, size_t dropPrefetchLevel, size_t maxOutPrefetches) { 
+        listeners_ = ptr; 
+        dropPrefetchLevel_ = dropPrefetchLevel;
+        maxOutstandingPrefetch_ = maxOutPrefetches;
+    }
+    
+    /* Set MSHR */
     void setMSHR(MSHR* ptr) { mshr_ = ptr; }
+    
+    /* Set link managers */
     void setLinks(MemLinkBase * linkUp, MemLinkBase * linkDown) {
         linkUp_ = linkUp;
         linkDown_ = linkDown;
     }
 
-    /* Setup debug info (this is cache-wide) */
-    void setDebug(std::set<Addr> debugAddr) {
-        DEBUG_ADDR = debugAddr;
-    }
+    /* Prefetch drop statistic is used by both controller and coherence managers */
+    void setStatistics(Statistic<uint64_t>* prefetchdrop) { statPrefetchDrop = prefetchdrop; }
 
-    /***** Statistics *****/
+    /* Controller records received events, but valid types are determined by coherence manager. Share those here */
+    virtual std::set<Command> getValidReceiveEvents() = 0;
+
+    /* Memory components are identified by their names (e.g., source, destination, requestor) */
+    void setName(std::string name) { cachename_ = name; }
+
+    /* Call through to cache array to configure banking/slicing */
+    virtual void setSliceAware(uint64_t interleaveSize, uint64_t interleaveStep) = 0;
+
+    /* Setup debug info (cache-wide) */
+    void setDebug(std::set<Addr> debugAddr) { DEBUG_ADDR = debugAddr; }
+
+    /* Retry buffer - parent drains this each cycle */
+    std::vector<MemEventBase*>* getRetryBuffer();
+    void clearRetryBuffer();
+    
+    virtual void printDebugInfo();
+
+    /*********************************************************************************
+     * Statistics functions shared by parent
+     * 
+     * Often statistics are recorded at the parent but the set 
+     * of valid statistics is determined by the specific coherence manager 
+     * (e.g., not all events and states are possible in all protocols)
+     *********************************************************************************/
     virtual void recordLatency(Command cmd, int type, uint64_t latency) =0;
-    virtual void recordEventSentUp(Command cmd) =0;
-    virtual void recordEventSentDown(Command cmd) =0;
+    
+    // TODO are these needed still?
     virtual void recordIncomingRequest(MemEventBase* event);
     virtual void removeRequestRecord(SST::Event::id_type id);
     virtual void recordMiss(SST::Event::id_type id);
 
-    /**** Debug support *****/
-    void printStatus(Output& out);
-
-    /**** Temporary ********/
-    virtual void setCacheArray(CacheArray* arrayptr) { }
+    // Called by owner during printStatus/emergencyShutdown
+    virtual void printStatus(Output &out);
 
 protected:
+
+    /*********************************************************************************
+     * Function members
+     *********************************************************************************/
+
+    /* Listener callbacks */
+    virtual void notifyListenerOfAccess(MemEvent * event, NotifyAccessType accessT, NotifyResultType resultT);
+    virtual void notifyListenerOfEvict(Addr addr, uint32_t size, uint64_t ip);
+
+    /* Forward a message to a lower memory level (towards memory) */
+    uint64_t forwardMessage(MemEvent * event, unsigned int requestSize, uint64_t baseTime, vector<uint8_t>* data);
+
+    /* Insert event into MSHR */
+    MemEventStatus allocateMSHR(MemEvent * event, bool fwdReq, int pos = -1, bool stallEvict = false);
+    
+    /* Statistics */
+    virtual void recordLatencyType(SST::Event::id_type id, int latencytype);
+    virtual void recordPrefetchLatency(SST::Event::id_type, int latencytype);
+    
+    /* Debug */
+
+    struct dbgin {
+        SST::Event::id_type id;
+        Command cmd;
+        bool prefetch;
+        Addr addr;
+        State oldst;
+        State newst;
+        std::string action;
+        std::string reason;
+        std::string verboseline;
+
+        void prefill(SST::Event::id_type i, Command c, bool p, Addr a, State o) {
+            id = i;
+            cmd = c;
+            prefetch = p;
+            addr = a;
+            oldst = o;
+            newst = o;
+            action = "";
+            reason = "";
+            verboseline = "";
+        }
+
+        void fill(State n, std::string act, std::string rea) {
+            newst = n;
+            action = act;
+            reason = rea;
+        }
+    } eventDI, evictDI;
+
+    virtual void printDebugInfo(dbgin * diStruct);
+    virtual void printDebugAlloc(bool alloc, Addr addr, std::string note);
+    
+    /* Initialization */
+    ReplacementPolicy * createReplacementPolicy(uint64_t lines, uint64_t assoc, Params& params, bool L1, int slotnum = 0);
+    HashFunction * createHashFunction(Params& params);
+
+    /*********************************************************************************
+     * Data members
+     *********************************************************************************/
+    
+    /* Miss status handling register */
+    MSHR * mshr_;
+
+    /* Listeners: prefetchers, tracers, etc. */
+    std::vector<CacheListener*> listeners_;
+    size_t maxOutstandingPrefetch_;
+    size_t dropPrefetchLevel_;
+    size_t outstandingPrefetches_;
+
+    /* Cache name - used for identifying where events came from/are going to */
+    std::string cachename_;
+    
+    /* Output & debug */
+    Output* output; // Output stream for warnings, notices, fatal, etc.
+    Output* debug;  // Output stream for debug -> SST must be compiled with --enable-debug
+    std::set<Addr> DEBUG_ADDR; // Addresses to print debug info for (all if empty)
+    uint32_t dlevel;    // Debug level -> used to determine output format/amount of output
+
+    /* Latencies amd timing */
+    uint64_t timestamp_;        // Local timestamp (cycles)
+    uint64_t accessLatency_;    // Data/tag access latency 
+    uint64_t tagLatency_;       // Tag only access latency
+    uint64_t mshrLatency_;      // MSHR lookup latency
+
+    /* Cache parameters that are often needed by coherence managers */
+    uint64_t lineSize_;
+    bool writebackCleanBlocks_; // Writeback clean data as opposed to just a coherence msg
+    bool silentEvictClean_;     // Silently evict clean blocks (currently ok when just mem below us)
+    bool recvWritebackAck_;     // Whether we should expect writeback acks
+    bool sendWritebackAck_;     // Whether we should send writeback acks
+    bool lastLevel_;            // Whether we are the lowest coherence level and should not send coherence messages down
+
+    /* Response structure - used for outgoing event queues */
     struct Response {
-        MemEventBase* event;
-        uint64_t deliveryTime;
-        uint64_t size;
+        MemEventBase* event;    // Event to send
+        uint64_t deliveryTime;  // Time this event can be sent
+        uint64_t size;          // Size of event (for bandwidth accounting)
     };
 
-    std::string ownerName_; // Owning component name
+    /* Retry buffer - filled by coherence manangers and drained by parent */
+    std::vector<MemEventBase*> retryBuffer_;
 
-    /* Pointers to other subcomponents and cache structures */
-    std::vector<CacheListener*> listeners_;
-    MSHR *          mshr_;              // Pointer to cache's MSHR, coherence controllers are responsible for managing writeback acks
-
-    /* Latency and timing related parameters */
-    uint64_t        timestamp_;         // Local timestamp (cycles)
-    uint64_t        accessLatency_;     // Cache access latency
-    uint64_t        tagLatency_;        // Cache tag access latency
-    uint64_t        mshrLatency_;       // MSHR lookup latency
-
-    /* Outgoing event queues - events are stalled here to account for access latencies */
-    list<Response> outgoingEventQueue_;
-    list<Response> outgoingEventQueueUp_;
-
-    /* Debug control */
-    std::set<Addr>  DEBUG_ADDR;
-
-    /* Output */
-    Output*     output;
-    Output*     debug;
-
-    /* Parameters controlling how this cache interacts with the one below it */
-    bool            writebackCleanBlocks_;  // Writeback clean data as opposed to just a coherence msg
-    bool            silentEvictClean_;      // Silently evict clean blocks (currently ok when just mem below us)
-    bool            expectWritebackAck_;    // Whether we should expect a writeback ack
-    bool            lastLevel_;             // Whether we are the lowest coherence level and should not send coherence messages down
-
-    /* General parameters and structures */
-    uint64_t lineSize_;
-
-    /* Throughput control TODO move these to a port manager */
-    uint64_t maxBytesUp;
-    uint64_t maxBytesDown;
-    uint64_t packetHeaderBytes;
-
-    /* Statistic tracking */
+    /* Statistics - some variables used by all are declared here, but they are maintained by coherence protocols */
+    Statistic<uint64_t>* stat_eventSent[(int)Command::LAST_CMD];    // Count events sent
+    Statistic<uint64_t>* stat_evict[LAST_STATE];                    // Count how many evictions happened in a given state
+    std::array<std::array<Statistic<uint64_t>*, LAST_STATE>, (int)Command::LAST_CMD> stat_eventState;
+    
     struct LatencyStat{
         uint64_t time;
         Command cmd;
         int missType;
         LatencyStat(uint64_t t, Command c, int m) : time(t), cmd(c), missType(m) { }
     };
+    
     std::map<SST::Event::id_type, LatencyStat> startTimes_;
 
-    
-    /***** Functions used by child classes *****/
 
     /* Add a new event to the outgoing command queue towards memory */
     virtual void addToOutgoingQueue(Response& resp);
@@ -211,28 +307,32 @@ protected:
     /* Add a new event to the outgoing command queue towards the CPU */
     virtual void addToOutgoingQueueUp(Response& resp);
 
-    /* MSHR insertion */
-    bool processInvRequestInMSHR(Addr addr, MemEvent* event, bool blocks);
+    virtual uint64_t sendResponseUp(MemEvent * event, vector<uint8_t>* data, bool replay, uint64_t baseTime, bool atomic = false);
+    virtual uint64_t sendResponseUp(MemEvent * event, Command cmd, vector<uint8_t>* data, bool replay, uint64_t baseTime, bool atomic = false);
+    virtual uint64_t sendResponseUp(MemEvent * event, Command cmd, vector<uint8_t>* data, bool dirty, bool replay, uint64_t baseTime, bool atomic = false);
 
-    /* Statistics */
-    virtual void recordStateEventCount(Command cmd, State state);
-    virtual void recordEvictionState(State state);
-    virtual void recordLatencyType(SST::Event::id_type id, int latencytype);
-    virtual void recordPrefetchLatency(SST::Event::id_type, int latencytype);
+    std::string getDestination(Addr addr) { return linkDown_->findTargetDestination(addr); }
 
-    /* Listener callback */
-    virtual void notifyListenerOfAccess(MemEvent * event, NotifyAccessType accessT, NotifyResultType resultT);
+    std::string getSrc();
 
-    virtual void printLine(Addr addr, CacheLine* line);
+private:
+    /* Outgoing event queues - events are stalled here to account for access latencies */
+    list<Response> outgoingEventQueue_;
+    list<Response> outgoingEventQueueUp_;
 
-    // Eviction statistics, count how many times we attempted to evict a block in a particular state
-    Statistic<uint64_t>* stat_evict_I;
-    Statistic<uint64_t>* stat_evict_E;
-    Statistic<uint64_t>* stat_evict_M;
-    Statistic<uint64_t>* stat_evict_IS;
-    Statistic<uint64_t>* stat_evict_IM;
-    Statistic<uint64_t>* stat_evict_IB;
-    Statistic<uint64_t>* stat_evict_SB;
+    MemLinkBase * linkUp_;
+    MemLinkBase * linkDown_;
+
+    /**************** Haven't determined if we need the rest yet ! ************************************/
+protected:
+
+    /* Resend an event after a NACK */
+    void resendEvent(MemEvent * event, bool towardsCPU);
+
+    /* Throughput control TODO move these to a port manager */
+    uint64_t maxBytesUp;
+    uint64_t maxBytesDown;
+    uint64_t packetHeaderBytes;
 
     /* Prefetch statistics */
     Statistic<uint64_t>* statPrefetchEvict;
@@ -240,9 +340,7 @@ protected:
     Statistic<uint64_t>* statPrefetchRedundant;
     Statistic<uint64_t>* statPrefetchUpgradeMiss;
     Statistic<uint64_t>* statPrefetchHit;
-private:
-    MemLinkBase * linkUp_;
-    MemLinkBase * linkDown_;
+    Statistic<uint64_t>* statPrefetchDrop;
 };
 
 }}

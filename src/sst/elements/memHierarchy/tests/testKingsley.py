@@ -253,7 +253,6 @@ class DDRDCBuilder:
             "addr_range_end" : myEnd,
             "interleave_step" : str(8 * 64) + "B",
             "interleave_size" : "64B",
-            "net_memory_name" : "ddr_" + str(memId),
         })
         # Create NIC on to interface to NoC from directory
         dcNIC = dc.setSubComponent("cpulink", "memHierarchy.MemNICFour")

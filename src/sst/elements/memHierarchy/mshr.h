@@ -13,8 +13,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef MEMHIERARCHY_MSHR_H_
-#define MEMHIERARCHY_MSHR_H_
+#ifndef _MSHR_H_
+#define _MSHR_H_
 
 #include <map>
 #include <string>
@@ -24,6 +24,7 @@
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>
 #include <sst/core/output.h>
+#include <sst/core/simulation.h>
 
 #include "sst/elements/memHierarchy/memEvent.h"
 #include "sst/elements/memHierarchy/util.h"
@@ -32,84 +33,148 @@ namespace SST { namespace MemHierarchy {
 
 using namespace std;
 
+/*
+ * MSHR buffers pending and outstanding requests
+ * Three types:
+ *  - Writeback
+ *  - Eviction
+ *  - Event
+ */
+
 enum class MSHREntryType { Event, Evict, Writeback };
 
-class AddrEventVariant {
-    union {
-        Addr addr;
-        MemEvent* event;
-    } data;
-    bool _isAddr;
-    
-public:
-    AddrEventVariant(Addr a) {data.addr = a; _isAddr = true; }
-    AddrEventVariant(MemEvent* ev) {data.event = ev; _isAddr = false; }
-
-    Addr getAddr() const { return data.addr; }
-    MemEvent* getEvent() const { return data.event; }
-
-    bool isAddr() const { return _isAddr; }
-    bool isEvent() const { return !_isAddr; }
-    
-};
-
-/* MSHRs hold both events and pointers to events (e.g., the address of an event to replay when the current event resolves) */
 class MSHREntry {
     public:
-        AddrEventVariant elem;
-        MemEvent * event;
+        // Event entry
+        MSHREntry(MemEventBase* ev, bool stallEvict) {
+            type = MSHREntryType::Event;
+            evictPtrs = nullptr;
+            event = ev;
+            time = Simulation::getSimulation()->getCurrentSimCycle();
+            inProgress = false;
+            needEvict = stallEvict;
+            profiled = false;
+            downgrade = false;
+        }
 
-        MSHREntry(MemEvent* ev) : elem(ev), event(ev), insertTime(Simulation::getSimulation()->getCurrentSimCycle()) {}
-        MSHREntry(Addr addr) : elem(addr), insertTime(Simulation::getSimulation()->getCurrentSimCycle()) {}
+        // Writeback entry
+        MSHREntry(bool downgr) {
+            type = MSHREntryType::Writeback;
+            evictPtrs = nullptr;
+            event = nullptr;
+            time = Simulation::getSimulation()->getCurrentSimCycle();
+            inProgress = false;
+            needEvict = false;
+            profiled = false;
+            event = nullptr;
+            downgrade = downgr;
+        }
+
+        // Evict entry
+        MSHREntry(Addr addr) {
+            type = MSHREntryType::Evict;
+            event = nullptr;
+            evictPtrs = new std::list<Addr>;
+            evictPtrs->push_back(addr);
+            time = Simulation::getSimulation()->getCurrentSimCycle();
+            inProgress = false;
+            needEvict = false;
+            profiled = false;
+            event = nullptr;
+            downgrade = false;
+        }
+
+        MSHREntry(const MSHREntry& entry) {
+            type = entry.type;
+            evictPtrs = entry.evictPtrs;
+            event = entry.event;
+            time = entry.time;
+            inProgress = entry.inProgress;
+            needEvict = entry.needEvict;
+            profiled = entry.profiled;
+            downgrade = entry.downgrade;
+        }
+
+        MSHREntryType getType() { return type; }
 
         bool getInProgress() { return inProgress; }
         void setInProgress(bool value) { inProgress = value; }
 
-        bool getProfiled() { return profiled; }
-        void setProfiled() { profiled = true; }
-
         bool getStalledForEvict() { return needEvict; }
-        void setStalledForEvict(bool value) { needEvict = value; }
+        void setStalledForEvict(bool set) { needEvict = set; }
 
-        bool getDowngrade() { return downgrade; }
-        void setDowngrade(bool value) { downgrade = value; }
+        void setProfiled() { profiled = true; }
+        bool getProfiled() { return profiled; } 
 
-        /* Some fields only have getters */
+        SimTime_t getStartTime() { return time; }
 
-        MSHREntryType getType() { return type; }
+        std::list<Addr>* getPointers() {
+            return evictPtrs;
+        }
 
-        SimTime_t getInsertionTime() const { return insertTime; }
+        MemEventBase * getEvent() {
+            return event;
+        }
 
-//        MemEventBase* getEvent() { return event; }
+        bool getDowngrade() {
+            return downgrade;
+        }
+
+        /* Remove event at head of queue and swap with a new one (leaving entry in place) */
+        MemEventBase * swapEvent(MemEventBase* newEvent) {
+            if (type != MSHREntryType::Event) return nullptr;
+            time = Simulation::getSimulation()->getCurrentSimCycle();
+            MemEventBase* oldEvent = event;
+            event = newEvent;
+            return oldEvent;
+        }
+
+        std::string getString() {
+            std::ostringstream str;
+            str << "Time: " << std::to_string(time);
+            str << " Iss: ";
+            inProgress ? str << "T" : str << "F";
+            str << " Evi: ";
+            needEvict ? str << "T" : str << "F";
+            str << " Stat: ";
+            profiled ? str << "T" : str << "F";
+            if (type == MSHREntryType::Event) {
+                str << " Type: Event" << " (" << event->getBriefString() << ")";
+            } else if (type == MSHREntryType::Evict) {
+                str << " Type: Evict (";
+                for (std::list<Addr>::iterator it = evictPtrs->begin(); it != evictPtrs->end(); it++) {
+                    str << " 0x" << std::hex << *it;
+                }
+                str << ")";
+            } else {
+                str << " Type: Writeback";
+            }
+            return str.str();
+        }
 
     private:
         MSHREntryType type;
-        std::list<Addr> * evictPtrs;    // Specific to Evict type
-//        MemEventBase* event;            // Specific to Event type;
+        std::list<Addr> *evictPtrs; // Specific to Evict type
+        MemEventBase* event;        // Specific to Event type
+        SimTime_t time;
+        bool needEvict;
         bool inProgress;
         bool profiled;
-        SimTime_t insertTime;
-        bool needEvict;
-        bool downgrade;                 // Specific to Writeback type
+        bool downgrade;             // Specific to Writeback type
 };
 
-/* 
- * An MSHR Register has a list of MSHR entries (events & pointers) along with some bookkeeping for outstanding requests 
- * If we were only supporting inclusive caches, some of the bookkeeping could alternatively be kept with the cache state
- */
 struct MSHRRegister {
-    list<MSHREntry>  entries;   // Events and pointers to events for this address
-    uint32_t        acksNeeded; // Acks needed for request at top of queue. Here instead of at cacheline for non-inclusive caches
-    vector<uint8_t> dataBuffer; // Temporary holding place for response data during replay of request events
-    bool dataDirty;             // Whether the data in the dataBuffer is dirty
+    MSHRRegister() : acksNeeded(0), dataDirty(false) { }
+    list<MSHREntry> entries;
+    uint32_t acksNeeded;
+    vector<uint8_t> dataBuffer;
+    bool dataDirty;
 };
 
-typedef map<Addr, MSHRRegister >   mshrTable;
-
-#define HUGE_MSHR 100000
+typedef map<Addr, MSHRRegister> MSHRBlock;
 
 /**
- *  Implements an MSHR with entries of type MSHRRegister
+ *  Implements an MSHR with entries of type mshrEntry
  */
 class MSHR {
 public:
@@ -117,62 +182,73 @@ public:
     // used externally
     MSHR(Output* dbg, int maxSize, string cacheName, std::set<Addr> debugAddr);
     
-    // Member getters
     int getMaxSize();
     int getSize();
     unsigned int getSize(Addr addr);
+    bool exists(Addr addr);
+
+    // Accessors for first event since that's most common
+    MSHREntry getFront(Addr addr);
+    void removeFront(Addr addr);
+
+    MSHREntryType getFrontType(Addr addr);
+
+    MemEventBase* getFrontEvent(Addr addr);
+    std::list<Addr>* getEvictPointers(Addr addr);
+    bool removeEvictPointer(Addr addr, Addr ptrAddr);
     
-    bool exists(Addr baseAddr);                             
-    list<MSHREntry>* getAll(Addr);                       
+    // Special move accessor
+    void moveEntryToFront(Addr addr, unsigned int index);
+
+    // Generic accessors
+    MSHREntry getEntry(Addr addr, size_t index);
+    void removeEntry(Addr addr, size_t index);
+
+    MSHREntryType getEntryType(Addr addr, size_t index);
+    MemEventBase* getEntryEvent(Addr addr, size_t index);
+   
+    MemEventBase* swapFrontEvent(Addr addr, MemEventBase* event);
     
-    bool insertAll(Addr, list<MSHREntry>&);                 
-    bool insert(Addr baseAddr, MemEvent* event);            
-    bool insertPointer(Addr keyAddr, Addr pointerAddr);
-    bool insertInv(Addr baseAddr, MemEvent* event, bool inProgress);            
-    bool insertWriteback(Addr keyAddr);
+    bool pendingWriteback(Addr addr);
+    bool pendingWritebackIsDowngrade(Addr addr);
+
+    int insertEvent(Addr addr, MemEventBase* event, int position, bool fwdRequest, bool stallEvict);
+    bool insertWriteback(Addr addr, bool downgrade);
+    bool insertEviction(Addr evictAddr, Addr newAddr);
+
+    void setInProgress(Addr addr, bool value = true);
+    bool getInProgress(Addr addr);
+
+    void setStalledForEvict(Addr addr, bool set);
+    bool getStalledForEvict(Addr addr);
+
+    void setProfiled(Addr addr);
+    bool getProfiled(Addr addr);
     
-    MemEvent* removeFront(Addr baseAddr);                  
-    void removeElement(Addr baseAddr, MemEvent* event);     
-    list<MSHREntry> removeAll(Addr);                       
-    void removeWriteback(Addr baseAddr);
+    void setProfiled(Addr addr, SST::Event::id_type id);
+    bool getProfiled(Addr addr, SST::Event::id_type id);
 
-    const list<MSHREntry> lookup(Addr baseAddr);           
-    bool isHit(Addr baseAddr);                              
-    bool elementIsHit(Addr baseAddr, MemEvent *event);
-    bool isFull();                                          // external
-    bool isAlmostFull();                                    // external
-    const MSHREntry* getOldestRequest() const;                     // external
-    bool pendingWriteback(Addr baseAddr);
-    unsigned int getPrefetchCount() { return prefetchCount_; }
+    MemEventBase* getFirstEventEntry(Addr addr, Command cmd);
+    MSHREntry* getOldestEntry();
 
-    // Bookkeeping getters/setters
-    int getAcksNeeded(Addr baseAddr);
-    void setAcksNeeded(Addr baseAddr, int acksNeeded, MemEvent * event = nullptr);
-    void incrementAcksNeeded(Addr baseAddr);
-    void decrementAcksNeeded(Addr baseAddr);
-    vector<uint8_t> * getDataBuffer(Addr baseAddr);
-    void setDataBuffer(Addr baseAddr, vector<uint8_t>& data);
-    void clearDataBuffer(Addr baseAddr);
-    bool isDataBufferValid(Addr baseAddr);
+    void incrementAcksNeeded(Addr addr);
+    bool decrementAcksNeeded(Addr addr);
+    uint32_t getAcksNeeded(Addr addr);
 
-    // used internally
-    bool insert(Addr baseAddr, MSHREntry entry);         // internal
-    bool insert(Addr keyAddr, Addr ptrAddr);         // internal
-    bool insertInv(Addr baseAddr, MSHREntry entry, bool inProgress);         // internal
-    bool removeElement(Addr baseAddr, MSHREntry entry);  // internal
+    void setData(Addr addr, vector<uint8_t>& data, bool dirty = false);
+    void clearData(Addr addr);
+    vector<uint8_t>& getData(Addr addr); 
+    bool hasData(Addr addr);
+    bool getDataDirty(Addr addr);
+    void setDataDirty(Addr addr, bool dirty);
 
-    // debug
-    void printStatus(Output& out);
-
-    // unimplemented or unused functions
-    void printEntry(Addr baseAddr);                         // not implemented
-    MemEvent* lookupFront(Addr baseAddr);      
-    void removeElement(Addr baseAddr, Addr pointer);
-    void insertFront(Addr baseAddr, MemEvent* event);
-    void printTable();
+    void printStatus(Output &out);
 
 private:
-    mshrTable mshr_;
+
+    void printDebug(uint32_t level, std::string action, Addr addr, std::string reason);
+
+    MSHRBlock mshr_;
     Output* d_;
     Output* d2_;
     int size_;
