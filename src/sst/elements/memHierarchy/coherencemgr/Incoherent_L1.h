@@ -14,7 +14,7 @@
 // distribution.
 
 #ifndef MEMHIERARCHY_L1INCOHERENTCONTROLLER_H
-#define MEMHIERRACHY_L1INCOHERENTCONTROLLER_H
+#define MEMHIERARCHY_L1INCOHERENTCONTROLLER_H
 
 #include <iostream>
 #include <array>
@@ -229,7 +229,7 @@ public:
     bool handleFlushLineResp(MemEvent * event, bool inMSHR);
     bool handleNACK(MemEvent * event, bool inMSHR);
 
-    virtual Addr getBank(Addr addr) { cacheArray_->getBank(addr); }
+    virtual Addr getBank(Addr addr) { return cacheArray_->getBank(addr); }
     virtual void setSliceAware(uint64_t size, uint64_t step) { cacheArray_->setSliceAware(size, step); }
 
     MemEventInitCoherence * getInitCoherenceEvent();

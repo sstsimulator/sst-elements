@@ -1893,6 +1893,8 @@ State MESIInclusive::doEviction(MemEvent * event, SharedCacheLine * line, State 
             case E_InvX:    
                 nState = M_InvX;    
                 break;
+            default: // Already in a dirty state
+                break; 
         }
     }
     if (line->getOwner() == event->getSrc()) 

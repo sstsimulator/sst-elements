@@ -2207,6 +2207,7 @@ uint64_t MESIPrivNoninclusive::sendWriteback(Addr addr, uint32_t size, Command c
     Response resp = {writeback, sendTime, packetHeaderBytes + writeback->getPayloadSize()};
     addToOutgoingQueue(resp);
     
+    return sendTime;
     //if (is_debug_addr(addr)) 
         //debug->debug(_L3_,"Sending Writeback at cycle = %" PRIu64 ", Cmd = %s. With%s data.\n", sendTime, CommandString[(int)cmd], ((cmd == Command::PutM || writebackCleanBlocks_) ? "" : "out"));
 }

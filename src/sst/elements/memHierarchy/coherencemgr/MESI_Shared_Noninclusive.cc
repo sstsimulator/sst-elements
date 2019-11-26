@@ -323,7 +323,7 @@ bool MESISharNoninclusive::handleGetX(MemEvent * event, bool inMSHR) {
             if (!inMSHR)
                 status = allocateMSHR(event, false);
             else if (is_debug_event(event))
-                eventDI.action == "Stall";
+                eventDI.action = "Stall";
     }
 
     if (is_debug_addr(addr) && tag) {
@@ -3105,7 +3105,7 @@ void MESISharNoninclusive::printLine(Addr addr) {
     debug->debug(_L8_, "  Line 0x%" PRIx64 ": %s Data Present: (%s)\n", addr, state.c_str(), data && data->getTag() ? "Y" : "N");
     if (data && data->getTag() && data->getTag() != tag) {
         if (data->getTag() != tag) {
-            debug->fatal(CALL_INFO, -1, "Error: Data has a tag but it does not match the tag found in the directory. Addr 0x%" PRIx64 ". Data = (%" PRIu64 ",0x%" PRIx64 "), Tag = (%" PRIu64 ",0x%" PRIx64 ")\n", 
+            debug->fatal(CALL_INFO, -1, "Error: Data has a tag but it does not match the tag found in the directory. Addr 0x%" PRIx64 ". Data = (%" PRIu32 ",0x%" PRIx64 "), Tag = (%" PRIu32 ",0x%" PRIx64 ")\n", 
                     addr, data->getIndex(), data->getAddr(), tag->getIndex(), tag->getAddr());
         }
     }

@@ -306,11 +306,11 @@ MemEventBase* MSHR::swapFrontEvent(Addr addr, MemEventBase* event) {
 
 void MSHR::moveEntryToFront(Addr addr, unsigned int index) {
     if (mshr_.find(addr) == mshr_.end()) {
-        d_->fatal(CALL_INFO, -1, "%s, Error: MSHR::moveEntryToFront(0x%" PRIx64 ", %zu). Address doesn't exist in MSHR.\n", ownerName_.c_str(), addr, index);
+        d_->fatal(CALL_INFO, -1, "%s, Error: MSHR::moveEntryToFront(0x%" PRIx64 ", %u). Address doesn't exist in MSHR.\n", ownerName_.c_str(), addr, index);
     }
     MSHRRegister * reg = &(mshr_.find(addr)->second);
     if (reg->entries.size() <= index) {
-        d_->fatal(CALL_INFO, -1, "%s, Error: MSHR::moveEntryToFront(0x%" PRIx64 ", %zu). Entry list is shorter than requested index.\n", ownerName_.c_str(), addr, index);
+        d_->fatal(CALL_INFO, -1, "%s, Error: MSHR::moveEntryToFront(0x%" PRIx64 ", %u). Entry list is shorter than requested index.\n", ownerName_.c_str(), addr, index);
     }
 
     std::list<MSHREntry>::iterator entry = reg->entries.begin();
@@ -330,7 +330,7 @@ bool MSHR::insertWriteback(Addr addr, bool downgrade) {
     
     if (is_debug_addr(addr)) {
         stringstream reason;
-        reason << "Downgrade: " << downgrade ? "T" : "F";
+        reason << "Downgrade: " << (downgrade ? "T" : "F");
         printDebug(10, "InsWB", addr, reason.str());
     }
     
@@ -450,10 +450,10 @@ bool MSHR::getProfiled(Addr addr) {
 
 bool MSHR::getProfiled(Addr addr, SST::Event::id_type id) {
     if (mshr_.find(addr) == mshr_.end())
-        d_->fatal(CALL_INFO, -1, "%s, Error: MSHR::getProfiled(0x%" PRIx64 ", (%" PRIu64 ", %" PRIu64 ")). Address does not exist in MSHR.\n", ownerName_.c_str(), addr, id.first, id.second);
+        d_->fatal(CALL_INFO, -1, "%s, Error: MSHR::getProfiled(0x%" PRIx64 ", (%" PRIu64 ", %" PRId32 ")). Address does not exist in MSHR.\n", ownerName_.c_str(), addr, id.first, id.second);
     if (mshr_.find(addr)->second.entries.empty())
-        d_->fatal(CALL_INFO, -1, "%s, Error: MSHR::getProfiled(0x%" PRIx64 ", (%" PRIu64 ", %" PRIu64 ")). Entry list is empty.\n", ownerName_.c_str(), addr, id.first, id.second);
-    for (list<MSHREntry>::iterator jt = mshr_.find(addr)->second.entries.begin(); jt != mshr_.find(addr)->second.entries.end(); jt) {
+        d_->fatal(CALL_INFO, -1, "%s, Error: MSHR::getProfiled(0x%" PRIx64 ", (%" PRIu64 ", %" PRId32 ")). Entry list is empty.\n", ownerName_.c_str(), addr, id.first, id.second);
+    for (list<MSHREntry>::iterator jt = mshr_.find(addr)->second.entries.begin(); jt != mshr_.find(addr)->second.entries.end(); jt++) {
         if (jt->getType() == MSHREntryType::Event && jt->getEvent()->getID() == id) {
             return jt->getProfiled();
         }
@@ -466,12 +466,12 @@ void MSHR::setProfiled(Addr addr, SST::Event::id_type id) {
         printDebug(20, "Profile", addr, "");
     
     if (mshr_.find(addr) == mshr_.end()) {
-        d_->fatal(CALL_INFO, -1, "%s, Error: MSHR::setProfiled(0x%" PRIx64 ", (%" PRIu64 ", %" PRIu64 ")). Address does not exist in MSHR.\n", ownerName_.c_str(), addr, id.first, id.second);
+        d_->fatal(CALL_INFO, -1, "%s, Error: MSHR::setProfiled(0x%" PRIx64 ", (%" PRIu64 ", %" PRId32 ")). Address does not exist in MSHR.\n", ownerName_.c_str(), addr, id.first, id.second);
     }
     if (mshr_.find(addr)->second.entries.empty()) {
-        d_->fatal(CALL_INFO, -1, "%s Error: MSHR::setProfiled(0x%" PRIx64 ", (%" PRIu64 ", %" PRIu64 ")). Entry list is empty.\n", ownerName_.c_str(), addr, id.first, id.second);
+        d_->fatal(CALL_INFO, -1, "%s Error: MSHR::setProfiled(0x%" PRIx64 ", (%" PRIu64 ", %" PRId32 ")). Entry list is empty.\n", ownerName_.c_str(), addr, id.first, id.second);
     }
-    for (list<MSHREntry>::iterator jt = mshr_.find(addr)->second.entries.begin(); jt != mshr_.find(addr)->second.entries.end(); jt) {
+    for (list<MSHREntry>::iterator jt = mshr_.find(addr)->second.entries.begin(); jt != mshr_.find(addr)->second.entries.end(); jt++) {
         if (jt->getType() == MSHREntryType::Event && jt->getEvent()->getID() == id) {
             jt->setProfiled();
             return;
