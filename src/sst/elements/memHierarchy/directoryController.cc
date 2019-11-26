@@ -859,9 +859,9 @@ bool DirectoryController::handleGetX(MemEvent * event, bool inMSHR) {
             if (status == MemEventStatus::OK) {
                 entry->setState(IM);
                 issueMemoryRequest(event, entry);
+                if (is_debug_event(event))
+                    eventDI.reason = "miss";
             }
-            if (is_debug_event(event))
-                eventDI.reason = "miss";
             break;
         case S:
             // Cases
@@ -921,7 +921,7 @@ bool DirectoryController::handleGetX(MemEvent * event, bool inMSHR) {
             break;
         default:
             if (!inMSHR)
-                allocateMSHR(event, false);
+                status = allocateMSHR(event, false);
             break;
     }
 
@@ -1670,6 +1670,12 @@ bool DirectoryController::handleGetXResp(MemEvent * event, bool inMSHR) {
         case SM_Inv:
             entry->setState(S_Inv);
             mshr->setData(addr, event->getPayload(), false); // Save data for when the invalidations finish
+            if (is_debug_addr(addr)) {
+                eventDI.newst = entry->getState();
+                eventDI.verboseline = entry->getString();
+            }
+            delete event;
+            return true;
             break;
         default:
             out.fatal(CALL_INFO, -1, "%s, Error: Received GetXResp in unhandled state '%s'. Event: %s. Time: %" PRIu64 "ns\n", 

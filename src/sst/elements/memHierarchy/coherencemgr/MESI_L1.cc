@@ -186,7 +186,7 @@ bool MESIL1::handleGetX(MemEvent* event, bool inMSHR) {
                 line->setTimestamp(sendTime);
                 mshr_->setInProgress(addr);
                 if (is_debug_addr(addr))
-                    eventDI.reason = true;
+                    eventDI.reason = "miss";
             }
             break;
         case E:
@@ -1048,7 +1048,7 @@ bool MESIL1::handleEviction(Addr addr, L1CacheLine*& line) {
     State state = line->getState();
 
     if (is_debug_addr(addr))
-        eventDI.oldst = line->getState();
+        evictDI.oldst = line->getState();
 
     /* L1s can have locked cache lines which prevents replacement */
     if (line->isLocked()) {

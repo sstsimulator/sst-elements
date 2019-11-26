@@ -289,8 +289,10 @@ bool MESIInclusive::handleGetX(MemEvent * event, bool inMSHR) {
             if (is_debug_event(event))
                 eventDI.reason = "hit";
 
+            if (!inMSHR || !mshr_->getProfiled(addr))
+                recordLatencyType(event->getID(), LatType::HIT);
+
             cleanUpAfterRequest(event, inMSHR);
-            recordLatencyType(event->getID(), LatType::HIT);
             break;
         default:
             if (!inMSHR)
