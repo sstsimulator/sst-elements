@@ -6,10 +6,10 @@ TrivialCPU: Test Completed Successfuly
 TrivialCPU: Test Completed Successfuly
 TrivialCPU: Test Completed Successfuly
 TrivialCPU: Test Completed Successfuly
-TrivialCPU cpu3 Finished after 1000 issued reads, 1000 returned (471954 clocks)
-TrivialCPU cpu2 Finished after 1000 issued reads, 1000 returned (470658 clocks)
-TrivialCPU cpu1 Finished after 1000 issued reads, 1000 returned (472242 clocks)
 TrivialCPU cpu0 Finished after 1000 issued reads, 1000 returned (471522 clocks)
+TrivialCPU cpu1 Finished after 1000 issued reads, 1000 returned (472242 clocks)
+TrivialCPU cpu2 Finished after 1000 issued reads, 1000 returned (470658 clocks)
+TrivialCPU cpu3 Finished after 1000 issued reads, 1000 returned (471954 clocks)
  cpu0.pendCycle : Accumulator : Sum.u64 = 4584129; SumSQ.u64 = 44799551; Count.u64 = 471522; Min.u64 = 0; Max.u64 = 10; 
  c0.l1cache.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c0.l1cache.stateEvent_GetS_I : Accumulator : Sum.u64 = 896; SumSQ.u64 = 896; Count.u64 = 896; Min.u64 = 1; Max.u64 = 1; 
@@ -1109,9 +1109,9 @@ TrivialCPU cpu0 Finished after 1000 issued reads, 1000 returned (471522 clocks)
  l3cache.latency_GetS_hit : Accumulator : Sum.u64 = 23500; SumSQ.u64 = 56524650; Count.u64 = 100; Min.u64 = 101; Max.u64 = 5114; 
  l3cache.latency_GetS_miss : Accumulator : Sum.u64 = 31949122; SumSQ.u64 = 319876580394; Count.u64 = 3399; Min.u64 = 1092; Max.u64 = 18212; 
  l3cache.latency_GetS_inv : Accumulator : Sum.u64 = 7584; SumSQ.u64 = 15837408; Count.u64 = 15; Min.u64 = 236; Max.u64 = 3848; 
- l3cache.latency_GetX_hit : Accumulator : Sum.u64 = 236; SumSQ.u64 = 55696; Count.u64 = 1; Min.u64 = 236; Max.u64 = 236; 
+ l3cache.latency_GetX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache.latency_GetX_miss : Accumulator : Sum.u64 = 3585972; SumSQ.u64 = 36134033182; Count.u64 = 377; Min.u64 = 1960; Max.u64 = 11314; 
- l3cache.latency_GetX_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l3cache.latency_GetX_inv : Accumulator : Sum.u64 = 236; SumSQ.u64 = 55696; Count.u64 = 1; Min.u64 = 236; Max.u64 = 236; 
  l3cache.latency_GetX_upgrade : Accumulator : Sum.u64 = 234820; SumSQ.u64 = 2618887676; Count.u64 = 22; Min.u64 = 5139; Max.u64 = 18622; 
  l3cache.latency_GetSX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache.latency_GetSX_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -1229,12 +1229,12 @@ TrivialCPU cpu0 Finished after 1000 issued reads, 1000 returned (471522 clocks)
  memory.requests_received_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  memory.requests_received_GetX : Accumulator : Sum.u64 = 377; SumSQ.u64 = 377; Count.u64 = 377; Min.u64 = 1; Max.u64 = 1; 
  memory.requests_received_PutM : Accumulator : Sum.u64 = 286; SumSQ.u64 = 286; Count.u64 = 286; Min.u64 = 1; Max.u64 = 1; 
- memory.outstanding_requests : Accumulator : Sum.u64 = 190914; SumSQ.u64 = 190914; Count.u64 = 472242; Min.u64 = 0; Max.u64 = 1; 
+ memory.outstanding_requests : Accumulator : Sum.u64 = 190914; SumSQ.u64 = 190914; Count.u64 = 472249; Min.u64 = 0; Max.u64 = 1; 
  memory.latency_GetS : Accumulator : Sum.u64 = 159753; SumSQ.u64 = 7508391; Count.u64 = 3399; Min.u64 = 47; Max.u64 = 47; 
  memory.latency_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  memory.latency_GetX : Accumulator : Sum.u64 = 17719; SumSQ.u64 = 832793; Count.u64 = 377; Min.u64 = 47; Max.u64 = 47; 
  memory.latency_PutM : Accumulator : Sum.u64 = 13442; SumSQ.u64 = 631774; Count.u64 = 286; Min.u64 = 47; Max.u64 = 47; 
  memory.cycles_with_issue : Accumulator : Sum.u64 = 4062; SumSQ.u64 = 4062; Count.u64 = 4062; Min.u64 = 1; Max.u64 = 1; 
  memory.cycles_attempted_issue_but_rejected : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- memory.total_cycles : Accumulator : Sum.u64 = 472242; SumSQ.u64 = 223012506564; Count.u64 = 1; Min.u64 = 472242; Max.u64 = 472242; 
+ memory.total_cycles : Accumulator : Sum.u64 = 472249; SumSQ.u64 = 223019118001; Count.u64 = 1; Min.u64 = 472249; Max.u64 = 472249; 
 Simulation is complete, simulated time: 472.242 us

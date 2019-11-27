@@ -424,9 +424,9 @@ TrivialCPU cpu0 Finished after 1000 issued reads, 1000 returned (104069 clocks)
  l2cache.latency_GetS_hit : Accumulator : Sum.u64 = 133299; SumSQ.u64 = 33037299; Count.u64 = 892; Min.u64 = 21; Max.u64 = 274; 
  l2cache.latency_GetS_miss : Accumulator : Sum.u64 = 118446; SumSQ.u64 = 31885440; Count.u64 = 440; Min.u64 = 268; Max.u64 = 271; 
  l2cache.latency_GetS_inv : Accumulator : Sum.u64 = 1902; SumSQ.u64 = 144708; Count.u64 = 25; Min.u64 = 76; Max.u64 = 78; 
- l2cache.latency_GetX_hit : Accumulator : Sum.u64 = 30051; SumSQ.u64 = 9599253; Count.u64 = 102; Min.u64 = 21; Max.u64 = 330; 
+ l2cache.latency_GetX_hit : Accumulator : Sum.u64 = 84; SumSQ.u64 = 1764; Count.u64 = 4; Min.u64 = 21; Max.u64 = 21; 
  l2cache.latency_GetX_miss : Accumulator : Sum.u64 = 13731; SumSQ.u64 = 3696909; Count.u64 = 51; Min.u64 = 268; Max.u64 = 271; 
- l2cache.latency_GetX_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l2cache.latency_GetX_inv : Accumulator : Sum.u64 = 29967; SumSQ.u64 = 9597489; Count.u64 = 98; Min.u64 = 76; Max.u64 = 330; 
  l2cache.latency_GetX_upgrade : Accumulator : Sum.u64 = 10201; SumSQ.u64 = 2738441; Count.u64 = 38; Min.u64 = 268; Max.u64 = 269; 
  l2cache.latency_GetSX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache.latency_GetSX_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
