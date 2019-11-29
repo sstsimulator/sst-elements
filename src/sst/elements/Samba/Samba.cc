@@ -33,7 +33,10 @@ using namespace SST::SambaComponent;
 
 Samba::Samba(SST::ComponentId_t id, SST::Params& params): Component(id) {
 
-	//CR3 = -1;
+    int verbosity = params.find<int>("verbose", 0);
+    output = new SST::Output("SambaComponent[@f:@l:@p] ", verbosity, 0, SST::Output::STDOUT);
+
+    output->verbose(CALL_INFO, 1, 0, "Creating Samba component...\n");
 
 	core_count = (uint32_t) params.find<uint32_t>("corecount", 1);
 
@@ -45,6 +48,18 @@ Samba::Samba(SST::ComponentId_t id, SST::Params& params): Component(id) {
 
 	int  page_walk_latency = ((uint32_t) params.find<uint32_t>("page_walk_latency", 50));
 
+	if(emulate_faults==1)
+	{
+		if (NULL != (pageFaultHandler = loadUserSubComponent<PageFaultHandler>("pagefaulthandler"))) {
+			output->verbose(CALL_INFO, 1, 0, "Loaded page fault handler: %s\n", pageFaultHandler->getName().c_str());
+		} else {
+			std::string pagefaulthandler_name = params.find<std::string>("pagefaulthandler", "Opal.PageFaultHandler");
+			output->verbose(CALL_INFO, 1, 0, "Loading page fault handler: %s\n", pagefaulthandler_name.c_str());
+			pageFaultHandler = loadAnonymousSubComponent<PageFaultHandler>(pagefaulthandler_name, "pagefaulthandler", 0, ComponentInfo::SHARE_STATS | ComponentInfo::INSERT_STATS, params);
+			if (NULL == pageFaultHandler) output->fatal(CALL_INFO, -1, "Failed to load page fault handler: %s\n", pagefaulthandler_name.c_str());
+		}
+	}
+
 	std::cout<<"Initialized with "<<core_count<<" cores"<<std::endl;
 
 
@@ -54,7 +69,7 @@ Samba::Samba(SST::ComponentId_t id, SST::Params& params): Component(id) {
 
 	ptw_to_mem = (SST::Link **) malloc( sizeof(SST::Link *) * core_count );
 
-	ptw_to_opal = (SST::Link **) malloc( sizeof(SST::Link *) * core_count );
+	cr3I = 0;
 
 
 	char* link_buffer = (char*) malloc(sizeof(char) * 256);
@@ -62,8 +77,6 @@ Samba::Samba(SST::ComponentId_t id, SST::Params& params): Component(id) {
 	char* link_buffer2 = (char*) malloc(sizeof(char) * 256);
 
 	char* link_buffer3 = (char*) malloc(sizeof(char) * 256);
-
-	char* link_buffer4 = (char*) malloc(sizeof(char) * 256);
 
 	std::cout<<"Before initialization "<<std::endl;
 	for(uint32_t i = 0; i < core_count; ++i) {
@@ -96,22 +109,18 @@ Samba::Samba(SST::ComponentId_t id, SST::Params& params): Component(id) {
 		ptw_to_mem[i] = link3;
 
 
-		sprintf(link_buffer4, "ptw_to_opal%" PRIu32, i);
-		SST::Link * link4;
-
 
 		if(emulate_faults==1)
 		{
-			link4 = configureLink(link_buffer4, new Event::Handler<PageTableWalker>(TLB[i]->getPTW(), &PageTableWalker::recvOpal));
-			ptw_to_opal[i] = link4;
-			TLB[i]->setOpalLink(link4);
+			pageFaultHandler->registerPageFaultHandler(i, new PageFaultHandler::PageFaultHandlerInterface<PageTableWalker>(TLB[i]->getPTW(), &PageTableWalker::recvPageFaultResp));
+			TLB[i]->getPTW()->setPageFaultHandler(pageFaultHandler);
 
 			sprintf(link_buffer, "event_bus%" PRIu32, i);
 
 			event_link = configureSelfLink(link_buffer, "1ns", new Event::Handler<PageTableWalker>(TLB[i]->getPTW(), &PageTableWalker::handleEvent));
 
 			TLB[i]->getPTW()->setEventChannel(event_link);
-			TLB[i]->setPageTablePointers(&CR3, &PGD, &PUD, &PMD, &PTE, &MAPPED_PAGE_SIZE1GB, &MAPPED_PAGE_SIZE2MB, &MAPPED_PAGE_SIZE4KB, &PENDING_PAGE_FAULTS, &PENDING_SHOOTDOWN_EVENTS);
+			TLB[i]->setPageTablePointers(&CR3, &PGD, &PUD, &PMD, &PTE, &MAPPED_PAGE_SIZE1GB, &MAPPED_PAGE_SIZE2MB, &MAPPED_PAGE_SIZE4KB, &PENDING_PAGE_FAULTS, &cr3I, &PENDING_PAGE_FAULTS_PGD, &PENDING_PAGE_FAULTS_PUD, &PENDING_PAGE_FAULTS_PMD, &PENDING_PAGE_FAULTS_PTE);//, &PENDING_SHOOTDOWN_EVENTS, &PTR, &PTR_map);
 
 		}
 

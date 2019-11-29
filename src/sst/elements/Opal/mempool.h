@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2018 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 // 
 // This file is part of the SST software package. For license
@@ -27,7 +27,6 @@
 typedef struct reqresponse {
 	uint64_t address;
 	int pages;
-	int page_migration;
 	int status;
 
 }REQRESPONSE;
@@ -49,6 +48,8 @@ class Frame{
 		// This will be used to store information about current allocation
 		int metadata;
 
+		int frame_number;
+
 };
 
 
@@ -60,6 +61,18 @@ class Pool{
 
 		//Constructor for pool
 		Pool(SST::Component* own, Params parmas, SST::OpalComponent::MemType mem_type, int id);
+
+		~Pool() {
+			while(!freelist.empty()) {
+				delete freelist.front();
+				//freelist.remove(freelist.begin());
+			}
+
+			std::map<uint64_t, Frame*>::iterator it;
+			for(it=alloclist.begin();it!=alloclist.end();it++) {
+				delete it->second;
+			}
+		}
 
 		void finish() {}
 
@@ -75,11 +88,15 @@ class Pool{
 		// Allocate 'size' contigiuous memory, returns a structure with starting address and number of frames allocated
 		REQRESPONSE allocate_frames(int pages);
 
+		REQRESPONSE allocate_frame_address(uint64_t address, int N);
+
 		// Freeing N frames starting from Address X, this will return -1 if we find that these frames were not allocated
 		REQRESPONSE deallocate_frame(uint64_t X, int N);
 
 		// Deallocate 'size' contigiuous memory starting from physical address 'starting_pAddress', returns a structure which indicates success or not
 		REQRESPONSE deallocate_frames(int size, uint64_t starting_pAddress);
+
+		bool isAllocated(uint64_t address);
 
 		// Current number of free frames
 		int freeframes() { return freelist.size(); }
@@ -128,16 +145,12 @@ class Pool{
 		SST::OpalComponent::MemTech memTech;
 
 		// The list of free frames
-		std::list<Frame*> freelist;
+		std::vector<Frame*> freelist;
+
+		//std::map<uint64_t, int> freelist_index;
 
 		// The list of allocated frames --- the key is the starting physical address
 		std::map<uint64_t, Frame*> alloclist;
-
-		Statistic<uint64_t>* memUsage;
-		Statistic<uint64_t>* mappedMemory;
-		Statistic<uint64_t>* unmappedMemory;
-		Statistic<uint64_t>* tlbShootdowns;
-		Statistic<uint64_t>* tlbShootdownDelay;
 
 };
 

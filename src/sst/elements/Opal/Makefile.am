@@ -14,7 +14,9 @@ libOpal_la_SOURCES = \
 	arielmemmgr_opal.cc \
 	arielmemmgr_opal.h \
 	opalMemNIC.cc \
-	opalMemNIC.h
+	opalMemNIC.h \
+	PageFaultHandler.cc \
+	PageFaultHandler.h
 	
 
 libOpal_la_CPPFLAGS = \

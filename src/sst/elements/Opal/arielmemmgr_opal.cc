@@ -79,21 +79,16 @@ void MemoryManagerOpal::handleInterrupt(SST::Event *event) {
 }
 
 bool MemoryManagerOpal::allocateMalloc(const uint64_t size, const uint32_t level, const uint64_t addr, const uint64_t ip, const uint32_t thread) {
-    OpalEvent * tse = new OpalEvent(OpalComponent::EventType::HINT);
-    tse->setHint(level);
-    tse->setResp(addr, 0, size);
+    OpalEvent * tse = new OpalEvent(OpalComponent::EventType::HINT, level, addr, size, thread);
     opalLink[thread]->send(tse);
 
     return temp_translator->allocateMalloc(size, level, addr, ip, thread);
 }
 
-bool MemoryManagerOpal::allocateMMAP(const uint64_t size, const uint32_t level, const uint64_t virtualAddr, const uint64_t ip, const uint32_t file, const uint32_t thread) {
-    OpalEvent * tse = new OpalEvent(OpalComponent::EventType::MMAP);
-    tse->setHint(level);
+bool MemoryManagerOpal::allocateMMAP(const uint64_t size, const uint32_t level, const uint64_t addr, const uint64_t ip, const uint32_t file, const uint32_t thread) {
+    OpalEvent * tse = new OpalEvent(OpalComponent::EventType::HINT, level, addr, size, thread);
     tse->setFileId(file);
     output->output("Before sending to Opal.. file ID is: %" PRIu32 "\n", file);
-    // length should be a multiple of page size
-    tse->setResp(virtualAddr, 0, size);
     opalLink[thread]->send(tse);
     return true;
 }
