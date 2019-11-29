@@ -14,7 +14,7 @@ cores = 2*2
 
 #os.environ['OMP_NUM_THREADS'] = str(cores/2)
 
-
+nodes = 2
 local_memory_capacity = 128  	# Size of memory in MBs
 shared_memory_capacity = 2048	# 2GB
 shared_memory = 1
@@ -22,8 +22,7 @@ page_size = 4 # In KB
 num_pages = local_memory_capacity * 1024 / page_size + 8*1024*1024/page_size
 
 
-ariel = sst.Component("cpu", "ariel.ariel")
-ariel.addParams({
+arielParams = {
     "verbose" : 1,
     "clock" : clock,
     "maxcorequeue" : 1024,
@@ -38,24 +37,9 @@ ariel.addParams({
     "node" : 0,
     "launchparamcount" : 1,
     "launchparam0" : "-ifeellucky",
-})
+}
 
-# Opal uses this memory manager to intercept memory translation requests, mallocs, mmaps, etc.
-memmgr = ariel.setSubComponent("memmgr", "Opal.MemoryManagerOpal")
-memmgr.addParams({
-    "opal_latency" : "30ps"
-})
-# Opal uses this memory manager (for now?) to do the actual translation
-submemmgr = memmgr.setSubComponent("translator", "ariel.MemoryManagerSimple")
-submemmgr.addParams({
-    "pagecount0" : num_pages,
-    "pagesize0" : page_size * 1024,
-})
-
-ariel.enableAllStatistics({"type":"sst.AccumulatorStatistic"})
-
-mmu = sst.Component("mmu", "Samba")
-mmu.addParams({
+mmuParams = {
         "os_page_size": 4,
 	"perfect": 0,
         "corecount": cores/2,
@@ -103,19 +87,13 @@ mmu.addParams({
 	"latency_PTWC": 10, # This is the latency of checking the page table walk cache
 	"opal_latency": "30ps",
 	"emulate_faults": 1,
-})
-mmu.enableAllStatistics({"type":"sst.AccumulatorStatistic"})
+}
 
-# MMU uses this page fault handler.
-pagefaulthandler = mmu.setSubComponent("pagefaulthandler", "Opal.PageFaultHandler")
-pagefaulthandler.addParams({
-    "opal_latency" : "30ps"
-})
 
 opal= sst.Component("opal","Opal")
 opal.addParams({
 	"clock"				: clock,
-	"num_nodes"			: 1,
+	"num_nodes"			: nodes,
 	"verbose"  			: 1,
 	"max_inst" 			: 32,
 	"shared_mempools" 		: 1,
@@ -125,15 +103,19 @@ opal.addParams({
 	"shared_mem.mempool0.mem_type"	: 0,
 	"node0.cores" 			: cores/2,
 	"node0.allocation_policy" 	: 1,
-	"node0.page_migration" 		: 0,
-	"node0.page_migration_policy" 	: 0,
-	"node0.num_pages_to_migrate" 	: 0,
 	"node0.latency" 		: 2000,
 	"node0.memory.start" 		: 0,
 	"node0.memory.size" 		: local_memory_capacity*1024,
 	"node0.memory.frame_size" 	: page_size,
 	"node0.memory.mem_type" 	: 0,
-	"num_ports"			: cores,
+        "node1.cores"                   : cores/2,
+        "node1.allocation_policy"       : 1,
+        "node1.latency"                 : 2000,
+        "node1.memory.start"            : 0,
+        "node1.memory.size"             : local_memory_capacity*1024,
+        "node1.memory.frame_size"       : page_size,
+        "node1.memory.mem_type"         : 0,
+	"num_ports"			: cores*nodes,
 })
 opal.enableAllStatistics({"type":"sst.AccumulatorStatistic"})
 
@@ -168,12 +150,12 @@ l3_params = {
 
 link_params = {
 	"shared_memory": shared_memory,
-	"node": 0,
+#	"node": 0,
 }
 
 nic_params = {
 	"shared_memory": shared_memory,
-	"node": 0,
+#	"node": 0,
 	"network_bw": "96GiB/s",
 	"local_memory_size" : local_memory_capacity*1024*1024,
 }
@@ -203,125 +185,157 @@ class Network:
         self.rtr.addParam("num_ports", self.ports)
         return (self.ports-1)
 
+internal_network_map = {}
+
+for node in range(nodes):
+	ariel = sst.Component("node"+str(node)+"_cpu", "ariel.ariel")
+	ariel.addParams(arielParams)
+
+	# Opal uses this memory manager to intercept memory translation requests, mallocs, mmaps, etc.
+	memmgr = ariel.setSubComponent("memmgr", "Opal.MemoryManagerOpal")
+	memmgr.addParams({
+	    "opal_latency" : "30ps"
+	})
+	# Opal uses this memory manager (for now?) to do the actual translation
+	submemmgr = memmgr.setSubComponent("translator", "ariel.MemoryManagerSimple")
+	submemmgr.addParams({
+	    "pagecount0" : num_pages,
+	    "pagesize0" : page_size * 1024,
+	})
+
+	ariel.enableAllStatistics({"type":"sst.AccumulatorStatistic"})
+
+	# MMU
+	mmu = sst.Component("node"+str(node)+"_mmu", "Samba")
+	mmu.addParams(mmuParams)
+
+	# MMU uses this page fault handler
+        pagefaulthandler = mmu.setSubComponent("pagefaulthandler", "Opal.PageFaultHandler")
+        pagefaulthandler.addParams({
+            "opal_latency" : "30ps"
+        })
+
+	mmu.enableAllStatistics({"type":"sst.AccumulatorStatistic"})
+
+	internal_network = Network("node"+str(node)+"_internal_network",0,"20ps","20ps")
+
+	for next_core in range(cores):
+
+		l1 = sst.Component("node"+str(node)+"_l1cache_" + str(next_core), "memHierarchy.Cache")
+		l1.addParams(l1_params)
+		l1_cpulink = l1.setSubComponent("cpulink", "memHierarchy.MemLink")
+		l1_memlink = l1.setSubComponent("memlink", "memHierarchy.MemLink")
+		l1_cpulink.addParams(link_params)
+		l1_memlink.addParams(link_params)
+		l1_cpulink.addParams({"node": node,})
+		l1_memlink.addParams({"node": node,})
+
+		l2 = sst.Component("node"+str(node)+"_l2cache_" + str(next_core), "memHierarchy.Cache")
+		l2.addParams(l2_params)
+		l2_cpulink = l2.setSubComponent("cpulink", "memHierarchy.MemLink")
+		l2_memlink = l2.setSubComponent("memlink", "Opal.OpalMemNIC")
+		l2_cpulink.addParams(link_params)
+		l2_memlink.addParams(nic_params)
+		l2_cpulink.addParams({ "node" : node})
+		l2_memlink.addParams({ "node" : node})
+		l2_memlink.addParams({ "group" : 1})
+
+		arielMMULink = sst.Link("node"+str(node)+"_cpu_mmu_link_" + str(next_core))
+		MMUCacheLink = sst.Link("node"+str(node)+"_mmu_cache_link_" + str(next_core))
+		PTWMemLink = sst.Link("node"+str(node)+"_ptw_mem_link_" + str(next_core))
+		PTWOpalLink = sst.Link("node"+str(node)+"_ptw_opal_" + str(next_core))
+		ArielOpalLink = sst.Link("node"+str(node)+"_ariel_opal_" + str(next_core))
+
+		if next_core < cores/2:
+			arielMMULink.connect((ariel, "cache_link_%d"%next_core, "300ps"), (mmu, "cpu_to_mmu%d"%next_core, "300ps"))
+			ArielOpalLink.connect((memmgr, "opal_link_%d"%next_core, "300ps"), (opal, "coreLink%d"%(next_core + node*(cores/2)), "300ps"))
+			MMUCacheLink.connect((mmu, "mmu_to_cache%d"%next_core, "300ps"), (l1_cpulink, "port", "300ps"))
+			PTWOpalLink.connect( (pagefaulthandler, "opal_link_%d"%next_core, "300ps"), (opal, "mmuLink%d"%(next_core + node*(cores/2)), "300ps") )
+		else:
+			PTWMemLink.connect((mmu, "ptw_to_mem%d"%(next_core-cores/2), "300ps"), (l1_cpulink, "port", "300ps"))
+
+		l2_core_link = sst.Link("node"+str(node)+"_l2cache_" + str(next_core) + "_link")
+		l2_core_link.connect((l1_memlink, "port", "300ps"), (l2_cpulink, "port", "300ps"))				
+
+		l2_ring_link = sst.Link("node"+str(node)+"_l2_ring_link_" + str(next_core))
+		l2_ring_link.connect((l2_memlink, "port", "300ps"), (internal_network.rtr, "port%d"%(internal_network.getNextPort()), "300ps"))
+
+	l3cache = sst.Component("node"+str(node)+"_l3cache", "memHierarchy.Cache")
+	l3cache.addParams(l3_params)
+	l3_link = l3cache.setSubComponent("cpulink", "Opal.OpalMemNIC")
+	l3cache.addParams({ "slice_id" : 0 })
+	l3_link.addParams(nic_params)
+	l3_link.addParams({
+		"node" : node,
+		"group" : 2,
+		"addr_range_start": 0,
+		"addr_range_end": (local_memory_capacity*1024*1024) - 1,
+		"interleave_size": "0B",
+	})
+
+	l3_ring_link = sst.Link("node"+str(node)+"_l3_link")
+	l3_ring_link.connect( (l3_link, "port", "300ps"), (internal_network.rtr, "port%d"%(internal_network.getNextPort()), "300ps"))
 
 
-internal_network = Network("internal_network",0,"20ps","20ps")
+	mem = sst.Component("node"+str(node)+"_local_memory", "memHierarchy.MemController")	
+	mem.addParams({
+		"clock"   : "1.2GHz",
+		"backing" : "none",
+		"backend" : "memHierarchy.timingDRAM",
+		"backend.id" : 0,
+		"backend.addrMapper" : "memHierarchy.roundRobinAddrMapper",
+		"backend.addrMapper.interleave_size" : "64B",
+		"backend.addrMapper.row_size" : "1KiB",
+		"backend.clock" : "1.2GHz",
+		"backend.mem_size" : str(local_memory_capacity) + "MiB",
+		"backend.channels" : 2,
+		"backend.channel.numRanks" : 2,
+		"backend.channel.rank.numBanks" : 16,
+		"backend.channel.transaction_Q_size" : 32,
+		"backend.channel.rank.bank.CL" : 14,
+		"backend.channel.rank.bank.CL_WR" : 12,
+		"backend.channel.rank.bank.RCD" : 14,
+		"backend.channel.rank.bank.TRP" : 14,
+		"backend.channel.rank.bank.dataCycles" : 2,
+		"backend.channel.rank.bank.pagePolicy" : "memHierarchy.simplePagePolicy",
+		"backend.channel.rank.bank.transactionQ" : "memHierarchy.fifoTransactionQ",
+		"backend.channel.rank.bank.pagePolicy.close" : 1,
+	})
+	mem_link = mem.setSubComponent("cpulink", "memHierarchy.MemLink")
+	mem_link.addParams({
+	    "shared_memory": 1,
+	    "node" : 0
+	})
 
-for next_core in range(cores):
+	dc = sst.Component("node"+str(node)+"_dc", "memHierarchy.DirectoryController")
+	dc.addParams({
+		"entry_cache_size": 256*1024*1024, #Entry cache size of mem/blocksize
+		"clock": "200MHz",
+		#"debug" : 1,
+		#"debug_level" : 10,
+	})
 
-	l1 = sst.Component("l1cache_" + str(next_core), "memHierarchy.Cache")
-	l1.addParams(l1_params)
-        l1_cpulink = l1.setSubComponent("cpulink", "memHierarchy.MemLink")
-        l1_memlink = l1.setSubComponent("memlink", "memHierarchy.MemLink")
-        l1_cpulink.addParams(link_params)
-        l1_memlink.addParams(link_params)
+	dc_cpulink = dc.setSubComponent("cpulink", "Opal.OpalMemNIC")
+	dc_memlink = dc.setSubComponent("memlink", "memHierarchy.MemLink")
+	dc_memlink.addParams(link_params)
+	dc_cpulink.addParams(nic_params)
+	dc_cpulink.addParams({
+		"node" : node,
+		"group" : 3,
+		"addr_range_start" : 0,
+		"addr_range_end" : (local_memory_capacity*1024*1024)-1,
+		"interleave_size": "0B",
+		#"debug" : 1,
+		#"debug_level" : 10,
+	})
 
-	l2 = sst.Component("l2cache_" + str(next_core), "memHierarchy.Cache")
-	l2.addParams(l2_params)
-        l2_cpulink = l2.setSubComponent("cpulink", "memHierarchy.MemLink")
-        l2_memlink = l2.setSubComponent("memlink", "Opal.OpalMemNIC")
-        l2_cpulink.addParams(link_params)
-        l2_memlink.addParams(nic_params)
-        l2_memlink.addParams({ "group" : 1})
+	memLink = sst.Link("node"+str(node)+"_mem_link")
+	memLink.connect((mem_link, "port", "300ps"), (dc_memlink, "port", "300ps"))
 
-	arielMMULink = sst.Link("cpu_mmu_link_" + str(next_core))
-	MMUCacheLink = sst.Link("mmu_cache_link_" + str(next_core))
-	PTWMemLink = sst.Link("ptw_mem_link_" + str(next_core))
-	PTWOpalLink = sst.Link("ptw_opal_" + str(next_core))
-	ArielOpalLink = sst.Link("ariel_opal_" + str(next_core))
+	netLink = sst.Link("node"+str(node)+"_dc_link")
+	netLink.connect((dc_cpulink, "port", "300ps"), (internal_network.rtr, "port%d"%(internal_network.getNextPort()), "300ps"))
 
-	if next_core < cores/2:
-        	arielMMULink.connect((ariel, "cache_link_%d"%next_core, "300ps"), (mmu, "cpu_to_mmu%d"%next_core, "300ps"))
-		ArielOpalLink.connect((memmgr, "opal_link_%d"%next_core, "300ps"), (opal, "coreLink%d"%(next_core), "300ps"))
-		MMUCacheLink.connect((mmu, "mmu_to_cache%d"%next_core, "300ps"), (l1_cpulink, "port", "300ps"))
-		PTWOpalLink.connect( (pagefaulthandler, "opal_link_%d"%next_core, "300ps"), (opal, "mmuLink%d"%(next_core), "300ps") )
-	else:
-		PTWMemLink.connect((mmu, "ptw_to_mem%d"%(next_core-cores/2), "300ps"), (l1_cpulink, "port", "300ps"))
-
-	l2_core_link = sst.Link("l2cache_" + str(next_core) + "_link")
-	l2_core_link.connect((l1_memlink, "port", "300ps"), (l2_cpulink, "port", "300ps"))				
-
-	l2_ring_link = sst.Link("l2_ring_link_" + str(next_core))
-	l2_ring_link.connect((l2_memlink, "port", "300ps"), (internal_network.rtr, "port%d"%(internal_network.getNextPort()), "300ps"))
-			
-
-
-l3cache = sst.Component("l3cache", "memHierarchy.Cache")
-l3cache.addParams(l3_params)
-l3_link = l3cache.setSubComponent("cpulink", "Opal.OpalMemNIC")
-l3cache.addParams({ "slice_id" : 0 })
-l3_link.addParams(nic_params)
-l3_link.addParams({
-        "group" : 2,
-	"addr_range_start": 0,
-	"addr_range_end": (local_memory_capacity*1024*1024) - 1,
-	"interleave_size": "0B",
-})
-
-l3_ring_link = sst.Link("l3_link")
-l3_ring_link.connect( (l3_link, "port", "300ps"), (internal_network.rtr, "port%d"%(internal_network.getNextPort()), "300ps"))
-
-
-mem = sst.Component("local_memory", "memHierarchy.MemController")	
-mem.addParams({
-	"clock"   : "1.2GHz",
-	"backing" : "none",
-	"backend" : "memHierarchy.timingDRAM",
-	"backend.id" : 0,
-	"backend.addrMapper" : "memHierarchy.roundRobinAddrMapper",
-	"backend.addrMapper.interleave_size" : "64B",
-	"backend.addrMapper.row_size" : "1KiB",
-	"backend.clock" : "1.2GHz",
-	"backend.mem_size" : str(local_memory_capacity) + "MiB",
-	"backend.channels" : 2,
-	"backend.channel.numRanks" : 2,
-	"backend.channel.rank.numBanks" : 16,
-	"backend.channel.transaction_Q_size" : 32,
-	"backend.channel.rank.bank.CL" : 14,
-	"backend.channel.rank.bank.CL_WR" : 12,
-	"backend.channel.rank.bank.RCD" : 14,
-	"backend.channel.rank.bank.TRP" : 14,
-	"backend.channel.rank.bank.dataCycles" : 2,
-	"backend.channel.rank.bank.pagePolicy" : "memHierarchy.simplePagePolicy",
-	"backend.channel.rank.bank.transactionQ" : "memHierarchy.fifoTransactionQ",
-	"backend.channel.rank.bank.pagePolicy.close" : 1,
-})
-mem_link = mem.setSubComponent("cpulink", "memHierarchy.MemLink")
-mem_link.addParams({
-    "shared_memory": 1,
-    "node" : 0
-})
-
-dc = sst.Component("dc", "memHierarchy.DirectoryController")
-dc.addParams({
-	"entry_cache_size": 256*1024*1024, #Entry cache size of mem/blocksize
-	"clock": "200MHz",
-        #"debug" : 1,
-        #"debug_level" : 10,
-})
-
-dc_cpulink = dc.setSubComponent("cpulink", "Opal.OpalMemNIC")
-dc_memlink = dc.setSubComponent("memlink", "memHierarchy.MemLink")
-dc_memlink.addParams(link_params)
-dc_cpulink.addParams(nic_params)
-dc_cpulink.addParams({
-        "group" : 3,
-	"addr_range_start" : 0,
-	"addr_range_end" : (local_memory_capacity*1024*1024)-1,
-	"interleave_size": "0B",
-	"shared_memory": shared_memory,
-	"node": 0,
-        #"debug" : 1,
-        #"debug_level" : 10,
-})
-
-memLink = sst.Link("mem_link")
-memLink.connect((mem_link, "port", "300ps"), (dc_memlink, "port", "300ps"))
-
-netLink = sst.Link("dc_link")
-netLink.connect((dc_cpulink, "port", "300ps"), (internal_network.rtr, "port%d"%(internal_network.getNextPort()), "300ps"))
-
-
+	internal_network_map[str(node)] = internal_network
 
 
 
@@ -408,8 +422,9 @@ def bridge(net0, net1):
     link.connect( (bridge, "network1", "500ps"), (net1.rtr, "port%d"%net1port, "500ps") )
 
 
-midnet = Network("Bridge",3,"50ps","50ps")
-bridge(internal_network, midnet)
-bridge(external_network, midnet)
+for node in range(nodes):
+	midnet = Network("node"+str(node)+"_Bridge",3,"50ps","50ps")
+	bridge(internal_network_map[str(node)], midnet)
+	bridge(external_network, midnet)
 
 
