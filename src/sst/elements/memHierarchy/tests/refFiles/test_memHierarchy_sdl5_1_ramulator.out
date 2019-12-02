@@ -915,7 +915,6 @@ TrivialCPU cpu3 Finished after 1000 issued reads, 1000 returned (104055 clocks)
  n1.l2cache.latency_GetX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  n1.l2cache.latency_GetX_miss : Accumulator : Sum.u64 = 1821; SumSQ.u64 = 1105347; Count.u64 = 3; Min.u64 = 607; Max.u64 = 607; 
  n1.l2cache.latency_GetX_inv : Accumulator : Sum.u64 = 72677; SumSQ.u64 = 57858957; Count.u64 = 96; Min.u64 = 96; Max.u64 = 815; 
- n1.l2cache.latency_GetX_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  n1.l2cache.latency_GetX_upgrade : Accumulator : Sum.u64 = 63259; SumSQ.u64 = 45996663; Count.u64 = 87; Min.u64 = 727; Max.u64 = 737; 
  n1.l2cache.latency_GetSX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  n1.l2cache.latency_GetSX_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
