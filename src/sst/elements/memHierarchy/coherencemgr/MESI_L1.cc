@@ -74,6 +74,7 @@ bool MESIL1::handleGetS(MemEvent * event, bool inMSHR) {
                 line->setTimestamp(sendTime);
                 if (is_debug_addr(addr))
                     eventDI.reason = "miss";
+                mshr_->setInProgress(addr);
             } else {
                 recordMiss(event->getID());
             }
@@ -1064,40 +1065,46 @@ bool MESIL1::handleEviction(Addr addr, L1CacheLine*& line) {
         case I:
             return true;
         case S:
-            if (!silentEvictClean_) {
-                sendWriteback(Command::PutS, line, false);
-                if (recvWritebackAck_) {
-                    mshr_->insertWriteback(line->getAddr(), false);
+            if (!mshr_->getInProgress(line->getAddr())) {
+                if (!silentEvictClean_) {
+                    sendWriteback(Command::PutS, line, false);
+                    if (recvWritebackAck_) {
+                        mshr_->insertWriteback(line->getAddr(), false);
+                    }
+                    if (is_debug_addr(line->getAddr()))
+                        printDebugAlloc(false, line->getAddr(), "Writeback");
+                } else if (is_debug_addr(line->getAddr())) {
+                        printDebugAlloc(false, line->getAddr(), "Drop");
                 }
-                if (is_debug_addr(line->getAddr()))
-                    printDebugAlloc(false, line->getAddr(), "Writeback");
-            } else if (is_debug_addr(line->getAddr())) {
-                    printDebugAlloc(false, line->getAddr(), "Drop");
+                line->setState(I);
+                break;
             }
-            line->setState(I);
-            break;
         case E:
-            if (!silentEvictClean_) {
-                sendWriteback(Command::PutE, line, false);
-                if (recvWritebackAck_) {
-                    mshr_->insertWriteback(line->getAddr(), false);
+            if (!mshr_->getInProgress(line->getAddr())) {
+                if (!silentEvictClean_) {
+                    sendWriteback(Command::PutE, line, false);
+                    if (recvWritebackAck_) {
+                        mshr_->insertWriteback(line->getAddr(), false);
+                    }
+                    if (is_debug_addr(line->getAddr()))
+                        printDebugAlloc(false, line->getAddr(), "Writeback");
+                } else if (is_debug_addr(line->getAddr())) {
+                        printDebugAlloc(false, line->getAddr(), "Drop");
                 }
+                line->setState(I);
+                line->setState(I);
+                break;
+            }
+        case M:
+            if (!mshr_->getInProgress(line->getAddr())) {
+                sendWriteback(Command::PutM, line, true);
+                if (recvWritebackAck_)
+                    mshr_->insertWriteback(line->getAddr(), false);
                 if (is_debug_addr(line->getAddr()))
                     printDebugAlloc(false, line->getAddr(), "Writeback");
-            } else if (is_debug_addr(line->getAddr())) {
-                    printDebugAlloc(false, line->getAddr(), "Drop");
+                line->setState(I);
+                break;
             }
-            line->setState(I);
-            line->setState(I);
-            break;
-        case M:
-            sendWriteback(Command::PutM, line, true);
-            if (recvWritebackAck_)
-                mshr_->insertWriteback(line->getAddr(), false);
-            if (is_debug_addr(line->getAddr()))
-                printDebugAlloc(false, line->getAddr(), "Writeback");
-            line->setState(I);
-            break;
         default:
             if (is_debug_addr(line->getAddr())) {
                 stringstream note;

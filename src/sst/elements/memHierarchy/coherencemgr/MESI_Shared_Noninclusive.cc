@@ -122,6 +122,7 @@ bool MESISharNoninclusive::handleGetS(MemEvent* event, bool inMSHR) {
                     tag->setTimestamp(sendTime - 1);
                     if (is_debug_event(event))
                         eventDI.reason = "data miss";
+                    mshr_->setInProgress(addr);
                 }
             }
             break;
@@ -157,6 +158,7 @@ bool MESISharNoninclusive::handleGetS(MemEvent* event, bool inMSHR) {
                     state == E ? tag->setState(E_InvX) : tag->setState(M_InvX);
                     tag->setTimestamp(sendTime - 1);
                     recordLatencyType(event->getID(), LatType::INV);
+                    mshr_->setInProgress(addr);
                 }
             } else if (data || mshr_->hasData(addr)) {
                 recordLatencyType(event->getID(), LatType::HIT);
@@ -186,6 +188,7 @@ bool MESISharNoninclusive::handleGetS(MemEvent* event, bool inMSHR) {
                     if (is_debug_event(event))
                         eventDI.reason = "data miss";
                     recordLatencyType(event->getID(), LatType::INV);
+                    mshr_->setInProgress(addr);
                 }
             }
             break;
@@ -317,6 +320,7 @@ bool MESISharNoninclusive::handleGetX(MemEvent * event, bool inMSHR) {
                     invalidateOwner(event, tag, inMSHR, Command::FetchInv);
                 }
                 tag->setState(M_Inv);
+                mshr_->setInProgress(addr);
             }
             break;
         default:
@@ -2399,83 +2403,89 @@ bool MESISharNoninclusive::handleDirEviction(Addr addr, DirectoryLine*& tag) {
         case I:
             return true;
         case S:
-            data = dataArray_->lookup(tag->getAddr(), false);
-            if (invalidateAll(nullptr, tag, false)) {
-                evict = false;
-                tag->setState(S_Inv);
-                if (is_debug_addr(tag->getAddr()))
-                    printDebugAlloc(false, tag->getAddr(), "Dir, InProg, S_Inv");
-                break;
-            } else if (!silentEvictClean_) {
-                if (data) {
-                    sendWritebackFromCache(Command::PutS, tag, data, false);
-                } else {
-                    sendWritebackFromMSHR(Command::PutS, tag, false);
-                }
-                wbSent = true;
-                if (is_debug_addr(tag->getAddr()))
-                    printDebugAlloc(false, tag->getAddr(), "Dir, Writeback");
-            } else if (is_debug_addr(tag->getAddr()))
-                printDebugAlloc(false, tag->getAddr(), "Dir, Drop");
-            if (data) {
-                if (is_debug_addr(data->getAddr()))
-                    printDebugAlloc(false, data->getAddr(), "Data");
-                dataArray_->deallocate(data);
-            }
-            tag->setState(I);
-            evict = true;
-            break;
-        case E:
-            data = dataArray_->lookup(tag->getAddr(), false);
-            if (invalidateAll(nullptr, tag, false)) {
-                evict = false;
-                tag->setState(E_Inv);
-                if (is_debug_addr(tag->getAddr()))
-                    printDebugAlloc(false, tag->getAddr(), "Dir, InProg, E_Inv");
-                break;
-            } else if (!silentEvictClean_) {
-                if (data) {
-                    sendWritebackFromCache(Command::PutE, tag, data, false);
-                } else {
-                    sendWritebackFromMSHR(Command::PutE, tag, false);
-                }
-                wbSent = true;
-                if (is_debug_addr(tag->getAddr()))
-                    printDebugAlloc(false, tag->getAddr(), "Dir, Writeback");
-            } else if (is_debug_addr(tag->getAddr()))
-                printDebugAlloc(false, tag->getAddr(), "Dir, Drop");
-            tag->setState(I);
-            
-            if (data) {
-                if (is_debug_addr(data->getAddr()))
-                    printDebugAlloc(false, data->getAddr(), "Data");
-                dataArray_->deallocate(data);
-            }
-            evict = true;
-            break;
-        case M:
-            if (invalidateAll(nullptr, tag, false)) {
-                evict = false; 
-                tag->setState(M_Inv);
-                if (is_debug_addr(tag->getAddr()))
-                    printDebugAlloc(false, tag->getAddr(), "Dir, InProg, M_Inv");
-            } else {
-                if (is_debug_addr(tag->getAddr()))
-                    printDebugAlloc(false, tag->getAddr(), "Dir, Writeback");
+            if (!mshr_->getInProgress(tag->getAddr())) {
                 data = dataArray_->lookup(tag->getAddr(), false);
+                if (invalidateAll(nullptr, tag, false)) {
+                    evict = false;
+                    tag->setState(S_Inv);
+                    if (is_debug_addr(tag->getAddr()))
+                        printDebugAlloc(false, tag->getAddr(), "Dir, InProg, S_Inv");
+                    break;
+                } else if (!silentEvictClean_) {
+                    if (data) {
+                        sendWritebackFromCache(Command::PutS, tag, data, false);
+                    } else {
+                        sendWritebackFromMSHR(Command::PutS, tag, false);
+                    }
+                    wbSent = true;
+                    if (is_debug_addr(tag->getAddr()))
+                        printDebugAlloc(false, tag->getAddr(), "Dir, Writeback");
+                } else if (is_debug_addr(tag->getAddr()))
+                    printDebugAlloc(false, tag->getAddr(), "Dir, Drop");
                 if (data) {
-                    sendWritebackFromCache(Command::PutM, tag, data, true);
-                   if (is_debug_addr(data->getAddr()))
-                       printDebugAlloc(false, data->getAddr(), "Data");
+                    if (is_debug_addr(data->getAddr()))
+                        printDebugAlloc(false, data->getAddr(), "Data");
                     dataArray_->deallocate(data);
-                } else {
-                    sendWritebackFromMSHR(Command::PutM, tag, true);
                 }
-                wbSent = true;
                 tag->setState(I);
                 evict = true;
+                break;
             }
-            break;
+        case E:
+            if (!mshr_->getInProgress(tag->getAddr())) {
+                data = dataArray_->lookup(tag->getAddr(), false);
+                if (invalidateAll(nullptr, tag, false)) {
+                    evict = false;
+                    tag->setState(E_Inv);
+                    if (is_debug_addr(tag->getAddr()))
+                        printDebugAlloc(false, tag->getAddr(), "Dir, InProg, E_Inv");
+                    break;
+                } else if (!silentEvictClean_) {
+                    if (data) {
+                        sendWritebackFromCache(Command::PutE, tag, data, false);
+                    } else {
+                        sendWritebackFromMSHR(Command::PutE, tag, false);
+                    }
+                    wbSent = true;
+                    if (is_debug_addr(tag->getAddr()))
+                        printDebugAlloc(false, tag->getAddr(), "Dir, Writeback");
+                } else if (is_debug_addr(tag->getAddr()))
+                    printDebugAlloc(false, tag->getAddr(), "Dir, Drop");
+                tag->setState(I);
+                
+                if (data) {
+                    if (is_debug_addr(data->getAddr()))
+                        printDebugAlloc(false, data->getAddr(), "Data");
+                    dataArray_->deallocate(data);
+                }
+                evict = true;
+                break;
+            }
+        case M:
+            if (!mshr_->getInProgress(tag->getAddr())) {
+                if (invalidateAll(nullptr, tag, false)) {
+                    evict = false; 
+                    tag->setState(M_Inv);
+                    if (is_debug_addr(tag->getAddr()))
+                        printDebugAlloc(false, tag->getAddr(), "Dir, InProg, M_Inv");
+                } else {
+                    if (is_debug_addr(tag->getAddr()))
+                        printDebugAlloc(false, tag->getAddr(), "Dir, Writeback");
+                    data = dataArray_->lookup(tag->getAddr(), false);
+                    if (data) {
+                        sendWritebackFromCache(Command::PutM, tag, data, true);
+                       if (is_debug_addr(data->getAddr()))
+                           printDebugAlloc(false, data->getAddr(), "Data");
+                        dataArray_->deallocate(data);
+                    } else {
+                        sendWritebackFromMSHR(Command::PutM, tag, true);
+                    }
+                    wbSent = true;
+                    tag->setState(I);
+                    evict = true;
+                }
+                break;
+            }
         default:
             if (is_debug_addr(tag->getAddr())) {
                 std::stringstream note;
@@ -2509,59 +2519,65 @@ bool MESISharNoninclusive::handleDataEviction(Addr addr, DataLine *&data) {
         case I:
             return true;
         case S:
-            tag = data->getTag();
-            if (!(tag->hasSharers())) {
-                if (is_debug_addr(data->getAddr())) {
-                    printDebugAlloc(false, tag->getAddr(), "Dir, Writeback");
-                    printDebugAlloc(false, data->getAddr(), "Data"); 
+            if (!mshr_->getInProgress(data->getAddr())) {
+                tag = data->getTag();
+                if (!(tag->hasSharers())) {
+                    if (is_debug_addr(data->getAddr())) {
+                        printDebugAlloc(false, tag->getAddr(), "Dir, Writeback");
+                        printDebugAlloc(false, data->getAddr(), "Data"); 
+                    }
+                    sendWritebackFromCache(Command::PutS, tag, data, false);
+                    if (recvWritebackAck_)
+                        mshr_->insertWriteback(tag->getAddr(), false);
+                    recordPrefetchResult(tag, statPrefetchEvict);
+                    notifyListenerOfEvict(data->getAddr(), lineSize_, 0);
+                    tag->setState(I);
+                    dirArray_->deallocate(tag);
+                } else if (is_debug_addr(data->getAddr())) {
+                    printDebugAlloc(false, data->getAddr(), "Data, Drop");
                 }
-                sendWritebackFromCache(Command::PutS, tag, data, false);
-                if (recvWritebackAck_)
-                    mshr_->insertWriteback(tag->getAddr(), false);
-                recordPrefetchResult(tag, statPrefetchEvict);
-                notifyListenerOfEvict(data->getAddr(), lineSize_, 0);
-                tag->setState(I);
-                dirArray_->deallocate(tag);
-            } else if (is_debug_addr(data->getAddr())) {
-                printDebugAlloc(false, data->getAddr(), "Data, Drop");
+                return true;
             }
-            return true;
         case E:
-            tag = data->getTag();
-            if (!(tag->hasOwner() || tag->hasSharers())) {
-                if (is_debug_addr(data->getAddr())) {
-                    printDebugAlloc(false, tag->getAddr(), "Dir, Writeback");
-                    printDebugAlloc(false, data->getAddr(), "Data"); 
+            if (!mshr_->getInProgress(data->getAddr())) {
+                tag = data->getTag();
+                if (!(tag->hasOwner() || tag->hasSharers())) {
+                    if (is_debug_addr(data->getAddr())) {
+                        printDebugAlloc(false, tag->getAddr(), "Dir, Writeback");
+                        printDebugAlloc(false, data->getAddr(), "Data"); 
+                    }
+                    sendWritebackFromCache(Command::PutE, tag, data, false);
+                    if (recvWritebackAck_)
+                        mshr_->insertWriteback(tag->getAddr(), false);
+                    recordPrefetchResult(tag, statPrefetchEvict);
+                    notifyListenerOfEvict(data->getAddr(), lineSize_, 0);
+                    tag->setState(I);
+                    dirArray_->deallocate(tag);
+                } else if (is_debug_addr(data->getAddr())) {
+                    printDebugAlloc(false, data->getAddr(), "Data, Drop");
                 }
-                sendWritebackFromCache(Command::PutE, tag, data, false);
-                if (recvWritebackAck_)
-                    mshr_->insertWriteback(tag->getAddr(), false);
-                recordPrefetchResult(tag, statPrefetchEvict);
-                notifyListenerOfEvict(data->getAddr(), lineSize_, 0);
-                tag->setState(I);
-                dirArray_->deallocate(tag);
-            } else if (is_debug_addr(data->getAddr())) {
-                printDebugAlloc(false, data->getAddr(), "Data, Drop");
+                return true;
             }
-            return true;
         case M:
-            tag = data->getTag();
-            if (!(tag->hasOwner() || tag->hasSharers())) {
-                if (is_debug_addr(data->getAddr())) {
-                    printDebugAlloc(false, tag->getAddr(), "Dir, Writeback");
-                    printDebugAlloc(false, data->getAddr(), "Data"); 
+            if (!mshr_->getInProgress(data->getAddr())) {
+                tag = data->getTag();
+                if (!(tag->hasOwner() || tag->hasSharers())) {
+                    if (is_debug_addr(data->getAddr())) {
+                        printDebugAlloc(false, tag->getAddr(), "Dir, Writeback");
+                        printDebugAlloc(false, data->getAddr(), "Data"); 
+                    }
+                    sendWritebackFromCache(Command::PutM, tag, data, false);
+                    if (recvWritebackAck_)
+                        mshr_->insertWriteback(tag->getAddr(), false);
+                    recordPrefetchResult(tag, statPrefetchEvict);
+                    notifyListenerOfEvict(data->getAddr(), lineSize_, 0);
+                    tag->setState(I);
+                    dirArray_->deallocate(tag);
+                } else if (is_debug_addr(data->getAddr())) {
+                    printDebugAlloc(false, data->getAddr(), "Data, Drop");
                 }
-                sendWritebackFromCache(Command::PutM, tag, data, false);
-                if (recvWritebackAck_)
-                    mshr_->insertWriteback(tag->getAddr(), false);
-                recordPrefetchResult(tag, statPrefetchEvict);
-                notifyListenerOfEvict(data->getAddr(), lineSize_, 0);
-                tag->setState(I);
-                dirArray_->deallocate(tag);
-            } else if (is_debug_addr(data->getAddr())) {
-                printDebugAlloc(false, data->getAddr(), "Data, Drop");
+                return true;
             }
-            return true;
         default:
             if (is_debug_addr(data->getAddr())) {
                 std::stringstream reason;

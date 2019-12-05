@@ -140,6 +140,7 @@ bool MESIInclusive::handleGetS(MemEvent * event, bool inMSHR) {
                         line->setState(E_InvX);
                     else 
                         line->setState(M_InvX);
+                    mshr_->setInProgress(addr);
                 }
                 break;
             } else {
@@ -213,7 +214,7 @@ bool MESIInclusive::handleGetX(MemEvent * event, bool inMSHR) {
                 sendTime = forwardMessage(event, lineSize_, 0, nullptr);
                 line->setState(IM);
                 line->setTimestamp(sendTime);
-                mshr_->setInProgress(addr); // Keeps us from retrying too early due to certain race conditions between events
+                mshr_->setInProgress(addr); // Keeps us from retrying too early due to certain race conditions between events and prevents deallocations
                 if (is_debug_event(event))
                     eventDI.reason = "miss";
             }
@@ -266,6 +267,7 @@ bool MESIInclusive::handleGetX(MemEvent * event, bool inMSHR) {
                     mshr_->setProfiled(addr);
                     invalidateExceptRequestor(event, line, inMSHR);
                     line->setState(M_Inv);
+                    mshr_->setInProgress(addr);
                 }
                 break;
             } else if (line->hasOwner()) {
@@ -276,6 +278,7 @@ bool MESIInclusive::handleGetX(MemEvent * event, bool inMSHR) {
                     recordLatencyType(event->getID(), LatType::INV);
                     invalidateOwner(event, line, inMSHR, Command::FetchInv);
                     line->setState(M_Inv);
+                    mshr_->setInProgress(addr);
                 }
                 break;
             }
@@ -732,7 +735,6 @@ bool MESIInclusive::handlePutM(MemEvent * event, bool inMSHR) {
                     getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
 
-    //printLine(addr);
     if (is_debug_addr(addr) && line) {
         eventDI.newst = line->getState();
         eventDI.verboseline = line->getString();
@@ -1715,7 +1717,7 @@ bool MESIInclusive::handleEviction(Addr addr, SharedCacheLine *& line) {
         line = cacheArray_->findReplacementCandidate(addr);
     State state = line->getState();
     
-    if (is_debug_addr(addr))
+    if (is_debug_addr(addr) || (line && is_debug_addr(line->getAddr())))
         evictDI.oldst = state;
     
     stat_evict[state]->addData(1);
@@ -1726,54 +1728,60 @@ bool MESIInclusive::handleEviction(Addr addr, SharedCacheLine *& line) {
         case I:
             return true;
         case S:
-            if (invalidateAll(nullptr, line, false)) {
-                evict = false;
-                line->setState(S_Inv);
-                if (is_debug_addr(line->getAddr()))
-                    printDebugAlloc(false, line->getAddr(), "InProg, S_Inv");
-                break;
-            } else if (!silentEvictClean_) {
-                sendWriteback(Command::PutS, line, false);
-                wbSent = true;
-                if (is_debug_addr(line->getAddr()))
-                    printDebugAlloc(false, line->getAddr(), "Writeback");
-            } else if (is_debug_addr(line->getAddr()))
-                printDebugAlloc(false, line->getAddr(), "Drop");
-            line->setState(I);
-            evict = true;
-            break;
-        case E:
-            if (invalidateAll(nullptr, line, false)) {
-                evict = false;
-                line->setState(E_Inv);
-                if (is_debug_addr(line->getAddr()))
-                    printDebugAlloc(false, line->getAddr(), "InProg, E_Inv");
-                break;
-            } else if (!silentEvictClean_) {
-                sendWriteback(Command::PutE, line, false);
-                wbSent = true;
-                if (is_debug_addr(line->getAddr()))
-                    printDebugAlloc(false, line->getAddr(), "Writeback");
-            } else if (is_debug_addr(line->getAddr()))
-                printDebugAlloc(false, line->getAddr(), "Drop");
-            line->setState(I);
-            evict = true;
-            break;
-        case M:
-            if (invalidateAll(nullptr, line, false)) {
-                evict = false; 
-                line->setState(M_Inv);
-                if (is_debug_addr(line->getAddr()))
-                    printDebugAlloc(false, line->getAddr(), "InProg, M_Inv");
-            } else {
-                sendWriteback(Command::PutM, line, true);
-                wbSent = true;
+            if (!mshr_->getInProgress(line->getAddr())) {
+                if (invalidateAll(nullptr, line, false)) {
+                    evict = false;
+                    line->setState(S_Inv);
+                    if (is_debug_addr(line->getAddr()))
+                        printDebugAlloc(false, line->getAddr(), "InProg, S_Inv");
+                    break;
+                } else if (!silentEvictClean_) {
+                    sendWriteback(Command::PutS, line, false);
+                    wbSent = true;
+                    if (is_debug_addr(line->getAddr()))
+                        printDebugAlloc(false, line->getAddr(), "Writeback");
+                } else if (is_debug_addr(line->getAddr()))
+                    printDebugAlloc(false, line->getAddr(), "Drop");
                 line->setState(I);
                 evict = true;
-                if (is_debug_addr(line->getAddr()))
-                    printDebugAlloc(false, line->getAddr(), "Writeback");
+                break;
             }
-            break;
+        case E:
+            if (!mshr_->getInProgress(line->getAddr())) {
+                if (invalidateAll(nullptr, line, false)) {
+                    evict = false;
+                    line->setState(E_Inv);
+                    if (is_debug_addr(line->getAddr()))
+                        printDebugAlloc(false, line->getAddr(), "InProg, E_Inv");
+                    break;
+                } else if (!silentEvictClean_) {
+                    sendWriteback(Command::PutE, line, false);
+                    wbSent = true;
+                    if (is_debug_addr(line->getAddr()))
+                        printDebugAlloc(false, line->getAddr(), "Writeback");
+                } else if (is_debug_addr(line->getAddr()))
+                    printDebugAlloc(false, line->getAddr(), "Drop");
+                line->setState(I);
+                evict = true;
+                break;
+            }
+        case M:
+            if (!mshr_->getInProgress(line->getAddr())) {
+                if (invalidateAll(nullptr, line, false)) {
+                    evict = false; 
+                    line->setState(M_Inv);
+                    if (is_debug_addr(line->getAddr()))
+                        printDebugAlloc(false, line->getAddr(), "InProg, M_Inv");
+                } else {
+                    sendWriteback(Command::PutM, line, true);
+                    wbSent = true;
+                    line->setState(I);
+                    evict = true;
+                    if (is_debug_addr(line->getAddr()))
+                        printDebugAlloc(false, line->getAddr(), "Writeback");
+                }
+                break;
+            }
         default:
             if (is_debug_addr(line->getAddr())) {
                 std::stringstream note;
@@ -1864,11 +1872,11 @@ void MESIInclusive::retry(Addr addr) {
     if (mshr_->exists(addr)) {
         if (mshr_->getFrontType(addr) == MSHREntryType::Event) {
             //if (is_debug_addr(addr))
-                //debug->debug(_L5_, "    Retry: Waiting Event exists in MSHR and is ready to retry\n");
+            //    debug->debug(_L5_, "    Retry: Waiting Event exists in MSHR and is ready to retry\n");
             retryBuffer_.push_back(mshr_->getFrontEvent(addr));
         } else if (!(mshr_->pendingWriteback(addr))) {
             //if (is_debug_addr(addr))
-                //debug->debug(_L5_, "    Retry: Waiting Evict in MSHR, retrying eviction\n");
+            //    debug->debug(_L5_, "    Retry: Waiting Evict in MSHR, retrying eviction\n");
             std::list<Addr>* evictPointers = mshr_->getEvictPointers(addr);
             for (std::list<Addr>::iterator it = evictPointers->begin(); it != evictPointers->end(); it++) {
                 MemEvent * ev = new MemEvent(cachename_, addr, *it, Command::NULLCMD);
