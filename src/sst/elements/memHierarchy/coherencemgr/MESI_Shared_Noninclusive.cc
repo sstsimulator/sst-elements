@@ -1711,6 +1711,7 @@ bool MESISharNoninclusive::handleFetchInvX(MemEvent * event, bool inMSHR) {
                 state == E ? tag->setState(E_D) : tag->setState(M_D);
                 mshr_->setProfiled(addr);
             } else {
+                tag->setState(S);
                 if (data)
                     sendResponseDown(event, data->getData(), state == M, true); // TODO Double check that a downgrade counts as an evict
                 else {
