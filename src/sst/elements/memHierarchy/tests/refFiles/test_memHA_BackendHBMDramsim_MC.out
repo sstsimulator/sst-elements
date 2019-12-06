@@ -22,6 +22,8 @@ Channel 6 statistics
 Channel 7 statistics
  Total Return Transactions: 32 (1024 bytes) aggregate average bandwidth 0.046GB/s
  Rank 0 -  Reads: 32 (1024 bytes) Writes: 0 (0 bytes)
+== Loading device model file 'ddr_device.ini' ==
+== Loading system model file 'ddr_system.ini' ==
  cpu0.pendCycle : Accumulator : Sum.u64 = 47113; SumSQ.u64 = 185567; Count.u64 = 19687; Min.u64 = 0; Max.u64 = 10; 
  c0.l1cache.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c0.l1cache.stateEvent_GetS_I : Accumulator : Sum.u64 = 870; SumSQ.u64 = 870; Count.u64 = 870; Min.u64 = 1; Max.u64 = 1; 
