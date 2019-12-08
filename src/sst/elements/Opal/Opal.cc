@@ -50,6 +50,8 @@ Opal::Opal(SST::ComponentId_t id, SST::Params& params): Component(id) {
 
 	cycles = 0;
 
+	opalBase = new OpalBase();
+
 	char* buffer = (char*) malloc(sizeof(char) * 256);
 
 	/* Configuring shared memory */
@@ -66,7 +68,7 @@ Opal::Opal(SST::ComponentId_t id, SST::Params& params): Component(id) {
 		memset(buffer, 0 , 256);
 		sprintf(buffer, "mempool%" PRIu32 ".", i);
 		Params memPoolParams = sharedMemParams.find_prefix_params(buffer);
-		sharedMemoryInfo[i] = new MemoryPrivateInfo(this, i, memPoolParams);
+		sharedMemoryInfo[i] = new MemoryPrivateInfo(opalBase, i, memPoolParams);
 		std::cerr << getName().c_str() << "Configuring Shared " << buffer << std::endl;
 		shared_mem_size += memPoolParams.find<uint64_t>("size", 0);
 		memset(buffer, 0 , 256);
@@ -80,7 +82,7 @@ Opal::Opal(SST::ComponentId_t id, SST::Params& params): Component(id) {
 		memset(buffer, 0 , 256);
 		sprintf(buffer, "node%" PRIu32 ".", i);
 		Params nodePrivateParams = params.find_prefix_params(buffer);
-		nodeInfo[i] = new NodePrivateInfo(this, i, nodePrivateParams);
+		nodeInfo[i] = new NodePrivateInfo(opalBase, i, nodePrivateParams);
 		for(uint32_t j=0; j<nodeInfo[i]->cores; j++) {
 			memset(buffer, 0 , 256);
 			sprintf(buffer, "coreLink%" PRIu32, num_cores);
@@ -96,6 +98,12 @@ Opal::Opal(SST::ComponentId_t id, SST::Params& params): Component(id) {
 			nodeInfo[i]->memCntrlInfo[j].link = configureLink(buffer, "1ns", new Event::Handler<MemoryPrivateInfo>((&nodeInfo[i]->memCntrlInfo[j]), &MemoryPrivateInfo::handleRequest));
 			num_memCntrls++;
 		}
+
+		char* subID = (char*) malloc(sizeof(char) * 32);
+		sprintf(subID, "%" PRIu32, i);
+		nodeInfo[i]->statLocalMemUsage = registerStatistic<uint64_t>("local_mem_usage", subID );
+		nodeInfo[i]->statSharedMemUsage = registerStatistic<uint64_t>("shared_mem_usage", subID );
+		free(subID);
 	}
 
 	free(buffer);
@@ -187,10 +195,10 @@ void Opal::setNextMemPool( int node, int fault_level )
 void Opal::processHint(int node, int fileId, uint64_t vAddress, int size)
 {
 
-	std::map<int, std::pair<std::vector<int>*, std::vector<uint64_t>* > >::iterator fileIdHint = mmapFileIdHints.find(fileId);
+	std::map<int, std::pair<std::vector<int>*, std::vector<uint64_t>* > >::iterator fileIdHint = opalBase->mmapFileIdHints.find(fileId);
 
 	//fileId is already registered by another node
-	if( fileIdHint != mmapFileIdHints.end() )
+	if( fileIdHint != opalBase->mmapFileIdHints.end() )
 	{
 		//search for nodeId
 		std::vector<int>* it = (fileIdHint->second).first;
@@ -216,7 +224,7 @@ void Opal::processHint(int node, int fileId, uint64_t vAddress, int size)
 		std::vector<uint64_t> *pa = new std::vector<uint64_t>;
 
 		it->push_back(node);
-		mmapFileIdHints.insert(std::make_pair(fileId, std::make_pair( it, pa )));
+		opalBase->mmapFileIdHints.insert(std::make_pair(fileId, std::make_pair( it, pa )));
 		nodeInfo[node]->reservedSpace.insert(std::make_pair(vAddress/4096, std::make_pair(fileId, std::make_pair( ceil(size/(nodeInfo[node]->page_size)), 0))));
 
 	}
@@ -371,7 +379,7 @@ REQRESPONSE Opal::allocateFromReservedMemory(int node, uint64_t reserved_vAddres
 	int pages_reserved = nodeInfo[node]->reservedSpace[reserved_vAddress].second.first;
 	int pages_used = nodeInfo[node]->reservedSpace[reserved_vAddress].second.second;
 
-	std::vector<uint64_t> *reserved_pAddress = mmapFileIdHints[fileID].second;
+	std::vector<uint64_t> *reserved_pAddress = opalBase->mmapFileIdHints[fileID].second;
 
 	//Allocate all the pages. TODO: pages can be reserved on demand instead of allocating all the pages at a time. But what if the memory is drained out.
 	if(reserved_pAddress->empty()) {
@@ -413,7 +421,7 @@ REQRESPONSE Opal::allocateFromReservedMemory(int node, uint64_t reserved_vAddres
 	}
 	else
 	{
-		output->fatal(CALL_INFO, -1, "Opal: address :%lu requested with fileId:%d has no space left\n", vAddress, fileID);
+		output->fatal(CALL_INFO, -1, "Opal: address :%llu requested with fileId:%d has no space left\n", vAddress, fileID);
 	}
 
 	return response;
@@ -474,9 +482,9 @@ bool Opal::tick(SST::Cycle_t x)
 	cycles++;
 
 	int inst_served = 0;
-	while(!requestQ.empty()) {
+	while(!opalBase->requestQ.empty()) {
 		if(inst_served < max_inst) {
-			OpalEvent *ev = requestQ.front();
+			OpalEvent *ev = opalBase->requestQ.front();
 			bool removeEvent = true;
 
 			switch(ev->getType()) {
@@ -521,7 +529,7 @@ bool Opal::tick(SST::Cycle_t x)
 				break;
 			}
 
-			requestQ.pop();
+			opalBase->requestQ.pop();
 			delete ev;
 			inst_served++;
 		}

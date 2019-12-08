@@ -37,7 +37,6 @@
 #include <sst/core/timeConverter.h>
 #include <sst/core/interfaces/simpleMem.h>
 #include <sst/core/output.h>
-#include <sst/core/elementinfo.h>
 
 #include "Opal_Event.h"
 #include "mempool.h"
@@ -51,14 +50,215 @@ namespace SST
 {
 	namespace OpalComponent
 	{
-		class MemoryPrivateInfo;
-		class NodePrivateInfo;
+
+		class OpalBase {
+
+			public:
+				OpalBase() { }
+
+				~OpalBase() {
+
+					while( !requestQ.empty() ) {
+						delete requestQ.front();
+						requestQ.pop();
+					}
+
+					std::map<int, std::pair<std::vector<int>*, std::vector<uint64_t>* > >::iterator it;
+					for(it=mmapFileIdHints.begin(); it!=mmapFileIdHints.end(); it++){
+						delete (it->second).second;
+						delete (it->second).first;
+					}
+				}
+
+				std::queue<OpalEvent*> requestQ; // stores page fault requests, hints and shootdown acknowledgement events from all the cores
+
+				std::map<int, std::pair<std::vector<int>*, std::vector<uint64_t>* > > mmapFileIdHints; // used to store reserved memory which is useful for inter-node communication
+		};
+
+		class MemoryPrivateInfo
+		{
+			public:
+
+				OpalBase *opalBase;
+
+				int nodeId;
+
+				int memContrlId;
+
+				SST::Link * link;
+
+				unsigned int latency;
+
+				Pool* pool;
+
+				MemoryPrivateInfo() { }
+
+				MemoryPrivateInfo(OpalBase *base, uint32_t _id, Params params)
+				{
+					memContrlId = _id;
+					opalBase = base;
+					latency = (uint32_t) params.find<uint32_t>("latency", 1);
+					pool = new Pool(params, SST::OpalComponent::MemType::SHARED, _id);
+				}
+
+				~MemoryPrivateInfo() {
+					delete pool;
+				}
+
+				void setOwner(OpalBase *base) { opalBase = base; }
+
+				void handleRequest(SST::Event* e)
+				{
+					OpalEvent *ev =  static_cast<OpalComponent::OpalEvent*> (e);
+					ev->setMemContrlId(memContrlId);
+					delete ev;	// delete event from memory controller for now
+				}
+
+				bool contains(uint64_t page)
+				{
+					return ((pool->start <= page) && (page < pool->start + pool->num_frames*pool->frsize)) ? true : false;
+				}
+		};
+
+		class CorePrivateInfo
+		{
+			public:
+
+				OpalBase *opalBase;
+
+				int nodeId;
+
+				int coreId;
+
+				uint64_t cr3;
+
+				SST::Link * coreLink;
+
+				SST::Link * mmuLink;
+
+				float ipc;
+
+				CorePrivateInfo() { }
+
+				~CorePrivateInfo() { }
+
+				unsigned int latency;
+
+				void setOwner(OpalBase *base) { opalBase = base; }
+
+				void handleRequest(SST::Event* e)
+				{
+					OpalEvent *ev =  static_cast<OpalComponent::OpalEvent*> (e);
+					ev->setNodeId(nodeId);
+					ev->setCoreId(coreId);
+					opalBase->requestQ.push(ev);
+				}
+
+		};
+
+		class NodePrivateInfo
+		{
+			public:
+
+				OpalBase *opalBase;
+
+				uint32_t clock; // clock rate of Opal
+
+				uint32_t node_num; // stores the node number of this node
+
+				uint32_t cores; // stores number of cores in this node
+
+				uint32_t memory_cntrls; // stores number of memory controllers available in this node
+
+				uint32_t latency; // latency to communicate with Core, MMU and Memory controller units
+
+				CorePrivateInfo *coreInfo; // stores core specific information of this node
+
+				MemoryPrivateInfo *memCntrlInfo; // stores memory controller information of this node
+
+				uint32_t memoryAllocationPolicy; // used for deciding memory allocation policies
+
+				int nextallocmem; // stores next memory pool to allocate memory from
+
+				int allocatedmempool; // used to store current allocated memory pool
+
+				Pool* pool; // local memory pool which maintains memory utilization - allocated and free pages
+
+				uint64_t page_size; // page size of the node in KB's
+
+				uint64_t memory_size; // local memory size in terms of number of pages
+
+				uint64_t num_pages; // number of pages in local memory
+
+				uint32_t pages_available; // used to check number of pages free in local memory
+
+				std::map<uint64_t, std::pair<int, std::pair<int, int> > > reservedSpace; // stores pages that are reserved by nodes. these can be shared by other nodes for inter-node communication. fileds: virtual address, fileId, size
+
+				Statistic<uint64_t>* statLocalMemUsage;
+				Statistic<uint64_t>* statSharedMemUsage;
+
+				NodePrivateInfo(OpalBase *base, uint32_t node, Params params)
+				{
+					opalBase = base;
+					node_num = node;
+					clock = (uint32_t) params.find<uint32_t>("clock", 2000); // in MHz
+					cores = (uint32_t) params.find<uint32_t>("cores", 1);
+					memory_cntrls = (uint32_t) params.find<uint32_t>("memory_cntrls", 1);
+					latency = (uint32_t) params.find<uint32_t>("latency", 2000);	//2us
+
+					memoryAllocationPolicy = (uint32_t) params.find<uint32_t>("allocation_policy", 0);
+					nextallocmem = 0;
+					allocatedmempool = 0;
+
+					pool = new Pool((Params) params.find_prefix_params("memory."), SST::OpalComponent::MemType::LOCAL, node);
+					memory_size = (uint32_t) params.find<uint32_t>("memory.size", 1);	// in KB's
+					page_size = (uint32_t) params.find<uint32_t>("memory.frame_size", 4);
+					page_size = page_size * 1024;
+
+					coreInfo = new CorePrivateInfo[cores];
+					for(uint32_t i=0; i<cores; i++) {
+						coreInfo[i].latency = latency;
+						coreInfo[i].nodeId = node_num;
+						coreInfo[i].coreId = i;
+						coreInfo[i].opalBase = opalBase;
+					}
+
+					memCntrlInfo = new MemoryPrivateInfo[memory_cntrls];
+					for(uint32_t i=0; i<memory_cntrls; i++) {
+						memCntrlInfo[i].latency = latency;
+						memCntrlInfo[i].nodeId = node_num;
+						memCntrlInfo[i].memContrlId = i;
+						memCntrlInfo[i].opalBase = opalBase;
+						memCntrlInfo[i].setOwner(opalBase);
+						memCntrlInfo[i].pool = pool;
+					}
+
+					num_pages = ceil((memory_size *1024)/page_size);
+
+				}
+
+				~NodePrivateInfo() {
+					delete[] coreInfo;
+					delete[] memCntrlInfo;
+				}
+
+				void profileEvent(SST::OpalComponent::MemType memType)
+				{
+						if( memType == SST::OpalComponent::MemType::LOCAL ) {
+								statLocalMemUsage->addData(1);
+						}
+						else{
+								statSharedMemUsage->addData(1);
+						}
+				}
+
+		};
 
 		class Opal : public SST::Component
 		{
 			public:
 
-				Opal( SST::ComponentId_t id, SST::Params& params); 
+				Opal( SST::ComponentId_t id, SST::Params& params);
 
 				void setup()  { };
 
@@ -80,26 +280,18 @@ namespace SST
 
 				void processHint(int node, int fileId, uint64_t vAddress, int size);
 
-				std::queue<OpalEvent*> requestQ; // stores page fault requests, hints and shootdown acknowledgement events from all the cores
-
 				void deallocateSharedMemory(uint64_t page, int N);
 
 				~Opal() {
-
 					for(uint32_t i=0; i<num_nodes; i++)
-						delete[] nodeInfo[i];
+						delete nodeInfo[i];
 					delete[] nodeInfo;
 
 					for(uint32_t i=0; i<num_shared_mempools; i++)
-						delete[] sharedMemoryInfo[i];
+						delete sharedMemoryInfo[i];
 					delete[] sharedMemoryInfo;
 
-					std::map<int, std::pair<std::vector<int>*, std::vector<uint64_t>* > >::iterator it;
-					for(it=mmapFileIdHints.begin(); it!=mmapFileIdHints.end(); it++){
-						delete (it->second).second;
-						delete (it->second).first;
-					}
-
+					delete opalBase;
 				};
 
 				SST_ELI_REGISTER_COMPONENT(
@@ -170,6 +362,8 @@ namespace SST
 
 					int verbosity;
 
+					OpalBase* opalBase;
+
 					long long int max_inst; //maximum instructions per cycle
 
 					uint32_t num_nodes; // stores total number of nodes available in the system
@@ -186,192 +380,7 @@ namespace SST
 
 					NodePrivateInfo **nodeInfo; // stores private information of each node
 
-					std::map<int, std::pair<std::vector<int>*, std::vector<uint64_t>* > > mmapFileIdHints; // used to store reserved memory which is useful for inter-node communication
 		};
-
-		class MemoryPrivateInfo
-		{
-			public:
-
-				Opal *owner;
-
-				int nodeId;
-
-				int memContrlId;
-
-				SST::Link * link;
-
-				unsigned int latency;
-
-				Pool* pool;
-
-				MemoryPrivateInfo() { }
-
-				MemoryPrivateInfo(Opal *_owner, uint32_t _id, Params params)
-				{
-					memContrlId = _id;
-					owner = _owner;
-					latency = (uint32_t) params.find<uint32_t>("latency", 1);
-					pool = new Pool(owner, params, SST::OpalComponent::MemType::SHARED, _id);
-				}
-
-				~MemoryPrivateInfo() {
-					delete pool;
-				}
-
-				void setOwner(Opal *owner_) { owner = owner_; }
-
-				void handleRequest(SST::Event* e)
-				{
-					OpalEvent *ev =  static_cast<OpalComponent::OpalEvent*> (e);
-					ev->setMemContrlId(memContrlId);
-					delete ev;	// delete event from memory controller for now
-				}
-
-				bool contains(uint64_t page)
-				{
-					return ((pool->start <= page) && (page < pool->start + pool->num_frames*pool->frsize)) ? true : false;
-				}
-		};
-
-		class CorePrivateInfo
-		{
-			public:
-
-				Opal *owner;
-
-				int nodeId;
-
-				int coreId;
-
-				uint64_t cr3;
-
-				SST::Link * coreLink;
-
-				SST::Link * mmuLink;
-
-				float ipc;
-
-				CorePrivateInfo() { }
-
-				~CorePrivateInfo() { }
-
-				unsigned int latency;
-
-				void setOwner(Opal *owner_) { owner = owner_; }
-
-				void handleRequest(SST::Event* e)
-				{
-					OpalEvent *ev =  static_cast<OpalComponent::OpalEvent*> (e);
-					ev->setNodeId(nodeId);
-					ev->setCoreId(coreId);
-					owner->requestQ.push(ev);
-				}
-
-		};
-
-		class NodePrivateInfo
-		{
-			public:
-
-				Opal *owner;
-
-				uint32_t clock; // clock rate of Opal
-
-				uint32_t node_num; // stores the node number of this node
-
-				uint32_t cores; // stores number of cores in this node
-
-				uint32_t memory_cntrls; // stores number of memory controllers available in this node
-
-				uint32_t latency; // latency to communicate with Core, MMU and Memory controller units
-
-				CorePrivateInfo *coreInfo; // stores core specific information of this node
-
-				MemoryPrivateInfo *memCntrlInfo; // stores memory controller information of this node
-
-				uint32_t memoryAllocationPolicy; // used for deciding memory allocation policies
-
-				int nextallocmem; // stores next memory pool to allocate memory from
-
-				int allocatedmempool; // used to store current allocated memory pool
-
-				Pool* pool; // local memory pool which maintains memory utilization - allocated and free pages
-
-				uint64_t page_size; // page size of the node in KB's
-
-				uint64_t memory_size; // local memory size in terms of number of pages
-
-				uint64_t num_pages; // number of pages in local memory
-
-				uint32_t pages_available; // used to check number of pages free in local memory
-
-				std::map<uint64_t, std::pair<int, std::pair<int, int> > > reservedSpace; // stores pages that are reserved by nodes. these can be shared by other nodes for inter-node communication. fileds: virtual address, fileId, size
-
-				Statistic<uint64_t>* statLocalMemUsage;
-				Statistic<uint64_t>* statSharedMemUsage;
-
-				NodePrivateInfo(Opal *_owner, uint32_t node, Params params)
-				{
-					owner = _owner;
-					node_num = node;
-					clock = (uint32_t) params.find<uint32_t>("clock", 2000); // in MHz
-					cores = (uint32_t) params.find<uint32_t>("cores", 1);
-					memory_cntrls = (uint32_t) params.find<uint32_t>("memory_cntrls", 1);
-					latency = (uint32_t) params.find<uint32_t>("latency", 2000);	//2us
-
-					memoryAllocationPolicy = (uint32_t) params.find<uint32_t>("allocation_policy", 0);
-					nextallocmem = 0;
-					allocatedmempool = 0;
-
-					pool = new Pool(owner, (Params) params.find_prefix_params("memory."), SST::OpalComponent::MemType::LOCAL, node);
-					memory_size = (uint32_t) params.find<uint32_t>("memory.size", 1);	// in KB's
-					page_size = (uint32_t) params.find<uint32_t>("memory.frame_size", 4);
-					page_size = page_size * 1024;
-
-					coreInfo = new CorePrivateInfo[cores];
-					for(uint32_t i=0; i<cores; i++) {
-						coreInfo[i].latency = latency;
-						coreInfo[i].nodeId = node_num;
-						coreInfo[i].coreId = i;
-						coreInfo[i].owner = owner;
-					}
-
-					memCntrlInfo = new MemoryPrivateInfo[memory_cntrls];
-					for(uint32_t i=0; i<memory_cntrls; i++) {
-						memCntrlInfo[i].latency = latency;
-						memCntrlInfo[i].nodeId = node_num;
-						memCntrlInfo[i].memContrlId = i;
-						memCntrlInfo[i].owner = owner;
-					}
-
-					num_pages = ceil((memory_size *1024)/page_size);
-
-					char* subID = (char*) malloc(sizeof(char) * 32);
-					sprintf(subID, "%" PRIu32, node_num);
-
-					statLocalMemUsage = owner->registerStatistic<uint64_t>("local_mem_usage", subID );
-					statSharedMemUsage = owner->registerStatistic<uint64_t>("shared_mem_usage", subID );
-				}
-
-				~NodePrivateInfo() {
-					delete coreInfo;
-					delete memCntrlInfo;
-					delete pool;
-				}
-
-                                void profileEvent(SST::OpalComponent::MemType memType)
-                                {
-                                        if( memType == SST::OpalComponent::MemType::LOCAL ) {
-                                                statLocalMemUsage->addData(1);
-                                        }
-                                        else{
-                                                statSharedMemUsage->addData(1);
-                                        }
-                                }
-
-		};
-
 	}
 }
 

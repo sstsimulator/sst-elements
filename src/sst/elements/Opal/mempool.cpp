@@ -24,10 +24,8 @@
 #include <chrono> 
 
 //Constructor for pool
-Pool::Pool(SST::Component* own, Params params, SST::OpalComponent::MemType mem_type, int id)
+Pool::Pool(Params params, SST::OpalComponent::MemType mem_type, int id)
 {
-
-	owner = own;
 
 	output = new SST::Output("OpalMemPool[@f:@l:@p] ", 16, 0, SST::Output::STDOUT);
 
@@ -83,22 +81,19 @@ Pool::Pool(SST::Component* own, Params params, SST::OpalComponent::MemType mem_t
 void Pool::build_mem()
 {
 	int i=0;
-	Frame *frame;
 	num_frames = ceil(size/frsize);
 	real_size = num_frames * frsize;
 
-	std::vector<int> numbers;
-	for(int i=0; i<num_frames; i++)       // add 0-99 to the vector
-    	numbers.push_back(i);
+	//std::vector<int> numbers;
+	//for(int i=0; i<num_frames; i++)       // add 0-99 to the vector
+    //	numbers.push_back(i);
 
     // random allocation of frames
-	unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-	std::shuffle(numbers.begin(), numbers.end(), std::default_random_engine(seed));
+	//unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+	//std::shuffle(numbers.begin(), numbers.end(), std::default_random_engine(seed));
 
 	for(i=0; i< num_frames; i++) {
-		frame = new Frame(((uint64_t) numbers[i]*frsize*1024) + start, 0);
-		frame->frame_number = numbers[i];
-		freelist.push_back(frame);
+		freelist.push_back(((uint64_t) i*frsize*1024) + start);
 	}
 
 	available_frames = num_frames;
@@ -126,17 +121,19 @@ REQRESPONSE Pool::allocate_frames(int pages)
 		if(freelist.empty()) {
 			while(!frames_allocated.empty()) {
 				Frame *frame = frames_allocated.front();
-				freelist.push_back(frame);
+				freelist.push_back(frame->starting_address);
 				alloclist.erase(frame->starting_address);
 				frames_allocated.pop_front();
 				available_frames++;
+				delete frame;
 			}
 			break;
 		}
 		else
 		{
-			Frame *frame = freelist.front();
+			uint64_t frameAddr = freelist.front();
 			freelist.erase(freelist.begin());
+			Frame *frame = new Frame(frameAddr,0);
 			alloclist[frame->starting_address] = frame;
 			frames_allocated.push_back(frame);
 			available_frames--;
@@ -174,8 +171,9 @@ REQRESPONSE Pool::allocate_frame(int N)
 	else
 	{
 		// Simply, pop the first free frame and assign it
-		Frame * temp = freelist.front();
+		uint64_t frameAddr = freelist.front();
 		freelist.erase(freelist.begin());
+		Frame *temp = new Frame(frameAddr,0);
 		alloclist[temp->starting_address] = temp;
 		available_frames--;
 		response.address = temp->starting_address;
@@ -207,9 +205,9 @@ REQRESPONSE Pool::deallocate_frames(int pages, uint64_t starting_pAddress)
 		{
 			//Remove from allocation map and add to free list
 			Frame *temp = it->second;
-			freelist.push_back(temp);
+			freelist.push_back(temp->starting_address);
 			alloclist.erase(pAddress);
-
+			delete temp;
 		}
 		else
 		{
@@ -246,8 +244,9 @@ REQRESPONSE Pool::deallocate_frame(uint64_t X, int N)
 		{
 			// Remove from allocation map and add to free list
 			Frame * temp = alloclist[X];
-			freelist.push_back(temp);
+			freelist.push_back(temp->starting_address);
 			alloclist.erase(X);
+			delete temp;
 			available_frames++;
 			response.status = 1;
 		}

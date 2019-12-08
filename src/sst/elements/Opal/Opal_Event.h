@@ -123,7 +123,7 @@ namespace SST{ namespace OpalComponent{
 			void setMemContrlId(int id) { memContrlId = id; }
 			int getMemContrlId() { return memContrlId; }
 
-			void serialize_order(SST::Core::Serialization::serializer &ser) {
+			void serialize_order(SST::Core::Serialization::serializer &ser) override {
 				Event::serialize_order(ser);
 				ser & ev;
 				ser & address;

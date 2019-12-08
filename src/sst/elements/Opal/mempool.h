@@ -42,6 +42,8 @@ class Frame{
 		// Constructor with paramteres
 		Frame(uint64_t st, uint64_t md) { starting_address = st; metadata = 0;}
 
+		~Frame(){}
+
 		// The starting address of the frame
 		uint64_t starting_address;
 
@@ -60,17 +62,19 @@ class Pool{
 	public:
 
 		//Constructor for pool
-		Pool(SST::Component* own, Params parmas, SST::OpalComponent::MemType mem_type, int id);
+		Pool(Params parmas, SST::OpalComponent::MemType mem_type, int id);
 
 		~Pool() {
-			while(!freelist.empty()) {
-				delete freelist.front();
-				//freelist.remove(freelist.begin());
+/*			while(!freelist.empty()) {
+				Frame* frame = freelist.front();
+				freelist.erase(freelist.begin());
+				delete frame;
 			}
-
+*/
 			std::map<uint64_t, Frame*>::iterator it;
 			for(it=alloclist.begin();it!=alloclist.end();it++) {
-				delete it->second;
+				Frame* frame = it->second;
+				delete frame;
 			}
 		}
 
@@ -131,8 +135,6 @@ class Pool{
 
 	private:
 
-		SST::Component* owner;
-
 		Output *output;
 
 		//memory pool id
@@ -145,7 +147,7 @@ class Pool{
 		SST::OpalComponent::MemTech memTech;
 
 		// The list of free frames
-		std::vector<Frame*> freelist;
+		std::list<uint64_t> freelist;
 
 		//std::map<uint64_t, int> freelist_index;
 
