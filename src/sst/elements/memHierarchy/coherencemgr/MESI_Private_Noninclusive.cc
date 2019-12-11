@@ -48,6 +48,9 @@ bool MESIPrivNoninclusive::handleGetS(MemEvent* event, bool inMSHR) {
     if (is_debug_event(event))
         eventDI.prefill(event->getID(), Command::GetS, false, addr, state);
 
+    if (inMSHR)
+        mshr_->removePendingRetry(addr);
+
     switch (state) {
         case I:
             status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, false);
@@ -131,6 +134,9 @@ bool MESIPrivNoninclusive::handleGetX(MemEvent* event, bool inMSHR) {
 
     if (is_debug_event(event))
         eventDI.prefill(event->getID(), event->getCmd(), false, addr, state);
+    
+    if (inMSHR)
+        mshr_->removePendingRetry(addr);
 
     if (state == S && lastLevel_) { // Special case, silent upgrade
         state = M;
@@ -209,6 +215,9 @@ bool MESIPrivNoninclusive::handleFlushLine(MemEvent * event, bool inMSHR) {
 
     if (is_debug_event(event))
         eventDI.prefill(event->getID(), Command::FlushLine, false, addr, state);
+    
+    if (inMSHR)
+        mshr_->removePendingRetry(addr);
 
     MemEventStatus status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, false);
 
@@ -318,6 +327,9 @@ bool MESIPrivNoninclusive::handleFlushLineInv(MemEvent * event, bool inMSHR) {
     if (is_debug_event(event))
         eventDI.prefill(event->getID(), Command::FlushLineInv, false, addr, state);
 
+    if (inMSHR)
+        mshr_->removePendingRetry(addr);
+    
     MemEventStatus status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, false);
     
     recordLatencyType(event->getID(), LatType::HIT);
@@ -466,6 +478,8 @@ bool MESIPrivNoninclusive::handlePutS(MemEvent * event, bool inMSHR) {
     
     if (!inMSHR)
         stat_eventState[(int)Command::PutS][state]->addData(1);
+    else
+        mshr_->removePendingRetry(addr);
 
     switch (state) {
         case I:
@@ -563,6 +577,8 @@ bool MESIPrivNoninclusive::handlePutE(MemEvent * event, bool inMSHR) {
     
     if (!inMSHR)
         stat_eventState[(int)Command::PutE][state]->addData(1);
+    else
+        mshr_->removePendingRetry(addr);
 
     switch (state) {
         case I:
@@ -649,6 +665,8 @@ bool MESIPrivNoninclusive::handlePutM(MemEvent * event, bool inMSHR) {
     
     if (!inMSHR)
         stat_eventState[(int)Command::PutM][state]->addData(1);
+    else
+        mshr_->removePendingRetry(addr);
     
     switch (state) {
         case I:
@@ -731,6 +749,8 @@ bool MESIPrivNoninclusive::handlePutX(MemEvent * event, bool inMSHR) {
     
     if (!inMSHR)
         stat_eventState[(int)Command::PutX][state]->addData(1);
+    else
+        mshr_->removePendingRetry(addr);
     
     switch (state) {
         case I:
@@ -823,6 +843,8 @@ bool MESIPrivNoninclusive::handleFetch(MemEvent * event, bool inMSHR) {
     
     if (!inMSHR)
         stat_eventState[(int)Command::Fetch][state]->addData(1);
+    else
+        mshr_->removePendingRetry(addr);
     
     switch (state) {
         case I:
@@ -899,6 +921,8 @@ bool MESIPrivNoninclusive::handleInv(MemEvent * event, bool inMSHR) {
 
     if (!inMSHR)
         stat_eventState[(int)Command::Inv][state]->addData(1);
+    else
+        mshr_->removePendingRetry(addr);
 
     switch (state) {
         case I:
@@ -1003,6 +1027,8 @@ bool MESIPrivNoninclusive::handleForceInv(MemEvent * event, bool inMSHR) {
     
     if (!inMSHR)
         stat_eventState[(int)Command::ForceInv][state]->addData(1);
+    else
+        mshr_->removePendingRetry(addr);
     
     bool handle = false;
     State state1, state2;
@@ -1151,6 +1177,8 @@ bool MESIPrivNoninclusive::handleFetchInv(MemEvent * event, bool inMSHR){
 
     if (!inMSHR)
         stat_eventState[(int)Command::FetchInv][state]->addData(1);
+    else
+        mshr_->removePendingRetry(addr);
     
     State state1, state2;
     bool handle = false;
@@ -1295,6 +1323,8 @@ bool MESIPrivNoninclusive::handleFetchInvX(MemEvent * event, bool inMSHR) {
 
     if (!inMSHR)
         stat_eventState[(int)Command::FetchInvX][state]->addData(1);
+    else
+        mshr_->removePendingRetry(addr);
 
     if (is_debug_event(event))
         eventDI.prefill(event->getID(), Command::FetchInvX, false, addr, state); 
@@ -1702,6 +1732,7 @@ bool MESIPrivNoninclusive::handleNULLCMD(MemEvent* event, bool inMSHR) {
         if (mshr_->exists(newAddr) && mshr_->getStalledForEvict(newAddr)) {
             debug->debug(_L5_, "%s, Retry for 0x%" PRIx64 "\n", cachename_.c_str(), newAddr);
             retryBuffer_.push_back(mshr_->getFrontEvent(newAddr));
+            mshr_->addPendingRetry(newAddr);
             mshr_->setStalledForEvict(newAddr, false);
         }
         if (mshr_->removeEvictPointer(oldAddr, newAddr))
@@ -1860,100 +1891,110 @@ bool MESIPrivNoninclusive::handleEviction(Addr addr, PrivateCacheLine*& line, db
             }
             return true;
         case S:
-            if (!line->getShared() && !silentEvictClean_) {
-                uint64_t sendTime = sendWriteback(line->getAddr(), lineSize_, Command::PutS, line->getData(), false, line->getTimestamp());
-                line->setTimestamp(sendTime-1);
-                mshr_->insertWriteback(line->getAddr(), false);
-                if (is_debug_addr(line->getAddr()))
-                    printDebugAlloc(false, line->getAddr(), "Writeback"); 
-                if (is_debug_addr(addr) || is_debug_addr(line->getAddr())) {
-                    diStruct.action = "Writeback";
+            if (!mshr_->getPendingRetries(line->getAddr())) {
+                if (!line->getShared() && !silentEvictClean_) {
+                    uint64_t sendTime = sendWriteback(line->getAddr(), lineSize_, Command::PutS, line->getData(), false, line->getTimestamp());
+                    line->setTimestamp(sendTime-1);
+                    mshr_->insertWriteback(line->getAddr(), false);
+                    if (is_debug_addr(line->getAddr()))
+                        printDebugAlloc(false, line->getAddr(), "Writeback"); 
+                    if (is_debug_addr(addr) || is_debug_addr(line->getAddr())) {
+                        diStruct.action = "Writeback";
+                    }
+                } else if (is_debug_addr(addr) || is_debug_addr(line->getAddr())) {
+                    diStruct.action = "Drop";
+                    if (is_debug_addr(line->getAddr()))
+                        printDebugAlloc(false, line->getAddr(), "Drop"); 
                 }
-            } else if (is_debug_addr(addr) || is_debug_addr(line->getAddr())) {
-                diStruct.action = "Drop";
-                if (is_debug_addr(line->getAddr()))
-                    printDebugAlloc(false, line->getAddr(), "Drop"); 
-            }
-            line->setState(I);
-            return true;
-        case E:
-            if (line->getShared()) {
-                uint64_t sendTime = sendWriteback(line->getAddr(), lineSize_, Command::PutX, line->getData(), false, line->getTimestamp());
-                line->setTimestamp(sendTime-1);
-                mshr_->insertWriteback(line->getAddr(), true);
-                if (is_debug_addr(addr) || is_debug_addr(line->getAddr()))
-                    diStruct.action = "Writeback";
-                if (is_debug_addr(line->getAddr()))
-                    printDebugAlloc(false, line->getAddr(), "Writeback");
-            } else if (!line->getOwned() && !silentEvictClean_) {
-                uint64_t sendTime = sendWriteback(line->getAddr(), lineSize_, Command::PutE, line->getData(), false, line->getTimestamp());
-                line->setTimestamp(sendTime-1);
-                mshr_->insertWriteback(line->getAddr(), false);
-                if (is_debug_addr(line->getAddr()))
-                    printDebugAlloc(false, line->getAddr(), "Writeback");
-                if (is_debug_addr(addr) || is_debug_addr(line->getAddr()))
-                    diStruct.action = "Writeback";
-            } else if (is_debug_addr(addr) || is_debug_addr(line->getAddr())) {
-                if (is_debug_addr(line->getAddr()))
-                    printDebugAlloc(false, line->getAddr(), "Drop");
-                diStruct.action = "Drop";
-            }
-            line->setState(I);
-            return true;
-        case M:
-            if (line->getShared()) {
-                uint64_t sendTime = sendWriteback(line->getAddr(), lineSize_, Command::PutX, line->getData(), true, line->getTimestamp());
-                line->setTimestamp(sendTime-1);
-                mshr_->insertWriteback(line->getAddr(), true);
-                if (is_debug_addr(addr) || is_debug_addr(line->getAddr()))
-                    diStruct.action = "Writeback";
-                if (is_debug_addr(line->getAddr()))
-                    printDebugAlloc(false, line->getAddr(), "Writeback");
-            } else if (!line->getOwned()) {
-                uint64_t sendTime = sendWriteback(line->getAddr(), lineSize_, Command::PutM, line->getData(), true, line->getTimestamp());
-                line->setTimestamp(sendTime-1);
-                mshr_->insertWriteback(line->getAddr(), false);
-                if (is_debug_addr(addr) || is_debug_addr(line->getAddr())) {
-                    diStruct.action = "Writeback";
-                }
-                if (is_debug_addr(line->getAddr()))
-                    printDebugAlloc(false, line->getAddr(), "Writeback");
-            } else if (is_debug_addr(addr) || is_debug_addr(line->getAddr())) {
-                diStruct.action = "Drop";
-
-                if (is_debug_addr(line->getAddr()))
-                    printDebugAlloc(false, line->getAddr(), "Drop");
-            }
-            line->setState(I);
-            return true;
-        case S_B:
-        case S_Inv:
-            if (line->getShared()) { // This cache is not responsible for the block, drop it
                 line->setState(I);
-                if (is_debug_addr(addr) || is_debug_addr(line->getAddr())) {
+                return true;
+            }
+        case E:
+            if (!mshr_->getPendingRetries(line->getAddr())) {
+                if (line->getShared()) {
+                    uint64_t sendTime = sendWriteback(line->getAddr(), lineSize_, Command::PutX, line->getData(), false, line->getTimestamp());
+                    line->setTimestamp(sendTime-1);
+                    mshr_->insertWriteback(line->getAddr(), true);
+                    if (is_debug_addr(addr) || is_debug_addr(line->getAddr()))
+                        diStruct.action = "Writeback";
+                    if (is_debug_addr(line->getAddr()))
+                        printDebugAlloc(false, line->getAddr(), "Writeback");
+                } else if (!line->getOwned() && !silentEvictClean_) {
+                    uint64_t sendTime = sendWriteback(line->getAddr(), lineSize_, Command::PutE, line->getData(), false, line->getTimestamp());
+                    line->setTimestamp(sendTime-1);
+                    mshr_->insertWriteback(line->getAddr(), false);
+                    if (is_debug_addr(line->getAddr()))
+                        printDebugAlloc(false, line->getAddr(), "Writeback");
+                    if (is_debug_addr(addr) || is_debug_addr(line->getAddr()))
+                        diStruct.action = "Writeback";
+                } else if (is_debug_addr(addr) || is_debug_addr(line->getAddr())) {
+                    if (is_debug_addr(line->getAddr()))
+                        printDebugAlloc(false, line->getAddr(), "Drop");
                     diStruct.action = "Drop";
                 }
-                if (is_debug_addr(line->getAddr()))
-                    printDebugAlloc(false, line->getAddr(), "Drop");
-            } else if (is_debug_addr(addr) || is_debug_addr(line->getAddr())) {
-                diStruct.action = "Stall";
+                line->setState(I);
+                return true;
             }
-            return false;
+        case M:
+            if (!mshr_->getPendingRetries(line->getAddr())) {
+                if (line->getShared()) {
+                    uint64_t sendTime = sendWriteback(line->getAddr(), lineSize_, Command::PutX, line->getData(), true, line->getTimestamp());
+                    line->setTimestamp(sendTime-1);
+                    mshr_->insertWriteback(line->getAddr(), true);
+                    if (is_debug_addr(addr) || is_debug_addr(line->getAddr()))
+                        diStruct.action = "Writeback";
+                    if (is_debug_addr(line->getAddr()))
+                        printDebugAlloc(false, line->getAddr(), "Writeback");
+                } else if (!line->getOwned()) {
+                    uint64_t sendTime = sendWriteback(line->getAddr(), lineSize_, Command::PutM, line->getData(), true, line->getTimestamp());
+                    line->setTimestamp(sendTime-1);
+                    mshr_->insertWriteback(line->getAddr(), false);
+                    if (is_debug_addr(addr) || is_debug_addr(line->getAddr())) {
+                        diStruct.action = "Writeback";
+                    }
+                    if (is_debug_addr(line->getAddr()))
+                        printDebugAlloc(false, line->getAddr(), "Writeback");
+                } else if (is_debug_addr(addr) || is_debug_addr(line->getAddr())) {
+                    diStruct.action = "Drop";
+    
+                    if (is_debug_addr(line->getAddr()))
+                        printDebugAlloc(false, line->getAddr(), "Drop");
+                }
+                line->setState(I);
+                return true;
+            }
+        case S_B:
+        case S_Inv:
+            if (!mshr_->getPendingRetries(line->getAddr())) {
+                if (line->getShared()) { // This cache is not responsible for the block, drop it
+                    line->setState(I);
+                    if (is_debug_addr(addr) || is_debug_addr(line->getAddr())) {
+                        diStruct.action = "Drop";
+                    }
+                    if (is_debug_addr(line->getAddr()))
+                        printDebugAlloc(false, line->getAddr(), "Drop");
+                } else if (is_debug_addr(addr) || is_debug_addr(line->getAddr())) {
+                    diStruct.action = "Stall";
+                }
+                return false;
+            }
         case M_Inv:
         case E_Inv:
         case M_InvX:
         case E_InvX:
-            if (line->getOwned()) { // This cache is not responsible for the block, drop it
-                line->setState(I);
-                if (is_debug_addr(addr) || is_debug_addr(line->getAddr())) {
-                    diStruct.action = "Drop";
-                }
-                if (is_debug_addr(line->getAddr()))
-                    printDebugAlloc(false, line->getAddr(), "Drop");
-                return true;
-            } else if (is_debug_addr(addr) || is_debug_addr(line->getAddr())) 
-                diStruct.action = "Stall";
-            return false;
+            if (!mshr_->getPendingRetries(line->getAddr())) {
+                if (line->getOwned()) { // This cache is not responsible for the block, drop it
+                    line->setState(I);
+                    if (is_debug_addr(addr) || is_debug_addr(line->getAddr())) {
+                        diStruct.action = "Drop";
+                    }
+                    if (is_debug_addr(line->getAddr()))
+                        printDebugAlloc(false, line->getAddr(), "Drop");
+                    return true;
+                } else if (is_debug_addr(addr) || is_debug_addr(line->getAddr())) 
+                    diStruct.action = "Stall";
+                return false;
+            }
         default:
             if (is_debug_addr(addr) || is_debug_addr(line->getAddr())) 
                 diStruct.action = "Stall";
@@ -1988,6 +2029,7 @@ void MESIPrivNoninclusive::cleanUpAfterRequest(MemEvent* event, bool inMSHR) {
         if (mshr_->getFrontType(addr) == MSHREntryType::Event) {
             if (!mshr_->getInProgress(addr) && !mshr_->getStalledForEvict(addr) && mshr_->getAcksNeeded(addr) == 0) {
                 retryBuffer_.push_back(mshr_->getFrontEvent(addr));
+                mshr_->addPendingRetry(addr);
             }
         } else { // Pointer -> either we're waiting for a writeback ACK or another address is waiting for this one
             if (mshr_->getFrontType(addr) == MSHREntryType::Evict && mshr_->getAcksNeeded(addr) == 0) {
@@ -2021,6 +2063,7 @@ void MESIPrivNoninclusive::cleanUpAfterResponse(MemEvent* event, bool inMSHR) {
         if (mshr_->getFrontType(addr) == MSHREntryType::Event) {
             if (!mshr_->getInProgress(addr) && mshr_->getAcksNeeded(addr) == 0) { 
                 retryBuffer_.push_back(mshr_->getFrontEvent(addr));
+                mshr_->addPendingRetry(addr);
             }
         } else {
             if (mshr_->getAcksNeeded(addr) == 0) {
@@ -2039,6 +2082,7 @@ void MESIPrivNoninclusive::retry(Addr addr) {
     if (mshr_->exists(addr)) {
         if (mshr_->getFrontType(addr) == MSHREntryType::Event) {
             retryBuffer_.push_back(mshr_->getFrontEvent(addr));
+            mshr_->addPendingRetry(addr);
         } else if (!(mshr_->pendingWriteback(addr))) {
             std::list<Addr>* evictPointers = mshr_->getEvictPointers(addr);
             for (std::list<Addr>::iterator it = evictPointers->begin(); it != evictPointers->end(); it++) {
