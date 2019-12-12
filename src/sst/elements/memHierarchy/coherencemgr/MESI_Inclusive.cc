@@ -48,6 +48,9 @@ bool MESIInclusive::handleGetS(MemEvent * event, bool inMSHR) {
     if (is_debug_addr(addr))
         eventDI.prefill(event->getID(), Command::GetS, localPrefetch, addr, state);
 
+    if (inMSHR)
+        mshr_->removePendingRetry(addr);
+
     switch (state) {
         case I:
             status = processCacheMiss(event, line, inMSHR);
@@ -197,6 +200,9 @@ bool MESIInclusive::handleGetX(MemEvent * event, bool inMSHR) {
 
     if (is_debug_event(event))
         eventDI.prefill(event->getID(), event->getCmd(), false, addr, state);
+    
+    if (inMSHR)
+        mshr_->removePendingRetry(addr);
 
     switch (state) {
         case I:
@@ -214,7 +220,7 @@ bool MESIInclusive::handleGetX(MemEvent * event, bool inMSHR) {
                 sendTime = forwardMessage(event, lineSize_, 0, nullptr);
                 line->setState(IM);
                 line->setTimestamp(sendTime);
-                mshr_->setInProgress(addr); // Keeps us from retrying too early due to certain race conditions between events and prevents deallocations
+                mshr_->setInProgress(addr); // Keeps us from retrying too early due to certain race conditions between events
                 if (is_debug_event(event))
                     eventDI.reason = "miss";
             }
@@ -331,6 +337,8 @@ bool MESIInclusive::handleFlushLine(MemEvent * event, bool inMSHR) {
     MemEventStatus status = MemEventStatus::OK;
     if (!inMSHR) {
         status = allocateMSHR(event, false);
+    } else {
+        mshr_->removePendingRetry(addr);
     }
 
     bool ack = false;
@@ -435,6 +443,8 @@ bool MESIInclusive::handleFlushLineInv(MemEvent * event, bool inMSHR) {
     // Always need an MSHR entry
     if (!inMSHR) {
         status = allocateMSHR(event, false);
+    } else {
+        mshr_->removePendingRetry(addr);
     }
     
     bool done = (mshr_->getAcksNeeded(addr) == 0);
@@ -555,6 +565,9 @@ bool MESIInclusive::handlePutS(MemEvent * event, bool inMSHR) {
         eventDI.prefill(event->getID(), Command::PutS, false, addr, state);
         eventDI.action = "Done";
     }
+    
+    if (inMSHR)
+        mshr_->removePendingRetry(addr);
 
     state = doEviction(event, line, state);
     stat_eventState[(int)Command::PutS][state]->addData(1);
@@ -635,6 +648,9 @@ bool MESIInclusive::handlePutE(MemEvent * event, bool inMSHR) {
         eventDI.prefill(event->getID(), Command::PutE, false, addr, state);
         eventDI.action = "Done";
     }
+
+    if (inMSHR)
+        mshr_->removePendingRetry(addr);
     
     stat_eventState[(int)Command::PutE][state]->addData(1);
 
@@ -696,6 +712,9 @@ bool MESIInclusive::handlePutM(MemEvent * event, bool inMSHR) {
         eventDI.prefill(event->getID(), Command::PutM, false, addr, state);
         eventDI.action = "Done";
     }
+
+    if (inMSHR)
+        mshr_->removePendingRetry(addr);
     
     stat_eventState[(int)Command::PutM][state]->addData(1);
     
@@ -753,6 +772,9 @@ bool MESIInclusive::handlePutX(MemEvent * event, bool inMSHR) {
 
     if (is_debug_event(event))
         eventDI.prefill(event->getID(), Command::PutX, false, addr, state);
+
+    if (inMSHR)
+        mshr_->removePendingRetry(addr);
     
     stat_eventState[(int)Command::PutX][state]->addData(1);
     
@@ -813,6 +835,9 @@ bool MESIInclusive::handleFetch(MemEvent * event, bool inMSHR) {
 
     if (is_debug_event(event))
         eventDI.prefill(event->getID(), Command::Fetch, false, addr, state);
+    
+    if (inMSHR)
+        mshr_->removePendingRetry(addr);
    
     stat_eventState[(int)Command::Fetch][state]->addData(1);
 
@@ -852,6 +877,9 @@ bool MESIInclusive::handleInv(MemEvent * event, bool inMSHR) {
 
     if (is_debug_event(event))
         eventDI.prefill(event->getID(), Command::Inv, false, addr, state);
+    
+    if (inMSHR)
+        mshr_->removePendingRetry(addr);
    
     bool handle = false;
     State state1, state2;
@@ -930,6 +958,9 @@ bool MESIInclusive::handleForceInv(MemEvent * event, bool inMSHR) {
     
     if (is_debug_event(event))
         eventDI.prefill(event->getID(), Command::ForceInv, false, addr, state);
+    
+    if (inMSHR)
+        mshr_->removePendingRetry(addr);
     
     bool handle = false;
     bool profile = false;
@@ -1051,6 +1082,9 @@ bool MESIInclusive::handleFetchInv(MemEvent * event, bool inMSHR) {
     if (is_debug_event(event))
         eventDI.prefill(event->getID(), Command::FetchInv, false, addr, state);
     
+    if (inMSHR)
+        mshr_->removePendingRetry(addr);
+    
     State state1, state2;
     bool handle = false;
     bool profile = false;
@@ -1169,6 +1203,9 @@ bool MESIInclusive::handleFetchInvX(MemEvent * event, bool inMSHR) {
     if (is_debug_event(event))
         eventDI.prefill(event->getID(), Command::FetchInvX, false, addr, state);
    
+    if (inMSHR)
+        mshr_->removePendingRetry(addr);
+    
     switch (state) {
         case E:
         case M:
@@ -1590,6 +1627,7 @@ bool MESIInclusive::handleNULLCMD(MemEvent* event, bool inMSHR) {
         notifyListenerOfEvict(line->getAddr(), lineSize_, event->getInstructionPointer());
         cacheArray_->deallocate(line);
         retryBuffer_.push_back(mshr_->getFrontEvent(newAddr));
+        mshr_->addPendingRetry(newAddr);
         if (mshr_->removeEvictPointer(oldAddr, newAddr))
             retry(oldAddr);
         if (is_debug_addr(newAddr)) {
@@ -1728,7 +1766,7 @@ bool MESIInclusive::handleEviction(Addr addr, SharedCacheLine *& line) {
         case I:
             return true;
         case S:
-            if (!mshr_->getInProgress(line->getAddr())) {
+            if (!mshr_->getPendingRetries(line->getAddr())) {
                 if (invalidateAll(nullptr, line, false)) {
                     evict = false;
                     line->setState(S_Inv);
@@ -1747,7 +1785,7 @@ bool MESIInclusive::handleEviction(Addr addr, SharedCacheLine *& line) {
                 break;
             }
         case E:
-            if (!mshr_->getInProgress(line->getAddr())) {
+            if (!mshr_->getPendingRetries(line->getAddr())) {
                 if (invalidateAll(nullptr, line, false)) {
                     evict = false;
                     line->setState(E_Inv);
@@ -1766,7 +1804,7 @@ bool MESIInclusive::handleEviction(Addr addr, SharedCacheLine *& line) {
                 break;
             }
         case M:
-            if (!mshr_->getInProgress(line->getAddr())) {
+            if (!mshr_->getPendingRetries(line->getAddr())) {
                 if (invalidateAll(nullptr, line, false)) {
                     evict = false; 
                     line->setState(M_Inv);
@@ -1823,6 +1861,7 @@ void MESIInclusive::cleanUpAfterRequest(MemEvent* event, bool inMSHR) {
         if (mshr_->getFrontType(addr) == MSHREntryType::Event) {
             if (!mshr_->getInProgress(addr) && mshr_->getAcksNeeded(addr) == 0) {
                 retryBuffer_.push_back(mshr_->getFrontEvent(addr));
+                mshr_->addPendingRetry(addr);
             }
         } else { // Pointer -> either we're waiting for a writeback ACK or another address is waiting for this one
             if (mshr_->getFrontType(addr) == MSHREntryType::Evict && mshr_->getAcksNeeded(addr) == 0) {
@@ -1854,6 +1893,7 @@ void MESIInclusive::cleanUpAfterResponse(MemEvent* event, bool inMSHR) {
         if (mshr_->getFrontType(addr) == MSHREntryType::Event) {
             if (!mshr_->getInProgress(addr) && mshr_->getAcksNeeded(addr) == 0) { 
                 retryBuffer_.push_back(mshr_->getFrontEvent(addr));
+                mshr_->addPendingRetry(addr);
             }
         } else {
             if (mshr_->getAcksNeeded(addr) == 0) {
@@ -1874,6 +1914,7 @@ void MESIInclusive::retry(Addr addr) {
             //if (is_debug_addr(addr))
             //    debug->debug(_L5_, "    Retry: Waiting Event exists in MSHR and is ready to retry\n");
             retryBuffer_.push_back(mshr_->getFrontEvent(addr));
+            mshr_->addPendingRetry(addr);
         } else if (!(mshr_->pendingWriteback(addr))) {
             //if (is_debug_addr(addr))
             //    debug->debug(_L5_, "    Retry: Waiting Evict in MSHR, retrying eviction\n");

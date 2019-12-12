@@ -49,6 +49,9 @@ bool MESIL1::handleGetS(MemEvent * event, bool inMSHR) {
     uint64_t sendTime = 0;
     MemEventStatus status = MemEventStatus::OK;
     vector<uint8_t> data;
+    
+    if (inMSHR)
+        mshr_->removePendingRetry(addr);
 
     if (is_debug_addr(addr)) {
         eventDI.prefill(event->getID(), Command::GetS, localPrefetch, addr, state);
@@ -134,6 +137,9 @@ bool MESIL1::handleGetX(MemEvent* event, bool inMSHR) {
 
     if (is_debug_addr(addr))
         eventDI.prefill(event->getID(), Command::GetX, false, addr, state);
+
+    if (inMSHR)
+        mshr_->removePendingRetry(addr);
 
     /* Special case - if this is the last coherence level (e.g., just mem below), 
      * can upgrade without forwarding request */
@@ -242,6 +248,9 @@ bool MESIL1::handleGetSX(MemEvent* event, bool inMSHR) {
     L1CacheLine * line = cacheArray_->lookup(addr, true);
     State state = line ? line->getState() : I;
 
+    if (inMSHR)
+        mshr_->removePendingRetry(addr);
+
     if (is_debug_addr(addr))
         eventDI.prefill(event->getID(), Command::GetSX, false, addr, state);
 
@@ -347,6 +356,8 @@ bool MESIL1::handleFlushLine(MemEvent* event, bool inMSHR) {
 
     if (!inMSHR && mshr_->exists(addr)) {
         return (allocateMSHR(event, false) == MemEventStatus::Reject) ? false : true;
+    } else if (inMSHR) {
+        mshr_->removePendingRetry(addr);
     }
 
     /* If we're here, state is stable */
@@ -408,6 +419,8 @@ bool MESIL1::handleFlushLineInv(MemEvent* event, bool inMSHR) {
     if (!inMSHR && mshr_->exists(addr)) {
         return (allocateMSHR(event, false) != MemEventStatus::Reject);
     } else if (inMSHR) {
+        mshr_->removePendingRetry(addr);
+
         if (!mshr_->getFrontEvent(addr) || mshr_->getFrontEvent(addr) != event) {
             if (is_debug_event(event))
                 eventDI.action = "Stall";
@@ -467,6 +480,9 @@ bool MESIL1::handleFetch(MemEvent* event, bool inMSHR) {
     if (is_debug_event(event))
         eventDI.prefill(event->getID(), Command::Fetch, false, event->getBaseAddr(), state);
 
+    if (inMSHR)
+        mshr_->removePendingRetry(addr);
+
     switch (state) {
         case S:
         case SM:
@@ -500,6 +516,9 @@ bool MESIL1::handleInv(MemEvent* event, bool inMSHR) {
     if (is_debug_event(event))
         eventDI.prefill(event->getID(), Command::Inv, false, event->getBaseAddr(), state);
 
+    if (inMSHR)
+        mshr_->removePendingRetry(addr);
+    
     snoopInvalidation(event, line);
 
     /* Note - not possible to receive an inv when the line is locked (locked implies state = E or M) */
@@ -548,6 +567,9 @@ bool MESIL1::handleForceInv(MemEvent* event, bool inMSHR) {
     L1CacheLine* line = cacheArray_->lookup(addr, false);
     State state = line ? line->getState() : I;
 
+    if (inMSHR)
+        mshr_->removePendingRetry(addr);
+    
     snoopInvalidation(event, line);
 
     if (is_debug_event(event))
@@ -609,6 +631,9 @@ bool MESIL1::handleFetchInv(MemEvent* event, bool inMSHR) {
     Addr addr = event->getBaseAddr();
     L1CacheLine* line = cacheArray_->lookup(addr, false);
     State state = line ? line->getState() : I;
+    
+    if (inMSHR)
+        mshr_->removePendingRetry(addr);
     
     snoopInvalidation(event, line);
 
@@ -678,6 +703,9 @@ bool MESIL1::handleFetchInvX(MemEvent* event, bool inMSHR) {
     Addr addr = event->getBaseAddr();
     L1CacheLine* line = cacheArray_->lookup(addr, false);
     State state = line ? line->getState() : I;
+    
+    if (inMSHR)
+        mshr_->removePendingRetry(addr);
     
     snoopInvalidation(event, line);
 
@@ -937,6 +965,7 @@ bool MESIL1::handleNULLCMD(MemEvent * event, bool inMSHR) {
         notifyListenerOfEvict(line->getAddr(), lineSize_, event->getInstructionPointer());
         cacheArray_->deallocate(line);
         retryBuffer_.push_back(mshr_->getFrontEvent(newAddr));
+        mshr_->addPendingRetry(newAddr);
         if (mshr_->removeEvictPointer(oldAddr, newAddr))
             retry(oldAddr);
         if (is_debug_addr(newAddr)) {
@@ -1065,7 +1094,7 @@ bool MESIL1::handleEviction(Addr addr, L1CacheLine*& line) {
         case I:
             return true;
         case S:
-            if (!mshr_->getInProgress(line->getAddr())) {
+            if (!mshr_->getPendingRetries(line->getAddr())) {
                 if (!silentEvictClean_) {
                     sendWriteback(Command::PutS, line, false);
                     if (recvWritebackAck_) {
@@ -1080,7 +1109,7 @@ bool MESIL1::handleEviction(Addr addr, L1CacheLine*& line) {
                 break;
             }
         case E:
-            if (!mshr_->getInProgress(line->getAddr())) {
+            if (!mshr_->getPendingRetries(line->getAddr())) {
                 if (!silentEvictClean_) {
                     sendWriteback(Command::PutE, line, false);
                     if (recvWritebackAck_) {
@@ -1096,7 +1125,7 @@ bool MESIL1::handleEviction(Addr addr, L1CacheLine*& line) {
                 break;
             }
         case M:
-            if (!mshr_->getInProgress(line->getAddr())) {
+            if (!mshr_->getPendingRetries(line->getAddr())) {
                 sendWriteback(Command::PutM, line, true);
                 if (recvWritebackAck_)
                     mshr_->insertWriteback(line->getAddr(), false);
@@ -1108,7 +1137,11 @@ bool MESIL1::handleEviction(Addr addr, L1CacheLine*& line) {
         default:
             if (is_debug_addr(line->getAddr())) {
                 stringstream note;
-                note << "InProg, " << StateString[state];
+                if (mshr_->getPendingRetries(addr) != 0) {
+                    note << "PendRetry, " << StateString[state];
+                } else {
+                    note << "InProg, " << StateString[state];
+                }
                 printDebugAlloc(false, line->getAddr(), note.str());
             }
             return false;
@@ -1137,6 +1170,7 @@ void MESIL1::cleanUpAfterRequest(MemEvent * event, bool inMSHR) {
         if (mshr_->getFrontType(addr) == MSHREntryType::Event) {
             if (!mshr_->getInProgress(addr))
                 retryBuffer_.push_back(mshr_->getFrontEvent(addr));
+                mshr_->addPendingRetry(addr);
         } else { // Pointer -> either we're waiting for a writeback ACK or another address is waiting to evict this one
             if (mshr_->getFrontType(addr) == MSHREntryType::Evict) {
                 std::list<Addr>* evictPointers = mshr_->getEvictPointers(addr);
@@ -1168,6 +1202,7 @@ void MESIL1::cleanUpAfterResponse(MemEvent* event, bool inMSHR) {
         if (mshr_->getFrontType(addr) == MSHREntryType::Event) {
             if (!mshr_->getInProgress(addr)) { 
                 retryBuffer_.push_back(mshr_->getFrontEvent(addr));
+                mshr_->addPendingRetry(addr);
             }
         } else { // Pointer to an eviction
             std::list<Addr>* evictPointers = mshr_->getEvictPointers(addr);
@@ -1185,6 +1220,7 @@ void MESIL1::retry(Addr addr) {
     if (mshr_->exists(addr)) {
         if (mshr_->getFrontType(addr) == MSHREntryType::Event) {
             retryBuffer_.push_back(mshr_->getFrontEvent(addr));
+            mshr_->addPendingRetry(addr);
         } else if (!(mshr_->pendingWriteback(addr))) {
             std::list<Addr>* evictPointers = mshr_->getEvictPointers(addr);
             for (std::list<Addr>::iterator it = evictPointers->begin(); it != evictPointers->end(); it++) {
