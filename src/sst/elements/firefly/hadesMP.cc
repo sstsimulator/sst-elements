@@ -27,6 +27,11 @@ HadesMP::HadesMP(Component* owner, Params& params) :
 {
 }
 
+HadesMP::HadesMP(ComponentId_t id, Params& params) :
+    Interface(id), m_os(NULL)
+{
+}
+
 #if PRINT_STATUS 
 void HadesMP::printStatus( Output& out )
 {

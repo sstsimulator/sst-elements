@@ -53,6 +53,7 @@ class Interface : public Hermes::Interface {
     public:
 
     Interface( Component* parent ) : Hermes::Interface(parent) {}
+    Interface( ComponentId_t id ) : Hermes::Interface(id) {}
     virtual ~Interface() {}
 
     virtual void init(Callback) { assert(0); }

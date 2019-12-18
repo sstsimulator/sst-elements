@@ -28,6 +28,7 @@ class Interface : public Hermes::Interface {
     public:
 
     Interface( Component* parent ) : Hermes::Interface(parent) {}
+    Interface( ComponentId_t id ) : Hermes::Interface(id) {}
 
     virtual void getNodeNum( int*, Callback*) { assert(0); }
     virtual void getNumNodes( int*, Callback*) { assert(0); }

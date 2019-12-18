@@ -28,6 +28,8 @@
 
 #define CALL_INFO_LAMBDA     __LINE__, __FILE__
 
+namespace SST {
+namespace Firefly {
 
 class SimpleMemoryModel : public MemoryModel {
 
@@ -38,7 +40,7 @@ public:
         "SimpleMemory",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "",
-       	SimpleMemoryModel 
+       	SST::Firefly::SimpleMemoryModel 
     )
 
     SST_ELI_DOCUMENT_PARAMS(
@@ -380,4 +382,6 @@ public:
 	Output		m_dbg;
 }; 
 
+} // namespace Firefly
+} // namespace SST
 #endif

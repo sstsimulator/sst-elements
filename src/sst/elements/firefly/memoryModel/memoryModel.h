@@ -16,11 +16,14 @@
 #ifndef COMPONENTS_FIREFLY_MEMORY_MODEL_H
 #define COMPONENTS_FIREFLY_MEMORY_MODEL_H
 
+namespace SST {
+namespace Firefly {
+
 class MemoryModel : public SubComponent {
 
 public:
 
-	SST_ELI_REGISTER_SUBCOMPONENT_API(MemoryModel)
+	SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Firefly::MemoryModel)
 
     typedef std::function<void()> Callback;
 
@@ -34,4 +37,6 @@ public:
 	virtual void schedNicCallback( int unit, int pid, std::vector< MemOp >* ops, Callback callback ) = 0;
 };
 
+} // namespace Firefly
+} // namespace SST
 #endif

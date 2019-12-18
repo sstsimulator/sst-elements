@@ -26,12 +26,13 @@ libsimpleElementExample_la_SOURCES = \
 	simpleLookupTableComponent.cc \
 	simpleSubComponent.h \
 	simpleSubComponent.cc \
-	simpleSubComponentLegacy.h \
-	simpleSubComponentLegacy.cc \
 	simpleModule.h \
 	simpleModule.cc \
 	simpleParamComponent.h \
 	simpleParamComponent.cc
+
+#	simpleSubComponentLegacy.h \
+#	simpleSubComponentLegacy.cc
 
 EXTRA_DIST = \
     README \

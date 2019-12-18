@@ -101,6 +101,7 @@ class Interface : public Hermes::Interface {
     SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Hermes::MP::Interface)
 
     Interface( Component* parent ) : Hermes::Interface( parent )  {}
+    Interface( ComponentId_t id ) : Hermes::Interface( id )  {}
     virtual ~Interface() {}
 
     virtual int sizeofDataType( PayloadDataType ) { assert(0); }

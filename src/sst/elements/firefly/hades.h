@@ -45,7 +45,7 @@ class Hades : public OS
         "hades",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "",
-       	SST::Firefly::Hades 
+       	SST::Hermes::OS 
     )
 
     SST_ELI_DOCUMENT_PARAMS(

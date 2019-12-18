@@ -36,6 +36,7 @@ namespace Shogun {
         ShogunNIC(SST::ComponentId_t id, Params& params, int vns);
         ~ShogunNIC();
 
+#ifndef SST_ENABLE_PREVIEW_BUILD
         /** Second half of building the interface.
         Initialize network interface
         @param portName - Name of port to connect to
@@ -48,7 +49,7 @@ namespace Shogun {
         virtual bool initialize(const std::string& portName, const UnitAlgebra& link_bw,
             int vns, const UnitAlgebra& in_buf_size,
             const UnitAlgebra& out_buf_size) override;
-
+#endif
         /**
      		* Sends a network request during the init() phase
      	*/

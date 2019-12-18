@@ -29,12 +29,26 @@ networkMemInspector::networkMemInspector(Component *parent, Params &params)
 
 }
 
+networkMemInspector::networkMemInspector(ComponentId_t id, Params &params, const std::string& sub_id)
+    : NetworkInspector(id) {
+    // should fix to have this be a param
+    dbg.init("@R:netMemInspect::@p():@l " + getName() + ": ", 0, 0, 
+             Output::STDOUT);  
+
+    // Init the stats
+    for (int i = 0; i < (int)Command::LAST_CMD; ++i) {
+        memCmdStat[i] = registerStatistic<uint64_t>(CommandString[i],sub_id);
+    }
+}
+
+#ifndef SST_ENABLE_PREVIEW_BUILD
 void networkMemInspector::initialize(std::string id) {
     // Init the stats
     for (int i = 0; i < (int)Command::LAST_CMD; ++i) {
         memCmdStat[i] = registerStatistic<uint64_t>(CommandString[i],id);
     }
 }
+#endif
 
 void networkMemInspector::inspectNetworkData(SimpleNetwork::Request* req) {
     MemNIC::MemRtrEvent *mre = dynamic_cast<MemNIC::MemRtrEvent*>(req->inspectPayload());

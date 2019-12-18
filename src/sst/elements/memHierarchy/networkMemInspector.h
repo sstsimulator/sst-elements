@@ -32,25 +32,33 @@ namespace SST { namespace MemHierarchy {
 class networkMemInspector : public SimpleNetwork::NetworkInspector {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT(networkMemInspector, "memHierarchy", "networkMemoryInspector", SST_ELI_ELEMENT_VERSION(1,0,0),
-            "Used to classify memory traffic going through a network router", "SST::Interfaces::SimpleNetwork::NetworkInspector")
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+        networkMemInspector,
+        "memHierarchy",
+        "networkMemoryInspector",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "Used to classify memory traffic going through a network router",
+        SST::Interfaces::SimpleNetwork::NetworkInspector
+    )
 
     SST_ELI_DOCUMENT_STATISTICS( networkMemoryInspector_statistics ) // Defined in memTypes.h via x macro
 
 /* Begin class definition */
-            networkMemInspector(Component *parent, Params &params);
+    networkMemInspector(Component *parent, Params &params);
+    networkMemInspector(ComponentId_t, Params &params, const std::string& sub_id);
             
-            virtual ~networkMemInspector() {}
-            
-            virtual void inspectNetworkData(SimpleNetwork::Request* req);
-            
-            virtual void initialize(std::string id);
-            
-            Output dbg;
-            // statistics
-            Statistic<uint64_t>*  memCmdStat[(int)Command::LAST_CMD];
-        };
+    virtual ~networkMemInspector() {}
+    
+    virtual void inspectNetworkData(SimpleNetwork::Request* req);
 
-    }}
+#ifndef SST_ENABLE_PREVIEW_BUILD
+    virtual void initialize(std::string id);
+#endif
+    Output dbg;
+    // statistics
+    Statistic<uint64_t>*  memCmdStat[(int)Command::LAST_CMD];
+};
+
+}}
 
 #endif /* NETWORKMEMINSECTOR_H_ */

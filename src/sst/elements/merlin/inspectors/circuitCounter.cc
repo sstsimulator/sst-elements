@@ -35,6 +35,43 @@ CircNetworkInspector::CircNetworkInspector(SST::Component* parent,
     }
 }
 
+CircNetworkInspector::CircNetworkInspector(SST::ComponentId_t id, 
+                                           SST::Params &params, const std::string& sub_id) :
+        SimpleNetwork::NetworkInspector(id) {
+    outFileName = params.find<std::string>("output_file");
+    if (outFileName.empty()) {
+        outFileName = "RouterCircuits";
+    }
+
+    {
+        mapLock.lock();
+        
+        // use router name as the key
+        // Get router name from my name
+        string fullname = getName();
+
+        // Nmae of router is the name before the first :
+        int index = fullname.find(":");
+        
+        const string &key = index == string::npos ? fullname : fullname.substr(0,index);
+        // look up our key
+        setMap_t::iterator iter = setMap.find(key);
+        if (iter == setMap.end()) {
+            // we're first!
+            pairSet_t *ps = new pairSet_t;
+            setMap[key] = ps;
+            uniquePaths = ps;
+        } else {
+            // someone else created the set already
+            uniquePaths = iter->second;
+        }
+        
+        mapLock.unlock();
+    }
+}    
+
+
+#ifndef SST_ENABLE_PREVIEW_BUILD
 void CircNetworkInspector::initialize(string id) {
     // critical section for accessing the map
     {
@@ -63,6 +100,7 @@ void CircNetworkInspector::initialize(string id) {
         mapLock.unlock();
     }
 }
+#endif
 
 void CircNetworkInspector::inspectNetworkData(SimpleNetwork::Request* req) {
     uniquePaths->insert(SDPair(req->src, req->dest));

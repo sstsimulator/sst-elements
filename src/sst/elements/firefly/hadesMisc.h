@@ -28,16 +28,17 @@ namespace Firefly {
 class HadesMisc : public Misc::Interface
 {
   public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         HadesMisc,
         "firefly",
         "hadesMisc",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "",
-        ""
+        SST::Hermes::Interface
     )
 
     HadesMisc(Component* owner, Params&) : Interface(owner), m_os(NULL) {}
+    HadesMisc(ComponentId_t id, Params&) : Interface(id), m_os(NULL) {}
     ~HadesMisc() {}
 
     virtual void setup() {}

@@ -76,6 +76,7 @@ ReorderLinkControl::~ReorderLinkControl() {
     delete [] input_buf;
 }
 
+#ifndef SST_ENABLE_PREVIEW_BUILD
 bool
 ReorderLinkControl::initialize(const std::string& port_name, const UnitAlgebra& link_bw_in,
                                int vns, const UnitAlgebra& in_buf_size,
@@ -96,7 +97,7 @@ ReorderLinkControl::initialize(const std::string& port_name, const UnitAlgebra& 
     
     return true;
 }
-
+#endif
 
 void
 ReorderLinkControl::setup()

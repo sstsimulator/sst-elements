@@ -143,9 +143,10 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
         ("topology", ComponentInfo::SHARE_NONE, num_ports, id);
 
     if ( !topo ) {
+#ifndef SST_ENABLE_PREVIEW_BUILD
         // Backward compatibility
         std::string topology = params.find<std::string>("topology");
-
+        
         if ( topology == "" ) {
             merlin_abort.fatal(CALL_INFO, -1, "hr_router requires topology to be specified\n");
         }
@@ -156,6 +157,9 @@ REENABLE_WARNING
         if ( !topo ) {
             merlin_abort.fatal(CALL_INFO, -1, "Unable to find topology '%s'\n", topology.c_str());
         }
+#else
+        merlin_abort.fatal(CALL_INFO_LONG, 1, "hr_router requires topology to be specified in input file\n");
+#endif
     }
 
     // Get the number of VNs

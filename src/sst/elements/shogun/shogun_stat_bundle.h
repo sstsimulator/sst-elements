@@ -5,6 +5,8 @@
 #include <sst/core/component.h>
 #include <sst/core/statapi/statbase.h>
 
+#include "shogun.h"
+
 using namespace SST;
 
 namespace SST {
@@ -32,17 +34,17 @@ namespace Shogun {
             free(input_packet_count);
         }
 
-        void registerStatistics(SST::Component* comp)
+        void registerStatistics(ShogunComponent* comp)
         {
             char* subIDName = new char[256];
 
             for (int i = 0; i < port_count; ++i) {
                 sprintf(subIDName, "port%" PRIi32, i);
-                output_packet_count[i] = comp->registerStatistic<uint64_t>("output_packet_count", subIDName);
-                input_packet_count[i] = comp->registerStatistic<uint64_t>("input_packet_count", subIDName);
+                output_packet_count[i] = comp->bundleRegisterStatistic("output_packet_count", subIDName);
+                input_packet_count[i] = comp->bundleRegisterStatistic("input_packet_count", subIDName);
             }
 
-            packetsMoved = comp->registerStatistic<uint64_t>("packets_moved");
+            packetsMoved = comp->bundleRegisterStatistic("packets_moved");
 
             delete[] subIDName;
         }

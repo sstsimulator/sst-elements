@@ -554,14 +554,14 @@ void c_AddressHasher::parsePattern(string *x_inStr, std::pair<string,uint> *x_ou
   while(!l_matched) {
     if(isdigit(*l_sIter)) {
       if(l_sizeMatched) {
-	output->fatal(CALL_INFO, -1, "%s, Weird parsing detected!\nParsing error at %s in address map string %s]\n",
+	output->fatal(CALL_INFO, -1, "%s, Weird parsing detected!\nParsing error at %c in address map string %s]\n",
                 getName().c_str(), (*l_sIter), (*x_inStr).c_str());
       }
       l_sizeStr = *l_sIter + l_sizeStr;
     } else if(isalpha(*l_sIter)) {
       if(!(*l_sIter == 'r' || *l_sIter == 'l' || *l_sIter == 'R' || *l_sIter == 'B' ||
 	   *l_sIter == 'b' || *l_sIter == 'C' || *l_sIter == 'h' ||*l_sIter == 'c' ||*l_sIter == 'x')) {
-          output->fatal(CALL_INFO, -1, "%s, Parsing error at %s in address map string %s\n", 
+          output->fatal(CALL_INFO, -1, "%s, Parsing error at %c in address map string %s\n", 
                   getName().c_str(), (*l_sIter), (*x_inStr).c_str()); 
       }
 
@@ -578,7 +578,7 @@ void c_AddressHasher::parsePattern(string *x_inStr, std::pair<string,uint> *x_ou
     } else if(*l_sIter == ':') {
       l_sizeMatched = true;
     } else {
-      output->fatal(CALL_INFO, -1, "%s, Parsing error at %s in address map string %s\n", getName().c_str(), (*l_sIter), (*x_inStr).c_str());
+      output->fatal(CALL_INFO, -1, "%s, Parsing error at %c in address map string %s\n", getName().c_str(), (*l_sIter), (*x_inStr).c_str());
     }
     l_sIter++;
     if(l_sIter == x_inStr->rend()) {

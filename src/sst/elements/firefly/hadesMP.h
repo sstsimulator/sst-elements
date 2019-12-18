@@ -31,13 +31,13 @@ namespace Firefly {
 class HadesMP : public MP::Interface 
 {
   public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         HadesMP,
         "firefly",
         "hadesMP",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "",
-        ""
+        SST::Hermes::Interface
     )
     SST_ELI_DOCUMENT_PARAMS(
         {"verboseLevel", "Sets the output verbosity of the component", "1"},
@@ -51,6 +51,7 @@ class HadesMP : public MP::Interface
     ) 
   public:
     HadesMP(Component*, Params&);
+    HadesMP(ComponentId_t, Params&);
     ~HadesMP() {}
 
     virtual std::string getName() { return "HadesMP"; } 

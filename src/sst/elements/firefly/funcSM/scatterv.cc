@@ -64,7 +64,7 @@ void ScattervFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
 		std::vector<int>* buf = new std::vector<int>( m_tree->numDes() + 1);
 
 		for ( int i =0; i < m_info->getGroup(m_event->group)->getSize() * 2; i++ ) {
-			m_dbg.debug(CALL_INFO,1,0,"%d \n",((long*)m_event->sendBuf.getBacking())[i]);
+			m_dbg.debug(CALL_INFO,1,0,"%ld \n",((long*)m_event->sendBuf.getBacking())[i]);
 		}
 
 		SendInfo* info = new SendInfo( buf, m_tree->numChildren() );
@@ -228,7 +228,7 @@ bool ScattervFuncSM::dataSend( SendInfo* sInfo , RecvInfo* rInfo )
 				backing += offset;
 			}
 
-			m_dbg.debug(CALL_INFO,1,0,"des %d length=%d offset=%zu simAddr=%x backing=%p\n",pos,length,offset,simAddr,backing);
+			m_dbg.debug(CALL_INFO,1,0,"des %d length=%d offset=%zu simAddr=%" PRIx64 " backing=%p\n",pos,length,offset,simAddr,backing);
 
 			ioVec.push_back( IoVec( MemAddr(simAddr,backing), length ) );
 		}

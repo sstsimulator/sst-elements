@@ -69,6 +69,7 @@ LinkControl::LinkControl(ComponentId_t cid, Params &params, int vns) :
     network_initialized(false),
     output(Simulation::getSimulation()->getSimulationOutput())
 {
+    fatal(false,CALL_INFO,-1,"just a test\n");
     // Get the checkerboard factor
     checker_board_factor = params.find<int>("checkerboard", 1);
     std::string checkerboard_alg = params.find<std::string>("checkerboard_alg","deterministic");
@@ -162,7 +163,8 @@ LinkControl::LinkControl(ComponentId_t cid, Params &params, int vns) :
     output_port_stalls = registerStatistic<uint64_t>("output_port_stalls");
     idle_time = registerStatistic<uint64_t>("idle_time");
 }
-    
+
+#ifndef SST_ENABLE_PREVIEW_BUILD
 bool
 LinkControl::initialize(const std::string& port_name, const UnitAlgebra& link_bw_in,
                         int vns, const UnitAlgebra& in_buf_size,
@@ -228,7 +230,7 @@ LinkControl::initialize(const std::string& port_name, const UnitAlgebra& link_bw
     
     return true;
 }
-
+#endif
 
 LinkControl::~LinkControl()
 {

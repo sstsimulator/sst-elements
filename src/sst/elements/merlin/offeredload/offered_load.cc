@@ -76,6 +76,7 @@ OfferedLoad::OfferedLoad(ComponentId_t cid, Params& params) :
         ("networkIF", ComponentInfo::SHARE_NONE, 1 /* vns */);
 
     if ( !link_if ) {
+#ifndef SST_ENABLE_PREVIEW_BUILD
         // Not defined in python code.  See if this uses the legacy
         // API.  If so, load it with loadSubComponent.  Otherwise, use
         // the default linkcontrol (merlin.linkcontrol) loaded with
@@ -107,8 +108,20 @@ REENABLE_WARNING
                 ("merlin.linkcontrol", "networkIF", 0,
                  ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, if_params, 1 /* vns */);
         }
+#else
+        // Not in python, just load the default
+        Params if_params;
+        
+        if_params.insert("link_bw",params.find<std::string>("link_bw"));
+        if_params.insert("input_buf_size",params.find<std::string>("buffer_size"));
+        if_params.insert("output_buf_size",params.find<std::string>("buffer_size"));            
+        if_params.insert("port_name","rtr");
+        
+        link_if = loadAnonymousSubComponent<SST::Interfaces::SimpleNetwork>
+            ("merlin.linkcontrol", "networkIF", 0,
+             ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, if_params, 1 /* vns */);
+#endif
     }
-    
 
 
     // Register functors for the SimpleNetwork IF
@@ -235,7 +248,9 @@ OfferedLoad::init(unsigned int phase) {
         std::string pattern = pattern_params->find<std::string>("pattern_gen");
         // packetDestGen = static_cast<TargetGenerator*>(loadSubComponent(pattern, this, *pattern_params));
         packetDestGen = loadAnonymousSubComponent<TargetGenerator>(pattern, "pattern_gen", 0, ComponentInfo::SHARE_NONE, *pattern_params, id, num_peers);
+#ifndef SST_ENABLE_PREVIEW_BUILD
         if ( packetDestGen->wasLoadedWithLegacyAPI() ) packetDestGen->initialize(id, num_peers);
+#endif
         delete pattern_params;
     }
         

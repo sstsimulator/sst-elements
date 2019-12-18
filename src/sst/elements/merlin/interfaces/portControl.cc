@@ -285,11 +285,11 @@ PortControl::PortControl(ComponentId_t cid, Params& params,  Router* rif, int rt
     std::string port_name("port");
     port_name = port_name + std::to_string(port_number);
 
-    send_bit_count = rif->registerStatistic<uint64_t>("send_bit_count", port_name);
-    send_packet_count = rif->registerStatistic<uint64_t>("send_packet_count", port_name);
-    output_port_stalls = rif->registerStatistic<uint64_t>("output_port_stalls", port_name);
-    idle_time = rif->registerStatistic<uint64_t>("idle_time", port_name);
-    width_adj_count = rif->registerStatistic<uint64_t>("width_adj_count", port_name);
+    send_bit_count = registerStatistic<uint64_t>("send_bit_count", port_name);
+    send_packet_count = registerStatistic<uint64_t>("send_packet_count", port_name);
+    output_port_stalls = registerStatistic<uint64_t>("output_port_stalls", port_name);
+    idle_time = registerStatistic<uint64_t>("idle_time", port_name);
+    width_adj_count = registerStatistic<uint64_t>("width_adj_count", port_name);
 
 	// set the SAI metrics to 0
 	stalled = 0;
@@ -316,7 +316,9 @@ PortControl::PortControl(ComponentId_t cid, Params& params,  Router* rif, int rt
         if ( ni == NULL ) {
             merlin_abort.fatal(CALL_INFO,1,"NetworkInspector: %s, not found.\n",inspector_names[i].c_str());
         }
+#ifndef SST_ENABLE_PREVIEW_BUILD
         if ( ni->wasLoadedWithLegacyAPI() ) ni->initialize(port_name);
+#endif
         network_inspectors.push_back(ni);
     }
 
@@ -546,7 +548,7 @@ PortControl::init(unsigned int phase) {
         // right BW).
         UnitAlgebra link_clock = link_bw / flit_size;
         // std::cout << link_clock.toStringBestSI() << std::endl;
-        flit_cycle = parent->getTimeConverter(link_clock);
+        flit_cycle = getTimeConverter(link_clock);
         output_timing->setDefaultTimeBase(flit_cycle);
         delete ev;
         
@@ -857,10 +859,10 @@ PortControl::handle_input_n2r(Event* ev)
             output.output("TRACE(%d): %" PRIu64 " ns: Received an event on port %d in router %d"
                           " (%s) on VC %d from src %" PRIu64 " to dest %" PRIu64 ".\n",
                           event->getTraceID(),
-                          parent->getCurrentSimTimeNano(),
+                          getCurrentSimTimeNano(),
                           port_number,
                           rtr_id,
-                          parent->getName().c_str(),
+                          getName().c_str(),
                           curr_vc,
                           event->request->src,
                           event->request->dest);
@@ -947,10 +949,10 @@ PortControl::handle_input_r2r(Event* ev)
             output.output("TRACE(%d): %" PRIu64 " ns: Received an event on port %d in router %d"
                           " (%s) on VC %d from src %d to dest %d.\n",
                           event->getTraceID(),
-                          parent->getCurrentSimTimeNano(),
+                          getCurrentSimTimeNano(),
                           port_number,
                           rtr_id,
-                          parent->getName().c_str(),
+                          getName().c_str(),
                           curr_vc,
                           event->getSrc(),
                           event->getDest());
@@ -1044,9 +1046,9 @@ PortControl::handle_output(Event* ev) {
             output.output("TRACE(%d): %" PRIu64 " ns: Sent and event to router from PortControl in router: %d"
                           " (%s) on VC %d from src %d to dest %d.\n",
                           send_event->getTraceID(),
-                          parent->getCurrentSimTimeNano(),
+                          getCurrentSimTimeNano(),
                           rtr_id,
-                          parent->getName().c_str(),
+                          getName().c_str(),
                           send_event->getVC(),
                           send_event->getSrc(),
                           send_event->getDest());
@@ -1167,7 +1169,7 @@ PortControl::decreaseLinkWidth() {
         cur_link_width = cur_link_width/2;
         link_bw = link_bw/2;
         UnitAlgebra link_clock = link_bw / flit_size;
-        TimeConverter* tc = parent->getTimeConverter(link_clock);
+        TimeConverter* tc = getTimeConverter(link_clock);
         output_timing->setDefaultTimeBase(tc);
         width_adj_count->addData(1);
         // I need to add a delay before messages can transmit on the link
@@ -1194,7 +1196,7 @@ if ( cur_link_width < max_link_width )
 	cur_link_width = max_link_width;
 	link_bw = link_bw*2;
 	UnitAlgebra link_clock = link_bw / flit_size;
-	TimeConverter* tc = parent->getTimeConverter(link_clock);
+	TimeConverter* tc = getTimeConverter(link_clock);
 	output_timing->setDefaultTimeBase(tc);
 	width_adj_count->addData(1);
 	// I need to add a delay before messages can transmit on the link
