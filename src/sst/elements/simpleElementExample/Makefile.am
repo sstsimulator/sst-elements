@@ -31,8 +31,11 @@ libsimpleElementExample_la_SOURCES = \
 	simpleParamComponent.h \
 	simpleParamComponent.cc
 
-#	simpleSubComponentLegacy.h \
-#	simpleSubComponentLegacy.cc
+deprecated_libsimpleElementExample_sources = \
+	simpleSubComponentLegacy.h \
+	simpleSubComponentLegacy.cc
+
+libsimpleElementExample_la_SOURCES += $(deprecated_libsimpleElementExample_sources)
 
 EXTRA_DIST = \
     README \
