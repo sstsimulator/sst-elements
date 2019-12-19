@@ -39,7 +39,9 @@ public:
 
 /* Begin class definition */
     DelayBuffer();
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     DelayBuffer(Component *comp, Params &params);
+#endif  // inserted by script
     DelayBuffer(ComponentId_t id, Params &params);
     virtual bool issueRequest( ReqId, Addr, bool isWrite, unsigned numBytes );
     void handleNextRequest(SST::Event * ev);

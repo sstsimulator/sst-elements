@@ -173,10 +173,12 @@ void StridePrefetcher::DetectStride() {
     }
 }
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 StridePrefetcher::StridePrefetcher(Component* owner, Params& params) : CacheListener(owner, params) {
     Output out("", 1, 0, Output::STDOUT);
     out.fatal(CALL_INFO, -1, "%s, Error: SubComponent does not support legacy loadSubComponent call; use new calls (loadUserSubComponent or loadAnonymousSubComponent)\n", getName().c_str());
 }
+#endif  // inserted by script
 
 StridePrefetcher::StridePrefetcher(ComponentId_t id, Params& params) : CacheListener(id, params) {
     Simulation::getSimulation()->requireEvent("memHierarchy.MemEvent");

@@ -77,7 +77,9 @@ private:
   void registerStatistics();
 
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     HBMDRAMSimMemory(Component *comp, Params &params);
+#endif  // inserted by script
     HBMDRAMSimMemory(ComponentId_t id, Params &params);
     virtual bool issueRequest(ReqId, Addr, bool, unsigned );
     virtual bool clock(Cycle_t cycle);

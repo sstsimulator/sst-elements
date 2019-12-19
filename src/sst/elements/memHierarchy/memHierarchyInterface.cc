@@ -27,6 +27,7 @@ using namespace SST::MemHierarchy;
 using namespace SST::Interfaces;
 
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 MemHierarchyInterface::MemHierarchyInterface(SST::Component *comp, Params &params) :
     SimpleMem(comp, params), recvHandler_(NULL), link_(NULL)
 { 
@@ -34,6 +35,7 @@ MemHierarchyInterface::MemHierarchyInterface(SST::Component *comp, Params &param
     rqstr_ = "";
     initDone_ = false;
 }
+#endif  // inserted by script
 
 MemHierarchyInterface::MemHierarchyInterface(SST::ComponentId_t id, Params &params, TimeConverter * time, HandlerBase* handler) :
     SimpleMem(id, params)

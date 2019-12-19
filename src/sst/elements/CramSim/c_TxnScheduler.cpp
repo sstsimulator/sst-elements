@@ -41,6 +41,7 @@ using namespace SST;
 using namespace SST::CramSim;
 using namespace std;
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 c_TxnScheduler::c_TxnScheduler(SST::Component *owner, SST::Params& x_params) : SubComponent(owner) {
     c_Controller* m_controller = dynamic_cast<c_Controller *>(owner);
     m_txnConverter = m_controller->getTxnConverter();
@@ -50,6 +51,7 @@ c_TxnScheduler::c_TxnScheduler(SST::Component *owner, SST::Params& x_params) : S
     m_numChannels = m_controller->getDeviceDriver()->getNumChannel();
     build(x_params);
 }
+#endif  // inserted by script
 
 c_TxnScheduler::c_TxnScheduler(SST::ComponentId_t id, SST::Params& x_params, Output* out, unsigned channels, c_TxnConverter* converter, c_CmdScheduler* scheduler) : 
     SubComponent(id), output(out), m_numChannels(channels), m_txnConverter(converter), m_cmdScheduler(scheduler) {

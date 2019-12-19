@@ -78,6 +78,7 @@ bool SubComponentLoader::tick(Cycle_t cyc)
  *    SubCompSlot
  *
  ***********************************************************************/
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 SubCompSlot::SubCompSlot(Component *owningComponent, Params &params) :
     SubCompInterface(owningComponent)
 {
@@ -99,6 +100,7 @@ SubCompSlot::SubCompSlot(Component *owningComponent, Params &params) :
         info->createAll(subComps);
     }
 }
+#endif  // inserted by script
 
 void SubCompSlot::clock(Cycle_t cyc)
 {
@@ -112,6 +114,7 @@ void SubCompSlot::clock(Cycle_t cyc)
  *    SubCompSender
  *
  ***********************************************************************/
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 SubCompSender::SubCompSender(Component *owningComponent, Params &params) :
     SubCompInterface(owningComponent)
 {
@@ -131,6 +134,7 @@ SubCompSender::SubCompSender(Component *owningComponent, Params &params) :
     totalMsgSent = NULL;
     nToSend = params.find<uint32_t>("sendCount", 10);
 }
+#endif  // inserted by script
 
 
 void SubCompSender::clock(Cycle_t cyc)
@@ -152,6 +156,7 @@ void SubCompSender::clock(Cycle_t cyc)
  *    SubCompReceiver
  *
  ***********************************************************************/
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 SubCompReceiver::SubCompReceiver(Component *owningComponent, Params &params) :
     SubCompInterface(owningComponent)
 {
@@ -169,6 +174,7 @@ SubCompReceiver::SubCompReceiver(Component *owningComponent, Params &params) :
     // registerTimeBase("1GHz", true);
     nMsgReceived = registerStatistic<uint32_t>("numRecv", "");
 }
+#endif  // inserted by script
 
 void SubCompReceiver::clock(Cycle_t cyc)
 {

@@ -173,7 +173,9 @@ private:
     Output& output;
     
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     LinkControl(Component* parent, Params &params);
+#endif  // inserted by script
     LinkControl(ComponentId_t cid, Params &params, int vns);
 
     ~LinkControl();

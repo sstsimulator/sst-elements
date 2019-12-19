@@ -71,7 +71,9 @@ public:
 
 
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 	EmberNASLUGenerator(SST::Component* owner, Params& params) : EmberMessagePassingGenerator(owner,params,"") {}
+#endif  // inserted by script
 	EmberNASLUGenerator(SST::ComponentId_t, Params& params);
 	void configure();
     bool generate( std::queue<EmberEvent*>& evQ );

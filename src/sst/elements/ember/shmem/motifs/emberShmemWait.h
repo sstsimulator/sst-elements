@@ -28,7 +28,9 @@ template <class TYPE>
 class EmberShmemWaitGenerator : public EmberShmemGenerator {
 
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 	EmberShmemWaitGenerator(SST::Component* owner, Params& params) : EmberShmemGenerator(owner, params, "" ) {}
+#endif  // inserted by script
 	EmberShmemWaitGenerator(SST::ComponentId_t id, Params& params) :
 		EmberShmemGenerator(id, params, "ShmemWait" ), m_phase(0) 
 	{ 
@@ -107,8 +109,10 @@ public:
     SST_ELI_DOCUMENT_PARAMS()
 
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     EmberShmemWaitIntGenerator( SST::Component* owner, Params& params ) :
         EmberShmemWaitGenerator(owner,  params) { }
+#endif  // inserted by script
     EmberShmemWaitIntGenerator( SST::ComponentId_t id, Params& params ) :
         EmberShmemWaitGenerator(id,  params) { }
 };
@@ -127,8 +131,10 @@ public:
     SST_ELI_DOCUMENT_PARAMS()
 
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     EmberShmemWaitLongGenerator( SST::Component* owner, Params& params ) :
         EmberShmemWaitGenerator(owner,  params) { }
+#endif  // inserted by script
     EmberShmemWaitLongGenerator( SST::ComponentId_t id, Params& params ) :
         EmberShmemWaitGenerator(id,  params) { }
 };

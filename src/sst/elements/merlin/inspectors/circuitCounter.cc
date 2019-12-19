@@ -25,6 +25,7 @@ namespace Merlin {
 SST::Core::ThreadSafe::Spinlock CircNetworkInspector::mapLock;
 CircNetworkInspector::setMap_t CircNetworkInspector::setMap;
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 CircNetworkInspector::CircNetworkInspector(SST::Component* parent, 
                                            SST::Params &params) :
         SimpleNetwork::NetworkInspector(parent) {
@@ -34,6 +35,7 @@ CircNetworkInspector::CircNetworkInspector(SST::Component* parent,
       outFileName = "RouterCircuits";
     }
 }
+#endif  // inserted by script
 
 CircNetworkInspector::CircNetworkInspector(SST::ComponentId_t id, 
                                            SST::Params &params, const std::string& sub_id) :

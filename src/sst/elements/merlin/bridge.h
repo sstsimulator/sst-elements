@@ -83,7 +83,9 @@ public:
 
         SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Merlin::Bridge::Translator, Bridge*)
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
         Translator(SST::Component *bridge, Params &params) : SubComponent(bridge), bridge((Bridge*) bridge) { }
+#endif  // inserted by script
         Translator(SST::ComponentId_t cid, Params &params, Bridge* bridge) : SubComponent(cid), bridge(bridge) { }
         virtual void init(unsigned int) { }
         virtual void setup(void) { }

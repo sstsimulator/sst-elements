@@ -40,6 +40,7 @@ using namespace SST;
 using namespace SST::CramSim;
 
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 c_AddressHasher::c_AddressHasher(Component * comp, Params &params) : SubComponent(comp) {
 
   c_Controller* m_owner = dynamic_cast<c_Controller *>(comp);
@@ -52,6 +53,7 @@ c_AddressHasher::c_AddressHasher(Component * comp, Params &params) : SubComponen
   k_pNumPseudoChannels = m_owner->getDeviceDriver()->getNumPChPerChannel();
   build(params);
 }
+#endif  // inserted by script
 
 c_AddressHasher::c_AddressHasher(ComponentId_t id, Params &params, Output* out, unsigned channels, unsigned ranks, unsigned bankGroups,
         unsigned banks, unsigned rows, unsigned cols, unsigned pChannels) : SubComponent(id), output(out), k_pNumChannels(channels),

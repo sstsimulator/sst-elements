@@ -45,18 +45,22 @@ namespace SimpleSubComponent {
 class SubCompInterface : public SST::SubComponent
 {
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     SubCompInterface(Component *owningComponent) :
         SubComponent(owningComponent)
     { }
+#endif  // inserted by script
     SubCompInterface(ComponentId_t id) :
         SubComponent(id)
     { }
     SubCompInterface(ComponentId_t id, Params& params) :
         SubComponent(id)
     { }
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     SubCompInterface(Component* comp, Params& params) :
         SubComponent(comp)
     { }
+#endif  // inserted by script
     virtual ~SubCompInterface() {}
     virtual void clock(SST::Cycle_t) {}
 
@@ -165,7 +169,9 @@ private:
     
 public:
     // Legacy API
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     SubCompSlot(Component *owningComponent, Params &params);
+#endif  // inserted by script
     // New API
     SubCompSlot(ComponentId_t id, Params& params);
     // Direct load
@@ -218,7 +224,9 @@ private:
     SST::Link *link;
 public:
     // Legacy API
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     SubCompSender(Component *owningComponent, Params &params);
+#endif  // inserted by script
     // New API
     SubCompSender(ComponentId_t id, Params &params);
     // Direct API
@@ -269,7 +277,9 @@ private:
     void handleEvent(SST::Event *ev);
 
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     SubCompReceiver(Component *owningComponent, Params &params);
+#endif  // inserted by script
     SubCompReceiver(ComponentId_t id, Params &params);
     SubCompReceiver(ComponentId_t id, std::string port) ;
     ~SubCompReceiver() {}

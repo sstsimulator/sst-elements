@@ -43,10 +43,12 @@ public:
     int dest;
     
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     BitComplementDist(Component* parent, Params &params) :
         TargetGenerator(parent)
     {
     }
+#endif  // inserted by script
     
     BitComplementDist(ComponentId_t cid, Params &params, int id, int num_peers) :
         TargetGenerator(cid)

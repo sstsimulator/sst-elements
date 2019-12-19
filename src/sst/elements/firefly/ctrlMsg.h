@@ -68,7 +68,9 @@ class API : public ProtocolAPI {
 
     SST_ELI_DOCUMENT_PARAMS()
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     API( Component* comp, Params& ) : ProtocolAPI(comp) {}
+#endif  // inserted by script
     API( ComponentId_t id, Params& );
     ~API();
 

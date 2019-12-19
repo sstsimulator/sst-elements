@@ -22,7 +22,9 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 
 /*------------------------------- Simple Backend ------------------------------- */
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 RequestReorderSimple::RequestReorderSimple(Component *comp, Params &params) : SimpleMemBackend(comp, params){ build(params); }
+#endif  // inserted by script
 RequestReorderSimple::RequestReorderSimple(ComponentId_t id, Params &params) : SimpleMemBackend(id, params){ build(params); }
     
 void RequestReorderSimple::build(Params& params) {

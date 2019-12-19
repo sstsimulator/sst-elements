@@ -29,8 +29,10 @@ public:
 
     SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Merlin::TargetGenerator, int, int)
     
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     TargetGenerator(Component* parent) :
         SubComponent(parent) {}
+#endif  // inserted by script
 
     TargetGenerator(ComponentId_t cid) :
         SubComponent(cid) {}

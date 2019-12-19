@@ -24,6 +24,7 @@
 using namespace SST::Merlin;
 
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 topo_hyperx::topo_hyperx(Component* comp, Params& params) :
     Topology(comp)
 {
@@ -127,6 +128,7 @@ topo_hyperx::topo_hyperx(Component* comp, Params& params) :
     }
     
 }
+#endif  // inserted by script
 
 topo_hyperx::topo_hyperx(ComponentId_t cid, Params& params, int num_ports, int rtr_id) :
     Topology(cid),

@@ -42,11 +42,13 @@ public:
     )
 
     
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     TrivialMemoryModel( Component* comp, Params& params ) : MemoryModel(comp) 
 	{
 		m_selfLink = configureSelfLink("Nic::TrivialMemoryModel", "1 ns",
         new Event::Handler<TrivialMemoryModel>(this,&TrivialMemoryModel::handleSelfEvent));
 	} 
+#endif  // inserted by script
     TrivialMemoryModel( ComponentId_t id, Params& params ) : MemoryModel(id) 
 	{
 		m_selfLink = configureSelfLink("Nic::TrivialMemoryModel", "1 ns",

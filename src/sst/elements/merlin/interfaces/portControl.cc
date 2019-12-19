@@ -137,12 +137,14 @@ PortControl::recv(int vc)
     return event;
 }
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 PortControl::PortControl(Component* parent, Params& params) :
     PortInterface(parent),
     output(Simulation::getSimulation()->getSimulationOutput())
 {
     merlin_abort.fatal(CALL_INFO_LONG,1,"Old style subcomponent loading not supported for PortControl.");
 }
+#endif  // inserted by script
 
 
 PortControl::PortControl(ComponentId_t cid, Params& params,  Router* rif, int rtr_id, int port_number, Topology *topo) :

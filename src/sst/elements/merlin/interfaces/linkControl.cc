@@ -28,6 +28,7 @@ using namespace Interfaces;
 
 namespace Merlin {
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 LinkControl::LinkControl(Component* parent, Params &params) :
     SST::Interfaces::SimpleNetwork(parent),
     rtr_link(NULL), output_timing(NULL),
@@ -54,6 +55,7 @@ LinkControl::LinkControl(Component* parent, Params &params) :
         merlin_abort.fatal(CALL_INFO,-1,"Unknown checkerboard_alg requested: %s\n",checkerboard_alg.c_str());
     }
 }
+#endif  // inserted by script
     
 LinkControl::LinkControl(ComponentId_t cid, Params &params, int vns) :
     SST::Interfaces::SimpleNetwork(cid),
@@ -69,7 +71,6 @@ LinkControl::LinkControl(ComponentId_t cid, Params &params, int vns) :
     network_initialized(false),
     output(Simulation::getSimulation()->getSimulationOutput())
 {
-    fatal(false,CALL_INFO,-1,"just a test\n");
     // Get the checkerboard factor
     checker_board_factor = params.find<int>("checkerboard", 1);
     std::string checkerboard_alg = params.find<std::string>("checkerboard_alg","deterministic");

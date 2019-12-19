@@ -25,6 +25,7 @@
 using namespace SST::Firefly;
 using namespace Hermes;
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 HadesSHMEM::HadesSHMEM(Component* owner, Params& params) :
 	Interface(owner), m_common( NULL ), m_zero((long)0)
 {
@@ -53,6 +54,7 @@ HadesSHMEM::HadesSHMEM(Component* owner, Params& params) :
 		m_famAddrMapper->setDbg( &m_dbg );
 	}
 }
+#endif  // inserted by script
 
 HadesSHMEM::HadesSHMEM(ComponentId_t id, Params& params) :
 	Interface(id), m_common( NULL ), m_zero((long)0)

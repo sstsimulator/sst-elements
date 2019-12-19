@@ -63,9 +63,11 @@ private:
     Cycle_t last_cycle;
     
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     output_arb_qos_multi(Component* parent, Params& params) :
         OutputArbitration(parent)
     {}
+#endif  // inserted by script
 
     output_arb_qos_multi(ComponentId_t cid, Params& params) :
         OutputArbitration(cid),

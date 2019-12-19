@@ -62,10 +62,12 @@ private:
     // PortControl** ports;
     
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     xbar_arb_lru_infx(Component* parent, Params& params) :
         XbarArbitration(parent)
     {
     }
+#endif  // inserted by script
 
     xbar_arb_lru_infx(ComponentId_t cid, Params& params) :
         XbarArbitration(cid)

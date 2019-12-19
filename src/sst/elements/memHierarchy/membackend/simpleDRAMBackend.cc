@@ -47,7 +47,9 @@ using namespace SST::MemHierarchy;
  */
 
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 SimpleDRAM::SimpleDRAM(Component *comp, Params &params) : SimpleMemBackend(comp, params){ build(params); }
+#endif  // inserted by script
 SimpleDRAM::SimpleDRAM(ComponentId_t id, Params &params) : SimpleMemBackend(id, params){ build(params); }
 
 void SimpleDRAM::build(Params& params) {

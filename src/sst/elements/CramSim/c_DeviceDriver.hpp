@@ -127,7 +127,9 @@ public:
     SST_ELI_DOCUMENT_STATISTICS(
     )
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     c_DeviceDriver(Component *comp, Params& x_params);
+#endif  // inserted by script
     c_DeviceDriver(ComponentId_t id, Params& x_params, Output* out, std::function<void(c_BankCommand*)> sendFunc);
     void build(Params& x_params);
     virtual ~c_DeviceDriver();

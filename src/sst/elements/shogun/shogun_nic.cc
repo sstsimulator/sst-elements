@@ -11,6 +11,7 @@
 
 using namespace SST::Shogun;
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 ShogunNIC::ShogunNIC(SST::Component* component, Params& params)
     : SimpleNetwork(component)
     , netID(-1), bw(UnitAlgebra("1GB/s"))
@@ -26,6 +27,7 @@ ShogunNIC::ShogunNIC(SST::Component* component, Params& params)
     onSendFunctor = nullptr;
     onRecvFunctor = nullptr;
 }
+#endif  // inserted by script
 
 ShogunNIC::ShogunNIC(SST::ComponentId_t id, Params& params, int vns = 1)
     : SimpleNetwork(id)

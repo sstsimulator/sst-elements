@@ -65,7 +65,9 @@ class Hades : public OS
         {"nodePerf", "Sets the node performance module ", "1"},
     )
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     Hades(Component* comp, Params& params) : OS(comp,params) { assert(0); }
+#endif  // inserted by script
     Hades(ComponentId_t id, Params& params);
     ~Hades();
     virtual void _componentInit(unsigned int phase );

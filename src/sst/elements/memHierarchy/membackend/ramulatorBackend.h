@@ -41,7 +41,9 @@ public:
             {"configFile",  "Name of the Ramulator Device config file", NULL} )
 
 /* Begin class definition */
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     ramulatorMemory(Component *comp, Params &params);
+#endif  // inserted by script
     ramulatorMemory(ComponentId_t id, Params &params);
     bool issueRequest(ReqId, Addr, bool, unsigned );
     //virtual bool issueRequest(DRAMReq *req);

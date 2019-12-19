@@ -22,9 +22,11 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 
 /* Constructor */
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 MemLink::MemLink(Component* parent, Params &params) : MemLinkBase(parent, params) {
     build(params);
 }
+#endif  // inserted by script
 
 MemLink::MemLink(ComponentId_t id, Params &params) : MemLinkBase(id, params) {
     build(params);

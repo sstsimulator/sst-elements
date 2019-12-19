@@ -48,7 +48,9 @@ public:
             {"debug_level", "(int) Debugging level. Between 0 and 10", "0"} )
 
 /* Begin class definition */
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     MemNetBridge(SST::Component *comp, SST::Params &params);
+#endif  // inserted by script
     MemNetBridge(SST::ComponentId_t id, SST::Params &params, Merlin::Bridge*  bridge);
     ~MemNetBridge();
     void init(unsigned int);

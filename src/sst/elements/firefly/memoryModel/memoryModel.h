@@ -29,7 +29,9 @@ public:
 
 #include "memOp.h"
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     MemoryModel( Component* comp ) : SubComponent(comp) {}
+#endif  // inserted by script
     MemoryModel( ComponentId_t id ) : SubComponent(id) {}
 
     virtual void printStatus( Output& out, int id ) { }

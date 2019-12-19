@@ -25,7 +25,10 @@ namespace Ember {
 class EmberHalo1DGenerator : public EmberMessagePassingGenerator {
 
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 	EmberHalo1DGenerator(SST::Component* owner, Params& params);
+#endif  // inserted by script
+	EmberHalo1DGenerator(SST::ComponentId_t id, Params& params);
     bool generate( std::queue<EmberEvent*>& evQ );
 
 private:

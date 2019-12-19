@@ -137,7 +137,9 @@ class ProcessQueuesState : public SubComponent
 
 
   public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     ProcessQueuesState( Component* comp, Params& params ) : SubComponent(comp) {} 
+#endif  // inserted by script
     ProcessQueuesState( ComponentId_t id, Params& params );
     ~ProcessQueuesState();
     void setup() {}

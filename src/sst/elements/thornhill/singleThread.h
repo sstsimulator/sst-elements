@@ -41,7 +41,9 @@ class SingleThread : public DetailedCompute {
 
   public:
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     SingleThread( Component* owner, Params& params ) : DetailedCompute(owner) {}
+#endif  // inserted by script
     SingleThread( ComponentId_t id, Params& params );
 
     ~SingleThread(){};
