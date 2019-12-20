@@ -109,7 +109,7 @@ namespace SST {
 
                 int LInfDistanceTo(const MeshLocation & other) const;
 
-                bool operator()(MeshLocation* loc1, MeshLocation* loc2);
+                bool operator()(MeshLocation* loc1, MeshLocation* loc2) const;
 
                 bool equals(const MeshLocation & other) const;
 

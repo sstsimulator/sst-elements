@@ -351,7 +351,7 @@ EASYScheduler* EASYScheduler::copy(std::vector<Job*>* inrunning, std::vector<Job
 //for this to work correctly, it returns the reverse of what it would
 //in the comparators for the PQscheduler (because this uses sets and maps
 //instead of priority queues)
-bool EASYScheduler::JobComparator::operator()(Job* const& j1,Job* const& j2) 
+bool EASYScheduler::JobComparator::operator()(Job* const& j1,Job* const& j2) const
 { 
     switch(type) {
     case FIFO:

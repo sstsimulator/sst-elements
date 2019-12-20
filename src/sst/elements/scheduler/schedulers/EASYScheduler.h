@@ -63,8 +63,8 @@ namespace SST {
                     public:
                         static JobComparator* Make(std::string typeName);  //return NULL if name is invalid
                         static void printComparatorList(std::ostream& out);  //print list of possible comparators
-                        bool operator()(Job*& j1, Job*& j2);
-                        bool operator()(Job* const& j1, Job* const& j2);
+                        bool operator()(Job*& j1, Job*& j2) const;
+                        bool operator()(Job* const& j1, Job* const& j2) const;
                         std::string toString();
                         JobComparator(JobComparator* incomp) { 
                            type = incomp -> type;
@@ -89,7 +89,7 @@ namespace SST {
                         RunningInfo() 
                         {
                         } 
-                        bool operator()(RunningInfo* r1, RunningInfo* r2)
+                        bool operator()(RunningInfo* r1, RunningInfo* r2) const
                         {
                             if(r1->estComp != r2->estComp) {
                                 return r1->estComp < r2->estComp;
