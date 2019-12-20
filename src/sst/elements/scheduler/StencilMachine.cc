@@ -12,6 +12,7 @@
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
+#include <sst_config.h>
 
 #include <algorithm>
 #include <vector>
@@ -192,7 +193,7 @@ int MeshLocation::LInfDistanceTo(const MeshLocation & other) const
     return distance;
 }
 
-bool MeshLocation::operator()(MeshLocation* loc1, MeshLocation* loc2)
+bool MeshLocation::operator()(MeshLocation* loc1, MeshLocation* loc2) const
 {
     for(unsigned int i = 0; i < dims.size() ; i++){
         if(loc1->dims[i] != loc2->dims[i]){

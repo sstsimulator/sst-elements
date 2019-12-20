@@ -26,6 +26,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+#include <sst_config.h>
+
 #include <assert.h>
 #include "sst/core/simulation.h"
 #include "c_BankCommand.hpp"

@@ -16,6 +16,7 @@
 /*
  * Machine based on a mesh structure
  */
+#include <sst_config.h>
 
 #include "Mesh3DMachine.h"
 #include "output.h"

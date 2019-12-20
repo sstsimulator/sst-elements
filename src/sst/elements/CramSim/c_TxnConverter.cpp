@@ -23,6 +23,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //SST includes
+#include <sst_config.h>
 
 // std includes
 #include <iostream>
