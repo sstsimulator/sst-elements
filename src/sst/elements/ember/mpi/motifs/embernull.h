@@ -62,9 +62,11 @@ public:
     )
 
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 	EmberNullGenerator(SST::Component* owner, Params& params) :
 		EmberMessagePassingGenerator(owner, params, "Null" ) 
 	{ }
+#endif  // inserted by script
 	EmberNullGenerator(SST::ComponentId_t id, Params& params) :
 		EmberMessagePassingGenerator(id, params, "Null" ) 
 	{ }

@@ -23,12 +23,14 @@
 using namespace SST;
 using namespace SST::MemHierarchy;
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 SimpleMemScratchBackendConvertor::SimpleMemScratchBackendConvertor(Component *comp, Params &params) :
         ScratchBackendConvertor(comp, params) 
 {
     using std::placeholders::_1;
     static_cast<SimpleMemBackend*>(m_backend)->setResponseHandler( std::bind( &SimpleMemScratchBackendConvertor::handleMemResponse, this, _1 ) );
 }
+#endif  // inserted by script
 
 SimpleMemScratchBackendConvertor::SimpleMemScratchBackendConvertor(ComponentId_t id, Params &params) :
         ScratchBackendConvertor(id, params) 

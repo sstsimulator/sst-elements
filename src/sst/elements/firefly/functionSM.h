@@ -86,7 +86,9 @@ class FunctionSM : public SubComponent {
 
     const char *functionName( FunctionEnum x) {return m_functionName[x]; }
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     FunctionSM( Component* comp, Params& params ) : SubComponent(comp) {}
+#endif  // inserted by script
     FunctionSM( ComponentId_t, Params& params, ProtocolAPI* );
     ~FunctionSM();
 

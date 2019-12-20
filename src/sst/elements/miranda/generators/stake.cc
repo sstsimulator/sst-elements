@@ -27,10 +27,12 @@ Stake::Stake( ComponentId_t id, Params& params )
     build(params);
 }
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 Stake::Stake( Component* owner, Params& params )
   : RequestGenerator(owner, params) {
     build(params);
 }
+#endif  // inserted by script
 
 void Stake::build(Params &params) {
         // default parameters

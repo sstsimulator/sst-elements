@@ -178,7 +178,9 @@ public:
             {"swap_delays", "Number of an access is delayed because the page is swapping", "count", 1} )
     
 /* Class definition */
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     HBMpagedMultiMemory(Component *comp, Params &params);
+#endif  // inserted by script
     HBMpagedMultiMemory(ComponentId_t id, Params &params);
     virtual bool issueRequest(ReqId, Addr, bool, unsigned );
     virtual bool clock(Cycle_t cycle);

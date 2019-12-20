@@ -27,7 +27,9 @@ namespace Prospero {
 class ProsperoTextTraceReader : public ProsperoTraceReader {
 
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
         ProsperoTextTraceReader( Component* owner, Params& params );
+#endif  // inserted by script
         ProsperoTextTraceReader( ComponentId_t id, Params& params, Output* out );
         ~ProsperoTextTraceReader();
         ProsperoTraceEntry* readNextEntry();

@@ -22,8 +22,15 @@ using namespace SST::Firefly;
 using namespace Hermes;
 using namespace Hermes::MP;
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 HadesMP::HadesMP(Component* owner, Params& params) :
     Interface(owner), m_os(NULL)
+{
+}
+#endif  // inserted by script
+
+HadesMP::HadesMP(ComponentId_t id, Params& params) :
+    Interface(id), m_os(NULL)
 {
 }
 

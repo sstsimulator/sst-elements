@@ -102,6 +102,10 @@ echo "SST Elements Configuration completed."
 echo "-------------------------------------------------------"
 echo "Build Environment:"
 echo ""
+if test "x$SST_PREVIEW_BUILD" = "xyes"; then
+echo "-- PREVIEW BUILD --"
+echo ""
+fi
 printf "%38s : %s\n" "SST-Elements Version" "$PACKAGE_VERSION"
 if test "x$SSTELEMENTS_GIT_HEADSHA" != "x$PACKAGE_VERSION"; then
 printf "%38s : %s\n" "Git Branch" "$SSTELEMENTS_GIT_BRANCH"

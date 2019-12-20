@@ -26,7 +26,9 @@ namespace Prospero {
 class ProsperoCompressedBinaryTraceReader : public ProsperoTraceReader {
 
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
         ProsperoCompressedBinaryTraceReader( Component* owner, Params& params );
+#endif  // inserted by script
         ProsperoCompressedBinaryTraceReader( ComponentId_t id, Params& params, Output* out );
         ~ProsperoCompressedBinaryTraceReader();
         ProsperoTraceEntry* readNextEntry();

@@ -40,6 +40,7 @@ using namespace SST;
 using namespace SST::CramSim;
 using namespace std;
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 c_TxnConverter::c_TxnConverter(SST::Component *owner, SST::Params& x_params) : SubComponent(owner) {
 
 	c_Controller* m_owner = dynamic_cast<c_Controller *>(owner);
@@ -48,6 +49,7 @@ c_TxnConverter::c_TxnConverter(SST::Component *owner, SST::Params& x_params) : S
 	unsigned l_bankNum=m_owner->getDeviceDriver()->getTotalNumBank();
         build(x_params, l_bankNum);
 }
+#endif  // inserted by script
 c_TxnConverter::c_TxnConverter(SST::ComponentId_t id, SST::Params& x_params, Output* out, unsigned banks, c_CmdScheduler* scheduler) : SubComponent(id), output(out), m_cmdScheduler(scheduler) {
     build(x_params, banks);
 }

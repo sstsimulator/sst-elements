@@ -19,6 +19,7 @@
 
 using namespace SST::Prospero;
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 ProsperoTextTraceReader::ProsperoTextTraceReader( Component* owner, Params& params ) :
 	ProsperoTraceReader(owner, params) {
 
@@ -32,6 +33,7 @@ ProsperoTextTraceReader::ProsperoTextTraceReader( Component* owner, Params& para
 	}
 
 }
+#endif  // inserted by script
 
 ProsperoTextTraceReader::ProsperoTextTraceReader( ComponentId_t id, Params& params, Output* out ) :
 	ProsperoTraceReader(id, params, out) {

@@ -28,6 +28,7 @@ using namespace Interfaces;
 
 namespace Merlin {
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 ReorderLinkControl::ReorderLinkControl(Component* parent, Params &params) :
     SimpleNetwork(parent),
     receiveFunctor(NULL)
@@ -37,6 +38,7 @@ DISABLE_WARN_DEPRECATED_DECLARATION
     link_control = static_cast<SimpleNetwork*>(loadSubComponent(networkIF, params));
 REENABLE_WARNING
 }
+#endif  // inserted by script
 
 ReorderLinkControl::ReorderLinkControl(ComponentId_t cid, Params &params, int vns) :
     SimpleNetwork(cid),
@@ -76,6 +78,7 @@ ReorderLinkControl::~ReorderLinkControl() {
     delete [] input_buf;
 }
 
+#ifndef SST_ENABLE_PREVIEW_BUILD
 bool
 ReorderLinkControl::initialize(const std::string& port_name, const UnitAlgebra& link_bw_in,
                                int vns, const UnitAlgebra& in_buf_size,
@@ -96,7 +99,7 @@ ReorderLinkControl::initialize(const std::string& port_name, const UnitAlgebra& 
     
     return true;
 }
-
+#endif
 
 void
 ReorderLinkControl::setup()

@@ -87,9 +87,8 @@ shift_nic::shift_nic(ComponentId_t cid, Params& params) :
 
     if ( !link_control ) {
         // Not defined in python code. Just use default (merlin.reorderlinkcontrol)
-    
+        
         UnitAlgebra buf_size("1kB");
-        link_control->initialize("rtr", link_bw, 1, buf_size, buf_size);
 
         Params if_params;
         

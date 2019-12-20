@@ -19,6 +19,7 @@
 
 using namespace SST::Prospero;
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 ProsperoCompressedBinaryTraceReader::ProsperoCompressedBinaryTraceReader( Component* owner, Params& params ) :
 	ProsperoTraceReader(owner, params) {
 
@@ -34,6 +35,7 @@ ProsperoCompressedBinaryTraceReader::ProsperoCompressedBinaryTraceReader( Compon
 	recordLength = sizeof(uint64_t) + sizeof(char) + sizeof(uint64_t) + sizeof(uint32_t);
 	buffer = (char*) malloc(sizeof(char) * recordLength);
 }
+#endif  // inserted by script
 
 ProsperoCompressedBinaryTraceReader::ProsperoCompressedBinaryTraceReader( ComponentId_t id, Params& params, Output* out ) :
 	ProsperoTraceReader(id, params, out) {

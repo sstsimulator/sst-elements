@@ -3,6 +3,7 @@
 
 #include "shogun_event.h"
 #include "shogunrrarb.h"
+#include "shogun_stat_bundle.h"
 
 using namespace SST::Shogun;
 

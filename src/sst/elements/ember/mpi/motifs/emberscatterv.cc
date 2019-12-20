@@ -63,7 +63,7 @@ bool EmberScattervGenerator::generate( std::queue<EmberEvent*>& evQ) {
 		if ( m_root != rank() ) {
     		for ( int i = 0; i < m_count; i++ ) {
 				if ( ((long*)m_recvBuf)[i] != rank() ) {
-					printf("Error: Rank %d index %d verification failed, want %" PRIx64 " got %" PRIx64 "\n", rank(), i, rank(), ((long*)m_recvBuf)[i] );
+					printf("Error: Rank %d index %d verification failed, want %d got %ld\n", rank(), i, rank(), ((long*)m_recvBuf)[i] );
 				} 
 			}
 		}

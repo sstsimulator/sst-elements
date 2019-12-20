@@ -38,7 +38,9 @@ public:
     SST_ELI_DOCUMENT_PARAMS()
 
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 	EmberShmemBarrierAllGenerator(SST::Component* owner, Params& params) : EmberShmemGenerator(owner, params, "" ) {}
+#endif  // inserted by script
 	EmberShmemBarrierAllGenerator(SST::ComponentId_t id, Params& params) :
 		EmberShmemGenerator(id, params, "ShmemBarrierAll" ), m_phase(-1) 
 	{ 

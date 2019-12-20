@@ -52,7 +52,10 @@ typedef enum { MOVE, AND, MAX, MIN, SUM, PROD, OR, XOR } ReduOp;
 class Interface : public Hermes::Interface {
     public:
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     Interface( Component* parent ) : Hermes::Interface(parent) {}
+#endif  // inserted by script
+    Interface( ComponentId_t id ) : Hermes::Interface(id) {}
     virtual ~Interface() {}
 
     virtual void init(Callback) { assert(0); }

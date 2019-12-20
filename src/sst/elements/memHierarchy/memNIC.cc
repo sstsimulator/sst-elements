@@ -36,9 +36,11 @@ using namespace SST::Interfaces;
 /******************************************************************/
 
 /* Constructor */
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 MemNIC::MemNIC(Component * parent, Params &params) : MemNICBase(parent, params) {
     build(params);
 }
+#endif  // inserted by script
 
 MemNIC::MemNIC(ComponentId_t id, Params &params) : MemNICBase(id, params) {
     build(params);

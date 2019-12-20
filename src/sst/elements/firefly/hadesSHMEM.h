@@ -48,13 +48,13 @@ namespace Firefly {
 class HadesSHMEM : public Shmem::Interface
 {
   public:
-    SST_ELI_REGISTER_SUBCOMPONENT(
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
         HadesSHMEM,
         "firefly",
         "hadesSHMEM",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "",
-        ""
+        SST::Hermes::Interface
     )
     SST_ELI_DOCUMENT_PARAMS(
         {"verboseLevel","Sets the level of debug verbosity",""},
@@ -415,7 +415,10 @@ class HadesSHMEM : public Shmem::Interface
 	};
 
   public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     HadesSHMEM(Component*, Params&);
+#endif  // inserted by script
+    HadesSHMEM(ComponentId_t, Params&);
     ~HadesSHMEM();
 
     virtual void setup();

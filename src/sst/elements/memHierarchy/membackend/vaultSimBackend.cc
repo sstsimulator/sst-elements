@@ -24,7 +24,9 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 using namespace SST::VaultSim;
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 VaultSimMemory::VaultSimMemory(Component *comp, Params &params) : FlagMemBackend(comp, params){ build(params); }
+#endif  // inserted by script
 VaultSimMemory::VaultSimMemory(ComponentId_t id, Params &params) : FlagMemBackend(id, params){ build(params); }
 
 void VaultSimMemory::build(Params& params) {

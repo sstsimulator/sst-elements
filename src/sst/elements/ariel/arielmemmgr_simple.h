@@ -48,7 +48,9 @@ class ArielMemoryManagerSimple : public ArielMemoryManagerCache {
 
         /* ArielMemoryManagerSimple */
         ArielMemoryManagerSimple(ComponentId_t id, Params& params); 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
         ArielMemoryManagerSimple(Component* comp, Params& params) : ArielMemoryManagerCache(comp, params) { }  // Legacy
+#endif  // inserted by script
         ~ArielMemoryManagerSimple();
 
         uint64_t translateAddress(uint64_t virtAddr);

@@ -37,7 +37,9 @@ class MsgTiming : public SubComponent {
         SST::Firefly::CtrlMsg::MsgTiming
     )
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 	MsgTiming( Component* comp, Params& params) : SubComponent(comp) {}
+#endif  // inserted by script
     inline MsgTiming( ComponentId_t id, Params& params );
     inline ~MsgTiming();
 

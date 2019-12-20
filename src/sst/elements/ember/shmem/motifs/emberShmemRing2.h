@@ -28,7 +28,9 @@ template< class TYPE >
 class EmberShmemRing2Generator : public EmberShmemGenerator {
 
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 	EmberShmemRing2Generator(SST::Component* owner, Params& params) : EmberShmemGenerator(owner, params, "" ) {}
+#endif  // inserted by script
 	EmberShmemRing2Generator(SST::ComponentId_t id, Params& params) : 
 		EmberShmemGenerator(id, params, "ShmemRing2" ), m_phase(-2) 
 	{ 
@@ -123,8 +125,10 @@ public:
     SST_ELI_DOCUMENT_PARAMS()
 
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     EmberShmemRing2IntGenerator( SST::Component* owner, Params& params ) :
         EmberShmemRing2Generator(owner,  params) { }
+#endif  // inserted by script
     EmberShmemRing2IntGenerator( SST::ComponentId_t id, Params& params ) :
         EmberShmemRing2Generator(id,  params) { }
 };

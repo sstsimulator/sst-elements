@@ -28,7 +28,9 @@ namespace Miranda {
 class SingleStreamGenerator : public RequestGenerator {
 
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
       SingleStreamGenerator( Component* owner, Params& params );
+#endif  // inserted by script
       SingleStreamGenerator( ComponentId_t id, Params& params );
       void build(Params& params);
       ~SingleStreamGenerator();

@@ -45,7 +45,9 @@ class MemoryManagerSieve : public ArielComponent::ArielMemoryManager {
 
         /* MemoryManagerSieve */
         MemoryManagerSieve(ComponentId_t id, Params& params);
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
         MemoryManagerSieve(Component* comp, Params& params) : ArielMemoryManager(comp, params) { } // Legacy
+#endif  // inserted by script
         ~MemoryManagerSieve();
 
         uint64_t translateAddress(uint64_t virtAddr);

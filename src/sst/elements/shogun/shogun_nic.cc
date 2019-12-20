@@ -11,6 +11,7 @@
 
 using namespace SST::Shogun;
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 ShogunNIC::ShogunNIC(SST::Component* component, Params& params)
     : SimpleNetwork(component)
     , netID(-1), bw(UnitAlgebra("1GB/s"))
@@ -26,6 +27,7 @@ ShogunNIC::ShogunNIC(SST::Component* component, Params& params)
     onSendFunctor = nullptr;
     onRecvFunctor = nullptr;
 }
+#endif  // inserted by script
 
 ShogunNIC::ShogunNIC(SST::ComponentId_t id, Params& params, int vns = 1)
     : SimpleNetwork(id)
@@ -56,6 +58,7 @@ ShogunNIC::~ShogunNIC()
     delete output;
 }
 
+#ifndef SST_ENABLE_PREVIEW_BUILD
 bool ShogunNIC::initialize(const std::string& portName, const UnitAlgebra& link_bw,
     int vns, const UnitAlgebra& in_buf_size,
     const UnitAlgebra& out_buf_size)
@@ -69,7 +72,7 @@ bool ShogunNIC::initialize(const std::string& portName, const UnitAlgebra& link_
 
     return (nullptr != link);
 }
-
+#endif
 void ShogunNIC::sendInitData(SimpleNetwork::Request* req)
 {
     output->verbose(CALL_INFO, 8, 0, "Send init-data called.\n");

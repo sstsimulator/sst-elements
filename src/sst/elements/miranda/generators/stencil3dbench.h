@@ -28,7 +28,9 @@ namespace Miranda {
 class Stencil3DBenchGenerator : public RequestGenerator {
 
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 	Stencil3DBenchGenerator( Component* owner, Params& params );
+#endif  // inserted by script
 	Stencil3DBenchGenerator( ComponentId_t id, Params& params );
         void build(Params& params);
 	~Stencil3DBenchGenerator();

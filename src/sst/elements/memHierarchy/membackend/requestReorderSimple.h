@@ -40,7 +40,9 @@ public:
 
 /* Begin class definition */
     RequestReorderSimple();
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     RequestReorderSimple(Component *comp, Params &params);
+#endif  // inserted by script
     RequestReorderSimple(ComponentId_t id, Params &params);
 	virtual bool issueRequest( ReqId, Addr, bool isWrite, unsigned numBytes );
     void setup();

@@ -143,7 +143,7 @@ bool DMAEngine::issueNextReadOperation() {
 	if( ! currentState->allReadsIssued() ) {
 		if(opsInFlight < maxInFlight) {
 			uint64_t nextReqLength = std::min(cacheLineSize,
-				(currentState->getCommandLength() - currentState->getIssuedBytes());
+                                              (currentState->getCommandLength() - currentState->getIssuedBytes()));
 
 			SimpleMem::Request* nextReq = new SimpleMem::Request(SimpleMem::Request::Read,
 				currentState->getSrcAddr() + currentState->getIssuedBytes(),

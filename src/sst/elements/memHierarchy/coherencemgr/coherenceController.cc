@@ -21,11 +21,13 @@
 using namespace SST;
 using namespace SST::MemHierarchy;
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 CoherenceController::CoherenceController(Component * comp, Params &params) : SubComponent(comp) {
     /* Output stream */
     output = new Output("", 1, 0, SST::Output::STDOUT);
     output->fatal(CALL_INFO, -1, "%s, Error: CohrenceController subcomponents do not support loading via legacy API\n", getName().c_str());
 }
+#endif  // inserted by script
 
 CoherenceController::CoherenceController(ComponentId_t id, Params &params, Params& ownerParams, bool prefetch) : SubComponent(id) {
     params.insert(ownerParams); // Combine params 

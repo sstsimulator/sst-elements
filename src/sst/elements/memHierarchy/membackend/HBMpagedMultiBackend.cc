@@ -31,10 +31,12 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 using namespace HBMDRAMSim;
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 HBMpagedMultiMemory::HBMpagedMultiMemory(Component *comp, Params &params)
   : HBMDRAMSimMemory(comp, params), pagesInFast(0), lastMin(0) {
       build(params);
   }
+#endif  // inserted by script
 
 HBMpagedMultiMemory::HBMpagedMultiMemory(ComponentId_t id, Params &params)
   : HBMDRAMSimMemory(id, params), pagesInFast(0), lastMin(0) {
