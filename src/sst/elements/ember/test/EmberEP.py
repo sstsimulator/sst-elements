@@ -202,7 +202,6 @@ class EmberEP( EndPoint ):
             nicLink.setNoCut()
 
             linkName = "loop" + str(nodeID/self.nicsPerNode) + "nic"+ str(nodeID%self.nicsPerNode)+"core" + str(x) + "_Link" 
-            print linkName
             loopLink = sst.Link( linkName ); 
             loopLink.setNoCut() 
 
