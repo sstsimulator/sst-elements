@@ -501,6 +501,7 @@ class ProcessQueuesState : public SubComponent
     Statistic<uint64_t>* m_statPstdRcv;
     int m_numSent;
     int m_numRecv;
+    int m_nicsPerNode;
 };
 
 }
