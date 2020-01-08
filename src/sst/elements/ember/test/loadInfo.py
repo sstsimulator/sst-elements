@@ -4,30 +4,32 @@ from loadUtils import *
 from EmberEP import *
 from paramUtils import *
 
+
 class PartInfo:
-	def __init__(self, nicParams, epParams, numNodes, numCores, detailedModel = None ):
+	def __init__(self, nicParams, epParams, numNodes, nicsPerNode, numCores, detailedModel = None ):
 		self.nicParams = nicParams
 		self.epParams = epParams
 		self.numNodes = int(numNodes)
 		self.numCores = int(numCores)
 		self.detailedModel = detailedModel
-		self.nicParams["num_vNics"] = numCores
+		self.nicParams["num_vNics"] = numCores/nicsPerNode
 		self.nicParams["numCores"] = numCores
 
 class LoadInfo:
 
-	def __init__(self,numNics, baseNicParams, defaultEmberParams):
+	def __init__(self,numNics, nicsPerNode, baseNicParams, defaultEmberParams):
 		self.numNics = int(numNics)
+		self.nicsPerNode = nicsPerNode
 		nullMotif = { 'motif0.name' : 'ember.NullMotif', 'motif0.printStats' : 0, 'motif0.spyplotmode': 0 }
 
 		self.parts = {} 
-		ep = EmberEP( -1 , defaultEmberParams, baseNicParams, nullMotif, 1,1,[],'Null',1,[],None)
+		ep = EmberEP( -1 , defaultEmberParams, baseNicParams, nullMotif, nicsPerNode, 1,1,[],'Null',1,[],None)
 		ep.prepParams()
 		self.endPointMap = [ ep for i in range(self.numNics)]
 		self.globalToLocalNidMap = [ -1 for i in range(self.numNics) ]
 
 	def addPart(self, nodeList, nicParams, epParams, numCores, detailedModel = None ):
-                self.parts[nodeList] = PartInfo( nicParams, epParams, calcNetMapSize(nodeList), numCores, detailedModel );
+                self.parts[nodeList] = PartInfo( nicParams, epParams, calcNetMapSize(nodeList), self.nicsPerNode, numCores, detailedModel );
 
 	def createEP( self, jobId, nidList, ranksPerNode, motifs, statNodes, detailedModel = None ):
 		
@@ -53,7 +55,7 @@ class LoadInfo:
 				 ' is greater than available nodes ' + str(self.numNics) ) 
 		numNodes = calcNetMapSize( nidList ) 
 
-		ep = EmberEP( jobId, epParams, nicParams, motifs, numCores, ranksPerNode, statNodes, self.globalToLocalNidMap, numNodes, motifLogNodes, detailedModel ) # added motifLogNodes here
+		ep = EmberEP( jobId, epParams, nicParams, motifs, self.nicsPerNode, numCores, ranksPerNode, statNodes, self.globalToLocalNidMap, numNodes, motifLogNodes, detailedModel ) # added motifLogNodes here
 
 		ep.prepParams()
 		return ep
