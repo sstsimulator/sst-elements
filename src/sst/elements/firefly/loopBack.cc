@@ -29,20 +29,24 @@ using namespace SST::Firefly;
 LoopBack::LoopBack(ComponentId_t id, Params& params ) :
         Component( id )
 {
-    int numCores = params.find<int>("numCores", 1 );
+    int nicsPerNode = params.find<int>("nicsPerNode", 1 );
+    int numCores = params.find<int>("numCores", 1 )/nicsPerNode;
 
-    for ( int i = 0; i < numCores; i++ ) {
-        std::ostringstream tmp;
-        tmp <<  i;
+	for ( int j = 0; j < nicsPerNode; j++ ) {
+		std::ostringstream nic;
+		nic <<  j;
+		for ( int i = 0; i < numCores; i++ ) {
+			std::ostringstream core;
+			core <<  i;
 
-        Event::Handler<LoopBack,int>* handler =
-                new Event::Handler<LoopBack,int>(
-                                this, &LoopBack::handleCoreEvent, i );
+			Event::Handler<LoopBack,int>* handler =
+                new Event::Handler<LoopBack,int>( this, &LoopBack::handleCoreEvent, j*numCores + i );
 
-        Link* link = configureLink("core" + tmp.str(), "1 ns", handler );
-        assert(link);
-        m_links.push_back( link );
-    }
+			Link* link = configureLink("nic"+ nic.str() + "core" + core.str(), "1 ns", handler );
+			assert(link);
+			m_links.push_back( link );
+		}
+	}
 }
 
 void LoopBack::handleCoreEvent( Event* ev, int src ) {
