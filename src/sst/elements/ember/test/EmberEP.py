@@ -109,7 +109,6 @@ class EmberEP( EndPoint ):
             #memory.addParam( "verboseLevel", 1 )
 
         loopBackName = "loopBack" + str(nodeID/self.nicsPerNode)		
-        print loopBackName
         if nodeID % self.nicsPerNode == 0:
             loopBack = sst.Component(loopBackName, "firefly.loopBack")
             loopBack.addParam( "numCores", self.numCores )
@@ -124,7 +123,6 @@ class EmberEP( EndPoint ):
         # end
 
         for x in xrange(self.numCores/self.nicsPerNode):
-            print self.numCores, self.nicsPerNode
             ep = sst.Component("nic" + str(nodeID) + "core" + str(x) + "_EmberEP", "ember.EmberEngine")
 
             os = ep.setSubComponent( "OS", "firefly.hades" )
