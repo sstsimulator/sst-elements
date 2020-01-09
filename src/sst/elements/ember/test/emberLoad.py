@@ -38,6 +38,7 @@ netShape = ''
 netHostsPerRtr = 1
 netInspect = ''
 rtrArb = ''
+nicsPerNode=1
 
 rndmPlacement = False
 #rndmPlacement = True
@@ -177,7 +178,7 @@ if simConfig:
 	except:
 		sys.exit('Failed: could not import sim configuration `{0}`'.format(simConfig) )
 
-	workFlow, numNodes, numCores = config.getWorkFlow( motifDefaults )
+	workFlow, numNodes, numCores, nicsPerNode = config.getWorkFlow( motifDefaults )
 	platform, netTopo, netShape = config.getNetwork( )
 	detailedModelName, detailedModelParams, detailedModelNodes = config.getDetailedModel()
 
@@ -245,7 +246,7 @@ if "" == netShape:
 
 if "torus" == netTopo:
 
-	topoInfo = TorusInfo(netShape, netHostsPerRtr)
+	topoInfo = TorusInfo(netShape, netHostsPerRtr, nicsPerNode)
 	topo = topoTorus()
 
 elif "fattree" == netTopo:
@@ -375,7 +376,9 @@ hermesParams['hermesParams.nicParams.verboseLevel'] = debug
 hermesParams['hermesParams.functionSM.verboseLevel'] = debug
 hermesParams['hermesParams.ctrlMsg.verboseLevel'] = debug
 hermesParams['hermesParams.ctrlMsg.pqs.verboseLevel'] = debug 
-hermesParams['hermesParams.ctrlMsg.pqs.verboseMask'] = 1
+hermesParams['hermesParams.ctrlMsg.pqs.verboseMask'] = -1 
+
+hermesParams["hermesParams.ctrlMsg.nicsPerNode"] = nicsPerNode 
 emberParams['verbose'] = emberVerbose
 hermesParams[ emberParams['os.name'] + '.numNodes'] = topoInfo.getNumNodes() 
 
@@ -465,7 +468,7 @@ baseNicParams = {
     "module" : nicParams['module']
 }
 
-loadInfo = LoadInfo( topoInfo.getNumNodes(), baseNicParams, epParams)
+loadInfo = LoadInfo( topoInfo.getNumNodes(), topoInfo.getNicsPerNode(), baseNicParams, epParams)
 
 if len(loadFile) > 0:
     for jobid, nidlist, numCores, params, motifs in ParseLoadFile( loadFile, loadFileVars ):
