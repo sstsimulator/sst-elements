@@ -210,7 +210,6 @@ class EmberEP( EndPoint ):
             nicLink.connect( (virtNic,'nic','1ns' ),(nic,'core'+str(x),'1ns'))
 
             loopLink.connect( (process,'loop','1ns' ),(loopBack,'nic'+str(nodeID%self.nicsPerNode)+'core'+str(x),'1ns'))
-            #loopLink.connect( (process,'loop','1ns' ),(loopBack,'core'+str(x),'1ns'))
 
             if built:
                 memoryLink = sst.Link( "memory" + str(nodeID) + "core" + str(x) + "_Link"  )
