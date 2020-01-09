@@ -12,14 +12,14 @@ class PartInfo:
 		self.numNodes = int(numNodes)
 		self.numCores = int(numCores)
 		self.detailedModel = detailedModel
-		self.nicParams["num_vNics"] = numCores/nicsPerNode
+		self.nicParams["num_vNics"] = self.numCores/int(nicsPerNode)
 		self.nicParams["numCores"] = numCores
 
 class LoadInfo:
 
 	def __init__(self,numNics, nicsPerNode, baseNicParams, defaultEmberParams):
 		self.numNics = int(numNics)
-		self.nicsPerNode = nicsPerNode
+		self.nicsPerNode = int(nicsPerNode)
 		nullMotif = { 'motif0.name' : 'ember.NullMotif', 'motif0.printStats' : 0, 'motif0.spyplotmode': 0 }
 
 		self.parts = {} 
