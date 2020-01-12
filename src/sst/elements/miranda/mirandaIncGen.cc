@@ -13,6 +13,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
+#include <sst_config.h>
+
 #include "generators/copygen.h"
 #include "generators/gupsgen.h"
 #include "generators/inorderstreambench.h"

@@ -23,6 +23,7 @@
 using namespace SST::Merlin;
 
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 topo_torus::topo_torus(Component* comp, Params& params) :
     Topology(comp)
 {
@@ -89,6 +90,7 @@ topo_torus::topo_torus(Component* comp, Params& params) :
     id_loc = new int[dimensions];
     idToLocation(router_id, id_loc);
 }
+#endif  // inserted by script
 
 topo_torus::topo_torus(ComponentId_t cid, Params& params, int num_ports, int rtr_id) :
     Topology(cid),

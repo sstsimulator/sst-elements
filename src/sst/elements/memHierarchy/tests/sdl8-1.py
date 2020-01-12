@@ -30,6 +30,7 @@ comp_l1cache.addParams({
       "L1" : "1",
       "debug" : DEBUG_L1,
       "debug_level" : 10,
+      "verbose" : 2,
 })
 l1ToC = comp_l1cache.setSubComponent("cpulink", "memHierarchy.MemLink")
 l1Tol2 = comp_l1cache.setSubComponent("memlink", "memHierarchy.MemLink")
@@ -45,6 +46,7 @@ comp_l2cache.addParams({
       "cache_size" : "32 KB",
       "debug" : DEBUG_L2,
       "debug_level" : 10,
+      "verbose" : 2,
 })
 l2Tol1 = comp_l2cache.setSubComponent("cpulink", "memHierarchy.MemLink")
 l2Tol3 = comp_l2cache.setSubComponent("memlink", "memHierarchy.MemLink")
@@ -60,6 +62,7 @@ l3cache.addParams({
       "cache_size" : "64 KB",
       "debug" : DEBUG_L3,
       "debug_level" : 10,
+      "verbose" : 2,
 })
 l3Tol2 = l3cache.setSubComponent("cpulink", "memHierarchy.MemLink")
 l3NIC = l3cache.setSubComponent("memlink", "memHierarchy.MemNIC")
@@ -68,6 +71,7 @@ l3NIC.addParams({
       #"debug_level" : 10,
       "network_bw" : "25GB/s",
       "group" : 1,
+      "verbose" : 2,
 })
 
 comp_chiprtr = sst.Component("chiprtr", "merlin.hr_router")
@@ -90,11 +94,13 @@ comp_dirctrl.addParams({
       "entry_cache_size" : "16384",
       "addr_range_end" : "0x1F000000",
       "addr_range_start" : "0x0",
+      "verbose" : 2,
 })
 dirNIC = comp_dirctrl.setSubComponent("cpulink", "memHierarchy.MemNIC")
 dirNIC.addParams({
       "network_bw" : "25GB/s",
       "group" : 2,
+      "verbose" : 2,
       #"debug" : 1,
       #"debug_level" : 10,
 })
@@ -105,6 +111,7 @@ memctrl.addParams({
       "debug" : DEBUG_MEM,
       "debug_level" : 10,
       "clock" : "1GHz",
+      "verbose" : 2,
 })
 memToDir = memctrl.setSubComponent("cpulink", "memHierarchy.MemLink")
 memory = memctrl.setSubComponent("backend", "memHierarchy.simpleMem")

@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2019 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2019, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -40,8 +40,10 @@ public:
             "Custom command handler for atomics (AMO)", SST::MemHierarchy::CustomCmdMemHandler)
 
 /* Begin class defintion */
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
   AMOCustomCmdMemHandler(Component * comp, Params &params)
     : CustomCmdMemHandler(comp,params) {}
+#endif  // inserted by script
   
   AMOCustomCmdMemHandler(ComponentId_t id, Params &params, std::function<void(Addr,size_t,std::vector<uint8_t>&)> read, std::function<void(Addr,std::vector<uint8_t>*)> write)
     : CustomCmdMemHandler(id, params, read, write) {}

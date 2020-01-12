@@ -20,7 +20,9 @@
 using namespace SST;
 using namespace SST::MemHierarchy;
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 DRAMSimMemory::DRAMSimMemory(Component *comp, Params &params) : SimpleMemBackend(comp, params){ build(params); }
+#endif  // inserted by script
 DRAMSimMemory::DRAMSimMemory(ComponentId_t id, Params &params) : SimpleMemBackend(id, params){ build(params); }
 
 void DRAMSimMemory::build(Params& params) {

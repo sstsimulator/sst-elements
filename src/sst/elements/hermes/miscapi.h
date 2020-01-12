@@ -27,7 +27,10 @@ namespace Misc {
 class Interface : public Hermes::Interface {
     public:
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     Interface( Component* parent ) : Hermes::Interface(parent) {}
+#endif  // inserted by script
+    Interface( ComponentId_t id ) : Hermes::Interface(id) {}
 
     virtual void getNodeNum( int*, Callback*) { assert(0); }
     virtual void getNumNodes( int*, Callback*) { assert(0); }

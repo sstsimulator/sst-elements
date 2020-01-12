@@ -21,10 +21,12 @@
 
 using namespace SST::Miranda;
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 RandomGenerator::RandomGenerator( Component* owner, Params& params ) :
 	RequestGenerator(owner, params) {
             build(params);
         }
+#endif  // inserted by script
 
 RandomGenerator::RandomGenerator( ComponentId_t id, Params& params ) :
 	RequestGenerator(id, params) {

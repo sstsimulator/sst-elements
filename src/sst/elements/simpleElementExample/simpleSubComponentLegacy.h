@@ -41,9 +41,11 @@ namespace SimpleSubComponentLegacy {
 class SubCompInterface : public SST::SubComponent
 {
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     SubCompInterface(Component *owningComponent) :
         SubComponent(owningComponent)
     { }
+#endif  // inserted by script
     virtual ~SubCompInterface() {}
     virtual void clock(SST::Cycle_t) {}
 
@@ -134,7 +136,9 @@ private:
     
 public:
     // Legacy API
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     SubCompSlot(Component *owningComponent, Params &params);
+#endif  // inserted by script
 
     ~SubCompSlot() {}
     void clock(Cycle_t);
@@ -182,7 +186,9 @@ private:
     SST::Link *link;
 public:
     // Legacy API
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     SubCompSender(Component *owningComponent, Params &params);
+#endif  // inserted by script
     ~SubCompSender() {}
     void clock(Cycle_t);
 
@@ -228,7 +234,9 @@ private:
     void handleEvent(SST::Event *ev);
 
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     SubCompReceiver(Component *owningComponent, Params &params);
+#endif  // inserted by script
     SubCompReceiver(ComponentId_t id, Params &params);
     SubCompReceiver(ComponentId_t id, std::string port) ;
     ~SubCompReceiver() {}

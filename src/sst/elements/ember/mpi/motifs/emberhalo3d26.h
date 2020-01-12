@@ -77,7 +77,9 @@ public:
 
 
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 	EmberHalo3D26Generator(SST::Component* owner, Params& params) : EmberMessagePassingGenerator(owner,params,"") {}
+#endif  // inserted by script
 	EmberHalo3D26Generator(SST::ComponentId_t, Params& params);
 	~EmberHalo3D26Generator() {}
     bool generate( std::queue<EmberEvent*>& evQ);

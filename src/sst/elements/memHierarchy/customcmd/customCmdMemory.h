@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2019 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2019, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -94,10 +94,12 @@ public:
 
 
     /* Constructor */
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     CustomCmdMemHandler(Component * comp, Params &params) : SubComponent(comp) { 
         dbg.init("", 1, 0, Output::STDOUT);
         dbg.fatal(CALL_INFO, -1, "%s, Error: CustomCmdMemHandlers do not support loading via legacy loadSubComponent API - use loadUserSubComponent(...) or loadAnonymousSubComponent(...) instead", getName().c_str());
     }
+#endif  // inserted by script
     
     CustomCmdMemHandler(ComponentId_t id, Params &params, std::function<void(Addr,size_t,std::vector<uint8_t>&)> read, std::function<void(Addr,std::vector<uint8_t>*)> write) : SubComponent(id) {
         /* Create debug output */

@@ -24,7 +24,9 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 using namespace SST::CramSim;
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 CramSimMemory::CramSimMemory(Component *comp, Params &params) : SimpleMemBackend(comp, params){ build(params); }
+#endif  // inserted by script
 CramSimMemory::CramSimMemory(ComponentId_t id, Params &params) : SimpleMemBackend(id, params){ build(params); }
 
 void CramSimMemory::build(Params& params) {

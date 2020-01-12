@@ -79,7 +79,9 @@ namespace SST {
             )
 
             // Below is for calling in generic locations to obtain a pointer to the singleton instance
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
             c_AddressHasher(Component *comp, Params &params); // Temporary until subcomponent api transition is complete
+#endif  // inserted by script
             c_AddressHasher(ComponentId_t id, Params &params, Output* out, unsigned channels, unsigned ranks, unsigned bankGroups, unsigned banks, unsigned rows, unsigned cols, unsigned pChannels);
             void build(Params &params); // Temporary until subcomponent api transition is complete
 

@@ -46,7 +46,9 @@ public:
     )
 
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 	EmberShmemFAM_PutGenerator(SST::Component* owner, Params& params) : EmberShmemGenerator(owner, params, "" ) {}
+#endif  // inserted by script
 	EmberShmemFAM_PutGenerator(SST::ComponentId_t id, Params& params) :
 		EmberShmemGenerator(id, params, "ShmemFAM_Put" ), m_phase(Init), m_groupName("MyApplication"),m_curBlock(0),m_rng(NULL)
 	{ 

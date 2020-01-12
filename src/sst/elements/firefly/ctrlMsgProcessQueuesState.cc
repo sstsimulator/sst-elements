@@ -39,6 +39,7 @@ ProcessQueuesState::ProcessQueuesState( ComponentId_t id, Params& params ) :
 {
     int level = params.find<uint32_t>("pqs.verboseLevel",0);
     int mask = params.find<int32_t>("pqs.verboseMask",-1);
+    m_nicsPerNode = params.find<int32_t>("nicsPerNode",1);
 
     m_dbg.init("", level, mask, Output::STDOUT );
 
@@ -140,7 +141,7 @@ void ProcessQueuesState::enterSend( _CommReq* req, uint64_t exitDelay )
     uint64_t delay = txDelay( req->getLength() );
 
     VoidFunction callback;
-    if ( m_nic->isLocal( calcNid( req, req->getDestRank() ) ) ) {
+    if ( m_nic->isLocal( calcNid( req, req->getDestRank()), m_nicsPerNode ) ) {
         callback =  std::bind( 
                     &ProcessQueuesState::processSendLoop, this, req );
     } else {
@@ -262,7 +263,8 @@ void ProcessQueuesState::processSendLoop( _CommReq* req )
     vec.insert( vec.begin() + 1, req->ioVec().begin(), 
                                         req->ioVec().end() );
 
-    loopSendReq( vec, m_nic->calcCoreId( calcNid( req, req->getDestRank() ) ), req );
+    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_APP_SIDE,"destCore=%d\n", m_nic->calcCoreId( calcNid( req, req->getDestRank() ), m_nicsPerNode) );
+    loopSendReq( vec, m_nic->calcCoreId( calcNid( req, req->getDestRank() ), m_nicsPerNode ), req );
 
     if ( ! req->isBlocking() ) {
         exit();
@@ -1015,8 +1017,8 @@ void ProcessQueuesState::loopSendResp( int core, void* key )
 void ProcessQueuesState::loopHandler( Event* ev )
 {
     LoopBackEvent* event = static_cast< LoopBackEvent* >(ev);
-    m_dbg.debug(CALL_INFO,1,DBG_MSK_PQS_LOOP,"%s key=%p\n",
-        event->vec.empty() ? "Response" : "Request", event->key);
+    m_dbg.debug(CALL_INFO,1,DBG_MSK_PQS_LOOP,"%s core=%d key=%p\n",
+        event->vec.empty() ? "Response" : "Request", event->core, event->key);
 
     if ( event->vec.empty() ) {
         loopHandler(event->core, event->key );

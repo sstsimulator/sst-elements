@@ -28,7 +28,9 @@ template< class TYPE >
 class EmberShmemBroadcastGenerator : public EmberShmemGenerator {
 
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 	EmberShmemBroadcastGenerator(SST::Component* owner, Params& params) : EmberShmemGenerator(owner, params, "" ) {}
+#endif  // inserted by script
 	EmberShmemBroadcastGenerator(SST::ComponentId_t id, Params& params) :
 		EmberShmemGenerator(id, params, "ShmemBroadcast" ), m_phase(0) 
 	{ 
@@ -145,8 +147,10 @@ public:
     SST_ELI_DOCUMENT_PARAMS()
 
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     EmberShmemBroadcast32Generator(SST::Component* owner, Params& params) :
     	EmberShmemBroadcastGenerator( owner, params) {}
+#endif  // inserted by script
     EmberShmemBroadcast32Generator(SST::ComponentId_t id, Params& params) :
     	EmberShmemBroadcastGenerator( id, params) {}
 };
@@ -165,8 +169,10 @@ public:
     SST_ELI_DOCUMENT_PARAMS()
 
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     EmberShmemBroadcast64Generator(SST::Component* owner, Params& params) :
     	EmberShmemBroadcastGenerator( owner, params) {}
+#endif  // inserted by script
     EmberShmemBroadcast64Generator(SST::ComponentId_t id, Params& params) :
     	EmberShmemBroadcastGenerator( id, params) {}
 };

@@ -135,7 +135,9 @@ class VirtNic : public SST::SubComponent {
     };
 
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     VirtNic( Component* owner, Params&) : SubComponent(owner) {}
+#endif  // inserted by script
     VirtNic( ComponentId_t id, Params&);
     ~VirtNic();
     void init( unsigned int );
@@ -156,17 +158,17 @@ class VirtNic : public SST::SubComponent {
 		return m_realNicId * m_numCores + m_coreId;
     }
 
-    bool isLocal( int nodeId ) {
-        return ( (nodeId / m_numCores) == m_realNicId ); 
+    bool isLocal( int nodeId, int nicsPerNode ) {
+        return ( (nodeId / (m_numCores * nicsPerNode) ) == (m_realNicId / nicsPerNode) ); 
     }
 
-	int calcCoreId( int nodeId ) {
+	int calcCoreId( int nodeId, int nicsPerNode = 1) {
 		if ( -1 == nodeId ) {
 			return -1;
 		} else if ( nodeId & (1<<31) )  {
 			return 0;
 		} else {
-			return nodeId % m_numCores;
+			return nodeId % (m_numCores * nicsPerNode);
 		}
 	}
 

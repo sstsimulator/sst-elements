@@ -6,14 +6,12 @@ quiet = True
 debugAll = 0
 debugL1 = max(debugAll, 0)
 debugL2 = max(debugAll, 0)
-debugHBMDC = max(debugAll, 0)
-debugHBMDCNIC = max(debugAll, 0)
 debugDDRDC = max(debugAll, 0)
 debugMemCtrl = max(debugAll, 0)
 debugDDRMemCtrl = max(debugMemCtrl, 0)
 debugHBMMemCtrl = max(debugMemCtrl, 0)
 debugNIC = max(debugAll, 0)
-debugLev = 3
+debugLev = 10
 
 # Parameters
 hbmCapacity = 8    # In GB
@@ -279,7 +277,6 @@ class DCBuilder:
             "addr_range_end" : myEnd,
             "interleave_step" : str(self.dc_count * 64) + "B",
             "interleave_size" : "64B",
-            "net_memory_name" : "ddr_" + str(ddrnum),
         })
 
         # Define DC NIC

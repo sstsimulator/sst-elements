@@ -41,6 +41,7 @@
 using namespace SST;
 using namespace SST::CramSim;
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 c_CmdScheduler::c_CmdScheduler(Component *comp, Params &x_params) : SubComponent(comp) {
     c_Controller* m_owner = dynamic_cast<c_Controller*>(comp);
     m_deviceController=m_owner->getDeviceDriver();
@@ -48,6 +49,7 @@ c_CmdScheduler::c_CmdScheduler(Component *comp, Params &x_params) : SubComponent
     //create command queue
     build(x_params);
 }
+#endif  // inserted by script
 
 c_CmdScheduler::c_CmdScheduler(ComponentId_t id, Params &x_params, Output* out, c_DeviceDriver* driver) : SubComponent(id), output(out), m_deviceController(driver) {
     build(x_params);

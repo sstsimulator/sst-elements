@@ -137,7 +137,9 @@ class ProcessQueuesState : public SubComponent
 
 
   public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     ProcessQueuesState( Component* comp, Params& params ) : SubComponent(comp) {} 
+#endif  // inserted by script
     ProcessQueuesState( ComponentId_t id, Params& params );
     ~ProcessQueuesState();
     void setup() {}
@@ -499,6 +501,7 @@ class ProcessQueuesState : public SubComponent
     Statistic<uint64_t>* m_statPstdRcv;
     int m_numSent;
     int m_numRecv;
+    int m_nicsPerNode;
 };
 
 }

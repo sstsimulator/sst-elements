@@ -88,7 +88,9 @@ public:
         {"resQueueSize", "Total size of the response queue over time", "transactions", 1},
     )
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     c_TxnConverter(SST::Component * comp, SST::Params& x_params);
+#endif  // inserted by script
     c_TxnConverter(SST::ComponentId_t id, SST::Params& x_params, Output* out, unsigned banks, c_CmdScheduler* scheduler);
     void build(SST::Params& x_params, unsigned l_bankNum);
     ~c_TxnConverter();

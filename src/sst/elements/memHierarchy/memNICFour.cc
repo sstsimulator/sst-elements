@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2019 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2019, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -34,9 +34,11 @@ using namespace SST::Interfaces;
 #endif
 
 /* Constructor */
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 MemNICFour::MemNICFour(Component * parent, Params &params) : MemNICBase(parent, params) {
     build(params);
 }
+#endif  // inserted by script
 
 MemNICFour::MemNICFour(ComponentId_t id, Params &params) : MemNICBase(id, params) {
     build(params);

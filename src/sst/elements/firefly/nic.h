@@ -29,7 +29,7 @@
 #include "sst/elements/thornhill/detailedCompute.h"
 #include "ioVec.h"
 #include "merlinEvent.h"
-#include "memoryModel/trivialMemoryModel.h"
+//#include "memoryModel/trivialMemoryModel.h"
 #include "memoryModel/simpleMemoryModel.h"
 #include "memoryModel/detailedInterface.h"
 

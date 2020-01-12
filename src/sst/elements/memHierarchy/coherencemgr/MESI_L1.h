@@ -21,17 +21,32 @@
 
 #include "sst/elements/memHierarchy/coherencemgr/coherenceController.h"
 #include "sst/elements/memHierarchy/memTypes.h"
+#include "sst/elements/memHierarchy/lineTypes.h"
+#include "sst/elements/memHierarchy/cacheArray.h"
 
 
 namespace SST { namespace MemHierarchy {
 
-class L1CoherenceController : public CoherenceController {
+class MESIL1 : public CoherenceController {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(L1CoherenceController, "memHierarchy", "L1CoherenceController", SST_ELI_ELEMENT_VERSION(1,0,0), 
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(MESIL1, "memHierarchy", "coherence.mesi_l1", SST_ELI_ELEMENT_VERSION(1,0,0), 
             "Implements MESI or MSI coherence for an L1 cache", SST::MemHierarchy::CoherenceController)
 
     SST_ELI_DOCUMENT_STATISTICS(
+        /* Event hits & misses */
+        {"GetSHit_Arrival",         "GetS was handled at arrival and was a cache hit", "count", 1},
+        {"GetXHit_Arrival",         "GetX was handled at arrival and was a cache hit", "count", 1},
+        {"GetSXHit_Arrival",        "GetSX was handled at arrival and was a cache hit", "count", 1},
+        {"GetSMiss_Arrival",        "GetS was handled at arrival and was a cache miss", "count", 1},
+        {"GetXMiss_Arrival",        "GetX was handled at arrival and was a cache miss", "count", 1},
+        {"GetSXMiss_Arrival",       "GetSX was handled at arrival and was a cache miss", "count", 1},
+        {"GetSHit_Blocked",         "GetS was blocked in MSHR at arrival and later was a cache hit", "count", 1},
+        {"GetXHit_Blocked",         "GetX was blocked in MSHR at arrival and later was a cache hit", "count", 1},
+        {"GetSXHit_Blocked",        "GetSX was blocked in MSHR at arrival and later was a cache hit", "count", 1},
+        {"GetSMiss_Blocked",        "GetS was blocked in MSHR at arrival and later was a cache miss", "count", 1},
+        {"GetXMiss_Blocked",        "GetX was blocked in MSHR at arrival and later was a cache miss", "count", 1},
+        {"GetSXMiss_Blocked",       "GetSX was blocked in MSHR at arrival and later was a cache miss", "count", 1},
         /* Event sends */
         {"eventSent_GetS",          "Number of GetS requests sent", "events", 2},
         {"eventSent_GetX",          "Number of GetX requests sent", "events", 2},
@@ -94,6 +109,15 @@ public:
         {"stateEvent_FetchInvX_M",      "Event/State: Number of times a FetchInvX was seen in state M", "count", 3},
         {"stateEvent_FetchInvX_IB",     "Event/State: Number of times a FetchInvX was seen in state I_B", "count", 3},
         {"stateEvent_FetchInvX_SB",     "Event/State: Number of times a FetchInvX was seen in state S_B", "count", 3},
+        {"stateEvent_ForceInv_I",       "Event/State: Number of times a ForceInv was seen in state I", "count", 3},
+        {"stateEvent_ForceInv_IS",      "Event/State: Number of times a ForceInv was seen in state IS", "count", 3},
+        {"stateEvent_ForceInv_IM",      "Event/State: Number of times a ForceInv was seen in state IM", "count", 3},
+        {"stateEvent_ForceInv_SM",      "Event/State: Number of times a ForceInv was seen in state SM", "count", 3},
+        {"stateEvent_ForceInv_S",       "Event/State: Number of times a ForceInv was seen in state S", "count", 3},
+        {"stateEvent_ForceInv_E",       "Event/State: Number of times a ForceInv was seen in state E", "count", 3},
+        {"stateEvent_ForceInv_M",       "Event/State: Number of times a ForceInv was seen in state M", "count", 3},
+        {"stateEvent_ForceInv_IB",      "Event/State: Number of times a ForceInv was seen in state I_B", "count", 3},
+        {"stateEvent_ForceInv_SB",      "Event/State: Number of times a ForceInv was seen in state S_B", "count", 3},
         {"stateEvent_Fetch_I",          "Event/State: Number of times a Fetch was seen in state I", "count", 3},
         {"stateEvent_Fetch_IS",         "Event/State: Number of times a Fetch was seen in state IS", "count", 3},
         {"stateEvent_Fetch_IM",         "Event/State: Number of times a Fetch was seen in state IM", "count", 3},
@@ -106,20 +130,10 @@ public:
         {"stateEvent_FlushLine_S",      "Event/State: Number of times a FlushLine was seen in state S", "count", 3},
         {"stateEvent_FlushLine_E",      "Event/State: Number of times a FlushLine was seen in state E", "count", 3},
         {"stateEvent_FlushLine_M",      "Event/State: Number of times a FlushLine was seen in state M", "count", 3},
-        {"stateEvent_FlushLine_IS",     "Event/State: Number of times a FlushLine was seen in state IS", "count", 3},
-        {"stateEvent_FlushLine_IM",     "Event/State: Number of times a FlushLine was seen in state IM", "count", 3},
-        {"stateEvent_FlushLine_SM",     "Event/State: Number of times a FlushLine was seen in state SM", "count", 3},
-        {"stateEvent_FlushLine_IB",     "Event/State: Number of times a FlushLine was seen in state I_B", "count", 3},
-        {"stateEvent_FlushLine_SB",     "Event/State: Number of times a FlushLine was seen in state S_B", "count", 3},
         {"stateEvent_FlushLineInv_I",       "Event/State: Number of times a FlushLineInv was seen in state I", "count", 3},
         {"stateEvent_FlushLineInv_S",       "Event/State: Number of times a FlushLineInv was seen in state S", "count", 3},
         {"stateEvent_FlushLineInv_E",       "Event/State: Number of times a FlushLineInv was seen in state E", "count", 3},
         {"stateEvent_FlushLineInv_M",       "Event/State: Number of times a FlushLineInv was seen in state M", "count", 3},
-        {"stateEvent_FlushLineInv_IS",      "Event/State: Number of times a FlushLineInv was seen in state IS", "count", 3},
-        {"stateEvent_FlushLineInv_IM",      "Event/State: Number of times a FlushLineInv was seen in state IM", "count", 3},
-        {"stateEvent_FlushLineInv_SM",      "Event/State: Number of times a FlushLineInv was seen in state SM", "count", 3},
-        {"stateEvent_FlushLineInv_IB",      "Event/State: Number of times a FlushLineInv was seen in state I_B", "count", 3},
-        {"stateEvent_FlushLineInv_SB",      "Event/State: Number of times a FlushLineInv was seen in state S_B", "count", 3},
         {"stateEvent_FlushLineResp_I",      "Event/State: Number of times a FlushLineResp was seen in state I", "count", 3},
         {"stateEvent_FlushLineResp_IB",     "Event/State: Number of times a FlushLineResp was seen in state I_B", "count", 3},
         {"stateEvent_FlushLineResp_SB",     "Event/State: Number of times a FlushLineResp was seen in state S_B", "count", 3},
@@ -154,27 +168,40 @@ public:
         {"prefetch_redundant",      "Prefetch issued for a block that was already in cache", "count", 2},
         /* Miscellaneous */
         {"EventStalledForLockedCacheline",  "Number of times an event (FetchInv, FetchInvX, eviction, Fetch, etc.) was stalled because a cache line was locked", "instances", 1},
-        {"default_stat",            "Default statistic used for unexpected events/states/etc. Should be 0, if not, check for missing statistic registerations.", "none", 7})
+        {"default_stat",            "Default statistic used for unexpected events/states/etc. Should be 0, if not, check for missing statistic registrations.", "none", 7})
+    
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+            {"replacement", "Replacement policies, slot 0 is for cache, slot 1 is for directory (if it exists)", "SST::MemHierarchy::ReplacementPolicy"},
+            {"hash", "Hash function for mapping addresses to cache lines", "SST::MemHierarchy::HashFunction"} )
 
 /* Class definition */
-    /** Constructor for L1CoherenceController */
-    L1CoherenceController(Component* comp, Params& params) : CoherenceController(comp, params) { }
-    L1CoherenceController(ComponentId_t id, Params& params, Params& ownerParams, bool prefetch) : CoherenceController(id, params, ownerParams, prefetch) {
+    /** Constructor for MESIL1 */
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
+    MESIL1(Component* comp, Params& params) : CoherenceController(comp, params) { }
+#endif  // inserted by script
+
+    MESIL1(ComponentId_t id, Params& params, Params& ownerParams, bool prefetch) : CoherenceController(id, params, ownerParams, prefetch) {
         params.insert(ownerParams);
         debug->debug(_INFO_,"--------------------------- Initializing [L1Controller] ... \n\n");
         
         snoopL1Invs_ = params.find<bool>("snoop_l1_invalidations", false);
-        protocol_ = params.find<bool>("protocol", true);
-   
-        // Default statistic avoids segfault in case we forgot to implement one
-        Statistic<uint64_t> * defStat = registerStatistic<uint64_t>("default_stat");
-        for (int i = 0; i < (int)Command::LAST_CMD; i++) {
-            stat_eventSent[i] = defStat;
-            for (int j = 0; j < LAST_STATE; j++) {
-                stat_eventState[i][j] = defStat;
-            }
-        }
+        bool MESI = params.find<bool>("protocol", true);
 
+        // State to transition to on a GetXResp/clean to a read (GetS)
+        if (MESI)
+            protocolState_ = E;
+        else 
+            protocolState_ = S;
+
+        // Cache Array
+        uint64_t lines = params.find<uint64_t>("lines", 0);
+        uint64_t assoc = params.find<uint64_t>("associativity", 0);
+        ReplacementPolicy * rmgr = createReplacementPolicy(lines, assoc, params, true);
+        HashFunction * ht = createHashFunction(params);
+        
+        cacheArray_ = new CacheArray<L1CacheLine>(debug, lines, assoc, lineSize_, rmgr, ht);
+        cacheArray_->setBanked(params.find<uint64_t>("banks", 0));
+   
         // Register statistics
         stat_eventState[(int)Command::GetS][I] =      registerStatistic<uint64_t>("stateEvent_GetS_I");
         stat_eventState[(int)Command::GetS][S] =      registerStatistic<uint64_t>("stateEvent_GetS_S");
@@ -217,22 +244,20 @@ public:
         stat_eventState[(int)Command::FetchInv][SM] =   registerStatistic<uint64_t>("stateEvent_FetchInv_SM");
         stat_eventState[(int)Command::FetchInv][S_B] =  registerStatistic<uint64_t>("stateEvent_FetchInv_SB");
         stat_eventState[(int)Command::FetchInv][I_B] =  registerStatistic<uint64_t>("stateEvent_FetchInv_IB");
+        stat_eventState[(int)Command::ForceInv][I] =    registerStatistic<uint64_t>("stateEvent_ForceInv_I");
+        stat_eventState[(int)Command::ForceInv][S] =    registerStatistic<uint64_t>("stateEvent_ForceInv_S");
+        stat_eventState[(int)Command::ForceInv][M] =    registerStatistic<uint64_t>("stateEvent_ForceInv_M");
+        stat_eventState[(int)Command::ForceInv][IS] =   registerStatistic<uint64_t>("stateEvent_ForceInv_IS");
+        stat_eventState[(int)Command::ForceInv][IM] =   registerStatistic<uint64_t>("stateEvent_ForceInv_IM");
+        stat_eventState[(int)Command::ForceInv][SM] =   registerStatistic<uint64_t>("stateEvent_ForceInv_SM");
+        stat_eventState[(int)Command::ForceInv][S_B] =  registerStatistic<uint64_t>("stateEvent_ForceInv_SB");
+        stat_eventState[(int)Command::ForceInv][I_B] =  registerStatistic<uint64_t>("stateEvent_ForceInv_IB");
         stat_eventState[(int)Command::FlushLine][I] =   registerStatistic<uint64_t>("stateEvent_FlushLine_I");
         stat_eventState[(int)Command::FlushLine][S] =   registerStatistic<uint64_t>("stateEvent_FlushLine_S");
         stat_eventState[(int)Command::FlushLine][M] =   registerStatistic<uint64_t>("stateEvent_FlushLine_M");
-        stat_eventState[(int)Command::FlushLine][IS] =  registerStatistic<uint64_t>("stateEvent_FlushLine_IS");
-        stat_eventState[(int)Command::FlushLine][IM] =  registerStatistic<uint64_t>("stateEvent_FlushLine_IM");
-        stat_eventState[(int)Command::FlushLine][SM] =  registerStatistic<uint64_t>("stateEvent_FlushLine_SM");
-        stat_eventState[(int)Command::FlushLine][I_B] = registerStatistic<uint64_t>("stateEvent_FlushLine_IB");
-        stat_eventState[(int)Command::FlushLine][S_B] = registerStatistic<uint64_t>("stateEvent_FlushLine_SB");
         stat_eventState[(int)Command::FlushLineInv][I] =    registerStatistic<uint64_t>("stateEvent_FlushLineInv_I");
         stat_eventState[(int)Command::FlushLineInv][S] =    registerStatistic<uint64_t>("stateEvent_FlushLineInv_S");
         stat_eventState[(int)Command::FlushLineInv][M] =    registerStatistic<uint64_t>("stateEvent_FlushLineInv_M");
-        stat_eventState[(int)Command::FlushLineInv][IS] =   registerStatistic<uint64_t>("stateEvent_FlushLineInv_IS");
-        stat_eventState[(int)Command::FlushLineInv][IM] =   registerStatistic<uint64_t>("stateEvent_FlushLineInv_IM");
-        stat_eventState[(int)Command::FlushLineInv][SM] =   registerStatistic<uint64_t>("stateEvent_FlushLineInv_SM");
-        stat_eventState[(int)Command::FlushLineInv][I_B] =  registerStatistic<uint64_t>("stateEvent_FlushLineInv_IB");
-        stat_eventState[(int)Command::FlushLineInv][S_B] =  registerStatistic<uint64_t>("stateEvent_FlushLineInv_SB");
         stat_eventState[(int)Command::FlushLineResp][I] =   registerStatistic<uint64_t>("stateEvent_FlushLineResp_I");
         stat_eventState[(int)Command::FlushLineResp][I_B] = registerStatistic<uint64_t>("stateEvent_FlushLineResp_IB");
         stat_eventState[(int)Command::FlushLineResp][S_B] = registerStatistic<uint64_t>("stateEvent_FlushLineResp_SB");
@@ -255,9 +280,15 @@ public:
         stat_eventSent[(int)Command::CustomReq]     = registerStatistic<uint64_t>("eventSent_CustomReq");
         stat_eventSent[(int)Command::CustomResp]    = registerStatistic<uint64_t>("eventSent_CustomResp");
         stat_eventSent[(int)Command::CustomAck]     = registerStatistic<uint64_t>("eventSent_CustomAck");
-        stat_eventStalledForLock =      registerStatistic<uint64_t>("EventStalledForLockedCacheline");
-        stat_evict_S =                  registerStatistic<uint64_t>("evict_S");
-        stat_evict_SM =                 registerStatistic<uint64_t>("evict_SM");
+        stat_eventStalledForLock                = registerStatistic<uint64_t>("EventStalledForLockedCacheline");
+        stat_evict[I]                           = registerStatistic<uint64_t>("evict_I");
+        stat_evict[S]                           = registerStatistic<uint64_t>("evict_S");
+        stat_evict[M]                           = registerStatistic<uint64_t>("evict_M");
+        stat_evict[IS]                          = registerStatistic<uint64_t>("evict_IS");
+        stat_evict[IM]                          = registerStatistic<uint64_t>("evict_IM");
+        stat_evict[SM]                          = registerStatistic<uint64_t>("evict_SM");
+        stat_evict[I_B]                         = registerStatistic<uint64_t>("evict_SB");
+        stat_evict[S_B]                         = registerStatistic<uint64_t>("evict_SB");
         stat_latencyGetS[LatType::HIT]          = registerStatistic<uint64_t>("latency_GetS_hit");
         stat_latencyGetS[LatType::MISS]         = registerStatistic<uint64_t>("latency_GetS_miss");
         stat_latencyGetX[LatType::HIT]          = registerStatistic<uint64_t>("latency_GetX_hit");
@@ -270,6 +301,18 @@ public:
         stat_latencyFlushLine[LatType::MISS]    = registerStatistic<uint64_t>("latency_FlushLine_fail");
         stat_latencyFlushLineInv[LatType::HIT]  = registerStatistic<uint64_t>("latency_FlushLineInv");
         stat_latencyFlushLineInv[LatType::MISS] = registerStatistic<uint64_t>("latency_FlushLineInv_fail");
+        stat_hit[0][0] = registerStatistic<uint64_t>("GetSHit_Arrival");
+        stat_hit[1][0] = registerStatistic<uint64_t>("GetXHit_Arrival");
+        stat_hit[2][0] = registerStatistic<uint64_t>("GetSXHit_Arrival");
+        stat_hit[0][1] = registerStatistic<uint64_t>("GetSHit_Blocked");
+        stat_hit[1][1] = registerStatistic<uint64_t>("GetXHit_Blocked");
+        stat_hit[2][1] = registerStatistic<uint64_t>("GetSXHit_Blocked");
+        stat_miss[0][0] = registerStatistic<uint64_t>("GetSMiss_Arrival");
+        stat_miss[1][0] = registerStatistic<uint64_t>("GetXMiss_Arrival");
+        stat_miss[2][0] = registerStatistic<uint64_t>("GetSXMiss_Arrival");
+        stat_miss[0][1] = registerStatistic<uint64_t>("GetSMiss_Blocked");
+        stat_miss[1][1] = registerStatistic<uint64_t>("GetXMiss_Blocked");
+        stat_miss[2][1] = registerStatistic<uint64_t>("GetSXMiss_Blocked");
    
         /* Only for caches that expect writeback acks but don't know yet and can't register statistics later. Always enabled for now. */
         stat_eventState[(int)Command::AckPut][I] = registerStatistic<uint64_t>("stateEvent_AckPut_I");
@@ -293,133 +336,91 @@ public:
         }
 
         /* MESI-specific statistics (as opposed to MSI) */
-        if (protocol_) {
-            stat_eventState[(int)Command::GetS][E] =        registerStatistic<uint64_t>("stateEvent_GetS_E");
-            stat_eventState[(int)Command::GetX][E] =        registerStatistic<uint64_t>("stateEvent_GetX_E");
-            stat_eventState[(int)Command::GetSX][E] =      registerStatistic<uint64_t>("stateEvent_GetSX_E");
-            stat_eventState[(int)Command::FlushLine][E] =   registerStatistic<uint64_t>("stateEvent_FlushLine_E");
-            stat_eventState[(int)Command::FlushLineInv][E] =    registerStatistic<uint64_t>("stateEvent_FlushLineInv_E");
-            stat_eventState[(int)Command::FetchInv][E] =    registerStatistic<uint64_t>("stateEvent_FetchInv_E");
-            stat_eventState[(int)Command::FetchInvX][E] =   registerStatistic<uint64_t>("stateEvent_FetchInvX_E");
+        if (MESI) {
+            stat_eventState[(int)Command::GetS][E]          = registerStatistic<uint64_t>("stateEvent_GetS_E");
+            stat_eventState[(int)Command::GetX][E]          = registerStatistic<uint64_t>("stateEvent_GetX_E");
+            stat_eventState[(int)Command::GetSX][E]         = registerStatistic<uint64_t>("stateEvent_GetSX_E");
+            stat_eventState[(int)Command::FlushLine][E]     = registerStatistic<uint64_t>("stateEvent_FlushLine_E");
+            stat_eventState[(int)Command::FlushLineInv][E]  = registerStatistic<uint64_t>("stateEvent_FlushLineInv_E");
+            stat_eventState[(int)Command::FetchInv][E]      = registerStatistic<uint64_t>("stateEvent_FetchInv_E");
+            stat_eventState[(int)Command::ForceInv][E]      = registerStatistic<uint64_t>("stateEvent_ForceInv_E");
+            stat_eventState[(int)Command::FetchInvX][E]     = registerStatistic<uint64_t>("stateEvent_FetchInvX_E");
+            stat_evict[E]                                   = registerStatistic<uint64_t>("evict_E");
         }
     }
 
-    ~L1CoherenceController() {}
+    ~MESIL1() {}
     
-    /** Used to determine in advance if an event will be a miss (and which kind of miss)
-     * Used for statistics only
-     */
-    bool isCacheHit(MemEvent* event);
+    /** Event handlers - called by controller */
+    bool handleGetS(MemEvent * event, bool inMSHR);
+    bool handleGetX(MemEvent * event, bool inMSHR);
+    bool handleGetSX(MemEvent * event, bool inMSHR);
+    bool handleFlushLine(MemEvent * event, bool inMSHR);
+    bool handleFlushLineInv(MemEvent * event, bool inMSHR);
+    bool handleFetch(MemEvent * event, bool inMSHR);
+    bool handleInv(MemEvent * event, bool inMSHR);
+    bool handleForceInv(MemEvent * event, bool inMSHR);
+    bool handleFetchInv(MemEvent * event, bool inMSHR);
+    bool handleFetchInvX(MemEvent * event, bool inMSHR);
+    bool handleGetSResp(MemEvent * event, bool inMSHR);
+    bool handleGetXResp(MemEvent * event, bool inMSHR);
+    bool handleFlushLineResp(MemEvent * event, bool inMSHR);
+    bool handleAckPut(MemEvent * event, bool inMSHR);
+    bool handleNULLCMD(MemEvent * event, bool inMSHR);
+    bool handleNACK(MemEvent * event, bool inMSHR);
 
-    /* Event handlers called by cache controller */
-    /** Send cache line data to the lower level caches */
-    CacheAction handleEviction(CacheLine* wbCacheLine, string origRqstr, bool ignoredParam=false);
+    /** Configuration */
+    MemEventInitCoherence* getInitCoherenceEvent();
+    virtual std::set<Command> getValidReceiveEvents();
+    void setSliceAware(uint64_t interleaveSize, uint64_t interleaveStep);
 
-    /** Process new cache request:  GetX, GetS, GetSX */
-    CacheAction handleRequest(MemEvent* event, CacheLine* cacheLine, bool replay);
-   
-    /** Process replacement - implemented for compatibility with CoherenceController but L1s do not receive replacements */
-    CacheAction handleReplacement(MemEvent* event, CacheLine* cacheLine, MemEvent * origRequest, bool replay);
-    
-    /** Process Inv */
-    CacheAction handleInvalidationRequest(MemEvent *event, bool inMSHR);
+    void printStatus(Output& out);
 
-    /** Process responses */
-    CacheAction handleCacheResponse(MemEvent* responseEvent, bool inMSHR);
-    CacheAction handleFetchResponse(MemEvent* responseEvent, bool inMSHR);
+    Addr getBank(Addr addr);
 
-    bool handleNACK(MemEvent* event, bool inMSHR);
+private:
 
-    /* Methods for sending events, called by cache controller */
-    /** Send response up (to processor) */
-    uint64_t sendResponseUp(MemEvent * event, vector<uint8_t>* data, bool replay, uint64_t baseTime, bool atomic = false);
-    
-    /** Call through to coherenceController with statistic recording */
+    /** Cache and MSHR management */
+    MemEventStatus processCacheMiss(MemEvent * event, L1CacheLine * line, bool inMSHR);
+    L1CacheLine* allocateLine(MemEvent * event, L1CacheLine * line);
+    bool handleEviction(Addr addr, L1CacheLine *& line);
+    void cleanUpAfterRequest(MemEvent * event, bool inMSHR);
+    void cleanUpAfterResponse(MemEvent * event, bool inMSHR);
+    void retry(Addr addr);
+
+    /** Event send */
+    uint64_t sendResponseUp(MemEvent * event, vector<uint8_t>* data, bool inMSHR, uint64_t time, bool success = false);
+    void sendResponseDown(MemEvent * event, L1CacheLine * line, bool data);
+    void forwardFlush(MemEvent * event, L1CacheLine * line, bool evict);
+    void sendWriteback(Command cmd, L1CacheLine * line, bool dirty);
+    void snoopInvalidation(MemEvent * event, L1CacheLine * line);
     void addToOutgoingQueue(Response& resp);
     void addToOutgoingQueueUp(Response& resp);
 
-/* Miscellaneous */
+    /** Statistics/Listeners */
+    inline void recordPrefetchResult(L1CacheLine * line, Statistic<uint64_t>* stat);
+    void recordLatency(Command cmd, int type, uint64_t latency);
+    void eventProfileAndNotify(MemEvent * event, State state, NotifyAccessType type, NotifyResultType result, bool inMSHR);
+
+    /** Miscellaneous */
+    void printLine(Addr addr);
+    void printData(Addr addr);
     void printData(vector<uint8_t> * data, bool set);
 
-/* Temporary */
-    void setCacheArray(CacheArray* arrayptr) { cacheArray_ = arrayptr; }
+    bool snoopL1Invs_;
+    State protocolState_; // E for MESI, S for MSI
 
-private:
-        
-    bool        protocol_;  // True for MESI, false for MSI
-    bool        snoopL1Invs_;
-    CacheArray* cacheArray_;
+    CacheArray<L1CacheLine>* cacheArray_;
 
-    /* Statistics */
+    /** Statistics */
     Statistic<uint64_t>* stat_eventStalledForLock;
-    Statistic<uint64_t>* stat_evict_S;
-    Statistic<uint64_t>* stat_evict_SM;
-    Statistic<uint64_t>* stat_eventSent[(int)Command::LAST_CMD];
     Statistic<uint64_t>* stat_latencyGetS[2];
     Statistic<uint64_t>* stat_latencyGetX[4];
     Statistic<uint64_t>* stat_latencyGetSX[4];
     Statistic<uint64_t>* stat_latencyFlushLine[2];
     Statistic<uint64_t>* stat_latencyFlushLineInv[2];
-    std::array<std::array<Statistic<uint64_t>*, LAST_STATE>, (int)Command::LAST_CMD> stat_eventState;
-    
-    void printLine(Addr addr, CacheLine* line);
-
-    void recordLatency(Command cmd, int type, uint64_t timestamp);
-
-    /* Private event handlers */
-    /** Handle GetX request. Request upgrade if needed */
-    CacheAction handleGetXRequest(MemEvent* event, CacheLine* cacheLine, bool replay);
-    
-    /** Handle GetS request. Request block if needed */
-    CacheAction handleGetSRequest(MemEvent* event, CacheLine* cacheLine, bool replay);
-    
-    /** Handle FlushLine request. */
-    CacheAction handleFlushLineRequest(MemEvent *event, CacheLine* cacheLine, MemEvent* reqEvent, bool replay);
-    
-    /** Handle FlushLineInv request */
-    CacheAction handleFlushLineInvRequest(MemEvent *event, CacheLine* cacheLine, MemEvent* reqEvent, bool replay);
-
-    /** Handle Inv request */
-    CacheAction handleInv(MemEvent * event, CacheLine * cacheLine, bool replay);
-    
-    /** Handle ForceInv request */
-    CacheAction handleForceInv(MemEvent * event, CacheLine * cacheLine, bool replay);
-    
-    /** Handle Fetch */
-    CacheAction handleFetch(MemEvent * event, CacheLine * cacheLine, bool replay);
-    
-    /** Handle FetchInv */
-    CacheAction handleFetchInv(MemEvent * event, CacheLine * cacheLine, bool replay);
-    
-    /** Handle FetchInvX */
-    CacheAction handleFetchInvX(MemEvent * event, CacheLine * cacheLine, bool replay);
-
-    /** Handle data response - GetSResp or GetXResp */
-    void handleDataResponse(MemEvent* responseEvent, CacheLine * cacheLine, MemEvent * reqEvent);
-
-    
-    /* Methods for sending events */
-    /** Send response memEvent to lower level caches */
-    void sendResponseDown(MemEvent* event, CacheLine* cacheLine, bool replay);
-
-    /** Send writeback request to lower level caches */
-    void sendWriteback(Command cmd, CacheLine* cacheLine, bool dirty, string origRqstr);
-
-    /** Send AckInv response to lower level caches */
-    void sendAckInv(MemEvent * request, CacheLine * cacheLine);
-
-    /** Forward a flush line request, with or without data */
-    void forwardFlushLine(Addr baseAddr, Command cmd, string origRqstr, CacheLine * cacheLine);
-    
-    /** Send response to a flush request */
-    void sendFlushResponse(MemEvent * requestEvent, bool success, uint64_t baseTime, bool replay);
-
-    /* Methods for recording statistics */
-    void recordEvictionState(State state);
-    void recordStateEventCount(Command cmd, State state);
-    void recordEventSent(Command cmd);
-    void recordEventSentUp(Command cmd) { recordEventSent(cmd); }
-    void recordEventSentDown(Command cmd) { recordEventSent(cmd); }
+    Statistic<uint64_t>* stat_hit[3][2];
+    Statistic<uint64_t>* stat_miss[3][2];
 };
 
 

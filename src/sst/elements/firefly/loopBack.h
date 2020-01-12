@@ -42,9 +42,10 @@ class LoopBack : public SST::Component  {
     )
     SST_ELI_DOCUMENT_PARAMS(
         {"numCores","Sets the number cores to create links to", "1"},
+        {"nicsPerNode","", "1"},
     )
     SST_ELI_DOCUMENT_PORTS(
-        {"core%(num_vNics)d", "Ports connected to the network driver", {}}
+        {"nic%(nicsPerNode)dcore%(num_vNics/nicsPerNode)d", "Ports connected to the network driver", {}}
     )
 
     LoopBack(ComponentId_t id, Params& params );

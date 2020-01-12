@@ -271,13 +271,46 @@ void CoherentMemController::handleReplacement(MemEvent * ev) {
  * Handle Flush request
  * FlushInv means all caches have evicted the block
  * Flush is just a writeback of dirty data
- *
+ * Resolve shootdown races
  */
 void CoherentMemController::handleFlush(MemEvent * ev) {
     if (ev->isAddrGlobal()) {
         ev->setBaseAddr(translateToLocal(ev->getBaseAddr()));
         ev->setAddr(translateToLocal(ev->getAddr()));
     }
+
+    /* Resolve races with shootdowns
+     * - Directory handles a FetchInv that raced with FlushLineInv by sending AckInv immediately
+     * - Directory handles a FetchInv that raced with FlushLine by invalidating caches and eventually responding with AckInv
+     * - Caches handle a FetchInv that raced with FlushLineInv by dropping the FetchInv
+     * - Caches handle a FetchInv that raced with FlushLine by invalidating caches and eventually responding with AckInv
+     */
+    if (mshr_.find(ev->getBaseAddr()) != mshr_.end()) {
+        MSHREntry * entry = &(mshr_.find(ev->getBaseAddr())->second.front());
+        if (entry->cmd == Command::CustomReq && entry->shootdown) { // Race with shootdown
+            if (!directory_) {
+                if (ev->getCmd() == Command::FlushLineInv) {
+                    MemEvent * resp = new MemEvent(ev->getSrc(), ev->getBaseAddr(), ev->getBaseAddr(), Command::AckInv);
+                    if (ev->getPayloadSize() != 0) {
+                        resp->setDirty(ev->getDirty());
+                        resp->setPayload(ev->getPayload());
+                        ev->setPayload(0, nullptr);
+                        ev->setDirty(false);
+                        handleFetchResp(resp);
+                    } else {
+                        handleAckInv(resp);
+                    }
+                } else { // FlushLine -> we'll get an AckInv but it might not have data
+                    if (ev->getPayloadSize() != 0) {
+                        entry->writebacks.insert(ev->getID()); // We're about to writeback, just make sure we tell the shootdown about it
+                    }
+                }
+            } else {    // Directory
+                if (ev->getPayloadSize() != 0)
+                    entry->writebacks.insert(ev->getID());
+            }
+        }
+    } // Shootdown races handled
 
     MemEvent* put = NULL;
     if (ev->getPayloadSize() != 0) {
@@ -302,7 +335,7 @@ void CoherentMemController::handleFlush(MemEvent * ev) {
             ev->setCmd(Command::FlushLine);
         }
         memBackendConvertor_->handleMemEvent(ev);
-    } else {
+    } else { // TODO resolve potential race with a not-yet-started shootdown sitting in the MSHR?
         mshr_.find(ev->getBaseAddr())->second.push_back(MSHREntry(ev->getID(), ev->getCmd()));
     }
 }

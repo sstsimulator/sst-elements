@@ -43,7 +43,9 @@ class Stake : public RequestGenerator {
 
 public:
         Stake( ComponentId_t id, Params& params );
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
         Stake( Component* owner, Params& params );
+#endif  // inserted by script
         void build(Params& params); // Temporary while legacy constructor is getting deprecated
 	~Stake();
 	void generate(MirandaRequestQueue<GeneratorRequest*>* q);

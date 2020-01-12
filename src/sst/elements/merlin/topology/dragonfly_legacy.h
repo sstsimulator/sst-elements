@@ -84,7 +84,9 @@ public:
         uint32_t host;
     };
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     topo_dragonfly_legacy(Component* comp, Params& p);
+#endif  // inserted by script
     topo_dragonfly_legacy(ComponentId_t cid, Params& p, int num_ports, int rtr_id);
     ~topo_dragonfly_legacy();
 

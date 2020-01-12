@@ -28,7 +28,9 @@ template< class TYPE >
 class EmberShmemGetNBIGenerator : public EmberShmemGenerator {
 
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 	EmberShmemGetNBIGenerator(SST::Component* owner, Params& params) : EmberShmemGenerator(owner, params, "" ) {}
+#endif  // inserted by script
 	EmberShmemGetNBIGenerator(SST::ComponentId_t id, Params& params) :
 		EmberShmemGenerator(id, params, "ShmemGetNBI" ), m_phase(0)
 	{ 
@@ -133,8 +135,10 @@ public:
     SST_ELI_DOCUMENT_PARAMS()
 
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     EmberShmemGetNBIIntGenerator( SST::Component* owner, Params& params ) :
         EmberShmemGetNBIGenerator(owner,  params) { }
+#endif  // inserted by script
     EmberShmemGetNBIIntGenerator( SST::ComponentId_t id, Params& params ) :
         EmberShmemGetNBIGenerator(id,  params) { }
 };
@@ -153,8 +157,10 @@ public:
     SST_ELI_DOCUMENT_PARAMS()
 
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     EmberShmemGetNBILongGenerator( SST::Component* owner, Params& params ) :
         EmberShmemGetNBIGenerator(owner,  params) { }
+#endif  // inserted by script
     EmberShmemGetNBILongGenerator( SST::ComponentId_t id, Params& params ) :
         EmberShmemGetNBIGenerator(id,  params) { }
 };
@@ -173,8 +179,10 @@ public:
     SST_ELI_DOCUMENT_PARAMS()
 
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     EmberShmemGetNBIDoubleGenerator( SST::Component* owner, Params& params ) :
         EmberShmemGetNBIGenerator(owner,  params) { }
+#endif  // inserted by script
     EmberShmemGetNBIDoubleGenerator( SST::ComponentId_t id, Params& params ) :
         EmberShmemGetNBIGenerator(id,  params) { }
 };
@@ -193,8 +201,10 @@ public:
     SST_ELI_DOCUMENT_PARAMS()
 
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     EmberShmemGetNBIFloatGenerator( SST::Component* owner, Params& params ) :
         EmberShmemGetNBIGenerator(owner,  params) { }
+#endif  // inserted by script
     EmberShmemGetNBIFloatGenerator( SST::ComponentId_t id, Params& params ) :
         EmberShmemGetNBIGenerator(id,  params) { }
 };

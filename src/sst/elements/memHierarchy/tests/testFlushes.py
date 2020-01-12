@@ -5,6 +5,13 @@ import sst
 # cores with private L1/L2
 # Shared distributed LLCs
 
+DEBUG_L1 = 0
+DEBUG_L2 = 0
+DEBUG_L3 = 0
+DEBUG_DIR = 0
+DEBUG_MEM = 0
+DEBUG_LEVEL = 10
+
 
 cores = 6
 caches = 3  # Number of LLCs on the network
@@ -56,6 +63,8 @@ for x in range(cores):
         "associativity" : 2,
         "L1" : 1,
         "verbose" : verbose,
+        "debug" : DEBUG_L1,
+        "debug_level" : DEBUG_LEVEL
     })
 
     l2cache = sst.Component("l2cache" + str(x), "memHierarchy.Cache")
@@ -71,6 +80,8 @@ for x in range(cores):
         "max_requests_per_cycle" : 1,
         "mshr_num_entries" : 8,
         "verbose" : verbose,
+        "debug" : DEBUG_L2,
+        "debug_level" : DEBUG_LEVEL
     })
     l2tol1 = l2cache.setSubComponent("cpulink", "memHierarchy.MemLink")
     l2NIC = l2cache.setSubComponent("memlink", "memHierarchy.MemNIC")
@@ -107,6 +118,8 @@ for x in range(caches):
         "num_cache_slices" : caches,
         "slice_allocation_policy" : "rr", # Round-robin
         "slice_id" : x,
+        "debug" : DEBUG_L3,
+        "debug_level" : DEBUG_LEVEL
     })
     l3NIC = l3cache.setSubComponent("cpulink", "memHierarchy.MemNIC")
     l3NIC.addParams({
@@ -132,6 +145,8 @@ for x in range(memories):
         "interleave_step" : str(memories * 64) + "B",
         "addr_range_start" : x*64,
         "addr_range_end" :  1024*1024*1024 - ((memories - x) * 64) + 63,
+        "debug" : DEBUG_DIR,
+        "debug_level" : DEBUG_LEVEL
     })
     
     dirtoM = directory.setSubComponent("memlink", "memHierarchy.MemLink")
@@ -148,6 +163,8 @@ for x in range(memories):
         "clock" : "500MHz",
         "backing" : "none",
         "verbose" : verbose,
+        "debug" : DEBUG_MEM,
+        "debug_level" : DEBUG_LEVEL
     })
     memory = memctrl.setSubComponent("backend", "memHierarchy.simpleDRAM")
     memory.addParams({

@@ -52,7 +52,9 @@ public:
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(SCRATCHBACKENDCONVERTOR_ELI_SLOTS)
 
 /* Begin class definition */
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     SimpleMemScratchBackendConvertor(Component *comp, Params &params);
+#endif  // inserted by script
     SimpleMemScratchBackendConvertor(ComponentId_t id, Params &params);
 
     virtual bool issue( MemReq* req );

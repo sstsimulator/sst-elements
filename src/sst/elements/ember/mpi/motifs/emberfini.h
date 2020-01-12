@@ -62,7 +62,9 @@ public:
     )
 
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     EmberFiniGenerator(SST::Component* owner, Params& params) : EmberMessagePassingGenerator(owner, params, "") {}
+#endif  // inserted by script
     EmberFiniGenerator(SST::ComponentId_t id, Params& params) :
         EmberMessagePassingGenerator(id, params, "Fini")
     { }

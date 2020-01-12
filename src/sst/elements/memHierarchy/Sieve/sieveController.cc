@@ -120,14 +120,14 @@ void Sieve::processEvent(SST::Event* ev) {
     event->setBaseAddr(toBaseAddr(event->getAddr()));
     Addr baseAddr   = event->getBaseAddr();
             
-    CacheLine * cline = cacheArray_->lookup(baseAddr, true);
+    SharedCacheLine * cline = cacheArray_->lookup(baseAddr, true);
     bool miss = (cline == nullptr);
     Addr replacementAddr = 0;
 
     if (miss) {                                     /* Miss.  If needed, evict candidate */
         // output_->debug(_L3_,"-- Cache Miss --\n");
-        CacheLine * line = cacheArray_->findReplacementCandidate(baseAddr, false);
-        replacementAddr = line->getBaseAddr();
+        SharedCacheLine * line = cacheArray_->findReplacementCandidate(baseAddr);
+        replacementAddr = line->getAddr();
         cacheArray_->replace(baseAddr, line);
         line->setState(M);
 

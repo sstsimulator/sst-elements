@@ -44,7 +44,9 @@ public:
 
 /* Begin class definition */
     RequestReorderRow();
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     RequestReorderRow(Component *comp, Params &params);
+#endif  // inserted by script
     RequestReorderRow(ComponentId_t id, Params &params);
 	
     virtual bool issueRequest( ReqId, Addr, bool isWrite, unsigned numBytes );

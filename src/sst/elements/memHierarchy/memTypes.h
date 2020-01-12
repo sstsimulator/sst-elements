@@ -59,6 +59,7 @@ enum class MemEventType { Cache, Move, Custom };                    // For parsi
     X(PutS,             AckPut,         Request,    Request,        1, 1,   Cache)   /* Clean replacement from S->I:      Remove sharer */\
     X(PutM,             AckPut,         Request,    Request,        1, 1,   Cache)   /* Dirty replacement from M/O->I:    Remove owner and writeback data */\
     X(PutE,             AckPut,         Request,    Request,        1, 1,   Cache)   /* Clean replacement from E->I:      Remove owner but don't writeback data */\
+    X(PutX,             AckPut,         Request,    Request,        1, 1,   Cache)   /* Clean downgrade from E->S:        Remove owner, add as sharer, don't writeback data */\
     /* Invalidations*/\
     X(Inv,              AckInv,         Request,    ForwardRequest, 0, 0,   Cache)   /* Other write request:  Invalidate cache line */\
     X(ForceInv,         AckInv,         Request,    ForwardRequest, 0, 0,   Cache)   /* Force invalidation even if line is modified */ \
@@ -175,15 +176,22 @@ static const std::vector<ElementInfoStatistic> networkMemoryInspector_statistics
     X(E_D,      E)  /* E with sharers, waiting for data from memory for another GetS request */\
     X(M_D,      M)  /* M with sharers, waiting for data from memory for another GetS request */\
     X(SM_D,     SM) /* SM, waiting for data from memory for another GetS request */\
+    X(SB_D,     S_B) /* S_B, waiting for data from memory for another GetS request */\
     X(S_Inv,    S)  /* S, waiting for Invalidation acks from sharers */\
     X(SM_Inv,   SM) /* SM, waiting for Invalidation acks from sharers */\
     X(SD_Inv,   IS) /* S_D, got Invalidation, waiting for acks */\
     X(MI,       I) \
     X(EI,       I) \
     X(SI,       I) \
+    X(M_B,      M)  /* M, blocked while waiting for a response (currently used for flushes) */\
+    X(E_B,      E)  /* E, blocked while waiting for a response (currently used for flushes) */\
     X(S_B,      S)  /* S, blocked while waiting for a response (currently used for flushes) */\
     X(I_B,      I)  /* I, blocked while waiting for a response (currently used for flushes) */\
     X(SB_Inv,   S_B)/* Was in S_B, got an Inv, resolving Inv first */\
+    X(IA,       I)  /* Still I, but reserve line for a pending fill */\
+    X(SA,       S)  /* Still S, but reserve line for a pending fill */\
+    X(EA,       E)  /* Still E, but reserve line for a pending fill */\
+    X(MA,       M)  /* Still M, but reserve line for a pending fill */\
     X(NULLST,   NULLST)
 
 typedef enum {

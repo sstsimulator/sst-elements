@@ -18,6 +18,9 @@
 
 #include "memoryModel/memoryModel.h"
 
+namespace SST {
+namespace Firefly {
+
 class TrivialMemoryModel : public MemoryModel {
 
     class SelfEvent : public SST::Event {
@@ -29,9 +32,26 @@ class TrivialMemoryModel : public MemoryModel {
 
 public:
 
+   SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+        TrivialMemoryModel,
+        "firefly",
+        "TrivialMemory",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+        "",
+       	SST::Firefly::MemoryModel
+    )
+
+    
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     TrivialMemoryModel( Component* comp, Params& params ) : MemoryModel(comp) 
 	{
-		m_selfLink = comp->configureSelfLink("Nic::TrivialMemoryModel", "1 ns",
+		m_selfLink = configureSelfLink("Nic::TrivialMemoryModel", "1 ns",
+        new Event::Handler<TrivialMemoryModel>(this,&TrivialMemoryModel::handleSelfEvent));
+	} 
+#endif  // inserted by script
+    TrivialMemoryModel( ComponentId_t id, Params& params ) : MemoryModel(id) 
+	{
+		m_selfLink = configureSelfLink("Nic::TrivialMemoryModel", "1 ns",
         new Event::Handler<TrivialMemoryModel>(this,&TrivialMemoryModel::handleSelfEvent));
 	} 
     virtual void printStatus( Output& out, int id ) { }
@@ -66,4 +86,6 @@ private:
 	Link* m_selfLink;
 };
 
+} // namespace Firefly
+} // namespace SST
 #endif

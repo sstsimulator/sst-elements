@@ -32,7 +32,7 @@ comp_scratch.addParams({
     "backendConvertor" : "memHierarchy.simpleMemScratchBackendConvertor",
     "backendConvertor.backend" : "memHierarchy.simpleMem",
     "backendConvertor.backend.access_time" : "10ns",
-    "backendConvertor.debug_location" : 1,
+    "backendConvertor.debug_location" : 0,
     "backendConvertor.debug_level" : 10,
 })
 memctrl = sst.Component("memory", "memHierarchy.MemController")

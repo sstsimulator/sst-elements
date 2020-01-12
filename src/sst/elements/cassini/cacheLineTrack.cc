@@ -61,10 +61,12 @@ cacheLineTrack::cacheLineTrack(ComponentId_t id, Params& params) : CacheListener
     evicts = registerStatistic<uint>("evicts");
 
 }
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 cacheLineTrack::cacheLineTrack(Component* owner, Params& params) : CacheListener(owner, params) {
     Output out("", 1, 0, Output::STDOUT);
     out.fatal(CALL_INFO, -1, "%s, Error: SubComponent does not support legacy loadSubComponent call; use new calls (loadUserSubComponent or loadAnonymousSubComponent)\n", getName().c_str());
 }
+#endif  // inserted by script
 
 
 void cacheLineTrack::notifyAccess(const CacheListenerNotification& notify) {

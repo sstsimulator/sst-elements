@@ -232,7 +232,10 @@ Nic::Nic(ComponentId_t id, Params &params) :
 			m_dbg.fatal(CALL_INFO,0,"can't used TrivialMemoryModel, memoryModel already configured\n" );
 		}
         Params smmParams = params.find_prefix_params( "simpleMemoryModel." );
-    	m_memoryModel = new TrivialMemoryModel( this, smmParams );
+    	// m_memoryModel = new TrivialMemoryModel( this, smmParams );
+    	m_memoryModel = loadAnonymousSubComponent<MemoryModel>(
+            "firefly.TrivialMemory","", 0,
+            ComponentInfo::SHARE_PORTS | ComponentInfo::SHARE_STATS | ComponentInfo::INSERT_STATS, smmParams );
     }
     
     m_recvMachine = new RecvMachine( *this, 0, m_vNicV.size(), m_myNodeId, 

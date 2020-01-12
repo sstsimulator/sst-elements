@@ -42,10 +42,12 @@ class ArielMemoryManager : public SubComponent {
                 verbosity, 0, SST::Output::STDOUT);
         }
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
         ArielMemoryManager(Component* comp, Params& params) : SubComponent(comp) {
             output = new SST::Output("", 0, 0, SST::Output::STDOUT);
             output->fatal(CALL_INFO, -1, "Error: ArielMemoryManager subcomponents do not support loading using legacy load functions");
         }
+#endif  // inserted by script
 
         ~ArielMemoryManager() {};
 

@@ -88,6 +88,7 @@ nic::nic(ComponentId_t cid, Params& params) :
         ("networkIF", ComponentInfo::SHARE_NONE, 1 /* vns */);
 
     if ( !link_control ) {
+#ifndef SST_ENABLE_PREVIEW_BUILD
         // Not defined in python code.  See if this uses the legacy
         // API.  If so, load it with loadSubComponent.  Otherwise, use
         // the default linkcontrol (merlin.linkcontrol) loaded with
@@ -122,8 +123,21 @@ REENABLE_WARNING
                 ("merlin.linkcontrol", "networkIF", 0,
                  ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, if_params, 1 /* vns */);
         }
+#else
+        // Not defined in python, just load the default
+        Params if_params;
+        
+        if_params.insert("link_bw",params.find<std::string>("link_bw"));
+        if_params.insert("input_buf_size",params.find<std::string>("in_buf_size","1kB"));
+        if_params.insert("output_buf_size",params.find<std::string>("out_buf_size","1kB"));            
+        if_params.insert("port_name","rtr");
+        
+        link_control = loadAnonymousSubComponent<SST::Interfaces::SimpleNetwork>
+            ("merlin.linkcontrol", "networkIF", 0,
+             ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, if_params, 1 /* vns */);
+        
+#endif
     }
-
     
     last_target = id;
     next_seq = new int[group_peers];

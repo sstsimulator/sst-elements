@@ -33,7 +33,9 @@ public:
     SST_ELI_DOCUMENT_STATISTICS( MEMBACKENDCONVERTOR_ELI_STATS )
     
 /* Class definition */
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     ExtMemBackendConvertor(Component *comp, Params &params);
+#endif  // inserted by script
     ExtMemBackendConvertor(ComponentId_t id, Params &params, MemBackend* backend, uint32_t reqWidth);
 
     virtual bool issue( BaseReq* req );

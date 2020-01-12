@@ -59,7 +59,9 @@ class ProsperoTraceReader : public SubComponent {
 public:
         SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Prospero::ProsperoTraceReader, Output*)
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 	ProsperoTraceReader( Component* owner, Params& params ) : SubComponent(owner) {}
+#endif  // inserted by script
 	ProsperoTraceReader( ComponentId_t id, Params& params, Output* out) : SubComponent(id) {
             output = out;
         }

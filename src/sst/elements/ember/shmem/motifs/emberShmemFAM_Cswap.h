@@ -35,7 +35,9 @@ template < class TYPE, int VAL >
 class EmberShmemFAM_CswapBaseGenerator : public EmberShmemGenerator {
 
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 	EmberShmemFAM_CswapBaseGenerator(SST::Component* owner, Params& params, std::string name) : EmberShmemGenerator(owner, params, "" ) {}
+#endif  // inserted by script
 	EmberShmemFAM_CswapBaseGenerator(SST::ComponentId_t id, Params& params, std::string name) :
 		EmberShmemGenerator(id, params, name ), m_phase(-3), m_numFamNodes(0), m_oldValue(0), m_newValue(1)
 	{ 
@@ -241,8 +243,10 @@ public:
 template < class TYPE, int VAL >
 class EmberShmemFAM_CswapGenerator : public EmberShmemFAM_CswapBaseGenerator<TYPE,VAL> {
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     EmberShmemFAM_CswapGenerator(SST::Component* owner, Params& params, std::string name ) :
 	    EmberShmemFAM_CswapBaseGenerator<TYPE,VAL>(owner, params, name) { } 
+#endif  // inserted by script
 
     EmberShmemFAM_CswapGenerator(SST::ComponentId_t id, Params& params, std::string name ) :
 	    EmberShmemFAM_CswapBaseGenerator<TYPE,VAL>(id, params, name) { } 
@@ -251,8 +255,10 @@ public:
 template < class TYPE >
 class EmberShmemFAM_CswapGenerator<TYPE,1> : public EmberShmemFAM_CswapBaseGenerator<TYPE,1> {
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 	EmberShmemFAM_CswapGenerator(SST::Component* owner, Params& params, std::string name ) :
 	    EmberShmemFAM_CswapBaseGenerator<TYPE,1>(owner, params, name) { } 
+#endif  // inserted by script
 
 	EmberShmemFAM_CswapGenerator(SST::ComponentId_t id, Params& params, std::string name ) :
 	    EmberShmemFAM_CswapBaseGenerator<TYPE,1>(id, params, name) { } 
@@ -261,8 +267,10 @@ public:
 template < class TYPE >
 class EmberShmemFAM_CswapGenerator<TYPE,2> : public EmberShmemFAM_CswapBaseGenerator<TYPE,2> {
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 	EmberShmemFAM_CswapGenerator(SST::Component* owner, Params& params, std::string name ) :
 	    EmberShmemFAM_CswapBaseGenerator<TYPE,2>(owner, params, name ) { } 
+#endif  // inserted by script
 
 	EmberShmemFAM_CswapGenerator(SST::ComponentId_t id, Params& params, std::string name ) :
 	    EmberShmemFAM_CswapBaseGenerator<TYPE,2>(id, params, name ) { } 
@@ -281,8 +289,10 @@ public:
 
     SST_ELI_DOCUMENT_PARAMS()
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 	EmberShmemFAM_CswapIntGenerator(SST::Component* owner, Params& params) :
 	    EmberShmemFAM_CswapGenerator(owner, params, "ShmemFAM_CswapInt" ) { } 
+#endif  // inserted by script
 	EmberShmemFAM_CswapIntGenerator(SST::ComponentId_t id, Params& params) :
 	    EmberShmemFAM_CswapGenerator(id, params, "ShmemFAM_CswapInt" ) { } 
 };
@@ -301,8 +311,10 @@ public:
     SST_ELI_DOCUMENT_PARAMS(
     )
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 	EmberShmemFAM_CswapLongGenerator(SST::Component* owner, Params& params) :
 	    EmberShmemFAM_CswapGenerator(owner, params, "ShmemFAM_CswapLong") {} 
+#endif  // inserted by script
 	EmberShmemFAM_CswapLongGenerator(SST::ComponentId_t id, Params& params) :
 	    EmberShmemFAM_CswapGenerator(id, params, "ShmemFAM_CswapLong") {} 
 };

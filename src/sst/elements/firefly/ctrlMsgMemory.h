@@ -50,7 +50,9 @@ class Memory : public MemoryBase {
         SST::Firefly::CtrlMsg::Memory
     )
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     Memory( Component* comp, Params& params ) : MemoryBase(comp) {}
+#endif  // inserted by script
     Memory( ComponentId_t id, Params& params );
     ~Memory();
     void setOutput( Output* output ) {
