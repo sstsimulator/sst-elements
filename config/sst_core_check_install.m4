@@ -7,23 +7,23 @@ AC_DEFUN([SST_CORE_CHECK_INSTALL], [
   SST_CONFIG_TOOL=""
   SST_REGISTER_TOOL=""
 
-  AS_IF( [test "x$with_sst_core" = "xyes"],
+  AS_IF( [test "x$with_sst_core" = "x"],
 	 [AC_PATH_PROG([SST_CONFIG_TOOL], [sst-config], [], [$PATH])],
-	 [AC_PATH_PROG([SST_CONFIG_TOOL], [sst-config], [], [$PATH$PATH_SEPARATOR$with_sst_core/bin])] )
+	 [AC_PATH_PROG([SST_CONFIG_TOOL], [sst-config], [], [$with_sst_core/bin])] )
 
   AC_MSG_CHECKING([for sst-config tool])
   AS_IF([test -x "$SST_CONFIG_TOOL"],
 	[AC_MSG_RESULT([found $SST_CONFIG_TOOL])],
-	[AC_MSG_ERROR([Unable to find sst-config in the PATH or in the sst-core directory], [1])])
+	[AC_MSG_ERROR([Unable to find sst-config in the sst-core directory or in the PATH], [1])])
 
-  AS_IF( [test "x$with_sst_core" = "xyes"],
+  AS_IF( [test "x$with_sst_core" = "x"],
 	 [AC_PATH_PROG([SST_REGISTER_TOOL], [sst-register], [], [$PATH])],
-	 [AC_PATH_PROG([SST_REGISTER_TOOL], [sst-register], [], [$PATH$PATH_SEPARATOR$with_sst_core/bin])] )
+	 [AC_PATH_PROG([SST_REGISTER_TOOL], [sst-register], [], [$with_sst_core/bin])] )
 
   AC_MSG_CHECKING([for sst-register tool])
   AS_IF([test -x "$SST_REGISTER_TOOL"],
 	[AC_MSG_RESULT([found $SST_REGISTER_TOOL])],
-	[AC_MSG_ERROR([Unable to find sst-register in the PATH or in sst-core directory], [1])])
+	[AC_MSG_ERROR([Unable to find sst-register in the sst-core directory or in the PATH], [1])])
 
   SST_PREFIX=`$SST_CONFIG_TOOL --prefix`
   SST_CPPFLAGS=`$SST_CONFIG_TOOL --CPPFLAGS`
