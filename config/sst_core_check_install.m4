@@ -2,28 +2,32 @@
 AC_DEFUN([SST_CORE_CHECK_INSTALL], [
 	AC_ARG_WITH([sst-core],
 	  [AS_HELP_STRING([--with-sst-core=@<:@=DIR@:>@],
-	    [Use SST Discrete Event Core installed in DIR])])
+	    [Use SST Discrete Event Core installed in DIR])],
+	    [with_sst_core=$withval/bin],
+	    [with_sst_core=$PATH])
 
   SST_CONFIG_TOOL=""
   SST_REGISTER_TOOL=""
 
-  AS_IF( [test "x$with_sst_core" = "x"],
-	 [AC_PATH_PROG([SST_CONFIG_TOOL], [sst-config], [], [$PATH])],
-	 [AC_PATH_PROG([SST_CONFIG_TOOL], [sst-config], [], [$with_sst_core/bin])] )
+  AS_IF( [test x"$with_sst_core" = "x/bin"],
+	 [AC_MSG_ERROR([User undefined path while using --with-sst-core], [1])], [] )
 
-  AC_MSG_CHECKING([for sst-config tool])
+  AS_IF( [test x"$with_sst_core" = "xyes/bin"],
+	 [AC_MSG_ERROR([User undefined path while using --with-sst-core], [1])], [] )
+
+  AC_PATH_PROG([SST_CONFIG_TOOL], [sst-config], [], [$with_sst_core])
+
+  AC_MSG_CHECKING([for sst-config tool available])
   AS_IF([test -x "$SST_CONFIG_TOOL"],
 	[AC_MSG_RESULT([found $SST_CONFIG_TOOL])],
-	[AC_MSG_ERROR([Unable to find sst-config in the sst-core directory or in the PATH], [1])])
+	[AC_MSG_ERROR([Unable to find sst-config in $with_sst_core], [1])])
 
-  AS_IF( [test "x$with_sst_core" = "x"],
-	 [AC_PATH_PROG([SST_REGISTER_TOOL], [sst-register], [], [$PATH])],
-	 [AC_PATH_PROG([SST_REGISTER_TOOL], [sst-register], [], [$with_sst_core/bin])] )
+  AC_PATH_PROG([SST_REGISTER_TOOL], [sst-register], [], [$with_sst_core])
 
-  AC_MSG_CHECKING([for sst-register tool])
+  AC_MSG_CHECKING([for sst-register tool available])
   AS_IF([test -x "$SST_REGISTER_TOOL"],
 	[AC_MSG_RESULT([found $SST_REGISTER_TOOL])],
-	[AC_MSG_ERROR([Unable to find sst-register in the sst-core directory or in the PATH], [1])])
+	[AC_MSG_ERROR([Unable to find sst-register in $with_sst_core], [1])])
 
   SST_PREFIX=`$SST_CONFIG_TOOL --prefix`
   SST_CPPFLAGS=`$SST_CONFIG_TOOL --CPPFLAGS`
