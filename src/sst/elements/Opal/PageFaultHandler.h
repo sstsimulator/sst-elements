@@ -46,7 +46,9 @@ class PageFaultHandler : public SambaComponent::PageFaultHandler {
 
         /* MemoryManagerOpal */
         PageFaultHandler(ComponentId_t id, Params& params);
+#ifndef SST_ENABLE_PREVIEW_BUILD
         PageFaultHandler(Component* comp, Params& params) : SambaComponent::PageFaultHandler(comp, params) { } // Legacy
+#endif
         ~PageFaultHandler();
 
         void handleEvent(SST::Event * event);

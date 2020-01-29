@@ -221,7 +221,7 @@ void PageTableWalker::handleEvent( SST::Event* e )
 	 		else output->fatal(CALL_INFO, -1, "MMU: DANGER!!\n");
 		}
 
-		if(!cr3_init) {
+		if(!(*cr3_init)) {
 			*cr3_init = 1;
 			pageFaultHandler->allocatePage(coreId,fault_level,stall_addr,4096);
 		}else
