@@ -169,7 +169,7 @@ class Network:
         self.rtr = sst.Component("rtr_%s"%name, "merlin.hr_router")
         self.rtr.addParams({
             "id": networkId,
-            "topology": "merlin.singlerouter",
+            #"topology": "merlin.singlerouter",
             "link_bw" : "80GiB/s",
             "xbar_bw" : "80GiB/s",
             "flit_size" : "8B",
@@ -179,6 +179,7 @@ class Network:
             "output_buf_size" : "1KB",
             })
 
+        topo = self.rtr.setSubComponent("topology", "merlin.singlerouter")
 
     def getNextPort(self):
         self.ports += 1
