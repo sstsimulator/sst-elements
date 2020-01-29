@@ -24,11 +24,13 @@ using namespace SST::Merlin;
 
 #define DPRINTF( fmt, args...) __DBG( DBG_NETWORK, topo_singlerouter, fmt, ## args )
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 topo_singlerouter::topo_singlerouter(Component* comp, Params& params) :
     Topology(comp)
 {
     num_ports = params.find<int>("num_ports");
 }
+#endif  // inserted by script
 
 topo_singlerouter::topo_singlerouter(ComponentId_t cid, Params& params, int num_ports, int rtr_id) :
     Topology(cid),

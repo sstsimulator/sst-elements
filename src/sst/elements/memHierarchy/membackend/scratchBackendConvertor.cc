@@ -29,9 +29,11 @@ using namespace SST::MemHierarchy;
 #define Debug(level, fmt, ... )
 #endif
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 ScratchBackendConvertor::ScratchBackendConvertor(Component *comp, Params& params ) : 
     SubComponent(comp), m_reqId(0)
 { build(params); }
+#endif  // inserted by script
 ScratchBackendConvertor::ScratchBackendConvertor(ComponentId_t id, Params& params ) : 
     SubComponent(id), m_reqId(0)
 { build(params); }

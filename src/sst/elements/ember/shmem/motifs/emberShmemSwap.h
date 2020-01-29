@@ -28,7 +28,9 @@ template <class TYPE>
 class EmberShmemSwapGenerator : public EmberShmemGenerator {
 
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     EmberShmemSwapGenerator(SST::Component* owner, Params& params) : EmberShmemGenerator(owner, params, "" ) {}
+#endif  // inserted by script
     EmberShmemSwapGenerator(SST::ComponentId_t id, Params& params) :
 		EmberShmemGenerator(id, params, "ShmemSwap" ), m_phase(0) 
 	{ 
@@ -114,8 +116,10 @@ public:
     SST_ELI_DOCUMENT_PARAMS()
 
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     EmberShmemSwapIntGenerator( SST::Component* owner, Params& params ) :
         EmberShmemSwapGenerator(owner,  params) { }
+#endif  // inserted by script
     EmberShmemSwapIntGenerator( SST::ComponentId_t id, Params& params ) :
         EmberShmemSwapGenerator(id,  params) { }
 };
@@ -135,8 +139,10 @@ public:
     SST_ELI_DOCUMENT_PARAMS()
 
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     EmberShmemSwapLongGenerator( SST::Component* owner, Params& params ) :
         EmberShmemSwapGenerator(owner,  params) { }
+#endif  // inserted by script
     EmberShmemSwapLongGenerator( SST::ComponentId_t id, Params& params ) :
         EmberShmemSwapGenerator(id,  params) { }
 };

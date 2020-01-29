@@ -189,11 +189,11 @@ class EmberEP(EndPoint):
             
 			nicLink = sst.Link( "nic" + str(nodeID) + "core" + str(x) + "_Link"  )
 
-			loopLink = sst.Link( "loop" + str(nodeID) + "core" + str(x) + "_Link"  )
+			loopLink = sst.Link( "loop" + str(nodeID) + "nic0core" + str(x) + "_Link"  )
 
 			nicLink.connect( (virtNic,'nic','1ns' ),(nic,'core'+str(x),'150ns'))
             
-			loopLink.connect( (process,'loop','1ns' ),(loopBack,'core'+str(x),'1ns'))
+			loopLink.connect( (process,'loop','1ns' ),(loopBack,'nic0core'+str(x),'1ns'))
 
 		return retval
 

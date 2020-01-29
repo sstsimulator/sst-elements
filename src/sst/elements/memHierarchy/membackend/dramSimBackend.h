@@ -49,7 +49,9 @@ public:
     SST_ELI_DOCUMENT_PARAMS( DRAMSIM_ELI_PARAMS )
 
 /* Begin class definition */
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     DRAMSimMemory(Component *comp, Params &params);
+#endif  // inserted by script
     DRAMSimMemory(ComponentId_t id, Params &params);
     
     virtual bool issueRequest(ReqId, Addr, bool, unsigned );

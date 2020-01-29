@@ -28,6 +28,7 @@ using namespace Interfaces;
 
 namespace Merlin {
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 LinkControl::LinkControl(Component* parent, Params &params) :
     SST::Interfaces::SimpleNetwork(parent),
     rtr_link(NULL), output_timing(NULL),
@@ -54,6 +55,7 @@ LinkControl::LinkControl(Component* parent, Params &params) :
         merlin_abort.fatal(CALL_INFO,-1,"Unknown checkerboard_alg requested: %s\n",checkerboard_alg.c_str());
     }
 }
+#endif  // inserted by script
     
 LinkControl::LinkControl(ComponentId_t cid, Params &params, int vns) :
     SST::Interfaces::SimpleNetwork(cid),
@@ -162,7 +164,8 @@ LinkControl::LinkControl(ComponentId_t cid, Params &params, int vns) :
     output_port_stalls = registerStatistic<uint64_t>("output_port_stalls");
     idle_time = registerStatistic<uint64_t>("idle_time");
 }
-    
+
+#ifndef SST_ENABLE_PREVIEW_BUILD
 bool
 LinkControl::initialize(const std::string& port_name, const UnitAlgebra& link_bw_in,
                         int vns, const UnitAlgebra& in_buf_size,
@@ -228,7 +231,7 @@ LinkControl::initialize(const std::string& port_name, const UnitAlgebra& link_bw
     
     return true;
 }
-
+#endif
 
 LinkControl::~LinkControl()
 {

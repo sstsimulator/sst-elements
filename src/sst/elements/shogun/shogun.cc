@@ -23,6 +23,7 @@
 #include "shogun.h"
 #include "shogun_credit_event.h"
 #include "shogun_init_event.h"
+#include "shogun_stat_bundle.h"
 
 using namespace SST;
 using namespace SST::Shogun;

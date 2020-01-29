@@ -67,9 +67,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
 
     // Output for debug
     dbg.init("", debugLevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
-    if (debugLevel < 0 || debugLevel > 10)
-        out.fatal(CALL_INFO, -1, "Debugging level must be between 0 and 10. \n");
-
+    
     // Debug address
     std::vector<Addr> addrArr;
     params.find_array<Addr>("debug_addr", addrArr);

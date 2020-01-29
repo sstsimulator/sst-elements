@@ -157,18 +157,23 @@ class MSHREntry {
         std::list<Addr> *evictPtrs; // Specific to Evict type
         MemEventBase* event;        // Specific to Event type
         SimTime_t time;
-        bool needEvict;
-        bool inProgress;
+        bool needEvict;             
+        bool inProgress;            // Whether event is currently being handled; prevents early retries
         bool profiled;
         bool downgrade;             // Specific to Writeback type
 };
 
 struct MSHRRegister {
-    MSHRRegister() : acksNeeded(0), dataDirty(false) { }
+    MSHRRegister() : acksNeeded(0), dataDirty(false), pendingRetries(0) { }
     list<MSHREntry> entries;
     uint32_t acksNeeded;
     vector<uint8_t> dataBuffer;
     bool dataDirty;
+    uint32_t pendingRetries;
+    
+    uint32_t getPendingRetries() { return pendingRetries; }
+    void addPendingRetry() { pendingRetries++; }
+    void removePendingRetry() { pendingRetries--; }
 };
 
 typedef map<Addr, MSHRRegister> MSHRBlock;
@@ -218,6 +223,10 @@ public:
 
     void setInProgress(Addr addr, bool value = true);
     bool getInProgress(Addr addr);
+    
+    void addPendingRetry(Addr addr);
+    void removePendingRetry(Addr addr);
+    uint32_t getPendingRetries(Addr addr);
 
     void setStalledForEvict(Addr addr, bool set);
     bool getStalledForEvict(Addr addr);

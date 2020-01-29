@@ -24,6 +24,7 @@
 using namespace SST::Merlin;
 
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 topo_hyperx::topo_hyperx(Component* comp, Params& params) :
     Topology(comp)
 {
@@ -96,7 +97,7 @@ topo_hyperx::topo_hyperx(Component* comp, Params& params) :
     }
     else if ( !route_algo.compare("valiant") ) {
         algorithm = VALIANT;
-        vcs_per_vn = 1;
+        vcs_per_vn = 2;
     }
     else if ( !route_algo.compare("VDAL") ) {
         algorithm = VDAL;
@@ -127,6 +128,7 @@ topo_hyperx::topo_hyperx(Component* comp, Params& params) :
     }
     
 }
+#endif  // inserted by script
 
 topo_hyperx::topo_hyperx(ComponentId_t cid, Params& params, int num_ports, int rtr_id) :
     Topology(cid),
@@ -188,21 +190,27 @@ topo_hyperx::topo_hyperx(ComponentId_t cid, Params& params, int num_ports, int r
     if ( !route_algo.compare("DOAL") ) {
         // std::cout << "Setting algorithm to DOAL" << std::endl;
         algorithm = DOAL;
+        vcs_per_vn = 2;
     }
     else if ( !route_algo.compare("valiant") ) {
         algorithm = VALIANT;
+        vcs_per_vn = 2;
     }
     else if ( !route_algo.compare("VDAL") ) {
         algorithm = VDAL;
+        vcs_per_vn = 2 * dimensions;
     }
     else if ( !route_algo.compare("DOR-ND") ) {
         algorithm = DORND;
+        vcs_per_vn = 1;
     }
     else if ( !route_algo.compare("DOR") ) {
         algorithm = DOR;
+        vcs_per_vn = 1;
     }
     else if ( !route_algo.compare("MIN-A") ) {
         algorithm = MINA;
+        vcs_per_vn = dimensions;
     }
     else {
         output.fatal(CALL_INFO,-1,"Unknown routing mode specified: %s\n",route_algo.c_str());
@@ -215,6 +223,8 @@ topo_hyperx::topo_hyperx(ComponentId_t cid, Params& params, int num_ports, int r
     for (int i = 0; i < dimensions; ++i ) {
         total_routers *= dim_size[i];
     }
+
+    
     
 }
 

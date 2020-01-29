@@ -28,6 +28,7 @@ using namespace Interfaces;
 
 namespace Merlin {
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 ReorderLinkControl::ReorderLinkControl(Component* parent, Params &params) :
     SimpleNetwork(parent),
     receiveFunctor(NULL)
@@ -37,6 +38,7 @@ DISABLE_WARN_DEPRECATED_DECLARATION
     link_control = static_cast<SimpleNetwork*>(loadSubComponent(networkIF, params));
 REENABLE_WARNING
 }
+#endif  // inserted by script
 
 ReorderLinkControl::ReorderLinkControl(ComponentId_t cid, Params &params, int vns) :
     SimpleNetwork(cid),
@@ -47,7 +49,14 @@ ReorderLinkControl::ReorderLinkControl(ComponentId_t cid, Params &params, int vn
         // Need to see if the network_if was loaded as a user subcomponent
         link_control = loadUserSubComponent<SimpleNetwork>("networkIF", ComponentInfo::SHARE_NONE, vns);
         // If the load was successful, we can return
-        if ( link_control ) return;
+        if ( link_control ) {
+            this->vns = vns;
+    
+            // Don't need output buffers, sends will go directly to
+            // LinkControl.  Do need input buffers.
+            input_buf = new request_queue_t[vns];
+            return;
+        }
     }
 
     // NetworkIF not loaded as user subcomponent, try anonymous
@@ -76,6 +85,7 @@ ReorderLinkControl::~ReorderLinkControl() {
     delete [] input_buf;
 }
 
+#ifndef SST_ENABLE_PREVIEW_BUILD
 bool
 ReorderLinkControl::initialize(const std::string& port_name, const UnitAlgebra& link_bw_in,
                                int vns, const UnitAlgebra& in_buf_size,
@@ -96,7 +106,7 @@ ReorderLinkControl::initialize(const std::string& port_name, const UnitAlgebra& 
     
     return true;
 }
-
+#endif
 
 void
 ReorderLinkControl::setup()
@@ -188,6 +198,17 @@ SST::Interfaces::SimpleNetwork::Request* ReorderLinkControl::recv(int vn) {
 bool ReorderLinkControl::requestToReceive( int vn ) {
 //    return link_control->requestToReceive(vn);
     return !input_buf[vn].empty();
+}
+
+
+void ReorderLinkControl::sendUntimedData(SST::Interfaces::SimpleNetwork::Request* req)
+{
+    link_control->sendInitData(req);
+}
+
+SST::Interfaces::SimpleNetwork::Request* ReorderLinkControl::recvUntimedData()
+{
+    return link_control->recvInitData();
 }
 
 void ReorderLinkControl::sendInitData(SST::Interfaces::SimpleNetwork::Request* req)

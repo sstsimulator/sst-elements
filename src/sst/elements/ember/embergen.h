@@ -55,9 +55,13 @@ class EmberGenerator : public SubComponent {
 
 	SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Ember::EmberGenerator)
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     EmberGenerator( Component* owner, Params& params ) : SubComponent(owner)  { assert(0); }
+#endif  // inserted by script
     EmberGenerator( ComponentId_t id, Params& params ) : SubComponent(id) { assert(0); }
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     EmberGenerator( Component* owner, Params& params, std::string name ="" ) : SubComponent(owner) { assert(0); }
+#endif  // inserted by script
     EmberGenerator( ComponentId_t id, Params& params, std::string name ="" );
 
 	void setEngine( EmberEngine* );

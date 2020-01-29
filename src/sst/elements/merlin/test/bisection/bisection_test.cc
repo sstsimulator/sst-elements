@@ -72,6 +72,7 @@ bisection_test::bisection_test(ComponentId_t cid, Params& params) :
         ("networkIF", ComponentInfo::SHARE_NONE, 1 /* vns */);
 
     if ( !link_control ) {
+#ifndef SST_ENABLE_PREVIEW_BUILD
         // Not defined in python code.  See if this uses the legacy
         // API.  If so, load it with loadSubComponent.  Otherwise, use
         // the default linkcontrol (merlin.linkcontrol) loaded with
@@ -100,6 +101,19 @@ REENABLE_WARNING
                 ("merlin.linkcontrol", "networkIF", 0,
                  ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, if_params, 1 /* vns */);
         }
+#else
+        // Not in python, just load the default
+        Params if_params;
+        
+        if_params.insert("link_bw",params.find<std::string>("link_bw","2GB/s"));
+        if_params.insert("input_buf_size",params.find<std::string>("buffer_size","128B"));
+        if_params.insert("output_buf_size",params.find<std::string>("buffer_size","128B"));            
+        if_params.insert("port_name","rtr");
+        
+        link_control = loadAnonymousSubComponent<SST::Interfaces::SimpleNetwork>
+            ("merlin.linkcontrol", "networkIF", 0,
+             ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, if_params, 1 /* vns */);
+#endif
     }
 
 

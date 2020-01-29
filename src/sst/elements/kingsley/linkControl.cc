@@ -25,6 +25,7 @@ using namespace Interfaces;
 
 namespace Kingsley {
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 LinkControl::LinkControl(Component* parent, Params &params) :
     SST::Interfaces::SimpleNetwork(parent),
     init_state(0),
@@ -38,6 +39,7 @@ LinkControl::LinkControl(Component* parent, Params &params) :
     output(Simulation::getSimulation()->getSimulationOutput())
 {
 }
+#endif  // inserted by script
 
 LinkControl::LinkControl(ComponentId_t id, Params &params, int vns) :
     SST::Interfaces::SimpleNetwork(id),

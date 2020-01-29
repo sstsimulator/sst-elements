@@ -39,7 +39,9 @@ public:
             {"cramsim_link",   "Link to CramSim",  {"CramSim.MemReqEvent", "CramSim.MemRespEvent"} } )
 
 /* Begin class definition */
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     CramSimMemory(Component *comp, Params &params);
+#endif  // inserted by script
     CramSimMemory(ComponentId_t id, Params &params);
     virtual bool issueRequest( ReqId, Addr, bool isWrite, unsigned numBytes );
     virtual bool isClocked() { return false; }

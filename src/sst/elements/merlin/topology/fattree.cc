@@ -59,6 +59,7 @@ topo_fattree::parseShape(const std::string &shape, int *downs, int *ups) const
     }
 }
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 topo_fattree::topo_fattree(Component* comp, Params& params) :
     Topology(comp),
     num_vcs(-1),
@@ -148,6 +149,7 @@ topo_fattree::topo_fattree(Component* comp, Params& params) :
     //     cout << "  " << i << "   " << ev->getNextPort() << endl; 
     // }
 }
+#endif  // inserted by script
 
 
 topo_fattree::topo_fattree(ComponentId_t cid, Params& params, int num_ports, int rtr_id) :

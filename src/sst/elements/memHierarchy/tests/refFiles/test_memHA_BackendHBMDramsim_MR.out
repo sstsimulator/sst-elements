@@ -22,6 +22,8 @@ Channel 6 statistics
 Channel 7 statistics
  Total Return Transactions: 32 (1024 bytes) aggregate average bandwidth 0.046GB/s
  Rank 0 -  Reads: 32 (1024 bytes) Writes: 0 (0 bytes)
+== Loading device model file 'ddr_device.ini' ==
+== Loading system model file 'ddr_system.ini' ==
  cpu0.pendCycle : Accumulator : Sum.u64 = 47113; SumSQ.u64 = 185567; Count.u64 = 19687; Min.u64 = 0; Max.u64 = 10; 
  c0.l1cache.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c0.l1cache.stateEvent_GetS_I : Accumulator : Sum.u64 = 870; SumSQ.u64 = 870; Count.u64 = 870; Min.u64 = 1; Max.u64 = 1; 
@@ -443,9 +445,9 @@ Channel 7 statistics
  n0.l2cache.latency_GetS_hit : Accumulator : Sum.u64 = 1088; SumSQ.u64 = 8672; Count.u64 = 148; Min.u64 = 7; Max.u64 = 24; 
  n0.l2cache.latency_GetS_miss : Accumulator : Sum.u64 = 56561; SumSQ.u64 = 3333165; Count.u64 = 1577; Min.u64 = 20; Max.u64 = 281; 
  n0.l2cache.latency_GetS_inv : Accumulator : Sum.u64 = 145; SumSQ.u64 = 2629; Count.u64 = 8; Min.u64 = 18; Max.u64 = 19; 
- n0.l2cache.latency_GetX_hit : Accumulator : Sum.u64 = 25; SumSQ.u64 = 373; Count.u64 = 2; Min.u64 = 7; Max.u64 = 18; 
+ n0.l2cache.latency_GetX_hit : Accumulator : Sum.u64 = 7; SumSQ.u64 = 49; Count.u64 = 1; Min.u64 = 7; Max.u64 = 7; 
  n0.l2cache.latency_GetX_miss : Accumulator : Sum.u64 = 8665; SumSQ.u64 = 512133; Count.u64 = 196; Min.u64 = 25; Max.u64 = 157; 
- n0.l2cache.latency_GetX_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ n0.l2cache.latency_GetX_inv : Accumulator : Sum.u64 = 18; SumSQ.u64 = 324; Count.u64 = 1; Min.u64 = 18; Max.u64 = 18; 
  n0.l2cache.latency_GetX_upgrade : Accumulator : Sum.u64 = 758; SumSQ.u64 = 27654; Count.u64 = 22; Min.u64 = 24; Max.u64 = 57; 
  n0.l2cache.latency_GetSX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  n0.l2cache.latency_GetSX_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -925,9 +927,9 @@ Channel 7 statistics
  n1.l2cache.latency_GetS_hit : Accumulator : Sum.u64 = 1361; SumSQ.u64 = 24499; Count.u64 = 162; Min.u64 = 7; Max.u64 = 83; 
  n1.l2cache.latency_GetS_miss : Accumulator : Sum.u64 = 58426; SumSQ.u64 = 3745322; Count.u64 = 1562; Min.u64 = 24; Max.u64 = 339; 
  n1.l2cache.latency_GetS_inv : Accumulator : Sum.u64 = 72; SumSQ.u64 = 1296; Count.u64 = 4; Min.u64 = 18; Max.u64 = 18; 
- n1.l2cache.latency_GetX_hit : Accumulator : Sum.u64 = 39; SumSQ.u64 = 471; Count.u64 = 4; Min.u64 = 7; Max.u64 = 18; 
+ n1.l2cache.latency_GetX_hit : Accumulator : Sum.u64 = 21; SumSQ.u64 = 147; Count.u64 = 3; Min.u64 = 7; Max.u64 = 7; 
  n1.l2cache.latency_GetX_miss : Accumulator : Sum.u64 = 8372; SumSQ.u64 = 540266; Count.u64 = 188; Min.u64 = 24; Max.u64 = 207; 
- n1.l2cache.latency_GetX_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ n1.l2cache.latency_GetX_inv : Accumulator : Sum.u64 = 18; SumSQ.u64 = 324; Count.u64 = 1; Min.u64 = 18; Max.u64 = 18; 
  n1.l2cache.latency_GetX_upgrade : Accumulator : Sum.u64 = 844; SumSQ.u64 = 32550; Count.u64 = 23; Min.u64 = 25; Max.u64 = 57; 
  n1.l2cache.latency_GetSX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  n1.l2cache.latency_GetSX_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -1121,10 +1123,10 @@ Channel 7 statistics
  l3cache.latency_GetS_hit : Accumulator : Sum.u64 = 26920; SumSQ.u64 = 302926; Count.u64 = 2653; Min.u64 = 5; Max.u64 = 134; 
  l3cache.latency_GetS_miss : Accumulator : Sum.u64 = 38840; SumSQ.u64 = 3954806; Count.u64 = 448; Min.u64 = 58; Max.u64 = 322; 
  l3cache.latency_GetS_inv : Accumulator : Sum.u64 = 1258; SumSQ.u64 = 51772; Count.u64 = 38; Min.u64 = 25; Max.u64 = 123; 
- l3cache.latency_GetX_hit : Accumulator : Sum.u64 = 2785; SumSQ.u64 = 67523; Count.u64 = 165; Min.u64 = 10; Max.u64 = 44; 
+ l3cache.latency_GetX_hit : Accumulator : Sum.u64 = 1140; SumSQ.u64 = 11400; Count.u64 = 114; Min.u64 = 10; Max.u64 = 10; 
  l3cache.latency_GetX_miss : Accumulator : Sum.u64 = 5307; SumSQ.u64 = 497427; Count.u64 = 63; Min.u64 = 58; Max.u64 = 193; 
- l3cache.latency_GetX_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l3cache.latency_GetX_upgrade : Accumulator : Sum.u64 = 3993; SumSQ.u64 = 79417; Count.u64 = 201; Min.u64 = 19; Max.u64 = 21; 
+ l3cache.latency_GetX_inv : Accumulator : Sum.u64 = 527; SumSQ.u64 = 17217; Count.u64 = 17; Min.u64 = 25; Max.u64 = 43; 
+ l3cache.latency_GetX_upgrade : Accumulator : Sum.u64 = 5111; SumSQ.u64 = 118323; Count.u64 = 235; Min.u64 = 19; Max.u64 = 44; 
  l3cache.latency_GetSX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache.latency_GetSX_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache.latency_GetSX_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -1317,5 +1319,3 @@ Channel 7 statistics
  hbm.cycles_attempted_issue_but_rejected : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  hbm.total_cycles : Accumulator : Sum.u64 = 10380; SumSQ.u64 = 107744400; Count.u64 = 1; Min.u64 = 10380; Max.u64 = 10380; 
 Simulation is complete, simulated time: 10.3805 us
-== Loading device model file 'ddr_device.ini' ==
-== Loading system model file 'ddr_system.ini' ==

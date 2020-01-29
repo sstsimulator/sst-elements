@@ -57,6 +57,7 @@ RouteToGroup::setRouterPortPair(int group, int route_number, const RouterPortPai
  * [params.p, params.p+params.a-1)  // Routers within this group
  * [params.p+params.a-1, params.k)  // Other groups
  */
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 topo_dragonfly::topo_dragonfly(Component* comp, Params &p) :
     Topology(comp)
 {
@@ -153,11 +154,12 @@ topo_dragonfly::topo_dragonfly(Component* comp, Params &p) :
     output.verbose(CALL_INFO, 1, 1, "%u:%u:  ID: %u   Params:  p = %u  a = %u  k = %u  h = %u  g = %u\n",
             group_id, router_id, id, params.p, params.a, params.k, params.h, params.g);
 }
+#endif  // inserted by script
 
 topo_dragonfly::topo_dragonfly(ComponentId_t cid, Params &p, int num_ports, int rtr_id) :
     Topology(cid)
 {
-    params.p = p.find<uint32_t>(":hosts_per_router");
+    params.p = p.find<uint32_t>("hosts_per_router");
     params.a = p.find<uint32_t>("routers_per_group");
     params.k = num_ports;
     params.h = p.find<uint32_t>("intergroup_per_router");

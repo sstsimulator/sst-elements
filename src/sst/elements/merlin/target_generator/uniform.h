@@ -54,12 +54,14 @@ public:
 
     
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     UniformDist(Component* parent, Params &params) :
         TargetGenerator(parent)
     {
         min = params.find<int>("min",-1);
         max = params.find<int>("max",-1);        
     }
+#endif  // inserted by script
     
     UniformDist(ComponentId_t cid, Params &params, int id, int num_peers) :
         TargetGenerator(cid)

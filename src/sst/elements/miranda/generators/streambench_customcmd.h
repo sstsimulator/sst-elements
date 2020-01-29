@@ -28,7 +28,9 @@ namespace Miranda {
 class STREAMBenchGenerator_CustomCmd : public RequestGenerator {
 
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 	STREAMBenchGenerator_CustomCmd( Component* owner, Params& params );
+#endif  // inserted by script
 	STREAMBenchGenerator_CustomCmd( ComponentId_t id, Params& params );
         void build(Params& params);
 	~STREAMBenchGenerator_CustomCmd();

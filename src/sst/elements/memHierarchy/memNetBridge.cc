@@ -25,6 +25,7 @@ using SST::Interfaces::SimpleNetwork;
 
 
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 MemNetBridge::MemNetBridge(SST::Component *comp, SST::Params &params) :
     Bridge::Translator(comp, params)
 {
@@ -32,7 +33,15 @@ MemNetBridge::MemNetBridge(SST::Component *comp, SST::Params &params) :
     dbg.init("@t:Bridge::@p():@l " + getName() + ": ",
             debugLevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
 }
+#endif  // inserted by script
 
+MemNetBridge::MemNetBridge(SST::ComponentId_t id, SST::Params &params, Merlin::Bridge* bridge) :
+    Bridge::Translator(id, params, bridge)
+{
+    int debugLevel = params.find<int>("debug_level", 0);
+    dbg.init("@t:Bridge::@p():@l " + getName() + ": ",
+            debugLevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
+}
 
 MemNetBridge::~MemNetBridge()
 {

@@ -76,7 +76,9 @@ public:
 
 
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 	EmberSweep3DGenerator(SST::Component* comp, Params& params) : EmberMessagePassingGenerator(comp,params) {}
+#endif  // inserted by script
 	EmberSweep3DGenerator(SST::ComponentId_t id, Params& params);
 	void configure();
     bool generate( std::queue<EmberEvent*>& evQ );

@@ -25,7 +25,9 @@ class MemoryBase : public SubComponent {
     typedef std::function<void()> Callback;
     typedef uint64_t MemAddr;
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     MemoryBase( Component* comp ) : SubComponent( comp ) {}
+#endif  // inserted by script
     MemoryBase( ComponentId_t id ) : SubComponent( id ) {}
     virtual ~MemoryBase() {}
     virtual void copy( Callback, MemAddr to, MemAddr from, size_t ) = 0;

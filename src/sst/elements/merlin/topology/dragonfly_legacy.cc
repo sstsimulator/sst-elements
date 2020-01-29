@@ -30,6 +30,7 @@ using namespace SST::Merlin;
  * [params.p+params.a-1, params.k)  // Other groups
  */
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 topo_dragonfly_legacy::topo_dragonfly_legacy(Component* comp, Params &p) :
     Topology(comp)
 {
@@ -58,6 +59,7 @@ topo_dragonfly_legacy::topo_dragonfly_legacy(Component* comp, Params &p) :
     output.verbose(CALL_INFO, 1, 1, "%u:%u:  ID: %u   Params:  p = %u  a = %u  k = %u  h = %u  g = %u\n",
             group_id, router_id, id, params.p, params.a, params.k, params.h, params.g);
 }
+#endif  // inserted by script
 
 /*
  * Port Layout:

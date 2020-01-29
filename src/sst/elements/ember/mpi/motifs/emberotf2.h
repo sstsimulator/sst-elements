@@ -28,7 +28,9 @@ namespace Ember {
 class EmberOTF2Generator : public EmberMessagePassingGenerator {
 
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 	EmberOTF2Generator(SST::Component* owner, Params& params) : EmberMessagePassingGenerator(owner,params,"") {}
+#endif  // inserted by script
 	EmberOTF2Generator(SST::ComponentId_t, Params& params);
 	~EmberOTF2Generator();
     	bool generate( std::queue<EmberEvent*>& evQ );

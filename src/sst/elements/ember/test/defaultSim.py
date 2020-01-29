@@ -17,8 +17,9 @@ def getWorkFlow( defaults ):
 	# numNodes = 0 implies use all nodes on network
     numNodes = 0 
     numCores = 1 
+    nicsPerNode = 1
 
-    return workFlow, numNodes, numCores 
+    return workFlow, numNodes, numCores, nicsPerNode
 
 def getNetwork():
 

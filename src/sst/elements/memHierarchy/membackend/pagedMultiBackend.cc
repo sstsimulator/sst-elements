@@ -28,7 +28,9 @@
 using namespace SST;
 using namespace SST::MemHierarchy;
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 pagedMultiMemory::pagedMultiMemory(Component *comp, Params &params) : DRAMSimMemory(comp, params), pagesInFast(0), lastMin(0) { build(params); }
+#endif  // inserted by script
 pagedMultiMemory::pagedMultiMemory(ComponentId_t id, Params &params) : DRAMSimMemory(id, params), pagesInFast(0), lastMin(0) { build(params); }
 
 void pagedMultiMemory::build(Params& params) {

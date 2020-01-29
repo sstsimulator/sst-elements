@@ -321,7 +321,9 @@ private:
 
 public:
     TimingDRAM();
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     TimingDRAM(Component*, Params& );
+#endif  // inserted by script
     TimingDRAM(ComponentId_t, Params& );
     virtual bool issueRequest( ReqId, Addr, bool, unsigned );
     void handleResponse(ReqId  id ) {

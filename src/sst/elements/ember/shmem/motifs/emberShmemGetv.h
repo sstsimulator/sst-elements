@@ -40,7 +40,9 @@ class EmberShmemGetvGenerator : public EmberShmemGenerator {
     }
 
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 	EmberShmemGetvGenerator(SST::Component* owner, Params& params) : EmberShmemGenerator(owner, params, "" ) {}
+#endif  // inserted by script
 	EmberShmemGetvGenerator(SST::ComponentId_t id, Params& params) :
 		EmberShmemGenerator(id, params, "ShmemGetv" ), m_phase(0) 
 	{ 
@@ -120,8 +122,10 @@ public:
     SST_ELI_DOCUMENT_PARAMS()
 
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     EmberShmemGetvIntGenerator( SST::Component* owner, Params& params ) :
         EmberShmemGetvGenerator(owner,  params) { }
+#endif  // inserted by script
     EmberShmemGetvIntGenerator( SST::ComponentId_t id, Params& params ) :
         EmberShmemGetvGenerator(id,  params) { }
 };
@@ -140,8 +144,10 @@ public:
     SST_ELI_DOCUMENT_PARAMS()
 
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     EmberShmemGetvLongGenerator( SST::Component* owner, Params& params ) :
         EmberShmemGetvGenerator(owner,  params) { }
+#endif  // inserted by script
     EmberShmemGetvLongGenerator( SST::ComponentId_t id, Params& params ) :
         EmberShmemGetvGenerator(id,  params) { }
 };
@@ -160,8 +166,10 @@ public:
     SST_ELI_DOCUMENT_PARAMS()
 
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     EmberShmemGetvDoubleGenerator( SST::Component* owner, Params& params ) :
         EmberShmemGetvGenerator(owner,  params) { }
+#endif  // inserted by script
     EmberShmemGetvDoubleGenerator( SST::ComponentId_t id, Params& params ) :
         EmberShmemGetvGenerator(id,  params) { }
 };
@@ -180,8 +188,10 @@ public:
     SST_ELI_DOCUMENT_PARAMS()
 
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     EmberShmemGetvFloatGenerator( SST::Component* owner, Params& params ) :
         EmberShmemGetvGenerator(owner,  params) { }
+#endif  // inserted by script
     EmberShmemGetvFloatGenerator( SST::ComponentId_t id, Params& params ) :
         EmberShmemGetvGenerator(id,  params) { }
 };

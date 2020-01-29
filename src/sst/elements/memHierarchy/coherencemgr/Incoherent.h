@@ -133,7 +133,9 @@ public:
             {"hash", "Hash function for mapping addresses to cache lines", "SST::MemHierarchy::HashFunction"} )
 /* Class definition */
     /** Constructor for Incoherent. */
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     Incoherent(SST::Component* comp, Params& params) : CoherenceController (comp, params) { }
+#endif  // inserted by script
     Incoherent(SST::ComponentId_t id, Params& params, Params& ownerParams, bool prefetch) : CoherenceController(id, params, ownerParams, prefetch) {
         params.insert(ownerParams);
         debug->debug(_INFO_,"--------------------------- Initializing [Incoherent Controller] ... \n\n");

@@ -52,7 +52,9 @@ struct StrideFilter
 class PalaPrefetcher : public SST::MemHierarchy::CacheListener
 {
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     PalaPrefetcher(Component* owner, Params& params);
+#endif  // inserted by script
     PalaPrefetcher(ComponentId_t id, Params& params);
     ~PalaPrefetcher();
 

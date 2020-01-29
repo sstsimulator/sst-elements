@@ -21,10 +21,15 @@
 
 using namespace SST::Ember;
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 EmberContextSwitchingMessagePassingGenerator::EmberContextSwitchingMessagePassingGenerator(Component* owner, Params& params) :
 	EmberMessagePassingGenerator(owner, params) {
 
 }
+#endif  // inserted by script
+EmberContextSwitchingMessagePassingGenerator::EmberContextSwitchingMessagePassingGenerator(ComponentId_t id, Params& params) :
+	EmberMessagePassingGenerator(id, params) {
+
 
 EmberContextSwitchingMessagePassingGenerator::~EmberContextSwitchingMessagePassingGenerator() {
 

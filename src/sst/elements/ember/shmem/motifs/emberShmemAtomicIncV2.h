@@ -37,7 +37,9 @@ class EmberShmemAtomicIncV2BaseGenerator : public EmberShmemGenerator {
     enum { Add, Fadd, Putv, Getv } m_op;
     std::string m_opStr;
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 	EmberShmemAtomicIncV2BaseGenerator(SST::Component* owner, Params& params, std::string name) : EmberShmemGenerator(owner, params, "" ) {}
+#endif  // inserted by script
 	EmberShmemAtomicIncV2BaseGenerator(SST::ComponentId_t id, Params& params, std::string name) :
 		EmberShmemGenerator(id, params, name ), m_phase(Init1), m_one(1), m_curUpdate(0), m_loopCnt(0), m_detailedDone(false)
 	{ 
@@ -400,8 +402,10 @@ public:
 template < class TYPE, int VAL >
 class EmberShmemAtomicIncV2Generator : public EmberShmemAtomicIncV2BaseGenerator<TYPE,VAL> {
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     EmberShmemAtomicIncV2Generator(SST::Component* owner, Params& params, std::string name ) :
 	    EmberShmemAtomicIncV2BaseGenerator<TYPE,VAL>(owner, params, name) { } 
+#endif  // inserted by script
 
     EmberShmemAtomicIncV2Generator(SST::ComponentId_t id, Params& params, std::string name ) :
 	    EmberShmemAtomicIncV2BaseGenerator<TYPE,VAL>(id, params, name) { } 
@@ -410,8 +414,10 @@ public:
 template < class TYPE >
 class EmberShmemAtomicIncV2Generator<TYPE,1> : public EmberShmemAtomicIncV2BaseGenerator<TYPE,1> {
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 	EmberShmemAtomicIncV2Generator(SST::Component* owner, Params& params, std::string name ) :
 	    EmberShmemAtomicIncV2BaseGenerator<TYPE,1>(owner, params, name) { } 
+#endif  // inserted by script
 
 	EmberShmemAtomicIncV2Generator(SST::ComponentId_t id, Params& params, std::string name ) :
 	    EmberShmemAtomicIncV2BaseGenerator<TYPE,1>(id, params, name) { } 
@@ -434,8 +440,10 @@ private:
 template < class TYPE >
 class EmberShmemAtomicIncV2Generator<TYPE,2> : public EmberShmemAtomicIncV2BaseGenerator<TYPE,2> {
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 	EmberShmemAtomicIncV2Generator(SST::Component* owner, Params& params, std::string name ) :
 	    EmberShmemAtomicIncV2BaseGenerator<TYPE,2>(owner, params, name ) { } 
+#endif  // inserted by script
 
 	EmberShmemAtomicIncV2Generator(SST::ComponentId_t id, Params& params, std::string name ) :
 	    EmberShmemAtomicIncV2BaseGenerator<TYPE,2>(id, params, name ) { } 
@@ -478,8 +486,10 @@ public:
     SST_ELI_DOCUMENT_PARAMS()
 
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 	EmberShmemAtomicIncV2IntGenerator(SST::Component* owner, Params& params) :
 	    EmberShmemAtomicIncV2Generator(owner, params, "ShmemAtomicIncV2Int" ) { } 
+#endif  // inserted by script
 	EmberShmemAtomicIncV2IntGenerator(SST::ComponentId_t id, Params& params) :
 	    EmberShmemAtomicIncV2Generator(id, params, "ShmemAtomicIncV2Int" ) { } 
 };
@@ -498,8 +508,10 @@ public:
     SST_ELI_DOCUMENT_PARAMS()
 
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 	EmberShmemNSAtomicIncV2IntGenerator(SST::Component* owner, Params& params) :
 	    EmberShmemAtomicIncV2Generator(owner, params, "ShmemNSAtomicIncV2Int") { } 
+#endif  // inserted by script
 	EmberShmemNSAtomicIncV2IntGenerator(SST::ComponentId_t id, Params& params) :
 	    EmberShmemAtomicIncV2Generator(id, params, "ShmemNSAtomicIncV2Int") { } 
 };
@@ -518,8 +530,10 @@ public:
     SST_ELI_DOCUMENT_PARAMS()
 
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 	EmberShmemHotAtomicIncV2IntGenerator(SST::Component* owner, Params& params) :
 	    EmberShmemAtomicIncV2Generator(owner, params, "ShmemHotAtomicIncV2Int") { } 
+#endif  // inserted by script
 	EmberShmemHotAtomicIncV2IntGenerator(SST::ComponentId_t id, Params& params) :
 	    EmberShmemAtomicIncV2Generator(id, params, "ShmemHotAtomicIncV2Int") { } 
 };
@@ -538,8 +552,10 @@ public:
     SST_ELI_DOCUMENT_PARAMS()
 
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 	EmberShmemAtomicIncV2LongGenerator(SST::Component* owner, Params& params) :
 	    EmberShmemAtomicIncV2Generator(owner, params, "ShmemAtomicIncV2Long") {} 
+#endif  // inserted by script
 	EmberShmemAtomicIncV2LongGenerator(SST::ComponentId_t id, Params& params) :
 	    EmberShmemAtomicIncV2Generator(id, params, "ShmemAtomicIncV2Long") {} 
 };
@@ -558,8 +574,10 @@ public:
     SST_ELI_DOCUMENT_PARAMS(
     )
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 	EmberShmemHotAtomicIncV2LongGenerator(SST::Component* owner, Params& params) :
 	    EmberShmemAtomicIncV2Generator(owner, params, "ShmemHotAtomicIncV2Long") {} 
+#endif  // inserted by script
 	EmberShmemHotAtomicIncV2LongGenerator(SST::ComponentId_t id, Params& params) :
 	    EmberShmemAtomicIncV2Generator(id, params, "ShmemHotAtomicIncV2Long") {} 
 };

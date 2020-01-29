@@ -28,7 +28,9 @@ namespace Miranda {
 class ReverseSingleStreamGenerator : public RequestGenerator {
 
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
       ReverseSingleStreamGenerator( Component* owner, Params& params );
+#endif  // inserted by script
       ReverseSingleStreamGenerator( ComponentId_t id, Params& params );
       void build(Params& params);
       ~ReverseSingleStreamGenerator();

@@ -5,7 +5,7 @@ from sst.merlin import *
 from loadUtils import *
 
 class EmberEP( EndPoint ):
-    def __init__( self, jobId, driverParams, nicParams, motifs, numCores, ranksPerNode, statNodes, nidMap, numNodes, motifLogNodes, detailedModel ): # added motifLogNodes here
+    def __init__( self, jobId, driverParams, nicParams, motifs, nicsPerNode, numCores, ranksPerNode, statNodes, nidMap, numNodes, motifLogNodes, detailedModel ): # added motifLogNodes here
 
         self.driverParams = driverParams
         self.nicParams = nicParams
@@ -18,6 +18,8 @@ class EmberEP( EndPoint ):
         # in order to create motifLog files only for the desired nodes of a job
         self.motifLogNodes = motifLogNodes
         self.detailedModel = detailedModel
+        self.nicsPerNode = nicsPerNode 
+        self.loopBackDict = dict();
 
     def getName( self ):
         return "EmberEP"
@@ -106,15 +108,21 @@ class EmberEP( EndPoint ):
             memory.addParam( "nid", nodeID )
             #memory.addParam( "verboseLevel", 1 )
 
-        loopBack = sst.Component("loopBack" + str(nodeID), "firefly.loopBack")
-        loopBack.addParam( "numCores", self.numCores )
+        loopBackName = "loopBack" + str(nodeID/self.nicsPerNode)		
+        if nodeID % self.nicsPerNode == 0:
+            loopBack = sst.Component(loopBackName, "firefly.loopBack")
+            loopBack.addParam( "numCores", self.numCores )
+            loopBack.addParam( "nicsPerNode", self.nicsPerNode )
+            self.loopBackDict[loopBackName] = loopBack 
+        else:
+            loopBack = self.loopBackDict[loopBackName]
 
 
         # Create a motifLog only for one core of the desired node(s)
         logCreatedforFirstCore = False
         # end
 
-        for x in xrange(self.numCores):
+        for x in xrange(self.numCores/self.nicsPerNode):
             ep = sst.Component("nic" + str(nodeID) + "core" + str(x) + "_EmberEP", "ember.EmberEngine")
 
             os = ep.setSubComponent( "OS", "firefly.hades" )
@@ -193,14 +201,15 @@ class EmberEP( EndPoint ):
             nicLink = sst.Link( "nic" + str(nodeID) + "core" + str(x) + "_Link"  )
             nicLink.setNoCut()
 
-            loopLink = sst.Link( "loop" + str(nodeID) + "core" + str(x) + "_Link"  )
+            linkName = "loop" + str(nodeID/self.nicsPerNode) + "nic"+ str(nodeID%self.nicsPerNode)+"core" + str(x) + "_Link" 
+            loopLink = sst.Link( linkName ); 
             loopLink.setNoCut() 
 
             #ep.addLink(nicLink, "nic", self.nicParams["nic2host_lat"] )
             #nic.addLink(nicLink, "core" + str(x), self.nicParams["nic2host_lat"] )
             nicLink.connect( (virtNic,'nic','1ns' ),(nic,'core'+str(x),'1ns'))
 
-            loopLink.connect( (process,'loop','1ns' ),(loopBack,'core'+str(x),'1ns'))
+            loopLink.connect( (process,'loop','1ns' ),(loopBack,'nic'+str(nodeID%self.nicsPerNode)+'core'+str(x),'1ns'))
 
             if built:
                 memoryLink = sst.Link( "memory" + str(nodeID) + "core" + str(x) + "_Link"  )

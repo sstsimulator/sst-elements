@@ -5,9 +5,11 @@ class TopoInfo:
 		pass
 	def getNetworkParams(self):
 		pass
+	def getNicsPerNode(self):
+		return 1 
 
 class TorusInfo(TopoInfo):
-	def __init__( self, shape, local_ports ):
+	def __init__( self, shape, local_ports, nicsPerNode ):
 
 		width = 1
 
@@ -17,6 +19,7 @@ class TorusInfo(TopoInfo):
 		self.params["torus:width"] = self.calcWidth(shape,width)
 		self.params["torus:local_ports"] = local_ports 
 		self.numNodes = self.calcNumNodes( shape ) * local_ports
+		self.nicsPerNode = nicsPerNode
 
 	def getNetworkParams(self):
 		return self.params
@@ -42,6 +45,9 @@ class TorusInfo(TopoInfo):
 			retval += "x" + str(width)
 			count  += 1
 		return retval
+
+	def getNicsPerNode(self):
+		return self.nicsPerNode 
 
 class HyperXInfo(TopoInfo):
 

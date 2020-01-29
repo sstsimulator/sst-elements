@@ -371,6 +371,34 @@ bool MSHR::insertEviction(Addr oldAddr, Addr newAddr) {
     return true;
 }
 
+void MSHR::addPendingRetry(Addr addr) {
+    if (is_debug_addr(addr))
+        printDebug(20, "IncRetry", addr, "");
+
+    if (mshr_.find(addr) == mshr_.end()) {
+        d_->fatal(CALL_INFO, -1, "%s, Error: MSHR::addPendingRetry(0x%" PRIx64 "). Address does not exist in MSHR.\n", ownerName_.c_str(), addr);
+    }
+    mshr_.find(addr)->second.addPendingRetry();
+}
+
+void MSHR::removePendingRetry(Addr addr) {
+    if (is_debug_addr(addr))
+        printDebug(20, "DecRetry", addr, "");
+
+    if (mshr_.find(addr) == mshr_.end()) {
+        d_->fatal(CALL_INFO, -1, "%s, Error: MSHR::removePendingRetry(0x%" PRIx64 "). Address does not exist in MSHR.\n", ownerName_.c_str(), addr);
+    }
+    mshr_.find(addr)->second.removePendingRetry();
+}
+
+uint32_t MSHR::getPendingRetries(Addr addr) {
+    if (mshr_.find(addr) == mshr_.end())
+        return 0;
+
+    return mshr_.find(addr)->second.getPendingRetries();
+}
+
+
 void MSHR::setInProgress(Addr addr, bool value) {
 //    if (is_debug_addr(addr))
 //        d_->debug(_L10_, "    MSHR::setInProgress(0x%" PRIx64 ")\n", addr);
@@ -388,10 +416,10 @@ void MSHR::setInProgress(Addr addr, bool value) {
 
 bool MSHR::getInProgress(Addr addr) {
     if (mshr_.find(addr) == mshr_.end()) {
-        d_->fatal(CALL_INFO, -1, "%s, Error: MSHR::getInProgress(0x%" PRIx64 "). Address does not exist in MSHR.\n", ownerName_.c_str(), addr);
+        return false;
     }
     if (mshr_.find(addr)->second.entries.empty()) {
-        d_->fatal(CALL_INFO, -1, "%s, Error: MSHR::getInProgress(0x%" PRIx64 "). Entry list is empty.\n", ownerName_.c_str(), addr);
+        return false;
     }
     return mshr_.find(addr)->second.entries.front().getInProgress();
 }

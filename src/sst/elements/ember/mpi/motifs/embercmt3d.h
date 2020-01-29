@@ -77,7 +77,9 @@ public:
     )
 
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 	EmberCMT3DGenerator(SST::Component* owner, Params& params) : EmberMessagePassingGenerator(owner,params,"") {}
+#endif  // inserted by script
 	EmberCMT3DGenerator(SST::ComponentId_t, Params& params);
 //	~EmberCMT3DGenerator();
 	void configure();

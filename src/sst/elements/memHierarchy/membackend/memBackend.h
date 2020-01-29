@@ -50,7 +50,9 @@ public:
     typedef MemBackendConvertor::ReqId ReqId;
     MemBackend();
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     MemBackend(Component *comp, Params &params) : SubComponent(comp) { build(params); }
+#endif  // inserted by script
     MemBackend(ComponentId_t id, Params &params) : SubComponent(id) { build(params); }
     void build(Params& params) 
     {
@@ -117,7 +119,9 @@ class SimpleMemBackend : public MemBackend {
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED_API(SST::MemHierarchy::SimpleMemBackend, SST::MemHierarchy::MemBackend)
 
     SimpleMemBackend() : MemBackend() {} 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     SimpleMemBackend(Component *comp, Params &params) : MemBackend(comp,params) {}  
+#endif  // inserted by script
     SimpleMemBackend(ComponentId_t id, Params &params) : MemBackend(id,params) {}  
 
     virtual bool issueRequest( ReqId, Addr, bool isWrite, unsigned numBytes ) = 0; 
@@ -142,7 +146,9 @@ class SimpleMemBackend : public MemBackend {
 class FlagMemBackend : public MemBackend {
   public:
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED_API(SST::MemHierarchy::FlagMemBackend, SST::MemHierarchy::MemBackend)
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     FlagMemBackend(Component *comp, Params &params) : MemBackend(comp,params) {}  
+#endif  // inserted by script
     FlagMemBackend(ComponentId_t id, Params &params) : MemBackend(id,params) {}  
     virtual bool issueRequest( ReqId, Addr, bool isWrite, uint32_t flags, unsigned numBytes ) = 0;
 
@@ -165,7 +171,9 @@ class FlagMemBackend : public MemBackend {
 class ExtMemBackend : public MemBackend {
   public:
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED_API(SST::MemHierarchy::ExtMemBackend, SST::MemHierarchy::MemBackend)
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
     ExtMemBackend(Component *comp, Params &params) : MemBackend(comp,params) {}  
+#endif  // inserted by script
     ExtMemBackend(ComponentId_t id, Params &params) : MemBackend(id,params) {}  
     virtual bool issueRequest( ReqId, Addr, bool isWrite,
                                std::vector<uint64_t> ins,

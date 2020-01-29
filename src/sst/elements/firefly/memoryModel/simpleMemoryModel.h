@@ -28,6 +28,8 @@
 
 #define CALL_INFO_LAMBDA     __LINE__, __FILE__
 
+namespace SST {
+namespace Firefly {
 
 class SimpleMemoryModel : public MemoryModel {
 
@@ -38,7 +40,7 @@ public:
         "SimpleMemory",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "",
-       	SimpleMemoryModel 
+       	SST::Firefly::SimpleMemoryModel 
     )
 
     SST_ELI_DOCUMENT_PARAMS(
@@ -120,7 +122,9 @@ public:
   public:
 	enum NIC_Thread { Send, Recv };
 
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 	SimpleMemoryModel( Component* comp, Params& params ) : MemoryModel(comp) { assert(0); }
+#endif  // inserted by script
     SimpleMemoryModel( ComponentId_t compId, Params& params ) :
 		MemoryModel( compId ), m_hostCacheUnit(NULL), m_busBridgeUnit(NULL)
 	{
@@ -380,4 +384,6 @@ public:
 	Output		m_dbg;
 }; 
 
+} // namespace Firefly
+} // namespace SST
 #endif

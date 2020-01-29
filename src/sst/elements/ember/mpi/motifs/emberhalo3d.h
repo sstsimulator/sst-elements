@@ -78,7 +78,9 @@ public:
 
 
 public:
+#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
 	EmberHalo3DGenerator(SST::Component* owner, Params& params) : EmberMessagePassingGenerator(owner,params,"") {}
+#endif  // inserted by script
 	EmberHalo3DGenerator(SST::ComponentId_t, Params& params);
 	~EmberHalo3DGenerator() {}
 	void configure();
