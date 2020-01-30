@@ -55,9 +55,9 @@ ringstop_params = {
 }
 
 topology_params = {
-        "torus:shape" : groups * (cores_per_group + memory_controllers_per_group + l3cache_blocks_per_group),
-        "torus:local_ports" : "1",
-       	"torus:width" : "1",
+        "shape" : groups * (cores_per_group + memory_controllers_per_group + l3cache_blocks_per_group),
+        "local_ports" : "1",
+       	"width" : "1",
 }
 
 l1_params = {
