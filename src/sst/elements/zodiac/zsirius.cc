@@ -39,7 +39,6 @@ ZodiacSiriusTraceReader::ZodiacSiriusTraceReader(ComponentId_t id, Params& param
   waitFunctor(DerivedFunctor(this, &ZodiacSiriusTraceReader::completedWaitFunction)),
   trace(NULL)
 {
-    TraceFunction trace(CALL_INFO_LONG);
     scaleCompute = params.find("scalecompute", 1.0);
 
     string osModule = params.find<std::string>("os.module");
