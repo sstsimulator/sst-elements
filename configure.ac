@@ -47,15 +47,15 @@ SST_CHECK_OSX()
 
 SST_ELEMENT_CONFIG_OUTPUT()
 
-# Compile flags come from SST-Core, add or remove extra warnings 
-# depending on the use-picky flag 
+# Compile flags come from SST-Core, add or remove extra warnings
+# depending on the use-picky flag
 SST_CHECK_PICKY
 AS_IF([test "x$use_picky" = "xyes"],
       [WARNFLAGS="-Wall -Wextra"],
       [WARNFLAGS=""])
 CFLAGS="$CFLAGS $WARNFLAGS"
 CXXFLAGS="$CXXFLAGS $WARNFLAGS"
-      
+
 AC_MSG_CHECKING([for SST-Elements Git Branch, Head SHA and Commit Count])
 if test -d ".git" ; then
     SSTELEMENTS_GIT_BRANCH=`git rev-parse --abbrev-ref HEAD`
@@ -111,7 +111,7 @@ if test "x$SSTELEMENTS_GIT_HEADSHA" != "x$PACKAGE_VERSION"; then
 printf "%38s : %s\n" "Git Branch" "$SSTELEMENTS_GIT_BRANCH"
 printf "%38s : %s\n" "Git HEAD SHA" "$SSTELEMENTS_GIT_HEADSHA"
 printf "%38s : %s\n" "Branch Commit Count" "$SSTELEMENTS_GIT_COMMITCOUNT"
-else 
+else
 printf "%38s : %s\n" "Version" "SST-Elements $PACKAGE_VERSION"
 fi
 printf "%38s : %s\n" "SST-Elements Prefix" "$prefix"
@@ -149,26 +149,26 @@ for depfilepath in $list; do
 
     # Get the basename of the file
     depfilename=`basename $depfilepath`
-   
-    # Strip off the .m4 from the filename 
+
+    # Strip off the .m4 from the filename
     depfile=${depfilename%$suffix}
 
     # Extract the subname from the depfile string name
     depsubname=$depfile
     depsubname=${depsubname#$prefix}
-    
+
     happytest=${depfile}_happy
-    
+
     if test "x${!happytest}" = "xyes" ; then
         printf "%38s : YES\n" $depsubname
     else
         printf "%38s : No\n" $depsubname
     fi
-    
+
 done
 
 echo ""
-echo "-------------------------------------------------------" 
+echo "-------------------------------------------------------"
 echo "Configuration Information (Make will build the following elements):"
 echo ""
 
@@ -176,7 +176,11 @@ for e in $dist_element_libraries
 do
     echo "$active_element_libraries" | grep "$e" >/dev/null
     if test $? -eq 0 ; then
-        msg="YES"
+        if test -e "./src/sst/elements/$e/.deprecated" ; then
+            msg="YES - DEPRECATED"
+        else
+            msg="YES"
+        fi
     else
         msg="no"
     fi
