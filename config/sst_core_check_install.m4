@@ -10,10 +10,12 @@ AC_DEFUN([SST_CORE_CHECK_INSTALL], [
   SST_REGISTER_TOOL=""
 
   AS_IF( [test x"$with_sst_core" = "x/bin"],
-	 [AC_MSG_ERROR([User undefined path while using --with-sst-core], [1])], [] )
+	 [AC_MSG_ERROR([User undefined path while using --with-sst-core], [1])],
+	 [AC_MSG_NOTICE([--with-sst-core check = good 1])] )
 
   AS_IF( [test x"$with_sst_core" = "xyes/bin"],
-	 [AC_MSG_ERROR([User undefined path while using --with-sst-core], [1])], [] )
+	 [AC_MSG_ERROR([User undefined path while using --with-sst-core], [1])],
+	 [AC_MSG_NOTICE([--with-sst-core check = good 2])] )
 
   AC_PATH_PROG([SST_CONFIG_TOOL], [sst-config], [], [$with_sst_core])
 
