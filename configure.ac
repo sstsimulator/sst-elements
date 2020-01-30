@@ -176,8 +176,8 @@ for e in $dist_element_libraries
 do
     echo "$active_element_libraries" | grep "$e" >/dev/null
     if test $? -eq 0 ; then
-        if test -e "./src/sst/elements/$e/.depreciated" ; then
-            msg="YES - DEPRECIATED"
+        if test -e "./src/sst/elements/$e/.deprecated" ; then
+            msg="YES - DEPRECATED"
         else
             msg="YES"
         fi
