@@ -85,6 +85,7 @@ comp_chiprtr.addParams({
       "id" : "0",
       "topology" : "merlin.singlerouter"
 })
+comp_chiprtr.setSubComponent("topology","merlin.singlerouter")
 
 comp_dirctrl = sst.Component("dirctrl", "memHierarchy.DirectoryController")
 comp_dirctrl.addParams({

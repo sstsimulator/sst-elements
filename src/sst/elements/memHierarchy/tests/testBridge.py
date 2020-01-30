@@ -34,6 +34,7 @@ class Network:
             "output_buf_size" : "1KB",
             "debug" : 0,
             })
+        self.rtr.setSubComponent("topology","merlin.singlerouter")
 
 
     def getNextPort(self):

@@ -28,6 +28,7 @@ network.addParams({
       "id" : "0",  
       "topology" : "merlin.singlerouter"
 })
+network.setSubComponent("topology","merlin.singlerouter")
 
 for x in range(cores):
     cpu = sst.Component("cpu" + str(x), "memHierarchy.trivialCPU")
