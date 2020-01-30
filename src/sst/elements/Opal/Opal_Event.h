@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2018 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -37,10 +37,9 @@ using namespace SST;
 
 namespace SST{ namespace OpalComponent{
 
-	enum EventType { HINT, MMAP, REQUEST, RESPONSE, UNMAP, UMAPACK, SHOOTDOWN, INVALIDADDR, SDACK};
+	enum EventType { HINT, MMAP, REQUEST, RESPONSE, UNMAP, UMAPACK, SHOOTDOWN, REMAP, SDACK, ARIEL_ENABLED, HALT, PAGE_REFERENCE, PAGE_REFERENCE_END, IPC_INFO };
 	enum MemType { LOCAL, SHARED };
 	enum MemTech { DRAM, NVM, HBM, HMC, SCRATCHPAD, BURSTBUFFER};
-//	enum HintType { DRAM, NVM, HBM, HMC, SCRATCHPAD, BURSTBUFFER, };
 
 // **************** Important *****************
 //	Levels hints are: 0 for DRAM
@@ -61,18 +60,30 @@ namespace SST{ namespace OpalComponent{
 			uint64_t address;
 			uint64_t paddress;
 			int faultLevel;
-			int size;
-			int nodeId;
-			int coreId;
+			int size; // to redcue packet size, size valiable we used size variable for multiple pusrposes. 1. size of the page fault. 2. shoowdownID. 3. local and global page reference
+			uint32_t nodeId;
+			uint32_t coreId;
 			MemType memType;
-			int shootdownId;
 			int hint;
 			int fileId;
+			int memContrlId;
+			bool invalidate;
 
 		public:
 
 			OpalEvent(EventType y) : SST::Event()
-		{ ev = y; memType = SST::OpalComponent::MemType::LOCAL;}
+		{ ev = y; memType = SST::OpalComponent::MemType::LOCAL; invalidate = false;}
+
+			OpalEvent(EventType y, const uint32_t level, const uint64_t virtualAddress, const uint64_t size_, const uint32_t thread) : SST::Event()
+			{
+				ev = y; 
+				memType = SST::OpalComponent::MemType::LOCAL; 
+				invalidate = false;
+				size =size_;
+				faultLevel = level;
+				address = virtualAddress;
+				coreId = thread;
+			}
 
 			void setType(int ev1) { ev = static_cast<EventType>(ev1);}
 			int getType() { return ev; }
@@ -80,26 +91,28 @@ namespace SST{ namespace OpalComponent{
 			void setMemType(int mtype) { memType = static_cast<MemType>(mtype);}
 			MemType getMemType() { return memType; }
 
-			void setNodeId(int id) { nodeId = id; }
-			int getNodeId() { return nodeId; }
+			void setNodeId(uint32_t id) { nodeId = id; }
+			uint32_t getNodeId() { return nodeId; }
 
-			void setCoreId(int id) { coreId = id; }
-			int getCoreId() { return coreId; }
+			void setCoreId(uint32_t id) { coreId = id; }
+			uint32_t getCoreId() { return coreId; }
 			
 			void setResp(uint64_t add, uint64_t padd, int sz) { address = add; paddress = padd; size = sz;}
 
 			void setAddress(uint64_t add) { address = add; }
 			uint64_t getAddress() { return address; }
 
+			void setPAddress(uint64_t add) { paddress = add; }
 			uint64_t getPaddress() { return paddress; }
 
+			void setSize(int size_) { size = size_; }
 			int getSize() { return size; }
 
 			void setFaultLevel(int level) { faultLevel = level; }
 			int getFaultLevel() { return faultLevel; }
 
-			void setShootdownId(int id) { shootdownId = id; }
-			int getShootdownId() { return shootdownId; }
+			void setInvalidate() { invalidate = true; }
+			bool getInvalidate() { return invalidate; }
 
 			void setFileId(int id) { fileId = id; }
 			int getFileId() { return fileId; }
@@ -107,7 +120,10 @@ namespace SST{ namespace OpalComponent{
 			void setHint(int x) { hint = x; }
 			int getHint() { return hint; }
 
-			void serialize_order(SST::Core::Serialization::serializer &ser) override{
+			void setMemContrlId(int id) { memContrlId = id; }
+			int getMemContrlId() { return memContrlId; }
+
+			void serialize_order(SST::Core::Serialization::serializer &ser) override {
 				Event::serialize_order(ser);
 				ser & ev;
 				ser & address;
@@ -116,9 +132,9 @@ namespace SST{ namespace OpalComponent{
 				ser & nodeId;
 				ser & coreId;
 				ser & memType;
-				ser & shootdownId;
 				ser & hint;
 				ser & fileId;
+				ser & memContrlId;
 			}
 
 

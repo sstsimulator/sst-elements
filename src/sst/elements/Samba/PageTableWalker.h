@@ -30,6 +30,7 @@
 #include <sst/core/sst_types.h>
 
 #include "utils.h"
+#include "PageFaultHandler.h"
 
 // This file defines the page table walker and 
 
@@ -66,20 +67,20 @@ namespace SST { namespace SambaComponent{
 
 		SST::Link * to_mem; // This links the Page table walker to the memory hierarchy
 
-
-		SST::Link * to_opal; // This links the Page table walker to the opal memory manager
-
 		int * hold; // This is used to tell the TLB hierarchy to stall, to emulate overhead of page fault handler
 
 		int * shootdown; // This is used to indicate TLB hierarchy that TLB shootdown from other cores is in progress
 
-		int * own_shootdown; // This is used to indicate TLB hierarchy that TLB shootdown from the same core is in progress
-
 		int shootdownId;
 
-		std::list<Address_t> buffer;
-		std::list<Address_t> * invalid_addrs; // This is used to store address invalidation requests.
+		int num_pages_migrated;
+ 
+		//std::vector<Address_t, int> buffer;
+		int *hasInvalidAddrs;
+ 
+		std::vector<std::pair<Address_t, int> > * invalid_addrs; // This is used to store address invalidation requests.
 
+		uint64_t tlb_shootdown_time;
 
 
 		// ------------- Note that we assume that for each Samba componenet instance, all units run the same VMA, thus all share the same page table
@@ -87,7 +88,7 @@ namespace SST { namespace SambaComponent{
 
 		// Holds CR3 value of current context
 		Address_t *CR3;
-		int cr3_init;
+		int *cr3_init;
 
 		// Holds the PGD physical pointers, the key is the 9 bits 39-47, i.e., VA/(4096*512*512*512)
 		std::map<Address_t, Address_t> * PGD;
@@ -108,6 +109,10 @@ namespace SST { namespace SambaComponent{
 		std::map<Address_t,int> * MAPPED_PAGE_SIZE1GB;
 
 		std::map<Address_t,int> *PENDING_PAGE_FAULTS;
+		std::map<Address_t,int> *PENDING_PAGE_FAULTS_PGD;
+		std::map<Address_t,int> *PENDING_PAGE_FAULTS_PUD;
+		std::map<Address_t,int> *PENDING_PAGE_FAULTS_PMD;
+		std::map<Address_t,int> *PENDING_PAGE_FAULTS_PTE;
 		std::map<Address_t,int> *PENDING_SHOOTDOWN_EVENTS;
 
 
@@ -121,6 +126,12 @@ namespace SST { namespace SambaComponent{
 
 		Address_t stall_addr; // stores the address for which ptw was stalled
 
+		int stall_at_levels;
+		int stall_at_PGD;
+		int stall_at_PUD;
+		int stall_at_PMD;
+		int stall_at_PTE;
+
 		int  * sets; //stores the number of sets
 
 		int* size; // Number of entries
@@ -133,11 +144,11 @@ namespace SST { namespace SambaComponent{
 
 		int latency; // indicates the latency in cycles
 
-		int emulate_faults; // if set, the page faults will be communicated to Opal
+		int emulate_faults; // if set, the page faults will be communicated to page fault handler
 
-		int *page_migration;
+		int *page_placement;
 
-		PageMigrationType *page_migration_policy;
+		uint64_t *timeStamp;
 
 		int upper_link_latency; // This indicates the upper link latency
 
@@ -168,9 +179,13 @@ namespace SST { namespace SambaComponent{
 
 		int page_walk_latency; // this is really nothing than the page walk latency in case of having no walkers
 
+		long long int mmu_id=0;
+
 		SST::Cycle_t currTime;
 
 		uint64_t line_size; // For setting base address of MemEvents
+
+		PageFaultHandler* pageFaultHandler;
 
 		public: 
 
@@ -178,7 +193,8 @@ namespace SST { namespace SambaComponent{
 		PageTableWalker(ComponentId_t id, int tlb_id, PageTableWalker * Next_level,int level, SST::Params& params);
 
 		void setPageTablePointers( Address_t * cr3, std::map<Address_t, Address_t> * pgd,  std::map<Address_t, Address_t> * pud,  std::map<Address_t, Address_t> * pmd, std::map<Address_t, Address_t> * pte,
-				std::map<Address_t,int> * gb,  std::map<Address_t,int> * mb,  std::map<Address_t,int> * kb, std::map<Address_t,int> * pr, std::map<Address_t,int> * sr)
+				std::map<Address_t,int> * gb,  std::map<Address_t,int> * mb,  std::map<Address_t,int> * kb, std::map<Address_t,int> * pr, int *cr3I, std::map<Address_t,int> *pf_pgd,  std::map<Address_t,int> *pf_pud,  
+				std::map<Address_t,int> *pf_pmd, std::map<Address_t,int> * pf_pte)
 		{
 			CR3 = cr3;
 			PGD = pgd;
@@ -189,10 +205,21 @@ namespace SST { namespace SambaComponent{
 			MAPPED_PAGE_SIZE2MB = mb;
 			MAPPED_PAGE_SIZE1GB = gb;
 			PENDING_PAGE_FAULTS = pr;
-			PENDING_SHOOTDOWN_EVENTS = sr;
+			PENDING_PAGE_FAULTS_PGD = pf_pgd;
+			PENDING_PAGE_FAULTS_PUD = pf_pud;
+			PENDING_PAGE_FAULTS_PMD = pf_pmd;
+			PENDING_PAGE_FAULTS_PTE = pf_pte;
 
-			cr3_init = 0;
+			cr3_init = cr3I;
 		}
+
+		void setPageFaultHandler( PageFaultHandler *pfh) {
+			pageFaultHandler = pfh;
+		}
+
+		uint64_t *local_memory_size;
+
+		uint32_t ptw_confined;
 
 		// Does the translation and updating the statistics of miss/hit
 		Address_t translate(Address_t vadd);
@@ -204,15 +231,13 @@ namespace SST { namespace SambaComponent{
 
 		void set_ToMem(SST::Link * l) { to_mem = l;} 
 
-		void set_ToOpal(SST::Link * l) { to_opal = l;} 
-
 		void setLineSize(uint64_t size) { line_size = size; }
 
 		// invalidate PTWC
-		void invalidate(Address_t vadd);
+		void invalidate(Address_t vadd, int id);
 
 		// shootdown ack
-		void sendShootdownAck();
+		void sendShootdownAck(int delay, int page_swapping_delay);
 
 		// Find if it exists
 		bool check_hit(Address_t vadd, int struct_id);
@@ -224,15 +249,21 @@ namespace SST { namespace SambaComponent{
 
 		void setHold(int * tmp) { hold = tmp; }
 
-		void setShootDownEvents(int * sd, int * own_sd, std::list<Address_t> * x) { shootdown = sd; own_shootdown = own_sd; invalid_addrs = x;}
+		void setShootDownEvents(int * sd, int *iva, std::vector<std::pair<Address_t, int> > * x) { shootdown = sd; hasInvalidAddrs = iva; invalid_addrs = x;}
 
-		void setPageMigration(int *page_mig, PageMigrationType *policy) { page_migration = page_mig; page_migration_policy = policy; }
+		void setPagePlacement(int *page_plac) { page_placement = page_plac; }
+
+		void setTimeStamp(uint64_t *time) { timeStamp = time; }
+
+		void setLocalMemorySize(uint64_t *mem_size) { local_memory_size = mem_size;
+			//std::cerr << " PTW local memory size: " << *local_memory_size << std::endl;
+		}
 
 		void initaitePageMigration(Address_t vaddress, Address_t paddress);
 
 		void recvResp(SST::Event* event);
 
-		void recvOpal(SST::Event* event);
+		bool recvPageFaultResp(PageFaultHandler::PageFaultHandlerPacket pkt);
 
 		void setServiceBackSize( std::map<MemHierarchy::MemEventBase *, long long int, MemEventPtrCompare> * x) { service_back_size = x;}
 

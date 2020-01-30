@@ -33,7 +33,7 @@ using namespace SST;
 
 namespace SST{ namespace SambaComponent{
 
-	enum EventType { PAGE_FAULT, OPAL_RESPONSE, SHOOTDOWN};
+	enum EventType { PAGE_FAULT, PAGE_FAULT_RESPONSE, PAGE_FAULT_SERVED, SHOOTDOWN, PAGE_REFERENCE, SDACK };
 
 	// Thie defines a class for events of Samba
 	class SambaEvent : public SST::Event

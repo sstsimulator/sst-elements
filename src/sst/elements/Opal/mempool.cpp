@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2018 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2018, NTESS
 // All rights reserved.
 // 
 // This file is part of the SST software package. For license
@@ -20,12 +20,12 @@
 
 #include "mempool.h"
 
+#include <algorithm>
+#include <chrono> 
 
 //Constructor for pool
-Pool::Pool(SST::Component* own, Params params, SST::OpalComponent::MemType mem_type, int id)
+Pool::Pool(Params params, SST::OpalComponent::MemType mem_type, int id)
 {
-
-	owner = own;
 
 	output = new SST::Output("OpalMemPool[@f:@l:@p] ", 16, 0, SST::Output::STDOUT);
 
@@ -35,12 +35,12 @@ Pool::Pool(SST::Component* own, Params params, SST::OpalComponent::MemType mem_t
 
 	frsize = params.find<int>("frame_size", 4); //4KB frame size
 
-	char* subID = (char*) malloc(sizeof(char) * 32);
-	sprintf(subID, "%" PRIu32, id);
-
 	memType = mem_type;
 
 	poolId = id;
+
+	/*char* subID = (char*) malloc(sizeof(char) * 32);
+	sprintf(subID, "%" PRIu32, id);
 
 	if(memType == SST::OpalComponent::MemType::LOCAL) {
 		memUsage = own->registerStatistic<uint64_t>( "local_mem_usage", subID );
@@ -56,7 +56,7 @@ Pool::Pool(SST::Component* own, Params params, SST::OpalComponent::MemType mem_t
 	}
 
 	free(subID);
-
+	*/
 	/* memory technology
 	 * 0: DRAM
 	 * 1: NVRAM
@@ -81,13 +81,19 @@ Pool::Pool(SST::Component* own, Params params, SST::OpalComponent::MemType mem_t
 void Pool::build_mem()
 {
 	int i=0;
-	Frame *frame;
 	num_frames = ceil(size/frsize);
 	real_size = num_frames * frsize;
 
+	//std::vector<int> numbers;
+	//for(int i=0; i<num_frames; i++)       // add 0-99 to the vector
+    //	numbers.push_back(i);
+
+    // random allocation of frames
+	//unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+	//std::shuffle(numbers.begin(), numbers.end(), std::default_random_engine(seed));
+
 	for(i=0; i< num_frames; i++) {
-		frame = new Frame(((uint64_t) i*frsize*1024) + start, 0);
-		freelist.push_back(frame);
+		freelist.push_back(((uint64_t) i*frsize*1024) + start);
 	}
 
 	available_frames = num_frames;
@@ -115,17 +121,19 @@ REQRESPONSE Pool::allocate_frames(int pages)
 		if(freelist.empty()) {
 			while(!frames_allocated.empty()) {
 				Frame *frame = frames_allocated.front();
-				freelist.push_back(frame);
+				freelist.push_back(frame->starting_address);
 				alloclist.erase(frame->starting_address);
 				frames_allocated.pop_front();
 				available_frames++;
+				delete frame;
 			}
 			break;
 		}
 		else
 		{
-			Frame *frame = freelist.front();
-			freelist.pop_front();
+			uint64_t frameAddr = freelist.front();
+			freelist.erase(freelist.begin());
+			Frame *frame = new Frame(frameAddr,0);
 			alloclist[frame->starting_address] = frame;
 			frames_allocated.push_back(frame);
 			available_frames--;
@@ -163,8 +171,9 @@ REQRESPONSE Pool::allocate_frame(int N)
 	else
 	{
 		// Simply, pop the first free frame and assign it
-		Frame * temp = freelist.front();
-		freelist.pop_front();
+		uint64_t frameAddr = freelist.front();
+		freelist.erase(freelist.begin());
+		Frame *temp = new Frame(frameAddr,0);
 		alloclist[temp->starting_address] = temp;
 		available_frames--;
 		response.address = temp->starting_address;
@@ -196,9 +205,9 @@ REQRESPONSE Pool::deallocate_frames(int pages, uint64_t starting_pAddress)
 		{
 			//Remove from allocation map and add to free list
 			Frame *temp = it->second;
-			freelist.push_back(temp);
+			freelist.push_back(temp->starting_address);
 			alloclist.erase(pAddress);
-
+			delete temp;
 		}
 		else
 		{
@@ -235,8 +244,9 @@ REQRESPONSE Pool::deallocate_frame(uint64_t X, int N)
 		{
 			// Remove from allocation map and add to free list
 			Frame * temp = alloclist[X];
-			freelist.push_back(temp);
+			freelist.push_back(temp->starting_address);
 			alloclist.erase(X);
+			delete temp;
 			available_frames++;
 			response.status = 1;
 		}
@@ -248,28 +258,43 @@ REQRESPONSE Pool::deallocate_frame(uint64_t X, int N)
 	return response;
 }
 
-void Pool::profileStats(int stat, int value)
+bool Pool::isAllocated(uint64_t address)
 {
-	switch(stat){
-	case 0:
-		memUsage->addData(value);
-		break;
-	case 1:
-		mappedMemory->addData(value);
-		break;
-	case 2:
-		unmappedMemory->addData(value);
-		break;
-	case 3:
-		tlbShootdowns->addData(value);
-		break;
-	case 4:
-		tlbShootdownDelay->addData(value);
-		break;
-	//default:
-		//own->output->fatal(CALL_INFO, -1, "%s, Error - Unknown statistic\n", own->getName().c_str());
+	if(alloclist.find(address)==alloclist.end())
+		return false;
+
+	return true;
+}
+
+/*REQRESPONSE Pool::allocate_frame_address(uint64_t address)
+{
+
+	REQRESPONSE response;
+	response.status = 0;
+
+	// Make sure we have free frames first
+	if(freelist.empty())
+		return response;
+
+	// For now, we will assume you can only allocate 1 frame, TODO: We will implemenet a buddy-allocator style that enables allocating contigous physical spaces
+	if(N>1)
+		return response;
+
+	else
+	{
+		int index = freelist_index[address];
+		Frame * temp = freelist[index];
+		//freelist.remove(temp);
+		freelist.erase(freelist.begin()+index);
+		alloclist[temp->starting_address] = temp;
+		available_frames--;
+		response.address = temp->starting_address;
+		response.pages = 1;
+		response.status = 1;
+		return response;
+
 	}
 
-}
+}*/
 
 

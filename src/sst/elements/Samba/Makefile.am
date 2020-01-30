@@ -17,7 +17,8 @@ libSamba_la_SOURCES = \
 	TLBhierarchy.h \
 	TLBhierarchy.cc \
 	PageTableWalker.h \
-	PageTableWalker.cc
+	PageTableWalker.cc \
+	PageFaultHandler.h
 
 
 libSamba_la_CPPFLAGS = \
