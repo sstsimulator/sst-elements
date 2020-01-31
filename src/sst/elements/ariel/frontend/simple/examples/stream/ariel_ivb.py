@@ -53,6 +53,12 @@ ringstop_params = {
         "topology" : "merlin.torus"
 }
 
+topology_params = {
+        "shape" : groups * (cores_per_group + memory_controllers_per_group + l3cache_blocks_per_group),
+        "local_ports" : "1",
+        "width" : "1",
+}
+
 l1_params = {
 	"coherence_protocol": coherence_protocol,
         "cache_frequency": clock,
@@ -153,6 +159,8 @@ for next_ring_stop in range((cores_per_group + memory_controllers_per_group + l3
         ring_rtr.addParams({
                	"id" : next_ring_stop
                	})
+        topo = ring_rtr.setSubComponent("topology","merlin.torus")
+        topo.addParams(topology_params)
         router_map["rtr." + str(next_ring_stop)] = ring_rtr
 
 for next_ring_stop in range((cores_per_group + memory_controllers_per_group + l3cache_blocks_per_group) * groups):
