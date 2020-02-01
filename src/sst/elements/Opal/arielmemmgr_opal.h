@@ -40,6 +40,7 @@ class MemoryManagerOpal : public ArielComponent::ArielMemoryManager {
                 "Memory manager which uses the Opal memory allocation component", SST::ArielComponent::ArielMemoryManager)
 
         SST_ELI_DOCUMENT_PARAMS( 
+        		{ "corecount", "Sets the verbosity of the memory manager output", "1"},
                 { "opal_latency",   "latency to communicate to the Opal manager", "32ps"},
                 { "translator",     "(temporary) translation memory manager to actually translate addresses for now", "MemoryManagerSimple"} )
         
@@ -49,7 +50,9 @@ class MemoryManagerOpal : public ArielComponent::ArielMemoryManager {
 
         /* MemoryManagerOpal */
         MemoryManagerOpal(ComponentId_t id, Params& params);
+#ifndef SST_ENABLE_PREVIEW_BUILD
         MemoryManagerOpal(Component* comp, Params& params) : ArielComponent::ArielMemoryManager(comp, params) { } // Legacy
+#endif
         ~MemoryManagerOpal();
 
         /* Call through to temporary translator */

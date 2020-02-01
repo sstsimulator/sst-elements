@@ -121,6 +121,7 @@ comp_chiprtr.addParams({
       "id" : "0",
       "topology" : "merlin.singlerouter"
 })
+comp_chiprtr.setSubComponent("topology","merlin.singlerouter")
 dirctrl0 = sst.Component("dirctrl0", "memHierarchy.DirectoryController")
 dirctrl0.addParams({
     "coherence_protocol" : "MSI",

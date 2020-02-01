@@ -261,6 +261,7 @@ chiprtr.addParams({
       "link_bw" : "1GB/s",
       "topology" : "merlin.singlerouter"
 })
+chiprtr.setSubComponent("topology","merlin.singlerouter")
 dirctrl = sst.Component("dirctrl", "memHierarchy.DirectoryController")
 dirctrl.addParams({
     "coherence_protocol" : "MSI",

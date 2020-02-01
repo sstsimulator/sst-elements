@@ -41,7 +41,7 @@ class TLB : public ComponentExtension
 
 	int sizes; // This indicates the number of sizes supported
 
-	int * page_size; // By default, lets assume 4KB pages
+	uint64_t * page_size; // By default, lets assume 4KB pages
 
 	int * assoc; // This represents the associativiety
 
@@ -68,7 +68,7 @@ class TLB : public ComponentExtension
 
 	int misses; // number of misses
 
-	int emulate_faults; // If set, then page faults will send requests to Opal
+	int emulate_faults; // If set, then page faults will send requests to page fault handler
 
 	int os_page_size; // This is a hack for the size of the frames returned by the OS, by default
 
@@ -115,7 +115,7 @@ class TLB : public ComponentExtension
 	void finish(){}
 
 	// Invalidate TLB entry
-	void invalidate(Address_t vadd);
+	void invalidate(Address_t vadd, int id);
 
 	// Find if it exists
 	bool check_hit(Address_t vadd, int struct_id);

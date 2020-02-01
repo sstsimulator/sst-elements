@@ -59,7 +59,9 @@ for y in xrange(y_size):
                 "message_size" : msg_size,
                 "num_messages" : "%d"%(num_messages)
             })
-            ep.addLink(getLink("rtr.%d.%d"%(x,y), "ep0.%d.%d"%(x,y+1)), "rtr", "800ps")
+            sub = ep.setSubComponent("networkIF","kingsley.linkcontrol")
+            sub.addParam("link_bw","1GB/s")
+            sub.addLink(getLink("rtr.%d.%d"%(x,y), "ep0.%d.%d"%(x,y+1)), "rtr_port", "800ps")
             
             
         if y != 0:
@@ -76,7 +78,9 @@ for y in xrange(y_size):
                 "message_size" : msg_size,
                 "num_messages" : "%d"%(num_messages)
             })
-            ep.addLink(getLink("rtr.%d.%d"%(x,y-1), "ep0.%d.%d"%(x,y)), "rtr", "800ps")
+            sub = ep.setSubComponent("networkIF","kingsley.linkcontrol")
+            sub.addParam("link_bw","1GB/s")
+            sub.addLink(getLink("rtr.%d.%d"%(x,y-1), "ep0.%d.%d"%(x,y)), "rtr_port", "800ps")
 
         if x != x_size - 1:
             rtr.addLink(getLink("rtr.%d.%d"%(x,y), "rtr.%d.%d"%(x+1,y)), "east", "800ps")
@@ -92,7 +96,9 @@ for y in xrange(y_size):
                 "message_size" : msg_size,
                 "num_messages" : "%d"%(num_messages)
             })
-            ep.addLink(getLink("rtr.%d.%d"%(x,y), "ep0.%d.%d"%(x+1,y)), "rtr", "800ps")
+            sub = ep.setSubComponent("networkIF","kingsley.linkcontrol")
+            sub.addParam("link_bw","1GB/s")
+            sub.addLink(getLink("rtr.%d.%d"%(x,y), "ep0.%d.%d"%(x+1,y)), "rtr_port", "800ps")
 
         if x != 0:
             rtr.addLink(getLink("rtr.%d.%d"%(x-1,y), "rtr.%d.%d"%(x,y)), "west", "800ps")
@@ -108,7 +114,9 @@ for y in xrange(y_size):
                 "message_size" : msg_size,
                 "num_messages" : "%d"%(num_messages)
             })
-            ep.addLink(getLink("rtr.%d.%d"%(x-1,y), "ep0.%d.%d"%(x,y)), "rtr", "800ps")
+            sub = ep.setSubComponent("networkIF","kingsley.linkcontrol")
+            sub.addParam("link_bw","1GB/s")
+            sub.addLink(getLink("rtr.%d.%d"%(x-1,y), "ep0.%d.%d"%(x,y)), "rtr_port", "800ps")
 
 
         # Add endpoints
@@ -125,7 +133,9 @@ for y in xrange(y_size):
                 "num_messages" : "%d"%(num_messages)
                 
             })
-            ep.addLink(getLink("rtr.%d.%d"%(x,y), "ep%d.%d.%d"%(z,x,y)), "rtr", "800ps")
+            sub = ep.setSubComponent("networkIF","kingsley.linkcontrol")
+            sub.addParam("link_bw","1GB/s")
+            sub.addLink(getLink("rtr.%d.%d"%(x,y), "ep%d.%d.%d"%(z,x,y)), "rtr_port", "800ps")
 
 
 sst.setStatisticLoadLevel(9)

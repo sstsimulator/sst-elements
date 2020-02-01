@@ -159,7 +159,7 @@ topo_dragonfly::topo_dragonfly(Component* comp, Params &p) :
 topo_dragonfly::topo_dragonfly(ComponentId_t cid, Params &p, int num_ports, int rtr_id) :
     Topology(cid)
 {
-    params.p = p.find<uint32_t>(":hosts_per_router");
+    params.p = p.find<uint32_t>("hosts_per_router");
     params.a = p.find<uint32_t>("routers_per_group");
     params.k = num_ports;
     params.h = p.find<uint32_t>("intergroup_per_router");

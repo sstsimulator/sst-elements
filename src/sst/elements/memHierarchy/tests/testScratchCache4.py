@@ -201,6 +201,7 @@ comp_net.addParams({
     "topology" : "merlin.singlerouter",
     "num_ports" : 6
 })
+comp_net.setSubComponent("topology","merlin.singlerouter")
 
 memctrl0 = sst.Component("memory0", "memHierarchy.MemController")
 memctrl0.addParams({
