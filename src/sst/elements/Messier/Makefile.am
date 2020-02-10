@@ -1,9 +1,9 @@
 AM_CPPFLAGS = \
-	$(MPIT_CPPFLAGS) 
+	$(MPIT_CPPFLAGS)
 
-AM_LDFLAGS = -lm 
+AM_LDFLAGS = -lm
 compdir = $(pkglibdir)
-comp_LTLIBRARIES = libMessier.la 
+comp_LTLIBRARIES = libMessier.la
 
 libMessier_la_SOURCES = \
 	Cache.h \
@@ -19,8 +19,8 @@ libMessier_la_SOURCES = \
 	NVM_Request.h \
 	NVM_DIMM.h \
 	NVM_DIMM.cc \
-	NVM_Params.h 
-	
+	NVM_Params.h
+
 
 
 libMessier_la_CPPFLAGS = \
@@ -47,9 +47,13 @@ EXTRA_DIST = \
 #infogather_CPPFLAGS = -I/usr/local/systemc-2.3/include \
 #											-std=c++11 -fPIC -Wall \
 #											$(BOOST_CPPFLAGS) \
-#											$(MPI_CPPFLAGS) 
+#											$(MPI_CPPFLAGS)
 #infogather_LDFLAGS =  -L/usr/local/systemc-2.3/lib-linux64/ -lsystemc \
 #											-lhmcsim \
 #										 	-avoid-version
 #infogather_LDADD = libhmcsim.so
 
+install-exec-hook:
+	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     Messier=$(abs_srcdir)
+	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      Messier=$(abs_srcdir)/tests
+	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTSUITES Messier=$(abs_srcdir)/testsuites

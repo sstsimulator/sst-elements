@@ -72,7 +72,7 @@ libCramSim_la_SOURCES = \
 	c_TxnDispatcher.cpp \
 	c_TxnGen.hpp \
 	c_TxnGen.cpp \
-	memReqEvent.hpp 
+	memReqEvent.hpp
 
 EXTRA_DIST = \
 	README \
@@ -94,6 +94,11 @@ EXTRA_DIST = \
 	tests/test_txntrace.py
 
 libCramSim_la_LDFLAGS = -module -avoid-version
+
+install-exec-hook:
+	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     CramSim=$(abs_srcdir)
+	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      CramSim=$(abs_srcdir)/tests
+	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTSUITES CramSim=$(abs_srcdir)/testsuites
 
 ##########################################################################
 ##########################################################################

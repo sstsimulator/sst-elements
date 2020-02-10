@@ -4,7 +4,7 @@ AM_CPPFLAGS = \
         -DPROSPERO_TOOL_DIR="$(libexecdir)"
 
 compdir = $(pkglibdir)
-comp_LTLIBRARIES = libprospero.la 
+comp_LTLIBRARIES = libprospero.la
 
 libprospero_la_SOURCES = \
         proscpu.h \
@@ -75,9 +75,12 @@ all-local: tracetool/sstmemtrace.cc
 	-o prosperotrace.dylib $(top_srcdir)/src/sst/elements/prospero/tracetool/sstmemtrace.cc \
 	-stdlib=libstdc++ \
 	-lpin -lxed -lpindwarf -lpthread $(LIBZ_LDFLAGS) $(LIBZ_LIB)
-	
+
 install-exec-hook: prosperotrace.dylib
 	cp prosperotrace.dylib $(libexecdir)/prosperotrace.dylib
+	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     prospero=$(abs_srcdir)
+	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      prospero=$(abs_srcdir)/tests
+	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTSUITES prospero=$(abs_srcdir)/testsuites
 
 else
 
@@ -101,9 +104,12 @@ all-local: tracetool/sstmemtrace.cc
 	-L$(PINTOOL_DIR)/extras/xed-intel64/lib \
 	-o prosperotrace.so $(top_srcdir)/src/sst/elements/prospero/tracetool/sstmemtrace.cc \
 	-ldl -lpin -lxed -lpindwarf -ldl -lpthread -lrt $(LIBZ_LDFLAGS) $(LIBZ_LIB)
-	
+
 install-exec-hook: prosperotrace.so
 	cp prosperotrace.so $(libexecdir)/prosperotrace.so
+	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     prospero=$(abs_srcdir)
+	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      prospero=$(abs_srcdir)/tests
+	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTSUITES prospero=$(abs_srcdir)/testsuites
 
 endif
 endif

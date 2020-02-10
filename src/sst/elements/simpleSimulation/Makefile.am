@@ -3,19 +3,24 @@
 #
 
 AM_CPPFLAGS = \
-	$(MPI_CPPFLAGS) 
+	$(MPI_CPPFLAGS)
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libsimpleSimulation.la
 libsimpleSimulation_la_SOURCES = \
 	simpleCarWash.h \
 	simpleCarWash.cc
-	
+
 EXTRA_DIST = \
     README \
-    tests/test_simpleCarWash.py 
+    tests/test_simpleCarWash.py
 
 libsimpleSimulation_la_LDFLAGS = -module -avoid-version
+
+install-exec-hook:
+	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     simpleSimulation=$(abs_srcdir)
+	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      simpleSimulation=$(abs_srcdir)/tests
+	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTSUITES simpleSimulation=$(abs_srcdir)/testsuites
 
 ##########################################################################
 ##########################################################################

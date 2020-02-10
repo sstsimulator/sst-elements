@@ -51,3 +51,8 @@ libmiranda_la_SOURCES += \
 libmiranda_la_LDFLAGS += $(STAKE_LDFLAGS) $(STAKE_LIB)
 AM_CPPFLAGS += $(STAKE_CPPFLAGS) -DHAVE_STAKE
 endif
+
+install-exec-hook:
+	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     miranda=$(abs_srcdir)
+	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      miranda=$(abs_srcdir)/tests
+	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTSUITES miranda=$(abs_srcdir)/testsuites

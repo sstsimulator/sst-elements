@@ -307,3 +307,7 @@ libember_la_LIBADD = \
 
 endif
 
+install-exec-hook:
+	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     ember=$(abs_srcdir)
+	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      ember=$(abs_srcdir)/tests
+	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTSUITES ember=$(abs_srcdir)/testsuites

@@ -13,9 +13,14 @@ libkingsley_la_SOURCES = \
 	noc_mesh.cc \
 	lru_unit.h \
 	linkControl.h \
-	linkControl.cc 
+	linkControl.cc
 
 EXTRA_DIST = \
 	tests/noc_mesh_32_test.py
 
 libkingsley_la_LDFLAGS = -module -avoid-version
+
+install-exec-hook:
+	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     kingsley=$(abs_srcdir)
+	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      kingsley=$(abs_srcdir)/tests
+	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTSUITES kingsley=$(abs_srcdir)/testsuites

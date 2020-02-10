@@ -115,6 +115,9 @@ all-local: frontend/simple/fesimple.cc
 install-exec-hook:
 	$(MKDIR_P) $(libexecdir)
 	$(INSTALL) fesimple.dylib $(libexecdir)/fesimple.dylib
+	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     ariel=$(abs_srcdir)
+	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      ariel=$(abs_srcdir)/tests
+	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTSUITES ariel=$(abs_srcdir)/testsuites
 
 else
 
@@ -144,9 +147,11 @@ all-local:
 	-o fesimple.so $(top_srcdir)/src/sst/elements/ariel/frontend/simple/fesimple.cc \
 	-ldl -lpin -lxed -lpindwarf -ldl -lpthread -lrt $(LIBZ_LDFLAGS) $(LIBZ_LIB) $(CUDA_LDFLAGS)
 
-
 install-exec-hook:
 	$(MKDIR_P) $(libexecdir)
 	$(INSTALL) fesimple.so $(libexecdir)/fesimple.so
+	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     ariel=$(abs_srcdir)
+	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      ariel=$(abs_srcdir)/tests
+	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTSUITES ariel=$(abs_srcdir)/testsuites
 
 endif

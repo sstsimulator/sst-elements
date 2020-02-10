@@ -231,7 +231,7 @@ nobase_sst_HEADERS = \
 	memTypes.h
 
 libmemHierarchy_la_LDFLAGS = -module -avoid-version
-libmemHierarchy_la_LIBADD = 
+libmemHierarchy_la_LIBADD =
 
 if HAVE_RAMULATOR
 libmemHierarchy_la_LDFLAGS += $(RAMULATOR_LDFLAGS)
@@ -316,4 +316,7 @@ install-exec-hook:
 	$(SST_REGISTER_TOOL) FDSIM LIBDIR=$(FDSIM_LIBDIR)
 	$(SST_REGISTER_TOOL) GOBLIN_HMCSIM LIBDIR=$(GOBLIN_HMCSIM_LIBDIR)
 	$(SST_REGISTER_TOOL) RAMULATOR LIBDIR=$(RAMULATOR_LIBDIR)
+	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     memHierarchy=$(abs_srcdir)
+	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      memHierarchy=$(abs_srcdir)/tests
+	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTSUITES memHierarchy=$(abs_srcdir)/testsuites
 
