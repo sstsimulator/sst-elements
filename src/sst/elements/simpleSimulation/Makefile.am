@@ -20,7 +20,6 @@ libsimpleSimulation_la_LDFLAGS = -module -avoid-version
 install-exec-hook:
 	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     simpleSimulation=$(abs_srcdir)
 	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      simpleSimulation=$(abs_srcdir)/tests
-	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTSUITES simpleSimulation=$(abs_srcdir)/testsuites
 
 ##########################################################################
 ##########################################################################

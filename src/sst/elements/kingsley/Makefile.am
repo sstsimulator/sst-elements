@@ -23,4 +23,3 @@ libkingsley_la_LDFLAGS = -module -avoid-version
 install-exec-hook:
 	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     kingsley=$(abs_srcdir)
 	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      kingsley=$(abs_srcdir)/tests
-	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTSUITES kingsley=$(abs_srcdir)/testsuites

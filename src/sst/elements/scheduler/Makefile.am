@@ -179,5 +179,4 @@ install-exec-hook:
 	$(SST_REGISTER_TOOL) METIS LIBDIR=$(METIS_LIBDIR)
 	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     scheduler=$(abs_srcdir)
 	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      scheduler=$(abs_srcdir)/tests
-	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTSUITES scheduler=$(abs_srcdir)/testsuites
 

@@ -35,4 +35,3 @@ libVaultSimC_la_LIBADD = $(LIBPHX_LIB)
 install-exec-hook:
 	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     VaultSimC=$(abs_srcdir)
 	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      VaultSimC=$(abs_srcdir)/tests
-	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTSUITES VaultSimC=$(abs_srcdir)/testsuites

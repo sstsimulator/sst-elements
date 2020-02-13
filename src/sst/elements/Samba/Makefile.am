@@ -52,4 +52,3 @@ EXTRA_DIST = \
 install-exec-hook:
 	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     Samba=$(abs_srcdir)
 	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      Samba=$(abs_srcdir)/tests
-	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTSUITES Samba=$(abs_srcdir)/testsuites

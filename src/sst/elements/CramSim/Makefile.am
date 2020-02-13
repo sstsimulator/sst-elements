@@ -98,7 +98,6 @@ libCramSim_la_LDFLAGS = -module -avoid-version
 install-exec-hook:
 	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     CramSim=$(abs_srcdir)
 	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      CramSim=$(abs_srcdir)/tests
-	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTSUITES CramSim=$(abs_srcdir)/testsuites
 
 ##########################################################################
 ##########################################################################

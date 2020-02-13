@@ -117,7 +117,6 @@ install-exec-hook:
 	$(INSTALL) fesimple.dylib $(libexecdir)/fesimple.dylib
 	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     ariel=$(abs_srcdir)
 	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      ariel=$(abs_srcdir)/tests
-	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTSUITES ariel=$(abs_srcdir)/testsuites
 
 else
 
