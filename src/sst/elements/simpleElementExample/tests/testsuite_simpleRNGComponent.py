@@ -10,14 +10,14 @@ from test_support import *
 ################################################################################
 
 def setUpModule():
-    initTestSuite(__file__)
+    pass
 
 def tearDownModule():
     pass
 
 ############
 
-class test_simpleRNGComponent(SSTUnitTest):
+class testsuite_simpleRNGComponent(SSTUnitTest):
 
     def setUp(self):
         pass
@@ -27,15 +27,15 @@ class test_simpleRNGComponent(SSTUnitTest):
 
     def test_RNG_Mersenne(self):
         self.RNG_test_template("mersenne")
-        log("=======================================================")
+        log("\n=======================================================")
 
         log("")
         log("=== ls cmd")
-        self.os_ls()
+        os_ls()
 
         log("")
         log("=== cat VERSION file")
-        self.os_cat("VERSION")
+        os_cat("VERSION")
 
         log("")
         log("=== Run tail and force a timeout")
@@ -43,7 +43,7 @@ class test_simpleRNGComponent(SSTUnitTest):
         rtn = OSCommand(cmd).run(timeout=5)
         log("Tail (forced Timeout) Rtn = {0}".format(rtn))
 
-        log("=======================================================")
+        log("\n=======================================================")
 
 
     def test_RNG_Marsaglia(self):
@@ -57,11 +57,11 @@ class test_simpleRNGComponent(SSTUnitTest):
 
     def RNG_test_template(self, testcase):
         # Set the various file paths
-        sdlfile = "{0}/test_simpleRNGComponent_{1}.py".format(self.getTestSuiteDir(), testcase)
-        reffile = "{0}/refFiles/test_simpleRNGComponent_{1}.out".format(self.getTestSuiteDir(), testcase)
-        outfile = "{0}/test_simpleRNGComponent_{1}.out".format(self.getTestOutputRunDir(), testcase)
-        tmpfile = "{0}/test_simpleRNGComponent_{1}.tmp".format(self.getTestOutputRunDir(), testcase)
-        cmpfile = "{0}/test_simpleRNGComponent_{1}.cmp".format(self.getTestOutputRunDir(), testcase)
+        sdlfile = "{0}/test_simpleRNGComponent_{1}.py".format(self.get_testsuite_dir(), testcase)
+        reffile = "{0}/refFiles/test_simpleRNGComponent_{1}.out".format(self.get_testsuite_dir(), testcase)
+        outfile = "{0}/test_simpleRNGComponent_{1}.out".format(get_test_output_run_dir(), testcase)
+        tmpfile = "{0}/test_simpleRNGComponent_{1}.tmp".format(get_test_output_run_dir(), testcase)
+        cmpfile = "{0}/test_simpleRNGComponent_{1}.cmp".format(get_test_output_run_dir(), testcase)
 
         # TODO: Destroy any outfiles
         # TODO: Validate SST is an executable file

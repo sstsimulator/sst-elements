@@ -9,16 +9,17 @@ from test_support import *
 ################################################################################
 
 def setUpModule():
-    initTestSuite(__file__)
+    pass
 
 def tearDownModule():
     pass
 
 ############
 
-class test_merlin_Component(SSTUnitTest):
+class testsuite_merlin_Component(SSTUnitTest):
 
     def setUp(self):
+#        init_testsuite_1(__file__)
         pass
 
     def tearDown(self):
@@ -27,23 +28,23 @@ class test_merlin_Component(SSTUnitTest):
     def test_merlin_dragon_128(self):
         self.merlin_test_template("dragon_128_test", 500)
 
-    def test_merlin_dragon_72(self):
-        self.merlin_test_template("dragon_72_test", 500)
-
-    def test_merlin_fattree_128(self):
-        self.merlin_test_template("fattree_128_test", 500)
-
-    def test_merlin_fattree_256(self):
-        self.merlin_test_template("fattree_256_test", 500)
-
-    def test_merlin_torus_128(self):
-        self.merlin_test_template("torus_128_test", 500)
-
-    def test_merlin_torus_5_trafficgen(self):
-        self.merlin_test_template("torus_5_trafficgen", 500)
-
-    def test_merlin_torus_64(self):
-         self.merlin_test_template("torus_64_test", 500)
+#    def test_merlin_dragon_72(self):
+#        self.merlin_test_template("dragon_72_test", 500)
+#
+#    def test_merlin_fattree_128(self):
+#        self.merlin_test_template("fattree_128_test", 500)
+#
+#    def test_merlin_fattree_256(self):
+#        self.merlin_test_template("fattree_256_test", 500)
+#
+#    def test_merlin_torus_128(self):
+#        self.merlin_test_template("torus_128_test", 500)
+#
+#    def test_merlin_torus_5_trafficgen(self):
+#        self.merlin_test_template("torus_5_trafficgen", 500)
+#
+#    def test_merlin_torus_64(self):
+#         self.merlin_test_template("torus_64_test", 500)
 
 ############
 
@@ -51,9 +52,9 @@ class test_merlin_Component(SSTUnitTest):
         # Set the various file paths
         testDataFileName="test_merlin_{0}".format(testcase)
 
-        sdlfile = "{0}/{1}.py".format(self.getTestSuiteDir(), testcase)
-        reffile = "{0}/refFiles/test_merlin_{1}.out".format(self.getTestSuiteDir(), testcase)
-        outfile = "{0}/{1}.out".format(self.getTestOutputRunDir(), testDataFileName)
+        sdlfile = "{0}/{1}.py".format(self.get_testsuite_dir(), testcase)
+        reffile = "{0}/refFiles/test_merlin_{1}.out".format(self.get_testsuite_dir(), testcase)
+        outfile = "{0}/{1}.out".format(get_test_output_run_dir(), testDataFileName)
 
         # TODO: Destroy any outfiles
         # TODO: Validate SST is an executable file
@@ -72,8 +73,8 @@ class test_merlin_Component(SSTUnitTest):
 
 
     def compare_sorted(self, outfile, reffile):
-       sorted_outfile = "{0}/test_merlin_sorted_outfile".format(self.getTestOutputTmpDir())
-       sorted_reffile = "{0}/test_merlin_sorted_reffile".format(self.getTestOutputTmpDir())
+       sorted_outfile = "{0}/test_merlin_sorted_outfile".format(get_test_output_tmp_dir())
+       sorted_reffile = "{0}/test_merlin_sorted_reffile".format(get_test_output_tmp_dir())
 
        os.system("sort -o {0} {1}".format(sorted_outfile, outfile))
        os.system("sort -o {0} {1}".format(sorted_reffile, reffile))
