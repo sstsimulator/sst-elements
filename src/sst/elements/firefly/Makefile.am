@@ -163,3 +163,7 @@ libfirefly_la_SOURCES = \
 	nodePerf.h
 
 libfirefly_la_LDFLAGS = -module -avoid-version
+
+install-exec-hook:
+	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     firefly=$(abs_srcdir)
+	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      firefly=$(abs_srcdir)/tests

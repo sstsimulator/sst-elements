@@ -19,10 +19,14 @@ libGNA_la_SOURCES = \
 EXTRA_DIST = \
 	tests/test.py \
 	tests/test.ref.out \
-	README 
+	README
 
 
 libGNA_la_LDFLAGS = -module -avoid-version
+
+install-exec-hook:
+	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     GNA=$(abs_srcdir)
+	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      GNA=$(abs_srcdir)/tests
 
 ##########################################################################
 ##########################################################################
