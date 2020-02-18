@@ -76,3 +76,7 @@ libzodiac_la_CPPFLAGS +=
 libzodiac_la_LDFLAGS +=
 	$(DUMPI_LDFLAGS)
 endif
+
+install-exec-hook:
+	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     zodiac=$(abs_srcdir)
+	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      zodiac=$(abs_srcdir)/tests

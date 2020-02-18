@@ -22,3 +22,7 @@ nobase_sst_HEADERS = \
 	shmemapi.h
 
 libhermes_la_LDFLAGS = -module -avoid-version
+
+install-exec-hook:
+	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     hermes=$(abs_srcdir)
+	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      hermes=$(abs_srcdir)/tests
