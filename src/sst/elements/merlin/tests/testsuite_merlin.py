@@ -28,23 +28,23 @@ class testsuite_merlin_Component(SSTUnitTest):
     def test_merlin_dragon_128(self):
         self.merlin_test_template("dragon_128_test", 500)
 
-#    def test_merlin_dragon_72(self):
-#        self.merlin_test_template("dragon_72_test", 500)
-#
-#    def test_merlin_fattree_128(self):
-#        self.merlin_test_template("fattree_128_test", 500)
-#
-#    def test_merlin_fattree_256(self):
-#        self.merlin_test_template("fattree_256_test", 500)
-#
-#    def test_merlin_torus_128(self):
-#        self.merlin_test_template("torus_128_test", 500)
-#
-#    def test_merlin_torus_5_trafficgen(self):
-#        self.merlin_test_template("torus_5_trafficgen", 500)
-#
-#    def test_merlin_torus_64(self):
-#         self.merlin_test_template("torus_64_test", 500)
+    def test_merlin_dragon_72(self):
+        self.merlin_test_template("dragon_72_test", 500)
+
+    def test_merlin_fattree_128(self):
+        self.merlin_test_template("fattree_128_test", 500)
+
+    def test_merlin_fattree_256(self):
+        self.merlin_test_template("fattree_256_test", 500)
+
+    def test_merlin_torus_128(self):
+        self.merlin_test_template("torus_128_test", 500)
+
+    def test_merlin_torus_5_trafficgen(self):
+        self.merlin_test_template("torus_5_trafficgen", 500)
+
+    def test_merlin_torus_64(self):
+         self.merlin_test_template("torus_64_test", 500)
 
 ############
 
