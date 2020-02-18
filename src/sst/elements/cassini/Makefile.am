@@ -28,3 +28,7 @@ EXTRA_DIST = \
 	tests/streamcpu-sp.py
 
 libcassini_la_LDFLAGS = -module -avoid-version
+
+install-exec-hook:
+	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     cassini=$(abs_srcdir)
+	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      cassini=$(abs_srcdir)/tests

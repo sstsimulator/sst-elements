@@ -160,7 +160,7 @@ EXTRA_DIST = \
     simulations/test_DetailedNetwork.sim
 
 libscheduler_la_LDFLAGS = -module -avoid-version
-libscheduler_la_LIBADD = 
+libscheduler_la_LIBADD =
 
 if HAVE_GLPK
 libscheduler_la_LDFLAGS += $(GLPK_LDFLAGS)
@@ -177,4 +177,6 @@ endif
 install-exec-hook:
 	$(SST_REGISTER_TOOL) GLPK LIBDIR=$(GLPK_LIBDIR)
 	$(SST_REGISTER_TOOL) METIS LIBDIR=$(METIS_LIBDIR)
+	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     scheduler=$(abs_srcdir)
+	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      scheduler=$(abs_srcdir)/tests
 
