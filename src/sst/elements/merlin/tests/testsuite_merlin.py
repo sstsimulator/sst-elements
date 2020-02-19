@@ -3,8 +3,7 @@
 import os
 import filecmp
 
-import test_globals
-from test_support import *
+from sst_unittest_support import *
 
 ################################################################################
 
@@ -19,7 +18,6 @@ def tearDownModule():
 class testsuite_merlin_Component(SSTUnitTest):
 
     def setUp(self):
-#        init_testsuite_1(__file__)
         pass
 
     def tearDown(self):
@@ -54,18 +52,12 @@ class testsuite_merlin_Component(SSTUnitTest):
 
         sdlfile = "{0}/{1}.py".format(self.get_testsuite_dir(), testcase)
         reffile = "{0}/refFiles/test_merlin_{1}.out".format(self.get_testsuite_dir(), testcase)
-        outfile = "{0}/{1}.out".format(get_test_output_run_dir(), testDataFileName)
+        outfile = "{0}/{1}.out".format(self.get_test_output_run_dir(), testDataFileName)
 
         # TODO: Destroy any outfiles
         # TODO: Validate SST is an executable file
 
-        # Build the launch command
-        # TODO: Figure out a std way to run SST in either standalone or
-        #       multirank and/or multithread
-        oscmd = "sst {0}".format(sdlfile)
-        rtn = OSCommand(oscmd, outfile).run()
-        self.assertFalse(rtn.timeout(), "SST Timed-Out while running {0}".format(oscmd))
-        self.assertEqual(rtn.result(), 0, "SST returned {0}; while running {1}".format(rtn.result(), oscmd))
+        self.run_sst(sdlfile, outfile)
 
         # Perform the test
         cmp_result = self.compare_sorted(outfile, reffile)
@@ -73,8 +65,8 @@ class testsuite_merlin_Component(SSTUnitTest):
 
 
     def compare_sorted(self, outfile, reffile):
-       sorted_outfile = "{0}/test_merlin_sorted_outfile".format(get_test_output_tmp_dir())
-       sorted_reffile = "{0}/test_merlin_sorted_reffile".format(get_test_output_tmp_dir())
+       sorted_outfile = "{0}/test_merlin_sorted_outfile".format(self.get_test_output_tmp_dir())
+       sorted_reffile = "{0}/test_merlin_sorted_reffile".format(self.get_test_output_tmp_dir())
 
        os.system("sort -o {0} {1}".format(sorted_outfile, outfile))
        os.system("sort -o {0} {1}".format(sorted_reffile, reffile))
