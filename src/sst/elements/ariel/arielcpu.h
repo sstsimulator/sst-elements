@@ -21,6 +21,11 @@
 #include <sst/core/component.h>
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>
+#ifdef HAVE_PIN3
+#include <sst/core/interprocess/mmapparent.h>
+#else
+#include <sst/core/interprocess/shmparent.h>
+#endif
 
 #include <stdint.h>
 #include <unistd.h>
@@ -128,6 +133,11 @@ class ArielCPU : public SST::Component {
         pid_t child_pid;
 
         uint32_t core_count;
+#ifdef HAVE_PIN3
+        SST::Core::Interprocess::MMAPParent<ArielTunnel>* tunnelmgr;
+#else
+        SST::Core::Interprocess::SHMParent<ArielTunnel>* tunnelmgr;
+#endif
         ArielTunnel* tunnel;
         bool stopTicking;
 

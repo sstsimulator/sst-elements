@@ -7,55 +7,48 @@
 //
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
-// the distribution for more information.
+// of the distribution for more information.
 //
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-//#include <malloc.h>
-#include <execinfo.h>
-#include <assert.h>
-#include <stdlib.h>
-#include <stdio.h>
 #include "pin.H"
-#include <time.h>
-#include <sys/time.h>
-#include <string.h>
-#include <sstream>
-#include <fcntl.h>
-#include <unistd.h>
+#include <sst_config.h>
 #include <iostream>
 #include <fstream>
+#include <sys/shm.h>
+#include <sys/stat.h>
+#include "atomic.hpp"
+#include <time.h>
+
+#include <string>
 #include <map>
-#include <stack>
-#include <ctime>
-#include <bitset>
 #include <set>
-#include <sst_config.h>
 
 #ifdef HAVE_CUDA
 #include "host_defines.h"
 #include "builtin_types.h"
 #endif
 
-#ifdef HAVE_LIBZ
+// TODO add check for PinCRT compatible libz and try to pick that up
+/*#ifdef HAVE_PINCRT_LIBZ
 
 #include "zlib.h"
 #define BT_PRINTF(fmt, args...) gzprintf(btfiles[thr], fmt, ##args);
 
 #else
-
+*/
 #define BT_PRINTF(fmt, args...) fprintf(btfiles[thr], fmt, ##args);
 
-#endif
+//#endif
 
 //This must be defined before inclusion of intttypes.h
 #ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
 #endif
 
-#include <sst/core/interprocess/shmchild.h>
+#include <sst/core/interprocess/mmapchild_pin3.h>
 #include "ariel_shmem.h"
 #include "ariel_inst_class.h"
 
@@ -63,24 +56,26 @@
 
 
 using namespace SST::ArielComponent;
+using namespace std;
 
 // General
-KNOB<string> SSTNamedPipe(KNOB_MODE_WRITEONCE, "pintool", "p", "", "Named pipe to connect to SST simulator");
-KNOB<UINT32> SSTVerbosity(KNOB_MODE_WRITEONCE, "pintool", "v", "0", "SST verbosity level");
-KNOB<UINT32> MaxCoreCount(KNOB_MODE_WRITEONCE, "pintool", "c", "1", "Maximum core count to use for data pipes.");
-KNOB<UINT32> StartupMode(KNOB_MODE_WRITEONCE, "pintool", "s", "1", "Mode for configuring profile behavior, 1 = start enabled, 0 = start disabled, 2 = attempt auto detect");
+KNOB<string> SSTNamedPipe           (KNOB_MODE_WRITEONCE, "pintool", "p", "",  "Named pipe to connect to SST simulator");
+KNOB<UINT32> SSTVerbosity           (KNOB_MODE_WRITEONCE, "pintool", "v", "0", "SST verbosity level");
+KNOB<UINT32> MaxCoreCount           (KNOB_MODE_WRITEONCE, "pintool", "c", "1", "Maximum core count to use for data pipes.");
+KNOB<UINT32> StartupMode            (KNOB_MODE_WRITEONCE, "pintool", "s", "1", "Mode for configuring profile behavior, 1 = start enabled, 0 = start disabled, 2 = attempt auto detect");
 // Instrumentation control
-KNOB<UINT32> InstrumentInstructions(KNOB_MODE_WRITEONCE, "pintool", "E", "1", "Enable instruction instrumentation");
-KNOB<UINT32> PerformWriteTrace(KNOB_MODE_WRITEONCE, "pintool", "w", "0", "Perform write tracing (i.e copy values directly into SST memory operations) (0 = disabled, 1 = enabled)");
-KNOB<UINT32> TrapFunctionProfile(KNOB_MODE_WRITEONCE, "pintool", "t", "0", "Function profiling level (0 = disabled, 1 = enabled)");
+KNOB<UINT32> InstrumentInstructions (KNOB_MODE_WRITEONCE, "pintool", "E", "1", "Enable instruction instrumentation");
+KNOB<UINT32> PerformWriteTrace      (KNOB_MODE_WRITEONCE, "pintool", "w", "0", "Perform write tracing (i.e copy values directly into SST memory operations) (0 = disabled, 1 = enabled)");
+KNOB<UINT32> TrapFunctionProfile    (KNOB_MODE_WRITEONCE, "pintool", "t", "0", "Function profiling level (0 = disabled, 1 = enabled)");
 // Memory/malloc/etc. tracking
 KNOB<UINT32> InterceptMemAllocations(KNOB_MODE_WRITEONCE, "pintool", "m", "1", "Should intercept multi-level memory allocations, mallocs, and frees, 1 = start enabled, 0 = start disabled");
-KNOB<string> UseMallocMap(KNOB_MODE_WRITEONCE, "pintool", "u", "", "Should intercept ariel_malloc_flag() and interpret using a malloc map: specify filename or leave blank for disabled");
-KNOB<UINT32> KeepMallocStackTrace(KNOB_MODE_WRITEONCE, "pintool", "k", "1", "Should keep shadow stack and dump on malloc calls. 1 = enabled, 0 = disabled");
-KNOB<UINT32> DefaultMemoryPool(KNOB_MODE_WRITEONCE, "pintool", "d", "0", "Default SST Memory Pool");
+KNOB<string> UseMallocMap           (KNOB_MODE_WRITEONCE, "pintool", "u", "",  "Should intercept ariel_malloc_flag() and interpret using a malloc map: specify filename or leave blank for disabled");
+KNOB<UINT32> KeepMallocStackTrace   (KNOB_MODE_WRITEONCE, "pintool", "k", "1", "Should keep shadow stack and dump on malloc calls. 1 = enabled, 0 = disabled");
+KNOB<UINT32> DefaultMemoryPool      (KNOB_MODE_WRITEONCE, "pintool", "d", "0", "Default Ariel Memory Pool");
 // GPGPUSim
-KNOB<string> SSTNamedPipe2(KNOB_MODE_WRITEONCE, "pintool", "g", "", "Named pipe to connect to SST simulator");
-KNOB<string> SSTNamedPipe3(KNOB_MODE_WRITEONCE, "pintool", "x", "", "Named pipe to connect to SST simulator");
+KNOB<string> SSTNamedPipe2          (KNOB_MODE_WRITEONCE, "pintool", "g", "",  "Named pipe to connect to SST simulator");
+KNOB<string> SSTNamedPipe3          (KNOB_MODE_WRITEONCE, "pintool", "x", "",  "Named pipe to connect to SST simulator");
+
 
 #define ARIEL_MAX(a,b) \
    ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
@@ -88,45 +83,32 @@ KNOB<string> SSTNamedPipe3(KNOB_MODE_WRITEONCE, "pintool", "x", "", "Named pipe 
 #define ARIEL_MIN(a,b) \
    ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a < _b ? _a : _b; })
 
+
+// General
+UINT32 core_count;
+SST::Core::Interprocess::MMAPChild_Pin3<ArielTunnel> * tunnelmgr;
+ArielTunnel *tunnel = NULL;
+bool enable_output;
+PIN_LOCK mainLock;
+
+// Instrumentation control
+UINT32 instrument_instructions;
+bool writeTrace;
+UINT32 funcProfileLevel;
 typedef struct {
     int64_t insExecuted;
 } ArielFunctionRecord;
-
-UINT32 funcProfileLevel;
-UINT32 core_count;
-UINT32 default_pool;
-UINT32 instrument_instructions;
-SST::Core::Interprocess::SHMChild<ArielTunnel> * tunnelmgr;
-ArielTunnel *tunnel = NULL;
-#ifdef HAVE_CUDA
-GpuReturnTunnel *tunnelR = NULL;
-GpuDataTunnel *tunnelD = NULL;
-SST::Core::Interprocess::SHMChild<GpuReturnTunnel> * tunnelRmgr;
-SST::Core::Interprocess::SHMChild<GpuDataTunnel> * tunnelDmgr;
-#endif
-bool enable_output;
-std::vector<void*> allocated_list;
-PIN_LOCK mainLock;
-PIN_LOCK mallocIndexLock;
-UINT64* lastMallocSize;
 std::map<std::string, ArielFunctionRecord*> funcProfile;
-UINT64* lastMallocLoc;
-std::vector< std::set<ADDRINT> > instPtrsList;
+
+// Malloc interception/MLM support
+UINT32 default_pool;
 UINT32 overridePool;
 bool shouldOverride;
-bool writeTrace;
-
-// For gettimeofday/get_clocktime overrides:
-struct timeval offset_tv;
-#if !defined(__APPLE__)
-struct timespec offset_tp_mono;
-struct timespec offset_tp_real;
-#endif
-
-// For mlm stuff
-// Map each location ID to the set of repeats that should go to fast mem
+std::vector<void*> allocated_list;
+PIN_LOCK mallocIndexLock;
+UINT64* lastMallocSize;
+UINT64* lastMallocLoc;
 set<int64_t> fastmemlocs;
-// Flag whether to send next intercept malloc to fast memory or not
 struct mallocFlagInfo {
     bool valid;
     int count;
@@ -136,6 +118,21 @@ struct mallocFlagInfo {
 };
 std::vector<mallocFlagInfo> toFast;
 
+// GPGPUSim
+#ifdef HAVE_CUDA
+SST::Core::Interprocess::MMAPChild_Pin3<GpuReturnTunnel> * tunnelRmgr;
+SST::Core::Interprocess::MMAPChild_Pin3<GpuDataTunnel> * tunnelDmgr;
+GpuReturnTunnel *tunnelR = NULL;
+GpuDataTunnel *tunnelD = NULL;
+#endif
+
+// Time function interception
+struct timeval offset_tv;
+#if !defined(__APPLE__)
+struct timespec offset_tp_mono;
+struct timespec offset_tp_real;
+#endif
+
 /****************************************************************/
 /********************** SHADOW STACK ****************************/
 /* Used by 'sieve' to associate mallocs to the code they        */
@@ -143,13 +140,15 @@ std::vector<mallocFlagInfo> toFast;
 /****************************************************************/
 /****************************************************************/
 
+std::vector< std::set<ADDRINT> > instPtrsList;
+
 // Per-thread malloc file -> we don't have to lock the file this way
 // Compress it if possible
-#ifdef HAVE_LIBZ
-std::vector<gzFile> btfiles;
-#else
+//#ifdef HAVE_PINCRT_LIBZ
+//std::vector<gzFile> btfiles;
+//#else
 std::vector<FILE*> btfiles;
-#endif
+//#endif
 
 UINT64 mallocIndex;
 FILE * rtnNameMap;
@@ -237,8 +236,8 @@ VOID InstrumentTrace (TRACE trace, VOID* args)
         INS tail = BBL_InsTail(bbl);
 
         if (INS_IsCall(tail)) {
-            if (INS_IsDirectBranchOrCall(tail)) {
-                ADDRINT target = INS_DirectBranchOrCallTargetAddress(tail);
+            if (INS_IsDirectControlFlow(tail)) {
+                ADDRINT target = INS_DirectControlFlowTargetAddress(tail);
                 INS_InsertPredicatedCall(tail, IPOINT_BEFORE, (AFUNPTR)
                     ariel_stack_call,
                     IARG_THREAD_ID,
@@ -314,13 +313,13 @@ VOID Fini(INT32 code, VOID* v)
     // Close backtrace files if needed
     if (KeepMallocStackTrace.Value() == 1) {
         fclose(rtnNameMap);
-        for (int i = 0; i < core_count; i++) {
+        for (unsigned int i = 0; i < core_count; i++) {
             if (btfiles[i] != NULL)
-#ifdef HAVE_LIBZ
+/*#ifdef HAVE_PINCRT_LIBZ
                 gzclose(btfiles[i]);
-#else
+#else*/
                 fclose(btfiles[i]);
-#endif
+//#endif
         }
     }
 }
@@ -389,7 +388,7 @@ VOID WriteInstructionWrite(ADDRINT* address, UINT32 writeSize, THREADID thr, ADD
 //              writeSize, ARIEL_MAX_PAYLOAD_SIZE);
 //          exit(-1);
 //      }
-        PIN_SafeCopy( &ac.inst.payload[0], address, ARIEL_MIN( writeSize, ARIEL_MAX_PAYLOAD_SIZE ) );
+        PIN_SafeCopy( &ac.inst.payload[0], address, ARIEL_MIN( writeSize, (UINT32) ARIEL_MAX_PAYLOAD_SIZE ) );
     }
 /*
     printf("CU Instruction %p ",address);
@@ -494,21 +493,21 @@ VOID InstrumentInstruction(INS ins, VOID *v)
 
     for(UINT32 i = 0; i < INS_MaxNumRRegs(ins); i++) {
         if( REG_is_xmm(INS_RegR(ins, i)) ) {
-                maxSIMDRegWidth = ARIEL_MAX(maxSIMDRegWidth, 2);
+                maxSIMDRegWidth = ARIEL_MAX(maxSIMDRegWidth, (UINT32) 2);
         } else if ( REG_is_ymm(INS_RegR(ins, i)) ) {
-                maxSIMDRegWidth = ARIEL_MAX(maxSIMDRegWidth, 4);
+                maxSIMDRegWidth = ARIEL_MAX(maxSIMDRegWidth, (UINT32) 4);
         } else if ( REG_is_zmm(INS_RegR(ins, i)) ) {
-                maxSIMDRegWidth = ARIEL_MAX(maxSIMDRegWidth, 8);
+                maxSIMDRegWidth = ARIEL_MAX(maxSIMDRegWidth, (UINT32) 8);
         }
     }
 
     for(UINT32 i = 0; i < INS_MaxNumWRegs(ins); i++) {
         if( REG_is_xmm(INS_RegW(ins, i)) ) {
-                maxSIMDRegWidth = ARIEL_MAX(maxSIMDRegWidth, 2);
+                maxSIMDRegWidth = ARIEL_MAX(maxSIMDRegWidth, (UINT32) 2);
         } else if ( REG_is_ymm(INS_RegW(ins, i)) ) {
-                maxSIMDRegWidth = ARIEL_MAX(maxSIMDRegWidth, 4);
+                maxSIMDRegWidth = ARIEL_MAX(maxSIMDRegWidth, (UINT32) 4);
         } else if ( REG_is_zmm(INS_RegW(ins, i)) ) {
-                maxSIMDRegWidth = ARIEL_MAX(maxSIMDRegWidth, 8);
+                maxSIMDRegWidth = ARIEL_MAX(maxSIMDRegWidth, (UINT32) 8);
         }
     }
 
@@ -625,19 +624,17 @@ void mapped_ariel_enable()
 
     // Setup timers to count start time + elapsed simulated time
     struct timeval tvsim;
-    gettimeofday(&offset_tv, nullptr);
+    gettimeofday(&offset_tv, NULL);
     tunnel->getTime(&tvsim);
     offset_tv.tv_sec -= tvsim.tv_sec;
     offset_tv.tv_usec -= tvsim.tv_usec;
 #if ! defined(__APPLE__)
     struct timespec tpsim;
-    clock_gettime(CLOCK_MONOTONIC, &offset_tp_mono);
-    clock_gettime(CLOCK_REALTIME, &offset_tp_real);
     tunnel->getTimeNs(&tpsim);
-    offset_tp_mono.tv_sec -= tpsim.tv_sec;
-    offset_tp_mono.tv_nsec -= tpsim.tv_nsec;
-    offset_tp_real.tv_sec -= tpsim.tv_sec;
-    offset_tp_real.tv_nsec -= tpsim.tv_nsec;
+    offset_tp_mono.tv_sec = tvsim.tv_sec - tpsim.tv_sec;
+    offset_tp_mono.tv_nsec = (tvsim.tv_usec * 1000) - tpsim.tv_nsec;
+    offset_tp_real.tv_sec = tvsim.tv_sec - tpsim.tv_sec;
+    offset_tp_real.tv_nsec = (tvsim.tv_usec * 1000) - tpsim.tv_nsec;
 #endif
     /* ENABLE */
     enable_output = true;
@@ -685,8 +682,13 @@ int mapped_gettimeofday(struct timeval *tp, void *tzp)
 #if ! defined(__APPLE__)
 int mapped_clockgettime(clockid_t clock, struct timespec *tp)
 {
-    if (!enable_output)
-        return clock_gettime(clock, tp);
+    if (!enable_output) {
+        struct timeval tv;
+        int retval = gettimeofday(&tv, NULL);
+        tp->tv_sec = tv.tv_sec;
+        tp->tv_nsec = tv.tv_usec * 1000;
+        return retval;
+    }
 
     if (tp == NULL) { errno = EINVAL; return -1; }
     tunnel->getTimeNs(tp);
@@ -825,9 +827,6 @@ void* ariel_mmap_mlm(int fileID, size_t size, int level)
     if(0 == size)
     {
         fprintf(stderr, "YOU REQUESTED ZERO BYTES\n");
-        void *bt_entries[64];
-        int entry_returned = backtrace(bt_entries, 64);
-        backtrace_symbols(bt_entries, entry_returned);
         exit(-8);
     }
 
@@ -882,9 +881,6 @@ void* ariel_mlm_malloc(size_t size, int level) {
 
     if(0 == size) {
         fprintf(stderr, "YOU REQUESTED ZERO BYTES\n");
-        void *bt_entries[64];
-        int entry_returned = backtrace(bt_entries, 64);
-        backtrace_symbols(bt_entries, entry_returned);
         exit(-8);
     }
 
@@ -1345,7 +1341,7 @@ __host__ cudaError_t CUDARTAPI cudaSetupArgument(const void *arg, size_t size, s
         memcpy(ac.API.CA.set_arg.value, value, size);
 #ifdef ARIEL_DEBUG
         printf("CUDA VALUE ARG ");
-        for(int i = 0; i < size; i++)
+        for(size_t i = 0; i < size; i++)
             printf("%d ", value[i]);
         printf("\n");
 #endif
@@ -1668,7 +1664,7 @@ VOID InstrumentRoutine(RTN rtn, VOID* args)
         fprintf(stderr, "Replacement complete\n");
         return;
     } else if (RTN_Name(rtn) == "ariel_mmap_mlm" || RTN_Name(rtn) == "_ariel_mmap_mlm") {
-        AFUNPTR ret = RTN_Replace(rtn, (AFUNPTR) ariel_mmap_mlm);
+        RTN_Replace(rtn, (AFUNPTR) ariel_mmap_mlm);
         return;
     } else if (RTN_Name(rtn) == "ariel_munmap_mlm" || RTN_Name(rtn) == "_ariel_munmap_mlm") {
         return;
@@ -1783,7 +1779,7 @@ int main(int argc, char *argv[])
 
     if(SSTVerbosity.Value() > 0) {
         std::cout << "SSTARIEL: Loading Ariel Tool to connect to SST on pipe: " <<
-            SSTNamedPipe.Value() <<
+            SSTNamedPipe.Value() << 
             " max core count: " << MaxCoreCount.Value() << std::endl;
     }
 
@@ -1818,15 +1814,15 @@ int main(int argc, char *argv[])
     core_count = MaxCoreCount.Value();
     instrument_instructions = InstrumentInstructions.Value();
 
-    tunnelmgr = new SST::Core::Interprocess::SHMChild<ArielTunnel>(SSTNamedPipe.Value());
+// Pin version specific tunnel attach
+    tunnelmgr = new SST::Core::Interprocess::MMAPChild_Pin3<ArielTunnel>(SSTNamedPipe.Value());
     tunnel = tunnelmgr->getTunnel();
 #ifdef HAVE_CUDA
-    tunnelRmgr = new SST::Core::Interprocess::SHMChild<GpuReturnTunnel>(SSTNamedPipe2.Value());
-    tunnelDmgr = new SST::Core::Interprocess::SHMChild<GpuDataTunnel>(SSTNamedPipe3.Value());
+    tunnelRmgr = new SST::Core::Interprocess::MMAPChild_Pin3<GpuReturnTunnel>(SSTNamedPipe2.Value());
+    tunnelDmgr = new SST::Core::Interprocess::MMAPChild_Pin3<GpuDataTunnel>(SSTNamedPipe3.Value());
     tunnelR = tunnelRmgr->getTunnel();
     tunnelD = tunnelDmgr->getTunnel();
 #endif
-
     lastMallocSize = (UINT64*) malloc(sizeof(UINT64) * core_count);
     lastMallocLoc = (UINT64*) malloc(sizeof(UINT64) * core_count);
     mallocIndex = 0;
@@ -1837,7 +1833,7 @@ int main(int argc, char *argv[])
         instPtrsList.resize(core_count);    // Need core_count sets of instruction pointers (to avoid locks)
     }
 
-    for(int i = 0; i < core_count; i++) {
+    for(unsigned int i = 0; i < core_count; i++) {
         lastMallocSize[i] = (UINT64) 0;
         lastMallocLoc[i] = (UINT64) 0;
 
@@ -1846,12 +1842,12 @@ int main(int argc, char *argv[])
             stringstream fn;
             fn << "backtrace_" << i << ".txt";
             string filename(fn.str());
-#ifdef HAVE_LIBZ
+/*#ifdef HAVE_PINCRT_LIBZ
             filename += ".gz";
             btfiles.push_back(gzopen(filename.c_str(), "w"));
-#else
+#else*/
             btfiles.push_back(fopen(filename.c_str(), "w"));
-#endif
+//#endif
             if (btfiles.back() == NULL) {
                 fprintf(stderr, "ARIEL ERROR: could not create and/or open backtrace file: %s\n", filename.c_str());
                 return 73;  // EX_CANTCREATE
@@ -1901,7 +1897,7 @@ int main(int argc, char *argv[])
 
     if (UseMallocMap.Value() != "") {
         loadFastMemLocations();
-        for (int i = 0; i < core_count; i++) {
+        for (unsigned int i = 0; i < core_count; i++) {
             toFast.push_back(mallocFlagInfo(false, 0, 0, 0));
         }
     }

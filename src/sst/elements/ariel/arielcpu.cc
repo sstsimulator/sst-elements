@@ -209,17 +209,31 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
         output->verbose(CALL_INFO, 1, 0, "Malloc map file is ENABLED, using file '%s'\n", malloc_map_filename.c_str());
     }
 
-    tunnel = new ArielTunnel(id, core_count, maxCoreQueueLen);
-    std::string shmem_region_name = tunnel->getRegionName();
+// Create tunnels using a manager to use mmap (pin3) or shm (pin2)
+#ifdef HAVE_PIN3
+    tunnelmgr = new SST::Core::Interprocess::MMAPParent<ArielTunnel>(id, core_count, maxCoreQueueLen);
+#else
+    tunnelmgr = new SST::Core::Interprocess::SHMParent<ArielTunnel>(id, core_count, maxCoreQueueLen);
+#endif
+    
+    std::string shmem_region_name = tunnelmgr->getRegionName();
+    tunnel = tunnelmgr->getTunnel();
     output->verbose(CALL_INFO, 1, 0, "Base pipe name: %s\n", shmem_region_name.c_str());
 
 #ifdef HAVE_CUDA
-    tunnelR = new GpuReturnTunnel(id, core_count, maxCoreQueueLen);
-    std::string shmem_region_name2 = tunnelR->getRegionName();
+#ifdef HAVE_PIN3
+    tunnelRmgr = new SST::Core::Interprocess::MMAPParent<GpuReturnTunnel>(id, core_count, maxCoreQueueLen);
+    tunnelDmgr = new SST::Core::Interprocess::MMAPParent<GpuDataTunnel>(id, core_count, maxCoreQueueLen);
+#else
+    tunnelRmgr = new SST::Core::Interprocess::SHMParent<GpuReturnTunnel>(id, core_count, maxCoreQueueLen);
+    tunnelDmgr = new SST::Core::Interprocess::SHMParent<GpuDataTunnel>(id, core_count, maxCoreQueueLen);
+#endif
+    tunnelR = tunnelRmgr->getTunnel();
+    std::string shmem_region_name2 = tunnelRmgr->getRegionName();
     output->verbose(CALL_INFO, 1, 0, "Base pipe name: %s\n", shmem_region_name2.c_str());
 
-    tunnelD = new GpuDataTunnel(id, core_count, maxCoreQueueLen);
-    std::string shmem_region_name3 = tunnelD->getRegionName();
+    tunnelD = tunnelDmgr->getTunnel();
+    std::string shmem_region_name3 = tunnelDmgr->getRegionName();
     output->verbose(CALL_INFO, 1, 0, "Base pipe name: %s\n", shmem_region_name3.c_str());
 #endif
 
@@ -300,9 +314,6 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     execute_args[arg++] = const_cast<char*>("-t");
     execute_args[arg++] = (char*) malloc(sizeof(char) * 8);
     sprintf(execute_args[arg-1], "%" PRIu32, profileFunctions);
-    execute_args[arg++] = const_cast<char*>("-i");
-    execute_args[arg++] = (char*) malloc(sizeof(char) * 30);
-    sprintf(execute_args[arg-1], "%" PRIu64, (uint64_t) 1000000000);
     execute_args[arg++] = const_cast<char*>("-c");
     execute_args[arg++] = (char*) malloc(sizeof(char) * 8);
     sprintf(execute_args[arg-1], "%" PRIu32, core_count);
@@ -315,9 +326,11 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     execute_args[arg++] = const_cast<char*>("-k");
     execute_args[arg++] = (char*) malloc(sizeof(char) * 8);
     sprintf(execute_args[arg-1], "%" PRIu32, keep_malloc_stack_trace);
-    execute_args[arg++] = const_cast<char*>("-u");
-    execute_args[arg++] = (char*) malloc(sizeof(char) * (malloc_map_filename.size() + 1));
-    strcpy(execute_args[arg-1], malloc_map_filename.c_str());
+    if (malloc_map_filename != "") {
+        execute_args[arg++] = const_cast<char*>("-u");
+        execute_args[arg++] = (char*) malloc(sizeof(char) * (malloc_map_filename.size() + 1));
+        strcpy(execute_args[arg-1], malloc_map_filename.c_str());
+    }
     execute_args[arg++] = const_cast<char*>("-d");
     execute_args[arg++] = (char*) malloc(sizeof(char) * 8);
     sprintf(execute_args[arg-1], "%" PRIu32, memmgr->getDefaultPool());
@@ -644,15 +657,14 @@ bool ArielCPU::tick( SST::Cycle_t cycle) {
 
 ArielCPU::~ArielCPU() {
     // Everything loaded by calls to the core are deleted by the core (subcomponents, component extension, etc.)
-    delete tunnel;
+    delete tunnelmgr;
 #ifdef HAVE_CUDA
-    delete tunnelR;
-    delete tunnelD;
+    delete tunnelRmgr;
+    delete tunnelDmgr;
 #endif
 }
 
 void ArielCPU::emergencyShutdown() {
-    tunnel->shutdown(true);
     // If child_pid = 0, dont kill (this would kill all processes of the group)
     if (child_pid != 0) {
         kill(child_pid, SIGKILL);
@@ -662,4 +674,10 @@ void ArielCPU::emergencyShutdown() {
     for(uint32_t i = 0; i < core_count; ++i) {
         cpu_cores[i]->finishCore();
     }
+    
+    delete tunnelmgr; // Clean up tmp file
+#ifdef HAVE_CUDA
+    delete tunnelRmgr;
+    delete tunnelDmgr;
+#endif
 }
