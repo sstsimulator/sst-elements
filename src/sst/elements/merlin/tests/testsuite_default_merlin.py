@@ -17,7 +17,7 @@ def tearDownModule():
 
 ################################################################################
 
-class testcase_merlin_Component(SSTUnitTestCase):
+class testcase_merlin_Component(SSTTestCase):
 
     def setUp(self):
         super(type(self), self).setUp()
