@@ -19,6 +19,18 @@ def tearDownModule():
 
 class testcase_merlin_Component(SSTTestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        super(cls, cls).setUpClass()
+        # Put class based setup code here. it is called once before tests are run
+
+    @classmethod
+    def tearDownClass(cls):
+        # Put class based teardown code here. it is called once after tests are run
+        super(cls, cls).tearDownClass()
+
+#####
+
     def setUp(self):
         super(type(self), self).setUp()
         # Put test based setup code here. it is called once before every test
@@ -26,6 +38,8 @@ class testcase_merlin_Component(SSTTestCase):
     def tearDown(self):
         # Put test based teardown code here. it is called once after every test
         super(type(self), self).tearDown()
+
+#####
 
     def test_merlin_dragon_128(self):
         self.merlin_test_template("dragon_128_test", 500)

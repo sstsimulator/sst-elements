@@ -20,6 +20,18 @@ def tearDownModule():
 
 class testcase_simpleRNGComponent(SSTTestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        super(cls, cls).setUpClass()
+        # Put class based setup code here. it is called once before tests are run
+
+    @classmethod
+    def tearDownClass(cls):
+        # Put class based teardown code here. it is called once after tests are run
+        super(cls, cls).tearDownClass()
+
+#####
+
     def setUp(self):
         super(type(self), self).setUp()
         # Put test based setup code here. it is called once before every test
@@ -27,6 +39,8 @@ class testcase_simpleRNGComponent(SSTTestCase):
     def tearDown(self):
         # Put test based teardown code here. it is called once after every test
         super(type(self), self).tearDown()
+
+#####
 
     def test_RNG_Mersenne(self):
         self.RNG_test_template("mersenne")
