@@ -35,7 +35,6 @@ typedef enum {
         OPCOUNT
 } ReqOperation;
 
-static std::atomic<uint64_t> nextGeneratorRequestID(0);
 
 class GeneratorRequest {
 public:
@@ -81,6 +80,8 @@ protected:
 	uint64_t reqID;
 	uint64_t issueTime;
 	std::vector<uint64_t> dependsOn;
+private:
+	static std::atomic<uint64_t> nextGeneratorRequestID;
 };
 
 template<typename QueueType>
