@@ -210,7 +210,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     }
 
 // Create tunnels using a manager to use mmap (pin3) or shm (pin2)
-#ifdef HAVE_PIN3
+#ifdef HAVE_PINCRT
     tunnelmgr = new SST::Core::Interprocess::MMAPParent<ArielTunnel>(id, core_count, maxCoreQueueLen);
 #else
     tunnelmgr = new SST::Core::Interprocess::SHMParent<ArielTunnel>(id, core_count, maxCoreQueueLen);
@@ -221,7 +221,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     output->verbose(CALL_INFO, 1, 0, "Base pipe name: %s\n", shmem_region_name.c_str());
 
 #ifdef HAVE_CUDA
-#ifdef HAVE_PIN3
+#ifdef HAVE_PINCRT
     tunnelRmgr = new SST::Core::Interprocess::MMAPParent<GpuReturnTunnel>(id, core_count, maxCoreQueueLen);
     tunnelDmgr = new SST::Core::Interprocess::MMAPParent<GpuDataTunnel>(id, core_count, maxCoreQueueLen);
 #else

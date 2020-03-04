@@ -8,6 +8,10 @@ if HAVE_SET_PTRACER
 AM_CPPFLAGS += "-DHAVE_SET_PTRACER=1"
 endif
 
+if HAVE_PIN3
+AM_CPPFLAGS += "-DHAVE_PINCRT=1"
+endif
+
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libariel.la
 libariel_la_SOURCES = \
@@ -184,32 +188,6 @@ fesimple.o : $(top_srcdir)/src/sst/elements/ariel/frontend/simple/fesimple.cc
 	    -I$(top_srcdir)/src/sst \
 	    -I$(top_srcdir)/src/sst/elements/ariel \
 	    -O3 -fomit-frame-pointer -c $(top_srcdir)/src/sst/elements/ariel/frontend/simple/fesimple.cc
-
-
-#	$(CXX) -shared -Wl,--hash-style=sysv -Wl,-Bsymbolic \
-#	-fPIC -O3 \
-#	-fomit-frame-pointer \
-#	$(CXXFLAGS) \
-#	$(CPPFLAGS) \
-#	$(LIBZ_CPPFLAGS) \
-#	$(CUDA_CPPFLAGS) \
-#	-DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_LINUX \
-#	-I./ \
-#	-I$(PINTOOL_DIR)/source/include/pin \
-#	-I$(PINTOOL_DIR)/ \
-#	-I$(PINTOOL_DIR)/extras/components/include \
-#	-I$(PINTOOL_DIR)/source/include/pin/gen/ \
-#	-I$(PINTOOL_DIR)/extras/xed-intel64/include \
-#	-I$(top_srcdir)/src/sst \
-#	-I$(top_srcdir)/src/sst/elements/ariel \
-#	-Wl,--version-script=$(PINTOOL_DIR)/source/include/pin/pintool.ver \
-#	-L$(PINTOOL_DIR)/intel64/lib \
-#	-L$(PINTOOL_DIR)/intel64/lib-ext \
-#	-L$(PINTOOL_DIR)/intel64/runtime/glibc \
-#	-L$(PINTOOL_DIR)/extras/xed-intel64/lib \
-#	$(CUDA_LIBS) \
-#	-o fesimple.so $(top_srcdir)/src/sst/elements/ariel/frontend/simple/fesimple.cc \
-#	-ldl -lpin -lxed -lpindwarf -ldl -lpthread -lrt $(LIBZ_LDFLAGS) $(LIBZ_LIB) $(CUDA_LDFLAGS)
 
 endif
 

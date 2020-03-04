@@ -8,8 +8,6 @@ AC_DEFUN([SST_CHECK_PINTOOL],
 
   AS_IF([test "$with_pin" = "no"], [sst_check_pintool_happy="no"])
 
-  HAVE_PIN_VERSION3="no"
-
   CPPFLAGS_saved="$CPPFLAGS"
   LDFLAGS_saved="$LDFLAGS"
   PATH_saved="$PATH"
@@ -28,36 +26,35 @@ AC_DEFUN([SST_CHECK_PINTOOL],
 	PINTOOL_DIR=])])
 
 dnl pin.sh is present in pin 2.14, but not in 3.0+
-  AC_PATH_PROG([PINTOOL_RUNTIME], [pin.sh], [], [$PINTOOL_PATH])
-  AS_IF([test "x$PINTOOL_RUNTIME" = "x"], [HAVE_PIN_VERSION3="yes"])
-  AS_IF([test "x$PINTOOL_RUNTIME" = "x"], [AC_PATH_PROG([PINTOOL_RUNTIME], [pin], [], [$PINTOOL_PATH])])
-  AS_IF([test "x$PINTOOL_RUNTIME" = "x"], [sst_check_pintool_happy="no"])
+  AC_PATH_PROG([PINTOOL2_RUNTIME], [pin.sh], [""], [$PINTOOL_PATH])
+  AC_PATH_PROG([PINTOOL3_RUNTIME], [pin], [""], [$PINTOOL_PATH])
+  
+  AS_IF([test "x$PINTOOL2_RUNTIME" = "x" -a "x$PINTOOL3_RUNTIME" = "x"], [sst_check_pintool_happy="no"])
 
   CPPFLAGS="$CPPFLAGS_saved"
   LDFLAGS="$LDFLAGS_saved"
   PATH="$PATH_saved"
   
-  AS_IF([test "$HAVE_PIN_VERSION3" = "yes"],
-        [PINTOOL_CPPFLAGS="$PINTOOL_CPPFLAGS -DHAVE_PIN3=1 -DPINTOOL_EXECUTABLE=\\\"$PINTOOL_RUNTIME\\\""],
-        [PINTOOL_CPPFLAGS="$PINTOOL_CPPFLAGS -DPINTOOL_EXECUTABLE=\\\"$PINTOOL_RUNTIME\\\""])
+  AS_IF([test ! -z $PINTOOL2_RUNTIME], [PINTOOL_RUNTIME="$PINTOOL2_RUNTIME"], [PINTOOL_RUNTIME="$PINTOOL3_RUNTIME"])
+
+  PINTOOL_CPPFLAGS="$PINTOOL_CPPFLAGS -DPINTOOL_EXECUTABLE=\\\"$PINTOOL_RUNTIME\\\""
 
   AC_SUBST([PINTOOL_CPPFLAGS])
   AC_SUBST([PINTOOL_LDFLAGS])
   AC_SUBST([PINTOOL_RUNTIME])
   AC_SUBST([PINTOOL_DIR])
   AC_SUBST([PINTOOL_PATH])
-  AC_SUBST([HAVE_PIN_VERSION3])
+  
   AC_DEFINE_UNQUOTED([PINTOOL_EXECUTABLE], ["$PINTOOL_RUNTIME"], [Defines the exectuable to run when we are performing integrated runs of the PIN engine])
-  AS_IF([test "$HAVE_PIN_VERSION3" = "yes"],
-        [AC_DEFINE([HAVE_PIN3], [1], [Set to 1 if Pin version is 3+])])
-  AM_CONDITIONAL([HAVE_PIN3], [test "$HAVE_PIN_VERSION3" = "yes"])
+  
+  AM_CONDITIONAL([HAVE_PIN3], [test "x$PINTOOL2_RUNTIME" = "x"])
   AM_CONDITIONAL([HAVE_PINTOOL], [test "$sst_check_pintool_happy" = "yes"])
+  
+  AS_IF([test "x$sst_check_pintool_happy" = "xyes" -a  "x$PINTOOL2_RUNTIME" = "x"],
+         [AC_DEFINE([HAVE_PINCRT], [1], [Set to 1 if Pin is using PinCRT])])
 
   AC_MSG_CHECKING([PIN Tool])
   AC_MSG_RESULT([$sst_check_pintool_happy])
-
-  AC_MSG_CHECKING([PIN Tool version 3])
-  AC_MSG_RESULT([$HAVE_PIN_VERSION3])
 
   AS_IF([test "$sst_check_pintool_happy" = "no" -a ! -z "$with_pin" -a "$with_pin" != "no"], [$3])
   AS_IF([test "$sst_check_pintool_happy" = "yes"], [$1], [$2])
