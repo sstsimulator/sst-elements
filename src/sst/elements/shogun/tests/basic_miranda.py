@@ -17,7 +17,7 @@ gen_cpu0.addParams({
 	"count" : 100000,
 	"seed_a"  : 11,
 	"seed_b"  : 177,
-	"max_address" : ((memory_mb) / 2) * 1024 * 1024,
+	"max_address" : ((memory_mb) // 2) * 1024 * 1024,
 })
 
 comp_cpu1 = sst.Component("cpu1", "miranda.BaseCPU")
@@ -27,7 +27,7 @@ gen_cpu1.addParams({
 	"count" : 100000,
 	"seed_a"  : 10101110101,
 	"seed_b"  : 101011,
-	"max_address" : ((memory_mb) / 2) * 1024 * 1024,
+	"max_address" : ((memory_mb) // 2) * 1024 * 1024,
 })
 
 # Enable statistics outputs
