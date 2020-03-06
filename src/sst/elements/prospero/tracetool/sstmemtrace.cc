@@ -329,8 +329,8 @@ VOID Fini(INT32 code, VOID *v)
 #endif
     }
 
-    printf("PROSPERO: Thread read entries:     %llu\n", thread_instr_id[0].readCount);
-    printf("PROSPERO: Thread write entries:    %llu\n", thread_instr_id[0].writeCount);
+    printf("PROSPERO: Thread read entries:     %" PRIu64 "\n", thread_instr_id[0].readCount);
+    printf("PROSPERO: Thread write entries:    %" PRIu64 "\n", thread_instr_id[0].writeCount);
     printf("PROSPERO: Done.\n");
 }
 
@@ -425,7 +425,7 @@ int main(int argc, char *argv[])
     }
 
     nextFileTrip = KnobFileTrip.Value();
-    printf("PROSPERO: Next file trip count set to %llu instructions.\n", nextFileTrip);
+    printf("PROSPERO: Next file trip count set to %" PRIu64 " instructions.\n", nextFileTrip);
 
     // Thread zero is always started
     thread_instr_id[0].threadInit = 1;
