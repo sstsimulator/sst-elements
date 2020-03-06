@@ -46,7 +46,7 @@ comp_memctrl = sst.Component("memory", "memHierarchy.MemController")
 comp_memctrl.addParams({
       "clock" : "1GHz",
 })
-memory = comp_memctrl.setSubComponent("backend" : "memHierarchy.goblinHMCSim")
+memory = comp_memctrl.setSubComponent("backend", "memHierarchy.goblinHMCSim")
 memory.addParams({
       "access_time" : "1000 ns",
       "mem_size" : "512MiB",
