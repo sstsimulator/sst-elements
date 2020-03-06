@@ -25,6 +25,7 @@ print "Configuring Network-on-Chip..."
 router = sst.Component("router", "merlin.hr_router")
 router.addParams(config.getRouterParams())
 router.addParam('id', 0)
+router.setSubComponent("topology","merlin.singlerouter")
 
 # Connect Cores & caches
 for next_core_id in range(config.total_cores):
