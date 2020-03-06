@@ -21,11 +21,6 @@
 #include <sst/core/component.h>
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>
-#ifdef HAVE_PINCRT
-#include <sst/core/interprocess/mmapparent.h>
-#else
-#include <sst/core/interprocess/shmparent.h>
-#endif
 
 #include <stdint.h>
 #include <unistd.h>
@@ -35,6 +30,7 @@
 
 #include "arielmemmgr.h"
 #include "arielcore.h"
+#include "arielfrontend.h"
 #include "ariel_shmem.h"
 
 namespace SST {
@@ -120,7 +116,6 @@ class ArielCPU : public SST::Component {
         virtual void setup() {}
         virtual void finish();
         virtual bool tick( SST::Cycle_t );
-        int forkPINChild(const char* app, char** args, std::map<std::string, std::string>& app_env);
 
     private:
         SST::Output* output;
@@ -130,14 +125,9 @@ class ArielCPU : public SST::Component {
         std::vector<Interfaces::SimpleMem*> cpu_to_cache_links;
         std::vector<SST::Link*> cpu_to_gpu_links;
 
-        pid_t child_pid;
-
         uint32_t core_count;
-#ifdef HAVE_PINCRT
-        SST::Core::Interprocess::MMAPParent<ArielTunnel>* tunnelmgr;
-#else
-        SST::Core::Interprocess::SHMParent<ArielTunnel>* tunnelmgr;
-#endif
+        
+        ArielFrontend* frontend;
         ArielTunnel* tunnel;
         bool stopTicking;
 
@@ -146,11 +136,6 @@ class ArielCPU : public SST::Component {
         GpuDataTunnel* tunnelD;
         bool gpu_enabled;
 #endif
-
-        std::string appLauncher;
-
-        char **execute_args;
-        std::map<std::string, std::string> execute_env;
 
 };
 

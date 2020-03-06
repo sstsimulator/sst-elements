@@ -40,7 +40,8 @@ libariel_la_SOURCES = \
 	ariel_shmem.h \
 	arieltracegen.h \
 	arieltexttracegen.h \
-	arieltexttracegen.cc
+	arieltexttracegen.cc \
+	arielfrontend.h
 
 EXTRA_DIST = \
 	frontend/simple/fesimple.cc \
@@ -66,6 +67,14 @@ libariel_la_LDFLAGS += $(LIBZ_LDFLAGS)
 libariel_la_LIBADD += $(LIBZ_LIB)
 AM_CPPFLAGS += $(LIBZ_CPPFLAGS)
 libariel_la_SOURCES += arielgzbintracegen.h arielgzbintracegen.cc
+endif
+
+if HAVE_PIN3
+libariel_la_SOURCES += frontend/pin3/pin3frontend.h \
+		       frontend/pin3/pin3frontend.cc
+else
+libariel_la_SOURCES += frontend/simple/pin2frontend.h \
+		       frontend/simple/pin2frontend.cc
 endif
 
 if USE_CUDA
