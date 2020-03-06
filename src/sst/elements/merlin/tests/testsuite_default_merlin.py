@@ -69,8 +69,9 @@ class testcase_merlin_Component(SSTTestCase):
         sdlfile = "{0}/{1}.py".format(get_testsuite_dir(), testcase)
         reffile = "{0}/refFiles/test_merlin_{1}.out".format(get_testsuite_dir(), testcase)
         outfile = "{0}/{1}.out".format(get_test_output_run_dir(), testDataFileName)
+        mpioutfiles = "{0}/{1}.testfile".format(get_test_output_run_dir(), testDataFileName)
 
-        self.run_sst(sdlfile, outfile)
+        self.run_sst(sdlfile, outfile, mpi_out_files=mpioutfiles)
 
         # Perform the test
         cmp_result = compare_sorted(testcase, outfile, reffile)
