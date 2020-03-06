@@ -6,14 +6,14 @@ import sys
 
 def run(osCmd):
 
-	print osCmd
+	print(osCmd)
 
 	start=time.time()
 	os.system(osCmd)
 	end=time.time()
 	sim_elapsed_time=end-start
-	print "sim_elapsed_time(sec): ", sim_elapsed_time
-	print "\n\n"
+	print("sim_elapsed_time(sec): ", sim_elapsed_time)
+	print("\n\n")
 
 
 stopAtCycle = "100us"
@@ -56,4 +56,4 @@ elif(sel.isdigit()):
 	params=sstCmds[int(sel)]
 	run(params)
 else:
-	print "Param#1 should be \"batch\" or [0-%d]" % (len(sstCmds)-1)
+	print("Param#1 should be \"batch\" or [0-%d]" % (len(sstCmds)-1))

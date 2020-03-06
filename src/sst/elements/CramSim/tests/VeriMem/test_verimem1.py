@@ -17,16 +17,16 @@ def run_verimem(config_file, trace_file):
     sstParams_openbank = "--configfile=" + config_file_openbank + " traceFile=" + trace_file + "\""
     osCmd_openbank = sstCmd + sstParams_openbank
     
-    print osCmd
+    print (osCmd)
 
     # run SST
     p = subprocess.Popen(osCmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     output, err = p.communicate()
 
     if DEBUG:
-        print "My output: ", output
+        print ("My output: ", output)
         if err != "":
-            print "My error: ", err
+            print ("My error: ", err)
 
     # extract total Txns processed
     outputLines = output.split("\n")
@@ -47,16 +47,16 @@ def run_verimem_openbank(config_file, trace_file):
     sstParams_openbank = "--configfile=" + config_file_openbank + " traceFile=" + trace_file + "\""
     osCmd_openbank = sstCmd + sstParams_openbank
     
-    print osCmd_openbank
+    print (osCmd_openbank)
 
     # run SST
     p = subprocess.Popen(osCmd_openbank, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     output, err = p.communicate()
 
     if DEBUG:
-        print "My output: ", output
+        print ("My output: ", output)
         if err != "":
-            print "My error: ", err
+            print ("My error: ", err)
 
     # extract total Txns processed
     outputLines = output.split("\n")
@@ -85,8 +85,8 @@ def run_suite1(params):
     timing = params["stopAtCycle"] / totalTxns
 
     if DEBUG:
-        print "Expected Timing: ", expected_Timing
-        print "Actual Timing: ", timing, "\n\n\n"
+        print ("Expected Timing: ", expected_Timing)
+        print ("Actual Timing: ", timing, "\n\n\n")
 
 
     if ((abs(expected_Timing - timing) / timing) <= 0.10):
@@ -105,8 +105,8 @@ def run_suite1(params):
     timing = params["stopAtCycle"] / totalTxns
 
     if DEBUG:
-        print "Expected Timing: ", expected_Timing
-        print "Actual Timing: ", timing, "\n\n\n"
+        print ("Expected Timing: ", expected_Timing)
+        print ("Actual Timing: ", timing, "\n\n\n")
 
 
     if ((abs(expected_Timing - timing) / timing) <= 0.10):
@@ -125,8 +125,8 @@ def run_suite1(params):
     timing = params["stopAtCycle"] / totalTxns
 
     if DEBUG:
-        print "Expected Timing: ", expected_Timing
-        print "Actual Timing: ", timing, "\n\n\n"
+        print ("Expected Timing: ", expected_Timing)
+        print ("Actual Timing: ", timing, "\n\n\n")
 
 
     if ((abs(expected_Timing - timing) / timing) <= 0.10):
@@ -155,8 +155,8 @@ def run_suite2(params):
     timing = params["stopAtCycle"] / totalTxns
 
     if DEBUG:
-        print "Expected Timing: ", expected_Timing
-        print "Actual Timing: ", timing, "\n\n\n"
+        print ("Expected Timing: ", expected_Timing)
+        print ("Actual Timing: ", timing, "\n\n\n")
 
 
     if ((abs(expected_Timing - timing) / timing) <= 0.10):
@@ -175,8 +175,8 @@ def run_suite2(params):
     timing = params["stopAtCycle"] / totalTxns
 
     if DEBUG:
-        print "Expected Timing: ", expected_Timing
-        print "Actual Timing: ", timing, "\n\n\n"
+        print ("Expected Timing: ", expected_Timing)
+        print ("Actual Timing: ", timing, "\n\n\n")
 
 
     if ((abs(expected_Timing - timing) / timing) <= 0.10):
@@ -203,8 +203,8 @@ def run_suite4(params):
     timing = params["stopAtCycle"] / totalTxns
 
     if DEBUG:
-        print "Expected Timing: ", expected_Timing
-        print "Actual Timing: ", timing, "\n\n\n"
+        print ("Expected Timing: ", expected_Timing)
+        print ("Actual Timing: ", timing, "\n\n\n")
 
 
     if ((abs(expected_Timing - timing) / timing) <= 0.10):
@@ -223,8 +223,8 @@ def run_suite4(params):
     timing = params["stopAtCycle"] / totalTxns
 
     if DEBUG:
-        print "Expected Timing: ", expected_Timing
-        print "Actual Timing: ", timing, "\n\n\n"
+        print ("Expected Timing: ", expected_Timing)
+        print ("Actual Timing: ", timing, "\n\n\n")
 
 
     if ((abs(expected_Timing - timing) / timing) <= 0.10):
@@ -247,8 +247,8 @@ def run_suite5(params):
     timing = params["stopAtCycle"] / totalTxns
 
     if DEBUG:
-        print "Expected Timing: ", expected_Timing
-        print "Actual Timing: ", timing, "\n\n\n"
+        print ("Expected Timing: ", expected_Timing)
+        print ("Actual Timing: ", timing, "\n\n\n")
 
 
     if ((abs(expected_Timing - timing)) <= 1):
@@ -267,8 +267,8 @@ def run_suite5(params):
     timing = params["stopAtCycle"] / totalTxns
 
     if DEBUG:
-        print "Expected Timing: ", expected_Timing
-        print "Actual Timing: ", timing, "\n\n\n"
+        print ("Expected Timing: ", expected_Timing)
+        print ("Actual Timing: ", timing, "\n\n\n")
 
 
     if ((abs(expected_Timing - timing)) <= 1):
@@ -295,8 +295,8 @@ def run_suite6(params):
     timing = params["stopAtCycle"] / totalTxns
 
     if DEBUG:
-        print "Expected Timing: ", expected_Timing
-        print "Actual Timing: ", timing, "\n\n\n"
+        print ("Expected Timing: ", expected_Timing)
+        print ("Actual Timing: ", timing, "\n\n\n")
 
 
     if (((expected_Timing - timing)) <= 1):
@@ -315,8 +315,8 @@ def run_suite6(params):
     timing = params["stopAtCycle"] / totalTxns
 
     if DEBUG:
-        print "Expected Timing: ", expected_Timing
-        print "Actual Timing: ", timing, "\n\n\n"
+        print ("Expected Timing: ", expected_Timing)
+        print ("Actual Timing: ", timing, "\n\n\n")
 
 
     if ((abs(expected_Timing - timing)) <= 1):
@@ -381,7 +381,7 @@ for line in configFileInstance:
 g_params = santize_params(g_params)
 g_params["config_file"] = config_file
 
-print "-----RUNNING VERIMEM-----"
+print ("-----RUNNING VERIMEM-----")
 print(run_suite1(g_params))
 print(run_suite2(g_params))
 print(run_suite4(g_params))
