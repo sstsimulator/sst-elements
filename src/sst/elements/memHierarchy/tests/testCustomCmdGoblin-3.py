@@ -1,6 +1,11 @@
 import sst
 import sys
-import ConfigParser, argparse
+import argparse
+try:
+    import ConfigParser
+except ImportError:
+    import configparser as ConfigParser
+
 from utils import *
 from mhlib import componentlist
 
@@ -20,7 +25,7 @@ statLevel = args.statlevel
 # Build Configuration Information
 config = Config(cfgFile, verbose=verbose)
 
-print "Configuring Network-on-Chip..."
+print ("Configuring Network-on-Chip...")
 
 router = sst.Component("router", "merlin.hr_router")
 router.addParams(config.getRouterParams())
@@ -29,7 +34,7 @@ router.setSubComponent("topology","merlin.singlerouter")
 
 # Connect Cores & caches
 for next_core_id in range(config.total_cores):
-    print "Configuring core %d..."%next_core_id
+    print ("Configuring core %d..."%next_core_id)
 
     cpu = sst.Component("cpu%d"%(next_core_id), "miranda.BaseCPU")
     cpu.addParams(config.getCoreConfig(next_core_id))
@@ -83,4 +88,4 @@ sst.enableAllStatisticsForAllComponents({"type":"sst.AccumulatorStatistic"})
 
 sst.setStatisticOutput("sst.statOutputConsole")
 
-print "Completed configuring the EX3 model"
+print ("Completed configuring the EX3 model")

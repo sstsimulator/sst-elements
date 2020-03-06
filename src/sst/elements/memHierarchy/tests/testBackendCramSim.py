@@ -9,7 +9,7 @@ def read_arguments():
 def setup_config_params():
     l_params = {}
     if g_boolUseDefaultConfig:
-        print "Config file not found... using default configuration"
+        print("Config file not found... using default configuration")
         l_params = {
             "clockCycle": "1ns",
             "stopAtCycle": "10us",
