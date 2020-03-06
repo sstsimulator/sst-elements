@@ -30,12 +30,12 @@ cores_per_group = 8*2 #2 cores and 2 MMUs
 memory_controllers_per_group = 1
 groups = 1
 
-os.environ['OMP_NUM_THREADS'] = str(cores_per_group * groups/2)
+os.environ['OMP_NUM_THREADS'] = str(cores_per_group * groups//2)
 
 l3cache_blocks_per_group = 2
 l3cache_block_size = "2MB"
 
-l3_cache_per_core  = int(l3cache_blocks_per_group / cores_per_group)
+l3_cache_per_core  = int(l3cache_blocks_per_group // cores_per_group)
 l3_cache_remainder = l3cache_blocks_per_group - (l3_cache_per_core * cores_per_group)
 
 ring_latency = "300ps" # 2.66 GHz time period plus slack for ringstop latency
@@ -47,7 +47,7 @@ memory_network_bandwidth = "96GiB/s"
 mem_interleave_size = 64 #64	# Do 64B cache-line level interleaving
 memory_capacity = 16384 	# Size of memory in MBs
 page_size = 4                   # In KB 
-num_pages = memory_capacity * 1024 / page_size
+num_pages = memory_capacity * 1024 // page_size
 
 streamN = 1000000
 
@@ -85,7 +85,7 @@ mmu = sst.Component("mmu0", "Samba")
 mmu.addParams({
         "os_page_size": 4,
 	"perfect": 0,
-        "corecount": groups * cores_per_group/2,
+        "corecount": groups * cores_per_group//2,
         "sizes_L1": 3,
         "page_size1_L1": 4,
         "page_size2_L1": 2048,
@@ -137,7 +137,7 @@ mmu.addParams({
 opal = sst.Component("opal0", "Opal")
 
 opal.addParams({
-  "num_cores": groups * cores_per_group/2,
+  "num_cores": groups * cores_per_group//2,
   "latency" : 100,
 });
 
@@ -151,7 +151,7 @@ arielParams = {
     "maxissuepercycle" : 3,
     "maxtranscore": 16,
     "pipetimeout" : 0,
-    "corecount" : groups * cores_per_group/2,
+    "corecount" : groups * cores_per_group//2,
     "memmgr.memorylevels" : 1,
     "memmgr.pagecount0" : num_pages,
     "memmgr.pagesize0" : page_size * 1024,
@@ -259,7 +259,7 @@ l3_params = {
 
 
 mem_params = {
-    	"backend.mem_size" : str(memory_capacity / (groups * memory_controllers_per_group)) + "MiB",
+    	"backend.mem_size" : str(memory_capacity // (groups * memory_controllers_per_group)) + "MiB",
     	"backing" : "none",
     	"backend" : "memHierarchy.Messier",
     	"backendConvertor.backend" : "memHierarchy.Messier",
@@ -299,7 +299,7 @@ dc_params = {
 
 router_map = {}
 
-print "Configuring Ring Network-on-Chip..."
+print("Configuring Ring Network-on-Chip...")
 
 for next_ring_stop in range((cores_per_group + memory_controllers_per_group + l3cache_blocks_per_group) * groups):
 	ring_rtr = sst.Component("rtr." + str(next_ring_stop), "merlin.hr_router")
@@ -310,7 +310,7 @@ for next_ring_stop in range((cores_per_group + memory_controllers_per_group + l3
         router_map["rtr." + str(next_ring_stop)] = ring_rtr
 
 for next_ring_stop in range((cores_per_group + memory_controllers_per_group + l3cache_blocks_per_group) * groups):
-	print next_ring_stop
+	print(next_ring_stop)
 	if next_ring_stop == 0:
                	rtr_link_positive = sst.Link("rtr_pos_" + str(next_ring_stop))
                	rtr_link_positive.connect( (router_map["rtr.0"], "port0", ring_latency), (router_map["rtr.1"], "port1", ring_latency) )
@@ -328,11 +328,11 @@ for next_ring_stop in range((cores_per_group + memory_controllers_per_group + l3
                 rtr_link_negative.connect( (router_map["rtr." + str(next_ring_stop)], "port1", ring_latency), (router_map["rtr." + str(next_ring_stop-1)], "port0", ring_latency) )
 
 for next_group in range(groups):
-	print "Configuring core and memory controller group " + str(next_group) + "..."
+	print("Configuring core and memory controller group " + str(next_group) + "...")
 
 	for next_active_core in range(cores_per_group):
 		for next_l3_cache_block in range(l3_cache_per_core):
-			print "Creating L3 cache block " + str(next_l3_cache_id) + "..."
+			print("Creating L3 cache block " + str(next_l3_cache_id) + "...")
 			
 			l3cache = sst.Component("l3cache_" + str(next_l3_cache_id), "memHierarchy.Cache")
 			l3cache.addParams(l3_params)
@@ -347,11 +347,11 @@ for next_group in range(groups):
 			next_l3_cache_id = next_l3_cache_id + 1
 			next_network_id = next_network_id + 1
 		
-		print "Creating Core " + str(next_active_core) + " in Group " + str(next_group)
+		print("Creating Core " + str(next_active_core) + " in Group " + str(next_group))
 
 		l1 = sst.Component("l1cache_" + str(next_core_id), "memHierarchy.Cache")
 
-		if next_core_id < cores_per_group*groups/2:
+		if next_core_id < cores_per_group*groups//2:
 			l1.addParams(l1_params)
 		else:
 			l1.addParams(l1_dummy_params)
@@ -361,7 +361,7 @@ for next_group in range(groups):
 		l2 = sst.Component("l2cache_" + str(next_core_id), "memHierarchy.Cache")
 
 
-		if next_core_id < cores_per_group*groups/2:
+		if next_core_id < cores_per_group*groups//2:
 			l2.addParams(l2_params)
 		else:
 			l2.addParams(l2_dummy_params)
@@ -384,16 +384,16 @@ for next_group in range(groups):
 
 
 
-		if next_core_id < cores_per_group*groups/2:
+		if next_core_id < cores_per_group*groups//2:
                 	arielMMULink.connect((ariel, "cache_link_%d"%next_core_id, ring_latency), (mmu, "cpu_to_mmu%d"%next_core_id, ring_latency))
-                	ArielOpalLink.connect((ariel, "opal_link_%d"%next_core_id, ring_latency), (opal, "requestLink%d"%(next_core_id + cores_per_group*groups/2), ring_latency))
+                	ArielOpalLink.connect((ariel, "opal_link_%d"%next_core_id, ring_latency), (opal, "requestLink%d"%(next_core_id + cores_per_group*groups//2), ring_latency))
                 	MMUCacheLink.connect((mmu, "mmu_to_cache%d"%next_core_id, ring_latency), (l1, "high_network_0", ring_latency))
 			PTWOpalLink.connect( (mmu, "ptw_to_opal%d"%next_core_id, "50ps"), (opal, "requestLink%d"%next_core_id, "50ps") )
 			arielMMULink.setNoCut()
 			PTWOpalLink.setNoCut()
 			MMUCacheLink.setNoCut()
 		else:
-			PTWMemLink.connect((mmu, "ptw_to_mem%d"%(next_core_id-cores_per_group*groups/2), ring_latency), (l1, "high_network_0", ring_latency))
+			PTWMemLink.connect((mmu, "ptw_to_mem%d"%(next_core_id-cores_per_group*groups//2), ring_latency), (l1, "high_network_0", ring_latency))
 		#'''
 
 
@@ -409,7 +409,7 @@ for next_group in range(groups):
 		next_core_id = next_core_id + 1
 
 	for next_l3_cache_block in range(l3_cache_remainder):
-		print "Creating L3 cache block: " + str(next_l3_cache_id) + "..."
+		print("Creating L3 cache block: " + str(next_l3_cache_id) + "...")
 
 		l3cache = sst.Component("l3cache_" + str(next_l3_cache_id), "memHierarchy.Cache")
 		l3cache.addParams(l3_params)
@@ -425,7 +425,7 @@ for next_group in range(groups):
 		next_network_id = next_network_id + 1
 
 	for next_mem_ctrl in range(memory_controllers_per_group):	
-		local_size = memory_capacity / (groups * memory_controllers_per_group)
+		local_size = memory_capacity // (groups * memory_controllers_per_group)
 
 		mem = sst.Component("memory_" + str(next_memory_ctrl_id), "memHierarchy.MemController")
 		mem.addParams(mem_params)
@@ -478,4 +478,4 @@ sst.setStatisticOutputOptions( {
 	"separator" : ", "
 } )
 
-print "Completed configuring the SST Sandy Bridge model"
+print("Completed configuring the SST Sandy Bridge model")

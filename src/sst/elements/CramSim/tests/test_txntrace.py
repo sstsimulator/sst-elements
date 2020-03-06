@@ -11,26 +11,26 @@ def read_arguments():
                 if arg.find("--configfile=") != -1:
                         substrIndex = arg.find("=")+1
                         config_file_list.append(arg[substrIndex:])
-                        print "Config file list:", config_file_list
+                        print("Config file list:", config_file_list)
                         boolDefaultConfig = False;
 
                 elif arg.find("--traceFile=") != -1:  # just remove the -- argument signifier from the beginning
                         substrIndex = arg.find("-")+2  
                         override_list.append(arg[substrIndex:])
-                        print "Trace file:", arg[substrIndex:]
+                        print("Trace file:", arg[substrIndex:])
                         
                 elif arg != sys.argv[0]:
                         if arg.find("=") == -1:
-                                print "Malformed config override found!: ", arg
+                                print("Malformed config override found!: ", arg)
                                 exit(-1)
                         override_list.append(arg)
-                        print "Override: ", override_list[-1]
+                        print("Override: ", override_list[-1])
 
 
 	
 	if boolDefaultConfig == True:
 		config_file_list = "../ddr4_verimem.cfg"
-		print "config file is not specified.. using ddr4_verimem.cfg"
+		print("config file is not specified.. using ddr4_verimem.cfg")
 
 	return [config_file_list, override_list]
 
@@ -42,12 +42,12 @@ def setup_config_params(config_file_list, override_list):
             l_configFile = open(l_configFileEntry, 'r')
             for l_line in l_configFile:
                     l_tokens = l_line.split()
-                    #print l_tokens[0], ": ", l_tokens[1]
+                    #print (l_tokens[0], ": ", l_tokens[1])
                     l_params[l_tokens[0]] = l_tokens[1]
 
     for override in override_list:
         l_tokens = override.split("=")
-        print "Override cfg", l_tokens[0], l_tokens[1]
+        print("Override cfg", l_tokens[0], l_tokens[1])
         l_params[l_tokens[0]] = l_tokens[1]
      
     return l_params
@@ -62,10 +62,10 @@ g_override_list = ""
 [g_config_file_list, g_overrided_list] = read_arguments()
 g_params = setup_config_params(g_config_file_list, g_overrided_list)
 if "dumpConfig" in g_params and int(g_params["dumpConfig"]):
-        print "\n###########################\nDumping global config parameters:"
+        print("\n###########################\nDumping global config parameters:")
         for key in g_params:
-                print key + " " + g_params[key]
-        print "###########################\n"
+                print(key + " " + g_params[key])
+        print("###########################\n")
 
 numChannels = int(g_params["numChannels"])
 maxOutstandingReqs = numChannels*128
