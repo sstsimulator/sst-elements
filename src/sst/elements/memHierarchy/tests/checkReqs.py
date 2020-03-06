@@ -25,10 +25,10 @@ with open(sys.argv[1]) as f:
                 if key == (None, None):
                     key = respMap.group(3, 4)
                 if key not in reqs:
-                    print "Found response for missing request:", key
+                    print("Found response for missing request:", key)
                 else:
                     reqs.remove(key)
 
 for key in reqs:
-    print "Incomplete request:  ", key
+    print("Incomplete request:  ", key)
 

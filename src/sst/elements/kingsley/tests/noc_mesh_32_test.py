@@ -31,8 +31,8 @@ input_buf_size = "64B"
 # ports, as well as on all endpoints
 add_no_cut = False
 
-for y in xrange(y_size):
-    for x in xrange(x_size):
+for y in range(y_size):
+    for x in range(x_size):
         rtr = sst.Component("rtr.%d.%d"%(x,y), "kingsley.noc_mesh")
         rtr.addParams({
             "local_ports" : "%d"%(num_endpoints),
@@ -120,7 +120,7 @@ for y in xrange(y_size):
 
 
         # Add endpoints
-        for z in xrange(num_endpoints):
+        for z in range(num_endpoints):
             rtr.addLink(getLink("rtr.%d.%d"%(x,y), "ep%d.%d.%d"%(z,x,y)), "local%d"%(z), "800ps")
             if add_no_cut:
                 getLink("rtr.%d.%d"%(x,y), "ep%d.%d.%d"%(z,x,y)).setNoCut()
