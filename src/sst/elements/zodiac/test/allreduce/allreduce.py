@@ -20,7 +20,7 @@ def main():
     try:
         opts, args = getopt.getopt(sys.argv[1:], "", ["msgSize=","iter=","shape=","numCores="])
     except getopt.GetopError as err:
-        print str(err)
+        print (str(err))
         sys.exit(2)
     for o, a in opts:
         if o in ("--iter"):
@@ -61,8 +61,8 @@ numDim = calcNumDim( shape )
 width = calcWidth( shape )
 numRanks = numNodes * num_vNics
 
-print numNodes
-print numRanks
+print (numNodes)
+print (numRanks)
 
 sst.merlin._params["link_lat"] = "40ns"
 sst.merlin._params["link_bw"] = "4GB/s"
@@ -163,7 +163,7 @@ class EmberEP(EndPoint):
 		loopBack = sst.Component("loopBack" + str(nodeID), "firefly.loopBack")
 		loopBack.addParam("numCores", num_vNics)
 
-		for x in xrange(num_vNics ):
+		for x in range(num_vNics ):
 			ep = sst.Component("nic" + str(nodeID) + "core" + str(x) + "_TraceReader", "zodiac.ZodiacSiriusTraceReader")
 			ep.addParams(driverParams)
 			os = ep.setSubComponent( "OS", "firefly.hades" )
