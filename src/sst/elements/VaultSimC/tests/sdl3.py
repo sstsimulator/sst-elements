@@ -34,7 +34,7 @@ memclock = "500 MHz"
 memDebug = 0
 memDebugLevel = 6
 
-rank_size = 512 / PIMs
+rank_size = 512 // PIMs
 interleave_size = 1024*4
 corecount = (CPUQuads + (PIMQuads * PIMs)) * 4
 
@@ -257,7 +257,7 @@ def doFakeDC(rtr, nextPort, netAddr, dcNum):
             "network_bw": memNetBW,
             "addr_range_start": 0,
             "addr_range_end":  0,
-            "interleave_size": 0/1024,    # in KB
+            "interleave_size": 0//1024,    # in KB
             "interleave_step": 0,         # in KB
             "entry_cache_size": 128*1024, #Entry cache size of mem/blocksize
             "clock": memclock,
@@ -271,7 +271,7 @@ def doFakeDC(rtr, nextPort, netAddr, dcNum):
 
 def doDC(rtr, nextPort, netAddr, dcNum):
     start_pos = (dcNum * interleave_size);
-    interleave_step = PIMs*(interleave_size/1024) # in KB
+    interleave_step = PIMs*(interleave_size//1024) # in KB
     end_pos = start_pos + ((512*1024*1024)-(interleave_size*(PIMs-1))) 
 
     # add memory
@@ -298,7 +298,7 @@ def doDC(rtr, nextPort, netAddr, dcNum):
             "network_bw": memNetBW,
             "addr_range_start": start_pos,
             "addr_range_end":  end_pos,
-            "interleave_size": interleave_size/1024,    # in KB
+            "interleave_size": interleave_size//1024,    # in KB
             "interleave_step": interleave_step,         # in KB
             "entry_cache_size": 128*1024, #Entry cache size of mem/blocksize
             "clock": memclock,
