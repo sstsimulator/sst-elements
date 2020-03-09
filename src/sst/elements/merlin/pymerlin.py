@@ -31,7 +31,10 @@ class Params(dict):
         return val
     def subset(self, keys, optKeys = []):
         ret = dict((k, self[k]) for k in keys)
-        ret.update(dict((k, self[k]) for k in keys and self))
+        #ret.update(dict((k, self[k]) for k in (optKeys and self)))
+        for k in optKeys:
+            if k in self:
+                ret[k] = self[k]
         return ret
     def subsetWithRename(self, keys):
         ret = dict()
@@ -1128,7 +1131,7 @@ class TestEndPoint(EndPoint):
         #self.enableAllStats = False;
         #self.statInterval = "0"
         #self.nicKeys = ["topology", "num_peers", "num_messages", "link_bw", "checkerboard"]
-        self.epKeys.extend(["topology", "num_peers", "link_bw"])
+        self.epKeys.extend(["num_peers", "link_bw"])
         self.epOptKeys.extend(["checkerboard", "num_messages"])
         self.split = 1
         self.group_array = None
