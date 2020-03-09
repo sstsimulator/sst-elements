@@ -61,12 +61,15 @@ public:
         {"input_buf_size",     "Size of input buffers specified in b or B (can include SI prefix)."},
         {"output_buf_size",    "Size of output buffers specified in b or B (can include SI prefix)."},
         // {"network_inspectors", "Comma separated list of network inspectors to put on output ports.", ""},
-        {"checkerboard",     "Number of actual virtual networks to use per virtual network seen by endpoint", "1"},
-        {"checkerboard_alg", "Algorithm to use to spead traffic across checkerboarded VNs [deterministic | roundrobin]", "deterministic" },
-        {"total_endpoints",    "Number of endpoints on the network (only used if logical nids are used.",""},
+        {"checkerboard",     "DEPRECATED: Number of actual virtual networks to use per virtual network seen by endpoint", "1"},
+        {"checkerboard_alg", "DEPRECATED: Algorithm to use to spead traffic across checkerboarded VNs [deterministic | roundrobin]", "deterministic" },
+        {"job_id",             "ID of the job this enpoint is part of.", "" },
+        {"Job_size",           "Number of nodes in the job this endpoint is part of.",""},
         {"logical_nid",        "My logical NID", "" },
-        {"logical_peers",      "Number of peers in my logical mapping.",""},
-        {"nid_map_name",       "Base name of shared region where my NID map will be located.  If empty, no NID map will be used.",""}
+        {"use_nid_remap",      "If true, will remap logical nids in job to physical ids", "false" },
+        {"nid_map_name",       "Base name of shared region where my NID map will be located.  If empty, no NID map will be used.",""},
+        {"vn_remap",           "Remap VNs onto/off of the network.  If empty, no vn remapping is done", "" },
+
     )
 
     SST_ELI_DOCUMENT_STATISTICS(
@@ -222,7 +225,14 @@ public:
 
     inline bool isNetworkInitialized() const { return network_initialized; }
     // inline nid_t getEndpointID() const { return id; }
-    inline nid_t getEndpointID() const { return logical_nid; }
+    inline nid_t getEndpointID() const {
+        if ( nid_map ) {
+            return logical_nid;
+        }
+        else {
+            return id;
+        }
+    }
     inline const UnitAlgebra& getLinkBW() const { return link_bw; }
 
     
