@@ -92,7 +92,10 @@ nobase_sst_HEADERS = \
 
 libmerlin_la_LDFLAGS = -module -avoid-version $(PYTHON_LDFLAGS)
 
-BUILT_SOURCES = pymerlin.inc
+BUILT_SOURCES = \
+	pymerlin.inc \
+	pymerlin-base.inc \
+	topology/pymerlin-topology.inc
 
 install-exec-hook:
 	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     merlin=$(abs_srcdir)
