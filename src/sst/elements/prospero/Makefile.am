@@ -83,26 +83,69 @@ install-exec-hook: prosperotrace.dylib
 
 else
 
-all-local: tracetool/sstmemtrace.cc
+all-local: prosperotrace.so
+
+if HAVE_PIN3
+
+prosperotrace.so : prosperotrace.o
+	$(CXX) -shared -Wl,--hash-style=sysv \
+	    $(PINTOOL_DIR)/intel64/runtime/pincrt/crtbeginS.o \
+	    -Wl,-Bsymbolic -Wl,--version-script=$(PINTOOL_DIR)/source/include/pin/pintool.ver -fabi-version=2 \
+	    -o prosperotrace.so prosperotrace.o \
+	    -L$(PINTOOL_DIR)/intel64/runtime/pincrt \
+	    -L$(PINTOOL_DIR)/intel64/lib \
+	    -L$(PINTOOL_DIR)/intel64/lib-ext \
+	    -L$(PINTOOL_DIR)/extras/xed-intel64/lib -lpin -lxed \
+	    $(PINTOOL_DIR)/intel64/runtime/pincrt/crtendS.o \
+	    -lpin3dwarf -ldl-dynamic -nostdlib -lstlport-dynamic -lm-dynamic -lc-dynamic -lunwind-dynamic
+
+prosperotrace.o : $(top_srcdir)/src/sst/elements/prospero/tracetool/sstmemtrace.cc
+	$(CXX) -Wall -Werror -Wno-unknown-pragmas -D__PIN__=1 -DPIN_CRT=1 \
+	    -fno-stack-protector -fno-exceptions -funwind-tables -fasynchronous-unwind-tables -fno-rtti \
+	    -DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_LINUX -fabi-version=2 \
+	    $(CPPFLAGS) \
+	    -I$(top_srcdir)/src/sst/elements/ariel \
+	    -I$(PINTOOL_DIR)/source/include/pin \
+	    -I$(PINTOOL_DIR)/source/include/pin/gen \
+	    -isystem $(PINTOOL_DIR)/extras/stlport/include \
+	    -isystem $(PINTOOL_DIR)/extras/libstdc++/include \
+	    -isystem $(PINTOOL_DIR)/extras/crt/include \
+	    -isystem $(PINTOOL_DIR)/extras/crt/include/arch-x86_64 \
+	    -isystem $(PINTOOL_DIR)/extras/crt/include/kernel/uapi \
+	    -isystem $(PINTOOL_DIR)/extras/crt/include/kernel/uapi/asm-x86 \
+	    -I$(PINTOOL_DIR)/extras/components/include\
+	    -I$(PINTOOL_DIR)/extras/xed-intel64/include/xed \
+	    -I$(PINTOOL_DIR)/source/tools/Utils \
+	    -I$(PINTOOL_DIR)/source/tools/InstLib \
+	    -O3 -fomit-frame-pointer -fno-strict-aliasing \
+	    -o prosperotrace.o -c $(top_srcdir)/src/sst/elements/prospero/tracetool/sstmemtrace.cc
+
+else
+
+prosperotrace.so : prosperotrace.o
 	$(CXX) -shared -Wl,--hash-style=sysv -Wl,-Bsymbolic \
-	-fPIC -O3 \
-	-fomit-frame-pointer \
-	$(CPPFLAGS) \
-	$(LIBZ_CPPFLAGS) \
-	-DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_LINUX \
-	-I$(PINTOOL_DIR)/source/include/pin \
-	-I$(PINTOOL_DIR)/ \
-	-I$(PINTOOL_DIR)/extras/components/include \
-	-I$(PINTOOL_DIR)/source/include/pin/gen/ \
-	-I$(PINTOOL_DIR)/extras/xed-intel64/include \
-	-I$(top_srcdir)/sst \
-	-Wl,--version-script=$(PINTOOL_DIR)/source/include/pin/pintool.ver \
-	-L$(PINTOOL_DIR)/intel64/lib \
-	-L$(PINTOOL_DIR)/intel64/lib-ext \
-	-L$(PINTOOL_DIR)/intel64/runtime/glibc \
-	-L$(PINTOOL_DIR)/extras/xed-intel64/lib \
-	-o prosperotrace.so $(top_srcdir)/src/sst/elements/prospero/tracetool/sstmemtrace.cc \
-	-ldl -lpin -lxed -lpindwarf -ldl -lpthread -lrt $(LIBZ_LDFLAGS) $(LIBZ_LIB)
+	    -o prosperotrace.so prosperotrace.o \
+	    -Wl,--version-script=$(PINTOOL_DIR)/source/include/pin/pintool.ver \
+	    -L$(PINTOOL_DIR)/intel64/lib \
+	    -L$(PINTOOL_DIR)/intel64/lib-ext \
+	    -L$(PINTOOL_DIR)/intel64/runtime/glibc \
+	    -L$(PINTOOL_DIR)/extras/xed-intel64/lib \
+	    -ldl -lpin -lxed -lpindwarf -lpthread -lrt $(LIBZ_LDFLAGS) $(LIBZ_LIB)
+
+prosperotrace.o : $(top_srcdir)/src/sst/elements/prospero/tracetool/sstmemtrace.cc
+	$(CXX) $(CPPFLAGS) \
+	    $(LIBZ_CPPFLAGS) \
+	    -DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_LINUX \
+	    -I$(PINTOOL_DIR)/ \
+	    -I$(PINTOOL_DIR)/source/include/pin \
+	    -I$(PINTOOL_DIR)/source/include/pin/gen \
+	    -I$(PINTOOL_DIR)/extras/components/include \
+	    -I$(PINTOOL_DIR)/extras/xed-intel64/include \
+	    -I$(top_srcdir)/sst \
+	    -O3 -fomit-frame-pointer -o prosperotrace.o \
+	    -c $(top_srcdir)/src/sst/elements/prospero/tracetool/sstmemtrace.cc
+
+endif
 
 install-exec-hook: prosperotrace.so
 	cp prosperotrace.so $(libexecdir)/prosperotrace.so

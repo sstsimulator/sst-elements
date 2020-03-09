@@ -17,7 +17,7 @@ inFile = open(inFileName)
 sys.stdout.write('%10s' % " ")
 for ii in range(numBanks):
     sys.stdout.write('%3d' % ii)
-print
+print()
 
 bankList = list()
 first = True
@@ -39,7 +39,7 @@ for line in inFile:
         sys.stdout.write(" ")
         for ii in range(numBanks):
             sys.stdout.write('%3s' % bankStates[ii])
-        print " ",addr
+        print(" ",addr)
 
         #reset active banks to | and precharge banks to .
         if len(bankList) > 1:
@@ -59,7 +59,7 @@ for line in inFile:
     addr = grep[3]
     bankId = int(grep[-1])
     if bankId >= numBanks:
-        print "Increase numBanks!",bankId,"detected, max is",numBanks-1
+        print("Increase numBanks!",bankId,"detected, max is",numBanks-1)
         exit(-1)
     bankStates[bankId] = cmdDict[cmd]
     bankList.append(bankId)

@@ -107,7 +107,7 @@ mem_params = {
 	"backing" : "none",
 	"backend.access_time" : "30ns",
 	"rangeStart" : 0,
-	"backend.mem_size" : str(memory_capacity / (groups * memory_controllers_per_group)) + "MiB",
+	"backend.mem_size" : str(memory_capacity // (groups * memory_controllers_per_group)) + "MiB",
 	"clock" : memory_clock,
 }
 
@@ -121,7 +121,7 @@ dc_params = {
        	"debug": 1,
 }
 
-print "Configuring Ariel processor model (" + str(groups * cores_per_group) + " cores)..."
+print("Configuring Ariel processor model (" + str(groups * cores_per_group) + " cores)...")
 
 ariel = sst.Component("A0", "ariel.ariel")
 ariel.addParams({
@@ -151,7 +151,7 @@ memmgr.addParams({
 
 router_map = {}
 
-print "Configuring ring network..."
+print("Configuring ring network...")
 
 for next_ring_stop in range((cores_per_group + memory_controllers_per_group + l3cache_blocks_per_group) * groups):
 	ring_rtr = sst.Component("rtr." + str(next_ring_stop), "merlin.hr_router")
@@ -181,10 +181,10 @@ for next_ring_stop in range((cores_per_group + memory_controllers_per_group + l3
                 rtr_link_negative.connect( (router_map["rtr." + str(next_ring_stop)], "port1", ring_latency), (router_map["rtr." + str(next_ring_stop-1)], "port0", ring_latency) )
 
 for next_group in range(groups):
-	print "Configuring core and memory controller group " + str(next_group) + "..."
+	print("Configuring core and memory controller group " + str(next_group) + "...")
 
 	for next_active_core in range(active_cores_per_group):
-		print "Creating active core " + str(next_active_core) + " in group " + str(next_group)
+		print("Creating active core " + str(next_active_core) + " in group " + str(next_group))
 
 		l1 = sst.Component("l1cache_" + str(next_core_id), "memHierarchy.Cache")
 		l1.addParams(l1_params)
@@ -207,7 +207,7 @@ for next_group in range(groups):
 		next_core_id = next_core_id + 1
 
 	for next_inactive_core in range(cores_per_group - active_cores_per_group):
-		print "Creating inactive core: " + str(next_inactive_core) + " in group " + str(next_group)
+		print("Creating inactive core: " + str(next_inactive_core) + " in group " + str(next_group))
 
 		l1 = sst.Component("l1cache_" + str(next_core_id), "memHierarchy.Cache")
 		l1.addParams(l1_params)
@@ -230,7 +230,7 @@ for next_group in range(groups):
 		next_core_id = next_core_id + 1
 
 	for next_l3_cache_block in range(l3cache_blocks_per_group):
-		print "Creating L3 cache block: " + str(next_l3_cache_block) + " in group: " + str(next_group)
+		print("Creating L3 cache block: " + str(next_l3_cache_block) + " in group: " + str(next_group))
 
 		l3cache = sst.Component("l3cache" + str((next_group * l3cache_blocks_per_group) + next_l3_cache_block), "memHierarchy.Cache")
 		l3cache.addParams(l3_params)
@@ -245,7 +245,7 @@ for next_group in range(groups):
 		next_network_id = next_network_id + 1
 
 	for next_mem_ctrl in range(memory_controllers_per_group):	
-		local_size = memory_capacity / (groups * memory_controllers_per_group)
+		local_size = memory_capacity // (groups * memory_controllers_per_group)
 
 		mem = sst.Component("memory_" + str(next_memory_ctrl_id), "memHierarchy.MemController")
 		mem.addParams(mem_params)
@@ -276,4 +276,4 @@ sst.setStatisticOutputOptions( {
 		"separator" : ", "
 	} )
 
-print "Completed configuring the SST Sandy Bridge model"
+print("Completed configuring the SST Sandy Bridge model")

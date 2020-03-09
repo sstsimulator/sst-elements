@@ -19,7 +19,7 @@ local_memory_capacity = 128  	# Size of memory in MBs
 shared_memory_capacity = 2048	# 2GB
 shared_memory = 1
 page_size = 4 # In KB 
-num_pages = local_memory_capacity * 1024 / page_size + 8*1024*1024/page_size
+num_pages = local_memory_capacity * 1024 // page_size + 8*1024*1024//page_size
 
 
 ariel = sst.Component("cpu", "ariel.ariel")
@@ -30,7 +30,7 @@ ariel.addParams({
     "maxissuepercycle" : 2,
     "maxtranscore": 16,
     "pipetimeout" : 0,
-    "corecount" : cores/2,
+    "corecount" : cores//2,
     "arielmode" : 0,
     "appargcount" : 0,
     "max_insts" : 10000,
@@ -58,7 +58,7 @@ mmu = sst.Component("mmu", "Samba")
 mmu.addParams({
         "os_page_size": 4,
 	"perfect": 0,
-        "corecount": cores/2,
+        "corecount": cores//2,
 	"sizes_L1": 3,
 	"page_size1_L1": 4,
         "page_size2_L1": 2048,
@@ -123,7 +123,7 @@ opal.addParams({
 	"shared_mem.mempool0.size"	: shared_memory_capacity*1024,
 	"shared_mem.mempool0.frame_size": page_size,
 	"shared_mem.mempool0.mem_type"	: 0,
-	"node0.cores" 			: cores/2,
+	"node0.cores" 			: cores//2,
 	"node0.allocation_policy" 	: 1,
 	"node0.page_migration" 		: 0,
 	"node0.page_migration_policy" 	: 0,
@@ -231,13 +231,13 @@ for next_core in range(cores):
 	PTWOpalLink = sst.Link("ptw_opal_" + str(next_core))
 	ArielOpalLink = sst.Link("ariel_opal_" + str(next_core))
 
-	if next_core < cores/2:
+	if next_core < cores//2:
         	arielMMULink.connect((ariel, "cache_link_%d"%next_core, "300ps"), (mmu, "cpu_to_mmu%d"%next_core, "300ps"))
 		ArielOpalLink.connect((memmgr, "opal_link_%d"%next_core, "300ps"), (opal, "coreLink%d"%(next_core), "300ps"))
 		MMUCacheLink.connect((mmu, "mmu_to_cache%d"%next_core, "300ps"), (l1_cpulink, "port", "300ps"))
 		PTWOpalLink.connect( (pagefaulthandler, "opal_link_%d"%next_core, "300ps"), (opal, "mmuLink%d"%(next_core), "300ps") )
 	else:
-		PTWMemLink.connect((mmu, "ptw_to_mem%d"%(next_core-cores/2), "300ps"), (l1_cpulink, "port", "300ps"))
+		PTWMemLink.connect((mmu, "ptw_to_mem%d"%(next_core-cores//2), "300ps"), (l1_cpulink, "port", "300ps"))
 
 	l2_core_link = sst.Link("l2cache_" + str(next_core) + "_link")
 	l2_core_link.connect((l1_memlink, "port", "300ps"), (l2_cpulink, "port", "300ps"))				
