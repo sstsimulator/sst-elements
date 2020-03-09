@@ -137,15 +137,6 @@ PortControl::recv(int vc)
     return event;
 }
 
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-PortControl::PortControl(Component* parent, Params& params) :
-    PortInterface(parent),
-    output(Simulation::getSimulation()->getSimulationOutput())
-{
-    merlin_abort.fatal(CALL_INFO_LONG,1,"Old style subcomponent loading not supported for PortControl.");
-}
-#endif  // inserted by script
-
 
 PortControl::PortControl(ComponentId_t cid, Params& params,  Router* rif, int rtr_id, int port_number, Topology *topo) :
     PortInterface(cid),
@@ -318,9 +309,6 @@ PortControl::PortControl(ComponentId_t cid, Params& params,  Router* rif, int rt
         if ( ni == NULL ) {
             merlin_abort.fatal(CALL_INFO,1,"NetworkInspector: %s, not found.\n",inspector_names[i].c_str());
         }
-#ifndef SST_ENABLE_PREVIEW_BUILD
-        if ( ni->wasLoadedWithLegacyAPI() ) ni->initialize(port_name);
-#endif
         network_inspectors.push_back(ni);
     }
 

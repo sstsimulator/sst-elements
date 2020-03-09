@@ -30,44 +30,6 @@ using namespace SST::Merlin;
  * [params.p+params.a-1, params.k)  // Other groups
  */
 
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-topo_dragonfly_legacy::topo_dragonfly_legacy(Component* comp, Params &p) :
-    Topology(comp)
-{
-    params.p = (uint32_t)p.find<int>("dragonfly:hosts_per_router");
-    params.a = (uint32_t)p.find<int>("dragonfly:routers_per_group");
-    params.k = (uint32_t)p.find<int>("num_ports");
-    params.h = (uint32_t)p.find<int>("dragonfly:intergroup_per_router");
-    params.g = (uint32_t)p.find<int>("dragonfly:num_groups");
-
-    std::string route_algo = p.find<std::string>("dragonfly:algorithm", "minimal");
-
-    if ( !route_algo.compare("valiant") ) {
-        if ( params.g <= 2 ) {
-            /* 2 or less groups... no point in valiant */
-            algorithm = MINIMAL;
-        } else {
-            algorithm = VALIANT;
-        }
-    } else {
-        algorithm = MINIMAL;
-    }
-
-    uint32_t id = p.find<int>("id");
-    group_id = id / params.a;
-    router_id = id % params.a;
-    output.verbose(CALL_INFO, 1, 1, "%u:%u:  ID: %u   Params:  p = %u  a = %u  k = %u  h = %u  g = %u\n",
-            group_id, router_id, id, params.p, params.a, params.k, params.h, params.g);
-}
-#endif  // inserted by script
-
-/*
- * Port Layout:
- * [0, params.p)                    // Hosts 0 -> params.p
- * [params.p, params.p+params.a-1)  // Routers within this group
- * [params.p+params.a-1, params.k)  // Other groups
- */
-
 topo_dragonfly_legacy::topo_dragonfly_legacy(ComponentId_t cid, Params &p, int num_ports, int rtr_id) :
     Topology(cid)
 {

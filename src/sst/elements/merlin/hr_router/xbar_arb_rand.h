@@ -114,13 +114,6 @@ private:
     // PortControl** ports;
     
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    xbar_arb_rand(Component* parent, Params& params) :
-        XbarArbitration(parent)
-    {
-        rng = new RNG::XORShiftRNG(69);
-    }
-#endif  // inserted by script
 
     xbar_arb_rand(ComponentId_t cid, Params& params) :
         XbarArbitration(cid)
