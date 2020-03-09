@@ -194,7 +194,7 @@ class Config:
             "debug" : 0,
             "debug_level" : 10,
             "memNIC.addr_range_start" : 0,
-            "memNIC.addr_range_end" : (int(list(filter(str.isdigit, self.memory_capacity))) * 1024 * 1024),
+            "memNIC.addr_range_end" : (int(''.join(filter(str.isdigit, self.memory_capacity))) * 1024 * 1024),
             # Default params
             # "coherence_protocol": coherence_protocol,
             })
