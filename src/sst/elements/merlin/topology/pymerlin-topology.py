@@ -87,7 +87,7 @@ class topoDragonFly(Topology):
 
 
         total_intergroup_links = (self.num_groups - 1) * self.intergroup_links
-        intergroup_per_router = (total_intergroup_links + self.routers_per_group - 1 ) / self.routers_per_group
+        intergroup_per_router = (total_intergroup_links + self.routers_per_group - 1 ) // self.routers_per_group
         #extraParams["intergroup_per_router"] = inter_group_per_router
         
         empty_ports = intergroup_per_router * self.routers_per_group - total_intergroup_links
@@ -147,7 +147,7 @@ class topoDragonFly(Topology):
                 return None
             
             # Turn raw_dest into dest_grp and link_num
-            link_num = raw_dest / ng;
+            link_num = raw_dest // ng;
             dest_grp = raw_dest - link_num * ng
 
             if ( self.global_routes == "absolute" ):
@@ -174,7 +174,7 @@ class topoDragonFly(Topology):
         router_num = 0
         nic_num = 0
         # GROUPS
-        for g in xrange(self.num_groups):
+        for g in range(self.num_groups):
 
             # GROUP ROUTERS
             for r in range(self.routers_per_group):
