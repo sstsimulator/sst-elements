@@ -68,44 +68,7 @@ nic::nic(ComponentId_t cid, Params& params) :
         ("networkIF", ComponentInfo::SHARE_NONE, 1 /* vns */);
 
     if ( !link_control ) {
-#ifndef SST_ENABLE_PREVIEW_BUILD
-        // Not defined in python code.  See if this uses the legacy
-        // API.  If so, load it with loadSubComponent.  Otherwise, use
-        // the default linkcontrol (merlin.linkcontrol) loaded with
-        // the new API.
-        bool found;
-
-        // Get the link control to be used
-        std::string linkcontrol_type = params.find<std::string>("linkcontrol_type",found);
-
-        if ( found ) {
-            // Legacy
-DISABLE_WARN_DEPRECATED_DECLARATION
-            link_control = (SimpleNetwork*)loadSubComponent(linkcontrol_type, this, params);
-REENABLE_WARNING
-    
-            UnitAlgebra in_buf_size = params.find<UnitAlgebra>("in_buf_size","1kB");
-            UnitAlgebra out_buf_size = params.find<UnitAlgebra>("out_buf_size","1kB");
-            UnitAlgebra link_bw = params.find<UnitAlgebra>("link_bw");
-    
-            link_control->initialize("rtr", link_bw, 0, in_buf_size, out_buf_size);            
-        }
-        else {
-            // Just load the default
-            Params if_params;
-
-            if_params.insert("link_bw",params.find<std::string>("link_bw"));
-            if_params.insert("input_buf_size",params.find<std::string>("in_buf_size","1kB"));
-            if_params.insert("output_buf_size",params.find<std::string>("out_buf_size","1kB"));            
-            if_params.insert("port_name","rtr");
-        
-            link_control = loadAnonymousSubComponent<SST::Interfaces::SimpleNetwork>
-                ("merlin.linkcontrol", "networkIF", 0,
-                 ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, if_params, 1 /* vns */);
-        }
-#else
         merlin_abort.fatal(CALL_INFO,1,"Error: no LinkControl object loaded into test_nic\n");   
-#endif
     }
     
     last_target = net_id;

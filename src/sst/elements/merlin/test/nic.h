@@ -48,19 +48,10 @@ public:
         {"num_peers",    "Total number of endpoints in network."},
         {"num_messages", "Total number of messages to send to each endpoint."},
         {"message_size", "Size of each message to be sent specified in either b or B (can include SI prefix)."},
-#ifndef SST_ENABLE_PREVIEW_BUILD
-        {"link_bw",      "Bandwidth of the router link specified in either b/s or B/s (can include SI prefix)."},
-        {"in_buf_size",  "Size of linkcontrol input buffer specified in either b/s or B/s (can include SI prefix).", "1kB"},
-        {"out_buf_size", "Size of linkcontrol output buffer specified in either b/s or B/s (can include SI prefix).", "1kB"},
-        {"linkcontrol_type","Set the SimpleNetwork ", "merlin.linkcontrol"},
-#endif
         {"send_untimed_broadcast",   "Controls whether data is sent in init and complete.","false"},
     )
 
     SST_ELI_DOCUMENT_PORTS(
-#ifndef SST_ENABLE_PREVIEW_BUILD
-        {"rtr",  "Port that hooks up to router.", { "merlin.RtrEvent", "merlin.credit_event" } }
-#endif
     )
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(

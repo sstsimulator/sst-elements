@@ -46,9 +46,6 @@ private:
     int num_ports;
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    topo_singlerouter(Component* comp, Params& params);
-#endif  // inserted by script
     topo_singlerouter(ComponentId_t cid, Params& params, int num_ports, int rtr_id);
     ~topo_singlerouter();
 

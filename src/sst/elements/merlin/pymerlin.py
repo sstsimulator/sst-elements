@@ -1161,6 +1161,13 @@ class TestEndPoint(EndPoint):
 
         
         nic = sst.Component("testNic.%d"%nID, "merlin.test_nic")
+        linkif = nic.setSubComponent("networkIF","merlin.linkcontrol")
+        if ( "link_bw" in _params):
+            linkif.addParam("link_bw",_params["link_bw"])
+        #if ( "input_buf_size" in _params):
+        #    linkif.addParam("input_buf_size",_params["input_buf_size"])
+        #if ( "output_buf_size" in _params):
+        #    linkif.addParam("output_buf_size",_params["output_buf_size"])
         nic.addParams(_params.subset(self.epKeys, self.epOptKeys))
         nic.addParams(_params.subset(extraKeys))
         nic.addParam("id", nID)
@@ -1177,7 +1184,7 @@ class TestEndPoint(EndPoint):
                 offset = offset + self.group_array[i]
         if self.enableAllStats:
             nic.enableAllStatistics({"type":"sst.AccumulatorStatistic","rate":self.statInterval})
-        return (nic, "rtr", _params["link_lat"])
+        return (linkif, "rtr_port", _params["link_lat"])
         #print("Created Endpoint with id: %d, and params: %s %s\n"%(nID, _params.subset(self.nicKeys), _params.subset(extraKeys)))
     def enableAllStatistics(self,interval):
         self.enableAllStats = True;
@@ -1201,6 +1208,12 @@ class BisectionEndPoint(EndPoint):
         
     def build(self, nID, extraKeys):
         nic = sst.Component("bisectionNic.%d"%nID, "merlin.bisection_test")
+        linkif = nic.setSubComponent("networkIF","merlin.linkcontrol")
+        if ( "link_bw" in _params):
+            linkif.addParam("link_bw",_params["link_bw"])
+        if ( "buffer_size" in _params):
+            linkif.addParam("input_buf_size",_params["buffer_size"])
+            linkif.addParam("output_buf_size",_params["buffer_size"])
         nic.addParams(_params.subset(self.epKeys, self.epOptKeys))
         nic.addParams(_params.subset(extraKeys))
         nic.addParam("id", nID)
@@ -1352,6 +1365,13 @@ class TrafficGenEndPoint(EndPoint):
 
     def build(self, nID, extraKeys):
         nic = sst.Component("TrafficGen.%d"%nID, "merlin.trafficgen")
+        linkif = nic.setSubComponent("networkIF","merlin.linkcontrol")
+        if ( "link_bw" in _params):
+            linkif.addParam("link_bw",_params["link_bw"])
+        #if ( "input_buf_size" in _params):
+        #    linkif.addParam("input_buf_size",_params["input_buf_size"])
+        #if ( "output_buf_size" in _params):
+        #    linkif.addParam("output_buf_size",_params["output_buf_size"])
         nic.addParams(_params.subset(self.epKeys, self.epOptKeys))
         nic.addParams(_params.subset(self.nicKeys))
         nic.addParams(_params.subset(extraKeys, {}))
@@ -1361,7 +1381,7 @@ class TrafficGenEndPoint(EndPoint):
         nic.addParam("id", nID)
         if self.enableAllStats:
             nic.enableAllStatistics({"type":"sst.AccumulatorStatistic", "rate":self.statInterval})
-        return (nic, "rtr", _params["link_lat"])
+        return (linkif, "rtr_port", _params["link_lat"])
 
     def enableAllStatistics(self,interval):
         self.enableAllStats = True;
