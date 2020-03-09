@@ -1,7 +1,9 @@
 import sst
 import os
-import ConfigParser
-
+try:
+    import ConfigParser
+except ImportError:
+    import configparser as ConfigParser
 
 
 def connect(name, c0, port0, c1, port1, latency):
@@ -60,10 +62,10 @@ class Config:
         params = dict()
         params['max_reqs_cycle'] =  self.max_reqs_cycle
         params['generator'] = 'miranda.STREAMBenchGeneratorCustomCmd'
-        params['generatorParams.n'] = streamN / self.total_cores
-        params['generatorParams.start_a'] = ( (streamN * 32) / self.total_cores ) * core_id
-        params['generatorParams.start_b'] = ( (streamN * 32) / self.total_cores ) * core_id + (streamN * 32)
-        params['generatorParams.start_c'] = ( (streamN * 32) / self.total_cores ) * core_id + (2 * streamN * 32)
+        params['generatorParams.n'] = streamN // self.total_cores
+        params['generatorParams.start_a'] = ( (streamN * 32) // self.total_cores ) * core_id
+        params['generatorParams.start_b'] = ( (streamN * 32) // self.total_cores ) * core_id + (streamN * 32)
+        params['generatorParams.start_c'] = ( (streamN * 32) // self.total_cores ) * core_id + (2 * streamN * 32)
         params['generatorParams.operandwidth'] = 32
         params['generatorParams.verbose'] = int(self.verbose)
         params['generatorParams.write_cmd'] = 10
@@ -74,7 +76,7 @@ class Config:
         params = dict()
         # params['max_reqs_cycle'] =  self.max_reqs_cycle
         params['generator'] = 'miranda.GUPSGenerator'
-        params['generatorParams.count'] = streamN / self.total_cores
+        params['generatorParams.count'] = streamN // self.total_cores
         params['generatorParams.seed_a'] = 11
         params['generatorParams.seed_b'] = 31
         params['generatorParams.length'] = 32
@@ -88,7 +90,7 @@ class Config:
         params = dict()
         # params['max_reqs_cycle'] =  self.max_reqs_cycle
         params['generator'] = 'miranda.RandomGenerator'
-        params['generatorParams.count'] = streamN / self.total_cores
+        params['generatorParams.count'] = streamN // self.total_cores
         params['generatorParams.max_address'] = 16384
         params['generatorParams.issue_op_fences'] = "no"
         params['generatorParams.length'] = 32
@@ -112,7 +114,7 @@ class Config:
         params['generatorParams.matrix_row_indices_start_addr'] = 0
         params['generatorParams.matrix_col_indices_start_addr'] = 0
         params['generatorParams.matrix_element_start_addr'] = 0
-        params['generatorParams.iterations'] = streamN / self.total_cores
+        params['generatorParams.iterations'] = streamN // self.total_cores
         params['generatorParams.matrix_nnz_per_row'] = 9
         return params
 
@@ -192,7 +194,7 @@ class Config:
             "debug" : 0,
             "debug_level" : 10,
             "memNIC.addr_range_start" : 0,
-            "memNIC.addr_range_end" : (int(filter(str.isdigit, self.memory_capacity)) * 1024 * 1024),
+            "memNIC.addr_range_end" : (int(''.join(filter(str.isdigit, self.memory_capacity))) * 1024 * 1024),
             # Default params
             # "coherence_protocol": coherence_protocol,
             })

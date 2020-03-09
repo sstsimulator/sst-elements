@@ -47,6 +47,7 @@ comp_memctrl.addParams({
       "clock" : "1GHz",
 })
 memory = comp_memctrl.setSubComponent("backend", "memHierarchy.HBMDRAMSimMemory")
+memory.addParams({
       "access_time" : "1000 ns",
       "mem_size" : "512MiB",
       "access_time" : "100 ns",

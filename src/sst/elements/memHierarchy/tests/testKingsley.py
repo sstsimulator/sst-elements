@@ -6,7 +6,7 @@ quiet = True
 
 memCapacity = 4 # In GB
 memPageSize = 4 # in KB
-memNumPages = memCapacity * 1024 * 1024 / memPageSize
+memNumPages = memCapacity * 1024 * 1024 // memPageSize
 
 mesh_stops_x        = 3
 mesh_stops_y        = 3
@@ -189,14 +189,14 @@ class DDRBuilder:
 
     def build(self, nodeID):
         if not quiet:
-            print "Creating DDR controller " + str(self.next_ddr_id) + " out of 4 on node " + str(nodeID) + "..."
-            print " - Capacity: " + str(self.mem_capacity / 4) + " per DDR."
+            print("Creating DDR controller " + str(self.next_ddr_id) + " out of 4 on node " + str(nodeID) + "...")
+            print(" - Capacity: " + str(self.mem_capacity // 4) + " per DDR.")
 
         mem = sst.Component("ddr_" + str(self.next_ddr_id), "memHierarchy.MemController")
         mem.addParams(ddr_mem_timing_params)
         
         membk = mem.setSubComponent("backend", "memHierarchy.timingDRAM")
-        membk.addParams({ "mem_size" : str(self.mem_capacity / 4) + "B" })
+        membk.addParams({ "mem_size" : str(self.mem_capacity // 4) + "B" })
         membk.addParams(ddr_backend_params)
         
         memNIC = mem.setSubComponent("cpulink", "memHierarchy.MemNICFour")
@@ -243,7 +243,7 @@ class DDRDCBuilder:
         myEnd = self.memCapacity - 64 * (8 - memId - 4 * dcNum) + 63
 
         if not quiet:
-            print "\tCreating ddr dc with start: " + str(myStart) + " end: " + str(myEnd)
+            print("\tCreating ddr dc with start: " + str(myStart) + " end: " + str(myEnd))
 
         dc = sst.Component("ddr_dc_" + str(self.next_ddr_dc_id), "memHierarchy.DirectoryController")
         dc.addParams(ddr_dc_params)
@@ -316,7 +316,7 @@ class TileBuilder:
         tileLeftL1.addParams(l1_cache_params)
 
         if not quiet:
-            print "Creating core " + str(self.next_core_id) + " on tile: " + str(self.next_tile_id) + "..."
+            print("Creating core " + str(self.next_core_id) + " on tile: " + str(self.next_tile_id) + "...")
 
         # Left SMT
         leftSMT = sst.Component("smt_" + str(self.next_core_id), "memHierarchy.multithreadL1")
@@ -373,7 +373,7 @@ class TileBuilder:
         tileRightL1.addParams(l1_cache_params)
 
         if not quiet:
-            print "Creating core " + str(self.next_core_id) + " on tile: " + str(self.next_tile_id) + "..."
+            print("Creating core " + str(self.next_core_id) + " on tile: " + str(self.next_tile_id) + "...")
         
         # Right SMT
         rightSMT = sst.Component("smt_" + str(self.next_core_id), "memHierarchy.multithreadL1")
