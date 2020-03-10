@@ -68,9 +68,6 @@ public:
     )
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-	Ember3DCommDoublingGenerator(SST::Component* owner, Params& params) : EmberMessagePassingGenerator(owner,params,"") {}
-#endif  // inserted by script
 	Ember3DCommDoublingGenerator(SST::ComponentId_t, Params& params);
 	~Ember3DCommDoublingGenerator() {}
 	void configure();

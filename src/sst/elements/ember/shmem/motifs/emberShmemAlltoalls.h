@@ -28,9 +28,6 @@ template <class TYPE>
 class EmberShmemAlltoallsGenerator : public EmberShmemGenerator {
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-	EmberShmemAlltoallsGenerator(SST::Component* owner, Params& params) : EmberShmemGenerator(owner, params, "" ) {}
-#endif  // inserted by script
 	EmberShmemAlltoallsGenerator(SST::ComponentId_t id, Params& params) :
 		EmberShmemGenerator(id, params, "ShmemAlltoalls" ), m_phase(0) 
 	{ 
@@ -161,10 +158,6 @@ public:
     )
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-	EmberShmemAlltoalls32Generator(SST::Component* owner, Params& params) :
-		EmberShmemAlltoallsGenerator( owner, params) {} 
-#endif  // inserted by script
 	EmberShmemAlltoalls32Generator(SST::ComponentId_t id, Params& params) :
 		EmberShmemAlltoallsGenerator( id, params) {} 
 };
@@ -184,10 +177,6 @@ public:
     )
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-	EmberShmemAlltoalls64Generator(SST::Component* owner, Params& params) :
-		EmberShmemAlltoallsGenerator( owner, params) {} 
-#endif  // inserted by script
 	EmberShmemAlltoalls64Generator(SST::ComponentId_t id, Params& params) :
 		EmberShmemAlltoallsGenerator( id, params) {} 
 };

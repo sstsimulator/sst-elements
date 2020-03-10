@@ -63,10 +63,6 @@ public:
 
 public:
 
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    EmberInitGenerator(SST::Component* owner, Params& params) : EmberMessagePassingGenerator(owner,params,"") {} 
-#endif  // inserted by script
-
     EmberInitGenerator(SST::ComponentId_t id, Params& params) :
             EmberMessagePassingGenerator(id, params, "Init" ),
 			m_rank(-1),

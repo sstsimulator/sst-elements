@@ -46,9 +46,6 @@ public:
     )
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-	EmberShmemFAM_ScattervGenerator(SST::Component* owner, Params& params) : EmberShmemGenerator(owner, params, "" ) {}
-#endif  // inserted by script
 	EmberShmemFAM_ScattervGenerator(SST::ComponentId_t id, Params& params) :
 		EmberShmemGenerator(id, params, "ShmemFAM_Scatterv" ), m_phase(Init), m_groupName("MyApplication")
 	{ 

@@ -65,9 +65,6 @@ public:
 
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-	EmberRingGenerator(SST::Component* owner, Params& params) : EmberMessagePassingGenerator(owner,params,"") {}
-#endif  // inserted by script
 	EmberRingGenerator(SST::ComponentId_t id, Params& params);
     bool generate( std::queue<EmberEvent*>& evQ);
 
