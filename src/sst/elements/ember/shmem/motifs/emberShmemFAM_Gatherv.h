@@ -44,9 +44,6 @@ public:
     SST_ELI_DOCUMENT_PARAMS()
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-	EmberShmemFAM_GathervGenerator(SST::Component* owner, Params& params) : EmberShmemGenerator(owner, params, "" ) {}
-#endif  // inserted by script
 	EmberShmemFAM_GathervGenerator(SST::ComponentId_t id, Params& params) :
 		EmberShmemGenerator(id, params, "ShmemFAM_Gatherv" ), m_phase(Init), m_groupName("MyApplication")
 	{ 

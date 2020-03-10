@@ -40,9 +40,6 @@ class EmberShmemReductionGenerator : public EmberShmemGenerator {
     enum Op { AND, OR, XOR, SUM, PROD, MAX, MIN } m_op;
 	enum Type { Int, Long, LongLong, Float, Double } m_type;
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-	EmberShmemReductionGenerator(SST::Component* owner, Params& params) : EmberShmemGenerator(owner, params, "" ) {}
-#endif  // inserted by script
 	EmberShmemReductionGenerator(SST::ComponentId_t id, Params& params) :
 		EmberShmemGenerator(id, params, "ShmemReduction" ), m_phase(0) 
 	{ 
@@ -398,10 +395,6 @@ public:
     SST_ELI_DOCUMENT_PARAMS() 
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    EmberShmemReductionIntGenerator( SST::Component* owner, Params& params ) : 
-        EmberShmemReductionGenerator(owner,  params) { } 
-#endif  // inserted by script
     EmberShmemReductionIntGenerator( SST::ComponentId_t id, Params& params ) : 
         EmberShmemReductionGenerator(id,  params) { } 
 };
@@ -420,10 +413,6 @@ public:
     SST_ELI_DOCUMENT_PARAMS() 
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    EmberShmemReductionLongGenerator( SST::Component* owner, Params& params ) : 
-        EmberShmemReductionGenerator(owner,  params) { } 
-#endif  // inserted by script
     EmberShmemReductionLongGenerator( SST::ComponentId_t id, Params& params ) : 
         EmberShmemReductionGenerator(id,  params) { } 
 };
@@ -442,10 +431,6 @@ public:
     SST_ELI_DOCUMENT_PARAMS() 
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    EmberShmemReductionLongLongGenerator( SST::Component* owner, Params& params ) : 
-        EmberShmemReductionGenerator(owner,  params) { } 
-#endif  // inserted by script
     EmberShmemReductionLongLongGenerator( SST::ComponentId_t id, Params& params ) : 
         EmberShmemReductionGenerator(id,  params) { } 
 };
@@ -464,10 +449,6 @@ public:
     SST_ELI_DOCUMENT_PARAMS() 
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    EmberShmemReductionDoubleGenerator( SST::Component* owner, Params& params ) : 
-        EmberShmemReductionGenerator(owner,  params) { } 
-#endif  // inserted by script
     EmberShmemReductionDoubleGenerator( SST::ComponentId_t id, Params& params ) : 
         EmberShmemReductionGenerator(id,  params) { } 
 };
@@ -486,10 +467,6 @@ public:
     SST_ELI_DOCUMENT_PARAMS() 
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    EmberShmemReductionFloatGenerator( SST::Component* owner, Params& params ) : 
-        EmberShmemReductionGenerator(owner,  params) { } 
-#endif  // inserted by script
     EmberShmemReductionFloatGenerator( SST::ComponentId_t id, Params& params ) : 
         EmberShmemReductionGenerator(id,  params) { } 
 };

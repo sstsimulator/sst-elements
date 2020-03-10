@@ -28,9 +28,6 @@ template< class TYPE >
 class EmberShmemFaddGenerator : public EmberShmemGenerator {
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-	EmberShmemFaddGenerator(SST::Component* owner, Params& params) : EmberShmemGenerator(owner, params, "" ) {}
-#endif  // inserted by script
 	EmberShmemFaddGenerator(SST::ComponentId_t id, Params& params) :
 		EmberShmemGenerator(id, params, "ShmemFadd" ), m_phase(0) 
 	{ 
@@ -120,10 +117,6 @@ public:
     SST_ELI_DOCUMENT_PARAMS()
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    EmberShmemFaddIntGenerator( SST::Component* owner, Params& params ) :
-        EmberShmemFaddGenerator(owner,  params) { }
-#endif  // inserted by script
     EmberShmemFaddIntGenerator( SST::ComponentId_t id, Params& params ) :
         EmberShmemFaddGenerator(id,  params) { }
 };
@@ -142,10 +135,6 @@ public:
     SST_ELI_DOCUMENT_PARAMS()
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    EmberShmemFaddLongGenerator( SST::Component* owner, Params& params ) :
-        EmberShmemFaddGenerator(owner,  params) { }
-#endif  // inserted by script
     EmberShmemFaddLongGenerator( SST::ComponentId_t id, Params& params ) :
         EmberShmemFaddGenerator(id,  params) { }
 };
@@ -164,10 +153,6 @@ public:
     SST_ELI_DOCUMENT_PARAMS()
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    EmberShmemFaddDoubleGenerator( SST::Component* owner, Params& params ) :
-        EmberShmemFaddGenerator(owner,  params) { }
-#endif  // inserted by script
     EmberShmemFaddDoubleGenerator( SST::ComponentId_t id, Params& params ) :
         EmberShmemFaddGenerator(id,  params) { }
 };
@@ -186,10 +171,6 @@ public:
     SST_ELI_DOCUMENT_PARAMS()
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    EmberShmemFaddFloatGenerator( SST::Component* owner, Params& params ) :
-        EmberShmemFaddGenerator(owner,  params) { }
-#endif  // inserted by script
     EmberShmemFaddFloatGenerator( SST::ComponentId_t id, Params& params ) :
         EmberShmemFaddGenerator(id,  params) { }
 };

@@ -28,9 +28,6 @@ template <class TYPE>
 class EmberShmemWaitUntilGenerator : public EmberShmemGenerator {
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-	EmberShmemWaitUntilGenerator(SST::Component* owner, Params& params) : EmberShmemGenerator(owner, params, "" ) {}
-#endif  // inserted by script
 	EmberShmemWaitUntilGenerator(SST::ComponentId_t id, Params& params) :
 		EmberShmemGenerator(id, params, "ShmemWaitUntil" ), m_phase(0) 
 	{ 
@@ -145,10 +142,6 @@ public:
     SST_ELI_DOCUMENT_PARAMS()
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    EmberShmemWaitUntilIntGenerator( SST::Component* owner, Params& params ) :
-        EmberShmemWaitUntilGenerator(owner, params) { }
-#endif  // inserted by script
     EmberShmemWaitUntilIntGenerator( SST::ComponentId_t id, Params& params ) :
         EmberShmemWaitUntilGenerator(id, params) { }
 };
@@ -167,10 +160,6 @@ public:
     SST_ELI_DOCUMENT_PARAMS()
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    EmberShmemWaitUntilLongGenerator( SST::Component* owner, Params& params ) :
-        EmberShmemWaitUntilGenerator(owner,  params) { }
-#endif  // inserted by script
     EmberShmemWaitUntilLongGenerator( SST::ComponentId_t id, Params& params ) :
         EmberShmemWaitUntilGenerator(id,  params) { }
 };

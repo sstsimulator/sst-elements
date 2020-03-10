@@ -66,9 +66,6 @@ public:
 
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-	EmberUnstructuredGenerator(SST::Component* owner, Params& params) : EmberMessagePassingGenerator(owner,params,"") {}
-#endif  // inserted by script
 	EmberUnstructuredGenerator(SST::ComponentId_t, Params& params);
 	~EmberUnstructuredGenerator() {}
 	void configure();

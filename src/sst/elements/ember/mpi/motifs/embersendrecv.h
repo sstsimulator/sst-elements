@@ -62,9 +62,6 @@ public:
     )
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-	EmberSendrecvGenerator(SST::Component* owner, Params& params): EmberMessagePassingGenerator(owner,params,"") {} 
-#endif  // inserted by script
 	EmberSendrecvGenerator(SST::ComponentId_t id, Params& params): 
         EmberMessagePassingGenerator(id, params, "Null" ), m_phase(Init)
 	{
