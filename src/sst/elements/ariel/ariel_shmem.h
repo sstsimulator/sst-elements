@@ -282,7 +282,7 @@ public:
     /**
      * Create a new Gpu Tunnel
      */
-    GpuReturnTunnel(void* shmPtr, size_t shmSize, size_t numCores, size_t bufferSize, uint32_t expectedChildren = 1) :
+    GpuReturnTunnel(size_t numCores, size_t bufferSize, uint32_t expectedChildren = 1) :
         SST::Core::Interprocess::TunnelDef<GpuSharedData, GpuCommand>(numCores, bufferSize, expectedChildren)
     {
         sharedData->numCores = numCores;
@@ -296,11 +296,12 @@ public:
         SST::Core::Interprocess::TunnelDef<GpuSharedData, GpuCommand>(sPtr)
     { }
     
-    virtual void initialize(void* sPtr) {
-        SST::Core::Interprocess::TunnelDef<GpuSharedData, GpuCommand>::initialize(sPtr);
+    virtual uint32_t initialize(void* sPtr) {
+        uint32_t childnum = SST::Core::Interprocess::TunnelDef<GpuSharedData, GpuCommand>::initialize(sPtr);
         /* Ideally, this would be done atomically, but we'll only have 1 child */
         if (!isMaster())
             sharedData->child_attached++;
+        return childnum;
     }
 
     void waitForChild(void)
@@ -320,7 +321,7 @@ public:
     /**
      * Create a new Gpu Tunnel
      */
-    GpuDataTunnel(void* shmPtr, size_t shmSize, size_t numCores, size_t bufferSize, uint32_t expectedChildren = 1) :
+    GpuDataTunnel(size_t numCores, size_t bufferSize, uint32_t expectedChildren = 1) :
         SST::Core::Interprocess::TunnelDef<GpuSharedData, GpuDataCommand>(numCores, bufferSize, expectedChildren)
     {
         sharedData->numCores = numCores;
@@ -334,11 +335,12 @@ public:
         SST::Core::Interprocess::TunnelDef<GpuSharedData, GpuDataCommand>(sPtr)
     { }
     
-    virtual void initialize(void* sPtr) {
-        SST::Core::Interprocess::TunnelDef<ArielSharedData, ArielCommand>::initialize(sPtr);
+    virtual uint32_t initialize(void* sPtr) {
+        uint32_t childnum = SST::Core::Interprocess::TunnelDef<GpuSharedData, GpuDataCommand>::initialize(sPtr);
         /* Ideally, this would be done atomically, but we'll only have 1 child */
         if (!isMaster())
             sharedData->child_attached++;
+        return childnum;
     }
 
     void waitForChild(void)
