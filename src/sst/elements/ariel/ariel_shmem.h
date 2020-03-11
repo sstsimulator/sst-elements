@@ -284,10 +284,7 @@ public:
      */
     GpuReturnTunnel(size_t numCores, size_t bufferSize, uint32_t expectedChildren = 1) :
         SST::Core::Interprocess::TunnelDef<GpuSharedData, GpuCommand>(numCores, bufferSize, expectedChildren)
-    {
-        sharedData->numCores = numCores;
-        sharedData->child_attached = 0;
-    }
+    { }
 
     /**
      * Attach to an existing Gpu Tunnel (Created in another process)
@@ -298,9 +295,13 @@ public:
     
     virtual uint32_t initialize(void* sPtr) {
         uint32_t childnum = SST::Core::Interprocess::TunnelDef<GpuSharedData, GpuCommand>::initialize(sPtr);
+        if (isMaster()) {
+            sharedData->numCores = getNumBuffers();
+            sharedData->child_attached = 0;
+        } else {
         /* Ideally, this would be done atomically, but we'll only have 1 child */
-        if (!isMaster())
             sharedData->child_attached++;
+        }
         return childnum;
     }
 
@@ -323,10 +324,7 @@ public:
      */
     GpuDataTunnel(size_t numCores, size_t bufferSize, uint32_t expectedChildren = 1) :
         SST::Core::Interprocess::TunnelDef<GpuSharedData, GpuDataCommand>(numCores, bufferSize, expectedChildren)
-    {
-        sharedData->numCores = numCores;
-        sharedData->child_attached = 0;
-    }
+    { }
 
     /**
      * Attach to an existing Gpu Tunnel (Created in another process)
@@ -337,9 +335,13 @@ public:
     
     virtual uint32_t initialize(void* sPtr) {
         uint32_t childnum = SST::Core::Interprocess::TunnelDef<GpuSharedData, GpuDataCommand>::initialize(sPtr);
+        if (isMaster()) {
+            sharedData->numCores = getNumBuffers();
+            sharedData->child_attached = 0;
+        } else {
         /* Ideally, this would be done atomically, but we'll only have 1 child */
-        if (!isMaster())
             sharedData->child_attached++;
+        }
         return childnum;
     }
 
