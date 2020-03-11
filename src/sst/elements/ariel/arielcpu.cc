@@ -160,8 +160,8 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
    
     tunnel = frontend->getTunnel();
 #ifdef HAVE_CUDA
-    tunnelR = frontend->getTunnel(1);
-    tunnelD = frontend->getTunnel(2);
+    tunnelR = frontend->getReturnTunnel();
+    tunnelD = frontend->getDataTunnel();
 #endif
 
     /////////////////////////////////////////////////////////////////////////////////////
@@ -222,7 +222,8 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
                cpu_cores[i]->setGpuLink(cpu_to_gpu_links[i]);
                cpu_cores[i]->setGpu();
             }
-
+            
+            std::string executable = params.find<std::string>("executable", "");
             cpu_cores[i]->setFilePath(executable);
 #endif
         }
