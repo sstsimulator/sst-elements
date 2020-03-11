@@ -66,12 +66,6 @@ public:
     };
 
     /* Constructor */
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    MemLinkBase(Component * comp, Params &params) : SubComponent(comp) { 
-        build(params);
-    }
-#endif  // inserted by script
-
     MemLinkBase(ComponentId_t id, Params &params) : SubComponent(id) {
         build(params);
     }

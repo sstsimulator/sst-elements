@@ -35,9 +35,6 @@ public:
     SST_ELI_DOCUMENT_PORTS( {"cube_link", "Link to VaultSim.", {"VaultSimC.MemRespEvent", "VaultSimC.MemReqEvent"} } )
 
 /* Begin class definition */
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    VaultSimMemory(Component *comp, Params &params);
-#endif  // inserted by script
     VaultSimMemory(ComponentId_t id, Params &params);
     virtual bool issueRequest( ReqId, Addr, bool isWrite, uint32_t flags, unsigned numBytes );
     virtual bool isClocked() { return false; }

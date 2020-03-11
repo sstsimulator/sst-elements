@@ -30,9 +30,6 @@ namespace Miranda {
 class SPMVGenerator : public RequestGenerator {
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-	SPMVGenerator( Component* owner, Params& params ) : RequestGenerator(owner, params) { build(params); }
-#endif  // inserted by script
 	
         SPMVGenerator( ComponentId_t id, Params& params ) : RequestGenerator(id, params) { build(params); }
         

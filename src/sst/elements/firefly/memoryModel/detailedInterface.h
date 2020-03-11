@@ -63,9 +63,6 @@ private:
 
   public:
 
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    DetailedInterface( Component* comp, Params& ) : SubComponent( comp ) {} 
-#endif  // inserted by script
     DetailedInterface( ComponentId_t id, Params& params ) : SubComponent( id ), m_maxRequestsPending(2), m_pendingReqQ(2), m_blockedSrc(2,NULL), m_inFlightCnt(2,0), m_cnt(0)
     {
     	char buffer[100];

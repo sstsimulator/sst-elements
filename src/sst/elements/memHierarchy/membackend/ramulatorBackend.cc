@@ -25,12 +25,6 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 using namespace ramulator;
 
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-ramulatorMemory::ramulatorMemory(Component *comp, Params &params) : 
-    SimpleMemBackend(comp, params),
-    callBackFunc(std::bind(&ramulatorMemory::ramulatorDone, this, std::placeholders::_1))
-{ build(params); }
-#endif  // inserted by script
 
 ramulatorMemory::ramulatorMemory(ComponentId_t id, Params &params) : 
     SimpleMemBackend(id, params),

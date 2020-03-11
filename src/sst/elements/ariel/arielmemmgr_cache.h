@@ -89,9 +89,6 @@ class ArielMemoryManagerCache : public ArielMemoryManager{
             /* Statistics used by all memory managers; managers may also have their own */
         } // End constructor
         
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-        ArielMemoryManagerCache(Component* comp, Params& params) : ArielMemoryManager(comp, params) { } // Legacy
-#endif  // inserted by script
         ~ArielMemoryManagerCache() {};
 
     protected:

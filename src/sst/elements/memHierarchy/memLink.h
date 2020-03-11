@@ -87,9 +87,6 @@ public:
     };
 
     /* Constructor */
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    MemLink(Component * comp, Params &params);
-#endif  // inserted by script
     MemLink(ComponentId_t id, Params &params);
 
     /* Destructor */

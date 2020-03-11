@@ -73,9 +73,6 @@ namespace SST {
             SST_ELI_DOCUMENT_STATISTICS(
             )
 
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-            c_TxnScheduler(SST::Component *comp, SST::Params &x_params); // Temporary
-#endif  // inserted by script
             c_TxnScheduler(SST::ComponentId_t id, SST::Params &x_params, Output* out, unsigned channels, c_TxnConverter* converter, c_CmdScheduler* scheduler);
             void build(Params &x_params); // Temporary
             ~c_TxnScheduler();

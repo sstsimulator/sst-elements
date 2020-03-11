@@ -31,9 +31,6 @@ namespace Miranda {
 class RandomGenerator : public RequestGenerator {
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-	RandomGenerator( Component* owner, Params& params );
-#endif  // inserted by script
 	RandomGenerator( ComponentId_t id, Params& params );
         void build(Params& params);
 	~RandomGenerator();

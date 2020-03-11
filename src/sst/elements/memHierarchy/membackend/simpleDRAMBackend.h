@@ -48,9 +48,6 @@ public:
 
 /* Begin class definition */
     SimpleDRAM();
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    SimpleDRAM(Component *comp, Params &params);
-#endif  // inserted by script
     SimpleDRAM(ComponentId_t id, Params &params);
     bool issueRequest( ReqId, Addr, bool, unsigned );
     bool isClocked() { return false; }

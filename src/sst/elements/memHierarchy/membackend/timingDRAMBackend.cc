@@ -22,9 +22,6 @@ bool TimingDRAM::Channel::m_printConfig = true;
 bool TimingDRAM::Rank::m_printConfig = true;
 bool TimingDRAM::Bank::m_printConfig = true;
 
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-TimingDRAM::TimingDRAM(Component *comp, Params &params) : SimpleMemBackend(comp, params), m_cycle(0) { build(params); }
-#endif  // inserted by script
 TimingDRAM::TimingDRAM(ComponentId_t id, Params &params) : SimpleMemBackend(id, params), m_cycle(0) { build(params); }
 
 void TimingDRAM::build(Params& params) {

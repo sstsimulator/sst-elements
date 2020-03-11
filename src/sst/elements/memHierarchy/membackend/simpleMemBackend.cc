@@ -24,9 +24,6 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 
 /*------------------------------- Simple Backend ------------------------------- */
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-SimpleMemory::SimpleMemory(Component *comp, Params &params) : SimpleMemBackend(comp, params){ build(params); }
-#endif  // inserted by script
 SimpleMemory::SimpleMemory(ComponentId_t id, Params &params) : SimpleMemBackend(id, params){ build(params); }
 
 void SimpleMemory::build(Params& params) {

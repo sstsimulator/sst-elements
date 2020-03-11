@@ -34,9 +34,6 @@ public:
 
 /* Begin class definition */
     SimpleMemory();
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    SimpleMemory(Component *comp, Params &params);
-#endif  // inserted by script
     SimpleMemory(ComponentId_t id, Params &params);
     bool issueRequest(ReqId, Addr, bool, unsigned );
     virtual bool isClocked() { return false; }

@@ -154,11 +154,6 @@ const HMCPacket __PACKETS[] = {
   { "EOL",        MD_RD,      0,    0,    0,  false}
 };
 
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-GOBLINHMCSimBackend::GOBLINHMCSimBackend(Component* comp, Params& params) : ExtMemBackend(comp, params) {
-    build(params); 
-}
-#endif  // inserted by script
 
 GOBLINHMCSimBackend::GOBLINHMCSimBackend(ComponentId_t id, Params& params) : ExtMemBackend(id, params) {
     build(params); 

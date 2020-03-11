@@ -71,9 +71,6 @@ public:
   public:
 
     ScratchBackendConvertor();
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    ScratchBackendConvertor(Component* comp, Params& params);
-#endif  // inserted by script
     ScratchBackendConvertor(ComponentId_t id, Params& params);
     void build(Params& params);
     void finish(void);

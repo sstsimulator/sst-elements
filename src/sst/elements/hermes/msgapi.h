@@ -100,9 +100,6 @@ class Interface : public Hermes::Interface {
 
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED_API(SST::Hermes::MP::Interface,SST::Hermes::Interface)
 
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    Interface( Component* parent ) : Hermes::Interface( parent )  {}
-#endif  // inserted by script
     Interface( ComponentId_t id ) : Hermes::Interface( id )  {}
     virtual ~Interface() {}
 

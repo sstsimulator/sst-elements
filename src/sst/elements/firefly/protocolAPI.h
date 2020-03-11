@@ -28,9 +28,6 @@ class VirtNic;
 class ProtocolAPI : public SST::SubComponent 
 {
   public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    ProtocolAPI( Component* comp ) : SubComponent( comp ) {}
-#endif  // inserted by script
     ProtocolAPI( ComponentId_t id ) : SubComponent( id ) {}
     virtual ~ProtocolAPI() {}
     virtual void setVars( Info*, VirtNic*, Thornhill::MemoryHeapLink*, Link* ) = 0;  

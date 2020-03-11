@@ -49,9 +49,6 @@ class TransactionQ : public SST::SubComponent {
             "fifo transaction queue", SST::MemHierarchy::TimingDRAM_NS::TransactionQ)
 
 /* Begin class definition */
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    TransactionQ( Component* owner, Params& params ) : SubComponent( owner )  {}
-#endif  // inserted by script
     TransactionQ( ComponentId_t id, Params& params ) : SubComponent( id )  {}
 
     virtual void push( Transaction* trans ) {
@@ -85,11 +82,6 @@ class ReorderTransactionQ : public TransactionQ {
     SST_ELI_DOCUMENT_PARAMS( {"windowCycles", "Reorder window in cycles", "10" } )
 
 /* Begin class definition */
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    ReorderTransactionQ( Component* owner, Params& params ) : TransactionQ( owner, params ) {
-        windowCycles = params.find<unsigned int>("windowCycles", 10);
-    }
-#endif  // inserted by script
     
     ReorderTransactionQ( ComponentId_t id, Params& params ) : TransactionQ( id, params ) {
         windowCycles = params.find<unsigned int>("windowCycles", 10);

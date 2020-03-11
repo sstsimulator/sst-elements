@@ -23,9 +23,6 @@ class PagePolicy : public SST::SubComponent {
   public:
     SST_ELI_REGISTER_SUBCOMPONENT_API(SST::MemHierarchy::TimingDRAM_NS::PagePolicy)
 
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    PagePolicy( Component* owner, Params& params ) : SubComponent( owner )  { }
-#endif  // inserted by script
     PagePolicy( ComponentId_t id, Params& params ) : SubComponent( id )  { }
     virtual bool shouldClose( SimTime_t current ) = 0;
     virtual bool canClose() = 0 ;
@@ -40,11 +37,6 @@ class SimplePagePolicy : public PagePolicy {
     SST_ELI_DOCUMENT_PARAMS( {"close", "Whether to use a closed (true) or open (false) page policy", "true"} )
 
 /* Begin class definition */
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    SimplePagePolicy( Component* owner, Params& params ) : PagePolicy( owner, params )  {
-        m_close = params.find<bool>("close", true);
-    }
-#endif  // inserted by script
     SimplePagePolicy( ComponentId_t id, Params& params ) : PagePolicy( id, params )  {
         m_close = params.find<bool>("close", true);
     }
@@ -75,12 +67,6 @@ class TimeoutPagePolicy : public PagePolicy {
         m_cycles = params.find<SimTime_t>("timeoutCycles", 5);
     }
 
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    TimeoutPagePolicy( Component* owner, Params& params ) : PagePolicy( owner, params ),
-        m_numCyclesLeft(0), m_lastCycle(-2) { 
-        m_cycles = params.find<SimTime_t>("timeoutCycles", 5);
-    }
-#endif  // inserted by script
 
     bool shouldClose( SimTime_t current ) {
 

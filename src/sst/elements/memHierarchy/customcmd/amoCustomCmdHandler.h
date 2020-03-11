@@ -40,10 +40,6 @@ public:
             "Custom command handler for atomics (AMO)", SST::MemHierarchy::CustomCmdMemHandler)
 
 /* Begin class defintion */
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-  AMOCustomCmdMemHandler(Component * comp, Params &params)
-    : CustomCmdMemHandler(comp,params) {}
-#endif  // inserted by script
   
   AMOCustomCmdMemHandler(ComponentId_t id, Params &params, std::function<void(Addr,size_t,std::vector<uint8_t>&)> read, std::function<void(Addr,std::vector<uint8_t>*)> write)
     : CustomCmdMemHandler(id, params, read, write) {}
