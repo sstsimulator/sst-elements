@@ -26,9 +26,6 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 using namespace HBMDRAMSim;
 
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-HBMDRAMSimMemory::HBMDRAMSimMemory(Component *comp, Params &params) : SimpleMemBackend(comp, params){ build(params); }
-#endif  // inserted by script
 HBMDRAMSimMemory::HBMDRAMSimMemory(ComponentId_t id, Params &params) : SimpleMemBackend(id, params){ build(params); }
 
 void HBMDRAMSimMemory::build(Params& params) {

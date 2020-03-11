@@ -242,7 +242,8 @@ libember_la_SOURCES = \
 	shmem/motifs/emberShmemFAM_Gatherv.h \
 	shmem/motifs/emberShmemFAM_AtomicInc.h \
 	shmem/motifs/emberShmemFAM_Cswap.h \
-	sirius/include/sirius/siriusglobals.h
+	sirius/include/sirius/siriusglobals.h \
+	pyember.py
 
 
 bin_PROGRAMS = sst-spygen sst-meshconvert

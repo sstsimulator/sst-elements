@@ -47,9 +47,6 @@ struct lineTrack {
 
 class cacheLineTrack : public SST::MemHierarchy::CacheListener {
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    cacheLineTrack(Component*, Params& params); // Legacy
-#endif  // inserted by script
     cacheLineTrack(ComponentId_t, Params& params);
     ~cacheLineTrack() {};
 

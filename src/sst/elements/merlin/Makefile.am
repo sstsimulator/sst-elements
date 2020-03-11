@@ -75,7 +75,9 @@ libmerlin_la_SOURCES = \
 	arbitration/single_arb_rr.h \
 	pymodule.h \
 	pymodule.c \
-	pymerlin.py
+	pymerlin.py \
+	pymerlin-base.py \
+	topology/pymerlin-topology.py
 
 EXTRA_DIST = \
 	tests/dragon_128_test.py \

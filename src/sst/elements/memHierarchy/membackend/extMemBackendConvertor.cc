@@ -31,15 +31,6 @@ using namespace SST::MemHierarchy;
 #define Debug(level, fmt, ... )
 #endif
 
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-ExtMemBackendConvertor::ExtMemBackendConvertor(Component *comp, Params &params) :
-    MemBackendConvertor(comp,params)
-{
-    using std::placeholders::_1;
-    using std::placeholders::_2;
-    static_cast<ExtMemBackend*>(m_backend)->setResponseHandler( std::bind( &ExtMemBackendConvertor::handleMemResponse, this, _1,_2 ) );
-}
-#endif  // inserted by script
 
 ExtMemBackendConvertor::ExtMemBackendConvertor(ComponentId_t id, Params &params, MemBackend * backend, uint32_t reqWidth) :
     MemBackendConvertor(id, params, backend, reqWidth)

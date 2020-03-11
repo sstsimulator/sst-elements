@@ -51,12 +51,6 @@ class PageFaultHandler : public SubComponent {
             output = new SST::Output("PageFaultHandler[@f:@l:@p] ",
                 verbosity, 0, SST::Output::STDOUT);
         }
-#ifndef SST_ENABLE_PREVIEW_BUILD
-        PageFaultHandler(Component* comp, Params& params) : SubComponent(comp) {
-            output = new SST::Output("", 0, 0, SST::Output::STDOUT);
-            output->fatal(CALL_INFO, -1, "Error: PageFaultHandler subcomponents do not support loading using legacy load functions");
-        }
-#endif
         ~PageFaultHandler() {};
 
         /** Request to allocate a page */

@@ -32,9 +32,6 @@ class GUPSGenerator : public RequestGenerator {
 
 public:
 	GUPSGenerator( ComponentId_t id, Params& params );
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-	GUPSGenerator( Component* owner, Params& params );
-#endif  // inserted by script
         void build(Params &params);
 	~GUPSGenerator();
 	void generate(MirandaRequestQueue<GeneratorRequest*>* q);

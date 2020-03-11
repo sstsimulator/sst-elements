@@ -36,9 +36,6 @@ namespace Cassini {
 
 class AddrHistogrammer : public SST::MemHierarchy::CacheListener {
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    AddrHistogrammer(Component*, Params& params); // Legacy
-#endif  // inserted by script
     AddrHistogrammer(ComponentId_t, Params& params);
     ~AddrHistogrammer() {};
 

@@ -20,12 +20,6 @@
 
 using namespace SST::Miranda;
 
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-STREAMBenchGenerator_CustomCmd::STREAMBenchGenerator_CustomCmd( Component* owner, Params& params ) :
-	RequestGenerator(owner, params) {
-            build(params);
-        }
-#endif  // inserted by script
 
 STREAMBenchGenerator_CustomCmd::STREAMBenchGenerator_CustomCmd( ComponentId_t id, Params& params ) :
 	RequestGenerator(id, params) {

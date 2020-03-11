@@ -52,9 +52,6 @@ public:
     SST_ELI_DOCUMENT_PORTS( {"port", "Port to memory hierarchy (caches/memory/etc.)", {}} )
 
 /* Begin class definition */
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    MemHierarchyScratchInterface(SST::Component *comp, Params &params);
-#endif  // inserted by script
     MemHierarchyScratchInterface(SST::ComponentId_t id, Params &params, TimeConverter* time, HandlerBase *handler = NULL);
     
     /** Initialize the link to be used to connect with MemHierarchy */

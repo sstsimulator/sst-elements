@@ -176,9 +176,6 @@ public:
 
 /* Class definition */
     /** Constructor for MESIL1 */
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    MESIL1(Component* comp, Params& params) : CoherenceController(comp, params) { }
-#endif  // inserted by script
 
     MESIL1(ComponentId_t id, Params& params, Params& ownerParams, bool prefetch) : CoherenceController(id, params, ownerParams, prefetch) {
         params.insert(ownerParams);

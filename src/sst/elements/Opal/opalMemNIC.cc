@@ -20,11 +20,6 @@ using namespace SST;
 using namespace SST::Opal;
 
 /* Constructor */
-#ifndef SST_ENABLE_PREVIEW_BUILD
-OpalMemNIC::OpalMemNIC(Component * parent, Params &params) : SST::MemHierarchy::MemNICBase(parent, params) {
-    build(params);
-}
-#endif
 
 OpalMemNIC::OpalMemNIC(ComponentId_t id, Params &params) : SST::MemHierarchy::MemNICBase(id, params) {
     build(params);

@@ -221,9 +221,6 @@ class RequestGenerator : public SubComponent {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Miranda::RequestGenerator)
 
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-	RequestGenerator( Component* owner, Params& params) : SubComponent(owner) {}
-#endif  // inserted by script
 	RequestGenerator( ComponentId_t id, Params& params) : SubComponent(id) {}
 	~RequestGenerator() {}
 	virtual void generate(MirandaRequestQueue<GeneratorRequest*>* q) { }

@@ -19,21 +19,6 @@
 
 using namespace SST::Prospero;
 
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-ProsperoTextTraceReader::ProsperoTextTraceReader( Component* owner, Params& params ) :
-	ProsperoTraceReader(owner, params) {
-
-	std::string traceFile = params.find<std::string>("file", "");
-	traceInput = fopen(traceFile.c_str(), "rt");
-
-	if(NULL == traceInput) {
-		fprintf(stderr, "Fatal: Unable to open file: %s in text reader.\n",
-			traceFile.c_str());
-		exit(-1);
-	}
-
-}
-#endif  // inserted by script
 
 ProsperoTextTraceReader::ProsperoTextTraceReader( ComponentId_t id, Params& params, Output* out ) :
 	ProsperoTraceReader(id, params, out) {

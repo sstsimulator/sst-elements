@@ -375,9 +375,6 @@ class OS : public SubComponent {
 
 	SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Hermes::OS)
 
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-	OS( Component *owner, Params& ) : SubComponent( owner ) {}
-#endif  // inserted by script
 	OS( ComponentId_t id, Params& ) : SubComponent( id ) {}
 
     virtual void _componentInit( unsigned int phase ) {}
@@ -395,9 +392,6 @@ class Interface : public SubComponent {
   public:
 	SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Hermes::Interface)
     Interface( ComponentId_t id ) : SubComponent(id) {}
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    Interface( Component* owner ) : SubComponent(owner) {}
-#endif  // inserted by script
     virtual void setup() {} 
     virtual void finish() {} 
     virtual void setOS( OS* ) { assert(0); }

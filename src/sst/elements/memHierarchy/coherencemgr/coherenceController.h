@@ -47,9 +47,6 @@ public:
     SST_ELI_REGISTER_SUBCOMPONENT_API(SST::MemHierarchy::CoherenceController, Params&, bool)
 
     /***** Constructor & destructor *****/
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    CoherenceController(Component * comp, Params &params);
-#endif  // inserted by script
     CoherenceController(ComponentId_t id, Params &params, Params& ownerParams, bool prefetch);
     virtual ~CoherenceController() {}
 

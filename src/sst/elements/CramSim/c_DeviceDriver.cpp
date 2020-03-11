@@ -64,16 +64,6 @@ using namespace SST::CramSim;
  * @param owner
  * @param params
  */
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-c_DeviceDriver::c_DeviceDriver(Component *owner, Params& params) : SubComponent(owner) {
-
-    m_Owner = dynamic_cast<c_Controller *>(owner);
-    output = m_Owner->getOutput();
-    using std::placeholders::_1;
-    m_sendCmdFunc = std::bind(&c_Controller::sendCommand, m_Owner, _1);
-    build(params);
-}
-#endif  // inserted by script
 
 c_DeviceDriver::c_DeviceDriver(ComponentId_t id, Params& params, Output* out, std::function<void(c_BankCommand*)> sendFunc) : SubComponent(id), output(out), m_sendCmdFunc(sendFunc) {
     build(params);
