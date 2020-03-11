@@ -281,13 +281,19 @@ void Pin2Frontend::init(unsigned int phase)
 
 void Pin2Frontend::finish() { }
 
-ArielTunnel* Pin2Frontend::getTunnel(int tNum = 0) {
-#ifdef HAVE_CUDA
-    if (tNum == 1) return tunnelR;
-    else if (tNum == 2) return tunnelD;
-#endif
+ArielTunnel* Pin2Frontend::getTunnel() {
     return tunnel;
 }
+
+#ifdef HAVE_CUDA
+GpuReturnTunnel* Pin2Frontend::getReturnTunnel() {
+    return tunnelR;
+}
+
+GpuDataTunnel* Pin2Frontend::getDataTunnel() {
+    return tunnelD;
+}
+#endif
 
 int Pin2Frontend::forkPINChild(const char* app, char** args, std::map<std::string, std::string>& app_env) {
     // If user only wants to init the simulation then we do NOT fork the binary

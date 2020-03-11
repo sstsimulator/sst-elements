@@ -1,6 +1,10 @@
 import sst
 import sys
-import ConfigParser, argparse
+import argparser
+try:
+    import ConfigParser
+except ImportError:
+    import configparser as ConfigParser
 
 # Define SST core options
 sst.setProgramOption("timebase", "1ps")
@@ -53,7 +57,7 @@ router.addParams({
 
 for cpu_id in range(num_cpu):
    # Define the simulation components
-   maxAddr = (memory_capacity_inB / num_cpu)
+   maxAddr = (memory_capacity_inB // num_cpu)
    addr_a = (cpu_id * int(maxAddr))
 
    comp_cpu = sst.Component("cpu_%d"%cpu_id, "miranda.BaseCPU")
@@ -101,7 +105,7 @@ for cpu_id in range(num_cpu):
    next_port = next_port + 1
 
 # Connect L2 caches to the routers
-num_L2s_per_stack = num_l2 / hbmStacks
+num_L2s_per_stack = num_l2 // hbmStacks
 sub_mems = memoryControllers
 total_mems = hbmStacks * sub_mems
 
@@ -111,7 +115,7 @@ cacheStartAddr = 0x00
 memStartAddr = 0x00
 
 if (num_l2 % total_mems) != 0:
-   print "FAIL Number of L2s (%d) must be a multiple of the total number memory controllers (%d)."%(num_l2, total_mems)
+   print ("FAIL Number of L2s (%d) must be a multiple of the total number memory controllers (%d)."%(num_l2, total_mems))
    raise SystemExit
 
 for next_group_id in range(hbmStacks):

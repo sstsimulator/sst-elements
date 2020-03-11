@@ -48,19 +48,10 @@ public:
         {"num_peers",    "Total number of endpoints in network."},
         {"num_messages", "Total number of messages to send to each endpoint."},
         {"message_size", "Size of each message to be sent specified in either b or B (can include SI prefix)."},
-        {"num_vns",      "Number of requested virtual networks."},
-        {"link_bw",      "Bandwidth of the router link specified in either b/s or B/s (can include SI prefix)."},
-        {"in_buf_size",  "Size of linkcontrol input buffer specified in either b/s or B/s (can include SI prefix).", "1kB"},
-        {"out_buf_size", "Size of linkcontrol output buffer specified in either b/s or B/s (can include SI prefix).", "1kB"},
-        {"send_untimed_data",   "Controls whether data is sent in init and complete.","true"},
-        {"remap",        "Creates a logical to physical mapping shifted by remap amount.", "0"},
-        {"group_offset",   "If dividing network into multiple groups of test nics, this is offset for this group.", "0"},
-        {"group_peers",   "If dividing network into multiple groups of test nics, this is offset for this group.", "0"},
-        {"linkcontrol_type","Set the SimpleNetwork ", "merlin.linkcontrol"}
+        {"send_untimed_broadcast",   "Controls whether data is sent in init and complete.","false"},
     )
 
     SST_ELI_DOCUMENT_PORTS(
-        {"rtr",  "Port that hooks up to router.", { "merlin.RtrEvent", "merlin.credit_event" } }
     )
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
@@ -71,8 +62,6 @@ private:
 
     // SST::Interfaces::SimpleNetwork::nid_t id;
     int id;
-    int num_vns;
-    int last_vn;
 
     // passed in parameters
     int net_id;
@@ -93,15 +82,13 @@ private:
     int init_count;
     int init_broadcast_count;
 
-    bool send_untimed_data;
+    bool send_untimed_bcast;
     
     SST::Interfaces::SimpleNetwork* link_control;
 
     int last_target;
     
     int *next_seq;
-
-    int remap;
 
     Output& output;
     

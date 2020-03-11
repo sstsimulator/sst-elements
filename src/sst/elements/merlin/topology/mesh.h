@@ -132,9 +132,6 @@ private:
     int local_port_start;
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    topo_mesh(Component* comp, Params& params);
-#endif  // inserted by script
     topo_mesh(ComponentId_t cid, Params& params, int num_ports, int rtr_id);
     ~topo_mesh();
 

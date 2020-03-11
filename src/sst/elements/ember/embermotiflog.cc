@@ -24,13 +24,19 @@
 
 using namespace SST::Ember;
 
-static std::unordered_map<uint32_t, EmberMotifLogRecord*>* logHandles = NULL;
+static std::unordered_map<std::string, EmberMotifLogRecord*>* logHandles = NULL;
 
 #ifndef _SST_EMBER_DISABLE_PARALLEL
 static std::mutex mapLock;
 #endif
 
-EmberMotifLog::EmberMotifLog(const std::string logPath, const uint32_t jobID) {
+EmberMotifLog::EmberMotifLog(const std::string logPathPrefix, const uint32_t jobID) :
+    jobID(jobID),
+    rank(-1),
+    start_time("0 ns"),
+    currentMotifNum(0)
+{
+    
 #ifndef _SST_EMBER_DISABLE_PARALLEL
 	// Lock the map for the duration of the constructor to ensure we do not
 	// trample over each other
@@ -38,16 +44,25 @@ EmberMotifLog::EmberMotifLog(const std::string logPath, const uint32_t jobID) {
 #endif
 
 	if(NULL == logHandles) {
-		logHandles = new std::unordered_map<uint32_t, EmberMotifLogRecord*>();
+		logHandles = new std::unordered_map<std::string, EmberMotifLogRecord*>();
 	}
 
-	auto logHandleFind = logHandles->find(jobID);
+	auto logHandleFind = logHandles->find(logPathPrefix);
+
 
 	if(logHandleFind == logHandles->end()) {
-		logRecord = new EmberMotifLogRecord(logPath.c_str());
+        std::ostringstream logFile;
+        logFile << logPathPrefix;
+        
+        if ( Simulation::getSimulation()->getNumRanks().rank > 1 ) {
+            logFile << "-" << Simulation::getSimulation()->getRank().rank;
+        }
+        logFile << ".log";
+        
+		logRecord = new EmberMotifLogRecord(logFile.str().c_str());
 		logRecord->increment();
 
-		logHandles->insert( std::pair<uint32_t, EmberMotifLogRecord*>(jobID, logRecord) );
+		logHandles->insert( std::pair<std::string, EmberMotifLogRecord*>(logPathPrefix, logRecord) );
 	} else {
 		logRecord = logHandleFind->second;
 		logRecord->increment();
@@ -69,14 +84,26 @@ EmberMotifLog::~EmberMotifLog() {
 	}
 }
 
-void EmberMotifLog::logMotifStart(const std::string name, const int motifNum) {
+void EmberMotifLog::logMotifStart(int motifNum) {
+    start_time = Simulation::getSimulation()->getElapsedSimTime().toStringBestSI();
+    currentMotifNum = motifNum;
+}
+
+void EmberMotifLog::logMotifEnd(const std::string& name, const int motifNum) {
+    if ( motifNum != currentMotifNum ) {
+        // Don't have matching motif numbers, just return without logging
+        return;
+    }
+    
 	if(NULL != logRecord->getFile()) {
 		FILE* logFile = logRecord->getFile();
 
 		const char* nameChar = name.c_str();
-		const char* timeChar = Simulation::getSimulation()->getElapsedSimTime().toStringBestSI().c_str();
+		const char* endTimeChar = Simulation::getSimulation()->getElapsedSimTime().toStringBestSI().c_str();
+        const char* startTimeChar = start_time.c_str();
 
-		fprintf(logFile, "%d %s %s\n", motifNum, nameChar, timeChar);
+        // File format:  job rank motifnum motif_name start_time end_time
+		fprintf(logFile, "%d %d %d %s %s %s\n", jobID, rank, motifNum, nameChar, startTimeChar, endTimeChar);
 		fflush(logFile);
 
 	}

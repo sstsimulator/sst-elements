@@ -50,11 +50,6 @@ private:
     SingleArbitration* arb;
     
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    output_arb_basic(Component* parent, Params& params) :
-        OutputArbitration(parent)
-    {}
-#endif  // inserted by script
 
     output_arb_basic(ComponentId_t cid, Params& params) :
         OutputArbitration(cid)

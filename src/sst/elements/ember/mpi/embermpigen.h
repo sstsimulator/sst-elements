@@ -61,9 +61,6 @@ class EmberMessagePassingGenerator : public EmberGenerator {
 
 public:
 
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-	EmberMessagePassingGenerator( Component* comp, Params& params, std::string name = "" ) : EmberGenerator(comp,params,name) {}
-#endif  // inserted by script
 	EmberMessagePassingGenerator( ComponentId_t id, Params& params, std::string name = "" );
 	~EmberMessagePassingGenerator();
 

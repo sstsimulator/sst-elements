@@ -60,7 +60,8 @@ LinkControl::LinkControl(Component* parent, Params &params) :
 LinkControl::LinkControl(ComponentId_t cid, Params &params, int vns) :
     SST::Interfaces::SimpleNetwork(cid),
     rtr_link(NULL), output_timing(NULL),
-    req_vns(vns), total_vns(0), checker_board_factor(1), id(-1),
+    req_vns(vns), total_vns(0), checker_board_factor(1),
+    vn_remap_out(nullptr), vn_remap_in(nullptr), id(-1),
     logical_nid(-1), nid_map_shm(nullptr), nid_map(nullptr),
     rr(0), input_buf(NULL), output_buf(NULL),
     rtr_credits(NULL), in_ret_credits(NULL),
@@ -143,20 +144,54 @@ LinkControl::LinkControl(ComponentId_t cid, Params &params, int vns) :
 
 
     // See if we need to set up a nid map
-    std::string nid_map_name = params.find<std::string>("nid_map_name",std::string());
-    if ( !nid_map_name.empty() ) {
-        int logical_peers = params.find<int>("logical_peers",-1);
-        if ( logical_peers == -1 ) {
-            merlin_abort.fatal(CALL_INFO,1,"LinkControl: logical_peers must be set if nid_map_name is set\n");
+    bool found = false;
+    int job_id = params.find<int>("job_id",-1,found);
+    if ( found ) {
+        if ( params.find<bool>("use_nid_remap",false) ) {
+            std::string nid_map_name = std::string("job_") + std::to_string(job_id) + "_nid_map";
+
+            int job_size = params.find<int>("job_size",-1);
+            if ( job_size == -1 ) {
+                merlin_abort.fatal(CALL_INFO,1,"LinkControl: job_size must be set\n");
+            }
+            logical_nid = params.find<nid_t>("logical_nid",-1);
+            if ( job_size == -1 ) {
+                merlin_abort.fatal(CALL_INFO,1,"LinkControl: logical_nid must be set\n");
+            }
+            nid_map_shm = Simulation::getSharedRegionManager()->
+                getGlobalSharedRegion(nid_map_name, job_size * sizeof(nid_t), new SharedRegionMerger());
         }
-        logical_nid = params.find<nid_t>("logical_nid",-1);
-        if ( logical_peers == -1 ) {
-            merlin_abort.fatal(CALL_INFO,1,"LinkControl: logical_nid must be set if nid_map_name is set\n");
+    }
+    else {
+        std::string nid_map_name = params.find<std::string>("nid_map_name",std::string());
+        if ( !nid_map_name.empty() ) {
+            int job_size = params.find<int>("job_size",-1);
+            if ( job_size == -1 ) {
+                merlin_abort.fatal(CALL_INFO,1,"LinkControl: job_size must be set if nid_map_name is set\n");
+            }
+            logical_nid = params.find<nid_t>("logical_nid",-1);
+            if ( job_size == -1 ) {
+                merlin_abort.fatal(CALL_INFO,1,"LinkControl: logical_nid must be set if nid_map_name is set\n");
+            }
+            nid_map_shm = Simulation::getSharedRegionManager()->
+                getGlobalSharedRegion(nid_map_name, job_size * sizeof(nid_t), new SharedRegionMerger());
         }
-        nid_map_shm = Simulation::getSharedRegionManager()->
-            getGlobalSharedRegion(nid_map_name, logical_peers * sizeof(nid_t), new SharedRegionMerger());
     }
 
+
+    // See if there is a vn_map set
+    std::vector<int> vn_map_vec;
+    params.find_array<int>("vn_remap",vn_map_vec);
+    if ( vn_map_vec.size() > 0 ) {
+        if ( vn_map_vec.size() != total_vns ) {
+            merlin_abort.fatal(CALL_INFO,1,"LinkControl: length of vn_map (%lu) must be equal to total number of VNs (%d)\n",vn_map_vec.size(),total_vns);
+        }
+        vn_remap_out = new int[total_vns];
+        for ( int i = 0; i < total_vns; ++i ) {
+            vn_remap_out[i] = vn_map_vec[i];
+        }
+    }
+    
     
     // Register statistics
     packet_latency = registerStatistic<uint64_t>("packet_latency");
@@ -326,6 +361,7 @@ void LinkControl::init(unsigned int phase)
             nid_map_shm->publish();
             nid_map = nid_map_shm->getPtr<const nid_t*>();
         }
+
         // init_ev->print("LC: ",Simulation::getSimulation()->getSimulationOutput());
         delete ev;
         
@@ -339,8 +375,15 @@ void LinkControl::init(unsigned int phase)
         init_ev = dynamic_cast<RtrInitEvent*>(ev);
         int actual_vns = init_ev->int_value;
         delete ev;
+
+        bool vn_map_set = false;
+        if ( vn_remap_out ) {
+            vn_map_set = true;
+        }
+        else {
+            vn_remap_out = new int[total_vns];
+        }
         
-        vn_remap_out = new int[total_vns];
         vn_remap_in = new int[actual_vns];
         for ( int i = 0; i < actual_vns; ++i ) {
             vn_remap_in[i] = -1;
@@ -350,11 +393,22 @@ void LinkControl::init(unsigned int phase)
         for ( int i = 0; i < total_vns; ++i ) {
             ev = rtr_link->recvInitData();
             init_ev = dynamic_cast<RtrInitEvent*>(ev);
-            int vn = init_ev->int_value;
-            vn_remap_out[i] = vn;
-            if ( vn >= 0 ) vn_remap_in[vn] = i;
-            delete ev;
+            // If map was not set yet, get values from router
+            if ( !vn_map_set ) {
+                int vn = init_ev->int_value;
+                vn_remap_out[i] = vn;
+                if ( vn >= 0 ) vn_remap_in[vn] = i;
+                delete ev;
+            }
+            // Otherwise, use the vn_remap_out to set vn_remap_in
+            else {
+                int vn = vn_remap_out[i];
+                if ( vn >= 0 ) vn_remap_in[vn] = i;                
+            }
         }
+
+        
+
         // std::cout << "ID = " << id << "\n";
         // std::cout << "vn_remap_out:\n";
         // for ( int i = 0; i < total_vns; ++i ) {
@@ -548,6 +602,9 @@ SST::Interfaces::SimpleNetwork::Request* LinkControl::recv(int vn) {
 
 void LinkControl::sendUntimedData(SST::Interfaces::SimpleNetwork::Request* req)
 {
+    if ( nid_map ) {
+        req->dest = nid_map[req->dest];
+    }
     rtr_link->sendUntimedData(new RtrEvent(req,id));
 }
 

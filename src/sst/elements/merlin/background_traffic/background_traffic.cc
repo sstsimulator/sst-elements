@@ -130,9 +130,6 @@ BackgroundTraffic::init(unsigned int phase) {
         std::string pattern = pattern_params->find<std::string>("pattern_gen");
         // packetDestGen = static_cast<TargetGenerator*>(loadSubComponent(pattern, this, *pattern_params));
         packetDestGen = loadAnonymousSubComponent<TargetGenerator>(pattern, "pattern_gen", 0, ComponentInfo::SHARE_NONE, *pattern_params, id, num_peers);
-#ifndef SST_ENABLE_PREVIEW_BUILD
-        if ( packetDestGen->wasLoadedWithLegacyAPI() ) packetDestGen->initialize(id, num_peers);
-#endif
         delete pattern_params;
 
         // Set up send interval based on bandwidth

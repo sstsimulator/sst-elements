@@ -74,9 +74,6 @@ public:
     )
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-	EmberFFT3DGenerator(SST::Component* owner, Params& params) : EmberMessagePassingGenerator(owner,params,"") {}
-#endif  // inserted by script
 	EmberFFT3DGenerator(SST::ComponentId_t, Params& params);
 	~EmberFFT3DGenerator() {}
 	void configure();

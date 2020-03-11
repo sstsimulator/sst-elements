@@ -48,12 +48,12 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
     
     Params osParams = params.find_prefix_params("os.");
 
-    std::string osName = osParams.find<std::string>("name");
-    assert( ! osName.empty() );
-    std::string osModuleName = osParams.find<std::string>("module");
-    assert( ! osModuleName.empty() );
+    // std::string osName = osParams.find<std::string>("name");
+    // assert( ! osName.empty() );
+    // std::string osModuleName = osParams.find<std::string>("module");
+    // assert( ! osModuleName.empty() );
 
-    Params modParams = params.find_prefix_params( osName + "." );
+    // Params modParams = params.find_prefix_params( osName + "." );
     std::ostringstream tmp;
     tmp << m_jobId;
 
@@ -66,11 +66,12 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 
     std::string motifLogFile = params.find<std::string>("motifLog", "");
     if("" != motifLogFile) {
-        std::ostringstream logPrefix;
-        logPrefix << motifLogFile << "-" << m_jobId << ".log";
-        //logPrefix << motifLogFile << "-" << id << "-" << m_jobId << ".log";
-        output.verbose(CALL_INFO, 4, ENGINE_MASK, "Motif log file will write to: %s\n", logPrefix.str().c_str());
-        m_motifLogger = new EmberMotifLog(logPrefix.str(), m_jobId);
+        // std::ostringstream logPrefix;
+        // logPrefix << motifLogFile << "-" << m_jobId << "-" << Simulation::getSimulation()->getRank().rank << ".log";
+        // //logPrefix << motifLogFile << "-" << id << "-" << m_jobId << ".log";
+        // output.verbose(CALL_INFO, 4, ENGINE_MASK, "Motif log file will write to: %s\n", logPrefix.str().c_str());
+        // m_motifLogger = new EmberMotifLog(logPrefix.str(), m_jobId);
+        m_motifLogger = new EmberMotifLog(motifLogFile, m_jobId);
     } else {
         m_motifLogger = NULL;
     }
@@ -141,6 +142,7 @@ EmberEngine::ApiMap EmberEngine::createApiMap( OS* os,
 	    std::ostringstream numStr;
    	    numStr << apiNum++;
 
+        
         Params apiParams = apiList.find_prefix_params( numStr.str() + "." );
         if ( apiParams.empty() ) {
             break;
@@ -191,9 +193,9 @@ EmberGenerator* EmberEngine::initMotif( SST::Params params,
     std::string gentype = params.find<std::string>( "name" );
 	assert( !gentype.empty() );
 
-    if(NULL != m_motifLogger) {
-        m_motifLogger->logMotifStart(gentype, motifNum);
-    }
+    // if(NULL != m_motifLogger) {
+    //     m_motifLogger->logMotifStart(gentype, motifNum);
+    // }
 
 	output.verbose(CALL_INFO, 2, ENGINE_MASK, "motif=`%s`\n", gentype.c_str());
 
@@ -254,6 +256,10 @@ void EmberEngine::setup() {
 
     output.setPrefix( prefix.str() );
 
+    if (NULL != m_motifLogger) {
+        m_motifLogger->setRank(m_os->getRank());
+    }
+    
 	// Prime the event queue 
 	issueNextEvent(0);
 }
@@ -270,7 +276,10 @@ void EmberEngine::issueNextEvent(uint64_t nanoDelay) {
 
         // if the event Queue is empty after a refill the motif is done
         if (  evQueue.empty() ) {
-            output.verbose(CALL_INFO, 1, MOTIF_START_STOP_MASK, "Motif finished: %s\n",m_generator->getMotifName().c_str());
+            if (NULL != m_motifLogger) {
+                m_motifLogger->logMotifEnd(m_generator->getMotifName(),currentMotif);
+            }
+            // output.verbose(CALL_INFO, 1, MOTIF_START_STOP_MASK, "Motif finished: %s\n",m_generator->getMotifName().c_str());
             m_generator->completed( &output, getCurrentSimTimeNano() );
             if ( m_generator->primary() ) {	
 	            primaryComponentOKToEndSim();
@@ -283,7 +292,10 @@ void EmberEngine::issueNextEvent(uint64_t nanoDelay) {
                 m_generator = initMotif( motifParams[currentMotif],
 								m_apiMap, m_jobId, currentMotif, m_nodePerf );
                 assert( m_generator );
-                output.verbose(CALL_INFO, 1, MOTIF_START_STOP_MASK, "Motif starting: %s\n",m_generator->getMotifName().c_str());
+                if (NULL != m_motifLogger) {
+                    m_motifLogger->logMotifStart(currentMotif);
+                }
+                // output.verbose(CALL_INFO, 1, MOTIF_START_STOP_MASK, "Motif starting: %s\n",m_generator->getMotifName().c_str());
 
                 m_motifDone = refillQueue();
             }

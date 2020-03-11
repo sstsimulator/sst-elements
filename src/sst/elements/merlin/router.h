@@ -351,9 +351,6 @@ public:
     SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Merlin::Topology, int, int)
     
     enum PortState {R2R, R2N, UNCONNECTED};
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    Topology(Component* comp) : SubComponent(comp), output(Simulation::getSimulation()->getSimulationOutput()) {}
-#endif  // inserted by script
     Topology(ComponentId_t cid) : SubComponent(cid), output(Simulation::getSimulation()->getSimulationOutput()) {}
     virtual ~Topology() {}
 
@@ -422,11 +419,6 @@ public:
         SubComponent(cid)
         {}
 
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    PortInterface(Component* parent) :
-        SubComponent(parent)
-        {}
-#endif  // inserted by script
 
     virtual void initVCs(int vns, int* vcs_per_vn, internal_router_event** vc_heads, int* xbar_in_credits, int* output_queue_lengths) = 0;
 
@@ -456,11 +448,6 @@ public:
 
         SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Merlin::PortInterface::OutputArbitration)
     
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-        OutputArbitration(Component* parent) :
-            SubComponent(parent)
-        {}
-#endif  // inserted by script
         OutputArbitration(ComponentId_t cid) :
             SubComponent(cid)
         {}
@@ -481,11 +468,6 @@ public:
 
     SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Merlin::XbarArbitration)
     
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    XbarArbitration(Component* parent) :
-        SubComponent(parent)
-    {}
-#endif  // inserted by script
     XbarArbitration(ComponentId_t cid) :
         SubComponent(cid)
     {}

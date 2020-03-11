@@ -72,7 +72,12 @@ class Pin2Frontend : public ArielFrontend {
         virtual void init(unsigned int phase);
         virtual void setup() {}
         virtual void finish();
-        virtual ArielTunnel* getTunnel(int tNum);
+        virtual ArielTunnel* getTunnel();
+
+#ifdef HAVE_CUDA
+        virtual GpuReturnTunnel* getReturnTunnel();
+        virtual GpuDataTunnel* getDataTunnel();
+#endif
 
     private:
         
@@ -88,8 +93,8 @@ class Pin2Frontend : public ArielFrontend {
         ArielTunnel* tunnel;
 
 #ifdef HAVE_CUDA
-        SST::Core::Interprocess::SHMParent<ArielTunnel>* tunnelRmgr;
-        SST::Core::Interprocess::SHMParent<ArielTunnel>* tunnelDmgr;
+        SST::Core::Interprocess::SHMParent<GpuReturnTunnel>* tunnelRmgr;
+        SST::Core::Interprocess::SHMParent<GpuDataTunnel>* tunnelDmgr;
         
         GpuReturnTunnel* tunnelR;
         GpuDataTunnel* tunnelD;

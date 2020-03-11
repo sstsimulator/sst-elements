@@ -28,9 +28,6 @@ template< class TYPE >
 class EmberShmemPutGenerator : public EmberShmemGenerator {
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-	EmberShmemPutGenerator(SST::Component* owner, Params& params) : EmberShmemGenerator(owner, params, "" ) {}
-#endif  // inserted by script
 	EmberShmemPutGenerator(SST::ComponentId_t id, Params& params) :
 		EmberShmemGenerator(id, params, "ShmemPut" ), m_phase(-2)
 	{ 
@@ -164,10 +161,6 @@ public:
     SST_ELI_DOCUMENT_PARAMS()
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    EmberShmemPutIntGenerator( SST::Component* owner, Params& params ) :
-        EmberShmemPutGenerator(owner,  params) { }
-#endif  // inserted by script
     EmberShmemPutIntGenerator( SST::ComponentId_t id, Params& params ) :
         EmberShmemPutGenerator(id,  params) { }
 };
@@ -186,10 +179,6 @@ public:
     SST_ELI_DOCUMENT_PARAMS()
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    EmberShmemPutLongGenerator( SST::Component* owner, Params& params ) :
-        EmberShmemPutGenerator(owner,  params) { }
-#endif  // inserted by script
     EmberShmemPutLongGenerator( SST::ComponentId_t id, Params& params ) :
         EmberShmemPutGenerator(id,  params) { }
 };
@@ -208,10 +197,6 @@ public:
     SST_ELI_DOCUMENT_PARAMS()
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    EmberShmemPutDoubleGenerator( SST::Component* owner, Params& params ) :
-        EmberShmemPutGenerator(owner,  params) { }
-#endif  // inserted by script
     EmberShmemPutDoubleGenerator( SST::ComponentId_t id, Params& params ) :
         EmberShmemPutGenerator(id,  params) { }
 };
@@ -230,10 +215,6 @@ public:
     SST_ELI_DOCUMENT_PARAMS()
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    EmberShmemPutFloatGenerator( SST::Component* owner, Params& params ) :
-        EmberShmemPutGenerator(owner,  params) { }
-#endif  // inserted by script
     EmberShmemPutFloatGenerator( SST::ComponentId_t id, Params& params ) :
         EmberShmemPutGenerator(id,  params) { }
 };
