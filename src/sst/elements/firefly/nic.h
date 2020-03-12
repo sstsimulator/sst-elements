@@ -38,7 +38,9 @@
 namespace SST {
 namespace Firefly {
 
+
 #include "nicEvents.h"
+
 
 #define NIC_DBG_DMA_ARBITRATE (1<<1)
 #define NIC_DBG_DETAILED_MEM (1<<2)
@@ -162,35 +164,35 @@ class Nic : public SST::Component  {
 
         typedef std::function<void()> Callback;
 	  public:
-		LinkControlWidget( Output& output, Callback callback ) : m_dbg(output), m_notifiers(1,NULL), m_num(0), m_callback(callback) {
+		LinkControlWidget( Output& output, Callback callback, int numVN ) : m_dbg(output), m_notifiers(numVN,NULL), m_num(numVN,0), m_callback(callback) {
 		}
 
 		inline bool notify( int vn ) {
         	m_dbg.debug(CALL_INFO,1,NIC_DBG_LINK_CTRL,"Widget vn=%d\n",vn);
 			if ( m_notifiers[vn] ) {
-       			m_dbg.debug(CALL_INFO,1,NIC_DBG_LINK_CTRL,"Widget call notifier, number still installed %d\n", m_num -1);
+       			m_dbg.debug(CALL_INFO,1,NIC_DBG_LINK_CTRL,"Widget call notifier, number still installed %d\n", m_num[vn] - 1);
 				m_notifiers[vn]();
 				m_notifiers[vn] = NULL;
-				--m_num;
+				--m_num[vn];
 			}
 
-			return m_num > 0; 
+			return m_num[vn] > 0; 
 		}
 
 		inline void setNotify( std::function<void()> notifier, int vn ) {
-        	m_dbg.debug(CALL_INFO,1, NIC_DBG_LINK_CTRL,"Widget vn=%d, number now installed %d\n",vn,m_num+1);
-			if ( m_num == 0 ) {
+        	m_dbg.debug(CALL_INFO,1, NIC_DBG_LINK_CTRL,"Widget vn=%d, number now installed %d\n",vn,m_num[vn] + 1);
+			if ( m_num[vn] == 0 ) {
                 m_callback();
 			}
 			assert( m_notifiers[vn] == NULL );
 			m_notifiers[vn] = notifier;
-			++m_num;
+			++m_num[vn];
 		}
 
 	  private:
         Callback m_callback;
         Output& m_dbg;
-		int m_num;
+		std::vector< int > m_num;
 		std::vector< std::function<void()> > m_notifiers;
 	};
 
@@ -331,6 +333,7 @@ class Nic : public SST::Component  {
     #include "nicRecvMachine.h"
     #include "nicArbitrateDMA.h"
     #include "nicUnitPool.h"
+    #include "nicRecvCtxData.h"
 
 public:
 
@@ -373,6 +376,8 @@ public:
 	void shmemDecPendingPuts( int core ) {
 		m_shmem->decPendingPuts( core );
 	}
+
+    std::vector< RecvCtxData > m_recvCtxData;
 
   private:
     typedef uint64_t DestKey;
@@ -472,11 +477,11 @@ struct X {
 
 	typedef PriorityEntry<X*> PriorityX;
 
-	std::priority_queue< PriorityX*,std::vector<PriorityX*>, Compare > m_sendPQ;
+	std::vector< std::priority_queue< PriorityX*,std::vector<PriorityX*>, Compare > > m_sendPQ;
 
     std::vector<SendMachine*>   m_sendMachineV;
     std::queue<SendMachine*>    m_sendMachineQ;
-    RecvMachine* m_recvMachine;
+    std::vector<RecvMachine*>   m_recvMachine;
     ArbitrateDMA* m_arbitrateDMA;
 
     int                     m_myNodeId;
@@ -512,18 +517,18 @@ struct X {
 
     UnitPool* m_unitPool;
 
-    void feedTheNetwork( );
-    void sendPkt( FireflyNetworkEvent*, int dest, int vc );
+    void feedTheNetwork( int vn );
+    void sendPkt( FireflyNetworkEvent*, int dest, int vn );
     void notifySendDone( SendMachine* mach, SendEntryBase* entry );
 
     void qSendEntry( SendEntryBase* entry );
 
-    void notifyHavePkt( PriorityX* px ) {
-        m_dbg.debug(CALL_INFO,3,NIC_DBG_SEND_MACHINE,"p1=%" PRIu64 " p2=%d\n",px->p1(),px->p2());
-        m_sendPQ.push( px );
+    void notifyHavePkt( PriorityX* px, int vn ) {
+        m_dbg.debug(CALL_INFO,3,NIC_DBG_SEND_MACHINE,"vn=%d p1=%" PRIu64 " p2=%d\n",vn,px->p1(),px->p2());
+        m_sendPQ[vn].push( px );
 		
-        if ( 1 == m_sendPQ.size() ) {
-            feedTheNetwork();
+        if ( 1 == m_sendPQ[vn].size() ) {
+            feedTheNetwork( vn );
         }
     }
 
@@ -628,6 +633,8 @@ struct X {
     std::queue<int> m_availNicUnits;
     uint16_t m_getKey;
     int m_txDelay;
+
+    int m_numVN;
 
     static int  MaxPayload;
     static int  m_packetId;
