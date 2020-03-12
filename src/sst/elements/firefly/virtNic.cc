@@ -151,11 +151,11 @@ void VirtNic::dmaRecv( int src, int tag, std::vector<IoVec>& vec, void* key )
             calcCoreId(src), calcRealNicId(src), tag, vec, key ) );
 }
 
-void VirtNic::pioSend( int dest, int tag, std::vector<IoVec>& vec, void* key )
+void VirtNic::pioSend( int vn, int dest, int tag, std::vector<IoVec>& vec, void* key )
 {
     m_dbg.debug(CALL_INFO,2,0,"dest=%d\n",dest);
     m_toNicLink->send(0, new NicCmdEvent( NicCmdEvent::PioSend, 
-			calcCoreId(dest), calcRealNicId(dest), tag, vec, key ) );
+			calcCoreId(dest), calcRealNicId(dest), tag, vec, key, vn ) );
 }
 
 void VirtNic::get( int node, int tag, std::vector<IoVec>& vec, void* key )

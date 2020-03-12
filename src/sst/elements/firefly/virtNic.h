@@ -176,7 +176,7 @@ class VirtNic : public SST::SubComponent {
     bool canDmaRecv();
 
     void dmaRecv( int src, int tag, std::vector<IoVec>& vec, void* key );
-    void pioSend( int dest, int tag, std::vector<IoVec>& vec, void* key );
+    void pioSend( int vn, int dest, int tag, std::vector<IoVec>& vec, void* key  );
     void get( int node, int tag, std::vector<IoVec>& vec, void* key );
     void regMem( int node, int tag, std::vector<IoVec>& vec, void *key );
 
