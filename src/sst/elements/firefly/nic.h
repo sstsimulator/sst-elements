@@ -333,7 +333,12 @@ class Nic : public SST::Component  {
     #include "nicRecvMachine.h"
     #include "nicArbitrateDMA.h"
     #include "nicUnitPool.h"
-    #include "nicRecvCtxData.h"
+
+    struct  RecvCtxData {
+        std::unordered_map< int, DmaRecvEntry* >   m_getOrgnM;
+        std::unordered_map< int, MemRgnEntry* >    m_memRgnM;
+        std::deque<DmaRecvEntry*>        m_postedRecvs;
+    };
 
 public:
 
