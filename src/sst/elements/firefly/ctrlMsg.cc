@@ -105,19 +105,19 @@ static size_t calcLength( std::vector<IoVec>& ioVec )
 
 void API::sendv_common( std::vector<IoVec>& ioVec,
     MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
-    MP::Communicator group, CommReq* commReq )
+    MP::Communicator group, CommReq* commReq, int vn )
 {
-    m_dbg.debug(CALL_INFO,1,1,"dest=%#x tag=%#x length=%lu \n",
-                                        dest, tag, calcLength(ioVec) );
+    m_dbg.debug(CALL_INFO,1,1,"dest=%#x tag=%#x length=%lu vn=%d\n",
+                                        dest, tag, calcLength(ioVec), vn );
 
     _CommReq* req;
     if ( commReq ) {
         req = new _CommReq( _CommReq::Isend, ioVec,
-            m_info->sizeofDataType(dtype) , dest, tag, group );
+            m_info->sizeofDataType(dtype) , dest, tag, group, vn );
         commReq->req = req;
     } else {
         req = new _CommReq( _CommReq::Send, ioVec,
-            m_info->sizeofDataType( dtype), dest, tag, group );
+            m_info->sizeofDataType( dtype), dest, tag, group, vn );
     }
 
     m_processQueuesState->enterSend( req, sendStateDelay() );
@@ -134,13 +134,13 @@ void API::send( const Hermes::MemAddr& addr, size_t len, nid_t dest, uint64_t ta
 
 
 void API::send( const Hermes::MemAddr& addr, size_t len, MP::RankID dest, uint64_t tag, 
-                        MP::Communicator grp ) 
+                        MP::Communicator grp, int vn ) 
 {
     std::vector<IoVec> ioVec(1);
     ioVec[0].addr = addr;
     ioVec[0].len = len;
 
-    sendv_common( ioVec, MP::CHAR, dest, tag, grp, NULL );
+    sendv_common( ioVec, MP::CHAR, dest, tag, grp, NULL, vn );
 }
 
 void API::isend( void* ptr, size_t len, nid_t dest, uint64_t tag, MP::Communicator grp, CommReq* req)
@@ -160,14 +160,14 @@ void API::isend( const Hermes::MemAddr& addr, size_t len, nid_t dest, uint64_t t
 }
 
 void API::isend( const Hermes::MemAddr& addr, size_t len, nid_t dest, uint64_t tag, 
-				MP::Communicator group, CommReq* req)
+				MP::Communicator group, CommReq* req, int vn )
 {
     std::vector<IoVec> ioVec(1);
     ioVec[0].addr = addr;
     ioVec[0].len = len;
 
     assert(req);
-    sendv_common( ioVec, MP::CHAR, dest, tag, group, req );
+    sendv_common( ioVec, MP::CHAR, dest, tag, group, req, vn );
 }
 
 void API::sendv(std::vector<IoVec>& ioVec, nid_t dest, uint64_t tag )
@@ -190,11 +190,11 @@ void API::recvv_common( std::vector<IoVec>& ioVec,
     _CommReq* req;
     if ( commReq ) {
         req = new _CommReq( _CommReq::Irecv, ioVec,
-            m_info->sizeofDataType(dtype), src, tag, group );
+            m_info->sizeofDataType(dtype), src, tag, group, 0 );
         commReq->req = req;
     } else {
         req = new _CommReq( _CommReq::Recv, ioVec,
-            m_info->sizeofDataType(dtype), src, tag, group );
+            m_info->sizeofDataType(dtype), src, tag, group, 0 );
     }
 
     m_processQueuesState->enterRecv( req, recvStateDelay() );
@@ -288,7 +288,7 @@ void API::send( const Hermes::MemAddr& buf, uint32_t count,
     m_dbg.debug(CALL_INFO,1,1,"count=%d dest=%d tag=%#x\n",count,dest,tag);
 
     m_processQueuesState->enterSend( new _CommReq( _CommReq::Send, buf, count,
-            m_info->sizeofDataType( dtype), dest, tag, group ) );
+            m_info->sizeofDataType( dtype), dest, tag, group, 0 ) );
 }
 
 void API::isend( const Hermes::MemAddr& buf, uint32_t count,
@@ -296,7 +296,7 @@ void API::isend( const Hermes::MemAddr& buf, uint32_t count,
         MP::Communicator group, MP::MessageRequest* req )
 {
     *req = new _CommReq( _CommReq::Isend, buf, count,
-                        m_info->sizeofDataType(dtype) , dest, tag, group );
+                        m_info->sizeofDataType(dtype) , dest, tag, group, 0 );
     m_dbg.debug(CALL_INFO,1,1,"%p\n",*req);
     m_processQueuesState->enterSend( static_cast<_CommReq*>(*req) );
 }
@@ -307,7 +307,7 @@ void API::recv( const Hermes::MemAddr& buf, uint32_t count,
 {
     m_dbg.debug(CALL_INFO,1,1,"count=%d src=%d tag=%#x\n",count,src,tag);
     m_processQueuesState->enterRecv( new _CommReq( _CommReq::Recv, buf, count,
-            m_info->sizeofDataType(dtype), src, tag, group, resp ) );
+            m_info->sizeofDataType(dtype), src, tag, group, 0, resp ) );
 }
 
 void API::irecv( const Hermes::MemAddr& buf, uint32_t count,
@@ -316,7 +316,7 @@ void API::irecv( const Hermes::MemAddr& buf, uint32_t count,
 {
     m_dbg.debug(CALL_INFO,1,1,"count=%d src=%d tag=%#x\n",count,src,tag);
     *req = new _CommReq( _CommReq::Irecv, buf, count,
-                            m_info->sizeofDataType(dtype), src, tag, group );
+                            m_info->sizeofDataType(dtype), src, tag, group, 0 );
     m_processQueuesState->enterRecv( static_cast<_CommReq*>(*req) );
 }
 

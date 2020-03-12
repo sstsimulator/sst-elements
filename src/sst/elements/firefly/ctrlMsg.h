@@ -84,10 +84,10 @@ class API : public ProtocolAPI {
     void makeProgress();
     void send( const Hermes::MemAddr&, size_t len, nid_t dest, uint64_t tag ); 
     void send( const Hermes::MemAddr&, size_t len, MP::RankID dest, uint64_t tag, 
-                            MP::Communicator grp );
+                            MP::Communicator grp, int vn = 0 );
     void isend( const Hermes::MemAddr&, size_t len, nid_t dest, uint64_t tag, CommReq* );
     void isend( const Hermes::MemAddr&, size_t len, nid_t dest, uint64_t tag,
-							MP::Communicator, CommReq* );
+							MP::Communicator, CommReq*, int vc = 0 );
     void isend( void*, size_t len, nid_t dest, uint64_t tag, MP::Communicator, CommReq* );
     void sendv( std::vector<IoVec>&, nid_t dest, uint64_t tag );
     void isendv( std::vector<IoVec>&, nid_t dest, uint64_t tag, MP::Communicator, CommReq* );
@@ -132,7 +132,7 @@ class API : public ProtocolAPI {
   private:
     void sendv_common( std::vector<IoVec>& ioVec,
             MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
-            MP::Communicator group, CommReq* commReq );
+            MP::Communicator group, CommReq* commReq, int vn = 0 );
     void recvv_common( std::vector<IoVec>& ioVec,
     MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
     MP::Communicator group, CommReq* commReq );
