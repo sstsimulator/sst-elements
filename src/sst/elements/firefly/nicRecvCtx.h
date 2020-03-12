@@ -33,11 +33,11 @@
 
             void regMemRgn( int rgnNum, MemRgnEntry* entry ) {
                 m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_CTX, "rgnNum=%d\n",rgnNum);
-                m_memRgnM[ rgnNum ] = entry;
+                m_rm.m_nic.m_recvCtxData[m_pid].m_memRgnM[rgnNum] = entry;
             }
             void regGetOrigin( int key, DmaRecvEntry* entry ) {
                 m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_CTX, "key=%d\n",key);
-                m_getOrgnM[ key ] = entry;
+                m_rm.m_nic.m_recvCtxData[m_pid].m_getOrgnM[key] = entry;
             }
             void postRecv( DmaRecvEntry* entry ) {
                 // check to see if there are active streams for this pid
@@ -49,7 +49,7 @@
                         return;
                     }
                 }
-                m_postedRecvs.push_back( entry );
+                m_rm.m_nic.m_recvCtxData[m_pid].m_postedRecvs.push_back( entry );
             }
 
             Nic::Shmem* getShmem() {
@@ -122,8 +122,5 @@
             RecvMachine&    m_rm;
             int                              m_pid;
             std::unordered_map< SrcKey, StreamBase*>   m_streamMap;
-            std::unordered_map< int, DmaRecvEntry* >   m_getOrgnM;
-            std::unordered_map< int, MemRgnEntry* >    m_memRgnM;
-            std::deque<DmaRecvEntry*>        m_postedRecvs;
             int             m_maxQsize;
         };
