@@ -240,7 +240,7 @@ void ProcessQueuesState::processSend_2( _CommReq* req )
     VoidFunction* callback = new VoidFunction;
     *callback = std::bind( &ProcessQueuesState::pioSendFiniVoid, this, ptrs, hdrVec.addr.getSimVAddr() );
 
-    m_nic->pioSend( nid, ShortMsgQ, vec, callback);
+    m_nic->pioSend( req->m_vn, nid, ShortMsgQ, vec, callback);
 
     if ( ! req->isBlocking() ) {
         exit();
@@ -844,7 +844,7 @@ void ProcessQueuesState::processLongGetFini0( Stack* stack )
     dbg().debug(CALL_INFO,1,DBG_MSK_PQS_CB,"send long msg Ack to nid=%d key=%#x\n", 
                                                 req->m_ackNid, req->m_ackKey );
 
-    m_nic->pioSend( req->m_ackNid, req->m_ackKey, vec, callback );
+    m_nic->pioSend( 0, req->m_ackNid, req->m_ackKey, vec, callback );
 
     schedCallback( stack->back()->getCallback() );
 }
