@@ -39,6 +39,7 @@ void Nic::SendMachine::streamInit( SendEntryBase* entry )
     ev->setSrcPid( entry->local_vNic() ); 
     ev->setHdr();
     ev->setSrcStream( entry->streamNum() );
+    
     entry->m_start = m_nic.getCurrentSimTimeNano();
     if ( entry->isCtrl() || entry->isAck() ) {
         ev->setCtrl();
@@ -62,9 +63,9 @@ void Nic::SendMachine::getPayload( SendEntryBase* entry, FireflyNetworkEvent* ev
         m_dbg.debug(CALL_INFO,2,NIC_DBG_SEND_MACHINE, "enque load from host, %lu bytes\n",ev->bufSize());
         if ( entry->isDone() ) {
             ev->setTail();
-            m_inQ->enque( m_unit, pid, vec, ev, entry->dest(), std::bind( &Nic::SendMachine::streamFini, this, entry ) );
+            m_inQ->enque( m_unit, pid, vec, ev, entry->vn(), entry->dest(), std::bind( &Nic::SendMachine::streamFini, this, entry ) );
         } else {
-            m_inQ->enque( m_unit, pid, vec, ev, entry->dest() );
+            m_inQ->enque( m_unit, pid, vec, ev, entry->vn(), entry->dest() );
             m_nic.schedCallback( std::bind( &Nic::SendMachine::getPayload, this, entry, new FireflyNetworkEvent(m_pktOverhead) ), 0);
         }
 
@@ -96,7 +97,7 @@ void Nic::SendMachine::streamFini( SendEntryBase* entry )
 }
 
 void  Nic::SendMachine::InQ::enque( int unit, int pid, std::vector< MemOp >* vec,
-            FireflyNetworkEvent* ev, int dest, Callback callback )
+            FireflyNetworkEvent* ev, int vn, int dest, Callback callback )
 {
     ++m_numPending;
 	m_nic.m_sendStreamPending->addData( m_numPending );
@@ -105,32 +106,32 @@ void  Nic::SendMachine::InQ::enque( int unit, int pid, std::vector< MemOp >* vec
                  m_pktNum,ev->bufSize(), m_numPending);
 
     m_nic.dmaRead( unit, pid, vec,
-		std::bind( &Nic::SendMachine::InQ::ready, this,  ev, dest, callback, m_pktNum++ )
+		std::bind( &Nic::SendMachine::InQ::ready, this,  ev, vn, dest, callback, m_pktNum++ )
     ); 
 	// don't put code after this, the callback may be called serially
 }
 
-void Nic::SendMachine::InQ::ready( FireflyNetworkEvent* ev, int dest, Callback callback, uint64_t pktNum )
+void Nic::SendMachine::InQ::ready( FireflyNetworkEvent* ev, int vn, int dest, Callback callback, uint64_t pktNum )
 {
     m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_SEND_MACHINE, "packet %" PRIu64 " is ready, expected=%" PRIu64 "\n",pktNum,m_expectedPkt);
     assert(pktNum == m_expectedPkt++);
 
     if ( m_pendingQ.empty() && ! m_outQ->isFull() ) {
-        ready2( ev, dest, callback );
+        ready2( ev, vn, dest, callback );
     } else  {
         m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_SEND_MACHINE, "blocked by OutQ\n");
-        m_pendingQ.push( Entry( ev, dest,callback,pktNum ) );
+        m_pendingQ.push( Entry( ev, vn, dest, callback, pktNum ) );
         if ( 1 == m_pendingQ.size() )  {
             m_outQ->wakeMeUp( std::bind( &Nic::SendMachine::InQ::processPending, this ) );
         }
     }
 }
 
-void Nic::SendMachine::InQ::ready2( FireflyNetworkEvent* ev, int dest, Callback callback )
+void Nic::SendMachine::InQ::ready2( FireflyNetworkEvent* ev, int vn, int dest, Callback callback )
 {
     m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_SEND_MACHINE, "pass packet to OutQ numBytes=%lu\n", ev->bufSize() );
     --m_numPending;
-    m_outQ->enque( ev, dest, callback );
+    m_outQ->enque( ev, vn, dest, callback );
 
     if ( m_callback ) {
         m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_SEND_MACHINE, "wakeup send machine\n");
@@ -143,7 +144,7 @@ void Nic::SendMachine::InQ::processPending( )
 {
     m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_SEND_MACHINE, "size=%lu\n", m_pendingQ.size());
     Entry& entry = m_pendingQ.front();
-    ready2( entry.ev, entry.dest, entry.callback );
+    ready2( entry.ev, entry.vn, entry.dest, entry.callback );
 
     m_pendingQ.pop();
     if ( ! m_pendingQ.empty() ) {
@@ -157,7 +158,7 @@ void Nic::SendMachine::InQ::processPending( )
     }
 }
 
-void Nic::SendMachine::OutQ::enque( FireflyNetworkEvent* ev, int dest, Callback callback )
+void Nic::SendMachine::OutQ::enque( FireflyNetworkEvent* ev, int vn, int dest, Callback callback )
 {
 	SimTime_t now = Simulation::getSimulation()->getCurrentSimCycle();
 	if ( now > m_lastEnq ) {
@@ -171,5 +172,5 @@ void Nic::SendMachine::OutQ::enque( FireflyNetworkEvent* ev, int dest, Callback 
 	++m_qCnt;
 	m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_SEND_MACHINE, "qCnt=%d priority=%" PRIu64 ".%d\n", m_qCnt, m_lastEnq, m_enqCnt);
 
-	m_nic.notifyHavePkt( px );	
+	m_nic.notifyHavePkt( px, vn );	
 }
