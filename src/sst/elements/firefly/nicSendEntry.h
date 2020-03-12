@@ -29,6 +29,7 @@ class SendEntryBase {
 
     virtual int dst_vNic() = 0;
     virtual int dest() = 0;
+    virtual int vn() = 0;
     virtual void* hdr() = 0;
     virtual size_t hdrSize() = 0;
     virtual void copyOut( Output& dbg, int numBytes,
@@ -76,6 +77,7 @@ class CmdSendEntry: public SendEntryBase, public EntryBase {
     }
 
     MsgHdr::Op getOp()  { return MsgHdr::Msg; }
+    int vn()            { return m_cmd->vn; }
     int dst_vNic( )     { return m_cmd->dst_vNic; }
     int dest()          { return m_cmd->node; }
     void* hdr()         { return &m_hdr; }
@@ -100,6 +102,7 @@ class MsgSendEntry: public SendEntryBase {
 
     virtual int dest()     { return m_dst_node; }
     virtual int dst_vNic() { return m_dst_vNic; }
+    int vn()               { return 0; }
 
   private:
     int                 m_dst_node;
