@@ -42,7 +42,7 @@ class TemplateBase(object):
         object.__setattr__(self,"_params",dict())
         object.__setattr__(self,"_req_params",set()) 
         object.__setattr__(self,"_opt_params",set())
-        object.__setattr__(self,"_vars",{"_params","_req_params","_opt_params","_vars"})
+        object.__setattr__(self,"_vars",set(["_params","_req_params","_opt_params","_vars"]))
         
     def _defineRequiredParams(self,l):
         self._req_params.update(l)
