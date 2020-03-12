@@ -36,9 +36,6 @@ namespace Cassini {
 
 class NextBlockPrefetcher : public SST::MemHierarchy::CacheListener {
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    NextBlockPrefetcher(Component* owner, Params& params); // Legacy
-#endif  // inserted by script
     NextBlockPrefetcher(ComponentId_t id, Params& params);
     ~NextBlockPrefetcher();
 

@@ -25,36 +25,6 @@
 using namespace SST::Firefly;
 using namespace Hermes;
 
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-HadesSHMEM::HadesSHMEM(Component* owner, Params& params) :
-	Interface(owner), m_common( NULL ), m_zero((long)0)
-{
-    m_dbg.init("@t:HadesSHMEM::@p():@l ",
-        params.find<uint32_t>("verboseLevel",0),
-        params.find<uint32_t>("verboseMask",0),
-        Output::STDOUT );
-
-    m_selfLink = configureSelfLink("ShmemToDriver", "1 ns",
-            new Event::Handler<HadesSHMEM>(this,&HadesSHMEM::doCallback));
-    m_heap = new Heap();
-
-	m_enterLat_ns = params.find<int>("enterLat_ns",30);
-	m_returnLat_ns = params.find<int>("returnLat_ns",30);
-	m_blockingReturnLat_ns = params.find<int>("blockingReturnLat_ns",300);
-
-	Params famMapperParams = params.find_prefix_params( "famNodeMapper." );
-	if ( famMapperParams.size() ) {
-		m_famNodeMapper = dynamic_cast<FamNodeMapper*>( loadModule( famMapperParams.find<std::string>("name"), famMapperParams ) );
-		m_famNodeMapper->setDbg( &m_dbg );
-	}
-
-	famMapperParams = params.find_prefix_params( "famAddrMapper." );
-	if ( famMapperParams.size() ) {
-		m_famAddrMapper = dynamic_cast<FamAddrMapper*>( loadModule( famMapperParams.find<std::string>("name"), famMapperParams ) );
-		m_famAddrMapper->setDbg( &m_dbg );
-	}
-}
-#endif  // inserted by script
 
 HadesSHMEM::HadesSHMEM(ComponentId_t id, Params& params) :
 	Interface(id), m_common( NULL ), m_zero((long)0)

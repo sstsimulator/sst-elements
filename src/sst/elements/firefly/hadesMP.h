@@ -50,9 +50,6 @@ class HadesMP : public MP::Interface
         {"defaultModule","Sets the default function module","firefly"},
     ) 
   public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    HadesMP(Component*, Params&);
-#endif  // inserted by script
     HadesMP(ComponentId_t, Params&);
     ~HadesMP() {}
 

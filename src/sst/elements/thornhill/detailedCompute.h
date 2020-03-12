@@ -33,13 +33,7 @@ class DetailedCompute : public SubComponent {
 	};
 
     DetailedCompute( ComponentId_t id ) : SubComponent( id ) {}
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    DetailedCompute( Component* owner ) : SubComponent( owner ) {}
-#endif  // inserted by script
     DetailedCompute( ComponentId_t id, Params& ) : SubComponent( id ) {}
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    DetailedCompute( Component* owner, Params& ) : SubComponent( owner ) {}
-#endif  // inserted by script
 
     virtual ~DetailedCompute(){};
     virtual void start( std::deque< std::pair< std::string, SST::Params > >&,

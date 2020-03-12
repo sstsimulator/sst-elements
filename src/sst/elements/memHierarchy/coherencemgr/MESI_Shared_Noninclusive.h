@@ -256,9 +256,6 @@ public:
 
 /* Class definition */
     /** Constructor for MESISharNoninclusive. */
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    MESISharNoninclusive(Component * comp, Params& params) : CoherenceController(comp, params) { }
-#endif  // inserted by script
     MESISharNoninclusive(ComponentId_t id, Params& params, Params& ownerParams, bool prefetch) : CoherenceController(id, params, ownerParams, prefetch) {
         params.insert(ownerParams);
         

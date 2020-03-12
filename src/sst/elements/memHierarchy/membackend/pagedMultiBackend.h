@@ -176,9 +176,6 @@ public:
             {"swap_delays", "Number of an access is delayed because the page is swapping", "count", 1} )
 
 /* Begin class definition */
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    pagedMultiMemory(Component *comp, Params &params);
-#endif  // inserted by script
     pagedMultiMemory(ComponentId_t id, Params &params);
     void build(Params& params);
 

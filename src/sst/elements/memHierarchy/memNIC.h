@@ -68,9 +68,6 @@ public:
 
 /* Begin class definition */    
     /* Constructor */
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    MemNIC(Component * comp, Params &params);
-#endif  // inserted by script
     MemNIC(ComponentId_t id, Params &params);
     
     /* Destructor */

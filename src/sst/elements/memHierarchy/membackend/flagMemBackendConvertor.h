@@ -35,9 +35,6 @@ public:
     SST_ELI_DOCUMENT_STATISTICS( MEMBACKENDCONVERTOR_ELI_STATS )
     
 /* Begin class definition */
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    FlagMemBackendConvertor(Component *comp, Params &params);
-#endif  // inserted by script
     FlagMemBackendConvertor(ComponentId_t id, Params &params, MemBackend* backend, uint32_t request_width);
 
     virtual bool issue( BaseReq* req );

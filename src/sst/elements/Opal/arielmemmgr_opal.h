@@ -50,9 +50,6 @@ class MemoryManagerOpal : public ArielComponent::ArielMemoryManager {
 
         /* MemoryManagerOpal */
         MemoryManagerOpal(ComponentId_t id, Params& params);
-#ifndef SST_ENABLE_PREVIEW_BUILD
-        MemoryManagerOpal(Component* comp, Params& params) : ArielComponent::ArielMemoryManager(comp, params) { } // Legacy
-#endif
         ~MemoryManagerOpal();
 
         /* Call through to temporary translator */

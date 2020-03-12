@@ -227,9 +227,6 @@ public:
         {"RowAccessTherm",      "HMC DRAM row access thermal",            "btus", 1} )
 
 /* Class definition */
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-        GOBLINHMCSimBackend(Component* comp, Params& params);
-#endif  // inserted by script
         GOBLINHMCSimBackend(ComponentId_t id, Params& params);
 	~GOBLINHMCSimBackend();
 	bool issueRequest(ReqId, Addr, bool,

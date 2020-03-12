@@ -36,9 +36,6 @@ public:
     SST_ELI_DOCUMENT_PORTS( {"nvm_link", "Link to Messier", {"Messier.MemReqEvent", "Messier.MemRespEvent"} } )
 
 /* Begin class definition */
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    Messier(Component *comp, Params &params);
-#endif  // inserted by script
     Messier(ComponentId_t id, Params &params);
     virtual bool issueRequest( ReqId, Addr, bool isWrite, unsigned numBytes );
     void handleMessierResp(SST::Event *event);

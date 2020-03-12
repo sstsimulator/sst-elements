@@ -48,9 +48,6 @@ public:
             {"max_pending_reqs",    "Sets the maximum number of requests that can be outstanding", "32" } )
 
 /* Begin class definition */
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    FlashDIMMSimMemory(Component *comp, Params &params);
-#endif  // inserted by script
     FlashDIMMSimMemory(ComponentId_t id, Params &params);
     bool issueRequest(ReqId, Addr, bool, unsigned );
     virtual bool clock(Cycle_t cycle);

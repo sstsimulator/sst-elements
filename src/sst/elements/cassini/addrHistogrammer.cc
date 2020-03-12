@@ -40,12 +40,6 @@ AddrHistogrammer::AddrHistogrammer(ComponentId_t id, Params& params) : CacheList
 
 }
 
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-AddrHistogrammer::AddrHistogrammer(Component* owner, Params& params) : CacheListener(owner, params) {
-    Output out("", 1, 0, Output::STDOUT);
-    out.fatal(CALL_INFO, -1, "%s, Error: SubComponent does not support legacy loadSubComponent call; use new calls (loadUserSubComponent or loadAnonymousSubComponent)\n", getName().c_str());
-}
-#endif  // inserted by script
 
 
 void AddrHistogrammer::notifyAccess(const CacheListenerNotification& notify) {

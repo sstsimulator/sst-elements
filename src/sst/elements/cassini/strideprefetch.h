@@ -38,9 +38,6 @@ namespace Cassini {
 
 class StridePrefetcher : public SST::MemHierarchy::CacheListener {
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    StridePrefetcher(Component* owner, Params& params);
-#endif  // inserted by script
     StridePrefetcher(ComponentId_t id, Params& params);
     ~StridePrefetcher();
 

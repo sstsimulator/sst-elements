@@ -20,12 +20,6 @@
 
 using namespace SST::Miranda;
 
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-SingleStreamGenerator::SingleStreamGenerator( Component* owner, Params& params ) :
-	RequestGenerator(owner, params) {
-            build(params);
-        }
-#endif  // inserted by script
 
 SingleStreamGenerator::SingleStreamGenerator( ComponentId_t id, Params& params ) :
 	RequestGenerator(id, params) {

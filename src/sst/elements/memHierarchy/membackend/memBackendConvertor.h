@@ -144,9 +144,6 @@ class MemBackendConvertor : public SubComponent {
 
   public:
 
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    MemBackendConvertor(Component* comp, Params& params);
-#endif  // inserted by script
     MemBackendConvertor(ComponentId_t id, Params& params, MemBackend* backend, uint32_t request_width);
     void build(Params& params);
     void finish(void);
