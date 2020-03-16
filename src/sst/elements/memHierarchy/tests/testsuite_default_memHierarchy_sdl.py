@@ -125,19 +125,20 @@ class testcase_memHierarchy_Component(SSTTestCase):
 
     def memHierarchy_Template(self, testcase, tolerance):
         # Set the various file paths
+        test_path = os.path.dirname(os.path.abspath(__file__))
+
         testDataFileName="test_memHierarchy_{0}".format(testcase)
         sdlfile = "{0}/{1}.py".format(get_testsuite_dir(), testcase.replace("_", "-"))
         reffile = "{0}/refFiles/test_memHierarchy_{1}.out".format(get_testsuite_dir(), testcase)
         outfile = "{0}/{1}.out".format(get_test_output_run_dir(), testDataFileName)
+        errfile = "{0}/{1}.err".format(get_test_output_run_dir(), testDataFileName)
         mpioutfiles = "{0}/{1}.testfile".format(get_test_output_run_dir(), testDataFileName)
 
-        self.run_sst(sdlfile, outfile, mpi_out_files=mpioutfiles)
+        self.run_sst(sdlfile, outfile, errfile, set_cwd=test_path, mpi_out_files=mpioutfiles)
 
         # Perform the test
         cmp_result = compare_sorted(testcase, outfile, reffile)
         self.assertTrue(cmp_result, "Output/Compare file {0} does not match Reference File {1}".format(outfile, reffile))
-
-
 
 
 # THIS IS THE ORIGINAL memHierarchy_Template from the SQE Repository
