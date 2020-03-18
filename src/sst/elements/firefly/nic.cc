@@ -127,7 +127,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
     assert( ( packetSizeInBytes - packetOverhead ) >= minPktPayload );
 
     // Set up the linkcontrol
-    m_linkControl = loadUserSubComponent<Interfaces::SimpleNetwork>( "rtrLink", ComponentInfo::SHARE_NONE, m_numVN );
+    m_linkControl = loadUserSubComponent<Interfaces::SimpleNetwork>( "rtrLink", ComponentInfo::SHARE_NONE, m_numVN + 1 );
     assert( m_linkControl );
 
     m_recvNotifyFunctor =
