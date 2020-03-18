@@ -122,9 +122,6 @@ public:
   public:
 	enum NIC_Thread { Send, Recv };
 
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-	SimpleMemoryModel( Component* comp, Params& params ) : MemoryModel(comp) { assert(0); }
-#endif  // inserted by script
     SimpleMemoryModel( ComponentId_t compId, Params& params ) :
 		MemoryModel( compId ), m_hostCacheUnit(NULL), m_busBridgeUnit(NULL)
 	{

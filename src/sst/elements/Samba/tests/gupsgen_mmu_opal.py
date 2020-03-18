@@ -18,7 +18,7 @@ cpugen = comp_cpu.setSubComponent("generator", "miranda.GUPSGenerator")
 cpugen.addParams({
 	"verbose" : 0,
 	"count" : 10000,
-	"max_address" : ((memory_mb) / 2) * 1024 *1024,
+	"max_address" : ((memory_mb) // 2) * 1024 *1024,
 })
 
 # Enable statistics outputs

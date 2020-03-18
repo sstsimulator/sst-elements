@@ -28,9 +28,6 @@ template <class TYPE>
 class EmberShmemFcollectGenerator : public EmberShmemGenerator {
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-	EmberShmemFcollectGenerator(SST::Component* owner, Params& params) : EmberShmemGenerator(owner, params, "" ) {}
-#endif  // inserted by script
 	EmberShmemFcollectGenerator(SST::ComponentId_t id, Params& params) :
 		EmberShmemGenerator(id, params, "ShmemFcollect" ), m_phase(0) 
 	{ 
@@ -147,10 +144,6 @@ public:
     SST_ELI_DOCUMENT_PARAMS()
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    EmberShmemFcollect32Generator(SST::Component* owner, Params& params) :
-    	EmberShmemFcollectGenerator( owner, params) {}
-#endif  // inserted by script
     EmberShmemFcollect32Generator(SST::ComponentId_t id, Params& params) :
     	EmberShmemFcollectGenerator( id, params) {}
 };
@@ -169,10 +162,6 @@ public:
     SST_ELI_DOCUMENT_PARAMS()
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    EmberShmemFcollect64Generator(SST::Component* owner, Params& params) :
-    	EmberShmemFcollectGenerator( owner, params) {}
-#endif  // inserted by script
     EmberShmemFcollect64Generator(SST::ComponentId_t id, Params& params) :
     	EmberShmemFcollectGenerator( id, params) {}
 };

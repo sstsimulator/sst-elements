@@ -47,9 +47,6 @@ public:
             {"system_ini", "Name of the HybridSim Device system file", NULL} )
 
 /* Begin class definition */
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    HybridSimMemory(Component *comp, Params &params);
-#endif  // inserted by script
     HybridSimMemory(ComponentId_t id, Params &params);
     bool issueRequest( ReqId, Addr, bool, unsigned );
     bool clock(Cycle_t cycle);

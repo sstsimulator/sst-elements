@@ -240,9 +240,6 @@ public:
 
 /* Class definition */
     /** Constructor for MESIInclusive. Note that MESIInclusive handles both MESI & MSI protocols */
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    MESIInclusive(SST::Component* comp, Params& params) : CoherenceController(comp, params) { }
-#endif  // inserted by script
     MESIInclusive(SST::ComponentId_t id, Params& params, Params& ownerParams, bool prefetch) : CoherenceController(id, params, ownerParams, prefetch) {
         params.insert(ownerParams);
         debug->debug(_INFO_,"--------------------------- Initializing [MESI Controller] ... \n\n");

@@ -18,7 +18,7 @@ def main():
     try:
         opts, args = getopt.getopt(sys.argv[1:], "", ["TraceType=","UseDramSim="])
     except getopt.GetopError as err:
-        print str(err)
+        print(str(err))
         sys.exit(2)
     for o, a in opts:
         # print "args are ", o, "and", a
@@ -35,14 +35,14 @@ def main():
                 Tracetype = "CompressedBinary"
                 traceFile = "sstprospero-0-0-gz.trace"
             else:
-                print "no match a= ", a
-                print  "Found nothing for o", o
+                print("no match a= ", a)
+                print("Found nothing for o", o)
         elif o in ("--UseDramSim"):
             if a == "yes":
                 useDramSim = 'yes'
                 memSize = "512"
         else:
-            print "no match for o", o
+            print("no match for o", o)
             assert False, "Unknown Options !"
 
 main()

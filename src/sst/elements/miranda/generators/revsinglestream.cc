@@ -20,12 +20,6 @@
 
 using namespace SST::Miranda;
 
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-ReverseSingleStreamGenerator::ReverseSingleStreamGenerator( Component* owner, Params& params ) :
-	RequestGenerator(owner, params) {
-            build(params);
-        }
-#endif  // inserted by script
 
 ReverseSingleStreamGenerator::ReverseSingleStreamGenerator( ComponentId_t id, Params& params ) :
 	RequestGenerator(id, params) {
@@ -36,7 +30,8 @@ void ReverseSingleStreamGenerator::build(Params& params) {
 
 	const uint32_t verbose = params.find<uint32_t>("verbose", 0);
 
-	out = new Output("ReverseSingleStreamGenerator[@p:@l]: ", verbose, 0, Output::STDOUT);
+	//out = new Output("ReverseSingleStreamGenerator[@p:@l]: ", verbose, 0, Output::STDOUT);
+	out = new Output("ReverseSingleStreamGenerator[@p]: ", verbose, 0, Output::STDOUT);
 
 	stopIndex   = params.find<uint64_t>("stopat", 0);
 	startIndex  = params.find<uint64_t>("startat", 1024);

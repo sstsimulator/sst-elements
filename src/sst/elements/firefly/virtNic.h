@@ -135,9 +135,6 @@ class VirtNic : public SST::SubComponent {
     };
 
 
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    VirtNic( Component* owner, Params&) : SubComponent(owner) {}
-#endif  // inserted by script
     VirtNic( ComponentId_t id, Params&);
     ~VirtNic();
     void init( unsigned int );

@@ -35,9 +35,6 @@ template < class TYPE, int VAL >
 class EmberShmemFAM_AtomicIncBaseGenerator : public EmberShmemGenerator {
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-	EmberShmemFAM_AtomicIncBaseGenerator(SST::Component* owner, Params& params, std::string name) : EmberShmemGenerator(owner, params, "" ) {}
-#endif  // inserted by script
 	EmberShmemFAM_AtomicIncBaseGenerator(SST::ComponentId_t id, Params& params, std::string name) :
 		EmberShmemGenerator(id, params, name ), m_phase(-3), m_one(1), m_numFamNodes(0)
 	{ 
@@ -241,10 +238,6 @@ public:
 template < class TYPE, int VAL >
 class EmberShmemFAM_AtomicIncGenerator : public EmberShmemFAM_AtomicIncBaseGenerator<TYPE,VAL> {
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    EmberShmemFAM_AtomicIncGenerator(SST::Component* owner, Params& params, std::string name ) :
-	    EmberShmemFAM_AtomicIncBaseGenerator<TYPE,VAL>(owner, params, name) { } 
-#endif  // inserted by script
 
     EmberShmemFAM_AtomicIncGenerator(SST::ComponentId_t id, Params& params, std::string name ) :
 	    EmberShmemFAM_AtomicIncBaseGenerator<TYPE,VAL>(id, params, name) { } 
@@ -253,10 +246,6 @@ public:
 template < class TYPE >
 class EmberShmemFAM_AtomicIncGenerator<TYPE,1> : public EmberShmemFAM_AtomicIncBaseGenerator<TYPE,1> {
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-	EmberShmemFAM_AtomicIncGenerator(SST::Component* owner, Params& params, std::string name ) :
-	    EmberShmemFAM_AtomicIncBaseGenerator<TYPE,1>(owner, params, name) { } 
-#endif  // inserted by script
 
 	EmberShmemFAM_AtomicIncGenerator(SST::ComponentId_t id, Params& params, std::string name ) :
 	    EmberShmemFAM_AtomicIncBaseGenerator<TYPE,1>(id, params, name) { } 
@@ -265,10 +254,6 @@ public:
 template < class TYPE >
 class EmberShmemFAM_AtomicIncGenerator<TYPE,2> : public EmberShmemFAM_AtomicIncBaseGenerator<TYPE,2> {
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-	EmberShmemFAM_AtomicIncGenerator(SST::Component* owner, Params& params, std::string name ) :
-	    EmberShmemFAM_AtomicIncBaseGenerator<TYPE,2>(owner, params, name ) { } 
-#endif  // inserted by script
 
 	EmberShmemFAM_AtomicIncGenerator(SST::ComponentId_t id, Params& params, std::string name ) :
 	    EmberShmemFAM_AtomicIncBaseGenerator<TYPE,2>(id, params, name ) { } 
@@ -288,10 +273,6 @@ public:
     SST_ELI_DOCUMENT_PARAMS(
     )
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-	EmberShmemFAM_AtomicIncIntGenerator(SST::Component* owner, Params& params) :
-	    EmberShmemFAM_AtomicIncGenerator(owner, params, "ShmemFAM_AtomicIncInt" ) { } 
-#endif  // inserted by script
 	EmberShmemFAM_AtomicIncIntGenerator(SST::ComponentId_t id, Params& params) :
 	    EmberShmemFAM_AtomicIncGenerator(id, params, "ShmemFAM_AtomicIncInt" ) { } 
 };
@@ -310,10 +291,6 @@ public:
     SST_ELI_DOCUMENT_PARAMS(
     )
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-	EmberShmemFAM_AtomicIncLongGenerator(SST::Component* owner, Params& params) :
-	    EmberShmemFAM_AtomicIncGenerator(owner, params, "ShmemFAM_AtomicIncLong") {} 
-#endif  // inserted by script
 	EmberShmemFAM_AtomicIncLongGenerator(SST::ComponentId_t id, Params& params) :
 	    EmberShmemFAM_AtomicIncGenerator(id, params, "ShmemFAM_AtomicIncLong") {} 
 };

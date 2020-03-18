@@ -1,21 +1,22 @@
-ArielComponent[arielcpu.cc:49:ArielCPU] Creating Ariel component...
-ArielComponent[arielcpu.cc:55:ArielCPU] Configuring for 2 cores...
-ArielComponent[arielcpu.cc:58:ArielCPU] Configuring for check addresses = no
-ArielComponent[arielcpu.cc:133:ArielCPU] Loaded memory manager: node0_cpu:memmgr
-ArielComponent[arielcpu.cc:147:ArielCPU] Memory manager construction is completed.
-ArielComponent[arielcpu.cc:187:ArielCPU] Model specifies that there are 0 application arguments
-ArielComponent[arielcpu.cc:194:ArielCPU] Interception and instrumentation of multi-level memory and malloc/free calls is DISABLED.
-ArielComponent[arielcpu.cc:202:ArielCPU] Tracking the stack and dumping on malloc calls is DISABLED.
-ArielComponent[arielcpu.cc:207:ArielCPU] Malloc map file is DISABLED
-ArielComponent[arielcpu.cc:214:ArielCPU] Base pipe name: /sst_shmem_124704-1-1681692777
-ArielComponent[arielcpu.cc:235:ArielCPU] Processing application arguments...
-ArielComponent[arielcpu.cc:366:ArielCPU] Completed processing application arguments.
-ArielComponent[arielcpu.cc:374:ArielCPU] Registering ArielCPU clock at 2GHz
-ArielComponent[arielcpu.cc:378:ArielCPU] Clocks registered.
-ArielComponent[arielcpu.cc:380:ArielCPU] Creating core to cache links...
-ArielComponent[arielcpu.cc:382:ArielCPU] Creating processor cores and cache links...
-ArielComponent[arielcpu.cc:384:ArielCPU] Configuring cores and cache links...
-ArielComponent[arielcpu.cc:442:ArielCPU] Completed initialization of the Ariel CPU.
+ArielComponent[arielcpu.cc:38:ArielCPU] Creating Ariel component...
+ArielComponent[arielcpu.cc:44:ArielCPU] Configuring for 2 cores...
+ArielComponent[arielcpu.cc:47:ArielCPU] Configuring for check addresses = no
+ArielComponent[arielcpu.cc:120:ArielCPU] Loaded memory manager: node0_cpu:memmgr
+ArielComponent[arielcpu.cc:134:ArielCPU] Memory manager construction is completed.
+Pin2Frontend[frontend/simple/pin2frontend.cc:75:Pin2Frontend] Model specifies that there are 0 application arguments
+Pin2Frontend[frontend/simple/pin2frontend.cc:82:Pin2Frontend] Interception and instrumentation of multi-level memory and malloc/free calls is DISABLED.
+Pin2Frontend[frontend/simple/pin2frontend.cc:90:Pin2Frontend] Tracking the stack and dumping on malloc calls is DISABLED.
+Pin2Frontend[frontend/simple/pin2frontend.cc:95:Pin2Frontend] Malloc map file is DISABLED
+Pin2Frontend[frontend/simple/pin2frontend.cc:104:Pin2Frontend] Base pipe name: /sst_shmem_57429-1-1681692777
+Pin2Frontend[frontend/simple/pin2frontend.cc:128:Pin2Frontend] Processing application arguments...
+Pin2Frontend[frontend/simple/pin2frontend.cc:258:Pin2Frontend] Completed processing application arguments.
+Pin2Frontend[frontend/simple/pin2frontend.cc:263:Pin2Frontend] Completed initialization of the Ariel CPU.
+ArielComponent[arielcpu.cc:170:ArielCPU] Registering ArielCPU clock at 2GHz
+ArielComponent[arielcpu.cc:174:ArielCPU] Clocks registered.
+ArielComponent[arielcpu.cc:176:ArielCPU] Creating core to cache links...
+ArielComponent[arielcpu.cc:178:ArielCPU] Creating processor cores and cache links...
+ArielComponent[arielcpu.cc:180:ArielCPU] Configuring cores and cache links...
+ArielComponent[arielcpu.cc:239:ArielCPU] Completed initialization of the Ariel CPU.
 Initialized with 2 cores
 Before initialization 
 Assigning the PTW correctly
@@ -42,24 +43,25 @@ node0_local_memory, WARNING: loading backend in legacy mode (from parameter set)
 0:TimingDRAM:Bank:Bank():299:mc=0:chan=0:rank=0:bank=0: transactionQ: memHierarchy.fifoTransactionQ
 0:TimingDRAM:Bank:Bank():300:mc=0:chan=0:rank=0:bank=0: pagePolicy:   memHierarchy.simplePagePolicy
 node0_dc, Warning: getting region parameters (addr_range_start/end, interleave_step/size) from link subcomponent. In the future this will not be supported and region parameters should be declared in the directory's parameters instead.
-ArielComponent[arielcpu.cc:49:ArielCPU] Creating Ariel component...
-ArielComponent[arielcpu.cc:55:ArielCPU] Configuring for 2 cores...
-ArielComponent[arielcpu.cc:58:ArielCPU] Configuring for check addresses = no
-ArielComponent[arielcpu.cc:133:ArielCPU] Loaded memory manager: node1_cpu:memmgr
-ArielComponent[arielcpu.cc:147:ArielCPU] Memory manager construction is completed.
-ArielComponent[arielcpu.cc:187:ArielCPU] Model specifies that there are 0 application arguments
-ArielComponent[arielcpu.cc:194:ArielCPU] Interception and instrumentation of multi-level memory and malloc/free calls is DISABLED.
-ArielComponent[arielcpu.cc:202:ArielCPU] Tracking the stack and dumping on malloc calls is DISABLED.
-ArielComponent[arielcpu.cc:207:ArielCPU] Malloc map file is DISABLED
-ArielComponent[arielcpu.cc:214:ArielCPU] Base pipe name: /sst_shmem_124704-15-1714636915
-ArielComponent[arielcpu.cc:235:ArielCPU] Processing application arguments...
-ArielComponent[arielcpu.cc:366:ArielCPU] Completed processing application arguments.
-ArielComponent[arielcpu.cc:374:ArielCPU] Registering ArielCPU clock at 2GHz
-ArielComponent[arielcpu.cc:378:ArielCPU] Clocks registered.
-ArielComponent[arielcpu.cc:380:ArielCPU] Creating core to cache links...
-ArielComponent[arielcpu.cc:382:ArielCPU] Creating processor cores and cache links...
-ArielComponent[arielcpu.cc:384:ArielCPU] Configuring cores and cache links...
-ArielComponent[arielcpu.cc:442:ArielCPU] Completed initialization of the Ariel CPU.
+ArielComponent[arielcpu.cc:38:ArielCPU] Creating Ariel component...
+ArielComponent[arielcpu.cc:44:ArielCPU] Configuring for 2 cores...
+ArielComponent[arielcpu.cc:47:ArielCPU] Configuring for check addresses = no
+ArielComponent[arielcpu.cc:120:ArielCPU] Loaded memory manager: node1_cpu:memmgr
+ArielComponent[arielcpu.cc:134:ArielCPU] Memory manager construction is completed.
+Pin2Frontend[frontend/simple/pin2frontend.cc:75:Pin2Frontend] Model specifies that there are 0 application arguments
+Pin2Frontend[frontend/simple/pin2frontend.cc:82:Pin2Frontend] Interception and instrumentation of multi-level memory and malloc/free calls is DISABLED.
+Pin2Frontend[frontend/simple/pin2frontend.cc:90:Pin2Frontend] Tracking the stack and dumping on malloc calls is DISABLED.
+Pin2Frontend[frontend/simple/pin2frontend.cc:95:Pin2Frontend] Malloc map file is DISABLED
+Pin2Frontend[frontend/simple/pin2frontend.cc:104:Pin2Frontend] Base pipe name: /sst_shmem_57429-15-1714636915
+Pin2Frontend[frontend/simple/pin2frontend.cc:128:Pin2Frontend] Processing application arguments...
+Pin2Frontend[frontend/simple/pin2frontend.cc:258:Pin2Frontend] Completed processing application arguments.
+Pin2Frontend[frontend/simple/pin2frontend.cc:263:Pin2Frontend] Completed initialization of the Ariel CPU.
+ArielComponent[arielcpu.cc:170:ArielCPU] Registering ArielCPU clock at 2GHz
+ArielComponent[arielcpu.cc:174:ArielCPU] Clocks registered.
+ArielComponent[arielcpu.cc:176:ArielCPU] Creating core to cache links...
+ArielComponent[arielcpu.cc:178:ArielCPU] Creating processor cores and cache links...
+ArielComponent[arielcpu.cc:180:ArielCPU] Configuring cores and cache links...
+ArielComponent[arielcpu.cc:239:ArielCPU] Completed initialization of the Ariel CPU.
 Initialized with 2 cores
 Before initialization 
 Assigning the PTW correctly
@@ -77,79 +79,62 @@ node1_dc, Warning: getting region parameters (addr_range_start/end, interleave_s
 ExtMemDc, Warning: getting region parameters (addr_range_start/end, interleave_step/size) from link subcomponent. In the future this will not be supported and region parameters should be declared in the directory's parameters instead.
 The value of tRCD is 300
 After initialization 
---------------------------------------------------------------------------
-An MPI process has executed an operation involving a call to the
-"fork()" system call to create a child process.  Open MPI is currently
-operating in a condition that could result in memory corruption or
-other system errors; your MPI job may hang, crash, or produce silent
-data corruption.  The use of fork() (or system() or other calls that
-create child processes) is strongly discouraged.  
-
-The process that invoked fork was:
-
-  Local host:          euser1 (PID 124704)
-  MPI_COMM_WORLD rank: 0
-
-If you are *absolutely sure* that your application will successfully
-and correctly survive a call to fork(), you may disable this warning
-by setting the mpi_warn_on_fork MCA parameter to 0.
---------------------------------------------------------------------------
-ArielComponent[arielcpu.cc:449:init] Launching PIN...
-ArielComponent[arielcpu.cc:508:forkPINChild] Executing PIN command: /home/vreddy/local/pin-2.14-71313-gcc.4.4.7-linux/pin.sh -follow_execv -ifeellucky -t /home/vreddy/repository/SSTELEMENTS/libexec/fesimple.so -w 0 -E 1 -p /sst_shmem_124704-1-1681692777 -v 1 -t 0 -i 1000000000 -c 2 -s 0 -m 0 -k 0 -u  -d 0 -- ./app/opal_test
-SSTARIEL: Loading Ariel Tool to connect to SST on pipe: /sst_shmem_124704-1-1681692777 max instruction count: 1000000000 max core count: 2
+SSTARIEL: Loading Ariel Tool to connect to SST on pipe: /sst_shmem_57429-1-1681692777 max core count: 2
 SSTARIEL: Function profiling is disabled.
-SSTARIEL: Loading Ariel Tool to connect to SST on pipe: /sst_shmem_124704-15-1714636915 max instruction count: 1000000000 max core count: 2
+SSTARIEL: Loading Ariel Tool to connect to SST on pipe: /sst_shmem_57429-15-1714636915 max core count: 2
 SSTARIEL: Function profiling is disabled.
-ArielComponent[arielcpu.cc:454:init] Returned from launching PIN.  Waiting for child to attach.
-ArielComponent[arielcpu.cc:457:init] Child has attached!
-ArielComponent[arielcpu.cc:449:init] Launching PIN...
-ArielComponent[arielcpu.cc:508:forkPINChild] Executing PIN command: /home/vreddy/local/pin-2.14-71313-gcc.4.4.7-linux/pin.sh -follow_execv -ifeellucky -t /home/vreddy/repository/SSTELEMENTS/libexec/fesimple.so -w 0 -E 1 -p /sst_shmem_124704-15-1714636915 -v 1 -t 0 -i 1000000000 -c 2 -s 0 -m 0 -k 0 -u  -d 0 -- ./app/opal_test
-ArielComponent[arielcpu.cc:454:init] Returned from launching PIN.  Waiting for child to attach.
-ArielComponent[arielcpu.cc:457:init] Child has attached!
-ArielComponent[arielcpu.cc:470:finish] Ariel Processor Information:
-ArielComponent[arielcpu.cc:471:finish] Completed at: 737968 nanoseconds.
-ArielComponent[arielcpu.cc:472:finish] Ariel Component Statistics (By Core)
+Pin2Frontend[frontend/simple/pin2frontend.cc:270:init] Launching PIN...
+Pin2Frontend[frontend/simple/pin2frontend.cc:326:forkPINChild] Executing PIN command: /home/vamsee/SST_PORTED/pin-2.14-71313-gcc.4.4.7-linux/pin.sh -follow_execv -ifeellucky -t /home/vamsee/forked/BUILD_ELEMENTS/libexec/fesimple.so -w 0 -E 1 -p /sst_shmem_57429-1-1681692777 -v 1 -t 0 -c 2 -s 0 -m 0 -k 0 -d 0 -- ./app/opal_test
+Pin2Frontend[frontend/simple/pin2frontend.cc:275:init] Returned from launching PIN.  Waiting for child to attach.
+Pin2Frontend[frontend/simple/pin2frontend.cc:278:init] Child has attached!
+Pin2Frontend[frontend/simple/pin2frontend.cc:270:init] Launching PIN...
+Pin2Frontend[frontend/simple/pin2frontend.cc:326:forkPINChild] Executing PIN command: /home/vamsee/SST_PORTED/pin-2.14-71313-gcc.4.4.7-linux/pin.sh -follow_execv -ifeellucky -t /home/vamsee/forked/BUILD_ELEMENTS/libexec/fesimple.so -w 0 -E 1 -p /sst_shmem_57429-15-1714636915 -v 1 -t 0 -c 2 -s 0 -m 0 -k 0 -d 0 -- ./app/opal_test
+Pin2Frontend[frontend/simple/pin2frontend.cc:275:init] Returned from launching PIN.  Waiting for child to attach.
+Pin2Frontend[frontend/simple/pin2frontend.cc:278:init] Child has attached!
+ArielComponent[arielcpu.cc:257:finish] Ariel Processor Information:
+ArielComponent[arielcpu.cc:258:finish] Completed at: 657421 nanoseconds.
+ArielComponent[arielcpu.cc:259:finish] Ariel Component Statistics (By Core)
 
 Ariel Memory Management Statistics:
 ---------------------------------------------------------------------
 Page Table Sizes:
-- Map entries         67
+- Map entries         37
 Page Table Coverages:
-- Bytes               274432
-ArielComponent[arielcpu.cc:470:finish] Ariel Processor Information:
-ArielComponent[arielcpu.cc:471:finish] Completed at: 737968 nanoseconds.
-ArielComponent[arielcpu.cc:472:finish] Ariel Component Statistics (By Core)
+- Bytes               151552
+ArielComponent[arielcpu.cc:257:finish] Ariel Processor Information:
+ArielComponent[arielcpu.cc:258:finish] Completed at: 657421 nanoseconds.
+ArielComponent[arielcpu.cc:259:finish] Ariel Component Statistics (By Core)
 
 Ariel Memory Management Statistics:
 ---------------------------------------------------------------------
 Page Table Sizes:
-- Map entries         67
+- Map entries         37
 Page Table Coverages:
-- Bytes               274432
- opal.local_mem_usage.0 : Accumulator : Sum.u64 = 44; SumSQ.u64 = 44; Count.u64 = 44; Min.u64 = 1; Max.u64 = 1; 
- opal.shared_mem_usage.0 : Accumulator : Sum.u64 = 44; SumSQ.u64 = 44; Count.u64 = 44; Min.u64 = 1; Max.u64 = 1; 
- opal.local_mem_usage.1 : Accumulator : Sum.u64 = 45; SumSQ.u64 = 45; Count.u64 = 45; Min.u64 = 1; Max.u64 = 1; 
- opal.shared_mem_usage.1 : Accumulator : Sum.u64 = 44; SumSQ.u64 = 44; Count.u64 = 44; Min.u64 = 1; Max.u64 = 1; 
- node0_cpu.read_requests.0 : Accumulator : Sum.u64 = 3091; SumSQ.u64 = 3091; Count.u64 = 3091; Min.u64 = 1; Max.u64 = 1; 
- node0_cpu.write_requests.0 : Accumulator : Sum.u64 = 1401; SumSQ.u64 = 1401; Count.u64 = 1401; Min.u64 = 1; Max.u64 = 1; 
- node0_cpu.read_request_sizes.0 : Accumulator : Sum.u64 = 17521; SumSQ.u64 = 124051; Count.u64 = 3091; Min.u64 = 1; Max.u64 = 16; 
- node0_cpu.write_request_sizes.0 : Accumulator : Sum.u64 = 10136; SumSQ.u64 = 79350; Count.u64 = 1401; Min.u64 = 1; Max.u64 = 16; 
- node0_cpu.split_read_requests.0 : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; Min.u64 = 1; Max.u64 = 1; 
- node0_cpu.split_write_requests.0 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+- Bytes               151552
+ opal.local_mem_usage.0 : Accumulator : Sum.u64 = 28; SumSQ.u64 = 28; Count.u64 = 28; Min.u64 = 1; Max.u64 = 1; 
+ opal.shared_mem_usage.0 : Accumulator : Sum.u64 = 27; SumSQ.u64 = 27; Count.u64 = 27; Min.u64 = 1; Max.u64 = 1; 
+ opal.local_mem_usage.1 : Accumulator : Sum.u64 = 27; SumSQ.u64 = 27; Count.u64 = 27; Min.u64 = 1; Max.u64 = 1; 
+ opal.shared_mem_usage.1 : Accumulator : Sum.u64 = 26; SumSQ.u64 = 26; Count.u64 = 26; Min.u64 = 1; Max.u64 = 1; 
+ node0_cpu.read_requests.0 : Accumulator : Sum.u64 = 2865; SumSQ.u64 = 2865; Count.u64 = 2865; Min.u64 = 1; Max.u64 = 1; 
+ node0_cpu.write_requests.0 : Accumulator : Sum.u64 = 1338; SumSQ.u64 = 1338; Count.u64 = 1338; Min.u64 = 1; Max.u64 = 1; 
+ node0_cpu.read_request_sizes.0 : Accumulator : Sum.u64 = 16664; SumSQ.u64 = 124680; Count.u64 = 2865; Min.u64 = 1; Max.u64 = 64; 
+ node0_cpu.write_request_sizes.0 : Accumulator : Sum.u64 = 9670; SumSQ.u64 = 83592; Count.u64 = 1338; Min.u64 = 1; Max.u64 = 64; 
+ node0_cpu.split_read_requests.0 : Accumulator : Sum.u64 = 2; SumSQ.u64 = 2; Count.u64 = 2; Min.u64 = 1; Max.u64 = 1; 
+ node0_cpu.split_write_requests.0 : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; Min.u64 = 1; Max.u64 = 1; 
  node0_cpu.flush_requests.0 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  node0_cpu.fence_requests.0 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- node0_cpu.no_ops.0 : Accumulator : Sum.u64 = 5509; SumSQ.u64 = 5509; Count.u64 = 5509; Min.u64 = 1; Max.u64 = 1; 
+ node0_cpu.no_ops.0 : Accumulator : Sum.u64 = 5798; SumSQ.u64 = 5798; Count.u64 = 5798; Min.u64 = 1; Max.u64 = 1; 
  node0_cpu.instruction_count.0 : Accumulator : Sum.u64 = 10001; SumSQ.u64 = 10001; Count.u64 = 10001; Min.u64 = 1; Max.u64 = 1; 
- node0_cpu.cycles.0 : Accumulator : Sum.u64 = 72987; SumSQ.u64 = 72987; Count.u64 = 72987; Min.u64 = 1; Max.u64 = 1; 
- node0_cpu.active_cycles.0 : Accumulator : Sum.u64 = 16263; SumSQ.u64 = 16263; Count.u64 = 16263; Min.u64 = 1; Max.u64 = 1; 
+ node0_cpu.cycles.0 : Accumulator : Sum.u64 = 60312; SumSQ.u64 = 60312; Count.u64 = 60312; Min.u64 = 1; Max.u64 = 1; 
+ node0_cpu.active_cycles.0 : Accumulator : Sum.u64 = 13432; SumSQ.u64 = 13432; Count.u64 = 13432; Min.u64 = 1; Max.u64 = 1; 
  node0_cpu.fp_sp_ins.0 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- node0_cpu.fp_dp_ins.0 : Accumulator : Sum.u64 = 46; SumSQ.u64 = 46; Count.u64 = 46; Min.u64 = 1; Max.u64 = 1; 
+ node0_cpu.fp_dp_ins.0 : Accumulator : Sum.u64 = 127; SumSQ.u64 = 127; Count.u64 = 127; Min.u64 = 1; Max.u64 = 1; 
  node0_cpu.fp_sp_simd_ins.0 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  node0_cpu.fp_dp_simd_ins.0 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  node0_cpu.fp_sp_scalar_ins.0 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- node0_cpu.fp_dp_scalar_ins.0 : Accumulator : Sum.u64 = 46; SumSQ.u64 = 46; Count.u64 = 46; Min.u64 = 1; Max.u64 = 1; 
+ node0_cpu.fp_dp_scalar_ins.0 : Accumulator : Sum.u64 = 127; SumSQ.u64 = 127; Count.u64 = 127; Min.u64 = 1; Max.u64 = 1; 
  node0_cpu.fp_sp_ops.0 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- node0_cpu.fp_dp_ops.0 : Accumulator : Sum.u64 = 46; SumSQ.u64 = 46; Count.u64 = 46; Min.u64 = 1; Max.u64 = 1; 
+ node0_cpu.fp_dp_ops.0 : Accumulator : Sum.u64 = 127; SumSQ.u64 = 127; Count.u64 = 127; Min.u64 = 1; Max.u64 = 1; 
  node0_cpu.read_requests.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  node0_cpu.write_requests.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  node0_cpu.read_request_sizes.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -160,7 +145,7 @@ Page Table Coverages:
  node0_cpu.fence_requests.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  node0_cpu.no_ops.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  node0_cpu.instruction_count.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- node0_cpu.cycles.1 : Accumulator : Sum.u64 = 72986; SumSQ.u64 = 72986; Count.u64 = 72986; Min.u64 = 1; Max.u64 = 1; 
+ node0_cpu.cycles.1 : Accumulator : Sum.u64 = 60311; SumSQ.u64 = 60311; Count.u64 = 60311; Min.u64 = 1; Max.u64 = 1; 
  node0_cpu.active_cycles.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  node0_cpu.fp_sp_ins.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  node0_cpu.fp_dp_ins.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -170,14 +155,14 @@ Page Table Coverages:
  node0_cpu.fp_dp_scalar_ins.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  node0_cpu.fp_sp_ops.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  node0_cpu.fp_dp_ops.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- node0_mmu.tlb_hits.Core0_PTWC : Accumulator : Sum.u64 = 3; SumSQ.u64 = 3; Count.u64 = 3; Min.u64 = 1; Max.u64 = 1; 
- node0_mmu.tlb_misses.Core0_PTWC : Accumulator : Sum.u64 = 117; SumSQ.u64 = 117; Count.u64 = 117; Min.u64 = 1; Max.u64 = 1; 
- node0_mmu.total_waiting.0 : Accumulator : Sum.u64 = 80304; SumSQ.u64 = 42426568; Count.u64 = 4493; Min.u64 = 1; Max.u64 = 1470; 
+ node0_mmu.tlb_hits.Core0_PTWC : Accumulator : Sum.u64 = 7; SumSQ.u64 = 7; Count.u64 = 7; Min.u64 = 1; Max.u64 = 1; 
+ node0_mmu.tlb_misses.Core0_PTWC : Accumulator : Sum.u64 = 40; SumSQ.u64 = 40; Count.u64 = 40; Min.u64 = 1; Max.u64 = 1; 
+ node0_mmu.total_waiting.0 : Accumulator : Sum.u64 = 66211; SumSQ.u64 = 52679535; Count.u64 = 4206; Min.u64 = 1; Max.u64 = 2224; 
  node0_mmu.tlb_hits.Core0_L2 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- node0_mmu.tlb_misses.Core0_L2 : Accumulator : Sum.u64 = 120; SumSQ.u64 = 120; Count.u64 = 120; Min.u64 = 1; Max.u64 = 1; 
+ node0_mmu.tlb_misses.Core0_L2 : Accumulator : Sum.u64 = 47; SumSQ.u64 = 47; Count.u64 = 47; Min.u64 = 1; Max.u64 = 1; 
  node0_mmu.tlb_shootdown.Core0_L2 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- node0_mmu.tlb_hits.Core0_L1 : Accumulator : Sum.u64 = 4277; SumSQ.u64 = 4277; Count.u64 = 4277; Min.u64 = 1; Max.u64 = 1; 
- node0_mmu.tlb_misses.Core0_L1 : Accumulator : Sum.u64 = 216; SumSQ.u64 = 216; Count.u64 = 216; Min.u64 = 1; Max.u64 = 1; 
+ node0_mmu.tlb_hits.Core0_L1 : Accumulator : Sum.u64 = 4107; SumSQ.u64 = 4107; Count.u64 = 4107; Min.u64 = 1; Max.u64 = 1; 
+ node0_mmu.tlb_misses.Core0_L1 : Accumulator : Sum.u64 = 99; SumSQ.u64 = 99; Count.u64 = 99; Min.u64 = 1; Max.u64 = 1; 
  node0_mmu.tlb_shootdown.Core0_L1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  node0_mmu.tlb_hits.Core1_PTWC : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  node0_mmu.tlb_misses.Core1_PTWC : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -188,26 +173,26 @@ Page Table Coverages:
  node0_mmu.tlb_hits.Core1_L1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  node0_mmu.tlb_misses.Core1_L1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  node0_mmu.tlb_shootdown.Core1_L1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- node1_cpu.read_requests.0 : Accumulator : Sum.u64 = 3091; SumSQ.u64 = 3091; Count.u64 = 3091; Min.u64 = 1; Max.u64 = 1; 
- node1_cpu.write_requests.0 : Accumulator : Sum.u64 = 1400; SumSQ.u64 = 1400; Count.u64 = 1400; Min.u64 = 1; Max.u64 = 1; 
- node1_cpu.read_request_sizes.0 : Accumulator : Sum.u64 = 17521; SumSQ.u64 = 124051; Count.u64 = 3091; Min.u64 = 1; Max.u64 = 16; 
- node1_cpu.write_request_sizes.0 : Accumulator : Sum.u64 = 10128; SumSQ.u64 = 79286; Count.u64 = 1400; Min.u64 = 1; Max.u64 = 16; 
- node1_cpu.split_read_requests.0 : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; Min.u64 = 1; Max.u64 = 1; 
- node1_cpu.split_write_requests.0 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ node1_cpu.read_requests.0 : Accumulator : Sum.u64 = 2865; SumSQ.u64 = 2865; Count.u64 = 2865; Min.u64 = 1; Max.u64 = 1; 
+ node1_cpu.write_requests.0 : Accumulator : Sum.u64 = 1338; SumSQ.u64 = 1338; Count.u64 = 1338; Min.u64 = 1; Max.u64 = 1; 
+ node1_cpu.read_request_sizes.0 : Accumulator : Sum.u64 = 16664; SumSQ.u64 = 124680; Count.u64 = 2865; Min.u64 = 1; Max.u64 = 64; 
+ node1_cpu.write_request_sizes.0 : Accumulator : Sum.u64 = 9670; SumSQ.u64 = 83592; Count.u64 = 1338; Min.u64 = 1; Max.u64 = 64; 
+ node1_cpu.split_read_requests.0 : Accumulator : Sum.u64 = 2; SumSQ.u64 = 2; Count.u64 = 2; Min.u64 = 1; Max.u64 = 1; 
+ node1_cpu.split_write_requests.0 : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; Min.u64 = 1; Max.u64 = 1; 
  node1_cpu.flush_requests.0 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  node1_cpu.fence_requests.0 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- node1_cpu.no_ops.0 : Accumulator : Sum.u64 = 5509; SumSQ.u64 = 5509; Count.u64 = 5509; Min.u64 = 1; Max.u64 = 1; 
- node1_cpu.instruction_count.0 : Accumulator : Sum.u64 = 10000; SumSQ.u64 = 10000; Count.u64 = 10000; Min.u64 = 1; Max.u64 = 1; 
- node1_cpu.cycles.0 : Accumulator : Sum.u64 = 1475936; SumSQ.u64 = 1475936; Count.u64 = 1475936; Min.u64 = 1; Max.u64 = 1; 
- node1_cpu.active_cycles.0 : Accumulator : Sum.u64 = 16282; SumSQ.u64 = 16282; Count.u64 = 16282; Min.u64 = 1; Max.u64 = 1; 
+ node1_cpu.no_ops.0 : Accumulator : Sum.u64 = 5798; SumSQ.u64 = 5798; Count.u64 = 5798; Min.u64 = 1; Max.u64 = 1; 
+ node1_cpu.instruction_count.0 : Accumulator : Sum.u64 = 10001; SumSQ.u64 = 10001; Count.u64 = 10001; Min.u64 = 1; Max.u64 = 1; 
+ node1_cpu.cycles.0 : Accumulator : Sum.u64 = 1314843; SumSQ.u64 = 1314843; Count.u64 = 1314843; Min.u64 = 1; Max.u64 = 1; 
+ node1_cpu.active_cycles.0 : Accumulator : Sum.u64 = 12494; SumSQ.u64 = 12494; Count.u64 = 12494; Min.u64 = 1; Max.u64 = 1; 
  node1_cpu.fp_sp_ins.0 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- node1_cpu.fp_dp_ins.0 : Accumulator : Sum.u64 = 49; SumSQ.u64 = 49; Count.u64 = 49; Min.u64 = 1; Max.u64 = 1; 
+ node1_cpu.fp_dp_ins.0 : Accumulator : Sum.u64 = 122; SumSQ.u64 = 122; Count.u64 = 122; Min.u64 = 1; Max.u64 = 1; 
  node1_cpu.fp_sp_simd_ins.0 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  node1_cpu.fp_dp_simd_ins.0 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  node1_cpu.fp_sp_scalar_ins.0 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- node1_cpu.fp_dp_scalar_ins.0 : Accumulator : Sum.u64 = 49; SumSQ.u64 = 49; Count.u64 = 49; Min.u64 = 1; Max.u64 = 1; 
+ node1_cpu.fp_dp_scalar_ins.0 : Accumulator : Sum.u64 = 122; SumSQ.u64 = 122; Count.u64 = 122; Min.u64 = 1; Max.u64 = 1; 
  node1_cpu.fp_sp_ops.0 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- node1_cpu.fp_dp_ops.0 : Accumulator : Sum.u64 = 49; SumSQ.u64 = 49; Count.u64 = 49; Min.u64 = 1; Max.u64 = 1; 
+ node1_cpu.fp_dp_ops.0 : Accumulator : Sum.u64 = 122; SumSQ.u64 = 122; Count.u64 = 122; Min.u64 = 1; Max.u64 = 1; 
  node1_cpu.read_requests.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  node1_cpu.write_requests.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  node1_cpu.read_request_sizes.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -218,7 +203,7 @@ Page Table Coverages:
  node1_cpu.fence_requests.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  node1_cpu.no_ops.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  node1_cpu.instruction_count.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- node1_cpu.cycles.1 : Accumulator : Sum.u64 = 1475935; SumSQ.u64 = 1475935; Count.u64 = 1475935; Min.u64 = 1; Max.u64 = 1; 
+ node1_cpu.cycles.1 : Accumulator : Sum.u64 = 1314842; SumSQ.u64 = 1314842; Count.u64 = 1314842; Min.u64 = 1; Max.u64 = 1; 
  node1_cpu.active_cycles.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  node1_cpu.fp_sp_ins.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  node1_cpu.fp_dp_ins.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -228,14 +213,14 @@ Page Table Coverages:
  node1_cpu.fp_dp_scalar_ins.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  node1_cpu.fp_sp_ops.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  node1_cpu.fp_dp_ops.1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- node1_mmu.tlb_hits.Core0_PTWC : Accumulator : Sum.u64 = 5; SumSQ.u64 = 5; Count.u64 = 5; Min.u64 = 1; Max.u64 = 1; 
- node1_mmu.tlb_misses.Core0_PTWC : Accumulator : Sum.u64 = 119; SumSQ.u64 = 119; Count.u64 = 119; Min.u64 = 1; Max.u64 = 1; 
- node1_mmu.total_waiting.0 : Accumulator : Sum.u64 = 83430; SumSQ.u64 = 42712044; Count.u64 = 4491; Min.u64 = 1; Max.u64 = 1488; 
+ node1_mmu.tlb_hits.Core0_PTWC : Accumulator : Sum.u64 = 7; SumSQ.u64 = 7; Count.u64 = 7; Min.u64 = 1; Max.u64 = 1; 
+ node1_mmu.tlb_misses.Core0_PTWC : Accumulator : Sum.u64 = 45; SumSQ.u64 = 45; Count.u64 = 45; Min.u64 = 1; Max.u64 = 1; 
+ node1_mmu.total_waiting.0 : Accumulator : Sum.u64 = 57913; SumSQ.u64 = 42467155; Count.u64 = 4205; Min.u64 = 1; Max.u64 = 2087; 
  node1_mmu.tlb_hits.Core0_L2 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- node1_mmu.tlb_misses.Core0_L2 : Accumulator : Sum.u64 = 124; SumSQ.u64 = 124; Count.u64 = 124; Min.u64 = 1; Max.u64 = 1; 
+ node1_mmu.tlb_misses.Core0_L2 : Accumulator : Sum.u64 = 52; SumSQ.u64 = 52; Count.u64 = 52; Min.u64 = 1; Max.u64 = 1; 
  node1_mmu.tlb_shootdown.Core0_L2 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- node1_mmu.tlb_hits.Core0_L1 : Accumulator : Sum.u64 = 4266; SumSQ.u64 = 4266; Count.u64 = 4266; Min.u64 = 1; Max.u64 = 1; 
- node1_mmu.tlb_misses.Core0_L1 : Accumulator : Sum.u64 = 225; SumSQ.u64 = 225; Count.u64 = 225; Min.u64 = 1; Max.u64 = 1; 
+ node1_mmu.tlb_hits.Core0_L1 : Accumulator : Sum.u64 = 4111; SumSQ.u64 = 4111; Count.u64 = 4111; Min.u64 = 1; Max.u64 = 1; 
+ node1_mmu.tlb_misses.Core0_L1 : Accumulator : Sum.u64 = 94; SumSQ.u64 = 94; Count.u64 = 94; Min.u64 = 1; Max.u64 = 1; 
  node1_mmu.tlb_shootdown.Core0_L1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  node1_mmu.tlb_hits.Core1_PTWC : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  node1_mmu.tlb_misses.Core1_PTWC : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -246,4 +231,4 @@ Page Table Coverages:
  node1_mmu.tlb_hits.Core1_L1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  node1_mmu.tlb_misses.Core1_L1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  node1_mmu.tlb_shootdown.Core1_L1 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
-Simulation is complete, simulated time: 737.968 us
+Simulation is complete, simulated time: 657.422 us

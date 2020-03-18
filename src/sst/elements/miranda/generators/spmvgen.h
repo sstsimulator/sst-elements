@@ -30,9 +30,6 @@ namespace Miranda {
 class SPMVGenerator : public RequestGenerator {
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-	SPMVGenerator( Component* owner, Params& params ) : RequestGenerator(owner, params) { build(params); }
-#endif  // inserted by script
 	
         SPMVGenerator( ComponentId_t id, Params& params ) : RequestGenerator(id, params) { build(params); }
         
@@ -46,12 +43,14 @@ public:
 		elementWidth    = params.find<uint64_t>("element_width", 8);
 
 		uint64_t nextStartAddr = 0;
-
+                
+                // LHS vector has Nx elements of size elementWidth
 		lhsVecStartAddr = params.find<uint64_t>("lhs_start_addr", nextStartAddr);
 		nextStartAddr += matrixNx * elementWidth;
 
+                // RHS vector has Ny elements of size elementWidth
 		rhsVecStartAddr = params.find<uint64_t>("rhs_start_addr", nextStartAddr);
-		nextStartAddr += matrixNx * elementWidth;
+		nextStartAddr += matrixNy * elementWidth;
 
 		localRowStart   = params.find<uint64_t>("local_row_start", 0);
 		localRowEnd     = params.find<uint64_t>("local_row_end", matrixNy);
@@ -59,12 +58,15 @@ public:
 		ordinalWidth    = params.find<uint64_t>("ordinal_width", 8);
 		matrixNNZPerRow = params.find<uint64_t>("matrix_nnz_per_row", 4);
 
+                // Row-index vector has Ny+1 elements of size ordinalWidth
 		matrixRowIndicesStartAddr = params.find<uint64_t>("matrix_row_indices_start_addr", nextStartAddr);
 		nextStartAddr  += (ordinalWidth * (matrixNy + 1));
 
+                // Col-index vector has Ny * NNZ elements of size ordinalWidth
 		matrixColumnIndicesStartAddr = params.find<uint64_t>("matrix_col_indices_start_addr", nextStartAddr);
 		nextStartAddr  += (matrixNy * ordinalWidth * matrixNNZPerRow);
 
+                // Matrix vector has Ny * NNZ elements of size elementWidth
 		matrixElementsStartAddr = params.find<uint64_t>("matrix_element_start_addr", nextStartAddr);
 
 		iterations = params.find<uint64_t>("iterations", 1);
@@ -85,34 +87,37 @@ public:
 			q->push_back(readEnd);
 
                         MemoryOpRequest* readResultCurrentValue = new MemoryOpRequest(rhsVecStartAddr +
-				(row * matrixNNZPerRow), elementWidth, WRITE);
+				(row * elementWidth), elementWidth, WRITE);
                         MemoryOpRequest* writeResult = new MemoryOpRequest(rhsVecStartAddr +
-				(row * matrixNNZPerRow), elementWidth, WRITE);
+				(row * elementWidth), elementWidth, WRITE);
 
 			writeResult->addDependency(readResultCurrentValue->getRequestID());
 
 			q->push_back(readResultCurrentValue);
 
-			for(uint64_t col = row; col < (row + matrixNNZPerRow); col++) {
-				if(col >= matrixNx) {
-					break;
-				}
+                        // Putting non-zeros on the diagonal 
+			for(uint64_t j = 0; j < matrixNNZPerRow; j++) {
+                                uint64_t col = j + row;
+                                if (col >= matrixNx) 
+                                    break;
 
 				out->verbose(CALL_INFO, 4, 0, "Generating access for row %" PRIu64 ", column: %" PRIu64 "\n",
 					row, col);
 
                                 MemoryOpRequest* readMatElement = new MemoryOpRequest(matrixElementsStartAddr +
-                                        (row * matrixNNZPerRow + col) * elementWidth, elementWidth, READ);
+                                        (row * matrixNNZPerRow + j) * elementWidth, elementWidth, READ);
                                 MemoryOpRequest* readCol = new MemoryOpRequest(matrixColumnIndicesStartAddr +
-					(row * matrixNNZPerRow + col) * ordinalWidth, ordinalWidth, READ);
+					(row * matrixNNZPerRow + j) * ordinalWidth, ordinalWidth, READ);
                                 MemoryOpRequest* readLHSElem = new MemoryOpRequest(lhsVecStartAddr +
-					(row * matrixNNZPerRow + col) * elementWidth, elementWidth, READ);
+					col * elementWidth, elementWidth, READ);
 
 				readCol->addDependency(readStart->getRequestID());
 				readCol->addDependency(readEnd->getRequestID());
-
+                                readMatElement->addDependency(readStart->getRequestID());
+                                readMatElement->addDependency(readEnd->getRequestID());
 				readLHSElem->addDependency(readCol->getRequestID());
-				writeResult->addDependency(readLHSElem->getRequestID());
+                                
+                                writeResult->addDependency(readLHSElem->getRequestID());
 				writeResult->addDependency(readMatElement->getRequestID());
 
 				q->push_back(readCol);

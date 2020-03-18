@@ -88,9 +88,6 @@ public:
 
     enum NetType { REQ, ACK, FWD, DATA };
     /* Constructor */
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    MemNICFour(Component * comp, Params &params);
-#endif  // inserted by script
     MemNICFour(ComponentId_t id, Params &params);
 private:
     void build(Params& params);

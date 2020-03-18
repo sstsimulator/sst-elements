@@ -55,9 +55,6 @@ class ArielMemoryManagerMalloc : public ArielMemoryManagerCache {
 
         /* ArielMemoryManagerMalloc */
         ArielMemoryManagerMalloc(ComponentId_t id, Params& params);
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-        ArielMemoryManagerMalloc(Component* comp, Params& params) : ArielMemoryManagerCache(comp, params) { } // Legacy
-#endif  // inserted by script
         ~ArielMemoryManagerMalloc();
 
         void setDefaultPool(uint32_t pool);

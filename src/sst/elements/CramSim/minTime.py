@@ -71,7 +71,7 @@ for line in inFile:
 
     if bankId not in seenBankIds:
         if len(grep) < 5:
-            print "grep isn't long enough to get bankId stuff!!\n", bankId, bankId2Chan[bankId], line
+            print("grep isn't long enough to get bankId stuff!!\n", bankId, bankId2Chan[bankId], line)
             exit(-1)
 
         seenBankIds[bankId] = 1
@@ -95,7 +95,7 @@ for line in inFile:
             
             
     if bankId >= numBankIds:
-        print "Increase numBankIds!",bankId,"detected, max is",numBankIds-1
+        print("Increase numBankIds!",bankId,"detected, max is",numBankIds-1)
         exit(-1)
 
     for calCmd in cmdList:
@@ -145,16 +145,16 @@ for struct in structList:
         for cmd2 in cmdList:
             sys.stdout.write('%6d' % minDict[struct][cmd1][cmd2])
         sys.stdout.write("\n")
-    print
+    print()
 
 for struct in structList:
     print(struct)
 
     for cmd1 in cmdList:
         for cmd2 in cmdList:
-            print cmd2,"after",cmd1, minDict[struct][cmd1][cmd2]
-            print minLineDict[struct][cmd1][cmd2][0]
-            print minLineDict[struct][cmd1][cmd2][1]
-        print
+            print(cmd2,"after",cmd1, minDict[struct][cmd1][cmd2])
+            print(minLineDict[struct][cmd1][cmd2][0])
+            print(minLineDict[struct][cmd1][cmd2][1])
+        print()
             
-    print
+    print()

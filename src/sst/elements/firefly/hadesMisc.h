@@ -37,9 +37,6 @@ class HadesMisc : public Misc::Interface
         SST::Hermes::Interface
     )
 
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    HadesMisc(Component* owner, Params&) : Interface(owner), m_os(NULL) {}
-#endif  // inserted by script
     HadesMisc(ComponentId_t id, Params&) : Interface(id), m_os(NULL) {}
     ~HadesMisc() {}
 

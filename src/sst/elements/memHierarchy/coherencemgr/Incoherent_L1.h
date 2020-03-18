@@ -124,9 +124,6 @@ public:
 
 /* Begin class definition */    
     /** Constructor for IncoherentL1 */
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    IncoherentL1(Component* comp, Params& params) : CoherenceController(comp, params) { }
-#endif  // inserted by script
     IncoherentL1(ComponentId_t id, Params& params, Params& ownerParams, bool prefetch) : CoherenceController(id, params, ownerParams, prefetch) {
         params.insert(ownerParams);
         debug->debug(_INFO_,"--------------------------- Initializing [L1Controller] ... \n\n");

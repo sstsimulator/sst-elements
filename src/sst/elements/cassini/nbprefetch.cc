@@ -25,12 +25,6 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 using namespace SST::Cassini;
 
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-NextBlockPrefetcher::NextBlockPrefetcher(Component* comp, Params& params) : CacheListener(comp, params) {
-    Output out("", 1, 0, Output::STDOUT);
-    out.fatal(CALL_INFO, -1, "%s, Error: SubComponent does not support legacy loadSubComponent call; use new calls (loadUserSubComponent or loadAnonymousSubComponent)\n", getName().c_str());
-}
-#endif  // inserted by script
 
 NextBlockPrefetcher::NextBlockPrefetcher(ComponentId_t id, Params& params) : CacheListener(id, params) {
     Simulation::getSimulation()->requireEvent("memHierarchy.MemEvent");

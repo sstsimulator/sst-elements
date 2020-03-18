@@ -1719,7 +1719,11 @@ bool MESISharNoninclusive::handleFetchInvX(MemEvent * event, bool inMSHR) {
             if (!inMSHR || !mshr_->getProfiled(addr)) {
                 stat_eventState[(int)Command::FetchInvX][state]->addData(1);
             }
-            delete event;
+            if (inMSHR) {
+                cleanUpAfterRequest(event, inMSHR);
+            } else {
+                delete event;
+            }
             break;
         case E_B:
         case M_B:
@@ -2037,6 +2041,8 @@ bool MESISharNoninclusive::handleFetchResp(MemEvent * event, bool inMSHR) {
             tag->removeSharer(event->getSrc());
             if (done) {
                 tag->setState(SM);
+                if (!mshr_->getInProgress(addr))
+                    retry(addr);
             }
             break;
         case E_InvX:
@@ -2196,8 +2202,9 @@ bool MESISharNoninclusive::handleNULLCMD(MemEvent* event, bool inMSHR) {
     // Tag/directory array eviction
     if (dirEvict) {
         DirectoryLine * tag = dirArray_->lookup(oldAddr, false);
-        if (is_debug_event(event))
-            eventDI.prefill(event->getID(), Command::NULLCMD, false, tag->getAddr(), evictDI.oldst);
+        if (is_debug_event(event)) {
+            eventDI.prefill(event->getID(), Command::NULLCMD, false, oldAddr, evictDI.oldst);
+        }
 
         evicted = handleDirEviction(newAddr, tag);
         if (evicted) {

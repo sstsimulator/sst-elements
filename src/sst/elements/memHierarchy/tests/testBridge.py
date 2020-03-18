@@ -95,8 +95,8 @@ def buildMem(num, network):
         "entry_cache_size": 256*1024*1024, #Entry cache size of mem/blocksize
         "clock": "1GHz",
         "network_bw": netBW,
-        "addr_range_start" : num * (mem_size / num_mem),
-        "addr_range_end" : (num+1) * (mem_size / num_mem) -1,
+        "addr_range_start" : num * (mem_size // num_mem),
+        "addr_range_end" : (num+1) * (mem_size // num_mem) -1,
         })
 
     memLink = sst.Link("MemDir_%d"%num)

@@ -28,9 +28,6 @@ namespace Miranda {
 class InOrderSTREAMBenchGenerator : public RequestGenerator {
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-	InOrderSTREAMBenchGenerator( Component* owner, Params& params ) : RequestGenerator(owner, params) { build(params); }
-#endif  // inserted by script
         InOrderSTREAMBenchGenerator( ComponentId_t id, Params& params ) : RequestGenerator(id, params) { build(params); }
 
 	void build(Params& params) {

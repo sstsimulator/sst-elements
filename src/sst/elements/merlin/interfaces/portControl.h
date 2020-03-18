@@ -255,9 +255,6 @@ public:
     }
     
     // time_base is a frequency which represents the bandwidth of the link in flits/second.
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    PortControl(Component* parent, Params& params);
-#endif  // inserted by script
     PortControl(ComponentId_t cid, Params& params, Router* rif, int rtr_id, int port_number, Topology *topo); 
 
     void initVCs(int vns, int* vcs_per_vn, internal_router_event** vc_heads, int* xbar_in_credits, int* output_queue_lengths);

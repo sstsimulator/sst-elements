@@ -22,9 +22,6 @@
 using namespace SST;
 using namespace SST::MemHierarchy;
 
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-HybridSimMemory::HybridSimMemory(Component *comp, Params &params) : SimpleMemBackend(comp, params){ build(params); }
-#endif  // inserted by script
 HybridSimMemory::HybridSimMemory(ComponentId_t id, Params &params) : SimpleMemBackend(id, params){ build(params); }
 
 void HybridSimMemory::build(Params& params) {

@@ -32,11 +32,6 @@ public:
         build(params);
     }
 
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    CopyGenerator( Component* owner, Params& params ) : RequestGenerator(owner, params) {
-        build(params);
-    }
-#endif  // inserted by script
 
     void build(Params& params) {
         const uint32_t verbose = params.find<uint32_t>("verbose", 0);

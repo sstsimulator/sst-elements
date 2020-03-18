@@ -75,7 +75,9 @@ libmerlin_la_SOURCES = \
 	arbitration/single_arb_rr.h \
 	pymodule.h \
 	pymodule.c \
-	pymerlin.py
+	pymerlin.py \
+	pymerlin-base.py \
+	topology/pymerlin-topology.py
 
 EXTRA_DIST = \
 	tests/dragon_128_test.py \
@@ -92,7 +94,10 @@ nobase_sst_HEADERS = \
 
 libmerlin_la_LDFLAGS = -module -avoid-version $(PYTHON_LDFLAGS)
 
-BUILT_SOURCES = pymerlin.inc
+BUILT_SOURCES = \
+	pymerlin.inc \
+	pymerlin-base.inc \
+	topology/pymerlin-topology.inc
 
 install-exec-hook:
 	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     merlin=$(abs_srcdir)

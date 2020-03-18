@@ -69,12 +69,18 @@ class EmberMotifLogRecord {
 
 class EmberMotifLog {
 	public:
-		EmberMotifLog(const std::string logPath, const uint32_t jobID);
+		EmberMotifLog(const std::string logPathPrefix, const uint32_t jobID);
 		~EmberMotifLog();
-		void logMotifStart(const std::string name, const int motifNum);
+		void logMotifStart(int motifNum);
+        void logMotifEnd(const std::string& name, const int motifNum);
+    void setRank(int r) { rank = r; }
 	protected:
 		EmberMotifLogRecord* logRecord;
-
+    private:
+        int jobID;
+        int rank;
+        std::string start_time;
+        int currentMotifNum;
 };
 
 }

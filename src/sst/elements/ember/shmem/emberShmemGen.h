@@ -108,9 +108,6 @@ class EmberShmemGenerator : public EmberGenerator {
 
 public:
 
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-	EmberShmemGenerator( Component* owner, Params& params, std::string name ="") : EmberGenerator(owner,params,name) {}
-#endif  // inserted by script
 	EmberShmemGenerator( ComponentId_t, Params& params, std::string name ="");
 	~EmberShmemGenerator() {}
     virtual void completed( const SST::Output*, uint64_t time ) {}

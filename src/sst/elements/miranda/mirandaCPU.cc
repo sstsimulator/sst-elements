@@ -23,6 +23,8 @@
 #include "mirandaCPU.h"
 #include "mirandaEvent.h"
 
+std::atomic<uint64_t> SST::Miranda::GeneratorRequest::nextGeneratorRequestID(0);
+
 using namespace SST::Miranda;
 
 RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :

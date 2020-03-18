@@ -55,6 +55,7 @@
 #define __STDC_FORMAT_MACROS
 #endif
 
+#include <sst/core/interprocess/shmchild.h>
 #include "ariel_shmem.h"
 #include "ariel_inst_class.h"
 
@@ -63,34 +64,23 @@
 
 using namespace SST::ArielComponent;
 
-KNOB<UINT32> PerformWriteTrace(KNOB_MODE_WRITEONCE, "pintool",
-    "w", "0", "Perform write tracing (i.e copy values directly into SST memory operations) (0 = disabled, 1 = enabled)");
-KNOB<UINT32> TrapFunctionProfile(KNOB_MODE_WRITEONCE, "pintool",
-    "t", "0", "Function profiling level (0 = disabled, 1 = enabled)");
-KNOB<string> SSTNamedPipe(KNOB_MODE_WRITEONCE, "pintool",
-    "p", "", "Named pipe to connect to SST simulator");
-KNOB<UINT64> MaxInstructions(KNOB_MODE_WRITEONCE, "pintool",
-    "i", "10000000000", "Maximum number of instructions to run");
-KNOB<UINT32> SSTVerbosity(KNOB_MODE_WRITEONCE, "pintool",
-    "v", "0", "SST verbosity level");
-KNOB<UINT32> MaxCoreCount(KNOB_MODE_WRITEONCE, "pintool",
-    "c", "1", "Maximum core count to use for data pipes.");
-KNOB<UINT32> StartupMode(KNOB_MODE_WRITEONCE, "pintool",
-    "s", "1", "Mode for configuring profile behavior, 1 = start enabled, 0 = start disabled, 2 = attempt auto detect");
-KNOB<UINT32> InterceptMemAllocations(KNOB_MODE_WRITEONCE, "pintool",
-    "m", "1", "Should intercept multi-level memory allocations, mallocs, and frees, 1 = start enabled, 0 = start disabled");
-KNOB<string> UseMallocMap(KNOB_MODE_WRITEONCE, "pintool",
-    "u", "", "Should intercept ariel_malloc_flag() and interpret using a malloc map: specify filename or leave blank for disabled");
-KNOB<UINT32> KeepMallocStackTrace(KNOB_MODE_WRITEONCE, "pintool",
-    "k", "1", "Should keep shadow stack and dump on malloc calls. 1 = enabled, 0 = disabled");
-KNOB<UINT32> DefaultMemoryPool(KNOB_MODE_WRITEONCE, "pintool",
-    "d", "0", "Default SST Memory Pool");
-KNOB<string> SSTNamedPipe2(KNOB_MODE_WRITEONCE, "pintool",
-    "g", "", "Named pipe to connect to SST simulator");
-KNOB<string> SSTNamedPipe3(KNOB_MODE_WRITEONCE, "pintool",
-    "x", "", "Named pipe to connect to SST simulator");
-KNOB<UINT32> InstrumentInstructions(KNOB_MODE_WRITEONCE, "pintool",
-    "E", "1", "Enable instruction instrumentation");
+// General
+KNOB<string> SSTNamedPipe(KNOB_MODE_WRITEONCE, "pintool", "p", "", "Named pipe to connect to SST simulator");
+KNOB<UINT32> SSTVerbosity(KNOB_MODE_WRITEONCE, "pintool", "v", "0", "SST verbosity level");
+KNOB<UINT32> MaxCoreCount(KNOB_MODE_WRITEONCE, "pintool", "c", "1", "Maximum core count to use for data pipes.");
+KNOB<UINT32> StartupMode(KNOB_MODE_WRITEONCE, "pintool", "s", "1", "Mode for configuring profile behavior, 1 = start enabled, 0 = start disabled, 2 = attempt auto detect");
+// Instrumentation control
+KNOB<UINT32> InstrumentInstructions(KNOB_MODE_WRITEONCE, "pintool", "E", "1", "Enable instruction instrumentation");
+KNOB<UINT32> PerformWriteTrace(KNOB_MODE_WRITEONCE, "pintool", "w", "0", "Perform write tracing (i.e copy values directly into SST memory operations) (0 = disabled, 1 = enabled)");
+KNOB<UINT32> TrapFunctionProfile(KNOB_MODE_WRITEONCE, "pintool", "t", "0", "Function profiling level (0 = disabled, 1 = enabled)");
+// Memory/malloc/etc. tracking
+KNOB<UINT32> InterceptMemAllocations(KNOB_MODE_WRITEONCE, "pintool", "m", "1", "Should intercept multi-level memory allocations, mallocs, and frees, 1 = start enabled, 0 = start disabled");
+KNOB<string> UseMallocMap(KNOB_MODE_WRITEONCE, "pintool", "u", "", "Should intercept ariel_malloc_flag() and interpret using a malloc map: specify filename or leave blank for disabled");
+KNOB<UINT32> KeepMallocStackTrace(KNOB_MODE_WRITEONCE, "pintool", "k", "1", "Should keep shadow stack and dump on malloc calls. 1 = enabled, 0 = disabled");
+KNOB<UINT32> DefaultMemoryPool(KNOB_MODE_WRITEONCE, "pintool", "d", "0", "Default SST Memory Pool");
+// GPGPUSim
+KNOB<string> SSTNamedPipe2(KNOB_MODE_WRITEONCE, "pintool", "g", "", "Named pipe to connect to SST simulator");
+KNOB<string> SSTNamedPipe3(KNOB_MODE_WRITEONCE, "pintool", "x", "", "Named pipe to connect to SST simulator");
 
 #define ARIEL_MAX(a,b) \
    ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
@@ -106,10 +96,13 @@ UINT32 funcProfileLevel;
 UINT32 core_count;
 UINT32 default_pool;
 UINT32 instrument_instructions;
+SST::Core::Interprocess::SHMChild<ArielTunnel> * tunnelmgr;
 ArielTunnel *tunnel = NULL;
 #ifdef HAVE_CUDA
 GpuReturnTunnel *tunnelR = NULL;
 GpuDataTunnel *tunnelD = NULL;
+SST::Core::Interprocess::SHMChild<GpuReturnTunnel> * tunnelRmgr;
+SST::Core::Interprocess::SHMChild<GpuDataTunnel> * tunnelDmgr;
 #endif
 bool enable_output;
 std::vector<void*> allocated_list;
@@ -300,10 +293,10 @@ VOID Fini(INT32 code, VOID* v)
     ac.instPtr = (uint64_t) 0;
     tunnel->writeMessage(0, ac);
 
-    delete tunnel;
+    delete tunnelmgr;
 #ifdef HAVE_CUDA
-    delete tunnelR;
-    delete tunnelD;
+    delete tunnelRmgr;
+    delete tunnelDmgr;
 #endif
 
     if(funcProfileLevel > 0) {
@@ -1790,8 +1783,7 @@ int main(int argc, char *argv[])
 
     if(SSTVerbosity.Value() > 0) {
         std::cout << "SSTARIEL: Loading Ariel Tool to connect to SST on pipe: " <<
-            SSTNamedPipe.Value() << " max instruction count: " <<
-            MaxInstructions.Value() <<
+            SSTNamedPipe.Value() <<
             " max core count: " << MaxCoreCount.Value() << std::endl;
     }
 
@@ -1826,10 +1818,13 @@ int main(int argc, char *argv[])
     core_count = MaxCoreCount.Value();
     instrument_instructions = InstrumentInstructions.Value();
 
-    tunnel = new ArielTunnel(SSTNamedPipe.Value());
+    tunnelmgr = new SST::Core::Interprocess::SHMChild<ArielTunnel>(SSTNamedPipe.Value());
+    tunnel = tunnelmgr->getTunnel();
 #ifdef HAVE_CUDA
-    tunnelR = new GpuReturnTunnel(SSTNamedPipe2.Value());
-    tunnelD = new GpuDataTunnel(SSTNamedPipe3.Value());
+    tunnelRmgr = new SST::Core::Interprocess::SHMChild<GpuReturnTunnel>(SSTNamedPipe2.Value());
+    tunnelDmgr = new SST::Core::Interprocess::SHMChild<GpuDataTunnel>(SSTNamedPipe3.Value());
+    tunnelR = tunnelRmgr->getTunnel();
+    tunnelD = tunnelDmgr->getTunnel();
 #endif
 
     lastMallocSize = (UINT64*) malloc(sizeof(UINT64) * core_count);

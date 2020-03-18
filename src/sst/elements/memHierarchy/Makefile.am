@@ -133,7 +133,6 @@ EXTRA_DIST = \
         Sieve/tests/Makefile \
         Sieve/tests/ompsievetest.c \
         Sieve/tests/sieve-test.py \
-	tests/example.py \
 	tests/miranda.cfg \
 	tests/sdl-1.py \
 	tests/sdl2-1.py \

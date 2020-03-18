@@ -32,9 +32,6 @@ namespace Ember {
 class EmberContextSwitchingMessagePassingGenerator : public EmberMessagePassingGenerator {
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-	EmberContextSwitchingMessagePassingGenerator( Component* owner, Params& params);
-#endif  // inserted by script
 	EmberContextSwitchingMessagePassingGenerator( ComponentId_t id, Params& params);
 	bool autoInitialize() { return true; }
 

@@ -7,7 +7,7 @@ corecount = 8
 prospero={}
 
 for p in range(0, corecount):
-	print "Creating prospero component core " + str(p)
+	print("Creating prospero component core " + str(p))
         prospero["prospero" + str(p)] = sst.Component("prospero" + str(p), "prospero.prospero")
         prospero["prospero" + str(p)].addParams( {
 		"clock" : "1GHz",
@@ -79,4 +79,4 @@ memory.addParams( {
 memory_membus_link = sst.Link("memory_membus_link")
 memory_membus_link.connect( (memory, "snoop_link", "50ps"), (membus, "port" + str(corecount + corecount + 1), "50ps") )
 
-print "Done configuring SST model"
+print("Done configuring SST model")

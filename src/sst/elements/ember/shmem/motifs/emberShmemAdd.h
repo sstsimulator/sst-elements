@@ -28,9 +28,6 @@ template< class TYPE >
 class EmberShmemAddGenerator : public EmberShmemGenerator {
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-	EmberShmemAddGenerator(SST::Component* owner, Params& params) : EmberShmemGenerator(owner, params, "" ) {}
-#endif  // inserted by script
 	EmberShmemAddGenerator(SST::ComponentId_t id, Params& params) :
 		EmberShmemGenerator(id, params, "ShmemAdd" ), m_phase(0) 
 	{ 
@@ -112,9 +109,6 @@ public:
     )
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    EmberShmemAddIntGenerator( SST::Component* owner, Params& params ) :  EmberShmemAddGenerator(owner, params ) {}
-#endif  // inserted by script
     EmberShmemAddIntGenerator( SST::ComponentId_t id, Params& params ) : 
         EmberShmemAddGenerator(id,  params) { }
 };
@@ -135,9 +129,6 @@ public:
     )
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    EmberShmemAddLongGenerator( SST::Component* owner, Params& params ) : EmberShmemAddGenerator(owner, params ) {}
-#endif  // inserted by script
     EmberShmemAddLongGenerator( SST::ComponentId_t id, Params& params ) : 
         EmberShmemAddGenerator(id,  params) { }
 };
@@ -158,9 +149,6 @@ public:
     )
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    EmberShmemAddDoubleGenerator( SST::Component* owner, Params& params ) : EmberShmemAddGenerator(owner, params ) {}
-#endif  // inserted by script
     EmberShmemAddDoubleGenerator( SST::ComponentId_t id, Params& params ) :
         EmberShmemAddGenerator(id,  params) { }
 };
@@ -181,9 +169,6 @@ public:
     )
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    EmberShmemAddFloatGenerator( SST::Component* owner, Params& params ) : EmberShmemAddGenerator(owner, params ) {}
-#endif  // inserted by script
     EmberShmemAddFloatGenerator( SST::ComponentId_t id, Params& params ) :
         EmberShmemAddGenerator(id,  params) { }
 };

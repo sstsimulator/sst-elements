@@ -105,9 +105,6 @@ private:
     int local_port_start;
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    topo_torus(Component* comp, Params& params);
-#endif  // inserted by script
     topo_torus(ComponentId_t cid, Params& params, int num_ports, int rtr_id);
     ~topo_torus();
 

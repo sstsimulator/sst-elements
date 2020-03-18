@@ -66,12 +66,6 @@ class ReplacementPolicy : public SubComponent{
     public:
         SST_ELI_REGISTER_SUBCOMPONENT_API(SST::MemHierarchy::ReplacementPolicy, uint64_t, uint64_t)
 
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-        ReplacementPolicy(Component* comp, Params& params) : SubComponent(comp) {
-            Output out("", 1, 0, Output::STDOUT);
-            out.fatal(CALL_INFO, -1, "%s, Error: ReplacementPolicy subcomponents do not support loading via legacy API\n", getName().c_str());
-        }
-#endif  // inserted by script
         ReplacementPolicy(ComponentId_t id, Params& params, uint64_t lines, uint64_t associativity) : SubComponent(id) { 
         }
         virtual ~ReplacementPolicy(){}
@@ -96,9 +90,6 @@ public:
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(LRU, "memHierarchy", "replacement.lru", SST_ELI_ELEMENT_VERSION(1,0,0),
             "least-recently-used replacement policy", SST::MemHierarchy::ReplacementPolicy);
     
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    LRU(Component* comp, Params& params) : ReplacementPolicy(comp, params) { }
-#endif  // inserted by script
 
     LRU(ComponentId_t id, Params& params, uint64_t lines, uint64_t associativity) : ReplacementPolicy(id, params, lines, associativity), timestamp(1), bestCandidate(0) {
         ways = associativity;
@@ -159,9 +150,6 @@ public:
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(LRUOpt, "memHierarchy", "replacement.lru-opt", SST_ELI_ELEMENT_VERSION(1,0,0),
             "least-recently-used replacement policy with consideration for coherence state", SST::MemHierarchy::ReplacementPolicy);
     
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    LRUOpt(Component* comp, Params& params) : ReplacementPolicy(comp, params) { }
-#endif  // inserted by script
 
     LRUOpt(ComponentId_t id, Params& params, uint64_t lines, uint64_t associativity) : ReplacementPolicy(id, params, lines, associativity), timestamp(1), bestCandidate(0) {
         ways = associativity;
@@ -257,9 +245,6 @@ public:
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(LFU, "memHierarchy", "replacement.lfu", SST_ELI_ELEMENT_VERSION(1,0,0),
             "least-frequently-used replacement policy, recently used accesses are more heavily weighted", SST::MemHierarchy::ReplacementPolicy);
     
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    LFU(Component* comp, Params& params) : ReplacementPolicy(comp, params) { }
-#endif  // inserted by script
 
     LFU(ComponentId_t id, Params& params, uint64_t lines, uint64_t associativity) : ReplacementPolicy(id, params, lines, associativity), timestamp(1), bestCandidate(0) {
         ways = associativity;
@@ -334,9 +319,6 @@ public:
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(LFUOpt, "memHierarchy", "replacement.lfu-opt", SST_ELI_ELEMENT_VERSION(1,0,0),
             "least-frequently-used replacement policy, recently used accesses are more heavily weighted. Also considers coherence state in replacement decision", SST::MemHierarchy::ReplacementPolicy);
     
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    LFUOpt(Component* comp, Params& params) : ReplacementPolicy(comp, params) { }
-#endif  // inserted by script
 
     LFUOpt(ComponentId_t id, Params& params, uint64_t lines, uint64_t associativity) : ReplacementPolicy(id, params, lines, associativity), timestamp(1), bestCandidate(0) {
         ways = associativity;
@@ -472,9 +454,6 @@ public:
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(MRU, "memHierarchy", "replacement.mru", SST_ELI_ELEMENT_VERSION(1,0,0),
             "most-recently-used replacement policy", SST::MemHierarchy::ReplacementPolicy);
     
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    MRU(Component* comp, Params& params) : ReplacementPolicy(comp, params) { }
-#endif  // inserted by script
 
     MRU(ComponentId_t id, Params& params, uint64_t lines, uint64_t associativity) : ReplacementPolicy(id, params, lines, associativity), timestamp(1), bestCandidate(0) {
         ways = associativity;
@@ -553,9 +532,6 @@ public:
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(MRUOpt, "memHierarchy", "replacement.mru-opt", SST_ELI_ELEMENT_VERSION(1,0,0),
             "most-recently-used replacement policy, with consideration for coherence state", SST::MemHierarchy::ReplacementPolicy);
     
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    MRUOpt(Component* comp, Params& params) : ReplacementPolicy(comp, params) { }
-#endif  // inserted by script
 
     MRUOpt(ComponentId_t id, Params& params, uint64_t lines, uint64_t associativity) : ReplacementPolicy(id, params, lines, associativity), timestamp(1), bestCandidate(0) {
         ways = associativity;
@@ -621,9 +597,6 @@ public:
             {"seed_a",  "Seed for random number generator", "1"}, 
             {"seed_b",  "Seed for random number generator", "1"} )
     
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    Random(Component* comp, Params& params) : ReplacementPolicy(comp, params) { }
-#endif  // inserted by script
 
     Random(ComponentId_t id, Params& params, uint64_t lines, uint64_t associativity) : ReplacementPolicy(id, params, lines, associativity), bestCandidate(0) {
         ways = associativity;
@@ -686,9 +659,6 @@ public:
             {"seed_a",  "Seed for random number generator", "1"}, 
             {"seed_b",  "Seed for random number generator", "1"} )
     
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    NMRU(Component* comp, Params& params) : ReplacementPolicy(comp, params) { }
-#endif  // inserted by script
 
     NMRU(ComponentId_t id, Params& params, uint64_t lines, uint64_t associativity) : ReplacementPolicy(id, params, lines, associativity), bestCandidate(0) {
         ways = associativity;

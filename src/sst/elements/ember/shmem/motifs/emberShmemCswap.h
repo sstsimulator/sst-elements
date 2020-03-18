@@ -28,9 +28,6 @@ template< class TYPE >
 class EmberShmemCswapGenerator : public EmberShmemGenerator {
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    EmberShmemCswapGenerator(SST::Component* owner, Params& params) : EmberShmemGenerator(owner, params, "" ) {}
-#endif  // inserted by script
     EmberShmemCswapGenerator(SST::ComponentId_t id, Params& params) :
 		EmberShmemGenerator(id, params, "ShmemCswap" ), m_phase(0) 
 	{ 
@@ -121,10 +118,6 @@ public:
     SST_ELI_DOCUMENT_PARAMS()
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    EmberShmemCswapIntGenerator( SST::Component* owner, Params& params ) :
-        EmberShmemCswapGenerator(owner,  params) { }
-#endif  // inserted by script
     EmberShmemCswapIntGenerator( SST::ComponentId_t id, Params& params ) :
         EmberShmemCswapGenerator(id,  params) { }
 };
@@ -144,10 +137,6 @@ public:
     SST_ELI_DOCUMENT_PARAMS() 
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    EmberShmemCswapLongGenerator( SST::Component* owner, Params& params ) :
-        EmberShmemCswapGenerator(owner,  params) { }
-#endif  // inserted by script
     EmberShmemCswapLongGenerator( SST::ComponentId_t id, Params& params ) :
         EmberShmemCswapGenerator(id,  params) { }
 };
@@ -166,10 +155,6 @@ public:
     SST_ELI_DOCUMENT_PARAMS()
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    EmberShmemCswapDoubleGenerator( SST::Component* owner, Params& params ) :
-        EmberShmemCswapGenerator(owner,  params) { }
-#endif  // inserted by script
     EmberShmemCswapDoubleGenerator( SST::ComponentId_t id, Params& params ) :
         EmberShmemCswapGenerator(id,  params) { }
 };
@@ -188,10 +173,6 @@ public:
     SST_ELI_DOCUMENT_PARAMS()
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    EmberShmemCswapFloatGenerator( SST::Component* owner, Params& params ) :
-        EmberShmemCswapGenerator(owner,  params) { }
-#endif  // inserted by script
     EmberShmemCswapFloatGenerator( SST::ComponentId_t id, Params& params ) :
         EmberShmemCswapGenerator(id,  params) { }
 };

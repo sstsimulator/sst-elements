@@ -415,9 +415,6 @@ class HadesSHMEM : public Shmem::Interface
 	};
 
   public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    HadesSHMEM(Component*, Params&);
-#endif  // inserted by script
     HadesSHMEM(ComponentId_t, Params&);
     ~HadesSHMEM();
 

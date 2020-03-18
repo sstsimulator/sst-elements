@@ -29,14 +29,6 @@ using namespace SST::MemHierarchy;
 #define Debug(level, fmt, ... )
 #endif
 
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-MemBackendConvertor::MemBackendConvertor(Component *comp, Params& params ) : 
-    SubComponent(comp), m_cycleCount(0), m_reqId(0)
-{
-    m_dbg.init("", 0, 0, Output::STDOUT);
-    m_dbg.fatal(CALL_INFO, -1, "%s, Error: MembackendConvertor does not support loading as legacy subcomponent\n", getName().c_str());
-}
-#endif  // inserted by script
 
 MemBackendConvertor::MemBackendConvertor(ComponentId_t id, Params& params, MemBackend* backend, uint32_t request_width) :
     SubComponent(id), m_cycleCount(0), m_reqId(0), m_backend(backend) 

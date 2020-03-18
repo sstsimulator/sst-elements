@@ -65,9 +65,6 @@ public:
     )
 
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-	EmberAllreduceGenerator(SST::Component* owner, Params& params) : EmberMessagePassingGenerator(owner,params,"") {}
-#endif  // inserted by script
 	EmberAllreduceGenerator(SST::ComponentId_t, Params& params);
     bool generate( std::queue<EmberEvent*>& evQ);
 

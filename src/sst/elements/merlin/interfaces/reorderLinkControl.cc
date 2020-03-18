@@ -17,7 +17,6 @@
 #include <sst_config.h>
 
 #include "reorderLinkControl.h"
-#include "linkControl.h"
 
 #include <sst/core/simulation.h>
 

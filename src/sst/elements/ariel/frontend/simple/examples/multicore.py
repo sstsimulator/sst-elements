@@ -1,83 +1,102 @@
 import sst
 
-sst.setProgramOption("timebase", "1ps")
+# This is an example only, it is not reguarly used in testing
+# 8 cores, private L1 and L2, shared L3, one memory controller
+# No on-chip network (bus only)
 
 corecount = 8
+clock = "2GHz"
 
+# CPU with 'corecount' cores
 ariel = sst.Component("ariel0", "ariel.ariel")
 ariel.addParams( {
-	"verbose" : "0",
-	"maxcorequeue" : "256",
- 	"maxissuepercycle" : "2",
- 	"pipetimeout" : "0",
-	"corecount" : str(corecount),
- 	"executable" : "<BINARY PATH GOES HERE>",
-	"appargcount" : "1",
-	"apparg0" : str(corecount),
- 	"arielmode" : "1",
- 	"arieltool" : "<PUT YOUR SST ROOT OR ARIEL PATH HERE>sst/elements/ariel/tool/arieltool.so",
- 	"memorylevels" : "2",
-	"arielinterceptcalls" : "0", 
-        "launchparamcount" : 1,
-        "launchparam0" : "-ifeellucky",
-	"defaultlevel" : "0"
-	} )
+    "verbose" : "0",
+    "maxcorequeue" : "256",
+    "maxissuepercycle" : "2",
+    "pipetimeout" : "0",
+    "corecount" : str(corecount),
+    "clock" : clock,
+    "executable" : "<BINARY PATH GOES HERE>",
+#    "appargcount" : ARGUMENT COUNT FOR EXECUTABLE GOES HERE,
+#    "apparg0" : <ARG0 GOES HERE>,
+#    "apparg1" : <ARG1 GOES HERE>, # Add additional args as needed
+    "arielmode" : "1",
+    "arielinterceptcalls" : "0", # Do not intercept malloc/free 
+    "launchparamcount" : 1,
+    "launchparam0" : "-ifeellucky", # For Pin2.14 on newer hardware
+} )
 
+# Bus between L2s and L3
 membus = sst.Component("membus", "memHierarchy.Bus")
-membus.addParams( {
-	"numPorts" : str(corecount + corecount + 2),
-	"busDelay" : "1ns"
-	} )
+membus.addParams( { "bus_frequency" : clock } )
 
 for x in range(0, corecount):
-	l1d = sst.Component("l1cache_" + str(x), "memHierarchy.Cache")
-	l1d.addParams( {
-		"maxL1ResponseTime" : "100000000",
-		"num_ways" : "2",
-		"num_rows" : "256",
-		"blocksize" : "64",
-		"access_time" : "1ns",
-		"num_upstream" : "1",
-		"next_level" : "l2cache_" + str(x),
-		} )
-	ariel_l1d_link = sst.Link("cpu_cache_link_" + str(x))
-	ariel_l1d_link.connect( (ariel, "cache_link_" + str(x), "50ps"), (l1d, "upstream0", "50ps") )
-	ariel_l1d_mem_link = sst.Link("l1d_membus_link_" + str(x))
-	ariel_l1d_mem_link.connect( (l1d, "snoop_link", "50ps"), (membus, "port" + str(x), "50ps") )
+    # Private L1s
+    # 32KB, 2-way set associative, 64B line, 2 cycle access
+    # MSI coherence with LRU replacement
+    l1d = sst.Component("l1cache_" + str(x), "memHierarchy.Cache")
+    l1d.addParams( {
+        "cache_frequency" : clock,
+        "access_latency_cycles" : 2,
+        "cache_size" : "32KB",
+        "associativity" : 2,
+        "cache_line_size" : 64,
+        "replacement_policy" : "lru",
+        "coherence_protocol" : "MSI",
+        "L1" : 1,
+    } )
+    ariel_l1d_link = sst.Link("cpu_cache_link_" + str(x))
+    ariel_l1d_link.connect( (ariel, "cache_link_" + str(x), "50ps"), (l1d, "high_network_0", "50ps") )
 
-for x in range(0, corecount):
-	l2 = sst.Component("l2cache_" + str(x), "memHierarchy.Cache")
-	l2.addParams( {
-		"num_ways" : "2",
-                "num_rows" : "256",
-                "blocksize" : "64",
-                "access_time" :	"1ns",
-                "next_level" : "l3cache",
-		} )
-	ariel_l2_link = sst.Link("l2cache_link_" + str(x) )
-	ariel_l2_link.connect( (l2, "snoop_link", "50ps"), (membus, "port" + str(corecount + x), "50ps") )
+    # Private L2s
+    # 128KB, 8-way set associative, 64B line, 5 cycle access
+    # MSI coherence with LRU replacement
+    l2 = sst.Component("l2cache_" + str(x), "memHierarchy.Cache")
+    l2.addParams( {
+        "cache_frequency" : clock,
+        "access_latency_cycles" : 5,
+        "cache_size" : "128KB",
+        "associativity" : 8,
+        "cache_line_size" : 64,
+        "replacement_policy" : "lru",
+        "coherence_protocol" : "MSI"
+    })
+	
+    l1d_l2_link = sst.Link("l1_l2_link_" + str(x))
+    l1d_l2_link.connect( (l1d, "low_network_0", "50ps"), (l2, "high_network_0", "50ps") )
 
+    l2_bus_link = sst.Link("l2_bus_link_" + str(x))
+    l2_bus_link.connect( (l2, "low_network_0", "50ps"), (membus, "high_network_" + str(x), "50ps") )
+
+# Shared L3
+# 1MB*cores, 16-way set associative, 64B line, 15 cycle access
+# MSI coherence with NMRU (not-most-recently-used) replacement
 l3 = sst.Component("l3cache", "memHierarchy.Cache")
 l3.addParams( {
-		"num_ways" : "2",
-                "num_rows" : "256",
-               	"blocksize" : "64",
-               	"access_time" : "1ns",
-	} )
+    "cache_frequency" : clock,
+    "access_latency_cycles" : 15,
+    "cache_size" : str(corecount) + "MB",   # 1MB/core
+    "associativity" : 16,
+    "cache_line_size" : 64,
+    "replacement_policy" : "nmru",
+    "coherence_protocol" : "MSI"
+} )
 
-l3_membus_link = sst.Link("l3cache_link")
-l3_membus_link.connect( (l3, "snoop_link", "50ps"), (membus, "port" + str(corecount + corecount), "50ps") )
+l3_bus_link = sst.Link("l3_bus_link")
+l3_bus_link.connect( (l3, "high_network_0", "50ps"), (membus, "low_network_0", "50ps") )
 
-memory = sst.Component("fastmemory", "memHierarchy.MemController")
-memory.addParams( {
-		"access_time" : "70ns",
-		"rangeStart" : "0x00000000",
-		"backend.mem_size" : "512MiB",
-		"clock" : "1GHz",
-		"printStats" : "1"
-	} )
+# Memory/Controller
+# Using "simpleMem" memory model
+# 1GB with 70ns access time
+memctrl = sst.Component("memory", "memHierarchy.MemController")
+memctrl.addParam("clock", "1GHz")
+memory = memctrl.setSubComponent("backend", "memHierarchy.simpleMem")
+memory.addParams({
+    "access_time" : "70ns",
+    "mem_size" : "1GB"
+})
 
-memory_membus_link = sst.Link("memory_membus_link")
-memory_membus_link.connect( (memory, "snoop_link", "50ps"), (membus, "port" + str(corecount + corecount + 1), "50ps") )
+memory_bus_link = sst.Link("memory_bus_link")
+memory_bus_link.connect( (l3, "low_network_0", "50ps"), (memctrl, "direct_link", "50ps") )
 
-print "Done configuring SST model"
+print("Done configuring SST model")

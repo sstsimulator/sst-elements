@@ -16,9 +16,19 @@
 #ifndef SST_ARIEL_SHMEM_H
 #define SST_ARIEL_SHMEM_H
 
+/*
+ * Important note:
+ * This file is designed to be compiled both into Ariel and into a Pin3 pintool. 
+ * It must be PinCRT compatible without containing anything PinCRT-specific.
+ * Restrictions include:
+ *  - Nothing that relies on runtime type info (e.g., dynamic cast)
+ *  - No C++11 (nullptr, auto, etc.)
+ *  - Only PinCRT-enabled includes are allowed (no PinCRT specific ones and no non-enabled ones)
+ */
+
 #include <inttypes.h>
 
-#include <sst/core/interprocess/ipctunnel.h>
+#include <sst/core/interprocess/tunneldef.h>
 #include "ariel_inst_class.h"
 
 #ifdef HAVE_CUDA
@@ -132,13 +142,13 @@ struct ArielCommand {
             uint64_t alloc_len;
             uint32_t alloc_level;
         } mlm_map;
-            struct {
+        struct {
             uint64_t vaddr;
             uint64_t alloc_len;
             uint32_t alloc_level;
             uint32_t fileID;
         } mlm_mmap;
-            struct {
+        struct {
             uint64_t vaddr;
             uint64_t alloc_len;
             uint32_t alloc_level;
@@ -178,29 +188,39 @@ struct ArielSharedData {
     uint8_t __pad[ 256 - sizeof(uint32_t) - sizeof(size_t) - sizeof(uint64_t) - sizeof(uint64_t)];
 };
 
-class ArielTunnel : public SST::Core::Interprocess::IPCTunnel<ArielSharedData, ArielCommand>
+class ArielTunnel : public SST::Core::Interprocess::TunnelDef<ArielSharedData, ArielCommand>
 {
 public:
-    /**
+    /** 
      * Create a new Ariel Tunnel
      */
-    ArielTunnel(uint32_t comp_id, size_t numCores, size_t bufferSize) :
-        SST::Core::Interprocess::IPCTunnel<ArielSharedData, ArielCommand>(comp_id, numCores, bufferSize) {
-        sharedData->numCores = numCores;
-        sharedData->simTime = 0;
-        sharedData->cycles = 0;
-        sharedData->child_attached = 0;
-    }
+    ArielTunnel(size_t numCores, size_t bufferSize, uint32_t expectedChildren = 1) :
+        SST::Core::Interprocess::TunnelDef<ArielSharedData,ArielCommand>(numCores, bufferSize, expectedChildren) { }
 
     /**
-     * Attach to an existing Ariel Tunnel (Created in another process
+     * Attach to an existing Ariel Tunnel (Created in another process)
      */
-    ArielTunnel(const std::string &region_name) :
-        SST::Core::Interprocess::IPCTunnel<ArielSharedData, ArielCommand>(region_name) {
-        /* Ideally, this would be done atomically, but we'll only have 1 child */
-        sharedData->child_attached++;
-    }
+    ArielTunnel(void* sPtr) :
+        SST::Core::Interprocess::TunnelDef<ArielSharedData, ArielCommand>(sPtr) { }
 
+    /**
+     * Initialize tunnel
+     * None of the data structures (e.g., sharedData) are available until this function call
+     */
+    virtual uint32_t initialize(void* sPtr) {
+        uint32_t childnum = SST::Core::Interprocess::TunnelDef<ArielSharedData, ArielCommand>::initialize(sPtr);
+        if (isMaster()) {
+            sharedData->numCores = getNumBuffers();
+            sharedData->simTime = 0;
+            sharedData->cycles = 0;
+            sharedData->child_attached = 0;
+        } else {
+            /* Ideally, this would be done atomically, but we'll only have 1 child */
+            sharedData->child_attached++;
+        }
+        return childnum;
+    }
+    
     void waitForChild(void) {
         while ( sharedData->child_attached == 0 ) ;
     }
@@ -256,27 +276,33 @@ struct GpuCommand {
     };
 };
 
-class GpuReturnTunnel : public SST::Core::Interprocess::IPCTunnel<GpuSharedData, GpuCommand>
+class GpuReturnTunnel : public SST::Core::Interprocess::TunnelDef<GpuSharedData, GpuCommand>
 {
 public:
     /**
      * Create a new Gpu Tunnel
      */
-    GpuReturnTunnel(uint32_t comp_id, size_t numCores, size_t bufferSize) :
-        SST::Core::Interprocess::IPCTunnel<GpuSharedData, GpuCommand>(comp_id, numCores, bufferSize)
-    {
-        sharedData->numCores = numCores;
-        sharedData->child_attached = 0;
-    }
+    GpuReturnTunnel(size_t numCores, size_t bufferSize, uint32_t expectedChildren = 1) :
+        SST::Core::Interprocess::TunnelDef<GpuSharedData, GpuCommand>(numCores, bufferSize, expectedChildren)
+    { }
 
     /**
      * Attach to an existing Gpu Tunnel (Created in another process)
      */
-    GpuReturnTunnel(const std::string &region_name) :
-        SST::Core::Interprocess::IPCTunnel<GpuSharedData, GpuCommand>(region_name)
-    {
+    GpuReturnTunnel(void* sPtr) :
+        SST::Core::Interprocess::TunnelDef<GpuSharedData, GpuCommand>(sPtr)
+    { }
+    
+    virtual uint32_t initialize(void* sPtr) {
+        uint32_t childnum = SST::Core::Interprocess::TunnelDef<GpuSharedData, GpuCommand>::initialize(sPtr);
+        if (isMaster()) {
+            sharedData->numCores = getNumBuffers();
+            sharedData->child_attached = 0;
+        } else {
         /* Ideally, this would be done atomically, but we'll only have 1 child */
-        sharedData->child_attached++;
+            sharedData->child_attached++;
+        }
+        return childnum;
     }
 
     void waitForChild(void)
@@ -290,27 +316,33 @@ struct GpuDataCommand {
     uint8_t page_4k[1<<12];
 };
 
-class GpuDataTunnel : public SST::Core::Interprocess::IPCTunnel<GpuSharedData, GpuDataCommand>
+class GpuDataTunnel : public SST::Core::Interprocess::TunnelDef<GpuSharedData, GpuDataCommand>
 {
 public:
     /**
      * Create a new Gpu Tunnel
      */
-    GpuDataTunnel(uint32_t comp_id, size_t numCores, size_t bufferSize) :
-        SST::Core::Interprocess::IPCTunnel<GpuSharedData, GpuDataCommand>(comp_id, numCores, bufferSize)
-    {
-        sharedData->numCores = numCores;
-        sharedData->child_attached = 0;
-    }
+    GpuDataTunnel(size_t numCores, size_t bufferSize, uint32_t expectedChildren = 1) :
+        SST::Core::Interprocess::TunnelDef<GpuSharedData, GpuDataCommand>(numCores, bufferSize, expectedChildren)
+    { }
 
     /**
      * Attach to an existing Gpu Tunnel (Created in another process)
      */
-    GpuDataTunnel(const std::string &region_name) :
-        SST::Core::Interprocess::IPCTunnel<GpuSharedData, GpuDataCommand>(region_name)
-    {
+    GpuDataTunnel(void* sPtr) :
+        SST::Core::Interprocess::TunnelDef<GpuSharedData, GpuDataCommand>(sPtr)
+    { }
+    
+    virtual uint32_t initialize(void* sPtr) {
+        uint32_t childnum = SST::Core::Interprocess::TunnelDef<GpuSharedData, GpuDataCommand>::initialize(sPtr);
+        if (isMaster()) {
+            sharedData->numCores = getNumBuffers();
+            sharedData->child_attached = 0;
+        } else {
         /* Ideally, this would be done atomically, but we'll only have 1 child */
-        sharedData->child_attached++;
+            sharedData->child_attached++;
+        }
+        return childnum;
     }
 
     void waitForChild(void)
@@ -318,7 +350,8 @@ public:
         while ( sharedData->child_attached == 0 ) ;
     }
 };
-#endif
+
+#endif // Cuda
 
 }
 }
