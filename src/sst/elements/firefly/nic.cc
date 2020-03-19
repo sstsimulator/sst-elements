@@ -43,7 +43,10 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_respKey(1),
 	m_predNetIdleTime(0),
     m_linkBytesPerSec(0),
-	m_detailedInterface(NULL)
+	m_detailedInterface(NULL),
+    m_getHdrVN(0),
+    m_getRespLargeVN(0),
+    m_getRespSmallVN(0)
 {
     m_myNodeId = params.find<int>("nid", -1);
     assert( m_myNodeId != -1 );
@@ -67,7 +70,11 @@ Nic::Nic(ComponentId_t id, Params &params) :
 		m_nic2host_base_lat_ns = 1;
 	}
 
-    m_numVN = 2;
+    m_numVN = params.find<int>("numVNs",1);
+    m_getHdrVN = params.find<int>("getHdrVN",0); 
+    m_getRespLargeVN = params.find<int>("getRespLargeVN", 0 ); 
+    m_getRespSmallVN = params.find<int>("getRespSmallVN", 0 ); 
+    m_getRespSize = params.find<size_t>("getRespSize", 0 ); 
 
     m_sendPQ.resize( m_numVN );
 
@@ -75,6 +82,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_txDelay =      params.find<int>( "txDelay_ns", 50 );
     int hostReadDelay = params.find<int>( "hostReadDelay_ns", 200 );
     m_shmemRxDelay_ns = params.find<int>( "shmemRxDelay_ns",0); 
+
 
     m_num_vNics = params.find<int>("num_vNics", 1 );
 
@@ -458,8 +466,8 @@ void Nic::pioSend( NicCmdEvent *e, int vNicNum )
     CmdSendEntry* entry = new CmdSendEntry( vNicNum, getSendStreamNum(vNicNum), e, callback );
 
     m_dbg.debug(CALL_INFO,1,1,"src_vNic=%d dest=%#x dst_vNic=%d tag=%#x "
-        "vecLen=%lu totalBytes=%lu\n", vNicNum, e->node, e->dst_vNic,
-                    e->tag, e->iovec.size(), entry->totalBytes() );
+        "vecLen=%lu totalBytes=%lu vn=%d\n", vNicNum, e->node, e->dst_vNic,
+                    e->tag, e->iovec.size(), entry->totalBytes(), e->vn );
 
     qSendEntry( entry );
 }
@@ -488,7 +496,7 @@ void Nic::get( NicCmdEvent *e, int vNicNum )
     m_dbg.debug(CALL_INFO,1,1,"src_vNic=%d dest=%#x dst_vNic=%d tag=%#x vecLen=%lu totalBytes=%lu\n",
                 vNicNum, e->node, e->dst_vNic, e->tag, e->iovec.size(), entry->totalBytes() );
 
-    qSendEntry( new GetOrgnEntry( vNicNum, getSendStreamNum(vNicNum), e->node, e->dst_vNic, e->tag, getKey) );
+    qSendEntry( new GetOrgnEntry( vNicNum, getSendStreamNum(vNicNum), e->node, e->dst_vNic, e->tag, getKey, m_getHdrVN ) );
 }
 
 void Nic::put( NicCmdEvent *e, int vNicNum )

@@ -646,6 +646,10 @@ struct X {
 	int m_tracedPkt;
 	int m_tracedNode;
 	SimTime_t m_predNetIdleTime;
+    int m_getHdrVN;
+    int m_getRespSize;
+    int m_getRespLargeVN;
+    int m_getRespSmallVN;
 }; 
 
 } // namesapce Firefly 
