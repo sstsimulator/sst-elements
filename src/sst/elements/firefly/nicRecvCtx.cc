@@ -162,7 +162,15 @@ Nic::SendEntryBase* Nic::RecvMachine::Ctx::findGet( int srcNode, int srcPid, Rdm
 
     m.erase(rdmaHdr.rgnNum);
 
-    return new PutOrgnEntry( m_pid, nic().getSendStreamNum(m_pid), srcNode, srcPid, rdmaHdr.respKey, entry );
+    int vn = nic().m_getRespSmallVN; 
+    size_t length = 0;
+    for ( int i = 0; i <  entry->iovec().size(); i++ ) {
+        length += entry->iovec().at(i).len; 
+    }
+    if ( length >  nic().m_getRespSize ) {
+        vn = nic().m_getRespLargeVN; 
+    }
+    return new PutOrgnEntry( m_pid, nic().getSendStreamNum(m_pid), srcNode, srcPid, rdmaHdr.respKey, entry, vn );
 }
 
 Nic::DmaRecvEntry* Nic::RecvMachine::Ctx::findPut( int srcNode, MsgHdr& hdr, RdmaMsgHdr& rdmahdr )
