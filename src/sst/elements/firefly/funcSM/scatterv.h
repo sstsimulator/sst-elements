@@ -127,7 +127,10 @@ class ScattervFuncSM :  public FunctionSMInterface
         FunctionSMInterface( params ),
         m_event( NULL ),
         m_seq( 0 )
-    { }
+    { 
+        m_smallCollectiveVN = params.find<int>( "smallCollectiveVN", 0);
+        m_smallCollectiveSize = params.find<int>( "smallCollectiveSize", 0);
+   }
 
     virtual void handleStartEvent( SST::Event*, Retval& );
 
@@ -192,6 +195,8 @@ class ScattervFuncSM :  public FunctionSMInterface
     ScattervStartEvent*	m_event;
     int                 m_seq;
     MaryTree*           m_tree;
+    int m_smallCollectiveVN;
+    int m_smallCollectiveSize;
 };
         
 }

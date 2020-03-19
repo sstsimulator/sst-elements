@@ -152,7 +152,11 @@ bool ScattervFuncSM::sendSize( SendInfo* sendInfo, RecvInfo* info )
 
 	int tag = genTag(SizeMsg); 
 	m_dbg.debug(CALL_INFO,1,0,"iseend to %d tag %x\n", m_tree->calcChild( sendInfo->count ), tag);
-	proto()->isend( ptr, length, m_tree->calcChild( sendInfo->count ), tag, m_event->group, &sendInfo->reqs[sendInfo->count] );
+    int vn = 0;
+    if ( length <= m_smallCollectiveSize ) {
+        vn = m_smallCollectiveVN;
+    }
+    proto()->isend( ptr, length, m_tree->calcChild( sendInfo->count ), tag, m_event->group, &sendInfo->reqs[sendInfo->count], vn );
 
 	++sendInfo->count;	
 
@@ -255,7 +259,15 @@ bool ScattervFuncSM::dataSend( SendInfo* sInfo , RecvInfo* rInfo )
 
 	int tag = genTag(DataMsg);
 	m_dbg.debug(CALL_INFO,1,0,"isendv to child=%d tag=%x\n",m_tree->calcChild( sInfo->count ), tag);
-	proto()->isendv( ioVec, m_tree->calcChild( sInfo->count ), tag, m_event->group, &sInfo->reqs[sInfo->count] );
+    int vn = 0;
+    size_t length = 0;
+    for ( int i = 0; i < ioVec.size(); i++ ) {
+        length += ioVec[i].len;
+    } 
+    if ( length <= m_smallCollectiveSize ) {
+        vn = m_smallCollectiveVN;
+    }
+	proto()->isendv( ioVec, m_tree->calcChild( sInfo->count ), tag, m_event->group, &sInfo->reqs[sInfo->count], vn );
 
 	++sInfo->count;	
 

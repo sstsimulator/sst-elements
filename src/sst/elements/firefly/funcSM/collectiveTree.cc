@@ -61,10 +61,9 @@ void CollectiveTreeFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
     m_bufV.resize( m_yyy->numChildren() + 1);
 
     m_bufLen = m_event->count * m_info->sizeofDataType( m_event->dtype );  
-    if ( m_bufLen < m_smallCollectiveSize ) {
+    if ( m_bufLen <= m_smallCollectiveSize ) {
         m_vn = m_smallCollectiveVN;
     }
-    printf("%s() vn=%d\n",__func__,m_vn);
 
 
     m_bufV[0] = m_event->mydata.getBacking();

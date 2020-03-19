@@ -138,8 +138,6 @@ class CollectiveTreeFuncSM :  public FunctionSMInterface
     {
         m_smallCollectiveVN = params.find<int>( "smallCollectiveVN", 0); 
         m_smallCollectiveSize = params.find<int>( "smallCollectiveSize", 0); 
-        printf("%s() %d %d\n",__func__,m_smallCollectiveVN,m_smallCollectiveSize);
-    //params.print_all_params(std::cout);
     }
 
     virtual void handleStartEvent( SST::Event*, Retval& );

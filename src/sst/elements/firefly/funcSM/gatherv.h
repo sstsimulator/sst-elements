@@ -194,6 +194,9 @@ class GathervFuncSM :  public FunctionSMInterface
     std::vector<unsigned char>  m_recvBuf;
     int                 m_intBuf;
     int                 m_seq;
+
+    int m_smallCollectiveVN;
+    int m_smallCollectiveSize;
 };
         
 }
