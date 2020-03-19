@@ -123,13 +123,13 @@ void API::sendv_common( std::vector<IoVec>& ioVec,
     m_processQueuesState->enterSend( req, sendStateDelay() );
 }
 
-void API::send( const Hermes::MemAddr& addr, size_t len, nid_t dest, uint64_t tag )
+void API::send( const Hermes::MemAddr& addr, size_t len, nid_t dest, uint64_t tag, int vn )
 {
     std::vector<IoVec> ioVec(1);
     ioVec[0].addr = addr;
     ioVec[0].len = len;
 
-    sendv_common( ioVec, MP::CHAR, dest, tag, MP::GroupWorld, NULL );
+    sendv_common( ioVec, MP::CHAR, dest, tag, MP::GroupWorld, NULL, vn );
 }
 
 
@@ -143,20 +143,20 @@ void API::send( const Hermes::MemAddr& addr, size_t len, MP::RankID dest, uint64
     sendv_common( ioVec, MP::CHAR, dest, tag, grp, NULL, vn );
 }
 
-void API::isend( void* ptr, size_t len, nid_t dest, uint64_t tag, MP::Communicator grp, CommReq* req)
+void API::isend( void* ptr, size_t len, nid_t dest, uint64_t tag, MP::Communicator grp, CommReq* req, int vn )
 {
 	MemAddr addr( 1, ptr );
-	isend( addr, len, dest, tag, grp, req );
+	isend( addr, len, dest, tag, grp, req, vn );
 }
 
-void API::isend( const Hermes::MemAddr& addr, size_t len, nid_t dest, uint64_t tag, CommReq* req)
+void API::isend( const Hermes::MemAddr& addr, size_t len, nid_t dest, uint64_t tag, CommReq* req, int vn)
 {
     std::vector<IoVec> ioVec(1);
     ioVec[0].addr = addr;
     ioVec[0].len = len;
 
     assert(req);
-    sendv_common( ioVec, MP::CHAR, dest, tag, MP::GroupWorld, req );
+    sendv_common( ioVec, MP::CHAR, dest, tag, MP::GroupWorld, req, vn );
 }
 
 void API::isend( const Hermes::MemAddr& addr, size_t len, nid_t dest, uint64_t tag, 
@@ -170,14 +170,14 @@ void API::isend( const Hermes::MemAddr& addr, size_t len, nid_t dest, uint64_t t
     sendv_common( ioVec, MP::CHAR, dest, tag, group, req, vn );
 }
 
-void API::sendv(std::vector<IoVec>& ioVec, nid_t dest, uint64_t tag )
+void API::sendv(std::vector<IoVec>& ioVec, nid_t dest, uint64_t tag, int vn )
 {
-    sendv_common( ioVec, MP::CHAR, dest, tag, MP::GroupWorld, NULL );
+    sendv_common( ioVec, MP::CHAR, dest, tag, MP::GroupWorld, NULL, vn );
 }
 
-void API::isendv(std::vector<IoVec>& ioVec, nid_t dest, uint64_t tag, MP::Communicator group, CommReq* req ) 
+void API::isendv(std::vector<IoVec>& ioVec, nid_t dest, uint64_t tag, MP::Communicator group, CommReq* req, int vn ) 
 {
-    sendv_common( ioVec, MP::CHAR, dest, tag, group, req );
+    sendv_common( ioVec, MP::CHAR, dest, tag, group, req, vn );
 }
 
 void API::recvv_common( std::vector<IoVec>& ioVec,
