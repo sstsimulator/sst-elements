@@ -96,6 +96,10 @@ void FunctionSM::setup( Info* info )
                         m_params.find<std::string>("defaultEnterLatency","0"), true );
     defaultParams.insert( "returnLatency", 
                         m_params.find<std::string>("defaultReturnLatency","0"), true );
+    defaultParams.insert( "smallCollectiveVN", 
+                        m_params.find<std::string>("smallCollectiveVN","0"), true );
+    defaultParams.insert( "smallCollectiveSize", 
+                        m_params.find<std::string>("smallCollectiveSize","0"), true );
     defaultParams.insert( "verboseLevel", m_params.find<std::string>("verboseLevel","0"), true ); 
     std::ostringstream tmp;
     tmp <<  nodeId; 
@@ -135,6 +139,13 @@ void FunctionSM::initFunction( Info* info,
 
     if ( params.find<std::string>("returnLatency").empty() ) {
         params.insert( "returnLatency", defaultParams.find<std::string>( "returnLatency" ), true );
+    }
+
+    if ( params.find<std::string>("smallCollectiveVN").empty() ) {
+        params.insert( "smallCollectiveVN", defaultParams.find<std::string>( "smallCollectiveVN" ), true );
+    }
+    if ( params.find<std::string>("smallCollectiveSize").empty() ) {
+        params.insert( "smallCollectiveSize", defaultParams.find<std::string>( "smallCollectiveSize" ), true );
     }
 
     params.insert( "nodeId", defaultParams.find<std::string>( "nodeId" ), true );

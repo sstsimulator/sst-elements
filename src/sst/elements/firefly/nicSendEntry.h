@@ -29,6 +29,7 @@ class SendEntryBase {
 
     virtual int dst_vNic() = 0;
     virtual int dest() = 0;
+    virtual int vn() = 0;
     virtual void* hdr() = 0;
     virtual size_t hdrSize() = 0;
     virtual void copyOut( Output& dbg, int numBytes,
@@ -76,6 +77,7 @@ class CmdSendEntry: public SendEntryBase, public EntryBase {
     }
 
     MsgHdr::Op getOp()  { return MsgHdr::Msg; }
+    int vn()            { return m_cmd->vn; }
     int dst_vNic( )     { return m_cmd->dst_vNic; }
     int dest()          { return m_cmd->node; }
     void* hdr()         { return &m_hdr; }
@@ -108,8 +110,8 @@ class MsgSendEntry: public SendEntryBase {
 
 class GetOrgnEntry : public MsgSendEntry {
   public:
-    GetOrgnEntry( int local_vNic, int streamNum, int dst_node, int dst_vNic, int rgnNum, int respKey ) :
-            MsgSendEntry( local_vNic, streamNum, dst_node, dst_vNic )
+    GetOrgnEntry( int local_vNic, int streamNum, int dst_node, int dst_vNic, int rgnNum, int respKey, int vn ) :
+            MsgSendEntry( local_vNic, streamNum, dst_node, dst_vNic ), m_vn( vn )
     {
         m_hdr.respKey = respKey;
         m_hdr.rgnNum = rgnNum;
@@ -118,6 +120,7 @@ class GetOrgnEntry : public MsgSendEntry {
         m_isCtrl = true;
     }
 
+    int vn()               { return m_vn; }
     ~GetOrgnEntry() { }
 
     bool isDone()      { return true; }
@@ -135,19 +138,21 @@ class GetOrgnEntry : public MsgSendEntry {
   private:
     RdmaMsgHdr          m_hdr;
     std::vector<IoVec> m_ioVec;
+    int                m_vn;
 };
 
 class PutOrgnEntry : public MsgSendEntry, public EntryBase {
   public:
     PutOrgnEntry( int local_vNic, int streamNum, int dst_node,int dst_vNic,
-            int respKey, MemRgnEntry* memRgn ) :
+            int respKey, MemRgnEntry* memRgn, int vn ) :
         MsgSendEntry( local_vNic, streamNum, dst_node, dst_vNic ),
-        m_memRgn( memRgn )
+        m_memRgn( memRgn ), m_vn(vn)
     {
         m_totalBytes = EntryBase::totalBytes();
         m_hdr.respKey = respKey;
         m_hdr.op = RdmaMsgHdr::GetResp;
     }
+    int vn()               { return m_vn; }
 
     ~PutOrgnEntry()             { delete m_memRgn; }
 
@@ -168,4 +173,5 @@ class PutOrgnEntry : public MsgSendEntry, public EntryBase {
     size_t				m_totalBytes;
     MemRgnEntry*        m_memRgn;
     RdmaMsgHdr          m_hdr;
+    int                 m_vn;
 };

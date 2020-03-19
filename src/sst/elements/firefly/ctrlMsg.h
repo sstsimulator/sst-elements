@@ -79,15 +79,15 @@ class API : public ProtocolAPI {
 
     void initMsgPassing();
     void makeProgress();
-    void send( const Hermes::MemAddr&, size_t len, nid_t dest, uint64_t tag ); 
+    void send( const Hermes::MemAddr&, size_t len, nid_t dest, uint64_t tag, int vn = 0 ); 
     void send( const Hermes::MemAddr&, size_t len, MP::RankID dest, uint64_t tag, 
-                            MP::Communicator grp );
-    void isend( const Hermes::MemAddr&, size_t len, nid_t dest, uint64_t tag, CommReq* );
+                            MP::Communicator grp, int vn = 0 );
+    void isend( const Hermes::MemAddr&, size_t len, nid_t dest, uint64_t tag, CommReq*, int vn = 0 );
     void isend( const Hermes::MemAddr&, size_t len, nid_t dest, uint64_t tag,
-							MP::Communicator, CommReq* );
-    void isend( void*, size_t len, nid_t dest, uint64_t tag, MP::Communicator, CommReq* );
-    void sendv( std::vector<IoVec>&, nid_t dest, uint64_t tag );
-    void isendv( std::vector<IoVec>&, nid_t dest, uint64_t tag, MP::Communicator, CommReq* );
+							MP::Communicator, CommReq*, int vn = 0 );
+    void isend( void*, size_t len, nid_t dest, uint64_t tag, MP::Communicator, CommReq*, int vn = 0 );
+    void sendv( std::vector<IoVec>&, nid_t dest, uint64_t tag, int vn = 0 );
+    void isendv( std::vector<IoVec>&, nid_t dest, uint64_t tag, MP::Communicator, CommReq*, int vn = 0 );
     void recv( const Hermes::MemAddr&, size_t len, nid_t src, uint64_t tag );
     void recv( const Hermes::MemAddr&, size_t len, nid_t src, uint64_t tag, MP::Communicator grp );
     void recv( void*, size_t len, nid_t src, uint64_t tag, MP::Communicator grp );
@@ -129,7 +129,7 @@ class API : public ProtocolAPI {
   private:
     void sendv_common( std::vector<IoVec>& ioVec,
             MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
-            MP::Communicator group, CommReq* commReq );
+            MP::Communicator group, CommReq* commReq, int vn = 0 );
     void recvv_common( std::vector<IoVec>& ioVec,
     MP::PayloadDataType dtype, MP::RankID src, uint32_t tag,
     MP::Communicator group, CommReq* commReq );

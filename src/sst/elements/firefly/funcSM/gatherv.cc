@@ -28,6 +28,8 @@ GathervFuncSM::GathervFuncSM( SST::Params& params ) :
     m_event( NULL ),
     m_seq( 0 )
 {
+    m_smallCollectiveVN = params.find<int>( "smallCollectiveVN", 0);
+    m_smallCollectiveSize = params.find<int>( "smallCollectiveSize", 0);
 }
 
 void GathervFuncSM::handleStartEvent( SST::Event *e, Retval& retval ) 
@@ -167,7 +169,7 @@ bool GathervFuncSM::waitUp(Retval& retval)
 		addr.setSimVAddr( 1 );
 		addr.setBacking( NULL );
         proto()->send( addr, 0, m_qqq->calcChild( m_waitUpState.count ),
-                            genTag(3) );
+                            genTag(3), m_smallCollectiveVN );
 
         ++m_waitUpState.count;
         if ( m_waitUpState.count == m_qqq->numChildren() ) {
@@ -268,8 +270,14 @@ bool GathervFuncSM::sendUp(Retval& retval)
                                                 m_intBuf, m_qqq->parent());
 		addr.setSimVAddr( 1 );
 		addr.setBacking( &m_intBuf );
-        proto()->send( addr, sizeof(m_intBuf), m_qqq->parent(),
-                            genTag(1) );
+        {
+            int vn = 0;
+            if ( sizeof(m_intBuf) < m_smallCollectiveSize ) {
+                vn = m_smallCollectiveVN;
+            }
+            proto()->send( addr, sizeof(m_intBuf), m_qqq->parent(),
+                            genTag(1), vn );
+        }
 
         m_sendUpState.state = SendUpState::RecvGo;
         return true;
@@ -290,8 +298,14 @@ bool GathervFuncSM::sendUp(Retval& retval)
                                             m_qqq->parent());
 		addr.setSimVAddr( 1 );
 		addr.setBacking( &m_recvBuf[0] );
-        proto()->send( addr, m_recvBuf.size(), m_qqq->parent(),
-                            genTag(2) );
+        {
+            int vn = 0;
+            if ( m_recvBuf.size() < m_smallCollectiveSize ) {
+                vn = m_smallCollectiveVN;
+            }
+            proto()->send( addr, m_recvBuf.size(), m_qqq->parent(),
+                            genTag(2), vn );
+        }
 #if 0 // print debug 
         for ( unsigned int i = 0; i < m_recvBuf.size(); i++ ) {
             printf("%#03x\n", m_recvBuf[i]);

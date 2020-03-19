@@ -118,9 +118,10 @@ Nic::EntryBase* Nic::RecvMachine::Ctx::findRecv( int srcNode, int srcPid, MsgHdr
 
     DmaRecvEntry* entry = NULL;
 
-    std::deque<DmaRecvEntry*>::iterator iter = m_postedRecvs.begin();
+    auto& q = m_rm.m_nic.m_recvCtxData[m_pid].m_postedRecvs;
+    auto iter = q.begin();
 
-    for ( ; iter != m_postedRecvs.end(); ++iter ) {
+    for ( ; iter != q.end(); ++iter ) {
         entry = (*iter);
         m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_CTX,"check Posted Recv with tag=%#x node=%d\n",entry->tag(),entry->node());
 
@@ -136,7 +137,7 @@ Nic::EntryBase* Nic::RecvMachine::Ctx::findRecv( int srcNode, int srcPid, MsgHdr
 
         m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_CTX,"found recv entry, size %lu\n",entry->totalBytes());
 
-        m_postedRecvs.erase(iter);
+        q.erase(iter);
         return entry;
     }
     m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_CTX,"no match\n");
@@ -150,16 +151,26 @@ Nic::SendEntryBase* Nic::RecvMachine::Ctx::findGet( int srcNode, int srcPid, Rdm
                         srcNode, srcPid, rdmaHdr.rgnNum, rdmaHdr.offset, rdmaHdr.respKey );
     // Note that we are not doing a strong check here. We are only checking that
     // the tag matches.
-    if ( m_memRgnM.find( rdmaHdr.rgnNum ) == m_memRgnM.end() ) {
+    auto& m = m_rm.m_nic.m_recvCtxData[m_pid].m_memRgnM;
+
+    if ( m.find( rdmaHdr.rgnNum ) == m.end() ) {
         assert(0);
     }
 
-    MemRgnEntry* entry = m_memRgnM[rdmaHdr.rgnNum];
+    MemRgnEntry* entry = m[rdmaHdr.rgnNum];
     assert( entry );
 
-    m_memRgnM.erase(rdmaHdr.rgnNum);
+    m.erase(rdmaHdr.rgnNum);
 
-    return new PutOrgnEntry( m_pid, nic().getSendStreamNum(m_pid), srcNode, srcPid, rdmaHdr.respKey, entry );
+    int vn = nic().m_getRespSmallVN; 
+    size_t length = 0;
+    for ( int i = 0; i <  entry->iovec().size(); i++ ) {
+        length += entry->iovec().at(i).len; 
+    }
+    if ( length >  nic().m_getRespSize ) {
+        vn = nic().m_getRespLargeVN; 
+    }
+    return new PutOrgnEntry( m_pid, nic().getSendStreamNum(m_pid), srcNode, srcPid, rdmaHdr.respKey, entry, vn );
 }
 
 Nic::DmaRecvEntry* Nic::RecvMachine::Ctx::findPut( int srcNode, MsgHdr& hdr, RdmaMsgHdr& rdmahdr )
@@ -167,12 +178,13 @@ Nic::DmaRecvEntry* Nic::RecvMachine::Ctx::findPut( int srcNode, MsgHdr& hdr, Rdm
     m_dbg.verbosePrefix(prefix(),CALL_INFO,1,NIC_DBG_RECV_CTX, "srcNode=%d rgnNum=%d offset=%d respKey=%d\n",
             srcNode, rdmahdr.rgnNum, rdmahdr.offset, rdmahdr.respKey);
 
+    auto& m = m_rm.m_nic.m_recvCtxData[m_pid].m_getOrgnM;
     DmaRecvEntry* entry = NULL;
     if ( RdmaMsgHdr::GetResp == rdmahdr.op ) {
         m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_CTX,"GetResp\n");
-        entry = m_getOrgnM[ rdmahdr.respKey ];
+        entry = m[ rdmahdr.respKey ];
 
-        m_getOrgnM.erase(rdmahdr.respKey);
+        m.erase(rdmahdr.respKey);
 
     } else if ( RdmaMsgHdr::Put == rdmahdr.op ) {
         m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_CTX,"Put\n");
