@@ -416,15 +416,6 @@ PortControl::initVCs(int vns, int* vcs_per_vn, internal_router_event** vc_heads_
     // for ( int i = 0; i < vcs; i++ ) port_out_credits[i] = 0;
 
 
-    // If I'm not a host port, I'm going to send out the VC count to
-    // my neighbors in case they don't have any host ports to get the
-    // request from.
-    if ( !host_port && port_link ) {
-        RtrInitEvent* init_ev = new RtrInitEvent();
-        init_ev->command = RtrInitEvent::SET_VNS;
-        init_ev->int_value = num_vns;
-        port_link->sendInitData(init_ev);
-    }
     // Need to start the timer for links that never send data
     idle_start = Simulation::getSimulation()->getCurrentSimCycle();
     is_idle = true;
@@ -499,6 +490,7 @@ PortControl::init(unsigned int phase) {
         init_ev = new RtrInitEvent();
         init_ev->command = RtrInitEvent::REPORT_BW;
         init_ev->ua_value = link_bw;
+        
         port_link->sendInitData(init_ev);
         
         // If this is a host port, send the endpoint ID to the LinkControl
@@ -544,16 +536,12 @@ PortControl::init(unsigned int phase) {
         
         // Get initialization event from endpoint, but only if I am a host port
         if ( topo->isHostPort(port_number) ) {
+            // Number of VNs used by the endpoint
             ev = port_link->recvInitData();
             init_ev = dynamic_cast<RtrInitEvent*>(ev);
             int req_vns = init_ev->int_value;
             if ( num_vns == -1 ) num_vns = req_vns;
-            // Need to notify the router about the number of VNs requested
-            parent->reportRequestedVNs(port_number,init_ev->int_value);
-            // if ( num_vns == -1 ) {
-            //     // Need to notify the router about the number of VNs requested
-            //     parent->reportRequestedVNs(port_number,init_ev->int_value);
-            // }
+
             remote_rdy_for_credits = true;
             delete ev;
 
@@ -600,6 +588,9 @@ PortControl::init(unsigned int phase) {
             init_ev = dynamic_cast<RtrInitEvent*>(ev);
             remote_port_number = init_ev->int_value;
             delete init_ev;
+
+            remote_rdy_for_credits = true;
+
         }
         }
         break;
@@ -624,11 +615,12 @@ PortControl::init(unsigned int phase) {
         else {
             // If my VCs have been initialized and the remote side is
             // ready to receive credits, send the credit events.
-            if ( num_vcs != -1 && remote_rdy_for_credits ) {
+            if ( remote_rdy_for_credits ) {
                 for ( int i = 0; i < num_vcs; i++ ) {
                     port_link->sendInitData(new credit_event(i,port_ret_credits[i]));
                     port_ret_credits[i] = 0;
                 }
+                // Make sure we only send the credits once
                 remote_rdy_for_credits = false;
             }
         }
@@ -648,10 +640,6 @@ PortControl::init(unsigned int phase) {
                 if ( init_ev != NULL ) {
                     // std::cout << "Received RtrInitEvent (port = " << port_number << ")" << std::endl;
                     remote_rdy_for_credits = true;
-                    if ( num_vns == -1 ) {
-                        // I have not yet been intiialized, so report VCs to router
-                        parent->reportSetVNs(port_number,init_ev->int_value);
-                    }
                     delete init_ev;
                 }
                 else {
