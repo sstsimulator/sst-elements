@@ -502,6 +502,8 @@ class ProcessQueuesState : public SubComponent
     int m_numSent;
     int m_numRecv;
     int m_nicsPerNode;
+    int m_rendezvousVN;
+    int m_ackVN;
 };
 
 }

@@ -35,7 +35,9 @@ ProcessQueuesState::ProcessQueuesState( ComponentId_t id, Params& params ) :
         m_intCtx(NULL),
 		m_simVAddrs(NULL),
         m_numSent(0),
-        m_numRecv(0)
+        m_numRecv(0),
+        m_rendezvousVN(0),
+        m_ackVN(0)
 {
     int level = params.find<uint32_t>("pqs.verboseLevel",0);
     int mask = params.find<int32_t>("pqs.verboseMask",-1);
@@ -59,6 +61,9 @@ ProcessQueuesState::ProcessQueuesState( ComponentId_t id, Params& params ) :
             params.find<std::string>("loopBackPortName", "loop"), "1 ns",
             new Event::Handler<ProcessQueuesState>(this,&ProcessQueuesState::loopHandler) );
     assert(m_loopLink);
+
+    m_ackVN = params.find<int>( "ackVN", 0 ); 
+    m_rendezvousVN = params.find<int>( "rendezvousVN", 0 ); 
 }
 
 
@@ -176,6 +181,7 @@ void ProcessQueuesState::processSend_1( _CommReq* req )
 void ProcessQueuesState::processSend_2( _CommReq* req )
 {
     size_t length = req->getLength( );
+    int vn = 0;
 
 	std::vector<void*> ptrs;
     IoVec hdrVec;   
@@ -210,6 +216,7 @@ void ProcessQueuesState::processSend_2( _CommReq* req )
 		} 
         req->setDone( sendReqFiniDelay( length ) );
         ++m_numSent;
+        vn = req->m_vn;
 
     } else {
         dbg().debug(CALL_INFO,2,DBG_MSK_PQS_APP_SIDE,"sending long message %lu bytes\n",length); 
@@ -235,12 +242,13 @@ void ProcessQueuesState::processSend_2( _CommReq* req )
 
         m_nic->dmaRecv( nid, req->hdr().key, hdrVec, callback ); 
         m_nic->regMem( nid, req->hdr().key, req->ioVec(), NULL );
+        vn = m_rendezvousVN;
     }
 
     VoidFunction* callback = new VoidFunction;
     *callback = std::bind( &ProcessQueuesState::pioSendFiniVoid, this, ptrs, hdrVec.addr.getSimVAddr() );
 
-    m_nic->pioSend( req->m_vn, nid, ShortMsgQ, vec, callback);
+    m_nic->pioSend( vn, nid, ShortMsgQ, vec, callback);
 
     if ( ! req->isBlocking() ) {
         exit();
@@ -844,7 +852,7 @@ void ProcessQueuesState::processLongGetFini0( Stack* stack )
     dbg().debug(CALL_INFO,1,DBG_MSK_PQS_CB,"send long msg Ack to nid=%d key=%#x\n", 
                                                 req->m_ackNid, req->m_ackKey );
 
-    m_nic->pioSend( 0, req->m_ackNid, req->m_ackKey, vec, callback );
+    m_nic->pioSend( m_ackVN, req->m_ackNid, req->m_ackKey, vec, callback );
 
     schedCallback( stack->back()->getCallback() );
 }
