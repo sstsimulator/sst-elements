@@ -32,7 +32,10 @@ AllgatherFuncSM::AllgatherFuncSM( SST::Params& params ) :
     FunctionSMInterface( params ),
     m_event( NULL ),
     m_seq( 0 )
-{ }
+{
+        m_smallCollectiveVN = params.find<int>( "smallCollectiveVN", 0);
+        m_smallCollectiveSize = params.find<int>( "smallCollectiveSize", 0);
+}
 
 void AllgatherFuncSM::handleStartEvent( SST::Event *e, Retval& retval ) 
 {
@@ -125,12 +128,12 @@ bool AllgatherFuncSM::setup( Retval& retval )
         	memcpy( chunkPtr(m_rank), m_event->sendbuf.getBacking(), chunkSize(m_rank) );
 		}
 
-        m_dbg.debug(CALL_INFO,1,0,"send ready message to %d\n",
-						m_info->getGroup(m_event->group)->getMapping(m_dest[0]));
+        m_dbg.debug(CALL_INFO,1,0,"send ready message to %d vn=%d\n",
+						m_info->getGroup(m_event->group)->getMapping(m_dest[0]), m_smallCollectiveVN );
 		
 		addr.setSimVAddr( 1 );
 		addr.setBacking( NULL );
-        proto()->send( addr, 0, m_info->getGroup(m_event->group)->getMapping( m_dest[0] ), genTag() );
+        proto()->send( addr, 0, m_info->getGroup(m_event->group)->getMapping( m_dest[0] ), genTag(), m_smallCollectiveVN );
     }
     return true;
 }
@@ -157,10 +160,20 @@ void AllgatherFuncSM::handleEnterEvent( Retval& retval )
         initIoVec( ioVec, m_sendStartChunk[m_currentStage],
                             m_numChunks[m_currentStage], m_event->sendbuf.getBacking() != NULL );
 
-        m_dbg.debug(CALL_INFO,1,0,"send stage %d, dest %d\n",
-                        m_currentStage,m_info->getGroup(m_event->group)->getMapping(m_dest[m_currentStage]) );
-        proto()->sendv( ioVec, m_info->getGroup(m_event->group)->getMapping(m_dest[m_currentStage]), 
-               genTag() + m_currentStage + 1 );
+        {
+            int vn = 0;
+            size_t length = 0;
+            for ( int i = 0; i < ioVec.size(); i++ ) {
+                length += ioVec[i].len;
+            }
+            if ( length <= m_smallCollectiveSize ) {
+                vn = m_smallCollectiveVN;
+            } 
+            m_dbg.debug(CALL_INFO,1,0,"send stage %d, dest %d vn=%d\n",
+                        m_currentStage,m_info->getGroup(m_event->group)->getMapping(m_dest[m_currentStage]), vn );
+            proto()->sendv( ioVec, m_info->getGroup(m_event->group)->getMapping(m_dest[m_currentStage]), 
+               genTag() + m_currentStage + 1, vn );
+        }
         m_state = WaitRecvData;
         return;
 

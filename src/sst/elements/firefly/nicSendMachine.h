@@ -38,7 +38,7 @@ class SendMachine {
                 m_prefix = "@t:"+ std::to_string(nic.getNodeId()) +":Nic::SendMachine" + std::to_string(myId) + "::OutQ::@p():@l ";
             }
 
-            void enque( FireflyNetworkEvent* ev, int dest, Callback );
+            void enque( FireflyNetworkEvent* ev, int vn, int dest, Callback );
 
             bool isFull() { 
                 return m_qCnt == m_maxQsize; 
@@ -98,7 +98,7 @@ class SendMachine {
                 return m_numPending == m_maxQsize;
             }
 
-            void  enque( int unit, int pid, std::vector< MemOp >* vec, FireflyNetworkEvent* ev, int dest, Callback callback = NULL );
+            void  enque( int unit, int pid, std::vector< MemOp >* vec, FireflyNetworkEvent* ev, int vn, int dest, Callback callback = NULL );
         
             void wakeMeUp( Callback  callback) {
                 assert(!m_callback);
@@ -107,16 +107,17 @@ class SendMachine {
 
           private:
             struct Entry { 
-                Entry( FireflyNetworkEvent* ev, int dest, Callback callback, uint64_t pktNum ) : 
-                            ev(ev), dest(dest), callback(callback), pktNum(pktNum) {}
+                Entry( FireflyNetworkEvent* ev, int vn, int dest, Callback callback, uint64_t pktNum ) : 
+                            ev(ev), vn(vn), dest(dest), callback(callback), pktNum(pktNum) {}
                 FireflyNetworkEvent* ev;
+                int vn;
                 int dest;
                 Callback callback;
                 uint64_t pktNum;
             };
 
-            void ready( FireflyNetworkEvent* ev, int dest, Callback callback, uint64_t pktNum );
-            void ready2( FireflyNetworkEvent* ev, int dest, Callback callback );
+            void ready( FireflyNetworkEvent* ev, int vn, int dest, Callback callback, uint64_t pktNum );
+            void ready2( FireflyNetworkEvent* ev, int vn, int dest, Callback callback );
             void processPending();
 
             Nic&        m_nic;

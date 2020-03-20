@@ -64,7 +64,7 @@ public:
         {"network_inspectors", "Comma separated list of network inspectors to put on output ports.", ""},
         {"oql_track_port",     "Set to true to track output queue length for an entire port.  False tracks per VC.", "false"},
         {"oql_track_remote",   "Set to true to track output queue length including remote input queue.  False tracks only local queue.", "false"},
-        {"num_vns",            "Number of VNs.  Will default to number reqeusted by endpoints if not set.  Must be set in order to use VN remapping."},
+        {"num_vns",            "Number of VNs.","2"},
         {"vn_remap",           "Array that specifies the vn remapping for each node in the systsm."},
         {"vn_remap_shm",       "Name of shared memory region for vn remapping.  If empty, no remapping is done", ""},
         {"debug",              "Turn on debugging for router. Set to 1 for on, 0 for off.", "0"}
@@ -99,7 +99,6 @@ private:
     std::string vn_remap_shm;
     int vn_remap_shm_size;
     int num_vcs;
-    bool vcs_initialized;
         
     Topology* topo;
     XbarArbitration* arb;
@@ -153,9 +152,6 @@ public:
 
     void sendTopologyEvent(int port, TopologyEvent* ev);
     void recvTopologyEvent(int port, TopologyEvent* ev);
-    
-    void reportRequestedVNs(int port, int vns);
-    void reportSetVNs(int port, int vns);
     
     void dumpState(std::ostream& stream);
     void printStatus(Output& out);

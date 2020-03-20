@@ -135,6 +135,8 @@ class AllgatherFuncSM :  public FunctionSMInterface
     unsigned int        m_currentStage;
     static const char*  m_enumName[];
 
+    int m_smallCollectiveVN;
+    int m_smallCollectiveSize;
 };
         
 }

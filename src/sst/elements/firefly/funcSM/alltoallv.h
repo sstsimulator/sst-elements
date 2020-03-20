@@ -63,8 +63,9 @@ class AlltoallvFuncSM :  public FunctionSMInterface
         m_event( NULL ),
         m_seq( 0 )
     { 
+       m_smallCollectiveVN = params.find<int>( "smallCollectiveVN", 0);
+        m_smallCollectiveSize = params.find<int>( "smallCollectiveSize", 0);
     }
-
 
     virtual void handleStartEvent( SST::Event*, Retval& );
     virtual void handleEnterEvent( Retval& );
@@ -139,6 +140,10 @@ class AlltoallvFuncSM :  public FunctionSMInterface
     int                 m_seq;
     unsigned int        m_size;
     MP::RankID          m_rank;
+
+    int m_smallCollectiveVN;
+    int m_smallCollectiveSize;
+
 };
         
 }

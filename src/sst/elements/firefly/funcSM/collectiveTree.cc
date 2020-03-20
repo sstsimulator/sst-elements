@@ -61,6 +61,9 @@ void CollectiveTreeFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
     m_bufV.resize( m_yyy->numChildren() + 1);
 
     m_bufLen = m_event->count * m_info->sizeofDataType( m_event->dtype );  
+    if ( m_bufLen <= m_smallCollectiveSize ) {
+        m_vn = m_smallCollectiveVN;
+    }
 
 
     m_bufV[0] = m_event->mydata.getBacking();
@@ -141,7 +144,7 @@ void CollectiveTreeFuncSM::handleEnterEvent( Retval& retval )
                                                             m_yyy->parent());
 			addr.setSimVAddr( 1 );
 			addr.setBacking( ptr );
-            proto()->send( addr, m_bufLen, m_yyy->parent(), genTag(), m_event->group );
+            proto()->send( addr, m_bufLen, m_yyy->parent(), genTag(), m_event->group, m_vn );
             return;
         }
 
@@ -176,10 +179,8 @@ void CollectiveTreeFuncSM::handleEnterEvent( Retval& retval )
                 m_dbg.debug(CALL_INFO,1,0,"isend to child %d\n", child );
 				addr.setSimVAddr( 1 );
 				addr.setBacking( m_event->result.getBacking() );
-                proto()->isend( addr, m_bufLen,
-                        m_yyy->calcChild( child ), 
-                        genTag(), m_event->group, &m_sendReqV[ child ] );
-			
+                proto()->isend( addr, m_bufLen, m_yyy->calcChild( child ), 
+                        genTag(), m_event->group, &m_sendReqV[ child ], m_vn );
 				return;
 			  case SendDownState::Waiting:
 				m_state = Exit;
