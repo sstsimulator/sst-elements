@@ -90,8 +90,14 @@ void AlltoallvFuncSM::handleEnterEvent( Retval& retval )
 		
 		addr.setSimVAddr( 1 ); 
 		addr.setBacking( sendChunkPtr(rank) ); 
-        proto()->send( addr, sendChunkSize(rank), 
-                                            rank, genTag(), m_event->group ); 
+        { 
+            int vn = 0;
+            if ( sendChunkSize(rank) <= m_smallCollectiveSize ) {
+                vn = m_smallCollectiveVN;
+            }
+            proto()->send( addr, sendChunkSize(rank), 
+                                            rank, genTag(), m_event->group, vn ); 
+        }
         m_state = WaitRecv;
         break;
 

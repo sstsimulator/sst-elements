@@ -133,8 +133,12 @@ class CollectiveTreeFuncSM :  public FunctionSMInterface
     CollectiveTreeFuncSM( SST::Params& params ) :
         FunctionSMInterface( params ),
         m_event( NULL ),
-        m_seq( 0 )
-    { }
+        m_seq( 0 ),
+        m_vn( 0 )
+    {
+        m_smallCollectiveVN = params.find<int>( "smallCollectiveVN", 0); 
+        m_smallCollectiveSize = params.find<int>( "smallCollectiveSize", 0); 
+    }
 
     virtual void handleStartEvent( SST::Event*, Retval& );
     virtual void handleEnterEvent( Retval& );
@@ -159,6 +163,10 @@ class CollectiveTreeFuncSM :  public FunctionSMInterface
     size_t              m_bufLen;
     YYY*                m_yyy;
     int                 m_seq;
+
+    int m_vn;
+    int m_smallCollectiveVN;
+    int m_smallCollectiveSize;
 };
         
 }

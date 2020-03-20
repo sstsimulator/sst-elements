@@ -48,7 +48,7 @@ class _CommReq : public MP::MessageRequestBase {
 
     _CommReq( Type type, std::vector<IoVec>& _ioVec, 
         unsigned int dtypeSize, MP::RankID rank, uint32_t tag,
-        MP::Communicator group ) : 
+        MP::Communicator group, int vn ) : 
         m_type( type ),
         m_ioVec( _ioVec ),
         m_resp( NULL ),
@@ -56,7 +56,8 @@ class _CommReq : public MP::MessageRequestBase {
         m_destRank( MP::AnySrc ),
         m_ignore( 0 ),
         m_isMine( true ),
-        m_finiDelay_ns( 0 )
+        m_finiDelay_ns( 0 ),
+        m_vn(vn)
     {
         m_hdr.count = getLength() / dtypeSize;
         m_hdr.dtypeSize = dtypeSize; 
@@ -73,14 +74,15 @@ class _CommReq : public MP::MessageRequestBase {
 
     _CommReq( Type type, const Hermes::MemAddr& buf, uint32_t count,
         unsigned int dtypeSize, MP::RankID rank, uint32_t tag, 
-        MP::Communicator group, MP::MessageResponse* resp = NULL ) :
+        MP::Communicator group, int vn, MP::MessageResponse* resp = NULL ) :
         m_type( type ),
         m_resp( resp ),
         m_done( false ),
         m_destRank( MP::AnySrc ),
         m_ignore( 0 ),
         m_isMine( true ),
-        m_finiDelay_ns( 0 )
+        m_finiDelay_ns( 0 ),
+        m_vn(vn)
     { 
         m_hdr.count = count;
         m_hdr.dtypeSize = dtypeSize; 
@@ -168,6 +170,7 @@ class _CommReq : public MP::MessageRequestBase {
     // need to save info for the long protocol ack
     int m_ackKey;
     int m_ackNid;
+    int m_vn;
 
   private:
 

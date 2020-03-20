@@ -75,9 +75,6 @@ public:
     virtual int const* getOutputBufferCredits() = 0;
     virtual void sendTopologyEvent(int port, TopologyEvent* ev) = 0;
     virtual void recvTopologyEvent(int port, TopologyEvent* ev) = 0;
-
-    virtual void reportRequestedVNs(int port, int vns) = 0;
-    virtual void reportSetVNs(int port, int vns) = 0;
 };
 
 #define MERLIN_ENABLE_TRACE

@@ -22,6 +22,7 @@ class ShmemSendEntryBase: public SendEntryBase {
     MsgHdr::Op getOp() { return MsgHdr::Shmem; }
     void* hdr() { return &m_hdr; }
     size_t hdrSize() { return sizeof(m_hdr); }
+    int vn() { return 0; }
   protected:
     Nic::ShmemMsgHdr m_hdr;
 };

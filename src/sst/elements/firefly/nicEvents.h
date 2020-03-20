@@ -379,16 +379,18 @@ class NicCmdEvent : public NicCmdBaseEvent {
     int tag;
     std::vector<IoVec> iovec;
     void* key;
+    int vn;
 
     NicCmdEvent( Type _type, int _vNic, int _node, int _tag,
-            std::vector<IoVec>& _vec, void* _key ) :
+            std::vector<IoVec>& _vec, void* _key, int vn = 0 ) :
         NicCmdBaseEvent(Msg),
         type( _type ),
         node( _node ),
         dst_vNic( _vNic ),
         tag( _tag ),
         iovec( _vec ),
-        key( _key )
+        key( _key ),
+        vn(vn)
     { }
 
     NotSerializable(NicCmdEvent)

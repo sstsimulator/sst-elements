@@ -53,8 +53,8 @@ bool EmberAllreduceGenerator::generate( std::queue<EmberEvent*>& evQ) {
     }
     if ( 0 == m_loopIndex ) {
 		memSetBacked();
-		m_sendBuf = memAlloc(sizeofDataType(DOUBLE));
-		m_recvBuf = memAlloc(sizeofDataType(DOUBLE));
+		m_sendBuf = memAlloc(sizeofDataType(DOUBLE)*m_count);
+		m_recvBuf = memAlloc(sizeofDataType(DOUBLE)*m_count);
         enQ_getTime( evQ, &m_startTime );
     }
 
