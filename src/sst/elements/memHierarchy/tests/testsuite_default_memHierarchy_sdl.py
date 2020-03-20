@@ -106,17 +106,6 @@ class testcase_memHierarchy_Component(SSTTestCase):
     def test_memHierarchy_sdl9_2(self):
         self.memHierarchy_Template("sdl9-2", 500)
 
-
-#    def test_print_DramSim_summary(self):
-#        if [ $DRAMSIM_EXACT_MATCH_FAIL_COUNT != 0 ] ; then
-#            echo "DramSim exact match failed on:" > $$_tmp
-#            echo $FAIL_LIST  >> $$_tmp
-#        else
-#            echo "        DramSim sdl tests all got exact match"  >> $$_tmp
-#        fi
-#        echo ' '
-#        skip_this_test
-
 #####
 
     def memHierarchy_Template(self, testcase, tolerance):
@@ -133,17 +122,49 @@ class testcase_memHierarchy_Component(SSTTestCase):
         reffile = "{0}/refFiles/{1}.out".format(get_testsuite_dir(), testDataFileName)
         outfile = "{0}/{1}.out".format(get_test_output_run_dir(), testDataFileName)
         errfile = "{0}/{1}.err".format(get_test_output_run_dir(), testDataFileName)
+        tmpfile = "{0}/{1}.tmp".format(get_test_output_tmp_dir(), testDataFileName)
+        difffile = "{0}/{1}.raw_diff".format(get_test_output_tmp_dir(), testDataFileName)
         mpioutfiles = "{0}/{1}.testfile".format(get_test_output_run_dir(), testDataFileName)
 
         # Delete any leftover dramsim*.log files that might have been left over
         cmd = "rm -f {0}/dramsim*.log".format(get_testsuite_dir())
         os.system(cmd)
 
+        # See if sdl file is using DramSimm
+        cmd = "grep backend {0} | grep dramsim > /dev/null".format(sdlfile)
+        usingDramSim = (os.system(cmd) == 0)
+
         # Run SST in the tests directory
         self.run_sst(sdlfile, outfile, errfile, set_cwd=test_path, mpi_out_files=mpioutfiles)
 
-        # Perform the test
-        cmp_result = compare_sorted(testcase, outfile, reffile)
-        self.assertTrue(cmp_result, "Output/Compare file {0} does not match Reference File {1}".format(outfile, reffile))
+        # Get a count of "not aligned messages
+        cmd = "grep -c 'not aligned to the request size' {0} >> /dev/null".format(errfile)
+        notAlignedCount = os.system(cmd)
 
+        # if not multi-rank run, append the errfile onto the output file
+        if get_testing_num_ranks() <= 2:
+            cmd = "grep -v 'not aligned to the request size' {0} >> {1}".format(errfile, outfile)
+            os.system(cmd)
 
+        # Post processing clean up output file
+        cmd = "grep -v ^cpu.*: {0} > {1}".format(outfile, tmpfile)
+        os.system(cmd)
+        cmd = "grep -v 'not aligned to the request size' {0} > {1}".format(tmpfile, outfile)
+        os.system(cmd)
+
+        # This may be needed in the future
+        #remove_component_warning()
+
+        # Use diff (ignore whitespace) to see if the files are the same
+        cmd = "diff -b {0} {1} > {2}".format(reffile, outfile, difffile)
+        filesAreTheSame = (os.system(cmd) == 0)
+
+        if not filesAreTheSame:
+            # Perform the test to see if they match when sorted
+            cmp_result = compare_sorted(testcase, outfile, reffile)
+            self.assertTrue(cmp_result, "Output/Compare file {0} does not match Reference File {1}".format(outfile, reffile))
+
+        # Make sure the simulation completed
+        cmd = "grep 'Simulation is complete, simulated time:' {0} >> /dev/null".format(outfile)
+        foundEndMsg = (os.system(cmd) == 0)
+        self.assertTrue(foundEndMsg, "Did not find 'Simulation is complete, simulated time:' in output file")
