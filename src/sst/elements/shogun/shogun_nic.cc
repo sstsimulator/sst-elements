@@ -11,24 +11,6 @@
 
 using namespace SST::Shogun;
 
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-ShogunNIC::ShogunNIC(SST::Component* component, Params& params)
-    : SimpleNetwork(component)
-    , netID(-1), bw(UnitAlgebra("1GB/s"))
-{
-
-    const int verbosity = params.find<uint32_t>("verbose", 0);
-
-    //TODO: output = new ...
-    output = new SST::Output("ShogunNIC-Startup ", verbosity, 0, Output::STDOUT);
-    reqQ = nullptr;
-    remote_input_slots = -1;
-
-    onSendFunctor = nullptr;
-    onRecvFunctor = nullptr;
-}
-#endif  // inserted by script
-
 ShogunNIC::ShogunNIC(SST::ComponentId_t id, Params& params, int vns = 1)
     : SimpleNetwork(id)
     , netID(-1), bw(UnitAlgebra("1GB/s")) {

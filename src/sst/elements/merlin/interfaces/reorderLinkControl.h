@@ -159,9 +159,6 @@ private:
 //    HandlerBase* sendFunctor;
     
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    ReorderLinkControl(Component* parent, Params &params);
-#endif  // inserted by script
     ReorderLinkControl(ComponentId_t cid, Params &params, int vns);
 
     ~ReorderLinkControl();

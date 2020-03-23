@@ -50,9 +50,6 @@ private:
     static setMap_t setMap;
     static SST::Core::ThreadSafe::Spinlock mapLock;
 public:
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    CircNetworkInspector(SST::Component* parent, SST::Params &params);
-#endif  // inserted by script
     CircNetworkInspector(SST::ComponentId_t, SST::Params &params, const std::string& sub_id);
 
 #ifndef SST_ENABLE_PREVIEW_BUILD
