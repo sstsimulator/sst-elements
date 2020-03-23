@@ -142,7 +142,7 @@ class testcase_memHierarchy_Component(SSTTestCase):
         notAlignedCount = os.system(cmd)
 
         # if not multi-rank run, append the errfile onto the output file
-        if get_testing_num_ranks() <= 2:
+        if get_testing_num_ranks() < 2:
             cmd = "grep -v 'not aligned to the request size' {0} >> {1}".format(errfile, outfile)
             os.system(cmd)
 
