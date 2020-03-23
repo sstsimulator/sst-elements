@@ -20,12 +20,6 @@
 namespace SST {
 namespace Merlin {
 
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-TestNetworkInspector::TestNetworkInspector(Component* parent, Params& params) :
-    SimpleNetwork::NetworkInspector(parent)
-{}
-#endif  // inserted by script
-
 TestNetworkInspector::TestNetworkInspector(ComponentId_t id, Params& params, const std::string& sub_id) :
     SimpleNetwork::NetworkInspector(id)
 {
