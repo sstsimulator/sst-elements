@@ -456,17 +456,17 @@ public:
         return ++m_getKey;
     }
 
-    bool sendNotify(int vc)
+    bool sendNotify(int vn)
     {
-        m_dbg.debug(CALL_INFO,2,1,"network can send on vc=%d\n",vc);
-        return m_linkSendWidget->notify( vc );
+        m_dbg.debug(CALL_INFO,2,1,"network can send on vn=%d\n",vn);
+        return m_linkSendWidget->notify( vn );
     }
 
 
-    bool recvNotify(int vc)
+    bool recvNotify(int vn)
     {
-        m_dbg.debug(CALL_INFO,2,1,"network event available vc=%d\n",vc);
-        return m_linkRecvWidget->notify( vc );
+        m_dbg.debug(CALL_INFO,2,1,"network event available vn=%d\n",vn);
+        return m_linkRecvWidget->notify( vn );
     }
 
     int NetToId( int x ) { return x; }
@@ -646,10 +646,23 @@ struct X {
 	int m_tracedPkt;
 	int m_tracedNode;
 	SimTime_t m_predNetIdleTime;
+
     int m_getHdrVN;
     int m_getRespSize;
     int m_getRespLargeVN;
     int m_getRespSmallVN;
+
+
+    int m_shmemAckVN;
+
+    int m_shmemGetReqVN;
+    int m_shmemGetLargeVN;
+    int m_shmemGetSmallVN;
+    size_t m_shmemGetThresholdLength;
+
+    int m_shmemPutLargeVN;
+    int m_shmemPutSmallVN;
+    size_t m_shmemPutThresholdLength;
 }; 
 
 } // namesapce Firefly 
