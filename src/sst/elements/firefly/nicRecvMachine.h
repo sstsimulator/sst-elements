@@ -38,11 +38,11 @@ class RecvMachine {
 
       public:
 
-        RecvMachine( Nic& nic, int vc, int numVnics, 
+        RecvMachine( Nic& nic, int vn, int numVnics, 
                 int nodeId, int verboseLevel, int verboseMask,
                 int rxMatchDelay, int hostReadDelay, int maxQsize, int maxActiveStreams ) :
             m_nic(nic), 
-            m_vc(vc), 
+            m_vn(vn), 
             m_rxMatchDelay( rxMatchDelay ),
             m_hostReadDelay( hostReadDelay ),
             m_notifyCallback( false ),
@@ -53,7 +53,7 @@ class RecvMachine {
             m_hostBlockingTime(0)
         { 
             char buffer[100];
-            snprintf(buffer,100,"@t:%d:Nic::RecvMachine::@p():@l vc=%d ",nodeId,m_vc);
+            snprintf(buffer,100,"@t:%d:Nic::RecvMachine::@p():@l vn=%d ",nodeId,m_vn);
 
             m_dbg.init(buffer, verboseLevel, verboseMask, Output::STDOUT);
             setNotify();
@@ -97,7 +97,7 @@ class RecvMachine {
         std::vector< Ctx* >   m_ctxMap;
 
         void checkNetworkForData() {
-            FireflyNetworkEvent* ev = getNetworkEvent( m_vc );
+            FireflyNetworkEvent* ev = getNetworkEvent( m_vn );
             if ( ev ) {
                 m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"packet available\n");
                 m_nic.schedCallback( std::bind( &Nic::RecvMachine::processPkt, this, ev ));
@@ -113,7 +113,7 @@ class RecvMachine {
             if( ! m_notifyCallback ) {
                 m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE, "\n");
                 m_nic.m_linkRecvWidget->setNotify(
-                                    std::bind(&Nic::RecvMachine::processNetworkData, this), m_vc );
+                                    std::bind(&Nic::RecvMachine::processNetworkData, this), m_vn );
                 m_notifyCallback = true;
             }
         }
@@ -124,7 +124,7 @@ class RecvMachine {
             // this notifier was called by the LinkControl object, the RecvMachine may 
             // re-install the LinkControl notifier, if it does there would be a cycle
             // this schedCallback breaks the cycle
-            m_nic.schedCallback(  [=](){ processPkt( getNetworkEvent( m_vc ) ); } );
+            m_nic.schedCallback(  [=](){ processPkt( getNetworkEvent( m_vn ) ); } );
             m_notifyCallback = false;
         }
 
@@ -157,9 +157,9 @@ class RecvMachine {
             }
         }
 
-        FireflyNetworkEvent* getNetworkEvent(int vc ) {
+        FireflyNetworkEvent* getNetworkEvent(int vn ) {
             SST::Interfaces::SimpleNetwork::Request* req =
-                m_nic.m_linkControl->recv(vc);
+                m_nic.m_linkControl->recv(vn);
 
             if ( m_hostBlockingTime ) {
                 uint64_t latency = Simulation::getSimulation()->getCurrentSimCycle() - m_hostBlockingTime;
@@ -197,7 +197,7 @@ class RecvMachine {
         SimTime_t m_hostBlockingTime;		
         int m_numMsgRcvd;
         int m_receivedPkts;
-        int         m_vc;
+        int         m_vn;
         int         m_rxMatchDelay;
         bool        m_notifyCallback; 
 
