@@ -21,16 +21,6 @@
 
 namespace SST { namespace MemHierarchy {
 
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-networkMemInspector::networkMemInspector(Component *parent, Params &params)
-    : NetworkInspector(parent) {
-    // should fix to have this be a param
-    dbg.init("@R:netMemInspect::@p():@l " + getName() + ": ", 0, 0, 
-             Output::STDOUT);  
-
-}
-#endif  // inserted by script
-
 networkMemInspector::networkMemInspector(ComponentId_t id, Params &params, const std::string& sub_id)
     : NetworkInspector(id) {
     // should fix to have this be a param

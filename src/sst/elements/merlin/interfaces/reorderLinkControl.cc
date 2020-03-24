@@ -27,18 +27,6 @@ using namespace Interfaces;
 
 namespace Merlin {
 
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-ReorderLinkControl::ReorderLinkControl(Component* parent, Params &params) :
-    SimpleNetwork(parent),
-    receiveFunctor(NULL)
-{
-    std::string networkIF = params.find<std::string>("rlc:networkIF", "merlin.linkcontrol");
-DISABLE_WARN_DEPRECATED_DECLARATION
-    link_control = static_cast<SimpleNetwork*>(loadSubComponent(networkIF, params));
-REENABLE_WARNING
-}
-#endif  // inserted by script
-
 ReorderLinkControl::ReorderLinkControl(ComponentId_t cid, Params &params, int vns) :
     SimpleNetwork(cid),
     receiveFunctor(NULL),
@@ -90,18 +78,18 @@ ReorderLinkControl::initialize(const std::string& port_name, const UnitAlgebra& 
                                int vns, const UnitAlgebra& in_buf_size,
                                const UnitAlgebra& out_buf_size)
 {
-    if ( !wasLoadedWithLegacyAPI() ) {
-        merlin_abort.fatal(CALL_INFO_LONG,1,"reorderLinkControl::initializae() was called on instance that was loaded using new APIs.  This method can only be called when loaded with the legacy API.  Use wasLoadedWithLegacyAPI() to check load status.");
-        return false;
-    }
+    // if ( !wasLoadedWithLegacyAPI() ) {
+    //     merlin_abort.fatal(CALL_INFO_LONG,1,"reorderLinkControl::initializae() was called on instance that was loaded using new APIs.  This method can only be called when loaded with the legacy API.  Use wasLoadedWithLegacyAPI() to check load status.");
+    //     return false;
+    // }
     this->vns = vns;
     
     // Don't need output buffers, sends will go directly to
     // LinkControl.  Do need input buffers.
     input_buf = new request_queue_t[vns];
 
-    // Initialize link_control
-    link_control->initialize(port_name, link_bw_in, vns, in_buf_size, out_buf_size);
+    // // Initialize link_control
+    // link_control->initialize(port_name, link_bw_in, vns, in_buf_size, out_buf_size);
     
     return true;
 }

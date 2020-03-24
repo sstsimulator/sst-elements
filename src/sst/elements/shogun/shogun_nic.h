@@ -32,9 +32,6 @@ namespace Shogun {
 
         SST_ELI_DOCUMENT_PORTS( {"port", "Port into network", {"shogun.ShogunCreditEvent", "shogun.ShogunEvent"} } )
 
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-        ShogunNIC(SST::Component* component, Params& params);
-#endif  // inserted by script
         ShogunNIC(SST::ComponentId_t id, Params& params, int vns);
         ~ShogunNIC();
 
@@ -50,7 +47,7 @@ namespace Shogun {
      */
         virtual bool initialize(const std::string& portName, const UnitAlgebra& link_bw,
             int vns, const UnitAlgebra& in_buf_size,
-            const UnitAlgebra& out_buf_size) override;
+            const UnitAlgebra& out_buf_size);
 #endif
         /**
      		* Sends a network request during the init() phase

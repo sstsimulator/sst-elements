@@ -28,35 +28,6 @@ using namespace Interfaces;
 
 namespace Merlin {
 
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-LinkControl::LinkControl(Component* parent, Params &params) :
-    SST::Interfaces::SimpleNetwork(parent),
-    rtr_link(NULL), output_timing(NULL),
-    req_vns(0), total_vns(0), checker_board_factor(1), id(-1),
-    logical_nid(-1), nid_map_shm(nullptr), nid_map(nullptr),
-    rr(0), input_buf(NULL), output_buf(NULL),
-    rtr_credits(NULL), in_ret_credits(NULL),
-    curr_out_vn(0), waiting(true), have_packets(false), start_block(0),
-    idle_start(0),
-    is_idle(true),
-    receiveFunctor(NULL), sendFunctor(NULL),
-    network_initialized(false),
-    output(Simulation::getSimulation()->getSimulationOutput())
-{
-    checker_board_factor = params.find<int>("checkerboard", 1);
-    std::string checkerboard_alg = params.find<std::string>("checkerboard_alg","deterministic");
-    if ( checkerboard_alg == "roundrobin" ) {
-        cb_alg = ROUNDROBIN;
-    }
-    else if ( checkerboard_alg == "deterministic" ) {
-        cb_alg = DETERMINISTIC;
-    }
-    else {
-        merlin_abort.fatal(CALL_INFO,-1,"Unknown checkerboard_alg requested: %s\n",checkerboard_alg.c_str());
-    }
-}
-#endif  // inserted by script
-    
 LinkControl::LinkControl(ComponentId_t cid, Params &params, int vns) :
     SST::Interfaces::SimpleNetwork(cid),
     rtr_link(NULL), output_timing(NULL),
@@ -206,10 +177,6 @@ LinkControl::initialize(const std::string& port_name, const UnitAlgebra& link_bw
                         int vns, const UnitAlgebra& in_buf_size,
                         const UnitAlgebra& out_buf_size)
 {    
-    if ( !wasLoadedWithLegacyAPI() ) {
-        merlin_abort.fatal(CALL_INFO_LONG,1,"LinkControl::initializae() was called on instance that was loaded using new APIs.  This method can only be called when loaded with the legacy API.  Use wasLoadedWithLegacyAPI() to check load status.");
-        return false;
-    }
     req_vns = vns;
     total_vns = vns * checker_board_factor;
     link_bw = link_bw_in;
