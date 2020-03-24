@@ -367,8 +367,8 @@ if rndmPlacement and bgPercentage > 0:
 
 if 'verboseLevel' not in nicParams: 
     nicParams['verboseLevel'] = debug
-if 'verboseMaskl' not in nicParams: 
-    nicParams['verboseMask'] = 1
+if 'verboseMask' not in nicParams: 
+    nicParams['verboseMask'] = -1
 if useSimpleMemoryModel:
 	nicParams['useSimpleMemoryModel'] = 1
 hermesParams['hermesParams.verboseLevel'] = debug
@@ -427,7 +427,6 @@ for a in params['merlin']:
         print "set merlin {0}={1}".format( key, value )
     sst.merlin._params[key] = value
 
-
 nicParams["packetSize"] =	networkParams['packetSize']
 nicParams["link_bw"] = networkParams['link_bw']
 sst.merlin._params["link_lat"] = networkParams['link_lat']
@@ -445,6 +444,8 @@ if "network_inspectors" in networkParams.keys():
 if rtrArb:
 	sst.merlin._params["xbar_arb"] = "merlin." + rtrArb 
 
+if "numVNs" in nicParams: 
+    sst.merlin._params["num_vns"] = int( nicParams["numVNs"])
 
 print "EMBER: network: BW={0} pktSize={1} flitSize={2}".format(
         networkParams['link_bw'], networkParams['packetSize'], networkParams['flitSize'])
