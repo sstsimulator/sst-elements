@@ -15,6 +15,14 @@ def tearDownModule():
 
 ################################################################################
 
+class testcase_memHierarchy_second_debug(SSTTestCase):
+    def test_memHierarchy_debug_1(self):
+        pass
+
+    def test_memHierarchy_debug_2(self):
+        pass
+
+
 class testcase_memHierarchy_Component(SSTTestCase):
 
     @classmethod
