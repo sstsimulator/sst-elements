@@ -1,17 +1,7 @@
 # -*- coding: utf-8 -*-
 
-import sst_unittest_support
+from sst_unittest import *
 from sst_unittest_support import *
-
-################################################################################
-
-def setUpModule():
-    sst_unittest_support.setUpModule()
-    # Put Module based setup code here. it is called before any testcases are run
-
-def tearDownModule():
-    # Put Module based teardown code here. it is called after all testcases are run
-    sst_unittest_support.tearDownModule()
 
 ################################################################################
 
@@ -22,20 +12,9 @@ class testcase_memHierarchy_second_debug(SSTTestCase):
     def test_memHierarchy_debug_2(self):
         pass
 
+################################################################################
 
 class testcase_memHierarchy_Component(SSTTestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        super(cls, cls).setUpClass()
-        # Put class based setup code here. it is called once before tests are run
-
-    @classmethod
-    def tearDownClass(cls):
-        # Put class based teardown code here. it is called once after tests are run
-        super(cls, cls).tearDownClass()
-
-#####
 
     def setUp(self):
         super(type(self), self).setUp()
@@ -118,16 +97,16 @@ class testcase_memHierarchy_Component(SSTTestCase):
 
     def memHierarchy_Template(self, testcase, tolerance):
         # Get the path to the test files
-        test_path = get_testsuite_dir()
+        test_path = self.get_testsuite_dir()
 
         # Some tweeking of file names are due to inconsistencys with testcase name
         testcasename_sdl = testcase.replace("_MC", "")
         testcasename_out = testcase.replace("-", "_")
 
         # Set the various file paths
-        sdlfile = "{0}/{1}.py".format(get_testsuite_dir(), testcasename_sdl)
+        sdlfile = "{0}/{1}.py".format(test_path, testcasename_sdl)
         testDataFileName=("test_memHierarchy_{0}".format(testcasename_out))
-        reffile = "{0}/refFiles/{1}.out".format(get_testsuite_dir(), testDataFileName)
+        reffile = "{0}/refFiles/{1}.out".format(test_path, testDataFileName)
         outfile = "{0}/{1}.out".format(get_test_output_run_dir(), testDataFileName)
         errfile = "{0}/{1}.err".format(get_test_output_run_dir(), testDataFileName)
         tmpfile = "{0}/{1}.tmp".format(get_test_output_tmp_dir(), testDataFileName)
@@ -135,7 +114,7 @@ class testcase_memHierarchy_Component(SSTTestCase):
         mpioutfiles = "{0}/{1}.testfile".format(get_test_output_run_dir(), testDataFileName)
 
         # Delete any leftover dramsim*.log files that might have been left over
-        cmd = "rm -f {0}/dramsim*.log".format(get_testsuite_dir())
+        cmd = "rm -f {0}/dramsim*.log".format(test_path)
         os.system(cmd)
 
         # See if sdl file is using DramSimm
