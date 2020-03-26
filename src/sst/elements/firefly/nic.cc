@@ -76,6 +76,17 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_getRespSmallVN = params.find<int>("getRespSmallVN", 0 ); 
     m_getRespSize = params.find<size_t>("getRespSize", 0 ); 
 
+    m_shmemAckVN = params.find<int>( "shmemAckVN", 0 );
+
+    m_shmemGetReqVN = params.find<int>( "shmemGetReqVN", 0 );
+    m_shmemGetLargeVN = params.find<int>( "shmemGetLargeVN", 0 );
+    m_shmemGetSmallVN = params.find<int>( "shmemGetSmallVN", 0 );
+    m_shmemGetThresholdLength = params.find<size_t>( "shmemGetThresholdLength", 0 );
+
+    m_shmemPutLargeVN = params.find<int>( "shmemPutLargeVN", 0 );
+    m_shmemPutSmallVN = params.find<int>( "shmemPutSmallVN", 0 );
+    m_shmemPutThresholdLength = params.find<size_t>( "shmemPutThresholdLength", 0 );
+
     m_sendPQ.resize( m_numVN );
 
     int rxMatchDelay = params.find<int>( "rxMatchDelay_ns", 100 );
@@ -135,7 +146,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
     assert( ( packetSizeInBytes - packetOverhead ) >= minPktPayload );
 
     // Set up the linkcontrol
-    m_linkControl = loadUserSubComponent<Interfaces::SimpleNetwork>( "rtrLink", ComponentInfo::SHARE_NONE, m_numVN + 1 );
+    m_linkControl = loadUserSubComponent<Interfaces::SimpleNetwork>( "rtrLink", ComponentInfo::SHARE_NONE, m_numVN );
     assert( m_linkControl );
 
     m_recvNotifyFunctor =
