@@ -109,6 +109,11 @@ class TemplateBase(object):
         self._vars.add(name)
         object.__setattr__(self,name,TemplateBase())
         return self.__dict__[name]
+
+    def combineParams(self,defaultParams,userParams):
+        returnParams = defaultParams.copy()
+        returnParams.update(userParams)
+        return returnParams
                            
 # Classes implementing SimplenNetwork interface
 
