@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -29,9 +29,9 @@ typedef uint64_t ReqId;
 
 class MemReqEvent : public SST::Event {
   public:
-    MemReqEvent(ReqId id, Addr addr1, bool isWrite, unsigned numBytes, uint32_t flags) : 
-		SST::Event(), reqId(id), addr(addr1), isWrite(isWrite), numBytes(numBytes), flags(flags) 
-    { 
+    MemReqEvent(ReqId id, Addr addr1, bool isWrite, unsigned numBytes, uint32_t flags) :
+		SST::Event(), reqId(id), addr(addr1), isWrite(isWrite), numBytes(numBytes), flags(flags)
+    {
 
 		eventID  = generateUniqueId();
 	}
@@ -56,7 +56,7 @@ class MemReqEvent : public SST::Event {
   public:
     void serialize_order(SST::Core::Serialization::serializer &ser) override {
         Event::serialize_order(ser);
-        ser & reqId;  
+        ser & reqId;
         ser & addr;
         ser & isWrite;
         ser & numBytes;
@@ -69,9 +69,9 @@ class MemReqEvent : public SST::Event {
 
 class MemRespEvent : public SST::Event {
   public:
-    MemRespEvent(ReqId id, Addr addr, uint32_t flags) : 
-		SST::Event(), reqId(id), addr(addr), flags(flags) 
-	{ 
+    MemRespEvent(ReqId id, Addr addr, uint32_t flags) :
+		SST::Event(), reqId(id), addr(addr), flags(flags)
+	{
 		eventID  = generateUniqueId();
 	}
 
@@ -91,7 +91,7 @@ class MemRespEvent : public SST::Event {
   public:
     void serialize_order(SST::Core::Serialization::serializer &ser) override {
         Event::serialize_order(ser);
-        ser & reqId;  
+        ser & reqId;
         ser & flags;
         ser & addr;
 		ser & eventID;

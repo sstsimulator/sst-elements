@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -37,14 +37,14 @@ namespace SST{ namespace MessierComponent{
 //using namespace SST::MessierComponent;
 
 class NVM_PARAMS
-{ 
+{
 	public:
 
 		// The size of the whole rank in KB
 		long long int size;
 
 		// The size of the write buffer in number of entries
-		int write_buffer_size;	
+		int write_buffer_size;
 
 		// This determines the number of maximum buffer requests inside the controller
 		int max_requests;
@@ -62,7 +62,7 @@ class NVM_PARAMS
 		float read_weight;
 
 		// The clock of the internal controller of the DIMM in GHz
-		float clock; 
+		float clock;
 
 		// The clock of the internal PCM memory
 		float memory_clock;
@@ -97,11 +97,11 @@ class NVM_PARAMS
 		// This determines the number of banks on each Rank
 		int num_banks;
 
-		// This determines the row buffer size	
+		// This determines the row buffer size
 		int row_buffer_size;
 
 		// This indicates the threshold for starting the write buffer flushing
-		int flush_th; 
+		int flush_th;
 
 		// This indicates the low flush threshold
 		int flush_th_low;
@@ -114,7 +114,7 @@ class NVM_PARAMS
 
 		// This implements the adaptive writes policy for NVM devices
 		bool adaptive_writes;
-		
+
 		// This indicates if there is enough power to back-up the internal cache
 		bool cache_persistent;
 
@@ -123,7 +123,7 @@ class NVM_PARAMS
 
 		// This indidicates the cache size in KB
 		long long int cache_size;
-		
+
 		// This is the associativity of the internal cache
 		long long int cache_assoc;
 
@@ -154,7 +154,7 @@ class NVM_PARAMS
 
 	public:
 
-		void operator = (const NVM_PARAMS &D ) { 
+		void operator = (const NVM_PARAMS &D ) {
 
 
 			cache_enabled = D.cache_enabled;
@@ -170,10 +170,10 @@ class NVM_PARAMS
 			size = D.size;  // in KB, which mean 8GB
 
 			cacheline_interleaving = D.cacheline_interleaving;
-			
+
 			adaptive_writes = D.adaptive_writes;
 
-			write_buffer_size = D.write_buffer_size;	
+			write_buffer_size = D.write_buffer_size;
 
 			max_outstanding = D.max_outstanding;
 
@@ -183,7 +183,7 @@ class NVM_PARAMS
 
 			read_weight = D.read_weight;
 
-			clock = D.clock; 
+			clock = D.clock;
 
 			memory_clock = D.clock;
 
@@ -214,19 +214,19 @@ class NVM_PARAMS
 			max_requests = D.max_requests;
 
 			max_writes = D.max_writes;
-			
+
 			flush_th_low = D.flush_th_low;
 
 			cache_persistent = D.cache_persistent;
 
 			group_size = D.group_size;
-			
+
 			lock_period = D.lock_period;
 
 			modulo = D.modulo;
 
 			modulo_unit = D.modulo_unit;
-			
+
 			write_cancel = D.write_cancel;
 
 			write_cancel_th = D.write_cancel_th;
