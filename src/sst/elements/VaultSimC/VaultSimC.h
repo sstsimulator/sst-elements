@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -37,10 +37,10 @@ namespace SST {
 namespace VaultSim {
 
 #if HAVE_LIBPHX == 1
-using namespace PHXSim; 
+using namespace PHXSim;
 #endif  /* HAVE_LIBPHX */
 
-//#define STUPID_DEBUG 
+//#define STUPID_DEBUG
 
 class VaultSimC : public Component {
 
@@ -67,7 +67,7 @@ public: // functions
     SST_ELI_DOCUMENT_PORTS(
                            {"bus", "Link to the logic layer", {"MemEvent",""}},
                             )
-                           
+
     SST_ELI_DOCUMENT_STATISTICS(
                                 { "Mem_Outstanding", "Number of memory requests outstanding each cycle", "reqs/cycle", 1}
                             )
@@ -75,24 +75,24 @@ public: // functions
     VaultSimC( ComponentId_t id, Params& params );
     int Finish();
     void init(unsigned int phase);
-    
+
 private: // types
-    
+
     typedef SST::Link memChan_t;
     typedef map<unsigned, MemHierarchy::MemEvent*> t2MEMap_t;
-    
+
 private: // functions
-    
+
     VaultSimC( const VaultSimC& c );
-    
+
 #if HAVE_LIBPHX == 1
     bool clock_phx( Cycle_t );
-    
+
     inline PHXSim::TransactionType convertType( SST::MemHierarchy::Command type );
-    
+
     void readData(BusPacket bp, unsigned clockcycle);
     void writeData(BusPacket bp, unsigned clockcycle);
-    
+
     std::deque<Transaction> m_transQ;
     t2MEMap_t transactionToMemEventMap; // maps original MemEvent to a Vault transaction ID
     Vault* m_memorySystem;
@@ -101,9 +101,9 @@ private: // functions
 
     bool clock( Cycle_t );
     Link *delayLine;
-    
+
 #endif /* HAVE_LIBPHX */
-    
+
 
     uint8_t *memBuffer;
     memChan_t* m_memChan;
@@ -136,7 +136,7 @@ inline PHXSim::TransactionType VaultSimC::convertType( SST::MemHierarchy::Comman
       case SST::MemHierarchy::SupplyData:
       case SST::MemHierarchy::WriteReq:
 	return PHXSim::DATA_WRITE;
-      default: 
+      default:
 	_abort(VaultSimC,"Tried to convert unknown memEvent request type (%d) to PHXSim transaction type \n", type);
     }
     return (PHXSim::TransactionType)-1;
