@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -22,7 +22,7 @@ class RecvEntryBase : public EntryBase {
     { }
     virtual ~RecvEntryBase() {}
 
-    virtual void notify( int src_vNic, int src_node, int tag, size_t length ) {assert(0);} 
+    virtual void notify( int src_vNic, int src_node, int tag, size_t length ) {assert(0);}
 };
 
 class DmaRecvEntry : public RecvEntryBase {
@@ -33,7 +33,7 @@ class DmaRecvEntry : public RecvEntryBase {
     DmaRecvEntry( NicCmdEvent* cmd, Callback callback) :
         RecvEntryBase(), m_cmd( cmd ), m_callback( callback )
     { }
-    ~DmaRecvEntry() { 
+    ~DmaRecvEntry() {
         delete m_cmd;
     }
 
@@ -67,17 +67,17 @@ class ShmemRecvEntry : public RecvEntryBase {
 
     ShmemRecvEntry( Shmem* shmem, int core, Hermes::MemAddr addr, size_t length ) :
         RecvEntryBase()
-    { 
+    {
         m_shmemMove = new ShmemRecvMoveMem(  addr.getBacking(), length, shmem, core, addr.getSimVAddr() );
     }
 
-    ShmemRecvEntry( Shmem* shmem, int core, Hermes::MemAddr addr, size_t length, 
+    ShmemRecvEntry( Shmem* shmem, int core, Hermes::MemAddr addr, size_t length,
                         Hermes::Shmem::ReduOp op, Hermes::Value::Type dataType ) :
         RecvEntryBase()
-    { 
+    {
         m_shmemMove = new ShmemRecvMoveMemOp( addr.getBacking(), length, shmem, core, addr.getSimVAddr(), op, dataType );
     }
-    ~ShmemRecvEntry() { 
+    ~ShmemRecvEntry() {
         delete m_shmemMove;
     }
 
@@ -87,7 +87,7 @@ class ShmemRecvEntry : public RecvEntryBase {
     std::vector<IoVec>& ioVec() { assert(0); }
 
     bool copyIn( Output& dbg, FireflyNetworkEvent& ev, std::vector<MemOp>& vec ) {
-        return m_shmemMove->copyIn( dbg, ev, vec );  
+        return m_shmemMove->copyIn( dbg, ev, vec );
     }
 
   private:
@@ -98,8 +98,8 @@ class ShmemGetRespRecvEntry : public RecvEntryBase {
   public:
     ShmemGetRespRecvEntry( ShmemRespSendEntry* entry ) :
         RecvEntryBase(), m_entry(entry)
-    { } 
-    ~ShmemGetRespRecvEntry() { 
+    { }
+    ~ShmemGetRespRecvEntry() {
         delete m_shmemMove;
         delete m_entry->getCmd();
         delete m_entry;
@@ -109,7 +109,7 @@ class ShmemGetRespRecvEntry : public RecvEntryBase {
     std::vector<IoVec>& ioVec() { assert(0); }
 
     bool copyIn( Output& dbg, FireflyNetworkEvent& ev, std::vector<MemOp>& vec ) {
-        return m_shmemMove->copyIn( dbg, ev, vec );  
+        return m_shmemMove->copyIn( dbg, ev, vec );
     }
 
   protected:
@@ -123,7 +123,7 @@ class ShmemGetvRespRecvEntry : public ShmemGetRespRecvEntry {
     ShmemGetvRespRecvEntry( Shmem* shmem, size_t length, ShmemGetvSendEntry* entry ) :
         ShmemGetRespRecvEntry( entry ),
         m_value( static_cast<NicShmemGetvCmdEvent*>(entry->getCmd())->getDataType() )
-    { 
+    {
         assert( length == m_value.getLength() );
         m_shmemMove = new ShmemRecvMoveValue( m_value );
     }
@@ -142,7 +142,7 @@ class ShmemGetbRespRecvEntry : public ShmemGetRespRecvEntry {
 
     ShmemGetbRespRecvEntry( Shmem* shmem, int core, size_t length, ShmemGetbSendEntry* entry, void* backing ) :
         ShmemGetRespRecvEntry( entry )
-    { 
+    {
 
         NicShmemGetCmdEvent* cmd =    static_cast<NicShmemGetCmdEvent*>(entry->getCmd());
 

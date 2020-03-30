@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -21,7 +21,7 @@ using namespace SST;
 using namespace SST::Firefly;
 
 Nic::RecvMachine::MsgStream::MsgStream( Output& output, Ctx* ctx,
-        int srcNode, int srcPid, int destPid, FireflyNetworkEvent* ev ) : 
+        int srcNode, int srcPid, int destPid, FireflyNetworkEvent* ev ) :
     StreamBase(output,ctx,srcNode,srcPid,destPid), m_blocked(false)
 {
     m_unit = m_ctx->allocRecvUnit();

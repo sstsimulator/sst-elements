@@ -1,9 +1,9 @@
 
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -47,7 +47,7 @@ class VirtNic : public SST::SubComponent {
         {"debugLevel", "Sets the output verbosity of the component", "1"},
         {"debug", "Sets the messaging API of the end point", "0"},
         {"portName", "Sets the name of the port for the link", "nic"},
-    ) 
+    )
 
   private:
 
@@ -156,7 +156,7 @@ class VirtNic : public SST::SubComponent {
     }
 
     bool isLocal( int nodeId, int nicsPerNode ) {
-        return ( (nodeId / (m_numCores * nicsPerNode) ) == (m_realNicId / nicsPerNode) ); 
+        return ( (nodeId / (m_numCores * nicsPerNode) ) == (m_realNicId / nicsPerNode) );
     }
 
 	int calcCoreId( int nodeId, int nicsPerNode = 1) {
@@ -204,7 +204,7 @@ class VirtNic : public SST::SubComponent {
 
     bool isBlocked() {
 		m_dbg.debug(CALL_INFO,2,0,"%d %d\n", m_curNicQdepth, m_maxNicQdepth);
-        return m_curNicQdepth == m_maxNicQdepth;  
+        return m_curNicQdepth == m_maxNicQdepth;
     }
 
     void setBlockedCallback( Callback callback ) {
@@ -219,9 +219,9 @@ class VirtNic : public SST::SubComponent {
 		m_dbg.debug(CALL_INFO,2,0,"%d %d\n", m_curNicQdepth, m_maxNicQdepth);
         assert( m_curNicQdepth < m_maxNicQdepth );
         ++m_curNicQdepth;
-        m_toNicLink->send( delay, ev );  
+        m_toNicLink->send( delay, ev );
     }
-         
+
 	int calcRealNicId( int nodeId ) {
 		if ( -1 == nodeId ) {
 			return -1;
@@ -245,11 +245,11 @@ class VirtNic : public SST::SubComponent {
     Output      m_dbg;
     Link*       m_toNicLink;
 
-    VirtNic::HandlerBase<void*>* m_notifyGetDone; 
-    VirtNic::HandlerBase<void*>* m_notifyPutDone; 
-    VirtNic::HandlerBase<void*>* m_notifySendPioDone; 
-    VirtNic::HandlerBase<void*>* m_notifySendDmaDone; 
-    VirtNic::HandlerBase4Args<int, int, size_t, void*>* m_notifyRecvDmaDone; 
+    VirtNic::HandlerBase<void*>* m_notifyGetDone;
+    VirtNic::HandlerBase<void*>* m_notifyPutDone;
+    VirtNic::HandlerBase<void*>* m_notifySendPioDone;
+    VirtNic::HandlerBase<void*>* m_notifySendDmaDone;
+    VirtNic::HandlerBase4Args<int, int, size_t, void*>* m_notifyRecvDmaDone;
     VirtNic::HandlerBase2Args<int, size_t>* m_notifyNeedRecv;
     int m_maxNicQdepth;
     int m_curNicQdepth;

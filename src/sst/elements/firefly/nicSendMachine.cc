@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -36,14 +36,14 @@ void Nic::SendMachine::streamInit( SendEntryBase* entry )
 
     FireflyNetworkEvent* ev = new FireflyNetworkEvent(m_pktOverhead );
     ev->setDestPid( entry->dst_vNic() );
-    ev->setSrcPid( entry->local_vNic() ); 
+    ev->setSrcPid( entry->local_vNic() );
     ev->setHdr();
     ev->setSrcStream( entry->streamNum() );
-    
+
     entry->m_start = m_nic.getCurrentSimTimeNano();
     if ( entry->isCtrl() || entry->isAck() ) {
         ev->setCtrl();
-    } 
+    }
 
     ev->bufAppend( &hdr, sizeof(hdr) );
     ev->bufAppend( entry->hdr(), entry->hdrSize() );
@@ -51,15 +51,15 @@ void Nic::SendMachine::streamInit( SendEntryBase* entry )
     m_nic.schedCallback( std::bind( &Nic::SendMachine::getPayload, this, entry, ev ), entry->txDelay() );
 }
 
-void Nic::SendMachine::getPayload( SendEntryBase* entry, FireflyNetworkEvent* ev ) 
+void Nic::SendMachine::getPayload( SendEntryBase* entry, FireflyNetworkEvent* ev )
 {
-    int pid = entry->local_vNic(); 
+    int pid = entry->local_vNic();
     ev->setDestPid( entry->dst_vNic() );
     ev->setSrcPid( pid );
     ev->setSrcStream( entry->streamNum() );
     if ( ! m_inQ->isFull() ) {
-	    std::vector< MemOp >* vec = new std::vector< MemOp >; 
-        entry->copyOut( m_dbg, m_packetSizeInBytes, *ev, *vec ); 
+	    std::vector< MemOp >* vec = new std::vector< MemOp >;
+        entry->copyOut( m_dbg, m_packetSizeInBytes, *ev, *vec );
         m_dbg.debug(CALL_INFO,2,NIC_DBG_SEND_MACHINE, "enque load from host, %lu bytes\n",ev->bufSize());
         if ( entry->isDone() ) {
             ev->setTail();
@@ -74,7 +74,7 @@ void Nic::SendMachine::getPayload( SendEntryBase* entry, FireflyNetworkEvent* ev
         m_inQ->wakeMeUp( std::bind( &Nic::SendMachine::getPayload, this, entry, ev ) );
     }
 }
-void Nic::SendMachine::streamFini( SendEntryBase* entry ) 
+void Nic::SendMachine::streamFini( SendEntryBase* entry )
 {
     m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE, "%p sendMachine=%d pid=%d bytes=%zu latency=%" PRIu64 "\n",entry,m_id, entry->local_vNic(),
             entry->totalBytes(), m_nic.getCurrentSimTimeNano() - entry->m_start);
@@ -107,7 +107,7 @@ void  Nic::SendMachine::InQ::enque( int unit, int pid, std::vector< MemOp >* vec
 
     m_nic.dmaRead( unit, pid, vec,
 		std::bind( &Nic::SendMachine::InQ::ready, this,  ev, vn, dest, callback, m_pktNum++ )
-    ); 
+    );
 	// don't put code after this, the callback may be called serially
 }
 
@@ -172,5 +172,5 @@ void Nic::SendMachine::OutQ::enque( FireflyNetworkEvent* ev, int vn, int dest, C
 	++m_qCnt;
 	m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_SEND_MACHINE, "qCnt=%d priority=%" PRIu64 ".%d\n", m_qCnt, m_lastEnq, m_enqCnt);
 
-	m_nic.notifyHavePkt( px, vn );	
+	m_nic.notifyHavePkt( px, vn );
 }

@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -33,13 +33,13 @@ VirtNic::VirtNic( ComponentId_t id, Params& params ) :
     m_curNicQdepth(0),
     m_blockedCallback(NULL)
 {
-    m_dbg.init("@t:VirtNic::@p():@l ", 
+    m_dbg.init("@t:VirtNic::@p():@l ",
         params.find<uint32_t>("verboseLevel",0),
         0,
         Output::STDOUT );
     m_maxNicQdepth = params.find<int>("maxNicQdepth",32);
 
-    m_toNicLink = configureLink( params.find<std::string>("portName","nic"), 
+    m_toNicLink = configureLink( params.find<std::string>("portName","nic"),
 			"1 ns", new Event::Handler<VirtNic>(this,&VirtNic::handleEvent) );
 
     assert( m_toNicLink );
@@ -58,14 +58,14 @@ void VirtNic::init( unsigned int phase )
     m_dbg.debug(CALL_INFO,1,0,"phase=%d\n",phase);
 
     if ( 1 == phase ) {
-        NicInitEvent* ev = 
+        NicInitEvent* ev =
                         static_cast<NicInitEvent*>(m_toNicLink->recvInitData());
         assert( ev );
         m_realNicId = ev->node;
         m_coreId = ev->vNic;
         m_numCores = ev->num_vNics;
         delete ev;
-    
+
         char buffer[100];
         snprintf(buffer,100,"@t:%d:%d:VirtNic::@p():@l ", m_realNicId,
 							m_coreId );
@@ -133,14 +133,14 @@ void VirtNic::handleShmemEvent( NicShmemRespBaseEvent* event )
 bool VirtNic::canDmaSend()
 {
     m_dbg.debug(CALL_INFO,1,0,"\n");
-    //return m_nic.canDmaSend( this ); 
+    //return m_nic.canDmaSend( this );
     return true;
 }
 
 bool VirtNic::canDmaRecv()
-{ 
+{
     m_dbg.debug(CALL_INFO,1,0,"\n");
-//    return m_nic.canDmaRecv( this ); 
+//    return m_nic.canDmaRecv( this );
     return true;
 }
 
@@ -154,21 +154,21 @@ void VirtNic::dmaRecv( int src, int tag, std::vector<IoVec>& vec, void* key )
 void VirtNic::pioSend( int vn, int dest, int tag, std::vector<IoVec>& vec, void* key )
 {
     m_dbg.debug(CALL_INFO,2,0,"dest=%d\n",dest);
-    m_toNicLink->send(0, new NicCmdEvent( NicCmdEvent::PioSend, 
+    m_toNicLink->send(0, new NicCmdEvent( NicCmdEvent::PioSend,
 			calcCoreId(dest), calcRealNicId(dest), tag, vec, key, vn ) );
 }
 
 void VirtNic::get( int node, int tag, std::vector<IoVec>& vec, void* key )
 {
     m_dbg.debug(CALL_INFO,2,0,"node=%d\n",node);
-    m_toNicLink->send(0, new NicCmdEvent( NicCmdEvent::Get, 
+    m_toNicLink->send(0, new NicCmdEvent( NicCmdEvent::Get,
 			calcCoreId(node), calcRealNicId(node), tag, vec, key ) );
 }
 
 void VirtNic::regMem( int node, int tag, std::vector<IoVec>& vec, void* key )
 {
     m_dbg.debug(CALL_INFO,2,0,"node=%d\n",node);
-    m_toNicLink->send(0, new NicCmdEvent( NicCmdEvent::RegMemRgn, 
+    m_toNicLink->send(0, new NicCmdEvent( NicCmdEvent::RegMemRgn,
 			calcCoreId(node), calcRealNicId(node), tag, vec, key ) );
 }
 
@@ -252,26 +252,26 @@ void VirtNic::shmemFadd( int node, Hermes::Vaddr dest, Hermes::Value& value, Cal
 }
 
 void VirtNic::setNotifyOnRecvDmaDone(
-                VirtNic::HandlerBase4Args<int,int,size_t,void*>* functor) 
+                VirtNic::HandlerBase4Args<int,int,size_t,void*>* functor)
 {
     m_dbg.debug(CALL_INFO,2,0,"\n");
     m_notifyRecvDmaDone = functor;
 }
 
-void VirtNic::setNotifyOnSendPioDone(VirtNic::HandlerBase<void*>* functor) 
+void VirtNic::setNotifyOnSendPioDone(VirtNic::HandlerBase<void*>* functor)
 {
     m_dbg.debug(CALL_INFO,2,0,"\n");
     m_notifySendPioDone = functor;
 }
 
-void VirtNic::setNotifyOnGetDone(VirtNic::HandlerBase<void*>* functor) 
+void VirtNic::setNotifyOnGetDone(VirtNic::HandlerBase<void*>* functor)
 {
     m_dbg.debug(CALL_INFO,2,0,"\n");
     m_notifyGetDone = functor;
 }
 
 void VirtNic::setNotifyNeedRecv(
-                VirtNic::HandlerBase2Args<int,size_t>* functor) 
+                VirtNic::HandlerBase2Args<int,size_t>* functor)
 {
     m_dbg.debug(CALL_INFO,2,0,"\n");
     m_notifyNeedRecv = functor;

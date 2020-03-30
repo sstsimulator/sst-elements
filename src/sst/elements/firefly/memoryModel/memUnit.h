@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -65,7 +65,7 @@
             }
 
             ++m_pending;
-		
+
 			Callback* cb = new Callback;
 
             SimTime_t issueTime  = m_model.getCurrentSimTimeNano();
@@ -86,7 +86,7 @@
 					delete req;
 
                     if ( ! m_blocked.empty() ) {
-		
+
 						SimTime_t latency = m_model.getCurrentSimTimeNano() - m_blockedTime;
 						if ( latency ) {
 							m_latency->addData( latency );
@@ -99,7 +99,7 @@
                     }
                 };
 
-            m_model.schedCallback( delay, cb ); 
+            m_model.schedCallback( delay, cb );
 
 			return false;
         }

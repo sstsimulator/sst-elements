@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -12,8 +12,8 @@
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
-      
-#if 1 
+
+#if 1
 #define myPrintf(x,...)
 #else
 #define myPrintf(x,...) printf("List." x, __VA_ARGS__ )
@@ -46,10 +46,10 @@ template< class T >
             }
             void clear() {
 				Item* cur = m_head.next;
-				while ( cur != &m_tail ) { 
+				while ( cur != &m_tail ) {
 					Item* tmp = cur;
 					cur = tmp->next;
-					delete tmp;	
+					delete tmp;
 				}
 			}
 
@@ -65,7 +65,7 @@ template< class T >
             void push_back( Hermes::Vaddr addr ) {
 				Item* x = new Item( addr );
                 myPrintf("%s() ptr=%p %#" PRIx64 "\n",__func__,x,addr);
-                push_back( x ); 
+                push_back( x );
             }
 
             void move_to_back( Entry e ) {
@@ -100,7 +100,7 @@ template< class T >
 
             void push_back( Item* item ) {
                 myPrintf("%s() ptr=%p value=%#" PRIx64 "\n",__func__,item, item->value);
-				
+
                 Item* old_tail = m_tail.prev;
 
                 item->next = &m_tail;
@@ -108,11 +108,11 @@ template< class T >
 
                 m_tail.prev = item;
                 old_tail->next = item;
-                
+
                 print();
             }
             void print() {
-#ifdef DO_PRINT 
+#ifdef DO_PRINT
                 Item* ptr = m_head.next;
 
                 while( NULL != ptr->next ) {

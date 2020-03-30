@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -21,7 +21,7 @@
 namespace SST {
 namespace Firefly {
 
-class FiniFuncSM :  public BarrierFuncSM 
+class FiniFuncSM :  public BarrierFuncSM
 {
  public:
     SST_ELI_REGISTER_MODULE(

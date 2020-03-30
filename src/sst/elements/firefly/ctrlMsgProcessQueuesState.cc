@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -23,7 +23,7 @@ using namespace SST::Firefly;
 using namespace SST;
 
 
-ProcessQueuesState::ProcessQueuesState( ComponentId_t id, Params& params ) : 
+ProcessQueuesState::ProcessQueuesState( ComponentId_t id, Params& params ) :
         SubComponent( id ),
 
         m_getKey( 0 ),
@@ -62,8 +62,8 @@ ProcessQueuesState::ProcessQueuesState( ComponentId_t id, Params& params ) :
             new Event::Handler<ProcessQueuesState>(this,&ProcessQueuesState::loopHandler) );
     assert(m_loopLink);
 
-    m_ackVN = params.find<int>( "ackVN", 0 ); 
-    m_rendezvousVN = params.find<int>( "rendezvousVN", 0 ); 
+    m_ackVN = params.find<int>( "ackVN", 0 );
+    m_rendezvousVN = params.find<int>( "rendezvousVN", 0 );
 }
 
 
@@ -80,7 +80,7 @@ ProcessQueuesState::~ProcessQueuesState()
     delete m_msgTiming;
 }
 
-void ProcessQueuesState::setVars( VirtNic* nic, Info* info, MemoryBase* mem, 
+void ProcessQueuesState::setVars( VirtNic* nic, Info* info, MemoryBase* mem,
             Thornhill::MemoryHeapLink* memHeapLink, Link* returnToCaller )
 {
     m_nic = nic;
@@ -112,7 +112,7 @@ void ProcessQueuesState::enterInit( bool haveGlobalMemHeap )
     length += MaxPostedShortBuffers * (shortMsgLength() + 16 ) & ~15;
 
     std::function<void(uint64_t)> callback = [=](uint64_t addr){
-		enterInit_1( addr, length );      
+		enterInit_1( addr, length );
         return 0;
     };
 
@@ -140,17 +140,17 @@ void ProcessQueuesState::enterSend( _CommReq* req, uint64_t exitDelay )
 {
     m_exitDelay = exitDelay;
     req->setSrcRank( getMyRank( req ) );
-    dbg().debug(CALL_INFO,1,DBG_MSK_PQS_APP_SIDE,"req=%p delay=%" PRIu64 " destRank=%d\n", req, exitDelay, 
+    dbg().debug(CALL_INFO,1,DBG_MSK_PQS_APP_SIDE,"req=%p delay=%" PRIu64 " destRank=%d\n", req, exitDelay,
 				req->getDestRank() );
 
     uint64_t delay = txDelay( req->getLength() );
 
     VoidFunction callback;
     if ( m_nic->isLocal( calcNid( req, req->getDestRank()), m_nicsPerNode ) ) {
-        callback =  std::bind( 
+        callback =  std::bind(
                     &ProcessQueuesState::processSendLoop, this, req );
     } else {
-        callback = std::bind( 
+        callback = std::bind(
                     &ProcessQueuesState::processSend_0, this, req );
     }
     schedCallback( callback, delay);
@@ -158,15 +158,15 @@ void ProcessQueuesState::enterSend( _CommReq* req, uint64_t exitDelay )
 
 void ProcessQueuesState::processSend_0( _CommReq* req )
 {
-    m_mem->write( 
+    m_mem->write(
         std::bind( &ProcessQueuesState::processSend_1, this, req ),
-        0, sizeof( req->hdr()) 
-    ); 
+        0, sizeof( req->hdr())
+    );
 }
 
 void ProcessQueuesState::processSend_1( _CommReq* req )
 {
-    VoidFunction callback = std::bind( 
+    VoidFunction callback = std::bind(
         &ProcessQueuesState::processSend_2, this, req );
 
     size_t length = req->getLength( );
@@ -184,8 +184,8 @@ void ProcessQueuesState::processSend_2( _CommReq* req )
     int vn = 0;
 
 	std::vector<void*> ptrs;
-    IoVec hdrVec;   
-    hdrVec.len = sizeof( req->hdr() ); 
+    IoVec hdrVec;
+    hdrVec.len = sizeof( req->hdr() );
 
     hdrVec.addr.setSimVAddr( m_simVAddrs->alloc( hdrVec.len ) );
 
@@ -194,18 +194,18 @@ void ProcessQueuesState::processSend_2( _CommReq* req )
 		ptrs.push_back ( hdrVec.addr.getBacking() );
         memcpy( hdrVec.addr.getBacking(), &req->hdr(), hdrVec.len );
     } else {
-        hdrVec.addr.setBacking( &req->hdr() ); 
+        hdrVec.addr.setBacking( &req->hdr() );
     }
 
     std::vector<IoVec> vec;
     vec.insert( vec.begin(), hdrVec );
-    
+
     nid_t nid = calcNid( req, req->getDestRank() );
 
     if ( length <= shortMsgLength() ) {
-        dbg().debug(CALL_INFO,2,DBG_MSK_PQS_APP_SIDE,"Short %lu bytes dest %#x\n",length,nid); 
+        dbg().debug(CALL_INFO,2,DBG_MSK_PQS_APP_SIDE,"Short %lu bytes dest %#x\n",length,nid);
 		for ( int i = 0; i < req->ioVec().size(); i++ ) {
-			size_t len = req->ioVec()[i].len;	
+			size_t len = req->ioVec()[i].len;
 			MemAddr& addr =	req->ioVec()[i].addr;
 			void* backing = NULL;
 			if ( addr.getBacking() ) {
@@ -213,13 +213,13 @@ void ProcessQueuesState::processSend_2( _CommReq* req )
 				memcpy( backing, addr.getBacking(), len );
 			}
 			vec.push_back( IoVec( MemAddr( addr.getSimVAddr(), backing),len ) );
-		} 
+		}
         req->setDone( sendReqFiniDelay( length ) );
         ++m_numSent;
         vn = req->m_vn;
 
     } else {
-        dbg().debug(CALL_INFO,2,DBG_MSK_PQS_APP_SIDE,"sending long message %lu bytes\n",length); 
+        dbg().debug(CALL_INFO,2,DBG_MSK_PQS_APP_SIDE,"sending long message %lu bytes\n",length);
         req->hdr().key = genGetKey();
 
         GetInfo* info = new GetInfo;
@@ -228,19 +228,19 @@ void ProcessQueuesState::processSend_2( _CommReq* req )
 
         std::vector<IoVec> hdrVec;
         hdrVec.resize(1);
-        hdrVec[0].len = sizeof( info->hdr ); 
-        hdrVec[0].addr.setSimVAddr( m_simVAddrs->alloc( hdrVec[0].len ) ); 
-        hdrVec[0].addr.setBacking( &info->hdr ); 
-        
+        hdrVec[0].len = sizeof( info->hdr );
+        hdrVec[0].addr.setSimVAddr( m_simVAddrs->alloc( hdrVec[0].len ) );
+        hdrVec[0].addr.setBacking( &info->hdr );
+
         Callback2* callback = new Callback2;
-        *callback = std::bind( 
-            &ProcessQueuesState::dmaRecvFiniGI, this, info, hdrVec[0].addr.getSimVAddr(), 
+        *callback = std::bind(
+            &ProcessQueuesState::dmaRecvFiniGI, this, info, hdrVec[0].addr.getSimVAddr(),
             std::placeholders::_1,
             std::placeholders::_2,
             std::placeholders::_3
         );
 
-        m_nic->dmaRecv( nid, req->hdr().key, hdrVec, callback ); 
+        m_nic->dmaRecv( nid, req->hdr().key, hdrVec, callback );
         m_nic->regMem( nid, req->hdr().key, req->ioVec(), NULL );
         vn = m_rendezvousVN;
     }
@@ -268,7 +268,7 @@ void ProcessQueuesState::processSendLoop( _CommReq* req )
 
     std::vector<IoVec> vec;
     vec.insert( vec.begin(), hdrVec );
-    vec.insert( vec.begin() + 1, req->ioVec().begin(), 
+    vec.insert( vec.begin() + 1, req->ioVec().begin(),
                                         req->ioVec().end() );
 
     dbg().debug(CALL_INFO,2,DBG_MSK_PQS_APP_SIDE,"destCore=%d\n", m_nic->calcCoreId( calcNid( req, req->getDestRank() ), m_nicsPerNode) );
@@ -288,7 +288,7 @@ void ProcessQueuesState::enterRecv( _CommReq* req, uint64_t exitDelay )
 
     if ( m_postedShortBuffers.size() < MaxPostedShortBuffers ) {
         if ( m_numNicRequestedShortBuff ) {
-            --m_numNicRequestedShortBuff; 
+            --m_numNicRequestedShortBuff;
         } else if ( m_numRecvLooped ) {
             --m_numRecvLooped;
         } else {
@@ -306,7 +306,7 @@ void ProcessQueuesState::enterRecv( _CommReq* req, uint64_t exitDelay )
 
     if ( length > shortMsgLength() ) {
         callback = std::bind(
-                &ProcessQueuesState::processRecv_0, this, req ); 
+                &ProcessQueuesState::processRecv_0, this, req );
     } else {
         callback = std::bind(
                 &ProcessQueuesState::processRecv_1, this, req );
@@ -321,7 +321,7 @@ void ProcessQueuesState::processRecv_0( _CommReq* req )
 
     m_mem->pin(
         std::bind( &ProcessQueuesState::processRecv_1, this, req ),
-        0, req->getLength() 
+        0, req->getLength()
     );
 }
 
@@ -342,7 +342,7 @@ void ProcessQueuesState::enterMakeProgress(  uint64_t exitDelay  )
     m_exitDelay = exitDelay;
 
     WaitCtx* ctx = new WaitCtx ( NULL,
-        std::bind( &ProcessQueuesState::processMakeProgress, this, &m_funcStack ) 
+        std::bind( &ProcessQueuesState::processMakeProgress, this, &m_funcStack )
     );
 
     m_funcStack.push_back( ctx );
@@ -352,7 +352,7 @@ void ProcessQueuesState::enterMakeProgress(  uint64_t exitDelay  )
 
 void ProcessQueuesState::processMakeProgress( Stack* stack )
 {
-    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_APP_SIDE,"stack.size()=%lu\n", stack->size()); 
+    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_APP_SIDE,"stack.size()=%lu\n", stack->size());
     dbg().debug(CALL_INFO,2,DBG_MSK_PQS_APP_SIDE,"num pstd %lu, num short %lu\n",
                             m_pstdRcvQ.size(), m_recvdMsgQ.size() );
     WaitCtx* ctx = static_cast<WaitCtx*>( stack->back() );
@@ -388,7 +388,7 @@ void ProcessQueuesState::enterTest( WaitReq* req, int* flag, uint64_t exitDelay 
 
     WaitCtx* ctx = new WaitCtx ( req,
         std::bind( &ProcessQueuesState::processWait_0, this, &m_funcStack ),
-		flag	
+		flag
     );
 
     m_funcStack.push_back( ctx );
@@ -404,7 +404,7 @@ void ProcessQueuesState::enterWait( WaitReq* req, uint64_t exitDelay  )
     m_exitDelay = exitDelay;
 
     WaitCtx* ctx = new WaitCtx ( req,
-        std::bind( &ProcessQueuesState::processWait_0, this, &m_funcStack ) 
+        std::bind( &ProcessQueuesState::processWait_0, this, &m_funcStack )
     );
 
     m_funcStack.push_back( ctx );
@@ -414,7 +414,7 @@ void ProcessQueuesState::enterWait( WaitReq* req, uint64_t exitDelay  )
 
 void ProcessQueuesState::processWait_0( Stack* stack )
 {
-    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_APP_SIDE,"stack.size()=%lu\n", stack->size()); 
+    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_APP_SIDE,"stack.size()=%lu\n", stack->size());
     dbg().debug(CALL_INFO,2,DBG_MSK_PQS_APP_SIDE,"num pstd %lu, num short %lu\n",
                             m_pstdRcvQ.size(), m_recvdMsgQ.size() );
     WaitCtx* ctx = static_cast<WaitCtx*>( stack->back() );
@@ -426,7 +426,7 @@ void ProcessQueuesState::processWait_0( Stack* stack )
     _CommReq* req = ctx->req->getFiniReq();
 
     if ( req ) {
-        processWaitCtx_0( ctx, req ); 
+        processWaitCtx_0( ctx, req );
     } else if ( ctx->flag ) {
         delete ctx;
         exit();
@@ -438,7 +438,7 @@ void ProcessQueuesState::processWait_0( Stack* stack )
 void ProcessQueuesState::processWaitCtx_0( WaitCtx* ctx, _CommReq* req )
 {
     dbg().debug(CALL_INFO,2,DBG_MSK_PQS_APP_SIDE,"\n");
-    schedCallback( 
+    schedCallback(
         std::bind( &ProcessQueuesState::processWaitCtx_1, this, ctx, req ),
         req->getFiniDelay()
     );
@@ -446,20 +446,20 @@ void ProcessQueuesState::processWaitCtx_0( WaitCtx* ctx, _CommReq* req )
 
 void ProcessQueuesState::processWaitCtx_1( WaitCtx* ctx, _CommReq* req )
 {
-    size_t   length = req->getLength(); 
+    size_t   length = req->getLength();
 
     dbg().debug(CALL_INFO,2,DBG_MSK_PQS_APP_SIDE,"\n");
 
     if ( length > shortMsgLength() ) {
         // this is a hack, to get point to point latencies to match Chama
-        // we need to not add delay for unpinning the send buffer for long msg  
-        if ( req->isSend() ) { 
+        // we need to not add delay for unpinning the send buffer for long msg
+        if ( req->isSend() ) {
             length = 0;
-        } 
-        m_mem->unpin( 
+        }
+        m_mem->unpin(
             std::bind( &ProcessQueuesState::processWaitCtx_2, this, ctx ),
-            0, length 
-        ); 
+            0, length
+        );
     } else {
         processWaitCtx_2( ctx );
     }
@@ -475,7 +475,7 @@ void ProcessQueuesState::processWaitCtx_2( WaitCtx* ctx )
     dbg().debug(CALL_INFO,2,DBG_MSK_PQS_APP_SIDE,"\n");
 
     if ( req ) {
-        processWaitCtx_0( ctx, req ); 
+        processWaitCtx_0( ctx, req );
     } else  if ( ctx->req->isDone() ) {
         if ( ctx->flag ) {
             dbg().debug(CALL_INFO,2,DBG_MSK_PQS_APP_SIDE,"set flag\n");
@@ -491,14 +491,14 @@ void ProcessQueuesState::processWaitCtx_2( WaitCtx* ctx )
 void ProcessQueuesState::processQueues( Stack* stack )
 {
     dbg().debug(CALL_INFO,1,DBG_MSK_PQS_Q,"shortMsgV.size=%lu\n", m_recvdMsgQ.size() );
-    dbg().debug(CALL_INFO,1,DBG_MSK_PQS_Q,"stack.size()=%lu\n", stack->size()); 
+    dbg().debug(CALL_INFO,1,DBG_MSK_PQS_Q,"stack.size()=%lu\n", stack->size());
 
     // this does not cost time
     while ( m_needRecv ) {
-        ++m_numNicRequestedShortBuff; 
+        ++m_numNicRequestedShortBuff;
         postShortRecvBuffer();
         --m_needRecv;
-    } 
+    }
 
     // this does not cost time
     while ( ! m_longAckQ.empty() ) {
@@ -509,14 +509,14 @@ void ProcessQueuesState::processQueues( Stack* stack )
     // this does not cost time
     while ( ! m_loopResp.empty() ) {
         processLoopResp( m_loopResp.front() );
-        m_loopResp.pop_front(); 
+        m_loopResp.pop_front();
     }
 
     if ( ! m_longGetFiniQ.empty() ) {
 
         ProcessQueuesCtx* ctx = new ProcessQueuesCtx(
-                bind( &ProcessQueuesState::processQueues0, this, stack )  
-        ); 
+                bind( &ProcessQueuesState::processQueues0, this, stack )
+        );
         stack->push_back( ctx );
 
         processLongGetFini( stack, m_longGetFiniQ.front() );
@@ -526,8 +526,8 @@ void ProcessQueuesState::processQueues( Stack* stack )
     } else if ( ! m_recvdMsgQ.empty() ) {
 
         ProcessQueuesCtx* ctx = new ProcessQueuesCtx(
-                bind ( &ProcessQueuesState::processQueues0, this, stack ) 
-        );  
+                bind ( &ProcessQueuesState::processQueues0, this, stack )
+        );
         stack->push_back( ctx );
         processShortList_0( stack );
 
@@ -538,9 +538,9 @@ void ProcessQueuesState::processQueues( Stack* stack )
 
 void ProcessQueuesState::processQueues0( Stack* stack )
 {
-    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_Q,"stack.size()=%lu recvdMsgQ.size()=%lu\n", 
-            stack->size(), m_recvdMsgQ.size() ); 
-    
+    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_Q,"stack.size()=%lu recvdMsgQ.size()=%lu\n",
+            stack->size(), m_recvdMsgQ.size() );
+
     delete stack->back();
     stack->pop_back();
     schedCallback( stack->back()->getCallback() );
@@ -548,8 +548,8 @@ void ProcessQueuesState::processQueues0( Stack* stack )
 
 void ProcessQueuesState::processShortList_0( Stack* stack )
 {
-    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_Q,"stack.size()=%lu recvdMsgQ.size()=%lu\n", 
-            stack->size(), m_recvdMsgQ.size() ); 
+    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_Q,"stack.size()=%lu recvdMsgQ.size()=%lu\n",
+            stack->size(), m_recvdMsgQ.size() );
 
     ProcessShortListCtx* ctx = new ProcessShortListCtx( m_recvdMsgQ );
 	m_recvdMsgQ.clear();
@@ -560,33 +560,33 @@ void ProcessQueuesState::processShortList_0( Stack* stack )
 
 void ProcessQueuesState::processShortList_1( Stack* stack )
 {
-    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_Q,"stack.size()=%lu recvdMsgQ.size()=%lu\n", 
-                        stack->size(), m_recvdMsgQ.size() ); 
+    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_Q,"stack.size()=%lu recvdMsgQ.size()=%lu\n",
+                        stack->size(), m_recvdMsgQ.size() );
 
-    ProcessShortListCtx* ctx = 
+    ProcessShortListCtx* ctx =
                         static_cast<ProcessShortListCtx*>( stack->back() );
-    
+
     int count = 0;
     ctx->req = searchPostedRecv( ctx->hdr(), count );
 
-    m_mem->walk( 
+    m_mem->walk(
         std::bind( &ProcessQueuesState::processShortList_2, this, stack ),
         count
-    ); 
+    );
 }
 
 void ProcessQueuesState::processShortList_2( Stack* stack )
 {
-    ProcessShortListCtx* ctx = 
+    ProcessShortListCtx* ctx =
                         static_cast<ProcessShortListCtx*>( stack->back() );
-    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_Q,"stack.size()=%lu\n", stack->size()); 
+    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_Q,"stack.size()=%lu\n", stack->size());
 
     if ( ctx->req ) {
-        schedCallback( 
-            std::bind( 
+        schedCallback(
+            std::bind(
                     &ProcessQueuesState::processShortList_3, this, stack ),
             rxDelay( ctx->hdr().count * ctx->hdr().dtypeSize )
-        ); 
+        );
     } else {
         ctx->incPos();
         processShortList_5( stack );
@@ -595,7 +595,7 @@ void ProcessQueuesState::processShortList_2( Stack* stack )
 
 void ProcessQueuesState::processShortList_3( Stack* stack )
 {
-    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_Q,"stack.size()=%lu\n", stack->size()); 
+    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_Q,"stack.size()=%lu\n", stack->size());
 
     ProcessShortListCtx* ctx = static_cast<ProcessShortListCtx*>(stack->back());
 
@@ -605,17 +605,17 @@ void ProcessQueuesState::processShortList_3( Stack* stack )
 
     size_t length = ctx->hdr().count * ctx->hdr().dtypeSize;
 
-    if ( length <= shortMsgLength() || 
-                            dynamic_cast<LoopReq*>( ctx->msg() ) ) 
+    if ( length <= shortMsgLength() ||
+                            dynamic_cast<LoopReq*>( ctx->msg() ) )
     {
         dbg().debug(CALL_INFO,2,DBG_MSK_PQS_Q,"copyIoVec() short|loop message\n");
 
         copyIoVec( req->ioVec(), ctx->ioVec(), length );
 
-        m_mem->copy( 
+        m_mem->copy(
             std::bind(
                     &ProcessQueuesState::processShortList_4, this, stack ),
-                1, 0, length 
+                1, 0, length
         );
 
     } else {
@@ -627,7 +627,7 @@ void ProcessQueuesState::processShortList_4( Stack* stack )
 {
     ProcessShortListCtx* ctx = static_cast<ProcessShortListCtx*>(stack->back());
 
-    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_Q,"stack.size()=%lu\n", stack->size()); 
+    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_Q,"stack.size()=%lu\n", stack->size());
 
     _CommReq* req = ctx->req;
 
@@ -641,7 +641,7 @@ void ProcessQueuesState::processShortList_4( Stack* stack )
         ++m_numRecv;
         loopSendResp( loopReq->srcCore , loopReq->key );
 
-    } else if ( length <= shortMsgLength() ) { 
+    } else if ( length <= shortMsgLength() ) {
         dbg().debug(CALL_INFO,2,DBG_MSK_PQS_Q,"short\n");
         req->setDone( recvReqFiniDelay( length ) );
         ++m_numRecv;
@@ -655,7 +655,7 @@ void ProcessQueuesState::processShortList_4( Stack* stack )
 
         m_nic->get( nid, ctx->hdr().key, req->ioVec(), callback );
 
-        req->m_ackKey = ctx->hdr().key; 
+        req->m_ackKey = ctx->hdr().key;
         req->m_ackNid = nid;
     }
 
@@ -667,7 +667,7 @@ void ProcessQueuesState::processShortList_5( Stack* stack )
 {
     ProcessShortListCtx* ctx = static_cast<ProcessShortListCtx*>(stack->back());
 
-    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_Q,"stack.size()=%lu\n", stack->size()); 
+    dbg().debug(CALL_INFO,2,DBG_MSK_PQS_Q,"stack.size()=%lu\n", stack->size());
 
     if ( ctx->isDone() ) {
         dbg().debug(CALL_INFO,2,DBG_MSK_PQS_Q,"return up the stack\n");
@@ -676,7 +676,7 @@ void ProcessQueuesState::processShortList_5( Stack* stack )
 			m_recvdMsgQ.insert( m_recvdMsgQ.begin(), ctx->getMsgQ().begin(),
 														ctx->getMsgQ().end() );
 		}
-        delete stack->back(); 
+        delete stack->back();
         stack->pop_back();
         schedCallback( stack->back()->getCallback() );
     } else {
@@ -689,7 +689,7 @@ void ProcessQueuesState::processShortList_5( Stack* stack )
 void ProcessQueuesState::processLoopResp( LoopResp* resp )
 {
     dbg().debug(CALL_INFO,2,DBG_MSK_PQS_Q,"srcCore=%d\n",resp->srcCore );
-    _CommReq* req = (_CommReq*)resp->key;  
+    _CommReq* req = (_CommReq*)resp->key;
     ++m_numSent;
     req->setDone();
     delete resp;
@@ -703,7 +703,7 @@ void ProcessQueuesState::getFini( _CommReq* req )
     runInterruptCtx();
 }
 
-void ProcessQueuesState::dmaRecvFiniGI( GetInfo* info, uint64_t simVAddr, nid_t nid, 
+void ProcessQueuesState::dmaRecvFiniGI( GetInfo* info, uint64_t simVAddr, nid_t nid,
                                             uint32_t tag, size_t length )
 {
     dbg().debug(CALL_INFO,2,DBG_MSK_PQS_CB,"nid=%d tag=%#x length=%lu\n",
@@ -744,7 +744,7 @@ void ProcessQueuesState::enableInt( FuncCtxBase* ctx,
 	assert( m_funcStack.empty() );
     if ( m_intCtx ) {
   	    dbg().debug(CALL_INFO,1,DBG_MSK_PQS_INT,"already have a return ctx\n");
-        return; 
+        return;
     }
 
 	m_funcStack.push_back(ctx);
@@ -762,11 +762,11 @@ void ProcessQueuesState::runInterruptCtx( )
     	dbg().debug(CALL_INFO,1,DBG_MSK_PQS_INT,"missed interrupt\n");
         m_missedInt = true;
 		return;
-	} 
+	}
 
     InterruptCtx* ctx = new InterruptCtx(
-            std::bind( &ProcessQueuesState::leaveInterruptCtx, this, &m_intStack ) 
-    ); 
+            std::bind( &ProcessQueuesState::leaveInterruptCtx, this, &m_intStack )
+    );
 
     m_intStack.push_back( ctx );
 
@@ -818,9 +818,9 @@ void ProcessQueuesState::processLongGetFini( Stack* stack, _CommReq* req )
 
     stack->push_back( ctx );
 
-    schedCallback( 
+    schedCallback(
         std::bind( &ProcessQueuesState::processLongGetFini0, this, stack),
-        sendAckDelay() 
+        sendAckDelay()
     );
 }
 
@@ -829,27 +829,27 @@ void ProcessQueuesState::processLongGetFini0( Stack* stack )
     _CommReq* req = static_cast<ProcessLongGetFiniCtx*>(stack->back())->req;
 
     dbg().debug(CALL_INFO,1,DBG_MSK_PQS_CB,"\n");
-    
+
     delete stack->back();
     stack->pop_back();
-  
+
     ++m_numRecv;
     req->setDone( recvReqFiniDelay( req->getLength() ) );
 
-    IoVec hdrVec;   
+    IoVec hdrVec;
     CtrlHdr* hdr = new CtrlHdr;
-    hdrVec.len = sizeof( *hdr ); 
+    hdrVec.len = sizeof( *hdr );
     hdrVec.addr.setSimVAddr( m_simVAddrs->alloc(hdrVec.len) );
-    hdrVec.addr.setBacking( hdr ); 
+    hdrVec.addr.setBacking( hdr );
 
     VoidFunction* callback = new VoidFunction;
-    *callback = std::bind( 
-                &ProcessQueuesState::pioSendFiniCtrlHdr, this, hdr, hdrVec.addr.getSimVAddr() ); 
+    *callback = std::bind(
+                &ProcessQueuesState::pioSendFiniCtrlHdr, this, hdr, hdrVec.addr.getSimVAddr() );
 
     std::vector<IoVec> vec;
     vec.insert( vec.begin(), hdrVec );
 
-    dbg().debug(CALL_INFO,1,DBG_MSK_PQS_CB,"send long msg Ack to nid=%d key=%#x\n", 
+    dbg().debug(CALL_INFO,1,DBG_MSK_PQS_CB,"send long msg Ack to nid=%d key=%#x\n",
                                                 req->m_ackNid, req->m_ackKey );
 
     m_nic->pioSend( m_ackVN, req->m_ackNid, req->m_ackKey, vec, callback );
@@ -886,7 +886,7 @@ void ProcessQueuesState::loopHandler( int srcCore, void* key )
 
 void ProcessQueuesState::loopHandler( int srcCore, std::vector<IoVec>& vec, void* key )
 {
-        
+
     MatchHdr* hdr = (MatchHdr*) vec[0].addr.getBacking();
 
     dbg().debug(CALL_INFO,2,DBG_MSK_PQS_CB,"req: srcCore=%d key=%p vec.size()=%lu srcRank=%d\n",
@@ -925,7 +925,7 @@ bool ProcessQueuesState::checkMatchHdr( MatchHdr& hdr, MatchHdr& wantHdr,
                                     uint64_t ignore )
 {
     dbg().debug(CALL_INFO,2,DBG_MSK_PQS_Q,"posted tag %#" PRIx64 ", msg tag %#" PRIx64 "\n", wantHdr.tag, hdr.tag );
-    if ( ( AnyTag != wantHdr.tag ) && 
+    if ( ( AnyTag != wantHdr.tag ) &&
             ( ( wantHdr.tag & ~ignore) != ( hdr.tag & ~ignore ) ) ) {
         return false;
     }
@@ -956,7 +956,7 @@ bool ProcessQueuesState::checkMatchHdr( MatchHdr& hdr, MatchHdr& wantHdr,
     return true;
 }
 
-void ProcessQueuesState::copyIoVec( 
+void ProcessQueuesState::copyIoVec(
                 std::vector<IoVec>& dst, std::vector<IoVec>& src, size_t len )
 {
     dbg().debug(CALL_INFO,2,DBG_MSK_PQS_Q,"dst.size()=%lu src.size()=%lu wantLen=%lu\n",
@@ -964,7 +964,7 @@ void ProcessQueuesState::copyIoVec(
 
     size_t copied = 0;
     size_t rV = 0,rP =0;
-    for ( unsigned int i=0; i < src.size() && copied < len; i++ ) 
+    for ( unsigned int i=0; i < src.size() && copied < len; i++ )
     {
         assert( rV < dst.size() );
         dbg().debug(CALL_INFO,3,DBG_MSK_PQS_Q,"src[%d].len %lu\n", i, src[i].len);
@@ -974,7 +974,7 @@ void ProcessQueuesState::copyIoVec(
                                                         copied,rV,rP);
 
             if ( dst[rV].addr.getBacking() && src[i].addr.getBacking() ) {
-                ((char*)dst[rV].addr.getBacking())[rP] = 
+                ((char*)dst[rV].addr.getBacking())[rP] =
                             ((char*)src[i].addr.getBacking())[j];
             }
             ++copied;
@@ -982,7 +982,7 @@ void ProcessQueuesState::copyIoVec(
             if ( rP == dst[rV].len ) {
                 rP = 0;
                 ++rV;
-            } 
+            }
         }
     }
     assert( copied == len );
@@ -994,19 +994,19 @@ void ProcessQueuesState::postShortRecvBuffer( )
             new ShortRecvBuffer( shortMsgLength() + sizeof(MatchHdr), *m_simVAddrs );
 
     Callback2* callback = new Callback2;
-    *callback = std::bind( 
-        &ProcessQueuesState::dmaRecvFiniSRB, this, buf, 
+    *callback = std::bind(
+        &ProcessQueuesState::dmaRecvFiniSRB, this, buf,
         std::placeholders::_1,
-        std::placeholders::_2, 
+        std::placeholders::_2,
         std::placeholders::_3
-    ); 
+    );
 
-    // save this info so we can cleanup in the destructor 
+    // save this info so we can cleanup in the destructor
     m_postedShortBuffers[buf ] = callback;
 
     dbg().debug(CALL_INFO,2,DBG_MSK_PQS_POST_SHORT,"num postedShortRecvBuffers %lu\n",
                                         m_postedShortBuffers.size());
-    m_nic->dmaRecv( -1, ShortMsgQ, buf->ioVec, callback ); 
+    m_nic->dmaRecv( -1, ShortMsgQ, buf->ioVec, callback );
 }
 
 void ProcessQueuesState::loopSendReq( std::vector<IoVec>& vec, int core, void* key )

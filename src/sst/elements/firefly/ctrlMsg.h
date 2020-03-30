@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -46,7 +46,7 @@ struct CommReq {
     _CommReq* req;
 };
 
-static const uint64_t  AnyTag = -1; 
+static const uint64_t  AnyTag = -1;
 
 class API : public ProtocolAPI {
 
@@ -63,7 +63,7 @@ class API : public ProtocolAPI {
         "CtrlMsgProto",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "",
-        SST::Firefly::CtrlMsg::API 
+        SST::Firefly::CtrlMsg::API
     )
 
     SST_ELI_DOCUMENT_PARAMS()
@@ -79,8 +79,8 @@ class API : public ProtocolAPI {
 
     void initMsgPassing();
     void makeProgress();
-    void send( const Hermes::MemAddr&, size_t len, nid_t dest, uint64_t tag, int vn = 0 ); 
-    void send( const Hermes::MemAddr&, size_t len, MP::RankID dest, uint64_t tag, 
+    void send( const Hermes::MemAddr&, size_t len, nid_t dest, uint64_t tag, int vn = 0 );
+    void send( const Hermes::MemAddr&, size_t len, MP::RankID dest, uint64_t tag,
                             MP::Communicator grp, int vn = 0 );
     void isend( const Hermes::MemAddr&, size_t len, nid_t dest, uint64_t tag, CommReq*, int vn = 0 );
     void isend( const Hermes::MemAddr&, size_t len, nid_t dest, uint64_t tag,
@@ -92,7 +92,7 @@ class API : public ProtocolAPI {
     void recv( const Hermes::MemAddr&, size_t len, nid_t src, uint64_t tag, MP::Communicator grp );
     void recv( void*, size_t len, nid_t src, uint64_t tag, MP::Communicator grp );
     void irecv( const Hermes::MemAddr&, size_t len, nid_t src, uint64_t tag, CommReq* );
-    void irecv( const Hermes::MemAddr&, size_t len, MP::RankID src, uint64_t tag, 
+    void irecv( const Hermes::MemAddr&, size_t len, MP::RankID src, uint64_t tag,
                 MP::Communicator grp, CommReq* );
     void irecvv( std::vector<IoVec>&, nid_t src, uint64_t tag, CommReq* );
     void irecvv( std::vector<IoVec>&, nid_t src, uint64_t tag, MP::Communicator grp, CommReq* );
@@ -100,7 +100,7 @@ class API : public ProtocolAPI {
     void waitAll( std::vector<CommReq*>& );
     void waitAll( std::vector<CommReq>& );
 
-	void send( const Hermes::MemAddr& buf, uint32_t count, 
+	void send( const Hermes::MemAddr& buf, uint32_t count,
 		MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
         MP::Communicator group );
 

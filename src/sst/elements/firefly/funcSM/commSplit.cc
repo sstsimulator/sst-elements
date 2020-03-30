@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -20,13 +20,13 @@
 
 using namespace SST::Firefly;
 
-void CommSplitFuncSM::handleStartEvent( SST::Event *e, Retval& retval ) 
+void CommSplitFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
 {
     m_commSplitEvent = static_cast< CommSplitStartEvent* >(e);
     assert( m_commSplitEvent );
-    
+
     m_dbg.debug(CALL_INFO,1,0,"oldGroup=%d\n", m_commSplitEvent->oldComm );
-    m_dbg.debug(CALL_INFO,1,0,"color=%d key=%d\n", 
+    m_dbg.debug(CALL_INFO,1,0,"color=%d key=%d\n",
                 m_commSplitEvent->color, m_commSplitEvent->key );
 
     Group* oldGrp = m_info->getGroup( m_commSplitEvent->oldComm );
@@ -37,10 +37,10 @@ void CommSplitFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
     if (1 == cnt ) {
 
         assert( m_commSplitEvent->key == 0 );
-        *m_commSplitEvent->newComm = m_info->newGroup(); 
+        *m_commSplitEvent->newComm = m_info->newGroup();
         Group* newGroup = m_info->getGroup( *m_commSplitEvent->newComm );
         assert( newGroup );
-        newGroup->initMapping( 0, oldGrp->getMapping(0), 1 ); 
+        newGroup->initMapping( 0, oldGrp->getMapping(0), 1 );
         newGroup->setMyRank( 0 );
 
         retval.setExit(0);
@@ -74,33 +74,33 @@ void CommSplitFuncSM::handleEnterEvent( Retval& retval )
     AllgatherFuncSM::handleEnterEvent( retval );
 
     if ( retval.isExit() ) {
-        *m_commSplitEvent->newComm = m_info->newGroup(); 
+        *m_commSplitEvent->newComm = m_info->newGroup();
         Group* newGroup = m_info->getGroup( *m_commSplitEvent->newComm );
         assert( newGroup );
 
         Group* oldGrp = m_info->getGroup( m_commSplitEvent->oldComm);
         assert( oldGrp );
-    
+
         for ( int i = 0; i < oldGrp->getSize(); i++ ) {
             m_dbg.debug(CALL_INFO,1,0,"i=%d color=%#x key=%#x\n", i,
                  	((int*)m_recvbuf.getBacking())[i*2],
 					((int*)m_recvbuf.getBacking())[i*2 + 1] );
-            if ( m_commSplitEvent->color == 
+            if ( m_commSplitEvent->color ==
 					((int*)m_recvbuf.getBacking())[i*2] ) {
-            
+
                 m_dbg.debug(CALL_INFO,1,0,"add: oldRank=%d newRank=%d\n",
                                     i,
 					((int*)m_recvbuf.getBacking())[i*2 + 1]);
-                newGroup->initMapping( 
+                newGroup->initMapping(
 					((int*)m_recvbuf.getBacking())[i*2 + 1],
-                                    oldGrp->getMapping(i), 1 ); 
+                                    oldGrp->getMapping(i), 1 );
 
                 if ( oldGrp->getMyRank() == i ) {
-                    newGroup->setMyRank( 
+                    newGroup->setMyRank(
 						((int*)m_recvbuf.getBacking())[i*2 + 1] );
                 }
             }
-        }  
+        }
 
         delete m_commSplitEvent;
         free( m_sendbuf.getBacking() );

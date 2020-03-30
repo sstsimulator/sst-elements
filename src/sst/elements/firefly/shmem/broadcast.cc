@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -50,7 +50,7 @@ void ShmemBroadcast::start( Vaddr dest, Vaddr source, size_t nelems, int root, i
 
     for ( int i = 0; i < m_num_children; i++ ) {
         printf(":%d:%s():%d %d \n",my_pe(),__func__,__LINE__,m_children[i]);
-    } 
+    }
     m_iteration = 0;
 
     if ( m_num_children != 0 ) {
@@ -74,7 +74,7 @@ void ShmemBroadcast::node_0(int)
     m_api.wait_until( m_pSync, Shmem::NE, m_zero,
                        std::bind( &ShmemBroadcast::node_1, this, std::placeholders::_1 ) );
     //SHMEM_WAIT(pSync, 0);
-} 
+}
 
 void ShmemBroadcast::node_1(int)
 {
@@ -170,7 +170,7 @@ void ShmemBroadcast::node_7(int)
                 m_returnCallback );
                 //std::bind( &ShmemBroadcast::fini, this, std::placeholders::_1 ) );
     //SHMEM_WAIT_UNTIL(pSync, SHMEM_CMP_EQ, 0);
-} 
+}
 
 
 void ShmemBroadcast::leaf_0(int)
@@ -202,7 +202,7 @@ void ShmemBroadcast::leaf_2(int)
     m_api.putv( m_pSync, m_zero, my_pe(),
                 std::bind( &ShmemBroadcast::leaf_3, this, std::placeholders::_1 ) );
     //shmem_internal_put_small(pSync, &zero, sizeof(zero), shmem_internal_my_pe);
-} 
+}
 
 void ShmemBroadcast::leaf_3(int)
 {

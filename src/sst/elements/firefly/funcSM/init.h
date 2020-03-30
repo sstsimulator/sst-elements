@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -23,7 +23,7 @@
 namespace SST {
 namespace Firefly {
 
-class InitFuncSM :  public FunctionSMInterface 
+class InitFuncSM :  public FunctionSMInterface
 {
   public:
     SST_ELI_REGISTER_MODULE(
@@ -61,7 +61,7 @@ class InitFuncSM :  public FunctionSMInterface
     CtrlMsg::API* proto() { return static_cast<CtrlMsg::API*>(m_proto); }
 
     InitStartEvent* m_event;
-		
+
 };
 
 }

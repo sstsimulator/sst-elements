@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -26,18 +26,18 @@ class ArbitrateDMA {
     typedef std::function<void()> Callback;
 
     enum Type { Write, Read };
-    ArbitrateDMA( Nic& nic, Output& dbg, float GBs, float contentionMult, 
-                                    int bufferSize ) : 
+    ArbitrateDMA( Nic& nic, Output& dbg, float GBs, float contentionMult,
+                                    int bufferSize ) :
         m_nic(nic), m_dbg(dbg), m_GBs(GBs), m_contentionMult( contentionMult),
         m_bufferSize( bufferSize ),
-        m_xx(2) 
+        m_xx(2)
     {
         for ( unsigned i = 0; i < m_xx.size(); i++ ) {
             m_xx[i].avail = m_bufferSize;
             m_xx[i].lastTime = 0;
             m_xx[i].blocked = false;
         }
-    } 
+    }
 
     void canIWrite( Callback callback, int bytes ) {
 
@@ -62,10 +62,10 @@ class ArbitrateDMA {
 
   private:
     void updateAvail( XX& xx ) {
-        SimTime_t delta = m_nic.getCurrentSimTimeNano() - xx.lastTime; 
+        SimTime_t delta = m_nic.getCurrentSimTimeNano() - xx.lastTime;
         xx.lastTime = m_nic.getCurrentSimTimeNano();
-        long add = (float) delta * m_GBs;  
-        xx.avail += add; 
+        long add = (float) delta * m_GBs;
+        xx.avail += add;
 
         if ( xx.avail > m_bufferSize ) {
             xx.avail = m_bufferSize;
@@ -73,7 +73,7 @@ class ArbitrateDMA {
 
         m_dbg.debug(CALL_INFO,1,NIC_DBG_DMA_ARBITRATE,
 				"avail Bytes %ld, delta %" PRIu64 " ns, "
-            	"added %ld \n", xx.avail, delta, add ); 
+            	"added %ld \n", xx.avail, delta, add );
 		//assert( xx.avail >= 0 );
     }
 
@@ -83,7 +83,7 @@ class ArbitrateDMA {
 
         updateAvail( me );
 
-        adjustOther( other, bytes ); 
+        adjustOther( other, bytes );
 
         uint64_t delay = 0;
         if ( me.avail - bytes < 0 ) {

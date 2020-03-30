@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -28,9 +28,9 @@ class MemCpyReqEvent : public Event {
 
   public:
     typedef uint64_t Addr;
-    MemCpyReqEvent( Callback _callback, int _core, Addr _to, 
-                            Addr _from, size_t _length )  : 
-        Event(), 
+    MemCpyReqEvent( Callback _callback, int _core, Addr _to,
+                            Addr _from, size_t _length )  :
+        Event(),
         callback( _callback ),
         core(_core),
         to(_to),
@@ -51,9 +51,9 @@ class MemReadReqEvent : public Event {
 
   public:
     typedef uint64_t Addr;
-    MemReadReqEvent( Callback _callback, int _core, Addr _addr, 
-                            size_t _length )  : 
-        Event(), 
+    MemReadReqEvent( Callback _callback, int _core, Addr _addr,
+                            size_t _length )  :
+        Event(),
         callback( _callback ),
         core(_core),
         addr(_addr),
@@ -72,9 +72,9 @@ class MemWriteReqEvent : public Event {
 
   public:
     typedef uint64_t Addr;
-    MemWriteReqEvent( Callback _callback, int _core, Addr _addr, 
-                            size_t _length )  : 
-        Event(), 
+    MemWriteReqEvent( Callback _callback, int _core, Addr _addr,
+                            size_t _length )  :
+        Event(),
         callback( _callback ),
         core(_core),
         addr(_addr),
@@ -92,7 +92,7 @@ class MemWriteReqEvent : public Event {
 class MemRespEvent : public Event {
 
   public:
-    MemRespEvent( Callback _callback )  : 
+    MemRespEvent( Callback _callback )  :
         Event(),
         callback( _callback )
     {}
@@ -105,17 +105,17 @@ class MemRespEvent : public Event {
 class Mem : public SST::Component  {
   public:
     Mem(ComponentId_t id, Params& params );
-		
+
     ~Mem() {}
     void handleMemEvent( Event* ev, int );
 
   private:
-    std::vector<Link*>          m_links;   
+    std::vector<Link*>          m_links;
 };
 
 
 inline Mem::Mem(ComponentId_t id, Params& params ) :
-        Component( id ) 
+        Component( id )
 {
     int numCores = params.find<int>("numCores", 1 );
 
@@ -166,7 +166,7 @@ inline void Mem::handleMemEvent( Event* ev, int src ) {
             return;
         }
     }
-    
+
     delete ev;
 }
 

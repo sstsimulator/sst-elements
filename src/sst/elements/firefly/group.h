@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -27,16 +27,16 @@ class MapBase {
   public:
     virtual ~MapBase() {}
     virtual int getSize() = 0;
-    virtual void initMapping( int size ) {} 
-    virtual void initMapping( int from, int to, int range ) {} 
-    virtual void initMapping( const int* map, int size, int numCores ) {} 
+    virtual void initMapping( int size ) {}
+    virtual void initMapping( int from, int to, int range ) {}
+    virtual void initMapping( const int* map, int size, int numCores ) {}
     virtual int getMapping( int from ) = 0;
 };
 
 class Group : public MapBase
 {
   public:
-    Group() 
+    Group()
       : m_myRank( -1 )
     {}
     int getMyRank() {  return m_myRank; }
@@ -46,18 +46,18 @@ class Group : public MapBase
     int                 m_myRank;
 };
 
-class RandomGroup : public Group 
+class RandomGroup : public Group
 {
   public:
-    RandomGroup()  {} 
+    RandomGroup()  {}
 
     int getSize() { return m_map.size(); }
 
     void initMapping( int from, int to, int range ) {
-		
+
         if ( m_map.size() < (unsigned)from + range ) {
-            m_map.resize(from + range);	
-        }	
+            m_map.resize(from + range);
+        }
         for ( int i=0; i < range; i++ ) {
             m_map[from+i] = to+i;
         }
@@ -68,22 +68,22 @@ class RandomGroup : public Group
     std::vector<int> m_map;
 };
 
-class NetMapGroup : public Group 
+class NetMapGroup : public Group
 {
   public:
-    NetMapGroup() {} 
+    NetMapGroup() {}
 
     int getSize() { return m_size * m_numCores; }
 
-    void initMapping( const int* map, int size, int numCores ) 
+    void initMapping( const int* map, int size, int numCores )
     {
         m_netMap = map;
         m_numCores = numCores;
         m_size = size;
     }
 
-    int getMapping( int from ) { 
-        return m_netMap[from/m_numCores] * m_numCores + (from % m_numCores); 
+    int getMapping( int from ) {
+        return m_netMap[from/m_numCores] * m_numCores + (from % m_numCores);
     }
 
   private:
@@ -92,15 +92,15 @@ class NetMapGroup : public Group
     const int* m_netMap;
 };
 
-class IdentityGroup : public Group 
+class IdentityGroup : public Group
 {
   public:
-    IdentityGroup() : m_size(0) {} 
+    IdentityGroup() : m_size(0) {}
 
     int getSize() { return m_size; }
 
     void initMapping( int size ) {
-        m_size = size; 
+        m_size = size;
     }
 
     int getMapping( int from ) { return from; }
@@ -108,14 +108,14 @@ class IdentityGroup : public Group
     int m_size;
 };
 
-class DenseGroup : public Group 
+class DenseGroup : public Group
 {
   public:
-    int getSize() { 
+    int getSize() {
         if ( m_map.empty() ) {
             return 0;
         }
-        return m_map.rbegin()->first; 
+        return m_map.rbegin()->first;
     }
 
     void initMapping( int from, int to, int range ) {
@@ -131,13 +131,13 @@ class DenseGroup : public Group
                 assert( -1 == next->second );
                 if ( to == iter->second + ( next->first - iter->first ) ) {
                     m_map.erase( next->first );
-                    m_map[ from + range ] = -1; 
+                    m_map[ from + range ] = -1;
                     return;
-                }   
+                }
             }
         }
 
-		m_map[ from ] = to;		
+		m_map[ from ] = to;
 		m_map[ from + range ] = -1;
     }
 
@@ -149,7 +149,7 @@ class DenseGroup : public Group
 			std::map<int,int>::iterator next = iter;
 			++next;
 			if ( from >= iter->first && from < next->first ) {
-				to = iter->second + (from - iter->first); 
+				to = iter->second + (from - iter->first);
 				break;
 			}
 		}
