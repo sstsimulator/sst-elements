@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -22,7 +22,7 @@ using namespace SST::Ember;
 
 #define TAG 0xDEADBEEF
 
-EmberTrafficGenGenerator::EmberTrafficGenGenerator(SST::ComponentId_t id, 
+EmberTrafficGenGenerator::EmberTrafficGenGenerator(SST::ComponentId_t id,
                                                     Params& params) :
 	EmberMessagePassingGenerator(id, params, "TrafficGen")
 {
@@ -42,7 +42,7 @@ void EmberTrafficGenGenerator::configure()
 {
     assert( 2 == size() );
 
-    m_random = new SSTGaussianDistribution( m_mean, m_stddev, 
+    m_random = new SSTGaussianDistribution( m_mean, m_stddev,
                         //new RNG::MarsagliaRNG( 11 + rank(), 79  ) );
                         new RNG::MarsagliaRNG( 11 + rank(), getJobId()  ) );
 
@@ -55,8 +55,8 @@ void EmberTrafficGenGenerator::configure()
 }
 
 bool EmberTrafficGenGenerator::generate( std::queue<EmberEvent*>& evQ)
-{ 
-    double computeTime = m_random->getNextDouble(); 
+{
+    double computeTime = m_random->getNextDouble();
 
     if ( computeTime < 0 ) {
         computeTime = 0.0;

@@ -1,8 +1,8 @@
-# Copyright 2009-2019 NTESS. Under the terms
+# Copyright 2009-2020 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2019, NTESS
+# Copyright (c) 2009-2020, NTESS
 # All rights reserved.
 #
 # Portions are copyright of other developers:
@@ -18,12 +18,12 @@ import myprint
 
 pp = pprint.PrettyPrinter(indent=4)
 
-def getOptions(): 
+def getOptions():
 	return ["netBW=", "netFlitSize=", "rtrArb=", "netInspect="]
 
 class RtrConfig:
 	def __init__( self, params, opts ):
-		self._params = params 
+		self._params = params
 
 		for o,a in opts:
 			if o in ('--netBW='):
@@ -33,10 +33,10 @@ class RtrConfig:
 				self._params['flitSize'] = a
 
 			elif o in ('--rtrArb='):
-				self._params['xbar_arb'] = a 
+				self._params['xbar_arb'] = a
 
 			elif o in ('--netInspect='):
-				self._params['network_inspectors'] = a 
+				self._params['network_inspectors'] = a
 
 		#myprint.printParams( 'RtrConfig:', self._params );
 

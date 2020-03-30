@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -28,7 +28,7 @@ class EmberRecvEvent : public EmberMPIEvent {
 	EmberRecvEvent( MP::Interface& api, Output* output,
                    EmberEventTimeStatistic* stat,
         const Hermes::MemAddr& payload,
-		uint32_t count, PayloadDataType dtype, RankID src, 
+		uint32_t count, PayloadDataType dtype, RankID src,
         uint32_t tag, Communicator group, MessageResponse* resp ) :
         EmberMPIEvent( api, output, stat ),
         m_payload(payload),
@@ -37,7 +37,7 @@ class EmberRecvEvent : public EmberMPIEvent {
         m_src(src),
         m_tag(tag),
         m_group(group),
-        m_resp(resp)       
+        m_resp(resp)
     {}
 
     std::string getName() { return "Recv"; }

@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -29,8 +29,8 @@ class EmberShmemFaddGenerator : public EmberShmemGenerator {
 
 public:
 	EmberShmemFaddGenerator(SST::ComponentId_t id, Params& params) :
-		EmberShmemGenerator(id, params, "ShmemFadd" ), m_phase(0) 
-	{ 
+		EmberShmemGenerator(id, params, "ShmemFadd" ), m_phase(0)
+	{
         int status;
         std::string tname = typeid(TYPE).name();
 		char* tmp = abi::__cxa_demangle(tname.c_str(), NULL, NULL, &status);
@@ -38,7 +38,7 @@ public:
 		free(tmp);
 	}
 
-    bool generate( std::queue<EmberEvent*>& evQ) 
+    bool generate( std::queue<EmberEvent*>& evQ)
 	{
         bool ret = false;
         switch ( m_phase ) {
@@ -59,7 +59,7 @@ public:
             break;
 
         case 2:
-            
+
             if ( m_my_pe == 0 ) {
                 m_addr.at<TYPE>(0) = 10;
             }
@@ -86,7 +86,7 @@ public:
                 tmp << " got="<< m_result << " want=" << 10;
                 printf("%d:%s: Fadd %s\n",m_my_pe, getMotifName().c_str(), tmp.str().c_str());
 
-                assert ( m_result == 10 ); 
+                assert ( m_result == 10 );
             }
 		    ret = true;
         }

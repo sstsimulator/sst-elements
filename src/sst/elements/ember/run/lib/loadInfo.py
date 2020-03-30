@@ -1,8 +1,8 @@
-# Copyright 2009-2019 NTESS. Under the terms
+# Copyright 2009-2020 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2019, NTESS
+# Copyright (c) 2009-2020, NTESS
 # All rights reserved.
 #
 # Portions are copyright of other developers:
@@ -26,7 +26,7 @@ class LoadInfo:
 		self.nicConfig = nicConfig
 		self.numNics = numNics
 		self.map = []
-		self.nullEmber = nullEmber 
+		self.nullEmber = nullEmber
 
 	def addEmberConfig( self, emberConfig ):
 		self.map.append( emberConfig )
@@ -42,15 +42,15 @@ class LoadInfo:
 		#print "setNode() nodeId={0}".format( nodeId )
 		for ep in self.map:
 			x = ep.getNidList().split(',')
-			for y in x:	
+			for y in x:
 				tmp = y.split('-')
 
 				if 1 == len(tmp):
 					if nodeId == int( tmp[0] ):
-						return EmberEP( self.nicConfig, ep  )  
+						return EmberEP( self.nicConfig, ep  )
 				else:
 					if self.inRange( nodeId, int(tmp[0]), int(tmp[1]) ):
-						return EmberEP( self.nicConfig, ep  )  
+						return EmberEP( self.nicConfig, ep  )
 
 		if self.nullEmber:
 			return EmberEP( self.nicConfig, self.nullEmber )

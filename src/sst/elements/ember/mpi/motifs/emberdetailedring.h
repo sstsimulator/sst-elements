@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -66,14 +66,14 @@ public:
 public:
 	EmberDetailedRingGenerator(SST::ComponentId_t, Params& params);
     bool generate( std::queue<EmberEvent*>& evQ);
-	std::string getComputeModelName(); 
+	std::string getComputeModelName();
 
 private:
     void computeDetailed( std::queue<EmberEvent*>& evQ);
     void computeSimple( std::queue<EmberEvent*>& evQ);
     void (EmberDetailedRingGenerator::*m_computeFunc)( std::queue<EmberEvent*>& evQ );
     bool findNum( int num, std::string list );
-    
+
     MessageRequest  m_req[2];
 	std::string m_rankList;
 	uint32_t m_messageSize;

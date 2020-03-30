@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -94,7 +94,7 @@ protected:
 	}
 
 	ReductionOperation op_create( User_function* func, int commute ) {
-		return Hermes::MP::Op_create( func, commute ); 
+		return Hermes::MP::Op_create( func, commute );
 	}
 
 	void op_free( ReductionOperation op ) {
@@ -108,7 +108,7 @@ protected:
 	int get_count( MessageResponse* resp, PayloadDataType datatype, int* count ) {
 		uint32_t nbytes = resp->count * resp->dtypeSize;
 		int dtypesize = sizeofDataType(datatype);
-		if ( nbytes % dtypesize ) { 
+		if ( nbytes % dtypesize ) {
 			*count = 0;
 			return -1;
 		}

@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -29,8 +29,8 @@ class EmberShmemSwapGenerator : public EmberShmemGenerator {
 
 public:
     EmberShmemSwapGenerator(SST::ComponentId_t id, Params& params) :
-		EmberShmemGenerator(id, params, "ShmemSwap" ), m_phase(0) 
-	{ 
+		EmberShmemGenerator(id, params, "ShmemSwap" ), m_phase(0)
+	{
         int status;
         std::string tname = typeid(TYPE).name();
 		char* tmp = abi::__cxa_demangle(tname.c_str(), NULL, NULL, &status);
@@ -39,7 +39,7 @@ public:
         assert( 4 == sizeof(TYPE) || 8 == sizeof(TYPE) );
 	}
 
-    bool generate( std::queue<EmberEvent*>& evQ) 
+    bool generate( std::queue<EmberEvent*>& evQ)
 	{
         bool ret = false;
         switch ( m_phase ) {
@@ -57,8 +57,8 @@ public:
             enQ_malloc( evQ, &m_addr, sizeof(TYPE) );
             break;
 
-        case 2: 
-            
+        case 2:
+
             if ( m_my_pe == 0 ) {
                 m_addr.at<TYPE>(0) = 10;
             }
@@ -67,7 +67,7 @@ public:
 
             if ( m_my_pe == 1 ) {
                 m_value = 19;
-                enQ_swap( evQ, 
+                enQ_swap( evQ,
                     &m_result,
                     m_addr,
                     &m_value,
@@ -82,7 +82,7 @@ public:
                 assert( m_addr.at<TYPE>(0) == 19 );
             } else {
                 printf("%d:%s: Swap result=%#" PRIx64 "\n",m_my_pe, getMotifName().c_str(), (uint64_t) m_result);
-                assert ( m_result == 10 ); 
+                assert ( m_result == 10 );
             }
 		    ret = true;
         }

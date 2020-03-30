@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -26,9 +26,9 @@ class EmberWaitShmemEvent : public EmberShmemEvent {
 
 public:
 	EmberWaitShmemEvent( Shmem::Interface& api, Output* output,
-            Hermes::Vaddr dest, Hermes::Shmem::WaitOp op, Hermes::Value value, 
+            Hermes::Vaddr dest, Hermes::Shmem::WaitOp op, Hermes::Value value,
             EmberEventTimeStatistic* stat = NULL ) :
-            EmberShmemEvent( api, output, stat ), 
+            EmberShmemEvent( api, output, stat ),
             m_dest(dest), m_op(op), m_value(value) {}
 	~EmberWaitShmemEvent() {}
 

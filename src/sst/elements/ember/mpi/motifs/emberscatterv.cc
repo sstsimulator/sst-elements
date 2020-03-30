@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -43,7 +43,7 @@ EmberScattervGenerator::EmberScattervGenerator(SST::ComponentId_t id,
 			}
 			m_sendCnts[i] = m_count;
 			m_sendDsp[i] = i * m_count * sizeof(long);
-    	}	
+    	}
 	}
 }
 
@@ -56,7 +56,7 @@ bool EmberScattervGenerator::generate( std::queue<EmberEvent*>& evQ) {
             double latency = (double)(m_stopTime-m_startTime)/(double)m_iterations;
             latency /= 1000000000.0;
             output( "%s: ranks %d, loop %d, bytes %" PRIu32 ", latency %.3f us\n",
-                    getMotifName().c_str(), size(), m_iterations, 
+                    getMotifName().c_str(), size(), m_iterations,
                         m_count * typeSize, latency * 1000000.0  );
         }
 
@@ -64,7 +64,7 @@ bool EmberScattervGenerator::generate( std::queue<EmberEvent*>& evQ) {
     		for ( int i = 0; i < m_count; i++ ) {
 				if ( ((long*)m_recvBuf)[i] != rank() ) {
 					printf("Error: Rank %d index %d verification failed, want %d got %ld\n", rank(), i, rank(), ((long*)m_recvBuf)[i] );
-				} 
+				}
 			}
 		}
         return true;

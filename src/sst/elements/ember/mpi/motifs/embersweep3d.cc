@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -65,7 +65,7 @@ void EmberSweep3DGenerator::configure()
 	// Check that we are using all the processors or else lock up will happen :(.
 	if( (px * py) != (signed) size() ) {
 		fatal(CALL_INFO, -1, "Error: Sweep 3D motif checked "
-			"processor decomposition: %" PRIu32 "x%" PRIu32 " != MPI World %" 
+			"processor decomposition: %" PRIu32 "x%" PRIu32 " != MPI World %"
 			PRIu32 "\n", px, py, size());
 	}
 
@@ -82,14 +82,14 @@ void EmberSweep3DGenerator::configure()
 	y_down = (myY != 0) ? rank() - px : -1;
 
 	/**if(0 == rank()) {
-		output( "%s nx = %" PRIu32 ", ny = %" PRIu32 ", nz = %" PRIu32 
+		output( "%s nx = %" PRIu32 ", ny = %" PRIu32 ", nz = %" PRIu32
 			", kba=%" PRIu32 ", (nx/kba)=%" PRIu32 "\n",
 			m_name.c_str(), nx, ny, nz, kba, (nz / kba));
 	}
 
-	
-	output( "%s Rank: %" PRIu32 " is located at coordinations of (%" PRId32 
-			", %" PRId32 ") in the 2D decomposition, X+: %" PRId32 ",X-:%" 
+
+	output( "%s Rank: %" PRIu32 " is located at coordinations of (%" PRId32
+			", %" PRId32 ") in the 2D decomposition, X+: %" PRId32 ",X-:%"
 			PRId32 ",Y+:%" PRId32 ",Y-:%" PRId32 "\n",
 			m_name.c_str(), rank(), myX, myY, x_up, x_down, y_up, y_down);
 	*/
@@ -103,9 +103,9 @@ bool EmberSweep3DGenerator::generate( std::queue<EmberEvent*>& evQ) {
 	}
 
 	//for(uint32_t repeat = 0; repeat < 2; ++repeat) {
-	
+
 	switch(m_InnerLoopIndex) {
-	
+
 	case 0:
 		// Sweep from (0, 0) outwards towards (Px, Py)
 		for(uint32_t i = 0; i < nz; i+= kba) {
@@ -127,7 +127,7 @@ bool EmberSweep3DGenerator::generate( std::queue<EmberEvent*>& evQ) {
        		    enQ_send( evQ, y_up, (ny * kba * data_width * fields_per_cell), 1000, GroupWorld );
 			}
 		}
-		
+
 		break;
 
 	case 1:
@@ -151,7 +151,7 @@ bool EmberSweep3DGenerator::generate( std::queue<EmberEvent*>& evQ) {
 				enQ_send( evQ, y_up, (ny * kba * data_width * fields_per_cell), 2000, GroupWorld );
 			}
 		}
-		
+
 		break;
 
 	case 2:
@@ -175,9 +175,9 @@ bool EmberSweep3DGenerator::generate( std::queue<EmberEvent*>& evQ) {
 				enQ_send( evQ, y_down, (ny * kba * data_width * fields_per_cell), 3000, GroupWorld );
         	}
 		}
-		
+
 		break;
-		
+
 	case 3:
 		// Sweep from (0, Py) outwards towards (Px, 0)
 		for(uint32_t i = 0; i < nz; i+= kba) {
@@ -199,11 +199,11 @@ bool EmberSweep3DGenerator::generate( std::queue<EmberEvent*>& evQ) {
             	enQ_send( evQ, y_down, (ny * kba * data_width * fields_per_cell), 4000, GroupWorld );
 			}
         }
-        
+
         break;
 	}
 	//}
-	
+
 	if( ++m_InnerLoopIndex == 4 ) {
     	if ( ++m_loopIndex == (iterations * 2) ) {
         	return true;

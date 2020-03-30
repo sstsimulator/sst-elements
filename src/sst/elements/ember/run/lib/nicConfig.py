@@ -1,8 +1,8 @@
-# Copyright 2009-2019 NTESS. Under the terms
+# Copyright 2009-2020 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2019, NTESS
+# Copyright (c) 2009-2020, NTESS
 # All rights reserved.
 #
 # Portions are copyright of other developers:
@@ -13,7 +13,7 @@
 # information, see the LICENSE file in the top level directory of the
 # distribution.
 
-import componentConfig 
+import componentConfig
 import myprint
 import copy
 
@@ -22,7 +22,7 @@ def getOptions():
 
 class NicConfig(componentConfig.ComponentConfig):
 	def __init__( self, params, opts, getNicParams = None ):
-		self.params = params 
+		self.params = params
 		self.getNicParams = getNicParams
 		for o,a in opts:
 			if o in ('--netPktSize'):
@@ -36,13 +36,13 @@ class NicConfig(componentConfig.ComponentConfig):
 
 	def getParams( self, nodeNum, ranksPerNode ):
 		extra = copy.deepcopy(self.params)
-		extra["nid"] =  nodeNum	
-		extra["num_vNics"] = ranksPerNode	
+		extra["nid"] =  nodeNum
+		extra["num_vNics"] = ranksPerNode
 
 		if self.getNicParams:
 			extra.update(self.getNicParams( nodeNum ) )
-	
+
 		return extra
 
-	def getName( self, nodeNum ): 
+	def getName( self, nodeNum ):
 		return "firefly.nic"

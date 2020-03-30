@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -21,10 +21,10 @@ using namespace SST::Ember;
 
 #define TAG 0xDEADBEEF
 
-EmberBiPingPongGenerator::EmberBiPingPongGenerator(SST::ComponentId_t id, 
+EmberBiPingPongGenerator::EmberBiPingPongGenerator(SST::ComponentId_t id,
                                                     Params& params) :
 	EmberMessagePassingGenerator(id, params, "BiPingPong"),
-    m_loopIndex(0) 
+    m_loopIndex(0)
 {
 	m_messageSize = (uint32_t) params.find("arg.messageSize", 1024);
 	m_iterations = (uint32_t) params.find("arg.iterations", 1);
@@ -34,7 +34,7 @@ EmberBiPingPongGenerator::EmberBiPingPongGenerator(SST::ComponentId_t id,
 }
 
 bool EmberBiPingPongGenerator::generate( std::queue<EmberEvent*>& evQ)
-{ 
+{
     if ( m_loopIndex == m_iterations ) {
         if ( 0 == rank()) {
             double totalTime = (double)(m_stopTime - m_startTime)/1000000000.0;
@@ -70,7 +70,7 @@ bool EmberBiPingPongGenerator::generate( std::queue<EmberEvent*>& evQ)
 
     enQ_irecv( evQ, m_recvBuf, m_messageSize, CHAR, otherRank,
                                                 TAG, GroupWorld, &m_req );
-    enQ_send( evQ, m_sendBuf, m_messageSize, CHAR, otherRank, 
+    enQ_send( evQ, m_sendBuf, m_messageSize, CHAR, otherRank,
                                                 TAG, GroupWorld );
     enQ_wait( evQ, &m_req );
 

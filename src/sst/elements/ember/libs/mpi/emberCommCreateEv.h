@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -27,10 +27,10 @@ class EmberCommCreateEvent : public EmberMPIEvent {
 public:
     EmberCommCreateEvent( MP::Interface& api, Output* output,
                          EmberEventTimeStatistic* stat,
-        Communicator oldComm, std::vector<int>& ranks, Communicator* newComm ) 
+        Communicator oldComm, std::vector<int>& ranks, Communicator* newComm )
       : EmberMPIEvent( api, output, stat ),
-        m_oldComm( oldComm), 
-        m_ranks(ranks), 
+        m_oldComm( oldComm),
+        m_ranks(ranks),
         m_newComm(newComm)
     {}
     ~EmberCommCreateEvent() {}
@@ -40,7 +40,7 @@ public:
     void issue( uint64_t time, FOO* functor ) {
 
         EmberEvent::issue( time );
-        m_api.comm_create( m_oldComm, m_ranks.size(), &m_ranks[0], 
+        m_api.comm_create( m_oldComm, m_ranks.size(), &m_ranks[0],
                                                     m_newComm, functor );
     }
 

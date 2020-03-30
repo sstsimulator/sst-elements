@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -64,14 +64,14 @@ public:
 public:
 	EmberDetailedStreamGenerator(SST::ComponentId_t, Params& params);
     bool generate( std::queue<EmberEvent*>& evQ);
-	std::string getComputeModelName(); 
+	std::string getComputeModelName();
 
 private:
 	//enum Bench { COPY, TRIAD, NUM_BENCH }  m_bench;
     void computeDetailedCopy( std::queue<EmberEvent*>& evQ);
     void computeDetailedTriad( std::queue<EmberEvent*>& evQ);
 	void print();
-    
+
 	uint32_t m_numLoops;
 	uint32_t m_loopIndex;
 

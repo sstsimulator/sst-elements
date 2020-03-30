@@ -1,8 +1,8 @@
-# Copyright 2009-2019 NTESS. Under the terms
+# Copyright 2009-2020 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2019, NTESS
+# Copyright (c) 2009-2020, NTESS
 # All rights reserved.
 #
 # Portions are copyright of other developers:
@@ -60,12 +60,12 @@ class TorusInfo(TopoInfo):
 
 		if len( args ) > 2:
 			width = int( args[2] )
-		
+
 		self.params = {}
 		self.params["num_dims"] = self.calcNumDim(shape)
 		self.params["torus:shape"] = shape
 		self.params["torus:width"] = self.calcWidth(shape,width)
-		self.params["torus:local_ports"] = local_ports 
+		self.params["torus:local_ports"] = local_ports
 		self.numNodes = self.calcNumNodes( shape ) * local_ports
 
 	def getParams(self):
@@ -86,7 +86,7 @@ class TorusInfo(TopoInfo):
 
 	def calcWidth(self,shape,width):
 		tmp = len( shape.split( 'x' ) ) - 1
-		retval = str(width) 
+		retval = str(width)
 		count = 0
 		while ( count < tmp ):
 			retval += "x" + str(width)
@@ -104,12 +104,12 @@ class FattreeInfo(TopoInfo):
 		self.params = {}
 		self.numNodes = self.calcNumNodes(shape)
 		self.params["fattree:shape"] = shape
-                
+
 	def getParams(self):
 		return self.params
 
 	def getNumNodes(self):
-		return self.numNodes 
+		return self.numNodes
 
         def calcNumNodes(self, shape):
                 levels = shape.split(":")
@@ -132,20 +132,20 @@ class DragonFlyInfo(TopoInfo):
 		hostsPerGroup = int(nRtrs) * int(lcl)
 		nGrp = int(nRtrs) * int(glbl) + 1
 		self.params["router_radix"] = radix
-		self.params["dragonfly:shape"] = "" 
+		self.params["dragonfly:shape"] = ""
 		self.params["dragonfly:hosts_per_router"] = lcl
 		self.params["dragonfly:routers_per_group"] = nRtrs
 		self.params["dragonfly:intergroup_per_router"] = glbl
 		self.params["dragonfly:num_groups"] =  nGrp
-		self.params["dragonfly:algorithm"] =  "minimal" 
+		self.params["dragonfly:algorithm"] =  "minimal"
 
-		self.numNodes = nGrp * hostsPerGroup 
-                
+		self.numNodes = nGrp * hostsPerGroup
+
 	def getParams(self):
 		return self.params
 
 	def getNumNodes(self):
-		return self.numNodes 
+		return self.numNodes
 
 class DragonFly2Info(TopoInfo):
 	def __init__( self, shape ):
@@ -156,26 +156,26 @@ class DragonFly2Info(TopoInfo):
 		lcl, nRtrs, glbl, nGrp = shape.split(':')
 		self.params = {}
 		hostsPerGroup = int(nRtrs) * int(lcl)
-		self.params["dragonfly:shape"] = "" 
+		self.params["dragonfly:shape"] = ""
 		self.params["dragonfly:hosts_per_router"] = lcl
 		self.params["dragonfly:routers_per_group"] = nRtrs
 		self.params["dragonfly:intergroup_links"] = glbl
 		self.params["dragonfly:num_groups"] =  nGrp
-		self.params["dragonfly:algorithm"] =  "minimal" 
+		self.params["dragonfly:algorithm"] =  "minimal"
 
                 print lcl
                 print nRtrs
                 print glbl
                 print nGrp
-                
+
 		self.numNodes = int(nGrp) * hostsPerGroup
                 print self.numNodes
-                
+
 	def getParams(self):
 		return self.params
 
 	def getNumNodes(self):
-		return self.numNodes 
+		return self.numNodes
 
 def getTopoObj( topo ):
 	for case in switch(topo):
@@ -187,18 +187,18 @@ def getTopoObj( topo ):
 			return topoDrgonFly()
 		if case('dragonfly2'):
 			return topoDrgonFly2()
-			
+
 	sys.exit("how did we get here")
 
 def getTopoInfo( topo, shape ):
 	for case in switch(topo):
 		if case('torus'):
-			return TorusInfo(shape)   
+			return TorusInfo(shape)
 		if case('fattree'):
-			return FattreeInfo(shape)   
+			return FattreeInfo(shape)
 		if case('dragonfly'):
-			return DragonFlyInfo(shape)   
+			return DragonFlyInfo(shape)
 		if case('dragonfly2'):
-			return DragonFly2Info(shape)   
-			
+			return DragonFly2Info(shape)
+
 	sys.exit("how did we get here")

@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -32,14 +32,14 @@ public:
         m_nanoSecondDelay( nanoSecondDelay ),
         m_computeDistrib(dist),
         m_calcFunc(NULL)
-    {}  
+    {}
 
 	EmberComputeEvent( Output* output, std::function<uint64_t()> func,
                 EmberComputeDistribution* dist) :
         EmberEvent(output),
         m_computeDistrib(dist),
         m_calcFunc(func)
-    {}  
+    {}
 
 	~EmberComputeEvent() {}
 
@@ -48,9 +48,9 @@ public:
     void issue( uint64_t time, FOO* functor ) {
 
         EmberEvent::issue( time );
-    
+
         if ( m_calcFunc ) {
-            m_completeDelayNS = (double) m_calcFunc(); 
+            m_completeDelayNS = (double) m_calcFunc();
         } else {
             m_completeDelayNS = (double) m_nanoSecondDelay;
         }
@@ -63,7 +63,7 @@ public:
 protected:
 	uint64_t m_nanoSecondDelay;
     EmberComputeDistribution* m_computeDistrib;
-    std::function<uint64_t()> m_calcFunc; 
+    std::function<uint64_t()> m_calcFunc;
 
 };
 

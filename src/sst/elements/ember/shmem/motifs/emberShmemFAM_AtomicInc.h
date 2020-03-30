@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -37,18 +37,18 @@ class EmberShmemFAM_AtomicIncBaseGenerator : public EmberShmemGenerator {
 public:
 	EmberShmemFAM_AtomicIncBaseGenerator(SST::ComponentId_t id, Params& params, std::string name) :
 		EmberShmemGenerator(id, params, name ), m_phase(-3), m_one(1), m_numFamNodes(0)
-	{ 
+	{
         m_computeTime = params.find<int>("arg.computeTime", 0 );
 		m_totalBytes = (uint64_t) params.find<SST::UnitAlgebra>("arg.totalBytes").getRoundedValue();
-		
+
 		m_updates = params.find<int>("arg.updates", 4096);
 		m_iterations = params.find<int>("arg.iterations", 1);
 		m_hotMult = params.find<int>("arg.hotMult", 1);
-        
+
 		m_printTotals = params.find<bool>("arg.printTotals", false);
 		m_outLoop = params.find<int>("arg.outLoop", 1);
 		m_times.resize(m_outLoop);
-        
+
         m_numFamNodes = (int) params.find<int>("arg.numFamNodes",0);
 
 #if USE_SST_RNG
@@ -57,7 +57,7 @@ public:
 	}
 
 
-    bool generate( std::queue<EmberEvent*>& evQ) 
+    bool generate( std::queue<EmberEvent*>& evQ)
 	{
         bool ret = false;
 		if ( -3 == m_phase ) {
@@ -97,7 +97,7 @@ public:
 			if ( m_computeTime ) {
             	enQ_compute( evQ, m_computeTime );
 			}
-	
+
             enQ_fam_add( evQ, m_fd, offset, &m_one );
 
             if ( m_phase + 1 == m_iterations * m_updates ) {
@@ -110,7 +110,7 @@ public:
             --m_outLoop;
             m_times[m_outLoop] = (double)(m_stopTime - m_startTime) * 1.0e-9;;
 			if ( 0 == m_my_pe ) {
-				printf("outerLoop done %d %f\n",m_outLoop, 
+				printf("outerLoop done %d %f\n",m_outLoop,
                         ((double) m_iterations * (double) m_updates * (double) m_num_pes * 1.0e-9 ) /m_times[m_outLoop] );
 			}
 
@@ -133,16 +133,16 @@ public:
 					if ( m_times[i] > maxTime ) {
 						maxTime = m_times[i];
 					}
-				} 
+				}
 				double minTime = maxTime;
 
 				for ( int i = 0; i < m_times.size(); i++ ) {
 					if ( m_times[i] < minTime ) {
 						minTime = m_times[i];
 					}
-				} 
+				}
 
-                printf("%s:GUpdates  = %.9lf\n", getMotifName().c_str(), Gupdates ); 
+                printf("%s:GUpdates  = %.9lf\n", getMotifName().c_str(), Gupdates );
                 printf("%s:MinTime      = %.9lf\n", getMotifName().c_str(), minTime );
                 printf("%s:MaxTime      = %.9lf\n", getMotifName().c_str(), maxTime );
                 printf("%s:MinGUP/s     = %.9lf\n", getMotifName().c_str(), Gupdates / maxTime);
@@ -154,11 +154,11 @@ public:
         return ret;
 	}
   private:
-    unsigned int getSeed() { 
+    unsigned int getSeed() {
         struct timeval start;
         gettimeofday( &start, NULL );
-        return start.tv_usec; 
-    }            
+        return start.tv_usec;
+    }
 
  protected:
 
@@ -177,11 +177,11 @@ public:
 			ret *= sizeof(TYPE);
 			if ( ret >= m_totalBytes / m_numFamNodes ) {
 				printf("%" PRIu64 " %" PRIx64 "\n",ret, m_totalBytes / m_numFamNodes);
-				exit( 0); 
+				exit( 0);
 			}
 
 			// add the global offset to the local offset
-			ret += node * (m_totalBytes / m_numFamNodes); 
+			ret += node * (m_totalBytes / m_numFamNodes);
 
 		} else {
 			ret = genRand() % ( m_totalBytes / sizeof(TYPE) );
@@ -192,15 +192,15 @@ public:
 
     uint64_t genRand() {
         uint64_t retval;
-#if USE_SST_RNG 
+#if USE_SST_RNG
         retval = ((uint64_t) m_rng->generateNextUInt32()) << 32 | m_rng->generateNextUInt32();
 #else
         retval = ((uint64_t) rand_r(&m_randSeed)) << 32 | rand_r(&m_randSeed);
 #endif
         return retval;
-    } 
+    }
     void initRngSeed( unsigned int seed ) {
-#if USE_SST_RNG 
+#if USE_SST_RNG
         m_rng->seed( seed );
 #else
 	    m_randSeed = seed;
@@ -214,7 +214,7 @@ public:
 	int m_outLoop;
 	std::vector<double> m_times;
 
-#if USE_SST_RNG 
+#if USE_SST_RNG
     SST::RNG::XORShiftRNG* m_rng;
 #else
     unsigned int m_randSeed;
@@ -240,7 +240,7 @@ class EmberShmemFAM_AtomicIncGenerator : public EmberShmemFAM_AtomicIncBaseGener
 public:
 
     EmberShmemFAM_AtomicIncGenerator(SST::ComponentId_t id, Params& params, std::string name ) :
-	    EmberShmemFAM_AtomicIncBaseGenerator<TYPE,VAL>(id, params, name) { } 
+	    EmberShmemFAM_AtomicIncBaseGenerator<TYPE,VAL>(id, params, name) { }
 };
 
 template < class TYPE >
@@ -248,7 +248,7 @@ class EmberShmemFAM_AtomicIncGenerator<TYPE,1> : public EmberShmemFAM_AtomicIncB
 public:
 
 	EmberShmemFAM_AtomicIncGenerator(SST::ComponentId_t id, Params& params, std::string name ) :
-	    EmberShmemFAM_AtomicIncBaseGenerator<TYPE,1>(id, params, name) { } 
+	    EmberShmemFAM_AtomicIncBaseGenerator<TYPE,1>(id, params, name) { }
 };
 
 template < class TYPE >
@@ -256,7 +256,7 @@ class EmberShmemFAM_AtomicIncGenerator<TYPE,2> : public EmberShmemFAM_AtomicIncB
 public:
 
 	EmberShmemFAM_AtomicIncGenerator(SST::ComponentId_t id, Params& params, std::string name ) :
-	    EmberShmemFAM_AtomicIncBaseGenerator<TYPE,2>(id, params, name ) { } 
+	    EmberShmemFAM_AtomicIncBaseGenerator<TYPE,2>(id, params, name ) { }
 };
 
 class EmberShmemFAM_AtomicIncIntGenerator : public EmberShmemFAM_AtomicIncGenerator<int, 0> {
@@ -274,7 +274,7 @@ public:
     )
 public:
 	EmberShmemFAM_AtomicIncIntGenerator(SST::ComponentId_t id, Params& params) :
-	    EmberShmemFAM_AtomicIncGenerator(id, params, "ShmemFAM_AtomicIncInt" ) { } 
+	    EmberShmemFAM_AtomicIncGenerator(id, params, "ShmemFAM_AtomicIncInt" ) { }
 };
 
 class EmberShmemFAM_AtomicIncLongGenerator : public EmberShmemFAM_AtomicIncGenerator<long, 0 > {
@@ -292,7 +292,7 @@ public:
     )
 public:
 	EmberShmemFAM_AtomicIncLongGenerator(SST::ComponentId_t id, Params& params) :
-	    EmberShmemFAM_AtomicIncGenerator(id, params, "ShmemFAM_AtomicIncLong") {} 
+	    EmberShmemFAM_AtomicIncGenerator(id, params, "ShmemFAM_AtomicIncLong") {}
 };
 
 }

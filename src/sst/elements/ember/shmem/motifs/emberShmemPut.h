@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -30,7 +30,7 @@ class EmberShmemPutGenerator : public EmberShmemGenerator {
 public:
 	EmberShmemPutGenerator(SST::ComponentId_t id, Params& params) :
 		EmberShmemGenerator(id, params, "ShmemPut" ), m_phase(-2)
-	{ 
+	{
         m_biDir = params.find<bool>("arg.biDir", 0);
         m_nelems = params.find<int>("arg.nelems", 1);
         m_printResults = params.find<bool>("arg.printResults", false );
@@ -39,11 +39,11 @@ public:
         int status;
         std::string tname = typeid(TYPE).name();
 		char* tmp = abi::__cxa_demangle(tname.c_str(), NULL, NULL, &status);
-        m_type_name = tmp; 
+        m_type_name = tmp;
 		free( tmp );
     }
 
-    bool generate( std::queue<EmberEvent*>& evQ) 
+    bool generate( std::queue<EmberEvent*>& evQ)
 	{
         bool ret = false;
 		if ( -2 == m_phase ) {
@@ -61,12 +61,12 @@ public:
 
             m_other_pe = (m_my_pe + 1) % m_num_pes;
 
-            m_dest = m_src.offset<TYPE>(m_nelems ); 
+            m_dest = m_src.offset<TYPE>(m_nelems );
 
             for ( int i = 0; i < m_nelems; i++ ) {
                 m_src.at<TYPE>(i) = m_my_pe + i;
             }
-			
+
 			bzero( &m_dest.at<TYPE>(0), sizeof(TYPE) * m_nelems);
             enQ_barrier_all( evQ );
 
@@ -76,13 +76,13 @@ public:
 
 			if ( 0 == m_my_pe || m_biDir ) {
                 if ( m_blocking ) {
-            	    enQ_put( evQ, 
+            	    enQ_put( evQ,
 					    m_dest,
 					    m_src,
                         m_nelems*sizeof(TYPE),
                         m_other_pe );
                 } else {
-            	    enQ_put_nbi( evQ, 
+            	    enQ_put_nbi( evQ,
 					    m_dest,
 					    m_src,
                         m_nelems*sizeof(TYPE),
@@ -99,7 +99,7 @@ public:
 			}
 
 		} else {
-			
+
             if ( m_biDir ) {
             	for ( int i = 0; i < m_nelems; i++ ) {
 					TYPE want = ((m_my_pe + 1) % 2 )  + i;
@@ -134,7 +134,7 @@ public:
 	uint64_t m_startTime;
 	uint64_t m_stopTime;
     bool m_printResults;
-    std::string m_type_name;		
+    std::string m_type_name;
     Hermes::MemAddr m_src;
     Hermes::MemAddr m_dest;
 	int m_iterations;

@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 #
-# Copyright 2009-2019 NTESS. Under the terms
+# Copyright 2009-2020 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2019, NTESS
+# Copyright (c) 2009-2020, NTESS
 # All rights reserved.
 #
 # Portions are copyright of other developers:
@@ -20,8 +20,8 @@
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
 
-numNodes = -1 
-ranksPerNode = 1 
+numNodes = -1
+ranksPerNode = 1
 
 platform = 'defaultParams'
 
@@ -33,8 +33,8 @@ detailedNodes = [0]
 
 detailedModel = "sandyBridgeModel"
 detailedModelParams = "sandyBridgeModelParams"
-#detailedModel = "basicDetailedModel" 
-#detailedModelParams = "basicDetailedModelParams" 
+#detailedModel = "basicDetailedModel"
+#detailedModelParams = "basicDetailedModelParams"
 #detailedModel = "3LevelModel"
 #detailedModelParams = "3LevelModelParams"
 
@@ -47,7 +47,7 @@ def genWorkFlow( defaults, nodeNum = None ):
 	workFlow = []
 
 	motif = dict.copy( defaults )
-	motif['cmd'] = detailedMotif 
+	motif['cmd'] = detailedMotif
 	workFlow.append( motif )
 
 	return workFlow
@@ -56,13 +56,13 @@ def getNumNodes():
 	return numNodes
 
 def getRanksPerNode():
-	return ranksPerNode 
+	return ranksPerNode
 
 def getTopo():
-	return topo, shape 
+	return topo, shape
 
 def getPlatform():
-	return platform 
+	return platform
 
 def getPerNicParams(nodeNum):
 	return {}

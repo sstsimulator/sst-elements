@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -26,7 +26,7 @@ class EmberReduceEvent : public EmberMPIEvent {
 public:
 	EmberReduceEvent( MP::Interface& api, Output* output,
                      EmberEventTimeStatistic* stat,
-            const Hermes::MemAddr& mydata, 
+            const Hermes::MemAddr& mydata,
 			const Hermes::MemAddr& result, uint32_t count,
             PayloadDataType dtype, ReductionOperation op, RankID root,
             Communicator group ) :

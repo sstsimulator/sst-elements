@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 #
-# Copyright 2009-2019 NTESS. Under the terms
+# Copyright 2009-2020 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2019, NTESS
+# Copyright (c) 2009-2020, NTESS
 # All rights reserved.
 #
 # Portions are copyright of other developers:
@@ -15,8 +15,8 @@
 # information, see the LICENSE file in the top level directory of the
 # distribution.
 
-debug = 0 
-debug_level = 0 
+debug = 0
+debug_level = 0
 #debug_addr = 0x40280
 #debug_addr = 0x100000
 debug_addr = 0x100a00
@@ -26,9 +26,9 @@ memory_clock = "200MHz"
 #memory_clock = "800MHz"
 coherence_protocol = "MESI"
 
-cores_per_group = 2 
-memory_controllers_per_group = 1 
-groups = 4 
+cores_per_group = 2
+memory_controllers_per_group = 1
+groups = 4
 
 l3cache_blocks_per_group = 2
 l3cache_block_size = "2MB"
@@ -50,8 +50,8 @@ memory_network_bandwidth = "96GB/s"
 mem_interleave_size = 64    # Do 4K page level interleaving
 memory_capacity = 16384     # Size of memory in MBs
 
-num_routers = groups * (cores_per_group + memory_controllers_per_group + l3cache_blocks_per_group) + 2 
-#num_routers = groups * (cores_per_group + memory_controllers_per_group + l3cache_blocks_per_group) 
+num_routers = groups * (cores_per_group + memory_controllers_per_group + l3cache_blocks_per_group) + 2
+#num_routers = groups * (cores_per_group + memory_controllers_per_group + l3cache_blocks_per_group)
 
 cpu_params = {
 	"max_reqs_cycle": 2,
@@ -60,7 +60,7 @@ cpu_params = {
 	"max_reorder_lookups": 168,
     "verbose" : 1,
     "printStats" : 1,
-	"clock" : clock 
+	"clock" : clock
 }
 
 l1_prefetch_params = {
@@ -77,7 +77,7 @@ l2_prefetch_params = {
 
 rtr_params = {
         "debug" : "0",
-        "torus:shape" : str(num_routers), 
+        "torus:shape" : str(num_routers),
         "output_latency" : "25ps",
         "xbar_bw" : ring_bandwidth,
         "input_buf_size" : "2KB",
@@ -190,14 +190,14 @@ params = {
     "memory_params" :   mem_params,
     "rtr_params" :      rtr_params,
     "ring_latency" :    ring_latency,
-    "groups" :          groups, 
-    "cores_per_group" : cores_per_group, 
+    "groups" :          groups,
+    "cores_per_group" : cores_per_group,
     "l1_prefetch_params" : l1_prefetch_params,
     "l2_prefetch_params" : l2_prefetch_params,
     "l3cache_blocks_per_group" : l3cache_blocks_per_group,
     "memory_controllers_per_group" : memory_controllers_per_group,
     "memory_capacity" : memory_capacity,
     "mem_interleave_size" : mem_interleave_size,
-    "mem_params" : mem_params, 
-    "dc_params" : dc_params, 
+    "mem_params" : mem_params,
+    "dc_params" : dc_params,
 }

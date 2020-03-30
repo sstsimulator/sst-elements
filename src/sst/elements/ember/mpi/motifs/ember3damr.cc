@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -604,7 +604,7 @@ void Ember3DAMRGenerator::loadBlocks() {
                                                      (blockYPos / 2), (blockZPos / 2) + 1, blockZUp);
 
             std::map<uint32_t, int32_t>::iterator blockNode = blockToNodeMap.find(commToBlock);
-            
+
             if(blockNode == blockToNodeMap.end() && isBlockLocal(commToBlock)) {
                 if( ! isBlockLocal(commToBlock) ) {
                     printf("Y+ Did not locate block: %" PRIu32 "\n", commToBlock);
@@ -994,7 +994,7 @@ bool Ember3DAMRGenerator::generate( std::queue<EmberEvent*>& evQ)
 
 		std::map<int32_t, uint32_t>::iterator messageSizeItr;
 		for(messageSizeItr = messageSizeMap.begin(); messageSizeItr != messageSizeMap.end(); messageSizeItr++) {
-			printf("Rank %" PRIu32 " to rank %" PRId32 " aggregated bytes: %" PRIu32 "\n", 
+			printf("Rank %" PRIu32 " to rank %" PRId32 " aggregated bytes: %" PRIu32 "\n",
 				(uint32_t) rank(), messageSizeItr->first, messageSizeItr->second);
 		}
 */
@@ -1005,7 +1005,7 @@ bool Ember3DAMRGenerator::generate( std::queue<EmberEvent*>& evQ)
 		sprintf(timeBuffer, "%" PRIu64 "ns", getCurrentSimTimeNano());
 		UnitAlgebra timeUA(timeBuffer);
 
-		out->verbose(CALL_INFO, 2, 0, "Completed %" PRIu32 " iterations @ time=%s, will now complete and unload.\n", 
+		out->verbose(CALL_INFO, 2, 0, "Completed %" PRIu32 " iterations @ time=%s, will now complete and unload.\n",
 			iteration, timeUA.toString().c_str());
 
 		free(timeBuffer);

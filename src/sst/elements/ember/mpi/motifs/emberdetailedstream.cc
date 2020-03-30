@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -39,26 +39,26 @@ std::string EmberDetailedStreamGenerator::getComputeModelName()
 	return "thornhill.SingleThread";
 }
 
-void EmberDetailedStreamGenerator::print( ) 
+void EmberDetailedStreamGenerator::print( )
 {
-	output("%s, Array Size %d, Total Memory Required %.3f MB\n", 
-					getMotifName().c_str(), 
+	output("%s, Array Size %d, Total Memory Required %.3f MB\n",
+					getMotifName().c_str(),
 					m_stream_n,
 					(m_stream_n * 3 * 8) / 1048576.0
-					);	
+					);
 	for ( unsigned i = 0; i < m_benchName.size(); i++ ) {
 		double computeTime = (double)(m_stopTime[i] - m_startTime[i]);
 
  		output("%s, %d, %s %f MB/s, Time=%.3f us\n",
-					getMotifName().c_str(), 
+					getMotifName().c_str(),
 					m_stream_n,
-					m_benchName[i].c_str(), 
+					m_benchName[i].c_str(),
 					(double) (m_benchSize[i]* m_stream_n)/computeTime * 1000.0 ,
 					computeTime / 1000.0 );
 	}
 }
 
-bool EmberDetailedStreamGenerator::generate( std::queue<EmberEvent*>& evQ) 
+bool EmberDetailedStreamGenerator::generate( std::queue<EmberEvent*>& evQ)
 {
 	if ( m_loopIndex == m_numLoops ) {
 		print( );
@@ -75,12 +75,12 @@ bool EmberDetailedStreamGenerator::generate( std::queue<EmberEvent*>& evQ)
 
     enQ_getTime( evQ, &m_startTime[0] );
     Simulation::getSimulation()->getStatisticsProcessingEngine()->performGlobalStatisticOutput();
-    computeDetailedCopy( evQ ); 
+    computeDetailedCopy( evQ );
     enQ_getTime( evQ, &m_stopTime[0] );
 
     enQ_getTime( evQ, &m_startTime[1] );
     Simulation::getSimulation()->getStatisticsProcessingEngine()->performGlobalStatisticOutput();
-  	computeDetailedTriad( evQ ); 
+  	computeDetailedTriad( evQ );
     enQ_getTime( evQ, &m_stopTime[1] );
 
 	++m_loopIndex;
@@ -88,7 +88,7 @@ bool EmberDetailedStreamGenerator::generate( std::queue<EmberEvent*>& evQ)
     return false;
 }
 
-void EmberDetailedStreamGenerator::computeDetailedCopy( std::queue<EmberEvent*>& evQ) 
+void EmberDetailedStreamGenerator::computeDetailedCopy( std::queue<EmberEvent*>& evQ)
 {
     verbose( CALL_INFO, 1, 0, "\n");
 
@@ -96,7 +96,7 @@ void EmberDetailedStreamGenerator::computeDetailedCopy( std::queue<EmberEvent*>&
 
     std::string motif;
 
-	std::stringstream tmp;	
+	std::stringstream tmp;
 
     motif = "miranda.CopyGenerator";
 
@@ -121,7 +121,7 @@ void EmberDetailedStreamGenerator::computeDetailedCopy( std::queue<EmberEvent*>&
 
   	enQ_detailedCompute( evQ, motif, params );
 }
-void EmberDetailedStreamGenerator::computeDetailedTriad( std::queue<EmberEvent*>& evQ) 
+void EmberDetailedStreamGenerator::computeDetailedTriad( std::queue<EmberEvent*>& evQ)
 {
     verbose( CALL_INFO, 1, 0, "\n");
 
@@ -129,7 +129,7 @@ void EmberDetailedStreamGenerator::computeDetailedTriad( std::queue<EmberEvent*>
 
     std::string motif;
 
-	std::stringstream tmp;	
+	std::stringstream tmp;
 
     motif = "miranda.STREAMBenchGenerator";
 

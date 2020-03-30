@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -17,7 +17,7 @@
 using namespace SST::Ember;
 
 EmberUnstructuredGenerator::EmberUnstructuredGenerator(SST::ComponentId_t id, Params& params) :
-	EmberMessagePassingGenerator(id, params, "Unstructured"), 
+	EmberMessagePassingGenerator(id, params, "Unstructured"),
 	m_loopIndex(0)
 {
 	graphFile  = params.find<std::string>("arg.graphfile", "-1");
@@ -54,9 +54,9 @@ void EmberUnstructuredGenerator::configure()
 		if(use_CustomRankMap)
 			output("Unstructured motif rankmap: CustomRankMap\n");
 		else
-			output("Unstructured motif rankmap: LinearRankMap\n");			
+			output("Unstructured motif rankmap: LinearRankMap\n");
 	}
-	
+
 	//Read raw communication from the graph file
 	rawCommMap = readCommFile(graphFile, size());
 
@@ -68,8 +68,8 @@ void EmberUnstructuredGenerator::configure()
 	        	//std::cout << i << " communicates with " << it->first << std::endl;
 			}
 		}
-	}	
-	
+	}
+
 
 	//Create the actual communication map based on the custom task mapping
 	//Ex: TaskMapping on Node0 [3,5,7,120] -> CustomMap[0]=3, CustomMap[1]=5, CustomMap[2]=7, CustomMap[3]=120
@@ -90,7 +90,7 @@ void EmberUnstructuredGenerator::configure()
 	        for(std::map<int, int>::iterator it = rawCommMap->at(i).begin(); it != rawCommMap->at(i).end(); it++){
 	        	destTask = cm->CustomMap[it->first];
 	        	CommMap->at(srcTask)[destTask] = 1; //1 could be changed to the weight (it->second) in the future
-	        	//if(0 == rank()) 
+	        	//if(0 == rank())
 	        		//std::cout << srcTask << " communicates with " << destTask << std::endl;
 			}
 		}
@@ -110,7 +110,7 @@ void EmberUnstructuredGenerator::configure()
 	//output("My rank is: %" PRIu32 "\n", rank()); // NetworkSim
 }
 
-bool EmberUnstructuredGenerator::generate( std::queue<EmberEvent*>& evQ ) 
+bool EmberUnstructuredGenerator::generate( std::queue<EmberEvent*>& evQ )
 {
     verbose(CALL_INFO, 1, 0, "loop=%d\n", m_loopIndex );
 
@@ -143,7 +143,7 @@ bool EmberUnstructuredGenerator::generate( std::queue<EmberEvent*>& evQ )
         for(std::map<int, int>::iterator it = CommMap->at(rank()).begin(); it != CommMap->at(rank()).end(); it++){
 			MessageRequest*  req  = new MessageRequest();
 			requests.push_back(req);
-        	
+
         	//std::cout << rank() << " communicates with " << it->first << std::endl;
 			enQ_irecv( evQ, (int32_t)it->first, items_per_cell * sizeof_cell * p_size, 0, GroupWorld, req);
 			enQ_send( evQ , (int32_t)it->first, items_per_cell * sizeof_cell * p_size, 0, GroupWorld);
@@ -181,7 +181,7 @@ bool EmberUnstructuredGenerator::generate( std::queue<EmberEvent*>& evQ )
     */
     m_loopIndex++;
     return false;
-    
+
 }
 
 std::vector<std::map<int,int> >* EmberUnstructuredGenerator::readCommFile(std::string fileName, int procsNeeded)

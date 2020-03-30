@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -41,8 +41,8 @@ class EmberShmemGetvGenerator : public EmberShmemGenerator {
 
 public:
 	EmberShmemGetvGenerator(SST::ComponentId_t id, Params& params) :
-		EmberShmemGenerator(id, params, "ShmemGetv" ), m_phase(0) 
-	{ 
+		EmberShmemGenerator(id, params, "ShmemGetv" ), m_phase(0)
+	{
         m_printResults = params.find<bool>("arg.printResults", false );
         int status;
         std::string tname = typeid(TYPE).name();
@@ -51,7 +51,7 @@ public:
 		free(tmp);
 	}
 
-    bool generate( std::queue<EmberEvent*>& evQ) 
+    bool generate( std::queue<EmberEvent*>& evQ)
 	{
         bool ret = false;
         switch ( m_phase ) {
@@ -71,15 +71,15 @@ public:
             break;
 
         case 2:
-            
-			m_src.at<TYPE>( 0 ) = genSeed<TYPE>() + m_my_pe; 
+
+			m_src.at<TYPE>( 0 ) = genSeed<TYPE>() + m_my_pe;
             enQ_barrier_all( evQ );
 
             enQ_getv( evQ, &m_result, m_src, (m_my_pe + 1) % m_num_pes );
             break;
 
         case 3:
-            if ( m_printResults ) 
+            if ( m_printResults )
 			{
                 std::stringstream tmp;
                 tmp << " got="<< m_result << " want=" <<  genSeed<TYPE>() + ((m_my_pe + 1) % 2);
