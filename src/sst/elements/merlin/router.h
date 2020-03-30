@@ -116,13 +116,15 @@ public:
         injectionTime(0)
     {}
 
-    RtrEvent(SST::Interfaces::SimpleNetwork::Request* req, SST::Interfaces::SimpleNetwork::nid_t trusted_src) :
+    RtrEvent(SST::Interfaces::SimpleNetwork::Request* req, SST::Interfaces::SimpleNetwork::nid_t trusted_src, int original_vn) :
         BaseRtrEvent(BaseRtrEvent::PACKET),
         request(req),
         trusted_src(trusted_src),
+        original_vn(original_vn),
         injectionTime(0)
     {}
 
+    
     ~RtrEvent()
     {
         delete request;
@@ -145,6 +147,7 @@ public:
     inline int getSizeInFlits() { return size_in_flits; }
 
     inline SST::Interfaces::SimpleNetwork::nid_t getTrustedSrc() { return trusted_src; }
+    inline int getOriginalVN() { return original_vn; }
     
     virtual void print(const std::string& header, Output &out) const  override {
         out.output("%s RtrEvent to be delivered at %" PRIu64 " with priority %d. src = %lld (logical: %lld), dest = %lld\n",
@@ -156,6 +159,7 @@ public:
         BaseRtrEvent::serialize_order(ser);
         ser & request;
         ser & trusted_src;
+        ser & original_vn;
         ser & size_in_flits;
         ser & injectionTime;
     }
@@ -164,6 +168,7 @@ private:
     // TraceType trace;
     // int traceID;
     SST::Interfaces::SimpleNetwork::nid_t trusted_src;
+    int original_vn;
     SimTime_t injectionTime;
     int size_in_flits;
 
