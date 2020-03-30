@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -130,11 +130,11 @@ private:
 	std::map<SimpleMem::Request::id_t, CPURequest*> requestsInFlight;
 	SimpleMem* cache_link;
 	Link* srcLink;
-	MirandaReqEvent* srcReqEvent;	
+	MirandaReqEvent* srcReqEvent;
 
 	MirandaRequestQueue<GeneratorRequest*> pendingRequests;
 	MirandaMemoryManager* memMgr;
-        
+
         SharedRegion * addrMap;
 
         uint32_t maxRequestsPending[OPCOUNT];

@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -26,9 +26,9 @@ GUPSGenerator::GUPSGenerator( ComponentId_t id, Params& params ) : RequestGenera
 }
 
 
-void GUPSGenerator::build(Params &params) {        
+void GUPSGenerator::build(Params &params) {
     const uint32_t verbose = params.find<uint32_t>("verbose", 0);
-        
+
     out = new Output("GUPSGenerator[@p:@l]: ", verbose, 0, Output::STDOUT);
 
     iterations = params.find<uint64_t>("iterations", 1);
@@ -44,7 +44,7 @@ void GUPSGenerator::build(Params &params) {
     out->verbose(CALL_INFO, 1, 0, "Request lengths: %" PRIu64 " bytes\n", reqLength);
     out->verbose(CALL_INFO, 1, 0, "Minimum address: %" PRIu64 "\n", memStart);
     out->verbose(CALL_INFO, 1, 0, "Maximum address: %" PRIu64 "\n", memStart + memLength);
-    
+
     issueOpFences = params.find<std::string>("issue_op_fences", "yes") == "yes";
 }
 
@@ -54,10 +54,10 @@ GUPSGenerator::~GUPSGenerator() {
 }
 
 void GUPSGenerator::generate(MirandaRequestQueue<GeneratorRequest*>* q) {
-        
+
     const uint64_t rand_addr = rng->generateNextUInt64();
     // Ensure we have a reqLength aligned request
-		
+
     uint64_t addr = (rand_addr % ( memLength / reqLength ) );
     addr *= reqLength;
     addr += memStart;
