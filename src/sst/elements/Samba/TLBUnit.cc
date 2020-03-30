@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -91,7 +91,7 @@ TLB::TLB(ComponentId_t id, int tlb_id, TLB * Next_level, int Level, SST::Params&
 
 	os_page_size = ((uint32_t) params.find<uint32_t>("os_page_size", 4));
 
-	size = new int[sizes]; 
+	size = new int[sizes];
 	assoc = new int[sizes];
 	page_size = new uint64_t[sizes];
 	sets = new int[sizes];
@@ -222,7 +222,7 @@ bool TLB::tick(SST::Cycle_t x)
 		// Check if there are other misses that were going to the same translation and waiting for the response of this miss
 		if((level==1) && (SAME_MISS.find(addr/4096)!=SAME_MISS.end()))
 		{
-		  std::map< MemHierarchy::MemEventBase*, int>::iterator same_st, same_en; 
+		  std::map< MemHierarchy::MemEventBase*, int>::iterator same_st, same_en;
 		  same_st = SAME_MISS[addr/4096].begin();
     		  same_en = SAME_MISS[addr/4096].end();
    		   while(same_st!=same_en)
@@ -231,7 +231,7 @@ bool TLB::tick(SST::Cycle_t x)
 	    		ready_by[same_st->first] = x + latency + 2*upper_link_latency;
 	    		ready_by_size[same_st->first] = pushed_back_size[ev];
 			same_st++;
-		    }	
+		    }
 		  SAME_MISS.erase(addr/4096);
 		 // PENDING_MISS.erase(addr/4096);
 		}
@@ -260,7 +260,7 @@ bool TLB::tick(SST::Cycle_t x)
 		if(dispatched > max_width)
 			break;
 
-                MemHierarchy::MemEventBase * ev = *st_1; 
+                MemHierarchy::MemEventBase * ev = *st_1;
 		Address_t addr = ((MemEvent*) ev)->getVirtualAddress();
 
 
@@ -299,7 +299,7 @@ bool TLB::tick(SST::Cycle_t x)
 
 			// Making sure we have a room for an additional miss, i.e., less than the maximum outstanding misses
 			if((int) pending_misses.size() < (int) max_outstanding)
-			{	
+			{
 
 				// Check if the miss is not currently being handled
 				bool currently_handled=false;
@@ -343,7 +343,7 @@ bool TLB::tick(SST::Cycle_t x)
 
 			}
 
-		}	    
+		}
 
 
 		if(st_1 == not_serviced.end())
