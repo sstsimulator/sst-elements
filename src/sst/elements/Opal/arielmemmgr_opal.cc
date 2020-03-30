@@ -1,8 +1,8 @@
-// Copyright 2009-2018 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2018, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -23,14 +23,14 @@
 
 using namespace SST::OpalComponent;
 
-MemoryManagerOpal::MemoryManagerOpal(ComponentId_t id, Params& params) : 
+MemoryManagerOpal::MemoryManagerOpal(ComponentId_t id, Params& params) :
             ArielComponent::ArielMemoryManager(id, params) {
 
     // Find links
     std::string linkprefix = "opal_link_";
     std::string linkname = linkprefix + "0";
     int numPorts = 0;
-    
+
     std::string latency = params.find<std::string>("opal_latency", "32ps");
 
     while (isPortConnected(linkname)) {
@@ -39,7 +39,7 @@ MemoryManagerOpal::MemoryManagerOpal(ComponentId_t id, Params& params) :
         numPorts++;
         linkname = linkprefix + std::to_string(numPorts);
     }
-    
+
     std::string translatorstr = params.find<std::string>("translator", "ariel.MemoryManagerSimple");
     if (NULL != (temp_translator = loadUserSubComponent<ArielMemoryManager>("translator"))) {
         output->verbose(CALL_INFO, 1, 0, "Opal is using named subcomponent translator\n");
