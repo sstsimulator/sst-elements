@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -82,7 +82,7 @@ c_BankCommand::c_BankCommand(unsigned x_cmdSeqNum,
 
 	m_hashedAddr = x_hashedAddr;
 	m_bankId = x_bankIdVec.front();
-	
+
 	m_cmdToString[e_BankCommandType::ERR] = "ERR";
 	m_cmdToString[e_BankCommandType::ACT] = "ACT";
 	m_cmdToString[e_BankCommandType::READ] = "READ";
@@ -172,7 +172,7 @@ void c_BankCommand::serialize_order(SST::Core::Serialization::serializer &ser)
   ser & m_cmdToString;
   ser & m_isResponseReady;
   ser & m_isResponseReady;
-  
+
   ser & m_hashedAddr;
 
 }

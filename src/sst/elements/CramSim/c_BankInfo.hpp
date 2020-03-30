@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -43,7 +43,7 @@ namespace CramSim {
 class c_BankGroup;
 class c_BankCommand;
 enum class e_BankCommandType;
-  
+
 class c_BankInfo {
 public:
 
@@ -105,7 +105,7 @@ public:
         unsigned getBankId() {
 	  return m_bankId;
 	}
-  
+
 	c_BankGroup *getBankGroupPtr() {
 	  return m_bankGroupPtr;
 	}

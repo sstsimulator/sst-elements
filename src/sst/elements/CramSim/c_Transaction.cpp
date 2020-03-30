@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -42,7 +42,7 @@ c_Transaction::c_Transaction(ulong x_seqNum, e_TransactionType x_txnMnemonic,
 		m_seqNum(x_seqNum), m_txnMnemonic(x_txnMnemonic), m_addr(x_addr), m_isResponseReady(
 				false), m_numWaitingCommands(0), m_dataWidth(x_dataWidth), m_processed(
 				false) {
-       
+
 	m_hasHashedAddr= false;
 
 }
@@ -145,7 +145,7 @@ void c_Transaction::serialize_order(SST::Core::Serialization::serializer &ser)
   ser & m_txnMnemonic;
   ser & m_addr;
   //ser & m_txnToString;
-    
+
   ser & m_isResponseReady;
   ser & m_numWaitingCommands;
   ser & m_dataWidth;

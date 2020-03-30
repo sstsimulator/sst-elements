@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -44,7 +44,7 @@ public:
   		  unsigned x_bank, unsigned x_row, unsigned x_col, unsigned x_bankid) : m_channel(x_channel), m_pchannel(x_pchannel), m_rank(x_rank), m_bankgroup(x_bankgroup),
                                                                m_bank(x_bank),m_row(x_row),m_col(x_col),m_bankId(x_bankid){};
   friend class c_AddressHasher;
-  
+
   unsigned getChannel()   const {return m_channel;}
     unsigned getPChannel() const {return m_pchannel;}
   unsigned getRank()      const {return m_rank;}
@@ -69,7 +69,7 @@ public:
 
 
   void print() const;
-  
+
   void serialize_order(SST::Core::Serialization::serializer &ser) override
   {
     ser & m_channel;
@@ -82,7 +82,7 @@ public:
     ser & m_bankId;
     ser & m_rankId;
   }
-  
+
   ImplementSerializable(c_HashedAddress);
 
 private:

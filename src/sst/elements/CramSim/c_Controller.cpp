@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -99,8 +99,8 @@ c_Controller::c_Controller(ComponentId_t id, Params &params) :
     }
 
     // set address hasher
-    m_addrHasher = loadUserSubComponent<c_AddressHasher>("AddrMapper", ComponentInfo::SHARE_NONE, output, m_deviceDriver->getNumChannel(), 
-            m_deviceDriver->getNumRanksPerChannel(), m_deviceDriver->getNumBankGroupsPerRank(), m_deviceDriver->getNumBanksPerBankGroup(), 
+    m_addrHasher = loadUserSubComponent<c_AddressHasher>("AddrMapper", ComponentInfo::SHARE_NONE, output, m_deviceDriver->getNumChannel(),
+            m_deviceDriver->getNumRanksPerChannel(), m_deviceDriver->getNumBankGroupsPerRank(), m_deviceDriver->getNumBanksPerBankGroup(),
             m_deviceDriver->getNumRowsPerBank(), m_deviceDriver->getNumColPerBank(), m_deviceDriver->getNumPChPerChannel());
     if (!m_addrHasher) {
         l_subCompName = params.find<std::string>("AddrMapper", "CramSim.c_AddressHasher",l_found);
@@ -120,7 +120,7 @@ c_Controller::c_Controller(ComponentId_t id, Params &params) :
 
     // get configured clock frequency
     k_controllerClockFreqStr = (std::string)params.find<std::string>("strControllerClockFrequency", "1GHz", l_found);
-    
+
     //configure SST link
     configure_link();
 
@@ -154,7 +154,7 @@ void c_Controller::configure_link() {
 
 // clock event handler
 bool c_Controller::clockTic(SST::Cycle_t clock) {
-    
+
     m_simCycle++;
 
     sendResponse();
@@ -197,7 +197,7 @@ bool c_Controller::clockTic(SST::Cycle_t clock) {
                l_txnRes->setResponseReady();
                 m_ResQ.push_back(l_txnRes);
             }
-          
+
 
             l_it = m_ReqQ.erase(l_it);
 

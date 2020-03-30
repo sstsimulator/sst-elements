@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -86,7 +86,7 @@ void c_Bank::handleCommand(c_BankCommand* x_bankCommandPtr) {
 		m_cmd = x_bankCommandPtr;
 
                 unsigned l_row = m_cmd->getHashedAddress()->getRow();
-		
+
                 switch (x_bankCommandPtr->getCommandMnemonic()){
 			case e_BankCommandType::ACT:
 				m_ACTCmdsReceived++;
@@ -96,7 +96,7 @@ void c_Bank::handleCommand(c_BankCommand* x_bankCommandPtr) {
 			case e_BankCommandType::READA:
 				m_READCmdsReceived++;
 				m_bankStats->s_bankREADsRecvd->addData(1);
-                                
+
                 if(m_prevOpenRow == l_row)
                 {
                       m_bankStats->s_bankRowHits->addData(1);
@@ -116,7 +116,7 @@ void c_Bank::handleCommand(c_BankCommand* x_bankCommandPtr) {
                     m_bankStats->s_totalRowHits->addData(1);
                 }else
                     m_prevOpenRow = m_cmd->getHashedAddress()->getRow();
-	
+
 				break;
 			case e_BankCommandType::PRE:
 				m_PRECmdsReceived++;
