@@ -1,8 +1,8 @@
 /******************************************************************************
-  Copyright 2018 NTESS. Under the terms of Contract DE-NA0003525 with
+  Copyright 2018-2020 NTESS. Under the terms of Contract DE-NA0003525 with
  NTESS, the U.S. Government retains certain rights in this software.
 
- Copyright (c) 2018, NTESS
+ Copyright (c) 2018-2020, NTESS
  All rights reserved.
 
  Portions are copyright of other developers:
@@ -12,7 +12,7 @@
  This file is part of the SST software package. For license
  information, see the LICENSE file in the top level directory of the
  distribution.
-  
+
 ******************************************************************************/
 
 /******************************************************************************
@@ -23,7 +23,7 @@
 
  Description: STPU/GNA User API Library
 
- Special Req: 
+ Special Req:
 
  Notes      : All signals ending with _n are active low.
 
@@ -65,7 +65,7 @@ namespace Ctx_Seq_Mem_Types {
   // Context Sequence Entry (CSE) Format
   typedef struct {
     int      CtxNum; // Context Number
-    uint32_t LifCnt; // LIF Count 
+    uint32_t LifCnt; // LIF Count
   } T_Cse;
 
 } // Ctx_Seq_Mem_Types
