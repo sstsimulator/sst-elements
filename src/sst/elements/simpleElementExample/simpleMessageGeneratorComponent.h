@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -22,7 +22,7 @@
 namespace SST {
 namespace SimpleMessageGeneratorComponent {
 
-class simpleMessageGeneratorComponent : public SST::Component 
+class simpleMessageGeneratorComponent : public SST::Component
 {
 public:
 
@@ -35,7 +35,7 @@ public:
         "Messaging rate benchmark component",
         COMPONENT_CATEGORY_NETWORK
     )
-    
+
     SST_ELI_DOCUMENT_PARAMS(
         { "printStats", "Prints the statistics from the component", "0"},
         { "clock", "Sets the clock for the message generator", "1GHz" },
@@ -57,7 +57,7 @@ public:
 
     simpleMessageGeneratorComponent(SST::ComponentId_t id, SST::Params& params);
     void setup()  { }
-    void finish() 
+    void finish()
     {
         fprintf(stdout, "Component completed at: %" PRIu64 " milliseconds\n",
 		(uint64_t) getCurrentSimTimeMilli() );
@@ -70,15 +70,15 @@ private:
 
     void handleEvent(SST::Event *ev);
     virtual bool tick(SST::Cycle_t);
-    
+
     std::string clock_frequency_str;
     int message_counter_sent;
     int message_counter_recv;
     int total_message_send_count;
     int output_message_info;
-    
+
     SST::Link* remote_component;
-    
+
 };
 
 } // namespace SimpleMessageGeneratorComponent

@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -27,7 +27,7 @@ using namespace SST::RNG;
 using namespace SST::SimpleRNGComponent;
 
 simpleRNGComponent::simpleRNGComponent(ComponentId_t id, Params& params) :
-  Component(id) 
+  Component(id)
 {
     rng_count = 0;
     rng_max_count = params.find<int64_t>("count", 1000);
@@ -83,7 +83,7 @@ simpleRNGComponent::simpleRNGComponent() :
     // for serialization only
 }
 
-bool simpleRNGComponent::tick( Cycle_t ) 
+bool simpleRNGComponent::tick( Cycle_t )
 {
     double nU = rng->nextUniform();
     uint32_t U32 = rng->generateNextUInt32();
