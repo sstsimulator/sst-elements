@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -42,11 +42,11 @@ LinkControl::LinkControl(ComponentId_t id, Params &params, int vns) :
     if ( link_bw.hasUnits("B/s") ) {
         link_bw *= UnitAlgebra("8b/B");
     }
-    
+
     // Input and output buffers
     input_buf = new network_queue_t[req_vns];
     output_buf = new network_queue_t[req_vns];
-    
+
     // Initialize credit arrays.  Credits are in flits, and we don't
     // yet know the flit size, so can't initialize in_ret_credits and
     // outbuf_credits yet.  Will initialize them after we get the
@@ -69,7 +69,7 @@ LinkControl::LinkControl(ComponentId_t id, Params &params, int vns) :
                            "bits or bytes: %s\n",outbuf_size.toStringBestSI().c_str());
     }
     if ( outbuf_size.hasUnits("B") ) outbuf_size *= UnitAlgebra("8b/B");
-    
+
     // The output credits are set to zero and the other side of the
     // link will send the number of tokens.
     for ( int i = 0; i < req_vns; i++ ) rtr_credits[i] = 0;
@@ -81,7 +81,7 @@ LinkControl::LinkControl(ComponentId_t id, Params &params, int vns) :
         port_name = params.find<std::string>("port_name");
 
     rtr_link = configureLink(port_name, std::string("1GHz"), new Event::Handler<LinkControl>(this,&LinkControl::handle_input));
-    
+
     if (!rtr_link)
         output.fatal(CALL_INFO, -1, "%s, unable to configure link for port '%s'. Check port validity and subcomponent sharing flags\n",
                 getName().c_str(), port_name.c_str());
@@ -95,18 +95,18 @@ LinkControl::LinkControl(ComponentId_t id, Params &params, int vns) :
     // output_port_stalls = registerStatistic<uint64_t>("output_port_stalls");
     // idle_time = registerStatistic<uint64_t>("idle_time");
 }
-    
+
 bool
 LinkControl::initialize(const std::string& port_name, const UnitAlgebra& link_bw_in,
                         int vns, const UnitAlgebra& in_buf_size,
                         const UnitAlgebra& out_buf_size)
-{    
+{
     req_vns = vns;
     link_bw = link_bw_in;
     if ( link_bw.hasUnits("B/s") ) {
         link_bw *= UnitAlgebra("8b/B");
     }
-    
+
     // Input and output buffers
     input_buf = new network_queue_t[req_vns];
     output_buf = new network_queue_t[req_vns];
@@ -133,7 +133,7 @@ LinkControl::initialize(const std::string& port_name, const UnitAlgebra& link_bw
                            "bits or bytes: %s\n",outbuf_size.toStringBestSI().c_str());
     }
     if ( outbuf_size.hasUnits("B") ) outbuf_size *= UnitAlgebra("8b/B");
-    
+
     // The output credits are set to zero and the other side of the
     // link will send the number of tokens.
     for ( int i = 0; i < req_vns; i++ ) rtr_credits[i] = 0;
@@ -152,7 +152,7 @@ LinkControl::initialize(const std::string& port_name, const UnitAlgebra& link_bw
     // send_bit_count = registerStatistic<uint64_t>("send_bit_count");
     // output_port_stalls = registerStatistic<uint64_t>("output_port_stalls");
     // idle_time = registerStatistic<uint64_t>("idle_time");
-    
+
     return true;
 }
 
@@ -201,7 +201,7 @@ void LinkControl::init(unsigned int phase)
         flit_size = flit_size_ua.getRoundedValue();
 
         UnitAlgebra link_clock = link_bw / flit_size_ua;
-        
+
         TimeConverter* tc = getTimeConverter(link_clock);
         output_timing->setDefaultTimeBase(tc);
 
@@ -209,7 +209,7 @@ void LinkControl::init(unsigned int phase)
             outbuf_credits[i] = outbuf_size.getRoundedValue() / flit_size;
             in_ret_credits[i] = inbuf_size.getRoundedValue() /flit_size;
         }
-       
+
         init_state = 2;
         break;
     }
@@ -223,7 +223,7 @@ void LinkControl::init(unsigned int phase)
         // Send credit event to router
         credit_event* cr_ev = new credit_event(0,inbuf_size.getRoundedValue() / flit_size);
         rtr_link->sendInitData(cr_ev);
-        
+
         // network_initialized = true;
         init_state = 3;
         break;
@@ -340,18 +340,18 @@ bool LinkControl::send(SimpleNetwork::Request* req, int vn) {
 
     // printf("%d: Send message to %llu on VN: %d, which is actually VN:%d --> %llu",id,req->dest,vn,req->vn,req->dest+req->src);
     // std::cout << std::endl;
-    
+
     output_buf[ev->request->vn].push(ev);
     if ( waiting && !have_packets ) {
         output_timing->send(1,NULL);
         waiting = false;
     }
-    
+
     if ( ev->getTraceType() != SimpleNetwork::Request::NONE ) {
         output.output("TRACE(%d): %" PRIu64 " ns: Send on LinkControl in NIC: %s\n",ev->getTraceID(),
                       getCurrentSimTimeNano(), getName().c_str());
     }
-    
+
     return true;
 }
 
@@ -384,7 +384,7 @@ SST::Interfaces::SimpleNetwork::Request* LinkControl::recv(int vn) {
 
     // printf("%d: Returning credits on VN: %d for packet from %llu",id, event->request->vn, event->request->src);
     // std::cout << std::endl;
-    
+
     // if ( event->getTraceType() != SimpleNetwork::Request::NONE ) {
     //     output.output("TRACE(%d): %" PRIu64 " ns: recv called on LinkControl in NIC: %s\n",event->getTraceID(),
     //                   getCurrentSimTimeNano(), getName().c_str());
@@ -494,7 +494,7 @@ void LinkControl::handle_output(Event* ev)
         }
         // output.output("found enough credits\n");
         output_buf[vn].pop();
-        
+
         // Send the output to the network.
         // First set the virtual channel.
         send_event->request->vn = vn;
@@ -507,10 +507,10 @@ void LinkControl::handle_output(Event* ev)
 
         // Send an event to wake up again after this packet is sent.
         output_timing->send(size,NULL);
-        
+
         // // Add in inject time so we can track latencies
         send_event->setInjectionTime(getCurrentSimTimeNano());
-        
+
         // Subtract credits
         rtr_credits[vn] -= size;
 
@@ -519,7 +519,7 @@ void LinkControl::handle_output(Event* ev)
 
         rtr_link->send(send_event);
         // std::cout << "Sent packet on vn " << vn_to_send << ", credits remaining: " << rtr_credits[vn_to_send] << std::endl;
-        
+
         if ( send_event->getTraceType() == SimpleNetwork::Request::FULL ) {
             output.output("TRACE(%d): %" PRIu64 " ns: Sent an event to router from LinkControl"
                           " in NIC: %s on VN %d to dest %" PRIu64 ".\n",
@@ -561,7 +561,7 @@ LinkControl::printStatus(Output& out)
                    event->request->src, event->request->dest,
                    event->getSizeInFlits());
     }
-    
+
     out.output("End LinkControl for Component %s\n", getName().c_str());
 }
 

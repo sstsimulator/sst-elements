@@ -1,10 +1,10 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -54,7 +54,7 @@ public:
         SST_ELI_ELEMENT_VERSION(0,1,0),
         "Link Control module for building Kingsley-enabled NICs",
         SST::Interfaces::SimpleNetwork)
-    
+
     SST_ELI_DOCUMENT_PARAMS(
         { "port_name",      "Port name to connect to. Only used when loaded anonymously", ""},
         { "link_bw",        "Bandwidth of the links specified in either b/s or B/s (can include SI prefix)."},
@@ -71,7 +71,7 @@ public:
         // { "idle_time",          "Number of (in unites of core timebas) that port was idle", "time spent idle", 1},
     )
 
-    
+
 private:
 
     int init_state;
@@ -86,14 +86,14 @@ private:
     UnitAlgebra inbuf_size;
     UnitAlgebra outbuf_size;
     int flit_size; // in bits
-    
+
     std::deque<NocPacket*> init_events;
-    
+
     // Number of virtual channels
     int req_vns;
 
     int id;
-    
+
     // One buffer for each virtual network.  At the NIC level, we just
     // provide a virtual channel abstraction.
     network_queue_t* input_buf;
@@ -112,12 +112,12 @@ private:
     // before we begin more output.
     bool waiting;
     bool have_packets;
-    
+
     // Functors for notifying the parent when there is more space in
     // output queue or when a new packet arrives
     HandlerBase* receiveFunctor;
     HandlerBase* sendFunctor;
-    
+
     // PacketStats stats;
     // Statistics
     Statistic<uint64_t>* packet_latency;
@@ -126,7 +126,7 @@ private:
     // Statistic<uint64_t>* idle_time;
 
     Output& output;
-    
+
 public:
     LinkControl(ComponentId_t id, Params &params, int);
 
@@ -155,7 +155,7 @@ public:
     // the next event.
     SST::Interfaces::SimpleNetwork::Request* recv(int vn);
 
-    // Returns true if there is an event in the input buffer and false 
+    // Returns true if there is an event in the input buffer and false
     // otherwise.
     bool requestToReceive( int vn ) { return ! input_buf[vn].empty(); }
 
@@ -172,14 +172,14 @@ public:
     inline const UnitAlgebra& getLinkBW() const { return link_bw; }
 
     void printStatus(Output& out);
-    
+
 private:
     bool network_initialized;
 
     void handle_input(Event* ev);
     void handle_output(Event* ev);
 
-    
+
 };
 
 }
