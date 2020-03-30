@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -40,7 +40,7 @@ class MemoryHeapLink : public SubComponent {
 
 	struct Entry {
 		Entry( std::function<void(uint64_t)> _fini ) : fini( _fini ) {}
-		std::function<void(uint64_t)> fini; 
+		std::function<void(uint64_t)> fini;
 	};
 
   public:
@@ -48,7 +48,7 @@ class MemoryHeapLink : public SubComponent {
 	{
 		m_link = configureLink( "memoryHeap", "0ps",
             new Event::Handler<MemoryHeapLink>(
-                    this,&MemoryHeapLink::eventHandler ) );	
+                    this,&MemoryHeapLink::eventHandler ) );
 	}
 
     bool isConnected() {
@@ -63,7 +63,7 @@ class MemoryHeapLink : public SubComponent {
 		event->type = MemoryHeapEvent::Alloc;
 		event->length = length;
 
-		m_link->send(0, event );	
+		m_link->send(0, event );
 	}
 
 	void free( SimVAddr addr, std::function<void(uint64_t)> fini ) {
@@ -74,7 +74,7 @@ class MemoryHeapLink : public SubComponent {
 		event->type = MemoryHeapEvent::Free;
 		event->addr = addr;
 
-		m_link->send(0, event );	
+		m_link->send(0, event );
 	}
 
     ~MemoryHeapLink(){};
