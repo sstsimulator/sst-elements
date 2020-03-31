@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -60,7 +60,7 @@ struct HBMpageInfo {
     uint64_t accPat[LAST_CASE];
     set<string> rqstrs; // requestors who have touched this page
 
-    void record( Addr addr, bool isWrite, const std::string& requestor, 
+    void record( Addr addr, bool isWrite, const std::string& requestor,
                     const bool collectStats, const uint64_t pAddr, const bool limitTouch) {
 
         // record the pageAddr
@@ -150,7 +150,7 @@ struct HBMpageInfo {
 class HBMpagedMultiMemory : public HBMDRAMSimMemory {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(HBMpagedMultiMemory, "memHierarchy", "HBMpagedMultiMemory", SST_ELI_ELEMENT_VERSION(1,0,0), 
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(HBMpagedMultiMemory, "memHierarchy", "HBMpagedMultiMemory", SST_ELI_ELEMENT_VERSION(1,0,0),
             "HBM DRAMSim-driven memory timings with a fixed timing multi-level memory using paging", SST::MemHierarchy::SimpleMemBackend)
 
     SST_ELI_DOCUMENT_PARAMS( HBMDRAMSIMMEMORY_ELI_PARAMS,
@@ -168,7 +168,7 @@ public:
             {"page_shift", "Size of page (2^x bytes)", "12"},
             {"quantum", "Time period for when page access counts is shifted", "5ms"},
             {"accStatsPrefix", "File name for acces pattern statistics", ""} )
-    
+
     SST_ELI_DOCUMENT_STATISTICS( HBMDRAMSIMMEMORY_ELI_STATS,
             {"fast_hits", "Number of accesses that 'hit' a fast page", "count", 1},
             {"fast_swaps", "Number of pages swapped between 'fast' and 'slow' memory", "count", 1},
@@ -176,7 +176,7 @@ public:
             {"t_pages", "Number of total pages", "count", 1},
             {"cant_swap", "Number of times a page could not be swapped in because no victim page could be found because all candidates were swapping", "count", 1},
             {"swap_delays", "Number of an access is delayed because the page is swapping", "count", 1} )
-    
+
 /* Class definition */
     HBMpagedMultiMemory(ComponentId_t id, Params &params);
     virtual bool issueRequest(ReqId, Addr, bool, unsigned );
@@ -227,14 +227,14 @@ private:
                   BiLRU, // bimodal LRU
                   SCLRU, // scan aware
                   LAST_STRAT} pageReplaceStrat_t;
-    pageReplaceStrat_t replaceStrat; 
+    pageReplaceStrat_t replaceStrat;
 
     bool dramBackpressure;
 
     bool checkAdd(HBMpageInfo &page);
     void do_FIFO_LRU( HBMpageInfo &page, bool &inFast, bool &swapping);
     void do_LFU( Addr, HBMpageInfo &page, bool &inFast, bool &swapping);
-    
+
     void printAccStats();
     queue<Req *> dramQ;
     void queueRequest(Req *r) {
@@ -280,7 +280,7 @@ public:
             ser & req;  // Cannot serialize pointers unless they are a serializable object
         }
 
-        ImplementSerializable(SST::MemHierarchy::HBMpagedMultiMemory::MemCtrlEvent);     
+        ImplementSerializable(SST::MemHierarchy::HBMpagedMultiMemory::MemCtrlEvent);
     };
 
     typedef map<uint64_t, HBMpageInfo> pageMap_t;

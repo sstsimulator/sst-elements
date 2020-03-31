@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -74,11 +74,11 @@ class YYY {
         int child = (m_myVirtRank * m_degree) + i + 1;
         // ummm, child can never be 0
         if ( child == 0 ) {
-            child = m_root; 
+            child = m_root;
         }  else if ( child == m_root ) {
             child = 0;
         }
-        return child; 
+        return child;
     }
 
   private:
@@ -105,7 +105,7 @@ class YYY {
 
 class CollectiveTreeFuncSM :  public FunctionSMInterface
 {
-    enum StateEnum { 
+    enum StateEnum {
         FOREACH_ENUM(GENERATE_ENUM)
     } m_state;
 
@@ -136,8 +136,8 @@ class CollectiveTreeFuncSM :  public FunctionSMInterface
         m_seq( 0 ),
         m_vn( 0 )
     {
-        m_smallCollectiveVN = params.find<int>( "smallCollectiveVN", 0); 
-        m_smallCollectiveSize = params.find<int>( "smallCollectiveSize", 0); 
+        m_smallCollectiveVN = params.find<int>( "smallCollectiveVN", 0);
+        m_smallCollectiveSize = params.find<int>( "smallCollectiveSize", 0);
     }
 
     virtual void handleStartEvent( SST::Event*, Retval& );
@@ -168,7 +168,7 @@ class CollectiveTreeFuncSM :  public FunctionSMInterface
     int m_smallCollectiveVN;
     int m_smallCollectiveSize;
 };
-        
+
 }
 }
 

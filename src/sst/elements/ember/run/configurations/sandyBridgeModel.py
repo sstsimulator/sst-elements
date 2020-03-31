@@ -1,9 +1,9 @@
 
-# Copyright 2009-2019 NTESS. Under the terms
+# Copyright 2009-2020 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2019, NTESS
+# Copyright (c) 2009-2020, NTESS
 # All rights reserved.
 #
 # Portions are copyright of other developers:
@@ -26,7 +26,7 @@ import snb
 
 class SandyBridgeModel(DetailedModel):
     def __init__(self, params ):
-        self.name = 'SandyBridgeModel' 
+        self.name = 'SandyBridgeModel'
         self.params = params
         self.links = []
 
@@ -34,12 +34,12 @@ class SandyBridgeModel(DetailedModel):
         return self.name
 
     def _createThreads( self, prefix, cpuL1s, cpu_params ):
-        
+
         prefix += "thread"
         #print prefix
         links = []
         for i in range(len(cpuL1s)):
-            name = prefix + str(i) 
+            name = prefix + str(i)
             cpu = sst.Component( name , "miranda.BaseCPU")
             cpu.addParams( cpu_params )
 
@@ -76,7 +76,7 @@ class SandyBridgeModel(DetailedModel):
 		return self._name;
 
     def build(self,nodeID,ranksPerNode):
-        #print 'SandyBridgeModel.build( nodeID={0}, ranksPerNode={1} )'.format( nodeID, ranksPerNode ) 
+        #print 'SandyBridgeModel.build( nodeID={0}, ranksPerNode={1} )'.format( nodeID, ranksPerNode )
 
         if ranksPerNode > 1:
             sys.exit('FATAL: this model can have onely 1 rank per node')
@@ -94,15 +94,15 @@ class SandyBridgeModel(DetailedModel):
         self.nicLink.append( self._createNic( prefix + 'read', nicL1_read, self.params['nic_cpu_params'] ) )
         self.nicLink.append( self._createNic( prefix + 'write', nicL1_write, self.params['nic_cpu_params'] ) )
 
-        return True 
+        return True
 
     def getThreadLinks(self,nodeRank):
-        #print 'SandyBridgeModel.getThreadLinks( {0} )'.format(nodeRank) 
+        #print 'SandyBridgeModel.getThreadLinks( {0} )'.format(nodeRank)
         return self.links[nodeRank]
 
     def getNicLink(self ):
-        #print 'SandyBridgeModel.getNicLink()' 
-        return self.nicLink[0], self.nicLink[1] 
+        #print 'SandyBridgeModel.getNicLink()'
+        return self.nicLink[0], self.nicLink[1]
 
 def getModel(params):
     return SandyBridgeModel(params)

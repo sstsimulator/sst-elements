@@ -1,8 +1,8 @@
-/// Copyright 2009-2019 NTESS. Under the terms
+/// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -44,7 +44,7 @@
 
 namespace SST { namespace SambaComponent{
 
-	class TLBhierarchy : public ComponentExtension 
+	class TLBhierarchy : public ComponentExtension
 	{
 
 		// This keeps track of which core the TLB belongs to, here we assume typical private TLBs as in current x86 processor
@@ -76,7 +76,7 @@ namespace SST { namespace SambaComponent{
 
 		std::string clock_frequency_str;
 
-		// Holds the current time 
+		// Holds the current time
 		SST::Cycle_t curr_time;
 
 		// This vector holds the current requests to be translated
@@ -104,10 +104,10 @@ namespace SST { namespace SambaComponent{
 		// This mapping is used to track the time spent of translating each request
 		std::map<SST::Event *, uint64_t> time_tracker;
 		// The access latency in ns
-		int latency; 
+		int latency;
 
 		// This represents the maximum number of outstanding requests for this structure
-		int max_outstanding; 
+		int max_outstanding;
 
 		uint64_t timeStamp;
 
@@ -154,8 +154,8 @@ namespace SST { namespace SambaComponent{
 		void handleEvent_CPU(SST::Event * event);
 
 
-		void setPageTablePointers( Address_t * cr3, std::map<Address_t, Address_t> * pgd,  std::map<Address_t, Address_t> * pud,  std::map<Address_t, Address_t> * pmd, std::map<Address_t, Address_t> * pte, 
-				std::map<Address_t,int> * gb,  std::map<Address_t,int> * mb,  std::map<Address_t,int> * kb, std::map<Address_t,int> * pr, int *cr3I, std::map<Address_t,int> *pf_pgd,  
+		void setPageTablePointers( Address_t * cr3, std::map<Address_t, Address_t> * pgd,  std::map<Address_t, Address_t> * pud,  std::map<Address_t, Address_t> * pmd, std::map<Address_t, Address_t> * pte,
+				std::map<Address_t,int> * gb,  std::map<Address_t,int> * mb,  std::map<Address_t,int> * kb, std::map<Address_t,int> * pr, int *cr3I, std::map<Address_t,int> *pf_pgd,
 				std::map<Address_t,int> *pf_pud,  std::map<Address_t,int> *pf_pmd, std::map<Address_t,int> * pf_pte)
 		{
 	                CR3 = cr3;
@@ -194,10 +194,10 @@ namespace SST { namespace SambaComponent{
 		//	std::map<int, Statistic<uint64_t>*> statTLBHits;
 
 		//	std::map<int, Statistic<uint64_t>*> statTLBMisses;
-		// Sets the to cache link, this should be called from Samba component when creating links between TLB structures and CPUs 
+		// Sets the to cache link, this should be called from Samba component when creating links between TLB structures and CPUs
 		bool setCacheLink(SST::Link * TO_CACHE) { to_cache = TO_CACHE; return true;}
 
-		// Sets the to cpu link, this should be called from Samba component when creating links between TLB structures and CPUs 
+		// Sets the to cpu link, this should be called from Samba component when creating links between TLB structures and CPUs
 		bool setCPULink(SST::Link * TO_CPU) { to_cpu = TO_CPU; return true;}
 
 		// Setting the memory link of the page table walker

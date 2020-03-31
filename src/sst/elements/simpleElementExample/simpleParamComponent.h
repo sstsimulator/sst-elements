@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -21,7 +21,7 @@
 namespace SST {
 namespace SimpleParamComponent {
 
-class simpleParamComponent : public SST::Component 
+class simpleParamComponent : public SST::Component
 {
 public:
 
@@ -34,7 +34,7 @@ public:
         "Param Check Component",
         COMPONENT_CATEGORY_UNCATEGORIZED
     )
-    
+
     SST_ELI_DOCUMENT_PARAMS(
  	{ "int-param",  "Check for integer values", "-1" },
 	{ "str-param",  "Check for string values",  "test" },
@@ -48,7 +48,7 @@ public:
     // Optional since there is nothing to document
     SST_ELI_DOCUMENT_PORTS(
     )
-    
+
     // Optional since there is nothing to document
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
     )

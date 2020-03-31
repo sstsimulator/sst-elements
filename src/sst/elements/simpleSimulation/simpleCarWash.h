@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -27,7 +27,7 @@
 namespace SST {
 namespace SimpleCarWash {
 
-class simpleCarWash : public SST::Component 
+class simpleCarWash : public SST::Component
 {
 public:
     simpleCarWash(SST::ComponentId_t id, SST::Params& params);		// Constructor
@@ -39,13 +39,13 @@ public:
      struct CAR_RECORD_T {
 		int EntryTime;  		// Minutes from the car wash epoch
 		int CarSize;			// 0 == Small Car; 1 == Large Car
-		int washTime;			// How long has the car been in the wash booth? 
-		CAR_RECORD_T *ptrNext;	// The next Car in the linked list	
+		int washTime;			// How long has the car been in the wash booth?
+		CAR_RECORD_T *ptrNext;	// The next Car in the linked list
 	};
 
 	typedef struct CAR_RECORD_T CAR_RECORD;
 
-	// Record to manage the "books" for the car wash's day	
+	// Record to manage the "books" for the car wash's day
 	typedef struct {
 		int currentTime;		// Time (minutes) since the epoch of the day
 		int smallCarsWashed;	// Number of small cars washed
@@ -59,7 +59,7 @@ public:
 		int timeToOccupy;
 		int WashBaySize;
     } CAR_WASH_BAY;
-	
+
 	// Record to manage carwash inventory
     typedef struct {
 		int soapInv;
@@ -84,15 +84,15 @@ private:
     simpleCarWash();  // for serialization only
     simpleCarWash(const simpleCarWash&); // do not implement
     void operator=(const simpleCarWash&); // do not implement
-    
+
     virtual bool tick(SST::Cycle_t);
-    
+
     virtual bool Clock2Tick(SST::Cycle_t, uint32_t);
     virtual bool Clock3Tick(SST::Cycle_t, uint32_t);
-    
+
     virtual void Oneshot1Callback(uint32_t);
     virtual void Oneshot2Callback();
-    
+
     // Carwash member variables and functions
 
     SST::RNG::MarsagliaRNG* m_rng;
@@ -119,11 +119,11 @@ private:
 
     TimeConverter*      tc;
     Clock::HandlerBase* Clock3Handler;
-    
+
     // Variables to store OneShot Callback Handlers
     OneShot::HandlerBase* callback1Handler;
     OneShot::HandlerBase* callback2Handler;
-    
+
     std::string clock_frequency_str;
     int clock_count;
 };

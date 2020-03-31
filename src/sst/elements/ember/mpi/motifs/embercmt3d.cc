@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -21,7 +21,7 @@
 
 /*
 	CMT communication motif for a 3d decomposition of elements over any
-	network topology. Each process communicates with its +-x, +-y & +-z 
+	network topology. Each process communicates with its +-x, +-y & +-z
 	neighbors. Note: The motif works only when all the processors in the
 	grid are used.
 
@@ -31,7 +31,7 @@
 using namespace SST::Ember;
 
 EmberCMT3DGenerator::EmberCMT3DGenerator(SST::ComponentId_t id, Params& params) :
-	EmberMessagePassingGenerator(id, params, "CMT3D"), 
+	EmberMessagePassingGenerator(id, params, "CMT3D"),
         m_loopIndex(0),
         x_pos(-1), x_neg(-1),
         y_pos(-1), y_neg(-1),
@@ -64,7 +64,7 @@ EmberCMT3DGenerator::EmberCMT3DGenerator(SST::ComponentId_t id, Params& params) 
 
         m_mean = params.find("arg.nsComputeMean", time);
         m_stddev = params.find("arg.nsComputeStddev", (m_mean*0.05));
-    	
+
     	x_xferSize = eltSize*eltSize*my*mz;
     	y_xferSize = eltSize*eltSize*mx*mz;
     	z_xferSize = eltSize*eltSize*mx*my;
@@ -95,20 +95,20 @@ void EmberCMT3DGenerator::configure()
     			eltSize, nelt, size(), nelt*size(),
     			px, py, pz, threads,
     			mx, my, mz,
-                m_mean, m_stddev, 
+                m_mean, m_stddev,
     			x_xferSize, y_xferSize, z_xferSize );
-    	}		
+    	}
 
-    	// Get our (x,y,z) position and neighboring ranks in a 3D decomposition 
+    	// Get our (x,y,z) position and neighboring ranks in a 3D decomposition
     	myX=-1; myY=-1; myZ=-1;
     	myID = rank();
     	getPosition(myID, px, py, pz, &myX, &myY, &myZ);
 
         // Initialize Marsaglia RNG for compute time
-        m_random = new SSTGaussianDistribution( m_mean, m_stddev, 
+        m_random = new SSTGaussianDistribution( m_mean, m_stddev,
                                     new RNG::MarsagliaRNG( 7+myID, getJobId() ) );
 
-    	// Set which direction to transfer and the neighbors in that direction 
+    	// Set which direction to transfer and the neighbors in that direction
     	if( myX > 0 ) {
     		sendx_neg = true;
     		x_neg	= convertPositionToRank(px, py, pz, myX-1, myY, myZ);
@@ -138,28 +138,28 @@ void EmberCMT3DGenerator::configure()
     		sendz_pos = true;
     		z_pos	= convertPositionToRank(px, py, pz, myX, myY, myZ+1);
     	}
-    	
+
     	verbose(CALL_INFO, 2, 0, "Rank: %" PRIu64 " is located at coordinates \
     		(%" PRId32 ", %" PRId32 ", %" PRId32") in the 3D grid,\
     		X+:%s %" PRId32 ", X-:%s %" PRId32 ", \
     		Y+:%s %" PRId32 ", Y-:%s %" PRId32 ", \
-    		Z+:%s %" PRId32 ", Z-:%s %" PRId32 "\n",	
-    		myID, 
+    		Z+:%s %" PRId32 ", Z-:%s %" PRId32 "\n",
+    		myID,
     		myX, myY, myZ,
-    		(sendx_pos ? "Y" : "N"), x_pos, 
+    		(sendx_pos ? "Y" : "N"), x_pos,
     		(sendx_neg ? "Y" : "N"), x_neg,
     		(sendy_pos ? "Y" : "N"), y_pos,
     		(sendy_neg ? "Y" : "N"), y_neg,
     		(sendz_pos ? "Y" : "N"), z_pos,
     		(sendz_neg ? "Y" : "N"), z_neg);
-		
+
 }
 
 
 
-bool EmberCMT3DGenerator::generate( std::queue<EmberEvent*>& evQ) 
+bool EmberCMT3DGenerator::generate( std::queue<EmberEvent*>& evQ)
 {
-        if (m_loopIndex == 0) { 
+        if (m_loopIndex == 0) {
     		verbose(CALL_INFO, 2,0, "rank=%d, size=%d\n", rank(), size());
         }
 
@@ -174,7 +174,7 @@ bool EmberCMT3DGenerator::generate( std::queue<EmberEvent*>& evQ)
     		}
     		if (sendx_neg) {
     			enQ_recv( evQ, x_neg, x_xferSize, 0, GroupWorld );
-    			enQ_send( evQ, x_neg, x_xferSize, 0, GroupWorld );		
+    			enQ_send( evQ, x_neg, x_xferSize, 0, GroupWorld );
     		}
     	}
     	else {
@@ -184,10 +184,10 @@ bool EmberCMT3DGenerator::generate( std::queue<EmberEvent*>& evQ)
     		}
     		if (sendx_neg) {
     			enQ_send( evQ, x_neg, x_xferSize, 0, GroupWorld );
-    			enQ_recv( evQ, x_neg, x_xferSize, 0, GroupWorld );		
+    			enQ_recv( evQ, x_neg, x_xferSize, 0, GroupWorld );
     		}
     	}
-    	
+
     	// +y/-y transfers
     	if ( myY % 2 == 0){
     		if (sendy_pos) {
@@ -196,7 +196,7 @@ bool EmberCMT3DGenerator::generate( std::queue<EmberEvent*>& evQ)
     		}
     		if (sendy_neg) {
     			enQ_recv( evQ, y_neg, y_xferSize, 0, GroupWorld );
-    			enQ_send( evQ, y_neg, y_xferSize, 0, GroupWorld );		
+    			enQ_send( evQ, y_neg, y_xferSize, 0, GroupWorld );
     		}
     	}
     	else {
@@ -206,9 +206,9 @@ bool EmberCMT3DGenerator::generate( std::queue<EmberEvent*>& evQ)
     		}
     		if (sendy_neg) {
     			enQ_send( evQ, y_neg, y_xferSize, 0, GroupWorld );
-    			enQ_recv( evQ, y_neg, y_xferSize, 0, GroupWorld );		
+    			enQ_recv( evQ, y_neg, y_xferSize, 0, GroupWorld );
     		}
-    	}	
+    	}
 
     	// +z/-z transfers
     	if ( myZ % 2 == 0){
@@ -218,7 +218,7 @@ bool EmberCMT3DGenerator::generate( std::queue<EmberEvent*>& evQ)
     		}
     		if (sendz_neg) {
     			enQ_recv( evQ, z_neg, z_xferSize, 0, GroupWorld );
-    			enQ_send( evQ, z_neg, z_xferSize, 0, GroupWorld );		
+    			enQ_send( evQ, z_neg, z_xferSize, 0, GroupWorld );
     		}
     	}
     	else {
@@ -228,7 +228,7 @@ bool EmberCMT3DGenerator::generate( std::queue<EmberEvent*>& evQ)
     		}
     		if (sendz_neg) {
     			enQ_send( evQ, z_neg, z_xferSize, 0, GroupWorld );
-    			enQ_recv( evQ, z_neg, z_xferSize, 0, GroupWorld );		
+    			enQ_recv( evQ, z_neg, z_xferSize, 0, GroupWorld );
     		}
     	}
 

@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -53,7 +53,7 @@ std::string SortedFreeListAllocator::getSetupInfo(bool comment) const
 //allocates j if possible
 //returns information on the allocation or NULL if it wasn't possible
 //(doesn't make allocation; merely returns info on possible allocation)
-AllocInfo* SortedFreeListAllocator::allocate(Job* job) 
+AllocInfo* SortedFreeListAllocator::allocate(Job* job)
 {
     schedout.debug(CALL_INFO, 7, 0, "Allocating %s \n", job -> toString().c_str());
 
@@ -65,7 +65,7 @@ AllocInfo* SortedFreeListAllocator::allocate(Job* job)
     std::vector<MeshLocation*>* freeprocs = new std::vector<MeshLocation*>(freeNodes->size());
     for(unsigned int i = 0; i < freeNodes->size(); i++){
         freeprocs->at(i) = new MeshLocation(freeNodes->at(i), *mMachine);
-    }   
+    }
     delete freeNodes;
 
     stable_sort(freeprocs -> begin(), freeprocs -> end(), *ordering);

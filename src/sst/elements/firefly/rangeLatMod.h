@@ -1,9 +1,9 @@
 
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -63,20 +63,20 @@ class RangeLatMod : public LatencyMod {
         tmpStr = params.find<std::string>("op","None");
 
         if ( 0 == tmpStr.compare("Mult") ) {
-            op = Mult; 
+            op = Mult;
         } else if ( 0 == tmpStr.compare("Linear") ) {
-            op = Linear; 
+            op = Linear;
         }
 
-#if RANGELATMOD_DBG 
+#if RANGELATMOD_DBG
         printf("%s() op=%s base=%.3f\n", __func__, tmpStr.c_str(), base * 1000000000.0);
 #endif
 
-        Params range = params.find_prefix_params("range."); 
+        Params range = params.find_prefix_params("range.");
         range.enableVerify(false);
 
         std::set<std::string> keys = range.getKeys();
-        std::set<std::string>::iterator iter = keys.begin(); 
+        std::set<std::string>::iterator iter = keys.begin();
         for ( ; iter != keys.end(); ++iter ) {
             Entry entry;
             std::string value = range.find<std::string>(*iter);
@@ -89,7 +89,7 @@ class RangeLatMod : public LatencyMod {
             std::string range = value.substr(0, pos );
             pos = range.find("-");
 
-            entry.start = atoi(range.substr(0, pos ).c_str()); 
+            entry.start = atoi(range.substr(0, pos ).c_str());
             if ( std::string::npos == pos ) {
                 entry.stop = 0;
             } else {
@@ -101,7 +101,7 @@ class RangeLatMod : public LatencyMod {
             }
             //printf("%s start=%lu stop=%ld\n",range.c_str(), entry.start, entry.stop);
 
-#if RANGELATMOD_DBG  
+#if RANGELATMOD_DBG
             printf("%s()   %lu - %lu, value=%.3f ns\n", __func__, entry.start,
                         entry.stop, entry.latency * 1000000000.0 );
 #endif
@@ -111,21 +111,21 @@ class RangeLatMod : public LatencyMod {
     ~RangeLatMod(){};
 
     size_t getLatency( size_t value ) {
-        Entry* mid = NULL; 
-        Entry* prev = NULL; 
-        Entry* next = NULL; 
+        Entry* mid = NULL;
+        Entry* prev = NULL;
+        Entry* next = NULL;
 
-#if RANGELATMOD_DBG 
+#if RANGELATMOD_DBG
         printf("\n%s() value=%lu op=%d\n",__func__,value,op);
 #endif
-        std::deque<Entry>::iterator iter = map.begin(); 
+        std::deque<Entry>::iterator iter = map.begin();
 
         for ( ; iter != map.end(); ++iter ) {
 
         //    printf("%s() %p\n",__func__,&*(iter));
-            if ( value >= iter->start && 
+            if ( value >= iter->start &&
                         ( -1 == (signed)iter->stop || value <= iter->stop ) ) {
-#if RANGELATMOD_DBG 
+#if RANGELATMOD_DBG
                 printf("%s() found, start %lu, stop %lu, value %.3f ns\n",
                     __func__, iter->start, iter->stop,
                     iter->latency * 1000000000.0);
@@ -137,9 +137,9 @@ class RangeLatMod : public LatencyMod {
                 if ( iter != map.begin() ) {
                     prev = &*(iter-1);
                 }
-                break; 
+                break;
             }
-        } 
+        }
 
         double tmp = 0;
         if ( mid ) {
@@ -163,7 +163,7 @@ class RangeLatMod : public LatencyMod {
         }
 
         size_t ret = llround( ( base + tmp ) * 1000000000.0 );
-#if RANGELATMOD_DBG 
+#if RANGELATMOD_DBG
         printf("%s() value=%lu -> base %.3f + tmp %.3f = %lu ns\n", __func__,
                     value, base * 1000000000.0, tmp * 1000000000.0, ret);
 #endif
@@ -189,7 +189,7 @@ class RangeLatMod : public LatencyMod {
 
         return (slope * (x - start ) + one.latency);
     }
-    
+
   private:
     double base;
     std::deque< Entry > map;

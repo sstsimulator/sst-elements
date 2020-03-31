@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -34,9 +34,9 @@ EmberAlltoallvGenerator::EmberAlltoallvGenerator(SST::ComponentId_t id,
     m_recvCnts.resize(size());
     m_recvDsp.resize(size());
     for ( int i = 0; i < size(); i++ ) {
-        m_sendCnts[i] = m_count; 
+        m_sendCnts[i] = m_count;
         m_sendDsp[i] = i * m_count;
-        m_recvCnts[i] = m_count; 
+        m_recvCnts[i] = m_count;
         m_recvDsp[i] = ((size()-1) - 1) * m_count;
     }
 }
@@ -47,7 +47,7 @@ bool EmberAlltoallvGenerator::generate( std::queue<EmberEvent*>& evQ) {
         verbose(CALL_INFO, 1, 0, "rank=%d size=%d\n", rank(), size());
     }
 
-    enQ_alltoallv( evQ, m_sendBuf, &m_sendCnts[0], &m_sendDsp[0], DOUBLE, 
+    enQ_alltoallv( evQ, m_sendBuf, &m_sendCnts[0], &m_sendDsp[0], DOUBLE,
         m_recvBuf, &m_recvCnts[0], &m_recvDsp[0], DOUBLE, GroupWorld );
 
     if ( ++m_loopIndex == m_iterations ) {

@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -47,37 +47,37 @@ bool Nic::RecvMachine::Ctx::processStdPkt( FireflyNetworkEvent* ev ) {
     if ( ev->isHdr() ) {
 
         if ( m_streamMap.find(srcKey) != m_streamMap.end() ) {
-		
+
 			m_dbg.fatal(CALL_INFO,-1,"m_streamMap.find(srcKey) != m_streamMap.end() node=%d pid=%d stream=%d for pid=%d\n",ev->getSrcNode(),ev->getSrcPid(), ev->getSrcStream(), m_pid);
         }
         stream = newStream( ev );
         m_dbg.verbosePrefix(prefix(),CALL_INFO,1,NIC_DBG_RECV_CTX,"new stream %p %s node=%d pid=%d stream=%d for pid=%d\n",stream, ev->isTail()? "single packet stream":"",
                ev->getSrcNode(),ev->getSrcPid(), ev->getSrcStream(), m_pid );
 
-        if ( ! ev->isTail() ) { 
+        if ( ! ev->isTail() ) {
             m_streamMap[srcKey] = stream;
         }
 
         return false;
-    } else { 
-        assert ( m_streamMap.find(srcKey) != m_streamMap.end() ); 
+    } else {
+        assert ( m_streamMap.find(srcKey) != m_streamMap.end() );
 
-        stream = m_streamMap[srcKey]; 
+        stream = m_streamMap[srcKey];
 
-        if ( ev->isTail() ) { 
+        if ( ev->isTail() ) {
             m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_CTX,"tail packet stream=%p\n",stream );
-            m_streamMap.erase(srcKey); 
+            m_streamMap.erase(srcKey);
         } else {
             m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_CTX,"body packet stream=%p\n",stream );
         }
 
         if ( stream->isBlocked() ) {
             m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_CTX,"stream is blocked stream=%p\n",stream );
-            stream->setWakeup( 
+            stream->setWakeup(
                 [=]() {
                     m_dbg.verbosePrefix(prefix(),CALL_INFO_LAMBDA,"processStdPkt",2,NIC_DBG_RECV_CTX,"stream is unblocked stream=%p\n",stream );
                     stream->processPkt( ev );
-                    m_rm.checkNetworkForData(); 
+                    m_rm.checkNetworkForData();
                 }
             );
             return true;
@@ -85,7 +85,7 @@ bool Nic::RecvMachine::Ctx::processStdPkt( FireflyNetworkEvent* ev ) {
             m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_CTX,"\n" );
             stream->processPkt(ev);
             return false;
-        } 
+        }
     }
 }
 
@@ -162,13 +162,13 @@ Nic::SendEntryBase* Nic::RecvMachine::Ctx::findGet( int srcNode, int srcPid, Rdm
 
     m.erase(rdmaHdr.rgnNum);
 
-    int vn = nic().m_getRespSmallVN; 
+    int vn = nic().m_getRespSmallVN;
     size_t length = 0;
     for ( int i = 0; i <  entry->iovec().size(); i++ ) {
-        length += entry->iovec().at(i).len; 
+        length += entry->iovec().at(i).len;
     }
     if ( length >  nic().m_getRespSize ) {
-        vn = nic().m_getRespLargeVN; 
+        vn = nic().m_getRespLargeVN;
     }
     return new PutOrgnEntry( m_pid, nic().getSendStreamNum(m_pid), srcNode, srcPid, rdmaHdr.respKey, entry, vn );
 }

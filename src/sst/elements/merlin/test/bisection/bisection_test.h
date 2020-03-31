@@ -1,12 +1,12 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -42,7 +42,7 @@ public:
         SST_ELI_ELEMENT_VERSION(0,9,0),
         "Simple NIC to test bisection bandwidth of a network.",
         COMPONENT_CATEGORY_NETWORK)
-    
+
     SST_ELI_DOCUMENT_PARAMS(
         {"num_peers",       "Number of peers on the network (must be even number)"},
         {"link_bw",         "Bandwidth of the router link specified in either b/s or B/s (can include SI prefix).","2GB/s"},
@@ -59,22 +59,22 @@ public:
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
         {"networkIF", "Network interface", "SST::Interfaces::SimpleNetwork" }
     )
-    
+
 private:
     int id;
     int partner_id;
     int num_vns;
     int num_peers;
-    
+
     int packets_sent;
     int packets_recd;
 
     SimTime_t start_time;
-    
+
     int packets_to_send;
     int packet_size;
     UnitAlgebra buffer_size;
-    
+
     SST::Interfaces::SimpleNetwork* link_control;
     Link* self_link;
 
@@ -83,7 +83,7 @@ public:
     ~bisection_test() {}
 
     void init(unsigned int phase);
-    void setup(); 
+    void setup();
     void finish();
 
 
@@ -100,7 +100,7 @@ class bisection_test_event : public Event {
     SimTime_t start_time;
 
     bisection_test_event() {}
-    
+
     virtual Event* clone(void) override
     {
         return new bisection_test_event(*this);
@@ -113,7 +113,7 @@ class bisection_test_event : public Event {
 
 private:
     ImplementSerializable(SST::Merlin::bisection_test_event)
-    
+
 };
 } // namespace merlin
 } // namespace sst

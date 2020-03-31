@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -36,12 +36,12 @@ EmberAllgathervGenerator::EmberAllgathervGenerator(SST::ComponentId_t id,
     	((int*)m_sendBuf)[i] = rank();
 	}
 
-    m_sendCnt = m_count; 
+    m_sendCnt = m_count;
     m_recvCnts.resize(size());
     m_recvDsp.resize(size());
 
     for ( int i = 0; i < size(); i++ ) {
-        m_recvCnts[i] = m_count; 
+        m_recvCnts[i] = m_count;
         m_recvDsp[i] =  sizeofDataType(INT) * m_count * i;
     }
 }
@@ -59,7 +59,7 @@ bool EmberAllgathervGenerator::generate( std::queue<EmberEvent*>& evQ) {
         if ( m_verify ) {
             for ( int i = 0; i < size(); i++ ) {
             	for ( int j = 0; j < m_count; j++ ) {
-					int index = i * m_count + j; 
+					int index = i * m_count + j;
                 	if ( i != ((int*)m_recvBuf)[ index ]) {
                     	printf("Error: Rank %d index %d failed  got=%d\n", rank(), i, ((int*)m_recvBuf)[ index ] );
                 	}

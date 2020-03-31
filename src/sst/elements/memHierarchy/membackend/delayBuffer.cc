@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -24,17 +24,17 @@ using namespace SST::MemHierarchy;
 
 /*------------------------------- Simple Backend ------------------------------- */
 DelayBuffer::DelayBuffer(ComponentId_t id, Params &params) : SimpleMemBackend(id, params){ build(params); }
-    
+
 void DelayBuffer::build(Params& params) {
     // Get parameters
-    fixupParams( params, "clock", "backend.clock" ); 
-    
+    fixupParams( params, "clock", "backend.clock" );
+
     UnitAlgebra delay = params.find<UnitAlgebra>("request_delay", UnitAlgebra("0ns"));
-    
+
     if (!(delay.hasUnits("s"))) {
         output->fatal(CALL_INFO, -1, "Invalid param(%s): request_delay - must have units of 's' (seconds). You specified %s.\n", getName().c_str(), delay.toString().c_str());
     }
-    
+
     // Create our backend
     backend = loadUserSubComponent<SimpleMemBackend>("backend");
     if (!backend) {

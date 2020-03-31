@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -47,7 +47,7 @@ const PQScheduler::compTableEntry PQScheduler::compTable[] = {
 
 const int PQScheduler::numCompTableEntries = 6;
 
-PQScheduler::PQScheduler(JobComparator* comp) 
+PQScheduler::PQScheduler(JobComparator* comp)
 {
     schedout.init("", 8, ~0, Output::STDOUT);
     toRun = new priority_queue<Job*, vector<Job*>, JobComparator>(*comp);
@@ -56,7 +56,7 @@ PQScheduler::PQScheduler(JobComparator* comp)
 }
 
 //constructor only used in copy()
-PQScheduler::PQScheduler(PQScheduler* insched, priority_queue<Job*,std::vector<Job*>,JobComparator>* intoRun) 
+PQScheduler::PQScheduler(PQScheduler* insched, priority_queue<Job*,std::vector<Job*>,JobComparator>* intoRun)
 {
     schedout.init("", 8, ~0, Output::STDOUT);
     toRun = intoRun;
@@ -74,7 +74,7 @@ PQScheduler* PQScheduler::copy(std::vector<Job*>* inrunning, std::vector<Job*>* 
 
     //to copy toRun, we have to pop each element off individually, then add them to copyToRun. We must add them
     //back to toRun as we pop them off copyToRun
-    priority_queue<Job*,std::vector<Job*>,JobComparator>* copyToRun = new priority_queue<Job*, vector<Job*>, JobComparator>(*origcomp); 
+    priority_queue<Job*,std::vector<Job*>,JobComparator>* copyToRun = new priority_queue<Job*, vector<Job*>, JobComparator>(*origcomp);
     while(!toRun -> empty()) {
         copyToRun -> push(toRun -> top());
         toRun -> pop();
@@ -111,13 +111,13 @@ PQScheduler* PQScheduler::copy(std::vector<Job*>* inrunning, std::vector<Job*>* 
     delete copyToRun;
 
     //make the new scheduler
-    return new PQScheduler(this, newtoRun); 
+    return new PQScheduler(this, newtoRun);
 }
 
 
 void usage();
 
-string PQScheduler::getSetupInfo(bool comment) 
+string PQScheduler::getSetupInfo(bool comment)
 {
     string com;
     if (comment) {
@@ -125,13 +125,13 @@ string PQScheduler::getSetupInfo(bool comment)
     } else {
         com = "";
     }
-    return com + "Priority Queue Scheduler\n" + com + 
-        "Comparator: " + compSetupInfo; 
+    return com + "Priority Queue Scheduler\n" + com +
+        "Comparator: " + compSetupInfo;
 }
 
 //called when j arrives; time is current time
 //tryToStart should be called after each job arrives
-void PQScheduler::jobArrives(Job* j, unsigned long time, const Machine & mach) 
+void PQScheduler::jobArrives(Job* j, unsigned long time, const Machine & mach)
 {
     toRun -> push(j);
     schedout.debug(CALL_INFO, 7, 0, "%s arrives\n", j -> toString().c_str());
@@ -142,7 +142,7 @@ void PQScheduler::jobArrives(Job* j, unsigned long time, const Machine & mach)
 //(either after each call or after each call occuring at same time)
 //returns first job to start, NULL if none
 //(if not NULL, should call tryToStart again)
-Job* PQScheduler::tryToStart(unsigned long time, const Machine & mach) 
+Job* PQScheduler::tryToStart(unsigned long time, const Machine & mach)
 {
     if (0 == toRun->size()) return NULL;
     Job* job = toRun->top();
@@ -169,7 +169,7 @@ void PQScheduler::startNext(unsigned long time, const Machine & mach)
     return;
 }
 
-void PQScheduler::reset() 
+void PQScheduler::reset()
 {
     while(!toRun -> empty()) {
         toRun -> pop();
@@ -177,19 +177,19 @@ void PQScheduler::reset()
 }
 
 
-PQScheduler::JobComparator::JobComparator(ComparatorType type) 
+PQScheduler::JobComparator::JobComparator(ComparatorType type)
 {
     this -> type = type;
 }
 
-void PQScheduler::JobComparator::printComparatorList(ostream& out) 
+void PQScheduler::JobComparator::printComparatorList(ostream& out)
 {
     for (int i = 0; i < numCompTableEntries; i++) {
         out << "  " << compTable[i].name << endl;
     }
 }
 
-PQScheduler::JobComparator* PQScheduler::JobComparator::Make(string typeName) 
+PQScheduler::JobComparator* PQScheduler::JobComparator::Make(string typeName)
 {
     for (int i = 0; i < numCompTableEntries; i++) {
         if (typeName == compTable[i].name) {
@@ -201,7 +201,7 @@ PQScheduler::JobComparator* PQScheduler::JobComparator::Make(string typeName)
 
 //void internal_error(string mesg);
 
-bool PQScheduler::JobComparator::operator()(Job*& j1, Job*& j2) 
+bool PQScheduler::JobComparator::operator()(Job*& j1, Job*& j2)
 {
     switch(type) {
     case FIFO:
@@ -278,7 +278,7 @@ bool PQScheduler::JobComparator::operator()(Job*& j1, Job*& j2)
     }
 }
 
-string PQScheduler::JobComparator::toString() 
+string PQScheduler::JobComparator::toString()
 {
     switch(type){
     case FIFO:
@@ -292,7 +292,7 @@ string PQScheduler::JobComparator::toString()
     case SHORTFIRST:
         return "ShortestFirstComparator";
     case BETTERFIT:
-        return "BetterFitComparator";     
+        return "BetterFitComparator";
     default:
         schedout.fatal(CALL_INFO, 1, "toString() called on JobComparator w/ invalid type");
     }

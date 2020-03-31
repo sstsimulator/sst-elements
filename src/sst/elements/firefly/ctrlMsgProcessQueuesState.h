@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -30,12 +30,12 @@
 #include "ctrlMsgWaitReq.h"
 
 #define DBG_MSK_PQS_APP_SIDE 1 << 0
-#define DBG_MSK_PQS_INT 1 << 1 
-#define DBG_MSK_PQS_Q 1 << 2 
-#define DBG_MSK_PQS_CB 1 << 3 
+#define DBG_MSK_PQS_INT 1 << 1
+#define DBG_MSK_PQS_Q 1 << 2
+#define DBG_MSK_PQS_CB 1 << 3
 #define DBG_MSK_PQS_LOOP 1<< 4
-#define DBG_MSK_PQS_NEED_RECV 1<< 5 
-#define DBG_MSK_PQS_POST_SHORT 1<< 6 
+#define DBG_MSK_PQS_NEED_RECV 1<< 5
+#define DBG_MSK_PQS_POST_SHORT 1<< 6
 
 
 namespace SST {
@@ -142,7 +142,7 @@ class ProcessQueuesState : public SubComponent
     void setup() {}
     void finish();
 
-    void setVars( VirtNic* nic, Info* info, MemoryBase* mem, 
+    void setVars( VirtNic* nic, Info* info, MemoryBase* mem,
         Thornhill::MemoryHeapLink* m_memHeapLink, Link* returnToCaller );
 
     void enterInit( bool );
@@ -180,12 +180,12 @@ class ProcessQueuesState : public SubComponent
 
     class ShortRecvBuffer : public Msg {
       public:
-        ShortRecvBuffer(size_t length, HeapAddrs& _heap  ) : Msg( &hdr ), heap(_heap) 
-        { 
+        ShortRecvBuffer(size_t length, HeapAddrs& _heap  ) : Msg( &hdr ), heap(_heap)
+        {
 			if ( length ) {
-            	ioVec.resize(2);    
+            	ioVec.resize(2);
 			} else {
-            	ioVec.resize(1);    
+            	ioVec.resize(1);
 			}
 
             ioVec[0].len = sizeof(hdr);
@@ -201,7 +201,7 @@ class ProcessQueuesState : public SubComponent
 				assert(0);
 			}
 
-            m_ioVec.push_back( ioVec[1] ); 
+            m_ioVec.push_back( ioVec[1] );
         }
 		~ShortRecvBuffer() {
 			for ( unsigned i = 0; i < ioVec.size(); i++) {
@@ -210,17 +210,17 @@ class ProcessQueuesState : public SubComponent
 		}
 
         MatchHdr                hdr;
-        std::vector<IoVec>      ioVec; 
+        std::vector<IoVec>      ioVec;
         std::vector<unsigned char> buf;
         HeapAddrs& 				heap;
     };
 
     struct LoopReq : public Msg {
         LoopReq(int _srcCore, std::vector<IoVec>& _vec, void* _key ) :
-            Msg( (MatchHdr*)_vec[0].addr.getBacking() ), 
-            srcCore( _srcCore ), vec(_vec), key( _key) 
+            Msg( (MatchHdr*)_vec[0].addr.getBacking() ),
+            srcCore( _srcCore ), vec(_vec), key( _key)
         {
-            m_ioVec.push_back( vec[1] ); 
+            m_ioVec.push_back( vec[1] );
         }
 
         int srcCore;
@@ -244,13 +244,13 @@ class ProcessQueuesState : public SubComponent
 
     class FuncCtxBase {
       public:
-        FuncCtxBase( VoidFunction ret = NULL ) : 
+        FuncCtxBase( VoidFunction ret = NULL ) :
 			callback(ret) {}
 
 		virtual ~FuncCtxBase() {}
         VoidFunction getCallback() {
 			return callback;
-		} 
+		}
 
 		void setCallback( VoidFunction arg ) {
 			callback = arg;
@@ -260,14 +260,14 @@ class ProcessQueuesState : public SubComponent
         VoidFunction callback;
     };
 
-    typedef std::deque<FuncCtxBase*> Stack; 
+    typedef std::deque<FuncCtxBase*> Stack;
 
     class ProcessQueuesCtx : public FuncCtxBase {
 	  public:
 		ProcessQueuesCtx( VoidFunction callback ) :
 			FuncCtxBase( callback ) {}
     };
-	
+
     class InterruptCtx : public FuncCtxBase {
 	  public:
 		InterruptCtx( VoidFunction callback ) :
@@ -276,14 +276,14 @@ class ProcessQueuesState : public SubComponent
 
     class ProcessShortListCtx : public FuncCtxBase {
       public:
-        ProcessShortListCtx( std::deque<Msg*>& q ) : 
+        ProcessShortListCtx( std::deque<Msg*>& q ) :
             m_msgQ(q), m_iter(m_msgQ.begin()) { }
 
         MatchHdr&   hdr() {
             return (*m_iter)->hdr();
         }
 
-        std::vector<IoVec>& ioVec() { 
+        std::vector<IoVec>& ioVec() {
      	 	return (*m_iter)->ioVec();
         }
 
@@ -291,11 +291,11 @@ class ProcessQueuesState : public SubComponent
             return *m_iter;
         }
         std::deque<Msg*>& getMsgQ() { return m_msgQ; }
-        bool msgQempty() { return m_msgQ.empty(); } 
+        bool msgQempty() { return m_msgQ.empty(); }
 
-        _CommReq*    req; 
+        _CommReq*    req;
 
-        void removeMsg() { 
+        void removeMsg() {
             delete *m_iter;
             m_iter = m_msgQ.erase(m_iter);
         }
@@ -303,7 +303,7 @@ class ProcessQueuesState : public SubComponent
         bool isDone() { return m_iter == m_msgQ.end(); }
         void incPos() { ++m_iter; }
       private:
-        std::deque<Msg*> 			m_msgQ; 
+        std::deque<Msg*> 			m_msgQ;
         typename std::deque<Msg*>::iterator 	m_iter;
     };
 
@@ -382,7 +382,7 @@ class ProcessQueuesState : public SubComponent
     _CommReq*	searchPostedRecv( MatchHdr& hdr, int& delay );
 
     void exit( int delay = 0 ) {
-        dbg().debug(CALL_INFO,2,DBG_MSK_PQS_APP_SIDE,"exit ProcessQueuesState\n"); 
+        dbg().debug(CALL_INFO,2,DBG_MSK_PQS_APP_SIDE,"exit ProcessQueuesState\n");
         passCtrlToFunction( m_exitDelay + delay );
         m_exitDelay = 0;
     }
@@ -390,26 +390,26 @@ class ProcessQueuesState : public SubComponent
     key_t    genGetKey() {
         key_t tmp = m_getKey;;
         ++m_getKey;
-        if ( m_getKey == LongGetKey ) m_getKey = 0; 
+        if ( m_getKey == LongGetKey ) m_getKey = 0;
         return tmp | LongGetKey;
-    }  
+    }
 
     key_t    genRspKey() {
         key_t tmp = m_rspKey;
         ++m_rspKey;
-        if ( m_rspKey == LongRspKey ) m_rspKey = 0; 
+        if ( m_rspKey == LongRspKey ) m_rspKey = 0;
         return tmp | LongRspKey;
-    }  
+    }
 
     key_t    genReadReqKey( region_t region ) {
-        //assert ( region to big ); 
+        //assert ( region to big );
         return region | ReadReqKey;
-    }  
+    }
 
     key_t    genReadRspKey( region_t region ) {
-        //assert ( region to big ); 
+        //assert ( region to big );
         return region | ReadRspKey;
-    }  
+    }
 
     nid_t calcNid( _CommReq* req, MP::RankID rank ) {
         return m_info->getGroup( req->getGroup() )->getMapping( rank );
@@ -417,7 +417,7 @@ class ProcessQueuesState : public SubComponent
 
     MP::RankID getMyRank( _CommReq* req ) {
         return m_info->getGroup( req->getGroup() )->getMyRank();
-    } 
+    }
 
     size_t shortMsgLength( ) {
         return m_msgTiming->shortMsgLength();
@@ -443,9 +443,9 @@ class ProcessQueuesState : public SubComponent
 
     void schedCallback( VoidFunction callback, uint64_t delay = 0) {
         m_delayLink->send( delay, new DelayEvent(callback) );
-    }  
+    }
     void passCtrlToFunction( uint64_t delay = 0 ) {
-        dbg().debug(CALL_INFO,1,DBG_MSK_PQS_APP_SIDE,"\n"); 
+        dbg().debug(CALL_INFO,1,DBG_MSK_PQS_APP_SIDE,"\n");
         m_returnToCaller->send( delay, NULL );
     }
 
@@ -479,12 +479,12 @@ class ProcessQueuesState : public SubComponent
     std::deque< _CommReq* >         m_longGetFiniQ;
     std::deque< GetInfo* >          m_longAckQ;
 
-    Stack                           m_funcStack; 
-    Stack                           m_intStack; 
+    Stack                           m_funcStack;
+    Stack                           m_intStack;
 
     std::deque< LoopResp* >         m_loopResp;
 
-    std::map< ShortRecvBuffer*, Callback2* > m_postedShortBuffers; 
+    std::map< ShortRecvBuffer*, Callback2* > m_postedShortBuffers;
 	FuncCtxBase*	m_intCtx;
     uint64_t        m_exitDelay;
 

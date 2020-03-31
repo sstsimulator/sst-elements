@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -50,12 +50,12 @@ class HeapAddrs {
 
 		if ( m_buckets.find(length) == m_buckets.end() || m_buckets[length].empty() ) {
 			assert( m_curAddr + length <  m_endAddr );
-			addr = m_curAddr;	
+			addr = m_curAddr;
 			m_curAddr += length;
 		} else {
 			addr = m_buckets[length].front();
 			m_buckets[length].pop();
-		}		
+		}
 		m_used[addr] = length;
 #if _H_HEAP_ADDRS_DBG
 		printf("HeapAddrs::%s() addr=0x%" PRIx64 " length=%zu\n",__func__, addr, length );
@@ -64,7 +64,7 @@ class HeapAddrs {
 	}
 
 	void free( uint64_t addr ) {
-		assert( m_used.find( addr ) != m_used.end() ); 
+		assert( m_used.find( addr ) != m_used.end() );
 
 		size_t bucket = m_used[addr];
 #if _H_HEAP_ADDRS_DBG
@@ -79,7 +79,7 @@ class HeapAddrs {
 	size_t roundUp( size_t length ) {
 		if ( length % 16 ) {
 			return (length + 16) & ~15;
-		} else { 
+		} else {
 			return length;
 		}
 	}

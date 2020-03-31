@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -98,7 +98,7 @@ Pin2Frontend::Pin2Frontend(ComponentId_t id, Params& params, uint32_t cores, uin
     }
 
     tunnelmgr = new SST::Core::Interprocess::SHMParent<ArielTunnel>(id, core_count, maxCoreQueueLen);
-    
+
     std::string shmem_region_name = tunnelmgr->getRegionName();
     tunnel = tunnelmgr->getTunnel();
     output->verbose(CALL_INFO, 1, 0, "Base pipe name: %s\n", shmem_region_name.c_str());
@@ -106,7 +106,7 @@ Pin2Frontend::Pin2Frontend(ComponentId_t id, Params& params, uint32_t cores, uin
 #ifdef HAVE_CUDA
     tunnelRmgr = new SST::Core::Interprocess::SHMParent<GpuReturnTunnel>(id, core_count, maxCoreQueueLen);
     tunnelDmgr = new SST::Core::Interprocess::SHMParent<GpuDataTunnel>(id, core_count, maxCoreQueueLen);
-    
+
     tunnelR = tunnelRmgr->getTunnel();
     std::string shmem_region_name2 = tunnelRmgr->getRegionName();
     output->verbose(CALL_INFO, 1, 0, "Base pipe name: %s\n", shmem_region_name2.c_str());

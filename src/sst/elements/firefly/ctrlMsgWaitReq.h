@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -24,10 +24,10 @@ namespace CtrlMsg {
 
 class WaitReq {
     struct X {
-        X( _CommReq* _req, MP::MessageResponse* _resp = NULL ) : 
+        X( _CommReq* _req, MP::MessageResponse* _resp = NULL ) :
             pos(0), req(_req), resp(_resp) {}
 
-        X( int _pos, _CommReq* _req, MP::MessageResponse* _resp = NULL ) : 
+        X( int _pos, _CommReq* _req, MP::MessageResponse* _resp = NULL ) :
             pos(_pos), req(_req), resp(_resp) {}
 
         int pos;
@@ -37,13 +37,13 @@ class WaitReq {
 
   public:
     WaitReq( _CommReq* req ) : indexPtr(NULL) {
-        reqQ.push_back( X( req ) ); 
+        reqQ.push_back( X( req ) );
     }
 
     WaitReq( std::vector<_CommReq*> reqs ) : indexPtr(NULL) {
         for ( unsigned int i = 0; i < reqs.size(); i++ ) {
-            reqQ.push_back( X( i, reqs[i] ) ); 
-        } 
+            reqQ.push_back( X( i, reqs[i] ) );
+        }
     }
 
     WaitReq( MP::MessageRequest req, MP::MessageResponse* resp ) :
@@ -62,7 +62,7 @@ class WaitReq {
     }
 
     WaitReq( int count, MP::MessageRequest req[],
-                                        MP::MessageResponse* resp[] ) : 
+                                        MP::MessageResponse* resp[] ) :
         indexPtr(NULL)
     {
         MP::MessageResponse* tmp = (MP::MessageResponse*)resp;
@@ -92,7 +92,7 @@ class WaitReq {
                 }
 
                 // a waitany will have an valid indexPtr
-                if ( indexPtr ) { 
+                if ( indexPtr ) {
                     *indexPtr = iter->pos;
                     reqQ.clear();
                 } else {
@@ -103,13 +103,13 @@ class WaitReq {
             } else {
                 ++iter;
             }
-        } 
+        }
         return NULL;
     }
 
   private:
     std::deque< X > reqQ;
-    int* indexPtr; 
+    int* indexPtr;
 };
 
 }

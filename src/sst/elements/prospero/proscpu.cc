@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -46,7 +46,7 @@ ProsperoComponent::ProsperoComponent(ComponentId_t id, Params& params) :
 
 	if (NULL == reader)
 	    output->fatal(CALL_INFO, -1, "%s, Fatal: Failed to load reader module\n", getName().c_str());
-	
+
         reader->setOutput(output);
 
 	pageSize = (uint64_t) params.find<uint64_t>("pagesize", 4096);
@@ -74,7 +74,7 @@ ProsperoComponent::ProsperoComponent(ComponentId_t id, Params& params) :
 	output->verbose(CALL_INFO, 1, 0, "Configuring Prospero cache connection...\n");
 
         // Check for interface in the input config; if not, load an anonymous interface (must use our port instead of its own)
-        cache_link = loadUserSubComponent<Interfaces::SimpleMem>("memory", ComponentInfo::SHARE_NONE, time, 
+        cache_link = loadUserSubComponent<Interfaces::SimpleMem>("memory", ComponentInfo::SHARE_NONE, time,
                 new SimpleMem::Handler<ProsperoComponent>(this, &ProsperoComponent::handleResponse));
         if (!cache_link) {
             Params par;

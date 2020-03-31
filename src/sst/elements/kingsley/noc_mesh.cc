@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -57,7 +57,7 @@ noc_mesh::noc_mesh(ComponentId_t cid, Params& params) :
     use_dense_map = params.find<bool>("use_dense_map",false);
 
     port_priority_equal = params.find<bool>("port_priority_equal",false);
-    
+
     // Parse all the timing parameters
 
     bool found = false;
@@ -89,16 +89,16 @@ noc_mesh::noc_mesh(ComponentId_t cid, Params& params) :
         // Need to convert to bits per second
         link_bw_ua *= UnitAlgebra("8b/B");
     }
-    
+
     UnitAlgebra clock_freq = link_bw_ua / flit_size_ua;
 
     route_y_first = params.find<bool>("route_y_first",false);
-    
+
     // Register the clock
     my_clock_handler = new Clock::Handler<noc_mesh>(this,&noc_mesh::clock_handler);
     clock_tc = registerClock( clock_freq, my_clock_handler);
     clock_is_off = false;
-    
+
     // Configure the ports
     ports = new Link*[local_port_start + local_ports];
 
@@ -157,7 +157,7 @@ noc_mesh::noc_mesh(ComponentId_t cid, Params& params) :
         xbar_stalls[local_port_start + i] = registerStatistic<uint64_t>("xbar_stalls",port_name.str());
     }
 
-    
+
     // Allocate space for all the input buffers
     port_queues = new port_queue_t[local_port_start + local_ports];
     port_busy = new int[local_port_start + local_ports];
@@ -192,7 +192,7 @@ noc_mesh::route(noc_mesh_event* event)
             else {
                 event->next_port = event->egress_port;
             }
-        }    
+        }
     }
 
     else {
@@ -238,24 +238,24 @@ noc_mesh::handle_input_r2r(Event* ev, int port)
         noc_mesh_event* event = static_cast<noc_mesh_event*>(ev);
 
         route(event);
-        
+
         // Put the event into the proper queue
         port_queues[port].push(event);
-        if (clock_is_off) 
+        if (clock_is_off)
             clock_wakeup();
         break;
     }
     default:
-        break;        
+        break;
     }
-    
+
 }
 
 noc_mesh_event*
 noc_mesh::wrap_incoming_packet(NocPacket* packet) {
     // Wrap the incoming NocPacket in a noc_mesh_event
     noc_mesh_event* event = new noc_mesh_event(packet);
-    
+
     // Compute the destination router
     int dest = packet->request->dest;
 
@@ -269,9 +269,9 @@ noc_mesh::wrap_incoming_packet(NocPacket* packet) {
     // Check to see if we have dense addressing
     if ( use_dense_map ) {
         dest = dense_map[dest];
-        
+
     }
-    
+
     int dest_rtr_id = dest / local_ports;
     int x = dest_rtr_id % x_size;
     int y = dest_rtr_id / x_size;
@@ -299,14 +299,14 @@ noc_mesh::wrap_incoming_packet(NocPacket* packet) {
         event->egress_port = local_port_start + (dest - (((y * x_size) + x ) * local_ports) );
         // output.output("****** Setting egress port to: %d -> %d, %d, %d, %d\n",event->egress_port,dest,x,x_size,y);
     }
-    
+
     event->dest_mesh_loc.first = x;
     event->dest_mesh_loc.second = y;
 
     // if ( packet->request->dest == 15 || packet->request->dest == 24 ) {
     //     output.output("dest %lld (%d) routed to router (%d,%d) with egress %d\n",packet->request->dest,dest,x,y,event->egress_port);
     // }
-    
+
     return event;
 }
 
@@ -327,11 +327,11 @@ noc_mesh::handle_input_ep2r(Event* ev, int port)
     case BaseNocEvent::PACKET:
     {
         NocPacket* packet = static_cast<NocPacket*>(ev);
-        
+
         // Wrap the incoming NocPacket in a noc_mesh_event
         noc_mesh_event* event = wrap_incoming_packet(packet);
-        route(event); 
-   
+        route(event);
+
         // Need to put the event into the proper queue
         port_queues[port].push(event);
         if (clock_is_off)
@@ -339,7 +339,7 @@ noc_mesh::handle_input_ep2r(Event* ev, int port)
         break;
     }
     default:
-        break;        
+        break;
     }
 }
 
@@ -396,7 +396,7 @@ noc_mesh::clock_handler(Cycle_t cycle)
             if ( !port_queues[lru_port].empty() ) {
                 // noc_mesh_event* event = port_queues[local_port_start + i].front();
                 noc_mesh_event* event = port_queues[lru_port].front();
-                
+
                 // Get the next port
                 int port = event->next_port;
 
@@ -407,7 +407,7 @@ noc_mesh::clock_handler(Cycle_t cycle)
                     keepClockOn = true;
                     continue;
                 }
-            
+
                 // Check to see if there are enough credits to send on
                 // that port
                 // output.output("(%d,%d): clock_handler(): port_credits[%d] = %d\n",my_x,my_y,port,port_credits[port]);
@@ -418,7 +418,7 @@ noc_mesh::clock_handler(Cycle_t cycle)
                     SST::Interfaces::SimpleNetwork::nid_t dest = event->encap_ev->request->dest;
                     SST::Interfaces::SimpleNetwork::Request::TraceType ttype = event->encap_ev->request->getTraceType();
                     int flits = event->encap_ev->getSizeInFlits();
-                    
+
                     // port_queues[local_port_start + i].pop();
                     port_queues[lru_port].pop();
                     port_credits[port] -= event->encap_ev->getSizeInFlits();
@@ -462,7 +462,7 @@ noc_mesh::clock_handler(Cycle_t cycle)
             }
         }
     }
-    
+
     // }
     clock_is_off = !keepClockOn;
 
@@ -489,15 +489,15 @@ void noc_mesh::setup()
             lru_units[0].insert(i);
         }
     }
-    
+
 
     // If the priorities aren't equal, create another lru_unit for the
     // lower priority ports
     if ( !port_priority_equal ) {
         lru_units[0].finalize();
-        lru_units.resize(2);        
+        lru_units.resize(2);
     }
-    
+
     // Now the mesh ports
     for ( int i = 0; i < local_port_start; ++i ) {
         if ( ports[i] != NULL ) {
@@ -515,7 +515,7 @@ void
 noc_mesh::init(unsigned int phase)
 {
     // output.output("%s::init(%u) - init_state = %d\n",getName().c_str(),phase,init_state);
-    
+
     // Init states:
     // 0 - wait for endpoint messages
     //
@@ -547,13 +547,13 @@ noc_mesh::init(unsigned int phase)
     //   -  total_endpoints: total number of endpoints
     //   -  endpoint_start: number of endpoints in routers prior to
     //        current router
-    // 
+    //
     // There are also two intermediate counts: row_endpoints and
     // my_endpoints.  These will be stored in the final values as
     // follows:
     //   - row_endpoints stored in total_endpoints
     //   - my_endpoints stored in endpoint_start
-       
+
     NocInitEvent* nie;
     Event* ev;
     switch ( init_state ) {
@@ -682,7 +682,7 @@ noc_mesh::init(unsigned int phase)
             // Unexpected event type
         }
         init_state = 4;
-        
+
         // If south western router (router 0), compute x_size
         if ( edge_status & south_mask ) {
             ev = ports[east_port]->recvInitData();
@@ -769,7 +769,7 @@ noc_mesh::init(unsigned int phase)
         // Set x and y, remember that there is a virtual halo
         my_x = 1;
         my_y = 1;
-        
+
         // Send the info east and north
         nie = new NocInitEvent();
         nie->command = NocInitEvent::COMPUTE_ENDPOINT_START;
@@ -811,7 +811,7 @@ noc_mesh::init(unsigned int phase)
         nie->int_value = my_y;
         ports[east_port]->sendInitData(nie->clone());
         ports[north_port]->sendInitData(nie);
-        
+
         init_state = 8;
         init_count = (x_size - 2 - my_x) + (y_size - 2 - my_y) - 1;
         break;
@@ -819,10 +819,10 @@ noc_mesh::init(unsigned int phase)
     case 6:
         ev = ports[south_port]->recvInitData();
         if ( NULL == ev ) break;
-        
+
         nie = static_cast<NocInitEvent*>(ev);
         if ( nie->command == NocInitEvent::COMPUTE_ENDPOINT_START ) {
-            
+
             // Make a copy of my_endpoints (stored in endpoint_start)
             // because we need to put the actual endpoint_start in
             // that variable.
@@ -837,7 +837,7 @@ noc_mesh::init(unsigned int phase)
                 ports[north_port]->sendInitData(nie2);
             }
             nie->int_value += my_ep;
-            ports[east_port]->sendInitData(nie);                        
+            ports[east_port]->sendInitData(nie);
         }
 
         ev = ports[south_port]->recvInitData();
@@ -976,7 +976,7 @@ noc_mesh::init(unsigned int phase)
             int tmp = north_port;
             ep_ids.push_back(std::make_pair(endpoint_id,tmp));
         }
-        
+
         if ( endpoint_locations & south_mask ) {
             int x = my_x;
             int y = my_y - 1;
@@ -987,7 +987,7 @@ noc_mesh::init(unsigned int phase)
             int tmp = south_port;
             ep_ids.push_back(std::make_pair(endpoint_id,tmp));
         }
-        
+
         if ( endpoint_locations & east_mask ) {
             int x = my_x + 1;
             int y = my_y;
@@ -998,7 +998,7 @@ noc_mesh::init(unsigned int phase)
             int tmp = east_port;
             ep_ids.push_back(std::make_pair(endpoint_id,tmp));
         }
-        
+
         if ( endpoint_locations & west_mask ) {
             int x = my_x - 1;
             int y = my_y;
@@ -1034,7 +1034,7 @@ noc_mesh::init(unsigned int phase)
                 new SharedRegionMerger());
 
             std::sort(ep_ids.begin(), ep_ids.end());
-            
+
             for ( int i = 0; i < ep_ids.size(); ++i ) {
                 sr->modifyArray<int>(endpoint_start + i, ep_ids[i].first);
                 ep_ids[i].first = endpoint_start + i;
@@ -1054,7 +1054,7 @@ noc_mesh::init(unsigned int phase)
     }
     case 9:
     {
-        
+
         for ( int i = 0; i < local_port_start + local_ports; ++i ) {
             if ( ports[i] != NULL ) {
                 credit_event* cr_ev = new credit_event(0,input_buf_size/flit_size);
@@ -1090,12 +1090,12 @@ noc_mesh::init(unsigned int phase)
                     if ( endpoint ) {
                         NocPacket* packet = static_cast<NocPacket*>(ev);
                         nme = wrap_incoming_packet(packet);
-                        
+
                     }
                     else {
                         nme = static_cast<noc_mesh_event*>(ev);
                     }
-                    
+
                     // Route the packet, but look for broadcasts first
                     if ( nme->egress_port == -1 ) {
                         // This is a broadcast, need to decide which
@@ -1125,7 +1125,7 @@ noc_mesh::init(unsigned int phase)
                                 ports[east_port]->sendInitData(nme->clone());
                             }
                         }
-                        
+
                         // Send west.  We send west if this came from
                         // an endpoint or from the east.
                         if ( endpoint || ( (1 << i ) & east_mask ) ) {
@@ -1135,7 +1135,7 @@ noc_mesh::init(unsigned int phase)
                                 ports[west_port]->sendInitData(nme->clone());
                             }
                         }
-                        
+
                         // Send north.  We send north if this came
                         // from an endpoint, or from the east, west or
                         // south.
@@ -1147,7 +1147,7 @@ noc_mesh::init(unsigned int phase)
                                 ports[north_port]->sendInitData(nme->clone());
                             }
                         }
-                        
+
                         // Send south.  We send south if this came
                         // from an endpoint, or from the east, west or
                         // north.
@@ -1178,7 +1178,7 @@ noc_mesh::init(unsigned int phase)
                             }
                         }
                         if ( !sent ) delete packet;
-                        
+
                     }
                     else { // Not a broadcast
                         route(nme);
@@ -1189,12 +1189,12 @@ noc_mesh::init(unsigned int phase)
                         }
                         else {
                             ports[nme->next_port]->sendInitData(nme);
-                        }       
+                        }
                     }
                 }
             }
         }
-        
+
         break;
     }
 
@@ -1213,17 +1213,17 @@ noc_mesh::complete(unsigned int phase)
             while ( true ) { // Go until there are no more events
                 Event* ev = ports[i]->recvInitData();
                 if ( NULL == ev ) break;
-                
+
                 noc_mesh_event* nme;
                 if ( endpoint ) {
                     NocPacket* packet = static_cast<NocPacket*>(ev);
                     nme = wrap_incoming_packet(packet);
-                    
+
                 }
                 else {
                     nme = static_cast<noc_mesh_event*>(ev);
                 }
-                
+
                 // Route the packet, but look for broadcasts first
                 if ( nme->egress_port == -1 ) {
                     // This is a broadcast, need to decide which
@@ -1243,7 +1243,7 @@ noc_mesh::complete(unsigned int phase)
                     // endpoints (except that we don't send it to
                     // the endpoint we just got it from if we are
                     // in that phase).
-                    
+
                     // Send east.  We send east if this came from
                     // an endpoint or from the west.
                     if ( endpoint || ( (1 << i ) & west_mask ) ) {
@@ -1253,7 +1253,7 @@ noc_mesh::complete(unsigned int phase)
                             ports[east_port]->sendInitData(nme->clone());
                         }
                     }
-                    
+
                     // Send west.  We send west if this came from
                     // an endpoint or from the east.
                     if ( endpoint || ( (1 << i ) & east_mask ) ) {
@@ -1263,7 +1263,7 @@ noc_mesh::complete(unsigned int phase)
                             ports[west_port]->sendInitData(nme->clone());
                         }
                     }
-                    
+
                     // Send north.  We send north if this came
                     // from an endpoint, or from the east, west or
                     // south.
@@ -1275,7 +1275,7 @@ noc_mesh::complete(unsigned int phase)
                             ports[north_port]->sendInitData(nme->clone());
                         }
                     }
-                    
+
                     // Send south.  We send south if this came
                     // from an endpoint, or from the east, west or
                     // north.
@@ -1287,7 +1287,7 @@ noc_mesh::complete(unsigned int phase)
                             ports[south_port]->sendInitData(nme->clone());
                         }
                     }
-                    
+
                     // Now send to all the endpoints
                     bool sent = false;
                     NocPacket* packet = nme->encap_ev;
@@ -1306,7 +1306,7 @@ noc_mesh::complete(unsigned int phase)
                         }
                     }
                     if ( !sent ) delete packet;
-                    
+
                 }
                 else { // Not a broadcast
                     route(nme);
@@ -1317,12 +1317,12 @@ noc_mesh::complete(unsigned int phase)
                     }
                     else {
                         ports[nme->next_port]->sendInitData(nme);
-                    }       
+                    }
                 }
             }
         }
     }
-    
+
     return;
 
 }
@@ -1370,7 +1370,7 @@ noc_mesh::printStatus(Output& out)
             out.output("    UNUSED\n");
         }
     }
-    
+
     out.output("End Router %s: id = (%d, %d)\n\n", getName().c_str(), my_x, my_y);
 }
 

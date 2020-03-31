@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -28,13 +28,13 @@ public:
 /* Element Library Info */
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(DelayBuffer, "memHierarchy", "DelayBuffer", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Delays requests by a specified time", SST::MemHierarchy::SimpleMemBackend)
-    
+
     SST_ELI_DOCUMENT_PARAMS( MEMBACKEND_ELI_PARAMS,
             /* Own parameters */
             {"verbose", "Sets the verbosity of the backend output", "0"},
             {"backend", "Backend memory system", "memHierarchy.simpleMem"},
             {"request_delay", "Constant delay to be added to requests with units (e.g., 1us)", "0ns"} )
-    
+
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( {"backend", "Backend memory model", "SST::MemHierarchy::SimpleMemBackend"} )
 
 /* Begin class definition */
@@ -53,8 +53,8 @@ private:
         SimpleMemBackend::handleMemResponse( id );
     }
 	struct Req {
-		Req( ReqId id, Addr addr, bool isWrite, unsigned numBytes ) : 
-			id(id), addr(addr), isWrite(isWrite), numBytes(numBytes) 
+		Req( ReqId id, Addr addr, bool isWrite, unsigned numBytes ) :
+			id(id), addr(addr), isWrite(isWrite), numBytes(numBytes)
 		{ }
 		ReqId id;
 		Addr addr;

@@ -1,12 +1,12 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -42,8 +42,8 @@ public:
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         Event::serialize_order(ser);
         ser & type;
-    }    
-    
+    }
+
 protected:
     BaseNocEvent(NocEventType type) :
         Event(),
@@ -56,14 +56,14 @@ private:
 
     ImplementSerializable(SST::Kingsley::BaseNocEvent);
 };
-    
+
 
 class NocPacket : public BaseNocEvent {
 
 public:
     SST::Interfaces::SimpleNetwork::Request* request;
     int vn;
-    
+
     NocPacket() :
         BaseNocEvent(BaseNocEvent::PACKET),
         injectionTime(0)
@@ -79,7 +79,7 @@ public:
     {
         delete request;
     }
-    
+
     inline void setInjectionTime(SimTime_t time) {injectionTime = time;}
 
     virtual NocPacket* clone(void)  override {
@@ -91,7 +91,7 @@ public:
     inline SimTime_t getInjectionTime(void) const { return injectionTime; }
     inline SST::Interfaces::SimpleNetwork::Request::TraceType getTraceType() const {return request->getTraceType();}
     inline int getTraceID() const {return request->getTraceID();}
-    
+
     inline void setSizeInFlits(int size ) {size_in_flits = size; }
     inline int getSizeInFlits() { return size_in_flits; }
 
@@ -108,13 +108,13 @@ public:
         ser & size_in_flits;
         ser & injectionTime;
     }
-    
+
 private:
     SimTime_t injectionTime;
     int size_in_flits;
 
     ImplementSerializable(SST::Kingsley::NocPacket)
-    
+
 };
 
 class credit_event : public BaseNocEvent {
@@ -142,11 +142,11 @@ public:
         ser & vn;
         ser & credits;
     }
-    
+
 private:
 
     ImplementSerializable(SST::Kingsley::credit_event)
-    
+
 };
 
 class NocInitEvent : public BaseNocEvent {
@@ -182,8 +182,8 @@ public:
         ser & int_value;
         ser & ua_value;
     }
-    
-    
+
+
 private:
     ImplementSerializable(SST::Kingsley::NocInitEvent)
 };
@@ -254,7 +254,7 @@ private:
 //         ser & credit_return_vc;
 //         ser & encap_ev;
 //     }
-    
+
 // private:
 //     ImplementSerializable(SST::Kingsley::internal_router_event)
 // };

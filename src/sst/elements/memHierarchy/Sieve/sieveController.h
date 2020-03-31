@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -75,30 +75,30 @@ public:
 /* Begin class definition */
     typedef unsigned int uint;
     typedef uint64_t uint64;
-    
+
     /** Constructor for Sieve Component */
     Sieve(ComponentId_t id, Params &params);
 
     virtual void init(unsigned int);
     virtual void finish(void);
-    
+
     /** Computes the 'Base Address' of the requests.  The base address point the first address of the cache line */
     Addr toBaseAddr(Addr addr){
         Addr baseAddr = (addr) & ~(lineSize_ - 1);  //Remove the block offset bits
         return baseAddr;
     }
-    
+
 private:
     struct mallocEntry {
         uint64_t id;    // ID assigned by ariel
         uint64_t size;  // Number of bytes
     };
-    
-        
+
+
     typedef map<Addr, mallocEntry> allocMap_t;
     typedef pair<uint64_t, uint64_t> rwCount_t;
     typedef std::unordered_map<uint64_t, rwCount_t > allocCountMap_t;
-    
+
 
     /** Name of the output file */
     string outFileName;
@@ -108,11 +108,11 @@ private:
     allocCountMap_t allocMap;
      /** All allocations in list form */
     /** Active Allocations */
-    allocMap_t activeAllocMap; 
+    allocMap_t activeAllocMap;
     /** misses not associated with an alloc'd region */
 
     void recordMiss(Addr addr, bool isRead);
-    
+
     /** Destructor for Sieve Component */
     ~Sieve();
 
@@ -150,26 +150,26 @@ private:
 };
 
 /*  Implementation Details
- 
+
     The Sieve class serves as the main cache controller.  It is in charge of handling incoming
     memEvents and forwarding the requests to the other system's
     subcomponents:
-        - Cache Array:  Class in charge keeping track of all the cache lines in the cache.  The 
+        - Cache Array:  Class in charge keeping track of all the cache lines in the cache.  The
         Cache Line inner class stores the data and state related to a particular cache line.
- 
-        - Replacement Manager:  Class handles work related to the replacement policy of the cache.  
+
+        - Replacement Manager:  Class handles work related to the replacement policy of the cache.
         Similar to Cache Array, this class is OO-based so different replacement policies are simply
-        subclasses of the main based abstract class (ReplacementMgr), therefore they need to implement 
-        certain functions in order for them to work properly. Implemented policies are: least-recently-used (lru), 
+        subclasses of the main based abstract class (ReplacementMgr), therefore they need to implement
+        certain functions in order for them to work properly. Implemented policies are: least-recently-used (lru),
         least-frequently-used (lfu), most-recently-used (mru), random, and not-most-recently-used (nmru).
- 
+
         - Hash:  Class implements common hashing functions.  These functions are used by the Cache Array
         class.  For instance, a typical set associative array uses a simple hash function, whereas
         skewed associate and ZCaches use more advanced hashing functions.
- 
- 
+
+
     Key notes:
- 
+
         - Class member variables have a suffix "_".
 
 */

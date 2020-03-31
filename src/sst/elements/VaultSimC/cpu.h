@@ -1,8 +1,8 @@
-// Copyright 2012-2018 NTESS. Under the terms
+// Copyright 2012-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2012-2018, NTESS
+//
+// Copyright (c) 2012-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -25,14 +25,14 @@
 
 using namespace std;
 
-namespace SST { 
+namespace SST {
 namespace VaultSim {
 
 #ifndef VAULTSIMC_DBG
 #define VAULTSIMC_DBG 0
 #endif
 
-//#define STUPID_DEBUG 
+//#define STUPID_DEBUG
 
 class cpu : public Component {
 
@@ -60,19 +60,19 @@ public: // functions
 
   cpu( ComponentId_t id, Params& params );
   void finish();
-  
+
 private: // types
-  
+
   typedef SST::Link memChan_t;
   typedef set<uint64_t> memSet_t;
   typedef vector<memSet_t> thrSet_t;
   typedef vector<int> coreVec_t;
 
-private: 
-  
+private:
+
   cpu( const cpu& c );
   bool clock( Cycle_t );
-  
+
   SST::RNG::SSTRandom* rng;
   memChan_t *toMem;
   unsigned int outstanding;

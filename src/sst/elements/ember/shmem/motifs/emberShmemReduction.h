@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -41,18 +41,18 @@ class EmberShmemReductionGenerator : public EmberShmemGenerator {
 	enum Type { Int, Long, LongLong, Float, Double } m_type;
 public:
 	EmberShmemReductionGenerator(SST::ComponentId_t id, Params& params) :
-		EmberShmemGenerator(id, params, "ShmemReduction" ), m_phase(0) 
-	{ 
+		EmberShmemGenerator(id, params, "ShmemReduction" ), m_phase(0)
+	{
         m_printResults = params.find<bool>("arg.printResults", false );
         m_nelems = params.find<int>("arg.nelems", 1 );
         m_opName = params.find<std::string>("arg.op", "SUM");
-		m_nelems = params.find<int>("arg.nelems", 1 );	
+		m_nelems = params.find<int>("arg.nelems", 1 );
 
         int status;
         std::string tname = typeid(TYPE).name();
 		char* tmp = abi::__cxa_demangle(tname.c_str(), NULL, NULL, &status);
         m_type_name = tmp;
-		free(tmp); 
+		free(tmp);
 
 		if ( 0 == m_type_name.compare( "int" ) ) {
 			m_type = Int;
@@ -96,32 +96,32 @@ public:
 		switch( op ) {
 		case AND:
 			if ( m_num_pes / 2  == pe ) {
-				value = 1L << (pe + shift) | 1 << v; 
+				value = 1L << (pe + shift) | 1 << v;
 			} else {
 				value = -1;
-			} 
+			}
 			break;
 
 		case OR:
 			if ( m_num_pes / 2  == pe ) {
-				value = 1L << (pe + shift) | 1 << v; 
+				value = 1L << (pe + shift) | 1 << v;
 			} else {
 				value = 0;
-			} 
+			}
 			break;
 
 		case XOR:
-			value = ( 1L << ( pe + shift) ) | ( 1 << v ); 
-			
+			value = ( 1L << ( pe + shift) ) | ( 1 << v );
+
 			break;
 
 		case MAX:
 		case MIN:
 		case SUM:
 		case PROD:
-			value = pe + 1 + v + 1; 
+			value = pe + 1 + v + 1;
 			break;
-		}	
+		}
 		return value;
 	}
 
@@ -139,18 +139,18 @@ public:
 		switch ( op ) {
 		case AND:
 		case OR:
-			result = 1L << ( ( m_num_pes / 2 ) + shift ) | 1 << v; 
+			result = 1L << ( ( m_num_pes / 2 ) + shift ) | 1 << v;
 			break;
 
 		case XOR:
-			result = 1L << shift | 1 << v; 
+			result = 1L << shift | 1 << v;
 
 			for ( int i = 1; i< num_pes; i++ ) {
-				TYPE tmp = 1L << (  i  + shift ) | 1 << v; 
-				result ^= tmp; 
+				TYPE tmp = 1L << (  i  + shift ) | 1 << v;
+				result ^= tmp;
 			}
 			break;
-        default: 
+        default:
             assert(0);
 		}
 		return result;
@@ -161,11 +161,11 @@ public:
 		TYPE result = 0;
 		switch( op ) {
 
-		case MAX: 
+		case MAX:
 			result = num_pes - 1 + 1 + v  + 1;
 			break;
 
-		case MIN: 
+		case MIN:
 			result = 0 + 1 + v  + 1;
 			break;
 
@@ -185,17 +185,17 @@ public:
 		case AND:
 		case OR:
 		case XOR:
-			result = calcResultLOGICAL<T>( op, num_pes, v ); 
+			result = calcResultLOGICAL<T>( op, num_pes, v );
 			break;
-		}	
-		return result; 
+		}
+		return result;
 	}
 
-    bool generate( std::queue<EmberEvent*>& evQ) 
+    bool generate( std::queue<EmberEvent*>& evQ)
 	{
         bool ret = false;
         switch ( m_phase ) {
-          case 0: 
+          case 0:
             enQ_init( evQ );
             enQ_my_pe( evQ, &m_my_pe );
             enQ_n_pes( evQ, &m_num_pes );
@@ -218,8 +218,8 @@ public:
             bzero( &m_pSync.at<long>(0), sizeof(long) * 3);
 
 			m_src = m_pSync.offset<long>(3);
-			for ( int i = 0; i < m_nelems; i++ ) { 
-            	m_src.at<TYPE>(i) = calcSrc( m_op, m_my_pe, i ); 
+			for ( int i = 0; i < m_nelems; i++ ) {
+            	m_src.at<TYPE>(i) = calcSrc( m_op, m_my_pe, i );
 			}
 
             m_dest = m_src.offset<TYPE>(m_nelems );
@@ -229,7 +229,7 @@ public:
             break;
 
           case 3:
-            switch ( m_op ) { 
+            switch ( m_op ) {
             case AND:
 				switch ( m_type ) {
 				case Int:
@@ -238,7 +238,7 @@ public:
 				case Long:
                 	enQ_long_and_to_all( evQ, m_dest, m_src, m_nelems, 0, 0, m_num_pes, m_pSync );
 					break;
-                default: 
+                default:
                     assert(0);
 				}
                 break;
@@ -250,7 +250,7 @@ public:
 				case Long:
                 	enQ_long_or_to_all( evQ, m_dest, m_src, m_nelems, 0, 0, m_num_pes, m_pSync );
 					break;
-                default: 
+                default:
                     assert(0);
 				}
                 break;
@@ -346,13 +346,13 @@ public:
             break;
 
           case 4:
-           	for ( int i = 0; i < m_nelems; i++ ) { 
-				TYPE result = calcResult<TYPE>( m_op, m_num_pes, i); 
+           	for ( int i = 0; i < m_nelems; i++ ) {
+				TYPE result = calcResult<TYPE>( m_op, m_num_pes, i);
             	if ( m_printResults ) {
 					std::stringstream tmp;
 					tmp << " got="<< m_dest.at<TYPE>(i) << " want=" <<  result;
 					printf("%d:%s: %s\n",m_my_pe,getMotifName().c_str(),tmp.str().c_str());
-					
+
 				}
             	assert( m_dest.at<TYPE>(i) == result );
 			}
@@ -392,11 +392,11 @@ public:
         SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS() 
+    SST_ELI_DOCUMENT_PARAMS()
 
 public:
-    EmberShmemReductionIntGenerator( SST::ComponentId_t id, Params& params ) : 
-        EmberShmemReductionGenerator(id,  params) { } 
+    EmberShmemReductionIntGenerator( SST::ComponentId_t id, Params& params ) :
+        EmberShmemReductionGenerator(id,  params) { }
 };
 
 class EmberShmemReductionLongGenerator : public EmberShmemReductionGenerator<long> {
@@ -410,11 +410,11 @@ public:
         SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS() 
+    SST_ELI_DOCUMENT_PARAMS()
 
 public:
-    EmberShmemReductionLongGenerator( SST::ComponentId_t id, Params& params ) : 
-        EmberShmemReductionGenerator(id,  params) { } 
+    EmberShmemReductionLongGenerator( SST::ComponentId_t id, Params& params ) :
+        EmberShmemReductionGenerator(id,  params) { }
 };
 
 class EmberShmemReductionLongLongGenerator : public EmberShmemReductionGenerator<long long> {
@@ -428,11 +428,11 @@ public:
         SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS() 
+    SST_ELI_DOCUMENT_PARAMS()
 
 public:
-    EmberShmemReductionLongLongGenerator( SST::ComponentId_t id, Params& params ) : 
-        EmberShmemReductionGenerator(id,  params) { } 
+    EmberShmemReductionLongLongGenerator( SST::ComponentId_t id, Params& params ) :
+        EmberShmemReductionGenerator(id,  params) { }
 };
 
 class EmberShmemReductionDoubleGenerator : public EmberShmemReductionGenerator<double> {
@@ -446,11 +446,11 @@ public:
         SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS() 
+    SST_ELI_DOCUMENT_PARAMS()
 
 public:
-    EmberShmemReductionDoubleGenerator( SST::ComponentId_t id, Params& params ) : 
-        EmberShmemReductionGenerator(id,  params) { } 
+    EmberShmemReductionDoubleGenerator( SST::ComponentId_t id, Params& params ) :
+        EmberShmemReductionGenerator(id,  params) { }
 };
 
 class EmberShmemReductionFloatGenerator : public EmberShmemReductionGenerator<float> {
@@ -464,11 +464,11 @@ public:
         SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS() 
+    SST_ELI_DOCUMENT_PARAMS()
 
 public:
-    EmberShmemReductionFloatGenerator( SST::ComponentId_t id, Params& params ) : 
-        EmberShmemReductionGenerator(id,  params) { } 
+    EmberShmemReductionFloatGenerator( SST::ComponentId_t id, Params& params ) :
+        EmberShmemReductionGenerator(id,  params) { }
 };
 
 }

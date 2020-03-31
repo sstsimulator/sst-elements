@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -39,7 +39,7 @@ class DriverEvent : public SST::Event {
     MP::Functor* retFunc;
     int retval;
   private:
-      
+
     NotSerializable(DriverEvent)
 };
 
@@ -50,7 +50,7 @@ FunctionSM::FunctionSM( ComponentId_t id, SST::Params& params, ProtocolAPI* prot
     m_proto( proto )
 {
 
-    m_dbg.init("@t:FunctionSM::@p():@l ", 
+    m_dbg.init("@t:FunctionSM::@p():@l ",
             params.find<uint32_t>("verboseLevel",0),
             0,
             Output::STDOUT );
@@ -77,7 +77,7 @@ FunctionSM::~FunctionSM()
 
 void FunctionSM::printStatus( Output& out )
 {
-    m_sm->printStatus(out); 
+    m_sm->printStatus(out);
 }
 
 void FunctionSM::setup( Info* info )
@@ -92,32 +92,32 @@ void FunctionSM::setup( Info* info )
     Params defaultParams;
     defaultParams.enableVerify(false);
     defaultParams.insert( "module" , m_params.find<std::string>("defaultModule","firefly"), true );
-    defaultParams.insert( "enterLatency", 
+    defaultParams.insert( "enterLatency",
                         m_params.find<std::string>("defaultEnterLatency","0"), true );
-    defaultParams.insert( "returnLatency", 
+    defaultParams.insert( "returnLatency",
                         m_params.find<std::string>("defaultReturnLatency","0"), true );
-    defaultParams.insert( "smallCollectiveVN", 
+    defaultParams.insert( "smallCollectiveVN",
                         m_params.find<std::string>("smallCollectiveVN","0"), true );
-    defaultParams.insert( "smallCollectiveSize", 
+    defaultParams.insert( "smallCollectiveSize",
                         m_params.find<std::string>("smallCollectiveSize","0"), true );
-    defaultParams.insert( "verboseLevel", m_params.find<std::string>("verboseLevel","0"), true ); 
+    defaultParams.insert( "verboseLevel", m_params.find<std::string>("verboseLevel","0"), true );
     std::ostringstream tmp;
-    tmp <<  nodeId; 
+    tmp <<  nodeId;
     defaultParams.insert( "nodeId", tmp.str(), true );
 
     for ( int i = 0; i < NumFunctions; i++ ) {
         std::string name = functionName( (FunctionEnum) i );
-        Params tmp = m_params.find_prefix_params( name + "." );  
+        Params tmp = m_params.find_prefix_params( name + "." );
         defaultParams.insert( "name", name, true );
         initFunction( info, (FunctionEnum) i,
-                                        name, defaultParams, tmp ); 
+                                        name, defaultParams, tmp );
     }
 }
 
 void FunctionSM::initFunction( Info* info,
     FunctionEnum num, std::string name, Params& defaultParams, Params& params)
 {
-    std::string module = params.find<std::string>("module"); 
+    std::string module = params.find<std::string>("module");
     if ( module.empty() ) {
         module = defaultParams.find<std::string>("module");
     }
@@ -154,10 +154,10 @@ void FunctionSM::initFunction( Info* info,
                              params );
 
     assert( m_smV[ Init ] );
-    m_smV[ num ]->setInfo( info ); 
+    m_smV[ num ]->setInfo( info );
 
     if ( ! m_smV[ num ]->protocolName().empty() ) {
-        m_smV[ num ]->setProtocol( m_proto ); 
+        m_smV[ num ]->setProtocol( m_proto );
     }
 }
 
@@ -214,13 +214,13 @@ void FunctionSM::processRetval(  Retval& retval )
         m_dbg.debug(CALL_INFO,3,0,"Exit %" PRIu64 "\n", retval.value() );
         if ( m_retFunc ) {
             DriverEvent* x = new DriverEvent( m_retFunc, retval.value() );
-            m_toDriverLink->send( m_sm->returnLatency(), x ); 
+            m_toDriverLink->send( m_sm->returnLatency(), x );
         } else {
             m_callback();
         }
     } else if ( retval.isDelay() ) {
         m_dbg.debug(CALL_INFO,3,0,"Delay %" PRIu64 "\n", retval.value() );
-        m_toMeLink->send( retval.value(), NULL ); 
+        m_toMeLink->send( retval.value(), NULL );
     } else {
     }
 }
@@ -232,7 +232,7 @@ void FunctionSM::handleToDriver( Event* e )
     DriverEvent* event = static_cast<DriverEvent*>(e);
     if ( (*event->retFunc)( event->retval ) ) {
         delete event->retFunc;
-    }    
+    }
     m_sm = NULL;
     delete e;
 }

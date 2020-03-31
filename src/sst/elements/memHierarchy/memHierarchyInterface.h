@@ -1,9 +1,9 @@
 // -*- mode: c++ -*-
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -53,7 +53,7 @@ public:
 
 /* Begin class definition */
     MemHierarchyInterface(SST::ComponentId_t id, Params &params, TimeConverter* time, HandlerBase* handler = NULL);
-    
+
     /** Initialize the link to be used to connect with MemHierarchy */
     virtual bool initialize(const std::string &linkName, HandlerBase *handler = NULL);
 
@@ -72,13 +72,13 @@ protected:
 
     /** Function to update a SimpleMem request with a custom memEvent response */
     virtual void updateCustomRequest(Interfaces::SimpleMem::Request* req, MemEventBase *ev) const;
-    
+
     Output      output;
     Addr        baseAddrMask_;
     std::string rqstr_;
     std::map<MemEventBase::id_type, Interfaces::SimpleMem::Request*> requests_;
     SST::Link*  link_;
-    
+
     bool initDone_;
     std::queue<MemEventInit*> initSendQueue_;
 
@@ -87,13 +87,13 @@ private:
 
     /** Convert any incoming events to updated Requests, and fire handler */
     void handleIncoming(SST::Event *ev);
-    
+
     /** Process MemEvents into updated Requests*/
     Interfaces::SimpleMem::Request* processIncoming(MemEventBase *ev);
 
     /** Update Request with results of MemEvent. Calls updateCustomRequest for custom events. */
     void updateRequest(Interfaces::SimpleMem::Request* req, MemEvent *me) const;
-    
+
     /** Function used internally to create the memEvent that will be used by MemHierarchy */
     MemEventBase* createMemEvent(Interfaces::SimpleMem::Request* req) const;
 

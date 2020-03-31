@@ -1,12 +1,12 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -40,7 +40,7 @@ public:
         SST_ELI_ELEMENT_VERSION(0,9,0),
         "Simple NIC to test basic pt2pt performance.",
         COMPONENT_CATEGORY_NETWORK)
-    
+
     SST_ELI_DOCUMENT_PARAMS(
         {"link_bw",          "Bandwidth of the router link specified in either b/s or B/s (can include SI prefix)."},
         {"packet_size",      "Packet size specified in either b or B (can include SI prefix)."},
@@ -64,7 +64,7 @@ public:
 private:
 
     Output out;
-    
+
     struct recv_data {
         SimTime_t first_arrival;
         SimTime_t end_arrival;
@@ -75,32 +75,32 @@ private:
             end_arrival(0),
             packets_recd(0) {}
     };
-    
+
     int id;
 
     std::vector<int> src;
     std::vector<int> dest;
     std::vector<UnitAlgebra> delays;
-    
+
     int my_dest;
     UnitAlgebra my_delay;
-    
-    std::map<int,recv_data> my_recvs;    
-    
+
+    std::map<int,recv_data> my_recvs;
+
     int packets_sent;
     int packets_recd;
 
     SimTime_t start_time;
     SimTime_t latency;
-    
+
     int packets_to_send;
     int packet_size;
     UnitAlgebra buffer_size;
-    
+
     SST::Interfaces::SimpleNetwork* link_control;
     Link* self_link;
     Link* report_timing;
-    
+
     void start(Event* ev);
 
     // Variables need to print out bandwidth in intervals
@@ -113,7 +113,7 @@ private:
     int pkts_in_interval;
 
     void report_bw(Event* ev);
-    
+
 public:
     pt2pt_test(ComponentId_t cid, Params& params);
     ~pt2pt_test() {}
@@ -128,9 +128,9 @@ private:
     // void handle_complete(Event* ev);
 
     bool send_handler(int vn);
-    bool recv_handler(int vn); 
+    bool recv_handler(int vn);
 
-    
+
 };
 
 class pt2pt_test_event : public Event {
@@ -139,7 +139,7 @@ class pt2pt_test_event : public Event {
     SimTime_t start_time;
 
     pt2pt_test_event() {}
-    
+
     virtual Event* clone(void) override
     {
         return new pt2pt_test_event(*this);

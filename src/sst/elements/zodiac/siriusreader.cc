@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -22,8 +22,8 @@ using namespace SST::Zodiac;
 
 #if ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6))
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-variable" 
-#pragma GCC diagnostic ignored "-Wunused-result" 
+#pragma GCC diagnostic ignored "-Wunused-variable"
+#pragma GCC diagnostic ignored "-Wunused-result"
 #endif
 
 #if defined(__clang__)
@@ -89,7 +89,7 @@ void SiriusReader::generateNextEvent() {
 		ZodiacComputeEvent* ev = new ZodiacComputeEvent(evTimeDiff);
 		eventQ->push(ev);
 	} else {
-		output->verbose(__LINE__, __FILE__, "generateNextEvent", 8, 0, 
+		output->verbose(__LINE__, __FILE__, "generateNextEvent", 8, 0,
 			"Did not generate next event timing prevTime=%f, callTime=%f, diff=%f\n",
 			prevEventTime, callTime, evTimeDiff);
 	}

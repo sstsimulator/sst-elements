@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -20,7 +20,7 @@
 using namespace SST::Ember;
 
 EmberHalo3DGenerator::EmberHalo3DGenerator(SST::ComponentId_t id, Params& params) :
-	EmberMessagePassingGenerator(id, params, "Halo3D"), 
+	EmberMessagePassingGenerator(id, params, "Halo3D"),
 	m_loopIndex(0)
 {
 	nx  = params.find<uint32_t>("arg.nx", 100);
@@ -133,7 +133,7 @@ void EmberHalo3DGenerator::configure()
 	z_up    = convertPositionToRank(peX, peY, peZ, my_X, my_Y, my_Z + 1);
 	z_down  = convertPositionToRank(peX, peY, peZ, my_X, my_Y, my_Z - 1);
 
-	verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", World=%" PRId32 ", X=%" PRId32 ", Y=%" PRId32 ", Z=%" PRId32 ", Px=%" PRId32 ", Py=%" PRId32 ", Pz=%" PRId32 "\n", 
+	verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", World=%" PRId32 ", X=%" PRId32 ", Y=%" PRId32 ", Z=%" PRId32 ", Px=%" PRId32 ", Py=%" PRId32 ", Pz=%" PRId32 "\n",
 		rank(), worldSize, my_X, my_Y, my_Z, peX, peY, peZ);
 	verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", X+: %" PRId32 ", X-: %" PRId32 "\n", rank(), x_up, x_down);
 	verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 ", Y+: %" PRId32 ", Y-: %" PRId32 "\n", rank(), y_up, y_down);
@@ -142,7 +142,7 @@ void EmberHalo3DGenerator::configure()
 //	assert( (x_up < worldSize) && (y_up < worldSize) && (z_up < worldSize) );
 }
 
-bool EmberHalo3DGenerator::generate( std::queue<EmberEvent*>& evQ ) 
+bool EmberHalo3DGenerator::generate( std::queue<EmberEvent*>& evQ )
 {
     verbose(CALL_INFO, 1, 0, "loop=%d\n", m_loopIndex );
 
@@ -278,13 +278,13 @@ bool EmberHalo3DGenerator::generate( std::queue<EmberEvent*>& evQ )
 			enQ_allreduce( evQ, NULL, NULL, 1, DOUBLE, MP::SUM, GroupWorld);
 		}
 
-	
+
     if ( ++m_loopIndex == iterations ) {
         return true;
     } else {
         return false;
     }
-    
+
     //m_loopIndex++;
     //return false;
 

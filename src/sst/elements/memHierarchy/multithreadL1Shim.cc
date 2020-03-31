@@ -1,8 +1,8 @@
-// Copyright 2013-2019 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright(c) 2013-2019, NTESS
+// Copyright(c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -28,20 +28,20 @@ using namespace std;
 MultiThreadL1::MultiThreadL1(ComponentId_t id, Params &params) : Component(id) {
     /* Setup output and debug streams */
     output.init("", 1, 0, Output::STDOUT);
-    
+
     int debugLevel = params.find<int>("debug_level", 0);
     debug.init("", debugLevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
-    
+
     std::vector<Addr> addrArr;
     params.find_array<Addr>("debug_addr", addrArr);
-    for (std::vector<Addr>::iterator it = addrArr.begin(); it != addrArr.end(); it++) 
+    for (std::vector<Addr>::iterator it = addrArr.begin(); it != addrArr.end(); it++)
         DEBUG_ADDR.insert(*it);
 
     /* Setup clock */
     clockHandler = new Clock::Handler<MultiThreadL1>(this, &MultiThreadL1::tick);
     clock = registerClock(params.find<std::string>("clock", "1GHz"), clockHandler);
     clockOn = true;
-    timestamp = 0; 
+    timestamp = 0;
 
 
     /* Setup links */
@@ -97,9 +97,9 @@ void MultiThreadL1::handleResponse(SST::Event * ev) {
 
 bool MultiThreadL1::tick(SST::Cycle_t cycle) {
     timestamp++;
-   
+
     uint64_t sendcount = (requestsPerCycle == 0) ? requestQueue.size() : requestsPerCycle;
-    
+
     /* Drain request queue */
     while (!requestQueue.empty() && sendcount > 0) {
         cacheLink->send(requestQueue.front());
@@ -108,16 +108,16 @@ bool MultiThreadL1::tick(SST::Cycle_t cycle) {
     }
 
     sendcount = (responsesPerCycle == 0) ? responseQueue.size() : responsesPerCycle;
-    
+
     /* Drain response queue */
     while (!responseQueue.empty() && sendcount > 0) {
         MemEventBase * event = responseQueue.front();
         responseQueue.pop();
-        
+
         unsigned int linkid = threadRequestMap.find(event->getResponseToID())->second;
         threadRequestMap.erase(event->getResponseToID());
         threadLinks[linkid]->send(event);
-        
+
         sendcount--;
     }
 
@@ -141,7 +141,7 @@ void MultiThreadL1::setup() {}
 void MultiThreadL1::finish() {}
 
 /*
- *  Init: 
+ *  Init:
  *      forward all CPU events to memory hierarchy
  *      Broadcast L1's 'SST::MemHierarchy::MemEvent' event to all CPUs
  *
@@ -159,7 +159,7 @@ void MultiThreadL1::init(unsigned int phase) {
             delete ev;
         }
     }
-    
+
     // Broadcast L1 events to connected CPUs
     while ((ev = cacheLink->recvInitData()) != NULL) {
         MemEventInit * memEvent = dynamic_cast<MemEventInit*>(ev);

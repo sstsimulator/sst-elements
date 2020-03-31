@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -23,11 +23,11 @@ public:
         }
         //printf("%s():%d %#x\n",__func__,__LINE__,pageSize);
 
-        m_pageShift = calcPow( pageSize ); 
-        m_setShift = calcPow( nSets ); 
-        
+        m_pageShift = calcPow( pageSize );
+        m_setShift = calcPow( nSets );
+
         printf("%s():%d m_setMask=%" PRIx64 " m_pageShift=%d m_setShift=%d\n",__func__,__LINE__,m_setMask,m_pageShift,m_setShift);
-    } 
+    }
 
     bool isValid( Hermes::Vaddr addr ) {
         int set = addrToSet(addr);
@@ -65,7 +65,7 @@ public:
             output.output("set=%d: total=%" PRIi64 " %f hits\n", i, m_stats[i].first, (float) m_stats[i].second / (float)m_stats[i].first );
             }
         }
-    } 
+    }
 
 private:
     uint64_t m_setMask;
@@ -79,19 +79,19 @@ private:
         while( val > 1 ) {
             val /= 2;
             ++x;
-        } 
+        }
         assert( val == 1.0 );
         return x;
     }
 
     int addrToSet( Hermes::Vaddr addr ) {
-        int set = (addr >> m_pageShift) & m_setMask; 
+        int set = (addr >> m_pageShift) & m_setMask;
         //printf("%s():%d %#lx set=%#lx\n",__func__,__LINE__,addr,set);
-        return set; 
+        return set;
     }
 
     uint64_t addrToTag( Hermes::Vaddr addr ) {
-        int tag = (addr >> (m_pageShift + m_setShift));  
+        int tag = (addr >> (m_pageShift + m_setShift));
         //printf("%s():%d %#lx tag=%#lx\n",__func__,__LINE__,addr,tag);
         return tag;
     }

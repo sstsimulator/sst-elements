@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -28,7 +28,7 @@ class ShmemBroadcast : public ShmemCollective {
   public:
     ShmemBroadcast( HadesSHMEM& api, ShmemCommon& common ) : ShmemCollective(api, common )
     { }
-    void start( Hermes::Vaddr dest, Hermes::Vaddr source, size_t nelems, int root, int PE_start, 
+    void start( Hermes::Vaddr dest, Hermes::Vaddr source, size_t nelems, int root, int PE_start,
         int logPE_stride, int PE_size, Hermes::Vaddr pSync, Hermes::Shmem::Callback, bool complete );
   private:
 

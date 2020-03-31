@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -27,14 +27,14 @@
 #include <stdint.h>
 #include <sst/core/subcomponent.h>
 
-namespace SST { 
+namespace SST {
 namespace MemHierarchy {
 
 class HashFunction : public SubComponent {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT_API(SST::MemHierarchy::HashFunction)
 
-    
+
     HashFunction(ComponentId_t id, Params& params) : SubComponent(id) {}
     virtual ~HashFunction() {}
 
@@ -75,7 +75,7 @@ public:
             "Simple XOR hash", SST::MemHierarchy::HashFunction)
 
     XorHashFunction(ComponentId_t id, Params& params) : HashFunction(id, params) {}
-    
+
     uint64_t hash(uint32_t ID, uint64_t x) {
         unsigned char b[8];
         for (unsigned i = 0; i < 8; ++i)
@@ -87,11 +87,11 @@ public:
         uint64_t result = 0;
         for (unsigned i = 0; i < 8; ++i)
             result |= (b[i]<<(i*8));
-    
+
         return result;
     }
 };
 
 }}
-#endif	
+#endif
 /* HASH_H */

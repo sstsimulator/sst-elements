@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -28,14 +28,14 @@ template< class TYPE >
 class EmberShmemRingGenerator : public EmberShmemGenerator {
 
 public:
-	EmberShmemRingGenerator(SST::ComponentId_t id, Params& params) : 
-		EmberShmemGenerator(id, params, "ShmemRing" ), m_phase(-2) 
-	{ 
+	EmberShmemRingGenerator(SST::ComponentId_t id, Params& params) :
+		EmberShmemGenerator(id, params, "ShmemRing" ), m_phase(-2)
+	{
 		m_iterations = (uint32_t) params.find("arg.iterations", 1);
 		m_count = (uint32_t) params.find("arg.count", 1) - 1;
 	}
 
-    bool generate( std::queue<EmberEvent*>& evQ) 
+    bool generate( std::queue<EmberEvent*>& evQ)
 	{
         if ( -2 == m_phase ) {
             enQ_init( evQ );
@@ -47,7 +47,7 @@ public:
             if ( 0 == m_my_pe ) {
                 printf("%d:%s: num_pes=%d \n",m_my_pe, getMotifName().c_str(), m_num_pes);
             }
-			
+
 			m_dest = m_src.offset<TYPE>(m_count);
 			m_flag = m_dest.offset<TYPE>(m_count);
 			m_flag.at<TYPE>(0) = 0;
@@ -77,9 +77,9 @@ public:
                 double totalTime = (double)(m_stopTime - m_startTime)/1000000000.0;
                 double latency = ((totalTime/m_iterations)/m_num_pes);
                 printf("%d:%s: message-size %d, iterations %d, total-time %.3lf us, time-per %.3lf us, %.3f GB/s\n",m_my_pe,
-                            getMotifName().c_str(), 
-							(int)(m_count * sizeof(TYPE)), 
-							m_iterations, 
+                            getMotifName().c_str(),
+							(int)(m_count * sizeof(TYPE)),
+							m_iterations,
 							totalTime * 1000000.0,
 							latency * 1000000.0,
                             (m_count*sizeof(TYPE) / latency )/1000000000.0);
@@ -91,7 +91,7 @@ public:
 		return m_phase == m_iterations + 1;
 	}
   private:
-	
+
    	uint64_t m_startTime;
     uint64_t m_stopTime;
     Hermes::MemAddr m_src;

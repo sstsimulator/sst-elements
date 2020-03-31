@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -25,33 +25,33 @@ using namespace SST;
 using namespace SST::SimpleComponent;
 
 simpleComponent::simpleComponent(ComponentId_t id, Params& params) :
-  Component(id) 
+  Component(id)
 {
     bool found;
-    
+
     rng = new SST::RNG::MarsagliaRNG(11, 272727);
-    
+
     // get parameters
     workPerCycle = params.find<int64_t>("workPerCycle", 0, found);
     if (!found) {
         Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1,"couldn't find work per cycle\n");
     }
-    
+
     commFreq = params.find<int64_t>("commFreq", 0, found);
     if (!found) {
         Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1,"couldn't find communication frequency\n");
     }
-    
+
     commSize = params.find<int64_t>("commSize", 16);
-    
+
     // init randomness
     srand(1);
     neighbor = rng->generateNextInt32() % 4;
-    
+
     // tell the simulator not to end without us
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
-    
+
     // configure out links
     N = configureLink("Nlink", new Event::Handler<simpleComponent>(this,
                                &simpleComponent::handleEvent));
@@ -61,18 +61,18 @@ simpleComponent::simpleComponent(ComponentId_t id, Params& params) :
                                &simpleComponent::handleEvent));
     W = configureLink("Wlink", new Event::Handler<simpleComponent>(this,
                                &simpleComponent::handleEvent));
-    
+
     assert(N);
     assert(S);
     assert(E);
     assert(W);
-    
+
     //set our clock
-    registerClock("1GHz", new Clock::Handler<simpleComponent>(this, 
+    registerClock("1GHz", new Clock::Handler<simpleComponent>(this,
                   &simpleComponent::clockTic));
 }
 
-simpleComponent::~simpleComponent() 
+simpleComponent::~simpleComponent()
 {
 	delete rng;
 }
@@ -83,7 +83,7 @@ simpleComponent::simpleComponent() : Component(-1)
 }
 
 // incoming events are scanned and deleted
-void simpleComponent::handleEvent(Event *ev) 
+void simpleComponent::handleEvent(Event *ev)
 {
     //printf("recv\n");
     simpleComponentEvent *event = dynamic_cast<simpleComponentEvent*>(ev);
@@ -103,7 +103,7 @@ void simpleComponent::handleEvent(Event *ev)
 // each clock tick we do 'workPerCycle' iterations of a simple loop.
 // We have a 1/commFreq chance of sending an event of size commSize to
 // one of our neighbors.
-bool simpleComponent::clockTic( Cycle_t ) 
+bool simpleComponent::clockTic( Cycle_t )
 {
   // do work
   // loop becomes:
@@ -114,7 +114,7 @@ bool simpleComponent::clockTic( Cycle_t )
       00001abd        cmpl    %ecx,%edx
       00001abf        jne     0x00001ab5
 
-      6 instructions. 
+      6 instructions.
   */
 
     volatile int v = 0;
@@ -137,28 +137,28 @@ bool simpleComponent::clockTic( Cycle_t )
         // send
         switch (neighbor) {
         case 0:
-            N->send(e); 
+            N->send(e);
             break;
         case 1:
-            S->send(e);  
+            S->send(e);
             break;
         case 2:
-            E->send(e);  
+            E->send(e);
             break;
         case 3:
-            W->send(e);  
+            W->send(e);
             break;
         default:
             printf("bad neighbor\n");
         }
         //printf("sent\n");
     }
-    
+
     // return false so we keep going
     return false;
 }
 
 // Element Libarary / Serialization stuff
-    
+
 
 

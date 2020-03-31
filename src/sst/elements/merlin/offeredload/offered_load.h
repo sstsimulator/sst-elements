@@ -1,10 +1,10 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -72,7 +72,7 @@ public:
     SimTime_t max;
     uint64_t  count;
     SimTime_t backup;
-    
+
     offered_load_complete_event(int generation) :
         Event(),
         generation(generation),
@@ -90,7 +90,7 @@ public:
         return ret;
     }
 
-    
+
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         Event::serialize_order(ser);
         ser & generation;
@@ -123,7 +123,7 @@ public:
         SST_ELI_ELEMENT_VERSION(0,0,1),
         "Pattern-based traffic generator to study latency versus offered load.",
         COMPONENT_CATEGORY_NETWORK)
-    
+
     SST_ELI_DOCUMENT_PARAMS(
         {"num_peers",        "Total number of endpoints in network."},
         {"link_bw",          "Bandwidth of the router link specified in either b/s or B/s (can include SI prefix)."},
@@ -133,14 +133,14 @@ public:
         {"pattern",          "Traffic pattern to use.","merlin.targetgen.uniform"},
         {"offered_load",     "Load to be offered to network.  Valid range: 0 < offered_load <= 1.0."},
         {"warmup_time",      "Time to wait before recording latencies","1us"},
-        {"collect_time",     "Time to collect data after warmup","20us"},        
+        {"collect_time",     "Time to collect data after warmup","20us"},
         {"drain_time",       "Time to drain network before stating next round","50us"},
     )
 
     SST_ELI_DOCUMENT_PORTS(
         {"rtr",  "Port that hooks up to router.", { "merlin.RtrEvent", "merlin.credit_event" } }
     )
- 
+
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
         {"networkIF", "Network interface", "SST::Interfaces::SimpleNetwork" },
         {"pattern_gen", "Target address generator", "SST::Merlin::TargetGenerator" }
@@ -153,9 +153,9 @@ private:
     UnitAlgebra link_bw;
 
     Params* pattern_params;
-    
+
     UnitAlgebra serialization_time;
-    
+
     SimTime_t next_time;
     SimTime_t send_interval;
 
@@ -165,9 +165,9 @@ private:
     SimTime_t drain_time;
     SimTime_t warmup_time;
     SimTime_t collect_time;
-    
+
     int generation;
-    
+
     TimeConverter* base_tc;
 
     SST::Interfaces::SimpleNetwork* link_if;
@@ -176,23 +176,23 @@ private:
 
 
     TargetGenerator *packetDestGen;
-    
+
     Output out;
     int id;
     int num_peers;
     int packet_size; // in bits
-    
+
     uint64_t packets_sent;
     uint64_t packets_recd;
 
     Link* timing_link;
     Link* end_link;
-    
+
     // Generator *packetSizeGen;
     // Generator *packetDelayGen;
 
     std::vector<offered_load_complete_event*> complete_event;
-    
+
 public:
     OfferedLoad(ComponentId_t cid, Params& params);
     ~OfferedLoad();
@@ -211,7 +211,7 @@ private:
     void progress_messages(SimTime_t current_time);
 
     void end_handler(Event* ev);
-    
+
 };
 
 } //namespace Merlin

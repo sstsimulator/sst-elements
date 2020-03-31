@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -40,7 +40,7 @@ public:
         "SimpleMemory",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "",
-       	SST::Firefly::SimpleMemoryModel 
+       	SST::Firefly::SimpleMemoryModel
     )
 
     SST_ELI_DOCUMENT_PARAMS(
@@ -169,7 +169,7 @@ public:
 		} else if ( 0 == tmp.compare("no" ) ) {
 			useHostCache = false;
 		} else {
-			m_dbg.fatal(CALL_INFO,0,"unknown value for parameter useHostCache '%s'\n",tmp.c_str()); 
+			m_dbg.fatal(CALL_INFO,0,"unknown value for parameter useHostCache '%s'\n",tmp.c_str());
 		}
 
 		m_detailedUnit = NULL;
@@ -186,7 +186,7 @@ public:
 		} else if ( 0 == tmp.compare("no" ) ) {
 			useBusBridge = false;
 		} else {
-			m_dbg.fatal(CALL_INFO,0,"unknown value for parameter useBusBridge '%s'\n",tmp.c_str()); 
+			m_dbg.fatal(CALL_INFO,0,"unknown value for parameter useBusBridge '%s'\n",tmp.c_str());
 		}
 
 		if ( 0 == params.find<std::string>( "printConfig", "no" ).compare("yes" ) ) {
@@ -218,14 +218,14 @@ public:
 		}
 
         m_sharedTlb = new SharedTlb( *this, m_dbg, id, tlbSize, tlbPageSize, tlbMissLat_ns, numWalkers );
-		
+
 		m_nicUnit = new NicUnit( *this, m_dbg, id );
 
 		std::stringstream tlbName;
-		std::stringstream threadName; 
+		std::stringstream threadName;
 		for ( int i = 0; i < m_numNicThreads; i++ ) {
-		
-            SharedTlbUnit* tlb = new SharedTlbUnit( *this, m_dbg, id, "nic_thread", m_sharedTlb, 
+
+            SharedTlbUnit* tlb = new SharedTlbUnit( *this, m_dbg, id, "nic_thread", m_sharedTlb,
 					new LoadUnit( *this, m_dbg, id, i,
                         nicMuxUnit,
 						nicNumLoadSlots, "nic_thread" ),
@@ -233,20 +233,20 @@ public:
 					new StoreUnit( *this, m_dbg, id, i,
                         nicMuxUnit,
 						nicNumStoreSlots, "nic_thread" ),
-                        numTlbSlots, numTlbSlots 
+                        numTlbSlots, numTlbSlots
                         );
 
-			m_threads.push_back( 
-				new Thread( *this, "nic", m_dbg, id, i, nicToHostMTU, tlb, tlb )	
- 			); 
+			m_threads.push_back(
+				new Thread( *this, "nic", m_dbg, id, i, nicToHostMTU, tlb, tlb )
+ 			);
 		}
 		for ( int i = 0; i < numCores; i++ ) {
 
-			m_threads.push_back( 
+			m_threads.push_back(
 				new Thread( *this, "host", m_dbg, id, i, 64,
 						new LoadUnit( *this, m_dbg, id, i, m_muxUnit, hostNumLoadSlots, "host_thread" ),
-						new StoreUnit( *this, m_dbg, id, i, m_muxUnit, hostNumStoreSlots, "host_thread" ) 
-				) 
+						new StoreUnit( *this, m_dbg, id, i, m_muxUnit, hostNumStoreSlots, "host_thread" )
+				)
 			);
 		}
 
@@ -268,17 +268,17 @@ public:
 	ThingHeap<SelfEvent> m_eventHeap;
 
 	void setDetailedInterface( SST::Firefly::DetailedInterface* ptr ) {
-		assert( m_detailedUnit ); 
+		assert( m_detailedUnit );
 		static_cast<DetailedUnit*>(m_detailedUnit)->setDetailedInterface( ptr );
 	}
 
 	void schedCallback( SimTime_t delay, Callback* callback ){
-		SelfEvent* ev = m_eventHeap.alloc( );	
+		SelfEvent* ev = m_eventHeap.alloc( );
 		ev->init( callback );
 		m_selfLink->send( delay , ev );
 	}
 	void schedResume( SimTime_t delay, UnitBase* unit, UnitBase* srcUnit = NULL ){
-		SelfEvent* ev = m_eventHeap.alloc( );	
+		SelfEvent* ev = m_eventHeap.alloc( );
 		ev->init( unit, srcUnit );
 		m_selfLink->send( delay , ev );
 	}
@@ -286,7 +286,7 @@ public:
 	void handleSelfEvent( Event* ev ) {
 
 		SimTime_t now = getCurrentSimTimeNano();
-		SelfEvent* event = static_cast<SelfEvent*>(ev); 
+		SelfEvent* event = static_cast<SelfEvent*>(ev);
 		if ( event->callback ) {
 			m_dbg.debug(CALL_INFO,3,SM_MASK,"callback\n");
 			(*event->callback)();
@@ -308,8 +308,8 @@ public:
 	};
 
 	void addWork( int slot, Work* work ) {
-		// we send an event to ourselves to break the call chain, we will eventually call a 
-		// callback provided by the caller of this function, this call back may re-enter here 
+		// we send an event to ourselves to break the call chain, we will eventually call a
+		// callback provided by the caller of this function, this call back may re-enter here
 		if ( m_threads[slot]->isIdle() ) {
 			SelfEvent* ev = m_eventHeap.alloc();
 			ev->init( slot, work );
@@ -327,7 +327,7 @@ public:
 		addWork( id, new Work( core, ops, callback, now ) );
 	}
 
-	virtual void schedNicCallback( int unit, int pid, std::vector< MemOp >* ops, Callback callback ) { 
+	virtual void schedNicCallback( int unit, int pid, std::vector< MemOp >* ops, Callback callback ) {
 		SimTime_t now = getCurrentSimTimeNano();
 		m_dbg.debug(CALL_INFO,3,SM_MASK,"now=%" PRIu64 " unit=%d\n", now, unit );
 		assert( unit >=0 );
@@ -348,7 +348,7 @@ public:
 
     void printStatus( Output& out, int id ) {
         for ( unsigned i = 0; i < m_threads.size(); i++ ) {
-            m_threads[i]->printStatus( out, id ); 
+            m_threads[i]->printStatus( out, id );
         }
     }
 
@@ -379,7 +379,7 @@ public:
 	uint32_t    m_hostBW;
 	uint32_t    m_nicBW;
 	Output		m_dbg;
-}; 
+};
 
 } // namespace Firefly
 } // namespace SST

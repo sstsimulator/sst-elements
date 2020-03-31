@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -31,41 +31,41 @@
 
 namespace SST {
     namespace Ember {
-        
+
         class EmberAMRBinaryFile : public EmberAMRFile {
-            
+
         public:
             EmberAMRBinaryFile(char* amrPath, Output* out) :
                 EmberAMRFile(amrPath, out) {
-                
+
                 amrFile = fopen(amrFilePath, "rb");
-                
+
                 if(NULL == amrFile) {
                     output->fatal(CALL_INFO, -1, "Unable to open file: %s\n", amrPath);
                 }
-                
+
                 rankCount = 0;
                 fread(&rankCount, sizeof(rankCount), 1, amrFile);
-                
+
                     uint32_t meshBlockCount = 0;
                     fread(&meshBlockCount, sizeof(meshBlockCount), 1, amrFile);
-                    
+
                     uint8_t meshMaxRefineLevel = 0;
                     fread(&meshMaxRefineLevel, sizeof(meshMaxRefineLevel), 1, amrFile);
-                    
+
                     uint32_t meshBlocksX = 0;
                     fread(&meshBlocksX, sizeof(meshBlocksX), 1, amrFile);
-                    
+
                     uint32_t meshBlocksY = 0;
                     fread(&meshBlocksY, sizeof(meshBlocksY), 1, amrFile);
-                    
+
                     uint32_t meshBlocksZ = 0;
                     fread(&meshBlocksZ, sizeof(meshBlocksZ), 1, amrFile);
-                    
+
                     blocksX = (int) meshBlocksX;
                     blocksY = (int) meshBlocksY;
                     blocksZ = (int) meshBlocksZ;
-          
+
                     totalBlockCount = (int) meshBlockCount;
                     maxRefinementLevel = (int) meshMaxRefineLevel;
 
@@ -80,9 +80,9 @@ namespace SST {
 		    fseek(amrFile, (long)(meshStartIndex), SEEK_SET);
 
             }
-            
+
             ~EmberAMRBinaryFile() {
-        	fclose(amrFile);        
+        	fclose(amrFile);
             }
 
 	    void populateGlobalBlocks(std::map<uint32_t, int32_t>* globalBlockMap) {
@@ -197,7 +197,7 @@ namespace SST {
 
                 fread(&temp, sizeof(temp), 1, amrFile);
                 *zDown = (int32_t) temp;
-                
+
                 fread(&temp, sizeof(temp), 1, amrFile);
                 *zUp = (int32_t) temp;
             }
@@ -211,7 +211,7 @@ namespace SST {
 	    uint64_t rankIndexOffset;
             FILE* amrFile;
         };
-        
+
     }
 }
 

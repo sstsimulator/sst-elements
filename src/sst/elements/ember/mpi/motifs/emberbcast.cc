@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -40,7 +40,7 @@ printf("%s\n",__func__);
             double latency = (double)(m_stopTime-m_startTime)/(double)m_iterations;
             latency /= 1000000000.0;
             output( "%s: ranks %d, loop %d, bytes %" PRIu32 ", latency %.3f us\n",
-                    getMotifName().c_str(), size(), m_iterations, 
+                    getMotifName().c_str(), size(), m_iterations,
                         m_count * typeSize, latency * 1000000.0  );
         }
         return true;

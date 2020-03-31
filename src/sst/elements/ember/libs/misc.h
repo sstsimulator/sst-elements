@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -44,15 +44,15 @@ class EmberMiscLib : public EmberLib {
     EmberMiscLib( Params& params ) {}
 
     void getNodeNum( EmberGenerator::Queue& q, int* ptr ) {
-        q.push( new EmberGetNodeNumEvent( api(), m_output, ptr ) ); 
+        q.push( new EmberGetNodeNumEvent( api(), m_output, ptr ) );
     }
 
     void getNumNodes( EmberGenerator::Queue& q, int* ptr ) {
-        q.push( new EmberGetNumNodesEvent( api(), m_output, ptr ) ); 
+        q.push( new EmberGetNumNodesEvent( api(), m_output, ptr ) );
     }
 
     void malloc( EmberGenerator::Queue& q, Hermes::MemAddr* addr, size_t length, bool backed = false ) {
-        q.push( new EmberMallocEvent( api(), m_output, addr, length, backed ) ); 
+        q.push( new EmberMallocEvent( api(), m_output, addr, length, backed ) );
     }
 
   private:

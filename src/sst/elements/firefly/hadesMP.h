@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -28,7 +28,7 @@ using namespace Hermes;
 namespace SST {
 namespace Firefly {
 
-class HadesMP : public MP::Interface 
+class HadesMP : public MP::Interface
 {
   public:
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
@@ -48,18 +48,18 @@ class HadesMP : public MP::Interface
         {"enterLatency","internal",""},
         {"returnLatency","internal",""},
         {"defaultModule","Sets the default function module","firefly"},
-    ) 
+    )
   public:
     HadesMP(ComponentId_t, Params&);
     ~HadesMP() {}
 
-    virtual std::string getName() { return "HadesMP"; } 
-    virtual std::string getType() { return "mpi"; } 
+    virtual std::string getName() { return "HadesMP"; }
+    virtual std::string getType() { return "mpi"; }
 
-	virtual void setup() {} 
-	virtual void finish() {} 
-	virtual void setOS( OS* os ) { 
-		m_os = static_cast<Hades*>(os); 
+	virtual void setup() {}
+	virtual void finish() {}
+	virtual void setOS( OS* os ) {
+		m_os = static_cast<Hades*>(os);
 		dbg().debug(CALL_INFO,2,0,"\n");
 	}
 
@@ -75,10 +75,10 @@ class HadesMP : public MP::Interface
     virtual void makeProgress(MP::Functor*);
 
     virtual void send(const Hermes::MemAddr&, uint32_t count,
-        MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag, 
+        MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
         MP::Communicator group, MP::Functor*);
 
-    virtual void isend(const Hermes::MemAddr&, uint32_t count, 
+    virtual void isend(const Hermes::MemAddr&, uint32_t count,
         MP::PayloadDataType dtype, MP::RankID dest, uint32_t tag,
         MP::Communicator group, MP::MessageRequest* req,
         MP::Functor*);
@@ -88,19 +88,19 @@ class HadesMP : public MP::Interface
         MP::Communicator group, MP::MessageResponse* resp,
         MP::Functor*);
 
-    virtual void irecv(const Hermes::MemAddr&, uint32_t count, 
+    virtual void irecv(const Hermes::MemAddr&, uint32_t count,
         MP::PayloadDataType dtype, MP::RankID source, uint32_t tag,
         MP::Communicator group, MP::MessageRequest* req,
         MP::Functor*);
 
-    virtual void allreduce(const Hermes::MemAddr&, 
+    virtual void allreduce(const Hermes::MemAddr&,
 		const Hermes::MemAddr& result, uint32_t count,
         MP::PayloadDataType dtype, MP::ReductionOperation op,
         MP::Communicator group, MP::Functor*);
 
-    virtual void reduce(const Hermes::MemAddr&, 
+    virtual void reduce(const Hermes::MemAddr&,
 		const Hermes::MemAddr& result,
-        uint32_t count, MP::PayloadDataType dtype, 
+        uint32_t count, MP::PayloadDataType dtype,
         MP::ReductionOperation op, MP::RankID root,
         MP::Communicator group, MP::Functor*);
 
@@ -118,9 +118,9 @@ class HadesMP : public MP::Interface
         const Hermes::MemAddr& recvBuf, int recvcnt, MP::PayloadDataType recvType,
         MP::RankID root, MP::Communicator group, MP::Functor*);
 
-    virtual void allgather( const Hermes::MemAddr&, uint32_t sendcnt, 
+    virtual void allgather( const Hermes::MemAddr&, uint32_t sendcnt,
         MP::PayloadDataType sendtype,
-        const Hermes::MemAddr&, uint32_t recvcnt, 
+        const Hermes::MemAddr&, uint32_t recvcnt,
         MP::PayloadDataType recvtype,
         MP::Communicator group, MP::Functor*);
 
@@ -130,9 +130,9 @@ class HadesMP : public MP::Interface
         MP::PayloadDataType recvtype,
         MP::Communicator group, MP::Functor*);
 
-    virtual void gather( const Hermes::MemAddr&, uint32_t sendcnt, 
+    virtual void gather( const Hermes::MemAddr&, uint32_t sendcnt,
         MP::PayloadDataType sendtype,
-        const Hermes::MemAddr&, uint32_t recvcnt, 
+        const Hermes::MemAddr&, uint32_t recvcnt,
         MP::PayloadDataType recvtype,
         MP::RankID root, MP::Communicator group, MP::Functor*);
 
@@ -145,16 +145,16 @@ class HadesMP : public MP::Interface
     virtual void barrier(MP::Communicator group, MP::Functor*);
 
     virtual void alltoall(
-        const Hermes::MemAddr&, uint32_t sendcnt, 
+        const Hermes::MemAddr&, uint32_t sendcnt,
                         MP::PayloadDataType sendtype,
-        const Hermes::MemAddr&, uint32_t 
+        const Hermes::MemAddr&, uint32_t
                         recvcnt, MP::PayloadDataType recvtype,
         MP::Communicator group, MP::Functor*);
 
     virtual void alltoallv(
-        const Hermes::MemAddr&, MP::Addr sendcnts, 
+        const Hermes::MemAddr&, MP::Addr sendcnts,
             MP::Addr senddispls, MP::PayloadDataType sendtype,
-        const Hermes::MemAddr&, MP::Addr recvcnts, 
+        const Hermes::MemAddr&, MP::Addr recvcnts,
             MP::Addr recvdispls, MP::PayloadDataType recvtype,
         MP::Communicator group, MP::Functor*);
 
@@ -163,8 +163,8 @@ class HadesMP : public MP::Interface
         MP::Functor*);
 
     // Added (but unused) to avoid compile warning on overloaded virtual function
-    virtual void probe( int source, uint32_t tag, 
-        MP::Communicator group, MP::MessageResponse* resp, MP::Functor* ) {} 
+    virtual void probe( int source, uint32_t tag,
+        MP::Communicator group, MP::MessageResponse* resp, MP::Functor* ) {}
 
 	virtual void cancel( MP::MessageRequest req, MP::Functor* );
 
@@ -173,11 +173,11 @@ class HadesMP : public MP::Interface
 
     virtual void waitany( int count, MP::MessageRequest req[], int *index,
                  MP::MessageResponse* resp, MP::Functor* );
- 
+
     virtual void waitall( int count, MP::MessageRequest req[],
                  MP::MessageResponse* resp[], MP::Functor* );
 
-    virtual void test(MP::MessageRequest req, int* flag, 
+    virtual void test(MP::MessageRequest req, int* flag,
         MP::MessageResponse* resp, MP::Functor*);
 
 	virtual void testany( int count, MP::MessageRequest req[], int* indx, int* flag,
@@ -202,7 +202,7 @@ class HadesMP : public MP::Interface
 	Hades*	    m_os;
 };
 
-} // namesapce Firefly 
+} // namesapce Firefly
 } // namespace SST
 
 #endif

@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -42,7 +42,7 @@ EmberPingPongGenerator::EmberPingPongGenerator(SST::ComponentId_t id, Params& pa
 }
 
 bool EmberPingPongGenerator::generate( std::queue<EmberEvent*>& evQ)
-{ 
+{
     if ( m_loopIndex == m_iterations || ! ( 0 == rank() || m_rank2 == rank() ) ) {
         if ( 0 == rank()) {
             double totalTime = (double)(m_stopTime - m_startTime)/1000000000.0;
@@ -71,12 +71,12 @@ bool EmberPingPongGenerator::generate( std::queue<EmberEvent*>& evQ)
     }
 
     if ( 0 == rank()) {
-    
+
         if ( m_blockingSend ) {
-            enQ_send( evQ, m_sendBuf, m_messageSize, CHAR, m_rank2, 
+            enQ_send( evQ, m_sendBuf, m_messageSize, CHAR, m_rank2,
                                                 TAG, GroupWorld );
         } else {
-            enQ_isend( evQ, m_sendBuf, m_messageSize, CHAR, m_rank2, 
+            enQ_isend( evQ, m_sendBuf, m_messageSize, CHAR, m_rank2,
                                                 TAG, GroupWorld, &m_req );
             if ( m_waitall ) {
                 enQ_waitall( evQ, 1, &m_req, (MessageResponse**)&m_resp );
@@ -95,13 +95,13 @@ bool EmberPingPongGenerator::generate( std::queue<EmberEvent*>& evQ)
             } else {
                 enQ_wait( evQ, &m_req );
             }
-        } 
+        }
 	} else if ( m_rank2 == rank()) {
         if ( m_blockingRecv ) {
             enQ_recv( evQ, m_recvBuf, m_messageSize, CHAR, 0,
                                                 TAG, GroupWorld, &m_resp );
         } else {
-		    enQ_irecv( evQ, m_recvBuf, m_messageSize, CHAR, 0, 
+		    enQ_irecv( evQ, m_recvBuf, m_messageSize, CHAR, 0,
                                                 TAG, GroupWorld, &m_req );
             if ( m_waitall ) {
                 enQ_waitall( evQ, 1, &m_req, (MessageResponse**)&m_resp );

@@ -1,8 +1,8 @@
-// Copyright 2013-2019 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2019, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -56,7 +56,7 @@ public:
         { "port",                        "Deprecated. Used by parent component if the NIC is not loaded as a named subcomponent.", ""}, \
         { "network_link_control",        "Deprecated. Specify link control type by using named subcomponents", "merlin.linkcontrol" }
 
-    
+
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(MemNIC, "memHierarchy", "MemNIC", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Memory-oriented network interface", SST::MemHierarchy::MemLinkBase)
 
@@ -66,10 +66,10 @@ public:
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( { "linkcontrol", "Network interface"} )
 
-/* Begin class definition */    
+/* Begin class definition */
     /* Constructor */
     MemNIC(ComponentId_t id, Params &params);
-    
+
     /* Destructor */
     virtual ~MemNIC() { }
 
@@ -77,7 +77,7 @@ public:
     bool clock();
     void send(MemEventBase * ev);
     MemEventBase * recv();
-    
+
     /* Callback to notify when link_control receives a message */
     bool recvNotify(int);
 
@@ -94,7 +94,7 @@ public:
     void emergencyShutdownDebug(Output &out);
 
 private:
-    
+
     // Other parameters
     size_t packetHeaderBytes;
 

@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -20,7 +20,7 @@
 using namespace SST::Ember;
 
 #define TAG 0xDEADBEEF
-#define DATA_TYPE CHAR 
+#define DATA_TYPE CHAR
 
 EmberRingGenerator::EmberRingGenerator(SST::ComponentId_t id, Params& params) :
 	EmberMessagePassingGenerator(id, params, "Ring"),
@@ -36,7 +36,7 @@ inline long mod( long a, long b )
     return tmp;
 }
 
-bool EmberRingGenerator::generate( std::queue<EmberEvent*>& evQ) 
+bool EmberRingGenerator::generate( std::queue<EmberEvent*>& evQ)
 {
    if ( m_loopIndex == m_iterations ) {
         if ( 0 == rank()) {
@@ -47,7 +47,7 @@ bool EmberRingGenerator::generate( std::queue<EmberEvent*>& evQ)
             double bandwidth = (double) nBytes / latency;
 
             output("%s total time %.3f us, loop %d, bufLen %zu"
-                    ", latency %.3f us. bandwidth %f GB/s\n", 
+                    ", latency %.3f us. bandwidth %f GB/s\n",
                                 getMotifName().c_str(),
                                 totalTime * 1000000.0, m_iterations,
 								nBytes,
@@ -80,10 +80,10 @@ bool EmberRingGenerator::generate( std::queue<EmberEvent*>& evQ)
     if ( 0 == rank() ) {
         enQ_send( evQ, m_sendBuf, m_messageSize, DATA_TYPE, to, TAG,
                                                 GroupWorld );
-	    enQ_recv( evQ, m_recvBuf, m_messageSize, DATA_TYPE, from, TAG, 
+	    enQ_recv( evQ, m_recvBuf, m_messageSize, DATA_TYPE, from, TAG,
                                                 GroupWorld, &m_resp );
     } else {
-	    enQ_recv( evQ, m_recvBuf, m_messageSize, DATA_TYPE, from, TAG, 
+	    enQ_recv( evQ, m_recvBuf, m_messageSize, DATA_TYPE, from, TAG,
                                                 GroupWorld, &m_resp );
 	    enQ_send( evQ, m_sendBuf, m_messageSize, DATA_TYPE, to, TAG,
                                                 GroupWorld );

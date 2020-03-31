@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -21,7 +21,7 @@
 namespace SST {
 namespace SimpleClockerComponent {
 
-class simpleClockerComponent : public SST::Component 
+class simpleClockerComponent : public SST::Component
 {
 public:
 
@@ -34,7 +34,7 @@ public:
         "Clock Benchmark Component",
         COMPONENT_CATEGORY_UNCATEGORIZED
     )
-    
+
     SST_ELI_DOCUMENT_PARAMS(
         { "clock",      "Clock frequency", "1GHz" },
         { "clockcount", "Number of clock ticks to execute", "100000"}
@@ -47,7 +47,7 @@ public:
     // Optional since there is nothing to document
     SST_ELI_DOCUMENT_PORTS(
     )
-    
+
     // Optional since there is nothing to document
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
     )
@@ -60,22 +60,22 @@ private:
     simpleClockerComponent();  // for serialization only
     simpleClockerComponent(const simpleClockerComponent&); // do not implement
     void operator=(const simpleClockerComponent&); // do not implement
-    
+
     virtual bool tick(SST::Cycle_t);
-    
+
     virtual bool Clock2Tick(SST::Cycle_t, uint32_t);
     virtual bool Clock3Tick(SST::Cycle_t, uint32_t);
-    
+
     virtual void Oneshot1Callback(uint32_t);
     virtual void Oneshot2Callback();
-    
+
     TimeConverter*      tc;
     Clock::HandlerBase* Clock3Handler;
-    
+
     // Variables to store OneShot Callback Handlers
     OneShot::HandlerBase* callback1Handler;
     OneShot::HandlerBase* callback2Handler;
-    
+
     std::string clock_frequency_str;
     int clock_count;
 };

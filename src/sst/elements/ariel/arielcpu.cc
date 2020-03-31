@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -152,12 +152,12 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
     frontend = loadUserSubComponent<ArielFrontend>("frontend", ComponentInfo::SHARE_NONE, core_count, maxCoreQueueLen, memmgr->getDefaultPool());
     if (!frontend) {
         // ariel.frontend.pin points to either pin2 or pin3 based on sst-elements configuration
-        frontend = loadAnonymousSubComponent<ArielFrontend>("ariel.frontend.pin", "frontend", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_STATS, 
+        frontend = loadAnonymousSubComponent<ArielFrontend>("ariel.frontend.pin", "frontend", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_STATS,
                 params, core_count, maxCoreQueueLen, memmgr->getDefaultPool());
     }
     if (!frontend)
-        output->fatal(CALL_INFO, -1, "%s, Error: Loading frontend subcomponent failed\n", getName().c_str()); 
-   
+        output->fatal(CALL_INFO, -1, "%s, Error: Loading frontend subcomponent failed\n", getName().c_str());
+
     tunnel = frontend->getTunnel();
 #ifdef HAVE_CUDA
     tunnelR = frontend->getReturnTunnel();
@@ -179,7 +179,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
 
     output->verbose(CALL_INFO, 1, 0, "Configuring cores and cache links...\n");
     for(uint32_t i = 0; i < core_count; ++i) {
-        cpu_cores.push_back(loadComponentExtension<ArielCore>(tunnel, 
+        cpu_cores.push_back(loadComponentExtension<ArielCore>(tunnel,
 #ifdef HAVE_CUDA
                  tunnelR, tunnelD,
 #endif
@@ -222,7 +222,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
                cpu_cores[i]->setGpuLink(cpu_to_gpu_links[i]);
                cpu_cores[i]->setGpu();
             }
-            
+
             std::string executable = params.find<std::string>("executable", "");
             cpu_cores[i]->setFilePath(executable);
 #endif
@@ -297,6 +297,6 @@ void ArielCPU::emergencyShutdown() {
     for(uint32_t i = 0; i < core_count; ++i) {
         cpu_cores[i]->finishCore();
     }
-    
+
     frontend->emergencyShutdown();
 }

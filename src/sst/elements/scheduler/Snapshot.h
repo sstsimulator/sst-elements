@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -36,11 +36,11 @@ namespace SST {
                 void append(SimTime_t snapshotTime, unsigned long nextArrivalTime, std::map<int, ITMI> runningJobs);
 
                 std::map<int, ITMI> runningJobs;
-                
+
                 SimTime_t getSnapshotTime() const { return snapshotTime; }
                 unsigned long getNextArrivalTime() const { return nextArrivalTime; }
                 bool getSimFinished() const { return simFinished; }
-            private:   
+            private:
                 SimTime_t snapshotTime;   //current time of the snapshot
                 unsigned long nextArrivalTime; //arrival time of the next jobfor ember
                 bool simFinished;

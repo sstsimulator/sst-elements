@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
+// Copyright 2009-2020 Sandia Corporation. Under the terms
 // of Contract DE-NA0003525 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2020, Sandia Corporation
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -37,7 +37,7 @@ int main(int argc, char* argv[]) {
                 b[i] = LENGTH - i;
                 c[i] = 0;
         }
-	
+
 
         printf("Perfoming the fast_c compute loop...\n");
         #pragma omp parallel num_threads(2)
@@ -59,4 +59,4 @@ int main(int argc, char* argv[]) {
         free(c);
 
         printf("Done.\n");
-}                   
+}

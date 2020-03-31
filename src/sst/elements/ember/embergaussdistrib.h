@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -26,7 +26,7 @@ namespace Ember {
 class EmberGaussianDistribution : public EmberComputeDistribution {
 public:
     SST_ELI_REGISTER_MODULE(
-        EmberGaussianDistribution, 
+        EmberGaussianDistribution,
         "ember",
         "GaussianDistrib",
         SST_ELI_ELEMENT_VERSION(1,0,0),
@@ -37,7 +37,7 @@ public:
     SST_ELI_DOCUMENT_PARAMS(
         {   "mean",         "Sets the mean value of the Gaussian distribution", "1.0" },
         {   "stddev",       "Sets the standard deviation of the Gaussian distribution", "0.25" },
-    )    
+    )
 
 public:
 	EmberGaussianDistribution(Params& params);

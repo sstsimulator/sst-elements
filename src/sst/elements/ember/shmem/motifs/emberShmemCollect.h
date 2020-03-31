@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -29,8 +29,8 @@ class EmberShmemCollectGenerator : public EmberShmemGenerator {
 
 public:
 	EmberShmemCollectGenerator(SST::ComponentId_t id, Params& params) :
-		EmberShmemGenerator(id, params, "ShmemCollect" ), m_phase(0) 
-	{ 
+		EmberShmemGenerator(id, params, "ShmemCollect" ), m_phase(0)
+	{
         m_nelems = params.find<int>("arg.nelems", 1 );
 		m_printResults = params.find<bool>("arg.printResults", false );
         int status;
@@ -42,11 +42,11 @@ public:
         assert( 4 == sizeof(TYPE) || 8 == sizeof(TYPE) );
     }
 
-    bool generate( std::queue<EmberEvent*>& evQ) 
+    bool generate( std::queue<EmberEvent*>& evQ)
 	{
         bool ret = false;
         switch ( m_phase ) {
-          case 0: 
+          case 0:
             enQ_init( evQ );
             enQ_my_pe( evQ, &m_my_pe );
             enQ_n_pes( evQ, &m_num_pes );
@@ -57,9 +57,9 @@ public:
                 printf("%d:%s: num_pes=%d nelems=%d type=\"%s\"\n",m_my_pe,
                         getMotifName().c_str(), m_num_pes, m_nelems, m_type_name.c_str());
 			}
-            { 
+            {
                 size_t buffer_size = 3 * sizeof(long);                   // for pSync
-                buffer_size += m_nelems * sizeof(TYPE);              // for source  
+                buffer_size += m_nelems * sizeof(TYPE);              // for source
                 buffer_size += m_nelems * sizeof(TYPE) * m_num_pes;  // for dest
                 enQ_malloc( evQ, &m_pSync, buffer_size );
             }
@@ -72,15 +72,15 @@ public:
 
             m_src = m_pSync.offset<long>(3);
 
-            for ( int i = 0; i < m_nelems; i++ ) { 
+            for ( int i = 0; i < m_nelems; i++ ) {
                 int shift = (sizeof(TYPE) * 8 )/ 2;
                 m_src.at<TYPE>( i ) = ((TYPE) (m_my_pe + 1) << shift) | i + 1;
             }
 
             m_dest = m_src.offset<TYPE>( m_nelems );
 			if ( m_printResults && 0 == m_my_pe ) {
-            	printf("%d:%s: pSync=%#" PRIx64 " src=%#" PRIx64 " dest=%#" PRIx64 "\n",m_my_pe, 
-                        getMotifName().c_str(), m_pSync.getSimVAddr(), 
+            	printf("%d:%s: pSync=%#" PRIx64 " src=%#" PRIx64 " dest=%#" PRIx64 "\n",m_my_pe,
+                        getMotifName().c_str(), m_pSync.getSimVAddr(),
                         m_src.getSimVAddr(), m_dest.getSimVAddr());
 			}
             bzero( &m_dest.at<TYPE>(0), sizeof(TYPE) * m_num_pes * m_nelems);
@@ -101,7 +101,7 @@ public:
                 int shift = (sizeof(TYPE) * 8 )/ 2;
                 for ( int i = 0; i < m_nelems; i++ ) {
 					if ( m_printResults ) {
-                    	printf("%d:%s: pe=%d i=%d %#" PRIx64 "\n",m_my_pe, getMotifName().c_str(), 
+                    	printf("%d:%s: pe=%d i=%d %#" PRIx64 "\n",m_my_pe, getMotifName().c_str(),
                             pe, i, (uint64_t) m_dest.at<TYPE>( pe * m_nelems + i));
 					}
                     assert( m_dest.at<TYPE>( pe * m_nelems + i) == ( ((TYPE) (pe + 1) << shift) | i + 1  )  );

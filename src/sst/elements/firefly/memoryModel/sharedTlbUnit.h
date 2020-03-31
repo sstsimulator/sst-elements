@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -18,21 +18,21 @@ class SharedTlbUnit : public Unit {
     const char* prefix() { return m_prefix.c_str(); }
 
     struct Entry {
-        Entry( MemReq* req, Callback* callback  ) : req(req), callback(callback) {} 
+        Entry( MemReq* req, Callback* callback  ) : req(req), callback(callback) {}
         MemReq* req;
         Callback* callback;
     };
-    
+
     std::string m_name;
   public:
     SharedTlbUnit( SimpleMemoryModel& model, Output& dbg, int id, std::string name, SharedTlb* tlb, Unit* load, Unit* store, int maxStores, int maxLoads ) :
         Unit( model, dbg ),
         m_name(name),
         m_tlb(tlb),
-        m_load(load), 
+        m_load(load),
         m_store(store),
-        m_storeBlocked( false ), 
-        m_loadBlocked( false ), 
+        m_storeBlocked( false ),
+        m_loadBlocked( false ),
         m_maxPendingStores(maxStores),
         m_maxPendingLoads(maxLoads),
         m_blockedLoadSrc( NULL ),
@@ -79,11 +79,11 @@ class SharedTlbUnit : public Unit {
 
     bool storeCB( UnitBase* src, MemReq* req, Callback* callback ) {
 
-        uint64_t addr = m_tlb->lookup( req, 
+        uint64_t addr = m_tlb->lookup( req,
                     std::bind(&SharedTlbUnit::storeAddrResolved, this, callback, std::placeholders::_1, std::placeholders::_2 ) );
         if ( -1 == addr ) {
             ++m_pendingLookups;
-            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"Miss, pid %d, req Addr %#" PRIx64 " pendingLookups=%d\n", 
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"Miss, pid %d, req Addr %#" PRIx64 " pendingLookups=%d\n",
                                                 req->pid, req->addr, m_pendingLookups );
         } else {
             m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"Hit, pid %d, req Addr %#" PRIx64 "\n", req->pid, req->addr );
@@ -96,17 +96,17 @@ class SharedTlbUnit : public Unit {
             m_blockedStoreSrc = src;
             return true;
         } else {
-            return false; 
+            return false;
         }
     }
-    
+
     bool load( UnitBase* src, MemReq* req, Callback* callback ) {
 
-        uint64_t addr = m_tlb->lookup( req, 
+        uint64_t addr = m_tlb->lookup( req,
                     std::bind(&SharedTlbUnit::loadAddrResolved, this, callback, std::placeholders::_1, std::placeholders::_2 ) );
         if ( -1 == addr ) {
             ++m_pendingLookups;
-            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"Miss, pid %d, req Addr %#" PRIx64 " pendingLookups=%d\n", 
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"Miss, pid %d, req Addr %#" PRIx64 " pendingLookups=%d\n",
                                                 req->pid, req->addr, m_pendingLookups );
         } else {
             m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"Hit, pid %d, req Addr %#" PRIx64 "\n", req->pid, req->addr );
@@ -118,7 +118,7 @@ class SharedTlbUnit : public Unit {
             m_blockedLoadSrc = src;
             return true;
         } else {
-            return false; 
+            return false;
         }
     }
 
@@ -152,36 +152,36 @@ class SharedTlbUnit : public Unit {
         return retval;
     }
 
-    bool blockedTlb() { 
+    bool blockedTlb() {
         m_dbg.verbosePrefix(prefix(),CALL_INFO,2,TLB_MASK,"pendingLookups=%d\n", m_pendingLookups );
-        return m_pendingLookups == m_maxPendingLookups; 
-    } 
+        return m_pendingLookups == m_maxPendingLookups;
+    }
     bool blockedStore() {
         m_dbg.verbosePrefix(prefix(),CALL_INFO,2,TLB_MASK,"pendingLookups=%d\n", m_pendingLookups );
-        return blockedTlb() || m_readyStores.size() >= m_maxPendingStores; 
+        return blockedTlb() || m_readyStores.size() >= m_maxPendingStores;
     }
     bool blockedLoad() {
-        return blockedTlb() || m_readyLoads.size() >= m_maxPendingLoads; 
+        return blockedTlb() || m_readyLoads.size() >= m_maxPendingLoads;
     }
 
     void checkBlockedSrcs() {
         bool flag = true;
         if ( m_blockedLoadSrc ) {
-            if ( m_readyLoads.size() < m_maxPendingLoads ) { 
+            if ( m_readyLoads.size() < m_maxPendingLoads ) {
                 m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"schedule resume\n");
                 m_model.schedResume( 0, m_blockedLoadSrc );
                 m_blockedLoadSrc = NULL;
                 flag = false;
-            } 
-        }   
+            }
+        }
 
         if ( flag && m_blockedStoreSrc ) {
-            if ( m_readyStores.size() < m_maxPendingStores  ) { 
+            if ( m_readyStores.size() < m_maxPendingStores  ) {
                 m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"schedule resume\n");
                 m_model.schedResume( 0, m_blockedStoreSrc );
                 m_blockedStoreSrc = NULL;
             }
-        } 
+        }
     }
 
     void storeAddrResolved( Callback* callback, MemReq* req, uint64_t addr ) {

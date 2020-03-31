@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
     #pragma omp parallel for
     for(i = 0; i < n; ++i) {
     	int j = 0;
-    
+
         for(j = 0; j < n; ++j) {
 	    if (j < i) {
 		the_array[i][j] = 1;
@@ -53,7 +53,7 @@ int main(int argc, char* argv[]) {
 	    }
 	}
     }
-    
+
     // Now have a triangle matrix, no do something with std lib
     std::vector<int> rowSums;
     for (int i = 0; i < n; i++) {

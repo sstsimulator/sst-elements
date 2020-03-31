@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -37,7 +37,7 @@ topo_fattree::parseShape(const std::string &shape, int *downs, int *ups) const
         size_t length = end - start;
         std::string sub = shape.substr(start,length);
         // cout << "sub: " << sub << endl;
-        
+
         // Get the up and down
         size_t comma = sub.find(',');
         string down;
@@ -50,7 +50,7 @@ topo_fattree::parseShape(const std::string &shape, int *downs, int *ups) const
             down = sub.substr(0,comma);
             up = sub.substr(comma+1);
         }
-        
+
         downs[i] = strtol(down.c_str(), NULL, 0);
         ups[i] = strtol(up.c_str(), NULL, 0);
 
@@ -77,7 +77,7 @@ topo_fattree::topo_fattree(ComponentId_t cid, Params& params, int num_ports, int
     adaptive_threshold = params.find<double>("adaptive_threshold", 0.5);
     // std::cout << "routing_alg: " << routing_alg << std::endl;
     // std::cout << "adaptive_threshold: " << adaptive_threshold << std::endl;
-    
+
     int levels = std::count(shape.begin(), shape.end(), ':') + 1;
     int* ups = new int[levels];
     int* downs= new int[levels];
@@ -126,7 +126,7 @@ topo_fattree::topo_fattree(ComponentId_t cid, Params& params, int num_ports, int
     //     ", level_group = " << level_group << endl;
     down_ports = downs[rtr_level];
     up_ports = ups[rtr_level];
-    
+
     // Compute reachable IDs
     int rid = 1;
     for ( int i = 0; i <= rtr_level; i++ ) {
@@ -136,7 +136,7 @@ topo_fattree::topo_fattree(ComponentId_t cid, Params& params, int num_ports, int
 
     low_host = level_group * rid;
     high_host = low_host + rid - 1;
-    
+
     // cout << "low host = " << low_host << ", high host = " << high_host <<
     //     ", down_route_factor = " << down_route_factor << endl;
 
@@ -146,7 +146,7 @@ topo_fattree::topo_fattree(ComponentId_t cid, Params& params, int num_ports, int
     // for ( int i = 0; i < total_hosts; i++ ) {
     //     ev->getEncapsulatedEvent()->dest = i;
     //     route(0, 0, ev);
-    //     cout << "  " << i << "   " << ev->getNextPort() << endl; 
+    //     cout << "  " << i << "   " << ev->getNextPort() << endl;
     // }
 }
 
@@ -186,7 +186,7 @@ void topo_fattree::reroute(int port, int vc, internal_router_event* ev)
         int vc = ev->getVC();
         int index  = next_port*num_vcs + vc;
         if ( outputCredits[index] >= thresholds[index] ) return;
-        
+
         // std::cout << "Going to adaptively route" << std::endl;
         // std::cout << down_ports << ", " << num_vcs << ", " << vc << ", " << num_ports << std::endl;
 
@@ -324,5 +324,5 @@ void topo_fattree::setOutputBufferCreditArray(int const* array, int vcs) {
         for ( int i = 0; i < num_vcs * num_ports; i++ ) {
             thresholds[i] = outputCredits[i] * adaptive_threshold;
         }
-        
+
 }

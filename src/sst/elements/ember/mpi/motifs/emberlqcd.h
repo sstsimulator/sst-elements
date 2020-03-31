@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
+// Copyright 2009-2020 Sandia Corporation. Under the terms
 // of Contract DE-NA0003525 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2020, Sandia Corporation
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -148,11 +148,11 @@ private:
     uint32_t nt;
 
     uint32_t n_ranks[8];
-    
+
     // logical breakup of sites onto compute nodes
     int squaresize[4];	   /* dimensions of hypercubes */
     int nsquares[4];	           /* number of hypercubes in each direction */
-    int machine_coordinates[4]; /* logical machine coordinates */ 
+    int machine_coordinates[4]; /* logical machine coordinates */
 };
 
 }

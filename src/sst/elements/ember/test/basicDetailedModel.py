@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 #
-# Copyright 2009-2019 NTESS. Under the terms
+# Copyright 2009-2020 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2019, NTESS
+# Copyright (c) 2009-2020, NTESS
 # All rights reserved.
 #
 # Portions are copyright of other developers:
@@ -21,7 +21,7 @@ from detailedModel import *
 
 class BasicDetailedModel(DetailedModel):
     def __init__(self, params, nodeList ):
-        self.name = 'BasicDetailedModel' 
+        self.name = 'BasicDetailedModel'
         self.params = params
         self.nodeList = nodeList
         self.links = []
@@ -30,11 +30,11 @@ class BasicDetailedModel(DetailedModel):
         return self.name
 
     def createThreads(self, prefix, bus, numThreads, cpu_params, l1_params ):
-        #print "createThreads() ", prefix 
+        #print "createThreads() ", prefix
         prefix += "thread"
         links = []
         for i in range( numThreads ) :
-            name = prefix + str(i) + "_" 
+            name = prefix + str(i) + "_"
             cpu = sst.Component( name + "cpu", "miranda.BaseCPU")
             cpu.addParams( cpu_params )
             l1 = sst.Component( name + "l1cache", "memHierarchy.Cache")
@@ -43,7 +43,7 @@ class BasicDetailedModel(DetailedModel):
             link = sst.Link( name + "cpu_l1_link")
             link.setNoCut();
             link.connect( ( cpu, "cache_link", "100ps" ) , (l1,"high_network_0","1000ps") )
-            
+
             link = sst.Link( name + "l1_bus_link")
             link.setNoCut();
             link.connect( ( l1, "low_network_0", "50ps" ) , (bus,"high_network_" + str(i+2),"1000ps") )
@@ -83,7 +83,7 @@ class BasicDetailedModel(DetailedModel):
         return link
 
     def build(self,nodeID,numCores):
-        #print 'BasicDetailedModel.build( nodeID={0}, numCores={1} )'.format( nodeID, numCores ) 
+        #print 'BasicDetailedModel.build( nodeID={0}, numCores={1} )'.format( nodeID, numCores )
 
         self.links = []
 
@@ -105,37 +105,37 @@ class BasicDetailedModel(DetailedModel):
 
         link = sst.Link( prefix + "bus_l2_link")
         link.setNoCut();
-        link.connect( (bus, "low_network_0", "50ps"), (l2, "high_network_0", "50ps") ) 
+        link.connect( (bus, "low_network_0", "50ps"), (l2, "high_network_0", "50ps") )
 
         link = sst.Link( prefix + "l2_mem_link")
         link.setNoCut();
-        link.connect( (l2, "low_network_0", "50ps"), (memory, "direct_link", "50ps") ) 
+        link.connect( (l2, "low_network_0", "50ps"), (memory, "direct_link", "50ps") )
 
         for i in range(numCores):
-            name = prefix + "core" + str(i) + "_" 
+            name = prefix + "core" + str(i) + "_"
             self.links.append( \
                 self.createThreads( name, bus, int(self.params['numThreads']), \
                                     self.params['cpu_params'], \
                                     self.params['l1_params']  ) )
-            
+
         self.nicReadLink = self.createNic( prefix, 'read', bus, self.params['nic_cpu_params'],\
                                     self.params['nic_l1_params'] )
         self.nicWriteLink = self.createNic( prefix, 'write', bus, self.params['nic_cpu_params'],\
                                     self.params['nic_l1_params'] )
 
-        return True 
+        return True
 
     def getThreadLinks(self,core):
-        #print 'BasicDetailedModel.getThreadLinks( {0} )'.format(core) 
+        #print 'BasicDetailedModel.getThreadLinks( {0} )'.format(core)
         return self.links[core]
 
     def getNicReadLink(self ):
-        #print 'BasicDetailedModel.getNicLink()' 
-        return self.nicReadLink 
+        #print 'BasicDetailedModel.getNicLink()'
+        return self.nicReadLink
 
     def getNicWriteLink(self ):
-        #print 'BasicDetailedModel.getNicLink()' 
-        return self.nicWriteLink 
+        #print 'BasicDetailedModel.getNicLink()'
+        return self.nicWriteLink
 
 def getModel(params,nodeList):
     return BasicDetailedModel(params,nodeList)

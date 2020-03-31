@@ -1,12 +1,12 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -36,14 +36,14 @@ public:
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Multi-level output arbitration with quality of service for PortControl",
         SST::Merlin::PortInterface::OutputArbitration)
-    
+
     SST_ELI_DOCUMENT_PARAMS(
         {"arb_vns",      "Tyoe of arbitration to use for virtual networks","merlin.arb.base.single.lru"},
         {"arb_vcs",      "Tyoe of arbitration to use with virtual network for VCs","merlin.arb.base.single.roundrobin"},
         {"qos_settings", "Array of qos setting for each VN", ""},
     )
 
-    
+
 private:
 
     static const int window = 100;
@@ -61,7 +61,7 @@ private:
     int16_t* which_counter;
 
     Cycle_t last_cycle;
-    
+
 public:
 
     output_arb_qos_multi(ComponentId_t cid, Params& params) :
@@ -80,7 +80,7 @@ public:
         if ( settings.size() == 0 ) {
             merlin_abort.fatal(CALL_INFO_LONG,1,"output_arb_qos_multi: must specify qos_settings\n");
         }
-        
+
         num_vns = settings.size();
         num_counters = 0;
         for ( int i = 0; i < num_vns; ++i ) {
@@ -92,7 +92,7 @@ public:
             // have what's left of the bnadwidth
             num_counters++;
         }
-        
+
         qos_settings = new int16_t[num_counters];
         counters = new int16_t[num_counters];
         which_counter = new int16_t[num_vns];
@@ -134,7 +134,7 @@ public:
         delete[] vcs_per_vn;
         delete[] vn_offset;
     }
-    
+
     void setVCs(int n_vns, int* vcs_per_vn_in) {
         if ( n_vns != num_vns ) {
             // Error, this means the original qos_settings were wrong
@@ -165,7 +165,7 @@ public:
             }
         }
         last_cycle = cycle;
-        
+
         int vc_to_send = -1;
         bool found = false;
         internal_router_event* send_event = NULL;
@@ -233,7 +233,7 @@ public:
                 break;
             }
         }
-        
+
         return vc_to_send;
     }
 

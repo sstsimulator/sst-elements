@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -65,7 +65,7 @@ class ArielMemoryManagerMalloc : public ArielMemoryManagerCache {
 
         void freeMalloc(const uint64_t vAddr);
         bool allocateMalloc(const uint64_t size, const uint32_t level, const uint64_t virtualAddress, const uint64_t instructionPointer, const uint32_t thread);
-        
+
     private:
         void allocate(const uint64_t size, const uint32_t level, const uint64_t virtualAddress);
         bool canAllocateInLevel(const uint64_t size, const uint32_t level);

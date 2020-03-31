@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -56,13 +56,13 @@ void Machine::allocate(TaskMapInfo* taskMapInfo)
 {
     AllocInfo* allocInfo = taskMapInfo->allocInfo;
     int nodeCount = allocInfo->getNodesNeeded();
-    
+
     if(numAvail < nodeCount){
         schedout.fatal(CALL_INFO, 1, "Attempted to allocate %d nodes when only %d are available", nodeCount, numAvail);
     } else {
         numAvail -= nodeCount;
     }
-    
+
     for(int i = 0; i < nodeCount; i++) {
         if(!freeNodes[allocInfo -> nodeIndices[i]]){
             schedout.fatal(CALL_INFO, 0, "Attempted to allocate job %ld to a busy node: ", allocInfo->job->getJobNum() );
@@ -81,13 +81,13 @@ void Machine::deallocate(TaskMapInfo* taskMapInfo)
 {
     AllocInfo* allocInfo = taskMapInfo->allocInfo;
     int nodeCount = allocInfo->getNodesNeeded();
-    
+
     if(nodeCount > (numNodes - numAvail)) {
         schedout.fatal(CALL_INFO, 1, "Attempted to deallocate %d nodes when only %d are busy", nodeCount, (numNodes-numAvail));
     } else {
         numAvail += nodeCount;
     }
-    
+
     for(int i = 0; i < nodeCount; i++) {
         if(freeNodes[allocInfo -> nodeIndices[i]]){
             schedout.fatal(CALL_INFO, 0, "Attempted to deallocate job %ld from an idle node: ", allocInfo->job->getJobNum() );

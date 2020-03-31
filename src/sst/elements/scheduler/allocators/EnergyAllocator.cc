@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -53,7 +53,7 @@ std::string EnergyAllocator::getParamHelp()
 }
 
 std::string EnergyAllocator::getSetupInfo(bool comment) const
-{ 
+{
     std::string com;
     if (comment) {
         com="# ";
@@ -67,14 +67,14 @@ std::string EnergyAllocator::getSetupInfo(bool comment) const
 
 AllocInfo* EnergyAllocator::allocate(Job* job)
 {
-    std::vector<int>* available = machine.getFreeNodes();    
+    std::vector<int>* available = machine.getFreeNodes();
     return allocate(job, available);
 }
 
 //Allocates job if possible.
 //Returns information on the allocation or null if it wasn't possible
 //(doesn't make allocation; merely returns info on possible allocation).
-AllocInfo* EnergyAllocator::allocate(Job* job, std::vector<int>* available) 
+AllocInfo* EnergyAllocator::allocate(Job* job, std::vector<int>* available)
 {
     if (!canAllocate(*job)) {
         return NULL;
@@ -83,7 +83,7 @@ AllocInfo* EnergyAllocator::allocate(Job* job, std::vector<int>* available)
     AllocInfo* retVal = new AllocInfo(job, machine);
 
     int nodesNeeded = ceil((double) job->getProcsNeeded() / machine.coresPerNode);
-    
+
     //optimization: if exactly enough procs are free, just return them
     if ((unsigned int) nodesNeeded == available -> size()) {
         for (int i = 0; i < nodesNeeded; i++) {
@@ -99,4 +99,4 @@ AllocInfo* EnergyAllocator::allocate(Job* job, std::vector<int>* available)
     }
     delete available;
     return retVal;
-} 
+}

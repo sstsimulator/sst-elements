@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -17,14 +17,14 @@
 #define _H_HERMES_FUNCTOR
 
 template < class TRetval = void >
-class VoidArg_FunctorBase { 
+class VoidArg_FunctorBase {
   public:
     virtual TRetval operator()() = 0;
     virtual ~VoidArg_FunctorBase() {}
 };
 
 #if 0
-template <class TClass, class TArg, class TRetval = void > 
+template <class TClass, class TArg, class TRetval = void >
 class StaticArg_Functor : public VoidArg_FunctorBase< TRetval >
 {
   private:
@@ -47,13 +47,13 @@ class StaticArg_Functor : public VoidArg_FunctorBase< TRetval >
 #endif
 
 template < class TArg, class TRetval = void >
-class Arg_FunctorBase { 
+class Arg_FunctorBase {
   public:
     virtual TRetval operator()(TArg) = 0;
     virtual ~Arg_FunctorBase() {}
 };
 
-template <class TClass, class TArg, class TRetval = void > 
+template <class TClass, class TArg, class TRetval = void >
 class Arg_Functor : public Arg_FunctorBase< TArg, TRetval >
 {
   private:
@@ -73,7 +73,7 @@ class Arg_Functor : public Arg_FunctorBase< TArg, TRetval >
     virtual ~Arg_Functor() {}
 };
 
-template <class TClass, class TArg1, class TArg2, class TRetval = void > 
+template <class TClass, class TArg1, class TArg2, class TRetval = void >
 class ArgStatic_Functor : public Arg_FunctorBase< TArg1, TRetval >
 {
   private:

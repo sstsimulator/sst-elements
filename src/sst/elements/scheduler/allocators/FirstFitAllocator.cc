@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -37,7 +37,7 @@
 
 using namespace SST::Scheduler;
 
-FirstFitAllocator::FirstFitAllocator(std::vector<std::string>* params, Machine* mach): LinearAllocator(params, mach) 
+FirstFitAllocator::FirstFitAllocator(std::vector<std::string>* params, Machine* mach): LinearAllocator(params, mach)
 {
     schedout.init("", 8, 0, Output::STDOUT);
     schedout.debug(CALL_INFO, 1, 0, "Constructing FirstFitAllocator\n");
@@ -57,7 +57,7 @@ std::string FirstFitAllocator::getSetupInfo(bool comment) const
 //allocates job if possible
 //returns information on the allocation or NULL if it wasn't possible
 //(doesn't make allocation; merely returns info on possible allocation)
-AllocInfo* FirstFitAllocator::allocate(Job* job) 
+AllocInfo* FirstFitAllocator::allocate(Job* job)
 {
     schedout.fatal(CALL_INFO, 1, "Allocating %s procs: ", job -> toString().c_str());
 

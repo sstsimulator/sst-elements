@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -45,58 +45,58 @@ public:
 		pageCount(_pageCount),
 		maxMemoryAddress(_pageSize * _pageCount),
 		output(mgrOutput) {
-		
+
 		output->verbose(CALL_INFO, 2, 0, "Creating memory manager, page size=%" PRIu64 ", page count=%" PRIu64 ", max address=%" PRIu64 "\n",
 			pageSize, pageCount, maxMemoryAddress);
 
-		
+
                 if (mapRegion->getLocalShareID() == 0) { // First sharer, we're in charge
 		    uint64_t * pageArr = (uint64_t*) malloc(pageCount * sizeof(uint64_t));
 		    // Allocate pages into their standard linear mapping scheme
         	    for(uint64_t i = 0; i < pageCount; ++i) {
 	    	        pageArr[i] = i *pageSize;
 	            }
-		
+
 		    switch(mapPolicy) {
 		        case LINEAR:
 			    output->verbose(CALL_INFO, 2, 0, "Memory is set to LINEAR mapping, will not adjust current page maps\n");
 			    // Nothing to do
 			    break;
-			
+
 		        case RANDOMIZED:
 			    output->verbose(CALL_INFO, 2, 0, "Memory is set to RANDOMIZED mapping, will perform a randomized shuffle of pages...\n");
 			    MarsagliaRNG rng(11, 200009011);
-			
+
 			    // Random swap pages all over the space so we can distribute accesses
 			    // across the memory system unevenly
 			    for(uint64_t i = 0; i < (pageCount * 2); ++i) {
 				const uint64_t selectA = (rng.generateNextUInt64() % pageCount);
 				const uint64_t selectB = (rng.generateNextUInt64() % pageCount);
-				
+
 				if( selectA != selectB ) {
 					const uint64_t pageA = pageArr[selectA];
 					pageArr[selectA] = pageArr[selectB];
 					pageArr[selectB] = pageA;
-					
+
 					output->verbose(CALL_INFO, 64, 0, "Swapping index %" PRIu64 " with index %" PRIu64 ", pageA=%" PRIu64 ", pageB=%" PRIu64 "\n",
 						selectA, selectB, pageA, pageArr[selectA]);
 				}
 			    }
-			
+
 			    for(uint64_t i = 0; i < pageCount; ++i) {
 				output->verbose(CALL_INFO, 32, 0, "Virtual Start = %20" PRIu64 " Physical Start = %20" PRIu64 "\n",
 					(i * pageSize), pageArr[i]);
 			    }
-			
+
 			    break;
 		    }
 
                     mapRegion->modifyRegion(0, pageCount * sizeof(uint64_t), pageArr);
                     free(pageArr);
-		
+
                 } // End mapping by 'first' sharer
 	}
-	
+
         void setSharedAddressMap(const uint64_t * addrmap) {
             pageMap = addrmap;
         }
@@ -107,22 +107,22 @@ public:
 			output->fatal(CALL_INFO, -1, "Error: address %" PRIu64 " exceeds the maximum address in Miranda calculated by pageSize (%" PRIu64 ") * pageCount (%" PRIu64 ") = %" PRIu64 "\n",
 				addrIn, pageSize, pageCount, maxMemoryAddress);
 		}
-		
+
 		const uint64_t pageOffset       = addrIn % pageSize;
 		const uint64_t virtualPageStart = (addrIn - pageOffset) / pageSize;
-		
+
 		const uint64_t physPageStart    = pageMap[virtualPageStart];
 		const uint64_t physAddress      = physPageStart + pageOffset;
-		
+
 		#define MIRANDA_MAP_ADDRESS_VERBOSE_LEVEL 16
-		
+
 		if( __builtin_expect(output->getVerboseLevel() >= MIRANDA_MAP_ADDRESS_VERBOSE_LEVEL, 0) ) {
 			output->verbose(CALL_INFO, MIRANDA_MAP_ADDRESS_VERBOSE_LEVEL, 0, "Mapping v-addr: %" PRIu64 " pageOffset: %" PRIu64 " -> (%" PRIu64 " - %" PRIu64 ")/%" PRIu64 " = v-page-index: %" PRIu64 ", p-start: %" PRIu64 " + poffset %" PRIu64 " = %" PRIu64 "\n",
 				addrIn, pageOffset, addrIn, pageOffset, pageSize, virtualPageStart, physPageStart, pageOffset, physAddress);
 		}
-		
+
 		#undef MIRANDA_MAP_ADDRESS_VERBOSE_LEVEL
-		
+
 		return physAddress;
 	}
 
@@ -131,9 +131,9 @@ private:
 	uint64_t pageCount;
 	uint64_t maxMemoryAddress;
 	SST::Output* output;
-	
+
 	const uint64_t * pageMap;
-	
+
 };
 
 }

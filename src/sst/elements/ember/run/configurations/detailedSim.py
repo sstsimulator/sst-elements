@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 #
-# Copyright 2009-2019 NTESS. Under the terms
+# Copyright 2009-2020 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2019, NTESS
+# Copyright (c) 2009-2020, NTESS
 # All rights reserved.
 #
 # Portions are copyright of other developers:
@@ -20,8 +20,8 @@
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
 
-numNodes = -1 
-ranksPerNode = 1 
+numNodes = -1
+ranksPerNode = 1
 
 platform = 'defaultParams'
 
@@ -39,8 +39,8 @@ detailedNics = [0]
 
 detailedModel = "sandyBridgeModel"
 detailedModelParams = "sandyBridgeModelParams"
-#detailedModel = "basicDetailedModel" 
-#detailedModelParams = "basicDetailedModelParams" 
+#detailedModel = "basicDetailedModel"
+#detailedModelParams = "basicDetailedModelParams"
 
 arguments = 'messagesize=80000 printRank=-1'
 
@@ -58,9 +58,9 @@ def genWorkFlow( defaults, nodeNum = None ):
 
 	motif = dict.copy( defaults )
 	if nodeNum in detailedMotifs:
-		motif['cmd'] = detailedMotif 
+		motif['cmd'] = detailedMotif
 	else:
-		motif['cmd'] = nonDetailedMotif 
+		motif['cmd'] = nonDetailedMotif
 	workFlow.append( motif )
 
 	motif = dict.copy( defaults )
@@ -73,20 +73,20 @@ def getNumNodes():
 	return numNodes
 
 def getRanksPerNode():
-	return ranksPerNode 
+	return ranksPerNode
 
 def getTopo():
-	return topo, shape 
+	return topo, shape
 
 def getPlatform():
-	return platform 
+	return platform
 
 def getPerNicParams(nodeNum):
 	params = {}
-	if nodeNum in detailedNics: 
+	if nodeNum in detailedNics:
 		params['useDetailed'] = 'True'
 
-	return params 
+	return params
 
 def getDetailedModel():
     return detailedModel,detailedModelParams,detailedNodes

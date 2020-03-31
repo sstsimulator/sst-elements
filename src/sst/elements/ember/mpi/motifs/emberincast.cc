@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -40,13 +40,13 @@ EmberIncastGenerator::EmberIncastGenerator(SST::ComponentId_t id, Params& params
 }
 
 bool EmberIncastGenerator::generate( std::queue<EmberEvent*>& evQ)
-{ 
+{
 	if( m_currentItr == m_iterations ) {
 		return true;
 	} else {
 		if( rank() == m_incastTarget ) {
 			int next_index = 0;
-	
+
 			for( int i = 0; i < size(); ++i ) {
 				if( rank() != i ) {
 					enQ_irecv( evQ, &m_recvBuf[next_index * m_messageSize], m_messageSize, CHAR, i,
@@ -60,7 +60,7 @@ bool EmberIncastGenerator::generate( std::queue<EmberEvent*>& evQ)
 		} else {
 			verbose(CALL_INFO, 1, 0, "Non-target rank (%d) posting message to incast target (rank=%d, size=%" PRIu32 ")...\n", rank(),
 				m_incastTarget, m_messageSize);
-			enQ_send( evQ, m_sendBuf, m_messageSize, CHAR, m_incastTarget, TAG, GroupWorld );			
+			enQ_send( evQ, m_sendBuf, m_messageSize, CHAR, m_incastTarget, TAG, GroupWorld );
 		}
 	}
 

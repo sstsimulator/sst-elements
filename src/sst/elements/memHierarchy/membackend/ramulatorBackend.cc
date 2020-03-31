@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -26,7 +26,7 @@ using namespace SST::MemHierarchy;
 using namespace ramulator;
 
 
-ramulatorMemory::ramulatorMemory(ComponentId_t id, Params &params) : 
+ramulatorMemory::ramulatorMemory(ComponentId_t id, Params &params) :
     SimpleMemBackend(id, params),
     callBackFunc(std::bind(&ramulatorMemory::ramulatorDone, this, std::placeholders::_1))
 { build(params); }
@@ -36,23 +36,23 @@ void ramulatorMemory::build(Params& params) {
                                                         NO_STRING_DEFINED);
     if (ramulatorCfg == NO_STRING_DEFINED) {
         output->fatal(CALL_INFO, -1, "Ramulator Backend must define a 'configFile' file parameter\n");
-    } 
+    }
     ramulator::Config configs(ramulatorCfg);
-    
+
     configs.set_core_num(1); // ?
 
-    memSystem = new Gem5Wrapper(configs, m_reqWidth); // default cache line to 64 byte 
+    memSystem = new Gem5Wrapper(configs, m_reqWidth); // default cache line to 64 byte
 
     output->output(CALL_INFO, "Instantiated Ramulator from config file %s\n", ramulatorCfg.c_str());
 }
 
 bool ramulatorMemory::issueRequest(ReqId reqId, Addr addr, bool isWrite, unsigned numBytes){
-    ramulator::Request::Type type = (isWrite) 
+    ramulator::Request::Type type = (isWrite)
         ? (ramulator::Request::Type::WRITE) : (ramulator::Request::Type::READ);
-    
-    ramulator::Request request(addr, 
+
+    ramulator::Request request(addr,
                                type,
-                               callBackFunc, 
+                               callBackFunc,
                                0);  /* context or core ID. ? */
 
     bool ok = memSystem->send(request);
@@ -60,12 +60,12 @@ bool ramulatorMemory::issueRequest(ReqId reqId, Addr addr, bool isWrite, unsigne
     output->debug(_L10_, "RamulatorBackend: Attempting to issue %s request for %" PRIx64 ". Accepted: %d\n", (isWrite ? "WRITE" : "READ"), addr, ok);
 #endif
     if(!ok) return false;
-    
+
     // save this DRAM Request
     if (isWrite)
         writes.insert(reqId);
     else
-        dramReqs[addr].push_back(reqId); 
+        dramReqs[addr].push_back(reqId);
 
     return ok;
 }

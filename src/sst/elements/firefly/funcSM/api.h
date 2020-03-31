@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -13,8 +13,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef COMPONENTS_FIREFLY_FUNCSM_API_H 
-#define COMPONENTS_FIREFLY_FUNCSM_API_H 
+#ifndef COMPONENTS_FIREFLY_FUNCSM_API_H
+#define COMPONENTS_FIREFLY_FUNCSM_API_H
 
 #include <sst/core/event.h>
 #include <sst/core/module.h>
@@ -48,7 +48,7 @@ class FunctionSMInterface : public Module {
         bool isDelay() { return ( Delay == m_type); }
         uint64_t value() { return m_value; }
       private:
-        enum { None, Delay, Exit } m_type;  
+        enum { None, Delay, Exit } m_type;
         uint64_t m_value;
     };
 
@@ -62,23 +62,23 @@ class FunctionSMInterface : public Module {
         char buffer[100];
 
         snprintf(buffer,100,"@t:%" PRId64 ":%sFunc::@p():@l ",
-                    params.find<int64_t>("nodeId"), 
+                    params.find<int64_t>("nodeId"),
                     m_name.c_str() );
 
-        m_dbg.init( buffer, 
-            params.find<uint32_t>("verboseLevel",0), 
-            params.find<uint32_t>("verboseMask",-1), 
+        m_dbg.init( buffer,
+            params.find<uint32_t>("verboseLevel",0),
+            params.find<uint32_t>("verboseMask",-1),
             Output::STDOUT );
-    
+
         m_dbg.debug(CALL_INFO,1,0,"\n");
     }
 
-    virtual ~FunctionSMInterface() {} 
+    virtual ~FunctionSMInterface() {}
     virtual void printStatus( Output& ) {}
 
     void setInfo( Info* info ) { m_info = info; }
     void setProtocol( ProtocolAPI* proto ) { m_proto = proto; }
-    virtual void  handleStartEvent( SST::Event*, Retval& ) = 0; 
+    virtual void  handleStartEvent( SST::Event*, Retval& ) = 0;
     virtual void  handleEnterEvent( Retval& ) { assert(0); }
     virtual std::string  name() { return m_name; }
     virtual int enterLatency() { return m_enterLatency; }

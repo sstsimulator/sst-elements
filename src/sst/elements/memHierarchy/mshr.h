@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -104,7 +104,7 @@ class MSHREntry {
         void setStalledForEvict(bool set) { needEvict = set; }
 
         void setProfiled() { profiled = true; }
-        bool getProfiled() { return profiled; } 
+        bool getProfiled() { return profiled; }
 
         SimTime_t getStartTime() { return time; }
 
@@ -157,7 +157,7 @@ class MSHREntry {
         std::list<Addr> *evictPtrs; // Specific to Evict type
         MemEventBase* event;        // Specific to Event type
         SimTime_t time;
-        bool needEvict;             
+        bool needEvict;
         bool inProgress;            // Whether event is currently being handled; prevents early retries
         bool profiled;
         bool downgrade;             // Specific to Writeback type
@@ -170,7 +170,7 @@ struct MSHRRegister {
     vector<uint8_t> dataBuffer;
     bool dataDirty;
     uint32_t pendingRetries;
-    
+
     uint32_t getPendingRetries() { return pendingRetries; }
     void addPendingRetry() { pendingRetries++; }
     void removePendingRetry() { pendingRetries--; }
@@ -183,10 +183,10 @@ typedef map<Addr, MSHRRegister> MSHRBlock;
  */
 class MSHR {
 public:
-        
+
     // used externally
     MSHR(Output* dbg, int maxSize, string cacheName, std::set<Addr> debugAddr);
-    
+
     int getMaxSize();
     int getSize();
     unsigned int getSize(Addr addr);
@@ -201,7 +201,7 @@ public:
     MemEventBase* getFrontEvent(Addr addr);
     std::list<Addr>* getEvictPointers(Addr addr);
     bool removeEvictPointer(Addr addr, Addr ptrAddr);
-    
+
     // Special move accessor
     void moveEntryToFront(Addr addr, unsigned int index);
 
@@ -211,9 +211,9 @@ public:
 
     MSHREntryType getEntryType(Addr addr, size_t index);
     MemEventBase* getEntryEvent(Addr addr, size_t index);
-   
+
     MemEventBase* swapFrontEvent(Addr addr, MemEventBase* event);
-    
+
     bool pendingWriteback(Addr addr);
     bool pendingWritebackIsDowngrade(Addr addr);
 
@@ -223,7 +223,7 @@ public:
 
     void setInProgress(Addr addr, bool value = true);
     bool getInProgress(Addr addr);
-    
+
     void addPendingRetry(Addr addr);
     void removePendingRetry(Addr addr);
     uint32_t getPendingRetries(Addr addr);
@@ -233,7 +233,7 @@ public:
 
     void setProfiled(Addr addr);
     bool getProfiled(Addr addr);
-    
+
     void setProfiled(Addr addr, SST::Event::id_type id);
     bool getProfiled(Addr addr, SST::Event::id_type id);
 
@@ -246,7 +246,7 @@ public:
 
     void setData(Addr addr, vector<uint8_t>& data, bool dirty = false);
     void clearData(Addr addr);
-    vector<uint8_t>& getData(Addr addr); 
+    vector<uint8_t>& getData(Addr addr);
     bool hasData(Addr addr);
     bool getDataDirty(Addr addr);
     void setDataDirty(Addr addr, bool dirty);

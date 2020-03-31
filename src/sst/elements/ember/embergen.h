@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -37,7 +37,7 @@
 #include "embergettimeev.h"
 #include "libs/emberLib.h"
 
-#define ENGINE_MASK (1<<0) 
+#define ENGINE_MASK (1<<0)
 #define MOTIF_MASK (1<<1)
 #define MOTIF_START_STOP_MASK (1<<2)
 // #define EVENT_MASK (1<<2)  defined in emberevent.h"
@@ -61,14 +61,14 @@ class EmberGenerator : public SubComponent {
 	void setEngine( EmberEngine* );
 
 	~EmberGenerator(){ };
-    
+
     virtual void generate( const SST::Output* output, const uint32_t phase,
         std::queue<EmberEvent*>* evQ ) {
         assert(0);
     }
 
-    virtual bool generate( std::queue<EmberEvent*>& evQ ) { 
-        assert(0); 
+    virtual bool generate( std::queue<EmberEvent*>& evQ ) {
+        assert(0);
     }
 
     virtual void completed( const SST::Output* output, uint64_t time) {
@@ -126,7 +126,7 @@ class EmberGenerator : public SubComponent {
   private:
     EmberEngine*            m_ee;
     Output* 	        	m_output;
-    enum { NoBacking, Backing, BackingZeroed  } m_dataMode; 
+    enum { NoBacking, Backing, BackingZeroed  } m_dataMode;
     std::string				m_motifName;
     std::ostringstream      m_verbosePrefix;
     Hermes::NodePerf*       m_nodePerf;
@@ -169,7 +169,7 @@ void EmberGenerator::enQ_memAlloc( Queue& q, Hermes::MemAddr* addr, size_t lengt
             length &= ~(16-1);
         }
         *addr = Hermes::MemAddr( m_curVirtAddr, memAlloc( length ) );
-        m_curVirtAddr += length; 
+        m_curVirtAddr += length;
         q.push( new EmberComputeEvent( &getOutput(), 0, m_computeDistrib ) );
     }
 }

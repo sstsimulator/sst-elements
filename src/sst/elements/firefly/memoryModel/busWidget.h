@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -18,7 +18,7 @@ struct WidgetEntry {
             size(cacheLineSize ), issueTime(issueTime), callback(callback)
     {
 		addr = req->addr;
- 		uint64_t mask = cacheLineSize - 1; 
+ 		uint64_t mask = cacheLineSize - 1;
 		numAccess = req->length / cacheLineSize;
 		if ( req->addr & mask || req->length < cacheLineSize ) {
 			//printf("bump up size\n");
@@ -58,7 +58,7 @@ class BusLoadWidget : public Unit {
         m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::BusLoadWidget::@p():@l ";
         m_pendingQdepthStat = model.registerStatistic<uint64_t>("bus_load_widget_pending_Q_depth");
     }
-    std::string& name() { return m_name; } 
+    std::string& name() { return m_name; }
 
     bool load( UnitBase* src, MemReq* req, Callback* callback ) {
         m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"addr=%#" PRIx64 " length=%lu pending=%d\n",
@@ -111,7 +111,7 @@ class BusLoadWidget : public Unit {
 
 		if ( entry.isDone() ) {
            	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"entry done\n");
-		
+
 			*callback = [=]() {
 
 				SimTime_t latency = m_model.getCurrentSimTimeNano() - entry.issueTime;
@@ -120,7 +120,7 @@ class BusLoadWidget : public Unit {
                         entry.addr,latency);
 				if ( entry.callback ) {
 	                m_dbg.verbosePrefix(prefix(),CALL_INFO_LAMBDA,"process",1,BUS_WIDGET_MASK,"tell src load is complete\n");
-                   	m_model.schedCallback( 0, entry.callback );		
+                   	m_model.schedCallback( 0, entry.callback );
 				}
 
                	if ( m_blockedSrc ) {
@@ -138,7 +138,7 @@ class BusLoadWidget : public Unit {
                    	m_model.schedCallback( 0, cb );
                    	m_scheduled = true;
                	}
-			}; 
+			};
 			delete m_pendingQ.front();
 			m_pendingQ.pop();
 		} else {
@@ -155,7 +155,7 @@ class BusLoadWidget : public Unit {
                	}
 			};
 		}
-        m_blocked = m_cache->load( this, req, callback ); 
+        m_blocked = m_cache->load( this, req, callback );
 
       	if ( ! m_blocked && ! m_scheduled && ! m_pendingQ.empty() ) {
        		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"schedule process()\n");
@@ -201,7 +201,7 @@ class BusStoreWidget : public Unit {
         m_pendingQdepthStat = model.registerStatistic<uint64_t>("bus_store_widget_pending_Q_depth");
     }
 
-    std::string& name() { return m_name; } 
+    std::string& name() { return m_name; }
 
     bool store( UnitBase* src, MemReq* req ) {
 		return storeCB( src, req );
@@ -244,7 +244,7 @@ class BusStoreWidget : public Unit {
     }
 
 	void process() {
-			
+
 		assert( m_blocked == false );
 
 		m_scheduled = false;
@@ -252,7 +252,7 @@ class BusStoreWidget : public Unit {
 		WidgetEntry& entry= *m_pendingQ.front();
 		MemReq* req = new MemReq( entry.getAddr(), m_width );
 		entry.inc();
-		
+
 		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"addr=%#" PRIx64 " length=%lu entry=%p\n",req->addr,req->length,&entry);
         m_blocked = m_cache->store( this, req );
 
@@ -260,7 +260,7 @@ class BusStoreWidget : public Unit {
            	m_dbg.verbosePrefix(prefix(),CALL_INFO,1,BUS_WIDGET_MASK,"entry done entry=%p\n", &entry);
 			--m_numPending;
 			if ( entry.callback ) {
-           		m_model.schedCallback( 0, entry.callback );		
+           		m_model.schedCallback( 0, entry.callback );
 			}
 			delete m_pendingQ.front();
 			m_pendingQ.pop();

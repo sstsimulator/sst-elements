@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -39,12 +39,12 @@ using namespace SST::Firefly;
 using namespace SST;
 
 Hades::Hades( ComponentId_t id, Params& params ) :
-    OS( id, params ),	
+    OS( id, params ),
     m_virtNic(NULL),
     m_detailedCompute(NULL),
     m_memHeapLink(NULL)
 {
-    m_dbg.init("@t:Hades::@p():@l ", 
+    m_dbg.init("@t:Hades::@p():@l ",
         params.find<uint32_t>("verboseLevel",0),
         params.find<uint32_t>("verboseMask",0),
         Output::STDOUT );
@@ -55,13 +55,13 @@ Hades::Hades( ComponentId_t id, Params& params ) :
 
     Params funcParams = params.find_prefix_params("functionSM.");
 
-    m_numNodes = params.find<int>("numNodes",0); 
+    m_numNodes = params.find<int>("numNodes",0);
 
     m_functionSM = loadAnonymousSubComponent<FunctionSM>( "firefly.functionSM","", 0, ComponentInfo::SHARE_NONE, funcParams, m_proto );
 
     tmpParams = params.find_prefix_params("nicParams." );
 
-    std::string moduleName = params.find<std::string>("nicModule"); 
+    std::string moduleName = params.find<std::string>("nicModule");
 
     m_virtNic = loadUserSubComponent<VirtNic>("virtNic", ComponentInfo::SHARE_NONE);
 
@@ -72,7 +72,7 @@ Hades::Hades( ComponentId_t id, Params& params ) :
     moduleName = params.find<std::string>("nodePerf", "firefly.SimpleNodePerf");
 
     tmpParams = params.find_prefix_params("nodePerf." );
-    m_nodePerf = dynamic_cast<NodePerf*>(loadModule( 
+    m_nodePerf = dynamic_cast<NodePerf*>(loadModule(
                                         moduleName, tmpParams ) );
     if ( !m_nodePerf ) {
         m_dbg.fatal(CALL_INFO,0," Unable to find nodePerf module'%s'\n",
@@ -105,7 +105,7 @@ Hades::Hades( ComponentId_t id, Params& params ) :
     	int netMapId = params.find<int>("netMapId",-1);
 
     	if ( -1 == netMapId ) {
-        	netMapId = netId; 
+        	netMapId = netId;
     	}
 
     	m_dbg.debug(CALL_INFO,1,2,"netId=%d netMapId=%d netMapSize=%d\n",
@@ -141,7 +141,7 @@ void Hades::_componentSetup()
 
 	if ( m_netMapSize > 0 ) {
 
-    	Group* group = m_info.getGroup( 
+    	Group* group = m_info.getGroup(
         	m_info.newGroup( MP::GroupWorld, Info::NetMap ) );
     	group->initMapping( m_sreg->getPtr<const int*>(),
 					m_netMapSize, m_virtNic->getNumCores() );
@@ -153,7 +153,7 @@ void Hades::_componentSetup()
            		m_dbg.debug(CALL_INFO,1,2,"rank %d -> nid %d\n", i, nid );
             	group->setMyRank( i );
             	break;
-        	} 
+        	}
 		}
 
     	m_dbg.debug(CALL_INFO,1,2,"nid %d, numRanks %u, myRank %u \n",
@@ -181,12 +181,12 @@ void Hades::_componentInit(unsigned int phase )
     m_virtNic->init( phase );
 }
 
-int Hades::getNodeNum() 
+int Hades::getNodeNum()
 {
     return m_virtNic->getRealNodeId();
 }
 
-int Hades::getRank() 
+int Hades::getRank()
 {
     int rank = m_info.worldRank();
     m_dbg.debug(CALL_INFO,1,1,"rank=%d\n",rank);

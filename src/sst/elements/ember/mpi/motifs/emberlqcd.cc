@@ -1,8 +1,8 @@
-// Copyright 2009-2017 Sandia Corporation. Under the terms
+// Copyright 2009-2020 Sandia Corporation. Under the terms
 // of Contract DE-NA0003525 with Sandia Corporation, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2017, Sandia Corporation
+// Copyright (c) 2009-2020, Sandia Corporation
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -21,7 +21,7 @@ using namespace SST::Ember;
 
 
 EmberLQCDGenerator::EmberLQCDGenerator(SST::ComponentId_t id, Params& params) :
-	EmberMessagePassingGenerator(id, params, "LQCD"), 
+	EmberMessagePassingGenerator(id, params, "LQCD"),
 	m_loopIndex(0)
 {
 	nx  = (uint32_t) params.find("arg.nx", 64);
@@ -62,17 +62,17 @@ EmberLQCDGenerator::EmberLQCDGenerator(SST::ComponentId_t id, Params& params) :
     // Per SG: multiplication of 3X3 matrix by 3-vector:
     // 36 multiplies and 30 adds, i.e. 66 flops.
     // 3-vector add is 6 adds, so one call to this function is 4*72 flops.
-    // Each call is, therefore, 288 flops and there is loop over sites, 
-    // but that loop is only over one parity.  
+    // Each call is, therefore, 288 flops and there is loop over sites,
+    // but that loop is only over one parity.
     // But, there are two calls to mult_su3_mat_vec_sum_4dir, once with fatback4 and once with longback4.
 	const uint64_t flops_mmvs4d = sites_on_node*288;
 
     // This is overly simplified, but divides the flops per iteration evenly across the compute segments
-    // You have 4 approximately equal compute segments after the even/odd, pos/neg gathers, 
+    // You have 4 approximately equal compute segments after the even/odd, pos/neg gathers,
     // then the resid calculation which we assign two segments to.
     // Getting computation segments to represent all architectures optimizations is not possible.
     // Arithmetic intensity can vary widely machine to machine.
-    // This motif represents a starting point, given our profiled systems.  
+    // This motif represents a starting point, given our profiled systems.
 
 	// Converts FLOP/s into nano seconds of compute
 	compute_nseconds_resid = ( flops_resid / ( pe_flops / 1000000000.0 ) );
@@ -190,12 +190,12 @@ void EmberLQCDGenerator::setup_hyper_prime(){
         k = len_primes-1;
         while( (num_nodes/i)%prime[k] != 0 && k>0 ) --k;
         /* figure out which direction to divide */
-        
+
         /* find largest dimension of h-cubes divisible by prime[k] */
         for(j=0,dir=XUP;dir<=TUP;dir++)
             if( squaresize[dir]>j && squaresize[dir]%prime[k]==0 )
                 j=squaresize[dir];
-        
+
         /* if one direction with largest dimension has already been
            divided, divide it again.  Otherwise divide first direction
            with largest dimension. */
@@ -209,7 +209,7 @@ void EmberLQCDGenerator::setup_hyper_prime(){
                 printf("LAYOUT: Can't lay out this lattice, not enough factors of %d\n"
                ,prime[k]);
         }
-        
+
         /* do the surgery */
         i*=prime[k]; squaresize[dir] /= prime[k]; nsquares[dir] *= prime[k];
     }
@@ -231,7 +231,7 @@ int EmberLQCDGenerator::get_transfer_size(int dimension){
     int sitestrans = 1;
     int dim = dimension;
     // squaresize[neg] should == squaresize[pos]
-    if (dimension >= TDOWN){     
+    if (dimension >= TDOWN){
         dim = OPP_DIR(dim);
     }
     // for positive directions
@@ -255,7 +255,7 @@ int EmberLQCDGenerator::node_number(int x, int y, int z, int t) {
 
 void EmberLQCDGenerator::configure()
 {
-    
+
     //determine the problem size given to each node
     //code from MILC setup_hyper_prime()
     setup_hyper_prime();
@@ -288,9 +288,9 @@ void EmberLQCDGenerator::configure()
         n_ranks[OPP_DIR(d)] = lex_rank(tmp_coords, 4, nsquares);
     }
 
-	verbose(CALL_INFO, 1, 0, "Rank: %" PRIu32 ", World=%" PRId32 ", X=%" PRId32 ", Y=%" PRId32 ", Z=%" PRId32 ", T=%" PRId32 ", Px=%" PRId32 ", Py=%" PRId32 ", Pz=%" PRId32 ", Pt=%" PRId32 "\n", 
-		rank(), size(), 
-        machine_coordinates[XUP], machine_coordinates[YUP], machine_coordinates[ZUP], machine_coordinates[TUP], 
+	verbose(CALL_INFO, 1, 0, "Rank: %" PRIu32 ", World=%" PRId32 ", X=%" PRId32 ", Y=%" PRId32 ", Z=%" PRId32 ", T=%" PRId32 ", Px=%" PRId32 ", Py=%" PRId32 ", Pz=%" PRId32 ", Pt=%" PRId32 "\n",
+		rank(), size(),
+        machine_coordinates[XUP], machine_coordinates[YUP], machine_coordinates[ZUP], machine_coordinates[TUP],
         nsquares[XUP],nsquares[YUP],nsquares[ZUP],nsquares[TUP]);
 	verbose(CALL_INFO, 1, 0, "Rank: %" PRIu32 ", X+: %" PRId32 ", X-: %" PRId32 "\n", rank(), n_ranks[XUP], n_ranks[XDOWN]);
 	verbose(CALL_INFO, 1, 0, "Rank: %" PRIu32 ", Y+: %" PRId32 ", Y-: %" PRId32 "\n", rank(), n_ranks[YUP], n_ranks[YDOWN]);
@@ -301,116 +301,116 @@ void EmberLQCDGenerator::configure()
 // This code is a simplified representation of Rational Hybrid Monte Carlo (RHMC)
 // in MILC lattice QCD.
 // This is mostly focused on the Conjugate Gradient and Dslash
-bool EmberLQCDGenerator::generate( std::queue<EmberEvent*>& evQ ) 
+bool EmberLQCDGenerator::generate( std::queue<EmberEvent*>& evQ )
 {
     verbose(CALL_INFO, 1, 0, "loop=%d\n", m_loopIndex );
 	std::vector<MessageRequest*> pos_requests;
 	std::vector<MessageRequest*> neg_requests;
-    
+
     // Even/Odd preconditioning, organizes sites into two sets (if enabled odd_even == 2)
     // If enabled we do two loops of this function with one-half transfer size
     // int even_odd = 1;
     int even_odd = 2;
     // Enqueue gather from positive and negative directions (8 total)  su3_vector
     int transsz = 500;
-    
+
     for (int parity = 1; parity <= even_odd; parity++){
-        
+
         for (int d = XUP; d <= TUP; d++){
             if (n_ranks[d] != -1){
                 MessageRequest*  req  = new MessageRequest();
                 pos_requests.push_back(req);
-                transsz = get_transfer_size(d)/even_odd; 
+                transsz = get_transfer_size(d)/even_odd;
                 if (rank() == 0 || n_ranks[d] == 0)
                     verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 "receiving pos elements: %" PRIu32 "\n", rank(), transsz);
-                enQ_irecv( evQ, n_ranks[d], 
+                enQ_irecv( evQ, n_ranks[d],
                         sizeof_su3vector * transsz, 0, GroupWorld, req);
             }
         }
         for (int d = XUP; d <= TUP; d++){
             if ( n_ranks[d] != -1 ){
-                transsz = get_transfer_size(d)/even_odd; 
+                transsz = get_transfer_size(d)/even_odd;
                 if (rank() == 0 || n_ranks[d] == 0)
                     verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 "sending pos elements: %" PRIu32 "\n", rank(), transsz);
                 enQ_send( evQ, n_ranks[d] ,sizeof_su3vector * transsz, 0, GroupWorld);
             }
         }
-        
-        // And start the 3-step gather (4 total) 
-        // In the Greg Bauer MILC performance model paper they list trans_sz as 
+
+        // And start the 3-step gather (4 total)
+        // In the Greg Bauer MILC performance model paper they list trans_sz as
         // Fetch Naik term or three link term (points 1, 2 and 3 planes into the next domain)
         // multiplied by 6 elements multiplied by surface volume.
         // We don't need to gather the first site twice (hence get_transfer_size(d)*2)
-        
+
         for (int d = XUP; d <= TUP; d++){
             if (n_ranks[d] != -1){
                 MessageRequest*  req  = new MessageRequest();
                 pos_requests.push_back(req);
-                transsz = get_transfer_size(d)*2/even_odd; 
+                transsz = get_transfer_size(d)*2/even_odd;
                 if (rank() == 0 || n_ranks[d] == 0)
                     verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 "receiving pos (Naik) elements: %" PRIu32 "\n", rank(), transsz);
-                enQ_irecv( evQ, n_ranks[d], 
+                enQ_irecv( evQ, n_ranks[d],
                         sizeof_su3vector * transsz, 0, GroupWorld, req);
             }
         }
         for (int d = XUP; d <= TUP; d++){
             if ( n_ranks[d] != -1 ){
-                transsz = get_transfer_size(d)*2/even_odd; 
+                transsz = get_transfer_size(d)*2/even_odd;
                 if (rank() == 0 || n_ranks[d] == 0)
                     verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 "sending pos (Naik) elements: %" PRIu32 "\n", rank(), transsz);
                 enQ_send( evQ, n_ranks[d] ,sizeof_su3vector * transsz, 0, GroupWorld);
             }
         }
-        
+
         // Enqueue gather from negative directions (4 total)
         for (int d = TDOWN; d <= XDOWN; d++){
             if (n_ranks[d] != -1){
                 MessageRequest*  req  = new MessageRequest();
                 neg_requests.push_back(req);
-                transsz = get_transfer_size(d)/even_odd; 
+                transsz = get_transfer_size(d)/even_odd;
                 if (rank() == 0 || n_ranks[d] == 0)
                     verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 "receiving neg elements: %" PRIu32 "\n", rank(), transsz);
-                enQ_irecv( evQ, n_ranks[d], 
+                enQ_irecv( evQ, n_ranks[d],
                         sizeof_su3vector * transsz, 0, GroupWorld, req);
             }
         }
         for (int d = TDOWN; d <= XDOWN; d++){
             if ( n_ranks[d] != -1 ){
-                transsz = get_transfer_size(d)/even_odd; 
+                transsz = get_transfer_size(d)/even_odd;
                 if (rank() == 0 || n_ranks[d] == 0)
                     verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 "sending neg elements: %" PRIu32 "\n", rank(), transsz);
                 enQ_send( evQ, n_ranks[d] ,sizeof_su3vector * transsz, 0, GroupWorld);
             }
         }
-        
+
         // Enqueue 3-step gather (4 total)
         for (int d = TDOWN; d <= XDOWN; d++){
             if (n_ranks[d] != -1){
                 MessageRequest*  req  = new MessageRequest();
                 neg_requests.push_back(req);
-                transsz = get_transfer_size(d)*2/even_odd; 
+                transsz = get_transfer_size(d)*2/even_odd;
                 if (rank() == 0 || n_ranks[d] == 0)
                     verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 "receiving neg (Naik) elements: %" PRIu32 "\n", rank(), transsz);
-                enQ_irecv( evQ, n_ranks[d], 
+                enQ_irecv( evQ, n_ranks[d],
                         sizeof_su3vector * transsz, 0, GroupWorld, req);
             }
         }
         for (int d = TDOWN; d <= XDOWN; d++){
             if ( n_ranks[d] != -1 ){
-                transsz = get_transfer_size(d)*2/even_odd; 
+                transsz = get_transfer_size(d)*2/even_odd;
                 if (rank() == 0 || n_ranks[d] == 0)
                     verbose(CALL_INFO, 2, 0, "Rank: %" PRIu32 "sending neg (Naik) elements: %" PRIu32 "\n", rank(), transsz);
                 enQ_send( evQ, n_ranks[d] ,sizeof_su3vector * transsz, 0, GroupWorld);
             }
         }
-        
+
         // Wait on positive gathers (8 total)
 	    verbose(CALL_INFO, 1, 0, "Rank: %" PRIu32 ", +Messages to wait on: %zu\n", rank(), pos_requests.size());
         for(uint32_t i = 0; i < pos_requests.size(); ++i) {
             enQ_wait( evQ, pos_requests[i]);
         }
         pos_requests.clear();
-        
+
         // Compute Matrix Vector Multiply Sum in 4 directions
         // C <- A[0]*B[0]+A[1]*B[1]+A[2]*B[2]+A[3]*B[3]
         // This is done for both positive "fat" and "long" links
@@ -420,7 +420,7 @@ bool EmberLQCDGenerator::generate( std::queue<EmberEvent*>& evQ )
         else enQ_compute(evQ, compute_nseconds_mmvs4d);
         comp_time += Simulation::getSimulation()->getCurrentSimCycle() - comp_start;
         //output("Rank %" PRIu32 ", Compute end: %" PRIu64 "\n", rank(), Simulation::getSimulation()->getCurrentSimCycle());
-        
+
         //Wait on negative gathers (8 total)
 	    verbose(CALL_INFO, 1, 0, "Rank: %" PRIu32 ", -Messages to wait on: %zu\n", rank(), neg_requests.size());
         for(uint32_t i = 0; i < neg_requests.size(); ++i) {
@@ -428,7 +428,7 @@ bool EmberLQCDGenerator::generate( std::queue<EmberEvent*>& evQ )
         }
 
         neg_requests.clear();
-        
+
         // Compute Matrix Vector Multiply Sum in 4 directions
         // C <- A[0]*B[0]+A[1]*B[1]+A[2]*B[2]+A[3]*B[3]
         // This is done for both negative "fat" and "long" links
@@ -444,9 +444,9 @@ bool EmberLQCDGenerator::generate( std::queue<EmberEvent*>& evQ )
     enQ_allreduce( evQ, NULL, NULL, 1, DOUBLE, MP::SUM, GroupWorld);
     coll_time += Simulation::getSimulation()->getCurrentSimCycle() - coll_start;
     // Compute ResidSq
-    // Our profiling shows this is ~ 1/4th the FLOPS of the 
+    // Our profiling shows this is ~ 1/4th the FLOPS of the
     // compute segments above, but is more memory intensive (and takes longer).
-    // Depending on whether the problem is small enough to utilize memory 
+    // Depending on whether the problem is small enough to utilize memory
     // effectively, the time spent here can vary widely.
     if (nsCompute) enQ_compute(evQ, nsCompute);
     else enQ_compute(evQ, compute_nseconds_resid);

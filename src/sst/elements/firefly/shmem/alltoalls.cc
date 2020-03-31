@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -65,12 +65,12 @@ void ShmemAlltoalls::do_peer_0( int )
 
 void ShmemAlltoalls::do_peer_1( int )
 {
-    int peer_as_rank = (m_peer - m_PE_start) / stride(); 
+    int peer_as_rank = (m_peer - m_PE_start) / stride();
     m_dest =  m_dest_base;
     m_src =  m_src_base + peer_as_rank * m_nelems * m_sst * m_elem_size;
 
     m_iteration = m_nelems;
-        
+
     put(0);
 }
 
@@ -88,17 +88,17 @@ void ShmemAlltoalls::put( int )
 
     m_api.put( m_dest, m_src, m_elem_size, m_peer, true, callback );
     //shmem_internal_put_nbi((void *) dest_ptr, (uint8_t *) source + peer_as_rank * len, len, peer);
-    --m_iteration; 
+    --m_iteration;
 
     m_src  += m_sst * m_elem_size;
     m_dest += m_dst * m_elem_size;
 }
-   
+
 
 void ShmemAlltoalls::barrier( int )
 {
     printf(":%d:%s():%d\n",my_pe(),__func__,__LINE__);
-    m_api.barrier( m_PE_start, m_logPE_stride, m_PE_size, m_pSync, 
+    m_api.barrier( m_PE_start, m_logPE_stride, m_PE_size, m_pSync,
             std::bind( &ShmemAlltoalls::fini, this, std::placeholders::_1 )
         );
     //shmem_internal_barrier(PE_start, logPE_stride, PE_size, pSync);
@@ -107,7 +107,7 @@ void ShmemAlltoalls::barrier( int )
 void ShmemAlltoalls::fini( int )
 {
     printf(":%d:%s():%d\n",my_pe(),__func__,__LINE__);
-    m_api.putv( m_pSync, m_zero, my_pe(), m_returnCallback ); 
+    m_api.putv( m_pSync, m_zero, my_pe(), m_returnCallback );
 #if 0
     for (i = 0; i < SHMEM_BARRIER_SYNC_SIZE; i++)
         pSync[i] = SHMEM_SYNC_VALUE;

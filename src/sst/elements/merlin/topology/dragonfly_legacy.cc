@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -120,7 +120,7 @@ internal_router_event* topo_dragonfly_legacy::process_input(RtrEvent* ev)
     td_ev->src_group = group_id;
     td_ev->setEncapsulatedEvent(ev);
     td_ev->setVC(ev->request->vn * 3);
-    
+
     return td_ev;
 }
 

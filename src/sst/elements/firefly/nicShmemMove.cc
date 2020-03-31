@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -24,15 +24,15 @@ using namespace SST::Firefly;
 void Nic::ShmemSendMoveMem::copyOut( Output& dbg, int numBytes, FireflyNetworkEvent& event, std::vector<MemOp>& vec )
 {
 
-    size_t bufSpace = numBytes - event.bufSize(); 
+    size_t bufSpace = numBytes - event.bufSize();
     size_t left = m_length - m_offset;
     size_t len;
-    
+
     if ( left > bufSpace  ) {
         len = bufSpace & ~( m_alignment - 1);
     } else {
         len = left;
-    } 
+    }
 
     dbg.debug(CALL_INFO,3,NIC_DBG_SEND_MACHINE,"pktSpace=%lu dataLeft=%lu xferSize=%lu addr=%" PRIx64 "\n",
                 bufSpace, left, len, m_addr + m_offset  );
@@ -45,20 +45,20 @@ void Nic::ShmemSendMoveMem::copyOut( Output& dbg, int numBytes, FireflyNetworkEv
     	event.bufAppend( NULL, len );
 	}
 
-    m_offset += len; 
+    m_offset += len;
 }
 
 void Nic::ShmemSendMoveValue::copyOut( Output& dbg, int numBytes, FireflyNetworkEvent& event, std::vector<MemOp>& vec )
 {
-    size_t space = numBytes - event.bufSize(); 
-    size_t len = m_value.getLength() > space ? space : m_value.getLength(); 
+    size_t space = numBytes - event.bufSize();
+    size_t len = m_value.getLength() > space ? space : m_value.getLength();
 
     dbg.debug(CALL_INFO,3,NIC_DBG_SEND_MACHINE,"PacketSize=%d event.bufSpace()=%lu space=%lu len=%lu\n",
                 numBytes, event.bufSize(), space, len );
 
 	vec.push_back( MemOp( 0, len, MemOp::Op::LocalLoad ));
 
-    m_offset += len; 
+    m_offset += len;
     std::stringstream tmp;
     tmp << m_value;
 #if 0
@@ -70,13 +70,13 @@ void Nic::ShmemSendMoveValue::copyOut( Output& dbg, int numBytes, FireflyNetwork
 
 void Nic::ShmemSendMove2Value::copyOut( Output& dbg, int numBytes, FireflyNetworkEvent& event, std::vector<MemOp>& vec )
 {
-    size_t space = numBytes - event.bufSize(); 
+    size_t space = numBytes - event.bufSize();
     assert( getLength() <= space );
 
     dbg.debug(CALL_INFO,3,NIC_DBG_SEND_MACHINE,"PacketSize=%d event.bufSpace()=%lu space=%lu len=%lu\n",
                 numBytes, event.bufSize(), space, getLength() );
 
-    m_offset += getLength(); 
+    m_offset += getLength();
 	vec.push_back( MemOp( 0, getLength(), MemOp::Op::LocalLoad ));
 
 #if 0
@@ -108,11 +108,11 @@ bool Nic::ShmemRecvMoveMem::copyIn( Output& dbg, FireflyNetworkEvent& event, std
 	size_t tmpOffset = m_addr + m_offset;
 	int tmpCore = m_core;
 
-	vec.push_back( MemOp( m_addr + m_offset, length, MemOp::Op::BusDmaToHost, 
+	vec.push_back( MemOp( m_addr + m_offset, length, MemOp::Op::BusDmaToHost,
 		[=] () {
 			m_shmem->checkWaitOps( tmpCore, tmpOffset, length );
 		}
-	)); 
+	));
 
     event.bufPop(length);
     m_offset += length;
@@ -164,7 +164,7 @@ bool Nic::ShmemRecvMoveMemOp::copyIn( Output& dbg, FireflyNetworkEvent& event, s
             break;
           default:
             assert(0);
-        } 
+        }
 
 #if 0
         std::stringstream tmp3;
@@ -173,7 +173,7 @@ bool Nic::ShmemRecvMoveMemOp::copyIn( Output& dbg, FireflyNetworkEvent& event, s
                 m_op,tmp1.str().c_str(), tmp2.str().c_str(), tmp3.str().c_str());
 #endif
 
-		size_t tmpOffset = m_addr + m_offset; 
+		size_t tmpOffset = m_addr + m_offset;
 		int tmpCore = m_core;
 		vec.push_back( MemOp( m_addr, dataLength, MemOp::Op::BusLoad ));
 		vec.push_back( MemOp( m_addr, dataLength, MemOp::Op::BusStore,

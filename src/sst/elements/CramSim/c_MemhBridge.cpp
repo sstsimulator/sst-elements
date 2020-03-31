@@ -1,8 +1,8 @@
-// Copyright 2009-2016 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2016, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -82,9 +82,9 @@ c_MemhBridge::~c_MemhBridge() {
 
 
 void c_MemhBridge::createTxn() {
-   
+
     uint64_t l_cycle = m_simCycle;
-    
+
     SST::Event* e = 0;
     while((e = m_linkCPU->recv())) {
         MemReqEvent *event = dynamic_cast<MemReqEvent *>(e);
@@ -97,10 +97,10 @@ void c_MemhBridge::createTxn() {
         else
                 mTxn = new c_Transaction(event->getReqId(), e_TransactionType::READ, addr, 1);
 
-        
+
         std::pair<c_Transaction*, uint64_t > l_entry = std::make_pair(mTxn,l_cycle);
         m_txnReqQ.push_back(l_entry);
-     
+
         if(k_printTxnTrace)
             printTxn(event->getIsWrite(),addr);
     }
@@ -110,7 +110,7 @@ void c_MemhBridge::createTxn() {
 bool c_MemhBridge::readResponse() {
 	if (m_txnResQ.size() > 0) {
                 c_Transaction* l_txn = m_txnResQ.front();
-                
+
 		MemRespEvent *event = new MemRespEvent(l_txn->getSeqNum(), l_txn->getAddress(), 0);
 
 		l_txn->print(output,"[memhbridge.readResponse]", m_simCycle);
@@ -139,7 +139,7 @@ void c_MemhBridge::printTxn(bool x_isWrite, uint64_t x_addr){
                         << " " <<l_txnType
                         << " " << std::dec<<l_currentCycle
                         <<std::endl;
-		
+
 }
 
 // Element Libarary / Serialization stuff

@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -109,7 +109,7 @@ PageTableWalker::PageTableWalker(ComponentId_t id, int tlb_id, PageTableWalker *
 
 	os_page_size = ((uint32_t) params.find<uint32_t>("os_page_size", 4));
 
-	size = new int[sizes]; 
+	size = new int[sizes];
 	assoc = new int[sizes];
 	page_size = new uint64_t[sizes];
 	sets = new int[sizes];
@@ -315,7 +315,7 @@ void PageTableWalker::handleEvent( SST::Event* e )
 		{
 			if(!ptw_confined)
 				(*PTE)[stall_addr/page_size[0]] = temp_ptr->getPaddress();
-			else 
+			else
 			{
 				uint64_t offset = (uint64_t)512*512*512*512;
 				if((*PTE).find((stall_addr/page_size[0])%offset) != (*PTE).end())
@@ -330,12 +330,12 @@ void PageTableWalker::handleEvent( SST::Event* e )
 	}
 	else if(temp_ptr->getType() == EventType::PAGE_FAULT_SERVED)
 	{
-		if(!ptw_confined) 
+		if(!ptw_confined)
 		{
 			(*MAPPED_PAGE_SIZE4KB)[stall_addr/page_size[0]] = 0;
 			(*PENDING_PAGE_FAULTS).erase(stall_addr/page_size[0]);
 		}
-		else 
+		else
 		{
 			uint64_t offset = (uint64_t)512*512*512*512;
 			(*MAPPED_PAGE_SIZE4KB)[(stall_addr/page_size[0])%offset] = 0;
@@ -379,7 +379,7 @@ void PageTableWalker::recvResp(SST::Event * event)
 	if(!self_connected)
 		pw_id = MEM_REQ[ev->getResponseToID()];
 	else
-		pw_id = MEM_REQ[ev->getID()];	
+		pw_id = MEM_REQ[ev->getID()];
 
 	insert_way(WID_Add[pw_id], find_victim_way(WID_Add[pw_id], WSR_COUNT[pw_id]), WSR_COUNT[pw_id]);
 
@@ -485,7 +485,7 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 				{
 					release = 1;
 				}
-	
+
 			}
 				break;
 			case 3:
@@ -516,7 +516,7 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 				else output->fatal(CALL_INFO, -1, "MMU: PTW DANGER!!.. stall at level not recognized..\n");
 			}
 				break;
-	
+
 			default:
 				output->fatal(CALL_INFO, -1, "MMU: PTW DANGER!!.. stall at levels not recognized\n");
 			}
@@ -544,7 +544,7 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 		if(dispatched > max_width)
 			break;
 
-                MemHierarchy::MemEventBase* ev = *st_1; 
+                MemHierarchy::MemEventBase* ev = *st_1;
 		Address_t addr = ((MemEvent*) ev)->getVirtualAddress();
 
 		// A sneak-peak if the access is going to cause a page fault
@@ -580,7 +580,7 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 				uint64_t offset = (uint64_t)512*512*512*512;
 				if((*MAPPED_PAGE_SIZE4KB).find((addr/page_size[0])%offset)!=(*MAPPED_PAGE_SIZE4KB).end() || (*MAPPED_PAGE_SIZE2MB).find((addr/page_size[1])%(512*512*512))!=(*MAPPED_PAGE_SIZE2MB).end() || (*MAPPED_PAGE_SIZE1GB).find((addr/page_size[2])%(512*512))!=(*MAPPED_PAGE_SIZE1GB).end())
  					fault = false;
- 
+
 	 			if(fault)
 	 			{
 					stall_addr = addr;
@@ -718,16 +718,16 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 		{
 
 
-			// Note that this is a hack to reduce the number of walks needed for large pages, however, in case of full-system, the content of the page table 
+			// Note that this is a hack to reduce the number of walks needed for large pages, however, in case of full-system, the content of the page table
 			// will tell us that no next level, but since we don't have a full-system status, we will just stop at the priori-known leaf level
 			if(os_page_size == 2048)
 				k = max(k-1, 1);
 			else if(os_page_size == 1024*1024)
-				k = max(k-2, 1); 
+				k = max(k-2, 1);
 
 
 			if((int) pending_misses.size() < (int) max_outstanding)
-			{	
+			{
 				statPageTableWalkerMisses->addData(1);
 				misses++;
 				pending_misses.push_back(*st_1);
@@ -773,7 +773,7 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 					//		WID_EV[mmu_id] = e;
 					WID_Add[mmu_id] = addr;
 					e->setVirtualAddress(addr);
-					WSR_READY[mmu_id] = false;					
+					WSR_READY[mmu_id] = false;
 
 					// Add it to the tracking structure
 					MEM_REQ[e->getID()]=mmu_id;
@@ -801,7 +801,7 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 
 			}
 
-		}	    
+		}
 
 
 		if(st_1 == not_serviced.end())

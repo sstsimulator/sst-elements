@@ -1,7 +1,7 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
+//
 // Copyright (c) 2014, NTESS
 // All rights reserved.
 //
@@ -71,14 +71,14 @@ cpu::cpu( ComponentId_t id, Params& params ) :
     rng = new MersenneRNG(seed);
   } else {
     rng = new MersenneRNG();
-  } 
+  }
 
   // register as a primary component
   registerAsPrimaryComponent();
   primaryComponentDoNotEndSim();
 }
 
-void cpu::finish() 
+void cpu::finish()
 {
   printf("CPU completed %lld memOps\n", memOps);
   printf("CPU issued %lld inst\n", inst);
@@ -90,7 +90,7 @@ bool cpu::clock( Cycle_t current )
 
   // check for events from the memory chain
   while((e = toMem->recv())) {
-    MemRespEvent *event = 
+    MemRespEvent *event =
       dynamic_cast<MemRespEvent*>(e);
     if (event == NULL) {
       out.fatal(CALL_INFO, -1, "CPU got bad event\n");
@@ -112,7 +112,7 @@ bool cpu::clock( Cycle_t current )
   // send a reference
   for (int w = 0; w < 4; ++w) { //issue width
     for (int c = 0; c < threads; ++c) {
-      if (outstanding < MAX_OUT && Missued <= bwlimit) {    
+      if (outstanding < MAX_OUT && Missued <= bwlimit) {
 	if (thrOutstanding[c].size() <= MAX_OUT_THR) {
 	  MemReqEvent *event = getInst(1,app,c); // L1
 	  inst++;
@@ -133,7 +133,7 @@ bool cpu::clock( Cycle_t current )
 
   if ((current & 0x3ff) == 0) {
 //      printf("%lld: out:%d ops/cycle:%0.2f\n", current, outstanding,
-      printf("%" PRIu64 ": out:%d ops/cycle:%0.2f\n", current, outstanding, 
+      printf("%" PRIu64 ": out:%d ops/cycle:%0.2f\n", current, outstanding,
 	   double(memOps)/double(current));
   }
 

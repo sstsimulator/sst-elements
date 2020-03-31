@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -26,7 +26,7 @@ int handleOTFDefineProcess(void *userData, uint32_t stream, uint32_t process, co
 	return OTF_RETURN_OK;
 }
 
-int handleOTFSendMsg(void *userData, uint64_t time, uint32_t sender, uint32_t receiver, uint32_t group, uint32_t type, 
+int handleOTFSendMsg(void *userData, uint64_t time, uint32_t sender, uint32_t receiver, uint32_t group, uint32_t type,
 	uint32_t length, uint32_t source, OTF_KeyValueList *list) {
 
 	OTFReader* reader = (OTFReader*) userData;
@@ -38,7 +38,7 @@ int handleOTFSendMsg(void *userData, uint64_t time, uint32_t sender, uint32_t re
 	return OTF_RETURN_OK;
 }
 
-int handleOTFRecvMsg(void *userData, uint64_t time, uint32_t recvProc, uint32_t sendProc, uint32_t group, uint32_t type, 
+int handleOTFRecvMsg(void *userData, uint64_t time, uint32_t recvProc, uint32_t sendProc, uint32_t group, uint32_t type,
 	uint32_t length, uint32_t source, OTF_KeyValueList *list) {
 
 	OTFReader* reader = (OTFReader*) userData;
@@ -74,7 +74,7 @@ int handleOTFCollectiveOperation(void *userData, uint64_t time, uint32_t process
 int handleOTFBeginCollective(void *userData, uint64_t time, uint32_t process, uint32_t collOp, uint64_t matchingId, uint32_t procGroup,
 	uint32_t rootProc, uint64_t sent, uint64_t received, uint32_t scltoken, OTF_KeyValueList *list) {
 
-	std::cout << "OTF: Began a collective on process: " << process << " collective: " << collOp 
+	std::cout << "OTF: Began a collective on process: " << process << " collective: " << collOp
 		<< " at time: " << time << std::endl;
 
 	return OTF_RETURN_OK;
@@ -169,7 +169,7 @@ uint32_t OTFReader::generateNextEvents() {
 	}
 
 	// Return the size of the queue back to the caller, they
-	// may want to know that we consumed fewer events than 
+	// may want to know that we consumed fewer events than
 	// the queue limit - this happens if we encounter an MPI
 	// finalize statement
 	return (uint32_t) eventQ->size();

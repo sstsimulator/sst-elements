@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -52,7 +52,7 @@ void ShmemFcollect::state_0( int )
     size_t iter_offset = ((my_id() + 1 - m_iteration + m_PE_size) % m_PE_size) * m_nelems;
     printf(":%d:%s():%d iter_offset=%lu dest=%#" PRIx64 "\n",my_pe(),__func__,__LINE__,iter_offset,(uint64_t)m_dest + iter_offset);
 
-    m_api.put( m_dest + iter_offset, m_dest + iter_offset, m_nelems, next_proc(), true, 
+    m_api.put( m_dest + iter_offset, m_dest + iter_offset, m_nelems, next_proc(), true,
         std::bind( &ShmemFcollect::state_1, this, std::placeholders::_1 ) );
 }
 
@@ -70,8 +70,8 @@ void ShmemFcollect::state_2( int )
        only ever sent to next_proc and there's a shmem_fence
        between successive calls to the put above.  So a rolling
        counter is safe here. */
-    m_api.add( m_pSync, m_one, next_proc(), 
-                  std::bind( &ShmemFcollect::state_3, this, std::placeholders::_1 ));  
+    m_api.add( m_pSync, m_one, next_proc(),
+                  std::bind( &ShmemFcollect::state_3, this, std::placeholders::_1 ));
     //shmem_internal_atomic_small(pSync, &one, sizeof(long), next_proc, SHM_INTERNAL_SUM, SHM_INTERNAL_LONG);
 }
 
@@ -97,11 +97,11 @@ void ShmemFcollect::state_4( int )
 {
     printf(":%d:%s():%d\n",my_pe(),__func__,__LINE__);
     /* zero out psync */
-    m_api.putv( m_pSync, m_zero, m_common.my_pe(), 
+    m_api.putv( m_pSync, m_zero, m_common.my_pe(),
            std::bind( &ShmemFcollect::state_5, this, std::placeholders::_1 ) );
     //shmem_internal_put_small(pSync, &zero, sizeof(long), shmem_internal_my_pe);
-} 
-  
+}
+
 void ShmemFcollect::state_5( int )
 {
     printf(":%d:%s():%d\n",my_pe(),__func__,__LINE__);

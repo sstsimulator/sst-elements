@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -20,9 +20,9 @@
 
 using namespace SST::ArielComponent;
 
-ArielMemoryManagerMalloc::ArielMemoryManagerMalloc(ComponentId_t id, Params& params) : 
+ArielMemoryManagerMalloc::ArielMemoryManagerMalloc(ComponentId_t id, Params& params) :
             ArielMemoryManagerCache(id, params) {
-    
+
     memoryLevels = (uint32_t) params.find<uint32_t>("memorylevels", 1);
     defaultLevel = (uint32_t) params.find<uint32_t>("defaultlevel", 0);
     output->verbose(CALL_INFO, 1, 0, "Configuring for %" PRIu32 " memory levels; default level is %" PRIu32 ".\n", memoryLevels, defaultLevel);
@@ -129,7 +129,7 @@ void ArielMemoryManagerMalloc::allocate(const uint64_t size, const uint32_t leve
 
     output->verbose(CALL_INFO, 4, 0, "Request rounded to %" PRIu64 " bytes\n",
         roundedSize);
-    
+
     statDemandAllocs[level]->addData(roundedSize/pageSize);
 
     uint64_t nextVirtPage = virtualAddress;
@@ -217,7 +217,7 @@ bool ArielMemoryManagerMalloc::allocateMalloc(const uint64_t size, const uint32_
 
     // Record malloc
     mallocInformation.insert(std::make_pair(virtualAddress, mallocInfo(size, level, virtualPages)));
-    
+
     statBytesAlloc[level]->addData(size);
     return true;
 }
@@ -225,11 +225,11 @@ bool ArielMemoryManagerMalloc::allocateMalloc(const uint64_t size, const uint32_
 
 void ArielMemoryManagerMalloc::freeMalloc(const uint64_t virtualAddress) {
     output->verbose(CALL_INFO, 4, 0, "Freeing %" PRIu64 "\n", virtualAddress);
-    
+
     // Lookup VA in mallocInformation
     std::map<uint64_t, mallocInfo>::iterator it = mallocInformation.find(virtualAddress);
     if (it == mallocInformation.end()) return;
-    
+
     statBytesFree[it->second.level]->addData(it->second.size);
 
     // Free each VA in mallocInformation from mallocTranslations & mallocPrimaryVAMap TODO fix so that mapping stays but address is available for future mallocs

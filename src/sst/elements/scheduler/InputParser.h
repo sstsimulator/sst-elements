@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -22,26 +22,26 @@
 #include <sst/core/sst_types.h>
 
 namespace SST {
-    
+
     class Params;
-    
+
     namespace Scheduler {
 
         class Job;
         class Machine;
-        
+
         // the maximum length of a job ID.  used primarily for job list parsing.
 #define JobIDlength 16
-            
+
         class JobParser {
             public:
-                JobParser(Machine* machine, 
-                          SST::Params& params, 
-                          bool* useYumYumSimulationKill, 
+                JobParser(Machine* machine,
+                          SST::Params& params,
+                          bool* useYumYumSimulationKill,
                           bool* YumYumSimulationKillFlag,
-                          bool* doDetailedNetworkSim); //NetworkSim: added bool parameter 
+                          bool* doDetailedNetworkSim); //NetworkSim: added bool parameter
                 ~JobParser() { };
-                        
+
                 std::vector<Job*> parseJobs(SimTime_t currSimTime);
                 //NetworkSim: parse the files for jobs completed/running on ember
                 std::map<int, unsigned long> parseJobsEmberCompleted();
@@ -59,13 +59,13 @@ namespace SST {
 
                 std::string completedJobTrace; // NetworkSim: File that lists all jobs that has been completed in ember
                 std::string runningJobTrace; // NetworkSim: File that lists all jobs that are still running on ember
-                
+
                 time_t LastJobFileModTime;            // Contains the last time that the job file was modified
                 char lastJobRead[ JobIDlength ];      // The ID of the last job read from the Job list file
-                
+
                 bool newJobLine(std::string line);
                 bool validateJob( Job * j, std::vector<Job*> * jobs, long runningTime );
-                
+
                 //yumyum
                 bool useYumYumTraceFormat;
                 bool newYumYumJobLine(std::string line, SimTime_t currSimTime);
@@ -73,7 +73,7 @@ namespace SST {
                 bool* YumYumSimulationKillFlag;
                 bool* doDetailedNetworkSim; //NetworkSim: added doDetailedNetworkSim parameter
         };
-        
+
         class CommParser {
             public:
                 CommParser() { }
@@ -85,7 +85,7 @@ namespace SST {
                 //map<key,value> = map<communicatingTask, weight>
                 double** readCoordFile(std::string fileName, int procsNeeded);
         };
-        
+
         class DParser {
             public:
                 DParser(int numNodes,
@@ -96,7 +96,7 @@ namespace SST {
                 std::string fileName;
                 std::string filePath;
         };
-            
+
         //helper class
         template <class T>
         class MatrixMarketReader2D {

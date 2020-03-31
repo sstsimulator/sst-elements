@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -72,7 +72,7 @@ ZodiacSiriusTraceReader::ZodiacSiriusTraceReader(ComponentId_t id, Params& param
     verbosityLevel = params.find("verbose", 0);
     std::cout << "Set verbosity level to " << verbosityLevel << std::endl;
 
-    selfLink = configureSelfLink("Self", "1ns", 
+    selfLink = configureSelfLink("Self", "1ns",
 	new Event::Handler<ZodiacSiriusTraceReader>(this, &ZodiacSiriusTraceReader::handleSelfEvent));
 
     tConv = Simulation::getSimulation()->getTimeLord()->getTimeConverter("1ns");

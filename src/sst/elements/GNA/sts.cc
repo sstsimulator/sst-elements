@@ -1,8 +1,8 @@
-// Copyright 2018 NTESS. Under the terms
+// Copyright 2018-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2018, NTESS
+// Copyright (c) 2018-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -30,7 +30,7 @@ void STS::assign(int neuronNum) {
         // AFR: should throttle
         using namespace Interfaces;
         using namespace White_Matter_Types;
-        SimpleMem::Request *req = 
+        SimpleMem::Request *req =
             new SimpleMem::Request(SimpleMem::Request::Read, listAddr, sizeof(T_Wme));
         myGNA->readMem(req, this);
         listAddr += sizeof(T_Wme);

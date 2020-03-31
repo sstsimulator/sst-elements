@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -25,7 +25,7 @@ using namespace SST::MemHierarchy;
 
 ScratchCPU::ScratchCPU(ComponentId_t id, Params& params) : Component(id), rng(id, 13)
 {
-    // Restart the RNG to ensure completely consistent results 
+    // Restart the RNG to ensure completely consistent results
     uint32_t z_seed = params.find<uint32_t>("rngseed", 7);
     rng.restart(z_seed, 13);
 
@@ -57,7 +57,7 @@ ScratchCPU::ScratchCPU(ComponentId_t id, Params& params) : Component(id), rng(id
 
     reqsToIssue = params.find<uint64_t>("reqsToIssue", 1000);
 
-    
+
     // tell the simulator not to end without us
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
@@ -67,7 +67,7 @@ ScratchCPU::ScratchCPU(ComponentId_t id, Params& params) : Component(id), rng(id
     params.insert("scratchpad_size", size);
 
     memory = loadUserSubComponent<Interfaces::SimpleMem>("memory", ComponentInfo::SHARE_NONE, clockTC, new Interfaces::SimpleMem::Handler<ScratchCPU>(this, &ScratchCPU::handleEvent) );
-    
+
     if ( !memory ) {
         out.fatal(CALL_INFO, -1, "Unable to load scratchInterface subcomponent\n");
     }
@@ -101,13 +101,13 @@ bool ScratchCPU::tick(Cycle_t time) {
         if (requests.size() < reqQueueSize) {
             // Determine how many requests to issue this cycle
             uint32_t reqCount = rng.generateNextUInt32() % (reqPerCycle + 1);
-            
+
             // Create and send requests
             for (int i = 0; i < reqCount; i++) {
-                
+
                 // Determine what kind of request to send -> 6 options
                 uint32_t instType = rng.generateNextUInt32() % 6;
-                
+
                 Interfaces::SimpleMem::Request * req;
                 if (instType == 0) { // Scratch read
                     // Generate request size
@@ -115,7 +115,7 @@ bool ScratchCPU::tick(Cycle_t time) {
                     uint32_t size = 1 << log2Size;
                     // Generate address aligned to request size
                     Interfaces::SimpleMem::Addr addr = (Interfaces::SimpleMem::Addr) (((rng.generateNextUInt64() % scratchSize) >> log2Size) << log2Size);
-                    
+
                     req = new Interfaces::SimpleMem::Request(Interfaces::SimpleMem::Request::Read, addr, size);
                     out.debug(_L3_, "ScratchCPU (%s) sending Read. Addr: %" PRIu64 ", Size: %u\n\n", getName().c_str(), addr, size);
                 } else if (instType == 1) { // Scratch write
@@ -130,7 +130,7 @@ bool ScratchCPU::tick(Cycle_t time) {
                 } else if (instType == 2) { // Scratch Get (copy from memory to scratch)
                     uint32_t log2Size = rng.generateNextUInt32() % (log2MemLineSize + 1);
                     uint32_t size = 1 << log2Size;
-                    
+
                     Interfaces::SimpleMem::Addr srcAddr = (Interfaces::SimpleMem::Addr) (((rng.generateNextUInt64() % (maxAddr - scratchSize)) >> log2Size ) << log2Size);
                     Interfaces::SimpleMem::Addr dstAddr = (Interfaces::SimpleMem::Addr) (((rng.generateNextUInt64() % scratchSize) >> log2Size) << log2Size );
                     srcAddr += scratchSize;
@@ -163,10 +163,10 @@ bool ScratchCPU::tick(Cycle_t time) {
 
                     Interfaces::SimpleMem::Addr addr = (Interfaces::SimpleMem::Addr) (((rng.generateNextUInt64() % (maxAddr - scratchSize)) >> log2Size ) << log2Size);
                     addr += scratchSize;
-                    
+
                     std::vector<uint8_t> data;
                     data.resize(size, 0);
-                    
+
                     req = new Interfaces::SimpleMem::Request(Interfaces::SimpleMem::Request::Write, addr, size, data);
                     out.debug(_L3_, "ScratchCPU (%s) sending mem Write. Addr: %" PRIu64 ", Size: %u\n\n", getName().c_str(), addr, size);
                 }

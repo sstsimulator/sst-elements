@@ -1,8 +1,8 @@
-// Copyright 2013-2019 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2019, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -45,7 +45,7 @@ public:
         str << " OpCode: 0x" << custOpc_;
         return CustomCmdInfo::getString() + str.str();
     }
-    
+
     /* Address getter/setter */
     void setAddr(Addr addr) { addr_ = addr; }
     Addr getAddr() { return addr_; }

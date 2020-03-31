@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -29,8 +29,8 @@ class EmberShmemBroadcastGenerator : public EmberShmemGenerator {
 
 public:
 	EmberShmemBroadcastGenerator(SST::ComponentId_t id, Params& params) :
-		EmberShmemGenerator(id, params, "ShmemBroadcast" ), m_phase(0) 
-	{ 
+		EmberShmemGenerator(id, params, "ShmemBroadcast" ), m_phase(0)
+	{
 		m_printResults = params.find<bool>("arg.printResults", false );
 		m_nelems = params.find<int>("arg.nelems", 1 );
 		m_root = params.find<int>("arg.root", 0 );
@@ -40,14 +40,14 @@ public:
     	m_type_name = tmp;
 		free(tmp);
 
-		assert( 4 == sizeof(TYPE) || 8 == sizeof(TYPE) ); 	
+		assert( 4 == sizeof(TYPE) || 8 == sizeof(TYPE) );
     }
 
-    bool generate( std::queue<EmberEvent*>& evQ) 
+    bool generate( std::queue<EmberEvent*>& evQ)
 	{
         bool ret = false;
         switch ( m_phase ) {
-          case 0: 
+          case 0:
             enQ_init( evQ );
             enQ_my_pe( evQ, &m_my_pe );
             enQ_n_pes( evQ, &m_num_pes );
@@ -56,9 +56,9 @@ public:
           case 1:
 
             if ( 0 == m_my_pe ) {
-                printf("%d:%s: num_pes=%d nelems=%d type=\"%s\" root=%d\n",m_my_pe, 
+                printf("%d:%s: num_pes=%d nelems=%d type=\"%s\" root=%d\n",m_my_pe,
 						getMotifName().c_str(), m_num_pes, m_nelems, m_type_name.c_str(),m_root);
-				assert( m_root < m_num_pes ); 
+				assert( m_root < m_num_pes );
             }
             {
                 size_t buffer_size = 3 * sizeof(long);    // for pSync
@@ -66,7 +66,7 @@ public:
                 buffer_size += m_nelems * sizeof(TYPE);   // for dest
                 enQ_malloc( evQ, &m_pSync, buffer_size );
             }
-            break;	
+            break;
 
 
 		  case 2:
@@ -78,8 +78,8 @@ public:
 				int shift = (sizeof(TYPE) * 8 )/ 2;
 				for ( int i = 0; i < m_nelems; i++ ) {
                 	m_src.at<TYPE>(i) = ((TYPE)(m_my_pe + 1) << shift) | i + 1;
-				} 
-            } 
+				}
+            }
 
             m_dest = m_src.offset<TYPE>( m_nelems );
 			bzero( &m_dest.at<TYPE>(0), sizeof(TYPE) * m_nelems);
@@ -96,7 +96,7 @@ public:
             break;
 
           case 4:
-			for ( int i = 0; i < m_nelems; i++ ) { 
+			for ( int i = 0; i < m_nelems; i++ ) {
 				int shift = (sizeof(TYPE) * 8 )/ 2;
 				if ( m_my_pe != m_root ) {
 					if ( m_printResults ) {

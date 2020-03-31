@@ -1,8 +1,8 @@
-// Copyright 2009-2018 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2018, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -26,9 +26,9 @@ class EmberFamCswapEvent : public EmberFamEvent {
 
 public:
 	EmberFamCswapEvent( Shmem::Interface& api, Output* output,
-			Hermes::Value result, Shmem::Fam_Descriptor fd, uint64_t dest, Hermes::Value oldValue, Hermes::Value newValue, 
+			Hermes::Value result, Shmem::Fam_Descriptor fd, uint64_t dest, Hermes::Value oldValue, Hermes::Value newValue,
             EmberEventTimeStatistic* stat = NULL ) :
-            EmberFamEvent( api, output, stat ), 
+            EmberFamEvent( api, output, stat ),
             m_result(result), m_fd(fd), m_dest(dest), m_oldValue(oldValue), m_newValue(newValue) {}
 	~EmberFamCswapEvent() {}
 

@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -34,11 +34,11 @@ using namespace HBMDRAMSim;
 
 HBMpagedMultiMemory::HBMpagedMultiMemory(ComponentId_t id, Params &params)
   : HBMDRAMSimMemory(id, params), pagesInFast(0), lastMin(0) {
-      build(params); 
+      build(params);
   }
 
 void HBMpagedMultiMemory::build(Params& params) {
-    dbg.init("@R:HBMpagedMultiMemory::@p():@l " + getName() + ": ", 0, 0, 
+    dbg.init("@R:HBMpagedMultiMemory::@p():@l " + getName() + ": ", 0, 0,
              (Output::output_location_t)params.find<int>("debug", 0));
     dbg.output(CALL_INFO, "making HBMpagedMultiMemory controller\n");
 
@@ -103,13 +103,13 @@ void HBMpagedMultiMemory::build(Params& params) {
       }
     }
 
-    dramBackpressure = params.find<bool>("dramBackpressure", 1);    
+    dramBackpressure = params.find<bool>("dramBackpressure", 1);
 
-    threshold = params.find<unsigned int>("threshold", 4);    
-    scanThreshold = params.find<unsigned int>("scan_threshold", 6);    
+    threshold = params.find<unsigned int>("threshold", 4);
+    scanThreshold = params.find<unsigned int>("scan_threshold", 6);
 
     transferDelay = params.find<unsigned int>("transfer_delay", 250);
-    minAccTime = self_link->getDefaultTimeBase()->getFactor() / 
+    minAccTime = self_link->getDefaultTimeBase()->getFactor() /
         Simulation::getSimulation()->getTimeLord()->getNano()->getFactor();
 
     const uint32_t seed = params.find<uint32_t>("seed", 1447);
@@ -135,7 +135,7 @@ void HBMpagedMultiMemory::build(Params& params) {
 
         readDataCB = new HBMDRAMSim::Callback<HBMpagedMultiMemory, void, unsigned int,
                                            uint64_t, uint64_t>(this, &HBMpagedMultiMemory::dramSimDone);
-        writeDataCB = new HBMDRAMSim::Callback<HBMpagedMultiMemory, void, unsigned int, 
+        writeDataCB = new HBMDRAMSim::Callback<HBMpagedMultiMemory, void, unsigned int,
                                             uint64_t, uint64_t>(this, &HBMpagedMultiMemory::dramSimDone);
 
         memSystem->RegisterCallbacks(readDataCB, writeDataCB, NULL);
@@ -164,10 +164,10 @@ bool HBMpagedMultiMemory::checkAdd(HBMpageInfo &page) {
             if (myLastTouch > victimPage->lastTouch) {
 	      if (addStrat == addMFRPU) {
 		// more recent && more frequent
-		return (page.touched > threshold) && (page.touched > victimPage->touched); 
+		return (page.touched > threshold) && (page.touched > victimPage->touched);
 	      } else {
                 // more recent
-                return (page.touched > threshold); 
+                return (page.touched > threshold);
 	      }
             } else {
                 return false;
@@ -224,13 +224,13 @@ bool HBMpagedMultiMemory::checkAdd(HBMpageInfo &page) {
         } else {
             return false;
         }
-    default: 
+    default:
         dbg.fatal(CALL_INFO, -1, "Strategy not supported\n");
         return 0;
     }
 }
 
-void HBMpagedMultiMemory::do_FIFO_LRU( HBMpageInfo &page, bool &inFast, bool &swapping) {  
+void HBMpagedMultiMemory::do_FIFO_LRU( HBMpageInfo &page, bool &inFast, bool &swapping) {
     swapping = 0;
     if (0 == page.inFast) {
         // not in fast
@@ -272,7 +272,7 @@ void HBMpagedMultiMemory::do_FIFO_LRU( HBMpageInfo &page, bool &inFast, bool &sw
                 victimPage->listEntry = pageList.end();
                 pageList.erase(e);
                 if (modelSwaps) {moveToSlow(victimPage);}
-                
+
                 // put this one in
                 page.inFast = 1;
                 swapping = 1;
@@ -313,7 +313,7 @@ void HBMpagedMultiMemory::do_FIFO_LRU( HBMpageInfo &page, bool &inFast, bool &sw
 
         inFast = page.inFast;
     }
-    page.lastTouch = getCurrentSimTimeNano(); // for mrpu       
+    page.lastTouch = getCurrentSimTimeNano(); // for mrpu
 }
 
 void HBMpagedMultiMemory::do_LFU( Addr addr, HBMpageInfo &page, bool &inFast, bool &swapping) {
@@ -322,7 +322,7 @@ void HBMpagedMultiMemory::do_LFU( Addr addr, HBMpageInfo &page, bool &inFast, bo
     swapping = 0;
 
     // if we are hitting it "a lot" see if we can put it in fast
-    if ((0 == page.inFast) && (page.touched > threshold)) { 
+    if ((0 == page.inFast) && (page.touched > threshold)) {
         if (pagesInFast < maxFastPages) {
             // put it in
             page.inFast = 1;
@@ -359,12 +359,12 @@ void HBMpagedMultiMemory::do_LFU( Addr addr, HBMpageInfo &page, bool &inFast, bo
                     assert(page.inFast == 0);
                     swapping = 0;
                     page.lastTouch = getCurrentSimTimeNano(); // for mrpu
-                    dbg.debug(_L10_, "no pages to swap out (%d candidates)\n", 
+                    dbg.debug(_L10_, "no pages to swap out (%d candidates)\n",
                               (int)pageMap.size());
                     cantSwapOut->addData(1);
                     return;
                 }
-	      } 
+	      }
             }
         }
     } else {
@@ -416,7 +416,7 @@ bool HBMpagedMultiMemory::issueRequest(ReqId id, Addr addr, bool isWrite, unsign
         return true;
     } else {
         if (transferDelay > 0) {
-            SimTime_t now = getCurrentSimTimeNano(); 
+            SimTime_t now = getCurrentSimTimeNano();
             if (swapping) {
                 page.pageDelay = now + transferDelay;  //delay till page can be used
             }
@@ -425,13 +425,13 @@ bool HBMpagedMultiMemory::issueRequest(ReqId id, Addr addr, bool isWrite, unsign
                 extraDelay = max(extraDelay, minAccTime); // make sure it is always at least as slow as the fast mem
             }
         }
-        
+
         fastAccesses->addData(1);
         if (inFast) {
             fastHits->addData(1);
             if (extraDelay > 0) {
-                self_link->send(extraDelay, 
-                                Simulation::getSimulation()->getTimeLord()->getNano(), 
+                self_link->send(extraDelay,
+                                Simulation::getSimulation()->getTimeLord()->getNano(),
                                 new MemCtrlEvent(req));
             } else {
                 self_link->send(1, new MemCtrlEvent(req));
@@ -446,7 +446,7 @@ bool HBMpagedMultiMemory::issueRequest(ReqId id, Addr addr, bool isWrite, unsign
 bool HBMpagedMultiMemory::clock(Cycle_t cycle){
     HBMDRAMSimMemory::clock(cycle);
 
-    // put things in the DRAM 
+    // put things in the DRAM
     while (!dramQ.empty()) {
         Req *req = dramQ.front();
         bool inserted = HBMDRAMSimMemory::issueRequest((ReqId)req,req->addr,req->isWrite,req->numBytes);
@@ -544,9 +544,9 @@ void HBMpagedMultiMemory::moveToFast(HBMpageInfo &page) {
 
     // mark page as swapping
     page.swapDir = HBMpageInfo::StoF;
-    page.swapsOut = numTransfers;   
+    page.swapsOut = numTransfers;
 
-    dbg.debug(_L10_, "moveToFast(%p addr:%p) sO:%d\n", &page, (void*)(addr), 
+    dbg.debug(_L10_, "moveToFast(%p addr:%p) sO:%d\n", &page, (void*)(addr),
               page.swapsOut);
 
     // issue reads to slow mem

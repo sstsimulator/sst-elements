@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -29,7 +29,7 @@ public:
 /* Element Library Info */
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(RequestReorderRow, "memHierarchy", "reorderByRow", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Request re-orderer, groups requests by row", SST::MemHierarchy::SimpleMemBackend)
-    
+
     SST_ELI_DOCUMENT_PARAMS( MEMBACKEND_ELI_PARAMS,
             /* Own parameters */
             {"verbose",                     "Sets the verbosity of the backend output", "0"},
@@ -39,13 +39,13 @@ public:
             {"row_size",                    "Size of a row in bytes (B). Must be a power of 2.", "8KiB"},
             {"reorder_limit",               "Maximum number of request to reorder to a rwo before changing rows.", "1"},
             {"backend",                     "Backend memory system.", "memHierarchy.simpleDRAM"} )
-    
+
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( {"backend", "Backend memory model.", "SST::MemHierarchy::SimpleMemBackend"} )
 
 /* Begin class definition */
     RequestReorderRow();
     RequestReorderRow(ComponentId_t id, Params &params);
-	
+
     virtual bool issueRequest( ReqId, Addr, bool isWrite, unsigned numBytes );
     void setup();
     void finish();
@@ -65,7 +65,7 @@ private:
 		Addr addr;
 		bool isWrite;
 		unsigned numBytes;
-	};	
+	};
     SimpleMemBackend* backend;
     unsigned int maxReqsPerRow; // Maximum number of requests to issue per row before moving to a new row
     unsigned int banks;         // Number of banks we're issuing to

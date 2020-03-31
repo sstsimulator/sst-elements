@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -30,7 +30,7 @@
 
 using namespace SST::SambaComponent;
 
-class TLB : public ComponentExtension 
+class TLB : public ComponentExtension
 {
 
 	int coreId;
@@ -56,7 +56,7 @@ class TLB : public ComponentExtension
 	PageTableWalker * PTW; // This is a pointer to the PTW in case of being last level
 
 	std::map<long long int, int> SIZE_LOOKUP; // This structure checks if a size is supported inside the structure, and its index structure
-        
+
 	std::map< Address_t, std::map< MemHierarchy::MemEventBase *, int, MemEventPtrCompare>> SAME_MISS; // This tracks the misses for the same location and deduplicates them
 	std::map<Address_t, int> PENDING_MISS; // This tracks the addresses of the current master misses (other contained misses are tracked in SAME_MISS)
 
@@ -101,11 +101,11 @@ class TLB : public ComponentExtension
 
 	int page_walk_latency; // this is really nothing than the page walk latency in case of having no walkers
 
-	public: 
+	public:
 
 	TLB(ComponentId_t id, int page_size, int assoc, TLB * next_level, int size);
 	TLB(ComponentId_t id, int tlb_id, TLB * Next_level,int level, SST::Params& params);
-        
+
         // Set PTW for last level
         void setPTW(PageTableWalker * ptw);
 

@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -26,7 +26,7 @@ using namespace SST::Firefly;
 using namespace SST;
 using namespace SST::Firefly::CtrlMsg;
 
-API::API( ComponentId_t id, Params& params ) : 
+API::API( ComponentId_t id, Params& params ) :
     ProtocolAPI( id ), m_memHeapLink(NULL)
 {
     m_dbg_level = params.find<uint32_t>("verboseLevel",0);
@@ -50,10 +50,10 @@ API::~API()
     delete m_mem;
 }
 
-void API::setup() { 
+void API::setup() {
     m_processQueuesState->setup();
 }
-void API::finish() { 
+void API::finish() {
     m_processQueuesState->finish();
 }
 
@@ -133,8 +133,8 @@ void API::send( const Hermes::MemAddr& addr, size_t len, nid_t dest, uint64_t ta
 }
 
 
-void API::send( const Hermes::MemAddr& addr, size_t len, MP::RankID dest, uint64_t tag, 
-                        MP::Communicator grp, int vn ) 
+void API::send( const Hermes::MemAddr& addr, size_t len, MP::RankID dest, uint64_t tag,
+                        MP::Communicator grp, int vn )
 {
     std::vector<IoVec> ioVec(1);
     ioVec[0].addr = addr;
@@ -159,7 +159,7 @@ void API::isend( const Hermes::MemAddr& addr, size_t len, nid_t dest, uint64_t t
     sendv_common( ioVec, MP::CHAR, dest, tag, MP::GroupWorld, req, vn );
 }
 
-void API::isend( const Hermes::MemAddr& addr, size_t len, nid_t dest, uint64_t tag, 
+void API::isend( const Hermes::MemAddr& addr, size_t len, nid_t dest, uint64_t tag,
 				MP::Communicator group, CommReq* req, int vn )
 {
     std::vector<IoVec> ioVec(1);
@@ -175,7 +175,7 @@ void API::sendv(std::vector<IoVec>& ioVec, nid_t dest, uint64_t tag, int vn )
     sendv_common( ioVec, MP::CHAR, dest, tag, MP::GroupWorld, NULL, vn );
 }
 
-void API::isendv(std::vector<IoVec>& ioVec, nid_t dest, uint64_t tag, MP::Communicator group, CommReq* req, int vn ) 
+void API::isendv(std::vector<IoVec>& ioVec, nid_t dest, uint64_t tag, MP::Communicator group, CommReq* req, int vn )
 {
     sendv_common( ioVec, MP::CHAR, dest, tag, group, req, vn );
 }
@@ -203,14 +203,14 @@ void API::recvv_common( std::vector<IoVec>& ioVec,
 void API::recv( const Hermes::MemAddr& addr, size_t len, nid_t src, uint64_t tag )
 {
     std::vector<IoVec> ioVec(1);
-    ioVec[0].addr = addr; 
+    ioVec[0].addr = addr;
     ioVec[0].len = len;
     recvv_common( ioVec, MP::CHAR, src, tag, MP::GroupWorld, NULL );
 }
 
 void API::recv( void* ptr, size_t len, nid_t src, uint64_t tag, MP::Communicator group)
 {
-	MemAddr addr( 1, ptr ); 
+	MemAddr addr( 1, ptr );
 	recv( addr, len, src, tag, group );
 }
 
@@ -218,7 +218,7 @@ void API::recv( const Hermes::MemAddr& addr, size_t len, nid_t src, uint64_t tag
 			MP::Communicator group)
 {
     std::vector<IoVec> ioVec(1);
-    ioVec[0].addr = addr; 
+    ioVec[0].addr = addr;
     ioVec[0].len = len;
     recvv_common( ioVec, MP::CHAR, src, tag, group, NULL );
 }
@@ -234,7 +234,7 @@ void API::irecv( const Hermes::MemAddr& addr, size_t len, nid_t src, uint64_t ta
     recvv_common( ioVec, MP::CHAR, src, tag, MP::GroupWorld, req );
 }
 
-void API::irecv( const Hermes::MemAddr& addr, size_t len, MP::RankID src, uint64_t tag, 
+void API::irecv( const Hermes::MemAddr& addr, size_t len, MP::RankID src, uint64_t tag,
                                     MP::Communicator grp, CommReq* req )
 {
     std::vector<IoVec> ioVec(1);
@@ -258,7 +258,7 @@ void API::irecvv(std::vector<IoVec>& ioVec, nid_t src, uint64_t tag,
 
 void API::wait( CommReq* req )
 {
-    std::vector<CommReq*> tmp; 
+    std::vector<CommReq*> tmp;
     tmp.push_back( req );
     waitAll( tmp );
 }
@@ -357,7 +357,7 @@ void API::waitAll( int count, MP::MessageRequest req[],
         MP::MessageResponse* resp[] )
 {
     m_dbg.debug(CALL_INFO,1,1,"\n");
-    m_processQueuesState->enterWait( new WaitReq( count, req, resp ) );    
+    m_processQueuesState->enterWait( new WaitReq( count, req, resp ) );
 }
 
 // **********************************************************************

@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -222,7 +222,7 @@ c_Dimm::c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params) :
 		std::string l_statName;
 		unsigned l_bankNum = l_entry->getBankNum();
 		c_BankStatistics *l_bankStats = new c_BankStatistics();
-		
+
 		l_statName = "bankACTsRecvd_" + std::to_string(l_bankNum);
 		l_bankStats->s_bankACTsRecvd = registerStatistic<uint64_t>(l_statName);
 		l_statName = "bankREADsRecvd_" + std::to_string(l_bankNum);
@@ -234,16 +234,16 @@ c_Dimm::c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params) :
 
 		l_statName = "bankRowHits_" + std::to_string(l_bankNum);
 		l_bankStats->s_bankRowHits = registerStatistic<uint64_t>(l_statName);
-		
+
 		l_bankStats->s_totalRowHits = l_totalRowHits;
-		
+
 		l_entry->acceptStatistics(l_bankStats);
 		m_bankStatsVec.push_back(l_bankStats);
 	}
 
 	// get configured clock frequency
 	std::string l_clockFreqStr = (std::string)x_params.find<std::string>("strControllerClockFrequency", "1GHz", l_found);
-    
+
 	//set our clock
 	m_clockHandler=new Clock::Handler<c_Dimm>(this, &c_Dimm::clockTic);
 	registerClock(l_clockFreqStr, m_clockHandler);
@@ -264,7 +264,7 @@ c_Dimm::c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params) :
 	m_writeACmdsRecvd.resize(m_numRanks);
 	m_preCmdsRecvd.resize(m_numRanks);
 	m_refCmdsRecvd.resize(m_numRanks);
-  
+
         for(unsigned i=0; i<m_numRanks;i++)
         {
             m_actCmdsRecvd[i]=0;
