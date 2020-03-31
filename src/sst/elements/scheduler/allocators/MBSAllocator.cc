@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -65,13 +65,13 @@ MBSAllocator::MBSAllocator(StencilMachine* m, int x, int y, int z) : Allocator(*
     tempVec1[1] = y;
     tempVec1[2] = z;
     std::vector<int> tempVec2(3, 0);
-    initialize(new MeshLocation(tempVec1), 
+    initialize(new MeshLocation(tempVec1),
                new MeshLocation(tempVec2));
     //if (DEBUG) printFBR("Post Initialize:");
 }
 
 MBSAllocator::MBSAllocator(std::vector<std::string>* params, Machine* mach) : Allocator(*mach)
-{ 
+{
     mMachine = dynamic_cast<StencilMachine*>(mach);
     if (NULL == mMachine || mMachine->numDims() != 3) {
         schedout.fatal(CALL_INFO, 1, "MBS Allocator requires 3D mesh/torus machine.");
@@ -86,7 +86,7 @@ MBSAllocator::MBSAllocator(std::vector<std::string>* params, Machine* mach) : Al
     tempVec1[1] = mMachine->dims[1];
     tempVec1[2] = mMachine->dims[2];
     std::vector<int> tempVec2(3, 0);
-    initialize(new MeshLocation(tempVec1), 
+    initialize(new MeshLocation(tempVec1),
                new MeshLocation(tempVec2));
 
 }
@@ -125,7 +125,7 @@ void MBSAllocator::initialize(MeshLocation* dim, MeshLocation* off)
     tempVec1[0] = sideLen;
     tempVec1[1] = sideLen;
     tempVec1[2] = 1;
-    
+
     MeshLocation* blockdim = new MeshLocation(tempVec1);
     int size = blockdim->dims[0] * blockdim->dims[1];
     size *= blockdim->dims[2];
@@ -144,7 +144,7 @@ void MBSAllocator::initialize(MeshLocation* dim, MeshLocation* off)
         tempVec2[0] = blockdim->dims[0];
         tempVec2[1] = blockdim->dims[1];
         tempVec2[2] = blockdim->dims[2];
-        Block* block = new Block(new MeshLocation(tempVec1),new MeshLocation(tempVec2)); 
+        Block* block = new Block(new MeshLocation(tempVec1),new MeshLocation(tempVec2));
         FBR -> at(rank) -> insert(block);
         createChildren(block);
 
@@ -183,7 +183,7 @@ void MBSAllocator::initialize(MeshLocation* dim, MeshLocation* off)
 int MBSAllocator::createRank(int size)
 {
     std::vector<int>::iterator it = find(ordering -> begin(), ordering -> end(), size);
-    int i = distance(ordering -> begin(),it); 
+    int i = distance(ordering -> begin(),it);
     if (it != ordering -> end()) {
         return i;
     }
@@ -242,7 +242,7 @@ void MBSAllocator::createChildren(Block* b){
     schedout.debug(CALL_INFO, 7, 0, "\n");
 }
 
-std::set<Block*, Block>* MBSAllocator::splitBlock (Block* b) 
+std::set<Block*, Block>* MBSAllocator::splitBlock (Block* b)
 {
     //create the set to iterate over
     Block* BCComp = new Block();
@@ -479,7 +479,7 @@ bool MBSAllocator::splitLarger(int rank)
 
 void MBSAllocator::deallocate(AllocInfo* alloc)
 {
-    //check to make sure it is a MBSMeshAllocInfo->->->                        
+    //check to make sure it is a MBSMeshAllocInfo->->->
     if (NULL == dynamic_cast<MBSMeshAllocInfo*>(alloc)) {
         schedout.fatal(CALL_INFO, 1, "MBS allocator can only deallocate instances of MBSMeshAllocInfo");
     } else {
@@ -542,11 +542,11 @@ void MBSAllocator::printFBR(std::string msg)
     if (ordering -> size() != FBR -> size()) {
         schedout.fatal(CALL_INFO, 1, "Ordering vs FBR size mismatch");
     }
-    for (int i = 0;i < (int)ordering -> size(); i++) { 
+    for (int i = 0;i < (int)ordering -> size(); i++) {
         schedout.debug(CALL_INFO, 7, 0, "Rank: %d for size %d\n", i, ordering -> at(i));
         std::set<Block*, Block>::iterator it = FBR -> at(i) -> begin();
         while (it != FBR -> at(i)->end()) {
-            schedout.debug(CALL_INFO, 7, 0, "  %s\n", (*it) -> toString().c_str()); 
+            schedout.debug(CALL_INFO, 7, 0, "  %s\n", (*it) -> toString().c_str());
             it++;
         }
     }

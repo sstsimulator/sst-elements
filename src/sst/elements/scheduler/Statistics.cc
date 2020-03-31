@@ -1,9 +1,9 @@
-// Copyright 2009-2019 NTESS. Under the terms // of Contract DE-NA0003525 with NTESS, the U.S.
+// Copyright 2009-2020 NTESS. Under the terms // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -60,7 +60,7 @@ const logInfo supportedLogsFST[] = {
     {"snapshot.xml", ""} //NetworkSim: added snapshot as a supported log
 };
 
-const int numSupportedLogs = 6; //NetworkSim: changed this from 5 
+const int numSupportedLogs = 6; //NetworkSim: changed this from 5
 
 enum LOGNAME {  //to use symbolic names on logs; must be updated with supportedLogs
     TIME = 0,
@@ -68,14 +68,14 @@ enum LOGNAME {  //to use symbolic names on logs; must be updated with supportedL
     VISUAL = 2,
     UTIL = 3,
     WAIT = 4,
-    SNAPSHOT = 5 //NetworkSim: added snapshot as a supported log 
+    SNAPSHOT = 5 //NetworkSim: added snapshot as a supported log
 };
 /*
    UTIL = 1,
    WAIT = 2};
    */
 
-void Statistics::printLogList(ostream& out) 
+void Statistics::printLogList(ostream& out)
 {  //print list of possible logs
     for (int i = 0; i < numSupportedLogs; i++) {
         out << "  " << supportedLogs[i].logName << endl;
@@ -83,7 +83,7 @@ void Statistics::printLogList(ostream& out)
 }
 
 Statistics::Statistics(Machine* machine, Scheduler* sched, Allocator* alloc, TaskMapper* taskMap,
-                       string baseName, char* logList, bool simulation, FST* incalcFST) 
+                       string baseName, char* logList, bool simulation, FST* incalcFST)
 {
     this -> simulation = simulation;
     this -> calcFST = incalcFST;
@@ -147,7 +147,7 @@ Statistics::Statistics(Machine* machine, Scheduler* sched, Allocator* alloc, Tas
                        }
                        */
                     record[i] = true;
-                } 
+                }
             } else {
                 if (logName == supportedLogsFST[i].logName) {
                     found = true;
@@ -189,21 +189,21 @@ Statistics::Statistics(Machine* machine, Scheduler* sched, Allocator* alloc, Tas
     tempWaiting = 0;
 }
 
-Statistics::~Statistics() 
+Statistics::~Statistics()
 {
     delete[] record;
 }
 
 //called when a job has arrived; update our statistics accordingly.
-void Statistics::jobArrives(unsigned long time) 
-{   
+void Statistics::jobArrives(unsigned long time)
+{
     tempWaiting++;
     if(record[WAIT])
         writeWaiting(time);
 }
 
 //called every time a job starts
-void Statistics::jobStarts(TaskMapInfo* tmi, unsigned long time) 
+void Statistics::jobStarts(TaskMapInfo* tmi, unsigned long time)
 {
     if (record[ALLOC]) {
         writeAlloc(tmi);
@@ -215,7 +215,7 @@ void Statistics::jobStarts(TaskMapInfo* tmi, unsigned long time)
        writeVisual(mesg + allocInfo -> getProcList());
        }
        */
-    
+
     procsUsed += tmi -> job -> getProcsNeeded();
     if (record[UTIL]) {
         writeUtil(time);
@@ -230,8 +230,8 @@ void Statistics::jobStarts(TaskMapInfo* tmi, unsigned long time)
 }
 
 //called every time a job completes
-void Statistics::jobFinishes(TaskMapInfo* tmi, unsigned long time) 
-{ 
+void Statistics::jobFinishes(TaskMapInfo* tmi, unsigned long time)
+{
     /*
        if(record[VISUAL]) {
        char mesg[100];
@@ -265,7 +265,7 @@ void Statistics::simPauses(Snapshot *snapshot, unsigned long time)
 //end->NetworkSim
 
 //Write time statistics to the log.
-void Statistics::writeTime(AllocInfo* allocInfo, unsigned long time) 
+void Statistics::writeTime(AllocInfo* allocInfo, unsigned long time)
 {
 
     unsigned long arrival = allocInfo -> job -> getArrivalTime();
@@ -286,7 +286,7 @@ void Statistics::writeTime(AllocInfo* allocInfo, unsigned long time)
                 (startTime - arrival),            //Wait time
                 (time - arrival),                 //Response time
                 procsneeded                      //Processors needed
-               );    
+               );
     } else {
         sprintf(mesg, "%ld\t%lu\t%lu\t%lu\t%lu\t%lu\t%lu\t%d\t%lu\n",
                 jobNum,                           //Job Num
@@ -297,14 +297,14 @@ void Statistics::writeTime(AllocInfo* allocInfo, unsigned long time)
                 (startTime - arrival),            //Wait time
                 (time - arrival),                 //Response time
                 procsneeded,                      //Processors needed
-                calcFST -> getFST(jobNum));    //FST                        
+                calcFST -> getFST(jobNum));    //FST
     }
     appendToLog(mesg, supportedLogs[TIME].logName);
 }
 
 
 //Write allocation information to the log.
-void Statistics::writeAlloc(TaskMapInfo* tmi) 
+void Statistics::writeAlloc(TaskMapInfo* tmi)
 {
     char mesg[100];
     sprintf(mesg, "%ld\t%d\t%lu\t%f\t%f\t%f\n",
@@ -389,7 +389,7 @@ void Statistics::writeSnapshot(Snapshot *snapshot)
 //end->NetworkSim
 
 //Write to log for visualization.
-void Statistics::writeVisual(string mesg) 
+void Statistics::writeVisual(string mesg)
 {
     appendToLog(mesg + "\n", supportedLogs[VISUAL].logName);
 }
@@ -397,7 +397,7 @@ void Statistics::writeVisual(string mesg)
 
 //Method to write utilization statistics to file;
 //force it to write last entry by setting time = -1.
-void Statistics::writeUtil(unsigned long time) 
+void Statistics::writeUtil(unsigned long time)
 {
     if ((unsigned long)-1 == lastUtilTime) {  //if first observation, just remember it
         lastUtil = procsUsed;
@@ -422,7 +422,7 @@ void Statistics::writeUtil(unsigned long time)
 //possibly add line to log recording number of waiting jobs
 //  (only prints 1 line per time: #waiting jobs after all events at that time)
 //argument is current time or -1 at end of trace
-void Statistics::writeWaiting(unsigned long time) 
+void Statistics::writeWaiting(unsigned long time)
 {
     if ((unsigned long)-1 == lastWaitTime) {  //if first observation, just remember it
         lastWaitTime = time;
@@ -446,7 +446,7 @@ void Statistics::writeWaiting(unsigned long time)
 }
 
 //called after all events have occurred
-void Statistics::done() {  
+void Statistics::done() {
     if (record[UTIL]) {
         writeUtil(-1);
     }
@@ -456,7 +456,7 @@ void Statistics::done() {
     }
 }
 
-void Statistics::initializeLog(string extension) 
+void Statistics::initializeLog(string extension)
 {
     string name = outputDirectory + baseName + "." + extension;
     ofstream file(name.c_str(), ios::out | ios::trunc);
@@ -473,7 +473,7 @@ void Statistics::initializeLog(string extension)
     file.close();
 }
 
-void Statistics::appendToLog(string mesg, string extension) 
+void Statistics::appendToLog(string mesg, string extension)
 {
     string name = outputDirectory + baseName+ "." + extension;
     ofstream file(name.c_str(), ios::out | ios::app);

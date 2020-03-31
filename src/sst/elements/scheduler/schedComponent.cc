@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -15,7 +15,7 @@
 
 #include "sst_config.h"
 #include "sst/core/rng/mersenne.h"
-#include "schedComponent.h" 
+#include "schedComponent.h"
 
 #include <thread>
 #include <chrono>
@@ -62,9 +62,9 @@ extern int yumyumJobKillRand48Seed;
 
 //necessary for sorting a list of pointers to completion events
 //can't overload < because that does not work with pointers
-bool compareCEPointers(CompletionEvent* ev1, CompletionEvent* ev2) 
+bool compareCEPointers(CompletionEvent* ev1, CompletionEvent* ev2)
 {
-    return ev1 -> jobNum < ev2 -> jobNum; 
+    return ev1 -> jobNum < ev2 -> jobNum;
 }
 
 schedComponent::~schedComponent()
@@ -211,7 +211,7 @@ schedComponent::schedComponent(ComponentId_t id, Params& params) :
     scheduler -> reset();
 
     jobLogFileName = params.find<std::string>("jobLogFileName");
-    
+
     schedout.output("\n");
 }
 
@@ -232,13 +232,13 @@ void schedComponent::setup()
 
     // NetworkSim: record the total number of jobs as the jobs vector changes over time
     numJobs = (int) jobs.size();
-    
+
     if (doDetailedNetworkSim){
         //parse the ember completed/running job traces
         emberFinishedJobs = jobParser -> parseJobsEmberCompleted();
         emberRunningJobs = jobParser -> parseJobsEmberRunning();
         ignoreUntilTime = jobParser -> ignoreUntilTime;
-        
+
         schedout.output("The jobs that have been completed in ember\n");
         for(std::map<int, unsigned long>::iterator it = emberFinishedJobs.begin(); it != emberFinishedJobs.end(); it++){
             schedout.output("Job %d: %lu\n", it->first, it->second);
@@ -251,17 +251,17 @@ void schedComponent::setup()
             schedout.output("Job %d: soFarRunningTime: %lu currentMotifCount: %d\n", iter->first, iter->second.first, iter->second.second);
         }
     }
-    
+
     for(int i = 0; i < (int) jobs.size(); i++)
     {
         ArrivalEvent* ae = new ArrivalEvent(jobs[i]->getArrivalTime(), i);
         if (useYumYumTraceFormat) {
-            selfLink -> send(0, ae); 
+            selfLink -> send(0, ae);
         } else {
-            selfLink -> send(jobs[i]->getArrivalTime(), ae); 
+            selfLink -> send(jobs[i]->getArrivalTime(), ae);
         }
     }
-        
+
     if( useYumYumTraceFormat ){
         char* inputDir = getenv("SIMINPUT");
         string jobListFileName;
@@ -276,7 +276,7 @@ void schedComponent::setup()
         }
         CommunicationEvent * commEvent = new CommunicationEvent( START_FILE_WATCH );
         commEvent->payload = & jobListFileName;
-        selfLink->send( commEvent ); 
+        selfLink->send( commEvent );
     }
 
     if (FSTtype > 0){
@@ -343,16 +343,16 @@ void schedComponent::startNextJob()
 {
     CommunicationEvent * commEvent = new CommunicationEvent (START_NEXT_JOB);
     if (useYumYumTraceFormat) {
-        selfLink -> send(1, commEvent); 
+        selfLink -> send(1, commEvent);
     } else {
-        selfLink -> send(0, commEvent); 
+        selfLink -> send(0, commEvent);
     }
 }
 
 
 // incoming events are scanned and deleted. ev is the returned event,
 // node is the node it came from.
-void schedComponent::handleCompletionEvent(Event *ev, int node) 
+void schedComponent::handleCompletionEvent(Event *ev, int node)
 {
     if (dynamic_cast<CommunicationEvent *>(ev)) {
         CommunicationEvent * commEvent = dynamic_cast<CommunicationEvent *> (ev);
@@ -379,7 +379,7 @@ void schedComponent::handleCompletionEvent(Event *ev, int node)
             FinalTimeEvent *fte = new FinalTimeEvent();
             if(runningJobs[jobNum].tmi->job->getStartTime() == getCurrentSimTime())
                 fte->forceExecute = true;
-            selfLink->send(0, fte); //send back an event at the same time so we know it finished 
+            selfLink->send(0, fte); //send back an event at the same time so we know it finished
         }
         if (jobNum == jobs.back()->jobNum) {
             if (jobs.empty()) {
@@ -397,7 +397,7 @@ void schedComponent::handleCompletionEvent(Event *ev, int node)
         if (event) {
             int jobNum = event->jobNum;
             if (jobNum == -1) {
-                return; // the node that faulted was not running a job, nothing for 
+                return; // the node that faulted was not running a job, nothing for
                 //scheduler, allocator, machine to do
                 delete ev;
             }
@@ -421,7 +421,7 @@ void schedComponent::handleCompletionEvent(Event *ev, int node)
             for (int i = 0; i < tmi->job->getProcsNeeded(); ++i) {
                 JobKillEvent *ec = new JobKillEvent(tmi -> job -> getJobNum());
 
-                nodes[tmi->allocInfo->nodeIndices[i]] -> send(ec); 
+                nodes[tmi->allocInfo->nodeIndices[i]] -> send(ec);
             }
 
             machine -> deallocate(tmi);
@@ -434,16 +434,16 @@ void schedComponent::handleCompletionEvent(Event *ev, int node)
                 scheduler->jobFinishes(tmi->job, getCurrentSimTime() , *machine);
             }
             //the job is done and deleted from our records; don't need
-            delete runningJobs.find( jobNum )->second.tmi; 
-            
+            delete runningJobs.find( jobNum )->second.tmi;
+
             //its allocinfo again
             runningJobs.erase(jobNum);
 
             startNextJob();
 
             if (jobNum == jobs.back()->jobNum) {
-                while (!jobs.empty() && 
-                       runningJobs.find(jobs.back()->jobNum) == runningJobs.end() && 
+                while (!jobs.empty() &&
+                       runningJobs.find(jobs.back()->jobNum) == runningJobs.end() &&
                        jobs.back()->hasRun == true) {
                     delete jobs.back();
                     jobs.pop_back();
@@ -457,18 +457,18 @@ void schedComponent::handleCompletionEvent(Event *ev, int node)
         } else {
             schedout.fatal(CALL_INFO, 1, "S: Error! Bad Event Type!\n");
         }
-    }  
+    }
 }
 
-void schedComponent::handleJobArrivalEvent(Event *ev) 
-{    
+void schedComponent::handleJobArrivalEvent(Event *ev)
+{
     schedout.debug(CALL_INFO, 4, 0, "arrival event\n");
-    
+
     CommunicationEvent * commEvent = dynamic_cast<CommunicationEvent *>(ev);
     ArrivalEvent *arevent = dynamic_cast<ArrivalEvent*>(ev);
     FinalTimeEvent* fev = dynamic_cast<FinalTimeEvent*>(ev);
     SnapshotEvent* sev = dynamic_cast<SnapshotEvent*>(ev);
-    
+
     if (NULL != commEvent) {
         schedout.debug(CALL_INFO, 4, 0, "comm event\n");
 
@@ -500,7 +500,7 @@ void schedComponent::handleJobArrivalEvent(Event *ev)
                         snapshot->append(getCurrentSimTime(), NextArrivalTime, runningJobs);
                         schedout.output("Next Job is arriving at %lu\n", NextArrivalTime);
                         unregisterYourself();
-                    }                 
+                    }
                 }
             }
         }
@@ -509,7 +509,7 @@ void schedComponent::handleJobArrivalEvent(Event *ev)
         finishingarr.push_back(arevent);
         //NetworkSim: keep track of the last job that has arrived
         jobNumLastArrived = arevent->getJobIndex();
-        
+
         FinalTimeEvent* fte = new FinalTimeEvent();
         if (useYumYumSimulationKill xor YumYumSimulationKillFlag) {
             fte -> forceExecute = true; // avoid intermittent hangs when using yumyum
@@ -517,18 +517,18 @@ void schedComponent::handleJobArrivalEvent(Event *ev)
         else {
             fte -> forceExecute = false; // otherwise keep previous behavior
         }
-        //send back an event at the same time so we know it finished 
-        selfLink -> send(0, fte); 
+        //send back an event at the same time so we know it finished
+        selfLink -> send(0, fte);
     } else if (NULL != fev) {
         if (lastfinaltime == getCurrentSimTime() && !fev -> forceExecute) {
             delete ev;
-            return; //ignore duplicate final time events 
+            return; //ignore duplicate final time events
             //(unless the event forces us to handle them)
         } else {
             lastfinaltime = getCurrentSimTime();
         }
         if (finishingcomp.size() > 1) {
-            //finishingcomp.sort(compareCEPointers); 
+            //finishingcomp.sort(compareCEPointers);
         }
 
         while (!finishingcomp.empty()) {
@@ -537,7 +537,7 @@ void schedComponent::handleJobArrivalEvent(Event *ev)
             runningJobs.erase(finishedJobNum);
             machine->deallocate(tmi);
             theAllocator->deallocate(tmi->allocInfo);
-            
+
             if (useYumYumTraceFormat) {
                 stats -> jobFinishes(tmi, getCurrentSimTime() + 1);
                 scheduler -> jobFinishes(tmi->job, getCurrentSimTime() + 1, *machine);
@@ -551,8 +551,8 @@ void schedComponent::handleJobArrivalEvent(Event *ev)
             delete tmi;
 
             if (finishedJobNum == jobs.back()->jobNum) {
-                while (!jobs.empty() && 
-                       runningJobs.find(jobs.back()->jobNum) == runningJobs.end() && 
+                while (!jobs.empty() &&
+                       runningJobs.find(jobs.back()->jobNum) == runningJobs.end() &&
                        jobs.back()->hasRun == true) {
                     delete jobs.back();
                     jobs.pop_back();
@@ -564,7 +564,7 @@ void schedComponent::handleJobArrivalEvent(Event *ev)
             }
             delete finishingcomp.front();
             finishingcomp.pop_front();
-        } 
+        }
         //arrivals are handled strictly after finishes at the same time to
         //match the Java simulator
         //each time step these are cleared so we don't need to worry about
@@ -572,28 +572,28 @@ void schedComponent::handleJobArrivalEvent(Event *ev)
         //by number because they are given to SST (and therefore come back) that way.
         while (!finishingarr.empty()) {
             Job* arrivingjob = jobs[finishingarr.front() -> getJobIndex()];
-            if (FSTtype == 2) { 
+            if (FSTtype == 2) {
                 //relaxed, so do FST before we tell the scheduler about the job
                 calcFST -> jobArrives(arrivingjob, scheduler, machine);
-                finishingarr.front() -> happen(*machine, theAllocator, 
+                finishingarr.front() -> happen(*machine, theAllocator,
                                                scheduler, stats, arrivingjob);
             } else if (FSTtype == 1){
-                finishingarr.front() -> happen(*machine, theAllocator, 
+                finishingarr.front() -> happen(*machine, theAllocator,
                                                scheduler, stats, arrivingjob);
                 calcFST -> jobArrives(arrivingjob, scheduler, machine);
             } else {
-                finishingarr.front() -> happen(*machine, theAllocator, 
+                finishingarr.front() -> happen(*machine, theAllocator,
                                                scheduler, stats, arrivingjob);
             }
             delete finishingarr.front();
             finishingarr.pop_front();
-        }      
-        delete ev; 
+        }
+        delete ev;
 
         startNextJob();
     } else if (NULL != sev){ //snapshot event
         //dump snapshot to file
-        schedout.output("%llu:Snapshot event received...Appending snapshot...\n", getCurrentSimTime());        
+        schedout.output("%llu:Snapshot event received...Appending snapshot...\n", getCurrentSimTime());
         snapshot->append(sev->time, sev->nextJobArrivalTime, sev->runningJobs);
         delete ev;
         unregisterYourself();
@@ -603,7 +603,7 @@ void schedComponent::handleJobArrivalEvent(Event *ev)
     schedout.debug(CALL_INFO, 4, 0, "finishing arrival event\n");
 }
 
-void schedComponent::finish() 
+void schedComponent::finish()
 {
     scheduler -> done();
     if (doDetailedNetworkSim) {
@@ -619,12 +619,12 @@ void schedComponent::finish()
     theAllocator -> done();
 }
 
-void schedComponent::startJob(Job* job) 
+void schedComponent::startJob(Job* job)
 {
     //allocate & update machine
     CommParser commParser = CommParser();
     commParser.parseComm(job);                      //read communication files
-    
+
     if (doDetailedNetworkSim) {
         //update startingMotif for the jobs that are still running on ember
         if(emberRunningJobs.find(job->getJobNum()) != emberRunningJobs.end()){
@@ -638,11 +638,11 @@ void schedComponent::startJob(Job* job)
     machine->allocate(tmi);                         //allocate
     scheduler->startNext(getCurrentSimTime(), *machine); //start in scheduler
     stats->jobStarts(tmi, getCurrentSimTime() );    //record stats
-    
+
     //calculate running time with communication overhead
     int* jobNodes = ai->nodeIndices;
     unsigned long actualRunningTime = job->getActualTime();
-    
+
     SimpleMachine* sMachine = dynamic_cast<SimpleMachine*>(machine);
 
     if (timePerDistance -> at(0) != 0 && NULL == sMachine && NULL != ai) {
@@ -663,7 +663,7 @@ void schedComponent::startJob(Job* job)
         double hopBytes = tmi->getHopBytes();
         double timeWithComm = baselineRunningTime * (1 + timePerDistance->at(0) * pow(hopBytes, timePerDistance->at(1) + randomNumber));
 
-        //overestimate the fraction to keep min job length at 1 
+        //overestimate the fraction to keep min job length at 1
         actualRunningTime = ceil(timeWithComm);
     }
 
@@ -685,7 +685,7 @@ void schedComponent::startJob(Job* job)
     for (int i = 0; i < ai->getNodesNeeded(); ++i) {
         JobStartEvent *ec = new JobStartEvent(actualRunningTime, job->getJobNum());
         ec->emberFinished = emberFinished; //NetworkSim: add the emberFinished info to the event
-        nodes[jobNodes[i]] -> send(ec); 
+        nodes[jobNodes[i]] -> send(ec);
     }
 
     ITMI itmi;
@@ -763,7 +763,7 @@ void schedComponent::logJobFinish(ITMI itmi)
         jobLog << endl;
     } else {
         schedout.fatal(CALL_INFO, 1, "Couldn't open %s for writing the job log.", this->jobLogFileName.c_str());
-    } 
+    }
 
     if (getCurrentSimTime() < itmi.tmi->job->getStartTime()) {
         schedout.fatal(CALL_INFO, 1, "Job begin time larger than end time: jobid=%s, begin=%lu, end=%" PRIu64 "\n", (*itmi.tmi -> job -> getID()).c_str(), itmi.tmi -> job -> getStartTime(), getCurrentSimTime());
@@ -788,7 +788,7 @@ void schedComponent::logJobFault(ITMI itmi, FaultEvent * faultEvent)
         jobLog << endl;
     }else{
         schedout.fatal(CALL_INFO, 1, "Couldn't open %s for writing the job log.", this->jobLogFileName.c_str() );
-    } 
+    }
 
     if (getCurrentSimTime() < itmi.tmi->job->getStartTime()) {
         schedout.fatal(CALL_INFO, 1, "Job begin time larger than end time: jobid=%s, begin=%lu, end=%" PRIu64 "\n", (*itmi.tmi -> job -> getID()).c_str(), itmi.tmi->job->getStartTime(), (uint64_t)getCurrentSimTime());

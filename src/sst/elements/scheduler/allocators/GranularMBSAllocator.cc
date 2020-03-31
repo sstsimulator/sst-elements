@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -45,7 +45,7 @@ std::string GranularMBSAllocator::getSetupInfo(bool comment) const
     std::string com;
     if (comment) {
         com ="# ";
-    } else { 
+    } else {
         com = "";
     }
     return com + "Multiple Buddy Strategy (MBS) Allocator using Granular divisions";
@@ -57,13 +57,13 @@ GranularMBSAllocator::GranularMBSAllocator(std::vector<std::string>* params, Mac
     if (NULL == mMachine || mMachine->numDims() != 3) {
         schedout.fatal(CALL_INFO, 1, "Granular MBS Allocator requires 3D mesh/torus machine.");
     }
-    
+
     std::vector<int> tempVec1(3);
     tempVec1[0] = mMachine->dims[0];
     tempVec1[1] = mMachine->dims[1];
     tempVec1[2] = mMachine->dims[2];
     std::vector<int> tempVec2(3, 0);
-    initialize(new MeshLocation(tempVec1), 
+    initialize(new MeshLocation(tempVec1),
                new MeshLocation(tempVec2));
 }
 
@@ -103,7 +103,7 @@ bool GranularMBSAllocator::mergeAll()
     std::set<Block*, Block>* toRemove = new std::set<Block*, Block>(*BComp);
 
     //we will be scanning 3 times, for each dimension
-    for (int d = 0;d < 3;d++) {		
+    for (int d = 0;d < 3;d++) {
         //scan through and try to merge everything
         for (int i = (ordering->size()-1); i >= 0; i--) {
             std::set<Block*, Block>* blocks = FBR -> at(i);
@@ -126,7 +126,7 @@ bool GranularMBSAllocator::mergeAll()
                         //get the real second block
                         second = FBRGet(second);
 
-                        //make our new block 
+                        //make our new block
                         Block* newBlock = mergeBlocks(first,second);
 
                         //preserve hierarchy
@@ -140,7 +140,7 @@ bool GranularMBSAllocator::mergeAll()
                         FBR -> at(newRank) -> insert(newBlock);
 
                         //get rid of the old blocks
-                        blocks -> erase(first); //it's slower to erase by value instead of using the iterator but we can't corrupt it (it's already been incremented anyway for the same reason) 
+                        blocks -> erase(first); //it's slower to erase by value instead of using the iterator but we can't corrupt it (it's already been incremented anyway for the same reason)
                         toRemove -> insert(second);
 
                         //change return value since we created a block

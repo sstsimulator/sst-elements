@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -81,7 +81,7 @@ StatefulScheduler::StatefulScheduler(int numprocs, StatefulScheduler::JobCompara
     estSched = new set<SchedChange*, SCComparator>(*sccomp);
     jobToEvents = new map<Job*, SchedChange*, StatefulScheduler::JobComparator>(*comp);
     origcomp = comp;
-    heart = new DelayedCompressionManager(this, comp, mach); 
+    heart = new DelayedCompressionManager(this, comp, mach);
     sc = NULL;
 }
 
@@ -118,7 +118,7 @@ StatefulScheduler::StatefulScheduler(StatefulScheduler* insched, set<SchedChange
     //if (NULL == inheart) {
     //heart = insched -> heart -> copy(NULL);
     //} else {
-    heart = inheart; 
+    heart = inheart;
     heart -> scheduler = this;
     //}
     sc = NULL;
@@ -130,13 +130,13 @@ StatefulScheduler::StatefulScheduler(StatefulScheduler* insched, set<SchedChange
 //respectively.  We don't want to mess these jobs up for our simulation, so the
 //copy we return will replace all our pointers with pointers to the given deep
 //copies. We also must change the pointers in jobToEvents, for both jobs and
-//schedchanges (as both are deleted once the job ends) 
+//schedchanges (as both are deleted once the job ends)
 StatefulScheduler* StatefulScheduler::copy(std::vector<Job*>* inrunning, std::vector<Job*>* intoRun)
 {
     //copy heart -> backfill if it exists (as well as anything else with job
     //pointers)
 
-    SCComparator sccomp; 
+    SCComparator sccomp;
     std::set<SchedChange*, SCComparator>* newestSched = new std::set<SchedChange*, SCComparator>(sccomp);
     map<Job*, SchedChange*, StatefulScheduler::JobComparator>* newJobToEvents = new map<Job*, SchedChange*, StatefulScheduler::JobComparator>(*(origcomp));
 
@@ -161,7 +161,7 @@ StatefulScheduler* StatefulScheduler::copy(std::vector<Job*>* inrunning, std::ve
             }
         }
         if (!found) {
-            printPlan();    
+            printPlan();
             schedout.output("toRun:\n");
             for (vector<Job*>::iterator it2 = intoRun -> begin(); !found && it2 != intoRun -> end(); it2++) {
                 schedout.output("%s\n", (*it2) -> toString().c_str());
@@ -169,10 +169,10 @@ StatefulScheduler* StatefulScheduler::copy(std::vector<Job*>* inrunning, std::ve
             schedout.output("running:\n");
             for (vector<Job*>::iterator it2 = inrunning -> begin(); !found && it2 != inrunning -> end(); it2++) {
                 schedout.output("%s\n", (*it2) -> toString().c_str());
-            } 
+            }
             schedout.fatal(CALL_INFO, 1, "Could not find deep copy for %s\nwhen copying StatefulScheduler estSched for FST\n", (*it) -> j -> toString().c_str());
         }
-    } 
+    }
     //now the SchedChanges in newEstSched are not pointing to their correct partner (they're pointing to the old version)
     //we must iterate through newEstSched and fix that
     for (set<SchedChange*, SCComparator>::iterator it = newestSched -> begin(); it != newestSched -> end(); it++) {
@@ -189,14 +189,14 @@ StatefulScheduler* StatefulScheduler::copy(std::vector<Job*>* inrunning, std::ve
                 schedout.output("plan: \n");
                 for (set<SchedChange*, SCComparator>::iterator it3 = newestSched -> begin(); it3 != newestSched -> end(); it3++) {
                     (*it3) -> print();
-                } 
+                }
                 schedout.output("===========================================\n");
                 (*it)->print();
-                schedout.fatal(CALL_INFO, 1, "Was not able to find partner\n"); 
+                schedout.fatal(CALL_INFO, 1, "Was not able to find partner\n");
             }
         }
     }
-    
+
 
     for (map<Job*, SchedChange*, StatefulScheduler::JobComparator>::iterator it = jobToEvents -> begin(); it != jobToEvents -> end(); it++) {
         bool found = false;
@@ -235,9 +235,9 @@ StatefulScheduler* StatefulScheduler::copy(std::vector<Job*>* inrunning, std::ve
     Manager* newheart = heart -> copy(inrunning, intoRun);
     StatefulScheduler* ret = new StatefulScheduler(this, newestSched, newheart, newJobToEvents, mach);
     return ret;
-} 
+}
 
-int SchedChange::freeProcChange() 
+int SchedChange::freeProcChange()
 {
     return isEnd ? getNodesNeeded(*j) : - getNodesNeeded(*j);
 }
@@ -282,7 +282,7 @@ bool SCComparator::operator()(SchedChange* const& first, SchedChange* const& sec
 {
     //needs to be checked for right direction
     if(first -> getTime() != second -> getTime()) {
-        return first -> getTime() < second -> getTime(); 
+        return first -> getTime() < second -> getTime();
     }
     if(first -> isEnd && !second -> isEnd) {
         return false;
@@ -297,7 +297,7 @@ bool SCComparator::operator()(SchedChange* const& first, SchedChange* const& sec
 }
 
 
-string StatefulScheduler::getSetupInfo(bool comment) 
+string StatefulScheduler::getSetupInfo(bool comment)
 {
     string com;
     if(comment)
@@ -306,30 +306,30 @@ string StatefulScheduler::getSetupInfo(bool comment)
         com="";
     string heartstring = heart->getString();
     return com + heartstring + com +
-        "Comparator: " + compSetupInfo; 
+        "Comparator: " + compSetupInfo;
 }
 
 string StatefulScheduler::DelayedCompressionManager::getString()
 {
-    return "DelayedCompression Less Conservative Scheduler\n"; 
+    return "DelayedCompression Less Conservative Scheduler\n";
 }
 
 string StatefulScheduler::ConservativeManager::getString()
 {
-    return "Conservative Scheduler\n"; 
+    return "Conservative Scheduler\n";
 }
 
 string StatefulScheduler::PrioritizeCompressionManager::getString()
 {
-    return "PrioritizeCompression Scheduler\n"; 
+    return "PrioritizeCompression Scheduler\n";
 }
 
 string StatefulScheduler::EvenLessManager::getString()
 {
-    return "Even Less Conservative Scheduler\n"; 
+    return "Even Less Conservative Scheduler\n";
 }
 
-void StatefulScheduler::jobArrives(Job* j, unsigned long time, const Machine & mach) 
+void StatefulScheduler::jobArrives(Job* j, unsigned long time, const Machine & mach)
 {
     schedout.debug(CALL_INFO, 7, 0, "%ld: Job #%ld arrives\n", time, j -> getJobNum());
     scheduleJob(j, time);
@@ -347,13 +347,13 @@ unsigned long StatefulScheduler::scheduleJob(Job* j, unsigned long time)
     estSched -> insert(endChange);
     estSched -> insert(startChange);
     //the following is unnecessary for the most part, but if a job is reinserted can wind up with bad pointers
-    jobToEvents -> erase(j); 
+    jobToEvents -> erase(j);
     jobToEvents -> insert(pair<Job*,SchedChange*>(j, startChange));
     return starttime;
 }
 
 //finds the earliest time when j can be scheduled
-unsigned long StatefulScheduler::findTime(set<SchedChange*, SCComparator>* sched, Job *j, unsigned long time) 
+unsigned long StatefulScheduler::findTime(set<SchedChange*, SCComparator>* sched, Job *j, unsigned long time)
 {
     unsigned long intime = time;
     if (j -> getEstimatedRunningTime() == 0) return zeroCase(sched, j, intime);
@@ -438,7 +438,7 @@ unsigned long StatefulScheduler::findTime(set<SchedChange*, SCComparator>* sched
 
 //Finds the earliest time when a job with zero running time can be scheduled
 //(requires some unusual considerations).
-unsigned long StatefulScheduler::zeroCase(set<SchedChange*, SCComparator> *sched, Job* filler, unsigned long time) 
+unsigned long StatefulScheduler::zeroCase(set<SchedChange*, SCComparator> *sched, Job* filler, unsigned long time)
 {
     //iterate through event list to find first time where
     //there are enough avaiable procs
@@ -522,12 +522,12 @@ unsigned long StatefulScheduler::zeroCase(set<SchedChange*, SCComparator> *sched
 
 //Removes j from the list of running jobs and update start
 void StatefulScheduler::jobFinishes(Job* j, unsigned long time, const Machine & mach)
-{ 
+{
     schedout.debug(CALL_INFO, 7, 0, "%s finishing at %lu\n", j -> toString().c_str(), time);
     set<SchedChange*, SCComparator>::reverse_iterator it = estSched -> rend();
     bool success = false;
     SchedChange* sc ;
-    while (it != estSched -> rbegin()&& !success ) { 
+    while (it != estSched -> rbegin()&& !success ) {
         sc = *(--it);
         unsigned long scTime = sc -> getTime();
         if (scTime < time) {
@@ -553,7 +553,7 @@ void StatefulScheduler::jobFinishes(Job* j, unsigned long time, const Machine & 
 }
 
 //for debugging; prints planned schedule to stderr
-void StatefulScheduler::printPlan() 
+void StatefulScheduler::printPlan()
 {
     //bool first = true;
     int procs = freeProcs;
@@ -589,12 +589,12 @@ void StatefulScheduler::removeJob(Job* j, unsigned long time)
 //(either after each call or after each call occuring at same time)
 //returns first job to start, NULL if none
 //(if not NULL, should call tryToStart again)
-Job* StatefulScheduler::tryToStart(unsigned long time, const Machine & mach) 
+Job* StatefulScheduler::tryToStart(unsigned long time, const Machine & mach)
 {
     heart -> tryToStart(time);
     set<SchedChange*, SCComparator>::iterator it = estSched -> begin();
     while (it != estSched -> end()) {
-        SchedChange* sc = *(it); 
+        SchedChange* sc = *(it);
         unsigned long scTime = sc->getTime();
         if (scTime < time) {
             printPlan();
@@ -628,7 +628,7 @@ void StatefulScheduler::startNext(unsigned long time, const Machine & mach)
         schedout.fatal(CALL_INFO, 1, "startNext() and tryToStart() are called at different times for Job #%ld",
                                       nextToStart->getJobNum());
     }
-    
+
     freeProcs -= getNodesNeeded(*(sc->j));
     estSched -> erase(sc);
     jobToEvents -> erase(sc -> j);
@@ -641,13 +641,13 @@ void StatefulScheduler::startNext(unsigned long time, const Machine & mach)
 void StatefulScheduler::reset() { }
 
 //comparator functions:
-StatefulScheduler::JobComparator::JobComparator(ComparatorType type) 
+StatefulScheduler::JobComparator::JobComparator(ComparatorType type)
 {
     this -> type = type;
 }
 
 
-void StatefulScheduler::JobComparator::printComparatorList(ostream& out) 
+void StatefulScheduler::JobComparator::printComparatorList(ostream& out)
 {
     for (int i = 0; i < numCompTableEntries; i++) {
         out << " " << compTable[i].name << endl;
@@ -655,7 +655,7 @@ void StatefulScheduler::JobComparator::printComparatorList(ostream& out)
     }
 }
 
-StatefulScheduler::JobComparator* StatefulScheduler::JobComparator::Make(string typeName) 
+StatefulScheduler::JobComparator* StatefulScheduler::JobComparator::Make(string typeName)
 {
     for (int i = 0; i < numCompTableEntries; i++) {
         if (typeName == compTable[i].name) {
@@ -701,7 +701,7 @@ void StatefulScheduler::Manager::compress(unsigned long time)
             //scheduleJob will create two new SchedChanges and add them to EstSched
             unsigned long newStartTime = scheduler -> scheduleJob(sc -> j, time);
             if (newStartTime > scTime) schedout.fatal(CALL_INFO, 1, "Attempt to delay estimated start of Job");
-            delete sc; 
+            delete sc;
         } else if (NULL == sc -> j) {
             //these were duplicated; if not null it was copied directly and we don't want to delete it
             delete sc; //we may or may not have added the element to the array; either way we no longer need it. oldEstSched is going to be filled with lots of bad pointers but the next thing we do is clear it anyway.
@@ -946,7 +946,7 @@ void StatefulScheduler::DelayedCompressionManager::fill(unsigned long time)
     //backfills
     for(set<Job*, JobComparator>::iterator it = backfill -> begin(); it != backfill -> end(); it++) {
         SchedChange* OldStart = scheduler -> jobToEvents -> find(*it) -> second;
-        SchedChange* OldEnd = OldStart -> getPartner(); 
+        SchedChange* OldEnd = OldStart -> getPartner();
 
         scheduler -> estSched -> erase(OldStart);
         scheduler -> estSched -> erase(OldEnd);
@@ -978,7 +978,7 @@ StatefulScheduler::EvenLessManager::EvenLessManager(StatefulScheduler* inschedul
 }
 
 StatefulScheduler::EvenLessManager::EvenLessManager(EvenLessManager* inmanager, set<Job*, JobComparator>* inbackfill, const Machine & inmach) : Manager(inmach)
-{ 
+{
     //    set<Job*, JobComparator>* newbackfill = new set<Job*, JobComparator>(*origcomp);
     //   int notfound = 0;
     //   for (set<Job*, JobComparator>::iterator it = backfill -> begin(); it != backfill -> end(); it++) {
@@ -1007,7 +1007,7 @@ StatefulScheduler::EvenLessManager::EvenLessManager(EvenLessManager* inmanager, 
 StatefulScheduler::EvenLessManager* StatefulScheduler::EvenLessManager::copy(std::vector<Job*>* running, std::vector<Job*>* intoRun)
 {
     set<Job*, JobComparator>* newbackfill = new set<Job*, JobComparator>(*origcomp);
-    int notfound = 0; 
+    int notfound = 0;
     for (set<Job*, JobComparator>::iterator it = backfill -> begin(); it != backfill -> end(); it++) {
         bool found = false;
         for (std::vector<Job*>::iterator it2 = intoRun -> begin(); !found && it2 != intoRun -> end(); it2++) {
@@ -1021,7 +1021,7 @@ StatefulScheduler::EvenLessManager* StatefulScheduler::EvenLessManager::copy(std
     if (notfound > 1) schedout.fatal(CALL_INFO, 1, "Even Less Conservative Manager could not find two jobs for its new backfill in copy()");
     EvenLessManager* ret = new EvenLessManager(this, newbackfill, mach);
     //must match pointers in gJTE and backfill because we will later index into
-    //gJTE using the job pointer from backfill; also fill in guarantee 
+    //gJTE using the job pointer from backfill; also fill in guarantee
     map<Job*, SchedChange*, JobComparator>* newguarJobToEvents = ret -> guarJobToEvents;
     set<SchedChange*, SCComparator>* newguarantee = ret -> guarantee;
     for (map<Job*, SchedChange*, JobComparator>::iterator it = guarJobToEvents -> begin(); it != guarJobToEvents -> end(); it++)
@@ -1033,7 +1033,7 @@ StatefulScheduler::EvenLessManager* StatefulScheduler::EvenLessManager::copy(std
                 found = true;
                 SchedChange* tempsched = new SchedChange (it -> second, mach);
                 tempsched -> j = *it2;
-                newguarJobToEvents -> insert(pair<Job*, SchedChange*>(*it2, tempsched)); 
+                newguarJobToEvents -> insert(pair<Job*, SchedChange*>(*it2, tempsched));
                 newguarantee -> insert(tempsched);
                 tempsched -> print();
             }
@@ -1044,19 +1044,19 @@ StatefulScheduler::EvenLessManager* StatefulScheduler::EvenLessManager::copy(std
                 found = true;
                 SchedChange* tempsched = new SchedChange (it -> second, mach);
                 tempsched -> j = *it2;
-                newguarJobToEvents -> insert(pair<Job*, SchedChange*>(*it2, tempsched)); 
+                newguarJobToEvents -> insert(pair<Job*, SchedChange*>(*it2, tempsched));
                 newguarantee -> insert(tempsched);
                 tempsched -> print();
             }
         }
         if (!found) schedout.fatal(CALL_INFO, 1, "Could not find %s in new backfill\n", it -> first -> toString().c_str());
-    } 
+    }
     printPlan();
     ret -> printPlan();
     return ret;
 }
 
-void StatefulScheduler::EvenLessManager::deepCopy(set<SchedChange*, SCComparator> *from, set<SchedChange*, SCComparator> *to, map<Job*, SchedChange*, JobComparator> *toJ) 
+void StatefulScheduler::EvenLessManager::deepCopy(set<SchedChange*, SCComparator> *from, set<SchedChange*, SCComparator> *to, map<Job*, SchedChange*, JobComparator> *toJ)
 {
     // to->clear() does not actually delete elements so we use a manual loop
     set<SchedChange*, SCComparator>::iterator sc2 = to -> begin();
@@ -1243,7 +1243,7 @@ void StatefulScheduler::EvenLessManager::earlyFinish(Job* j, unsigned long time)
 }
 
 void StatefulScheduler::EvenLessManager::onTimeFinish(Job* j, unsigned long time)
-{ 
+{
     schedout.debug(CALL_INFO, 7, 0, "On Time Finish\n");
     if (guarJobToEvents -> find(j) == guarJobToEvents -> end()) {
         for (map<Job*, SchedChange*, JobComparator>::iterator it = guarJobToEvents -> begin(); it != guarJobToEvents -> end(); it++) {
@@ -1255,7 +1255,7 @@ void StatefulScheduler::EvenLessManager::onTimeFinish(Job* j, unsigned long time
     if (sc == NULL) schedout.fatal(CALL_INFO, 1, "SchedChange for %s is %p", j -> toString().c_str(), sc);
     guarantee -> erase(sc);
     guarJobToEvents -> erase(j);
-} 
+}
 
 void StatefulScheduler::EvenLessManager::start(Job* j, unsigned long time)
 {
@@ -1306,7 +1306,7 @@ void StatefulScheduler::EvenLessManager::start(Job* j, unsigned long time)
 
 //JobComparator operator
 bool StatefulScheduler::JobComparator::operator()(Job* const& j1,Job* const& j2) const
-{ 
+{
     //true means j1 comes before j2
     //for this to work correctly, it returns the reverse of what it would
     //in the comparators for the PQscheduler (because this uses sets and maps
@@ -1386,7 +1386,7 @@ bool StatefulScheduler::JobComparator::operator()(Job* const& j1,Job* const& j2)
 }
 
 
-string StatefulScheduler::JobComparator::toString() 
+string StatefulScheduler::JobComparator::toString()
 {
     switch (type) {
     case FIFO:

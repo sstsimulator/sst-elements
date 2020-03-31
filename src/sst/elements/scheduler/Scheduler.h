@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -22,7 +22,7 @@
 
 #include <queue>
 #include <set>
-#include <string> 
+#include <string>
 
 namespace SST {
     namespace Scheduler {
@@ -36,7 +36,7 @@ namespace SST {
         class Scheduler {
             public:
                 Scheduler() { nextToStart = NULL; }
-            
+
                 virtual ~Scheduler() {}
 
                 virtual std::string getSetupInfo(bool comment) = 0;
@@ -54,7 +54,7 @@ namespace SST {
                 //returns the job that can be started or NULL if none
                 //(if not NULL, tryToStart should be called again)
                 virtual Job* tryToStart(unsigned long time, const Machine & mach) = 0;
-                
+
                 //starts the next available job
                 //should be called after tryToStart at the same simulation time
                 virtual void startNext(unsigned long time, const Machine & mach) = 0;
@@ -67,7 +67,7 @@ namespace SST {
 
                 //used for FST, returns an exact copy of the current schedule
                 virtual Scheduler* copy(std::vector<Job*>* running, std::vector<Job*>* toRun) = 0;
-            
+
             protected:
                 Job* nextToStart; //next ready job - used to give feedback to schedComponent
                 unsigned long nextToStartTime; //used to validate tryToStart and startNext are called at the same time

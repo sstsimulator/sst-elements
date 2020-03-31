@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -40,9 +40,9 @@
  * The Rounding Up MBS Allocator will do the same GranularMBS style allocation, except that
  * instead of preserving larger blocks like all of the other MBS algorithms, one
  * will default to breaking up a large block, by rounding up the request size->
- * 
+ *
  * @author Peter Walker
- * 
+ *
  */
 
 using namespace SST::Scheduler;
@@ -91,7 +91,7 @@ MBSMeshAllocInfo* RoundUpMBSAllocator::allocate(Job* job)
 /**
  * is rounding up part.  method answers the question, should the
  * job be allocated ideally in system, what size block will it get.
- * 
+ *
  * @param procs the number of processors we are trying to allocate
  * @return an RBR which represents the ideal request for system.
  */
@@ -106,7 +106,7 @@ map<int,int>* RoundUpMBSAllocator::generateIdealRequest(int procs)
         roundedIndex++;
     };
     if (ordering -> at(roundedIndex) < procs){
-        retVal -> insert(pair<int,int>(roundedIndex, 
+        retVal -> insert(pair<int,int>(roundedIndex,
                                        (int)ceil(((double) procs)/((double)ordering -> at(roundedIndex)))));
     } else {
         retVal -> insert(pair<int,int>(roundedIndex, 1));
@@ -229,7 +229,7 @@ vector<Block*>* RoundUpMBSAllocator::partiallyAllocate(Block* block, int procs)
 {
     vector<Block*>* retVal = new vector<Block*>();
 
-    //keep track of the remaining procs after 
+    //keep track of the remaining procs after
     int procsLeft = procs;
 
     //remove the given block from the FBR

@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -25,13 +25,13 @@ namespace SST {
         // http://www.cs.huji.ac.il/labs/parallel/workload/swf.html
         class SWFEvent : public SST::Event {
             public:
-                SWFEvent() : SST::Event() 
+                SWFEvent() : SST::Event()
             {
                 jobStatus = SUBMITTED;
             }
 
                 typedef enum {
-                    SUBMITTED, 
+                    SUBMITTED,
                     RUNNING,
                     COMPLETED
                 } jobStatus_t;
@@ -39,7 +39,7 @@ namespace SST {
                 // Current Status of the job
                 jobStatus_t jobStatus;
 
-                // a counter field, starting from 1. 
+                // a counter field, starting from 1.
                 int JobNumber;
 
                 // in seconds. The earliest time the log refers to is zero, and is
@@ -98,7 +98,7 @@ namespace SST {
                 //different applications appearing in the workload. in some logs,
                 //this might represent a script file used to run jobs rather than
                 //the executable directly; this should be noted in a header comment.
-                int Executable; 
+                int Executable;
 
                 //  -- a natural number, between one and the number of different
                 //  -- queues in the system. The nature of the system's queues
@@ -126,7 +126,7 @@ namespace SST {
 
             private:
                 NotSerializable(SWFEvent)
-        }; 
+        };
 
     }
 }

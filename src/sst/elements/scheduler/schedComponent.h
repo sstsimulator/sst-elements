@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -31,7 +31,7 @@ namespace SST {
     class Event;
     class Link;
     class Params;
-    
+
     namespace Scheduler {
 
         class Job;
@@ -180,10 +180,10 @@ namespace SST {
                 )
 
                 schedComponent(SST::ComponentId_t id, SST::Params& params);
-                ~schedComponent(); 
+                ~schedComponent();
                 void setup();
                 void finish();
-                
+
                 //ConstraintAllocator needs this
                 std::string getNodeID(int nodeIndex) const
                 {
@@ -234,7 +234,7 @@ namespace SST {
                 SST::Link* selfLink;
                 std::map<int, ITMI> runningJobs;
                 std::vector<double>* timePerDistance; //used if we want to add time to the jobs proportional to the L1 distance
-                
+
                 std::string jobLogFileName;
                 std::ofstream jobLog;
                 bool printJobLog;
@@ -243,7 +243,7 @@ namespace SST {
                                               // useYumYumTraceFormat is regularly used to decide if YumYum functionality should be used or not.
 
                 //NetworkSim: enables detailed network simulation
-                bool doDetailedNetworkSim; //variable that protects the original functionality without detailed network sim 
+                bool doDetailedNetworkSim; //variable that protects the original functionality without detailed network sim
                 Snapshot *snapshot;
                 std::map<int, unsigned long> emberFinishedJobs; // The jobs that we have run on ember and finished
                 std::map<int, std::pair<unsigned long, int> > emberRunningJobs; // The jobs that are still running on ember <jobNum, <soFarRunningTime, currentMotifCount>>
@@ -257,7 +257,7 @@ namespace SST {
                 bool useYumYumSimulationKill;         // should the simulation end on a special job (true), or just when the job list is exhausted (false)?
                 bool YumYumSimulationKillFlag;        // this will signal the schedComponent to unregister itself iff useYumYumSimulationKill == true
                 int YumYumPollWait;                   // this is the length of time in ms to wait between checks for new jobs
-                
+
                 SST::RNG::SSTRandom* rng;  //random number generator
 
         };

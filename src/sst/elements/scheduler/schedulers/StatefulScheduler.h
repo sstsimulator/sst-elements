@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -106,7 +106,7 @@ namespace SST {
                 void printPlan();
                 void done()
                 {
-                    heart -> done(); 
+                    heart -> done();
                 }
                 void removeJob(Job* j, unsigned long time);
                 StatefulScheduler* copy(std::vector<Job*>* running, std::vector<Job*>* toRun);
@@ -168,9 +168,9 @@ namespace SST {
                         void reset() { }
                         void done() { }
                         std::string getString();
-                        Manager* copy(std::vector<Job*>* running, std::vector<Job*>* intoRun) 
-                        { 
-                            return new ConservativeManager(scheduler, mach); 
+                        Manager* copy(std::vector<Job*>* running, std::vector<Job*>* intoRun)
+                        {
+                            return new ConservativeManager(scheduler, mach);
                         }
                 };
 
@@ -183,11 +183,11 @@ namespace SST {
                         PrioritizeCompressionManager(StatefulScheduler* inscheduler, JobComparator* comp, int infillTimes, const Machine & mach);
                         PrioritizeCompressionManager(PrioritizeCompressionManager* inmanager, std::set<Job*, JobComparator>* inbackfill, const Machine & mach);
                         void reset();
-                        void arrival(Job* j, unsigned long time) 
+                        void arrival(Job* j, unsigned long time)
                         {
                             backfill -> insert(j);
                         }
-                        void start(Job *j, unsigned long time) 
+                        void start(Job *j, unsigned long time)
                         {
                             backfill -> erase(j);
                         }
@@ -198,7 +198,7 @@ namespace SST {
                         void removeJob(Job* j, unsigned long time) { }
                         void onTimeFinish(Job* j, unsigned long time) { }
                         std::string getString();
-                        PrioritizeCompressionManager* copy(std::vector<Job*>* running, std::vector<Job*>* intoRun); 
+                        PrioritizeCompressionManager* copy(std::vector<Job*>* running, std::vector<Job*>* intoRun);
                 };
 
                 class DelayedCompressionManager : public Manager {
@@ -221,7 +221,7 @@ namespace SST {
                         void removeJob(Job* j, unsigned long time) { }
                         void onTimeFinish(Job* j, unsigned long time) { }
                         std::string getString();
-                        DelayedCompressionManager* copy(std::vector<Job*>* running, std::vector<Job*>* intoRun); 
+                        DelayedCompressionManager* copy(std::vector<Job*>* running, std::vector<Job*>* intoRun);
                     private:
                         int results;
                 };
@@ -248,7 +248,7 @@ namespace SST {
                         void removeJob(Job* j, unsigned long time) { }
                         void reset();
                         std::string getString();
-                        EvenLessManager* copy(std::vector<Job*>* running, std::vector<Job*>* intoRun); 
+                        EvenLessManager* copy(std::vector<Job*>* running, std::vector<Job*>* intoRun);
                     private:
 //                        int results;
                 };

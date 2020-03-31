@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -66,7 +66,7 @@ namespace SST {
                         bool operator()(Job*& j1, Job*& j2) const;
                         bool operator()(Job* const& j1, Job* const& j2) const;
                         std::string toString();
-                        JobComparator(JobComparator* incomp) { 
+                        JobComparator(JobComparator* incomp) {
                            type = incomp -> type;
                         }
                     private:
@@ -80,15 +80,15 @@ namespace SST {
                         long jobNum;
                         int numNodes;
                         unsigned long estComp;
-                        RunningInfo(RunningInfo* inRI) 
+                        RunningInfo(RunningInfo* inRI)
                         {
                             jobNum = inRI -> jobNum;
                             numNodes = inRI -> numNodes;
                             estComp = inRI -> estComp;
                         }
-                        RunningInfo() 
+                        RunningInfo()
                         {
-                        } 
+                        }
                         bool operator()(RunningInfo* r1, RunningInfo* r2) const
                         {
                             if(r1->estComp != r2->estComp) {
@@ -124,11 +124,11 @@ namespace SST {
                 //need to use a set instead of a priority queue to suppport iteration
                 std::set<Job*, JobComparator>* toRun;  //jobs waiting to run
                 JobComparator * comp;
-                
+
                 //keeps track of running jobs in order based on their estimated
                 //completion time.  Must use multi in case jobs end at same
                 //time (careful not to erase jobs by key = finishing time)
-                std::multiset<RunningInfo*, RunningInfo>* running; 
+                std::multiset<RunningInfo*, RunningInfo>* running;
         };
     }
 }

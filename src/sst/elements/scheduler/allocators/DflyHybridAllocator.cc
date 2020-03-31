@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -21,8 +21,8 @@
 // the entire network, where it selects nodes in different groups in a round - robin
 // manner.
 // This policy is published in:
-// Yijia Zhang, Ozan Tuncer, Fulya Kaplan, Katzalin Olcoz, Vitus J Leung, 
-// Ayse K Coskun. Level-Spread: A New Job Allocation Policy for Dragonfly Networks. 
+// Yijia Zhang, Ozan Tuncer, Fulya Kaplan, Katzalin Olcoz, Vitus J Leung,
+// Ayse K Coskun. Level-Spread: A New Job Allocation Policy for Dragonfly Networks.
 // IEEE International Parallel & Distributed Processing Symposium (IPDPS), 2018.
 
 #include "sst_config.h"
@@ -81,7 +81,7 @@ AllocInfo* DflyHybridAllocator::allocate(Job* j)
                     BestRouterFreeNodes = thisRouterFreeNode;
                 }
             }
-            //if job can fit in this router, then 
+            //if job can fit in this router, then
             //we allocate the job to this router simply.
             if (jobSize <= BestRouterFreeNodes) {
                 int nodeID = BestRouter * dMach.nodesPerRouter;
@@ -121,7 +121,7 @@ AllocInfo* DflyHybridAllocator::allocate(Job* j)
                     BestGroupFreeNodes = thisGroupFreeNode;
                 }
             }
-            //if job can fit in this group, then 
+            //if job can fit in this group, then
             //we allocate the job to this group spreadingly.
             if (jobSize <= BestGroupFreeNodes) {
                 int routerID = BestGroup * dMach.routersPerGroup;

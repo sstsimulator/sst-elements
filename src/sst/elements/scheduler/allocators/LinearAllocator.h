@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -89,19 +89,19 @@ namespace SST {
                                 ret.r[6] = r[6] * in.r[0] + r[7] * in.r[3] + r[8] * in.r[6];
                                 ret.r[7] = r[6] * in.r[1] + r[7] * in.r[4] + r[8] * in.r[7];
                                 ret.r[8] = r[6] * in.r[2] + r[7] * in.r[5] + r[8] * in.r[8];
-                                return ret; 
+                                return ret;
                             }
                             void operator=(rotation in) {
                                 for (int x = 0; x < 9; x++) {
                                     r[x] = in.r[x];
                                 }
-                            } 
+                            }
                             void print()
                             {
                                 schedout.output("[%2d %2d %2d\n %2d %2d %2d\n %2d %2d %2d]\n", r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7], r[8]);
                             }
                         };
-                        int tripletoint(triple in) 
+                        int tripletoint(triple in)
                         {
                             return (in.d[0] + in.d[1] * xdim + in.d[2] * xdim * ydim);
                         }

@@ -1,18 +1,18 @@
 
-// Copyright 2011-2018 NTESS. Under the terms                          
-// of Contract DE-NA0003525 with NTESS, the U.S.             
-// Government retains certain rights in this software.                         
-//                                                                             
-// Copyright (c) 2011-2018, NTESS                                      
-// All rights reserved.                                                        
-//                                                                             
+// Copyright 2011-2020 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2011-2020, NTESS
+// All rights reserved.
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
 //
-// This file is part of the SST software package. For license                  
-// information, see the LICENSE file in the top level directory of the         
-// distribution.                                                               
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
 
 #include "sst_config.h"
 #include "ConstraintAllocator.h"
@@ -37,7 +37,7 @@
 
 using namespace SST::Scheduler;
 
-ConstraintAllocator::ConstraintAllocator(SimpleMachine* m, std::string DepsFile, std::string ConstFile, schedComponent* sc) 
+ConstraintAllocator::ConstraintAllocator(SimpleMachine* m, std::string DepsFile, std::string ConstFile, schedComponent* sc)
     : Allocator(*m)
 {
     schedout.init("", 8, 0, Output::STDOUT);
@@ -94,7 +94,7 @@ std::string ConstraintAllocator::getSetupInfo(bool comment) const
     std::string com;
     if (comment) {
         com = "# ";
-    } else { 
+    } else {
         com = "";
     }
     return com + "Constraint Allocator";
@@ -123,11 +123,11 @@ AllocInfo* ConstraintAllocator::allocate(Job* job){
                 int i = 1;
 		for( std::list<std::vector<std::string> * >::iterator constraint_iter = constraints.begin();
 		     constraint_iter != constraints.end(); ++ constraint_iter ){
-                            if (DEBUG) std::cout << "Attempting constraint " << i 
+                            if (DEBUG) std::cout << "Attempting constraint " << i
                                         << " for jobid " << *(job->getID()) << std::endl;
-			top_allocation = allocate_constrained( job, *constraint_iter ); 
+			top_allocation = allocate_constrained( job, *constraint_iter );
                         if (top_allocation != NULL) {
-                            if (DEBUG) std::cout << " SUCCESS in satisfying constraint " << i 
+                            if (DEBUG) std::cout << " SUCCESS in satisfying constraint " << i
                                         << " for jobid " << *(job->getID()) << std::endl;
                             break; // stop searching as soon as a constraint is satisfied
                         }
@@ -137,7 +137,7 @@ AllocInfo* ConstraintAllocator::allocate(Job* job){
 		if( top_allocation != NULL ){
 			allocation = generate_AllocInfo( top_allocation );
 		}else{
-                        if (DEBUG) std::cout << " FAILED to satisfy any constraint" 
+                        if (DEBUG) std::cout << " FAILED to satisfy any constraint"
                                         << " for jobid " << *(job->getID()) << std::endl;
 			allocation = generate_RandomAllocInfo( job );
 		}
@@ -158,7 +158,7 @@ AllocInfo* ConstraintAllocator::allocate(Job* job){
 AllocInfo * ConstraintAllocator::generate_RandomAllocInfo( Job * job ){
 	AllocInfo * alloc = new AllocInfo( job, machine );
 	std::vector<int> * free_comp_nodes = machine.getFreeNodes();
-    
+
     int numNodes = ceil((double) job->getProcsNeeded() / machine.coresPerNode);
 
 	for( int node_counter = 0; node_counter < numNodes; node_counter ++ ){
@@ -175,7 +175,7 @@ AllocInfo * ConstraintAllocator::generate_RandomAllocInfo( Job * job ){
 		alloc->nodeIndices[ node_counter ] = *node_iter;
 		free_comp_nodes->erase( node_iter );
 	}
-	
+
 	delete free_comp_nodes;
 
 	return alloc;
@@ -273,12 +273,12 @@ std::set< std::string > * ConstraintAllocator::get_constrained_leaves( std::stri
 }
 
 
-// returns an allocation satisifying the given constraint, or NULL if it can not be satisifed 
+// returns an allocation satisifying the given constraint, or NULL if it can not be satisifed
 // satisfied means: at least one constrained node used and one constraint node avoided
 ConstrainedAllocation * ConstraintAllocator::allocate_constrained(Job* job, std::vector<std::string> * nodes_on_constraint_line ){
 	std::vector<int> * all_available_compute_nodes = machine.getFreeNodes();
 	std::vector<int> * unconstrained_compute_nodes = machine.getFreeNodes();
-	std::list<std::vector<int> *> * constrained_compute_nodes = new std::list<std::vector<int> *>(); 
+	std::list<std::vector<int> *> * constrained_compute_nodes = new std::list<std::vector<int> *>();
 
 	std::sort( all_available_compute_nodes->begin(), all_available_compute_nodes->end() );
 	std::sort( unconstrained_compute_nodes->begin(), unconstrained_compute_nodes->end() );
@@ -288,19 +288,19 @@ ConstrainedAllocation * ConstraintAllocator::allocate_constrained(Job* job, std:
 	     constraint_node != nodes_on_constraint_line->end(); ++ constraint_node ){
 		std::set<std::string> * dependent_compute_node_IDs = this->get_constrained_leaves( *constraint_node );
 		std::vector<int> * dependent_compute_nodes = new std::vector<int>();
-		
+
 		for( std::vector<int>::iterator comp_node_iter = all_available_compute_nodes->begin();
 		     comp_node_iter != all_available_compute_nodes->end(); ++ comp_node_iter ){
 			if( dependent_compute_node_IDs->find( sc->getNodeID( *comp_node_iter ) ) !=
 			    dependent_compute_node_IDs->end() ){
 				dependent_compute_nodes->push_back( *comp_node_iter );
-				
+
 			}
 		}
 
 		std::sort( dependent_compute_nodes->begin(), dependent_compute_nodes->end() );
 		constrained_compute_nodes->push_back( dependent_compute_nodes );
-		
+
 		std::vector<int> * new_unconstrained_compute_nodes = new std::vector<int>( unconstrained_compute_nodes->size() );
 		std::vector<int>::iterator unconstrained_iter = std::set_difference(
 			unconstrained_compute_nodes->begin(),
@@ -312,9 +312,9 @@ ConstrainedAllocation * ConstraintAllocator::allocate_constrained(Job* job, std:
 		unconstrained_compute_nodes = new_unconstrained_compute_nodes;
 		std::sort( unconstrained_compute_nodes->begin(), unconstrained_compute_nodes->end() );
 	}
-	
+
 	unsigned numNodes = ceil((double) job->getProcsNeeded() / machine.coresPerNode);
-	
+
 	int num_constrained_needed = 0;
 	if( unconstrained_compute_nodes->size() >= numNodes ){
 		num_constrained_needed = 1;
@@ -401,8 +401,8 @@ bool ConstraintAllocator::try_to_remove_constraint_set( unsigned int num_constra
 	     constraint_node != constrained_compute_nodes->end(); ++ constraint_node ){
 
 		if( (all_nodes->size() - (*constraint_node)->size()) >= num_constrained_needed ){
-		    if (DEBUG) std::cout << " Removing node " << i << ": allsize-thissize >= needed (" << 
-                                        all_nodes->size() << "-" << (*constraint_node)->size() << " >= " <<  
+		    if (DEBUG) std::cout << " Removing node " << i << ": allsize-thissize >= needed (" <<
+                                        all_nodes->size() << "-" << (*constraint_node)->size() << " >= " <<
                                         num_constrained_needed << ")" << std::endl;
 			std::vector<int> * removed_constraint = *constraint_node;
 			constrained_compute_nodes->erase( constraint_node ); // remove this constraint node

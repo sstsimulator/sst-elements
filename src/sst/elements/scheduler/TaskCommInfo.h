@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -29,7 +29,7 @@ namespace SST {
         class Job;
 
         class TaskCommInfo {
-        
+
 	        public:
 		        TaskCommInfo(Job* job); //default: all-to-all communication
 	            TaskCommInfo(Job* job, std::vector<std::map<int,int> >* inCommInfo, int centerTask = -1); // communication matrix input
@@ -37,9 +37,9 @@ namespace SST {
 	            TaskCommInfo(Job* job, std::vector<std::map<int,int> >* inCommInfo, double** inCoords, int centerTask = -1); //coordinate input
 
                 TaskCommInfo(const TaskCommInfo& tci);
-                
+
                 ~TaskCommInfo();
-                
+
                 enum commType{
                     ALLTOALL = 0,
                     CUSTOM = 1,
@@ -66,7 +66,7 @@ namespace SST {
                 std::vector<std::map<int,int> >* commInfo;
 
 		        unsigned int size;
-		        
+
 		        void init(Job* job);
 		        int** buildMeshMatrix() const; //builds mesh structured communication matrix
 		        int** buildAllToAllMatrix(int size) const;

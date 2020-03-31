@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -54,7 +54,7 @@ Job::Job(const Job &job) : commInfo(job.commInfo)
     ID = job.ID;
     startTime = job.startTime;
     hasRun = job.hasRun;
-    started = job.started;  
+    started = job.started;
     if(job.taskCommInfo == NULL){
         taskCommInfo = NULL;
     } else {
@@ -71,7 +71,7 @@ Job::~Job()
 
 //Helper for constructors
 void Job::initialize(unsigned long arrivalTime, int procsNeeded,
-                     unsigned long actualRunningTime, unsigned long estRunningTime) 
+                     unsigned long actualRunningTime, unsigned long estRunningTime)
 {
     //make sure estimate is valid; workload log uses -1 for "no estimate"
     if (estRunningTime < actualRunningTime || (unsigned long)-1 == estRunningTime) {
@@ -101,12 +101,12 @@ std::string Job::toString()
 }
 
 //starts a job
-void Job::start(unsigned long time) 
+void Job::start(unsigned long time)
 {
     if ((unsigned long)-1 != startTime) {
         schedout.fatal(CALL_INFO, 1, "attempt to start an already-running job: %s\n", toString().c_str());
     }
-    started = true; 
+    started = true;
     startTime = time;
 }
 
@@ -120,7 +120,7 @@ void Job::reset()
 void Job::startsAtTime(unsigned long time)
 {
     startTime = time;
-    hasRun = true; 
-    started = true; 
+    hasRun = true;
+    started = true;
 }
 

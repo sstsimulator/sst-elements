@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -90,7 +90,7 @@ void readDelaysIntoMap( Tokenizer< escaped_list_separator > Tokenizer, std::map<
 
 
 nodeComponent::nodeComponent(ComponentId_t id, Params& params) :
-    Component(id), jobNum(-1) 
+    Component(id), jobNum(-1)
 {
     schedout.init("", 8, ~0, Output::STDOUT);
 
@@ -161,7 +161,7 @@ nodeComponent::nodeComponent(ComponentId_t id, Params& params) :
 
 
 void nodeComponent::setup()
-{ 
+{
 	yumyumFaultRand48State[0] = 0x330E;
 	yumyumFaultRand48State[1] = (yumyumFaultRand48Seed ^ nodeNum) & 0xFFFF;
 	yumyumFaultRand48State[2] = (yumyumFaultRand48Seed ^ nodeNum) >> 16;
@@ -232,7 +232,7 @@ void nodeComponent::handleJobKillEvent(JobKillEvent * killEvent)
 {
     if (killEvent -> jobNum == this -> jobNum && Scheduler){
         CompletionEvent *ec = new CompletionEvent(jobNum);
-        Scheduler -> send(ec); 
+        Scheduler -> send(ec);
 
         killedJobs.insert(std::pair<int, int>(jobNum,jobNum));
         jobNum = -1;
@@ -301,7 +301,7 @@ void nodeComponent::handleFaultEvent(SST::Event * ev)
         if (!canCorrectError(faultEvent)) {
             if (Scheduler && jobNum != -1) {
                 /* Kill the job if:
-                 * 
+                 *
                  * - The fault event doesn't say to kill the job or let it live and EITHER
                  *   - there is no jobKillProbability associated with this fault type OR
                  *   - a random number is under the jobKillProbability
@@ -311,11 +311,11 @@ void nodeComponent::handleFaultEvent(SST::Event * ev)
                     || (jobKillProbability.find( faultEvent -> faultType ) == jobKillProbability.end()
                         || erand48( yumyumJobKillRand48State ) < jobKillProbability.find( faultEvent -> faultType ) -> second) ) {
 
-                    //SelfLink->send( getCurrentSimTime(), new JobKillEvent( this->jobNum ) ); 
+                    //SelfLink->send( getCurrentSimTime(), new JobKillEvent( this->jobNum ) );
 
                     faultEvent -> jobNum = jobNum;
                     faultEvent -> nodeNumber = nodeNum;
-                    Scheduler -> send((unsigned int)genFaultLatency(faultEvent -> faultType), faultEvent -> copy()); 
+                    Scheduler -> send((unsigned int)genFaultLatency(faultEvent -> faultType), faultEvent -> copy());
                     // send the fault on to the scheduler.  It should tell the other nodes to kill the job.
 
                 }
@@ -328,7 +328,7 @@ void nodeComponent::handleFaultEvent(SST::Event * ev)
                     }
                 }
                 for (std::vector<SST::Link *>::iterator it = ChildFaultLinks.begin(); it != ChildFaultLinks.end(); ++it) {
-                    (*it) -> send((unsigned int)genFaultLatency( faultEvent -> faultType ), faultEvent -> copy()); 
+                    (*it) -> send((unsigned int)genFaultLatency( faultEvent -> faultType ), faultEvent -> copy());
                 }
             }
         }
@@ -352,7 +352,7 @@ void nodeComponent::handleEvent(Event *ev) {
                 event -> payload = &this -> ID;
                 event -> reply = true;
 
-                Scheduler -> send(event); 
+                Scheduler -> send(event);
                 return;
             }else{
                 event->payload = &this->ID;
@@ -377,13 +377,13 @@ void nodeComponent::handleEvent(Event *ev) {
 
         event -> payload = this;
 
-        Builder -> send(event); 
+        Builder -> send(event);
         return;
     }
 
 
     JobStartEvent *event = dynamic_cast<JobStartEvent*>(ev);
-    if (event) {  
+    if (event) {
         if (-1 == jobNum) {
             //std::cout << "Received JobStartEvent at Node " << this->nodeNum << std::endl;//NetworkSim: debug
             jobNum = event -> jobNum;
@@ -402,7 +402,7 @@ void nodeComponent::handleEvent(Event *ev) {
 
         handleFaultEvent(ev);
 
-    } else if (dynamic_cast<JobKillEvent*>(ev)) { 
+    } else if (dynamic_cast<JobKillEvent*>(ev)) {
         handleJobKillEvent(dynamic_cast<JobKillEvent*>(ev));
         delete ev;
     } else {
@@ -417,14 +417,14 @@ void nodeComponent::handleEvent(Event *ev) {
 /*
  *  Handle all events coming in on the self link
  */
-void nodeComponent::handleSelfEvent(Event *ev) 
+void nodeComponent::handleSelfEvent(Event *ev)
 {
     JobStartEvent *event = dynamic_cast<JobStartEvent*>(ev);
     if (event) {
         if (killedJobs.erase(event -> jobNum) == 1) {
         } else if (event -> jobNum == jobNum) {
             CompletionEvent *ec = new CompletionEvent(jobNum);
-            Scheduler -> send(ec); 
+            Scheduler -> send(ec);
             jobNum = -1;
         } else {
             schedout.fatal(CALL_INFO, 1, "Error!! We are not running this job we're supposed to finish!\n");
@@ -457,7 +457,7 @@ void nodeComponent::handleSelfEvent(Event *ev)
 }
 
 
-double urand( unsigned short int * seed ) 
+double urand( unsigned short int * seed )
 {
     //	return(rand() + 1.0)/(RAND_MAX + 1.0);
     return (((int)nrand48(seed)) + 1.0) / (pow(2.0, 31) + 1.0);
@@ -494,7 +494,7 @@ void nodeComponent::sendNextFault(std::string faultType)
      * Don't just check if the fault time is zero, the PRNG could be at fault for that one, and it would be OK.
      */
     if (std::isfinite(-1 / (Faults.find( faultType.c_str() ) -> second / lambdaScale))) {
-        SelfLink -> send(fail_time, new FaultEvent(faultType)); 
+        SelfLink -> send(fail_time, new FaultEvent(faultType));
     }
 }
 

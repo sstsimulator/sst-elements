@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -21,8 +21,8 @@
 // the entire network, where it selects nodes in different groups in a round - robin
 // manner.
 // This policy is published in:
-// Yijia Zhang, Ozan Tuncer, Fulya Kaplan, Katzalin Olcoz, Vitus J Leung, 
-// Ayse K Coskun. Level-Spread: A New Job Allocation Policy for Dragonfly Networks. 
+// Yijia Zhang, Ozan Tuncer, Fulya Kaplan, Katzalin Olcoz, Vitus J Leung,
+// Ayse K Coskun. Level-Spread: A New Job Allocation Policy for Dragonfly Networks.
 // IEEE International Parallel & Distributed Processing Symposium (IPDPS), 2018.
 
 #ifndef SST_SCHEDULER_DFLYHYBRIDALLOCATOR_H__
