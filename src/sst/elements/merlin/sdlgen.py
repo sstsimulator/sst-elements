@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 #
-# Copyright 2009-2019 NTESS. Under the terms
+# Copyright 2009-2020 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2019, NTESS
+# Copyright (c) 2009-2020, NTESS
 # All rights reserved.
 #
 # Portions are copyright of other developers:
@@ -40,7 +40,7 @@ class Topo:
         pass
     def formatSDL(self, out, endPoint):
         pass
-        
+
 
 class topoSimple:
     def getName(self):
@@ -76,7 +76,7 @@ class topoSimple:
             endPoint.formatComp(out, "nic:%d"%l, l, "link:%d"%l, dict())
             out.write("\n")
 
-        
+
 
 
 class topoTorus(Topo):
@@ -156,7 +156,7 @@ class topoTorus(Topo):
 
         def formatLoc(dims):
             return "x".join([str(x) for x in dims])
-            
+
 
         num_routers = params["peers"] / params["torus:local_ports"]
 
@@ -388,7 +388,7 @@ class topoDragonFly(Topo):
                         dst = max(p,r)
                         out.write("    <link name=link:g%dr%dr%d port=port%d latency=%s />\n" % (g, src, dst, port, params["link_lat"]))
                         port = port + 1
-                
+
                 for p in xrange(params["dragonfly:intergroup_per_router"]):
                     if (tgt_grp%params["dragonfly:num_groups"]) == g:
                         tgt_grp = tgt_grp +1
@@ -425,7 +425,7 @@ class EndPoint:
         pass
     def formatComp(self, out, name, num, linkName, extraParams):
         pass
-        
+
 
 
 
@@ -568,6 +568,6 @@ if __name__ == "__main__":
     print "Please enter the target output file  :"
     filename = raw_input()
 
-    
+
     generateSDL(filename, topo, endPoint)
 

@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -76,19 +76,19 @@ LinkControl::LinkControl(ComponentId_t cid, Params &params, int vns) :
     if ( isAnonymous() ) {
         port_name = params.find<std::string>("port_name");
     }
-    
+
     rtr_link = configureLink(port_name, std::string("1GHz"), new Event::Handler<LinkControl>(this,&LinkControl::handle_input));
-    
+
     output_timing = configureSelfLink(port_name + "_output_timing", "1GHz",
             new Event::Handler<LinkControl>(this,&LinkControl::handle_output));
 
-    
+
     // Input and output buffers.  Not all of them can be set up now.
     // Only those that are sized based on req_vns can be intialized
     // now.  Others will wait until init when we find out the rest of
     // the VN usage.
     input_queues = new network_queue_t[req_vns];
-    
+
     // Need to wait to do output_queues, router_credits
 
     // See if there is a vn_map set
@@ -103,7 +103,7 @@ LinkControl::LinkControl(ComponentId_t cid, Params &params, int vns) :
             vn_out_map[i] = vn_map_vec[i];
         }
     }
-    
+
 
     // See if we need to set up a nid map
     bool found = false;
@@ -141,7 +141,7 @@ LinkControl::LinkControl(ComponentId_t cid, Params &params, int vns) :
     }
 
 
-    
+
     // Register statistics
     packet_latency = registerStatistic<uint64_t>("packet_latency");
     send_bit_count = registerStatistic<uint64_t>("send_bit_count");
@@ -182,7 +182,7 @@ void LinkControl::init(unsigned int phase)
         init_ev->command = RtrInitEvent::REPORT_BW;
         init_ev->ua_value = link_bw;
         rtr_link->sendUntimedData(init_ev);
-        
+
         // In phase zero, send the number of VNs
         RtrInitEvent* ev = new RtrInitEvent();
         ev->command = RtrInitEvent::REQUEST_VNS;
@@ -205,12 +205,12 @@ void LinkControl::init(unsigned int phase)
         flit_size_ua = init_ev->ua_value;
         flit_size = flit_size_ua.getRoundedValue();
         delete ev;
-        
+
         // Need to reset the time base of the output link
         UnitAlgebra link_clock = link_bw / flit_size_ua;
         TimeConverter* tc = getTimeConverter(link_clock);
         output_timing->setDefaultTimeBase(tc);
-        
+
         // Initialize links
         // Receive the endpoint ID from PortControl
         ev = rtr_link->recvInitData();
@@ -236,7 +236,7 @@ void LinkControl::init(unsigned int phase)
         }
 
         delete ev;
-        
+
         }
         break;
     case 2:
@@ -277,7 +277,7 @@ void LinkControl::init(unsigned int phase)
             router_credits[i] = 0;
         }
 
-        
+
         int* vn_count = new int[total_vns];
         for ( int i = 0; i < total_vns; ++i ) vn_count[i] = 0;
 
@@ -296,7 +296,7 @@ void LinkControl::init(unsigned int phase)
             }
         }
 
-        // Instance the output queues        
+        // Instance the output queues
         int count = 0;
         vn_remap_out = new output_queue_bundle_t*[req_vns];
         output_queues = new output_queue_bundle_t[used_vns];
@@ -439,7 +439,7 @@ bool LinkControl::send(SimpleNetwork::Request* req, int vn) {
     // Update the credits
     out_handle.credits -= flits;
     // ev->request->vn = vn;
-    
+
     ev->setInjectionTime(getCurrentSimTimeNano());
     out_handle.queue.push(ev);
     if ( waiting && !have_packets ) {
@@ -492,7 +492,7 @@ SST::Interfaces::SimpleNetwork::Request* LinkControl::recv(int vn) {
     if ( nid_map ) ret->dest = logical_nid;
     event->request = NULL;
     delete event;
-; 
+;
     return ret;
 }
 
@@ -557,7 +557,7 @@ void LinkControl::handle_input(Event* ev)
         // int actual_vn = vn_remap_in[event->request->vn] / checker_board_factor;
         int orig_vn = event->getOriginalVN();
         event->request->vn = orig_vn;
-        
+
         input_queues[orig_vn].push(event);
         if (is_idle) {
             idle_time->addData(Simulation::getSimulation()->getCurrentSimCycle() - idle_start);
@@ -607,7 +607,7 @@ void LinkControl::handle_output(Event* ev)
         found = true;
         break;
     }
-    
+
     if (!found)  {
         for ( int i = 0; i < curr_out_vn; i++ ) {
             if ( output_queues[i].queue.empty() ) continue;
@@ -630,13 +630,13 @@ void LinkControl::handle_output(Event* ev)
 
         // Send an event to wake up again after this packet is sent.
         output_timing->send(size,NULL);
-        
+
         curr_out_vn = vn_to_send + 1;
         if ( curr_out_vn == used_vns ) curr_out_vn = 0;
 
         // Add in inject time so we can track latencies
         send_event->setInjectionTime(getCurrentSimTimeNano());
-        
+
         // Subtract credits
         // rtr_credits[vn_to_send] -= size;
         router_credits[output_queues[vn_to_send].vn] -= size;
@@ -647,7 +647,7 @@ void LinkControl::handle_output(Event* ev)
         }
 
         rtr_link->send(send_event);
-        
+
         if ( send_event->getTraceType() == SimpleNetwork::Request::FULL ) {
             output.output("TRACE(%d): %" PRIu64 " ns: Sent an event to router from LinkControl"
                           " in NIC: %s on VN %d to dest %" PRIu64 ".\n",

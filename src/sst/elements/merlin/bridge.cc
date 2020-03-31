@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -55,16 +55,16 @@ void Bridge::configureNIC(uint8_t id, SST::Params &params)
     Nic_t &nic = interfaces[id];
 
     Params if_params;
-    
+
     if_params.insert("link_bw",params.find<std::string>("network_bw","80GiB/s"));
     if_params.insert("input_buf_size",params.find<std::string>("network_input_buffer_size", "1KiB"));
-    if_params.insert("output_buf_size",params.find<std::string>("network_output_buffer_size", "1KiB"));            
+    if_params.insert("output_buf_size",params.find<std::string>("network_output_buffer_size", "1KiB"));
     if_params.insert("port_name","network" + std::to_string(id));
-    
+
     nic.nic = loadAnonymousSubComponent<SST::Interfaces::SimpleNetwork>
         ("merlin.linkcontrol", "networkIF", id,
          ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, if_params, 1 /* vns */);
-    
+
 
     // nic.nic = (SimpleNetwork*)loadSubComponent("merlin.linkcontrol", this, params);
     // nic.nic->initialize( "network" + std::to_string(id),

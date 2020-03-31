@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -47,7 +47,7 @@ TrafficGen::TrafficGen(ComponentId_t cid, Params& params) :
 {
 
     out.init(getName() + ": ", 0, 0, Output::STDOUT);
-    
+
     id = params.find<int>("id",-1);
     if ( id == -1 ) {
         out.fatal(CALL_INFO, -1, "id must be set!\n");
@@ -63,7 +63,7 @@ TrafficGen::TrafficGen(ComponentId_t cid, Params& params) :
     //     out.fatal(CALL_INFO, -1, "num_vns must be set!\n");
     // }
     num_vns = 1;
-    
+
     addressMode = SEQUENTIAL;
 
     // Create a LinkControl object
@@ -72,15 +72,15 @@ TrafficGen::TrafficGen(ComponentId_t cid, Params& params) :
         ("networkIF", ComponentInfo::SHARE_NONE, num_vns );
 
     if ( !link_control ) {
-        
+
         // Just load the default
         Params if_params;
-        
+
         if_params.insert("link_bw",params.find<std::string>("link_bw"));
         if_params.insert("input_buf_size",params.find<std::string>("buffer_length","1kB"));
-        if_params.insert("output_buf_size",params.find<std::string>("buffer_length","1kB"));            
+        if_params.insert("output_buf_size",params.find<std::string>("buffer_length","1kB"));
         if_params.insert("port_name","rtr");
-        
+
         link_control = loadAnonymousSubComponent<SST::Interfaces::SimpleNetwork>
             ("merlin.linkcontrol", "networkIF", 0,
              ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, if_params, num_vns /* vns */);
@@ -111,8 +111,8 @@ TrafficGen::TrafficGen(ComponentId_t cid, Params& params) :
     }
 
     base_packet_size = packet_size.getRoundedValue();
-    
-    
+
+
     // base_packet_delay = params.find_integer("delay_between_packets", 0);
     packetDelayGen = buildGenerator("PacketDelay", params);
     if ( packetDelayGen ) packetDelayGen->seed(id);
@@ -227,7 +227,7 @@ TrafficGen::clock_handler(Cycle_t cycle)
                 // req->givePayload(NULL);
                 req->head = true;
                 req->tail = true;
-                
+
                 switch ( addressMode ) {
                 case SEQUENTIAL:
                     req->dest = target;

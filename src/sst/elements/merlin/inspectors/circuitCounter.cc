@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -25,7 +25,7 @@ namespace Merlin {
 SST::Core::ThreadSafe::Spinlock CircNetworkInspector::mapLock;
 CircNetworkInspector::setMap_t CircNetworkInspector::setMap;
 
-CircNetworkInspector::CircNetworkInspector(SST::ComponentId_t id, 
+CircNetworkInspector::CircNetworkInspector(SST::ComponentId_t id,
                                            SST::Params &params, const std::string& sub_id) :
         SimpleNetwork::NetworkInspector(id) {
     outFileName = params.find<std::string>("output_file");
@@ -35,14 +35,14 @@ CircNetworkInspector::CircNetworkInspector(SST::ComponentId_t id,
 
     {
         mapLock.lock();
-        
+
         // use router name as the key
         // Get router name from my name
         string fullname = getName();
 
         // Nmae of router is the name before the first :
         int index = fullname.find(":");
-        
+
         const string &key = index == string::npos ? fullname : fullname.substr(0,index);
         // look up our key
         setMap_t::iterator iter = setMap.find(key);
@@ -55,10 +55,10 @@ CircNetworkInspector::CircNetworkInspector(SST::ComponentId_t id,
             // someone else created the set already
             uniquePaths = iter->second;
         }
-        
+
         mapLock.unlock();
     }
-}    
+}
 
 
 #ifndef SST_ENABLE_PREVIEW_BUILD
@@ -66,14 +66,14 @@ void CircNetworkInspector::initialize(string id) {
     // critical section for accessing the map
     {
         mapLock.lock();
-        
+
         // use router name as the key
         // Get router name from my name
         string fullname = getName();
 
         // Nmae of router is the name before the first :
         int index = fullname.find(":");
-        
+
         const string &key = index == string::npos ? fullname : fullname.substr(0,index);
         // look up our key
         setMap_t::iterator iter = setMap.find(key);
@@ -86,7 +86,7 @@ void CircNetworkInspector::initialize(string id) {
             // someone else created the set already
             uniquePaths = iter->second;
         }
-        
+
         mapLock.unlock();
     }
 }
@@ -102,26 +102,26 @@ void CircNetworkInspector::finish() {
     // critical section for accessing the map
     {
         mapLock.lock();
-        
+
         if (!setMap.empty()) {
             // create new file
             SST::Output* output_file = new SST::Output("",0,0,
-                                                       SST::Output::FILE, 
+                                                       SST::Output::FILE,
                                                        outFileName);
-            
+
             for(setMap_t::iterator i = setMap.begin();
                 i != setMap.end(); ++i) {
                 // print
-                output_file->output(CALL_INFO, "%s %" PRIu64 "\n", 
-                                    i->first.c_str(), 
+                output_file->output(CALL_INFO, "%s %" PRIu64 "\n",
+                                    i->first.c_str(),
                                     (unsigned long long)i->second->size());
                 // clean up
                 delete(i->second);
             }
         }
-        
+
         setMap.clear();
-        
+
         mapLock.unlock();
     }
 }

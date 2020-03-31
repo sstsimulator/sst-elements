@@ -1,12 +1,12 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -39,7 +39,7 @@ public:
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Fattree topology object",
         SST::Merlin::Topology)
-    
+
     SST_ELI_DOCUMENT_PARAMS(
         {"fattree:shape",               "Shape of the fattree"},
         {"fattree:routing_alg",         "Routing algorithm to use. [deterministic | adaptive]","deterministic"},
@@ -50,7 +50,7 @@ public:
         {"adaptive_threshold",  "Threshold used to determine if a packet will adaptively route."}
     )
 
-    
+
 private:
     int rtr_level;
     int level_id;
@@ -67,15 +67,15 @@ private:
     int down_ports;
     int num_ports;
     int num_vcs;
-    
+
     int const* outputCredits;
     int* thresholds;
     bool allow_adaptive;
     double adaptive_threshold;
-    
+
     void parseShape(const std::string &shape, int *downs, int *ups) const;
 
-    
+
 public:
     topo_fattree(ComponentId_t cid, Params& params, int num_ports, int rtr_id);
     ~topo_fattree();
@@ -94,7 +94,7 @@ public:
     virtual void setOutputBufferCreditArray(int const* array, int vcs);
 
     virtual int computeNumVCs(int vns) {return vns;}
-    
+
 };
 
 }

@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -40,13 +40,13 @@ public:
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Least recently used arbitration unit with \"infiinite crossbar\" for hr_router",
         SST::Merlin::XbarArbitration)
-    
-    
+
+
 private:
     int num_ports;
     int num_vcs;
-        
-#if VERIFY_DECLOCKING    
+
+#if VERIFY_DECLOCKING
     int rr_port_shadow;
 #endif
 
@@ -54,13 +54,13 @@ private:
     priority_entry_t* priority[2];
     priority_entry_t* cur_list;
     priority_entry_t* next_list;
-    
+
     int total_entries;
-    
+
     internal_router_event** vc_heads;
 
     // PortControl** ports;
-    
+
 public:
 
     xbar_arb_lru_infx(ComponentId_t cid, Params& params) :
@@ -81,7 +81,7 @@ public:
         priority[1] = new priority_entry_t[total_entries];
         cur_list = priority[0];
         next_list = priority[1];
-        
+
         int index = 0;
         for ( int i = 0; i < num_ports; i++ ) {
             for ( int j = 0; j < num_vcs; j++ ) {
@@ -89,10 +89,10 @@ public:
             }
         }
 
-        
+
         vc_heads = new internal_router_event*[num_vcs];
     }
-    
+
     // Naming convention is from point of view of the xbar.  So,
     // in_port_busy is >0 if someone is writing to that xbar port and
     // out_port_busy is >0 if that xbar port being read.
@@ -105,35 +105,35 @@ public:
                    )
     {
         // TraceFunction trace(CALL_INFO_LONG);
-        
+
         for ( int i = 0; i < num_ports; i++ ) progress_vc[i] = -1;
-        
+
 
         priority_entry_t* sat_list = &next_list[total_entries-1];
         priority_entry_t* unsat_list = next_list;
-        
+
         for ( int i = 0; i < total_entries; i++ ) {
-                    
+
             const priority_entry_t& check = cur_list[i];
 
             /* std::cout << check.first << ", " << check.second << std::endl; */
-            
+
             int port = check.first;
             int vc = check.second;
 
             // std::cout << check.first << ", " << check.second << std::endl;
-            
+
             vc_heads = ports[port]->getVCHeads();
-            
+
             internal_router_event* src_event = vc_heads[vc];
 
             // trace.getOutput().output("Got to here 1\n");
-            
+
             // If there's an event, see if we can progress it
             if ( src_event != NULL) {
                 int next_port = src_event->getNextPort();
                 int next_vc = src_event->getVC();
-            
+
                 // Move the packet as long as there is space in the output buffer
                 if ( ports[next_port]->spaceToSend(next_vc, src_event->getFlitCount()) ) {
 
@@ -145,8 +145,8 @@ public:
                     // trace.getOutput().output("%p\n",ev);
                     ports[ev->getNextPort()]->send(ev,ev->getVC());
                     // trace.getOutput().output("Got to here 3\n");
-                    
-                    
+
+
                     // Copy data to new list.  This goes at the bottom since it was satisfied
                     *sat_list = check;
                     --sat_list;
@@ -180,7 +180,7 @@ public:
         next_list = tmp;
         return;
     }
-    
+
     void reportSkippedCycles(Cycle_t cycles) {
     }
 
@@ -191,9 +191,9 @@ public:
         /*     stream << i << ": " << rr_vcs[i] << std::endl; */
         /* } */
     }
-    
+
 };
- 
+
 }
 }
 

@@ -1,12 +1,12 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -42,7 +42,7 @@ public:
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Simple NIC to test base functionality.",
         COMPONENT_CATEGORY_NETWORK)
-    
+
     SST_ELI_DOCUMENT_PARAMS(
         {"id",           "Network ID of endpoint."},
         {"num_peers",    "Total number of endpoints in network."},
@@ -70,12 +70,12 @@ private:
     int num_msg;
     int group_offset;
     int group_peers;
-    
+
     int packets_sent;
     int packets_recd;
     int stalled_cycles;
     int expected_recv_count;
-    
+
     bool done;
     bool initialized;
     int init_state;
@@ -83,22 +83,22 @@ private:
     int init_broadcast_count;
 
     bool send_untimed_bcast;
-    
+
     SST::Interfaces::SimpleNetwork* link_control;
 
     int last_target;
-    
+
     int *next_seq;
 
     Output& output;
-    
+
 public:
     nic(ComponentId_t cid, Params& params);
     ~nic();
 
     void init(unsigned int phase);
     void complete(unsigned int phase);
-    void setup(); 
+    void setup();
     void finish();
 
 

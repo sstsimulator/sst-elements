@@ -1,12 +1,12 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -33,11 +33,11 @@ namespace SST {
 namespace Merlin {
 
 #define VERIFY_DECLOCKING 0
-    
+
 const int INIT_BROADCAST_ADDR = -1;
 
 class TopologyEvent;
-    
+
 class Router : public Component {
 private:
     bool requestNotifyOnEvent;
@@ -53,7 +53,7 @@ protected:
     { requestNotifyOnEvent = state; }
 
     int vcs_with_data;
-    
+
 public:
 
     Router(ComponentId_t id) :
@@ -63,9 +63,9 @@ public:
     {}
 
     virtual ~Router() {}
-    
+
     inline bool getRequestNotifyOnEvent() { return requestNotifyOnEvent; }
-   
+
     virtual void notifyEvent() {}
 
     inline void inc_vcs_with_data() { vcs_with_data++; }
@@ -90,8 +90,8 @@ public:
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         Event::serialize_order(ser);
         ser & type;
-    }    
-    
+    }
+
 protected:
     BaseRtrEvent(RtrEventType type) :
         Event(),
@@ -104,13 +104,13 @@ private:
 
     ImplementSerializable(SST::Merlin::BaseRtrEvent);
 };
-    
+
 
 class RtrEvent : public BaseRtrEvent {
 
 public:
     SST::Interfaces::SimpleNetwork::Request* request;
-    
+
     RtrEvent() :
         BaseRtrEvent(BaseRtrEvent::PACKET),
         injectionTime(0)
@@ -124,12 +124,12 @@ public:
         injectionTime(0)
     {}
 
-    
+
     ~RtrEvent()
     {
         delete request;
     }
-    
+
     inline void setInjectionTime(SimTime_t time) {injectionTime = time;}
     // inline void setTraceID(int id) {traceID = id;}
     // inline void setTraceType(TraceType type) {trace = type;}
@@ -142,13 +142,13 @@ public:
     inline SimTime_t getInjectionTime(void) const { return injectionTime; }
     inline SST::Interfaces::SimpleNetwork::Request::TraceType getTraceType() const {return request->getTraceType();}
     inline int getTraceID() const {return request->getTraceID();}
-    
+
     inline void setSizeInFlits(int size ) {size_in_flits = size; }
     inline int getSizeInFlits() { return size_in_flits; }
 
     inline SST::Interfaces::SimpleNetwork::nid_t getTrustedSrc() { return trusted_src; }
     inline int getOriginalVN() { return original_vn; }
-    
+
     virtual void print(const std::string& header, Output &out) const  override {
         out.output("%s RtrEvent to be delivered at %" PRIu64 " with priority %d. src = %lld (logical: %lld), dest = %lld\n",
                    header.c_str(), getDeliveryTime(), getPriority(), trusted_src, request->src, request->dest);
@@ -163,7 +163,7 @@ public:
         ser & size_in_flits;
         ser & injectionTime;
     }
-    
+
 private:
     // TraceType trace;
     // int traceID;
@@ -173,14 +173,14 @@ private:
     int size_in_flits;
 
     ImplementSerializable(SST::Merlin::RtrEvent)
-    
+
 };
 
 class TopologyEvent : public BaseRtrEvent {
     // Allows Topology events to consume bandwidth.  If this is set to
     // zero, then no bandwidth is consumed.
     int size_in_flits;
-    
+
 public:
     TopologyEvent(int size_in_flits) :
 	BaseRtrEvent(BaseRtrEvent::TOPOLOGY),
@@ -204,7 +204,7 @@ public:
         BaseRtrEvent::serialize_order(ser);
         ser & size_in_flits;
     }
-    
+
     ImplementSerializable(SST::Merlin::TopologyEvent);
 };
 
@@ -233,11 +233,11 @@ public:
         ser & vc;
         ser & credits;
     }
-    
+
 private:
 
     ImplementSerializable(SST::Merlin::credit_event)
-    
+
 };
 
 class RtrInitEvent : public BaseRtrEvent {
@@ -269,8 +269,8 @@ public:
         ser & int_value;
         ser & ua_value;
     }
-    
-    
+
+
 private:
     ImplementSerializable(SST::Merlin::RtrInitEvent)
 };
@@ -341,7 +341,7 @@ public:
         ser & credit_return_vc;
         ser & encap_ev;
     }
-    
+
 private:
     ImplementSerializable(SST::Merlin::internal_router_event)
 };
@@ -351,7 +351,7 @@ public:
 
     // Parameters are:  num_ports, id
     SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Merlin::Topology, int, int)
-    
+
     enum PortState {R2R, R2N, UNCONNECTED};
     Topology(ComponentId_t cid) : SubComponent(cid), output(Simulation::getSimulation()->getSimulationOutput()) {}
     virtual ~Topology() {}
@@ -359,12 +359,12 @@ public:
     virtual void route(int port, int vc, internal_router_event* ev) = 0;
     virtual void reroute(int port, int vc, internal_router_event* ev)  { route(port,vc,ev); }
     virtual internal_router_event* process_input(RtrEvent* ev) = 0;
-	
+
     // Returns whether the port is a router to router, router to nic, or unconnected
     virtual PortState getPortState(int port) const = 0;
     inline bool isHostPort(int port) const { return getPortState(port) == R2N; }
     virtual std::string getPortLogicalGroup(int port) const {return "";}
-    
+
     // Methods used during init phase to route init messages
     virtual void routeInitData(int port, internal_router_event* ev, std::vector<int> &outPorts) = 0;
     virtual internal_router_event* process_InitData_input(RtrEvent* ev) = 0;
@@ -373,7 +373,7 @@ public:
     virtual int computeNumVCs(int vns) {return vns;}
     // Method used to set endpoint ID
     virtual int getEndpointID(int port) {return -1;}
-    
+
     // Sets the array that holds the credit values for all the output
     // buffers.  Format is:
     // For port=n, VC=x, location in array is n*num_vcs + x.
@@ -383,11 +383,11 @@ public:
     // will need to overload function to store it.
     virtual void setOutputBufferCreditArray(int const* array, int vcs) {};
     virtual void setOutputQueueLengthsArray(int const* array, int vcs) {};
-	
+
     // When TopologyEvents arrive, they are sent directly to the
     // topology object for the router
     virtual void recvTopologyEvent(int port, TopologyEvent* ev) {};
-    
+
 protected:
     Output &output;
 };
@@ -415,7 +415,7 @@ public:
     // the next event.
     virtual internal_router_event* recv(int vc) = 0;
     virtual internal_router_event** getVCHeads() = 0;
-    
+
     // time_base is a frequency which represents the bandwidth of the link in flits/second.
     PortInterface(ComponentId_t cid) :
         SubComponent(cid)
@@ -430,26 +430,26 @@ public:
     // void finish();
     // void init(unsigned int phase);
     // void complete(unsigned int phase);
-    
+
 
     virtual void sendInitData(Event *ev) = 0;
     virtual Event* recvInitData() = 0;
     virtual void sendUntimedData(Event *ev) = 0;
     virtual Event* recvUntimedData() = 0;
-    
+
     virtual void dumpState(std::ostream& stream) {}
     virtual void printStatus(Output& out, int out_port_busy, int in_port_busy) {}
-    
+
     // void setupVCs(int vcs, internal_router_event** vc_heads
 	virtual bool decreaseLinkWidth() = 0;
-	virtual bool increaseLinkWidth() = 0; 
+	virtual bool increaseLinkWidth() = 0;
 
 
     class OutputArbitration : public SubComponent {
     public:
 
         SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Merlin::PortInterface::OutputArbitration)
-    
+
         OutputArbitration(ComponentId_t cid) :
             SubComponent(cid)
         {}
@@ -469,7 +469,7 @@ class XbarArbitration : public SubComponent {
 public:
 
     SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Merlin::XbarArbitration)
-    
+
     XbarArbitration(ComponentId_t cid) :
         SubComponent(cid)
     {}
@@ -484,7 +484,7 @@ public:
     virtual bool isOkayToPauseClock() { return true; }
     virtual void reportSkippedCycles(Cycle_t cycles) {};
     virtual void dumpState(std::ostream& stream) {};
-	
+
 };
 
 }

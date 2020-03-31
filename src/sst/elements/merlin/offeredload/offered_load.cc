@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -42,11 +42,11 @@ OfferedLoad::OfferedLoad(ComponentId_t cid, Params& params) :
             offered_load.push_back(ol);
         }
     }
-    
+
     if ( offered_load.empty() ) {
         out.fatal(CALL_INFO, -1, "offered_load must be set!\n");
     }
-    
+
     num_peers = params.find<int>("num_peers",-1);
     if ( num_peers == -1 ) {
         out.fatal(CALL_INFO, -1, "num_peers must be set!\n");
@@ -68,7 +68,7 @@ OfferedLoad::OfferedLoad(ComponentId_t cid, Params& params) :
     serialization_time = ((pkt_size / link_bw) / UnitAlgebra("1ps"));
     UnitAlgebra interval = serialization_time / offered_load[0];
     send_interval = interval.getRoundedValue();
-    
+
     // Load the specified SimpleNetwork object
 
     // First see if it is defined in the python
@@ -78,12 +78,12 @@ OfferedLoad::OfferedLoad(ComponentId_t cid, Params& params) :
     if ( !link_if ) {
         // Not in python, just load the default
         Params if_params;
-        
+
         if_params.insert("link_bw",params.find<std::string>("link_bw"));
         if_params.insert("input_buf_size",params.find<std::string>("buffer_size"));
-        if_params.insert("output_buf_size",params.find<std::string>("buffer_size"));            
+        if_params.insert("output_buf_size",params.find<std::string>("buffer_size"));
         if_params.insert("port_name","rtr");
-        
+
         link_if = loadAnonymousSubComponent<SST::Interfaces::SimpleNetwork>
             ("merlin.linkcontrol", "networkIF", 0,
              ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, if_params, 1 /* vns */);
@@ -108,14 +108,14 @@ OfferedLoad::OfferedLoad(ComponentId_t cid, Params& params) :
     // packetDestGen = static_cast<TargetGenerator*>(loadSubComponent(pattern, this, params));
     pattern_params->insert(params.find_prefix_params("pattern"));
     pattern_params->insert("pattern_gen",pattern);
-    
+
     UnitAlgebra warmup_time_ua = params.find<UnitAlgebra>("warmup_time","5us");
     if ( !warmup_time_ua.hasUnits("s") ) {
         out.fatal(CALL_INFO,-1,"warmup_time must specified in seconds");
     }
     warmup_time = (warmup_time_ua / UnitAlgebra("1ps")).getRoundedValue();
     start_time = warmup_time;
-    
+
 
     UnitAlgebra collect_time_ua = params.find<UnitAlgebra>("collect_time","20us");
     if ( !collect_time_ua.hasUnits("s") ) {
@@ -123,14 +123,14 @@ OfferedLoad::OfferedLoad(ComponentId_t cid, Params& params) :
     }
     collect_time = (collect_time_ua / UnitAlgebra("1ps")).getRoundedValue();
     end_time = start_time + collect_time;
-    
+
 
     UnitAlgebra drain_time_ua = params.find<UnitAlgebra>("drain_time","50us");
     if ( !collect_time_ua.hasUnits("s") ) {
         out.fatal(CALL_INFO,-1,"drain_time must specified in seconds");
     }
     drain_time = (drain_time_ua / UnitAlgebra("1ps")).getRoundedValue();
-    
+
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
     // clock_functor = new Clock::Handler<TrafficGen>(this,&TrafficGen::clock_handler);
@@ -142,7 +142,7 @@ OfferedLoad::OfferedLoad(ComponentId_t cid, Params& params) :
     end_link = configureSelfLink("end_link", base_tc, new Event::Handler<OfferedLoad>(this, &OfferedLoad::end_handler));
 
     complete_event.push_back(new offered_load_complete_event(generation));
-    
+
     // out.output("send_interval = %llu\n",send_interval);
     // out.output("start_time = %llu\n",start_time);
     // out.output("end_time = %llu\n",end_time);
@@ -162,7 +162,7 @@ void OfferedLoad::finish()
 
     if ( id == 0 ) {
         // for ( auto ev : complete_event ) {
-        
+
         //     out.output("Latency Statistics for offered load = %f\n",offered_load[ev->generation]);
         //     out.output("  sum = %llu\n",ev->sum);
         //     out.output("  sum_of_squares = %llu\n",ev->sum_of_squares);
@@ -187,7 +187,7 @@ void OfferedLoad::finish()
             else out.output("\n");
         }
         out.output("\n");
-        
+
     }
 }
 
@@ -216,7 +216,7 @@ OfferedLoad::init(unsigned int phase) {
         packetDestGen = loadAnonymousSubComponent<TargetGenerator>(pattern, "pattern_gen", 0, ComponentInfo::SHARE_NONE, *pattern_params, id, num_peers);
         delete pattern_params;
     }
-        
+
 }
 
 void
@@ -234,7 +234,7 @@ OfferedLoad::complete(unsigned int phase) {
             complete_event[generation]->max = ev->max > complete_event[generation]->max ? ev->max : complete_event[generation]->max;
             complete_event[generation]->count += ev->count;
             complete_event[generation]->backup += ev->backup;
-            
+
             req = link_if->recvUntimedData();
         }
     }
@@ -283,7 +283,7 @@ OfferedLoad::send_notify(int vn)
     // can progress and messages
     SimTime_t current_time = getCurrentSimTime(base_tc);
     progress_messages(current_time);
-    
+
     // Determine if we are waiting for room in the LinkControl or not.
     // We are waiting for room if next_time is earlier than
     // current_time
@@ -296,7 +296,7 @@ OfferedLoad::send_notify(int vn)
         // Need to wake up again at next time to send packet
         timing_link->send(next_time - current_time, NULL);
     }
-        
+
     return false;
 }
 
@@ -320,7 +320,7 @@ OfferedLoad::output_timing(Event* ev)
     else {
         // Need to wake up again at next time to send packet
         timing_link->send(next_time - current_time, NULL);
-    }        
+    }
 }
 
 void
@@ -339,7 +339,7 @@ OfferedLoad::progress_messages(SimTime_t current_time) {
 }
 
 void
-OfferedLoad::end_handler(Event* ev) { 
+OfferedLoad::end_handler(Event* ev) {
 
     // Compute backup metric and put it in event
     SimTime_t current_time = getCurrentSimTime(base_tc);
@@ -363,7 +363,7 @@ OfferedLoad::end_handler(Event* ev) {
         // Add a new complete_event entry and increment generation
         // count
         complete_event.push_back(new offered_load_complete_event(++generation));
-        
+
         // Compute the new send interval based on the new
         // offered_load.  We do this by computing time to serialize
         // one packet and dividing by the offered_load
