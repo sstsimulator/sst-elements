@@ -99,7 +99,7 @@ def _finalize_qos_config(total_nodes) :
         if app.traffic_class > max:
             max = app.traffic_class
 
-    num_vns = 2 * (max + 1)
+    num_vns = max + 1
 
     # set up number of VNs.  Ember currently uses two VNs per class,
     # so we need to multiply by 2
@@ -111,9 +111,8 @@ def _finalize_qos_config(total_nodes) :
     # walk through apps array and set up the VN map
     for app in _apps:
         for nid in app.nids:
-            index = (nid * num_vns) + (app.traffic_class * 2)
+            index = (nid * num_vns) + app.traffic_class
             mylist[index] = 0
-            mylist[index+1] = 1
 
     sst.merlin._params["vn_remap_shm"] = "ember_vn_remap"
     sst.merlin._params["vn_remap"] = mylist

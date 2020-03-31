@@ -1,7 +1,7 @@
 [JOB_ID] 1
 [NID_LIST] generateNidList=generateNidListQOS(512,0,random,128,1)
 [PARAM] merlin:portcontrol:output_arb=merlin.arb.output.qos.multi
-[PARAM] merlin:portcontrol:arbitration:qos_settings=[25,-1,25,-1,25,-1,25,-1]
+[PARAM] merlin:portcontrol:arbitration:qos_settings=[25,25,25,25]
 [MOTIF] Init
 [MOTIF] Sweep3D pex=16 pey=8 nx=16 ny=16 nz=10 kba=10 fields_per_cell=10 iterations=1 computetime=1
 [MOTIF] Allreduce

@@ -1,10 +1,10 @@
 // Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-//
+// 
 // Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-//
+// 
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -131,8 +131,8 @@ topo_mesh::process_input(RtrEvent* ev)
 {
     topo_mesh_event* tt_ev = new topo_mesh_event(dimensions);
     tt_ev->setEncapsulatedEvent(ev);
-    tt_ev->setVC(ev->request->vn * 2);
-
+    tt_ev->setVC(tt_ev->getVN() * 2);
+    
     // Need to figure out what the mesh address is for easier
     // routing.
     int run_id = get_dest_router(tt_ev->getDest());
@@ -190,7 +190,6 @@ internal_router_event* topo_mesh::process_InitData_input(RtrEvent* ev)
 {
     topo_mesh_init_event* tt_ev = new topo_mesh_init_event(dimensions);
     tt_ev->setEncapsulatedEvent(ev);
-    tt_ev->setVC(ev->request->vn * 2);
     if ( tt_ev->getDest() == INIT_BROADCAST_ADDR ) {
         /* For broadcast, first send to rtr 0 */
         idToLocation(0, tt_ev->dest_loc);

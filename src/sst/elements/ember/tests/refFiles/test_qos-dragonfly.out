@@ -4,7 +4,7 @@ EMBER: network: topology=dragonfly shape=8:16:16:4
 EMBER: numNodes=512 numNics=512
 EMBER: network: BW=4GB/s pktSize=2048B flitSize=8B
 set merlinParams portcontrol:output_arb=merlin.arb.output.qos.multi
-set merlinParams portcontrol:arbitration:qos_settings=[25,-1,25,-1,25,-1,25,-1]
+set merlinParams portcontrol:arbitration:qos_settings=[25,25,25,25]
 EMBER: Job=1, nidList='364,299,45,39,423,498,85,283,323,508,126...'
 EMBER: Motif='Init'
 EMBER: Motif='Sweep3D pex=16 pey=8 nx=16 ny=16 nz=10 kba=10 fields_per_cell=10 iterations=1 computetime=1'
@@ -25,8 +25,8 @@ EMBER: Motif='Init'
 EMBER: Motif='Sweep3D pex=16 pey=8 nx=16 ny=16 nz=10 kba=10 fields_per_cell=10 iterations=1 computetime=1'
 EMBER: Motif='Allreduce'
 EMBER: Motif='Fini'
-Allreduce: ranks 128, loop 1, 1 double(s), latency 374.762 us
-Allreduce: ranks 128, loop 1, 1 double(s), latency 374.166 us
-Allreduce: ranks 128, loop 1, 1 double(s), latency 372.478 us
-Allreduce: ranks 128, loop 1, 1 double(s), latency 377.456 us
-Simulation is complete, simulated time: 2.87013 ms
+Allreduce: ranks 128, loop 1, 1 double(s), latency 374.926 us
+Allreduce: ranks 128, loop 1, 1 double(s), latency 372.392 us
+Allreduce: ranks 128, loop 1, 1 double(s), latency 374.400 us
+Allreduce: ranks 128, loop 1, 1 double(s), latency 375.788 us
+Simulation is complete, simulated time: 2.86114 ms
