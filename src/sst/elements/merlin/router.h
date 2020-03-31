@@ -108,26 +108,27 @@ private:
 
 class RtrEvent : public BaseRtrEvent {
 
+    friend class internal_router_event;
+
 public:
-    SST::Interfaces::SimpleNetwork::Request* request;
     
     RtrEvent() :
         BaseRtrEvent(BaseRtrEvent::PACKET),
         injectionTime(0)
     {}
 
-    RtrEvent(SST::Interfaces::SimpleNetwork::Request* req, SST::Interfaces::SimpleNetwork::nid_t trusted_src, int original_vn) :
+    RtrEvent(SST::Interfaces::SimpleNetwork::Request* req, SST::Interfaces::SimpleNetwork::nid_t trusted_src, int route_vn) :
         BaseRtrEvent(BaseRtrEvent::PACKET),
         request(req),
         trusted_src(trusted_src),
-        original_vn(original_vn),
+        route_vn(route_vn),
         injectionTime(0)
     {}
 
     
     ~RtrEvent()
     {
-        delete request;
+        if (request) delete request;
     }
     
     inline void setInjectionTime(SimTime_t time) {injectionTime = time;}
@@ -143,11 +144,20 @@ public:
     inline SST::Interfaces::SimpleNetwork::Request::TraceType getTraceType() const {return request->getTraceType();}
     inline int getTraceID() const {return request->getTraceID();}
     
-    inline void setSizeInFlits(int size ) {size_in_flits = size; }
+    inline void computeSizeInFlits(int flit_size ) {size_in_flits = (request->size_in_bits + flit_size - 1) / flit_size; }
     inline int getSizeInFlits() { return size_in_flits; }
+    inline int getSizeInBits() { return request->size_in_bits; }
 
+    inline SST::Interfaces::SimpleNetwork::nid_t getDest() const {return request->dest;}
+    
     inline SST::Interfaces::SimpleNetwork::nid_t getTrustedSrc() { return trusted_src; }
-    inline int getOriginalVN() { return original_vn; }
+    inline int getRouteVN() { return route_vn; }
+    inline int getLogicalVN() { return request->vn; }
+    SST::Interfaces::SimpleNetwork::Request* takeRequest() {
+        auto ret = request;
+        request = nullptr;
+        return ret;
+    }
     
     virtual void print(const std::string& header, Output &out) const  override {
         out.output("%s RtrEvent to be delivered at %" PRIu64 " with priority %d. src = %lld (logical: %lld), dest = %lld\n",
@@ -159,16 +169,16 @@ public:
         BaseRtrEvent::serialize_order(ser);
         ser & request;
         ser & trusted_src;
-        ser & original_vn;
+        ser & route_vn;
         ser & size_in_flits;
         ser & injectionTime;
     }
     
 private:
-    // TraceType trace;
-    // int traceID;
+    SST::Interfaces::SimpleNetwork::Request* request;
+
     SST::Interfaces::SimpleNetwork::nid_t trusted_src;
-    int original_vn;
+    int route_vn;
     SimTime_t injectionTime;
     int size_in_flits;
 
@@ -313,13 +323,15 @@ public:
     inline void setVC(int vc_in) {vc = vc_in; return;}
     inline int getVC() {return vc;}
 
-    inline void setVN(int vn) {encap_ev->request->vn = vn; return;}
-    inline int getVN() {return encap_ev->request->vn;}
+    // inline void setVN(int vn) {encap_ev->setVN(vn); return;}
+    inline int getVN() {return encap_ev->route_vn;}
 
     inline int getFlitCount() {return encap_ev->getSizeInFlits();}
 
     inline void setEncapsulatedEvent(RtrEvent* ev) {encap_ev = ev;}
     inline RtrEvent* getEncapsulatedEvent() {return encap_ev;}
+
+    inline SST::Interfaces::SimpleNetwork::Request* inspectRequest() { return encap_ev->request; }
 
     inline int getDest() const {return encap_ev->request->dest;}
     inline int getSrc() const {return encap_ev->getTrustedSrc();}

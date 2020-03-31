@@ -774,7 +774,6 @@ PortControl::dumpQueueState(port_queue_t& q, Output& out) {
 void
 PortControl::handle_input_n2r(Event* ev)
 {
-    
 	// Check to see if this is a credit or data packet
 	// credit_event* ce = dynamic_cast<credit_event*>(ev);
 	// if ( ce != NULL ) {
@@ -819,21 +818,21 @@ PortControl::handle_input_n2r(Event* ev)
 	    // Simply put the event into the right virtual network queue
         
 	    // Need to process input and do the routing
-        int vn = event->request->vn;
+        int vn = event->getRouteVN();
         internal_router_event* rtr_event = topo->process_input(event);
         rtr_event->setCreditReturnVC(vn);
         int curr_vc = rtr_event->getVC();
 	    topo->route(port_number, rtr_event->getVC(), rtr_event);
 	    input_buf[curr_vc].push(rtr_event);
 	    input_buf_count[curr_vc]++;
-        
+
 	    // If this becomes vc_head we need to put it into the vc_heads array
 	    if ( vc_heads[curr_vc] == NULL ) {
             vc_heads[curr_vc] = rtr_event;
             parent->inc_vcs_with_data();
 	    }
 	    
-	    if ( event->request->getTraceType() != SST::Interfaces::SimpleNetwork::Request::NONE ) {
+	    if ( event->getTraceType() != SST::Interfaces::SimpleNetwork::Request::NONE ) {
             output.output("TRACE(%d): %" PRIu64 " ns: Received an event on port %d in router %d"
                           " (%s) on VC %d from src %" PRIu64 " to dest %" PRIu64 ".\n",
                           event->getTraceID(),
@@ -842,8 +841,8 @@ PortControl::handle_input_n2r(Event* ev)
                           rtr_id,
                           getName().c_str(),
                           curr_vc,
-                          event->request->src,
-                          event->request->dest);
+                          event->getTrustedSrc(),
+                          event->getDest());
                           
             // std::cout << "TRACE(" << event->getTraceID() << "): " << parent->getCurrentSimTimeNano()
             //           << " ns: Received an event on port " << port_number
@@ -1031,12 +1030,12 @@ PortControl::handle_output(Event* ev) {
                           send_event->getSrc(),
                           send_event->getDest());
 	    }
-        send_bit_count->addData(send_event->getEncapsulatedEvent()->request->size_in_bits);
+        send_bit_count->addData(send_event->getEncapsulatedEvent()->getSizeInBits());
         send_packet_count->addData(1);
 
         // Send the request to all the registered NetworkInspectors
         for ( unsigned int i = 0; i < network_inspectors.size(); i++ ) {
-            network_inspectors[i]->inspectNetworkData(send_event->getEncapsulatedEvent()->request);
+            network_inspectors[i]->inspectNetworkData(send_event->inspectRequest());
         }
 
 	    if ( host_port ) {

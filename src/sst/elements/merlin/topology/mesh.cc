@@ -131,7 +131,7 @@ topo_mesh::process_input(RtrEvent* ev)
 {
     topo_mesh_event* tt_ev = new topo_mesh_event(dimensions);
     tt_ev->setEncapsulatedEvent(ev);
-    tt_ev->setVC(ev->request->vn * 2);
+    tt_ev->setVC(tt_ev->getVN() * 2);
     
     // Need to figure out what the mesh address is for easier
     // routing.
@@ -190,7 +190,6 @@ internal_router_event* topo_mesh::process_InitData_input(RtrEvent* ev)
 {
     topo_mesh_init_event* tt_ev = new topo_mesh_init_event(dimensions);
     tt_ev->setEncapsulatedEvent(ev);
-    tt_ev->setVC(ev->request->vn * 2);
     if ( tt_ev->getDest() == INIT_BROADCAST_ADDR ) {
         /* For broadcast, first send to rtr 0 */
         idToLocation(0, tt_ev->dest_loc);

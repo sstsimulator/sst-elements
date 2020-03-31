@@ -214,7 +214,7 @@ void LinkControl::init(unsigned int phase)
         // Initialize links
         // Receive the endpoint ID from PortControl
         ev = rtr_link->recvInitData();
-        if ( ev == NULL ) {
+        if ( ev == nullptr ) {
             // fail
         }
         if ( static_cast<BaseRtrEvent*>(ev)->getType() != BaseRtrEvent::INITIALIZATION ) {
@@ -335,7 +335,7 @@ void LinkControl::init(unsigned int phase)
         // For all other phases, look for credit events, any other
         // events get passed up to containing component by adding them
         // to init_events queue
-        while ( ( ev = rtr_link->recvInitData() ) != NULL ) {
+        while ( ( ev = rtr_link->recvInitData() ) != nullptr ) {
             BaseRtrEvent* bev = static_cast<BaseRtrEvent*>(ev);
             switch (bev->getType()) {
             case BaseRtrEvent::CREDIT:
@@ -370,7 +370,7 @@ void LinkControl::complete(unsigned int phase)
     // to init_events queue
     Event* ev;
     RtrInitEvent* init_ev;
-    while ( ( ev = rtr_link->recvInitData() ) != NULL ) {
+    while ( ( ev = rtr_link->recvInitData() ) != nullptr ) {
         BaseRtrEvent* bev = static_cast<BaseRtrEvent*>(ev);
         switch (bev->getType()) {
         case BaseRtrEvent::PACKET:
@@ -417,6 +417,7 @@ bool LinkControl::send(SimpleNetwork::Request* req, int vn) {
     // Check to see if the VN is in range
     if ( vn >= req_vns ) return false;
 
+    
     // Check to see if we need to do a nid translation
     if ( nid_map ) req->dest = nid_map[req->dest];
 
@@ -425,25 +426,24 @@ bool LinkControl::send(SimpleNetwork::Request* req, int vn) {
 
     // Do the VN remapping
     int real_vn = out_handle.vn;
-    req->vn = real_vn;
 
     // Create a router event using id and original vn
-    RtrEvent* ev = new RtrEvent(req,id,vn);
+    RtrEvent* ev = new RtrEvent(req,id,real_vn);
     // Fill in the number of flits
-    int flits = (ev->request->size_in_bits + (flit_size - 1)) / flit_size;
-    ev->setSizeInFlits(flits);
-
+    ev->computeSizeInFlits(flit_size);
+    int flits = ev->getSizeInFlits();
+    
     // Check to see if there are enough credits to send
     if ( out_handle.credits < flits ) return false;
 
     // Update the credits
     out_handle.credits -= flits;
     // ev->request->vn = vn;
-    
+
     ev->setInjectionTime(getCurrentSimTimeNano());
     out_handle.queue.push(ev);
     if ( waiting && !have_packets ) {
-        output_timing->send(1,NULL);
+        output_timing->send(1,nullptr);
         waiting = false;
     }
 
@@ -463,10 +463,10 @@ bool LinkControl::spaceToSend(int vn, int bits) {
 }
 
 
-// Returns NULL if no event in input_buf[vn]. Otherwise, returns
+// Returns nullptr if no event in input_buf[vn]. Otherwise, returns
 // the next event.
 SST::Interfaces::SimpleNetwork::Request* LinkControl::recv(int vn) {
-    if ( input_queues[vn].size() == 0 ) return NULL;
+    if ( input_queues[vn].size() == 0 ) return nullptr;
 
     RtrEvent* event = input_queues[vn].front();
     input_queues[vn].pop();
@@ -480,7 +480,7 @@ SST::Interfaces::SimpleNetwork::Request* LinkControl::recv(int vn) {
     // into account.
     // rtr_link->send(1,new credit_event(event->request->vn,in_ret_credits[event->request->vn]));
     // in_ret_credits[event->request->vn] = 0;
-    rtr_link->send(1,new credit_event(event->request->vn,router_return_credits[vn]));
+    rtr_link->send(1,new credit_event(event->getRouteVN(),router_return_credits[vn]));
     router_return_credits[vn] = 0;
 
     if ( event->getTraceType() != SimpleNetwork::Request::NONE ) {
@@ -488,9 +488,8 @@ SST::Interfaces::SimpleNetwork::Request* LinkControl::recv(int vn) {
                       getCurrentSimTimeNano(), getName().c_str());
     }
 
-    SST::Interfaces::SimpleNetwork::Request* ret = event->request;
+    SST::Interfaces::SimpleNetwork::Request* ret = event->takeRequest();
     if ( nid_map ) ret->dest = logical_nid;
-    event->request = NULL;
     delete event;
 ; 
     return ret;
@@ -509,12 +508,11 @@ SST::Interfaces::SimpleNetwork::Request* LinkControl::recvUntimedData()
     if ( init_events.size() ) {
         RtrEvent *ev = init_events.front();
         init_events.pop_front();
-        SST::Interfaces::SimpleNetwork::Request* ret = ev->request;
-        ev->request = NULL;
+        SST::Interfaces::SimpleNetwork::Request* ret = ev->takeRequest();
         delete ev;
         return ret;
     } else {
-        return NULL;
+        return nullptr;
     }
 }
 
@@ -531,7 +529,7 @@ void LinkControl::handle_input(Event* ev)
 {
     // Check to see if this is a credit or data packet
     // credit_event* ce = dynamic_cast<credit_event*>(ev);
-    // if ( ce != NULL ) {
+    // if ( ce != nullptr ) {
     BaseRtrEvent* base_event = static_cast<BaseRtrEvent*>(ev);
     if ( base_event->getType() == BaseRtrEvent::CREDIT ) {
     	credit_event* ce = static_cast<credit_event*>(ev);
@@ -541,7 +539,7 @@ void LinkControl::handle_input(Event* ev)
         // If we're waiting, we need to send a wakeup event to the
         // output queues
         if ( waiting ) {
-            output_timing->send(1,NULL);
+            output_timing->send(1,nullptr);
             waiting = false;
             // If we were stalled waiting for credits and we had
             // packets, we need to add stall time
@@ -553,30 +551,29 @@ void LinkControl::handle_input(Event* ev)
     else {
         RtrEvent* event = static_cast<RtrEvent*>(ev);
         // Simply put the event into the right virtual network queue
-        // int actual_vn = event->request->vn / checker_board_factor;
-        // int actual_vn = vn_remap_in[event->request->vn] / checker_board_factor;
-        int orig_vn = event->getOriginalVN();
-        event->request->vn = orig_vn;
-        
-        input_queues[orig_vn].push(event);
+        // int orig_vn = event->getOriginalVN();
+        int vn = event->getLogicalVN();
+        // event->request->vn = orig_vn;
+
+        input_queues[vn].push(event);
         if (is_idle) {
             idle_time->addData(Simulation::getSimulation()->getCurrentSimCycle() - idle_start);
             is_idle = false;
         }
-        if ( event->request->getTraceType() == SimpleNetwork::Request::FULL ) {
+        if ( event->getTraceType() == SimpleNetwork::Request::FULL ) {
             output.output("TRACE(%d): %" PRIu64 " ns: Received and event on LinkControl in NIC: %s"
                           " on VN %d from src %" PRIu64 "\n",
-                          event->request->getTraceID(),
+                          event->getTraceID(),
                           getCurrentSimTimeNano(),
                           getName().c_str(),
-                          event->request->vn,
-                          event->request->src);
+                          event->getRouteVN(),
+                          event->getTrustedSrc());
         }
         SimTime_t lat = getCurrentSimTimeNano() - event->getInjectionTime();
         packet_latency->addData(lat);
-        if ( receiveFunctor != NULL ) {
-            bool keep = (*receiveFunctor)(orig_vn);
-            if ( !keep) receiveFunctor = NULL;
+        if ( receiveFunctor != nullptr ) {
+            bool keep = (*receiveFunctor)(vn);
+            if ( !keep) receiveFunctor = nullptr;
         }
     }
 }
@@ -594,7 +591,7 @@ void LinkControl::handle_output(Event* ev)
     // data, find one that does.
     int vn_to_send = -1;
     bool found = false;
-    RtrEvent* send_event = NULL;
+    RtrEvent* send_event = nullptr;
     have_packets = false;
     for ( int i = curr_out_vn; i < used_vns; i++ ) {
         if ( output_queues[i].queue.empty() ) continue;
@@ -629,7 +626,7 @@ void LinkControl::handle_output(Event* ev)
         output_queues[vn_to_send].credits += size;
 
         // Send an event to wake up again after this packet is sent.
-        output_timing->send(size,NULL);
+        output_timing->send(size,nullptr);
         
         curr_out_vn = vn_to_send + 1;
         if ( curr_out_vn == used_vns ) curr_out_vn = 0;
@@ -654,13 +651,13 @@ void LinkControl::handle_output(Event* ev)
                           send_event->getTraceID(),
                           getCurrentSimTimeNano(),
                           getName().c_str(),
-                          send_event->request->vn,
-                          send_event->request->dest);
+                          send_event->getRouteVN(),
+                          send_event->getDest());
         }
-        send_bit_count->addData(send_event->request->size_in_bits);
-        if (sendFunctor != NULL ) {
-            bool keep = (*sendFunctor)(send_event->getOriginalVN());
-            if ( !keep ) sendFunctor = NULL;
+        send_bit_count->addData(send_event->getSizeInBits());
+        if (sendFunctor != nullptr ) {
+            bool keep = (*sendFunctor)(send_event->getLogicalVN());
+            if ( !keep ) sendFunctor = nullptr;
         }
     }
     else {

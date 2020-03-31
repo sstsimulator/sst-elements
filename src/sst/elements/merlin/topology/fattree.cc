@@ -218,7 +218,7 @@ void topo_fattree::reroute(int port, int vc, internal_router_event* ev)
 internal_router_event* topo_fattree::process_input(RtrEvent* ev)
 {
     internal_router_event* ire = new internal_router_event(ev);
-    ire->setVC(ev->request->vn);
+    ire->setVC(ire->getVN());
     return ire;
 }
 
