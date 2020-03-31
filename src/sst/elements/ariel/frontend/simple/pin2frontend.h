@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -80,22 +80,22 @@ class Pin2Frontend : public ArielFrontend {
 #endif
 
     private:
-        
+
         int forkPINChild(const char* app, char** args, std::map<std::string, std::string>& app_env);
-        
+
         SST::Output* output;
 
         pid_t child_pid;
 
         uint32_t core_count;
         SST::Core::Interprocess::SHMParent<ArielTunnel>* tunnelmgr;
-        
+
         ArielTunnel* tunnel;
 
 #ifdef HAVE_CUDA
         SST::Core::Interprocess::SHMParent<GpuReturnTunnel>* tunnelRmgr;
         SST::Core::Interprocess::SHMParent<GpuDataTunnel>* tunnelDmgr;
-        
+
         GpuReturnTunnel* tunnelR;
         GpuDataTunnel* tunnelD;
 #endif

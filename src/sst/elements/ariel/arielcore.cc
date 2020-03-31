@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -34,7 +34,7 @@ ArielCore::ArielCore(ComponentId_t id, ArielTunnel *tunnel,
             Output* out, uint32_t maxIssuePerCyc,
             uint32_t maxQLen, uint64_t cacheLineSz,
             ArielMemoryManager* memMgr, const uint32_t perform_address_checks, Params& params) :
-            ComponentExtension(id), output(out), tunnel(tunnel), 
+            ComponentExtension(id), output(out), tunnel(tunnel),
 #ifdef HAVE_CUDA
             tunnelR(tunnelR), tunnelD(tunnelD),
 #endif
@@ -303,7 +303,7 @@ void ArielCore::handleEvent(SimpleMem::Request* event) {
                     GpuCommand gc;
                     GpuDataCommand gd;
                     gc.API_Return.name = GPU_MEMCPY_RET;
-                    output->verbose(CALL_INFO, 16, 0, "CUDA: Ariel sent ACK\n");                    
+                    output->verbose(CALL_INFO, 16, 0, "CUDA: Ariel sent ACK\n");
                     tunnelR->writeMessage(coreID, gc);
                     bool avail = false;
 
@@ -705,7 +705,7 @@ bool ArielCore::isCoreStalled() const {
 
 #ifdef HAVE_CUDA
 void ArielCore::createGpuEvent(GpuApi_t API, CudaArguments CA) {
-    ArielGpuEvent* gEv = new ArielGpuEvent(API, CA); 
+    ArielGpuEvent* gEv = new ArielGpuEvent(API, CA);
     coreQ->push(gEv);
 
     ARIEL_CORE_VERBOSE(4, output->verbose(CALL_INFO, 4, 0, "Generated a CUDA event.\n"));
