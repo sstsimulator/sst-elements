@@ -58,7 +58,7 @@ PortControl::send(internal_router_event* ev, int vc)
 #endif
 	// std::cout << "sending event on port " << port_number << " and VC " << vc << std::endl;
 	// if ( xbar_in_credits[vc] < ev->getFlitCount() ) return false;
-
+    
 	xbar_in_credits[vc] -= ev->getFlitCount();
     if ( oql_track_port ) {
         int flits = ev->getFlitCount();
@@ -75,7 +75,7 @@ PortControl::send(internal_router_event* ev, int vc)
 	if ( waiting ) {
 	// if ( waiting && !have_packets ) {
 	    // std::cout << "waking up the output" << std::endl;
-	    output_timing->send(1,NULL);
+	    output_timing->send(1,NULL); 
 	    waiting = false;
 	}
 #if TRACK
@@ -117,7 +117,7 @@ PortControl::recv(int vc)
 	else {
 	    vc_heads[vc] = input_buf[vc].front();
 	}
-
+	
     int vc_return = topo->isHostPort(port_number) ? event->getCreditReturnVC() : vc;
 	// Figure out how many credits to return
 	port_ret_credits[vc_return] += event->getFlitCount();
@@ -125,9 +125,9 @@ PortControl::recv(int vc)
 	// For now, we're just going to send the credits back to the
 	// other side.  The required BW to do this will not be taken
 	// into account.
-	port_link->send(1,new credit_event(vc_return,port_ret_credits[vc_return]));
+	port_link->send(1,new credit_event(vc_return,port_ret_credits[vc_return])); 
 	port_ret_credits[vc_return] = 0;
-
+    
 #if TRACK
     if ( rtr_id == TRACK_ID && port_number == TRACK_PORT ) {
         // std::cout << "recv start:" << std::endl;
@@ -185,7 +185,7 @@ PortControl::PortControl(ComponentId_t cid, Params& params,  Router* rif, int rt
     if ( link_bw.hasUnits("B/s") ) {
         link_bw *= UnitAlgebra("8b/B");
     }
-
+    
     // Flit size
     flit_size = params.find<UnitAlgebra>("flit_size", found);
     if ( !found ) {
@@ -198,9 +198,9 @@ PortControl::PortControl(ComponentId_t cid, Params& params,  Router* rif, int rt
     if ( flit_size.hasUnits("B") ) {
         flit_size *= UnitAlgebra("8b");
     }
-
+    
     std::string output_latency_timebase = params.find<std::string>("output_latency","0ns");
-
+    
 
     // Configure the links.  output_timing will have a temporary time bases.  It will be
     // changed once the final link BW is set.
@@ -228,7 +228,7 @@ PortControl::PortControl(ComponentId_t cid, Params& params,  Router* rif, int rt
         port_link = NULL;
         break;
     }
-
+    
 	// This is the self link to enable the logic for adaptive link widths.
 	// The initial call to the handler dynlink_timing->send is made in setup.
 	dynlink_timing = configureSelfLink(link_port_name + "_dynlink_timing", "10us",
@@ -242,7 +242,7 @@ PortControl::PortControl(ComponentId_t cid, Params& params,  Router* rif, int rt
         connected = false;
         return;
     }
-
+    
     input_buf_size = params.find<UnitAlgebra>("input_buf_size",found);
     if ( !found ) {
         merlin_abort.fatal(CALL_INFO_LONG, 1, "PortContol: input_buf_size must be specified\n");
@@ -254,7 +254,7 @@ PortControl::PortControl(ComponentId_t cid, Params& params,  Router* rif, int rt
     if ( input_buf_size.hasUnits("B") ) {
         input_buf_size *= UnitAlgebra("8b");
     }
-
+    
     output_buf_size = params.find<UnitAlgebra>("output_buf_size",found);
     if ( !found ) {
         merlin_abort.fatal(CALL_INFO_LONG, 1, "PortControl: output_buf_size must be specified\n");
@@ -266,14 +266,14 @@ PortControl::PortControl(ComponentId_t cid, Params& params,  Router* rif, int rt
     if ( output_buf_size.hasUnits("B") ) {
         output_buf_size *= UnitAlgebra("8b");
     }
-
+    
     std::string input_latency_timebase = params.find<std::string>("input_latency",found);
     if ( port_link && found ) {
         // std::cout << "Adding extra latency" << std::endl;
         port_link->addRecvLatency(1,input_latency_timebase);
     }
-
-
+    
+    
     // Register statistics
     std::string port_name("port");
     port_name = port_name + std::to_string(port_number);
@@ -341,7 +341,7 @@ PortControl::initVCs(int vns, int* vcs_per_vn, internal_router_event** vc_heads_
 {
     vc_heads = vc_heads_in;
     num_vns = vns;
-
+    
     // num_vcs = vcs;
     num_vcs = 0;
     for ( int i = 0; i < vns; ++i ) {
@@ -358,25 +358,25 @@ PortControl::initVCs(int vns, int* vcs_per_vn, internal_router_event** vc_heads_
     }
     xbar_in_credits = xbar_in_credits_in;
     output_queue_lengths = output_queue_lengths_in;
-
+    
     // Input and output buffers
     input_buf = new port_queue_t[num_vcs];
     output_buf = new port_queue_t[num_vcs];
-
+    
     input_buf_count = new int[num_vcs];
     output_buf_count = new int[num_vcs];
-
+	
     for ( int i = 0; i < num_vcs; i++ ) {
         input_buf_count[i] = 0;
         output_buf_count[i] = 0;
         vc_heads[i] = NULL;
     }
-
+	
     // Initialize credit arrays
     // xbar_in_credits = new int[vcs];
     port_ret_credits = new int[num_vcs];
     port_out_credits = new int[num_vcs];
-
+    
     // Figure out how large the buffers are in flits
 
     // Need to see if we need to convert to bits
@@ -387,7 +387,7 @@ PortControl::initVCs(int vns, int* vcs_per_vn, internal_router_event** vc_heads_
     //     merlin_abort.fatal(CALL_INFO,-1,"input_buf_size must be specified in either "
     //                        "bits or bytes: %s\n",ibs.toStringBestSI().c_str());
     // }
-
+    
     // if ( !obs.hasUnits("b") && !obs.hasUnits("B") ) {
     //     merlin_abort.fatal(CALL_INFO,-1,"output_buf_size must be specified in either "
     //                        "bits or bytes: %s\n",obs.toStringBestSI().c_str());
@@ -399,18 +399,18 @@ PortControl::initVCs(int vns, int* vcs_per_vn, internal_router_event** vc_heads_
 
     ibs /= flit_size;
     obs /= flit_size;
-
+    
     for ( int i = 0; i < num_vcs; i++ ) {
         port_ret_credits[i] = ibs.getRoundedValue();
         xbar_in_credits[i] = obs.getRoundedValue();
         port_out_credits[i] = 0;
     }
-
+    
     // // Copy the starting return tokens for the input buffers (this
     // // essentially sets the size of the buffer)
     // memcpy(port_ret_credits,in_buf_size,vcs*sizeof(int));
     // memcpy(xbar_in_credits,out_buf_size,vcs*sizeof(int));
-
+	
     // The output credits are set to zero and the other side of the
     // link will send the number of tokens.
     // for ( int i = 0; i < vcs; i++ ) port_out_credits[i] = 0;
@@ -490,16 +490,16 @@ PortControl::init(unsigned int phase) {
         init_ev = new RtrInitEvent();
         init_ev->command = RtrInitEvent::REPORT_BW;
         init_ev->ua_value = link_bw;
-
+        
         port_link->sendInitData(init_ev);
-
+        
         // If this is a host port, send the endpoint ID to the LinkControl
         if ( topo->isHostPort(port_number) ) {
             init_ev = new RtrInitEvent();
             init_ev->command = RtrInitEvent::REPORT_FLIT_SIZE;
             init_ev->ua_value = flit_size;
             port_link->sendInitData(init_ev);
-
+        
             RtrInitEvent* ev = new RtrInitEvent();
             ev->command = RtrInitEvent::REPORT_ID;
             ev->int_value = topo->getEndpointID(port_number);
@@ -511,7 +511,7 @@ PortControl::init(unsigned int phase) {
             init_ev->command = RtrInitEvent::REPORT_ID;
             init_ev->int_value = rtr_id;
             port_link->sendInitData(init_ev);
-
+            
             init_ev = new RtrInitEvent();
             init_ev->command = RtrInitEvent::REPORT_PORT;
             init_ev->int_value = port_number;
@@ -533,7 +533,7 @@ PortControl::init(unsigned int phase) {
         flit_cycle = getTimeConverter(link_clock);
         output_timing->setDefaultTimeBase(flit_cycle);
         delete ev;
-
+        
         // Get initialization event from endpoint, but only if I am a host port
         if ( topo->isHostPort(port_number) ) {
             // Number of VNs used by the endpoint
@@ -575,7 +575,7 @@ PortControl::init(unsigned int phase) {
                 }
                 port_link->sendInitData(init_ev);
             }
-
+            
         } else {
             // If not a host port, the other side sent us their rtr_id
             // and port_number
@@ -610,7 +610,7 @@ PortControl::init(unsigned int phase) {
                 }
                 remote_rdy_for_credits = false;
             }
-
+            
         }
         else {
             // If my VCs have been initialized and the remote side is
@@ -624,7 +624,7 @@ PortControl::init(unsigned int phase) {
                 remote_rdy_for_credits = false;
             }
         }
-
+        
         // Need to recv the credits send from the other side
         while ( ( ev = port_link->recvInitData() ) != NULL ) {
             credit_event* ce = dynamic_cast<credit_event*>(ev);
@@ -648,7 +648,7 @@ PortControl::init(unsigned int phase) {
             }
         }
         break;
-    }
+    }   
     // std::cout << "End PortControl::init" << std::endl;
 }
 
@@ -758,7 +758,7 @@ PortControl::dumpQueueState(port_queue_t& q, std::ostream& stream) {
 	    q.push(ev);
 	}
 }
-
+    
 void
 PortControl::dumpQueueState(port_queue_t& q, Output& out) {
 	int size = q.size();
@@ -770,11 +770,10 @@ PortControl::dumpQueueState(port_queue_t& q, Output& out) {
 	    q.push(ev);
 	}
 }
-
+    
 void
 PortControl::handle_input_n2r(Event* ev)
 {
-
 	// Check to see if this is a credit or data packet
 	// credit_event* ce = dynamic_cast<credit_event*>(ev);
 	// if ( ce != NULL ) {
@@ -798,12 +797,12 @@ PortControl::handle_input_n2r(Event* ev)
         }
 
         delete ce;
-
+        
 	    // If we're waiting, we need to send a wakeup event to the
 	    // output queues
 	    if ( waiting ) {
             // std::cout << output_timing << std::endl;
-            output_timing->send(1,NULL);
+            output_timing->send(1,NULL); 
             waiting = false;
             // If we were stalled waiting for credits and we had
             // packets, we need to add stall time
@@ -817,9 +816,9 @@ PortControl::handle_input_n2r(Event* ev)
 	{
 	    RtrEvent* event = static_cast<RtrEvent*>(ev);
 	    // Simply put the event into the right virtual network queue
-
+        
 	    // Need to process input and do the routing
-        int vn = event->request->vn;
+        int vn = event->getRouteVN();
         internal_router_event* rtr_event = topo->process_input(event);
         rtr_event->setCreditReturnVC(vn);
         int curr_vc = rtr_event->getVC();
@@ -832,8 +831,8 @@ PortControl::handle_input_n2r(Event* ev)
             vc_heads[curr_vc] = rtr_event;
             parent->inc_vcs_with_data();
 	    }
-
-	    if ( event->request->getTraceType() != SST::Interfaces::SimpleNetwork::Request::NONE ) {
+	    
+	    if ( event->getTraceType() != SST::Interfaces::SimpleNetwork::Request::NONE ) {
             output.output("TRACE(%d): %" PRIu64 " ns: Received an event on port %d in router %d"
                           " (%s) on VC %d from src %" PRIu64 " to dest %" PRIu64 ".\n",
                           event->getTraceID(),
@@ -842,16 +841,16 @@ PortControl::handle_input_n2r(Event* ev)
                           rtr_id,
                           getName().c_str(),
                           curr_vc,
-                          event->request->src,
-                          event->request->dest);
-
+                          event->getTrustedSrc(),
+                          event->getDest());
+                          
             // std::cout << "TRACE(" << event->getTraceID() << "): " << parent->getCurrentSimTimeNano()
             //           << " ns: Received an event on port " << port_number
             //           << " in router " << rtr_id << " ("
             //           << parent->getName() << ") on VC " << curr_vc << " from src " << event->request->src
             //           << " to dest " << event->request->dest << "." << std::endl;
 	    }
-
+        
 	    if ( parent->getRequestNotifyOnEvent() ) parent->notifyEvent();
 	}
     break;
@@ -865,7 +864,7 @@ PortControl::handle_input_n2r(Event* ev)
 	    break;
 	}
 }
-
+    
 void
 PortControl::handle_input_r2r(Event* ev)
 {
@@ -880,18 +879,18 @@ PortControl::handle_input_r2r(Event* ev)
 	// credit_event* ce = dynamic_cast<credit_event*>(ev);
 	// if ( ce != NULL ) {
 	BaseRtrEvent* base_event = static_cast<BaseRtrEvent*>(ev);
-
+    
 	switch (base_event->getType()) {
 	case BaseRtrEvent::CREDIT:
 	{
 	    credit_event* ce = static_cast<credit_event*>(ev);
 	    port_out_credits[ce->vc] += ce->credits;
 	    delete ce;
-
+        
 	    // If we're waiting, we need to send a wakeup event to the
 	    // output queues
 	    if ( waiting ) {
-            output_timing->send(1,NULL);
+            output_timing->send(1,NULL); 
             waiting = false;
             // If we were stalled waiting for credits and we had
             // packets, we need to add stall time
@@ -908,21 +907,21 @@ PortControl::handle_input_r2r(Event* ev)
     {
 	    internal_router_event* event = static_cast<internal_router_event*>(ev);
 	    // Simply put the event into the right virtual network queue
-
+        
 	    // Need to do the routing
 	    int curr_vc = event->getVC();
 	    topo->route(port_number, event->getVC(), event);
 	    input_buf[curr_vc].push(event);
 	    input_buf_count[curr_vc]++;
-
+        
 	    // If this becomes vc_head (there isn't an event already
 	    // in the array) we need to put it into the vc_heads array
 	    if ( vc_heads[curr_vc] == NULL ) {
             vc_heads[curr_vc] = event;
             parent->inc_vcs_with_data();
 	    }
-        // std::cout << "Got to here 3" << std::endl;
-
+        // std::cout << "Got to here 3" << std::endl; 
+	    
 	    if ( event->getTraceType() != SimpleNetwork::Request::NONE ) {
             output.output("TRACE(%d): %" PRIu64 " ns: Received an event on port %d in router %d"
                           " (%s) on VC %d from src %d to dest %d.\n",
@@ -935,14 +934,14 @@ PortControl::handle_input_r2r(Event* ev)
                           event->getSrc(),
                           event->getDest());
 
-
+                          
             // std::cout << "TRACE(" << event->getTraceID() << "): " << parent->getCurrentSimTimeNano()
             //           << " ns: Received an event on port " << port_number
             //           << " in router " << rtr_id << " ("
             //           << parent->getName() << ") on VC " << curr_vc << " from src " << event->getSrc()
             //           << " to dest " << event->getDest() << "." << std::endl;
 	    }
-
+        
 	    if ( parent->getRequestNotifyOnEvent() ) parent->notifyEvent();
 	}
     break;
@@ -973,7 +972,7 @@ PortControl::handle_output(Event* ev) {
 	    TopologyEvent* event = topo_queue.front();
 	    // Send an event to wake up again after packet is done
 	    output_timing->send(event->getSizeInFlits(),NULL);
-
+        
 	    // Send event
 	    port_link->send(1,event);
 	    return;
@@ -993,7 +992,7 @@ PortControl::handle_output(Event* ev) {
 
         // If this is a host port, then we return it to the VN instead of the VC
         // send_event->setVC(vc_to_send);
-
+        
 	    // Need to return credits to the output buffer
 	    int size = send_event->getFlitCount();
 	    xbar_in_credits[vc_to_send] += size;
@@ -1007,10 +1006,10 @@ PortControl::handle_output(Event* ev) {
                 output_queue_lengths[vc_to_send] -= size;
             }
         }
-
+        
 	    // Send an event to wake up again after this packet is sent.
-	    output_timing->send(size,NULL);
-
+	    output_timing->send(size,NULL); 
+	    
 	    // Subtract credits
 	    port_out_credits[vc_to_send] -= size;
 	    output_buf_count[vc_to_send]++;
@@ -1019,7 +1018,7 @@ PortControl::handle_output(Event* ev) {
             idle_time->addData(Simulation::getSimulation()->getCurrentSimCycle() - idle_start);
             is_idle = false;
         }
-
+        
 	    if ( send_event->getTraceType() == SimpleNetwork::Request::FULL ) {
             output.output("TRACE(%d): %" PRIu64 " ns: Sent and event to router from PortControl in router: %d"
                           " (%s) on VC %d from src %d to dest %d.\n",
@@ -1031,21 +1030,21 @@ PortControl::handle_output(Event* ev) {
                           send_event->getSrc(),
                           send_event->getDest());
 	    }
-        send_bit_count->addData(send_event->getEncapsulatedEvent()->request->size_in_bits);
+        send_bit_count->addData(send_event->getEncapsulatedEvent()->getSizeInBits());
         send_packet_count->addData(1);
 
         // Send the request to all the registered NetworkInspectors
         for ( unsigned int i = 0; i < network_inspectors.size(); i++ ) {
-            network_inspectors[i]->inspectNetworkData(send_event->getEncapsulatedEvent()->request);
+            network_inspectors[i]->inspectNetworkData(send_event->inspectRequest());
         }
 
 	    if ( host_port ) {
-            port_link->send(1,send_event->getEncapsulatedEvent());
+            port_link->send(1,send_event->getEncapsulatedEvent()); 
             send_event->setEncapsulatedEvent(NULL);
             delete send_event;
 	    }
 	    else {
-            port_link->send(1,send_event);
+            port_link->send(1,send_event); 
 	    }
 	}
 	// TLG -- need to think about how to count a disabled link, is it stalled?
@@ -1072,7 +1071,7 @@ PortControl::handle_output(Event* ev) {
             is_idle = false;
         }
 		if (sai_port_disabled){
-			output_timing->send(1,NULL);
+			output_timing->send(1,NULL); 
 		}
 	}
 #if TRACK
@@ -1084,7 +1083,7 @@ PortControl::handle_output(Event* ev) {
 
 
 // This is the handler for an event that disables a port
-// from sending or receiving data for sai_adj_delay time
+// from sending or receiving data for sai_adj_delay time 
 void
 PortControl::reenablePort(Event* ev) {
 	sai_port_disabled = false;
@@ -1092,11 +1091,11 @@ PortControl::reenablePort(Event* ev) {
 
 // Triggered every window duration of time
 // This resets SAI metrics and calls increase/decreaseLinkWidth
-void
+void 
 PortControl::handleSAIWindow(Event* ev) {
 	SimTime_t cur_time = Simulation::getSimulation()->getCurrentSimCycle();
 	// If we are in the middle of an active state.
-
+	
 	// If we are in the middle of an idle state.
 	if (is_idle){
 		if (idle_start < sai_win_start){
@@ -1107,7 +1106,7 @@ PortControl::handleSAIWindow(Event* ev) {
 			idle = (cur_time - idle_start)/(double)sai_win_length_pico;
 		}
 	}
-
+	
 	// There should be a flag based off an input parameter enabling disabling dynamic link width.
 	// Here's the logic for adjusting link width based on idle time.
 	if (idle > dlink_thresh){
@@ -1116,16 +1115,16 @@ PortControl::handleSAIWindow(Event* ev) {
 	else if (cur_link_width < max_link_width){
 		increaseLinkWidth();
 	}
-
+	
 	// DEBUG
 	//if (active > 1 || idle > 1 || stalled > 1){
-   	//	std::cerr << "Error SAI greater than 1: " << stalled << ", "
+   	//	std::cerr << "Error SAI greater than 1: " << stalled << ", " 
 	//			  << active << ", "
 	//			  << idle << "\n";
 	//}
 
-	active = 0;
-	stalled = 0;
+	active = 0; 
+	stalled = 0; 
 	idle = 0;
 
 	dynlink_timing->send(1,NULL);
@@ -1136,10 +1135,10 @@ PortControl::handleSAIWindow(Event* ev) {
 // we want to reduce the bandwidth of the outgoing traffic.
 // Each port monitors the amount of outgoing traffic.
 // Since links are bidirectional we can assume that we can configure output ports independently.
-// This should translate into potential power savings,
+// This should translate into potential power savings, 
 // which a power constrained system can take advantage of.
-//
-// TODO add delay on port, before it can transmit data again.
+// 
+// TODO add delay on port, before it can transmit data again. 
 bool
 PortControl::decreaseLinkWidth() {
     // We don't want to reduce the link width below 1
@@ -1165,7 +1164,7 @@ PortControl::decreaseLinkWidth() {
 // Since links are bidirectional we can assume that we can configure output ports independently.
 // This should translate into potential performance savings.
 //
-// TODO add delay on port, before it can transmit data again.
+// TODO add delay on port, before it can transmit data again. 
 bool
 PortControl::increaseLinkWidth() {
 // We don't want to increase the link width above the max_link_width
