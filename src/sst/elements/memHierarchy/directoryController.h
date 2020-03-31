@@ -1,8 +1,8 @@
-// Copyright 2013-2019 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2019, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -91,7 +91,7 @@ public:
             {"GetS_recv",           "Event received: GetS (read-shared)", "count", 1},
             {"GetX_recv",           "Event received: GetX (write-exclusive)", "count", 1},
             {"GetSX_recv",          "Event received: GetSX (read-exclusive)", "count", 1},
-            {"GetSResp_recv",       "Event received: GetSResp (shared data)", "count", 1}, 
+            {"GetSResp_recv",       "Event received: GetSResp (shared data)", "count", 1},
             {"GetXResp_recv",       "Event received: GetXResp (exclusive data)", "count", 1},
             {"PutS_recv",           "Event received: PutS (shared replacement)", "count", 2},
             {"PutE_recv",           "Event received: PutE (clean exclusive replacement)", "count", 2},
@@ -136,7 +136,7 @@ public:
             {"eventSent_FlushLineResp", "Event sent: FlushLineResp", "count", 2},
             {"MSHR_occupancy",          "Number of events in MSHR each cycle",  "events",       1},
             {"default_stat",            "Default statistic. If not 0 then a statistic is missing", "", 1})
-            
+
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
             {"cpulink", "CPU-side link manager, for single-link directories, use this one only", "SST::MemHierarchy::MemLinkBase"},
             {"memlink", "Memory-side link manager", "SST::MemHierarchy::MemLinkBase"} )
@@ -177,15 +177,15 @@ private:
     Statistic<uint64_t> * stat_eventSent[(int)Command::LAST_CMD];
     Statistic<uint64_t> * stat_dirEntryReads;
     Statistic<uint64_t> * stat_dirEntryWrites;
-    
+
     Statistic<uint64_t> * stat_MSHROccupancy;
 
     /* Queue of packets to work on */
     std::list<MemEvent*> eventBuffer;
     std::list<MemEvent*> retryBuffer;
     std::map<MemEvent::id_type, std::string> noncacheMemReqs;
-    
-    
+
+
     /* Network connections */
     MemLinkBase*    memLink;
     MemLinkBase*    cpuLink;
@@ -264,7 +264,7 @@ private:
         std::string action;
         std::string reason;
         std::string verboseline;
-        
+
         void prefill(SST::Event::id_type i, Command c, bool p, Addr a, State o) {
             id = i;
             cmd = c;
@@ -282,7 +282,7 @@ private:
             reason = rea;
         }
     } eventDI, evictDI;
-    
+
     struct DirEntry {
 	bool                cached;         // whether block is cached or not
         Addr                addr;           // block address
@@ -328,7 +328,7 @@ private:
         Addr getBaseAddr() { return addr; }
 
         size_t getSharerCount() { return sharers.size(); }
-        
+
         void clearSharers() { sharers.clear(); }
 
         void addSharer(std::string shr) { sharers.insert(shr); }
@@ -342,7 +342,7 @@ private:
         void removeSharer(std::string shr) { sharers.erase(shr); }
 
         std::string getOwner() { return owner; }
-        
+
         bool hasOwner() { return owner != ""; }
 
         void removeOwner() { owner = ""; }
@@ -359,15 +359,15 @@ private:
 
     DirEntry* getDirEntry(Addr addr); // find entry in the master list
     bool retrieveDirEntry(DirEntry* entry, MemEvent* event, bool inMSHR); // Simulate fetching entry from memory
-    
+
     MemEventStatus allocateMSHR(MemEvent* event, bool fwdReq, int pos = -1);
 
     void cleanUpAfterRequest(MemEvent* event, bool inMSHR);
     void cleanUpAfterResponse(MemEvent* event, bool inMSHR);
-    
+
     void updateCache(DirEntry * entry);
     void sendEntryToMemory(DirEntry* entry);
-    
+
     void issueMemoryRequest(MemEvent* event, DirEntry* entry);
     void issueFlush(MemEvent* event);
     void issueFetch(MemEvent* event, DirEntry* entry, Command cmd);
@@ -385,8 +385,8 @@ private:
     MSHR * mshr;
     std::unordered_map<Addr, DirEntry*> directory; // Master list of all directory entries, including noncached ones
 
-    
-    struct MemMsg { 
+
+    struct MemMsg {
         MemEventBase * event;
         bool dirAccess;
 

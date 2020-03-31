@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -34,7 +34,7 @@ using namespace std;
 class CustomCmdEvent : public MemEventBase {
 public:
 
-    CustomCmdEvent(std::string src, Addr addr, Addr baseAddr, Command cmd, uint32_t opc = 0, uint32_t size = 0) : 
+    CustomCmdEvent(std::string src, Addr addr, Addr baseAddr, Command cmd, uint32_t opc = 0, uint32_t size = 0) :
         MemEventBase(src, cmd), addr_(addr), baseAddr_(baseAddr), addrGlobal_(true), opCode_(opc), size_(size), instPtr_(0), vAddr_(0) { }
 
     /* Getters/setters */
@@ -57,8 +57,8 @@ public:
         setSize(data.size());
         payload_ = data;
     }
-    std::vector<uint8_t>& getPayload() { 
-        if (payload_.size() < size_) payload_.resize(size_); 
+    std::vector<uint8_t>& getPayload() {
+        if (payload_.size() < size_) payload_.resize(size_);
         return payload_;
     }
 

@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -75,9 +75,9 @@ public:
     void finish();
 
     virtual void handleLocalMemResponse(SST::Event::id_type id, uint32_t flags);
-    
+
     SST::Cycle_t turnClockOn();
-    
+
     /* For updating memory values. CustomMemoryCommand should call this */
     void writeData(Addr addr, std::vector<uint8_t>* data);
     void readData(Addr addr, size_t size, std::vector<uint8_t>& data);
@@ -100,7 +100,7 @@ protected:
         MemEvent* event;
         AccessStatus status;
         MemEvent* reqev;
-        
+
         MemAccessRecord() : event(nullptr), status(AccessStatus::MISS), reqev(nullptr) { }
         MemAccessRecord(MemEvent* ev, AccessStatus stat) : event(ev), status(stat), reqev(nullptr) { }
     };
@@ -122,7 +122,7 @@ protected:
     void notifyListeners( MemEvent* ev ) {
         if (  ! listeners_.empty()) {
             // AFR: should this pass the base Addr?
-            CacheListenerNotification notify(ev->getAddr(), ev->getAddr(), ev->getVirtualAddress(), 
+            CacheListenerNotification notify(ev->getAddr(), ev->getAddr(), ev->getVirtualAddress(),
                         ev->getInstructionPointer(), ev->getSize(), READ, HIT);
 
             for (unsigned long int i = 0; i < listeners_.size(); ++i) {
@@ -130,7 +130,7 @@ protected:
             }
         }
     }
-    
+
     virtual void handleEvent( SST::Event* );
     virtual void processInitEvent( MemEventInit* );
 
@@ -149,17 +149,17 @@ protected:
     std::set<Addr> DEBUG_ADDR;
 
     MemBackendConvertor*    memBackendConvertor_;
-    Backend::Backing*       backing_; 
+    Backend::Backing*       backing_;
 
-    MemLinkBase* link_;         // Link to the rest of memHierarchy 
+    MemLinkBase* link_;         // Link to the rest of memHierarchy
     bool clockLink_;            // Flag - should we call clock() on this link or not
 
     std::vector<CacheListener*> listeners_;
-    
+
     bool isRequestAddressValid(Addr addr){
         return region_.contains(addr);
     }
-    
+
     void writeData( MemEvent* );
     void readData( MemEvent* );
 
@@ -169,10 +169,10 @@ protected:
 
     MemRegion region_; // Which address region we are, for translating to local addresses
     Addr toLocalAddr(Addr addr);
-    
+
     Clock::Handler<MemCacheController>* clockHandler_;
     TimeConverter* clockTimeBase_;
-    
+
     CustomCmdMemHandler * customCommandHandler_;
 
     /* Debug -triggered by output.fatal() and/or SIGUSR2 */

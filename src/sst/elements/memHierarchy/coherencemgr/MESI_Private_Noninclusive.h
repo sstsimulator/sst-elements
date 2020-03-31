@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -27,7 +27,7 @@ namespace SST { namespace MemHierarchy {
 
 class MESIPrivNoninclusive : public CoherenceController {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(MESIPrivNoninclusive, "memHierarchy", "coherence.mesi_private_noninclusive", SST_ELI_ELEMENT_VERSION(1,0,0), 
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(MESIPrivNoninclusive, "memHierarchy", "coherence.mesi_private_noninclusive", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Implements MESI or MSI coherence for a non-inclusive, non-L1 private cache", SST::MemHierarchy::CoherenceController)
 
     SST_ELI_DOCUMENT_STATISTICS(
@@ -201,7 +201,7 @@ public:
         {"latency_FlushLine",       "Latency for flush requests", "cycles", 1},
         {"latency_FlushLineInv",    "Latency for flush+invalidate requests", "cycles", 1},
         {"default_stat",            "Default statistic used for unexpected events/states/etc. Should be 0, if not, check for missing statistic registerations.", "none", 7})
-    
+
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
             {"replacement", "Replacement policies, slot 0 is for cache, slot 1 is for directory (if it exists)", "SST::MemHierarchy::ReplacementPolicy"},
             {"hash", "Hash function for mapping addresses to cache lines", "SST::MemHierarchy::HashFunction"} )
@@ -211,14 +211,14 @@ public:
     MESIPrivNoninclusive(SST::ComponentId_t id, Params& params, Params& ownerParams, bool prefetch) : CoherenceController(id, params, ownerParams, prefetch) {
         params.insert(ownerParams);
         debug->debug(_INFO_,"--------------------------- Initializing [MESI Controller] ... \n\n");
-        
+
         protocol_ = params.find<bool>("protocol", 1);
         if (protocol_) {
             protocolState_ = E;
         } else {
             protocolState_ = S;
         }
-        
+
         // Cache Array
         uint64_t lines = params.find<uint64_t>("lines");
         uint64_t assoc = params.find<uint64_t>("associativity");
@@ -362,10 +362,10 @@ public:
         stat_miss[0][1] = registerStatistic<uint64_t>("GetSMiss_Blocked");
         stat_miss[1][1] = registerStatistic<uint64_t>("GetXMiss_Blocked");
         stat_miss[2][1] = registerStatistic<uint64_t>("GetSXMiss_Blocked");
-        
+
         /* Only for caches that expect writeback acks but we don't know yet so always enabled for now (can't register statistics later) */
         stat_eventState[(int)Command::AckPut][I] = registerStatistic<uint64_t>("stateEvent_AckPut_I");
-        
+
         /* MESI-specific statistics (as opposed to MSI) */
         if (protocol_) {
             stat_evict[E] =         registerStatistic<uint64_t>("evict_E");
@@ -404,10 +404,10 @@ public:
         sendWritebackAck_ = true;
     }
     ~MESIPrivNoninclusive() {}
-    
+
 /*----------------------------------------------------------------------------------------------------------------------
  *  Public functions form external interface to the coherence controller
- *---------------------------------------------------------------------------------------------------------------------*/  
+ *---------------------------------------------------------------------------------------------------------------------*/
 
 /* Event handlers */
     virtual bool handleGetS(MemEvent * event, bool inMSHR);
@@ -471,14 +471,14 @@ public:
     //void printStatus(Output &out);
 
 private:
-    
+
     MemEventStatus allocateLine(MemEvent * event, PrivateCacheLine*& line, bool inMSHR);
     bool handleEviction(Addr addr, PrivateCacheLine*& line, dbgin &diStruct);
     void cleanUpAfterRequest(MemEvent * event, bool inMSHR);
     void cleanUpAfterResponse(MemEvent * event, bool inMSHR);
     void cleanUpEvent(MemEvent * event, bool inMSHR);
     void retry(Addr addr);
-    
+
     /** Forward a flush line request, with or without data */
     uint64_t forwardFlush(MemEvent* event, bool evict, std::vector<uint8_t>* data, bool dirty, uint64_t time);
 
@@ -488,19 +488,19 @@ private:
     /** Send response up (to processor) */
     uint64_t sendResponseUp(MemEvent * event, vector<uint8_t>* data, bool inMSHR, uint64_t baseTime, Command cmd = Command::GetSResp, bool success = false);
     uint64_t sendExclusiveResponse(MemEvent * event, vector<uint8_t>* data, bool inMSHR, uint64_t baseTime, bool dirty);
-    
+
     /** Send response down (towards memory) */
     void sendResponseDown(MemEvent * event, uint32_t size, vector<uint8_t>* data, bool dirty);
-    
+
     /** Send writeback request to lower level caches */
     uint64_t sendWriteback(Addr addr, uint32_t size, Command cmd, std::vector<uint8_t>* data, bool dirty, uint64_t time = 0);
-    
+
     void sendWritebackAck(MemEvent * event);
 
 /* Message send */
     /** Forward a message up, used for non-inclusive caches */
     void forwardMessageUp(MemEvent * event);
-    
+
     /** Call through to coherenceController with statistic recording */
     void addToOutgoingQueue(Response& resp);
     void addToOutgoingQueueUp(Response& resp);
@@ -511,7 +511,7 @@ private:
 
 /* Statistics */
     void recordLatency(Command cmd, int type, uint64_t latency);
-    
+
 /* Private data members */
     CacheArray<PrivateCacheLine> * cacheArray_; // Cache array
     bool protocol_;  // True for MESI, false for MSI

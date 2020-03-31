@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -29,12 +29,12 @@ using namespace SST::MemHierarchy;
 #define Debug(level, fmt, ... )
 #endif
 
-ScratchBackendConvertor::ScratchBackendConvertor(ComponentId_t id, Params& params ) : 
+ScratchBackendConvertor::ScratchBackendConvertor(ComponentId_t id, Params& params ) :
     SubComponent(id), m_reqId(0)
 { build(params); }
 
 void ScratchBackendConvertor::build(Params& params) {
-    m_dbg.init("", 
+    m_dbg.init("",
             params.find<uint32_t>("debug_level", 0),
             params.find<uint32_t>("debug_mask", 0),
             (Output::output_location_t)params.find<int>("debug_location", 0 ));

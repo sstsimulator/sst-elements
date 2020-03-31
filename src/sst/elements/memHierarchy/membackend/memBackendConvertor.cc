@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -31,9 +31,9 @@ using namespace SST::MemHierarchy;
 
 
 MemBackendConvertor::MemBackendConvertor(ComponentId_t id, Params& params, MemBackend* backend, uint32_t request_width) :
-    SubComponent(id), m_cycleCount(0), m_reqId(0), m_backend(backend) 
+    SubComponent(id), m_cycleCount(0), m_reqId(0), m_backend(backend)
 {
-    m_dbg.init("", 
+    m_dbg.init("",
             params.find<uint32_t>("debug_level", 0),
             params.find<uint32_t>("debug_mask", 0),
             (Output::output_location_t)params.find<int>("debug_location", 0 ));
@@ -46,9 +46,9 @@ MemBackendConvertor::MemBackendConvertor(ComponentId_t id, Params& params, MemBa
     if ( m_backendRequestWidth > m_frontendRequestWidth ) {
         m_backendRequestWidth = m_frontendRequestWidth;
     }
-    
+
     m_clockBackend = m_backend->isClocked();
-    
+
     stat_GetSReqReceived    = registerStatistic<uint64_t>("requests_received_GetS");
     stat_GetSXReqReceived   = registerStatistic<uint64_t>("requests_received_GetSX");
     stat_GetXReqReceived    = registerStatistic<uint64_t>("requests_received_GetX");
@@ -191,7 +191,7 @@ void MemBackendConvertor::doResponse( ReqId reqId, uint32_t flags ) {
 
             MemEvent* event = static_cast<MemReq*>(req)->getMemEvent();
 
-            Debug(_L10_,"doResponse req is done. %s\n", event->getBriefString().c_str()); 
+            Debug(_L10_,"doResponse req is done. %s\n", event->getBriefString().c_str());
 
             Cycle_t latency = m_cycleCount - event->getDeliveryTime();
 

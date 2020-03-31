@@ -1,8 +1,8 @@
-// Copyright 2013-2019 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2019, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -47,7 +47,7 @@ void MemNICFour::build(Params& params) {
         link_control[i] = loadUserSubComponent<SST::Interfaces::SimpleNetwork>(pref[i], ComponentInfo::SHARE_NONE, 1);
         if (link_control[i] == nullptr) {
 
-            std::string lctype = params.find<std::string>(pref[i] + ".linkcontrol", "kingsley.linkcontrol"); 
+            std::string lctype = params.find<std::string>(pref[i] + ".linkcontrol", "kingsley.linkcontrol");
             Params lcparams;
             lcparams.insert("link_bw", params.find<std::string>(pref[i] + ".network_bw", "80GiB/s"));
             lcparams.insert("in_buf_size", params.find<std::string>(pref[i] + ".network_input_buffer_size", "1KiB"));
@@ -59,14 +59,14 @@ void MemNICFour::build(Params& params) {
 
         packetHeaderBytes[i] = extractPacketHeaderSize(params, pref[i] + ".min_packet_size");
     }
-    
+
     // Set link control to call recvNotify on event receive
-    
+
     link_control[REQ]->setNotifyOnReceive(new SimpleNetwork::Handler<MemNICFour>(this, &MemNICFour::recvNotifyReq));
     link_control[ACK]->setNotifyOnReceive(new SimpleNetwork::Handler<MemNICFour>(this, &MemNICFour::recvNotifyAck));
     link_control[FWD]->setNotifyOnReceive(new SimpleNetwork::Handler<MemNICFour>(this, &MemNICFour::recvNotifyFwd));
     link_control[DATA]->setNotifyOnReceive(new SimpleNetwork::Handler<MemNICFour>(this, &MemNICFour::recvNotifyData));
-    
+
     // Register statistics
     stat_oooEvent[REQ] = registerStatistic<uint64_t>("outoforder_req_events");
     stat_oooEvent[ACK] = registerStatistic<uint64_t>("outoforder_ack_events");
@@ -87,7 +87,7 @@ void MemNICFour::init(unsigned int phase) {
     link_control[ACK]->init(phase);
     link_control[FWD]->init(phase);
     link_control[DATA]->init(phase);
-    
+
     MemNICBase::nicInit(link_control[DATA], phase);
 }
 
@@ -103,15 +103,15 @@ void MemNICFour::setup() {
         recvTags[it->addr] = 0;
         sendTags[it->addr] = 0;
     }
-    
+
     for (std::set<EndpointInfo>::iterator it = destEndpointInfo.begin(); it != destEndpointInfo.end(); it++) {
         recvTags[it->addr] = 0;
         sendTags[it->addr] = 0;
     }
 }
 
-/* 
- * Called by parent on a clock 
+/*
+ * Called by parent on a clock
  * Returns whether anything sent this cycle
  */
 bool MemNICFour::clock() {
@@ -137,7 +137,7 @@ void MemNICFour::send(MemEventBase *ev) {
         else if (CommandClassArr[(int)ev->getCmd()] == CommandClass::Ack) net = ACK;
         else net = FWD;
     }
-            
+
     SimpleNetwork::Request * req = new SimpleNetwork::Request();
     req->vn = 0;
     req->src = info.addr;
@@ -147,7 +147,7 @@ void MemNICFour::send(MemEventBase *ev) {
     sendTags[req->dest]++;
 
     OrderedMemRtrEvent * omre = new OrderedMemRtrEvent(ev, tag);
-    
+
     req->size_in_bits = getSizeInBits(ev, net);
     req->givePayload(omre);
 
@@ -163,8 +163,8 @@ void MemNICFour::send(MemEventBase *ev) {
 }
 
 
-/* 
- * Event handler called by link control on event receive 
+/*
+ * Event handler called by link control on event receive
  * Return whether event can be received
  */
 bool MemNICFour::recvNotifyReq(int) {
@@ -191,7 +191,7 @@ bool MemNICFour::recvNotifyData(int) {
 void MemNICFour::doRecv(SimpleNetwork::Request * req, NetType net) {
     uint64_t src = req->src;
     OrderedMemRtrEvent * mre = processRecv(req); // Return the splitmemrtrevent if we have one
-                
+
     if (mre != nullptr) {
         dbg.debug(_L3_, "%s, memNIC received a message: <%" PRIu64 ", %u>\n",
                 getName().c_str(), src, mre->tag);
@@ -201,7 +201,7 @@ void MemNICFour::doRecv(SimpleNetwork::Request * req, NetType net) {
         if (mre->tag == recvTags[src]) { // Got the tag we were expecting
             stat_oooEvent[net]->addData(0); // Count total number of events received
             recvTags[src]++;
-            
+
             if (recvQueue.empty())
                 recvNotify(mre);
             else {
@@ -229,11 +229,11 @@ void MemNICFour::doRecv(SimpleNetwork::Request * req, NetType net) {
 void MemNICFour::recvNotify(OrderedMemRtrEvent* mre) {
     MemEventBase * me = static_cast<MemEventBase*>(mre->event);
     delete mre;
-    
+
     if (!me) return;
 
     if (is_debug_event(me)) {
-        dbg.debug(_L3_, "%s, memNIC notify parent: src: %s. cmd: %s\n", 
+        dbg.debug(_L3_, "%s, memNIC notify parent: src: %s. cmd: %s\n",
                 getName().c_str(), me->getSrc().c_str(), CommandString[(int)me->getCmd()]);
     }
 
@@ -245,7 +245,7 @@ MemNICFour::OrderedMemRtrEvent* MemNICFour::processRecv(SimpleNetwork::Request *
     if (req != nullptr) {
         MemRtrEvent * mre = static_cast<MemRtrEvent*>(req->takePayload());
         delete req;
-        
+
         if (mre->hasClientData()) {
             OrderedMemRtrEvent * smre = static_cast<OrderedMemRtrEvent*>(mre);
             if (smre->event != nullptr) {
@@ -266,7 +266,7 @@ MemNICFour::OrderedMemRtrEvent* MemNICFour::processRecv(SimpleNetwork::Request *
             }
             delete imre;
         }
-    } 
+    }
     return nullptr;
 }
 
@@ -293,5 +293,5 @@ void MemNICFour::printStatus(Output& out) {
     if (link_control[ACK]) link_control[ACK]->printStatus(out);
     out.output("      Fwd linkcontrol status:\n");
     if (link_control[FWD]) link_control[FWD]->printStatus(out);
-    out.output("    End MemHierarchy::MemNICFour\n");    
+    out.output("    End MemHierarchy::MemNICFour\n");
 }

@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -144,11 +144,11 @@ bool Incoherent::handleGetX(MemEvent * event, bool inMSHR) {
             sendTime = sendResponseUp(event, line->getData(), inMSHR, line->getTimestamp());
             line->setTimestamp(sendTime);
             recordLatencyType(event->getID(), LatType::HIT);
-                
-            if (is_debug_event(event)) 
+
+            if (is_debug_event(event))
                 eventDI.reason = "hit";
             cleanUpAfterRequest(event, inMSHR);
-            break; 
+            break;
         default:
             if (!inMSHR)
                 status = allocateMSHR(event, false);
@@ -178,7 +178,7 @@ bool Incoherent::handleFlushLine(MemEvent * event, bool inMSHR) {
     Addr addr = event->getBaseAddr();
     PrivateCacheLine * line = cacheArray_->lookup(addr, false);
     State state = line ? line->getState() : I;
-    
+
     if (is_debug_event(event))
         eventDI.prefill(event->getID(), Command::FlushLine, false, addr, state);
 
@@ -211,7 +211,7 @@ bool Incoherent::handleFlushLine(MemEvent * event, bool inMSHR) {
         default:
             break;
     }
-    
+
     if (status == MemEventStatus::Reject)
         sendNACK(event);
 
@@ -219,7 +219,7 @@ bool Incoherent::handleFlushLine(MemEvent * event, bool inMSHR) {
         eventDI.newst = line->getState();
         eventDI.verboseline = line->getString();
     }
-    
+
     return true;
 }
 
@@ -228,10 +228,10 @@ bool Incoherent::handleFlushLineInv(MemEvent * event, bool inMSHR) {
     Addr addr = event->getBaseAddr();
     PrivateCacheLine * line = cacheArray_->lookup(addr, false);
     State state = line ? line->getState() : I;
-    
+
     if (is_debug_event(event))
         eventDI.prefill(event->getID(), Command::FlushLine, false, addr, state);
-    
+
     MemEventStatus status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, false);
     if (!inMSHR)
         stat_eventState[(int)Command::FlushLineInv][state]->addData(1);
@@ -376,7 +376,7 @@ bool Incoherent::handleGetSResp(MemEvent * event, bool inMSHR) {
 
     MemEvent * req = static_cast<MemEvent*>(mshr_->getFrontEvent(addr));
     req->setFlags(event->getMemFlags());
-    
+
     sendResponseUp(req, &event->getPayload(), true, 0);
 
     if (line) {
@@ -386,7 +386,7 @@ bool Incoherent::handleGetSResp(MemEvent * event, bool inMSHR) {
         line->setPrefetch(true);
         recordPrefetchLatency(req->getID(), LatType::MISS);
     }
-    
+
     cleanUpAfterResponse(event);
 
     if (is_debug_addr(addr) && line) {
@@ -412,7 +412,7 @@ bool Incoherent::handleGetXResp(MemEvent * event, bool inMSHR) {
     req->setFlags(event->getMemFlags());
 
     sendResponseUp(req, &event->getPayload(), true, 0);
-    
+
     cleanUpAfterResponse(event);
 
     return true;
@@ -478,7 +478,7 @@ bool Incoherent::handleNULLCMD(MemEvent* event, bool inMSHR) {
                 debug->debug(_L8_, "\tAddr 0x%" PRIx64 " now waiting for 0x%" PRIx64 " instead of 0x%" PRIx64 "\n",
                         oldAddr, line->getAddr(), newAddr);
             mshr_->insertEviction(line->getAddr(), newAddr);
-            if (mshr_->removeEvictPointer(oldAddr, newAddr)) 
+            if (mshr_->removeEvictPointer(oldAddr, newAddr))
                 retry(oldAddr);
         }
     }
@@ -494,12 +494,12 @@ bool Incoherent::handleNACK(MemEvent* event, bool inMSHR) {
     Addr addr = nackedEvent->getBaseAddr();
     PrivateCacheLine * line = cacheArray_->lookup(addr, false);
     State state = line ? line->getState() : I;
-    
+
     if (is_debug_event(event) || is_debug_event(nackedEvent))
         eventDI.prefill(event->getID(), Command::NACK, false, addr, state);
 
     delete event;
-                
+
     resendEvent(nackedEvent, false); // Re-send since we don't have races that make events redundant
 
     return true;
@@ -637,7 +637,7 @@ void Incoherent::cleanUpAfterResponse(MemEvent * event) {
 
     if (req)
         delete req;
-    
+
     retry(addr);
 }
 
@@ -738,7 +738,7 @@ void Incoherent::forwardFlush(MemEvent * event, bool evict, std::vector<uint8_t>
     } else {
         flush->setPayload(0, nullptr);
     }
-    
+
     uint64_t sendTime = timestamp_ + latency;
     Response resp = {flush, sendTime, packetHeaderBytes + flush->getPayloadSize()};
     addToOutgoingQueue(resp);
@@ -785,7 +785,7 @@ MemEventInitCoherence * Incoherent::getInitCoherenceEvent() {
     return new MemEventInitCoherence(cachename_, Endpoint::Cache, false, false, false, lineSize_, true);
 }
 
-void Incoherent::recordPrefetchResult(PrivateCacheLine * line, Statistic<uint64_t>* stat) { 
+void Incoherent::recordPrefetchResult(PrivateCacheLine * line, Statistic<uint64_t>* stat) {
     if (line->getPrefetch()) {
         stat->addData(1);
         line->setPrefetch(false);

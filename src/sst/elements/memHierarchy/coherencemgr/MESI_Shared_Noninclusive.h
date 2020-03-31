@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -28,7 +28,7 @@ namespace SST { namespace MemHierarchy {
 
 class MESISharNoninclusive : public CoherenceController {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(MESISharNoninclusive, "memHierarchy", "coherence.mesi_shared_noninclusive", SST_ELI_ELEMENT_VERSION(1,0,0), 
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(MESISharNoninclusive, "memHierarchy", "coherence.mesi_shared_noninclusive", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Implements MESI or MSI coherence for cache that is co-located with a directory, for noninclusive last-level caches", SST::MemHierarchy::CoherenceController)
 
     SST_ELI_DOCUMENT_STATISTICS(
@@ -249,7 +249,7 @@ public:
         {"prefetch_coherence_miss", "Prefetched block incurred a coherence miss (upgrade) on its first access", "count", 2},
         {"prefetch_redundant",      "Prefetch issued for a block that was already in cache", "count", 2},
         {"default_stat",            "Default statistic used for unexpected events/states/etc. Should be 0, if not, check for missing statistic registerations.", "none", 7})
-    
+
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
             {"replacement", "Replacement policies, slot 0 is for cache, slot 1 is for directory (if it exists)", "SST::MemHierarchy::ReplacementPolicy"},
             {"hash", "Hash function for mapping addresses to cache lines", "SST::MemHierarchy::HashFunction"} )
@@ -258,15 +258,15 @@ public:
     /** Constructor for MESISharNoninclusive. */
     MESISharNoninclusive(ComponentId_t id, Params& params, Params& ownerParams, bool prefetch) : CoherenceController(id, params, ownerParams, prefetch) {
         params.insert(ownerParams);
-        
+
         debug->debug(_INFO_,"--------------------------- Initializing [MESI + Directory Controller] ... \n\n");
-        
+
         protocol_ = params.find<bool>("protocol", 1);
         if (protocol_)
             protocolState_ = E;
         else
             protocolState_ = S;
-        
+
         // Data (cache) Array
         uint64_t lines = params.find<uint64_t>("lines");
         uint64_t assoc = params.find<uint64_t>("associativity");
@@ -275,7 +275,7 @@ public:
         HashFunction * ht = createHashFunction(params);
         dataArray_ = new CacheArray<DataLine>(debug, lines, assoc, lineSize_, rmgr, ht);
         dataArray_->setBanked(params.find<uint64_t>("banks", 0));
-        
+
         uint64_t dLines = params.find<uint64_t>("dlines");
         uint64_t dAssoc = params.find<uint64_t>("dassoc");
         params.insert("replacement_policy", params.find<std::string>("drpolicy", "lru"));
@@ -446,7 +446,7 @@ public:
         stat_miss[0][1] = registerStatistic<uint64_t>("GetSMiss_Blocked");
         stat_miss[1][1] = registerStatistic<uint64_t>("GetXMiss_Blocked");
         stat_miss[2][1] = registerStatistic<uint64_t>("GetSXMiss_Blocked");
-        
+
         /* Prefetch statistics */
         if (prefetch) {
             statPrefetchEvict = registerStatistic<uint64_t>("prefetch_evict");
@@ -504,7 +504,7 @@ public:
     }
 
     ~MESISharNoninclusive() {}
-    
+
     /** Event handlers */
     virtual bool handleGetS(MemEvent* event, bool inMSHR);
     virtual bool handleGetX(MemEvent* event, bool inMSHR);
@@ -532,11 +532,11 @@ public:
 
     // Initialization event
     MemEventInitCoherence* getInitCoherenceEvent();
-    
+
     virtual Addr getBank(Addr addr) { return dirArray_->getBank(addr); }
-    virtual void setSliceAware(uint64_t size, uint64_t step) { 
+    virtual void setSliceAware(uint64_t size, uint64_t step) {
         dirArray_->setSliceAware(size, step);
-        dataArray_->setSliceAware(size, step); 
+        dataArray_->setSliceAware(size, step);
     }
 
     std::set<Command> getValidReceiveEvents() {
@@ -577,30 +577,30 @@ private:
     void cleanUpAfterResponse(MemEvent * event, bool inMSHR);
     void cleanUpEvent(MemEvent * event, bool inMSHR);
     void retry(Addr addr);
-    
+
     /** Invalidate sharers and/or owner; returns either the new line timestamp (or 0 if no invalidation) or a bool indicating whether anything was invalidated */
     bool invalidateExceptRequestor(MemEvent * event, DirectoryLine * line, bool inMSHR, bool needData);
     bool invalidateAll(MemEvent * event, DirectoryLine * line, bool inMSHR, Command cmd = Command::NULLCMD);
     uint64_t invalidateSharer(std::string shr, MemEvent * event, DirectoryLine * line, bool inMSHR, Command cmd = Command::Inv);
     void invalidateSharers(MemEvent * event, DirectoryLine * line, bool inMSHR, bool needData, Command cmd);
     bool invalidateOwner(MemEvent * event, DirectoryLine * line, bool inMSHR, Command cmd = Command::FetchInv);
-    
+
     /** Forward a flush line request, with or without data */
     uint64_t forwardFlush(MemEvent* event, bool evict, std::vector<uint8_t>* data, bool dirty, uint64_t time);
 
     /** Send response up (to processor) */
     uint64_t sendResponseUp(MemEvent * event, vector<uint8_t>* data, bool inMSHR, uint64_t baseTime, Command cmd = Command::NULLCMD, bool success = false);
-    
+
     /** Send response down (towards memory) */
     void sendResponseDown(MemEvent* event, std::vector<uint8_t>* data, bool dirty, bool evict);
-    
+
     /** Send writeback request to lower level caches */
     void sendWritebackFromCache(Command cmd, DirectoryLine* tag, DataLine* data, bool dirty);
     void sendWritebackFromMSHR(Command cmd, DirectoryLine* tag, bool dirty);
     void sendWritebackAck(MemEvent* event);
-    
+
     uint64_t sendFetch(Command cmd, MemEvent * event, std::string dst, bool inMSHR, uint64_t ts);
-    
+
     /** Call through to coherenceController with statistic recording */
     void addToOutgoingQueue(Response& resp);
     void addToOutgoingQueueUp(Response& resp);

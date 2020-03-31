@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -26,7 +26,7 @@ namespace SST { namespace MemHierarchy {
 
 class Incoherent : public CoherenceController{
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(Incoherent, "memHierarchy", "coherence.incoherent", SST_ELI_ELEMENT_VERSION(1,0,0), 
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(Incoherent, "memHierarchy", "coherence.incoherent", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Implements an second level or greater cache without coherence", SST::MemHierarchy::CoherenceController)
 
     SST_ELI_DOCUMENT_STATISTICS(
@@ -136,7 +136,7 @@ public:
     Incoherent(SST::ComponentId_t id, Params& params, Params& ownerParams, bool prefetch) : CoherenceController(id, params, ownerParams, prefetch) {
         params.insert(ownerParams);
         debug->debug(_INFO_,"--------------------------- Initializing [Incoherent Controller] ... \n\n");
-    
+
         // Cache Array
         uint64_t lines = params.find<uint64_t>("lines");
         uint64_t assoc = params.find<uint64_t>("associativity");
@@ -145,7 +145,7 @@ public:
 
         cacheArray_ = new CacheArray<PrivateCacheLine>(debug, lines, assoc, lineSize_, rmgr, ht);
         cacheArray_->setBanked(params.find<uint64_t>("banks", 0));
-        
+
         stat_eventState[(int)Command::GetS][I] = registerStatistic<uint64_t>("stateEvent_GetS_I");
         stat_eventState[(int)Command::GetS][E] = registerStatistic<uint64_t>("stateEvent_GetS_E");
         stat_eventState[(int)Command::GetS][M] = registerStatistic<uint64_t>("stateEvent_GetS_M");
@@ -226,7 +226,7 @@ public:
         stat_miss[0][1] = registerStatistic<uint64_t>("GetSMiss_Blocked");
         stat_miss[1][1] = registerStatistic<uint64_t>("GetXMiss_Blocked");
         stat_miss[2][1] = registerStatistic<uint64_t>("GetSXMiss_Blocked");
-        
+
         if (prefetch) {
             statPrefetchEvict = registerStatistic<uint64_t>("prefetch_evict");
             statPrefetchHit = registerStatistic<uint64_t>("prefetch_useful");
@@ -235,7 +235,7 @@ public:
     }
 
     ~Incoherent() {}
-   
+
     /** Event handlers */
     virtual bool handleGetS(MemEvent * event, bool inMSHR);
     virtual bool handleGetX(MemEvent * event, bool inMSHR);
@@ -299,7 +299,7 @@ private:
 
     void addToOutgoingQueue(Response& resp);
     void addToOutgoingQueueUp(Response& resp);
-    
+
     void recordPrefetchResult(PrivateCacheLine * line, Statistic<uint64_t> * stat);
 
     void printLine(Addr addr);

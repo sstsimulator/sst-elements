@@ -1,9 +1,9 @@
 // -*- mode: c++ -*-
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -30,16 +30,16 @@ using namespace SST::Interfaces;
 
 MemHierarchyInterface::MemHierarchyInterface(SST::ComponentId_t id, Params &params, TimeConverter * time, HandlerBase* handler) :
     SimpleMem(id, params)
-{ 
+{
     setDefaultTimeBase(time); // Required for link since we no longer inherit it from our parent
 
     output.init("", 1, 0, Output::STDOUT);
     rqstr_ = "";
     initDone_ = false;
-    
+
     recvHandler_ = handler;
     std::string portname = params.find<std::string>("port", "port");
-    if ( NULL == recvHandler_) 
+    if ( NULL == recvHandler_)
         link_ = configureLink(portname);
     else
         link_ = configureLink(portname, new Event::Handler<MemHierarchyInterface>(this, &MemHierarchyInterface::handleIncoming));
@@ -85,7 +85,7 @@ void MemHierarchyInterface::init(unsigned int phase) {
             initSendQueue_.pop();
         }
     }
-    
+
 }
 
 void MemHierarchyInterface::sendInitData(SimpleMem::Request *req){
@@ -123,7 +123,7 @@ SimpleMem::Request* MemHierarchyInterface::recvResponse(void){
 
 MemEventBase* MemHierarchyInterface::createMemEvent(SimpleMem::Request *req) const{
     Command cmd = Command::NULLCMD;
-    
+
     switch ( req->cmd ) {
         case SimpleMem::Request::Read:          cmd = Command::GetS;         break;
         case SimpleMem::Request::Write:         cmd = Command::GetX;         break;
@@ -136,18 +136,18 @@ MemEventBase* MemHierarchyInterface::createMemEvent(SimpleMem::Request *req) con
     }
 
     Addr baseAddr = (req->addrs[0]) & baseAddrMask_;
-    
+
     MemEvent *me = new MemEvent(getName(), req->addrs[0], baseAddr, cmd);
-    
+
     me->setRqstr(rqstr_);
     me->setDst(rqstr_);
     me->setSize(req->size);
 
     if (SimpleMem::Request::Write == req->cmd)  {
         if (req->data.size() == 0) {
-            req->data.resize(req->size, 0);    
+            req->data.resize(req->size, 0);
         }
-        if (req->data.size() != req->size) 
+        if (req->data.size() != req->size)
             output.output("Warning: In memHierarchyInterface, write request size does not match payload size. Request size: %zu. Payload size: %zu. MemEvent will use payload size\n", req->size, req->data.size());
 
         me->setPayload(req->data);
@@ -155,13 +155,13 @@ MemEventBase* MemHierarchyInterface::createMemEvent(SimpleMem::Request *req) con
 
     if(req->flags & SimpleMem::Request::F_NONCACHEABLE)
         me->setFlag(MemEvent::F_NONCACHEABLE);
-    
+
     if(req->flags & SimpleMem::Request::F_LOCKED) {
         me->setFlag(MemEvent::F_LOCKED);
         if (req->cmd == SimpleMem::Request::Read)
             me->setCmd(Command::GetSX);
     }
-    
+
     if(req->flags & SimpleMem::Request::F_LLSC){
         me->setFlag(MemEvent::F_LLSC);
     }
@@ -183,7 +183,7 @@ MemEventBase* MemHierarchyInterface::createCustomEvent(SimpleMem::Request * req)
 
     if(req->flags & SimpleMem::Request::F_NONCACHEABLE)
         cme->setFlag(MemEvent::F_NONCACHEABLE);
-    
+
     if (req->data.size() != 0) {
         cme->setPayload(req->data); // Note this updates cme->size to payload.size()...
         cme->setSize(req->size);    // Assume this is what we want, not the copied payload size
@@ -192,11 +192,11 @@ MemEventBase* MemHierarchyInterface::createCustomEvent(SimpleMem::Request * req)
     cme->setInstructionPointer(req->getInstructionPointer());
 
     cme->setMemFlags(req->memFlags);
-    
+
     return cme;
 }
 
-/* Handle (response) events from memHierarchy 
+/* Handle (response) events from memHierarchy
  *  Update original request
  *  Call owner's callback
  */
@@ -212,7 +212,7 @@ SimpleMem::Request* MemHierarchyInterface::processIncoming(MemEventBase *ev){
     SimpleMem::Request *req = NULL;
     Command cmd = ev->getCmd();
     MemEventBase::id_type origID = ev->getResponseToID();
-    
+
     std::map<MemEventBase::id_type, SimpleMem::Request*>::iterator i = requests_.find(origID);
     if(i != requests_.end()){
         req = i->second;
@@ -238,12 +238,12 @@ void MemHierarchyInterface::updateRequest(SimpleMem::Request* req, MemEvent *me)
             break;
         case Command::GetXResp:
             req->cmd   = SimpleMem::Request::WriteResp;
-            if (me->success()) 
+            if (me->success())
                 req->flags |= (SimpleMem::Request::F_LLSC_RESP);
             break;
         case Command::FlushLineResp:
             req->cmd = SimpleMem::Request::FlushLineResp;
-            if (me->success()) 
+            if (me->success())
                 req->flags |= (SimpleMem::Request::F_FLUSH_SUCCESS);
             break;
     default:
@@ -251,7 +251,7 @@ void MemHierarchyInterface::updateRequest(SimpleMem::Request* req, MemEvent *me)
     }
    // Always update memFlags to faciliate mem->processor communication
     req->memFlags = me->getMemFlags();
-    
+
 }
 
 

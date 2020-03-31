@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -82,7 +82,7 @@ Cache::Cache(ComponentId_t id, Params &params) : Component(id) {
     configureLinks(params);
 
     createCoherenceManager(params);
-    
+
     /* Register statistics */
     registerStatistics();
 
@@ -99,7 +99,7 @@ void Cache::createCoherenceManager(Params &params) {
     if (accessLatency < 1) out_->fatal(CALL_INFO,-1, "%s, Invalid param: access_latency_cycles - must be at least 1. You specified %" PRIu64 "\n",
             this->Component::getName().c_str(), accessLatency);
     uint64_t tagLatency = params.find<uint64_t>("tag_access_latency_cycles", accessLatency);
-    
+
     // Protocol
     std::string protStr = params.find<std::string>("coherence_protocol", "mesi");
     to_lower(protStr);
@@ -108,10 +108,10 @@ void Cache::createCoherenceManager(Params &params) {
     else if (protStr == "msi") protocol = CoherenceProtocol::MSI;
     else if (protStr == "none") protocol = CoherenceProtocol::NONE;
     else out_->fatal(CALL_INFO,-1, "%s, Invalid param: coherence_protocol - must be 'msi', 'mesi', or 'none'.\n", getName().c_str());
-    
+
     // L1
     bool L1 = params.find<bool>("L1", false);
-    
+
     // Type
     std::string itype = params.find<std::string>("cache_type", "inclusive");
     to_lower(itype);
@@ -128,7 +128,7 @@ void Cache::createCoherenceManager(Params &params) {
 
     /* Create MSHR */
     uint64_t mshrLatency = createMSHR(params, accessLatency, L1);
-    
+
     /* Load prefetcher, listeners, if any : Requires MSHR since drop levels depend on MSHR size*/
     createListeners(params);
 
@@ -160,38 +160,38 @@ void Cache::createCoherenceManager(Params &params) {
 
     if (!L1) {
         if (protocol != CoherenceProtocol::NONE) {
-            if (itype == "inclusive") { 
-                coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.coherence.mesi_inclusive", "coherence", 0, 
+            if (itype == "inclusive") {
+                coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.coherence.mesi_inclusive", "coherence", 0,
                         ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams, prefetch);
             } else if (itype == "noninclusive") {
-                coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.coherence.mesi_private_noninclusive", "coherence", 0, 
+                coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.coherence.mesi_private_noninclusive", "coherence", 0,
                         ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams, prefetch);
             } else {
-                coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.coherence.mesi_shared_noninclusive", "coherence", 0, 
+                coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.coherence.mesi_shared_noninclusive", "coherence", 0,
                         ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams, prefetch);
             }
         } else {
-            coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.coherence.incoherent", "coherence", 0, 
+            coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.coherence.incoherent", "coherence", 0,
                     ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams, prefetch);
         }
     } else {
         if (protocol != CoherenceProtocol::NONE) {
-            coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.coherence.mesi_l1", "coherence", 0, 
+            coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.coherence.mesi_l1", "coherence", 0,
                     ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams, prefetch);
         } else {
-            coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.coherence.incoherent_l1", "coherence", 0, 
+            coherenceMgr_ = loadAnonymousSubComponent<CoherenceController>("memHierarchy.coherence.incoherent_l1", "coherence", 0,
                     ComponentInfo::INSERT_STATS, coherenceParams, coherenceParams, prefetch);
         }
     }
     if (coherenceMgr_ == NULL) {
         out_->fatal(CALL_INFO, -1, "%s, Failed to load CoherenceController.\n", this->Component::getName().c_str());
     }
-   
-    int mshrSize = mshr_->getMaxSize(); 
+
+    int mshrSize = mshr_->getMaxSize();
     size_t maxOutstandingPrefetch = params.find<size_t>("max_outstanding_prefetch", mshrSize / 2, found);
     if (!found && mshrSize < 0)
         maxOutstandingPrefetch = (size_t) - 2; // Basically no limit if MSHR size is unlimited as well
-    
+
     size_t dropPrefetchLevel = params.find<size_t>("drop_prefetch_mshr_level", mshrSize - 2, found);
     if (!found && mshrSize < 0) {          // Unlimited MSHR
         dropPrefetchLevel = (size_t) - 2;
@@ -245,10 +245,10 @@ void Cache::configureLinks(Params &params) {
         if (sliceCount == 1)
             sliceID = 0;
         else if (sliceCount > 1) {
-            if (sliceID >= sliceCount) 
+            if (sliceID >= sliceCount)
                 out_->fatal(CALL_INFO,-1, "%s, Invalid param: slice_id - should be between 0 and num_cache_slices-1. You specified %" PRIu64 ".\n",
                         getName().c_str(), sliceID);
-            if (slicePolicy != "rr") 
+            if (slicePolicy != "rr")
                 out_->fatal(CALL_INFO,-1, "%s, Invalid param: slice_allocation_policy - supported policy is 'rr' (round-robin). You specified '%s'.\n",
                         getName().c_str(), slicePolicy.c_str());
         } else {
@@ -301,7 +301,7 @@ void Cache::configureLinks(Params &params) {
                     "For example, to interleave 64B lines across 3 caches, specify interleave_size=64B and interleave_step=192B. You specified size = %" PRIu64 " and step = %" PRIu64 ".\n",
                     getName().c_str(), region_.interleaveSize, region_.interleaveStep);
         }
-        
+
         if (gotRegion) {
             linkDown_->setRegion(region_);
             linkUp_->setRegion(region_);
@@ -309,17 +309,17 @@ void Cache::configureLinks(Params &params) {
             region_ = linkDown_->getRegion();
             linkUp_->setRegion(region_);
         }
-        
+
         clockUpLink_ = linkUp_->isClocked();
         clockDownLink_ = linkDown_->isClocked();
-        
+
         linkUp_->setName(getName());
         linkDown_->setName(getName());
-        
+
         return;
     }
 
-    
+
     bool highNetExists  = false;    // high_network_0 is connected -> direct link toward CPU (to bus or directly to other component)
     bool lowCacheExists = false;    // cache is connected -> direct link towards memory to cache
     bool lowDirExists   = false;    // directory is connected -> network link towards memory to directory
@@ -429,7 +429,7 @@ void Cache::configureLinks(Params &params) {
         linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::handleEvent));
         clockDownLink_ = true;
         clockUpLink_ = false;
-        
+
         region_ = linkDown_->getRegion();
         linkUp_->setRegion(region_);
 
@@ -462,7 +462,7 @@ void Cache::configureLinks(Params &params) {
         linkDown_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::handleEvent));
         clockUpLink_ = true;
         clockDownLink_ = false;
-        
+
         /* Pull region off network link, really we should have the same region on both and it should be a cache property not link property... */
         region_ = linkUp_->getRegion();
         linkDown_->setRegion(region_);
@@ -497,7 +497,7 @@ void Cache::configureLinks(Params &params) {
         linkUp_->setRecvHandler(new Event::Handler<Cache>(this, &Cache::handleEvent));
         clockDownLink_ = true;
         clockUpLink_ = false;
-        
+
         region_ = linkDown_->getRegion();
         linkUp_->setRegion(region_);
 
@@ -571,17 +571,17 @@ void Cache::configureLinks(Params &params) {
         linkUp_ = linkDown_;
         clockDownLink_ = true;
         clockUpLink_ = false;
-        
+
         region_ = linkDown_->getRegion();
         linkUp_->setRegion(region_);
     }
-        
+
     linkUp_->setName(getName());
     linkDown_->setName(getName());
 }
 
-/* 
- * Listeners can be prefetchers, but could also be for statistic collection, trace generation, monitoring, etc. 
+/*
+ * Listeners can be prefetchers, but could also be for statistic collection, trace generation, monitoring, etc.
  * Prefetchers load into the 'prefetcher slot', listeners into the 'listener' slot
  */
 void Cache::createListeners(Params &params) {
@@ -615,7 +615,7 @@ void Cache::createListeners(Params &params) {
         statPrefetchRequest = nullptr;
         statPrefetchDrop = nullptr;
     }
-    
+
     if (!listeners_.empty()) { // Have at least one prefetcher
         // Configure self link for prefetch/listener events
         // Delay prefetches by a cycle TODO parameterize - let user specify prefetch delay
@@ -649,7 +649,7 @@ uint64_t Cache::createMSHR(Params &params, uint64_t accessLatency, bool L1) {
 
     mshr_ = new MSHR(dbg_, mshrSize, getName(), DEBUG_ADDR);
 
-    if (mshrLatency > 0 && found) 
+    if (mshrLatency > 0 && found)
         return mshrLatency;
 
     if (L1) {
@@ -695,7 +695,7 @@ void Cache::createCacheArray(Params &params) {
     uint64_t assoc = params.find<uint64_t>("associativity", -1, found); // uint64_t to match cache size in case we have a fully associative cache
     if (!found) out_->fatal(CALL_INFO, -1, "%s, Param not specified: associativity\n", getName().c_str());
 
-    
+
     uint64_t dEntries = params.find<uint64_t>("noninclusive_directory_entries", 0);
     uint64_t dAssoc = params.find<uint64_t>("noninclusive_directory_associativity", 1);
 
@@ -712,7 +712,7 @@ void Cache::createCacheArray(Params &params) {
     uint64_t cacheSize = ua.getRoundedValue();
 
     if (lineSize_ > cacheSize)
-        out_->fatal(CALL_INFO, -1, "%s, Invalid param combo: cache_line_size cannot be greater than cache_size. You specified: cache_size = '%s', cache_line_size = '%" PRIu64 "'\n", 
+        out_->fatal(CALL_INFO, -1, "%s, Invalid param combo: cache_line_size cannot be greater than cache_size. You specified: cache_size = '%s', cache_line_size = '%" PRIu64 "'\n",
                 getName().c_str(), sizeStr.c_str(), lineSize_);
     if (!isPowerOfTwo(lineSize_)) out_->fatal(CALL_INFO, -1, "%s, cache_line_size - must be a power of 2. You specified '%" PRIu64 "'.\n", getName().c_str(), lineSize_);
 

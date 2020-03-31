@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -23,7 +23,7 @@ using namespace SST::MemHierarchy;
 
 
 CoherenceController::CoherenceController(ComponentId_t id, Params &params, Params& ownerParams, bool prefetch) : SubComponent(id) {
-    params.insert(ownerParams); // Combine params 
+    params.insert(ownerParams); // Combine params
 
     /* Output stream */
     output = new Output("", 1, 0, SST::Output::STDOUT);
@@ -98,7 +98,7 @@ CoherenceController::CoherenceController(ComponentId_t id, Params &params, Param
             }
         }
     }
-   
+
     // Initialize event debug info (eventDI/evictDI)
     evictDI.id.first = 0;
     evictDI.id.second = 0;
@@ -132,7 +132,7 @@ ReplacementPolicy* CoherenceController::createReplacementPolicy(uint64_t lines, 
     Params emptyparams;
     std::string policy = params.find<std::string>("replacement_policy", "lru");
     to_lower(policy);
-    
+
     if (policy == "lru") {
         if (L1) return loadAnonymousSubComponent<ReplacementPolicy>("memHierarchy.replacement.lru", "replacement", slotnum, ComponentInfo::SHARE_NONE, emptyparams, lines, assoc);
         else    return loadAnonymousSubComponent<ReplacementPolicy>("memHierarchy.replacement.lru-opt", "replacement", slotnum, ComponentInfo::SHARE_NONE, emptyparams, lines, assoc);
@@ -148,7 +148,7 @@ ReplacementPolicy* CoherenceController::createReplacementPolicy(uint64_t lines, 
     if (policy == "random") return loadAnonymousSubComponent<ReplacementPolicy>("memHierarchy.replacement.random", "replacement", slotnum, ComponentInfo::SHARE_NONE, emptyparams, lines, assoc);
     if (policy == "nmru")   return loadAnonymousSubComponent<ReplacementPolicy>("memHierarchy.replacement.nmru", "replacement", slotnum, ComponentInfo::SHARE_NONE, emptyparams, lines, assoc);
 
-    debug->fatal(CALL_INFO, -1, "%s, Invalid param: replacement_policy - supported policies are 'lru', 'lfu', 'random', 'mru', and 'nmru'. You specified '%s'.\n", getName().c_str(), policy.c_str()); 
+    debug->fatal(CALL_INFO, -1, "%s, Invalid param: replacement_policy - supported policies are 'lru', 'lfu', 'random', 'mru', and 'nmru'. You specified '%s'.\n", getName().c_str(), policy.c_str());
     return nullptr;
 }
 
@@ -395,7 +395,7 @@ uint64_t CoherenceController::forwardTowardsMem(MemEventBase * event) {
 uint64_t CoherenceController::forwardTowardsCPU(MemEventBase * event, std::string dst) {
     event->setSrc(cachename_);
     event->setDst(dst);
-    
+
     Response fwdReq = {event, timestamp_ + 1, packetHeaderBytes + event->getPayloadSize()};
     addToOutgoingQueueUp(fwdReq);
     return timestamp_ + 1;
@@ -423,7 +423,7 @@ void CoherenceController::processInitCoherenceEvent(MemEventInitCoherence* event
     // The component below us will send writeback acks, we should wait for them
     if (!source && event->getSendWBAck())
         recvWritebackAck_ = true;
-    
+
     if (source && event->getRecvWBAck())
         sendWritebackAck_ = true;
 
@@ -493,7 +493,7 @@ uint64_t CoherenceController::forwardMessage(MemEvent * event, unsigned int requ
     Response fwdReq = {forwardEvent, deliveryTime, packetHeaderBytes + forwardEvent->getPayloadSize() };
     addToOutgoingQueue(fwdReq);
 
-    if (is_debug_event(event)) 
+    if (is_debug_event(event))
         eventDI.action = "Forward";
 
     return deliveryTime;
@@ -526,9 +526,9 @@ void CoherenceController::resendEvent(MemEvent * event, bool towardsCPU) {
 
     uint64_t deliveryTime =  timestamp_ + mshrLatency_ + backoff;
     Response resp = {event, deliveryTime, packetHeaderBytes + event->getPayloadSize() };
-    if (!towardsCPU) 
+    if (!towardsCPU)
         addToOutgoingQueue(resp);
-    else 
+    else
         addToOutgoingQueueUp(resp);
 
     if (is_debug_event(event)) {
@@ -605,7 +605,7 @@ MemEventStatus CoherenceController::allocateMSHR(MemEvent * event, bool fwdReq, 
             outstandingPrefetches_++;
         return MemEventStatus::Stall;
     }
-    
+
     if (event->isPrefetch())
         outstandingPrefetches_++;
     return MemEventStatus::OK;
@@ -626,7 +626,7 @@ void CoherenceController::printDebugInfo() {
 }
 
 void CoherenceController::printDebugInfo(dbgin * diStruct) {
-    if (dlevel < 5) 
+    if (dlevel < 5)
         return;
 
     std::string cmd = CommandString[(int)diStruct->cmd];
@@ -635,14 +635,14 @@ void CoherenceController::printDebugInfo(dbgin * diStruct) {
 
     std::stringstream id;
     id << "<" << diStruct->id.first << "," << diStruct->id.second << ">";
-    
+
     stringstream reas;
     reas << "(" << diStruct->reason << ")";
 
     debug->debug(_L5_, "C: %-20" PRIu64 " %-20" PRIu64 " %-20s %-13s 0x%-16" PRIx64 " %-15s %-6s %-6s %-10s %-15s",
-            Simulation::getSimulation()->getCurrentSimCycle(), timestamp_, cachename_.c_str(), cmd.c_str(), diStruct->addr, 
-            id.str().c_str(), StateString[diStruct->oldst], StateString[diStruct->newst], diStruct->action.c_str(), reas.str().c_str()); 
-    
+            Simulation::getSimulation()->getCurrentSimCycle(), timestamp_, cachename_.c_str(), cmd.c_str(), diStruct->addr,
+            id.str().c_str(), StateString[diStruct->oldst], StateString[diStruct->newst], diStruct->action.c_str(), reas.str().c_str());
+
     debug->debug(_L6_, " %s", diStruct->verboseline.c_str());
     debug->debug(_L5_, "\n");
 }
@@ -650,13 +650,13 @@ void CoherenceController::printDebugInfo(dbgin * diStruct) {
 void CoherenceController::printDebugAlloc(bool alloc, Addr addr, std::string note) {
     if (dlevel < 5)
         return;
-    
+
     std::string action = alloc ? "Alloc" : "Dealloc";
-    
+
     debug->debug(_L5_, "C: %-20" PRIu64 " %-20" PRIu64 " %-20s %-13s 0x%-16" PRIx64 "",
             Simulation::getSimulation()->getCurrentSimCycle(), timestamp_, cachename_.c_str(), action.c_str(), addr);
 
-    if (note != "") 
+    if (note != "")
         debug->debug(_L5_, " %s\n", note.c_str());
     else
         debug->debug(_L5_, "\n");
@@ -721,7 +721,7 @@ void CoherenceController::recordIncomingRequest(MemEventBase* event) {
     LatencyStat lat(timestamp_, event->getCmd(), -1);
     startTimes_.insert(std::make_pair(event->getID(), lat));
 }
-    
+
 void CoherenceController::removeRequestRecord(SST::Event::id_type id) {
     if (startTimes_.find(id) != startTimes_.end())
         startTimes_.erase(id);

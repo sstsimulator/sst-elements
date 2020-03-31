@@ -1,8 +1,8 @@
-// Copyright 2013-2019 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2019, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -32,14 +32,14 @@ public:
 
     /* Constructors */
     CustomCmdInfo() { }
-    
+
     CustomCmdInfo(SST::Event::id_type id, std::string rqstr, uint32_t flags = 0 ) :
       id_(id), flags_(flags), rqstr_(rqstr) { }
 
     virtual ~CustomCmdInfo() = default;
-    
+
     /* String-ify info for debug */
-    virtual std::string getString() { 
+    virtual std::string getString() {
         std::ostringstream idstring;
         idstring << "ID: <" << id_.first << "," << id_.second << ">";
         std::ostringstream flagstring;
@@ -94,7 +94,7 @@ public:
 
 
     /* Constructor */
-    
+
     CustomCmdMemHandler(ComponentId_t id, Params &params, std::function<void(Addr,size_t,std::vector<uint8_t>&)> read, std::function<void(Addr,std::vector<uint8_t>*)> write) : SubComponent(id) {
         /* Create debug output */
         int debugLevel = params.find<int>("debug_level", 0);
@@ -121,21 +121,21 @@ public:
      */
 
     /* Receive should decode a custom event and return an OutstandingEvent struct
-     * to the memory controller so that it knows how to process the event 
+     * to the memory controller so that it knows how to process the event
      */
     virtual MemEventInfo receive(MemEventBase* ev) =0;
 
     /* The memController will call ready when the event is ready to issue.
      * Events are ready immediately (back-to-back receive() and ready()) unless
      * the event needs to stall for some coherence action.
-     * The handler should return a CustomCmdInfo* which will be sent to the memBackendConvertor. 
+     * The handler should return a CustomCmdInfo* which will be sent to the memBackendConvertor.
      * The memBackendConvertor will then issue the unmodified CustomCmdReq* to the backend.
      * CustomCmdReq is intended as a base class for custom commands to define as needed.
      */
     virtual CustomCmdInfo* ready(MemEventBase* ev) =0;
 
     /* When the memBackendConvertor returns a response, the memController will call this function, including
-     * the return flags. This function should return a response event or null if none needed. 
+     * the return flags. This function should return a response event or null if none needed.
      * It should also call the following as needed:
      *  writeData(): Update the backing store if this custom command wrote data
      *  readData(): Read the backing store if the response needs data

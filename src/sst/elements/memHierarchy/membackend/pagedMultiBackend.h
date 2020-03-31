@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -58,9 +58,9 @@ struct pageInfo {
     uint64_t accPat[LAST_CASE];
     set<string> rqstrs; // requestors who have touched this page
 
-    void record( Addr addr, bool isWrite, const std::string& requestor, 
+    void record( Addr addr, bool isWrite, const std::string& requestor,
                     const bool collectStats, const uint64_t pAddr, const bool limitTouch) {
-        
+
         // record the pageAddr
         assert((pageAddr == 0) || (pAddr == pageAddr));
         pageAddr = pAddr;
@@ -84,12 +84,12 @@ struct pageInfo {
                 scanLeng = 0;
             }
         }
-         
+
         if (0 == collectStats) {
             lastRef = addr;
             return;
         }
-        
+
         // note: this is slow, and only works if directory controller
         // is modified to send along the requestor info
         if (1 == collectStats) {
@@ -128,12 +128,12 @@ struct pageInfo {
 	  }
 	  fprintf(outF, " %" PRIu64, (uint64_t)rqstrs.size());
 	  fprintf(outF, "\n");
-	}	  
+	}
 
         //clear
 	for (int i = 0; i < LAST_CASE; ++i) {
 	  accPat[i] = 0;
-	} 
+	}
 	rqstrs.clear();
     }
 
@@ -150,7 +150,7 @@ public:
 /* Element Library Info */
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(pagedMultiMemory, "memHierarchy", "pagedMulti", SST_ELI_ELEMENT_VERSION(1,0,0),
             "DRAMSim-driven memory timings with a fixed timing multi-levle memory using paging", SST::MemHierarchy::SimpleMemBackend)
-    
+
     SST_ELI_DOCUMENT_PARAMS( DRAMSIM_ELI_PARAMS,
             /* Own parameters */
             {"collect_stats",       "Name of DRAMSim Device system file", "0"},
@@ -226,14 +226,14 @@ private:
                   BiLRU, // bimodal LRU
                   SCLRU, // scan aware
                   LAST_STRAT} pageReplaceStrat_t;
-    pageReplaceStrat_t replaceStrat; 
+    pageReplaceStrat_t replaceStrat;
 
     bool dramBackpressure;
 
     bool checkAdd(pageInfo &page);
     void do_FIFO_LRU( pageInfo &page, bool &inFast, bool &swapping);
     void do_LFU( Addr, pageInfo &page, bool &inFast, bool &swapping);
-    
+
     void printAccStats();
     queue<Req *> dramQ;
     void queueRequest(Req *r) {
@@ -246,9 +246,9 @@ private:
     // swap tracking stuff
     const bool modelSwaps = 1;
     map<uint64_t, list<Req*> > waitingReqs;
-public:    
+public:
     class MemCtrlEvent;
-private:    
+private:
     typedef map<MemCtrlEvent *, pageInfo*> evToPage_t;
     typedef map<Req *, pageInfo*> reqToPage_t;
     evToPage_t swapToSlow_Reads;
@@ -262,7 +262,7 @@ private:
     void moveToSlow(pageInfo *);
     bool pageIsSwapping(const pageInfo &page);
 
-public:    
+public:
     class MemCtrlEvent : public SST::Event {
     public:
         MemCtrlEvent(Req* req) : SST::Event(), req(req)
@@ -270,16 +270,16 @@ public:
 
         Req* req;
 
-    private:   
+    private:
         MemCtrlEvent() {} // For Serialization only
-        
+
     public:
         void serialize_order(SST::Core::Serialization::serializer &ser)  override {
             Event::serialize_order(ser);
             ser & req;  // Cannot serialize pointers unless they are a serializable object
         }
-        
-        ImplementSerializable(SST::MemHierarchy::pagedMultiMemory::MemCtrlEvent);     
+
+        ImplementSerializable(SST::MemHierarchy::pagedMultiMemory::MemCtrlEvent);
     };
 
     typedef map<uint64_t, pageInfo> pageMap_t;

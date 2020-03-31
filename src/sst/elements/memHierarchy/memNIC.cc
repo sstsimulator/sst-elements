@@ -1,8 +1,8 @@
-// Copyright 2013-2019 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2019, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -51,7 +51,7 @@ void MemNIC::build(Params& params) {
         netparams.insert("out_buf_size", params.find<std::string>("network_output_buffer_size", "1KiB"));
         netparams.insert("link_bw", params.find<std::string>("network_bw", "80GiB/s"));
         std::string link_control_class = params.find<std::string>("network_link_control", "merlin.linkcontrol");
-        
+
         if (link_control_class != "merlin.linkcontrol")
             dbg.output("%s, Warning: use of the 'network_link_control' parameter is deprecated in favor of specifying a named 'linkcontrol' subcomponent in the input configuration.\n",
                     getName().c_str());
@@ -69,8 +69,8 @@ void MemNIC::init(unsigned int phase) {
     MemNICBase::nicInit(link_control, phase);
 }
 
-/* 
- * Called by parent on a clock 
+/*
+ * Called by parent on a clock
  * Returns whether anything sent this cycle
  */
 bool MemNIC::clock() {
@@ -81,8 +81,8 @@ bool MemNIC::clock() {
     return false;
 }
 
-/* 
- * Event handler called by link control on event receive 
+/*
+ * Event handler called by link control on event receive
  * Return whether event can be received
  */
 bool MemNIC::recvNotify(int) {
@@ -92,7 +92,7 @@ bool MemNIC::recvNotify(int) {
         delete mre;
         if (ev) {
             if (is_debug_event(ev)) {
-                dbg.debug(_L9_, "%s, memNIC recv: src: %s. cmd: %s\n", 
+                dbg.debug(_L9_, "%s, memNIC recv: src: %s. cmd: %s\n",
                         getName().c_str(), ev->getSrc().c_str(), CommandString[(int)ev->getCmd()]);
             }
             (*recvHandler)(ev);
@@ -110,7 +110,7 @@ void MemNIC::send(MemEventBase *ev) {
     req->dest = lookupNetworkAddress(ev->getDst());
     req->size_in_bits = getSizeInBits(ev);
     req->vn = 0;
-    
+
     if (is_debug_event(ev)) {
         dbg.debug(_L9_, "%s, memNIC adding to send queue: dst: %s, bits: %zu, cmd: %s\n",
                 getName().c_str(), ev->getDst().c_str(), req->size_in_bits, CommandString[(int)ev->getCmd()]);
@@ -132,7 +132,7 @@ size_t MemNIC::getSizeInBits(MemEventBase *ev) {
 void MemNIC::printStatus(Output &out) {
     out.output("  MemHierarchy::MemNIC\n");
     out.output("    Send queue (%zu entries):\n", sendQueue.size());
-    
+
     // Since this is just debug/fatal we're just going to read out the queue & re-populate it
     std::queue<SST::Interfaces::SimpleNetwork::Request*> tmpQ;
     while (!sendQueue.empty()) {

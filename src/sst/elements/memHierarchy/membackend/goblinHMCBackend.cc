@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -156,7 +156,7 @@ const HMCPacket __PACKETS[] = {
 
 
 GOBLINHMCSimBackend::GOBLINHMCSimBackend(ComponentId_t id, Params& params) : ExtMemBackend(id, params) {
-    build(params); 
+    build(params);
 }
 
 void GOBLINHMCSimBackend::build(Params& params) {
@@ -852,7 +852,7 @@ bool GOBLINHMCSimBackend::issueCustomRequest(ReqId reqId, Addr addr, uint32_t cm
 
   hmc_packet[0] = req_header;
   hmc_packet[1] = req_tail;
-  
+
   rc = hmcsim_send(&the_hmc, &hmc_packet[0]);
 
   if(HMC_STALL == rc) {

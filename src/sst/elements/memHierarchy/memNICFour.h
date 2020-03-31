@@ -1,8 +1,8 @@
-// Copyright 2013-2019 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2019, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -59,7 +59,7 @@ public:
         { "fwd.port",                       "(string) Fwd network. Set by parent component. Name of port this NIC sits on.", ""},\
         { "clock",                          "(string) Units for latency statistics", "1GHz"}
 
-    
+
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(MemNICFour, "memHierarchy", "MemNICFour", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Memory-oriented network interface for split networks", SST::MemHierarchy::MemLinkBase)
 
@@ -84,7 +84,7 @@ public:
             {"ack", "Link control subcomponent to acknowledgement network", "SST::Interfaces::SimpleNetwork"},
             {"fwd", "Link control subcomponent to forwarded request network", "SST::Interfaces::SimpleNetwork"})
 
-/* Begin class definition */    
+/* Begin class definition */
 
     enum NetType { REQ, ACK, FWD, DATA };
     /* Constructor */
@@ -109,12 +109,12 @@ public:
 
     /* Initialization and finish */
     void init(unsigned int phase);
-    void finish() { 
+    void finish() {
         for (int i = 0; i < 4; i++)
             link_control[i]->finish();
     }
     void setup();
-    
+
     // Router events
     class OrderedMemRtrEvent : public MemNICBase::MemRtrEvent {
         public:
@@ -125,9 +125,9 @@ public:
 
             virtual Event* clone(void) override {
                 OrderedMemRtrEvent * omre = new OrderedMemRtrEvent(*this);
-                if (this->event != nullptr) 
+                if (this->event != nullptr)
                     omre->event = this->event->clone();
-                else 
+                else
                     omre->event = nullptr;
                 return omre;
             }
@@ -146,7 +146,7 @@ public:
     void printStatus(Output& out);
 
 private:
-    
+
     void recvNotify(MemNICFour::OrderedMemRtrEvent* mre);
     MemNICFour::OrderedMemRtrEvent* processRecv(SST::Interfaces::SimpleNetwork::Request* req);
 
@@ -164,11 +164,11 @@ private:
     std::map<uint64_t, unsigned int> sendTags;
     std::map<uint64_t, unsigned int> recvTags;
     std::map<uint64_t, std::map<unsigned int, std::pair<OrderedMemRtrEvent*,SimTime_t> > > orderBuffer;
-    
+
     // Statistics
     Statistic<uint64_t>* stat_oooEvent[4];
-    Statistic<uint64_t>* stat_oooDepth; 
-    Statistic<uint64_t>* stat_oooDepthSrc; 
+    Statistic<uint64_t>* stat_oooDepth;
+    Statistic<uint64_t>* stat_oooDepthSrc;
     Statistic<uint64_t>* stat_orderLatency;
     uint64_t totalOOO; // Since there's no simple count of orderBuffer size
 };

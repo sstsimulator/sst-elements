@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -24,7 +24,7 @@ typedef uint64_t ReqId;
 struct Transaction {
     Transaction( SimTime_t _createTime, ReqId id, Addr addr, bool isWrite, unsigned numBytes, unsigned _bank, unsigned _row) :
         createTime(_createTime), id(id), addr(addr), isWrite(isWrite), numBytes(numBytes),
-	bank(_bank), row(_row), retired(false) 
+	bank(_bank), row(_row), retired(false)
     {}
 
     void setRetired() { retired = true; }
@@ -56,7 +56,7 @@ class TransactionQ : public SST::SubComponent {
     }
 
     virtual Transaction* pop( unsigned row ) {
-        Transaction* trans = NULL; 
+        Transaction* trans = NULL;
         if ( ! m_transQ.empty() ) {
             trans = m_transQ.front();
             m_transQ.pop_front();
@@ -82,7 +82,7 @@ class ReorderTransactionQ : public TransactionQ {
     SST_ELI_DOCUMENT_PARAMS( {"windowCycles", "Reorder window in cycles", "10" } )
 
 /* Begin class definition */
-    
+
     ReorderTransactionQ( ComponentId_t id, Params& params ) : TransactionQ( id, params ) {
         windowCycles = params.find<unsigned int>("windowCycles", 10);
     }
@@ -92,15 +92,15 @@ class ReorderTransactionQ : public TransactionQ {
         size_t numTrans = m_transQ.size();
 
         // the most comman condition is empty
-        if ( 0 == numTrans ) { 
+        if ( 0 == numTrans ) {
             return NULL;
         }
 
         // the second most condition is size of 1
-        if ( 1 == numTrans ) { 
+        if ( 1 == numTrans ) {
             Transaction* trans = m_transQ.front();
-            m_transQ.pop_front();    
-            return trans; 
+            m_transQ.pop_front();
+            return trans;
 
         }
 
@@ -108,25 +108,25 @@ class ReorderTransactionQ : public TransactionQ {
 
         if ( (*one)->row == row ) {
             Transaction* trans = (*one);
-            m_transQ.erase(one);    
-            return trans; 
+            m_transQ.erase(one);
+            return trans;
         }
 
         std::list<Transaction*>::iterator two = std::next(one,1);
 
         // size > 2 is rare so didn't try to craft generic reorder code
         // see if we can swap position 1 and 2
-        if ( (*two)->row == row && 
-             //(*one)->col != (*two)->col && 
-               (*one)->createTime + windowCycles > (*two)->createTime ) 
+        if ( (*two)->row == row &&
+             //(*one)->col != (*two)->col &&
+               (*one)->createTime + windowCycles > (*two)->createTime )
         {
             Transaction* trans = (*two);
-            m_transQ.erase(two);    
+            m_transQ.erase(two);
             return trans;
         }
         Transaction* trans = m_transQ.front();
-        m_transQ.pop_front();    
-        return trans; 
+        m_transQ.pop_front();
+        return trans;
     }
   private:
 

@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -39,7 +39,7 @@ using namespace std;
 class BroadcastShim : public SST::Component {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_COMPONENT(BroadcastShim, "memHierarchy", "BroadcastShim", SST_ELI_ELEMENT_VERSION(1,0,0), 
+    SST_ELI_REGISTER_COMPONENT(BroadcastShim, "memHierarchy", "BroadcastShim", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Used to connect a processor to multiple sieves (e.g., for private/semi-private last-level cache modeling)", COMPONENT_CATEGORY_MEMORY)
 
     SST_ELI_DOCUMENT_PORTS(
@@ -49,14 +49,14 @@ public:
 /* Begin class definiton */
     /** Constructor */
     BroadcastShim(ComponentId_t id, Params &params);
-    
+
     /** Destructor for Sieve Component */
     ~BroadcastShim() {}
-    
+
     virtual void init(unsigned int) {}
     virtual void finish(void) {}
-    
-    
+
+
 private:
 
     /** Handler for incoming allocation events.  */

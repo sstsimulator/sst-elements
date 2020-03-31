@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -23,7 +23,7 @@ using namespace SST::MemHierarchy;
 
 /*------------------------------- Simple Backend ------------------------------- */
 RequestReorderSimple::RequestReorderSimple(ComponentId_t id, Params &params) : SimpleMemBackend(id, params){ build(params); }
-    
+
 void RequestReorderSimple::build(Params& params) {
     fixupParams( params, "clock", "backend.clock" );
 
@@ -51,23 +51,23 @@ bool RequestReorderSimple::issueRequest(ReqId id, Addr addr, bool isWrite, unsig
     return true;
 }
 
-/* 
+/*
  * Issue as many requests as we can up to requestsPerCycle
  * by searching up to searchWindowSize requests
  */
 bool RequestReorderSimple::clock(Cycle_t cycle) {
-    
+
     if (!requestQueue.empty()) {
-        
+
         int reqsIssuedThisCycle = 0;
         int reqsSearchedThisCycle = 0;
-        
+
         std::list<Req>::iterator it = requestQueue.begin();
-        
+
         while (it != requestQueue.end()) {
-            
+
             bool issued = backend->issueRequest( (*it).id, (*it).addr, (*it).isWrite, (*it).numBytes );
-            
+
             if (issued) {
 #ifdef __SST_DEBUG_OUTPUT__
     output->debug(_L10_, "Reorderer issued request for 0x%" PRIx64 "\n", (Addr)(*it).addr);
@@ -81,7 +81,7 @@ bool RequestReorderSimple::clock(Cycle_t cycle) {
 #endif
                 it++;
             }
-        
+
             reqsSearchedThisCycle++;
             if (reqsSearchedThisCycle == searchWindowSize) break;
         }

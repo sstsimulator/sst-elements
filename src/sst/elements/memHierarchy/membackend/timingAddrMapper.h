@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -25,14 +25,14 @@ class AddrMapper : public SST::Module {
     AddrMapper( ) : m_numChannels(1), m_numRanks(1), m_numBanks(8)
     { }
 
-    virtual void setNumChannels( unsigned int num  ) { 
+    virtual void setNumChannels( unsigned int num  ) {
         m_numChannels = num;
     }
 
     virtual void setNumRanks( unsigned int num ) {
         m_numRanks = num;
-    } 
-    
+    }
+
     virtual void setNumBanks( unsigned int num ) {
         m_numBanks = num;
     }
@@ -53,10 +53,10 @@ class SimpleAddrMapper : public AddrMapper {
 /* Element Library Info */
     SST_ELI_REGISTER_MODULE(SimpleAddrMapper, "memHierarchy", "simpleAddrMapper", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Simple address mapper", "SST::MemHierarchy::AddrMapper")
-    
+
 /* Begin class definition */
-    SimpleAddrMapper( Params &params ) : 
-        AddrMapper(), 
+    SimpleAddrMapper( Params &params ) :
+        AddrMapper(),
         m_baseShift( 6 ),
         m_columnShift( 8 )
     { }
@@ -66,7 +66,7 @@ class SimpleAddrMapper : public AddrMapper {
             Output output("", 1, 0, Output::STDOUT);
             output.fatal(CALL_INFO, -1, "SimpleAddrMapper, Error: memHierarchy.simpleAddrMapper does not support non-power-of-2 channels...use memHierarchy.roundRobinAddrMapper instead\n");
         }
-        m_numChannels = num; 
+        m_numChannels = num;
     }
 
     virtual void setNumRanks( unsigned int num ) {
@@ -85,7 +85,7 @@ class SimpleAddrMapper : public AddrMapper {
         m_numBanks = num;
     }
 
-    int channelShift() { return m_baseShift; } 
+    int channelShift() { return m_baseShift; }
     int channelMask()  { return m_numChannels - 1; }
     int channelWidth() { return log2Of( m_numChannels ); }
 
@@ -99,7 +99,7 @@ class SimpleAddrMapper : public AddrMapper {
 
     int rowShift() { return bankShift() + bankWidth(); }
 
-    int getChannel( Addr addr ) { 
+    int getChannel( Addr addr ) {
         return (addr >> channelShift() ) & channelMask();
     }
 
@@ -114,7 +114,7 @@ class SimpleAddrMapper : public AddrMapper {
     int getRow( Addr addr ) {
         return addr >> rowShift();
     }
-    
+
   private:
     unsigned m_baseShift;
     unsigned m_columnShift;
@@ -137,7 +137,7 @@ public:
         UnitAlgebra ilSize = UnitAlgebra(params.find<std::string>("interleave_size", "64B")); /* Default = 64B line interleaving */
         UnitAlgebra rowSize = UnitAlgebra(params.find<std::string>("row_size", "1KiB"));
         Output output("", 1, 0, Output::STDOUT);
-        
+
         if (!ilSize.hasUnits("B")) {
             output.fatal(CALL_INFO, -1, "RoundRobinAddrMapper, Invalid param - interleave_size: must have units of 'B'. SI ok.\n");
         }
@@ -154,10 +154,10 @@ public:
         m_rowDivider = m_numChannels * m_numRanks * m_numBanks * (rowSize.getRoundedValue() / ilSize.getRoundedValue());
         m_rankDivider = m_numChannels * m_numBanks;
     }
-    
+
     virtual void setNumChannels( unsigned int num ) {
         m_rowDivider = m_rowDivider * num / m_numChannels; /* Swap num for m_numChannels */
-        m_numChannels = num; 
+        m_numChannels = num;
         m_rankDivider = m_numChannels * m_numBanks;
     }
 
@@ -175,15 +175,15 @@ public:
     int getChannel( Addr addr ) {
         return (addr >> m_baseShift) % m_numChannels;
     }
-    
+
     int getRank( Addr addr ) {
         return ((addr >> m_baseShift) / m_rankDivider) % m_numRanks;
     }
-    
+
     int getBank( Addr addr ) {
         return ((addr >> m_baseShift) / m_numChannels) % m_numBanks;
     }
-    
+
     int getRow( Addr addr ) {
         return (addr >> m_baseShift) / m_rowDivider;
     }
@@ -201,12 +201,12 @@ class SandyBridgeAddrMapper : public AddrMapper {
 /* Element Library Info */
     SST_ELI_REGISTER_MODULE(SandyBridgeAddrMapper, "memHierarchy", "sandyBridgeAddrMapper", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Sandy Bridge address mapper", "SST::MemHierarchy::AddrMapper")
-    
+
 /* Begin class definition */
-    SandyBridgeAddrMapper( Params &params ) : AddrMapper() 
+    SandyBridgeAddrMapper( Params &params ) : AddrMapper()
     { }
-    
-    virtual void setNumChannels( unsigned int num  ) { 
+
+    virtual void setNumChannels( unsigned int num  ) {
         if (num != 1) {
             Output output("", 1, 0, Output::STDOUT);
             output.fatal(CALL_INFO, -1, "SandyBridgeAddrMapper, Error: memHierarchy.sandyBridgeAddrMapper does not support multiple channels\n");

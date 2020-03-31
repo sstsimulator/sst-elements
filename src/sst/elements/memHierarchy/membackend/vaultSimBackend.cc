@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -49,7 +49,7 @@ bool VaultSimMemory::issueRequest(ReqId reqId, Addr addr, bool isWrite, uint32_t
         output->fatal(CALL_INFO, -1, "Assertion failed");
 
     outToCubes.insert( reqId );
-    cube_link->send( new VaultSim::MemReqEvent(reqId,addr,isWrite,numBytes,flags) ); 
+    cube_link->send( new VaultSim::MemReqEvent(reqId,addr,isWrite,numBytes,flags) );
     return true;
 }
 
@@ -62,7 +62,7 @@ void VaultSimMemory::handleCubeEvent(SST::Event *event){
             outToCubes.erase( ev->getReqId() );
             handleMemResponse( ev->getReqId(), ev->getFlags() );
       		delete event;
-        } else {  
+        } else {
             output->fatal(CALL_INFO, -1, "Could not match incoming request from cubes\n");
 		}
     } else {
