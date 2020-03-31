@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -66,18 +66,18 @@ class Interface : public Hermes::Interface {
 
     virtual void barrier_all(Callback) { assert(0); }
     virtual void barrier( int start, int stride, int size, Vaddr, Callback) { assert(0); }
-    virtual void broadcast( Vaddr dest, Vaddr source, size_t nelems, int root, int PE_start, 
+    virtual void broadcast( Vaddr dest, Vaddr source, size_t nelems, int root, int PE_start,
             int logPE_stride, int PE_size, Vaddr, Callback) { assert(0); }
-    virtual void fcollect( Vaddr dest, Vaddr source, size_t nelems, int PE_start, 
+    virtual void fcollect( Vaddr dest, Vaddr source, size_t nelems, int PE_start,
             int logPE_stride, int PE_size, Vaddr, Callback) { assert(0); }
-    virtual void collect( Vaddr dest, Vaddr source, size_t nelems, int PE_start, 
+    virtual void collect( Vaddr dest, Vaddr source, size_t nelems, int PE_start,
             int logPE_stride, int PE_size, Vaddr, Callback) { assert(0); }
-    virtual void alltoall( Vaddr dest, Vaddr source, size_t nelems, int PE_start, 
+    virtual void alltoall( Vaddr dest, Vaddr source, size_t nelems, int PE_start,
             int logPE_stride, int PE_size, Vaddr, Callback) { assert(0); }
     virtual void alltoalls( Vaddr dest, Vaddr source, int dst, int sst, size_t nelems, int elsize,
             int PE_start, int logPE_stride, int PE_size, Vaddr, Callback) { assert(0); }
-    virtual void reduction( Vaddr dest, Vaddr source, int nelems, int PE_start, 
-            int logPE_stride, int PE_size, Vaddr pSync, 
+    virtual void reduction( Vaddr dest, Vaddr source, int nelems, int PE_start,
+            int logPE_stride, int PE_size, Vaddr pSync,
             ReduOp, Hermes::Value::Type, Callback) { assert(0); }
 
     virtual void malloc(MemAddr*, size_t, bool backed, Callback) { assert(0); }
@@ -102,7 +102,7 @@ class Interface : public Hermes::Interface {
 
 	virtual void fam_scatter( Hermes::Vaddr src, Fam_Descriptor fd, uint64_t nElements, uint64_t firstElement,
 			uint64_t stride, uint64_t elmentSize, bool blocking, Callback& ) {assert(0); };
-	virtual void fam_scatterv( Hermes::Vaddr src, Fam_Descriptor fd, uint64_t nElements, 
+	virtual void fam_scatterv( Hermes::Vaddr src, Fam_Descriptor fd, uint64_t nElements,
 			std::vector<uint64_t> elementIndex, uint64_t elmentSize, bool blocking, Callback& ) {assert(0);};
 
 	virtual void fam_gather( Hermes::Vaddr dest, Fam_Descriptor fd, uint64_t nElements, uint64_t firstElement,

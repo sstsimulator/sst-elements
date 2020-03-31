@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -27,7 +27,7 @@ using namespace SST::MemHierarchy;
 using namespace SST::VaultSim;
 
 #define DBG( fmt, args... )m_dbg.write( "%s():%d: " fmt, __FUNCTION__, __LINE__, ##args)
-//typedef  VaultCompleteFn; 
+//typedef  VaultCompleteFn;
 
 logicLayer::logicLayer( ComponentId_t id, Params& params ) :
   Component( id ), memOps(0)
@@ -46,13 +46,13 @@ logicLayer::logicLayer( ComponentId_t id, Params& params ) :
 
   bwlimit = params.find( "bwlimit", -1 );
   if (-1 == bwlimit ) {
-    dbg.fatal(CALL_INFO, -1, 
+    dbg.fatal(CALL_INFO, -1,
 	   " no <bwlimit> tag defined for logiclayer\n");
   }
 
   int mask = params.find( "LL_MASK", -1 );
   if ( -1 == mask ) {
-    dbg.fatal(CALL_INFO, -1, 
+    dbg.fatal(CALL_INFO, -1,
 	   " no <LL_MASK> tag defined for logiclayer\n");
   }
   LL_MASK = mask;
@@ -70,13 +70,13 @@ logicLayer::logicLayer( ComponentId_t id, Params& params ) :
 	m_memChans.push_back(chan);
 	dbg.output(" connected %s\n", bus_name);
       } else {
-	dbg.fatal(CALL_INFO, -1, 
+	dbg.fatal(CALL_INFO, -1,
 	       " could not find %s\n", bus_name);
       }
     }
     printf(" Connected %d Vaults\n", numVaults);
   } else {
-    dbg.fatal(CALL_INFO, -1, 
+    dbg.fatal(CALL_INFO, -1,
 	   " no <vaults> tag defined for LogicLayer\n");
   }
 
@@ -93,13 +93,13 @@ logicLayer::logicLayer( ComponentId_t id, Params& params ) :
   dbg.output(CALL_INFO, "made logicLayer %d %p %p\n", llID, toMem, toCPU);
 
   // register bandwidth stats
-  bwUsedToCpu[0] = registerStatistic<uint64_t>("BW_recv_from_CPU", "1");  
+  bwUsedToCpu[0] = registerStatistic<uint64_t>("BW_recv_from_CPU", "1");
   bwUsedToCpu[1] = registerStatistic<uint64_t>("BW_send_to_CPU", "1");
   bwUsedToMem[0] = registerStatistic<uint64_t>("BW_recv_from_Mem", "1");
   bwUsedToMem[1] = registerStatistic<uint64_t>("BW_send_to_Mem", "1");
 }
 
-int logicLayer::Finish() 
+int logicLayer::Finish()
 {
   printf("Logic Layer %d completed %lld ops\n", llID, memOps);
   return 0;
@@ -112,7 +112,7 @@ void logicLayer::init(unsigned int phase) {
     if ( !phase ) {
         toCPU->sendInitData(new SST::Interfaces::StringEvent("SST::MemHierarchy::MemEvent"));
     }
-    
+
     // rec data events from the direction of the cpu
     SST::Event *ev = NULL;
     while ( (ev = toCPU->recvInitData()) != NULL ) {
@@ -130,8 +130,8 @@ void logicLayer::init(unsigned int phase) {
                     SST::MemHierarchy::Addr addr = me->getAddr();
                     for (int i = 0; i < numNewEv; ++i) {
                         // make new event
-                        MemEvent *newEv = new MemEvent(this, addr, 
-                                                       me->getBaseAddr(), 
+                        MemEvent *newEv = new MemEvent(this, addr,
+                                                       me->getBaseAddr(),
                                                        me->getCmd());
                         // set size and payload
                         if (i != (numNewEv - 1)) {
@@ -147,9 +147,9 @@ void logicLayer::init(unsigned int phase) {
                         // sent to where it needs to go
                         if (isOurs(newEv->getAddr())) {
                             // send to the vault
-                            unsigned int vaultID = 
+                            unsigned int vaultID =
                                 (newEv->getAddr() >> VAULT_SHIFT) % m_memChans.size();
-                            m_memChans[vaultID]->sendInitData(newEv);      
+                            m_memChans[vaultID]->sendInitData(newEv);
                         } else {
                             // send down the chain
                             toMem->sendInitData(newEv);
@@ -161,7 +161,7 @@ void logicLayer::init(unsigned int phase) {
                         // send to the vault
                         unsigned int vaultID = (me->getAddr() >> VAULT_SHIFT) % m_memChans.size();
                         // printf("Propagating initial write %p to vault %d\n", me, vaultID);
-                        m_memChans[vaultID]->sendInitData(me);      
+                        m_memChans[vaultID]->sendInitData(me);
                     } else {
 
                         // send down the chain
@@ -186,8 +186,8 @@ bool logicLayer::clock( Cycle_t current )
   // check for events from the CPU
   while((tc[0] < bwlimit) && (e = toCPU->recv())) {
     MemReqEvent *event  = dynamic_cast<MemReqEvent*>(e);
-//    dbg.output(CALL_INFO, "LL%d got req for %p (%lld %d)\n", llID, 
-    dbg.output(CALL_INFO, "LL%d got req for %p (%" PRIu64 " %d)\n", llID, 
+//    dbg.output(CALL_INFO, "LL%d got req for %p (%lld %d)\n", llID,
+    dbg.output(CALL_INFO, "LL%d got req for %p (%" PRIu64 " %d)\n", llID,
 	       (void*)event->getAddr(), event->getID().first, event->getID().second);
     if (event == NULL) {
       dbg.fatal(CALL_INFO, -1, "logic layer got bad event\n");
@@ -197,10 +197,10 @@ bool logicLayer::clock( Cycle_t current )
     if (isOurs(event->getAddr())) {
       // it is ours!
       unsigned int vaultID = (event->getAddr() >> VAULT_SHIFT) % m_memChans.size();
-//      dbg.output(CALL_INFO, "ll%d sends %p to vault @ %lld\n", llID, event, 
-      dbg.output(CALL_INFO, "ll%d sends %p to vault @ %" PRIu64 "\n", llID, event, 
+//      dbg.output(CALL_INFO, "ll%d sends %p to vault @ %lld\n", llID, event,
+      dbg.output(CALL_INFO, "ll%d sends %p to vault @ %" PRIu64 "\n", llID, event,
 		 current);
-      m_memChans[vaultID]->send(event);      
+      m_memChans[vaultID]->send(event);
     } else {
       // it is not ours
       if (toMem) {
@@ -223,16 +223,16 @@ bool logicLayer::clock( Cycle_t current )
 
       tm[0]++;
       // pass along to the CPU
-//      dbg.output(CALL_INFO, "ll%d sends %p towards cpu (%lld %d)\n", 
-      dbg.output(CALL_INFO, "ll%d sends %p towards cpu (%" PRIu64 " %d)\n", 
+//      dbg.output(CALL_INFO, "ll%d sends %p towards cpu (%lld %d)\n",
+      dbg.output(CALL_INFO, "ll%d sends %p towards cpu (%" PRIu64 " %d)\n",
 		 llID, event, event->getID().first, event->getID().second);
       toCPU->send( event );
       tc[1]++;
     }
   }
-	
+
   // check for incoming events from the vaults
-  for (memChans_t::iterator i = m_memChans.begin(); 
+  for (memChans_t::iterator i = m_memChans.begin();
        i != m_memChans.end(); ++i) {
     memChan_t *m_memChan = *i;
     while ((e = m_memChan->recv())) {
@@ -243,26 +243,26 @@ bool logicLayer::clock( Cycle_t current )
 //      dbg.output(CALL_INFO, "ll%d got an event %p from vault @ %lld, sends "
       dbg.output(CALL_INFO, "ll%d got an event %p from vault @ %" PRIu64 ", sends "
 		 "towards cpu\n", llID, event, current);
-      
+
       // send to CPU
       memOps++;
       toCPU->send( event );
       tc[1]++;
-    }    
+    }
   }
 
-  if (tm[0] > bwlimit || 
-      tm[1] > bwlimit || 
-      tc[0] > bwlimit || 
+  if (tm[0] > bwlimit ||
+      tm[1] > bwlimit ||
+      tc[0] > bwlimit ||
       tc[1] > bwlimit) {
-    dbg.output(CALL_INFO, "ll%d Bandwdith: %d %d %d %d\n", 
+    dbg.output(CALL_INFO, "ll%d Bandwdith: %d %d %d %d\n",
 	       llID, tm[0], tm[1], tc[0], tc[1]);
   }
   bwUsedToCpu[0]->addData(tc[0]);
   bwUsedToCpu[1]->addData(tc[1]);
   bwUsedToMem[0]->addData(tm[0]);
   bwUsedToMem[1]->addData(tm[1]);
-  
+
 
   return false;
 }

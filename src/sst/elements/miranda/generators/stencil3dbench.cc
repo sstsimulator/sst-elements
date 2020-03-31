@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -103,7 +103,7 @@ void Stencil3DBenchGenerator::generate(MirandaRequestQueue<GeneratorRequest*>* q
 
                                 MemoryOpRequest* write_a = new MemoryOpRequest( (nX * nY * nZ * datawidth) +
                                         datawidth * convertPositionToIndex(curX    , curY    , currentZ    ), datawidth, WRITE);
-				
+
                                 write_a->addDependency(read_a->getRequestID());
 				write_a->addDependency(read_b->getRequestID());
 				write_a->addDependency(read_c->getRequestID());

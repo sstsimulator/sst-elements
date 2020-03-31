@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -44,7 +44,7 @@ public:
 
 public:
 
-	EmberCustomRankMap(Params& params) : EmberRankMap(params) 
+	EmberCustomRankMap(Params& params) : EmberRankMap(params)
         {
                 jobId    = params.find<std::string>("_mapjobId", "-1");
                 //std::cout << "EmberCustommap: mapjobId: " << jobId << std::endl;
@@ -52,7 +52,7 @@ public:
                 //std::cout << "EmberCustommap: mapFile: " << mapFile.c_str() << std::endl;
                 if(jobId.compare("-1")){
                         readMapFile(mapFile);
-                }            
+                }
         }
 	~EmberCustomRankMap() {}
 
@@ -70,7 +70,7 @@ public:
                 input.open( fileName.c_str() );
 
                 if(!input.is_open()){
-                        std::cerr << "Error: Unable to open job task map file: \'" 
+                        std::cerr << "Error: Unable to open job task map file: \'"
                                     << fileName.c_str() << "\'" << std::endl;
                         exit(-1);
                 }
@@ -110,7 +110,7 @@ public:
                         }
                 }
                 input.close();
-                
+
                 /*
                 for(std::map<int, int>::iterator it = CustomMap.begin(); it != CustomMap.end(); it++){
                         std::cout << "linearMapRankNum: " << it->first << " customMapRankNum: " << it->second << std::endl;
@@ -125,7 +125,7 @@ public:
                 int32_t* myX, int32_t* myY, int32_t* myZ) {
 
                 int32_t customRank = (int32_t) InvCustomMap[rank];
-                
+
                 //std::cout << "rank: " << rank << " customRank: " << customRank << std::endl;
 
 

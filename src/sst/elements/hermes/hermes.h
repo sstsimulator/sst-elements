@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -47,7 +47,7 @@ class Value {
         return *this;
     }
 
-    Value( Type type ) : m_type( type ) { 
+    Value( Type type ) : m_type( type ) {
         m_length = getLength( type );
         m_value.resize(m_length);
         m_ptr = &m_value[0];
@@ -130,13 +130,13 @@ class Value {
         return *this;\
 
     Value& operator-=( const Value& rh ) {
-        MATH_OP(-) 
+        MATH_OP(-)
     }
     Value& operator+=( const Value& rh ) {
-        MATH_OP(+) 
+        MATH_OP(+)
     }
     Value& operator*=( const Value& rh ) {
-        MATH_OP(*) 
+        MATH_OP(*)
     }
 
 #define BIT_OP(op)\
@@ -160,13 +160,13 @@ class Value {
         return *this;\
 
     Value& operator&=( const Value& rh ) {
-        BIT_OP(&) 
+        BIT_OP(&)
     }
     Value& operator|=( const Value& rh ) {
-        BIT_OP(|) 
+        BIT_OP(|)
     }
     Value& operator^=( const Value& rh ) {
-        BIT_OP(^) 
+        BIT_OP(^)
     }
 
     template< class TYPE >
@@ -185,7 +185,7 @@ class Value {
     void* getPtr()       { return m_ptr; }
 
     size_t getLength() const { return m_length; }
-    static size_t getLength( Type type )  { 
+    static size_t getLength( Type type )  {
         switch ( type ) {
             case Float: return sizeof(float);
             case Double: return sizeof(double);
@@ -203,8 +203,8 @@ class Value {
   private:
     void copy( Value& dest, const Value& src ) {
 
-		if ( NULL == src.m_ptr ) { 
-			return; 
+		if ( NULL == src.m_ptr ) {
+			return;
 		}
         if ( dest.m_type == Empty ) {
             dest.m_type = src.m_type;
@@ -217,7 +217,7 @@ class Value {
             }
         }
         assert( dest.m_ptr );
-        assert( dest.m_type == src.m_type );         
+        assert( dest.m_type == src.m_type );
 
         if ( dest.m_ptr != src.m_ptr ) {
             memcpy( dest.m_ptr, src.m_ptr, getLength(dest.m_type) );
@@ -307,11 +307,11 @@ inline bool operator>=(const Value& lh, const Value& rh ) {
 class MemAddr {
 
   public:
-    enum Type { Normal, Shmem }; 
-    MemAddr( uint64_t sim, void* back, Type type = Normal) : 
-        type(type), simVAddr(sim), backing(back) {} 
-    MemAddr( Type type = Normal) : type(type), simVAddr(0), backing(NULL) {} 
-    MemAddr( void* backing ) : type(Normal), simVAddr(0), backing(backing) {} 
+    enum Type { Normal, Shmem };
+    MemAddr( uint64_t sim, void* back, Type type = Normal) :
+        type(type), simVAddr(sim), backing(back) {}
+    MemAddr( Type type = Normal) : type(type), simVAddr(0), backing(NULL) {}
+    MemAddr( void* backing ) : type(Normal), simVAddr(0), backing(backing) {}
 
     char& operator[](size_t index) {
         return ((char*)backing)[index];
@@ -325,7 +325,7 @@ class MemAddr {
     template < class TYPE = char >
     MemAddr offset( size_t val ) {
         MemAddr addr = *this;
-        addr.simVAddr += val * sizeof(TYPE); 
+        addr.simVAddr += val * sizeof(TYPE);
         if ( addr.backing ) {
             addr.backing = (char*) addr.backing + (val*sizeof(TYPE));
         }
@@ -355,7 +355,7 @@ class MemAddr {
     void setBacking( void* ptr ) {
         backing = ptr;
     }
-            
+
   private:
     Type type;
     uint64_t simVAddr;
@@ -366,8 +366,8 @@ class NodePerf : public Module {
   public:
     virtual double getFlops() { assert(0); }
     virtual double getBandwidth() { assert(0); }
-    virtual double calcTimeNS_flops( int instructions ) { assert(0); } 
-    virtual double calcTimeNS_bandwidth( int bytes ) { assert(0); } 
+    virtual double calcTimeNS_flops( int instructions ) { assert(0); }
+    virtual double calcTimeNS_bandwidth( int bytes ) { assert(0); }
 };
 
 class OS : public SubComponent {
@@ -392,8 +392,8 @@ class Interface : public SubComponent {
   public:
 	SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Hermes::Interface)
     Interface( ComponentId_t id ) : SubComponent(id) {}
-    virtual void setup() {} 
-    virtual void finish() {} 
+    virtual void setup() {}
+    virtual void finish() {}
     virtual void setOS( OS* ) { assert(0); }
     virtual std::string getName() { assert(0); }
 	virtual std::string getType() { return ""; }

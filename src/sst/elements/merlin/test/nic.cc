@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -54,9 +54,9 @@ nic::nic(ComponentId_t cid, Params& params) :
     num_peers = params.find<int>("num_peers",-1);
     if ( num_peers == -1 ) {
     }
-    
+
     num_msg = params.find<int>("num_messages",10);
-    
+
     send_untimed_bcast = params.find<bool>("send_untimed_data","false");
 
     UnitAlgebra message_size = params.find<std::string>("message_size","64b");
@@ -68,9 +68,9 @@ nic::nic(ComponentId_t cid, Params& params) :
         ("networkIF", ComponentInfo::SHARE_NONE, 1 /* vns */);
 
     if ( !link_control ) {
-        merlin_abort.fatal(CALL_INFO,1,"Error: no LinkControl object loaded into test_nic\n");   
+        merlin_abort.fatal(CALL_INFO,1,"Error: no LinkControl object loaded into test_nic\n");
     }
-    
+
     last_target = net_id;
     next_seq = new int[num_peers];
     for ( int i = 0 ; i < num_peers ; i++ )
@@ -96,13 +96,13 @@ void nic::finish()
     if ( init_count != num_peers ) {
         output.output("NIC %d didn't receive all complete point-to-point messages.  Only recieved %d\n",net_id,init_count);
     }
-        
+
     if ( send_untimed_bcast ) {
         if ( init_broadcast_count != (num_peers -1 ) ) {
             output.output("NIC %d didn't receive all complete broadcast messages.  Only recieved %d\n",net_id,init_broadcast_count);
         }
     }
-    
+
     link_control->finish();
     output.output("Nic %d had %d stalled cycles.\n",net_id,stalled_cycles);
 }
@@ -111,7 +111,7 @@ void nic::setup()
 {
     link_control->setup();
     if ( link_control->getEndpointID() != net_id ) {
-        output.output("NIC ids don't match: param = %" PRIi64 ", LinkControl = %" PRIi64 "\n", 
+        output.output("NIC ids don't match: param = %" PRIi64 ", LinkControl = %" PRIi64 "\n",
 		(int64_t) net_id, (int64_t) link_control->getEndpointID());
     }
 
@@ -129,7 +129,7 @@ void nic::setup()
 
 void nic::complete(unsigned int phase) {
     link_control->complete(phase);
-    
+
     if ( phase == 0 ) {
         init_count = 0;
         init_broadcast_count = 0;
@@ -212,7 +212,7 @@ nic::init_complete(unsigned int phase) {
         break;
     }
     case 2:
-    {   
+    {
         SimpleNetwork::Request* req;
         while ( (req = link_control->recvInitData() ) != NULL ) {
 
@@ -243,7 +243,7 @@ nic::init_complete(unsigned int phase) {
             else {
                 init_state = 3;
             }
-        }        
+        }
         break;
     }
     case 3:
@@ -264,7 +264,7 @@ nic::init_complete(unsigned int phase) {
                 link_control->sendUntimedData(req);
             }
             init_state = 4;
-        }        
+        }
         break;
     }
     case 4:
@@ -282,8 +282,8 @@ nic::init_complete(unsigned int phase) {
 
         if ( init_count == num_peers ) {
             init_state = 5;
-        }        
-        
+        }
+
         break;
     }
     default:
@@ -312,7 +312,7 @@ public:
         out.output("%s MyRtrEvent to be delivered at %" PRIu64 " with priority %d.  seq = %d\n",
                    header.c_str(), getDeliveryTime(), getPriority(), seq);
     }
-    
+
 
 private:
 
@@ -340,10 +340,10 @@ nic::clock_handler(Cycle_t cycle)
         if ( link_control->spaceToSend(send_vc,msg_size) ) {
             last_target++;
             last_target %= num_peers;
-            
+
             MyRtrEvent* ev = new MyRtrEvent(packets_sent/num_peers);
             SimpleNetwork::Request* req = new SimpleNetwork::Request();
-            
+
             req->dest = last_target;
             req->src = net_id;
 
@@ -362,7 +362,7 @@ nic::clock_handler(Cycle_t cycle)
                               cycle, net_id, num_msg);
             }
         }
-        else {            
+        else {
             stalled_cycles++;
         }
     }
@@ -381,7 +381,7 @@ nic::clock_handler(Cycle_t cycle)
         if ( req->dest != net_id ) {
             output.fatal(CALL_INFO,-1,"%d received packet intended for %d\n",net_id,(int)req->dest);
         }
-            
+
         next_seq[src]++;
         delete ev;
         delete req;

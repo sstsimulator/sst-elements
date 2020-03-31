@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // // of Contract DE-NA0003525 with NTESS, the U.S.
 // // Government retains certain rights in this software.
 // //
-// // Copyright (c) 2009-2019, NTESS
+// // Copyright (c) 2009-2020, NTESS
 // // All rights reserved.
 // //
 // // This file is part of the SST software package. For license
@@ -10,7 +10,7 @@
 // // distribution.
 
 
-// This defines the TLB entry 
+// This defines the TLB entry
 class TLBentry
 {
 
@@ -18,7 +18,7 @@ class TLBentry
 	int page_size;
 
 	// Maintains permissions, not sure if we will end up using this later, for now: 0 means RWX, 1 means R-only
-	bool permissions; 
+	bool permissions;
 
 	// Maintains the virtual address, note that this is in the granularity of the page size of this entry
 	uint64_t VA;

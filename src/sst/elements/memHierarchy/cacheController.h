@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -203,10 +203,10 @@ private:
 
     // Coherence manager creation
     void createCoherenceManager(Params &params);
-    
+
     // Configure links
     void configureLinks(Params &params);
-    
+
     /** Cache operation ********************************************************/
 
     // Computes base address based on line size
@@ -216,7 +216,7 @@ private:
 
     // Handle incoming events -> prepare to process
     void handleEvent(SST::Event *event);
-    
+
     // Handle incoming prefetching events -> prepare to process
     void handlePrefetchEvent(SST::Event *event);
 
@@ -256,7 +256,7 @@ private:
     Link* timeoutSelfLink_;                 // link to check for timeouts (possible deadlock)
     MSHR* mshr_;                            // MSHR
     CoherenceController* coherenceMgr_;     // Coherence protocol - where most of the event handling happens
-    
+
     /** Latencies **************************************************************/
     SimTime_t   prefetchDelay_;
 
@@ -286,8 +286,8 @@ private:
     std::list<MemEventBase*>    eventBuffer_;
     std::queue<MemEventBase*>   prefetchBuffer_;
     std::map<SST::Event::id_type, std::string> noncacheableResponseDst_;
-    
-    
+
+
     /** Output and debug *******************************************************/
     Output*                 out_;
     Output*                 dbg_;

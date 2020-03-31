@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -32,7 +32,7 @@
 #include "utils.h"
 #include "PageFaultHandler.h"
 
-// This file defines the page table walker and 
+// This file defines the page table walker and
 
 typedef std::pair<uint64_t, int> id_type;
 typedef uint64_t Address_t;
@@ -74,10 +74,10 @@ namespace SST { namespace SambaComponent{
 		int shootdownId;
 
 		int num_pages_migrated;
- 
+
 		//std::vector<Address_t, int> buffer;
 		int *hasInvalidAddrs;
- 
+
 		std::vector<std::pair<Address_t, int> > * invalid_addrs; // This is used to store address invalidation requests.
 
 		uint64_t tlb_shootdown_time;
@@ -187,13 +187,13 @@ namespace SST { namespace SambaComponent{
 
 		PageFaultHandler* pageFaultHandler;
 
-		public: 
+		public:
 
 		PageTableWalker(ComponentId_t id, int page_size, int assoc, PageTableWalker * next_level, int size);
 		PageTableWalker(ComponentId_t id, int tlb_id, PageTableWalker * Next_level,int level, SST::Params& params);
 
 		void setPageTablePointers( Address_t * cr3, std::map<Address_t, Address_t> * pgd,  std::map<Address_t, Address_t> * pud,  std::map<Address_t, Address_t> * pmd, std::map<Address_t, Address_t> * pte,
-				std::map<Address_t,int> * gb,  std::map<Address_t,int> * mb,  std::map<Address_t,int> * kb, std::map<Address_t,int> * pr, int *cr3I, std::map<Address_t,int> *pf_pgd,  std::map<Address_t,int> *pf_pud,  
+				std::map<Address_t,int> * gb,  std::map<Address_t,int> * mb,  std::map<Address_t,int> * kb, std::map<Address_t,int> * pr, int *cr3I, std::map<Address_t,int> *pf_pgd,  std::map<Address_t,int> *pf_pud,
 				std::map<Address_t,int> *pf_pmd, std::map<Address_t,int> * pf_pte)
 		{
 			CR3 = cr3;
@@ -229,7 +229,7 @@ namespace SST { namespace SambaComponent{
 
 		void finish(){}
 
-		void set_ToMem(SST::Link * l) { to_mem = l;} 
+		void set_ToMem(SST::Link * l) { to_mem = l;}
 
 		void setLineSize(uint64_t size) { line_size = size; }
 

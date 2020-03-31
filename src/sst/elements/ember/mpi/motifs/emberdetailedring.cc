@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -46,7 +46,7 @@ inline long mod( long a, long b )
     return tmp;
 }
 
-bool EmberDetailedRingGenerator::generate( std::queue<EmberEvent*>& evQ) 
+bool EmberDetailedRingGenerator::generate( std::queue<EmberEvent*>& evQ)
 {
    if ( m_loopIndex == m_iterations ) {
         if ( m_printRank == rank() || -1 == m_printRank ) {
@@ -111,10 +111,10 @@ bool EmberDetailedRingGenerator::generate( std::queue<EmberEvent*>& evQ)
     if ( 0 == rank() ) {
         enQ_isend( evQ, m_sendBuf, m_messageSize, CHAR, to, TAG,
                                                 GroupWorld, &m_req[0] );
-	    enQ_irecv( evQ, m_recvBuf, m_messageSize, CHAR, from, TAG, 
+	    enQ_irecv( evQ, m_recvBuf, m_messageSize, CHAR, from, TAG,
                                                 GroupWorld, &m_req[1] );
     } else {
-	    enQ_irecv( evQ, m_recvBuf, m_messageSize, CHAR, from, TAG, 
+	    enQ_irecv( evQ, m_recvBuf, m_messageSize, CHAR, from, TAG,
                                                 GroupWorld, &m_req[0] );
 	    enQ_isend( evQ, m_sendBuf, m_messageSize, CHAR, to, TAG,
                                                 GroupWorld, &m_req[1] );
@@ -135,7 +135,7 @@ bool EmberDetailedRingGenerator::generate( std::queue<EmberEvent*>& evQ)
     return false;
 }
 
-void EmberDetailedRingGenerator::computeSimple( std::queue<EmberEvent*>& evQ) 
+void EmberDetailedRingGenerator::computeSimple( std::queue<EmberEvent*>& evQ)
 {
     verbose( CALL_INFO, 1, 0, "\n");
     while ( m_computeTime ) {
@@ -146,7 +146,7 @@ void EmberDetailedRingGenerator::computeSimple( std::queue<EmberEvent*>& evQ)
     }
 }
 
-void EmberDetailedRingGenerator::computeDetailed( std::queue<EmberEvent*>& evQ) 
+void EmberDetailedRingGenerator::computeDetailed( std::queue<EmberEvent*>& evQ)
 {
     verbose( CALL_INFO, 1, 0, "\n");
 
@@ -154,7 +154,7 @@ void EmberDetailedRingGenerator::computeDetailed( std::queue<EmberEvent*>& evQ)
 
     std::string motif;
 
-	std::stringstream tmp;	
+	std::stringstream tmp;
 
     motif = "miranda.STREAMBenchGenerator";
 

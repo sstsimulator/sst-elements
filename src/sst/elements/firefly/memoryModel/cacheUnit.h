@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -12,7 +12,7 @@
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
-    
+
 	#include "muxUnit.h"
 
 	class CacheUnit : public Unit {
@@ -53,7 +53,7 @@
 		int m_numPending;
 
 		bool m_scheduled;
-		UnitBase* m_blockedSrc; 
+		UnitBase* m_blockedSrc;
 		std::queue<Entry*> m_blockedQ;
 		std::queue<Entry*> m_blockedDone;
     	Statistic<uint64_t>* m_hitCnt;
@@ -87,16 +87,16 @@
 		}
 
 	  private:
-		
+
 		bool addEntry( Entry* entry ) {
 			entry->req->addr = alignAddr( entry->req->addr );
-       		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"%s addr=%#" PRIx64 " pending=%d\n", 
+       		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"%s addr=%#" PRIx64 " pending=%d\n",
 					entry->op == Entry::Load?"Load":"Store",entry->req->addr,m_numPending);
 
             incNumPending();
 
             checkHitNew( entry );
-				
+
 			if ( m_numPending == m_qSize ) {
            		m_dbg.verbosePrefix(prefix(),CALL_INFO,2,CACHE_MASK,"pending Q is full\n");
 				m_blockedSrc = entry->src;
@@ -110,14 +110,14 @@
            	m_dbg.verbosePrefix(prefix(),CALL_INFO,2,CACHE_MASK,"\n");
             if ( checkHit( entry, false ) ) {
        	        m_dbg.verbosePrefix(prefix(),CALL_INFO,2,CACHE_MASK,"queue blocked %s addr=%#" PRIx64 "\n", entry->op == Entry::Load?"Load":"Store",entry->req->addr);
-				m_blockedQ.push( entry );	
+				m_blockedQ.push( entry );
             }
         }
 		void checkHitRetry( ) {
             m_scheduled = false;
            	m_dbg.verbosePrefix(prefix(),CALL_INFO,2,CACHE_MASK,"\n");
 			while ( ! blocked() && ! m_blockedQ.empty() ) {
-				Entry* entry = m_blockedQ.front();	
+				Entry* entry = m_blockedQ.front();
 				if (  ! checkHit( entry, true ) )  {
 					m_blockedQ.pop();
 				}
@@ -129,7 +129,7 @@
            	    m_dbg.verbosePrefix(prefix(),CALL_INFO,2,CACHE_MASK,"retry\n");
             }
            	m_dbg.verbosePrefix(prefix(),CALL_INFO,2,CACHE_MASK,"%s addr=%#" PRIx64 "\n", entry->op == Entry::Load?"Load":"Store",entry->req->addr);
-            if ( m_cache.isValid( entry->req->addr ) ) { 
+            if ( m_cache.isValid( entry->req->addr ) ) {
 				m_totalCnt->addData(1);
            	    m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"done, hit %s addr=%#" PRIx64 "\n",
                                                 entry->op == Entry::Load?"Load":"Store",entry->req->addr);
@@ -173,10 +173,10 @@
 		}
 
 		bool blocked() {
-		
-            m_dbg.verbosePrefix(prefix(),CALL_INFO,2,CACHE_MASK,"memUnitBlocked=%d outOfMSHR=%d\n", 
+
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,2,CACHE_MASK,"memUnitBlocked=%d outOfMSHR=%d\n",
 					m_blockedOnMemUnit, m_numIssuedLoads == m_numMSHR);
-			return m_blockedOnMemUnit || m_numIssuedLoads == m_numMSHR; 
+			return m_blockedOnMemUnit || m_numIssuedLoads == m_numMSHR;
 		}
 
 		void miss( Entry* entry ) {
@@ -186,10 +186,10 @@
             m_dbg.verbosePrefix(prefix(),CALL_INFO,2,CACHE_MASK,"%p\n",entry);
 			Callback* cb = new Callback;
 			entry->addr = entry->req->addr;
-			entry->startTime = m_model.getCurrentSimTimeNano(); 
+			entry->startTime = m_model.getCurrentSimTimeNano();
 			*cb = std::bind(&CacheUnit::loadDone, this, entry );
 		    m_blockedOnMemUnit = m_memory->load( this, entry->req, cb );
-                            
+
             // Note that the load deletes the request, so the req pointer is no longer valid
             entry->req=NULL;
             assert( m_numIssuedLoads < m_numMSHR);
@@ -202,14 +202,14 @@
 			} else {
 				loadDone2( entry );
 				schedule();
-			}  
+			}
 		}
 
 		void loadDone2( Entry* entry )
 		{
-			Hermes::Vaddr addr = entry->addr;	
+			Hermes::Vaddr addr = entry->addr;
    			m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"done, op=%s addr=%#" PRIx64 " latency=%" PRIu64 " numIssued=%d\n",
-                            entry->op == Entry::Load ? "load" : "store",                            
+                            entry->op == Entry::Load ? "load" : "store",
 							addr,m_model.getCurrentSimTimeNano()- entry->startTime, m_numIssuedLoads);
 
 			Hermes::Vaddr evictAddr = m_cache.evict();
@@ -252,7 +252,7 @@
             m_dbg.verbosePrefix(prefix(),CALL_INFO,2,CACHE_MASK,"scheduled=%d blocked=%d numBlocked=%zu`\n",
                     m_scheduled, blocked(), m_blockedQ.size());
 			if ( ! m_scheduled && ! blocked() && ! m_blockedQ.empty() ) {
-                m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"scheduled checkHitRetry addr=%#" PRIx64 "\n", 
+                m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"scheduled checkHitRetry addr=%#" PRIx64 "\n",
 										m_blockedQ.front()->req->addr);
 				Callback* cb = new Callback;
 				*cb = std::bind( &CacheUnit::checkHitRetry, this );
@@ -263,24 +263,24 @@
 
 		void incNumPending() {
 			++m_numPending;
-			assert( m_numPending <= m_qSize ); 
+			assert( m_numPending <= m_qSize );
          	m_dbg.verbosePrefix(prefix(),CALL_INFO,2,CACHE_MASK,"numPending=%d\n",m_numPending);
         }
 		void decNumPending() {
 			assert(m_numPending);
 			--m_numPending;
-			assert( m_numPending >=0 ); 
+			assert( m_numPending >=0 );
          	m_dbg.verbosePrefix(prefix(),CALL_INFO,2,CACHE_MASK,"numPending=%d\n",m_numPending);
-			if ( m_blockedSrc ) { 
+			if ( m_blockedSrc ) {
            		m_dbg.verbosePrefix(prefix(),CALL_INFO,2,CACHE_MASK,"unblock src schedResume\n");
                	m_model.schedResume( 0, m_blockedSrc );
                	m_blockedSrc = NULL;
-			} 
+			}
 		}
 
 		Hermes::Vaddr  alignAddr( Hermes::Vaddr addr ) {
 			return addr & ~(m_cacheLineSize-1);
-		}	
+		}
 
         bool isPending( Hermes::Vaddr addr ) {
             //m_dbg.verbosePrefix(prefix(),CALL_INFO,1,CACHE_MASK,"addr=%#lx %s numPending=%lu loads\n",

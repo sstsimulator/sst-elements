@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -78,7 +78,7 @@ private:
     typedef unordered_map<Addr, lineTrack> cacheTrack_t;
     cacheTrack_t cacheLines;
     std::vector<Event::HandlerBase*> registeredCallbacks;
-    bool captureVirtual; 
+    bool captureVirtual;
     Addr cutoff; // Don't bin addresses above the cutoff. Helps avoid creating
                 //  histogram entries for the vast address range between the
                 //  heap and the stack.

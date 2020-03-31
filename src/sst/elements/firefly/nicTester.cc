@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -33,7 +33,7 @@ struct Hdr {
     int pid;
 };
 
-#define BODY_SIZE 1000 
+#define BODY_SIZE 1000
 
 struct DmaEntry {
     Hdr hdr;
@@ -48,7 +48,7 @@ NicTester::NicTester(ComponentId_t id, Params &params) :
     Component( id ),
     m_state( PostSend )
 {
-    // this has to come first 
+    // this has to come first
     registerTimeBase( "100 ns", true);
 
     m_dbg.init("@t:NicTester::@p():@l " + getName() + ": ",
@@ -60,7 +60,7 @@ NicTester::NicTester(ComponentId_t id, Params &params) :
     std::string name = params.find_string("nicModule");
     assert( ! name.empty() );
 
-    m_dbg.debug(CALL_INFO,1,0,"nicModule `%s`\n",name.c_str()); 
+    m_dbg.debug(CALL_INFO,1,0,"nicModule `%s`\n",name.c_str());
 
     Params nicParams = params.find_prefix_params("nicParams." );
 
@@ -74,18 +74,18 @@ NicTester::NicTester(ComponentId_t id, Params &params) :
     m_dbg.setPrefix(buffer);
 
 
-    m_vNic->setNotifyOnSendPioDone( 
+    m_vNic->setNotifyOnSendPioDone(
         new VirtNic::Handler<NicTester,void*>(this, &NicTester::notifySendPioDone )
     );
-    m_vNic->setNotifyOnSendDmaDone( 
+    m_vNic->setNotifyOnSendDmaDone(
         new VirtNic::Handler<NicTester,void*>(this, &NicTester::notifySendDmaDone )
     );
 
-    m_vNic->setNotifyOnRecvDmaDone( 
+    m_vNic->setNotifyOnRecvDmaDone(
         new VirtNic::Handler4Args<NicTester,int,int,size_t,void*>(
                                 this, &NicTester::notifyRecvDmaDone )
     );
-    m_vNic->setNotifyNeedRecv( 
+    m_vNic->setNotifyNeedRecv(
         new VirtNic::Handler3Args<NicTester,int,int,size_t>(
                     this, &NicTester::notifyNeedRecv)
     );
@@ -119,7 +119,7 @@ bool NicTester::notifySendDmaDone( void* key )
 bool NicTester::notifyRecvDmaDone( int src, int tag, size_t len, void* key )
 {
     DmaEntry* entry = static_cast<DmaEntry*>(key);
-    m_dbg.debug(CALL_INFO,1,0,"src=%d tag=%#x len=%lu pid=%d\n",src, 
+    m_dbg.debug(CALL_INFO,1,0,"src=%d tag=%#x len=%lu pid=%d\n",src,
             tag, len, entry->hdr.pid);
 
     for ( unsigned int i = 0; i < len - sizeof(entry->hdr); i++ ) {
@@ -171,13 +171,13 @@ void NicTester::postRecv()
     DmaEntry* entry = new DmaEntry;
     std::vector<IoVec> iovec(2);
 
-    iovec[0].ptr = &entry->hdr; 
+    iovec[0].ptr = &entry->hdr;
     iovec[0].len = sizeof(entry->hdr);
-    iovec[1].ptr = &entry->body; 
+    iovec[1].ptr = &entry->body;
     iovec[1].len = sizeof(entry->body);
     m_vNic->dmaRecv( -1, SHORT_MSG, iovec, entry );
 
-    m_state = PostSend; 
+    m_state = PostSend;
 
     m_selfLink->send(0,NULL);
 }
@@ -189,9 +189,9 @@ void NicTester::postSend()
     PioEntry* entry = new PioEntry;
     std::vector<IoVec> iovec(2);
 
-    iovec[0].ptr = &entry->hdr; 
+    iovec[0].ptr = &entry->hdr;
     iovec[0].len = sizeof(entry->hdr);
-    iovec[1].ptr = &entry->body; 
+    iovec[1].ptr = &entry->body;
     iovec[1].len = 10;//sizeof(entry->body);
 
     entry->hdr.pid = 0xf00d;
@@ -201,7 +201,7 @@ void NicTester::postSend()
 
     m_vNic->pioSend( (m_vNic->getVirtNicId() + 1 ) % 2, SHORT_MSG, iovec, entry );
 
-    m_state = WaitSend; 
+    m_state = WaitSend;
 
     m_selfLink->send(0,NULL);
 }

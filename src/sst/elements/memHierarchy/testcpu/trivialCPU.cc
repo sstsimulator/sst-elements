@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -30,7 +30,7 @@ trivialCPU::trivialCPU(ComponentId_t id, Params& params) :
 {
     requestsPendingCycle = registerStatistic<uint64_t>("pendCycle");
 
-    // Restart the RNG to ensure completely consistent results 
+    // Restart the RNG to ensure completely consistent results
     uint32_t z_seed = params.find<uint32_t>("rngseed", 7);
     rng.restart(z_seed, 13);
 
@@ -40,15 +40,15 @@ trivialCPU::trivialCPU(ComponentId_t id, Params& params) :
     if (commFreq < 0) {
         out.fatal(CALL_INFO, -1,"couldn't find communication frequency\n");
     }
-    
+
     maxAddr = params.find<uint64_t>("memSize", -1) -1;
 
     maxOutstanding = params.find<uint64_t>("maxOutstanding", 10);
-    
+
     if ( !maxAddr ) {
         out.fatal(CALL_INFO, -1, "Must set memSize\n");
     }
-    
+
     lineSize = params.find<uint64_t>("lineSize", 64);
 
     do_flush = params.find<bool>("do_flush", 0);
@@ -69,15 +69,15 @@ trivialCPU::trivialCPU(ComponentId_t id, Params& params) :
     // tell the simulator not to end without us
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
-    
+
     //set our clock
     std::string clockFreq = params.find<std::string>("clock", "1GHz");
     clockHandler = new Clock::Handler<trivialCPU>(this, &trivialCPU::clockTic);
     clockTC = registerClock( clockFreq, clockHandler );
-    
+
 
     memory = loadUserSubComponent<Interfaces::SimpleMem>("memory", ComponentInfo::SHARE_NONE, clockTC, new Interfaces::SimpleMem::Handler<trivialCPU>(this, &trivialCPU::handleEvent));
-    
+
     if (!memory) {
         Params interfaceParams;
         interfaceParams.insert("port", "mem_link");
@@ -85,7 +85,7 @@ trivialCPU::trivialCPU(ComponentId_t id, Params& params) :
                 interfaceParams, clockTC, new Interfaces::SimpleMem::Handler<trivialCPU>(this, &trivialCPU::handleEvent));
         //out.fatal(CALL_INFO, -1, "Unable to load memHierarchy.memInterface subcomponent\n");
     }
-    
+
     clock_ticks = 0;
     num_reads_issued = num_reads_returned = 0;
     noncacheableReads = noncacheableWrites = 0;
@@ -142,7 +142,7 @@ bool trivialCPU::clockTic( Cycle_t )
             for (int i = 0; i < reqsToSend; i++) {
 
                 Interfaces::SimpleMem::Addr addr = rng.generateNextUInt64();
-                
+
                 Interfaces::SimpleMem::Request::Command cmd = Interfaces::SimpleMem::Request::Read;
 
                 uint32_t instNum = rng.generateNextUInt32() % 20;
@@ -181,20 +181,20 @@ bool trivialCPU::clockTic( Cycle_t )
                     req->data[2] = (addr >>  8) & 0xff;
                     req->data[3] = (addr >>  0) & 0xff;
 	        }
-            
+
                 bool noncacheable = ( addr >= noncacheableRangeStart && addr < noncacheableRangeEnd );
                 if ( noncacheable ) {
                     req->flags |= Interfaces::SimpleMem::Request::F_NONCACHEABLE;
-                    if ( cmd == Interfaces::SimpleMem::Request::Write ) { ++noncacheableWrites; } 
+                    if ( cmd == Interfaces::SimpleMem::Request::Write ) { ++noncacheableWrites; }
                     else if (cmd == Interfaces::SimpleMem::Request::Read ) { ++noncacheableReads; }
                 }
 
 		memory->sendRequest(req);
 		requests[req->id] =  getCurrentSimTime();
-                
+
 		out.verbose(CALL_INFO, 2, 0, "%s: %d Issued %s%s for address 0x%" PRIx64 "\n",
                             getName().c_str(), numLS, noncacheable ? "Noncacheable " : "" , cmdString.c_str(), addr);
-		
+
                 num_reads_issued++;
 
                 numLS--;

@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -68,41 +68,41 @@ public:
     }
 
 // Getters and setters
-    
+
     // dstAddr
     Addr getDstAddr(void) const { return dstAddr_; }
     void setDstAddr(Addr addr) { dstAddr_ = addr; }
-    
+
     // dstBaseAddr
     Addr getDstBaseAddr(void) const { return dstBaseAddr_; }
     void setDstBaseAddr(Addr addr) { dstBaseAddr_ = addr; }
-    
+
     // srcAddr
     Addr getSrcAddr(void) const { return srcAddr_; }
     void setSrcAddr(Addr addr) { srcAddr_ = addr; }
-    
+
     // srcBaseAddr
     Addr getSrcBaseAddr(void) const { return srcBaseAddr_; }
     void setSrcBaseAddr(Addr addr) { srcBaseAddr_ = addr; }
-    
+
     // size
     uint32_t getSize(void) const { return size_; }
     void setSize(uint32_t size) { size_ = size; }
-    
+
     // vAddr
     Addr getSrcVirtualAddress(void) const { return srcVAddr_; }
     void setSrcVirtualAddress(Addr addr) { srcVAddr_ = addr; }
     Addr getDstVirtualAddress(void) const { return dstVAddr_; }
     void setDstVirtualAddress(Addr addr) { dstVAddr_ = addr; }
-    
+
     // iPtr
     Addr getInstructionPointer(void) const { return iPtr_; }
     void setInstructionPointer(Addr iptr) { iPtr_ = iptr; }
-    
+
     virtual MoveEvent* clone(void) override {
         return new MoveEvent(*this);
     }
-    
+
     virtual std::string getVerboseString() override {
         std::ostringstream str;
         str << std::hex;
@@ -135,7 +135,7 @@ public:
         str << " Size: " << size_;
         return MemEventBase::getBriefString() + str.str();
     }
-    
+
     virtual bool doDebug(std::set<Addr> &addr) override {
         std::set<Addr>::iterator it = addr.lower_bound(dstBaseAddr_);
         if (it != addr.end()) {
@@ -182,8 +182,8 @@ public:
         ser & srcVAddr_;
         ser & iPtr_;
     }
-     
-    ImplementSerializable(SST::MemHierarchy::MoveEvent);     
+
+    ImplementSerializable(SST::MemHierarchy::MoveEvent);
 };
 
 }}

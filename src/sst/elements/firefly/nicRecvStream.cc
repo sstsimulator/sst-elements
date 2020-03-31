@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -79,7 +79,7 @@ void Nic::RecvMachine::StreamBase::processPktBody( FireflyNetworkEvent* ev  ) {
     Callback callback = NULL;
     bool finished = ret || length() == getRecvEntry()->currentLen();
 
-    m_ctx->nic().dmaWrite( m_unit, m_myPid, vec, 
+    m_ctx->nic().dmaWrite( m_unit, m_myPid, vec,
             std::bind( &Nic::RecvMachine::StreamBase::ready, this, finished, m_pktNum++ ) );
 }
 
@@ -129,7 +129,7 @@ bool Nic::RecvMachine::StreamBase::postedRecv( DmaRecvEntry* entry ) {
 
     m_recvEntry = entry;
     event->bufPop( sizeof(MsgHdr) + sizeof(MatchMsgHdr));
- 
+
     m_blockedNeedRecv = NULL;
     event->clearHdr();
     m_ctx->schedCallback( m_wakeupCallback );

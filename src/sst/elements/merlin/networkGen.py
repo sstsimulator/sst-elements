@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 #
-# Copyright 2009-2019 NTESS. Under the terms
+# Copyright 2009-2020 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2019, NTESS
+# Copyright (c) 2009-2020, NTESS
 # All rights reserved.
 #
 # Portions are copyright of other developers:
@@ -21,10 +21,10 @@ from sst.merlin import *
 if __name__ == "__main__":
     topos = dict( [(1,topoTorus()), (2,topoFatTree()), (3,topoDragonFly()), (4,topoSimple()), (5,topoMesh()), (6,topoDragonFly2()) ])
     endpoints = dict([(1,TestEndPoint()), (2, TrafficGenEndPoint()), (3, BisectionEndPoint())])
-    statoutputs = dict([(1,"sst.statOutputConsole"), (2,"sst.statOutputCSV"), (3,"sst.statOutputTXT")]) 
+    statoutputs = dict([(1,"sst.statOutputConsole"), (2,"sst.statOutputCSV"), (3,"sst.statOutputTXT")])
 
-    
-    
+
+
     print "Merlin SDL Generator\n"
 
 
@@ -53,7 +53,7 @@ if __name__ == "__main__":
 
     sst.merlin._params["xbar_arb"] = "merlin.xbar_arb_lru"
 
-    
+
     print "Set statistics load level (0 = off):"
     stats = int(raw_input())
     if ( stats != 0 ):
@@ -62,7 +62,7 @@ if __name__ == "__main__":
         if ( rate == "" ):
             rate = "0"
         sst.setStatisticLoadLevel(stats)
-        
+
         print "Please select statistics output type:"
         for (x,y) in statoutputs.iteritems():
             print "[ %d ]  %s" % (x, y)
@@ -70,7 +70,7 @@ if __name__ == "__main__":
         if output not in statoutputs:
             print "Bad answer.  try again."
             sys.exit(1)
-        
+
         sst.setStatisticOutput(statoutputs[output]);
         if (output != 1):
             print "Filename for stats output:"

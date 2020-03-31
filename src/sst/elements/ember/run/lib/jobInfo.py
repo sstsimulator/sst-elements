@@ -1,8 +1,8 @@
-# Copyright 2009-2019 NTESS. Under the terms
+# Copyright 2009-2020 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2019, NTESS
+# Copyright (c) 2009-2020, NTESS
 # All rights reserved.
 #
 # Portions are copyright of other developers:
@@ -54,12 +54,12 @@ def parseOptions(opts):
     return numNodes, ranksPerNode, motifs, random
 
 class JobInfoBase:
-	def __init__(self, jobId, numNodes, ranksPerNode ): 
-		self._jobId = jobId 
-		self._numNodes = numNodes 
-		self._ranksPerNode = ranksPerNode 
+	def __init__(self, jobId, numNodes, ranksPerNode ):
+		self._jobId = jobId
+		self._numNodes = numNodes
+		self._ranksPerNode = ranksPerNode
 		self._nidlist = None
-		self._detailedModel = None 
+		self._detailedModel = None
 		self._randomLoad = False
 
 	def genWorkFlow( self, nodeNum ):
@@ -105,32 +105,32 @@ class JobInfoBase:
 
 	def printInfo(self):
 		print 'JobInfo: jobId={0} numNodes={1} numRanksPerNode={2}'.\
-			format( self.jobId(), self.getNumNodes(), self.ranksPerNode() )		
-		print 'JobInfo: nidList="{0}"'.format( self.getNidlist() ) 
+			format( self.jobId(), self.getNumNodes(), self.ranksPerNode() )
+		print 'JobInfo: nidList="{0}"'.format( self.getNidlist() )
 		if self._detailedModel:
 			print 'JobInfo: detailed model {0}'.format(self._detailedModel)
 		self.printWork()
 
 class JobInfoCmd(JobInfoBase):
-	def __init__(self, jobId, numNodes, ranksPerNode, motifs, defaults = motifDefaults ): 
+	def __init__(self, jobId, numNodes, ranksPerNode, motifs, defaults = motifDefaults ):
 		JobInfoBase.__init__( self, jobId, numNodes, ranksPerNode )
 		self._motifs = []
 
-		for motif in motifs: 
+		for motif in motifs:
 			tmp = copy.deepcopy( defaults )
  			tmp.update( motif )
-			self._motifs += [ tmp ]	
+			self._motifs += [ tmp ]
 
 	def printWork(self):
 		for cmd in self._motifs:
 			print 'JobInfo:    cmdLine: "{0}"'.format(cmd['cmd'])
-	
+
 	def genWorkFlow( self, nodeNum ):
 		return self._motifs
 
 class JobInfo(JobInfoBase):
 
-	def __init__(self, jobId, numNodes, ranksPerNode, workflow, defaults = motifDefaults ): 
+	def __init__(self, jobId, numNodes, ranksPerNode, workflow, defaults = motifDefaults ):
 		JobInfoBase.__init__( self, jobId, numNodes, ranksPerNode )
 		self._genWorkFlow = workflow
 		self._motifDefaults =  defaults

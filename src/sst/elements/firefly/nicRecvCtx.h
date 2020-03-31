@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -42,7 +42,7 @@
             void postRecv( DmaRecvEntry* entry ) {
                 // check to see if there are active streams for this pid
                 // if there are they may be blocked waiting for the host to post a recv
-                
+
                 if (  m_blockedStream ) {
                     if ( m_blockedStream->postedRecv( entry ) ) {
                         m_blockedStream = NULL;
@@ -87,18 +87,18 @@
 
             void runSend( int num, SendEntryBase* entry ) {
                 m_rm.nic().qSendEntry( entry );
-            } 
+            }
 
             // this function is called by a Stream object, we don't want to delete ourself,
             // break the cycle by scheduling a callback
             void deleteStream( StreamBase* stream ) {
-                m_rm.nic().schedCallback( [=]() 
+                m_rm.nic().schedCallback( [=]()
                     {
 
                         m_dbg.verbosePrefix(prefix(),CALL_INFO_LAMBDA,"deleteStream",1,NIC_DBG_RECV_CTX,"%p\n",stream);
                         m_rm.decActiveStream();
                         delete stream;
-                    } 
+                    }
                 );
             }
 

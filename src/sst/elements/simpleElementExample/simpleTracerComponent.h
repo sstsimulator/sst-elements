@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -36,7 +36,7 @@ public:
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Random number generation component",
         COMPONENT_CATEGORY_UNCATEGORIZED)
-    
+
     SST_ELI_DOCUMENT_PARAMS(
         { "seed_w", "The seed to use for the random number generator", "7" },
         { "seed_z", "The seed to use for the random number generator", "5" },
@@ -53,7 +53,7 @@ public:
     // Optional since there is nothing to document
     SST_ELI_DOCUMENT_PORTS(
     )
-    
+
     simpleTracerComponent(SST::ComponentId_t id, Params& params);
     ~simpleTracerComponent();
     void finish();

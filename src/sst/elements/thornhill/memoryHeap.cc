@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -49,7 +49,7 @@ MemoryHeap::MemoryHeap(ComponentId_t id, Params& params ) :
 										linkName.str().c_str());
        	Link* link = configureLink( linkName.str(), "0ps",
             new Event::Handler<MemoryHeap,int>(
-                    this,&MemoryHeap::eventHandler, num ) ); 
+                    this,&MemoryHeap::eventHandler, num ) );
         assert(link);
 		m_links.push_back(link);
         linkName.str("");
@@ -69,7 +69,7 @@ void MemoryHeap::eventHandler( Event* ev, int src ) {
 			"Alloc length=%zu addr=0x%" PRIx64 "\n",
 									event->length,event->addr);
         m_currentVaddr += event->length;
-        break; 
+        break;
       case MemoryHeapEvent::Free:
         m_output.verbose(CALL_INFO,1,1,"free addr=%" PRIx64 "\n", event->addr);
 		assert(0);

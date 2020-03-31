@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -18,7 +18,7 @@
 
 /*
  * Important note:
- * This file is designed to be compiled both into Ariel and into a Pin3 pintool. 
+ * This file is designed to be compiled both into Ariel and into a Pin3 pintool.
  * It must be PinCRT compatible without containing anything PinCRT-specific.
  * Restrictions include:
  *  - Nothing that relies on runtime type info (e.g., dynamic cast)
@@ -191,7 +191,7 @@ struct ArielSharedData {
 class ArielTunnel : public SST::Core::Interprocess::TunnelDef<ArielSharedData, ArielCommand>
 {
 public:
-    /** 
+    /**
      * Create a new Ariel Tunnel
      */
     ArielTunnel(size_t numCores, size_t bufferSize, uint32_t expectedChildren = 1) :
@@ -220,7 +220,7 @@ public:
         }
         return childnum;
     }
-    
+
     void waitForChild(void) {
         while ( sharedData->child_attached == 0 ) ;
     }
@@ -292,7 +292,7 @@ public:
     GpuReturnTunnel(void* sPtr) :
         SST::Core::Interprocess::TunnelDef<GpuSharedData, GpuCommand>(sPtr)
     { }
-    
+
     virtual uint32_t initialize(void* sPtr) {
         uint32_t childnum = SST::Core::Interprocess::TunnelDef<GpuSharedData, GpuCommand>::initialize(sPtr);
         if (isMaster()) {
@@ -332,7 +332,7 @@ public:
     GpuDataTunnel(void* sPtr) :
         SST::Core::Interprocess::TunnelDef<GpuSharedData, GpuDataCommand>(sPtr)
     { }
-    
+
     virtual uint32_t initialize(void* sPtr) {
         uint32_t childnum = SST::Core::Interprocess::TunnelDef<GpuSharedData, GpuDataCommand>::initialize(sPtr);
         if (isMaster()) {

@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -17,7 +17,7 @@
 #define VAULTGLOBALS_H
 
 namespace SST {
-namespace VaultSim { 
+namespace VaultSim {
 
 static const unsigned int LL_SHIFT = 12; // min hash between cubes in 1024
 static const unsigned int VAULT_SHIFT = 7; // min hash for vaults in 16

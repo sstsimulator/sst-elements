@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -35,7 +35,7 @@ class FunctionSM;
 class VirtNic;
 
 
-class Hades : public OS 
+class Hades : public OS
 {
   public:
 
@@ -45,7 +45,7 @@ class Hades : public OS
         "hades",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "",
-       	SST::Hermes::OS 
+       	SST::Hermes::OS
     )
 
     SST_ELI_DOCUMENT_PARAMS(
@@ -74,8 +74,8 @@ class Hades : public OS
     int getRank();
     int getNodeNum();
 
-    int sizeofDataType( MP::PayloadDataType type ) { 
-        return m_info.sizeofDataType(type); 
+    int sizeofDataType( MP::PayloadDataType type ) {
+        return m_info.sizeofDataType(type);
     }
 
     NodePerf* getNodePerf() {
@@ -94,7 +94,7 @@ class Hades : public OS
     Info*               getInfo() { return &m_info; }
     FunctionSM&         getFunctionSM() { return *m_functionSM; }
     ProtocolAPI&        getMsgStack() { return *m_proto; }
-    int                 getNumNodes() { return m_numNodes; } 
+    int                 getNumNodes() { return m_numNodes; }
 
   private:
 
@@ -114,7 +114,7 @@ class Hades : public OS
     int                                  m_numNodes;
 };
 
-} // namesapce Firefly 
+} // namesapce Firefly
 } // namespace SST
 
 #endif

@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -62,7 +62,7 @@ class AlltoallvFuncSM :  public FunctionSMInterface
         FunctionSMInterface( params ),
         m_event( NULL ),
         m_seq( 0 )
-    { 
+    {
        m_smallCollectiveVN = params.find<int>( "smallCollectiveVN", 0);
         m_smallCollectiveSize = params.find<int>( "smallCollectiveSize", 0);
     }
@@ -86,7 +86,7 @@ class AlltoallvFuncSM :  public FunctionSMInterface
         } else {
             ptr += rank * sendChunkSize( rank );
         }
-        m_dbg.debug(CALL_INFO,2,0,"rank %d, buf %p, ptr %p\n", rank, 
+        m_dbg.debug(CALL_INFO,2,0,"rank %d, buf %p, ptr %p\n", rank,
                                     &m_event->sendbuf,ptr);
 
         return ptr;
@@ -113,7 +113,7 @@ class AlltoallvFuncSM :  public FunctionSMInterface
         } else {
             ptr += rank * recvChunkSize( rank );
         }
-        m_dbg.debug(CALL_INFO,2,0,"rank %d, buf %p, ptr %p\n", rank, 
+        m_dbg.debug(CALL_INFO,2,0,"rank %d, buf %p, ptr %p\n", rank,
                     &m_event->recvbuf, ptr);
 
         return ptr;
@@ -135,8 +135,8 @@ class AlltoallvFuncSM :  public FunctionSMInterface
     CtrlMsg::API* proto() { return static_cast<CtrlMsg::API*>(m_proto); }
 
     AlltoallStartEvent* m_event;
-    CtrlMsg::CommReq    m_recvReq; 
-    unsigned int        m_count; 
+    CtrlMsg::CommReq    m_recvReq;
+    unsigned int        m_count;
     int                 m_seq;
     unsigned int        m_size;
     MP::RankID          m_rank;
@@ -145,7 +145,7 @@ class AlltoallvFuncSM :  public FunctionSMInterface
     int m_smallCollectiveSize;
 
 };
-        
+
 }
 }
 

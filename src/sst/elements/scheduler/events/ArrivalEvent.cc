@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -25,18 +25,18 @@
 
 using namespace SST::Scheduler;
 
-unsigned long ArrivalEvent::getTime() const 
+unsigned long ArrivalEvent::getTime() const
 {
     return time;
 }
 
-int ArrivalEvent::getJobIndex() const 
+int ArrivalEvent::getJobIndex() const
 {
     return jobIndex;
 }
 
 void ArrivalEvent::happen(const Machine & mach, Allocator* alloc, Scheduler* sched,
-                          Statistics* stats, Job* arrivingJob) 
+                          Statistics* stats, Job* arrivingJob)
 {
     sched -> jobArrives(arrivingJob, time, mach);
     stats -> jobArrives(time);

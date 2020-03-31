@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -55,10 +55,10 @@ SubComponentLoader::SubComponentLoader(ComponentId_t id, Params &params) :
         if ( !info ) {
             Output::getDefaultObject().fatal(CALL_INFO, -1, "Must specify at least one SubComponent for slot mySubComp.\n");
         }
-        
+
         info->createAll<SubCompInterface>(subComps, ComponentInfo::SHARE_STATS);
     }
-    
+
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
 }
@@ -96,7 +96,7 @@ SubCompSlot::SubCompSlot(ComponentId_t id, Params &params) :
         if ( !info ) {
             Output::getDefaultObject().fatal(CALL_INFO, -1, "Must specify at least one SubComponent for slot mySubComp.\n");
         }
-        
+
         info->createAll<SubCompInterface>(subComps, ComponentInfo::SHARE_STATS);
     }
 }
@@ -123,7 +123,7 @@ SubCompSender::SubCompSender(ComponentId_t id, Params &params) :
         port_name = "sendPort";
     }
     else port_name = params.find<std::string>("port_name");
-    
+
     registerTimeBase("2GHz",true);
     link = configureLink(port_name);
     if ( !link ) {

@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -19,20 +19,20 @@ class Tlb : public Unit {
 
     struct Entry {
         enum Type { Load, Store } type;
-        Entry( MemReq* req, Callback* callback, Type type  ) : req(req), callback(callback), type(type) {} 
+        Entry( MemReq* req, Callback* callback, Type type  ) : req(req), callback(callback), type(type) {}
         MemReq* req;
         Callback* callback;
     };
-    
+
   public:
     Tlb( SimpleMemoryModel& model, Output& dbg, int id, std::string name, Unit* load, Unit* store, int size, int pageSize, int tlbMissLat_ns,
             int numWalkers, int maxStores, int maxLoads ) :
         Unit( model, dbg ), m_curPid(-1), m_cache( size ), m_cacheSize( size), m_pageMask( ~(pageSize - 1) ),
-        m_load(load), 
+        m_load(load),
         m_store(store),
-        m_storeBlocked( false ), 
-        m_loadBlocked( false ), 
-        m_numWalkers(numWalkers), 
+        m_storeBlocked( false ),
+        m_loadBlocked( false ),
+        m_numWalkers(numWalkers),
         m_tlbMissLat_ns( tlbMissLat_ns ),
         m_maxPendingStores(maxStores),
         m_maxPendingLoads(maxLoads),
@@ -89,7 +89,7 @@ class Tlb : public Unit {
 
     bool storeCB( UnitBase* src, MemReq* req, Callback* callback ) {
 
-        req->addr |= (uint64_t) req->pid << 56; 
+        req->addr |= (uint64_t) req->pid << 56;
         Hermes::Vaddr addr = getPageAddr(req->addr);
         m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"req Addr %#" PRIx64 ", page Addr %#" PRIx64 "\n", addr, req->addr );
 
@@ -109,13 +109,13 @@ class Tlb : public Unit {
             m_blockedStoreSrc = src;
             m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"blocking source\n" );
             return true;
-        } else { 
+        } else {
             return false;
         }
     }
 
     bool load( UnitBase* src, MemReq* req, Callback* callback ) {
-        req->addr |= (uint64_t) req->pid << 56; 
+        req->addr |= (uint64_t) req->pid << 56;
         Hermes::Vaddr addr = getPageAddr(req->addr);
         m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"%#" PRIx64 " %#" PRIx64 "\n", addr, req->addr );
 
@@ -135,7 +135,7 @@ class Tlb : public Unit {
             m_blockedLoadSrc = src;
             m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"blocking source\n" );
             return true;
-        } else { 
+        } else {
             return false;
         }
     }
@@ -238,7 +238,7 @@ class Tlb : public Unit {
         Hermes::Vaddr evictAddr = m_cache.evict();
         m_dbg.verbosePrefix(prefix(),CALL_INFO,1,TLB_MASK,"pid=%d addr=%#" PRIx64 " evictAddr=%#" PRIx64 "\n",pid, addr, evictAddr );
 		Callback* cb = new Callback;
-		*cb = [=](){               
+		*cb = [=](){
                 		m_cache.insert( addr );
                 		callback();
             		};
@@ -250,13 +250,13 @@ class Tlb : public Unit {
         ++m_total;
 
 #if 0
-        if (  pid != m_curPid ) {  
+        if (  pid != m_curPid ) {
             printf("%d %d\n",m_curPid, pid);
             ++m_flush;
             m_curPid = pid;
             m_cache.invalidate();
         }
-        assert ( -1 == m_curPid || pid == m_curPid ); 
+        assert ( -1 == m_curPid || pid == m_curPid );
 #endif
 
         bool retval;
@@ -273,7 +273,7 @@ class Tlb : public Unit {
 
     Hermes::Vaddr getPageAddr(Hermes::Vaddr addr ) {
         return addr & m_pageMask;
-    } 
+    }
 
     Unit* m_load;
     Unit* m_store;

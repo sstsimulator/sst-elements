@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 #
-# Copyright 2009-2019 NTESS. Under the terms
+# Copyright 2009-2020 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2019, NTESS
+# Copyright (c) 2009-2020, NTESS
 # All rights reserved.
 #
 # Portions are copyright of other developers:
@@ -17,8 +17,8 @@
 
 # numNodes = -1 implies use all nodes on network
 
-numNodes = -1 
-ranksPerNode = 1 
+numNodes = -1
+ranksPerNode = 1
 
 platform = 'defaultParams'
 
@@ -29,10 +29,10 @@ detailedNodes = [0]
 detailedMotifs = [0]
 detailedNics = [0]
 
-detailedModel = "sandyBridgeModel" 
-detailedModelParams = "sandyBridgeModelParams" 
+detailedModel = "sandyBridgeModel"
+detailedModelParams = "sandyBridgeModelParams"
 
-arguments = 'messagesize=100000 printRank=-1' 
+arguments = 'messagesize=100000 printRank=-1'
 
 detailedMotif = "DetailedRing " + arguments
 #detailedMotif = "DetailedRing computeTime=1000 " + arguments
@@ -65,13 +65,13 @@ def getNumNodes():
 	return numNodes
 
 def getRanksPerNode():
-	return ranksPerNode 
+	return ranksPerNode
 
 def getTopo():
-	return topo, shape 
+	return topo, shape
 
 def getPlatform():
-	return platform 
+	return platform
 
 def getPerNicParams(nodeNum):
     params = {}

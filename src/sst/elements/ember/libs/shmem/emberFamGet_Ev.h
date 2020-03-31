@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -28,7 +28,7 @@ public:
 	EmberFamGet_Event( Shmem::Interface& api, Output* output,
             Hermes::Vaddr dest, Shmem::Fam_Descriptor fd, uint64_t offset, uint64_t nbytes, bool blocking,
             EmberEventTimeStatistic* stat = NULL ) :
-            EmberFamEvent( api, output, stat ), 
+            EmberFamEvent( api, output, stat ),
             m_dest(dest), m_fd(fd), m_offset(offset), m_nbytes(nbytes), m_blocking(blocking) {}
 	~EmberFamGet_Event() {}
 

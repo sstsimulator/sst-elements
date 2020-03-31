@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -78,7 +78,7 @@ void c_AddressHasher::build(Params &params) {
 	l_curPos++;
       }
       l_simpleOrder.push_back(l_parsedData.first);
-    
+
   } // while !l_mapCopy.empty()
 
 
@@ -94,7 +94,7 @@ void c_AddressHasher::build(Params &params) {
       break;
     }
   }
-  
+
   if(l_allSimple) { // if simple address detected, reset the bitPositions structureSizes
     // reset bitPositions
     for(auto l_iter : l_simpleOrder) {
@@ -119,13 +119,13 @@ void c_AddressHasher::build(Params &params) {
 	l_curPos++;
       }
     }
-    
+
   } // if(allSimple)
-  
+
   //
   // now verify that the address map and other params make sense
   //
-  
+
   // Channels
   auto l_it = m_structureSizes.find("C"); // channel
   if(l_it == m_structureSizes.end()) { // if not found
@@ -147,7 +147,7 @@ void c_AddressHasher::build(Params &params) {
    l_it = m_structureSizes.find("c"); // Pseudo channel
   if(l_it == m_structureSizes.end()) { // if not found
   if(k_pNumPseudoChannels > 1) {
-      
+
       output->fatal(CALL_INFO, -1, "%s, Number of Pseudo Channels (%u) is greater than 1, but no Channels were specified (c) in the address map! Aborting!\n",
               getName().c_str(), k_pNumPseudoChannels);
     }
@@ -166,7 +166,7 @@ void c_AddressHasher::build(Params &params) {
   l_it = m_structureSizes.find("R");
   if(l_it == m_structureSizes.end()) { // if not found
     if(k_pNumRanks > 1) {
-      output->fatal(CALL_INFO, -1, "%s, Number of Ranks (%u) is greater than 1, but no Ranks were specified (R) en the address map! Aborting!\n", 
+      output->fatal(CALL_INFO, -1, "%s, Number of Ranks (%u) is greater than 1, but no Ranks were specified (R) en the address map! Aborting!\n",
               getName().c_str(), k_pNumRanks);
     }
   } else { // found in map
@@ -184,7 +184,7 @@ void c_AddressHasher::build(Params &params) {
   l_it = m_structureSizes.find("B");
   if(l_it == m_structureSizes.end()) { // if not found
     if(k_pNumBankGroups > 1) {
-      output->fatal(CALL_INFO, -1, "%s, Number of BankGroups (%u) is greater than 1, but no BankGroups were specified (B) in the address map! Aborting!\n", 
+      output->fatal(CALL_INFO, -1, "%s, Number of BankGroups (%u) is greater than 1, but no BankGroups were specified (B) in the address map! Aborting!\n",
               getName().c_str(), k_pNumBankGroups);
     }
   } else { // found in map
@@ -273,7 +273,7 @@ void c_AddressHasher::build(Params &params) {
 void c_AddressHasher::fillHashedAddress(c_HashedAddress *x_hashAddr, const ulong x_address) {
   ulong l_cur=0;
   ulong l_cnt=0;
-  
+
   //channel
   auto l_bitPos = m_bitPositions.find("C");
   if(l_bitPos == m_bitPositions.end()) { // not found
@@ -393,7 +393,7 @@ void c_AddressHasher::fillHashedAddress(c_HashedAddress *x_hashAddr, const ulong
     }
     x_hashAddr->setCacheline(l_cur);
   }
-  
+
   unsigned l_bankId =
     x_hashAddr->getBank()
     + x_hashAddr->getBankGroup() * k_pNumBanks
@@ -410,7 +410,7 @@ void c_AddressHasher::fillHashedAddress(c_HashedAddress *x_hashAddr, const ulong
   x_hashAddr->setBankId(l_bankId);
   x_hashAddr->setRankId(l_rankId);
    // cout << "0x" << std::hex << x_address << std::dec << "\t";  x_hashAddr->print();
-  
+
 } // fillHashedAddress(c_HashedAddress, x_address)
 
 ulong c_AddressHasher::getAddressForBankId(const unsigned x_bankId) {
@@ -439,7 +439,7 @@ ulong c_AddressHasher::getAddressForBankId(const unsigned x_bankId) {
     l_cur -= l_rankSize;
     l_rank++;
   }
-  
+
   while(l_cur >= l_bankGroupSize) {
     l_cur -= l_bankGroupSize;
     l_bankgroup++;
@@ -472,7 +472,7 @@ ulong c_AddressHasher::getAddressForBankId(const unsigned x_bankId) {
       l_tmp >>= 1;
       l_curPos++;
     }
-    
+
     l_address += l_tOut;
   }
 
@@ -485,7 +485,7 @@ ulong c_AddressHasher::getAddressForBankId(const unsigned x_bankId) {
       l_tmp >>= 1;
       l_curPos++;
     }
-    
+
     l_address += l_tOut;
   }
 
@@ -511,12 +511,12 @@ ulong c_AddressHasher::getAddressForBankId(const unsigned x_bankId) {
       l_tmp >>= 1;
       l_curPos++;
     }
-    
+
     l_address += l_tOut;
   }
 
  // cout << "Returning address 0x" << std::hex << l_address << std::dec << endl;
-  
+
   return(l_address);
 } // getAddressForBankId(const unsigned x_bankId)
 
@@ -539,7 +539,7 @@ void c_AddressHasher::parsePattern(string *x_inStr, std::pair<string,uint> *x_ou
 
   bool l_matched=false;
   bool l_sizeMatched = false;
-  
+
   auto l_sIter = x_inStr->rbegin();
   while(!l_matched) {
     if(isdigit(*l_sIter)) {
@@ -551,8 +551,8 @@ void c_AddressHasher::parsePattern(string *x_inStr, std::pair<string,uint> *x_ou
     } else if(isalpha(*l_sIter)) {
       if(!(*l_sIter == 'r' || *l_sIter == 'l' || *l_sIter == 'R' || *l_sIter == 'B' ||
 	   *l_sIter == 'b' || *l_sIter == 'C' || *l_sIter == 'h' ||*l_sIter == 'c' ||*l_sIter == 'x')) {
-          output->fatal(CALL_INFO, -1, "%s, Parsing error at %c in address map string %s\n", 
-                  getName().c_str(), (*l_sIter), (*x_inStr).c_str()); 
+          output->fatal(CALL_INFO, -1, "%s, Parsing error at %c in address map string %s\n",
+                  getName().c_str(), (*l_sIter), (*x_inStr).c_str());
       }
 
       x_outPair->first = *l_sIter;
@@ -561,7 +561,7 @@ void c_AddressHasher::parsePattern(string *x_inStr, std::pair<string,uint> *x_ou
       } else {
 	x_outPair->second = 1;
       }
-      
+
       x_inStr->erase(next(l_sIter).base(),x_inStr->end()); // remove the matched portion
       //cout << "Returning " << x_outPair->first << " " << x_outPair->second << endl;
       break;

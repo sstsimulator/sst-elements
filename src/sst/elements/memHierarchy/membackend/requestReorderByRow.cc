@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -27,7 +27,7 @@ RequestReorderRow::RequestReorderRow(ComponentId_t id, Params &params) : SimpleM
 void RequestReorderRow::build(Params& params) {
 
     fixupParams( params, "clock", "backend.clock" );
-    
+
     // Get parameters
     reqsPerCycle = params.find<int>("max_issue_per_cycle", -1);
 
@@ -77,7 +77,7 @@ void RequestReorderRow::build(Params& params) {
         lastRow.push_back(-1);  // No last request to this bank
         reorderCount.push_back(maxReqsPerRow);  // No requests reordered to this row
     }
-    
+
 }
 
 bool RequestReorderRow::issueRequest(ReqId id, Addr addr, bool isWrite, unsigned numBytes ) {
@@ -85,19 +85,19 @@ bool RequestReorderRow::issueRequest(ReqId id, Addr addr, bool isWrite, unsigned
     output->debug(_L10_, "Reorderer received request for 0x%" PRIx64 "\n", (Addr)addr);
 #endif
     int bank = (addr >> lineOffset) & bankMask;
-    
+
     requestQueue[bank]->push_back(Req(id,addr,isWrite,numBytes));
     return true;
 }
 
-/* 
+/*
  * Issue as many requests as we can up to requestsPerCycle
  * by searching up to searchWindowSize requests
  */
 bool RequestReorderRow::clock(Cycle_t cycle) {
-    
+
     if (!requestQueue.empty()) {
-        
+
         int reqsIssuedThisCycle = 0;
         int reqsSearchedThisCycle = 0;
         // For current bank
@@ -114,7 +114,7 @@ bool RequestReorderRow::clock(Cycle_t cycle) {
                 std::list<Req>* bankList = requestQueue[bank];
                 for (std::list<Req>::iterator it = bankList->begin(); it != bankList->end(); it++) {
                     unsigned int row = (*it).addr >> rowOffset;
-                    
+
                     if (row == lastRow[bank]) {
                         // Attempt issue, if we're blocked, this bank is busy & move to next bank
                         bool issued = backend->issueRequest((*it).id,(*it).addr,(*it).isWrite,(*it).numBytes);
@@ -124,14 +124,14 @@ bool RequestReorderRow::clock(Cycle_t cycle) {
                             nextBank = (bank + 1) % banks;
                             reorderCount[bank]++;
                             bankList->erase(it);
-                            break; 
+                            break;
                         } else {
                             break;
                         }
                     }
                 }
             }
-            
+
             if (!reorderIssued) {
                 // Try to issue oldest request
 				Req& req = *requestQueue[bank]->begin();
@@ -150,7 +150,7 @@ bool RequestReorderRow::clock(Cycle_t cycle) {
 
             bank = (bank + 1) % banks;
         }
-    } 
+    }
 
     bool unclock = backend->clock(cycle);
     return false;

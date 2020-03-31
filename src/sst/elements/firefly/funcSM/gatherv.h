@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -77,15 +77,15 @@ class QQQ {
                 map.push_back(0);
             } else if ( 0 == x )  {
                 map.push_back( m_root);
-            } else { 
+            } else {
                 map.push_back(x);
             }
-        } else { 
+        } else {
             map.push_back(x);
         }
 
         for ( int i = 0; i < m_degree; i++ ) {
-            int child = (x * m_degree) + i + 1; 
+            int child = (x * m_degree) + i + 1;
             if ( child < m_size ) {
                 foo( child, map );
             }
@@ -94,7 +94,7 @@ class QQQ {
 
     std::vector<int> getMap() {
         std::vector<int> map;
-        foo( 0, map ); 
+        foo( 0, map );
         return map;
     }
 
@@ -145,12 +145,12 @@ class GathervFuncSM :  public FunctionSMInterface
     } m_state;
 
     struct WaitUpState {
-        WaitUpState() : state(PostSizeRecvs), count(0) {} 
+        WaitUpState() : state(PostSizeRecvs), count(0) {}
         void init() {
             state = PostSizeRecvs;
             count = 0;
         }
-        enum { PostSizeRecvs, WaitSizeRecvs, Setup, PostDataRecv, 
+        enum { PostSizeRecvs, WaitSizeRecvs, Setup, PostDataRecv,
             SendSize, WaitDataRecv, DoRoot } state;
         unsigned int    count;
         size_t          len;
@@ -182,7 +182,7 @@ class GathervFuncSM :  public FunctionSMInterface
     void doRoot();
     uint32_t    genTag( int i = 0 ) {
         return CtrlMsg::GathervTag | i << 8 | (m_seq & 0xff);
-    } 
+    }
 
     CtrlMsg::API* proto() { return static_cast<CtrlMsg::API*>(m_proto); }
 
@@ -198,7 +198,7 @@ class GathervFuncSM :  public FunctionSMInterface
     int m_smallCollectiveVN;
     int m_smallCollectiveSize;
 };
-        
+
 }
 }
 

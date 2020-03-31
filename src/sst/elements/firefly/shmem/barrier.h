@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -27,7 +27,7 @@ class HadesSHMEM;
 class ShmemBarrier : protected ShmemCollective {
   public:
     ShmemBarrier( HadesSHMEM& api, ShmemCommon& common ) : ShmemCollective( api, common )
-    { 
+    {
 		m_prefix = "@t:" + std::to_string(common.my_pe()) + ":ShmemBarrier::@p():@l ";
 	}
     void start( int PE_start, int logPE_stride, int PE_size, Hermes::Vaddr pSync, Hermes::Shmem::Callback );

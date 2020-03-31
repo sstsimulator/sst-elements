@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -36,7 +36,7 @@ void Messier::parser(NVM_PARAMS * nvm, SST::Params& params)
 
 	nvm->size = (uint32_t) params.find<uint32_t>("size", 8388608);  // in KB, which mean 8GB
 
-	nvm->write_buffer_size = (uint32_t) params.find<uint32_t>("write_buffer_size", 128); ;	
+	nvm->write_buffer_size = (uint32_t) params.find<uint32_t>("write_buffer_size", 128); ;
 
 	nvm->max_outstanding = (uint32_t) params.find<uint32_t>("max_outstanding", 16) ;
 
@@ -49,7 +49,7 @@ void Messier::parser(NVM_PARAMS * nvm, SST::Params& params)
 	nvm->max_writes = (uint32_t) params.find<uint32_t>("max_writes", 1) ;
 
 	int cache_interleave = (uint32_t) params.find<uint32_t>("cacheline_interleaving", 1) ;
-	
+
 	int adaptive_writes = (uint32_t) params.find<uint32_t>("adaptive_writes", 0) ;
 
 	int cache_enabled = (uint32_t) params.find<uint32_t>("cache_enabled", 0) ;
@@ -58,7 +58,7 @@ void Messier::parser(NVM_PARAMS * nvm, SST::Params& params)
 
 	int write_cancel_th = (uint32_t) params.find<uint32_t>("write_cancel_th", 0) ;
 
-	
+
 
 	int modulo = (uint32_t) params.find<uint32_t>("modulo", 0) ;
 	int modulo_unit = (uint32_t) params.find<uint32_t>("modulo_unit", 4) ;
@@ -115,7 +115,7 @@ void Messier::parser(NVM_PARAMS * nvm, SST::Params& params)
 
 
 	// Skipe it for now
-	//	clock = D.clock; 
+	//	clock = D.clock;
 
 	//memory_clock = D.clock;
 
@@ -171,7 +171,7 @@ Messier::Messier(SST::ComponentId_t id, SST::Params& params): Component(id) {
 	parser(nvm_params, params);
 
 
-	// Instantiating the NVM-DIMM with the provided parameters 
+	// Instantiating the NVM-DIMM with the provided parameters
 	DIMM = loadComponentExtension<NVM_DIMM>(*nvm_params);
 
         m_memChan = configureLink(link_buffer, "1ns", new Event::Handler<NVM_DIMM>(DIMM, &NVM_DIMM::handleRequest));
@@ -203,7 +203,7 @@ Messier::Messier(SST::ComponentId_t id, SST::Params& params): Component(id) {
 Messier::Messier() : Component(-1)
 {
 	// for serialization only
-	// 
+	//
 }
 
 

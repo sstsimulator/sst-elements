@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -30,11 +30,11 @@
 
 using namespace SST;
 
-// This class structure represents the write buffer unit inside NVM memory controller 
+// This class structure represents the write buffer unit inside NVM memory controller
 
 namespace SST{ namespace MessierComponent {
 class NVM_WRITE_BUFFER
-{ 
+{
 
 	// This determines the size in number of entries
 	unsigned int max_size;
@@ -64,7 +64,7 @@ class NVM_WRITE_BUFFER
 
 	public:
 
-	
+
 
 	// Constructor
 	NVM_WRITE_BUFFER(int Size, int Sched_mode, int Entry_size, int Flush_th, int low_th){ flush_th_low = low_th; max_size = Size; sched_mode = Sched_mode; flush_th = Flush_th; entry_size = Entry_size; still_flushing=false; curr_entries = 0;}
@@ -81,7 +81,7 @@ class NVM_WRITE_BUFFER
 	int getSize(){ return curr_entries;}
 
 	// Tells you if larger than the low threshold;
-	
+
 	// Check if full or not
 	bool full() { if(curr_entries == max_size) return true; else return false;}
 
@@ -89,14 +89,14 @@ class NVM_WRITE_BUFFER
 	bool insert_write_request(NVM_Request * req);
 
         // This enables searching if a request exists on the write buffer (this is important for correctness and not to break memory consistency)
-        NVM_Request * find_entry(long long int address);		
+        NVM_Request * find_entry(long long int address);
 
 	// This removes an entry (returns NULL if empty)
 	NVM_Request * pop_entry();
 
 	NVM_Request * getFront() { return mem_reqs.front();}
 
-	void erase_entry(NVM_Request *);	
+	void erase_entry(NVM_Request *);
 
 	std::list<NVM_Request *> getList() { return mem_reqs;}
 

@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -35,7 +35,7 @@
 		}
 
 		std::string& name() { return m_name; }
-		
+
         bool store( UnitBase* src, MemReq* req ) {
             m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MUX_MASK,"%s addr=%#" PRIx64 " length=%lu\n",src->name().c_str(), req->addr,req->length);
 			if ( ! m_blockedSrc && ! m_scheduled ) {
@@ -45,8 +45,8 @@
 					m_blockedSrc = src;
 					m_blockedTime_ns = m_model.getCurrentSimTimeNano();
 					return true;
-				} else { 
-					return false; 
+				} else {
+					return false;
 				}
 			} else {
                 m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MUX_MASK,"blocking\n");
@@ -66,17 +66,17 @@
 				Callback* cb = new Callback;
 				*cb = [=]() {
 								m_dbg.verbosePrefix( prefix(), CALL_INFO_LAMBDA, "load",1,MUX_MASK, "load done latency=%" PRIu64 "\n",
-												m_model.getCurrentSimTimeNano() - now );  
+												m_model.getCurrentSimTimeNano() - now );
 								(*callback)();
 								delete callback;
-							}; 
+							};
 				if ( m_unit->load( this, req, cb ) ) {
                     m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MUX_MASK,"blocking\n");
 					m_blockedSrc = src;
 					m_blockedTime_ns = m_model.getCurrentSimTimeNano();
 					return true;
-				} else { 
-					return false; 
+				} else {
+					return false;
 				}
 			} else {
                 m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MUX_MASK,"blocking\n");
@@ -98,14 +98,14 @@
 				Callback* cb = new Callback;
 				*cb = [=](){
 								m_dbg.verbosePrefix( prefix(), CALL_INFO_LAMBDA, "processQ",1,MUX_MASK, "load done latency=%" PRIu64 "\n",
-										m_model.getCurrentSimTimeNano() - now );  
+										m_model.getCurrentSimTimeNano() - now );
 								(*callback)();
 								delete callback;
-						   }; 
+						   };
 				blocked = m_unit->load( this, entry.req, cb );
 			} else {
 				blocked = m_unit->store( this, entry.req );
-			}	
+			}
 
 			if ( ! blocked ) {
                 m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MUX_MASK,"unblocking\n");
@@ -128,7 +128,7 @@
                 m_dbg.verbosePrefix(prefix(),CALL_INFO,1,MUX_MASK,"unblocking\n");
 				m_model.schedResume( 0, m_blockedSrc );
 				m_blockedSrc = NULL;
-				SimTime_t latency = m_model.getCurrentSimTimeNano() - m_blockedTime_ns; 
+				SimTime_t latency = m_model.getCurrentSimTimeNano() - m_blockedTime_ns;
 				if ( latency ) {
 					m_blocked_ns->addData( latency );
 				}

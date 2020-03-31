@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -28,7 +28,7 @@
 #include<list>
 
 
-using namespace SST; 
+using namespace SST;
 
 
 namespace SST{ namespace SambaComponent{
@@ -53,7 +53,7 @@ namespace SST{ namespace SambaComponent{
 
 			void setType(int ev1) { ev = static_cast<EventType>(ev1);}
 			int getType() { return ev; }
-			
+
 			void setResp(uint64_t add, uint64_t padd, uint64_t sz) { address = add; paddress = padd; size = sz;}
 			uint64_t getAddress() { return address; }
 			uint64_t getPaddress() { return paddress; }

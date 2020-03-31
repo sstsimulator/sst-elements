@@ -1,12 +1,12 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -40,17 +40,17 @@ public:
     )
 
 private:
-    
+
     int16_t tail;
 
     int16_t current;
     int16_t last;
-    
+
     int16_t* order;
-    
-    
+
+
 public:
-    
+
     single_arb_lru(Params& params) :
         SingleArbitration()
     {
@@ -67,7 +67,7 @@ public:
             order[i] = i + 1;
         }
         order[size] = 1;
-        
+
         current = 0;
         tail = size;
         last = tail;
@@ -76,7 +76,7 @@ public:
     ~single_arb_lru() {
         delete[] order;
     }
-    
+
     int next() {
         last = current;
         current = order[current];
@@ -84,7 +84,7 @@ public:
         // subtract 1.
         return current-1;
     }
-    
+
     void satisfied() {
         if ( current == 0 ) {
             // next() not called, so nothing to do
@@ -116,7 +116,7 @@ public:
         // Reset curr_ind and last.  Once we're satisfied, we start
         // back at the head of the list
         current = 0;
-        last = tail;        
+        last = tail;
     }
 };
 

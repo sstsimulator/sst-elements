@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -22,14 +22,14 @@
 
         MemOp( ) : addr(0), length(0), type(NotInit), offset(0), callback(NULL), m_pending(0) {}
         MemOp( Op op ) : addr(0), length(0), type(op), offset(0), callback(NULL), m_pending(0) {}
-        MemOp( Hermes::Vaddr addr, size_t length, Op op, Callback callback = NULL ) : 
+        MemOp( Hermes::Vaddr addr, size_t length, Op op, Callback callback = NULL ) :
                 addr(addr), length(length), type(op), offset(0), callback(callback), m_pending(0) {}
-        MemOp( Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, Op op, Callback callback = NULL ) : 
+        MemOp( Hermes::Vaddr dest, Hermes::Vaddr src, size_t length, Op op, Callback callback = NULL ) :
 				dest(dest), src(src), length(length), type(op), offset(0), chunk(0), callback(callback), m_pending(0) {
 			//printf("%s() dest=%#lx src=%#lx length=%lu\n",__func__,dest,src,length);
 		}
 
-		Hermes::Vaddr getCurrentAddr() { 
+		Hermes::Vaddr getCurrentAddr() {
 			if ( HostCopy == type ) {
 				if ( 0 == chunk % 2 ) {
 					//printf("%s() src=%#lx offset=%lu\n",__func__,src, offset);
@@ -73,7 +73,7 @@
 				} else {
 					//printf("%s() Store\n",__func__);
 					return false;
-				}	
+				}
 
 			} else {
 				switch ( type ) {
@@ -91,11 +91,11 @@
         void decPending() {
             --m_pending;
         }
-        bool canBeRetired() { 
-            return isDone() && 0 == m_pending; 
+        bool canBeRetired() {
+            return isDone() && 0 == m_pending;
         }
-		bool isDone() { 
-			return offset == length; 
+		bool isDone() {
+			return offset == length;
 		}
 		Op getOp( ) {
 
@@ -139,6 +139,6 @@
             case HostBusRead: return "HostBusRead";
             }
         }
-     private: 
+     private:
         Op type;
     };

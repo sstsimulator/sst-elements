@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -20,7 +20,7 @@
 #include "embercmt2d.h"
 
 /*
-	CMT communication motif for a 2d decomposition of elements over a mesh 
+	CMT communication motif for a 2d decomposition of elements over a mesh
 	network. Each process communicates with its +/- x and +/- y neighbors.
 	Note: The motif works only when all the processors in the mesh are used.
 
@@ -30,7 +30,7 @@
 using namespace SST::Ember;
 
 EmberCMT2DGenerator::EmberCMT2DGenerator(SST::ComponentId_t id, Params& params) :
-	EmberMessagePassingGenerator(id, params, "CMT2D"), 
+	EmberMessagePassingGenerator(id, params, "CMT2D"),
 	    m_loopIndex(0),
 	    x_pos(-1), x_neg(-1),
         y_pos(-1), y_neg(-1),
@@ -60,7 +60,7 @@ EmberCMT2DGenerator::EmberCMT2DGenerator(SST::ComponentId_t id, Params& params) 
 
         m_mean = params.find("arg.nsComputeMean", time);
         m_stddev = params.find("arg.nsComputeStddev", (m_mean*0.05));
-    	
+
     	x_xferSize = eltSize*eltSize*my*mz;
     	y_xferSize = eltSize*eltSize*mx*mz;
 
@@ -82,44 +82,44 @@ void EmberCMT2DGenerator::configure()
     	        "element_size = %" PRIu32 ", elements_per_proc = %" PRIu32 ", total processes = %" PRIu32 \
     			"\ncompute time: mean = %fns ,stddev = %fns \
     			\nx_xfer: %" PRIu64 " ,y_xfer: %" PRIu64 \
-    			"\npx: %" PRIu32 " ,py: %" PRIu32 "\n", 
-    			eltSize, nelt, size(), m_mean, m_stddev, 
+    			"\npx: %" PRIu32 " ,py: %" PRIu32 "\n",
+    			eltSize, nelt, size(), m_mean, m_stddev,
     			x_xferSize, y_xferSize, px, py );
-    	
+
     	}
-    	
+
     	// Get our (x,y) position and neighboring ranks in a 3D decomposition
     	myX=-1; myY=-1;
     	myID = rank();
     	getPosition(rank(), px, py, &myX, &myY);
 
         // Initialize Marsaglia RNG for compute time
-        m_random = new SSTGaussianDistribution( m_mean, m_stddev, 
+        m_random = new SSTGaussianDistribution( m_mean, m_stddev,
                                     new RNG::MarsagliaRNG( 7+myID, getJobId() ) );
 
-    	// Set which direction to transfer and the neighbors in that direction 
-    	if( myY > 0 ) { 
+    	// Set which direction to transfer and the neighbors in that direction
+    	if( myY > 0 ) {
     		x_neg = convertPositionToRank(px, py, myX-1, myY);
-    		sendx_neg = true; 
+    		sendx_neg = true;
     	}
-    	if( myY < px-1 ) { 
+    	if( myY < px-1 ) {
     		x_pos = convertPositionToRank(px, py, myX+1, myY);
     		sendx_pos = true;
     	}
-    	if( myX > 0 ) { 
+    	if( myX > 0 ) {
     		y_neg = convertPositionToRank(px, py, myX, myY-1);
-    		sendy_neg = true; 
+    		sendy_neg = true;
     	}
     	if( myX < py-1 ) {
     		y_pos = convertPositionToRank(px, py, myX, myY+1);
-    		sendy_pos = true; 
+    		sendy_pos = true;
     	}
-    	
+
     	verbose(CALL_INFO, 2, 0, "Rank: %" PRIu64 " is located at coordinates \
     		(%" PRId32 ", %" PRId32 ") in the 2D mesh, \
-    		X+:%s %" PRId32 ",X-:%s %" PRId32 ", Y+:%s %" PRId32 ",Y-:%s %" PRId32 "\n",	
-    		myID, 
-    		myX, myY, 
+    		X+:%s %" PRId32 ",X-:%s %" PRId32 ", Y+:%s %" PRId32 ",Y-:%s %" PRId32 "\n",
+    		myID,
+    		myX, myY,
     		(sendx_pos ? "Y" : "N"), x_pos,
     		(sendx_neg ? "Y" : "N"), x_neg,
     		(sendy_pos ? "Y" : "N"), y_pos,
@@ -129,12 +129,12 @@ void EmberCMT2DGenerator::configure()
 
 
 
-bool EmberCMT2DGenerator::generate( std::queue<EmberEvent*>& evQ) 
+bool EmberCMT2DGenerator::generate( std::queue<EmberEvent*>& evQ)
 {
 
-        if (m_loopIndex == 0) { 
+        if (m_loopIndex == 0) {
     		verbose(CALL_INFO, 2,0, "rank=%d, size=%d\n", rank(), size());
-    //        GEN_DBG(1, "rank=%d, size=%d\n", rank(), size()); 
+    //        GEN_DBG(1, "rank=%d, size=%d\n", rank(), size());
         }
 
         double nsCompute = m_random->getNextDouble();
@@ -150,7 +150,7 @@ bool EmberCMT2DGenerator::generate( std::queue<EmberEvent*>& evQ)
     		if (sendx_neg) {
     		//	m_output->output("%" PRId32 " recv from %" PRId32 " send to %" PRId32 "\n", rank(), x_neg, x_neg);
     			enQ_recv( evQ, x_neg, x_xferSize, 0, GroupWorld );
-    			enQ_send( evQ, x_neg, x_xferSize, 0, GroupWorld );		
+    			enQ_send( evQ, x_neg, x_xferSize, 0, GroupWorld );
     		}
     	}
     	else {
@@ -162,10 +162,10 @@ bool EmberCMT2DGenerator::generate( std::queue<EmberEvent*>& evQ)
     		if (sendx_neg) {
     		//	m_output->output("%" PRId32 " send to %" PRId32 " recv from %" PRId32 "\n", rank(), x_neg, x_neg);
     			enQ_send( evQ, x_neg, x_xferSize, 0, GroupWorld );
-    			enQ_recv( evQ, x_neg, x_xferSize, 0, GroupWorld );		
+    			enQ_recv( evQ, x_neg, x_xferSize, 0, GroupWorld );
     		}
     	}
-    	
+
     	// +y/-y transfers
     	if ( myX % 2 == 0){
     		if (sendy_pos) {
@@ -174,7 +174,7 @@ bool EmberCMT2DGenerator::generate( std::queue<EmberEvent*>& evQ)
     		}
     		if (sendy_neg) {
     			enQ_recv( evQ, y_neg, y_xferSize, 0, GroupWorld );
-    			enQ_send( evQ, y_neg, y_xferSize, 0, GroupWorld );		
+    			enQ_send( evQ, y_neg, y_xferSize, 0, GroupWorld );
     		}
     	}
     	else {
@@ -184,13 +184,13 @@ bool EmberCMT2DGenerator::generate( std::queue<EmberEvent*>& evQ)
     		}
     		if (sendy_neg) {
     			enQ_send( evQ, y_neg, y_xferSize, 0, GroupWorld );
-    			enQ_recv( evQ, y_neg, y_xferSize, 0, GroupWorld );		
+    			enQ_recv( evQ, y_neg, y_xferSize, 0, GroupWorld );
     		}
-    	}	
+    	}
 
        //enQ_barrier( evQ, GroupWorld);
 
-        
+
     	if ( ++m_loopIndex == iterations) {
             if ( ++m_phyIndex == variables) {
                 return true;

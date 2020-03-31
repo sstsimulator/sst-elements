@@ -1,8 +1,8 @@
-# Copyright 2009-2019 NTESS. Under the terms
+# Copyright 2009-2020 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2019, NTESS
+# Copyright (c) 2009-2020, NTESS
 # All rights reserved.
 #
 # Portions are copyright of other developers:
@@ -32,7 +32,7 @@ def getOptions():
 
 def run( opts, platParamsName, topo, shape, jobs, perNicParams = None ):
 
-	topoInfo = TopoConfig.getTopoInfo( topo, shape )	
+	topoInfo = TopoConfig.getTopoInfo( topo, shape )
 	topoObj = TopoConfig.getTopoObj( topo )
 
 	print 'Platform: configuration "{0}"'.format( platParamsName )
@@ -49,14 +49,14 @@ def run( opts, platParamsName, topo, shape, jobs, perNicParams = None ):
 	Merlin.setTopoParams( topoInfo.getParams() )
 	Merlin.setRtrParams( rtrConfig.getParams() )
 
-	nullEmber = NullEmber.create( emberParams, hermesParams) 
+	nullEmber = NullEmber.create( emberParams, hermesParams)
 
 	loadInfo = LoadInfo.LoadInfo( nicConfig, topoInfo.getNumNodes(), nullEmber )
 
 	topoObj.setEndPointFunc( loadInfo.setNode )
 
 	for job in jobs:
-	
+
 		if None == job.getNidlist():
 			nidList = LoadUtils.genNidList( topoInfo.getNumNodes(), \
 					job.getNumNodes(), job.getRandom() )

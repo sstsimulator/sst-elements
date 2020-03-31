@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -28,40 +28,40 @@ namespace SST {
     namespace Scheduler {
 
         class DragonflyMachine : public Machine {
-                
+
             public:
                 enum localTopo{
                     ALLTOALL,
                 };
-                
+
                 enum globalTopo{
                     CIRCULANT,
                     ABSOLUTE,
                     RELATIVE,
                 };
-                
+
                 DragonflyMachine(int routersPerGroup, int portsPerRouter, int opticalsPerRouter,
                     int nodesPerRouter, int coresPerNode, localTopo lt, globalTopo gt,
                     double** D_matrix = NULL);
                 ~DragonflyMachine() { };
-				
+
 				AllocInfo* getBaselineAllocation(Job* job) const;
 
                 std::string getSetupInfo(bool comment);
-                
+
                 //returns the network distance of the given nodes
                 int getNodeDistance(int node0, int node1) const;
-                
+
                 //returns the free nodes at the given Distance
                 std::list<int>* getFreeAtDistance(int center, int distance) const;
-                
+
                 //max number of nodes at the given distance - NearestAllocMapper uses this
                 int nodesAtDistance(int dist) const;
-                
+
                 //DragonflyMachine default routing is shortest path
                 //@return list of link indices
                 std::list<int>* getRoute(int node0, int node1, double commWeight) const;
-                
+
                 const localTopo ltopo;
                 const globalTopo gtopo;
                 const int routersPerGroup;
@@ -76,8 +76,8 @@ namespace SST {
                 inline int routerOf(int nodeID) const { return nodeID / nodesPerRouter; }
                 inline int groupOf(int routerID) const { return routerID / routersPerGroup; }
                 inline int localIdOf(int routerID) const { return routerID % routersPerGroup; }
-                
-            private:                
+
+            private:
                 //constructor helpers
                 int getNumNodes(int opticalsPerRouter, int routersPerGroup, int nodesPerRouter) const
                 {
@@ -101,7 +101,7 @@ namespace SST {
 
                 //router graph: routers[routerID] = map<targetRouterID, linkInd>
                 std::vector<std::map<int,int> > routers;
-                std::vector<int> nodesAtDistances;                
+                std::vector<int> nodesAtDistances;
         };
     }
 }

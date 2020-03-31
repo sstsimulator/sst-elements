@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -18,16 +18,16 @@ class RecvMachine {
 
     #include "nicShmemRecvMachine.h"
 
-        
+
     typedef uint64_t SrcKey;
     typedef std::function<void()> Callback;
 
-    static SrcKey getSrcKey(uint32_t srcNode, uint32_t srcPid, uint32_t srcStream) { 
+    static SrcKey getSrcKey(uint32_t srcNode, uint32_t srcPid, uint32_t srcStream) {
 		SrcKey value;
 		value = srcNode;
-		value |= srcStream << 20; 
+		value |= srcStream << 20;
 		value |= (uint64_t) srcPid << ( 20 + STREAM_NUM_SIZE);
-		return value; 
+		return value;
 	}
 
     #include "nicRecvStream.h"
@@ -38,11 +38,11 @@ class RecvMachine {
 
       public:
 
-        RecvMachine( Nic& nic, int vn, int numVnics, 
+        RecvMachine( Nic& nic, int vn, int numVnics,
                 int nodeId, int verboseLevel, int verboseMask,
                 int rxMatchDelay, int hostReadDelay, int maxQsize, int maxActiveStreams ) :
-            m_nic(nic), 
-            m_vn(vn), 
+            m_nic(nic),
+            m_vn(vn),
             m_rxMatchDelay( rxMatchDelay ),
             m_hostReadDelay( hostReadDelay ),
             m_notifyCallback( false ),
@@ -51,7 +51,7 @@ class RecvMachine {
             m_blockedPkt(NULL),
             m_numMsgRcvd(0),
             m_hostBlockingTime(0)
-        { 
+        {
             char buffer[100];
             snprintf(buffer,100,"@t:%d:Nic::RecvMachine::@p():@l vn=%d ",nodeId,m_vn);
 
@@ -67,21 +67,21 @@ class RecvMachine {
 
         void regMemRgn( int pid, int rgnNum, MemRgnEntry* entry ) {
             m_ctxMap[pid]->regMemRgn( rgnNum, entry );
-        } 
+        }
 
         void regGetOrigin( int pid, int key, DmaRecvEntry* entry ) {
             m_ctxMap[pid]->regGetOrigin( key, entry );
         }
         void postRecv( int pid, DmaRecvEntry* entry ) {
             m_ctxMap[pid]->postRecv( entry );
-        }    
+        }
         Nic& nic() { return m_nic; }
         void printStatus( Output& out );
 
         void decActiveStream() {
             --m_numActiveStreams;
             assert( m_numActiveStreams >= 0 );
-             
+
             if ( m_blockedPkt ) {
       		    m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"unblocked\n");
                 assert( m_blockedPkt );
@@ -106,7 +106,7 @@ class RecvMachine {
                 setNotify();
             }
         }
-        
+
 	private:
         void setNotify( ) {
             assert( ! m_notifyCallback );
@@ -121,7 +121,7 @@ class RecvMachine {
         void processNetworkData() {
             m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_MACHINE, "\n");
 
-            // this notifier was called by the LinkControl object, the RecvMachine may 
+            // this notifier was called by the LinkControl object, the RecvMachine may
             // re-install the LinkControl notifier, if it does there would be a cycle
             // this schedCallback breaks the cycle
             m_nic.schedCallback(  [=](){ processPkt( getNetworkEvent( m_vn ) ); } );
@@ -129,14 +129,14 @@ class RecvMachine {
         }
 
 
-        int m_maxActiveStreams; 
+        int m_maxActiveStreams;
         int m_numActiveStreams;
         FireflyNetworkEvent* m_blockedPkt;
         virtual void processPkt( FireflyNetworkEvent* ev ) {
 
             if ( ev->isHdr() ) {
                 ++m_numActiveStreams;
-            } 
+            }
 
             if ( m_numActiveStreams == m_maxActiveStreams + 1) {
       		    m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"blocked on available streams\n");
@@ -144,9 +144,9 @@ class RecvMachine {
                 m_blockedPkt = ev;
             } else {
                 processPkt2( ev );
-            } 
+            }
         }
-                
+
         virtual void processPkt2( FireflyNetworkEvent* ev ) {
             // if the event was consumed, we can can check for the next
             if ( ! m_ctxMap[ ev->getDestPid() ]->processPkt( ev ) ) {
@@ -187,18 +187,18 @@ class RecvMachine {
                 delete req;
                 if ( ! event->isCtrl() && event->isHdr() ) {
                     ++m_numMsgRcvd;
-                } 
+                }
                 return event;
             } else {
                 return NULL;
             }
         }
 
-        SimTime_t m_hostBlockingTime;		
+        SimTime_t m_hostBlockingTime;
         int m_numMsgRcvd;
         int m_receivedPkts;
         int         m_vn;
         int         m_rxMatchDelay;
-        bool        m_notifyCallback; 
+        bool        m_notifyCallback;
 
 };

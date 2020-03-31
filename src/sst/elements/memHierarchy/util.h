@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -83,11 +83,11 @@ inline int log2Of(int x){
 }
 
 inline bool isPowerOfTwo(unsigned int x) {
-    return !(x & (x-1));   
+    return !(x & (x-1));
 }
 
-/* 
- * copy oldKey to newKey but don't overwrite if newKey already exists 
+/*
+ * copy oldKey to newKey but don't overwrite if newKey already exists
  * return whether parameter was fixed
  */
 inline bool fixupParam( SST::Params& params, const std::string oldKey, const std::string newKey ) {

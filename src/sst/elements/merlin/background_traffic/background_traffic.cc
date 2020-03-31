@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -33,7 +33,7 @@ BackgroundTraffic::BackgroundTraffic(ComponentId_t cid, Params& params) :
     if ( !found ) {
         Simulation::getSimulationOutput().fatal(CALL_INFO, -1, "BackgroundTraffic: offered_load must be set!\n");
     }
-    
+
     num_peers = params.find<int>("num_peers",-1);
     if ( num_peers == -1 ) {
         Simulation::getSimulationOutput().fatal(CALL_INFO, -1, "BackgroundTraffic: num_peers must be set!\n");
@@ -59,13 +59,13 @@ BackgroundTraffic::BackgroundTraffic(ComponentId_t cid, Params& params) :
 
     // For now, stash the pkt_size in serialization_time
     serialization_time = pkt_size;
-    
+
     // Load the specified SimpleNetwork object
 
     // First see if it is defined in the python
     link_if = loadUserSubComponent<SST::Interfaces::SimpleNetwork>
         ("networkIF", ComponentInfo::SHARE_NONE, 1 /* vns */);
-    
+
 
     // Register functors for the SimpleNetwork IF
     send_notify_functor = new SST::Interfaces::SimpleNetwork::Handler<BackgroundTraffic>(this, &BackgroundTraffic::send_notify);
@@ -85,14 +85,14 @@ BackgroundTraffic::BackgroundTraffic(ComponentId_t cid, Params& params) :
     // packetDestGen = static_cast<TargetGenerator*>(loadSubComponent(pattern, this, params));
     pattern_params->insert(params.find_prefix_params("pattern"));
     pattern_params->insert("pattern_gen",pattern);
-    
+
     registerAsPrimaryComponent();
     primaryComponentOKToEndSim();
 
     base_tc = registerTimeBase("1ps",false);
     timing_link = configureSelfLink("timing_link", base_tc, new Event::Handler<BackgroundTraffic>(this, &BackgroundTraffic::output_timing));
 
-    
+
 }
 
 
@@ -144,7 +144,7 @@ BackgroundTraffic::init(unsigned int phase) {
         UnitAlgebra interval = serialization_time / offered_load;
         send_interval = interval.getRoundedValue();
     }
-        
+
 }
 
 void
@@ -171,7 +171,7 @@ BackgroundTraffic::send_notify(int vn)
     // can progress and messages
     SimTime_t current_time = getCurrentSimTime(base_tc);
     progress_messages(current_time);
-    
+
     // Determine if we are waiting for room in the LinkControl or not.
     // We are waiting for room if next_time is earlier than
     // current_time
@@ -184,7 +184,7 @@ BackgroundTraffic::send_notify(int vn)
         // Need to wake up again at next time to send packet
         timing_link->send(next_time - current_time, NULL);
     }
-        
+
     return false;
 }
 
@@ -208,7 +208,7 @@ BackgroundTraffic::output_timing(Event* ev)
     else {
         // Need to wake up again at next time to send packet
         timing_link->send(next_time - current_time, NULL);
-    }        
+    }
 }
 
 void

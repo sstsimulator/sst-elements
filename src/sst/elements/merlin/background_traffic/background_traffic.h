@@ -1,10 +1,10 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -69,7 +69,7 @@ public:
         SST_ELI_ELEMENT_VERSION(0,0,1),
         "Pattern-based traffic generator to create background traffic.",
         COMPONENT_CATEGORY_NETWORK)
-    
+
     SST_ELI_DOCUMENT_PARAMS(
         {"num_peers",        "Total number of endpoints in network."},
         {"packet_size",      "Packet size specified in either b or B (can include SI prefix).","32B"},
@@ -80,7 +80,7 @@ public:
     SST_ELI_DOCUMENT_PORTS(
         {"rtr",  "Port that hooks up to router.", { "merlin.RtrEvent", "merlin.credit_event" } }
     )
- 
+
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
         {"networkIF", "Network interface", "SST::Interfaces::SimpleNetwork" },
         {"pattern_gen", "Target address generator", "SST::Merlin::TargetGenerator" }
@@ -93,9 +93,9 @@ private:
     UnitAlgebra link_bw;
 
     Params* pattern_params;
-    
+
     UnitAlgebra serialization_time;
-    
+
     SimTime_t next_time;
     SimTime_t send_interval;
 
@@ -107,16 +107,16 @@ private:
 
 
     TargetGenerator *packetDestGen;
-    
+
     int id;
     int num_peers;
     int packet_size; // in bits
-    
+
     uint64_t packets_sent;
     uint64_t packets_recd;
 
     Link* timing_link;
-    
+
 public:
     BackgroundTraffic(ComponentId_t cid, Params& params);
     ~BackgroundTraffic();
@@ -133,7 +133,7 @@ private:
 
     void output_timing(Event* ev);
     void progress_messages(SimTime_t current_time);
-    
+
 };
 
 } //namespace Merlin

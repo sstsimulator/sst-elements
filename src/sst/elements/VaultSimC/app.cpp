@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -46,14 +46,14 @@ L2 miss/inst	32	15
     Addr addr;
     if ((memRoll & 0x1) == 0) {
       // stride
-      addr = coreAddr[core] + (1 << 6);  
-      addr = (addr >> 6) << 6;    
+      addr = coreAddr[core] + (1 << 6);
+      addr = (addr >> 6) << 6;
     } else {
       //random
-      addr = (roll >> 6) << 6;    
+      addr = (roll >> 6) << 6;
     }
     coreAddr[core] = addr;
-	bool isWrite; 
+	bool isWrite;
 
     if (memRoll <= isLoad[app]) {
         isWrite = false;

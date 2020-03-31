@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -28,7 +28,7 @@ HadesMP::HadesMP(ComponentId_t id, Params& params) :
 {
 }
 
-#if PRINT_STATUS 
+#if PRINT_STATUS
 void HadesMP::printStatus( Output& out )
 {
     std::map<int,ProtocolAPI*>::iterator iter= m_protocolM.begin();
@@ -66,14 +66,14 @@ void HadesMP::size(Communicator group, int* size, Functor* retFunc )
                             new SizeStartEvent( group, size) );
 }
 
-void HadesMP::send(const Hermes::MemAddr& buf, uint32_t count, 
+void HadesMP::send(const Hermes::MemAddr& buf, uint32_t count,
         PayloadDataType dtype, RankID dest, uint32_t tag, Communicator group,
         Functor* retFunc )
 {
     dbg().debug(CALL_INFO,1,1,"buf=%p count=%d dtype=%d dest=%d tag=%d "
                         "group=%d\n", &buf,count,dtype,dest,tag,group);
     functionSM().start( FunctionSM::Send, retFunc,
-            new SendStartEvent( buf, count, dtype, dest, tag, group, NULL) ); 
+            new SendStartEvent( buf, count, dtype, dest, tag, group, NULL) );
 }
 
 void HadesMP::isend(const Hermes::MemAddr& buf, uint32_t count, PayloadDataType dtype,
@@ -82,7 +82,7 @@ void HadesMP::isend(const Hermes::MemAddr& buf, uint32_t count, PayloadDataType 
 {
     dbg().debug(CALL_INFO,1,1,"buf=%p count=%d dtype=%d dest=%d tag=%d "
                         "group=%d\n", &buf,count,dtype,dest,tag,group);
-    functionSM().start( FunctionSM::Send, retFunc, 
+    functionSM().start( FunctionSM::Send, retFunc,
                 new SendStartEvent( buf, count, dtype, dest, tag, group, req));
 }
 
@@ -100,13 +100,13 @@ void HadesMP::irecv(const Hermes::MemAddr& target, uint32_t count, PayloadDataTy
         RankID source, uint32_t tag, Communicator group,
         MessageRequest* req, Functor* retFunc)
 {
-    dbg().debug(CALL_INFO,1,1,"target=%p count=%d dtype=%d source=%d tag=%d " 
+    dbg().debug(CALL_INFO,1,1,"target=%p count=%d dtype=%d source=%d tag=%d "
                         "group=%d\n", &target,count,dtype,source,tag,group);
     functionSM().start( FunctionSM::Recv, retFunc,
       new RecvStartEvent(target, count, dtype, source, tag, group, req, NULL));
 }
 
-void HadesMP::allreduce(const Hermes::MemAddr& mydata, 
+void HadesMP::allreduce(const Hermes::MemAddr& mydata,
 		const Hermes::MemAddr& result, uint32_t count,
         PayloadDataType dtype, ReductionOperation op,
         Communicator group, Functor* retFunc)
@@ -114,11 +114,11 @@ void HadesMP::allreduce(const Hermes::MemAddr& mydata,
     dbg().debug(CALL_INFO,1,1,"in=%p out=%p count=%d dtype=%d\n",
                 &mydata,&result,count,dtype);
     functionSM().start( FunctionSM::Allreduce, retFunc,
-    new CollectiveStartEvent(mydata, result, count, dtype, op, 0, group, 
+    new CollectiveStartEvent(mydata, result, count, dtype, op, 0, group,
                             CollectiveStartEvent::Allreduce));
 }
 
-void HadesMP::reduce(const Hermes::MemAddr& mydata, 
+void HadesMP::reduce(const Hermes::MemAddr& mydata,
 		const Hermes::MemAddr& result, uint32_t count,
         PayloadDataType dtype, ReductionOperation op, RankID root,
         Communicator group, Functor* retFunc)
@@ -126,8 +126,8 @@ void HadesMP::reduce(const Hermes::MemAddr& mydata,
     dbg().debug(CALL_INFO,1,1,"in=%p out=%p count=%d dtype=%d \n",
                 &mydata,&result,count,dtype);
     functionSM().start( FunctionSM::Allreduce, retFunc,
-        new CollectiveStartEvent(mydata, result, count, 
-                        dtype, op, root, group, 
+        new CollectiveStartEvent(mydata, result, count,
+                        dtype, op, root, group,
                             CollectiveStartEvent::Reduce) );
 }
 
@@ -141,8 +141,8 @@ void HadesMP::bcast(const Hermes::MemAddr& mydata, uint32_t count,
 	Hermes::MemAddr addr(1,NULL);
 
     functionSM().start( FunctionSM::Allreduce, retFunc,
-        new CollectiveStartEvent(mydata, addr, count, 
-                        dtype, NOP, root, group, 
+        new CollectiveStartEvent(mydata, addr, count,
+                        dtype, NOP, root, group,
                             CollectiveStartEvent::Bcast) );
 }
 
@@ -216,7 +216,7 @@ void HadesMP::gatherv( const Hermes::MemAddr& sendbuf, uint32_t sendcnt, Payload
 void HadesMP::alltoall(
         const Hermes::MemAddr& sendbuf, uint32_t sendcnt, PayloadDataType sendtype,
         const Hermes::MemAddr& recvbuf, uint32_t recvcnt, PayloadDataType recvtype,
-        Communicator group, Functor* retFunc) 
+        Communicator group, Functor* retFunc)
 {
     dbg().debug(CALL_INFO,1,1,"sendbuf=%p recvbuf=%p sendcnt=%d "
                         "recvcnt=%d\n", &sendbuf,&recvbuf,sendcnt,recvcnt);
@@ -228,12 +228,12 @@ void HadesMP::alltoall(
 void HadesMP::alltoallv(
         const Hermes::MemAddr& sendbuf, Addr sendcnts, Addr senddispls, PayloadDataType sendtype,
         const Hermes::MemAddr& recvbuf, Addr recvcnts, Addr recvdispls, PayloadDataType recvtype,
-        Communicator group, Functor* retFunc ) 
+        Communicator group, Functor* retFunc )
 {
     dbg().debug(CALL_INFO,1,1,"sendbuf=%p recvbuf=%p sendcntPtr=%p "
                         "recvcntPtr=%p\n", &sendbuf,&recvbuf,sendcnts,recvcnts);
     functionSM().start( FunctionSM::Alltoallv, retFunc,
-        new AlltoallStartEvent( sendbuf, sendcnts, senddispls, sendtype, 
+        new AlltoallStartEvent( sendbuf, sendcnts, senddispls, sendtype,
             recvbuf, recvcnts, recvdispls, recvtype,
             group) );
 }
@@ -304,7 +304,7 @@ void HadesMP::comm_split( Communicator oldComm, int color, int key,
     dbg().debug(CALL_INFO,1,1,"\n");
     functionSM().start( FunctionSM::CommSplit, retFunc,
                        new CommSplitStartEvent( oldComm, color, key, newComm) );
-} 
+}
 
 void HadesMP::comm_create( MP::Communicator oldComm, size_t nRanks, int* ranks,
         MP::Communicator* newComm, MP::Functor* retFunc )

@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -26,7 +26,7 @@ class EmberFamScatter_Event : public EmberFamEvent {
 
 public:
 	EmberFamScatter_Event( Shmem::Interface& api, Output* output,
-			Hermes::Vaddr src, Shmem::Fam_Descriptor fd, uint64_t nblocks, uint64_t firstBlock, uint64_t stride, 
+			Hermes::Vaddr src, Shmem::Fam_Descriptor fd, uint64_t nblocks, uint64_t firstBlock, uint64_t stride,
 			uint64_t blockSize, bool blocking, EmberEventTimeStatistic* stat = NULL ) :
 			EmberFamEvent( api, output, stat ), m_src(src), m_fd(fd), m_nblocks(nblocks), m_firstBlock(firstBlock),
 			m_stride(stride), m_blockSize(blockSize), m_blocking(blocking) {}

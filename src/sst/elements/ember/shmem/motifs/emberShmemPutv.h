@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -41,8 +41,8 @@ class EmberShmemPutvGenerator : public EmberShmemGenerator {
 
 public:
 	EmberShmemPutvGenerator(SST::ComponentId_t id, Params& params) :
-		EmberShmemGenerator(id, params, "ShmemPutv" ), m_phase(-2) 
-	{ 
+		EmberShmemGenerator(id, params, "ShmemPutv" ), m_phase(-2)
+	{
         m_printResults = params.find<bool>("arg.printResults", false );
 		m_iterations = (uint32_t) params.find("arg.iterations", 1);
         int status;
@@ -52,7 +52,7 @@ public:
 		free(tmp);
 	}
 
-    bool generate( std::queue<EmberEvent*>& evQ) 
+    bool generate( std::queue<EmberEvent*>& evQ)
 	{
         bool ret = false;
 		if ( -2 == m_phase ) {
@@ -67,12 +67,12 @@ public:
                         getMotifName().c_str(), m_num_pes, m_type_name.c_str());
                 assert( 2 == m_num_pes );
             }
-            
+
 			m_dest.at<TYPE>(0) = 0;
             enQ_barrier_all( evQ );
 			enQ_getTime( evQ, &m_startTime );
 
-			m_value = genSeed<TYPE>() + m_my_pe; 
+			m_value = genSeed<TYPE>() + m_my_pe;
 		} else if ( m_phase < m_iterations ) {
 
             enQ_putv( evQ, m_dest, m_value, (m_my_pe + 1) % m_num_pes );

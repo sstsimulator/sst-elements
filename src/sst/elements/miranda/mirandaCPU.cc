@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -34,11 +34,11 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 	std::stringstream prefix;
 	prefix << "@t:" <<getName() << ":RequestGenCPU[@p:@l]: ";
 	out = new Output( prefix.str(), verbose, 0, SST::Output::STDOUT);
-        
+
 	maxRequestsPending[READ] = params.find<uint32_t>("maxloadmemreqpending", 16);
 	maxRequestsPending[WRITE] = params.find<uint32_t>("maxstorememreqpending", 16);
 	maxRequestsPending[CUSTOM] = params.find<uint32_t>("maxcustommemreqpending", 16);
-	
+
         requestsPending[READ] = requestsPending[WRITE] = requestsPending[CUSTOM] = 0;
 
 	out->verbose(CALL_INFO, 1, 0, "Configured CPU to allow %" PRIu32 " maximum Load requests to be memory to be outstanding.\n",
@@ -47,7 +47,7 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 		maxRequestsPending[WRITE]);
 	out->verbose(CALL_INFO, 1, 0, "Configured CPU to allow %" PRIu32 " maximum Custom requests to be memory to be outstanding.\n",
 		maxRequestsPending[CUSTOM]);
-	
+
         std::string cpuClock = params.find<std::string>("clock", "2GHz");
 	clockHandler = new Clock::Handler<RequestGenCPU>(this, &RequestGenCPU::clockTick);
 	timeConverter = registerClock(cpuClock, clockHandler );
@@ -61,9 +61,9 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 
 	    Params interfaceParams = params.find_prefix_params("memoryinterfaceparams.");
             interfaceParams.insert("port", "cache_link");
-	    cache_link = loadAnonymousSubComponent<Interfaces::SimpleMem>(interfaceName, "memory", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, 
+	    cache_link = loadAnonymousSubComponent<Interfaces::SimpleMem>(interfaceName, "memory", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS,
                     interfaceParams, timeConverter, new SimpleMem::Handler<RequestGenCPU>(this, &RequestGenCPU::handleEvent));
-            
+
             if (!cache_link)
                 out->fatal(CALL_INFO, -1, "%s, Error loading memory interface\n", getName().c_str());
         }
@@ -75,17 +75,17 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 	cacheLine = params.find<uint64_t>("cache_line_size", 64);
 	const uint64_t pageSize  = params.find<uint64_t>("pagesize", 4096);
 	const uint64_t pageCount = params.find<uint64_t>("pagecount", 4194304);
-	
+
 	if( pageSize % cacheLine > 0 ) {
 		out->fatal(CALL_INFO, -8, "Error: Miranda memory configuration. Page size=%" PRIu64 ", is not a multiple of cache line size: %" PRIu64 "\n",
 			pageSize, cacheLine);
 	}
-	
+
 	MirandaPageMappingPolicy policy = MirandaPageMappingPolicy::LINEAR;
-	
+
 	std::string policyStr = params.find<std::string>("pagemap", "linear");
         std::string pageMapStr = params.find<std::string>("pagemapname", "miranda");
-	
+
 	if(policyStr == "RANDOMIZED" || policyStr == "randomized") {
 		policy = MirandaPageMappingPolicy::RANDOMIZED;
 	} else if (policyStr == "LINEAR" || policyStr == "linear" ) {
@@ -93,7 +93,7 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 	} else {
 		out->fatal(CALL_INFO, -8, "Error: unknown page mapping type: \'%s\'\n", policyStr.c_str());
 	}
-	
+
         // Use shared region instead of replicating mapping on each core
         addrMap = Simulation::getSharedRegionManager()->getGlobalSharedRegion("miranda", pageCount * sizeof(uint64_t), new SharedRegionMerger());
 
@@ -107,10 +107,10 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
             out->verbose(CALL_INFO, 1, 0, "Generator loaded successfully.\n");
 	    registerAsPrimaryComponent();
 	    primaryComponentDoNotEndSim();
-        
+
         } else {
 	    std::string reqGenModName = params.find<std::string>("generator", "");
-            
+
             if ( ! reqGenModName.empty() ) {
 
 		out->verbose(CALL_INFO, 1, 0, "Request generator to be loaded is: %s\n", reqGenModName.c_str());
@@ -184,14 +184,14 @@ void RequestGenCPU::init(unsigned int phase) {
 
 void RequestGenCPU::handleSrcEvent( Event* ev ) {
 
-	MirandaReqEvent* event = static_cast<MirandaReqEvent*>(ev); 
+	MirandaReqEvent* event = static_cast<MirandaReqEvent*>(ev);
 
 	out->verbose(CALL_INFO, 2, 0, "got %lu generators\n", event->generators.size() );
 	loadGenerator( event );
 
 	if ( 0 != timeConverter->convertFromCoreTime( Simulation::getSimulation()->getCurrentSimCycle()) ) {
 		clockTick( reregisterClock( timeConverter, clockHandler ) );
-	}	
+	}
 
 	srcReqEvent = event;
 }
@@ -237,10 +237,10 @@ void RequestGenCPU::handleEvent( Interfaces::SimpleMem::Request* ev) {
 		cpuReq->decPartCount();
 
 		// Decrement pending requests, we have recv'd a response
-			
-		if ( ev->cmd == Interfaces::SimpleMem::Request::Command::ReadResp ) { 
+
+		if ( ev->cmd == Interfaces::SimpleMem::Request::Command::ReadResp ) {
 			requestsPending[READ]--;
-		} else if ( ev->cmd == Interfaces::SimpleMem::Request::Command::WriteResp ) { 
+		} else if ( ev->cmd == Interfaces::SimpleMem::Request::Command::WriteResp ) {
 			requestsPending[WRITE]--;
 		} else if( ev->cmd == Interfaces::SimpleMem::Request::Command::CustomCmd ){
                         requestsPending[CUSTOM]--;
@@ -279,7 +279,7 @@ void RequestGenCPU::issueRequest(MemoryOpRequest* req) {
         out->verbose(CALL_INFO, 4, 0, "Issue request: address=0x%" PRIx64 ", length=%" PRIu64 ", operation=%s, cache line offset=%" PRIu64 "\n",
                 reqAddress, reqLength, "CUSTOM", lineOffset);
     }
-        
+
     if (statBytes[operation] != nullptr)
         statBytes[operation]->addData(reqLength);
 
@@ -302,7 +302,7 @@ void RequestGenCPU::issueRequest(MemoryOpRequest* req) {
 
         SimpleMem::Request *reqLower;
         SimpleMem::Request *reqUpper;
-        
+
         if( isCustom ){
             CustomOpRequest * creq = static_cast<CustomOpRequest*>(req);
             // build a custom request event
@@ -323,7 +323,7 @@ void RequestGenCPU::issueRequest(MemoryOpRequest* req) {
                     isRead ? SimpleMem::Request::Read : SimpleMem::Request::Write,
                     upperAddress, upperLength);
         }
-        
+
         CPURequest* newCPUReq = new CPURequest(req->getRequestID());
     	newCPUReq->incPartCount();
         newCPUReq->incPartCount();
@@ -342,7 +342,7 @@ void RequestGenCPU::issueRequest(MemoryOpRequest* req) {
     	// Keep track of split requests
         if (statSplitReqs[operation] != nullptr)
             statSplitReqs[operation]->addData(1);
-    
+
     } else {
         // This is not a split load, i.e. issue in a single transaction
         SimpleMem::Request *request;
@@ -370,7 +370,7 @@ void RequestGenCPU::issueRequest(MemoryOpRequest* req) {
         cache_link->sendRequest(request);
 
         requestsPending[operation]++;
-                
+
         if (statReqs[operation] != nullptr)
             statReqs[operation]->addData(1);
     }
@@ -390,14 +390,14 @@ bool RequestGenCPU::clockTick(SST::Cycle_t cycle) {
                 (0 == requestsPending[WRITE]) &&
                 (0 == requestsPending[CUSTOM]) ) {
             out->verbose(CALL_INFO, 4, 0, "Request generator complete and no requests pending, simulation can halt.\n");
-            
+
             // Tell the statistics engine how long we have executed for
             statTime->addData(getCurrentSimTimeNano());
-            
+
             reqGen->completed();
             delete reqGen;
             reqGen = NULL;
-            
+
             if ( NULL == srcLink ) {
                 primaryComponentOKToEndSim();
             } else {
@@ -406,20 +406,20 @@ bool RequestGenCPU::clockTick(SST::Cycle_t cycle) {
                     event->key = static_cast<MirandaReqEvent*>(srcReqEvent)->key;
                     delete srcReqEvent;
                     srcLink->send(0,event);
-                    
+
                     return true;
                 } else {
                     loadGenerator( srcReqEvent );
                     return false;
                 }
-            
+
             }
-	    
+
             // Deregister here
             return true;
         }
     }
-    
+
     // Process the request which may require splitting into multiple
     // requests (if breaks over a cache line)
     out->verbose(CALL_INFO, 2, 0, "Load Requests pending %" PRIu32 ", maximum permitted %" PRIu32 ".\n",
@@ -432,7 +432,7 @@ bool RequestGenCPU::clockTick(SST::Cycle_t cycle) {
     bool issued = false;
     uint32_t reqsIssuedThisCycle = 0;
     std::vector<uint32_t> delReqs;
-    
+
     // We need to generate at least as many requests as can be looked up in the OoO window
     // otherwise the issue will have starvation.
     for(int i = pendingRequests.size(); i < maxOpLookup; ++i) {
@@ -442,7 +442,7 @@ bool RequestGenCPU::clockTick(SST::Cycle_t cycle) {
             reqGen->generate(&pendingRequests);
     	}
     }
-    
+
     for(uint32_t i = 0; i < pendingRequests.size(); ++i) {
         if(reqsIssuedThisCycle == reqMaxPerCycle) {
             statMaxIssuePerCycle->addData(1);
@@ -463,18 +463,18 @@ bool RequestGenCPU::clockTick(SST::Cycle_t cycle) {
 	if(nxtRq->getOperation() == REQ_FENCE) {
             if(0 == requestsInFlight.size()) {
 		out->verbose(CALL_INFO, 4, 0, "Fence operation completed, no pending requests, will be retired.\n");
-                
+
                 // Keep record we will delete fence at i
     		delReqs.push_back(i);
-		
+
                 // Delete the fence
     		delete nxtRq;
             } else {
                 out->verbose(CALL_INFO, 4, 0, "Fence operation in flight (>0 pending requests), stall.\n");
             }
-            
+
             statCyclesHitFence->addData(1);
-            
+
             // Fence operations do now allow anything else to complete in this cycle
             break;
 
@@ -487,16 +487,16 @@ bool RequestGenCPU::clockTick(SST::Cycle_t cycle) {
 		if(nxtRq->canIssue()) {
                     issued = true;
                     reqsIssuedThisCycle++;
-                    
+
                     out->verbose(CALL_INFO, 4, 0, "Request %" PRIu64 " encountered, cleared to be issued, %" PRIu32 " issued this cycle.\n",
                             nxtRq->getRequestID(), reqsIssuedThisCycle);
 
     		    // Keep record we will delete at index i
                     delReqs.push_back(i);
-                    
+
                     //MemoryOpRequest* memOpReq = dynamic_cast<MemoryOpRequest*>(nxtRq);
                     issueRequest(memOpReq);
-                    
+
                     delete nxtRq;
 		} else {
                     out->verbose(CALL_INFO, 4, 0, "Request %" PRIu64 " in queue, has dependencies which are not satisfied, wait.\n",

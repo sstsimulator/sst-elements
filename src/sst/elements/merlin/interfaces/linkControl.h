@@ -1,10 +1,10 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -54,7 +54,7 @@ public:
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Link Control module for building Merlin-enabled NICs",
         SST::Interfaces::SimpleNetwork)
-    
+
     SST_ELI_DOCUMENT_PARAMS(
         {"port_name",          "Port name to connect to.  Only used when loaded anonymously",""},
         {"link_bw",            "Bandwidth of the links specified in either b/s or B/s (can include SI prefix)."},
@@ -81,7 +81,7 @@ public:
         {"rtr_port", "Port that connects to router", { "merlin.RtrEvent", "merlin.credit_event", "" } },
     )
 
-    
+
 private:
 
     struct output_queue_bundle_t {
@@ -95,7 +95,7 @@ private:
             {}
     };
 
-        
+
     // Link to router
     Link* rtr_link;
     // Self link for timing output.  This is how we manage bandwidth
@@ -111,7 +111,7 @@ private:
 
     // Initialization events received from network
     std::deque<RtrEvent*> init_events;
-    
+
     // Number of virtual networks
     int req_vns; // VNs requested be endpoint in constructor
     int used_vns; // VNs actually used based on VN mapping
@@ -142,8 +142,8 @@ private:
 
     // Input queues.  Size is req_vn
     network_queue_t* input_queues;
-    
-    
+
+
     nid_t id;
     nid_t logical_nid;
     SharedRegion* nid_map_shm;
@@ -167,12 +167,12 @@ private:
     // means we're blocked and we need to keep track of block time
     bool have_packets;
     SimTime_t start_block;
-    
+
     // Functors for notifying the parent when there is more space in
     // output queue or when a new packet arrives
     HandlerBase* receiveFunctor;
     HandlerBase* sendFunctor;
-    
+
     // Component* parent;
 
     // PacketStats stats;
@@ -183,7 +183,7 @@ private:
     Statistic<uint64_t>* idle_time;
 
     Output& output;
-    
+
 public:
     LinkControl(ComponentId_t cid, Params &params, int vns);
 
@@ -214,7 +214,7 @@ public:
     // the next event.
     SST::Interfaces::SimpleNetwork::Request* recv(int vn);
 
-    // Returns true if there is an event in the input buffer and false 
+    // Returns true if there is an event in the input buffer and false
     // otherwise.
     bool requestToReceive( int vn ) { return ! input_queues[vn].empty(); }
 
@@ -239,14 +239,14 @@ public:
     }
     inline const UnitAlgebra& getLinkBW() const { return link_bw; }
 
-    
+
 private:
     bool network_initialized;
 
     void handle_input(Event* ev);
     void handle_output(Event* ev);
 
-    
+
 };
 
 }

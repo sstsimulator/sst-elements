@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -40,7 +40,7 @@ using namespace std;
  */
 class MemEvent : public MemEventBase  {
 public:
-    
+
     /****** Old calls will now throw deprecated warnings since parent pointer is not available *************/
     /** Creates a new MemEvent - Generic */
     MemEvent(const Component *src, Addr addr, Addr baseAddr, Command cmd) : MemEventBase(src->getName(), cmd) {
@@ -148,12 +148,12 @@ public:
 
     /** return the original event that caused a NACK */
     MemEvent* getNACKedEvent() { return NACKedEvent_; }
-    
+
     /** @return  the target Address of this MemEvent */
     Addr getAddr(void) const { return addr_; }
     /** Sets the target Address of this MemEvent */
     void setAddr(Addr addr) { addr_ = addr; }
-    
+
     /** Sets the Base Address of this MemEvent */
     void setBaseAddr(Addr baseAddr) { baseAddr_ = baseAddr; }
     /** Return the BaseAddr */
@@ -178,23 +178,23 @@ public:
     uint32_t getSize(void) const { return size_; }
     /** Sets the size in bytes that this MemEvent represents */
     void setSize(uint32_t size) { size_ = size; }
-   
+
     /** Increments the number of retries */
     void incrementRetries() { retries_++; }
     int getRetries() { return retries_; }
 
     bool blocked() { return blocked_; }
     void setBlocked(bool value) { blocked_ = value; }
-    
+
     bool inProgress() { return inProgress_; }
     void setInProgress(bool value) { inProgress_ = value; }
 
     void setLoadLink() { setFlag(MemEventBase::F_LLSC); }
     bool isLoadLink() { return cmd_ == Command::GetS && queryFlag(MemEventBase::F_LLSC); }
-    
+
     void setStoreConditional() { setFlag(MemEventBase::F_LLSC); }
     bool isStoreConditional() { return cmd_ == Command::GetX && queryFlag(MemEventBase::F_LLSC); }
-    
+
     void setSuccess(bool b) { b ? setFlag(MemEventBase::F_SUCCESS) : clearFlag(MemEventBase::F_SUCCESS); }
     bool success() { return queryFlag(MemEventBase::F_SUCCESS); }
 
@@ -207,7 +207,7 @@ public:
         if ( payload_.size() < size_ )  payload_.resize(size_);
         return payload_;
     }
-    
+
 
     /** Sets the data payload and payload size.
      * @param[in] data  Vector from which to copy data
@@ -216,7 +216,7 @@ public:
         setSize(data.size());
         payload_ = data;
     }
-    
+
     /** Sets the data payload and payload size.
      * @param[in] size  How many bytes to copy from data
      * @param[in] data  Data array to set as payload
@@ -243,7 +243,7 @@ public:
     void setPrefetchFlag(bool prefetch) { prefetch_ = prefetch;}
     /** Returns true if this is a prefetch command */
     bool isPrefetch() { return prefetch_; }
-    
+
 // Information about command types
     /** Returns true if this is a request that needs to access the data array (Get/Put/Flush) */
     bool isDataRequest(void) const { return CommandClassArr[(int)cmd_] == CommandClass::Request; }
@@ -287,7 +287,7 @@ public:
         str << std::dec << " Size: " << size_;
         return MemEventBase::getBriefString() + str.str();
     }
-    
+
     virtual bool doDebug(std::set<Addr> &addr) override {
         if (cmd_ == Command::NULLCMD && addr.find(addr_) != addr.end())
             return true;
@@ -302,7 +302,7 @@ private:
     uint32_t        size_;              // Size in bytes that are being requested
     Addr            addr_;              // Address
     Addr            baseAddr_;          // Base (line) address
-    bool            addrGlobal_;        // Whether address is a local or global address 
+    bool            addrGlobal_;        // Whether address is a local or global address
     MemEvent*       NACKedEvent_;       // For a NACK, pointer to the NACKed event
     int             retries_;           // For NACKed events, how many times a retry has been sent
     dataVec         payload_;           // Data
@@ -334,8 +334,8 @@ public:
         ser & vAddr_;
         ser & inProgress_;
     }
-     
-    ImplementSerializable(SST::MemHierarchy::MemEvent);     
+
+    ImplementSerializable(SST::MemHierarchy::MemEvent);
 };
 
 }}

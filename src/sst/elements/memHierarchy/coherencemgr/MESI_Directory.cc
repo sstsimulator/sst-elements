@@ -1,8 +1,8 @@
-// Copyright 2013-2019 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright(c) 2013-2019, NTESS
+// Copyright(c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -40,7 +40,7 @@ const MemEvent::id_type MESIDirectory::DirEntry::NO_LAST_REQUEST = std::make_pai
 
 MESIDirectory::MESIDirectory(ComponentId_t id, Params &params) :
     SubComponent(id) {
-    
+
     int debugLevel = params.find<int>("debug_level", 0);
     dbg.init("", debugLevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
     out.init("", params.find<int>("verbose", 1), 0, Output::STDOUT);

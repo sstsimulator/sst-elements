@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -51,9 +51,9 @@ static OTF2_CallbackCode EmberOTF2EndProgram(
 	return OTF2_CALLBACK_SUCCESS;
 }
 
-static OTF2_CallbackCode EmberOTF2EnterRegion( 
+static OTF2_CallbackCode EmberOTF2EnterRegion(
 	OTF2_LocationRef location,
-	OTF2_TimeStamp time, 
+	OTF2_TimeStamp time,
 	void* userData,
 	OTF2_AttributeList* attributes,
 	OTF2_RegionRef region ) {
@@ -208,7 +208,7 @@ static OTF2_CallbackCode EmberOTF2MPIIRecv(
 
         gen->enQ_irecv( *(gen->getEventQueue()), 0, msgLen, gen->extractDataTypeFromAttributeList(attributes), sender, tag, GroupWorld, newReq );
 
-        gen->getRequestMap().insert( std::pair<uint64_t, MessageRequest*>( reqID, newReq ) );	
+        gen->getRequestMap().insert( std::pair<uint64_t, MessageRequest*>( reqID, newReq ) );
 */
 
        	EmberOTF2Generator* gen = (EmberOTF2Generator*) userData;
@@ -448,7 +448,7 @@ bool EmberOTF2Generator::generate( std::queue<EmberEvent*>& evQ ) {
 	uint64_t eventsRead = 0;
 
 //	OTF2_Reader_ReadAllGlobalEvents( traceReader, traceGlobalEvtReader, &eventsRead );
-//	printf("READ %d EVENTS!\n", (int) eventsRead );	
+//	printf("READ %d EVENTS!\n", (int) eventsRead );
 
 //	if( OTF2_SUCCESS != OTF2_Reader_ReadGlobalEvents( traceReader, traceGlobalEvtReader, 1, &eventsRead ) ) {
 //		fatal(CALL_INFO, -1, "Error reading an event from the trace.\n" );

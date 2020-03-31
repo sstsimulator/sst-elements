@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -38,7 +38,7 @@ namespace SimpleSubComponent {
   depending on the configuration.
 
   Configurations to be supported:
-  
+
  */
 
 
@@ -74,7 +74,7 @@ public:
         "Default implementation of SubCompInterface",
         SST::SimpleSubComponent::SubCompInterface
     )
-    
+
 };
 
 /* Our trivial component */
@@ -134,7 +134,7 @@ public:
         SST::SimpleSubComponent::SubCompInterface
     )
 
-    
+
     SST_ELI_DOCUMENT_PARAMS(
         {"sendCount", "Number of Messages to Send", "10"},
         {"unnamed_subcomponent", "Unnamed SubComponent to load.  If empty, then a named subcomponent is loaded", ""},
@@ -148,15 +148,15 @@ public:
     SST_ELI_DOCUMENT_PORTS(
         {"slot_port%(num_subcomps)d", "Port(s) to send or receive on", { "simpleMessageGeneratorComponent.simpleMessage", "" } },
     )
-    
+
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
         {"mySubCompSlot", "Test slot", "SST::SimpleSubComponent::SubCompInterface" }
     )
 
-    
-private:    
+
+private:
     std::vector<SubCompInterface*> subComps;
-    
+
 public:
     // Legacy API
     // New API
@@ -199,12 +199,12 @@ public:
     SST_ELI_DOCUMENT_PORTS(
         {"sendPort", "Sending Port", { "simpleMessageGeneratorComponent.simpleMessage", "" } },
     )
-    
+
     // Optional since there is nothing to document
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
     )
 
-private:    
+private:
     Statistic<uint32_t> *nMsgSent;
     Statistic<uint32_t> *totalMsgSent;
     uint32_t nToSend;

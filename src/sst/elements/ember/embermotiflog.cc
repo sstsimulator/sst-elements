@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -36,7 +36,7 @@ EmberMotifLog::EmberMotifLog(const std::string logPathPrefix, const uint32_t job
     start_time("0 ns"),
     currentMotifNum(0)
 {
-    
+
 #ifndef _SST_EMBER_DISABLE_PARALLEL
 	// Lock the map for the duration of the constructor to ensure we do not
 	// trample over each other
@@ -53,12 +53,12 @@ EmberMotifLog::EmberMotifLog(const std::string logPathPrefix, const uint32_t job
 	if(logHandleFind == logHandles->end()) {
         std::ostringstream logFile;
         logFile << logPathPrefix;
-        
+
         if ( Simulation::getSimulation()->getNumRanks().rank > 1 ) {
             logFile << "-" << Simulation::getSimulation()->getRank().rank;
         }
         logFile << ".log";
-        
+
 		logRecord = new EmberMotifLogRecord(logFile.str().c_str());
 		logRecord->increment();
 
@@ -94,7 +94,7 @@ void EmberMotifLog::logMotifEnd(const std::string& name, const int motifNum) {
         // Don't have matching motif numbers, just return without logging
         return;
     }
-    
+
 	if(NULL != logRecord->getFile()) {
 		FILE* logFile = logRecord->getFile();
 

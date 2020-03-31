@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -61,7 +61,7 @@ JobParser::JobParser(Machine* machine,
 
     //NetworkSim: traces for completed/running jobs on ember
     if (*(this->doDetailedNetworkSim)){
-        //initialize outputDirectory        
+        //initialize outputDirectory
         if (NULL == dir) {
             completedJobTrace = params.find<std::string>("completedJobsTrace").c_str();
             runningJobTrace = params.find<std::string>("runningJobsTrace").c_str();
@@ -73,7 +73,7 @@ JobParser::JobParser(Machine* machine,
     //end->NetworkSim
 
     lastJobRead[ 0 ] = '\0';
-    
+
     char* inputDir = getenv("SIMINPUT");
     if (inputDir != NULL) {
         string fullName = inputDir + jobTrace;
@@ -91,11 +91,11 @@ std::vector<Job*> JobParser::parseJobs(SimTime_t currSimTime)
     input.open( fileName.c_str() );
     if(!input.is_open()){
         input.open(jobTrace.c_str());  //try without directory
-    }                     
+    }
     if(!input.is_open()){
         schedout.fatal(CALL_INFO, 1, "Unable to open job trace file: %s\n", fileName.c_str());
     }
-    
+
     jobs.clear();
 
     LastJobFileModTime = Utils::file_time_last_written( fileNamePath );
@@ -113,7 +113,7 @@ std::vector<Job*> JobParser::parseJobs(SimTime_t currSimTime)
     }
 
     input.close();
-    
+
     return jobs;
 }
 
@@ -133,7 +133,7 @@ std::map<int, unsigned long> JobParser::parseJobsEmberCompleted()
     int length = input.tellg();
 
     if(length != 0){
-        
+
         input.seekg (0, ios::beg);
         string line;
         while (!input.eof()) {
@@ -147,7 +147,7 @@ std::map<int, unsigned long> JobParser::parseJobsEmberCompleted()
 
             std::stringstream is(line);
             is >> jobNum >> runningTime >> nextStr;
-        
+
             if(!nextStr.empty()){
                 schedout.fatal(CALL_INFO, 1, "Input line format is incorrect:\n\"%s\"\n", line.c_str());
             }
@@ -161,7 +161,7 @@ std::map<int, unsigned long> JobParser::parseJobsEmberCompleted()
     }
 
     input.close();
-    
+
     return completedEmberJobs;
 }
 //end->NetworkSim
@@ -202,7 +202,7 @@ std::map<int, std::pair<unsigned long, int> > JobParser::parseJobsEmberRunning()
             while(!nextStr.empty()){
                 if(nextStr.compare("time") == 0){
                     isTimeLine = true;
-                    is >> this->ignoreUntilTime;     
+                    is >> this->ignoreUntilTime;
                 } else if (nextStr.compare("job") == 0){
                     is >> jobNum >> soFarRunningTime >> currentMotifCount;
                 } else {
@@ -226,7 +226,7 @@ std::map<int, std::pair<unsigned long, int> > JobParser::parseJobsEmberRunning()
     }
 
     input.close();
-    
+
     return runningEmberJobs;
 }
 //end->NetworkSim
@@ -308,7 +308,7 @@ bool JobParser::newYumYumJobLine(std::string line, SimTime_t currSimTime)
         }
     }
 
-    // validate the job to make sure that the specified machine can actually run it. 
+    // validate the job to make sure that the specified machine can actually run it.
     Job* j = jobs.back();
 
     return validateJob(j, &jobs, abs((long)duration));
@@ -333,7 +333,7 @@ bool JobParser::newJobLine(std::string line)
     if(estRunningTime <= 0){
         estRunningTime = 2 * runningTime;
     }
-    
+
     //get communication info
     Job::CommInfo commInfo;
     //NetworkSim: get phase info
@@ -406,7 +406,7 @@ bool JobParser::validateJob( Job* j, vector<Job*>* jobs, long runningTime )
         jobs->pop_back();
         ok = false;
     }
-    if (ok && runningTime < 0) {  //time 0 also strange, but perhaps rounded down     
+    if (ok && runningTime < 0) {  //time 0 also strange, but perhaps rounded down
         schedout.verbose(CALL_INFO, 0, 0, "Warning: Job %ld  has running time of %ld; ignoring it\n",
                          j->getJobNum(), runningTime);
         delete jobs->back();
@@ -414,11 +414,11 @@ bool JobParser::validateJob( Job* j, vector<Job*>* jobs, long runningTime )
         ok = false;
     }
     if (ok && j->getProcsNeeded() > (machine->numNodes * machine->coresPerNode)) {
-        schedout.fatal(CALL_INFO, 1, "Job %ld requires %d processors but only %d are in the machine\n", 
+        schedout.fatal(CALL_INFO, 1, "Job %ld requires %d processors but only %d are in the machine\n",
                        j->getJobNum(), j->getProcsNeeded(), (machine->numNodes * machine->coresPerNode));
         ok = false;
     }
-    
+
     return ok;
 }
 
@@ -429,25 +429,25 @@ void CommParser::parseComm(Job * job)
         new TaskCommInfo(job);
         break;
     case TaskCommInfo::CUSTOM:
-        new TaskCommInfo(job, 
+        new TaskCommInfo(job,
                                readCommFile(job->commInfo.commFile, job->getProcsNeeded()),
                                job->commInfo.centerTask );
         break;
     case TaskCommInfo::MESH:
-        new TaskCommInfo(job, 
+        new TaskCommInfo(job,
                                job->commInfo.meshx,
                                job->commInfo.meshy,
                                job->commInfo.meshz,
                                job->commInfo.centerTask );
         break;
     case TaskCommInfo::COORDINATE:
-        new TaskCommInfo(job, 
+        new TaskCommInfo(job,
                                readCommFile(job->commInfo.commFile, job->getProcsNeeded()),
                                readCoordFile(job->commInfo.coordFile, job->getProcsNeeded()),
                                job->commInfo.centerTask );
         break;
     default:
-        schedout.fatal(CALL_INFO, 1, "Unknown Communication type at Job %ld", 
+        schedout.fatal(CALL_INFO, 1, "Unknown Communication type at Job %ld",
                                       job->getJobNum() );
     }
 }
@@ -493,7 +493,7 @@ double** CommParser::readCoordFile(std::string fileName, int procsNeeded)
     if(reader.ydim != 2 && reader.ydim != 3){
         schedout.fatal(CALL_INFO, 1, "Coordinates matrix in file %s has a dimension other than 2 or 3.\n", fileName.c_str());
     }
-    
+
     //init matrix
     double** matrix = new double*[procsNeeded];
     for(int i=0; i < procsNeeded; i++){
@@ -522,7 +522,7 @@ DParser::DParser(int numNodes, SST::Params& params)
 {
     this->numNodes = numNodes;
     fileName = params.find<std::string>("dMatrixFile").c_str();
-    
+
     char* inputDir = getenv("SIMINPUT");
     if (inputDir != NULL) {
         filePath = inputDir + fileName;
@@ -540,7 +540,7 @@ double** DParser::readDMatrix()
     if(!input.is_open()){
         input.open(filePath.c_str());  //try without directory
         inFile = filePath;
-    }                     
+    }
     if(!input.is_open()){
         schedout.fatal(CALL_INFO, 1, "Unable to open file: %s\n", fileName.c_str());
     }
@@ -549,18 +549,18 @@ double** DParser::readDMatrix()
     //read matrix
     MatrixMarketReader2D<double> reader = MatrixMarketReader2D<double>();
     vector<double*>* dataVec = reader.readMatrix(inFile.c_str());
-    
+
     //check if x&y sizes and machine size match
     if(reader.xdim != reader.ydim){
         schedout.fatal(CALL_INFO, 1, "Given matrix in file %s is not a square matrix\n", inFile.c_str());
     } else if(reader.xdim != numNodes){
         schedout.fatal(CALL_INFO, 1, "The size of the matrix in file %s does not match with the job size\n", inFile.c_str());
     }
-    
+
     //init matrix
     double** matrix = new double*[numNodes];
     for(int i = 0; i < numNodes; i++){
-        matrix[i] = new double[numNodes]; 
+        matrix[i] = new double[numNodes];
         for(int j = 0; j < numNodes; j++){
             matrix[i][j] = 0;
         }
@@ -574,7 +574,7 @@ double** DParser::readDMatrix()
         delete [] data;
     }
     delete dataVec;
-    
+
     return matrix;
 }
 

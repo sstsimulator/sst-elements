@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -20,11 +20,11 @@
 
 using namespace SST::Firefly;
 
-void CommCreateFuncSM::handleStartEvent( SST::Event *e, Retval& retval ) 
+void CommCreateFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
 {
     CommCreateStartEvent* event = static_cast< CommCreateStartEvent* >(e);
     assert( event );
-    
+
     m_dbg.debug(CALL_INFO,1,0,"oldGroup=%d\n", event->oldComm );
     m_dbg.debug(CALL_INFO,1,0,"nRaks=%lu\n", event->nRanks );
 
@@ -35,20 +35,20 @@ void CommCreateFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
 
     m_dbg.debug(CALL_INFO,1,0,"old grpSize=%d\n", cnt );
 
-    *event->newComm = m_info->newGroup(); 
+    *event->newComm = m_info->newGroup();
     Group* newGroup = m_info->getGroup( *event->newComm );
     assert( newGroup );
 
     for ( size_t i = 0; i < event->nRanks; i++ ) {
         m_dbg.debug(CALL_INFO,1,0,"i=%lu %d \n", i, event->ranks[i] );
 
-        newGroup->initMapping( i, oldGrp->getMapping( event->ranks[i]), 1 ); 
+        newGroup->initMapping( i, oldGrp->getMapping( event->ranks[i]), 1 );
 
         if ( oldGrp->getMyRank() == event->ranks[i] ) {
             newGroup->setMyRank( i );
         }
 
-    }  
+    }
 
     m_dbg.debug(CALL_INFO,1,0,"newGroup=%d size=%d\n", *event->newComm, newGroup->getSize() );
 

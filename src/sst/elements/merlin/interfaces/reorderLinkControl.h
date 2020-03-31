@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -64,7 +64,7 @@ public:
 
     ~ReorderRequest() {}
 
-    
+
     // This is here just for the priority_queue insertion, so is
     // sorting based on what comes out of queue first (i.e. lowest
     // number, which makes this look backwards)
@@ -72,7 +72,7 @@ public:
     public:
         bool operator()(ReorderRequest* const& lhs, ReorderRequest* const& rhs) {
             return lhs->seq > rhs->seq;
-        }    
+        }
     };
 
     typedef std::priority_queue<ReorderRequest*, std::vector<ReorderRequest*>, Priority> PriorityQueue;
@@ -121,7 +121,7 @@ public:
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Link Control module that can handle out of order packet arrival. Events are sequenced and order is reconstructed on receive.",
         SST::Interfaces::SimpleNetwork)
-    
+
     SST_ELI_DOCUMENT_PARAMS(
         {"rlc:networkIF","SimpleNetwork subcomponent to be used for connecting to network", "merlin.linkcontrol"},
         {"networkIF","SimpleNetwork subcomponent to be used for connecting to network", "merlin.linkcontrol"}
@@ -134,9 +134,9 @@ public:
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
         {"networkIF", "Network interface", "SST::Interfaces::SimpleNetwork" }
     )
-    
+
     typedef std::queue<SST::Interfaces::SimpleNetwork::Request*> request_queue_t;
-    
+
 private:
     int vns;
     SST::Interfaces::SimpleNetwork* link_control;
@@ -146,7 +146,7 @@ private:
     int id;
 
     std::unordered_map<SST::Interfaces::SimpleNetwork::nid_t, ReorderInfo*> reorder_info;
-    
+
     // One buffer for each virtual network.  At the NIC level, we just
     // provide a virtual channel abstraction.  Don't need output
     // buffers, sends will go directly to LinkControl.  Do need input
@@ -157,7 +157,7 @@ private:
     // output queue or when a new packet arrives
     HandlerBase* receiveFunctor;
 //    HandlerBase* sendFunctor;
-    
+
 public:
     ReorderLinkControl(ComponentId_t cid, Params &params, int vns);
 
@@ -187,7 +187,7 @@ public:
     // the next event.
     SST::Interfaces::SimpleNetwork::Request* recv(int vn);
 
-    // Returns true if there is an event in the input buffer and false 
+    // Returns true if there is an event in the input buffer and false
     // otherwise.
     bool requestToReceive( int vn );
 
@@ -206,7 +206,7 @@ public:
     nid_t getEndpointID() const;
     const UnitAlgebra& getLinkBW() const;
 
-    
+
 private:
 
     bool handle_event(int vn);

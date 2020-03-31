@@ -1,8 +1,8 @@
-# Copyright 2009-2019 NTESS. Under the terms
+# Copyright 2009-2020 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2019, NTESS
+# Copyright (c) 2009-2020, NTESS
 # All rights reserved.
 #
 # Portions are copyright of other developers:
@@ -15,7 +15,7 @@
 
 import sys, pprint, copy
 
-import componentConfig 
+import componentConfig
 import loadUtils
 import hermesConfig
 
@@ -28,35 +28,35 @@ def getOptions():
 
 def parseOptions(opts):
 	level = 0
-	nodeList = [] 
+	nodeList = []
 	motifLogFile = None
 	motifLogFileNodeList = []
 	rankmapper = None
 
-	if opts:	
+	if opts:
 		for  o,a in opts:
 			if o in('--emberVerbose'):
 				level = int(a)
 			elif o in('--emberVerboseNode'):
 				nodeList += [ int(a) ]
 			elif o in('--emberMotifLogFile'):
-				motifLogFile =a 
+				motifLogFile =a
 			elif o in('--emberMotifLogNode'):
-				motifLogFileNodeList += [int(a)] 
+				motifLogFileNodeList += [int(a)]
 			elif o in('--emberRankMapper'):
-				rankmapper = a 
-	
+				rankmapper = a
+
 	return level, nodeList, motifLogFile, motifLogFileNodeList, rankmapper
 
 
-className = 'EmberConfig' 
+className = 'EmberConfig'
 
 class EmberConfig(componentConfig.ComponentConfig):
 	def __init__( self, emberParams, hermesParams, jobInfo, opts = None ):
 
 		#print className + '()'
 
-		self.params = emberParams 
+		self.params = emberParams
 		self.params.update(hermesParams)
 		self.jobInfo = jobInfo
 
@@ -64,7 +64,7 @@ class EmberConfig(componentConfig.ComponentConfig):
 		self.debugNodeList, \
 		self.motifLogFile, \
 		self.motifLogNodeList, \
-		self.params['ranksmapper'] = parseOptions(opts) 
+		self.params['ranksmapper'] = parseOptions(opts)
 
 		self.hermesLevel = hermesConfig.parseOptions( opts )
 
@@ -73,22 +73,22 @@ class EmberConfig(componentConfig.ComponentConfig):
 
 		extra = copy.deepcopy(self.params)
 
-		if 0 == len( self.debugNodeList ) or nodeNum in self.debugNodeList: 
-			if self.debugLevel:	
-				extra['verbose'] = self.debugLevel 
-			if self.hermesLevel:	
+		if 0 == len( self.debugNodeList ) or nodeNum in self.debugNodeList:
+			if self.debugLevel:
+				extra['verbose'] = self.debugLevel
+			if self.hermesLevel:
 				extra['hermesParams.ctrlMsg.verboseLevel'] = self.hermesLevel
 
 		if self.motifLogFile and nodeNum in self.motifLogNodeList:
 			extra['motifLog' ] = self.motifLogFile + '-' + str(nodeNum)
 
-		extra['jobId'] = self.jobInfo.jobId() 
+		extra['jobId'] = self.jobInfo.jobId()
 		extra['hermesParams.netId'] = nodeNum
 		extra['hermesParams.netMapId'] = \
 			loadUtils.calcNetMapId( nodeNum, self.jobInfo.getNidlist() )
 		extra['hermesParams.netMapSize'] = \
-			loadUtils.calcNetMapSize( self.jobInfo.getNidlist() ) 
-	
+			loadUtils.calcNetMapSize( self.jobInfo.getNidlist() )
+
 		extra.update( loadUtils.getMotifParams( self.jobInfo.genWorkFlow( nodeNum ) ) )
 
 		return extra
@@ -96,11 +96,11 @@ class EmberConfig(componentConfig.ComponentConfig):
 	def getNidList(self):
 		return self.jobInfo.getNidlist()
 
-	def getName( self, nodeNum ): 
+	def getName( self, nodeNum ):
 		return "ember.EmberEngine"
 
 	def getNumRanks( self ):
 		return self.jobInfo.ranksPerNode()
 
 	def getDetailed( self, nodeId ):
-		return self.jobInfo.getDetailed( nodeId ) 
+		return self.jobInfo.getDetailed( nodeId )

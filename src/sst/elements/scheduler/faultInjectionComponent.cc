@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -134,7 +134,7 @@ std::map<std::string, std::string> * faultInjectionComponent::readFailFile(){
 			std::string fileLine;
 
 			failFile.open( failFilename.c_str() );
-			
+
 			while( std::getline( failFile, fileLine ) ){
 				fileContainsToken |= (fileLine.find( resumeSimulationToken ) != std::string::npos);
 			}
@@ -153,7 +153,7 @@ std::map<std::string, std::string> * faultInjectionComponent::readFailFile(){
 	std::string fileLine;
 
 	failFile.open( failFilename.c_str() );
-	
+
 	while( std::getline( failFile, fileLine ) ){
 		if( fileLine.find( resumeSimulationToken ) == std::string::npos ){
 			Tokenizer<escaped_list_separator> tokenizer( fileLine );

@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -263,9 +263,9 @@ REQRESPONSE Opal::allocateSharedMemory(int node, int coreId, uint64_t vAddress, 
 	}
 	else {
 
-		for(uint32_t i = 0; i<num_shared_mempools; i++) 
+		for(uint32_t i = 0; i<num_shared_mempools; i++)
 		{
-			if( sharedMemoryInfo[i]->pool->available_frames >= pages ) 
+			if( sharedMemoryInfo[i]->pool->available_frames >= pages )
 			{
 				Pool *pool = sharedMemoryInfo[i]->pool;
 				for(int j=0; j<pages; j++) {
@@ -350,7 +350,7 @@ REQRESPONSE Opal::allocateLocalMemory(int node, int coreId, uint64_t vAddress, i
 			response = pool->allocate_frame(1);
 			if(!response.status)
 				output->fatal(CALL_INFO, -1, "Opal: Allocating local memory. This should never happen\n");
-			
+
 			nodeInfo[node]->profileEvent(SST::OpalComponent::MemType::LOCAL);
 		}
 

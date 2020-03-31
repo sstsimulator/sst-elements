@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -107,7 +107,7 @@ namespace SST {
                     NEARESTAMT = 5,
                     SPECTRALAMT = 6,
                 };
-                
+
                 enum FSTType{
                     NONE = 0,
                     STRICT = 1,
@@ -141,7 +141,7 @@ namespace SST {
                 static const int numFSTTableEntries = 3;
                 static const int numAllocTableEntries = 26;
                 static const int numTaskMapTableEntries = 7;
-                
+
                 static const machTableEntry machTable[4];
                 static const schedTableEntry schedTable[6];
                 static const FSTTableEntry FSTTable[3];

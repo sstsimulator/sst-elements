@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -91,7 +91,7 @@ class FunctionSM : public SubComponent {
 
     void printStatus( Output& );
 
-    Link* getRetLink() { return m_toMeLink; } 
+    Link* getRetLink() { return m_toMeLink; }
     void setup( Info* );
     void start(int type, MP::Functor* retFunc,  SST::Event* );
     void start(int type, Callback,  SST::Event* );
@@ -102,17 +102,17 @@ class FunctionSM : public SubComponent {
     void handleToDriver(SST::Event*);
     void handleEnterEvent( SST::Event* );
     void processRetval( Retval& );
-    
+
     void initFunction( Info*, FunctionEnum,
                                     std::string, Params&, Params& );
 
-    std::vector<FunctionSMInterface*>  m_smV; 
-    FunctionSMInterface*    m_sm; 
+    std::vector<FunctionSMInterface*>  m_smV;
+    FunctionSMInterface*    m_sm;
     MP::Functor*    m_retFunc;
     Callback        m_callback;
 
-    SST::Link*          m_fromDriverLink;    
-    SST::Link*          m_toDriverLink;    
+    SST::Link*          m_fromDriverLink;
+    SST::Link*          m_toDriverLink;
     SST::Link*          m_toMeLink;
     Output              m_dbg;
     SST::Params         m_params;

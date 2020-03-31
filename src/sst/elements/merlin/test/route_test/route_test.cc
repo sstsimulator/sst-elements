@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -54,12 +54,12 @@ route_test::route_test(ComponentId_t cid, Params& params) :
     if ( !link_control ) {
         // Just use the default linkcontrol (merlin.linkcontrol)
         Params if_params;
-        
+
         if_params.insert("link_bw",params.find<std::string>("link_bw"));
         if_params.insert("input_buf_size","1kB");
         if_params.insert("output_buf_size","1kB");
         if_params.insert("port_name","rtr");
-        
+
         link_control = loadAnonymousSubComponent<SST::Interfaces::SimpleNetwork>
             ("merlin.linkcontrol", "networkIF", 0,
              ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, if_params, 1 /* vns */);
@@ -92,7 +92,7 @@ route_test::init(unsigned int phase) {
     if ( id == 0 && !initialized ) {
         if ( link_control->isNetworkInitialized() ) {
             initialized = true;
-            
+
             SimpleNetwork::Request* req =
                 new SimpleNetwork::Request(SimpleNetwork::INIT_BROADCAST_ADDR, id,
                                            0, true, true);
@@ -117,7 +117,7 @@ void route_test::setup()
                           << link_control->getEndpointID() << std::endl;
     }
     if ( !initialized ) {
-        std::cout << "Nic " << id << ": Broadcast failed!" << std::endl;  
+        std::cout << "Nic " << id << ": Broadcast failed!" << std::endl;
     }
 
     if ( 0 == id ){
@@ -182,7 +182,7 @@ bool route_test::handle_event(int vn)
 }
 
 
-    
+
 
 } // namespace Merlin
 } // namespace SST

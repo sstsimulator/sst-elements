@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -24,13 +24,13 @@ namespace Firefly {
 template< class T >
 T min( T x, T y )
 {
-    return x < y ? x : y; 
+    return x < y ? x : y;
 }
 
 template< class T >
 T max( T x, T y )
 {
-    return x > y ? x : y; 
+    return x > y ? x : y;
 }
 
 template< class T >
@@ -44,25 +44,25 @@ T doOp( T x, T y, MP::ReductionOperation op )
 {
     T retval = 0;
     switch( op->type ) {
-      case MP::ReductionOpType::Sum: 
+      case MP::ReductionOpType::Sum:
         retval = sum( x, y );
         break;
-      case MP::ReductionOpType::Min: 
+      case MP::ReductionOpType::Min:
         retval = min( x, y );
         break;
-      case MP::ReductionOpType::Max: 
+      case MP::ReductionOpType::Max:
         retval = max( x, y );
         break;
-      case MP::ReductionOpType::Nop: 
+      case MP::ReductionOpType::Nop:
         assert(0);
         break;
-      case MP::ReductionOpType::Func: 
+      case MP::ReductionOpType::Func:
         assert(0);
         break;
-    } 
+    }
 //    printf("%x %x %x\n",retval,x,y);
     return retval;
-} 
+}
 
 template< class T >
 void collectiveOp( T* input[], int numIn, T result[],
@@ -71,20 +71,20 @@ void collectiveOp( T* input[], int numIn, T result[],
     for ( int c = 0; c < count; c++ ) {
         result[c] = input[0][c];
         for ( int n = 1; n < numIn; n++ ) {
-            result[c] = doOp( result[c], input[n][c], op );  
-        }  
-    } 
+            result[c] = doOp( result[c], input[n][c], op );
+        }
+    }
 }
 
-inline void collectiveOp( void* input[], int numIn, void* result, int count, 
+inline void collectiveOp( void* input[], int numIn, void* result, int count,
         MP::PayloadDataType dtype, MP::ReductionOperation op )
 {
     if ( op->type == MP::ReductionOpType::Func ) {
         op->userFunction( input, result, &count, &dtype );
         return;
-    }		
+    }
     switch ( dtype  ) {
-      case MP::CHAR: 
+      case MP::CHAR:
 
             collectiveOp( (char**)(input), numIn, static_cast<char*>(result),
                         count, op );

@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -100,7 +100,7 @@ simpleTracerComponent::simpleTracerComponent( ComponentId_t id, Params& params )
     sbCount = 0;
     timestamp = 0;
 
-} // constructor 
+} // constructor
 
 // destructor
 simpleTracerComponent::~simpleTracerComponent() {}
@@ -108,7 +108,7 @@ simpleTracerComponent::~simpleTracerComponent() {}
 bool simpleTracerComponent::clock(Cycle_t current){
     timestamp++;
 
-    unsigned int pageNum = 0; 
+    unsigned int pageNum = 0;
     unsigned int accessLatency = 0;
     SST::Event *ev = NULL;
     SST::MemHierarchy::Addr addr =0;
@@ -118,7 +118,7 @@ bool simpleTracerComponent::clock(Cycle_t current){
     // process Memevents from north-side to south-side
     while((ev = northBus->recv())){
         MemEvent *me = dynamic_cast<MemEvent*>(ev);
-        if (me == NULL){ 
+        if (me == NULL){
              _abort(simpleTracerComponent::clock, "\nsimpleTracer received bad event.\n");
         }
         addr = me->getAddr();
@@ -157,8 +157,8 @@ bool simpleTracerComponent::clock(Cycle_t current){
         }
         addr = me->getAddr();
         sbCount++;
-        
-        // Do NOT Append address info into Histogram, avoid duplication of addresses, 
+
+        // Do NOT Append address info into Histogram, avoid duplication of addresses,
         // address added to histogram only for NorthBus to SouthBus travel and NOT for
         // SouthBus to NorthBus response.
         /*
@@ -170,7 +170,7 @@ bool simpleTracerComponent::clock(Cycle_t current){
         if(InFlightReqQueue.find(me->getResponseToID()) != InFlightReqQueue.end()){
            //accessLatency = timestamp - InFlightReqQueue[me->getResponseToID()];
            accessLatency = nanoseconds - (InFlightReqQueue[me->getResponseToID()]);
-           if(accessLatency >= AccessLatencyDist.size()) { 
+           if(accessLatency >= AccessLatencyDist.size()) {
                AccessLatencyDist.resize(accessLatency+100);
            }
            AccessLatencyDist[accessLatency] += 1;
@@ -248,9 +248,9 @@ void simpleTracerComponent::PrintAccessLatencyDistribution(FILE* fp, unsigned in
     bool minSet = false;
     for (unsigned int i=0; i<AccessLatencyDist.size(); i++){
         if (AccessLatencyDist[i] > 0) {
-            if(!minSet) { 
+            if(!minSet) {
                minLat = i;
-               maxLat = i; 
+               maxLat = i;
                minSet = true;
             }
             if (i > maxLat){
@@ -271,8 +271,8 @@ void simpleTracerComponent::PrintAccessLatencyDistribution(FILE* fp, unsigned in
     }
     else {
         vector<unsigned int> latencyHist;
-        if (0 == latencyHist.size()){ 
-             latencyHist.resize(numBins); 
+        if (0 == latencyHist.size()){
+             latencyHist.resize(numBins);
         }
         float steps = (float) maxLat/numBins;
         unsigned int step = (unsigned int) ceil(steps);

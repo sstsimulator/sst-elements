@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -26,13 +26,13 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 
 BroadcastShim::BroadcastShim(ComponentId_t id, Params &params) : Component(id) {
-    
+
     output_ = new SST::Output("BroadcastShim ", 1, 0, SST::Output::STDOUT);
-    
+
     SST::Link* link;
     int linkCPU = 0;
     int linkSieve = 0;
-    
+
     while (true) {
         std::string linkName = "cpu_alloc_link_" + std::to_string(linkCPU);
         link = configureLink(linkName, "100 ps", new Event::Handler<BroadcastShim>(this, &BroadcastShim::processCoreEvent));
@@ -44,7 +44,7 @@ BroadcastShim::BroadcastShim(ComponentId_t id, Params &params) : Component(id) {
             break;
         }
     }
-    
+
     while (true) {
         std::string linkName = "sieve_alloc_link_" + std::to_string(linkSieve);
         link = configureLink(linkName, "100 ps", new Event::Handler<BroadcastShim>(this, &BroadcastShim::processSieveEvent));
@@ -59,17 +59,17 @@ BroadcastShim::BroadcastShim(ComponentId_t id, Params &params) : Component(id) {
 
     if (linkCPU < 1) output_->fatal(CALL_INFO, -1,"Did not find any connected links on ports cpu_alloc_link_n\n");
     if (linkSieve < 1) output_->fatal(CALL_INFO, -1,"Did not find any connected links on ports sive_alloc_link_n\n");
-    
+
 }
 
 
 void BroadcastShim::processCoreEvent(SST::Event* ev) {
     AllocTrackEvent* event = dynamic_cast<AllocTrackEvent*>(ev);
-    
+
     for (std::vector<Link*>::iterator it = sieveAllocLinks_.begin(); it != sieveAllocLinks_.end(); it++) {
         (*it)->send(new AllocTrackEvent(*event));
     }
-    
+
     delete event;
 }
 

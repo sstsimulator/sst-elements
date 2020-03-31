@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -66,7 +66,7 @@ NVM_DIMM::NVM_DIMM(ComponentId_t id, NVM_PARAMS par) : ComponentExtension(id)
 
 	params = new NVM_PARAMS();
 
-	(*params) = par; 
+	(*params) = par;
 
 	histogram_idle = registerStatistic<uint64_t>( "histogram_idle");
 	reads = registerStatistic<uint64_t>( "reads");
@@ -80,7 +80,7 @@ NVM_DIMM::NVM_DIMM(ComponentId_t id, NVM_PARAMS par) : ComponentExtension(id)
 	else
 		cache = NULL;
 
-	ranks = new RANK*[params->num_ranks];	
+	ranks = new RANK*[params->num_ranks];
 
 
 	cacheline_interleave = params->cacheline_interleaving;
@@ -96,7 +96,7 @@ NVM_DIMM::NVM_DIMM(ComponentId_t id, NVM_PARAMS par) : ComponentExtension(id)
 	curr_writes = 0;
 
 	gs = params->group_size;
-	lg = group_locked;	
+	lg = group_locked;
 
 }
 
@@ -132,7 +132,7 @@ bool NVM_DIMM::tick()
 
 
 	if(!enabled)
-		return false;	
+		return false;
 
 
 	// Incrementing the cycles count
@@ -178,8 +178,8 @@ bool NVM_DIMM::tick()
 			}
 			else
 			{
-				// Checking if there is any pending requests	
-				if(!transactions.empty()) 
+				// Checking if there is any pending requests
+				if(!transactions.empty())
 				{
 
 					// Try to submit a request to a free bank and rank
@@ -256,9 +256,9 @@ void NVM_DIMM::schedule_delivery()
 				(getBank(add))->set_last(true);
 				ready_trans[st_1->first] = cycles + params->tCMD + params->tCL + params->tBURST;
 				(st_1->first)->meta_data = EventType::READ_COMPLETION;
-                                m_EventChan->send(params->tCMD + params->tCL + params->tBURST, new MessierEvent(st_1->first, EventType::READ_COMPLETION)); 
+                                m_EventChan->send(params->tCMD + params->tCL + params->tBURST, new MessierEvent(st_1->first, EventType::READ_COMPLETION));
 				ready_at_NVM.erase(st_1);
-				break;		
+				break;
 			}
 
 		}
@@ -299,7 +299,7 @@ bool NVM_DIMM::try_flush_wb()
 		flush_write = true;
 
 	if(flush_write)
-	{	
+	{
 
 
 		std::list<NVM_Request *> writes_list = WB->getList();
@@ -343,7 +343,7 @@ bool NVM_DIMM::try_flush_wb()
 
 				removed = true;
 				WB->erase_entry(temp);
-				// Note that the rank will be busy for the time of sending the data to the bank, in addition to sending the command 
+				// Note that the rank will be busy for the time of sending the data to the bank, in addition to sending the command
 				getRank(add)->setBusyUntil(cycles + params->tCMD + params->tBURST);
 				(temp_bank)->setBusyUntil(cycles + params->tCMD + params->tCL_W + params->tBURST);
 				temp_bank->set_last(false); // setting it to write
@@ -353,7 +353,7 @@ bool NVM_DIMM::try_flush_wb()
 
 				delete temp;
 
-				return true;		
+				return true;
 
 			}
 
@@ -395,7 +395,7 @@ bool NVM_DIMM::find_in_wb(NVM_Request * temp)
 
 		bank_hist[WhichBank(temp->Address)]--;
 		delete NVM_EVENT_MAP[temp->req_ID];
-		NVM_EVENT_MAP.erase(temp->req_ID);	
+		NVM_EVENT_MAP.erase(temp->req_ID);
 		delete temp;
 	}
 
@@ -410,7 +410,7 @@ bool NVM_DIMM::row_buffer_hit(long long int add, long long int bank_add)
 
 	if(cacheline_interleave)
 	{
-		if((add/(params->num_banks*params->row_buffer_size)) == bank_add/params->num_banks)	
+		if((add/(params->num_banks*params->row_buffer_size)) == bank_add/params->num_banks)
 			return true;
 		else
 			return false;
@@ -455,7 +455,7 @@ bool NVM_DIMM::pop_optimal()
 		{
 
 			if ( row_buffer_hit(temp->Address, corresp_bank->getRB()))
-			{	
+			{
 				time_ready = cycles + 1;
 				outstanding.push_back(temp);
 				transactions.erase(st);
@@ -480,7 +480,7 @@ long long int last_write=0;
 
 bool NVM_DIMM::submit_request_opt()
 {
-	NVM_Request * temp; // = transactions.front();  
+	NVM_Request * temp; // = transactions.front();
 	bool removed = false;
 	bool found = pop_optimal();
 	if(found)
@@ -501,7 +501,7 @@ bool NVM_DIMM::submit_request_opt()
 
 			temp = *st;
 
-			// First check if this is a write request and the write buffer is not full 
+			// First check if this is a write request and the write buffer is not full
 			removed = false;
 
 
@@ -525,10 +525,10 @@ bool NVM_DIMM::submit_request_opt()
 					NVM_Request * write_req = new NVM_Request();
 					write_req->req_ID = 0;
 					write_req->Read = false;
-					write_req->Address = temp->Address; 
+					write_req->Address = temp->Address;
 
 
-					WB->insert_write_request(write_req); 
+					WB->insert_write_request(write_req);
 					transactions.erase(st);
 
 					MemRespEvent *respEvent = new MemRespEvent(
@@ -577,7 +577,7 @@ bool NVM_DIMM::submit_request_opt()
 
 
 						// If this comes here due to write cancellation: do the right business
-						if(params->write_cancel &&  (corresp_bank->getBusyUntil() >= cycles) && !corresp_bank->read() && !WB->flush() && (corresp_bank->getBusyUntil() - cycles < (100-4*WB->getSize())*1.0*params->tCL_W/100.0 ))							
+						if(params->write_cancel &&  (corresp_bank->getBusyUntil() >= cycles) && !corresp_bank->read() && !WB->flush() && (corresp_bank->getBusyUntil() - cycles < (100-4*WB->getSize())*1.0*params->tCL_W/100.0 ))
 						{
 						// Write cancellation business
 						corresp_bank->setLocked(false, cycles);
@@ -589,18 +589,18 @@ bool NVM_DIMM::submit_request_opt()
 
                                                 WB->insert_write_request(evicted);
 
-						}	
+						}
 
 
 						long long int time_ready;
 						// Check if row buffer hit
 						bool issued=false;
 						if ( row_buffer_hit(temp->Address, corresp_bank->getRB()))
-						{	
+						{
 							time_ready = cycles + 1;
 							issued = true;
 						}
-						else if((params->write_weight*curr_writes + params->read_weight*curr_reads) <= (params->max_current_weight - params->read_weight)) 
+						else if((params->write_weight*curr_writes + params->read_weight*curr_reads) <= (params->max_current_weight - params->read_weight))
 						{
 
 
@@ -741,7 +741,7 @@ void NVM_DIMM::handleEvent( SST::Event* e )
 								cache->update_lru(temp->Address);
 
 
-							}						
+							}
 
 
 						}
@@ -760,13 +760,13 @@ void NVM_DIMM::handleEvent( SST::Event* e )
 
 		}
 
-	} 
+	}
 	else if (tmp.getType() == EventType::DEVICE_READY)
 	{
 
 		NVM_Request * req = tmp.getReq();
 		ready_at_NVM[req] = cycles;
-		delete e;	
+		delete e;
 
 	}
 	else if(tmp.getType() == EventType::HIT_MISS)
@@ -828,14 +828,14 @@ void NVM_DIMM::handleEvent( SST::Event* e )
 						evicted->Read = false;
 						evicted->Address = evicted_address;
 
-						WB->insert_write_request(evicted); 
+						WB->insert_write_request(evicted);
 
 						MemRespEvent *respEvent = new MemRespEvent(
 								NVM_EVENT_MAP[temp->req_ID]->getReqId(), NVM_EVENT_MAP[temp->req_ID]->getAddr(), NVM_EVENT_MAP[temp->req_ID]->getFlags() );
 
 						m_memChan->send(respEvent);
 
-						if(cache!=NULL) 
+						if(cache!=NULL)
 						{
 							if(!cache->check_hit(temp->Address))
 							{
@@ -902,7 +902,7 @@ void NVM_DIMM::handleEvent( SST::Event* e )
 		delete e;
 
 
-	}	
+	}
 	else if(tmp.getType() == EventType::INVALIDATE_WRITE)
 	{
 		NVM_Request * req = tmp.getReq();

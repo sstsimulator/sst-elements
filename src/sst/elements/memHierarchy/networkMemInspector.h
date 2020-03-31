@@ -1,9 +1,9 @@
 // -*- mode: c++ -*-
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -48,9 +48,9 @@ public:
     networkMemInspector(Component *parent, Params &params);
 #endif  // inserted by script
     networkMemInspector(ComponentId_t, Params &params, const std::string& sub_id);
-            
+
     virtual ~networkMemInspector() {}
-    
+
     virtual void inspectNetworkData(SimpleNetwork::Request* req);
 
 #ifndef SST_ENABLE_PREVIEW_BUILD

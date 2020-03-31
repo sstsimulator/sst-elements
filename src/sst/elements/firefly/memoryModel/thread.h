@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -37,9 +37,9 @@ class Work {
                     MemOp op = MemOp( iter->addr & ~(alignment-1), alignment, iter->getOp() );
                     //printf("%s() insert addr=%#" PRIx64 " length=%" PRIu64 "\n",__func__, op.addr, op.length);
 
-                    iter->length = iter->length - (iter->addr & (alignment-1));  
-                    iter->length = iter->length + alignment & ~(alignment-1);  
-                    iter->addr = op.addr + alignment; 
+                    iter->length = iter->length - (iter->addr & (alignment-1));
+                    iter->length = iter->length + alignment & ~(alignment-1);
+                    iter->addr = op.addr + alignment;
                     //printf("%s() fix addr=%#" PRIx64 " length=%" PRIu64 "\n",__func__, iter->addr, iter->length);
                     iter = (*ops).insert( iter, op );
                 }
@@ -60,7 +60,7 @@ class Work {
         delete m_ops;
     }
 
-    int getPid()        { return m_pid; } 
+    int getPid()        { return m_pid; }
     SimTime_t start()   { return m_start; }
 	size_t getNumOps()  { return m_ops->size(); }
     bool isDone()       { return m_pos ==  m_ops->size(); }
@@ -93,9 +93,9 @@ class Thread : public UnitBase {
 
     std::string m_name;
 
-  public:	  
-     Thread( SimpleMemoryModel& model, std::string name, Output& output, int id, int thread_id , int accessSize, Unit* load, Unit* store ) : 
-			m_model(model), m_name(name), m_dbg(output), m_id(id), m_loadUnit(load), m_storeUnit(store), 
+  public:
+     Thread( SimpleMemoryModel& model, std::string name, Output& output, int id, int thread_id , int accessSize, Unit* load, Unit* store ) :
+			m_model(model), m_name(name), m_dbg(output), m_id(id), m_loadUnit(load), m_storeUnit(store),
 			m_maxAccessSize( accessSize ), m_nextOp(NULL), m_waitingOnOp(NULL), m_blocked(false), m_curWorkNum(0),m_lastDelete(0)
 	{
 		m_prefix = "@t:" + std::to_string(id) + ":SimpleMemoryModel::" + name +"::@p():@l ";
@@ -119,7 +119,7 @@ class Thread : public UnitBase {
 
             for ( ; iter != m_workQ.end(); ++iter) {
                 (*iter)->print(out,"");
-            } 
+            }
         }
         if ( m_OOOwork.size() ) {
             out.output( "NIC %d: %s OOOwork.size: %zu \n", id, m_name.c_str(), m_OOOwork.size() );
@@ -132,29 +132,29 @@ class Thread : public UnitBase {
         return !m_workQ.size();
     }
 
-	void addWork( Work* work ) { 
+	void addWork( Work* work ) {
 		m_dbg.verbosePrefix(prefix(),CALL_INFO,1,THREAD_MASK,"work=%p numOps=%lu workSize=%lu blocked=%d\n",
 														work, work->getNumOps(), m_workQ.size(), (int) m_blocked );
         work->m_workNum = m_curWorkNum++;
-		m_workQ.push_back( work ); 
+		m_workQ.push_back( work );
 
         work->print(m_dbg,prefix());
 		m_workQdepth->addData( m_workQ.size() );
 
 		if ( ! m_blocked && ! m_nextOp ) {
-			m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"prime pump\n");		
+			m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"prime pump\n");
 			process( );
         }
 	}
 
 	void resume( UnitBase* src = NULL ) {
         m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"work=%lu\n", m_workQ.size() );
-		
+
 		m_blocked = false;
-        if ( m_waitingOnOp ) { return; } 
+        if ( m_waitingOnOp ) { return; }
 
         if ( m_nextOp ) {
-            process( m_nextOp ); 
+            process( m_nextOp );
         } else if ( ! m_workQ.empty() ) {
 			process();
 		}
@@ -183,13 +183,13 @@ class Thread : public UnitBase {
         bool deleteWork = false;
         if ( work->isDone() ) {
             if ( op->isDone() ) {
-                // if the work is done and the Op is done pop the work Q so 
+                // if the work is done and the Op is done pop the work Q so
                 m_workQ.pop_front();
             }
             deleteWork = true;
         }
-        
-        // note that "work" will be a valid  ptr for all of the issues of the last Op 
+
+        // note that "work" will be a valid  ptr for all of the issues of the last Op
         // because we don't know which one will complete last
     	Callback* callback = new Callback;
 		*callback = std::bind(&Thread::opCallback,this, work, op, deleteWork );
@@ -243,7 +243,7 @@ class Thread : public UnitBase {
         }
 
         m_waitingOnOp = NULL;
-        if ( m_nextOp && op->getOp() != m_nextOp->getOp() ) { 
+        if ( m_nextOp && op->getOp() != m_nextOp->getOp() ) {
             m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"stalled on Op %p\n",op);
             m_waitingOnOp = op;
         }
@@ -252,10 +252,10 @@ class Thread : public UnitBase {
         	m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"blocked\n");
             // resume() will be called
             // the OP callback will also be called
-		} else if ( m_nextOp && ! m_waitingOnOp ) { 
+		} else if ( m_nextOp && ! m_waitingOnOp ) {
             m_dbg.verbosePrefix(prefix(),CALL_INFO,2,THREAD_MASK,"schedule process()\n");
 			Callback* cb = new Callback;
-			*cb = std::bind(&Thread::process, this, m_nextOp ); 
+			*cb = std::bind(&Thread::process, this, m_nextOp );
 		    m_model.schedCallback( 0, cb );
         }
     }
@@ -317,11 +317,11 @@ class Thread : public UnitBase {
     }
 
     const char* prefix() { return m_prefix.c_str(); }
-	
+
 	MemOp*  m_nextOp;
 	MemOp*  m_waitingOnOp;
 	bool    m_blocked;
-	
+
 	std::string         m_prefix;
 	SimpleMemoryModel&  m_model;
     std::deque<Work*>   m_workQ;

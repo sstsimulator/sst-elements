@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 #
-# Copyright 2009-2019 NTESS. Under the terms
+# Copyright 2009-2020 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2019, NTESS
+# Copyright (c) 2009-2020, NTESS
 # All rights reserved.
 #
 # Portions are copyright of other developers:
@@ -16,8 +16,8 @@
 # distribution.
 
 # numNodes = 0 implies use all nodes on network
-numNodes = 2 
-ranksPerNode = 1 
+numNodes = 2
+ranksPerNode = 1
 
 #platform = 'chamaPSM'
 #platform = 'chamaOpenIB'
@@ -31,9 +31,9 @@ shape = '4'
 
 detailedNodes = []
 
-detailedModel = "" 
-detailedModelParams = "" 
-xxx = "Sweep3D nx=30 ny=30 nz=30 computetime=140 pex=4 pey=16 pez=0 kba=10"     
+detailedModel = ""
+detailedModelParams = ""
+xxx = "Sweep3D nx=30 ny=30 nz=30 computetime=140 pex=4 pey=16 pez=0 kba=10"
 xxx = "Ring n=100"
 
 def genWorkFlow( defaults, nodeNum = None ):
@@ -59,13 +59,13 @@ def getNumNodes():
 	return numNodes
 
 def getRanksPerNode():
-	return ranksPerNode 
+	return ranksPerNode
 
 def getTopo():
-	return topo, shape 
+	return topo, shape
 
 def getPlatform():
-	return platform 
+	return platform
 
 def getDetailedModel():
     return detailedModel,detailedModelParams,detailedNodes
