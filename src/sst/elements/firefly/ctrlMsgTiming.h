@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -21,7 +21,7 @@
 
 namespace SST {
 namespace Firefly {
-namespace CtrlMsg { 
+namespace CtrlMsg {
 
 class MsgTiming : public SubComponent {
   public:
@@ -42,14 +42,14 @@ class MsgTiming : public SubComponent {
 
     virtual uint64_t txDelay( size_t bytes ) {
         return m_txSetupMod->getLatency( bytes );
-    } 
+    }
     virtual uint64_t rxDelay( size_t bytes ) {
         return m_rxSetupMod->getLatency( bytes );
-    } 
-    virtual uint64_t sendReqFiniDelay( size_t bytes ) { 
+    }
+    virtual uint64_t sendReqFiniDelay( size_t bytes ) {
         return m_txFiniMod->getLatency( bytes );
     }
-    virtual uint64_t recvReqFiniDelay( size_t bytes ) { 
+    virtual uint64_t recvReqFiniDelay( size_t bytes ) {
         return m_rxFiniMod->getLatency( bytes );
     }
     virtual uint64_t rxPostDelay_ns( size_t bytes ) {
@@ -59,12 +59,12 @@ class MsgTiming : public SubComponent {
             return 0;
         }
     }
-    virtual uint64_t sendAckDelay() { 
+    virtual uint64_t sendAckDelay() {
         return m_sendAckDelay;
     }
-    virtual uint64_t shortMsgLength() { 
+    virtual uint64_t shortMsgLength() {
         return m_shortMsgLength;
-    }        
+    }
 
   private:
     size_t m_shortMsgLength;

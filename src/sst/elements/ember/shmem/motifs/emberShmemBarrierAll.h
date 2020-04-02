@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -39,12 +39,12 @@ public:
 
 public:
 	EmberShmemBarrierAllGenerator(SST::ComponentId_t id, Params& params) :
-		EmberShmemGenerator(id, params, "ShmemBarrierAll" ), m_phase(-1) 
-	{ 
+		EmberShmemGenerator(id, params, "ShmemBarrierAll" ), m_phase(-1)
+	{
         m_count = (uint32_t) params.find("arg.iterations", 1);
     }
 
-    bool generate( std::queue<EmberEvent*>& evQ) 
+    bool generate( std::queue<EmberEvent*>& evQ)
 	{
         if ( m_phase == -1 ) {
             enQ_init( evQ );
@@ -63,7 +63,7 @@ public:
 			if ( 0 == m_my_pe ) {
 				double totalTime = (double)(m_stopTime - m_startTime)/1000000000.0;
             	double latency = totalTime/m_count;
-            	printf("%d:%s: iterations=%d time-per=%lf us\n",m_my_pe, 
+            	printf("%d:%s: iterations=%d time-per=%lf us\n",m_my_pe,
 							getMotifName().c_str(), m_count, latency * 1000000.0 );
 			}
         }

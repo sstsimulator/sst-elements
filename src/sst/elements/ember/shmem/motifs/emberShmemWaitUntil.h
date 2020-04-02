@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -29,11 +29,11 @@ class EmberShmemWaitUntilGenerator : public EmberShmemGenerator {
 
 public:
 	EmberShmemWaitUntilGenerator(SST::ComponentId_t id, Params& params) :
-		EmberShmemGenerator(id, params, "ShmemWaitUntil" ), m_phase(0) 
-	{ 
+		EmberShmemGenerator(id, params, "ShmemWaitUntil" ), m_phase(0)
+	{
         m_opName = params.find<std::string>("arg.op", "NE");
 
-        m_initValue = 0; 
+        m_initValue = 0;
         m_waitValue = m_initValue;
         if ( 0 == m_opName.compare("LTE") ) {
             m_waitValue = -1;
@@ -64,12 +64,12 @@ public:
         std::string tname = typeid(TYPE).name();
 		char* tmp = abi::__cxa_demangle(tname.c_str(), NULL, NULL, &status);
         m_type_name = tmp;
-		free(tmp); 
+		free(tmp);
 
-        assert( 4 == sizeof(TYPE) || 8 == sizeof(TYPE) );	
+        assert( 4 == sizeof(TYPE) || 8 == sizeof(TYPE) );
     }
 
-    bool generate( std::queue<EmberEvent*>& evQ) 
+    bool generate( std::queue<EmberEvent*>& evQ)
 	{
         bool ret = false;
         switch ( m_phase ) {
@@ -92,7 +92,7 @@ public:
         case 2:
             m_addr.at<TYPE>(0) = m_initValue;
             enQ_barrier_all( evQ );
-            
+
             if ( m_my_pe == 0 ) {
                 enQ_wait_until( evQ, m_addr, m_op, m_waitValue );
             } else {

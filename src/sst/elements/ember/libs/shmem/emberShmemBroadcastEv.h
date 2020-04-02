@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -26,11 +26,11 @@ class EmberBroadcastShmemEvent : public EmberShmemEvent {
 
 public:
 	EmberBroadcastShmemEvent( Shmem::Interface& api, Output* output,
-               Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int PE_root, 
-               int PE_start, int logPE_stride, int PE_size, Hermes::Vaddr pSync,  
+               Hermes::Vaddr dest, Hermes::Vaddr src, size_t nelems, int PE_root,
+               int PE_start, int logPE_stride, int PE_size, Hermes::Vaddr pSync,
                     EmberEventTimeStatistic* stat = NULL ) :
             EmberShmemEvent( api, output, stat ),
-            m_dest(dest), m_src(src), m_nelems(nelems), m_root(PE_root), 
+            m_dest(dest), m_src(src), m_nelems(nelems), m_root(PE_root),
             m_pe_start(PE_start), m_stride( logPE_stride), m_size(PE_size), m_pSync(pSync) {}
 	~EmberBroadcastShmemEvent() {}
 

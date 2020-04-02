@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -27,11 +27,11 @@ using namespace SST;
 using namespace SST::RNG;
 using namespace SST::SimpleDistribComponent;
 
-void simpleDistribComponent::finish() 
+void simpleDistribComponent::finish()
 {
     if (bin_results) {
         std::map<int64_t, uint64_t>::iterator map_itr;
-        
+
         std::cout << "Bin:" << std::endl;
         for (map_itr = bins->begin(); map_itr != bins->end(); map_itr++) {
             std::cout << map_itr->first << " " << map_itr->second << std::endl;
@@ -40,17 +40,17 @@ void simpleDistribComponent::finish()
 }
 
 simpleDistribComponent::simpleDistribComponent(ComponentId_t id, Params& params) :
-    Component(id) 
+    Component(id)
 {
     // tell the simulator not to end without us
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
-    
+
     rng_max_count = params.find<int64_t>("count", 1000);
     rng_count = 0;
-    
+
     bins = new std::map<int64_t, uint64_t>();
-    
+
     if ("1" == params.find<std::string>("binresults", "1")) {
         bin_results = true;
     } else {
@@ -114,7 +114,7 @@ simpleDistribComponent::simpleDistribComponent() : Component(-1)
     // for serialization only
 }
 
-bool simpleDistribComponent::tick(Cycle_t cyc) 
+bool simpleDistribComponent::tick(Cycle_t cyc)
 {
     double next_result = comp_distrib->getNextDouble();
     int64_t int_next_result = 0;
@@ -128,14 +128,14 @@ bool simpleDistribComponent::tick(Cycle_t cyc)
     } else {
         bins->at(int_next_result)++;
     }
-    
+
     rng_count++;
-    
+
     if (rng_max_count == rng_count) {
         primaryComponentOKToEndSim();
         return true;
     }
-    
+
     return false;
 }
 

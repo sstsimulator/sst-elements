@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -19,20 +19,20 @@
 namespace SST {
 namespace SimpleComponent {
 
-class simpleComponentEvent : public SST::Event 
+class simpleComponentEvent : public SST::Event
 {
 public:
     typedef std::vector<char> dataVec;
     simpleComponentEvent() : SST::Event() { }
     dataVec payload;
 
-public:	
+public:
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         Event::serialize_order(ser);
         ser & payload;
     }
-    
-    ImplementSerializable(SST::SimpleComponent::simpleComponentEvent);     
+
+    ImplementSerializable(SST::SimpleComponent::simpleComponentEvent);
 };
 
 } // namespace SimpleComponent

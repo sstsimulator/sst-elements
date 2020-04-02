@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -175,7 +175,7 @@ std::string NearestAllocator::getParamHelp()
 }
 
 std::string NearestAllocator::getSetupInfo(bool comment) const
-{ 
+{
     std::string com;
     if (comment) {
         com="# ";
@@ -192,26 +192,26 @@ std::string NearestAllocator::getSetupInfo(bool comment) const
     return ret.str();
 }
 AllocInfo* NearestAllocator::allocate(Job* job)
-{    
+{
     std::vector<int>* freeNodes = mMachine->getFreeNodes();
     std::vector<MeshLocation*>* available = new std::vector<MeshLocation*>(freeNodes->size());
     for(unsigned int i = 0; i < freeNodes->size(); i++){
         available->at(i) = new MeshLocation(freeNodes->at(i), *mMachine);
     }
     delete freeNodes;
-    
+
     return allocate(job, available);
 }
 
 //Allocates job if possible.
 //Returns information on the allocation or null if it wasn't possible
 //(doesn't make allocation; merely returns info on possible allocation).
-AllocInfo* NearestAllocator::allocate(Job* job, std::vector<MeshLocation*>* available) 
+AllocInfo* NearestAllocator::allocate(Job* job, std::vector<MeshLocation*>* available)
 {
     if (!canAllocate(*job, available)) {
         return NULL;
     }
-    
+
     AllocInfo* retVal = new AllocInfo(job, machine);
     int nodesNeeded = ceil((double) job->getProcsNeeded() / machine.coresPerNode);
 
@@ -231,7 +231,7 @@ AllocInfo* NearestAllocator::allocate(Job* job, std::vector<MeshLocation*>* avai
 
     //stores allocations w/ best score (no tiebreaking) if ties being recorded:
     //(actual best value w/ tiebreaking stored in retVal.processors)
-    std::vector<std::vector<MeshLocation*>*>* bestAllocs = new std::vector<std::vector<MeshLocation*> *>(); 
+    std::vector<std::vector<MeshLocation*>*>* bestAllocs = new std::vector<std::vector<MeshLocation*> *>();
     std::vector<MeshLocation*>* possCenters;
 
     if ("Hybrid" == configName) {
@@ -250,17 +250,17 @@ AllocInfo* NearestAllocator::allocate(Job* job, std::vector<MeshLocation*>* avai
             possCenters->at(i) = new MeshLocation(possCenterInds->at(i), *mMachine);
         }
         delete possCenterInds;
-    } else { 
+    } else {
         possCenters = centerGenerator -> getCenters(available);
     }
     delete available;
-    
+
     std::vector<MeshLocation*>* nearest = NULL;
     std::vector<MeshLocation*>* alloc = new std::vector<MeshLocation*>();
-    for (std::vector<MeshLocation*>::iterator center = possCenters -> begin(); center != possCenters -> end(); ++center) {        
-        nearest = pointCollector -> getNearest(*center, nodesNeeded, *mMachine);        
-        std::pair<long,long>* val = scorer -> valueOf(*center, nearest, mMachine); 
-        if (val -> first < bestVal -> first || 
+    for (std::vector<MeshLocation*>::iterator center = possCenters -> begin(); center != possCenters -> end(); ++center) {
+        nearest = pointCollector -> getNearest(*center, nodesNeeded, *mMachine);
+        std::pair<long,long>* val = scorer -> valueOf(*center, nearest, mMachine);
+        if (val -> first < bestVal -> first ||
             (val -> first == bestVal -> first && val -> second < bestVal -> second) ) {
             delete bestVal;
             bestVal = val;
@@ -288,7 +288,7 @@ AllocInfo* NearestAllocator::allocate(Job* job, std::vector<MeshLocation*>* avai
     delete bestAllocs;
     delete possCenters;
     delete bestVal;
-    
+
     return retVal;
 }
 
@@ -314,7 +314,7 @@ void NearestAllocator::MC1x1Allocator(StencilMachine* m) {
     centerGenerator = new FreeCenterGenerator(m);
     pointCollector = new LInfPointCollector();
     scorer = new LInfDistFromCenterScorer(new Tiebreaker(0,0,0,0));
-} 
+}
 
 void NearestAllocator::HybridAllocator(StencilMachine* m) {
     configName = "Hybrid";
@@ -322,4 +322,4 @@ void NearestAllocator::HybridAllocator(StencilMachine* m) {
     centerGenerator = NULL;
     pointCollector = new LInfPointCollector();
     scorer = new LInfDistFromCenterScorer(new Tiebreaker(0,0,0,0));
-} 
+}

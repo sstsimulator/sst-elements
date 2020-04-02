@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -40,7 +40,7 @@ namespace SST {
                 Job(long arrivalTime, int procsNeeded, long actualRunningTime,
                     long estRunningTime, std::string ID, CommInfo commInfo = CommInfo(), PhaseInfo phaseInfo = PhaseInfo()); //NetworkSim: added phase info
                 Job(const Job &job);
-                
+
                 ~Job();
 
                 unsigned long getStartTime() const { return startTime; }
@@ -51,7 +51,7 @@ namespace SST {
                 bool hasStarted() const { return started; }
                 //assumes that allocation is not considered:
                 unsigned long getEstimatedRunningTime() const { return estRunningTime; }
-                
+
                 std::string * getID() {
                     if (0 == ID.length()) {
                         std::ostringstream jobNumStr;
@@ -60,9 +60,9 @@ namespace SST {
                     }
                     return & ID;
                 }
-                
+
                 void reset();
-                
+
                 std::string toString();
 
                 void start(unsigned long time);
@@ -70,7 +70,7 @@ namespace SST {
                 unsigned long getFST();
                 void startsAtTime(unsigned long time);
                 TaskCommInfo* taskCommInfo;
-                
+
                 //following structure is used to prevent large memory usage:
                 //the communication files are read only when the job starts
                 const struct CommInfo{

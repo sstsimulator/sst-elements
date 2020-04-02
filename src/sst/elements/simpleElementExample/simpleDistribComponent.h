@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -25,7 +25,7 @@ using namespace SST::RNG;
 namespace SST {
 namespace SimpleDistribComponent {
 
-class simpleDistribComponent : public SST::Component 
+class simpleDistribComponent : public SST::Component
 {
 public:
 
@@ -38,7 +38,7 @@ public:
         "Random Number Distribution Component",
         COMPONENT_CATEGORY_UNCATEGORIZED
     )
-    
+
     SST_ELI_DOCUMENT_PARAMS(
         { "count",             "Number of random values to generate from the distribution", "1000"},
         { "distrib",           "Random distribution to use - \"gaussian\" (or \"normal\"), or \"exponential\"", "gaussian"},
@@ -65,21 +65,21 @@ public:
     simpleDistribComponent(SST::ComponentId_t id, SST::Params& params);
     void finish();
     void setup()  { }
-    
+
 private:
     simpleDistribComponent();  // for serialization only
     simpleDistribComponent(const simpleDistribComponent&); // do not implement
     void operator=(const simpleDistribComponent&); // do not implement
-    
+
     virtual bool tick( SST::Cycle_t );
-    
+
     SSTRandomDistribution* comp_distrib;
-    
+
     int  rng_max_count;
     int  rng_count;
     bool bin_results;
     std::string dist_type;
-    
+
     std::map<int64_t, uint64_t>* bins;
 };
 

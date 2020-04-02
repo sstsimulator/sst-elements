@@ -1,10 +1,10 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -40,10 +40,10 @@ public:
     int* dest_loc;
     bool val_route_dest;
     int* val_loc;
-    
+
     id_type id;
     bool rerouted;
-    
+
     topo_hyperx_event() : internal_router_event() {}
     topo_hyperx_event(int dim) :
         internal_router_event(),
@@ -69,7 +69,7 @@ public:
             if ( dest_loc[i] != curr_loc[i] ) dims.push_back(i);
         }
     }
-    
+
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         internal_router_event::serialize_order(ser);
         ser & dimensions;
@@ -153,7 +153,7 @@ public:
         SST_ELI_ELEMENT_VERSION(0,1,0),
         "Multi-dimensional hyperx topology object",
         SST::Merlin::Topology)
-    
+
     SST_ELI_DOCUMENT_PARAMS(
         {"hyperx:shape",        "Shape of the mesh specified as the number of routers in each dimension, where each dimension is separated by a colon.  For example, 4x4x2x2.  Any number of dimensions is supported."},
         {"hyperx:width",        "Number of links between routers in each dimension, specified in same manner as for shape.  For example, 2x2x1 denotes 2 links in the x and y dimensions and one in the z dimension."},
@@ -183,7 +183,7 @@ private:
     int* dim_size;
     int* dim_width;
     int total_routers;
-    
+
     int* port_start; // where does each dimension start
 
     int num_local_ports;
@@ -193,7 +193,7 @@ private:
     int const* output_queue_lengths;
     int num_vcs;
     int vcs_per_vn;
-    
+
     RouteAlgo algorithm;
     RNG::SSTRandom* rng;
     RNGFunc* rng_func;

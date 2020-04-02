@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -75,7 +75,7 @@ class ShmemCollective {
     void fini(int) {
         printf(":%d:%s():%d\n",my_pe(),__func__,__LINE__);
         m_returnCallback( 0 );
-    }    
+    }
 #endif
 
     std::string m_prefix;
@@ -94,7 +94,7 @@ class ShmemCollective {
     Hermes::Value   m_one;
     Hermes::Value   m_zero;
 
-    Hermes::Shmem::Callback m_returnCallback;    
+    Hermes::Shmem::Callback m_returnCallback;
 };
 
 }

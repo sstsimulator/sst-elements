@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -90,7 +90,7 @@ std::list<e_BankCommandType> c_BankStateIdle::getAllowedCommands() {
 void c_BankStateIdle::clockTic(c_BankInfo* x_bank, SimTime_t x_cycle) {
 
 	SimTime_t l_time = x_cycle;
-	
+
         if (2 < m_timer) {
 		--m_timer;
 	} else {

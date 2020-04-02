@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -28,7 +28,7 @@ namespace Zodiac {
 class ZodiacRecvEvent : public ZodiacEvent {
 
 	public:
-		ZodiacRecvEvent(uint32_t src, uint32_t length, 
+		ZodiacRecvEvent(uint32_t src, uint32_t length,
 			PayloadDataType dataType,
 			uint32_t tag, Communicator group);
 		virtual ZodiacEventType getEventType();

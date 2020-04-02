@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -31,13 +31,13 @@ class UnitPool {
             m_nicUnitAllocPolicy = RoundRobin;
             m_curRecvUnit.resize(1,0);
         } else if ( 0 == policy.compare("PerContext") ) {
-            assert( numRecvUnits % numCtx == 0 ); 
+            assert( numRecvUnits % numCtx == 0 );
             m_curRecvUnit.resize(numCtx,0);
             m_nicUnitAllocPolicy = PerContext;
         } else {
             assert(0);
         }
-    } 
+    }
     int allocRecvUnit( int pid ) {
         int unit;
         switch ( m_nicUnitAllocPolicy ) {

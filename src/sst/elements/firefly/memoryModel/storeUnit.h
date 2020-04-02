@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -39,7 +39,7 @@ class StoreUnit : public Unit {
 		if ( m_pendingQ.size() < m_qSize + 1) {
 			if ( ! m_blocked && ! m_scheduled ) {
 				Callback* cb = new Callback;
-				*cb = std::bind( &StoreUnit::process, this ); 
+				*cb = std::bind( &StoreUnit::process, this );
 				m_model.schedCallback( 0, cb );
 				m_scheduled = true;
 			}
@@ -77,7 +77,7 @@ class StoreUnit : public Unit {
 
 		if ( ! m_blocked && ! m_pendingQ.empty() ) {
 			Callback* cb = new Callback;
-			*cb = std::bind( &StoreUnit::process, this ); 
+			*cb = std::bind( &StoreUnit::process, this );
 			m_model.schedCallback( 0, cb );
 			m_scheduled = true;
 		}
@@ -85,15 +85,15 @@ class StoreUnit : public Unit {
 
     void resume( UnitBase* src = NULL ) {
         m_dbg.verbosePrefix(prefix(),CALL_INFO,1,STORE_MASK,"pending=%lu\n",m_pendingQ.size());
-		
+
 		assert( m_blocked == true );
 		m_blocked = false;
 		if ( ! m_scheduled && ! m_pendingQ.empty() ) {
 			process();
-		}		
+		}
     }
 
-	
+
 	UnitBase* m_blockedSrc;
 	bool 	m_scheduled;
 	bool    m_blocked;

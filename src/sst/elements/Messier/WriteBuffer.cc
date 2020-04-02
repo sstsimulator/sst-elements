@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -96,7 +96,7 @@ NVM_Request * NVM_WRITE_BUFFER::pop_entry()
 	ADD_REQ.erase(TEMP->Address/entry_size);
 	mem_reqs.pop_front();
 	curr_entries--;
-	
+
 		if(mem_reqs.size() != curr_entries)
 			std::cout<<"Massive error 2"<<std::endl;
 

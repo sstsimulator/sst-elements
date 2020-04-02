@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -39,7 +39,7 @@ class EmberShmemAtomicIncV2BaseGenerator : public EmberShmemGenerator {
 public:
 	EmberShmemAtomicIncV2BaseGenerator(SST::ComponentId_t id, Params& params, std::string name) :
 		EmberShmemGenerator(id, params, name ), m_phase(Init1), m_one(1), m_curUpdate(0), m_loopCnt(0), m_detailedDone(false)
-	{ 
+	{
         m_computeTime = params.find<int>("arg.computeTime", 0 );
         m_dataSize = params.find<int>("arg.dataSize", 32*1024*1024 );
 		m_updates = params.find<int>("arg.updates", 4096);
@@ -56,23 +56,23 @@ public:
         } else {
             assert(0);
         }
-        
+
 		m_detailedComputeList = params.find<std::string>("arg.detailedCompute","");
 		m_printTotals = params.find<bool>("arg.printTotals", false);
 		m_backed = params.find<bool>("arg.backed", false);
 		m_times.resize( params.find<int>("arg.outLoop", 1) );
 		m_randAddr = params.find<int>("arg.randAddr", 1);
 		m_run4ever = params.find<bool>("arg.run4ever", false);
-        
+
 #if USE_SST_RNG
         m_rng = new SST::RNG::XORShiftRNG();
 #endif
 	}
-	//virtual bool primary( ) { 
-	//	return m_detailed; 
+	//virtual bool primary( ) {
+	//	return m_detailed;
 	//}
 
-    bool generate( std::queue<EmberEvent*>& evQ) 
+    bool generate( std::queue<EmberEvent*>& evQ)
 	{
         bool ret = false;
 		switch( m_phase ) {
@@ -87,7 +87,7 @@ public:
 			m_phase=Init2;
 			break;
 
-		case Init2: 
+		case Init2:
 			verbose(CALL_INFO, 1,0, "Init2\n");
 			m_detailedCompute = findNid( m_node_num, m_detailedComputeList );
             if ( 0 == m_my_pe ) {
@@ -100,7 +100,7 @@ public:
                 printf("\touterLoop: %zu\n", m_times.size() );
                 printf("\toperation: %s\n", m_opStr.c_str() );
             }
-            
+
 			if ( m_backed ) {
 				bzero( &m_dest.at<TYPE>(0), sizeof(TYPE) * m_dataSize);
 			}
@@ -115,18 +115,18 @@ public:
 			initRngSeed( getSeed() );
 			enQ_getTime( evQ, &m_startTime );
 			m_phase=Work;
-#if 1 
+#if 1
 			if ( m_detailedCompute ) {
 				detailedLocalPE( evQ );
 			}
 #endif
 			break;
-		
+
 		case Work:
 
 			{
 				bool done;
-#if  0 
+#if  0
 				if ( m_detailedCompute ) {
 					done = detailedLocalPE( evQ );
 				} else {
@@ -148,7 +148,7 @@ public:
 			verbose(CALL_INFO, 1,0, "FiniLoop\n");
        		m_times[m_loopCnt] = (double)(m_stopTime - m_startTime) * 1.0e-9;
 			if ( 0 == m_my_pe ) {
-				printf("outerLoop done loopCnt=%d %f\n",m_loopCnt, 
+				printf("outerLoop done loopCnt=%d %f\n",m_loopCnt,
                         ((double) m_updates * (double) m_num_pes * 1.0e-9 ) /m_times[m_loopCnt] );
 			}
 
@@ -165,7 +165,7 @@ public:
 				m_phase = Fini;
 			}
 
-		case Fini:	
+		case Fini:
 			verbose(CALL_INFO, 1,0, "Fini node_num=%d pe=%d\n",m_node_num,m_my_pe);
 
 		    ret = true;
@@ -178,16 +178,16 @@ public:
 					if ( m_times[i] > maxTime ) {
 						maxTime = m_times[i];
 					}
-				} 
+				}
 				double minTime = maxTime;
 
 				for ( int i = 0; i < m_times.size(); i++ ) {
 					if ( m_times[i] < minTime ) {
 						minTime = m_times[i];
 					}
-				} 
+				}
 
-                printf("%s:GUpdates  = %.9lf\n", getMotifName().c_str(), Gupdates ); 
+                printf("%s:GUpdates  = %.9lf\n", getMotifName().c_str(), Gupdates );
                 printf("%s:MinTime      = %.9lf\n", getMotifName().c_str(), minTime );
                 printf("%s:MaxTime      = %.9lf\n", getMotifName().c_str(), maxTime );
                 printf("%s:MinGUP/s     = %.9lf\n", getMotifName().c_str(), Gupdates / maxTime);
@@ -203,7 +203,7 @@ public:
             	printf("%s: PE: %d total is: %" PRIu32 "\n", getMotifName().c_str(), m_my_pe, mytotal );
 			}
 			break;
-			
+
         }
         return ret;
 	}
@@ -228,7 +228,7 @@ public:
 
 		uint64_t minAddr = m_dest.getSimVAddr();;
        	tmp.str( std::string() ); tmp.clear();
-       	tmp << minAddr; 
+       	tmp << minAddr;
        	params.insert("min_address", tmp.str() );
 
        	tmp.str( std::string() ); tmp.clear();
@@ -253,8 +253,8 @@ public:
 
 	bool work( std::queue<EmberEvent*>& evQ ) {
 		//printf("%s()\n",__func__);
-		int dest = calcDestPe(); 
-            
+		int dest = calcDestPe();
+
 		Hermes::MemAddr addr;
         if ( m_randAddr ) {
 			addr = m_dest.offset<TYPE>( genRand() % m_dataSize );
@@ -262,8 +262,8 @@ public:
         	addr = m_dest.offset<TYPE>( 0 );
         }
         enQ_compute( evQ, m_computeTime );
-	
-		switch ( m_op ) { 
+
+		switch ( m_op ) {
           case Fadd:
        		enQ_fadd( evQ, &m_result, addr, &m_one, dest );
             break;
@@ -276,7 +276,7 @@ public:
           case Getv:
             enQ_getv( evQ, &m_one, addr, dest );
             break;
-		}	
+		}
 
 		if ( m_run4ever ) {
 			return m_detailedDone;
@@ -329,33 +329,33 @@ public:
         return false;
     }
 
-    unsigned int getSeed() { 
+    unsigned int getSeed() {
         struct timeval start;
         gettimeofday( &start, NULL );
-        return start.tv_usec; 
-    }            
+        return start.tv_usec;
+    }
 
     virtual int calcDestPe() {
-	    int dest = genRand() % m_num_pes; 
+	    int dest = genRand() % m_num_pes;
 
 		while( dest == m_my_pe ) {
 			dest = genRand() % m_num_pes;
 		}
         return dest;
-    }                
+    }
  protected:
 
     uint32_t genRand() {
         uint32_t retval;
-#if USE_SST_RNG 
+#if USE_SST_RNG
         retval = m_rng->generateNextUInt32();
 #else
         retval = rand_r(&m_randSeed);
 #endif
         return retval;
-    } 
+    }
     void initRngSeed( unsigned int seed ) {
-#if USE_SST_RNG 
+#if USE_SST_RNG
         m_rng->seed( seed );
 #else
 	    m_randSeed = seed;
@@ -365,7 +365,7 @@ public:
 	int m_loopCnt;
 	std::vector<double> m_times;
 
-#if USE_SST_RNG 
+#if USE_SST_RNG
     SST::RNG::XORShiftRNG* m_rng;
 #else
     unsigned int m_randSeed;
@@ -401,7 +401,7 @@ class EmberShmemAtomicIncV2Generator : public EmberShmemAtomicIncV2BaseGenerator
 public:
 
     EmberShmemAtomicIncV2Generator(SST::ComponentId_t id, Params& params, std::string name ) :
-	    EmberShmemAtomicIncV2BaseGenerator<TYPE,VAL>(id, params, name) { } 
+	    EmberShmemAtomicIncV2BaseGenerator<TYPE,VAL>(id, params, name) { }
 };
 
 template < class TYPE >
@@ -409,20 +409,20 @@ class EmberShmemAtomicIncV2Generator<TYPE,1> : public EmberShmemAtomicIncV2BaseG
 public:
 
 	EmberShmemAtomicIncV2Generator(SST::ComponentId_t id, Params& params, std::string name ) :
-	    EmberShmemAtomicIncV2BaseGenerator<TYPE,1>(id, params, name) { } 
+	    EmberShmemAtomicIncV2BaseGenerator<TYPE,1>(id, params, name) { }
 
-private:   
+private:
     int calcDestPe() {
-	    int dest = this->genRand() % this->m_num_pes; 
+	    int dest = this->genRand() % this->m_num_pes;
 
 		while( calcNode(dest) == this->m_node_num ) {
 			dest = this->genRand() % this->m_num_pes;
 		}
         return dest;
-    }                
+    }
 
     int calcNode(int pe ) {
-        return pe/(this->m_num_pes/this->m_num_nodes); 
+        return pe/(this->m_num_pes/this->m_num_nodes);
     }
 };
 
@@ -431,9 +431,9 @@ class EmberShmemAtomicIncV2Generator<TYPE,2> : public EmberShmemAtomicIncV2BaseG
 public:
 
 	EmberShmemAtomicIncV2Generator(SST::ComponentId_t id, Params& params, std::string name ) :
-	    EmberShmemAtomicIncV2BaseGenerator<TYPE,2>(id, params, name ) { } 
+	    EmberShmemAtomicIncV2BaseGenerator<TYPE,2>(id, params, name ) { }
 
-private:   
+private:
     int calcDestPe() {
         int pe = -1;
         if( this->m_my_pe == this->m_num_pes - 1 ) {
@@ -445,7 +445,7 @@ private:
 
             while( pe == this->m_my_pe ) {
                 pe = this->genRand() % pecountHS;
-            } 
+            }
 
             // If we generate a PE higher than we have
             // clamp ourselves to the highest PE
@@ -453,8 +453,8 @@ private:
                 pe = this->m_num_pes - 1;
             }
         }
-        return pe; 
-    }                
+        return pe;
+    }
 };
 
 class EmberShmemAtomicIncV2IntGenerator : public EmberShmemAtomicIncV2Generator<int, 0> {
@@ -472,7 +472,7 @@ public:
 
 public:
 	EmberShmemAtomicIncV2IntGenerator(SST::ComponentId_t id, Params& params) :
-	    EmberShmemAtomicIncV2Generator(id, params, "ShmemAtomicIncV2Int" ) { } 
+	    EmberShmemAtomicIncV2Generator(id, params, "ShmemAtomicIncV2Int" ) { }
 };
 
 class EmberShmemNSAtomicIncV2IntGenerator : public EmberShmemAtomicIncV2Generator<int, 1> {
@@ -490,7 +490,7 @@ public:
 
 public:
 	EmberShmemNSAtomicIncV2IntGenerator(SST::ComponentId_t id, Params& params) :
-	    EmberShmemAtomicIncV2Generator(id, params, "ShmemNSAtomicIncV2Int") { } 
+	    EmberShmemAtomicIncV2Generator(id, params, "ShmemNSAtomicIncV2Int") { }
 };
 
 class EmberShmemHotAtomicIncV2IntGenerator : public EmberShmemAtomicIncV2Generator<int, 2> {
@@ -508,9 +508,9 @@ public:
 
 public:
 	EmberShmemHotAtomicIncV2IntGenerator(SST::ComponentId_t id, Params& params) :
-	    EmberShmemAtomicIncV2Generator(id, params, "ShmemHotAtomicIncV2Int") { } 
+	    EmberShmemAtomicIncV2Generator(id, params, "ShmemHotAtomicIncV2Int") { }
 };
-    
+
 class EmberShmemAtomicIncV2LongGenerator : public EmberShmemAtomicIncV2Generator<long, 0 > {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
@@ -526,7 +526,7 @@ public:
 
 public:
 	EmberShmemAtomicIncV2LongGenerator(SST::ComponentId_t id, Params& params) :
-	    EmberShmemAtomicIncV2Generator(id, params, "ShmemAtomicIncV2Long") {} 
+	    EmberShmemAtomicIncV2Generator(id, params, "ShmemAtomicIncV2Long") {}
 };
 
 class EmberShmemHotAtomicIncV2LongGenerator : public EmberShmemAtomicIncV2Generator<long, 1 > {
@@ -544,9 +544,9 @@ public:
     )
 public:
 	EmberShmemHotAtomicIncV2LongGenerator(SST::ComponentId_t id, Params& params) :
-	    EmberShmemAtomicIncV2Generator(id, params, "ShmemHotAtomicIncV2Long") {} 
+	    EmberShmemAtomicIncV2Generator(id, params, "ShmemHotAtomicIncV2Long") {}
 };
-    
+
 }
 }
 

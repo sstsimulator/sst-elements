@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -37,7 +37,7 @@ AllgatherFuncSM::AllgatherFuncSM( SST::Params& params ) :
         m_smallCollectiveSize = params.find<int>( "smallCollectiveSize", 0);
 }
 
-void AllgatherFuncSM::handleStartEvent( SST::Event *e, Retval& retval ) 
+void AllgatherFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
 {
     ++m_seq;
 
@@ -50,7 +50,7 @@ void AllgatherFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
     int numStages = ceil( log2(m_size) );
     m_dbg.debug(CALL_INFO,1,0,"numStages=%d rank=%d size=%d\n",
                                         numStages, m_rank, m_size );
-    
+
     m_recvReqV.resize( numStages );
     m_numChunks.resize( numStages );
     m_sendStartChunk.resize( numStages );
@@ -68,7 +68,7 @@ bool AllgatherFuncSM::setup( Retval& retval )
 	Hermes::MemAddr addr;
     std::vector<IoVec> ioVec;
     int recvStartChunk;
-    int src; 
+    int src;
 
     switch ( m_setupState.state ) {
 
@@ -89,29 +89,29 @@ bool AllgatherFuncSM::setup( Retval& retval )
         m_dest[m_setupState.stage] = mod(m_rank + m_setupState.offset, m_size);
 
         m_dbg.debug(CALL_INFO,1,0,"setup stage %d, src %d, dest %d\n",
-                   m_setupState.stage, src, 
-					m_info->getGroup(m_event->group)->getMapping( m_dest[m_setupState.stage] ) ); 
+                   m_setupState.stage, src,
+					m_info->getGroup(m_event->group)->getMapping( m_dest[m_setupState.stage] ) );
 
-        if ( m_setupState.stage < m_dest.size() - 1 ) {  
+        if ( m_setupState.stage < m_dest.size() - 1 ) {
             m_numChunks[m_setupState.stage] = m_setupState.offset;
-            recvStartChunk = 
+            recvStartChunk =
                mod( (m_rank + 1) + (m_setupState.offset * (m_size-2)), m_size );
-            m_sendStartChunk[m_setupState.stage] = 
+            m_sendStartChunk[m_setupState.stage] =
                mod( (m_rank + 1) - (m_setupState.offset + m_size), m_size );
         } else {
             m_numChunks[m_setupState.stage]  = m_size - m_setupState.offset;
             recvStartChunk = mod( m_rank + 1, m_size);
-            m_sendStartChunk[m_setupState.stage] = 
+            m_sendStartChunk[m_setupState.stage] =
                mod( ( m_rank + 1) + m_setupState.offset, m_size );
         }
         m_dbg.debug(CALL_INFO,1,0," 2^stage %d, sendStart %d, recvStart %d "
-                    "numChunks %d\n", m_setupState.offset, 
-                    m_sendStartChunk[ m_setupState.stage], 
+                    "numChunks %d\n", m_setupState.offset,
+                    m_sendStartChunk[ m_setupState.stage],
                     recvStartChunk, m_numChunks[m_setupState.stage] );
 
         initIoVec( ioVec, recvStartChunk, m_numChunks[m_setupState.stage], m_event->recvbuf.getBacking() != NULL );
 
-        proto()->irecvv( ioVec, src, genTag() + m_setupState.stage + 1, 
+        proto()->irecvv( ioVec, src, genTag() + m_setupState.stage + 1,
                             &m_recvReqV[m_setupState.stage] );
 
         m_setupState.offset *= 2;
@@ -130,7 +130,7 @@ bool AllgatherFuncSM::setup( Retval& retval )
 
         m_dbg.debug(CALL_INFO,1,0,"send ready message to %d vn=%d\n",
 						m_info->getGroup(m_event->group)->getMapping(m_dest[0]), m_smallCollectiveVN );
-		
+
 		addr.setSimVAddr( 1 );
 		addr.setBacking( NULL );
         proto()->send( addr, 0, m_info->getGroup(m_event->group)->getMapping( m_dest[0] ), genTag(), m_smallCollectiveVN );
@@ -168,10 +168,10 @@ void AllgatherFuncSM::handleEnterEvent( Retval& retval )
             }
             if ( length <= m_smallCollectiveSize ) {
                 vn = m_smallCollectiveVN;
-            } 
+            }
             m_dbg.debug(CALL_INFO,1,0,"send stage %d, dest %d vn=%d\n",
                         m_currentStage,m_info->getGroup(m_event->group)->getMapping(m_dest[m_currentStage]), vn );
-            proto()->sendv( ioVec, m_info->getGroup(m_event->group)->getMapping(m_dest[m_currentStage]), 
+            proto()->sendv( ioVec, m_info->getGroup(m_event->group)->getMapping(m_dest[m_currentStage]),
                genTag() + m_currentStage + 1, vn );
         }
         m_state = WaitRecvData;
@@ -200,34 +200,34 @@ void AllgatherFuncSM::initIoVec( std::vector<IoVec>& ioVec,
                     int startChunk, int numChunks, bool backed )
 {
     int currentChunk = startChunk;
-    int nextChunk = ( currentChunk + 1 ) % m_size; 
+    int nextChunk = ( currentChunk + 1 ) % m_size;
     int countDown = numChunks;
 
     m_dbg.debug(CALL_INFO,2,0,"startChunk=%d numChunks=%d\n",
                                             startChunk,numChunks);
 
-    while ( countDown ) {  
+    while ( countDown ) {
         --countDown;
         IoVec jjj;
 		jjj.addr.setSimVAddr( 1 );
 		if ( backed ) {
-			jjj.addr.setBacking( chunkPtr( currentChunk ) ); 
+			jjj.addr.setBacking( chunkPtr( currentChunk ) );
 		}
         jjj.len = chunkSize( currentChunk );
-        
+
         m_dbg.debug(CALL_INFO,2,0,"currentChunk=%d ptr=%p len=%lu\n",
                     currentChunk, jjj.addr.getBacking(), jjj.len);
-    
+
         while ( countDown &&
                 (unsigned char*) jjj.addr.getBacking() + jjj.len == chunkPtr( nextChunk ) )
         {
             jjj.len += chunkSize( nextChunk );
             m_dbg.debug(CALL_INFO,2,0,"len=%lu\n", jjj.len );
             currentChunk = nextChunk;
-            nextChunk = ( currentChunk + 1 ) % m_size; 
+            nextChunk = ( currentChunk + 1 ) % m_size;
             --countDown;
         }
-        if ( 0 == countDown || 
+        if ( 0 == countDown ||
                 (unsigned char*) jjj.addr.getBacking() + jjj.len != chunkPtr( nextChunk ) )
         {
 
@@ -235,9 +235,9 @@ void AllgatherFuncSM::initIoVec( std::vector<IoVec>& ioVec,
             m_dbg.debug(CALL_INFO,2,0,"ioVec[%lu] ptr=%p len=%lu\n",
                                 ioVec.size()-1,
                                 ioVec[ioVec.size()-1].addr.getBacking(),
-                                ioVec[ioVec.size()-1].len); 
+                                ioVec[ioVec.size()-1].len);
         }
         currentChunk = nextChunk;
-        nextChunk = ( currentChunk + 1 ) % m_size; 
+        nextChunk = ( currentChunk + 1 ) % m_size;
     }
 }

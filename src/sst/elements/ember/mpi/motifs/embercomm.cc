@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -39,12 +39,12 @@ inline long mod( long a, long b )
     return tmp;
 }
 
-bool EmberCommGenerator::generate( std::queue<EmberEvent*>& evQ) 
+bool EmberCommGenerator::generate( std::queue<EmberEvent*>& evQ)
 {
     if ( 0 == m_workPhase ) {
         assert( size() > 7);
         assert( ! ( size() % 2 ) );
-        enQ_commSplit( evQ, GroupWorld, rank()/(size()/2), 
+        enQ_commSplit( evQ, GroupWorld, rank()/(size()/2),
                                 rank() % (size()/2), &m_newComm[0] );
         m_workPhase = 1;
 
@@ -55,7 +55,7 @@ bool EmberCommGenerator::generate( std::queue<EmberEvent*>& evQ)
     } else if ( 2 == m_workPhase ) {
         verbose(CALL_INFO, 1, 0, "new size=%d rank=%d\n",
                                             m_new_size, m_new_rank );
-        enQ_commSplit( evQ, m_newComm[0], m_new_rank/(m_new_size/2), 
+        enQ_commSplit( evQ, m_newComm[0], m_new_rank/(m_new_size/2),
                                 m_new_rank % (m_new_size/2), &m_newComm[1] );
         m_workPhase = 3;
     } else if ( 3 == m_workPhase ) {
@@ -64,7 +64,7 @@ bool EmberCommGenerator::generate( std::queue<EmberEvent*>& evQ)
         m_workPhase = 4;
 
     } else {
-        
+
         verbose(CALL_INFO, 1, 0, "new size=%d rank=%d\n",
                                             m_new_size, m_new_rank );
         uint32_t to = mod(m_new_rank + 1, m_new_size);

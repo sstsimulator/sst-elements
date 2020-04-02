@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -83,7 +83,7 @@ public:
     static const int east_port = 2;
     static const int west_port = 3;
     static const int local_port_start = 4;
-    
+
     static const int north_mask = 1 << north_port;
     static const int south_mask = 1 << south_port;
     static const int east_mask = 1 << east_port;
@@ -97,7 +97,7 @@ private:
     int total_endpoints;
     unsigned int edge_status;
     unsigned int endpoint_locations;
-    
+
     int flit_size;
     int input_buf_size;
 
@@ -108,8 +108,8 @@ private:
     int my_y;
 
     bool route_y_first;
-    
-    
+
+
     typedef std::queue<noc_mesh_event*> port_queue_t;
 
     Clock::Handler<noc_mesh>* my_clock_handler;
@@ -130,7 +130,7 @@ private:
     std::vector< lru_unit<int> > lru_units;
     // lru_unit<int> local_lru;
     // lru_unit<int> mesh_lru;
-    
+
     bool clock_handler(Cycle_t cycle);
     // Statistic<uint64_t>** xbar_stalls;
 
@@ -141,7 +141,7 @@ private:
     void handle_input_ep2r(Event* ev, int port);
 
     void route(noc_mesh_event* event);
-    
+
 
     Statistic<uint64_t>** send_bit_count;
     Statistic<uint64_t>** output_port_stalls;
@@ -149,12 +149,12 @@ private:
     // Statistic<uint64_t>** xbar_stalls_prioirty;
     // Statistic<uint64_t>** xbar_stalls_normal;
     // Statistic<uint64_t>** output_idle;
-    
-    
+
+
 public:
     noc_mesh(ComponentId_t cid, Params& params);
     ~noc_mesh();
-    
+
     void init(unsigned int phase);
     void complete(unsigned int phase);
     void setup();
@@ -162,7 +162,7 @@ public:
 
     // void sendTopologyEvent(int port, TopologyEvent* ev);
     // void recvTopologyEvent(int port, TopologyEvent* ev);
-    
+
     // void dumpState(std::ostream& stream);
     void printStatus(Output& out);
 
@@ -201,7 +201,7 @@ public:
         ret->encap_ev = encap_ev->clone();
         return ret;
     }
-            
+
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         BaseNocEvent::serialize_order(ser);
         ser & dest_mesh_loc;
@@ -209,13 +209,13 @@ public:
         ser & next_port;
         ser & encap_ev;
     }
-    
+
 private:
     ImplementSerializable(SST::Kingsley::noc_mesh_event)
-        
+
 };
 
-    
+
 }
 }
 

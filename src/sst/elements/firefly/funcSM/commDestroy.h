@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -38,7 +38,7 @@ class CommDestroyFuncSM :  public BarrierFuncSM
 
     virtual void handleStartEvent( SST::Event* e, Retval& retval ){
         CommDestroyStartEvent* event = static_cast<CommDestroyStartEvent*>( e );
-    
+
         m_comm = event->comm;
         BarrierStartEvent* tmp = new BarrierStartEvent( event->comm  );
         delete event;

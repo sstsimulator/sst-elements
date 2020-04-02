@@ -1,10 +1,10 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -35,7 +35,7 @@ public:
     int dimensions;
     int routing_dim;
     int* dest_loc;
-    
+
     topo_torus_event() {}
     topo_torus_event(int dim) {	dimensions = dim; routing_dim = 0; dest_loc = new int[dim]; }
     ~topo_torus_event() { delete[] dest_loc; }
@@ -79,7 +79,7 @@ public:
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Multi-dimensional torus topology object",
         SST::Merlin::Topology)
-    
+
     SST_ELI_DOCUMENT_PARAMS(
         {"torus:shape",        "Shape of the torus specified as the number of routers in each dimension, where each dimension is separated by an x.  For example, 4x4x2x2.  Any number of dimensions is supported."},
         {"torus:width",        "Number of links between routers in each dimension, specified in same manner as for shape.  For example, 2x2x1 denotes 2 links in the x and y dimensions and one in the z dimension."},
@@ -90,7 +90,7 @@ public:
         {"local_ports",  "Number of endpoints attached to each router."},
     )
 
-    
+
 private:
     int router_id;
     int* id_loc;

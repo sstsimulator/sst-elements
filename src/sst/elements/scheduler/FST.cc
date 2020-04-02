@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -52,17 +52,17 @@ FST::FST(int inrelaxed)
 }
 
 //This would normally be a part of the constructor but we need the number of
-//jobs, so schedComponent calls it later. 
+//jobs, so schedComponent calls it later.
 void FST::setup(int innumjobs)
 {
     numjobs = innumjobs;
-    jobFST = new unsigned long[numjobs]; 
+    jobFST = new unsigned long[numjobs];
 }
 
 //used as a comparator to make sure our simulation considers events in the
 //right order.  We assume that events that finish at the same time arrive in
 //order of event number (this also matches the Java), which corresponds to the
-//start time of the job 
+//start time of the job
 bool compevents(Job* j1, Job* j2) {
     if (j1 -> getStartTime() + j1 -> getActualTime() == j2 -> getStartTime() + j2 -> getActualTime()) {
         //return j1 -> getJobNum() < j2 -> getJobNum();
@@ -73,9 +73,9 @@ bool compevents(Job* j1, Job* j2) {
 
 //When a job arrives, we need to calculate its FST value
 void FST::jobArrives(Job *inj, Scheduler* insched, Machine* inmach)
-{ 
+{
     schedout.debug(CALL_INFO, 7, 0, "%s arriving to FST\n", inj -> toString().c_str());
-    
+
     Job *j = new Job(*inj); //must copy the job because they keep track of when they each start
 
     //if the schedule is not relaxed the job has already been added; otherwise
@@ -122,8 +122,8 @@ void FST::jobArrives(Job *inj, Scheduler* insched, Machine* inmach)
 
     //have to keep track of each job's end time
     bool(*compeventsptr)(Job*, Job*) = compevents;
-    std::multimap<Job*, unsigned long, bool(*)(Job*, Job*)>* endtimes = 
-        new std::multimap<Job*, unsigned long, bool(*)(Job*, Job*)>(compeventsptr); 
+    std::multimap<Job*, unsigned long, bool(*)(Job*, Job*)>* endtimes =
+        new std::multimap<Job*, unsigned long, bool(*)(Job*, Job*)>(compeventsptr);
 
     for(unsigned int x = 0; x < running -> size(); x++) {
         endtimes -> insert(pair<Job*, unsigned long>(running -> at(x), running -> at(x) -> getStartTime() + running -> at(x) -> getActualTime()));
@@ -131,8 +131,8 @@ void FST::jobArrives(Job *inj, Scheduler* insched, Machine* inmach)
 
     //the scheduler will delete jobs once they finish; we'll still need them
     //for the next simulation though
-    std::vector<Job*>* readdtorunning = new vector<Job*>; 
-    std::vector<Job*>* readdtorun = new vector<Job*>; 
+    std::vector<Job*>* readdtorunning = new vector<Job*>;
+    std::vector<Job*>* readdtorun = new vector<Job*>;
 
     //step through each waiting job, including j.  Tell the scheduler that it
     //arrives.  In the meantime, keep an eye on endtimes to make sure we tell
@@ -144,7 +144,7 @@ void FST::jobArrives(Job *inj, Scheduler* insched, Machine* inmach)
         toRun -> push_back(j);
         sched -> jobArrives(j, j -> getArrivalTime(), *mach);
         alreadyadded = true;
-    } 
+    }
     success = FSTstart(endtimes, jobToAi, j, sched, alloc, mach, stats, time);
 
     if (!alreadyadded) {
@@ -168,7 +168,7 @@ void FST::jobArrives(Job *inj, Scheduler* insched, Machine* inmach)
     //step through each running job.  When it finishes  we tell the scheduler
     //it finishes, then try to start a new job.  If the new job that gets
     //started is j, we assign that as the FST value of j
-    while (!success && !endtimes -> empty()) { 
+    while (!success && !endtimes -> empty()) {
         time = endtimes -> begin() -> second;
         bool found = false;
 
@@ -186,7 +186,7 @@ void FST::jobArrives(Job *inj, Scheduler* insched, Machine* inmach)
                 readdtorun-> push_back(new Job(*(endtimes -> begin() -> first)));
                 found = true;
             }
-        } 
+        }
         if (!found) schedout.fatal(CALL_INFO, 1, "Could not find %s in running or toRun", endtimes->begin()->first->toString().c_str());
 
         if(jobToAi -> find(endtimes -> begin() -> first) == jobToAi -> end()) schedout.fatal(CALL_INFO, 1, "couldn't find %s in jobToAi", endtimes ->begin() -> first -> toString().c_str());
@@ -219,7 +219,7 @@ void FST::jobArrives(Job *inj, Scheduler* insched, Machine* inmach)
                     success = FSTstart(endtimes, jobToAi, j, sched, alloc, mach, stats, time);
                 }
             }
-        } 
+        }
     }
     if (!success) schedout.fatal(CALL_INFO, 1, "Could not find time for %s in FST\n", j -> toString().c_str());
 
@@ -253,8 +253,8 @@ void FST::jobArrives(Job *inj, Scheduler* insched, Machine* inmach)
 
 //helper function; tells the scheduler to start a job
 bool FST::FSTstart(std::multimap<Job*, unsigned long, bool(*)(Job*, Job*)>* endtimes,
-                   std::map<Job*, TaskMapInfo*>* jobToAi, Job* j, Scheduler* sched, 
-                   Allocator* alloc, Machine* mach, Statistics* stats, unsigned long time) 
+                   std::map<Job*, TaskMapInfo*>* jobToAi, Job* j, Scheduler* sched,
+                   Allocator* alloc, Machine* mach, Statistics* stats, unsigned long time)
 {
     AllocInfo* ai;
     Job* newJob;
@@ -280,8 +280,8 @@ bool FST::FSTstart(std::multimap<Job*, unsigned long, bool(*)(Job*, Job*)>* endt
             }
             stats -> jobStarts(tmi, time);
         }
-    } while (ai != NULL); 
-    return false; 
+    } while (ai != NULL);
+    return false;
 }
 
 //when a job finishes, we just remove it from running
@@ -299,7 +299,7 @@ void FST::jobCompletes(Job* j)
 }
 
 //when a job starts, we must move it to running from toRun
-void FST::jobStarts(Job* j, unsigned long time) 
+void FST::jobStarts(Job* j, unsigned long time)
 {
     //Need to add the job to running when it actually starts.  But, we want to
     //add the copied version, not the actual version (or this simulation kills
@@ -308,10 +308,10 @@ void FST::jobStarts(Job* j, unsigned long time)
         if(toRun -> at(x) -> getJobNum() == j -> getJobNum()) {
             Job* startingjob = toRun -> at(x);
             startingjob -> startsAtTime(time);
-            running -> push_back(startingjob); 
+            running -> push_back(startingjob);
             toRun -> erase (toRun -> begin() + x);
             return;
-        } 
+        }
     }
     schedout.fatal(CALL_INFO, 1, "Job %ld started before FST was aware it arrived\n", j -> getJobNum());
 }
@@ -324,13 +324,13 @@ unsigned long FST::getFST(int num)
 }
 
 
-/*    
+/*
       for (unsigned int simjob = 0; simjob < running -> size(); simjob++) {
 //tell the scheduler about all jobs that finish before the next running job starts
 while (!endtimes -> empty() && endtimes -> begin() -> first <= running -> at(simjob) -> getArrivalTime()) {
 if (j -> getJobNum() == 37827 || j -> getJobNum() == 37828) schedout.output("%d arriving at %lu\nstart time:%lu\n", endtimes -> begin() -> second ->job -> getJobNum(), endtimes -> begin() -> first, endtimes ->begin()->second -> job ->getStartTime());
 if (!jinserted && endtimes -> begin() -> first > j -> getArrivalTime()) {
-//tell scheduler about our job 
+//tell scheduler about our job
 unsigned long time = j -> getArrivalTime()3
 4 processors free
 ;
@@ -378,12 +378,12 @@ return;
 endtimes -> insert(std::pair<unsigned long, AllocInfo*>(time + ai -> job -> getActualTime(), ai));
 if (j -> getJobNum() == 37827 || j -> getJobNum() == 37828) schedout.output("inserting %d to endtimes\n", ai ->job ->getJobNum());
 }
-} while (ai != NULL); 
-} 
+} while (ai != NULL);
+}
 //if (j -> getJobNum() == 37827 || j -> getJobNum() == 37828) schedout.output("outside while loop\n");
 //don't think this ever happens
 if (!jinserted && running -> at(simjob) -> getArrivalTime() > j -> getArrivalTime()) {
-//tell scheduler about our job 
+//tell scheduler about our job
 sched -> jobArrives(j, j -> getArrivalTime(), mach);
 jinserted = true;
 AllocInfo* ai;
@@ -443,21 +443,21 @@ for(std::multimap<unsigned long, AllocInfo*>::iterator it = endtimes -> begin();
 }
 schedout.output("\n");
 
-while (!endtimes -> empty()) { 
-    if (j -> getJobNum() == 37827 || j -> getJobNum() == 37828) schedout.output("popping %s off endtimes at %lu\nstart time:%lu\nfreeprocs left:%d\n", endtimes -> begin() -> second -> job -> toString().c_str(), endtimes->begin()->first, endtimes ->begin()->second -> job ->getStartTime(), mach->getNumFreeNodes()); 
+while (!endtimes -> empty()) {
+    if (j -> getJobNum() == 37827 || j -> getJobNum() == 37828) schedout.output("popping %s off endtimes at %lu\nstart time:%lu\nfreeprocs left:%d\n", endtimes -> begin() -> second -> job -> toString().c_str(), endtimes->begin()->first, endtimes ->begin()->second -> job ->getStartTime(), mach->getNumFreeNodes());
     if (!jinserted && endtimes -> begin() -> first > j -> getArrivalTime()) {
         //schedout.output("found time for job %s\n", j ->
-        //toString().c_str()); tell scheduler about our job 
-        unsigned long time = j -> getArrivalTime(); 
+        //toString().c_str()); tell scheduler about our job
+        unsigned long time = j -> getArrivalTime();
         sched -> jobArrives(j, time, mach);
         jinserted = true;
         //see if we can start any jobs
 
-        AllocInfo* ai; 
-        do { 
-            ai = sched -> tryToStart(alloc, time, mach, stats); 
-            if (ai != NULL) { 
-                if (ai -> job == j) { 
+        AllocInfo* ai;
+        do {
+            ai = sched -> tryToStart(alloc, time, mach, stats);
+            if (ai != NULL) {
+                if (ai -> job == j) {
                     //our job has been scheduled!  record the time
                     //schedout.debug(CALL_INFO, 7, 0, "found FST for %s :
                     //%lu", j -> toString().c_str(), time);
@@ -505,7 +505,7 @@ while (!endtimes -> empty()) {
             }
             endtimes -> insert(std::pair<unsigned long, AllocInfo*>(time + ai -> job -> getActualTime(), ai));
             if (j -> getJobNum() == 37827 || j -> getJobNum() == 37828) schedout.output("inserting %d to endtimes\n", ai ->job ->getJobNum());
-        } 
+        }
     } while (ai != NULL);
 }
 schedout.fatal(CALL_INFO, 1, "Could not get FST for %s", j -> toString().c_str() );

@@ -1,8 +1,8 @@
-// Copyright 2013-2019 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2019, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -46,8 +46,8 @@ public:
             {"debug",               "(uint) Where to print debug output. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
             {"debug_level",         "(uint) Debug verbosity level. Between 0 and 10", "0"},
             {"debug_addr",          "(comma separated uint) Address(es) to be debugged. Leave empty for all, otherwise specify one or more, comma-separated values. Start and end string with brackets",""} )
-      
-    SST_ELI_DOCUMENT_PORTS(           
+
+    SST_ELI_DOCUMENT_PORTS(
           {"cache", "Link to L1 cache", {"memHierarchy.MemEventBase"} },
           {"thread%(port)d", "Links to threads/cores", {"memHierarchy.MemEventBase"} } )
 
@@ -55,18 +55,18 @@ public:
     /** Constructor & destructor */
     MultiThreadL1(ComponentId_t id, Params &params);
     ~MultiThreadL1();
-    
+
     /** SST component basic functions */
     void setup(void);
     void init(unsigned int phase);
     void finish(void);
-    
+
     /** Handles response from memory hierarchy, passes to correct thread's CPU */
     void handleResponse(SST::Event *event);
 
     /** Handles request from CPU, passes on to memory hierarchy */
     void handleRequest(SST::Event *event, unsigned int threadid);
-	
+
     /** Clock handler - requests/responses are sent on cycle boundaries */
     bool tick(SST::Cycle_t cycle);
 
@@ -94,7 +94,7 @@ private:
     uint64_t responsesPerCycle;
     std::queue<MemEventBase*> requestQueue;
     std::queue<MemEventBase*> responseQueue;
-    
+
     inline void enableClock();
 };
 

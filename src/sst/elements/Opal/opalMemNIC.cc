@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -91,7 +91,7 @@ void OpalMemNIC::processInitMemRtrEvent(MemHierarchy::MemNICBase::InitMemRtrEven
     OpalInitMemRtrEvent* imre = static_cast<OpalInitMemRtrEvent*>(ev);
     dbg.debug(_L10_, "%s (OpalMemNIC) received imre. Name: %s, Addr: %" PRIu64 ", ID: %" PRIu32 ", start: %" PRIu64 ", end: %" PRIu64 ", size: %" PRIu64 ", step: %" PRIu64 ", node: %" PRIu32 "\n",
             getName().c_str(), imre->info.name.c_str(), imre->info.addr, imre->info.id, imre->info.region.start, imre->info.region.end, imre->info.region.interleaveSize, imre->info.region.interleaveStep, imre->node);
-    
+
     if (sourceIDs.find(imre->info.id) != sourceIDs.end()) { // From one of our source groups
         dbg.debug(_L10_, "\tAdding to sourceEndpointInfo. %zu sources found\n", sourceEndpointInfo.size());
         addSource(imre->info);

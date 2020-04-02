@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -27,11 +27,11 @@ public:
 /* Element Library Info */
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(ExtMemBackendConvertor, "memHierarchy", "extMemBackendConvertor", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Converts MemEventBase* for an ExtMemBackend - passes additional opcode information", SST::MemHierarchy::MemBackendConvertor)
-    
+
     SST_ELI_DOCUMENT_PARAMS( MEMBACKENDCONVERTOR_ELI_PARAMS )
 
     SST_ELI_DOCUMENT_STATISTICS( MEMBACKENDCONVERTOR_ELI_STATS )
-    
+
 /* Class definition */
     ExtMemBackendConvertor(ComponentId_t id, Params &params, MemBackend* backend, uint32_t reqWidth);
 

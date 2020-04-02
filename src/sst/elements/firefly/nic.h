@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -14,8 +14,8 @@
 // distribution.
 
 
-#ifndef COMPONENTS_FIREFLY_NIC_H 
-#define COMPONENTS_FIREFLY_NIC_H 
+#ifndef COMPONENTS_FIREFLY_NIC_H
+#define COMPONENTS_FIREFLY_NIC_H
 
 #include <math.h>
 #include <sstream>
@@ -46,7 +46,7 @@ namespace Firefly {
 #define NIC_DBG_DETAILED_MEM (1<<2)
 #define NIC_DBG_SEND_MACHINE (1<<3)
 #define NIC_DBG_RECV_MACHINE (1<<4)
-#define NIC_DBG_SHMEM        (1<<5) 
+#define NIC_DBG_SHMEM        (1<<5)
 #define NIC_DBG_SEND_NETWORK (1<<6)
 #define NIC_DBG_RECV_CTX     (1<<7)
 #define NIC_DBG_RECV_STREAM  (1<<8)
@@ -156,7 +156,7 @@ class Nic : public SST::Component  {
         {"nicDetailedRead", "Port connected to the detailed model", {"memHierarchy.memEvent" , ""}},
         {"nicDetailedWrite", "Port connected to the detailed model", {"memHierarchy.memEvent" , ""}},
         {"detailed", "Port connected to the detailed model", {"memHierarchy.memEvent" , ""}},
-    ) 
+    )
 
   private:
     typedef unsigned RespKey_t;
@@ -176,7 +176,7 @@ class Nic : public SST::Component  {
 				--m_num[vn];
 			}
 
-			return m_num[vn] > 0; 
+			return m_num[vn] > 0;
 		}
 
 		inline void setNotify( std::function<void()> notifier, int vn ) {
@@ -219,8 +219,8 @@ class Nic : public SST::Component  {
         uint64_t vaddr;
         uint32_t length;
         enum Op { Ack, Put, Get, GetResp, Add, Fadd, Swap, Cswap };
-        unsigned char op : 3; 
-        unsigned char op2 : 3; 
+        unsigned char op : 3;
+        unsigned char op2 : 3;
         unsigned char dataType : 3;
         uint32_t respKey : 24;
 
@@ -265,26 +265,26 @@ class Nic : public SST::Component  {
             type(Callback), callback( callback) {}
         SelfEvent( SST::Event* ev,  int linkNum  ) :
             type(Event), event( ev), linkNum(linkNum) {}
-        
+
         void*              entry;
         Callback_t         callback;
 		SST::Event*        event;
 		int				   linkNum;
-        
+
         NotSerializable(SelfEvent)
     };
 
     class MemRgnEntry {
       public:
-        MemRgnEntry( std::vector<IoVec>& iovec ) : 
+        MemRgnEntry( std::vector<IoVec>& iovec ) :
             m_iovec( iovec )
         { }
 
-        std::vector<IoVec>& iovec() { return m_iovec; } 
+        std::vector<IoVec>& iovec() { return m_iovec; }
 
       private:
         std::vector<IoVec>  m_iovec;
-        
+
     };
 
 	class Priority {
@@ -322,12 +322,12 @@ class Nic : public SST::Component  {
 	};
 
 
-    #include "nicVirtNic.h" 
+    #include "nicVirtNic.h"
     #include "nicShmem.h"
-    #include "nicShmemMove.h" 
+    #include "nicShmemMove.h"
     #include "nicEntryBase.h"
     #include "nicSendEntry.h"
-    #include "nicShmemSendEntry.h" 
+    #include "nicShmemSendEntry.h"
     #include "nicRecvEntry.h"
     #include "nicSendMachine.h"
     #include "nicRecvMachine.h"
@@ -406,7 +406,7 @@ public:
     Hermes::MemAddr findShmem( int core, Hermes::Vaddr  addr, size_t length );
 
 	SimTime_t getShmemRxDelay_ns() {
-		return m_shmemRxDelay_ns; 
+		return m_shmemRxDelay_ns;
 	}
 
 	SimTime_t calcDelay_ns( SST::UnitAlgebra val ) {
@@ -456,27 +456,27 @@ public:
         return ++m_getKey;
     }
 
-    bool sendNotify(int vc)
+    bool sendNotify(int vn)
     {
-        m_dbg.debug(CALL_INFO,2,1,"network can send on vc=%d\n",vc);
-        return m_linkSendWidget->notify( vc );
+        m_dbg.debug(CALL_INFO,2,1,"network can send on vn=%d\n",vn);
+        return m_linkSendWidget->notify( vn );
     }
 
 
-    bool recvNotify(int vc)
+    bool recvNotify(int vn)
     {
-        m_dbg.debug(CALL_INFO,2,1,"network event available vc=%d\n",vc);
-        return m_linkRecvWidget->notify( vc );
+        m_dbg.debug(CALL_INFO,2,1,"network event available vn=%d\n",vn);
+        return m_linkRecvWidget->notify( vn );
     }
 
     int NetToId( int x ) { return x; }
     int IdToNet( int x ) { return x; }
 
 struct X {
-	X( Callback callback, FireflyNetworkEvent* pkt, int dest) : callback(callback), pkt(pkt), dest(dest) {}  
+	X( Callback callback, FireflyNetworkEvent* pkt, int dest) : callback(callback), pkt(pkt), dest(dest) {}
 
 	Callback			 callback;
-	FireflyNetworkEvent* pkt; 
+	FireflyNetworkEvent* pkt;
 	int                  dest;
 };
 
@@ -505,7 +505,7 @@ struct X {
 
 	int getSendStreamNum( int pid ) {
 		unsigned int val = m_sendStreamNum[pid]++;
-		
+
 		m_dbg.debug(CALL_INFO,3,NIC_DBG_SEND_MACHINE,"pid=%d stream=%d next=%d\n",pid,val, m_sendStreamNum[pid] );
 		return val;
 	}
@@ -518,7 +518,7 @@ struct X {
     Shmem* m_shmem;
 	SimTime_t m_nic2host_lat_ns;
 	SimTime_t m_nic2host_base_lat_ns;
-	SimTime_t m_shmemRxDelay_ns; 
+	SimTime_t m_shmemRxDelay_ns;
 
     UnitPool* m_unitPool;
 
@@ -531,7 +531,7 @@ struct X {
     void notifyHavePkt( PriorityX* px, int vn ) {
         m_dbg.debug(CALL_INFO,3,NIC_DBG_SEND_MACHINE,"vn=%d p1=%" PRIu64 " p2=%d\n",vn,px->p1(),px->p2());
         m_sendPQ[vn].push( px );
-		
+
         if ( 1 == m_sendPQ[vn].size() ) {
             feedTheNetwork( vn );
         }
@@ -574,7 +574,7 @@ struct X {
     RespKey_t genRespKey( void* ptr ) {
         assert( m_respKeyMap.find(m_respKey) == m_respKeyMap.end() );
         RespKey_t key = m_respKey++;
-        m_respKeyMap[key] = ptr;  
+        m_respKeyMap[key] = ptr;
         m_respKey &= 0xffffff;
         if ( 0 == m_respKey ) {
             ++m_respKey;
@@ -586,7 +586,7 @@ struct X {
         void* value = m_respKeyMap[key];
         m_dbg.debug(CALL_INFO,2,1,"map[%#x]=%p\n",key,value);
         m_respKeyMap.erase(key);
-        return value; 
+        return value;
     }
 	bool findNid( int nid, std::string nidList ) {
 
@@ -611,14 +611,14 @@ struct X {
 			//printf("pos=%d end=%d '%s'\n",pos,end,tmp.c_str() );
 
 			if ( tmp.length() == 1 ) {
-				int val = atoi( tmp.c_str() ); 
+				int val = atoi( tmp.c_str() );
 				//printf("nid=%d val=%d\n",nid, val);
 				if ( nid == val ) {
 					return true;
 				}
 			} else {
 				size_t dash = tmp.find( "-" );
-				int first = atoi(tmp.substr(0,dash).c_str()) ; 
+				int first = atoi(tmp.substr(0,dash).c_str()) ;
 				int last = atoi(tmp.substr(dash+1).c_str());
 				//printf("nid=%d first=%d last=%d\n",nid, first,last);
 				if ( nid >= first && nid <= last ) {
@@ -630,7 +630,7 @@ struct X {
 		} while ( end < nidList.length() );
 
 		return false;
-	}	
+	}
 
     std::unordered_map<RespKey_t,void*> m_respKeyMap;
 
@@ -646,13 +646,26 @@ struct X {
 	int m_tracedPkt;
 	int m_tracedNode;
 	SimTime_t m_predNetIdleTime;
+
     int m_getHdrVN;
     int m_getRespSize;
     int m_getRespLargeVN;
     int m_getRespSmallVN;
-}; 
 
-} // namesapce Firefly 
+
+    int m_shmemAckVN;
+
+    int m_shmemGetReqVN;
+    int m_shmemGetLargeVN;
+    int m_shmemGetSmallVN;
+    size_t m_shmemGetThresholdLength;
+
+    int m_shmemPutLargeVN;
+    int m_shmemPutSmallVN;
+    size_t m_shmemPutThresholdLength;
+};
+
+} // namesapce Firefly
 } // namespace SST
 
 #endif

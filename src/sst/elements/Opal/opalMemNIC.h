@@ -1,8 +1,8 @@
-// Copyright 2013-2019 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2019, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -24,8 +24,8 @@
 namespace SST {
 namespace Opal {
 
-/* 
- * NIC for multi-node configurations 
+/*
+ * NIC for multi-node configurations
  */
 class OpalMemNIC : public SST::MemHierarchy::MemNICBase {
 
@@ -48,12 +48,12 @@ public:
 
     SST_ELI_DOCUMENT_PORTS( {"port", "Link to network", {"memHierarchy.MemRtrEvent"} } )
 
-/* Begin class definition */    
+/* Begin class definition */
 
     /* Constructor */
     OpalMemNIC(Component * comp, Params &params);
     OpalMemNIC(ComponentId_t id, Params &params);
-    
+
     /* Destructor */
     virtual ~OpalMemNIC() { }
 
@@ -61,7 +61,7 @@ public:
     class OpalInitMemRtrEvent : public MemHierarchy::MemNICBase::InitMemRtrEvent {
         public:
             uint32_t node;
-            
+
             OpalInitMemRtrEvent() {}
             OpalInitMemRtrEvent(EndpointInfo info, uint32_t node) : InitMemRtrEvent(info), node(node) { }
 
@@ -92,11 +92,11 @@ public:
     void init(unsigned int phase);
     void finish() { link_control->finish(); }
     void setup() { link_control->setup(); MemLinkBase::setup(); }
-    
+
     virtual std::string findTargetDestination(MemHierarchy::Addr addr);
 
 protected:
-    virtual MemHierarchy::MemNICBase::InitMemRtrEvent* createInitMemRtrEvent(); 
+    virtual MemHierarchy::MemNICBase::InitMemRtrEvent* createInitMemRtrEvent();
     virtual void processInitMemRtrEvent(MemHierarchy::MemNICBase::InitMemRtrEvent* ev);
 
 private:

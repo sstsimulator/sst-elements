@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -25,7 +25,7 @@ using namespace SST::RNG;
 namespace SST {
 namespace SimpleRNGComponent {
 
-class simpleRNGComponent : public SST::Component 
+class simpleRNGComponent : public SST::Component
 {
 public:
 
@@ -38,7 +38,7 @@ public:
         "Random number generation component",
         COMPONENT_CATEGORY_UNCATEGORIZED
     )
-    
+
     SST_ELI_DOCUMENT_PARAMS(
         { "seed_w",  "The seed to use for the random number generator", "7" },
         { "seed_z",  "The seed to use for the random number generator", "5" },
@@ -69,7 +69,7 @@ private:
     simpleRNGComponent();  // for serialization only
     simpleRNGComponent(const simpleRNGComponent&); // do not implement
     void operator=(const simpleRNGComponent&); // do not implement
-    
+
     virtual bool tick(SST::Cycle_t);
 
     Output* output;
@@ -77,7 +77,7 @@ private:
     std::string rng_type;
     int rng_max_count;
     int rng_count;
-    
+
 };
 
 } // namespace SimpleRNGComponent

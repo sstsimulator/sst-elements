@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 // 
 // Portions are copyright of other developers:
@@ -96,7 +96,7 @@ void topo_dragonfly_legacy::route(int port, int vc, internal_router_event* ev)
 internal_router_event* topo_dragonfly_legacy::process_input(RtrEvent* ev)
 {
     dgnflyAddr dstAddr = {0, 0, 0, 0};
-    idToLocation(ev->request->dest, &dstAddr);
+    idToLocation(ev->getDest(), &dstAddr);
 
     switch (algorithm) {
     case MINIMAL:
@@ -119,7 +119,7 @@ internal_router_event* topo_dragonfly_legacy::process_input(RtrEvent* ev)
     topo_dragonfly_legacy_event *td_ev = new topo_dragonfly_legacy_event(dstAddr);
     td_ev->src_group = group_id;
     td_ev->setEncapsulatedEvent(ev);
-    td_ev->setVC(ev->request->vn * 3);
+    td_ev->setVC(td_ev->getVN() * 3);
     
     return td_ev;
 }
@@ -170,7 +170,7 @@ void topo_dragonfly_legacy::routeInitData(int port, internal_router_event* ev, s
 internal_router_event* topo_dragonfly_legacy::process_InitData_input(RtrEvent* ev)
 {
     dgnflyAddr dstAddr;
-    idToLocation(ev->request->dest, &dstAddr);
+    idToLocation(ev->getDest(), &dstAddr);
     topo_dragonfly_legacy_event *td_ev = new topo_dragonfly_legacy_event(dstAddr);
     td_ev->src_group = group_id;
     td_ev->setEncapsulatedEvent(ev);

@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -150,14 +150,14 @@ Samba::Samba(SST::ComponentId_t id, SST::Params& params): Component(id) {
 Samba::Samba() : Component(-1)
 {
 	// for serialization only
-	// 
+	//
 }
 
 
 void Samba::init(unsigned int phase) {
 
-	/* 
-	 * CPU may send init events to memory, pass them through, 
+	/*
+	 * CPU may send init events to memory, pass them through,
 	 * also pass memory events to CPU
 	 */
 	for (uint32_t i = 0; i < core_count; i++) {
@@ -170,7 +170,7 @@ void Samba::init(unsigned int phase) {
 			SST::MemHierarchy::MemEventInit * mEv = dynamic_cast<SST::MemHierarchy::MemEventInit*>(ev);
 			if (mEv && mEv->getInitCmd() == SST::MemHierarchy::MemEventInit::InitCommand::Coherence) {
 				SST::MemHierarchy::MemEventInitCoherence * mEvC = static_cast<SST::MemHierarchy::MemEventInitCoherence*>(mEv);
-				TLB[i]->setLineSize(mEvC->getLineSize()); 
+				TLB[i]->setLineSize(mEvC->getLineSize());
 			}
 			cpu_to_mmu[i]->sendInitData(ev);
 		}

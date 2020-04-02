@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -63,10 +63,10 @@ public:
 
 public:
 	EmberShmemTestGenerator(SST::ComponentId_t id, Params& params) :
-		EmberShmemGenerator(id, params, "ShmemTest" ), m_phase(0) 
+		EmberShmemGenerator(id, params, "ShmemTest" ), m_phase(0)
 	{ }
 
-    bool generate( std::queue<EmberEvent*>& evQ) 
+    bool generate( std::queue<EmberEvent*>& evQ)
 	{
         bool ret = false;
         switch ( m_phase ) {
@@ -85,24 +85,24 @@ public:
             break;
 
         case 3:
-            
+
             memset( &m_addr[0], 12, 1000 );
             memset( &m_addr[1000], 0, 1000 );
             ((int*)&m_addr[32])[0] = 0xf00d0000 + m_my_pe;
             printf("%d:%s: simVAddr %#" PRIx64 " backing %p\n",m_my_pe, getMotifName().c_str(),m_addr.getSimVAddr(),m_addr.getBacking());
             enQ_barrier_all( evQ );
-            enQ_putv( evQ, 
+            enQ_putv( evQ,
                     m_addr,
-                    (int) (0xdead0000 + m_my_pe + 1), 
+                    (int) (0xdead0000 + m_my_pe + 1),
                     (m_my_pe + 1) % m_n_pes );
             enQ_barrier_all( evQ );
             break;
 
         case 4:
             printf("%d:%s: PUT value=%#" PRIx32 "\n",m_my_pe, getMotifName().c_str(), ((int*)&m_addr[0])[0]);
-            enQ_get( evQ, 
+            enQ_get( evQ,
                     m_addr.offset(16),
-                    m_addr.offset(32), 
+                    m_addr.offset(32),
                     4,
                     (m_my_pe + 1) % m_n_pes );
             enQ_barrier_all( evQ );
@@ -110,9 +110,9 @@ public:
 
         case 5:
             printf("%d:%s: GET value=%#" PRIx32 "\n",m_my_pe, getMotifName().c_str(), ((int*)&m_addr[16])[0]);
-            enQ_get( evQ, 
+            enQ_get( evQ,
                     m_addr.offset(1000),
-                    m_addr.offset(0), 
+                    m_addr.offset(0),
                     1000,
                     (m_my_pe + 1) % m_n_pes );
             enQ_barrier_all( evQ );
@@ -124,25 +124,25 @@ public:
             }
             memset( &m_addr[0], 0xfe, 1000 );
             enQ_barrier_all( evQ );
-            enQ_put( evQ, 
+            enQ_put( evQ,
                     m_addr.offset(1000),
-                    m_addr.offset(0), 
+                    m_addr.offset(0),
                     1000,
                     (m_my_pe + 1) % m_n_pes );
             enQ_barrier_all( evQ );
             break;
 
-        case 7: 
+        case 7:
             for ( int i = 0; i < 10; i++ ) {
                 printf("%d:%s: GET value=%#" PRIx32 "\n",m_my_pe, getMotifName().c_str(), ((int*)&m_addr[1000])[i]);
             }
-            enQ_getv( evQ, 
+            enQ_getv( evQ,
                     &m_local,
                     m_addr,
                     (m_my_pe + 1) % m_n_pes );
             enQ_barrier_all( evQ );
             break;
-        case 8: 
+        case 8:
             printf("%d:%s: GET value=%#" PRIx32 "\n",m_my_pe, getMotifName().c_str(), m_local );
 
         default:

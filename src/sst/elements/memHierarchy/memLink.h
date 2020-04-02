@@ -1,8 +1,8 @@
-// Copyright 2013-2019 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2019, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -101,7 +101,7 @@ public:
     virtual bool isDest(std::string UNUSED(str));
     virtual bool isSource(std::string UNUSED(str));
     virtual std::string findTargetDestination(Addr addr);
-    
+
     /* Send and receive functions for MemLink */
     virtual void sendInitData(MemEventInit * ev);
     virtual MemEventInit* recvInitData();

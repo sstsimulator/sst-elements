@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 #
-# Copyright 2009-2019 NTESS. Under the terms
+# Copyright 2009-2020 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2019, NTESS
+# Copyright (c) 2009-2020, NTESS
 # All rights reserved.
 #
 # Portions are copyright of other developers:
@@ -31,7 +31,7 @@ cpu_params = {
 	"max_reqs_cycle": 2,
 	"maxmemreqpending" : maxmemreqpending,
 	"max_reorder_lookups": 168,
-	"clock" : clock, 
+	"clock" : clock,
 	"verbose" : 1,
 	"printStats" : 1,
 	"clock" : clock
@@ -39,8 +39,8 @@ cpu_params = {
 
 l1cache_params = {
     "clock" : clock,
-    "debug": 1, 
-    "debug_level": 0, 
+    "debug": 1,
+    "debug_level": 0,
     "coherence_protocol": coherence_protocol,
     "cache_frequency": clock,
     "replacement_policy": "lru",
@@ -51,7 +51,7 @@ l1cache_params = {
     "low_network_links": 1,
     "access_latency_cycles": 4,
     "L1": 1,
-    "debug": 0, 
+    "debug": 0,
 
     "prefetcher": "cassini.StridePrefetcher",
     "reach": 16,
@@ -59,15 +59,15 @@ l1cache_params = {
 }
     #"prefetcher": "cassini.StridePrefetcher",
     #"reach": 16,
-    #"detect_range" : 1 
+    #"detect_range" : 1
 
 bus_params = {
-    "bus_frequency" : clock 
+    "bus_frequency" : clock
 }
 
 l2cache_params = {
-    "debug": 1, 
-    "debug_level": 0, 
+    "debug": 1,
+    "debug_level": 0,
     "clock" : clock,
     "coherence_protocol": coherence_protocol,
     "cache_frequency": clock,
@@ -83,7 +83,7 @@ l2cache_params = {
 }
 
 l3cache_params = {
-    "debug_level": 0, 
+    "debug_level": 0,
     "debug" : "1",
 
     "access_latency_cycles" : 21,

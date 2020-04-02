@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -37,7 +37,7 @@ streamCPU::streamCPU(ComponentId_t id, Params& params) :
     if (commFreq < 0) {
 	out.fatal(CALL_INFO, -1,"couldn't find communication frequency\n");
     }
-    
+
     maxAddr = params.find<uint32_t>("memSize", -1) -1;
     if ( !maxAddr ) {
         out.fatal(CALL_INFO, -1, "Must set memSize\n");
@@ -63,9 +63,9 @@ streamCPU::streamCPU(ComponentId_t id, Params& params) :
     clockHandler = new Clock::Handler<streamCPU>(this, &streamCPU::clockTic);
     clockTC = registerClock(clockFreq, clockHandler);
     num_reads_issued = num_reads_returned = 0;
-    
+
     memory = loadUserSubComponent<Interfaces::SimpleMem>("memory", ComponentInfo::SHARE_NONE, clockTC, new Interfaces::SimpleMem::Handler<streamCPU>(this, &streamCPU::handleEvent));
-    
+
     if (!memory) {
         Params interfaceParams;
         interfaceParams.insert("port", "mem_link");
@@ -129,7 +129,7 @@ bool streamCPU::clockTic( Cycle_t )
             Interfaces::SimpleMem::Request::Command cmd = doWrite ? Interfaces::SimpleMem::Request::Write : Interfaces::SimpleMem::Request::Read;
 
             Interfaces::SimpleMem::Request *req = new Interfaces::SimpleMem::Request(cmd, nextAddr, 4/* 4 bytes*/);
-	    
+
 	    if ( doWrite ) {
 	        req->data.resize(4);
                 req->data[0] = (nextAddr >> 24) & 0xff;
@@ -137,7 +137,7 @@ bool streamCPU::clockTic( Cycle_t )
                 req->data[2] = (nextAddr >>  8) & 0xff;
                 req->data[3] = (nextAddr >>  0) & 0xff;
 	    }
-	    
+
             memory->sendRequest(req);
             requests.insert(std::make_pair(req->id, getCurrentSimTime()));
 

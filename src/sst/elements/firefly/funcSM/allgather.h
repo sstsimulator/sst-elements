@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -46,7 +46,7 @@ class AllgatherFuncSM :  public FunctionSMInterface
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "",
         ""
-    ) 
+    )
 
   private:
     enum StateEnum {
@@ -54,9 +54,9 @@ class AllgatherFuncSM :  public FunctionSMInterface
     } m_state;
 
     struct SetupState {
-        SetupState() : count(0), state( PostStartMsgRecv ), 
+        SetupState() : count(0), state( PostStartMsgRecv ),
                 offset(1), stage(0) {}
-        void init() { 
+        void init() {
             count = 0;
             state = PostStartMsgRecv;
             offset = 1;
@@ -87,7 +87,7 @@ class AllgatherFuncSM :  public FunctionSMInterface
     long mod( long a, long b ) { return (a % b + b) % b; }
 
     uint32_t genTag() {
-        return CtrlMsg::AllgatherTag | (( m_seq & 0xff) << 8 ); 
+        return CtrlMsg::AllgatherTag | (( m_seq & 0xff) << 8 );
     }
 
     int calcSrc ( int offset) {
@@ -98,12 +98,12 @@ class AllgatherFuncSM :  public FunctionSMInterface
     unsigned char* chunkPtr( int rank ) {
         unsigned char* ptr = (unsigned char*) m_event->recvbuf.getBacking();
         if ( m_event->recvcntPtr ) {
-            ptr += ((int*)m_event->displsPtr)[rank]; 
+            ptr += ((int*)m_event->displsPtr)[rank];
         } else {
             ptr += rank * chunkSize( rank );
         }
         m_dbg.debug(CALL_INFO,2,0,"rank %d, ptr %p\n", rank, ptr);
- 
+
         return ptr;
     }
 
@@ -111,10 +111,10 @@ class AllgatherFuncSM :  public FunctionSMInterface
         size_t size;
 		int count;
         if ( m_event->recvcntPtr ) {
-			count = ((int*)m_event->recvcntPtr)[rank]; 
+			count = ((int*)m_event->recvcntPtr)[rank];
         } else {
 			count = m_event->recvcnt;
-        } 
+        }
         size = m_info->sizeofDataType( m_event->recvtype ) * count;
         m_dbg.debug(CALL_INFO,2,0,"rank %d, size %lu count %d\n",rank,size,count);
         return size;
@@ -123,22 +123,22 @@ class AllgatherFuncSM :  public FunctionSMInterface
     CtrlMsg::API* proto() { return static_cast<CtrlMsg::API*>(m_proto); }
 
     std::vector<CtrlMsg::CommReq>  m_recvReqV;
-    CtrlMsg::CommReq    m_recvReq; 
+    CtrlMsg::CommReq    m_recvReq;
     GatherStartEvent*   m_event;
     int                 m_seq;
     SetupState          m_setupState;
     std::vector<int>    m_numChunks;
     std::vector<int>    m_sendStartChunk;
     std::vector<int>    m_dest;
-    int                 m_rank; 
-    int                 m_size; 
+    int                 m_rank;
+    int                 m_size;
     unsigned int        m_currentStage;
     static const char*  m_enumName[];
 
     int m_smallCollectiveVN;
     int m_smallCollectiveSize;
 };
-        
+
 }
 }
 

@@ -1,8 +1,8 @@
-// Copyright 2009-2018 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2018, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -60,7 +60,7 @@ namespace SST {
 namespace Ember {
 
 class EmberShmemLib : public EmberLib {
-  
+
   public:
 
     SST_ELI_REGISTER_MODULE(
@@ -122,7 +122,7 @@ class EmberShmemLib : public EmberLib {
 	}
 
 	void fam_scatter_blocking( Queue& q, Hermes::MemAddr src, Shmem::Fam_Descriptor fd,
-		uint64_t nblocks, uint64_t firstBlock, uint64_t stride, uint64_t blockSize ) 
+		uint64_t nblocks, uint64_t firstBlock, uint64_t stride, uint64_t blockSize )
 	{
 		q.push( new EmberFamScatter_Event( api(), m_output, src.getSimVAddr(), fd, nblocks, firstBlock, stride, blockSize, true ) );
 	}
@@ -134,7 +134,7 @@ class EmberShmemLib : public EmberLib {
 	}
 
 	void fam_scatter_nonblocking( Queue& q, Hermes::MemAddr src, Shmem::Fam_Descriptor fd,
-		uint64_t nblocks, uint64_t firstBlock, uint64_t stride, uint64_t blockSize ) 
+		uint64_t nblocks, uint64_t firstBlock, uint64_t stride, uint64_t blockSize )
 	{
 		q.push( new EmberFamScatter_Event( api(), m_output, src.getSimVAddr(), fd, nblocks, firstBlock, stride, blockSize, false ) );
 	}
@@ -145,7 +145,7 @@ class EmberShmemLib : public EmberLib {
 		q.push( new EmberFamGatherv_Event( api(), m_output, dest.getSimVAddr(), fd, nblocks, indexes, blockSize, true ) );
 	}
 	void fam_gather_blocking( Queue& q, Hermes::MemAddr dest, Shmem::Fam_Descriptor fd,
-		uint64_t nblocks, uint64_t firstBlock, uint64_t stride, uint64_t blockSize ) 
+		uint64_t nblocks, uint64_t firstBlock, uint64_t stride, uint64_t blockSize )
 	{
 		q.push( new EmberFamGather_Event( api(), m_output, dest.getSimVAddr(), fd, nblocks, firstBlock, stride, blockSize, true ) );
 	}
@@ -156,7 +156,7 @@ class EmberShmemLib : public EmberLib {
 		q.push( new EmberFamGatherv_Event( api(), m_output, dest.getSimVAddr(), fd, nblocks, indexes, blockSize, false ) );
 	}
 	void fam_gather_nonblocking( Queue& q, Hermes::MemAddr dest, Shmem::Fam_Descriptor fd,
-		uint64_t nblocks, uint64_t firstBlock, uint64_t stride, uint64_t blockSize ) 
+		uint64_t nblocks, uint64_t firstBlock, uint64_t stride, uint64_t blockSize )
 	{
 		q.push( new EmberFamGather_Event( api(), m_output, dest.getSimVAddr(), fd, nblocks, firstBlock, stride, blockSize, false ) );
 	}
@@ -191,82 +191,82 @@ class EmberShmemLib : public EmberLib {
 		q.push( new EmberBarrierShmemEvent( api(), m_output, PE_start, logPE_stride, PE_size, pSync.getSimVAddr() ) );
 	}
 
-	void broadcast32( Queue& q, Hermes::MemAddr dest, Hermes::MemAddr src, size_t nelems, 
-				int PE_root, int PE_start, int logPE_stride, int PE_size, Hermes::MemAddr pSync ) 
+	void broadcast32( Queue& q, Hermes::MemAddr dest, Hermes::MemAddr src, size_t nelems,
+				int PE_root, int PE_start, int logPE_stride, int PE_size, Hermes::MemAddr pSync )
 	{
-		q.push( new EmberBroadcastShmemEvent( api(), m_output, 
+		q.push( new EmberBroadcastShmemEvent( api(), m_output,
 						dest.getSimVAddr(), src.getSimVAddr(), nelems * 4, PE_root, PE_start,
 							logPE_stride, PE_size, pSync.getSimVAddr() ) );
 	}
 
-	void broadcast64( Queue& q, Hermes::MemAddr dest, Hermes::MemAddr src, size_t nelems, 
+	void broadcast64( Queue& q, Hermes::MemAddr dest, Hermes::MemAddr src, size_t nelems,
 				int PE_root, int PE_start, int logPE_stride, int PE_size, Hermes::MemAddr pSync )
 	{
-		q.push( new EmberBroadcastShmemEvent( api(), m_output, 
+		q.push( new EmberBroadcastShmemEvent( api(), m_output,
 						dest.getSimVAddr(), src.getSimVAddr(), nelems * 8, PE_root, PE_start,
 							logPE_stride, PE_size, pSync.getSimVAddr() ) );
 	}
 
-	void fcollect32( Queue& q, Hermes::MemAddr dest, Hermes::MemAddr src, size_t nelems, 
+	void fcollect32( Queue& q, Hermes::MemAddr dest, Hermes::MemAddr src, size_t nelems,
 				int PE_start, int logPE_stride, int PE_size, Hermes::MemAddr pSync )
 	{
-		q.push( new EmberFcollectShmemEvent( api(), m_output, 
+		q.push( new EmberFcollectShmemEvent( api(), m_output,
 						dest.getSimVAddr(), src.getSimVAddr(), nelems * 4, PE_start,
 							logPE_stride, PE_size, pSync.getSimVAddr() ) );
 	}
 
-	void fcollect64( Queue& q, Hermes::MemAddr dest, Hermes::MemAddr src, size_t nelems, 
+	void fcollect64( Queue& q, Hermes::MemAddr dest, Hermes::MemAddr src, size_t nelems,
 				int PE_start, int logPE_stride, int PE_size, Hermes::MemAddr pSync )
 	{
-		q.push( new EmberFcollectShmemEvent( api(), m_output, 
+		q.push( new EmberFcollectShmemEvent( api(), m_output,
 						dest.getSimVAddr(), src.getSimVAddr(), nelems * 8, PE_start,
 							logPE_stride, PE_size, pSync.getSimVAddr() ) );
 	}
 
-	void collect32( Queue& q, Hermes::MemAddr dest, Hermes::MemAddr src, size_t nelems, 
+	void collect32( Queue& q, Hermes::MemAddr dest, Hermes::MemAddr src, size_t nelems,
 				int PE_start, int logPE_stride, int PE_size, Hermes::MemAddr pSync )
 	{
-		q.push( new EmberCollectShmemEvent( api(), m_output, 
+		q.push( new EmberCollectShmemEvent( api(), m_output,
 						dest.getSimVAddr(), src.getSimVAddr(), nelems * 4, PE_start,
 							logPE_stride, PE_size, pSync.getSimVAddr() ) );
 	}
 
-	void collect64( Queue& q, Hermes::MemAddr dest, Hermes::MemAddr src, size_t nelems, 
+	void collect64( Queue& q, Hermes::MemAddr dest, Hermes::MemAddr src, size_t nelems,
 				int PE_start, int logPE_stride, int PE_size, Hermes::MemAddr pSync )
 	{
-		q.push( new EmberCollectShmemEvent( api(), m_output, 
+		q.push( new EmberCollectShmemEvent( api(), m_output,
 						dest.getSimVAddr(), src.getSimVAddr(), nelems * 8, PE_start,
 							logPE_stride, PE_size, pSync.getSimVAddr() ) );
 	}
 
-	void alltoall32( Queue& q, Hermes::MemAddr dest, Hermes::MemAddr src, size_t nelems, 
+	void alltoall32( Queue& q, Hermes::MemAddr dest, Hermes::MemAddr src, size_t nelems,
 				int PE_start, int logPE_stride, int PE_size, Hermes::MemAddr pSync )
 	{
-		q.push( new EmberAlltoallShmemEvent( api(), m_output, 
+		q.push( new EmberAlltoallShmemEvent( api(), m_output,
 						dest.getSimVAddr(), src.getSimVAddr(), nelems * 4, PE_start,
 							logPE_stride, PE_size, pSync.getSimVAddr() ) );
 	}
 
-	void alltoall64( Queue& q, Hermes::MemAddr dest, Hermes::MemAddr src, size_t nelems, 
+	void alltoall64( Queue& q, Hermes::MemAddr dest, Hermes::MemAddr src, size_t nelems,
 				int PE_start, int logPE_stride, int PE_size, Hermes::MemAddr pSync )
 	{
-		q.push( new EmberAlltoallShmemEvent( api(), m_output, 
+		q.push( new EmberAlltoallShmemEvent( api(), m_output,
 						dest.getSimVAddr(), src.getSimVAddr(), nelems * 8, PE_start,
 							logPE_stride, PE_size, pSync.getSimVAddr() ) );
 	}
 
-	void alltoalls32( Queue& q, Hermes::MemAddr dest, Hermes::MemAddr src, 
+	void alltoalls32( Queue& q, Hermes::MemAddr dest, Hermes::MemAddr src,
 			int dst, int sst, size_t nelems, int PE_start, int logPE_stride, int PE_size, Hermes::MemAddr pSync )
 	{
-		q.push( new EmberAlltoallsShmemEvent( api(), m_output, 
+		q.push( new EmberAlltoallsShmemEvent( api(), m_output,
 						dest.getSimVAddr(), src.getSimVAddr(), dst, sst, nelems, 4, PE_start,
 							logPE_stride, PE_size, pSync.getSimVAddr() ) );
 	}
 
-	void alltoalls64( Queue& q, Hermes::MemAddr dest, Hermes::MemAddr src, 
+	void alltoalls64( Queue& q, Hermes::MemAddr dest, Hermes::MemAddr src,
 			int dst, int sst, size_t nelems, int PE_start, int logPE_stride, int PE_size, Hermes::MemAddr pSync )
 	{
-		q.push( new EmberAlltoallsShmemEvent( api(), m_output, 
+		q.push( new EmberAlltoallsShmemEvent( api(), m_output,
 						dest.getSimVAddr(), src.getSimVAddr(), dst, sst, nelems, 8, PE_start,
 							logPE_stride, PE_size, pSync.getSimVAddr() ) );
 	}
@@ -358,30 +358,30 @@ class EmberShmemLib : public EmberLib {
 
 	template <class TYPE>
 	void add( Queue& q, Hermes::MemAddr addr, TYPE* value,  int pe ) {
-		q.push( new EmberAddShmemEvent( api(), m_output,  
+		q.push( new EmberAddShmemEvent( api(), m_output,
 					addr.getSimVAddr(), Hermes::Value(value), pe ) );
 	}
 
 	template <class TYPE>
 	void fadd( Queue& q, TYPE* result, Hermes::MemAddr addr, TYPE* value,  int pe ) {
-		q.push( new EmberFaddShmemEvent( api(), m_output,  
+		q.push( new EmberFaddShmemEvent( api(), m_output,
 					Hermes::Value(result), addr.getSimVAddr(), Hermes::Value(value), pe ) );
 	}
 
 	template <class TYPE>
 	void swap( Queue& q, TYPE* result, Hermes::MemAddr addr, TYPE* value,  int pe ) {
-		q.push( new EmberSwapShmemEvent( api(), m_output,  
+		q.push( new EmberSwapShmemEvent( api(), m_output,
 					Hermes::Value(result), addr.getSimVAddr(), Hermes::Value(value), pe ) );
 	}
 
 	template <class TYPE>
 	void cswap( Queue& q, TYPE* result, Hermes::MemAddr addr, TYPE* cond, TYPE* value,  int pe ) {
-		q.push( new EmberCswapShmemEvent( api(), m_output,  
+		q.push( new EmberCswapShmemEvent( api(), m_output,
 					Hermes::Value(result), addr.getSimVAddr(), Hermes::Value(cond), Hermes::Value(value), pe ) );
 	}
 
   private:
-	Shmem::Interface& api() { return *static_cast<Shmem::Interface*>(m_api); } 
+	Shmem::Interface& api() { return *static_cast<Shmem::Interface*>(m_api); }
 };
 
 }

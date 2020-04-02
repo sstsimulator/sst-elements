@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -64,7 +64,7 @@ int LinearAllocator::MeshLocationOrdering::valtox(int x, int xoff, int y, int yo
             //default: error("rotate value too large in LinearAllocator.cc:" + rotate);
     default: schedout.fatal(CALL_INFO, 1, "rotate value too large in LinearAllocator.cc: %d", rotate);
              return 0;
-    } 
+    }
 }
 
 int LinearAllocator::MeshLocationOrdering::valtoy(int x, int xoff, int y, int yoff, int rotate, int mirror)
@@ -77,7 +77,7 @@ int LinearAllocator::MeshLocationOrdering::valtoy(int x, int xoff, int y, int yo
             //default: error("rotate value too large in LinearAllocator.cc:" + rotate);
     default: schedout.fatal(CALL_INFO, 1, "rotate value too large in LinearAllocator.cc: %d", rotate);
              return 0;
-    } 
+    }
 }
 
 //helper function for 3D Hilbert curve
@@ -165,7 +165,7 @@ void LinearAllocator::MeshLocationOrdering::threedmark(triple curpoint, rotation
             mirror = addwithrotate(mirror, 0, localmirror & 1, 0, bigrotate);
             mirror = addwithrotate(mirror, 1, localmirror & 2, 0, bigrotate);
             mirror = addwithrotate(mirror, 2, localmirror & 4, 0, bigrotate);
-            localmirror = (int)(mirror.d[0] != 0) + 2 * (int)(mirror.d[1] != 0) + 4 * (int)(mirror.d[2] != 0); //don't want negative values 
+            localmirror = (int)(mirror.d[0] != 0) + 2 * (int)(mirror.d[1] != 0) + 4 * (int)(mirror.d[2] != 0); //don't want negative values
             mirrors[tripletoint(curpoint)] = bigmirror ^ localmirror;
 
             //set inverse
@@ -174,7 +174,7 @@ void LinearAllocator::MeshLocationOrdering::threedmark(triple curpoint, rotation
             //set rank
             if (point > 0) {
                 rank[tripletoint(curpoint)] = lastrank + curdim * curdim * curdim / 8;
-            } 
+            }
             lastrank = rank[tripletoint(curpoint)];
 
             //find next point
@@ -218,7 +218,7 @@ void LinearAllocator::MeshLocationOrdering::threedmark(triple curpoint, rotation
             mirror = addwithrotate(mirror, 0, localmirror & 1, 0, bigrotate);
             mirror = addwithrotate(mirror, 1, localmirror & 2, 0, bigrotate);
             mirror = addwithrotate(mirror, 2, localmirror & 4, 0, bigrotate);
-            localmirror = (int)(mirror.d[0] != 0) + 2 * (int)(mirror.d[1] != 0) + 4 * (int)(mirror.d[2] != 0); //don't want negative values 
+            localmirror = (int)(mirror.d[0] != 0) + 2 * (int)(mirror.d[1] != 0) + 4 * (int)(mirror.d[2] != 0); //don't want negative values
             mirrors[tripletoint(curpoint)] = bigmirror ^ localmirror;
 
             //set inverse
@@ -227,7 +227,7 @@ void LinearAllocator::MeshLocationOrdering::threedmark(triple curpoint, rotation
             //set rank
             if (point < 7) {
                 rank[tripletoint(curpoint)] = lastrank + curdim * curdim * curdim / 8;
-            } 
+            }
             lastrank = rank[tripletoint(curpoint)];
 
             //find next point
@@ -246,7 +246,7 @@ void LinearAllocator::MeshLocationOrdering::threedmark(triple curpoint, rotation
     }
 }
 
-LinearAllocator::MeshLocationOrdering::MeshLocationOrdering(Machine* mach, bool SORT = false, bool hilbert = true) 
+LinearAllocator::MeshLocationOrdering::MeshLocationOrdering(Machine* mach, bool SORT = false, bool hilbert = true)
 {
     StencilMachine* m = dynamic_cast<StencilMachine*>(mach);
     //if (NULL == m) error("Linear Allocators Require Mesh Machine");
@@ -332,16 +332,16 @@ LinearAllocator::MeshLocationOrdering::MeshLocationOrdering(Machine* mach, bool 
                 int point1 = curx + cury * xdimh;
 
                 //point 2
-                int point2 = valtox(curx, 0, cury, curyd / 2, rotate[point1], mirror[point1]) + 
-                    xdimh * valtoy(curx, 0, cury, curyd / 2, rotate[point1], mirror[point1]); 
+                int point2 = valtox(curx, 0, cury, curyd / 2, rotate[point1], mirror[point1]) +
+                    xdimh * valtoy(curx, 0, cury, curyd / 2, rotate[point1], mirror[point1]);
 
                 rankh[point2] = rankh[point1] + 1 * size;
                 rotate[point2] = rotate[point1];
                 mirror[point2] = mirror[point1];
 
                 //point 3
-                int point3 = valtox(curx, curxd / 2, cury, curyd / 2, rotate[point1], mirror[point1]) + 
-                    xdimh * valtoy(curx, curxd / 2, cury, curyd / 2, rotate[point1], mirror[point1]); 
+                int point3 = valtox(curx, curxd / 2, cury, curyd / 2, rotate[point1], mirror[point1]) +
+                    xdimh * valtoy(curx, curxd / 2, cury, curyd / 2, rotate[point1], mirror[point1]);
 
                 rankh[point3] = rankh[point1] + 2 * size;
                 rotate[point3] = rotate[point1];
@@ -365,12 +365,12 @@ LinearAllocator::MeshLocationOrdering::MeshLocationOrdering(Machine* mach, bool 
                 //remains the same.  This will mess up continuity for points 2 and
                 //3 recursively but we won't use them anyway there can still be
                 //some discontinuities, all along the right border, but none of the
-                //jumps appear to be larger than 2 
+                //jumps appear to be larger than 2
                 if (0 == rotate[point1] % 2) {
                     if (valtoy(curx, curxd / 2, cury, curyd / 2, rotate[point1], mirror[point1]) == ydim) {
                         rankh[point4] = 0; //undo our old point 4
-                        point4 = valtox(curx, curxd/2, cury, 0, rotate[point1], mirror[point1]) + 
-                            xdimh * valtoy(curx, curxd/2, cury, 0, rotate[point1], mirror[point1]); 
+                        point4 = valtox(curx, curxd/2, cury, 0, rotate[point1], mirror[point1]) +
+                            xdimh * valtoy(curx, curxd/2, cury, 0, rotate[point1], mirror[point1]);
                         rankh[point4] = rankh[point1] + 3 * size;
                         rotate[point4] = rotate[point1];
                         mirror[point4] = mirror[point1];
@@ -386,8 +386,8 @@ LinearAllocator::MeshLocationOrdering::MeshLocationOrdering(Machine* mach, bool 
                 } else {
                     if (valtox(curx, curxd / 2, cury, curyd / 2,rotate[point1], mirror[point1]) == xdim) {
                         rankh[point4] = 0; //undo our old point 4
-                        point4 = valtox(curx, curxd / 2, cury, 0, rotate[point1], mirror[point1]) + 
-                            xdimh * valtoy(curx, curxd / 2, cury, 0, rotate[point1], mirror[point1]); 
+                        point4 = valtox(curx, curxd / 2, cury, 0, rotate[point1], mirror[point1]) +
+                            xdimh * valtoy(curx, curxd / 2, cury, 0, rotate[point1], mirror[point1]);
                         rankh[point4] = rankh[point1] + 3 * size;
                         rotate[point4] = rotate[point1];
                         mirror[point4] = mirror[point1];
@@ -464,7 +464,7 @@ LinearAllocator::MeshLocationOrdering::MeshLocationOrdering(Machine* mach, bool 
             delete [] exists;
             delete [] rankh;
 
-        } else { 
+        } else {
 
             //a 3D Hilbert curve. There are many ways to extend a Hilbert curve
             //to three dimensions.  This one is from "An inventory of
@@ -497,7 +497,7 @@ LinearAllocator::MeshLocationOrdering::MeshLocationOrdering(Machine* mach, bool 
             int* inverse = new int[xdim * ydim * zdim];
 
             int curdim = xdim;
-            triple curpoint; 
+            triple curpoint;
             curpoint.d[0] = 0;
             curpoint.d[1] = curdim / 3;
             curpoint.d[2] = curdim / 3;
@@ -530,7 +530,7 @@ LinearAllocator::MeshLocationOrdering::MeshLocationOrdering(Machine* mach, bool 
 
             while (curdim > 1) {
                 //mark the eight points accordingly
-                triple nextpoint = next[tripletoint(curpoint)]; //don't overwrite 
+                triple nextpoint = next[tripletoint(curpoint)]; //don't overwrite
                 threedmark(curpoint, rot, rankh, curdim, next, mirrors, inverse, &rules[0]);
 
                 //go to the next point
@@ -589,7 +589,7 @@ LinearAllocator::MeshLocationOrdering::MeshLocationOrdering(Machine* mach, bool 
                 if (!flag) {
                     schedout.fatal(CALL_INFO, 1, "error: %d not found", rankin);
                 }
-            } 
+            }
 
             delete [] exists;
             delete [] rot;
@@ -601,7 +601,7 @@ LinearAllocator::MeshLocationOrdering::MeshLocationOrdering(Machine* mach, bool 
         //snake curve
         rank = new int[xdim * ydim * zdim];
         int xcount = 0;
-        int ycount = 0; 
+        int ycount = 0;
         int zcount = 0;
         int xdir = 1;
         int ydir = 1;
@@ -626,7 +626,7 @@ LinearAllocator::MeshLocationOrdering::MeshLocationOrdering(Machine* mach, bool 
 
 //returns the rank of a given location
 //have to mix which coordinate is which in case x was not smallest
-int LinearAllocator::MeshLocationOrdering::rankOf(MeshLocation* L) 
+int LinearAllocator::MeshLocationOrdering::rankOf(MeshLocation* L)
 {
     int coordinates[3];
     coordinates[xpos] = L->dims[0];
@@ -686,7 +686,7 @@ LinearAllocator::LinearAllocator(vector<string>* params, Machine* mach) : Alloca
 
 //returns list of intervals of free processors
 //each interval represented by a list of its locations
-vector<vector<MeshLocation*>*>* LinearAllocator::getIntervals() 
+vector<vector<MeshLocation*>*>* LinearAllocator::getIntervals()
 {
     set<MeshLocation*, MeshLocationOrdering>* avail = new set<MeshLocation*,MeshLocationOrdering>(*ordering);
     //add all free nodes to avail
@@ -694,7 +694,7 @@ vector<vector<MeshLocation*>*>* LinearAllocator::getIntervals()
     std::vector<MeshLocation*>* machfree = new std::vector<MeshLocation*>(freeNodes->size());
     for(unsigned int i = 0; i < freeNodes->size(); i++){
         machfree->at(i) = new MeshLocation(freeNodes->at(i), *mMachine);
-    }   
+    }
     delete freeNodes;
 
     avail -> insert(machfree -> begin(), machfree -> end());
@@ -739,9 +739,9 @@ AllocInfo* LinearAllocator::minSpanAllocate(Job* job) {
     std::vector<MeshLocation*>* avail = new std::vector<MeshLocation*>(freeNodes->size());
     for(unsigned int i = 0; i < freeNodes->size(); i++){
         avail->at(i) = new MeshLocation(freeNodes->at(i), *mMachine);
-    }   
+    }
     delete freeNodes;
-    
+
     sort(avail -> begin(), avail -> end(), *ordering);
     int num = ceil((double) job->getProcsNeeded() / machine.coresPerNode);
 

@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -33,7 +33,7 @@
 #include "SimpleMachine.h"
 #include "StencilMachine.h"
 #include "Torus3DMachine.h"
- 
+
 #include "allocators/NearestAllocator.h"
 #include "allocators/OctetMBSAllocator.h"
 #include "allocators/BestFitAllocator.h"
@@ -71,7 +71,7 @@
 using namespace SST::Scheduler;
 using namespace std;
 
-/* 
+/*
  * Factory file helps parse the parameters in the sdl file
  * returns correct type of machine, allocator, and scheduler
  */
@@ -253,9 +253,9 @@ Machine* Factory::getMachine(SST::Params& params, int numNodes)
         DParser dParser = DParser(numNodes, params);
         D_matrix = dParser.readDMatrix();
     }
-    
+
     int coresPerNode = params.find<int64_t>("coresPerNode", 1);
-    
+
     //get machine
     if (params.find<std::string>("machine").empty()) {
         //default: FIFO queue priority scheduler
@@ -277,16 +277,16 @@ Machine* Factory::getMachine(SST::Params& params, int numNodes)
         case MESH:
         {
             schedout.debug(CALL_INFO, 4, 0, "Mesh 3D Machine\n");
-            
+
             if (schedparams -> size() != 3 && schedparams -> size() != 4) {
                 schedout.fatal(CALL_INFO, 1, "Wrong number of arguments for Mesh 3D Machine:\nNeed 3 (x, y, and z dimensions) or 2 (z defaults to 1)");
             }
 
             std::vector<int> dims(3);
-            dims[0] = strtol(schedparams -> at(1).c_str(), NULL, 0); 
-            dims[1] = strtol(schedparams -> at(2).c_str(), NULL, 0); 
+            dims[0] = strtol(schedparams -> at(1).c_str(), NULL, 0);
+            dims[1] = strtol(schedparams -> at(2).c_str(), NULL, 0);
             if (schedparams -> size() == 4) {
-                dims[2] = strtol(schedparams -> at(3).c_str(), NULL, 0); 
+                dims[2] = strtol(schedparams -> at(3).c_str(), NULL, 0);
             } else {
                 dims[2] = 1;
             }
@@ -303,10 +303,10 @@ Machine* Factory::getMachine(SST::Params& params, int numNodes)
             }
 
             std::vector<int> dims(3);
-            dims[0] = strtol(schedparams -> at(1).c_str(), NULL, 0); 
-            dims[1] = strtol(schedparams -> at(2).c_str(), NULL, 0); 
+            dims[0] = strtol(schedparams -> at(1).c_str(), NULL, 0);
+            dims[1] = strtol(schedparams -> at(2).c_str(), NULL, 0);
             if (schedparams -> size() == 4) {
-                dims[2] = strtol(schedparams -> at(3).c_str(), NULL, 0); 
+                dims[2] = strtol(schedparams -> at(3).c_str(), NULL, 0);
             } else {
                 dims[2] = 1;
             }
@@ -350,7 +350,7 @@ Machine* Factory::getMachine(SST::Params& params, int numNodes)
             schedout.fatal(CALL_INFO, 1, "Cannot parse name of machine");
         }
     }
-        
+
     return retMachine;
 }
 
@@ -366,7 +366,7 @@ Allocator* Factory::getAllocator(SST::Params& params, Machine* m, schedComponent
         vector<string>* nearestparams = NULL;
         switch (allocatorname(schedparams -> at(0)))
         {
-            //Simple Allocator 
+            //Simple Allocator
         case SIMPLEALLOC:
             return new SimpleAllocator(m);
 
@@ -430,7 +430,7 @@ Allocator* Factory::getAllocator(SST::Params& params, Machine* m, schedComponent
         case GRANULARMBS:
             schedout.debug(CALL_INFO, 4, 0, "Granular MBS Allocator\n");
             return new GranularMBSAllocator(nearestparams, m);
-        case OCTETMBS: 
+        case OCTETMBS:
             schedout.debug(CALL_INFO, 4, 0, "Octet MBS Allocator\n");
             return new OctetMBSAllocator(nearestparams, m);
 
@@ -606,7 +606,7 @@ TaskMapper* Factory::getTaskMapper(SST::Params& params, Machine* mach)
             break;
         case RCMMAP:
             taskMapper = new TopoMapper(*mach, TopoMapper::R_C_M);
-            break;  
+            break;
         case NEARESTAMT:
             if (!params.find<std::string>("allocator").empty()
                 && allocatorname(parseparams(params.find<std::string>("allocator"))->at(0)) == NEARESTAMAP ) {
@@ -614,7 +614,7 @@ TaskMapper* Factory::getTaskMapper(SST::Params& params, Machine* mach)
             } else {
                 taskMapper = new NearestAllocMapper(*mach, false);
             }
-            break;  
+            break;
         case SPECTRALAMT:
            if(!params.find<std::string>("allocator").empty()
               && allocatorname(parseparams(params.find<std::string>("allocator"))->at(0)) == SPECTRALAMAP ){
@@ -622,8 +622,8 @@ TaskMapper* Factory::getTaskMapper(SST::Params& params, Machine* mach)
             } else {
                 taskMapper = new SpectralAllocMapper(*mach, false);
             }
-            break;    
-        default: 
+            break;
+        default:
             taskMapper = NULL;
             schedout.fatal(CALL_INFO, 1, "Could not parse name of task mapper");
         }
@@ -653,7 +653,7 @@ int Factory::getFST(SST::Params& params)
         }
     }
     schedout.fatal(CALL_INFO, 1, "Could not parse FST type; should be none, strict, or relaxed");
-    return 0; 
+    return 0;
 }
 
 vector<double>* Factory::getTimePerDistance(SST::Params& params)
@@ -676,7 +676,7 @@ vector<double>* Factory::getTimePerDistance(SST::Params& params)
         //return atof(tpdparams -> at(0).c_str());
     }
     //schedout.fatal(CALL_INFO, 1, "Could not parse timeperdistance; should be a floating point integer");
-    return ret; 
+    return ret;
 }
 
 
@@ -741,7 +741,7 @@ Factory::FSTType Factory::FSTname(string inparam)
 {
     for(int i = 0; i < numFSTTableEntries; i++) {
         if (inparam == FSTTable[i].name) return FSTTable[i].val;
-    } 
+    }
     schedout.fatal(CALL_INFO, 1, "FST name not found:%s", inparam.c_str());
     exit(0);
 }

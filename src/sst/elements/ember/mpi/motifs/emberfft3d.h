@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -99,8 +99,8 @@ private:
         std::vector<int> np2loc_col;
     } m_data;
 
-    std::vector< uint64_t > m_fwdTime; 
-    std::vector< uint64_t > m_bwdTime; 
+    std::vector< uint64_t > m_fwdTime;
+    std::vector< uint64_t > m_bwdTime;
     uint64_t calcFwdFFT1() { return m_fwdTime[0]; }
     uint64_t calcFwdFFT2() { return m_fwdTime[1]; }
     uint64_t calcFwdFFT3() { return m_fwdTime[2]; }

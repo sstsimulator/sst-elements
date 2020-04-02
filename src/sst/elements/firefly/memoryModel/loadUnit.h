@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -14,18 +14,18 @@
 // distribution.
 
 class LoadUnit : public Unit {
-	struct Entry { 
+	struct Entry {
 		Entry( MemReq* req, Callback* callback, SimTime_t time ) : req(req), callback(callback), postTime(time) {}
 		MemReq* req;
 		Callback* callback;
-		SimTime_t postTime; 
+		SimTime_t postTime;
 	};
 
 	std::string m_name;
 
   public:
     LoadUnit( SimpleMemoryModel& model, Output& dbg, int id, int thread_id, Unit* cache, int numSlots, std::string name ) :
-        Unit( model, dbg ),  m_qSize(numSlots), m_cache(cache),  m_blocked(false), m_scheduled(false), 
+        Unit( model, dbg ),  m_qSize(numSlots), m_cache(cache),  m_blocked(false), m_scheduled(false),
 			m_blockedSrc(NULL) , m_numPending(0)//, m_name(name)
 	{
 		std::stringstream tmp;
@@ -46,7 +46,7 @@ class LoadUnit : public Unit {
         m_dbg.verbosePrefix(prefix(),CALL_INFO,1,LOAD_MASK,"addr=%#" PRIx64 " length=%lu pending=%lu\n",req->addr, req->length, m_pendingQ.size() );
 
 		m_pendingQ.push( Entry( req, callback, m_model.getCurrentSimTimeNano() ) );
-		++m_numPending; 
+		++m_numPending;
 		m_pendingQdepth->addData( m_numPending );
 
         if ( m_numPending <= m_qSize ) {

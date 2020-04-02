@@ -1,12 +1,12 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -45,7 +45,7 @@ public:
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Simple NIC to test routing.",
         COMPONENT_CATEGORY_NETWORK)
-    
+
     SST_ELI_DOCUMENT_PARAMS(
         {"id",        "Network ID of endpoint."},
         {"num_peers", "Total number of endpoints in network."},
@@ -59,7 +59,7 @@ public:
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
         {"networkIF", "Network interface", "SST::Interfaces::SimpleNetwork" }
     )
-    
+
 private:
 
     int id;
@@ -69,7 +69,7 @@ private:
 
     bool done;
     bool initialized;
-    
+
     SST::Interfaces::SimpleNetwork* link_control;
 
 public:
@@ -77,7 +77,7 @@ public:
     ~route_test();
 
     void init(unsigned int phase);
-    void setup(); 
+    void setup();
     void finish();
 
 

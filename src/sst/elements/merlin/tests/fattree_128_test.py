@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 #
-# Copyright 2009-2015 NTESS. Under the terms
+# Copyright 2009-2020 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2015, NTESS
+# Copyright (c) 2009-2020, NTESS
 # All rights reserved.
 #
 # This file is part of the SST software package. For license
@@ -21,8 +21,8 @@ if __name__ == "__main__":
 
 
     sst.merlin._params["fattree:shape"] = "4,4:4,4:8"
-    
-    
+
+
     sst.merlin._params["link_bw"] = "4GB/s"
     sst.merlin._params["link_lat"] = "20ns"
     sst.merlin._params["flit_size"] = "8B"
@@ -31,7 +31,7 @@ if __name__ == "__main__":
     sst.merlin._params["output_latency"] = "20ns"
     sst.merlin._params["input_buf_size"] = "4kB"
     sst.merlin._params["output_buf_size"] = "4kB"
-    
+
     #sst.merlin._params["checkerboard"] = "1"
     sst.merlin._params["xbar_arb"] = "merlin.xbar_arb_lru"
 
@@ -39,9 +39,9 @@ if __name__ == "__main__":
     endPoint.prepParams()
     topo.setEndPoint(endPoint)
     topo.build()
-    
+
     #sst.setStatisticLoadLevel(9)
-        
+
     #sst.setStatisticOutput("sst.statOutputCSV");
     #sst.setStatisticOutputOptions({
     #    "filepath" : "stats.csv",

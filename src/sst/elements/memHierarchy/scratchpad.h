@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -53,12 +53,12 @@ public:
             {"backendConvertor",    "(string) Backend convertor to use for the scratchpad", "memHierarchy.scratchpadBackendConvertor"},
             {"debug",               "(uint) Where to print debug output. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},
             {"debug_level",         "(uint) Debug verbosity level. Between 0 and 10", "0"} )
-            
+
     SST_ELI_DOCUMENT_PORTS(
             {"cpu", "Link to cpu/cache on the cpu side", {"memHierarchy.MemEventBase"}},
             {"memory", "Direct link to a memory or bus", {"memHierarchy.MemEventBase"}},
             {"network", "Network link to memory", {"memHierarchy.MemRtrEvent"}} )
-                 
+
     SST_ELI_DOCUMENT_STATISTICS(
             {"request_received_scratch_read",   "Number of scratchpad reads received from CPU", "count", 1},
             {"request_received_scratch_write",  "Number of scratchpad writes received from CPU", "count", 1},
@@ -69,7 +69,7 @@ public:
             {"request_issued_scratch_read",     "Number of scratchpad reads issued to scratchpad", "count", 1},
             {"request_issued_scratch_write",    "Number of scratchpad writes issued to scratchpad", "count", 1} )
 
-    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( 
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
             {"backendConvertor", "Convertor to interface to memory timing model (backend)", "SST::MemHierarchy::ScratchBackendConvertor" },
             {"cpulink", "CPU-side link manager", "SST::MemHierarchy::MemLinkBase"},
             {"memlink", "Memory-side link manager", "SST::MemHierarchy::MemLinkBase"} )
@@ -96,7 +96,7 @@ private:
     // Parameters - scratchpad
     uint64_t scratchSize_;      // Size of the total scratchpad in bytes - any address above this is assumed to address remote memory
     uint64_t scratchLineSize_;  // Size of each line in the scratchpad in bytes
-    
+
     // Parameters - memory
     uint64_t remoteAddrOffset_;   // Offset for remote addresses, defaults to scratchSize (i.e., CPU addr scratchSize = mem addr 0)
     uint64_t remoteLineSize_;
@@ -152,7 +152,7 @@ private:
     // Links
     MemLinkBase* linkUp_;     // To cache/cpu
     MemLinkBase* linkDown_;   // To memory
-    
+
     class OutstandingEvent {
         public:
             MemEventBase * request;     // Request (outstanding event)
@@ -160,9 +160,9 @@ private:
             MemEvent * remoteWrite;     // For Put requests, collect scratch read responses here
             uint32_t count;             // Number of lines we are waiting on - when 0, the request is complete
                                         // i.e., for a read or write, just 1, for a get or put, the size/lineSize
-            
+
             OutstandingEvent(MemEventBase * request, MemEventBase * response) : request(request), response(response), remoteWrite(nullptr), count(0) { }
-            OutstandingEvent(MemEventBase * request, MemEventBase * response, MemEvent * write) : request(request), response(response), remoteWrite(write), count(0) { } 
+            OutstandingEvent(MemEventBase * request, MemEventBase * response, MemEvent * write) : request(request), response(response), remoteWrite(write), count(0) { }
 
             uint32_t decrementCount() { count--; return count; }
             void incrementCount() { count++; }
@@ -231,10 +231,10 @@ private:
     // Outgoing message queues - map send timestamp to event
     std::multimap<uint64_t, MemEventBase*> procMsgQueue_;
     std::multimap<uint64_t, MemEvent*> memMsgQueue_;
-    
+
     // Throughput limits
     uint32_t responsesPerCycle_;
-    
+
     // Caching information
     bool caching_;  // Whether or not caching is possible
     bool directory_; // Whether or not a directory is managing the caches - if so we cannot assume on a writeback that the data is not cached

@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -76,10 +76,10 @@ void Cache::processPrefetchEvent(SST::Event * ev) {
 /* Clock handler */
 bool Cache::clockTick(Cycle_t time) {
     timestamp_++;
-    
+
     // Drain any outgoing messages
     bool idle = coherenceMgr_->sendOutgoingEvents();
-        
+
     if (clockUpLink_) {
         idle &= linkUp_->clock();
     }
@@ -158,7 +158,7 @@ bool Cache::clockTick(Cycle_t time) {
         }
         prefetchBuffer_.pop();
     }
-    
+
     // Push any events that need to be retried next cycle onto the retry buffer
     std::vector<MemEventBase*>* rBuf = coherenceMgr_->getRetryBuffer();
     std::copy( rBuf->begin(), rBuf->end(), std::back_inserter(retryBuffer_) );
@@ -177,7 +177,7 @@ bool Cache::clockTick(Cycle_t time) {
 }
 
 void Cache::turnClockOn() {
-    Cycle_t time = reregisterClock(defaultTimeBase_, clockHandler_); 
+    Cycle_t time = reregisterClock(defaultTimeBase_, clockHandler_);
     timestamp_ = time - 1;
     coherenceMgr_->updateTimestamp(timestamp_);
     int64_t cyclesOff = timestamp_ - lastActiveClockCycle_;
@@ -197,12 +197,12 @@ void Cache::turnClockOff() {
  * Event processing
  **************************************************************************/
 
-/* 
+/*
  * Main function for processing events
  * - Dispatches events to appropriate handlers
  *   -> Cache events go to coherence manager
  *   -> Noncacheable events are handled by processNoncacheable()
- * - Arbitrates bank access 
+ * - Arbitrates bank access
  *
  *   Returns: whether event was accepted/can be popped off event queue
  */
@@ -217,7 +217,7 @@ bool Cache::processEvent(MemEventBase* ev, bool inMSHR) {
         processNoncacheable(ev);
         return true;
     }
-            
+
     statCacheRecv[(int)ev->getCmd()]->addData(1);
 
     /* Handle cache events */
@@ -237,7 +237,7 @@ bool Cache::processEvent(MemEventBase* ev, bool inMSHR) {
         return false;
     }
 
-    bool dbgevent = is_debug_event(event); 
+    bool dbgevent = is_debug_event(event);
     bool accepted = false;
 
     switch (event->getCmd()) {
@@ -311,7 +311,7 @@ bool Cache::processEvent(MemEventBase* ev, bool inMSHR) {
             accepted = coherenceMgr_->handleNULLCMD(event, inMSHR);
             break;
         default:
-            out_->fatal(CALL_INFO, -1, "%s, Error: Received an unsupported command. Event: %s. Time = %" PRIu64 "ns.\n", 
+            out_->fatal(CALL_INFO, -1, "%s, Error: Received an unsupported command. Event: %s. Time = %" PRIu64 "ns.\n",
                     getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
 
@@ -320,7 +320,7 @@ bool Cache::processEvent(MemEventBase* ev, bool inMSHR) {
 
     if (accepted)
         updateAccessStatus(addr);
-    
+
     return accepted;
 }
 
@@ -399,12 +399,12 @@ void Cache::checkTimeout() {
 }
 
 /**************************************************************************
- * Simulation flow 
+ * Simulation flow
  * - init: coordinate protocols/configuration between components
  * - setup
- * - finish 
+ * - finish
  * - printStatus - called on SIGUSR2 and emergencyShutdown
- * - emergenyShutdown - called on fatal() 
+ * - emergenyShutdown - called on fatal()
  **************************************************************************/
 
 void Cache::init(unsigned int phase) {
@@ -419,7 +419,7 @@ void Cache::init(unsigned int phase) {
 
         while(MemEventInit *event = linkDown_->recvInitData()) {
             if (event->getCmd() == Command::NULLCMD) {
-                dbg_->debug(_L10_, "I: %-20s   Event:Init      (%s)\n", 
+                dbg_->debug(_L10_, "I: %-20s   Event:Init      (%s)\n",
                         getName().c_str(), event->getVerboseString().c_str());
             }
             /* If event is from one of our destinations, update parameters - link only returns events from destinations */
@@ -431,11 +431,11 @@ void Cache::init(unsigned int phase) {
         }
         return;
     }
-    
+
     // Case: 2 links
     linkUp_->init(phase);
     linkDown_->init(phase);
-    
+
     if (!phase) {
         linkUp_->sendInitData(coherenceMgr_->getInitCoherenceEvent());
         linkDown_->sendInitData(coherenceMgr_->getInitCoherenceEvent());
@@ -443,7 +443,7 @@ void Cache::init(unsigned int phase) {
 
     while (MemEventInit * memEvent = linkUp_->recvInitData()) {
         if (memEvent->getCmd() == Command::NULLCMD) {
-            dbg_->debug(_L10_, "I: %-20s   Event:Init      (%s)\n", 
+            dbg_->debug(_L10_, "I: %-20s   Event:Init      (%s)\n",
                     getName().c_str(), memEvent->getVerboseString().c_str());
             coherenceMgr_->hasUpperLevelCacheName(memEvent->getSrc());
             if (memEvent->getInitCmd() == MemEventInit::InitCommand::Coherence) {
@@ -451,7 +451,7 @@ void Cache::init(unsigned int phase) {
                 processInitCoherenceEvent(eventC, true);
             }
         } else {
-            dbg_->debug(_L10_, "I: %-20s   Event:Init      (%s)\n", 
+            dbg_->debug(_L10_, "I: %-20s   Event:Init      (%s)\n",
                     getName().c_str(), memEvent->getVerboseString().c_str());
             MemEventInit * mEv = memEvent->clone();
             mEv->setSrc(getName());
@@ -460,12 +460,12 @@ void Cache::init(unsigned int phase) {
         }
         delete memEvent;
     }
-    
+
     while (MemEventInit * memEvent = linkDown_->recvInitData()) {
         if (memEvent->getCmd() == Command::NULLCMD) {
-            dbg_->debug(_L10_, "I: %-20s   Event:Init      (%s)\n", 
+            dbg_->debug(_L10_, "I: %-20s   Event:Init      (%s)\n",
                     getName().c_str(), memEvent->getVerboseString().c_str());
-            
+
             if (linkDown_->isDest(memEvent->getSrc()) && memEvent->getInitCmd() == MemEventInit::InitCommand::Coherence) {
                 MemEventInitCoherence * eventC = static_cast<MemEventInitCoherence*>(memEvent);
                 processInitCoherenceEvent(eventC, false);
@@ -482,7 +482,7 @@ void Cache::processInitCoherenceEvent(MemEventInitCoherence* event, bool src) {
 
 void Cache::setup() {
     // Check that our sources and destinations exist or configure if needed
-   
+
     linkUp_->setup();
     if (linkUp_ != linkDown_) linkDown_->setup();
 

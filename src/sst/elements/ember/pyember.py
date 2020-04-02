@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 #
-# Copyright 2009-2019 NTESS. Under the terms
+# Copyright 2009-2020 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2019, NTESS
+# Copyright (c) 2009-2020, NTESS
 # All rights reserved.
 #
 # Portions are copyright of other developers:
@@ -19,23 +19,34 @@ import sys
 import sst
 from merlin.base import *
 
+
 class BasicNicConfiguration(TemplateBase):
+
+    nic_defaults = {
+        "nic2host_lat" : "150ns",
+        "rxMatchDelay_ns" : 100,
+        "txDelay_ns" : 50,
+        "hostReadDelay_ns" : 200,
+        "packetSize" : "2048B",
+        "packetOverhead" : 0,
+
+        "numVNs" : 1, # total number of VN used
+        "getHdrVN" : 0, # VN used for sending a get request
+        "getRespSmallVN" : 0, # VN used for sending a get response <= getRespSize
+        "getRespLargeVN" : 0, # VN used for sending a get response > getRespSize
+        "getRespSize" : 15000,
+    }
+
     def __init__(self):
         TemplateBase.__init__(self)
         #self._declareClassVariables("_nic")
-        self._defineOptionalParams(["nic2host_lat", "rxMatchDelay_ns", "txDelay_ns", "hostReadDelay_ns", "packetSize", "packetOverhead"])
+        self._defineOptionalParams(self.nic_defaults.keys())
         # Set up default parameters
-        self.nic2host_lat = "150ns"
-        self.rxMatchDelay_ns = 100
-        self.txDelay_ns = 50
-        #self.hostReadDelay_ns = 
-        self.packetSize = "2048B"
-        #self.packetOverhead = 
-        
-        
+
+
     def build(self,nID,num_vNics):
         nic = sst.Component("nic" + str(nID), "firefly.nic")
-        nic.addParams(self._params)
+        nic.addParams(self.combineParams(self.nic_defaults,self._params))
         nic.addParam("nid",nID)
         nic.addParam("num_vNics",num_vNics)
         return nic, "rtrLink"
@@ -65,16 +76,19 @@ class FireflyHades(FireflyOS):
         'verboseLevel': 0,
         'defaultReturnLatency': 30000,
         'defaultEnterLatency': 30000,
-        'defaultModule': 'firefly'
+        'defaultModule': 'firefly',
+        'smallCollectiveVN' : 0, # VN used for collectives <= smallCollectiveSize
+        'smallCollectiveSize' : 8,
     }
 
     ctrl_defaults = {
-        "sendStateDelay_ps" : 0,
-        "recvStateDelay_ps" : 0,
-        "waitallStateDelay_ps" : 0,
-        "waitanyStateDelay_ps" : 0,
+        'sendStateDelay_ps' : 0,
+        'recvStateDelay_ps' : 0,
+        'waitallStateDelay_ps' : 0,
+        'waitanyStateDelay_ps' : 0,
         'matchDelay_ns': 150,
         'regRegionBaseDelay_ns': 3000,
+
         #'rxMemcpyModParams.range.0': '0-:344ps',
         #'txMemcpyModParams.range.0': '0-:344ps',
         #'txSetupModParams.range.0': '0-:130ns',
@@ -82,12 +96,16 @@ class FireflyHades(FireflyOS):
         #'txSetupMod': 'firefly.LatencyMod',
         #'rxSetupMod': 'firefly.LatencyMod',
         #'rxMemcpyMod': 'firefly.LatencyMod',
+
         'regRegionPerPageDelay_ns': 100,
         'verboseLevel': 0,
         'txMemcpyModParams.op': 'Mult',
         'sendAckDelay_ns': 0,
         'shortMsgLength': 12000,
         'regRegionXoverLength': 4096,
+
+        'rendezvousVN' : 0, # VN used to send a match header that requires a get by the target
+        'ackVN' : 0,  # VN used to send an ACK back to originator after target does a get
 
         #'pqs.verboseMask': -1,
         #'pqs.verboseLevel': 0,
@@ -111,18 +129,22 @@ class FireflyHades(FireflyOS):
 
     def build(self,engine,nicLink,loopLink,size,nicsPerNode,job_id,pid,lid,coreId):
         if not self._final_hades_params:
-            self._final_hades_params = self.hades_defaults.copy()
-            self._final_hades_params.update(self._params)
-            for key,value in self.functionSM._params:
-                self._final_hades_params["functionSM." + key] = value            
-            
+            #self._final_hades_params = self.hades_defaults.copy()
+            #self._final_hades_params.update(self._params)
+            self._final_hades_params = self.combineParams(self.hades_defaults,self._params)
+            for key,value in self.functionsm_defaults.items():
+                self._final_hades_params["functionSM." + key] = value
+            for key,value in self.functionSM._params.items():
+                self._final_hades_params["functionSM." + key] = value
+
         if not self._final_ctrl_params:
-            self._final_ctrl_params = self.ctrl_defaults.copy()
-            self._final_ctrl_params.update(self.ctrl._params)
-                        
+            #self._final_ctrl_params = self.ctrl_defaults.copy()
+            #self._final_ctrl_params.update(self.ctrl._params)
+            self._final_ctrl_params = self.combineParams(self.ctrl_defaults,self.ctrl._params)
+
 
         os = engine.setSubComponent( "OS", "firefly.hades" )
-        
+
         os.addParams(self._final_hades_params)
         os.addParam( 'numNodes', size )
         os.addParam( 'netMapName', 'Ember' + str(job_id) )
@@ -136,7 +158,7 @@ class FireflyHades(FireflyOS):
         #for key, value in self.driverParams.items():
         #    if key.startswith(self.driverParams['os.name']+'.virtNic'):
         #        key = key[key.rfind('.')+1:]
-        #        virtNic.addParam( key,value) 
+        #        virtNic.addParam( key,value)
 
         # prefixed by "hermesParams.ctrlMsg."
         ctrl_params = {
@@ -152,29 +174,29 @@ class FireflyHades(FireflyOS):
             'rxSetupModParams.range.0': '0-:100ns',
             'pqs.verboseMask': -1,
             'pqs.verboseLevel': 0,
-            
-            'nicsPerNode': nicsPerNode,    
+
+            'nicsPerNode': nicsPerNode,
         }
 
 
         proto = os.setSubComponent( "proto", "firefly.CtrlMsgProto" )
         process = proto.setSubComponent( "process", "firefly.ctrlMsg" )
-        
-        
+
+
         proto.addParams(self._final_ctrl_params)
         proto.addParams(ctrl_params)
         process.addParams(self._final_ctrl_params)
         process.addParams(ctrl_params)
-        
+
         #nicLink.connect( (virtNic,'nic','1ns' ),(nic,'core'+str(x),'1ns'))
         virtNic.addLink(nicLink,'nic','1ns')
-        
+
         #loopLink.connect( (process,'loop','1ns' ),(loopBack,'nic'+str(nodeID%self._nicsPerNode)+'core'+str(x),'1ns'))
         process.addLink(loopLink,'loop','1ns')
 
 
-        
-        
+
+
 class EmberMPIJob(Job):
     def __init__(self, job_id, num_nodes, numCores = 1, nicsPerNode = 1):
         Job.__init__(self,job_id,num_nodes * nicsPerNode)
@@ -196,12 +218,12 @@ class EmberMPIJob(Job):
     def addMotif(self,motif):
         # Parse the motif "command line" to create the proper params
         # to represent it
-        
+
         # First, separate by spaces to get the individual arguments
         arglist = motif.split()
-        
+
         key = 'motif' + str(self._motifNum) + '.name'
-        
+
         # Look at the name of the motif.  This can be in two formats:
         # lib.motif or motif.  If the second, it turns into
         # ember.motifMotif
@@ -227,12 +249,12 @@ class EmberMPIJob(Job):
     def enableMotifLog(self,logfilePrefix, nids = None):
         self._logfilePrefix = logfilePrefix;
         self._logfileNids = nids
-        
-        
+
+
     def build(self, nodeID, extraKeys):
 
         nic, slot_name = self.nic_configuration.build(nodeID,self._numCores // self._nicsPerNode)
-        
+
         # Build NetworkInterface
         logical_id = self._nid_map.index(nodeID)
         networkif, port_name = self.network_interface.build(nic,slot_name,0,self.job_id,self.size,logical_id,False)
@@ -242,12 +264,12 @@ class EmberMPIJob(Job):
 
 
         # Set up the loopback for intranode communications
-        loopBackName = "loopBack" + str(nodeID // self._nicsPerNode)		
+        loopBackName = "loopBack" + str(nodeID // self._nicsPerNode)
         if nodeID % self._nicsPerNode == 0:
             loopBack = sst.Component(loopBackName, "firefly.loopBack")
             loopBack.addParam( "numCores", self._numCores )
             loopBack.addParam( "nicsPerNode", self._nicsPerNode )
-            self._loopBackDict[loopBackName] = loopBack 
+            self._loopBackDict[loopBackName] = loopBack
         else:
             loopBack = self._loopBackDict[loopBackName]
 
@@ -268,29 +290,29 @@ class EmberMPIJob(Job):
             if self._logfilePrefix:
                 if ( self._logfileNids is None or logical_id in self._logfileNids):
                     ep.addParam("motifLog",self._logfilePrefix)
-            
+
 
             # Create the links to the OS layer
             nicLink = sst.Link( "nic" + str(nodeID) + "core" + str(x) + "_Link"  )
             nicLink.setNoCut()
 
-            linkName = "loop" + str(nodeID // self._nicsPerNode) + "nic"+ str(nodeID%self._nicsPerNode)+"core" + str(x) + "_Link" 
-            loopLink = sst.Link( linkName ); 
-            loopLink.setNoCut() 
+            linkName = "loop" + str(nodeID // self._nicsPerNode) + "nic"+ str(nodeID%self._nicsPerNode)+"core" + str(x) + "_Link"
+            loopLink = sst.Link( linkName );
+            loopLink.setNoCut()
 
             #nicLink.connect( (virtNic,'nic','1ns' ),(nic,'core'+str(x),'1ns'))
             nic.addLink(nicLink,'core'+str(x),'1ns')
-            
+
             #loopLink.connect( (process,'loop','1ns' ),(loopBack,'nic'+str(nodeID%self._nicsPerNode)+'core'+str(x),'1ns'))
             loopBack.addLink(loopLink,'nic'+str(nodeID%self._nicsPerNode)+'core'+str(x),'1ns')
 
-                    
+
             # Create the OS layer
             self.os.build(ep,nicLink,loopLink,self.size,self._nicsPerNode,self.job_id,nodeID,self._nid_map.index(nodeID),x)
 
             """
             os = ep.setSubComponent( "OS", "firefly.hades" )
-            
+
             # prefixed by "hermesParams."
             os_params = {
                 #'detailedCompute.name': 'thornhill.SingleThread',
@@ -319,7 +341,7 @@ class EmberMPIJob(Job):
             #for key, value in self.driverParams.items():
             #    if key.startswith(self.driverParams['os.name']+'.virtNic'):
             #        key = key[key.rfind('.')+1:]
-            #        virtNic.addParam( key,value) 
+            #        virtNic.addParam( key,value)
 
             # prefixed by "hermesParams.ctrlMsg."
             ctrl_params = {
@@ -358,14 +380,14 @@ class EmberMPIJob(Job):
 
             proto.addParams(ctrl_params)
             process.addParams(ctrl_params)
-                
+
             #nicLink.connect( (virtNic,'nic','1ns' ),(nic,'core'+str(x),'1ns'))
             virtNic.addLink(nicLink,'nic','1ns')
-            
+
             #loopLink.connect( (process,'loop','1ns' ),(loopBack,'nic'+str(nodeID%self._nicsPerNode)+'core'+str(x),'1ns'))
             process.addLink(loopLink,'loop','1ns')
             """
         return retval
 
-        
-    
+
+

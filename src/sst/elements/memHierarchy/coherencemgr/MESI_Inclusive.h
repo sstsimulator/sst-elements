@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -28,7 +28,7 @@ namespace SST { namespace MemHierarchy {
 
 class MESIInclusive : public CoherenceController {
 public:
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(MESIInclusive, "memHierarchy", "coherence.mesi_inclusive", SST_ELI_ELEMENT_VERSION(1,0,0), 
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(MESIInclusive, "memHierarchy", "coherence.mesi_inclusive", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Implements MESI or MSI coherence for a second level or greater cache", SST::MemHierarchy::CoherenceController)
 
     SST_ELI_DOCUMENT_STATISTICS(
@@ -233,7 +233,7 @@ public:
         {"prefetch_coherence_miss", "Prefetched block incurred a coherence miss (upgrade) on its first access", "count", 2},
         {"prefetch_redundant",      "Prefetch issued for a block that was already in cache", "count", 2},
         {"default_stat",            "Default statistic used for unexpected events/states/etc. Should be 0, if not, check for missing statistic registerations.", "none", 7})
-    
+
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
             {"replacement", "Replacement policies, slot 0 is for cache, slot 1 is for directory (if it exists)", "SST::MemHierarchy::ReplacementPolicy"},
             {"hash", "Hash function for mapping addresses to cache lines", "SST::MemHierarchy::HashFunction"} )
@@ -243,7 +243,7 @@ public:
     MESIInclusive(SST::ComponentId_t id, Params& params, Params& ownerParams, bool prefetch) : CoherenceController(id, params, ownerParams, prefetch) {
         params.insert(ownerParams);
         debug->debug(_INFO_,"--------------------------- Initializing [MESI Controller] ... \n\n");
-        
+
         protocol_ = params.find<bool>("protocol", 1);
         if (protocol_)
             protocolState_ = E;
@@ -258,7 +258,7 @@ public:
         HashFunction * ht = createHashFunction(params);
         cacheArray_ = new CacheArray<SharedCacheLine>(debug, lines, assoc, lineSize_, rmgr, ht);
         cacheArray_->setBanked(params.find<uint64_t>("banks", 0));
-      
+
         /* Statistics */
         stat_evict[I] =         registerStatistic<uint64_t>("evict_I");
         stat_evict[IS] =        registerStatistic<uint64_t>("evict_IS");
@@ -412,7 +412,7 @@ public:
         stat_miss[0][1] = registerStatistic<uint64_t>("GetSMiss_Blocked");
         stat_miss[1][1] = registerStatistic<uint64_t>("GetXMiss_Blocked");
         stat_miss[2][1] = registerStatistic<uint64_t>("GetSXMiss_Blocked");
-        
+
         /* Prefetch statistics */
         if (prefetch) {
             statPrefetchEvict = registerStatistic<uint64_t>("prefetch_evict");
@@ -424,7 +424,7 @@ public:
 
         /* Only for caches that expect writeback acks but we don't know yet so always enabled for now (can't register statistics later) */
         stat_eventState[(int)Command::AckPut][I] = registerStatistic<uint64_t>("stateEvent_AckPut_I");
-        
+
         /* MESI-specific statistics (as opposed to MSI) */
         if (protocol_) {
             stat_evict[E] =         registerStatistic<uint64_t>("evict_E");
@@ -465,7 +465,7 @@ public:
         }
     }
     ~MESIInclusive() {}
-    
+
     /** Event handlers **/
     virtual bool handleGetS(MemEvent * event, bool inMSHR);
     virtual bool handleGetX(MemEvent * event, bool inMSHR);
@@ -571,7 +571,7 @@ private:
 /* Miscellaneous functions */
     /* Record prefetch statistics. Line cannot be null. */
     void recordPrefetchResult(SharedCacheLine * line, Statistic<uint64_t> * stat);
-    
+
     /* Record latency */
     void recordLatency(Command cmd, int type, uint64_t latency);
 

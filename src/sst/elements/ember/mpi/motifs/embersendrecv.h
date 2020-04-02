@@ -1,8 +1,8 @@
-// Copyright 2009-2018 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2018, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -62,7 +62,7 @@ public:
     )
 
 public:
-	EmberSendrecvGenerator(SST::ComponentId_t id, Params& params): 
+	EmberSendrecvGenerator(SST::ComponentId_t id, Params& params):
         EmberMessagePassingGenerator(id, params, "Null" ), m_phase(Init)
 	{
 			m_messageSize = 1024;
@@ -74,7 +74,7 @@ public:
 			case Init:
 		    	m_sendBuf = memAlloc(m_messageSize * sizeofDataType(DATA_TYPE) );
     			m_recvBuf = memAlloc(m_messageSize * sizeofDataType(DATA_TYPE) );
-				enQ_sendrecv( evQ, 
+				enQ_sendrecv( evQ,
 							m_sendBuf, m_messageSize, DATA_TYPE, destRank(), 0xdeadbeef,
 							m_recvBuf, m_messageSize, DATA_TYPE, srcRank(),  0xdeadbeef,
 							GroupWorld, &m_resp );

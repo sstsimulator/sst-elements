@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -51,7 +51,7 @@ bool EmberMsgRateGenerator::generate( std::queue<EmberEvent*>& evQ)
         m_totalPostTime += m_recvStopTime - m_recvStartTime;
     }
 
-    // if are done printout results and exit 
+    // if are done printout results and exit
     if ( m_loopIndex == m_iterations  ) {
         int totalMsgs = m_numMsgs * m_iterations;
         double tmp = (double) m_totalTime / 1000000000.0;
@@ -76,30 +76,30 @@ bool EmberMsgRateGenerator::generate( std::queue<EmberEvent*>& evQ)
     verbose(CALL_INFO, 1, 0, "%p %p\n",&m_reqs[0],&m_resp[0]);
     if ( 0 == rank() ) {
         enQ_barrier( evQ, GroupWorld );
-        enQ_getTime( evQ, &m_startTime ); 
+        enQ_getTime( evQ, &m_startTime );
         for ( unsigned int i = 0; i < m_numMsgs; i++ ) {
             enQ_isend( evQ, NULL, m_msgSize, CHAR, 1, TAG,
                                                 GroupWorld, &m_reqs[i] );
         }
-        enQ_getTime( evQ, &m_preWaitTime ); 
+        enQ_getTime( evQ, &m_preWaitTime );
 
         enQ_waitall( evQ, m_numMsgs, &m_reqs[0],
-                                        (MessageResponse**)&m_resp[0] ); 
-        enQ_getTime( evQ, &m_stopTime ); 
+                                        (MessageResponse**)&m_resp[0] );
+        enQ_getTime( evQ, &m_stopTime );
     } else {
 
-        enQ_getTime( evQ, &m_recvStartTime ); 
+        enQ_getTime( evQ, &m_recvStartTime );
         for ( unsigned int i = 0; i < m_numMsgs; i++ ) {
-            enQ_irecv( evQ, NULL, m_msgSize, CHAR, 0, TAG, 
+            enQ_irecv( evQ, NULL, m_msgSize, CHAR, 0, TAG,
                                                 GroupWorld, &m_reqs[i] );
         }
-        enQ_getTime( evQ, &m_recvStopTime ); 
+        enQ_getTime( evQ, &m_recvStopTime );
 
         enQ_barrier( evQ, GroupWorld );
-        enQ_getTime( evQ, &m_startTime ); 
-        enQ_waitall( evQ, m_numMsgs, &m_reqs[0], 
-                                        (MessageResponse**)&m_resp[0] ); 
-        enQ_getTime( evQ, &m_stopTime ); 
+        enQ_getTime( evQ, &m_startTime );
+        enQ_waitall( evQ, m_numMsgs, &m_reqs[0],
+                                        (MessageResponse**)&m_resp[0] );
+        enQ_getTime( evQ, &m_stopTime );
     }
 
     if ( ++m_loopIndex == m_iterations ) {

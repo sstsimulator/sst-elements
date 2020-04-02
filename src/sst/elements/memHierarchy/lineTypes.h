@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -28,8 +28,8 @@ using namespace std;
 
 namespace SST { namespace MemHierarchy {
 
-/* 
- * Line types 
+/*
+ * Line types
  * Required API:
  * - reset() to reset to invalid state
  * - getString() for debug
@@ -52,11 +52,11 @@ class DirectoryLine {
         bool wasPrefetch_;
 
     public:
-        DirectoryLine(uint32_t size, unsigned int index) : index_(index), addr_(0), state_(I), lastSendTimestamp_(0), wasPrefetch_(false) { 
+        DirectoryLine(uint32_t size, unsigned int index) : index_(index), addr_(0), state_(I), lastSendTimestamp_(0), wasPrefetch_(false) {
             info_ = new CoherenceReplacementInfo(index, I, false, false);
         }
         virtual ~DirectoryLine() { }
-        
+
         void reset() {
             state_ = I;
             sharers_.clear();
@@ -71,46 +71,46 @@ class DirectoryLine {
         // Addr
         Addr getAddr() { return addr_; }
         void setAddr(Addr addr) { addr_ = addr; }
-        
+
         // State
         State getState() { return state_; }
         void setState(State state) { state_ = state; }
-        
+
         // Sharers
         set<std::string>* getSharers() { return &sharers_; }
         bool isSharer(std::string shr) {   return sharers_.find(shr) != sharers_.end(); }
         size_t numSharers() { return sharers_.size(); }
         bool hasSharers() { return !sharers_.empty(); }
         bool hasOtherSharers(std::string shr) { return !(sharers_.empty() || (sharers_.size() == 1 && sharers_.find(shr) != sharers_.end())); }
-        void addSharer(std::string shr) { 
-            sharers_.insert(shr); 
+        void addSharer(std::string shr) {
+            sharers_.insert(shr);
             info_->setShared(true);
         }
-        void removeSharer(std::string shr) { 
-            sharers_.erase(shr); 
+        void removeSharer(std::string shr) {
+            sharers_.erase(shr);
             info_->setShared(!sharers_.empty());
         }
 
         // Owner
         std::string getOwner() { return owner_; }
         bool hasOwner() { return !owner_.empty(); }
-        void setOwner(std::string owner) { 
-            owner_ = owner; 
+        void setOwner(std::string owner) {
+            owner_ = owner;
             info_->setOwned(true);
         }
-        void removeOwner() { 
-            owner_.clear(); 
+        void removeOwner() {
+            owner_.clear();
             info_->setOwned(false);
         }
 
         // Timestamp
         uint64_t getTimestamp() { return lastSendTimestamp_; }
         void setTimestamp(uint64_t timestamp) { lastSendTimestamp_ = timestamp; }
-        
+
         // Prefetch
         bool getPrefetch() { return wasPrefetch_; }
         void setPrefetch(bool prefetch) { wasPrefetch_ = prefetch; }
-        
+
 
         // Replacement
         ReplacementInfo* getReplacementInfo() { return info_; }
@@ -124,7 +124,7 @@ class DirectoryLine {
                 if (it != sharers_.begin()) str << ",";
                 str << *it;
             }
-            str << "]"; 
+            str << "]";
             return str.str();
         }
 };
@@ -143,7 +143,7 @@ class DataLine {
             info_ = new CoherenceReplacementInfo(index, I, false, false);
         }
         virtual ~DataLine() { }
-        
+
         void reset() {
             tag_ = nullptr;
         }
@@ -154,11 +154,11 @@ class DataLine {
         // Addr
         Addr getAddr() { return addr_; }
         void setAddr(Addr addr) { addr_ = addr; }
-        
+
         // Valid
         State getState() { return tag_ ? tag_->getState() : I; }
-        void setTag(DirectoryLine* tag) { 
-            tag_ = tag; 
+        void setTag(DirectoryLine* tag) {
+            tag_ = tag;
         }
         DirectoryLine* getTag() { return tag_; }
 
@@ -167,10 +167,10 @@ class DataLine {
         void setData(vector<uint8_t> data, uint32_t offset) {
             std::copy(data.begin(), data.end(), data_.begin() + offset);
         }
-        
+
         // Replacement
         ReplacementInfo* getReplacementInfo() { return tag_ ? tag_->getReplacementInfo() : info_; }
-        
+
         // String-ify for debugging
         std::string getString() {
             return (tag_ ? "Valid" : "Invalid");
@@ -184,7 +184,7 @@ class CacheLine {
         Addr addr_;
         State state_;
         vector<uint8_t> data_;
-            
+
         // Timing
         uint64_t lastSendTimestamp_;
 
@@ -197,20 +197,20 @@ class CacheLine {
             data_.resize(size);
         }
         virtual ~CacheLine() { }
-        
+
         void reset() {
             state_ = I;
             lastSendTimestamp_ = 0;
             wasPrefetch_ = false;
         }
-        
+
         // Index
         unsigned int getIndex() { return index_; }
 
         // Addr
         Addr getAddr() { return addr_; }
         void setAddr(Addr addr) { addr_ = addr; }
-        
+
         // State
         State getState() { return state_; }
         void setState(State state) { state_ = state; updateReplacement(); }
@@ -224,11 +224,11 @@ class CacheLine {
         // Timestamp
         uint64_t getTimestamp() { return lastSendTimestamp_; }
         void setTimestamp(uint64_t timestamp) { lastSendTimestamp_ = timestamp; }
-        
+
         // Prefetch
         bool getPrefetch() { return wasPrefetch_; }
         void setPrefetch(bool prefetch) { wasPrefetch_ = prefetch; }
-        
+
         virtual ReplacementInfo* getReplacementInfo() = 0;
 
         // String-ify for debugging
@@ -250,11 +250,11 @@ class L1CacheLine : public CacheLine {
     protected:
         void updateReplacement() { info->setState(state_); }
     public:
-        L1CacheLine(uint32_t size, unsigned int index) : userLock_(0), LLSCAtomic_(false), eventsWaitingForLock_(false), CacheLine(size, index) { 
+        L1CacheLine(uint32_t size, unsigned int index) : userLock_(0), LLSCAtomic_(false), eventsWaitingForLock_(false), CacheLine(size, index) {
             info = new ReplacementInfo(index, I);
         }
         virtual ~L1CacheLine() { }
-        
+
         void reset() {
             CacheLine::reset();
             userLock_ = 0;
@@ -266,16 +266,16 @@ class L1CacheLine : public CacheLine {
         void atomicStart() { LLSCAtomic_ = true; }
         void atomicEnd() { LLSCAtomic_ = false; }
         bool isAtomic() { return LLSCAtomic_; }
-        
+
         // Lock
         bool isLocked() { return (userLock_ > 0) ? true : false; }
         void incLock() { userLock_++; }
         void decLock() { userLock_--; }
-        
+
         // Waiting events
         bool getEventsWaitingForLock() { return eventsWaitingForLock_; }
         void setEventsWaitingForLock(bool eventsWaiting) { eventsWaitingForLock_ = eventsWaiting; }
-        
+
         ReplacementInfo * getReplacementInfo() { return info; }
 
         // String-ify for debugging
@@ -296,12 +296,12 @@ class SharedCacheLine : public CacheLine {
     protected:
         virtual void updateReplacement() { info->setState(state_); }
     public:
-        SharedCacheLine(uint32_t size, unsigned int index) : owner_(""), CacheLine(size, index) { 
+        SharedCacheLine(uint32_t size, unsigned int index) : owner_(""), CacheLine(size, index) {
             info = new CoherenceReplacementInfo(index, I, false, false);
         }
-        
+
         virtual ~SharedCacheLine() { }
-        
+
         void reset() {
             CacheLine::reset();
             sharers_.clear();
@@ -314,27 +314,27 @@ class SharedCacheLine : public CacheLine {
         size_t numSharers() { return sharers_.size(); }
         bool hasSharers() { return !sharers_.empty(); }
         bool hasOtherSharers(std::string shr) { return !(sharers_.empty() || (sharers_.size() == 1 && sharers_.find(shr) != sharers_.end())); }
-        void addSharer(std::string s) { 
-            sharers_.insert(s); 
-            info->setShared(true);    
+        void addSharer(std::string s) {
+            sharers_.insert(s);
+            info->setShared(true);
         }
-        void removeSharer(std::string s) { 
-            sharers_.erase(s); 
+        void removeSharer(std::string s) {
+            sharers_.erase(s);
             info->setShared(!sharers_.empty());
         }
-        
+
         // Owner
         std::string getOwner() { return owner_; }
         bool hasOwner() { return !owner_.empty(); }
-        void setOwner(std::string owner) { 
-            owner_ = owner; 
+        void setOwner(std::string owner) {
+            owner_ = owner;
             info->setOwned(true);
         }
-        void removeOwner() { 
-            owner_.clear(); 
+        void removeOwner() {
+            owner_.clear();
             info->setOwned(false);
         }
-        
+
         // Replacement
         ReplacementInfo * getReplacementInfo() { return info; }
 
@@ -361,12 +361,12 @@ class PrivateCacheLine : public CacheLine {
     protected:
         virtual void updateReplacement() { info->setState(state_); }
     public:
-        PrivateCacheLine(uint32_t size, unsigned int index) : shared(false), owned(false), CacheLine(size, index) { 
+        PrivateCacheLine(uint32_t size, unsigned int index) : shared(false), owned(false), CacheLine(size, index) {
             info = new CoherenceReplacementInfo(index, I, false, false);
-        } 
-        
+        }
+
         virtual ~PrivateCacheLine() { }
-        
+
         void reset() {
             CacheLine::reset();
             shared = false;
@@ -376,11 +376,11 @@ class PrivateCacheLine : public CacheLine {
         // Shared
         bool getShared() { return shared; }
         void setShared(bool s) { shared = s; info->setShared(s);}
-        
+
         // Owned
         bool getOwned() { return owned; }
         void setOwned(bool o) { owned = o; info->setOwned(o); }
-       
+
         // Replacement
         ReplacementInfo * getReplacementInfo() { return info; }
 

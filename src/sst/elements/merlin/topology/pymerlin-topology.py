@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 #
-# Copyright 2009-2019 NTESS. Under the terms
+# Copyright 2009-2020 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2019, NTESS
+# Copyright (c) 2009-2020, NTESS
 # All rights reserved.
 #
 # Portions are copyright of other developers:
@@ -39,8 +39,8 @@ class Topology(TemplateBase):
         self._router_template = template
     def getNumNodes(self):
         pass
-        
-        
+
+
 class topoDragonFly(Topology):
 
     def __init__(self):
@@ -63,11 +63,11 @@ class topoDragonFly(Topology):
         self.intergroup_links = intergroup_links
         self.num_groups = num_groups
 
-        
+
     def setRoutingModeAbsolute(self):
         self.global_routes = "absolute"
 
-        
+
     def setRoutingModeRelative(self):
         self.global_routes = "relative"
 
@@ -75,10 +75,10 @@ class topoDragonFly(Topology):
     def build(self, network_name, endpoint):
         if self.host_link_latency is None:
             self.host_link_latency = self.link_latency
-        
+
         #self.params.verifyParamsExist(self.topoKeys)
         #endpoint.verifyParams()
-        
+
         #extraParams = dict()
         #extraParams["topology"] = "merlin.dragonfly"
         num_peers = self.hosts_per_router * self.routers_per_group * self.num_groups
@@ -89,9 +89,9 @@ class topoDragonFly(Topology):
         total_intergroup_links = (self.num_groups - 1) * self.intergroup_links
         intergroup_per_router = (total_intergroup_links + self.routers_per_group - 1 ) // self.routers_per_group
         #extraParams["intergroup_per_router"] = inter_group_per_router
-        
+
         empty_ports = intergroup_per_router * self.routers_per_group - total_intergroup_links
-        
+
         #self.params["router_radix"] = self.routers_per_group - 1 + self.hosts_per_router + self.params["dragonfly:intergroup_per_router"]
         num_ports = self.routers_per_group - 1 + self.hosts_per_router + intergroup_per_router
 
@@ -111,12 +111,12 @@ class topoDragonFly(Topology):
         rpg = self.routers_per_group
         ng = self.num_groups - 1 # don't count my group
         igpr = intergroup_per_router
-            
+
         if self.global_link_map is None:
             # Need to define global link map
 
             self.global_link_map = [-1 for i in range(igpr * rpg)]
-            
+
             # Links will be mapped in linear order, but we will
             # potentially skip one port per router, depending on the
             # parameters.  The variable self.empty_ports tells us how
@@ -133,7 +133,7 @@ class topoDragonFly(Topology):
                     count = count + 1
 
         # End set global link map with default
-            
+
 
         # g is group number
         # r is router number with group
@@ -145,7 +145,7 @@ class topoDragonFly(Topology):
             raw_dest = self.global_link_map[r * igpr + p];
             if raw_dest == -1:
                 return None
-            
+
             # Turn raw_dest into dest_grp and link_num
             link_num = raw_dest // ng;
             dest_grp = raw_dest - link_num * ng
@@ -161,16 +161,16 @@ class topoDragonFly(Topology):
                 dest_grp = (dest_grp + g + 1) % (ng+1)
             #else:
                 # should never happen
-                
+
             src = min(dest_grp, g)
             dest = max(dest_grp, g)
 
             #getLink("link:g%dg%dr%d"%(g, src, dst)), "port%d"%port, self.params["link_lat"])
             return getLink("%s:global_link:g%dg%dr%d"%(network_name,src,dest,link_num))
 
-        #########################    
+        #########################
 
-        
+
         router_num = 0
         nic_num = 0
         # GROUPS
@@ -193,7 +193,7 @@ class topoDragonFly(Topology):
                     #map_str = str(self.global_link_map).strip('[]')
                     #rtr.addParam("dragonfly:global_link_map",map_str)
                     sub.addParam("global_link_map",self.global_link_map)
-                
+
                 port = 0
                 for p in range(self.hosts_per_router):
                     #(nic, port_name) = endpoint.build(nic_num, {"num_peers":num_peers})
@@ -212,7 +212,7 @@ class topoDragonFly(Topology):
                         dst = max(p,r)
                         rtr.addLink(getLink("link:g%dr%dr%d"%(g, src, dst)), "port%d"%port, self.link_latency)
                         port = port + 1
-                
+
                 for p in range(igpr):
                     link = getGlobalLink(g,r,p)
                     if link is not None:

@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -41,7 +41,7 @@ namespace SST { namespace MessierComponent{
 
 	// This class structure represents NVM-Based DIMM, including the NVM-DIMM controller
 	class NVM_DIMM : public ComponentExtension
-	{ 
+	{
 
 		bool enabled;
 
@@ -52,14 +52,14 @@ namespace SST { namespace MessierComponent{
 		NVM_PARAMS * params;
 
 		// This is the requests buffer, where all transactions are buffered before being processed by the controller
-		std::list<NVM_Request *> transactions;	
+		std::list<NVM_Request *> transactions;
 
 		// This tracks the currently outstanding requests
 		std::list<NVM_Request *> outstanding;
 
 		// This is used to quickly track the number of writes complete at a specific cycle to remove them from the currently executed writes
 		std::map<long long int, int> WRITES_COMPLETE;
-		
+
 		// This is used to quickly track the number of reads complete at a specific cycle to remove them from the currently executed reads
 		std::map<long long int, int> READS_COMPLETE;
 
@@ -70,7 +70,7 @@ namespace SST { namespace MessierComponent{
                     }
                 };
 
-		// This is the queue of the ready requests 
+		// This is the queue of the ready requests
 		std::map<NVM_Request *, long long int, NVMReqPtrCompare> ready_trans;
 
 		// This tracks if a request is expected to be ready at the PCM
@@ -78,7 +78,7 @@ namespace SST { namespace MessierComponent{
 
 		// This determines the completed requests and when they are completed
 		std::list<NVM_Request *> completed_requests;
-		
+
 		// This holds a pointer to the ranks. Note: for NVM devices, most likely there will be no ranks concept, thus it will be only one rank
 		RANK ** ranks;
 
@@ -95,8 +95,8 @@ namespace SST { namespace MessierComponent{
 		int read_count;
 
 		// This determines if cache line interleaving was used
-		bool cacheline_interleave; 
-		
+		bool cacheline_interleave;
+
 		SST::Link * m_memChan;
 
 		SST::Link * m_EventChan;
@@ -118,14 +118,14 @@ namespace SST { namespace MessierComponent{
 
 		int group_locked;
 
-		public: 
+		public:
 
 		// This is the constructor for the NVM-based DIMM
-		NVM_DIMM(SST::ComponentId_t id, NVM_PARAMS par); 
+		NVM_DIMM(SST::ComponentId_t id, NVM_PARAMS par);
 
 		// This is the clock of the near memory controller
 		bool tick();
-		
+
 		void finish(){}
 
 		RANK * getRank(long long int add){ return ranks[WhichRank(add)]; }
@@ -141,7 +141,7 @@ namespace SST { namespace MessierComponent{
 		int WhichBank(long long int add);
 
 		//bool push_request(NVM_Request * req) { if(transactions.size() >= params->max_requests) return false; else {transactions.push_back(req); return true; }}
-		
+
 		bool push_request(NVM_Request * req) { transactions.push_back(req);  if(req->Read) TIME_STAMP[req]= cycles; return true;}
 
 		// This is the optimized version that basiclly tries to find out if there is any possibility to achieve a row buffer hit from the current transactions
@@ -158,9 +158,9 @@ namespace SST { namespace MessierComponent{
 
 		// Try to find a row buffer hit and prioritize it over all other requests;
 		bool pop_optimal();
-	
+
 		NVM_Request * pop_request();
-		
+
 		void setMemChannel(SST::Link * x) { m_memChan = x; }
 		void setEventChannel(SST::Link * x) { m_EventChan = x; }
 

@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -51,14 +51,14 @@ shift_nic::shift_nic(ComponentId_t cid, Params& params) :
     num_peers = params.find<int>("num_peers",-1);
     if ( num_peers == -1 ) {
     }
-    
+
     shift = params.find<int>("shift",-1);
     if ( shift == -1 ) {
         // Abort
     }
 
     target = (net_id + shift) % num_peers;
-    
+
     num_msg = params.find<int>("packets_to_send",10);
 
     // std::string packet_size_s = params.find<std::string>("packet_size", "64B");
@@ -69,16 +69,16 @@ shift_nic::shift_nic(ComponentId_t cid, Params& params) :
     }
 
     size_in_bits = packet_size.getRoundedValue();
-    
+
     std::string link_bw_s = params.find<std::string>("link_bw");
     if ( link_bw_s == "" ) {
     }
     UnitAlgebra link_bw(link_bw_s);
-    
+
 
     // remap = params.find<int>("remap", 0);
     // id = (net_id + remap) % num_peers;
-    
+
 
     // Create a LinkControl object
     // First see if it is defined in the python
@@ -87,17 +87,17 @@ shift_nic::shift_nic(ComponentId_t cid, Params& params) :
 
     if ( !link_control ) {
         // Not defined in python code. Just use default (merlin.reorderlinkcontrol)
-        
+
         UnitAlgebra buf_size("1kB");
 
         Params if_params;
-        
+
         if_params.insert("networkIF","merlin.linkcontrol");
         if_params.insert("networkIF::link_bw",params.find<std::string>("link_bw","2GB/s"));
         if_params.insert("networkIF::input_buf_size","1kB");
-        if_params.insert("networkIF::output_buf_size","1kB");           
+        if_params.insert("networkIF::output_buf_size","1kB");
         if_params.insert("networkIF::port_name","rtr");
-        
+
         link_control = loadAnonymousSubComponent<SST::Interfaces::SimpleNetwork>
             ("merlin.reorderlinkcontrol", "networkIF", 0,
              ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, if_params, 1 /* vns */);
@@ -109,7 +109,7 @@ shift_nic::shift_nic(ComponentId_t cid, Params& params) :
     registerClock( "1GHz", new Clock::Handler<shift_nic>(this,&shift_nic::clock_handler), false);
 
     link_control->setNotifyOnReceive(new SST::Interfaces::SimpleNetwork::Handler<shift_nic>(this,&shift_nic::handle_event));
-    
+
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
 
@@ -190,7 +190,7 @@ shift_nic::clock_handler(Cycle_t cycle)
         if ( link_control->spaceToSend(0,size_in_bits) ) {
             ShiftEvent* ev = new ShiftEvent(send_seq++);
             SimpleNetwork::Request* req = new SimpleNetwork::Request();
-            
+
             // req->dest = net_map[last_target];
             req->dest = target;
             req->src = net_id;
@@ -202,7 +202,7 @@ shift_nic::clock_handler(Cycle_t cycle)
             //     req->setTraceType(SST::Interfaces::SimpleNetwork::Request::FULL);
             //     req->setTraceID(net_id*1000 + packets_sent);
             // }
-            
+
             bool sent = link_control->send(req,0);
             assert( sent );
             packets_sent++;
@@ -244,7 +244,7 @@ shift_nic::clock_handler(Cycle_t cycle)
     //     delete ev;
     //     delete req;
     // }
-    
+
     return false;
 }
 
@@ -285,7 +285,7 @@ shift_nic::handle_event(int vn)
     else {
         return true;
     }
-    
+
 }
 
 } // namespace Merlin

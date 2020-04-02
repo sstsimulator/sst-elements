@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -29,12 +29,12 @@ using namespace std;
 namespace SST {
 namespace VaultSim {
 
-//#define STUPID_DEBUG 
+//#define STUPID_DEBUG
 
 class logicLayer : public Component {
-  
+
 public: // functions
-  
+
     SST_ELI_REGISTER_COMPONENT(
                                logicLayer,
                                "VaultSimC",
@@ -62,21 +62,21 @@ public: // functions
 
     SST_ELI_DOCUMENT_PORTS(
        {"bus_%(vaults)d", "Link to the individual memory vaults", {"memEvent",""}},
-       {"toCPU", "Connection towards the processor (directly to the proessor, or down the chain in the direction of the processor)", {"memEvent",""}},    
+       {"toCPU", "Connection towards the processor (directly to the proessor, or down the chain in the direction of the processor)", {"memEvent",""}},
        {"toMem", "If 'terminal' is 0 (i.e. this is not the last cube in the chain) then this port connects to the next cube.", {"memEvent",""}},
            )
 
   logicLayer( ComponentId_t id, Params& params );
   int Finish();
   void init(unsigned int phase);
-  
+
 private: // types
-  
+
   typedef SST::Link memChan_t;
   typedef vector<memChan_t*> memChans_t;
-  
-private: 
-  
+
+private:
+
   logicLayer( const logicLayer& c );
   bool clock( Cycle_t );
   // determine if we 'own' a given address
@@ -94,8 +94,8 @@ private:
   unsigned int llID;
   unsigned long long memOps;
 
-    Statistic<uint64_t>*  bwUsedToCpu[2]; 
-    Statistic<uint64_t>*  bwUsedToMem[2]; 
+    Statistic<uint64_t>*  bwUsedToCpu[2];
+    Statistic<uint64_t>*  bwUsedToMem[2];
 };
 
 }

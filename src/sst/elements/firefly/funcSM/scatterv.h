@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -127,7 +127,7 @@ class ScattervFuncSM :  public FunctionSMInterface
         FunctionSMInterface( params ),
         m_event( NULL ),
         m_seq( 0 )
-    { 
+    {
         m_smallCollectiveVN = params.find<int>( "smallCollectiveVN", 0);
         m_smallCollectiveSize = params.find<int>( "smallCollectiveSize", 0);
    }
@@ -153,7 +153,7 @@ class ScattervFuncSM :  public FunctionSMInterface
 		~RecvInfo( ) {
 			if ( ioVec.size() > 1 ) {
 				if ( ioVec[1].addr.getBacking() ) {
-					free( ioVec[1].addr.getBacking() ); 
+					free( ioVec[1].addr.getBacking() );
 				}
 			}
 		}
@@ -164,7 +164,7 @@ class ScattervFuncSM :  public FunctionSMInterface
 
 	struct SendInfo {
 		SendInfo( std::vector<int>* sizeBuf, int numChildren  ) : sizeBuf(sizeBuf), count(0), bufPos(1), reqs( numChildren )  {}
-		~SendInfo() { delete sizeBuf; } 
+		~SendInfo() { delete sizeBuf; }
 		int count;
 		int bufPos;
 		std::vector<int>* sizeBuf;
@@ -198,7 +198,7 @@ class ScattervFuncSM :  public FunctionSMInterface
     int m_smallCollectiveVN;
     int m_smallCollectiveSize;
 };
-        
+
 }
 }
 

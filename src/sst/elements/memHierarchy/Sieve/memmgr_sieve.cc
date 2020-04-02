@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -24,11 +24,11 @@
 using namespace SST::MemHierarchy;
 using namespace SST::ArielComponent;
 
-MemoryManagerSieve::MemoryManagerSieve(ComponentId_t id, Params& params) : 
+MemoryManagerSieve::MemoryManagerSieve(ComponentId_t id, Params& params) :
             ArielMemoryManager(id, params) {
-    
+
     // Load a memory manager to actually do the translation -> we're just interception allocation events
-    
+
     // Attempt to load as a named subcomponent first
     if (NULL != (memmgr = loadUserSubComponent<ArielMemoryManager>("memmgr"))) {
         output->verbose(CALL_INFO, 1, 0, "Loaded memory manager: %s\n", memmgr->getName().c_str());
@@ -39,7 +39,7 @@ MemoryManagerSieve::MemoryManagerSieve(ComponentId_t id, Params& params) :
         memmgr = loadAnonymousSubComponent<ArielMemoryManager>(memorymanager, "memmgr", 0, ComponentInfo::SHARE_STATS | ComponentInfo::INSERT_STATS, mmParams);
         if (NULL == memmgr) output->fatal(CALL_INFO, -1, "Failed to load memory manager: %s\n", memorymanager.c_str());
     }
-    
+
     // Find our links
     std::string linkprefix = "alloc_link_";
     std::string linkname = linkprefix + "0";
@@ -84,7 +84,7 @@ void MemoryManagerSieve::freeMalloc(const uint64_t virtualAddress) {
     for (int i = 0; i < allocLink.size(); i++) {
         allocLink[i]->send(new AllocTrackEvent(AllocTrackEvent::FREE, virtualAddress, 0, 0, 0));
     }
-    
+
 }
 
 void MemoryManagerSieve::printStats() {

@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -25,7 +25,7 @@ using namespace SST::Ember;
 
 EmberNASLUGenerator::EmberNASLUGenerator(SST::ComponentId_t id, Params& params) :
 	EmberMessagePassingGenerator(id, params, "NASLU"),
-	m_loopIndex(0) 
+	m_loopIndex(0)
 {
 	nsCompute = (uint64_t) params.find("arg.computetime", 1000);
 
@@ -75,7 +75,7 @@ void EmberNASLUGenerator::configure()
 		rank(), myX, myY, x_up, x_down, y_up, y_down);
 }
 
-bool EmberNASLUGenerator::generate( std::queue<EmberEvent*>& evQ) 
+bool EmberNASLUGenerator::generate( std::queue<EmberEvent*>& evQ)
 {
     if( 0 == m_loopIndex) {
         verbose(CALL_INFO, 1, 0, "rank=%d size=%d\n", rank(),size());

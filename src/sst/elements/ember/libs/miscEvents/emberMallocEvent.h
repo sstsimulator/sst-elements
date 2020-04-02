@@ -1,8 +1,8 @@
-// Copyright 2009-2018 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2018, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -27,16 +27,16 @@ namespace Ember {
 
 class EmberMallocEvent : public EmberMiscEvent {
 public:
-	EmberMallocEvent( Misc::Interface& api, Output* output, Hermes::MemAddr* addr, 
+	EmberMallocEvent( Misc::Interface& api, Output* output, Hermes::MemAddr* addr,
 		   size_t length, bool backed, EmberEventTimeStatistic* stat = NULL ) :
         EmberMiscEvent( api, output, stat ), m_addr(addr), m_length(length), m_backed(backed)
     { }
 
-	~EmberMallocEvent() {} 
+	~EmberMallocEvent() {}
 
     std::string getName() { return "Malloc"; }
 
-    virtual void issue( uint64_t time, Callback* callback ) 
+    virtual void issue( uint64_t time, Callback* callback )
     {
         EmberEvent::issue( time );
 		m_output->verbose(CALL_INFO, 2, EVENT_MASK, "length=%zu backed=%d\n",m_length, m_backed );

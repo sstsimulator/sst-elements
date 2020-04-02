@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -47,7 +47,7 @@ class EmberEvent : public SST::Event {
 
 public:
 
-    enum State { 
+    enum State {
         FOREACH_ENUM(GENERATE_ENUM)
     } m_state;
 
@@ -57,9 +57,9 @@ public:
 	EmberEvent( Output* output, int* retval) :
         m_state(Issue), m_output(output), m_evStat(NULL), m_completeDelayNS(0), m_retvalPtr(retval)
 	{}
-	EmberEvent( ) : 
+	EmberEvent( ) :
         m_state(Issue), m_output(NULL), m_evStat(NULL), m_completeDelayNS(0), m_retvalPtr(NULL) {}
-	~EmberEvent() {} 
+	~EmberEvent() {}
 
 	virtual std::string getName() { return "?????"; };
 
@@ -99,11 +99,11 @@ public:
         if ( m_retvalPtr ) {
             *m_retvalPtr = retval;
         }
-        
+
         if ( m_evStat ) {
             m_evStat->addData( time - m_issueTime );
-        }  
-        return true; 
+        }
+        return true;
     }
 
     virtual uint64_t completeDelayNS() {
@@ -120,7 +120,7 @@ public:
     uint64_t            m_completeDelayNS;
     uint64_t            m_issueTime;
     int*                m_retvalPtr;
-    
+
     NotSerializable(EmberEvent)
 };
 

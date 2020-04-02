@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -88,7 +88,7 @@ class MemBackendConvertor : public SubComponent {
 
     class CustomReq : public BaseReq {
     public:
-        CustomReq(CustomCmdInfo * info, uint32_t reqId) : BaseReq(reqId, BaseReq::ReqType::CUSTOM), 
+        CustomReq(CustomCmdInfo * info, uint32_t reqId) : BaseReq(reqId, BaseReq::ReqType::CUSTOM),
             m_info(info) { }
         ~CustomReq() { }
 
@@ -102,7 +102,7 @@ class MemBackendConvertor : public SubComponent {
 
     class MemReq : public BaseReq {
       public:
-        MemReq( MemEvent* event, uint32_t reqId ) : BaseReq(reqId, BaseReq::ReqType::MEM), 
+        MemReq( MemEvent* event, uint32_t reqId ) : BaseReq(reqId, BaseReq::ReqType::MEM),
             m_event(event), m_offset(0), m_numReq(0) { }
         ~MemReq() { }
 
@@ -156,7 +156,7 @@ class MemBackendConvertor : public SubComponent {
     virtual uint32_t getRequestWidth();
     virtual bool isBackendClocked() { return m_clockBackend; }
 
-    virtual const std::string getRequestor( ReqId reqId ) { 
+    virtual const std::string getRequestor( ReqId reqId ) {
         uint32_t id = BaseReq::getBaseId(reqId);
         if ( m_pendingRequests.find( id ) == m_pendingRequests.end() ) {
             m_dbg.fatal(CALL_INFO, -1, "memory request not found\n");
@@ -164,7 +164,7 @@ class MemBackendConvertor : public SubComponent {
 
         return m_pendingRequests[id]->getRqstr();
     }
-    
+
     virtual void setCallbackHandlers(std::function<void(Event::id_type,uint32_t)> responseCB, std::function<Cycle_t()> clockenableCB);
 
     // generates a MemReq for the target custom command
@@ -215,7 +215,7 @@ class MemBackendConvertor : public SubComponent {
 
             if (dependsOn.empty()) return false;
             m_waitingFlushes.insert(std::make_pair(ev, dependsOn));
-            return true; 
+            return true;
         }
 
         uint32_t id = genReqId();
@@ -226,12 +226,12 @@ class MemBackendConvertor : public SubComponent {
     }
 
     inline void doClockStat( ) {
-        stat_totalCycles->addData(1);        
+        stat_totalCycles->addData(1);
     }
 
     void doReceiveStat( Command cmd) {
-        switch (cmd ) { 
-            case Command::GetS: 
+        switch (cmd ) {
+            case Command::GetS:
                 stat_GetSReqReceived->addData(1);
                 break;
             case Command::GetX:

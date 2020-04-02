@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -32,11 +32,11 @@ class SingleThread : public DetailedCompute {
         "SingleThread",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "",
-       	SST::Thornhill::SingleThread 
+       	SST::Thornhill::SingleThread
     )
 	struct Entry {
       Entry( std::function<int()>& _finiHandler ) : finiHandler( _finiHandler ) {}
-    	std::function<int()> finiHandler; 
+    	std::function<int()> finiHandler;
 	};
 
   public:
@@ -48,21 +48,21 @@ class SingleThread : public DetailedCompute {
 	struct Pending {
 		Pending( std::deque< std::pair< std::string, SST::Params > >& work,
                  std::function<int()> retHandler, std::function<int()> finiHandler) : work(work), retHandler(retHandler), finiHandler(finiHandler) {}
-    	std::deque< std::pair< std::string, SST::Params > > work; 
+    	std::deque< std::pair< std::string, SST::Params > > work;
         std::function<int()> retHandler;
-		std::function<int()> finiHandler; 
+		std::function<int()> finiHandler;
 	};
-    virtual void start( std::deque< std::pair< std::string, SST::Params > >& work, 
-                 std::function<int()> retHandler, std::function<int()> finiHandler ) 
+    virtual void start( std::deque< std::pair< std::string, SST::Params > >& work,
+                 std::function<int()> retHandler, std::function<int()> finiHandler )
 	{
 		if ( ! m_busy ) {
-			start2( work, retHandler, finiHandler ); 
+			start2( work, retHandler, finiHandler );
 		} else {
-			m_pendingQ.push( Pending( work, retHandler, finiHandler ) ); 
+			m_pendingQ.push( Pending( work, retHandler, finiHandler ) );
 		}
 	}
     virtual bool isConnected() { return ( m_link ); }
-	
+
 	virtual std::string getModelName() {
 		return "thornhill.SingleThread";
 	}
@@ -70,9 +70,9 @@ class SingleThread : public DetailedCompute {
   private:
 	bool m_busy;
 	std::queue<Pending> m_pendingQ;
-    void eventHandler( SST::Event* ev ); 
-    void start2( const std::deque< std::pair< std::string, SST::Params > >&, 
-                 std::function<int()>, std::function<int()> ); 
+    void eventHandler( SST::Event* ev );
+    void start2( const std::deque< std::pair< std::string, SST::Params > >&,
+                 std::function<int()>, std::function<int()> );
     Link*  m_link;
 };
 

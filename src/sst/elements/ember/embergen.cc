@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -28,8 +28,8 @@ EmberGenerator::EmberGenerator( ComponentId_t id, Params& params, std::string na
     m_curVirtAddr( 0x1000 )
 {
     m_primary = params.find<bool>("primary",true);
-    m_motifNum = params.find<int>( "_motifNum", -1 );	
-    m_jobId = params.find<int>( "_jobId", -1 );	
+    m_motifNum = params.find<int>( "_motifNum", -1 );
+    m_jobId = params.find<int>( "_jobId", -1 );
     uint64_t parentPtr = params.find<uint64_t>("_enginePtr",0 );
     assert( parentPtr != 0 );
 
@@ -46,11 +46,11 @@ EmberGenerator::EmberGenerator( ComponentId_t id, Params& params, std::string na
         std::cerr << "Error: Unable to load compute distribution: \'"
                                     << distribModule << "\'" << std::endl;
         exit(-1);
-    } 
+    }
 }
 
 
-void EmberGenerator::setEngine( EmberEngine* ee ) { 
+void EmberGenerator::setEngine( EmberEngine* ee ) {
 
 	m_ee = ee;
     m_output = m_ee->getOutput();
@@ -78,7 +78,7 @@ void EmberGenerator::fatal(uint32_t line, const char* file, const char* func,
 	va_start(arg, format);
 	vsnprintf( buf, 500, format, arg);
     va_end(arg);
-	m_output->fatal( line, file, func, exit_code, buf ); 
+	m_output->fatal( line, file, func, exit_code, buf );
 }
 
 void EmberGenerator::output(const char* format, ...) const
@@ -88,9 +88,9 @@ void EmberGenerator::output(const char* format, ...) const
 	va_start(arg, format);
 	vsnprintf( buf, 500, format, arg);
     va_end(arg);
-	m_output->output( buf ); 
+	m_output->output( buf );
 }
-    
+
 void EmberGenerator::verbose(uint32_t line, const char* file, const char* func,
                  uint32_t output_level, uint32_t output_bits,
                  const char* format, ...) const
@@ -101,7 +101,7 @@ void EmberGenerator::verbose(uint32_t line, const char* file, const char* func,
 	vsnprintf( buf, 500, format, arg);
     va_end(arg);
 	m_output->verbosePrefix( m_verbosePrefix.str().c_str(), line, file, func,
-											output_level, output_bits, buf ); 
+											output_level, output_bits, buf );
 }
 
 #if defined(__clang__)
@@ -115,13 +115,13 @@ void* EmberGenerator::memAlloc( size_t size )
       case Backing:
         ret = malloc( size );
         break;
-      case BackingZeroed: 
+      case BackingZeroed:
         ret = malloc( size );
-        memset( ret, 0, size ); 
+        memset( ret, 0, size );
         break;
       case NoBacking:
         break;
-    } 
+    }
     return ret;
 }
 
@@ -129,12 +129,12 @@ void EmberGenerator::memFree( void* ptr )
 {
     switch ( m_dataMode  ) {
       case Backing:
-      case BackingZeroed: 
+      case BackingZeroed:
         free( ptr );
         break;
       case NoBacking:
         break;
-    } 
+    }
 }
 
 

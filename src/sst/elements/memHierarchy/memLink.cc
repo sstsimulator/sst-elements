@@ -1,8 +1,8 @@
-// Copyright 2013-2019 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2019, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -26,14 +26,14 @@ using namespace SST::MemHierarchy;
 MemLink::MemLink(ComponentId_t id, Params &params) : MemLinkBase(id, params) {
     build(params);
 }
- 
+
 void MemLink::build(Params &params) {
     // Configure link
     std::string latency = params.find<std::string>("latency", "50ps");
     std::string port = params.find<std::string>("port", "port");
 
     link = configureLink(port, latency, new Event::Handler<MemLink>(this, &MemLink::recvNotify));
-    
+
     if (!link)
         dbg.fatal(CALL_INFO, -1, "%s, Error: unable to configure link on port '%s'\n", getName().c_str(), port.c_str());
 
@@ -57,7 +57,7 @@ void MemLink::init(unsigned int phase) {
             if (mEv->getInitCmd() == MemEventInit::InitCommand::Region) {
                 MemEventInitRegion * mEvRegion = static_cast<MemEventInitRegion*>(mEv);
                 dbg.debug(_L10_, "%s received init message: %s\n", getName().c_str(), mEvRegion->getVerboseString().c_str());
-            
+
                 EndpointInfo epInfo;
                 epInfo.name = mEvRegion->getSrc();
                 epInfo.addr = 0;
@@ -73,13 +73,13 @@ void MemLink::init(unsigned int phase) {
             } else { /* No need to filter by source since this is a direct link */
                 initReceiveQ.push(mEv);
             }
-        } else 
+        } else
             delete ev;
     }
 }
 
 /**
- * send init data 
+ * send init data
  */
 void MemLink::sendInitData(MemEventInit * event) {
     dbg.debug(_L10_, "%s sending init message: %s\n", getName().c_str(), event->getVerboseString().c_str());
@@ -98,7 +98,7 @@ MemEventInit * MemLink::recvInitData() {
     return me;
 }
 
-void MemLink::addRemote(EndpointInfo info) { 
+void MemLink::addRemote(EndpointInfo info) {
     remotes.insert(info);
 }
 

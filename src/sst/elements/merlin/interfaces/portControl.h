@@ -1,12 +1,12 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -53,7 +53,7 @@ public:
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Port Control module for use by hr_router",
         SST::Merlin::PortInterface)
-    
+
     SST_ELI_DOCUMENT_PARAMS(
         {"port_name",          "Port name to connect to.  Only used when loaded anonymously",""},
         {"link_bw",            "Bandwidth of the links specified in either b/s or B/s (can include SI prefix)."},
@@ -114,7 +114,7 @@ private:
     int num_vns;
     std::string vn_remap_shm;
     int vn_remap_shm_size;
-    
+
 	int max_link_width;
 	int cur_link_width;
 
@@ -125,7 +125,7 @@ private:
     UnitAlgebra flit_size;
     UnitAlgebra input_buf_size;
     UnitAlgebra output_buf_size;
-    
+
     Topology* topo;
     int port_number;
     bool host_port;
@@ -133,7 +133,7 @@ private:
 
     int remote_rtr_id;
     int remote_port_number;
-    
+
     // One buffer for each virtual network.  At the NIC level, we just
     // provide a virtual network abstraction.
     port_queue_t* input_buf;
@@ -142,13 +142,13 @@ private:
     // Need an output queue for topology events.  Incoming topology
     // events will be directed right to the topolgy object.
     topo_queue_t topo_queue;
-    
+
     // We need to avoid checking all the queues every time we clock
     // the arbitration logic, so we'll have each PortControl put the
     // head of each of its VC queues into a single array to speed
     // things up.  This is an array passed into the constructor.
     internal_router_event** vc_heads;
-    
+
     int* input_buf_count;
     int* output_buf_count;
 
@@ -168,17 +168,17 @@ private:
     // from next router.
     bool oql_track_remote;
 
-    
-    
+
+
     // Variables to keep track of credits.  You need to keep track of
     // the credits available for your next buffer, as well as track
     // the credits you need to return to the buffer sending data to
     // you,
     int* xbar_in_credits;
-    
+
     int* port_ret_credits;
     int* port_out_credits;
-    
+
     // Represents the start of when a port was idle
     // If the buffer was empty we instantiate this to the current time
     SimTime_t idle_start;
@@ -203,7 +203,7 @@ private:
 
     Router* parent;
     bool connected;
-    
+
     // Statistics
     Statistic<uint64_t>* send_bit_count;
     Statistic<uint64_t>* send_packet_count;
@@ -211,7 +211,7 @@ private:
     Statistic<uint64_t>* idle_time;
     Statistic<uint64_t>* width_adj_count;
 
-	// SAI Metrics (S+A+I=1) corresponds to 
+	// SAI Metrics (S+A+I=1) corresponds to
 	// sai_win_start to (sai_win_start + sai_win_length)
 	double stalled;
 	double active;
@@ -228,7 +228,7 @@ private:
 	// After adjusting a link the port is disable for sai_adj_delay
 	bool sai_port_disabled;
 
-    // Specifies if the active time is going past the window	
+    // Specifies if the active time is going past the window
 	bool ongoing_transmit;
 	uint64_t time_active_nano_remaining;
 
@@ -237,7 +237,7 @@ private:
     PortInterface::OutputArbitration* output_arb;
 
     SharedRegion* shared_region;
-    
+
 public:
 
     void sendTopologyEvent(TopologyEvent* ev);
@@ -253,9 +253,9 @@ public:
     internal_router_event** getVCHeads() {
     	return vc_heads;
     }
-    
+
     // time_base is a frequency which represents the bandwidth of the link in flits/second.
-    PortControl(ComponentId_t cid, Params& params, Router* rif, int rtr_id, int port_number, Topology *topo); 
+    PortControl(ComponentId_t cid, Params& params, Router* rif, int rtr_id, int port_number, Topology *topo);
 
     void initVCs(int vns, int* vcs_per_vn, internal_router_event** vc_heads, int* xbar_in_credits, int* output_queue_lengths);
 
@@ -265,27 +265,27 @@ public:
     void finish();
     void init(unsigned int phase);
     void complete(unsigned int phase);
-    
+
 
     void sendInitData(Event *ev);
     Event* recvInitData();
     void sendUntimedData(Event *ev);
     Event* recvUntimedData();
-    
+
     void dumpState(std::ostream& stream);
     void printStatus(Output& out, int out_port_busy, int in_port_busy);
-    
+
     // void setupVCs(int vcs, internal_router_event** vc_heads
 	bool decreaseLinkWidth();
 	bool increaseLinkWidth();
-    
+
 private:
 
     std::vector<SST::Interfaces::SimpleNetwork::NetworkInspector*> network_inspectors;
 
     void dumpQueueState(port_queue_t& q, std::ostream& stream);
     void dumpQueueState(port_queue_t& q, Output& out);
-    
+
     void handle_input_n2r(Event* ev);
     void handle_input_r2r(Event* ev);
     void handle_output(Event* ev);

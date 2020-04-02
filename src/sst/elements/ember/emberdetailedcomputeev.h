@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -37,7 +37,7 @@ public:
         m_fini(fini)
     {
         m_state = IssueFunctor;
-    }  
+    }
 
 	~EmberDetailedComputeEvent() {}
 
@@ -46,11 +46,11 @@ public:
     void issue( uint64_t time, FOO* functor ) {
 
         EmberEvent::issue( time );
-    
-        std::function<int()> foo = [=](){ 
+
+        std::function<int()> foo = [=](){
             (*functor)(0);
             return 0;
-        }; 
+        };
 
         std::deque< std::pair< std::string, SST::Params> > tmp;
         tmp.push_back( std::make_pair( m_name, m_params ) );

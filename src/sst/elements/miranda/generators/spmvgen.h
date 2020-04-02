@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -30,9 +30,9 @@ namespace Miranda {
 class SPMVGenerator : public RequestGenerator {
 
 public:
-	
+
         SPMVGenerator( ComponentId_t id, Params& params ) : RequestGenerator(id, params) { build(params); }
-        
+
         void build(Params& params) {
 		const uint32_t verbose = params.find<uint32_t>("verbose", 0);
 		out = new Output("SPMVGenerator[@p:@l]: ", verbose, 0, Output::STDOUT);
@@ -43,7 +43,7 @@ public:
 		elementWidth    = params.find<uint64_t>("element_width", 8);
 
 		uint64_t nextStartAddr = 0;
-                
+
                 // LHS vector has Nx elements of size elementWidth
 		lhsVecStartAddr = params.find<uint64_t>("lhs_start_addr", nextStartAddr);
 		nextStartAddr += matrixNx * elementWidth;
@@ -95,10 +95,10 @@ public:
 
 			q->push_back(readResultCurrentValue);
 
-                        // Putting non-zeros on the diagonal 
+                        // Putting non-zeros on the diagonal
 			for(uint64_t j = 0; j < matrixNNZPerRow; j++) {
                                 uint64_t col = j + row;
-                                if (col >= matrixNx) 
+                                if (col >= matrixNx)
                                     break;
 
 				out->verbose(CALL_INFO, 4, 0, "Generating access for row %" PRIu64 ", column: %" PRIu64 "\n",
@@ -116,7 +116,7 @@ public:
                                 readMatElement->addDependency(readStart->getRequestID());
                                 readMatElement->addDependency(readEnd->getRequestID());
 				readLHSElem->addDependency(readCol->getRequestID());
-                                
+
                                 writeResult->addDependency(readLHSElem->getRequestID());
 				writeResult->addDependency(readMatElement->getRequestID());
 

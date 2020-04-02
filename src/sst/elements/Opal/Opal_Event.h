@@ -1,8 +1,8 @@
-// Copyright 2009-2018 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2018, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -32,7 +32,7 @@
 #include<string>
 
 
-using namespace SST; 
+using namespace SST;
 
 
 namespace SST{ namespace OpalComponent{
@@ -76,8 +76,8 @@ namespace SST{ namespace OpalComponent{
 
 			OpalEvent(EventType y, const uint32_t level, const uint64_t virtualAddress, const uint64_t size_, const uint32_t thread) : SST::Event()
 			{
-				ev = y; 
-				memType = SST::OpalComponent::MemType::LOCAL; 
+				ev = y;
+				memType = SST::OpalComponent::MemType::LOCAL;
 				invalidate = false;
 				size =size_;
 				faultLevel = level;
@@ -87,7 +87,7 @@ namespace SST{ namespace OpalComponent{
 
 			void setType(int ev1) { ev = static_cast<EventType>(ev1);}
 			int getType() { return ev; }
-			
+
 			void setMemType(int mtype) { memType = static_cast<MemType>(mtype);}
 			MemType getMemType() { return memType; }
 
@@ -96,7 +96,7 @@ namespace SST{ namespace OpalComponent{
 
 			void setCoreId(uint32_t id) { coreId = id; }
 			uint32_t getCoreId() { return coreId; }
-			
+
 			void setResp(uint64_t add, uint64_t padd, int sz) { address = add; paddress = padd; size = sz;}
 
 			void setAddress(uint64_t add) { address = add; }

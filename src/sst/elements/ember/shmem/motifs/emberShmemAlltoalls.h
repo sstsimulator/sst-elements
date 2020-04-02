@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -29,8 +29,8 @@ class EmberShmemAlltoallsGenerator : public EmberShmemGenerator {
 
 public:
 	EmberShmemAlltoallsGenerator(SST::ComponentId_t id, Params& params) :
-		EmberShmemGenerator(id, params, "ShmemAlltoalls" ), m_phase(0) 
-	{ 
+		EmberShmemGenerator(id, params, "ShmemAlltoalls" ), m_phase(0)
+	{
         m_nelems = params.find<int>("arg.nelems", 1 );
         m_dst = params.find<int>("arg.dst", 1 );
         m_sst = params.find<int>("arg.sst", 1 );
@@ -45,24 +45,24 @@ public:
         assert( 4 == sizeof(TYPE) || 8 == sizeof(TYPE) );
     }
 
-    bool generate( std::queue<EmberEvent*>& evQ) 
+    bool generate( std::queue<EmberEvent*>& evQ)
 	{
         bool ret = false;
         switch ( m_phase ) {
-          case 0: 
+          case 0:
             enQ_init( evQ );
             enQ_my_pe( evQ, &m_my_pe );
             enQ_n_pes( evQ, &m_num_pes );
             break;
 
           case 1:
-			if ( 0 == m_my_pe ) { 
-            	printf("%d:%s: num_pes=%d nelems=%d type=\"%s\" dst=%d sst=%d\n",m_my_pe, getMotifName().c_str(), 
+			if ( 0 == m_my_pe ) {
+            	printf("%d:%s: num_pes=%d nelems=%d type=\"%s\" dst=%d sst=%d\n",m_my_pe, getMotifName().c_str(),
 							m_num_pes, m_nelems, m_type_name.c_str(), m_dst, m_sst);
 			}
-            { 
+            {
                 size_t buffer_size = 3 * sizeof(long);                   // for pSync
-                buffer_size += m_nelems * sizeof(TYPE) * m_num_pes * m_sst;  // for source  
+                buffer_size += m_nelems * sizeof(TYPE) * m_num_pes * m_sst;  // for source
                 buffer_size += m_nelems * sizeof(TYPE) * m_num_pes * m_dst;  // for dest
                 enQ_malloc( evQ, &m_pSync, buffer_size );
             }
@@ -79,16 +79,16 @@ public:
 
             for ( int pe = 0; pe < m_num_pes; pe++ ) {
 				int shift = (sizeof(TYPE) * 8 )/ 2;
-                for ( int i = 0; i < m_nelems; i++ ) { 
+                for ( int i = 0; i < m_nelems; i++ ) {
 
                     m_src.at<TYPE>( pe * m_nelems *  m_sst + i * m_sst ) = ((TYPE) (m_my_pe + 1) << shift) | i + 1;
-                } 
+                }
             }
 
             m_dest = m_src.offset<TYPE>( m_nelems * m_num_pes * m_sst );
-			if ( m_printResults &&  0 == m_my_pe ) { 
-            	printf("%d:%s: pSync=%#" PRIx64 " src=%#" PRIx64 " dest=%#" PRIx64 "\n",m_my_pe, 
-                        getMotifName().c_str(), m_pSync.getSimVAddr(), 
+			if ( m_printResults &&  0 == m_my_pe ) {
+            	printf("%d:%s: pSync=%#" PRIx64 " src=%#" PRIx64 " dest=%#" PRIx64 "\n",m_my_pe,
+                        getMotifName().c_str(), m_pSync.getSimVAddr(),
                         m_src.getSimVAddr(), m_dest.getSimVAddr());
 			}
             bzero( &m_dest.at<TYPE>(0), sizeof(TYPE) * m_num_pes * m_nelems * m_dst);
@@ -110,8 +110,8 @@ public:
                 for ( int i = 0; i < m_nelems; i++ ) {
 
 					if ( m_printResults ) {
-                    	printf("%d:%s: addr=%#" PRIx64 " pe=%d i=%d %#" PRIx64 "\n",m_my_pe, getMotifName().c_str(), 
-                            (uint64_t) m_dest.getSimVAddr<TYPE>( pe * m_nelems * m_dst + i * m_dst  ), 
+                    	printf("%d:%s: addr=%#" PRIx64 " pe=%d i=%d %#" PRIx64 "\n",m_my_pe, getMotifName().c_str(),
+                            (uint64_t) m_dest.getSimVAddr<TYPE>( pe * m_nelems * m_dst + i * m_dst  ),
                             pe, i, (uint64_t) m_dest.at<TYPE>( pe * m_nelems * m_dst + i * m_dst));
 					}
 
@@ -159,7 +159,7 @@ public:
 
 public:
 	EmberShmemAlltoalls32Generator(SST::ComponentId_t id, Params& params) :
-		EmberShmemAlltoallsGenerator( id, params) {} 
+		EmberShmemAlltoallsGenerator( id, params) {}
 };
 
 class EmberShmemAlltoalls64Generator : public EmberShmemAlltoallsGenerator<uint64_t> {
@@ -178,7 +178,7 @@ public:
 
 public:
 	EmberShmemAlltoalls64Generator(SST::ComponentId_t id, Params& params) :
-		EmberShmemAlltoallsGenerator( id, params) {} 
+		EmberShmemAlltoallsGenerator( id, params) {}
 };
 
 }

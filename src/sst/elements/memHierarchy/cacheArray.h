@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -30,7 +30,7 @@ using namespace std;
 
 namespace SST { namespace MemHierarchy {
 
-/* 
+/*
  * CacheArrays should  be templated on a line type
  * See the comment in lineTypes.h for the required API
  */
@@ -63,15 +63,15 @@ class CacheArray {
 
         /** Get line size.  Should not change at runtime */
         uint32_t getLineSize() { return lineSize_; }
-        
+
         /** Drop block offset bits (ie. log2(lineSize) */
         Addr toLineAddr(Addr addr);
-    
+
         /** Return bank num */
         Addr getBank(Addr addr) { return (toLineAddr(addr) % banks_); }
-        
+
     /**** Cache queries & maintenance */
-    
+
         /** Function returns the cacheline if found, otherwise a null pointer.
             If updateReplacement is set, the replacement stats are updated */
         T * lookup(Addr addr, bool updateReplacement);
@@ -81,7 +81,7 @@ class CacheArray {
 
         /** Replace a line with address 'addr' and update its replacement info */
         void replace(Addr addr, T* candidate);
-        
+
         /** Deallocate a line and notify replacement manager that it's been deallocated */
         void deallocate(T* candidate);
 
@@ -94,28 +94,28 @@ class CacheArray {
 /************* Function definitions *****************/
 
 template <class T>
-CacheArray<T>::CacheArray(Output* dbg, unsigned int numLines, unsigned int associativity, uint32_t lineSize, ReplacementPolicy* replacementMgr, HashFunction* hash) : 
+CacheArray<T>::CacheArray(Output* dbg, unsigned int numLines, unsigned int associativity, uint32_t lineSize, ReplacementPolicy* replacementMgr, HashFunction* hash) :
     dbg_(dbg), numLines_(numLines), associativity_(associativity), lineSize_(lineSize), replacementMgr_(replacementMgr), hash_(hash) {
-            
+
     // Error check parameters
     if (numLines_ == 0)
         dbg_->fatal(CALL_INFO, -1, "CacheArray, Error: number of lines is 0. Must be greater than 0.\n");
-            
+
     if (associativity_ == 0)
         dbg_->fatal(CALL_INFO, -1, "CacheArray, Error: associativity is 0. Use 1 for direct mapped, 2 or more for set-associative.\n");
 
     numSets_ = numLines_ / associativity_;
-            
+
     if (numSets_ == 0)
-        dbg_->fatal(CALL_INFO, -1, "CacheArray, Error: number of sets (number of lines / associativity) is 0. Must be at least 1. Number of lines = %u. Associativity = %u.\n", 
+        dbg_->fatal(CALL_INFO, -1, "CacheArray, Error: number of sets (number of lines / associativity) is 0. Must be at least 1. Number of lines = %u. Associativity = %u.\n",
                         numLines_, associativity_);
     if ((numSets_ * associativity_) != numLines_)
         dbg_->fatal(CALL_INFO, -1, "CacheArray, Error: The number of cachelines is not divisible by the cache associativity. Ensure (lines mod associativiy = 0). Number of lines = %u. Associativity = %u\n",
                 numLines_, associativity_);
-            
+
     lineOffset_ = log2Of(lineSize_);
     lines_.resize(numLines_);
-    
+
     // Set later using setter functions
     sliceStep_ = 1;
     sliceSize_ = 1;
@@ -165,7 +165,7 @@ T* CacheArray<T>::lookup(const Addr addr, bool updateReplacement) {
 
     for (int i = setBegin; i < setEnd; i++) {
         if (lines_[i]->getAddr() == addr) {
-            if (updateReplacement) 
+            if (updateReplacement)
                 replacementMgr_->update(i, lines_[i]->getReplacementInfo());
             return lines_[i];
         }
@@ -177,12 +177,12 @@ template <class T>
 T * CacheArray<T>::findReplacementCandidate(Addr addr) {
     Addr laddr = toLineAddr(addr);
     int set = hash_->hash(0, laddr) % numSets_;
-    
+
     unsigned int id = replacementMgr_->findBestCandidate(rInfo[set]);
 
     return lines_[id];
 }
-    
+
 template <class T>
 void CacheArray<T>::replace(Addr addr, T* candidate) {
     unsigned int index = candidate->getIndex();
@@ -198,7 +198,7 @@ void CacheArray<T>::deallocate(T* candidate) {
     replacementMgr_->replaced(index);
     candidate->reset();
 }
-   
+
 template <class T>
 void CacheArray<T>::setSliceAware(Addr size, Addr step) {
     sliceSize_ = size >> lineOffset_;

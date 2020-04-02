@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -42,23 +42,23 @@ public:
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Round robin arbitration unit for hr_router",
         SST::Merlin::XbarArbitration)
-    
-    
+
+
 private:
     int num_ports;
     int num_vcs;
-    
+
     int *rr_vcs;
     int rr_port;
-    
-#if VERIFY_DECLOCKING    
+
+#if VERIFY_DECLOCKING
     int rr_port_shadow;
 #endif
-    
+
     internal_router_event** vc_heads;
 
     // PortControl** ports;
-    
+
 public:
 
     xbar_arb_rr(ComponentId_t cid, Params& params) :
@@ -79,14 +79,14 @@ public:
         for ( int i = 0; i < num_ports; i++ ) {
             rr_vcs[i] = 0;
         }
-	
+
         rr_port = 0;
 #if VERIFY_DECLOCKING
         rr_port_shadow = 0;
 #endif
         vc_heads = new internal_router_event*[num_vcs];
     }
-    
+
     // Naming convention is from point of view of the xbar.  So,
     // in_port_busy is >0 if someone is writing to that xbar port and
     // out_port_busy is >0 if that xbar port being read.
@@ -103,44 +103,44 @@ public:
         for ( int port = rr_port, pcount = 0; pcount < num_ports; port = ((port != num_ports-1) ? port+1 : 0), pcount++ ) {
 
             vc_heads = ports[port]->getVCHeads();
-	    
+
             // Overwrite old data
             progress_vc[port] = -1;
             // if the output of this port is busy, nothing to do.
             if ( in_port_busy[port] > 0 ) {
                 continue;
             }
-	    
+
             // See what we should progress for this port
             // for ( int vc = rr_vcs[port], vcount = 0; vcount < num_vcs; vc = (vc+1) % num_vcs, vcount++ ) {
             for ( int vc = rr_vcs[port], vcount = 0; vcount < num_vcs; vc = ((vc != num_vcs-1) ? (vc+1) : 0), vcount++ ) {
-		
+
                 // If there is no event, move to next VC
                 internal_router_event* src_event = vc_heads[vc];
                 if ( src_event == NULL ) continue;
-		
+
                 // Have an event, see if it can be progressed
                 int next_port = src_event->getNextPort();
-		
+
                 // We can progress if the next port's input is not
                 // busy and there are enough credits.
                 if ( out_port_busy[next_port] > 0 ) continue;
-                
+
                 // Need to see if the VC has enough credits
                 int next_vc = src_event->getVC();
 
                 // See if there is enough space
                 if ( !ports[next_port]->spaceToSend(next_vc, src_event->getFlitCount()) ) continue;
-		
+
                 // Tell the router what to move
                 progress_vc[port] = vc;
-		
+
                 // Need to set the busy values
                 in_port_busy[port] = src_event->getFlitCount();
                 out_port_busy[next_port] = src_event->getFlitCount();
                 break;  // Go to next port;
             }
-            // Increemnt rr_vcs for next time 
+            // Increemnt rr_vcs for next time
             rr_vcs[port] = (rr_vcs[port] + 1) % num_vcs;
         }
         rr_port = (rr_port + 1) % num_ports;
@@ -150,10 +150,10 @@ public:
             rr_port_shadow = rr_port;
         }
 #endif
-    
+
         return;
     }
-    
+
     void reportSkippedCycles(Cycle_t cycles) {
 #if VERIFY_DECLOCKING
         rr_port_shadow = (rr_port_shadow + cycles) % num_ports;
@@ -174,7 +174,7 @@ public:
     }
 
 };
- 
+
 }
 }
 

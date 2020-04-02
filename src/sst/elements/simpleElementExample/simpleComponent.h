@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -23,7 +23,7 @@
 namespace SST {
 namespace SimpleComponent {
 
-class simpleComponent : public SST::Component 
+class simpleComponent : public SST::Component
 {
 public:
 
@@ -36,7 +36,7 @@ public:
         "Simple Demo Component",
         COMPONENT_CATEGORY_PROCESSOR
     )
-    
+
     SST_ELI_DOCUMENT_PARAMS(
         { "workPerCycle", "Count of busy work to do during a clock tick.", NULL},
         { "commFreq",     "Approximate frequency of sending an event during a clock tick.", NULL},
@@ -53,7 +53,7 @@ public:
         {"Elink", "Link to the simpleComponent to the East",  { "simpleComponent.simpleComponentEvent", "" } },
         {"Wlink", "Link to the simpleComponent to the West",  { "simpleComponent.simpleComponentEvent", "" } }
     )
-    
+
     // Optional since there is nothing to document
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
     )

@@ -1,8 +1,8 @@
-// Copyright 2009-2018 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2018, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -61,7 +61,7 @@ public:
 
 public:
 
-	EmberTestGenerator(SST::ComponentId_t id, Params& params): 
+	EmberTestGenerator(SST::ComponentId_t id, Params& params):
         EmberMessagePassingGenerator(id, params, "Null" ), m_phase(Init)
 	{
 		m_rng = new SST::RNG::XORShiftRNG();
@@ -80,10 +80,10 @@ public:
 					enQ_compute( evQ, m_rng->generateNextUInt32() % 1000000 );
 					enQ_send( evQ, NULL, 0, CHAR, 0, 0xdeadbeef, GroupWorld );
 					return true;
-				} 
+				}
 
-			case Check:				
-					
+			case Check:
+
 				if ( m_flag ) {
 					printf("src=%d\n", m_resp.src );
 					return true;

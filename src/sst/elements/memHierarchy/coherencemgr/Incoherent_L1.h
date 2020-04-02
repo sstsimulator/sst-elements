@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -28,7 +28,7 @@ namespace SST { namespace MemHierarchy {
 class IncoherentL1 : public CoherenceController {
 public:
 /* Element Library Info */
-    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(IncoherentL1, "memHierarchy", "coherence.incoherent_l1", SST_ELI_ELEMENT_VERSION(1,0,0), 
+    SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(IncoherentL1, "memHierarchy", "coherence.incoherent_l1", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Implements an L1 cache without coherence", SST::MemHierarchy::CoherenceController)
 
     SST_ELI_DOCUMENT_STATISTICS(
@@ -122,7 +122,7 @@ public:
             {"hash", "Hash function for mapping addresses to cache lines", "SST::MemHierarchy::HashFunction"} )
 
 
-/* Begin class definition */    
+/* Begin class definition */
     /** Constructor for IncoherentL1 */
     IncoherentL1(ComponentId_t id, Params& params, Params& ownerParams, bool prefetch) : CoherenceController(id, params, ownerParams, prefetch) {
         params.insert(ownerParams);
@@ -203,10 +203,10 @@ public:
         stat_miss[0][1] = registerStatistic<uint64_t>("GetSMiss_Blocked");
         stat_miss[1][1] = registerStatistic<uint64_t>("GetXMiss_Blocked");
         stat_miss[2][1] = registerStatistic<uint64_t>("GetSXMiss_Blocked");
-    
+
         /* Only for caches that write back clean blocks (i.e., lower cache is non-inclusive and may need the data) but don't know yet and can't register statistics later. Always enabled for now. */
         stat_eventSent[(int)Command::PutE] =           registerStatistic<uint64_t>("eventSent_PutE");
-        
+
         /* Prefetch statistics */
         if (prefetch) {
             statPrefetchEvict = registerStatistic<uint64_t>("prefetch_evict");
@@ -216,7 +216,7 @@ public:
     }
 
     ~IncoherentL1() {}
-    
+
     bool handleGetS(MemEvent * event, bool inMSHR);
     bool handleGetX(MemEvent * event, bool inMSHR);
     bool handleGetSX(MemEvent * event, bool inMSHR);
@@ -274,7 +274,7 @@ private:
     void addToOutgoingQueueUp(Response& resp);
 
 /* Miscellaneous */
-   
+
     /* Statistics recording */
     void recordPrefetchResult(L1CacheLine * line, Statistic<uint64_t> * stat);
     void recordLatency(Command cmd, int type, uint64_t timestamp);

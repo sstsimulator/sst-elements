@@ -1,9 +1,9 @@
 
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -27,7 +27,7 @@ namespace Firefly {
 
 #define SCALELATMOD_DBG 0
 
-class ScaleLatMod : public LatencyMod { 
+class ScaleLatMod : public LatencyMod {
 
   public:
     SST_ELI_REGISTER_MODULE(
@@ -63,7 +63,7 @@ class ScaleLatMod : public LatencyMod {
             std::size_t pos = tmp.find(":");
             std::string range = tmp.substr( 0, pos );
             std::string value = tmp.substr( pos + 1 );
-#if SCALELATMOD_DBG 
+#if SCALELATMOD_DBG
             printf("%s %s\n",range.c_str(), value.c_str());
 #endif
 
@@ -85,38 +85,38 @@ class ScaleLatMod : public LatencyMod {
 
     size_t getLatency( size_t value ) {
         double mult = 0;
-        std::deque<Entry>::iterator iter = m_deque.begin(); 
+        std::deque<Entry>::iterator iter = m_deque.begin();
         Entry* entry = NULL;
         for ( ; iter != m_deque.end(); ++ iter ) {
             if ( value >= iter->start && value < iter->stop ) {
                 entry = &(*iter);
-                break; 
+                break;
             }
         }
-#if SCALELATMOD_DBG 
+#if SCALELATMOD_DBG
         printf("value=%lu\n",value);
 #endif
         if ( entry ) {
             mult = entry->valueStart;
 
-#if SCALELATMOD_DBG 
-            printf("range: %lu - %lu, value: %.3f ns - %.3f ns \n",entry->start, entry->stop, 
-                    entry->valueStart * 1000000000.0, entry->valueStop * 1000000000.0); 
+#if SCALELATMOD_DBG
+            printf("range: %lu - %lu, value: %.3f ns - %.3f ns \n",entry->start, entry->stop,
+                    entry->valueStart * 1000000000.0, entry->valueStop * 1000000000.0);
 #endif
-            double percent = (double) (value - entry->start) / 
+            double percent = (double) (value - entry->start) /
                             (double) (entry->stop - entry->start);
-            
-#if SCALELATMOD_DBG 
+
+#if SCALELATMOD_DBG
             printf("%.12f percent\n",percent);
 #endif
-            
+
             if ( percent > 0  ) {
 
                 double delta = entry->valueStop - entry->valueStart;
                 double log = log10( percent * 10 );
                 double adjLog = log + 9 ;
                 double foo = adjLog/10.0;
-#if SCALELATMOD_DBG 
+#if SCALELATMOD_DBG
                 printf( "value=%lu log=%f delta=%.3f ns, foo=%.2f %.3f\n",  value,
                             log, delta * 1000000000.0, foo, foo * delta * 1000000000.0  );
 #endif
@@ -125,8 +125,8 @@ class ScaleLatMod : public LatencyMod {
         }
         // convert from seconds to nanoseconds
         mult *= 1000000000.0;
-#if SCALELATMOD_DBG 
-        printf("value=%lu, mult=%.2f, return %lu ns\n",value, mult, 
+#if SCALELATMOD_DBG
+        printf("value=%lu, mult=%.2f, return %lu ns\n",value, mult,
                                 (size_t)( (float) value * mult ));
 #endif
         return mult * value;

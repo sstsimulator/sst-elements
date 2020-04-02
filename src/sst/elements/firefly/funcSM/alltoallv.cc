@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -32,7 +32,7 @@ const char* AlltoallvFuncSM::m_enumName[] = {
     FOREACH_ENUM(GENERATE_STRING)
 };
 
-void AlltoallvFuncSM::handleStartEvent( SST::Event *e, Retval& retval ) 
+void AlltoallvFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
 {
     assert( NULL == m_event );
     m_event = static_cast< AlltoallStartEvent* >(e);
@@ -51,7 +51,7 @@ void AlltoallvFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
     if ( recv && send ) {
         memcpy( recv, send, recvChunkSize(m_rank));
     }
-    
+
     retval.setDelay( 0 );
 }
 
@@ -71,32 +71,32 @@ void AlltoallvFuncSM::handleEnterEvent( Retval& retval )
         }
         rank = mod((long) m_rank - m_count, m_size);
 
-        m_dbg.debug(CALL_INFO,1,0,"count=%d irecv src=%d\n", 
+        m_dbg.debug(CALL_INFO,1,0,"count=%d irecv src=%d\n",
                                                         m_count, rank );
 
-		addr.setSimVAddr( 1 ); 
+		addr.setSimVAddr( 1 );
 		addr.setBacking( recvChunkPtr(rank) );
-        proto()->irecv( addr, recvChunkSize(rank), 
-                        rank, genTag(), m_event->group, &m_recvReq ); 
+        proto()->irecv( addr, recvChunkSize(rank),
+                        rank, genTag(), m_event->group, &m_recvReq );
         m_state = Send;
         break;
 
       case Send:
         rank = mod((long) m_rank + m_count, m_size);
 
-        m_dbg.debug(CALL_INFO,1,0,"count=%d send dest=%d\n", 
+        m_dbg.debug(CALL_INFO,1,0,"count=%d send dest=%d\n",
                                                         m_count, rank );
 
-		
-		addr.setSimVAddr( 1 ); 
-		addr.setBacking( sendChunkPtr(rank) ); 
-        { 
+
+		addr.setSimVAddr( 1 );
+		addr.setBacking( sendChunkPtr(rank) );
+        {
             int vn = 0;
             if ( sendChunkSize(rank) <= m_smallCollectiveSize ) {
                 vn = m_smallCollectiveVN;
             }
-            proto()->send( addr, sendChunkSize(rank), 
-                                            rank, genTag(), m_event->group, vn ); 
+            proto()->send( addr, sendChunkSize(rank),
+                                            rank, genTag(), m_event->group, vn );
         }
         m_state = WaitRecv;
         break;

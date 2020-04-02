@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -25,7 +25,7 @@ WaitAllFuncSM::WaitAllFuncSM( SST::Params& params ) :
 {
 }
 
-void WaitAllFuncSM::handleStartEvent( SST::Event *e, Retval& retval ) 
+void WaitAllFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
 {
     assert( NULL == m_event );
     m_dbg.debug(CALL_INFO,1,0,"\n");

@@ -1,8 +1,8 @@
-// Copyright 2013-2019 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2019, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -53,13 +53,13 @@ class MemNICBase : public MemLinkBase {
         /* Destructor */
         virtual ~MemNICBase() { }
 
-        // Router events 
+        // Router events
         class MemRtrEvent : public SST::Event {
             public:
                 MemEventBase * event;
                 MemRtrEvent() : Event(), event(nullptr) { }
                 MemRtrEvent(MemEventBase * ev) : Event(), event(ev) { }
-            
+
                 virtual Event* clone(void) override {
                     MemRtrEvent *mre = new MemRtrEvent(*this);
                     if (this->event != nullptr)
@@ -70,12 +70,12 @@ class MemNICBase : public MemLinkBase {
                 }
 
                 virtual bool hasClientData() const { return true; }
-    
+
                 void serialize_order(SST::Core::Serialization::serializer &ser) override {
                     Event::serialize_order(ser);
                     ser & event;
                 }
-    
+
                 ImplementSerializable(SST::MemHierarchy::MemNICBase::MemRtrEvent);
         };
 
@@ -107,7 +107,7 @@ class MemNICBase : public MemLinkBase {
                     ser & info.region.interleaveSize;
                     ser & info.region.interleaveStep;
                 }
-    
+
                 ImplementSerializable(SST::MemHierarchy::MemNICBase::InitMemRtrEvent);
         };
 
@@ -133,14 +133,14 @@ class MemNICBase : public MemLinkBase {
 
         virtual bool isSource(std::string str) { /* Note this is only used during init so doesn't need to be fast */
             for (std::set<EndpointInfo>::iterator it = sourceEndpointInfo.begin(); it != sourceEndpointInfo.end(); it++) {
-                if (it->name == str) return true;   
+                if (it->name == str) return true;
             }
             return false;
         }
 
         virtual bool isDest(std::string str) { /* Note this is only used during init so doesn't need to be fast */
             for (std::set<EndpointInfo>::iterator it = destEndpointInfo.begin(); it != destEndpointInfo.end(); it++) {
-                if (it->name == str) return true;   
+                if (it->name == str) return true;
             }
             return false;
         }
@@ -164,7 +164,7 @@ class MemNICBase : public MemLinkBase {
             dbg.fatal(CALL_INFO, -1, "%s", error.str().c_str());
             return "";
         }
-    
+
     protected:
         virtual void addSource(EndpointInfo info) { sourceEndpointInfo.insert(info); }
         virtual void addDest(EndpointInfo info) { destEndpointInfo.insert(info); }
@@ -172,11 +172,11 @@ class MemNICBase : public MemLinkBase {
         virtual InitMemRtrEvent* createInitMemRtrEvent() {
             return new InitMemRtrEvent(info);
         }
-        
+
         virtual void processInitMemRtrEvent(InitMemRtrEvent* imre) {
             dbg.debug(_L10_, "%s (memNICBase) received imre. Name: %s, Addr: %" PRIu64 ", ID: %" PRIu32 ", start: %" PRIu64 ", end: %" PRIu64 ", size: %" PRIu64 ", step: %" PRIu64 "\n",
                     getName().c_str(), imre->info.name.c_str(), imre->info.addr, imre->info.id, imre->info.region.start, imre->info.region.end, imre->info.region.interleaveSize, imre->info.region.interleaveStep);
-                    
+
             if (sourceIDs.find(imre->info.id) != sourceIDs.end()) {
                 addSource(imre->info);
                 dbg.debug(_L10_, "\tAdding to sourceEndpointInfo. %zu sources found\n", sourceEndpointInfo.size());
@@ -189,7 +189,7 @@ class MemNICBase : public MemLinkBase {
         /* NIC initialization so that subclasses don't have to do this. Subclasses should call this during init() */
         virtual void nicInit(SST::Interfaces::SimpleNetwork * linkcontrol, unsigned int phase) {
             bool networkReady = linkcontrol->isNetworkInitialized();
-    
+
             // After we've set up network and exchanged params, drain the send queue
             if (networkReady && initMsgSent) {
                 while (!initSendQueue.empty()) {
@@ -197,7 +197,7 @@ class MemNICBase : public MemLinkBase {
                     initSendQueue.pop();
                 }
             }
-    
+
             // On first init round, send our region out to all others
             if (networkReady && !initMsgSent) {
                 info.addr = linkcontrol->getEndpointID();
@@ -210,11 +210,11 @@ class MemNICBase : public MemLinkBase {
                 linkcontrol->sendInitData(req);
                 initMsgSent = true;
             }
-    
+
             // Expect different kinds of init events
             // 1. MemNIC - record these as needed and do not inform parent
             // 2. MemEventBase - only notify parent if sender is a src or dst for us
-            // We should know since network is in order and NIC does its init before the 
+            // We should know since network is in order and NIC does its init before the
             // parents do
             while (SST::Interfaces::SimpleNetwork::Request *req = linkcontrol->recvInitData()) {
                 Event * payload = req->takePayload();
@@ -228,8 +228,8 @@ class MemNICBase : public MemLinkBase {
                     MemRtrEvent * mre = static_cast<MemRtrEvent*>(payload);
                     MemEventInit *ev = static_cast<MemEventInit*>(mre->event);
                     dbg.debug(_L10_, "%s (memNICBase) received mre during init. %s\n", getName().c_str(), mre->event->getVerboseString().c_str());
-                
-                    /* 
+
+                    /*
                      * Event is for us if:
                      *  1. We are the dst
                      *  2. Broadcast (dst = "") and:
@@ -264,7 +264,7 @@ class MemNICBase : public MemLinkBase {
             return it->second;
         }
 
-        /* 
+        /*
          * Some helper functions to avoid needing to repeat code everywhere
          */
 
@@ -340,7 +340,7 @@ class MemNICBase : public MemLinkBase {
 
         // Other parameters
         std::unordered_set<uint32_t> sourceIDs, destIDs; // IDs which this endpoint cares about
-        
+
     private:
 
         void build(Params& params) {
@@ -350,14 +350,14 @@ class MemNICBase : public MemLinkBase {
             bool found;
             info.id = params.find<uint32_t>("group", 0, found);
             if (!found) {
-                dbg.fatal(CALL_INFO, -1, "Param not specified(%s): group - group ID (or hierarchy level) for this NIC's component. Example: L2s in group 1, directories in group 2, memories (on network) in group 3.\n", 
+                dbg.fatal(CALL_INFO, -1, "Param not specified(%s): group - group ID (or hierarchy level) for this NIC's component. Example: L2s in group 1, directories in group 2, memories (on network) in group 3.\n",
                         getName().c_str());
             }
 
             std::stringstream sources, destinations;
             sources.str(params.find<std::string>("sources", ""));
             destinations.str(params.find<std::string>("destinations", ""));
-    
+
             uint32_t id;
             while (sources >> id) {
                 sourceIDs.insert(id);

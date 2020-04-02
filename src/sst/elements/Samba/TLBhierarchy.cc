@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -71,7 +71,7 @@ TLBhierarchy::TLBhierarchy(ComponentId_t id, int tlb_id, int Levels, Params& par
 		page_swapping_delay = ((uint32_t) params.find<uint32_t>("page_swapping_delay", 1000));
 
 		//std::cerr << owner->getName().c_str() << " core: " << coreID << " shoowtdown_delay: " << shootdown_delay << " page swapping delay: " << page_swapping_delay << std::endl;
- 
+
 	}
 
 	if(emulate_faults) {
@@ -105,7 +105,7 @@ TLBhierarchy::TLBhierarchy(ComponentId_t id, int tlb_id, int Levels, Params& par
 
 	PTW = loadComponentExtension<PageTableWalker>(coreID, nullptr, 0, params);
 
-	total_waiting = registerStatistic<uint64_t>( "total_waiting", subID );	
+	total_waiting = registerStatistic<uint64_t>( "total_waiting", subID );
 
 	if(levels)
 	{
@@ -122,7 +122,7 @@ TLBhierarchy::TLBhierarchy(ComponentId_t id, int tlb_id, int Levels, Params& par
 
 		for(int level=2; level <=levels; level++)
 		{
-			TLB_CACHE[level]->setServiceBack(TLB_CACHE[level-1]->getPushedBack());	
+			TLB_CACHE[level]->setServiceBack(TLB_CACHE[level-1]->getPushedBack());
 			TLB_CACHE[level]->setServiceBackSize(TLB_CACHE[level-1]->getPushedBackSize());
 
 		}
@@ -134,7 +134,7 @@ TLBhierarchy::TLBhierarchy(ComponentId_t id, int tlb_id, int Levels, Params& par
 		TLB_CACHE[1]->setServiceBack(&mem_reqs);
 		TLB_CACHE[1]->setServiceBackSize(&mem_reqs_sizes);
 	}
-	else 
+	else
 	{
 		PTW->setServiceBack(&mem_reqs);
 		PTW->setServiceBackSize(&mem_reqs_sizes);
@@ -153,7 +153,7 @@ TLBhierarchy::TLBhierarchy(ComponentId_t id, int tlb_id, int Levels, Params& par
 
 
 
-TLBhierarchy::TLBhierarchy(ComponentId_t id, Params& params, int tlb_id) : ComponentExtension(id) 
+TLBhierarchy::TLBhierarchy(ComponentId_t id, Params& params, int tlb_id) : ComponentExtension(id)
 {
 
 	coreID=tlb_id;
@@ -240,7 +240,7 @@ bool TLBhierarchy::tick(SST::Cycle_t x)
             MemHierarchy::MemEventBase * event= mem_reqs.back();
 
 		if(time_tracker.find(event) == time_tracker.end())
-		{ 
+		{
 			std::cout << "Danger! Something is terribly wrong..." << std::endl;
 			mem_reqs_sizes.erase(event);
 			mem_reqs.pop_back();
@@ -277,7 +277,7 @@ bool TLBhierarchy::tick(SST::Cycle_t x)
 					//std::cerr << Owner->getName().c_str() << " Page table reference update address: " << (*PTR)[(*PTR_map)[(*PTE)[vaddr / 4096]]].first << " index: " <<
 					//		(*PTR_map)[(*PTE)[vaddr / 4096]] << " PTE " << std::endl;
 					PTW->updatePTR((*PTE)[vaddr / 4096]);
- 
+
 					//(*PTR)[(*PTE)[vaddr / 4096]] = 1;
 				}
 			}*/

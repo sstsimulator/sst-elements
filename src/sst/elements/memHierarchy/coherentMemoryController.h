@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -54,14 +54,14 @@ public:
 
     /* Event handling */
     void handleMemResponse(SST::Event::id_type id, uint32_t flags);
-    
+
     /* Component API */
     virtual void init(unsigned int phase);
     virtual void setup();
 
 protected:
     virtual void processInitEvent(MemEventInit* ev);
-    
+
     virtual void handleEvent(SST::Event * event);
 
     virtual bool clock(Cycle_t cycle);
@@ -87,7 +87,7 @@ private:
     void updateMSHR(Addr baseAddr);
     void replayMemEvent(MemEvent * ev);
 
-    // Custom command handler 
+    // Custom command handler
     // TODO ability to specify multiple handlers
     //CustomCmdMemHandler * customCommandHandler_;
 
@@ -104,13 +104,13 @@ private:
     class MSHREntry {
         public:
             SST::Event::id_type id;                     // Event id, use to find event in OutstandEventList_
-            Command cmd;                                // Event command, mostly for quick lookup 
+            Command cmd;                                // Event command, mostly for quick lookup
             bool shootdown;                             // Whether event requires a shootdown before being processed
             std::set<SST::Event::id_type> writebacks;   // Writebacks this event is waiting for, due to shootdown
-            
+
             MSHREntry(SST::Event::id_type id, Command cmd, bool sdown = false) : id(id), cmd(cmd), shootdown(sdown) { }
     };
-    
+
     std::map<Addr, std::list<MSHREntry> > mshr_;    // Keeps outstanding events coherent
 
     // Event tracking

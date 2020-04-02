@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -25,12 +25,12 @@ namespace Firefly {
 class Info;
 class VirtNic;
 
-class ProtocolAPI : public SST::SubComponent 
+class ProtocolAPI : public SST::SubComponent
 {
   public:
     ProtocolAPI( ComponentId_t id ) : SubComponent( id ) {}
     virtual ~ProtocolAPI() {}
-    virtual void setVars( Info*, VirtNic*, Thornhill::MemoryHeapLink*, Link* ) = 0;  
+    virtual void setVars( Info*, VirtNic*, Thornhill::MemoryHeapLink*, Link* ) = 0;
     virtual std::string name() = 0;
 };
 

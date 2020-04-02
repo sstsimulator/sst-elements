@@ -1,10 +1,10 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -54,15 +54,13 @@ public:
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Link Control module for building Merlin-enabled NICs",
         SST::Interfaces::SimpleNetwork)
-    
+
     SST_ELI_DOCUMENT_PARAMS(
         {"port_name",          "Port name to connect to.  Only used when loaded anonymously",""},
         {"link_bw",            "Bandwidth of the links specified in either b/s or B/s (can include SI prefix)."},
         {"input_buf_size",     "Size of input buffers specified in b or B (can include SI prefix)."},
         {"output_buf_size",    "Size of output buffers specified in b or B (can include SI prefix)."},
         // {"network_inspectors", "Comma separated list of network inspectors to put on output ports.", ""},
-        {"checkerboard",     "DEPRECATED: Number of actual virtual networks to use per virtual network seen by endpoint", "1"},
-        {"checkerboard_alg", "DEPRECATED: Algorithm to use to spead traffic across checkerboarded VNs [deterministic | roundrobin]", "deterministic" },
         {"job_id",             "ID of the job this enpoint is part of.", "" },
         {"Job_size",           "Number of nodes in the job this endpoint is part of.",""},
         {"logical_nid",        "My logical NID", "" },
@@ -83,62 +81,73 @@ public:
         {"rtr_port", "Port that connects to router", { "merlin.RtrEvent", "merlin.credit_event", "" } },
     )
 
-    
+
 private:
+
+    struct output_queue_bundle_t {
+        network_queue_t queue;
+        int vn;
+        int credits;
+
+        output_queue_bundle_t() :
+            vn(-1),
+            credits(0)
+            {}
+    };
+
+
     // Link to router
     Link* rtr_link;
     // Self link for timing output.  This is how we manage bandwidth
     // usage
     Link* output_timing;
 
+    // Perforamne paramters
     UnitAlgebra link_bw;
     UnitAlgebra inbuf_size;
     UnitAlgebra outbuf_size;
     int flit_size; // in bits
     UnitAlgebra flit_size_ua;
-    
-    std::deque<RtrEvent*> init_events;
-    
-    // Number of virtual channels
-    int req_vns;
-    int total_vns;
-    int checker_board_factor;
 
-    int* vn_remap_out;
-    int* vn_remap_in;
-    
+    // Initialization events received from network
+    std::deque<RtrEvent*> init_events;
+
+    // Number of virtual networks
+    int req_vns; // VNs requested be endpoint in constructor
+    int used_vns; // VNs actually used based on VN mapping
+    int total_vns; // Total VNs in the network
+
+    int* vn_out_map;
+
+    /******************************************************************
+     * Data structures to hold output quewus/credits and mapping data
+     *****************************************************************/
+    // Holds the mapping from user VN to network VN.  Size is req_vns
+    output_queue_bundle_t** vn_remap_out;
+
+    // Holds the queues to output to network.  Size is used_vns
+    output_queue_bundle_t* output_queues;
+
+    // Holds the credits for the router input buffers.  Size is
+    // total_vns.
+    int* router_credits;
+
+    /******************************************************************
+     * Data structures to hold input quewus
+     *****************************************************************/
+
+    // Holds the credits to return to the router for my input buffers.
+    // Size is total_vns.
+    int* router_return_credits;
+
+    // Input queues.  Size is req_vn
+    network_queue_t* input_queues;
+
+
     nid_t id;
     nid_t logical_nid;
     SharedRegion* nid_map_shm;
     const nid_t* nid_map;
-    int rr;
-
-    typedef enum {
-        DETERMINISTIC,   /*!< Hashes based on src and dest */
-        ROUNDROBIN,      /*!< Round robins through VNs */
-    } cb_alg_t;
-
-    cb_alg_t cb_alg;
-    
-    // One buffer for each virtual network.  At the NIC level, we just
-    // provide a virtual channel abstraction.
-    network_queue_t* input_buf;
-    network_queue_t* output_buf;
-
-    // Variables to keep track of credits.  You need to keep track of
-    // the credits available for your next buffer, as well as track
-    // the credits you need to return to the buffer sending data to
-    // you,
-
-    // Number of credits available to the host in each VN (size = req_vns)
-    int* outbuf_credits;
-
-    // Number of credits available in the router input buffers for VC0
-    // of each VN (size = total_vns)
-    int* rtr_credits;
-
-    // Number of credits to return to the router (size = total_vns)
-    int* in_ret_credits;
 
     // Doing a round robin on the output.  Need to keep track of the
     // current virtual channel.
@@ -158,12 +167,12 @@ private:
     // means we're blocked and we need to keep track of block time
     bool have_packets;
     SimTime_t start_block;
-    
+
     // Functors for notifying the parent when there is more space in
     // output queue or when a new packet arrives
     HandlerBase* receiveFunctor;
     HandlerBase* sendFunctor;
-    
+
     // Component* parent;
 
     // PacketStats stats;
@@ -174,7 +183,7 @@ private:
     Statistic<uint64_t>* idle_time;
 
     Output& output;
-    
+
 public:
     LinkControl(ComponentId_t cid, Params &params, int vns);
 
@@ -205,17 +214,15 @@ public:
     // the next event.
     SST::Interfaces::SimpleNetwork::Request* recv(int vn);
 
-    // Returns true if there is an event in the input buffer and false 
+    // Returns true if there is an event in the input buffer and false
     // otherwise.
-    bool requestToReceive( int vn ) { return ! input_buf[vn].empty(); }
+    bool requestToReceive( int vn ) { return ! input_queues[vn].empty(); }
 
     void sendInitData(SST::Interfaces::SimpleNetwork::Request* ev);
     SST::Interfaces::SimpleNetwork::Request* recvInitData();
 
     void sendUntimedData(SST::Interfaces::SimpleNetwork::Request* ev);
     SST::Interfaces::SimpleNetwork::Request* recvUntimedData();
-
-    // const PacketStats& getPacketStats(void) const { return stats; }
 
     inline void setNotifyOnReceive(HandlerBase* functor) { receiveFunctor = functor; }
     inline void setNotifyOnSend(HandlerBase* functor) { sendFunctor = functor; }
@@ -232,14 +239,14 @@ public:
     }
     inline const UnitAlgebra& getLinkBW() const { return link_bw; }
 
-    
+
 private:
     bool network_initialized;
 
     void handle_input(Event* ev);
     void handle_output(Event* ev);
 
-    
+
 };
 
 }

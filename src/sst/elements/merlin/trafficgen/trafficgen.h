@@ -1,10 +1,10 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -52,7 +52,7 @@ public:
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Pattern-based traffic generator.",
         COMPONENT_CATEGORY_NETWORK)
-    
+
     SST_ELI_DOCUMENT_PARAMS(
         {"id",                                    "Network ID of endpoint."},
         {"num_peers",                             "Total number of endpoints in network."},
@@ -122,7 +122,7 @@ private:
         virtual int getNextValue(void) = 0;
         virtual void seed(uint32_t val) = 0;
     };
-    
+
     class NearestNeighbor : public Generator {
         Generator *dist;
         int *neighbors;
@@ -150,7 +150,7 @@ private:
                     "Unsure how to deal with %d neighbors\n", numNeighbors);
             }
         }
-        
+
         int getNextValue(void)
         {
             int neighbor = dist->getNextValue();
@@ -162,11 +162,11 @@ private:
             dist->seed(val);
         }
     };
-    
+
     class ExponentialDist : public Generator {
         MersenneRNG* gen;
         SSTExponentialDistribution* dist;
-        
+
     public:
         ExponentialDist(int lambda)
         {
@@ -197,7 +197,7 @@ private:
         SSTUniformDistribution* dist;
 
         int dist_size;
-        
+
     public:
         UniformDist(int min, int max)
         {
@@ -335,7 +335,7 @@ private:
     SST::Interfaces::SimpleNetwork::Handler<TrafficGen>* send_notify_functor;
     Clock::Handler<TrafficGen>* clock_functor;
     TimeConverter* clock_tc;
-    
+
     int base_packet_size;
     uint64_t packets_to_send;
 
@@ -362,7 +362,7 @@ private:
     int IP_to_fattree_ID(int id);
     bool handle_receives(int vn);
     bool send_notify(int vn);
-    
+
 protected:
     int getPacketDest(void);
     int getPacketSize(void);

@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -71,7 +71,7 @@ class ArielMemoryManager : public SubComponent {
             output->verbose(CALL_INFO, 4, 0, "The instantiated ArielMemoryManager does nto support MMAP handling.\n");
             return false;
         }
-        
+
         virtual void freeMMAP(const uint32_t file) {
             output->verbose(CALL_INFO, 4, 0, "The instantiated ArielMemoryManager does not support MMAP handling.\n");
         }

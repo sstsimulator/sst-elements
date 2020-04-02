@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -72,7 +72,7 @@ class Memory : public MemoryBase {
     virtual void write( Callback callback, MemAddr to, size_t length ) {
         m_dbg->debug(CALL_INFO,1,1,"\n");
         schedCallback( callback, txMemcpyDelay( length ) );
-    } 
+    }
 
     virtual void read( Callback callback, MemAddr to, size_t length ) {
         m_dbg->debug(CALL_INFO,1,1,"\n");
@@ -87,7 +87,7 @@ class Memory : public MemoryBase {
     virtual void unpin( Callback callback, MemAddr, size_t  length ) {
         m_dbg->debug(CALL_INFO,1,1,"\n");
         schedCallback( callback, regRegionDelay( length ) );
-    }        
+    }
 
     virtual void walk( Callback callback, int count ) {
         m_dbg->debug(CALL_INFO,1,1,"\n");
@@ -122,7 +122,7 @@ class Memory : public MemoryBase {
 
   private:
 
-    void schedCallback( Callback callback, uint64_t delay ) {        
+    void schedCallback( Callback callback, uint64_t delay ) {
         m_delayLink->send( delay, new DelayEvent(callback) );
     }
 
@@ -148,7 +148,7 @@ class Memory : public MemoryBase {
     Link*       m_delayLink;
 };
 
-inline Memory::Memory( ComponentId_t id, Params& params ) : MemoryBase(id)  
+inline Memory::Memory( ComponentId_t id, Params& params ) : MemoryBase(id)
 {
     std::stringstream ss;
     ss << this;
@@ -170,7 +170,7 @@ inline Memory::Memory( ComponentId_t id, Params& params ) : MemoryBase(id)
     m_regRegionBaseDelay_ns = params.find<int>( "regRegionBaseDelay_ns", 0 );
     m_regRegionPerPageDelay_ns = params.find<int>( "regRegionPerPageDelay_ns", 0 );
     m_regRegionXoverLength = params.find<int>( "regRegionXoverLength", 4096 );
-} 
+}
 inline Memory::~Memory( ) {
     delete m_txMemcpyMod;
     delete m_rxMemcpyMod;

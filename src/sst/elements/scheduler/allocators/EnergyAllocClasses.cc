@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -24,9 +24,9 @@
 
 #ifdef HAVE_GLPK
 #include <glpk.h>
-#endif 
+#endif
 
-#include "Job.h" 
+#include "Job.h"
 #include "Machine.h"
 #include "output.h"
 
@@ -53,21 +53,21 @@ namespace SST {
                             maxpos = xcount;
                             max = x[xcount];
                         }
-                    } 
+                    }
                     newx[maxpos] = 1;
                 }
             }
 
             void hybridalloc(int* oldx, int* roundedalloc, int processors, int requiredprocessors, const Machine & machine)
-            {     
+            {
 
 #ifdef HAVE_GLPK
                 int numNodes = machine.numNodes;
                 int Putil=1500;
                 int Pidle=1000;
-                    
+
                 double Tsup=288.15;
-                
+
                 double* D = new double[numNodes*numNodes];
                 int d_counter = 0;
                 if(machine.D_matrix == NULL){
@@ -81,7 +81,7 @@ namespace SST {
                 }
 
                 double Dsum[numNodes]; //stores the sum of each row of D
-                
+
                 double oldprocessors = 0; //total number of already-allocated processors
                 for(int x = 0; x < processors; x++)
                     oldprocessors += oldx[x];
@@ -116,7 +116,7 @@ namespace SST {
                 int row;
                 for (row = 1; row <= numNodes; row++) {
                     glp_set_row_bnds(lp, row, GLP_FX, Tsup + Dsum[row-1] * Pidle, Tsup + Dsum[row-1] * Pidle);
-                } 
+                }
 
                 for (row = numNodes+1; row <= 2*numNodes; row++) {
                     glp_set_row_bnds(lp, row, GLP_LO, 0.0, 0.0);
@@ -133,7 +133,7 @@ namespace SST {
                 for(col = 1; col <= numNodes; col++) {
                     if (oldx[col-1] == 0) {
                         glp_set_col_bnds(lp, col, GLP_DB, oldx[col-1], 1);
-                    } else { 
+                    } else {
                         glp_set_col_bnds(lp, col, GLP_FX, 1, 1);
                     }
                     glp_set_obj_coef(lp, col, 0);
@@ -142,7 +142,7 @@ namespace SST {
                 for(col = numNodes + 1; col <= 2*numNodes; col++) {
                     glp_set_col_bnds(lp, col, GLP_FR, 0.0, 0.0);
                     glp_set_obj_coef(lp, col, 0);
-                } 
+                }
 
                 glp_set_col_bnds(lp, 2*numNodes + 1, GLP_FR, 0.0, 0.0);
                 glp_set_obj_coef(lp, 2*numNodes + 1, 1);
@@ -154,12 +154,12 @@ namespace SST {
                     for(col = 0; col < numNodes; col++) {
                         ia[arraycount] = row + 1;
                         ja[arraycount] = col + 1;
-                        ar[arraycount] =  D[numNodes*row + col] * -Putil; 
+                        ar[arraycount] =  D[numNodes*row + col] * -Putil;
                         arraycount++;
                     }
-                    ia[arraycount] = row + 1; 
+                    ia[arraycount] = row + 1;
                     ja[arraycount] = numNodes + row + 1;
-                    ar[arraycount] =  1; 
+                    ar[arraycount] =  1;
                     arraycount++;
                 }
 
@@ -188,7 +188,7 @@ namespace SST {
                     roundedalloc[x] = 0;
 
                 roundallocarray(allocarray, numNodes, requiredprocessors+oldprocessors, roundedalloc);
-                
+
                 delete [] D;
                 delete [] ia;
                 delete [] ja;
@@ -200,7 +200,7 @@ namespace SST {
             }
 
             std::vector<int>* getEnergyNodes(std::vector<int>* available, int numProcs, const Machine & machine)
-            { 
+            {
                 std::cout << "Getting energy nodes\n";
                 std::vector<int>* ret = new std::vector<int>();
 
@@ -211,10 +211,10 @@ namespace SST {
                     oldx[x] = 1;
                     newx[x] = 0;
                 }
-                for (unsigned int x = 0; x < available -> size(); x++) { 
+                for (unsigned int x = 0; x < available -> size(); x++) {
                     oldx[available->at(x)] = 0;
                 }
-                
+
                 hybridalloc(oldx, newx, numNodes, numProcs, machine);
                 for (int x = 0; x < numNodes; x++) {
                     if (newx[x] == 1 && oldx[x] == 0) {

@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // This file is part of the SST software package. For license
 // information, see the LICENSE file in the top level directory of the
 // distribution.
@@ -18,24 +18,24 @@ namespace SST {
 namespace SimpleCarWash {
 
 simpleCarWash::simpleCarWash(ComponentId_t id, Params& params) :
-  Component(id) 
+  Component(id)
 {
     int64_t RandomSeed;
 
     // See if any optional simulation parameters were set in the executing Python script
-    // 
+    //
     clock_frequency_str = params.find<std::string>("clock", "1GHz");
     clock_count = params.find<int64_t>("clockcount", 1000);
     RandomSeed = params.find<int64_t>("randomseed", 151515);
     m_SimulationTimeLength = params.find<int64_t>("simulationtime", MINUTES_IN_A_DAY);
 
     std::cout << std::endl << std::endl;
-    std::cout << "Welcome to Uncle Ed's Fantastic, Awesome, and Incredible Carwash!\n" << std::endl;    
+    std::cout << "Welcome to Uncle Ed's Fantastic, Awesome, and Incredible Carwash!\n" << std::endl;
     std::cout << "The system clock is configured for: " << clock_frequency_str << std::endl;
     std::cout << "Random seed used is: " << RandomSeed << std::endl;
     std::cout << "Simulation time will be: " << m_SimulationTimeLength << std::endl;
     std::cout << std::endl;
-    
+
     // tell the simulator not to end without us
     registerAsPrimaryComponent();
     primaryComponentDoNotEndSim();
@@ -45,15 +45,15 @@ simpleCarWash::simpleCarWash(ComponentId_t id, Params& params) :
     registerClock(clock_frequency_str, new Clock::Handler<simpleCarWash>(this,
 			      &simpleCarWash::tick));
 
-#ifdef DISABLE_ONE_SHOTS 
+#ifdef DISABLE_ONE_SHOTS
 // These are interesting, and we should do some fun stuff with them, like maybe have a car's driver
 // become annoyed and jump out of our queue and leave???
 
     // Set some other clocks
-    // Second Clock (5ns) 
+    // Second Clock (5ns)
     std::cout << "REGISTER CLOCK #2 at 5 ns" << std::endl;
     registerClock("5 ns", new Clock::Handler<simpleCarWash, uint32_t>(this, &simpleCarWash::Clock2Tick, 222));
-    
+
     // Third Clock (15ns)
     std::cout << "REGISTER CLOCK #3 at 15 ns" << std::endl;
     Clock3Handler = new Clock::Handler<simpleCarWash, uint32_t>(this, &simpleCarWash::Clock3Tick, 333);
@@ -61,7 +61,7 @@ simpleCarWash::simpleCarWash(ComponentId_t id, Params& params) :
 #endif
 
     // This is the constructor, Let's set up the car was simulation
-    // Random number generation can be improved! 
+    // Random number generation can be improved!
 
     m_rng = new SST::RNG::MarsagliaRNG(11,  RandomSeed);
     srand(5);					// We need a bit of randomness for our customer arrival simulation
@@ -73,7 +73,7 @@ simpleCarWash::simpleCarWash(ComponentId_t id, Params& params) :
     m_CarWash.smallCarsWashed = 0;	// Clear the car's washed counters
     m_CarWash.largeCarsWashed =0;	//
     m_CarWash.noCarsArrived = 0;	//
-    m_LargeBay.Occupied = WASH_BAY_EMPTY; 
+    m_LargeBay.Occupied = WASH_BAY_EMPTY;
     m_LargeBay.timeToOccupy = 0;
     m_SmallBay.Occupied = WASH_BAY_EMPTY;
     m_SmallBay.timeToOccupy = 0;
@@ -83,14 +83,14 @@ simpleCarWash::simpleCarWash(ComponentId_t id, Params& params) :
     m_HourlyReport.noCarsArrived = 0;
 
     // inventory variables (you can change these)
-    
+
     m_blueSoap.soapInv = 50;
     m_strawBrush.brushInv = 10;
 
 
     std::cout << "The carwash simulation is now initialized and ready to run" << std::endl;
 
-#ifdef DISABLE_ONE_SHOTS  
+#ifdef DISABLE_ONE_SHOTS
     // Create the OneShot Callback Handlers
     callback1Handler = new OneShot::Handler<simpleCarWash, uint32_t>(this, &simpleCarWash::Oneshot1Callback, 456);
     callback2Handler = new OneShot::Handler<simpleCarWash>(this, &simpleCarWash::Oneshot2Callback);
@@ -104,7 +104,7 @@ simpleCarWash::simpleCarWash() :
     // for serialization only
 }
 
-bool simpleCarWash::tick( Cycle_t ) 
+bool simpleCarWash::tick( Cycle_t )
 {
 	int CarType;
 
@@ -129,7 +129,7 @@ bool simpleCarWash::tick( Cycle_t )
     if((0 < m_CarWashTick) && (0 == (m_CarWashTick % 60))) {
 		std::cout << "------------------------------------------------------------------" << std::endl;
 		std::cout << "Time= " << m_CarWashTick << "(minutes) another simulated hour has passed! Summary:" << std::endl;
-		std::cout << " Small Cars = " << m_HourlyReport.smallCarsWashed << std::endl; 
+		std::cout << " Small Cars = " << m_HourlyReport.smallCarsWashed << std::endl;
 		std::cout << " Large Cars = " << m_HourlyReport.largeCarsWashed << std::endl;
 		std::cout << " No Cars = " << m_HourlyReport.noCarsArrived << std::endl;
 		std::cout << std::endl;
@@ -144,7 +144,7 @@ bool simpleCarWash::tick( Cycle_t )
 		std::cout << "------------------------------------------------------------------" << std::endl;
 		std::cout << "Uncle Ed's Carwash Simulation has completed!" << std::endl;
 		std::cout << "Here's a summary of the results:" << std::endl;
-	        std::cout << "Simulation duration was:" << m_SimulationTimeLength 
+	        std::cout << "Simulation duration was:" << m_SimulationTimeLength
                           << "(sec.) (" << (m_SimulationTimeLength / 60) << " hours) of operation." << std::endl;
 		std::cout << "Small Cars Washed: " << m_CarWash.smallCarsWashed << std::endl;
 		std::cout << "Large Cars Washed: " << m_CarWash.largeCarsWashed << std::endl;
@@ -154,18 +154,18 @@ bool simpleCarWash::tick( Cycle_t )
 		ShowDisappointedCustomers();
 		return(true);
 	}
-    
-    // See what carwash bays can be cycled, and if any new cars can be processed in 
+
+    // See what carwash bays can be cycled, and if any new cars can be processed in
     if(false == CarWashClockTick(m_CarWashTick)) {
 	    m_CarWashTick++;
 	    return(false);
     }
- 
+
     std::cout << "Help! For some reason the simulator has reached code that shouldn't have been reached!" << std::endl;
     std::cout << "This would imply there is a bug that needs to be addressed??" << std::endl;
-	
+
     return(true);
-  
+
 #ifdef TEST
     // return false so we keep going
     if(clock_count == 0) {
@@ -183,9 +183,9 @@ bool simpleCarWash::tick( Cycle_t )
 
 bool simpleCarWash::Clock2Tick(SST::Cycle_t CycleNum, uint32_t Param)
 {
-    // NOTE: THIS IS THE 5NS CLOCK 
+    // NOTE: THIS IS THE 5NS CLOCK
     std::cout << "  CLOCK #2 - TICK Num " << CycleNum << "; Param = " << Param << std::endl;
-    
+
     // return false so we keep going or true to stop
     if (CycleNum == 15) {
         return true;
@@ -193,25 +193,25 @@ bool simpleCarWash::Clock2Tick(SST::Cycle_t CycleNum, uint32_t Param)
         return false;
     }
 }
-    
+
 bool simpleCarWash::Clock3Tick(SST::Cycle_t CycleNum, uint32_t Param)
 {
 #ifdef NOT_USED
 
-// But this is pretty cool timing code, that might be fun for other events, 
+// But this is pretty cool timing code, that might be fun for other events,
 // like running out of carwash soap?
 
     std::cout << "Uncle Ed's carwash optional timing events..." << CycleNum << std::endl;
 
-    // NOTE: THIS IS THE 15NS CLOCK 
-    std::cout << "  CLOCK #3 - TICK Num " << CycleNum << "; Param = " << Param << std::endl;    
-    
+    // NOTE: THIS IS THE 15NS CLOCK
+    std::cout << "  CLOCK #3 - TICK Num " << CycleNum << "; Param = " << Param << std::endl;
+
     if ((CycleNum == 1) || (CycleNum == 4))  {
         std::cout << "*** REGISTERING ONESHOTS " << std::endl ;
         registerOneShot("10ns", callback1Handler);
         registerOneShot("18ns", callback2Handler);
     }
-    
+
     // return false so we keep going or true to stop
     if (CycleNum == 15) {
 	   DumpCarRecordList();
@@ -227,7 +227,7 @@ void simpleCarWash::Oneshot1Callback(uint32_t Param)
     std::cout << "-------- ONESHOT #1 CALLBACK; Param = " << Param << std::endl;
     return;
 }
-    
+
 void simpleCarWash::Oneshot2Callback()
 {
     std::cout << "-------- ONESHOT #2 CALLBACK" << std::endl;
@@ -238,9 +238,9 @@ int simpleCarWash::CheckForNewCustomer()
 {
 	int rndNumber;
 
-	// Okay so this is a bit on the kludgy side, but let's at least make an attempt at a 
+	// Okay so this is a bit on the kludgy side, but let's at least make an attempt at a
      // Random number...
-	rndNumber = (int)(m_rng->generateNextInt32());		
+	rndNumber = (int)(m_rng->generateNextInt32());
 	rndNumber = (rndNumber & 0x0000FFFF) ^ ((rndNumber & 0xFFFF0000) >> 16);
 	rndNumber = abs((int)(rndNumber % 3));
 
@@ -253,15 +253,15 @@ int simpleCarWash::CheckForNewCustomer()
 int simpleCarWash::QueueACar(int carSize, int clockTick)
 {
 	// Find the end of the car queue
-	
+
 	CAR_RECORD *ptr = m_ptrCarRecordList;
 
 	if(NULL != ptr)	{			// Check to see if the list is empty
 		while(NULL != ptr->ptrNext)	// If not walk down the list to the end
-			ptr = ptr->ptrNext;		// 
+			ptr = ptr->ptrNext;		//
 	}  // if(NULL != ptr...
 
-	// Allocate a bit of memory, formatted for a car record, and set the pointers. 
+	// Allocate a bit of memory, formatted for a car record, and set the pointers.
 	if(NULL == ptr) { 				// First entry is a special case
 		if(NULL == (m_ptrCarRecordList = new CAR_RECORD)) {
 			printf("Error allocating memory for the first new car wash record\n");
@@ -281,7 +281,7 @@ int simpleCarWash::QueueACar(int carSize, int clockTick)
 	ptr->CarSize = carSize;				// Set the car's size
 	ptr->EntryTime = clockTick;			// Save of the entry time
 
-	if(1 == carSize) 
+	if(1 == carSize)
 		ptr->washTime = SMALL_CAR_WASH_TIME;		// Three minutes to wash a small car
 	else if(2 == carSize)
 		ptr->washTime = LARGE_CAR_WASH_TIME;		// Five minutes to wash a big car
@@ -298,17 +298,17 @@ int *simpleCarWash::DeQueueCar()
 	CAR_RECORD *pTemp;
 
 	car = new CAR_RECORD;
-	
-	// Get the next car in line				
+
+	// Get the next car in line
 	car->EntryTime = m_ptrCarRecordList->EntryTime;
 	car->CarSize = m_ptrCarRecordList->CarSize;
 	car->washTime = m_ptrCarRecordList->washTime;
 	car->ptrNext = NULL;						// This isn't necessary, but it's tidy
-	
+
 	// Delete the record and reconcile the pointers
 	pTemp = m_ptrCarRecordList;						// Get the record's pointer
 	m_ptrCarRecordList = m_ptrCarRecordList->ptrNext;		// Remove the record, adjusting the link
-	delete pTemp;									// Free the record's memory 
+	delete pTemp;									// Free the record's memory
 
 	return((int *)car);
 }  // DeQueueCar()
@@ -326,7 +326,7 @@ int simpleCarWash::DumpCarRecordList()
 		if(NULL != ptr) {
 			std::cout << "Car record[" << count << "]: " << ptr->EntryTime << " " << ptr->CarSize << std::endl;
 			count++;				// Increment
-			ptr = ptr->ptrNext;		// Index to the next pointer 
+			ptr = ptr->ptrNext;		// Index to the next pointer
 		} // i(NULL != ptr...
 		else {
 			std::cout << "Done" << std::endl;
@@ -348,7 +348,7 @@ int simpleCarWash::ShowDisappointedCustomers()
 				SmallCarCustomers++;
 			else if(LARGE_CAR == ptr->CarSize)
 				LargeCarCustomers++;
-			ptr = ptr->ptrNext;		// Index to the next pointer 
+			ptr = ptr->ptrNext;		// Index to the next pointer
 		} // i(NULL != ptr...
 		else {
 			std::cout << std::endl;
@@ -375,7 +375,7 @@ int simpleCarWash::ShowCarArt()
 				std::cout << "SC: ";
 			else if(LARGE_CAR == ptr->CarSize)
 				std::cout << "LC: ";
-			ptr = ptr->ptrNext;		// Index to the next pointer 
+			ptr = ptr->ptrNext;		// Index to the next pointer
 		} // i(NULL != ptr...
 		else {
 			std::cout << std::endl;
@@ -403,12 +403,12 @@ bool simpleCarWash::IsCarWashBayReady(CAR_WASH_BAY *ptrWashBay)
 // each clock tick we do 'workPerCycle' iterations of a simple loop.
 // We have a 1/commFreq chance of sending an event of size commSize to
 // one of our neighbors.
-bool simpleCarWash::CarWashClockTick(int clockTick) 
+bool simpleCarWash::CarWashClockTick(int clockTick)
 {
 	// This is the callback for a clock-tick (one minute has elapsed)
 
 	CAR_RECORD *pTemp;
-	
+
 	// Now let's see if we have a bay empty, or ready to be emptied
 	// Return of true implies the bay is empty and ready for a new car
 	if(true == IsCarWashBayReady(&m_LargeBay)) {
@@ -419,8 +419,8 @@ bool simpleCarWash::CarWashClockTick(int clockTick)
 		m_CarWash.smallCarsWashed++;
 	}
 
-	// Now that we've check the bays, let's fill any that have emptied. 
-	if(NULL != m_ptrCarRecordList) {		// Are there any cars waiting? 
+	// Now that we've check the bays, let's fill any that have emptied.
+	if(NULL != m_ptrCarRecordList) {		// Are there any cars waiting?
 		// See if we can fill the small bay first
 		if((m_SmallBay.Occupied == WASH_BAY_EMPTY) && (m_ptrCarRecordList->CarSize == SMALL_CAR))  { // SB - Open SM - Next
 //			printf("%d Filling Small Bay\n", __LINE__);
@@ -433,10 +433,10 @@ bool simpleCarWash::CarWashClockTick(int clockTick)
 	}  // if(NULL != m_ptrCarRecord
 
 	// The simulation rules stipulate that a large bay can accomodate either sized cars, but we can adjust the wash time
-	// Apparently we have somewhat intelligent car-washing equipment, of course this can change too. 
+	// Apparently we have somewhat intelligent car-washing equipment, of course this can change too.
 
 	if(NULL != m_ptrCarRecordList) {		// Examine the linked list to see if there are any cars waiting to be washed?
-		if(m_LargeBay.Occupied == WASH_BAY_EMPTY)  { 
+		if(m_LargeBay.Occupied == WASH_BAY_EMPTY)  {
 //			printf("%d, Filling Large Bay\n", __LINE__);
 			m_LargeBay.Occupied = WASH_BAY_FULL;
 			// Set the wash time based on the car's size
@@ -452,7 +452,7 @@ bool simpleCarWash::CarWashClockTick(int clockTick)
 	}  // if(NULL != m_ptrCarRecord...
 
 	// Since we might have moved a large car out of the way, let's recheck and see  if we can place a small car
-	if(NULL != m_ptrCarRecordList) {		// Are there any cars waiting? 
+	if(NULL != m_ptrCarRecordList) {		// Are there any cars waiting?
 		if((m_SmallBay.Occupied == WASH_BAY_EMPTY) && (m_ptrCarRecordList->CarSize == SMALL_CAR))  {
 //			printf("%d Trying again to fill Small Bay\n", __LINE__);
 			m_SmallBay.Occupied = WASH_BAY_FULL;
@@ -462,12 +462,12 @@ bool simpleCarWash::CarWashClockTick(int clockTick)
 			delete pTemp;			// Free the memory
 		} // if((m_SmallBay...
 	}  // if(NULL != m_ptrCarRecord...
-    
+
     // return false so we keep going  (No errors)
-    return(false);   
+    return(false);
 }
 
-// Serialization 
+// Serialization
 } // namespace simpleCarWash
 } // namespace SST
 

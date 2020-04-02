@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -29,9 +29,9 @@ class ArielWriteEvent : public ArielEvent {
     public:
         ArielWriteEvent(uint64_t wAddr, uint32_t length, const uint8_t* payloadData) :
                 writeAddress(wAddr), writeLength(length) {
-                
+
                 payload = new uint8_t[length];
-                
+
                 for( int i = 0; i < length; ++i ) {
                 	payload[i] = payloadData[i];
                 }
@@ -52,7 +52,7 @@ class ArielWriteEvent : public ArielEvent {
         uint32_t getLength() const {
                 return writeLength;
         }
-        
+
         uint8_t* getPayload() const {
         		return payload;
         }

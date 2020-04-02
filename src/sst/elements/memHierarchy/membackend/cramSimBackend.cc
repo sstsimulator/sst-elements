@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -31,7 +31,7 @@ void CramSimMemory::build(Params& params) {
     if (isPortConnected("cramsim_link"))
         cramsim_link = configureLink( "cramsim_link", access_time,
                 new Event::Handler<CramSimMemory>(this, &CramSimMemory::handleCramsimEvent));
-    else 
+    else
         cramsim_link = configureLink( "cube_link", access_time,
                 new Event::Handler<CramSimMemory>(this, &CramSimMemory::handleCramsimEvent));
 
@@ -67,7 +67,7 @@ void CramSimMemory::handleCramsimEvent(SST::Event *event){
             memReqs.erase( ev->getReqId() );
             handleMemResponse( ev->getReqId());
       		delete event;
-        } else {  
+        } else {
             output->fatal(CALL_INFO, -1, "Could not match incoming request from cubes\n");
 		}
     } else {

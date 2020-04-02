@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -21,7 +21,7 @@
 namespace SST {
 namespace Firefly {
 
-class BarrierFuncSM :  public CollectiveTreeFuncSM 
+class BarrierFuncSM :  public CollectiveTreeFuncSM
 {
   public:
     SST_ELI_REGISTER_MODULE(
@@ -41,7 +41,7 @@ class BarrierFuncSM :  public CollectiveTreeFuncSM
 
 		Hermes::MemAddr addr(1,NULL);
         CollectiveStartEvent* tmp = new CollectiveStartEvent( addr, addr, 0,
-                MP::CHAR, MP::MAX, 0, event->group, 
+                MP::CHAR, MP::MAX, 0, event->group,
                                 CollectiveStartEvent::Allreduce );
 
         delete event;

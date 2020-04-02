@@ -1,8 +1,8 @@
-# Copyright 2009-2019 NTESS. Under the terms
+# Copyright 2009-2020 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2019, NTESS
+# Copyright (c) 2009-2020, NTESS
 # All rights reserved.
 #
 # Portions are copyright of other developers:
@@ -21,33 +21,33 @@ def getCommand( key, cmd ):
 	params = {}
 	cmd = re.sub( ' +', ' ',cmd)
 	x = cmd.split(' ')
-	params[ key + '.name' ] = 'ember.' + x[0] + 'Motif' 
+	params[ key + '.name' ] = 'ember.' + x[0] + 'Motif'
 	x.pop(0)
 
 	for arg in x:
 		try:
 			argName, value = arg.split('=')
-		except: 
+		except:
 			break
-		params[ key + '.arg.' + argName ] = value 
-	return params 
+		params[ key + '.arg.' + argName ] = value
+	return params
 
 def getMotifParams( workflow ):
 	params = {}
 	motif_count = 0
 	for motif in workflow:
-		#pp.pprint(motif)	
+		#pp.pprint(motif)
 		curName = 'motif' + str(motif_count)
-		params[curName+'.api'] = motif['api'] 
+		params[curName+'.api'] = motif['api']
 
 		params.update( getCommand(curName, motif['cmd']) )
 
-		params[curName+'.spyplotmode'] = motif['spyplotmode'] 
+		params[curName+'.spyplotmode'] = motif['spyplotmode']
 		motif_count += 1
 
 	params['motif_count'] = motif_count
 
-	return params 
+	return params
 
 def calcNetMapId( nodeId, nidList ):
 
@@ -169,12 +169,12 @@ def getWorkListFromFile( filename, defaultParams ):
             if jobId:
                 yield jobId, nidlist, cmds
 
-            jobId = int(str) 
-            cmds = [] 
+            jobId = int(str)
+            cmds = []
 
         elif tag == '[NID_LIST]':
             nidlist = str
         elif tag == '[MOTIF]':
 			cmds += [str]
 
-    yield jobId, nidlist, cmds 
+    yield jobId, nidlist, cmds

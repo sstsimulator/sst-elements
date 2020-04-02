@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -67,7 +67,7 @@ public:
     }
 
     void set (Addr addr, size_t size, std::vector<uint8_t> &data) {
-        for (size_t i = 0; i < size; i++) 
+        for (size_t i = 0; i < size; i++)
             m_buffer[addr + i] = data[i];
     }
 
@@ -111,7 +111,7 @@ public:
         Addr bAddr = addr >> m_shift;
         Addr offset = addr - (bAddr << m_shift);
         size_t dataOffset = 0;
-        
+
         allocIfNeeded(bAddr);
 
         while (dataOffset != size) {
@@ -125,15 +125,15 @@ public:
                 allocIfNeeded(bAddr);
             }
         }
-    }        
+    }
 
     void get (Addr addr, size_t size, std::vector<uint8_t> &data) {
         Addr bAddr = addr >> m_shift;
         Addr offset = addr - (bAddr << m_shift);
         size_t dataOffset = 0;
-        
+
         allocIfNeeded(bAddr);
-        
+
         while (dataOffset != size) {
             data[dataOffset] = m_buffer[bAddr][offset];
             offset++;

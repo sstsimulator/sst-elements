@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -31,7 +31,7 @@ using namespace std;
 DragonflyMachine::DragonflyMachine(int routersPerGroup, int portsPerRouter,
     int opticalsPerRouter, int nodesPerRouter, int coresPerNode, localTopo ltopo,
     globalTopo gtopo, double** D_matrix)
-    : Machine(getNumNodes(opticalsPerRouter, routersPerGroup, nodesPerRouter), 
+    : Machine(getNumNodes(opticalsPerRouter, routersPerGroup, nodesPerRouter),
               coresPerNode,
               D_matrix,
               getNumLinks(portsPerRouter, nodesPerRouter, routersPerGroup, opticalsPerRouter)),
@@ -44,7 +44,7 @@ DragonflyMachine::DragonflyMachine(int routersPerGroup, int portsPerRouter,
       numNodes(getNumNodes(opticalsPerRouter, routersPerGroup, nodesPerRouter)),
       numRouters(getNumRouters(routersPerGroup, opticalsPerRouter)),
       numLinks(getNumLinks(portsPerRouter, nodesPerRouter, routersPerGroup, opticalsPerRouter))
-{   
+{
     //sanity check
     if (portsPerRouter < nodesPerRouter + opticalsPerRouter)
         schedout.fatal(CALL_INFO, 1, "DragonflyMachine: Too few ports!\n");
@@ -67,9 +67,9 @@ DragonflyMachine::DragonflyMachine(int routersPerGroup, int portsPerRouter,
             goto unknown_topo;
     }
 
-    //init routers    
+    //init routers
     routers = vector<map<int,int> >(numRouters);
-    
+
     //build local groups
     switch (ltopo) {
     case ALLTOALL:
@@ -87,7 +87,7 @@ DragonflyMachine::DragonflyMachine(int routersPerGroup, int portsPerRouter,
     default:
         goto unknown_topo;
     }
-    
+
     //build global groups
     switch (gtopo) {
     case CIRCULANT:
@@ -146,13 +146,13 @@ DragonflyMachine::DragonflyMachine(int routersPerGroup, int portsPerRouter,
     default:
         goto unknown_topo;
     }
-    
+
     //node-to-router link indices are in-order starting from (numLinks - nodesPerRouter * numRouters)
     //sanity check
     if (linkCount != numLinks - nodesPerRouter * numRouters) {
         schedout.fatal(CALL_INFO, 1, "DragonflyMachine: Network setup failed!\n");
     }
-    
+
     //For nearestAllocMapper:
     //Fill nodes at distances for fast access
     //Calculate with breadth-first from node 0. Assume symmetrical network
@@ -166,7 +166,7 @@ DragonflyMachine::DragonflyMachine(int routersPerGroup, int portsPerRouter,
         delete temp_list;
         dist_it++;
     }
-    
+
     return;
 unknown_topo:
     schedout.fatal(CALL_INFO, 1, "DragonflyMachine(): Unknown local or global topology\n");
@@ -183,7 +183,7 @@ AllocInfo* DragonflyMachine::getBaselineAllocation(Job* job) const
 	for(int i = 0; i < nodesNeeded; i++){
 		allocInfo->nodeIndices[i] = i;
 	}
-	
+
 	return allocInfo;
 }
 
@@ -217,7 +217,7 @@ list<int>* DragonflyMachine::getFreeAtDistance(int center, int distance) const
     if (distance <= 1) {
         return nodes;
     }
-  
+
     //apply breadth-first search to find routers at (distance - 2)
     //  to account for the node-to-router hop
     vector<bool> marked(numRouters, false);
@@ -225,7 +225,7 @@ list<int>* DragonflyMachine::getFreeAtDistance(int center, int distance) const
     int center_rID = routerOf(center);
     rQ1->push_back(center_rID);
     marked[center_rID] = true;
-    
+
     while (distance > 2) {
         list<int>* rQ2 = new list<int>();
         while (!rQ1->empty()) {
@@ -247,8 +247,8 @@ list<int>* DragonflyMachine::getFreeAtDistance(int center, int distance) const
         distance--;
     }
     for (int i = 0; i < numRouters; i++)
-        rQ1->push_back(i); 
-    
+        rQ1->push_back(i);
+
     //get all nodes connected to the routers in the queue
     while (!rQ1->empty()) {
         int rID = rQ1->front();
@@ -259,14 +259,14 @@ list<int>* DragonflyMachine::getFreeAtDistance(int center, int distance) const
             }
         }
     }
-    
+
     delete rQ1;
 
     return nodes;
 }
 
 int DragonflyMachine::nodesAtDistance(int dist) const
-{    
+{
     if(dist >= (int) nodesAtDistances.size())
         return 0;
     else
@@ -278,25 +278,25 @@ list<int>* DragonflyMachine::getRoute(int node0, int node1, double commWeight) c
     int nInterRouterLinks;
 
     list<int>* links = new list<int>();
-    
+
     if(node0 == node1) {
         return links;
     }
-    
+
     int rID0 = routerOf(node0);
     int rID1 = routerOf(node1);
-    
+
     /*
     //The below is the literal minimum path, and can use global-global hops
     //  whereas the default minimum uses local-global-local
     if (rID0 != rID1) {
         //apply breadth-first search to get all links from rID0 to rID1
-  
+
         list<int> routerQ;
         vector<bool> marked(numRouters, false);
         vector<int> prevRouter(numRouters, -1);
         routerQ.push_back(rID0);
-        
+
         while (!routerQ.empty()) {
             int curNode = routerQ.front();
             routerQ.pop_front();
@@ -313,7 +313,7 @@ list<int>* DragonflyMachine::getRoute(int node0, int node1, double commWeight) c
                 }
             }
         }
-    
+
         //Found the shortest route. Now add links
         int cur = rID1;
         int previous = prevRouter[rID1];
@@ -408,7 +408,7 @@ list<int>* DragonflyMachine::getRoute(int node0, int node1, double commWeight) c
 
                 //add global hop
                 links->push_back(routers[rmid0].find(rmid1)->second);
-                
+
                 //add remote local hop
                 if (rmid1 != rID1) {
                     links->push_back(routers[rmid1].find(rID1)->second);
@@ -450,17 +450,17 @@ list<int>* DragonflyMachine::getRoute(int node0, int node1, double commWeight) c
                 }
             }
             break;
-        }        
+        }
         default:
             goto unknown_topo;
         }
     }
 
     nInterRouterLinks = numLinks - nodesPerRouter * numRouters;
-    
+
     //node-to-router-hop
     links->push_front(nInterRouterLinks + node0);
-    
+
     //router-to-node hop
     links->push_back(nInterRouterLinks + node1);
 

@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // This file is part of the SST software package. For license
@@ -30,8 +30,8 @@ void TimingDRAM::build(Params& params) {
     assert( id != -1 );
 
     std::ostringstream tmp;
-    tmp << "@t:TimingDRAM::@p():@l:mc=" << id << ": "; 
-    
+    tmp << "@t:TimingDRAM::@p():@l:mc=" << id << ": ";
+
     int dbg_level = params.find<int>("dbg_level", 1);
     int dbg_mask = params.find<int>("dbg_mask", -1);
     output = new Output(tmp.str().c_str(), dbg_level, dbg_mask, Output::STDOUT);
@@ -42,7 +42,7 @@ void TimingDRAM::build(Params& params) {
     m_mapper = dynamic_cast<AddrMapper*>(loadModule( addrMapper, tmpParams ) );
 
     if ( ! m_mapper ) {
-        output->fatal(CALL_INFO, -1, "Invalid param(%s): addrMapper,  '%s'.\n", 
+        output->fatal(CALL_INFO, -1, "Invalid param(%s): addrMapper,  '%s'.\n",
             getName().c_str(), addrMapper.c_str());
     }
 
@@ -71,7 +71,7 @@ bool TimingDRAM::issueRequest( ReqId id, Addr addr, bool isWrite, unsigned numBy
 
     bool ret = m_channels[chan]->issue(m_cycle, id, addr, isWrite, numBytes );
 
-    if ( ret ) { 
+    if ( ret ) {
         output->verbose(CALL_INFO, 2, DBG_MASK, "chan=%d reqId=%" PRIu64 " addr=%#" PRIx64 "\n",chan,id,addr);
     } else {
         output->verbose(CALL_INFO, 5, DBG_MASK, "chan=%d reqId=%" PRIu64 " addr=%#" PRIx64 " failed\n",chan,id,addr);
@@ -90,21 +90,21 @@ bool TimingDRAM::clock(Cycle_t cycle)
 }
 
 //==================================================================================
-// Channel 
+// Channel
 //==================================================================================
 
 TimingDRAM::Channel::Channel( ComponentId_t id, std::function<void(ReqId)> handler, Params& params, unsigned mc, unsigned myNum, Output* output, AddrMapper* mapper ) :
     ComponentExtension(id), m_responseHandler(handler), m_output( output ), m_mapper( mapper ), m_nextRankUp(0), m_dataBusAvailCycle(0)
 {
     std::ostringstream tmp;
-    tmp << "@t:TimingDRAM:Channel:@p():@l:mc=" << mc << ":chan=" << myNum << ": "; 
+    tmp << "@t:TimingDRAM:Channel:@p():@l:mc=" << mc << ":chan=" << myNum << ": ";
     m_pre = tmp.str();
 
     unsigned numRanks = params.find<unsigned>("numRanks", 1);
     m_maxPendingTrans = params.find<unsigned>("transaction_Q_size", 32);
 
     m_pendingCount = 0;
-    
+
     m_mapper->setNumRanks( numRanks );
 
     if (m_printConfig)
@@ -118,7 +118,7 @@ TimingDRAM::Channel::Channel( ComponentId_t id, std::function<void(ReqId)> handl
     Params tmpParams = params.find_prefix_params("rank." );
     for ( unsigned i=0; i<numRanks; i++ ) {
         m_ranks.push_back( loadComponentExtension<Rank>( tmpParams, mc, myNum, i, output, mapper ) );
-    } 
+    }
 }
 
 void TimingDRAM::Channel::clock( SimTime_t cycle )
@@ -142,16 +142,16 @@ void TimingDRAM::Channel::clock( SimTime_t cycle )
             }
 
             delete (*iter);
-            iter = m_issuedCmds.erase(iter); 
+            iter = m_issuedCmds.erase(iter);
         } else {
             ++iter;
         }
     }
- 
+
     /* Return a response if possible */
     if ( ! m_retiredTrans.empty() ) {
         if (is_debug)
-            m_output->verbosePrefix(prefix(),CALL_INFO, 3, DBG_MASK, "send response: reqId=%" PRIu64 " bank=%d addr=%#" PRIx64 ", createTime=%" PRIu64 "\n", 
+            m_output->verbosePrefix(prefix(),CALL_INFO, 3, DBG_MASK, "send response: reqId=%" PRIu64 " bank=%d addr=%#" PRIx64 ", createTime=%" PRIu64 "\n",
                     m_retiredTrans.front()->id, m_retiredTrans.front()->bank, m_retiredTrans.front()->addr, m_retiredTrans.front()->createTime);
 
         m_responseHandler(m_retiredTrans.front()->id);
@@ -168,7 +168,7 @@ void TimingDRAM::Channel::clock( SimTime_t cycle )
             m_output->verbosePrefix(prefix(),CALL_INFO, 2, DBG_MASK, "cycle=%" PRIu64 " issue %s for rank=%d bank=%d row=%d\n",
                     cycle, cmd->getName().c_str(), cmd->getRank(), cmd->getBank(), cmd->getRow());
 
-        m_dataBusAvailCycle = cmd->issue();  
+        m_dataBusAvailCycle = cmd->issue();
 
         m_issuedCmds.push_back(cmd);
     }
@@ -191,7 +191,7 @@ TimingDRAM::Cmd* TimingDRAM::Channel::popCmd( SimTime_t cycle, SimTime_t dataBus
                     if (is_debug)
                         m_output->verbosePrefix(prefix(),CALL_INFO, 3, DBG_MASK, "rank %d next up\n",m_nextRankUp);
                 }
-            
+
                 break;
             }
         }
@@ -203,20 +203,20 @@ TimingDRAM::Cmd* TimingDRAM::Channel::popCmd( SimTime_t cycle, SimTime_t dataBus
 }
 
 //==================================================================================
-// Rank 
+// Rank
 //==================================================================================
 
-TimingDRAM::Rank::Rank( ComponentId_t id, Params& params, unsigned mc, unsigned chan, unsigned myNum, Output* output, AddrMapper* mapper ) : 
+TimingDRAM::Rank::Rank( ComponentId_t id, Params& params, unsigned mc, unsigned chan, unsigned myNum, Output* output, AddrMapper* mapper ) :
     ComponentExtension(id), m_output( output ), m_mapper( mapper ), m_nextBankUp(0)
 {
     std::ostringstream tmp;
-    tmp << "@t:TimingDRAM:Rank:@p():@l:mc=" << mc << ":chan=" << chan << ":rank=" << myNum <<": "; 
+    tmp << "@t:TimingDRAM:Rank:@p():@l:mc=" << mc << ":chan=" << chan << ":rank=" << myNum <<": ";
     m_pre = tmp.str();
 
     int banks = params.find<int>("numBanks", 8);
 
     m_mapper->setNumBanks( banks );
-    
+
     if (m_printConfig)
         m_printConfig = params.find<bool>("printconfig", true);
     if ( m_printConfig ) {
@@ -227,7 +227,7 @@ TimingDRAM::Rank::Rank( ComponentId_t id, Params& params, unsigned mc, unsigned 
     Params tmpParams = params.find_prefix_params("bank." );
     for ( unsigned i=0; i<banks; i++ ) {
         m_banks.push_back( loadComponentExtension<Bank>( tmpParams, mc, chan, myNum, i, output ) );
-    } 
+    }
 }
 
 TimingDRAM::Cmd* TimingDRAM::Rank::popCmd( SimTime_t cycle, SimTime_t dataBusAvailCycle )
@@ -264,11 +264,11 @@ TimingDRAM::Cmd* TimingDRAM::Rank::popCmd( SimTime_t cycle, SimTime_t dataBusAva
 // Bank
 //==================================================================================
 
-TimingDRAM::Bank::Bank( ComponentId_t id, Params& params, unsigned mc, unsigned chan, unsigned rank, unsigned myNum, Output* output ) : 
-    ComponentExtension(id), m_output( output ), m_lastCmd(nullptr), m_bank(myNum), m_rank(rank), m_row( -1 ) 
+TimingDRAM::Bank::Bank( ComponentId_t id, Params& params, unsigned mc, unsigned chan, unsigned rank, unsigned myNum, Output* output ) :
+    ComponentExtension(id), m_output( output ), m_lastCmd(nullptr), m_bank(myNum), m_rank(rank), m_row( -1 )
 {
     std::ostringstream tmp;
-    tmp << "@t:TimingDRAM:Bank:@p():@l:mc=" << mc << ":chan=" << chan << ":rank=" << rank << ":bank=" << myNum <<": "; 
+    tmp << "@t:TimingDRAM:Bank:@p():@l:mc=" << mc << ":chan=" << chan << ":rank=" << rank << ":bank=" << myNum <<": ";
     m_pre = tmp.str();
 
     m_col_rd_lat = params.find<unsigned int>("CL", 11);
@@ -312,14 +312,14 @@ TimingDRAM::Cmd* TimingDRAM::Bank::popCmd( SimTime_t cycle, SimTime_t dataBusAva
         if (is_debug)
             m_output->verbosePrefix(prefix(),CALL_INFO, 2, DBG_MASK, "%s row=%d\n",cmd->getName().c_str(), cmd->getRow() );
         m_cmdQ.pop_front();
-    }  
+    }
     return cmd;
 }
 
 void TimingDRAM::Bank::update( SimTime_t current )
 {
     if ( nullptr == m_lastCmd && m_row != -1 && m_pagePolicy->shouldClose( current ) ) {
-        Cmd* cmd = new Cmd( this, Cmd::PRE, m_trp_lat ); 
+        Cmd* cmd = new Cmd( this, Cmd::PRE, m_trp_lat );
         m_cmdQ.push_back(cmd);
         m_row = -1;
         return;
@@ -339,16 +339,16 @@ void TimingDRAM::Bank::update( SimTime_t current )
 
     if ( trans->row != m_row ) {
         if ( m_row != -1 ) {
-            cmd = new Cmd( this, Cmd::PRE, m_trp_lat ); 
+            cmd = new Cmd( this, Cmd::PRE, m_trp_lat );
             m_cmdQ.push_back(cmd);
         }
 
-        cmd = new Cmd( this, Cmd::ACT, m_rcd_lat, trans->row ); 
+        cmd = new Cmd( this, Cmd::ACT, m_rcd_lat, trans->row );
         m_cmdQ.push_back(cmd);
         m_row = trans->row;
-    }  
+    }
 
-    unsigned val = trans->isWrite ? m_col_wr_lat :  m_col_rd_lat; 
+    unsigned val = trans->isWrite ? m_col_wr_lat :  m_col_rd_lat;
     cmd = new Cmd( this, Cmd::COL, val, trans->row, m_data_lat, trans );
     m_cmdQ.push_back(cmd);
 }

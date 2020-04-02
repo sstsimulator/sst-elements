@@ -1,8 +1,8 @@
-// Copyright 2013-2018 NTESS. Under the terms
+// Copyright 2013-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2018, NTESS
+// Copyright (c) 2013-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -21,37 +21,37 @@
 
 using namespace SST::Firefly;
 
-void ScattervFuncSM::handleStartEvent( SST::Event *e, Retval& retval ) 
+void ScattervFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
 {
     assert( NULL == m_event );
     m_event = static_cast< ScattervStartEvent* >(e);
 
     ++m_seq;
 
-	int sendSize;	
+	int sendSize;
     if ( m_event->sendCntPtr ) {
-       sendSize = ((int*)m_event->sendCntPtr)[0] * m_info->sizeofDataType( m_event->sendType );  
+       sendSize = ((int*)m_event->sendCntPtr)[0] * m_info->sizeofDataType( m_event->sendType );
     } else {
-       sendSize = m_event->sendCnt * m_info->sizeofDataType( m_event->sendType );  
+       sendSize = m_event->sendCnt * m_info->sizeofDataType( m_event->sendType );
     }
 
 	int recvSize = m_event->recvCnt * m_info->sizeofDataType( m_event->recvType );
 
     if ( m_info->getGroup(m_event->group)->getMyRank() == 0 && sendSize != recvSize ) {
-		m_dbg.fatal( CALL_INFO, -1, "send data size [%d] must equal recv data size [%d]  \n", sendSize, recvSize );	
+		m_dbg.fatal( CALL_INFO, -1, "send data size [%d] must equal recv data size [%d]  \n", sendSize, recvSize );
 	}
 
 	if ( 0 != m_event->root ) {
-		m_dbg.fatal( CALL_INFO, -1, "Scatterv root must equal 0,  %d\n", m_event->root );	
+		m_dbg.fatal( CALL_INFO, -1, "Scatterv root must equal 0,  %d\n", m_event->root );
 	}
 
     m_tree = new MaryTree( 4, m_info->getGroup(m_event->group)->getMyRank(),
-                m_info->getGroup(m_event->group)->getSize() ); 
+                m_info->getGroup(m_event->group)->getSize() );
 
     m_dbg.debug(CALL_INFO,1,0,"group %d, root %d, size %d, rank %d\n",
-                m_event->group, m_event->root, m_tree->size(), 
+                m_event->group, m_event->root, m_tree->size(),
                 m_tree->myRank());
-    
+
     m_dbg.debug(CALL_INFO,1,0,"parent %d \n",m_tree->parent());
     for ( unsigned int i = 0; i < m_tree->numChildren(); i++ ) {
         m_dbg.debug(CALL_INFO,1,0,"child[%d]=%d\n",i,m_tree->calcChild(i));
@@ -69,12 +69,12 @@ void ScattervFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
 
 		SendInfo* info = new SendInfo( buf, m_tree->numChildren() );
 
-		for ( int i = 0; i < m_tree->numDes() + 1; i++ ) { 
+		for ( int i = 0; i < m_tree->numDes() + 1; i++ ) {
 
 			if ( m_event->sendCntPtr ) {
-				(*buf)[i] = m_event->sendCntPtr[i] * m_info->sizeofDataType( m_event->sendType ); 
+				(*buf)[i] = m_event->sendCntPtr[i] * m_info->sizeofDataType( m_event->sendType );
 			} else {
-				(*buf)[i] = m_event->sendCnt * m_info->sizeofDataType( m_event->sendType ); 
+				(*buf)[i] = m_event->sendCnt * m_info->sizeofDataType( m_event->sendType );
 			}
 			m_dbg.debug(CALL_INFO,1,0,"node %d has %d bytes of data\n", i, (*buf)[i]);
 		}
@@ -92,7 +92,7 @@ bool ScattervFuncSM::recvSize( )
 	std::vector<int>* buf = new std::vector<int>( m_tree->numDes() + 1 );
 
 	m_dbg.debug(CALL_INFO,1,0,"%p %zu\n",buf,buf->size());
-	int tag = genTag(SizeMsg); 
+	int tag = genTag(SizeMsg);
 	m_dbg.debug(CALL_INFO,1,0,"recev from parent=%d tag=%x\n",m_tree->parent(), tag );
     proto()->recv( buf->data(), buf->size() * sizeof(int), m_tree->parent(), tag, m_event->group );
 
@@ -129,11 +129,11 @@ bool ScattervFuncSM::recvSizeDone( std::vector<int>* buf )
 	} else {
 		*m_callback = std::bind( &ScattervFuncSM::dataWait, this, (SendInfo*)NULL, rInfo );
 	}
- 
+
 	int tag = genTag(DataMsg);
 
 	m_dbg.debug(CALL_INFO,1,0,"irecvv from parent=%d tag=%x\n",m_tree->parent(), tag);
-	proto()->irecvv( rInfo->ioVec, m_tree->parent(), tag, m_event->group, &rInfo->req ); 	
+	proto()->irecvv( rInfo->ioVec, m_tree->parent(), tag, m_event->group, &rInfo->req );
 
 	return false;
 }
@@ -150,7 +150,7 @@ bool ScattervFuncSM::sendSize( SendInfo* sendInfo, RecvInfo* info )
 
 	sendInfo->bufPos += m_tree->calcChildTreeSize(sendInfo->count);
 
-	int tag = genTag(SizeMsg); 
+	int tag = genTag(SizeMsg);
 	m_dbg.debug(CALL_INFO,1,0,"iseend to %d tag %x\n", m_tree->calcChild( sendInfo->count ), tag);
     int vn = 0;
     if ( length <= m_smallCollectiveSize ) {
@@ -158,7 +158,7 @@ bool ScattervFuncSM::sendSize( SendInfo* sendInfo, RecvInfo* info )
     }
     proto()->isend( ptr, length, m_tree->calcChild( sendInfo->count ), tag, m_event->group, &sendInfo->reqs[sendInfo->count], vn );
 
-	++sendInfo->count;	
+	++sendInfo->count;
 
 	m_callback = new Callback;
 	if ( sendInfo->count == sendInfo->reqs.size() ) {
@@ -192,7 +192,7 @@ bool ScattervFuncSM::dataWait( SendInfo* sInfo , RecvInfo* rInfo )
 	proto()->wait( &rInfo->req );
 
 	m_callback = new Callback;
-	if ( m_tree->numChildren() ) { 
+	if ( m_tree->numChildren() ) {
 		sInfo->count = 0;
 		*m_callback = std::bind( &ScattervFuncSM::dataSend, this, sInfo, rInfo );
 	} else {
@@ -209,24 +209,24 @@ bool ScattervFuncSM::dataSend( SendInfo* sInfo , RecvInfo* rInfo )
 
 	if ( -1 == m_tree->parent() ) {
 		int x = m_tree->calcChildTreeSize(sInfo->count);
-		int child = m_tree->calcChild(sInfo->count); 
+		int child = m_tree->calcChild(sInfo->count);
 
 		m_dbg.debug(CALL_INFO,1,0,"childNum=%d childNode=%d childTreeSize=%d\n",sInfo->count, child, x );
 
 		for ( int i = 0; i < x ; i++ ) {
 
-			char* backing = (char*) m_event->sendBuf.getBacking(); 
-			int pos = (child - m_tree->myRank()) + i;	
-			int length = (*sInfo->sizeBuf)[pos]; 
+			char* backing = (char*) m_event->sendBuf.getBacking();
+			int pos = (child - m_tree->myRank()) + i;
+			int length = (*sInfo->sizeBuf)[pos];
 			size_t offset;
 
 			if ( m_event->sendDisplsPtr ) {
-				offset = m_event->sendDisplsPtr[pos]; 
+				offset = m_event->sendDisplsPtr[pos];
 			} else {
-				offset = pos * m_event->sendCnt * m_info->sizeofDataType( m_event->sendType ); 
+				offset = pos * m_event->sendCnt * m_info->sizeofDataType( m_event->sendType );
 			}
 
-			uint64_t simAddr = m_event->sendBuf.getSimVAddr() + offset; 
+			uint64_t simAddr = m_event->sendBuf.getSimVAddr() + offset;
 
 			if ( backing ) {
 				backing += offset;
@@ -239,12 +239,12 @@ bool ScattervFuncSM::dataSend( SendInfo* sInfo , RecvInfo* rInfo )
 
 	} else {
 		int x = m_tree->calcChildTreeSize(sInfo->count);
-		int child = m_tree->calcChild(sInfo->count); 
+		int child = m_tree->calcChild(sInfo->count);
 		m_dbg.debug(CALL_INFO,1,0,"childNum=%d childNode=%d childTreeSize=%d\n",sInfo->count, child, x );
 		int length = 0;
 
 		for ( int i = 0; i < x; i++ ) {
-			length += ((int*)sInfo->sizeBuf->data())[ (child - m_tree->myRank()) + i]; 
+			length += ((int*)sInfo->sizeBuf->data())[ (child - m_tree->myRank()) + i];
 		}
 		MemAddr addr = rInfo->ioVec[1].addr;
 		void* backing = NULL;
@@ -263,13 +263,13 @@ bool ScattervFuncSM::dataSend( SendInfo* sInfo , RecvInfo* rInfo )
     size_t length = 0;
     for ( int i = 0; i < ioVec.size(); i++ ) {
         length += ioVec[i].len;
-    } 
+    }
     if ( length <= m_smallCollectiveSize ) {
         vn = m_smallCollectiveVN;
     }
 	proto()->isendv( ioVec, m_tree->calcChild( sInfo->count ), tag, m_event->group, &sInfo->reqs[sInfo->count], vn );
 
-	++sInfo->count;	
+	++sInfo->count;
 
 	m_callback = new Callback;
 	if ( sInfo->count == sInfo->reqs.size() ) {
@@ -293,7 +293,7 @@ bool ScattervFuncSM::dataSendWait( SendInfo* sInfo , RecvInfo* rInfo )
 bool ScattervFuncSM::exit( SendInfo* sInfo , RecvInfo* rInfo )
 {
 	m_dbg.debug(CALL_INFO,1,0,"\n");
-	if ( sInfo ) { 
+	if ( sInfo ) {
 		delete sInfo;
 	}
 	if ( rInfo ) {

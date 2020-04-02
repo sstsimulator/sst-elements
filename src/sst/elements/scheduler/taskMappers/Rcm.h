@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -58,7 +58,7 @@ namespace SST {
                  * this blocked, using @a p as the root.
                  *
                  * @param[in] n is the number of nodes/vertices in the graph.
-                 * 
+                 *
                  * @param[in] xadj
                  *               Pointers (indices) into  @a adj.  @a xadj[@a p]
                  *               points  to  the
@@ -111,7 +111,7 @@ namespace SST {
                 /**
                  * @brief Find a pseudo-peripheral node for the subgraph specified
                  * by @a root.
-                 * 
+                 *
                  * Find a pseudo-peripheral node for the subgraph specified
                  * by @a root.
                  *
@@ -134,7 +134,7 @@ namespace SST {
                  *               of the connected component in which we look for a
                  *               pseudo-peripheral node.   On  onput,  it  is  the  node
                  *               found.
-                 * 
+                 *
                  * @param[in] mask
                  *               Used  to  keep track of found nodes in the traversal of
                  *               the graph component.  Nodes marked by having a non-zero
@@ -170,11 +170,11 @@ namespace SST {
                  * Find a reverse Cuthill-McKee ordering of the
                  * connected component specified by @a root.
                  * The numbering process is to be started at the node @a root.
-                 * 
+                 *
                  * @param[in] root
                  *               is  the  root  node  of the connected component and the
                  *               starting node of the RCM ordering.
-                 * 
+                 *
                  * @param[in] xadj
                  *               Pointers to the adjacency lists in @a adj.
                  *               See the @a xadj parameter of @c genrcmi()
@@ -190,7 +190,7 @@ namespace SST {
                  *               filled  by the caller, @a deg[@a p] is used for the
                  *               degree
                  *               of node @a p. No further checking is done.
-                 * 
+                 *
                  * @param[in,out] mask
                  *               The nodes numbered by RCM will have their
                  *               @a mask values
@@ -213,12 +213,12 @@ namespace SST {
                  *               the caller
                  *               is responsible for setting  the  entries  of  @a deg
                  *               correctly.
-                 * 
+                 *
                  * @param[out] perm
                  *               is  used to store the reverse Cuthill-McKee ordering of
                  *               the nodes in the component rooted by  @a root. Only the
                  *               first @a ccsize entries of @a perm are overwritten.
-                 * 
+                 *
                  * @param[out] ccsize
                  *               The size of the component found.
                  */
@@ -226,7 +226,7 @@ namespace SST {
                 void rcm(const int root, const int *xadj, const int *adj, const int *deg,
                          signed char *mask, int *perm, int *ccsize);
             private:
-                void degree(const int n, const int* xadj, const int* adj, 
+                void degree(const int n, const int* xadj, const int* adj,
                             signed char* mask, int* deg);
 
                 void rootls(const int root, const int* xadj, const int* adj,

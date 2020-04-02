@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -80,7 +80,7 @@ private:
 		m_clock_handler = new Clock::Handler<DetailedInterface>(this,&DetailedInterface::clock_handler);
 		m_clock = registerClock( freq, m_clock_handler);
 
-		m_mem_link = loadUserSubComponent<Interfaces::SimpleMem>("memInterface", ComponentInfo::SHARE_NONE, 
+		m_mem_link = loadUserSubComponent<Interfaces::SimpleMem>("memInterface", ComponentInfo::SHARE_NONE,
 			m_clock , new Interfaces::SimpleMem::Handler<DetailedInterface>(this, &DetailedInterface::handleEvent) );
 
 	    if( m_mem_link ) {
@@ -95,8 +95,8 @@ private:
 		m_reqLatency  = registerStatistic<uint64_t>( "detailed_req_latency" );
     }
 
-	std::function<void( MemoryModel::Callback*)> m_callback; 
-	std::function<void(PTR*)> m_resume; 
+	std::function<void( MemoryModel::Callback*)> m_callback;
+	std::function<void(PTR*)> m_resume;
 
 	void setCallback( std::function<void( MemoryModel::Callback* )> callback ) {
 		m_callback = callback;
@@ -159,7 +159,7 @@ private:
 			m_inflight.erase( ev->id );
             if ( m_blockedSrc[entry->op] ) {
                 m_dbg.verbose(CALL_INFO,2,MY_MASK,"resume\n" );
-				m_resume(m_blockedSrc[entry->op] ); 
+				m_resume(m_blockedSrc[entry->op] );
                 m_blockedSrc[entry->op] = NULL;
             }
 			delete entry;
@@ -205,7 +205,7 @@ private:
         if ( ( entry = nextEntry() ) ) {
 
 			if ( m_inFlightAddr.find( entry->memReq->addr ) != m_inFlightAddr.end() ) {
-				return false;	
+				return false;
 			}
 
 			popEntry();
@@ -216,7 +216,7 @@ private:
 				req = new Interfaces::SimpleMem::Request(
                     entry->op == Read ? Interfaces::SimpleMem::Request::Read : Interfaces::SimpleMem::Request::Write,
                     entry->memReq->addr, entry->memReq->length);
-				m_inflight[req->id] = entry; 
+				m_inflight[req->id] = entry;
 				m_dbg.verbose(CALL_INFO,1,MY_MASK,"id=%" PRIu64 ", addr=%" PRIx64 ", %s inFlightCnt=%d\n",
                                     req->id, req->addr, entry->op == Write ? "Write":"Read", m_inFlightCnt[entry->op]);
 				entry->issueTime = getCurrentSimTimeNano();
@@ -224,7 +224,7 @@ private:
 				m_inFlightAddr.insert( entry->memReq->addr );
 			} else {
 				assert(0);
-			}	
+			}
 		}
 		return false;
 	}
@@ -234,7 +234,7 @@ private:
 	Interfaces::SimpleMem* 			m_mem_link;
 
 	std::map< Interfaces::SimpleMem::Request::id_t, Entry* > m_inflight;
-	std::set< uint64_t > m_inFlightAddr; 
+	std::set< uint64_t > m_inFlightAddr;
 	Output m_dbg;
 	std::vector< Statistic<uint64_t>* > m_reqCnt;
 	Statistic<uint64_t>* m_reqLatency;

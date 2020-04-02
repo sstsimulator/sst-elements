@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 // 
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 // 
 // Portions are copyright of other developers:
@@ -218,7 +218,7 @@ void topo_fattree::reroute(int port, int vc, internal_router_event* ev)
 internal_router_event* topo_fattree::process_input(RtrEvent* ev)
 {
     internal_router_event* ire = new internal_router_event(ev);
-    ire->setVC(ev->request->vn);
+    ire->setVC(ire->getVN());
     return ire;
 }
 

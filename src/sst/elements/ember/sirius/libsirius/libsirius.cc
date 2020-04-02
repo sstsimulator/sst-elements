@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -203,7 +203,7 @@ extern "C" int MPI_Init(int* argc, char** argv[]) {
 
 	if(sirius_rank == 0) {
 		char buffer_meta[512];
-		sprintf(buffer_meta, "%s-%d.meta", 
+		sprintf(buffer_meta, "%s-%d.meta",
 			(*argv)[0], sirius_npes);
 		FILE* meta_file = fopen(buffer_meta, "wt");
 
@@ -219,7 +219,7 @@ extern "C" int MPI_Init(int* argc, char** argv[]) {
 
 		fclose(meta_file);
 
-		printf("SIRIUS: =============================================================\n");		
+		printf("SIRIUS: =============================================================\n");
 		printf("SIRIUS: MPI Profiling Enabled\n");
 		printf("SIRIUS: =============================================================\n");
 	}

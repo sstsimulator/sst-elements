@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -46,7 +46,7 @@ bool EmberAllgatherGenerator::generate( std::queue<EmberEvent*>& evQ) {
 
 			double latency = (double)(m_stopTime-m_startTime)/(double)m_iterations;
 			latency /= 1000000000.0;
-            output( "%s: ranks %d, loop %d, bytes %d, latency %.3f us\n", 
+            output( "%s: ranks %d, loop %d, bytes %d, latency %.3f us\n",
 					getMotifName().c_str(), size(), m_iterations, m_count* sizeofDataType(INT), latency * 1000000.0  );
             /*
             //NetworkSim: report total running time
@@ -63,7 +63,7 @@ bool EmberAllgatherGenerator::generate( std::queue<EmberEvent*>& evQ) {
 				for ( int j = 0; j < m_count; j++ ) {
                     int index = i * m_count + j;
 					if ( i != ((int*)m_recvBuf)[index]) {
-						printf("Error: Rank %d index %d failed  got=%d\n",rank(),i, ((int*)m_recvBuf)[index] ); 
+						printf("Error: Rank %d index %d failed  got=%d\n",rank(),i, ((int*)m_recvBuf)[index] );
 					}
 				}
 			}

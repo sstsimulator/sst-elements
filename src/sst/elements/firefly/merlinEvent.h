@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -23,7 +23,7 @@ namespace SST {
 namespace Firefly {
 
 
-#define FOO 0 
+#define FOO 0
 class FireflyNetworkEvent : public Event {
 
   public:
@@ -33,7 +33,7 @@ class FireflyNetworkEvent : public Event {
         assert( 0 == buf.size() );
     }
 
-    FireflyNetworkEvent( int pktOverhead, size_t reserve = 1000 ) : offset(0), bufLen(0), 
+    FireflyNetworkEvent( int pktOverhead, size_t reserve = 1000 ) : offset(0), bufLen(0),
             m_isHdr(false), m_isTail(false), m_isCtrl(false), pktOverhead(pktOverhead) {
         buf.reserve( reserve );
         assert( 0 == buf.size() );
@@ -65,27 +65,27 @@ class FireflyNetworkEvent : public Event {
     bool bufEmpty() {
         return ( bufLen == offset );
     }
-    void* bufPtr( size_t len = 0 ) {  
+    void* bufPtr( size_t len = 0 ) {
         if ( offset + len < buf.size() ) {
-            return &buf[offset + len]; 
+            return &buf[offset + len];
         } else {
             return NULL;
         }
-    } 
+    }
 
     void bufPop( size_t len ) {
 
         offset += len;
         assert( offset <= bufLen );
     }
-    
+
     void bufAppend( const void* ptr , size_t len ) {
         if ( ptr ) {
             buf.resize( bufLen + len);
             memcpy( &buf[bufLen], (const char*) ptr, len );
         }
         bufLen += len;
-    } 
+    }
 
     FireflyNetworkEvent(const FireflyNetworkEvent *me) :
         Event()
@@ -132,7 +132,7 @@ class FireflyNetworkEvent : public Event {
     //     src = _src;
     // }
     // void setPktSize() {
-    //     size_in_bits = buf.size() * 8; 
+    //     size_in_bits = buf.size() * 8;
     // }
 
   private:
@@ -146,12 +146,12 @@ class FireflyNetworkEvent : public Event {
     bool            m_isTail;
     bool            m_isCtrl;
     int             pktOverhead;
-    
+
     size_t          offset;
     size_t          bufLen;
     std::vector<unsigned char>     buf;
 
-  public:	
+  public:
     void serialize_order(SST::Core::Serialization::serializer &ser)  override {
         Event::serialize_order(ser);
         ser & seq;
@@ -167,9 +167,9 @@ class FireflyNetworkEvent : public Event {
         ser & m_isTail;
         ser & m_isCtrl;
     }
-    
-    ImplementSerializable(SST::Firefly::FireflyNetworkEvent);     
-    
+
+    ImplementSerializable(SST::Firefly::FireflyNetworkEvent);
+
 };
 
 }

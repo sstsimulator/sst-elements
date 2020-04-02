@@ -1,10 +1,10 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2019, NTESS
+//
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -57,7 +57,7 @@ namespace SST {
                     //empty constructor, only to be used for comparator
                 }
 
-                Block (MeshLocation* l, MeshLocation* d) 
+                Block (MeshLocation* l, MeshLocation* d)
                 {
                     dimension = d;
                     location = l;
@@ -65,7 +65,7 @@ namespace SST {
                     children = new std::set<Block*, Block>(*BComp);
                     parent = NULL;
                 }
-                Block (MeshLocation* l, MeshLocation* d, Block* p) 
+                Block (MeshLocation* l, MeshLocation* d, Block* p)
                 {
                     dimension = d;
                     location = l;

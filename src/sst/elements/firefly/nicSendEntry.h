@@ -1,8 +1,8 @@
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -33,12 +33,12 @@ class SendEntryBase {
     virtual void* hdr() = 0;
     virtual size_t hdrSize() = 0;
     virtual void copyOut( Output& dbg, int numBytes,
-            FireflyNetworkEvent& event, std::vector<MemOp>& vec ) = 0; 
+            FireflyNetworkEvent& event, std::vector<MemOp>& vec ) = 0;
     virtual bool shouldDelete() { return true; }
     bool isCtrl() { return m_isCtrl; }
     bool isAck() { return m_isAck; }
     int txDelay() { return m_txDelay; }
-    void setTxDelay(int delay) { m_txDelay = delay; } 
+    void setTxDelay(int delay) { m_txDelay = delay; }
     uint64_t m_start;
 
   protected:
@@ -71,7 +71,7 @@ class CmdSendEntry: public SendEntryBase, public EntryBase {
     std::vector<IoVec>& ioVec() { return m_cmd->iovec; }
     size_t totalBytes() { return m_hdr.len; }
     bool isDone()       { return EntryBase::isDone(); }
-    void copyOut( Output& dbg, int numBytes, 
+    void copyOut( Output& dbg, int numBytes,
                 FireflyNetworkEvent& event, std::vector<MemOp>& vec ) {
         EntryBase::copyOut(dbg,numBytes, event, vec );
     }
@@ -125,10 +125,10 @@ class GetOrgnEntry : public MsgSendEntry {
 
     bool isDone()      { return true; }
     void copyOut( Output& dbg, int numBytes,
-                FireflyNetworkEvent& event, std::vector<MemOp>& vec ) 
+                FireflyNetworkEvent& event, std::vector<MemOp>& vec )
 	{
 		vec.push_back( MemOp( 0, numBytes, MemOp::Op::LocalLoad ) );
-	}; 
+	};
 
     size_t totalBytes(){ return sizeof( m_hdr ); }
     MsgHdr::Op getOp() { return MsgHdr::Rdma; }

@@ -1,9 +1,9 @@
 // -*- mode: c++ -*-
-// Copyright 2009-2019 NTESS. Under the terms
+// Copyright 2009-2020 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2019, NTESS
+// Copyright (c) 2009-2020, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -29,28 +29,28 @@ using namespace SST::Interfaces;
 
 
 MemHierarchyScratchInterface::MemHierarchyScratchInterface(SST::ComponentId_t id, Params &params, TimeConverter* time, HandlerBase* handler) :
-    SimpleMem(id, params) 
+    SimpleMem(id, params)
 {
     setDefaultTimeBase(time);
 
-    output.init("", 1, 0, Output::STDOUT); 
+    output.init("", 1, 0, Output::STDOUT);
 
     bool found;
     UnitAlgebra size = UnitAlgebra(params.find<std::string>("scratchpad_size", "0B", found));
-    if (!found) 
+    if (!found)
         output.fatal(CALL_INFO, -1, "Param not specified (%s): scratchpad_size - size of scratchpad\n", getName().c_str());
     if (!size.hasUnits("B"))
         output.fatal(CALL_INFO, -1, "Invalid param (%s): scratchpad_size - must have units of 'B'. SI units ok. You specified '%s'\n", getName().c_str(), size.toString().c_str());
     remoteMemStart_ = size.getRoundedValue();
 
     initDone_ = false;
-    
+
     recvHandler_ = handler;
-    if ( NULL == recvHandler_) 
+    if ( NULL == recvHandler_)
         link_ = configureLink("port");
     else
         link_ = configureLink("port", new Event::Handler<MemHierarchyScratchInterface>(this, &MemHierarchyScratchInterface::handleIncoming));
-        
+
     if (!link_)
         output.fatal(CALL_INFO, -1, "%s, Error: unable to configure link on port 'port'\n", getName().c_str());
 }
@@ -88,7 +88,7 @@ void MemHierarchyScratchInterface::sendInitData(SimpleMem::Request *req) {
     MemEventInit * event = new MemEventInit(getName(), Command::GetX, req->addrs[0], req->data);
     if (initDone_)
         link_->sendInitData(event);
-    else 
+    else
         initSendQueue_.push(event);
 }
 
@@ -131,7 +131,7 @@ MemEvent * MemHierarchyScratchInterface::createMemEvent(SimpleMem::Request * req
     Addr baseAddr = req->addrs[0] & baseAddrMask_;
 
     MemEvent * me = new MemEvent(getName(), req->addrs[0], baseAddr, cmd);
-   
+
     /* Set remote memory accesses to noncacheable so that any cache avoids trying to cache the response */
     if (me->getAddr() >= remoteMemStart_ || allNoncache_) {
         me->setFlag(MemEvent::F_NONCACHEABLE);
@@ -195,7 +195,7 @@ SimpleMem::Request* MemHierarchyScratchInterface::processIncoming(MemEventBase *
     SimpleMem::Request *req = NULL;
     Command cmd = ev->getCmd();
     SST::Event::id_type origID = ev->getResponseToID();
-    
+
     std::map<SST::Event::id_type, SimpleMem::Request*>::iterator i = requests_.find(origID);
     if(i != requests_.end()){
         req = i->second;
@@ -227,7 +227,7 @@ void MemHierarchyScratchInterface::updateRequest(SimpleMem::Request* req, MemEve
     }
    // Always update memFlags to faciliate mem->processor communication
     req->memFlags = me->getMemFlags();
-    
+
 }
 
 bool MemHierarchyScratchInterface::initialize(const std::string &linkName, HandlerBase *handler){
