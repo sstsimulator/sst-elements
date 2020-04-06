@@ -12,7 +12,7 @@ class PartInfo:
 		self.numNodes = int(numNodes)
 		self.numCores = int(numCores)
 		self.detailedModel = detailedModel
-		self.nicParams["num_vNics"] = self.numCores/int(nicsPerNode)
+		self.nicParams["num_vNics"] = self.numCores//int(nicsPerNode)
 		self.nicParams["numCores"] = numCores
 
 class LoadInfo:
@@ -91,16 +91,16 @@ class LoadInfo:
 	def readWorkList(self, jobid, nidList, workList ):
 		tmp = {}
 		tmp['motif_count'] = len(workList) 
-		print "EMBER: Job={0}, nidList=\'{1}\'".format( jobid, truncate(nidList) )
+		print ("EMBER: Job={0}, nidList=\'{1}\'".format( jobid, truncate(nidList) ))
 		for i, work in enumerate( workList ) :
 			cmdList = work['cmd'].split()
 
-			print "EMBER: Motif=\'{0}\'".format( ' '.join(cmdList) )
+			print ("EMBER: Motif=\'{0}\'".format( ' '.join(cmdList) ))
 			del work['cmd']
 
 			motif = self.parseCmd( "ember.", "Motif", cmdList, i )
 
-			for x in work.items():
+			for x in list(work.items()):
 				motif[ 'motif' + str(i) + '.' + x[0] ] = x[1] 
 
 			tmp.update( motif )

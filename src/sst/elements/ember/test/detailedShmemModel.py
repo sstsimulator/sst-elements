@@ -30,7 +30,7 @@ class BasicDetailedModel(DetailedModel):
         return self.name
 
     def createThreads(self, prefix, bus, numThreads, cpu_params, l1_params ):
-        #print "createThreads() ", prefix
+        #print ("createThreads() ", prefix)
         prefix += "thread"
         links = []
         for i in range( numThreads ) :
@@ -57,7 +57,7 @@ class BasicDetailedModel(DetailedModel):
 
     def createNic( self, prefix, bus, cpu_params, l1_params ):
         name = prefix + "nic_"
-        #print "createNic() ", name
+        #print ("createNic() ", name)
 
         l1 = sst.Component( name + "l1cache", "memHierarchy.Cache")
         l1.addParams( l1_params )
@@ -74,14 +74,14 @@ class BasicDetailedModel(DetailedModel):
         return link
 
     def build(self,nodeID,numCores):
-        #print 'BasicDetailedModel.build( nodeID={0}, numCores={1} )'.format( nodeID, numCores )
+        #print ('BasicDetailedModel.build( nodeID={0}, numCores={1} )'.format( nodeID, numCores ))
 
         self.links = []
 
         if not nodeID in self.nodeList:
             return False
 
-        #print "found", nodeID
+        #print ("found", nodeID)
 
         prefix = "basicModel_node" + str(nodeID) + "_"
 
@@ -115,11 +115,11 @@ class BasicDetailedModel(DetailedModel):
         return True
 
     def getThreadLinks(self,core):
-        #print 'BasicDetailedModel.getThreadLinks( {0} )'.format(core)
+        #print ('BasicDetailedModel.getThreadLinks( {0} )'.format(core))
         return self.links[core]
 
     def getNicLink(self ):
-        #print 'BasicDetailedModel.getNicLink()'
+        #print ('BasicDetailedModel.getNicLink()')
         return self.nicLink
 
 def getModel(params,nodeList):

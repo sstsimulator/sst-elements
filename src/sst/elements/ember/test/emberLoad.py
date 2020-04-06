@@ -81,7 +81,7 @@ try:
 		"useSimpleMemoryModel","param=","paramDir=","statsModule=","statsFile="])
 
 except getopt.GetoptError as err:
-    print str(err)
+    print (str(err))
     sys.exit(2)
 
 for o, a in opts:
@@ -164,7 +164,7 @@ for o, a in opts:
         assert False, "unknow option {0}".format(o)
 
 sys.path.append( os.getcwd() + '/' + paramDir )
-print 'EMBER: using param directory: {0}'.format( paramDir )
+print ('EMBER: using param directory: {0}'.format( paramDir ))
 
 if 1 == len(sys.argv):
 	simConfig = 'defaultSim'
@@ -202,7 +202,7 @@ if detailedModelName:
 
 	model = modelModule.getModel(modelParams.params,detailedModelNodes)
 
-print "EMBER: platform: {0}".format( platform )
+print ("EMBER: platform: {0}".format( platform ))
 
 if not platParams:
 	platParams = platform + 'Params'
@@ -286,9 +286,9 @@ else:
 	sys.exit("how did we get here")
 
 if rtrArb:
-	print "EMBER: network: topology={0} shape={1} arbitration={2}".format(netTopo,netShape,rtrArb)
+	print ("EMBER: network: topology={0} shape={1} arbitration={2}".format(netTopo,netShape,rtrArb))
 else:
-	print "EMBER: network: topology={0} shape={1}".format(netTopo,netShape)
+	print ("EMBER: network: topology={0} shape={1}".format(netTopo,netShape))
 
 if int(numNodes) == 0:
     numNodes = int(topoInfo.getNumNodes())
@@ -298,19 +298,19 @@ nidList='0-' + str(int(numNodes)-1)
 if int(numNodes) > int(topoInfo.getNumNodes()):
     sys.exit("need more nodes want " + str(numNodes) + ", have " + str(topoInfo.getNumNodes()))
  
-print "EMBER: numNodes={0} numNics={1}".format(numNodes, topoInfo.getNumNodes() )
+print ("EMBER: numNodes={0} numNics={1}".format(numNodes, topoInfo.getNumNodes() ))
 
 emptyNids = []
 
 if jobid > 0 and rndmPlacement:
 
-	print "EMBER: random placement"
+	print ("EMBER: random placement")
 
 	hermesParams["hermesParams.mapType"] = 'random'
 
 	random.seed( 0xf00dbeef )
 	nidList=""
-	nids = random.sample( xrange( int(topoInfo.getNumNodes())), int(numNodes) )
+	nids = random.sample( list(range( int(topoInfo.getNumNodes()))), int(numNodes) )
 	#nids.sort()
 
 	allNids = []
@@ -342,8 +342,8 @@ if rndmPlacement and bgPercentage > 0:
     avail = int( topoInfo.getNumNodes() * bgPercentage ) 
     bgMotifs, r = divmod( avail - int(numNodes), 2 )
 
-    print "EMBER: netAlloced {0}%, bg motifs {1}, mean {2} ns, stddev {3} ns, msgsize {4} bytes".\
-                    format(int(bgPercentage*100),bgMotifs,bgMean,bgStddev,bgMsgSize)
+    print ("EMBER: netAlloced {0}%, bg motifs {1}, mean {2} ns, stddev {3} ns, msgsize {4} bytes".\
+                    format(int(bgPercentage*100),bgMotifs,bgMean,bgStddev,bgMsgSize))
     while ( count < bgMotifs ) :
         workFlow = []
         nidList = "-nidList=" + str(emptyNids[ count * 2 ] ) + "," + str(emptyNids[ count * 2 + 1])
@@ -390,41 +390,41 @@ if emberrankmapper:
 for a in params['network']:
     key, value = a.split("=")
     if key in networkParams:
-        print "override networkParams {0}={1} with {2}".format( key, networkParams[key], value )
+        print ("override networkParams {0}={1} with {2}".format( key, networkParams[key], value ))
     else:
-        print "set networkParams {0}={1}".format( key, value )
+        print ("set networkParams {0}={1}".format( key, value ))
     networkParams[key] = value
 
 for a in params['nic']:
     key, value = a.split("=")
     if key in nicParams:
-        print "override nicParams {0}={1} with {2}".format( key, nicParams[key], value )
+        print ("override nicParams {0}={1} with {2}".format( key, nicParams[key], value ))
     else:
-        print "set nicParams {0}={1}".format( key, value )
+        print ("set nicParams {0}={1}".format( key, value ))
     nicParams[key] = value
 
 for a in params['ember']:
     key, value = a.split("=")
     if key in emberParams:
-        print "override emberParams {0}={1} with {2}".format( key, emberParams[key], value )
+        print ("override emberParams {0}={1} with {2}".format( key, emberParams[key], value ))
     else:
-        print "set emberParams {0}={1}".format( key, value )
+        print ("set emberParams {0}={1}".format( key, value ))
     emberParams[key] = value
 
 for a in params['hermes']:
     key, value = a.split("=")
     if key in hermesParams:
-        print "override hermesParams {0}={1} with {2}".format( key, hermesParams[key], value )
+        print ("override hermesParams {0}={1} with {2}".format( key, hermesParams[key], value ))
     else:
-        print "set hermesParams {0}={1}".format( key, value )
+        print ("set hermesParams {0}={1}".format( key, value ))
     hermesParams[key] = value
 
 for a in params['merlin']:
     key, value = a.split("=")
     if key in sst.merlin._params:
-        print "override hermesParams {0}={1} with {2}".format( key, sst.merlin._params[key], value )
+        print ("override hermesParams {0}={1} with {2}".format( key, sst.merlin._params[key], value ))
     else:
-        print "set merlin {0}={1}".format( key, value )
+        print ("set merlin {0}={1}".format( key, value ))
     sst.merlin._params[key] = value
 
 nicParams["packetSize"] =	networkParams['packetSize']
@@ -438,7 +438,7 @@ sst.merlin._params["output_latency"] = networkParams['output_latency']
 sst.merlin._params["input_buf_size"] = networkParams['input_buf_size'] 
 sst.merlin._params["output_buf_size"] = networkParams['output_buf_size'] 
 
-if "network_inspectors" in networkParams.keys():
+if "network_inspectors" in list(networkParams.keys()):
     sst.merlin._params["network_inspectors"] = networkParams['network_inspectors']
 
 if rtrArb:
@@ -447,8 +447,8 @@ if rtrArb:
 if "numVNs" in nicParams: 
     sst.merlin._params["num_vns"] = int( nicParams["numVNs"])
 
-print "EMBER: network: BW={0} pktSize={1} flitSize={2}".format(
-        networkParams['link_bw'], networkParams['packetSize'], networkParams['flitSize'])
+print ("EMBER: network: BW={0} pktSize={1} flitSize={2}".format(
+        networkParams['link_bw'], networkParams['packetSize'], networkParams['flitSize']))
 
 if len(params['merlin']) == 0:
     sst.merlin._params.update( topoInfo.getNetworkParams() )
@@ -515,6 +515,6 @@ if statsModuleName:
 	except:
 		sys.exit('Failed: could not import statsistics module `{0}`'.format(statsModuleName) )
 
-	print 'EMBER: statistics module: {0} '.format(statsModuleName)
-	print 'EMBER: statistics file: {0} '.format(statsFile)
+	print ('EMBER: statistics module: {0} '.format(statsModuleName))
+	print ('EMBER: statistics file: {0} '.format(statsFile))
 	statsModule.init(statsFile)

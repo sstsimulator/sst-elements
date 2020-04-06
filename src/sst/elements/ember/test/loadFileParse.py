@@ -70,7 +70,7 @@ class ParseLoadFile:
 
         return module.generate( args.split(')',1)[0] ) 
 
-    def next(self):
+    def __next(self)__:
 
         if len(self.stuff) == 0:
             raise StopIteration
