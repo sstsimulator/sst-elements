@@ -84,13 +84,13 @@ class EmberEP( EndPoint ):
         
         built = False 
         if self.detailedModel:
-            #print nodeID,  "use detailed"
+            #print (nodeID,  "use detailed")
             built = self.detailedModel.build( nodeID, self.numCores )
 
         memory = None
         if built:
             if self.nicParams["useSimpleMemoryModel"] == 0 :
-                #print nodeID,  "addLink  detailed"
+                #print (nodeID,  "addLink  detailed")
 
                 nicDetailedRead = nic.setSubComponent(  "nicDetailedRead", self.nicParams['detailedCompute.name']  )
                 nicDetailedRead.addLink( self.detailedModel.getNicReadLink(), "detailed0", "1ps" )
@@ -108,7 +108,7 @@ class EmberEP( EndPoint ):
             memory.addParam( "nid", nodeID )
             #memory.addParam( "verboseLevel", 1 )
 
-        loopBackName = "loopBack" + str(nodeID/self.nicsPerNode)		
+        loopBackName = "loopBack" + str(nodeID//self.nicsPerNode)		
         if nodeID % self.nicsPerNode == 0:
             loopBack = sst.Component(loopBackName, "firefly.loopBack")
             loopBack.addParam( "numCores", self.numCores )
@@ -122,18 +122,18 @@ class EmberEP( EndPoint ):
         logCreatedforFirstCore = False
         # end
 
-        for x in xrange(self.numCores/self.nicsPerNode):
+        for x in range(self.numCores//self.nicsPerNode):
             ep = sst.Component("nic" + str(nodeID) + "core" + str(x) + "_EmberEP", "ember.EmberEngine")
 
             os = ep.setSubComponent( "OS", "firefly.hades" )
-            for key, value in self.driverParams.items():
+            for key, value in list(self.driverParams.items()):
                 if key.startswith("hermesParams."):
                     key = key[key.find('.')+1:] 
-                    #print key, value
+                    #print (key, value)
                     os.addParam( key,value)
 
             virtNic = os.setSubComponent( "virtNic", "firefly.VirtNic" )
-            for key, value in self.driverParams.items():
+            for key, value in list(self.driverParams.items()):
                 if key.startswith(self.driverParams['os.name']+'.virtNic'):
                     key = key[key.rfind('.')+1:]
                     virtNic.addParam( key,value)
@@ -142,10 +142,10 @@ class EmberEP( EndPoint ):
             process = proto.setSubComponent( "process", "firefly.ctrlMsg" )
 
             prefix = "hermesParams.ctrlMsg."
-            for key, value in self.driverParams.items():
+            for key, value in list(self.driverParams.items()):
                 if key.startswith(prefix):
                     key = key[len(prefix):] 
-                    #print key, value
+                    #print (key, value)
                     proto.addParam( key,value)
                     process.addParam( key,value)
 
@@ -165,8 +165,8 @@ class EmberEP( EndPoint ):
             		if (self.motifLogNodes):
             			for id in self.motifLogNodes:
             				if nodeID == int(id) and logCreatedforFirstCore == False:
-                				#print str(nodeID) + " " + str(self.driverParams['jobId']) + " " + str(self.motifLogNodes)
-                				#print "Create motifLog for node {0}".format(id)
+                				#print (str(nodeID) + " " + str(self.driverParams['jobId']) + " " + str(self.motifLogNodes))
+                				#print ("Create motifLog for node {0}".format(id))
                 				logCreatedforFirstCore = True
                 				ep.addParams(self.driverParams)
                 			else:
@@ -189,7 +189,7 @@ class EmberEP( EndPoint ):
 
             for id in self.statNodes:
                 if nodeID == id:
-                    print "printStats for node {0}".format(id)
+                    print ("printStats for node {0}".format(id))
                     ep.addParams( {'motif1.printStats': 1} )
 
             os.addParams( {'netMapName': 'Ember' + str(self.driverParams['jobId']) } )
@@ -201,7 +201,7 @@ class EmberEP( EndPoint ):
             nicLink = sst.Link( "nic" + str(nodeID) + "core" + str(x) + "_Link"  )
             nicLink.setNoCut()
 
-            linkName = "loop" + str(nodeID/self.nicsPerNode) + "nic"+ str(nodeID%self.nicsPerNode)+"core" + str(x) + "_Link" 
+            linkName = "loop" + str(nodeID//self.nicsPerNode) + "nic"+ str(nodeID%self.nicsPerNode)+"core" + str(x) + "_Link" 
             loopLink = sst.Link( linkName ); 
             loopLink.setNoCut() 
 
