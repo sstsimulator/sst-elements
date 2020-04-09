@@ -1171,7 +1171,7 @@ class TestEndPoint(EndPoint):
         nic.addParams(_params.subset(self.epKeys, self.epOptKeys))
         nic.addParams(_params.subset(extraKeys))
         nic.addParam("id", nID)
-        if self.split is not 1:
+        if self.split != 1:
             # Need to figure out what group I'm in
             limit = 0
             offset = 0

@@ -4,30 +4,29 @@ import time
 
 #######################################################################################################
 def read_arguments():
-	config_file_list = list()
-        override_list = list()
-        boolDefaultConfig = True;
+    config_file_list = list()
+    override_list = list()
+    boolDefaultConfig = True;
 
-	for arg in sys.argv:
-            if arg.find("--configfile=") != -1:
-		substrIndex = arg.find("=")+1
-		config_file_list.append(arg[substrIndex:])
-		print("Config file list:", config_file_list)
-		boolDefaultConfig = False;
+    for arg in sys.argv:
+        if arg.find("--configfile=") != -1:
+            substrIndex = arg.find("=")+1
+            config_file_list.append(arg[substrIndex:])
+            print("Config file list:", config_file_list)
+            boolDefaultConfig = False;
 
-  	    elif arg != sys.argv[0]:
-                if arg.find("=") == -1:
-                    print("Malformed config override found!: ", arg)
-                    exit(-1)
-                override_list.append(arg)
-                print("Override: ", override_list[-1])
+        elif arg != sys.argv[0]:
+            if arg.find("=") == -1:
+                print("Malformed config override found!: ", arg)
+                exit(-1)
+            override_list.append(arg)
+            print("Override: ", override_list[-1])
 
-	
-	if boolDefaultConfig == True:
-		config_file_list.append("../ddr4_verimem.cfg")
-		print("config file is not specified.. using ddr4_verimem.cfg")
+    if boolDefaultConfig == True:
+        config_file_list.append("../ddr4_verimem.cfg")
+        print("config file is not specified.. using ddr4_verimem.cfg")
 
-	return [config_file_list, override_list]
+    return [config_file_list, override_list]
 
 
 
@@ -57,10 +56,10 @@ g_override_list = ""
 [g_config_file_list, g_overrided_list] = read_arguments()
 g_params = setup_config_params(g_config_file_list, g_overrided_list)
 if "dumpConfig" in g_params and int(g_params["dumpConfig"]):
-        print("\n###########################\nDumping global config parameters:")
-        for key in g_params:
-                print(key + " " + g_params[key])
-        print("###########################\n")
+    print("\n###########################\nDumping global config parameters:")
+    for key in g_params:
+        print(key + " " + g_params[key])
+    print("###########################\n")
 
 numChannels = int(g_params["numChannels"])
 maxOutstandingReqs = numChannels*64
@@ -81,11 +80,11 @@ sst.setStatisticOutput("sst.statOutputConsole")
 comp_txnGen = sst.Component("TxnGen", "CramSim.c_TxnGen")
 comp_txnGen.addParams(g_params)
 comp_txnGen.addParams({
-	"maxTxns" : maxTxns,
-	"numTxnPerCycle" : numTxnPerCycle,
-	"maxOutstandingReqs" : maxOutstandingReqs,
-	"readWriteRatio" : 0.5
-	})
+    "maxTxns" : maxTxns,
+    "numTxnPerCycle" : numTxnPerCycle,
+    "maxOutstandingReqs" : maxOutstandingReqs,
+    "readWriteRatio" : 0.5
+    })
 comp_txnGen.enableAllStatistics()
 
 

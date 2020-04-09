@@ -30,7 +30,7 @@ class BasicDetailedModel(DetailedModel):
         return self.name
 
     def createThreads(self, prefix, bus, numThreads, cpu_params, l1_params ):
-        #print "createThreads() ", prefix
+        #print ("createThreads() ", prefix)
         prefix += "thread"
         links = []
         for i in range( numThreads ) :
@@ -57,7 +57,7 @@ class BasicDetailedModel(DetailedModel):
 
     def createNic( self, prefix, op, bus, cpu_params, l1_params ):
         name = prefix + "nic_" + op + "_"
-        #print "createNic() ", name
+        #print ("createNic() ", name)
 
         cpu = sst.Component( name + "cpu", "miranda.BaseCPU")
         cpu.addParams( cpu_params )
@@ -83,14 +83,14 @@ class BasicDetailedModel(DetailedModel):
         return link
 
     def build(self,nodeID,numCores):
-        #print 'BasicDetailedModel.build( nodeID={0}, numCores={1} )'.format( nodeID, numCores )
+        #print ('BasicDetailedModel.build( nodeID={0}, numCores={1} )'.format( nodeID, numCores ))
 
         self.links = []
 
         if not nodeID in self.nodeList:
             return False
 
-        #print "found", nodeID
+        #print ("found", nodeID)
 
         prefix = "basicModel_node" + str(nodeID) + "_"
 
@@ -126,15 +126,15 @@ class BasicDetailedModel(DetailedModel):
         return True
 
     def getThreadLinks(self,core):
-        #print 'BasicDetailedModel.getThreadLinks( {0} )'.format(core)
+        #print ('BasicDetailedModel.getThreadLinks( {0} )'.format(core))
         return self.links[core]
 
     def getNicReadLink(self ):
-        #print 'BasicDetailedModel.getNicLink()'
+        #print ('BasicDetailedModel.getNicLink()')
         return self.nicReadLink
 
     def getNicWriteLink(self ):
-        #print 'BasicDetailedModel.getNicLink()'
+        #print ('BasicDetailedModel.getNicLink()')
         return self.nicWriteLink
 
 def getModel(params,nodeList):

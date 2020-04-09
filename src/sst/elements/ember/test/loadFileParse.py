@@ -70,7 +70,7 @@ class ParseLoadFile:
 
         return module.generate( args.split(')',1)[0] ) 
 
-    def next(self):
+    def __next__(self):
 
         if len(self.stuff) == 0:
             raise StopIteration
@@ -84,6 +84,8 @@ class ParseLoadFile:
             motifs = self.stuff[0]['motifs']
             self.stuff.pop(0)
             return jobid, nidlist, numCores, params, motifs 
+
+    next = __next__
 
     def substitute( self, line, variables ):
         retval = ''
