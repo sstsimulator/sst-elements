@@ -3,11 +3,11 @@ import sys
 import time
 ################################################################################
 def read_arguments():
-	config_file_list = list()
+    config_file_list = list()
         override_list = list()
         boolDefaultConfig = True;
 
-	for arg in sys.argv:
+    for arg in sys.argv:
                 if arg.find("--configfile=") != -1:
                         substrIndex = arg.find("=")+1
                         config_file_list.append(arg[substrIndex:])
@@ -15,10 +15,10 @@ def read_arguments():
                         boolDefaultConfig = False;
 
                 elif arg.find("--traceFile=") != -1:  # just remove the -- argument signifier from the beginning
-                        substrIndex = arg.find("-")+2  
+                        substrIndex = arg.find("-")+2
                         override_list.append(arg[substrIndex:])
                         print("Trace file:", arg[substrIndex:])
-                        
+
                 elif arg != sys.argv[0]:
                         if arg.find("=") == -1:
                                 print("Malformed config override found!: ", arg)
@@ -27,12 +27,12 @@ def read_arguments():
                         print("Override: ", override_list[-1])
 
 
-	
-	if boolDefaultConfig == True:
-		config_file_list = "../ddr4_verimem.cfg"
-		print("config file is not specified.. using ddr4_verimem.cfg")
 
-	return [config_file_list, override_list]
+    if boolDefaultConfig == True:
+        config_file_list = "../ddr4_verimem.cfg"
+        print("config file is not specified.. using ddr4_verimem.cfg")
+
+    return [config_file_list, override_list]
 
 
 
@@ -49,7 +49,7 @@ def setup_config_params(config_file_list, override_list):
         l_tokens = override.split("=")
         print("Override cfg", l_tokens[0], l_tokens[1])
         l_params[l_tokens[0]] = l_tokens[1]
-     
+
     return l_params
 
 #######################################################################################################
@@ -86,10 +86,10 @@ sst.setStatisticOutput("sst.statOutputConsole")
 comp_txnGen = sst.Component("TxnGen", "CramSim.c_TraceFileReader")
 comp_txnGen.addParams(g_params)
 comp_txnGen.addParams({
-	"maxTxns" : maxTxns,
-	"numTxnPerCycle" : numTxnPerCycle,
-	"maxOutstandingReqs" : maxOutstandingReqs
-	})
+    "maxTxns" : maxTxns,
+    "numTxnPerCycle" : numTxnPerCycle,
+    "maxOutstandingReqs" : maxOutstandingReqs
+    })
 comp_txnGen.enableAllStatistics()
 
 
@@ -117,7 +117,7 @@ txnReqLink_0 = sst.Link("txnReqLink_0_"+"0")
 txnReqLink_0.connect((comp_txnGen, "memLink", g_params["clockCycle"]), (comp_controller, "txngenLink", g_params["clockCycle"]) )
 
 
-# Controller <-> Dimm 
+# Controller <-> Dimm
 cmdReqLink_1 = sst.Link("cmdReqLink_1_"+"0")
 cmdReqLink_1.connect( (comp_controller, "memLink", g_params["clockCycle"]), (comp_dimm, "ctrlLink", g_params["clockCycle"]) )
 
