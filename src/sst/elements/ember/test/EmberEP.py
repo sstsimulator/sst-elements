@@ -18,7 +18,7 @@ class EmberEP( EndPoint ):
         # in order to create motifLog files only for the desired nodes of a job
         self.motifLogNodes = motifLogNodes
         self.detailedModel = detailedModel
-        self.nicsPerNode = nicsPerNode 
+        self.nicsPerNode = nicsPerNode
         self.loopBackDict = dict();
 
     def getName( self ):
@@ -29,7 +29,7 @@ class EmberEP( EndPoint ):
 
     def build( self, nodeID, extraKeys ):
 
-        
+
         # See if this endpoints is not an ember endpoint
         if self.motifs["motif0.name"].startswith("<"):
             # This is a non ember endpoint. Find the element name.
@@ -38,19 +38,19 @@ class EmberEP( EndPoint ):
             # lib.element:slot_name
             element = self.motifs["motif0.name"]
             element = element[1:-1]
-            
+
             # parse out the slot
             element,slot = element.split(":",1)
 
             ep = sst.Component( "nic" + str(nodeID), element)
             sc = ep.setSubComponent(slot, self.nicParams["module"])
             retval = (sc, "rtr_port", sst.merlin._params["link_lat"] )
-            
+
             # Add paramters to the component
             ep.addParams(self.motifs["params"])
 
             ep.addParam("num_peers",self.numNids)
-            
+
             # Add parameters to the linkcontrol
             sc.addParam("link_bw",sst.merlin._params["link_bw"]);
             sc.addParam("input_buf_size",sst.merlin._params["input_buf_size"]);
@@ -60,8 +60,8 @@ class EmberEP( EndPoint ):
             sc.addParam("nid_map_name","nid_map_jobid_%d"%self.driverParams["jobId"])
             return retval
 
-        
-        
+
+
         # Regular ember motif processing
         nicComponentName = "firefly.nic"
         if 'nicComponent' in self.nicParams:
@@ -81,8 +81,8 @@ class EmberEP( EndPoint ):
         nic.addParams( extraKeys)
         nic.addParam( "nid", nodeID )
         retval = (rtrLink, "rtr_port", sst.merlin._params["link_lat"] )
-        
-        built = False 
+
+        built = False
         if self.detailedModel:
             #print (nodeID,  "use detailed")
             built = self.detailedModel.build( nodeID, self.numCores )
@@ -108,12 +108,12 @@ class EmberEP( EndPoint ):
             memory.addParam( "nid", nodeID )
             #memory.addParam( "verboseLevel", 1 )
 
-        loopBackName = "loopBack" + str(nodeID//self.nicsPerNode)		
+        loopBackName = "loopBack" + str(nodeID//self.nicsPerNode)
         if nodeID % self.nicsPerNode == 0:
             loopBack = sst.Component(loopBackName, "firefly.loopBack")
             loopBack.addParam( "numCores", self.numCores )
             loopBack.addParam( "nicsPerNode", self.nicsPerNode )
-            self.loopBackDict[loopBackName] = loopBack 
+            self.loopBackDict[loopBackName] = loopBack
         else:
             loopBack = self.loopBackDict[loopBackName]
 
@@ -128,7 +128,7 @@ class EmberEP( EndPoint ):
             os = ep.setSubComponent( "OS", "firefly.hades" )
             for key, value in list(self.driverParams.items()):
                 if key.startswith("hermesParams."):
-                    key = key[key.find('.')+1:] 
+                    key = key[key.find('.')+1:]
                     #print (key, value)
                     os.addParam( key,value)
 
@@ -144,7 +144,7 @@ class EmberEP( EndPoint ):
             prefix = "hermesParams.ctrlMsg."
             for key, value in list(self.driverParams.items()):
                 if key.startswith(prefix):
-                    key = key[len(prefix):] 
+                    key = key[len(prefix):]
                     #print (key, value)
                     proto.addParam( key,value)
                     process.addParam( key,value)
@@ -153,7 +153,7 @@ class EmberEP( EndPoint ):
             if built:
                 links = self.detailedModel.getThreadLinks( x )
                 cpuNum = 0
-                for link in links: 
+                for link in links:
                     dc = os.setSubComponent( "detailedCompute", self.driverParams["hermesParams.detailedCompute.name"] )
                     dc.addLink(link,"detailed"+str(cpuNum),"1ps")
                     cpuNum = cpuNum + 1
@@ -161,27 +161,27 @@ class EmberEP( EndPoint ):
             # Create a motif log only for the desired list of nodes (endpoints)
             # Delete the 'motifLog' parameter from the param list of other endpoints
             if 'motifLog' in self.driverParams:
-            	if self.driverParams['motifLog'] != '':
-            		if (self.motifLogNodes):
-            			for id in self.motifLogNodes:
-            				if nodeID == int(id) and logCreatedforFirstCore == False:
-                				#print (str(nodeID) + " " + str(self.driverParams['jobId']) + " " + str(self.motifLogNodes))
-                				#print ("Create motifLog for node {0}".format(id))
-                				logCreatedforFirstCore = True
-                				ep.addParams(self.driverParams)
-                			else:
-                				tempParams = copy.copy(self.driverParams)
-                				del tempParams['motifLog']
-                				ep.addParams(tempParams)
-                	else:
-                		tempParams = copy.copy(self.driverParams)
-                		del tempParams['motifLog']
-                		ep.addParams(tempParams)
+                if self.driverParams['motifLog'] != '':
+                    if (self.motifLogNodes):
+                        for id in self.motifLogNodes:
+                            if nodeID == int(id) and logCreatedforFirstCore == False:
+                                #print (str(nodeID) + " " + str(self.driverParams['jobId']) + " " + str(self.motifLogNodes))
+                                #print ("Create motifLog for node {0}".format(id))
+                                logCreatedforFirstCore = True
+                                ep.addParams(self.driverParams)
+                            else:
+                                tempParams = copy.copy(self.driverParams)
+                                del tempParams['motifLog']
+                                ep.addParams(tempParams)
+                    else:
+                        tempParams = copy.copy(self.driverParams)
+                        del tempParams['motifLog']
+                        ep.addParams(tempParams)
                 else:
-                	ep.addParams(self.driverParams)      				
+                    ep.addParams(self.driverParams)
             else:
-            	ep.addParams(self.driverParams)
-           	# end          
+                ep.addParams(self.driverParams)
+                # end
 
 
             # Original version before motifLog
@@ -201,9 +201,9 @@ class EmberEP( EndPoint ):
             nicLink = sst.Link( "nic" + str(nodeID) + "core" + str(x) + "_Link"  )
             nicLink.setNoCut()
 
-            linkName = "loop" + str(nodeID//self.nicsPerNode) + "nic"+ str(nodeID%self.nicsPerNode)+"core" + str(x) + "_Link" 
-            loopLink = sst.Link( linkName ); 
-            loopLink.setNoCut() 
+            linkName = "loop" + str(nodeID//self.nicsPerNode) + "nic"+ str(nodeID%self.nicsPerNode)+"core" + str(x) + "_Link"
+            loopLink = sst.Link( linkName );
+            loopLink.setNoCut()
 
             #ep.addLink(nicLink, "nic", self.nicParams["nic2host_lat"] )
             #nic.addLink(nicLink, "core" + str(x), self.nicParams["nic2host_lat"] )

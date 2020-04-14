@@ -2,9 +2,9 @@
 debug = 0
 
 netConfig = {
-	"topology":	"torus",
-	"shape":	"4x4x4x4x2"
-	#shape="2x2x2"
+    "topology":    "torus",
+    "shape":    "4x4x4x4x2"
+    #shape="2x2x2"
 }
 
 networkParams = {
@@ -22,7 +22,7 @@ networkParams = {
 
 nicParams = {
     "module" : "merlin.linkcontrol",
-    "topology" : networkParams['topology'], 
+    "topology" : networkParams['topology'],
     "packetSize" : networkParams['packetSize'],
     "link_bw" : networkParams['link_bw'],
     "input_buf_size" : networkParams['input_buf_size'],

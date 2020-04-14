@@ -2,8 +2,8 @@
 debug = 0
 
 netConfig = {
-	"topology" : "dragonfly",
-	"shape" : "16:32:32:16",
+    "topology" : "dragonfly",
+    "shape" : "16:32:32:16",
     "hosts_per_router": "16",
     "intergroup_links":"32",
     "num_groups": "16",
@@ -24,7 +24,7 @@ networkParams = {
 }
 
 nicParams = {
-	"detailedCompute.name" : "thornhill.SingleThread",
+    "detailedCompute.name" : "thornhill.SingleThread",
     "module" : "merlin.reorderlinkcontrol",
     "packetSize" : networkParams['packetSize'],
     "link_bw" : networkParams['link_bw'],
@@ -34,7 +34,7 @@ nicParams = {
     "txDelay_ns" : 50,
     "nic2host_lat" : "150ns",
     "useSimpleMemoryModel" : 1,
-# simpleMemoryModel.verboseMask: values 
+# simpleMemoryModel.verboseMask: values
 #define BUS_WIDGET_MASK 1<<1
 #define CACHE_MASK      1<<2
 #define LOAD_MASK       1<<3
@@ -43,29 +43,29 @@ nicParams = {
 #define STORE_MASK      1<<6
 #define THREAD_MASK     1<<7
 #define BUS_BRIDGE_MASK 1<<8
-	"simpleMemoryModel.verboseLevel" : 0,
-	"simpleMemoryModel.verboseMask" : -1,
+    "simpleMemoryModel.verboseLevel" : 0,
+    "simpleMemoryModel.verboseMask" : -1,
 
-	"simpleMemoryModel.memNumSlots" : 32,
-	"simpleMemoryModel.memReadLat_ns" : 150, 
-	"simpleMemoryModel.memWriteLat_ns" : 40, 
+    "simpleMemoryModel.memNumSlots" : 32,
+    "simpleMemoryModel.memReadLat_ns" : 150,
+    "simpleMemoryModel.memWriteLat_ns" : 40,
 
-	"simpleMemoryModel.hostCacheUnitSize" : 32, 
-	"simpleMemoryModel.hostCacheNumMSHR" : 32, 
-	"simpleMemoryModel.hostCacheLineSize" : 64, 
+    "simpleMemoryModel.hostCacheUnitSize" : 32,
+    "simpleMemoryModel.hostCacheNumMSHR" : 32,
+    "simpleMemoryModel.hostCacheLineSize" : 64,
 
-	"simpleMemoryModel.widgetSlots" : 32, 
+    "simpleMemoryModel.widgetSlots" : 32,
 
-	"simpleMemoryModel.nicNumLoadSlots" : 16, 
-	"simpleMemoryModel.nicNumStoreSlots" : 16, 
+    "simpleMemoryModel.nicNumLoadSlots" : 16,
+    "simpleMemoryModel.nicNumStoreSlots" : 16,
 
-	"simpleMemoryModel.nicHostLoadSlots" : 1, 
-	"simpleMemoryModel.nicHostStoreSlots" : 1, 
+    "simpleMemoryModel.nicHostLoadSlots" : 1,
+    "simpleMemoryModel.nicHostStoreSlots" : 1,
 
-	"simpleMemoryModel.busBandwidth_Gbs" : 7.8,
-	"simpleMemoryModel.busNumLinks" : 8,
-	"maxRecvMachineQsize" : 100,
-	"maxSendMachineQsize" : 100,
+    "simpleMemoryModel.busBandwidth_Gbs" : 7.8,
+    "simpleMemoryModel.busNumLinks" : 8,
+    "maxRecvMachineQsize" : 100,
+    "maxSendMachineQsize" : 100,
 }
 
 emberParams = {
@@ -82,8 +82,8 @@ emberParams = {
 }
 
 hermesParams = {
-	"hermesParams.detailedCompute.name" : "thornhill.SingleThread",
-	"hermesParams.memoryHeapLink.name" : "thornhill.MemoryHeapLink",
+    "hermesParams.detailedCompute.name" : "thornhill.SingleThread",
+    "hermesParams.memoryHeapLink.name" : "thornhill.MemoryHeapLink",
     "hermesParams.nicModule" : "firefly.VirtNic",
 
     "hermesParams.functionSM.defaultEnterLatency" : 30000,
