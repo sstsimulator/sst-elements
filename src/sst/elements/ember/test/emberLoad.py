@@ -491,8 +491,8 @@ if len(loadFile) > 0:
 
     workList.append( [jobid, workFlow] )
 
-        loadInfo.addPart( myNidList, myNicParams, myEpParams, numCores,  model )
-        loadInfo.initWork( myNidList, workList, statNodeList )
+    loadInfo.addPart( myNidList, myNicParams, myEpParams, numCores,  model )
+    loadInfo.initWork( myNidList, workList, statNodeList )
 
 elif len(workList) > 0:
     loadInfo.addPart( nidList, nicParams, epParams, numCores,  model )
