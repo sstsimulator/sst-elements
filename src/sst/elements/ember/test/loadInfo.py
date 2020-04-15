@@ -112,7 +112,7 @@ class LoadInfo:
 
         key = 'motif' + str(cmdNum) + '.name'
         # Check to see if this is for a non-ember endpoint
-        if cmdList[0].find("<") is 0:
+        if cmdList[0].find("<") == 0:
             motif[key] = cmdList[0]
             params = {}
             cmdList.pop(0)
