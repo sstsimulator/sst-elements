@@ -2,11 +2,11 @@
 debug = 0
 
 netConfig = {
-    'topology': 'fattree',
-    'shape' : '9,9:9,9:18'
-    #'radix':    18,
-    #'loading':  9.
-    #'shape' : '18,18:18,18:36'
+	'topology': 'fattree',
+	'shape' : '9,9:9,9:18'
+	#'radix':    18,
+	#'loading':  9.
+	#'shape' : '18,18:18,18:36'
 }
 
 networkParams = {
@@ -23,7 +23,7 @@ networkParams = {
 
 nicParams = {
     "module" : "merlin.linkcontrol",
-    "topology" : networkParams['topology'],
+    "topology" : networkParams['topology'], 
     "packetSize" : networkParams['packetSize'],
     "link_bw" : networkParams['link_bw'],
     "input_buf_size" : networkParams['input_buf_size'],
