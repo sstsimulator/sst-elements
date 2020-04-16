@@ -108,7 +108,7 @@ class EmberEP( EndPoint ):
             memory.addParam( "nid", nodeID )
             #memory.addParam( "verboseLevel", 1 )
 
-        loopBackName = "loopBack" + str(nodeID//self.nicsPerNode)		
+        loopBackName = "loopBack" + str(nodeID//self.nicsPerNode)        
         if nodeID % self.nicsPerNode == 0:
             loopBack = sst.Component(loopBackName, "firefly.loopBack")
             loopBack.addParam( "numCores", self.numCores )
@@ -161,27 +161,27 @@ class EmberEP( EndPoint ):
             # Create a motif log only for the desired list of nodes (endpoints)
             # Delete the 'motifLog' parameter from the param list of other endpoints
             if 'motifLog' in self.driverParams:
-            	if self.driverParams['motifLog'] != '':
-            		if (self.motifLogNodes):
-            			for id in self.motifLogNodes:
-            				if nodeID == int(id) and logCreatedforFirstCore == False:
-                				#print (str(nodeID) + " " + str(self.driverParams['jobId']) + " " + str(self.motifLogNodes))
-                				#print ("Create motifLog for node {0}".format(id))
-                				logCreatedforFirstCore = True
-                				ep.addParams(self.driverParams)
-                			else:
-                				tempParams = copy.copy(self.driverParams)
-                				del tempParams['motifLog']
-                				ep.addParams(tempParams)
-                	else:
-                		tempParams = copy.copy(self.driverParams)
-                		del tempParams['motifLog']
-                		ep.addParams(tempParams)
+                if self.driverParams['motifLog'] != '':
+                    if (self.motifLogNodes):
+                        for id in self.motifLogNodes:
+                            if nodeID == int(id) and logCreatedforFirstCore == False:
+                                #print (str(nodeID) + " " + str(self.driverParams['jobId']) + " " + str(self.motifLogNodes))
+                                #print ("Create motifLog for node {0}".format(id))
+                                logCreatedforFirstCore = True
+                                ep.addParams(self.driverParams)
+                            else:
+                                tempParams = copy.copy(self.driverParams)
+                                del tempParams['motifLog']
+                                ep.addParams(tempParams)
+                    else:
+                        tempParams = copy.copy(self.driverParams)
+                        del tempParams['motifLog']
+                        ep.addParams(tempParams)
                 else:
-                	ep.addParams(self.driverParams)      				
+                    ep.addParams(self.driverParams)                      
             else:
-            	ep.addParams(self.driverParams)
-           	# end          
+                ep.addParams(self.driverParams)
+               # end          
 
 
             # Original version before motifLog
