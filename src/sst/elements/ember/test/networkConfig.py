@@ -114,15 +114,15 @@ class FattreeInfo(TopoInfo):
     def getNumNodes(self):
         return self.numNodes
 
-        def calcNumNodes(self, shape):
-                levels = shape.split(":")
+    def calcNumNodes(self, shape):
+        levels = shape.split(":")
 
-                total_hosts = 1;
-                for l in levels:
-                        links = l.split(",")
-                        total_hosts = total_hosts * int(links[0])
+        total_hosts = 1;
+        for l in levels:
+            links = l.split(",")
+            total_hosts = total_hosts * int(links[0])
 
-                return total_hosts
+        return total_hosts
 
 class DragonFlyLegacyInfo(TopoInfo):
     def __init__( self, shape ):
