@@ -72,13 +72,13 @@ motifDefaults = {
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], "", ["topo=", "shape=","hostsPerRtr=",
-        "simConfig=","platParams=",",debug=","platform=","numNodes=",
-        "numCores=","loadFile=","loadFileVar=","cmdLine=","printStats=","randomPlacement=",
-        "emberVerbose=","netBW=","netPktSize=","netFlitSize=",
-        "rtrArb=","embermotifLog=","rankmapper=", "motifAPI=",
-        "bgPercentage=","bgMean=","bgStddev=","bgMsgSize=","netInspect=",
-        "detailedModelName=","detailedModelParams=","detailedModelNodes=",
-        "useSimpleMemoryModel","param=","paramDir=","statsModule=","statsFile="])
+                 "simConfig=","platParams=",",debug=","platform=","numNodes=",
+                 "numCores=","loadFile=","loadFileVar=","cmdLine=","printStats=","randomPlacement=",
+                 "emberVerbose=","netBW=","netPktSize=","netFlitSize=",
+                 "rtrArb=","embermotifLog=","rankmapper=", "motifAPI=",
+                 "bgPercentage=","bgMean=","bgStddev=","bgMsgSize=","netInspect=",
+                 "detailedModelName=","detailedModelParams=","detailedModelNodes=",
+                 "useSimpleMemoryModel","param=","paramDir=","statsModule=","statsFile="])
 
 except getopt.GetoptError as err:
     print (str(err))
@@ -278,9 +278,9 @@ elif "hyperx" == netTopo:
 
 elif "json" == netTopo:
 
-        topo,rtr = netShape.split(':')
-        topo = TopoJSON( topo, rtr )
-        topoInfo = JSONInfo(topo.num_nodes)
+    topo,rtr = netShape.split(':')
+    topo = TopoJSON( topo, rtr )
+    topoInfo = JSONInfo(topo.num_nodes)
 
 else:
     sys.exit("how did we get here")
@@ -489,10 +489,10 @@ if len(loadFile) > 0:
             tmp['cmd'] = motif
             workFlow.append( tmp )
 
-    workList.append( [jobid, workFlow] )
+        workList.append( [jobid, workFlow] )
 
-    loadInfo.addPart( myNidList, myNicParams, myEpParams, numCores,  model )
-    loadInfo.initWork( myNidList, workList, statNodeList )
+        loadInfo.addPart( myNidList, myNicParams, myEpParams, numCores,  model )
+        loadInfo.initWork( myNidList, workList, statNodeList )
 
 elif len(workList) > 0:
     loadInfo.addPart( nidList, nicParams, epParams, numCores,  model )
