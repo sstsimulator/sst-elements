@@ -9,9 +9,9 @@ sst.setProgramOption("stopAtCycle", "5s")
 # Define the simulation components
 comp_cpu = sst.Component("cpu", "prospero.prosperoCPU")
 comp_cpu.addParams({
-      	"verbose" : "0",
-	"reader" : "prospero.ProsperoTextTraceReader",
-	"readerParams.file" : "sstprospero-0-0.trace"
+    "verbose" : "0",
+    "reader" : "prospero.ProsperoTextTraceReader",
+    "readerParams.file" : "sstprospero-0-0.trace"
 })
 comp_l1cache = sst.Component("l1cache", "memHierarchy.Cache")
 comp_l1cache.addParams({

@@ -1,18 +1,18 @@
 import sys
 
 class Buffer:
-	def __init__(self):
-		self.buffer = ''
-		self.offset = 0
-	def write( self, data ):
-		self.buffer += data
-	def readline( self ):
-		end = self.offset
-		while end < len(self.buffer) and self.buffer[end] != '\n':
-			end += 1	
-		start = self.offset
-		self.offset = end + 1
-		return self.buffer[start:self.offset]
+    def __init__(self):
+        self.buffer = ''
+        self.offset = 0
+    def write( self, data ):
+        self.buffer += data
+    def readline( self ):
+        end = self.offset
+        while end < len(self.buffer) and self.buffer[end] != '\n':
+            end += 1
+        start = self.offset
+        self.offset = end + 1
+        return self.buffer[start:self.offset]
 
 class ParseLoadFile:
 
@@ -100,18 +100,18 @@ class ParseLoadFile:
         return retval
 
     def preprocess( self, vars ):
-		while True:
-			line = self.fp.readline()
-			if len(line) > 0:
-				if line[0] != '#' and not line.isspace():
-					if line[0:len('[VAR]')] == '[VAR]':
-						tag, rem = line.split(' ',1);
-						var,value = rem.split('=');
-						vars[var] = value.rstrip()
-					else:
-						self.buffer.write( self.substitute(line,vars) )
-			else:
-				return
+        while True:
+            line = self.fp.readline()
+            if len(line) > 0:
+                if line[0] != '#' and not line.isspace():
+                    if line[0:len('[VAR]')] == '[VAR]':
+                        tag, rem = line.split(' ',1);
+                        var,value = rem.split('=');
+                        vars[var] = value.rstrip()
+                    else:
+                        self.buffer.write( self.substitute(line,vars) )
+            else:
+                return
 
 
     def getKeyValue( self ):

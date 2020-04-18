@@ -3,10 +3,10 @@ import sys
 Truncate=40
 
 def truncate(value):
-	if Truncate and len(value) > Truncate:
-		return value[0:Truncate] + '...'
-	else:
-		return value
+    if Truncate and len(value) > Truncate:
+        return value[0:Truncate] + '...'
+    else:
+        return value
 
 def updateDict( name, params, key, value ):
     if key in params:
