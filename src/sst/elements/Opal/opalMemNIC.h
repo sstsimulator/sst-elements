@@ -51,7 +51,6 @@ public:
 /* Begin class definition */
 
     /* Constructor */
-    OpalMemNIC() {} // For serialization
     OpalMemNIC(Component * comp, Params &params);
     OpalMemNIC(ComponentId_t id, Params &params);
 
