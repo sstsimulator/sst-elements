@@ -25,7 +25,6 @@
 #include <map>
 #include <algorithm>
 
-#include <stdio.h>
 #include <stdint.h>
 #include <poll.h>
 #include <queue>

@@ -22,14 +22,13 @@
 #ifndef _H_SST_OPAL_EVENT
 #define _H_SST_OPAL_EVENT
 
-#include <map>
-#include <list>
-#include <string>
-
 #include <sst/core/component.h>
 #include <sst/core/timeConverter.h>
 #include <../memHierarchy/memEvent.h>
 
+#include <map>
+#include <list>
+#include <string>
 
 using namespace SST;
 
