@@ -17,7 +17,7 @@
 
 import sys
 import sst
-from merlin.base import *
+from sst.merlin.base import *
 
 
 class BasicNicConfiguration(TemplateBase):
