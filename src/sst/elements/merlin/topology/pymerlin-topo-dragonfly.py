@@ -18,29 +18,6 @@
 import sst
 from sst.merlin.base import *
 
-
-class Topology(TemplateBase):
-    def __init__(self):
-        TemplateBase.__init__(self)
-        self._declareClassVariables(["endPointLinks","built","_router_template"])
-        self.endPointLinks = []
-        self.built = False
-    def getTopologyName(self):
-        return "NoName"
-    #def addParams(self,p):
-    #    self._params.update(p)
-    #def addParam(self, key, value):
-    #    self._params[key] = value
-    def build(self, network_name, endpoint = None):
-        pass
-    def getEndPointLinks(self):
-        pass
-    def setRouterTemplate(self,template):
-        self._router_template = template
-    def getNumNodes(self):
-        pass
-
-
 class topoDragonFly(Topology):
 
     def __init__(self):
@@ -50,7 +27,7 @@ class topoDragonFly(Topology):
         self._defineOptionalParams(["algorithm","adaptive_threshold","global_routes"])
         self.global_routes = "absolute"
 
-    def getTopologyName(self):
+    def getName(self):
         return "Dragonfly"
 
 
@@ -178,11 +155,7 @@ class topoDragonFly(Topology):
 
             # GROUP ROUTERS
             for r in range(self.routers_per_group):
-                rtr = self._router_template.instanceRouter("%s:rtr:G%dR%d"%(network_name, g, r))
-                #rtr = sst.Component("%s:rtr:G%dR%d"%(network_name, g, r), "merlin.hr_router")
-                #rtr.addParams(self.params.subset(self.topoKeys, self.topoOptKeys))
-                rtr.addParam("num_ports",num_ports)
-                rtr.addParam("id", router_num)
+                rtr = self._router_template.instanceRouter("%s:rtr:G%dR%d"%(network_name, g, r),num_ports,router_num)
 
                 # Insert the topology object
                 sub = rtr.setSubComponent(self._router_template.getTopologySlotName(),"merlin.dragonfly",0)
