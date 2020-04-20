@@ -126,6 +126,7 @@ namespace SST{ namespace OpalComponent{
 				ser & ev;
 				ser & address;
 				ser & paddress;
+                ser & faultLevel;
 				ser & size;
 				ser & nodeId;
 				ser & coreId;
@@ -133,6 +134,7 @@ namespace SST{ namespace OpalComponent{
 				ser & hint;
 				ser & fileId;
 				ser & memContrlId;
+                ser & invalidate;
 			}
 
 
