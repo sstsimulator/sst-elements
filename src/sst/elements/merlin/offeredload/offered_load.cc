@@ -29,7 +29,6 @@ OfferedLoad::OfferedLoad(ComponentId_t cid, Params& params) :
     generation(0),
     id(-1)
 {
-
     out.init(getName() + ": ", 0, 0, Output::STDOUT);
 
     try {

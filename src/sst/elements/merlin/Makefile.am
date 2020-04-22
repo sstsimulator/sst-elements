@@ -77,7 +77,11 @@ libmerlin_la_SOURCES = \
 	pymodule.c \
 	pymerlin.py \
 	pymerlin-base.py \
-	topology/pymerlin-topology.py
+	pymerlin-endpoint.py \
+	topology/pymerlin-topo-dragonfly.py \
+	topology/pymerlin-topo-hyperx.py \
+	topology/pymerlin-topo-fattree.py \
+	topology/pymerlin-topo-mesh.py
 
 EXTRA_DIST = \
 	tests/dragon_128_test.py \
@@ -97,6 +101,7 @@ libmerlin_la_LDFLAGS = -module -avoid-version $(PYTHON_LDFLAGS)
 BUILT_SOURCES = \
 	pymerlin.inc \
 	pymerlin-base.inc \
+	pymerlin-endpoint.inc \
 	topology/pymerlin-topo-dragonfly.inc \
 	topology/pymerlin-topo-hyperx.inc \
 	topology/pymerlin-topo-fattree.inc \
@@ -122,4 +127,4 @@ install-exec-hook:
 clean-local: clean-local-check
 .PHONY: clean-local-check
 clean-local-check:
-	-rm -rf pymerlin.inc
+	-rm -rf $(BUILT_SOURCES)

@@ -124,6 +124,7 @@ class _topoMeshBase(Topology):
             rtr = self._router_template.instanceRouter("rtr.%s"%mylocstr,radix,i)
             
             topology = rtr.setSubComponent(self._router_template.getTopologySlotName(),self._getTopologyName())
+            self._applyStatisticsSettings(topology)
             topology.addParams(self._params)
 
             port = 0
@@ -209,6 +210,7 @@ class topoSingle(Topology):
         rtr = self._router_template.instanceRouter("router",self.num_ports,0)
 
         topo = rtr.setSubComponent(self._router_template.getTopologySlotName(),"merlin.singlerouter",0)
+        self._applyStatisticsSettings(topo)
         topo.addParams(self._params)
         
         for l in range(self.num_ports):
