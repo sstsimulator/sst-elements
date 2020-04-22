@@ -18,12 +18,12 @@
  */
 
 #include <sst_config.h>
-#include <stdio.h>
-
-#include <sst/core/link.h>
 
 #include "PageFaultHandler.h"
 #include "Opal_Event.h"
+
+#include <sst/core/link.h>
+
 
 using namespace SST::OpalComponent;
 

@@ -14,12 +14,11 @@
 // distribution.
 
 #include <sst_config.h>
-#include <stdio.h>
+#include "arielmemmgr_opal.h"
+#include "Opal_Event.h"
 
 #include <sst/core/link.h>
 
-#include "arielmemmgr_opal.h"
-#include "Opal_Event.h"
 
 using namespace SST::OpalComponent;
 

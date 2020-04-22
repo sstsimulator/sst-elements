@@ -22,15 +22,13 @@
 #ifndef _H_SST_OPAL_EVENT
 #define _H_SST_OPAL_EVENT
 
-
-#include <sst_config.h>
 #include <sst/core/component.h>
 #include <sst/core/timeConverter.h>
 #include <../memHierarchy/memEvent.h>
-#include<map>
-#include<list>
-#include<string>
 
+#include <map>
+#include <list>
+#include <string>
 
 using namespace SST;
 
@@ -128,6 +126,7 @@ namespace SST{ namespace OpalComponent{
 				ser & ev;
 				ser & address;
 				ser & paddress;
+                ser & faultLevel;
 				ser & size;
 				ser & nodeId;
 				ser & coreId;
@@ -135,6 +134,7 @@ namespace SST{ namespace OpalComponent{
 				ser & hint;
 				ser & fileId;
 				ser & memContrlId;
+                ser & invalidate;
 			}
 
 

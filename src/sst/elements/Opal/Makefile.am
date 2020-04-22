@@ -7,7 +7,7 @@ comp_LTLIBRARIES = libOpal.la
 
 libOpal_la_SOURCES = \
 	mempool.h \
-	mempool.cpp \
+	mempool.cc \
 	Opal.cc \
 	Opal.h \
         Opal_Event.h \
