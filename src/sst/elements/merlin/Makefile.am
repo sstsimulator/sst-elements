@@ -97,7 +97,10 @@ libmerlin_la_LDFLAGS = -module -avoid-version $(PYTHON_LDFLAGS)
 BUILT_SOURCES = \
 	pymerlin.inc \
 	pymerlin-base.inc \
-	topology/pymerlin-topology.inc
+	topology/pymerlin-topo-dragonfly.inc \
+	topology/pymerlin-topo-hyperx.inc \
+	topology/pymerlin-topo-fattree.inc \
+	topology/pymerlin-topo-mesh.inc
 
 install-exec-hook:
 	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     merlin=$(abs_srcdir)

@@ -21,10 +21,10 @@
 
 
 #include <sst_config.h>
-#include <string>
-#include<iostream>
 #include "Opal.h"
 
+#include <string>
+#include <iostream>
 
 using namespace SST::Interfaces;
 using namespace SST;

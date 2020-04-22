@@ -19,8 +19,8 @@ AC_DEFUN([SST_CHECK_GPGPUSIM],
    ])
    
    #Need compiler versions
-   CC_VERSION=$(gcc -dumpversion)  
-   AC_CHECK_FILE($with_cuda/bin/nvcc, 
+   CC_VERSION=$($CC --version | head -1 | sed 's/\(@<:@0-9@:>@.@<:@0-9@:>@.@<:@0-9@:>@\).*/\1/' | sed 's/.* //')
+   AC_CHECK_FILE($with_cuda/bin/nvcc,
                  [CUDA_VERSION_STRING=$($with_cuda/bin/nvcc --version | grep -o "release .*" | sed 's/ *,.*//' | sed 's/release //g' | sed 's/\./ /g' | sed 's/$/ /' | sed 's/\ /0/g')],
                  [CUDA_VERSION_STRING=""]
    )   

@@ -66,14 +66,14 @@ def _interval( args ):
     if len(args) >= 3:
         count = int(args[2])
     else:
-        count = sys.maxint
+        count = sys.maxsize
         
     # Start with a sorted nid space
     _nids.sort()
 
     nid_list = []
     index = start_index
-    for i in xrange(0,count):
+    for i in range(0,count):
         if ( index < len(_nids) ):
             nid_list.append( _nids.pop(index) )
             index = index + interval - 1 # -1 because we popped a value
@@ -132,7 +132,7 @@ def generate( args ):
 
     global _nids
     if _nids is None:
-        _nids = range(total_nodes)
+        _nids = list(range(total_nodes))
 
     # allocation types and their args:
     # linear size

@@ -1,18 +1,18 @@
 import sys
 
 class Buffer:
-	def __init__(self):
-		self.buffer = ''
-		self.offset = 0
-	def write( self, data ):
-		self.buffer += data
-	def readline( self ):
-		end = self.offset
-		while end < len(self.buffer) and self.buffer[end] != '\n':
-			end += 1	
-		start = self.offset
-		self.offset = end + 1
-		return self.buffer[start:self.offset]
+    def __init__(self):
+        self.buffer = ''
+        self.offset = 0
+    def write( self, data ):
+        self.buffer += data
+    def readline( self ):
+        end = self.offset
+        while end < len(self.buffer) and self.buffer[end] != '\n':
+            end += 1
+        start = self.offset
+        self.offset = end + 1
+        return self.buffer[start:self.offset]
 
 class ParseLoadFile:
 
@@ -70,7 +70,7 @@ class ParseLoadFile:
 
         return module.generate( args.split(')',1)[0] ) 
 
-    def next(self):
+    def __next__(self):
 
         if len(self.stuff) == 0:
             raise StopIteration
@@ -85,6 +85,8 @@ class ParseLoadFile:
             self.stuff.pop(0)
             return jobid, nidlist, numCores, params, motifs 
 
+    next = __next__
+
     def substitute( self, line, variables ):
         retval = ''
         line = line.replace('}','{')
@@ -98,18 +100,18 @@ class ParseLoadFile:
         return retval
 
     def preprocess( self, vars ):
-		while True:
-			line = self.fp.readline()
-			if len(line) > 0:
-				if line[0] != '#' and not line.isspace():
-					if line[0:len('[VAR]')] == '[VAR]':
-						tag, rem = line.split(' ',1);
-						var,value = rem.split('=');
-						vars[var] = value.rstrip()
-					else:
-						self.buffer.write( self.substitute(line,vars) )
-			else:
-				return
+        while True:
+            line = self.fp.readline()
+            if len(line) > 0:
+                if line[0] != '#' and not line.isspace():
+                    if line[0:len('[VAR]')] == '[VAR]':
+                        tag, rem = line.split(' ',1);
+                        var,value = rem.split('=');
+                        vars[var] = value.rstrip()
+                    else:
+                        self.buffer.write( self.substitute(line,vars) )
+            else:
+                return
 
 
     def getKeyValue( self ):

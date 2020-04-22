@@ -37,7 +37,7 @@ l1cache.addParams({
         "cache_line_size" : "64",
         "L1" : "1",
         "debug" : "0",
-	})
+})
 
 memctrl = sst.Component("memory", "memHierarchy.MemController")
 memctrl.addParams({

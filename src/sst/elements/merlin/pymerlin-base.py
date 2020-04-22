@@ -117,6 +117,27 @@ class TemplateBase(object):
 
 # Classes implementing SimplenNetwork interface
 
+class Topology(TemplateBase):
+    def __init__(self):
+        TemplateBase.__init__(self)
+        self._declareClassVariables(["endPointLinks","built","_router_template"])
+        self.endPointLinks = []
+        self.built = False
+    def getName(self):
+        return "NoName"
+    #def addParams(self,p):
+    #    self._params.update(p)
+    #def addParam(self, key, value):
+    #    self._params[key] = value
+    def build(self, network_name, endpoint = None):
+        pass
+    def getEndPointLinks(self):
+        pass
+    def setRouterTemplate(self,template):
+        self._router_template = template
+    def getNumNodes(self):
+        pass
+
 class NetworkInterface(TemplateBase):
     def __init__(self):
         TemplateBase.__init__(self)
@@ -228,11 +249,13 @@ class TestJob(Job):
 class RouterTemplate(TemplateBase):
     def __init__(self):
         TemplateBase.__init__(self)
-    def instanceRouter(self, name):
+    def instanceRouter(self, name, rtr_id, radix):
         pass
     def getTopologySlotName(self):
         pass
     def build(self, nID, extraKeys):
+        pass
+    def getPortConnectionInfo(port_num):
         pass
 
 class hr_router(RouterTemplate):
@@ -240,10 +263,14 @@ class hr_router(RouterTemplate):
         RouterTemplate.__init__(self)
         self._defineRequiredParams(["link_bw","flit_size","xbar_bw","input_latency","output_latency","input_buf_size","output_buf_size"])
         self._defineOptionalParams(["xbar_arb","network_inspectors","oql_track_port","oql_track_remote","num_vns","vn_remap","vn_remap_shm"])
-    def instanceRouter(self, name):
+
+    def instanceRouter(self, name, radix, rtr_id):
         rtr = sst.Component(name, "merlin.hr_router")
         rtr.addParams(self._params)
+        rtr.addParam("num_ports",radix)
+        rtr.addParam("id",rtr_id)
         return rtr
+    
     def getTopologySlotName(self):
         return "topology"
 

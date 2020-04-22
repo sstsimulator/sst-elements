@@ -65,5 +65,5 @@ sst.setStatisticLoadLevel(7)
 sst.setStatisticOutput(statoutputs[2])
 sst.enableAllStatisticsForAllComponents()
 
-print "done configuring SST"
+print("done configuring SST")
 
