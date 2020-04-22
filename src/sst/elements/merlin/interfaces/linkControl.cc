@@ -67,7 +67,6 @@ LinkControl::LinkControl(ComponentId_t cid, Params &params, int vns) :
     }
     if ( outbuf_size.hasUnits("B") ) outbuf_size *= UnitAlgebra("8b/B");
 
-
     // Configure the links
     // For now give it a fake timebase.  Will give it the real timebase during init
 
@@ -416,7 +415,7 @@ void LinkControl::finish(void)
 bool LinkControl::send(SimpleNetwork::Request* req, int vn) {
     // Check to see if the VN is in range
     if ( vn >= req_vns ) return false;
-
+    req->vn = vn;
     
     // Check to see if we need to do a nid translation
     if ( nid_map ) req->dest = nid_map[req->dest];
