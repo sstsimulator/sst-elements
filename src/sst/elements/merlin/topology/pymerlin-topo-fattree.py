@@ -79,6 +79,7 @@ class topoFatTree(Topology):
                 rtr = self._router_template.instanceRouter("rtr_l0_g%d_r0"%(group), ups[0] + downs[0], rtr_id)
                 
                 topology = rtr.setSubComponent(self._router_template.getTopologySlotName(),"merlin.fattree")
+                self._applyStatisticsSettings(topology)
                 topology.addParams(self._params)
                 # Add links
                 for l in range(len(host_links)):
@@ -112,7 +113,8 @@ class topoFatTree(Topology):
                 rtr_id = id + i
                 rtr = self._router_template.instanceRouter("rtr_l%d_g%d_r%d"%(level,group,i), ups[level] + downs[level], rtr_id)
 
-                topology = rtr.setSubComponent(self.router_template.getTopologySlotName(),"merlin.fattree")
+                topology = rtr.setSubComponent(self._router_template.getTopologySlotName(),"merlin.fattree")
+                self._applyStatisticsSettings(topology)
                 topology.addParams(self._params)
                 # Add links
                 for l in range(len(rtr_links[i])):
@@ -179,6 +181,7 @@ class topoFatTree(Topology):
                 rtr = self._router_template.instanceRouter("rtr_l%d_g0_r%d"%(len(ups),i),radix,rtr_id);
 
                 topology = rtr.setSubComponent(self._router_template.getTopologySlotName(),"merlin.fattree",0)
+                self._applyStatisticsSettings(topology)
                 topology.addParams(self._params)
 
                 for l in range(len(rtr_links[i])):

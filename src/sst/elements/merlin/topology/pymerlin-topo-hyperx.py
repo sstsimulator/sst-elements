@@ -131,6 +131,7 @@ class topoHyperX(Topology):
             rtr = self._router_template.instanceRouter("rtr.%s"%mylocstr,radix,i)
 
             topology = rtr.setSubComponent(self._router_template.getTopologySlotName(),"merlin.hyperx")
+            self._applyStatisticsSettings(topology)
             topology.addParams(self._params)
 
             port = 0

@@ -44,6 +44,10 @@ char pymerlin_base[] = {
 #include "pymerlin-base.inc"
     0x00};
 
+char pymerlin_endpoint[] = {
+#include "pymerlin-endpoint.inc"
+    0x00};
+
 char pymerlin_topo_dragonfly[] = {
 #include "topology/pymerlin-topo-dragonfly.inc"
     0x00};
@@ -67,6 +71,7 @@ public:
     {
         auto primary_module = createPrimaryModule(pymerlin,"pymerlin.py");
         primary_module->addSubModule("base",pymerlin_base,"pymerlin-base.py");
+        primary_module->addSubModule("endpoint",pymerlin_endpoint,"pymerlin-endpoint.py");
         primary_module->addSubModule("topology",pymerlin_topo_dragonfly,"topology/pymerlin-topo-dragonfly.py");
         primary_module->addSubModule("topology",pymerlin_topo_hyperx,"topology/pymerlin-topo-hyperx.py");
         primary_module->addSubModule("topology",pymerlin_topo_fattree,"topology/pymerlin-topo-fattree.py");

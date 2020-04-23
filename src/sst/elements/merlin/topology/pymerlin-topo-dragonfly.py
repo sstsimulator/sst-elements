@@ -159,6 +159,7 @@ class topoDragonFly(Topology):
 
                 # Insert the topology object
                 sub = rtr.setSubComponent(self._router_template.getTopologySlotName(),"merlin.dragonfly",0)
+                self._applyStatisticsSettings(sub)
                 sub.addParams(self._params)
                 sub.addParam("intergroup_per_router",intergroup_per_router)
                 if router_num == 0:
