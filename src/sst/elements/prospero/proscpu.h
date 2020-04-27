@@ -28,8 +28,10 @@
 #include "prosreader.h"
 #include "prosmemmgr.h"
 
+#ifndef HAVE_PIN3
 #ifdef HAVE_LIBZ
 #include <zlib.h>
+#endif
 #endif
 
 using namespace SST;
@@ -91,8 +93,10 @@ private:
   SimpleMem* cache_link;
   FILE* traceFile;
   bool traceEnded;
+#ifndef HAVE_PIN3
 #ifdef HAVE_LIBZ
   gzFile traceFileZ;
+#endif
 #endif
   uint64_t pageSize;
   uint64_t cacheLineSize;
