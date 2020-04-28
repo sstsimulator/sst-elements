@@ -28,10 +28,8 @@
 #include "prosreader.h"
 #include "prosmemmgr.h"
 
-#ifndef HAVE_PIN3
 #ifdef HAVE_LIBZ
 #include <zlib.h>
-#endif
 #endif
 
 using namespace SST;

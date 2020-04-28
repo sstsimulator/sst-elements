@@ -73,7 +73,7 @@ KNOB<string> KnobInsRoutine(KNOB_MODE_WRITEONCE, "pintool",
 KNOB<string> KnobTraceFile(KNOB_MODE_WRITEONCE, "pintool",
     "o", "sstprospero", "Output analysis to trace file.");
 KNOB<string> KnobTraceFormat(KNOB_MODE_WRITEONCE, "pintool",
-    "f", "text", "Output format, \'text\' = Plain text, \'binary\' = Binary, \'compressed\' = zlib compressed");
+    "f", "text", "Output format, \'text\' = Plain text, \'binary\' = Binary, \'compressed\' = zlib compressed (pin2 only)");
 KNOB<UINT32> KnobMaxThreadCount(KNOB_MODE_WRITEONCE, "pintool",
     "t", "1", "Maximum number of threads to record memory patterns");
 KNOB<UINT32> KnobFileBufferSize(KNOB_MODE_WRITEONCE, "pintool",
