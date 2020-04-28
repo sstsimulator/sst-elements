@@ -91,10 +91,8 @@ private:
   SimpleMem* cache_link;
   FILE* traceFile;
   bool traceEnded;
-#ifndef HAVE_PIN3
 #ifdef HAVE_LIBZ
   gzFile traceFileZ;
-#endif
 #endif
   uint64_t pageSize;
   uint64_t cacheLineSize;
