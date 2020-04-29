@@ -47,9 +47,6 @@ simpleClockerComponent::simpleClockerComponent(ComponentId_t id, Params& params)
     Clock3Handler = new Clock::Handler<simpleClockerComponent, uint32_t>(this, &simpleClockerComponent::Clock3Tick, 333);
     tc = registerClock("15 ns", Clock3Handler);
 
-    // Create the OneShot Callback Handlers
-    callback1Handler = new OneShot::Handler<simpleClockerComponent, uint32_t>(this, &simpleClockerComponent::Oneshot1Callback, 456);
-    callback2Handler = new OneShot::Handler<simpleClockerComponent>(this, &simpleClockerComponent::Oneshot2Callback);
 }
 
 simpleClockerComponent::simpleClockerComponent() :
@@ -89,28 +86,12 @@ bool simpleClockerComponent::Clock3Tick(SST::Cycle_t CycleNum, uint32_t Param)
     // NOTE: THIS IS THE 15NS CLOCK
     std::cout << "  CLOCK #3 - TICK Num " << CycleNum << "; Param = " << Param << std::endl;
 
-    if ((CycleNum == 1) || (CycleNum == 4))  {
-        std::cout << "*** REGISTERING ONESHOTS " << std::endl ;
-        registerOneShot("10ns", callback1Handler);
-        registerOneShot("18ns", callback2Handler);
-    }
-
     // return false so we keep going or true to stop
     if (CycleNum == 15) {
         return true;
     } else {
         return false;
     }
-}
-
-void simpleClockerComponent::Oneshot1Callback(uint32_t Param)
-{
-    std::cout << "-------- ONESHOT #1 CALLBACK; Param = " << Param << std::endl;
-}
-
-void simpleClockerComponent::Oneshot2Callback()
-{
-    std::cout << "-------- ONESHOT #2 CALLBACK" << std::endl;
 }
 
 // Serialization
