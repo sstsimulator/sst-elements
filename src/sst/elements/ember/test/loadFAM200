@@ -14,6 +14,7 @@
 # two jobs can not have the same NID 
 
 [JOB_ID] 10 
+[NUM_CORES] 1 
 # 80 nodes started at network node 1, with an interval of 2
 [NID_LIST] generateNidList=generateNidListInterval(1,80,2) 
 [MOTIF_API]  HadesSHMEM
