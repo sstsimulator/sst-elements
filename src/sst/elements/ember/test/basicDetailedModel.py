@@ -97,6 +97,9 @@ class BasicDetailedModel(DetailedModel):
         memory = sst.Component( prefix + "memory", "memHierarchy.MemController")
         memory.addParams( self.params['memory_params'])
 
+        membk = memory.setSubComponent("backend", "memHierarchy.simpleMem")
+        membk.addParams( self.params['memory_backend_params'])
+
         l2 = sst.Component( prefix + "l2cache", "memHierarchy.Cache")
         l2.addParams( self.params['l2_params'])
 
