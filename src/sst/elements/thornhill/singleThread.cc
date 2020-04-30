@@ -36,8 +36,8 @@ SingleThread::SingleThread( ComponentId_t id,
         m_link = configureLink( portName.c_str(), "0ps",
             new Event::Handler<SingleThread>(
                     this,&SingleThread::eventHandler ) );
-        assert(m_link);
     }
+    assert(m_link);
 }
 
 void SingleThread::eventHandler( SST::Event* ev )
