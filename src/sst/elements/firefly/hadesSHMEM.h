@@ -653,6 +653,8 @@ class HadesSHMEM : public Shmem::Interface
 	SimTime_t m_enterLat_ns;
     SimTime_t m_blockingReturnLat_ns;
 
+	uint64_t m_shmemAddrStart;
+
     ShmemCommon*    m_common;
     ShmemBarrier*   m_barrier;
     ShmemBroadcast* m_broadcast;
