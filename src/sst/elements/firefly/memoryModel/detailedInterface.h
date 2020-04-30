@@ -109,6 +109,10 @@ private:
     bool store( PTR* src, MemReq* req ) {
         m_dbg.verbose(CALL_INFO,1,MY_MASK,"addr=%#" PRIx64 " length=%lu\n",req->addr, req->length);
 
+        // Some models use the same address space for each PID. To map each processes address
+        // to a unique address the upper 8 bits contain the PID. The detailed model uses unique addresses
+        // at the source and sizes the memHierarchy accordingly so we must remove the PID 
+        req->addr &= ~0x0f00000000000000;
 		if ( m_inFlightCnt[Write] + m_pendingReqQ[Write].size() < m_maxRequestsPending[Write] - 1 ) {
 			src = NULL;
 		} else {
@@ -123,6 +127,11 @@ private:
 
     bool load( PTR* src, MemReq* req, MemoryModel::Callback* callback ) {
         m_dbg.verbose(CALL_INFO,1,MY_MASK,"addr=%#" PRIx64 " length=%lu\n",req->addr,req->length);
+
+        // Some models use the same address space for each PID. To map each processes address
+        // to a unique address the upper 8 bits contain the PID. The detailed model uses unique addresses
+        // at the source and sizes the memHierarchy accordingly so we must remove the PID 
+        req->addr &= ~0x0f00000000000000;
        if ( m_inFlightCnt[Read] + m_pendingReqQ[Read].size() < m_maxRequestsPending[Read] - 1 ) {
             src = NULL;
         } else {
@@ -199,7 +208,7 @@ private:
     }
 
 	bool clock_handler(Cycle_t cycle) {
-        m_dbg.verbose(CALL_INFO,2,MY_MASK,"pendingWrite=%zu pendingRea%zu\n", m_pendingReqQ[Write].size(), m_pendingReqQ[Read].size() );
+        m_dbg.verbose(CALL_INFO,2,MY_MASK,"pendingWrite=%zu pendingRead=%zu\n", m_pendingReqQ[Write].size(), m_pendingReqQ[Read].size() );
 
         Entry* entry;
         if ( ( entry = nextEntry() ) ) {
