@@ -72,29 +72,6 @@ ReorderLinkControl::~ReorderLinkControl() {
     delete [] input_buf;
 }
 
-#ifndef SST_ENABLE_PREVIEW_BUILD
-bool
-ReorderLinkControl::initialize(const std::string& port_name, const UnitAlgebra& link_bw_in,
-                               int vns, const UnitAlgebra& in_buf_size,
-                               const UnitAlgebra& out_buf_size)
-{
-    // if ( !wasLoadedWithLegacyAPI() ) {
-    //     merlin_abort.fatal(CALL_INFO_LONG,1,"reorderLinkControl::initializae() was called on instance that was loaded using new APIs.  This method can only be called when loaded with the legacy API.  Use wasLoadedWithLegacyAPI() to check load status.");
-    //     return false;
-    // }
-    this->vns = vns;
-
-    // Don't need output buffers, sends will go directly to
-    // LinkControl.  Do need input buffers.
-    input_buf = new request_queue_t[vns];
-
-    // // Initialize link_control
-    // link_control->initialize(port_name, link_bw_in, vns, in_buf_size, out_buf_size);
-
-    return true;
-}
-#endif
-
 void
 ReorderLinkControl::setup()
 {

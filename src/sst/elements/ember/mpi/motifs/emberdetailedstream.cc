@@ -74,12 +74,12 @@ bool EmberDetailedStreamGenerator::generate( std::queue<EmberEvent*>& evQ)
 	verbose( CALL_INFO, 2, 1, "streambuff=%" PRIx64 "\n",m_streamBuf.getSimVAddr());
 
     enQ_getTime( evQ, &m_startTime[0] );
-    Simulation::getSimulation()->getStatisticsProcessingEngine()->performGlobalStatisticOutput();
+    performGlobalStatisticOutput();
     computeDetailedCopy( evQ );
     enQ_getTime( evQ, &m_stopTime[0] );
 
     enQ_getTime( evQ, &m_startTime[1] );
-    Simulation::getSimulation()->getStatisticsProcessingEngine()->performGlobalStatisticOutput();
+    performGlobalStatisticOutput();
   	computeDetailedTriad( evQ );
     enQ_getTime( evQ, &m_stopTime[1] );
 

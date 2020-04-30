@@ -52,9 +52,6 @@ private:
 public:
     CircNetworkInspector(SST::ComponentId_t, SST::Params &params, const std::string& sub_id);
 
-#ifndef SST_ENABLE_PREVIEW_BUILD
-    void initialize(std::string id);
-#endif
     void finish();
 
     void inspectNetworkData(SimpleNetwork::Request* req);
