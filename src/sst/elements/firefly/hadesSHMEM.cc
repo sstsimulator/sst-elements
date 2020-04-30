@@ -286,10 +286,9 @@ void HadesSHMEM::malloc( Hermes::MemAddr* ptr, size_t size, bool backed, Callbac
 {
     dbg().debug(CALL_INFO,1,SHMEM_BASE," maddr ptr=%p size=%lu\n",ptr,size);
 
-	uint64_t sharedAddr = m_shmemAddrStart;
-	m_shmemAddrStart += size;
 
     if ( m_memHeapLink ) {
+        uint64_t sharedAddr = allocSpace(size);
         m_memHeapLink->alloc( size,
         [=](uint64_t addr ) {
                 this->dbg().debug(CALL_INFO_LAMBDA,"malloc",1,SHMEM_BASE,"addr=%#" PRIx64 " size=%zu\n",addr,size);
@@ -298,8 +297,8 @@ void HadesSHMEM::malloc( Hermes::MemAddr* ptr, size_t size, bool backed, Callbac
             }
         );
     } else {
-        *ptr = m_heap->addAddr( sharedAddr, size, backed );
-        nic().shmemRegMem( *ptr, sharedAddr, size, callback) ;
+        *ptr =  m_heap->malloc( size, backed );
+        nic().shmemRegMem( *ptr, ptr->getSimVAddr(), size, callback) ;
     }
 }
 
