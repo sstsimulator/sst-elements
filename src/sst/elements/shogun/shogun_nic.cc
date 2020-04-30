@@ -54,21 +54,6 @@ ShogunNIC::~ShogunNIC()
     delete output;
 }
 
-#ifndef SST_ENABLE_PREVIEW_BUILD
-bool ShogunNIC::initialize(const std::string& portName, const UnitAlgebra& link_bw,
-    int vns, const UnitAlgebra& in_buf_size,
-    const UnitAlgebra& out_buf_size)
-{
-
-    output->verbose(CALL_INFO, 4, 0, "Configuring port %s...\n", portName.c_str());
-
-    link = configureLink(portName, "1ps", new Event::Handler<ShogunNIC>(this, &ShogunNIC::recvLinkEvent));
-
-    output->verbose(CALL_INFO, 4, 0, "-> result: %s\n", (nullptr == link) ? "null, not-configured" : "configure successful");
-
-    return (nullptr != link);
-}
-#endif
 void ShogunNIC::sendInitData(SimpleNetwork::Request* req)
 {
     output->verbose(CALL_INFO, 8, 0, "Send init-data called.\n");

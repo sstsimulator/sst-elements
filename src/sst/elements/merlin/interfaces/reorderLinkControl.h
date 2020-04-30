@@ -163,14 +163,6 @@ public:
 
     ~ReorderLinkControl();
 
-#ifndef SST_ENABLE_PREVIEW_BUILD
-    // Must be called before any other functions to configure the link.
-    // Preferably during the owning component's constructor
-    // time_base is a frequency which represents the bandwidth of the link in flits/second.
-    bool initialize(const std::string& port_name, const UnitAlgebra& link_bw_in,
-                    int vns, const UnitAlgebra& in_buf_size,
-                    const UnitAlgebra& out_buf_size);
-#endif
     void setup();
     void init(unsigned int phase);
     void finish();

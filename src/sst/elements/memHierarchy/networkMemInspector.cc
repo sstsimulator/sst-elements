@@ -33,15 +33,6 @@ networkMemInspector::networkMemInspector(ComponentId_t id, Params &params, const
     }
 }
 
-#ifndef SST_ENABLE_PREVIEW_BUILD
-void networkMemInspector::initialize(std::string id) {
-    // Init the stats
-    for (int i = 0; i < (int)Command::LAST_CMD; ++i) {
-        memCmdStat[i] = registerStatistic<uint64_t>(CommandString[i],id);
-    }
-}
-#endif
-
 void networkMemInspector::inspectNetworkData(SimpleNetwork::Request* req) {
     MemNIC::MemRtrEvent *mre = dynamic_cast<MemNIC::MemRtrEvent*>(req->inspectPayload());
     if (mre) {
