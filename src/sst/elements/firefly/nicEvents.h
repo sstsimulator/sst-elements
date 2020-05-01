@@ -126,11 +126,12 @@ class NicShmemFenceCmdEvent : public NicShmemCmdEvent {
 class NicShmemRegMemCmdEvent : public NicShmemCmdEvent {
   public:
     typedef std::function<void()> Callback;
-    NicShmemRegMemCmdEvent( Hermes::MemAddr& addr, size_t len, Callback callback ) :
-        NicShmemCmdEvent( RegMem ), addr(addr), len(len), callback(callback) {}
+    NicShmemRegMemCmdEvent( Hermes::MemAddr& addr, Hermes::Vaddr realAddr, size_t len, Callback callback ) :
+        NicShmemCmdEvent( RegMem ), addr(addr), realAddr(realAddr), len(len), callback(callback) {}
 
     virtual int getNode() { return -1; }
     Hermes::MemAddr addr;
+	Hermes::Vaddr   realAddr;
     size_t          len;
     Callback        callback;
 

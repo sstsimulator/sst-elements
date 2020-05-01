@@ -29,8 +29,8 @@ class BasicDetailedModel(DetailedModel):
     def getName(self):
         return self.name
 
-    def createThreads(self, prefix, bus, numThreads, cpu_params, l1_params ):
-        #print ("createThreads() ", prefix)
+    def createThreads(self, prefix, bus, offset, numThreads, cpu_params, l1_params ):
+        #print "createThreads() {} numThreads={} ".format(prefix,numThreads)
         prefix += "thread"
         links = []
         for i in range( numThreads ) :
@@ -46,7 +46,8 @@ class BasicDetailedModel(DetailedModel):
 
             link = sst.Link( name + "l1_bus_link")
             link.setNoCut();
-            link.connect( ( l1, "low_network_0", "50ps" ) , (bus,"high_network_" + str(i+1),"1000ps") )
+            portName =  "high_network_" + str(offset+i)
+            link.connect( ( l1, "low_network_0", "50ps" ) , ( bus, portName, "1000ps" ) )
 
             link = sst.Link( name + "src_link" )
             link.setNoCut();
@@ -87,6 +88,8 @@ class BasicDetailedModel(DetailedModel):
 
         memory = sst.Component( prefix + "memory", "memHierarchy.MemController")
         memory.addParams( self.params['memory_params'])
+        membk = memory.setSubComponent("backend", "memHierarchy.simpleMem")
+        membk.addParams( self.params['memory_backend_params'])
 
         l2 = sst.Component( prefix + "l2cache", "memHierarchy.Cache")
         l2.addParams( self.params['l2_params'])
@@ -102,10 +105,11 @@ class BasicDetailedModel(DetailedModel):
         link.setNoCut();
         link.connect( (l2, "low_network_0", "50ps"), (memory, "direct_link", "50ps") )
 
+        numThreads = int(self.params['numThreads'])
         for i in range(numCores):
             name = prefix + "core" + str(i) + "_"
             self.links.append( \
-                self.createThreads( name, bus, int(self.params['numThreads']), \
+                self.createThreads( name, bus, 1 + i * numThreads, numThreads, \
                                     self.params['cpu_params'], \
                                     self.params['l1_params']  ) )
 

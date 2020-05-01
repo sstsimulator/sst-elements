@@ -179,7 +179,7 @@ class VirtNic : public SST::SubComponent {
 
     void shmemInit( Hermes::Vaddr, Callback );
     void shmemFence( Callback );
-    void shmemRegMem( Hermes::MemAddr&, size_t len, Callback );
+    void shmemRegMem( Hermes::MemAddr&, Hermes::Vaddr, size_t len, Callback );
     void shmemWait( Hermes::Vaddr dest, Hermes::Shmem::WaitOp, Hermes::Value&, Callback );
     void shmemPutv( int node, Hermes::Vaddr dest, Hermes::Value& );
     void shmemGetv( int node, Hermes::Vaddr src, Hermes::Value::Type, CallbackV );

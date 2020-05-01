@@ -184,10 +184,10 @@ void VirtNic::shmemFence( Callback callback )
     sendCmd(0, new NicShmemFenceCmdEvent( callback ) );
 }
 
-void VirtNic::shmemRegMem( Hermes::MemAddr& addr, size_t len, Callback callback )
+void VirtNic::shmemRegMem( Hermes::MemAddr& addr, Hermes::Vaddr realAddr, size_t len, Callback callback )
 {
     m_dbg.debug(CALL_INFO,2,0,"\n");
-    sendCmd(0, new NicShmemRegMemCmdEvent( addr, len, callback ) );
+    sendCmd(0, new NicShmemRegMemCmdEvent( addr, realAddr, len, callback ) );
 }
 
 void VirtNic::shmemGet( int node, Hermes::Vaddr dest, Hermes::Vaddr src, size_t len, Callback callback )
