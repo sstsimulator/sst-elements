@@ -26,11 +26,6 @@ TestNetworkInspector::TestNetworkInspector(ComponentId_t id, Params& params, con
     test_count = registerStatistic<uint64_t>("test_count", sub_id);
 }
 
-#ifndef SST_ENABLE_PREVIEW_BUILD
-void TestNetworkInspector::initialize(string id) {
-    test_count = registerStatistic<uint64_t>("test_count", id);
-}
-#endif
 void TestNetworkInspector::inspectNetworkData(SimpleNetwork::Request* req) {
     test_count->addData(1);
 }

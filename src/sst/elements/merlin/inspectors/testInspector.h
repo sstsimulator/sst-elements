@@ -48,9 +48,6 @@ private:
 public:
     TestNetworkInspector(ComponentId_t id, Params& params, const std::string& sub_id);
 
-#ifndef SST_ENABLE_PREVIEW_BUILD
-    void initialize(string id);
-#endif
     void inspectNetworkData(SimpleNetwork::Request* req);
 
 };
