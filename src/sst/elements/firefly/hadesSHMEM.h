@@ -653,6 +653,17 @@ class HadesSHMEM : public Shmem::Interface
 	SimTime_t m_enterLat_ns;
     SimTime_t m_blockingReturnLat_ns;
 
+	uint64_t m_shmemAddrStart;
+
+	uint64_t allocSpace( size_t length ) {
+		uint64_t base = m_shmemAddrStart;
+        m_shmemAddrStart += length;
+        // allign on cache line
+        m_shmemAddrStart += 64;
+        m_shmemAddrStart &= ~(64-1);
+		return base;
+	}
+
     ShmemCommon*    m_common;
     ShmemBarrier*   m_barrier;
     ShmemBroadcast* m_broadcast;

@@ -44,6 +44,7 @@ libariel_la_SOURCES = \
 	arielfrontend.h
 
 EXTRA_DIST = \
+	frontend/pin3/fesimple.cc \
 	frontend/simple/fesimple.cc \
 	frontend/simple/examples/multicore.py \
 	frontend/simple/examples/stream/Makefile \
