@@ -129,7 +129,7 @@ class testcase_memHierarchy_Component(SSTTestCase):
 
         # if not multi-rank run, append the errfile onto the output file
         if get_testing_num_ranks() < 2:
-            self.grep_v_cleanup_file("not aligned to the request size", errfile, outfile, append=True)
+            self._grep_v_cleanup_file("not aligned to the request size", errfile, outfile, append=True)
             pass
 
         # Post processing clean up output file
@@ -139,8 +139,8 @@ class testcase_memHierarchy_Component(SSTTestCase):
 #        os.system(cmd)
 
         # Post processing clean up output file
-#        self.grep_v_cleanup_file("^cpu.*:", outfile)
-#        self.grep_v_cleanup_file("not aligned to the request size", outfile)
+#        self._grep_v_cleanup_file("^cpu.*:", outfile)
+#        self._grep_v_cleanup_file("not aligned to the request size", outfile)
 
         # Copy the orig reffile to the fixedreffile
         cmd = "cat {0} > {1}".format(reffile, fixedreffile)
@@ -148,16 +148,16 @@ class testcase_memHierarchy_Component(SSTTestCase):
 
         # Cleanup any DRAMSIM Debug messages; from both the output file and fixedreffile
         # (this is a bit of hammer, but it works)
-        self.grep_v_cleanup_file("===== MemorySystem", outfile)
-        self.grep_v_cleanup_file("===== MemorySystem", fixedreffile)
-        self.grep_v_cleanup_file("TOTAL_STORAGE : 2048MB | 1 Ranks | 16 Devices per rank", outfile)
-        self.grep_v_cleanup_file("TOTAL_STORAGE : 2048MB | 1 Ranks | 16 Devices per rank", fixedreffile)
-        self.grep_v_cleanup_file("== Loading", outfile)
-        self.grep_v_cleanup_file("== Loading", fixedreffile)
-        self.grep_v_cleanup_file("DRAMSim2 Clock Frequency =1Hz, CPU Clock Frequency=1Hz", outfile)
-        self.grep_v_cleanup_file("DRAMSim2 Clock Frequency =1Hz, CPU Clock Frequency=1Hz", fixedreffile)
-        self.grep_v_cleanup_file("WARNING: UNKNOWN KEY 'DEBUG_TRANS_FLOW' IN INI FILE", outfile)
-        self.grep_v_cleanup_file("WARNING: UNKNOWN KEY 'DEBUG_TRANS_FLOW' IN INI FILE", fixedreffile)
+        self._grep_v_cleanup_file("===== MemorySystem", outfile)
+        self._grep_v_cleanup_file("===== MemorySystem", fixedreffile)
+        self._grep_v_cleanup_file("TOTAL_STORAGE : 2048MB | 1 Ranks | 16 Devices per rank", outfile)
+        self._grep_v_cleanup_file("TOTAL_STORAGE : 2048MB | 1 Ranks | 16 Devices per rank", fixedreffile)
+        self._grep_v_cleanup_file("== Loading", outfile)
+        self._grep_v_cleanup_file("== Loading", fixedreffile)
+        self._grep_v_cleanup_file("DRAMSim2 Clock Frequency =1Hz, CPU Clock Frequency=1Hz", outfile)
+        self._grep_v_cleanup_file("DRAMSim2 Clock Frequency =1Hz, CPU Clock Frequency=1Hz", fixedreffile)
+        self._grep_v_cleanup_file("WARNING: UNKNOWN KEY 'DEBUG_TRANS_FLOW' IN INI FILE", outfile)
+        self._grep_v_cleanup_file("WARNING: UNKNOWN KEY 'DEBUG_TRANS_FLOW' IN INI FILE", fixedreffile)
 
 #        # This may be needed in the future
 #        remove_component_warning()
@@ -177,9 +177,8 @@ class testcase_memHierarchy_Component(SSTTestCase):
         self.assertTrue(foundEndMsg, "Did not find 'Simulation is complete, simulated time:' in output file")
 
 
-    def grep_v_cleanup_file(self, grep_str, grep_file, out_file = None, append = False):
+    def _grep_v_cleanup_file(self, grep_str, grep_file, out_file = None, append = False):
         cmd = 'grep -v \"{0}\" {1} > {2}'.format(grep_str, grep_file, self.grep_tmp_file)
-        #print("\nAARON grep cmd = {0}".format(cmd))
         os.system(cmd)
         redirecttype = ">"
         if append == True:
