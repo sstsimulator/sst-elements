@@ -98,6 +98,8 @@ class testcase_memHierarchy_Component(SSTTestCase):
     def memHierarchy_Template(self, testcase, tolerance):
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
+        outdir = get_test_output_run_dir()
+        tmpdir = get_test_output_tmp_dir()
 
         # Some tweeking of file names are due to inconsistencys with testcase name
         testcasename_sdl = testcase.replace("_MC", "")
@@ -107,11 +109,11 @@ class testcase_memHierarchy_Component(SSTTestCase):
         sdlfile = "{0}/{1}.py".format(test_path, testcasename_sdl)
         testDataFileName=("test_memHierarchy_{0}".format(testcasename_out))
         reffile = "{0}/refFiles/{1}.out".format(test_path, testDataFileName)
-        outfile = "{0}/{1}.out".format(get_test_output_run_dir(), testDataFileName)
-        errfile = "{0}/{1}.err".format(get_test_output_run_dir(), testDataFileName)
-        tmpfile = "{0}/{1}.tmp".format(get_test_output_tmp_dir(), testDataFileName)
-        difffile = "{0}/{1}.raw_diff".format(get_test_output_tmp_dir(), testDataFileName)
-        mpioutfiles = "{0}/{1}.testfile".format(get_test_output_run_dir(), testDataFileName)
+        outfile = "{0}/{1}.out".format(outdir, testDataFileName)
+        errfile = "{0}/{1}.err".format(outdir, testDataFileName)
+        tmpfile = "{0}/{1}.tmp".format(outdir, testDataFileName)
+        mpioutfiles = "{0}/{1}.testfile".format(outdir, testDataFileName)
+        difffile = "{0}/{1}.raw_diff".format(tmpdir, testDataFileName)
 
         # Delete any leftover dramsim*.log files that might have been left over
         cmd = "rm -f {0}/dramsim*.log".format(test_path)

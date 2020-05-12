@@ -43,16 +43,18 @@ class testcase_merlin_Component(SSTTestCase):
     def merlin_test_template(self, testcase, tolerance):
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
+        outdir = get_test_output_run_dir()
 
         # Set the various file paths
         testDataFileName="test_merlin_{0}".format(testcase)
 
         sdlfile = "{0}/{1}.py".format(test_path, testcase)
         reffile = "{0}/refFiles/test_merlin_{1}.out".format(test_path, testcase)
-        outfile = "{0}/{1}.out".format(get_test_output_run_dir(), testDataFileName)
-        mpioutfiles = "{0}/{1}.testfile".format(get_test_output_run_dir(), testDataFileName)
+        outfile = "{0}/{1}.out".format(outdir, testDataFileName)
+        errfile = "{0}/{1}.err".format(outdir, testDataFileName)
+        mpioutfiles = "{0}/{1}.testfile".format(outdir, testDataFileName)
 
-        self.run_sst(sdlfile, outfile, mpi_out_files=mpioutfiles)
+        self.run_sst(sdlfile, outfile, errfile, mpi_out_files=mpioutfiles)
 
         # Perform the test
         cmp_result = compare_sorted(testcase, outfile, reffile)
