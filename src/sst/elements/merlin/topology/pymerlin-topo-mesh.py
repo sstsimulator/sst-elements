@@ -22,27 +22,36 @@ from sst.merlin.base import *
 class _topoMeshBase(Topology):
     def __init__(self):
         Topology.__init__(self)
-        self._declareClassVariables(["link_latency","host_link_latency","bundleEndpoints"])
+        self._declareClassVariables(["link_latency","host_link_latency","bundleEndpoints","_num_dims","_dim_size","_dim_width"])
         self._defineRequiredParams(["shape", "width", "local_ports"])
         #self._defineOptionalParams([])
+        self._setCallbackOnWrite("shape",self._shape_callback)
+        self._setCallbackOnWrite("width",self._shape_callback)
 
-    def _processShape(self):
-        if self.shape and self.width:
-            # Get the size in dimension
-            dim_size = [int(x) for x in self.shape.split('x')]
-
-            # Get the number of links in each dimension and check to
-            # make sure the number of dimensions matches the shape
-            dim_width = [int(x) for x in self.width.split('x')]
-
-            if len(dim_size) != len(dim_width):
-                print("topoHyperX:  Incompatible number of dimensions set for shape and width.")
-                exit(1)
-
-            return dim_size, dim_width
-
+    def _shape_callback(self,variable_name,value):
+        if variable_name == "shape":
+            if not self.width:
+                return
+            shape = value
+            width = self.width
         else:
-            return None, None
+            if not self.shape:
+                return
+            shape = self.shape
+            width = value
+            
+        # Get the size in dimension
+        self._dim_size = [int(x) for x in shape.split('x')]
+
+        # Get the number of links in each dimension and check to
+        # make sure the number of dimensions matches the shape
+        self._dim_width = [int(x) for x in width.split('x')]
+
+        self._num_dims = len(self._dim_size)
+
+        if len(self._dim_size) != len(self._dim_width):
+            print("topo%s:  Incompatible number of dimensions set for shape and width."%getName())
+            exit(1)
 
     def _getTopologyName():
         pass
@@ -51,14 +60,12 @@ class _topoMeshBase(Topology):
         pass
 
     def getNumNodes(self):
-        dim_size, dim_shape = self._processShape()
-
-        if not dim_size or not self.local_ports:
-            print("%s: calling getNumNodes before shape, width and local_ports was set."%self.getName())
+        if not self._dim_size or not self.local_ports:
+            print("topo%s: calling getNumNodes before shape, width and local_ports was set."%self.getName())
             exit(1)
 
         num_routers = 1;
-        for x in dim_size:
+        for x in self._dim_size:
             num_routers = num_routers * x
 
         return num_routers * int(self.local_ports)
@@ -72,40 +79,48 @@ class _topoMeshBase(Topology):
     def _formatShape(self, arr):
         return 'x'.join([str(x) for x in arr])
 
+    def _idToLoc(self,rtr_id):
+        foo = list()
+        for i in range(self._num_dims-1, 0, -1):
+            div = 1
+            for j in range(0, i):
+                div = div * self._dim_size[j]
+            value = (rtr_id // div)
+            foo.append(value)
+            rtr_id = rtr_id - (value * div)
+        foo.append(rtr_id)
+        foo.reverse()
+        return foo
 
-    def build(self, network_name, endpoint):
+    def getRouterNameForId(self,rtr_id):
+        return self.getRouterNameForLocation(self._idToLoc(rtr_id))
+        
+    def getRouterNameForLocation(self,location):
+        return "%srtr.%s"%(self._prefix,self._formatShape(location))
+    
+    def findRouterByLocation(self,location):
+        return sst.findComponentByName(self.getRouterNameForLocation(location))
+        
+    def build(self, endpoint):
         if self.host_link_latency is None:
             self.host_link_latency = self.link_latency
         
         # get some local variables from the parameters
-        dim_size, dim_width = self._processShape()
         local_ports = int(self.local_ports)
-        num_dims = len(dim_size)
+        num_dims = len(self._dim_size)
 
         
-        def idToLoc(rtr_id):
-            foo = list()
-            for i in range(num_dims-1, 0, -1):
-                div = 1
-                for j in range(0, i):
-                    div = div * dim_size[j]
-                value = (rtr_id // div)
-                foo.append(value)
-                rtr_id = rtr_id - (value * div)
-            foo.append(rtr_id)
-            foo.reverse()
-            return foo
 
         # Calculate number of routers and endpoints
         num_routers = 1
-        for x in dim_size:
+        for x in self._dim_size:
             num_routers = num_routers * x
 
         num_peers = num_routers * local_ports
 
         radix = local_ports
         for x in range(num_dims):
-            radix = radix + (dim_width[x] * 2)
+            radix = radix + (self._dim_width[x] * 2)
             
         
         links = dict()
@@ -118,10 +133,10 @@ class _topoMeshBase(Topology):
         
         for i in range(num_routers):
             # set up 'mydims'
-            mydims = idToLoc(i)
+            mydims = self._idToLoc(i)
             mylocstr = self._formatShape(mydims)
 
-            rtr = self._router_template.instanceRouter("rtr.%s"%mylocstr,radix,i)
+            rtr = self._instanceRouter(radix,i)
             
             topology = rtr.setSubComponent(self._router_template.getTopologySlotName(),self._getTopologyName())
             self._applyStatisticsSettings(topology)
@@ -132,24 +147,24 @@ class _topoMeshBase(Topology):
                 theirdims = mydims[:]
 
                 # Positive direction
-                if mydims[dim]+1 < dim_size[dim] or self._includeWrapLinks():
-                    theirdims[dim] = (mydims[dim] +1 ) % dim_size[dim]
+                if mydims[dim]+1 < self._dim_size[dim] or self._includeWrapLinks():
+                    theirdims[dim] = (mydims[dim] +1 ) % self._dim_size[dim]
                     theirlocstr = self._formatShape(theirdims)
-                    for num in range(dim_width[dim]):
+                    for num in range(self._dim_width[dim]):
                         rtr.addLink(getLink(mylocstr, theirlocstr, num), "port%d"%port, self.link_latency)
                         port = port+1
                 else:
-                    port += dim_width[dim]
+                    port += self._dim_width[dim]
 
                 # Negative direction
                 if mydims[dim] > 0 or self._includeWrapLinks():
-                    theirdims[dim] = ((mydims[dim] -1) + dim_size[dim]) % dim_size[dim]
+                    theirdims[dim] = ((mydims[dim] -1) + self._dim_size[dim]) % self._dim_size[dim]
                     theirlocstr = self._formatShape(theirdims)
-                    for num in range(dim_width[dim]):
+                    for num in range(self._dim_width[dim]):
                         rtr.addLink(getLink(theirlocstr, mylocstr, num), "port%d"%port, self.link_latency)
                         port = port+1
                 else:
-                    port += dim_width[dim]
+                    port += self._dim_width[dim]
 
             for n in range(local_ports):
                 nodeID = local_ports * i + n
