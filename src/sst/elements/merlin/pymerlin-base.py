@@ -44,7 +44,8 @@ class TemplateBase(object):
         object.__setattr__(self,"_opt_params",set())
         object.__setattr__(self,"_enabled_stats",list())
         object.__setattr__(self,"_stat_load_level",None)
-        object.__setattr__(self,"_vars",set(["_params","_req_params","_opt_params","_enabled_stats","_stat_load_level","_vars"]))
+        object.__setattr__(self,"_callbacks",dict())
+        object.__setattr__(self,"_vars",set(["_params","_req_params","_opt_params","_enabled_stats","_stat_load_level","_vars","_callbacks"]))
 
     def _defineRequiredParams(self,l):
         self._req_params.update(l)
@@ -69,6 +70,9 @@ class TemplateBase(object):
         else:
             raise AttributeError("%r has no attribute %r"%(self.__class__.__name__,key))
 
+        if key in self._callbacks:
+            self._callbacks[key](key,value)
+
     def __getattr__(self,key):
         if key in self._req_params or key in self._opt_params:
             try:
@@ -80,6 +84,9 @@ class TemplateBase(object):
         else:
             raise AttributeError("%r has no attribute %r"%(self.__class__.__name__,key))
 
+    def _setCallbackOnWrite(self,variable,func):
+        self._callbacks[variable] = func
+        
     def addParams(self,p):
         for x in p:
             #if x in self._req_params or x in self._opt_params:
@@ -144,12 +151,20 @@ class TemplateBase(object):
 class Topology(TemplateBase):
     def __init__(self):
         TemplateBase.__init__(self)
-        self._declareClassVariables(["endPointLinks","built","_router_template"])
+        self._declareClassVariables(["endPointLinks","built","_router_template","_prefix"])
         self.endPointLinks = []
         self.built = False
+        self._prefix = ""
+    def setNetworkName(self,name):
+        if name:
+            self._prefix = "%s."%name
+    def getNetworkName(self):
+        if self._prefix:
+            return self._prefix[1:]
+        return ""
     def getName(self):
         return "NoName"
-    def build(self, network_name, endpoint = None):
+    def build(self, endpoint):
         pass
     def getEndPointLinks(self):
         pass
@@ -157,6 +172,12 @@ class Topology(TemplateBase):
         self._router_template = template
     def getNumNodes(self):
         pass
+    def getRouterNameForId(self,rtr_id):
+        return "%srtr.%d"%(self._prefix,rtr_id)
+    def findRouterById(self,rtr_id):
+        return sst.findComponentByName(self.getRouterNameForId(rtr_id))
+    def _instanceRouter(self,radix,rtr_id):
+        return self._router_template.instanceRouter(self.getRouterNameForId(rtr_id), radix, rtr_id)
 
 class NetworkInterface(TemplateBase):
     def __init__(self):
@@ -232,11 +253,9 @@ class Job(Buildable):
 class RouterTemplate(TemplateBase):
     def __init__(self):
         TemplateBase.__init__(self)
-    def instanceRouter(self, name, rtr_id, radix):
+    def instanceRouter(self, name, radix, rtr_id):
         pass
     def getTopologySlotName(self):
-        pass
-    def build(self, nID, extraKeys):
         pass
     def getPortConnectionInfo(port_num):
         pass
@@ -303,7 +322,7 @@ class System:
     # Build the system
     def build(self):
         system_ep = SystemEndpoint(self)
-        self._topology.build("network",system_ep)
+        self._topology.build(system_ep)
 
     #def setNumRails(self,num_rails):
     #    self.num_rails = num_rails
