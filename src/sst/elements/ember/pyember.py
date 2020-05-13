@@ -17,7 +17,7 @@
 
 import sys
 import sst
-from merlin.base import *
+from sst.merlin.base import *
 
 
 class BasicNicConfiguration(TemplateBase):
@@ -46,6 +46,7 @@ class BasicNicConfiguration(TemplateBase):
 
     def build(self,nID,num_vNics):
         nic = sst.Component("nic" + str(nID), "firefly.nic")
+        self._applyStatisticsSettings(nic)
         nic.addParams(self.combineParams(self.nic_defaults,self._params))
         nic.addParam("nid",nID)
         nic.addParam("num_vNics",num_vNics)
@@ -263,8 +264,15 @@ class EmberMPIJob(Job):
         retval = ( networkif, port_name )
 
 
-        # Set up the loopback for intranode communications
-        loopBackName = "loopBack" + str(nodeID // self._nicsPerNode)
+        # Set up the loopback for intranode communications.  In the
+        # case of multiple nics, will name things based on the lowest
+        # nodeID for this node.  This will allow different jobs to use
+        # different numbers of nics per node (thoough the system level
+        # allocation will have to be a multiple of any of the number
+        # of nics per node values used.
+        my_id_name = str( (nodeID // self._nicsPerNode) * self._nicsPerNode)
+        
+        loopBackName = "loopBack" + my_id_name
         if nodeID % self._nicsPerNode == 0:
             loopBack = sst.Component(loopBackName, "firefly.loopBack")
             loopBack.addParam( "numCores", self._numCores )
@@ -278,6 +286,7 @@ class EmberMPIJob(Job):
         for x in range(self._numCores // self._nicsPerNode):
             # Instance the EmberEngine
             ep = sst.Component("nic" + str(nodeID) + "core" + str(x) + "_EmberEP", "ember.EmberEngine")
+            self._applyStatisticsSettings(ep)
 
             # Add the params to the EmberEngine
             ep.addParam('jobId',self.job_id)
@@ -296,7 +305,7 @@ class EmberMPIJob(Job):
             nicLink = sst.Link( "nic" + str(nodeID) + "core" + str(x) + "_Link"  )
             nicLink.setNoCut()
 
-            linkName = "loop" + str(nodeID // self._nicsPerNode) + "nic"+ str(nodeID%self._nicsPerNode)+"core" + str(x) + "_Link"
+            linkName = "loop" + my_id_name + "nic"+ str(nodeID%self._nicsPerNode)+"core" + str(x) + "_Link"
             loopLink = sst.Link( linkName );
             loopLink.setNoCut()
 

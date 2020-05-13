@@ -23,7 +23,7 @@ coherence_protocol = "MSI"
 
 memory_controllers_per_group = 1
 groups = 8
-memory_capacity = 16384     # Size of memory in MBs
+memory_capacity = 16384 * 4     # Size of memory in MBs
 
 
 cpu_params = {
@@ -63,10 +63,16 @@ l2cache_params = {
 
 memory_params = {
     "coherence_protocol" : coherence_protocol,
-    "backend.access_time" : "1ps",
     "rangeStart" : 0,
-    "backend.mem_size" : str( memory_capacity // (groups * memory_controllers_per_group)) + "MiB",
     "clock" : memory_clock,
+
+    "addr_range_start" : 0,
+    "addr_range_end" :  (memory_capacity // (groups * memory_controllers_per_group) ) * 1024*1024,
+}
+
+memory_backend_params = {
+    "access_time" : "1ps",
+    "mem_size" : str( memory_capacity // (groups * memory_controllers_per_group)) + "MiB",
 }
 
 params = {
@@ -78,4 +84,5 @@ params = {
     "nic_cpu_params" :  cpu_params,
     "nic_l1_params" :   l1cache_params,
     "memory_params" :   memory_params,
+    "memory_backend_params" :   memory_backend_params,
 }

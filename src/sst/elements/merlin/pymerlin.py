@@ -71,6 +71,12 @@ class Topo(object):
         self._getEndPoint = epFunc
     def build(self):
         pass
+    def getRouterNameForId(self,rtr_id):
+        return "rtr.%d"%rtr_id
+    def findRouterById(self,rtr_id):
+        return sst.findComponentByName(self.getRouterNameForId(rtr_id))
+    def _instanceRouter(self,rtr_id,rtr_type):
+        return sst.Component(self.getRouterNameForId(rtr_id),rtr_type)
 
 
 class topoSimple(Topo):
@@ -89,7 +95,7 @@ class topoSimple(Topo):
         _params["num_peers"] = int(_params["router_radix"])
 
     def build(self):
-        rtr = sst.Component("router", "merlin.hr_router")
+        rtr = self._instanceRouter(0,"merlin.hr)_router")
         rtr.setSubComponent("topology","merlin.singlerouter",0)
         _params["topology"] = "merlin.singlerouter"
         _params["debug"] = debug
@@ -105,6 +111,9 @@ class topoSimple(Topo):
                     link.setNoCut()
                 link.connect(ep, (rtr, "port%d"%l, _params["link_lat"]) )
 
+    def getRouterNameForId(self,rtr_id):
+        return "router"
+                
 
 class topoTorus(Topo):
     def __init__(self):
@@ -126,7 +135,7 @@ class topoTorus(Topo):
                 print("Dim %d size:"%x)
                 ds = int(input())
                 self.dims.append(ds);
-            _params["torus:shape"] = self.formatShape(self.dims)
+            _params["torus:shape"] = self._formatShape(self.dims)
         else:
             self.dims = [int(x) for x in _params["torus:shape"].split('x')]
             self.nd = len(self.dims)
@@ -135,7 +144,7 @@ class topoTorus(Topo):
                 print("Dim %d width (# of links in this dimension):" % x)
                 dw = int(input())
                 self.dimwidths.append(dw)
-            _params["torus:width"] = self.formatShape(self.dimwidths)
+            _params["torus:width"] = self._formatShape(self.dimwidths)
         else:
             self.dimwidths = [int(x) for x in _params["torus:width"].split('x')]
 
@@ -153,23 +162,34 @@ class topoTorus(Topo):
         _params["num_ports"] = _params["router_radix"] = radix
         _params["torus:local_ports"] = local_ports
 
-    def formatShape(self, arr):
+    def _formatShape(self, arr):
         return 'x'.join([str(x) for x in arr])
 
-    def build(self):
-        def idToLoc(rtr_id):
-            foo = list()
-            for i in range(self.nd-1, 0, -1):
-                div = 1
-                for j in range(0, i):
-                    div = div * self.dims[j]
-                value = (rtr_id // div)
-                foo.append(value)
-                rtr_id = rtr_id - (value * div)
-            foo.append(rtr_id)
-            foo.reverse()
-            return foo
 
+    def _idToLoc(self,rtr_id):
+        foo = list()
+        for i in range(self.nd-1, 0, -1):
+            div = 1
+            for j in range(0, i):
+                div = div * self.dims[j]
+            value = (rtr_id // div)
+            foo.append(value)
+            rtr_id = rtr_id - (value * div)
+        foo.append(rtr_id)
+        foo.reverse()
+        return foo
+
+    def getRouterNameForId(self,rtr_id):
+        return self.getRouterNameForLocation(self._idToLoc(rtr_id))
+
+    def getRouterNameForLocation(self,location):
+        return "rtr.%s"%(self._formatShape(location))
+    
+    def findRouterByLocation(self,location):
+        return sst.findComponentByName(self.getRouterNameForLocation(location));
+    
+
+    def build(self):
 
         num_routers = _params["num_peers"] // _params["torus:local_ports"]
         links = dict()
@@ -185,10 +205,11 @@ class topoTorus(Topo):
 
         for i in range(num_routers):
             # set up 'mydims'
-            mydims = idToLoc(i)
-            mylocstr = self.formatShape(mydims)
+            mydims = self._idToLoc(i)
+            mylocstr = self._formatShape(mydims)
 
-            rtr = sst.Component("rtr.%s"%mylocstr, "merlin.hr_router")
+            rtr = self._instanceRouter(i,"merlin.hr_router")
+            #rtr = sst.Component("rtr.%s"%mylocstr, "merlin.hr_router")
             rtr.addParams(_params.subset(self.topoKeys, self.topoOptKeys))
             rtr.addParam("id", i)
             topology = rtr.setSubComponent("topology","merlin.torus")
@@ -200,14 +221,14 @@ class topoTorus(Topo):
 
                 # Positive direction
                 theirdims[dim] = (mydims[dim] +1 ) % self.dims[dim]
-                theirlocstr = self.formatShape(theirdims)
+                theirlocstr = self._formatShape(theirdims)
                 for num in range(self.dimwidths[dim]):
                     rtr.addLink(getLink(mylocstr, theirlocstr, num), "port%d"%port, _params["link_lat"])
                     port = port+1
 
                 # Negative direction
                 theirdims[dim] = ((mydims[dim] -1) +self.dims[dim]) % self.dims[dim]
-                theirlocstr = self.formatShape(theirdims)
+                theirlocstr = self._formatShape(theirdims)
                 for num in range(self.dimwidths[dim]):
                     rtr.addLink(getLink(theirlocstr, mylocstr, num), "port%d"%port, _params["link_lat"])
                     port = port+1
@@ -244,7 +265,7 @@ class topoMesh(Topo):
                 print("Dim %d size:"%x)
                 ds = int(input())
                 self.dims.append(ds);
-            _params["mesh:shape"] = self.formatShape(self.dims)
+            _params["mesh:shape"] = self._formatShape(self.dims)
         else:
             self.dims = [int(x) for x in _params["mesh:shape"].split('x')]
             self.nd = len(self.dims)
@@ -253,7 +274,7 @@ class topoMesh(Topo):
                 print("Dim %d width (# of links in this dimension):" % x)
                 dw = int(input())
                 self.dimwidths.append(dw)
-            _params["mesh:width"] = self.formatShape(self.dimwidths)
+            _params["mesh:width"] = self._formatShape(self.dimwidths)
         else:
             self.dimwidths = [int(x) for x in _params["mesh:width"].split('x')]
 
@@ -271,23 +292,34 @@ class topoMesh(Topo):
         _params["num_ports"] = _params["router_radix"] = radix
         _params["mesh:local_ports"] = local_ports
 
-    def formatShape(self, arr):
+    def _formatShape(self, arr):
         return 'x'.join([str(x) for x in arr])
 
-    def build(self):
-        def idToLoc(rtr_id):
-            foo = list()
-            for i in range(self.nd-1, 0, -1):
-                div = 1
-                for j in range(0, i):
-                    div = div * self.dims[j]
-                value = (rtr_id // div)
-                foo.append(value)
-                rtr_id = rtr_id - (value * div)
-            foo.append(rtr_id)
-            foo.reverse()
-            return foo
 
+    def _idToLoc(self,rtr_id):
+        foo = list()
+        for i in range(self.nd-1, 0, -1):
+            div = 1
+            for j in range(0, i):
+                div = div * self.dims[j]
+            value = (rtr_id // div)
+            foo.append(value)
+            rtr_id = rtr_id - (value * div)
+        foo.append(rtr_id)
+        foo.reverse()
+        return foo
+
+    def getRouterNameForId(self,rtr_id):
+        return self.getRouterNameForLocation(self._idToLoc(rtr_id))
+
+    def getRouterNameForLocation(self,location):
+        return "rtr.%s"%(self._formatShape(location))
+    
+    def findRouterByLocation(self,location):
+        return sst.findComponentByName(self.getRouterNameForLocation(location));
+    
+    
+    def build(self):
 
         num_routers = _params["num_peers"] // _params["mesh:local_ports"]
         links = dict()
@@ -303,10 +335,11 @@ class topoMesh(Topo):
 
         for i in range(num_routers):
             # set up 'mydims'
-            mydims = idToLoc(i)
-            mylocstr = self.formatShape(mydims)
+            mydims = self._idToLoc(i)
+            mylocstr = self._formatShape(mydims)
 
-            rtr = sst.Component("rtr.%s"%mylocstr, "merlin.hr_router")
+            rtr = self._instanceRouter(i,"merlin.hr_router")
+            #rtr = sst.Component("rtr.%s"%mylocstr, "merlin.hr_router")
             rtr.addParams(_params.subset(self.topoKeys, self.topoOptKeys))
             rtr.addParam("id", i)
             topology = rtr.setSubComponent("topology","merlin.mesh")
@@ -319,7 +352,7 @@ class topoMesh(Topo):
                 # Positive direction
                 if mydims[dim]+1 < self.dims[dim]:
                     theirdims[dim] = (mydims[dim] +1 ) % self.dims[dim]
-                    theirlocstr = self.formatShape(theirdims)
+                    theirlocstr = self._formatShape(theirdims)
                     for num in range(self.dimwidths[dim]):
                         rtr.addLink(getLink(mylocstr, theirlocstr, num), "port%d"%port, _params["link_lat"])
                         port = port+1
@@ -329,7 +362,7 @@ class topoMesh(Topo):
                 # Negative direction
                 if mydims[dim] > 0:
                     theirdims[dim] = ((mydims[dim] -1) +self.dims[dim]) % self.dims[dim]
-                    theirlocstr = self.formatShape(theirdims)
+                    theirlocstr = self._formatShape(theirdims)
                     for num in range(self.dimwidths[dim]):
                         rtr.addLink(getLink(theirlocstr, mylocstr, num), "port%d"%port, _params["link_lat"])
                         port = port+1
@@ -367,7 +400,7 @@ class topoHyperX(Topo):
                 print("Dim %d size:"%x)
                 ds = int(input())
                 self.dims.append(ds);
-            _params["hyperx:shape"] = self.formatShape(self.dims)
+            _params["hyperx:shape"] = self._formatShape(self.dims)
         else:
             self.dims = [int(x) for x in _params["hyperx:shape"].split('x')]
             self.nd = len(self.dims)
@@ -376,7 +409,7 @@ class topoHyperX(Topo):
                 print("Dim %d width (# of links in this dimension):" % x)
                 dw = int(input())
                 self.dimwidths.append(dw)
-            _params["hyperx:width"] = self.formatShape(self.dimwidths)
+            _params["hyperx:width"] = self._formatShape(self.dimwidths)
         else:
             self.dimwidths = [int(x) for x in _params["hyperx:width"].split('x')]
 
@@ -396,24 +429,33 @@ class topoHyperX(Topo):
         _params["num_ports"] = _params["router_radix"] = radix
         _params["hyperx:local_ports"] = local_ports
 
-    def formatShape(self, arr):
+    def _formatShape(self, arr):
         return 'x'.join([str(x) for x in arr])
 
+    def _idToLoc(self,rtr_id):
+        foo = list()
+        for i in range(self.nd-1, 0, -1):
+            div = 1
+            for j in range(0, i):
+                div = div * self.dims[j]
+            value = (rtr_id // div)
+            foo.append(value)
+            rtr_id = rtr_id - (value * div)
+        foo.append(rtr_id)
+        foo.reverse()
+        return foo
+
+    def getRouterNameForId(self,rtr_id):
+        return self.getRouterNameForLocation(self._idToLoc(rtr_id))
+
+    def getRouterNameForLocation(self,location):
+        return "rtr.%s"%(self._formatShape(location))
+    
+    def findRouterByLocation(self,location):
+        return sst.findComponentByName(self.getRouterNameForLocation(location));
+    
+    
     def build(self):
-        def idToLoc(rtr_id):
-            foo = list()
-            for i in range(self.nd-1, 0, -1):
-                div = 1
-                for j in range(0, i):
-                    div = div * self.dims[j]
-                value = (rtr_id // div)
-                foo.append(value)
-                rtr_id = rtr_id - (value * div)
-            foo.append(rtr_id)
-            foo.reverse()
-            return foo
-
-
         num_routers = _params["num_peers"] // _params["hyperx:local_ports"]
         links = dict()
         def getLink(name1, name2, num):
@@ -434,12 +476,13 @@ class topoHyperX(Topo):
         # loop through the routers to hook up links
         for i in range(num_routers):
             # set up 'mydims'
-            mydims = idToLoc(i)
-            mylocstr = self.formatShape(mydims)
+            mydims = self._idToLoc(i)
+            mylocstr = self._formatShape(mydims)
 
             #print("Creating router %s (%d)"%(mylocstr,i))
 
-            rtr = sst.Component("rtr.%s"%mylocstr, "merlin.hr_router")
+            rtr = self._instanceRouter(i,"merlin.hr_router")
+            #rtr = sst.Component("rtr.%s"%mylocstr, "merlin.hr_router")
             rtr.addParams(_params.subset(self.topoKeys, self.topoOptKeys))
             rtr.addParam("id", i)
             topology = rtr.setSubComponent("topology","merlin.hyperx")
@@ -454,7 +497,7 @@ class topoHyperX(Topo):
                 for router in range(self.dims[dim]):
                     if router != mydims[dim]: # no link to ourselves
                         theirdims[dim] = router
-                        theirlocstr = self.formatShape(theirdims)
+                        theirlocstr = self._formatShape(theirdims)
                         # Hook up "width" number of links for this dimension
                         for num in range(self.dimwidths[dim]):
                             rtr.addLink(getLink(mylocstr, theirlocstr, num), "port%d"%port, _params["link_lat"])
@@ -539,6 +582,36 @@ class topoFatTree(Topo):
         _params["num_peers"] = self.total_hosts
 
 
+    def getRouterNameForId(self,rtr_id):
+        num_levels = len(self.start_ids)
+
+        # Check to make sure the index is in range
+        level = num_levels - 1
+        if rtr_id >= (self.start_ids[level] + self.routers_per_level[level]) or rtr_id < 0:
+            print("ERROR: topoFattree.getRouterNameForId: rtr_id not found: %d"%rtr_id)
+            sst.exit()
+
+        # Find the level
+        for x in range(num_levels-1,0,-1):
+            if rtr_id >= self.start_ids[x]:
+                break
+            level = level - 1
+
+        # Find the group
+        remainder = rtr_id - self.start_ids[level]
+        routers_per_group = self.routers_per_level[level] // self.groups_per_level[level]
+        group = remainder // routers_per_group
+        router = remainder % routers_per_group
+        return self.getRouterNameForLocation((level,group,router))
+            
+    
+    def getRouterNameForLocation(self,location):
+        return "rtr_l%s_g%d_r%d"%(location[0],location[1],location[2])
+    
+    def findRouterByLocation(self,location):
+        return sst.findComponentByName(self.getRouterNameForLocation(location));
+    
+        
     def fattree_rb(self, level, group, links):
 #        print("routers_per_level: %d, groups_per_level: %d, start_ids: %d"%(self.routers_per_level[level],self.groups_per_level[level],self.start_ids[level]))
         id = self.start_ids[level] + group * (self.routers_per_level[level]//self.groups_per_level[level])
@@ -558,17 +631,15 @@ class topoFatTree(Topo):
                        hlink.setNoCut()
                     ep[0].addLink(hlink, ep[1], ep[2])
                     host_links.append(hlink)
-                #print("Instancing node " + str(node_id))
-                #self._getEndPoint(node_id).build(node_id, hlink, _params.subset(self.nicKeys, []))
-                #self._getEndPoint(node_id).build(node_id, hlink, _params.subset(self.nicKeys, []))
 
             # Create the edge router
             rtr_id = id
-#            print("Instancing router " + str(rtr_id))
-            rtr = sst.Component("rtr_l0_g%d_r0"%(group), "merlin.hr_router")
+
+            rtr = self._instanceRouter(rtr_id,"merlin.hr_router")
+            #rtr = sst.Component("rtr_l0_g%d_r0"%(group), "merlin.hr_router")
+
             # Add parameters
             rtr.addParams(_params.subset(self.topoKeys, self.topoOptKeys))
-#            rtr.addParams(_params.optional_subset(self.optRtrKeys))
             rtr.addParam("id",rtr_id)
             rtr.addParam("num_ports",self.ups[0] + self.downs[0])
             topology = rtr.setSubComponent("topology","merlin.fattree")
@@ -604,11 +675,12 @@ class topoFatTree(Topo):
 
         for i in range(rtrs_in_group):
             rtr_id = id + i
-#            print("Instancing router " + str(rtr_id))
-            rtr = sst.Component("rtr_l%d_g%d_r%d"%(level,group,i), "merlin.hr_router")
+
+            rtr = self._instanceRouter(rtr_id,"merlin.hr_router")
+            #rtr = sst.Component("rtr_l%d_g%d_r%d"%(level,group,i), "merlin.hr_router")
+
             # Add parameters
             rtr.addParams(_params.subset(self.topoKeys, self.topoOptKeys))
-#            rtr.addParams(_params.optional_subset(self.optRtrKeys))
             rtr.addParam("id",rtr_id)
             rtr.addParam("num_ports",self.ups[level] + self.downs[level])
             topology = rtr.setSubComponent("topology","merlin.fattree")
@@ -650,11 +722,13 @@ class topoFatTree(Topo):
             # Create the routers in this level
             radix = self.downs[level]
             for i in range(self.routers_per_level[level]):
+
                 rtr_id = self.start_ids[len(self.ups)] + i
-#                print("Instancing router " + str(rtr_id))
-                rtr = sst.Component("rtr_l%d_g0_r%d"%(len(self.ups),i),"merlin.hr_router")
+
+                rtr = self._instanceRouter(rtr_id,"merlin.hr_router")
+                #rtr = sst.Component("rtr_l%d_g0_r%d"%(len(self.ups),i),"merlin.hr_router")
+
                 rtr.addParams(_params.subset(self.topoKeys, self.topoOptKeys))
-#                rtr.addParams(_params.optional_subset(self.optRtrKeys))
                 rtr.addParam("id", rtr_id)
                 rtr.addParam("num_ports",radix)
                 topology = rtr.setSubComponent("topology","merlin.fattree")
@@ -720,6 +794,18 @@ class topoDragonFly(Topo):
     def setRoutingModeRelative(self):
         self.global_routes = "relative"
 
+
+    def getRouterNameForId(self,rtr_id):
+        rpg = _params["dragonfly:routers_per_group"]
+        ret = self.getRouterNameForLocation(rtr_id // rpg, rtr_id % rpg)
+        return ret
+        
+    def getRouterNameForLocation(self,group,rtr):
+        return "rtr:G%dR%d"%(group,rtr)
+    
+    def findRouterByLocation(self,group,rtr):
+        return sst.findComponentByName(self.getRouterNameForLocation(group,rtr))
+    
     def build(self):
         links = dict()
 
@@ -806,7 +892,8 @@ class topoDragonFly(Topo):
 
             # GROUP ROUTERS
             for r in range(_params["dragonfly:routers_per_group"]):
-                rtr = sst.Component("rtr:G%dR%d"%(g, r), "merlin.hr_router")
+                rtr = self._instanceRouter(router_num,"merlin.hr_router")
+                #rtr = sst.Component("rtr:G%dR%d"%(g, r), "merlin.hr_router")
                 rtr.addParams(_params.subset(self.topoKeys, self.topoOptKeys))
                 rtr.addParam("id", router_num)
                 topology = rtr.setSubComponent("topology","merlin.dragonfly")

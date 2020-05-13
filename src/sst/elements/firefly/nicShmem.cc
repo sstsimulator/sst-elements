@@ -267,7 +267,7 @@ void Nic::Shmem::regMem( NicShmemRegMemCmdEvent* event, int id )
     m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_DBG_SHMEM,"core=%d simVAddr=%" PRIx64 " backing=%p len=%lu\n",
             id, event->addr.getSimVAddr(), event->addr.getBacking(), event->len );
 
-    m_regMem[id].push_back( std::make_pair(event->addr, event->len) );
+    m_regMem[id].push_back( RegionEntry( event->addr, event->realAddr, event->len) );
 
     m_nic.getVirtNic(id)->notifyShmem( getNic2HostDelay_ns(), event->callback );
 

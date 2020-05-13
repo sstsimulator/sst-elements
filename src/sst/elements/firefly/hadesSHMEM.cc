@@ -27,7 +27,7 @@ using namespace Hermes;
 
 
 HadesSHMEM::HadesSHMEM(ComponentId_t id, Params& params) :
-	Interface(id), m_common( NULL ), m_zero((long)0)
+	Interface(id), m_common( NULL ), m_zero((long)0), m_shmemAddrStart(0x1000)
 {
     m_dbg.init("@t:HadesSHMEM::@p():@l ",
         params.find<uint32_t>("verboseLevel",0),
@@ -286,17 +286,19 @@ void HadesSHMEM::malloc( Hermes::MemAddr* ptr, size_t size, bool backed, Callbac
 {
     dbg().debug(CALL_INFO,1,SHMEM_BASE," maddr ptr=%p size=%lu\n",ptr,size);
 
+
     if ( m_memHeapLink ) {
+        uint64_t sharedAddr = allocSpace(size);
         m_memHeapLink->alloc( size,
         [=](uint64_t addr ) {
                 this->dbg().debug(CALL_INFO_LAMBDA,"malloc",1,SHMEM_BASE,"addr=%#" PRIx64 " size=%zu\n",addr,size);
-                *ptr = m_heap->addAddr( addr, size, backed );
-                nic().shmemRegMem( *ptr, size, callback);
+                *ptr = m_heap->addAddr( sharedAddr, size, backed );
+                nic().shmemRegMem( *ptr, addr, size, callback);
             }
         );
     } else {
         *ptr =  m_heap->malloc( size, backed );
-        nic().shmemRegMem( *ptr, size, callback) ;
+        nic().shmemRegMem( *ptr, ptr->getSimVAddr(), size, callback) ;
     }
 }
 

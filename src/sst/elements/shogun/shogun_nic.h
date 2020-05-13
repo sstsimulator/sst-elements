@@ -49,20 +49,6 @@ namespace Shogun {
         ShogunNIC(SST::ComponentId_t id, Params& params, int vns);
         ~ShogunNIC();
 
-#ifndef SST_ENABLE_PREVIEW_BUILD
-        /** Second half of building the interface.
-        Initialize network interface
-        @param portName - Name of port to connect to
-        @param link_bw - Bandwidth of the link
-        @param vns - Number of virtual networks to be provided
-        @param in_buf_size - Size of input buffers (from router)
-        @param out_buf_size - Size of output buffers (to router)
-     * @return true if the link was able to be configured.
-     */
-        virtual bool initialize(const std::string& portName, const UnitAlgebra& link_bw,
-            int vns, const UnitAlgebra& in_buf_size,
-            const UnitAlgebra& out_buf_size);
-#endif
         /**
      		* Sends a network request during the init() phase
      	*/

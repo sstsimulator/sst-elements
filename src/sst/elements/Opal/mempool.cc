@@ -18,6 +18,8 @@
  * E-mail: vamseereddy@knights.ucf.edu
  */
 
+#include <sst_config.h>
+
 #include "mempool.h"
 
 #include <algorithm>

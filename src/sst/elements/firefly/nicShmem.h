@@ -77,6 +77,13 @@ class Shmem {
         Hermes::Value m_value;
     };
 
+	struct RegionEntry {
+		RegionEntry( Hermes::MemAddr addr, Hermes::Vaddr realAddr, size_t length ) : addr(addr), realAddr(addr.getSimVAddr(),addr.getBacking() ), length(length) { }
+		Hermes::MemAddr addr;
+		Hermes::MemAddr realAddr;
+		size_t length;
+	};
+
 	std::string m_prefix;
 
 	const char* prefix() { return m_prefix.c_str(); }
@@ -141,11 +148,11 @@ class Shmem {
 		checkWaitOps( core, m_pendingGets[core].first, m_pendingGets[core].second.getLength() );
 	}
 
-    std::pair<Hermes::MemAddr, size_t>& findRegion( int core, uint64_t addr ) {
+    std::pair<Hermes::MemAddr, size_t> findRegion( int core, uint64_t addr ) {
         for ( int i = 0; i < m_regMem[core].size(); i++ ) {
-            if ( addr >= m_regMem[core][i].first.getSimVAddr() &&
-                addr < m_regMem[core][i].first.getSimVAddr() + m_regMem[core][i].second ) {
-                return m_regMem[core][i];
+            if ( addr >= m_regMem[core][i].addr.getSimVAddr() &&
+                addr < m_regMem[core][i].addr.getSimVAddr() + m_regMem[core][i].length ) {
+                return std::make_pair( m_regMem[core][i].realAddr, m_regMem[core][i].length );
             }
         }
 		m_dbg.fatal(CALL_INFO,0," core %d Unable to find for for addr %" PRIx64 "\n", core, addr);
@@ -159,7 +166,7 @@ class Shmem {
 	    m_dbg.verbosePrefix( prefix(),CALL_INFO,1,NIC_DBG_SHMEM,"core=%d simVAddr=%" PRIx64 " backing=%p len=%lu\n",
             id, addr.getSimVAddr(), addr.getBacking(), length );
 
-    	m_regMem[id].push_back( std::make_pair(addr, length) );
+    	m_regMem[id].push_back( RegionEntry( addr, simAddr, length)  );
 	}
 
     void checkWaitOps( int core, Hermes::Vaddr addr, size_t length );
@@ -192,6 +199,7 @@ private:
     void swap( NicShmemSwapCmdEvent*, int id );
 
     void* getBacking( int core, Hermes::Vaddr addr, size_t length ) {
+        m_dbg.verbosePrefix( prefix(), CALL_INFO,1,NIC_DBG_SHMEM,"core=%d addr=%#" PRIx64 "\n", core, addr );
         return  m_nic.findShmem( core, addr, length ).getBacking();
     }
 	void doReduction( Hermes::Shmem::ReduOp op, int destCore, Hermes::Vaddr destAddr,
@@ -204,7 +212,8 @@ private:
     Nic& m_nic;
     Output& m_dbg;
     std::vector< std::list<Op*> > m_pendingOps;
-    std::vector<std::vector< std::pair<Hermes::MemAddr, size_t> > > m_regMem;
+
+    std::vector<std::vector< RegionEntry > > m_regMem;
 	SimTime_t m_nic2HostDelay_ns;
 	SimTime_t m_host2NicDelay_ns;
 

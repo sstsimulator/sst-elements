@@ -18,29 +18,6 @@
 import sst
 from sst.merlin.base import *
 
-
-class Topology(TemplateBase):
-    def __init__(self):
-        TemplateBase.__init__(self)
-        self._declareClassVariables(["endPointLinks","built","_router_template"])
-        self.endPointLinks = []
-        self.built = False
-    def getTopologyName(self):
-        return "NoName"
-    #def addParams(self,p):
-    #    self._params.update(p)
-    #def addParam(self, key, value):
-    #    self._params[key] = value
-    def build(self, network_name, endpoint = None):
-        pass
-    def getEndPointLinks(self):
-        pass
-    def setRouterTemplate(self,template):
-        self._router_template = template
-    def getNumNodes(self):
-        pass
-
-
 class topoDragonFly(Topology):
 
     def __init__(self):
@@ -50,7 +27,7 @@ class topoDragonFly(Topology):
         self._defineOptionalParams(["algorithm","adaptive_threshold","global_routes"])
         self.global_routes = "absolute"
 
-    def getTopologyName(self):
+    def getName(self):
         return "Dragonfly"
 
 
@@ -72,32 +49,30 @@ class topoDragonFly(Topology):
         self.global_routes = "relative"
 
 
-    def build(self, network_name, endpoint):
+    def getRouterNameForId(self,rtr_id):
+        return self.getRouterNameForLocation(rtr_id // self.routers_per_group, rtr_id % self.routers_per_group)
+        
+    def getRouterNameForLocation(self,group,rtr):
+        return "%srtr.G%dR%d"%(self._prefix,group,rtr)
+    
+    def findRouterByLocation(self,group,rtr):
+        return sst.findComponentByName(self.getRouterNameForLocation(group,rtr))
+    
+        
+    def build(self, endpoint):
         if self.host_link_latency is None:
             self.host_link_latency = self.link_latency
 
-        #self.params.verifyParamsExist(self.topoKeys)
-        #endpoint.verifyParams()
-
-        #extraParams = dict()
-        #extraParams["topology"] = "merlin.dragonfly"
         num_peers = self.hosts_per_router * self.routers_per_group * self.num_groups
-
-        #self.params["dragonfly:global_route_mode"] = self.global_routes
 
 
         total_intergroup_links = (self.num_groups - 1) * self.intergroup_links
         intergroup_per_router = (total_intergroup_links + self.routers_per_group - 1 ) // self.routers_per_group
-        #extraParams["intergroup_per_router"] = inter_group_per_router
 
         empty_ports = intergroup_per_router * self.routers_per_group - total_intergroup_links
 
-        #self.params["router_radix"] = self.routers_per_group - 1 + self.hosts_per_router + self.params["dragonfly:intergroup_per_router"]
         num_ports = self.routers_per_group - 1 + self.hosts_per_router + intergroup_per_router
 
-        #if self.num_groups > 2:
-        #    #foo = self.params["dragonfly:algorithm"]
-        #    self.topoKeys.append("dragonfly:algorithm")
 
         links = dict()
 
@@ -166,7 +141,7 @@ class topoDragonFly(Topology):
             dest = max(dest_grp, g)
 
             #getLink("link:g%dg%dr%d"%(g, src, dst)), "port%d"%port, self.params["link_lat"])
-            return getLink("%s:global_link:g%dg%dr%d"%(network_name,src,dest,link_num))
+            return getLink("%sglobal_link:g%dg%dr%d"%(self._prefix,src,dest,link_num))
 
         #########################
 
@@ -178,14 +153,11 @@ class topoDragonFly(Topology):
 
             # GROUP ROUTERS
             for r in range(self.routers_per_group):
-                rtr = self._router_template.instanceRouter("%s:rtr:G%dR%d"%(network_name, g, r))
-                #rtr = sst.Component("%s:rtr:G%dR%d"%(network_name, g, r), "merlin.hr_router")
-                #rtr.addParams(self.params.subset(self.topoKeys, self.topoOptKeys))
-                rtr.addParam("num_ports",num_ports)
-                rtr.addParam("id", router_num)
+                rtr = self._instanceRouter(num_ports,router_num)
 
                 # Insert the topology object
                 sub = rtr.setSubComponent(self._router_template.getTopologySlotName(),"merlin.dragonfly",0)
+                self._applyStatisticsSettings(sub)
                 sub.addParams(self._params)
                 sub.addParam("intergroup_per_router",intergroup_per_router)
                 if router_num == 0:
@@ -219,4 +191,4 @@ class topoDragonFly(Topology):
                         rtr.addLink(link,"port%d"%port, self.link_latency)
                     port = port +1
 
-                router_num = router_num +1
+                router_num = router_num + 1

@@ -802,7 +802,7 @@ bool ArielCore::refillQueue() {
         switch(ac.command) {
             case ARIEL_OUTPUT_STATS:
                 fprintf(stdout, "Performing statistics output at simulation time = %" PRIu64 " cycles\n", getCurrentSimTimeNano());
-                Simulation::getSimulation()->getStatisticsProcessingEngine()->performGlobalStatisticOutput();
+                performGlobalStatisticOutput();
                 break;
 
             case ARIEL_START_INSTRUCTION:

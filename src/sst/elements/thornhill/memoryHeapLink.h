@@ -49,6 +49,7 @@ class MemoryHeapLink : public SubComponent {
 		m_link = configureLink( "memoryHeap", "0ps",
             new Event::Handler<MemoryHeapLink>(
                     this,&MemoryHeapLink::eventHandler ) );
+        assert(m_link);
 	}
 
     bool isConnected() {

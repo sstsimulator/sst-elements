@@ -44,18 +44,12 @@ public:
     SST_ELI_DOCUMENT_STATISTICS( networkMemoryInspector_statistics ) // Defined in memTypes.h via x macro
 
 /* Begin class definition */
-#ifndef SST_ENABLE_PREVIEW_BUILD  // inserted by script
-    networkMemInspector(Component *parent, Params &params);
-#endif  // inserted by script
     networkMemInspector(ComponentId_t, Params &params, const std::string& sub_id);
 
     virtual ~networkMemInspector() {}
 
     virtual void inspectNetworkData(SimpleNetwork::Request* req);
 
-#ifndef SST_ENABLE_PREVIEW_BUILD
-    virtual void initialize(std::string id);
-#endif
     Output dbg;
     // statistics
     Statistic<uint64_t>*  memCmdStat[(int)Command::LAST_CMD];
