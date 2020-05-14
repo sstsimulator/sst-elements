@@ -4,11 +4,34 @@ from sst_unittest import *
 from sst_unittest_support import *
 
 ################################################################################
+# Code to support a single instance module initialize, must be called setUp method  
+
+module_init = 0
+module_sema = threading.Semaphore()
+
+def initializeTestModule_SingleInstance(class_inst):
+    global module_init
+    global module_sema
+    
+    module_sema.acquire()
+    if module_init != 1:
+        # Put your single instance Init Code Here
+        module_init = 1
+        
+    module_sema.release()
+
+################################################################################
 
 class testcase_Samba_Component(SSTTestCase):
 
+    def initializeClass(self, testName):
+        super(type(self), self).initializeClass(testName)
+        # Put test based setup code here. it is called before testing starts
+        # NOTE: This method is called once for every test
+        
     def setUp(self):
         super(type(self), self).setUp()
+        initializeTestModule_SingleInstance(self)
         # Put test based setup code here. it is called once before every test
 
     def tearDown(self):
@@ -43,7 +66,7 @@ class testcase_Samba_Component(SSTTestCase):
         # Set the various file paths
         testDataFileName="test_Samba_{0}".format(testcase)
         sdlfile = "{0}/{1}.py".format(test_path, testcase)
-        reffile = "{0}/refFiles/test_Samba_{1}.out".format(test_path, testcase)
+        reffile = "{0}/refFiles/{1}.out".format(test_path, testDataFileName)
         outfile = "{0}/{1}.out".format(outdir, testDataFileName)
         errfile = "{0}/{1}.err".format(outdir, testDataFileName)
         tmpfile = "{0}/{1}.tmp".format(tmpdir, testDataFileName)
