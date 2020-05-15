@@ -80,9 +80,7 @@ class testcase_Samba_Component(SSTTestCase):
 #        # This may be needed in the future
 #        remove_component_warning()
 
-        cmp_result = True
-        cmd = 'diff {0} {1} > /dev/null'.format(reffile, outfile)
-        cmp_result = (os.system(cmd) == 0)
+        cmp_result = compare_diff(outfile, reffile)
         if cmp_result != True:
             # We need to use some bailing wire to allow serialization
             # branch to work with same reference files

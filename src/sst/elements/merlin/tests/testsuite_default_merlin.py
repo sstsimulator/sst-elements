@@ -80,5 +80,5 @@ class testcase_merlin_Component(SSTTestCase):
         self.run_sst(sdlfile, outfile, errfile, mpi_out_files=mpioutfiles)
 
         # Perform the test
-        cmp_result = compare_sorted(testcase, outfile, reffile)
+        cmp_result = compare_sorted_diff(testcase, outfile, reffile)
         self.assertTrue(cmp_result, "Sorted Output file {0} does not match sorted Reference File {1}".format(outfile, reffile))

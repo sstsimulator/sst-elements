@@ -19,7 +19,7 @@ def initializeTestModule_SingleInstance(class_inst):
     module_sema.acquire()
     if module_init != 1:
         # Put your single instance Init Code Here
-        class_inst.setupCramSimTestFiles()
+        class_inst._setupCramSimTestFiles()
         module_init = 1
 
     module_sema.release()
@@ -36,40 +36,47 @@ class testcase_CramSim_Component(SSTTestCase):
     def setUp(self):
         super(type(self), self).setUp()
         initializeTestModule_SingleInstance(self)
+        self.saved_dir = os.getcwd()
+        os.chdir(self.testCramSimDir)
 
     def tearDown(self):
         # Put test based teardown code here. it is called once after every test
         super(type(self), self).tearDown()
+        os.chdir(self.saved_dir)
 
 #####
 
-    def setupCramSimTestFiles(self):
-        log_debug("\nsetupCramSimTestFiles()")
+    def _setupCramSimTestFiles(self):
+        log_debug("\n_setupCramSimTestFiles() Running")
         test_path = self.get_testsuite_dir()
         outdir = get_test_output_run_dir()
         tmpdir = get_test_output_tmp_dir()
         CramSimElementDir = os.path.abspath("{0}/../".format(test_path))
         CramSimElementTestsDir = "{0}/tests".format(CramSimElementDir)
-        testCramSimDir = "{0}/testCramSim".format(tmpdir)
-        testCramSimTestsDir = "{0}/testCramSim/tests".format(tmpdir)
+        self.testCramSimDir = "{0}/testCramSim".format(tmpdir)
+        self.testCramSimTestsDir = "{0}/testCramSim/tests".format(tmpdir)
 
         # Create a clean version of the testCramSim Directory
-        if os.path.isdir(testCramSimDir):
-            shtuil.rmtree(testCramSimDir, True)
-        os.makedirs(testCramSimDir)
-        os.makedirs(testCramSimTestsDir)
+        if os.path.isdir(self.testCramSimDir):
+            shtuil.rmtree(self.testCramSimDir, True)
+        os.makedirs(self.testCramSimDir)
+        os.makedirs(self.testCramSimTestsDir)
 
         # Create a simlink of the ddr4_verimem.cfg file
-        os_file_symlink(CramSimElementDir, testCramSimDir, "ddr4_verimem.cfg")
+        os_file_symlink(CramSimElementDir, self.testCramSimDir, "ddr4_verimem.cfg")
 
         # Create a simlink of each file in the CramSim/Tests directory
         for f in os.listdir(CramSimElementTestsDir):
-            os_file_symlink(CramSimElementTestsDir, testCramSimTestsDir, f)
+            os_file_symlink(CramSimElementTestsDir, self.testCramSimTestsDir, f)
 
         # wget a test file tar.gz
         testfile = "sst-CramSim_trace_verimem_trace_files.tar.gz"
         fileurl = "https://github.com/sstsimulator/sst-downloads/releases/download/TestFiles/{0}".format(testfile)
-        self.assertTrue(os_wget(fileurl, testCramSimTestsDir), "Failed to download {0}".format(testfile))
+        self.assertTrue(os_wget(fileurl, self.testCramSimTestsDir), "Failed to download {0}".format(testfile))
+
+        # Extract the test file
+        filename = "{0}/{1}".format(self.testCramSimTestsDir, testfile)
+        os_extract_tar(filename, self.testCramSimTestsDir)
 
 #####
 
@@ -114,11 +121,14 @@ class testcase_CramSim_Component(SSTTestCase):
         test_path = self.get_testsuite_dir()
         outdir = get_test_output_run_dir()
         tmpdir = get_test_output_tmp_dir()
+        CramSimElementDir = os.path.abspath("{0}/../".format(test_path))
+        CramSimElementTestsDir = "{0}/tests".format(CramSimElementDir)
+        self.testCramSimDir = "{0}/testCramSim".format(tmpdir)
+        self.testCramSimTestsDir = "{0}/testCramSim/tests".format(tmpdir)
 
         # Set the various file paths
-        testDataFileName="test_CramSim_{0}trc".format(testcase)
+        testDataFileName="test_CramSim_{0}".format(testcase)
 
-##        sdlfile = "{0}/{1}.py".format(test_path, testcase)
         reffile = "{0}/refFiles/{1}.out".format(test_path, testDataFileName)
         outfile = "{0}/{1}.out".format(outdir, testDataFileName)
         errfile = "{0}/{1}.err".format(outdir, testDataFileName)
@@ -126,25 +136,20 @@ class testcase_CramSim_Component(SSTTestCase):
         newreffile = "{0}/{1}.newref".format(outdir, testDataFileName)
         mpioutfiles = "{0}/{1}.testfile".format(outdir, testDataFileName)
 
-        return
+        testpyfilepath = "{0}/test_txntrace.py".format(self.testCramSimTestsDir)
+        tracefile      = "{0}/sst-CramSim-trace_verimem_{1}.trc".format(self.testCramSimTestsDir, testcase)
+        configfile     = "{0}/ddr4_verimem.cfg".format(self.testCramSimDir)
+        if os.path.isfile(testpyfilepath):
+            sdlfile = "{0}/test_txntrace.py".format(self.testCramSimTestsDir)
+            otherargs = '--model-options=\"--configfile={0} traceFile={1}\"'.format(configfile, tracefile)
+        else:
+            sdlfile = "{0}/test_txntrace4.py".format(self.testCramSimTestsDir)
+            otherargs = '--model-options=\"--configfile={0} --traceFile={1}\"'.format(configfile, tracefile)
 
-
-
-        self.run_sst(sdlfile, outfile, errfile, mpi_out_files=mpioutfiles)
+        # Run SST
+        self.run_sst(sdlfile, outfile, errfile, other_args=otherargs, mpi_out_files=mpioutfiles)
 
         # Perform the test
-        cmp_result = compare_sorted(testcase, outfile, reffile)
-        self.assertTrue(cmp_result, "Sorted Output file {0} does not match sorted Reference File {1}".format(outfile, reffile))
-
-
-
-    def _CramSim_test_setup():
-        log_forced("\nCRAMSIM Performing Test SETUP")
-        if self._moduleInitialized == 1:
-            print("AARON - CRAMSIM SETUP ALREADY PERFORMED")
-        else:
-            print("AARON - PERFORMING CRAMSIM SETUP")
-
-
-
+        cmp_result = compare_diff(outfile, reffile)
+        self.assertTrue(cmp_result, "Output file {0} does not match Reference File {1}".format(outfile, reffile))
 

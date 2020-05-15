@@ -191,7 +191,7 @@ class testcase_memHierarchy_Component(SSTTestCase):
 
         if not filesAreTheSame:
             # Perform the test to see if they match when sorted
-            cmp_result = compare_sorted(testcase, outfile, fixedreffile)
+            cmp_result = compare_sorted_diff(testcase, outfile, fixedreffile)
             self.assertTrue(cmp_result, "Sorted Output file {0} does not match Sorted (fixed) Reference File {1}".format(outfile, fixedreffile))
 
         # Make sure the simulation completed
