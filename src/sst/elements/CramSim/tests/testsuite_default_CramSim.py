@@ -130,11 +130,14 @@ class testcase_CramSim_Component(SSTTestCase):
         errfile = "{0}/{1}.err".format(outdir, testDataFileName)
         mpioutfiles = "{0}/{1}.testfile".format(outdir, testDataFileName)
 
-        testpyfilepath = "{0}/test_txntrace.py".format(self.testCramSimTestsDir)
-        tracefile      = "{0}/sst-CramSim-trace_verimem_{1}.trc".format(self.testCramSimTestsDir, testcase)
-        configfile     = "{0}/ddr4_verimem.cfg".format(self.testCramSimDir)
+#        testpyfilepath = "{0}/test_txntrace.py".format(self.testCramSimTestsDir)
+#        tracefile      = "{0}/sst-CramSim-trace_verimem_{1}.trc".format(self.testCramSimTestsDir, testcase)
+#        configfile     = "{0}/ddr4_verimem.cfg".format(self.testCramSimDir)
+        testpyfilepath = "tests/test_txntrace.py"
+        tracefile      = "tests/sst-CramSim-trace_verimem_{0}.trc".format(testcase)
+        configfile     = "ddr4_verimem.cfg"
         if os.path.isfile(testpyfilepath):
-            sdlfile = "{0}/test_txntrace.py".format(self.testCramSimTestsDir)
+            sdlfile = testpyfilepath
             otherargs = '--model-options=\"--configfile={0} traceFile={1}\"'.format(configfile, tracefile)
         else:
             sdlfile = "{0}/test_txntrace4.py".format(self.testCramSimTestsDir)
