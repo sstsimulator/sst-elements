@@ -51,23 +51,23 @@ class testcase_CramSim_Component(SSTTestCase):
         test_path = self.get_testsuite_dir()
         outdir = get_test_output_run_dir()
         tmpdir = get_test_output_tmp_dir()
-        CramSimElementDir = os.path.abspath("{0}/../".format(test_path))
-        CramSimElementTestsDir = "{0}/tests".format(CramSimElementDir)
-        self.testCramSimDir = "{0}/testCramSim".format(tmpdir)
-        self.testCramSimTestsDir = "{0}/testCramSim/tests".format(tmpdir)
+        self.CramSimElementDir = os.path.abspath("{0}/../".format(test_path))
+        self.CramSimElementTestsDir = "{0}/tests".format(self.CramSimElementDir)
+        self.testCramSimDir = "{0}/testCramSim".format(self.CramSimElementTestsDir)
+        self.testCramSimTestsDir = "{0}/testCramSim/tests".format(self.CramSimElementTestsDir)
 
         # Create a clean version of the testCramSim Directory
         if os.path.isdir(self.testCramSimDir):
-            shtuil.rmtree(self.testCramSimDir, True)
+            shutil.rmtree(self.testCramSimDir, True)
         os.makedirs(self.testCramSimDir)
         os.makedirs(self.testCramSimTestsDir)
 
         # Create a simlink of the ddr4_verimem.cfg file
-        os_file_symlink(CramSimElementDir, self.testCramSimDir, "ddr4_verimem.cfg")
+        os_file_symlink(self.CramSimElementDir, self.testCramSimDir, "ddr4_verimem.cfg")
 
         # Create a simlink of each file in the CramSim/Tests directory
-        for f in os.listdir(CramSimElementTestsDir):
-            os_file_symlink(CramSimElementTestsDir, self.testCramSimTestsDir, f)
+        for f in os.listdir(self.CramSimElementTestsDir):
+            os_file_symlink(self.CramSimElementTestsDir, self.testCramSimTestsDir, f)
 
         # wget a test file tar.gz
         testfile = "sst-CramSim_trace_verimem_trace_files.tar.gz"
@@ -121,10 +121,6 @@ class testcase_CramSim_Component(SSTTestCase):
         test_path = self.get_testsuite_dir()
         outdir = get_test_output_run_dir()
         tmpdir = get_test_output_tmp_dir()
-        CramSimElementDir = os.path.abspath("{0}/../".format(test_path))
-        CramSimElementTestsDir = "{0}/tests".format(CramSimElementDir)
-        self.testCramSimDir = "{0}/testCramSim".format(tmpdir)
-        self.testCramSimTestsDir = "{0}/testCramSim/tests".format(tmpdir)
 
         # Set the various file paths
         testDataFileName="test_CramSim_{0}".format(testcase)
@@ -132,8 +128,6 @@ class testcase_CramSim_Component(SSTTestCase):
         reffile = "{0}/refFiles/{1}.out".format(test_path, testDataFileName)
         outfile = "{0}/{1}.out".format(outdir, testDataFileName)
         errfile = "{0}/{1}.err".format(outdir, testDataFileName)
-        newoutfile = "{0}/{1}.newout".format(outdir, testDataFileName)
-        newreffile = "{0}/{1}.newref".format(outdir, testDataFileName)
         mpioutfiles = "{0}/{1}.testfile".format(outdir, testDataFileName)
 
         testpyfilepath = "{0}/test_txntrace.py".format(self.testCramSimTestsDir)
