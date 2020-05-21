@@ -14,7 +14,7 @@ STATMODULE='statModule'
 STATFILE='myStats.out'
 
 MODEL="detailedShmemModel"
-MODEL_PARAMS="cramsimDetailedModelParams"
+MODEL_PARAMS="basicDetailedModelParams"
 MODEL_NODES=1
 
 #time sst -v -v -v -v -n8 \
