@@ -1,3 +1,11 @@
+##################################################
+##
+## MODEL_PARAMS
+##  simpleMem = basicDetailedModelParams
+##  timingDRAM = timingDetailedModelParams
+##  Cramsim = cramsimDetailedModelParams
+##
+##################################################
 
 SHAPE="5,5:5,5:8"
 LOADFILE="loadFAM200detailed"
@@ -6,7 +14,7 @@ STATMODULE='statModule'
 STATFILE='myStats.out'
 
 MODEL="detailedShmemModel"
-MODEL_PARAMS="basicDetailedModelParams"
+MODEL_PARAMS="cramsimDetailedModelParams"
 MODEL_NODES=1
 
 #time sst -v -v -v -v -n8 \
