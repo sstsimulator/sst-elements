@@ -20,7 +20,7 @@ clock = "100MHz"
 memory_clock = "100MHz"
 coherence_protocol = "MSI"
 
-memory_backend = "simple"
+memory_backend = "timing"
 
 memory_controllers_per_group = 1
 groups = 8
@@ -72,8 +72,29 @@ memory_params = {
 }
 
 memory_backend_params = {
-    "access_time" : "1ps",
+    "id" : 0,
+    "clock" : "1333MHz",
     "mem_size" : str( memory_capacity // (groups * memory_controllers_per_group)) + "MiB",
+    "max_requests_per_cycle": "-1",
+    "addrMapper" : "memHierarchy.roundRobinAddrMapper",
+    "addrMapper.interleave_size" : "64B",
+    "addrMapper.row_size" : "1KiB",
+    "channels" : 8,
+    "channel.transaction_Q_size" : 32,
+    "channel.numRanks" : 8,
+    "channel.rank.numBanks" : 16,
+    "channel.rank.bank.CL" : 12,
+    "channel.rank.bank.CL_WR" : 10,
+    "channel.rank.bank.RCD" : 12,
+    "channel.rank.bank.TRP" : 12,
+    "channel.rank.bank.dataCycles" : 2,
+    "channel.rank.bank.pagePolicy" : "memHierarchy.simplePagePolicy",
+    "channel.rank.bank.transactionQ" : "memHierarchy.reorderTransactionQ",
+    "channel.rank.bank.pagePolicy.close" : 0,
+    "printconfig" : 1,
+    "channel.printconfig" : 0,
+    "channel.rank.printconfig" : 0,
+    "channel.rank.bank.printconfig" : 0,
 }
 
 params = {
