@@ -86,11 +86,6 @@ class BasicDetailedModel(DetailedModel):
 
         prefix = "basicModel_node" + str(nodeID) + "_"
 
-        memory = sst.Component( prefix + "memory", "memHierarchy.MemController")
-        memory.addParams( self.params['memory_params'])
-        membk = memory.setSubComponent("backend", "memHierarchy.simpleMem")
-        membk.addParams( self.params['memory_backend_params'])
-
         l2 = sst.Component( prefix + "l2cache", "memHierarchy.Cache")
         l2.addParams( self.params['l2_params'])
 
@@ -100,6 +95,40 @@ class BasicDetailedModel(DetailedModel):
         link = sst.Link( prefix + "bus_l2_link")
         link.setNoCut();
         link.connect( (bus, "low_network_0", "50ps"), (l2, "high_network_0", "50ps") )
+
+        memory = sst.Component( prefix + "memory", "memHierarchy.MemController")
+        memory.addParams( self.params['memory_params'])
+
+        if self.params['memory_backend'] == "simple":
+            # Create SimpleMem
+            print ("Configuring Simple mem part")
+            membk = memory.setSubComponent("backend", "memHierarchy.simpleMem")
+            membk.addParams( self.params['memory_backend_params'])
+        elif self.params['memory_backend'] == "timing":
+            # Create timingDRAM
+            print ("Configuring timingDRAM mem part")
+            membk = memory.setSubComponent("backend", "memHierarchy.timingDRAM")
+            membk.addParams( self.params['memory_backend_params'])
+        elif self.params['memory_backend'] == "hbm":
+            # Create Cramsim
+            print ("Configuring Cramsim mem part")
+            membk = memory.setSubComponent("backend", "memHierarchy.cramsim")
+            membk.addParams( self.params['memory_backend_params'])
+
+            cramsimBridge = sst.Component("hbm_cs_bridge_" + str(nodeID), "CramSim.c_MemhBridge")
+            cramsimCtrl = sst.Component("hbm_cs_ctrl_" + str(nodeID), "CramSim.c_Controller")
+            cramsimDimm = sst.Component("hbm_cs_dimm_" + str(nodeID), "CramSim.c_Dimm")
+
+            cramsimBridge.addParams(self.params['bridge_params'])
+            cramsimCtrl.addParams(self.params['ctrl_params'])
+            cramsimDimm.addParams(self.params['dimm_params'])
+
+            linkMemBridge = sst.Link("memctrl_cramsim_link_" + str(nodeID))
+            linkMemBridge.connect( (membk, "cramsim_link", "2ns"), (cramsimBridge, "cpuLink", "2ns") )
+            linkBridgeCtrl = sst.Link("cramsim_bridge_link_" + str(nodeID))
+            linkBridgeCtrl.connect( (cramsimBridge, "memLink", "1ns"), (cramsimCtrl, "txngenLink", "1ns") )
+            linkDimmCtrl = sst.Link("cramsim_dimm_link_" + str(nodeID))
+            linkDimmCtrl.connect( (cramsimCtrl, "memLink", "1ns"), (cramsimDimm, "ctrlLink", "1ns") )
 
         link = sst.Link( prefix + "l2_mem_link")
         link.setNoCut();
