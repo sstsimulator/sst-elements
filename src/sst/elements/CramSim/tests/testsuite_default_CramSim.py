@@ -46,40 +46,6 @@ class testcase_CramSim_Component(SSTTestCase):
 
 #####
 
-    def _setupCramSimTestFiles(self):
-        log_debug("\n_setupCramSimTestFiles() Running")
-        test_path = self.get_testsuite_dir()
-        outdir = get_test_output_run_dir()
-        tmpdir = get_test_output_tmp_dir()
-        self.CramSimElementDir = os.path.abspath("{0}/../".format(test_path))
-        self.CramSimElementTestsDir = "{0}/tests".format(self.CramSimElementDir)
-        self.testCramSimDir = "{0}/testCramSim".format(self.CramSimElementTestsDir)
-        self.testCramSimTestsDir = "{0}/testCramSim/tests".format(self.CramSimElementTestsDir)
-
-        # Create a clean version of the testCramSim Directory
-        if os.path.isdir(self.testCramSimDir):
-            shutil.rmtree(self.testCramSimDir, True)
-        os.makedirs(self.testCramSimDir)
-        os.makedirs(self.testCramSimTestsDir)
-
-        # Create a simlink of the ddr4_verimem.cfg file
-        os_file_symlink(self.CramSimElementDir, self.testCramSimDir, "ddr4_verimem.cfg")
-
-        # Create a simlink of each file in the CramSim/Tests directory
-        for f in os.listdir(self.CramSimElementTestsDir):
-            os_file_symlink(self.CramSimElementTestsDir, self.testCramSimTestsDir, f)
-
-        # wget a test file tar.gz
-        testfile = "sst-CramSim_trace_verimem_trace_files.tar.gz"
-        fileurl = "https://github.com/sstsimulator/sst-downloads/releases/download/TestFiles/{0}".format(testfile)
-        self.assertTrue(os_wget(fileurl, self.testCramSimTestsDir), "Failed to download {0}".format(testfile))
-
-        # Extract the test file
-        filename = "{0}/{1}".format(self.testCramSimTestsDir, testfile)
-        os_extract_tar(filename, self.testCramSimTestsDir)
-
-#####
-
     def test_CramSim_1_R(self):
         self.CramSim_test_template("1_R", 500)
 
@@ -149,4 +115,38 @@ class testcase_CramSim_Component(SSTTestCase):
         # Perform the test
         cmp_result = compare_diff(outfile, reffile)
         self.assertTrue(cmp_result, "Output file {0} does not match Reference File {1}".format(outfile, reffile))
+
+#####
+
+    def _setupCramSimTestFiles(self):
+        log_debug("_setupCramSimTestFiles() Running")
+        test_path = self.get_testsuite_dir()
+        outdir = get_test_output_run_dir()
+        tmpdir = get_test_output_tmp_dir()
+        self.CramSimElementDir = os.path.abspath("{0}/../".format(test_path))
+        self.CramSimElementTestsDir = "{0}/tests".format(self.CramSimElementDir)
+        self.testCramSimDir = "{0}/testCramSim".format(self.CramSimElementTestsDir)
+        self.testCramSimTestsDir = "{0}/testCramSim/tests".format(self.CramSimElementTestsDir)
+
+        # Create a clean version of the testCramSim Directory
+        if os.path.isdir(self.testCramSimDir):
+            shutil.rmtree(self.testCramSimDir, True)
+        os.makedirs(self.testCramSimDir)
+        os.makedirs(self.testCramSimTestsDir)
+
+        # Create a simlink of the ddr4_verimem.cfg file
+        os_file_symlink(self.CramSimElementDir, self.testCramSimDir, "ddr4_verimem.cfg")
+
+        # Create a simlink of each file in the CramSim/Tests directory
+        for f in os.listdir(self.CramSimElementTestsDir):
+            os_file_symlink(self.CramSimElementTestsDir, self.testCramSimTestsDir, f)
+
+        # wget a test file tar.gz
+        testfile = "sst-CramSim_trace_verimem_trace_files.tar.gz"
+        fileurl = "https://github.com/sstsimulator/sst-downloads/releases/download/TestFiles/{0}".format(testfile)
+        self.assertTrue(os_wget(fileurl, self.testCramSimTestsDir), "Failed to download {0}".format(testfile))
+
+        # Extract the test file
+        filename = "{0}/{1}".format(self.testCramSimTestsDir, testfile)
+        os_extract_tar(filename, self.testCramSimTestsDir)
 
