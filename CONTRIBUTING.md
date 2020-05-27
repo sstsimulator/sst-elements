@@ -124,6 +124,8 @@ once you are done with the feature and would like to get changes to the official
    * If the test suites pass, then the Pull Request will be automatically merged.  
       * Pull Requests from forks will not be automatially merged unless they are from a trusted user.
    * The testing is not all inclusive, it is possible for a bug related to a specific platform to slip in.  See Nightly Testing below.
+   
+---
 
 #### **Nightly Testing**
 
