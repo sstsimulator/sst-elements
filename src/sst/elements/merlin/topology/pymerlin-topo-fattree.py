@@ -155,7 +155,7 @@ class topoFatTree(Topology):
             # Create the down links for the routers
             rtr_links = [ [] for index in range(rtrs_in_group) ]
             for i in range(rtrs_in_group):
-                for j in range(downs[level]):
+                for j in range(self._downs[level]):
                     rtr_links[i].append(sst.Link("link_l%d_g%d_r%d_p%d"%(level,group,i,j)));
 
             # Now create group links to pass to lower level groups from router down links
@@ -164,7 +164,7 @@ class topoFatTree(Topology):
                 for j in range(rtrs_in_group):
                     group_links[i].append(rtr_links[j][i])
 
-            for i in range(downs[level]):
+            for i in range(self._downs[level]):
                 fattree_rb(self,level-1,group*self._downs[level]+i,group_links[i])
 
             # Create the routers in this level.
