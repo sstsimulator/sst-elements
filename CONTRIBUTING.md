@@ -8,7 +8,8 @@
       * **devel** - Contains the latest offical codeset of SST-Elements.  **This branch is unstable and may be broken at any time.**
       * **master** - Contains the latest fully tested stable version of SST-Elements.
 
-Repository to SST-Elements is located [here](https://github.com/sstsimulator/sst-elements).
+* Repository to SST-Elements is located [here](https://github.com/sstsimulator/sst-elements).
+* Questions can be sent to wg-sst@sandia.gov
 
 ---
 
