@@ -21,9 +21,9 @@ from sst.merlin.base import *
 class TestJob(Job):
     def __init__(self,job_id,size):
         Job.__init__(self,job_id,size)
-        self._defineRequiredParams(["num_peers"])
+        self._declareParams("main",["num_peers","num_messages","message_size","send_untimed_bcast"])
         self.num_peers = size
-        self._defineOptionalParams(["num_messages","message_size","send_untimed_bcast"])
+        self._lockVariable("num_peers")
 
     def getName(self):
         return "TestJob"
@@ -31,7 +31,7 @@ class TestJob(Job):
     def build(self, nID, extraKeys):
         nic = sst.Component("testNic.%d"%nID, "merlin.test_nic")
         self._applyStatisticsSettings(nic)
-        nic.addParams(self._params)
+        nic.addParams(self._getGroupParams("main"))
         nic.addParams(extraKeys)
         # Get the logical node id
         id = self._nid_map.index(nID)
@@ -46,9 +46,9 @@ class TestJob(Job):
 class OfferedLoadJob(Job):
     def __init__(self,job_id,size):
         Job.__init__(self,job_id,size)
-        self._defineRequiredParams(["offered_load","pattern","num_peers","message_size","link_bw"])
+        self._declareParams("main",["offered_load","pattern","num_peers","message_size","link_bw","warmup_time","collect_time","drain_time"])
         self.num_peers = size
-        self._defineOptionalParams(["warmup_time","collect_time","drain_time"])
+        self._lockVariable("num_peers")
 
     def getName(self):
         return "Offered Load Job"
@@ -56,7 +56,7 @@ class OfferedLoadJob(Job):
     def build(self, nID, extraKeys):
         nic = sst.Component("offered_load.%d"%nID, "merlin.offered_load")
         self._applyStatisticsSettings(nic)
-        nic.addParams(self._params)
+        nic.addParams(self._getGroupParams("main"))
         nic.addParams(extraKeys)
         id = self._nid_map.index(nID)
         nic.addParam("id", id)
