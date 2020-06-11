@@ -23,20 +23,24 @@ class _topoMeshBase(Topology):
     def __init__(self):
         Topology.__init__(self)
         self._declareClassVariables(["link_latency","host_link_latency","bundleEndpoints","_num_dims","_dim_size","_dim_width"])
-        self._defineRequiredParams(["shape", "width", "local_ports"])
+        self._declareParams("main",["shape", "width", "local_ports"])
         #self._defineOptionalParams([])
         self._setCallbackOnWrite("shape",self._shape_callback)
         self._setCallbackOnWrite("width",self._shape_callback)
+        self._setCallbackOnWrite("local_ports",self._shape_callback)
 
     def _shape_callback(self,variable_name,value):
+        self._lockVariable(variable_name)
+        if variable_name == "local_ports":
+            return
+        
+        if not self._areVariablesLocked(["shape","width"]):
+            return
+
         if variable_name == "shape":
-            if not self.width:
-                return
             shape = value
             width = self.width
         else:
-            if not self.shape:
-                return
             shape = self.shape
             width = value
             
@@ -50,7 +54,7 @@ class _topoMeshBase(Topology):
         self._num_dims = len(self._dim_size)
 
         if len(self._dim_size) != len(self._dim_width):
-            print("topo%s:  Incompatible number of dimensions set for shape and width."%getName())
+            print("topo%s:  Incompatible number of dimensions set for shape (%s) and width (%s)."%(self.getName(),shape,width))
             exit(1)
 
     def _getTopologyName():
@@ -138,9 +142,9 @@ class _topoMeshBase(Topology):
 
             rtr = self._instanceRouter(radix,i)
             
-            topology = rtr.setSubComponent(self._router_template.getTopologySlotName(),self._getTopologyName())
+            topology = rtr.setSubComponent(self.router.getTopologySlotName(),self._getTopologyName())
             self._applyStatisticsSettings(topology)
-            topology.addParams(self._params)
+            topology.addParams(self._getGroupParams("main"))
 
             port = 0
             for dim in range(num_dims):
@@ -213,7 +217,7 @@ class topoSingle(Topology):
     def __init__(self):
         Topology.__init__(self)
         self._declareClassVariables(["link_latency","bundleEndpoints"])
-        self._defineRequiredParams(["num_ports"])
+        self._declareParams("main",["num_ports"])
 
     def getName(self):
         return "Single Router"
@@ -221,12 +225,15 @@ class topoSingle(Topology):
     def getNumNodes(self):
         return self.num_ports
 
-    def build(self, network_name, endpoint):
-        rtr = self._router_template.instanceRouter("router",self.num_ports,0)
+    def getRouterNameForId(self,rtr_id):
+        return "%srouter"%self._prefix
+        
+    def build(self, endpoint):
+        rtr = self._instanceRouter(self.num_ports,0)
 
-        topo = rtr.setSubComponent(self._router_template.getTopologySlotName(),"merlin.singlerouter",0)
+        topo = rtr.setSubComponent(self.router.getTopologySlotName(),"merlin.singlerouter",0)
         self._applyStatisticsSettings(topo)
-        topo.addParams(self._params)
+        topo.addParams(self._getGroupParams("main"))
         
         for l in range(self.num_ports):
             (ep, portname) = endpoint.build(l, {})

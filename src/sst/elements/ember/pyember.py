@@ -20,34 +20,90 @@ import sst
 from sst.merlin.base import *
 
 
+defaults = PlatformDefinition("ember-defaults")
+PlatformDefinition.registerPlatformDefinition(defaults)
+
+
+_basic_nic_defaults = {
+    "nic2host_lat" : "150ns",
+    "rxMatchDelay_ns" : 100,
+    "txDelay_ns" : 50,
+    "hostReadDelay_ns" : 200,
+    "packetSize" : "2048B",
+    "packetOverhead" : 0,
+    
+    "numVNs" : 1, # total number of VN used
+    "getHdrVN" : 0, # VN used for sending a get request
+    "getRespSmallVN" : 0, # VN used for sending a get response <= getRespSize
+    "getRespLargeVN" : 0, # VN used for sending a get response > getRespSize
+    "getRespSize" : 15000
+}
+    
+defaults.addParamSet("ember.basic_nic",_basic_nic_defaults)
+
+_functionsm_defaults = {
+    'verboseLevel': 0,
+    'defaultReturnLatency': 30000,
+    'defaultEnterLatency': 30000,
+    'defaultModule': 'firefly',
+    'smallCollectiveVN' : 0, # VN used for collectives <= smallCollectiveSize
+    'smallCollectiveSize' : 8,
+}
+
+defaults.addParamSet("ember.functionsm",_functionsm_defaults)
+
+_ctrl_defaults = {
+    'sendStateDelay_ps' : 0,
+    'recvStateDelay_ps' : 0,
+    'waitallStateDelay_ps' : 0,
+    'waitanyStateDelay_ps' : 0,
+    'matchDelay_ns': 150,
+    'regRegionBaseDelay_ns': 3000,
+    
+    #'rxMemcpyModParams.range.0': '0-:344ps',
+    #'txMemcpyModParams.range.0': '0-:344ps',
+    #'txSetupModParams.range.0': '0-:130ns',
+    #'txMemcpyMod': 'firefly.LatencyMod',
+    #'txSetupMod': 'firefly.LatencyMod',
+    #'rxSetupMod': 'firefly.LatencyMod',
+    #'rxMemcpyMod': 'firefly.LatencyMod',
+    
+    'regRegionPerPageDelay_ns': 100,
+    'verboseLevel': 0,
+    'txMemcpyModParams.op': 'Mult',
+    'sendAckDelay_ns': 0,
+    'shortMsgLength': 12000,
+    'regRegionXoverLength': 4096,
+    
+    'rendezvousVN' : 0, # VN used to send a match header that requires a get by the target
+    'ackVN' : 0,  # VN used to send an ACK back to originator after target does a get
+    
+    #'pqs.verboseMask': -1,
+    #'pqs.verboseLevel': 0,
+    #'rxMemcpyModParams.range.0': '0-:344ps',
+    #'txMemcpyModParams.range.0': '0-:344ps',
+    #'txSetupModParams.range.0': '0-:130ns',
+    #'txMemcpyModParams.op': 'Mult',
+    #'rxSetupModParams.range.0': '0-:100ns'
+}
+
+defaults.addParamSet("ember.ctrl",_ctrl_defaults)
+
 class BasicNicConfiguration(TemplateBase):
-
-    nic_defaults = {
-        "nic2host_lat" : "150ns",
-        "rxMatchDelay_ns" : 100,
-        "txDelay_ns" : 50,
-        "hostReadDelay_ns" : 200,
-        "packetSize" : "2048B",
-        "packetOverhead" : 0,
-
-        "numVNs" : 1, # total number of VN used
-        "getHdrVN" : 0, # VN used for sending a get request
-        "getRespSmallVN" : 0, # VN used for sending a get response <= getRespSize
-        "getRespLargeVN" : 0, # VN used for sending a get response > getRespSize
-        "getRespSize" : 15000,
-    }
 
     def __init__(self):
         TemplateBase.__init__(self)
         #self._declareClassVariables("_nic")
-        self._defineOptionalParams(self.nic_defaults.keys())
+        self._declareParams("main",_basic_nic_defaults.keys())
         # Set up default parameters
+        self._subscribeToPlatformParamSet("ember.basic_nic")
 
 
     def build(self,nID,num_vNics):
         nic = sst.Component("nic" + str(nID), "firefly.nic")
         self._applyStatisticsSettings(nic)
-        nic.addParams(self.combineParams(self.nic_defaults,self._params))
+        #nic.addParams(self.combineParams(self.nic_defaults,self._getGroupParams("main")))
+        nic.addParams(self._getGroupParams("main"))
         nic.addParam("nid",nID)
         nic.addParam("num_vNics",num_vNics)
         return nic, "rtrLink"
@@ -67,86 +123,24 @@ class FireflyOS(TemplateBase):
         pass
 
 class FireflyHades(FireflyOS):
-    # Default parameters
-    hades_defaults = {
-        "verboseLevel" : 0,
-        "verboseMask" : 0
-    }
-
-    functionsm_defaults = {
-        'verboseLevel': 0,
-        'defaultReturnLatency': 30000,
-        'defaultEnterLatency': 30000,
-        'defaultModule': 'firefly',
-        'smallCollectiveVN' : 0, # VN used for collectives <= smallCollectiveSize
-        'smallCollectiveSize' : 8,
-    }
-
-    ctrl_defaults = {
-        'sendStateDelay_ps' : 0,
-        'recvStateDelay_ps' : 0,
-        'waitallStateDelay_ps' : 0,
-        'waitanyStateDelay_ps' : 0,
-        'matchDelay_ns': 150,
-        'regRegionBaseDelay_ns': 3000,
-
-        #'rxMemcpyModParams.range.0': '0-:344ps',
-        #'txMemcpyModParams.range.0': '0-:344ps',
-        #'txSetupModParams.range.0': '0-:130ns',
-        #'txMemcpyMod': 'firefly.LatencyMod',
-        #'txSetupMod': 'firefly.LatencyMod',
-        #'rxSetupMod': 'firefly.LatencyMod',
-        #'rxMemcpyMod': 'firefly.LatencyMod',
-
-        'regRegionPerPageDelay_ns': 100,
-        'verboseLevel': 0,
-        'txMemcpyModParams.op': 'Mult',
-        'sendAckDelay_ns': 0,
-        'shortMsgLength': 12000,
-        'regRegionXoverLength': 4096,
-
-        'rendezvousVN' : 0, # VN used to send a match header that requires a get by the target
-        'ackVN' : 0,  # VN used to send an ACK back to originator after target does a get
-
-        #'pqs.verboseMask': -1,
-        #'pqs.verboseLevel': 0,
-        #'rxMemcpyModParams.range.0': '0-:344ps',
-        #'txMemcpyModParams.range.0': '0-:344ps',
-        #'txSetupModParams.range.0': '0-:130ns',
-        #'txMemcpyModParams.op': 'Mult',
-        #'rxSetupModParams.range.0': '0-:100ns'
-    }
-
 
     def __init__(self):
         FireflyOS.__init__(self)
-        self._declareClassVariables(["_final_hades_params","_final_ctrl_params"])
-        self._defineOptionalParams(self.hades_defaults.keys())
+        #self._declareClassVariables(["_final_hades_params","_final_ctrl_params"])
+        self._declareParams("main",["verboseLevel","verboseMask"])
         funcsm = self._createPrefixedParams("functionSM")
-        funcsm._defineOptionalParams(self.functionsm_defaults.keys())
+        funcsm._declareParams("main",_functionsm_defaults.keys(),"functionSM.")
+        funcsm._subscribeToPlatformParamSet("ember.functionsm")
         ctrl = self._createPrefixedParams("ctrl")
-        ctrl._defineOptionalParams(self.ctrl_defaults.keys())
+        ctrl._declareParams("ctrl",_ctrl_defaults.keys())
+        ctrl._subscribeToPlatformParamSet("ember.ctrl")
 
 
     def build(self,engine,nicLink,loopLink,size,nicsPerNode,job_id,pid,lid,coreId):
-        if not self._final_hades_params:
-            #self._final_hades_params = self.hades_defaults.copy()
-            #self._final_hades_params.update(self._params)
-            self._final_hades_params = self.combineParams(self.hades_defaults,self._params)
-            for key,value in self.functionsm_defaults.items():
-                self._final_hades_params["functionSM." + key] = value
-            for key,value in self.functionSM._params.items():
-                self._final_hades_params["functionSM." + key] = value
-
-        if not self._final_ctrl_params:
-            #self._final_ctrl_params = self.ctrl_defaults.copy()
-            #self._final_ctrl_params.update(self.ctrl._params)
-            self._final_ctrl_params = self.combineParams(self.ctrl_defaults,self.ctrl._params)
-
 
         os = engine.setSubComponent( "OS", "firefly.hades" )
 
-        os.addParams(self._final_hades_params)
+        os.addParams(self._getGroupParams("main"))
         os.addParam( 'numNodes', size )
         os.addParam( 'netMapName', 'Ember' + str(job_id) )
         os.addParam( 'netId', pid )
@@ -184,9 +178,9 @@ class FireflyHades(FireflyOS):
         process = proto.setSubComponent( "process", "firefly.ctrlMsg" )
 
 
-        proto.addParams(self._final_ctrl_params)
+        proto.addParams(self._getGroupParams("ctrl"))
         proto.addParams(ctrl_params)
-        process.addParams(self._final_ctrl_params)
+        process.addParams(self._getGroupParams("ctrl"))
         process.addParams(ctrl_params)
 
         #nicLink.connect( (virtNic,'nic','1ns' ),(nic,'core'+str(x),'1ns'))
