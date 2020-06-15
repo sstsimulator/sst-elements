@@ -18,7 +18,15 @@
 import sst
 import random
 import copy
-import importlib
+
+# importlib didn't exist until 2.7, so if we're running on 2.6, then
+# import statement will fail.
+try:
+    from importlib import import_module
+except ImportError:
+    # We must be using 2.6, use the old module import code.
+    def import_module(filename):
+        return __import__( filename, fromlist=[''] )
 
 class PlatformDefinition:
 
@@ -44,7 +52,7 @@ class PlatformDefinition:
 
     @classmethod
     def loadPlatformFile(cls,name):
-        importlib.import_module(name)
+        import_module(name)
 
     @classmethod
     def getClassType(cls,key):
@@ -56,7 +64,7 @@ class PlatformDefinition:
         if not type_name: return None
         
         module_name, class_name = type_name.rsplit(".", 1)
-        return getattr(importlib.import_module(module_name), class_name)()
+        return getattr(import_module(module_name), class_name)()
 
 
 
