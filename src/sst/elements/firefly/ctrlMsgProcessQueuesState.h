@@ -94,6 +94,10 @@ class ProcessQueuesState : public SubComponent
         {"waitanyStateDelay_ps","", "0"},
     )
 
+    SST_ELI_DOCUMENT_PORTS(
+        {"loop", "loopback port", {}}
+    )
+    
     SST_ELI_DOCUMENT_STATISTICS(
         { "posted_receive_list", "", "count", 1 },
         { "received_msg_list", "", "count", 1 }

@@ -18,14 +18,23 @@
 import sst
 from sst.merlin.base import *
 
+plat = PlatformDefinition("default")
+plat.addParamSet("topology",
+                 { "link_latency" : "20ns",
+                   "host_link_latency" : "5ns" })
+
+PlatformDefinition.registerPlatformDefinition(plat)
+
+
 class topoDragonFly(Topology):
 
     def __init__(self):
         Topology.__init__(self)
         self._declareClassVariables(["link_latency","host_link_latency","global_link_map"])
-        self._defineRequiredParams(["hosts_per_router","routers_per_group","intergroup_links","num_groups"])
-        self._defineOptionalParams(["algorithm","adaptive_threshold","global_routes"])
+        self._declareParams("main",["hosts_per_router","routers_per_group","intergroup_links","num_groups",
+                                    "algorithm","adaptive_threshold","global_routes"])
         self.global_routes = "absolute"
+        self._subscribeToPlatformParamSet("topology")
 
     def getName(self):
         return "Dragonfly"
@@ -156,9 +165,9 @@ class topoDragonFly(Topology):
                 rtr = self._instanceRouter(num_ports,router_num)
 
                 # Insert the topology object
-                sub = rtr.setSubComponent(self._router_template.getTopologySlotName(),"merlin.dragonfly",0)
+                sub = rtr.setSubComponent(self.router.getTopologySlotName(),"merlin.dragonfly",0)
                 self._applyStatisticsSettings(sub)
-                sub.addParams(self._params)
+                sub.addParams(self._getGroupParams("main"))
                 sub.addParam("intergroup_per_router",intergroup_per_router)
                 if router_num == 0:
                     # Need to send in the global_port_map
