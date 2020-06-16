@@ -23,15 +23,14 @@ class topoFatTree(Topology):
 
     def __init__(self):
         Topology.__init__(self)
-        self._declareClassVariables(["link_latency","host_link_latency","bundleEndpoints","_ups","_downs","_routers_per_level",
-                                     "_groups_per_level","_ups","_downs","_routers_per_level","_groups_per_level","_start_ids",
+        self._declareClassVariables(["link_latency","host_link_latency","bundleEndpoints","_ups","_downs","_routers_per_level","_groups_per_level","_start_ids",
                                      "_total_hosts"])
-        self._defineRequiredParams(["shape"])
-        self._defineOptionalParams(["routing_alg","adaptive_threshold"])        
+        self._declareParams("main",["shape","routing_alg","adaptive_threshold"])        
         self._setCallbackOnWrite("shape",self._shape_callback)
 
 
     def _shape_callback(self,variable_name,value):
+        self._lockVariable(variable_name)
         shape = value
         
         # Process the shape
@@ -141,9 +140,9 @@ class topoFatTree(Topology):
                 rtr_id = id
                 rtr = self._instanceRouter(self._ups[0] + self._downs[0], rtr_id)
                 
-                topology = rtr.setSubComponent(self._router_template.getTopologySlotName(),"merlin.fattree")
+                topology = rtr.setSubComponent(self.router.getTopologySlotName(),"merlin.fattree")
                 self._applyStatisticsSettings(topology)
-                topology.addParams(self._params)
+                topology.addParams(self._getGroupParams("main"))
                 # Add links
                 for l in range(len(host_links)):
                     rtr.addLink(host_links[l],"port%d"%l, self.link_latency)
@@ -155,7 +154,7 @@ class topoFatTree(Topology):
             # Create the down links for the routers
             rtr_links = [ [] for index in range(rtrs_in_group) ]
             for i in range(rtrs_in_group):
-                for j in range(downs[level]):
+                for j in range(self._downs[level]):
                     rtr_links[i].append(sst.Link("link_l%d_g%d_r%d_p%d"%(level,group,i,j)));
 
             # Now create group links to pass to lower level groups from router down links
@@ -164,7 +163,7 @@ class topoFatTree(Topology):
                 for j in range(rtrs_in_group):
                     group_links[i].append(rtr_links[j][i])
 
-            for i in range(downs[level]):
+            for i in range(self._downs[level]):
                 fattree_rb(self,level-1,group*self._downs[level]+i,group_links[i])
 
             # Create the routers in this level.
@@ -176,9 +175,9 @@ class topoFatTree(Topology):
                 rtr_id = id + i
                 rtr = self._instanceRouter(self._ups[level] + self._downs[level], rtr_id)
 
-                topology = rtr.setSubComponent(self._router_template.getTopologySlotName(),"merlin.fattree")
+                topology = rtr.setSubComponent(self.router.getTopologySlotName(),"merlin.fattree")
                 self._applyStatisticsSettings(topology)
-                topology.addParams(self._params)
+                topology.addParams(self._getGroupParams("main"))
                 # Add links
                 for l in range(len(rtr_links[i])):
                     rtr.addLink(rtr_links[i][l],"port%d"%l, self.link_latency)
@@ -211,9 +210,9 @@ class topoFatTree(Topology):
                 rtr_id = self._start_ids[len(self._ups)] + i
                 rtr = self._instanceRouter(radix,rtr_id);
 
-                topology = rtr.setSubComponent(self._router_template.getTopologySlotName(),"merlin.fattree",0)
+                topology = rtr.setSubComponent(self.router.getTopologySlotName(),"merlin.fattree",0)
                 self._applyStatisticsSettings(topology)
-                topology.addParams(self._params)
+                topology.addParams(self._getGroupParams("main"))
 
                 for l in range(len(rtr_links[i])):
                     rtr.addLink(rtr_links[i][l], "port%d"%l, self.link_latency)
