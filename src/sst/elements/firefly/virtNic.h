@@ -43,6 +43,10 @@ class VirtNic : public SST::SubComponent {
         SST::Firefly::VirtNic
     )
 
+    SST_ELI_DOCUMENT_PORTS(
+        {"nic", "Connection to upper level nic", {}}
+    )
+    
     SST_ELI_DOCUMENT_PARAMS(
         {"debugLevel", "Sets the output verbosity of the component", "1"},
         {"debug", "Sets the messaging API of the end point", "0"},
