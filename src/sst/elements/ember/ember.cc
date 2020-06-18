@@ -56,7 +56,10 @@
  */
 #include <sst/core/model/element_python.h>
 
-char pymerlin[] = {
+namespace SST {
+namespace Ember {
+
+char pyember[] = {
 #include "pyember.inc"
     0x00};
 
@@ -65,12 +68,14 @@ public:
     EmberPyModule(std::string library) :
         SSTElementPythonModule(library)
     {
-        auto primary_module = createPrimaryModule(pymerlin,"pyember.py");
+        auto primary_module = createPrimaryModule(pyember,"pyember.py");
     }
 
     SST_ELI_REGISTER_PYTHON_MODULE(
-        EmberPyModule,
+        SST::Ember::EmberPyModule,
         "ember",
         SST_ELI_ELEMENT_VERSION(1,0,0)
     )
 };
+}
+}
