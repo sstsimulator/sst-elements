@@ -19,7 +19,7 @@
 
 
 /*
-  This are header file only classes, so need to be included here to
+  These are header file only classes, so need to be included here to
   get compiled.
  */
 #include "hr_router/xbar_arb_rr.h"
@@ -35,6 +35,9 @@
   Install the python library
  */
 #include <sst/core/model/element_python.h>
+
+namespace SST {
+namespace Merlin {
 
 char pymerlin[] = {
 #include "pymerlin.inc"
@@ -79,11 +82,14 @@ public:
     }
 
     SST_ELI_REGISTER_PYTHON_MODULE(
-        MerlinPyModule,
+        SST::Merlin::MerlinPyModule,
         "merlin",
         SST_ELI_ELEMENT_VERSION(1,0,0)
     )
 };
+
+}
+}
 
 /*
   Needed temporarily because the Factory doesn't know if this is an
