@@ -27,7 +27,7 @@ class topoFatTree(Topology):
                                      "_total_hosts"])
         self._declareParams("main",["shape","routing_alg","adaptive_threshold"])        
         self._setCallbackOnWrite("shape",self._shape_callback)
-
+        self._subscribeToPlatformParamSet("topology")
 
     def _shape_callback(self,variable_name,value):
         self._lockVariable(variable_name)
