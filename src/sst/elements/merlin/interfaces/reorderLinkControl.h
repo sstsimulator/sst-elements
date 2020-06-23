@@ -165,6 +165,7 @@ public:
 
     void setup();
     void init(unsigned int phase);
+    void complete(unsigned int phase);
     void finish();
 
     // Returns true if there is space in the output buffer and false

@@ -193,13 +193,13 @@ void LinkControl::init(unsigned int phase)
     {
         // Get the link speed from the other side.  Actual link speed
         // will be the minumum the two sides
-        ev = rtr_link->recvInitData();
+        ev = rtr_link->recvUntimedData();
         init_ev = dynamic_cast<RtrInitEvent*>(ev);
         if ( link_bw > init_ev->ua_value ) link_bw = init_ev->ua_value;
         delete ev;
 
         // Get the flit size from the router
-        ev = rtr_link->recvInitData();
+        ev = rtr_link->recvUntimedData();
         init_ev = dynamic_cast<RtrInitEvent*>(ev);
         flit_size_ua = init_ev->ua_value;
         flit_size = flit_size_ua.getRoundedValue();
@@ -212,7 +212,7 @@ void LinkControl::init(unsigned int phase)
         
         // Initialize links
         // Receive the endpoint ID from PortControl
-        ev = rtr_link->recvInitData();
+        ev = rtr_link->recvUntimedData();
         if ( ev == nullptr ) {
             // fail
         }
@@ -242,7 +242,7 @@ void LinkControl::init(unsigned int phase)
         {
         // Will receive information about total vns used and the
         // mapping of my VNs to all of them
-        ev = rtr_link->recvInitData();
+        ev = rtr_link->recvUntimedData();
         init_ev = dynamic_cast<RtrInitEvent*>(ev);
         total_vns = init_ev->int_value;
         delete ev;
@@ -257,7 +257,7 @@ void LinkControl::init(unsigned int phase)
 
         // Will receive a message for each of my requested vns
         for ( int i = 0; i < req_vns; ++i ) {
-            ev = rtr_link->recvInitData();
+            ev = rtr_link->recvUntimedData();
             init_ev = dynamic_cast<RtrInitEvent*>(ev);
             // If map was not set yet, get values from router
             if ( !vn_map_set ) {
@@ -334,7 +334,7 @@ void LinkControl::init(unsigned int phase)
         // For all other phases, look for credit events, any other
         // events get passed up to containing component by adding them
         // to init_events queue
-        while ( ( ev = rtr_link->recvInitData() ) != nullptr ) {
+        while ( ( ev = rtr_link->recvUntimedData() ) != nullptr ) {
             BaseRtrEvent* bev = static_cast<BaseRtrEvent*>(ev);
             switch (bev->getType()) {
             case BaseRtrEvent::CREDIT:
@@ -369,7 +369,7 @@ void LinkControl::complete(unsigned int phase)
     // to init_events queue
     Event* ev;
     RtrInitEvent* init_ev;
-    while ( ( ev = rtr_link->recvInitData() ) != nullptr ) {
+    while ( ( ev = rtr_link->recvUntimedData() ) != nullptr ) {
         BaseRtrEvent* bev = static_cast<BaseRtrEvent*>(ev);
         switch (bev->getType()) {
         case BaseRtrEvent::PACKET:

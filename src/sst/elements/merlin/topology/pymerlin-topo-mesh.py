@@ -28,6 +28,7 @@ class _topoMeshBase(Topology):
         self._setCallbackOnWrite("shape",self._shape_callback)
         self._setCallbackOnWrite("width",self._shape_callback)
         self._setCallbackOnWrite("local_ports",self._shape_callback)
+        self._subscribeToPlatformParamSet("topology")
 
     def _shape_callback(self,variable_name,value):
         self._lockVariable(variable_name)
@@ -218,6 +219,7 @@ class topoSingle(Topology):
         Topology.__init__(self)
         self._declareClassVariables(["link_latency","bundleEndpoints"])
         self._declareParams("main",["num_ports"])
+        self._subscribeToPlatformParamSet("topology")
 
     def getName(self):
         return "Single Router"
