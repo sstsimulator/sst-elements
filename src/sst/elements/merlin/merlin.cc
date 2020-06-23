@@ -51,6 +51,10 @@ char pymerlin_endpoint[] = {
 #include "pymerlin-endpoint.inc"
     0x00};
 
+char pymerlin_router[] = {
+#include "pymerlin-router.inc"
+    0x00};
+
 char pymerlin_interface[] = {
 #include "interfaces/pymerlin-interface.inc"
     0x00};
@@ -79,6 +83,7 @@ public:
         auto primary_module = createPrimaryModule(pymerlin,"pymerlin.py");
         primary_module->addSubModule("base",pymerlin_base,"pymerlin-base.py");
         primary_module->addSubModule("endpoint",pymerlin_endpoint,"pymerlin-endpoint.py");
+        primary_module->addSubModule("router",pymerlin_router,"pymerlin-router.py");
         primary_module->addSubModule("interface",pymerlin_interface,"interfaces/pymerlin-interface.py");
         primary_module->addSubModule("topology",pymerlin_topo_dragonfly,"topology/pymerlin-topo-dragonfly.py");
         primary_module->addSubModule("topology",pymerlin_topo_hyperx,"topology/pymerlin-topo-hyperx.py");
