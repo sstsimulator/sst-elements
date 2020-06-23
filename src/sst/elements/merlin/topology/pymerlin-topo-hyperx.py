@@ -29,6 +29,7 @@ class topoHyperX(Topology):
         self._setCallbackOnWrite("shape",self._shape_callback)
         self._setCallbackOnWrite("width",self._shape_callback)
         self._setCallbackOnWrite("local_ports",self._shape_callback)
+        self._subscribeToPlatformParamSet("topology")
 
     def _shape_callback(self,variable_name,value):
         self._lockVariable(variable_name)

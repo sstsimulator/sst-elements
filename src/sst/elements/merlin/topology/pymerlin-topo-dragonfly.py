@@ -18,13 +18,6 @@
 import sst
 from sst.merlin.base import *
 
-plat = PlatformDefinition("default")
-plat.addParamSet("topology",
-                 { "link_latency" : "20ns",
-                   "host_link_latency" : "5ns" })
-
-PlatformDefinition.registerPlatformDefinition(plat)
-
 
 class topoDragonFly(Topology):
 
