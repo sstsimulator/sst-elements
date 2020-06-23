@@ -94,6 +94,11 @@ void ReorderLinkControl::init(unsigned int phase)
     }
 }
 
+void ReorderLinkControl::complete(unsigned int phase)
+{
+    link_control->complete(phase);
+}
+
 
 void ReorderLinkControl::finish(void)
 {
@@ -167,12 +172,12 @@ bool ReorderLinkControl::requestToReceive( int vn ) {
 
 void ReorderLinkControl::sendUntimedData(SST::Interfaces::SimpleNetwork::Request* req)
 {
-    link_control->sendInitData(req);
+    link_control->sendUntimedData(req);
 }
 
 SST::Interfaces::SimpleNetwork::Request* ReorderLinkControl::recvUntimedData()
 {
-    return link_control->recvInitData();
+    return link_control->recvUntimedData();
 }
 
 void ReorderLinkControl::sendInitData(SST::Interfaces::SimpleNetwork::Request* req)
