@@ -78,6 +78,7 @@ libmerlin_la_SOURCES = \
 	pymerlin.py \
 	pymerlin-base.py \
 	pymerlin-endpoint.py \
+	interfaces/pymerlin-interfaces.py \
 	topology/pymerlin-topo-dragonfly.py \
 	topology/pymerlin-topo-hyperx.py \
 	topology/pymerlin-topo-fattree.py \
@@ -102,6 +103,7 @@ BUILT_SOURCES = \
 	pymerlin.inc \
 	pymerlin-base.inc \
 	pymerlin-endpoint.inc \
+	interfaces/pymerlin-interfaces.inc \
 	topology/pymerlin-topo-dragonfly.inc \
 	topology/pymerlin-topo-hyperx.inc \
 	topology/pymerlin-topo-fattree.inc \

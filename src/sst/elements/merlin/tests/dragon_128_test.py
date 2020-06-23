@@ -14,6 +14,7 @@
 import sst
 from sst.merlin.base import *
 from sst.merlin.endpoint import *
+from sst.merlin.interfaces import *
 from sst.merlin.topology import *
 
 if __name__ == "__main__":
