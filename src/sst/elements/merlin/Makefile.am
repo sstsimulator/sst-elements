@@ -92,7 +92,9 @@ EXTRA_DIST = \
 	tests/fattree_256_test.py \
 	tests/torus_128_test.py \
 	tests/torus_5_trafficgen.py \
-	tests/torus_64_test.py
+	tests/torus_64_test.py \
+	tests/dragon_128_platform_test.py \
+	tests/platform_file_dragon_128.py
 
 sstdir = $(includedir)/sst/elements/merlin
 nobase_sst_HEADERS = \
