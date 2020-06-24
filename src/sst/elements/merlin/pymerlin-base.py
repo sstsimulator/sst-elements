@@ -319,6 +319,10 @@ class _SubAttributeManager(_AttributeManager):
         for var in plist:
             self._addVariable(var,group_dict,prefix)
 
+    def _createPrefixedParams(self,name):
+        self._addDirectAttribute(name,_SubAttributeManager(self._parent))
+        return self.__dict__[name]
+
 
 class TemplateBase(_AttributeManager):
     def __init__(self):
