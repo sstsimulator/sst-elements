@@ -60,6 +60,7 @@ class PlatformDefinition:
 
     @classmethod
     def getPlatformDefinedClassInstance(cls,key):
+        if not cls._current_platform:return None
         type_name = cls._current_platform.getClassType(key)
         if not type_name: return None
         
@@ -143,6 +144,9 @@ class _AttributeManager(object):
         object.__setattr__(self,"_in_dict",set(["_in_dict","_vars"]))
         object.__setattr__(self,"_vars",dict())
 
+    def _setPassthroughTarget(self,target):
+        object.__setattr__(self,"_passthrough_target",target)
+
     def _addDirectAttribute(self,name,value=None):
         self._in_dict.add(name)
         object.__setattr__(self,name,value)
@@ -179,7 +183,7 @@ class _AttributeManager(object):
                 else:
                     d[mykey] = value
 
-            # If theres a callback, call it
+            # If there's a callback, call it
             if var.call_back:
                 var.call_back(key,value)
 
@@ -189,7 +193,11 @@ class _AttributeManager(object):
 
         # Not allowing writes to unknown variables
         else:
-            raise KeyError("%r has no attribute %r"%(self.__class__.__name__,key))
+            # If there's a passthrough target, send this write to it
+            if "_passthrough_target" in self.__dict__:
+                self.__dict__["_passthrough_target"].__setattr__(key,value)
+            else:
+                raise KeyError("%r has no attribute %r"%(self.__class__.__name__,key))
         
 
     # Function will be called when a variable not in __dict__ is read
@@ -197,7 +205,10 @@ class _AttributeManager(object):
         if key in self._vars:
             return self._vars[key].value
         else:
-            raise AttributeError("%r has no attribute %r"%(self.__class__.__name__,key))
+            if "_passthrough_target" in self.__dict__:
+                self.__dict__["passthrough_target"].__getattr__(key,value)
+            else:
+                raise AttributeError("%r has no attribute %r"%(self.__class__.__name__,key))
 
 
     def addParams(self,p):
@@ -308,6 +319,10 @@ class _SubAttributeManager(_AttributeManager):
         for var in plist:
             self._addVariable(var,group_dict,prefix)
 
+    def _createPrefixedParams(self,name):
+        self._addDirectAttribute(name,_SubAttributeManager(self._parent))
+        return self.__dict__[name]
+
 
 class TemplateBase(_AttributeManager):
     def __init__(self):
@@ -417,7 +432,8 @@ class Topology(TemplateBase):
         self._setCallbackOnWrite("router",self._router_callback)
         self.router = PlatformDefinition.getPlatformDefinedClassInstance("router")
 
-        # if no router was set in platform file, set a default
+        # if no router was set in platform file, set a default (can be
+        # overwritten)
         if not self.router:
             self.router = hr_router()
             self._unlockVariable("router")
@@ -461,39 +477,6 @@ class NetworkInterface(TemplateBase):
         return None
 
 
-class LinkControl(NetworkInterface):
-    def __init__(self):
-        NetworkInterface.__init__(self)
-        self._declareParams("params",["link_bw","input_buf_size","output_buf_size","vn_remap"])
-
-    # returns subcomp, port_name
-    def build(self,comp,slot,slot_num,job_id,job_size,logical_nid,use_nid_remap = False):
-        sub = comp.setSubComponent(slot,"merlin.linkcontrol",slot_num)
-        self._applyStatisticsSettings(sub)
-        sub.addParams(self._getGroupParams("params"))
-        sub.addParam("job_id",job_id)
-        sub.addParam("job_size",job_size)
-        sub.addParam("use_nid_remap",use_nid_remap)
-        sub.addParam("logical_nid",logical_nid)
-        return sub,"rtr_port"
-
-
-class ReorderLinkControl(NetworkInterface):
-    def __init__(self):
-        NetworkInterface.__init__(self)
-        self._declareClassVariables(["network_interface"])
-
-    def setNetworkInterface(self,interface):
-        self.network_interface = interface
-
-    def build(self,comp,slot,slot_num,job_id,job_size,nid,use_nid_map = False):
-        sub = comp.setSubComponent(slot,"merlin.reorderlinkcontrol",slot_num)
-        self._applyStatisticsSettings(sub)
-        sub.addParams(self._params)
-        return self.network_interface.build(sub,"networkIF",0,job_id,job_size,nid,use_nid_map)
-
-
-
 
 # Base class that is used to build endpoints
 class Buildable(TemplateBase):
@@ -514,6 +497,8 @@ class Job(Buildable):
         self.statInterval = "0"
         self._nid_map = None
 
+        self.network_interface = PlatformDefinition.getPlatformDefinedClassInstance("network_interface")
+
     def getName(self):
         return "BaseJobClass"
 
@@ -531,6 +516,7 @@ class RouterTemplate(TemplateBase):
         pass
     def getPortConnectionInfo(port_num):
         pass
+
 
 class hr_router(RouterTemplate):
     def __init__(self):
@@ -597,7 +583,7 @@ class System(TemplateBase):
         #self.allocation_block_size = 1
 
     def setTopology(self, topo, allocation_block_size = 1):
-        self.allocation_block_size = allication_block_size
+        self.allocation_block_size = allocation_block_size
         self.topology = topo
 
     # Build the system
@@ -606,6 +592,7 @@ class System(TemplateBase):
         self.topology.build(system_ep)
 
     def _topology_config_callback(self, variable_name, value):
+        if not value: return
         self._lockVariable(variable_name)
 
         # Set the variables
