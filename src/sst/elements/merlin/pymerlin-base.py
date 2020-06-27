@@ -319,6 +319,10 @@ class _SubAttributeManager(_AttributeManager):
         for var in plist:
             self._addVariable(var,group_dict,prefix)
 
+    def _createPrefixedParams(self,name):
+        self._addDirectAttribute(name,_SubAttributeManager(self._parent))
+        return self.__dict__[name]
+
 
 class TemplateBase(_AttributeManager):
     def __init__(self):
@@ -471,68 +475,6 @@ class NetworkInterface(TemplateBase):
     # returns subcomp, port_name
     def build(self,comp,slot,slot_num,link,job_id,job_size,logical_nid,use_nid_remap=False):
         return None
-
-
-class LinkControl(NetworkInterface):
-    def __init__(self):
-        NetworkInterface.__init__(self)
-        self._declareParams("params",["link_bw","input_buf_size","output_buf_size","vn_remap"])
-        self._subscribeToPlatformParamSet("network_interface")
-
-    # returns subcomp, port_name
-    def build(self,comp,slot,slot_num,job_id,job_size,logical_nid,use_nid_remap = False):
-        sub = comp.setSubComponent(slot,"merlin.linkcontrol",slot_num)
-        self._applyStatisticsSettings(sub)
-        sub.addParams(self._getGroupParams("params"))
-        sub.addParam("job_id",job_id)
-        sub.addParam("job_size",job_size)
-        sub.addParam("use_nid_remap",use_nid_remap)
-        sub.addParam("logical_nid",logical_nid)
-        return sub,"rtr_port"
-
-
-class ReorderLinkControl(NetworkInterface):
-    def __init__(self):
-        NetworkInterface.__init__(self)
-        self._declareClassVariables(["network_interface"])
-        self._setCallbackOnWrite("network_interface",self._network_interface_callback)
-
-        self.network_interface = PlatformDefinition.getPlatformDefinedClassInstance("reorderlinkcontrol_network_interface")
-        if not self.network_interface:
-            self.network_interface = LinkControl()
-            # This is just a default, can be overwritten
-            self._unlockVariable("network_interface")
-
-    def _network_interface_callback(self, variable_name, value):
-        if not value: return
-        self._lockVariable("network_interface")
-        self._setPassthroughTarget(value)
-
-    def setNetworkInterface(self,interface):
-        self.network_interface = interface
-
-    def build(self,comp,slot,slot_num,job_id,job_size,nid,use_nid_map = False):
-        sub = comp.setSubComponent(slot,"merlin.reorderlinkcontrol",slot_num)
-        #self._applyStatisticsSettings(sub)
-        #sub.addParams(self._params)
-        return self.network_interface.build(sub,"networkIF",0,job_id,job_size,nid,use_nid_map)
-
-    # Functions to enable statistics
-    def enableAllStatistics(self,stat_params,apply_to_children=False):
-        # no stats of our own, simply pass to network interface
-        if self.network_interface:
-            self.network_interface.enableAllStatistics(stat_params,apply_to_children)
-
-    def enableStatistics(self,stats,stat_params,apply_to_children=False):
-        # no stats of our own, simply pass to network interface
-        if self.network_interface:
-            self.network_interface.enableStatistics(stats,stat_params,apply_to_children)
-
-    def setStatisticLoadLevel(self,level,apply_to_children=False):
-        # no stats of our own, simply pass to network interface
-        if self.network_interface:
-            self.network_intrface.setStatisticLoadLevel(level,apply_to_children)
-
 
 
 

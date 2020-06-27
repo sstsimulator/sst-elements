@@ -197,7 +197,7 @@ nic::init_complete(unsigned int phase) {
     case 1:
     {
         SimpleNetwork::Request* req;
-        while ( (req = link_control->recvInitData() ) != NULL ) {
+        while ( (req = link_control->recvUntimedData() ) != NULL ) {
             delete req;
             init_broadcast_count++;
         }
@@ -214,7 +214,7 @@ nic::init_complete(unsigned int phase) {
     case 2:
     {
         SimpleNetwork::Request* req;
-        while ( (req = link_control->recvInitData() ) != NULL ) {
+        while ( (req = link_control->recvUntimedData() ) != NULL ) {
 
             // It's possible some of the point to point will overlap
             // some of the broadcasts, so we need to check to see
@@ -249,7 +249,7 @@ nic::init_complete(unsigned int phase) {
     case 3:
     {
         SimpleNetwork::Request* req;
-        while ( (req = link_control->recvInitData() ) != NULL ) {
+        while ( (req = link_control->recvUntimedData() ) != NULL ) {
             // std::cout << "NIC " << id << " Received an init event in phase " << phase << "!" << std::endl;
             // Only point to points could arrive now
             // if ( req->dest != net_id ) output.output("%d: received event with dest %lld and src %lld\n",net_id,req->dest,req->src);
@@ -270,7 +270,7 @@ nic::init_complete(unsigned int phase) {
     case 4:
     {
         SimpleNetwork::Request* req;
-        while ( (req = link_control->recvInitData() ) != NULL ) {
+        while ( (req = link_control->recvUntimedData() ) != NULL ) {
             // std::cout << "NIC " << id << " Received an init event in phase " << phase << "!" << std::endl;
 
             // It's possible some of the point to point will overlap

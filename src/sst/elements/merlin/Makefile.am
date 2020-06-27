@@ -78,6 +78,8 @@ libmerlin_la_SOURCES = \
 	pymerlin.py \
 	pymerlin-base.py \
 	pymerlin-endpoint.py \
+	pymerlin-router.py \
+	interfaces/pymerlin-interface.py \
 	topology/pymerlin-topo-dragonfly.py \
 	topology/pymerlin-topo-hyperx.py \
 	topology/pymerlin-topo-fattree.py \
@@ -90,7 +92,9 @@ EXTRA_DIST = \
 	tests/fattree_256_test.py \
 	tests/torus_128_test.py \
 	tests/torus_5_trafficgen.py \
-	tests/torus_64_test.py
+	tests/torus_64_test.py \
+	tests/dragon_128_platform_test.py \
+	tests/platform_file_dragon_128.py
 
 sstdir = $(includedir)/sst/elements/merlin
 nobase_sst_HEADERS = \
@@ -102,6 +106,8 @@ BUILT_SOURCES = \
 	pymerlin.inc \
 	pymerlin-base.inc \
 	pymerlin-endpoint.inc \
+	pymerlin-router.inc \
+	interfaces/pymerlin-interface.inc \
 	topology/pymerlin-topo-dragonfly.inc \
 	topology/pymerlin-topo-hyperx.inc \
 	topology/pymerlin-topo-fattree.inc \
