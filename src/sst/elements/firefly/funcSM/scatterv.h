@@ -25,8 +25,39 @@ namespace Firefly {
 
 class MaryTree {
   public:
-    MaryTree( int radix, int myNode, int numNodes ) : m_numNodes(numNodes), m_radix(radix), m_myNode(myNode) {
+    MaryTree( int radix, int myNode, int numNodes, int root ) : m_numNodes(numNodes), m_radix(radix), m_myNode(myNode), m_root(root) {
         initNode( -1, 0, m_numNodes-1, myNode );
+
+		if ( root != 0 && ( myNode == 0 || myNode == root ) ) {
+			int x;
+			if ( myNode == 0  ) {
+				x = root;
+			} else if ( myNode == root ) {
+				x = 0;
+			}
+			MaryTree tmp( radix, x, m_numNodes, 0 );
+
+			m_parent = tmp.parent();
+			m_numDes = tmp.numDes();
+
+			m_children.clear();
+			for ( int i = 0; i < tmp.numChildren(); i ++ ) {
+				int x = tmp.calcChild(i);
+				m_children.push_back( x );
+			}
+		}
+		for ( int i = 0; i < m_children.size(); i ++ ) {
+			if ( m_children[i] == root ) {
+				m_children[i] = 0;
+			}
+		}
+
+		int tmp = m_parent;
+		if ( tmp == 0 ) {
+			m_parent = root;
+		} else if ( tmp == root ) {
+			m_parent = 0;
+		}
     }
 
 	int numDes() {
@@ -47,12 +78,24 @@ class MaryTree {
         return m_children[n];
     }
 
-    int calcChildTreeSize( int n ) {
-		if ( n < numChildren() -1 ) {
-			return calcChild(n+1) - calcChild(n);
-		}  else {
-			return numDes() + myRank() + 1 - calcChild(n);
+	int getOrig( int rank ) {
+		int ret = rank;
+		if ( rank == 0 ) {
+			ret = m_root;
+		} else if ( rank == m_root ) {
+			ret = 0;
 		}
+		return ret;
+	}
+
+    int calcChildTreeSize( int n ) {
+		int retval;
+		if ( n < numChildren() -1 ) {
+			retval = getOrig( calcChild(n+1) ) - getOrig( calcChild(n) );
+		}  else {
+			retval = numDes() + getOrig( myRank() ) + 1 - getOrig( calcChild(n) );
+		}
+		return retval;
     }
 
     int myRank() {
@@ -66,7 +109,8 @@ class MaryTree {
     int m_numNodes;
     int m_radix;
     int m_myNode;
-	int m_numDes;
+    int m_numDes;
+    int m_root;
     void initNode( int parent, int root, int numDes, int want ) {
         int firstDes = root + 1;
         int size0 = numDes / m_radix;
