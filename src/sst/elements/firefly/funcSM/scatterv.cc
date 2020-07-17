@@ -82,7 +82,7 @@ void ScattervFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
 
 		*m_callback = std::bind( &ScattervFuncSM::sendSize, this, info, (RecvInfo*)  NULL );
 	}
-	if ( 0 != m_event->root ) {
+	if ( 0 != m_event->root && m_event->root == m_info->getGroup(m_event->group)->getMyRank() ) {
 
 		// root is not 0, we need to swap new root data with rank 0 
 
