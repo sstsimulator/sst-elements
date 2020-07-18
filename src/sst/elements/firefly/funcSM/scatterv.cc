@@ -29,8 +29,13 @@ void ScattervFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
     ++m_seq;
 
 	int sendSize;
+
+	if ( m_event->root >= m_info->getGroup(m_event->group)->getSize() ) {
+		m_dbg.fatal( CALL_INFO, -1, "Scatterv root is %d, group size is %d\n", m_event->root,  m_info->getGroup(m_event->group)->getSize() );
+	}
+
     if ( m_event->sendCntPtr ) {
-       sendSize = ((int*)m_event->sendCntPtr)[0] * m_info->sizeofDataType( m_event->sendType );
+       sendSize = ((int*)m_event->sendCntPtr)[m_event->root] * m_info->sizeofDataType( m_event->sendType );
     } else {
        sendSize = m_event->sendCnt * m_info->sizeofDataType( m_event->sendType );
     }
@@ -41,12 +46,8 @@ void ScattervFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
 		m_dbg.fatal( CALL_INFO, -1, "send data size [%d] must equal recv data size [%d]  \n", sendSize, recvSize );
 	}
 
-	if ( 0 != m_event->root ) {
-		m_dbg.fatal( CALL_INFO, -1, "Scatterv root must equal 0,  %d\n", m_event->root );
-	}
-
     m_tree = new MaryTree( 4, m_info->getGroup(m_event->group)->getMyRank(),
-                m_info->getGroup(m_event->group)->getSize() );
+                m_info->getGroup(m_event->group)->getSize(), m_event->root );
 
     m_dbg.debug(CALL_INFO,1,0,"group %d, root %d, size %d, rank %d\n",
                 m_event->group, m_event->root, m_tree->size(),
@@ -81,6 +82,36 @@ void ScattervFuncSM::handleStartEvent( SST::Event *e, Retval& retval )
 
 		*m_callback = std::bind( &ScattervFuncSM::sendSize, this, info, (RecvInfo*)  NULL );
 	}
+	if ( 0 != m_event->root && m_event->root == m_info->getGroup(m_event->group)->getMyRank() ) {
+
+		// root is not 0, we need to swap new root data with rank 0 
+
+		char* backing = (char*) m_event->sendBuf.getBacking();
+
+		if ( backing) {
+			void* tmp = malloc( sendSize );
+
+			// save rank 0 data
+			memcpy( tmp, backing, sendSize );
+
+			size_t offset;
+			if ( m_event->sendDisplsPtr ) {
+				offset = m_event->sendDisplsPtr[m_event->root];
+			} else {
+				offset = m_event->root * m_event->sendCnt * m_info->sizeofDataType( m_event->sendType );
+			}
+
+			// calc ptr of new root rank's data
+			void *ptr = backing + offset;
+
+			// copy new root rank data to rank 0 
+			memcpy( backing, ptr ,sendSize );
+
+			// copy rank 0 data to new root rank
+			memcpy( ptr, tmp, sendSize );
+			free( tmp );
+		}
+	}
 
     handleEnterEvent( retval );
 }
@@ -91,9 +122,8 @@ bool ScattervFuncSM::recvSize( )
 
 	std::vector<int>* buf = new std::vector<int>( m_tree->numDes() + 1 );
 
-	m_dbg.debug(CALL_INFO,1,0,"%p %zu\n",buf,buf->size());
 	int tag = genTag(SizeMsg);
-	m_dbg.debug(CALL_INFO,1,0,"recev from parent=%d tag=%x\n",m_tree->parent(), tag );
+	m_dbg.debug(CALL_INFO,1,0,"recv from parent=%d tag=%x\n",m_tree->parent(), tag );
     proto()->recv( buf->data(), buf->size() * sizeof(int), m_tree->parent(), tag, m_event->group );
 
 	m_callback = new Callback;
@@ -103,7 +133,7 @@ bool ScattervFuncSM::recvSize( )
 
 bool ScattervFuncSM::recvSizeDone( std::vector<int>* buf )
 {
-	m_dbg.debug(CALL_INFO,1,0,"%p I have %d bytes\n", buf, (*buf)[0] );
+	m_dbg.debug(CALL_INFO,1,0,"received %d bytes\n", (*buf)[0] );
 
 	int bufLen = 0;
 	for ( int i = 1; i < m_tree->numDes() + 1; i++ ) {
@@ -121,7 +151,6 @@ bool ScattervFuncSM::recvSizeDone( std::vector<int>* buf )
 		if ( m_event->recvBuf.getBacking() ) {
 			backing = malloc(bufLen);
 		}
-		m_dbg.debug(CALL_INFO,1,0,"backing=%p\n",backing);
 		rInfo->ioVec.push_back( IoVec( MemAddr( 1, backing ), bufLen ) );
 		SendInfo* sInfo = new SendInfo( buf, m_tree->numChildren() );
 		*m_callback = std::bind( &ScattervFuncSM::sendSize, this, sInfo, rInfo );
@@ -132,7 +161,7 @@ bool ScattervFuncSM::recvSizeDone( std::vector<int>* buf )
 
 	int tag = genTag(DataMsg);
 
-	m_dbg.debug(CALL_INFO,1,0,"irecvv from parent=%d tag=%x\n",m_tree->parent(), tag);
+	m_dbg.debug(CALL_INFO,1,0,"call irecvv() from parent=%d tag=%x numVec=%zu\n",m_tree->parent(), tag,rInfo->ioVec.size());
 	proto()->irecvv( rInfo->ioVec, m_tree->parent(), tag, m_event->group, &rInfo->req );
 
 	return false;
@@ -142,16 +171,17 @@ bool ScattervFuncSM::sendSize( SendInfo* sendInfo, RecvInfo* info )
 {
 	int* ptr = &sendInfo->sizeBuf->data()[sendInfo->bufPos];
 
-	m_dbg.debug(CALL_INFO,1,0,"child %d tree size %d\n",sendInfo->count, m_tree->calcChildTreeSize(sendInfo->count));
+	int treeSize = m_tree->calcChildTreeSize(sendInfo->count);
+	m_dbg.debug(CALL_INFO,1,0,"child %d tree size %d\n",sendInfo->count, treeSize );
 
-	size_t length = sizeof(int) * m_tree->calcChildTreeSize(sendInfo->count);
+	size_t length = sizeof(int) * treeSize;
 
 	m_dbg.debug(CALL_INFO,1,0,"bufPos=%d length=%zu\n",sendInfo->bufPos,length);
 
-	sendInfo->bufPos += m_tree->calcChildTreeSize(sendInfo->count);
+	sendInfo->bufPos += treeSize;
 
 	int tag = genTag(SizeMsg);
-	m_dbg.debug(CALL_INFO,1,0,"iseend to %d tag %x\n", m_tree->calcChild( sendInfo->count ), tag);
+	m_dbg.debug(CALL_INFO,1,0,"isend to %d tag %x\n", m_tree->calcChild( sendInfo->count ), tag);
     int vn = 0;
     if ( length <= m_smallCollectiveSize ) {
         vn = m_smallCollectiveVN;
@@ -203,8 +233,6 @@ bool ScattervFuncSM::dataWait( SendInfo* sInfo , RecvInfo* rInfo )
 
 bool ScattervFuncSM::dataSend( SendInfo* sInfo , RecvInfo* rInfo )
 {
-	m_dbg.debug(CALL_INFO,1,0,"\n");
-
 	std::vector<IoVec> ioVec;
 
 	if ( -1 == m_tree->parent() ) {
@@ -216,7 +244,7 @@ bool ScattervFuncSM::dataSend( SendInfo* sInfo , RecvInfo* rInfo )
 		for ( int i = 0; i < x ; i++ ) {
 
 			char* backing = (char*) m_event->sendBuf.getBacking();
-			int pos = (child - m_tree->myRank()) + i;
+			int pos = (m_tree->getOrig(child) - m_tree->getOrig( m_tree->myRank()) ) + i;
 			int length = (*sInfo->sizeBuf)[pos];
 			size_t offset;
 
@@ -244,7 +272,7 @@ bool ScattervFuncSM::dataSend( SendInfo* sInfo , RecvInfo* rInfo )
 		int length = 0;
 
 		for ( int i = 0; i < x; i++ ) {
-			length += ((int*)sInfo->sizeBuf->data())[ (child - m_tree->myRank()) + i];
+			length += ((int*)sInfo->sizeBuf->data())[ ( m_tree->getOrig(child) - m_tree->getOrig(m_tree->myRank())) + i];
 		}
 		MemAddr addr = rInfo->ioVec[1].addr;
 		void* backing = NULL;
