@@ -25,20 +25,24 @@ class topoHyperX(Topology):
     def __init__(self):
         Topology.__init__(self)
         self._declareClassVariables(["link_latency","host_link_latency","bundleEndpoints","_num_dims","_dim_size","_dim_width"])
-        self._defineRequiredParams(["shape", "width", "local_ports"])
-        self._defineOptionalParams(["algorithm"])
+        self._declareParams("main",["shape", "width", "local_ports","algorithm"])
         self._setCallbackOnWrite("shape",self._shape_callback)
         self._setCallbackOnWrite("width",self._shape_callback)
+        self._setCallbackOnWrite("local_ports",self._shape_callback)
+        self._subscribeToPlatformParamSet("topology")
 
     def _shape_callback(self,variable_name,value):
+        self._lockVariable(variable_name)
+        if variable_name == "local_ports":
+            return
+        
+        if not self._areVariablesLocked(["shape","width"]):
+            return
+
         if variable_name == "shape":
-            if not self.width:
-                return
             shape = value
             width = self.width
         else:
-            if not self.shape:
-                return
             shape = self.shape
             width = value
             
@@ -52,7 +56,7 @@ class topoHyperX(Topology):
         self._num_dims = len(self._dim_size)
 
         if len(self._dim_size) != len(self._dim_width):
-            print("topoHyperX:  Incompatible number of dimensions set for shape and width."%getName())
+            print("topoHyperX:  Incompatible number of dimensions set for shape (%s) and width (%s)."%(shape,width))
             exit(1)
         
     def getName(self):
@@ -145,9 +149,9 @@ class topoHyperX(Topology):
 
             rtr = self._instanceRouter(radix,i)
 
-            topology = rtr.setSubComponent(self._router_template.getTopologySlotName(),"merlin.hyperx")
+            topology = rtr.setSubComponent(self.router.getTopologySlotName(),"merlin.hyperx")
             self._applyStatisticsSettings(topology)
-            topology.addParams(self._params)
+            topology.addParams(self._getGroupParams("main"))
 
             port = 0
             # Connect to all routers that only differ in one location index

@@ -19,7 +19,7 @@
 
 
 /*
-  This are header file only classes, so need to be included here to
+  These are header file only classes, so need to be included here to
   get compiled.
  */
 #include "hr_router/xbar_arb_rr.h"
@@ -36,6 +36,9 @@
  */
 #include <sst/core/model/element_python.h>
 
+namespace SST {
+namespace Merlin {
+
 char pymerlin[] = {
 #include "pymerlin.inc"
     0x00};
@@ -46,6 +49,14 @@ char pymerlin_base[] = {
 
 char pymerlin_endpoint[] = {
 #include "pymerlin-endpoint.inc"
+    0x00};
+
+char pymerlin_router[] = {
+#include "pymerlin-router.inc"
+    0x00};
+
+char pymerlin_interface[] = {
+#include "interfaces/pymerlin-interface.inc"
     0x00};
 
 char pymerlin_topo_dragonfly[] = {
@@ -72,6 +83,8 @@ public:
         auto primary_module = createPrimaryModule(pymerlin,"pymerlin.py");
         primary_module->addSubModule("base",pymerlin_base,"pymerlin-base.py");
         primary_module->addSubModule("endpoint",pymerlin_endpoint,"pymerlin-endpoint.py");
+        primary_module->addSubModule("router",pymerlin_router,"pymerlin-router.py");
+        primary_module->addSubModule("interface",pymerlin_interface,"interfaces/pymerlin-interface.py");
         primary_module->addSubModule("topology",pymerlin_topo_dragonfly,"topology/pymerlin-topo-dragonfly.py");
         primary_module->addSubModule("topology",pymerlin_topo_hyperx,"topology/pymerlin-topo-hyperx.py");
         primary_module->addSubModule("topology",pymerlin_topo_fattree,"topology/pymerlin-topo-fattree.py");
@@ -79,11 +92,14 @@ public:
     }
 
     SST_ELI_REGISTER_PYTHON_MODULE(
-        MerlinPyModule,
+        SST::Merlin::MerlinPyModule,
         "merlin",
         SST_ELI_ELEMENT_VERSION(1,0,0)
     )
 };
+
+}
+}
 
 /*
   Needed temporarily because the Factory doesn't know if this is an

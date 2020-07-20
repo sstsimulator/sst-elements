@@ -164,22 +164,13 @@ for next_ring_stop in range((cores_per_group + memory_controllers_per_group + l3
     router_map["rtr." + str(next_ring_stop)] = ring_rtr
 
 for next_ring_stop in range((cores_per_group + memory_controllers_per_group + l3cache_blocks_per_group) * groups):
-    if next_ring_stop == 0:
-        rtr_link_positive = sst.Link("rtr_pos_" + str(next_ring_stop))
-        rtr_link_positive.connect( (router_map["rtr.0"], "port0", ring_latency), (router_map["rtr.1"], "port1", ring_latency) )
-        rtr_link_negative = sst.Link("rtr_neg_" + str(next_ring_stop))
-        rtr_link_negative.connect( (router_map["rtr.0"], "port1", ring_latency), (router_map["rtr." + str(((cores_per_group + memory_controllers_per_group + l3cache_blocks_per_group) * groups) - 1)], "port0", ring_latency) )
-    elif next_ring_stop == ((cores_per_group + memory_controllers_per_group + l3cache_blocks_per_group) * groups) - 1:
-        rtr_link_positive = sst.Link("rtr_pos_" + str(next_ring_stop))
-        rtr_link_positive.connect( (router_map["rtr." + str(next_ring_stop)], "port0", ring_latency), (router_map["rtr.0"], "port1", ring_latency) )
-        rtr_link_negative = sst.Link("rtr_neg_" + str(next_ring_stop))
-        rtr_link_negative.connect( (router_map["rtr." + str(next_ring_stop)], "port1", ring_latency), (router_map["rtr." + str(next_ring_stop-1)], "port0", ring_latency) )
+    if next_ring_stop == ((cores_per_group + memory_controllers_per_group + l3cache_blocks_per_group) * groups) - 1:
+        rtr_link = sst.Link("rtr_" + str(next_ring_stop))
+        rtr_link.connect( (router_map["rtr." + str(next_ring_stop)], "port0", ring_latency), (router_map["rtr.0"], "port1", ring_latency) )
     else:
-        rtr_link_positive = sst.Link("rtr_pos_" + str(next_ring_stop))
-        rtr_link_positive.connect( (router_map["rtr." + str(next_ring_stop)], "port0", ring_latency), (router_map["rtr." + str(next_ring_stop+1)], "port1", ring_latency) )
-        rtr_link_negative = sst.Link("rtr_neg_" + str(next_ring_stop))
-        rtr_link_negative.connect( (router_map["rtr." + str(next_ring_stop)], "port1", ring_latency), (router_map["rtr." + str(next_ring_stop-1)], "port0", ring_latency) )
-
+        rtr_link = sst.Link("rtr_" + str(next_ring_stop))
+        rtr_link.connect( (router_map["rtr." + str(next_ring_stop)], "port0", ring_latency), (router_map["rtr." + str(next_ring_stop+1)], "port1", ring_latency) )
+    
 for next_group in range(groups):
     print("Configuring core and memory controller group " + str(next_group) + "...")
 
