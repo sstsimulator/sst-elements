@@ -156,7 +156,7 @@ ArielCPU::ArielCPU(ComponentId_t id, Params& params) :
                 params, core_count, maxCoreQueueLen, memmgr->getDefaultPool());
     }
     if (!frontend)
-        output->fatal(CALL_INFO, -1, "%s, Error: Loading frontend subcomponent failed\n", getName().c_str());
+        output->fatal(CALL_INFO, -1, "%s, Error: Loading frontend subcomponent failed. If Ariel was not built with Pin, user must supply a custom frontend in the input file.\n", getName().c_str());
 
     tunnel = frontend->getTunnel();
 #ifdef HAVE_CUDA
