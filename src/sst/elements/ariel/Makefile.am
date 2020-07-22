@@ -1,15 +1,19 @@
 
 AM_CPPFLAGS = \
         $(MPI_CPPFLAGS) \
-	-I$(top_srcdir)/src \
-        $(PINTOOL_CPPFLAGS)
+	-I$(top_srcdir)/src 
 
 if HAVE_SET_PTRACER
 AM_CPPFLAGS += "-DHAVE_SET_PTRACER=1"
 endif
 
 if HAVE_PIN3
-AM_CPPFLAGS += "-DHAVE_PINCRT=1"
+AM_CPPFLAGS += $(PINTOOL_CPPFLAGS)
+AM_CPPFLAGS += "-DHAVE_PINCRT=1 "
+else
+if HAVE_PINTOOL
+AM_CPPFLAGS += $(PINTOOL_CPPFLAGS)
+endif
 endif
 
 compdir = $(pkglibdir)
@@ -70,12 +74,14 @@ AM_CPPFLAGS += $(LIBZ_CPPFLAGS)
 libariel_la_SOURCES += arielgzbintracegen.h arielgzbintracegen.cc
 endif
 
+if HAVE_PINTOOL
 if HAVE_PIN3
 libariel_la_SOURCES += frontend/pin3/pin3frontend.h \
 		       frontend/pin3/pin3frontend.cc
 else
 libariel_la_SOURCES += frontend/simple/pin2frontend.h \
 		       frontend/simple/pin2frontend.cc
+endif
 endif
 
 if USE_CUDA
@@ -97,46 +103,51 @@ nobase_sst_HEADERS = \
 libexec_PROGRAMS =
 
 
-if SST_COMPILE_OSX
+#if SST_COMPILE_OSX
 
-all-local: frontend/simple/fesimple.cc
-	$(CXX) -O3 -shared \
-	$(CXXFLAGS) \
-	$(CPPFLAGS) \
-	$(LIBZ_CPPFLAGS) \
-	-DBIGARRAY_MULTIPLIER=1 \
-	-DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_MAC \
-	$(CUDA_CPPFLAGS) \
-	-I./ \
-	-I$(PINTOOL_DIR)/source/include/pin \
-	-I$(PINTOOL_DIR)/ \
-	-I$(PINTOOL_DIR)/extras/components/include \
-	-I$(PINTOOL_DIR)/source/include/pin/gen/ \
-	-I$(PINTOOL_DIR)/extras/xed-intel64/include \
-	-I$(top_srcdir)/src/sst \
-	-I$(top_srcdir)/src/sst/elements/ariel \
-	-fomit-frame-pointer -fno-stack-protector \
-	-Wl,-exported_symbols_list \
-	-Wl,$(PINTOOL_DIR)/source/include/pin/pintool.exp \
-	$(CUDA_LIBS) \
-	-L$(PINTOOL_DIR)/intel64/lib \
-	-L$(PINTOOL_DIR)/intel64/lib-ext \
-	-L$(PINTOOL_DIR)/extras/xed-intel64/lib \
-	-o fesimple.dylib $(top_srcdir)/src/sst/elements/ariel/frontend/simple/fesimple.cc \
-	-stdlib=libstdc++ \
-	-lpin -lxed -lpindwarf -lpthread $(LIBZ_LDFLAGS) $(LIBZ_LIB) $(CUDA_LDFLAGS)
+#all-local: frontend/simple/fesimple.cc
+#	$(CXX) -O3 -shared \
+#	$(CXXFLAGS) \
+#	$(CPPFLAGS) \
+#	$(LIBZ_CPPFLAGS) \
+#	-DBIGARRAY_MULTIPLIER=1 \
+#	-DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_MAC \
+#	$(CUDA_CPPFLAGS) \
+#	-I./ \
+#	-I$(PINTOOL_DIR)/source/include/pin \
+#	-I$(PINTOOL_DIR)/ \
+#	-I$(PINTOOL_DIR)/extras/components/include \
+#	-I$(PINTOOL_DIR)/source/include/pin/gen/ \
+#	-I$(PINTOOL_DIR)/extras/xed-intel64/include \
+#	-I$(top_srcdir)/src/sst \
+#	-I$(top_srcdir)/src/sst/elements/ariel \
+#	-fomit-frame-pointer -fno-stack-protector \
+#	-Wl,-exported_symbols_list \
+#	-Wl,$(PINTOOL_DIR)/source/include/pin/pintool.exp \
+#	$(CUDA_LIBS) \
+#	-L$(PINTOOL_DIR)/intel64/lib \
+#	-L$(PINTOOL_DIR)/intel64/lib-ext \
+#	-L$(PINTOOL_DIR)/extras/xed-intel64/lib \
+#	-o fesimple.dylib $(top_srcdir)/src/sst/elements/ariel/frontend/simple/fesimple.cc \
+#	-stdlib=libstdc++ \
+#	-lpin -lxed -lpindwarf -lpthread $(LIBZ_LDFLAGS) $(LIBZ_LIB) $(CUDA_LDFLAGS)
 
-install-exec-hook:
-	$(MKDIR_P) $(libexecdir)
-	$(INSTALL) fesimple.dylib $(libexecdir)/fesimple.dylib
-	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     ariel=$(abs_srcdir)
-	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      ariel=$(abs_srcdir)/tests
+#install-exec-hook:
+#	$(MKDIR_P) $(libexecdir)
+#	$(INSTALL) fesimple.dylib $(libexecdir)/fesimple.dylib
+#	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     ariel=$(abs_srcdir)
+#	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      ariel=$(abs_srcdir)/tests
 
-else
+#else
 
-all-local : fesimple.so
+
+if !SST_COMPILE_OSX
+
+if HAVE_PINTOOL
 
 if HAVE_PIN3
+
+all-local : fesimple.so
 
 fesimple.so : fesimple.o
 	$(CXX) -shared -Wl,--hash-style=sysv \
@@ -169,9 +180,18 @@ fesimple.o : $(top_srcdir)/src/sst/elements/ariel/frontend/pin3/fesimple.cc
 	    -I$(PINTOOL_DIR)/source/tools/Utils \
 	    -I$(PINTOOL_DIR)/source/tools/InstLib \
 	    -O3 -fomit-frame-pointer -fno-strict-aliasing -c $(top_srcdir)/src/sst/elements/ariel/frontend/pin3/fesimple.cc
+
+install-exec-hook:
+	$(MKDIR_P) $(libexecdir)
+	$(INSTALL) fesimple.so $(libexecdir)/fesimple.so
+	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     ariel=$(abs_srcdir)
+	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      ariel=$(abs_srcdir)/tests
+	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTSUITES ariel=$(abs_srcdir)/testsuites
 	    
 
 else
+
+all-local : fesimple.so
 
 fesimple.so : fesimple.o
 	$(CXX) -shared -Wl,--hash-style=sysv -Wl,-Bsymbolic \
@@ -199,8 +219,6 @@ fesimple.o : $(top_srcdir)/src/sst/elements/ariel/frontend/simple/fesimple.cc
 	    -I$(top_srcdir)/src/sst/elements/ariel \
 	    -O3 -fomit-frame-pointer -c $(top_srcdir)/src/sst/elements/ariel/frontend/simple/fesimple.cc
 
-endif
-
 install-exec-hook:
 	$(MKDIR_P) $(libexecdir)
 	$(INSTALL) fesimple.so $(libexecdir)/fesimple.so
@@ -208,5 +226,11 @@ install-exec-hook:
 	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      ariel=$(abs_srcdir)/tests
 	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTSUITES ariel=$(abs_srcdir)/testsuites
 
+# HAVE_PIN3
+endif
 
+# HAVE_PINTOOL
+endif
+
+# HAVE_OSX....
 endif
