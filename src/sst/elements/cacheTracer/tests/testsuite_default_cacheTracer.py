@@ -90,8 +90,8 @@ class testcase_cacheTracer_Component(SSTTestCase):
         self.run_sst(sdlfile, outfile, errfile, mpi_out_files=mpioutfiles)
 
         # Cat the files together normally (OpenMPI V2)
-        cmd = "cat {0} {1} > {2}".format("./test_cacheTracer_2_mem_ref_trace.txt",
-                                         "./test_cacheTracer_2_mem_ref_stats.txt",
+        cmd = "cat {0} {1} > {2}".format("{0}/test_cacheTracer_2_mem_ref_trace.txt".format(outdir),
+                                         "{0}/test_cacheTracer_2_mem_ref_stats.txt".format(outdir),
                                          out_memRefFile)
         os.system(cmd)
 
