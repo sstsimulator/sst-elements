@@ -42,27 +42,27 @@ class testcase_Samba_Component(SSTTestCase):
 
     @unittest.skipIf(get_testing_num_ranks() > 2, "Samba: test_Samba_gupsgen_mmu skipped if ranks > 2")
     def test_Samba_gupsgen_mmu(self):
-        self.Samba_test_template("gupsgen_mmu",  500)
+        self.Samba_test_template("gupsgen_mmu")
 
     @unittest.skipIf(get_testing_num_ranks() > 2, "Samba: test_Samba_gupsgen_mmu_4KB skipped if ranks > 2")
     def test_Samba_gupsgen_mmu_4KB(self):
-        self.Samba_test_template("gupsgen_mmu_4KB",  500)
+        self.Samba_test_template("gupsgen_mmu_4KB")
 
     @unittest.skipIf(get_testing_num_ranks() > 2, "Samba: test_Samba_gupsgen_mmu_three_levels skipped if ranks > 2")
     def test_Samba_gupsgen_mmu_three_levels(self):
-        self.Samba_test_template("gupsgen_mmu_three_levels",  500)
+        self.Samba_test_template("gupsgen_mmu_three_levels")
 
     @unittest.skipIf(get_testing_num_ranks() > 2, "Samba: test_Samba_stencil3dbench_mmu skipped if ranks > 2")
     def test_Samba_stencil3dbench_mmu(self):
-        self.Samba_test_template("stencil3dbench_mmu",  500)
+        self.Samba_test_template("stencil3dbench_mmu")
 
     @unittest.skipIf(get_testing_num_ranks() > 2, "Samba: test_Samba_streambench_mmu skipped if ranks > 2")
     def test_Samba_streambench_mmu(self):
-        self.Samba_test_template("streambench_mmu", 500)
+        self.Samba_test_template("streambench_mmu")
 
 #####
 
-    def Samba_test_template(self, testcase, tolerance):
+    def Samba_test_template(self, testcase):
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
         outdir = self.get_test_output_run_dir()

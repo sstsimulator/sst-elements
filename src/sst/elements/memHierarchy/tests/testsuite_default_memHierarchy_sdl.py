@@ -92,81 +92,81 @@ class testcase_memHierarchy_Component(SSTTestCase):
     @unittest.skipIf(get_testing_num_ranks() > 3, "memH: test_memHierarchy_sdl_1 skipped if ranks > 3")
     def test_memHierarchy_sdl_1(self):
         #  sdl-1   Simple CPU + 1 level cache + Memory
-        self.memHierarchy_Template("sdl-1", 500)
+        self.memHierarchy_Template("sdl-1")
 
     @unittest.skipIf(get_testing_num_ranks() > 3, "memH: test_memHierarchy_sdl_2 skipped if ranks > 3")
     def test_memHierarchy_sdl_2(self):
         #  sdl-2  Simple CPU + 1 level cache + DRAMSim Memory
-        self.memHierarchy_Template("sdl-2", 500)
+        self.memHierarchy_Template("sdl-2")
 
     @unittest.skipIf(get_testing_num_ranks() > 3, "memH: test_memHierarchy_sdl_3 skipped if ranks > 3")
     def test_memHierarchy_sdl_3(self):
         #  sdl-3  Simple CPU + 1 level cache + DRAMSim Memory (alternate block size)
-        self.memHierarchy_Template("sdl-3", 500)
+        self.memHierarchy_Template("sdl-3")
 
     def test_memHierarchy_sdl2_1(self):
         #  sdl2-1  Simple CPU + 2 levels cache + Memory
-        self.memHierarchy_Template("sdl2-1", 500)
+        self.memHierarchy_Template("sdl2-1")
 
     def test_memHierarchy_sdl3_1(self):
         #  sdl3-1  2 Simple CPUs + 2 levels cache + Memory
-        self.memHierarchy_Template("sdl3-1", 500)
+        self.memHierarchy_Template("sdl3-1")
 
     def test_memHierarchy_sdl3_2(self):
         #  sdl3-2  2 Simple CPUs + 2 levels cache + DRAMSim Memory
-        self.memHierarchy_Template("sdl3-2", 500)
+        self.memHierarchy_Template("sdl3-2")
 
     def test_memHierarchy_sdl3_3(self):
-        self.memHierarchy_Template("sdl3-3", 500)
+        self.memHierarchy_Template("sdl3-3")
 
     def test_memHierarchy_sdl4_1(self):
-        self.memHierarchy_Template("sdl4-1", 500)
+        self.memHierarchy_Template("sdl4-1")
 
     @skipOnSSTSimulatorConfEmptyStr ("DRAMSIM", "LIBDIR", "DRAMSIM is not included as part of this build")
     def test_memHierarchy_sdl4_2_dramsim(self):
-        self.memHierarchy_Template("sdl4-2", 500)
+        self.memHierarchy_Template("sdl4-2")
 
     @skipOnSSTSimulatorConfEmptyStr ("RAMULATOR", "LIBDIR", "RAMULATOR is not included as part of this build")
     def test_memHierarchy_sdl4_2_ramulator(self):
-        self.memHierarchy_Template("sdl4-2-ramulator", 500)
+        self.memHierarchy_Template("sdl4-2-ramulator")
 
     @skipOnSSTSimulatorConfEmptyStr ("DRAMSIM", "LIBDIR", "DRAMSIM is not included as part of this build")
     def test_memHierarchy_sdl5_1_dramsim(self):
-#        self.memHierarchy_Template("sdl5-1", 500)
+#        self.memHierarchy_Template("sdl5-1")
         # For some reason, this test perfers the _MC version
-        self.memHierarchy_Template("sdl5-1_MC", 500)
+        self.memHierarchy_Template("sdl5-1_MC")
 
     @skipOnSSTSimulatorConfEmptyStr ("RAMULATOR", "LIBDIR", "RAMULATOR is not included as part of this build")
     def test_memHierarchy_sdl5_1_ramulator(self):
         if get_testing_num_threads() > 1:
-            self.memHierarchy_Template("sdl5-1-ramulator_MC", 500)
+            self.memHierarchy_Template("sdl5-1-ramulator_MC")
         else:
-#            self.memHierarchy_Template("sdl5-1-ramulator", 500)
+#            self.memHierarchy_Template("sdl5-1-ramulator")
             # For some reason, this test perfers the _MC version
-            self.memHierarchy_Template("sdl5-1-ramulator_MC", 500)
+            self.memHierarchy_Template("sdl5-1-ramulator_MC")
 
     def test_memHierarchy_sdl8_1(self):
-        self.memHierarchy_Template("sdl8-1", 500)
+        self.memHierarchy_Template("sdl8-1")
 
     @unittest.skipIf(get_testing_num_ranks() > 3, "memH: test_memHierarchy_sdl8_3 skipped if ranks > 3")
     def test_memHierarchy_sdl8_3(self):
-        self.memHierarchy_Template("sdl-3", 500)
+        self.memHierarchy_Template("sdl-3")
 
     def test_memHierarchy_sdl8_4(self):
-        self.memHierarchy_Template("sdl8-4", 500)
+        self.memHierarchy_Template("sdl8-4")
 
     def test_memHierarchy_sdl9_1(self):
         if get_testing_num_threads() > 1:
-            self.memHierarchy_Template("sdl9-1_MC", 500)
+            self.memHierarchy_Template("sdl9-1_MC")
         else:
-            self.memHierarchy_Template("sdl9-1", 500)
+            self.memHierarchy_Template("sdl9-1")
 
     def test_memHierarchy_sdl9_2(self):
-        self.memHierarchy_Template("sdl9-2", 500)
+        self.memHierarchy_Template("sdl9-2")
 
 #####
 
-    def memHierarchy_Template(self, testcase, tolerance):
+    def memHierarchy_Template(self, testcase):
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
         outdir = self.get_test_output_run_dir()

@@ -40,29 +40,29 @@ class testcase_merlin_Component(SSTTestCase):
 #####
 
     def test_merlin_dragon_128(self):
-        self.merlin_test_template("dragon_128_test", 500)
+        self.merlin_test_template("dragon_128_test")
 
     def test_merlin_dragon_72(self):
-        self.merlin_test_template("dragon_72_test", 500)
+        self.merlin_test_template("dragon_72_test")
 
     def test_merlin_fattree_128(self):
-        self.merlin_test_template("fattree_128_test", 500)
+        self.merlin_test_template("fattree_128_test")
 
     def test_merlin_fattree_256(self):
-        self.merlin_test_template("fattree_256_test", 500)
+        self.merlin_test_template("fattree_256_test")
 
     def test_merlin_torus_128(self):
-        self.merlin_test_template("torus_128_test", 500)
+        self.merlin_test_template("torus_128_test")
 
     def test_merlin_torus_5_trafficgen(self):
-        self.merlin_test_template("torus_5_trafficgen", 500)
+        self.merlin_test_template("torus_5_trafficgen")
 
     def test_merlin_torus_64(self):
-         self.merlin_test_template("torus_64_test", 500)
+         self.merlin_test_template("torus_64_test")
 
 #####
 
-    def merlin_test_template(self, testcase, tolerance):
+    def merlin_test_template(self, testcase):
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
         outdir = self.get_test_output_run_dir()

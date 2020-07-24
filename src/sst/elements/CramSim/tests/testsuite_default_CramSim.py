@@ -81,7 +81,7 @@ class testcase_CramSim_Component(SSTTestCase):
 
 #####
 
-    def CramSim_test_template(self, testcase, tolerance):
+    def CramSim_test_template(self, testcase):
 
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
