@@ -4,7 +4,7 @@ from sst_unittest import *
 from sst_unittest_support import *
 
 ################################################################################
-# Code to support a single instance module initialize, must be called setUp method  
+# Code to support a single instance module initialize, must be called setUp method
 
 module_init = 0
 module_sema = threading.Semaphore()
@@ -12,13 +12,13 @@ module_sema = threading.Semaphore()
 def initializeTestModule_SingleInstance(class_inst):
     global module_init
     global module_sema
-    
+
     module_sema.acquire()
     if module_init != 1:
         # Put your single instance Init Code Here
         module_init = 1
     module_sema.release()
-    
+
 ################################################################################
 
 class testcase_merlin_Component(SSTTestCase):
@@ -27,7 +27,7 @@ class testcase_merlin_Component(SSTTestCase):
         super(type(self), self).initializeClass(testName)
         # Put test based setup code here. it is called before testing starts
         # NOTE: This method is called once for every test
-        
+
     def setUp(self):
         super(type(self), self).setUp()
         initializeTestModule_SingleInstance(self)
@@ -65,8 +65,8 @@ class testcase_merlin_Component(SSTTestCase):
     def merlin_test_template(self, testcase, tolerance):
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
-        outdir = get_test_output_run_dir()
-        tmpdir = get_test_output_tmp_dir()
+        outdir = self.get_test_output_run_dir()
+        tmpdir = self.get_test_output_tmp_dir()
 
         # Set the various file paths
         testDataFileName="test_merlin_{0}".format(testcase)

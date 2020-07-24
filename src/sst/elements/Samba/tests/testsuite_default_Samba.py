@@ -4,7 +4,7 @@ from sst_unittest import *
 from sst_unittest_support import *
 
 ################################################################################
-# Code to support a single instance module initialize, must be called setUp method  
+# Code to support a single instance module initialize, must be called setUp method
 
 module_init = 0
 module_sema = threading.Semaphore()
@@ -12,12 +12,12 @@ module_sema = threading.Semaphore()
 def initializeTestModule_SingleInstance(class_inst):
     global module_init
     global module_sema
-    
+
     module_sema.acquire()
     if module_init != 1:
         # Put your single instance Init Code Here
         module_init = 1
-        
+
     module_sema.release()
 
 ################################################################################
@@ -28,7 +28,7 @@ class testcase_Samba_Component(SSTTestCase):
         super(type(self), self).initializeClass(testName)
         # Put test based setup code here. it is called before testing starts
         # NOTE: This method is called once for every test
-        
+
     def setUp(self):
         super(type(self), self).setUp()
         initializeTestModule_SingleInstance(self)
@@ -40,18 +40,23 @@ class testcase_Samba_Component(SSTTestCase):
 
 #####
 
+    @unittest.skipIf(get_testing_num_ranks() > 2, "Samba: test_Samba_gupsgen_mmu skipped if ranks > 2")
     def test_Samba_gupsgen_mmu(self):
         self.Samba_test_template("gupsgen_mmu",  500)
 
+    @unittest.skipIf(get_testing_num_ranks() > 2, "Samba: test_Samba_gupsgen_mmu_4KB skipped if ranks > 2")
     def test_Samba_gupsgen_mmu_4KB(self):
         self.Samba_test_template("gupsgen_mmu_4KB",  500)
 
+    @unittest.skipIf(get_testing_num_ranks() > 2, "Samba: test_Samba_gupsgen_mmu_three_levels skipped if ranks > 2")
     def test_Samba_gupsgen_mmu_three_levels(self):
         self.Samba_test_template("gupsgen_mmu_three_levels",  500)
 
+    @unittest.skipIf(get_testing_num_ranks() > 2, "Samba: test_Samba_stencil3dbench_mmu skipped if ranks > 2")
     def test_Samba_stencil3dbench_mmu(self):
         self.Samba_test_template("stencil3dbench_mmu",  500)
 
+    @unittest.skipIf(get_testing_num_ranks() > 2, "Samba: test_Samba_streambench_mmu skipped if ranks > 2")
     def test_Samba_streambench_mmu(self):
         self.Samba_test_template("streambench_mmu", 500)
 
@@ -60,8 +65,8 @@ class testcase_Samba_Component(SSTTestCase):
     def Samba_test_template(self, testcase, tolerance):
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
-        outdir = get_test_output_run_dir()
-        tmpdir = get_test_output_tmp_dir()
+        outdir = self.get_test_output_run_dir()
+        tmpdir = self.get_test_output_tmp_dir()
 
         # Set the various file paths
         testDataFileName="test_Samba_{0}".format(testcase)

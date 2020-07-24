@@ -85,8 +85,8 @@ class testcase_CramSim_Component(SSTTestCase):
 
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
-        outdir = get_test_output_run_dir()
-        tmpdir = get_test_output_tmp_dir()
+        outdir = self.get_test_output_run_dir()
+        tmpdir = self.get_test_output_tmp_dir()
 
         # Set the various file paths
         testDataFileName="test_CramSim_{0}".format(testcase)

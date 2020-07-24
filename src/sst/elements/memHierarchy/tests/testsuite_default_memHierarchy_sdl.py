@@ -4,7 +4,7 @@ from sst_unittest import *
 from sst_unittest_support import *
 
 ################################################################################
-# Code to support a single instance module initialize, must be called setUp method  
+# Code to support a single instance module initialize, must be called setUp method
 
 module_init = 0
 module_sema = threading.Semaphore()
@@ -12,14 +12,63 @@ module_sema = threading.Semaphore()
 def initializeTestModule_SingleInstance(class_inst):
     global module_init
     global module_sema
-    
+
     module_sema.acquire()
     if module_init != 1:
         # Put your single instance Init Code Here
         module_init = 1
-        
+
     module_sema.release()
 
+################################################################################
+
+#    NOTE: THIS IS AN EXPERIMENTAL TESTCASE TO SHOW HOW TO IMPLEMENT
+#          A FAILURES, ERRORS, SKIPS, EXPECTED FAILS & UNEXPECTED SUCCESS
+#          IT WILL BE DELETED IN THE FUTURE
+
+###class testcase_memHierarchy_Testing(SSTTestCase):
+###
+###    def initializeClass(self, testName):
+###        super(type(self), self).initializeClass(testName)
+###        # Put test based setup code here. it is called before testing starts
+###        # NOTE: This method is called once for every test
+###
+###    def setUp(self):
+###        super(type(self), self).setUp()
+###        initializeTestModule_SingleInstance(self)
+###        # Put test based setup code here. it is called once before every test
+###
+###    def tearDown(self):
+###        # Put test based teardown code here. it is called once after every test
+###        super(type(self), self).tearDown()
+###
+########
+###
+###    # PASSING TESTS
+###    def test_verify_pass(self):
+###        self.assertTrue(True, "Verify Pass Test")
+###
+###    @unittest.skip("Expected Skip Test")
+###    def test_verify_skip(self):
+###        self.assertTrue(True, "Verify Skip Test")
+###
+###    @unittest.expectedFailure
+###    def test_verify_expected_fail(self):
+###        self.assertTrue(False, "Verify Expected Failure Test")
+###
+###    # FAILING TESTS
+###    def test_verify_fail(self):
+###        self.assertTrue(False, "Verify Fail Test")
+###
+###    def test_verify_error(self):
+###        x = 10/0
+###        self.assertTrue(True, "Verify Error Test")
+###
+###    @unittest.expectedFailure
+###    def test_verify_unexpected_pass(self):
+###        self.assertTrue(True, "Verify Unexpected Pass Test")
+
+################################################################################
 ################################################################################
 
 class testcase_memHierarchy_Component(SSTTestCase):
@@ -28,7 +77,7 @@ class testcase_memHierarchy_Component(SSTTestCase):
         super(type(self), self).initializeClass(testName)
         # Put test based setup code here. it is called before testing starts
         # NOTE: This method is called once for every test
-        
+
     def setUp(self):
         super(type(self), self).setUp()
         initializeTestModule_SingleInstance(self)
@@ -40,14 +89,17 @@ class testcase_memHierarchy_Component(SSTTestCase):
 
 #####
 
+    @unittest.skipIf(get_testing_num_ranks() > 3, "memH: test_memHierarchy_sdl_1 skipped if ranks > 3")
     def test_memHierarchy_sdl_1(self):
         #  sdl-1   Simple CPU + 1 level cache + Memory
         self.memHierarchy_Template("sdl-1", 500)
 
+    @unittest.skipIf(get_testing_num_ranks() > 3, "memH: test_memHierarchy_sdl_2 skipped if ranks > 3")
     def test_memHierarchy_sdl_2(self):
         #  sdl-2  Simple CPU + 1 level cache + DRAMSim Memory
         self.memHierarchy_Template("sdl-2", 500)
 
+    @unittest.skipIf(get_testing_num_ranks() > 3, "memH: test_memHierarchy_sdl_3 skipped if ranks > 3")
     def test_memHierarchy_sdl_3(self):
         #  sdl-3  Simple CPU + 1 level cache + DRAMSim Memory (alternate block size)
         self.memHierarchy_Template("sdl-3", 500)
@@ -96,6 +148,7 @@ class testcase_memHierarchy_Component(SSTTestCase):
     def test_memHierarchy_sdl8_1(self):
         self.memHierarchy_Template("sdl8-1", 500)
 
+    @unittest.skipIf(get_testing_num_ranks() > 3, "memH: test_memHierarchy_sdl8_3 skipped if ranks > 3")
     def test_memHierarchy_sdl8_3(self):
         self.memHierarchy_Template("sdl-3", 500)
 
@@ -116,8 +169,8 @@ class testcase_memHierarchy_Component(SSTTestCase):
     def memHierarchy_Template(self, testcase, tolerance):
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
-        outdir = get_test_output_run_dir()
-        tmpdir = get_test_output_tmp_dir()
+        outdir = self.get_test_output_run_dir()
+        tmpdir = self.get_test_output_tmp_dir()
 
         # Some tweeking of file names are due to inconsistencys with testcase name
         testcasename_sdl = testcase.replace("_MC", "")

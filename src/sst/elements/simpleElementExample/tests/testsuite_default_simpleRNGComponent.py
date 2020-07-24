@@ -36,13 +36,15 @@ class testcase_simpleRNGComponent(SSTTestCase):
     def RNG_test_template(self, testcase):
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
+        outdir = self.get_test_output_run_dir()
+        tmpdir = self.get_test_output_tmp_dir()
 
         # Set the various file paths
         sdlfile = "{0}/test_simpleRNGComponent_{1}.py".format(test_path, testcase)
         reffile = "{0}/refFiles/test_simpleRNGComponent_{1}.out".format(test_path, testcase)
-        outfile = "{0}/test_simpleRNGComponent_{1}.out".format(get_test_output_run_dir(), testcase)
-        tmpfile = "{0}/test_simpleRNGComponent_{1}.tmp".format(get_test_output_tmp_dir(), testcase)
-        cmpfile = "{0}/test_simpleRNGComponent_{1}.cmp".format(get_test_output_tmp_dir(), testcase)
+        outfile = "{0}/test_simpleRNGComponent_{1}.out".format(outdir, testcase)
+        tmpfile = "{0}/test_simpleRNGComponent_{1}.tmp".format(tmpdir, testcase)
+        cmpfile = "{0}/test_simpleRNGComponent_{1}.cmp".format(tmpdir, testcase)
 
         self.run_sst(sdlfile, outfile)
 
