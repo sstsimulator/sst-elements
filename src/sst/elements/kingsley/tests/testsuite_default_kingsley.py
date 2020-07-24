@@ -58,10 +58,6 @@ class testcase_kingsley_Component(SSTTestCase):
         outfile = "{0}/{1}.out".format(outdir, testDataFileName)
         errfile = "{0}/{1}.err".format(outdir, testDataFileName)
         mpioutfiles = "{0}/{1}.testfile".format(outdir, testDataFileName)
-        newoutfile = "{0}/{1}.newout".format(outdir, testDataFileName)
-        newreffile = "{0}/{1}.newref".format(outdir, testDataFileName)
-
-        #testOutFiles="${SST_TEST_OUTPUTS}/${testDataFileBase}.testFile"
 
         self.run_sst(sdlfile, outfile, errfile, mpi_out_files=mpioutfiles)
 
