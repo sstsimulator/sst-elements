@@ -109,7 +109,14 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
 
     MemBackend * memory = loadUserSubComponent<MemBackend>("backend");
     if (!memory) {  /* Try to load from our parameters (legacy mode 1) */
-        out.output("%s, WARNING: loading backend in legacy mode (from parameter set). Instead, load backend into this controller's 'backend' slot via ctrl.setSubComponent() in configuration.\n", getName().c_str());
+        /* Check if there's an error with the subcomponent the user specified */
+        SubComponentSlotInfo * info = getSubComponentSlotInfo("backend");
+        if (info && info->isPopulated(0)) {
+            out.fatal(CALL_INFO, -1, "%s, ERROR: Unable to load the subcomponent in the 'backend' slot. Check that the requested subcomponent is registered with the SST core.\n", 
+                    getName().c_str());
+        } else {
+            out.output("%s, WARNING: loading backend in legacy mode (from parameter set). Instead, load backend into this controller's 'backend' slot via ctrl.setSubComponent() in configuration.\n", getName().c_str());
+        }
         Params tmpParams = params.find_prefix_params("backendConvertor.backend.");
         std::string name = params.find<std::string>("backendConvertor.backend", "memHierarchy.simpleMem");
         memory = loadAnonymousSubComponent<MemBackend>(name, "backend", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, tmpParams);
@@ -330,6 +337,38 @@ void MemController::handleEvent(SST::Event* event) {
     }
 
     MemEvent * ev = static_cast<MemEvent*>(meb);
+
+#ifdef __SST_DEBUG_OUTPUT__
+    // Check that the request address(es) belong to this memory
+    // Disabled except in debug mode
+    if (!region_.contains(ev->getBaseAddr())) {
+        out.fatal(CALL_INFO, -1, "%s, Error: Received an event with a base address that does not map to this controller. Event: %s\n", getName().c_str(), ev->getVerboseString().c_str());
+    }
+    if (!region_.contains(ev->getAddr())) {
+        out.fatal(CALL_INFO, -1, "%s, Error: Received an event with an address that does not map to this controller. Event: %s\n", getName().c_str(), ev->getVerboseString().c_str());
+    }
+    
+    bool noncacheable = ev->queryFlag(MemEvent::F_NONCACHEABLE);
+    Addr chkAddr = noncacheable ? ev->getAddr() : ev->getBaseAddr();
+
+    if (region_.interleaveStep != 0 && ev->getSize() > 0) {  // Non-contiguous address region so make sure this request doesn't fall outside the region
+        Addr a0 = (chkAddr - region_.start) / region_.interleaveStep; 
+        a0 = a0 * region_.interleaveStep + region_.start; // Address of the interleave chunk that contains the target address
+        Addr b0 = a0 + region_.interleaveSize - 1; // Last address in the interleave chunk that contains the target starting address
+        Addr a1 = a0 + region_.interleaveStep; // Address of the next interleave chunk
+
+        // If the request size is larger than one of our interleaved chunks
+        // then the only way for it to completely fall in our region is if our interleaving is contiguous (e.g., not reall interleaving)
+        if (b0 < (chkAddr + ev->getSize() - 1)) {
+            if ((b0 + 1) != a1) {
+                out.fatal(CALL_INFO, -1, "%s: Error: Received an event for an address range that does not map to this controller. Event: %s\n", getName().c_str(), ev->getVerboseString().c_str());
+            }
+        }
+    } else if (ev->getSize() > 0) { // Contiguous address region, make sure last address of request falls in region
+        if (!region_.contains(chkAddr + ev->getSize() - 1))
+        out.fatal(CALL_INFO, -1, "%s, Error: Received an event for an address range that does not map to this controller. Event: %s\n", getName().c_str(), ev->getVerboseString().c_str());
+    }
+#endif
 
     if (ev->isAddrGlobal()) {
         ev->setBaseAddr(translateToLocal(ev->getBaseAddr()));

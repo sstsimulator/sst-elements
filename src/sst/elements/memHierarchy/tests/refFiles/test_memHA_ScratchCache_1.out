@@ -129,8 +129,8 @@ ScratchCPU cpu0 Finished after 1000 issued memory events, 1000 returned, 3785 cy
  l1_0.CustomResp_uncache_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_0.CustomAck_uncache_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_0.NULLCMD_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1_0.GetS_recv : Accumulator : Sum.u64 = 155; SumSQ.u64 = 155; Count.u64 = 155; Min.u64 = 1; Max.u64 = 1; 
- l1_0.GetX_recv : Accumulator : Sum.u64 = 152; SumSQ.u64 = 152; Count.u64 = 152; Min.u64 = 1; Max.u64 = 1; 
+ l1_0.GetS_recv : Accumulator : Sum.u64 = 154; SumSQ.u64 = 154; Count.u64 = 154; Min.u64 = 1; Max.u64 = 1; 
+ l1_0.GetX_recv : Accumulator : Sum.u64 = 149; SumSQ.u64 = 149; Count.u64 = 149; Min.u64 = 1; Max.u64 = 1; 
  l1_0.GetSX_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_0.FlushLine_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_0.FlushLineInv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -316,7 +316,7 @@ ScratchCPU cpu0 Finished after 1000 issued memory events, 1000 returned, 3785 cy
  l1_1.Inv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_1.ForceInv_recv : Accumulator : Sum.u64 = 8; SumSQ.u64 = 8; Count.u64 = 8; Min.u64 = 1; Max.u64 = 1; 
  l1_1.Fetch_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1_1.FetchInv_recv : Accumulator : Sum.u64 = 12; SumSQ.u64 = 12; Count.u64 = 12; Min.u64 = 1; Max.u64 = 1; 
+ l1_1.FetchInv_recv : Accumulator : Sum.u64 = 11; SumSQ.u64 = 11; Count.u64 = 11; Min.u64 = 1; Max.u64 = 1; 
  l1_1.FetchInvX_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_1.NACK_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1_1.AckPut_recv : Accumulator : Sum.u64 = 205; SumSQ.u64 = 205; Count.u64 = 205; Min.u64 = 1; Max.u64 = 1; 

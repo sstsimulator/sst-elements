@@ -129,9 +129,9 @@ TrivialCPU cpu Finished after 10000 issued reads, 10000 returned (1325350 clocks
  l1cache.CustomReq_uncache_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.CustomResp_uncache_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.CustomAck_uncache_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.NULLCMD_recv : Accumulator : Sum.u64 = 17; SumSQ.u64 = 17; Count.u64 = 17; Min.u64 = 1; Max.u64 = 1; 
- l1cache.GetS_recv : Accumulator : Sum.u64 = 8999; SumSQ.u64 = 8999; Count.u64 = 8999; Min.u64 = 1; Max.u64 = 1; 
- l1cache.GetX_recv : Accumulator : Sum.u64 = 1023; SumSQ.u64 = 1023; Count.u64 = 1023; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.NULLCMD_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache.GetS_recv : Accumulator : Sum.u64 = 8979; SumSQ.u64 = 8979; Count.u64 = 8979; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.GetX_recv : Accumulator : Sum.u64 = 1021; SumSQ.u64 = 1021; Count.u64 = 1021; Min.u64 = 1; Max.u64 = 1; 
  l1cache.GetSX_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.FlushLine_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.FlushLineInv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -511,8 +511,8 @@ TrivialCPU cpu Finished after 10000 issued reads, 10000 returned (1325350 clocks
  l3cache.CustomResp_uncache_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache.CustomAck_uncache_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache.NULLCMD_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l3cache.GetS_recv : Accumulator : Sum.u64 = 8707; SumSQ.u64 = 8707; Count.u64 = 8707; Min.u64 = 1; Max.u64 = 1; 
- l3cache.GetX_recv : Accumulator : Sum.u64 = 1017; SumSQ.u64 = 1017; Count.u64 = 1017; Min.u64 = 1; Max.u64 = 1; 
+ l3cache.GetS_recv : Accumulator : Sum.u64 = 8702; SumSQ.u64 = 8702; Count.u64 = 8702; Min.u64 = 1; Max.u64 = 1; 
+ l3cache.GetX_recv : Accumulator : Sum.u64 = 1016; SumSQ.u64 = 1016; Count.u64 = 1016; Min.u64 = 1; Max.u64 = 1; 
  l3cache.GetSX_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache.FlushLine_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l3cache.FlushLineInv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
