@@ -62,10 +62,10 @@ class testcase_GNA_Component(SSTTestCase):
 
         self.run_sst(sdlfile, outfile, errfile, mpi_out_files=mpioutfiles)
 
+        remove_component_warning_from_file(outfile)
+
         # Perform the tests
         self.assertFalse(os_test_file(errfile, "-s"), "GNA test {0} has Non-empty Error File {1}".format(testDataFileName, errfile))
-
-        remove_component_warning_from_file(outfile)
 
         cmp_result = compare_sorted_diff(testcase, outfile, reffile)
         self.assertTrue(cmp_result, "Output file {0} does not match Reference File {1}".format(outfile, reffile))

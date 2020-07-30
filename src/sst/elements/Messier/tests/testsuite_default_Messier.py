@@ -39,23 +39,18 @@ class testcase_Messier_Component(SSTTestCase):
 
 #####
 
-    @unittest.skipIf(get_testing_num_ranks() > 2, "Messier: test_Messier_gupsgen skipped if ranks > 2")
     def test_Messier_gupsgen(self):
         self.Messier_test_template("gupsgen")
 
-    @unittest.skipIf(get_testing_num_ranks() > 2, "Messier: test_Messier_gupsgen_2RANKS skipped if ranks > 2")
     def test_Messier_gupsgen_2RANKS(self):
         self.Messier_test_template("gupsgen_2RANKS")
 
-    @unittest.skipIf(get_testing_num_ranks() > 2, "Messier: test_Messier_gupsgen_fastNVM skipped if ranks > 2")
     def test_Messier_gupsgen_fastNVM(self):
         self.Messier_test_template("gupsgen_fastNVM")
 
-    @unittest.skipIf(get_testing_num_ranks() > 3, "Messier: test_Messier_gupsgen_fastNVM skipped if ranks > 3")
     def test_Messier_stencil3dbench_messier(self):
         self.Messier_test_template("stencil3dbench_messier")
 
-    @unittest.skipIf(get_testing_num_ranks() > 2, "Messier: test_Messier_streambench_messier skipped if ranks > 2")
     def test_Messier_streambench_messier(self):
         self.Messier_test_template("streambench_messier")
 
@@ -78,14 +73,15 @@ class testcase_Messier_Component(SSTTestCase):
         newreffile = "{0}/refFiles/{1}.newref".format(outdir, testDataFileName)
         newoutfile = "{0}/{1}.newout".format(outdir, testDataFileName)
 
-        self.run_sst(sdlfile, outfile, errfile, mpi_out_files=mpioutfiles)
+        self.run_sst(sdlfile, outfile, errfile, mpi_out_files=mpioutfiles, timeout_sec=120)
 
-#        # This may be needed in the future
-#        RemoveComponentWarning()
-#        RemoveWarning_btl_tcp()
+        remove_component_warning_from_file(outfile)
+
+        # Perform the tests
+        self.assertFalse(os_test_file(errfile, "-s"), "Messier test {0} has Non-empty Error File {1}".format(testDataFileName, errfile))
 
         # Perform the test
-        cmp_result = compare_diff(outfile, reffile)
+        cmp_result = compare_sorted_diff(testcase, outfile, reffile)
 
         # Special case handling of stencil3dbench_messier
         if not cmp_result and testcase == "stencil3dbench_messier":
