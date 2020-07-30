@@ -5,30 +5,30 @@ import os
 
 #######################################################################################################
 def read_arguments():
-	config_file = list()
-        override_list = list()
-        boolDefaultConfig = True;
+    config_file = list()
+    override_list = list()
+    boolDefaultConfig = True;
 
-	for arg in sys.argv:
-            if arg.find("--configfile=") != -1:
-		substrIndex = arg.find("=")+1
-		config_file = arg[substrIndex:]
-		print("Config file:", config_file)
-		boolDefaultConfig = False;
+    for arg in sys.argv:
+        if arg.find("--configfile=") != -1:
+            substrIndex = arg.find("=")+1
+            config_file = arg[substrIndex:]
+            print("Config file:", config_file)
+            boolDefaultConfig = False;
 
-  	    elif arg != sys.argv[0]:
-                if arg.find("=") == -1:
-                    print("Malformed config override found!: ", arg)
-                    exit(-1)
-                override_list.append(arg)
-                print("Override: ", override_list[-1])
+        elif arg != sys.argv[0]:
+            if arg.find("=") == -1:
+                print("Malformed config override found!: ", arg)
+                exit(-1)
+            override_list.append(arg)
+            print("Override: ", override_list[-1])
 
-	
-	if boolDefaultConfig == True:
-		config_file = "../ddr4_verimem.cfg"
-		print("config file is not specified.. using ddr4_verimem.cfg")
+    
+    if boolDefaultConfig == True:
+        config_file = "../ddr4_verimem.cfg"
+        print("config file is not specified.. using ddr4_verimem.cfg")
 
-	return [config_file, override_list]
+    return [config_file, override_list]
 
 
 
@@ -122,131 +122,131 @@ ariel.addParams({
 
 def genMemHierarchy(cores):
    
-   membus = sst.Component("membus", "memHierarchy.Bus")
-   membus.addParams({
-       "bus_frequency" : cacheFrequency,
-   })
+    membus = sst.Component("membus", "memHierarchy.Bus")
+    membus.addParams({
+        "bus_frequency" : cacheFrequency,
+    })
   
 
-   memory = sst.Component("memory", "memHierarchy.MemController")
-   memory.addParams({
-       "debug"                 : memDebug,
-       "clock"                 : "1Ghz",
-       "request_width"         : cacheLineSize
-   })
-   backend = memory.setSubComponent("backend", "memHierarchy.cramsim")
-   backend.addParams({
-      "access_time" : "2 ns",   # Phy latency
-      "mem_size" : "512MiB",
-      "max_outstanding_requests" : 256,
-      "verbose" : 1,
-   })
+    memory = sst.Component("memory", "memHierarchy.MemController")
+    memory.addParams({
+        "debug"                 : memDebug,
+        "clock"                 : "1Ghz",
+        "request_width"         : cacheLineSize
+    })
+    backend = memory.setSubComponent("backend", "memHierarchy.cramsim")
+    backend.addParams({
+        "access_time" : "2 ns",   # Phy latency
+        "mem_size" : "512MiB",
+        "max_outstanding_requests" : 256,
+        "verbose" : 1,
+    })
    
-   for core in range (cores):
-       l1 = sst.Component("l1cache_%d"%core, "memHierarchy.Cache")
-       l1.addParams({
-           "cache_frequency"       : cacheFrequency,
-           "cache_size"            : "32KB",
-           "cache_line_size"       : cacheLineSize,
-           "associativity"         : "8",
-           "access_latency_cycles" : "4",
-           "coherence_protocol"    : coherenceProtocol,
-           "replacement_policy"    : rplPolicy,
-           "L1"                    : "1",
-           "debug"                 : memDebug,  
-           "debug_level"           : memDebugLevel, 
-       })
+    for core in range (cores):
+        l1 = sst.Component("l1cache_%d"%core, "memHierarchy.Cache")
+        l1.addParams({
+            "cache_frequency"       : cacheFrequency,
+            "cache_size"            : "32KB",
+            "cache_line_size"       : cacheLineSize,
+            "associativity"         : "8",
+            "access_latency_cycles" : "4",
+            "coherence_protocol"    : coherenceProtocol,
+            "replacement_policy"    : rplPolicy,
+            "L1"                    : "1",
+            "debug"                 : memDebug,  
+            "debug_level"           : memDebugLevel, 
+        })
 
-       l2 = sst.Component("l2cache_%d"%core, "memHierarchy.Cache")
-       l2.addParams({
-           "cache_frequency"       : cacheFrequency,
-           "cache_size"            : "256 KB",
-           "cache_line_size"       : cacheLineSize,
-           "associativity"         : "8",
-           "access_latency_cycles" : "10",
-           "coherence_protocol"    : coherenceProtocol,
-           "replacement_policy"    : rplPolicy,
-           "L1"                    : "0",
-           "debug"                 : memDebug,  
-           "debug_level"           : memDebugLevel, 
-           "mshr_num_entries"      : "16",
-       })
+        l2 = sst.Component("l2cache_%d"%core, "memHierarchy.Cache")
+        l2.addParams({
+            "cache_frequency"       : cacheFrequency,
+            "cache_size"            : "256 KB",
+            "cache_line_size"       : cacheLineSize,
+            "associativity"         : "8",
+            "access_latency_cycles" : "10",
+            "coherence_protocol"    : coherenceProtocol,
+            "replacement_policy"    : rplPolicy,
+            "L1"                    : "0",
+            "debug"                 : memDebug,  
+            "debug_level"           : memDebugLevel, 
+            "mshr_num_entries"      : "16",
+        })
        
-       ## SST Links
-       # Ariel -> L1(PRIVATE) -> L2(PRIVATE)  -> L3 (SHARED) -> DRAM 
-       ArielL1Link = sst.Link("cpu_cache_%d"%core)
-       ArielL1Link.connect((ariel, "cache_link_%d"%core, busLat), (l1, "high_network_0", busLat))
-       L1L2Link = sst.Link("l1_l2_%d"%core)
-       L1L2Link.connect((l1, "low_network_0", busLat), (l2, "high_network_0", busLat))
-       L2MembusLink = sst.Link("l2_membus_%d"%core)
-       L2MembusLink.connect((l2, "low_network_0", busLat), (membus, "high_network_%d"%core, busLat))
+        ## SST Links
+        # Ariel -> L1(PRIVATE) -> L2(PRIVATE)  -> L3 (SHARED) -> DRAM 
+        ArielL1Link = sst.Link("cpu_cache_%d"%core)
+        ArielL1Link.connect((ariel, "cache_link_%d"%core, busLat), (l1, "high_network_0", busLat))
+        L1L2Link = sst.Link("l1_l2_%d"%core)
+        L1L2Link.connect((l1, "low_network_0", busLat), (l2, "high_network_0", busLat))
+        L2MembusLink = sst.Link("l2_membus_%d"%core)
+        L2MembusLink.connect((l2, "low_network_0", busLat), (membus, "high_network_%d"%core, busLat))
    
 
-   l3 = sst.Component("L3cache", "memHierarchy.Cache")
-   l3.addParams({
-       "cache_frequency"       : cacheFrequency,
-       "cache_size"            : "8 MB",
-       "cache_line_size"       : cacheLineSize,
-       "associativity"         : "8",
-       "access_latency_cycles" : "20",
-       "coherence_protocol"    : coherenceProtocol,
-       "replacement_policy"    : rplPolicy,
-       "L1"                    : "0",
-       "debug"                 : memDebug,  
-       "debug_level"           : memDebugLevel, 
-       "mshr_num_entries"      : "16",
-   })
+    l3 = sst.Component("L3cache", "memHierarchy.Cache")
+    l3.addParams({
+        "cache_frequency"       : cacheFrequency,
+        "cache_size"            : "8 MB",
+        "cache_line_size"       : cacheLineSize,
+        "associativity"         : "8",
+        "access_latency_cycles" : "20",
+        "coherence_protocol"    : coherenceProtocol,
+        "replacement_policy"    : rplPolicy,
+        "L1"                    : "0",
+        "debug"                 : memDebug,  
+        "debug_level"           : memDebugLevel, 
+        "mshr_num_entries"      : "16",
+    })
   
-   # Bus to L3 and L3 <-> MM
-   BusL3Link = sst.Link("bus_L3")
-   BusL3Link.connect((membus, "low_network_0", busLat), (l3, "high_network_0", busLat))
-   L3MemCtrlLink = sst.Link("L3MemCtrl")
-   L3MemCtrlLink.connect((l3, "low_network_0", busLat), (memory, "direct_link", busLat))
+    # Bus to L3 and L3 <-> MM
+    BusL3Link = sst.Link("bus_L3")
+    BusL3Link.connect((membus, "low_network_0", busLat), (l3, "high_network_0", busLat))
+    L3MemCtrlLink = sst.Link("L3MemCtrl")
+    L3MemCtrlLink.connect((l3, "low_network_0", busLat), (memory, "direct_link", busLat))
 
     # txn gen --> memHierarchy Bridge
-   comp_memhBridge = sst.Component("memh_bridge", "CramSim.c_MemhBridge")
-   comp_memhBridge.addParams(g_params);
-   comp_memhBridge.addParams({
+    comp_memhBridge = sst.Component("memh_bridge", "CramSim.c_MemhBridge")
+    comp_memhBridge.addParams(g_params);
+    comp_memhBridge.addParams({
                         "verbose" : "0",
                         "numTxnPerCycle" : g_params["numChannels"],
                         "strTxnTraceFile" : "arielTrace",
                         "boolPrintTxnTrace" : "1"
                         })
-   # controller
-   comp_controller0 = sst.Component("MemController0", "CramSim.c_Controller")
-   comp_controller0.addParams(g_params)
-   comp_controller0.addParams({
+    # controller
+    comp_controller0 = sst.Component("MemController0", "CramSim.c_Controller")
+    comp_controller0.addParams(g_params)
+    comp_controller0.addParams({
                         "verbose" : "0",
-			})
-   c0 = comp_controller0.setSubComponent("TxnConverter","CramSim.c_TxnConverter")
-   c1 = comp_controller0.setSubComponent("AddrMapper", "CramSim.c_AddressHasher")
-   c2 = comp_controller0.setSubComponent("CmdScheduler", "CramSim.c_CmdScheduler")
-   c3 = comp_controller0.setSubComponent("DeviceController", "CramSim.c_DeviceController")
-   c0.addParams(g_params)
-   c1.addParams(g_params)
-   c2.addParams(g_params)
-   c3.addParams(g_params)
+                        })
+    c0 = comp_controller0.setSubComponent("TxnConverter","CramSim.c_TxnConverter")
+    c1 = comp_controller0.setSubComponent("AddrMapper", "CramSim.c_AddressHasher")
+    c2 = comp_controller0.setSubComponent("CmdScheduler", "CramSim.c_CmdScheduler")
+    c3 = comp_controller0.setSubComponent("DeviceController", "CramSim.c_DeviceController")
+    c0.addParams(g_params)
+    c1.addParams(g_params)
+    c2.addParams(g_params)
+    c3.addParams(g_params)
 
-		# bank receiver
-   comp_dimm0 = sst.Component("Dimm0", "CramSim.c_Dimm")
-   comp_dimm0.addParams(g_params)
-
-
-   link_dir_cramsim_link = sst.Link("link_dir_cramsim_link")
-   link_dir_cramsim_link.connect( (backend, "cramsim_link", "2ns"), (comp_memhBridge, "cpuLink", "2ns") )
-
-   # memhBridge(=TxnGen) <-> Memory Controller 
-   memHLink = sst.Link("memHLink_1")
-   memHLink.connect( (comp_memhBridge, "memLink", g_params["clockCycle"]), (comp_controller0, "txngenLink", g_params["clockCycle"]) )
-
-   # Controller <-> Dimm
-   cmdLink = sst.Link("cmdLink_1")
-   cmdLink.connect( (comp_controller0, "memLink", g_params["clockCycle"]), (comp_dimm0, "ctrlLink", g_params["clockCycle"]) )
+    # bank receiver
+    comp_dimm0 = sst.Component("Dimm0", "CramSim.c_Dimm")
+    comp_dimm0.addParams(g_params)
 
 
-   comp_controller0.enableAllStatistics()
-   comp_memhBridge.enableAllStatistics()
-   comp_dimm0.enableAllStatistics()
+    link_dir_cramsim_link = sst.Link("link_dir_cramsim_link")
+    link_dir_cramsim_link.connect( (backend, "cramsim_link", "2ns"), (comp_memhBridge, "cpuLink", "2ns") )
+
+    # memhBridge(=TxnGen) <-> Memory Controller 
+    memHLink = sst.Link("memHLink_1")
+    memHLink.connect( (comp_memhBridge, "memLink", g_params["clockCycle"]), (comp_controller0, "txngenLink", g_params["clockCycle"]) )
+
+    # Controller <-> Dimm
+    cmdLink = sst.Link("cmdLink_1")
+    cmdLink.connect( (comp_controller0, "memLink", g_params["clockCycle"]), (comp_dimm0, "ctrlLink", g_params["clockCycle"]) )
+
+
+    comp_controller0.enableAllStatistics()
+    comp_memhBridge.enableAllStatistics()
+    comp_dimm0.enableAllStatistics()
 
 
 sst.setStatisticLoadLevel(7)
