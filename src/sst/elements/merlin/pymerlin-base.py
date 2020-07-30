@@ -96,7 +96,6 @@ class PlatformDefinition:
     # Adds a new parameter set or updates the set if it already exists
     def addParamSet(self,set_name, params):
         if set_name in self._param_sets:
-            print("Updating params")
             self._param_sets[set_name].update(params)
         else:
             self._param_sets[set_name] = copy.copy(params)
@@ -484,7 +483,6 @@ class TemplateBase(_AttributeManager):
         if params:
             for key,value in params.items():
                 try:
-                    print"Calling addParam(%s,%r)"%(key,value)
                     self.addParam(key,value)
                 except LockedWriteError as err:
                     print("WARNING: attribute %s cannot be set in %r as it is marked read-only"%(key,self.__class__.__name__))
@@ -507,7 +505,6 @@ class TemplateBase(_AttributeManager):
         if params:
             for key,value in params.items():
                 try:
-                    print"Calling addParam(%s,%r)"%(key,value)
                     self.addParam(user_prefix + "." + key,value)
                 except LockedWriteError as err:
                     print("WARNING: attribute %s cannot be set in %r as it is marked read-only"%(key,self.__class__.__name__))
