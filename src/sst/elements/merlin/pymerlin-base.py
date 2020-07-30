@@ -18,6 +18,7 @@
 import sst
 import random
 import copy
+import re
 
 # importlib didn't exist until 2.7, so if we're running on 2.6, then
 # import statement will fail.
@@ -27,6 +28,7 @@ except ImportError:
     # We must be using 2.6, use the old module import code.
     def import_module(filename):
         return __import__( filename, fromlist=[''] )
+
 
 class PlatformDefinition:
 
@@ -94,6 +96,7 @@ class PlatformDefinition:
     # Adds a new parameter set or updates the set if it already exists
     def addParamSet(self,set_name, params):
         if set_name in self._param_sets:
+            print("Updating params")
             self._param_sets[set_name].update(params)
         else:
             self._param_sets[set_name] = copy.copy(params)
@@ -130,86 +133,177 @@ that you have to declare all your parameter names using
 _declareClassVariables.
 
 """
+class LockedWriteError(Exception):
+    pass
+
 class _member_info(object):
-    def __init__(self):
+    def __init__(self,name):
+        self.fullname = name
         self.value = None
         self.dictionaries = list()
         self.locked = False
+        self.call_back = None
+
+class _member_formatted_info(object):
+    def __init__(self):
+        self.dictionaries = list()
         self.call_back = None
 
 
 
 class _AttributeManager(object):
     def __init__(self):
-        object.__setattr__(self,"_in_dict",set(["_in_dict","_vars"]))
+        object.__setattr__(self,"_in_dict",set(["_in_dict","_vars","_format_vars","_name","_passthrough_target"]))
         object.__setattr__(self,"_vars",dict())
-
-    def _setPassthroughTarget(self,target):
-        object.__setattr__(self,"_passthrough_target",target)
-
+        object.__setattr__(self,"_format_vars",dict())
+        object.__setattr__(self,"_name",None)
+        object.__setattr__(self,"_passthrough_target",None)
+        
     def _addDirectAttribute(self,name,value=None):
         self._in_dict.add(name)
         object.__setattr__(self,name,value)
                 
     def _addVariable(self,var,dictionary=None,prefix=None):
         if not var in self._vars:
-            self._vars[var] = _member_info()
+            if self._name:
+                self._vars[var] = _member_info(self._name + "." + var)
+            else:
+                self._vars[var] = _member_info(var)
             #raise AttributeError("%r: %s was already declared as a variable or parameter"%(self.__class__.__name__,var))
 
         myvar = self._vars[var]
         if dictionary is not None:
             myvar.dictionaries.append(( dictionary, prefix) )
 
+    def _addFormattedVariable(self,var,dictionary=None,prefix=None,callback=None):
+        if "%d" in var:
+            # Switch out the %d with \d+ (the regex version)
+            var = var.replace("%d","\d+")
+
+        if not var in self._format_vars:
+            self._format_vars[var] = _member_formatted_info()
+
+        myvar = self._format_vars[var]
+
+        if dictionary is not None:
+            myvar.dictionaries.append(( dictionary, prefix ) )
+
+        if callback is not None:
+            myvar.call_back = callback
+
+
+    def __getErrorReportClass(self):
+        if "_parent" in self.__dict__:
+            return self._parent.__class__.__name__
+        else:
+            return self.__class__.__name__
         
+    def __getErrorReportName(self,var_name):
+        if self._name:
+            return self._name + "." + var_name
+        else:
+            return var_name
+        
+            
     # Function that will be called when a class variable is accessed
     # to write
     def __setattr__(self,key,value):
+
+        if key in self._in_dict:
+            return object.__setattr__(self,key,value)
+
+        var = None
+        callback = None
         if key in self._vars:
             var = self._vars[key]
             if var.locked:
-                raise AttributeError("attribute %s of class %r has been marked read only"%(key,self.__class__.__name__))            
-            # Set the value
-            var.value = value
-            # Put the value in the specified param dictionaries with
-            # their corresponding prefixes
-            for (d,p) in var.dictionaries:
-                # Apply the prefix for this dictionary
-                mykey = key
-                if p:
-                    mykey = p + mykey
-                if value is None:
-                    # If set to None, remove from dictionary
-                    d.pop(mykey,None)
-                else:
-                    d[mykey] = value
+                raise LockedWriteError("attribute %s of class %r has been marked read only"%(key,self.__class__.__name__))
 
-            # If there's a callback, call it
-            if var.call_back:
-                var.call_back(key,value)
-
-        # If key resides in __dict__, just call object setattr function
-        elif key in self._in_dict:
-            object.__setattr__(self,key,value)
-
-        # Not allowing writes to unknown variables
         else:
+            
+            # Check to see if there is a formatted var that matches
+            for match in self._format_vars:
+                if re.match(match,key):
+                    obj = self._format_vars[match]
+
+                    # Create a "real" variable for this and copy over
+                    # the dictionaries list
+                    if key in self._vars:
+                        # This shouldn't happen.  After it's called
+                        # once it should use the normal path
+                        print("ERROR: logic error in __settattr__ for class _AttributeManager")
+                        sst.exit()
+
+                    self._vars[key] = _member_info(self._name + "." + key)
+                    var = self._vars[key]
+                    var.dictionaries = copy.copy(obj.dictionaries)
+                    callback = obj.call_back
+                    break
+
+        # Process the variable
+        if not var:
+            # Variable not found, see if there is a passthrough
             # If there's a passthrough target, send this write to it
-            if "_passthrough_target" in self.__dict__:
-                self.__dict__["_passthrough_target"].__setattr__(key,value)
+            if self._passthrough_target:
+                return self._passthrough_target.__setattr__(key,value)
             else:
-                raise KeyError("%r has no attribute %r"%(self.__class__.__name__,key))
+                raise KeyError("%r has no attribute %r"%(self.__getErrorReportClass(),self.__getErrorReportName(key)))
         
+        # Set the value
+        var.value = value
+
+        # Put the value in the specified param dictionaries with
+        # their corresponding prefixes
+        for (d,p) in var.dictionaries:
+            # Apply the prefix for this dictionary
+            mykey = key
+            if p:
+                mykey = p + mykey
+            if value is None:
+                # If set to None, remove from dictionary
+                d.pop(mykey,None)
+            else:
+                d[mykey] = value
+
+        # If there's a callback, call it.  It can either be a
+        # callback for a formatted variable (callback will not be
+        # None, or it could be a regular callback
+        if callback:
+            callback(var.fullname,value)
+        elif var.call_back:
+            var.call_back(var.fullname,value)
+
 
     # Function will be called when a variable not in __dict__ is read
     def __getattr__(self,key):
         if key in self._vars:
             return self._vars[key].value
         else:
-            if "_passthrough_target" in self.__dict__:
-                self.__dict__["passthrough_target"].__getattr__(key,value)
+            if self._passthrough_target:
+                self._passthrough_target.__getattr__(key,value)
             else:
-                raise AttributeError("%r has no attribute %r"%(self.__class__.__name__,key))
+                raise KeyError("%r has no attribute %r"%(self.__getErrorReportClass(),self.__getErrorReportName(key)))
 
+    def clone(self):
+        return copy.deepcopy(self)
+
+    
+class _SubAttributeManager(_AttributeManager):
+    def __init__(self,parent,name=None):
+        _AttributeManager.__init__(self)
+        self._addDirectAttribute("_parent",parent)
+        self._name = name
+
+
+class TemplateBase(_AttributeManager):
+    def __init__(self):
+        _AttributeManager.__init__(self)
+        self._addDirectAttribute("_groups",dict())
+        self._addDirectAttribute("_enabled_stats",list())
+        self._addDirectAttribute("_stat_load_level",None)
+
+    def _setPassthroughTarget(self,target):
+        self._passthrough_target = target
 
     def addParams(self,p):
         for x in p:
@@ -220,46 +314,44 @@ class _AttributeManager(object):
             self.addParam(x,p[x])
 
     def addParam(self, key, value):
-        if key in self._vars:
-            var = self._vars[key]
-            if var.locked:
-                raise AttributeError("parameter %s of class %r has been marked read only"%(key,self.__class__.__name__))            
 
-            # Set the value
-            var.value = value
-            # Put the value in the specified param dictionaries with
-            # their corresponding prefixes
-            for (d,p) in var.dictionaries:
-                # Apply the prefix for this dictionary
-                mykey = key
-                if p:
-                    mykey = p + mykey
-                if value is None:
-                    # If set to None, remove from dictionary
-                    d.pop(mykey,None)
-                else:
-                    d[mykey] = value
+        # Provide a convenience feature of recursing into other
+        # Attribute Managers.  See if the first item is another
+        # TemplateBase
+        if "." in key:
+            tokens = key.split(".",1)
+            try:
+                if tokens[0] in self._vars:
+                    return self._vars[tokens[0]].value.addParam(tokens[1],value)
+            except AttributeError as e:
+                # This means there was no addParams call, so not a
+                # valid name
+                pass
+            
+        sub, var_name = self.__parseSubAttributeName(key)
 
-            # If theres a callback, call it
-            if var.call_back:
-                var.call_back(key,value)
-        else:
-            raise KeyError("%s is not a defined parameter for %r"%(key,self.__class__.__name__))
+        try:
+            return sub.__setattr__(var_name,value)
+        except LockedWriteError:
+            raise LockedWriteError("parameter %s of class %r has been marked read only"%(key,self.__class__.__name__))
+        except KeyError:
+            pass
+
 
     def getParam(self,key):
-        if key in self._vars:
-            return self._vars[key].value
-        else:
-            raise AttributeError("%r has no param %r"%(self.__class__.__name__,key))
+        sub, var = self.__parseSubAttribute(key);
+        return sub.__getattr__(var)
 
 
     # Function to lock a variable (make it read-only)
     def _lockVariable(self,variable):
-        self._vars[variable].locked = True
+        (_, var) = self.__parseSubAttribute(variable)
+        var.locked = True
         
     # Function to unlock a variable (make it writable)
     def _unlockVariable(self,variable):
-        self._vars[variable].locked = False
+        (_, var) = self.__parseSubAttribute(variable)
+        var.locked = False
 
     def _isVariableLocked(self,variable):
         return self._vars[variable].locked
@@ -267,70 +359,16 @@ class _AttributeManager(object):
     def _areVariablesLocked(self,variables):
         ret = True
         for var in variables:
-            ret = ret and self._vars[var].locked
+            (_, v) = self.__parseSubAttribute(var)
+            ret = ret and v.locked
         return ret
-
 
     # Set a callback to be called on write to a variable
     def _setCallbackOnWrite(self,variable,func):
-        self._vars[variable].call_back = func
+        (_, var) = self.__parseSubAttribute(variable)
+        var.call_back = func
 
-
-    # Functions to subscribe to PlatformParameters.  This will apply
-    # platform params from the specified set to the object.  This
-    # should be the last thing called in the init function of the
-    # derived class.  It must be called after all variables and params
-    # are declared.
-    def _subscribeToPlatformParamSet(self,set_name):
-        plat = PlatformDefinition.getCurrentPlatform()
-        if not plat:
-            return
-        try:
-            params = plat.getParamSet(set_name)
-        except KeyError:
-            # No set with the correct name
-            return
-        if params:
-            for key,value in params.items():
-                try:
-                    self.__setattr__(key,value)
-                except AttributeError as err:
-                    print("WARNING: attribute %s cannot be set in %r as it is marked read-only"%(key,self.__class__.__name__))
-                except KeyError:
-                    # not a valid variable for this class, just ignore
-                    pass
-
-
-    def clone(self):
-        return copy.deepcopy(self)
-
-    
-class _SubAttributeManager(_AttributeManager):
-    def __init__(self,parent):
-        _AttributeManager.__init__(self)
-        self._addDirectAttribute("_parent",parent)
         
-    def _declareParams(self,group,plist,prefix=None):
-        if not group in self._parent._groups:
-            self._parent._groups[group] = dict()
-
-        group_dict = self._parent._groups[group]
-
-        for var in plist:
-            self._addVariable(var,group_dict,prefix)
-
-    def _createPrefixedParams(self,name):
-        self._addDirectAttribute(name,_SubAttributeManager(self._parent))
-        return self.__dict__[name]
-
-
-class TemplateBase(_AttributeManager):
-    def __init__(self):
-        _AttributeManager.__init__(self)
-        self._addDirectAttribute("_groups",dict())
-        self._addDirectAttribute("_enabled_stats",list())
-        self._addDirectAttribute("_stat_load_level",None)
-
 
     # Declare variables used by the class, but not passed as
     # parameters to any Components/SubCompnoents.  Variable will be
@@ -339,6 +377,28 @@ class TemplateBase(_AttributeManager):
         for var in vlist:
             self._addVariable(var)
 
+
+
+    def __createSubItems(self,param):
+        curr = self
+
+        fullname = ""
+        remaining = param
+        while remaining:
+            if not "." in remaining:
+                return curr, remaining
+
+            (sub_name, remaining) = remaining.split(".",1)
+            fullname = fullname + sub_name
+            if not sub_name in curr._in_dict:
+                # Not created yet
+                curr._addDirectAttribute(sub_name,_SubAttributeManager(self,fullname))
+
+            curr = curr.__dict__[sub_name]
+
+            fullname = fullname + "."
+
+            
     # Declare parameters (variables) of the class.  The group will
     # collect params together for easy passing as parameters to
     # Components/SubComponents
@@ -348,21 +408,39 @@ class TemplateBase(_AttributeManager):
 
         group_dict = self._groups[group]
         
-        for var in plist:
-            self._addVariable(var,group_dict,prefix)
-            #if var in self._vars:
-            #    raise AttributeError("%r: %s was already declared as a variable or parameter"%(self.__class__.__name__,var))
-            #self._vars[var] = _member_info(group_dict)
+        for v in plist:
+            sub, var = self.__createSubItems(v)
+            sub._addVariable(var,group_dict,prefix)
 
+
+    def _declareParamsWithUserPrefix(self,group,user_prefix,plist,prefix=None):
+        # Mostly we'll defer to _declareParams
+        new_plist = [user_prefix + "." + sub for sub in plist]
+        self._declareParams(group,new_plist,prefix)
+        
+
+    def _declareFormattedParams(self,group,plist,prefix=None,callback=None):
+        if not group in self._groups:
+            self._groups[group] = dict()
+
+        group_dict = self._groups[group]
+
+        for v in plist:
+            sub, var = self.__createSubItems(v)
+            sub._addFormattedVariable(var,group_dict,prefix,callback)
+
+    def _declareFormattedParamsWithUserPrefix(self,group,user_prefix,plist,prefix=None,callback=None):
+        # Mostly we'll defer to _declareParams
+        new_plist = [user_prefix + "." + sub for sub in plist]
+        self._declareFormattedParams(group,new_plist,prefix,callback)
+
+
+                
     # Get the dictionary of parameters for a group
     def _getGroupParams(self,group):
         return self._groups[group]
 
     
-    def _createPrefixedParams(self,name):
-        self._addDirectAttribute(name,_SubAttributeManager(self))
-        return self.__dict__[name]
-
     def combineParams(self,defaultParams,userParams):
         returnParams = defaultParams.copy()
         returnParams.update(userParams)
@@ -389,12 +467,97 @@ class TemplateBase(_AttributeManager):
         if self._stat_load_level:
             component.setStatisticLoadLevel(self._stat_load_level[0],self._stat_load_level[1])
 
+    # Functions to subscribe to PlatformParameters.  This will apply
+    # platform params from the specified set to the object.  This
+    # should be the last thing called in the init function of the
+    # derived class.  It must be called after all variables and params
+    # are declared.
+    def _subscribeToPlatformParamSet(self,set_name):
+        plat = PlatformDefinition.getCurrentPlatform()
+        if not plat:
+            return
+        try:
+            params = plat.getParamSet(set_name)
+        except KeyError:
+            # No set with the correct name
+            return
+        if params:
+            for key,value in params.items():
+                try:
+                    print"Calling addParam(%s,%r)"%(key,value)
+                    self.addParam(key,value)
+                except LockedWriteError as err:
+                    print("WARNING: attribute %s cannot be set in %r as it is marked read-only"%(key,self.__class__.__name__))
+                except AttributeError as err:
+                    print("WARNING: attribute %s not found in class %r"%(key,self.__class__.__name__))
+                except KeyError:
+                    # not a valid variable for this class, just ignore
+                    pass
+
+
+    def _subscribeToPlatformParamSetAndPrefix(self,set_name,user_prefix):
+        plat = PlatformDefinition.getCurrentPlatform()
+        if not plat:
+            return
+        try:
+            params = plat.getParamSet(set_name)
+        except KeyError:
+            # No set with the correct name
+            return
+        if params:
+            for key,value in params.items():
+                try:
+                    print"Calling addParam(%s,%r)"%(key,value)
+                    self.addParam(user_prefix + "." + key,value)
+                except LockedWriteError as err:
+                    print("WARNING: attribute %s cannot be set in %r as it is marked read-only"%(key,self.__class__.__name__))
+                except AttributeError as err:
+                    print("WARNING: attribute %s not found in class %r"%(key,self.__class__.__name__))
+                except KeyError:
+                    # not a valid variable for this class, just ignore
+                    pass
+
+    def __parseSubAttribute(self,attribute):
+        if "." not in attribute:
+            try:
+                return (self, self._vars[attribute])
+            except KeyError:
+                raise AttributeError("%r has no param %r"%(self.__class__.__name__,attribute))
+
+        tokens = attribute.split(".")
+        var = tokens.pop(-1)
+        sub = self
+        for level in tokens:
+            if level in sub.__dict__:
+                sub = sub.__dict__[level]
+            else:
+                raise AttributeError("%r has no param %r (%r not found)"%(self.__class__.__name__,attribute,level))
+
+        if var not in sub._vars:
+            raise AttributeError("%r has no param %r"%(self.__class__.__name__,attribute))
+
+        return (sub, sub._vars[var])
+    
+    def __parseSubAttributeName(self,attribute):
+        if "." not in attribute:
+            return (self, attribute)
+
+        tokens = attribute.split(".")
+        var = tokens.pop(-1)
+        sub = self
+        for level in tokens:
+            if level in sub.__dict__:
+                sub = sub.__dict__[level]
+            else:
+                raise AttributeError("%r has no param %r (%r not found)"%(self.__class__.__name__,attribute,level))
+
+        return (sub, var)                
+
+"""
     @classmethod
     def instanceTemplate(cls,base, name):
         def findClass(base,name,_seen):
-            print("Base = %r"%base)
             subs = base.__subclasses__()
-            print("  subs: %r"%subs)
             #print(subs)
             for sub in subs:
                 print("    sub: %r"%sub)
@@ -417,7 +580,7 @@ class TemplateBase(_AttributeManager):
         sub = findClass(base,name,seen)
                 
         return sub()
-        
+"""        
 
 # Classes implementing topology
 class Topology(TemplateBase):
