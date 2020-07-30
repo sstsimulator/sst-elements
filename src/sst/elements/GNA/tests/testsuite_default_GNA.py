@@ -39,8 +39,6 @@ class testcase_GNA_Component(SSTTestCase):
 
 #####
 
-    @unittest.skipIf(get_testing_num_ranks() > 2, "GNA: test_GNA_1 skipped if ranks > 2")
-    @unittest.skipIf(get_testing_num_threads() > 3, "Messier: test_GNA_1 skipped if Treads > 3")
     def test_GNA_1(self):
         self.GNA_test_template("1")
 
@@ -67,7 +65,9 @@ class testcase_GNA_Component(SSTTestCase):
         # Perform the tests
         self.assertFalse(os_test_file(errfile, "-s"), "GNA test {0} has Non-empty Error File {1}".format(testDataFileName, errfile))
 
-        cmp_result = compare_diff(outfile, reffile)
+        remove_component_warning_from_file(outfile)
+
+        cmp_result = compare_sorted_diff(testcase, outfile, reffile)
         self.assertTrue(cmp_result, "Output file {0} does not match Reference File {1}".format(outfile, reffile))
 
 
