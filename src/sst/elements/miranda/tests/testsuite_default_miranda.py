@@ -39,6 +39,7 @@ class testcase_miranda_Component(SSTTestCase):
 
 #####
 
+    @unittest.skipIf(get_testing_num_ranks() > 2, "miranda: test_miranda_singlestream skipped if ranks > 2")
     def test_miranda_singlestream(self):
         self.miranda_test_template("singlestream")
 
