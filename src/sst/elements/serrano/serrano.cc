@@ -6,6 +6,8 @@
 #include "seriterunit.h"
 #include "serprintunit.h"
 
+#include <limits>
+
 using namespace SST::Serrano;
 
 SerranoComponent::SerranoComponent( SST::ComponentId_t id, SST::Params& params ) :
@@ -24,7 +26,7 @@ SerranoComponent::SerranoComponent( SST::ComponentId_t id, SST::Params& params )
 
 	constexpr int kernel_name_len = 128;
 	char* kernel_name = new char[kernel_name_len];
-	for( int i = 0; i < INT_MAX; ++i ) {
+	for( int i = 0; i < std::numeric_limits<int>::max(); ++i ) {
 		snprintf( kernel_name, kernel_name_len, "kernel%d", i);
 		std::string kernel_name_file = params.find<std::string>( kernel_name, "" );
 
