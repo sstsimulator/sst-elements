@@ -41,6 +41,14 @@ _basic_nic_defaults = {
     
 defaults.addParamSet("ember.basic_nic",_basic_nic_defaults)
 
+_embermain_defaults = {
+    'verboseMask': -1,
+    'verboseLevel': 0,
+}
+
+defaults.addParamSet("ember.main",_embermain_defaults)
+
+
 _functionsm_defaults = {
     'verboseLevel': 0,
     'defaultReturnLatency': 30000,
@@ -60,17 +68,13 @@ _ctrl_defaults = {
     'matchDelay_ns': 150,
     'regRegionBaseDelay_ns': 3000,
     
-    #'rxMemcpyModParams.range.0': '0-:344ps',
-    #'txMemcpyModParams.range.0': '0-:344ps',
-    #'txSetupModParams.range.0': '0-:130ns',
-    #'txMemcpyMod': 'firefly.LatencyMod',
-    #'txSetupMod': 'firefly.LatencyMod',
-    #'rxSetupMod': 'firefly.LatencyMod',
-    #'rxMemcpyMod': 'firefly.LatencyMod',
+    'txMemcpyMod': 'firefly.LatencyMod',
+    'txSetupMod': 'firefly.LatencyMod',
+    'rxSetupMod': 'firefly.LatencyMod',
+    'rxMemcpyMod': 'firefly.LatencyMod',
     
     'regRegionPerPageDelay_ns': 100,
     'verboseLevel': 0,
-    'txMemcpyModParams.op': 'Mult',
     'sendAckDelay_ns': 0,
     'shortMsgLength': 12000,
     'regRegionXoverLength': 4096,
@@ -78,13 +82,13 @@ _ctrl_defaults = {
     'rendezvousVN' : 0, # VN used to send a match header that requires a get by the target
     'ackVN' : 0,  # VN used to send an ACK back to originator after target does a get
     
-    #'pqs.verboseMask': -1,
-    #'pqs.verboseLevel': 0,
-    #'rxMemcpyModParams.range.0': '0-:344ps',
-    #'txMemcpyModParams.range.0': '0-:344ps',
-    #'txSetupModParams.range.0': '0-:130ns',
-    #'txMemcpyModParams.op': 'Mult',
-    #'rxSetupModParams.range.0': '0-:100ns'
+    'pqs.verboseMask': -1,
+    'pqs.verboseLevel': 0,
+    'rxMemcpyModParams.range.0': '0-:344ps',
+    'txMemcpyModParams.range.0': '0-:344ps',
+    'txSetupModParams.range.0': '0-:130ns',
+    'rxSetupModParams.range.0': '0-:100ns',
+    'txMemcpyModParams.op': 'Mult'
 }
 
 defaults.addParamSet("ember.ctrl",_ctrl_defaults)
@@ -128,12 +132,76 @@ class FireflyHades(FireflyOS):
         FireflyOS.__init__(self)
         #self._declareClassVariables(["_final_hades_params","_final_ctrl_params"])
         self._declareParams("main",["verboseLevel","verboseMask"])
-        funcsm = self._createPrefixedParams("functionSM")
-        funcsm._declareParams("main",_functionsm_defaults.keys(),"functionSM.")
-        funcsm._subscribeToPlatformParamSet("ember.functionsm")
-        ctrl = self._createPrefixedParams("ctrl")
-        ctrl._declareParams("ctrl",_ctrl_defaults.keys())
-        ctrl._subscribeToPlatformParamSet("ember.ctrl")
+        self._subscribeToPlatformParamSet("ember.main")
+        
+        ### functionSM variables ###
+        self._declareParamsWithUserPrefix(
+            "main",  # dictionary params will end up in
+            "functionsm", # prefix as seen by the end user
+            [ 'verboseLevel', 'defaultReturnLatency', 'defaultEnterLatency', 'defaultModule',
+              'smallCollectiveVN', 'smallCollectiveSize'],
+            "functionSM." # prefix needed in the dictionary so things get passed correctly to elements
+        )
+
+        # Subscribe to ember.functionsm platform param set.  Need to
+        # prefix the keys with functionsm so that the end use doesn't
+        # have to put it on each key entry
+        self._subscribeToPlatformParamSetAndPrefix("ember.functionsm","functionsm")
+
+        ### ctrl variables ###
+        self._declareParamsWithUserPrefix(
+            "ctrl", # dictionary params will end up in
+            "ctrl", # user visible prefix
+            [ 'sendStateDelay_ps', 'recvStateDelay_ps', 'waitallStateDelay_ps', 'waitanyStateDelay_ps', 'matchDelay_ns',
+              'regRegionBaseDelay_ns',
+              'regRegionPerPageDelay_ns', 'verboseLevel', 'sendAckDelay_ns', 'shortMsgLength',
+              'regRegionXoverLength',
+              'rendezvousVN', 'ackVN' ]
+        )
+
+        self._declareParamsWithUserPrefix(
+            "ctrl", # dictionary params will end up in
+            "ctrl", # user visible prefix
+            [ 'pqs.verboseMask', 'pqs.verboseLevel' ],
+            "pqs." # prefix needed in the dictionary so things get passed correctly to elements
+        )
+
+        # Initial the variables for the modules
+        #'txMemcpyMod', 'txSetupMod', 'rxSetupMod', 'rxMemcpyMod',
+        subs = [
+            "rxMemcpyMod",
+            "txMemcpyMod",
+            "txSetupMod",
+            "rxSetupMod",
+            "txFiniMod",
+            "rxFiniMod",
+            "rxPostMod"
+        ]
+
+        for var in subs:
+            self._declareParamsWithUserPrefix(
+                "ctrl", # dictionary params will end up in
+                "ctrl", # user visible prefix
+                [ var ]
+            )
+
+            self._declareParamsWithUserPrefix(
+                "ctrl", # dictionary params will end up in
+                "ctrl." + var + "Params", # user visible prefix
+                [ "op", "base" ]
+            )
+
+            self._declareFormattedParamsWithUserPrefix(
+                "ctrl", # dictionary params will end up in
+                "ctrl." + var + "Params", # user visible prefix
+                [ 'range.%d' ],
+                var + "ModParams.range."
+            )
+            
+        # Subscribe to ember.ctrl platform param set.  Need to
+        # prefix the keys with ctrl so that the end use doesn't
+        # have to put it on each key entry
+        self._subscribeToPlatformParamSetAndPrefix("ember.ctrl","ctrl")
 
 
     def build(self,engine,nicLink,loopLink,size,nicsPerNode,job_id,pid,lid,coreId):
@@ -157,19 +225,6 @@ class FireflyHades(FireflyOS):
 
         # prefixed by "hermesParams.ctrlMsg."
         ctrl_params = {
-            'txMemcpyMod': 'firefly.LatencyMod',
-            'rxMemcpyMod': 'firefly.LatencyMod',
-            'txSetupMod': 'firefly.LatencyMod',
-            'rxSetupMod': 'firefly.LatencyMod',
-
-            'rxMemcpyModParams.range.0': '0-:344ps',
-            'txMemcpyModParams.range.0': '0-:344ps',
-            'txSetupModParams.range.0': '0-:130ns',
-            'txMemcpyModParams.op': 'Mult',
-            'rxSetupModParams.range.0': '0-:100ns',
-            'pqs.verboseMask': -1,
-            'pqs.verboseLevel': 0,
-
             'nicsPerNode': nicsPerNode,
         }
 
@@ -177,11 +232,13 @@ class FireflyHades(FireflyOS):
         proto = os.setSubComponent( "proto", "firefly.CtrlMsgProto" )
         process = proto.setSubComponent( "process", "firefly.ctrlMsg" )
 
-
         proto.addParams(self._getGroupParams("ctrl"))
         proto.addParams(ctrl_params)
         process.addParams(self._getGroupParams("ctrl"))
         process.addParams(ctrl_params)
+        # Should figure out how to put this into the main param group
+        # object
+        process.addParam("nicsPerNode", nicsPerNode)
 
         #nicLink.connect( (virtNic,'nic','1ns' ),(nic,'core'+str(x),'1ns'))
         virtNic.addLink(nicLink,'nic','1ns')
@@ -206,7 +263,8 @@ class EmberMPIJob(Job):
 
         # Set up the prefixed params
         self.os = FireflyHades()
-
+        self._lockVariable("os")
+        
     def getName(self):
         return "EmberMPIJob"
 
