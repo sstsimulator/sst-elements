@@ -19,7 +19,7 @@ libserrano_la_SOURCES = \
 
 EXTRA_DIST = \
 	tests/test_serrano.py \
-	tests/graph/sum.graph
+	tests/graphs/sum.graph
 
 libserrano_la_LDFLAGS = -module -avoid-version
 
