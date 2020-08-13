@@ -29,4 +29,7 @@
 // Store instructions
 #include "inst/vstore.h"
 
+// Special instructions
+#include "inst/vdecodefaultinst.sh"
+
 #endif

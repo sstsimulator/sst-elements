@@ -486,19 +486,26 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 		if( ! rob[i]->empty() ) {
 			VanadisInstruction* rob_front = rob[i]->peek();
 
+			// Instruction is flagging error, print out and halt
+			if( rob_front->trapsError() ) {
+				output->fatal( CALL_INFO, -1, "Instruction %" PRIu64 " at %" PRIu64 " flags an error (instruction-type=%s)\n",
+					rob_front->getID(), rob_front->getInstructionAddress(),
+					rob_front->getInstCode() );
+			}
+
 			if( rob_front->isSpeculated() && rob_front->completedExecution() ) {
 				// Check we predicted in the right direction.
 				output->verbose(CALL_INFO, 8, 0, "ROB -> front on thread %" PRIu32 " is a speculated instruction.\n", i);
 
 				VanadisSpeculatedInstruction* spec_ins = dynamic_cast<VanadisSpeculatedInstruction*>( rob_front );
-				
+
 				output->verbose(CALL_INFO, 8, 0, "ROB -> check prediction: speculated: %s / result: %s\n",
 					directionToChar( spec_ins->getSpeculatedDirection() ),
 					directionToChar( spec_ins->getResultDirection( register_files[i] ) ) );
 
 				if( spec_ins->getSpeculatedDirection() != spec_ins->getResultDirection( register_files[i] ) ) {
 					// We have a mis-speculated instruction, uh-oh.
-					output->verbose(CALL_INFO, 8, 0, "ROB -> mis-speculated execution, begin pipeline reset.\n");		
+					output->verbose(CALL_INFO, 8, 0, "ROB -> mis-speculated execution, begin pipeline reset.\n");
 				} else {
 					output->verbose(CALL_INFO, 8, 0, "ROB -> speculation correct.\n");
 				}
