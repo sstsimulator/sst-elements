@@ -29,7 +29,6 @@ public:
 
 	void reset( const size_t cache_entries ) {
 		max_entries = cache_entries;
-		ordering_q.reserve( cache_entries );
                 data_values.reserve( cache_entries );
 	}
 
@@ -39,7 +38,7 @@ public:
 
 	T find( const I& key ) {
 		send_key_to_front( key );
-		return data_values.find( key ).second;
+		return data_values.find( key )->second;
 	}
 
 	void store( const I& key, T value ) {
@@ -58,16 +57,6 @@ public:
 	}
 
 private:
-	
-/*
-	template< class U = T, typename std::enable_if< std::is_pointer<T>::value > >
-	void delete_entry( T entry ) {
-		delete entry;
-	}
-
-	template< class U = T, typename = std::enable_if< ! std::is_pointer<T>::value > >
-	void delete_entry( T entry ) { // Don't do anything }
-*/
 	void kill_lru_key() {
 		// if we aren't full yet, then keep entries otherwise we will
 		// throw away
@@ -79,7 +68,7 @@ private:
 		ordering_q.pop_back();
 
 		auto find_key = data_values.find( remove_key );
-//		delete_entry( find_key.second );
+		delete find_key->second;
 		data_values.erase( find_key );
 	}
 
@@ -87,7 +76,7 @@ private:
 		bool found_key = false;
 
                 for( auto order_itr = ordering_q.begin(); order_itr != ordering_q.end(); ) {
-                        if( key == order_itr.first ) {
+                        if( key == (*order_itr) ) {
                                 ordering_q.erase( order_itr );
                                 found_key = true;
                         } else {
@@ -101,8 +90,8 @@ private:
 	}
 
 	size_t max_entries;
-	std::list<const I> ordering_q;
-	std::unordered_map<const I, T> data_values;
+	std::list< I > ordering_q;
+	std::unordered_map<I, T> data_values;
 
 };
 
