@@ -28,7 +28,7 @@ public:
 	}
 
 	void reset( const size_t cache_entries ) {
-		max_entries( cache_entries );
+		max_entries = cache_entries;
 		ordering_q.reserve( cache_entries );
                 data_values.reserve( cache_entries );
 	}
@@ -59,18 +59,15 @@ public:
 
 private:
 	
-	template< class T >
-	std::enable_if< std::is_pointer<T>::value >
+/*
+	template< class U = T, typename std::enable_if< std::is_pointer<T>::value > >
 	void delete_entry( T entry ) {
 		delete entry;
 	}
 
-	template< class T >
-	std::enable_if< ! std::is_pointer<T>::value >
-	void delete_entry( T entry ) {
-		// Don't do anything
-	}
-
+	template< class U = T, typename = std::enable_if< ! std::is_pointer<T>::value > >
+	void delete_entry( T entry ) { // Don't do anything }
+*/
 	void kill_lru_key() {
 		// if we aren't full yet, then keep entries otherwise we will
 		// throw away
@@ -82,7 +79,7 @@ private:
 		ordering_q.pop_back();
 
 		auto find_key = data_values.find( remove_key );
-		delete_entry( find_key.second );
+//		delete_entry( find_key.second );
 		data_values.erase( find_key );
 	}
 
