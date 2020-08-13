@@ -2,71 +2,112 @@
 #ifndef _H_VANADIS_INST_LOADER
 #define _H_VANADIS_INST_LOADER
 
-#include <unordered_map>
-#include <list>
-
 #include <sst/core/subcomponent.h>
 #include <sst/core/interfaces/simpleMem.h>
+
+#include "datastruct/vcache.h"
 
 namespace SST {
 namespace Vanadis {
 
 class VanadisInstructionBundle {
+
 public:
 	VanadisInstructionBundle( const uint64_t addr ) : ins_addr(addr) {
 		inst_bundle.reserve(1);
 	}
 
 	~VanadisInstructionBundle() {
+		for( VanadisInstruction* next_ins : inst_bundle ) {
+			delete next_ins;
+		}
+
 		inst_bundle.clear();
 	}
 
-	uint32_t getInstructionCount() {
-		inst_bundle.size();
+	uint32_t getInstructionCount() const {
+		return inst_bundle.size();
 	}
 
-	void addInstruction( VanadisInstruction& newIns ) {
-		inst_bundle.push_back(newIns);
+	void addInstruction( VanadisInstruction* newIns ) {
+		inst_bundle.push_back(newIns->clone() );
 	}
 
 	VanadisInstruction* getInstructionByIndex( const uint32_t index ) {
 		return inst_bundle[index]->clone();
 	}
 
+	VanadisInstruction* getInstructionByIndex( const uint32_t index, const uint64_t new_id ) {
+		VanadisInstruction* new_ins = inst_bundle[index]->clone();
+		new_ins->setID( new_id );
+		return new_ins;
+	}
+
 	uint64_t getInstructionAddress() const {
 		return ins_addr;
 	}
 
+	VanadisInstructionBundle* clone() {
+		VanadisInstructionBundle* new_bundle = new VanadisInstructionBundle( ins_addr );
+
+		for( VanadisInstruction* next_ins : inst_bundle ) {
+			new_bundle->addInstruction( next_ins->clone() );
+		}
+
+		return new_bundle;
+	}
+
+	VanadisInstructionBundle* clone( const uint64_t base_ins_id ) {
+		VanadisInstructionBundle* new_bundle = new VanadisInstructionBundle( ins_addr );
+		uint64_t next_id = base_ins_id;
+
+		for( VanadisInstruction* next_ins : inst_bundle ) {
+			VanadisInstruction* cloned_ins = next_ins->clone();
+			cloned_ins->setID( next_id++ );
+			new_bundle->addInstruction( cloned_ins );
+		}
+
+		return new_bundle;
+	}
+
 private:
 	const uint64_t ins_addr;
-	std::vector<VanadisInstruction> inst_bundle;
+	std::vector<VanadisInstruction*> inst_bundle;
 };
 
 class VanadisInstructionLoader {
 public:
-	SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Vanadis::VanadisInstructionDecoder)
+	VanadisInstructionLoader( 
+		const size_t uop_cache_size,
+		const size_t predecode_cache_entries,
+		const uint64_t cachelinewidth ) : cache_line_width( cachelinewidth ) {
 
-	VanadisInstructionLoader( ComponentId_t& id, Params& params ) :
-		SubComponent(id) {
-	
+		uop_cache = new VanadisCache< uint64_t, VanadisInstructionBundle* >( uop_cache_size );
+		predecode_cache = new VanadisCache< uint64_t, std::vector<uint8_t>* >( predecode_cache_entries );
+
 		mem_if = nullptr;
-		max_uop_cache_entries = params.find<uint32_t>("uop_cache_entries", 128);
-		max_predecode_cache_entries = params.find<uint32_t>("predecode_buffer_entries", 64);
-		cacheLineWidth = params.find<uint32_t>("cache_line_width", 64);
 	}
 
-	void setMemoryInterface( SimpleMem* new_if ) { mem_if = mem_if; }
+	~VanadisInstructionLoader() {
+		delete uop_cache;
+		delete predecode_cache;
+	}
 
-	bool acceptResponse( SimpleMem::Request* req ) {
+	void setMemoryInterface( SST::Interfaces::SimpleMem* new_if ) {
+		mem_if = new_if;
+	}
+
+	bool acceptResponse( SST::Interfaces::SimpleMem::Request* req ) {
 		// Looks like we created this request, so we should accept and process it
 		if( pending_loads.find( req->id ) != pending_loads.end() ) {
-			const uint64_t base_addr = req->addr;
-			uint8_t* data_payload    = &req->data[0];
+			std::vector<uint8_t>* new_line = std::vector<uint8_t>();
+			new_line.reserve( cache_line_width );
 
-			for( int i = 0; i < req->size; i += 4 ) {
-				uint32_t* read_4b = (uint32_t*) data_payload[i];
-				cachePredecodedIns( base_addr + i, (*read_4b) );
+			for( uint64_t i = 0; i < cache_line_width; ++i ) {
+				new_line.push_back( req->data[i] );
 			}
+
+			predecoded_cache.store( req->id, new_line );
 
 			return true;
 		} else {
@@ -74,137 +115,116 @@ public:
 		}
 	}
 
-	bool hasUopCacheForAddress( const uint64_t addr ) {
-		return uop_cache.contains( addr );
-	}
-
 	bool getPredecodeBytes( SST::Output* output, const uint64_t addr,
 		uint8_t* buffer, const size_t buffer_req ) {
 
+		if( buffer_req > cache_line_width ) {
+			output->fatal(CALL_INFO, -1, "[inst-predecode-bytes-check]: Requested a decoded bytes fill of longer than a cache line, req=%" PRIu64 ", line-width=%" PRIu64 "\n",
+				(uint64_t) buffer_req, cache_line_width);
+		}
+
 		// calculate offset within the cache line
-		const uint64_t inst_line_offset = (addr % cacheLineWidth);
+		const uint64_t inst_line_offset = (addr % cache_line_width);
 
 		// get the start of the cache line containing the request
 		const uint64_t cache_line_start = addr - inst_line_offset;
 
-		// Most likely to NOT have this in our cache, so process the false
-		// path first
-		if( ! predecode_cache.contains( cache_line_start ) ) {
-			// We don't have this instruction in our cache and are
-			// going to have to request it
+		bool filled = true;
 
-			bool req_pending = false;
-			for( auto load_itr = pending_loads.begin(); load_itr != pending_loads.end();
-				load_itr++) {
+		if( predecode_cache->contains( cache_line_start ) ) {
+			if( (addr + buffer_req) > (cache_line_start + cache_line_width) ) {
+				if( predecode_cache->contains( cache_line_start + cache_line_width ) ) {
+					// Needs two cache lines
+					std::vector<uint8_t>* cached_bytes = predecode_cache->find( cache_line_start );
 
-				// Already have a request which is in-flight to the cache so
-				// we don't want to issue any more
-				if( cache_line_start == load_itr->second->addr ) {
-					req_pending = true;
-					break;
+					for( uint64_t i = 0; i < (cache_line_width - inst_line_offset); ++i ) {
+						buffer[i] = cache_bytes->at( inst_line_offset + i );
+					}
+
+					cached_bytes = predecode_cache->find( cache_line_start + cache_line_width );
+
+					for( uint64_t i = 0; i < (buffer_req - (cache_line_width - inst_line_offset)); ++i ) {
+						buffer[(cache_line_width - inst_line_offset) + i] = cached_bytes->at(i);
+					}
+				} else {
+					filled = false;
 				}
-			}
-
-			if( req_pending ) {
-				SimpleMem::Request* req_line = new SimpleMem::Request(SimpleMem::Request::Read,
-					cache_line_start, cacheLineWidth));
-				pending_loads->insert( std::pair<SimpleMem::Request::id_t, SimpleMem::Request?(
-					req_line.id, req_line); 			
-			}
-			return false;
-		} else {
-			// We DO have this in our cache, so now let's process it
-
-			// do we only need a single line or do we need two?
-			if( (cacheLineWidth - inst_line_offset) < buffer_req ) {
-				std::vector<uint8_t>* line_bytes = (*predecode_cache.find( cache_line_start ));
-
-				// Copy over the bytes requested from the line
-				for( int i = 0; i < buffer_req; ++i ) {
-					buffer[i] = line_bytes[ cache_line_start + i ];
-				}
-
-				// FIX UP THE LRU
-
-				return true;
 			} else {
-				// We don't have enough data in this line and we have to check TWO 
-				// cache lines as this is split
+				std::vector<uint8_t>* cached_bytes = predecode_cache->find( cache_line_start );
+
+				for( uint64_t i = 0; i < buffer_req; ++i ) 
+					buffer[i] = cached_bytes->at( inst_line_offset + i );
+				}
 			}
+		} else {
+			filled = false;
 		}
 
-	}
-
-	VanadisInstructionBundle* getUopBundleByInstructionAddress( const uint64_t addr,
-		const uint64_t& id_seq_start ) {
-
-		VanadisInstructionBundle* bundle = new VanadisInstructionBundle( addr );
-		VanadisInstructionBundle* uop_cache_bundle = (*uop_cache.find( addr ));
-
-		// make a copy of the cache instruction and then resequence the ID scheme
-		// since ordering of instructions matters for retirement
-		for( int i = 0; i < uop_cache_bundle->getInstructionCount(); ++i ) {
-			VanadisInstruction* new_ins = uop_cache_bundle[i]->clone();
-			new_ins->setID( id_seq_start++ );
-			bundle.push_back( new_ins );
-		}
-
-		return bundle;
+		return filled;
 	}
 
 	void cacheDecodedBundle( VanadisInstructionBundle* bundle ) {
-		free_entry();
-
-		uop_cache.insert( std::pair< uint64_t, VanadisInstructionBundle*>(
-			bundle->getInstructionAddress(), bundle );
-		uop_lru_q.push_front( bundle->getInstructionAddress() );
+		uop_cache->store( bundle->getInstructionAddress(), bundle );
 	}
 
 	void clearCache() {
-		uop_cache.clear();
-		uop_lru_q.clear();
-
-		predecode_cache.clear();
-		predecode_lru_q.clear();
+		uop_cache->clear();
+		predecode_cache->clear();
 	}
 
 	void cachePredecodedIns( const uint64_t addr, const uint32_t ins ) {
-		free_predecode_entry();
-
-		predecode_cache->insert( std::pair<uint64_t, uin32_t>( addr, ins ) );
-		predecode_lru_q->push_front(addr);
+		predecode_cache->store( addr, ins );
 	}
 
-protected:
-	void free_uop_entry() {
-		if( max_cache_entries >= uop_lru_q.size() ) {
-			// Get the last address and clear it out
-			const uint64_t lru_uop_entry = uop_lru_q.back();
-			uop_lru_q.pop_back();
-			uop_cache.erase(lru_uop_entry);
+	bool hasBundleAt( const uint64_t addr ) const {
+		return uop_cache->contains( addr );
+	}
+
+	bool hasPredecodeAt( const uint64_t addr ) const {
+		const uint64_t line_start = addr - (addr % (uint64_t) cache_line_width);
+		return predecode_cache->contains( line_start );
+	}
+
+	VanadisInstructionBundle* getBundleAt( const uint64_t addr ) {
+		return uop_cache->find( addr );
+	}
+
+	void requestLoadAt( SST::Output* output, const uint64_t addr, const uint64_t len ) {
+		if( len > cache_line_width ) {
+			output->fatal(CALL_INFO, -1, "Error: requested an instruction load which is longer than a cache line, req=%" PRIu16 ", line=%" PRIu16 "\n",
+				len, cache_line_width);
 		}
+
+		uint64_t line_start = addr - (addr % cache_line_width);
+
+		do {
+			output->verbose(CALL_INFO, 8, 0, "(ins-loader) ---> issue ins-load line-start: %" PRIu64 ", len=%" PRIu16" \n",
+				line_start, cache_line_width);
+
+			SST::Interfaces::SimpleMem::Request* req_line = new SST::Interfaces::SimpleMem::Request(
+                                        SST::Interfaces::SimpleMem::Request::Read,
+                                        next_line_start, cache_line_width );
+
+			mem_if->sendRequest( req_line );
+
+			pending_loads.insert( std::pair<SST::Interfaces::SimpleMem::Request::id_t,
+                                        SST::Interfaces::SimpleMem::Request> (
+                                        req_line->id, req_line);
+
+			line_start += cache_line_width;
+
+		} while( line_start < (addr + len) );
 	}
 
-	void free_predecode_entry() {
-		if( max_predecode_cache_entries >= predecode_lrq_q.size() ) {
-			const uint64_t lru_predecode_entry = predecode_lru_q.back();
-			predecode_lru_q.pop_back();
-			predecode_cache.erase(lru_predecode_entry);
-		}
-	}
-	
-	uint32_t max_uop_cache_entries;
-	uint32_t max_predecode_cache_entries;
-	uint16_t cacheLineWidth;
+private:
+	const uint64_t cache_line_width;
 
-	SimpleMem* mem_if;
-	std::unordered_map< uint64_t, VanadisInstructionBundle*> > uop_cache;
-	std::list<uint64_t> uop_lru_q;
+	SST::Interfaces::SimpleMem* mem_if;
 
-	std::unordered_map< uint64_t, std::vector<uint8_t> cache_line > predecode_cache;
-	std::list<uint64_t> predecode_lru_q;
+	VanadisCache< uint64_t, VanadisInstructionBundle* >* uop_cache;
+	VanadisCache< uint64_t, std::vector<uint8_t>* >* predecode_cache;
 
-	std::unordered_map< SimpleMem::Request::id_t, SimpleMem::Request* > pending_loads;
+	std::unordered_map<SST::Interfaces::SimpleMem::Request::id_t,SST::Interfaces::SimpleMem::Request* > pending_loads;
 };
 
 }

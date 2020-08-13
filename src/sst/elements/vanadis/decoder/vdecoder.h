@@ -12,6 +12,7 @@
 #include "decoder/visaopts.h"
 #include "inst/vinst.h"
 #include "vbranchunit.h"
+#include "vinsloader.h"
 
 namespace SST {
 namespace Vanadis {

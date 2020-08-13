@@ -5,6 +5,7 @@
 #include <list>
 #include <unordered_map>
 #include <cstdint>
+#include <type_traits>
 
 namespace SST {
 namespace Vanadis {
@@ -12,14 +13,24 @@ namespace Vanadis {
 template<class I, class T>
 class VanadisCache {
 public:
-	VanadisCache( size_t cache_entries ) : max_entries( cache_entries ) {
-		ordering_q.reserve( cache_entries );
-		data_values.reserve( cache_entries );
+	VanadisCache( const size_t cache_entries ) {
+		reset( cache_entries );
 	}
 
 	~VanadisCache() {
 		ordering_q.clear();
 		data_values.clear();
+	}
+
+	void clear() {
+		ordering_q.clear();
+		data_values.clear();
+	}
+
+	void reset( const size_t cache_entries ) {
+		max_entries( cache_entries );
+		ordering_q.reserve( cache_entries );
+                data_values.reserve( cache_entries );
 	}
 
 	bool contains( const I& value ) const {
@@ -28,7 +39,7 @@ public:
 
 	T find( const I& key ) {
 		send_key_to_front( key );
-		return data_values.find(value).second;
+		return data_values.find( key ).second;
 	}
 
 	void store( const I& key, T value ) {
@@ -40,7 +51,26 @@ public:
 		}
 	}
 
+	void touch( const I& key ) {
+		if( contains(key) ) {
+			send_key_to_front( key );
+		}
+	}
+
 private:
+	
+	template< class T >
+	std::enable_if< std::is_pointer<T>::value >
+	void delete_entry( T entry ) {
+		delete entry;
+	}
+
+	template< class T >
+	std::enable_if< ! std::is_pointer<T>::value >
+	void delete_entry( T entry ) {
+		// Don't do anything
+	}
+
 	void kill_lru_key() {
 		// if we aren't full yet, then keep entries otherwise we will
 		// throw away
@@ -52,6 +82,7 @@ private:
 		ordering_q.pop_back();
 
 		auto find_key = data_values.find( remove_key );
+		delete_entry( find_key.second );
 		data_values.erase( find_key );
 	}
 

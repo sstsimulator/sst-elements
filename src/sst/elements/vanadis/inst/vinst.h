@@ -140,10 +140,11 @@ public:
 
 	bool checkFrontOfROB() { return isFrontOfROB; }
 	void markFrontOfROB() { isFrontOfROB = true; }
+	void setID( const uint64_t new_id ) { id = new_id; }
 protected:
 	void flagError() { trapError = true; }
 
-	const uint64_t id;
+	uint64_t id;
 	const uint64_t ins_address;
 	const uint32_t hw_thread;
 
