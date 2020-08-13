@@ -45,10 +45,22 @@ void Cache::handleEvent(SST::Event * ev) {
     if (CommandClassArr[(int)event->getCmd()] == CommandClass::Request && !CommandWriteback[(int)event->getCmd()])
         coherenceMgr_->recordIncomingRequest(event);
 
+    // Record that an event was received
+    if (MemEventTypeArr[(int)event->getCmd()] != MemEventType::Cache || event->queryFlag(MemEventBase::F_NONCACHEABLE)) {
+        statUncacheRecv[(int)event->getCmd()]->addData(1);
+    } else {
+        statCacheRecv[(int)event->getCmd()]->addData(1);
+    }
+
     eventBuffer_.push_back(event);
 }
 
-/* Handle event from cache listener (prefetcher) */
+/* 
+ * Handle event from cache listener (prefetcher) 
+ * -> Delay prefetch using a self link since prefetcher can 
+ *  return a prefetch request in the same cycle it identifies
+ *  a prefetch target
+ */
 void Cache::handlePrefetchEvent(SST::Event * ev) {
     prefetchSelfLink_->send(prefetchDelay_, ev);
 }
@@ -66,6 +78,7 @@ void Cache::processPrefetchEvent(SST::Event * ev) {
 
     // Record received prefetch
     statPrefetchRequest->addData(1);
+    statCacheRecv[(int)event->getCmd()]->addData(1);
     prefetchBuffer_.push(event);
 }
 
@@ -213,12 +226,9 @@ bool Cache::processEvent(MemEventBase* ev, bool inMSHR) {
     }
 
     if (MemEventTypeArr[(int)ev->getCmd()] != MemEventType::Cache || ev->queryFlag(MemEventBase::F_NONCACHEABLE)) {
-        statUncacheRecv[(int)ev->getCmd()]->addData(1);
         processNoncacheable(ev);
         return true;
     }
-
-    statCacheRecv[(int)ev->getCmd()]->addData(1);
 
     /* Handle cache events */
     MemEvent * event = static_cast<MemEvent*>(ev);
