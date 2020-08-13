@@ -33,12 +33,16 @@ public:
 		"Implements a MIPS-compatible decoder for Vanadis CPU processing.",
 		SST::Vanadis::VanadisDecoder )
 
+	SST_ELI_DOCUMENT_PARAMS(
+		{ "decode_max_ins_per_cycle", 		"Maximum number of instructions that can be decoded and issued per cycle"  				},
+		{ "uop_cache_entries",                  "Number of micro-op cache entries, this corresponds to ISA-level instruction counts."  			},
+		{ "predecode_cache_entries",            "Number of cache lines that a cached prior to decoding (these support loading from cache prior to decode)" }
+		)
+
 	VanadisMIPSDecoder( ComponentId_t id, Params& params ) :
 		VanadisDecoder( id, params ) {
 
 		options = new VanadisDecoderOptions( (uint16_t) 0 );
-		icache_max_bytes_per_cycle = params.find<uint16_t>("icache_bytes_per_request",  4);
-		decode_buffer_max_entries  = params.find<uint16_t>("decode_buffer_max_entries", 4);
 		max_decodes_per_cycle      = params.find<uint16_t>("decode_max_ins_per_cycle",  2);
 
 		// See if we get an entry point the sub-component says we have to use
