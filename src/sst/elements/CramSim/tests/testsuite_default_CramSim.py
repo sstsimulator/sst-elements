@@ -119,7 +119,7 @@ class testcase_CramSim_Component(SSTTestCase):
         #       This should be improved upon to check for real data...
         cmp_result = compare_diff(outfile, reffile)
         if not cmp_result:
-            cmd = 'grep Simulation {0}'.format(outfile)
+            cmd = 'grep -q "Simulation is complete" {0} '.format(outfile)
             grep_result = os.system(cmd) == 0
             self.assertTrue(grep_result, "Output file {0} does not contain a simulation complete message".format(outfile, reffile))
         else:
