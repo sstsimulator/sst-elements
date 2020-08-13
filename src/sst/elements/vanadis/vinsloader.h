@@ -34,6 +34,15 @@ public:
 		delete predecode_cache;
 	}
 
+	void setCacheLineWidth( const uint64_t new_line_width ) {
+		// if the line width is changed then we have to flush our cache
+		if( cache_line_width != new_line_width ) {
+			predecode_cache->clear();
+		}
+
+		cache_line_width = new_line_width;
+	}
+
 	void setMemoryInterface( SST::Interfaces::SimpleMem* new_if ) {
 		mem_if = new_if;
 	}

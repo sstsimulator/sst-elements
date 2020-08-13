@@ -19,11 +19,13 @@ public:
 	}
 
 	~VanadisInstructionBundle() {
+		inst_bundle.clear();
+	}
+
+	void clear() {
 		for( VanadisInstruction* next_ins : inst_bundle ) {
 			delete next_ins;
 		}
-
-		inst_bundle.clear();
 	}
 
 	uint32_t getInstructionCount() const {
@@ -48,6 +50,14 @@ public:
 		return ins_addr;
 	}
 
+	void resequenceBundleID( uint64_t start_id ) {
+		uint64_t next_id = start_id;
+
+		for( VanadisInstruction* next_ins : inst_bundle ) {
+			next_ins->setID( next_id++ );
+		}
+	}
+
 	VanadisInstructionBundle* clone() {
 		VanadisInstructionBundle* new_bundle = new VanadisInstructionBundle( ins_addr );
 
@@ -58,13 +68,13 @@ public:
 		return new_bundle;
 	}
 
-	VanadisInstructionBundle* clone( const uint64_t base_ins_id ) {
+	VanadisInstructionBundle* clone( uint64_t* base_ins_id ) {
 		VanadisInstructionBundle* new_bundle = new VanadisInstructionBundle( ins_addr );
-		uint64_t next_id = base_ins_id;
 
 		for( VanadisInstruction* next_ins : inst_bundle ) {
 			VanadisInstruction* cloned_ins = next_ins->clone();
-			cloned_ins->setID( next_id++ );
+			cloned_ins->setID( (*base_ins_id ) );
+			*base_ins_id = *base_ins_id + 1;
 			new_bundle->addInstruction( cloned_ins );
 		}
 

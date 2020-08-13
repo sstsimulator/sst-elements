@@ -307,28 +307,14 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 	output->verbose(CALL_INFO, 8, 0, "-- Core Status:\n");
 
 	for( uint32_t i = 0; i < hw_threads; ++i) {
-		output->verbose(CALL_INFO, 8, 0, "---> Thr: %5" PRIu32 " (%s) / ROB-Pend: %" PRIu16 " / IntReg-Free: %" PRIu16 " / FPReg-Free: %" PRIu16 "\n", 
-			i, halted_masks[i] ? "halted" : "unhalted", 
+		output->verbose(CALL_INFO, 8, 0, "---> Thr: %5" PRIu32 " (%s) / ROB-Pend: %" PRIu16 " / IntReg-Free: %" PRIu16 " / FPReg-Free: %" PRIu16 "\n",
+			i, halted_masks[i] ? "halted" : "unhalted",
 			(uint16_t) rob[i]->size(),
 			(uint16_t) int_register_stacks[i]->unused(), (uint16_t) fp_register_stacks[i]->unused() );
 	}
 
 	// Fetch
 	output->verbose(CALL_INFO, 8, 0, "-- Fetch Stage --------------------------------------------------------------\n");
-	for( uint32_t i = 0; i < hw_threads; ++i ) {
-		if( ! halted_masks[i] ) {
-			if( thread_decoders[i]->requestingDelegatedRead() ) {
-				const uint64_t del_addr  = thread_decoders[i]->getDelegatedLoadAddr();
-				const uint16_t del_width = thread_decoders[i]->getDelegatedLoadWidth();
-
-				output->verbose(CALL_INFO, 16, 0, "-> Thr: %" PRIu32 " is requesting a delegated i-cache read, addr=%p, width=%" PRIu16"\n",
-					i, (void*) del_addr, del_width);
-
-				// Clear out the load, we have to wait for the cache to process it now
-				thread_decoders[i]->clearDelegatedLoadRequest();
-			}
-		}
-	}
 
 	// Decode
 	output->verbose(CALL_INFO, 8, 0, "-- Decode Stage -------------------------------------------------------------\n");
@@ -359,7 +345,7 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 			if( ! thread_decoders[i]->getDecodedQueue()->empty() ) {
 				VanadisInstruction* ins = thread_decoders[i]->getDecodedQueue()->peek();
 				ins->printToBuffer(instPrintBuffer, 1024);
-				
+
 				output->verbose(CALL_INFO, 8, 0, "--> Attempting issue for: %s / %p\n", instPrintBuffer,
 						(void*) ins->getInstructionAddress());
 
@@ -715,6 +701,18 @@ void VanadisComponent::handleIncomingDataCacheEvent( SimpleMem::Request* ev ) {
 void VanadisComponent::handleIncomingInstCacheEvent( SimpleMem::Request* ev ) {
 	output->verbose(CALL_INFO, 16, 0, "-> I-Cache Incoming Event\n");
 	// Needs to get attached to the decoder
+	bool hit = false;
+
+	for( VanadisDecoder* next_decoder : thread_decoders ) {
+		if( next_decoder->acceptCacheResponse( ev ) ) {
+			hit = true;
+			break;
+		}
+	}
+
+	if( ! hit ) {
+		delete ev;
+	}
 }
 
 void VanadisComponent::handleMisspeculate( const uint32_t hw_thr ) {

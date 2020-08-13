@@ -4,6 +4,7 @@
 #define _H_VANADIS_MIPS_DECODER
 
 #include "decoder/vdecoder.h"
+#include "vinsloader.h"
 #include "inst/vinstall.h"
 
 #include <list>
@@ -21,19 +22,6 @@
 
 namespace SST {
 namespace Vanadis {
-
-class VanadisMIPSDecodeBlock {
-public:
-	VanadisMIPSDecodeBlock( const uint64_t addr, const uint32_t potentialIns ):
-		startAddr(addr), ins(potentialIns) {}
-
-	uint64_t getStartAddress() const { return startAddr; }
-	uint32_t getInstruction()  const { return ins; }
-
-private:
-	const uint64_t startAddr;
-	const uint32_t ins;
-};
 
 class VanadisMIPSDecoder : public VanadisDecoder {
 public:
@@ -53,9 +41,6 @@ public:
 		decode_buffer_max_entries  = params.find<uint16_t>("decode_buffer_max_entries", 4);
 		max_decodes_per_cycle      = params.find<uint16_t>("decode_max_ins_per_cycle",  2);
 
-		delegatedLoadWidth = icache_max_bytes_per_cycle;
-		delegatedLoadAddr  = 0;
-
 		// See if we get an entry point the sub-component says we have to use
 		// if not, we will fall back to ELF reading at the core level to work this out
 		setInstructionPointer( params.find<uint64_t>("entry_point", 0) );
@@ -70,87 +55,86 @@ public:
 
 	virtual void tick( SST::Output* output, uint64_t cycle ) {
 		output->verbose(CALL_INFO, 16, 0, "-> Decode step for thr: %" PRIu32 "\n", hw_thr);
-		output->verbose(CALL_INFO, 16, 0, "---> Max decodes per cycle: %" PRIu16 ", buffer has %" PRIu32 " pending entries.\n",
-			max_decodes_per_cycle, (uint32_t) pendingBlocks.size() );
+		output->verbose(CALL_INFO, 16, 0, "---> Max decodes per cycle: %" PRIu16 "\n", max_decodes_per_cycle );
 
 		uint16_t decodes_performed = 0;
+		uint16_t uop_bundles_used  = 0;
 
 		for( uint16_t i = 0; i < max_decodes_per_cycle; ++i ) {
 			// if the decoded queue has space, then lets go ahead and
 			// decode the input, put it in the queue for issue.
 			if( ! decoded_q->full() ) {
-				if( ! pendingBlocks.empty() ) {
-					VanadisMIPSDecodeBlock* nextBlock = pendingBlocks.front();
-					pendingBlocks.pop_front();
+				if( ins_loader->hasBundleAt( ip ) ) {
+					output->verbose(CALL_INFO, 16, 0, "---> Found uop bundle for ip=%p, loading from cache...\n", (void*) ip);
+					VanadisInstructionBundle* bundle = ins_loader->getBundleAt( ip )->clone( &next_ins_id );
 
-					// Push this off to the decoder to pull the data in
-					decode( output, nextBlock->getStartAddress(),
-						nextBlock->getInstruction());
+					// Do we have enough space in the decode queue for the bundle contents?
+					if( bundle->getInstructionCount() < (decoded_q->capacity() - decoded_q->size()) ) {
+						// Put in the queue
+						for( uint32_t i = 0; i < bundle->getInstructionCount(); ++i ) {
+							VanadisInstruction* next_ins = bundle->getInstructionByIndex( i );
+							output->verbose(CALL_INFO, 16, 0, "---> --> issuing ins id: %" PRIu64 "(addr: %p, %s)...\n",
+								next_ins->getID(), (void*) next_ins->getInstructionAddress(),
+								next_ins->getInstCode());
+							decoded_q->push( next_ins );
+						}
 
-					decodes_performed++;
+						delete bundle;
+						uop_bundles_used++;
+					} else {
+						// We don't have enough space, so we have to stop and wait for more entries to free up.
+						break;
+					}
+				} else if( ins_loader->hasPredecodeAt( ip ) ) {
+					// We do have a locally cached copy of the data at the IP though, so decode into a bundle
+					output->verbose(CALL_INFO, 16, 0, "---> uop not found, but matched in predecoded L0-icache (ip=%p)\n", (void*) ip);
 
-					delete nextBlock;
-				}			
+					uint32_t temp_ins = 0;
+					VanadisInstructionBundle* decoded_bundle = new VanadisInstructionBundle( ip );
+
+					if( ins_loader->getPredecodeBytes( output, ip, (uint8_t*) &temp_ins, sizeof(temp_ins) ) ) {
+						decode( output, ip, temp_ins, decoded_bundle );
+						ins_loader->cacheDecodedBundle( decoded_bundle );
+						decodes_performed++;
+						break;
+					} else {
+						output->fatal(CALL_INFO, -1, "Error: predecoded bytes found at ip=%p, but %d byte retrival failed.\n",
+							(void*) ip, (int) sizeof( temp_ins ));
+					}
+				} else {
+					output->verbose(CALL_INFO, 16, 0, "---> uop bundle and pre-decoded bytes are not found (ip=%p), requesting icache read.\n",
+						(void*) ip);
+					ins_loader->requestLoadAt( output, ip, sizeof( uint32_t ) );
+					break;
+				}
+			} else {
+				output->verbose(CALL_INFO, 16, 0, "---> Decoded pending issue queue is full, no more decodes permitted.\n");
 			}
 		}
 
-		output->verbose(CALL_INFO, 16, 0, "---> Performed %" PRIu16 " decodes this cycle.\n", decodes_performed );
-	
-		if( pendingBlocks.size() < decode_buffer_max_entries ) {
-			output->verbose(CALL_INFO, 16, 0, "---> Requesting a delegated load (addr=%" PRIu64 ", width=%" PRIu16 ")\n",
-				delegatedLoadAddr, delegatedLoadWidth);
-			wantDelegatedLoad = true;
-		} else {
-			output->verbose(CALL_INFO, 16, 0, "---> Disabling delegated load this cycle, decode-pending buffers are full (%" PRIu32 " entries in use)\n",
-				(uint32_t) pendingBlocks.size());
-			wantDelegatedLoad = false;
-		}
-	}
-
-	virtual void deliverPayload( SST::Output* output, uint8_t* decodePayload, const uint16_t payloadLength ) {
-		uint32_t tmp = 0;
-		uint8_t* tmp_addr = (uint8_t*) &tmp;
-
-		output->verbose(CALL_INFO, 16, 0, "-> Payload delivery to thr: %" PRIu32 " (addr=%" PRIu64 ", len=%" PRIu16 ")\n",
-			hw_thr, delegatedLoadAddr, payloadLength);
-
-		for( uint16_t i = 0; i < payloadLength; i += 4 ) {
-			// Copy in memory bytes to integer for processing
-			for( uint16_t j = 0; j < 4; ++j ) {
-				tmp_addr[j] = decodePayload[i + j];
-			}
-
-			pendingBlocks.push_back( new VanadisMIPSDecodeBlock( delegatedLoadAddr + i, tmp ) );
-		}
-
-		// Turn off delivery of data so tick phase can decide if we need more
-		// but ... crank the address on so we don't get the same data
-		wantDelegatedLoad  = false;
-		delegatedLoadAddr  += (payloadLength / 4);
-		delegatedLoadWidth -= payloadLength;
+		output->verbose(CALL_INFO, 16, 0, "---> Performed %" PRIu16 " decodes this cycle, %" PRIu16 " uop-bundles used.\n",
+			decodes_performed, uop_bundles_used);
 	}
 
 	virtual void clearDecoderAfterMisspeculate() {
-		for( VanadisMIPSDecodeBlock* block : pendingBlocks ) {
-			delete block;
-		}
-
-		pendingBlocks.clear();
-
-		wantDelegatedLoad  = true;
-		delegatedLoadAddr  = ip;
-
-		// We will load the rest of the cache line into the decoder
-		delegatedLoadWidth = (iCacheLineWidth) - (ip % iCacheLineWidth);
+		// TODO - what do we need to do here?
 	}
 
-	
 protected:
-	void decode( SST::Output* output, const uint64_t ins_addr,
-		const uint32_t next_ins ) {
+	void extract_imm( const uint32_t ins, uint32_t* imm ) const {
+		(*imm) = (ins & MIPS_IMM_MASK);
+	}
+
+	void extract_three_regs( const uint32_t ins, uint16_t* rt, uint16_t* rs, uint16_t* rd ) const {
+		(*rt) = (ins & MIPS_RT_MASK) >> 16;
+		(*rs) = (ins & MIPS_RS_MASK) >> 21;
+		(*rd) = (ins & MIPS_RD_MASK) >> 11;
+	}
+
+	void decode( SST::Output* output, const uint64_t ins_addr, const uint32_t next_ins, VanadisInstructionBundle* bundle ) {
 
 		const uint32_t ins_mask = next_ins & MIPS_OP_MASK;
-		
+
 		uint16_t rt = 0;
 		uint16_t rs = 0;
 		uint16_t rd = 0;
@@ -178,16 +162,6 @@ protected:
 		}
 	}
 
-	void extract_imm( const uint32_t ins, uint32_t* imm ) const {
-		(*imm) = (ins & MIPS_IMM_MASK);
-	}
-
-	void extract_three_regs( const uint32_t ins, uint16_t* rt, uint16_t* rs, uint16_t* rd ) const {
-		(*rt) = (ins & MIPS_RT_MASK) >> 16;
-		(*rs) = (ins & MIPS_RS_MASK) >> 21;
-		(*rd) = (ins & MIPS_RD_MASK) >> 11;
-	}
-
 	const VanadisDecoderOptions* options;
 
 	uint64_t next_ins_id;
@@ -195,7 +169,6 @@ protected:
 	uint16_t icache_max_bytes_per_cycle;
 	uint16_t max_decodes_per_cycle;
 	uint16_t decode_buffer_max_entries;
-	std::list<VanadisMIPSDecodeBlock*> pendingBlocks;
 
 /*
 	constexpr uint32_t addi_op_mask   = 0b00110000000000000000000000000000;

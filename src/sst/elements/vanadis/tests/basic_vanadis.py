@@ -23,7 +23,7 @@ icache_if = v_cpu_0.setSubComponent( "mem_interface_inst", "memHierarchy.memInte
 cpu0_l1dcache = sst.Component("cpu0.l1dcache", "memHierarchy.Cache")
 cpu0_l1dcache.addParams({
       "access_latency_cycles" : "1",
-      "cache_frequency" : "2 Ghz",
+      "cache_frequency" : "2 GHz",
       "replacement_policy" : "lru",
       "coherence_protocol" : "MSI",
       "associativity" : "2",
@@ -35,7 +35,7 @@ cpu0_l1dcache.addParams({
 cpu0_l1icache = sst.Component("cpu0.l1icache", "memHierarchy.Cache")
 cpu0_l1icache.addParams({
       "access_latency_cycles" : "1",
-      "cache_frequency" : "2 Ghz",
+      "cache_frequency" : "2 GHz",
       "replacement_policy" : "lru",
       "coherence_protocol" : "MSI",
       "associativity" : "2",
@@ -47,7 +47,7 @@ cpu0_l1icache.addParams({
 cpu0_l2cache = sst.Component("l2cache", "memHierarchy.Cache")
 cpu0_l2cache.addParams({
       "access_latency_cycles" : "1",
-      "cache_frequency" : "2 Ghz",
+      "cache_frequency" : "2 GHz",
       "replacement_policy" : "lru",
       "coherence_protocol" : "MSI",
       "associativity" : "8",
@@ -57,7 +57,7 @@ cpu0_l2cache.addParams({
 
 cache_bus = sst.Component("bus", "memHierarchy.Bus")
 cache_bus.addParams({
-      "bus_frequency" : "2 Ghz",
+      "bus_frequency" : "2 GHz",
 })
 
 memctrl = sst.Component("memory", "memHierarchy.MemController")
