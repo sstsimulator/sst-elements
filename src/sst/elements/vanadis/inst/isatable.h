@@ -139,43 +139,39 @@ public:
 		char* reg_bin_str = new char[65];
 
 		if( print_int ) {
-		output->verbose(CALL_INFO, 16, 0, "Integer Registers (Count=%" PRIu16 ")\n", count_int_reg);
-		for( uint16_t i = 0; i < count_int_reg; ++i ) {
-			if( nullptr == regFile ) {
-//				output->verbose(CALL_INFO, 16, 0, "ISA Int-Reg %5" PRIu16 " Phys: %5" PRIu16 " Read: %8" PRIu32 " / Write: %8" PRIu32 "\n",
-//					i, int_reg_ptr[i], int_reg_pending_read[i], int_reg_pending_write[i]);
-				output->verbose(CALL_INFO, 16, 0, "| isa:%5" PRIu16 " -> phys:%5" PRIu16 " | r:%6" PRIu32 " | w:%6" PRIu32 " |\n",
-					i, int_reg_ptr[i], int_reg_pending_read[i], int_reg_pending_write[i]);
-			} else {
-				int64_t* val = (int64_t*) regFile->getIntReg( i );
-				toBinaryString(reg_bin_str, *((int64_t*) regFile->getIntReg(i)));
+			output->verbose(CALL_INFO, 16, 0, "Integer Registers (Count=%" PRIu16 ")\n", count_int_reg);
+			for( uint16_t i = 0; i < count_int_reg; ++i ) {
+				if( nullptr == regFile ) {
+					output->verbose(CALL_INFO, 16, 0, "| isa:%5" PRIu16 " -> phys:%5" PRIu16 " | r:%6" PRIu32 " | w:%6" PRIu32 " |\n",
+						i, int_reg_ptr[i], int_reg_pending_read[i], int_reg_pending_write[i]);
+				} else {
+					int64_t* val = (int64_t*) regFile->getIntReg( i );
+					toBinaryString(reg_bin_str, *val);
 
-//				output->verbose(CALL_INFO, 16, 0, "ISA Int-Reg %5" PRIu16 " Phys: %5" PRIu16 " Read: %8" PRIu32 " / Write: %8" PRIu32 " / Value: %" PRId64 "\n",
-				output->verbose(CALL_INFO, 16, 0, "| isa:%5" PRIu16 " -> phys:%5" PRIu16 " | r:%5" PRIu32 " | w:%5" PRIu32 " | value=%" PRIu64 "\n",
-					i, int_reg_ptr[i], int_reg_pending_read[i], int_reg_pending_write[i],
-					*((int64_t*) regFile->getIntReg(int_reg_ptr[i])));
+					output->verbose(CALL_INFO, 16, 0, "| isa:%5" PRIu16 " -> phys:%5" PRIu16 " | r:%5" PRIu32 " | w:%5" PRIu32 " | value=%" PRIu64 "\n",
+						i, int_reg_ptr[i], int_reg_pending_read[i], int_reg_pending_write[i],
+						*((int64_t*) regFile->getIntReg(int_reg_ptr[i])));
+				}
 			}
-		}
 		}
 
 		if( print_fp ) {
 
 		output->verbose(CALL_INFO, 16, 0, "Floating-Point Registers (Count=%" PRIu16 ")\n", count_fp_reg);
-		for( uint16_t i = 0; i < count_fp_reg; ++i ) {
-			if( nullptr == regFile ) {
+			for( uint16_t i = 0; i < count_fp_reg; ++i ) {
+				if( nullptr == regFile ) {
 //				output->verbose(CALL_INFO, 16, 0, "ISA  FP-Reg %5" PRIu16 " Phys: %5" PRIu16 " Read: %8" PRIu32 " / Write: %8" PRIu32 "\n",
-				output->verbose(CALL_INFO, 16, 0, "| isa:%5" PRIu16 " -> phys:%5" PRIu16 " | r:%5" PRIu32 " | w:%5" PRIu32 " |\n",
-					i, fp_reg_ptr[i], fp_reg_pending_read[i], fp_reg_pending_write[i]);
-			} else {
-				int64_t* val = (int64_t*) regFile->getFPReg( i );
-				toBinaryString(reg_bin_str, *((int64_t*) regFile->getFPReg(i)));
+					output->verbose(CALL_INFO, 16, 0, "| isa:%5" PRIu16 " -> phys:%5" PRIu16 " | r:%5" PRIu32 " | w:%5" PRIu32 " |\n",
+						i, fp_reg_ptr[i], fp_reg_pending_read[i], fp_reg_pending_write[i]);
+				} else {
+					int64_t* val = (int64_t*) regFile->getFPReg( i );
+					toBinaryString(reg_bin_str, *((int64_t*) regFile->getFPReg(i)));
 
 //				output->verbose(CALL_INFO, 16, 0, "ISA  FP-Reg %5" PRIu16 " Phys: %5" PRIu16 " Read: %8" PRIu32 " / Write: %8" PRIu32 " / Value: %s\n",
-				output->verbose(CALL_INFO, 16, 0, "| isa:%5" PRIu16 " -> phys:%5" PRIu16 " | r:%5" PRIu32 " | w:%5" PRIu32 " | value=%s\n",
-					i, fp_reg_ptr[i], fp_reg_pending_read[i], fp_reg_pending_write[i], reg_bin_str);
+					output->verbose(CALL_INFO, 16, 0, "| isa:%5" PRIu16 " -> phys:%5" PRIu16 " | r:%5" PRIu32 " | w:%5" PRIu32 " | value=%s\n",
+						i, fp_reg_ptr[i], fp_reg_pending_read[i], fp_reg_pending_write[i], reg_bin_str);
+				}
 			}
-		}
-
 		}
 
 		delete[] reg_bin_str;

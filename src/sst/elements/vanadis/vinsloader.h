@@ -140,21 +140,24 @@ public:
 				len, cache_line_width);
 		}
 
-		uint64_t line_start = addr - (addr % cache_line_width);
+		const uint64_t line_start_offset = (addr % cache_line_width);
+		uint64_t line_start = addr - line_start_offset;
 
 		do {
-			output->verbose(CALL_INFO, 8, 0, "(ins-loader) ---> issue ins-load line-start: %" PRIu64 ", len=%" PRIu64 " \n",
-				line_start, cache_line_width);
+			output->verbose(CALL_INFO, 8, 0, "(ins-loader) ---> issue ins-load line-start: %p (offset=%" PRIu64 "), line-len: %" PRIu64 " read-len=%" PRIu64 " \n",
+				(void*) line_start, line_start_offset, cache_line_width, cache_line_width);
 
-			SST::Interfaces::SimpleMem::Request* req_line = new SST::Interfaces::SimpleMem::Request(
-                                        SST::Interfaces::SimpleMem::Request::Read,
-                                        line_start, cache_line_width );
+			if( pending_loads.find( line_start ) == pending_loads.end() ) {
+				SST::Interfaces::SimpleMem::Request* req_line = new SST::Interfaces::SimpleMem::Request(
+       	                	 	SST::Interfaces::SimpleMem::Request::Read, line_start, cache_line_width );
 
-			mem_if->sendRequest( req_line );
+				mem_if->sendRequest( req_line );
 
-			pending_loads.insert( std::pair<SST::Interfaces::SimpleMem::Request::id_t,
-                                        SST::Interfaces::SimpleMem::Request*> (
-                                        req_line->id, req_line) );
+				pending_loads.insert( std::pair<SST::Interfaces::SimpleMem::Request::id_t,
+                        		SST::Interfaces::SimpleMem::Request*> ( req_line->id, req_line) );
+			} else {
+				output->verbose(CALL_INFO, 8, 0, "(ins-loader) -----> load is already in progress, will not issue another load.\n");
+			}
 
 			line_start += cache_line_width;
 

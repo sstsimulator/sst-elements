@@ -270,6 +270,11 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 
     	output->verbose(CALL_INFO, 1, 0, "Successfully loaded memory interface.\n");
 
+	for( uint32_t i = 0; i < thread_decoders.size(); ++i ) {
+		output->verbose(CALL_INFO, 8, 0, "Configuring thread instruction cache interface (thread %" PRIu32 ")\n", i);
+		thread_decoders[i]->getInstructionLoader()->setMemoryInterface( memInstInterface );
+	}
+
 	size_t lsq_store_size    = params.find<size_t>("lsq_store_entries", 8);
 	size_t lsq_store_pending = params.find<size_t>("lsq_issued_stores_inflight", 8);
 	size_t lsq_load_size     = params.find<size_t>("lsq_load_entries", 8);
@@ -694,12 +699,15 @@ void VanadisComponent::init(unsigned int phase) {
 }
 
 void VanadisComponent::handleIncomingDataCacheEvent( SimpleMem::Request* ev ) {
-	output->verbose(CALL_INFO, 16, 0, "-> D-Cache Incoming Event\n");
+	output->verbose(CALL_INFO, 16, 0, "-> Incoming d-cache event (addr=%p)...\n",
+		(void*) ev->addr);
 	lsq->processIncomingDataCacheEvent( output, ev );
 }
 
 void VanadisComponent::handleIncomingInstCacheEvent( SimpleMem::Request* ev ) {
-	output->verbose(CALL_INFO, 16, 0, "-> I-Cache Incoming Event\n");
+	output->verbose(CALL_INFO, 16, 0, "-> Incoming i-cache event (addr=%p)...\n",
+		(void*) ev->addr);
+
 	// Needs to get attached to the decoder
 	bool hit = false;
 
@@ -712,6 +720,8 @@ void VanadisComponent::handleIncomingInstCacheEvent( SimpleMem::Request* ev ) {
 
 	if( ! hit ) {
 		delete ev;
+	} else {
+		output->verbose(CALL_INFO, 16, 0, "---> Successful hit in hardware-thread decoders.\n");
 	}
 }
 

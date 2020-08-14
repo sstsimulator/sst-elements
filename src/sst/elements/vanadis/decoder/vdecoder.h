@@ -83,6 +83,10 @@ public:
 	void setHardwareThread( const uint32_t thr ) { hw_thr = thr; }
 	uint32_t getHardwareThread() const { return hw_thr; }
 
+	VanadisInstructionLoader* getInstructionLoader() {
+		return ins_loader;
+	}
+
 protected:
 	virtual void clearDecoderAfterMisspeculate() = 0;
 
