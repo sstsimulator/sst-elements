@@ -96,6 +96,10 @@ uint64_t ArielMemoryManagerSimple::translateAddress(uint64_t virtAddr) {
         return virtAddr;
     }
 
+    if( output->getVerboseLevel() > 15 ) {
+	printTable();
+    }
+
     // Keep track of how many translations we are performing
     statTranslationQueries->addData(1);
 
@@ -158,4 +162,18 @@ void ArielMemoryManagerSimple::printStats() {
 
     output->output("- Bytes               %" PRIu64 "\n",
         ((uint64_t) pageTable.size()) * ((uint64_t) pageSize));
+}
+
+void ArielMemoryManagerSimple::printTable() {
+
+    	output->output("---------------------------------------------------------------------\n");
+	output->verbose(CALL_INFO, 16, 0, "Page Table Map:\n");
+
+	for( auto table_itr : pageTable ) {
+		output->verbose(CALL_INFO, 16, 0, "-> VA: %15" PRIu64 " -> PA: %15" PRIu64 "\n",
+			table_itr.first, table_itr.second);
+	}
+
+    	output->output("---------------------------------------------------------------------\n");
+
 }
