@@ -74,6 +74,8 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 
 		sprintf(decoder_name, "decoder%" PRIu32 "", i);
 		VanadisDecoder* thr_decoder = loadUserSubComponent<SST::Vanadis::VanadisDecoder>(decoder_name);
+		thr_decoder->setHardwareThread( i );
+
 		output->verbose(CALL_INFO, 8, 0, "Loading decoder%" PRIu32 ": %s.\n", i,
 			(nullptr == thr_decoder) ? "failed" : "successful");
 
@@ -690,7 +692,7 @@ void VanadisComponent::finish() {
 
 }
 
-void VanadisComponent::printStatus() {
+void VanadisComponent::printStatus( SST::Output& output ) {
 
 }
 
@@ -712,7 +714,7 @@ void VanadisComponent::handleIncomingInstCacheEvent( SimpleMem::Request* ev ) {
 	bool hit = false;
 
 	for( VanadisDecoder* next_decoder : thread_decoders ) {
-		if( next_decoder->acceptCacheResponse( ev ) ) {
+		if( next_decoder->acceptCacheResponse( output, ev ) ) {
 			hit = true;
 			break;
 		}

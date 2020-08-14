@@ -137,7 +137,7 @@ public:
     void setup();
     void finish();
 
-    void printStatus();
+    void printStatus( SST::Output& output );
 
     void handleIncomingDataCacheEvent( SimpleMem::Request* ev );
     void handleIncomingInstCacheEvent( SimpleMem::Request* ev );

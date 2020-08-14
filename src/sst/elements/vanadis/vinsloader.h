@@ -23,6 +23,7 @@ public:
 		const uint64_t cachelinewidth ) {
 
 		cache_line_width = cachelinewidth;
+		printf("CACHE_LINEW_WIDTH=%" PRIu64 "\n", cache_line_width);
 		uop_cache = new VanadisCache< uint64_t, VanadisInstructionBundle* >( uop_cache_size );
 		predecode_cache = new VanadisCache< uint64_t, std::vector<uint8_t>* >( predecode_cache_entries );
 
@@ -34,7 +35,13 @@ public:
 		delete predecode_cache;
 	}
 
+	uint64_t getCacheLineWidth() {
+		return cache_line_width;
+	}
+
 	void setCacheLineWidth( const uint64_t new_line_width ) {
+		printf("SET CACHE LINE WIDTH CALLED: NEW WIDTH: %" PRIu64 "\n", new_line_width);
+
 		// if the line width is changed then we have to flush our cache
 		if( cache_line_width != new_line_width ) {
 			predecode_cache->clear();
@@ -47,16 +54,28 @@ public:
 		mem_if = new_if;
 	}
 
-	bool acceptResponse( SST::Interfaces::SimpleMem::Request* req ) {
+	bool acceptResponse( SST::Output* output, SST::Interfaces::SimpleMem::Request* req ) {
 		// Looks like we created this request, so we should accept and process it
-		if( pending_loads.find( req->id ) != pending_loads.end() ) {
+		auto check_hit_local = pending_loads.find( req->id );
+		if( check_hit_local != pending_loads.end() ) {
+			if( req->data.size() != cache_line_width ) {
+				output->fatal(CALL_INFO, -1, "Error: request to the instruction cache was not for a full line, req=%d, line-width=%d\n",
+					(int) req->data.size(), (int) cache_line_width);
+			}
+
 			std::vector<uint8_t>* new_line = new std::vector<uint8_t>( cache_line_width );
 
 			for( uint64_t i = 0; i < cache_line_width; ++i ) {
 				new_line->push_back( req->data[i] );
 			}
 
-			predecode_cache->store( req->id, new_line );
+			output->verbose(CALL_INFO, 16, 0, "[ins-loader] ---> hit (addr=%p), caching line in predecoder.\n",
+				(void*) req->addr);
+
+			predecode_cache->store( req->addr, new_line );
+
+			// Remove from pending load stores.
+			pending_loads.erase(check_hit_local);
 
 			return true;
 		} else {
@@ -140,14 +159,26 @@ public:
 				len, cache_line_width);
 		}
 
+		output->verbose(CALL_INFO, 8, 0, "[ins-loader] ---> processing a requested load ip=%p, icache-line: %" PRIu64 " bytes.\n",
+			(void*) addr, cache_line_width);
+
 		const uint64_t line_start_offset = (addr % cache_line_width);
 		uint64_t line_start = addr - line_start_offset;
 
 		do {
-			output->verbose(CALL_INFO, 8, 0, "(ins-loader) ---> issue ins-load line-start: %p (offset=%" PRIu64 "), line-len: %" PRIu64 " read-len=%" PRIu64 " \n",
+			output->verbose(CALL_INFO, 8, 0, "[ins-loader] ---> issue ins-load line-start: %p (offset=%" PRIu64 "), line-len: %" PRIu64 " read-len=%" PRIu64 " \n",
 				(void*) line_start, line_start_offset, cache_line_width, cache_line_width);
 
-			if( pending_loads.find( line_start ) == pending_loads.end() ) {
+			bool found_pending_load = false;
+
+			for( auto pending_load_itr : pending_loads ) {
+				if( pending_load_itr.second->addr == line_start ) {
+					found_pending_load = true;
+					break;
+				}
+			}
+
+			if( ! found_pending_load ) {
 				SST::Interfaces::SimpleMem::Request* req_line = new SST::Interfaces::SimpleMem::Request(
        	                	 	SST::Interfaces::SimpleMem::Request::Read, line_start, cache_line_width );
 
@@ -156,12 +187,27 @@ public:
 				pending_loads.insert( std::pair<SST::Interfaces::SimpleMem::Request::id_t,
                         		SST::Interfaces::SimpleMem::Request*> ( req_line->id, req_line) );
 			} else {
-				output->verbose(CALL_INFO, 8, 0, "(ins-loader) -----> load is already in progress, will not issue another load.\n");
+				output->verbose(CALL_INFO, 8, 0, "[ins-loader] -----> load is already in progress, will not issue another load.\n");
 			}
 
 			line_start += cache_line_width;
 
 		} while( line_start < (addr + len) );
+	}
+
+	void printStatus( SST::Output* output ) {
+		output->verbose(CALL_INFO, 8, 0, "Instruction Loader - Internal State Report:\n");
+		output->verbose(CALL_INFO, 8, 0, "--> Cache Line Width:          %" PRIu64 "\n", cache_line_width );
+		output->verbose(CALL_INFO, 8, 0, "--> Pending Loads:             %" PRIu32 "\n", (uint32_t) pending_loads.size() );
+
+		for( auto pl_itr : pending_loads ) {
+			output->verbose(CALL_INFO, 16, 0, "-----> Address:       %p\n", (void*) pl_itr.second->addr);
+		}
+
+		output->verbose(CALL_INFO, 8, 0, "--> uop Cache Entries:         %" PRIu32 " / %" PRIu32 "\n", (uint32_t) uop_cache->size(),
+			(uint32_t) uop_cache->capacity());
+		output->verbose(CALL_INFO, 8, 0, "--> Predecode Cache Entries:   %" PRIu32 " / %" PRIu32 "\n", (uint32_t) predecode_cache->size(),
+			(uint32_t) predecode_cache->capacity());
 	}
 
 private:

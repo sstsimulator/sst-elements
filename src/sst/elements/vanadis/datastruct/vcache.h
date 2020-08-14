@@ -28,6 +28,8 @@ public:
 	}
 
 	void reset( const size_t cache_entries ) {
+		clear();
+
 		max_entries = cache_entries;
                 data_values.reserve( cache_entries );
 	}
@@ -54,6 +56,14 @@ public:
 		if( contains(key) ) {
 			send_key_to_front( key );
 		}
+	}
+
+	size_t size() {
+		return ordering_q.size();
+	}
+
+	size_t capacity() {
+		return max_entries;
 	}
 
 private:

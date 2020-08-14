@@ -61,6 +61,8 @@ public:
 		output->verbose(CALL_INFO, 16, 0, "-> Decode step for thr: %" PRIu32 "\n", hw_thr);
 		output->verbose(CALL_INFO, 16, 0, "---> Max decodes per cycle: %" PRIu16 "\n", max_decodes_per_cycle );
 
+		ins_loader->printStatus( output );
+
 		uint16_t decodes_performed = 0;
 		uint16_t uop_bundles_used  = 0;
 
@@ -96,7 +98,7 @@ public:
 					uint32_t temp_ins = 0;
 					VanadisInstructionBundle* decoded_bundle = new VanadisInstructionBundle( ip );
 
-					if( ins_loader->getPredecodeBytes( output, ip, (uint8_t*) &temp_ins, sizeof(temp_ins) ) ) {
+					if( ins_loader->getPredecodeBytes( output, ip, (uint8_t*) &temp_ins, 4 ) ) {
 						decode( output, ip, temp_ins, decoded_bundle );
 						ins_loader->cacheDecodedBundle( decoded_bundle );
 						decodes_performed++;
@@ -106,13 +108,14 @@ public:
 							(void*) ip, (int) sizeof( temp_ins ));
 					}
 				} else {
-					output->verbose(CALL_INFO, 16, 0, "---> uop bundle and pre-decoded bytes are not found (ip=%p), requesting icache read.\n",
-						(void*) ip);
-					ins_loader->requestLoadAt( output, ip, sizeof( uint32_t ) );
+					output->verbose(CALL_INFO, 16, 0, "---> uop bundle and pre-decoded bytes are not found (ip=%p), requesting icache read (line-width=%" PRIu64 ")\n",
+						(void*) ip, ins_loader->getCacheLineWidth() );
+					ins_loader->requestLoadAt( output, ip, 4 );
 					break;
 				}
 			} else {
 				output->verbose(CALL_INFO, 16, 0, "---> Decoded pending issue queue is full, no more decodes permitted.\n");
+				break;
 			}
 		}
 

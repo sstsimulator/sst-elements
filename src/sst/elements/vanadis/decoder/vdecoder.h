@@ -34,7 +34,7 @@ public:
 		const size_t uop_cache_size          = params.find<size_t>("uop_cache_entries", 128);
 		const size_t predecode_cache_entries = params.find<size_t>("predecode_cache_entries", 32);
 
-		ins_loader = new VanadisInstructionLoader( uop_cache_size, uop_cache_size, predecode_cache_entries );
+		ins_loader = new VanadisInstructionLoader( uop_cache_size, predecode_cache_entries, icache_line_width );
 	}
 
 	virtual ~VanadisDecoder() {
@@ -46,8 +46,8 @@ public:
 		ins_loader->setCacheLineWidth( ic_width );
 	}
 
-	bool acceptCacheResponse( SST::Interfaces::SimpleMem::Request* req ) {
-		return ins_loader->acceptResponse( req );
+	bool acceptCacheResponse( SST::Output* output, SST::Interfaces::SimpleMem::Request* req ) {
+		return ins_loader->acceptResponse( output, req );
 	}
 
 	uint64_t getInsCacheLineWidth() const { return icache_line_width; }
