@@ -55,6 +55,7 @@ class ArielMemoryManagerSimple : public ArielMemoryManagerCache {
 
     private:
         void allocate(const uint64_t size, const uint32_t level, const uint64_t virtualAddress);
+	void printTable();
 
         uint64_t pageSize;
         std::deque<uint64_t> freePages;
