@@ -88,6 +88,9 @@ public:
 						delete bundle;
 						uop_bundles_used++;
 					} else {
+						output->verbose(CALL_INFO, 16, 0, "---> --> micro-op bundle for %p contains %" PRIu32 " ops, we only have %" PRIu32 " slots available in the decode q, wait for resources to become available.\n",
+							(void*) ip, (uint32_t) bundle->getInstructionCount(),
+							(uint32_t) (decoded_q->capacity() - decoded_q->size()));
 						// We don't have enough space, so we have to stop and wait for more entries to free up.
 						break;
 					}
@@ -99,9 +102,14 @@ public:
 					VanadisInstructionBundle* decoded_bundle = new VanadisInstructionBundle( ip );
 
 					if( ins_loader->getPredecodeBytes( output, ip, (uint8_t*) &temp_ins, 4 ) ) {
+						output->verbose(CALL_INFO, 16, 0, "---> performing a decode of the bytes found.\n");
 						decode( output, ip, temp_ins, decoded_bundle );
+
+						output->verbose(CALL_INFO, 16, 0, "---> performing a decode of the bytes found (generates %" PRIu32 " micro-op bundle).\n",
+							(uint32_t) decoded_bundle->getInstructionCount());
 						ins_loader->cacheDecodedBundle( decoded_bundle );
 						decodes_performed++;
+
 						break;
 					} else {
 						output->fatal(CALL_INFO, -1, "Error: predecoded bytes found at ip=%p, but %d byte retrival failed.\n",
