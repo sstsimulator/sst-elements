@@ -720,11 +720,11 @@ void VanadisComponent::handleIncomingInstCacheEvent( SimpleMem::Request* ev ) {
 		}
 	}
 
-	if( ! hit ) {
-		delete ev;
-	} else {
+	if( hit ) {
 		output->verbose(CALL_INFO, 16, 0, "---> Successful hit in hardware-thread decoders.\n");
 	}
+
+	delete ev;
 }
 
 void VanadisComponent::handleMisspeculate( const uint32_t hw_thr ) {

@@ -23,7 +23,6 @@ public:
 		const uint64_t cachelinewidth ) {
 
 		cache_line_width = cachelinewidth;
-		printf("CACHE_LINEW_WIDTH=%" PRIu64 "\n", cache_line_width);
 		uop_cache = new VanadisCache< uint64_t, VanadisInstructionBundle* >( uop_cache_size );
 		predecode_cache = new VanadisCache< uint64_t, std::vector<uint8_t>* >( predecode_cache_entries );
 
@@ -40,8 +39,6 @@ public:
 	}
 
 	void setCacheLineWidth( const uint64_t new_line_width ) {
-		printf("SET CACHE LINE WIDTH CALLED: NEW WIDTH: %" PRIu64 "\n", new_line_width);
-
 		// if the line width is changed then we have to flush our cache
 		if( cache_line_width != new_line_width ) {
 			predecode_cache->clear();
