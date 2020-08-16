@@ -9,6 +9,7 @@
 #include "inst/vload.h"
 
 #include "datastruct/cqueue.h"
+#include "util/vsignx.h"
 
 #include <map>
 #include <set>
@@ -200,7 +201,7 @@ public:
 						(void*) store_address, check_store_ins->getStoreWidth());
 
 					switch( evaluateAddressOverlap(
-							load_address, 
+							load_address,
 							load_ins->getLoadWidth(),
 							store_address,
 							check_store_ins->getStoreWidth()
@@ -255,7 +256,7 @@ public:
 
 					SimpleMem::Request* new_load_req = new SimpleMem::Request( SimpleMem::Request::Read,
 						load_addr, load_width);
-				
+
 					pending_loads.insert( std::pair<SimpleMem::Request::id_t, VanadisLoadRecord*>(new_load_req->id, new VanadisLoadRecord( load_ins )) );
 					memInterface->sendRequest( new_load_req );
 
@@ -363,23 +364,69 @@ public:
 				output->verbose(CALL_INFO, 16, 0, "-> LSQ match load entry, unpacking payload.\n");
 				VanadisLoadRecord* load_record = check_ev_load_exists->second;
 				VanadisLoadInstruction* load_ins = load_record->getAssociatedInstruction();
-				
+
 				const uint16_t target_reg = load_ins->getPhysIntRegOut(0);
 				const uint16_t load_width = load_ins->getLoadWidth();
 				const uint32_t hw_thr     = load_ins->getHWThread();
 
 				output->verbose(CALL_INFO, 16, 0, "-> LSQ matched to load hw_thr = %" PRIu32 ", target_reg = %" PRIu16 ", width=%" PRIu16 "\n",
 					hw_thr, target_reg, load_width);
+/*
 				registerFiles->at( hw_thr )->setIntReg( target_reg, (uint64_t) 0);
 
 				uint8_t* reg_ptr = (uint8_t*) registerFiles->at( hw_thr )->getIntReg( target_reg );
-				
+
 				// Copy out the payload for the register
 				for( uint16_t i = 0; i < load_width; ++i ) {
 					reg_ptr[i] = ev->data[i];
 				}
 
-				// TODO - SIGN EXTEND THIS REGISTER IF NEEDED 
+				const uint8_t check_sign_mask = 0b10000000;
+				const uint8_t all_bits_set    = 0b11111111;
+
+				// Do we need to perform sign extension
+
+				if( load_ins->performSignExtension() ) {
+					if( reg_ptr[(load_width-1)] & check_sign_mask != 0 ) {
+						// The sign is bit is set
+						for( uint16_t i = load_width; i < 8; ++i ) {
+							reg_ptr[i] = all_bits_set;
+						}
+					}
+				}
+*/
+				uint64_t new_value = 0;
+
+				switch( load_width ) {
+				case 1:
+					new_value = vanadis_sign_extend( ev->data[0] );
+					break;
+				case 2:
+				{
+					uint16_t* val_16 = (uint16_t*) &ev->data[0];
+					new_value = vanadis_sign_extend( *val_16 );
+				}
+					break;
+				case 4:
+				{
+					uint32_t* val_32 = (uint32_t*) &ev->data[0];
+					new_value = vanadis_sign_extend( *val_32 );
+				}
+					break;
+				case 8:
+				{
+					uint64_t* val_64 = (uint64_t*) &ev->data[0];
+					new_value = *val_64;
+				}
+					break;
+
+				default:
+					output->fatal(CALL_INFO, -1, "Error: load-instruction forces a load which is not power-of-2: width=%" PRIu16 "\n", load_width);
+					break;
+				}
+
+				// Set the register value
+				registerFiles->at( hw_thr )->setIntReg( target_reg, new_value );
 
 				load_ins->markExecuted();
 				pending_loads.erase( check_ev_load_exists );

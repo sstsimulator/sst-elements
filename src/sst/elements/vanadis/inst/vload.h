@@ -13,7 +13,7 @@ enum VanadisLoadRegisterType {
 class VanadisLoadInstruction : public VanadisInstruction {
 
 public:
-	VanadisLoadInstruction( 
+	VanadisLoadInstruction(
 		const uint64_t id,
 		const uint64_t addr,
 		const uint32_t hw_thr,
@@ -23,7 +23,24 @@ public:
 		const uint16_t tgtReg,
 		const uint16_t load_bytes
 		) : VanadisInstruction(id, addr, hw_thr, isa_opts, 1, 1, 1, 1, 0, 0, 0, 0),
-			offset(offst), load_width(load_bytes) {
+			offset(offst), load_width(load_bytes), signed_extend(false) {
+
+		isa_int_regs_out[0] = tgtReg;
+		isa_int_regs_in[1]  = memAddrReg;
+	}
+
+	VanadisLoadInstruction(
+		const uint64_t id,
+		const uint64_t addr,
+		const uint32_t hw_thr,
+		const VanadisDecoderOptions* isa_opts,
+		const uint16_t memAddrReg,
+		const uint64_t offst,
+		const uint16_t tgtReg,
+		const uint16_t load_bytes,
+		const bool extend_sign
+		) : VanadisInstruction(id, addr, hw_thr, isa_opts, 1, 1, 1, 1, 0, 0, 0, 0),
+			offset(offst), load_width(load_bytes), signed_extend(extend_sign) {
 
 		isa_int_regs_out[0] = tgtReg;
 		isa_int_regs_in[1]  = memAddrReg;
@@ -32,6 +49,8 @@ public:
 	VanadisLoadInstruction* clone() {
 		return new VanadisLoadInstruction( *this );
 	}
+
+	bool performSignExtension() const { return signed_extend; }
 
 	virtual VanadisFunctionalUnitType getInstFuncType() const { return INST_LOAD; }
 	virtual const char* getInstCode() const { return "LOAD"; }
@@ -60,6 +79,7 @@ public:
 	}
 
 protected:
+	const bool signed_extend;
 	const uint64_t offset;
 	const uint16_t load_width;
 
