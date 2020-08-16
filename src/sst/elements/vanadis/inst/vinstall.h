@@ -6,6 +6,8 @@
 #include "inst/vadd.h"
 #include "inst/vaddi.h"
 #include "inst/vsub.h"
+#include "inst/vmul.h"
+#include "inst/vmuli.h"
 
 // Logical operations
 #include "inst/vand.h"
@@ -19,6 +21,10 @@
 #include "inst/vsrai.h"
 #include "inst/vsrl.h"
 #include "inst/vsrli.h"
+
+// Compare operations
+#include "inst/vcmplt.h"
+#include "inst/vcmplte.h"
 
 // Jumps and PC change instructions
 #include "inst/vjump.h"
