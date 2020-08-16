@@ -14,7 +14,6 @@ using namespace SST::Vanadis;
 VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 	Component(id),
 	current_cycle(0) {
-	
 
 	instPrintBuffer = new char[1024];
 
@@ -41,12 +40,6 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 	const uint32_t rob_count = params.find<uint32_t>("reorder_slots", 64);
 	dCacheLineWidth = params.find<uint64_t>("dcache_line_width", 64);
         iCacheLineWidth = params.find<uint64_t>("icache_line_width", 64);
-
-	uint8_t val = 200;
-	uint64_t val_se = vanadis_sign_extend( val );
-
-	printf("u8=%" PRIu8 ", d8=%" PRId8 ", val_se_u64=%" PRIu64 ", val_se_d64=%" PRId64 "\n",
-		val, (int8_t) val, val_se, (int64_t) val_se);
 
 	output->verbose(CALL_INFO, 2, 0, "Core L1 Cache Configurations:\n");
 	output->verbose(CALL_INFO, 2, 0, "-> D-Cache Line Width:       %" PRIu64 " bytes\n", dCacheLineWidth);
