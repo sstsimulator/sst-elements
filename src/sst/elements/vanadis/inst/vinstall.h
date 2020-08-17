@@ -13,6 +13,7 @@
 #include "inst/vand.h"
 #include "inst/vor.h"
 #include "inst/vxor.h"
+#include "inst/vxori.h"
 
 // Shift operations
 #include "inst/vsll.h"

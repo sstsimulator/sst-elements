@@ -18,10 +18,11 @@ public:
                 const uint64_t addr,
                 const uint32_t hw_thr,
                 const VanadisDecoderOptions* isa_opts,
-		const uint64_t pc
-		) : 
+		const uint64_t pc,
+		const VanadisDelaySlotRequirement delayT
+		) :
 		VanadisSpeculatedInstruction(id, addr, hw_thr, isa_opts,
-			0,0,0,0,0,0,0,0 ), new_pc(pc) {}
+			0,0,0,0,0,0,0,0, delayT ), new_pc(pc) {}
 
 		virtual uint64_t getSpeculatePCAddress( const VanadisRegisterFile* reg_file ) {
 			return new_pc;
@@ -38,7 +39,6 @@ public:
 		virtual void execute( SST::Output* output, VanadisRegisterFile* regFile ) {
 			markExecuted();
 		}
-
 protected:
 	const uint64_t new_pc;
 

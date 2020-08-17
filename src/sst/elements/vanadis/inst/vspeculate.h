@@ -3,6 +3,7 @@
 #define _H_VANADIS_SPECULATE
 
 #include "inst/vinst.h"
+#include "inst/vdelaytype.h"
 
 namespace SST {
 namespace Vanadis {
@@ -26,7 +27,7 @@ const char* directionToChar( const VanadisBranchDirection dir ) {
 class VanadisSpeculatedInstruction : public VanadisInstruction {
 
 public:
-	VanadisSpeculatedInstruction( 
+	VanadisSpeculatedInstruction(
 		const uint64_t id,
 		const uint64_t addr,
 		const uint32_t hw_thr,
@@ -38,7 +39,8 @@ public:
 		const uint16_t c_phys_fp_reg_in,
 		const uint16_t c_phys_fp_reg_out,
 		const uint16_t c_isa_fp_reg_in,
-		const uint16_t c_isa_fp_reg_out) :
+		const uint16_t c_isa_fp_reg_out,
+		const VanadisDelaySlotRequirement delayT) :
 		VanadisInstruction(id, addr, hw_thr, isa_opts,
 			c_phys_int_reg_in, c_phys_int_reg_out,
 			c_isa_int_reg_in, c_isa_int_reg_out,
@@ -46,6 +48,7 @@ public:
 			c_isa_fp_reg_in, c_isa_fp_reg_out) {
 
 			spec = BRANCH_TAKEN;
+			delayType = delayT;
 		}
 
 	virtual ~VanadisSpeculatedInstruction() {}
@@ -64,8 +67,11 @@ public:
 		return INST_BRANCH;
 	}
 
+	virtual VanadisDelaySlotRequirement getDelaySlotType() const { return delayType; }
+
 protected:
 	VanadisBranchDirection spec;
+	VanadisDelaySlotRequirement delayType;
 
 };
 

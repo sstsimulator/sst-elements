@@ -149,7 +149,7 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 			// This wasn't provided, or its explicitly set to zero which means
 			// we should auto-calculate it
 			const uint64_t c0_entry = bin_info->getEntryPoint();
-			output->verbose(CALL_INFO, 8, 0, "Configuring core-0, thread-0 entry point = %p\n", 
+			output->verbose(CALL_INFO, 8, 0, "Configuring core-0, thread-0 entry point = %p\n",
 				(void*) c0_entry);
 			thread_decoders[0]->setInstructionPointer( c0_entry );
 		} else {
@@ -173,7 +173,7 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 //	test_ins = new VanadisAddInstruction(nextInsID++, 4, 0, isa_options[0], 9, 4, 3);
 //	thread_decoders[0]->getDecodedQueue()->push( test_ins );
 //	rob[0]->push(test_ins);
-	
+
 	test_ins = new VanadisSubInstruction(nextInsID++, 3, 0, isa_options[0], 4, 1, 1);
 	thread_decoders[0]->getDecodedQueue()->push( test_ins );
 	rob[0]->push(test_ins);
@@ -284,7 +284,7 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 	size_t lsq_max_stores_per_cycle = params.find<size_t>("max_stores_per_cycle", 2);
 
 	lsq = new VanadisLoadStoreQueue( memDataInterface, lsq_store_size, lsq_store_pending,
-		lsq_load_size, lsq_load_pending, lsq_max_loads_per_cycle, 
+		lsq_load_size, lsq_load_pending, lsq_max_loads_per_cycle,
 		lsq_max_stores_per_cycle, &register_files);
 
 	registerAsPrimaryComponent();
@@ -495,11 +495,32 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 					directionToChar( spec_ins->getSpeculatedDirection() ),
 					directionToChar( spec_ins->getResultDirection( register_files[i] ) ) );
 
-				if( spec_ins->getSpeculatedDirection() != spec_ins->getResultDirection( register_files[i] ) ) {
-					// We have a mis-speculated instruction, uh-oh.
-					output->verbose(CALL_INFO, 8, 0, "ROB -> mis-speculated execution, begin pipeline reset.\n");
-				} else {
-					output->verbose(CALL_INFO, 8, 0, "ROB -> speculation correct.\n");
+				bool delaySlotsAreOK = true;
+
+				switch( spec_ins->getDelaySlotType() ) {
+				case VANADIS_SINGLE_DELAY_SLOT:
+					output->verbose(CALL_INFO, 8, 0, "ROB ---> requires a single delay slot for marking complete.\n");
+
+					// We need to check the instruction just behind this one (a single delay slot, it must have executed)
+					if( rob[i]->peekAt(1)->completedExecution() ) {
+						output->verbose(CALL_INFO, 8, 0, "ROB ------> delay slot required ans has completed execution.\n");
+					} else {
+						output->verbose(CALL_INFO, 8, 0, "ROB ------> delay slot required but has not completed execution, must wait.\n");
+						delaySlotsAreOK = false;
+					}
+					break;
+				default:
+					break;
+				}
+
+				// If the delay slot handlers are satisfied we can proceed
+				if( delaySlotsAreOK ) {
+					if( spec_ins->getSpeculatedDirection() != spec_ins->getResultDirection( register_files[i] ) ) {
+						// We have a mis-speculated instruction, uh-oh.
+						output->verbose(CALL_INFO, 8, 0, "ROB -> mis-speculated execution, begin pipeline reset.\n");
+					} else {
+						output->verbose(CALL_INFO, 8, 0, "ROB -> speculation correct.\n");
+					}
 				}
 			} else if( rob_front->completedExecution() ) {
 				output->verbose(CALL_INFO, 8, 0, "ROB for Thread %5" PRIu32 " contains entries and those have finished executing, in retire status...\n", i);
