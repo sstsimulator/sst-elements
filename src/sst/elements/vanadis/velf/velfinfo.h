@@ -188,6 +188,17 @@ public:
 	uint64_t getHeaderMemoryLength() const { return memDataLen; }
 	uint64_t getAlignment() const { return alignment; }
 
+	void print( SST::Output* output, uint64_t index ) {
+		output->verbose(CALL_INFO, 2, 0, ">> Program Header Entry:    %" PRIu64 "\n", index );
+		output->verbose(CALL_INFO, 2, 0, "---> Header Type:           %s\n",
+			getELFProgramHeaderTypeString(hdr_type));
+		output->verbose(CALL_INFO, 2, 0, "---> Image Offset:          %" PRIu64 "\n", imgOffset);
+		output->verbose(CALL_INFO, 2, 0, "---> Virtual Memory Start:  %" PRIu64 " / %p\n", virtMemAddrStart, (void*) virtMemAddrStart);
+		output->verbose(CALL_INFO, 2, 0, "---> Phys. Memory Start:    %" PRIu64 " / %p\n", physMemAddrStart, (void*) physMemAddrStart);
+		output->verbose(CALL_INFO, 2, 0, "---> Image Data Length:     %" PRIu64 " / %p\n", imgDataLen, (void*) imgDataLen);
+		output->verbose(CALL_INFO, 2, 0, "---> Image Mem Length:      %" PRIu64 " / %p\n", memDataLen, (void*) memDataLen);
+		output->verbose(CALL_INFO, 2, 0, "---> Alignment:             %" PRIu64 " / %p\n", alignment, (void*) alignment);
+	}
 private:
 	void init() {
 		hdr_type = PROG_HEADER_NOT_USED;
@@ -240,6 +251,29 @@ public:
 	uint64_t getImageOffset() const { return imgOffset; }
 	uint64_t getImageLength() const { return imgDataLen; }
 	uint64_t getAlignment() const { return alignment; }
+
+	void print( SST::Output* output, uint64_t index ) {
+		output->verbose(CALL_INFO, 2, 0, ">> Section Entry %" PRIu64 "\n", index);
+		output->verbose(CALL_INFO, 2, 0, "---> Header Type:                 %s\n",
+			getELFSectionHeaderTypeString( sec_type ));
+		output->verbose(CALL_INFO, 2, 0, "---> Section Flags:               %" PRIu64 " / %p\n",
+			sec_flags, (void*) sec_flags);
+		output->verbose(CALL_INFO, 2, 0, "-----> isWriteable():             %s\n", isWriteable() ? "yes" : "no"  );
+		output->verbose(CALL_INFO, 2, 0, "-----> isAllocated():             %s\n", isAllocated() ? "yes" : "no"  );
+		output->verbose(CALL_INFO, 2, 0, "-----> isExecutable():            %s\n", isExecutable() ? "yes" : "no" );
+ 		output->verbose(CALL_INFO, 2, 0, "-----> isMergeable():             %s\n", isMergable() ? "yes" : "no"   );
+		output->verbose(CALL_INFO, 2, 0, "-----> isNullTermStrings():       %s\n", isNullTerminatedStrings() ? "yes" : "no" );
+		output->verbose(CALL_INFO, 2, 0, "-----> SHT-Index():               %s\n", containsSHTIndex() ? "yes" : "no" );
+		output->verbose(CALL_INFO, 2, 0, "-----> TLS-Data():                %s\n", containsTLSData() ? "yes" : "no" );
+		output->verbose(CALL_INFO, 2, 0, "---> Virtual Address:             %" PRIu64 " / %p\n", virtMemAddrStart,
+			(void*) virtMemAddrStart);
+		output->verbose(CALL_INFO, 2, 0, "---> Image Offset:                %" PRIu64 " / %p\n",
+			imgOffset, (void*) imgOffset);
+		output->verbose(CALL_INFO, 2, 0, "---> Image Data Length:           %" PRIu64 " / %p\n",
+			imgDataLen, (void*) imgDataLen);
+		output->verbose(CALL_INFO, 2, 0, "---> Alignment:                   %" PRIu64 " / %p\n",
+			alignment, (void*) alignment);
+	}
 
 private:
 	void init() {
@@ -301,6 +335,8 @@ public:
 			getProgramHeaderEntrySize() );
 		output->verbose(CALL_INFO, 2, 0, "Prog-Hdr Entry Count: %" PRIu16 "\n",
 			getProgramHeaderEntryCount() );
+		output->verbose(CALL_INFO, 2, 0, "Sect-hdr Offset:      %p\n",
+ 			(void*) getSectionHeaderOffset() );
 		output->verbose(CALL_INFO, 2, 0, "Sect-Hdr Entry Size:  %" PRIu16 "\n",
 			getSectionHeaderEntrySize() );
 		output->verbose(CALL_INFO, 2, 0, "Sect-Hdr Entry Count: %" PRIu16 "\n",
@@ -308,6 +344,16 @@ public:
 		output->verbose(CALL_INFO, 2, 0, "Sect-Hdr Strings Loc: %" PRIu16 "\n",
 			getSectionHeaderNameEntryOffset() );
 		output->verbose(CALL_INFO, 2, 0, "-------------------------------------------------------\n");
+
+		for( int i = 0; i < progHeaders.size(); ++i ) {
+			progHeaders[i]->print( output, i );
+			output->verbose(CALL_INFO, 2, 0, "-------------------------------------------------------\n");
+		}
+
+		for( int i = 0; i < progSections.size(); ++i ) {
+			progSections[i]->print( output, i );
+			output->verbose(CALL_INFO, 2, 0, "-------------------------------------------------------\n");
+		}
 	}
 
 	void setClass( const uint8_t new_class )    { elf_class  = new_class;  }
@@ -480,7 +526,7 @@ VanadisELFInfo* readBinaryELFInfo( SST::Output* output, const char* path ) {
 
 	fread( &tmp_byte, 1, 1, bin_file );
 	elf_info->setEndian( tmp_byte );
-	
+
 	fread( &tmp_byte, 1, 1, bin_file );
 	// Discard this read, it is set to 1 for modern ELF
 
@@ -545,6 +591,8 @@ VanadisELFInfo* readBinaryELFInfo( SST::Output* output, const char* path ) {
 	fread( &tmp_2byte, 2, 1, bin_file );
 	elf_info->setProgramHeaderEntryCount( tmp_2byte );
 
+	const uint32_t prog_header_count = (uint32_t) tmp_2byte;
+
 	fread( &tmp_2byte, 2, 1, bin_file );
 	elf_info->setSectionHeaderEntrySize( tmp_2byte );
 
@@ -553,6 +601,165 @@ VanadisELFInfo* readBinaryELFInfo( SST::Output* output, const char* path ) {
 
 	fread( &tmp_2byte, 2, 1, bin_file );
 	elf_info->setSectionEntryIndexForNames( tmp_2byte );
+
+	// Wind the file pointer to the program header offset
+	fseek( bin_file, elf_info->getProgramHeaderOffset(), SEEK_SET);
+
+	for( uint32_t i = 0; i < prog_header_count; ++i ) {
+		output->verbose(CALL_INFO, 4, 0, "Reading Program Header %" PRIu32 "...\n", i);
+		VanadisELFProgramHeaderEntry* new_prg_hdr = new VanadisELFProgramHeaderEntry();
+
+		// Header type
+		fread( &tmp_4byte, 4, 1, bin_file );
+
+		VanadisELFProgramHeaderType prg_hdr_type = PROG_HEADER_NOT_USED;
+
+		switch( tmp_4byte ) {
+		case 0x0: prg_hdr_type = PROG_HEADER_NOT_USED;     break;
+		case 0x1: prg_hdr_type = PROG_HEADER_LOAD;         break;
+		case 0x2: prg_hdr_type = PROG_HEADER_DYNAMIC;      break;
+		case 0x3: prg_hdr_type = PROG_HEADER_INTERPRETER;  break;
+		case 0x4: prg_hdr_type = PROG_HEADER_NOTE;         break;
+		case 0x5: /* not used? */ break;
+		case 0x6: prg_hdr_type = PROG_HEADER_TABLE_INFO;   break;
+		case 0x7: prg_hdr_type = PROG_HEADER_THREAD_LOCAL; break;
+		default:
+			output->verbose(CALL_INFO, 4, 0, "Unknown program header type in ELF: %" PRIu32 "\n", tmp_4byte );
+		}
+
+		new_prg_hdr->setHeaderType( prg_hdr_type );
+
+		if( elf_info->isELF64() ) {
+			// Discard segment-dependent flags
+			fread( &tmp_4byte, 4, 1, bin_file );
+
+			fread( &tmp_8byte, 8, 1, bin_file);
+			new_prg_hdr->setImageOffset( tmp_8byte );
+
+			fread( &tmp_8byte, 8, 1, bin_file);
+			new_prg_hdr->setVirtualMemoryStart( tmp_8byte );
+
+			fread( &tmp_8byte, 8, 1, bin_file);
+			new_prg_hdr->setPhysicalMemoryStart( tmp_8byte );
+
+			fread( &tmp_8byte, 8, 1, bin_file);
+			new_prg_hdr->setHeaderImageLength( tmp_8byte );
+
+			fread( &tmp_8byte, 8, 1, bin_file);
+			new_prg_hdr->setHeaderMemoryLength( tmp_8byte );
+
+			fread( &tmp_8byte, 8, 1, bin_file);
+			new_prg_hdr->setAlignment( tmp_8byte );
+		} else if( elf_info->isELF32() ) {
+			fread( &tmp_4byte, 4, 1, bin_file);
+			new_prg_hdr->setImageOffset( tmp_4byte );
+
+			fread( &tmp_4byte, 4, 1, bin_file);
+			new_prg_hdr->setVirtualMemoryStart( tmp_4byte );
+
+			fread( &tmp_4byte, 4, 1, bin_file);
+			new_prg_hdr->setPhysicalMemoryStart( tmp_4byte );
+
+			fread( &tmp_4byte, 4, 1, bin_file);
+			new_prg_hdr->setHeaderImageLength( tmp_4byte );
+
+			fread( &tmp_4byte, 4, 1, bin_file);
+			new_prg_hdr->setHeaderMemoryLength( tmp_4byte );
+
+			// Segment dependent flags - ignore?
+			fread( &tmp_4byte, 4, 1, bin_file);
+
+			fread( &tmp_4byte, 4, 1, bin_file);
+			new_prg_hdr->setAlignment( tmp_4byte );
+		} else {
+			output->fatal(CALL_INFO, -1, "Error: neither 32 or 64 bit test passed ELF read.\n");
+		}
+
+		elf_info->addProgramHeader( new_prg_hdr );
+	}
+
+	fseek( bin_file, elf_info->getSectionHeaderOffset(), SEEK_SET );
+
+	for( uint32_t i = 0; i < elf_info->getSectionHeaderEntryCount(); ++i ) {
+		output->verbose(CALL_INFO, 4, 0, "Reading Section Header %" PRIu32 "...\n", i);
+		VanadisELFProgramSectionEntry* new_sec = new VanadisELFProgramSectionEntry();
+
+		// Offset for section name
+		fread( &tmp_4byte, 4, 1, bin_file );
+
+		fread( &tmp_4byte, 4, 1, bin_file );
+		VanadisELFSectionHeaderType sec_type = SECTION_HEADER_NOT_USED;
+
+		switch( tmp_4byte ) {
+		case 0x0:  sec_type = SECTION_HEADER_NOT_USED;                  break;
+		case 0x1:  sec_type = SECTION_HEADER_PROG_DATA;		   	break;
+		case 0x2:  sec_type = SECTION_HEADER_SYMBOL_TABLE;		break;
+		case 0x3:  sec_type = SECTION_HEADER_STRING_TABLE;		break;
+		case 0x4:  sec_type = SECTION_HEADER_RELOCATABLE_ENTRY;		break;
+		case 0x5:  sec_type = SECTION_HEADER_SYMBOL_HASH_TABLE;		break;
+		case 0x6:  sec_type = SECTION_HEADER_DYN_LINK_INFO;		break;
+		case 0x7:  sec_type = SECTION_HEADER_NOTE;			break;
+		case 0x8:  sec_type = SECTION_HEADER_BSS;			break;
+		case 0x0B: sec_type = SECTION_HEADER_DYN_SYMBOL_INFO;		break;
+		case 0x0E: sec_type = SECTION_HEADER_INIT_ARRAY;		break;
+		case 0x0F: sec_type = SECTION_HEADER_FINI_ARRAY;		break;
+		case 0x10: sec_type = SECTION_HEADER_PREINIT_ARRAY;		break;
+		case 0x11: sec_type = SECTION_HEADER_SECTION_GROUP;		break;
+		case 0x12: sec_type = SECTION_HEADER_EXTENDED_SECTION_INDEX;	break;
+		case 0x13: sec_type = SECTION_HEADER_DEFINED_TYPES;		break;
+		default:
+			output->verbose(CALL_INFO, 4, 0, "Unknown Section type: %" PRIu32 "\n", tmp_4byte );
+			break;
+		}
+
+		new_sec->setSectionType( sec_type );
+
+		if( elf_info->isELF64() ) {
+			fread( &tmp_8byte, 8, 1, bin_file );
+			new_sec->setSectionFlags( tmp_8byte );
+
+			fread( &tmp_8byte, 8, 1, bin_file );
+			new_sec->setVirtualMemoryStart( tmp_8byte );
+
+			fread( &tmp_8byte, 8, 1, bin_file );
+			new_sec->setImageOffset( tmp_8byte );
+
+			fread( &tmp_8byte, 8, 1, bin_file );
+			new_sec->setImageLength( tmp_8byte );
+
+			fread( &tmp_4byte, 4, 1, bin_file );
+			fread( &tmp_4byte, 4, 1, bin_file );
+
+			fread( &tmp_8byte, 8, 1, bin_file );
+			new_sec->setAlignment( tmp_8byte );
+
+			fread( &tmp_8byte, 8, 1, bin_file );
+		} else if( elf_info->isELF32() ) {
+			fread( &tmp_4byte, 4, 1, bin_file );
+			new_sec->setSectionFlags( tmp_4byte );
+
+			fread( &tmp_4byte, 4, 1, bin_file );
+			new_sec->setVirtualMemoryStart( tmp_4byte );
+
+			fread( &tmp_4byte, 4, 1, bin_file );
+			new_sec->setImageOffset( tmp_4byte );
+
+			fread( &tmp_4byte, 4, 1, bin_file );
+			new_sec->setImageLength( tmp_4byte );
+
+			fread( &tmp_4byte, 4, 1, bin_file );
+			fread( &tmp_4byte, 4, 1, bin_file );
+
+			fread( &tmp_4byte, 4, 1, bin_file );
+			new_sec->setAlignment( tmp_4byte );
+
+			fread( &tmp_4byte, 4, 1, bin_file );
+		} else {
+			output->fatal(CALL_INFO, -1, "Error: not 32 or 64-bit type ELF info. Not sure what to do.\n");
+		}
+
+		elf_info->addProgramSection( new_sec );
+	}
 
 	fclose( bin_file );
 	return elf_info;
