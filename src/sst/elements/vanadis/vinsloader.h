@@ -66,6 +66,28 @@ public:
 				new_line->push_back( req->data[i] );
 			}
 
+			output->verbose(CALL_INFO, 16, 0, "[ins-loader] ---> response has: %" PRIu64 " bytes in payload\n",
+				(uint64_t) req->data.size());
+
+			if( output->getVerboseLevel() >= 16 ) {
+				char* print_line = new char[2048];
+				char* temp_line  = new char[2048];
+				print_line[0] = '\0';
+
+				for( uint64_t i = 0; i < cache_line_width; ++i ) {
+					for( uint64_t j = 0; j < 2048; ++j ) {
+						temp_line[j] = print_line[j];
+					}
+
+					snprintf( print_line, 2048, "%s %" PRIu8 "", temp_line, req->data[i] );
+				}
+
+				output->verbose(CALL_INFO, 16, 0, "[ins-loader] ---> cache-line: %s\n", print_line);
+
+				delete[] print_line;
+				delete[] temp_line;
+			}
+
 			output->verbose(CALL_INFO, 16, 0, "[ins-loader] ---> hit (addr=%p), caching line in predecoder.\n",
 				(void*) req->addr);
 

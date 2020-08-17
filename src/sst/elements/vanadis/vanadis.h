@@ -25,6 +25,8 @@
 #include <set>
 #include <limits>
 
+#include "velf/velfinfo.h"
+
 #include "decoder/vdecoder.h"
 #include "datastruct/cqueue.h"
 #include "inst/vinst.h"
@@ -220,6 +222,8 @@ private:
     uint64_t iCacheLineWidth;
 
     TimeConverter* cpuClockTC;
+
+    VanadisELFInfo* binary_elf_info;
 };
 
 

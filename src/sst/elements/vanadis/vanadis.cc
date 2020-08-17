@@ -3,6 +3,9 @@
 #include <sst_config.h>
 #include <sst/core/output.h>
 
+#include <cstdio>
+#include <vector>
+
 #include "vanadis.h"
 
 #include "velf/velfinfo.h"
@@ -29,9 +32,16 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 	output = new SST::Output(outputPrefix, verbosity, 0, Output::STDOUT);
 	free(outputPrefix);
 
-	const char* check_bin = "./tests/hello-mips";
-	VanadisELFInfo* bin_info = readBinaryELFInfo( output, check_bin );
-	bin_info->print( output );
+	std::string binary_img = params.find<std::string>("executable", "");
+
+	if( "" == binary_img ) {
+		output->verbose(CALL_INFO, 2, 0, "No executable specified, will not perform any binary load.\n");
+		binary_elf_info = nullptr;
+	} else {
+		output->verbose(CALL_INFO, 2, 0, "Executable: %s\n", binary_img.c_str());
+		binary_elf_info = readBinaryELFInfo( output, binary_img.c_str() );
+		binary_elf_info->print( output );
+	}
 
 	std::string clock_rate = params.find<std::string>("clock", "1GHz");
 	output->verbose(CALL_INFO, 2, 0, "Registering clock at %s.\n", clock_rate.c_str());
@@ -104,7 +114,7 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 
 		isa_options.push_back( thread_decoders[i]->getDecoderOptions() );
 
-		output->verbose(CALL_INFO, 8, 0, "Thread: %6" PRIu32 " ISA set to: %s [Int-Reg: %" PRIu16 "/FP-Reg: %" PRIu16 "]\n", 
+		output->verbose(CALL_INFO, 8, 0, "Thread: %6" PRIu32 " ISA set to: %s [Int-Reg: %" PRIu16 "/FP-Reg: %" PRIu16 "]\n",
 			i,
 			thread_decoders[i]->getISAName(),
 			thread_decoders[i]->countISAIntReg(),
@@ -148,7 +158,7 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 		if( 0 == thread_decoders[0]->getInstructionPointer() ) {
 			// This wasn't provided, or its explicitly set to zero which means
 			// we should auto-calculate it
-			const uint64_t c0_entry = bin_info->getEntryPoint();
+			const uint64_t c0_entry = (binary_elf_info != nullptr) ? binary_elf_info->getEntryPoint() : 0;
 			output->verbose(CALL_INFO, 8, 0, "Configuring core-0, thread-0 entry point = %p\n",
 				(void*) c0_entry);
 			thread_decoders[0]->setInstructionPointer( c0_entry );
@@ -723,7 +733,7 @@ int VanadisComponent::recoverRetiredRegisters(
 		(int) recovered_phys_reg_int.size(), (int) recovered_phys_reg_fp.size());
 
 	for( uint16_t next_reg : recovered_phys_reg_int ) {
-		int_regs->push(next_reg);	
+		int_regs->push(next_reg);
 	}
 
 	for( uint16_t next_reg : recovered_phys_reg_fp ) {
@@ -746,7 +756,93 @@ void VanadisComponent::printStatus( SST::Output& output ) {
 }
 
 void VanadisComponent::init(unsigned int phase) {
+	output->verbose(CALL_INFO, 2, 0, "Start: init-phase: %" PRIu32 "...\n", (uint32_t) phase );
+	output->verbose(CALL_INFO, 2, 0, "-> Initializing memory interfaces with this phase...\n");
 
+	memDataInterface->init( phase );
+	memInstInterface->init( phase );
+
+	output->verbose(CALL_INFO, 2, 0, "-> Performing init operations for Vanadis...\n");
+
+	// Pull in all the binary contents and push this into the memory system
+	// everything should be correctly up and running by now (components, links etc)
+	if( 0 == phase ) {
+		if( nullptr != binary_elf_info ) {
+			if( 0 == core_id ) {
+				output->verbose(CALL_INFO, 2, 0, "-> Loading %s, to locate program sections ...\n",
+					binary_elf_info->getBinaryPath());
+				FILE* exec_file = fopen( binary_elf_info->getBinaryPath(), "rb" );
+
+				if( nullptr == exec_file ) {
+					output->fatal(CALL_INFO, -1, "Error: unable to open %s\n", binary_elf_info->getBinaryPath());
+				}
+
+				std::vector<uint8_t> initial_mem_contents;
+
+/*
+				for( size_t i = 0; i < binary_elf_info->countProgramSections(); ++i ) {
+					const VanadisELFProgramSectionEntry* next_sec = binary_elf_info->getProgramSection( i );
+
+					if( (SECTION_HEADER_PROG_DATA == next_sec->getSectionType()) ||
+						(SECTION_HEADER_BSS == next_sec->getSectionType()) ) {
+
+						output->verbose(CALL_INFO, 2, 0, ">> Loading Section from executable at: %p, len=%" PRIu64 "...\n",
+							(void*) next_sec->getVirtualMemoryStart(), next_sec->getImageLength());
+
+						// Executable data, let's load it in
+						if( initial_mem_contents.size() < (next_sec->getVirtualMemoryStart() + next_sec->getImageLength()) ) {
+							size_t size_now = initial_mem_contents.size();
+							initial_mem_contents.resize( next_sec->getVirtualMemoryStart() + next_sec->getImageLength(), 0 );
+						}
+
+						// Find the section and read it all in
+						fseek( exec_file, next_sec->getImageOffset(), SEEK_SET );
+						fread( &initial_mem_contents[next_sec->getVirtualMemoryStart()],
+							next_sec->getImageLength(), 1, exec_file);
+					}
+				}
+*/
+				for( size_t i = 0; i < binary_elf_info->countProgramHeaders(); ++i ) {
+					const VanadisELFProgramHeaderEntry* next_prog_hdr = binary_elf_info->getProgramHeader(i);
+
+					if( (PROG_HEADER_LOAD == next_prog_hdr->getHeaderType()) ) {
+						output->verbose(CALL_INFO, 2, 0, ">> Loading Program Header from executable at %p, len=%" PRIu64 "...\n",
+							(void*) next_prog_hdr->getImageOffset(), next_prog_hdr->getHeaderImageLength());
+						output->verbose(CALL_INFO, 2, 0, ">>>> Placing at virtual address: %p\n",
+							(void*) next_prog_hdr->getVirtualMemoryStart());
+
+						// Do we have enough space in the memory image, if not, extend and zero
+						if( initial_mem_contents.size() < ( next_prog_hdr->getVirtualMemoryStart() + next_prog_hdr->getHeaderImageLength() )) {
+							initial_mem_contents.resize( ( next_prog_hdr->getVirtualMemoryStart() + next_prog_hdr->getHeaderImageLength() ), 0);
+						}
+
+						fseek( exec_file, next_prog_hdr->getImageOffset(), SEEK_SET );
+						fread( &initial_mem_contents[ next_prog_hdr->getVirtualMemoryStart() ],
+							next_prog_hdr->getHeaderImageLength(), 1, exec_file);
+					}
+				}
+
+				fclose(exec_file);
+
+				output->verbose(CALL_INFO, 2, 0, ">> Writing memory contents (%" PRIu64 " bytes at index 0)\n",
+					(uint64_t) initial_mem_contents.size());
+
+				for( size_t i = 0x400580; i < (0x400580 + 0x8); i++ ) {
+					printf("i=%p = %x\n", (void*) i, initial_mem_contents[i]);
+				}
+
+				SimpleMem::Request* writeExe = new SimpleMem::Request(SimpleMem::Request::Write,
+					0, initial_mem_contents.size(), initial_mem_contents);
+				memDataInterface->sendInitData( writeExe );
+			} else {
+				output->verbose(CALL_INFO, 2, 0, "Not core-0, so will not perform any loading of binary info.\n");
+			}
+		} else {
+			output->verbose(CALL_INFO, 2, 0, "No ELF binary information loaded, will not perform any loading.\n");
+		}
+	}
+
+	output->verbose(CALL_INFO, 2, 0, "End: init-phase: %" PRIu32 "...\n", (uint32_t) phase );
 }
 
 void VanadisComponent::handleIncomingDataCacheEvent( SimpleMem::Request* ev ) {
