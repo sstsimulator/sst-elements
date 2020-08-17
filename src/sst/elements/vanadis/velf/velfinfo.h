@@ -161,7 +161,104 @@ const char* getELFOSABIString( VanadisELFOSABI abi ) {
 	}
 }
 
+class VanadisELFProgramHeaderEntry {
+public:
+	VanadisELFProgramHeaderEntry( VanadisELFProgramHeaderType hdr ) {
+		init();
+		hdr_type = hdr;
+	}
 
+	VanadisELFProgramHeaderEntry() {
+		init();
+	}
+
+	void setHeaderType( VanadisELFProgramHeaderType new_type ) { hdr_type = new_type; }
+	void setImageOffset( const uint64_t new_off ) { imgOffset = new_off; }
+	void setVirtualMemoryStart( const uint64_t new_start ) { virtMemAddrStart = new_start; }
+	void setPhysicalMemoryStart( const uint64_t new_start ) { physMemAddrStart = new_start; }
+	void setHeaderImageLength( const uint64_t new_len ) { imgDataLen = new_len; }
+	void setHeaderMemoryLength( const uint64_t new_len ) { memDataLen = new_len; }
+	void setAlignment( const uint64_t new_align ) { alignment = new_align; }
+
+	VanadisELFProgramHeaderType getHeaderType() const { return hdr_type; }
+	uint64_t getImageOffset() const { return imgOffset; }
+	uint64_t getVirtualMemoryStart() const { return virtMemAddrStart; }
+	uint64_t getPhysicalMemoryStart() const { return physMemAddrStart; }
+	uint64_t getHeaderImageLength() const { return imgDataLen; }
+	uint64_t getHeaderMemoryLength() const { return memDataLen; }
+	uint64_t getAlignment() const { return alignment; }
+
+private:
+	void init() {
+		hdr_type = PROG_HEADER_NOT_USED;
+		imgOffset = 0;
+		virtMemAddrStart = 0;
+		physMemAddrStart = 0;
+		imgDataLen = 0;
+		memDataLen = 0;
+		alignment = 0;
+	}
+
+	VanadisELFProgramHeaderType hdr_type;
+	uint64_t imgOffset;
+	uint64_t virtMemAddrStart;
+	uint64_t physMemAddrStart;
+	uint64_t imgDataLen;
+	uint64_t memDataLen;
+	uint64_t alignment;
+};
+
+class VanadisELFProgramSectionEntry {
+public:
+	VanadisELFProgramSectionEntry() {
+		init();
+	}
+
+	VanadisELFProgramSectionEntry( VanadisELFSectionHeaderType s_type ) {
+		init();
+		sec_type = s_type;
+	}
+
+	void setSectionType( VanadisELFSectionHeaderType new_type ) { sec_type = new_type; }
+	void setSectionFlags( const uint64_t new_flags ) { sec_flags = new_flags; }
+	void setVirtualMemoryStart( const uint64_t new_start ) { virtMemAddrStart = new_start; }
+	void setImageOffset( const uint64_t new_off ) { imgOffset = new_off; }
+	void setImageLength( const uint64_t new_len ) { imgDataLen = new_len; }
+	void setAlignment( const uint64_t new_align ) { alignment = new_align; }
+
+	VanadisELFSectionHeaderType getSectionType() const { return sec_type; }
+
+	bool isWriteable()    const { return (sec_flags & 0x1  ) != 0; }
+	bool isAllocated()    const { return (sec_flags & 0x2  ) != 0; }
+	bool isExecutable()   const { return (sec_flags & 0x4  ) != 0; }
+	bool isMergable()     const { return (sec_flags & 0x10 ) != 0; }
+	bool isNullTerminatedStrings() const { return (sec_flags & 0x20 ) != 0; }
+	bool containsSHTIndex() const { return (sec_flags & 0x40 ) != 0; }
+	bool containsTLSData() const { return (sec_flags & 0x400 ) != 0; }
+
+	uint64_t getVirtualMemoryStart() const { return virtMemAddrStart; }
+	uint64_t getImageOffset() const { return imgOffset; }
+	uint64_t getImageLength() const { return imgDataLen; }
+	uint64_t getAlignment() const { return alignment; }
+
+private:
+	void init() {
+		sec_type = SECTION_HEADER_NOT_USED;
+		sec_flags = 0;
+		virtMemAddrStart = 0;
+		imgOffset = 0;
+		imgDataLen = 0;
+		alignment = 0;
+	}
+
+	VanadisELFSectionHeaderType sec_type;
+	uint64_t sec_flags;
+	uint64_t virtMemAddrStart;
+	uint64_t imgOffset;
+	uint64_t imgDataLen;
+	uint64_t alignment;
+
+};
 
 class VanadisELFInfo {
 public:
@@ -459,105 +556,6 @@ VanadisELFInfo* readBinaryELFInfo( SST::Output* output, const char* path ) {
 
 	fclose( bin_file );
 	return elf_info;
-};
-
-class VanadisELFProgramHeaderEntry {
-public:
-	VanadisELFProgramHeaderEntry( VanadisELFProgramHeaderType hdr ) {
-		init();
-		hdr_type = hdr;
-	}
-
-	VanadisELFProgramHeaderEntry() {
-		init();
-	}
-
-	void setHeaderType( VanadisELFProgramHeaderType new_type ) { hdr_type = new_type; }
-	void setImageOffset( const uint64_t new_off ) { imgOffset = new_off; }
-	void setVirtualMemoryStart( const uint64_t new_start ) { virtMemAddrStart = new_start; }
-	void setPhysicalMemoryStart( const uint64_t new_start ) { physMemAddrStart = new_start; }
-	void setHeaderImageLength( const uint64_t new_len ) { imgDataLen = new_len; }
-	void setHeaderMemoryLength( const uint64_t new_len ) { memDataLen = new_len; }
-	void setAlignment( const uint64_t new_align ) { alignment = new_align; }
-
-	VanadisELFProgramHeaderType getHeaderType() const { return hdr_type; }
-	uint64_t getImageOffset() const { return imgOffset; }
-	uint64_t getVirtualMemoryStart() const { return virtMemAddrStart; }
-	uint64_t getPhysicalMemoryStart() const { return physMemAddrStart; }
-	uint64_t getHeaderImageLength() const { return imgDataLen; }
-	uint64_t getHeaderMemoryLength() const { return memDataLen; }
-	uint64_t getAlignment() const { return alignment; }
-
-private:
-	void init() {
-		hdr_type = PROG_HEADER_NOT_USED;
-		imgOffset = 0;
-		virtMemAddrStart = 0;
-		physMemAddrStart = 0;
-		imgDataLen = 0;
-		memDataLen = 0;
-		alignment = 0;
-	}
-
-	VanadisELFProgramHeaderType hdr_type;
-	uint64_t imgOffset;
-	uint64_t virtMemAddrStart;
-	uint64_t physMemAddrStart;
-	uint64_t imgDataLen;
-	uint64_t memDataLen;
-	uint64_t alignment;
-};
-
-class VanadisELFProgramSectionEntry {
-public:
-	VanadisELFProgramSectionEntry() {
-		init();
-	}
-
-	VanadisELFProgramSectionEntry( VanadisELFSectionHeaderType s_type ) {
-		init();
-		sec_type = s_type;
-	}
-
-	void setSectionType( VanadisELFSectionHeaderType new_type ) { sec_type = new_type; }
-	void setSectionFlags( const uint64_t new_flags ) { sec_flags = new_flags; }
-	void setVirtualMemoryStart( const uint64_t new_start ) { virtMemAddrStart = new_start; }
-	void setImageOffset( const uint64_t new_off ) { imgOffset = new_off; }
-	void setImageLength( const uint64_t new_len ) { imgDataLen = new_len; }
-	void setAlignment( const uint64_t new_align ) { alignment = new_align; }
-
-	VanadisELFSectionHeaderType getSectionType() const { return sec_type; }
-
-	bool isWriteable()    const { return (sec_flags & 0x1  ) != 0; }
-	bool isAllocated()    const { return (sec_flags & 0x2  ) != 0; }
-	bool isExecutable()   const { return (sec_flags & 0x4  ) != 0; }
-	bool isMergable()     const { return (sec_flags & 0x10 ) != 0; }
-	bool isNullTerminatedStrings() const { return (sec_flags & 0x20 ) != 0; }
-	bool containsSHTIndex() const { return (sec_flags & 0x40 ) != 0; }
-	bool containsTLSData() const { return (sec_flags & 0x400 ) != 0; }
-
-	uint64_t getVirtualMemoryStart() const { return virtMemAddrStart; }
-	uint64_t getImageOffset() const { return imgOffset; }
-	uint64_t getImageLength() const { return imgDataLen; }
-	uint64_t getAlignment() const { return alignment; }
-
-private:
-	void init() {
-		sec_type = SECTION_HEADER_NOT_USED;
-		sec_flags = 0;
-		virtMemAddrStart = 0;
-		imgOffset = 0;
-		imgDataLen = 0;
-		alignment = 0;
-	}
-
-	VanadisELFSectionHeaderType sec_type;
-	uint64_t sec_flags;
-	uint64_t virtMemAddrStart;
-	uint64_t imgOffset;
-	uint64_t imgDataLen;
-	uint64_t alignment;
-
 };
 
 }
