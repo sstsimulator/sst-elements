@@ -60,7 +60,8 @@ public:
 					(int) req->data.size(), (int) cache_line_width);
 			}
 
-			std::vector<uint8_t>* new_line = new std::vector<uint8_t>( cache_line_width );
+			std::vector<uint8_t>* new_line = new std::vector<uint8_t>();
+			new_line->reserve( cache_line_width );
 
 			for( uint64_t i = 0; i < cache_line_width; ++i ) {
 				new_line->push_back( req->data[i] );
@@ -118,7 +119,11 @@ public:
 
 		bool filled = true;
 
+		output->verbose(CALL_INFO, 16, 0, "[fill-decode]: ins-addr: 0x%llx line-offset: %" PRIu64 " line-start=%" PRIu64 " / 0x%llx\n",
+			addr, inst_line_offset, cache_line_start, cache_line_start);
+
 		if( predecode_cache->contains( cache_line_start ) ) {
+/*
 			if( (addr + buffer_req) > (cache_line_start + cache_line_width) ) {
 				if( predecode_cache->contains( cache_line_start + cache_line_width ) ) {
 					// Needs two cache lines
@@ -137,15 +142,18 @@ public:
 					filled = false;
 				}
 			} else {
+*/
 				std::vector<uint8_t>* cached_bytes = predecode_cache->find( cache_line_start );
 
 				for( uint64_t i = 0; i < buffer_req; ++i ) {
 					buffer[i] = cached_bytes->at( inst_line_offset + i );
 				}
-			}
+//			}
 		} else {
 			filled = false;
 		}
+
+		output->verbose(CALL_INFO, 16, 0, "[fill-decode]: line-filled: %s\n", (filled) ? "yes" : "no");
 
 		return filled;
 	}

@@ -15,7 +15,8 @@ enum VanadisFunctionalUnitType {
 	INST_BRANCH,
 	INST_SPECIAL,
 	INST_FENCE,
-	INST_NOOP
+	INST_NOOP,
+	INST_FAULT
 };
 
 const char* funcTypeToString( VanadisFunctionalUnitType unit_type ) {
@@ -40,6 +41,8 @@ case INST_FENCE:
 	return "FENCE";
 case INST_NOOP:
 	return "NOOP";
+case INST_FAULT:
+	return "FAULT";
 }
 };
 

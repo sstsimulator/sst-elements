@@ -48,6 +48,8 @@ public:
 		// See if we get an entry point the sub-component says we have to use
 		// if not, we will fall back to ELF reading at the core level to work this out
 		setInstructionPointer( params.find<uint64_t>("entry_point", 0) );
+
+		next_ins_id = 0;
 	}
 
 	~VanadisMIPSDecoder() {}
@@ -79,8 +81,9 @@ public:
 						// Put in the queue
 						for( uint32_t i = 0; i < bundle->getInstructionCount(); ++i ) {
 							VanadisInstruction* next_ins = bundle->getInstructionByIndex( i );
-							output->verbose(CALL_INFO, 16, 0, "---> --> issuing ins id: %" PRIu64 "(addr: %p, %s)...\n",
-								next_ins->getID(), (void*) next_ins->getInstructionAddress(),
+							output->verbose(CALL_INFO, 16, 0, "---> --> issuing ins id: %" PRIu64 " (addr: %llx, %s)...\n",
+								next_ins->getID(),
+								next_ins->getInstructionAddress(),
 								next_ins->getInstCode());
 							decoded_q->push( next_ins );
 						}
@@ -101,8 +104,8 @@ public:
 					uint32_t temp_ins = 0;
 					VanadisInstructionBundle* decoded_bundle = new VanadisInstructionBundle( ip );
 
-					if( ins_loader->getPredecodeBytes( output, ip, (uint8_t*) &temp_ins, 4 ) ) {
-						output->verbose(CALL_INFO, 16, 0, "---> performing a decode of the bytes found.\n");
+					if( ins_loader->getPredecodeBytes( output, ip, (uint8_t*) &temp_ins, sizeof(temp_ins) ) ) {
+						output->verbose(CALL_INFO, 16, 0, "---> performing a decode of the bytes found (ins-bytes: 0x%x)\n", temp_ins);
 						decode( output, ip, temp_ins, decoded_bundle );
 
 						output->verbose(CALL_INFO, 16, 0, "---> performing a decode of the bytes found (generates %" PRIu32 " micro-op bundle).\n",
@@ -147,8 +150,11 @@ protected:
 	}
 
 	void decode( SST::Output* output, const uint64_t ins_addr, const uint32_t next_ins, VanadisInstructionBundle* bundle ) {
+		output->verbose( CALL_INFO, 16, 0, "[decode] > addr: 0x%llx ins: 0x%08x\n", ins_addr, next_ins );
 
 		const uint32_t ins_mask = next_ins & MIPS_OP_MASK;
+
+		output->verbose( CALL_INFO, 16, 0, "[decode] ---> ins-mask: %08x\n", ins_mask );
 
 		uint16_t rt = 0;
 		uint16_t rs = 0;
@@ -162,18 +168,26 @@ protected:
 
 		const uint64_t imm64 = (uint64_t) imm;
 
+		bool insertDecodeFault = true;
+
 		switch( ins_mask ) {
 		case 0:
 			// Special category
 			break;
 
 		case MIPS_ADDI_OP_MASK:
-			decoded_q->push( new VanadisAddImmInstruction( getNextInsID(),
-				ins_addr, getHardwareThread(), options, rt, rs, imm64 ) );
+			//decoded_q->push( new VanadisAddImmInstruction( getNextInsID(),
+			//	ins_addr, getHardwareThread(), options, rt, rs, imm64 ) );
+			insertDecodeFault = false;
 			break;
 
 		default:
 			break;
+		}
+
+		if( insertDecodeFault ) {
+			bundle->addInstruction( new VanadisInstructionDecodeFault( getNextInsID(),
+				ins_addr, getHardwareThread(), options) );
 		}
 	}
 

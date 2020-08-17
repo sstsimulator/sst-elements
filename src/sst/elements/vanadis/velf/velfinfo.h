@@ -189,15 +189,15 @@ public:
 	uint64_t getAlignment() const { return alignment; }
 
 	void print( SST::Output* output, uint64_t index ) {
-		output->verbose(CALL_INFO, 2, 0, ">> Program Header Entry:    %" PRIu64 "\n", index );
-		output->verbose(CALL_INFO, 2, 0, "---> Header Type:           %s\n",
+		output->verbose(CALL_INFO, 32, 0, ">> Program Header Entry:    %" PRIu64 "\n", index );
+		output->verbose(CALL_INFO, 32, 0, "---> Header Type:           %s\n",
 			getELFProgramHeaderTypeString(hdr_type));
-		output->verbose(CALL_INFO, 2, 0, "---> Image Offset:          %" PRIu64 "\n", imgOffset);
-		output->verbose(CALL_INFO, 2, 0, "---> Virtual Memory Start:  %" PRIu64 " / %p\n", virtMemAddrStart, (void*) virtMemAddrStart);
-		output->verbose(CALL_INFO, 2, 0, "---> Phys. Memory Start:    %" PRIu64 " / %p\n", physMemAddrStart, (void*) physMemAddrStart);
-		output->verbose(CALL_INFO, 2, 0, "---> Image Data Length:     %" PRIu64 " / %p\n", imgDataLen, (void*) imgDataLen);
-		output->verbose(CALL_INFO, 2, 0, "---> Image Mem Length:      %" PRIu64 " / %p\n", memDataLen, (void*) memDataLen);
-		output->verbose(CALL_INFO, 2, 0, "---> Alignment:             %" PRIu64 " / %p\n", alignment, (void*) alignment);
+		output->verbose(CALL_INFO, 32, 0, "---> Image Offset:          %" PRIu64 "\n", imgOffset);
+		output->verbose(CALL_INFO, 32, 0, "---> Virtual Memory Start:  %" PRIu64 " / %p\n", virtMemAddrStart, (void*) virtMemAddrStart);
+		output->verbose(CALL_INFO, 32, 0, "---> Phys. Memory Start:    %" PRIu64 " / %p\n", physMemAddrStart, (void*) physMemAddrStart);
+		output->verbose(CALL_INFO, 32, 0, "---> Image Data Length:     %" PRIu64 " / %p\n", imgDataLen, (void*) imgDataLen);
+		output->verbose(CALL_INFO, 32, 0, "---> Image Mem Length:      %" PRIu64 " / %p\n", memDataLen, (void*) memDataLen);
+		output->verbose(CALL_INFO, 32, 0, "---> Alignment:             %" PRIu64 " / %p\n", alignment, (void*) alignment);
 	}
 private:
 	void init() {
@@ -253,25 +253,25 @@ public:
 	uint64_t getAlignment() const { return alignment; }
 
 	void print( SST::Output* output, uint64_t index ) {
-		output->verbose(CALL_INFO, 2, 0, ">> Section Entry %" PRIu64 "\n", index);
-		output->verbose(CALL_INFO, 2, 0, "---> Header Type:                 %s\n",
+		output->verbose(CALL_INFO, 32, 0, ">> Section Entry %" PRIu64 "\n", index);
+		output->verbose(CALL_INFO, 32, 0, "---> Header Type:                 %s\n",
 			getELFSectionHeaderTypeString( sec_type ));
-		output->verbose(CALL_INFO, 2, 0, "---> Section Flags:               %" PRIu64 " / %p\n",
+		output->verbose(CALL_INFO, 32, 0, "---> Section Flags:               %" PRIu64 " / %p\n",
 			sec_flags, (void*) sec_flags);
-		output->verbose(CALL_INFO, 2, 0, "-----> isWriteable():             %s\n", isWriteable() ? "yes" : "no"  );
-		output->verbose(CALL_INFO, 2, 0, "-----> isAllocated():             %s\n", isAllocated() ? "yes" : "no"  );
-		output->verbose(CALL_INFO, 2, 0, "-----> isExecutable():            %s\n", isExecutable() ? "yes" : "no" );
- 		output->verbose(CALL_INFO, 2, 0, "-----> isMergeable():             %s\n", isMergable() ? "yes" : "no"   );
-		output->verbose(CALL_INFO, 2, 0, "-----> isNullTermStrings():       %s\n", isNullTerminatedStrings() ? "yes" : "no" );
-		output->verbose(CALL_INFO, 2, 0, "-----> SHT-Index():               %s\n", containsSHTIndex() ? "yes" : "no" );
-		output->verbose(CALL_INFO, 2, 0, "-----> TLS-Data():                %s\n", containsTLSData() ? "yes" : "no" );
-		output->verbose(CALL_INFO, 2, 0, "---> Virtual Address:             %" PRIu64 " / %p\n", virtMemAddrStart,
+		output->verbose(CALL_INFO, 32, 0, "-----> isWriteable():             %s\n", isWriteable() ? "yes" : "no"  );
+		output->verbose(CALL_INFO, 32, 0, "-----> isAllocated():             %s\n", isAllocated() ? "yes" : "no"  );
+		output->verbose(CALL_INFO, 32, 0, "-----> isExecutable():            %s\n", isExecutable() ? "yes" : "no" );
+ 		output->verbose(CALL_INFO, 32, 0, "-----> isMergeable():             %s\n", isMergable() ? "yes" : "no"   );
+		output->verbose(CALL_INFO, 32, 0, "-----> isNullTermStrings():       %s\n", isNullTerminatedStrings() ? "yes" : "no" );
+		output->verbose(CALL_INFO, 32, 0, "-----> SHT-Index():               %s\n", containsSHTIndex() ? "yes" : "no" );
+		output->verbose(CALL_INFO, 32, 0, "-----> TLS-Data():                %s\n", containsTLSData() ? "yes" : "no" );
+		output->verbose(CALL_INFO, 32, 0, "---> Virtual Address:             %" PRIu64 " / %p\n", virtMemAddrStart,
 			(void*) virtMemAddrStart);
-		output->verbose(CALL_INFO, 2, 0, "---> Image Offset:                %" PRIu64 " / %p\n",
+		output->verbose(CALL_INFO, 32, 0, "---> Image Offset:                %" PRIu64 " / %p\n",
 			imgOffset, (void*) imgOffset);
-		output->verbose(CALL_INFO, 2, 0, "---> Image Data Length:           %" PRIu64 " / %p\n",
+		output->verbose(CALL_INFO, 32, 0, "---> Image Data Length:           %" PRIu64 " / %p\n",
 			imgDataLen, (void*) imgDataLen);
-		output->verbose(CALL_INFO, 2, 0, "---> Alignment:                   %" PRIu64 " / %p\n",
+		output->verbose(CALL_INFO, 32, 0, "---> Alignment:                   %" PRIu64 " / %p\n",
 			alignment, (void*) alignment);
 	}
 
