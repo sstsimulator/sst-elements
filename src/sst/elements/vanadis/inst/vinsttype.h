@@ -14,6 +14,7 @@ enum VanadisFunctionalUnitType {
 	INST_STORE,
 	INST_BRANCH,
 	INST_SPECIAL,
+	INST_FENCE,
 	INST_NOOP
 };
 
@@ -35,6 +36,8 @@ case INST_BRANCH:
 	return "BRANCH";
 case INST_SPECIAL:
 	return "SPECIAL";
+case INST_FENCE:
+	return "FENCE";
 case INST_NOOP:
 	return "NOOP";
 }

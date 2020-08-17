@@ -64,7 +64,7 @@ class VanadisLoadStoreQueue {
 
 public:
 	VanadisLoadStoreQueue(
-		SimpleMem* memI, 
+		SimpleMem* memI,
 		const size_t lsq_store_entries,
 		const size_t lsq_load_entries,
 		const size_t max_issue_store_count,
@@ -72,7 +72,7 @@ public:
 		const size_t max_stores_issue_each_cycle,
 		const size_t max_loads_issue_each_cycle,
 		std::vector<VanadisRegisterFile*>* reg_files
-		)	 : 	
+		)	 :
 			memInterface(memI),
 			max_mem_issued_stores(max_issue_store_count),
 			max_mem_issued_loads(max_issue_load_count),
@@ -147,7 +147,7 @@ public:
 				output->verbose(CALL_INFO, 16, 0, "---> Store handling returns that store at the front of the queue cannot be issued this cycle.\n");
 				break;
 			} else if( -1 == rc ) {
-				output->verbose(CALL_INFO, 16, 0, "---> Store Queue is empty, no further processing needed this cycle.\n");				
+				output->verbose(CALL_INFO, 16, 0, "---> Store Queue is empty, no further processing needed this cycle.\n");
 				break;
 			}
 
@@ -180,7 +180,7 @@ public:
 			const size_t store_q_count = store_q->size();
 
 			VanadisLoadIssueEvaluation load_eval = REQUIRE_LOAD;
-			
+
 			// Must check in reverse order, we need the most up to date version of
 			// the address if multiple stores hit the same place
 			for( int i = store_q_count - 1; i >= 0; i-- ) {

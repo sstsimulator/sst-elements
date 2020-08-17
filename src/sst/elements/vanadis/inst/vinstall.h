@@ -36,6 +36,9 @@
 // Store instructions
 #include "inst/vstore.h"
 
+// Fence Instructions
+#include "inst/vfence.h"
+
 // Special instructions
 #include "inst/vdecodefaultinst.sh"
 

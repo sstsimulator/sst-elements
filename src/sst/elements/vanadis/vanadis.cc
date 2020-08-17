@@ -517,25 +517,47 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 				if( delaySlotsAreOK ) {
 					if( spec_ins->getSpeculatedDirection() != spec_ins->getResultDirection( register_files[i] ) ) {
 						// We have a mis-speculated instruction, uh-oh.
-						output->verbose(CALL_INFO, 8, 0, "ROB -> mis-speculated execution, begin pipeline reset.\n");
+						output->verbose(CALL_INFO, 8, 0, "ROB -> [PIPELINE-CLEAR] mis-speculated execution, begin pipeline reset.\n");
+						handleMisspeculate( i );
+						// SET THE IP CORRECTLY.
 					} else {
 						output->verbose(CALL_INFO, 8, 0, "ROB -> speculation correct.\n");
 					}
 				}
 			} else if( rob_front->completedExecution() ) {
 				output->verbose(CALL_INFO, 8, 0, "ROB for Thread %5" PRIu32 " contains entries and those have finished executing, in retire status...\n", i);
+				bool perform_execute_clear_up = true;
 
-				// Actually pop the instruction now we know its safe to do so.
-				rob[i]->pop();
+				if( INST_FENCE == rob_front->getInstFuncType() ) {
+					VanadisFenceInstruction* fence_ins = dynamic_cast<VanadisFenceInstruction*>( rob_front );
+					output->verbose(CALL_INFO, 8, 0, "ROB -> front entry performs fence load-fence: %s / store-fence: %s\n",
+						fence_ins->createsLoadFence() ? "yes" : "no",
+						fence_ins->createsStoreFence() ? "yes" : "no" );
 
-				recoverRetiredRegisters( rob_front,
-					int_register_stacks[rob_front->getHWThread()],
-					fp_register_stacks[rob_front->getHWThread()],
-					issue_isa_tables[i], retire_isa_tables[i] );
+					perform_execute_clear_up = fence_ins->createsLoadFence()  ? (lsq->loadSize() == 0)  : true;
+					perform_execute_clear_up = fence_ins->createsStoreFence() ? (lsq->storeSize() == 0) : perform_execute_clear_up;
 
-				retire_isa_tables[i]->print(output, print_int_reg, print_fp_reg);
+					output->verbose(CALL_INFO, 8, 0, "ROB ---> evaluation of LSQ determines that fence retire can %s\n",
+						perform_execute_clear_up ? "proceed" : "*not* proceed" );
 
-				delete rob_front;
+					if( perform_execute_clear_up ) {
+						// Notify the decoder we can accept load/stores again
+					}
+				}
+
+				if( perform_execute_clear_up ) {
+					// Actually pop the instruction now we know its safe to do so.
+					rob[i]->pop();
+
+					recoverRetiredRegisters( rob_front,
+						int_register_stacks[rob_front->getHWThread()],
+						fp_register_stacks[rob_front->getHWThread()],
+						issue_isa_tables[i], retire_isa_tables[i] );
+
+					retire_isa_tables[i]->print(output, print_int_reg, print_fp_reg);
+
+					delete rob_front;
+				}
 			} else {
 				// make sure instruction is marked at front of ROB since this can
 				// enable instructions which need to be retire-ready to process

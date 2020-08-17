@@ -30,6 +30,95 @@ enum VanadisELFObjectType {
         OBJ_TYPE_UNKNOWN
 };
 
+enum VanadisELFProgramHeaderType {
+	PROG_HEADER_NOT_USED,
+	PROG_HEADER_LOAD,
+	PROG_HEADER_DYNAMIC,
+	PROG_HEADER_INTERPRETER,
+	PROG_HEADER_NOTE,
+	PROG_HEADER_TABLE_INFO,
+	PROG_HEADER_THREAD_LOCAL
+};
+
+enum VanadisELFSectionHeaderType {
+	SECTION_HEADER_NOT_USED,
+	SECTION_HEADER_PROG_DATA,
+	SECTION_HEADER_SYMBOL_TABLE,
+	SECTION_HEADER_STRING_TABLE,
+	SECTION_HEADER_RELOCATABLE_ENTRY,
+	SECTION_HEADER_SYMBOL_HASH_TABLE,
+	SECTION_HEADER_DYN_LINK_INFO,
+	SECTION_HEADER_NOTE,
+	SECTION_HEADER_BSS,
+	SECTION_HEADER_DYN_SYMBOL_INFO,
+	SECTION_HEADER_INIT_ARRAY,
+	SECTION_HEADER_FINI_ARRAY,
+	SECTION_HEADER_PREINIT_ARRAY,
+	SECTION_HEADER_SECTION_GROUP,
+	SECTION_HEADER_EXTENDED_SECTION_INDEX,
+	SECTION_HEADER_DEFINED_TYPES
+};
+
+const char* getELFSectionHeaderTypeString( VanadisELFSectionHeaderType sec_type ) {
+	switch( sec_type ) {
+	case SECTION_HEADER_NOT_USED:
+		return "NOT_USED";
+	case SECTION_HEADER_PROG_DATA:
+		return "Program Data";
+	case SECTION_HEADER_SYMBOL_TABLE:
+		return "Program Symbol Table";
+	case SECTION_HEADER_STRING_TABLE:
+		return "Program String Table";
+	case SECTION_HEADER_RELOCATABLE_ENTRY:
+		return "Relocatable Entry";
+	case SECTION_HEADER_SYMBOL_HASH_TABLE:
+		return "Symbol Hash Table";
+	case SECTION_HEADER_DYN_LINK_INFO:
+		return "Dynamic Linking Information";
+	case SECTION_HEADER_NOTE:
+		return "Notes";
+	case SECTION_HEADER_BSS:
+		return "Program Space without Data (BSS Entry)";
+	case SECTION_HEADER_DYN_SYMBOL_INFO:
+		return "Dynamic Linker Symbol Table";
+	case SECTION_HEADER_INIT_ARRAY:
+		return "Array of Constructors";
+	case SECTION_HEADER_FINI_ARRAY:
+		return "Array of Destructors";
+	case SECTION_HEADER_PREINIT_ARRAY:
+		return "Array of Pre-constructors";
+	case SECTION_HEADER_SECTION_GROUP:
+		return "Section Group";
+	case SECTION_HEADER_EXTENDED_SECTION_INDEX:
+		return "Extended Section Indices";
+	case SECTION_HEADER_DEFINED_TYPES:
+		return "Number of Defined Types in Section Header";
+	default:
+		return "Unknown";
+	}
+};
+
+const char* getELFProgramHeaderTypeString( VanadisELFProgramHeaderType hdr ) {
+	switch( hdr ) {
+	case PROG_HEADER_NOT_USED:
+		return "NOT_USED";
+	case PROG_HEADER_LOAD:
+		return "Loadable Segment";
+	case PROG_HEADER_DYNAMIC:
+		return "Dynamic Linking Info";
+	case PROG_HEADER_INTERPRETER:
+		return "Interpreter Information";
+	case PROG_HEADER_NOTE:
+		return "Auxillary ELF Information";
+	case PROG_HEADER_TABLE_INFO:
+		return "ELF Program Table Information";
+	case PROG_HEADER_THREAD_LOCAL:
+		return "Thread Local Storage Template";
+	default:
+		return "Unknown";
+	}
+};
+
 const char* getELFObjectTypeString( VanadisELFObjectType obj ) {
 	switch( obj ) {
 	case OBJ_TYPE_NONE:
@@ -42,9 +131,9 @@ const char* getELFObjectTypeString( VanadisELFObjectType obj ) {
 		return "DYN";
 	case OBJ_TYPE_UNKNOWN:
 	default:
-		return "Unknown";		
+		return "Unknown";
 	}
-}
+};
 
 const char* getELFISAString( VanadisELFISA isa ) {
 	switch( isa ) {
@@ -71,6 +160,8 @@ const char* getELFOSABIString( VanadisELFOSABI abi ) {
 		return "Unknown";
 	}
 }
+
+
 
 class VanadisELFInfo {
 public:
@@ -123,7 +214,7 @@ public:
 	}
 
 	void setClass( const uint8_t new_class )    { elf_class  = new_class;  }
-	void setEndian( const uint8_t new_endian )  { elf_endian = new_endian; }	
+	void setEndian( const uint8_t new_endian )  { elf_endian = new_endian; }
 	void setOSABI( const uint8_t new_os_abi )   { elf_os_abi = new_os_abi; }
 	void setOSABIVersion( const uint8_t new_abi_ver ) { elf_abi_version = new_abi_ver; }
 	void setObjectType( const uint16_t new_obj_type ) { elf_obj_type = new_obj_type; }
@@ -208,6 +299,38 @@ public:
 	uint16_t getSectionHeaderEntryCount() const { return elf_prog_section_entry_count; }
 	uint16_t getSectionHeaderNameEntryOffset() const { return elf_section_header_name_location; }
 
+	size_t countProgramHeaders() const { return progHeaders.size(); }
+	const VanadisELFProgramHeaderEntry* getProgramHeader( const size_t index ) {
+		return progHeaders[index];
+	}
+
+	size_t countProgramSections() const { return progSections.size(); }
+	const VanadisELFProgramSectionEntry* getProgramSection( const size_t index ) {
+		return progSections[index];
+	}
+
+	void addProgramHeader( VanadisELFProgramHeaderEntry* new_header ) {
+		progHeaders.push_back(new_header);
+	}
+
+	void addProgramSection( VanadisELFProgramSectionEntry* new_sec ) {
+		progSections.push_back(new_sec);
+	}
+
+	~VanadisELFInfo() {
+		if( nullptr != bin_path ) {
+			delete[] bin_path;
+		}
+
+		for( VanadisELFProgramHeaderEntry* next_hdr : progHeaders ) {
+			delete next_hdr;
+		}
+
+		for( VanadisELFProgramSectionEntry* next_sec : progSections ) {
+			delete next_sec;
+		}
+	}
+
 protected:
 	char*    bin_path;
 	uint8_t  elf_class;
@@ -216,7 +339,7 @@ protected:
 	uint8_t  elf_abi_version;
 	uint16_t elf_obj_type;
 	uint16_t elf_isa;
-	
+
 	uint64_t elf_entry_point;
 	uint64_t elf_prog_header_start;
 	uint64_t elf_prog_section_start;
@@ -225,12 +348,14 @@ protected:
 	uint16_t elf_prog_header_entry_count;
 	uint16_t elf_prog_section_entry_size;
 	uint16_t elf_prog_section_entry_count;
-	uint16_t elf_section_header_name_location;	
+	uint16_t elf_section_header_name_location;
 
+	std::vector<VanadisELFProgramHeaderEntry*>  progHeaders;
+	std::vector<VanadisELFProgramSectionEntry*> progSections;
 };
 
 VanadisELFInfo* readBinaryELFInfo( SST::Output* output, const char* path ) {
-	
+
 	FILE* bin_file = fopen( path, "rb" );
 
 	if( nullptr == bin_file ) {
@@ -330,10 +455,109 @@ VanadisELFInfo* readBinaryELFInfo( SST::Output* output, const char* path ) {
 	elf_info->setSectionHeaderEntryCount( tmp_2byte );
 
 	fread( &tmp_2byte, 2, 1, bin_file );
-	elf_info->setSectionEntryIndexForNames( tmp_2byte );	
+	elf_info->setSectionEntryIndexForNames( tmp_2byte );
 
 	fclose( bin_file );
 	return elf_info;
+};
+
+class VanadisELFProgramHeaderEntry {
+public:
+	VanadisELFProgramHeaderEntry( VanadisELFProgramHeaderType hdr ) {
+		init();
+		hdr_type = hdr;
+	}
+
+	VanadisELFProgramHeaderEntry() {
+		init();
+	}
+
+	void setHeaderType( VanadisELFProgramHeaderType new_type ) { hdr_type = new_type; }
+	void setImageOffset( const uint64_t new_off ) { imgOffset = new_off; }
+	void setVirtualMemoryStart( const uint64_t new_start ) { virtMemAddrStart = new_start; }
+	void setPhysicalMemoryStart( const uint64_t new_start ) { physMemAddrStart = new_start; }
+	void setHeaderImageLength( const uint64_t new_len ) { imgDataLen = new_len; }
+	void setHeaderMemoryLength( const uint64_t new_len ) { memDataLen = new_len; }
+	void setAlignment( const uint64_t new_align ) { alignment = new_align; }
+
+	VanadisELFProgramHeaderType getHeaderType() const { return hdr_type; }
+	uint64_t getImageOffset() const { return imgOffset; }
+	uint64_t getVirtualMemoryStart() const { return virtMemAddrStart; }
+	uint64_t getPhysicalMemoryStart() const { return physMemAddrStart; }
+	uint64_t getHeaderImageLength() const { return imgDataLen; }
+	uint64_t getHeaderMemoryLength() const { return memDataLen; }
+	uint64_t getAlignment() const { return alignment; }
+
+private:
+	void init() {
+		hdr_type = PROG_HEADER_NOT_USED;
+		imgOffset = 0;
+		virtMemAddrStart = 0;
+		physMemAddrStart = 0;
+		imgDataLen = 0;
+		memDataLen = 0;
+		alignment = 0;
+	}
+
+	VanadisELFProgramHeaderType hdr_type;
+	uint64_t imgOffset;
+	uint64_t virtMemAddrStart;
+	uint64_t physMemAddrStart;
+	uint64_t imgDataLen;
+	uint64_t memDataLen;
+	uint64_t alignment;
+};
+
+class VanadisELFProgramSectionEntry {
+public:
+	VanadisELFProgramSectionEntry() {
+		init();
+	}
+
+	VanadisELFProgramSectionEntry( VanadisELFSectionHeaderType s_type ) {
+		init();
+		sec_type = s_type;
+	}
+
+	void setSectionType( VanadisELFSectionHeaderType new_type ) { sec_type = new_type; }
+	void setSectionFlags( const uint64_t new_flags ) { sec_flags = new_flags; }
+	void setVirtualMemoryStart( const uint64_t new_start ) { virtMemAddrStart = new_start; }
+	void setImageOffset( const uint64_t new_off ) { imgOffset = new_off; }
+	void setImageLength( const uint64_t new_len ) { imgDataLen = new_len; }
+	void setAlignment( const uint64_t new_align ) { alignment = new_align; }
+
+	VanadisELFSectionHeaderType getSectionType() const { return sec_type; }
+
+	bool isWriteable()    const { return (sec_flags & 0x1  ) != 0; }
+	bool isAllocated()    const { return (sec_flags & 0x2  ) != 0; }
+	bool isExecutable()   const { return (sec_flags & 0x4  ) != 0; }
+	bool isMergable()     const { return (sec_flags & 0x10 ) != 0; }
+	bool isNullTerminatedStrings() const { return (sec_flags & 0x20 ) != 0; }
+	bool containsSHTIndex() const { return (sec_flags & 0x40 ) != 0; }
+	bool containsTLSData() const { return (sec_flags & 0x400 ) != 0; }
+
+	uint64_t getVirtualMemoryStart() const { return virtMemAddrStart; }
+	uint64_t getImageOffset() const { return imgOffset; }
+	uint64_t getImageLength() const { return imgDataLen; }
+	uint64_t getAlignment() const { return alignment; }
+
+private:
+	void init() {
+		sec_type = SECTION_HEADER_NOT_USED;
+		sec_flags = 0;
+		virtMemAddrStart = 0;
+		imgOffset = 0;
+		imgDataLen = 0;
+		alignment = 0;
+	}
+
+	VanadisELFSectionHeaderType sec_type;
+	uint64_t sec_flags;
+	uint64_t virtMemAddrStart;
+	uint64_t imgOffset;
+	uint64_t imgDataLen;
+	uint64_t alignment;
+
 };
 
 }
