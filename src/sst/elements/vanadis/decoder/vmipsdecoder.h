@@ -123,29 +123,98 @@ public:
 			// decode the input, put it in the queue for issue.
 			if( ! decoded_q->full() ) {
 				if( ins_loader->hasBundleAt( ip ) ) {
-					output->verbose(CALL_INFO, 16, 0, "---> Found uop bundle for ip=%p, loading from cache...\n", (void*) ip);
+					output->verbose(CALL_INFO, 16, 0, "---> Found uop bundle for ip=0x0%llxx, loading from cache...\n", ip);
 					VanadisInstructionBundle* bundle = ins_loader->getBundleAt( ip )->clone( &next_ins_id );
 
-					// Do we have enough space in the decode queue for the bundle contents?
-					if( bundle->getInstructionCount() < (decoded_q->capacity() - decoded_q->size()) ) {
-						// Put in the queue
-						for( uint32_t i = 0; i < bundle->getInstructionCount(); ++i ) {
-							VanadisInstruction* next_ins = bundle->getInstructionByIndex( i );
-							output->verbose(CALL_INFO, 16, 0, "---> --> issuing ins id: %" PRIu64 " (addr: %llx, %s)...\n",
-								next_ins->getID(),
-								next_ins->getInstructionAddress(),
-								next_ins->getInstCode());
-							decoded_q->push( next_ins );
+					// Check if last instruction is a BRANCH, if yes, we need to also decode the branch-delay slot
+					if( bundle->getInstructionByIndex( bundle->getInstructionCount() - 1 )->getInstFuncType() == INST_BRANCH ) {
+						output->verbose(CALL_INFO, 16, 0, "-----> Last instruction in the bundle causes potential branch, checking on branch delay slot...\n");
+
+						VanadisInstructionBundle* delay_bundle = nullptr;
+						uint32_t temp_delay = 0;
+
+						if( ins_loader->hasBundleAt( ip + 4 ) ) {
+							// We have also decoded the branch-delay
+							delay_bundle = ins_loader->getBundleAt( ip + 4 );
+						} else {
+							output->verbose(CALL_INFO, 16, 0, "-----> Branch delay slot is not currently decoded into a bundle.\n");
+							if( ins_loader->hasPredecodeAt( ip + 4 ) ) {
+								output->verbose(CALL_INFO, 16, 0, "-----> Branch delay slot is a pre-decode cache item, decode it and keep bundle.\n");
+								delay_bundle = new VanadisInstructionBundle( ip + 4 );
+
+								if( ins_loader->getPredecodeBytes( output, ip + 4, (uint8_t*) &temp_delay, sizeof( temp_delay ) ) ) {
+									decode( output, ip + 4, temp_delay, delay_bundle );
+									ins_loader->cacheDecodedBundle( delay_bundle );
+									decodes_performed++;
+								} else {
+									output->fatal(CALL_INFO, -1, "Error: instruction loader has bytes for delay slot at %0llx, but they cannot be retrieved.\n",
+										(ip + 4));
+								}
+							} else {
+								output->verbose(CALL_INFO, 16, 0, "-----> Branch delay slot also misses in pre-decode cache, need to request it.\n");
+								ins_loader->requestLoadAt( output, ip + 4, 4 );
+							}
 						}
 
-						delete bundle;
-						uop_bundles_used++;
+						// We have the branch AND the delay, now lets issue them.
+						if( nullptr != delay_bundle ) {
+							if( ( bundle->getInstructionCount() + delay_bundle->getInstructionCount() ) <
+								( decoded_q->capacity() - decoded_q->size() ) ) {
+
+								output->verbose(CALL_INFO, 16, 0, "---> Proceeding with issue the branch and its delay slot...\n");
+
+								for( uint32_t i = 0; i < bundle->getInstructionCount(); ++i ) {
+									VanadisInstruction* next_ins = bundle->getInstructionByIndex( i );
+									next_ins->setID( getNextInsID() );
+
+									output->verbose(CALL_INFO, 16, 0, "---> --> issuing ins id: %" PRIu64 " (addr: 0x0%llx, %s)...\n",
+										next_ins->getID(),
+										next_ins->getInstructionAddress(),
+										next_ins->getInstCode());
+									decoded_q->push( next_ins );
+								}
+
+								for( uint32_t i = 0; i < delay_bundle->getInstructionCount(); ++i ) {
+									VanadisInstruction* next_ins = delay_bundle->getInstructionByIndex( i );
+									next_ins->setID( getNextInsID() );
+
+									output->verbose(CALL_INFO, 16, 0, "---> --> issuing ins id: %" PRIu64 " (addr: 0x0%llx, %s)...\n",
+										next_ins->getID(),
+										next_ins->getInstructionAddress(),
+										next_ins->getInstCode());
+									decoded_q->push( next_ins );
+								}
+
+								delete bundle++;
+								uop_bundles_used += 2;
+							} else {
+								output->verbose(CALL_INFO, 16, 0, "---> --> micro-op for branch and delay exceed decode-q space. Cannot issue this cycle.\n");
+								break;
+							}
+						}
 					} else {
-						output->verbose(CALL_INFO, 16, 0, "---> --> micro-op bundle for %p contains %" PRIu32 " ops, we only have %" PRIu32 " slots available in the decode q, wait for resources to become available.\n",
-							(void*) ip, (uint32_t) bundle->getInstructionCount(),
-							(uint32_t) (decoded_q->capacity() - decoded_q->size()));
-						// We don't have enough space, so we have to stop and wait for more entries to free up.
-						break;
+						output->verbose(CALL_INFO, 16, 0, "---> Instruction for issue is not a branch, continuing with normal copy to issue-queue...\n");
+						// Do we have enough space in the decode queue for the bundle contents?
+						if( bundle->getInstructionCount() < (decoded_q->capacity() - decoded_q->size()) ) {
+							// Put in the queue
+							for( uint32_t i = 0; i < bundle->getInstructionCount(); ++i ) {
+								VanadisInstruction* next_ins = bundle->getInstructionByIndex( i );
+								output->verbose(CALL_INFO, 16, 0, "---> --> issuing ins id: %" PRIu64 " (addr: 0x0%llx, %s)...\n",
+									next_ins->getID(),
+									next_ins->getInstructionAddress(),
+									next_ins->getInstCode());
+								decoded_q->push( next_ins );
+							}
+
+							delete bundle;
+							uop_bundles_used++;
+						} else {
+							output->verbose(CALL_INFO, 16, 0, "---> --> micro-op bundle for %p contains %" PRIu32 " ops, we only have %" PRIu32 " slots available in the decode q, wait for resources to become available.\n",
+								(void*) ip, (uint32_t) bundle->getInstructionCount(),
+								(uint32_t) (decoded_q->capacity() - decoded_q->size()));
+							// We don't have enough space, so we have to stop and wait for more entries to free up.
+							break;
+						}
 					}
 				} else if( ins_loader->hasPredecodeAt( ip ) ) {
 					// We do have a locally cached copy of the data at the IP though, so decode into a bundle

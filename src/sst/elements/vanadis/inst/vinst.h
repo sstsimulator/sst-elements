@@ -59,6 +59,7 @@ public:
 		hasRegistersAllocated = false;
 		enduOpGroup = false;
 		isFrontOfROB = false;
+		hasROBSlot = false;
 	}
 
 	virtual ~VanadisInstruction() {
@@ -92,7 +93,8 @@ public:
 		hasIssued = copy_me.hasIssued;
 		hasRegistersAllocated = copy_me.hasRegistersAllocated;
 		enduOpGroup = copy_me.enduOpGroup;
-		isFrontOfROB = copy_me.isFrontOfROB;
+		isFrontOfROB = false;
+		hasROBSlot = false;
 
 		phys_int_regs_in  = (count_phys_int_reg_in > 0)  ? new uint16_t[ count_phys_int_reg_in  ] : nullptr;
                 phys_int_regs_out = (count_phys_int_reg_out > 0) ? new uint16_t[ count_phys_int_reg_out ] : nullptr;
@@ -211,6 +213,9 @@ public:
 	bool checkFrontOfROB() { return isFrontOfROB; }
 	void markFrontOfROB() { isFrontOfROB = true; }
 	void setID( const uint64_t new_id ) { id = new_id; }
+
+	bool hasROBSlotIssued() const { return hasROBSlot; }
+	void markROBSlotIssued() { hasROBSlot = true; }
 protected:
 	void flagError() { trapError = true; }
 
@@ -244,6 +249,7 @@ protected:
 	bool hasRegistersAllocated;
 	bool enduOpGroup;
 	bool isFrontOfROB;
+	bool hasROBSlot;
 
 	const VanadisDecoderOptions* isa_options;
 };

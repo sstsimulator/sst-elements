@@ -352,6 +352,21 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 			output->verbose(CALL_INFO, 8, 0, "--> Performing issue for thread %" PRIu32 " (decoded pending queue depth: %" PRIu32 ")...\n",
 				i, (uint32_t) thread_decoders[i]->getDecodedQueue()->size());
 
+			output->verbose(CALL_INFO, 8, 0, "--> Allocating ROB entries to any new instructions...\n");
+			for( size_t j = 0; j < thread_decoders[i]->getDecodedQueue()->size(); ++j ) {
+				if( rob[i]->full() ) {
+					break;
+				} else {
+					VanadisInstruction* ins = thread_decoders[i]->getDecodedQueue()->peekAt(j);
+
+					if( ! ins->hasROBSlotIssued() ) {
+						output->verbose(CALL_INFO, 16, 0, "---> Inst: %" PRIu64 ", allocated to ROB...\n", ins->getID());
+						ins->markROBSlotIssued();
+						rob[i]->push( ins );
+					}
+				}
+			}
+
 			if( ! thread_decoders[i]->getDecodedQueue()->empty() ) {
 				VanadisInstruction* ins = thread_decoders[i]->getDecodedQueue()->peek();
 				ins->printToBuffer(instPrintBuffer, 1024);
@@ -359,11 +374,20 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 				output->verbose(CALL_INFO, 8, 0, "--> Attempting issue for: %s / %p\n", instPrintBuffer,
 						(void*) ins->getInstructionAddress());
 
+				/*
 				if( rob[i]->full() ) {
 					output->verbose(CALL_INFO, 8, 0, "--> ROB for the executing thread is full, cannot issue.\n");
 				} else {
 					output->verbose(CALL_INFO, 8, 0, "--> ROB for executing thread has %" PRIu32 " out of %" PRIu32 " entries used.\n",
 						(uint32_t) rob[i]->size(), (uint32_t) rob[i]->capacity());
+				}
+				*/
+
+				if( ins->hasROBSlotIssued() ) {
+					output->verbose(CALL_INFO, 16, 0, "---> Current instrn has an ROB slot allocated, processing for issue can continue...\n");
+				} else {
+					output->verbose(CALL_INFO, 16, 0, "---> Current instrn does not have an ROB slot allocated, cannot issue this, stall this cycle.\n");
+					continue;
 				}
 
 				const int resource_check = checkInstructionResources( ins,
@@ -454,9 +478,6 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 						thread_decoders[i]->getDecodedQueue()->pop();
 						ins->markIssued();
 						output->verbose(CALL_INFO, 8, 0, "Issued to functional unit, status=%d\n", status);
-
-						rob[i]->push( ins );
-						output->verbose(CALL_INFO, 8, 0, "Issued to ROB to obtain entry.\n");
 					}
 				}
 			}
@@ -503,6 +524,14 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 					rob_front->getID(),
 					rob_front->getInstructionAddress(),
 					rob_front->getInstCode() );
+			}
+
+			// Check we have actually issued the instruction, otherwise this is stuck at the issue stage waiting for
+			// resources and has been given an ROB slot to maintain ordering.
+			if( ! rob_front->completedIssue() ) {
+				output->verbose( CALL_INFO, 8, 0, "ROB -> front instruction (id=%" PRIu64 ") has been allocated, but not issued yet, stall this cycle.\n",
+					rob_front->getID());
+				continue;
 			}
 
 			if( rob_front->isSpeculated() && rob_front->completedExecution() ) {
@@ -568,6 +597,11 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 				if( perform_execute_clear_up ) {
 					// Actually pop the instruction now we know its safe to do so.
 					rob[i]->pop();
+
+					output->verbose(CALL_INFO, 16, 0, "----> Retire inst: %" PRIu64 " (addr: 0x%0llx / %s)\n",
+						rob_front->getID(),
+						rob_front->getInstructionAddress(),
+						rob_front->getInstCode() );
 
 					recoverRetiredRegisters( rob_front,
 						int_register_stacks[rob_front->getHWThread()],
