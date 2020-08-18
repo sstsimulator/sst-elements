@@ -48,26 +48,22 @@ LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
     output = new SST::Output(prefix, verbosity, 0, Output::STDOUT);
 
     //construct hardware graph
-    std::string const& fileName = params.find< std::string >("hardwareGraph", "tests/grid.cfg");
-    constructHardwareGraph(fileName);
+    std::string const& hwFileName = params.find< std::string >("hardwareGraph", "tests/grid.cfg");
+    constructHardwareGraph(hwFileName);
 
+    std::string const& swFileName = params.find< std::string >("hardwareGraph", "tests/app.in");
+    constructSoftwareGraph(swFileName);
 
 }
 
 LlyrComponent::~LlyrComponent()
 {
     output->verbose(CALL_INFO, 1, 0, "Llyr destructor fired, closing down.\n");
-    hardwareGraph.printGraph();
+//     hardwareGraph.printGraph();
     hardwareGraph.printDot("moo.dot");
-//     delete output;
-//     delete arb;
-//     delete stats;
-//
-//     for (int32_t i = 0; i < port_count; ++i) {
-//         delete [] pendingOutputs[i];
-//     }
-//
-//     delete [] pendingOutputs;
+
+    applicationGraph.printGraph();
+    applicationGraph.printDot("moo.dot");
 }
 
 LlyrComponent::LlyrComponent() :
@@ -87,10 +83,10 @@ void LlyrComponent::constructHardwareGraph(std::string fileName)
         std::uint64_t position;
         while( std::getline( inputStream, thisLine ) )
         {
-            std::cout << "Parse " << thisLine << std::endl;
+//             std::cout << "Parse " << thisLine << std::endl;
 
             //Ignore blank lines
-            if( std::all_of(thisLine.begin(), thisLine.end(), isspace) == 0)
+            if( std::all_of(thisLine.begin(), thisLine.end(), isspace) == 0 )
             {
                 //First read all nodes
                 //If all nodes read, must mean we're at edge list
@@ -107,7 +103,7 @@ void LlyrComponent::constructHardwareGraph(std::string fileName)
                 }
                 else
                 {
-                    std::cout << "\t*Parse " << thisLine << std::endl;
+//                     std::cout << "\t*Parse " << thisLine << std::endl;
                     std::regex delimiter( "\\->" );
 
                     std::sregex_token_iterator iterA(thisLine.begin(), thisLine.end(), delimiter, -1);
@@ -115,10 +111,63 @@ void LlyrComponent::constructHardwareGraph(std::string fileName)
                     std::vector<std::string> edges( iterA, iterB );
 
                     hardwareGraph.addEdge( std::stoi(edges[0].substr(0, edges[0].find(" "))), std::stoi(edges[1].substr(0, edges[1].find(" "))) );
-
                 }
             }
         }
+
+        inputStream.close();
+    }
+    else
+    {
+        std::cout << "Unable to open file";
+        exit(0);
+    }
+
+}
+
+void LlyrComponent::constructSoftwareGraph(std::string fileName)
+{
+    std::cout << "Constructing Software Graph From " << fileName << "\n";
+    std::ifstream inputStream(fileName, std::ios::in);
+
+    if( inputStream.is_open() )
+    {
+        std::string thisLine;
+        std::uint64_t position;
+        while( std::getline( inputStream, thisLine ) )
+        {
+            std::cout << "Parse " << thisLine << std::endl;
+
+            //Ignore blank lines
+            if( std::all_of(thisLine.begin(), thisLine.end(), isspace) == 0 )
+            {
+                //First read all nodes
+                //If all nodes read, must mean we're at edge list
+                position = thisLine.find_first_of( "[" );
+                if( position !=  std::string::npos )
+                {
+                    uint32_t vertex = std::stoi( thisLine.substr( 0, position ) );
+
+                    std::uint64_t posA = thisLine.find_first_of( "\"" ) + 1;
+                    std::uint64_t posB = thisLine.find_last_of( "\"" );
+                    std::string op = thisLine.substr( posA, posB-posA );
+
+                    applicationGraph.addVertex( vertex, op );
+                }
+                else
+                {
+                    std::cout << "\t*Parse " << thisLine << std::endl;
+                    std::regex delimiter( "\\->" );
+
+                    std::sregex_token_iterator iterA(thisLine.begin(), thisLine.end(), delimiter, -1);
+                    std::sregex_token_iterator iterB;
+                    std::vector<std::string> edges( iterA, iterB );
+
+                    applicationGraph.addEdge( std::stoi(edges[0].substr(0, edges[0].find(" "))), std::stoi(edges[1].substr(0, edges[1].find(" "))) );
+                }
+            }
+        }
+
         inputStream.close();
     }
     else

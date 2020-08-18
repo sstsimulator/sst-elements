@@ -42,6 +42,7 @@ public:
         { "verbose",        "Level of output verbosity, higher is more output, 0 is no output", 0 },
         { "clock",          "Clock frequency", "1GHz" },
         { "clockcount",     "Number of clock ticks to execute", "100000" },
+        { "application",    "Application in affine IR", "" },
         { "hardwareGraph",  "Hardware connectivity graph", "grid.cfg" },
         { "intLatency",     "Number of clock ticks for integer operations", "1" },
         { "fpLatency",      "Number of clock ticks for integer operations", "4" }
@@ -87,8 +88,11 @@ private:
 
     LlyrGraph hardwareGraph;
     LlyrGraph applicationGraph;
+    LlyrGraph mappedGraph;
 
     void constructHardwareGraph(std::string fileName);
+    void constructSoftwareGraph(std::string fileName);
+    LlyrGraph subgraphIsomorphism( LlyrGraph largeGraph, LlyrGraph smallGraph );
 
 };
 

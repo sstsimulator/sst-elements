@@ -110,5 +110,5 @@ void LlyrGraph::addVertex(uint32_t vertex, std::string type)
 
 
 
-}
-}
+} // namespace LLyr
+} // namespace SST
