@@ -40,6 +40,6 @@
 #include "inst/vfence.h"
 
 // Special instructions
-#include "inst/vdecodefaultinst.sh"
+#include "inst/vdecodefaultinst.h"
 
 #endif

@@ -34,7 +34,7 @@ public:
 	}
 
 	virtual VanadisFunctionalUnitType getInstFuncType() const {
-		return INST_SPECIAL;
+		return INST_FAULT;
 	}
 
 	virtual void execute( SST::Output* output, VanadisRegisterFile* regFile ) {
