@@ -24,6 +24,10 @@ public:
 		isa_int_regs_out[0] = dest;
 	}
 
+	virtual VanadisXorInstruction* clone() {
+		return new VanadisXorInstruction( *this );
+	}
+
 	virtual VanadisFunctionalUnitType getInstFuncType() const {
 		return INST_INT_ARITH;
 	}

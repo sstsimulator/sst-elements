@@ -168,13 +168,13 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 		}
 	}
 
-	VanadisInstruction* test_ins = new VanadisAddInstruction(nextInsID++, 0, 0, isa_options[0], 3, 4, 5);
-	thread_decoders[0]->getDecodedQueue()->push( test_ins );
-	rob[0]->push(test_ins);
+//	VanadisInstruction* test_ins = new VanadisAddInstruction(nextInsID++, 0, 0, isa_options[0], 3, 4, 5);
+//	thread_decoders[0]->getDecodedQueue()->push( test_ins );
+//	rob[0]->push(test_ins);
 
-	test_ins = new VanadisAddImmInstruction(nextInsID++, 1, 0, isa_options[0], 1, 3, 128);
-	thread_decoders[0]->getDecodedQueue()->push( test_ins );
-	rob[0]->push(test_ins);
+//	test_ins = new VanadisAddImmInstruction(nextInsID++, 1, 0, isa_options[0], 1, 3, 128);
+//	thread_decoders[0]->getDecodedQueue()->push( test_ins );
+//	rob[0]->push(test_ins);
 
 //	test_ins = new VanadisAddImmInstruction(nextInsID++, 2, 0, isa_options[0], 3, 10101010, 4);
 //	thread_decoders[0]->getDecodedQueue()->push( test_ins );
@@ -184,25 +184,25 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 //	thread_decoders[0]->getDecodedQueue()->push( test_ins );
 //	rob[0]->push(test_ins);
 
-	test_ins = new VanadisSubInstruction(nextInsID++, 3, 0, isa_options[0], 4, 1, 1);
-	thread_decoders[0]->getDecodedQueue()->push( test_ins );
-	rob[0]->push(test_ins);
+//	test_ins = new VanadisSubInstruction(nextInsID++, 3, 0, isa_options[0], 4, 1, 1);
+//	thread_decoders[0]->getDecodedQueue()->push( test_ins );
+//	rob[0]->push(test_ins);
 
-	test_ins = new VanadisSubInstruction(nextInsID++, 3, 0, isa_options[0], 5, 6, 1);
-	thread_decoders[0]->getDecodedQueue()->push( test_ins );
-	rob[0]->push(test_ins);
+//	test_ins = new VanadisSubInstruction(nextInsID++, 3, 0, isa_options[0], 5, 6, 1);
+//	thread_decoders[0]->getDecodedQueue()->push( test_ins );
+//	rob[0]->push(test_ins);
 
-	test_ins = new VanadisAddImmInstruction(nextInsID++, 3, 0, isa_options[0], 10, 0, 256 );
-	thread_decoders[0]->getDecodedQueue()->push( test_ins );
-        rob[0]->push(test_ins);
+//	test_ins = new VanadisAddImmInstruction(nextInsID++, 3, 0, isa_options[0], 10, 0, 256 );
+//	thread_decoders[0]->getDecodedQueue()->push( test_ins );
+//        rob[0]->push(test_ins);
 
-	test_ins = new VanadisStoreInstruction( nextInsID++, 3, 0, isa_options[0], 10, 512, 5, 8 );
-	thread_decoders[0]->getDecodedQueue()->push( test_ins );
-        rob[0]->push(test_ins);
+//	test_ins = new VanadisStoreInstruction( nextInsID++, 3, 0, isa_options[0], 10, 512, 5, 8 );
+//	thread_decoders[0]->getDecodedQueue()->push( test_ins );
+//        rob[0]->push(test_ins);
 
-	test_ins = new VanadisLoadInstruction( nextInsID++, 4, 0, isa_options[0], 0, 768, 12, 8 );
-	thread_decoders[0]->getDecodedQueue()->push( test_ins );
-        rob[0]->push(test_ins);
+//	test_ins = new VanadisLoadInstruction( nextInsID++, 4, 0, isa_options[0], 0, 768, 12, 8 );
+//	thread_decoders[0]->getDecodedQueue()->push( test_ins );
+//        rob[0]->push(test_ins);
 
 	//////////////////////////////////////////////////////////////////////////////////////
 
@@ -341,12 +341,6 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 		}
 	}
 
-	if( thread_decoders[0]->getDecodedQueue()->size() < 6 ) {
-		VanadisInstruction* test_ins = new VanadisAddInstruction(nextInsID++, 0, 0, isa_options[0], 0, 0, 0);
-	        thread_decoders[0]->getDecodedQueue()->push( test_ins );
-        	rob[0]->push(test_ins);
-	}
-
 	// Issue
 	output->verbose(CALL_INFO, 8, 0, "-- Issue Stage --------------------------------------------------------------\n");
 	for( uint32_t i = 0 ; i < hw_threads; ++i ) {
@@ -365,6 +359,12 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 				output->verbose(CALL_INFO, 8, 0, "--> Attempting issue for: %s / %p\n", instPrintBuffer,
 						(void*) ins->getInstructionAddress());
 
+				if( rob[i]->full() ) {
+					output->verbose(CALL_INFO, 8, 0, "--> ROB for the executing thread is full, cannot issue.\n");
+				} else {
+					output->verbose(CALL_INFO, 8, 0, "--> ROB for executing thread has %" PRIu32 " out of %" PRIu32 " entries used.\n",
+						(uint32_t) rob[i]->size(), (uint32_t) rob[i]->capacity());
+				}
 
 				const int resource_check = checkInstructionResources( ins,
 					int_register_stacks[i], fp_register_stacks[i],
@@ -373,7 +373,7 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 				output->verbose(CALL_INFO, 8, 0, "Instruction resource can be issuable: %s (issue-query result: %d)\n",
 					(resource_check == 0) ? "yes" : "no", resource_check);
 
-				bool can_be_issued = (resource_check == 0);
+				bool can_be_issued = (resource_check == 0) && (! rob[i]->full());
 				bool allocated_fu = false;
 
 				// Register dependencies are met and ROB has an entry
@@ -387,7 +387,7 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 							if(next_fu->isInstructionSlotFree()) {
 								next_fu->setSlotInstruction( ins );
 								allocated_fu = true;
-								break;				
+								break;
 							}
 						}
 
@@ -397,7 +397,7 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 							if(next_fu->isInstructionSlotFree()) {
 								next_fu->setSlotInstruction( ins );
 								allocated_fu = true;
-								break;				
+								break;
 							}
 						}
 
@@ -419,7 +419,7 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 							if(next_fu->isInstructionSlotFree()) {
 								next_fu->setSlotInstruction( ins );
 								allocated_fu = true;
-								break;				
+								break;
 							}
 						}
 
@@ -429,10 +429,15 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 							if(next_fu->isInstructionSlotFree()) {
 								next_fu->setSlotInstruction( ins );
 								allocated_fu = true;
-								break;				
+								break;
 							}
 						}
 
+						break;
+					case INST_NOOP:
+					case INST_FAULT:
+						allocated_fu = true;
+						ins->markExecuted();
 						break;
 					default:
 						// ERROR UNALLOCATED
@@ -449,6 +454,9 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 						thread_decoders[i]->getDecodedQueue()->pop();
 						ins->markIssued();
 						output->verbose(CALL_INFO, 8, 0, "Issued to functional unit, status=%d\n", status);
+
+						rob[i]->push( ins );
+						output->verbose(CALL_INFO, 8, 0, "Issued to ROB to obtain entry.\n");
 					}
 				}
 			}
@@ -483,15 +491,17 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 	output->verbose(CALL_INFO, 8, 0, "-- Retire Stage -------------------------------------------------------------\n");
 
 	for( uint32_t i = 0; i < hw_threads; ++i ) {
-		output->verbose(CALL_INFO, 8, 0, "Executing retire for thread %" PRIu32 "...\n", i);
+		output->verbose(CALL_INFO, 8, 0, "Executing retire for thread %" PRIu32 ", rob-entries: %" PRIu64 "\n", i,
+			(uint64_t) rob[i]->size());
 
 		if( ! rob[i]->empty() ) {
 			VanadisInstruction* rob_front = rob[i]->peek();
 
 			// Instruction is flagging error, print out and halt
 			if( rob_front->trapsError() ) {
-				output->fatal( CALL_INFO, -1, "Instruction %" PRIu64 " at %" PRIu64 " flags an error (instruction-type=%s)\n",
-					rob_front->getID(), rob_front->getInstructionAddress(),
+				output->fatal( CALL_INFO, -1, "Instruction %" PRIu64 " at 0x%llx flags an error (instruction-type=%s)\n",
+					rob_front->getID(),
+					rob_front->getInstructionAddress(),
 					rob_front->getInstCode() );
 			}
 
@@ -779,7 +789,26 @@ void VanadisComponent::init(unsigned int phase) {
 
 				std::vector<uint8_t> initial_mem_contents;
 
-/*
+  				for( size_t i = 0; i < binary_elf_info->countProgramHeaders(); ++i ) {
+					const VanadisELFProgramHeaderEntry* next_prog_hdr = binary_elf_info->getProgramHeader(i);
+
+					if( (PROG_HEADER_LOAD == next_prog_hdr->getHeaderType()) ) {
+						output->verbose(CALL_INFO, 2, 0, ">> Loading Program Header from executable at %p, len=%" PRIu64 "...\n",
+							(void*) next_prog_hdr->getImageOffset(), next_prog_hdr->getHeaderImageLength());
+						output->verbose(CALL_INFO, 2, 0, ">>>> Placing at virtual address: %p\n",
+							(void*) next_prog_hdr->getVirtualMemoryStart());
+
+						// Do we have enough space in the memory image, if not, extend and zero
+						if( initial_mem_contents.size() < ( next_prog_hdr->getVirtualMemoryStart() + next_prog_hdr->getHeaderImageLength() )) {
+							initial_mem_contents.resize( ( next_prog_hdr->getVirtualMemoryStart() + next_prog_hdr->getHeaderImageLength() ), 0);
+						}
+
+						fseek( exec_file, next_prog_hdr->getImageOffset(), SEEK_SET );
+						fread( &initial_mem_contents[ next_prog_hdr->getVirtualMemoryStart() ],
+							next_prog_hdr->getHeaderImageLength(), 1, exec_file);
+					}
+				}
+
 				for( size_t i = 0; i < binary_elf_info->countProgramSections(); ++i ) {
 					const VanadisELFProgramSectionEntry* next_sec = binary_elf_info->getProgramSection( i );
 
@@ -801,36 +830,17 @@ void VanadisComponent::init(unsigned int phase) {
 							next_sec->getImageLength(), 1, exec_file);
 					}
 				}
-*/
-				for( size_t i = 0; i < binary_elf_info->countProgramHeaders(); ++i ) {
-					const VanadisELFProgramHeaderEntry* next_prog_hdr = binary_elf_info->getProgramHeader(i);
-
-					if( (PROG_HEADER_LOAD == next_prog_hdr->getHeaderType()) ) {
-						output->verbose(CALL_INFO, 2, 0, ">> Loading Program Header from executable at %p, len=%" PRIu64 "...\n",
-							(void*) next_prog_hdr->getImageOffset(), next_prog_hdr->getHeaderImageLength());
-						output->verbose(CALL_INFO, 2, 0, ">>>> Placing at virtual address: %p\n",
-							(void*) next_prog_hdr->getVirtualMemoryStart());
-
-						// Do we have enough space in the memory image, if not, extend and zero
-						if( initial_mem_contents.size() < ( next_prog_hdr->getVirtualMemoryStart() + next_prog_hdr->getHeaderImageLength() )) {
-							initial_mem_contents.resize( ( next_prog_hdr->getVirtualMemoryStart() + next_prog_hdr->getHeaderImageLength() ), 0);
-						}
-
-						fseek( exec_file, next_prog_hdr->getImageOffset(), SEEK_SET );
-						fread( &initial_mem_contents[ next_prog_hdr->getVirtualMemoryStart() ],
-							next_prog_hdr->getHeaderImageLength(), 1, exec_file);
-					}
-				}
 
 				fclose(exec_file);
 
 				output->verbose(CALL_INFO, 2, 0, ">> Writing memory contents (%" PRIu64 " bytes at index 0)\n",
 					(uint64_t) initial_mem_contents.size());
 
+/*
 				for( size_t i = 0x400580; i < (0x400580 + 0x8); i++ ) {
 					printf("i=%p = %x\n", (void*) i, initial_mem_contents[i]);
 				}
-
+*/
 				SimpleMem::Request* writeExe = new SimpleMem::Request(SimpleMem::Request::Write,
 					0, initial_mem_contents.size(), initial_mem_contents);
 				memDataInterface->sendInitData( writeExe );

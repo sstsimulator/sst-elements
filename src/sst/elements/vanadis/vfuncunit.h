@@ -14,17 +14,16 @@ namespace Vanadis {
 
 class VanadisNoInstruction : public VanadisInstruction {
 public:
-	VanadisNoInstruction(const VanadisDecoderOptions* opts) : 
+	VanadisNoInstruction(const VanadisDecoderOptions* opts) :
 		VanadisInstruction(UINT64_MAX, UINT64_MAX, UINT32_MAX, opts, 0, 0, 0, 0, 0, 0, 0, 0) {}
-//	VanadisNoInstruction( VanadisNoInstruction const& orig ) :
-//		VanadisInstruction(UINT64_MAX, UINT64_MAX, UINT32_MAX, orig.isa_options,
-//			0, 0, 0, 0, 0, 0, 0, 0) {}
+
 	virtual const char* getInstCode() const { return "VOID"; }
 	VanadisInstruction* clone() { return new VanadisNoInstruction( *this ); };
 	virtual VanadisFunctionalUnitType getInstFuncType() const { return INST_NOOP; }
 	virtual void execute( SST::Output* output, VanadisRegisterFile* rFile) {
 		markExecuted();
 	}
+
 	virtual bool performDeleteAtFuncUnit() const { return true; }
 };
 
@@ -54,7 +53,7 @@ public:
 	}
 
 	bool isInstructionSlotFree() const { return slot_inst == nullptr; }
-	
+
 	void setSlotInstruction( VanadisInstruction* ins ) {
 		slot_inst = ins;
 	}
@@ -87,7 +86,7 @@ public:
 
 	void clearByHWThreadID( SST::Output* output, const uint16_t hw_thr ) {
 		output->verbose(CALL_INFO, 16, 0, "-> Function Unit, clearing by hardware thread %" PRIu32 "...\n", hw_thr);
-		
+
 		VanadisCircularQueue<VanadisInstruction*>* tmp_q = new
 			VanadisCircularQueue<VanadisInstruction*>( fu_queue->capacity() );
 

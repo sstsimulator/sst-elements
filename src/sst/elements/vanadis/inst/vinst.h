@@ -40,15 +40,18 @@ public:
 		count_isa_fp_reg_out(c_isa_fp_reg_out)
 	{
 
-		phys_int_regs_in       = new uint16_t[ count_phys_int_reg_in  ];
-		phys_int_regs_out      = new uint16_t[ count_phys_int_reg_out ];
-		isa_int_regs_in        = new uint16_t[ count_isa_int_reg_in   ];
-		isa_int_regs_out       = new uint16_t[ count_isa_int_reg_out  ];
 
-		phys_fp_regs_in        = new uint16_t[ count_phys_fp_reg_in  ];
-		phys_fp_regs_out       = new uint16_t[ count_phys_fp_reg_out ];
-		isa_fp_regs_in         = new uint16_t[ count_isa_fp_reg_in   ];
-		isa_fp_regs_out        = new uint16_t[ count_isa_fp_reg_out  ];
+		phys_int_regs_in  = (count_phys_int_reg_in > 0)  ? new uint16_t[ count_phys_int_reg_in  ] : nullptr;
+		phys_int_regs_out = (count_phys_int_reg_out > 0) ? new uint16_t[ count_phys_int_reg_out ] : nullptr;
+
+		isa_int_regs_in   = (count_isa_int_reg_in > 0)   ? new uint16_t[ count_isa_int_reg_in   ] : nullptr;
+		isa_int_regs_out  = (count_isa_int_reg_out> 0)   ? new uint16_t[ count_isa_int_reg_out  ] : nullptr;
+
+		phys_fp_regs_in   = (count_phys_fp_reg_in > 0)   ? new uint16_t[ count_phys_fp_reg_in   ] : nullptr;
+		phys_fp_regs_out  = (count_phys_fp_reg_out> 0)   ? new uint16_t[ count_phys_fp_reg_out  ] : nullptr;
+
+		isa_fp_regs_in    = (count_isa_fp_reg_in > 0 )   ? new uint16_t[ count_isa_fp_reg_in    ] : nullptr;
+		isa_fp_regs_out   = (count_isa_fp_reg_out > 0 )  ? new uint16_t[ count_isa_fp_reg_out   ] : nullptr;
 
 		trapError = false;
 		hasExecuted = false;
@@ -59,14 +62,81 @@ public:
 	}
 
 	virtual ~VanadisInstruction() {
-		delete[] phys_int_regs_in;
-		delete[] phys_int_regs_out;
-		delete[] isa_int_regs_in;
-		delete[] isa_int_regs_out;
-		delete[] phys_fp_regs_in;
-		delete[] phys_fp_regs_out;
-		delete[] isa_fp_regs_in;
-		delete[] isa_fp_regs_out;
+		if( phys_int_regs_in != nullptr  ) delete[] phys_int_regs_in;
+		if( phys_int_regs_out != nullptr ) delete[] phys_int_regs_out;
+		if( isa_int_regs_in != nullptr   ) delete[] isa_int_regs_in;
+		if( isa_int_regs_out != nullptr  ) delete[] isa_int_regs_out;
+		if( phys_fp_regs_in != nullptr   ) delete[] phys_fp_regs_in;
+		if( phys_fp_regs_out != nullptr  ) delete[] phys_fp_regs_out;
+		if( isa_fp_regs_in != nullptr    ) delete[] isa_fp_regs_in;
+		if( isa_fp_regs_out != nullptr   ) delete[] isa_fp_regs_out;
+	}
+
+	VanadisInstruction( const VanadisInstruction& copy_me ) :
+		id(copy_me.id),
+		ins_address(copy_me.ins_address),
+		hw_thread(copy_me.hw_thread),
+		isa_options(copy_me.isa_options),
+		count_phys_int_reg_in(copy_me.count_phys_int_reg_in),
+                count_phys_int_reg_out(copy_me.count_phys_int_reg_out),
+                count_isa_int_reg_in(copy_me.count_isa_int_reg_in),
+                count_isa_int_reg_out(copy_me.count_isa_int_reg_out),
+                count_phys_fp_reg_in(copy_me.count_phys_fp_reg_in),
+                count_phys_fp_reg_out(copy_me.count_phys_fp_reg_out),
+                count_isa_fp_reg_in(copy_me.count_isa_fp_reg_in),
+                count_isa_fp_reg_out(copy_me.count_isa_fp_reg_out)
+		{
+
+		trapError = copy_me.trapError;
+		hasExecuted = copy_me.hasExecuted;
+		hasIssued = copy_me.hasIssued;
+		hasRegistersAllocated = copy_me.hasRegistersAllocated;
+		enduOpGroup = copy_me.enduOpGroup;
+		isFrontOfROB = copy_me.isFrontOfROB;
+
+		phys_int_regs_in  = (count_phys_int_reg_in > 0)  ? new uint16_t[ count_phys_int_reg_in  ] : nullptr;
+                phys_int_regs_out = (count_phys_int_reg_out > 0) ? new uint16_t[ count_phys_int_reg_out ] : nullptr;
+
+                isa_int_regs_in   = (count_isa_int_reg_in > 0)   ? new uint16_t[ count_isa_int_reg_in   ] : nullptr;
+                isa_int_regs_out  = (count_isa_int_reg_out> 0)   ? new uint16_t[ count_isa_int_reg_out  ] : nullptr;
+
+                phys_fp_regs_in   = (count_phys_fp_reg_in > 0)   ? new uint16_t[ count_phys_fp_reg_in   ] : nullptr;
+                phys_fp_regs_out  = (count_phys_fp_reg_out> 0)   ? new uint16_t[ count_phys_fp_reg_out  ] : nullptr;
+
+                isa_fp_regs_in    = (count_isa_fp_reg_in > 0 )   ? new uint16_t[ count_isa_fp_reg_in    ] : nullptr;
+                isa_fp_regs_out   = (count_isa_fp_reg_out > 0 )  ? new uint16_t[ count_isa_fp_reg_out   ] : nullptr;
+
+		for( uint16_t i = 0; i < count_phys_int_reg_in; ++i ) {
+			phys_int_regs_in[i] = copy_me.phys_int_regs_in[i];
+		}
+
+		for( uint16_t i = 0; i < count_phys_int_reg_out; ++i ) {
+			phys_int_regs_out[i] = copy_me.phys_int_regs_out[i];
+		}
+
+		for( uint16_t i = 0; i < count_isa_int_reg_in; ++i ) {
+			isa_int_regs_in[i] = copy_me.isa_int_regs_in[i];
+		}
+
+		for( uint16_t i = 0; i < count_isa_int_reg_out; ++i ) {
+			isa_int_regs_out[i] = copy_me.isa_int_regs_out[i];
+		}
+
+		for( uint16_t i = 0; i < count_phys_fp_reg_in; ++i ) {
+			phys_fp_regs_in[i] = copy_me.phys_fp_regs_in[i];
+		}
+
+		for( uint16_t i = 0; i < count_phys_fp_reg_out; ++i ) {
+			phys_fp_regs_out[i] = copy_me.phys_fp_regs_out[i];
+		}
+
+		for( uint16_t i = 0; i < count_isa_fp_reg_in; ++i ) {
+			isa_fp_regs_in[i] = copy_me.isa_fp_regs_in[i];
+		}
+
+		for( uint16_t i = 0; i < count_isa_fp_reg_out; ++i ) {
+			isa_fp_regs_out[i] = copy_me.isa_fp_regs_out[i];
+		}
 	}
 
 	uint16_t countPhysIntRegIn()  const { return count_phys_int_reg_in;  }
@@ -78,7 +148,7 @@ public:
 	uint16_t countPhysFPRegOut()  const { return count_phys_fp_reg_out; }
 	uint16_t countISAFPRegIn()    const { return count_isa_fp_reg_in;  }
 	uint16_t countISAFPRegOut()   const { return count_isa_fp_reg_out; }
-	
+
 	uint16_t* getPhysIntRegIn()  { return phys_int_regs_in; }
 	uint16_t* getPhysIntRegOut() { return phys_int_regs_out; }
 	uint16_t* getISAIntRegIn()   { return isa_int_regs_in; }
