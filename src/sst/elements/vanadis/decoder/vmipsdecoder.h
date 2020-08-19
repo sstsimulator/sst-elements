@@ -200,6 +200,7 @@ public:
 								// Do we have an entry for the branch instruction we just issued
 								if( branch_predictor->contains(ip) ) {
 									const uint64_t predicted_address = branch_predictor->predictAddress( ip );
+									speculated_ins->setSpeculatedAddress( predicted_address );
 
 									// This is essential a predicted not taken branch
 									if( predicted_address == (ip + 8) ) {
@@ -217,6 +218,7 @@ public:
 										ip);
 
 									speculated_ins->setSpeculatedDirection( BRANCH_NOT_TAKEN );
+									speculated_ins->setSpeculatedAddress( ip + 8 );
 
 									// We don't urgh.. let's just carry on
 									// remember we increment the IP by 2 instructions (me + delay)
@@ -336,6 +338,8 @@ protected:
 			bundle->addInstruction( new VanadisNoOpInstruction( getNextInsID(), ins_addr, hw_thr, options ) );
 			insertDecodeFault = false;
 		} else {
+
+		output->verbose(CALL_INFO, 16, 0, "[decode] -> inst-mask: 0x%08x\n", ins_mask);
 
 		switch( ins_mask ) {
 		case 0:
@@ -482,6 +486,10 @@ protected:
 			{
 				const uint16_t offset_value_16 = (uint16_t) (next_ins & MIPS_IMM_MASK);
 				const uint64_t offset_value_64 = vanadis_sign_extend( offset_value_16 ) << 2;
+
+				output->verbose(CALL_INFO, 16, 0, "[decoder/REGIMM] -> offset-16: %" PRIu16 " shifted: %" PRIu64 "\n", offset_value_16,
+					offset_value_64);
+				output->verbose(CALL_INFO, 16, 0, "[decoder]        -> rt: 0x%08x\n", (next_ins & MIPS_RT_MASK));
 
 				switch( ( next_ins & MIPS_RT_MASK ) ) {
 				case MIPS_SPEC_OP_MASK_BGEZAL:

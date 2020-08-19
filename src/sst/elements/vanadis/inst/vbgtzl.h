@@ -51,7 +51,7 @@ public:
 	}
 
 	virtual void execute( SST::Output* output, VanadisRegisterFile* regFile ) {
-		output->verbose(CALL_INFO, 16, 0, "Execute: (addr=%0llx) BGTZL isa-in: %" PRIu16 " phys-in: %" PRIu16 " / isa-out: %" PRIu16 " phys-out: %" PRIu16 " imm: %" PRId64 "\n",
+		output->verbose(CALL_INFO, 16, 0, "Execute: (addr=0x%0llx) BGTZL isa-in: %" PRIu16 " phys-in: %" PRIu16 " / isa-out: %" PRIu16 " phys-out: %" PRIu16 " imm: %" PRId64 "\n",
 			getInstructionAddress(), isa_int_regs_in[0], phys_int_regs_in[0], isa_int_regs_out[0], phys_int_regs_out[0], imm);
 
 		int64_t* comp_reg_ptr = (int64_t*) regFile->getIntReg( phys_int_regs_in[0]  );
@@ -60,16 +60,16 @@ public:
 		if( (*comp_reg_ptr) >= 0 ) {
 			// Set link address to our location + 2 instructions (this instruction, plus delay)
 			(*link_reg_ptr) = getInstructionAddress() + 8;
-			computed_address = (getInstructionAddress() + 4) + imm;
+			computed_address = 4 + imm;
 			result_dir = BRANCH_TAKEN;
 
-			output->verbose(CALL_INFO, 16, 0, "Execute result (branch-taken): %" PRId64 " >= 0, link: %" PRIu64 " jump-to: PC + %" PRId64 "\n",
+			output->verbose(CALL_INFO, 16, 0, "Execute result (branch-taken): %" PRId64 " >= 0, link: 0x%0llx jump-to: PC + %" PRId64 "\n",
 				(*comp_reg_ptr), (*link_reg_ptr), computed_address);
 		} else {
-			computed_address = getInstructionAddress() + 8;
+			computed_address = 0;
 			result_dir = BRANCH_NOT_TAKEN;
 
-			output->verbose(CALL_INFO, 16, 0, "Execute result (branch not-taken): %" PRId64 " >= 0, link: %" PRIu64 " jump-to: PC + %" PRId64 "\n",
+			output->verbose(CALL_INFO, 16, 0, "Execute result (branch not-taken): %" PRId64 " >= 0, link: 0x%0llx jump-to: PC + %" PRId64 "\n",
 				(*comp_reg_ptr), (*link_reg_ptr), computed_address);
 		}
 

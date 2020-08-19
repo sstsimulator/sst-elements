@@ -56,6 +56,8 @@ public:
 
 	virtual VanadisBranchDirection getSpeculatedDirection() const { return spec_dir; }
 	virtual void setSpeculatedDirection( const VanadisBranchDirection dir ) { spec_dir = dir; }
+	virtual uint64_t getSpeculatedAddress() { return speculatedAddress; }
+	virtual void setSpeculatedAddress( const uint64_t spec_ad ) { speculatedAddress = spec_ad; }
 
 	virtual uint64_t calculateAddress( SST::Output* output, const VanadisRegisterFile* reg_file, const uint64_t current_ip ) = 0;
 	virtual VanadisBranchDirection getResultDirection( const VanadisRegisterFile* reg_file ) {
@@ -74,6 +76,7 @@ protected:
 	VanadisBranchDirection spec_dir;
 	VanadisBranchDirection result_dir;
 	VanadisDelaySlotRequirement delayType;
+	uint64_t speculatedAddress;
 
 };
 

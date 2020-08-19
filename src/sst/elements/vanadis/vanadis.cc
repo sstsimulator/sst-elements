@@ -534,6 +534,8 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 
 		if( ! rob[i]->empty() ) {
 			VanadisInstruction* rob_front = rob[i]->peek();
+			bool perform_pipeline_clear = false;
+			uint64_t pipeline_clear_set_ip = 0;
 
 			output->verbose(CALL_INFO, 8, 0, "----> ROB-Front ins: 0x%0llx / %s / error: %s / issued: %s / spec: %s / exe: %s\n", rob_front->getInstructionAddress(), rob_front->getInstCode(),
 				rob_front->trapsError() ? "yes" : "no",
@@ -597,9 +599,77 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 						output->verbose(CALL_INFO, 8, 0, "ROB -> Updating branch predictor with new information\n");
 						thread_decoders[i]->getBranchPredictor()->push( spec_ins->getInstructionAddress(), recalculate_ip );
 
+                                        	// Actually pop the instruction now we know its safe to do so.
+      	                                 	rob[i]->pop();
+
+                                        	output->verbose(CALL_INFO, 16, 0, "----> Retire inst: %" PRIu64 " (addr: 0x%0llx / %s)\n",
+                                                	rob_front->getID(),
+                                                	rob_front->getInstructionAddress(),
+                                                	rob_front->getInstCode() );
+
+                                        	recoverRetiredRegisters( rob_front,
+                                                int_register_stacks[rob_front->getHWThread()],
+                                                fp_register_stacks[rob_front->getHWThread()],
+                                                issue_isa_tables[i], retire_isa_tables[i] );
+
+                                        	retire_isa_tables[i]->print(output, print_int_reg, print_fp_reg);
+
+                                        	delete rob_front;
+
 						handleMisspeculate( i, recalculate_ip );
+
+						perform_pipeline_clear = true;
+						pipeline_clear_set_ip = recalculate_ip;
 					} else {
-						output->verbose(CALL_INFO, 8, 0, "ROB -> speculation correct for branch, continue execution.\n");
+						const uint64_t recalculate_ip = spec_ins->calculateAddress( output, register_files[i], spec_ins->getInstructionAddress() );
+
+						if( recalculate_ip == spec_ins->getSpeculatedAddress() ) {
+							output->verbose(CALL_INFO, 8, 0, "ROB -> speculation direction and target correct for branch, continue execution.\n");
+
+	                                        	// Actually pop the instruction now we know its safe to do so.
+       	                                 		rob[i]->pop();
+
+                                        		output->verbose(CALL_INFO, 16, 0, "----> Retire inst: %" PRIu64 " (addr: 0x%0llx / %s)\n",
+                                                		rob_front->getID(),
+                                                		rob_front->getInstructionAddress(),
+                                                		rob_front->getInstCode() );
+
+                                        		recoverRetiredRegisters( rob_front,
+                                                	int_register_stacks[rob_front->getHWThread()],
+                                                	fp_register_stacks[rob_front->getHWThread()],
+                                                	issue_isa_tables[i], retire_isa_tables[i] );
+
+                                        		retire_isa_tables[i]->print(output, print_int_reg, print_fp_reg);
+
+                                        		delete rob_front;
+						} else {
+							output->verbose(CALL_INFO, 8, 0, "ROB -> [PIPELINE-CLEAR] correctly speculated direction, but target was incorrect.\n");
+
+							perform_pipeline_clear = true;
+							pipeline_clear_set_ip = recalculate_ip;
+
+							output->verbose(CALL_INFO, 8, 0, "ROB -> Updating branch predictor with new information\n");
+							thread_decoders[i]->getBranchPredictor()->push( spec_ins->getInstructionAddress(), recalculate_ip );
+
+	                                        	// Actually pop the instruction now we know its safe to do so.
+       	                                 		rob[i]->pop();
+
+                                        		output->verbose(CALL_INFO, 16, 0, "----> Retire inst: %" PRIu64 " (addr: 0x%0llx / %s)\n",
+                                                		rob_front->getID(),
+                                                		rob_front->getInstructionAddress(),
+                                                		rob_front->getInstCode() );
+
+                                        		recoverRetiredRegisters( rob_front,
+                                                	int_register_stacks[rob_front->getHWThread()],
+                                                	fp_register_stacks[rob_front->getHWThread()],
+                                                	issue_isa_tables[i], retire_isa_tables[i] );
+
+                                        		retire_isa_tables[i]->print(output, print_int_reg, print_fp_reg);
+
+                                        		delete rob_front;
+
+							handleMisspeculate( i, recalculate_ip );
+						}
 					}
 				}
 			} else if( rob_front->completedExecution() ) {
