@@ -537,11 +537,16 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 			bool perform_pipeline_clear = false;
 			uint64_t pipeline_clear_set_ip = 0;
 
-			output->verbose(CALL_INFO, 8, 0, "----> ROB-Front ins: 0x%0llx / %s / error: %s / issued: %s / spec: %s / exe: %s\n", rob_front->getInstructionAddress(), rob_front->getInstCode(),
-				rob_front->trapsError() ? "yes" : "no",
-				rob_front->completedIssue() ? "yes" : "no",
-				rob_front->isSpeculated() ? "yes" : "no",
-				rob_front->completedExecution() ? "yes" : "no");
+			for( int j = std::min(3, (int) rob[i]->size() - 1); j >= 0; --j ) {
+				output->verbose(CALL_INFO, 8, 0, "----> ROB[%2d]: ins: 0x%0llx / %s / error: %s / issued: %s / spec: %s / exe: %s\n",
+					j,
+					rob[i]->peekAt(j)->getInstructionAddress(),
+					rob[i]->peekAt(j)->getInstCode(),
+					rob[i]->peekAt(j)->trapsError() ? "yes" : "no",
+					rob[i]->peekAt(j)->completedIssue() ? "yes" : "no",
+					rob[i]->peekAt(j)->isSpeculated() ? "yes" : "no",
+					rob[i]->peekAt(j)->completedExecution() ? "yes" : "no");
+			}
 
 			// Instruction is flagging error, print out and halt
 			if( rob_front->trapsError() ) {
@@ -607,6 +612,17 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
                                                 	rob_front->getInstructionAddress(),
                                                 	rob_front->getInstCode() );
 
+						if( VANADIS_SINGLE_DELAY_SLOT == spec_ins->getDelaySlotType() ) {
+							// Need to retire the delay slot too
+       	        	                         	recoverRetiredRegisters( rob[i]->peek(),
+        	                                        int_register_stacks[rob_front->getHWThread()],
+                        	                        fp_register_stacks[rob_front->getHWThread()],
+                                	                issue_isa_tables[i], retire_isa_tables[i] );
+
+							VanadisInstruction* delay_ins = rob[i]->pop();
+							delete delay_ins;
+						}
+
                                         	recoverRetiredRegisters( rob_front,
                                                 int_register_stacks[rob_front->getHWThread()],
                                                 fp_register_stacks[rob_front->getHWThread()],
@@ -634,6 +650,17 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
                                                 		rob_front->getInstructionAddress(),
                                                 		rob_front->getInstCode() );
 
+							if( VANADIS_SINGLE_DELAY_SLOT == spec_ins->getDelaySlotType() ) {
+								// Need to retire the delay slot too
+       	        	        	                 	recoverRetiredRegisters( rob[i]->peek(),
+        	       		                                int_register_stacks[rob_front->getHWThread()],
+                	        	                        fp_register_stacks[rob_front->getHWThread()],
+       		                         	                issue_isa_tables[i], retire_isa_tables[i] );
+
+								VanadisInstruction* delay_ins = rob[i]->pop();
+								delete delay_ins;
+							}
+
                                         		recoverRetiredRegisters( rob_front,
                                                 	int_register_stacks[rob_front->getHWThread()],
                                                 	fp_register_stacks[rob_front->getHWThread()],
@@ -658,6 +685,17 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
                                                 		rob_front->getID(),
                                                 		rob_front->getInstructionAddress(),
                                                 		rob_front->getInstCode() );
+
+							if( VANADIS_SINGLE_DELAY_SLOT == spec_ins->getDelaySlotType() ) {
+								// Need to retire the delay slot too
+       	        	        	                 	recoverRetiredRegisters( rob[i]->peek(),
+        	       		                                int_register_stacks[rob_front->getHWThread()],
+                	        	                        fp_register_stacks[rob_front->getHWThread()],
+       		                         	                issue_isa_tables[i], retire_isa_tables[i] );
+
+								VanadisInstruction* delay_ins = rob[i]->pop();
+								delete delay_ins;
+							}
 
                                         		recoverRetiredRegisters( rob_front,
                                                 	int_register_stacks[rob_front->getHWThread()],
