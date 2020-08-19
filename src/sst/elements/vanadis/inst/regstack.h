@@ -6,7 +6,7 @@ namespace SST {
 namespace Vanadis {
 
 class VanadisRegisterStack {
-public:	
+public:
 	VanadisRegisterStack(const size_t count) :
 		reg_count(count), max_capacity(count) {
 
@@ -30,7 +30,6 @@ public:
 
 	void push(const uint16_t v) {
 		index++;
-		
 		regs[index] = v;
 	}
 
@@ -39,7 +38,7 @@ public:
 	}
 
 	size_t unused() const {
-		return index;	
+		return index;
 	}
 
 	size_t size() const {
@@ -48,8 +47,12 @@ public:
 
 	bool full()  { return index == reg_count; }
 	bool empty() { return index == -1; }
-	
+
+	void clear() {
+		index = -1;
+	}
 private:
+
 	size_t max_capacity;
 	size_t reg_count;
 	size_t index;

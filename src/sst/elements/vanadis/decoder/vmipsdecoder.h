@@ -17,11 +17,16 @@
 #define MIPS_IMM_MASK        0xFFFF
 #define MIPS_SHFT_MASK       0x7C0
 #define MIPS_FUNC_MASK       0x3F
+
 #define MIPS_SPECIAL_OP_MASK 0x7FF
 
 #define MIPS_SPEC_OP_MASK_ADD     0x20
 #define MIPS_SPEC_OP_MASK_ADDU    0x21
 #define MIPS_SPEC_OP_MASK_AND     0x24
+
+#define MIPS_SPEC_OP_MASK_REGIMM  0x4000000
+#define MIPS_SPEC_OP_MASK_BGEZAL  0x110000
+
 #define MIPS_SPEC_OP_MASK_BREAK   0x0D
 #define MIPS_SPEC_OP_MASK_DADD    0x2C
 #define MIPS_SPEC_OP_MASK_DADDU   0x2D
@@ -100,6 +105,7 @@ public:
 		setInstructionPointer( params.find<uint64_t>("entry_point", 0) );
 
 		next_ins_id = 0;
+
 	}
 
 	~VanadisMIPSDecoder() {}
@@ -126,7 +132,7 @@ public:
 					output->verbose(CALL_INFO, 16, 0, "---> Found uop bundle for ip=0x0%llxx, loading from cache...\n", ip);
 					VanadisInstructionBundle* bundle = ins_loader->getBundleAt( ip )->clone( &next_ins_id );
 
-					// Check if last instruction is a BRANCH, if yes, we need to also decode the branch-delay slot
+					// Check if last instruction is a BRANCH, if yes, we need to also decode the branch-delay slot AND handle the prediction
 					if( bundle->getInstructionByIndex( bundle->getInstructionCount() - 1 )->getInstFuncType() == INST_BRANCH ) {
 						output->verbose(CALL_INFO, 16, 0, "-----> Last instruction in the bundle causes potential branch, checking on branch delay slot...\n");
 
@@ -185,6 +191,38 @@ public:
 									decoded_q->push( next_ins );
 								}
 
+								VanadisSpeculatedInstruction* speculated_ins = dynamic_cast<VanadisSpeculatedInstruction*>(bundle->getInstructionByIndex( bundle->getInstructionCount() - 1 ));
+
+								if( nullptr == speculated_ins ) {
+									output->fatal(CALL_INFO, -1, "Error: unable to cast into a speculated instruction despite this being a branch.\n");
+								}
+
+								// Do we have an entry for the branch instruction we just issued
+								if( branch_predictor->contains(ip) ) {
+									const uint64_t predicted_address = branch_predictor->predictAddress( ip );
+
+									// This is essential a predicted not taken branch
+									if( predicted_address == (ip + 8) ) {
+										output->verbose(CALL_INFO, 16, 0, "---> Branch predicted not taken, ip set to: %0llx\n", predicted_address );
+										speculated_ins->setSpeculatedDirection( BRANCH_NOT_TAKEN );
+									} else {
+										output->verbose(CALL_INFO, 16, 0, "---> Branch predicted taken, jump to %0llx\n", predicted_address);
+										speculated_ins->setSpeculatedDirection( BRANCH_TAKEN );
+									}
+
+									ip = predicted_address;
+									output->verbose(CALL_INFO, 16, 0, "---> Forcing IP update according to branch prediction table, new-ip: %0llx\n", ip);
+								} else {
+									output->verbose(CALL_INFO, 16, 0, "---> Branch table does not contain an entry for ins: %0llx, continue with normal ip += 8\n",
+										ip);
+
+									speculated_ins->setSpeculatedDirection( BRANCH_NOT_TAKEN );
+
+									// We don't urgh.. let's just carry on
+									// remember we increment the IP by 2 instructions (me + delay)
+									ip += 8;
+								}
+
 								delete bundle++;
 								uop_bundles_used += 2;
 							} else {
@@ -208,6 +246,9 @@ public:
 
 							delete bundle;
 							uop_bundles_used++;
+
+							// Push the instruction pointer along by the standard amount
+							ip += 4;
 						} else {
 							output->verbose(CALL_INFO, 16, 0, "---> --> micro-op bundle for %p contains %" PRIu32 " ops, we only have %" PRIu32 " slots available in the decode q, wait for resources to become available.\n",
 								(void*) ip, (uint32_t) bundle->getInstructionCount(),
@@ -253,10 +294,6 @@ public:
 			decodes_performed, uop_bundles_used);
 	}
 
-	virtual void clearDecoderAfterMisspeculate() {
-		// TODO - what do we need to do here?
-	}
-
 protected:
 	void extract_imm( const uint32_t ins, uint32_t* imm ) const {
 		(*imm) = (ins & MIPS_IMM_MASK);
@@ -293,6 +330,12 @@ protected:
 		const uint64_t imm64 = (uint64_t) imm;
 
 		bool insertDecodeFault = true;
+
+		// Check if this is a NOP, this is fairly frequent due to use in delay slots, do not spend time decoding this
+		if( 0 == next_ins ) {
+			bundle->addInstruction( new VanadisNoOpInstruction( getNextInsID(), ins_addr, hw_thr, options ) );
+			insertDecodeFault = false;
+		} else {
 
 		switch( ins_mask ) {
 		case 0:
@@ -435,6 +478,22 @@ protected:
 			}
 			break;
 
+		case MIPS_SPEC_OP_MASK_REGIMM:
+			{
+				const uint16_t offset_value_16 = (uint16_t) (next_ins & MIPS_IMM_MASK);
+				const uint64_t offset_value_64 = vanadis_sign_extend( offset_value_16 ) << 2;
+
+				switch( ( next_ins & MIPS_RT_MASK ) ) {
+				case MIPS_SPEC_OP_MASK_BGEZAL:
+					bundle->addInstruction( new VanadisBranchGTZeroInstruction( getNextInsID(), ins_addr, hw_thr, options, rs, (uint16_t) 31,
+						offset_value_64, VANADIS_SINGLE_DELAY_SLOT) );
+					insertDecodeFault = false;
+					break;
+				}
+
+			}
+			break;
+
 		case MIPS_ADDI_OP_MASK:
 			//decoded_q->push( new VanadisAddImmInstruction( getNextInsID(),
 			//	ins_addr, getHardwareThread(), options, rt, rs, imm64 ) );
@@ -443,6 +502,7 @@ protected:
 
 		default:
 			break;
+		}
 		}
 
 		if( insertDecodeFault ) {

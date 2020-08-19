@@ -47,18 +47,19 @@ public:
 			c_phys_fp_reg_in, c_phys_fp_reg_out,
 			c_isa_fp_reg_in, c_isa_fp_reg_out) {
 
-			spec = BRANCH_TAKEN;
-			delayType = delayT;
+			spec_dir   = BRANCH_NOT_TAKEN;
+			result_dir = BRANCH_NOT_TAKEN;
+			delayType  = delayT;
 		}
 
 	virtual ~VanadisSpeculatedInstruction() {}
 
-	virtual VanadisBranchDirection getSpeculatedDirection() const { return spec; }
-	virtual void setSpeculatedDirection( const VanadisBranchDirection dir ) { spec = dir; }
+	virtual VanadisBranchDirection getSpeculatedDirection() const { return spec_dir; }
+	virtual void setSpeculatedDirection( const VanadisBranchDirection dir ) { spec_dir = dir; }
 
-	virtual uint64_t getSpeculatePCAddress( const VanadisRegisterFile* reg_file ) = 0;
+	virtual uint64_t calculateAddress( SST::Output* output, const VanadisRegisterFile* reg_file, const uint64_t current_ip ) = 0;
 	virtual VanadisBranchDirection getResultDirection( const VanadisRegisterFile* reg_file ) {
-		return BRANCH_TAKEN;
+		return result_dir;
 	}
 
 	virtual bool isSpeculated() const { return true; }
@@ -70,7 +71,8 @@ public:
 	virtual VanadisDelaySlotRequirement getDelaySlotType() const { return delayType; }
 
 protected:
-	VanadisBranchDirection spec;
+	VanadisBranchDirection spec_dir;
+	VanadisBranchDirection result_dir;
 	VanadisDelaySlotRequirement delayType;
 
 };

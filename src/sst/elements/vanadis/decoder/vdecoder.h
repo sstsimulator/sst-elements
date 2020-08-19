@@ -27,14 +27,15 @@ public:
 		const size_t decode_q_len = params.find<size_t>("decode_q_len", 8);
 		decoded_q = new VanadisCircularQueue< VanadisInstruction* >( decode_q_len );
 
-		branch_unit = nullptr;
-
 		icache_line_width = params.find<uint64_t>("icache_line_width", 64);
 
 		const size_t uop_cache_size          = params.find<size_t>("uop_cache_entries", 128);
 		const size_t predecode_cache_entries = params.find<size_t>("predecode_cache_entries", 32);
 
 		ins_loader = new VanadisInstructionLoader( uop_cache_size, predecode_cache_entries, icache_line_width );
+
+		const size_t branch_pred_entries     = params.find<size_t>("branch_predictor_entries", 32);
+		branch_predictor = new VanadisBranchUnit( branch_pred_entries );
 	}
 
 	virtual ~VanadisDecoder() {
@@ -68,16 +69,17 @@ public:
 			// Do we need to clear here or not?
 		}
 
-	void setInstructionPointerAfterMisspeculate( const uint64_t newIP ) {
+	void setInstructionPointerAfterMisspeculate( SST::Output* output, const uint64_t newIP ) {
 		ip = newIP;
+
+		output->verbose(CALL_INFO, 16, 0, "[decoder] -> clear decode-q and set new ip: 0x%llx\n", newIP);
 
 		// Clear out the decode queue, need to restart
 		decoded_q->clear();
 
-		clearDecoderAfterMisspeculate();
+		clearDecoderAfterMisspeculate( output );
 	}
 
-	void setBranchUnit( VanadisBranchUnit* new_branch ) { branch_unit = new_branch; }
 	VanadisCircularQueue<VanadisInstruction*>* getDecodedQueue() { return decoded_q; }
 
 	void setHardwareThread( const uint32_t thr ) { hw_thr = thr; }
@@ -87,8 +89,12 @@ public:
 		return ins_loader;
 	}
 
+	VanadisBranchUnit* getBranchPredictor() {
+		return branch_predictor;
+	}
+
 protected:
-	virtual void clearDecoderAfterMisspeculate() = 0;
+	virtual void clearDecoderAfterMisspeculate( SST::Output* output ) {};
 
 	uint64_t ip;
 	uint64_t next_ins_id;
@@ -97,9 +103,9 @@ protected:
 
 	bool wantDelegatedLoad;
 	VanadisCircularQueue<VanadisInstruction*>* decoded_q;
-	VanadisBranchUnit* branch_unit;
 
 	VanadisInstructionLoader* ins_loader;
+	VanadisBranchUnit* branch_predictor;
 
 };
 

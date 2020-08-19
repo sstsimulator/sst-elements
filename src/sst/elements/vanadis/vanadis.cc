@@ -72,9 +72,6 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 
 	halted_masks = new bool[hw_threads];
 
-	const uint32_t branch_entries = params.find<uint32_t>("branch_predict_entries", 32);
-	output->verbose(CALL_INFO, 2, 0, "Branch prediction entries:         %10" PRIu32 "\n", branch_entries);
-
 	//////////////////////////////////////////////////////////////////////////////////////
 
 	char* decoder_name = new char[64];
@@ -131,9 +128,6 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 		// WE NEED ISA INTEGER AND FP COUNTS HERE NOT ZEROS
 		issue_isa_tables.push_back( new VanadisISATable( thread_decoders[i]->getDecoderOptions(),
 			thread_decoders[i]->countISAIntReg(), thread_decoders[i]->countISAFPReg() ) );
-
-		branch_units.push_back( new VanadisBranchUnit( branch_entries ) );
-		thread_decoders[i]->setBranchUnit( branch_units[i] );
 
 		for( uint16_t j = 0; j < thread_decoders[i]->countISAIntReg(); ++j ) {
 			issue_isa_tables[i]->setIntPhysReg( j, int_register_stacks[i]->pop() );
@@ -226,6 +220,16 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 
 	for( uint16_t i = 0; i < int_div_units; ++i ) {
 		fu_int_div.push_back( new VanadisFunctionalUnit(fu_id++, INST_INT_DIV, int_div_cycles) );
+	}
+
+	const uint16_t branch_units  = params.find<uint16_t>("branch_units", 1);
+	const uint16_t branch_cycles = params.find<uint16_t>("branch_unit_cycles", int_arith_cycles);
+
+	output->verbose(CALL_INFO, 2, 0, "Creating %" PRIu16 " branching units, latency = %" PRIu16 "...\n",
+		branch_units, branch_cycles);
+
+	for( uint16_t i = 0; i < branch_units; ++i ) {
+		fu_branch.push_back( new VanadisFunctionalUnit(fu_id++, INST_BRANCH, branch_cycles) );
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -458,6 +462,15 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 						}
 
 						break;
+					case INST_BRANCH:
+						for( VanadisFunctionalUnit* next_fu : fu_branch ) {
+                                                        if(next_fu->isInstructionSlotFree() ) {
+                                                                next_fu->setSlotInstruction( ins );
+                                                                allocated_fu = true;
+                                                                break;
+                                                        }
+                                                }
+						break;
 					case INST_NOOP:
 					case INST_FAULT:
 						allocated_fu = true;
@@ -505,6 +518,10 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 		next_fu->tick(cycle, output, register_files);
 	}
 
+	for( VanadisFunctionalUnit* next_fu : fu_branch ) {
+		next_fu->tick(cycle, output, register_files);
+	}
+
 	// LSQ Processing
 	lsq->tick( (uint64_t) cycle, output );
 
@@ -517,6 +534,12 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 
 		if( ! rob[i]->empty() ) {
 			VanadisInstruction* rob_front = rob[i]->peek();
+
+			output->verbose(CALL_INFO, 8, 0, "----> ROB-Front ins: 0x%0llx / %s / error: %s / issued: %s / spec: %s / exe: %s\n", rob_front->getInstructionAddress(), rob_front->getInstCode(),
+				rob_front->trapsError() ? "yes" : "no",
+				rob_front->completedIssue() ? "yes" : "no",
+				rob_front->isSpeculated() ? "yes" : "no",
+				rob_front->completedExecution() ? "yes" : "no");
 
 			// Instruction is flagging error, print out and halt
 			if( rob_front->trapsError() ) {
@@ -565,12 +588,18 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 				// If the delay slot handlers are satisfied we can proceed
 				if( delaySlotsAreOK ) {
 					if( spec_ins->getSpeculatedDirection() != spec_ins->getResultDirection( register_files[i] ) ) {
+						const uint64_t recalculate_ip = spec_ins->calculateAddress( output, register_files[i], spec_ins->getInstructionAddress() );
+
 						// We have a mis-speculated instruction, uh-oh.
-						output->verbose(CALL_INFO, 8, 0, "ROB -> [PIPELINE-CLEAR] mis-speculated execution, begin pipeline reset.\n");
-						handleMisspeculate( i );
-						// SET THE IP CORRECTLY.
+						output->verbose(CALL_INFO, 8, 0, "ROB -> [PIPELINE-CLEAR] mis-speculated execution, begin pipeline reset (set ip: 0x%llx)\n",
+							recalculate_ip);
+
+						output->verbose(CALL_INFO, 8, 0, "ROB -> Updating branch predictor with new information\n");
+						thread_decoders[i]->getBranchPredictor()->push( spec_ins->getInstructionAddress(), recalculate_ip );
+
+						handleMisspeculate( i, recalculate_ip );
 					} else {
-						output->verbose(CALL_INFO, 8, 0, "ROB -> speculation correct.\n");
+						output->verbose(CALL_INFO, 8, 0, "ROB -> speculation correct for branch, continue execution.\n");
 					}
 				}
 			} else if( rob_front->completedExecution() ) {
@@ -613,6 +642,7 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 					delete rob_front;
 				}
 			} else {
+				output->verbose(CALL_INFO, 16, 0, "----> [ROB] - marking front instruction as ROB-Front\n");
 				// make sure instruction is marked at front of ROB since this can
 				// enable instructions which need to be retire-ready to process
 				rob_front->markFrontOfROB();
@@ -916,13 +946,14 @@ void VanadisComponent::handleIncomingInstCacheEvent( SimpleMem::Request* ev ) {
 	delete ev;
 }
 
-void VanadisComponent::handleMisspeculate( const uint32_t hw_thr ) {
-	output->verbose(CALL_INFO, 16, 0, "-> Handle mis-speculation on %" PRIu32 "...\n", hw_thr);
+void VanadisComponent::handleMisspeculate( const uint32_t hw_thr, const uint64_t new_ip ) {
+	output->verbose(CALL_INFO, 16, 0, "-> Handle mis-speculation on %" PRIu32 " (new-ip: 0x%llx)...\n", hw_thr, new_ip);
 
 	clearFuncUnit( hw_thr, fu_int_arith );
 	clearFuncUnit( hw_thr, fu_int_div );
 	clearFuncUnit( hw_thr, fu_fp_arith );
 	clearFuncUnit( hw_thr, fu_fp_div );
+	clearFuncUnit( hw_thr, fu_branch );
 
 	lsq->clearLSQByThreadID( output, hw_thr );
 	resetRegisterStacks( hw_thr );
@@ -930,6 +961,9 @@ void VanadisComponent::handleMisspeculate( const uint32_t hw_thr ) {
 
 	// Reset the ISA table to get correct ISA to physical mappings
 	issue_isa_tables[hw_thr]->reset( retire_isa_tables[hw_thr] );
+
+	// Notify the decoder we need a clear and reset to new instruction pointer
+	thread_decoders[hw_thr]->setInstructionPointerAfterMisspeculate( output, new_ip );
 
 	output->verbose(CALL_INFO, 16, 0, "-> Mis-speculate repair finished.\n");
 }
@@ -942,39 +976,43 @@ void VanadisComponent::clearFuncUnit( const uint32_t hw_thr, std::vector<Vanadis
 
 void VanadisComponent::resetRegisterStacks( const uint32_t hw_thr ) {
 	output->verbose(CALL_INFO, 16, 0, "-> Resetting register stacks on thread %" PRIu32 "...\n", hw_thr);
-
 	output->verbose(CALL_INFO, 16, 0, "---> Reclaiming integer registers...\n");
 
 	const uint16_t int_reg_count = int_register_stacks[hw_thr]->capacity();
-	VanadisRegisterStack* new_int_stack = new VanadisRegisterStack( int_reg_count );
+	output->verbose(CALL_INFO, 16, 0, "---> Creating a new int register stack with %" PRIu16 " registers...\n", int_reg_count);
+	VanadisRegisterStack* thr_int_stack = int_register_stacks[hw_thr];
+	thr_int_stack->clear();
 
 	for( uint16_t i = 0; i < int_reg_count; ++i ) {
 		if( ! retire_isa_tables[ hw_thr ]->physIntRegInUse( i ) ) {
-			new_int_stack->push(i);
+			thr_int_stack->push(i);
 		}
 	}
 
-	delete int_register_stacks[hw_thr];
-	int_register_stacks[hw_thr] = new_int_stack;
+//	delete int_register_stacks[hw_thr];
+//	int_register_stacks[hw_thr] = new_int_stack;
 
 	output->verbose(CALL_INFO, 16, 0, "---> Integer register stack contains %" PRIu32 " registers.\n",
-		(uint32_t) new_int_stack->size());
+		(uint32_t) thr_int_stack->size());
 	output->verbose(CALL_INFO, 16, 0, "---> Reclaiming floating point registers...\n");
 
 	const uint16_t fp_reg_count = fp_register_stacks[hw_thr]->capacity();
-	VanadisRegisterStack* new_fp_stack = new VanadisRegisterStack( fp_reg_count );
+	output->verbose(CALL_INFO, 16, 0, "---> Creating a new fp register stack with %" PRIu16 " registers...\n", fp_reg_count);
+//	VanadisRegisterStack* new_fp_stack = new VanadisRegisterStack( fp_reg_count );
+	VanadisRegisterStack* thr_fp_stack = fp_register_stacks[hw_thr];
+	thr_fp_stack->clear();
 
 	for( uint16_t i = 0; i < fp_reg_count; ++i ) {
 		if( ! retire_isa_tables[ hw_thr ]->physFPRegInUse( i ) ) {
-			new_fp_stack->push(i);
+			thr_fp_stack->push(i);
 		}
 	}
 
-	delete fp_register_stacks[hw_thr];
-	fp_register_stacks[hw_thr] = new_fp_stack;
+//	delete fp_register_stacks[hw_thr];
+//	fp_register_stacks[hw_thr] = new_fp_stack;
 
 	output->verbose(CALL_INFO, 16, 0, "---> Floating point stack contains %" PRIu32 " registers.\n",
-		(uint32_t) new_fp_stack->size());
+		(uint32_t) thr_fp_stack->size());
 }
 
 void VanadisComponent::clearROBMisspeculate( const uint32_t hw_thr ) {

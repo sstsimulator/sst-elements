@@ -49,6 +49,7 @@ public:
 		} else {
 			kill_lru_key();
 			data_values.insert( std::pair<I, T>( key, value ) );
+			ordering_q.push_front( key );
 		}
 	}
 
@@ -59,7 +60,7 @@ public:
 	}
 
 	size_t size() {
-		return ordering_q.size();
+		return data_values.size();
 	}
 
 	size_t capacity() {
@@ -89,6 +90,7 @@ private:
                         if( key == (*order_itr) ) {
                                 ordering_q.erase( order_itr );
                                 found_key = true;
+				break;
                         } else {
                                 order_itr++;
                         }

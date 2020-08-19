@@ -35,7 +35,6 @@
 #include "inst/isatable.h"
 #include "vfuncunit.h"
 #include "vlsq.h"
-#include "vbranchunit.h"
 
 namespace SST {
 namespace Vanadis {
@@ -144,7 +143,7 @@ public:
     void handleIncomingDataCacheEvent( SimpleMem::Request* ev );
     void handleIncomingInstCacheEvent( SimpleMem::Request* ev );
 
-    void handleMisspeculate( const uint32_t hw_thr );
+    void handleMisspeculate( const uint32_t hw_thr, const uint64_t new_ip );
     void clearROBMisspeculate( const uint32_t hw_thr );
     void resetRegisterStacks( const uint32_t hw_thr );
     void clearFuncUnit( const uint32_t hw_thr, std::vector<VanadisFunctionalUnit*>& unit );
@@ -191,6 +190,7 @@ private:
 
     std::vector<VanadisFunctionalUnit*> fu_int_arith;
     std::vector<VanadisFunctionalUnit*> fu_int_div;
+    std::vector<VanadisFunctionalUnit*> fu_branch;
     std::vector<VanadisFunctionalUnit*> fu_fp_arith;
     std::vector<VanadisFunctionalUnit*> fu_fp_div;
 
@@ -200,8 +200,6 @@ private:
 
     std::vector<VanadisISATable*> issue_isa_tables;
     std::vector<VanadisISATable*> retire_isa_tables;
-
-    std::vector<VanadisBranchUnit*> branch_units;
 
     std::set<uint16_t> tmp_raw_int;
     std::set<uint16_t> tmp_raw_fp;

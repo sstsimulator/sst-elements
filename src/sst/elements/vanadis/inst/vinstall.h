@@ -29,6 +29,7 @@
 
 // Jumps and PC change instructions
 #include "inst/vjump.h"
+#include "inst/vbgtzl.h"
 
 // Load instructions
 #include "inst/vload.h"
@@ -41,5 +42,6 @@
 
 // Special instructions
 #include "inst/vdecodefaultinst.h"
+#include "inst/vnop.h"
 
 #endif
