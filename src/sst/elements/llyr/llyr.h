@@ -86,13 +86,13 @@ private:
     Statistic<uint64_t>* zeroEventCycles;
     Statistic<uint64_t>* eventCycles;
 
-    LlyrGraph hardwareGraph;
-    LlyrGraph applicationGraph;
-    LlyrGraph mappedGraph;
+    LlyrGraph<std::string> hardwareGraph;
+    LlyrGraph<std::string> applicationGraph;
+    LlyrGraph<uint32_t> mappedGraph;
 
     void constructHardwareGraph(std::string fileName);
     void constructSoftwareGraph(std::string fileName);
-    LlyrGraph subgraphIsomorphism( LlyrGraph largeGraph, LlyrGraph smallGraph );
+//     LlyrGraph subgraphIsomorphism( LlyrGraph largeGraph, LlyrGraph smallGraph );
 
 };
 

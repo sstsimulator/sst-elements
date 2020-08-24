@@ -21,17 +21,39 @@
 namespace SST {
 namespace Llyr {
 
-LlyrGraph::LlyrGraph()
+template<class T>
+Vertex<T>::Vertex(T type)
 {
-    vertices = 0;
+    this->type = type;
+    visited = 0;
 }
 
-LlyrGraph::~LlyrGraph()
-{}
-
-void LlyrGraph::printGraph()
+template<class T>
+T Vertex<T>::getType() const
 {
-    std::map< uint32_t, Vertex >::iterator vertexIterator;
+    return type;
+}
+
+template <class T>
+void Vertex<T>::addEdge( uint32_t endVertex )
+{
+    adjacencyList->push_back(endVertex);
+}
+
+// template<class T>
+// LlyrGraph<T>::LlyrGraph()
+// {
+//     vertices = 0;
+// }
+//
+// template<class T>
+// LlyrGraph<T>::~LlyrGraph()
+// {}
+
+template<class T>
+void LlyrGraph<T>::printGraph()
+{
+    typename std::map< uint32_t, Vertex<T> >::iterator vertexIterator;
     for(vertexIterator = vertexMap.begin(); vertexIterator != vertexMap.end(); ++vertexIterator)
     {
         std::cout << "\n Adjacency list of vertex "
@@ -46,7 +68,8 @@ void LlyrGraph::printGraph()
     }
 }
 
-void LlyrGraph::printDot( std::string fileName )
+template<class T>
+void LlyrGraph<T>::printDot( std::string fileName )
 {
     std::ofstream outputFile(fileName.c_str(), std::ios::trunc);         //open a file for writing (truncate the current contents)
     if ( !outputFile )                                                   //check to be sure file is open
@@ -54,7 +77,7 @@ void LlyrGraph::printDot( std::string fileName )
 
     outputFile << "digraph G {" << "\n";
 
-    std::map< uint32_t, Vertex >::iterator vertexIterator;
+    typename std::map< uint32_t, Vertex<T> >::iterator vertexIterator;
     for(vertexIterator = vertexMap.begin(); vertexIterator != vertexMap.end(); ++vertexIterator)
     {
         outputFile << vertexIterator->first << "[label=\"";
@@ -78,28 +101,31 @@ void LlyrGraph::printDot( std::string fileName )
     outputFile.close();
 }
 
-uint32_t LlyrGraph::numVertices()
+template<class T>
+uint32_t LlyrGraph<T>::numVertices()
 {
     return vertices;
 }
 
-void LlyrGraph::addEdge( uint32_t beginVertex, uint32_t endVertex )
+template<class T>
+void LlyrGraph<T>::addEdge( uint32_t beginVertex, uint32_t endVertex )
 {
     std::cout << "add edge:  " << beginVertex << " --> " << endVertex << std::endl;
 
-    vertexMap[beginVertex].adjacencyList->push_back(endVertex);
+    vertexMap[beginVertex].addEdge(endVertex);
 }
 
-void LlyrGraph::addVertex(uint32_t vertex, std::string type)
+template<class T>
+void LlyrGraph<T>::addVertex(uint32_t vertex, T type)
 {
     std::cout << "add vertex:  " << vertex << std::endl;
 
-    Vertex thisVertex;
+    Vertex<T> thisVertex;
     thisVertex.type = type;
     thisVertex.adjacencyList = new std::vector< uint32_t >;
 
-    std::pair< std::map< uint32_t, Vertex >::iterator,bool > retVal;
-    retVal = vertexMap.insert( std::pair< uint32_t, Vertex >( vertex, thisVertex) );
+    std::pair< typename std::map< uint32_t, Vertex<T> >::iterator,bool > retVal;
+    retVal = vertexMap.insert( std::pair< uint32_t, Vertex<T> >( vertex, thisVertex) );
     if( retVal.second == false )
     {
         ///TODO

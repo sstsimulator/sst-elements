@@ -27,34 +27,43 @@
 namespace SST {
 namespace Llyr {
 
-struct Vertex
+template<class T>
+class Vertex
 {
-    std::string type;
+private:
+    T type;
+    bool visited;
     std::vector< uint32_t >* adjacencyList;
+
+public:
+    Vertex( T type );
+
+    T getType( void ) const;
+    void addEdge( uint32_t edge );
 };
 
+template<class T>
 class LlyrGraph
 {
 
 private:
     uint32_t vertices;
-    std::map< uint32_t, Vertex > vertexMap;
+    std::map< uint32_t, Vertex<T> > vertexMap;
 
     SST::Output* output;
 
 protected:
 
 public:
-
-    LlyrGraph();
-    ~LlyrGraph();
+//     LlyrGraph();
+//     ~LlyrGraph();
 
     void printGraph( void );
     void printDot( std::string fileName );
 
     uint32_t numVertices( void );
     void addEdge( uint32_t vertex, uint32_t edge );
-    void addVertex( uint32_t beginVertex, std::string type );
+    void addVertex( uint32_t beginVertex, T type );
 
 };
 

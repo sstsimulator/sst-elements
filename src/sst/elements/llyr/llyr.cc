@@ -48,10 +48,10 @@ LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
     output = new SST::Output(prefix, verbosity, 0, Output::STDOUT);
 
     //construct hardware graph
-    std::string const& hwFileName = params.find< std::string >("hardwareGraph", "tests/grid.cfg");
+    std::string const& hwFileName = params.find< std::string >("hardwareGraph", "grid.cfg");
     constructHardwareGraph(hwFileName);
 
-    std::string const& swFileName = params.find< std::string >("hardwareGraph", "tests/app.in");
+    std::string const& swFileName = params.find< std::string >("hardwareGraph", "app.in");
     constructSoftwareGraph(swFileName);
 
 }
