@@ -386,6 +386,8 @@ bool DirectoryController::clock(SST::Cycle_t cycle){
 
     int requestsThisCycle = 0;
 
+    addrsThisCycle.clear();
+
     size_t entries = retryBuffer.size();
 
     std::list<MemEvent*>::iterator it = retryBuffer.begin();
@@ -393,10 +395,9 @@ bool DirectoryController::clock(SST::Cycle_t cycle){
         if (maxRequestsPerCycle != 0 && requestsThisCycle == maxRequestsPerCycle) {
             break;
         }
-
         dbg.debug(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Retry   (%s)\n",
                 Simulation::getSimulation()->getCurrentSimCycle(), timestamp, getName().c_str(), (*it)->getVerboseString().c_str());
-
+        
         if (processPacket(*it, true)) {
             requestsThisCycle++;
             it = retryBuffer.erase(it);
@@ -443,6 +444,20 @@ bool DirectoryController::processPacket(MemEvent * ev, bool replay) {
     if(! isRequestAddressValid(ev->getAddr()) ) {
 	dbg.fatal(CALL_INFO, -1, "%s, Error: Request address is not valid. Event: %s. Time = %" PRIu64 "ns\n",
                 getName().c_str(), ev->getVerboseString().c_str(), getCurrentSimTimeNano());
+    }
+
+    Addr addr = ev->getBaseAddr();
+
+    /* Disallow more than one access to a given line per cycle */
+    if (!arbitrateAccess(addr)) {
+        if (is_debug_addr(addr)) {
+            std::stringstream id;
+            id << "<" << ev->getID().first << "," << ev->getID().second << ">";
+            dbg.debug(_L5_, "A: %-20" PRIu64 " %-20" PRIu64 " %-20s %-13s 0x%-16" PRIx64 " %-15s %-6s %-6s %-10s %-15s\n",
+                    Simulation::getSimulation()->getCurrentSimCycle(), timestamp, getName().c_str(), CommandString[(int)ev->getCmd()],
+                    addr, id.str().c_str(), "", "", "Stall", "(line conflict)");
+        }
+        return false;
     }
 
     bool retval = false;
@@ -517,9 +532,18 @@ bool DirectoryController::processPacket(MemEvent * ev, bool replay) {
     if (dbgevent)
         printDebugInfo();
 
+    if (retval)
+        addrsThisCycle.insert(addr);
+
     return retval;
 }
 
+
+bool DirectoryController::arbitrateAccess(Addr addr) {
+    if (addrsThisCycle.find(addr) == addrsThisCycle.end())
+        return true;
+    return false;
+}
 
 void DirectoryController::handleNoncacheableRequest(MemEventBase * ev) {
     if (!(ev->queryFlag(MemEventBase::F_NORESPONSE))) {

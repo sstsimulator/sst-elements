@@ -185,6 +185,7 @@ private:
     std::list<MemEvent*> retryBuffer;
     std::map<MemEvent::id_type, std::string> noncacheMemReqs;
 
+    std::set<Addr> addrsThisCycle;
 
     /* Network connections */
     MemLinkBase*    memLink;
@@ -196,6 +197,8 @@ private:
     bool isRequestAddressValid(Addr addr);
 
     void turnClockOn();
+
+    bool arbitrateAccess(Addr addr);
 
     inline void recordStartLatency(MemEventBase* ev);
     inline void profileRequestSent(MemEvent* event);
