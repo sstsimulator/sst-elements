@@ -19,6 +19,7 @@
 #include <sst/core/component.h>
 
 #include "graph.h"
+#include "mappers/llyrMapper.h"
 #include "processingElement.h"
 
 namespace SST {
@@ -88,11 +89,15 @@ private:
 
     LlyrGraph<std::string> hardwareGraph;
     LlyrGraph<std::string> applicationGraph;
-    LlyrGraph<uint32_t> mappedGraph;
+    LlyrGraph<opType> mappedGraph;
+
+    LlyrMapper* llyrMapper;
+
+//     LlyrGraph<opType> tempGraph;
+//     LlyrMapper<opType>* llyrMapper;
 
     void constructHardwareGraph(std::string fileName);
     void constructSoftwareGraph(std::string fileName);
-//     LlyrGraph subgraphIsomorphism( LlyrGraph largeGraph, LlyrGraph smallGraph );
 
 };
 

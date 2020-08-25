@@ -13,14 +13,16 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#include "sst_config.h"
-#include "llyr.h"
+#include <sst_config.h>
+#include <sst/core/params.h>
 
 #include <regex>
 #include <vector>
 #include <string>
 #include <fstream>
 #include <algorithm>
+
+#include "llyr.h"
 
 namespace SST {
 namespace Llyr {
@@ -54,6 +56,11 @@ LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
     std::string const& swFileName = params.find< std::string >("hardwareGraph", "app.in");
     constructSoftwareGraph(swFileName);
 
+    //do the mapping
+    Params mapperParams;    //empty but needed for loadModule API
+    std::string mapperName = params.find<std::string>("mapper", "simpleMapper");
+    llyrMapper = dynamic_cast<LlyrMapper*>( loadModule(mapperName, mapperParams) );
+    llyrMapper->mapGraph(hardwareGraph, applicationGraph, mappedGraph);
 }
 
 LlyrComponent::~LlyrComponent()
