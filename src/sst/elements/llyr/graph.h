@@ -37,6 +37,8 @@ private:
 
     std::vector< uint32_t >* adjacencyList;
 
+protected:
+
 public:
     Vertex();
     Vertex( T type );

@@ -66,6 +66,8 @@ public:
 
     void setup()  { }
     void finish() { }
+protected:
+
 
 private:
     LlyrComponent();                        // for serialization only
@@ -87,17 +89,16 @@ private:
     Statistic<uint64_t>* zeroEventCycles;
     Statistic<uint64_t>* eventCycles;
 
-    LlyrGraph<std::string> hardwareGraph;
-    LlyrGraph<std::string> applicationGraph;
+    LlyrGraph<opType> hardwareGraph;
+    LlyrGraph<opType> applicationGraph;
     LlyrGraph<opType> mappedGraph;
 
     LlyrMapper* llyrMapper;
 
-//     LlyrGraph<opType> tempGraph;
-//     LlyrMapper<opType>* llyrMapper;
-
     void constructHardwareGraph(std::string fileName);
     void constructSoftwareGraph(std::string fileName);
+
+    opType getOptype(std::string opString);
 
 };
 

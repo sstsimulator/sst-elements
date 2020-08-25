@@ -24,6 +24,9 @@ namespace SST {
 namespace Llyr {
 
 typedef enum {
+    ANY,
+    LD,
+    ST,
     ADD,
     SUB,
     MUL,
@@ -36,7 +39,8 @@ typedef enum {
 } opType;
 
 
-class ProcessingElement {
+class ProcessingElement
+{
 public:
     ProcessingElement();
     virtual ~ProcessingElement();

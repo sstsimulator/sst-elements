@@ -1,7 +1,7 @@
-0[label="LD32"];
-1[label="LD32"];
-2[label="ADD32"];
-3[label="ST32"];
+0[label="LD"];
+1[label="LD"];
+2[label="ADD"];
+3[label="ST"];
 0->2
 1->2
 2->3

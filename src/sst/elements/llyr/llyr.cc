@@ -23,6 +23,7 @@
 #include <algorithm>
 
 #include "llyr.h"
+#include "processingElement.h"
 #include "mappers/simpleMapper.h"
 
 namespace SST {
@@ -68,10 +69,12 @@ LlyrComponent::~LlyrComponent()
 {
     output->verbose(CALL_INFO, 1, 0, "Llyr destructor fired, closing down.\n");
 //     hardwareGraph.printGraph();
-    hardwareGraph.printDot("moo.dot");
+    hardwareGraph.printDot("hdwr.dot");
 
-    applicationGraph.printGraph();
-    applicationGraph.printDot("moo.dot");
+//     applicationGraph.printGraph();
+    applicationGraph.printDot("app.dot");
+
+    mappedGraph.printDot("mapp.dot");
 }
 
 LlyrComponent::LlyrComponent() :
@@ -106,8 +109,10 @@ void LlyrComponent::constructHardwareGraph(std::string fileName)
                     std::uint64_t posA = thisLine.find_first_of( "\"" ) + 1;
                     std::uint64_t posB = thisLine.find_last_of( "\"" );
                     std::string op = thisLine.substr( posA, posB-posA );
+                    opType operation = getOptype(op);
 
-                    hardwareGraph.addVertex( vertex, op );
+                    std::cout << "OpString " << op << "\t\t" << operation << std::endl;
+                    hardwareGraph.addVertex( vertex, operation );
                 }
                 else
                 {
@@ -159,8 +164,10 @@ void LlyrComponent::constructSoftwareGraph(std::string fileName)
                     std::uint64_t posA = thisLine.find_first_of( "\"" ) + 1;
                     std::uint64_t posB = thisLine.find_last_of( "\"" );
                     std::string op = thisLine.substr( posA, posB-posA );
+                    opType operation = getOptype(op);
 
-                    applicationGraph.addVertex( vertex, op );
+                    std::cout << "OpString " << op << "\t\t" << operation << std::endl;
+                    applicationGraph.addVertex( vertex, operation );
                 }
                 else
                 {
@@ -184,6 +191,34 @@ void LlyrComponent::constructSoftwareGraph(std::string fileName)
         exit(0);
     }
 
+}
+
+opType LlyrComponent::getOptype(std::string opString)
+{
+    opType operation;
+
+    if( opString == "ANY" )
+        operation = ANY;
+    else if( opString == "ADD" )
+        operation = ADD;
+    else if( opString == "SUB" )
+        operation = SUB;
+    else if( opString == "MUL" )
+        operation = MUL;
+    else if( opString == "DIV" )
+        operation = DIV;
+    else if( opString == "FPADD" )
+        operation = FPADD;
+    else if( opString == "FPSUB" )
+        operation = FPSUB;
+    else if( opString == "FPMUL" )
+        operation = FPMUL;
+    else if( opString == "FPDIV" )
+        operation = FPDIV;
+    else
+        operation = OTHER;
+
+    return operation;
 }
 
 bool LlyrComponent::tick( Cycle_t )

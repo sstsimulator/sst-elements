@@ -19,6 +19,7 @@
 #include <sst/core/module.h>
 
 #include "../graph.h"
+#include "../processingElement.h"
 #include "llyrMapper.h"
 
 #include <iostream>
@@ -33,7 +34,6 @@ class SimpleMapper : public LlyrMapper
 public:
     SimpleMapper(Params& params) : LlyrMapper()
     {
-
     }
 
     SST_ELI_REGISTER_MODULE_DERIVED(
@@ -45,13 +45,8 @@ public:
         SST::Llyr::LlyrMapper
     )
 
-//     SST_ELI_DOCUMENT_PARAMS(
-//         {"hardware graph", "Name to give this module", ""},
-//         {"application graph", "Name to give this module", ""},
-//     )
-
 //     void mapGraph(LlyrGraph<T> hardwareGraph, LlyrGraph<T> appGraph, LlyrGraph<T> graphOut);
-    void mapGraph(LlyrGraph<std::string> hardwareGraph, LlyrGraph<std::string> appGraph, LlyrGraph<opType> graphOut);
+    void mapGraph(LlyrGraph<opType> hardwareGraph, LlyrGraph<opType> appGraph, LlyrGraph<opType> &graphOut);
 
 private:
 
@@ -65,9 +60,18 @@ private:
 //
 // }
 
-void SimpleMapper::mapGraph(LlyrGraph<std::string> hardwareGraph, LlyrGraph<std::string> appGraph, LlyrGraph<opType> graphOut)
+void SimpleMapper::mapGraph(LlyrGraph<opType> hardwareGraph, LlyrGraph<opType> appGraph, LlyrGraph<opType> &graphOut)
 {
-    std::cout << "FDSLAFKDLSKFLDKSFKDSLKFLDSKAFDSALFKDSLAKFDSKAFDSAFDKSLAFKDLSKFDLSA\n\n\n\n";
+    graphOut.addVertex( 0, LD );
+    graphOut.addVertex( 1, LD );
+    graphOut.addVertex( 3, ADD );
+    graphOut.addVertex( 4, ST );
+
+    graphOut.addEdge( 0, 3 );
+    graphOut.addEdge( 1, 3 );
+    graphOut.addEdge( 3, 4 );
+
+
 }
 
 
