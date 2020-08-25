@@ -35,13 +35,16 @@ private:
     T type;
     bool visited;
 
+    std::vector< uint32_t >* adjacencyList;
+
 public:
     Vertex();
     Vertex( T type );
-    std::vector< uint32_t >* adjacencyList;
 
     bool setType( T type );
     T getType( void ) const;
+
+    std::vector< uint32_t >* getAdjacencyList( void ) const;
     void addEdge( uint32_t edge );
 };
 
@@ -73,11 +76,14 @@ public:
 template<class T>
 Vertex<T>::Vertex()
 {
+    adjacencyList = new std::vector< uint32_t >;
 }
 
 template<class T>
 Vertex<T>::Vertex(T type)
 {
+    adjacencyList = new std::vector< uint32_t >;
+
     this->type = type;
     visited = 0;
 }
@@ -93,6 +99,12 @@ template<class T>
 T Vertex<T>::getType() const
 {
     return type;
+}
+
+template <class T>
+std::vector< uint32_t >* Vertex<T>::getAdjacencyList( void ) const
+{
+    return adjacencyList;
 }
 
 template <class T>
@@ -121,8 +133,10 @@ void LlyrGraph<T>::printGraph()
         std::cout << "\n Adjacency list of vertex "
             << vertexIterator->first << "\n head ";
 
+        std::vector< uint32_t >* adjacencyList = vertexIterator->second.getAdjacencyList();
+
         std::vector< uint32_t >::iterator it;
-        for( it = vertexIterator->second.adjacencyList->begin(); it != vertexIterator->second.adjacencyList->end(); it++)
+        for( it = adjacencyList->begin(); it != adjacencyList->end(); it++ )
         {
             std::cout << "-> " << *it;
         }
@@ -149,8 +163,10 @@ void LlyrGraph<T>::printDot( std::string fileName )
 
     for(vertexIterator = vertexMap->begin(); vertexIterator != vertexMap->end(); ++vertexIterator)
     {
+        std::vector< uint32_t >* adjacencyList = vertexIterator->second.getAdjacencyList();
+
         std::vector< uint32_t >::iterator it;
-        for( it = vertexIterator->second.adjacencyList->begin(); it != vertexIterator->second.adjacencyList->end(); it++)
+        for( it = adjacencyList->begin(); it != adjacencyList->end(); it++ )
         {
             outputFile << vertexIterator->first;
             outputFile << "->";
@@ -184,7 +200,6 @@ void LlyrGraph<T>::addVertex(uint32_t vertex, T type)
 
     Vertex<T> thisVertex;
     thisVertex.setType(type);
-    thisVertex.adjacencyList = new std::vector< uint32_t >;
 
     std::pair< typename std::map< uint32_t, Vertex<T> >::iterator,bool > retVal;
     retVal = vertexMap->insert( std::pair< uint32_t, Vertex<T> >( vertex, thisVertex) );

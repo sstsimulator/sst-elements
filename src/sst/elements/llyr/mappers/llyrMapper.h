@@ -29,7 +29,7 @@ class LlyrMapper : public SST::Module
 {
 
 public:
-    SST_ELI_REGISTER_MODULE_API(SST::Llyr::LlyrMapper, int16_t);
+    SST_ELI_REGISTER_MODULE_API(SST::Llyr::LlyrMapper);
 
     LlyrMapper() : Module() {}
     virtual ~LlyrMapper() {}

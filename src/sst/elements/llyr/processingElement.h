@@ -18,6 +18,7 @@
 #define _LLYR_PE_H
 
 #include <vector>
+#include <cstdint>
 
 namespace SST {
 namespace Llyr {
@@ -32,7 +33,7 @@ typedef enum {
     FPMUL,
     FPDIV,
     OTHER
-} opList;
+} opType;
 
 
 class ProcessingElement {
@@ -46,8 +47,8 @@ protected:
 private:
     uint32_t processorId;
 
-    std::vector< std::vector< opList > >* inputQueues;
-    std::vector< std::vector< opList > >* outputQueues;
+    std::vector< std::vector< opType > >* inputQueues;
+    std::vector< std::vector< opType > >* outputQueues;
 
 };
 

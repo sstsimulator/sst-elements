@@ -31,7 +31,10 @@ class SimpleMapper : public LlyrMapper
 {
 
 public:
-    SimpleMapper() : LlyrMapper();
+    SimpleMapper(Params& params) : LlyrMapper()
+    {
+
+    }
 
     SST_ELI_REGISTER_MODULE_DERIVED(
         SimpleMapper,
@@ -39,13 +42,13 @@ public:
         "simpleMapper",
         SST_ELI_ELEMENT_VERSION(1,0,0),
         "Greedy subgraph mapper.",
-        "SST::Llyr::LlyrMapper"
+        SST::Llyr::LlyrMapper
     )
 
-    SST_ELI_DOCUMENT_PARAMS(
-        {"hardware graph", "Name to give this module", ""},
-        {"application graph", "Name to give this module", ""},
-    )
+//     SST_ELI_DOCUMENT_PARAMS(
+//         {"hardware graph", "Name to give this module", ""},
+//         {"application graph", "Name to give this module", ""},
+//     )
 
 //     void mapGraph(LlyrGraph<T> hardwareGraph, LlyrGraph<T> appGraph, LlyrGraph<T> graphOut);
     void mapGraph(LlyrGraph<std::string> hardwareGraph, LlyrGraph<std::string> appGraph, LlyrGraph<opType> graphOut);

@@ -23,6 +23,7 @@
 #include <algorithm>
 
 #include "llyr.h"
+#include "mappers/simpleMapper.h"
 
 namespace SST {
 namespace Llyr {
@@ -58,7 +59,7 @@ LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
 
     //do the mapping
     Params mapperParams;    //empty but needed for loadModule API
-    std::string mapperName = params.find<std::string>("mapper", "simpleMapper");
+    std::string mapperName = params.find<std::string>("mapper", "llyr.simpleMapper");
     llyrMapper = dynamic_cast<LlyrMapper*>( loadModule(mapperName, mapperParams) );
     llyrMapper->mapGraph(hardwareGraph, applicationGraph, mappedGraph);
 }
