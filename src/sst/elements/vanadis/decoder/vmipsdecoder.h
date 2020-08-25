@@ -9,16 +9,16 @@
 
 #include <list>
 
-#define MIPS_OP_MASK         0xFC000000
-#define MIPS_RS_MASK         0x3E00000
-#define MIPS_RT_MASK         0x1F0000
-#define MIPS_RD_MASK         0xF800
-#define MIPS_ADDR_MASK       0x7FFFFFF
-#define MIPS_IMM_MASK        0xFFFF
-#define MIPS_SHFT_MASK       0x7C0
-#define MIPS_FUNC_MASK       0x3F
+#define MIPS_OP_MASK              0xFC000000
+#define MIPS_RS_MASK              0x3E00000
+#define MIPS_RT_MASK              0x1F0000
+#define MIPS_RD_MASK              0xF800
+#define MIPS_ADDR_MASK            0x7FFFFFF
+#define MIPS_IMM_MASK             0xFFFF
+#define MIPS_SHFT_MASK            0x7C0
+#define MIPS_FUNC_MASK       	  0x3F
 
-#define MIPS_SPECIAL_OP_MASK 0x7FF
+#define MIPS_SPECIAL_OP_MASK      0x7FF
 
 #define MIPS_SPEC_OP_MASK_ADD     0x20
 #define MIPS_SPEC_OP_MASK_ADDU    0x21
@@ -26,6 +26,8 @@
 
 #define MIPS_SPEC_OP_MASK_REGIMM  0x4000000
 #define MIPS_SPEC_OP_MASK_BGEZAL  0x110000
+#define MIPS_SPEC_OP_MASK_LUI     0x3C000000
+#define MIPS_SPEC_OP_MASK_ADDIU   0x24000000
 
 #define MIPS_SPEC_OP_MASK_BREAK   0x0D
 #define MIPS_SPEC_OP_MASK_DADD    0x2C
@@ -492,6 +494,7 @@ protected:
 				output->verbose(CALL_INFO, 16, 0, "[decoder]        -> rt: 0x%08x\n", (next_ins & MIPS_RT_MASK));
 
 				switch( ( next_ins & MIPS_RT_MASK ) ) {
+
 				case MIPS_SPEC_OP_MASK_BGEZAL:
 					bundle->addInstruction( new VanadisBranchGTZeroInstruction( getNextInsID(), ins_addr, hw_thr, options, rs, (uint16_t) 31,
 						offset_value_64, VANADIS_SINGLE_DELAY_SLOT) );
@@ -499,6 +502,28 @@ protected:
 					break;
 				}
 
+			}
+			break;
+
+		case MIPS_SPEC_OP_MASK_LUI:
+			{
+				const uint32_t imm_value_16 = (uint32_t) (next_ins & MIPS_IMM_MASK);
+				const int64_t imm_value_64 = vanadis_sign_extend( imm_value_16 << 16 );
+				output->verbose(CALL_INFO, 16, 0, "[decoder/LUI] -> reg: %" PRIu16 " / imm=%" PRId64 " = (%" PRIu32 " << 16)\n",
+					rt, imm_value_64, imm_value_16);
+
+				bundle->addInstruction( new VanadisSetRegisterInstruction( getNextInsID(), ins_addr, hw_thr, options, rt, imm_value_64) );
+				insertDecodeFault = false;
+			}
+			break;
+
+		case MIPS_SPEC_OP_MASK_ADDIU:
+			{
+				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
+				output->verbose(CALL_INFO, 16, 0, "[decoder/ADDIU]: -> reg: %" PRIu16 " rt=%" PRIu16 " / imm=%" PRId64 "\n",
+					rt, rs, imm_value_64);
+				bundle->addInstruction( new VanadisAddImmInstruction( getNextInsID(), ins_addr, hw_thr, options, rt, rs, imm_value_64) );
+				insertDecodeFault = false;
 			}
 			break;
 

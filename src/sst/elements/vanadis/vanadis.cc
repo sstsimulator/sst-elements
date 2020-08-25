@@ -343,6 +343,9 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 		if( ! halted_masks[i] ) {
 			thread_decoders[i]->tick(output, (uint64_t) cycle);
 		}
+
+		output->verbose(CALL_INFO, 16, 0, "---> Decode [hw: %5" PRIu32 "] queue-size: %" PRIu32 "\n", i,
+			(uint32_t) thread_decoders[i]->getDecodedQueue()->size());
 	}
 
 	// Issue
@@ -356,20 +359,37 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 			output->verbose(CALL_INFO, 8, 0, "--> Performing issue for thread %" PRIu32 " (decoded pending queue depth: %" PRIu32 ")...\n",
 				i, (uint32_t) thread_decoders[i]->getDecodedQueue()->size());
 
-			output->verbose(CALL_INFO, 8, 0, "--> Allocating ROB entries to any new instructions...\n");
 			for( size_t j = 0; j < thread_decoders[i]->getDecodedQueue()->size(); ++j ) {
 				if( rob[i]->full() ) {
 					break;
 				} else {
 					VanadisInstruction* ins = thread_decoders[i]->getDecodedQueue()->peekAt(j);
 
+					if( nullptr == ins ) {
+						output->fatal(CALL_INFO, -1, "Error: peekAt(%" PRIu32 ") produced a null instruction.\n", (uint32_t) j);
+					}
+
+					output->verbose(CALL_INFO, 16, 0, "---> ROB check for ins: %" PRIu64 " / 0x%0llx / %s\n",
+						ins->getID(),
+						ins->getInstructionAddress(),
+						ins->getInstCode());
+
 					if( ! ins->hasROBSlotIssued() ) {
-						output->verbose(CALL_INFO, 16, 0, "---> Inst: %" PRIu64 ", allocated to ROB...\n", ins->getID());
+						output->verbose(CALL_INFO, 16, 0, "---> Inst: %" PRIu64 " (queue-slot: %" PRIu32 "), allocating to ROB (ROB-size: %" PRIu32 " / %" PRIu32 ")\n",
+							ins->getID(), (uint32_t) j,
+							(uint32_t) rob[i]->size(), (uint32_t) rob[i]->capacity() );
 						ins->markROBSlotIssued();
 						rob[i]->push( ins );
+						output->verbose(CALL_INFO, 16, 0, "---> Allocation to ROB completed for instruction\n");
+					} else {
+						output->verbose(CALL_INFO, 16, 0, "---> Inst: %" PRIu64 " (queue-slot: %" PRIu32 "), already allocated in the ROB.\n",
+							ins->getID(), (uint32_t) j);
 					}
 				}
 			}
+
+			output->verbose(CALL_INFO, 8, 0, "--> Allocation of entries into ROB is completed for this cycle.\n");
+			output->verbose(CALL_INFO, 8, 0, "--> Being functional unit allocation...\n");
 
 			if( ! thread_decoders[i]->getDecodedQueue()->empty() ) {
 				VanadisInstruction* ins = thread_decoders[i]->getDecodedQueue()->peek();
@@ -483,7 +503,10 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 					}
 
 					if( allocated_fu ) {
-						const int status = assignRegistersToInstruction(ins,
+						const int status = assignRegistersToInstruction(
+							thread_decoders[i]->countISAIntReg(),
+							thread_decoders[i]->countISAFPReg(),
+							ins,
 							int_register_stacks[i],
 							fp_register_stacks[i],
 							issue_isa_tables[i]);
@@ -826,6 +849,8 @@ int VanadisComponent::checkInstructionResources(
 }
 
 int VanadisComponent::assignRegistersToInstruction(
+	const uint16_t int_reg_count,
+	const uint16_t fp_reg_count,
         VanadisInstruction* ins,
         VanadisRegisterStack* int_regs,
         VanadisRegisterStack* fp_regs,
@@ -833,17 +858,32 @@ int VanadisComponent::assignRegistersToInstruction(
 
 	// Set the current ISA registers required for input
 	for( uint16_t i = 0; i < ins->countISAIntRegIn(); ++i ) {
+		if( ins->getISAIntRegIn(i) >= int_reg_count ) {
+			output->fatal(CALL_INFO, -1, "Error: ins request in-int-reg: %" PRIu16 " but ISA has only %" PRIu16 " available\n",
+				ins->getISAIntRegIn(i), int_reg_count );
+		}
+
 		ins->setPhysIntRegIn(i, isa_table->getIntPhysReg( ins->getISAIntRegIn(i) ));
 		isa_table->incIntRead( ins->getISAIntRegIn(i) );
 	}
 
 	for( uint16_t i = 0; i < ins->countISAFPRegIn(); ++i ) {
+		if( ins->getISAFPRegIn(i) >= fp_reg_count ) {
+			output->fatal(CALL_INFO, -1, "Error: ins request in-fp-reg: %" PRIu16 " but ISA has only %" PRIu16 " available\n",
+				ins->getISAFPRegIn(i), fp_reg_count);
+		}
+
 		ins->setPhysFPRegIn(i, isa_table->getFPPhysReg( ins->getISAFPRegIn(i) ));
 		isa_table->incFPRead( ins->getISAFPRegIn(i) );
 	}
 
 	// Set current ISA registers required for output
 	for( uint16_t i = 0; i < ins->countISAIntRegOut(); ++i ) {
+		if( ins->getISAIntRegOut(i) >= int_reg_count ) {
+			output->fatal(CALL_INFO, -1, "Error: ins request out-int-reg: %" PRIu16 " but ISA has only %" PRIu16 " available\n",
+				ins->getISAIntRegOut(i), int_reg_count);
+		}
+
 		const uint16_t ins_isa_reg = ins->getISAIntRegOut(i);
 		const uint16_t free_reg = int_regs->pop();
 
@@ -854,6 +894,11 @@ int VanadisComponent::assignRegistersToInstruction(
 
 	// Set current ISA registers required for output
 	for( uint16_t i = 0; i < ins->countISAFPRegOut(); ++i ) {
+		if( ins->getISAFPRegOut(i) >= fp_reg_count ) {
+			output->fatal(CALL_INFO, -1, "Error: ins request out-fp-reg: %" PRIu16 " but ISA has only %" PRIu16 " available\n",
+				ins->getISAFPRegOut(i), fp_reg_count);
+		}
+
 		const uint16_t ins_isa_reg = ins->getISAFPRegOut(i);
 		const uint16_t free_reg = fp_regs->pop();
 

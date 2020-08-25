@@ -5,6 +5,7 @@
 // Arithmetic operations
 #include "inst/vadd.h"
 #include "inst/vaddi.h"
+#include "inst/vaddiu.h"
 #include "inst/vsub.h"
 #include "inst/vmul.h"
 #include "inst/vmuli.h"
@@ -43,5 +44,6 @@
 // Special instructions
 #include "inst/vdecodefaultinst.h"
 #include "inst/vnop.h"
+#include "inst/vsetreg.h"
 
 #endif

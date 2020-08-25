@@ -156,6 +156,8 @@ private:
     virtual bool tick(SST::Cycle_t);
 
     int assignRegistersToInstruction(
+	const uint16_t int_reg_count,
+        const uint16_t fp_reg_count,
 	VanadisInstruction* ins,
 	VanadisRegisterStack* int_regs,
 	VanadisRegisterStack* fp_regs,
