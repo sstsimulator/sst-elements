@@ -11,6 +11,7 @@
 #include "datastruct/cqueue.h"
 #include "decoder/visaopts.h"
 #include "inst/vinst.h"
+#include "inst/isatable.h"
 #include "vbranchunit.h"
 #include "vinsloader.h"
 
@@ -92,6 +93,9 @@ public:
 	VanadisBranchUnit* getBranchPredictor() {
 		return branch_predictor;
 	}
+
+	virtual void configureApplicationLaunch( SST::Output* output, VanadisISATable* isa_tbl,
+		VanadisRegisterFile* regFile, Interfaces::SimpleMem* mem_if ) = 0;
 
 protected:
 	virtual void clearDecoderAfterMisspeculate( SST::Output* output ) {};

@@ -35,7 +35,7 @@ public:
 		return new VanadisBranchGTZeroInstruction( *this );
 	}
 
-	virtual uint64_t calculateAddress( SST::Output* output, const VanadisRegisterFile* reg_file, const uint64_t current_ip ) {
+	virtual uint64_t calculateAddress( SST::Output* output, VanadisRegisterFile* reg_file, const uint64_t current_ip ) {
 		const uint64_t updated_address = (uint64_t) ((int64_t) current_ip + computed_address);
 
 		output->verbose(CALL_INFO, 16, 0, "calculate-address: (ip): %" PRIu64 " / 0x%llx + (computed-address): %" PRId64 " / 0x%llx = %" PRIu64 " / 0x%llx\n",

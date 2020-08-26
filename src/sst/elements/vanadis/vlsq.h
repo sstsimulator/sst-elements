@@ -87,6 +87,7 @@ public:
 			registerFiles(reg_files) {
 
 		store_q = new VanadisCircularQueue<VanadisStoreRecord*>(lsq_store_entries);
+		max_mem_address_mask = UINT64_MAX;
 	}
 
 	~VanadisLoadStoreQueue() {
@@ -107,6 +108,10 @@ public:
 	void push( VanadisLoadInstruction* load_me ) {
 		load_q.push_back( new VanadisLoadRecord( load_me ) );
 		pending_queued_loads++;
+	}
+
+	void setMaxAddressMask( const uint64_t mask ) {
+		max_mem_address_mask = mask;
 	}
 
 	VanadisAddressOverlapType evaluateAddressOverlap( const uint64_t loadAddress, const uint16_t loadLen,
@@ -170,7 +175,7 @@ public:
 				break;
 			}
 
-			const uint64_t load_address = load_ins->computeLoadAddress(
+			const uint64_t load_address = load_ins->computeLoadAddress( output,
 				registerFiles->at( load_ins->getHWThread() ) );
 
 			output->verbose(CALL_INFO, 16, 0, "-> LSQ attempt process for load at: %p / %" PRIu64 "\n",
@@ -249,8 +254,8 @@ public:
 			// Processing says we really have to go ahead and do this load
 			if( load_eval == REQUIRE_LOAD ) {
 				if( pending_mem_issued_loads < max_mem_issued_loads ) {
-					const uint64_t load_addr = load_ins->computeLoadAddress(
-						registerFiles->at( load_ins->getHWThread() ) );
+					const uint64_t load_addr = ( load_ins->computeLoadAddress(
+						registerFiles->at( load_ins->getHWThread() ) ) ) & max_mem_address_mask;
 					const uint16_t load_width = load_ins->getLoadWidth();
 					output->verbose(CALL_INFO, 16, 0, "-> LSQ issuing load to %p width=%" PRIu16 "\n", (void*) load_addr, load_width);
 
@@ -297,7 +302,7 @@ public:
 				// Are we using all the slots to issue stores to L1 we have available?
 				if( pending_mem_issued_stores < max_mem_issued_stores ) {
 					VanadisRegisterFile* hw_thr_reg = registerFiles->at( front_store->getHWThread() );
-					const uint64_t store_address = front_store->computeStoreAddress( hw_thr_reg );
+					const uint64_t store_address = ( front_store->computeStoreAddress( hw_thr_reg ) & max_mem_address_mask );
 					const uint16_t store_width   = front_store->getStoreWidth();
 
 					std::vector<uint8_t> payload;
@@ -505,6 +510,8 @@ protected:
 
 	const uint32_t max_stores_issue_per_cycle;
 	const uint32_t max_load_issue_per_cycle;
+
+	uint64_t max_mem_address_mask;
 
 	std::set<SimpleMem::Request::id_t> pending_stores;
 	std::map<SimpleMem::Request::id_t, VanadisLoadRecord*> pending_loads;

@@ -146,6 +146,40 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 
 	delete[] decoder_name;
 
+	memDataInterface = loadUserSubComponent<Interfaces::SimpleMem>("mem_interface_data", ComponentInfo::SHARE_NONE, cpuClockTC, new SimpleMem::Handler<SST::Vanadis::VanadisComponent>(this, &VanadisComponent::handleIncomingDataCacheEvent ));
+	memInstInterface = loadUserSubComponent<Interfaces::SimpleMem>("mem_interface_inst", ComponentInfo::SHARE_NONE, cpuClockTC, new SimpleMem::Handler<SST::Vanadis::VanadisComponent>(this, &VanadisComponent::handleIncomingInstCacheEvent));
+
+    	// Load anonymously if not found in config
+/*
+    	if (!memInterface) {
+        	std::string memIFace = params.find<std::string>("meminterface", "memHierarchy.memInterface");
+        	output.verbose(CALL_INFO, 1, 0, "Loading memory interface: %s ...\n", memIFace.c_str());
+        	Params interfaceParams = params.find_prefix_params("meminterface.");
+        	interfaceParams.insert("port", "dcache_link");
+
+        	memInterface = loadAnonymousSubComponent<Interfaces::SimpleMem>(memIFace, "memory", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS,
+		interfaceParams, cpuClockTC, new SimpleMem::Handler<JunoCPU>(this, &JunoCPU::handleEvent));
+
+        	if( NULL == mem )
+            		output.fatal(CALL_INFO, -1, "Error: unable to load %s memory interface.\n", memIFace.c_str());
+    	}
+*/
+
+	if( nullptr == memDataInterface ) {
+		output->fatal(CALL_INFO, -1, "Error: unable to load memory interface subcomponent for data cache.\n");
+	}
+
+	if( nullptr == memInstInterface ) {
+		output->fatal(CALL_INFO, -1, "Error: unable ot load memory interface subcomponent for instruction cache.\n");
+	}
+
+    	output->verbose(CALL_INFO, 1, 0, "Successfully loaded memory interface.\n");
+
+	for( uint32_t i = 0; i < thread_decoders.size(); ++i ) {
+		output->verbose(CALL_INFO, 8, 0, "Configuring thread instruction cache interface (thread %" PRIu32 ")\n", i);
+		thread_decoders[i]->getInstructionLoader()->setMemoryInterface( memInstInterface );
+	}
+
 	if( 0 == core_id ) {
 		halted_masks[0] = false;
 
@@ -156,6 +190,12 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 			output->verbose(CALL_INFO, 8, 0, "Configuring core-0, thread-0 entry point = %p\n",
 				(void*) c0_entry);
 			thread_decoders[0]->setInstructionPointer( c0_entry );
+
+			output->verbose(CALL_INFO, 8, 0, "Configuring core-0, thread-0 application info...\n");
+			thread_decoders[0]->configureApplicationLaunch( output, issue_isa_tables[0], register_files[0], memDataInterface);
+
+			// Force retire table to sync with issue table
+			retire_isa_tables[0]->reset( issue_isa_tables[0] );
 		} else {
 			output->verbose(CALL_INFO, 8, 0, "Entry point for core-0, thread-0 is set by configuration or decoder to: %p\n",
 				(void*) thread_decoders[0]->getInstructionPointer());
@@ -256,40 +296,6 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 
 	//////////////////////////////////////////////////////////////////////////////////////
 
-	memDataInterface = loadUserSubComponent<Interfaces::SimpleMem>("mem_interface_data", ComponentInfo::SHARE_NONE, cpuClockTC, new SimpleMem::Handler<SST::Vanadis::VanadisComponent>(this, &VanadisComponent::handleIncomingDataCacheEvent ));
-	memInstInterface = loadUserSubComponent<Interfaces::SimpleMem>("mem_interface_inst", ComponentInfo::SHARE_NONE, cpuClockTC, new SimpleMem::Handler<SST::Vanadis::VanadisComponent>(this, &VanadisComponent::handleIncomingInstCacheEvent));
-
-    	// Load anonymously if not found in config
-/*
-    	if (!memInterface) {
-        	std::string memIFace = params.find<std::string>("meminterface", "memHierarchy.memInterface");
-        	output.verbose(CALL_INFO, 1, 0, "Loading memory interface: %s ...\n", memIFace.c_str());
-        	Params interfaceParams = params.find_prefix_params("meminterface.");
-        	interfaceParams.insert("port", "dcache_link");
-
-        	memInterface = loadAnonymousSubComponent<Interfaces::SimpleMem>(memIFace, "memory", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS,
-		interfaceParams, cpuClockTC, new SimpleMem::Handler<JunoCPU>(this, &JunoCPU::handleEvent));
-
-        	if( NULL == mem )
-            		output.fatal(CALL_INFO, -1, "Error: unable to load %s memory interface.\n", memIFace.c_str());
-    	}
-*/
-
-	if( nullptr == memDataInterface ) {
-		output->fatal(CALL_INFO, -1, "Error: unable to load memory interface subcomponent for data cache.\n");
-	}
-
-	if( nullptr == memInstInterface ) {
-		output->fatal(CALL_INFO, -1, "Error: unable ot load memory interface subcomponent for instruction cache.\n");
-	}
-
-    	output->verbose(CALL_INFO, 1, 0, "Successfully loaded memory interface.\n");
-
-	for( uint32_t i = 0; i < thread_decoders.size(); ++i ) {
-		output->verbose(CALL_INFO, 8, 0, "Configuring thread instruction cache interface (thread %" PRIu32 ")\n", i);
-		thread_decoders[i]->getInstructionLoader()->setMemoryInterface( memInstInterface );
-	}
-
 	size_t lsq_store_size    = params.find<size_t>("lsq_store_entries", 8);
 	size_t lsq_store_pending = params.find<size_t>("lsq_issued_stores_inflight", 8);
 	size_t lsq_load_size     = params.find<size_t>("lsq_load_entries", 8);
@@ -300,6 +306,14 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 	lsq = new VanadisLoadStoreQueue( memDataInterface, lsq_store_size, lsq_store_pending,
 		lsq_load_size, lsq_load_pending, lsq_max_loads_per_cycle,
 		lsq_max_stores_per_cycle, &register_files);
+
+	const uint64_t max_addr_mask = binary_elf_info->isELF32() ? 0xFFFFFFFF : UINT64_MAX;
+	output->verbose(CALL_INFO, 8, 0, "Setting maximum address mask for the LSQ to: 0x%0llx (derived from ELF-32? %s)\n",
+		max_addr_mask, binary_elf_info->isELF32() ? "yes" : "no");
+
+	// if we are doing a 32-bit run, then limit the address ranges which can be reached
+	// otherwise leave the mask fully open.
+	lsq->setMaxAddressMask( max_addr_mask );
 
 	registerAsPrimaryComponent();
     	primaryComponentDoNotEndSim();
@@ -393,8 +407,8 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 
 			if( ! thread_decoders[i]->getDecodedQueue()->empty() ) {
 				VanadisInstruction* ins = thread_decoders[i]->getDecodedQueue()->peek();
-				ins->printToBuffer(instPrintBuffer, 1024);
 
+				ins->printToBuffer(instPrintBuffer, 1024);
 				output->verbose(CALL_INFO, 8, 0, "--> Attempting issue for: %s / %p\n", instPrintBuffer,
 						(void*) ins->getInstructionAddress());
 
@@ -510,6 +524,10 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 							int_register_stacks[i],
 							fp_register_stacks[i],
 							issue_isa_tables[i]);
+
+						ins->printToBuffer(instPrintBuffer, 1024);
+						output->verbose(CALL_INFO, 8, 0, "--> Issued for: %s / %p\n", instPrintBuffer,
+							(void*) ins->getInstructionAddress());
 
 						thread_decoders[i]->getDecodedQueue()->pop();
 						ins->markIssued();

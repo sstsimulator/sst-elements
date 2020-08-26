@@ -4,6 +4,7 @@
 #define _H_VANADIS_MIPS_DECODER
 
 #include "decoder/vdecoder.h"
+#include "inst/isatable.h"
 #include "vinsloader.h"
 #include "inst/vinstall.h"
 
@@ -28,6 +29,8 @@
 #define MIPS_SPEC_OP_MASK_BGEZAL  0x110000
 #define MIPS_SPEC_OP_MASK_LUI     0x3C000000
 #define MIPS_SPEC_OP_MASK_ADDIU   0x24000000
+#define MIPS_SPEC_OP_MASK_LW      0x8C000000
+#define MIPS_SPEC_OP_MASK_SW      0xAC000000
 
 #define MIPS_SPEC_OP_MASK_BREAK   0x0D
 #define MIPS_SPEC_OP_MASK_DADD    0x2C
@@ -93,7 +96,8 @@ public:
 	SST_ELI_DOCUMENT_PARAMS(
 		{ "decode_max_ins_per_cycle", 		"Maximum number of instructions that can be decoded and issued per cycle"  				},
 		{ "uop_cache_entries",                  "Number of micro-op cache entries, this corresponds to ISA-level instruction counts."  			},
-		{ "predecode_cache_entries",            "Number of cache lines that a cached prior to decoding (these support loading from cache prior to decode)" }
+		{ "predecode_cache_entries",            "Number of cache lines that a cached prior to decoding (these support loading from cache prior to decode)" },
+		{ "stack_start_address",                "Sets the start of the stack and dynamic program segments" }
 		)
 
 	VanadisMIPSDecoder( ComponentId_t id, Params& params ) :
@@ -101,6 +105,9 @@ public:
 
 		options = new VanadisDecoderOptions( (uint16_t) 0 );
 		max_decodes_per_cycle      = params.find<uint16_t>("decode_max_ins_per_cycle",  2);
+
+		// MIPS default is 0x7fffffff according to SYS-V manual
+		start_stack_address        = params.find<uint64_t>("stack_start_address", 0x7fffffff);
 
 		// See if we get an entry point the sub-component says we have to use
 		// if not, we will fall back to ELF reading at the core level to work this out
@@ -116,6 +123,20 @@ public:
 	virtual uint16_t countISAIntReg() const { return 32; }
 	virtual uint16_t countISAFPReg() const { return 32; }
 	virtual const VanadisDecoderOptions* getDecoderOptions() const { return options; }
+
+	virtual void configureApplicationLaunch( SST::Output* output, VanadisISATable* isa_tbl,
+		VanadisRegisterFile* regFile, Interfaces::SimpleMem* mem_if ) {
+
+		// Set up the stack pointer
+		// Register 29 is MIPS for Stack Pointer
+		const int16_t sp_phys_reg = isa_tbl->getIntPhysReg( 29 );
+		regFile->setIntReg( sp_phys_reg, start_stack_address );
+
+		output->verbose(CALL_INFO, 16, 0, "Application Startup Processing:\n");
+		output->verbose(CALL_INFO, 16, 0, "-> Stack Pointer (r29) maps to phys-reg: %" PRIu16 "\n", sp_phys_reg);
+		output->verbose(CALL_INFO, 16, 0, "-> Setting SP to                       : %" PRIu64 " / 0x%0llx\n",
+			start_stack_address, start_stack_address);
+	}
 
 	virtual void tick( SST::Output* output, uint64_t cycle ) {
 		output->verbose(CALL_INFO, 16, 0, "-> Decode step for thr: %" PRIu32 "\n", hw_thr);
@@ -406,6 +427,11 @@ protected:
 						break;
 
 					case MIPS_SPEC_OP_MASK_JALR:
+						{
+							bundle->addInstruction( new VanadisJumpLinkInstruction( getNextInsID(), ins_addr, hw_thr, options,
+								rd, rs, VANADIS_SINGLE_DELAY_SLOT ) );
+							insertDecodeFault = false;
+						}
 						break;
 
 					case MIPS_SPEC_OP_MASK_JR:
@@ -430,8 +456,10 @@ protected:
 						break;
 
 					case MIPS_SPEC_OP_MASK_MULT:
-						bundle->addInstruction( new VanadisMultiplyInstruction( getNextInsID(), ins_addr, hw_thr, options, rd, rs, rt ) );
-						insertDecodeFault = false;
+						{
+							bundle->addInstruction( new VanadisMultiplyInstruction( getNextInsID(), ins_addr, hw_thr, options, rd, rs, rt ) );
+							insertDecodeFault = false;
+						}
 						break;
 
 					case MIPS_SPEC_OP_MASK_MULTU:
@@ -517,10 +545,32 @@ protected:
 			}
 			break;
 
+		case MIPS_SPEC_OP_MASK_LW:
+			{
+				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
+				output->verbose(CALL_INFO, 16, 0, "[decoder/LW]: -> reg: %" PRIu16 " <- base: %" PRIu16 " + offset=%" PRId64 "\n",
+					rt, rs, imm_value_64);
+				bundle->addInstruction( new VanadisLoadInstruction( getNextInsID(), ins_addr, hw_thr, options, rs, imm_value_64,
+					rt, 4, true) );
+				insertDecodeFault = false;
+			}
+			break;
+
+		case MIPS_SPEC_OP_MASK_SW:
+			{
+				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
+				output->verbose(CALL_INFO, 16, 0, "[decoder/SW]: -> reg: %" PRIu16 " -> base: %" PRIu16 " + offset=%" PRId64 "\n",
+					rt, rs, imm_value_64);
+				bundle->addInstruction( new VanadisStoreInstruction( getNextInsID(), ins_addr, hw_thr, options, rs, imm_value_64,
+					rt, 4) );
+				insertDecodeFault = false;
+			}
+			break;
+
 		case MIPS_SPEC_OP_MASK_ADDIU:
 			{
 				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
-				output->verbose(CALL_INFO, 16, 0, "[decoder/ADDIU]: -> reg: %" PRIu16 " rt=%" PRIu16 " / imm=%" PRId64 "\n",
+				output->verbose(CALL_INFO, 16, 0, "[decoder/ADDIU]: -> reg: %" PRIu16 " rs=%" PRIu16 " / imm=%" PRId64 "\n",
 					rt, rs, imm_value_64);
 				bundle->addInstruction( new VanadisAddImmInstruction( getNextInsID(), ins_addr, hw_thr, options, rt, rs, imm_value_64) );
 				insertDecodeFault = false;
@@ -552,6 +602,7 @@ protected:
 	const VanadisDecoderOptions* options;
 
 	uint64_t next_ins_id;
+	uint64_t start_stack_address;
 
 	uint16_t icache_max_bytes_per_cycle;
 	uint16_t max_decodes_per_cycle;

@@ -19,7 +19,7 @@ public:
 		const uint32_t hw_thr,
 		const VanadisDecoderOptions* isa_opts,
 		const uint16_t memAddrReg,
-		const uint64_t offst,
+		const int64_t offst,
 		const uint16_t tgtReg,
 		const uint16_t load_bytes
 		) : VanadisInstruction(id, addr, hw_thr, isa_opts, 1, 1, 1, 1, 0, 0, 0, 0),
@@ -35,7 +35,7 @@ public:
 		const uint32_t hw_thr,
 		const VanadisDecoderOptions* isa_opts,
 		const uint16_t memAddrReg,
-		const uint64_t offst,
+		const int64_t offst,
 		const uint16_t tgtReg,
 		const uint16_t load_bytes,
 		const bool extend_sign
@@ -63,13 +63,24 @@ public:
 	}
 
 	virtual void printToBuffer( char* buffer, size_t buffer_size ) {
-		snprintf( buffer, buffer_size, "LOAD     %5" PRIu16 " <- memory[ %5" PRIu16 " + %15" PRIu64 " (phys: %5" PRIu16 " <- memory[%5" PRIu16 " + %20" PRIu64 "])\n",
+		snprintf( buffer, buffer_size, "LOAD     %5" PRIu16 " <- memory[ %5" PRIu16 " + %20" PRId64 " (phys: %5" PRIu16 " <- memory[%5" PRIu16 " + %20" PRId64 "])\n",
 			isa_int_regs_out[0], isa_int_regs_in[1], offset,
 			phys_int_regs_out[0], phys_int_regs_in[1], offset);
 	}
 
 	uint64_t computeLoadAddress( VanadisRegisterFile* reg ) const {
 		return (*((uint64_t*) reg->getIntReg( phys_int_regs_in[0]))) + offset ;
+	}
+
+	uint64_t computeLoadAddress( SST::Output* output, VanadisRegisterFile* regFile ) const {
+		const uint64_t* mem_addr_reg_ptr = (uint64_t*) regFile->getIntReg( phys_int_regs_in[0] );
+                const uint64_t mem_addr_reg_val = (*mem_addr_reg_ptr);
+
+                output->verbose(CALL_INFO, 16, 0, "[execute-load]: reg[%5" PRIu16 "]: %" PRIu64 "\n", phys_int_regs_in[0], mem_addr_reg_val);
+                output->verbose(CALL_INFO, 16, 0, "[execute-load]: offset           : %" PRIu64 "\n", offset);
+                output->verbose(CALL_INFO, 16, 0, "[execute-load]: (add)            : %" PRIu64 "\n", (mem_addr_reg_val + offset));
+
+		return (*((uint64_t*) regFile->getIntReg( phys_int_regs_in[0]))) + offset ;
 	}
 
 	uint16_t getLoadWidth() const { return load_width; }
@@ -80,7 +91,7 @@ public:
 
 protected:
 	const bool signed_extend;
-	const uint64_t offset;
+	const int64_t offset;
 	const uint16_t load_width;
 
 };
