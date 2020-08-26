@@ -39,7 +39,7 @@ public:
 
 		virtual void printToBuffer(char* buffer, size_t buffer_size) {
 			snprintf(buffer, buffer_size, "JLR     link-reg: %" PRIu16 " addr-reg: %" PRIu16 "\n",
-				phys_int_regs_out[0], phys_int_regs_in[0]);
+				isa_int_regs_out[0], isa_int_regs_in[0]);
 		}
 
 		virtual uint64_t calculateAddress( SST::Output* output, VanadisRegisterFile* reg_file, const uint64_t current_ip ) {

@@ -32,6 +32,7 @@
 #include "inst/vjump.h"
 #include "inst/vbgtzl.h"
 #include "inst/vjlr.h"
+#include "inst/vbcmp.h"
 
 // Load instructions
 #include "inst/vload.h"

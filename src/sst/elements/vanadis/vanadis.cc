@@ -681,7 +681,9 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 						const uint64_t recalculate_ip = spec_ins->calculateAddress( output, register_files[i], spec_ins->getInstructionAddress() );
 
 						if( recalculate_ip == spec_ins->getSpeculatedAddress() ) {
-							output->verbose(CALL_INFO, 8, 0, "ROB -> speculation direction and target correct for branch, continue execution.\n");
+							output->verbose(CALL_INFO, 8, 0,  "ROB -> speculation direction and target correct for branch, continue execution.\n");
+							output->verbose(CALL_INFO, 16, 0, "ROB -> spec-addr: 0x%0llx / target: 0x%0llx\n",
+								recalculate_ip, spec_ins->getSpeculatedAddress());
 
 	                                        	// Actually pop the instruction now we know its safe to do so.
        	                                 		rob[i]->pop();
@@ -712,6 +714,8 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
                                         		delete rob_front;
 						} else {
 							output->verbose(CALL_INFO, 8, 0, "ROB -> [PIPELINE-CLEAR] correctly speculated direction, but target was incorrect.\n");
+							output->verbose(CALL_INFO, 8, 0, "ROB -> [PIPELINE-CLEAR] pred: 0x%0llx executed: 0x%0llx\n",
+								recalculate_ip, spec_ins->getSpeculatedAddress());
 
 							perform_pipeline_clear = true;
 							pipeline_clear_set_ip = recalculate_ip;
@@ -903,10 +907,25 @@ int VanadisComponent::assignRegistersToInstruction(
 		}
 
 		const uint16_t ins_isa_reg = ins->getISAIntRegOut(i);
-		const uint16_t free_reg = int_regs->pop();
+		bool reg_is_also_in = false;
 
-		ins->setPhysIntRegOut(i, free_reg);
-		isa_table->setIntPhysReg( ins_isa_reg, free_reg );
+		for( uint16_t j = 0; j < ins->countISAIntRegIn(); ++j ) {
+			if( ins_isa_reg == ins->getISAIntRegIn(j) ) {
+				reg_is_also_in = true;
+				break;
+			}
+		}
+
+		uint16_t out_reg;
+
+		if( reg_is_also_in ) {
+			out_reg = isa_table->getIntPhysReg( ins_isa_reg );
+		} else {
+			out_reg = int_regs->pop();
+			isa_table->setIntPhysReg( ins_isa_reg, out_reg );
+		}
+
+		ins->setPhysIntRegOut(i, out_reg);
 		isa_table->incIntWrite( ins_isa_reg );
 	}
 
@@ -918,10 +937,25 @@ int VanadisComponent::assignRegistersToInstruction(
 		}
 
 		const uint16_t ins_isa_reg = ins->getISAFPRegOut(i);
-		const uint16_t free_reg = fp_regs->pop();
+		bool reg_is_also_in = false;
 
-		ins->setPhysFPRegOut(i, free_reg);
-		isa_table->setFPPhysReg( ins_isa_reg, free_reg );
+		for( uint16_t j = 0; j < ins->countISAFPRegIn(); ++j ) {
+			if( ins_isa_reg == ins->getISAFPRegIn(j) ) {
+				reg_is_also_in = true;
+				break;
+			}
+		}
+
+		uint16_t out_reg;
+
+		if( reg_is_also_in ) {
+			out_reg = isa_table->getFPPhysReg( ins_isa_reg );
+		} else {
+			out_reg = fp_regs->pop();
+			isa_table->setFPPhysReg( ins_isa_reg, out_reg );
+		}
+
+		ins->setPhysFPRegOut(i, out_reg);
 		isa_table->incFPWrite( ins_isa_reg );
 	}
 
@@ -951,27 +985,51 @@ int VanadisComponent::recoverRetiredRegisters(
 	for( uint16_t i = 0; i < ins->countISAIntRegOut(); ++i ) {
 		const uint16_t isa_reg = ins->getISAIntRegOut(i);
    		const uint16_t cur_phys_reg = retire_isa_table->getIntPhysReg(isa_reg);
-		
-		recovered_phys_reg_int.push_back( cur_phys_reg );
 
 		issue_isa_table->decIntWrite( isa_reg );
 
-		// Set the ISA register in the retirement table to point
-		// to the physical register used by this instruction
-		retire_isa_table->setIntPhysReg( isa_reg, ins->getPhysIntRegOut(i) );
+		// Check this register isn't also in our input set because then we
+		// wouldn't have allocated a new register for it
+		bool reg_also_input = false;
+
+		for( uint16_t j = 0; j < ins->countISAIntRegIn(); ++j ) {
+			if( isa_reg == ins->getISAIntRegIn(j) ) {
+				reg_also_input = true;
+			}
+		}
+
+		if( ! reg_also_input ) {
+			recovered_phys_reg_int.push_back( cur_phys_reg );
+
+			// Set the ISA register in the retirement table to point
+			// to the physical register used by this instruction
+			retire_isa_table->setIntPhysReg( isa_reg, ins->getPhysIntRegOut(i) );
+		}
 	}
 
 	for( uint16_t i = 0; i < ins->countISAFPRegOut(); ++i ) {
 		const uint16_t isa_reg = ins->getISAFPRegOut(i);
 		const uint16_t cur_phys_reg = retire_isa_table->getFPPhysReg(isa_reg);
 
-		recovered_phys_reg_fp.push_back( cur_phys_reg );
-
 		issue_isa_table->decFPWrite( isa_reg );
 
-		// Set the ISA register in the retirement table to point
-		// to the physical register used by this instruction
-		retire_isa_table->setFPPhysReg( isa_reg, ins->getPhysFPRegOut(i) );
+		// Check this register isn't also in our input set because then we
+		// wouldn't have allocated a new register for it
+		bool reg_also_input = false;
+
+		for( uint16_t j = 0; j < ins->countISAIntRegIn(); ++j ) {
+			if( isa_reg == ins->getISAIntRegIn(j) ) {
+				reg_also_input = true;
+			}
+		}
+
+		if( ! reg_also_input ) {
+			recovered_phys_reg_fp.push_back( cur_phys_reg );
+
+			// Set the ISA register in the retirement table to point
+			// to the physical register used by this instruction
+			retire_isa_table->setFPPhysReg( isa_reg, ins->getPhysFPRegOut(i) );
+		}
 	}
 
 	output->verbose(CALL_INFO, 16, 0, "Recovering: %d int-reg and %d fp-reg\n",

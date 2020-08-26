@@ -36,11 +36,15 @@ public:
 	}
 
 	virtual uint64_t calculateAddress( SST::Output* output, VanadisRegisterFile* reg_file, const uint64_t current_ip ) {
-		const uint64_t updated_address = (uint64_t) ((int64_t) current_ip + computed_address);
+		if( BRANCH_TAKEN == result_dir ) {
+			const uint64_t updated_address = (uint64_t) ((int64_t) getInstructionAddress() + computed_address);
 
-		output->verbose(CALL_INFO, 16, 0, "calculate-address: (ip): %" PRIu64 " / 0x%llx + (computed-address): %" PRId64 " / 0x%llx = %" PRIu64 " / 0x%llx\n",
-			current_ip, current_ip, computed_address, computed_address, updated_address, updated_address);
-		return updated_address;
+			output->verbose(CALL_INFO, 16, 0, "calculate-address: (ip): %" PRIu64 " / 0x%llx + (computed-address): %" PRId64 " / 0x%llx = %" PRIu64 " / 0x%llx\n",
+				current_ip, current_ip, computed_address, computed_address, updated_address, updated_address);
+			return updated_address;
+		} else {
+			return calculateStandardNotTakenAddress();
+		}
 	}
 
 	virtual const char* getInstCode() const { return "BGTZL"; }

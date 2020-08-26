@@ -50,9 +50,18 @@ public:
 			spec_dir   = BRANCH_NOT_TAKEN;
 			result_dir = BRANCH_NOT_TAKEN;
 			delayType  = delayT;
+
+			speculatedAddress = UINT64_MAX;
 		}
 
 	virtual ~VanadisSpeculatedInstruction() {}
+	VanadisSpeculatedInstruction( const VanadisSpeculatedInstruction& copy_me ) :
+		VanadisInstruction(copy_me) {
+		spec_dir = copy_me.spec_dir;
+		result_dir = copy_me.result_dir;
+		delayType = copy_me.delayType;
+		speculatedAddress = copy_me.speculatedAddress;
+	}
 
 	virtual VanadisBranchDirection getSpeculatedDirection() const { return spec_dir; }
 	virtual void setSpeculatedDirection( const VanadisBranchDirection dir ) { spec_dir = dir; }
@@ -73,6 +82,20 @@ public:
 	virtual VanadisDelaySlotRequirement getDelaySlotType() const { return delayType; }
 
 protected:
+	uint64_t calculateStandardNotTakenAddress() {
+		uint64_t new_addr = getInstructionAddress();
+
+		switch( delayType ) {
+		case VANADIS_SINGLE_DELAY_SLOT:
+			new_addr += 8; break;
+		case VANADIS_NO_DELAY_SLOT:
+			new_addr += 4; break;
+		}
+
+		return new_addr;
+	}
+
+
 	VanadisBranchDirection spec_dir;
 	VanadisBranchDirection result_dir;
 	VanadisDelaySlotRequirement delayType;

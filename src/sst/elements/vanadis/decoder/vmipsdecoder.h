@@ -31,6 +31,7 @@
 #define MIPS_SPEC_OP_MASK_ADDIU   0x24000000
 #define MIPS_SPEC_OP_MASK_LW      0x8C000000
 #define MIPS_SPEC_OP_MASK_SW      0xAC000000
+#define MIPS_SPEC_OP_MASK_BEQ     0x10000000
 
 #define MIPS_SPEC_OP_MASK_BREAK   0x0D
 #define MIPS_SPEC_OP_MASK_DADD    0x2C
@@ -237,8 +238,8 @@ public:
 									ip = predicted_address;
 									output->verbose(CALL_INFO, 16, 0, "---> Forcing IP update according to branch prediction table, new-ip: %0llx\n", ip);
 								} else {
-									output->verbose(CALL_INFO, 16, 0, "---> Branch table does not contain an entry for ins: %0llx, continue with normal ip += 8\n",
-										ip);
+									output->verbose(CALL_INFO, 16, 0, "---> Branch table does not contain an entry for ins: 0x%0llx, continue with normal ip += 8 = 0x%0llx\n",
+										ip, (ip+8) );
 
 									speculated_ins->setSpeculatedDirection( BRANCH_NOT_TAKEN );
 									speculated_ins->setSpeculatedAddress( ip + 8 );
@@ -248,7 +249,9 @@ public:
 									ip += 8;
 								}
 
-								delete bundle++;
+								delete bundle;
+								delete delay_bundle;
+
 								uop_bundles_used += 2;
 							} else {
 								output->verbose(CALL_INFO, 16, 0, "---> --> micro-op for branch and delay exceed decode-q space. Cannot issue this cycle.\n");
@@ -573,6 +576,17 @@ protected:
 				output->verbose(CALL_INFO, 16, 0, "[decoder/ADDIU]: -> reg: %" PRIu16 " rs=%" PRIu16 " / imm=%" PRId64 "\n",
 					rt, rs, imm_value_64);
 				bundle->addInstruction( new VanadisAddImmInstruction( getNextInsID(), ins_addr, hw_thr, options, rt, rs, imm_value_64) );
+				insertDecodeFault = false;
+			}
+			break;
+
+		case MIPS_SPEC_OP_MASK_BEQ:
+			{
+				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
+				output->verbose(CALL_INFO, 16, 0, "[decoder/BEQ]: -> r1: %" PRIu16 " r2: %" PRIu16 " offset: %" PRId64 " << 2 : %" PRId64 "\n",
+                                        rt, rs, imm_value_64, (imm_value_64 << 2) );
+				bundle->addInstruction( new VanadisBranchRegCompareInstruction( getNextInsID(), ins_addr, hw_thr, options, rt, rs,
+					(imm_value_64 << 2), VANADIS_SINGLE_DELAY_SLOT, REG_COMPARE_EQ) );
 				insertDecodeFault = false;
 			}
 			break;

@@ -43,11 +43,12 @@ public:
 		output->verbose(CALL_INFO, 16, 0, "Execute: (addr=0x%0llx) SETREG phys: out=%" PRIu16 " imm=%" PRId64 ", isa: out=%" PRIu16 "\n",
 			getInstructionAddress(), phys_int_regs_out[0], imm_value, isa_int_regs_out[0] );
 
-		// If we arent targeting the "special" ISA register which ignores writes
-		// then proceed with the update;
-		if( phys_int_regs_out[0] != isa_options->getRegisterIgnoreWrites() ) {
-			regFile->setIntReg( phys_int_regs_out[0], imm_value );
-		}
+		int64_t* reg_ptr = (int64_t*) regFile->getIntReg( phys_int_regs_out[0] );
+
+		regFile->setIntReg( phys_int_regs_out[0], imm_value );
+
+		output->verbose(CALL_INFO, 16, 0, "Result-reg %" PRIu16 ": %" PRId64 "\n",
+			phys_int_regs_out[0], *reg_ptr);
 
 		markExecuted();
 	}
