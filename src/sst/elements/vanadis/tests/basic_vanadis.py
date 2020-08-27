@@ -10,13 +10,20 @@ sst.setStatisticLoadLevel(4)
 v_cpu_0 = sst.Component("v0", "vanadis.VanadisCPU")
 v_cpu_0.addParams({
        "clock" : "1.0GHz",
-       "max_cycle" : 28,
+       "executable" : "./tests/hello-mips", 
+       "max_cycle" : 1000,
        "verbose" : 16,
        "physical_fp_registers" : 96,
        "print_int_reg" : 1
 })
 
 decode0   = v_cpu_0.setSubComponent( "decoder0", "vanadis.VanadisMIPSDecoder" )
+os_hdlr   = decode0.setSubComponent( "os_handler", "vanadis.VanadisMIPSOSHandler" )
+
+os_hdlr.addParams({
+	"verbose" : 16
+})
+
 dcache_if = v_cpu_0.setSubComponent( "mem_interface_data", "memHierarchy.memInterface" )
 icache_if = v_cpu_0.setSubComponent( "mem_interface_inst", "memHierarchy.memInterface" )
 
@@ -67,8 +74,8 @@ memctrl.addParams({
 
 memory = memctrl.setSubComponent("backend", "memHierarchy.simpleMem")
 memory.addParams({
-      "mem_size" : "512MiB",
-      "access_time" : "1 ns",
+      "mem_size" : "4GiB",
+      "access_time" : "1 ns"
 })
 
 link_cpu0_l1dcache_link = sst.Link("link_cpu0_l1dcache_link")
