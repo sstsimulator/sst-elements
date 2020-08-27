@@ -7,6 +7,7 @@
 #include "inst/isatable.h"
 #include "vinsloader.h"
 #include "inst/vinstall.h"
+#include "os/vmipscpuos.h"
 
 #include <list>
 
@@ -106,7 +107,8 @@ public:
 	VanadisMIPSDecoder( ComponentId_t id, Params& params ) :
 		VanadisDecoder( id, params ) {
 
-		options = new VanadisDecoderOptions( (uint16_t) 0 );
+		// 32 int, 32 fp, reg-2 is for sys-call codes
+		options = new VanadisDecoderOptions( (uint16_t) 0, 32, 32, 2 );
 		max_decodes_per_cycle      = params.find<uint16_t>("decode_max_ins_per_cycle",  2);
 
 		// MIPS default is 0x7fffffff according to SYS-V manual

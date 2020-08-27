@@ -224,6 +224,7 @@ private:
     TimeConverter* cpuClockTC;
 
     VanadisELFInfo* binary_elf_info;
+    bool handlingSysCall;
 };
 
 

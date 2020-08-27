@@ -315,6 +315,8 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 	// otherwise leave the mask fully open.
 	lsq->setMaxAddressMask( max_addr_mask );
 
+	handlingSysCall = false;
+
 	registerAsPrimaryComponent();
     	primaryComponentDoNotEndSim();
 }
@@ -811,6 +813,19 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 				// make sure instruction is marked at front of ROB since this can
 				// enable instructions which need to be retire-ready to process
 				rob_front->markFrontOfROB();
+
+				// Are we handling a system call
+				if( INST_SYSCALL == rob_front->getInstFuncType() ) {
+					if( ! handlingSysCall ) {
+						output->verbose(CALL_INFO, 8, 0, "[syscall] -> need to issue request for handling to the OS (thr: %" PRIu32 ")\n",
+							rob_front->getHWThread() );
+						handlingSysCall = true;
+
+						output->verbose(CALL_INFO, 8, 0, "[syscall] -> calling OS handler in decode engine...\n");
+						thread_decoders[ rob_front->getHWThread() ]->getOSHandler()->handleSysCall(
+							rob_front->getHWThread(), register_files[i], retire_isa_tables[i] );
+					}
+				}
 			}
 		}
 	}

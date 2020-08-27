@@ -14,6 +14,7 @@
 #include "inst/isatable.h"
 #include "vbranchunit.h"
 #include "vinsloader.h"
+#include "os/vcpuos.h"
 
 namespace SST {
 namespace Vanadis {
@@ -21,6 +22,18 @@ namespace Vanadis {
 class VanadisDecoder : public SST::SubComponent {
 public:
 	SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Vanadis::VanadisDecoder)
+
+	SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+		{ "os_handler",		"Handler for SYSCALL instructions",	"SST::Vanadis::VanadisCPUOSHandler" }
+	)
+
+	SST_ELI_DOCUMENT_PARAMS(
+		{ "decode_q_len", 	      "Number of entries in the decoded, but pending issue queue" },
+		{ "icache_line_width",        "Number of bytes in an icache line" },
+		{ "uop_cache_entries",        "Number of instructions to cache in the micro-op cache (this is full instructions, not microops but usually 1:1 ratio" },
+		{ "predecode_cache_entries",  "Number of cache lines to store in the local L0 cache for instructions pending decoding." },
+		{ "branch_predictor_entries", "Number of entries in the branch predictor, an entry is a branch instruction address" }
+	)
 
 	VanadisDecoder( ComponentId_t id, Params& params ) : SubComponent(id) {
 		ip = 0;
@@ -37,10 +50,13 @@ public:
 
 		const size_t branch_pred_entries     = params.find<size_t>("branch_predictor_entries", 32);
 		branch_predictor = new VanadisBranchUnit( branch_pred_entries );
+
+		os_handler = loadUserSubComponent<SST::Vanadis::VanadisCPUOSHandler>("os_handler");
 	}
 
 	virtual ~VanadisDecoder() {
 		delete decoded_q;
+		delete os_handler;
 	}
 
 	void setInsCacheLineWidth( const uint64_t ic_width ) {
@@ -97,6 +113,9 @@ public:
 	virtual void configureApplicationLaunch( SST::Output* output, VanadisISATable* isa_tbl,
 		VanadisRegisterFile* regFile, Interfaces::SimpleMem* mem_if ) = 0;
 
+	virtual VanadisCPUOSHandler* getOSHandler() {
+		return os_handler;
+	}
 protected:
 	virtual void clearDecoderAfterMisspeculate( SST::Output* output ) {};
 
@@ -110,6 +129,7 @@ protected:
 
 	VanadisInstructionLoader* ins_loader;
 	VanadisBranchUnit* branch_predictor;
+	VanadisCPUOSHandler* os_handler;
 
 };
 
