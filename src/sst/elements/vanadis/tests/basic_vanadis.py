@@ -27,6 +27,12 @@ os_hdlr.addParams({
 dcache_if = v_cpu_0.setSubComponent( "mem_interface_data", "memHierarchy.memInterface" )
 icache_if = v_cpu_0.setSubComponent( "mem_interface_inst", "memHierarchy.memInterface" )
 
+node_os = sst.Component("os", "vanadis.VanadisNodeOS")
+node_os.addParams({
+	"verbose" : 16,
+	"cores" : 1
+})
+
 cpu0_l1dcache = sst.Component("cpu0.l1dcache", "memHierarchy.Cache")
 cpu0_l1dcache.addParams({
       "access_latency_cycles" : "1",

@@ -80,7 +80,7 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 
 		sprintf(decoder_name, "decoder%" PRIu32 "", i);
 		VanadisDecoder* thr_decoder = loadUserSubComponent<SST::Vanadis::VanadisDecoder>(decoder_name);
-		thr_decoder->setHardwareThread( i );
+//		thr_decoder->setHardwareThread( i );
 
 		output->verbose(CALL_INFO, 8, 0, "Loading decoder%" PRIu32 ": %s.\n", i,
 			(nullptr == thr_decoder) ? "failed" : "successful");
@@ -93,7 +93,12 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 				thr_decoder->getISAName());
 		}
 
+		thr_decoder->setHardwareThread(i);
 		thread_decoders.push_back( thr_decoder );
+
+		output->verbose(CALL_INFO, 8, 0, "Registering SYSCALL return interface...\n");
+		std::function<void(uint32_t)> sys_callback = std::bind( &VanadisComponent::syscallReturnCallback, this, std::placeholders::_1 );
+		thread_decoders[i]->getOSHandler()->registerReturnCallback( sys_callback );
 
 		if( 0 == thread_decoders[i]->getInsCacheLineWidth() ) {
 			output->verbose(CALL_INFO, 2, 0, "Auto-setting icache line width in decoder to %" PRIu64 "\n", iCacheLineWidth);
@@ -292,6 +297,14 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 
 	for( uint16_t i = 0; i < fp_div_units; ++i ) {
 		fu_fp_div.push_back( new VanadisFunctionalUnit(fu_id++, INST_FP_DIV, fp_div_cycles) );
+	}
+
+	//////////////////////////////////////////////////////////////////////////////////////
+
+	for( uint32_t i = 0; i < hw_threads; ++i ) {
+		thread_decoders[i]->getOSHandler()->setHWThread(i);
+		thread_decoders[i]->getOSHandler()->setRegisterFile( register_files[i] );
+		thread_decoders[i]->getOSHandler()->setISATable( retire_isa_tables[i]  );
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -821,9 +834,14 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 							rob_front->getHWThread() );
 						handlingSysCall = true;
 
+						VanadisSysCallInstruction* the_syscall_ins = dynamic_cast<VanadisSysCallInstruction*>( rob_front );
+
+						if( nullptr == the_syscall_ins ) {
+							output->fatal(CALL_INFO, -1, "Error: SYSCALL cannot be converted to an actual sys-call instruction.\n");
+						}
+
 						output->verbose(CALL_INFO, 8, 0, "[syscall] -> calling OS handler in decode engine...\n");
-						thread_decoders[ rob_front->getHWThread() ]->getOSHandler()->handleSysCall(
-							rob_front->getHWThread(), register_files[i], retire_isa_tables[i] );
+						thread_decoders[ rob_front->getHWThread() ]->getOSHandler()->handleSysCall( the_syscall_ins );
 					}
 				}
 			}
@@ -1278,4 +1296,22 @@ void VanadisComponent::clearROBMisspeculate( const uint32_t hw_thr ) {
 	// Delete the old ROB since this is not clear and reset to an empty one
 	delete rob[hw_thr];
 	rob[hw_thr] = rob_tmp;
+}
+
+void VanadisComponent::syscallReturnCallback( uint32_t thr ) {
+	if( rob[thr]->empty() ) {
+		output->fatal(CALL_INFO, -1, "Error - syscall return called on thread: %" PRIu32 " but ROB is empty.\n", thr);
+	}
+
+	VanadisInstruction* rob_front = rob[thr]->peek();
+	VanadisSysCallInstruction* syscall_ins = dynamic_cast<VanadisSysCallInstruction*>( rob_front );
+
+	if( nullptr == syscall_ins ) {
+		output->fatal(CALL_INFO, -1, "Error - unable to obtain a syscall from the ROB front of thread %" PRIu32 " (code: %s)\n", thr,
+			rob_front->getInstCode());
+	}
+
+	output->verbose(CALL_INFO, 16, 0, "[syscall-return]: syscall on thread %" PRIu32 " (0x%0llx) is completed, return to processing.\n",
+		thr, syscall_ins->getInstructionAddress());
+	syscall_ins->markExecuted();
 }

@@ -212,7 +212,14 @@ public:
 
 	bool checkFrontOfROB() { return isFrontOfROB; }
 	void markFrontOfROB() { isFrontOfROB = true; }
-	void setID( const uint64_t new_id ) { id = new_id; }
+	void setID( const uint64_t new_id ) {
+		id = new_id;
+
+//		if( new_id > 10000 ) {
+//			printf("NEW INSTRUCTION ID: %" PRIu64 "\n", new_id);
+//		}
+//		assert( new_id < 10000 );
+	}
 
 	bool hasROBSlotIssued() const { return hasROBSlot; }
 	void markROBSlotIssued() { hasROBSlot = true; }

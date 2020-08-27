@@ -52,6 +52,7 @@ public:
 		branch_predictor = new VanadisBranchUnit( branch_pred_entries );
 
 		os_handler = loadUserSubComponent<SST::Vanadis::VanadisCPUOSHandler>("os_handler");
+		hw_thr = 0;
 	}
 
 	virtual ~VanadisDecoder() {

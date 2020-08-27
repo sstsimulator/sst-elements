@@ -119,7 +119,6 @@ public:
 		setInstructionPointer( params.find<uint64_t>("entry_point", 0) );
 
 		next_ins_id = 0;
-
 	}
 
 	~VanadisMIPSDecoder() {}
@@ -205,8 +204,7 @@ public:
 								output->verbose(CALL_INFO, 16, 0, "---> Proceeding with issue the branch and its delay slot...\n");
 
 								for( uint32_t i = 0; i < bundle->getInstructionCount(); ++i ) {
-									VanadisInstruction* next_ins = bundle->getInstructionByIndex( i );
-									next_ins->setID( getNextInsID() );
+									VanadisInstruction* next_ins = bundle->getInstructionByIndex( i, getNextInsID() );
 
 									output->verbose(CALL_INFO, 16, 0, "---> --> issuing ins id: %" PRIu64 " (addr: 0x0%llx, %s)...\n",
 										next_ins->getID(),
@@ -216,8 +214,7 @@ public:
 								}
 
 								for( uint32_t i = 0; i < delay_bundle->getInstructionCount(); ++i ) {
-									VanadisInstruction* next_ins = delay_bundle->getInstructionByIndex( i );
-									next_ins->setID( getNextInsID() );
+									VanadisInstruction* next_ins = delay_bundle->getInstructionByIndex( i, getNextInsID() );
 
 									output->verbose(CALL_INFO, 16, 0, "---> --> issuing ins id: %" PRIu64 " (addr: 0x0%llx, %s)...\n",
 										next_ins->getID(),

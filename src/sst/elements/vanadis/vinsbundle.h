@@ -50,6 +50,7 @@ public:
 		return ins_addr;
 	}
 
+/*
 	void resequenceBundleID( uint64_t start_id ) {
 		uint64_t next_id = start_id;
 
@@ -57,7 +58,7 @@ public:
 			next_ins->setID( next_id++ );
 		}
 	}
-
+*/
 	VanadisInstructionBundle* clone() {
 		VanadisInstructionBundle* new_bundle = new VanadisInstructionBundle( ins_addr );
 
@@ -73,8 +74,8 @@ public:
 
 		for( VanadisInstruction* next_ins : inst_bundle ) {
 			VanadisInstruction* cloned_ins = next_ins->clone();
-			cloned_ins->setID( (*base_ins_id ) );
-			*base_ins_id = *base_ins_id + 1;
+			cloned_ins->setID( (*base_ins_id) );
+			*base_ins_id = (*base_ins_id) + 1;
 			new_bundle->addInstruction( cloned_ins );
 		}
 

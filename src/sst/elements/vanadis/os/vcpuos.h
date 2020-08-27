@@ -5,9 +5,12 @@
 #include <sst/core/subcomponent.h>
 #include <sst/core/output.h>
 
+#include <functional>
+
 #include "inst/isatable.h"
 #include "inst/regfile.h"
 #include "os/vosresp.h"
+#include "inst/vsyscall.h"
 
 namespace SST {
 namespace Vanadis {
@@ -20,18 +23,35 @@ public:
 		SubComponent(id) {
 
 		const uint32_t verbosity = params.find<uint32_t>("verbose", 0);
-		output = new SST::Output("[os]: ", verbosity, 0, Output::STDOUT);
+		output   = new SST::Output("[os]: ", verbosity, 0, Output::STDOUT);
+
+		regFile  = nullptr;
+		isaTable = nullptr;
+		hw_thr   = 0;
 	}
 
 	virtual ~VanadisCPUOSHandler() {
 		delete output;
 	}
 
-	virtual void handleSysCall( const uint32_t thr, VanadisRegisterFile* regFile, VanadisISATable* isaTable ) = 0;
-	virtual void handleReturn( const uint32_t thr, VanadisRegisterFile* regFile, VanadisISATable* isaTable, VanadisSysCallResponse* resp )  = 0;
+	void setHWThread( const uint32_t newThr ) { hw_thr = newThr; }
+	void setRegisterFile( VanadisRegisterFile* newFile ) { regFile = newFile; }
+	void setISATable( VanadisISATable* newTable ) { isaTable = newTable; }
+
+	virtual void handleSysCall( VanadisSysCallInstruction* syscallIns ) = 0;
+//	virtual void handleReturn( const uint32_t thr, VanadisRegisterFile* regFile, VanadisISATable* isaTable, VanadisSysCallResponse* resp )  = 0;
+
+	virtual void registerReturnCallback( std::function<void(uint32_t)>& new_call_back ) {
+		returnCallbacks.push_back( new_call_back );
+	}
 
 protected:
 	SST::Output* output;
+	std::vector< std::function<void(uint32_t)> > returnCallbacks;
+	uint32_t hw_thr;
+
+	VanadisRegisterFile* regFile;
+	VanadisISATable* isaTable;
 
 };
 

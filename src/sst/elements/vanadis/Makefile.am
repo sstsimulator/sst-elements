@@ -12,7 +12,8 @@ libvanadis_la_SOURCES = \
 	vanadis.h \
 	os/vcpuos.h \
 	os/vmipscpuos.h \
-	os/vosresp.h	
+	os/vosresp.h \
+	os/vnodeos.cc
 
 EXTRA_DIST = \
 	tests/basic_miranda.py \
