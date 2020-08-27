@@ -32,6 +32,7 @@
 #include "inst/vjump.h"
 #include "inst/vbgtzl.h"
 #include "inst/vjlr.h"
+#include "inst/vjr.h"
 #include "inst/vbcmp.h"
 
 // Load instructions
@@ -47,5 +48,6 @@
 #include "inst/vdecodefaultinst.h"
 #include "inst/vnop.h"
 #include "inst/vsetreg.h"
+#include "inst/vsyscall.h"
 
 #endif

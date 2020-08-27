@@ -63,8 +63,14 @@ public:
 	}
 
 	void tick(const uint64_t cycle, SST::Output* output, std::vector<VanadisRegisterFile*>& regFile) {
-		output->verbose(CALL_INFO, 8, 0, "Functional Unit %" PRIu16 " (%s) executing cycle %" PRIu64 "...\n", fu_id, funcTypeToString(fu_type), cycle);
+		output->verbose(CALL_INFO, 8, 0, "Functional Unit %" PRIu16 " (%s) executing cycle %" PRIu64 " (func-q: %" PRIu32 ")...\n",
+			fu_id, funcTypeToString(fu_type), cycle, (uint32_t) fu_queue->size());
+
 		VanadisInstruction* ins = fu_queue->pop();
+
+		if( nullptr == ins ) {
+			output->fatal(CALL_INFO, -1, "Error - should not have a null entry in a functional unit queue, if no instruction fill with voids.\n");
+		}
 
 		if( UINT32_MAX == ins->getHWThread() ) {
 			ins->execute(output, nullptr);
@@ -95,7 +101,9 @@ public:
 		for( uint16_t i = 0; i < fu_queue->size(); ++i ) {
 			tmp_ins = fu_queue->pop();
 
-			if( hw_thr != tmp_ins->getHWThread() ) {
+			if( hw_thr == tmp_ins->getHWThread() ) {
+				tmp_q->push( new VanadisNoInstruction( isa_options ) );
+			} else {
 				tmp_q->push( tmp_ins );
 			}
 		}

@@ -43,7 +43,7 @@ public:
 			offset(offst), load_width(load_bytes), signed_extend(extend_sign) {
 
 		isa_int_regs_out[0] = tgtReg;
-		isa_int_regs_in[1]  = memAddrReg;
+		isa_int_regs_in[0]  = memAddrReg;
 	}
 
 	VanadisLoadInstruction* clone() {
@@ -64,8 +64,8 @@ public:
 
 	virtual void printToBuffer( char* buffer, size_t buffer_size ) {
 		snprintf( buffer, buffer_size, "LOAD     %5" PRIu16 " <- memory[ %5" PRIu16 " + %20" PRId64 " (phys: %5" PRIu16 " <- memory[%5" PRIu16 " + %20" PRId64 "])\n",
-			isa_int_regs_out[0], isa_int_regs_in[1], offset,
-			phys_int_regs_out[0], phys_int_regs_in[1], offset);
+			isa_int_regs_out[0], isa_int_regs_in[0], offset,
+			phys_int_regs_out[0], phys_int_regs_in[0], offset);
 	}
 
 	uint64_t computeLoadAddress( VanadisRegisterFile* reg ) const {

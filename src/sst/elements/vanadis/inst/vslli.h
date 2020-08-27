@@ -25,6 +25,10 @@ public:
 		imm_value = immediate;
 	}
 
+	VanadisShiftLeftLogicalImmInstruction* clone() {
+		return new VanadisShiftLeftLogicalImmInstruction( *this );
+	}
+
 	virtual VanadisFunctionalUnitType getInstFuncType() const {
 		return INST_INT_ARITH;
 	}

@@ -148,8 +148,9 @@ public:
 					int64_t* val = (int64_t*) regFile->getIntReg( i );
 					toBinaryString(reg_bin_str, *val);
 
-					output->verbose(CALL_INFO, 16, 0, "| isa:%5" PRIu16 " -> phys:%5" PRIu16 " | r:%5" PRIu32 " | w:%5" PRIu32 " | value=%" PRIu64 "\n",
+					output->verbose(CALL_INFO, 16, 0, "| isa:%5" PRIu16 " -> phys:%5" PRIu16 " | r:%5" PRIu32 " | w:%5" PRIu32 " | v: 0x%016llx | v: %" PRIu64 "\n",
 						i, int_reg_ptr[i], int_reg_pending_read[i], int_reg_pending_write[i],
+						*((int64_t*) regFile->getIntReg(int_reg_ptr[i])),
 						*((int64_t*) regFile->getIntReg(int_reg_ptr[i])));
 				}
 			}

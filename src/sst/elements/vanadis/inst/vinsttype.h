@@ -14,6 +14,7 @@ enum VanadisFunctionalUnitType {
 	INST_STORE,
 	INST_BRANCH,
 	INST_SPECIAL,
+	INST_SYSCALL,
 	INST_FENCE,
 	INST_NOOP,
 	INST_FAULT
@@ -43,6 +44,8 @@ case INST_NOOP:
 	return "NOOP";
 case INST_FAULT:
 	return "FAULT";
+case INST_SYSCALL:
+	return "SYSCALL";
 }
 };
 

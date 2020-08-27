@@ -505,10 +505,14 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
                                                         }
                                                 }
 						break;
+
+					// Mark as executed and intentionally FALL THRU so we also (pretend) we
+					// have allocated an FU.
 					case INST_NOOP:
 					case INST_FAULT:
-						allocated_fu = true;
 						ins->markExecuted();
+					case INST_SYSCALL:
+						allocated_fu = true;
 						break;
 					default:
 						// ERROR UNALLOCATED
@@ -625,6 +629,13 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 					if( rob[i]->peekAt(1)->completedExecution() ) {
 						output->verbose(CALL_INFO, 8, 0, "ROB ------> delay slot required ans has completed execution.\n");
 					} else {
+						if( rob[i]->peekAt(1)->getInstFuncType() == INST_LOAD ||
+							rob[i]->peekAt(1)->getInstFuncType() == INST_STORE ) {
+
+							output->verbose(CALL_INFO, 8, 0, "ROB -----> delay slot is either load/store, so mark as front of ROB to cause processing.\n");
+							rob[i]->peekAt(1)->markFrontOfROB();
+						}
+
 						output->verbose(CALL_INFO, 8, 0, "ROB ------> delay slot required but has not completed execution, must wait.\n");
 						delaySlotsAreOK = false;
 					}
@@ -709,6 +720,7 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
                                                 	fp_register_stacks[rob_front->getHWThread()],
                                                 	issue_isa_tables[i], retire_isa_tables[i] );
 
+//							output->verbose(CALL_INFO, 16, 0, "-- Retirement ISA Table--------------------------------------------------------------\n");
                                         		retire_isa_tables[i]->print(output, print_int_reg, print_fp_reg);
 
                                         		delete rob_front;
@@ -790,7 +802,7 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 						fp_register_stacks[rob_front->getHWThread()],
 						issue_isa_tables[i], retire_isa_tables[i] );
 
-					retire_isa_tables[i]->print(output, print_int_reg, print_fp_reg);
+					retire_isa_tables[i]->print(output, register_files[i], print_int_reg, print_fp_reg);
 
 					delete rob_front;
 				}

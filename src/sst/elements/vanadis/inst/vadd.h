@@ -38,7 +38,7 @@ public:
 
 	virtual void printToBuffer(char* buffer, size_t buffer_size) {
                 snprintf(buffer, buffer_size, "ADD     %5" PRIu16 " <- %5" PRIu16 " + %5" PRIu16 " (phys: %5" PRIu16 " <- %5" PRIu16 " + %5" PRIu16 ")",
-			isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1], 
+			isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1],
 			phys_int_regs_out[0], phys_int_regs_in[0], phys_int_regs_in[1] );
         }
 
@@ -48,15 +48,10 @@ public:
 			phys_int_regs_in[0], phys_int_regs_in[1],
 			isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1] );
 
-		// If we arent targeting the "special" ISA register which ignores writes
-		// then proceed with the update;
-		if( phys_int_regs_out[0] != isa_options->getRegisterIgnoreWrites() ) {
-			int64_t* dest  = (int64_t*) regFile->getIntReg( phys_int_regs_out[0] );
-			int64_t* src_1 = (int64_t*) regFile->getIntReg( phys_int_regs_in[0]  );
-			int64_t* src_2 = (int64_t*) regFile->getIntReg( phys_int_regs_in[1]  );
+		int64_t* src_1 = (int64_t*) regFile->getIntReg( phys_int_regs_in[0]  );
+		int64_t* src_2 = (int64_t*) regFile->getIntReg( phys_int_regs_in[1]  );
 
-			(*dest) = (*src_1) + (*src_2);
-		}
+		regFile->setIntReg( phys_int_regs_out[0], ((*src_1) + (*src_2)));
 
 		markExecuted();
 	}
