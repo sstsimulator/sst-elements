@@ -28,14 +28,14 @@ public:
 	)
 
 	SST_ELI_DOCUMENT_PORTS(
-		{ "core%(cores)",	"Connects to a CPU core",	{} }
+		{ "core%(cores)d",	"Connects to a CPU core",	{} }
 	)
 
 	VanadisNodeOSComponent( SST::ComponentId_t id, SST::Params& params );
 	~VanadisNodeOSComponent();
 
 	virtual void init( unsigned int phase );
-	void handleIncomingSysCall();
+	void handleIncomingSysCall( SST::Event* ev );
 	void handleIncomingMemory( SimpleMem::Request* ev );
 
 private:

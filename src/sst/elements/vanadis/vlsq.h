@@ -78,7 +78,6 @@ public:
 			max_mem_issued_loads(max_issue_load_count),
 			max_queued_stores(lsq_store_entries),
 			max_queued_loads(lsq_load_entries),
-			pending_queued_stores(0),
 			pending_queued_loads(0),
 			pending_mem_issued_stores(0),
 			pending_mem_issued_loads(0),
@@ -94,15 +93,16 @@ public:
 		delete store_q;
 	}
 
-	bool storeFull() const 	 { return (pending_queued_stores >= max_queued_stores); }
-	bool loadFull() const    { return (pending_queued_loads  >= max_queued_loads);  }
+	bool storeFull() const 	 { return store_q->full(); }
+	bool loadFull()  const   { return (pending_queued_loads  >= max_queued_loads);  }
 
-	size_t storeSize() const { return pending_queued_stores; }
+	size_t storeSize() const { return store_q->size(); }
 	size_t loadSize()  const { return pending_queued_loads;  }
 
 	void push( VanadisStoreInstruction* store_me ) {
+		assert( ! (store_q->full()) );
+
 		store_q->push( new VanadisStoreRecord( store_me ) );
-		pending_queued_stores++;
 	}
 
 	void push( VanadisLoadInstruction* load_me ) {
@@ -139,7 +139,12 @@ public:
 
 	void tick( uint64_t cycle, SST::Output* output ) {
 		output->verbose(CALL_INFO, 16, 0, "-> Ticking Load/Store Queue Processors...\n");
-		output->verbose(CALL_INFO, 16, 0, "---> LSQ contains: %" PRIu32 " queued loads / %" PRIu32 " queued stores.\n", pending_queued_loads, pending_queued_stores );
+		output->verbose(CALL_INFO, 16, 0, "---> LSQ contains: %" PRIu32 " queued loads / %" PRIu32 " queued stores.\n", pending_queued_loads,
+			(uint32_t) store_q->size() );
+		for( size_t i = 0;i < store_q->size(); ++i) {
+		output->verbose(CALL_INFO, 16, 0, "-----> store [%5" PRIu32 "]: addr: 0x%0llx\n", (uint32_t) i,
+			store_q->peekAt(i)->getAssociatedInstruction()->getInstructionAddress());
+		}
 		output->verbose(CALL_INFO, 16, 0, "---> LSQ contains: %" PRIu32 " loads in flight / %" PRIu32 " stores in flight\n", pending_mem_issued_loads, pending_mem_issued_stores );
 		output->verbose(CALL_INFO, 16, 0, "-> Ticking Load Queue Handling...\n");
 		tick_loads(cycle, output);
@@ -175,8 +180,11 @@ public:
 				break;
 			}
 
-			const uint64_t load_address = load_ins->computeLoadAddress( output,
-				registerFiles->at( load_ins->getHWThread() ) );
+			uint64_t load_address = 0;
+			uint16_t load_width   = 0;
+
+			load_ins->computeLoadAddress( output, registerFiles->at( load_ins->getHWThread() ),
+				&load_address, &load_width );
 
 			output->verbose(CALL_INFO, 16, 0, "-> LSQ attempt process for load at: %p / %" PRIu64 "\n",
 				(void*) load_address, load_address );
@@ -198,12 +206,14 @@ public:
 				if( (load_ins->getHWThread() == check_store_ins->getHWThread()) &&
 					 check_store->predates( load_ins ) ) {
 
-					const uint64_t store_address = check_store_ins->computeStoreAddress(
-						registerFiles->at( load_ins->getHWThread() ) );
+					uint64_t store_address = 0;
+					uint16_t store_width   = 0;
 
-					output->verbose(CALL_INFO, 16, 0, "-> LSQ compare load (%p, width=%" PRIu16 ") to store at (%p, width=%" PRIu16 ")\n",
-						(void*) load_address, load_ins->getLoadWidth(),
-						(void*) store_address, check_store_ins->getStoreWidth());
+					check_store_ins->computeStoreAddress( output, registerFiles->at( load_ins->getHWThread() ),
+						&store_address, &store_width );
+
+					output->verbose(CALL_INFO, 16, 0, "-> LSQ compare load (0x%0llx, width=%" PRIu16 ") to store at (0x%0llx, width=%" PRIu16 ")\n",
+						load_address, load_width, store_address, store_width);
 
 					switch( evaluateAddressOverlap(
 							load_address,
@@ -248,24 +258,36 @@ public:
 					}
 
 					break;
-				} 
+				}
 			}
 
 			// Processing says we really have to go ahead and do this load
 			if( load_eval == REQUIRE_LOAD ) {
 				if( pending_mem_issued_loads < max_mem_issued_loads ) {
-					const uint64_t load_addr = ( load_ins->computeLoadAddress(
-						registerFiles->at( load_ins->getHWThread() ) ) ) & max_mem_address_mask;
-					const uint16_t load_width = load_ins->getLoadWidth();
-					output->verbose(CALL_INFO, 16, 0, "-> LSQ issuing load to %p width=%" PRIu16 "\n", (void*) load_addr, load_width);
+					uint64_t load_addr  = 0;
+					uint16_t load_width = 0;
 
-					SimpleMem::Request* new_load_req = new SimpleMem::Request( SimpleMem::Request::Read,
-						load_addr, load_width);
+					load_ins->computeLoadAddress( output, registerFiles->at( load_ins->getHWThread() ) , &load_addr, &load_width );
+					load_addr = load_addr & max_mem_address_mask;
 
-					pending_loads.insert( std::pair<SimpleMem::Request::id_t, VanadisLoadRecord*>(new_load_req->id, new VanadisLoadRecord( load_ins )) );
-					memInterface->sendRequest( new_load_req );
+					output->verbose(CALL_INFO, 16, 0, "-> LSQ issuing load to 0x%0llx width=%" PRIu16 " (partial? %s)\n", load_addr, load_width,
+						load_ins->isPartialLoad() ? "yes" : "no");
 
-					pending_mem_issued_loads++;
+					if( load_width > 0 ) {
+						output->verbose(CALL_INFO, 16, 0, "-> issuing load into memory interface...\n");
+
+						SimpleMem::Request* new_load_req = new SimpleMem::Request( SimpleMem::Request::Read,
+							load_addr, load_width);
+
+						pending_loads.insert( std::pair<SimpleMem::Request::id_t, VanadisLoadRecord*>(new_load_req->id, new VanadisLoadRecord( load_ins )) );
+						memInterface->sendRequest( new_load_req );
+
+						pending_mem_issued_loads++;
+					} else {
+						output->verbose(CALL_INFO, 16, 0, "-> load width is zero, will not issue a load and just complete instruction.\n");
+						output->verbose(CALL_INFO, 16, 0, "-> marking instruction as executed to allow ROB clear.\n");
+						load_ins->markExecuted();
+					}
 
 					// Remove this load from the queue and fix up the iterator
 					next_load = load_q.erase( next_load );
@@ -302,8 +324,10 @@ public:
 				// Are we using all the slots to issue stores to L1 we have available?
 				if( pending_mem_issued_stores < max_mem_issued_stores ) {
 					VanadisRegisterFile* hw_thr_reg = registerFiles->at( front_store->getHWThread() );
-					const uint64_t store_address = ( front_store->computeStoreAddress( hw_thr_reg ) & max_mem_address_mask );
-					const uint16_t store_width   = front_store->getStoreWidth();
+					uint64_t store_address = 0;
+					uint16_t store_width   = 0;
+
+					front_store->computeStoreAddress( output, hw_thr_reg, &store_address, &store_width );
 
 					std::vector<uint8_t> payload;
 					uint8_t* value_reg_addr = nullptr;
@@ -319,26 +343,41 @@ public:
 						output->fatal(CALL_INFO, -1, "Unknown register type.\n");
 					}
 
-					for( uint16_t j = 0; j < store_width; ++j ) {
-						payload.push_back( value_reg_addr[j] );
+					output->verbose(CALL_INFO, 16, 0, "----> LSQ is-partial-store? %s\n",
+						front_store->isPartialStore() ? "yes" : "no");
+
+					if( front_store->isPartialStore() ) {
+						uint16_t reg_offset = front_store->getRegisterOffset();
+
+						output->verbose(CALL_INFO, 16, 0, "----> reg-offset for partial store: %" PRIu16 "\n",
+							reg_offset);
+
+						for( uint16_t j = 0; j < store_width; ++j ) {
+							payload.push_back( value_reg_addr[ reg_offset + j ]);
+						}
+					} else {
+						for( uint16_t j = 0; j < store_width; ++j ) {
+							payload.push_back( value_reg_addr[j] );
+						}
 					}
+
+					output->verbose(CALL_INFO, 16, 0, "----> LSQ creating memory store request: payload-len: %" PRIu32 "\n",
+						(uint32_t) payload.size());
 
 					SimpleMem::Request* new_store_req = new SimpleMem::Request(
 						SimpleMem::Request::Write,
-						store_address, store_width , payload );
+						store_address, payload.size() , payload );
 
 					output->verbose(CALL_INFO, 16, 0, "---> LSQ -> issuing store to cache, addr=%p / %" PRIu64 ", width=%" PRIu16 " bytes\n", (void*) store_address, store_address, store_width);
 
 					memInterface->sendRequest( new_store_req );
 					pending_stores.insert( new_store_req->id );
-	
+
 					pending_mem_issued_stores++;
 
 					// Mark the instruction as executed and clear it from our queue
 					front_store->markExecuted();
 					store_q->pop();
-
-					pending_queued_stores--;
 
 					// delete the record, but not the instruction
 					// the main core ROB engine will do that for us
@@ -361,12 +400,13 @@ public:
 		auto check_ev_exists = pending_stores.find( ev->id );
 
 		if( check_ev_exists == pending_stores.end() ) {
+			output->verbose(CALL_INFO, 16, 0, "--> Does not match a store entry.\n");
 			auto check_ev_load_exists = pending_loads.find( ev->id );
 
 			if( check_ev_load_exists == pending_loads.end() ) {
-
+				output->verbose(CALL_INFO, 16, 0, "--> Does not match a load entry.\n");
 			} else {
-				output->verbose(CALL_INFO, 16, 0, "-> LSQ match load entry, unpacking payload.\n");
+				output->verbose(CALL_INFO, 16, 0, "--> LSQ match load entry, unpacking payload.\n");
 				VanadisLoadRecord* load_record = check_ev_load_exists->second;
 				VanadisLoadInstruction* load_ins = load_record->getAssociatedInstruction();
 
@@ -374,64 +414,57 @@ public:
 				const uint16_t load_width = load_ins->getLoadWidth();
 				const uint32_t hw_thr     = load_ins->getHWThread();
 
-				output->verbose(CALL_INFO, 16, 0, "-> LSQ matched to load hw_thr = %" PRIu32 ", target_reg = %" PRIu16 ", width=%" PRIu16 "\n",
-					hw_thr, target_reg, load_width);
-/*
-				registerFiles->at( hw_thr )->setIntReg( target_reg, (uint64_t) 0);
+				if( load_ins->isPartialLoad() ) {
+					uint64_t recompute_address = 0;
+					uint16_t recompute_width   = 0;
 
-				uint8_t* reg_ptr = (uint8_t*) registerFiles->at( hw_thr )->getIntReg( target_reg );
+					load_ins->computeLoadAddress( registerFiles->at( hw_thr ), &recompute_address, &recompute_width );
+					const uint16_t reg_offset = load_ins->getRegisterOffset();
 
-				// Copy out the payload for the register
-				for( uint16_t i = 0; i < load_width; ++i ) {
-					reg_ptr[i] = ev->data[i];
-				}
+					output->verbose(CALL_INFO, 16, 0, "-> LSQ matched an unaligned/partial load, target: %" PRIu16 " / reg-offset: %" PRIu16 " / full-width: %" PRIu16 " / partial-width: %" PRIu16 "\n",
+						target_reg, reg_offset, load_width, recompute_width);
+					uint8_t* reg_ptr = (uint8_t*) registerFiles->at( hw_thr )->getIntReg( target_reg );
 
-				const uint8_t check_sign_mask = 0b10000000;
-				const uint8_t all_bits_set    = 0b11111111;
-
-				// Do we need to perform sign extension
-
-				if( load_ins->performSignExtension() ) {
-					if( reg_ptr[(load_width-1)] & check_sign_mask != 0 ) {
-						// The sign is bit is set
-						for( uint16_t i = load_width; i < 8; ++i ) {
-							reg_ptr[i] = all_bits_set;
-						}
+					for( uint16_t i = 0; i < recompute_width; ++i ) {
+						reg_ptr[ reg_offset + i ] = ev->data[i];
 					}
-				}
-*/
-				uint64_t new_value = 0;
+				} else {
+					output->verbose(CALL_INFO, 16, 0, "-> LSQ matched to load hw_thr = %" PRIu32 ", target_reg = %" PRIu16 ", width=%" PRIu16 "\n",
+						hw_thr, target_reg, load_width);
+					uint64_t new_value = 0;
 
-				switch( load_width ) {
-				case 1:
-					new_value = vanadis_sign_extend( ev->data[0] );
-					break;
-				case 2:
-				{
-					uint16_t* val_16 = (uint16_t*) &ev->data[0];
-					new_value = vanadis_sign_extend( *val_16 );
-				}
-					break;
-				case 4:
-				{
-					uint32_t* val_32 = (uint32_t*) &ev->data[0];
-					new_value = vanadis_sign_extend( *val_32 );
-				}
-					break;
-				case 8:
-				{
-					uint64_t* val_64 = (uint64_t*) &ev->data[0];
-					new_value = *val_64;
-				}
-					break;
+					switch( load_width ) {
 
-				default:
-					output->fatal(CALL_INFO, -1, "Error: load-instruction forces a load which is not power-of-2: width=%" PRIu16 "\n", load_width);
-					break;
-				}
+					case 1:
+						new_value = vanadis_sign_extend( ev->data[0] );
+						break;
+					case 2:
+					{
+						uint16_t* val_16 = (uint16_t*) &ev->data[0];
+						new_value = vanadis_sign_extend( *val_16 );
+					}
+						break;
+					case 4:
+					{
+						uint32_t* val_32 = (uint32_t*) &ev->data[0];
+						new_value = vanadis_sign_extend( *val_32 );
+					}
+						break;
+					case 8:
+					{
+						uint64_t* val_64 = (uint64_t*) &ev->data[0];
+						new_value = *val_64;
+					}
+						break;
 
-				// Set the register value
-				registerFiles->at( hw_thr )->setIntReg( target_reg, new_value );
+					default:
+						output->fatal(CALL_INFO, -1, "Error: load-instruction forces a load which is not power-of-2: width=%" PRIu16 "\n", load_width);
+						break;
+					}
+
+					// Set the register value
+					registerFiles->at( hw_thr )->setIntReg( target_reg, new_value );
+				}
 
 				load_ins->markExecuted();
 				pending_loads.erase( check_ev_load_exists );
@@ -486,7 +519,6 @@ public:
 		// Swap out queued stores to new queue and reset the counter
 		delete store_q;
 		store_q = sq_tmp;
-		pending_queued_stores = store_q->size();
 	}
 
 protected:
@@ -499,7 +531,6 @@ protected:
 	const uint32_t max_queued_stores;
 	const uint32_t max_queued_loads;
 
-	uint32_t pending_queued_stores;
 	uint32_t pending_queued_loads;
 
 	const uint32_t max_mem_issued_stores;

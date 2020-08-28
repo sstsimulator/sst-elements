@@ -302,6 +302,7 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 	//////////////////////////////////////////////////////////////////////////////////////
 
 	for( uint32_t i = 0; i < hw_threads; ++i ) {
+		thread_decoders[i]->getOSHandler()->setCoreID( core_id );
 		thread_decoders[i]->getOSHandler()->setHWThread(i);
 		thread_decoders[i]->getOSHandler()->setRegisterFile( register_files[i] );
 		thread_decoders[i]->getOSHandler()->setISATable( retire_isa_tables[i]  );
@@ -822,7 +823,8 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 					delete rob_front;
 				}
 			} else {
-				output->verbose(CALL_INFO, 16, 0, "----> [ROB] - marking front instruction as ROB-Front\n");
+				output->verbose(CALL_INFO, 16, 0, "----> [ROB] - marking front instruction as ROB-Front (code: %s, type: %s)\n",
+					rob_front->getInstCode(), funcTypeToString(rob_front->getInstFuncType()));
 				// make sure instruction is marked at front of ROB since this can
 				// enable instructions which need to be retire-ready to process
 				rob_front->markFrontOfROB();
@@ -1314,4 +1316,7 @@ void VanadisComponent::syscallReturnCallback( uint32_t thr ) {
 	output->verbose(CALL_INFO, 16, 0, "[syscall-return]: syscall on thread %" PRIu32 " (0x%0llx) is completed, return to processing.\n",
 		thr, syscall_ins->getInstructionAddress());
 	syscall_ins->markExecuted();
+
+	// Set back to false ready for the next SYSCALL
+	handlingSysCall = false;
 }

@@ -27,6 +27,9 @@
 // Compare operations
 #include "inst/vcmplt.h"
 #include "inst/vcmplte.h"
+#include "inst/vscmp.h"
+#include "inst/vscmpi.h"
+#include "inst/vbcmpi.h"
 
 // Jumps and PC change instructions
 #include "inst/vjump.h"
@@ -37,9 +40,11 @@
 
 // Load instructions
 #include "inst/vload.h"
+#include "inst/vpartialload.h"
 
 // Store instructions
 #include "inst/vstore.h"
+#include "inst/vpartialstore.h"
 
 // Fence Instructions
 #include "inst/vfence.h"

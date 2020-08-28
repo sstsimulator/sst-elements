@@ -230,15 +230,15 @@ protected:
 	const uint64_t ins_address;
 	const uint32_t hw_thread;
 
-	const uint16_t count_phys_int_reg_in;
-	const uint16_t count_phys_int_reg_out;
-	const uint16_t count_isa_int_reg_in;
-	const uint16_t count_isa_int_reg_out;
+	uint16_t count_phys_int_reg_in;
+	uint16_t count_phys_int_reg_out;
+	uint16_t count_isa_int_reg_in;
+	uint16_t count_isa_int_reg_out;
 
-	const uint16_t count_phys_fp_reg_in;
-	const uint16_t count_phys_fp_reg_out;
-	const uint16_t count_isa_fp_reg_in;
-	const uint16_t count_isa_fp_reg_out;
+	uint16_t count_phys_fp_reg_in;
+	uint16_t count_phys_fp_reg_out;
+	uint16_t count_isa_fp_reg_in;
+	uint16_t count_isa_fp_reg_out;
 
 	uint16_t* phys_int_regs_in;
 	uint16_t* phys_int_regs_out;

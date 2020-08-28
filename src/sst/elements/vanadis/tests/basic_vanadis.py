@@ -11,7 +11,7 @@ v_cpu_0 = sst.Component("v0", "vanadis.VanadisCPU")
 v_cpu_0.addParams({
        "clock" : "1.0GHz",
        "executable" : "./tests/hello-mips", 
-       "max_cycle" : 1000,
+       "max_cycle" : 1700,
        "verbose" : 16,
        "physical_fp_registers" : 96,
        "print_int_reg" : 1
@@ -102,3 +102,5 @@ link_bus_l2cache_link.connect( (cache_bus, "low_network_0", "1ns"), (cpu0_l2cach
 link_l2cache_mem_link = sst.Link("link_l2cache_mem_link")
 link_l2cache_mem_link.connect( (cpu0_l2cache, "low_network_0", "1ns"), (memctrl, "direct_link", "1ns") )
 
+link_core0_os_link = sst.Link("link_core0_os_link")
+link_core0_os_link.connect( (os_hdlr, "os_link", "5ns"), (node_os, "core0", "5ns") )

@@ -28,12 +28,14 @@ public:
 		regFile  = nullptr;
 		isaTable = nullptr;
 		hw_thr   = 0;
+		core_id  = 0;
 	}
 
 	virtual ~VanadisCPUOSHandler() {
 		delete output;
 	}
 
+	void setCoreID( const uint32_t newCoreID ) { core_id = newCoreID; }
 	void setHWThread( const uint32_t newThr ) { hw_thr = newThr; }
 	void setRegisterFile( VanadisRegisterFile* newFile ) { regFile = newFile; }
 	void setISATable( VanadisISATable* newTable ) { isaTable = newTable; }
@@ -48,6 +50,7 @@ public:
 protected:
 	SST::Output* output;
 	std::vector< std::function<void(uint32_t)> > returnCallbacks;
+	uint32_t core_id;
 	uint32_t hw_thr;
 
 	VanadisRegisterFile* regFile;

@@ -35,6 +35,10 @@ public:
 		return new VanadisStoreInstruction( *this );
 	}
 
+	virtual bool isPartialStore() {
+		return false;
+	}
+
 	virtual VanadisFunctionalUnitType getInstFuncType() const {
 		return INST_STORE;
 	}
@@ -53,12 +57,17 @@ public:
 		markExecuted();
 	}
 
-	uint64_t computeStoreAddress( VanadisRegisterFile* reg ) const {
-		return (*((uint64_t*) reg->getIntReg( phys_int_regs_in[0] ))) + offset;
-	}
+	virtual void computeStoreAddress( SST::Output* output, VanadisRegisterFile* reg, uint64_t* store_addr, uint16_t* op_width ) {
+                (*store_addr)  = (*((uint64_t*) reg->getIntReg( phys_int_regs_in[0] ))) + offset;
+		(*op_width)    = store_width;
+        }
 
 	uint16_t getStoreWidth() const {
 		return store_width;
+	}
+
+	virtual uint16_t getRegisterOffset() const {
+		return 0;
 	}
 
 	uint16_t getMemoryAddressRegister() const { return phys_int_regs_in[0]; }

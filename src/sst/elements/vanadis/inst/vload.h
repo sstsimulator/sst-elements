@@ -52,6 +52,7 @@ public:
 
 	bool performSignExtension() const { return signed_extend; }
 
+	virtual bool isPartialLoad() const { return false; }
 	virtual VanadisFunctionalUnitType getInstFuncType() const { return INST_LOAD; }
 	virtual const char* getInstCode() const { return "LOAD"; }
 
@@ -68,11 +69,12 @@ public:
 			phys_int_regs_out[0], phys_int_regs_in[0], offset);
 	}
 
-	uint64_t computeLoadAddress( VanadisRegisterFile* reg ) const {
-		return (*((uint64_t*) reg->getIntReg( phys_int_regs_in[0]))) + offset ;
+	virtual void computeLoadAddress( VanadisRegisterFile* reg, uint64_t* out_addr, uint16_t* width ) {
+		(*out_addr) = (*((uint64_t*) reg->getIntReg( phys_int_regs_in[0]))) + offset ;
+		(*width)    = load_width;
 	}
 
-	uint64_t computeLoadAddress( SST::Output* output, VanadisRegisterFile* regFile ) const {
+	virtual void computeLoadAddress( SST::Output* output, VanadisRegisterFile* regFile, uint64_t* out_addr, uint16_t* width ) {
 		const uint64_t* mem_addr_reg_ptr = (uint64_t*) regFile->getIntReg( phys_int_regs_in[0] );
                 const uint64_t mem_addr_reg_val = (*mem_addr_reg_ptr);
 
@@ -80,13 +82,18 @@ public:
                 output->verbose(CALL_INFO, 16, 0, "[execute-load]: offset           : %" PRIu64 "\n", offset);
                 output->verbose(CALL_INFO, 16, 0, "[execute-load]: (add)            : %" PRIu64 "\n", (mem_addr_reg_val + offset));
 
-		return (*((uint64_t*) regFile->getIntReg( phys_int_regs_in[0]))) + offset ;
+		(*out_addr) = (*((uint64_t*) regFile->getIntReg( phys_int_regs_in[0]))) + offset ;
+		(*width)    = load_width;
 	}
 
-	uint16_t getLoadWidth() const { return load_width; }
+	virtual uint16_t getLoadWidth() const { return load_width; }
 
 	VanadisLoadRegisterType getValueRegisterType() const {
 		return LOAD_INT_REGISTER;
+	}
+
+	virtual uint16_t getRegisterOffset() const {
+		return 0;
 	}
 
 protected:
