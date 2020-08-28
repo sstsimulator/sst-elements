@@ -171,6 +171,24 @@ MemEventBase* MemHierarchyInterface::createMemEvent(SimpleMem::Request *req) con
 
     me->setMemFlags(req->memFlags);
 
+#ifdef __SST_DEBUG_OUTPUT__
+    // These checks are only enabled if sst-core is configured with "--enable-debug"
+    // Check that we did actually complete the initialization during init, really should only check this once but no good place to do it
+    if (!initDone_) {
+        output.fatal(CALL_INFO, -1, "Error: In memHierarcnyInterface (%s), init() was never completed and line address mask was not set.\n", 
+                getName().c_str());
+    }
+
+    // Check that the request doesn't span cache lines
+    Addr lastAddr = me->getAddr() + me->getSize() - 1;
+    lastAddr &= baseAddrMask_;
+    if (lastAddr != me->getBaseAddr()) {
+        output.fatal(CALL_INFO, -1, "Error: In memHierarchy Interface (%s), Request cannot span multiple cache lines! Line mask = %" PRIu64 ". Event is: %s\n", 
+                getName().c_str(), baseAddrMask_, me->getVerboseString().c_str());
+    }
+
+#endif
+
     return me;
 }
 
@@ -222,6 +240,9 @@ SimpleMem::Request* MemHierarchyInterface::processIncoming(MemEventBase *ev){
         } else {
             updateRequest(req, static_cast<MemEvent*>(ev));
         }
+    } else if (cmd == Command::Inv) { /* Invalidation notifications to core (only if enabled in caches) */
+        MemEvent* event = static_cast<MemEvent*>(ev);
+        req = new SimpleMem::Request(SimpleMem::Request::Inv, event->getBaseAddr(), event->getSize());  
     } else {
         output.fatal(CALL_INFO, -1, "(%s interface) Unable to find matching request. Event: %s\n", getName().c_str(), ev->getVerboseString().c_str());
     }
@@ -249,7 +270,7 @@ void MemHierarchyInterface::updateRequest(SimpleMem::Request* req, MemEvent *me)
     default:
         output.fatal(CALL_INFO, -1, "Don't know how to deal with command %s\n", CommandString[(int)me->getCmd()]);
     }
-   // Always update memFlags to faciliate mem->processor communication
+    // Always update memFlags to faciliate mem->processor communication
     req->memFlags = me->getMemFlags();
 
 }
