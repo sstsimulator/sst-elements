@@ -464,7 +464,7 @@ TrivialCPU cpu3 Finished after 1000 issued reads, 1000 returned (471149 clocks)
  n0.l2cache.CustomResp_uncache_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  n0.l2cache.CustomAck_uncache_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  n0.l2cache.NULLCMD_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- n0.l2cache.GetS_recv : Accumulator : Sum.u64 = 1778; SumSQ.u64 = 1778; Count.u64 = 1778; Min.u64 = 1; Max.u64 = 1; 
+ n0.l2cache.GetS_recv : Accumulator : Sum.u64 = 1777; SumSQ.u64 = 1777; Count.u64 = 1777; Min.u64 = 1; Max.u64 = 1; 
  n0.l2cache.GetX_recv : Accumulator : Sum.u64 = 213; SumSQ.u64 = 213; Count.u64 = 213; Min.u64 = 1; Max.u64 = 1; 
  n0.l2cache.GetSX_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  n0.l2cache.FlushLine_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
