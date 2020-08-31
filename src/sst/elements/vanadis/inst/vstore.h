@@ -48,7 +48,7 @@ public:
 	}
 
 	virtual void printToBuffer(char* buffer, size_t buffer_size) {
-		snprintf(buffer, buffer_size, "STORE    %5" PRIu16 " -> memory[%5" PRIu16 " + %" PRIu64 "] (phys: %5" PRIu16 " -> memory[%5" PRIu16 " + %" PRIu64 "])\n",
+		snprintf(buffer, buffer_size, "STORE    %5" PRIu16 " -> memory[%5" PRIu16 " + %" PRIu64 "] (phys: %5" PRIu16 " -> memory[%5" PRIu16 " + %" PRIu64 "])",
 			isa_int_regs_in[1], isa_int_regs_in[0], offset,
 			phys_int_regs_in[1], phys_int_regs_in[0], offset);
         }

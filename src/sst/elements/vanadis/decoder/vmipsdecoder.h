@@ -123,7 +123,7 @@ public:
 		max_decodes_per_cycle      = params.find<uint16_t>("decode_max_ins_per_cycle",  2);
 
 		// MIPS default is 0x7fffffff according to SYS-V manual
-		start_stack_address        = params.find<uint64_t>("stack_start_address", 0x7fffffff);
+		start_stack_address        = params.find<uint64_t>("stack_start_address", 0x7ffffff0);
 
 		// See if we get an entry point the sub-component says we have to use
 		// if not, we will fall back to ELF reading at the core level to work this out
@@ -430,9 +430,19 @@ protected:
 						break;
 
 					case MIPS_SPEC_OP_MASK_DIV:
+						{
+							bundle->addInstruction( new VanadisDivideRemainderInstruction( getNextInsID(), ins_addr,
+								hw_thr, options, MIPS_REG_LO, MIPS_REG_HI, rs, rt, true ) );
+							insertDecodeFault = false;
+						}
 						break;
 
 					case MIPS_SPEC_OP_MASK_DIVU:
+						{
+							bundle->addInstruction( new VanadisDivideRemainderInstruction( getNextInsID(), ins_addr,
+								hw_thr, options, MIPS_REG_LO, MIPS_REG_HI, rs, rt, false ) );
+							insertDecodeFault = false;
+						}
 						break;
 
 					case MIPS_SPEC_OP_MASK_DMULT:
@@ -542,11 +552,17 @@ protected:
 						break;
 
 					case MIPS_SPEC_OP_MASK_SUB:
-						bundle->addInstruction( new VanadisSubInstruction( getNextInsID(), ins_addr, hw_thr, options, rd, rs, rt ) );
-						insertDecodeFault = false;
+						{
+							bundle->addInstruction( new VanadisSubInstruction( getNextInsID(), ins_addr, hw_thr, options, rd, rs, rt, true ) );
+							insertDecodeFault = false;
+						}
 						break;
 
 					case MIPS_SPEC_OP_MASK_SUBU:
+						{
+							bundle->addInstruction( new VanadisSubInstruction( getNextInsID(), ins_addr, hw_thr, options, rd, rs, rt, false ) );
+							insertDecodeFault = false;
+						}
 						break;
 
 					case MIPS_SPEC_OP_MASK_SYSCALL:
@@ -768,7 +784,7 @@ protected:
 				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
 				output->verbose(CALL_INFO, 16, 0, "[decoder/ANDI]: -> %" PRIu16 " <- r2: %" PRIu16 " imm: %" PRId64 "\n",
                                         rt, rs, imm_value_64 );
-				bundle->addInstruction( new VanadisAddImmInstruction( getNextInsID(), ins_addr, hw_thr, options,
+				bundle->addInstruction( new VanadisAndImmInstruction( getNextInsID(), ins_addr, hw_thr, options,
 					rt, rs, imm_value_64) );
 				insertDecodeFault = false;
 			}

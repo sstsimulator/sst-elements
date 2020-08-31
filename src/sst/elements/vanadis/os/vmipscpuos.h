@@ -8,10 +8,12 @@
 #include "os/voscallresp.h"
 #include "os/voscallaccessev.h"
 #include "os/voscallbrk.h"
+#include "os/voscallsta.h"
 #include "os/vosresp.h"
 
-#define VANADIS_SYSCALL_ACCESS 4033
-#define VANADIS_SYSCALL_BRK    4045
+#define VANADIS_SYSCALL_ACCESS           4033
+#define VANADIS_SYSCALL_BRK              4045
+#define VANADIS_SYSCALL_SET_THREAD_AREA  4283
 
 namespace SST {
 namespace Vanadis {
@@ -67,6 +69,16 @@ public:
 				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to brk( value: %" PRIu64 " )\n",
 					newBrk);
 				call_ev = new VanadisSyscallBRKEvent( core_id, hw_thr, newBrk );
+			}
+			break;
+		case VANADIS_SYSCALL_SET_THREAD_AREA:
+			{
+				const uint64_t phys_reg_4 = isaTable->getIntPhysReg(4);
+				const uint64_t thread_area_ptr = *((uint64_t*) regFile->getIntReg( phys_reg_4 ) );
+
+				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to set_thread_area( value: %" PRIu64 " )\n",
+					thread_area_ptr);
+				call_ev = new VanadisSyscallSetThreadAreaEvent( core_id, hw_thr, thread_area_ptr );
 			}
 			break;
 		default:

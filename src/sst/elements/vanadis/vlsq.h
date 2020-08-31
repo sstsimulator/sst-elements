@@ -141,10 +141,13 @@ public:
 		output->verbose(CALL_INFO, 16, 0, "-> Ticking Load/Store Queue Processors...\n");
 		output->verbose(CALL_INFO, 16, 0, "---> LSQ contains: %" PRIu32 " queued loads / %" PRIu32 " queued stores.\n", pending_queued_loads,
 			(uint32_t) store_q->size() );
+		char* inst_print_buffer = new char[256];
 		for( size_t i = 0;i < store_q->size(); ++i) {
-		output->verbose(CALL_INFO, 16, 0, "-----> store [%5" PRIu32 "]: addr: 0x%0llx\n", (uint32_t) i,
-			store_q->peekAt(i)->getAssociatedInstruction()->getInstructionAddress());
+			store_q->peekAt(i)->getAssociatedInstruction()->printToBuffer( inst_print_buffer, 256 );
+			output->verbose(CALL_INFO, 16, 0, "-----> store [%5" PRIu32 "]: addr: 0x%0llx (%s)\n", (uint32_t) i,
+				store_q->peekAt(i)->getAssociatedInstruction()->getInstructionAddress(), inst_print_buffer);
 		}
+		delete[] inst_print_buffer;
 		output->verbose(CALL_INFO, 16, 0, "---> LSQ contains: %" PRIu32 " loads in flight / %" PRIu32 " stores in flight\n", pending_mem_issued_loads, pending_mem_issued_stores );
 		output->verbose(CALL_INFO, 16, 0, "-> Ticking Load Queue Handling...\n");
 		tick_loads(cycle, output);
@@ -171,8 +174,8 @@ public:
 		for( auto next_load = load_q.begin(); next_load != load_q.end(); ) {
 			VanadisLoadInstruction* load_ins = (*next_load)->getAssociatedInstruction();
 
-			output->verbose(CALL_INFO, 16, 0, "-> LSQ inspect load record: executed? %s\n",
-				(load_ins->completedExecution() ? "yes" : "no"));
+			output->verbose(CALL_INFO, 16, 0, "-> LSQ inspect load record: (ins: 0x%0llx) executed? %s\n",
+				load_ins->getInstructionAddress(), (load_ins->completedExecution() ? "yes" : "no"));
 
 			// If instruction has already been issued, we skip it, and will remove it
 			// from the queue later
@@ -278,6 +281,7 @@ public:
 
 						SimpleMem::Request* new_load_req = new SimpleMem::Request( SimpleMem::Request::Read,
 							load_addr, load_width);
+						new_load_req->setInstructionPointer( load_ins->getInstructionAddress() );
 
 						pending_loads.insert( std::pair<SimpleMem::Request::id_t, VanadisLoadRecord*>(new_load_req->id, new VanadisLoadRecord( load_ins )) );
 						memInterface->sendRequest( new_load_req );
@@ -367,6 +371,7 @@ public:
 					SimpleMem::Request* new_store_req = new SimpleMem::Request(
 						SimpleMem::Request::Write,
 						store_address, payload.size() , payload );
+					new_store_req->setInstructionPointer( front_store->getInstructionAddress() );
 
 					output->verbose(CALL_INFO, 16, 0, "---> LSQ -> issuing store to cache, addr=%p / %" PRIu64 ", width=%" PRIu16 " bytes\n", (void*) store_address, store_address, store_width);
 
@@ -406,7 +411,9 @@ public:
 			if( check_ev_load_exists == pending_loads.end() ) {
 				output->verbose(CALL_INFO, 16, 0, "--> Does not match a load entry.\n");
 			} else {
-				output->verbose(CALL_INFO, 16, 0, "--> LSQ match load entry, unpacking payload.\n");
+				output->verbose(CALL_INFO, 16, 0, "--> LSQ match load entry, unpacking payload (load-addr: 0x%0llx).\n",
+					ev->addr);
+
 				VanadisLoadRecord* load_record = check_ev_load_exists->second;
 				VanadisLoadInstruction* load_ins = load_record->getAssociatedInstruction();
 
@@ -428,10 +435,37 @@ public:
 					for( uint16_t i = 0; i < recompute_width; ++i ) {
 						reg_ptr[ reg_offset + i ] = ev->data[i];
 					}
+
+					// if we are not at offset zero then or we are loading the entire width, we need to perform an update to the full register
+					if( (reg_offset > 0) || (recompute_width == load_ins->getLoadWidth()) ) {
+						// if we are loading less than 8 bytes, because otherwise the full data width of the register is set
+						if( load_ins->getLoadWidth() < 8 ) {
+							uint64_t extended_value = 0;
+
+							switch( load_ins->getLoadWidth() ) {
+							case 2:
+								{
+									uint16_t* reg_ptr_16 = (uint16_t*) reg_ptr;
+									extended_value = vanadis_sign_extend( (*reg_ptr_16) );
+								}
+								break;
+
+							case 4:
+								{
+									uint32_t* reg_ptr_32 = (uint32_t*) reg_ptr;
+									extended_value = vanadis_sign_extend( (*reg_ptr_32) );
+								}
+								break;
+							}
+
+							uint64_t* reg_ptr_64 = (uint64_t*) reg_ptr;
+							(*reg_ptr_64) = extended_value;
+						}
+					}
 				} else {
 					output->verbose(CALL_INFO, 16, 0, "-> LSQ matched to load hw_thr = %" PRIu32 ", target_reg = %" PRIu16 ", width=%" PRIu16 "\n",
 						hw_thr, target_reg, load_width);
-					uint64_t new_value = 0;
+					int64_t new_value = 0;
 
 					switch( load_width ) {
 
@@ -461,6 +495,9 @@ public:
 						output->fatal(CALL_INFO, -1, "Error: load-instruction forces a load which is not power-of-2: width=%" PRIu16 "\n", load_width);
 						break;
 					}
+
+					output->verbose(CALL_INFO, 16, 0, "---> LSQ (ins: 0x%0llx) set sign-extended register value for r: %" PRIu16 ", v: %" PRId64 " / 0x%0llx\n",
+						load_ins->getInstructionAddress(), target_reg, new_value, new_value );
 
 					// Set the register value
 					registerFiles->at( hw_thr )->setIntReg( target_reg, new_value );

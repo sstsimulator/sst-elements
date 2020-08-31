@@ -11,6 +11,7 @@ enum VanadisSyscallOp {
 	SYSCALL_OP_UNKNOWN,
 	SYSCALL_OP_ACCESS,
 	SYSCALL_OP_BRK,
+	SYSCALL_OP_SET_THREAD_AREA
 };
 
 class VanadisSyscallEvent : public SST::Event {

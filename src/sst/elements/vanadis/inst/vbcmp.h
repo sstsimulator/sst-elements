@@ -51,16 +51,32 @@ public:
 		}
 	}
 
-	virtual const char* getInstCode() const { return "BCMP"; }
+	virtual const char* getInstCode() const {
+		switch( compareType ) {
+		case REG_COMPARE_EQ:
+			return "BCMP_EQ";
+		case REG_COMPARE_NEQ:
+			return "BCMP_NEQ";
+		case REG_COMPARE_LT:
+			return "BCMP_LT";
+		case REG_COMPARE_LTE:
+			return "BCMP_LTE";
+		case REG_COMPARE_GT:
+			return "BCMP_GT";
+		case REG_COMPARE_GTE:
+			return "BCMP_GTE";
+		}
+	}
 
 	virtual void printToBuffer(char* buffer, size_t buffer_size ) {
-		snprintf( buffer, buffer_size, "BCMP isa-in: %" PRIu16 ", %" PRIu16 " / phys-in: %" PRIu16 ", %" PRIu16 " offset: %" PRId64 "\n",
-			isa_int_regs_in[0], isa_int_regs_in[1], phys_int_regs_in[0], phys_int_regs_in[1], offset);
+		snprintf( buffer, buffer_size, "BCMP (%s) isa-in: %" PRIu16 ", %" PRIu16 " / phys-in: %" PRIu16 ", %" PRIu16 " offset: %" PRId64 "\n",
+			convertCompareTypeToString(compareType), isa_int_regs_in[0], isa_int_regs_in[1], phys_int_regs_in[0], phys_int_regs_in[1], offset);
 	}
 
 	virtual void execute( SST::Output* output, VanadisRegisterFile* regFile ) {
-		output->verbose(CALL_INFO, 16, 0, "Execute: (addr=0x%0llx) BCMP isa-in: %" PRIu16 ", %" PRIu16 " / phys-in: %" PRIu16 ", %" PRIu16 " offset: %" PRId64 "\n",
-			getInstructionAddress(), isa_int_regs_in[0], isa_int_regs_in[1], phys_int_regs_in[0], phys_int_regs_in[1], offset);
+		output->verbose(CALL_INFO, 16, 0, "Execute: (addr=0x%0llx) BCMP (%s) isa-in: %" PRIu16 ", %" PRIu16 " / phys-in: %" PRIu16 ", %" PRIu16 " offset: %" PRId64 "\n",
+			getInstructionAddress(), convertCompareTypeToString(compareType),isa_int_regs_in[0],
+			isa_int_regs_in[1], phys_int_regs_in[0], phys_int_regs_in[1], offset);
 
 		int64_t* reg1_ptr = (int64_t*) regFile->getIntReg( phys_int_regs_in[0] );
 		int64_t* reg2_ptr = (int64_t*) regFile->getIntReg( phys_int_regs_in[1] );

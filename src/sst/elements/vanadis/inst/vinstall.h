@@ -9,9 +9,11 @@
 #include "inst/vsub.h"
 #include "inst/vmul.h"
 #include "inst/vmuli.h"
+#include "inst/vdivmod.h"
 
 // Logical operations
 #include "inst/vand.h"
+#include "inst/vandi.h"
 #include "inst/vor.h"
 #include "inst/vxor.h"
 #include "inst/vxori.h"

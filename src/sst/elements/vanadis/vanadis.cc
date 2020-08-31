@@ -1,5 +1,4 @@
 
-
 #include <sst_config.h>
 #include <sst/core/output.h>
 
@@ -644,6 +643,11 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 					// We need to check the instruction just behind this one (a single delay slot, it must have executed)
 					if( rob[i]->peekAt(1)->completedExecution() ) {
 						output->verbose(CALL_INFO, 8, 0, "ROB ------> delay slot required ans has completed execution.\n");
+
+						if( rob[i]->peekAt(1)->trapsError() ) {
+							output->fatal(CALL_INFO, -1, "Error instruction in delay-slot (0x%0llx) flags error (type: %s)\n",
+								rob[i]->peekAt(1)->getInstructionAddress(), rob[i]->peekAt(1)->getInstCode());
+						}
 					} else {
 						if( rob[i]->peekAt(1)->getInstFuncType() == INST_LOAD ||
 							rob[i]->peekAt(1)->getInstFuncType() == INST_STORE ) {
