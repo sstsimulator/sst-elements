@@ -43,7 +43,14 @@ public:
 		}
 
 		virtual uint64_t calculateAddress( SST::Output* output, VanadisRegisterFile* reg_file, const uint64_t current_ip ) {
-			return *((const uint64_t*) reg_file->getIntReg( phys_int_regs_in[0] ));
+			uint64_t jump_to_reg_ptr = *((const uint64_t*) reg_file->getIntReg( phys_int_regs_in[0] ));
+			const uint64_t jump_to_addr    = ( 0 == jump_to_reg_ptr ) ? getInstructionAddress() + 8 : jump_to_reg_ptr;
+
+			if( 0 == jump_to_reg_ptr ) {
+				output->verbose(CALL_INFO, 16, 0, "[jump]: jump to virtual address zero detected, this is usually bad so overriding.\n");
+			}
+
+			return jump_to_addr;
 		}
 
 		virtual void execute( SST::Output* output, VanadisRegisterFile* regFile ) {

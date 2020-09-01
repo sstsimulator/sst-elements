@@ -19,7 +19,7 @@ public:
 		const uint16_t load_bytes,
 		const bool extend_sign,
 		const bool isLeftLoad
-		) : VanadisLoadInstruction(id, addr, hw_thr, isa_opts, memAddrReg, offst, tgtReg, load_bytes, extend_sign),
+		) : VanadisLoadInstruction(id, addr, hw_thr, isa_opts, memAddrReg, offst, tgtReg, load_bytes, extend_sign, MEM_TRANSACTION_NONE),
 			is_load_lower(isLeftLoad) {
 
 		// We need an extra in register here

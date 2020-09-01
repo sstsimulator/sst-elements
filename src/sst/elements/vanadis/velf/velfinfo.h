@@ -236,6 +236,7 @@ public:
 	void setImageOffset( const uint64_t new_off ) { imgOffset = new_off; }
 	void setImageLength( const uint64_t new_len ) { imgDataLen = new_len; }
 	void setAlignment( const uint64_t new_align ) { alignment = new_align; }
+	void setID( const uint64_t new_id ) { id = new_id; }
 
 	VanadisELFSectionHeaderType getSectionType() const { return sec_type; }
 
@@ -247,13 +248,14 @@ public:
 	bool containsSHTIndex() const { return (sec_flags & 0x40 ) != 0; }
 	bool containsTLSData() const { return (sec_flags & 0x400 ) != 0; }
 
+	uint64_t getID() const { return id; }
 	uint64_t getVirtualMemoryStart() const { return virtMemAddrStart; }
 	uint64_t getImageOffset() const { return imgOffset; }
 	uint64_t getImageLength() const { return imgDataLen; }
 	uint64_t getAlignment() const { return alignment; }
 
 	void print( SST::Output* output, uint64_t index ) {
-		output->verbose(CALL_INFO, 32, 0, ">> Section Entry %" PRIu64 "\n", index);
+		output->verbose(CALL_INFO, 32, 0, ">> Section Entry %" PRIu64 " (id: %" PRIu64 ")\n", index, id);
 		output->verbose(CALL_INFO, 32, 0, "---> Header Type:                 %s\n",
 			getELFSectionHeaderTypeString( sec_type ));
 		output->verbose(CALL_INFO, 32, 0, "---> Section Flags:               %" PRIu64 " / %p\n",
@@ -283,8 +285,10 @@ private:
 		imgOffset = 0;
 		imgDataLen = 0;
 		alignment = 0;
+		id = 0;
 	}
 
+	uint64_t id;
 	VanadisELFSectionHeaderType sec_type;
 	uint64_t sec_flags;
 	uint64_t virtMemAddrStart;
@@ -683,6 +687,7 @@ VanadisELFInfo* readBinaryELFInfo( SST::Output* output, const char* path ) {
 	for( uint32_t i = 0; i < elf_info->getSectionHeaderEntryCount(); ++i ) {
 		output->verbose(CALL_INFO, 4, 0, "Reading Section Header %" PRIu32 "...\n", i);
 		VanadisELFProgramSectionEntry* new_sec = new VanadisELFProgramSectionEntry();
+		new_sec->setID( i );
 
 		// Offset for section name
 		fread( &tmp_4byte, 4, 1, bin_file );

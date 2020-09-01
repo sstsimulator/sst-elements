@@ -1142,9 +1142,13 @@ void VanadisComponent::init(unsigned int phase) {
 						output->verbose(CALL_INFO, 2, 0, ">>>> Placing at virtual address: %p\n",
 							(void*) next_prog_hdr->getVirtualMemoryStart());
 
+						// Note - padding automatically zeros because we perform a resize with parameter 0 given
+						const uint64_t padding = 4096 - ((next_prog_hdr->getVirtualMemoryStart() + next_prog_hdr->getHeaderImageLength()) % 4096);
+
 						// Do we have enough space in the memory image, if not, extend and zero
 						if( initial_mem_contents.size() < ( next_prog_hdr->getVirtualMemoryStart() + next_prog_hdr->getHeaderImageLength() )) {
-							initial_mem_contents.resize( ( next_prog_hdr->getVirtualMemoryStart() + next_prog_hdr->getHeaderImageLength() ), 0);
+							initial_mem_contents.resize( ( next_prog_hdr->getVirtualMemoryStart() + next_prog_hdr->getHeaderImageLength()
+								+ padding), 0);
 						}
 
 						fseek( exec_file, next_prog_hdr->getImageOffset(), SEEK_SET );
@@ -1159,13 +1163,16 @@ void VanadisComponent::init(unsigned int phase) {
 					if( (SECTION_HEADER_PROG_DATA == next_sec->getSectionType()) ||
 						(SECTION_HEADER_BSS == next_sec->getSectionType()) ) {
 
-						output->verbose(CALL_INFO, 2, 0, ">> Loading Section from executable at: %p, len=%" PRIu64 "...\n",
-							(void*) next_sec->getVirtualMemoryStart(), next_sec->getImageLength());
+						output->verbose(CALL_INFO, 2, 0, ">> Loading Section (%" PRIu64 ") from executable at: 0x%0llx, len=%" PRIu64 "...\n",
+							next_sec->getID(), next_sec->getVirtualMemoryStart(), next_sec->getImageLength());
+
+						const uint64_t padding = 4096 - ((next_sec->getVirtualMemoryStart() + next_sec->getImageLength()) % 4096);
 
 						// Executable data, let's load it in
 						if( initial_mem_contents.size() < (next_sec->getVirtualMemoryStart() + next_sec->getImageLength()) ) {
 							size_t size_now = initial_mem_contents.size();
-							initial_mem_contents.resize( next_sec->getVirtualMemoryStart() + next_sec->getImageLength(), 0 );
+							initial_mem_contents.resize( next_sec->getVirtualMemoryStart() + next_sec->getImageLength() +
+								padding, 0 );
 						}
 
 						// Find the section and read it all in
@@ -1180,11 +1187,6 @@ void VanadisComponent::init(unsigned int phase) {
 				output->verbose(CALL_INFO, 2, 0, ">> Writing memory contents (%" PRIu64 " bytes at index 0)\n",
 					(uint64_t) initial_mem_contents.size());
 
-/*
-				for( size_t i = 0x400580; i < (0x400580 + 0x8); i++ ) {
-					printf("i=%p = %x\n", (void*) i, initial_mem_contents[i]);
-				}
-*/
 				SimpleMem::Request* writeExe = new SimpleMem::Request(SimpleMem::Request::Write,
 					0, initial_mem_contents.size(), initial_mem_contents);
 				memDataInterface->sendInitData( writeExe );

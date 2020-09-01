@@ -87,6 +87,7 @@ public:
 
 		store_q = new VanadisCircularQueue<VanadisStoreRecord*>(lsq_store_entries);
 		max_mem_address_mask = UINT64_MAX;
+		processingLLSC = false;
 	}
 
 	~VanadisLoadStoreQueue() {
@@ -283,6 +284,22 @@ public:
 							load_addr, load_width);
 						new_load_req->setInstructionPointer( load_ins->getInstructionAddress() );
 
+						switch( load_ins->getTransactionType() ) {
+						case MEM_TRANSACTION_NONE:
+							output->verbose(CALL_INFO, 16, 0, "---> [memory-transaction]: standard load\n");
+							break;
+						case MEM_TRANSACTION_LLSC_LOAD:
+							output->verbose(CALL_INFO, 16, 0, "---> [memory-transaction]: marked for LLSC with load transaction type\n");
+							new_load_req->flags |= SST::Interfaces::SimpleMem::Request::F_LLSC;
+							break;
+						case MEM_TRANSACTION_LLSC_STORE:
+							output->fatal(CALL_INFO, -1, "Error - logical error, LOAD instruction is marked with an LLSC STORE transaction class.\n");
+						case MEM_TRANSACTION_LOCK:
+							output->verbose(CALL_INFO, 16, 0, "---> [memory-transaction]: marked for LOCK load transaction\n");
+							new_load_req->flags |= SST::Interfaces::SimpleMem::Request::F_LOCKED;
+							break;
+						}
+
 						pending_loads.insert( std::pair<SimpleMem::Request::id_t, VanadisLoadRecord*>(new_load_req->id, new VanadisLoadRecord( load_ins )) );
 						memInterface->sendRequest( new_load_req );
 
@@ -314,6 +331,11 @@ public:
 	int tick_stores( const uint64_t cycle, SST::Output* output ) {
 		output->verbose(CALL_INFO, 16, 0, "---> LSQ -> Ticking Store Processing (store_q = %" PRIu32 " items)\n", (uint32_t) store_q->size() );
 		int tick_rc = 1;
+
+		if( processingLLSC ) {
+			output->verbose(CALL_INFO, 16, 0, "---> LSQ has a pending LLSC store operation, will not process any other stores.\n");
+			return tick_rc;
+		}
 
 		if( ! store_q->empty() ) {
 			VanadisStoreRecord* front_record = store_q->peek();
@@ -373,6 +395,24 @@ public:
 						store_address, payload.size() , payload );
 					new_store_req->setInstructionPointer( front_store->getInstructionAddress() );
 
+					switch( front_store->getTransactionType() ) {
+                                                case MEM_TRANSACTION_NONE:
+                                                        output->verbose(CALL_INFO, 16, 0, "---> [memory-transaction]: standard store\n");
+                                                        break;
+                                                case MEM_TRANSACTION_LLSC_LOAD:
+							output->fatal(CALL_INFO, -1, "---> [memory-transaction]: marked for LLSC with LOAD transaction, logical error.\n");
+                                                        break;
+                                                case MEM_TRANSACTION_LLSC_STORE:
+							output->verbose(CALL_INFO, 16, 0, "---> [memory-transaction]: marked for LLSC-STORE transaction\n");
+							new_store_req->flags |= SST::Interfaces::SimpleMem::Request::F_LLSC;
+							processingLLSC = true;
+							break;
+                                                case MEM_TRANSACTION_LOCK:
+                                                        output->verbose(CALL_INFO, 16, 0, "---> [memory-transaction]: marked for LOCK store transaction\n");
+                                                        new_store_req->flags |= SST::Interfaces::SimpleMem::Request::F_LOCKED;
+                                             	break;
+                                        }
+
 					output->verbose(CALL_INFO, 16, 0, "---> LSQ -> issuing store to cache, addr=%p / %" PRIu64 ", width=%" PRIu16 " bytes\n", (void*) store_address, store_address, store_width);
 
 					memInterface->sendRequest( new_store_req );
@@ -380,18 +420,20 @@ public:
 
 					pending_mem_issued_stores++;
 
-					// Mark the instruction as executed and clear it from our queue
-					front_store->markExecuted();
-					store_q->pop();
+					if( ! processingLLSC ) {
+						// Mark the instruction as executed and clear it from our queue
+						front_store->markExecuted();
+						store_q->pop();
 
-					// delete the record, but not the instruction
-					// the main core ROB engine will do that for us
-					delete front_record;
+						// delete the record, but not the instruction
+						// the main core ROB engine will do that for us
+						delete front_record;
 
-					// Return code set to zero indicates we processed something
-					// and want additional tick_store calls if we are allowed them
-					// during this cycle.
-					tick_rc = 0;
+						// Return code set to zero indicates we processed something
+						// and want additional tick_store calls if we are allowed them
+						// during this cycle.
+						tick_rc = 0;
+					}
 				}
 			}
 		} else {
@@ -511,7 +553,28 @@ public:
 			}
 		} else {
 			output->verbose(CALL_INFO, 16, 0, "-> LSQ match store entry, cleaning entry list.\n");
+			output->verbose(CALL_INFO, 16, 0, "---> ev-null? %s\n", nullptr == ev ? "yes" : "no");
+			output->verbose(CALL_INFO, 16, 0, "---> response flags: 0x%0llx\n", (uint64_t) ev->flags);
 
+			// Check to see if this is a LLSC response event
+			if( (ev->flags & SST::Interfaces::SimpleMem::Request::F_LLSC_RESP)  != 0 ) {
+				if( store_q->empty() ) {
+					output->fatal(CALL_INFO, -1, "Error - received an LLSC response event, but store queue is empty\n");
+				} else {
+					VanadisStoreRecord* front_record = store_q->pop();
+					VanadisStoreInstruction* front_store = front_record->getAssociatedInstruction();
+
+					if( front_store->getTransactionType() != MEM_TRANSACTION_LLSC_STORE ) {
+						output->fatal(CALL_INFO, -1, "Error - received an LLSC response event, but store queue front is not an LLSC transaction.\n");
+					} else {
+						output->verbose(CALL_INFO, 16, 0, "---> LSQ LLSC-STORE handled for ins: 0x%0llx, marked executed and LLSC/LSQ cleared for resuming operation\n",
+							front_store->getInstructionAddress());
+						front_store->markExecuted();
+					}
+				}
+			}
+
+			processingLLSC = false;
 			// Found in the Pending Store List
 			pending_stores.erase( check_ev_exists );
 			pending_mem_issued_stores--;
@@ -534,7 +597,7 @@ public:
 			if( (*load_q_itr)->getAssociatedInstruction()->getHWThread() == thr ) {
 				delete (*load_q_itr);
 				load_q_itr = load_q.erase( load_q_itr );
-				pending_queued_loads--;				
+				pending_queued_loads--;
 			} else {
 				load_q_itr++;
 			}
@@ -583,6 +646,8 @@ protected:
 
 	std::set<SimpleMem::Request::id_t> pending_stores;
 	std::map<SimpleMem::Request::id_t, VanadisLoadRecord*> pending_loads;
+
+	bool processingLLSC;
 };
 
 }

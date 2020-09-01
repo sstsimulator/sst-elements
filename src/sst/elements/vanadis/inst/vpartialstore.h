@@ -20,7 +20,7 @@ public:
 		const uint16_t valueReg,
 		const uint16_t store_bytes,
 		const bool isLeftStore) :
-		VanadisStoreInstruction(id, addr, hw_thr, isa_opts, memoryAddr, offst, valueReg, store_bytes),
+		VanadisStoreInstruction(id, addr, hw_thr, isa_opts, memoryAddr, offst, valueReg, store_bytes, MEM_TRANSACTION_NONE),
 			is_left_store(isLeftStore) {
 
 		register_offset = 0;

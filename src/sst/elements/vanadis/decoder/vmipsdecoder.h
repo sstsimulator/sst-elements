@@ -20,6 +20,8 @@
 #define MIPS_RT_MASK              0x1F0000
 #define MIPS_RD_MASK              0xF800
 #define MIPS_ADDR_MASK            0x7FFFFFF
+#define MIPS_J_ADDR_MASK          0x3FFFFFF
+#define MIPS_J_UPPER_MASK         0xF0000000
 #define MIPS_IMM_MASK             0xFFFF
 #define MIPS_SHFT_MASK            0x7C0
 #define MIPS_FUNC_MASK       	  0x3F
@@ -35,10 +37,12 @@
 #define MIPS_SPEC_OP_MASK_BGEZAL  0x110000
 #define MIPS_SPEC_OP_MASK_LUI     0x3C000000
 #define MIPS_SPEC_OP_MASK_ADDIU   0x24000000
+#define MIPS_SPEC_OP_MASK_LL      0xC0000000
 #define MIPS_SPEC_OP_MASK_LW      0x8C000000
 #define MIPS_SPEC_OP_MASK_LWL     0x88000000
 #define MIPS_SPEC_OP_MASK_LWR     0x98000000
 #define MIPS_SPEC_OP_MASK_LHU     0x94000000
+#define MIPS_SPEC_OP_MASK_SC      0xE0000000
 #define MIPS_SPEC_OP_MASK_SW      0xAC000000
 #define MIPS_SPEC_OP_MASK_SWL     0xA8000000
 #define MIPS_SPEC_OP_MASK_SWR     0xB8000000
@@ -47,6 +51,7 @@
 #define MIPS_SPEC_OP_MASK_BLEZ    0x18000000
 #define MIPS_SPEC_OP_MASK_SLTI    0x28000000
 #define MIPS_SPEC_OP_MASK_SLTIU   0x2C000000
+#define MIPS_SPEC_OP_MASK_J       0x8000000
 
 #define MIPS_SPEC_OP_MASK_BLTZ    0x0
 #define MIPS_SPEC_OP_MASK_BREAK   0x0D
@@ -643,7 +648,18 @@ protected:
 				output->verbose(CALL_INFO, 16, 0, "[decoder/LW]: -> reg: %" PRIu16 " <- base: %" PRIu16 " + offset=%" PRId64 "\n",
 					rt, rs, imm_value_64);
 				bundle->addInstruction( new VanadisLoadInstruction( getNextInsID(), ins_addr, hw_thr, options, rs, imm_value_64,
-					rt, 4, true) );
+					rt, 4, true, MEM_TRANSACTION_NONE) );
+				insertDecodeFault = false;
+			}
+			break;
+
+		case MIPS_SPEC_OP_MASK_LL:
+			{
+				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
+				output->verbose(CALL_INFO, 16, 0, "[decoder/LL]: -> reg: %" PRIu16 " <- base: %" PRIu16 " + offset=%" PRId64 "\n",
+					rt, rs, imm_value_64);
+				bundle->addInstruction( new VanadisLoadInstruction( getNextInsID(), ins_addr, hw_thr, options, rs, imm_value_64,
+					rt, 4, true, MEM_TRANSACTION_LLSC_LOAD) );
 				insertDecodeFault = false;
 			}
 			break;
@@ -676,7 +692,18 @@ protected:
 				output->verbose(CALL_INFO, 16, 0, "[decoder/LHU]: -> reg: %" PRIu16 " <- base: %" PRIu16 " + offset=%" PRId64 "\n",
 					rt, rs, imm_value_64);
 				bundle->addInstruction( new VanadisLoadInstruction( getNextInsID(), ins_addr, hw_thr, options, rs, imm_value_64,
-					rt, 2, false) );
+					rt, 2, false, MEM_TRANSACTION_NONE) );
+				insertDecodeFault = false;
+			}
+			break;
+
+		case MIPS_SPEC_OP_MASK_SC:
+			{
+				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
+				output->verbose(CALL_INFO, 16, 0, "[decoder/SC]: -> reg: %" PRIu16 " -> base: %" PRIu16 " + offset=%" PRId64 "\n",
+					rt, rs, imm_value_64);
+				bundle->addInstruction( new VanadisStoreInstruction( getNextInsID(), ins_addr, hw_thr, options, rs, imm_value_64,
+					rt, 4, MEM_TRANSACTION_LLSC_STORE) );
 				insertDecodeFault = false;
 			}
 			break;
@@ -687,7 +714,7 @@ protected:
 				output->verbose(CALL_INFO, 16, 0, "[decoder/SW]: -> reg: %" PRIu16 " -> base: %" PRIu16 " + offset=%" PRId64 "\n",
 					rt, rs, imm_value_64);
 				bundle->addInstruction( new VanadisStoreInstruction( getNextInsID(), ins_addr, hw_thr, options, rs, imm_value_64,
-					rt, 4) );
+					rt, 4, MEM_TRANSACTION_NONE) );
 				insertDecodeFault = false;
 			}
 			break;
@@ -789,6 +816,24 @@ protected:
 				insertDecodeFault = false;
 			}
 			break;
+
+		case MIPS_SPEC_OP_MASK_J:
+			{
+				const uint32_t j_addr_index = (next_ins & MIPS_J_ADDR_MASK) << 2;
+				const uint32_t upper_bits   = ((ins_addr + 4) & MIPS_J_UPPER_MASK);
+
+				uint64_t jump_to = 0;
+				jump_to = jump_to + (uint64_t) j_addr_index;
+				jump_to = jump_to + (uint64_t) upper_bits;
+
+				output->verbose(CALL_INFO, 16, 0, "[decoder/J]: -> jump-to: %" PRIu64 " / 0x%0llx\n",
+					jump_to, jump_to);
+
+                                bundle->addInstruction( new VanadisJumpInstruction( getNextInsID(), ins_addr, hw_thr, options, jump_to, VANADIS_SINGLE_DELAY_SLOT ) );
+				insertDecodeFault = false;
+			}
+			break;
+
 		default:
 			break;
 		}

@@ -2,6 +2,7 @@
 #ifndef _H_VANADIS_STORE
 #define _H_VANADIS_STORE
 
+#include "inst/vmemflagtype.h"
 #include "inst/vinst.h"
 
 namespace SST {
@@ -23,9 +24,10 @@ public:
 		const uint16_t memoryAddr,
 		const uint64_t offst,
 		const uint16_t valueReg,
-		const uint16_t store_bytes) :
+		const uint16_t store_bytes,
+		VanadisMemoryTransaction accessT) :
 		VanadisInstruction(id, addr, hw_thr, isa_opts, 2, 0, 2, 0, 0, 0, 0, 0),
-		store_width(store_bytes), offset(offst) {
+		store_width(store_bytes), offset(offst), memAccessType(accessT) {
 
 		isa_int_regs_in[0] = memoryAddr;
 		isa_int_regs_in[1] = valueReg;
@@ -39,22 +41,36 @@ public:
 		return false;
 	}
 
+	virtual VanadisMemoryTransaction getTransactionType() const {
+		return memAccessType;
+	}
+
 	virtual VanadisFunctionalUnitType getInstFuncType() const {
 		return INST_STORE;
 	}
 
 	virtual const char* getInstCode() const {
-		return "STORE";
+		switch( memAccessType ) {
+		case MEM_TRANSACTION_LLSC_STORE:
+			return "LLSC_STORE";
+		case MEM_TRANSACTION_LOCK:
+			return "LOCK_STORE";
+		case MEM_TRANSACTION_NONE:
+		default:
+			return "STORE";
+		}
 	}
 
 	virtual void printToBuffer(char* buffer, size_t buffer_size) {
-		snprintf(buffer, buffer_size, "STORE    %5" PRIu16 " -> memory[%5" PRIu16 " + %" PRIu64 "] (phys: %5" PRIu16 " -> memory[%5" PRIu16 " + %" PRIu64 "])",
-			isa_int_regs_in[1], isa_int_regs_in[0], offset,
+		snprintf(buffer, buffer_size, "STORE (%s)   %5" PRIu16 " -> memory[%5" PRIu16 " + %" PRIu64 "] (phys: %5" PRIu16 " -> memory[%5" PRIu16 " + %" PRIu64 "])",
+			getTransactionTypeString(memAccessType), isa_int_regs_in[1], isa_int_regs_in[0], offset,
 			phys_int_regs_in[1], phys_int_regs_in[0], offset);
         }
 
 	virtual void execute( SST::Output* output, VanadisRegisterFile* regFile ) {
-		markExecuted();
+		if( memAccessType != MEM_TRANSACTION_LLSC_STORE ) {
+			markExecuted();
+		}
 	}
 
 	virtual void computeStoreAddress( SST::Output* output, VanadisRegisterFile* reg, uint64_t* store_addr, uint16_t* op_width ) {
@@ -77,6 +93,7 @@ public:
 protected:
 	const uint64_t offset;
 	const uint16_t store_width;
+	VanadisMemoryTransaction memAccessType;
 
 };
 
