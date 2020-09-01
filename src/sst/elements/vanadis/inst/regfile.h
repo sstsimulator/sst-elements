@@ -44,13 +44,49 @@ public:
 	const VanadisDecoderOptions* getDecoderOptions() const {
 		return decoder_opts;
 	}
- 
+
 	char* getIntReg( const uint16_t reg ) {
 		return int_reg_storage + (8 * reg);
 	}
 
 	char* getFPReg( const uint16_t reg ) {
 		return fp_reg_storage + (8 * reg);
+	}
+
+	void getIntReg( const uint16_t reg, uint64_t* val ) {
+		if( reg != decoder_opts->getRegisterIgnoreWrites() ) {
+			uint64_t* reg_ptr = (uint64_t*) int_reg_storage;
+			*val = reg_ptr[reg];
+		} else {
+			*val = 0;
+		}
+	}
+
+	void getIntReg( const uint16_t reg, int64_t* val ) {
+		if( reg != decoder_opts->getRegisterIgnoreWrites() ) {
+			int64_t* reg_ptr = (int64_t*) int_reg_storage;
+			*val = reg_ptr[reg];
+		} else {
+			*val = 0;
+		}
+	}
+
+	void getIntReg( const uint16_t reg, uint32_t* val ) {
+		if( reg != decoder_opts->getRegisterIgnoreWrites() ) {
+			uint32_t* reg_ptr = (uint32_t*) (int_reg_storage + (8 * reg));
+			*val = reg_ptr[reg];
+		} else {
+			*val = 0;
+		}
+	}
+
+	void getIntReg( const uint16_t reg, int32_t* val ) {
+		if( reg != decoder_opts->getRegisterIgnoreWrites() ) {
+			int32_t* reg_ptr = (int32_t*) (int_reg_storage + (8 * reg));
+			*val = reg_ptr[reg];
+		} else {
+			*val = 0;
+		}
 	}
 
 	void setIntReg( const uint16_t reg, const uint64_t val ) {

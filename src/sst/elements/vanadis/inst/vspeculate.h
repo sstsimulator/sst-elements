@@ -55,6 +55,8 @@ public:
 		}
 
 	virtual ~VanadisSpeculatedInstruction() {}
+
+/*
 	VanadisSpeculatedInstruction( const VanadisSpeculatedInstruction& copy_me ) :
 		VanadisInstruction(copy_me) {
 		spec_dir = copy_me.spec_dir;
@@ -62,6 +64,7 @@ public:
 		delayType = copy_me.delayType;
 		speculatedAddress = copy_me.speculatedAddress;
 	}
+*/
 
 	virtual VanadisBranchDirection getSpeculatedDirection() const { return spec_dir; }
 	virtual void setSpeculatedDirection( const VanadisBranchDirection dir ) { spec_dir = dir; }

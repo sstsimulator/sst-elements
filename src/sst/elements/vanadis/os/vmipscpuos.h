@@ -14,6 +14,7 @@
 #define VANADIS_SYSCALL_ACCESS           4033
 #define VANADIS_SYSCALL_BRK              4045
 #define VANADIS_SYSCALL_SET_THREAD_AREA  4283
+#define VANADIS_SYSCALL_RM_INOTIFY       4286
 
 namespace SST {
 namespace Vanadis {
@@ -47,11 +48,14 @@ public:
 	virtual void handleSysCall( VanadisSysCallInstruction* syscallIns ) {
 		output->verbose(CALL_INFO, 8, 0, "System Call (syscall-ins: 0x%0llx)\n", syscallIns->getInstructionAddress() );
 
+		const uint32_t hw_thr = syscallIns->getHWThread();
+
 		// MIPS puts codes in GPR r2
 		const uint16_t os_code_phys_reg = isaTable->getIntPhysReg(2);
 		uint64_t os_code = *((uint64_t*) regFile->getIntReg( os_code_phys_reg ) );
 
-		output->verbose(CALL_INFO, 8, 0, "--> [syscall-handler] call-code: %" PRIu64 "\n", os_code);
+		output->verbose(CALL_INFO, 8, 0, "--> [SYSCALL-handler] syscall-ins: 0x%0llx / call-code: %" PRIu64 "\n",
+			syscallIns->getInstructionAddress(), os_code);
 		VanadisSyscallEvent* call_ev = nullptr;
 
 		switch(os_code) {
@@ -81,6 +85,18 @@ public:
 				call_ev = new VanadisSyscallSetThreadAreaEvent( core_id, hw_thr, thread_area_ptr );
 			}
 			break;
+		case VANADIS_SYSCALL_RM_INOTIFY:
+			{
+				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to inotify_rm_watch(), by-passing and removing.\n");
+				const uint16_t rc_reg = isaTable->getIntPhysReg(7);
+				regFile->setIntReg( rc_reg, (uint64_t) 0 );
+
+				for( int i = 0; i < returnCallbacks.size(); ++i ) {
+		                        returnCallbacks[i](hw_thr);
+                		}
+			}
+			break;
+
 		default:
 			output->fatal(CALL_INFO, -1, "[syscall-handler] Error: unknown code %" PRIu64 "\n", os_code);
 			break;

@@ -73,20 +73,26 @@ public:
 	}
 
 	virtual void computeLoadAddress( VanadisRegisterFile* reg, uint64_t* out_addr, uint16_t* width ) {
-		(*out_addr) = (*((uint64_t*) reg->getIntReg( phys_int_regs_in[0]))) + offset ;
+		uint64_t tmp = 0;
+		reg->getIntReg( phys_int_regs_in[0], &tmp );
+
+		(*out_addr) = (tmp + offset);
 		(*width)    = load_width;
 	}
 
 	virtual void computeLoadAddress( SST::Output* output, VanadisRegisterFile* regFile, uint64_t* out_addr, uint16_t* width ) {
-		const uint64_t* mem_addr_reg_ptr = (uint64_t*) regFile->getIntReg( phys_int_regs_in[0] );
-                const uint64_t mem_addr_reg_val = (*mem_addr_reg_ptr);
+		uint64_t mem_addr_reg_val = 0;
+		regFile->getIntReg( phys_int_regs_in[0], &mem_addr_reg_val );
 
 		output->verbose(CALL_INFO, 16, 0, "[execute-load]: transaction-type:  %s\n", getTransactionTypeString( memAccessType ) );
                 output->verbose(CALL_INFO, 16, 0, "[execute-load]: reg[%5" PRIu16 "]:       %" PRIu64 "\n", phys_int_regs_in[0], mem_addr_reg_val);
                 output->verbose(CALL_INFO, 16, 0, "[execute-load]: offset           : %" PRIu64 "\n", offset);
                 output->verbose(CALL_INFO, 16, 0, "[execute-load]: (add)            : %" PRIu64 "\n", (mem_addr_reg_val + offset));
 
-		(*out_addr) = (*((uint64_t*) regFile->getIntReg( phys_int_regs_in[0]))) + offset ;
+		uint64_t tmp_val = 0;
+		regFile->getIntReg( phys_int_regs_in[0], &tmp_val );
+
+		(*out_addr) = (tmp_val + offset);
 		(*width)    = load_width;
 	}
 

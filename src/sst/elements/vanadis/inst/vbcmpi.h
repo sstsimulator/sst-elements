@@ -59,46 +59,47 @@ public:
 		output->verbose(CALL_INFO, 16, 0, "Execute: (addr=0x%0llx) BCMPI isa-in: %" PRIu16 " / phys-in: %" PRIu16 " / imm: %" PRId64 " / offset: %" PRId64 "\n",
 			getInstructionAddress(), isa_int_regs_in[0], phys_int_regs_in[0], imm_value, offset );
 
-		int64_t* reg1_ptr = (int64_t*) regFile->getIntReg( phys_int_regs_in[0] );
+		int64_t reg1_ptr = 0;
+		regFile->getIntReg( phys_int_regs_in[0], &reg1_ptr);
 
-		output->verbose(CALL_INFO, 16, 0, "---> reg-left: %" PRId64 " reg-right: %" PRId64 "\n", (*reg1_ptr), imm_value );
+		output->verbose(CALL_INFO, 16, 0, "---> reg-left: %" PRId64 " reg-right: %" PRId64 "\n", (reg1_ptr), imm_value );
 
 		bool compare_result = false;
 
 		switch( compareType ) {
 		case REG_COMPARE_EQ:
 			{
-				compare_result = (*reg1_ptr) == imm_value;
+				compare_result = (reg1_ptr) == imm_value;
 				output->verbose(CALL_INFO, 16, 0, "-----> compare: equal     / result: %s\n", (compare_result ? "true" : "false") );
 			}
 			break;
 		case REG_COMPARE_NEQ:
 			{
-				compare_result = (*reg1_ptr) != imm_value;
+				compare_result = (reg1_ptr) != imm_value;
 				output->verbose(CALL_INFO, 16, 0, "-----> compare: not-equal / result: %s\n", (compare_result ? "true" : "false") );
 			}
 			break;
 		case REG_COMPARE_LT:
 			{
-				compare_result = (*reg1_ptr) < imm_value;
+				compare_result = (reg1_ptr) < imm_value;
 				output->verbose(CALL_INFO, 16, 0, "-----> compare: less-than / result: %s\n", (compare_result ? "true" : "false") );
 			}
 			break;
 		case REG_COMPARE_LTE:
 			{
-				compare_result = (*reg1_ptr) <= imm_value;
+				compare_result = (reg1_ptr) <= imm_value;
 				output->verbose(CALL_INFO, 16, 0, "-----> compare: less-than-eq / result: %s\n", (compare_result ? "true" : "false") );
 			}
 			break;
 		case REG_COMPARE_GT:
 			{
-				compare_result = (*reg1_ptr) > imm_value;
+				compare_result = (reg1_ptr) > imm_value;
 				output->verbose(CALL_INFO, 16, 0, "-----> compare: greater-than / result: %s\n", (compare_result ? "true" : "false") );
 			}
 			break;
 		case REG_COMPARE_GTE:
 			{
-				compare_result = (*reg1_ptr) >= imm_value;
+				compare_result = (reg1_ptr) >= imm_value;
 				output->verbose(CALL_INFO, 16, 0, "-----> compare: greater-than-eq / result: %s\n", (compare_result ? "true" : "false") );
 			}
 			break;

@@ -245,7 +245,9 @@ public:
 							output->verbose(CALL_INFO, 16, 0, "-> LSQ compare -> load can be forwarded from associated store, process load from existing register contents...\n");
 							// We can forward result from register back to load
 							VanadisRegisterFile* reg_file = registerFiles->at( load_ins->getHWThread() );
-							const uint64_t store_value = (*((uint64_t*) reg_file->getIntReg(check_store_ins->getPhysIntRegIn()[1]) ));
+
+							uint64_t store_value = 0;
+							reg_file->getIntReg( check_store_ins->getPhysIntRegIn()[1], &store_value );
 
 							reg_file->setIntReg(
 								load_ins->getPhysIntRegOut()[0],
@@ -556,25 +558,42 @@ public:
 			output->verbose(CALL_INFO, 16, 0, "---> ev-null? %s\n", nullptr == ev ? "yes" : "no");
 			output->verbose(CALL_INFO, 16, 0, "---> response flags: 0x%0llx\n", (uint64_t) ev->flags);
 
-			// Check to see if this is a LLSC response event
-			if( (ev->flags & SST::Interfaces::SimpleMem::Request::F_LLSC_RESP)  != 0 ) {
-				if( store_q->empty() ) {
-					output->fatal(CALL_INFO, -1, "Error - received an LLSC response event, but store queue is empty\n");
-				} else {
-					VanadisStoreRecord* front_record = store_q->pop();
-					VanadisStoreInstruction* front_store = front_record->getAssociatedInstruction();
-
-					if( front_store->getTransactionType() != MEM_TRANSACTION_LLSC_STORE ) {
-						output->fatal(CALL_INFO, -1, "Error - received an LLSC response event, but store queue front is not an LLSC transaction.\n");
+			// This is an LLSC requested store (i.e. SC)
+			if( (ev->flags & SST::Interfaces::SimpleMem::Request::F_LLSC) != 0 ) {
+				if( processingLLSC ) {
+					// Check to see if this is a LLSC response event
+					if( store_q->empty() ) {
+						output->fatal(CALL_INFO, -1, "Error - received an LLSC response event, but store queue is empty\n");
 					} else {
-						output->verbose(CALL_INFO, 16, 0, "---> LSQ LLSC-STORE handled for ins: 0x%0llx, marked executed and LLSC/LSQ cleared for resuming operation\n",
-							front_store->getInstructionAddress());
-						front_store->markExecuted();
+						VanadisStoreRecord* front_record = store_q->pop();
+						VanadisStoreInstruction* front_store = front_record->getAssociatedInstruction();
+
+						if( front_store->getTransactionType() != MEM_TRANSACTION_LLSC_STORE ) {
+							output->fatal(CALL_INFO, -1, "Error - received an LLSC response event, but store queue front is not an LLSC transaction.\n");
+						} else {
+							output->verbose(CALL_INFO, 16, 0, "---> LSQ LLSC-STORE handled for ins: 0x%0llx, marked executed and LLSC/LSQ cleared for resuming operation\n",
+								front_store->getInstructionAddress());
+
+							const uint16_t value_reg = front_store->getPhysIntRegOut(0);
+
+							if( (ev->flags & SST::Interfaces::SimpleMem::Request::F_LLSC_RESP)  != 0 ) {
+								output->verbose(CALL_INFO, 16, 0, "---> LSQ LLSC-STORE rt: %" PRIu16 " <- 1 (success)\n", value_reg );
+								registerFiles->at( front_store->getHWThread() )->setIntReg( value_reg, (uint64_t) 1 );
+							} else {
+								output->verbose(CALL_INFO, 16, 0, "---> LSQ LLSC-STORE rt: %" PRIu16 " <- 0 (failed)\n", value_reg );
+								registerFiles->at( front_store->getHWThread() )->setIntReg( value_reg, (uint64_t) 0 );
+							}
+
+							front_store->markExecuted();
+						}
 					}
+				} else {
+					output->fatal(CALL_INFO, -1, "Response from cache was a store response with LLSC/SC marked, but core is not processing an LLSC event. Logical error?\n");
 				}
 			}
 
 			processingLLSC = false;
+
 			// Found in the Pending Store List
 			pending_stores.erase( check_ev_exists );
 			pending_mem_issued_stores--;

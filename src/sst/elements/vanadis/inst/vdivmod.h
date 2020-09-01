@@ -53,31 +53,37 @@ public:
 			phys_int_regs_out[0], phys_int_regs_out[1], phys_int_regs_in[0], phys_int_regs_in[1]);
 
 		if( performSigned ) {
-			int64_t* src_1 = (int64_t*) regFile->getIntReg( phys_int_regs_in[0]  );
-			int64_t* src_2 = (int64_t*) regFile->getIntReg( phys_int_regs_in[1]  );
+	                int64_t src_1 = 0;
+	       	        int64_t src_2 = 0;
 
-			if( 0 == (*src_2) ) {
+	                regFile->getIntReg( phys_int_regs_in[0], &src_1 );
+	                regFile->getIntReg( phys_int_regs_in[1], &src_2 );
+
+			if( 0 == src_2 ) {
 				flagError();
+			} else {
+				const int64_t quo = (src_1) / (src_2);
+				const int64_t mod = (src_1) % (src_2);
+
+				regFile->setIntReg( phys_int_regs_out[0], quo );
+				regFile->setIntReg( phys_int_regs_out[1], mod );
 			}
-
-			const int64_t quo = (*src_1) / (*src_2);
-			const int64_t mod = (*src_1) % (*src_2);
-
-			regFile->setIntReg( phys_int_regs_out[0], quo );
-			regFile->setIntReg( phys_int_regs_out[1], mod );
 		} else {
-			uint64_t* src_1 = (uint64_t*) regFile->getIntReg( phys_int_regs_in[0]  );
-			uint64_t* src_2 = (uint64_t*) regFile->getIntReg( phys_int_regs_in[1]  );
+	                uint64_t src_1 = 0;
+	       	        uint64_t src_2 = 0;
 
-			if( 0 == (*src_2) ) {
+	                regFile->getIntReg( phys_int_regs_in[0], &src_1 );
+	                regFile->getIntReg( phys_int_regs_in[1], &src_2 );
+
+			if( 0 == src_2 ) {
 				flagError();
+			} else {
+				const uint64_t quo = (src_1) / (src_2);
+				const uint64_t mod = (src_1) % (src_2);
+
+				regFile->setIntReg( phys_int_regs_out[0], quo );
+				regFile->setIntReg( phys_int_regs_out[1], mod );
 			}
-
-			const uint64_t quo = (*src_1) / (*src_2);
-			const uint64_t mod = (*src_1) % (*src_2);
-
-			regFile->setIntReg( phys_int_regs_out[0], quo );
-			regFile->setIntReg( phys_int_regs_out[1], mod );
 		}
 
 		markExecuted();

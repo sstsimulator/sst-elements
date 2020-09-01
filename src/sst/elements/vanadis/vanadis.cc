@@ -880,7 +880,8 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 							output->fatal(CALL_INFO, -1, "Error: SYSCALL cannot be converted to an actual sys-call instruction.\n");
 						}
 
-						output->verbose(CALL_INFO, 8, 0, "[syscall] -> calling OS handler in decode engine...\n");
+						output->verbose(CALL_INFO, 8, 0, "[syscall] -> calling OS handler in decode engine (ins-addr: 0x%0llx)...\n",
+							the_syscall_ins->getInstructionAddress());
 						thread_decoders[ rob_front->getHWThread() ]->getOSHandler()->handleSysCall( the_syscall_ins );
 					}
 				}

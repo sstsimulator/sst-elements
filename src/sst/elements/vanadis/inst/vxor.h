@@ -48,15 +48,13 @@ public:
 			phys_int_regs_in[0], phys_int_regs_in[1],
 			isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1] );
 
-		// If we arent targeting the "special" ISA register which ignores writes
-		// then proceed with the update;
-		if( phys_int_regs_out[0] != isa_options->getRegisterIgnoreWrites() ) {
-			uint64_t* dest  = (uint64_t*) regFile->getIntReg( phys_int_regs_out[0] );
-			uint64_t* src_1 = (uint64_t*) regFile->getIntReg( phys_int_regs_in[0]  );
-			uint64_t* src_2 = (uint64_t*) regFile->getIntReg( phys_int_regs_in[1]  );
+		uint64_t src_1 = 0;
+		uint64_t src_2 = 0;
 
-			(*dest) = (*src_1) ^ (*src_2);
-		}
+		regFile->getIntReg( phys_int_regs_in[0], &src_1 );
+		regFile->getIntReg( phys_int_regs_in[1], &src_2 );
+
+		regFile->setIntReg( phys_int_regs_out[0], (src_1) ^ (src_2) );
 
 		markExecuted();
 	}

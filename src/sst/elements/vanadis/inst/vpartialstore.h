@@ -55,7 +55,11 @@ public:
 	virtual void computeStoreAddress( SST::Output* output, VanadisRegisterFile* reg, uint64_t* store_addr, uint16_t* op_width ) {
 		output->verbose(CALL_INFO, 16, 0, "[partial-store]: compute base address: phys-reg: %" PRIu16 " / offset: %" PRIu64 " / 0x%0llx\n",
 			phys_int_regs_in[0], offset, offset);
-		const uint64_t base_addr = (*((uint64_t*) reg->getIntReg( phys_int_regs_in[0] ))) + offset;
+
+		uint64_t reg_tmp = 0;
+		reg->getIntReg( phys_int_regs_in[0], &reg_tmp );
+
+		const uint64_t base_addr = reg_tmp + offset;
 		const uint64_t width_64  = (uint64_t) store_width;
 
 		const uint64_t right_len = (base_addr % width_64) == 0 ? width_64 : (base_addr % width_64);

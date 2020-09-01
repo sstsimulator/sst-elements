@@ -29,8 +29,18 @@ public:
 		VanadisInstruction(id, addr, hw_thr, isa_opts, 2, 0, 2, 0, 0, 0, 0, 0),
 		store_width(store_bytes), offset(offst), memAccessType(accessT) {
 
-		isa_int_regs_in[0] = memoryAddr;
-		isa_int_regs_in[1] = valueReg;
+		if( memAccessType == MEM_TRANSACTION_LLSC_STORE ) {
+			count_isa_int_reg_out = 1;
+			isa_int_regs_out = new uint16_t[1];
+
+			count_phys_int_reg_out = 1;
+			phys_int_regs_out = new uint16_t[1];
+
+			isa_int_regs_out[0] = valueReg;
+		} else {
+			isa_int_regs_in[0] = memoryAddr;
+			isa_int_regs_in[1] = valueReg;
+		}
 	}
 
 	VanadisStoreInstruction* clone() {
@@ -74,7 +84,10 @@ public:
 	}
 
 	virtual void computeStoreAddress( SST::Output* output, VanadisRegisterFile* reg, uint64_t* store_addr, uint16_t* op_width ) {
-                (*store_addr)  = (*((uint64_t*) reg->getIntReg( phys_int_regs_in[0] ))) + offset;
+		uint64_t reg_tmp = 0;
+		reg->getIntReg( phys_int_regs_in[0], &reg_tmp );
+
+                (*store_addr)  = reg_tmp + offset;
 		(*op_width)    = store_width;
         }
 
