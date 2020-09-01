@@ -68,12 +68,13 @@ LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
 LlyrComponent::~LlyrComponent()
 {
     output->verbose(CALL_INFO, 1, 0, "Llyr destructor fired, closing down.\n");
-//     hardwareGraph.printGraph();
+    hardwareGraph.printGraph();
     hardwareGraph.printDot("hdwr.dot");
 
-//     applicationGraph.printGraph();
+    applicationGraph.printGraph();
     applicationGraph.printDot("app.dot");
 
+    mappedGraph.printGraph();
     mappedGraph.printDot("mapp.dot");
 }
 

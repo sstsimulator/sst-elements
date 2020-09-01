@@ -27,7 +27,6 @@
 namespace SST {
 namespace Llyr {
 
-// template<class T>
 class SimpleMapper : public LlyrMapper
 {
 
@@ -45,7 +44,6 @@ public:
         SST::Llyr::LlyrMapper
     )
 
-//     void mapGraph(LlyrGraph<T> hardwareGraph, LlyrGraph<T> appGraph, LlyrGraph<T> graphOut);
     void mapGraph(LlyrGraph<opType> hardwareGraph, LlyrGraph<opType> appGraph, LlyrGraph<opType> &graphOut);
 
 private:
@@ -70,7 +68,6 @@ void SimpleMapper::mapGraph(LlyrGraph<opType> hardwareGraph, LlyrGraph<opType> a
     graphOut.addEdge( 0, 3 );
     graphOut.addEdge( 1, 3 );
     graphOut.addEdge( 3, 4 );
-
 
 }
 

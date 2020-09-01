@@ -28,6 +28,40 @@
 namespace SST {
 namespace Llyr {
 
+class Edge
+{
+private:
+    float weight;
+    uint32_t destinationVertex;
+
+protected:
+
+public:
+    Edge();
+    Edge( float weightIn, uint32_t vertexIn )
+    {
+        weight = 0.00;
+        destinationVertex = vertexIn;
+    }
+
+    bool setWeight( float weightIn )
+    {
+        weight = weightIn;
+    }
+
+    float getWeight( void ) const
+    {
+        return weight;
+    }
+
+    uint32_t getDestination( void ) const
+    {
+        return destinationVertex;
+    }
+
+};
+
+
 template<class T>
 class Vertex
 {
@@ -35,19 +69,46 @@ private:
     T type;
     bool visited;
 
-    std::vector< uint32_t >* adjacencyList;
+    std::vector< Edge* >* adjacencyList;
 
 protected:
 
 public:
-    Vertex();
-    Vertex( T type );
+    Vertex()
+    {
+        adjacencyList = new std::vector< Edge* >;
+        visited = 0;
+    }
 
-    bool setType( T type );
-    T getType( void ) const;
+    Vertex( T typeIn )
+    {
+        adjacencyList = new std::vector< Edge* >;
 
-    std::vector< uint32_t >* getAdjacencyList( void ) const;
-    void addEdge( uint32_t edge );
+        type = typeIn;
+        visited = 0;
+    }
+
+
+    bool setType( T typeIn )
+    {
+        type = typeIn;
+        return true;
+    }
+
+    T getType( void ) const
+    {
+        return type;
+    }
+
+    std::vector< Edge* >* getAdjacencyList( void ) const
+    {
+        return adjacencyList;
+    }
+
+    void addEdge( Edge* edgeIn )
+    {
+        adjacencyList->push_back(edgeIn);
+    }
 };
 
 template<class T>
@@ -70,50 +131,11 @@ public:
     void printDot( std::string fileName );
 
     uint32_t numVertices( void );
-    void addEdge( uint32_t vertex, uint32_t edge );
+    void addEdge( uint32_t beginVertex, uint32_t endVertex );
+    void addEdge( uint32_t beginVertex, uint32_t endVertex, float weightIn );
     void addVertex( uint32_t beginVertex, T type );
 
 };
-
-template<class T>
-Vertex<T>::Vertex()
-{
-    adjacencyList = new std::vector< uint32_t >;
-}
-
-template<class T>
-Vertex<T>::Vertex(T type)
-{
-    adjacencyList = new std::vector< uint32_t >;
-
-    this->type = type;
-    visited = 0;
-}
-
-template<class T>
-bool Vertex<T>::setType(T in)
-{
-    type = in;
-    return true;
-}
-
-template<class T>
-T Vertex<T>::getType() const
-{
-    return type;
-}
-
-template <class T>
-std::vector< uint32_t >* Vertex<T>::getAdjacencyList( void ) const
-{
-    return adjacencyList;
-}
-
-template <class T>
-void Vertex<T>::addEdge( uint32_t endVertex )
-{
-    adjacencyList->push_back(endVertex);
-}
 
 template<class T>
 LlyrGraph<T>::LlyrGraph()
@@ -132,15 +154,14 @@ void LlyrGraph<T>::printGraph()
     typename std::map< uint32_t, Vertex<T> >::iterator vertexIterator;
     for(vertexIterator = vertexMap->begin(); vertexIterator != vertexMap->end(); ++vertexIterator)
     {
-        std::cout << "\n Adjacency list of vertex "
-            << vertexIterator->first << "\n head ";
+        std::cout << "\n Adjacency list of vertex " << vertexIterator->first << "\n head ";
 
-        std::vector< uint32_t >* adjacencyList = vertexIterator->second.getAdjacencyList();
+        std::vector< Edge* >* adjacencyList = vertexIterator->second.getAdjacencyList();
 
-        std::vector< uint32_t >::iterator it;
+        std::vector< Edge* >::iterator it;
         for( it = adjacencyList->begin(); it != adjacencyList->end(); it++ )
         {
-            std::cout << "-> " << *it;
+            std::cout << "-> " << (*it)->getDestination();
         }
         std::cout << std::endl;
     }
@@ -165,14 +186,14 @@ void LlyrGraph<T>::printDot( std::string fileName )
 
     for(vertexIterator = vertexMap->begin(); vertexIterator != vertexMap->end(); ++vertexIterator)
     {
-        std::vector< uint32_t >* adjacencyList = vertexIterator->second.getAdjacencyList();
+        std::vector< Edge* >* adjacencyList = vertexIterator->second.getAdjacencyList();
 
-        std::vector< uint32_t >::iterator it;
+        std::vector< Edge* >::iterator it;
         for( it = adjacencyList->begin(); it != adjacencyList->end(); it++ )
         {
             outputFile << vertexIterator->first;
             outputFile << "->";
-            outputFile << *it;
+            outputFile << (*it)->getDestination();
             outputFile << "\n";
         }
     }
@@ -191,20 +212,30 @@ template<class T>
 void LlyrGraph<T>::addEdge( uint32_t beginVertex, uint32_t endVertex )
 {
     std::cout << "add edge:  " << beginVertex << " --> " << endVertex << std::endl;
+    Edge* edge = new Edge( 0.00, endVertex );
 
-    vertexMap->at(beginVertex).addEdge(endVertex);
+    vertexMap->at(beginVertex).addEdge(edge);
 }
 
 template<class T>
-void LlyrGraph<T>::addVertex(uint32_t vertex, T type)
+void LlyrGraph<T>::addEdge( uint32_t beginVertex, uint32_t endVertex, float weightIn )
 {
-    std::cout << "add vertex:  " << vertex << std::endl;
+    std::cout << "add edge:  " << beginVertex << " --> " << endVertex << std::endl;
+    Edge* edge = new Edge( weightIn, endVertex );
 
-    Vertex<T> thisVertex;
-    thisVertex.setType(type);
+    vertexMap->at(beginVertex).addEdge(edge);
+}
+
+template<class T>
+void LlyrGraph<T>::addVertex(uint32_t vertexIn, T type)
+{
+    std::cout << "add vertex:  " << vertexIn << std::endl;
+
+    Vertex<T> vertex;
+    vertex.setType(type);
 
     std::pair< typename std::map< uint32_t, Vertex<T> >::iterator,bool > retVal;
-    retVal = vertexMap->insert( std::pair< uint32_t, Vertex<T> >( vertex, thisVertex) );
+    retVal = vertexMap->insert( std::pair< uint32_t, Vertex<T> >( vertexIn, vertex) );
     if( retVal.second == false )
     {
         ///TODO

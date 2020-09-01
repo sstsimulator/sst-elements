@@ -24,7 +24,6 @@
 namespace SST {
 namespace Llyr {
 
-// template<class T>
 class LlyrMapper : public SST::Module
 {
 
@@ -34,7 +33,6 @@ public:
     LlyrMapper() : Module() {}
     virtual ~LlyrMapper() {}
 
-//     virtual void mapGraph(LlyrGraph<T> hardwareGraph, LlyrGraph<T> appGraph, LlyrGraph<T> graphOut) = 0;
     virtual void mapGraph(LlyrGraph<opType> hardwareGraph, LlyrGraph<opType> appGraph, LlyrGraph<opType> &graphOut) = 0;
 
 };
