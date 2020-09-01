@@ -53,11 +53,40 @@ public:
 
 		os_handler = loadUserSubComponent<SST::Vanadis::VanadisCPUOSHandler>("os_handler");
 		hw_thr = 0;
+
+		canIssueStores = true;
+		canIssueLoads  = true;
 	}
 
 	virtual ~VanadisDecoder() {
 		delete decoded_q;
 		delete os_handler;
+	}
+
+	virtual void markLoadFencing() {
+		canIssueLoads = false;
+	}
+
+	virtual void markStoreFencing() {
+		canIssueStores = false;
+	}
+
+	virtual void clearLoadFencing() {
+		canIssueLoads = true;
+	}
+
+	virtual void clearStoreFencing() {
+		canIssueStores = true;
+	}
+
+	virtual void clearFencing() {
+		clearLoadFencing();
+		clearStoreFencing();
+	}
+
+	virtual void markFencing() {
+		markLoadFencing();
+		markStoreFencing();
 	}
 
 	void setInsCacheLineWidth( const uint64_t ic_width ) {
@@ -131,6 +160,9 @@ protected:
 	VanadisInstructionLoader* ins_loader;
 	VanadisBranchUnit* branch_predictor;
 	VanadisCPUOSHandler* os_handler;
+
+	bool canIssueStores;
+	bool canIssueLoads;
 
 };
 

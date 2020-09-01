@@ -427,15 +427,6 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 				output->verbose(CALL_INFO, 8, 0, "--> Attempting issue for: %s / %p\n", instPrintBuffer,
 						(void*) ins->getInstructionAddress());
 
-				/*
-				if( rob[i]->full() ) {
-					output->verbose(CALL_INFO, 8, 0, "--> ROB for the executing thread is full, cannot issue.\n");
-				} else {
-					output->verbose(CALL_INFO, 8, 0, "--> ROB for executing thread has %" PRIu32 " out of %" PRIu32 " entries used.\n",
-						(uint32_t) rob[i]->size(), (uint32_t) rob[i]->capacity());
-				}
-				*/
-
 				if( ins->hasROBSlotIssued() ) {
 					output->verbose(CALL_INFO, 16, 0, "---> Current instrn has an ROB slot allocated, processing for issue can continue...\n");
 				} else {
@@ -521,6 +512,47 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
                                                 }
 						break;
 
+					case INST_FENCE:
+						{
+							VanadisFenceInstruction* fence_ins = dynamic_cast<VanadisFenceInstruction*>( ins );
+
+							if( nullptr == fence_ins ) {
+								output->fatal(CALL_INFO, -1, "Error: instruction (0x%0llu) is a fence but not convertable to a fence instruction.\n",
+									ins->getInstructionAddress());
+							}
+
+							allocated_fu = true;
+
+							output->verbose(CALL_INFO, 16, 0, "[fence]: processing ins: 0x%0llx functional unit allocation for fencing (lsq-load size: %" PRIu32 " / lsq-store size: %" PRIu32 ")\n",
+								ins->getInstructionAddress(), (uint32_t) lsq->loadSize(), (uint32_t) lsq->storeSize());
+
+							if( fence_ins->createsStoreFence() ) {
+								if( lsq->storeSize() == 0 ) {
+									allocated_fu = true;
+								} else {
+									allocated_fu = false;
+								}
+							} else {
+								allocated_fu = true;
+							}
+
+							if( fence_ins->createsLoadFence() ) {
+								if( lsq->loadSize() == 0 ) {
+									allocated_fu = allocated_fu & true;
+								} else {
+									allocated_fu = false;
+								}
+							}
+
+							output->verbose(CALL_INFO, 16, 0, "[fence]: can proceed? %s\n", allocated_fu ? "yes" : "no");
+
+							if( allocated_fu ) {
+								ins->markExecuted();
+							}
+						}
+
+						break;
+
 					// Mark as executed and intentionally FALL THRU so we also (pretend) we
 					// have allocated an FU.
 					case INST_NOOP:
@@ -531,7 +563,8 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 						break;
 					default:
 						// ERROR UNALLOCATED
-						output->fatal(CALL_INFO, -1, "Error - no processing for instruction class.\n");
+						output->fatal(CALL_INFO, -1, "Error - no processing for instruction class (%s)\n",
+							ins->getInstCode() );
 						break;
 					}
 
@@ -791,22 +824,23 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 				output->verbose(CALL_INFO, 8, 0, "ROB for Thread %5" PRIu32 " contains entries and those have finished executing, in retire status...\n", i);
 				bool perform_execute_clear_up = true;
 
+/*
 				if( INST_FENCE == rob_front->getInstFuncType() ) {
 					VanadisFenceInstruction* fence_ins = dynamic_cast<VanadisFenceInstruction*>( rob_front );
 					output->verbose(CALL_INFO, 8, 0, "ROB -> front entry performs fence load-fence: %s / store-fence: %s\n",
 						fence_ins->createsLoadFence() ? "yes" : "no",
 						fence_ins->createsStoreFence() ? "yes" : "no" );
 
+					output->verbose(CALL_INFO, 8, 0, "ROB --> FENCE load-count: %" PRIu32 " / store-count: %" PRIu32 "\n",
+						(uint32_t) lsq->loadSize(), (uint32_t) lsq->storeSize());
+
 					perform_execute_clear_up = fence_ins->createsLoadFence()  ? (lsq->loadSize() == 0)  : true;
 					perform_execute_clear_up = fence_ins->createsStoreFence() ? (lsq->storeSize() == 0) : perform_execute_clear_up;
 
 					output->verbose(CALL_INFO, 8, 0, "ROB ---> evaluation of LSQ determines that fence retire can %s\n",
 						perform_execute_clear_up ? "proceed" : "*not* proceed" );
-
-					if( perform_execute_clear_up ) {
-						// Notify the decoder we can accept load/stores again
-					}
 				}
+*/
 
 				if( perform_execute_clear_up ) {
 					// Actually pop the instruction now we know its safe to do so.

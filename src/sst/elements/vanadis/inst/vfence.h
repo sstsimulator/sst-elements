@@ -21,8 +21,12 @@ public:
 		const uint32_t hw_thr,
 		const VanadisDecoderOptions* isa_opts,
 		const VanadisFenceType fenceT
-		) : VanadisInstruction( ins_id, address, hw_thr, isa_opts, 0, 0, 0, 0, 0, 0, 0, 0 ) {
+		) : VanadisInstruction( ins_id, address, hw_thr, isa_opts, 0,0,0,0,0,0,0,0 ) {
 		fence = fenceT;
+	}
+
+	virtual VanadisFenceInstruction* clone() {
+		return new VanadisFenceInstruction( *this );
 	}
 
 	bool createsLoadFence() const {

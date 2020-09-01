@@ -97,6 +97,7 @@
 #define MIPS_SPEC_OP_MASK_SUB	  0x22
 #define MIPS_SPEC_OP_MASK_SUBU    0x23
 #define MIPS_SPEC_OP_MASK_SYSCALL 0x0C
+#define MIPS_SPEC_OP_MASK_SYNC    0x0F
 #define MIPS_SPEC_OP_MASK_XOR     0x26
 
 namespace SST {
@@ -573,6 +574,13 @@ protected:
 					case MIPS_SPEC_OP_MASK_SYSCALL:
 						{
 							bundle->addInstruction( new VanadisSysCallInstruction( getNextInsID(), ins_addr, hw_thr, options ) );
+							insertDecodeFault = false;
+						}
+						break;
+
+					case MIPS_SPEC_OP_MASK_SYNC:
+						{
+							bundle->addInstruction( new VanadisFenceInstruction( getNextInsID(), ins_addr, hw_thr, options, VANADIS_LOAD_STORE_FENCE) );
 							insertDecodeFault = false;
 						}
 						break;
