@@ -137,18 +137,22 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
     }
 
 
-    // Get the topology
-    topo = loadUserSubComponent<SST::Merlin::Topology>
-        ("topology", ComponentInfo::SHARE_NONE, num_ports, id);
+    // Get the number of VNs
+    num_vns = params.find<int>("num_vns",2);
+    vcs_per_vn.resize(num_vns);
 
+    // Get the topology
+    topo = (Topology*)loadUserSubComponent<SST::Merlin::Topology>
+        ("topology", ComponentInfo::SHARE_NONE, num_ports, id, num_vns);
+    
     if ( !topo ) {
         merlin_abort.fatal(CALL_INFO_LONG, 1, "hr_router requires topology to be specified in input file\n");
     }
 
-    // Get the number of VNs
-    num_vns = params.find<int>("num_vns",2);
-    num_vcs = topo->computeNumVCs(num_vns);
-
+    topo->getVCsPerVN(vcs_per_vn);
+    num_vcs = 0;
+    for ( int vcs : vcs_per_vn ) num_vcs += vcs;
+    
     // Check to see if remap is on
     vn_remap_shm = params.find<std::string>("vn_remap_shm","");
     if ( vn_remap_shm != "" ) {
@@ -267,17 +271,6 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
         pc_params.insert("vn_remap_shm_size", std::to_string(vn_remap_shm_size));
         pc_params.insert("num_vns", std::to_string(num_vns));
 
-        // ports[i] = new PortControl(this, id, port_name.str(), i,
-        //                            getLogicalGroupParamUA(params,topo,i,"link_bw"),
-        //                            flit_size, topo,
-        //                            1, getLogicalGroupParam(params,topo,i,"input_latency","0ns"),
-        //                            1, getLogicalGroupParam(params,topo,i,"output_latency","0ns"),
-        //                            getLogicalGroupParam(params,topo,i,"input_buf_size"),
-        //                            getLogicalGroupParam(params,topo,i,"output_buf_size"),
-        //                            inspector_names,
-		// 						   std::stof(getLogicalGroupParam(params,topo,i,"dlink_thresh", "-1")),
-        //                            oql_track_port,oql_track_remote);
-
         ports[i] = loadAnonymousSubComponent<PortInterface>
             ("merlin.portcontrol","portcontrol", i, ComponentInfo::SHARE_PORTS | ComponentInfo::SHARE_STATS | ComponentInfo::INSERT_STATS,
              pc_params,this,id,i,topo);
@@ -304,10 +297,9 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
     // the link BW, otherwise the model runs into problems
     // if ( xbar_tc->getFactor() > link_tc->getFactor() ) {
     if ( xbar_bw_ua < link_bw  ) {
-        std::cout << "ERROR: hr_router requires xbar_bw to be greater than or equal to link_bw" << std::endl;
-        std::cout << "  xbar_bw = " << xbar_bw_ua.toStringBestSI() << ", link_bw = "
-                  << link_bw.toStringBestSI() << std::endl;
-        abort();
+        merlin_abort.fatal(CALL_INFO_LONG,1,"ERROR: hr_router requires xbar_bw to be greater than or equal to link_bw\n"
+              "  xbar_bw = %s, link_bw = %s\n",
+              xbar_bw_ua.toStringBestSI().c_str(), link_bw.toStringBestSI().c_str());
     }
     // Register statistics
     xbar_stalls = new Statistic<uint64_t>*[num_ports];
@@ -385,7 +377,6 @@ hr_router::printStatus(Output& out)
 bool
 hr_router::clock_handler(Cycle_t cycle)
 {
-    // TraceFunction trace(CALL_INFO_LONG);
     // If there are no events in the input queues, then we can remove
     // ourselves from the clock queue, as long as the arbitration unit
     // says it's okay.
@@ -410,17 +401,6 @@ hr_router::clock_handler(Cycle_t cycle)
 
 #endif
     }
-    // Loop through all the events at the heads of the queues and call
-    // route
-    int index = 0;
-    for ( int i = 0; i < num_ports; i++ ) {
-        for ( int j = 0; j < num_vcs; j++ ) {
-            if ( vc_heads[index] != NULL ) {
-                topo->reroute(i,j,vc_heads[index]);
-            }
-            index++;
-        }
-    }
 
     // All we need to do is arbitrate the crossbar
 #if VERIFY_DECLOCKING
@@ -435,8 +415,6 @@ hr_router::clock_handler(Cycle_t cycle)
         if ( progress_vcs[i] > -1 ) {
             internal_router_event* ev = ports[i]->recv(progress_vcs[i]);
             ports[ev->getNextPort()]->send(ev,ev->getVC());
-            // std::cout << "" << id << ": " << "Moving VC " << progress_vcs[i] <<
-            // 	" for port " << i << " to port " << ev->getNextPort() << std::endl;
 
             if ( ev->getTraceType() == SimpleNetwork::Request::FULL ) {
                 output.output("TRACE(%d): %" PRIu64 " ns: Copying event (src = %d, dest = %d) "
@@ -487,7 +465,6 @@ void
 hr_router::init(unsigned int phase)
 {
     for ( int i = 0; i < num_ports; i++ ) {
-        // std::cout << "Calling init on port: " << i << ", in phase " << phase << std::endl;
         ports[i]->init(phase);
         Event *ev = NULL;
         while ( (ev = ports[i]->recvInitData()) != NULL ) {
@@ -536,7 +513,6 @@ void
 hr_router::complete(unsigned int phase)
 {
     for ( int i = 0; i < num_ports; i++ ) {
-        // std::cout << "Calling init on port: " << i << ", in phase " << phase << std::endl;
         ports[i]->complete(phase);
         Event *ev = NULL;
         while ( (ev = ports[i]->recvInitData()) != NULL ) {
@@ -595,16 +571,9 @@ hr_router::init_vcs()
         output_queue_lengths[i] = 0;
     }
 
-    int* vcs_per_vn = new int[num_vns];
-    // For now, all VNs have the same number of VCs
-    int vpv = topo->computeNumVCs(1);
-    for ( int i = 0; i < num_vns; ++i ) {
-        vcs_per_vn[i] = vpv;
-    }
     for ( int i = 0; i < num_ports; i++ ) {
-        ports[i]->initVCs(num_vns,vcs_per_vn,&vc_heads[i*num_vcs],&xbar_in_credits[i*num_vcs],&output_queue_lengths[i*num_vcs]);
+        ports[i]->initVCs(num_vns,vcs_per_vn.data(),&vc_heads[i*num_vcs],&xbar_in_credits[i*num_vcs],&output_queue_lengths[i*num_vcs]);
     }
-    delete[] vcs_per_vn;
 
     topo->setOutputBufferCreditArray(xbar_in_credits, num_vcs);
     topo->setOutputQueueLengthsArray(output_queue_lengths, num_vcs);

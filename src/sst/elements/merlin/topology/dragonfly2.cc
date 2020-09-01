@@ -57,7 +57,7 @@ RouteToGroup2::setRouterPortPair(int group, int route_number, const RouterPortPa
  * [params.p, params.p+params.a-1)  // Routers within this group
  * [params.p+params.a-1, params.k)  // Other groups
  */
-topo_dragonfly2::topo_dragonfly2(ComponentId_t cid, Params &p, int num_ports, int rtr_id) :
+topo_dragonfly2::topo_dragonfly2(ComponentId_t cid, Params &p, int num_ports, int rtr_id, int UNUSED(num_vns)) :
     Topology(cid)
 {
     params.p = p.find<uint32_t>("hosts_per_router");
