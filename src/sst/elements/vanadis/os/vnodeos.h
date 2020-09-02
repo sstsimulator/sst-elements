@@ -60,6 +60,7 @@ public:
 
 	void sendMemoryEvent( SimpleMem::Request* ev, uint32_t core ) {
 		ev_core_map.insert( std::pair< SimpleMem::Request::id_t, uint32_t >( ev->id, core ) );
+		mem_if->sendRequest(ev);
 	}
 
 private:

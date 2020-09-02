@@ -63,9 +63,8 @@ VanadisNodeOSComponent::~VanadisNodeOSComponent() {
 }
 
 void VanadisNodeOSComponent::init( unsigned int phase ) {
-	if( 0 == phase ) {
-		mem_if->init( phase );
-	}
+	output->verbose(CALL_INFO, 1, 0, "Performing init-phase %u...\n", phase);
+	mem_if->init( phase );
 }
 
 void VanadisNodeOSComponent::handleIncomingSysCall( SST::Event* ev ) {
