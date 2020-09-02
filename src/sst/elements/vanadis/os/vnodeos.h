@@ -7,6 +7,7 @@
 #include <sst/core/component.h>
 #include <sst/core/interfaces/simpleMem.h>
 
+#include "os/vnodeoshandler.h"
 #include "os/callev/voscallall.h"
 
 using namespace SST::Interfaces;
@@ -35,23 +36,42 @@ public:
 		{ "core%(cores)d",	"Connects to a CPU core",	{} }
 	)
 
+	SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+		{ "mem_interface",      "Interface to memory system for data access",  "SST::Interfaces::SimpleMem" }
+	)
+
 	VanadisNodeOSComponent( SST::ComponentId_t id, SST::Params& params );
 	~VanadisNodeOSComponent();
 
 	virtual void init( unsigned int phase );
 	void handleIncomingSysCall( SST::Event* ev );
-	void handleIncomingMemory( SimpleMem::Request* ev );
+
+	void handleIncomingMemory( SimpleMem::Request* ev ) {
+		auto lookup_result = ev_core_map.find( ev->id );
+
+		if( lookup_result == ev_core_map.end() ) {
+			output->fatal( CALL_INFO, -1, "Error - received a call which does not have a mapping to a core.\n" );
+		} else {
+			output->verbose( CALL_INFO, 8, 0, "redirecting to core %" PRIu32 "...\n", lookup_result->second );
+			core_handlers[ lookup_result->second ]->handleIncomingMemory( ev );
+			ev_core_map.erase(lookup_result);
+		}
+	}
+
+	void sendMemoryEvent( SimpleMem::Request* ev, uint32_t core ) {
+		ev_core_map.insert( std::pair< SimpleMem::Request::id_t, uint32_t >( ev->id, core ) );
+	}
 
 private:
 	VanadisNodeOSComponent();  // for serialization only
     	VanadisNodeOSComponent(const VanadisNodeOSComponent&); // do not implement
     	void operator=(const VanadisNodeOSComponent&); // do not implement
 
+	std::unordered_map< SimpleMem::Request::id_t, uint32_t > ev_core_map;
 	std::vector< SST::Link* > core_links;
-	SimpleMem* memDataInterface;
+	std::vector< VanadisNodeOSCoreHandler* > core_handlers;
+	SimpleMem* mem_if;
 	SST::Output* output;
-
-	std::unordered_set< SimpleMem::Request::id_t > pending_stores;
 };
 
 }

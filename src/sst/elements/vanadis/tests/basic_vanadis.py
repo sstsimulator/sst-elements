@@ -11,7 +11,7 @@ v_cpu_0 = sst.Component("v0", "vanadis.VanadisCPU")
 v_cpu_0.addParams({
        "clock" : "1.0GHz",
        "executable" : "./tests/hello-mips", 
-       "max_cycle" : 1700,
+       "max_cycle" : 2000,
        "verbose" : 16,
        "physical_fp_registers" : 96,
        "print_int_reg" : 1
@@ -33,6 +33,22 @@ node_os.addParams({
 	"cores" : 1
 })
 
+node_os_mem_if = node_os.setSubComponent( "mem_interface", "memHierarchy.memInterface" )
+
+os_l1dcache = sst.Component("node_os.l1dcache", "memHierarchy.Cache")
+os_l1dcache.addParams({
+      "access_latency_cycles" : "1",
+      "cache_frequency" : "2 GHz",
+      "replacement_policy" : "lru",
+      "coherence_protocol" : "MSI",
+      "associativity" : "2",
+      "cache_line_size" : "64",
+      "cache_size" : "1 KB",
+      "L1" : "1",
+      "debug" : 1,
+      "debug_level" : 6
+})
+
 cpu0_l1dcache = sst.Component("cpu0.l1dcache", "memHierarchy.Cache")
 cpu0_l1dcache.addParams({
       "access_latency_cycles" : "1",
@@ -43,6 +59,8 @@ cpu0_l1dcache.addParams({
       "cache_line_size" : "64",
       "cache_size" : "1 KB",
       "L1" : "1",
+      "debug" : 1,
+      "debug_level" : 6
 })
 
 cpu0_l1icache = sst.Component("cpu0.l1icache", "memHierarchy.Cache")
@@ -90,11 +108,17 @@ link_cpu0_l1dcache_link.connect( (dcache_if, "port", "1ns"), (cpu0_l1dcache, "hi
 link_cpu0_l1icache_link = sst.Link("link_cpu0_l1icache_link")
 link_cpu0_l1icache_link.connect( (icache_if, "port", "1ns"), (cpu0_l1icache, "high_network_0", "1ns") )
 
+link_os_l1dcache_link = sst.Link("link_os_l1dcache_link")
+link_os_l1dcache_link.connect( (node_os_mem_if, "port", "1ns"), (os_l1dcache, "high_network_0", "1ns") )
+
 link_l1dcache_l2cache_link = sst.Link("link_l1dcache_l2cache_link")
 link_l1dcache_l2cache_link.connect( (cpu0_l1dcache, "low_network_0", "1ns"), (cache_bus, "high_network_0", "1ns") )
 
 link_l1icache_l2cache_link = sst.Link("link_l1icache_l2cache_link")
 link_l1icache_l2cache_link.connect( (cpu0_l1icache, "low_network_0", "1ns"), (cache_bus, "high_network_1", "1ns") )
+
+link_os_l1dcache_l2cache_link = sst.Link("link_os_l1dcache_l2cache_link")
+link_os_l1dcache_l2cache_link.connect( (os_l1dcache, "low_network_0", "1ns"), (cache_bus, "high_network_2", "1ns") )
 
 link_bus_l2cache_link = sst.Link("link_bus_l2cache_link")
 link_bus_l2cache_link.connect( (cache_bus, "low_network_0", "1ns"), (cpu0_l2cache, "high_network_0", "1ns") )

@@ -2,6 +2,8 @@
 #include <sst_config.h>
 #include <sst/core/component.h>
 
+#include <functional>
+
 #include "os/voscallresp.h"
 #include "os/voscallev.h"
 #include "os/vnodeos.h"
@@ -15,6 +17,10 @@ VanadisNodeOSComponent::VanadisNodeOSComponent( SST::ComponentId_t id, SST::Para
 	output = new SST::Output("[node-os]: ", verbosity, 0, SST::Output::STDOUT);
 
 	const uint32_t core_count = params.find<uint32_t>("cores", 0);
+
+	output->verbose(CALL_INFO, 1, 0, "Configuring the memory interface...\n");
+	mem_if = loadUserSubComponent<Interfaces::SimpleMem>("mem_interface", ComponentInfo::SHARE_NONE, getTimeConverter("1ps"),
+		new SimpleMem::Handler<SST::Vanadis::VanadisNodeOSComponent>( this, &VanadisNodeOSComponent::handleIncomingMemory ) );
 
 	output->verbose(CALL_INFO, 1, 0, "Configuring for %" PRIu32 " core links...\n", core_count);
 	core_links.reserve(core_count);
@@ -34,17 +40,32 @@ VanadisNodeOSComponent::VanadisNodeOSComponent( SST::ComponentId_t id, SST::Para
 			output->verbose(CALL_INFO, 8, 0, "configuring link %s...\n", port_name_buffer );
 			core_links.push_back( core_link );
 		}
+
+		VanadisNodeOSCoreHandler* new_core_handler = new VanadisNodeOSCoreHandler( verbosity, i );
+		new_core_handler->setLink( core_link );
+
+		std::function<void( SimpleMem::Request*, uint32_t )> core_callback = std::bind( &VanadisNodeOSComponent::sendMemoryEvent,
+			this, std::placeholders::_1, std::placeholders::_2 );
+		new_core_handler->setSendMemoryCallback( core_callback );
+
+		core_handlers.push_back( new_core_handler );
 	}
 
 	delete[] port_name_buffer;
 }
 
 VanadisNodeOSComponent::~VanadisNodeOSComponent() {
+	for( VanadisNodeOSCoreHandler* next_core_handler : core_handlers ) {
+		delete next_core_handler;
+	}
+
 	delete output;
 }
 
 void VanadisNodeOSComponent::init( unsigned int phase ) {
-
+	if( 0 == phase ) {
+		mem_if->init( phase );
+	}
 }
 
 void VanadisNodeOSComponent::handleIncomingSysCall( SST::Event* ev ) {
@@ -54,45 +75,9 @@ void VanadisNodeOSComponent::handleIncomingSysCall( SST::Event* ev ) {
 		output->fatal(CALL_INFO, -1, "Error - received an event in the OS, but cannot cast it to a system-call event.\n");
 	}
 
-	output->verbose(CALL_INFO, 16, 0, "Call from core: %" PRIu32 ", thr: %" PRIu32 "\n",
+	output->verbose(CALL_INFO, 16, 0, "Call from core: %" PRIu32 ", thr: %" PRIu32 " -> calling handler...\n",
 		sys_ev->getCoreID(), sys_ev->getThreadID());
 
-	switch( sys_ev->getOperation() ) {
-
-	case SYSCALL_OP_UNAME:
-		{
-			output->verbose(CALL_INFO, 16, 0, "-> call is uname()\n");
-			VanadisSyscallUnameEvent* uname_ev = dynamic_cast<VanadisSyscallUnameEvent*>( sys_ev );
-
-			if( nullptr == uname_ev ) {
-				output->fatal(CALL_INFO, -1, "-> unable to case to a uname event.\n");
-			}
-
-			output->verbose(CALL_INFO, 16, 0, "---> uname struct is at address 0x%0llx\n", uname_ev->getUnameInfoAddress());
-			output->fatal(CALL_INFO, -1, "Not implemented.\n");
-		}
-		break;
-
-	default:
-		VanadisSyscallResponse* resp = new VanadisSyscallResponse();
-		core_links[sys_ev->getCoreID()]->send( resp );
-		break;
-	}
-
-	delete ev;
+	core_handlers[ sys_ev->getCoreID() ]->handleIncomingSyscall( sys_ev );
 }
-
-void VanadisNodeOSComponent::handleIncomingMemory( SimpleMem::Request* ev ) {
-
-	output->verbose(CALL_INFO, 8, 0, "Receiving incoming data cache response...\n");
-
-	if( pending_stores.find( ev->id ) != pending_stores.end() ) {
-		output->verbose(CALL_INFO, 8, 0, "Matched a previous store operation.\n");
-		pending_stores.erase( ev->id );
-	} else {
-
-	}
-
-}
-
 
