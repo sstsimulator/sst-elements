@@ -146,17 +146,125 @@ public:
 	virtual const VanadisDecoderOptions* getDecoderOptions() const { return options; }
 
 	virtual void configureApplicationLaunch( SST::Output* output, VanadisISATable* isa_tbl,
-		VanadisRegisterFile* regFile, Interfaces::SimpleMem* mem_if ) {
+		VanadisRegisterFile* regFile, Interfaces::SimpleMem* mem_if,
+		VanadisELFInfo* elf_info, SST::Params& params ) {
+
+		output->verbose(CALL_INFO, 16, 0, "Application Startup Processing:\n");
+
+		const uint32_t arg_count = params.find<uint32_t>("argc", 1);
+		const uint32_t env_count = params.find<uint32_t>("env_count", 0);
+
+		char* arg_name = new char[32];
+		std::vector<uint8_t> arg_data_block;
+		for( uint32_t arg = 0; arg < arg_count; ++arg ) {
+			snprintf( arg_name, 32, "arg%" PRIu32 "", arg );
+			std::string arg_value = params.find<std::string>(arg_name, (0 == arg) ? "./app" : "" );
+
+			if( "" == arg_value ) {
+				output->fatal( CALL_INFO, -1, "Error - unable to find argument %s, value is empty string which is not allowed in Linux.\n", arg_name );
+			}
+
+			uint8_t* arg_value_ptr = (uint8_t*) &arg_value.c_str()[0];
+			for( size_t j = 0; j < arg_value.size(); ++j ) {
+				arg_data_block.push_back( arg_value_ptr[j] );
+			}
+
+			arg_data_block.push_back( (uint8_t)('\0') );
+		}
+		delete[] arg_name;
+
+		char* env_var_name = new char[32];
+		std::vector<uint8_t> env_data_block;
+		for( uint32_t env_var = 0; env_var < env_count; ++env_var ) {
+			snprintf( env_var_name, 32, "env%" PRIu32 "", env_var );
+			std::string env_value = params.find<std::string>( env_var_name, "" );
+
+			if( "" == env_value ) {
+				output->fatal( CALL_INFO, -1, "Error - unable to find a value for %s, value is empty or non-existent which is not allowed.\n", env_var_name );
+			}
+
+			uint8_t* env_value_ptr = (uint8_t*) &env_value.c_str()[0];
+			for( size_t j = 0; j < env_value.size(); ++j ) {
+				env_data_block.push_back( env_value_ptr[j] );
+			}
+			env_data_block.push_back( (uint8_t)('\0') );
+		}
+		delete[] env_var_name;
+
+		std::vector<uint8_t> aux_data_block;
+
+		int aux_page_size  = 6;
+		int aux_page_value = 4096;
+
+		for( int i = 0; i < sizeof(aux_page_size); ++i ) {
+			aux_data_block.push_back( ((uint8_t*)(&aux_page_size))[i] );
+		}
+
+		for( int i = 0; i < sizeof(aux_page_size); ++i ) {
+			aux_data_block.push_back( ((uint8_t*)(&aux_page_value))[i] );
+		}
+
+		int aux_entry = 9;
+		int aux_entry_value = (int) elf_info->getEntryPoint();
+
+		for( int i = 0; i < sizeof(aux_entry); ++i ) {
+			aux_data_block.push_back( ((uint8_t*)(&aux_entry))[i] );
+		}
+
+		for( int i = 0; i < sizeof(aux_entry_value); ++i ) {
+			aux_data_block.push_back( ((uint8_t*)(&aux_entry_value))[i] );
+		}
+
+		// Push in the null vector
+		for( int i = 0; i < sizeof(int) * 2; ++i ) {
+			aux_data_block.push_back( (uint8_t) 0 );
+		}
+
+
+		/*
+		std::vector<uint8_t> stack_data;
+		for( int i = 0; i < sizeof( arg_count ); ++i ) {
+			stack_data.push_back( ((uint8_t*)(&arg_count))[i] );
+		}
+		*/
+
+		// Allocate 64 zeros for now
+		std::vector<uint8_t> stack_data;
+		stack_data.resize(64, 0);
+
+		const int16_t sp_phys_reg = isa_tbl->getIntPhysReg( 29 );
+
+		output->verbose(CALL_INFO, 16, 0, "-> Argument Count:                       %" PRIu32 "\n", arg_count );
+		output->verbose(CALL_INFO, 16, 0, "---> Data Size for items:                %" PRIu32 "\n", (uint32_t) arg_data_block.size() );
+		output->verbose(CALL_INFO, 16, 0, "-> Environment Variable Count:           %" PRIu32 "\n", env_count );
+		output->verbose(CALL_INFO, 16, 0, "---> Data size for items:                %" PRIu32 "\n", (uint32_t) env_data_block.size() );
+		output->verbose(CALL_INFO, 16, 0, "---> Data size of aux-vector:            %" PRIu32 "\n", (uint32_t) aux_data_block.size() );
+		output->verbose(CALL_INFO, 16, 0, "-> Full Startup Data Size:               %" PRIu32 "\n", (uint32_t) stack_data.size() );
+		output->verbose(CALL_INFO, 16, 0, "-> Stack Pointer (r29) maps to phys-reg: %" PRIu16 "\n", sp_phys_reg);
+		output->verbose(CALL_INFO, 16, 0, "-> Setting SP to (not-aligned):          %" PRIu64 " / 0x%0llx\n",
+			start_stack_address, start_stack_address);
+
+		uint64_t aligned_start_stack_address = ( start_stack_address - stack_data.size() );
+		const uint64_t padding_needed        = ( aligned_start_stack_address % 64 );
+		aligned_start_stack_address 	     = aligned_start_stack_address - padding_needed;
+
+		output->verbose(CALL_INFO, 16, 0, "Aligning stack address to 64 bytes (%" PRIu64 " - %" PRIu64 " - padding: %" PRIu64 " = %" PRIu64 " / 0x%0llx)\n",
+			start_stack_address, (uint64_t) stack_data.size(), padding_needed, aligned_start_stack_address,
+			aligned_start_stack_address );
+
+		start_stack_address = aligned_start_stack_address;
+
+		SimpleMem::Request* stack_req = new SimpleMem::Request( SimpleMem::Request::Write,
+			start_stack_address, stack_data.size(), stack_data );
+		mem_if->sendInitData( stack_req );
+
+		output->verbose(CALL_INFO, 16, 0, "-> Setting SP to (64B-aligned):          %" PRIu64 " / 0x%0llx\n",
+			aligned_start_stack_address, aligned_start_stack_address );
 
 		// Set up the stack pointer
 		// Register 29 is MIPS for Stack Pointer
-		const int16_t sp_phys_reg = isa_tbl->getIntPhysReg( 29 );
-		regFile->setIntReg( sp_phys_reg, start_stack_address );
+		regFile->setIntReg( sp_phys_reg, aligned_start_stack_address );
 
-		output->verbose(CALL_INFO, 16, 0, "Application Startup Processing:\n");
-		output->verbose(CALL_INFO, 16, 0, "-> Stack Pointer (r29) maps to phys-reg: %" PRIu16 "\n", sp_phys_reg);
-		output->verbose(CALL_INFO, 16, 0, "-> Setting SP to                       : %" PRIu64 " / 0x%0llx\n",
-			start_stack_address, start_stack_address);
 	}
 
 	virtual void tick( SST::Output* output, uint64_t cycle ) {
@@ -893,3 +1001,4 @@ protected:
 }
 
 #endif
+

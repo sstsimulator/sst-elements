@@ -195,8 +195,13 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 				(void*) c0_entry);
 			thread_decoders[0]->setInstructionPointer( c0_entry );
 
+			uint64_t stack_start = 0;
+
+			Params app_params = params.find_prefix_params("app");
+
 			output->verbose(CALL_INFO, 8, 0, "Configuring core-0, thread-0 application info...\n");
-			thread_decoders[0]->configureApplicationLaunch( output, issue_isa_tables[0], register_files[0], memDataInterface);
+			thread_decoders[0]->configureApplicationLaunch( output, issue_isa_tables[0], register_files[0],
+				memDataInterface, binary_elf_info, app_params );
 
 			// Force retire table to sync with issue table
 			retire_isa_tables[0]->reset( issue_isa_tables[0] );
@@ -352,7 +357,6 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 	}
 
 	output->verbose(CALL_INFO, 2, 0, "============================ Cycle %12" PRIu64 " ============================\n", current_cycle );
-
 	output->verbose(CALL_INFO, 8, 0, "-- Core Status:\n");
 
 	for( uint32_t i = 0; i < hw_threads; ++i) {
@@ -360,6 +364,18 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 			i, halted_masks[i] ? "halted" : "unhalted",
 			(uint16_t) rob[i]->size(),
 			(uint16_t) int_register_stacks[i]->unused(), (uint16_t) fp_register_stacks[i]->unused() );
+	}
+
+	output->verbose(CALL_INFO, 8, 0, "-- Resetting Zero Registers\n" );
+	for( uint32_t i = 0; i < hw_threads; ++i ) {
+		const uint16_t zero_reg = isa_options[i]->getRegisterIgnoreWrites();
+
+		if( zero_reg < isa_options[i]->countISAIntRegisters() ) {
+			VanadisISATable* thr_issue_table = issue_isa_tables[i];
+			const uint16_t zero_phys_reg = thr_issue_table->getIntPhysReg( zero_reg );
+			uint64_t* reg_ptr = (uint64_t*) register_files[i]->getIntReg( zero_phys_reg );
+			*(reg_ptr) = 0;
+		}
 	}
 
 	// Fetch

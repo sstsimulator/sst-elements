@@ -141,8 +141,8 @@ public:
 	}
 
 	virtual void configureApplicationLaunch( SST::Output* output, VanadisISATable* isa_tbl,
-		VanadisRegisterFile* regFile, Interfaces::SimpleMem* mem_if ) = 0;
-
+		VanadisRegisterFile* regFile, Interfaces::SimpleMem* mem_if,
+		VanadisELFInfo* elf_info, SST::Params& app_params ) = 0;
 	virtual VanadisCPUOSHandler* getOSHandler() {
 		return os_handler;
 	}

@@ -2,6 +2,8 @@
 #ifndef _H_VANADIS_NODE_OS
 #define _H_VANADIS_NODE_OS
 
+#include <unordered_set>
+
 #include <sst/core/component.h>
 #include <sst/core/interfaces/simpleMem.h>
 
@@ -47,6 +49,7 @@ private:
 	SimpleMem* memDataInterface;
 	SST::Output* output;
 
+	std::unordered_set< SimpleMem::Request::id_t > pending_stores;
 };
 
 }

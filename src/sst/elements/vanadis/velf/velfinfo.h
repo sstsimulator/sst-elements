@@ -50,6 +50,7 @@ enum VanadisELFSectionHeaderType {
 	SECTION_HEADER_DYN_LINK_INFO,
 	SECTION_HEADER_NOTE,
 	SECTION_HEADER_BSS,
+        SECTION_HEADER_REL,
 	SECTION_HEADER_DYN_SYMBOL_INFO,
 	SECTION_HEADER_INIT_ARRAY,
 	SECTION_HEADER_FINI_ARRAY,
@@ -77,6 +78,8 @@ const char* getELFSectionHeaderTypeString( VanadisELFSectionHeaderType sec_type 
 		return "Dynamic Linking Information";
 	case SECTION_HEADER_NOTE:
 		return "Notes";
+	case SECTION_HEADER_REL:
+		return "Relocation Information";
 	case SECTION_HEADER_BSS:
 		return "Program Space without Data (BSS Entry)";
 	case SECTION_HEADER_DYN_SYMBOL_INFO:
@@ -148,7 +151,7 @@ const char* getELFISAString( VanadisELFISA isa ) {
 	default:
 		return "Unknown";
 	}
-}
+};
 
 const char* getELFOSABIString( VanadisELFOSABI abi ) {
 	switch( abi ) {
@@ -159,7 +162,124 @@ const char* getELFOSABIString( VanadisELFOSABI abi ) {
 	default:
 		return "Unknown";
 	}
+};
+
+enum VanadisSymbolType {
+	SYMBOL_NO_TYPE,
+	SYMBOL_OBJECT,
+	SYMBOL_FUNCTION,
+	SYMBOL_SECTION,
+	SYMBOL_FILE,
+	SYMBOL_UNKNOWN
+};
+
+enum VanadisSymbolBindType {
+	SYMBOL_BIND_LOCAL,
+	SYMBOL_BIND_GLOBAL,
+	SYMBOL_BIND_WEAK,
+	SYMBOL_BIND_UNKNOWN
+};
+
+const char* getSymbolBindTypeString( VanadisSymbolBindType bindT ) {
+	switch( bindT ) {
+	case SYMBOL_BIND_LOCAL:
+		return "Local";
+	case SYMBOL_BIND_GLOBAL:
+		return "Global";
+	case SYMBOL_BIND_WEAK:
+		return "Weak";
+	default:
+		return "Unknown";
+	}
+};
+
+const char* getSymbolTypeString( VanadisSymbolType symT ) {
+	switch( symT ) {
+	case SYMBOL_NO_TYPE:
+		return "NO_TYPE";
+	case SYMBOL_OBJECT:
+		return "Object";
+	case SYMBOL_FUNCTION:
+		return "Function";
+	case SYMBOL_SECTION:
+		return "Section";
+	case SYMBOL_FILE:
+		return "File";
+	default:
+		return "Unknown";
+	}
 }
+
+class VanadisELFRelocationEntry {
+public:
+	VanadisELFRelocationEntry() {
+		rel_address = 0;
+		symbol_info = 0;
+	}
+
+	void print( SST::Output* output, uint32_t index ) {
+		output->verbose(CALL_INFO, 16, 0, "Relocation (index: %" PRIu32 " / address: %" PRIu64 " (0x%0llx) / info: %" PRIu64 "\n",
+			index, rel_address, rel_address, symbol_info);
+	}
+
+	void setAddress( const uint64_t addr ) { rel_address = addr; }
+	void setInfo( const uint64_t info    ) { symbol_info = info; }
+
+	uint64_t getAddress() const { return rel_address; }
+	uint64_t getInfo() const { return symbol_info; }
+
+protected:
+	uint64_t rel_address;
+	uint64_t symbol_info;
+
+};
+
+class VanadisSymbolTableEntry {
+public:
+	VanadisSymbolTableEntry() {
+		sym_name_offset = 0;
+		sym_address     = 0;
+		sym_size        = 0;
+		sym_type        = SYMBOL_UNKNOWN;
+		sym_bind        = SYMBOL_BIND_UNKNOWN;
+		sym_sndx        = 0;
+	}
+
+	void setNameOffset( const uint64_t val ) { sym_name_offset = val; }
+	void setAddress( const uint64_t val ) { sym_address = val; }
+	void setSize( const uint64_t val ) { sym_size = val; }
+	void setType( VanadisSymbolType newT ) { sym_type = newT; }
+	void setBindType( VanadisSymbolBindType newBT ) { sym_bind = newBT; }
+	void setName( const char* name_buffer ) {
+		std::string name_buffer_str(name_buffer);
+		symbolName = name_buffer_str;
+	}
+	void setSymbolSection( const uint64_t sec_in ) { sym_sndx = sec_in; }
+
+	uint64_t getNameOffset() const { return sym_name_offset; }
+	uint64_t getAddress() const { return sym_address; }
+	uint64_t getSize() const { return sym_size; }
+	const char* getName() const { return symbolName.c_str(); }
+	VanadisSymbolType getType() const { return sym_type; }
+	VanadisSymbolBindType getBindType() const { return sym_bind; }
+	uint64_t getSymbolSection() const { return sym_sndx; }
+
+	void print( SST::Output* output, size_t index ) {
+		output->verbose(CALL_INFO, 16, 0, "Symbol (index: %" PRIu32 " / name: %s / offset: %" PRIu64 " / address: 0x%0llx / sz: %" PRIu64 ", type: %s / bind: %s / sndx: %" PRIu64 ")\n",
+			(uint32_t) index, symbolName.c_str(), sym_name_offset, sym_address, sym_size, getSymbolTypeString( sym_type ),
+			getSymbolBindTypeString( sym_bind ), sym_sndx );
+	}
+
+protected:
+	std::string symbolName;
+	VanadisSymbolBindType sym_bind;
+	VanadisSymbolType sym_type;
+	uint64_t sym_name_offset;
+	uint64_t sym_address;
+	uint64_t sym_size;
+	uint64_t sym_sndx;
+
+};
 
 class VanadisELFProgramHeaderEntry {
 public:
@@ -189,15 +309,15 @@ public:
 	uint64_t getAlignment() const { return alignment; }
 
 	void print( SST::Output* output, uint64_t index ) {
-		output->verbose(CALL_INFO, 32, 0, ">> Program Header Entry:    %" PRIu64 "\n", index );
-		output->verbose(CALL_INFO, 32, 0, "---> Header Type:           %s\n",
+		output->verbose(CALL_INFO, 16, 0, ">> Program Header Entry:    %" PRIu64 "\n", index );
+		output->verbose(CALL_INFO, 16, 0, "---> Header Type:           %s\n",
 			getELFProgramHeaderTypeString(hdr_type));
-		output->verbose(CALL_INFO, 32, 0, "---> Image Offset:          %" PRIu64 "\n", imgOffset);
-		output->verbose(CALL_INFO, 32, 0, "---> Virtual Memory Start:  %" PRIu64 " / %p\n", virtMemAddrStart, (void*) virtMemAddrStart);
-		output->verbose(CALL_INFO, 32, 0, "---> Phys. Memory Start:    %" PRIu64 " / %p\n", physMemAddrStart, (void*) physMemAddrStart);
-		output->verbose(CALL_INFO, 32, 0, "---> Image Data Length:     %" PRIu64 " / %p\n", imgDataLen, (void*) imgDataLen);
-		output->verbose(CALL_INFO, 32, 0, "---> Image Mem Length:      %" PRIu64 " / %p\n", memDataLen, (void*) memDataLen);
-		output->verbose(CALL_INFO, 32, 0, "---> Alignment:             %" PRIu64 " / %p\n", alignment, (void*) alignment);
+		output->verbose(CALL_INFO, 16, 0, "---> Image Offset:          %" PRIu64 "\n", imgOffset);
+		output->verbose(CALL_INFO, 16, 0, "---> Virtual Memory Start:  %" PRIu64 " / %p\n", virtMemAddrStart, (void*) virtMemAddrStart);
+		output->verbose(CALL_INFO, 16, 0, "---> Phys. Memory Start:    %" PRIu64 " / %p\n", physMemAddrStart, (void*) physMemAddrStart);
+		output->verbose(CALL_INFO, 16, 0, "---> Image Data Length:     %" PRIu64 " / %p\n", imgDataLen, (void*) imgDataLen);
+		output->verbose(CALL_INFO, 16, 0, "---> Image Mem Length:      %" PRIu64 " / %p\n", memDataLen, (void*) memDataLen);
+		output->verbose(CALL_INFO, 16, 0, "---> Alignment:             %" PRIu64 " / %p\n", alignment, (void*) alignment);
 	}
 private:
 	void init() {
@@ -255,25 +375,25 @@ public:
 	uint64_t getAlignment() const { return alignment; }
 
 	void print( SST::Output* output, uint64_t index ) {
-		output->verbose(CALL_INFO, 32, 0, ">> Section Entry %" PRIu64 " (id: %" PRIu64 ")\n", index, id);
-		output->verbose(CALL_INFO, 32, 0, "---> Header Type:                 %s\n",
+		output->verbose(CALL_INFO, 16, 0, ">> Section Entry %" PRIu64 " (id: %" PRIu64 ")\n", index, id);
+		output->verbose(CALL_INFO, 16, 0, "---> Header Type:                 %s\n",
 			getELFSectionHeaderTypeString( sec_type ));
-		output->verbose(CALL_INFO, 32, 0, "---> Section Flags:               %" PRIu64 " / %p\n",
+		output->verbose(CALL_INFO, 16, 0, "---> Section Flags:               %" PRIu64 " / %p\n",
 			sec_flags, (void*) sec_flags);
-		output->verbose(CALL_INFO, 32, 0, "-----> isWriteable():             %s\n", isWriteable() ? "yes" : "no"  );
-		output->verbose(CALL_INFO, 32, 0, "-----> isAllocated():             %s\n", isAllocated() ? "yes" : "no"  );
-		output->verbose(CALL_INFO, 32, 0, "-----> isExecutable():            %s\n", isExecutable() ? "yes" : "no" );
- 		output->verbose(CALL_INFO, 32, 0, "-----> isMergeable():             %s\n", isMergable() ? "yes" : "no"   );
-		output->verbose(CALL_INFO, 32, 0, "-----> isNullTermStrings():       %s\n", isNullTerminatedStrings() ? "yes" : "no" );
-		output->verbose(CALL_INFO, 32, 0, "-----> SHT-Index():               %s\n", containsSHTIndex() ? "yes" : "no" );
-		output->verbose(CALL_INFO, 32, 0, "-----> TLS-Data():                %s\n", containsTLSData() ? "yes" : "no" );
-		output->verbose(CALL_INFO, 32, 0, "---> Virtual Address:             %" PRIu64 " / %p\n", virtMemAddrStart,
+		output->verbose(CALL_INFO, 16, 0, "-----> isWriteable():             %s\n", isWriteable() ? "yes" : "no"  );
+		output->verbose(CALL_INFO, 16, 0, "-----> isAllocated():             %s\n", isAllocated() ? "yes" : "no"  );
+		output->verbose(CALL_INFO, 16, 0, "-----> isExecutable():            %s\n", isExecutable() ? "yes" : "no" );
+ 		output->verbose(CALL_INFO, 16, 0, "-----> isMergeable():             %s\n", isMergable() ? "yes" : "no"   );
+		output->verbose(CALL_INFO, 16, 0, "-----> isNullTermStrings():       %s\n", isNullTerminatedStrings() ? "yes" : "no" );
+		output->verbose(CALL_INFO, 16, 0, "-----> SHT-Index():               %s\n", containsSHTIndex() ? "yes" : "no" );
+		output->verbose(CALL_INFO, 16, 0, "-----> TLS-Data():                %s\n", containsTLSData() ? "yes" : "no" );
+		output->verbose(CALL_INFO, 16, 0, "---> Virtual Address:             %" PRIu64 " / %p\n", virtMemAddrStart,
 			(void*) virtMemAddrStart);
-		output->verbose(CALL_INFO, 32, 0, "---> Image Offset:                %" PRIu64 " / %p\n",
+		output->verbose(CALL_INFO, 16, 0, "---> Image Offset:                %" PRIu64 " / %p\n",
 			imgOffset, (void*) imgOffset);
-		output->verbose(CALL_INFO, 32, 0, "---> Image Data Length:           %" PRIu64 " / %p\n",
+		output->verbose(CALL_INFO, 16, 0, "---> Image Data Length:           %" PRIu64 " / %p\n",
 			imgDataLen, (void*) imgDataLen);
-		output->verbose(CALL_INFO, 32, 0, "---> Alignment:                   %" PRIu64 " / %p\n",
+		output->verbose(CALL_INFO, 16, 0, "---> Alignment:                   %" PRIu64 " / %p\n",
 			alignment, (void*) alignment);
 	}
 
@@ -347,17 +467,31 @@ public:
 			getSectionHeaderEntryCount() );
 		output->verbose(CALL_INFO, 2, 0, "Sect-Hdr Strings Loc: %" PRIu16 "\n",
 			getSectionHeaderNameEntryOffset() );
+		output->verbose(CALL_INFO, 2, 0, "Symbols Found:        %" PRIu32 "\n",
+			(uint32_t) progSymbols.size() );
+		output->verbose(CALL_INFO, 2, 0, "Relocation Entries:   %" PRIu32 "\n",
+			(uint32_t) progRelDyn.size() );
 		output->verbose(CALL_INFO, 2, 0, "-------------------------------------------------------\n");
 
 		for( int i = 0; i < progHeaders.size(); ++i ) {
 			progHeaders[i]->print( output, i );
-			output->verbose(CALL_INFO, 2, 0, "-------------------------------------------------------\n");
+			output->verbose(CALL_INFO, 16, 0, "-------------------------------------------------------\n");
 		}
 
 		for( int i = 0; i < progSections.size(); ++i ) {
 			progSections[i]->print( output, i );
-			output->verbose(CALL_INFO, 2, 0, "-------------------------------------------------------\n");
+			output->verbose(CALL_INFO, 16, 0, "-------------------------------------------------------\n");
 		}
+
+		for( int i = 0; i < progSymbols.size(); ++i ) {
+			progSymbols[i]->print( output, i );
+		}
+
+		for( int i = 0; i < progRelDyn.size(); ++i ) {
+			progRelDyn[i]->print( output, i );
+		}
+
+		output->verbose(CALL_INFO, 16, 0, "-------------------------------------------------------\n");
 	}
 
 	void setClass( const uint8_t new_class )    { elf_class  = new_class;  }
@@ -456,12 +590,30 @@ public:
 		return progSections[index];
 	}
 
+	size_t countSymbols() const { return progSymbols.size(); }
+	const VanadisSymbolTableEntry* getSymbol( const size_t index ) {
+		return progSymbols[index];
+	}
+
+	size_t countDynRelocations() const { return progRelDyn.size(); }
+	const VanadisELFRelocationEntry* getDynRelocation( const size_t index ) {
+		return progRelDyn[index];
+	}
+
 	void addProgramHeader( VanadisELFProgramHeaderEntry* new_header ) {
 		progHeaders.push_back(new_header);
 	}
 
 	void addProgramSection( VanadisELFProgramSectionEntry* new_sec ) {
 		progSections.push_back(new_sec);
+	}
+
+	void addSymbolTableEntry( VanadisSymbolTableEntry* new_entry ) {
+		progSymbols.push_back( new_entry );
+	}
+
+	void addRelocationEntry( VanadisELFRelocationEntry* new_rel ) {
+		progRelDyn.push_back( new_rel );
 	}
 
 	~VanadisELFInfo() {
@@ -475,6 +627,14 @@ public:
 
 		for( VanadisELFProgramSectionEntry* next_sec : progSections ) {
 			delete next_sec;
+		}
+
+		for( VanadisSymbolTableEntry* next_sym : progSymbols ) {
+			delete next_sym;
+		}
+
+		for( VanadisELFRelocationEntry* next_rel : progRelDyn ) {
+			delete next_rel;
 		}
 	}
 
@@ -499,7 +659,184 @@ protected:
 
 	std::vector<VanadisELFProgramHeaderEntry*>  progHeaders;
 	std::vector<VanadisELFProgramSectionEntry*> progSections;
+	std::vector<VanadisSymbolTableEntry*>       progSymbols;
+	std::vector<VanadisELFRelocationEntry*>     progRelDyn;
 };
+
+void readString( FILE* bin_file, uint64_t stringTableStart, uint64_t stringTableOffset, std::vector<char>& nameBuffer ) {
+	uint64_t current_file_pos = (uint64_t) ftell( bin_file );
+
+	nameBuffer.clear();
+	fseek( bin_file, stringTableStart + stringTableOffset, SEEK_SET );
+
+	while( ! feof(bin_file) ) {
+		int next_c = fgetc( bin_file );
+
+		if( '\0' == next_c ) {
+			break;
+		} else if( EOF == next_c ) {
+			break;
+		}
+
+		nameBuffer.push_back( (char) next_c );
+	}
+
+	// Push back a null character as we are turning this into a string later
+	nameBuffer.push_back('\0');
+
+	// Restore file position
+	fseek( bin_file, current_file_pos, SEEK_SET );
+}
+
+void readBinarySymbolTable( SST::Output* output, const char* path, VanadisELFInfo* elf_info,
+	const VanadisELFProgramSectionEntry* symbolSection,
+	const VanadisELFProgramSectionEntry* stringTableEntry ) {
+
+	FILE* bin_file = fopen( path, "rb" );
+
+	if( nullptr == bin_file ) {
+		output->fatal(CALL_INFO, -1, "Error: unable to open %s for reading symbol table.\n", path);
+	}
+
+	const bool binary_is_32 = elf_info->isELF32();
+
+	output->verbose(CALL_INFO, 16, 0, "Symbol Table located at %" PRIu64 " / 0x%0llx in executable (is 32bit? %s).\n",
+		symbolSection->getImageOffset(), symbolSection->getImageOffset(),
+		binary_is_32 ? "yes" : "no" );
+
+	// Wind forward to the symbol table entries
+	fseek( bin_file, symbolSection->getImageOffset(), SEEK_SET );
+	uint64_t symbol_size = binary_is_32 ? (4+4+4+2+2) : (4+2+2+8+8);
+
+	output->verbose(CALL_INFO, 16, 0, "Symbol entry is %" PRIu64 " bytes in size, expecting %" PRIu64 " symbols (remainder: %" PRIu64 ")\n",
+		symbol_size, (symbolSection->getImageLength() / symbol_size),
+		symbolSection->getImageLength() % symbol_size);
+
+	uint8_t  tmp_u8  = 0;
+	uint16_t tmp_u16 = 0;
+	uint32_t tmp_u32 = 0;
+	uint64_t tmp_u64 = 0;
+
+	std::vector<char> name_buffer;
+
+	if( binary_is_32 ) {
+
+	} else {
+		output->fatal(CALL_INFO, -1, "Not implemented yet - 64-bit symbol reads are not yet implemented.\n");
+	}
+
+	for( uint64_t i = symbolSection->getImageOffset() ; i < (symbolSection->getImageOffset() + symbolSection->getImageLength());
+		i += symbol_size ) {
+
+		VanadisSymbolTableEntry* new_symbol = new VanadisSymbolTableEntry();
+
+		if( binary_is_32 ) {
+			fread( &tmp_u32, 4, 1, bin_file );
+			new_symbol->setNameOffset( tmp_u32 );
+
+			fread( &tmp_u32, 4, 1, bin_file );
+			new_symbol->setAddress( tmp_u32 );
+
+			fread( &tmp_u32, 4, 1, bin_file );
+			new_symbol->setSize( tmp_u32 );
+
+			fread( &tmp_u8, 1, 1, bin_file );
+			//output->verbose(CALL_INFO, 16, 0, "Symbol info >> 4 = %" PRIu64 "\n", (tmp_u8 >> 4));
+
+			switch( (tmp_u8 >> 4) ) {
+			case 0:
+				new_symbol->setBindType( SYMBOL_BIND_LOCAL );
+				break;
+			case 1:
+				new_symbol->setBindType( SYMBOL_BIND_GLOBAL );
+				break;
+			case 2:
+				new_symbol->setBindType( SYMBOL_BIND_WEAK );
+				break;
+			default:
+				break;
+			}
+
+			//output->verbose(CALL_INFO, 16, 0, "Symbol type = %" PRIu64 "\n", (tmp_u8 & 0xf) );
+			switch( (tmp_u8 & 0xf) ) {
+			case 0:
+				new_symbol->setType( SYMBOL_NO_TYPE );
+				break;
+			case 1:
+				new_symbol->setType( SYMBOL_OBJECT );
+				break;
+			case 2:
+				new_symbol->setType( SYMBOL_FUNCTION );
+				break;
+			case 3:
+				new_symbol->setType( SYMBOL_SECTION );
+				break;
+			case 4:
+				new_symbol->setType( SYMBOL_FILE );
+				break;
+			default:
+				break;
+			}
+
+			fread( &tmp_u8, 1, 1, bin_file );
+			fread( &tmp_u16, 2, 1, bin_file );
+
+			new_symbol->setSymbolSection( tmp_u16 );
+
+			if( nullptr != stringTableEntry ) {
+				if( new_symbol->getNameOffset() > 0 ) {
+					readString( bin_file, stringTableEntry->getImageOffset(), new_symbol->getNameOffset(), name_buffer );
+					new_symbol->setName( &name_buffer[0] );
+				} else {
+					const char* no_symbol_name = "";
+					new_symbol->setName( no_symbol_name );
+				}
+			}
+
+			elf_info->addSymbolTableEntry( new_symbol );
+		} else {
+
+		}
+	}
+
+
+	fclose( bin_file );
+}
+
+void readELFRelocationInformation( SST::Output* output, const char* path, VanadisELFInfo* elf_info,
+	const VanadisELFProgramSectionEntry* relocationEntry ) {
+
+	FILE* bin_file = fopen( path, "rb" );
+
+	if( nullptr == bin_file ) {
+		output->fatal(CALL_INFO, -1, "Error - unable to open %s\n", path);
+	}
+
+	fseek( bin_file, relocationEntry->getImageOffset(), SEEK_SET );
+
+	if( elf_info->isELF32() ) {
+		uint32_t u32_tmp = 0;
+
+		for( size_t i = relocationEntry->getImageOffset(); i < (relocationEntry->getImageOffset() + relocationEntry->getImageLength());
+			i += 8) {
+
+			VanadisELFRelocationEntry* new_reloc = new VanadisELFRelocationEntry();
+
+			fread( &u32_tmp, 4, 1, bin_file );
+			new_reloc->setAddress( u32_tmp );
+
+			fread( &u32_tmp, 4, 1, bin_file );
+			new_reloc->setInfo( u32_tmp );
+
+			elf_info->addRelocationEntry( new_reloc );
+		}
+	} else {
+		output->fatal(CALL_INFO, -1, "64bit relocation entry reads are not implemented yet.\n");
+	}
+
+
+	fclose( bin_file );
+}
 
 VanadisELFInfo* readBinaryELFInfo( SST::Output* output, const char* path ) {
 
@@ -705,6 +1042,7 @@ VanadisELFInfo* readBinaryELFInfo( SST::Output* output, const char* path ) {
 		case 0x6:  sec_type = SECTION_HEADER_DYN_LINK_INFO;		break;
 		case 0x7:  sec_type = SECTION_HEADER_NOTE;			break;
 		case 0x8:  sec_type = SECTION_HEADER_BSS;			break;
+		case 0x9:  sec_type = SECTION_HEADER_REL;			break;
 		case 0x0B: sec_type = SECTION_HEADER_DYN_SYMBOL_INFO;		break;
 		case 0x0E: sec_type = SECTION_HEADER_INIT_ARRAY;		break;
 		case 0x0F: sec_type = SECTION_HEADER_FINI_ARRAY;		break;
@@ -767,8 +1105,42 @@ VanadisELFInfo* readBinaryELFInfo( SST::Output* output, const char* path ) {
 	}
 
 	fclose( bin_file );
+
+	VanadisELFProgramSectionEntry* string_table_entry = nullptr;
+
+	for( size_t i = 0; i < elf_info->countProgramSections(); ++i ) {
+		const VanadisELFProgramSectionEntry* next_entry = elf_info->getProgramSection( i );
+
+		if( next_entry->getSectionType() == SECTION_HEADER_STRING_TABLE ) {
+			string_table_entry = const_cast<VanadisELFProgramSectionEntry*>(next_entry);
+			break;
+		}
+	}
+
+	for( size_t i = 0; i < elf_info->countProgramSections(); ++i ) {
+		const VanadisELFProgramSectionEntry* next_entry = elf_info->getProgramSection( i );
+
+		if( next_entry->getSectionType() == SECTION_HEADER_SYMBOL_TABLE ) {
+			output->verbose(CALL_INFO, 16, 0, "Reading in symbol table (Section %" PRIu64 ")...\n",
+				next_entry->getID());
+
+			readBinarySymbolTable( output, path, elf_info, next_entry, string_table_entry );
+
+			output->verbose(CALL_INFO, 16, 0, "Read of section completed.\n");
+		} else if( next_entry->getSectionType() == SECTION_HEADER_REL ) {
+			output->verbose(CALL_INFO, 16, 0, "Reading in relocation table (Section %" PRIu64 ")...\n",
+				next_entry->getID());
+
+			readELFRelocationInformation( output, path, elf_info, next_entry );
+
+			output->verbose(CALL_INFO, 16, 0, "Read of relocation entry completed\n");
+		}
+	}
+
 	return elf_info;
 };
+
+
 
 }
 }
