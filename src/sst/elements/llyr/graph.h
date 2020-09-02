@@ -38,9 +38,14 @@ protected:
 
 public:
     Edge();
-    Edge( float weightIn, uint32_t vertexIn )
+    Edge( uint32_t vertexIn )
     {
         weight = 0.00;
+        destinationVertex = vertexIn;
+    }
+    Edge( float weightIn, uint32_t vertexIn )
+    {
+        weight = weightIn;
         destinationVertex = vertexIn;
     }
 
@@ -87,7 +92,6 @@ public:
         type = typeIn;
         visited = 0;
     }
-
 
     bool setType( T typeIn )
     {
@@ -212,7 +216,7 @@ template<class T>
 void LlyrGraph<T>::addEdge( uint32_t beginVertex, uint32_t endVertex )
 {
     std::cout << "add edge:  " << beginVertex << " --> " << endVertex << std::endl;
-    Edge* edge = new Edge( 0.00, endVertex );
+    Edge* edge = new Edge( endVertex );
 
     vertexMap->at(beginVertex).addEdge(edge);
 }
