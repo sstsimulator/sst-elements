@@ -2,7 +2,6 @@
 #ifndef _H_VANADIS_SYSTEM_CALL_FUNC_TYPE
 #define _H_VANADIS_SYSTEM_CALL_FUNC_TYPE
 
-
 namespace SST {
 namespace Vanadis {
 
