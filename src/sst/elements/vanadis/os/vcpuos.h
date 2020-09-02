@@ -10,6 +10,7 @@
 #include "inst/isatable.h"
 #include "inst/regfile.h"
 #include "os/vosresp.h"
+#include "os/voscallall.h"
 #include "inst/vsyscall.h"
 
 namespace SST {

@@ -65,6 +65,15 @@ void VanadisNodeOSComponent::handleIncomingSysCall( SST::Event* ev ) {
 
 void VanadisNodeOSComponent::handleIncomingMemory( SimpleMem::Request* ev ) {
 
+	output->verbose(CALL_INFO, 8, 0, "Receiving incoming data cache response...\n");
+
+	if( pending_stores.find( ev->id ) != pending_stores.end() ) {
+		output->verbose(CALL_INFO, 8, 0, "Matched a previous store operation.\n");
+		pending_stores.erase( ev->id );
+	} else {
+
+	}
+
 }
 
 
