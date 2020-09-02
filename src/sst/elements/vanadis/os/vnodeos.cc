@@ -57,8 +57,27 @@ void VanadisNodeOSComponent::handleIncomingSysCall( SST::Event* ev ) {
 	output->verbose(CALL_INFO, 16, 0, "Call from core: %" PRIu32 ", thr: %" PRIu32 "\n",
 		sys_ev->getCoreID(), sys_ev->getThreadID());
 
-	VanadisSyscallResponse* resp = new VanadisSyscallResponse();
-	core_links[sys_ev->getCoreID()]->send( resp );
+	switch( sys_ev->getOperation() ) {
+
+	case SYSCALL_OP_UNAME:
+		{
+			output->verbose(CALL_INFO, 16, 0, "-> call is uname()\n");
+			VanadisSyscallUnameEvent* uname_ev = dynamic_cast<VanadisSyscallUnameEvent*>( sys_ev );
+
+			if( nullptr == uname_ev ) {
+				output->fatal(CALL_INFO, -1, "-> unable to case to a uname event.\n");
+			}
+
+			output->verbose(CALL_INFO, 16, 0, "---> uname struct is at address 0x%0llx\n", uname_ev->getUnameInfoAddress());
+			output->fatal(CALL_INFO, -1, "Not implemented.\n");
+		}
+		break;
+
+	default:
+		VanadisSyscallResponse* resp = new VanadisSyscallResponse();
+		core_links[sys_ev->getCoreID()]->send( resp );
+		break;
+	}
 
 	delete ev;
 }

@@ -33,6 +33,7 @@
 #define MIPS_SPEC_OP_MASK_AND     0x24
 
 #define MIPS_SPEC_OP_MASK_ANDI    0x30000000
+#define MIPS_SPEC_OP_MASK_ORI     0x34000000
 #define MIPS_SPEC_OP_MASK_REGIMM  0x4000000
 #define MIPS_SPEC_OP_MASK_BGEZAL  0x110000
 #define MIPS_SPEC_OP_MASK_LUI     0x3C000000
@@ -928,6 +929,17 @@ protected:
 				output->verbose(CALL_INFO, 16, 0, "[decoder/ANDI]: -> %" PRIu16 " <- r2: %" PRIu16 " imm: %" PRId64 "\n",
                                         rt, rs, imm_value_64 );
 				bundle->addInstruction( new VanadisAndImmInstruction( getNextInsID(), ins_addr, hw_thr, options,
+					rt, rs, imm_value_64) );
+				insertDecodeFault = false;
+			}
+			break;
+
+		case MIPS_SPEC_OP_MASK_ORI:
+			{
+				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
+				output->verbose(CALL_INFO, 16, 0, "[decoder/ORI]: -> %" PRIu16 " <- r2: %" PRIu16 " imm: %" PRId64 "\n",
+                                        rt, rs, imm_value_64 );
+				bundle->addInstruction( new VanadisOrImmInstruction( getNextInsID(), ins_addr, hw_thr, options,
 					rt, rs, imm_value_64) );
 				insertDecodeFault = false;
 			}

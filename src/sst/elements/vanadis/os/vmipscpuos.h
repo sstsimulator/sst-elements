@@ -5,14 +5,12 @@
 #include <functional>
 #include "os/vcpuos.h"
 #include "os/voscallev.h"
+#include "os/callev/voscallall.h"
 #include "os/voscallresp.h"
-#include "os/voscallaccessev.h"
-#include "os/voscallbrk.h"
-#include "os/voscallsta.h"
-#include "os/vosresp.h"
 
 #define VANADIS_SYSCALL_ACCESS           4033
 #define VANADIS_SYSCALL_BRK              4045
+#define VANADIS_SYSCALL_UNAME            4122
 #define VANADIS_SYSCALL_SET_THREAD_AREA  4283
 #define VANADIS_SYSCALL_RM_INOTIFY       4286
 
@@ -68,7 +66,9 @@ public:
 		case VANADIS_SYSCALL_BRK:
 			{
 				const uint64_t phys_reg_4 = isaTable->getIntPhysReg(4);
-				const uint64_t newBrk = *((uint64_t*) regFile->getIntReg( phys_reg_4 ) );
+
+				uint64_t newBrk = 0;
+				regFile->getIntReg( phys_reg_4, &newBrk );
 
 				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to brk( value: %" PRIu64 " )\n",
 					newBrk);
@@ -78,7 +78,9 @@ public:
 		case VANADIS_SYSCALL_SET_THREAD_AREA:
 			{
 				const uint64_t phys_reg_4 = isaTable->getIntPhysReg(4);
-				const uint64_t thread_area_ptr = *((uint64_t*) regFile->getIntReg( phys_reg_4 ) );
+
+				uint64_t thread_area_ptr = 0;
+				regFile->getIntReg( phys_reg_4, &thread_area_ptr );
 
 				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to set_thread_area( value: %" PRIu64 " )\n",
 					thread_area_ptr);
@@ -96,6 +98,18 @@ public:
                 		}
 			}
 			break;
+		case VANADIS_SYSCALL_UNAME:
+			{
+				const uint64_t phys_reg_4 = isaTable->getIntPhysReg(4);
+
+				uint64_t uname_addr = 0;
+				regFile->getIntReg( phys_reg_4, &uname_addr );
+
+				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to uname()\n");
+
+				call_ev = new VanadisSyscallUnameEvent( core_id, hw_thr, uname_addr );
+			}
+			break;
 
 		default:
 			output->fatal(CALL_INFO, -1, "[syscall-handler] Error: unknown code %" PRIu64 "\n", os_code);
@@ -103,6 +117,7 @@ public:
 		}
 
 		if( nullptr != call_ev ) {
+			output->verbose(CALL_INFO, 8, 0, "Sending event to operating system...\n");
 			os_link->send( call_ev );
 		}
 	}

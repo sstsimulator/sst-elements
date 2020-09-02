@@ -7,7 +7,7 @@
 #include <sst/core/component.h>
 #include <sst/core/interfaces/simpleMem.h>
 
-#include "os/voscallall.h"
+#include "os/callev/voscallall.h"
 
 using namespace SST::Interfaces;
 
