@@ -13,6 +13,7 @@
 #define VANADIS_SYSCALL_UNAME            4122
 #define VANADIS_SYSCALL_SET_THREAD_AREA  4283
 #define VANADIS_SYSCALL_RM_INOTIFY       4286
+#define VANADIS_SYSCALL_OPENAT		 4288
 
 namespace SST {
 namespace Vanadis {
@@ -100,7 +101,7 @@ public:
 			break;
 		case VANADIS_SYSCALL_UNAME:
 			{
-				const uint64_t phys_reg_4 = isaTable->getIntPhysReg(4);
+				const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
 
 				uint64_t uname_addr = 0;
 				regFile->getIntReg( phys_reg_4, &uname_addr );
@@ -108,6 +109,24 @@ public:
 				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to uname()\n");
 
 				call_ev = new VanadisSyscallUnameEvent( core_id, hw_thr, uname_addr );
+			}
+			break;
+		case VANADIS_SYSCALL_OPENAT:
+			{
+				const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
+				uint64_t openat_dirfd = 0;
+				regFile->getIntReg( phys_reg_4, &openat_dirfd );
+
+				const uint16_t phys_reg_5 = isaTable->getIntPhysReg(5);
+				uint64_t openat_path_ptr = 0;
+				regFile->getIntReg( phys_reg_5, &openat_path_ptr );
+
+				const uint16_t phys_reg_6 = isaTable->getIntPhysReg(6);
+				uint64_t openat_flags = 0;
+				regFile->getIntReg( phys_reg_6, &openat_flags );
+
+				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to openat()\n");
+				call_ev = new VanadisSyscallOpenAtEvent( core_id, hw_thr, openat_dirfd, openat_path_ptr, openat_flags );
 			}
 			break;
 

@@ -6,5 +6,6 @@
 #include "os/callev/voscallbrk.h"
 #include "os/callev/voscalluname.h"
 #include "os/callev/voscallsta.h"
+#include "os/callev/voscallopenat.h"
 
 #endif

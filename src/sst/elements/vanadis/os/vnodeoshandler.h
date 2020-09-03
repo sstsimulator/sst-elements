@@ -91,6 +91,22 @@ public:
 			}
 			break;
 
+		case SYSCALL_OP_OPENAT:
+			{
+				output->verbose(CALL_INFO, 16, 0, "-> call is openat()\n");
+				VanadisSyscallOpenAtEvent* openat_ev = dynamic_cast< VanadisSyscallOpenAtEvent* >(sys_ev);
+
+				if( nullptr == openat_ev ) {
+					output->fatal(CALL_INFO, -1, "-> error unable ot cast syscall to an openat event.\n");
+				}
+
+				output->verbose(CALL_INFO, 16, 0, "-> call is openat( %" PRId64 ", 0x%0llx, %" PRId64 " )\n",
+					openat_ev->getDirectoryFileDescriptor(),
+					openat_ev->getPathPointer(), openat_ev->getFlags());
+				output->fatal(CALL_INFO, -1, "NOT IMPLEMENTED YET.\n");
+			}
+			break;
+
 		default:
 			{
 				// Send default response
