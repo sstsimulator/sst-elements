@@ -72,7 +72,7 @@ if __name__ == "__main__":
     system = System()
     system.setTopology(topo)
     system.allocateNodes(ep,"linear")
-    system.allocateNodes(ep2,"random",5)
+    system.allocateNodes(ep2,"linear")
 
     system.build()
     
