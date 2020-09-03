@@ -94,12 +94,12 @@ private:
     static int print_debug;
     int id;
     int num_ports;
-//    int requested_vns;
     int num_vns;
     std::string vn_remap_shm;
     int vn_remap_shm_size;
     int num_vcs;
-
+    std::vector<int> vcs_per_vn;
+    
     Topology* topo;
     XbarArbitration* arb;
 
@@ -129,7 +129,6 @@ private:
     std::vector<std::string> inspector_names;
 
     bool clock_handler(Cycle_t cycle);
-    // bool debug_clock_handler(Cycle_t cycle);
     static void sigHandler(int signal);
 
     void init_vcs();
@@ -155,7 +154,6 @@ public:
 
     void dumpState(std::ostream& stream);
     void printStatus(Output& out);
-
 
 };
 
