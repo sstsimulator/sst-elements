@@ -86,6 +86,7 @@ libmerlin_la_SOURCES = \
 	topology/pymerlin-topo-mesh.py
 
 EXTRA_DIST = \
+	tests/hyperx_128_test.py \
 	tests/dragon_128_test.py \
 	tests/dragon_72_test.py \
 	tests/fattree_128_test.py \
