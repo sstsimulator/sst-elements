@@ -4,7 +4,6 @@ from sst_unittest import *
 from sst_unittest_support import *
 
 import os
-#import shutil
 
 ################################################################################
 # Code to support a single instance module initialize, must be called setUp method
@@ -71,7 +70,7 @@ class testcase_EmberNightly(SSTTestCase):
         outfile = "{0}/{1}.out".format(outdir, testDataFileName)
         errfile = "{0}/{1}.err".format(outdir, testDataFileName)
         mpioutfiles = "{0}/{1}.testfile".format(outdir, testDataFileName)
-        sdlfile="{0}/../test/emberLoad.py".format(test_path)
+        sdlfile = "{0}/../test/emberLoad.py".format(test_path)
 
         # Run SST
         self.run_sst(sdlfile, outfile, errfile, other_args=otherargs, set_cwd=self.emberSweep_Folder, mpi_out_files=mpioutfiles)
@@ -88,7 +87,7 @@ class testcase_EmberNightly(SSTTestCase):
 ###############################################
 
     def _setupEmberTestFiles(self):
-        log_debug("_cleanupEmberTestFiles() Running")
+        log_debug("_setupEmberTestFiles() Running")
         test_path = self.get_testsuite_dir()
         outdir = get_test_output_run_dir()
         tmpdir = get_test_output_tmp_dir()
