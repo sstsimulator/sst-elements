@@ -8,6 +8,7 @@
 #include "os/callev/voscallall.h"
 #include "os/voscallresp.h"
 
+#define VANADIS_SYSCALL_READ             4003
 #define VANADIS_SYSCALL_ACCESS           4033
 #define VANADIS_SYSCALL_BRK              4045
 #define VANADIS_SYSCALL_UNAME            4122
@@ -58,12 +59,29 @@ public:
 		VanadisSyscallEvent* call_ev = nullptr;
 
 		switch(os_code) {
+		case VANADIS_SYSCALL_READ:
+			{
+                                const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
+                                int64_t read_fd = 0;
+                                regFile->getIntReg( phys_reg_4, &read_fd );
+
+                                const uint16_t phys_reg_5 = isaTable->getIntPhysReg(5);
+                                uint64_t read_buff_ptr = 0;
+                                regFile->getIntReg( phys_reg_5, &read_buff_ptr );
+
+                                const uint16_t phys_reg_6 = isaTable->getIntPhysReg(6);
+                                int64_t read_count = 0;
+                                regFile->getIntReg( phys_reg_6, &read_count );
+
+				call_ev = new VanadisSyscallReadEvent( core_id, hw_thr, read_fd, read_buff_ptr, read_count );
+			}
+			break;
 		case VANADIS_SYSCALL_ACCESS:
 			{
 				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to access()\n");
 				call_ev = new VanadisSyscallAccessEvent( core_id, hw_thr );
-				break;
 			}
+			break;
 		case VANADIS_SYSCALL_BRK:
 			{
 				const uint64_t phys_reg_4 = isaTable->getIntPhysReg(4);
@@ -85,6 +103,11 @@ public:
 
 				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to set_thread_area( value: %" PRIu64 " )\n",
 					thread_area_ptr);
+
+				if( tls_address != nullptr ) {
+					(*tls_address) = thread_area_ptr;
+				}
+
 				call_ev = new VanadisSyscallSetThreadAreaEvent( core_id, hw_thr, thread_area_ptr );
 			}
 			break;
@@ -152,11 +175,11 @@ protected:
 			output->fatal(CALL_INFO, -1, "Error - got a OS response, but cannot convert to a correct response.\n");
 		}
 
-		output->verbose(CALL_INFO, 8, 0, "syscall return-code: %d\n", os_resp->getReturnCode() );
+		output->verbose(CALL_INFO, 8, 0, "syscall return-code: %" PRId64 "\n", os_resp->getReturnCode() );
 		output->verbose(CALL_INFO, 8, 0, "-> issuing call-backs to clear syscall ROB stops...\n");
 
-		// Set up the return code (according to ABI, this goes in r7)
-		const uint16_t rc_reg = isaTable->getIntPhysReg(7);
+		// Set up the return code (according to ABI, this goes in r2)
+		const uint16_t rc_reg = isaTable->getIntPhysReg(2);
 		const int64_t  rc_val = (int64_t) os_resp->getReturnCode();
 		regFile->setIntReg( rc_reg, rc_val );
 

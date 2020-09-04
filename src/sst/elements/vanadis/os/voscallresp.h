@@ -14,12 +14,12 @@ public:
 		return_code = 0;
 	}
 
-	VanadisSyscallResponse( int ret_c ) :
+	VanadisSyscallResponse( int64_t ret_c ) :
 		SST::Event(), return_code(ret_c) {
 	}
 
 	~VanadisSyscallResponse() {}
-	int getReturnCode() { return return_code; }
+	int64_t getReturnCode() { return return_code; }
 
 private:
 	void serialize_order(SST::Core::Serialization::serializer &ser) override {
@@ -28,7 +28,7 @@ private:
 	}
 
 	ImplementSerializable( SST::Vanadis::VanadisSyscallResponse );
-	int return_code;
+	int64_t return_code;
 
 };
 

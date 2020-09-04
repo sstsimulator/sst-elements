@@ -27,12 +27,18 @@ public:
 
 		regFile  = nullptr;
 		isaTable = nullptr;
+		tls_address = nullptr;
+
 		hw_thr   = 0;
 		core_id  = 0;
 	}
 
 	virtual ~VanadisCPUOSHandler() {
 		delete output;
+	}
+
+	void setThreadLocalStoragePointer( uint64_t* new_tls_ptr ) {
+		tls_address = new_tls_ptr;
 	}
 
 	void setCoreID( const uint32_t newCoreID ) { core_id = newCoreID; }
@@ -55,6 +61,8 @@ protected:
 
 	VanadisRegisterFile* regFile;
 	VanadisISATable* isaTable;
+
+	uint64_t* tls_address;
 
 };
 

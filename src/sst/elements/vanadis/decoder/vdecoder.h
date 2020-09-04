@@ -37,6 +37,7 @@ public:
 
 	VanadisDecoder( ComponentId_t id, Params& params ) : SubComponent(id) {
 		ip = 0;
+		tls_ptr = 0;
 
 		const size_t decode_q_len = params.find<size_t>("decode_q_len", 8);
 		decoded_q = new VanadisCircularQueue< VanadisInstruction* >( decode_q_len );
@@ -53,6 +54,8 @@ public:
 
 		os_handler = loadUserSubComponent<SST::Vanadis::VanadisCPUOSHandler>("os_handler");
 		hw_thr = 0;
+
+		os_handler->setThreadLocalStoragePointer( &tls_ptr );
 
 		canIssueStores = true;
 		canIssueLoads  = true;
@@ -127,6 +130,14 @@ public:
 		clearDecoderAfterMisspeculate( output );
 	}
 
+	void setThreadLocalStoragePointer( uint64_t new_tls ) {
+		tls_ptr = new_tls;
+	}
+
+	uint64_t getThreadLocalStoragePointer() const {
+		return tls_ptr;
+	}
+
 	VanadisCircularQueue<VanadisInstruction*>* getDecodedQueue() { return decoded_q; }
 
 	void setHardwareThread( const uint32_t thr ) { hw_thr = thr; }
@@ -153,6 +164,8 @@ protected:
 	uint64_t next_ins_id;
 	uint64_t icache_line_width;
 	uint32_t hw_thr;
+
+	uint64_t tls_ptr;
 
 	bool wantDelegatedLoad;
 	VanadisCircularQueue<VanadisInstruction*>* decoded_q;

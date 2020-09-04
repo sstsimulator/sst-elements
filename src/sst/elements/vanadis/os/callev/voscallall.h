@@ -7,5 +7,6 @@
 #include "os/callev/voscalluname.h"
 #include "os/callev/voscallsta.h"
 #include "os/callev/voscallopenat.h"
+#include "os/callev/voscallread.h"
 
 #endif

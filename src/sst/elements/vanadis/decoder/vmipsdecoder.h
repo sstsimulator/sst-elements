@@ -26,6 +26,8 @@
 #define MIPS_SHFT_MASK            0x7C0
 #define MIPS_FUNC_MASK       	  0x3F
 
+#define MIPS_SPEC_OP_SPECIAL3     0x7c000000
+
 #define MIPS_SPECIAL_OP_MASK      0x7FF
 
 #define MIPS_SPEC_OP_MASK_ADD     0x20
@@ -34,10 +36,11 @@
 
 #define MIPS_SPEC_OP_MASK_ANDI    0x30000000
 #define MIPS_SPEC_OP_MASK_ORI     0x34000000
-#define MIPS_SPEC_OP_MASK_REGIMM  0x4000000
-#define MIPS_SPEC_OP_MASK_BGEZAL  0x110000
+#define MIPS_SPEC_OP_MASK_REGIMM  0x04000000
+#define MIPS_SPEC_OP_MASK_BGEZAL  0x00110000
 #define MIPS_SPEC_OP_MASK_LUI     0x3C000000
 #define MIPS_SPEC_OP_MASK_ADDIU   0x24000000
+#define MIPS_SPEC_OP_MASK_LB      0x80000000
 #define MIPS_SPEC_OP_MASK_LL      0xC0000000
 #define MIPS_SPEC_OP_MASK_LW      0x8C000000
 #define MIPS_SPEC_OP_MASK_LWL     0x88000000
@@ -52,7 +55,8 @@
 #define MIPS_SPEC_OP_MASK_BLEZ    0x18000000
 #define MIPS_SPEC_OP_MASK_SLTI    0x28000000
 #define MIPS_SPEC_OP_MASK_SLTIU   0x2C000000
-#define MIPS_SPEC_OP_MASK_J       0x8000000
+#define MIPS_SPEC_OP_MASK_JAL     0x0C000000
+#define MIPS_SPEC_OP_MASK_J       0x08000000
 
 #define MIPS_SPEC_OP_MASK_BLTZ    0x0
 #define MIPS_SPEC_OP_MASK_BREAK   0x0D
@@ -87,6 +91,7 @@
 #define MIPS_SPEC_OP_MASK_MULTU   0x19
 #define MIPS_SPEC_OP_MASK_NOR     0x27
 #define MIPS_SPEC_OP_MASK_OR      0x25
+#define MIPS_SPEC_OP_MASK_RDHWR   0x3B
 #define MIPS_SPEC_OP_MASK_SLL     0x00
 #define MIPS_SPEC_OP_MASK_SLLV    0x04
 #define MIPS_SPEC_OP_MASK_SLT	  0x2A
@@ -636,11 +641,17 @@ protected:
 						break;
 
 					case MIPS_SPEC_OP_MASK_NOR:
+						{
+							bundle->addInstruction( new VanadisNorInstruction( getNextInsID(), ins_addr, hw_thr, options, rd, rs, rt ) );
+                                                        insertDecodeFault = false;
+						}
 						break;
 
 					case MIPS_SPEC_OP_MASK_OR:
-						bundle->addInstruction( new VanadisOrInstruction( getNextInsID(), ins_addr, hw_thr, options, rd, rs, rt ) );
-						insertDecodeFault = false;
+						{
+							bundle->addInstruction( new VanadisOrInstruction( getNextInsID(), ins_addr, hw_thr, options, rd, rs, rt ) );
+							insertDecodeFault = false;
+						}
 						break;
 
 					case MIPS_SPEC_OP_MASK_SLLV:
@@ -756,6 +767,17 @@ protected:
 
 				bundle->addInstruction( new VanadisSetRegisterInstruction( getNextInsID(), ins_addr, hw_thr, options, rt, imm_value_64) );
 				insertDecodeFault = false;
+			}
+			break;
+
+		case MIPS_SPEC_OP_MASK_LB:
+			{
+				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
+                                output->verbose(CALL_INFO, 16, 0, "[decoder/LB]: -> reg: %" PRIu16 " <- base: %" PRIu16 " + offset=%" PRId64 "\n",
+                                        rt, rs, imm_value_64);
+                                bundle->addInstruction( new VanadisLoadInstruction( getNextInsID(), ins_addr, hw_thr, options, rs, imm_value_64,
+                                        rt, 1, true, MEM_TRANSACTION_NONE) );
+                                insertDecodeFault = false;
 			}
 			break;
 
@@ -959,6 +981,46 @@ protected:
 
                                 bundle->addInstruction( new VanadisJumpInstruction( getNextInsID(), ins_addr, hw_thr, options, jump_to, VANADIS_SINGLE_DELAY_SLOT ) );
 				insertDecodeFault = false;
+			}
+			break;
+		case MIPS_SPEC_OP_MASK_JAL:
+			{
+				const uint32_t j_addr_index = (next_ins & MIPS_J_ADDR_MASK) << 2;
+                                const uint32_t upper_bits   = ((ins_addr + 4) & MIPS_J_UPPER_MASK);
+
+				uint64_t jump_to = 0;
+                                jump_to = jump_to + (uint64_t) j_addr_index;
+                                jump_to = jump_to + (uint64_t) upper_bits;
+
+				bundle->addInstruction( new VanadisSetRegisterInstruction( getNextInsID(), ins_addr, hw_thr, options, 31, ins_addr + 8 ) );
+				bundle->addInstruction( new VanadisJumpInstruction( getNextInsID(), ins_addr, hw_thr, options, jump_to, VANADIS_SINGLE_DELAY_SLOT ) );
+				insertDecodeFault = false;
+			}
+			break;
+
+		case MIPS_SPEC_OP_SPECIAL3:
+			{
+				output->verbose(CALL_INFO, 16, 0, "[decoder, partial: special3], further decode required...\n");
+
+				switch( next_ins & 0x3F ) {
+				case MIPS_SPEC_OP_MASK_RDHWR:
+					{
+						const uint16_t target_reg = rt;
+						const uint16_t req_type   = rd;
+
+						output->verbose(CALL_INFO, 16, 0, "[decode/RDHWR] target: %" PRIu16 " type: %" PRIu16 "\n",
+							target_reg, req_type);
+
+						switch( rd ) {
+						case 29:
+							bundle->addInstruction( new VanadisSetRegisterInstruction( getNextInsID(), ins_addr, hw_thr, options,
+								target_reg, (int64_t) getThreadLocalStoragePointer() ) );
+							insertDecodeFault = false;
+							break;
+						}
+					}
+					break;
+				}
 			}
 			break;
 

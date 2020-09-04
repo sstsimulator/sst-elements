@@ -14,6 +14,7 @@
 // Logical operations
 #include "inst/vand.h"
 #include "inst/vandi.h"
+#include "inst/vnor.h"
 #include "inst/vor.h"
 #include "inst/vori.h"
 #include "inst/vxor.h"
