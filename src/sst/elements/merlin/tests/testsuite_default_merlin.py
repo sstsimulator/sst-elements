@@ -60,6 +60,9 @@ class testcase_merlin_Component(SSTTestCase):
     def test_merlin_torus_64(self):
          self.merlin_test_template("torus_64_test")
 
+    def test_merlin_hyperx_128(self):
+         self.merlin_test_template("hyperx_128_test")
+
 #####
 
     def merlin_test_template(self, testcase):
