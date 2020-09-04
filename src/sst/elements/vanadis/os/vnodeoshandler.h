@@ -17,6 +17,7 @@
 #include "os/node/vnodeosfd.h"
 #include "os/node/vnodeoswritevh.h"
 #include "os/node/vnodeosopenath.h"
+#include "os/node/vnodeosreadlink.h"
 
 using namespace SST::Interfaces;
 
@@ -134,7 +135,7 @@ public:
 					openat_ev->getPathPointer(), openat_ev->getFlags() );
 
 				current_syscall = std::bind( &VanadisNodeOSCoreHandler::processSyscallOpenAt, this );
-				const uint64_t start_read_len = (64 - (openat_ev->getPathPointer() % 64));
+				const uint64_t start_read_len = (openat_ev->getPathPointer() % 64) == 0 ? 64 : openat_ev->getPathPointer() % 64;
 
 				SimpleMem::Request* openat_start_req = new SimpleMem::Request( SimpleMem::Request::Read,
 					openat_ev->getPathPointer(), start_read_len );
@@ -175,6 +176,49 @@ public:
 			}
 			break;
 
+		case SYSCALL_OP_READLINK:
+			{
+				output->verbose(CALL_INFO, 16, 0, "-> call is readlink()\n");
+				VanadisSyscallReadLinkEvent* readlink_ev = dynamic_cast< VanadisSyscallReadLinkEvent* >( sys_ev );
+
+				if( nullptr == readlink_ev ) {
+					output->fatal(CALL_INFO, -1, "-> error unable ot cast system call to a readlink event.\n");
+				}
+
+				if( readlink_ev->getBufferSize() > 0 ) {
+					output->verbose(CALL_INFO, 16, 0, "-> readlink( 0x%0llx, 0x%llx, %" PRId64 " )\n",
+						readlink_ev->getPathPointer(), readlink_ev->getBufferPointer(), readlink_ev->getBufferSize() );
+
+					std::function<void(SimpleMem::Request*)> send_req_func = std::bind(
+       	                                                        	&VanadisNodeOSCoreHandler::sendMemRequest, this, std::placeholders::_1 );
+					std::function<void(const uint64_t, std::vector<uint8_t>&)> send_block_func = std::bind(
+						&VanadisNodeOSCoreHandler::sendBlockToMemory, this, std::placeholders::_1, std::placeholders::_2 );
+
+					handler_state = new VanadisReadLinkHandlerState( output->getVerboseLevel(), readlink_ev->getPathPointer(),
+						readlink_ev->getBufferPointer(), readlink_ev->getBufferSize(), send_req_func, send_block_func );
+
+					uint64_t line_remain = ( readlink_ev->getPathPointer() % 64 ) == 0 ? 64 : readlink_ev->getPathPointer() % 64;
+
+					sendMemRequest( new SimpleMem::Request( SimpleMem::Request::Read,
+							readlink_ev->getPathPointer(), line_remain ) );
+
+					current_syscall = std::bind( &VanadisNodeOSCoreHandler::processSyscallReadLink, this );
+				} else if( readlink_ev->getBufferSize() == 0 ) {
+					VanadisSyscallResponse* resp = new VanadisSyscallResponse( 0 );
+		                        core_link->send( resp );
+
+                		        resetSyscallNothing();
+				} else {
+					VanadisSyscallResponse* resp = new VanadisSyscallResponse( 22 );
+					resp->markFailed();
+		                        core_link->send( resp );
+					
+                		        resetSyscallNothing();
+				}
+
+			}
+			break;
+
 		case SYSCALL_OP_WRITEV:
 			{
 				output->verbose(CALL_INFO, 16, 0, "-> call is writev()\n");
@@ -198,6 +242,7 @@ public:
 					// EINVAL = 22
 					VanadisSyscallResponse* resp = new VanadisSyscallResponse( 22 );
                                                 core_link->send( resp );
+					resp->markFailed();
 
                                        resetSyscallNothing();
 				} else {
@@ -223,6 +268,7 @@ public:
 					} else {
 						// EINVAL = 22
 						VanadisSyscallResponse* resp = new VanadisSyscallResponse( 22 );
+						resp->markFailed();
 			                        core_link->send( resp );
 
 	                		        resetSyscallNothing();
@@ -260,37 +306,56 @@ public:
 	}
 
 	void sendBlockToMemory( const uint64_t start_address, std::vector<uint8_t>& data_block ) {
-		uint64_t line_offset = 64 - (start_address % 64);
+		output->verbose(CALL_INFO, 16, 0, "bulk memory write addr: 0x%0llx / len: %" PRIu64 "\n",
+				start_address, (uint64_t) data_block.size());
+
+		uint64_t prolog_size = 0;
+
+		if( data_block.size() < 64 ) {
+			// Less than one cache line, but may still span 2 lines
+			uint64_t start_address_offset = (start_address % 64);
+
+			if( data_block.size() < (64 - start_address_offset) ) {
+				prolog_size = data_block.size();
+			} else {
+				prolog_size = 64 - start_address_offset;
+			}
+		} else {
+			prolog_size = 64 - (start_address % 64);
+		}
 
 		std::vector<uint8_t> offset_payload;
-		for( uint64_t i = 0; i < line_offset; ++i ) {
+		for( uint64_t i = 0; i < prolog_size; ++i ) {
 			offset_payload.push_back( data_block[i] );
 		}
 
 		sendMemRequest( new SimpleMem::Request( SimpleMem::Request::Write,
 			start_address, offset_payload.size(), offset_payload) );
 
-		uint64_t remainder = (data_block.size() - line_offset) % 64;
-		uint64_t blocks    = (data_block.size() - line_offset - remainder) / 64;
+		uint64_t remainder = (data_block.size() - prolog_size) % 64;
+		uint64_t blocks    = (data_block.size() - prolog_size - remainder) / 64;
+
+		output->verbose(CALL_INFO, 16, 0, "requires %" PRIu64 " lines to be written.\n", blocks);
+		output->verbose(CALL_INFO, 16, 0, "requires %" PRIu64 " bytes in remainder\n", remainder );
 
 		for( uint64_t i = 0; i < blocks; ++i ) {
 			std::vector<uint8_t> block_payload;
 
 			for( uint64_t j = 0; j < 64; ++j ) {
-				block_payload.push_back( data_block[ line_offset + (i*64) + j] );
+				block_payload.push_back( data_block[ prolog_size + (i*64) + j] );
 			}
 
 			sendMemRequest( new SimpleMem::Request( SimpleMem::Request::Write,
-				start_address + line_offset + (i*64), block_payload.size(), block_payload) );
+				start_address + prolog_size + (i*64), block_payload.size(), block_payload) );
 		}
 
 		std::vector<uint8_t> remainder_payload;
 		for( uint64_t i = 0; i < remainder; ++i ) {
-			remainder_payload.push_back( data_block[ line_offset + (blocks * 64) + i ] );
+			remainder_payload.push_back( data_block[ prolog_size + (blocks * 64) + i ] );
 		}
 
 		sendMemRequest( new SimpleMem::Request( SimpleMem::Request::Write,
-			start_address + line_offset + (blocks * 64), remainder_payload.size(), remainder_payload) );
+			start_address + prolog_size + (blocks * 64), remainder_payload.size(), remainder_payload) );
 	}
 
 	void handleIncomingMemory( SimpleMem::Request* ev ) {
@@ -319,8 +384,8 @@ public:
 	}
 
 	void sendMemRequest( SimpleMem::Request* req ) {
-		output->verbose(CALL_INFO, 16, 0, "sending request: addr: %" PRIu64 " / size: %" PRIu64 "\n",
-			req->addr, (uint64_t) req->size);
+		output->verbose(CALL_INFO, 16, 0, "sending request: addr: %" PRIu64 " 0x%0llx / size: %" PRIu64 "\n",
+			req->addr, req->addr, (uint64_t) req->size);
 
 		pending_mem.insert( req->id );
 		sendMemEventCallback( req, core_id );
@@ -358,6 +423,25 @@ public:
 			SimpleMem::Request* new_req = new SimpleMem::Request( SimpleMem::Request::Read,
 				openat_state->getPathPtr() + openat_state->getOpenAtPathLength(), 64 );
 			sendMemRequest( new_req );
+		}
+	}
+
+	void processSyscallReadLink() {
+		VanadisReadLinkHandlerState* readlink_start = ((VanadisReadLinkHandlerState*)( handler_state ));
+
+		// All the pending writes must be done.
+		if( 0 == pending_mem.size() ) {
+			if( readlink_start->isCompleted() ) {
+				output->verbose(CALL_INFO, 16, 0, "readlink() memory writes completed (%" PRIu64 " bytes written)\n", 
+					readlink_start->getBytesWritten() );
+				VanadisSyscallResponse* resp = new VanadisSyscallResponse( readlink_start->getBytesWritten() );
+       		                core_link->send( resp );
+
+                	       	resetSyscallNothing();
+			}
+		} else {
+			output->verbose(CALL_INFO, 16, 0, "processing %" PRIu64 " pending memory operations\n",
+				(uint64_t) pending_mem.size());
 		}
 	}
 
