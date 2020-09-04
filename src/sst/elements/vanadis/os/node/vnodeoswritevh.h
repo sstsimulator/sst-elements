@@ -91,7 +91,9 @@ public:
                 case 2:
                         {
                                 // Write out the payload
-				printf("fwrite, size: %" PRIu32 " handle: 0x%0llx\n", (uint32_t) req->size, file_handle);
+				output->verbose(CALL_INFO, 16, 0, "fwrite output addr: 0x%0llx size: %" PRIu32 "\n",
+					req->addr, (uint32_t) req->size);
+
                                 fwrite( &req->data[0], req->size, 1, file_handle );
 				fflush( file_handle );
 
@@ -118,6 +120,9 @@ public:
                                                         writev_iovec_addr + (current_iovec * 8), 4 ) );
                                                 state = 0;
                                         } else {
+						output->verbose(CALL_INFO, 16, 0, "iovec processing is completed.\n");
+						printStatus();
+
                                                 state = 3;
                                         }
                                 }

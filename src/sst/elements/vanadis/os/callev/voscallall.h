@@ -8,6 +8,7 @@
 #include "os/callev/voscallsta.h"
 #include "os/callev/voscallopenat.h"
 #include "os/callev/voscallread.h"
+#include "os/callev/voscallreadlink.h"
 #include "os/callev/voscallwritev.h"
 
 #endif

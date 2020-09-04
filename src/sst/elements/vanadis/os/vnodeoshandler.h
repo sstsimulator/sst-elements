@@ -56,6 +56,10 @@ public:
 	}
 
 	void resetSyscallNothing() {
+		if( nullptr != handler_state ) {
+			delete handler_state;
+		}
+
 		current_syscall = std::bind( &VanadisNodeOSCoreHandler::processSyscallNothing, this );
 		handler_state = nullptr;
 	}
@@ -158,6 +162,8 @@ public:
 						next_file->first, next_file->second->getPath());
 				}
 
+				output->fatal(CALL_INFO, -1, "NOT IMPLEMENTED\n");
+
 				if( 0 == read_ev->getCount() ) {
 					VanadisSyscallResponse* resp = new VanadisSyscallResponse( 0 );
 		                        core_link->send( resp );
@@ -226,11 +232,27 @@ public:
 			}
 			break;
 
+		case SYSCALL_OP_BRK:
+		case SYSCALL_OP_ACCESS:
+		case SYSCALL_OP_SET_THREAD_AREA:
+			{
+				VanadisSyscallResponse* resp = new VanadisSyscallResponse();
+				core_link->send( resp );
+
+				resetSyscallNothing();
+			}
+			break;
+
 		default:
 			{
+				output->fatal(CALL_INFO, -1, "Error - unknown operating system call (code: %" PRIu64 ")\n",
+					(uint64_t) sys_ev->getOperation());
+
 				// Send default response
 				VanadisSyscallResponse* resp = new VanadisSyscallResponse();
 				core_link->send( resp );
+
+				resetSyscallNothing();
 			}
 			break;
 		}

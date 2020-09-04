@@ -11,6 +11,7 @@
 #define VANADIS_SYSCALL_READ             4003
 #define VANADIS_SYSCALL_ACCESS           4033
 #define VANADIS_SYSCALL_BRK              4045
+#define VANADIS_SYSCALL_READLINK         4085
 #define VANADIS_SYSCALL_UNAME            4122
 #define VANADIS_SYSCALL_WRITEV           4146
 #define VANADIS_SYSCALL_SET_THREAD_AREA  4283
@@ -60,6 +61,24 @@ public:
 		VanadisSyscallEvent* call_ev = nullptr;
 
 		switch(os_code) {
+		case VANADIS_SYSCALL_READLINK:
+			{
+                                const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
+                                uint64_t readlink_path = 0;
+                                regFile->getIntReg( phys_reg_4, &readlink_path );
+
+                                const uint16_t phys_reg_5 = isaTable->getIntPhysReg(5);
+                                uint64_t readlink_buff_ptr = 0;
+                                regFile->getIntReg( phys_reg_5, &readlink_buff_ptr );
+
+                                const uint16_t phys_reg_6 = isaTable->getIntPhysReg(6);
+                                int64_t readlink_size = 0;
+                                regFile->getIntReg( phys_reg_6, &readlink_size );
+
+				call_ev = new VanadisSyscallReadLinkEvent( core_id, hw_thr, readlink_path, readlink_buff_ptr, readlink_size );
+			}
+			break;
+
 		case VANADIS_SYSCALL_READ:
 			{
                                 const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
@@ -199,9 +218,16 @@ protected:
 		output->verbose(CALL_INFO, 8, 0, "-> issuing call-backs to clear syscall ROB stops...\n");
 
 		// Set up the return code (according to ABI, this goes in r2)
-		const uint16_t rc_reg = isaTable->getIntPhysReg(2);
+		const uint16_t rc_reg   = isaTable->getIntPhysReg(2);
+		const uint16_t succ_reg = isaTable->getIntPhysReg(7);
+
 		const int64_t  rc_val = (int64_t) os_resp->getReturnCode();
-		regFile->setIntReg( rc_reg, rc_val );
+		regFile->setIntReg( rc_reg,   rc_val );
+
+		const uint64_t os_success = 0;
+		const uint64_t os_failed  = 0;
+
+		regFile->setIntReg( succ_reg, os_resp->isSuccessful() ? os_success : os_failed );
 
 		for( int i = 0; i < returnCallbacks.size(); ++i ) {
 			returnCallbacks[i](hw_thr);

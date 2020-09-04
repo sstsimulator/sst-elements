@@ -658,6 +658,11 @@ protected:
 						break;
 
 					case MIPS_SPEC_OP_MASK_SLT:
+						{
+							bundle->addInstruction( new VanadisSetRegCompareInstruction( getNextInsID(), ins_addr, hw_thr, options,
+								rd, rs, rt, REG_COMPARE_LT) );
+							insertDecodeFault = false;
+						}
 						break;
 
 					case MIPS_SPEC_OP_MASK_SLTU:
@@ -721,6 +726,18 @@ protected:
 
 							bundle->addInstruction( new VanadisShiftLeftLogicalImmInstruction( getNextInsID(), ins_addr,
 								hw_thr, options, rd, rt, shf_amnt ) );
+							insertDecodeFault = false;
+						}
+						break;
+					case MIPS_SPEC_OP_MASK_SRL:
+						{
+							const uint64_t shf_amnt = ((uint64_t) (next_ins & MIPS_SHFT_MASK)) >> 6;
+
+							output->verbose(CALL_INFO, 16, 0, "[decode/SRL]-> out: %" PRIu16 " / in: %" PRIu16 " shft: %" PRIu64 "\n",
+								rd, rt, shf_amnt);
+
+							bundle->addInstruction( new VanadisShiftRightLogicalImmInstruction( getNextInsID(), ins_addr, hw_thr, options,
+								rd, rs, shf_amnt ) );
 							insertDecodeFault = false;
 						}
 						break;
