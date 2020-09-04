@@ -13,8 +13,21 @@ class VanadisOSFileDescriptor {
 public:
         VanadisOSFileDescriptor( uint32_t desc_id, const char* file_path ) :
                 file_id( desc_id ) {
+
+		if( nullptr != file_path ) {
+			printf("OPENING FILE: %s, result: ", file_path);
+			file_handle = fopen( file_path, "w+" );
+
+			if( nullptr == file_handle ) {
+				printf(" failed\n");
+			} else {
+				printf(" success\n");
+			}
+		} else {
+	                file_handle = nullptr;
+		}
+
                 path = file_path ;
-                file_handle = nullptr;
         }
 
         ~VanadisOSFileDescriptor() {

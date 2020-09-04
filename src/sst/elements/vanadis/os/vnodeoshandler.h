@@ -38,11 +38,11 @@ public:
 		handler_state = nullptr;
 
 		if( stdin_path != nullptr )
-			file_descriptors.insert( std::pair< uint32_t, VanadisOSFileDescriptor*>( 0, new VanadisOSFileDescriptor( 0, stdin_path ) ) );
+			file_descriptors.insert( std::pair< uint32_t, VanadisOSFileDescriptor*>( 0, new VanadisOSFileDescriptor( 0, stdin_path  ) ) );
 		if( stdout_path != nullptr )
-			file_descriptors.insert( std::pair< uint32_t, VanadisOSFileDescriptor*>( 1, new VanadisOSFileDescriptor( 1, stdin_path ) ) );
+			file_descriptors.insert( std::pair< uint32_t, VanadisOSFileDescriptor*>( 1, new VanadisOSFileDescriptor( 1, stdout_path ) ) );
 		if( stderr_path != nullptr )
-			file_descriptors.insert( std::pair< uint32_t, VanadisOSFileDescriptor*>( 2, new VanadisOSFileDescriptor( 2, stdin_path ) ) );
+			file_descriptors.insert( std::pair< uint32_t, VanadisOSFileDescriptor*>( 2, new VanadisOSFileDescriptor( 2, stderr_path ) ) );
 
 		resetSyscallNothing();
 	}
@@ -126,7 +126,7 @@ public:
 					openat_ev->getDirectoryFileDescriptor(),
 					openat_ev->getPathPointer(), openat_ev->getFlags() );
 
-				handler_state = new VanadisOpenAtHandlerState( openat_ev->getDirectoryFileDescriptor(),
+				handler_state = new VanadisOpenAtHandlerState( output->getVerboseLevel(), openat_ev->getDirectoryFileDescriptor(),
 					openat_ev->getPathPointer(), openat_ev->getFlags() );
 
 				current_syscall = std::bind( &VanadisNodeOSCoreHandler::processSyscallOpenAt, this );
@@ -185,29 +185,31 @@ public:
 				auto file_des = file_descriptors.find( writev_ev->getFileDescriptor() );
 
 				if( file_des == file_descriptors.end() ) {
+
 					output->verbose(CALL_INFO, 16, 0, "-> file handle %" PRId64 " is not currently open, return an error code.\n",
 						writev_ev->getFileDescriptor());
 
 					// EINVAL = 22
-					VanadisSyscallResponse* resp = new VanadisSyscallResponse(22 );
+					VanadisSyscallResponse* resp = new VanadisSyscallResponse( 22 );
                                                 core_link->send( resp );
 
                                        resetSyscallNothing();
 				} else {
-					if( writev_ev->getIOVecCount() > 0 ) {
-						std::function<void(SimpleMem::Request*> send_req = std::bind(
-								&VanadisNodeOSCoreHandler::sendMemRequest, this);
-							);
 
-						handler_state = new VanadisWritevHandlerState( writev_ev->getFileDescriptor(), writev_ev->getIOVecAddress(),
-       		                                	writev_ev->getIOVecCount(), file_des->getFileHandle(), send_req);
+					if( writev_ev->getIOVecCount() > 0 ) {
+						std::function<void(SimpleMem::Request*)> send_req_func = std::bind(
+								&VanadisNodeOSCoreHandler::sendMemRequest, this, std::placeholders::_1 );
+
+						handler_state = new VanadisWritevHandlerState( output->getVerboseLevel(),
+							writev_ev->getFileDescriptor(), writev_ev->getIOVecAddress(),
+       		                                	writev_ev->getIOVecCount(), file_des->second->getFileHandle(), send_req_func );
 
 						// Launch read of the initial iovec info
 						sendMemRequest( new SimpleMem::Request( SimpleMem::Request::Read,
-							writev_ev->getIOVecAddress(), 4);
+							writev_ev->getIOVecAddress(), 4) );
 
 						current_syscall = std::bind( &VanadisNodeOSCoreHandler::processSyscallWritev, this );
-					} else if( writev_ev->getIOVecCount() == 0 ) {{
+					} else if( writev_ev->getIOVecCount() == 0 ) {
 						VanadisSyscallResponse* resp = new VanadisSyscallResponse( 0 );
 			                        core_link->send( resp );
 
@@ -219,6 +221,7 @@ public:
 
 	                		        resetSyscallNothing();
 					}
+
 				}
 			}
 			break;
@@ -269,6 +272,9 @@ public:
 	}
 
 	void handleIncomingMemory( SimpleMem::Request* ev ) {
+		output->verbose(CALL_INFO, 16, 0, "recv memory event (addr: 0x%llx, size: %" PRIu64 ")\n",
+			ev->addr, (uint64_t) ev->size);
+
 		auto find_event = pending_mem.find(ev->id);
 
 		if( find_event != pending_mem.end() ) {
@@ -334,10 +340,9 @@ public:
 	}
 
 	void processSyscallWritev() {
-/*
-		VanadisWritevHandlerState* writev_state = ((VanadisWritevHandlerState*)( handler_state );
+		VanadisWritevHandlerState* writev_state = ((VanadisWritevHandlerState*)( handler_state ));
 
-		if( writev_state->getCurrentIOVec() < write_state->getIOVecCount() ) {
+		if( writev_state->getCurrentIOVec() < writev_state->getIOVecCount() ) {
 
 		} else {
 			VanadisSyscallResponse* resp = new VanadisSyscallResponse( writev_state->getTotalBytesWritten() );
@@ -345,7 +350,6 @@ public:
 
                         resetSyscallNothing();
 		}
-*/
 	}
 
 	void processSyscallNothing() {

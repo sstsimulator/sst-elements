@@ -27,6 +27,10 @@ VanadisNodeOSComponent::VanadisNodeOSComponent( SST::ComponentId_t id, SST::Para
 
 	char* port_name_buffer = new char[128];
 
+	const char* stdin_path  = nullptr;
+	const char* stdout_path = "stdout";
+	const char* stderr_path = "stderr";
+
 	for( uint32_t i = 0; i < core_count; ++i ) {
 		snprintf( port_name_buffer, 128, "core%" PRIu32 "", i );
 		output->verbose(CALL_INFO, 1, 0, "---> processing link %s...\n", port_name_buffer);
@@ -41,7 +45,8 @@ VanadisNodeOSComponent::VanadisNodeOSComponent( SST::ComponentId_t id, SST::Para
 			core_links.push_back( core_link );
 		}
 
-		VanadisNodeOSCoreHandler* new_core_handler = new VanadisNodeOSCoreHandler( verbosity, i );
+		VanadisNodeOSCoreHandler* new_core_handler = new VanadisNodeOSCoreHandler( verbosity, i,
+			stdin_path, stdout_path, stderr_path );
 		new_core_handler->setLink( core_link );
 
 		std::function<void( SimpleMem::Request*, uint32_t )> core_callback = std::bind( &VanadisNodeOSComponent::sendMemoryEvent,

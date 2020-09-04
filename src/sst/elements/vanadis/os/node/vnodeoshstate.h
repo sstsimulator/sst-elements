@@ -11,10 +11,19 @@ namespace Vanadis {
 
 class VanadisHandlerState {
 public:
-        VanadisHandlerState() {}
-        ~VanadisHandlerState() {}
+        VanadisHandlerState( uint32_t verb ) {
+		output = new SST::Output( "[os-func-handler]: ", verb, 0, SST::Output::STDOUT );
+	}
+
+        ~VanadisHandlerState() {
+		delete output;
+	}
 
         virtual void handleIncomingRequest( SimpleMem::Request* req ) {}
+
+protected:
+	SST::Output* output;
+
 };
 
 }

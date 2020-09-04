@@ -2,6 +2,7 @@
 #ifndef _H_VANADIS_OS_WRITEV_STATE
 #define _H_VANADIS_OS_WRITEV_STATE
 
+#include <cstdio>
 #include <sst/core/interfaces/simpleMem.h>
 #include "os/node/vnodeoshstate.h"
 
@@ -12,9 +13,9 @@ namespace Vanadis {
 
 class VanadisWritevHandlerState : public VanadisHandlerState {
 public:
-        VanadisWritevHandlerState( int64_t fd, uint64_t iovec_addr,
+        VanadisWritevHandlerState( uint32_t verbosity, int64_t fd, uint64_t iovec_addr,
                 int64_t iovec_count, FILE* handle, std::function<void(SimpleMem::Request*)> send_r ) :
-                VanadisHandlerState(), writev_fd(fd), writev_iovec_addr(iovec_addr),
+                VanadisHandlerState(verbosity), writev_fd(fd), writev_iovec_addr(iovec_addr),
                 writev_iovec_count(iovec_count), file_handle(handle),
                 send_mem_req(send_r) {
 
@@ -58,6 +59,8 @@ public:
 
         virtual void handleIncomingRequest( SimpleMem::Request* req ) {
 
+		printStatus();
+
                 switch( state ) {
                 case 0:
                         {
@@ -88,7 +91,10 @@ public:
                 case 2:
                         {
                                 // Write out the payload
+				printf("fwrite, size: %" PRIu32 " handle: 0x%0llx\n", (uint32_t) req->size, file_handle);
                                 fwrite( &req->data[0], req->size, 1, file_handle );
+				fflush( file_handle );
+
                                 total_bytes_written += req->size;
                                 current_offset += req->size;
 
@@ -125,6 +131,20 @@ public:
                 }
 
         }
+
+	void printStatus() {
+		output->verbose(CALL_INFO, 16, 0, "writev Handler Status\n");
+		output->verbose(CALL_INFO, 16, 0, "-> fd:                %" PRId64 "\n", writev_fd);
+		output->verbose(CALL_INFO, 16, 0, "-> iovec_addr:        0x%llx\n", writev_iovec_addr);
+		output->verbose(CALL_INFO, 16, 0, "-> iovec_count:       %" PRId64 "\n", writev_iovec_count);
+		output->verbose(CALL_INFO, 16, 0, "-> current iovec state:\n");
+		output->verbose(CALL_INFO, 16, 0, "---> current_base:    0x%llx\n", current_iovec_base_addr);
+		output->verbose(CALL_INFO, 16, 0, "---> current_len:     %" PRId64 "\n", current_iovec_length);
+		output->verbose(CALL_INFO, 16, 0, "---> current_iovec:   %" PRId64 "\n", current_iovec);
+		output->verbose(CALL_INFO, 16, 0, "---> current_offset:  %" PRId64 "\n", current_offset);
+		output->verbose(CALL_INFO, 16, 0, "-> total-bytes:       %" PRId64 "\n", total_bytes_written);
+		output->verbose(CALL_INFO, 16, 0, "-> current state:     %" PRId32 "\n", state);
+	}
 
 protected:
         int64_t  writev_fd;
