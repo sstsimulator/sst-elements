@@ -25,8 +25,8 @@ namespace Vanadis {
 
 class VanadisNodeOSCoreHandler {
 public:
-	VanadisNodeOSCoreHandler( uint32_t verbosity, uint32_t core,
-		const char* stdin_path, const char* stdout_path, const char* stderr_path ) :
+	VanadisNodeOSCoreHandler( uint32_t verbosity, uint32_t core, const char* stdin_path,
+		const char* stdout_path, const char* stderr_path ) :
 		core_id(core), next_file_id(16) {
 
 		core_link = nullptr;
@@ -38,11 +38,11 @@ public:
 		handler_state = nullptr;
 
 		if( stdin_path != nullptr )
-			file_descriptors.insert( new VanadisOSFileDescriptor( 0, stdin_path ) );
+			file_descriptors.insert( std::pair< uint32_t, VanadisOSFileDescriptor*>( 0, new VanadisOSFileDescriptor( 0, stdin_path ) ) );
 		if( stdout_path != nullptr )
-			file_descriptors.insert( new VanadisOSFileDescriptor( 1, stdout_path ) );
+			file_descriptors.insert( std::pair< uint32_t, VanadisOSFileDescriptor*>( 1, new VanadisOSFileDescriptor( 1, stdin_path ) ) );
 		if( stderr_path != nullptr )
-			file_descriptors.insert( new VanadisOSFileDescriptor( 2, stderr_path ) );
+			file_descriptors.insert( std::pair< uint32_t, VanadisOSFileDescriptor*>( 2, new VanadisOSFileDescriptor( 2, stdin_path ) ) );
 
 		resetSyscallNothing();
 	}
@@ -322,7 +322,6 @@ public:
 			VanadisOSFileDescriptor* new_file = new VanadisOSFileDescriptor( next_file_id++, openat_state->getOpenAtPath() );
 			file_descriptors.insert( std::pair< uint32_t, VanadisOSFileDescriptor* >( new_file->getHandle(), new_file ) );
 
-//			VanadisSyscallResponse* resp = new VanadisSyscallResponse( (int64_t) new_file->getHandle() );
 			VanadisSyscallResponse* resp = new VanadisSyscallResponse( 0 );
                 	core_link->send( resp );
 
@@ -335,16 +334,18 @@ public:
 	}
 
 	void processSyscallWritev() {
+/*
 		VanadisWritevHandlerState* writev_state = ((VanadisWritevHandlerState*)( handler_state );
 
 		if( writev_state->getCurrentIOVec() < write_state->getIOVecCount() ) {
-			
+
 		} else {
 			VanadisSyscallResponse* resp = new VanadisSyscallResponse( writev_state->getTotalBytesWritten() );
                         core_link->send( resp );
 
                         resetSyscallNothing();
 		}
+*/
 	}
 
 	void processSyscallNothing() {
