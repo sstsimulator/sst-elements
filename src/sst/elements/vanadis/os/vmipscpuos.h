@@ -12,6 +12,7 @@
 #define VANADIS_SYSCALL_ACCESS           4033
 #define VANADIS_SYSCALL_BRK              4045
 #define VANADIS_SYSCALL_UNAME            4122
+#define VANADIS_SYSCALL_WRITEV           4146
 #define VANADIS_SYSCALL_SET_THREAD_AREA  4283
 #define VANADIS_SYSCALL_RM_INOTIFY       4286
 #define VANADIS_SYSCALL_OPENAT		 4288
@@ -150,6 +151,25 @@ public:
 
 				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to openat()\n");
 				call_ev = new VanadisSyscallOpenAtEvent( core_id, hw_thr, openat_dirfd, openat_path_ptr, openat_flags );
+			}
+			break;
+		case VANADIS_SYSCALL_WRITEV:
+			{
+				const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
+                                int64_t writev_fd = 0;
+                                regFile->getIntReg( phys_reg_4, &writev_fd );
+
+                                const uint16_t phys_reg_5 = isaTable->getIntPhysReg(5);
+                                uint64_t writev_iovec_ptr = 0;
+                                regFile->getIntReg( phys_reg_5, &writev_iovec_ptr );
+
+                                const uint16_t phys_reg_6 = isaTable->getIntPhysReg(6);
+                                int64_t writev_iovec_count = 0;
+                                regFile->getIntReg( phys_reg_6, &writev_iovec_count );
+
+				output->verbose(CALL_INFO, 8, 0, "[syscall-hanlder] found a call to writev( %" PRId64 ", %" PRIu64 ", %" PRId64 ")\n",
+					writev_fd, writev_iovec_ptr, writev_iovec_count);
+				call_ev = new VanadisSyscallWritevEvent( core_id, hw_thr, writev_fd, writev_iovec_ptr, writev_iovec_count );
 			}
 			break;
 

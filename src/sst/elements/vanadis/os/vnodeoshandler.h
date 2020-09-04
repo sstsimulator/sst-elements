@@ -13,89 +13,22 @@
 #include "os/voscallresp.h"
 #include "os/voscallev.h"
 
+#include "os/node/vnodeoshstate.h"
+#include "os/node/vnodeosfd.h"
+#include "os/node/vnodeoswritevh.h"
+#include "os/node/vnodeosopenath.h"
+
 using namespace SST::Interfaces;
 
 namespace SST {
 namespace Vanadis {
 
-class VanadisOSFileDescriptor {
-public:
-	VanadisOSFileDescriptor( uint32_t desc_id, const char* file_path ) :
-		file_id( desc_id ) {
-		path = file_path ;
-	}
-
-	uint32_t getHandle() const { return file_id; }
-	const char* getPath() const {
-		if( path.size() == 0 ) {
-			return "";
-		} else {
-			return &path[0];
-		}
-	}
-
-protected:
-	const uint32_t file_id;
-	std::string path;
-
-};
-
-class VanadisHandlerState {
-public:
-	VanadisHandlerState() {}
-	~VanadisHandlerState();
-
-	virtual void handleIncomingRequest( SimpleMem::Request* req ) {}
-};
-
-class VanadisOpenAtHandlerState : public VanadisHandlerState {
-public:
-	VanadisOpenAtHandlerState( int64_t dirfd,
-		uint64_t path_ptr, int64_t flags ) :
-		VanadisHandlerState(), openat_dirfd(dirfd),
-		openat_path_ptr(path_ptr), openat_flags(flags) {
-		completed_path_read = false;
-	}
-
-	int64_t getDirFD() const { return openat_dirfd; }
-	uint64_t getPathPtr() const { return openat_path_ptr; }
-	int64_t getFlags() const { return openat_flags; }
-
-	void addToPath( std::vector<uint8_t> payload ) {
-		if( ! completed_path_read ) {
-			for( int i = 0; i < payload.size(); ++i ) {
-				openat_path.push_back( payload[i] );
-
-				if( payload[i] == '\0' ) {
-					completed_path_read = true;
-				}
-			}
-		}
-	}
-
-	virtual void handleIncomingRequest( SimpleMem::Request* req ) {
-		addToPath( req->data );
-	}
-
-	bool completedPathRead() const { return completed_path_read; }
-	uint64_t getOpenAtPathLength() const { return openat_path.size(); }
-
-	const char* getOpenAtPath() {
-		return (const char*) &openat_path[0];
-	}
-
-protected:
-	const int64_t openat_dirfd;
-	const uint64_t openat_path_ptr;
-	const int64_t openat_flags;
-	std::vector<uint8_t> openat_path;
-	bool completed_path_read;
-};
-
 class VanadisNodeOSCoreHandler {
 public:
-	VanadisNodeOSCoreHandler( uint32_t verbosity, uint32_t core ):
+	VanadisNodeOSCoreHandler( uint32_t verbosity, uint32_t core,
+		const char* stdin_path, const char* stdout_path, const char* stderr_path ) :
 		core_id(core), next_file_id(16) {
+
 		core_link = nullptr;
 
 		char* out_prefix = new char[64];
@@ -104,11 +37,22 @@ public:
 
 		handler_state = nullptr;
 
+		if( stdin_path != nullptr )
+			file_descriptors.insert( new VanadisOSFileDescriptor( 0, stdin_path ) );
+		if( stdout_path != nullptr )
+			file_descriptors.insert( new VanadisOSFileDescriptor( 1, stdout_path ) );
+		if( stderr_path != nullptr )
+			file_descriptors.insert( new VanadisOSFileDescriptor( 2, stderr_path ) );
+
 		resetSyscallNothing();
 	}
 
 	~VanadisNodeOSCoreHandler() {
 		delete output;
+
+		for( auto next_file = file_descriptors.begin(); next_file != file_descriptors.end(); next_file++ ) {
+			delete next_file->second;
+		}
 	}
 
 	void resetSyscallNothing() {
@@ -223,6 +167,61 @@ public:
 					output->fatal(CALL_INFO, -1, "Non-zeros not implemented.\n");
 				}
 			}
+			break;
+
+		case SYSCALL_OP_WRITEV:
+			{
+				output->verbose(CALL_INFO, 16, 0, "-> call is writev()\n");
+				VanadisSyscallWritevEvent* writev_ev = dynamic_cast< VanadisSyscallWritevEvent* >(sys_ev);
+
+				if( nullptr == writev_ev ) {
+					output->fatal(CALL_INFO, -1, "-> error unable to cast syscall to a writev event.\n");
+				}
+
+				output->verbose(CALL_INFO, 16, 0, "-> call is writev( %" PRId64 ", 0x%0llx, %" PRId64 " )\n",
+					writev_ev->getFileDescriptor(), writev_ev->getIOVecAddress(),
+					writev_ev->getIOVecCount() );
+
+				auto file_des = file_descriptors.find( writev_ev->getFileDescriptor() );
+
+				if( file_des == file_descriptors.end() ) {
+					output->verbose(CALL_INFO, 16, 0, "-> file handle %" PRId64 " is not currently open, return an error code.\n",
+						writev_ev->getFileDescriptor());
+
+					// EINVAL = 22
+					VanadisSyscallResponse* resp = new VanadisSyscallResponse(22 );
+                                                core_link->send( resp );
+
+                                       resetSyscallNothing();
+				} else {
+					if( writev_ev->getIOVecCount() > 0 ) {
+						std::function<void(SimpleMem::Request*> send_req = std::bind(
+								&VanadisNodeOSCoreHandler::sendMemRequest, this);
+							);
+
+						handler_state = new VanadisWritevHandlerState( writev_ev->getFileDescriptor(), writev_ev->getIOVecAddress(),
+       		                                	writev_ev->getIOVecCount(), file_des->getFileHandle(), send_req);
+
+						// Launch read of the initial iovec info
+						sendMemRequest( new SimpleMem::Request( SimpleMem::Request::Read,
+							writev_ev->getIOVecAddress(), 4);
+
+						current_syscall = std::bind( &VanadisNodeOSCoreHandler::processSyscallWritev, this );
+					} else if( writev_ev->getIOVecCount() == 0 ) {{
+						VanadisSyscallResponse* resp = new VanadisSyscallResponse( 0 );
+			                        core_link->send( resp );
+
+	                		        resetSyscallNothing();
+					} else {
+						// EINVAL = 22
+						VanadisSyscallResponse* resp = new VanadisSyscallResponse( 22 );
+			                        core_link->send( resp );
+
+	                		        resetSyscallNothing();
+					}
+				}
+			}
+			break;
 
 		default:
 			{
@@ -332,6 +331,19 @@ public:
 			SimpleMem::Request* new_req = new SimpleMem::Request( SimpleMem::Request::Read,
 				openat_state->getPathPtr() + openat_state->getOpenAtPathLength(), 64 );
 			sendMemRequest( new_req );
+		}
+	}
+
+	void processSyscallWritev() {
+		VanadisWritevHandlerState* writev_state = ((VanadisWritevHandlerState*)( handler_state );
+
+		if( writev_state->getCurrentIOVec() < write_state->getIOVecCount() ) {
+			
+		} else {
+			VanadisSyscallResponse* resp = new VanadisSyscallResponse( writev_state->getTotalBytesWritten() );
+                        core_link->send( resp );
+
+                        resetSyscallNothing();
 		}
 	}
 
