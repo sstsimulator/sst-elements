@@ -84,7 +84,7 @@ public:
         uint32_t host;
     };
 
-    topo_dragonfly_legacy(ComponentId_t cid, Params& p, int num_ports, int rtr_id);
+    topo_dragonfly_legacy(ComponentId_t cid, Params& p, int num_ports, int rtr_id, int num_vns);
     ~topo_dragonfly_legacy();
 
     virtual void route(int port, int vc, internal_router_event* ev);

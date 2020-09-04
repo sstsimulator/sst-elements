@@ -30,7 +30,7 @@ using namespace SST::Merlin;
  * [params.p+params.a-1, params.k)  // Other groups
  */
 
-topo_dragonfly_legacy::topo_dragonfly_legacy(ComponentId_t cid, Params &p, int num_ports, int rtr_id) :
+topo_dragonfly_legacy::topo_dragonfly_legacy(ComponentId_t cid, Params &p, int num_ports, int rtr_id, int UNUSED(num_vns) ) :
     Topology(cid)
 {
     params.p = (uint32_t)p.find<int>("dragonfly:hosts_per_router");

@@ -21,12 +21,11 @@ if __name__ == "__main__":
 
 
     ### Setup the topology
-    topo = topoDragonFly()
-    topo.hosts_per_router = 4
-    topo.routers_per_group = 8
-    topo.intergroup_links = 4
-    topo.num_groups = 4
-    topo.algorithm = ["minimal","adaptive-local"]
+    topo = topoHyperX()
+    topo.shape = "4x4"
+    topo.width = "2x2"
+    topo.local_ports = 8
+    topo.algorithm = ["DOR","MIN-A"]
     
     # Set up the routers
     router = hr_router()

@@ -124,7 +124,6 @@ public:
     RouteToGroup group_to_global_port;
 
     struct dgnflyParams params;
-    RouteAlgo algorithm;
     double adaptive_threshold;
     uint32_t group_id;
     uint32_t router_id;
@@ -132,7 +131,9 @@ public:
     RNG::SSTRandom* rng;
 
     int const* output_credits;
+    int const* output_queue_lengths;
     int num_vcs;
+    int num_vns;
 
     enum global_route_mode_t { ABSOLUTE, RELATIVE };
     global_route_mode_t global_route_mode;
@@ -146,11 +147,10 @@ public:
         uint32_t host;
     };
 
-    topo_dragonfly(ComponentId_t cid, Params& p, int num_ports, int rtr_id);
+    topo_dragonfly(ComponentId_t cid, Params& p, int num_ports, int rtr_id, int num_vns);
     ~topo_dragonfly();
 
-    virtual void route(int port, int vc, internal_router_event* ev);
-    virtual void reroute(int port, int vc, internal_router_event* ev);
+    virtual void route_packet(int port, int vc, internal_router_event* ev);
     virtual internal_router_event* process_input(RtrEvent* ev);
 
     virtual PortState getPortState(int port) const;
@@ -159,10 +159,16 @@ public:
     virtual void routeInitData(int port, internal_router_event* ev, std::vector<int> &outPorts);
     virtual internal_router_event* process_InitData_input(RtrEvent* ev);
 
-    virtual int computeNumVCs(int vns) { return vns * 3; }
+    virtual void getVCsPerVN(std::vector<int>& vcs_per_vn) {
+        for ( int i = 0; i < num_vns; ++i ) {
+            vcs_per_vn[i] = vns[i].num_vcs;
+        }
+    }
+
     virtual int getEndpointID(int port);
 
     virtual void setOutputBufferCreditArray(int const* array, int vcs);
+    virtual void setOutputQueueLengthsArray(int const* array, int vcs);
 
 private:
     void idToLocation(int id, dgnflyAddr *location);
@@ -170,6 +176,18 @@ private:
     uint32_t port_for_router(uint32_t router);
     uint32_t port_for_group(uint32_t group, uint32_t global_slice, int id = -1);
 
+    struct vn_info {
+        int start_vc;
+        int num_vcs;
+        RouteAlgo algorithm;
+    };
+
+    vn_info* vns;
+
+    void route_nonadaptive(int port, int vc, internal_router_event* ev);
+    void route_adaptive_local(int port, int vc, internal_router_event* ev);
+
+    
 };
 
 

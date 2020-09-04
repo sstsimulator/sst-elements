@@ -44,12 +44,13 @@ public:
 
 private:
     int num_ports;
-
+    int num_vns;
+    
 public:
-    topo_singlerouter(ComponentId_t cid, Params& params, int num_ports, int rtr_id);
+    topo_singlerouter(ComponentId_t cid, Params& params, int num_ports, int rtr_id, int nm_vns);
     ~topo_singlerouter();
 
-    virtual void route(int port, int vc, internal_router_event* ev);
+    virtual void route_packet(int port, int vc, internal_router_event* ev);
     virtual internal_router_event* process_input(RtrEvent* ev);
 
     virtual void routeInitData(int port, internal_router_event* ev, std::vector<int> &outPorts);
@@ -59,6 +60,11 @@ public:
 
     virtual int getEndpointID(int port) { return port; }
 
+    virtual void getVCsPerVN(std::vector<int>& vcs_per_vn) {
+        for ( int i = 0; i < num_vns; ++i ) {
+            vcs_per_vn[i] = 1;
+        }
+    }
 };
 
 }
