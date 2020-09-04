@@ -12,7 +12,7 @@ namespace Vanadis {
 class VanadisHandlerState {
 public:
         VanadisHandlerState() {}
-        ~VanadisHandlerState();
+        ~VanadisHandlerState() {}
 
         virtual void handleIncomingRequest( SimpleMem::Request* req ) {}
 };

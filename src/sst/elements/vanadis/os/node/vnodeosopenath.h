@@ -2,6 +2,8 @@
 #ifndef _H_VANADIS_OS_WRITEAT_HANDLER
 #define _H_VANADIS_OS_WRITEAT_HANDLER
 
+#include <cstdint>
+#include "os/node/vnodeoshstate.h"
 
 namespace SST {
 namespace Vanadis {
@@ -12,6 +14,7 @@ public:
                 uint64_t path_ptr, int64_t flags ) :
                 VanadisHandlerState(), openat_dirfd(dirfd),
                 openat_path_ptr(path_ptr), openat_flags(flags) {
+
                 completed_path_read = false;
         }
 
