@@ -46,6 +46,8 @@ case INST_FAULT:
 	return "FAULT";
 case INST_SYSCALL:
 	return "SYSCALL";
+default:
+	return "UNKNOWN";
 }
 };
 

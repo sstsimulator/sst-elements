@@ -65,6 +65,8 @@ public:
 			return "BCMP_GT";
 		case REG_COMPARE_GTE:
 			return "BCMP_GTE";
+		default:
+			return "Unknown";
 		}
 	}
 
