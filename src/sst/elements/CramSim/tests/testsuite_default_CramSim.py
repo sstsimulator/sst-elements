@@ -132,8 +132,8 @@ class testcase_CramSim_Component(SSTTestCase):
         #       may have some redunant
         log_debug("_setupCramSimTestFiles() Running")
         test_path = self.get_testsuite_dir()
-        outdir = get_test_output_run_dir()
-        tmpdir = get_test_output_tmp_dir()
+        outdir = self.get_test_output_run_dir()
+        tmpdir = self.get_test_output_tmp_dir()
 
         self.CramSimElementDir = os.path.abspath("{0}/../".format(test_path))
         self.CramSimElementTestsDir = "{0}/tests".format(self.CramSimElementDir)
