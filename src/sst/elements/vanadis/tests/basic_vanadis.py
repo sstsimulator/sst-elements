@@ -11,7 +11,7 @@ v_cpu_0 = sst.Component("v0", "vanadis.VanadisCPU")
 v_cpu_0.addParams({
        "clock" : "1.0GHz",
        "executable" : "./tests/hello-mips", 
-       "max_cycle" : 3000,
+       "max_cycle" : 7000,
        "verbose" : 16,
        "physical_fp_registers" : 96,
        "print_int_reg" : 1

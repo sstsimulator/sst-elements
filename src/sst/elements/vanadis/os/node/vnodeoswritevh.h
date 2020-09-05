@@ -73,7 +73,10 @@ public:
                 case 1:
                         {
                                 current_iovec_length = *( (int64_t*)( &req->data[0] ) );
-                                uint64_t base_addr_offset = 64 - (current_iovec_base_addr % 64);
+                                uint64_t base_addr_offset = (current_iovec_base_addr % 64);
+
+				output->verbose(CALL_INFO, 16, 0, "iovec-len: %" PRIu64 " / offset: %" PRIu64 "\n",
+					current_iovec_length, base_addr_offset);
 
                                 if( (base_addr_offset + current_iovec_length) <= 64 ) {
                                         // we only need to do one read and we are done
