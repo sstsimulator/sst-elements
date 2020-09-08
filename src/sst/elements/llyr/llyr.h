@@ -16,7 +16,10 @@
 #ifndef _LLYR_H
 #define _LLYR_H
 
+#include <sst/core/sst_config.h>
+
 #include <sst/core/component.h>
+#include <sst/core/interfaces/simpleMem.h>
 
 #include "graph.h"
 #include "mappers/llyrMapper.h"
@@ -64,21 +67,27 @@ public:
     LlyrComponent(SST::ComponentId_t id, SST::Params& params);
     ~LlyrComponent();
 
-    void setup()  { }
-    void finish() { }
+    void setup();
+    void finish();
+
+    void init( uint32_t phase );
+
 protected:
 
 
 private:
-    LlyrComponent();                        // for serialization only
-    LlyrComponent(const LlyrComponent&);    // do not implement
-    void operator=(const LlyrComponent&);   // do not implement
+    LlyrComponent();                            // for serialization only
+    LlyrComponent( const LlyrComponent& );      // do not implement
+    void operator=( const LlyrComponent& );     // do not implement
 
-    virtual bool tick(SST::Cycle_t);
+    virtual bool tick( SST::Cycle_t currentCycle );
+    void handleEvent( Interfaces::SimpleMem::Request* ev );
 
-    TimeConverter*      tc;
-    Clock::HandlerBase* clockTickHandler;
-    bool handlerRegistered;
+    Interfaces::SimpleMem*  memInterface;
+
+    SST::TimeConverter*     timeConverter;
+    Clock::HandlerBase*     clockTickHandler;
+    bool                    handlerRegistered;
 
     int clock_count;
 
@@ -86,19 +95,19 @@ private:
     SST::Link* clockLink;
     SST::Output* output;
 
-    Statistic<uint64_t>* zeroEventCycles;
-    Statistic<uint64_t>* eventCycles;
+    Statistic< uint64_t >* zeroEventCycles;
+    Statistic< uint64_t >* eventCycles;
 
-    LlyrGraph<opType> hardwareGraph;
-    LlyrGraph<opType> applicationGraph;
-    LlyrGraph<opType> mappedGraph;
+    LlyrGraph< opType > hardwareGraph;
+    LlyrGraph< opType > applicationGraph;
+    LlyrGraph< opType > mappedGraph;
 
     LlyrMapper* llyrMapper;
 
-    void constructHardwareGraph(std::string fileName);
-    void constructSoftwareGraph(std::string fileName);
+    void constructHardwareGraph( std::string fileName );
+    void constructSoftwareGraph( std::string fileName );
 
-    opType getOptype(std::string opString);
+    opType getOptype( std::string opString );
 
 };
 

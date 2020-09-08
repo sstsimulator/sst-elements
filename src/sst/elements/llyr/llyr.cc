@@ -32,24 +32,41 @@ namespace Llyr {
 LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
   Component(id)
 {
-    const int32_t verbosity = params.find< uint32_t >("verbose", 0);
-    const std::string clock_rate = params.find< std::string >("clock", "1.0GHz");
+    //get initial params
+    const uint32_t verbosity = params.find< uint32_t >("verbose", 0);
     clock_count = params.find< int64_t >("clockcount", 10);
-
-    std::cout << "Clock is configured for: " << clock_rate << std::endl;
-
-    // tell the simulator not to end without us
-    registerAsPrimaryComponent();
-    primaryComponentDoNotEndSim();
-
-    //set our Main Clock
-    clockTickHandler = new Clock::Handler<LlyrComponent>(this, &LlyrComponent::tick);
-    registerClock(clock_rate, clockTickHandler);
 
     //setup up i/o for messages
     char prefix[256];
     sprintf(prefix, "[t=@t][%s]: ", getName().c_str());
     output = new SST::Output(prefix, verbosity, 0, Output::STDOUT);
+
+    //tell the simulator not to end without us
+    registerAsPrimaryComponent();
+    primaryComponentDoNotEndSim();
+
+    //set our Main Clock
+    const std::string clock_rate = params.find< std::string >("clock", "1.0GHz");
+    std::cout << "Clock is configured for: " << clock_rate << std::endl;
+    clockTickHandler = new Clock::Handler<LlyrComponent>(this, &LlyrComponent::tick);
+    registerClock(clock_rate, clockTickHandler);
+
+    memInterface = loadUserSubComponent<Interfaces::SimpleMem>("memory", ComponentInfo::SHARE_NONE, timeConverter, new
+        Interfaces::SimpleMem::Handler<LlyrComponent>(this, &LlyrComponent::handleEvent));
+
+    if( !memInterface ) {
+        std::string interfaceName = params.find<std::string>("memoryinterface", "memHierarchy.memInterface");
+        output->verbose(CALL_INFO, 1, 0, "Memory interface to be loaded is: %s\n", interfaceName.c_str());
+
+        Params interfaceParams = params.find_prefix_params("memoryinterfaceparams.");
+        interfaceParams.insert("port", "cache_link");
+        memInterface = loadAnonymousSubComponent<Interfaces::SimpleMem>(interfaceName, "memory", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS,
+                interfaceParams, timeConverter, new Interfaces::SimpleMem::Handler<LlyrComponent>(this, &LlyrComponent::handleEvent));
+
+        if( !memInterface ) {
+            output->fatal(CALL_INFO, -1, "%s, Error loading memory interface\n", getName().c_str());
+        }
+    }
 
     //construct hardware graph
     std::string const& hwFileName = params.find< std::string >("hardwareGraph", "grid.cfg");
@@ -63,6 +80,9 @@ LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
     std::string mapperName = params.find<std::string>("mapper", "llyr.simpleMapper");
     llyrMapper = dynamic_cast<LlyrMapper*>( loadModule(mapperName, mapperParams) );
     llyrMapper->mapGraph(hardwareGraph, applicationGraph, mappedGraph);
+
+    //all done
+    output->verbose(CALL_INFO, 1, 0, "Initialization done.\n");
 }
 
 LlyrComponent::~LlyrComponent()
@@ -82,6 +102,71 @@ LlyrComponent::LlyrComponent() :
     Component(-1)
 {
     // for serialization only
+}
+
+void LlyrComponent::init( uint32_t phase ) {
+    memInterface->init( phase );
+
+//     if( 0 == phase ) {
+//         const size_t initLen = static_cast<size_t>( progReader->getDataLength() + progReader->getInstLength() );
+//
+//         std::vector<uint8_t> exeImage;
+//         exeImage.reserve( initLen );
+//
+//         for( size_t i = 0; i < initLen; ++i ) {
+//             exeImage.push_back( progReader->getBinaryBuffer()[i] );
+//         }
+//
+// 	for( size_t i = 0; i < progReader->getPadding(); ++i ) {
+// 	    exeImage.push_back( static_cast<uint8_t>(0) );
+// 	}
+//
+//         SimpleMem::Request* writeExe = new SimpleMem::Request(SimpleMem::Request::Write, 0, exeImage.size(), exeImage);
+//         output.verbose(CALL_INFO, 1, 0, "Sending initialization data to memory...\n");
+//
+//         mem->sendInitData(writeExe);
+//
+//         output.verbose(CALL_INFO, 1, 0, "Initialization data sent.\n");
+//     }
+}
+
+void LlyrComponent::setup() {
+}
+
+void LlyrComponent::finish() {
+}
+
+bool LlyrComponent::tick( Cycle_t )
+{
+    clock_count--;
+
+    // return false so we keep going
+    if(clock_count == 0) {
+    primaryComponentOKToEndSim();
+        return true;
+    } else {
+        return false;
+    }
+}
+
+void LlyrComponent::handleEvent( Interfaces::SimpleMem::Request* ev ) {
+    output->verbose(CALL_INFO, 4, 0, "Recv response from cache\n");
+
+    if( ev->cmd == Interfaces::SimpleMem::Request::Command::ReadResp ) {
+        // Read request needs some special handling
+//         uint8_t regTarget = ldStUnit->lookupEntry( ev->id );
+//         int64_t newValue = 0;
+//
+//         memcpy( (void*) &newValue, &ev->data[0], sizeof(newValue) );
+//         output->verbose(CALL_INFO, 8, 0, "Response to a read, payload=%" PRId64 ", for reg: %" PRIu8 "\n", newValue, regTarget);
+//         regFile->writeReg(regTarget, newValue);
+    }
+
+//     ldStUnit->removeEntry( ev->id );
+
+    // Need to clean up the events coming back from the cache
+    delete ev;
+    output->verbose(CALL_INFO, 4, 0, "Complete cache response handling.\n");
 }
 
 void LlyrComponent::constructHardwareGraph(std::string fileName)
@@ -222,18 +307,6 @@ opType LlyrComponent::getOptype(std::string opString)
     return operation;
 }
 
-bool LlyrComponent::tick( Cycle_t )
-{
-    clock_count--;
-
-    // return false so we keep going
-    if(clock_count == 0) {
-    primaryComponentOKToEndSim();
-        return true;
-    } else {
-        return false;
-    }
-}
 
 // Serialization
 } // namespace llyr
