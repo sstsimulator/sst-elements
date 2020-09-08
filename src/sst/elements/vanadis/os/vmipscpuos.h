@@ -137,6 +137,8 @@ public:
 				const uint16_t rc_reg = isaTable->getIntPhysReg(7);
 				regFile->setIntReg( rc_reg, (uint64_t) 0 );
 
+				writeSyscallResult( true );
+
 				for( int i = 0; i < returnCallbacks.size(); ++i ) {
 		                        returnCallbacks[i](hw_thr);
                 		}
@@ -186,7 +188,7 @@ public:
                                 int64_t writev_iovec_count = 0;
                                 regFile->getIntReg( phys_reg_6, &writev_iovec_count );
 
-				output->verbose(CALL_INFO, 8, 0, "[syscall-hanlder] found a call to writev( %" PRId64 ", %" PRIu64 ", %" PRId64 ")\n",
+				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to writev( %" PRId64 ", 0x%llx, %" PRId64 " )\n",
 					writev_fd, writev_iovec_ptr, writev_iovec_count);
 				call_ev = new VanadisSyscallWritevEvent( core_id, hw_thr, writev_fd, writev_iovec_ptr, writev_iovec_count );
 			}
@@ -205,6 +207,24 @@ public:
 
 protected:
 
+	void writeSyscallResult( const bool success ) {
+		const uint64_t os_success = 0;
+                const uint64_t os_failed  = 1;
+		const uint16_t succ_reg = isaTable->getIntPhysReg(7);
+
+		if( success ) {
+			output->verbose(CALL_INFO, 8, 0, "syscall - generating successful (v: 0) result (isa-reg: 7, phys-reg: %" PRIu16 ")\n",
+				succ_reg);
+
+	                regFile->setIntReg( succ_reg, os_success );
+		} else {
+			output->verbose(CALL_INFO, 8, 0, "syscall - generating failed (v: 1) result (isa-reg: 7, phys-reg: %" PRIu16 ")\n",
+				succ_reg);
+
+	                regFile->setIntReg( succ_reg, os_failed );
+		}
+	}
+
 	void recvOSEvent( SST::Event* ev ) {
 		output->verbose(CALL_INFO, 8, 0, "Recv OS Event\n");
 
@@ -219,15 +239,11 @@ protected:
 
 		// Set up the return code (according to ABI, this goes in r2)
 		const uint16_t rc_reg   = isaTable->getIntPhysReg(2);
-		const uint16_t succ_reg = isaTable->getIntPhysReg(7);
-
 		const int64_t  rc_val = (int64_t) os_resp->getReturnCode();
 		regFile->setIntReg( rc_reg,   rc_val );
 
-		const uint64_t os_success = 0;
-		const uint64_t os_failed  = 0;
-
-		regFile->setIntReg( succ_reg, os_resp->isSuccessful() ? os_success : os_failed );
+		// Generate correct markers for OS return code checks
+		writeSyscallResult( os_resp->isSuccessful() );
 
 		for( int i = 0; i < returnCallbacks.size(); ++i ) {
 			returnCallbacks[i](hw_thr);

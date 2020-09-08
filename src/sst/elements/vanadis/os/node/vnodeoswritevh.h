@@ -64,7 +64,7 @@ public:
                 switch( state ) {
                 case 0:
                         {
-                                current_iovec_base_addr = *( (uint64_t*)( &req->data[0] ) );
+                                current_iovec_base_addr = (uint64_t) (*( (uint32_t*)( &req->data[0] ) ));
                                 send_mem_req( new SimpleMem::Request( SimpleMem::Request::Read,
                                         writev_iovec_addr + (current_iovec * 8) + 4, 4 ) );
                                 state++;
@@ -72,7 +72,7 @@ public:
                         break;
                 case 1:
                         {
-                                current_iovec_length = *( (int64_t*)( &req->data[0] ) );
+                                current_iovec_length = (int64_t)( *( (int32_t*)( &req->data[0] ) ) );
                                 uint64_t base_addr_offset = (current_iovec_base_addr % 64);
 
 				output->verbose(CALL_INFO, 16, 0, "iovec-len: %" PRIu64 " / offset: %" PRIu64 "\n",

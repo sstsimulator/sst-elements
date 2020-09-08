@@ -279,6 +279,20 @@ public:
 			break;
 
 		case SYSCALL_OP_BRK:
+			{
+				VanadisSyscallBRKEvent* brk_ev = dynamic_cast< VanadisSyscallBRKEvent* >( sys_ev );
+				output->verbose(CALL_INFO, 16, 0, "recv brk( 0x%0llx ) call.\n", brk_ev->getUpdatedBRK() );
+
+				// Linux syscall for brk returns the BRK point on success
+				VanadisSyscallResponse* resp = new VanadisSyscallResponse( brk_ev->getUpdatedBRK() );
+				resp->markSuccessful();
+
+				core_link->send( resp );
+
+				resetSyscallNothing();
+			}
+			break;
+
 		case SYSCALL_OP_ACCESS:
 		case SYSCALL_OP_SET_THREAD_AREA:
 			{
