@@ -47,6 +47,18 @@ public:
 	virtual ~VanadisMIPSOSHandler() {
 	}
 
+	virtual void registerInitParameter( VanadisCPUOSInitParameter paramType, void* param_val ) {
+		switch( paramType ) {
+		case SYSCALL_INIT_PARAM_INIT_BRK:
+			{
+				uint64_t* param_val_64 = (uint64_t*) param_val;
+				output->verbose(CALL_INFO, 8, 0, "set initial brk point (init) event (0x%llx)\n", (*param_val_64) );
+				os_link->sendInitData( new VanadisSyscallInitBRKEvent( core_id, hw_thr, (*param_val_64) ) );
+			}
+			break;
+		}
+	}
+
 	virtual void handleSysCall( VanadisSysCallInstruction* syscallIns ) {
 		output->verbose(CALL_INFO, 8, 0, "System Call (syscall-ins: 0x%0llx)\n", syscallIns->getInstructionAddress() );
 

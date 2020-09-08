@@ -45,6 +45,8 @@ public:
 		if( stderr_path != nullptr )
 			file_descriptors.insert( std::pair< uint32_t, VanadisOSFileDescriptor*>( 2, new VanadisOSFileDescriptor( 2, stderr_path ) ) );
 
+		current_brk_point = 0;
+
 		resetSyscallNothing();
 	}
 
@@ -212,7 +214,7 @@ public:
 					VanadisSyscallResponse* resp = new VanadisSyscallResponse( 22 );
 					resp->markFailed();
 		                        core_link->send( resp );
-					
+
                 		        resetSyscallNothing();
 				}
 
@@ -277,14 +279,28 @@ public:
 				}
 			}
 			break;
-
 		case SYSCALL_OP_BRK:
 			{
 				VanadisSyscallBRKEvent* brk_ev = dynamic_cast< VanadisSyscallBRKEvent* >( sys_ev );
 				output->verbose(CALL_INFO, 16, 0, "recv brk( 0x%0llx ) call.\n", brk_ev->getUpdatedBRK() );
 
+				if( brk_ev->getUpdatedBRK() > 0 ) {
+					uint64_t old_brk = current_brk_point;
+
+//					if( brk_ev->getUpdatedBRK() > current_brk_point ) {
+//						current_brk_point = brk_ev->getUpdatedBRK();
+//					}
+
+					current_brk_point += brk_ev->getUpdatedBRK();
+
+					output->verbose(CALL_INFO, 16, 0, "old brk: 0x%llx -> new brk: 0x%llx (diff: %" PRIu64 ")\n",
+						old_brk, current_brk_point, (current_brk_point - old_brk) );
+				} else {
+					output->verbose(CALL_INFO, 16, 0, "brk request is for size 0, so return current brk point\n");
+				}
+
 				// Linux syscall for brk returns the BRK point on success
-				VanadisSyscallResponse* resp = new VanadisSyscallResponse( brk_ev->getUpdatedBRK() );
+				VanadisSyscallResponse* resp = new VanadisSyscallResponse( current_brk_point );
 				resp->markSuccessful();
 
 				core_link->send( resp );
@@ -476,6 +492,32 @@ public:
 
 	}
 
+	void init( unsigned int phase ) {
+		output->verbose( CALL_INFO, 8, 0, "performing init phase %u...\n", phase );
+
+		while( SST::Event* ev = core_link->recvInitData() ) {
+			VanadisSyscallEvent* sys_ev = dynamic_cast< VanadisSyscallEvent* >( ev );
+
+			if( nullptr == sys_ev ) {
+				output->fatal( CALL_INFO, -1, "Error - event cannot be converted to syscall\n" );
+			}
+
+			switch( sys_ev->getOperation() ) {
+			case SYSCALL_OP_INIT_BRK:
+				{
+					VanadisSyscallInitBRKEvent* init_brk_ev = dynamic_cast< VanadisSyscallInitBRKEvent* >( sys_ev );
+					output->verbose( CALL_INFO, 8, 0, "setting initial brk to 0x%llx\n", init_brk_ev->getUpdatedBRK() );
+
+					current_brk_point = init_brk_ev->getUpdatedBRK();
+				}
+				break;
+
+			default:
+				output->fatal( CALL_INFO, -1, "Error - not implemented an an init event.\n" );
+			}
+		}
+	}
+
 protected:
 	std::function<void( SimpleMem::Request*, uint32_t )> sendMemEventCallback;
 	std::function<void()> current_syscall;
@@ -488,6 +530,8 @@ protected:
 	SST::Output* output;
 	const uint32_t core_id;
 	uint32_t next_file_id;
+
+	uint64_t current_brk_point;
 };
 
 }

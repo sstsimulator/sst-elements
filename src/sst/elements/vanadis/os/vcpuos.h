@@ -15,6 +15,10 @@
 namespace SST {
 namespace Vanadis {
 
+enum VanadisCPUOSInitParameter {
+	SYSCALL_INIT_PARAM_INIT_BRK
+};
+
 class VanadisCPUOSHandler : public SST::SubComponent {
 public:
 	SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Vanadis::VanadisCPUOSHandler)
@@ -47,12 +51,12 @@ public:
 	void setISATable( VanadisISATable* newTable ) { isaTable = newTable; }
 
 	virtual void handleSysCall( VanadisSysCallInstruction* syscallIns ) = 0;
-//	virtual void handleReturn( const uint32_t thr, VanadisRegisterFile* regFile, VanadisISATable* isaTable, VanadisSysCallResponse* resp )  = 0;
 
 	virtual void registerReturnCallback( std::function<void(uint32_t)>& new_call_back ) {
 		returnCallbacks.push_back( new_call_back );
 	}
 
+	virtual void registerInitParameter( VanadisCPUOSInitParameter paramType, void* param_val ) = 0;
 protected:
 	SST::Output* output;
 	std::vector< std::function<void(uint32_t)> > returnCallbacks;
@@ -63,7 +67,6 @@ protected:
 	VanadisISATable* isaTable;
 
 	uint64_t* tls_address;
-
 };
 
 }

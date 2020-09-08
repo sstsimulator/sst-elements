@@ -70,6 +70,11 @@ VanadisNodeOSComponent::~VanadisNodeOSComponent() {
 void VanadisNodeOSComponent::init( unsigned int phase ) {
 	output->verbose(CALL_INFO, 1, 0, "Performing init-phase %u...\n", phase);
 	mem_if->init( phase );
+
+	// Trigger each core handler for initialization phase
+	for( VanadisNodeOSCoreHandler* next_handler : core_handlers ) {
+		next_handler->init( phase );
+	}
 }
 
 void VanadisNodeOSComponent::handleIncomingSysCall( SST::Event* ev ) {

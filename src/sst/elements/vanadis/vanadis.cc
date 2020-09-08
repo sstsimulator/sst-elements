@@ -1243,6 +1243,11 @@ void VanadisComponent::init(unsigned int phase) {
 				SimpleMem::Request* writeExe = new SimpleMem::Request(SimpleMem::Request::Write,
 					0, initial_mem_contents.size(), initial_mem_contents);
 				memDataInterface->sendInitData( writeExe );
+
+				uint64_t initial_brk = (uint64_t) initial_mem_contents.size();
+
+				output->verbose(CALL_INFO, 2, 0, ">> Setting initial break point to image size in memory ( brk: 0x%llx )\n", initial_brk );
+				thread_decoders[0]->getOSHandler()->registerInitParameter( SYSCALL_INIT_PARAM_INIT_BRK, &initial_brk );
 			} else {
 				output->verbose(CALL_INFO, 2, 0, "Not core-0, so will not perform any loading of binary info.\n");
 			}
