@@ -45,11 +45,11 @@ class testcase_QOS(SSTTestCase):
     def test_qos_fattree(self):
         self.qos_test_template("fattree")
 
-#    def test_qos_dragonfly(self):
-#        self.qos_test_template("dragonfly")
+    def test_qos_dragonfly(self):
+        self.qos_test_template("dragonfly")
 
-#    def test_qos_hyperx(self):
-#        self.qos_test_template("hyperx")
+    def test_qos_hyperx(self):
+        self.qos_test_template("hyperx")
 
 #####
 
