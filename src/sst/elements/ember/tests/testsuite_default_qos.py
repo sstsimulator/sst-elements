@@ -63,8 +63,6 @@ class testcase_QOS(SSTTestCase):
         self.qostest_Folder = "{0}/qostest_Folder".format(tmpdir)
         self.emberelement_testdir = "{0}/../test/".format(test_path)
 
-#        os.environ["PYTHONPATH"] = self.emberelement_testdir
-
         # Set the various file paths
         testDataFileName="test_qos-{0}".format(testcase)
 
@@ -88,13 +86,46 @@ class testcase_QOS(SSTTestCase):
 
         # Run SST
         self.run_sst(sdlfile, outfile, errfile, other_args=otherargs, set_cwd=self.qostest_Folder, mpi_out_files=mpioutfiles)
-#        self.run_sst(sdlfile, outfile, errfile, other_args=otherargs, set_cwd=test_path, mpi_out_files=mpioutfiles)
 
-        cmp_result = compare_diff(outfile, reffile)
-        self.assertTrue(cmp_result, "Diffed compared Output file {0} does not match Reference File {1}".format(outfile, reffile))
+        # NOTE: THE PASS / FAIL EVALUATIONS ARE PORTED FROM THE SQE BAMBOO
+        #       BASED testSuite_XXX.sh THESE SHOULD BE RE-EVALUATED BY THE
+        #       DEVELOPER AGAINST THE LATEST VERSION OF SST TO SEE IF THE
+        #       TESTS & RESULT FILES ARE STILL VALID
 
         self.assertFalse(os_test_file(errfile, "-s"), "QOS test {0} has Non-empty Error File {1}".format(testDataFileName, errfile))
 
+        ## These tests are following the older SQE bamboo based testSuite_qos.sh
+        ## qos has an issue on the golden file between PY2 builds and Py3 builds
+        ## due to differences in the random seed generation methods.
+
+
+        # Look for a direct match
+        cmp_result = compare_diff(outfile, reffile)
+        if cmp_result:
+            # Is it a direct match
+            log_debug("Direct Match\n")
+            self.assertTrue(cmp_result, "Diffed compared Output file {0} does not match Reference File {1}".format(outfile, reffile))
+            return
+
+        # Look for a sorted compare match
+        cmp_result = compare_sorted_diff(testcase, outfile, reffile)
+        if cmp_result:
+            # Is it a sorted match
+            log_debug("Sorted Match\n")
+            self.assertTrue(cmp_result, "Sorted and Diffed compared Output file {0} does not match Reference File {1}".format(outfile, reffile))
+            return
+
+        # Look for comparison of word/line counts
+        ##  Reference the older SQE bamboo based testSuite_qos.sh for more info
+        wc_out_data = os_wc(outfile, [0, 1])
+        log_debug("{0} : wc_out_data ={1}".format(outfile, wc_out_data))
+        wc_ref_data = os_wc(reffile, [0, 1])
+        log_debug("{0} : wc_ref_data ={1}".format(reffile, wc_ref_data))
+
+        wc_line_word_count_diff = wc_out_data == wc_ref_data
+        if wc_line_word_count_diff:
+            log_debug("Line Word Count Match\n")
+        self.assertTrue(wc_line_word_count_diff, "Line & Word count between file {0} does not match Reference File {1}".format(outfile, reffile))
 
 ###############################################
 
