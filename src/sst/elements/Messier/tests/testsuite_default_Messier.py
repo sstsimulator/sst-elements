@@ -80,13 +80,18 @@ class testcase_Messier_Component(SSTTestCase):
         # Perform the tests
         self.assertFalse(os_test_file(errfile, "-s"), "Messier test {0} has Non-empty Error File {1}".format(testDataFileName, errfile))
 
+        # NOTE: THE PASS / FAIL EVALUATIONS ARE PORTED FROM THE SQE BAMBOO
+        #       BASED testSuite_XXX.sh THESE SHOULD BE RE-EVALUATED BY THE
+        #       DEVELOPER AGAINST THE LATEST VERSION OF SST TO SEE IF THE
+        #       TESTS & RESULT FILES ARE STILL VALID
+
         # Perform the test
         cmp_result = compare_sorted_diff(testcase, outfile, reffile)
 
         # Special case handling of stencil3dbench_messier
         if not cmp_result and testcase == "stencil3dbench_messier":
             ##  Follows some bailing wire to allow serialization branch to work with same reference files
-            ##  Reference the older SQE testSuite_Messier.sh for more info
+            ##  Reference the older SQE bamboo based testSuite_Messier.sh for more info
             wc_out_data = os_wc(outfile, [0, 1])
             log_debug("{0} : wc_out_data ={1}".format(outfile, wc_out_data))
             wc_ref_data = os_wc(reffile, [0, 1])

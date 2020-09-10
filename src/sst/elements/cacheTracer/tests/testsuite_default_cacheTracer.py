@@ -65,6 +65,11 @@ class testcase_cacheTracer_Component(SSTTestCase):
 
         self.run_sst(sdlfile, outfile, errfile, mpi_out_files=mpioutfiles)
 
+        # NOTE: THE PASS / FAIL EVALUATIONS ARE PORTED FROM THE SQE BAMBOO
+        #       BASED testSuite_XXX.sh THESE SHOULD BE RE-EVALUATED BY THE
+        #       DEVELOPER AGAINST THE LATEST VERSION OF SST TO SEE IF THE
+        #       TESTS & RESULT FILES ARE STILL VALID
+
         # Perform the test
         cmp_result = compare_sorted_diff(testDataFileName, outfile, reffile)
         self.assertTrue(cmp_result, "Sorted Output file {0} does not match sorted Reference File {1}".format(outfile, reffile))
@@ -94,6 +99,11 @@ class testcase_cacheTracer_Component(SSTTestCase):
                                          "{0}/test_cacheTracer_2_mem_ref_stats.txt".format(outdir),
                                          out_memRefFile)
         os.system(cmd)
+
+        # NOTE: THE PASS / FAIL EVALUATIONS ARE PORTED FROM THE SQE BAMBOO
+        #       BASED testSuite_XXX.sh THESE SHOULD BE RE-EVALUATED BY THE
+        #       DEVELOPER AGAINST THE LATEST VERSION OF SST TO SEE IF THE
+        #       TESTS & RESULT FILES ARE STILL VALID
 
         # Perform the test
         cmp_result = compare_diff(out_memRefFile, reffile, ignore_ws=True)

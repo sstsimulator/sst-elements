@@ -112,6 +112,11 @@ class testcase_CramSim_Component(SSTTestCase):
         # Run SST
         self.run_sst(sdlfile, outfile, errfile, other_args=otherargs, mpi_out_files=mpioutfiles)
 
+        # NOTE: THE PASS / FAIL EVALUATIONS ARE PORTED FROM THE SQE BAMBOO
+        #       BASED testSuite_XXX.sh THESE SHOULD BE RE-EVALUATED BY THE
+        #       DEVELOPER AGAINST THE LATEST VERSION OF SST TO SEE IF THE
+        #       TESTS & RESULT FILES ARE STILL VALID
+
         # Perform the test
         # NOTE: This is how the bamboo tests does it, and its very crude.  The
         #       compare_diff will always fail, so all it looks for is the

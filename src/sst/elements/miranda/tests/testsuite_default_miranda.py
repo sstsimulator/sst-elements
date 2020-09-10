@@ -85,6 +85,11 @@ class testcase_miranda_Component(SSTTestCase):
 
 #        remove_component_warning_from_file(outfile)
 
+        # NOTE: THE PASS / FAIL EVALUATIONS ARE PORTED FROM THE SQE BAMBOO
+        #       BASED testSuite_XXX.sh THESE SHOULD BE RE-EVALUATED BY THE
+        #       DEVELOPER AGAINST THE LATEST VERSION OF SST TO SEE IF THE
+        #       TESTS & RESULT FILES ARE STILL VALID
+
         # Perform the tests
         self.assertFalse(os_test_file(errfile, "-s"), "miranda test {0} has Non-empty Error File {1}".format(testDataFileName, errfile))
 

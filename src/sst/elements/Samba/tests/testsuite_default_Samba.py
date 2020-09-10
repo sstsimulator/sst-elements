@@ -85,6 +85,11 @@ class testcase_Samba_Component(SSTTestCase):
 #        # This may be needed in the future
 #        remove_component_warning()
 
+        # NOTE: THE PASS / FAIL EVALUATIONS ARE PORTED FROM THE SQE BAMBOO
+        #       BASED testSuite_XXX.sh THESE SHOULD BE RE-EVALUATED BY THE
+        #       DEVELOPER AGAINST THE LATEST VERSION OF SST TO SEE IF THE
+        #       TESTS & RESULT FILES ARE STILL VALID
+
         cmp_result = compare_diff(outfile, reffile)
         if cmp_result != True:
             # We need to use some bailing wire to allow serialization

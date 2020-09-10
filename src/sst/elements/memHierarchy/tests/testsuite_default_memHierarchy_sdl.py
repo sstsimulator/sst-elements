@@ -238,6 +238,11 @@ class testcase_memHierarchy_Component(SSTTestCase):
 #        # This may be needed in the future
 #        remove_component_warning()
 
+        # NOTE: THE PASS / FAIL EVALUATIONS ARE PORTED FROM THE SQE BAMBOO
+        #       BASED testSuite_XXX.sh THESE SHOULD BE RE-EVALUATED BY THE
+        #       DEVELOPER AGAINST THE LATEST VERSION OF SST TO SEE IF THE
+        #       TESTS & RESULT FILES ARE STILL VALID
+
         # Use diff (ignore whitespace) to see if the files are the same
         cmd = "diff -b {0} {1} > {2}".format(fixedreffile, outfile, difffile)
         filesAreTheSame = (os.system(cmd) == 0)
@@ -252,6 +257,7 @@ class testcase_memHierarchy_Component(SSTTestCase):
         foundEndMsg = (os.system(cmd) == 0)
         self.assertTrue(foundEndMsg, "Did not find 'Simulation is complete, simulated time:' in output file")
 
+###
 
     def _grep_v_cleanup_file(self, grep_str, grep_file, out_file = None, append = False):
         cmd = 'grep -v \"{0}\" {1} > {2}'.format(grep_str, grep_file, self.grep_tmp_file)

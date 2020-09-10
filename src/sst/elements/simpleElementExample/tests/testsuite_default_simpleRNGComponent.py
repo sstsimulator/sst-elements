@@ -52,6 +52,11 @@ class testcase_simpleRNGComponent(SSTTestCase):
         os.system("grep Random {0} > {1}".format(outfile, tmpfile))
         os.system("tail -5 {0} > {1}".format(tmpfile, cmpfile))
 
+        # NOTE: THE PASS / FAIL EVALUATIONS ARE PORTED FROM THE SQE BAMBOO
+        #       BASED testSuite_XXX.sh THESE SHOULD BE RE-EVALUATED BY THE
+        #       DEVELOPER AGAINST THE LATEST VERSION OF SST TO SEE IF THE
+        #       TESTS & RESULT FILES ARE STILL VALID
+
         # Perform the test
         testresult = filecmp.cmp(cmpfile, reffile)
         testerror = "Output/Compare file {0} does not match Reference File {1}".format(cmpfile, reffile)
