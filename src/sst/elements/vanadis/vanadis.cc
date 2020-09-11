@@ -199,7 +199,7 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 
 		uint64_t stack_start = 0;
 
-		Params app_params = params.find_prefix_params("app");
+		Params app_params = params.find_prefix_params("app.");
 
 		output->verbose(CALL_INFO, 8, 0, "Configuring core-0, thread-0 application info...\n");
 		thread_decoders[0]->configureApplicationLaunch( output, issue_isa_tables[0], register_files[0],
