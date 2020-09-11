@@ -76,15 +76,16 @@ public:
 	}
 
 	virtual void execute( SST::Output* output, VanadisRegisterFile* regFile ) {
-		output->verbose(CALL_INFO, 16, 0, "Execute: (addr=0x%0llx) BCMP (%s) isa-in: %" PRIu16 ", %" PRIu16 " / phys-in: %" PRIu16 ", %" PRIu16 " offset: %" PRId64 "\n",
-			getInstructionAddress(), convertCompareTypeToString(compareType),isa_int_regs_in[0],
-			isa_int_regs_in[1], phys_int_regs_in[0], phys_int_regs_in[1], offset);
-
 		int64_t reg1_ptr = 0;
 		int64_t reg2_ptr = 0;
 
 		regFile->getIntReg( phys_int_regs_in[0], &reg1_ptr );
 		regFile->getIntReg( phys_int_regs_in[1], &reg2_ptr );
+
+		output->verbose(CALL_INFO, 16, 0, "Execute: (addr=0x%0llx) BCMP (%s) isa-in: %" PRIu16 ", %" PRIu16 " / phys-in: %" PRIu16 ", %" PRIu16 " offset: %" PRId64 " (r1: %" PRId64 " r: %" PRId64 ")\n",
+			getInstructionAddress(), convertCompareTypeToString(compareType),isa_int_regs_in[0],
+			isa_int_regs_in[1], phys_int_regs_in[0], phys_int_regs_in[1], offset,
+			reg1_ptr, reg2_ptr);
 
 		output->verbose(CALL_INFO, 16, 0, "---> reg-left: %" PRId64 " reg-right: %" PRId64 "\n", (reg1_ptr), (reg2_ptr) );
 

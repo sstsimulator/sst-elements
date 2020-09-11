@@ -23,7 +23,9 @@ public:
 		) :
 		VanadisSpeculatedInstruction(id, addr, hw_thr, isa_opts,
 			0,0,0,0,0,0,0,0, delayT ), new_pc(pc) {
-		}
+
+		result_dir = BRANCH_TAKEN;
+	}
 
 	virtual VanadisJumpInstruction* clone() {
 		return new VanadisJumpInstruction( *this );
@@ -43,7 +45,6 @@ public:
 	}
 
 	virtual void execute( SST::Output* output, VanadisRegisterFile* regFile ) {
-		result_dir = BRANCH_TAKEN;
 		markExecuted();
 	}
 protected:

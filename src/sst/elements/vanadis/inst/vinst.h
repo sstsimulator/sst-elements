@@ -223,6 +223,10 @@ public:
 
 	bool hasROBSlotIssued() const { return hasROBSlot; }
 	void markROBSlotIssued() { hasROBSlot = true; }
+
+	const VanadisDecoderOptions* getISAOptions() const {
+		return isa_options;
+	}
 protected:
 	void flagError() { trapError = true; }
 

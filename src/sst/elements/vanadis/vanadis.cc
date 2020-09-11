@@ -26,7 +26,7 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 	core_id   = params.find<uint32_t>("core_id", 0);
 
 	char* outputPrefix = (char*) malloc( sizeof(char) * 256 );
-	sprintf(outputPrefix, "[Core: %6" PRIu32 "]: ", core_id);
+	sprintf(outputPrefix, "[(@t) Core: %6" PRIu32 "]: ", core_id);
 
 	output = new SST::Output(outputPrefix, verbosity, 0, Output::STDOUT);
 	free(outputPrefix);
@@ -761,6 +761,7 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 						const uint64_t recalculate_ip = spec_ins->calculateAddress( output, register_files[i], spec_ins->getInstructionAddress() );
 
 						// We have a mis-speculated instruction, uh-oh.
+						output->verbose(CALL_INFO, 8, 0, "ROB -> [PIPELINE-CLEAR] predicted: 0x%llx\n", spec_ins->getSpeculatedAddress() );
 						output->verbose(CALL_INFO, 8, 0, "ROB -> [PIPELINE-CLEAR] mis-speculated execution, begin pipeline reset (set ip: 0x%llx)\n",
 							recalculate_ip);
 
@@ -842,7 +843,7 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 						} else {
 							output->verbose(CALL_INFO, 8, 0, "ROB -> [PIPELINE-CLEAR] correctly speculated direction, but target was incorrect.\n");
 							output->verbose(CALL_INFO, 8, 0, "ROB -> [PIPELINE-CLEAR] pred: 0x%0llx executed: 0x%0llx\n",
-								recalculate_ip, spec_ins->getSpeculatedAddress());
+								spec_ins->getSpeculatedAddress(), recalculate_ip );
 
 							perform_pipeline_clear = true;
 							pipeline_clear_set_ip = recalculate_ip;

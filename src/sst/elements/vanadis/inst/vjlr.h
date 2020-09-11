@@ -27,6 +27,9 @@ public:
 
 			isa_int_regs_in[0]  = jumpToAddrReg;
 			isa_int_regs_out[0] = returnAddrReg;
+
+			// JLR means we will ALWAYS take the branch
+			result_dir = BRANCH_TAKEN;
 		}
 
 		VanadisJumpLinkInstruction* clone() {
@@ -46,7 +49,7 @@ public:
 			uint64_t jump_reg_tmp = 0;
 			reg_file->getIntReg( phys_int_regs_in[0], &jump_reg_tmp );
 
-			const uint64_t jump_to_addr    = ( 0 == jump_reg_tmp ) ? getInstructionAddress() + 8 : jump_reg_tmp;
+			const uint64_t jump_to_addr    = jump_reg_tmp;
 
 			if( 0 == jump_reg_tmp ) {
 				output->verbose(CALL_INFO, 16, 0, "[jump]: (ins: 0x%0llx) jump to virtual address zero detected, this is usually bad so overriding (set to: 0x%0llx)\n",

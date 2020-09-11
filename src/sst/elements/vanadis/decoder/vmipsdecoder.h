@@ -609,7 +609,8 @@ protected:
 					case MIPS_SPEC_OP_MASK_MFHI:
 						{
 							// Special instruction, 32 is LO, 33 is HI
-							bundle->addInstruction( new VanadisAddImmInstruction( next_ins_id++, ins_addr, hw_thr, options, rd, MIPS_REG_HI, 0) );
+							bundle->addInstruction( new VanadisAddImmInstruction( next_ins_id++, ins_addr, hw_thr, options, rd,
+								MIPS_REG_HI, 0) );
 							insertDecodeFault = false;
 						}
 						break;
@@ -617,7 +618,8 @@ protected:
 					case MIPS_SPEC_OP_MASK_MFLO:
 						{
 							// Special instruction, 32 is LO, 33 is HI
-							bundle->addInstruction( new VanadisAddImmInstruction( next_ins_id++, ins_addr, hw_thr, options, rd, MIPS_REG_LO, 0) );
+							bundle->addInstruction( new VanadisAddImmInstruction( next_ins_id++, ins_addr, hw_thr, options, rd,
+								MIPS_REG_LO, 0) );
 							insertDecodeFault = false;
 						}
 						break;
@@ -709,7 +711,8 @@ protected:
 
 					case MIPS_SPEC_OP_MASK_SYNC:
 						{
-							bundle->addInstruction( new VanadisFenceInstruction( next_ins_id++, ins_addr, hw_thr, options, VANADIS_LOAD_STORE_FENCE) );
+							bundle->addInstruction( new VanadisFenceInstruction( next_ins_id++, ins_addr, hw_thr, options,
+								VANADIS_LOAD_STORE_FENCE) );
 							insertDecodeFault = false;
 						}
 						break;
@@ -783,10 +786,12 @@ protected:
 
 		case MIPS_SPEC_OP_MASK_LUI:
 			{
-				const uint32_t imm_value_16 = (uint32_t) (next_ins & MIPS_IMM_MASK);
-				const int64_t imm_value_64 = vanadis_sign_extend( imm_value_16 << 16 );
-				output->verbose(CALL_INFO, 16, 0, "[decoder/LUI] -> reg: %" PRIu16 " / imm=%" PRId64 " = (%" PRIu32 " << 16)\n",
-					rt, imm_value_64, imm_value_16);
+//				const uint32_t imm_value_16 = (uint32_t) (next_ins & MIPS_IMM_MASK);
+//				const int64_t imm_value_64 = vanadis_sign_extend( imm_value_16 ) << 16;
+
+				const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins ) << 16;
+				output->verbose(CALL_INFO, 16, 0, "[decoder/LUI] -> reg: %" PRIu16 " / imm=%" PRId64 "\n",
+					rt, imm_value_64);
 
 				bundle->addInstruction( new VanadisSetRegisterInstruction( next_ins_id++, ins_addr, hw_thr, options, rt, imm_value_64) );
 				insertDecodeFault = false;
@@ -795,7 +800,9 @@ protected:
 
 		case MIPS_SPEC_OP_MASK_LB:
 			{
-				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
+//				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
+				const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins );
+
                                 output->verbose(CALL_INFO, 16, 0, "[decoder/LB]: -> reg: %" PRIu16 " <- base: %" PRIu16 " + offset=%" PRId64 "\n",
                                         rt, rs, imm_value_64);
                                 bundle->addInstruction( new VanadisLoadInstruction( next_ins_id++, ins_addr, hw_thr, options, rs, imm_value_64,
@@ -806,7 +813,8 @@ protected:
 
 		case MIPS_SPEC_OP_MASK_LBU:
 			{
-				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
+//				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
+				const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins );
                                 output->verbose(CALL_INFO, 16, 0, "[decoder/LBU]: -> reg: %" PRIu16 " <- base: %" PRIu16 " + offset=%" PRId64 "\n",
                                         rt, rs, imm_value_64);
                                 bundle->addInstruction( new VanadisLoadInstruction( next_ins_id++, ins_addr, hw_thr, options, rs, imm_value_64,
@@ -817,7 +825,9 @@ protected:
 
 		case MIPS_SPEC_OP_MASK_LW:
 			{
-				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
+//				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
+				const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins );
+
 				output->verbose(CALL_INFO, 16, 0, "[decoder/LW]: -> reg: %" PRIu16 " <- base: %" PRIu16 " + offset=%" PRId64 "\n",
 					rt, rs, imm_value_64);
 				bundle->addInstruction( new VanadisLoadInstruction( next_ins_id++, ins_addr, hw_thr, options, rs, imm_value_64,
@@ -828,7 +838,9 @@ protected:
 
 		case MIPS_SPEC_OP_MASK_LL:
 			{
-				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
+//				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
+				const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins );
+
 				output->verbose(CALL_INFO, 16, 0, "[decoder/LL]: -> reg: %" PRIu16 " <- base: %" PRIu16 " + offset=%" PRId64 "\n",
 					rt, rs, imm_value_64);
 				bundle->addInstruction( new VanadisLoadInstruction( next_ins_id++, ins_addr, hw_thr, options, rs, imm_value_64,
@@ -839,7 +851,9 @@ protected:
 
 		case MIPS_SPEC_OP_MASK_LWL:
 			{
-				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
+//				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
+				const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins );
+
 				output->verbose(CALL_INFO, 16, 0, "[decoder/LWL (PARTLOAD)]: -> reg: %" PRIu16 " <- base: %" PRIu16 " + offset=%" PRId64 "\n",
                                         rt, rs, imm_value_64);
 				bundle->addInstruction( new VanadisPartialLoadInstruction( next_ins_id++, ins_addr, hw_thr, options, rs, imm_value_64,
@@ -850,7 +864,9 @@ protected:
 
 		case MIPS_SPEC_OP_MASK_LWR:
 			{
-				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
+//				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
+				const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins );
+
 				output->verbose(CALL_INFO, 16, 0, "[decoder/LWR (PARTLOAD)]: -> reg: %" PRIu16 " <- base: %" PRIu16 " + offset=%" PRId64 "\n",
                                         rt, rs, imm_value_64);
 				bundle->addInstruction( new VanadisPartialLoadInstruction( next_ins_id++, ins_addr, hw_thr, options, rs, imm_value_64,
@@ -861,7 +877,9 @@ protected:
 
 		case MIPS_SPEC_OP_MASK_LHU:
 			{
-				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
+//				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
+				const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins );
+
 				output->verbose(CALL_INFO, 16, 0, "[decoder/LHU]: -> reg: %" PRIu16 " <- base: %" PRIu16 " + offset=%" PRId64 "\n",
 					rt, rs, imm_value_64);
 				bundle->addInstruction( new VanadisLoadInstruction( next_ins_id++, ins_addr, hw_thr, options, rs, imm_value_64,
@@ -872,7 +890,9 @@ protected:
 
 		case MIPS_SPEC_OP_MASK_SC:
 			{
-				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
+//				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
+				const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins );
+
 				output->verbose(CALL_INFO, 16, 0, "[decoder/SC]: -> reg: %" PRIu16 " -> base: %" PRIu16 " + offset=%" PRId64 "\n",
 					rt, rs, imm_value_64);
 				bundle->addInstruction( new VanadisStoreInstruction( next_ins_id++, ins_addr, hw_thr, options, rs, imm_value_64,
@@ -883,7 +903,9 @@ protected:
 
 		case MIPS_SPEC_OP_MASK_SW:
 			{
-				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
+//				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
+				const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins );
+
 				output->verbose(CALL_INFO, 16, 0, "[decoder/SW]: -> reg: %" PRIu16 " -> base: %" PRIu16 " + offset=%" PRId64 "\n",
 					rt, rs, imm_value_64);
 				bundle->addInstruction( new VanadisStoreInstruction( next_ins_id++, ins_addr, hw_thr, options, rs, imm_value_64,
@@ -894,7 +916,9 @@ protected:
 
 		case MIPS_SPEC_OP_MASK_SWL:
 			{
-				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
+//				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
+				const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins );
+
 				output->verbose(CALL_INFO, 16, 0, "[decoder/SWL]: -> reg: %" PRIu16 " -> base: %" PRIu16 " + offset=%" PRId64 "\n",
 					rt, rs, imm_value_64);
 				bundle->addInstruction( new VanadisPartialStoreInstruction( next_ins_id++, ins_addr, hw_thr, options, rs, imm_value_64,
@@ -905,7 +929,9 @@ protected:
 
 		case MIPS_SPEC_OP_MASK_SWR:
 			{
-				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
+//				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
+				const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins );
+
 				output->verbose(CALL_INFO, 16, 0, "[decoder/SWR]: -> reg: %" PRIu16 " -> base: %" PRIu16 " + offset=%" PRId64 "\n",
 					rt, rs, imm_value_64);
 				bundle->addInstruction( new VanadisPartialStoreInstruction( next_ins_id++, ins_addr, hw_thr, options, rs, imm_value_64,
@@ -926,7 +952,9 @@ protected:
 
 		case MIPS_SPEC_OP_MASK_BEQ:
 			{
-				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
+//				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
+				const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins );
+
 				output->verbose(CALL_INFO, 16, 0, "[decoder/BEQ]: -> r1: %" PRIu16 " r2: %" PRIu16 " offset: %" PRId64 " << 2 : %" PRId64 "\n",
                                         rt, rs, imm_value_64, (imm_value_64 << 2) );
 				bundle->addInstruction( new VanadisBranchRegCompareInstruction( next_ins_id++, ins_addr, hw_thr, options, rt, rs,
@@ -937,7 +965,9 @@ protected:
 
 		case MIPS_SPEC_OP_MASK_BLEZ:
 			{
-				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
+//				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
+				const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins );
+
 				output->verbose(CALL_INFO, 16, 0, "[decoder/BLEZ]: -> r1: %" PRIu16 " offset: %" PRId64 " << 2 : %" PRId64 "\n",
                                         rs, imm_value_64, (imm_value_64 << 2) );
 				bundle->addInstruction( new VanadisBranchRegCompareInstruction( next_ins_id++, ins_addr, hw_thr, options, rs, 0,
@@ -948,7 +978,9 @@ protected:
 
 		case MIPS_SPEC_OP_MASK_BNE:
 			{
-				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
+//				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
+				const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins );
+
 				output->verbose(CALL_INFO, 16, 0, "[decoder/BNE]: -> r1: %" PRIu16 " r2: %" PRIu16 " offset: %" PRId64 " << 2 : %" PRId64 "\n",
                                         rt, rs, imm_value_64, (imm_value_64 << 2) );
 				bundle->addInstruction( new VanadisBranchRegCompareInstruction( next_ins_id++, ins_addr, hw_thr, options, rt, rs,
@@ -959,7 +991,8 @@ protected:
 
 		case MIPS_SPEC_OP_MASK_SLTI:
 			{
-				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
+				const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins );
+//				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
 				output->verbose(CALL_INFO, 16, 0, "[decoder/SLTI]: -> r1: %" PRIu16 " r2: %" PRIu16 " offset: %" PRId64 "\n",
                                         rt, rs, imm_value_64 );
 				bundle->addInstruction( new VanadisSetRegCompareImmInstruction( next_ins_id++, ins_addr, hw_thr, options,
@@ -970,7 +1003,9 @@ protected:
 
 		case MIPS_SPEC_OP_MASK_SLTIU:
 			{
-				const int64_t imm_value_64 = (uint64_t) ((uint16_t) (next_ins & MIPS_IMM_MASK));
+//				const int64_t imm_value_64 = (uint64_t) ((uint16_t) (next_ins & MIPS_IMM_MASK));
+				const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins );
+
 				output->verbose(CALL_INFO, 16, 0, "[decoder/SLTIU]: -> r1: %" PRIu16 " r2: %" PRIu16 " offset: %" PRId64 "\n",
                                         rt, rs, imm_value_64 );
 				bundle->addInstruction( new VanadisSetRegCompareImmInstruction( next_ins_id++, ins_addr, hw_thr, options,
@@ -981,7 +1016,9 @@ protected:
 
 		case MIPS_SPEC_OP_MASK_ANDI:
 			{
-				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
+//				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
+				const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins );
+
 				output->verbose(CALL_INFO, 16, 0, "[decoder/ANDI]: -> %" PRIu16 " <- r2: %" PRIu16 " imm: %" PRId64 "\n",
                                         rt, rs, imm_value_64 );
 				bundle->addInstruction( new VanadisAndImmInstruction( next_ins_id++, ins_addr, hw_thr, options,
@@ -992,7 +1029,9 @@ protected:
 
 		case MIPS_SPEC_OP_MASK_ORI:
 			{
-				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
+//				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
+				const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins );
+
 				output->verbose(CALL_INFO, 16, 0, "[decoder/ORI]: -> %" PRIu16 " <- r2: %" PRIu16 " imm: %" PRId64 "\n",
                                         rt, rs, imm_value_64 );
 				bundle->addInstruction( new VanadisOrImmInstruction( next_ins_id++, ins_addr, hw_thr, options,

@@ -19,7 +19,7 @@ public:
 			0, 0, 0, 0, VANADIS_SINGLE_DELAY_SLOT) {
 
 		isa_int_regs_in[0] = jump_to_reg;
-			result_dir = BRANCH_TAKEN;
+		result_dir = BRANCH_TAKEN;
 	}
 
 	~VanadisJumpRegInstruction() {}
@@ -36,7 +36,7 @@ public:
 		if( (jump_to & 0x3) == 0 ) {
 			output->verbose(CALL_INFO, 16, 0, "[jump]: jump-to: 0x%0llx\n", jump_to);
 		} else {
-			output->verbose(CALL_INFO, 16, 0, "[flag-error]: flagging error for JR instruction, jump address (0x%0llx) is not naturally aligned.\n",
+			output->fatal(CALL_INFO, -1, "[flag-error]: flagging error for JR instruction, jump address (0x%0llx) is not naturally aligned.\n",
 				jump_to);
 			flagError();
 		}
@@ -54,7 +54,6 @@ public:
 	virtual void execute( SST::Output* output, VanadisRegisterFile* regFile ) {
 		output->verbose(CALL_INFO, 16, 0, "Execute: (addr=0x%0llx) JR   isa-in: %" PRIu16 " / phys-in: %" PRIu16 "\n",
 			getInstructionAddress(), isa_int_regs_in[0], phys_int_regs_in[0] );
-		result_dir = BRANCH_TAKEN;
 		markExecuted();
 	}
 

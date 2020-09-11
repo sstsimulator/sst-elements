@@ -43,13 +43,10 @@ public:
 		output->verbose(CALL_INFO, 16, 0, "Execute: (addr=0x%0llx) SETREG phys: out=%" PRIu16 " imm=%" PRId64 ", isa: out=%" PRIu16 "\n",
 			getInstructionAddress(), phys_int_regs_out[0], imm_value, isa_int_regs_out[0] );
 
-		int64_t reg_ptr = 0;
-
-		regFile->getIntReg( phys_int_regs_out[0], &reg_ptr );
 		regFile->setIntReg( phys_int_regs_out[0], imm_value );
 
 		output->verbose(CALL_INFO, 16, 0, "Result-reg %" PRIu16 ": %" PRId64 "\n",
-			phys_int_regs_out[0], reg_ptr);
+			phys_int_regs_out[0], imm_value);
 
 		markExecuted();
 	}

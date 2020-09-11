@@ -474,36 +474,40 @@ public:
 
 					output->verbose(CALL_INFO, 16, 0, "-> LSQ matched an unaligned/partial load, target: %" PRIu16 " / reg-offset: %" PRIu16 " / full-width: %" PRIu16 " / partial-width: %" PRIu16 "\n",
 						target_reg, reg_offset, load_width, recompute_width);
-					uint8_t* reg_ptr = (uint8_t*) registerFiles->at( hw_thr )->getIntReg( target_reg );
 
-					for( uint16_t i = 0; i < recompute_width; ++i ) {
-						reg_ptr[ reg_offset + i ] = ev->data[i];
-					}
+					// check we aren't writing to a zero register, if we are just drop the update
+					if( target_reg != load_ins->getISAOptions()->getRegisterIgnoreWrites() ) {
+						uint8_t* reg_ptr = (uint8_t*) registerFiles->at( hw_thr )->getIntReg( target_reg );
 
-					// if we are not at offset zero then or we are loading the entire width, we need to perform an update to the full register
-					if( (reg_offset > 0) || (recompute_width == load_ins->getLoadWidth()) ) {
-						// if we are loading less than 8 bytes, because otherwise the full data width of the register is set
-						if( load_ins->getLoadWidth() < 8 ) {
-							uint64_t extended_value = 0;
+						for( uint16_t i = 0; i < recompute_width; ++i ) {
+							reg_ptr[ reg_offset + i ] = ev->data[i];
+						}
 
-							switch( load_ins->getLoadWidth() ) {
-							case 2:
-								{
-									uint16_t* reg_ptr_16 = (uint16_t*) reg_ptr;
-									extended_value = vanadis_sign_extend( (*reg_ptr_16) );
+						// if we are not at offset zero then or we are loading the entire width, we need to perform an update to the full register
+						if( (reg_offset > 0) || (recompute_width == load_ins->getLoadWidth()) ) {
+							// if we are loading less than 8 bytes, because otherwise the full data width of the register is set
+							if( load_ins->getLoadWidth() < 8 ) {
+								uint64_t extended_value = 0;
+
+								switch( load_ins->getLoadWidth() ) {
+								case 2:
+									{
+										uint16_t* reg_ptr_16 = (uint16_t*) reg_ptr;
+										extended_value = vanadis_sign_extend( (*reg_ptr_16) );
+									}
+									break;
+
+								case 4:
+									{
+										uint32_t* reg_ptr_32 = (uint32_t*) reg_ptr;
+										extended_value = vanadis_sign_extend( (*reg_ptr_32) );
+									}
+									break;
 								}
-								break;
 
-							case 4:
-								{
-									uint32_t* reg_ptr_32 = (uint32_t*) reg_ptr;
-									extended_value = vanadis_sign_extend( (*reg_ptr_32) );
-								}
-								break;
+								// Put the sign extended value into the register
+								registerFiles->at( hw_thr )->setIntReg( target_reg, extended_value );
 							}
-
-							uint64_t* reg_ptr_64 = (uint64_t*) reg_ptr;
-							(*reg_ptr_64) = extended_value;
 						}
 					}
 				} else {
@@ -547,6 +551,14 @@ public:
 					registerFiles->at( hw_thr )->setIntReg( target_reg, new_value );
 				}
 
+				output->verbose(CALL_INFO, 16, 0, "---> LSQ Execute: %s (0x%llx) load data instruction marked executed.\n",
+					load_ins->getInstCode(), load_ins->getInstructionAddress() );
+
+				if( ev->addr < 64 ) {
+					output->fatal(CALL_INFO, -1, "Error - load operation at 0x%llx address is less than virtual address 64, this would be a segmentation fault.\n",
+						load_ins->getInstructionAddress() );
+				}
+
 				load_ins->markExecuted();
 				pending_loads.erase( check_ev_load_exists );
 				pending_mem_issued_loads--;
@@ -582,6 +594,14 @@ public:
 							} else {
 								output->verbose(CALL_INFO, 16, 0, "---> LSQ LLSC-STORE rt: %" PRIu16 " <- 0 (failed)\n", value_reg );
 								registerFiles->at( front_store->getHWThread() )->setIntReg( value_reg, (uint64_t) 0 );
+							}
+
+							output->verbose(CALL_INFO, 16, 0, "---> LSQ Execute %s (0x%llx) store operation executed.\n",
+								front_store->getInstCode(), front_store->getInstructionAddress() );
+
+							if( ev->addr < 64 ) {
+								output->fatal(CALL_INFO, -1, "Error - store operation at 0x%llx address is less than virtual address 64, this would be a segmentation fault.\n",
+									front_store->getInstructionAddress() );
 							}
 
 							front_store->markExecuted();
