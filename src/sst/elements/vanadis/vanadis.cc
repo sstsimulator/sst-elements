@@ -188,28 +188,33 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 
 	if( 0 == core_id ) {
 		halted_masks[0] = false;
+		uint64_t initial_config_ip = thread_decoders[0]->getInstructionPointer();
 
-		if( 0 == thread_decoders[0]->getInstructionPointer() ) {
-			// This wasn't provided, or its explicitly set to zero which means
-			// we should auto-calculate it
-			const uint64_t c0_entry = (binary_elf_info != nullptr) ? binary_elf_info->getEntryPoint() : 0;
-			output->verbose(CALL_INFO, 8, 0, "Configuring core-0, thread-0 entry point = %p\n",
-				(void*) c0_entry);
-			thread_decoders[0]->setInstructionPointer( c0_entry );
+		// This wasn't provided, or its explicitly set to zero which means
+		// we should auto-calculate it
+		const uint64_t c0_entry = (binary_elf_info != nullptr) ? binary_elf_info->getEntryPoint() : 0;
+		output->verbose(CALL_INFO, 8, 0, "Configuring core-0, thread-0 entry point = %p\n",
+			(void*) c0_entry);
+		thread_decoders[0]->setInstructionPointer( c0_entry );
 
-			uint64_t stack_start = 0;
+		uint64_t stack_start = 0;
 
-			Params app_params = params.find_prefix_params("app");
+		Params app_params = params.find_prefix_params("app");
 
-			output->verbose(CALL_INFO, 8, 0, "Configuring core-0, thread-0 application info...\n");
-			thread_decoders[0]->configureApplicationLaunch( output, issue_isa_tables[0], register_files[0],
-				memDataInterface, binary_elf_info, app_params );
+		output->verbose(CALL_INFO, 8, 0, "Configuring core-0, thread-0 application info...\n");
+		thread_decoders[0]->configureApplicationLaunch( output, issue_isa_tables[0], register_files[0],
+			memDataInterface, binary_elf_info, app_params );
 
-			// Force retire table to sync with issue table
-			retire_isa_tables[0]->reset( issue_isa_tables[0] );
+		// Force retire table to sync with issue table
+		retire_isa_tables[0]->reset( issue_isa_tables[0] );
+
+		if( initial_config_ip > 0 ) {
+			output->verbose(CALL_INFO, 8, 0, "Overrding entry point for core-0, thread-0, set to 0x%llx\n",
+				initial_config_ip);
+			thread_decoders[0]->setInstructionPointer( initial_config_ip );
 		} else {
-			output->verbose(CALL_INFO, 8, 0, "Entry point for core-0, thread-0 is set by configuration or decoder to: %p\n",
-				(void*) thread_decoders[0]->getInstructionPointer());
+			output->verbose(CALL_INFO, 8, 0, "Utilizing entry point from binary (auto-detected) 0x%llx\n",
+				thread_decoders[0]->getInstructionPointer() );
 		}
 	}
 
@@ -688,27 +693,34 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 				bool delaySlotsAreOK = true;
 
 				switch( spec_ins->getDelaySlotType() ) {
+				case VANADIS_CONDITIONAL_SINGLE_DELAY_SLOT:
+					{
+						output->verbose(CALL_INFO, 8, 0, "ROB ---> instruction has a conditional marking on the delay slot.\n");
+					}
+					// NO BREAK BECAUSE WE STILL NEED TO PROCESS THE DELAY SLOT HERE - DO NOT ADD A BREAK STATEMENT
 				case VANADIS_SINGLE_DELAY_SLOT:
-					output->verbose(CALL_INFO, 8, 0, "ROB ---> requires a single delay slot for marking complete.\n");
+					{
+						output->verbose(CALL_INFO, 8, 0, "ROB ---> requires a single delay slot for marking complete.\n");
 
-					// We need to check the instruction just behind this one (a single delay slot, it must have executed)
-					if( rob[i]->peekAt(1)->completedExecution() ) {
-						output->verbose(CALL_INFO, 8, 0, "ROB ------> delay slot required ans has completed execution.\n");
+						// We need to check the instruction just behind this one (a single delay slot, it must have executed)
+						if( rob[i]->peekAt(1)->completedExecution() ) {
+							output->verbose(CALL_INFO, 8, 0, "ROB ------> delay slot required ans has completed execution.\n");
 
-						if( rob[i]->peekAt(1)->trapsError() ) {
-							output->fatal(CALL_INFO, -1, "Error instruction in delay-slot (0x%0llx) flags error (type: %s)\n",
-								rob[i]->peekAt(1)->getInstructionAddress(), rob[i]->peekAt(1)->getInstCode());
+							if( rob[i]->peekAt(1)->trapsError() ) {
+								output->fatal(CALL_INFO, -1, "Error instruction in delay-slot (0x%0llx) flags error (type: %s)\n",
+									rob[i]->peekAt(1)->getInstructionAddress(), rob[i]->peekAt(1)->getInstCode());
+							}
+						} else {
+							if( rob[i]->peekAt(1)->getInstFuncType() == INST_LOAD ||
+								rob[i]->peekAt(1)->getInstFuncType() == INST_STORE ) {
+
+								output->verbose(CALL_INFO, 8, 0, "ROB -----> delay slot is either load/store, so mark as front of ROB to cause processing.\n");
+								rob[i]->peekAt(1)->markFrontOfROB();
+							}
+
+							output->verbose(CALL_INFO, 8, 0, "ROB ------> delay slot required but has not completed execution, must wait.\n");
+							delaySlotsAreOK = false;
 						}
-					} else {
-						if( rob[i]->peekAt(1)->getInstFuncType() == INST_LOAD ||
-							rob[i]->peekAt(1)->getInstFuncType() == INST_STORE ) {
-
-							output->verbose(CALL_INFO, 8, 0, "ROB -----> delay slot is either load/store, so mark as front of ROB to cause processing.\n");
-							rob[i]->peekAt(1)->markFrontOfROB();
-						}
-
-						output->verbose(CALL_INFO, 8, 0, "ROB ------> delay slot required but has not completed execution, must wait.\n");
-						delaySlotsAreOK = false;
 					}
 					break;
 				default:
@@ -717,7 +729,35 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 
 				// If the delay slot handlers are satisfied we can proceed
 				if( delaySlotsAreOK ) {
-					if( spec_ins->getSpeculatedDirection() != spec_ins->getResultDirection( register_files[i] ) ) {
+					if( VANADIS_CONDITIONAL_SINGLE_DELAY_SLOT == spec_ins->getDelaySlotType() &&
+						( BRANCH_NOT_TAKEN == spec_ins->getResultDirection( register_files[i] ) ) ) {
+
+						output->verbose(CALL_INFO, 8, 0, "ROB -> instruction (0x%llx) contains a conditional delay slot and branch was not taken\n",
+							spec_ins->getInstructionAddress() );
+						const uint64_t recalculate_ip = spec_ins->calculateAddress( output, register_files[i], spec_ins->getInstructionAddress() );
+
+						output->verbose(CALL_INFO, 8, 0, "ROB -> calculated address for branch is 0x%llx\n", recalculate_ip);
+
+						output->verbose(CALL_INFO, 8, 0, "ROB -> branch was not taken, so we need to pipeline clear to avoid executing delay slot\n");
+						output->verbose(CALL_INFO, 8, 0, "ROB -> Updating branch predictor with new information\n");
+                                                thread_decoders[i]->getBranchPredictor()->push( spec_ins->getInstructionAddress(), recalculate_ip );
+						rob[i]->pop();
+
+						output->verbose(CALL_INFO, 16, 0, "----> Retire inst: %" PRIu64 " (addr: 0x%0llx / %s)\n",
+       	                                                rob_front->getID(),
+             	                                        rob_front->getInstructionAddress(),
+                                                        rob_front->getInstCode() );
+
+						recoverRetiredRegisters( rob_front,
+	                                                int_register_stacks[rob_front->getHWThread()],
+               		                                fp_register_stacks[rob_front->getHWThread()],
+                               		                issue_isa_tables[i], retire_isa_tables[i] );
+
+						handleMisspeculate( i, recalculate_ip );
+
+                                                perform_pipeline_clear = true;
+                                                pipeline_clear_set_ip = recalculate_ip;
+					} else if( spec_ins->getSpeculatedDirection() != spec_ins->getResultDirection( register_files[i] ) ) {
 						const uint64_t recalculate_ip = spec_ins->calculateAddress( output, register_files[i], spec_ins->getInstructionAddress() );
 
 						// We have a mis-speculated instruction, uh-oh.
@@ -733,9 +773,11 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
                                         	output->verbose(CALL_INFO, 16, 0, "----> Retire inst: %" PRIu64 " (addr: 0x%0llx / %s)\n",
                                                 	rob_front->getID(),
                                                 	rob_front->getInstructionAddress(),
-                                                	rob_front->getInstCode() );
+							rob_front->getInstCode() );
 
-						if( VANADIS_SINGLE_DELAY_SLOT == spec_ins->getDelaySlotType() ) {
+						// if this is a conditional, we know the branch was taken by this point so execute the delay slot
+						if( VANADIS_SINGLE_DELAY_SLOT == spec_ins->getDelaySlotType() ||
+							VANADIS_CONDITIONAL_SINGLE_DELAY_SLOT == spec_ins->getDelaySlotType() ) {
 							// Need to retire the delay slot too
        	        	                         	recoverRetiredRegisters( rob[i]->peek(),
         	                                        int_register_stacks[rob_front->getHWThread()],
@@ -775,7 +817,9 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
                                                 		rob_front->getInstructionAddress(),
                                                 		rob_front->getInstCode() );
 
-							if( VANADIS_SINGLE_DELAY_SLOT == spec_ins->getDelaySlotType() ) {
+							// We know that the branch was taken for conditional operations, so execute delay slot
+							if( VANADIS_SINGLE_DELAY_SLOT == spec_ins->getDelaySlotType() ||
+								VANADIS_CONDITIONAL_SINGLE_DELAY_SLOT == spec_ins->getDelaySlotType() ) {
 								// Need to retire the delay slot too
        	        	        	                 	recoverRetiredRegisters( rob[i]->peek(),
         	       		                                int_register_stacks[rob_front->getHWThread()],
@@ -814,7 +858,8 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
                                                 		rob_front->getInstructionAddress(),
                                                 		rob_front->getInstCode() );
 
-							if( VANADIS_SINGLE_DELAY_SLOT == spec_ins->getDelaySlotType() ) {
+							if( VANADIS_SINGLE_DELAY_SLOT == spec_ins->getDelaySlotType() ||
+								VANADIS_CONDITIONAL_SINGLE_DELAY_SLOT == spec_ins->getDelaySlotType() ) {
 								// Need to retire the delay slot too
        	        	        	                 	recoverRetiredRegisters( rob[i]->peek(),
         	       		                                int_register_stacks[rob_front->getHWThread()],
@@ -1185,6 +1230,28 @@ void VanadisComponent::init(unsigned int phase) {
 				}
 
 				std::vector<uint8_t> initial_mem_contents;
+				uint64_t max_content_address = 0;
+
+				// Find the max value we think we are going to need to place entries up to
+
+				for( size_t i = 0; i < binary_elf_info->countProgramHeaders(); ++i ) {
+					const VanadisELFProgramHeaderEntry* next_prog_hdr = binary_elf_info->getProgramHeader(i);
+					max_content_address = std::max( max_content_address, (uint64_t) next_prog_hdr->getVirtualMemoryStart() +
+						next_prog_hdr->getHeaderImageLength() );
+				}
+
+				for( size_t i = 0 ; i < binary_elf_info->countProgramSections(); ++i ) {
+					const VanadisELFProgramSectionEntry* next_sec = binary_elf_info->getProgramSection( i );
+					max_content_address = std::max( max_content_address, (uint64_t) next_sec->getVirtualMemoryStart() +
+						next_sec->getImageLength() );
+				}
+
+				output->verbose(CALL_INFO, 2, 0, "-> expecting max address for initial binary load is 0x%llx, zeroing the memory\n",
+					max_content_address );
+				initial_mem_contents.resize( max_content_address, (uint8_t) 0 );
+
+				// Populate the memory with contents from the binary
+				output->verbose(CALL_INFO, 2, 0, "-> populating memory contents with info from the executable...\n");
 
   				for( size_t i = 0; i < binary_elf_info->countProgramHeaders(); ++i ) {
 					const VanadisELFProgramHeaderEntry* next_prog_hdr = binary_elf_info->getProgramHeader(i);

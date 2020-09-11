@@ -165,7 +165,7 @@ public:
 		std::vector<uint8_t> arg_data_block;
 		for( uint32_t arg = 0; arg < arg_count; ++arg ) {
 			snprintf( arg_name, 32, "arg%" PRIu32 "", arg );
-			std::string arg_value = params.find<std::string>(arg_name, (0 == arg) ? "./app" : "" );
+			std::string arg_value = params.find<std::string>(arg_name, (0 == arg) ? elf_info->getBinaryPath() : "" );
 
 			if( "" == arg_value ) {
 				output->fatal( CALL_INFO, -1, "Error - unable to find argument %s, value is empty string which is not allowed in Linux.\n", arg_name );
@@ -769,8 +769,10 @@ protected:
 					break;
 				case MIPS_SPEC_OP_MASK_BGEZAL:
 					{
-						bundle->addInstruction( new VanadisBranchGTZeroInstruction( next_ins_id++, ins_addr, hw_thr, options, rs, (uint16_t) 31,
-							offset_value_64, VANADIS_SINGLE_DELAY_SLOT) );
+//						bundle->addInstruction( new VanadisBranchGTZeroInstruction( next_ins_id++, ins_addr, hw_thr, options, rs, (uint16_t) 31,
+//							offset_value_64, VANADIS_SINGLE_DELAY_SLOT) );
+						bundle->addInstruction( new VanadisBranchRegCompareImmLinkInstruction( next_ins_id++, ins_addr, hw_thr, options,
+							rs, 0, offset_value_64, (uint16_t) 31, VANADIS_SINGLE_DELAY_SLOT, REG_COMPARE_GTE ) );
 						insertDecodeFault = false;
 					}
 					break;

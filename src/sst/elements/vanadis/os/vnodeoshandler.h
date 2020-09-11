@@ -19,6 +19,8 @@
 #include "os/node/vnodeosopenath.h"
 #include "os/node/vnodeosreadlink.h"
 
+#include "util/vlinesplit.h"
+
 using namespace SST::Interfaces;
 
 namespace SST {
@@ -83,8 +85,8 @@ public:
 					output->fatal(CALL_INFO, -1, "-> error: unable to case syscall to a uname event.\n");
 				}
 
-				output->verbose(CALL_INFO, 16, 0, "---> uname struct is at address 0x%0llx\n", uname_ev->getUnameInfoAddress());
-				output->verbose(CALL_INFO, 16, 0, "---> generating syscall memory updates...\n");
+				output->verbose(CALL_INFO, 16, 0, "[syscall-uname] ---> uname struct is at address 0x%0llx\n", uname_ev->getUnameInfoAddress());
+				output->verbose(CALL_INFO, 16, 0, "[syscall-uname] ---> generating syscall memory updates...\n");
 
 				std::vector<uint8_t> uname_payload;
 				uname_payload.resize( 65 * 5, (uint8_t) '\0' );
@@ -126,10 +128,10 @@ public:
 				VanadisSyscallOpenAtEvent* openat_ev = dynamic_cast< VanadisSyscallOpenAtEvent* >(sys_ev);
 
 				if( nullptr == openat_ev ) {
-					output->fatal(CALL_INFO, -1, "-> error unable ot cast syscall to an openat event.\n");
+					output->fatal(CALL_INFO, -1, "[syscall-openat] -> error unable ot cast syscall to an openat event.\n");
 				}
 
-				output->verbose(CALL_INFO, 16, 0, "-> call is openat( %" PRId64 ", 0x%0llx, %" PRId64 " )\n",
+				output->verbose(CALL_INFO, 16, 0, "[syscall-openat] -> call is openat( %" PRId64 ", 0x%0llx, %" PRId64 " )\n",
 					openat_ev->getDirectoryFileDescriptor(),
 					openat_ev->getPathPointer(), openat_ev->getFlags() );
 
@@ -184,11 +186,11 @@ public:
 				VanadisSyscallReadLinkEvent* readlink_ev = dynamic_cast< VanadisSyscallReadLinkEvent* >( sys_ev );
 
 				if( nullptr == readlink_ev ) {
-					output->fatal(CALL_INFO, -1, "-> error unable ot cast system call to a readlink event.\n");
+					output->fatal(CALL_INFO, -1, "[syscall-readlink] -> error unable ot cast system call to a readlink event.\n");
 				}
 
 				if( readlink_ev->getBufferSize() > 0 ) {
-					output->verbose(CALL_INFO, 16, 0, "-> readlink( 0x%0llx, 0x%llx, %" PRId64 " )\n",
+					output->verbose(CALL_INFO, 16, 0, "[syscall-readlink] -> readlink( 0x%0llx, 0x%llx, %" PRId64 " )\n",
 						readlink_ev->getPathPointer(), readlink_ev->getBufferPointer(), readlink_ev->getBufferSize() );
 
 					std::function<void(SimpleMem::Request*)> send_req_func = std::bind(
@@ -199,7 +201,7 @@ public:
 					handler_state = new VanadisReadLinkHandlerState( output->getVerboseLevel(), readlink_ev->getPathPointer(),
 						readlink_ev->getBufferPointer(), readlink_ev->getBufferSize(), send_req_func, send_block_func );
 
-					uint64_t line_remain = ( readlink_ev->getPathPointer() % 64 ) == 0 ? 64 : readlink_ev->getPathPointer() % 64;
+					uint64_t line_remain = vanadis_line_remainder( readlink_ev->getPathPointer(), 64 );
 
 					sendMemRequest( new SimpleMem::Request( SimpleMem::Request::Read,
 							readlink_ev->getPathPointer(), line_remain ) );
@@ -230,7 +232,7 @@ public:
 					output->fatal(CALL_INFO, -1, "-> error unable to cast syscall to a writev event.\n");
 				}
 
-				output->verbose(CALL_INFO, 16, 0, "-> call is writev( %" PRId64 ", 0x%0llx, %" PRId64 " )\n",
+				output->verbose(CALL_INFO, 16, 0, "[syscall-writev] -> call is writev( %" PRId64 ", 0x%0llx, %" PRId64 " )\n",
 					writev_ev->getFileDescriptor(), writev_ev->getIOVecAddress(),
 					writev_ev->getIOVecCount() );
 
@@ -238,7 +240,7 @@ public:
 
 				if( file_des == file_descriptors.end() ) {
 
-					output->verbose(CALL_INFO, 16, 0, "-> file handle %" PRId64 " is not currently open, return an error code.\n",
+					output->verbose(CALL_INFO, 16, 0, "[syscall-writev] -> file handle %" PRId64 " is not currently open, return an error code.\n",
 						writev_ev->getFileDescriptor());
 
 					// EINVAL = 22
@@ -282,22 +284,13 @@ public:
 		case SYSCALL_OP_BRK:
 			{
 				VanadisSyscallBRKEvent* brk_ev = dynamic_cast< VanadisSyscallBRKEvent* >( sys_ev );
-				output->verbose(CALL_INFO, 16, 0, "recv brk( 0x%0llx ) call.\n", brk_ev->getUpdatedBRK() );
+				output->verbose(CALL_INFO, 16, 0, "[syscall-brk] recv brk( 0x%0llx ) call.\n", brk_ev->getUpdatedBRK() );
 
-				if( brk_ev->getUpdatedBRK() > 0 ) {
-					uint64_t old_brk = current_brk_point;
+				uint64_t old_brk  = current_brk_point;
+				current_brk_point = brk_ev->getUpdatedBRK();
 
-//					if( brk_ev->getUpdatedBRK() > current_brk_point ) {
-//						current_brk_point = brk_ev->getUpdatedBRK();
-//					}
-
-					current_brk_point += brk_ev->getUpdatedBRK();
-
-					output->verbose(CALL_INFO, 16, 0, "old brk: 0x%llx -> new brk: 0x%llx (diff: %" PRIu64 ")\n",
-						old_brk, current_brk_point, (current_brk_point - old_brk) );
-				} else {
-					output->verbose(CALL_INFO, 16, 0, "brk request is for size 0, so return current brk point\n");
-				}
+				output->verbose(CALL_INFO, 16, 0, "[syscall-brk] old brk: 0x%llx -> new brk: 0x%llx (diff: %" PRIu64 ")\n",
+					old_brk, current_brk_point, (current_brk_point - old_brk) );
 
 				// Linux syscall for brk returns the BRK point on success
 				VanadisSyscallResponse* resp = new VanadisSyscallResponse( current_brk_point );

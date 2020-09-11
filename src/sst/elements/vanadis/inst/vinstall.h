@@ -34,6 +34,7 @@
 #include "inst/vscmp.h"
 #include "inst/vscmpi.h"
 #include "inst/vbcmpi.h"
+#include "inst/vbcmpil.h"
 
 // Jumps and PC change instructions
 #include "inst/vjump.h"

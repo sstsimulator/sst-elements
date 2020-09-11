@@ -51,7 +51,7 @@ public:
 
 		int64_t src_1 = 0;
 		regFile->getIntReg( phys_int_regs_in[0], &src_1 );
-		regFile->setIntReg( phys_int_regs_out[0], src_1 & imm_value );
+		regFile->setIntReg( phys_int_regs_out[0], (src_1 & imm_value) );
 
 		markExecuted();
 	}

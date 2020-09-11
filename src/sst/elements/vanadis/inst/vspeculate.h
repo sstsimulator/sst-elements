@@ -89,6 +89,7 @@ protected:
 		uint64_t new_addr = getInstructionAddress();
 
 		switch( delayType ) {
+		case VANADIS_CONDITIONAL_SINGLE_DELAY_SLOT:
 		case VANADIS_SINGLE_DELAY_SLOT:
 			new_addr += 8; break;
 		case VANADIS_NO_DELAY_SLOT:
