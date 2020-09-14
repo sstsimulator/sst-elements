@@ -110,8 +110,17 @@ public:
 			break;
 		case VANADIS_SYSCALL_ACCESS:
 			{
-				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to access()\n");
-				call_ev = new VanadisSyscallAccessEvent( core_id, hw_thr );
+                                const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
+                                uint64_t path_ptr = 0;
+                                regFile->getIntReg( phys_reg_4, &path_ptr );
+
+                                const uint16_t phys_reg_5 = isaTable->getIntPhysReg(5);
+                                uint64_t access_mode = 0;
+                                regFile->getIntReg( phys_reg_5, &access_mode );
+
+				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to access( 0x%llx, %" PRIu64 " )\n",
+					path_ptr, access_mode);
+				call_ev = new VanadisSyscallAccessEvent( core_id, hw_thr, path_ptr, access_mode );
 			}
 			break;
 		case VANADIS_SYSCALL_BRK:

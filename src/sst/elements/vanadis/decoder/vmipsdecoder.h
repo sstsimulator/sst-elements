@@ -214,6 +214,9 @@ public:
 			}
 			env_data_block.push_back( (uint8_t)('\0') );
 		}
+		env_start_offsets.push_back( env_data_block.size() );
+		vanadis_vec_copy_in<char>( env_data_block, '\0' );
+
 		delete[] env_var_name;
 
 		std::vector<uint8_t> aux_data_block;
@@ -237,7 +240,7 @@ public:
 
 		output->verbose(CALL_INFO, 16, 0, "-> Argument Count:                       %" PRIu32 "\n", arg_count );
 		output->verbose(CALL_INFO, 16, 0, "---> Data Size for items:                %" PRIu32 "\n", (uint32_t) arg_data_block.size() );
-		output->verbose(CALL_INFO, 16, 0, "-> Environment Variable Count:           %" PRIu32 "\n", env_count );
+		output->verbose(CALL_INFO, 16, 0, "-> Environment Variable Count:           %" PRIu32 "\n", (uint32_t) env_start_offsets.size() );
 		output->verbose(CALL_INFO, 16, 0, "---> Data size for items:                %" PRIu32 "\n", (uint32_t) env_data_block.size() );
 		output->verbose(CALL_INFO, 16, 0, "---> Data size of aux-vector:            %" PRIu32 "\n", (uint32_t) aux_data_block.size() );
 		//output->verbose(CALL_INFO, 16, 0, "-> Full Startup Data Size:               %" PRIu32 "\n", (uint32_t) stack_data.size() );

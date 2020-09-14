@@ -18,6 +18,7 @@
 #include "os/node/vnodeoswritevh.h"
 #include "os/node/vnodeosopenath.h"
 #include "os/node/vnodeosreadlink.h"
+#include "os/node/vnodeosaccessh.h"
 
 #include "util/vlinesplit.h"
 
@@ -303,6 +304,25 @@ public:
 			break;
 
 		case SYSCALL_OP_ACCESS:
+			{
+				VanadisSyscallAccessEvent* access_ev = dynamic_cast< VanadisSyscallAccessEvent* >( sys_ev );
+				output->verbose(CALL_INFO, 16, 0, "[syscall-access] access( 0x%llx, %" PRIu64 " )\n",
+					access_ev->getPathPointer(), access_ev->getAccessMode() );
+
+				std::function<void(SimpleMem::Request*)> send_req_func = std::bind(
+       	                        	&VanadisNodeOSCoreHandler::sendMemRequest, this, std::placeholders::_1 );
+
+				handler_state = new VanadisAccessHandlerState( output->getVerboseLevel(), access_ev->getPathPointer(), access_ev->getAccessMode(),
+					send_req_func );
+
+				uint64_t line_remain = vanadis_line_remainder( access_ev->getPathPointer(), 64 );
+				current_syscall = std::bind( &VanadisNodeOSCoreHandler::processSyscallAccess, this );
+
+				sendMemRequest( new SimpleMem::Request( SimpleMem::Request::Read,
+					access_ev->getPathPointer(), line_remain ) );
+			}
+			break;
+
 		case SYSCALL_OP_SET_THREAD_AREA:
 			{
 				VanadisSyscallResponse* resp = new VanadisSyscallResponse();
@@ -389,14 +409,34 @@ public:
 
 		if( find_event != pending_mem.end() ) {
 			pending_mem.erase( find_event );
-		}
 
-		// if we have a state registered, pass off the event and payload
-		if( nullptr != handler_state ) {
-			handler_state->handleIncomingRequest( ev );
-		}
+			// if we have a state registered, pass off the event and payload
+			if( nullptr != handler_state ) {
+				if( handler_state->isComplete() ) {
+					// Completed?
+				} else {
+					handler_state->handleIncomingRequest( ev );
+				}
+			} else {
+				// will this ever happen?
+			}
 
-		current_syscall();
+			// if we are completed and all the memory events are processed
+			if( handler_state->isComplete() && (pending_mem.size() == 0) ) {
+				output->verbose(CALL_INFO, 16, 0, "handler is completed and all memory events are processed, sending response to core.\n");
+
+				VanadisSyscallResponse* resp = handler_state->generateResponse();
+				core_link->send( resp );
+
+				delete handler_state;
+				handler_state = nullptr;
+			} else {
+				if( handler_state->isComplete() ) {
+					output->verbose(CALL_INFO, 16, 0, "handler completed but waiting on memory operations (%" PRIu32 " pending)\n",
+						(uint32_t) pending_mem.size() );
+				}
+			}
+		}
 
 		delete ev;
 	}
@@ -446,6 +486,25 @@ public:
 			SimpleMem::Request* new_req = new SimpleMem::Request( SimpleMem::Request::Read,
 				openat_state->getPathPtr() + openat_state->getOpenAtPathLength(), 64 );
 			sendMemRequest( new_req );
+		}
+	}
+
+	void processSyscallAccess() {
+		VanadisAccessHandlerState* handler_state = dynamic_cast< VanadisAccessHandlerState* >( handler_state );
+
+		if( nullptr == handler_state ) {
+			output->fatal(CALL_INFO, -1, "Error - unable to convert state back into a handler for access call.\n");
+		}
+
+		output->verbose(CALL_INFO, 16, 0, "-> [syscall-access] calling handler...\n");
+
+		if( handler_state->hasCompleted() ) {
+			output->verbose(CALL_INFO, 16, 0, "-> [syscall-access] completed, returning response to the core...\n");
+
+			VanadisSyscallResponse* resp = new VanadisSyscallResponse( handler_state->getReturnCode() );
+                        core_link->send( resp );
+
+			resetSyscallNothing();
 		}
 	}
 

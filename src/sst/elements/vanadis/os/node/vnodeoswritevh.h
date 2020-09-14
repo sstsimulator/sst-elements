@@ -27,15 +27,12 @@ public:
                 state = 0;
         }
 
-        int64_t  getFileDescriptor() const { return writev_fd; }
-        uint64_t getIOVecAddress() const { return writev_iovec_addr; }
-        int64_t  getIOVecCount() const   { return writev_iovec_count; }
-
         void reset_iovec() {
                 current_iovec_base_addr = UINT64_MAX;
                 current_iovec_length    = INT64_MAX;
         }
 
+/*
         uint64_t getCurrentIOVecBase() const   { return current_iovec_base_addr; }
         int64_t  getCurrentIOVecLength() const { return current_iovec_length;    }
 
@@ -46,18 +43,10 @@ public:
         void setCurrentIOVecLength( const int64_t new_len ) {
                 current_iovec_length = new_len;
         }
-
-        int64_t getCurrentIOVec() const  { return current_iovec;   }
-        int64_t getCurrentOffset() const { return current_offset;  }
-
-        void incrementIOVec() { current_iovec++; }
-        void addToCurrentOffset( int64_t add_amount ) { current_offset += add_amount; }
-        void resetCurrentOffset() { current_offset = 0; }
-
-        int64_t getTotalBytesWritten() const { return total_bytes_written; }
-        void addToByteCount( int64_t bytes ) { total_bytes_written += bytes; }
-
+*/
         virtual void handleIncomingRequest( SimpleMem::Request* req ) {
+		output->verbose(CALL_INFO, 16, 0, "[syscall-writev] processing incoming request (addr: 0x%llx, size: %" PRIu64 ")\n",
+			req->addr, (uint64_t) req->size );
 
 		printStatus();
 
@@ -134,11 +123,16 @@ public:
                 case 3:
                         {
                                 // We are done here, don't do anything.
+				markComplete();
                         }
                         break;
                 }
 
         }
+
+	virtual VanadisSyscallResponse* generateResponse() {
+		return new VanadisSyscallResponse( total_bytes_written );
+	}
 
 	void printStatus() {
 		output->verbose(CALL_INFO, 16, 0, "writev Handler Status\n");

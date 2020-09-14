@@ -317,6 +317,7 @@ public:
 					pending_queued_loads--;
 				} else {
 					output->verbose(CALL_INFO, 16, 0, "-> LSQ -> attempt to issue load but pending memory operation slots are full.\n");
+					break;
 				}
 			} else if( load_eval == FORWARD_STORE ) {
 				// Store forwarding has already been done, load record is cleared to be

@@ -22,74 +22,56 @@ public:
 
 		send_mem_req = send_mem;
 		send_block_mem = send_block;
-		state = 0;
 		readlink_buff_bytes_written = 0;
-		completed = false;
         }
-
-	bool isCompleted() const { return completed; }
-	uint64_t getPathPtr() const { return readlink_path_buff; }
-	uint64_t getBufferPtr() const { return readlink_out_buff; }
-	int64_t  getBufferSize() const { return readlink_buff_size; }
-	int64_t getBytesWritten() const { return readlink_buff_bytes_written; }
 
 	virtual void handleIncomingRequest( SimpleMem::Request* req ) {
 		output->verbose(CALL_INFO, 16, 0, "-> handle incoming for readlink()\n");
 
-		switch( state ) {
-		case 0:
-			{
-				bool found_null = false;
+		bool found_null = false;
 
-				for( size_t i = 0; i < req->size; ++i ) {
-					path.push_back(req->data[i]);
+		for( size_t i = 0; i < req->size; ++i ) {
+			path.push_back(req->data[i]);
 
-					if( req->data[i] == '\0' ) {
-						found_null = true;
-						break;
-					}
+			if( req->data[i] == '\0' ) {
+				found_null = true;
+				break;
+			}
+		}
+
+		if( found_null ) {
+			output->verbose(CALL_INFO, 16, 0, "path: %s\n", (char*) (&path[0]));
+
+			if( strcmp( (char*) (&path[0]), "/proc/self/exe" ) == 0 ) {
+				const char* path_self = "/tmp/self";
+				std::vector<uint8_t> real_path;
+
+				for( int i = 0; i < strlen(path_self); ++i ) {
+					real_path.push_back( path_self[i] );
 				}
 
-				if( found_null ) {
-					output->verbose(CALL_INFO, 16, 0, "path: %s\n", (char*) (&path[0]));
+				output->verbose(CALL_INFO, 16, 0, "output: %s len: %" PRIu32 "\n",
+					path_self, (uint32_t) real_path.size());
 
-					if( strcmp( (char*) (&path[0]), "/proc/self/exe" ) == 0 ) {
-						const char* path_self = "/tmp/self";
-						std::vector<uint8_t> real_path;
-
-						for( int i = 0; i < strlen(path_self); ++i ) {
-							real_path.push_back( path_self[i] );
-						}
-
-						output->verbose(CALL_INFO, 16, 0, "output: %s len: %" PRIu32 "\n",
-							path_self, (uint32_t) real_path.size());
-
-						send_block_mem( readlink_out_buff, real_path );
-						readlink_buff_bytes_written = strlen( path_self );
-					} else {
-						output->fatal(CALL_INFO, -1, "Haven't implemented this yet.\n");
-					}
-
-					state = 1;
-					completed = true;
-				} else {
-					// Read the next cache line
-					send_mem_req( new SimpleMem::Request( SimpleMem::Request::Read,
-                                                readlink_path_buff + path.size(), 64 ) );
-				}
-
+				send_block_mem( readlink_out_buff, real_path );
+				readlink_buff_bytes_written = strlen( path_self );
+			} else {
+				output->fatal(CALL_INFO, -1, "Haven't implemented this yet.\n");
 			}
-			break;
-		case 1:
-			{
-			}
-			break;
+
+			markComplete();
+		} else {
+			// Read the next cache line
+			send_mem_req( new SimpleMem::Request( SimpleMem::Request::Read,
+                                     readlink_path_buff + path.size(), 64 ) );
 		}
         }
 
+	virtual VanadisSyscallResponse* generateResponse() {
+		return new VanadisSyscallResponse( readlink_buff_bytes_written );
+	}
+
 protected:
-	bool completed;
-	int state;
 	uint64_t readlink_path_buff;
 	uint64_t readlink_out_buff;
 	int64_t readlink_buff_size;
