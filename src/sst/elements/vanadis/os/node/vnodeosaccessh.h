@@ -49,7 +49,8 @@ public:
 		output->verbose(CALL_INFO, 16, 0, "-> [syscall-access] path is: \"%s\"\n", path );
 
 		if( strcmp( path, "/etc/suid-debug" ) == 0 ) {
-			returnCode = -1;
+			// Return ENOENT (which is 2, but we make it negative)
+			returnCode = -2;
 			markComplete();
 		} else {
 			output->fatal(CALL_INFO, -1, "Not sure what to do with path: \"%s\"\n", path);

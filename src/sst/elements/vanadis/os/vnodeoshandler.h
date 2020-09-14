@@ -50,7 +50,7 @@ public:
 
 		current_brk_point = 0;
 
-		resetSyscallNothing();
+		handlerSendMemCallback = std::bind( &VanadisNodeOSCoreHandler::sendMemRequest, this, std::placeholders::_1 );
 	}
 
 	~VanadisNodeOSCoreHandler() {
@@ -59,15 +59,6 @@ public:
 		for( auto next_file = file_descriptors.begin(); next_file != file_descriptors.end(); next_file++ ) {
 			delete next_file->second;
 		}
-	}
-
-	void resetSyscallNothing() {
-		if( nullptr != handler_state ) {
-			delete handler_state;
-		}
-
-		current_syscall = std::bind( &VanadisNodeOSCoreHandler::processSyscallNothing, this );
-		handler_state = nullptr;
 	}
 
 	void setLink( SST::Link* new_link ) {  core_link = new_link; }
@@ -119,7 +110,7 @@ public:
 				}
 
 				sendBlockToMemory( uname_ev->getUnameInfoAddress(), uname_payload );
-				current_syscall = std::bind( &VanadisNodeOSCoreHandler::processSyscallUname, this );
+				output->fatal(CALL_INFO, -1, "uname handler not implemented.\n");
 			}
 			break;
 
@@ -137,13 +128,13 @@ public:
 					openat_ev->getPathPointer(), openat_ev->getFlags() );
 
 				handler_state = new VanadisOpenAtHandlerState( output->getVerboseLevel(), openat_ev->getDirectoryFileDescriptor(),
-					openat_ev->getPathPointer(), openat_ev->getFlags() );
+					openat_ev->getPathPointer(), openat_ev->getFlags(), &file_descriptors, handlerSendMemCallback );
 
-				current_syscall = std::bind( &VanadisNodeOSCoreHandler::processSyscallOpenAt, this );
 				const uint64_t start_read_len = (openat_ev->getPathPointer() % 64) == 0 ? 64 : openat_ev->getPathPointer() % 64;
 
 				SimpleMem::Request* openat_start_req = new SimpleMem::Request( SimpleMem::Request::Read,
 					openat_ev->getPathPointer(), start_read_len );
+
 				sendMemRequest( openat_start_req );
 			}
 			break;
@@ -173,8 +164,6 @@ public:
 				if( 0 == read_ev->getCount() ) {
 					VanadisSyscallResponse* resp = new VanadisSyscallResponse( 0 );
 		                        core_link->send( resp );
-
-                		        resetSyscallNothing();
 				} else {
 					output->fatal(CALL_INFO, -1, "Non-zeros not implemented.\n");
 				}
@@ -207,18 +196,12 @@ public:
 					sendMemRequest( new SimpleMem::Request( SimpleMem::Request::Read,
 							readlink_ev->getPathPointer(), line_remain ) );
 
-					current_syscall = std::bind( &VanadisNodeOSCoreHandler::processSyscallReadLink, this );
 				} else if( readlink_ev->getBufferSize() == 0 ) {
 					VanadisSyscallResponse* resp = new VanadisSyscallResponse( 0 );
 		                        core_link->send( resp );
-
-                		        resetSyscallNothing();
 				} else {
-					VanadisSyscallResponse* resp = new VanadisSyscallResponse( 22 );
-					resp->markFailed();
+					VanadisSyscallResponse* resp = new VanadisSyscallResponse( -22 );
 		                        core_link->send( resp );
-
-                		        resetSyscallNothing();
 				}
 
 			}
@@ -245,11 +228,8 @@ public:
 						writev_ev->getFileDescriptor());
 
 					// EINVAL = 22
-					VanadisSyscallResponse* resp = new VanadisSyscallResponse( 22 );
+					VanadisSyscallResponse* resp = new VanadisSyscallResponse( -22 );
                                                 core_link->send( resp );
-					resp->markFailed();
-
-                                       resetSyscallNothing();
 				} else {
 
 					if( writev_ev->getIOVecCount() > 0 ) {
@@ -263,20 +243,13 @@ public:
 						// Launch read of the initial iovec info
 						sendMemRequest( new SimpleMem::Request( SimpleMem::Request::Read,
 							writev_ev->getIOVecAddress(), 4) );
-
-						current_syscall = std::bind( &VanadisNodeOSCoreHandler::processSyscallWritev, this );
 					} else if( writev_ev->getIOVecCount() == 0 ) {
 						VanadisSyscallResponse* resp = new VanadisSyscallResponse( 0 );
 			                        core_link->send( resp );
-
-	                		        resetSyscallNothing();
 					} else {
 						// EINVAL = 22
-						VanadisSyscallResponse* resp = new VanadisSyscallResponse( 22 );
-						resp->markFailed();
+						VanadisSyscallResponse* resp = new VanadisSyscallResponse( -22 );
 			                        core_link->send( resp );
-
-	                		        resetSyscallNothing();
 					}
 
 				}
@@ -295,11 +268,7 @@ public:
 
 				// Linux syscall for brk returns the BRK point on success
 				VanadisSyscallResponse* resp = new VanadisSyscallResponse( current_brk_point );
-				resp->markSuccessful();
-
 				core_link->send( resp );
-
-				resetSyscallNothing();
 			}
 			break;
 
@@ -316,8 +285,6 @@ public:
 					send_req_func );
 
 				uint64_t line_remain = vanadis_line_remainder( access_ev->getPathPointer(), 64 );
-				current_syscall = std::bind( &VanadisNodeOSCoreHandler::processSyscallAccess, this );
-
 				sendMemRequest( new SimpleMem::Request( SimpleMem::Request::Read,
 					access_ev->getPathPointer(), line_remain ) );
 			}
@@ -327,8 +294,6 @@ public:
 			{
 				VanadisSyscallResponse* resp = new VanadisSyscallResponse();
 				core_link->send( resp );
-
-				resetSyscallNothing();
 			}
 			break;
 
@@ -336,12 +301,6 @@ public:
 			{
 				output->fatal(CALL_INFO, -1, "Error - unknown operating system call (code: %" PRIu64 ")\n",
 					(uint64_t) sys_ev->getOperation());
-
-				// Send default response
-				VanadisSyscallResponse* resp = new VanadisSyscallResponse();
-				core_link->send( resp );
-
-				resetSyscallNothing();
 			}
 			break;
 		}
@@ -454,96 +413,6 @@ public:
 		sendMemEventCallback( req, core_id );
 	}
 
-	void processSyscallUname() {
-		output->verbose(CALL_INFO, 16, 0, "processing callback for uname, pending memory events: %" PRIu64 "\n",
-			(uint64_t) pending_mem.size());
-
-		if( 0 == pending_mem.size() ) {
-			output->verbose(CALL_INFO, 16, 0, "completed, returning response to calling core.\n");
-			VanadisSyscallResponse* resp = new VanadisSyscallResponse();
-                	core_link->send( resp );
-
-			resetSyscallNothing();
-		}
-	}
-
-	void processSyscallOpenAt() {
-		VanadisOpenAtHandlerState* openat_state = (VanadisOpenAtHandlerState*)( handler_state );
-
-		if( openat_state->completedPathRead() ) {
-			output->verbose(CALL_INFO, 16, 0, "openat->path read is completed %s, opening at file handle: %" PRIu32 "\n", openat_state->getOpenAtPath(),
-				next_file_id);
-			output->verbose(CALL_INFO, 16, 0, "call to openat() is complete, returning control to the calling core (core: %" PRIu32 ")\n", core_id);
-
-			VanadisOSFileDescriptor* new_file = new VanadisOSFileDescriptor( next_file_id++, openat_state->getOpenAtPath() );
-			file_descriptors.insert( std::pair< uint32_t, VanadisOSFileDescriptor* >( new_file->getHandle(), new_file ) );
-
-			VanadisSyscallResponse* resp = new VanadisSyscallResponse( 0 );
-                	core_link->send( resp );
-
-			resetSyscallNothing();
-		} else {
-			SimpleMem::Request* new_req = new SimpleMem::Request( SimpleMem::Request::Read,
-				openat_state->getPathPtr() + openat_state->getOpenAtPathLength(), 64 );
-			sendMemRequest( new_req );
-		}
-	}
-
-	void processSyscallAccess() {
-		VanadisAccessHandlerState* handler_state = dynamic_cast< VanadisAccessHandlerState* >( handler_state );
-
-		if( nullptr == handler_state ) {
-			output->fatal(CALL_INFO, -1, "Error - unable to convert state back into a handler for access call.\n");
-		}
-
-		output->verbose(CALL_INFO, 16, 0, "-> [syscall-access] calling handler...\n");
-
-		if( handler_state->hasCompleted() ) {
-			output->verbose(CALL_INFO, 16, 0, "-> [syscall-access] completed, returning response to the core...\n");
-
-			VanadisSyscallResponse* resp = new VanadisSyscallResponse( handler_state->getReturnCode() );
-                        core_link->send( resp );
-
-			resetSyscallNothing();
-		}
-	}
-
-	void processSyscallReadLink() {
-		VanadisReadLinkHandlerState* readlink_start = ((VanadisReadLinkHandlerState*)( handler_state ));
-
-		// All the pending writes must be done.
-		if( 0 == pending_mem.size() ) {
-			if( readlink_start->isCompleted() ) {
-				output->verbose(CALL_INFO, 16, 0, "readlink() memory writes completed (%" PRIu64 " bytes written)\n", 
-					readlink_start->getBytesWritten() );
-				VanadisSyscallResponse* resp = new VanadisSyscallResponse( readlink_start->getBytesWritten() );
-       		                core_link->send( resp );
-
-                	       	resetSyscallNothing();
-			}
-		} else {
-			output->verbose(CALL_INFO, 16, 0, "processing %" PRIu64 " pending memory operations\n",
-				(uint64_t) pending_mem.size());
-		}
-	}
-
-	void processSyscallWritev() {
-		VanadisWritevHandlerState* writev_state = ((VanadisWritevHandlerState*)( handler_state ));
-
-		if( writev_state->getCurrentIOVec() < writev_state->getIOVecCount() ) {
-
-		} else {
-			VanadisSyscallResponse* resp = new VanadisSyscallResponse( writev_state->getTotalBytesWritten() );
-                        core_link->send( resp );
-
-                        resetSyscallNothing();
-		}
-	}
-
-	void processSyscallNothing() {
-
-	}
-
 	void init( unsigned int phase ) {
 		output->verbose( CALL_INFO, 8, 0, "performing init phase %u...\n", phase );
 
@@ -571,8 +440,9 @@ public:
 	}
 
 protected:
+	std::function<void( SimpleMem::Request* )> handlerSendMemCallback;
 	std::function<void( SimpleMem::Request*, uint32_t )> sendMemEventCallback;
-	std::function<void()> current_syscall;
+
 	std::unordered_set< SimpleMem::Request::id_t > pending_mem;
 	std::unordered_map<uint32_t, VanadisOSFileDescriptor*> file_descriptors;
 

@@ -263,8 +263,12 @@ protected:
 		const int64_t  rc_val = (int64_t) os_resp->getReturnCode();
 		regFile->setIntReg( rc_reg,   rc_val );
 
-		// Generate correct markers for OS return code checks
-		writeSyscallResult( os_resp->isSuccessful() );
+		if( rc_val < 0 ) {
+			writeSyscallResult( false );
+		} else {
+			// Generate correct markers for OS return code checks
+			writeSyscallResult( os_resp->isSuccessful() );
+		}
 
 		for( int i = 0; i < returnCallbacks.size(); ++i ) {
 			returnCallbacks[i](hw_thr);
