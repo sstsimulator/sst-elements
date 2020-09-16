@@ -66,7 +66,7 @@ public:
 
 		// MIPS puts codes in GPR r2
 		const uint16_t os_code_phys_reg = isaTable->getIntPhysReg(2);
-		uint64_t os_code = *((uint64_t*) regFile->getIntReg( os_code_phys_reg ) );
+		const uint64_t os_code = regFile->getIntReg<uint64_t>( os_code_phys_reg );
 
 		output->verbose(CALL_INFO, 8, 0, "--> [SYSCALL-handler] syscall-ins: 0x%0llx / call-code: %" PRIu64 "\n",
 			syscallIns->getInstructionAddress(), os_code);
@@ -76,16 +76,13 @@ public:
 		case VANADIS_SYSCALL_READLINK:
 			{
                                 const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
-                                uint64_t readlink_path = 0;
-                                regFile->getIntReg( phys_reg_4, &readlink_path );
+                                uint64_t readlink_path = regFile->getIntReg<uint64_t>( phys_reg_4 );
 
                                 const uint16_t phys_reg_5 = isaTable->getIntPhysReg(5);
-                                uint64_t readlink_buff_ptr = 0;
-                                regFile->getIntReg( phys_reg_5, &readlink_buff_ptr );
+                                uint64_t readlink_buff_ptr = regFile->getIntReg<uint64_t>( phys_reg_5 );
 
                                 const uint16_t phys_reg_6 = isaTable->getIntPhysReg(6);
-                                int64_t readlink_size = 0;
-                                regFile->getIntReg( phys_reg_6, &readlink_size );
+                                int64_t readlink_size = regFile->getIntReg<uint64_t>( phys_reg_6 );
 
 				call_ev = new VanadisSyscallReadLinkEvent( core_id, hw_thr, readlink_path, readlink_buff_ptr, readlink_size );
 			}
@@ -94,16 +91,13 @@ public:
 		case VANADIS_SYSCALL_READ:
 			{
                                 const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
-                                int64_t read_fd = 0;
-                                regFile->getIntReg( phys_reg_4, &read_fd );
+                                int64_t read_fd = regFile->getIntReg<int64_t>( phys_reg_4 );
 
                                 const uint16_t phys_reg_5 = isaTable->getIntPhysReg(5);
-                                uint64_t read_buff_ptr = 0;
-                                regFile->getIntReg( phys_reg_5, &read_buff_ptr );
+                                uint64_t read_buff_ptr = regFile->getIntReg<uint64_t>( phys_reg_5 );
 
                                 const uint16_t phys_reg_6 = isaTable->getIntPhysReg(6);
-                                int64_t read_count = 0;
-                                regFile->getIntReg( phys_reg_6, &read_count );
+                                int64_t read_count = regFile->getIntReg<int64_t>( phys_reg_6 );
 
 				call_ev = new VanadisSyscallReadEvent( core_id, hw_thr, read_fd, read_buff_ptr, read_count );
 			}
@@ -111,12 +105,10 @@ public:
 		case VANADIS_SYSCALL_ACCESS:
 			{
                                 const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
-                                uint64_t path_ptr = 0;
-                                regFile->getIntReg( phys_reg_4, &path_ptr );
+                                uint64_t path_ptr = regFile->getIntReg<uint64_t>( phys_reg_4 );
 
                                 const uint16_t phys_reg_5 = isaTable->getIntPhysReg(5);
-                                uint64_t access_mode = 0;
-                                regFile->getIntReg( phys_reg_5, &access_mode );
+                                uint64_t access_mode = regFile->getIntReg<uint64_t>( phys_reg_5 );
 
 				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to access( 0x%llx, %" PRIu64 " )\n",
 					path_ptr, access_mode);
@@ -126,9 +118,7 @@ public:
 		case VANADIS_SYSCALL_BRK:
 			{
 				const uint64_t phys_reg_4 = isaTable->getIntPhysReg(4);
-
-				uint64_t newBrk = 0;
-				regFile->getIntReg( phys_reg_4, &newBrk );
+				uint64_t newBrk = regFile->getIntReg<uint64_t>( phys_reg_4 );
 
 				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to brk( value: %" PRIu64 " )\n",
 					newBrk);
@@ -138,9 +128,7 @@ public:
 		case VANADIS_SYSCALL_SET_THREAD_AREA:
 			{
 				const uint64_t phys_reg_4 = isaTable->getIntPhysReg(4);
-
-				uint64_t thread_area_ptr = 0;
-				regFile->getIntReg( phys_reg_4, &thread_area_ptr );
+				uint64_t thread_area_ptr = regFile->getIntReg<uint64_t>( phys_reg_4 );
 
 				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to set_thread_area( value: %" PRIu64 " )\n",
 					thread_area_ptr);
@@ -168,9 +156,7 @@ public:
 		case VANADIS_SYSCALL_UNAME:
 			{
 				const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
-
-				uint64_t uname_addr = 0;
-				regFile->getIntReg( phys_reg_4, &uname_addr );
+				uint64_t uname_addr = regFile->getIntReg<uint64_t>( phys_reg_4 );
 
 				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to uname()\n");
 
@@ -180,16 +166,13 @@ public:
 		case VANADIS_SYSCALL_OPENAT:
 			{
 				const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
-				uint64_t openat_dirfd = 0;
-				regFile->getIntReg( phys_reg_4, &openat_dirfd );
+				uint64_t openat_dirfd = regFile->getIntReg<uint64_t>( phys_reg_4 );
 
 				const uint16_t phys_reg_5 = isaTable->getIntPhysReg(5);
-				uint64_t openat_path_ptr = 0;
-				regFile->getIntReg( phys_reg_5, &openat_path_ptr );
+				uint64_t openat_path_ptr = regFile->getIntReg<uint64_t>( phys_reg_5 );
 
 				const uint16_t phys_reg_6 = isaTable->getIntPhysReg(6);
-				uint64_t openat_flags = 0;
-				regFile->getIntReg( phys_reg_6, &openat_flags );
+				uint64_t openat_flags = regFile->getIntReg<uint64_t>( phys_reg_6 );
 
 				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to openat()\n");
 				call_ev = new VanadisSyscallOpenAtEvent( core_id, hw_thr, openat_dirfd, openat_path_ptr, openat_flags );
@@ -198,16 +181,13 @@ public:
 		case VANADIS_SYSCALL_WRITEV:
 			{
 				const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
-                                int64_t writev_fd = 0;
-                                regFile->getIntReg( phys_reg_4, &writev_fd );
+                                int64_t writev_fd = regFile->getIntReg<int64_t>( phys_reg_4 );
 
                                 const uint16_t phys_reg_5 = isaTable->getIntPhysReg(5);
-                                uint64_t writev_iovec_ptr = 0;
-                                regFile->getIntReg( phys_reg_5, &writev_iovec_ptr );
+                                uint64_t writev_iovec_ptr = regFile->getIntReg<uint64_t>( phys_reg_5 );
 
                                 const uint16_t phys_reg_6 = isaTable->getIntPhysReg(6);
-                                int64_t writev_iovec_count = 0;
-                                regFile->getIntReg( phys_reg_6, &writev_iovec_count );
+                                int64_t writev_iovec_count = regFile->getIntReg<int64_t>( phys_reg_6);
 
 				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to writev( %" PRId64 ", 0x%llx, %" PRId64 " )\n",
 					writev_fd, writev_iovec_ptr, writev_iovec_count);
@@ -261,7 +241,7 @@ protected:
 		// Set up the return code (according to ABI, this goes in r2)
 		const uint16_t rc_reg   = isaTable->getIntPhysReg(2);
 		const int64_t  rc_val = (int64_t) os_resp->getReturnCode();
-		regFile->setIntReg( rc_reg,   rc_val );
+		regFile->setIntReg( rc_reg, rc_val );
 
 		if( rc_val < 0 ) {
 			writeSyscallResult( false );

@@ -49,8 +49,7 @@ public:
 			phys_int_regs_in[0], imm_value,
 			isa_int_regs_out[0], isa_int_regs_in[0] );
 
-		uint64_t src_1 = 0;
-		regFile->getIntReg( phys_int_regs_in[0], &src_1 );
+		const uint64_t src_1 = regFile->getIntReg<uint64_t>( phys_int_regs_in[0] );
 		regFile->setIntReg( phys_int_regs_out[0], (src_1) | imm_value );
 
 		markExecuted();

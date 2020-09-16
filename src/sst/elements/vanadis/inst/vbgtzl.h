@@ -58,15 +58,13 @@ public:
 		output->verbose(CALL_INFO, 16, 0, "Execute: (addr=0x%0llx) BGTZL isa-in: %" PRIu16 " phys-in: %" PRIu16 " / isa-out: %" PRIu16 " phys-out: %" PRIu16 " imm: %" PRId64 "\n",
 			getInstructionAddress(), isa_int_regs_in[0], phys_int_regs_in[0], isa_int_regs_out[0], phys_int_regs_out[0], imm);
 
-		int64_t comp_reg_ptr = 0;
-		regFile->getIntReg( phys_int_regs_in[0], &comp_reg_ptr);
-
+		const int64_t comp_reg_ptr = regFile->getIntReg<int64_t>( phys_int_regs_in[0] );
 		uint64_t link_reg_ptr = 0;
 
 		if( (comp_reg_ptr) >= 0 ) {
 			// Set link address to our location + 2 instructions (this instruction, plus delay)
 			regFile->setIntReg( phys_int_regs_out[0], getInstructionAddress() + 8 );
-			regFile->getIntReg( phys_int_regs_out[0], &link_reg_ptr );
+			link_reg_ptr = regFile->getIntReg<uint64_t>( phys_int_regs_out[0] );
 
 			computed_address = 4 + imm;
 			result_dir = BRANCH_TAKEN;
@@ -76,7 +74,7 @@ public:
 		} else {
 			computed_address = 0;
 			result_dir = BRANCH_NOT_TAKEN;
-			regFile->getIntReg( phys_int_regs_out[0], &link_reg_ptr );
+			link_reg_ptr = regFile->getIntReg<uint64_t>( phys_int_regs_out[0] );
 
 			output->verbose(CALL_INFO, 16, 0, "Execute result (branch not-taken): %" PRId64 " >= 0, link: 0x%0llx jump-to: PC + %" PRId64 "\n",
 				(comp_reg_ptr), (link_reg_ptr), computed_address);

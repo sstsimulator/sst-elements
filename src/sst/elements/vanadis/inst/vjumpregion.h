@@ -78,11 +78,8 @@ public:
 			getInstructionAddress(), convertCompareTypeToString(compareType),isa_int_regs_in[0],
 			isa_int_regs_in[1], phys_int_regs_in[0], phys_int_regs_in[1], offset);
 
-		int64_t reg1_ptr = 0;
-		int64_t reg2_ptr = 0;
-
-		regFile->getIntReg( phys_int_regs_in[0], &reg1_ptr );
-		regFile->getIntReg( phys_int_regs_in[1], &reg2_ptr );
+		const int64_t reg1_ptr = regFile->getIntReg<int64_t>( phys_int_regs_in[0] );
+		const int64_t reg2_ptr = regFile->getIntReg<int64_t>( phys_int_regs_in[1] );
 
 		output->verbose(CALL_INFO, 16, 0, "---> reg-left: %" PRId64 " reg-right: %" PRId64 "\n", (reg1_ptr), (reg2_ptr) );
 

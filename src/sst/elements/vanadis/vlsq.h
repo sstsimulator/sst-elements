@@ -246,8 +246,7 @@ public:
 							// We can forward result from register back to load
 							VanadisRegisterFile* reg_file = registerFiles->at( load_ins->getHWThread() );
 
-							uint64_t store_value = 0;
-							reg_file->getIntReg( check_store_ins->getPhysIntRegIn()[1], &store_value );
+							const uint64_t store_value = reg_file->getIntReg<uint64_t>( check_store_ins->getPhysIntRegIn()[1] );
 
 							reg_file->setIntReg(
 								load_ins->getPhysIntRegOut()[0],
@@ -556,8 +555,8 @@ public:
 					load_ins->getInstCode(), load_ins->getInstructionAddress() );
 
 				if( ev->addr < 64 ) {
-					output->fatal(CALL_INFO, -1, "Error - load operation at 0x%llx address is less than virtual address 64, this would be a segmentation fault.\n",
-						load_ins->getInstructionAddress() );
+					output->fatal(CALL_INFO, -1, "Error - load operation at instruction 0x%llx address: 0x%llx is less than virtual address 64, this would be a segmentation fault.\n",
+						load_ins->getInstructionAddress(), ev->addr );
 				}
 
 				load_ins->markExecuted();

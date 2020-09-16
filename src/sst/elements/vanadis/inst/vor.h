@@ -48,11 +48,8 @@ public:
 			phys_int_regs_in[0], phys_int_regs_in[1],
 			isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1] );
 
-		uint64_t src_1 = 0;
-		uint64_t src_2 = 0;
-
-		regFile->getIntReg( phys_int_regs_in[0], &src_1 );
-		regFile->getIntReg( phys_int_regs_in[1], &src_2 );
+		const uint64_t src_1 = regFile->getIntReg<uint64_t>( phys_int_regs_in[0] );
+		const uint64_t src_2 = regFile->getIntReg<uint64_t>( phys_int_regs_in[1] );
 
 		regFile->setIntReg( phys_int_regs_out[0], (src_1) | (src_2) );
 

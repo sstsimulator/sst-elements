@@ -61,8 +61,7 @@ public:
 		output->verbose(CALL_INFO, 16, 0, "Execute: (addr=0x%0llx) BCMPIL isa-in: %" PRIu16 " / phys-in: %" PRIu16 " / imm: %" PRId64 " / offset: %" PRId64 " / isa-link: %" PRIu16 " / phys-link: %" PRIu16 "\n",
 			getInstructionAddress(), isa_int_regs_in[0], phys_int_regs_in[0], imm_value, offset, isa_int_regs_out[0], phys_int_regs_out[0] );
 
-		int64_t reg_1 = 0;
-		regFile->getIntReg( phys_int_regs_in[0], &reg_1);
+		int64_t reg_1 = regFile->getIntReg<int64_t>( phys_int_regs_in[0] );
 
 		output->verbose(CALL_INFO, 16, 0, "---> reg-left: %" PRId64 " imm: %" PRId64 "\n", (reg_1), imm_value );
 

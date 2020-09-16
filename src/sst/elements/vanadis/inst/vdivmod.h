@@ -53,11 +53,8 @@ public:
 			phys_int_regs_out[0], phys_int_regs_out[1], phys_int_regs_in[0], phys_int_regs_in[1]);
 
 		if( performSigned ) {
-	                int64_t src_1 = 0;
-	       	        int64_t src_2 = 0;
-
-	                regFile->getIntReg( phys_int_regs_in[0], &src_1 );
-	                regFile->getIntReg( phys_int_regs_in[1], &src_2 );
+	                const int64_t src_1 = regFile->getIntReg<int64_t>( phys_int_regs_in[0] );
+	       	        const int64_t src_2 = regFile->getIntReg<int64_t>( phys_int_regs_in[1] );
 
 			if( 0 == src_2 ) {
 				flagError();
@@ -69,11 +66,8 @@ public:
 				regFile->setIntReg( phys_int_regs_out[1], mod );
 			}
 		} else {
-	                uint64_t src_1 = 0;
-	       	        uint64_t src_2 = 0;
-
-	                regFile->getIntReg( phys_int_regs_in[0], &src_1 );
-	                regFile->getIntReg( phys_int_regs_in[1], &src_2 );
+	                const uint64_t src_1 = regFile->getIntReg<uint64_t>( phys_int_regs_in[0] );
+	       	        const uint64_t src_2 = regFile->getIntReg<uint64_t>( phys_int_regs_in[1] );
 
 			if( 0 == src_2 ) {
 				flagError();

@@ -66,8 +66,7 @@ public:
 	void computeLoadAddress( VanadisRegisterFile* reg, uint64_t* out_addr, uint16_t* width ) {
 		const uint64_t width_64       = (uint64_t) load_width;
 
-		uint64_t reg_tmp = 0;
-		reg->getIntReg( phys_int_regs_in[0], &reg_tmp );
+		uint64_t reg_tmp = reg->getIntReg<uint64_t>( phys_int_regs_in[0] );
 
 		const uint64_t base_address   = reg_tmp + offset;
 		const uint64_t right_read_len = (base_address % width_64) == 0 ? width_64 : (base_address % width_64);
@@ -92,8 +91,7 @@ public:
 	}
 
 	void computeLoadAddress( SST::Output* output, VanadisRegisterFile* regFile, uint64_t* out_addr, uint16_t* width ) {
-		uint64_t mem_addr_reg_val = 0;
-		regFile->getIntReg( phys_int_regs_in[0], &mem_addr_reg_val );
+		const uint64_t mem_addr_reg_val = regFile->getIntReg<uint64_t>( phys_int_regs_in[0] );
 
                 output->verbose(CALL_INFO, 16, 0, "[execute-partload]: reg[%5" PRIu16 "]: %" PRIu64 "\n", phys_int_regs_in[0], mem_addr_reg_val);
                 output->verbose(CALL_INFO, 16, 0, "[execute-partload]: offset           : %" PRIu64 "\n", offset);

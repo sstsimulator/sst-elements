@@ -29,8 +29,7 @@ public:
 	}
 
 	virtual uint64_t calculateAddress( SST::Output* output, VanadisRegisterFile* reg_file, const uint64_t current_ip ) {
-		uint64_t jump_to = 0;
-		reg_file->getIntReg( phys_int_regs_in[0], &jump_to );
+		const uint64_t jump_to = reg_file->getIntReg<uint64_t>( phys_int_regs_in[0] );
 
 		// Last two bits MUST be zero
 		if( (jump_to & 0x3) == 0 ) {

@@ -30,7 +30,6 @@
 
 // Compare operations
 #include "inst/vcmplt.h"
-#include "inst/vcmplte.h"
 #include "inst/vscmp.h"
 #include "inst/vscmpi.h"
 #include "inst/vbcmpi.h"

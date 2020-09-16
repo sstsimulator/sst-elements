@@ -84,8 +84,7 @@ public:
 	}
 
 	virtual void computeStoreAddress( SST::Output* output, VanadisRegisterFile* reg, uint64_t* store_addr, uint16_t* op_width ) {
-		uint64_t reg_tmp = 0;
-		reg->getIntReg( phys_int_regs_in[0], &reg_tmp );
+		const uint64_t reg_tmp = reg->getIntReg<uint64_t>( phys_int_regs_in[0] );
 
                 (*store_addr)  = reg_tmp + offset;
 		(*op_width)    = store_width;

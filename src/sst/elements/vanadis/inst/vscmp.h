@@ -51,11 +51,8 @@ public:
 			isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1],
 			phys_int_regs_out[0], phys_int_regs_in[0], phys_int_regs_in[1]);
 
-		int64_t reg1_ptr = 0;
-		int64_t reg2_ptr = 0;
-
-		regFile->getIntReg( phys_int_regs_in[0], &reg1_ptr );
-		regFile->getIntReg( phys_int_regs_in[1], &reg2_ptr );
+		const int64_t reg1_ptr = regFile->getIntReg<int64_t>( phys_int_regs_in[0] );
+		const int64_t reg2_ptr = regFile->getIntReg<int64_t>( phys_int_regs_in[1] );
 
 		output->verbose(CALL_INFO, 16, 0, "---> reg-left: %" PRIu64 " reg-right: %" PRIu64 "\n", (reg1_ptr), (reg2_ptr) );
 

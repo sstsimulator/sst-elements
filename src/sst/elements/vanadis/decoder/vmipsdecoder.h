@@ -361,6 +361,36 @@ public:
 							ip);
 					}
 
+					bool q_contains_store = false;
+
+					// Do we have a store in the queue
+					for( uint32_t j = 0; j < decoded_q->size(); ++j ) {
+						if( decoded_q->peekAt(j)->getInstFuncType() == INST_STORE ) {
+							q_contains_store = true;
+							break;
+						}
+					}
+
+					// Does the bundle have a LOAD
+					bool bundle_contains_load = false;
+					for( uint32_t j = 0; j < bundle->getInstructionCount(); ++j ) {
+						if( bundle->getInstructionByIndex( j )->getInstFuncType() == INST_LOAD ) {
+							bundle_contains_load = true;
+							break;
+						}
+					}
+
+					// We have a store in the queue and we want to issue a load, we have to wait until the store is
+					// issued first to prevent a potential ordering violation
+					if( q_contains_store ) {
+						output->verbose(CALL_INFO, 16, 0, "-----> Decode-q contains a store operation, checking for loads...\n");
+
+						if( bundle_contains_load ) {
+							output->verbose(CALL_INFO, 16, 0, "-----> Decode pending queue contains a store and the instruction bundle contains a load, stalling decode-q insertion to prevent race.\n");
+							continue;
+						}
+					}
+
 					// Check if last instruction is a BRANCH, if yes, we need to also decode the branch-delay slot AND handle the prediction
 					if( bundle->getInstructionByIndex( bundle->getInstructionCount() - 1 )->getInstFuncType() == INST_BRANCH ) {
 						output->verbose(CALL_INFO, 16, 0, "-----> Last instruction in the bundle causes potential branch, checking on branch delay slot (resequence from %" PRIu64 ")...\n", next_ins_id);
@@ -1184,27 +1214,6 @@ protected:
 	uint16_t icache_max_bytes_per_cycle;
 	uint16_t max_decodes_per_cycle;
 	uint16_t decode_buffer_max_entries;
-
-/*
-	constexpr uint32_t addi_op_mask   = 0b00110000000000000000000000000000;
-	constexpr uint32_t beq_op_mask    = 0b00010000000000000000000000000000;
-	constexpr uint32_t beql_op_mask   = 0b01010000000000000000000000000000;
-	constexpr uint32_t regimm_op_mask = 0b00000100000000000000000000000000;
-	constexpr uint32_t bgtz_op_mask   = 0b00011100000000000000000000000000;
-	constexpr uint32_t bgtzl_op_mask  = 0b01011100000000000000000000000000;
-	constexpr uint32_t blez_op_mask   = 0b00011000000000000000000000000000;
-	constexpr uint32_t blezl_op_mask  = 0b01011000000000000000000000000000;
-	constexpr uint32_t bne_op_mask    = 0b00010100000000000000000000000000;
-	constexpr uint32_t bnel_op_mask   = 0b01010100000000000000000000000000;
-	constexpr uint32_t daddi_op_mask  = 0b01100000000000000000000000000000;
-	constexpr uint32_t daddiu_op_mask = 0b01100100000000000000000000000000;
-	constexpr uint32_t j_op_mask      = 0b00001000000000000000000000000000;
-	constexpr uint32_t jal_op_mask    = 0b00001100000000000000000000000000;
-	constexpr uint32_t lb_op_mask     = 0b10000000000000000000000000000000;
-	constexpr uint32_t lbu_op_mask    = 0b10010000000000000000000000000000;
-	constexpr uint32_t ld_op_mask     = 0b11011100000000000000000000000000;
-	constexpr uint32_t ldl_op_mask    = 0b01101000000000000000000000000000;
-*/
 };
 
 }

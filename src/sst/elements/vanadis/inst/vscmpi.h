@@ -50,8 +50,7 @@ public:
 			isa_int_regs_out[0], isa_int_regs_in[0],
 			phys_int_regs_out[0], phys_int_regs_in[0], imm_value);
 
-		int64_t reg1_ptr = 0;
-		regFile->getIntReg( phys_int_regs_in[0], &reg1_ptr );
+		const int64_t reg1_ptr = regFile->getIntReg<int64_t>( phys_int_regs_in[0] );
 
 		output->verbose(CALL_INFO, 16, 0, "---> reg-left: %" PRId64 " imm: %" PRId64 "\n", (reg1_ptr), imm_value );
 

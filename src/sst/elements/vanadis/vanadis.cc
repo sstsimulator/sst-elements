@@ -654,7 +654,7 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 			uint64_t pipeline_clear_set_ip = 0;
 
 			for( int j = std::min(3, (int) rob[i]->size() - 1); j >= 0; --j ) {
-				output->verbose(CALL_INFO, 8, 0, "----> ROB[%2d]: ins: 0x%0llx / %s / error: %s / issued: %s / spec: %s / exe: %s\n",
+				output->verbose(CALL_INFO, 8, 0, "----> ROB[%2d]: ins: 0x%016llx / %10s / error: %3s / issued: %3s / spec: %3s / exe: %3s\n",
 					j,
 					rob[i]->peekAt(j)->getInstructionAddress(),
 					rob[i]->peekAt(j)->getInstCode(),
