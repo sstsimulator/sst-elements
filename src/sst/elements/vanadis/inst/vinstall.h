@@ -29,7 +29,6 @@
 #include "inst/vsrli.h"
 
 // Compare operations
-#include "inst/vcmplt.h"
 #include "inst/vscmp.h"
 #include "inst/vscmpi.h"
 #include "inst/vbcmpi.h"
