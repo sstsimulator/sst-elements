@@ -219,22 +219,87 @@ public:
 
 		delete[] env_var_name;
 
+		std::vector<uint8_t> phdr_data_block;
+
+		for( int i = 0; i < elf_info->getProgramHeaderEntryCount(); ++i ) {
+			const VanadisELFProgramHeaderEntry* nxt_entry = elf_info->getProgramHeader( i );
+
+			vanadis_vec_copy_in<int>( phdr_data_block, (int) nxt_entry->getHeaderTypeNumber() );
+			vanadis_vec_copy_in<int>( phdr_data_block, (int) nxt_entry->getImageOffset() );
+			vanadis_vec_copy_in<int>( phdr_data_block, (int) nxt_entry->getVirtualMemoryStart() );
+			// Physical address - just ignore this for now
+			vanadis_vec_copy_in<int>( phdr_data_block, (int) 0 );
+			vanadis_vec_copy_in<int>( phdr_data_block, (int) nxt_entry->getHeaderImageLength() );
+			vanadis_vec_copy_in<int>( phdr_data_block, (int) nxt_entry->getHeaderMemoryLength() );
+			vanadis_vec_copy_in<int>( phdr_data_block, (int) 0 );
+			vanadis_vec_copy_in<int>( phdr_data_block, (int) nxt_entry->getAlignment() );
+		}
+
+		const uint64_t phdr_address = params.find<uint64_t>("program_header_address", 0x90000000 );
+
 		std::vector<uint8_t> aux_data_block;
 
-		int aux_page_size  = 6;
-		int aux_page_value = 4096;
+//		vanadis_vec_copy_in<int>( aux_data_block, 2    );
+//		vanadis_vec_copy_in<int>( aux_data_block, 4    );
 
-		vanadis_vec_copy_in<int>( aux_data_block, aux_page_size  );
-		vanadis_vec_copy_in<int>( aux_data_block, aux_page_value );
+		vanadis_vec_copy_in<int>( aux_data_block, 3    );
+		vanadis_vec_copy_in<int>( aux_data_block, (int) phdr_address );
 
-		int aux_entry = 9;
-		int aux_entry_value = (int) elf_info->getEntryPoint();
+		vanadis_vec_copy_in<int>( aux_data_block, 4    );
+		vanadis_vec_copy_in<int>( aux_data_block, (int) elf_info->getProgramHeaderEntryCount() );
 
-		vanadis_vec_copy_in<int>( aux_data_block, aux_entry );
+		vanadis_vec_copy_in<int>( aux_data_block, 5    );
+		vanadis_vec_copy_in<int>( aux_data_block, (int) elf_info->getProgramHeaderEntrySize() );
+
+		vanadis_vec_copy_in<int>( aux_data_block, 6    );
+		vanadis_vec_copy_in<int>( aux_data_block, 4096 );
+
+		vanadis_vec_copy_in<int>( aux_data_block, 9    );
 		vanadis_vec_copy_in<int>( aux_data_block, (int) elf_info->getEntryPoint() );
 
-		vanadis_vec_copy_in<int>( aux_data_block, 0 );
-		vanadis_vec_copy_in<int>( aux_data_block, 0 );
+		// Not ELF
+		vanadis_vec_copy_in<int>( aux_data_block, 10   );
+		vanadis_vec_copy_in<int>( aux_data_block, 0    );
+
+		// Real UID
+		vanadis_vec_copy_in<int>( aux_data_block, 11   );
+		vanadis_vec_copy_in<int>( aux_data_block, 2000 );
+
+		// Effective UID
+		vanadis_vec_copy_in<int>( aux_data_block, 12   );
+		vanadis_vec_copy_in<int>( aux_data_block, 2000 );
+
+		// Real GID
+		vanadis_vec_copy_in<int>( aux_data_block, 13   );
+		vanadis_vec_copy_in<int>( aux_data_block, 2000 );
+
+		// Effective GID
+		vanadis_vec_copy_in<int>( aux_data_block, 14   );
+		vanadis_vec_copy_in<int>( aux_data_block, 2000 );
+
+//		int aux_dcache_linesize = 19;
+//		int aux_dcache_linesize_value = 64;
+//
+//		vanadis_vec_copy_in<int>( aux_data_block, aux_dcache_linesize );
+//		vanadis_vec_copy_in<int>( aux_data_block, aux_dcache_linesize_value );
+//
+//		int aux_icache_linesize = 20;
+//		int aux_icache_linesize_value = 64;
+//
+//		vanadis_vec_copy_in<int>( aux_data_block, aux_icache_linesize );
+//		vanadis_vec_copy_in<int>( aux_data_block, aux_icache_linesize_value );
+
+		// AT_SECURE?
+		vanadis_vec_copy_in<int>( aux_data_block, 23   );
+		vanadis_vec_copy_in<int>( aux_data_block, 0    );
+
+		// End the Auxillary vector
+		vanadis_vec_copy_in<int>( aux_data_block, 0    );
+		vanadis_vec_copy_in<int>( aux_data_block, 0    );
+
+		// Find out how many AUX entries we added, these should be an int (identifier) and then an int (value) so div by 8
+		// but we need to count ints, so really div by 4
+		const int aux_entry_count = aux_data_block.size() / 4;
 
 		const int16_t sp_phys_reg = isa_tbl->getIntPhysReg( 29 );
 
@@ -243,12 +308,13 @@ public:
 		output->verbose(CALL_INFO, 16, 0, "-> Environment Variable Count:           %" PRIu32 "\n", (uint32_t) env_start_offsets.size() );
 		output->verbose(CALL_INFO, 16, 0, "---> Data size for items:                %" PRIu32 "\n", (uint32_t) env_data_block.size() );
 		output->verbose(CALL_INFO, 16, 0, "---> Data size of aux-vector:            %" PRIu32 "\n", (uint32_t) aux_data_block.size() );
+		output->verbose(CALL_INFO, 16, 0, "---> Aux entry count:                    %d\n", aux_entry_count);
 		//output->verbose(CALL_INFO, 16, 0, "-> Full Startup Data Size:               %" PRIu32 "\n", (uint32_t) stack_data.size() );
 		output->verbose(CALL_INFO, 16, 0, "-> Stack Pointer (r29) maps to phys-reg: %" PRIu16 "\n", sp_phys_reg);
 		output->verbose(CALL_INFO, 16, 0, "-> Setting SP to (not-aligned):          %" PRIu64 " / 0x%0llx\n",
 			start_stack_address, start_stack_address);
 
-		uint64_t arg_env_space_needed = 1 + arg_count + 1 + env_count + 1 + 6;
+		uint64_t arg_env_space_needed = 1 + arg_count + 1 + env_count + 1 + aux_entry_count;
 		uint64_t arg_env_space_and_data_needed = (arg_env_space_needed * 4) + arg_data_block.size() + env_data_block.size() + aux_data_block.size();
 
 		uint64_t aligned_start_stack_address = ( start_stack_address - arg_env_space_and_data_needed );
@@ -324,9 +390,20 @@ public:
 			printf("\n");
 		}
 
+		output->verbose(CALL_INFO, 16, 0, "-> Sending inital write of auxillary vector to memory, forms basis of stack start (addr: 0x%llx)\n",
+			start_stack_address);
+
+		// Send request for application stack
 		SimpleMem::Request* stack_req = new SimpleMem::Request( SimpleMem::Request::Write,
 			start_stack_address, stack_data.size(), stack_data );
 		mem_if->sendInitData( stack_req );
+
+		output->verbose(CALL_INFO, 16, 0, "-> Sending initial data for program headers (addr: 0x%llx)\n", phdr_address );
+
+		// Send request for program header tables
+		SimpleMem::Request* phdr_req = new SimpleMem::Request( SimpleMem::Request::Write,
+			phdr_address, phdr_data_block.size(), phdr_data_block );
+		mem_if->sendInitData( phdr_req );
 
 		output->verbose(CALL_INFO, 16, 0, "-> Setting SP to (64B-aligned):          %" PRIu64 " / 0x%0llx\n",
 			aligned_start_stack_address, aligned_start_stack_address );
@@ -693,7 +770,7 @@ protected:
 
 					case MIPS_SPEC_OP_MASK_JALR:
 						{
-							bundle->addInstruction( new VanadisJumpLinkInstruction( next_ins_id++, ins_addr, hw_thr, options,
+							bundle->addInstruction( new VanadisJumpRegLinkInstruction( next_ins_id++, ins_addr, hw_thr, options,
 								rd, rs, VANADIS_SINGLE_DELAY_SLOT ) );
 							insertDecodeFault = false;
 						}
@@ -1152,8 +1229,9 @@ protected:
                                 jump_to = jump_to + (uint64_t) j_addr_index;
                                 jump_to = jump_to + (uint64_t) upper_bits;
 
-				bundle->addInstruction( new VanadisSetRegisterInstruction( next_ins_id++, ins_addr, hw_thr, options, 31, ins_addr + 8 ) );
-				bundle->addInstruction( new VanadisJumpInstruction( next_ins_id++, ins_addr, hw_thr, options, jump_to, VANADIS_SINGLE_DELAY_SLOT ) );
+//				bundle->addInstruction( new VanadisSetRegisterInstruction( next_ins_id++, ins_addr, hw_thr, options, 31, ins_addr + 8 ) );
+				bundle->addInstruction( new VanadisJumpLinkInstruction( next_ins_id++, ins_addr, hw_thr, options, 31, jump_to,
+					VANADIS_SINGLE_DELAY_SLOT ) );
 				insertDecodeFault = false;
 			}
 			break;

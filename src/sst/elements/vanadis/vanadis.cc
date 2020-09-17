@@ -1313,6 +1313,7 @@ void VanadisComponent::init(unsigned int phase) {
 				memDataInterface->sendInitData( writeExe );
 
 				uint64_t initial_brk = (uint64_t) initial_mem_contents.size();
+				initial_brk = initial_brk + (64 - (initial_brk % 64));
 
 				output->verbose(CALL_INFO, 2, 0, ">> Setting initial break point to image size in memory ( brk: 0x%llx )\n", initial_brk );
 				thread_decoders[0]->getOSHandler()->registerInitParameter( SYSCALL_INIT_PARAM_INIT_BRK, &initial_brk );

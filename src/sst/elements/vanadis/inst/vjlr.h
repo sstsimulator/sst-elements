@@ -1,6 +1,6 @@
 
-#ifndef _H_VANADIS_JUMP_LINK
-#define _H_VANADIS_JUMP_LINK
+#ifndef _H_VANADIS_JUMP_REG_LINK
+#define _H_VANADIS_JUMP_REG_LINK
 
 #include <cstdio>
 
@@ -10,10 +10,10 @@
 namespace SST {
 namespace Vanadis {
 
-class VanadisJumpLinkInstruction : public VanadisSpeculatedInstruction {
+class VanadisJumpRegLinkInstruction : public VanadisSpeculatedInstruction {
 
 public:
-	VanadisJumpLinkInstruction(
+	VanadisJumpRegLinkInstruction(
 		const uint64_t id,
                 const uint64_t addr,
                 const uint32_t hw_thr,
@@ -32,8 +32,8 @@ public:
 			result_dir = BRANCH_TAKEN;
 		}
 
-		VanadisJumpLinkInstruction* clone() {
-			return new VanadisJumpLinkInstruction( *this );
+		VanadisJumpRegLinkInstruction* clone() {
+			return new VanadisJumpRegLinkInstruction( *this );
 		}
 
 		virtual const char* getInstCode() const {

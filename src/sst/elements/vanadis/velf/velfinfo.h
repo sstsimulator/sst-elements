@@ -265,7 +265,7 @@ public:
 	uint64_t getSymbolSection() const { return sym_sndx; }
 
 	void print( SST::Output* output, size_t index ) {
-		output->verbose(CALL_INFO, 16, 0, "Symbol (index: %" PRIu32 " / name: %s / offset: %" PRIu64 " / address: 0x%0llx / sz: %" PRIu64 ", type: %s / bind: %s / sndx: %" PRIu64 ")\n",
+		output->verbose(CALL_INFO, 32, 0, "Symbol (index: %" PRIu32 " / name: %s / offset: %" PRIu64 " / address: 0x%0llx / sz: %" PRIu64 ", type: %s / bind: %s / sndx: %" PRIu64 ")\n",
 			(uint32_t) index, symbolName.c_str(), sym_name_offset, sym_address, sym_size, getSymbolTypeString( sym_type ),
 			getSymbolBindTypeString( sym_bind ), sym_sndx );
 	}
@@ -292,6 +292,7 @@ public:
 		init();
 	}
 
+	void setHeaderTypeNum( uint64_t new_type ) { hdr_type_num = new_type; }
 	void setHeaderType( VanadisELFProgramHeaderType new_type ) { hdr_type = new_type; }
 	void setImageOffset( const uint64_t new_off ) { imgOffset = new_off; }
 	void setVirtualMemoryStart( const uint64_t new_start ) { virtMemAddrStart = new_start; }
@@ -301,6 +302,7 @@ public:
 	void setAlignment( const uint64_t new_align ) { alignment = new_align; }
 
 	VanadisELFProgramHeaderType getHeaderType() const { return hdr_type; }
+	uint64_t getHeaderTypeNumber() const { return hdr_type_num; }
 	uint64_t getImageOffset() const { return imgOffset; }
 	uint64_t getVirtualMemoryStart() const { return virtMemAddrStart; }
 	uint64_t getPhysicalMemoryStart() const { return physMemAddrStart; }
@@ -310,8 +312,8 @@ public:
 
 	void print( SST::Output* output, uint64_t index ) {
 		output->verbose(CALL_INFO, 16, 0, ">> Program Header Entry:    %" PRIu64 "\n", index );
-		output->verbose(CALL_INFO, 16, 0, "---> Header Type:           %s\n",
-			getELFProgramHeaderTypeString(hdr_type));
+		output->verbose(CALL_INFO, 16, 0, "---> Header Type:           %" PRIu64 " / 0x%llx / %s\n",
+			hdr_type_num, hdr_type_num, getELFProgramHeaderTypeString(hdr_type));
 		output->verbose(CALL_INFO, 16, 0, "---> Image Offset:          %" PRIu64 "\n", imgOffset);
 		output->verbose(CALL_INFO, 16, 0, "---> Virtual Memory Start:  %" PRIu64 " / %p\n", virtMemAddrStart, (void*) virtMemAddrStart);
 		output->verbose(CALL_INFO, 16, 0, "---> Phys. Memory Start:    %" PRIu64 " / %p\n", physMemAddrStart, (void*) physMemAddrStart);
@@ -328,9 +330,11 @@ private:
 		imgDataLen = 0;
 		memDataLen = 0;
 		alignment = 0;
+		hdr_type_num = 0;
 	}
 
 	VanadisELFProgramHeaderType hdr_type;
+	uint64_t hdr_type_num;
 	uint64_t imgOffset;
 	uint64_t virtMemAddrStart;
 	uint64_t physMemAddrStart;
@@ -968,6 +972,7 @@ VanadisELFInfo* readBinaryELFInfo( SST::Output* output, const char* path ) {
 			output->verbose(CALL_INFO, 4, 0, "Unknown program header type in ELF: %" PRIu32 "\n", tmp_4byte );
 		}
 
+		new_prg_hdr->setHeaderTypeNum( tmp_4byte );
 		new_prg_hdr->setHeaderType( prg_hdr_type );
 
 		if( elf_info->isELF64() ) {

@@ -130,8 +130,8 @@ public:
 				const uint64_t phys_reg_4 = isaTable->getIntPhysReg(4);
 				uint64_t thread_area_ptr = regFile->getIntReg<uint64_t>( phys_reg_4 );
 
-				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to set_thread_area( value: %" PRIu64 " )\n",
-					thread_area_ptr);
+				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to set_thread_area( value: %" PRIu64 " / 0x%llx )\n",
+					thread_area_ptr, thread_area_ptr);
 
 				if( tls_address != nullptr ) {
 					(*tls_address) = thread_area_ptr;
