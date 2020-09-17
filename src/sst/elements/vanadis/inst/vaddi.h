@@ -1,4 +1,3 @@
-
 #ifndef _H_VANADIS_ADDI
 #define _H_VANADIS_ADDI
 
@@ -17,12 +16,11 @@ public:
 		const uint16_t dest,
 		const uint16_t src_1,
 		const int64_t immediate) :
-		VanadisInstruction(id, addr, hw_thr, isa_opts, 1, 1, 1, 1, 0, 0, 0, 0) {
+		VanadisInstruction(id, addr, hw_thr, isa_opts, 1, 1, 1, 1, 0, 0, 0, 0),
+			imm_value(immediate) {
 
 		isa_int_regs_in[0]  = src_1;
 		isa_int_regs_out[0] = dest;
-
-		imm_value = immediate;
 	}
 
 	VanadisAddImmInstruction* clone() {
@@ -49,14 +47,14 @@ public:
 			phys_int_regs_in[0], imm_value,
 			isa_int_regs_out[0], isa_int_regs_in[0] );
 
-                int64_t src_1 = regFile->getIntReg<int64_t>( phys_int_regs_in[0] );
+                const int64_t src_1 = regFile->getIntReg<int64_t>( phys_int_regs_in[0] );
 		regFile->setIntReg( phys_int_regs_out[0], src_1 + imm_value );
 
 		markExecuted();
 	}
 
 private:
-	int64_t imm_value;
+	const int64_t imm_value;
 
 };
 

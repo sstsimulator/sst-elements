@@ -36,7 +36,6 @@
 
 // Jumps and PC change instructions
 #include "inst/vjump.h"
-#include "inst/vbgtzl.h"
 #include "inst/vjlr.h"
 #include "inst/vjr.h"
 #include "inst/vbcmp.h"

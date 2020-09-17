@@ -22,10 +22,7 @@ public:
 		const VanadisRegisterCompareType cType
 		) :
 		VanadisSpeculatedInstruction(id, addr, hw_thr, isa_opts, 2, 0, 2, 0, 0, 0, 0, 0, delayT),
-			compareType(cType) {
-
-		offset = offst;
-
+			offset(offst), compareType(cType) {
 		isa_int_regs_in[0] = src_1;
 		isa_int_regs_in[1] = src_2;
 	}
@@ -38,7 +35,7 @@ public:
 
 	virtual uint64_t calculateAddress( SST::Output* output, VanadisRegisterFile* reg_file, const uint64_t current_ip ) {
 		if( result_dir == BRANCH_TAKEN ) {
-			const uint64_t updated_address = (uint64_t) ((int64_t) getInstructionAddress() + 4 + offset);
+			const uint64_t updated_address = (uint64_t) (((int64_t) getInstructionAddress()) + 4 + offset);
 
 			output->verbose(CALL_INFO, 16, 0, "calculate-address: (taken) (ip): %" PRIu64" / 0x%llx + (4 + offset: %" PRId64 " / 0x%llx = %" PRIu64 " / 0x%llx\n",
 				current_ip, current_ip, offset, offset, updated_address, updated_address);
@@ -137,7 +134,7 @@ public:
 	}
 
 protected:
-	int64_t offset;
+	const int64_t offset;
 	VanadisRegisterCompareType compareType;
 
 };

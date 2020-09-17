@@ -865,8 +865,6 @@ protected:
 					break;
 				case MIPS_SPEC_OP_MASK_BGEZAL:
 					{
-//						bundle->addInstruction( new VanadisBranchGTZeroInstruction( next_ins_id++, ins_addr, hw_thr, options, rs, (uint16_t) 31,
-//							offset_value_64, VANADIS_SINGLE_DELAY_SLOT) );
 						bundle->addInstruction( new VanadisBranchRegCompareImmLinkInstruction( next_ins_id++, ins_addr, hw_thr, options,
 							rs, 0, offset_value_64, (uint16_t) 31, VANADIS_SINGLE_DELAY_SLOT, REG_COMPARE_GTE ) );
 						insertDecodeFault = false;
@@ -879,9 +877,6 @@ protected:
 
 		case MIPS_SPEC_OP_MASK_LUI:
 			{
-//				const uint32_t imm_value_16 = (uint32_t) (next_ins & MIPS_IMM_MASK);
-//				const int64_t imm_value_64 = vanadis_sign_extend( imm_value_16 ) << 16;
-
 				const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins ) << 16;
 				output->verbose(CALL_INFO, 16, 0, "[decoder/LUI] -> reg: %" PRIu16 " / imm=%" PRId64 "\n",
 					rt, imm_value_64);
@@ -893,7 +888,6 @@ protected:
 
 		case MIPS_SPEC_OP_MASK_LB:
 			{
-//				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
 				const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins );
 
                                 output->verbose(CALL_INFO, 16, 0, "[decoder/LB]: -> reg: %" PRIu16 " <- base: %" PRIu16 " + offset=%" PRId64 "\n",
