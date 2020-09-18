@@ -111,20 +111,7 @@ public:
 
 			// Update the link address
 			// The link address is the address of the second instruction after the branch (so the instruction after the delay slot)
-			uint64_t link_address = UINT64_MAX;
-
-			switch( delayType ) {
-			case VANADIS_NO_DELAY_SLOT:
-				link_address = getInstructionAddress() + 4;
-				break;
-			case VANADIS_SINGLE_DELAY_SLOT:
-			case VANADIS_CONDITIONAL_SINGLE_DELAY_SLOT:
-				link_address = getInstructionAddress() + 8;
-				break;
-			default:
-				output->fatal(CALL_INFO, -1, "Unknown delay type, unable to compute link address prior to jump.\n");
-			}
-
+			uint64_t link_address = calculateStandardNotTakenAddress();
 			regFile->setIntReg( phys_int_regs_out[0], link_address );
 		} else {
 			result_dir = BRANCH_NOT_TAKEN;

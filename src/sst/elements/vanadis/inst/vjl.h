@@ -47,7 +47,7 @@ public:
 	}
 
 	virtual void execute( SST::Output* output, VanadisRegisterFile* regFile ) {
-		const uint64_t link_value = getInstructionAddress() + 8;
+		const uint64_t link_value = calculateStandardNotTakenAddress();
 
 		output->verbose(CALL_INFO, 16, 0, "Execute: JL jump-to: %" PRIu64 " / 0x%llx / link: %" PRIu16 " phys: %" PRIu16 " v: %" PRIu64 "/ 0x%llx\n",
 			new_pc, new_pc, isa_int_regs_out[0], phys_int_regs_out[0], link_value, link_value);

@@ -38,12 +38,12 @@ public:
 
 	virtual void printToBuffer(char* buffer, size_t buffer_size) {
                 snprintf(buffer, buffer_size, "MUL     %5" PRIu16 " <- %5" PRIu16 " * %5" PRIu16 " (phys: %5" PRIu16 " <- %5" PRIu16 " * %5" PRIu16 ")",
-			isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1], 
+			isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1],
 			phys_int_regs_out[0], phys_int_regs_in[0], phys_int_regs_in[1] );
         }
 
 	virtual void execute( SST::Output* output, VanadisRegisterFile* regFile ) {
-		output->verbose(CALL_INFO, 16, 0, "Execute: (adrrr=%p) MUL phys: out=%" PRIu16 " in=%" PRIu16 ", %" PRIu16 ", isa: out=%" PRIu16 " / in=%" PRIu16 ", %" PRIu16 "\n",
+		output->verbose(CALL_INFO, 16, 0, "Execute: (addr=%p) MUL phys: out=%" PRIu16 " in=%" PRIu16 ", %" PRIu16 ", isa: out=%" PRIu16 " / in=%" PRIu16 ", %" PRIu16 "\n",
 			(void*) getInstructionAddress(), phys_int_regs_out[0],
 			phys_int_regs_in[0], phys_int_regs_in[1],
 			isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1] );

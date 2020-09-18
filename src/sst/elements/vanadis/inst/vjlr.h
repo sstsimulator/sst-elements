@@ -46,15 +46,14 @@ public:
 		}
 
 		virtual uint64_t calculateAddress( SST::Output* output, VanadisRegisterFile* reg_file, const uint64_t current_ip ) {
-			uint64_t jump_reg_tmp = reg_file->getIntReg<uint64_t>( phys_int_regs_in[0] );
-			const uint64_t jump_to_addr    = jump_reg_tmp;
+			const uint64_t jump_to = reg_file->getIntReg<uint64_t>( phys_int_regs_in[0] );
 
-			if( 0 == jump_reg_tmp ) {
-				output->verbose(CALL_INFO, 16, 0, "[jump]: (ins: 0x%0llx) jump to virtual address zero detected, this is usually bad so overriding (set to: 0x%0llx)\n",
-					getInstructionAddress(), jump_to_addr);
+			if( 0 == jump_to ) {
+				output->fatal(CALL_INFO, -1, "[jump]: (ins: 0x%0llx) jump to virtual address zero detected, this is usually bad so overriding (set to: 0x%0llx)\n",
+					getInstructionAddress(), jump_to );
 			}
 
-			return jump_to_addr;
+			return jump_to;
 		}
 
 		virtual void execute( SST::Output* output, VanadisRegisterFile* regFile ) {
@@ -62,12 +61,11 @@ public:
 				getInstructionAddress(), isa_int_regs_out[0], isa_int_regs_in[0], phys_int_regs_out[0], phys_int_regs_in[0]);
 
 			const uint64_t jump_to = regFile->getIntReg<uint64_t>( phys_int_regs_in[0] );
-			const uint64_t link_value = getInstructionAddress() + 8;
+			const uint64_t link_value = calculateStandardNotTakenAddress();
 
 			regFile->setIntReg( phys_int_regs_out[0], link_value );
 
-			output->verbose(CALL_INFO, 16, 0, "Execute JLR jump-to: 0x%0llx link-value: 0x%0llx\n",
-				jump_to, link_value);
+			output->verbose(CALL_INFO, 16, 0, "Execute JLR jump-to: 0x%0llx link-value: 0x%0llx\n", jump_to, link_value);
 
 			markExecuted();
 		}

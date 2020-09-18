@@ -37,7 +37,7 @@ public:
 		if( result_dir == BRANCH_TAKEN ) {
 			const uint64_t updated_address = (uint64_t) (((int64_t) getInstructionAddress()) + 4 + offset);
 
-			output->verbose(CALL_INFO, 16, 0, "calculate-address: (taken) (ip): %" PRIu64" / 0x%llx + (4 + offset: %" PRId64 " / 0x%llx = %" PRIu64 " / 0x%llx\n",
+			output->verbose(CALL_INFO, 16, 0, "calculate-address: (taken) (ip): %" PRIu64 " / 0x%llx + (4 + offset: %" PRId64 " / 0x%llx = %" PRIu64 " / 0x%llx\n",
 				current_ip, current_ip, offset, offset, updated_address, updated_address);
 			return updated_address;
 		} else {

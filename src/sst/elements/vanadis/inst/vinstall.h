@@ -9,6 +9,7 @@
 #include "inst/vsub.h"
 #include "inst/vmul.h"
 #include "inst/vmuli.h"
+#include "inst/vmulsplit.h"
 #include "inst/vdivmod.h"
 
 // Logical operations

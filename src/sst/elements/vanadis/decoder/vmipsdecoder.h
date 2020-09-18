@@ -763,7 +763,8 @@ protected:
 					case MIPS_SPEC_OP_MASK_JR:
 						{
 
-							bundle->addInstruction( new VanadisJumpRegInstruction( next_ins_id++, ins_addr, hw_thr, options, rs) );
+							bundle->addInstruction( new VanadisJumpRegInstruction( next_ins_id++, ins_addr, hw_thr, options, rs,
+								VANADIS_SINGLE_DELAY_SLOT ) );
 							insertDecodeFault = false;
 						}
 						break;
@@ -808,7 +809,8 @@ protected:
 
 					case MIPS_SPEC_OP_MASK_MULT:
 						{
-							bundle->addInstruction( new VanadisMultiplyInstruction( next_ins_id++, ins_addr, hw_thr, options, rd, rs, rt ) );
+							bundle->addInstruction( new VanadisMultiplySplitInstruction( next_ins_id++, ins_addr, hw_thr, options,
+								MIPS_REG_LO, MIPS_REG_HI, rs, rt ) );
 							insertDecodeFault = false;
 						}
 						break;

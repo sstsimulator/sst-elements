@@ -95,6 +95,7 @@ public:
 		}
 	}
 */
+
 	void setIntReg( const uint16_t reg, const uint64_t val ) {
 		if( reg != decoder_opts->getRegisterIgnoreWrites() ) {
 			*((uint64_t*) &int_reg_storage[8*reg]) = val;
