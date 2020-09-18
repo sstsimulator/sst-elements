@@ -60,6 +60,7 @@ bool MESIInclusive::handleGetS(MemEvent * event, bool inMSHR) {
                 if (!mshr_->getProfiled(addr)) {
                     stat_eventState[(int)Command::GetS][I]->addData(1);
                     stat_miss[0][inMSHR]->addData(1);
+                    stat_misses->addData(1);
                     notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::MISS);
                     recordLatencyType(event->getID(), LatType::MISS);
                     mshr_->setProfiled(addr);
@@ -77,6 +78,7 @@ bool MESIInclusive::handleGetS(MemEvent * event, bool inMSHR) {
             if (!inMSHR || !mshr_->getProfiled(addr)) {
                 stat_eventState[(int)Command::GetS][S]->addData(1);
                 stat_hit[0][inMSHR]->addData(1);
+                stat_hits->addData(1);
                 notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
                 if (localPrefetch) {
                     statPrefetchRedundant->addData(1);
@@ -114,6 +116,7 @@ bool MESIInclusive::handleGetS(MemEvent * event, bool inMSHR) {
                 if (!inMSHR || !mshr_->getProfiled(addr)) {
                     stat_eventState[(int)Command::GetS][state]->addData(1);
                     stat_hit[0][inMSHR]->addData(1);
+                    stat_hits->addData(1);
                     notifyListenerOfAccess(event, NotifyAccessType::PREFETCH, NotifyResultType::HIT);
                     statPrefetchRedundant->addData(1);
                     recordPrefetchLatency(event->getID(), LatType::HIT);
@@ -134,6 +137,7 @@ bool MESIInclusive::handleGetS(MemEvent * event, bool inMSHR) {
                     if (!mshr_->getProfiled(addr)) {
                         stat_eventState[(int)Command::GetS][state]->addData(1);
                         stat_hit[0][inMSHR]->addData(1);
+                        stat_hits->addData(1);
                         notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
                         recordLatencyType(event->getID(), LatType::INV);
                         mshr_->setProfiled(addr);
@@ -150,6 +154,7 @@ bool MESIInclusive::handleGetS(MemEvent * event, bool inMSHR) {
                 if (!inMSHR || !mshr_->getProfiled(addr)) {
                     stat_eventState[(int)Command::GetS][state]->addData(1);
                     stat_hit[0][inMSHR]->addData(1);
+                    stat_hits->addData(1);
                     notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
                     recordLatencyType(event->getID(), LatType::HIT);
                     if (inMSHR) mshr_->setProfiled(addr);
@@ -214,6 +219,7 @@ bool MESIInclusive::handleGetX(MemEvent * event, bool inMSHR) {
                     recordLatencyType(event->getID(), LatType::MISS);
                     stat_eventState[(int)event->getCmd()][I]->addData(1);
                     stat_miss[(event->getCmd() == Command::GetX ? 1 : 2)][inMSHR]->addData(1);
+                    stat_misses->addData(1);
                     notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::MISS);
                     mshr_->setProfiled(addr);
                 }
@@ -232,6 +238,7 @@ bool MESIInclusive::handleGetX(MemEvent * event, bool inMSHR) {
                     if (!mshr_->getProfiled(addr)) {
                         stat_eventState[(int)event->getCmd()][state]->addData(1);
                         stat_miss[(event->getCmd() == Command::GetX ? 1 : 2)][inMSHR]->addData(1);
+                        stat_misses->addData(1);
                         notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::MISS);
                         mshr_->setProfiled(addr);
                     }
@@ -259,6 +266,7 @@ bool MESIInclusive::handleGetX(MemEvent * event, bool inMSHR) {
                 notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::HIT);
                 stat_eventState[(int)event->getCmd()][state]->addData(1);
                 stat_hit[(event->getCmd() == Command::GetX ? 1 : 2)][inMSHR]->addData(1);
+                stat_hits->addData(1);
                 if (inMSHR)
                     mshr_->setProfiled(addr);
             }
