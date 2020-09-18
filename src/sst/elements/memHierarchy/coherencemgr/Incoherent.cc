@@ -54,6 +54,8 @@ bool Incoherent::handleGetS(MemEvent * event, bool inMSHR) {
                     stat_eventState[(int)Command::GetS][I]->addData(1);
                     notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::MISS);
                     mshr_->setProfiled(addr);
+                    stat_misses->addData(1);
+                    stat_miss[(int)Command::GetS][(int)inMSHR]->addData(1);
                 }
                 recordLatencyType(event->getID(), LatType::MISS);
                 sendTime = forwardMessage(event, event->getSize(), 0, nullptr);
@@ -71,6 +73,8 @@ bool Incoherent::handleGetS(MemEvent * event, bool inMSHR) {
             if (!inMSHR || mshr_->getProfiled(addr)) {
                 notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
                 stat_eventState[(int)Command::GetS][state]->addData(1);
+                stat_hit[(int)Command::GetS][(int)inMSHR]->addData(1);
+                stat_hits->addData(1);
             }
             if (localPrefetch) {
                 statPrefetchRedundant->addData(1);
@@ -126,6 +130,8 @@ bool Incoherent::handleGetX(MemEvent * event, bool inMSHR) {
                     stat_eventState[(int)event->getCmd()][I]->addData(1);
                     notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::MISS);
                     mshr_->setProfiled(addr);
+                    stat_miss[(int)event->getCmd()][(int)inMSHR]->addData(1);
+                    stat_misses->addData(1);
                 }
                 recordLatencyType(event->getID(), LatType::MISS);
                 forwardMessage(event, event->getSize(), 0, nullptr);
@@ -139,6 +145,8 @@ bool Incoherent::handleGetX(MemEvent * event, bool inMSHR) {
             if (!inMSHR || !mshr_->getProfiled(addr)) {
                 notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::HIT);
                 stat_eventState[(int)event->getCmd()][I]->addData(1);
+                stat_hit[(int)event->getCmd()][(int)inMSHR]->addData(1);
+                stat_hits->addData(1);
             }
             recordPrefetchResult(line, statPrefetchHit);
             sendTime = sendResponseUp(event, line->getData(), inMSHR, line->getTimestamp());
