@@ -1183,14 +1183,14 @@ TrivialCPU cpu3 Finished after 1000 issued reads, 1000 returned (104055 clocks)
  memory.requests_received_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  memory.requests_received_GetX : Accumulator : Sum.u64 = 47; SumSQ.u64 = 47; Count.u64 = 47; Min.u64 = 1; Max.u64 = 1; 
  memory.requests_received_PutM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- memory.outstanding_requests : Accumulator : Sum.u64 = 3451; SumSQ.u64 = 3901; Count.u64 = 104055; Min.u64 = 0; Max.u64 = 3; 
+ memory.outstanding_requests : Accumulator : Sum.u64 = 3451; SumSQ.u64 = 3901; Count.u64 = 104059; Min.u64 = 0; Max.u64 = 3; 
  memory.latency_GetS : Accumulator : Sum.u64 = 1935; SumSQ.u64 = 62529; Count.u64 = 61; Min.u64 = 18; Max.u64 = 43; 
  memory.latency_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  memory.latency_GetX : Accumulator : Sum.u64 = 1516; SumSQ.u64 = 49280; Count.u64 = 47; Min.u64 = 18; Max.u64 = 33; 
  memory.latency_PutM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  memory.cycles_with_issue : Accumulator : Sum.u64 = 108; SumSQ.u64 = 108; Count.u64 = 108; Min.u64 = 1; Max.u64 = 1; 
  memory.cycles_attempted_issue_but_rejected : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- memory.total_cycles : Accumulator : Sum.u64 = 104055; SumSQ.u64 = 10827443025; Count.u64 = 1; Min.u64 = 104055; Max.u64 = 104055; 
+ memory.total_cycles : Accumulator : Sum.u64 = 104059; SumSQ.u64 = 10828275481; Count.u64 = 1; Min.u64 = 104059; Max.u64 = 104059; 
 Simulation is complete, simulated time: 104.055 us
 == Loading device model file 'DDR3_micron_32M_8B_x4_sg125.ini' ==
 == Loading system model file 'system.ini' ==
