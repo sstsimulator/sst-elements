@@ -239,8 +239,8 @@ public:
 
 		std::vector<uint8_t> aux_data_block;
 
-//		vanadis_vec_copy_in<int>( aux_data_block, 2    );
-//		vanadis_vec_copy_in<int>( aux_data_block, 4    );
+		vanadis_vec_copy_in<int>( aux_data_block, 2    );
+		vanadis_vec_copy_in<int>( aux_data_block, 4    );
 
 		vanadis_vec_copy_in<int>( aux_data_block, 3    );
 		vanadis_vec_copy_in<int>( aux_data_block, (int) phdr_address );
@@ -838,7 +838,7 @@ protected:
 					case MIPS_SPEC_OP_MASK_SLT:
 						{
 							bundle->addInstruction( new VanadisSetRegCompareInstruction( next_ins_id++, ins_addr, hw_thr, options,
-								rd, rs, rt, REG_COMPARE_LT) );
+								rd, rs, rt, true, REG_COMPARE_LT) );
 							insertDecodeFault = false;
 						}
 						break;
@@ -846,7 +846,7 @@ protected:
 					case MIPS_SPEC_OP_MASK_SLTU:
 						{
 							bundle->addInstruction( new VanadisSetRegCompareInstruction( next_ins_id++, ins_addr, hw_thr, options,
-								rd, rs, rt, REG_COMPARE_LT) );
+								rd, rs, rt, false, REG_COMPARE_LT) );
 							insertDecodeFault = false;
 						}
 						break;
@@ -956,7 +956,8 @@ protected:
 
 		case MIPS_SPEC_OP_MASK_LUI:
 			{
-				const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins ) << 16;
+				const int64_t imm_value_64 = ( vanadis_sign_extend_offset_16( next_ins ) << 16 ) & 0xFFFFFFFFFFFF0000;
+
 				output->verbose(CALL_INFO, 16, 0, "[decoder/LUI] -> reg: %" PRIu16 " / imm=%" PRId64 "\n",
 					rt, imm_value_64);
 
@@ -1136,7 +1137,7 @@ protected:
 
 				output->verbose(CALL_INFO, 16, 0, "[decoder/BLEZ]: -> r1: %" PRIu16 " offset: %" PRId64 " << 2 : %" PRId64 "\n",
                                         rs, imm_value_64, (imm_value_64 << 2) );
-				bundle->addInstruction( new VanadisBranchRegCompareInstruction( next_ins_id++, ins_addr, hw_thr, options, rs, 0,
+				bundle->addInstruction( new VanadisBranchRegCompareImmInstruction( next_ins_id++, ins_addr, hw_thr, options, rs, 0,
 					(imm_value_64 << 2), VANADIS_SINGLE_DELAY_SLOT, REG_COMPARE_LTE) );
 				insertDecodeFault = false;
 			}
@@ -1162,7 +1163,7 @@ protected:
 				output->verbose(CALL_INFO, 16, 0, "[decoder/SLTI]: -> r1: %" PRIu16 " r2: %" PRIu16 " offset: %" PRId64 "\n",
                                         rt, rs, imm_value_64 );
 				bundle->addInstruction( new VanadisSetRegCompareImmInstruction( next_ins_id++, ins_addr, hw_thr, options,
-					rt, rs, imm_value_64, REG_COMPARE_LT) );
+					rt, rs, imm_value_64, true, REG_COMPARE_LT) );
 				insertDecodeFault = false;
 			}
 			break;
@@ -1175,7 +1176,7 @@ protected:
 				output->verbose(CALL_INFO, 16, 0, "[decoder/SLTIU]: -> r1: %" PRIu16 " r2: %" PRIu16 " offset: %" PRId64 "\n",
                                         rt, rs, imm_value_64 );
 				bundle->addInstruction( new VanadisSetRegCompareImmInstruction( next_ins_id++, ins_addr, hw_thr, options,
-					rt, rs, imm_value_64, REG_COMPARE_LT) );
+					rt, rs, imm_value_64, false, REG_COMPARE_LT) );
 				insertDecodeFault = false;
 			}
 			break;
