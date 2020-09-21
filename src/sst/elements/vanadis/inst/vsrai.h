@@ -25,6 +25,10 @@ public:
 		imm_value = immediate;
 	}
 
+	virtual VanadisShiftRightArithmeticImmInstruction* clone() {
+		return new VanadisShiftRightArithmeticImmInstruction(*this);
+	}
+
 	virtual VanadisFunctionalUnitType getInstFuncType() const {
 		return INST_INT_ARITH;
 	}

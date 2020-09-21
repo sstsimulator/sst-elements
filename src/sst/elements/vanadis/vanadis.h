@@ -94,24 +94,28 @@ public:
 	{ "reorder_slots", 	"Number of slots in the reorder buffer" },
 	{ "core_id", 		"Identifier for this core" },
 	{ "hardware_threads", 	"Number of hardware threads in this core" },
-        { "physical_integer_registers", "Number of physical integer registers per hardware thread" },
-        { "physical_fp_registers", "Number of physical floating point registers per hardware thread" },
+    { "physical_integer_registers", "Number of physical integer registers per hardware thread" },
+	{ "physical_fp_registers", "Number of physical floating point registers per hardware thread" },
 	{ "integer_arith_units", "Number of integer arithemetic units" },
-        { "integer_arith_cycles", "Cycles per instruction for integer arithmetic" },
-        { "integer_div_units", "Number of integer division units" },
-        { "integer_div_cycles", "Cycles per instruction for integer division" },
-        { "fp_arith_units",     "Number of floating point arithmetic units" },
-        { "fp_arith_cycles",    "Cycles per floating point arithmetic" },
+    { "integer_arith_cycles", "Cycles per instruction for integer arithmetic" },
+    { "integer_div_units", "Number of integer division units" },
+    { "integer_div_cycles", "Cycles per instruction for integer division" },
+    { "fp_arith_units",     "Number of floating point arithmetic units" },
+    { "fp_arith_cycles",    "Cycles per floating point arithmetic" },
 	{ "fp_div_units",       "Number of floating point division units" },
-        { "fp_div_cycles",      "Cycles per floating point division" },
-        { "load_units",         "Number of memory load units" },
-        { "store_units",        "Number of memory store units" },
+    { "fp_div_cycles",      "Cycles per floating point division" },
+    { "load_units",         "Number of memory load units" },
+    { "store_units",        "Number of memory store units" },
 	{ "max_loads_per_cycle",    "Maximum number of loads that can issue to the cache per cycle" },
 	{ "max_stores_per_cycle",   "Maximum number of stores that can issue to the cache per cycle" },
-        { "branch_units",       "Number of branch units" },
-        { "special_units",      "Number of special instruction units" },
+    { "branch_units",       "Number of branch units" },
+    { "special_units",      "Number of special instruction units" },
+    { "issues_per_cycle",   "Number of instruction issues per cycle" },
+    { "fetches_per_cycle",  "Number of instruction fetches per cycle" },
+    { "retires_per_cycle",   "Number of instruction retires per cycle" },
+    { "decodes_per_cycle",   "Number of instruction decodes per cycle" },
 	{ "print_int_reg",      "Print integer registers true/false, auto set to true if verbose > 16" },
-	{ "print_fp_reg",	"Print floating-point registers true/false, auto set to true if verbose > 16" }
+	{ "print_fp_reg",		"Print floating-point registers true/false, auto set to true if verbose > 16" }
     )
 
     SST_ELI_DOCUMENT_STATISTICS(
@@ -159,7 +163,7 @@ private:
 
     int assignRegistersToInstruction(
 	const uint16_t int_reg_count,
-        const uint16_t fp_reg_count,
+    const uint16_t fp_reg_count,
 	VanadisInstruction* ins,
 	VanadisRegisterStack* int_regs,
 	VanadisRegisterStack* fp_regs,
@@ -171,15 +175,24 @@ private:
         VanadisRegisterStack* fp_regs,
         VanadisISATable* isa_table,
         std::set<uint16_t>& isa_int_regs_written_ahead,
-        std::set<uint16_t>& isa_fp_regs_written_ahead);
+        std::set<uint16_t>& isa_fp_regs_written_ahead );
 
     int recoverRetiredRegisters( 
-	VanadisInstruction* ins,
+		VanadisInstruction* ins,
         VanadisRegisterStack* int_regs,
         VanadisRegisterStack* fp_regs,
-	VanadisISATable* issue_isa_table,
-        VanadisISATable* retire_isa_table
-	);
+		VanadisISATable* issue_isa_table,
+        VanadisISATable* retire_isa_table );
+
+    int performFetch( const uint64_t cycle );
+    int performDecode( const uint64_t cycle );   
+    int performIssue( const uint64_t cycle );
+	int performExecute( const uint64_t cycle );
+	int performRetire( VanadisCircularQueue<VanadisInstruction*>* rob,
+		const uint64_t cycle );
+	int allocateFunctionalUnit( VanadisInstruction* ins );
+	bool mapInstructiontoFunctionalUnit( VanadisInstruction* ins, 
+		std::vector< VanadisFunctionalUnit* >& functional_units );
 
     SST::Output* output;
 
@@ -187,6 +200,11 @@ private:
     uint64_t current_cycle;
     uint64_t max_cycle;
     uint32_t hw_threads;
+    
+    uint32_t fetches_per_cycle;
+    uint32_t decodes_per_cycle;
+    uint32_t issues_per_cycle;
+    uint32_t retires_per_cycle;
     
     std::vector< VanadisCircularQueue<VanadisInstruction*>* > rob;
     std::vector< VanadisDecoder* > thread_decoders;

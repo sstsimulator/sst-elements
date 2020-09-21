@@ -2,6 +2,7 @@
 #ifndef _H_VANADIS_CIRC_Q
 #define _H_VANADIS_CIRC_Q
 
+#include <deque>
 #include <cassert>
 
 namespace SST {
@@ -10,28 +11,22 @@ namespace Vanadis {
 template<class T>
 class VanadisCircularQueue {
 public:
-	VanadisCircularQueue(
-		const size_t size ) :
+	VanadisCircularQueue( const size_t size ) :
 		max_capacity(size) {
-
-		front = 0;
-		back = 0;
-
-		count = 0;
-
-		data = new T[size];
 	}
 
 	~VanadisCircularQueue() {
-		delete[] data;
+
 	}
 
 	bool empty() {
-		return (front == back);
+		return 0 == data.size();
 	}
 
 	bool full() {
-		return ( safe_inc(back) == front );
+//		printf("full check - back: %" PRIu32 " front: %" PRIu32 "\n",
+//			(uint32_t) back, (uint32_t) front);
+		return max_capacity == data.size();
 	}
 
 	void push(T item) {
@@ -40,30 +35,25 @@ public:
 			assert(0);
 		}
 
-		data[back] = item;
-		back = safe_inc(back);
-		count++;
+		data.push_back(item);
 	}
 
 	T peek() {
-		return data[front];
+		return data.front();
 	}
 
 	T peekAt( const size_t index ) {
-		return data[ (front+index) % max_capacity ];
+		return data.at( index );
 	}
 
 	T pop() {
-		T temp = data[front];
-		data[front] = nullptr;
-
-		front = safe_inc(front);
-		count--;
-		return temp;
+		T tmp = data.front();
+		data.pop_front();
+		return tmp;
 	}
 
 	size_t size() const {
-		return count;
+		return data.size();
 	}
 
 	size_t capacity() const {
@@ -71,25 +61,20 @@ public:
 	}
 
 	void clear() {
-		for( size_t i = 0; i < max_capacity; ++i ) {
-			data[i] = nullptr;
-		}
+		data.clear();
+	}
 
-		front = 0;
-		back  = 0;
-		count = 0;
+	void removeAt( const size_t index ) {
+		auto remove_itr = data.begin();
+
+		for( size_t i = 0; i < index; ++i, remove_itr++ ) {}
+
+		data.erase(remove_itr);
 	}
 
 private:
-	size_t safe_inc(size_t v) {
-		return (v+1) % max_capacity;
-	}
-
-	size_t front;
-	size_t back;
-	size_t count;
 	const size_t max_capacity;
-	T* data;
+	std::deque<T> data;
 
 };
 

@@ -26,7 +26,7 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 	core_id   = params.find<uint32_t>("core_id", 0);
 
 	char* outputPrefix = (char*) malloc( sizeof(char) * 256 );
-	sprintf(outputPrefix, "[(@t) Core: %6" PRIu32 "]: ", core_id);
+	sprintf(outputPrefix, "[Core: %3" PRIu32 "]: ", core_id);
 
 	output = new SST::Output(outputPrefix, verbosity, 0, Output::STDOUT);
 	free(outputPrefix);
@@ -324,7 +324,7 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 	size_t lsq_store_size    = params.find<size_t>("lsq_store_entries", 8);
 	size_t lsq_store_pending = params.find<size_t>("lsq_issued_stores_inflight", 8);
 	size_t lsq_load_size     = params.find<size_t>("lsq_load_entries", 8);
-	size_t lsq_load_pending  = params.find<size_t>("lsq_issused_loads_inflight", 8);
+	size_t lsq_load_pending  = params.find<size_t>("lsq_issued_loads_inflight", 8);
 	size_t lsq_max_loads_per_cycle = params.find<size_t>("max_loads_per_cycle", 2);
 	size_t lsq_max_stores_per_cycle = params.find<size_t>("max_stores_per_cycle", 2);
 
@@ -341,6 +341,20 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 	lsq->setMaxAddressMask( max_addr_mask );
 
 	handlingSysCall = false;
+	
+	fetches_per_cycle = params.find<uint32_t>("fetches_per_cycle", 2);
+    decodes_per_cycle = params.find<uint32_t>("decodes_per_cycle", 2);
+    issues_per_cycle  = params.find<uint32_t>("issues_per_cycle",  2);
+    retires_per_cycle = params.find<uint32_t>("retires_per_cycle", 2);
+
+	output->verbose(CALL_INFO, 8, 0, "Configuring hardware parameters:\n");
+	output->verbose(CALL_INFO, 8, 0, "-> Fetches/cycle:                %" PRIu32 "\n", fetches_per_cycle);
+	output->verbose(CALL_INFO, 8, 0, "-> Decodes/cycle:                %" PRIu32 "\n", decodes_per_cycle);
+	output->verbose(CALL_INFO, 8, 0, "-> Retires/cycle:                %" PRIu32 "\n", retires_per_cycle);
+        output->verbose(CALL_INFO, 8, 0, "-> LSQ Store Entries:            %" PRIu32 "\n", (uint32_t) lsq_store_size );
+        output->verbose(CALL_INFO, 8, 0, "-> LSQ Stores In-flight:         %" PRIu32 "\n", (uint32_t) lsq_store_pending );
+        output->verbose(CALL_INFO, 8, 0, "-> LSQ Load Entries:             %" PRIu32 "\n", (uint32_t) lsq_load_size );
+        output->verbose(CALL_INFO, 8, 0, "-> LSQ Loads In-flight:          %" PRIu32 "\n", (uint32_t) lsq_load_pending );
 
 	registerAsPrimaryComponent();
     	primaryComponentDoNotEndSim();
@@ -349,6 +363,439 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 VanadisComponent::~VanadisComponent() {
 	delete[] instPrintBuffer;
 	delete lsq;
+}
+
+int VanadisComponent::performFetch( const uint64_t cycle ) {
+	// This is handled by the decoder step, so just keep it empty.
+	return 0;
+}
+
+int VanadisComponent::performDecode( const uint64_t cycle ) {
+	
+	for( uint32_t i = 0 ; i < hw_threads; ++i ) {
+		// If thread is not masked then decode from it
+		if( ! halted_masks[i] ) {
+			thread_decoders[i]->tick(output, (uint64_t) cycle);
+		}
+
+		output->verbose(CALL_INFO, 16, 0, "---> Decode [hw: %5" PRIu32 "] queue-size: %" PRIu32 "\n", i,
+			(uint32_t) thread_decoders[i]->getDecodedQueue()->size());
+	}
+	
+	return 0;
+}
+
+int VanadisComponent::performIssue( const uint64_t cycle ) {
+	// clear the temporary register set that we keep for pending instructions
+	tmp_raw_int.clear();
+	tmp_raw_fp.clear();
+	
+	char* inst_buffer = new char[1024];
+	
+	for( uint32_t i = 0 ; i < hw_threads; ++i ) {
+		if( ! halted_masks[i] ) {
+			output->verbose(CALL_INFO, 8, 0, "thread %" PRIu32 " issuing / %" PRIu32 " pending issue\n",
+				i, (uint32_t) thread_decoders[i]->getDecodedQueue()->size());
+		
+			////////////////////////////////////////////////////////////////////////////
+			// See if we can find ROB slots for instructions in the decode
+			VanadisInstruction* ins = nullptr;
+			uint32_t ins_index = UINT32_MAX;
+			
+			for( uint32_t j = 0; j < thread_decoders[i]->getDecodedQueue()->size(); ++j ) {
+				if( rob[i]->full() ) {
+					break;
+				}
+			
+				ins = thread_decoders[i]->getDecodedQueue()->peekAt(j);
+			
+				if( ! ins->hasROBSlotIssued() ) {
+					rob[i]->push( ins );
+					ins->markROBSlotIssued();
+				}
+			}
+			
+			////////////////////////////////////////////////////////////////////////////
+			// Find an instruction which has ROB but isn't issued yet
+			ins = nullptr;
+			
+			// Find the first instruction which has an ROB allocated for us to 
+			// allocate and issue
+			for( uint32_t j = 0; j < thread_decoders[i]->getDecodedQueue()->size(); ++j ) {
+				ins = thread_decoders[i]->getDecodedQueue()->peekAt(j);
+				ins_index = j;
+				
+				if( ins->hasROBSlotIssued() ) {
+					break;
+				} else {
+					ins = nullptr;
+				}
+			}
+			
+			// if we are a load and there is a store in front of us then it must not
+			// just have an ROB but it must also have issued to the LSQ or else we 
+			// could get a memory order violation
+			if( ins != nullptr ) {
+				if( ins->getInstFuncType() == INST_LOAD ) {
+					for( uint32_t j = 0; i < ins_index; ++j ) {
+						if( thread_decoders[i]->getDecodedQueue()->peekAt(j)->getInstFuncType() == INST_STORE ) {
+							if( ! thread_decoders[i]->getDecodedQueue()->peekAt(j)->completedIssue() ) {
+								ins = nullptr;
+								ins_index = UINT32_MAX;
+								break;
+							}
+						}
+					}
+				}
+			}
+		
+			// if the instruction isn't null we can try to allocate it
+			if( ins != nullptr ) {
+				ins->printToBuffer(instPrintBuffer, 1024);
+				output->verbose(CALL_INFO, 8, 0, "--> Attempting issue for: 0x%llx / %s\n",
+					ins->getInstructionAddress(), instPrintBuffer );
+				
+				const int resource_check = checkInstructionResources( ins, int_register_stacks[i], 
+					fp_register_stacks[i], issue_isa_tables[i], tmp_raw_int, tmp_raw_fp);
+					
+				output->verbose(CALL_INFO, 8, 0, "----> Check if registers are usable? result: %d (%s)\n",
+					resource_check, (0 == resource_check) ? "success" : "cannot issue");
+					
+				if( 0 == resource_check ) {
+					int allocate_fu = allocateFunctionalUnit( ins );
+					output->verbose(CALL_INFO, 8, 0, "----> allocated functional unit: %s\n",
+						(0 == allocate_fu) ? "yes" : "no");
+					
+					if( 0 == allocate_fu ) {
+						const int status = assignRegistersToInstruction(
+							thread_decoders[i]->countISAIntReg(),
+							thread_decoders[i]->countISAFPReg(),
+							ins,
+							int_register_stacks[i],
+							fp_register_stacks[i],
+							issue_isa_tables[i]);
+
+						ins->printToBuffer(instPrintBuffer, 1024);
+						output->verbose(CALL_INFO, 8, 0, "----> Issued for: %s / 0x%llx / status: %d\n", instPrintBuffer,
+							ins->getInstructionAddress(), status);
+
+					//	thread_decoders[i]->getDecodedQueue()->pop();
+					// REMOVE FROM THE DECODER
+						if( ins_index != UINT32_MAX ) {
+							thread_decoders[i]->getDecodedQueue()->removeAt( ins_index );
+						}
+						ins->markIssued();
+					}
+				}
+			} else {
+				output->verbose(CALL_INFO, 8, 0, "--> no instruction has ROB and can be allocated.\n");
+			}
+			
+			issue_isa_tables[i]->print(output, register_files[i], print_int_reg, print_fp_reg);
+		} else {
+			output->verbose(CALL_INFO, 8, 0, "thread %" PRIu32 " is halted, did not process for issue this cycle.\n", i);
+		}
+	}
+	
+	delete[] inst_buffer;
+	
+	return 0;
+}
+
+int VanadisComponent::performExecute( const uint64_t cycle ) {
+	for( VanadisFunctionalUnit* next_fu : fu_int_arith ) {
+		next_fu->tick(cycle, output, register_files);
+	}
+
+	for( VanadisFunctionalUnit* next_fu : fu_int_div ) {
+		next_fu->tick(cycle, output, register_files);
+	}
+
+	for( VanadisFunctionalUnit* next_fu : fu_fp_arith ) {
+		next_fu->tick(cycle, output, register_files);
+	}
+
+	for( VanadisFunctionalUnit* next_fu : fu_fp_div ) {
+		next_fu->tick(cycle, output, register_files);
+	}
+
+	for( VanadisFunctionalUnit* next_fu : fu_branch ) {
+		next_fu->tick(cycle, output, register_files);
+	}
+	
+	// Tick the load/store queue
+	lsq->tick( (uint64_t) cycle, output );
+	
+	return 0;
+}
+
+int VanadisComponent::performRetire( VanadisCircularQueue<VanadisInstruction*>* rob, const uint64_t cycle ) {
+	output->verbose(CALL_INFO, 8, 0, "-- ROB: %" PRIu32 " out of %" PRIu32 " entries:\n",
+		(uint32_t) rob->size(), (uint32_t) rob->capacity() );
+	for( int j = std::min(3, (int) rob->size() - 1); j >= 0; --j ) {
+		output->verbose(CALL_INFO, 8, 0, "----> ROB[%2d]: ins: 0x%016llx / %10s / error: %3s / issued: %3s / spec: %3s / rob-front: %3s / exe: %3s\n",
+			j, rob->peekAt(j)->getInstructionAddress(), rob->peekAt(j)->getInstCode(),
+			rob->peekAt(j)->trapsError() ? "yes" : "no", 
+			rob->peekAt(j)->completedIssue() ? "yes" : "no",
+			rob->peekAt(j)->isSpeculated() ? "yes" : "no", 
+			rob->peekAt(j)->checkFrontOfROB() ? "yes" : "no",
+			rob->peekAt(j)->completedExecution() ? "yes" : "no" );
+	}
+	
+	// if empty, nothing to do here
+	if( rob->empty() ) {
+		return 0;
+	}
+	
+	VanadisInstruction* rob_front = rob->peek();
+	bool perform_pipeline_clear = false;
+	
+	// Instruction is flagging error, print out and halt
+	if( rob_front->trapsError() ) {
+		output->fatal( CALL_INFO, -1, "Instruction %" PRIu64 " at 0x%llx flags an error (instruction-type=%s)\n",
+			rob_front->getID(), rob_front->getInstructionAddress(), rob_front->getInstCode() );
+	}
+	
+	if( rob_front->completedExecution() ) {
+		bool perform_cleanup         = true;
+		bool perform_delay_cleanup   = false;
+		bool perform_pipelne_clear   = false;
+		uint64_t pipeline_reset_addr = 0;
+	
+		if( rob_front->isSpeculated() ) {
+			output->verbose(CALL_INFO, 8, 0, "--> instruction is speculated\n");
+			VanadisSpeculatedInstruction* spec_ins = dynamic_cast<VanadisSpeculatedInstruction*>( rob_front );
+
+			if( nullptr == spec_ins ) {
+				output->fatal(CALL_INFO, -1, "Error - instruction is speculated, but not able to perform a cast to a speculated instruction.\n");
+			}
+			
+			switch( spec_ins->getDelaySlotType() ) {
+			case VANADIS_SINGLE_DELAY_SLOT:
+			case VANADIS_CONDITIONAL_SINGLE_DELAY_SLOT:
+				{
+					// is there an instruction behind us in the ROB queue?
+					if( rob->size() >= 2 ) {
+						VanadisInstruction* delay_ins = rob->peekAt(1);
+						
+						if( delay_ins->completedExecution() ) {
+							if( delay_ins->trapsError() ) {
+								output->fatal(CALL_INFO, -1, "Instruction (delay-slot) %" PRIu64 " at 0x%llx flags an error (instruction-type: %s)\n",
+									delay_ins->getID(), delay_ins->getInstructionAddress(), delay_ins->getInstCode() );
+							}
+							
+							perform_delay_cleanup = true;
+						} else {
+							output->verbose(CALL_INFO, 8, 0, "----> delay slot has not completed execution, stall to wait.\n");
+							if( ! delay_ins->checkFrontOfROB() ) {
+								delay_ins->markFrontOfROB();
+							}
+							perform_cleanup = false;
+						}
+					} else {
+						// The instruction is not in the ROB yet, so we must wait
+						perform_cleanup = false;
+						perform_delay_cleanup = false;
+					}
+				}
+				break;
+			case VANADIS_NO_DELAY_SLOT:
+				break;
+			}
+			
+			// If we are performing a clean up (means we executed and the delays are
+			// processed OK, then we are good to calculate branch-to locations.
+			if( perform_cleanup ) {
+				pipeline_reset_addr   = spec_ins->calculateAddress( output, register_files[rob_front->getHWThread()],
+					spec_ins->getInstructionAddress() );
+				// we have to clear the pipeline if we predict a branch to an address but we
+				// don't end up taking when we actually calculate the branch-to location
+				perform_pipelne_clear = spec_ins->getSpeculatedAddress() != pipeline_reset_addr;
+			
+				output->verbose(CALL_INFO, 8, 0, "----> speculated addr: 0x%llx / result addr: 0x%llx / pipeline-clear: %s\n",
+					spec_ins->getSpeculatedAddress(), pipeline_reset_addr,
+					perform_pipelne_clear ? "yes" : "no" );
+				
+				if( perform_pipeline_clear ) {
+					output->verbose(CALL_INFO, 8, 0, "----> Updating branch predictor with new information (new addr: 0x%llx)\n",
+						pipeline_reset_addr);
+					thread_decoders[rob_front->getHWThread()]->getBranchPredictor()->push( 
+						spec_ins->getInstructionAddress(), pipeline_reset_addr );
+				}
+			}
+		}
+		
+		// is the instruction completed (including anything like delay slots) and can
+		// be cleared from the ROB
+		if( perform_cleanup ) {
+			rob->pop();
+		
+			if( perform_delay_cleanup ) {
+				VanadisInstruction* delay_ins = rob->pop();
+			
+				output->verbose(CALL_INFO, 8, 0, "----> Retire delay: %" PRIu64 " (0x%llx / %s)\n",
+					delay_ins->getID(), delay_ins->getInstructionAddress(), delay_ins->getInstCode() );
+				
+				recoverRetiredRegisters( delay_ins, int_register_stacks[delay_ins->getHWThread()],
+					fp_register_stacks[delay_ins->getHWThread()],
+					issue_isa_tables[delay_ins->getHWThread()],
+					retire_isa_tables[delay_ins->getHWThread()] );
+				
+				delete delay_ins;
+			}
+
+			output->verbose(CALL_INFO, 8, 0, "----> Retire: %" PRIu64 " (0x%0llx / %s)\n",
+				rob_front->getID(), rob_front->getInstructionAddress(), rob_front->getInstCode() );
+
+			recoverRetiredRegisters( rob_front, int_register_stacks[rob_front->getHWThread()],
+				fp_register_stacks[rob_front->getHWThread()],
+				issue_isa_tables[rob_front->getHWThread()],
+				retire_isa_tables[rob_front->getHWThread()] );
+
+			retire_isa_tables[rob_front->getHWThread()]->print(output,
+				register_files[rob_front->getHWThread()], print_int_reg, print_fp_reg);
+
+			if( perform_pipelne_clear ) {
+				output->verbose(CALL_INFO, 8, 0, "----> perform a pipeline clear thread %" PRIu32 ", reset to address: 0x%llx\n",
+					rob_front->getHWThread(), pipeline_reset_addr);
+				handleMisspeculate( rob_front->getHWThread(), pipeline_reset_addr );
+			}
+			
+			delete rob_front;
+		}
+	} else {
+		if( INST_SYSCALL == rob_front->getInstFuncType() ) {
+			// have we been marked front on ROB yet? if yes, then we have issued our syscall
+			if( ! rob_front->checkFrontOfROB() ) {
+				VanadisSysCallInstruction* the_syscall_ins = dynamic_cast<VanadisSysCallInstruction*>( rob_front );
+
+				if( nullptr == the_syscall_ins ) {
+					output->fatal(CALL_INFO, -1, "Error: SYSCALL cannot be converted to an actual sys-call instruction.\n");
+				}
+
+				output->verbose(CALL_INFO, 8, 0, "[syscall] -> calling OS handler in decode engine (ins-addr: 0x%0llx)...\n",
+					the_syscall_ins->getInstructionAddress());
+				thread_decoders[ rob_front->getHWThread() ]->getOSHandler()->handleSysCall( the_syscall_ins );
+			}
+		}
+	
+		if( ! rob_front->checkFrontOfROB() ) {
+			rob_front->markFrontOfROB();
+		}
+	}
+	
+	return 0;
+}
+
+bool VanadisComponent::mapInstructiontoFunctionalUnit( VanadisInstruction* ins, 
+	std::vector< VanadisFunctionalUnit* >& functional_units ) {
+	
+	bool allocated = false;
+	
+	for( VanadisFunctionalUnit* next_fu : functional_units ) {
+		if( next_fu->isInstructionSlotFree() ) {
+			next_fu->setSlotInstruction( ins );
+			allocated = true;
+			break;
+		}
+	}
+
+	return allocated;
+}
+
+int VanadisComponent::allocateFunctionalUnit( VanadisInstruction* ins ) {
+	bool allocated_fu = false;
+
+	switch( ins->getInstFuncType() ) {
+		case INST_INT_ARITH:
+			allocated_fu = mapInstructiontoFunctionalUnit( ins, fu_int_arith );
+			break;
+
+		case INST_FP_ARITH:
+			allocated_fu = mapInstructiontoFunctionalUnit( ins, fu_fp_arith );
+			break;
+			
+		case INST_LOAD:
+			if( ! lsq->loadFull() ) {
+				lsq->push( (VanadisLoadInstruction*) ins );
+				allocated_fu = true;
+			}
+			break;
+			
+		case INST_STORE:
+			if( ! lsq->storeFull() ) {
+				lsq->push( (VanadisStoreInstruction*) ins );
+				allocated_fu = true;
+			}
+			break;
+			
+		case INST_INT_DIV:
+			allocated_fu = mapInstructiontoFunctionalUnit( ins, fu_int_div );
+			break;
+			
+		case INST_FP_DIV:
+			allocated_fu = mapInstructiontoFunctionalUnit( ins, fu_fp_div );
+			break;
+			
+		case INST_BRANCH:
+			allocated_fu = mapInstructiontoFunctionalUnit( ins, fu_branch );
+			break;
+
+		case INST_FENCE:
+			{
+				VanadisFenceInstruction* fence_ins = dynamic_cast<VanadisFenceInstruction*>( ins );
+
+				if( nullptr == fence_ins ) {
+					output->fatal(CALL_INFO, -1, "Error: instruction (0x%0llu) is a fence but not convertable to a fence instruction.\n",
+						ins->getInstructionAddress());
+
+
+					allocated_fu = true;
+
+					output->verbose(CALL_INFO, 16, 0, "[fence]: processing ins: 0x%0llx functional unit allocation for fencing (lsq-load size: %" PRIu32 " / lsq-store size: %" PRIu32 ")\n",
+								ins->getInstructionAddress(), (uint32_t) lsq->loadSize(), (uint32_t) lsq->storeSize());
+
+					if( fence_ins->createsStoreFence() ) {
+						if( lsq->storeSize() == 0 ) {
+							allocated_fu = true;
+						} else {
+							allocated_fu = false;
+						}
+					}
+					
+					if( fence_ins->createsLoadFence() ) {
+						if( lsq->loadSize() == 0 ) {
+							allocated_fu = allocated_fu & true;
+						} else {
+							allocated_fu = false;
+						}
+					}
+
+					output->verbose(CALL_INFO, 16, 0, "[fence]: can proceed? %s\n", allocated_fu ? "yes" : "no");
+
+					if( allocated_fu ) {
+						ins->markExecuted();
+					}
+				}
+			}
+			break;
+
+		case INST_NOOP:
+		case INST_FAULT:
+			ins->markExecuted();
+		case INST_SYSCALL:
+			allocated_fu = true;
+			break;
+		default:
+			output->fatal(CALL_INFO, -1, "Error - no processing for instruction class (%s)\n", ins->getInstCode() );
+		break;
+	}
+	
+	if( allocated_fu ) {
+		return 0;
+	} else {
+		return 1;
+	}
 }
 
 bool VanadisComponent::tick(SST::Cycle_t cycle) {
@@ -385,571 +832,38 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 		}
 	}
 
-	// Fetch
-	output->verbose(CALL_INFO, 8, 0, "-- Fetch Stage --------------------------------------------------------------\n");
-
-	// Decode
-	output->verbose(CALL_INFO, 8, 0, "-- Decode Stage -------------------------------------------------------------\n");
-	for( uint32_t i = 0 ; i < hw_threads; ++i ) {
-		// If thread is not masked then decode from it
-		if( ! halted_masks[i] ) {
-			thread_decoders[i]->tick(output, (uint64_t) cycle);
+	// Fetch  //////////////////////////////////////////////////////////////////////////
+	output->verbose(CALL_INFO, 8, 0, "=> Fetch Stage <==========================================================\n");
+	for( uint32_t i = 0; i < fetches_per_cycle; ++i ) {
+		if( performFetch( cycle ) != 0 ) {
+			break;
 		}
-
-		output->verbose(CALL_INFO, 16, 0, "---> Decode [hw: %5" PRIu32 "] queue-size: %" PRIu32 "\n", i,
-			(uint32_t) thread_decoders[i]->getDecodedQueue()->size());
 	}
 
-	// Issue
-	output->verbose(CALL_INFO, 8, 0, "-- Issue Stage --------------------------------------------------------------\n");
-	for( uint32_t i = 0 ; i < hw_threads; ++i ) {
-		tmp_raw_int.clear();
-		tmp_raw_fp.clear();
-
-		// If thread is not masked then pull a pending instruction and issue
-		if( ! halted_masks[i] ) {
-			output->verbose(CALL_INFO, 8, 0, "--> Performing issue for thread %" PRIu32 " (decoded pending queue depth: %" PRIu32 ")...\n",
-				i, (uint32_t) thread_decoders[i]->getDecodedQueue()->size());
-
-			for( size_t j = 0; j < thread_decoders[i]->getDecodedQueue()->size(); ++j ) {
-				if( rob[i]->full() ) {
-					break;
-				} else {
-					VanadisInstruction* ins = thread_decoders[i]->getDecodedQueue()->peekAt(j);
-
-					if( nullptr == ins ) {
-						output->fatal(CALL_INFO, -1, "Error: peekAt(%" PRIu32 ") produced a null instruction.\n", (uint32_t) j);
-					}
-
-					output->verbose(CALL_INFO, 16, 0, "---> ROB check for ins: %" PRIu64 " / 0x%0llx / %s\n",
-						ins->getID(),
-						ins->getInstructionAddress(),
-						ins->getInstCode());
-
-					if( ! ins->hasROBSlotIssued() ) {
-						output->verbose(CALL_INFO, 16, 0, "---> Inst: %" PRIu64 " (queue-slot: %" PRIu32 "), allocating to ROB (ROB-size: %" PRIu32 " / %" PRIu32 ")\n",
-							ins->getID(), (uint32_t) j,
-							(uint32_t) rob[i]->size(), (uint32_t) rob[i]->capacity() );
-						ins->markROBSlotIssued();
-						rob[i]->push( ins );
-						output->verbose(CALL_INFO, 16, 0, "---> Allocation to ROB completed for instruction\n");
-					} else {
-						output->verbose(CALL_INFO, 16, 0, "---> Inst: %" PRIu64 " (queue-slot: %" PRIu32 "), already allocated in the ROB.\n",
-							ins->getID(), (uint32_t) j);
-					}
-				}
-			}
-
-			output->verbose(CALL_INFO, 8, 0, "--> Allocation of entries into ROB is completed for this cycle.\n");
-			output->verbose(CALL_INFO, 8, 0, "--> Being functional unit allocation...\n");
-
-			if( ! thread_decoders[i]->getDecodedQueue()->empty() ) {
-				VanadisInstruction* ins = thread_decoders[i]->getDecodedQueue()->peek();
-
-				ins->printToBuffer(instPrintBuffer, 1024);
-				output->verbose(CALL_INFO, 8, 0, "--> Attempting issue for: %s / %p\n", instPrintBuffer,
-						(void*) ins->getInstructionAddress());
-
-				if( ins->hasROBSlotIssued() ) {
-					output->verbose(CALL_INFO, 16, 0, "---> Current instrn has an ROB slot allocated, processing for issue can continue...\n");
-				} else {
-					output->verbose(CALL_INFO, 16, 0, "---> Current instrn does not have an ROB slot allocated, cannot issue this, stall this cycle.\n");
-					continue;
-				}
-
-				const int resource_check = checkInstructionResources( ins,
-					int_register_stacks[i], fp_register_stacks[i],
-					issue_isa_tables[i], tmp_raw_int, tmp_raw_fp);
-
-				output->verbose(CALL_INFO, 8, 0, "Instruction resource can be issuable: %s (issue-query result: %d)\n",
-					(resource_check == 0) ? "yes" : "no", resource_check);
-
-				bool can_be_issued = (resource_check == 0) && (! rob[i]->full());
-				bool allocated_fu = false;
-
-				// Register dependencies are met and ROB has an entry
-				if( can_be_issued ) {
-
-					const VanadisFunctionalUnitType ins_type = ins->getInstFuncType();
-
-					switch( ins_type ) {
-					case INST_INT_ARITH:
-						for( VanadisFunctionalUnit* next_fu : fu_int_arith ) {
-							if(next_fu->isInstructionSlotFree()) {
-								next_fu->setSlotInstruction( ins );
-								allocated_fu = true;
-								break;
-							}
-						}
-
-						break;
-					case INST_FP_ARITH:
-						for( VanadisFunctionalUnit* next_fu : fu_fp_div ) {
-							if(next_fu->isInstructionSlotFree()) {
-								next_fu->setSlotInstruction( ins );
-								allocated_fu = true;
-								break;
-							}
-						}
-
-						break;
-					case INST_LOAD:
-						if( ! lsq->loadFull() ) {
-							lsq->push( (VanadisLoadInstruction*) ins );
-							allocated_fu = true;
-						}
-						break;
-					case INST_STORE:
-						if( ! lsq->storeFull() ) {
-							lsq->push( (VanadisStoreInstruction*) ins );
-							allocated_fu = true;
-						}
-						break;
-					case INST_INT_DIV:
-						for( VanadisFunctionalUnit* next_fu : fu_int_div ) {
-							if(next_fu->isInstructionSlotFree()) {
-								next_fu->setSlotInstruction( ins );
-								allocated_fu = true;
-								break;
-							}
-						}
-
-						break;
-					case INST_FP_DIV:
-						for( VanadisFunctionalUnit* next_fu : fu_fp_div ) {
-							if(next_fu->isInstructionSlotFree()) {
-								next_fu->setSlotInstruction( ins );
-								allocated_fu = true;
-								break;
-							}
-						}
-
-						break;
-					case INST_BRANCH:
-						for( VanadisFunctionalUnit* next_fu : fu_branch ) {
-                                                        if(next_fu->isInstructionSlotFree() ) {
-                                                                next_fu->setSlotInstruction( ins );
-                                                                allocated_fu = true;
-                                                                break;
-                                                        }
-                                                }
-						break;
-
-					case INST_FENCE:
-						{
-							VanadisFenceInstruction* fence_ins = dynamic_cast<VanadisFenceInstruction*>( ins );
-
-							if( nullptr == fence_ins ) {
-								output->fatal(CALL_INFO, -1, "Error: instruction (0x%0llu) is a fence but not convertable to a fence instruction.\n",
-									ins->getInstructionAddress());
-							}
-
-							allocated_fu = true;
-
-							output->verbose(CALL_INFO, 16, 0, "[fence]: processing ins: 0x%0llx functional unit allocation for fencing (lsq-load size: %" PRIu32 " / lsq-store size: %" PRIu32 ")\n",
-								ins->getInstructionAddress(), (uint32_t) lsq->loadSize(), (uint32_t) lsq->storeSize());
-
-							if( fence_ins->createsStoreFence() ) {
-								if( lsq->storeSize() == 0 ) {
-									allocated_fu = true;
-								} else {
-									allocated_fu = false;
-								}
-							} else {
-								allocated_fu = true;
-							}
-
-							if( fence_ins->createsLoadFence() ) {
-								if( lsq->loadSize() == 0 ) {
-									allocated_fu = allocated_fu & true;
-								} else {
-									allocated_fu = false;
-								}
-							}
-
-							output->verbose(CALL_INFO, 16, 0, "[fence]: can proceed? %s\n", allocated_fu ? "yes" : "no");
-
-							if( allocated_fu ) {
-								ins->markExecuted();
-							}
-						}
-
-						break;
-
-					// Mark as executed and intentionally FALL THRU so we also (pretend) we
-					// have allocated an FU.
-					case INST_NOOP:
-					case INST_FAULT:
-						ins->markExecuted();
-					case INST_SYSCALL:
-						allocated_fu = true;
-						break;
-					default:
-						// ERROR UNALLOCATED
-						output->fatal(CALL_INFO, -1, "Error - no processing for instruction class (%s)\n",
-							ins->getInstCode() );
-						break;
-					}
-
-					if( allocated_fu ) {
-						const int status = assignRegistersToInstruction(
-							thread_decoders[i]->countISAIntReg(),
-							thread_decoders[i]->countISAFPReg(),
-							ins,
-							int_register_stacks[i],
-							fp_register_stacks[i],
-							issue_isa_tables[i]);
-
-						ins->printToBuffer(instPrintBuffer, 1024);
-						output->verbose(CALL_INFO, 8, 0, "--> Issued for: %s / %p\n", instPrintBuffer,
-							(void*) ins->getInstructionAddress());
-
-						thread_decoders[i]->getDecodedQueue()->pop();
-						ins->markIssued();
-						output->verbose(CALL_INFO, 8, 0, "Issued to functional unit, status=%d\n", status);
-					}
-				}
-			}
+	// Decode //////////////////////////////////////////////////////////////////////////
+	output->verbose(CALL_INFO, 8, 0, "=> Decode Stage <==========================================================\n");
+	for( uint32_t i = 0; i < decodes_per_cycle; ++i ) {
+		if( performDecode( cycle ) != 0 ) {
+			break;
 		}
-
-		issue_isa_tables[i]->print(output, register_files[i], print_int_reg, print_fp_reg);
 	}
 
-	// Functional Units / Execute
-	output->verbose(CALL_INFO, 8, 0, "-- Execute Stage ------------------------------------------------------------\n");
-
-	for( VanadisFunctionalUnit* next_fu : fu_int_arith ) {
-		next_fu->tick(cycle, output, register_files);
+	// Issue  //////////////////////////////////////////////////////////////////////////
+	output->verbose(CALL_INFO, 8, 0, "=> Issue Stage  <==========================================================\n");
+	for( uint32_t i = 0; i < issues_per_cycle; ++i ) {
+		if( performIssue( cycle ) != 0 ) {
+			break;
+		}
 	}
 
-	for( VanadisFunctionalUnit* next_fu : fu_int_div ) {
-		next_fu->tick(cycle, output, register_files);
-	}
-
-	for( VanadisFunctionalUnit* next_fu : fu_fp_arith ) {
-		next_fu->tick(cycle, output, register_files);
-	}
-
-	for( VanadisFunctionalUnit* next_fu : fu_fp_div ) {
-		next_fu->tick(cycle, output, register_files);
-	}
-
-	for( VanadisFunctionalUnit* next_fu : fu_branch ) {
-		next_fu->tick(cycle, output, register_files);
-	}
-
-	// LSQ Processing
-	lsq->tick( (uint64_t) cycle, output );
-
-	// Retirement
-	output->verbose(CALL_INFO, 8, 0, "-- Retire Stage -------------------------------------------------------------\n");
-
-	for( uint32_t i = 0; i < hw_threads; ++i ) {
-		output->verbose(CALL_INFO, 8, 0, "Executing retire for thread %" PRIu32 ", rob-entries: %" PRIu64 "\n", i,
-			(uint64_t) rob[i]->size());
-
-		if( ! rob[i]->empty() ) {
-			VanadisInstruction* rob_front = rob[i]->peek();
-			bool perform_pipeline_clear = false;
-			uint64_t pipeline_clear_set_ip = 0;
-
-			for( int j = std::min(3, (int) rob[i]->size() - 1); j >= 0; --j ) {
-				output->verbose(CALL_INFO, 8, 0, "----> ROB[%2d]: ins: 0x%016llx / %10s / error: %3s / issued: %3s / spec: %3s / exe: %3s\n",
-					j,
-					rob[i]->peekAt(j)->getInstructionAddress(),
-					rob[i]->peekAt(j)->getInstCode(),
-					rob[i]->peekAt(j)->trapsError() ? "yes" : "no",
-					rob[i]->peekAt(j)->completedIssue() ? "yes" : "no",
-					rob[i]->peekAt(j)->isSpeculated() ? "yes" : "no",
-					rob[i]->peekAt(j)->completedExecution() ? "yes" : "no");
-			}
-
-			// Instruction is flagging error, print out and halt
-			if( rob_front->trapsError() ) {
-				output->fatal( CALL_INFO, -1, "Instruction %" PRIu64 " at 0x%llx flags an error (instruction-type=%s)\n",
-					rob_front->getID(),
-					rob_front->getInstructionAddress(),
-					rob_front->getInstCode() );
-			}
-
-			// Check we have actually issued the instruction, otherwise this is stuck at the issue stage waiting for
-			// resources and has been given an ROB slot to maintain ordering.
-			if( ! rob_front->completedIssue() ) {
-				output->verbose( CALL_INFO, 8, 0, "ROB -> front instruction (id=%" PRIu64 ") has been allocated, but not issued yet, stall this cycle.\n",
-					rob_front->getID());
-				continue;
-			}
-
-			if( rob_front->isSpeculated() && rob_front->completedExecution() ) {
-				// Check we predicted in the right direction.
-				output->verbose(CALL_INFO, 8, 0, "ROB -> front on thread %" PRIu32 " is a speculated instruction.\n", i);
-
-				VanadisSpeculatedInstruction* spec_ins = dynamic_cast<VanadisSpeculatedInstruction*>( rob_front );
-
-				output->verbose(CALL_INFO, 8, 0, "ROB -> check prediction: speculated: %s / result: %s\n",
-					directionToChar( spec_ins->getSpeculatedDirection() ),
-					directionToChar( spec_ins->getResultDirection( register_files[i] ) ) );
-
-				bool delaySlotsAreOK = true;
-
-				switch( spec_ins->getDelaySlotType() ) {
-				case VANADIS_CONDITIONAL_SINGLE_DELAY_SLOT:
-					{
-						output->verbose(CALL_INFO, 8, 0, "ROB ---> instruction has a conditional marking on the delay slot.\n");
-					}
-					// NO BREAK BECAUSE WE STILL NEED TO PROCESS THE DELAY SLOT HERE - DO NOT ADD A BREAK STATEMENT
-				case VANADIS_SINGLE_DELAY_SLOT:
-					{
-						output->verbose(CALL_INFO, 8, 0, "ROB ---> requires a single delay slot for marking complete.\n");
-
-						// We need to check the instruction just behind this one (a single delay slot, it must have executed)
-						if( rob[i]->peekAt(1)->completedExecution() ) {
-							output->verbose(CALL_INFO, 8, 0, "ROB ------> delay slot required ans has completed execution.\n");
-
-							if( rob[i]->peekAt(1)->trapsError() ) {
-								output->fatal(CALL_INFO, -1, "Error instruction in delay-slot (0x%0llx) flags error (type: %s)\n",
-									rob[i]->peekAt(1)->getInstructionAddress(), rob[i]->peekAt(1)->getInstCode());
-							}
-						} else {
-							if( rob[i]->peekAt(1)->getInstFuncType() == INST_LOAD ||
-								rob[i]->peekAt(1)->getInstFuncType() == INST_STORE ) {
-
-								output->verbose(CALL_INFO, 8, 0, "ROB -----> delay slot is either load/store, so mark as front of ROB to cause processing.\n");
-								rob[i]->peekAt(1)->markFrontOfROB();
-							}
-
-							output->verbose(CALL_INFO, 8, 0, "ROB ------> delay slot required but has not completed execution, must wait.\n");
-							delaySlotsAreOK = false;
-						}
-					}
-					break;
-				default:
-					break;
-				}
-
-				// If the delay slot handlers are satisfied we can proceed
-				if( delaySlotsAreOK ) {
-					if( VANADIS_CONDITIONAL_SINGLE_DELAY_SLOT == spec_ins->getDelaySlotType() &&
-						( BRANCH_NOT_TAKEN == spec_ins->getResultDirection( register_files[i] ) ) ) {
-
-						output->verbose(CALL_INFO, 8, 0, "ROB -> instruction (0x%llx) contains a conditional delay slot and branch was not taken\n",
-							spec_ins->getInstructionAddress() );
-						const uint64_t recalculate_ip = spec_ins->calculateAddress( output, register_files[i], spec_ins->getInstructionAddress() );
-
-						output->verbose(CALL_INFO, 8, 0, "ROB -> calculated address for branch is 0x%llx\n", recalculate_ip);
-
-						output->verbose(CALL_INFO, 8, 0, "ROB -> branch was not taken, so we need to pipeline clear to avoid executing delay slot\n");
-						output->verbose(CALL_INFO, 8, 0, "ROB -> Updating branch predictor with new information\n");
-                                                thread_decoders[i]->getBranchPredictor()->push( spec_ins->getInstructionAddress(), recalculate_ip );
-						rob[i]->pop();
-
-						output->verbose(CALL_INFO, 16, 0, "----> Retire inst: %" PRIu64 " (addr: 0x%0llx / %s)\n",
-       	                                                rob_front->getID(),
-             	                                        rob_front->getInstructionAddress(),
-                                                        rob_front->getInstCode() );
-
-						recoverRetiredRegisters( rob_front,
-	                                                int_register_stacks[rob_front->getHWThread()],
-               		                                fp_register_stacks[rob_front->getHWThread()],
-                               		                issue_isa_tables[i], retire_isa_tables[i] );
-
-						handleMisspeculate( i, recalculate_ip );
-
-                                                perform_pipeline_clear = true;
-                                                pipeline_clear_set_ip = recalculate_ip;
-					} else if( spec_ins->getSpeculatedDirection() != spec_ins->getResultDirection( register_files[i] ) ) {
-						const uint64_t recalculate_ip = spec_ins->calculateAddress( output, register_files[i], spec_ins->getInstructionAddress() );
-
-						// We have a mis-speculated instruction, uh-oh.
-						output->verbose(CALL_INFO, 8, 0, "ROB -> [PIPELINE-CLEAR] predicted: 0x%llx\n", spec_ins->getSpeculatedAddress() );
-						output->verbose(CALL_INFO, 8, 0, "ROB -> [PIPELINE-CLEAR] mis-speculated execution, begin pipeline reset (set ip: 0x%llx)\n",
-							recalculate_ip);
-
-						output->verbose(CALL_INFO, 8, 0, "ROB -> Updating branch predictor with new information\n");
-						thread_decoders[i]->getBranchPredictor()->push( spec_ins->getInstructionAddress(), recalculate_ip );
-
-                                        	// Actually pop the instruction now we know its safe to do so.
-      	                                 	rob[i]->pop();
-
-                                        	output->verbose(CALL_INFO, 16, 0, "----> Retire inst: %" PRIu64 " (addr: 0x%0llx / %s)\n",
-                                                	rob_front->getID(),
-                                                	rob_front->getInstructionAddress(),
-							rob_front->getInstCode() );
-
-						// if this is a conditional, we know the branch was taken by this point so execute the delay slot
-						if( VANADIS_SINGLE_DELAY_SLOT == spec_ins->getDelaySlotType() ||
-							VANADIS_CONDITIONAL_SINGLE_DELAY_SLOT == spec_ins->getDelaySlotType() ) {
-							// Need to retire the delay slot too
-       	        	                         	recoverRetiredRegisters( rob[i]->peek(),
-        	                                        int_register_stacks[rob_front->getHWThread()],
-                        	                        fp_register_stacks[rob_front->getHWThread()],
-                                	                issue_isa_tables[i], retire_isa_tables[i] );
-
-							VanadisInstruction* delay_ins = rob[i]->pop();
-							delete delay_ins;
-						}
-
-                                        	recoverRetiredRegisters( rob_front,
-                                                int_register_stacks[rob_front->getHWThread()],
-                                                fp_register_stacks[rob_front->getHWThread()],
-                                                issue_isa_tables[i], retire_isa_tables[i] );
-
-                                        	retire_isa_tables[i]->print(output, print_int_reg, print_fp_reg);
-
-                                        	delete rob_front;
-
-						handleMisspeculate( i, recalculate_ip );
-
-						perform_pipeline_clear = true;
-						pipeline_clear_set_ip = recalculate_ip;
-					} else {
-						const uint64_t recalculate_ip = spec_ins->calculateAddress( output, register_files[i], spec_ins->getInstructionAddress() );
-
-						if( recalculate_ip == spec_ins->getSpeculatedAddress() ) {
-							output->verbose(CALL_INFO, 8, 0,  "ROB -> speculation direction and target correct for branch, continue execution.\n");
-							output->verbose(CALL_INFO, 16, 0, "ROB -> spec-addr: 0x%0llx / target: 0x%0llx\n",
-								recalculate_ip, spec_ins->getSpeculatedAddress());
-
-	                                        	// Actually pop the instruction now we know its safe to do so.
-       	                                 		rob[i]->pop();
-
-                                        		output->verbose(CALL_INFO, 16, 0, "----> Retire inst: %" PRIu64 " (addr: 0x%0llx / %s)\n",
-                                                		rob_front->getID(),
-                                                		rob_front->getInstructionAddress(),
-                                                		rob_front->getInstCode() );
-
-							// We know that the branch was taken for conditional operations, so execute delay slot
-							if( VANADIS_SINGLE_DELAY_SLOT == spec_ins->getDelaySlotType() ||
-								VANADIS_CONDITIONAL_SINGLE_DELAY_SLOT == spec_ins->getDelaySlotType() ) {
-								// Need to retire the delay slot too
-       	        	        	                 	recoverRetiredRegisters( rob[i]->peek(),
-        	       		                                int_register_stacks[rob_front->getHWThread()],
-                	        	                        fp_register_stacks[rob_front->getHWThread()],
-       		                         	                issue_isa_tables[i], retire_isa_tables[i] );
-
-								VanadisInstruction* delay_ins = rob[i]->pop();
-								delete delay_ins;
-							}
-
-                                        		recoverRetiredRegisters( rob_front,
-                                                	int_register_stacks[rob_front->getHWThread()],
-                                                	fp_register_stacks[rob_front->getHWThread()],
-                                                	issue_isa_tables[i], retire_isa_tables[i] );
-
-//							output->verbose(CALL_INFO, 16, 0, "-- Retirement ISA Table--------------------------------------------------------------\n");
-                                        		retire_isa_tables[i]->print(output, print_int_reg, print_fp_reg);
-
-                                        		delete rob_front;
-						} else {
-							output->verbose(CALL_INFO, 8, 0, "ROB -> [PIPELINE-CLEAR] correctly speculated direction, but target was incorrect.\n");
-							output->verbose(CALL_INFO, 8, 0, "ROB -> [PIPELINE-CLEAR] pred: 0x%0llx executed: 0x%0llx\n",
-								spec_ins->getSpeculatedAddress(), recalculate_ip );
-
-							perform_pipeline_clear = true;
-							pipeline_clear_set_ip = recalculate_ip;
-
-							output->verbose(CALL_INFO, 8, 0, "ROB -> Updating branch predictor with new information\n");
-							thread_decoders[i]->getBranchPredictor()->push( spec_ins->getInstructionAddress(), recalculate_ip );
-
-	                                        	// Actually pop the instruction now we know its safe to do so.
-       	                                 		rob[i]->pop();
-
-                                        		output->verbose(CALL_INFO, 16, 0, "----> Retire inst: %" PRIu64 " (addr: 0x%0llx / %s)\n",
-                                                		rob_front->getID(),
-                                                		rob_front->getInstructionAddress(),
-                                                		rob_front->getInstCode() );
-
-							if( VANADIS_SINGLE_DELAY_SLOT == spec_ins->getDelaySlotType() ||
-								VANADIS_CONDITIONAL_SINGLE_DELAY_SLOT == spec_ins->getDelaySlotType() ) {
-								// Need to retire the delay slot too
-       	        	        	                 	recoverRetiredRegisters( rob[i]->peek(),
-        	       		                                int_register_stacks[rob_front->getHWThread()],
-                	        	                        fp_register_stacks[rob_front->getHWThread()],
-       		                         	                issue_isa_tables[i], retire_isa_tables[i] );
-
-								VanadisInstruction* delay_ins = rob[i]->pop();
-								delete delay_ins;
-							}
-
-                                        		recoverRetiredRegisters( rob_front,
-                                                	int_register_stacks[rob_front->getHWThread()],
-                                                	fp_register_stacks[rob_front->getHWThread()],
-                                                	issue_isa_tables[i], retire_isa_tables[i] );
-
-                                        		retire_isa_tables[i]->print(output, print_int_reg, print_fp_reg);
-
-                                        		delete rob_front;
-
-							handleMisspeculate( i, recalculate_ip );
-						}
-					}
-				}
-			} else if( rob_front->completedExecution() ) {
-				output->verbose(CALL_INFO, 8, 0, "ROB for Thread %5" PRIu32 " contains entries and those have finished executing, in retire status...\n", i);
-				bool perform_execute_clear_up = true;
-
-/*
-				if( INST_FENCE == rob_front->getInstFuncType() ) {
-					VanadisFenceInstruction* fence_ins = dynamic_cast<VanadisFenceInstruction*>( rob_front );
-					output->verbose(CALL_INFO, 8, 0, "ROB -> front entry performs fence load-fence: %s / store-fence: %s\n",
-						fence_ins->createsLoadFence() ? "yes" : "no",
-						fence_ins->createsStoreFence() ? "yes" : "no" );
-
-					output->verbose(CALL_INFO, 8, 0, "ROB --> FENCE load-count: %" PRIu32 " / store-count: %" PRIu32 "\n",
-						(uint32_t) lsq->loadSize(), (uint32_t) lsq->storeSize());
-
-					perform_execute_clear_up = fence_ins->createsLoadFence()  ? (lsq->loadSize() == 0)  : true;
-					perform_execute_clear_up = fence_ins->createsStoreFence() ? (lsq->storeSize() == 0) : perform_execute_clear_up;
-
-					output->verbose(CALL_INFO, 8, 0, "ROB ---> evaluation of LSQ determines that fence retire can %s\n",
-						perform_execute_clear_up ? "proceed" : "*not* proceed" );
-				}
-*/
-
-				if( perform_execute_clear_up ) {
-					// Actually pop the instruction now we know its safe to do so.
-					rob[i]->pop();
-
-					output->verbose(CALL_INFO, 16, 0, "----> Retire inst: %" PRIu64 " (addr: 0x%0llx / %s)\n",
-						rob_front->getID(),
-						rob_front->getInstructionAddress(),
-						rob_front->getInstCode() );
-
-					recoverRetiredRegisters( rob_front,
-						int_register_stacks[rob_front->getHWThread()],
-						fp_register_stacks[rob_front->getHWThread()],
-						issue_isa_tables[i], retire_isa_tables[i] );
-
-					retire_isa_tables[i]->print(output, register_files[i], print_int_reg, print_fp_reg);
-
-					delete rob_front;
-				}
-			} else {
-				output->verbose(CALL_INFO, 16, 0, "----> [ROB] - marking front instruction as ROB-Front (code: %s, type: %s)\n",
-					rob_front->getInstCode(), funcTypeToString(rob_front->getInstFuncType()));
-				// make sure instruction is marked at front of ROB since this can
-				// enable instructions which need to be retire-ready to process
-				rob_front->markFrontOfROB();
-
-				// Are we handling a system call
-				if( INST_SYSCALL == rob_front->getInstFuncType() ) {
-					if( ! handlingSysCall ) {
-						output->verbose(CALL_INFO, 8, 0, "[syscall] -> need to issue request for handling to the OS (thr: %" PRIu32 ")\n",
-							rob_front->getHWThread() );
-						handlingSysCall = true;
-
-						VanadisSysCallInstruction* the_syscall_ins = dynamic_cast<VanadisSysCallInstruction*>( rob_front );
-
-						if( nullptr == the_syscall_ins ) {
-							output->fatal(CALL_INFO, -1, "Error: SYSCALL cannot be converted to an actual sys-call instruction.\n");
-						}
-
-						output->verbose(CALL_INFO, 8, 0, "[syscall] -> calling OS handler in decode engine (ins-addr: 0x%0llx)...\n",
-							the_syscall_ins->getInstructionAddress());
-						thread_decoders[ rob_front->getHWThread() ]->getOSHandler()->handleSysCall( the_syscall_ins );
-					}
-				}
-			}
+	// Execute //////////////////////////////////////////////////////////////////////////
+	output->verbose(CALL_INFO, 8, 0, "=> Execute Stage <==========================================================\n");
+	performExecute( cycle );
+
+	// Retire //////////////////////////////////////////////////////////////////////////
+	for( uint32_t i = 0; i < retires_per_cycle; ++i ) {
+		for( uint32_t j = 0; j < rob.size(); ++j ) {
+			performRetire( rob[j], cycle );
 		}
 	}
 
@@ -980,6 +894,10 @@ int VanadisComponent::checkInstructionResources(
 	resources_good &= (int_regs->unused() >= ins->countISAIntRegOut());
 	resources_good &= (fp_regs->unused() >= ins->countISAFPRegOut());
 
+	if( ! resources_good ) {
+		return 1;
+	}
+
 	// If there are any pending writes against our reads, we can't issue until
 	// they are done
 	for( uint16_t i = 0; i < ins->countISAIntRegIn(); ++i ) {
@@ -993,6 +911,10 @@ int VanadisComponent::checkInstructionResources(
 	output->verbose(CALL_INFO, 16, 0, "--> Check input integer registers, issue-status: %s\n",
 		(resources_good ? "yes" : "no") );
 
+	if( ! resources_good ) {
+		return 2;
+	}
+
 	if( resources_good ) {
 		for( uint16_t i = 0; i < ins->countISAFPRegIn(); ++i ) {
 			const uint16_t ins_isa_reg = ins->getISAFPRegIn(i);
@@ -1005,11 +927,19 @@ int VanadisComponent::checkInstructionResources(
 		output->verbose(CALL_INFO, 16, 0, "--> Check input floating-point registers, issue-status: %s\n",
 			(resources_good ? "yes" : "no") );
 	}
+	
+	if( ! resources_good ) {
+		return 3;
+	}
 
 	// Update RAW table
 	for( uint16_t i = 0; i < ins->countISAIntRegOut(); ++i ) {
 		const uint16_t ins_isa_reg = ins->getISAIntRegOut(i);
 		isa_int_regs_written_ahead.insert(ins_isa_reg);
+	}
+	
+	if( ! resources_good ) {
+		return 4;
 	}
 
 	for( uint16_t i = 0; i < ins->countISAFPRegOut(); ++i ) {
@@ -1017,7 +947,7 @@ int VanadisComponent::checkInstructionResources(
 		isa_fp_regs_written_ahead.insert(ins_isa_reg);
 	}
 
-	return (resources_good) ? 0 : 1;
+	return (resources_good) ? 0 : 5;
 }
 
 int VanadisComponent::assignRegistersToInstruction(
