@@ -17,8 +17,10 @@ public:
 		const uint16_t dest_lo,
 		const uint16_t dest_hi,
 		const uint16_t src_1,
-		const uint16_t src_2) :
-		VanadisInstruction(id, addr, hw_thr, isa_opts, 2, 2, 2, 2, 0, 0, 0, 0) {
+		const uint16_t src_2,
+		bool performSgnd ) :
+		VanadisInstruction(id, addr, hw_thr, isa_opts, 2, 2, 2, 2, 0, 0, 0, 0),
+			performSigned(performSgnd) {
 
 		isa_int_regs_in[0]  = src_1;
 		isa_int_regs_in[1]  = src_2;
@@ -52,18 +54,38 @@ public:
 			phys_int_regs_in[0], phys_int_regs_in[1],
 			isa_int_regs_out[0], isa_int_regs_out[1], isa_int_regs_in[0], isa_int_regs_in[1] );
 
-		const int64_t src_1 = regFile->getIntReg<int64_t>( phys_int_regs_in[0] );
-		const int64_t src_2 = regFile->getIntReg<int64_t>( phys_int_regs_in[1] );
+		if( performSigned ) {
+			const int64_t src_1 = regFile->getIntReg<int64_t>( phys_int_regs_in[0] );
+			const int64_t src_2 = regFile->getIntReg<int64_t>( phys_int_regs_in[1] );
 
-		const int64_t multiply_result = (src_1) * (src_2);
-		const int64_t result_lo       = (int32_t)( multiply_result & 0xFFFFFFFF );
-		const int64_t result_hi       = (int32_t)( multiply_result >> 32 );
+			const int64_t multiply_result = (src_1) * (src_2);
+			const int64_t result_lo       = (int32_t)( multiply_result & 0xFFFFFFFF );
+			const int64_t result_hi       = (int32_t)( multiply_result >> 32 );
 
-		regFile->setIntReg( phys_int_regs_out[0], result_lo );
-		regFile->setIntReg( phys_int_regs_out[1], result_hi );
+			output->verbose(CALL_INFO, 16, 0, "-> Execute: (detail, signed, MULSPLIT) %" PRId64 " * %" PRId64 " = %" PRId64 " = (lo: %" PRId64 ", hi: %" PRId64 " )\n",
+				src_1, src_2, multiply_result, result_lo, result_hi );
 
+			regFile->setIntReg( phys_int_regs_out[0], result_lo );
+			regFile->setIntReg( phys_int_regs_out[1], result_hi );
+		} else {
+			const uint64_t src_1 = regFile->getIntReg<uint64_t>( phys_int_regs_in[0] );
+			const uint64_t src_2 = regFile->getIntReg<uint64_t>( phys_int_regs_in[1] );
+
+			const uint64_t multiply_result = (src_1) * (src_2);
+			const uint64_t result_lo       = (uint32_t)( multiply_result & 0xFFFFFFFF );
+			const uint64_t result_hi       = (uint32_t)( multiply_result >> 32 );
+
+			output->verbose(CALL_INFO, 16, 0, "-> Execute: (detail, unsigned, MULSPLIT) %" PRIu64 " * %" PRIu64 " = %" PRIu64 " = (lo: %" PRIu64 ", hi: %" PRIu64 " )\n",
+				src_1, src_2, multiply_result, result_lo, result_hi );
+
+			regFile->setIntReg( phys_int_regs_out[0], result_lo );
+			regFile->setIntReg( phys_int_regs_out[1], result_hi );
+		}
 		markExecuted();
 	}
+
+protected:
+	bool performSigned;
 
 };
 

@@ -654,6 +654,13 @@ protected:
 		const uint32_t ins_mask  = next_ins & MIPS_OP_MASK;
 		const uint32_t func_mask = next_ins & MIPS_FUNC_MASK;
 
+		if( 0 != (ins_addr & 0x3) ) {
+			output->verbose( CALL_INFO, 16, 0, "[decode] ---> fault address 0x%llu is not aligned at 4 bytes.\n",
+				ins_addr);
+			bundle->addInstruction( new VanadisInstructionDecodeFault( next_ins_id++, ins_addr, hw_thr, options ) );
+			return;
+		}
+
 		output->verbose( CALL_INFO, 16, 0, "[decode] ---> ins-mask: 0x%08x / 0x%08x\n", ins_mask, func_mask );
 
 		uint16_t rt = 0;
@@ -811,12 +818,17 @@ protected:
 					case MIPS_SPEC_OP_MASK_MULT:
 						{
 							bundle->addInstruction( new VanadisMultiplySplitInstruction( next_ins_id++, ins_addr, hw_thr, options,
-								MIPS_REG_LO, MIPS_REG_HI, rs, rt ) );
+								MIPS_REG_LO, MIPS_REG_HI, rs, rt, true ) );
 							insertDecodeFault = false;
 						}
 						break;
 
 					case MIPS_SPEC_OP_MASK_MULTU:
+						{
+							bundle->addInstruction( new VanadisMultiplySplitInstruction( next_ins_id++, ins_addr, hw_thr, options,
+								MIPS_REG_LO, MIPS_REG_HI, rs, rt, false ) );
+							insertDecodeFault = false;
+						}
 						break;
 
 					case MIPS_SPEC_OP_MASK_NOR:

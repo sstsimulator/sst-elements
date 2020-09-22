@@ -62,6 +62,9 @@ public:
 				const int64_t quo = (src_1) / (src_2);
 				const int64_t mod = (src_1) % (src_2);
 
+				output->verbose(CALL_INFO, 16, 0, "--> Execute: (detailed, signed, DIVREM) %" PRId64 " / %" PRId64 " = (q: %" PRId64 ", r: %" PRId64 ")\n",
+					src_1, src_2, quo, mod);
+
 				regFile->setIntReg( phys_int_regs_out[0], quo );
 				regFile->setIntReg( phys_int_regs_out[1], mod );
 			}
@@ -74,6 +77,9 @@ public:
 			} else {
 				const uint64_t quo = (src_1) / (src_2);
 				const uint64_t mod = (src_1) % (src_2);
+
+				output->verbose(CALL_INFO, 16, 0, "--> Execute: (detailed, unsigned, DIVREM) %" PRIu64 " / %" PRIu64 " = (q: %" PRIu64 ", r: %" PRIu64 ")\n",
+					src_1, src_2, quo, mod);
 
 				regFile->setIntReg( phys_int_regs_out[0], quo );
 				regFile->setIntReg( phys_int_regs_out[1], mod );
