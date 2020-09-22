@@ -53,7 +53,7 @@ bool IncoherentL1::handleGetS(MemEvent* event, bool inMSHR){
             if (status == MemEventStatus::OK) { // Both MSHR insert & cache line allocation succeeded
                 line = cacheArray_->lookup(addr, false);
                 recordLatencyType(event->getID(), LatType::MISS);
-                eventProfileAndNotify(event, I, NotifyAccessType::READ, NotifyResultType::MISS, true);
+                eventProfileAndNotify(event, I, NotifyAccessType::READ, NotifyResultType::MISS, true, inMSHR);
                 sendTime = forwardMessage(event, lineSize_, 0, NULL);
                 line->setState(IM);
                 line->setTimestamp(sendTime);
@@ -62,7 +62,7 @@ bool IncoherentL1::handleGetS(MemEvent* event, bool inMSHR){
             break;
         case E:
         case M:
-            eventProfileAndNotify(event, state, NotifyAccessType::READ, NotifyResultType::HIT, inMSHR);
+            eventProfileAndNotify(event, state, NotifyAccessType::READ, NotifyResultType::HIT, inMSHR, inMSHR);
             if (localPrefetch) {
                 recordPrefetchResult(line, statPrefetchRedundant);
                 cleanUpAfterRequest(event, inMSHR);
@@ -121,7 +121,7 @@ bool IncoherentL1::handleGetX(MemEvent* event, bool inMSHR){
                 line = cacheArray_->lookup(addr, false);
 
                 // Profile
-                eventProfileAndNotify(event, I, NotifyAccessType::WRITE, NotifyResultType::MISS, true);
+                eventProfileAndNotify(event, I, NotifyAccessType::WRITE, NotifyResultType::MISS, true, inMSHR);
 
                 // Handle
                 recordLatencyType(event->getID(), LatType::MISS);
@@ -135,7 +135,7 @@ bool IncoherentL1::handleGetX(MemEvent* event, bool inMSHR){
             line->setState(M);
         case M:
             // Profile
-            eventProfileAndNotify(event, state, NotifyAccessType::WRITE, NotifyResultType::HIT, inMSHR);
+            eventProfileAndNotify(event, state, NotifyAccessType::WRITE, NotifyResultType::HIT, inMSHR, inMSHR);
             recordPrefetchResult(line, statPrefetchHit);
             recordLatencyType(event->getID(), LatType::HIT);
             // Handle
@@ -182,7 +182,7 @@ bool IncoherentL1::handleGetSX(MemEvent* event, bool inMSHR) {
             if (status == MemEventStatus::OK) { // Both MSHR insert & cache line allocation succeeded
                 line = cacheArray_->lookup(addr, false);
                 // Profile
-                eventProfileAndNotify(event, I, NotifyAccessType::READ, NotifyResultType::MISS, true);
+                eventProfileAndNotify(event, I, NotifyAccessType::READ, NotifyResultType::MISS, true, inMSHR);
                 recordLatencyType(event->getID(), LatType::MISS);
                 // Handle
                 sendTime = forwardMessage(event, lineSize_, 0, nullptr);
@@ -195,7 +195,7 @@ bool IncoherentL1::handleGetSX(MemEvent* event, bool inMSHR) {
             line->setState(M);
         case M:
             // Profile
-            eventProfileAndNotify(event, state, NotifyAccessType::READ, NotifyResultType::HIT, inMSHR);
+            eventProfileAndNotify(event, state, NotifyAccessType::READ, NotifyResultType::HIT, inMSHR, inMSHR);
             recordPrefetchResult(line, statPrefetchHit);
             recordLatencyType(event->getID(), LatType::HIT);
             // Handle
@@ -836,9 +836,16 @@ void IncoherentL1::recordPrefetchResult(L1CacheLine * line, Statistic<uint64_t> 
     }
 }
 
-void IncoherentL1::eventProfileAndNotify(MemEvent * event, State state, NotifyAccessType type, NotifyResultType result, bool inMSHR) {
+void IncoherentL1::eventProfileAndNotify(MemEvent * event, State state, NotifyAccessType type, NotifyResultType result, bool inMSHR, bool stalled) {
     if (!inMSHR || !mshr_->getProfiled(event->getBaseAddr())) {
         stat_eventState[(int)event->getCmd()][state]->addData(1); // profile
+        if (result == NotifyResultType::MISS) {
+            stat_misses->addData(1);
+            stat_miss[(int)event->getCmd()][(int)stalled]->addData(1);
+        } else {
+            stat_hits->addData(1);
+            stat_hit[(int)event->getCmd()][(int)stalled]->addData(1);
+        }
         notifyListenerOfAccess(event, type, result);
         if (inMSHR)
             mshr_->setProfiled(event->getBaseAddr());
