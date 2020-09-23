@@ -34,7 +34,8 @@
 #include "inst/regstack.h"
 #include "inst/isatable.h"
 #include "vfuncunit.h"
-#include "vlsq.h"
+#include "lsq/vlsq.h"
+#include "lsq/vlsqstd.h"
 
 namespace SST {
 namespace Vanadis {
@@ -129,7 +130,7 @@ public:
 
     // Optional since there is nothing to document
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-	{ "mem_interface_data", "Interface to memory system for data access",  "SST::Interfaces::SimpleMem" },
+	{ "lsq",                "Load-Store Queue for Memory Access", "SST::Vanadis::VanadisLoadStoreQueue" },
 	{ "mem_interface_inst", "Interface to memory system for instructions", "SST::Interfaces::SimpleMem" },
 	{ "decoder%(hardware_threads)d", "Instruction decoder for a hardware thread", "SST::Vanadis::VanadisDecoder" }
     )
@@ -229,7 +230,6 @@ private:
     std::list<VanadisInsCacheLoadRecord*>* icache_load_records;
 
     VanadisLoadStoreQueue* lsq;
-    SimpleMem* memDataInterface;
     SimpleMem* memInstInterface;
 
     bool* halted_masks;
@@ -243,6 +243,7 @@ private:
 
     TimeConverter* cpuClockTC;
 
+    FILE* pipelineTrace;
     VanadisELFInfo* binary_elf_info;
     bool handlingSysCall;
 };

@@ -1,12 +1,14 @@
 
-#ifndef _H_VANADIS_LOAD_STORE_Q
-#define _H_VANADIS_LOAD_STORE_Q
+#ifndef _H_VANADIS_STD_LOAD_STORE_Q
+#define _H_VANADIS_STD_LOAD_STORE_Q
 
 #include "sst/core/interfaces/simpleMem.h"
 
 #include "inst/vinst.h"
 #include "inst/vstore.h"
 #include "inst/vload.h"
+
+#include "lsq/vlsq.h"
 
 #include "datastruct/cqueue.h"
 #include "util/vsignx.h"
@@ -60,59 +62,87 @@ protected:
 
 };
 
-class VanadisLoadStoreQueue {
+class VanadisStandardLoadStoreQueue : public VanadisLoadStoreQueue {
 
 public:
-	VanadisLoadStoreQueue(
-		SimpleMem* memI,
-		const size_t lsq_store_entries,
-		const size_t lsq_load_entries,
-		const size_t max_issue_store_count,
-		const size_t max_issue_load_count,
-		const size_t max_stores_issue_each_cycle,
-		const size_t max_loads_issue_each_cycle,
-		std::vector<VanadisRegisterFile*>* reg_files
-		)	 :
-			memInterface(memI),
-			max_mem_issued_stores(max_issue_store_count),
-			max_mem_issued_loads(max_issue_load_count),
-			max_queued_stores(lsq_store_entries),
-			max_queued_loads(lsq_load_entries),
-			pending_queued_loads(0),
-			pending_mem_issued_stores(0),
-			pending_mem_issued_loads(0),
-			max_stores_issue_per_cycle(max_stores_issue_each_cycle),
-			max_load_issue_per_cycle(max_loads_issue_each_cycle),
-			registerFiles(reg_files) {
+	SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
+		VanadisStandardLoadStoreQueue,
+		"vanadis",
+		"VanadisStandardLoadStoreQueue",
+		SST_ELI_ELEMENT_VERSION(1,0,0),
+		"Implements a basic laod-store queue for use with the SST memInterface",
+		SST::Vanadis::VanadisLoadStoreQueue
+	)
 
-		store_q = new VanadisCircularQueue<VanadisStoreRecord*>(lsq_store_entries);
-		max_mem_address_mask = UINT64_MAX;
-		processingLLSC = false;
+	SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
+		{ "memory_interface",		"Set the interface to memory",		"SST::Interfaces::SimpleMem" 		}
+	)
+
+	SST_ELI_DOCUMENT_PORTS(
+		{ "dcache_link",		"Connects the LSQ to the data cache",	{}					}
+	)
+
+	SST_ELI_DOCUMENT_PARAMS(
+		{ "lsq_store_entries",		"Set the number of store entries in the queuing system",		"8"	},
+		{ "lsq_load_entries",		"Set the number of load entries in the queuing system",         	"8"	},
+		{ "lsq_store_pending",          "Set the maximum number of in-flight stores",			   	"8"	},
+		{ "lsq_load_pending",           "Set the maximum number of in-flight loads",				"8"	},
+		{ "max_store_issue_per_cycle",	"Set the maximum number of stores that can be issued per cycle",	"2"	},
+		{ "max_load_issue_per_cycle",   "Set the maximum number of loads that can be issued per cycle",		"2"	}
+	)
+
+	VanadisStandardLoadStoreQueue( ComponentId_t id, Params& params ) :
+		VanadisLoadStoreQueue( id, params ), processingLLSC(false) {
+
+		max_mem_issued_stores = params.find<uint32_t>("lsq_store_pending");
+		max_mem_issued_loads  = params.find<uint32_t>("lsq_load_pending");
+
+		max_queued_stores     = params.find<uint32_t>("lsq_store_entries");
+		max_queued_loads      = params.find<uint32_t>("lsq_load_entries");
+
+		max_stores_issue_per_cycle = params.find<uint32_t>("max_store_issue_per_cycle");
+		max_load_issue_per_cycle   = params.find<uint32_t>("max_load_issue_per_cycle");
+
+		memInterface = loadUserSubComponent<Interfaces::SimpleMem>("memory_interface", ComponentInfo::SHARE_PORTS |
+			ComponentInfo::INSERT_STATS, getTimeConverter("1ps"),
+			new SimpleMem::Handler<SST::Vanadis::VanadisStandardLoadStoreQueue>(this,
+			&VanadisStandardLoadStoreQueue::processIncomingDataCacheEvent));
+
+		store_q = new VanadisCircularQueue<VanadisStoreRecord*>(max_mem_issued_stores);
+		registerFiles  = nullptr;
 	}
 
-	~VanadisLoadStoreQueue() {
+	~VanadisStandardLoadStoreQueue() {
 		delete store_q;
+		delete memInterface;
 	}
 
-	bool storeFull() const 	 { return store_q->full(); }
-	bool loadFull()  const   { return (pending_queued_loads  >= max_queued_loads);  }
+	virtual bool storeFull()  	 { return store_q->full(); }
+	virtual bool loadFull()          { return (pending_queued_loads  >= max_queued_loads);  }
 
-	size_t storeSize() const { return store_q->size(); }
-	size_t loadSize()  const { return pending_queued_loads;  }
+	virtual size_t storeSize()       { return store_q->size(); }
+	virtual size_t loadSize()        { return pending_queued_loads;  }
 
-	void push( VanadisStoreInstruction* store_me ) {
+	virtual void push( VanadisStoreInstruction* store_me ) {
 		assert( ! (store_q->full()) );
 
 		store_q->push( new VanadisStoreRecord( store_me ) );
 	}
 
-	void push( VanadisLoadInstruction* load_me ) {
+	virtual void push( VanadisLoadInstruction* load_me ) {
 		load_q.push_back( new VanadisLoadRecord( load_me ) );
 		pending_queued_loads++;
 	}
 
-	void setMaxAddressMask( const uint64_t mask ) {
-		max_mem_address_mask = mask;
+	virtual void init( unsigned int phase ) {
+		memInterface->init( phase );
+	}
+
+	virtual void setInitialMemory( const uint64_t address, std::vector<uint8_t>& payload ) {
+		output->verbose(CALL_INFO, 2, 0, "setting initial memory contents for address 0x%llx / size: %" PRIu64 "\n",
+			address, (uint64_t) payload.size() );
+		memInterface->sendInitData( new SimpleMem::Request( SimpleMem::Request::Write, address,
+			payload.size(), payload) );
 	}
 
 	VanadisAddressOverlapType evaluateAddressOverlap( const uint64_t loadAddress, const uint16_t loadLen,
@@ -138,7 +168,7 @@ public:
 		return overlap;
 	}
 
-	void tick( uint64_t cycle, SST::Output* output ) {
+	virtual void tick( uint64_t cycle ) {
 		output->verbose(CALL_INFO, 16, 0, "-> Ticking Load/Store Queue Processors...\n");
 		output->verbose(CALL_INFO, 16, 0, "---> LSQ contains: %" PRIu32 " queued loads / %" PRIu32 " queued stores.\n", pending_queued_loads,
 			(uint32_t) store_q->size() );
@@ -151,11 +181,11 @@ public:
 		delete[] inst_print_buffer;
 		output->verbose(CALL_INFO, 16, 0, "---> LSQ contains: %" PRIu32 " loads in flight / %" PRIu32 " stores in flight\n", pending_mem_issued_loads, pending_mem_issued_stores );
 		output->verbose(CALL_INFO, 16, 0, "-> Ticking Load Queue Handling...\n");
-		tick_loads(cycle, output);
+		tick_loads(cycle);
 		output->verbose(CALL_INFO, 16, 0, "---> Ticking Store Queue Handling (max stores per cycle = %" PRIu32 ")\n", max_stores_issue_per_cycle);
 		int stores_this_cycle = 0;
 		for( uint32_t i = 0; i < max_stores_issue_per_cycle; ++i ) {
-			int rc = tick_stores(cycle, output);
+			int rc = tick_stores(cycle);
 
 			if( 1 == rc ) {
 				output->verbose(CALL_INFO, 16, 0, "---> Store handling returns that store at the front of the queue cannot be issued this cycle.\n");
@@ -171,7 +201,7 @@ public:
 		output->verbose(CALL_INFO, 16, 0, "-> Load/Store Queue Processing Complete for this cycle\n");
 	}
 
-	void tick_loads( const uint64_t cycle, SST::Output* output ) {
+	void tick_loads( const uint64_t cycle ) {
 		for( auto next_load = load_q.begin(); next_load != load_q.end(); ) {
 			VanadisLoadInstruction* load_ins = (*next_load)->getAssociatedInstruction();
 
@@ -281,30 +311,38 @@ public:
 					if( load_width > 0 ) {
 						output->verbose(CALL_INFO, 16, 0, "-> issuing load into memory interface...\n");
 
-						SimpleMem::Request* new_load_req = new SimpleMem::Request( SimpleMem::Request::Read,
-							load_addr, load_width);
-						new_load_req->setInstructionPointer( load_ins->getInstructionAddress() );
+						if( ! load_ins->trapsError() ) {
+							if( (load_addr % load_width) == 0 ) {
+								SimpleMem::Request* new_load_req = new SimpleMem::Request( SimpleMem::Request::Read,
+									load_addr, load_width);
+								new_load_req->setInstructionPointer( load_ins->getInstructionAddress() );
 
-						switch( load_ins->getTransactionType() ) {
-						case MEM_TRANSACTION_NONE:
-							output->verbose(CALL_INFO, 16, 0, "---> [memory-transaction]: standard load\n");
-							break;
-						case MEM_TRANSACTION_LLSC_LOAD:
-							output->verbose(CALL_INFO, 16, 0, "---> [memory-transaction]: marked for LLSC with load transaction type\n");
-							new_load_req->flags |= SST::Interfaces::SimpleMem::Request::F_LLSC;
-							break;
-						case MEM_TRANSACTION_LLSC_STORE:
-							output->fatal(CALL_INFO, -1, "Error - logical error, LOAD instruction is marked with an LLSC STORE transaction class.\n");
-						case MEM_TRANSACTION_LOCK:
-							output->verbose(CALL_INFO, 16, 0, "---> [memory-transaction]: marked for LOCK load transaction\n");
-							new_load_req->flags |= SST::Interfaces::SimpleMem::Request::F_LOCKED;
-							break;
+								switch( load_ins->getTransactionType() ) {
+								case MEM_TRANSACTION_NONE:
+									output->verbose(CALL_INFO, 16, 0, "---> [memory-transaction]: standard load\n");
+									break;
+								case MEM_TRANSACTION_LLSC_LOAD:
+									output->verbose(CALL_INFO, 16, 0, "---> [memory-transaction]: marked for LLSC with load transaction type\n");
+									new_load_req->flags |= SST::Interfaces::SimpleMem::Request::F_LLSC;
+									break;
+								case MEM_TRANSACTION_LLSC_STORE:
+									output->fatal(CALL_INFO, -1, "Error - logical error, LOAD instruction is marked with an LLSC STORE transaction class.\n");
+								case MEM_TRANSACTION_LOCK:
+									output->verbose(CALL_INFO, 16, 0, "---> [memory-transaction]: marked for LOCK load transaction\n");
+									new_load_req->flags |= SST::Interfaces::SimpleMem::Request::F_LOCKED;
+									break;
+								}
+
+								pending_loads.insert( std::pair<SimpleMem::Request::id_t, VanadisLoadRecord*>(new_load_req->id, new VanadisLoadRecord( load_ins )) );
+								memInterface->sendRequest( new_load_req );
+
+								pending_mem_issued_loads++;
+							} else {
+								output->verbose(CALL_INFO, 16, 0, "-> fails alignment check, marking instruction 0x%llx as causing error.\n",
+									load_ins->getInstructionAddress());
+								load_ins->flagError();
+							}
 						}
-
-						pending_loads.insert( std::pair<SimpleMem::Request::id_t, VanadisLoadRecord*>(new_load_req->id, new VanadisLoadRecord( load_ins )) );
-						memInterface->sendRequest( new_load_req );
-
-						pending_mem_issued_loads++;
 					} else {
 						output->verbose(CALL_INFO, 16, 0, "-> load width is zero, will not issue a load and just complete instruction.\n");
 						output->verbose(CALL_INFO, 16, 0, "-> marking instruction as executed to allow ROB clear.\n");
@@ -330,7 +368,7 @@ public:
 		}
 	}
 
-	int tick_stores( const uint64_t cycle, SST::Output* output ) {
+	int tick_stores( const uint64_t cycle ) {
 		output->verbose(CALL_INFO, 16, 0, "---> LSQ -> Ticking Store Processing (store_q = %" PRIu32 " items)\n", (uint32_t) store_q->size() );
 		int tick_rc = 1;
 
@@ -384,8 +422,13 @@ public:
 							payload.push_back( value_reg_addr[ reg_offset + j ]);
 						}
 					} else {
-						for( uint16_t j = 0; j < store_width; ++j ) {
-							payload.push_back( value_reg_addr[j] );
+						if( 0 == (store_address % store_width) ) {
+							for( uint16_t j = 0; j < store_width; ++j ) {
+								payload.push_back( value_reg_addr[j] );
+							}
+						} else {
+							output->fatal( CALL_INFO, -1, "Error - store alignment check fails address: 0x%llx / width: %" PRIu32 "\n",
+								store_address, (uint32_t) store_width);
 						}
 					}
 
@@ -445,7 +488,7 @@ public:
 		return tick_rc;
 	}
 
-	void processIncomingDataCacheEvent( SST::Output* output, SimpleMem::Request* ev ) {
+	void processIncomingDataCacheEvent( SimpleMem::Request* ev ) {
 		auto check_ev_exists = pending_stores.find( ev->id );
 
 		if( check_ev_exists == pending_stores.end() ) {
@@ -620,7 +663,7 @@ public:
 		}
 	}
 
-	void clearLSQByThreadID( SST::Output* output, const uint32_t thr ) {
+	void clearLSQByThreadID( const uint32_t thr ) {
 		// Clear pending loads, returns will get dropped when we cannot match them
 		for( auto load_itr = pending_loads.begin(); load_itr != pending_loads.end(); ) {
 			if( load_itr->second->getAssociatedInstruction()->getHWThread() == thr ) {
@@ -667,19 +710,19 @@ protected:
 	std::vector<VanadisRegisterFile*>* registerFiles;
 	SimpleMem* memInterface;
 
-	const uint32_t max_queued_stores;
-	const uint32_t max_queued_loads;
+	uint32_t max_queued_stores;
+	uint32_t max_queued_loads;
 
 	uint32_t pending_queued_loads;
 
-	const uint32_t max_mem_issued_stores;
-	const uint32_t max_mem_issued_loads;
+	uint32_t max_mem_issued_stores;
+	uint32_t max_mem_issued_loads;
 
 	uint32_t pending_mem_issued_stores;
 	uint32_t pending_mem_issued_loads;
 
-	const uint32_t max_stores_issue_per_cycle;
-	const uint32_t max_load_issue_per_cycle;
+	uint32_t max_stores_issue_per_cycle;
+	uint32_t max_load_issue_per_cycle;
 
 	uint64_t max_mem_address_mask;
 

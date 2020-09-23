@@ -18,6 +18,7 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 	current_cycle(0) {
 
 	instPrintBuffer = new char[1024];
+	pipelineTrace = nullptr;
 
 	max_cycle = params.find<uint64_t>("max_cycle",
 		std::numeric_limits<uint64_t>::max() );
@@ -150,8 +151,8 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 
 	delete[] decoder_name;
 
-	memDataInterface = loadUserSubComponent<Interfaces::SimpleMem>("mem_interface_data", ComponentInfo::SHARE_NONE, cpuClockTC,
-		new SimpleMem::Handler<SST::Vanadis::VanadisComponent>(this, &VanadisComponent::handleIncomingDataCacheEvent ));
+//	memDataInterface = loadUserSubComponent<Interfaces::SimpleMem>("mem_interface_data", ComponentInfo::SHARE_NONE, cpuClockTC,
+//		new SimpleMem::Handler<SST::Vanadis::VanadisComponent>(this, &VanadisComponent::handleIncomingDataCacheEvent ));
 	memInstInterface = loadUserSubComponent<Interfaces::SimpleMem>("mem_interface_inst", ComponentInfo::SHARE_NONE, cpuClockTC,
 		new SimpleMem::Handler<SST::Vanadis::VanadisComponent>(this, &VanadisComponent::handleIncomingInstCacheEvent));
 
@@ -171,9 +172,9 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
     	}
 */
 
-	if( nullptr == memDataInterface ) {
-		output->fatal(CALL_INFO, -1, "Error: unable to load memory interface subcomponent for data cache.\n");
-	}
+//	if( nullptr == memDataInterface ) {
+//		output->fatal(CALL_INFO, -1, "Error: unable to load memory interface subcomponent for data cache.\n");
+//	}
 
 	if( nullptr == memInstInterface ) {
 		output->fatal(CALL_INFO, -1, "Error: unable ot load memory interface subcomponent for instruction cache.\n");
@@ -203,7 +204,7 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 
 		output->verbose(CALL_INFO, 8, 0, "Configuring core-0, thread-0 application info...\n");
 		thread_decoders[0]->configureApplicationLaunch( output, issue_isa_tables[0], register_files[0],
-			memDataInterface, binary_elf_info, app_params );
+			memInstInterface, binary_elf_info, app_params );
 
 		// Force retire table to sync with issue table
 		retire_isa_tables[0]->reset( issue_isa_tables[0] );
@@ -321,27 +322,18 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 
 	//////////////////////////////////////////////////////////////////////////////////////
 
-	size_t lsq_store_size    = params.find<size_t>("lsq_store_entries", 8);
-	size_t lsq_store_pending = params.find<size_t>("lsq_issued_stores_inflight", 8);
-	size_t lsq_load_size     = params.find<size_t>("lsq_load_entries", 8);
-	size_t lsq_load_pending  = params.find<size_t>("lsq_issued_loads_inflight", 8);
-	size_t lsq_max_loads_per_cycle = params.find<size_t>("max_loads_per_cycle", 2);
-	size_t lsq_max_stores_per_cycle = params.find<size_t>("max_stores_per_cycle", 2);
+	lsq = loadUserSubComponent<SST::Vanadis::VanadisLoadStoreQueue>("lsq");
+	lsq->setRegisterFiles( &register_files );
 
-	lsq = new VanadisLoadStoreQueue( memDataInterface, lsq_store_size, lsq_store_pending,
-		lsq_load_size, lsq_load_pending, lsq_max_loads_per_cycle,
-		lsq_max_stores_per_cycle, &register_files);
-
-	const uint64_t max_addr_mask = binary_elf_info->isELF32() ? 0xFFFFFFFF : UINT64_MAX;
-	output->verbose(CALL_INFO, 8, 0, "Setting maximum address mask for the LSQ to: 0x%0llx (derived from ELF-32? %s)\n",
-		max_addr_mask, binary_elf_info->isELF32() ? "yes" : "no");
-
-	// if we are doing a 32-bit run, then limit the address ranges which can be reached
-	// otherwise leave the mask fully open.
-	lsq->setMaxAddressMask( max_addr_mask );
+//	const uint64_t max_addr_mask = binary_elf_info->isELF32() ? 0xFFFFFFFF : UINT64_MAX;
+//	output->verbose(CALL_INFO, 8, 0, "Setting maximum address mask for the LSQ to: 0x%0llx (derived from ELF-32? %s)\n",
+//		max_addr_mask, binary_elf_info->isELF32() ? "yes" : "no");
+//
+//	// if we are doing a 32-bit run, then limit the address ranges which can be reached
+//	// otherwise leave the mask fully open.
+//	lsq->setMaxAddressMask( max_addr_mask );
 
 	handlingSysCall = false;
-	
 	fetches_per_cycle = params.find<uint32_t>("fetches_per_cycle", 2);
     decodes_per_cycle = params.find<uint32_t>("decodes_per_cycle", 2);
     issues_per_cycle  = params.find<uint32_t>("issues_per_cycle",  2);
@@ -351,10 +343,24 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 	output->verbose(CALL_INFO, 8, 0, "-> Fetches/cycle:                %" PRIu32 "\n", fetches_per_cycle);
 	output->verbose(CALL_INFO, 8, 0, "-> Decodes/cycle:                %" PRIu32 "\n", decodes_per_cycle);
 	output->verbose(CALL_INFO, 8, 0, "-> Retires/cycle:                %" PRIu32 "\n", retires_per_cycle);
-        output->verbose(CALL_INFO, 8, 0, "-> LSQ Store Entries:            %" PRIu32 "\n", (uint32_t) lsq_store_size );
-        output->verbose(CALL_INFO, 8, 0, "-> LSQ Stores In-flight:         %" PRIu32 "\n", (uint32_t) lsq_store_pending );
-        output->verbose(CALL_INFO, 8, 0, "-> LSQ Load Entries:             %" PRIu32 "\n", (uint32_t) lsq_load_size );
-        output->verbose(CALL_INFO, 8, 0, "-> LSQ Loads In-flight:          %" PRIu32 "\n", (uint32_t) lsq_load_pending );
+//        output->verbose(CALL_INFO, 8, 0, "-> LSQ Store Entries:            %" PRIu32 "\n", (uint32_t) lsq_store_size );
+//        output->verbose(CALL_INFO, 8, 0, "-> LSQ Stores In-flight:         %" PRIu32 "\n", (uint32_t) lsq_store_pending );
+//        output->verbose(CALL_INFO, 8, 0, "-> LSQ Load Entries:             %" PRIu32 "\n", (uint32_t) lsq_load_size );
+//        output->verbose(CALL_INFO, 8, 0, "-> LSQ Loads In-flight:          %" PRIu32 "\n", (uint32_t) lsq_load_pending );
+
+    std::string pipeline_trace_path = params.find<std::string>("pipeline_trace_file", "");
+    
+    if( pipeline_trace_path == "" ) {
+    	output->verbose(CALL_INFO, 8, 0, "Pipeline trace output not specified, disabling.\n");
+    } else {
+    	output->verbose(CALL_INFO, 8, 0, "Opening a pipeline trace output at: %s\n",
+    		pipeline_trace_path.c_str());
+    	pipelineTrace = fopen( pipeline_trace_path.c_str(), "wt" );
+    	
+    	if( pipelineTrace == nullptr ) {
+    		output->fatal(CALL_INFO, -1, "Failed to open pipeline trace file.\n");
+    	}
+    }
 
 	registerAsPrimaryComponent();
     	primaryComponentDoNotEndSim();
@@ -363,6 +369,10 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 VanadisComponent::~VanadisComponent() {
 	delete[] instPrintBuffer;
 	delete lsq;
+	
+	if( pipelineTrace != nullptr ) {
+		fclose( pipelineTrace );
+	}
 }
 
 int VanadisComponent::performFetch( const uint64_t cycle ) {
@@ -522,10 +532,10 @@ int VanadisComponent::performExecute( const uint64_t cycle ) {
 	for( VanadisFunctionalUnit* next_fu : fu_branch ) {
 		next_fu->tick(cycle, output, register_files);
 	}
-	
+
 	// Tick the load/store queue
-	lsq->tick( (uint64_t) cycle, output );
-	
+	lsq->tick( (uint64_t) cycle );
+
 	return 0;
 }
 
@@ -635,6 +645,11 @@ int VanadisComponent::performRetire( VanadisCircularQueue<VanadisInstruction*>* 
 			
 				output->verbose(CALL_INFO, 8, 0, "----> Retire delay: %" PRIu64 " (0x%llx / %s)\n",
 					delay_ins->getID(), delay_ins->getInstructionAddress(), delay_ins->getInstCode() );
+					
+				if( pipelineTrace != nullptr ) {
+					fprintf( pipelineTrace, "0x%llx %s\n",
+						delay_ins->getInstructionAddress(), delay_ins->getInstCode() );
+				}
 				
 				recoverRetiredRegisters( delay_ins, int_register_stacks[delay_ins->getHWThread()],
 					fp_register_stacks[delay_ins->getHWThread()],
@@ -659,6 +674,11 @@ int VanadisComponent::performRetire( VanadisCircularQueue<VanadisInstruction*>* 
 				output->verbose(CALL_INFO, 8, 0, "----> perform a pipeline clear thread %" PRIu32 ", reset to address: 0x%llx\n",
 					rob_front->getHWThread(), pipeline_reset_addr);
 				handleMisspeculate( rob_front->getHWThread(), pipeline_reset_addr );
+			}
+			
+			if( pipelineTrace != nullptr ) {
+				fprintf( pipelineTrace, "0x%llx %s\n",
+					rob_front->getInstructionAddress(), rob_front->getInstCode() );
 			}
 			
 			delete rob_front;
@@ -1142,7 +1162,8 @@ void VanadisComponent::init(unsigned int phase) {
 	output->verbose(CALL_INFO, 2, 0, "Start: init-phase: %" PRIu32 "...\n", (uint32_t) phase );
 	output->verbose(CALL_INFO, 2, 0, "-> Initializing memory interfaces with this phase...\n");
 
-	memDataInterface->init( phase );
+	lsq->init( phase );
+//	memDataInterface->init( phase );
 	memInstInterface->init( phase );
 
 	output->verbose(CALL_INFO, 2, 0, "-> Performing init operations for Vanadis...\n");
@@ -1238,9 +1259,10 @@ void VanadisComponent::init(unsigned int phase) {
 				output->verbose(CALL_INFO, 2, 0, ">> Writing memory contents (%" PRIu64 " bytes at index 0)\n",
 					(uint64_t) initial_mem_contents.size());
 
-				SimpleMem::Request* writeExe = new SimpleMem::Request(SimpleMem::Request::Write,
-					0, initial_mem_contents.size(), initial_mem_contents);
-				memDataInterface->sendInitData( writeExe );
+//				SimpleMem::Request* writeExe = new SimpleMem::Request(SimpleMem::Request::Write,
+//					0, initial_mem_contents.size(), initial_mem_contents);
+				lsq->setInitialMemory( 0, initial_mem_contents );
+//				memInstInterface->sendInitData( writeExe );
 
 				uint64_t initial_brk = (uint64_t) initial_mem_contents.size();
 				initial_brk = initial_brk + (64 - (initial_brk % 64));
@@ -1258,11 +1280,11 @@ void VanadisComponent::init(unsigned int phase) {
 	output->verbose(CALL_INFO, 2, 0, "End: init-phase: %" PRIu32 "...\n", (uint32_t) phase );
 }
 
-void VanadisComponent::handleIncomingDataCacheEvent( SimpleMem::Request* ev ) {
-	output->verbose(CALL_INFO, 16, 0, "-> Incoming d-cache event (addr=%p)...\n",
-		(void*) ev->addr);
-	lsq->processIncomingDataCacheEvent( output, ev );
-}
+//void VanadisComponent::handleIncomingDataCacheEvent( SimpleMem::Request* ev ) {
+//	output->verbose(CALL_INFO, 16, 0, "-> Incoming d-cache event (addr=%p)...\n",
+//		(void*) ev->addr);
+//	lsq->processIncomingDataCacheEvent( output, ev );
+//}
 
 void VanadisComponent::handleIncomingInstCacheEvent( SimpleMem::Request* ev ) {
 	output->verbose(CALL_INFO, 16, 0, "-> Incoming i-cache event (addr=%p)...\n",
@@ -1294,7 +1316,7 @@ void VanadisComponent::handleMisspeculate( const uint32_t hw_thr, const uint64_t
 	clearFuncUnit( hw_thr, fu_fp_div );
 	clearFuncUnit( hw_thr, fu_branch );
 
-	lsq->clearLSQByThreadID( output, hw_thr );
+	lsq->clearLSQByThreadID( hw_thr );
 	resetRegisterStacks( hw_thr );
 	clearROBMisspeculate(hw_thr);
 

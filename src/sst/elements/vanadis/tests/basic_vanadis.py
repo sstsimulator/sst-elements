@@ -10,22 +10,45 @@ sst.setStatisticLoadLevel(4)
 v_cpu_0 = sst.Component("v0", "vanadis.VanadisCPU")
 v_cpu_0.addParams({
        "clock" : "1.0GHz",
-       "executable" : "./tests/hello-mips", 
-       "max_cycle" : 7000,
+       "executable" : "./tests/hello-mips",
+#       "executable" : "./tests/inst-test/and",
+       "app.env_count" : 1,
+       "app.env0" : "HOME=/home/sdhammo",
+       "max_cycle" : 10000000,
        "verbose" : 16,
        "physical_fp_registers" : 96,
-       "print_int_reg" : 1
+       "print_int_reg" : 1,
+       "reorder_slots" : 2,
+      "decodes_per_cycle" : 2,
+      "issues_per_cycle" :  4,
+      "retires_per_cycle" : 4,
+      "lsq_store_entries" : 1,
+      "lsq_issued_stores_inflight" : 1,
+      "lsq_load_entries" : 1,
+      "lsq_issued_loads_inflight" : 1,
+      "pipeline_trace_file" : "pipe.trace"
 })
 
 decode0   = v_cpu_0.setSubComponent( "decoder0", "vanadis.VanadisMIPSDecoder" )
 os_hdlr   = decode0.setSubComponent( "os_handler", "vanadis.VanadisMIPSOSHandler" )
 
+decode0.addParams({
+
+})
+
 os_hdlr.addParams({
 	"verbose" : 16
 })
 
-dcache_if = v_cpu_0.setSubComponent( "mem_interface_data", "memHierarchy.memInterface" )
+#dcache_if = v_cpu_0.setSubComponent( "mem_interface_data", "memHierarchy.memInterface" )
 icache_if = v_cpu_0.setSubComponent( "mem_interface_inst", "memHierarchy.memInterface" )
+
+v_cpu_0_lsq = v_cpu_0.setSubComponent( "lsq", "vanadis.VanadisStandardLoadStoreQueue" )
+v_cpu_0_lsq.addParams({
+	"verbose" : 16
+})
+
+dcache_if = v_cpu_0_lsq.setSubComponent( "memory_interface", "memHierarchy.memInterface" )
 
 node_os = sst.Component("os", "vanadis.VanadisNodeOS")
 node_os.addParams({
@@ -94,6 +117,8 @@ cache_bus.addParams({
 memctrl = sst.Component("memory", "memHierarchy.MemController")
 memctrl.addParams({
       "clock" : "1GHz",
+      "backend.mem_size" : "4GiB",
+      "backing" : "malloc"
 })
 
 memory = memctrl.setSubComponent("backend", "memHierarchy.simpleMem")

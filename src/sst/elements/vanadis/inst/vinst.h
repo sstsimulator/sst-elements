@@ -227,9 +227,9 @@ public:
 	const VanadisDecoderOptions* getISAOptions() const {
 		return isa_options;
 	}
-protected:
-	void flagError() { trapError = true; }
 
+	void flagError() { trapError = true; }
+protected:
 	uint64_t id;
 	const uint64_t ins_address;
 	const uint32_t hw_thread;
