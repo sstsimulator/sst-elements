@@ -19,8 +19,12 @@ class MsgStream : public StreamBase {
     ~MsgStream() {
         m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_STREAM,"\n");
     }
-    bool isBlocked() {
-        return  m_recvEntry == NULL || m_blocked;
+    bool isBlocked( bool head ) {
+        if ( head ) {
+            return m_recvEntry == NULL;
+        } else {
+            return m_blocked;
+        }
     }
   protected:
     void processFirstPkt( FireflyNetworkEvent* ev ) {
