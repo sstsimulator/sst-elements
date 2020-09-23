@@ -60,7 +60,7 @@
             void needRecv( StreamBase* stream ) {
 
                 m_blockedStream = stream;
-                m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_CTX, "pid%d blocked, srcNode=%d srcPid=%d\n",
+                m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_CTX, "pid %d blocked, srcNode=%d srcPid=%d\n",
                     stream->getSrcPid(), stream->getSrcNode(), stream->getSrcPid() );
 
                 m_rm.m_nic.notifyNeedRecv( stream->getMyPid(), stream->getSrcNode(), stream->getSrcPid(), stream->length() );
