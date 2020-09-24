@@ -48,7 +48,7 @@ Nic::RecvMachine::StreamBase::~StreamBase() {
     }
 }
 
-bool Nic::RecvMachine::StreamBase::isBlocked()    {
+bool Nic::RecvMachine::StreamBase::isBlocked( bool )    {
     m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_STREAM,"%d\n",m_numPending == m_ctx->getMaxQsize());
     return m_numPending == m_ctx->getMaxQsize();
 }
@@ -132,6 +132,8 @@ bool Nic::RecvMachine::StreamBase::postedRecv( DmaRecvEntry* entry ) {
 
     m_blockedNeedRecv = NULL;
     event->clearHdr();
+    assert ( m_wakeupCallback );
+
     m_ctx->schedCallback( m_wakeupCallback );
     m_wakeupCallback = NULL;
     return true;
