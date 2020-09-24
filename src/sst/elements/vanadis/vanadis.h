@@ -36,6 +36,7 @@
 #include "vfuncunit.h"
 #include "lsq/vlsq.h"
 #include "lsq/vlsqstd.h"
+#include "lsq/vlsqseq.h"
 
 namespace SST {
 namespace Vanadis {
@@ -145,7 +146,7 @@ public:
 
     void printStatus( SST::Output& output );
 
-    void handleIncomingDataCacheEvent( SimpleMem::Request* ev );
+//    void handleIncomingDataCacheEvent( SimpleMem::Request* ev );
     void handleIncomingInstCacheEvent( SimpleMem::Request* ev );
 
     void handleMisspeculate( const uint32_t hw_thr, const uint64_t new_ip );

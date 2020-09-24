@@ -322,9 +322,6 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 
 	//////////////////////////////////////////////////////////////////////////////////////
 
-	lsq = loadUserSubComponent<SST::Vanadis::VanadisLoadStoreQueue>("lsq");
-	lsq->setRegisterFiles( &register_files );
-
 //	const uint64_t max_addr_mask = binary_elf_info->isELF32() ? 0xFFFFFFFF : UINT64_MAX;
 //	output->verbose(CALL_INFO, 8, 0, "Setting maximum address mask for the LSQ to: 0x%0llx (derived from ELF-32? %s)\n",
 //		max_addr_mask, binary_elf_info->isELF32() ? "yes" : "no");
@@ -348,19 +345,27 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 //        output->verbose(CALL_INFO, 8, 0, "-> LSQ Load Entries:             %" PRIu32 "\n", (uint32_t) lsq_load_size );
 //        output->verbose(CALL_INFO, 8, 0, "-> LSQ Loads In-flight:          %" PRIu32 "\n", (uint32_t) lsq_load_pending );
 
-    std::string pipeline_trace_path = params.find<std::string>("pipeline_trace_file", "");
-    
-    if( pipeline_trace_path == "" ) {
-    	output->verbose(CALL_INFO, 8, 0, "Pipeline trace output not specified, disabling.\n");
-    } else {
-    	output->verbose(CALL_INFO, 8, 0, "Opening a pipeline trace output at: %s\n",
-    		pipeline_trace_path.c_str());
-    	pipelineTrace = fopen( pipeline_trace_path.c_str(), "wt" );
-    	
-    	if( pipelineTrace == nullptr ) {
-    		output->fatal(CALL_INFO, -1, "Failed to open pipeline trace file.\n");
+    	std::string pipeline_trace_path = params.find<std::string>("pipeline_trace_file", "");
+
+    	if( pipeline_trace_path == "" ) {
+    		output->verbose(CALL_INFO, 8, 0, "Pipeline trace output not specified, disabling.\n");
+    	} else {
+    		output->verbose(CALL_INFO, 8, 0, "Opening a pipeline trace output at: %s\n",
+    			pipeline_trace_path.c_str());
+    		pipelineTrace = fopen( pipeline_trace_path.c_str(), "wt" );
+
+    		if( pipelineTrace == nullptr ) {
+    			output->fatal(CALL_INFO, -1, "Failed to open pipeline trace file.\n");
+    		}
     	}
-    }
+
+	lsq = loadUserSubComponent<SST::Vanadis::VanadisLoadStoreQueue>("lsq");
+
+	if( nullptr == lsq ) {
+		output->fatal(CALL_INFO, -1, "Error - unable to load the load-store queue (lsq subcomponent)\n");
+	}
+
+	lsq->setRegisterFiles( &register_files );
 
 	registerAsPrimaryComponent();
     	primaryComponentDoNotEndSim();
@@ -445,19 +450,19 @@ int VanadisComponent::performIssue( const uint64_t cycle ) {
 			// if we are a load and there is a store in front of us then it must not
 			// just have an ROB but it must also have issued to the LSQ or else we 
 			// could get a memory order violation
-			if( ins != nullptr ) {
-				if( ins->getInstFuncType() == INST_LOAD ) {
-					for( uint32_t j = 0; i < ins_index; ++j ) {
-						if( thread_decoders[i]->getDecodedQueue()->peekAt(j)->getInstFuncType() == INST_STORE ) {
-							if( ! thread_decoders[i]->getDecodedQueue()->peekAt(j)->completedIssue() ) {
-								ins = nullptr;
-								ins_index = UINT32_MAX;
-								break;
-							}
-						}
-					}
-				}
-			}
+			//if( ins != nullptr ) {
+			//	if( ins->getInstFuncType() == INST_LOAD ) {
+			//		for( uint32_t j = 0; i < ins_index; ++j ) {
+			//			if( thread_decoders[i]->getDecodedQueue()->peekAt(j)->getInstFuncType() == INST_STORE ) {
+			//				if( ! thread_decoders[i]->getDecodedQueue()->peekAt(j)->completedIssue() ) {
+			//					ins = nullptr;
+			//					ins_index = UINT32_MAX;
+			//					break;
+			//				}
+			//			}
+			//		}
+			//	}
+			//}
 		
 			// if the instruction isn't null we can try to allocate it
 			if( ins != nullptr ) {
@@ -494,6 +499,7 @@ int VanadisComponent::performIssue( const uint64_t cycle ) {
 						if( ins_index != UINT32_MAX ) {
 							thread_decoders[i]->getDecodedQueue()->removeAt( ins_index );
 						}
+						
 						ins->markIssued();
 					}
 				}

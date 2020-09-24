@@ -94,14 +94,14 @@ public:
 	VanadisStandardLoadStoreQueue( ComponentId_t id, Params& params ) :
 		VanadisLoadStoreQueue( id, params ), processingLLSC(false) {
 
-		max_mem_issued_stores = params.find<uint32_t>("lsq_store_pending");
-		max_mem_issued_loads  = params.find<uint32_t>("lsq_load_pending");
+		max_mem_issued_stores = params.find<uint32_t>("lsq_store_pending", 8);
+		max_mem_issued_loads  = params.find<uint32_t>("lsq_load_pending", 8);
 
-		max_queued_stores     = params.find<uint32_t>("lsq_store_entries");
-		max_queued_loads      = params.find<uint32_t>("lsq_load_entries");
+		max_queued_stores     = params.find<uint32_t>("lsq_store_entries", 8);
+		max_queued_loads      = params.find<uint32_t>("lsq_load_entries", 8);
 
-		max_stores_issue_per_cycle = params.find<uint32_t>("max_store_issue_per_cycle");
-		max_load_issue_per_cycle   = params.find<uint32_t>("max_load_issue_per_cycle");
+		max_stores_issue_per_cycle = params.find<uint32_t>("max_store_issue_per_cycle", 2);
+		max_load_issue_per_cycle   = params.find<uint32_t>("max_load_issue_per_cycle", 2);
 
 		memInterface = loadUserSubComponent<Interfaces::SimpleMem>("memory_interface", ComponentInfo::SHARE_PORTS |
 			ComponentInfo::INSERT_STATS, getTimeConverter("1ps"),
@@ -109,7 +109,13 @@ public:
 			&VanadisStandardLoadStoreQueue::processIncomingDataCacheEvent));
 
 		store_q = new VanadisCircularQueue<VanadisStoreRecord*>(max_mem_issued_stores);
-		registerFiles  = nullptr;
+
+		output->verbose(CALL_INFO, 2, 0, "LSQ Store Queue Length:               %" PRIu32 "\n", max_mem_issued_stores );
+		output->verbose(CALL_INFO, 2, 0, "LSQ Load Queue Length:                %" PRIu32 "\n", max_mem_issued_loads );
+		output->verbose(CALL_INFO, 2, 0, "LSQ Max Stores in Flight:             %" PRIu32 "\n", max_queued_stores );
+		output->verbose(CALL_INFO, 2, 0, "LSQ Max Loads in Flight:              %" PRIu32 "\n", max_queued_loads );
+		output->verbose(CALL_INFO, 2, 0, "LSQ Max Store issue/cycle:            %" PRIu32 "\n", max_stores_issue_per_cycle );
+		output->verbose(CALL_INFO, 2, 0, "LSQ Max Loads issue/cycle:            %" PRIu32 "\n", max_load_issue_per_cycle );
 	}
 
 	~VanadisStandardLoadStoreQueue() {
@@ -205,8 +211,9 @@ public:
 		for( auto next_load = load_q.begin(); next_load != load_q.end(); ) {
 			VanadisLoadInstruction* load_ins = (*next_load)->getAssociatedInstruction();
 
-			output->verbose(CALL_INFO, 16, 0, "-> LSQ inspect load record: (ins: 0x%0llx) executed? %s\n",
-				load_ins->getInstructionAddress(), (load_ins->completedExecution() ? "yes" : "no"));
+			output->verbose(CALL_INFO, 16, 0, "-> LSQ inspect load record: (ins: 0x%0llx, thr: %" PRIu32 ") executed? %s\n",
+				load_ins->getInstructionAddress(), load_ins->getHWThread(),
+				(load_ins->completedExecution() ? "yes" : "no"));
 
 			// If instruction has already been issued, we skip it, and will remove it
 			// from the queue later
@@ -216,6 +223,8 @@ public:
 
 			uint64_t load_address = 0;
 			uint16_t load_width   = 0;
+
+			assert( registerFiles != nullptr );
 
 			load_ins->computeLoadAddress( output, registerFiles->at( load_ins->getHWThread() ),
 				&load_address, &load_width );
@@ -707,7 +716,6 @@ protected:
 	VanadisCircularQueue<VanadisStoreRecord*>* store_q;
 	std::list<VanadisLoadRecord*> load_q;
 
-	std::vector<VanadisRegisterFile*>* registerFiles;
 	SimpleMem* memInterface;
 
 	uint32_t max_queued_stores;

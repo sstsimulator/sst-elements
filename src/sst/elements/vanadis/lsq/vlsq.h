@@ -12,6 +12,7 @@
 
 #include <cinttypes>
 #include <cstdint>
+#include <cassert>
 #include <vector>
 
 using namespace SST::Interfaces;
@@ -33,6 +34,8 @@ public:
 
 		uint32_t verbosity = params.find<uint32_t>("verbose");
 		output = new SST::Output( "[lsq]: ", verbosity, 0, SST::Output::STDOUT );
+
+		registerFiles = nullptr;
 	}
 
 	virtual ~VanadisLoadStoreQueue() {
@@ -40,6 +43,10 @@ public:
 	}
 
 	void setRegisterFiles( std::vector<VanadisRegisterFile*>* reg_f ) {
+		output->verbose(CALL_INFO, 8, 0, "Setting register files (%" PRIu32 " register files in set)\n",
+			(uint32_t) reg_f->size() );
+		assert( reg_f != nullptr );
+
 		registerFiles = reg_f;
 	}
 
