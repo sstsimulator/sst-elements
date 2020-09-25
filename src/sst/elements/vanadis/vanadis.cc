@@ -622,8 +622,9 @@ int VanadisComponent::performRetire( VanadisCircularQueue<VanadisInstruction*>* 
 			// If we are performing a clean up (means we executed and the delays are
 			// processed OK, then we are good to calculate branch-to locations.
 			if( perform_cleanup ) {
-				pipeline_reset_addr   = spec_ins->calculateAddress( output, register_files[rob_front->getHWThread()],
-					spec_ins->getInstructionAddress() );
+				pipeline_reset_addr   = spec_ins->getTakenAddress();
+					//spec_ins->calculateAddress( output, register_files[rob_front->getHWThread()],
+					//spec_ins->getInstructionAddress() );
 				// we have to clear the pipeline if we predict a branch to an address but we
 				// don't end up taking when we actually calculate the branch-to location
 				perform_pipelne_clear = spec_ins->getSpeculatedAddress() != pipeline_reset_addr;

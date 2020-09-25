@@ -33,6 +33,7 @@ public:
 		return new VanadisBranchRegCompareImmInstruction( *this );
 	}
 
+/*
 	virtual uint64_t calculateAddress( SST::Output* output, VanadisRegisterFile* reg_file, const uint64_t current_ip ) {
 		if( result_dir == BRANCH_TAKEN ) {
 			const uint64_t updated_address = (uint64_t) (((int64_t) getInstructionAddress()) + 4 + offset);
@@ -47,7 +48,7 @@ public:
 			return updated_address;
 		}
 	}
-
+*/
 	virtual const char* getInstCode() const { return "BCMPI"; }
 
 	virtual void printToBuffer(char* buffer, size_t buffer_size ) {
@@ -106,8 +107,10 @@ public:
 
 		if( compare_result ) {
 			result_dir = BRANCH_TAKEN;
+			takenAddress = (uint64_t) ( ((int64_t) getInstructionAddress()) +  offset + 4  );
 		} else {
 			result_dir = BRANCH_NOT_TAKEN;
+			takenAddress = calculateStandardNotTakenAddress();
 		}
 
 		markExecuted();

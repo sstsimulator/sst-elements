@@ -34,7 +34,7 @@ public:
 	VanadisBranchRegCompareImmLinkInstruction* clone() {
 		return new VanadisBranchRegCompareImmLinkInstruction( *this );
 	}
-
+/*
 	virtual uint64_t calculateAddress( SST::Output* output, VanadisRegisterFile* reg_file, const uint64_t current_ip ) {
 		if( result_dir == BRANCH_TAKEN ) {
 			const uint64_t updated_address = (uint64_t) ((int64_t) getInstructionAddress() + 4 + offset);
@@ -49,7 +49,7 @@ public:
 			return updated_address;
 		}
 	}
-
+*/
 	virtual const char* getInstCode() const { return "BCMPIL"; }
 
 	virtual void printToBuffer(char* buffer, size_t buffer_size ) {
@@ -108,6 +108,7 @@ public:
 
 		if( compare_result ) {
 			result_dir = BRANCH_TAKEN;
+			takenAddress = (uint64_t) ( ((int64_t) getInstructionAddress()) +  offset + 4  );
 
 			// Update the link address
 			// The link address is the address of the second instruction after the branch (so the instruction after the delay slot)
@@ -115,6 +116,7 @@ public:
 			regFile->setIntReg( phys_int_regs_out[0], link_address );
 		} else {
 			result_dir = BRANCH_NOT_TAKEN;
+			takenAddress = calculateStandardNotTakenAddress();
 		}
 
 		markExecuted();

@@ -60,16 +60,19 @@ public:
 			}
 */
 			speculatedAddress = UINT64_MAX;
+			takenAddress      = UINT64_MAX;
 		}
 
 	virtual ~VanadisSpeculatedInstruction() {}
 
 	virtual VanadisBranchDirection getSpeculatedDirection() const { return spec_dir; }
 	virtual void setSpeculatedDirection( const VanadisBranchDirection dir ) { spec_dir = dir; }
-	virtual uint64_t getSpeculatedAddress() { return speculatedAddress; }
+	virtual uint64_t getSpeculatedAddress() const { return speculatedAddress; }
 	virtual void setSpeculatedAddress( const uint64_t spec_ad ) { speculatedAddress = spec_ad; }
 
-	virtual uint64_t calculateAddress( SST::Output* output, VanadisRegisterFile* reg_file, const uint64_t current_ip ) = 0;
+//	virtual uint64_t calculateAddress( SST::Output* output, VanadisRegisterFile* reg_file, const uint64_t current_ip ) = 0;
+	virtual uint64_t getTakenAddress() const { return takenAddress; }
+
 	virtual VanadisBranchDirection getResultDirection( const VanadisRegisterFile* reg_file ) {
 		return result_dir;
 	}
@@ -102,6 +105,7 @@ protected:
 	VanadisBranchDirection result_dir;
 	VanadisDelaySlotRequirement delayType;
 	uint64_t speculatedAddress;
+	uint64_t takenAddress;
 
 };
 

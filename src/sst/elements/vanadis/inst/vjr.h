@@ -28,7 +28,7 @@ public:
 	VanadisJumpRegInstruction* clone() {
 		return new VanadisJumpRegInstruction( *this );
 	}
-
+/*
 	virtual uint64_t calculateAddress( SST::Output* output, VanadisRegisterFile* reg_file, const uint64_t current_ip ) {
 		const uint64_t jump_to = reg_file->getIntReg<uint64_t>( phys_int_regs_in[0] );
 
@@ -43,7 +43,7 @@ public:
 
 		return jump_to;
 	}
-
+*/
 	virtual const char* getInstCode() const { return "JR"; }
 
 	virtual void printToBuffer(char* buffer, size_t buffer_size ) {
@@ -54,6 +54,13 @@ public:
 	virtual void execute( SST::Output* output, VanadisRegisterFile* regFile ) {
 		output->verbose(CALL_INFO, 16, 0, "Execute: (addr=0x%0llx) JR   isa-in: %" PRIu16 " / phys-in: %" PRIu16 "\n",
 			getInstructionAddress(), isa_int_regs_in[0], phys_int_regs_in[0] );
+
+		takenAddress = regFile->getIntReg<uint64_t>( phys_int_regs_in[0] );
+
+		if( (takenAddress & 0x3) != 0 ) {
+			flagError();
+		}
+
 		markExecuted();
 	}
 
