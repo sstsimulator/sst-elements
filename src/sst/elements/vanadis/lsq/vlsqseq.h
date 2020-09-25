@@ -204,8 +204,9 @@ public:
 						reg_offset );
 						
 					if( store_addr < 4096 ) {
-						output->fatal(CALL_INFO, -1, "[fault] - address 0x%llx is less than 4096, indicates a segmentation fault (store-ins: 0x%llx)\n",
+						output->verbose(CALL_INFO, 16, 0, "[fault] - address 0x%llx is less than 4096, indicates a segmentation fault (store-ins: 0x%llx)\n",
 							store_addr, store_ins->getInstructionAddress() );
+						store_ins->flagError();
 					} else {
 						memInterface->sendRequest( new SimpleMem::Request( SimpleMem::Request::Write,
 							store_addr, store_width, payload ) );
@@ -253,36 +254,45 @@ public:
 						reg_offset);
 
 					if( target_reg != load_ins->getISAOptions()->getRegisterIgnoreWrites() ) {
-						//if( load_ins->isPartialLoad() ) {
-						char* reg_ptr = reg_file->getIntReg( target_reg );
-						reg_file->setIntReg( target_reg, (uint64_t) 0 );
+						if( load_ins->isPartialLoad() ) {
+							char* reg_ptr = reg_file->getIntReg( target_reg );
+							reg_file->setIntReg( target_reg, (uint64_t) 0 );
 						
-						for( uint16_t i = 0; i < ev->size; ++i ) {
-							reg_ptr[ reg_offset + i ] = ev->data[i];
-						}
-					
-						/*
+							for( uint16_t i = 0; i < ev->size; ++i ) {
+								reg_ptr[ reg_offset + i ] = ev->data[i];
+							}
 						} else {
 							int64_t value = 0;
 					
 							switch( load_width ) {
 							case 1:
-								 value = (int64_t)( *((int8_t*) ev->data[0]) );
-								 break;
+								{
+									int8_t* v_8 = (int8_t*) &ev->data[0];
+									value = (*v_8);
+								}
+								break;
 							case 2:
-								value = (int64_t)( *((int16_t*) ev->data[0]) );
-								 break;
+								{
+									int16_t* v_16 = (int16_t*) &ev->data[0];
+									value = (*v_16);
+								}
+								break;
 							case 4:
-								value = (int64_t)( *((int32_t*) ev->data[0]) );
-								 break;
+								{
+									int32_t* v_32 = (int32_t*) &ev->data[0];
+									value = (*v_32);
+								}
+								break;
 							case 8:
-								value = (int64_t)( *((int64_t*) ev->data[0]) );
-								 break;
+								{
+									int64_t* v_64 = (int64_t*) &ev->data[0];
+									value = (*v_64);
+								}
+								break;
 							}
-						
+
 							reg_file->setIntReg( target_reg, value );
 						}
-						*/
 					}
 					
 					// mark instruction as executed

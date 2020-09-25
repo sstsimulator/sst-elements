@@ -73,9 +73,9 @@ public:
 	}
 
 	virtual void computeLoadAddress( VanadisRegisterFile* reg, uint64_t* out_addr, uint16_t* width ) {
-		uint64_t tmp = reg->getIntReg<uint64_t>( phys_int_regs_in[0] );
+		int64_t tmp = reg->getIntReg<int64_t>( phys_int_regs_in[0] );
 
-		(*out_addr) = (tmp + offset);
+		(*out_addr) = (uint64_t) (tmp + offset);
 		(*width)    = load_width;
 	}
 
@@ -87,9 +87,9 @@ public:
                 output->verbose(CALL_INFO, 16, 0, "[execute-load]: offset           : %" PRIu64 "\n", offset);
                 output->verbose(CALL_INFO, 16, 0, "[execute-load]: (add)            : %" PRIu64 "\n", (mem_addr_reg_val + offset));
 
-		uint64_t tmp_val = regFile->getIntReg<uint64_t>( phys_int_regs_in[0] );
+		int64_t tmp_val = regFile->getIntReg<int64_t>( phys_int_regs_in[0] );
 
-		(*out_addr) = (tmp_val + offset);
+		(*out_addr) = (uint64_t) (tmp_val + offset);
 		(*width)    = load_width;
 	}
 

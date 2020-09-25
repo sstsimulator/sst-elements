@@ -22,7 +22,7 @@ public:
 		const uint32_t hw_thr,
 		const VanadisDecoderOptions* isa_opts,
 		const uint16_t memoryAddr,
-		const uint64_t offst,
+		const int64_t offst,
 		const uint16_t valueReg,
 		const uint16_t store_bytes,
 		VanadisMemoryTransaction accessT) :
@@ -72,7 +72,7 @@ public:
 	}
 
 	virtual void printToBuffer(char* buffer, size_t buffer_size) {
-		snprintf(buffer, buffer_size, "STORE (%s)   %5" PRIu16 " -> memory[%5" PRIu16 " + %" PRIu64 "] (phys: %5" PRIu16 " -> memory[%5" PRIu16 " + %" PRIu64 "])",
+		snprintf(buffer, buffer_size, "STORE (%s)   %5" PRIu16 " -> memory[%5" PRIu16 " + %" PRId64 "] (phys: %5" PRIu16 " -> memory[%5" PRIu16 " + %" PRId64 "])",
 			getTransactionTypeString(memAccessType), isa_int_regs_in[1], isa_int_regs_in[0], offset,
 			phys_int_regs_in[1], phys_int_regs_in[0], offset);
         }
@@ -84,10 +84,13 @@ public:
 	}
 
 	virtual void computeStoreAddress( SST::Output* output, VanadisRegisterFile* reg, uint64_t* store_addr, uint16_t* op_width ) {
-		const uint64_t reg_tmp = reg->getIntReg<uint64_t>( phys_int_regs_in[0] );
+		const int64_t reg_tmp = reg->getIntReg<int64_t>( phys_int_regs_in[0] );
 
-                (*store_addr)  = reg_tmp + offset;
+                (*store_addr)  = (uint64_t)( reg_tmp + offset );
 		(*op_width)    = store_width;
+
+		output->verbose(CALL_INFO, 16, 0, "Execute: store addr-reg: %" PRIu16 " / val-reg: %" PRIu16 " / offset: %" PRId64 " / width: %" PRIu16 " / store-addr: %" PRIu64 "\n",
+			phys_int_regs_in[0], phys_int_regs_in[1], offset, store_width, (*store_addr) );
         }
 
 	uint16_t getStoreWidth() const {
@@ -103,7 +106,7 @@ public:
 	VanadisStoreRegisterType getValueRegisterType() const { return STORE_INT_REGISTER; }
 
 protected:
-	const uint64_t offset;
+	const int64_t offset;
 	const uint16_t store_width;
 	VanadisMemoryTransaction memAccessType;
 

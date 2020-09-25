@@ -647,6 +647,19 @@ int VanadisComponent::performRetire( VanadisCircularQueue<VanadisInstruction*>* 
 		if( perform_cleanup ) {
 			rob->pop();
 		
+			output->verbose(CALL_INFO, 8, 0, "----> Retire: %" PRIu64 " (0x%0llx / %s)\n",
+				rob_front->getID(), rob_front->getInstructionAddress(), rob_front->getInstCode() );
+
+			recoverRetiredRegisters( rob_front, int_register_stacks[rob_front->getHWThread()],
+				fp_register_stacks[rob_front->getHWThread()],
+				issue_isa_tables[rob_front->getHWThread()],
+				retire_isa_tables[rob_front->getHWThread()] );
+			
+			if( pipelineTrace != nullptr ) {
+				fprintf( pipelineTrace, "0x%llx %s\n",
+					rob_front->getInstructionAddress(), rob_front->getInstCode() );
+			}
+
 			if( perform_delay_cleanup ) {
 				VanadisInstruction* delay_ins = rob->pop();
 			
@@ -666,14 +679,6 @@ int VanadisComponent::performRetire( VanadisCircularQueue<VanadisInstruction*>* 
 				delete delay_ins;
 			}
 
-			output->verbose(CALL_INFO, 8, 0, "----> Retire: %" PRIu64 " (0x%0llx / %s)\n",
-				rob_front->getID(), rob_front->getInstructionAddress(), rob_front->getInstCode() );
-
-			recoverRetiredRegisters( rob_front, int_register_stacks[rob_front->getHWThread()],
-				fp_register_stacks[rob_front->getHWThread()],
-				issue_isa_tables[rob_front->getHWThread()],
-				retire_isa_tables[rob_front->getHWThread()] );
-
 			retire_isa_tables[rob_front->getHWThread()]->print(output,
 				register_files[rob_front->getHWThread()], print_int_reg, print_fp_reg);
 
@@ -681,11 +686,6 @@ int VanadisComponent::performRetire( VanadisCircularQueue<VanadisInstruction*>* 
 				output->verbose(CALL_INFO, 8, 0, "----> perform a pipeline clear thread %" PRIu32 ", reset to address: 0x%llx\n",
 					rob_front->getHWThread(), pipeline_reset_addr);
 				handleMisspeculate( rob_front->getHWThread(), pipeline_reset_addr );
-			}
-			
-			if( pipelineTrace != nullptr ) {
-				fprintf( pipelineTrace, "0x%llx %s\n",
-					rob_front->getInstructionAddress(), rob_front->getInstCode() );
 			}
 			
 			delete rob_front;
