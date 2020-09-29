@@ -44,18 +44,7 @@ public:
 			snprintf(buffer, buffer_size, "JLR     link-reg: %" PRIu16 " addr-reg: %" PRIu16 "\n",
 				isa_int_regs_out[0], isa_int_regs_in[0]);
 		}
-/*
-		virtual uint64_t calculateAddress( SST::Output* output, VanadisRegisterFile* reg_file, const uint64_t current_ip ) {
-			const uint64_t jump_to = reg_file->getIntReg<uint64_t>( phys_int_regs_in[0] );
 
-			if( 0 == jump_to ) {
-				output->fatal(CALL_INFO, -1, "[jump]: (ins: 0x%0llx) jump to virtual address zero detected, this is usually bad so overriding (set to: 0x%0llx)\n",
-					getInstructionAddress(), jump_to );
-			}
-
-			return jump_to;
-		}
-*/
 		virtual void execute( SST::Output* output, VanadisRegisterFile* regFile ) {
 			output->verbose(CALL_INFO, 16, 0, "Execute: addr=(0x%0llx) JLR isa-link: %" PRIu16 " isa-addr: %" PRIu16 " phys-link: %" PRIu16 " phys-addr: %" PRIu16 "\n",
 				getInstructionAddress(), isa_int_regs_out[0], isa_int_regs_in[0], phys_int_regs_out[0], phys_int_regs_in[0]);
@@ -68,6 +57,10 @@ public:
 			output->verbose(CALL_INFO, 16, 0, "Execute JLR jump-to: 0x%0llx link-value: 0x%0llx\n", jump_to, link_value);
 
 			takenAddress = regFile->getIntReg<uint64_t>( phys_int_regs_in[0] );
+
+			if( (takenAddress & 0x3) != 0 ) {
+				flagError();
+			}
 
 			markExecuted();
 		}

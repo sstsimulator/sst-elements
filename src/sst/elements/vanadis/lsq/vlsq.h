@@ -35,6 +35,8 @@ public:
 		uint32_t verbosity = params.find<uint32_t>("verbose");
 		output = new SST::Output( "[lsq]: ", verbosity, 0, SST::Output::STDOUT );
 
+		address_mask = params.find<uint64_t>("address_mask", 0xFFFFFFFFFFFFFFFF );
+		
 		registerFiles = nullptr;
 	}
 
@@ -68,6 +70,7 @@ public:
 	virtual void setInitialMemory( const uint64_t address, std::vector<uint8_t>& payload ) = 0;
 
 protected:
+	uint64_t address_mask;
 	std::vector<VanadisRegisterFile*>* registerFiles;
 	SST::Output* output;
 

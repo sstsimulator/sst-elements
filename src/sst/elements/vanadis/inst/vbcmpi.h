@@ -107,7 +107,7 @@ public:
 
 		if( compare_result ) {
 			result_dir = BRANCH_TAKEN;
-			takenAddress = (uint64_t) ( ((int64_t) getInstructionAddress()) +  offset + 4  );
+			takenAddress = (uint64_t) ( ((int64_t) getInstructionAddress()) +  offset + VANADIS_SPECULATE_JUMP_ADDR_ADD );
 		} else {
 			result_dir = BRANCH_NOT_TAKEN;
 			takenAddress = calculateStandardNotTakenAddress();

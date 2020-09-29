@@ -215,8 +215,8 @@ public:
 			}
 			env_data_block.push_back( (uint8_t)('\0') );
 		}
-		env_start_offsets.push_back( env_data_block.size() );
-		vanadis_vec_copy_in<char>( env_data_block, '\0' );
+//		env_start_offsets.push_back( env_data_block.size() );
+//		vanadis_vec_copy_in<char>( env_data_block, '\0' );
 
 		delete[] env_var_name;
 
@@ -240,6 +240,7 @@ public:
 
 		std::vector<uint8_t> aux_data_block;
 
+		// AT_EXECFD (file descriptor of the executable)
 		vanadis_vec_copy_in<int>( aux_data_block, 2    );
 		vanadis_vec_copy_in<int>( aux_data_block, 4    );
 
@@ -247,16 +248,21 @@ public:
 		vanadis_vec_copy_in<int>( aux_data_block, (int) phdr_address );
 
 		vanadis_vec_copy_in<int>( aux_data_block, 4    );
-		vanadis_vec_copy_in<int>( aux_data_block, (int) elf_info->getProgramHeaderEntryCount() );
-
-		vanadis_vec_copy_in<int>( aux_data_block, 5    );
 		vanadis_vec_copy_in<int>( aux_data_block, (int) elf_info->getProgramHeaderEntrySize() );
 
+		vanadis_vec_copy_in<int>( aux_data_block, 5    );
+		vanadis_vec_copy_in<int>( aux_data_block, (int) elf_info->getProgramHeaderEntryCount() );
+
+		// System page size
 		vanadis_vec_copy_in<int>( aux_data_block, 6    );
 		vanadis_vec_copy_in<int>( aux_data_block, 4096 );
 
 		vanadis_vec_copy_in<int>( aux_data_block, 9    );
 		vanadis_vec_copy_in<int>( aux_data_block, (int) elf_info->getEntryPoint() );
+
+		// AT_BASE (base address loaded into)
+		vanadis_vec_copy_in<int>( aux_data_block, 7    );
+		vanadis_vec_copy_in<int>( aux_data_block, 0    );
 
 		// Not ELF
 		vanadis_vec_copy_in<int>( aux_data_block, 10   );
@@ -278,17 +284,13 @@ public:
 		vanadis_vec_copy_in<int>( aux_data_block, 14   );
 		vanadis_vec_copy_in<int>( aux_data_block, 2000 );
 
-//		int aux_dcache_linesize = 19;
-//		int aux_dcache_linesize_value = 64;
-//
-//		vanadis_vec_copy_in<int>( aux_data_block, aux_dcache_linesize );
-//		vanadis_vec_copy_in<int>( aux_data_block, aux_dcache_linesize_value );
-//
-//		int aux_icache_linesize = 20;
-//		int aux_icache_linesize_value = 64;
-//
-//		vanadis_vec_copy_in<int>( aux_data_block, aux_icache_linesize );
-//		vanadis_vec_copy_in<int>( aux_data_block, aux_icache_linesize_value );
+		// D-Cache Line Size
+		vanadis_vec_copy_in<int>( aux_data_block, 19 	);
+		vanadis_vec_copy_in<int>( aux_data_block, 64    );
+
+		// I-Cache Line Size
+		vanadis_vec_copy_in<int>( aux_data_block, 20 	);
+		vanadis_vec_copy_in<int>( aux_data_block, 64 	);
 
 		// AT_SECURE?
 		vanadis_vec_copy_in<int>( aux_data_block, 23   );
@@ -330,7 +332,6 @@ public:
 
 		// Allocate 64 zeros for now
 		std::vector<uint8_t> stack_data;
-		//stack_data.resize(64, 0);
 
 		const uint64_t arg_env_data_start = start_stack_address + (arg_env_space_needed * 4);
 

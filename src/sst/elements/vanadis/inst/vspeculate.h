@@ -5,6 +5,8 @@
 #include "inst/vinst.h"
 #include "inst/vdelaytype.h"
 
+#define VANADIS_SPECULATE_JUMP_ADDR_ADD 4
+
 namespace SST {
 namespace Vanadis {
 

@@ -46,6 +46,10 @@ public:
 	}
 
 	virtual void execute( SST::Output* output, VanadisRegisterFile* regFile ) {
+		if( (takenAddress & 0x3) != 0 ) {
+			flagError();
+		}
+
 		markExecuted();
 	}
 

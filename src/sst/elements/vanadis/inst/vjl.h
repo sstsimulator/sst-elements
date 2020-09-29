@@ -56,6 +56,10 @@ public:
 
 		regFile->setIntReg( phys_int_regs_out[0], link_value );
 
+		if( (takenAddress & 0x3) != 0 ) {
+			flagError();
+		}
+
 		markExecuted();
 	}
 

@@ -127,10 +127,10 @@ public:
 
 		if( compare_result ) {
 			result_dir   = BRANCH_TAKEN;
-			takenAddress = (uint64_t) ( ((int64_t) getInstructionAddress()) +  offset + 4 );
+			takenAddress = (uint64_t) ( ((int64_t) getInstructionAddress()) +  offset + VANADIS_SPECULATE_JUMP_ADDR_ADD );
 
-			output->verbose(CALL_INFO, 16, 0, "-----> taken-address: 0x%llx + %" PRId64 " + 4 = 0x%llx\n",
-				getInstructionAddress(), offset, takenAddress);
+			output->verbose(CALL_INFO, 16, 0, "-----> taken-address: 0x%llx + %" PRId64 " + %d = 0x%llx\n",
+				getInstructionAddress(), offset, VANADIS_SPECULATE_JUMP_ADDR_ADD, takenAddress);
 		} else {
 			result_dir = BRANCH_NOT_TAKEN;
 			takenAddress = calculateStandardNotTakenAddress();

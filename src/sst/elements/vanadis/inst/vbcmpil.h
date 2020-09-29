@@ -108,7 +108,7 @@ public:
 
 		if( compare_result ) {
 			result_dir = BRANCH_TAKEN;
-			takenAddress = (uint64_t) ( ((int64_t) getInstructionAddress()) +  offset + 4  );
+			takenAddress = (uint64_t) ( ((int64_t) getInstructionAddress()) +  offset + VANADIS_SPECULATE_JUMP_ADDR_ADD );
 
 			// Update the link address
 			// The link address is the address of the second instruction after the branch (so the instruction after the delay slot)

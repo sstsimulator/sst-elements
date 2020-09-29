@@ -164,6 +164,7 @@ public:
 
 				output->verbose( CALL_INFO, 8, 0, "--> issue load for 0x%llx width: %" PRIu16 " bytes.\n",
 					load_addr, load_width );
+				load_addr = load_addr & address_mask;
 				
 				SimpleMem::Request* load_req = new SimpleMem::Request( SimpleMem::Request::Read,
 					load_addr, load_width );
@@ -193,6 +194,7 @@ public:
 					char* reg_ptr = reg_file->getIntReg( value_reg );
 					
 					store_ins->computeStoreAddress( output, reg_file, &store_addr, &store_width );
+					store_addr = store_addr & address_mask;
 					
 					for( uint16_t i = 0; i < store_width; ++i ) {
 						payload.push_back( reg_ptr[reg_offset + i] );

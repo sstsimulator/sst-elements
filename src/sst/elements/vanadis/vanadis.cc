@@ -1211,7 +1211,7 @@ void VanadisComponent::init(unsigned int phase) {
 
 				// Populate the memory with contents from the binary
 				output->verbose(CALL_INFO, 2, 0, "-> populating memory contents with info from the executable...\n");
-
+/*
   				for( size_t i = 0; i < binary_elf_info->countProgramHeaders(); ++i ) {
 					const VanadisELFProgramHeaderEntry* next_prog_hdr = binary_elf_info->getProgramHeader(i);
 
@@ -1235,29 +1235,71 @@ void VanadisComponent::init(unsigned int phase) {
 							next_prog_hdr->getHeaderImageLength(), 1, exec_file);
 					}
 				}
-
+*/
 				for( size_t i = 0; i < binary_elf_info->countProgramSections(); ++i ) {
 					const VanadisELFProgramSectionEntry* next_sec = binary_elf_info->getProgramSection( i );
 
-					if( (SECTION_HEADER_PROG_DATA == next_sec->getSectionType()) ||
-						(SECTION_HEADER_BSS == next_sec->getSectionType()) ) {
-
+					if( SECTION_HEADER_PROG_DATA == next_sec->getSectionType() ) {
 						output->verbose(CALL_INFO, 2, 0, ">> Loading Section (%" PRIu64 ") from executable at: 0x%0llx, len=%" PRIu64 "...\n",
 							next_sec->getID(), next_sec->getVirtualMemoryStart(), next_sec->getImageLength());
 
-						const uint64_t padding = 4096 - ((next_sec->getVirtualMemoryStart() + next_sec->getImageLength()) % 4096);
+						if( next_sec->getVirtualMemoryStart() > 0 ) {
+							const uint64_t padding = 4096 - ((next_sec->getVirtualMemoryStart() + next_sec->getImageLength()) % 4096);
 
-						// Executable data, let's load it in
-						if( initial_mem_contents.size() < (next_sec->getVirtualMemoryStart() + next_sec->getImageLength()) ) {
-							size_t size_now = initial_mem_contents.size();
-							initial_mem_contents.resize( next_sec->getVirtualMemoryStart() + next_sec->getImageLength() +
-								padding, 0 );
+							// Executable data, let's load it in
+							if( initial_mem_contents.size() < (next_sec->getVirtualMemoryStart() + next_sec->getImageLength()) ) {
+								size_t size_now = initial_mem_contents.size();
+								initial_mem_contents.resize( next_sec->getVirtualMemoryStart() + next_sec->getImageLength() +
+									padding, 0 );
+							}
+
+							// Find the section and read it all in
+							fseek( exec_file, next_sec->getImageOffset(), SEEK_SET );
+							fread( &initial_mem_contents[next_sec->getVirtualMemoryStart()],
+								next_sec->getImageLength(), 1, exec_file);
+						} else {
+							output->verbose(CALL_INFO, 2, 0, "--> Not loading because virtual address is zero.\n");
 						}
+					} else if( SECTION_HEADER_BSS == next_sec->getSectionType() ) {
+						output->verbose(CALL_INFO, 2, 0, ">> Loading BSS Section (%" PRIu64 ") with zeroing at 0x%0llx, len=%" PRIu64 "\n",
+							next_sec->getID(), next_sec->getVirtualMemoryStart(), next_sec->getImageLength());
 
-						// Find the section and read it all in
-						fseek( exec_file, next_sec->getImageOffset(), SEEK_SET );
-						fread( &initial_mem_contents[next_sec->getVirtualMemoryStart()],
-							next_sec->getImageLength(), 1, exec_file);
+						if( next_sec->getVirtualMemoryStart() > 0 ) {
+							const uint64_t padding = 4096 - ((next_sec->getVirtualMemoryStart() + next_sec->getImageLength()) % 4096);
+
+       		                                         // Resize if needed with zeroing
+               		                                 if( initial_mem_contents.size() < (next_sec->getVirtualMemoryStart() + next_sec->getImageLength()) ) {
+                        	                                size_t size_now = initial_mem_contents.size();
+                                	                        initial_mem_contents.resize( next_sec->getVirtualMemoryStart() + next_sec->getImageLength() +
+                                       		                         padding, 0 );
+                                                	}
+
+							// Zero out the section according to the Section header info
+							std::memset( &initial_mem_contents[next_sec->getVirtualMemoryStart()], 0, next_sec->getImageLength());
+						} else {
+							output->verbose(CALL_INFO, 2, 0, "--> Not loading because virtual address is zero.\n");
+						}
+					} else {
+						if( next_sec->isAllocated() ) {
+							output->verbose(CALL_INFO, 2, 0, ">> Loading Allocatable Section (%" PRIu64 ") at 0x%0llx, len: %" PRIu64 "\n",
+								next_sec->getID(), next_sec->getVirtualMemoryStart(), next_sec->getImageLength());
+
+							if( next_sec->getVirtualMemoryStart() > 0 ) {
+								const uint64_t padding = 4096 - ((next_sec->getVirtualMemoryStart() + next_sec->getImageLength()) % 4096);
+
+                        	                                 // Resize if needed with zeroing
+                	                                         if( initial_mem_contents.size() < (next_sec->getVirtualMemoryStart() + next_sec->getImageLength()) ) {
+        	                                                        size_t size_now = initial_mem_contents.size();
+	                                                                initial_mem_contents.resize( next_sec->getVirtualMemoryStart() + next_sec->getImageLength() +
+                                                                	         padding, 0 );
+                                                        	}
+
+								// Find the section and read it all in
+	                                                        fseek( exec_file, next_sec->getImageOffset(), SEEK_SET );
+        	                                                fread( &initial_mem_contents[next_sec->getVirtualMemoryStart()],
+                	                                                next_sec->getImageLength(), 1, exec_file);
+							}
+						}
 					}
 				}
 
