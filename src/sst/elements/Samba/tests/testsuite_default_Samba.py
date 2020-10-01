@@ -40,23 +40,23 @@ class testcase_Samba_Component(SSTTestCase):
 
 #####
 
-    @unittest.skipIf(get_testing_num_ranks() > 2, "Samba: test_Samba_gupsgen_mmu skipped if ranks > 2")
+    @unittest.skipIf(testing_check_get_num_ranks() > 2, "Samba: test_Samba_gupsgen_mmu skipped if ranks > 2")
     def test_Samba_gupsgen_mmu(self):
         self.Samba_test_template("gupsgen_mmu")
 
-    @unittest.skipIf(get_testing_num_ranks() > 2, "Samba: test_Samba_gupsgen_mmu_4KB skipped if ranks > 2")
+    @unittest.skipIf(testing_check_get_num_ranks() > 2, "Samba: test_Samba_gupsgen_mmu_4KB skipped if ranks > 2")
     def test_Samba_gupsgen_mmu_4KB(self):
         self.Samba_test_template("gupsgen_mmu_4KB")
 
-    @unittest.skipIf(get_testing_num_ranks() > 2, "Samba: test_Samba_gupsgen_mmu_three_levels skipped if ranks > 2")
+    @unittest.skipIf(testing_check_get_num_ranks() > 2, "Samba: test_Samba_gupsgen_mmu_three_levels skipped if ranks > 2")
     def test_Samba_gupsgen_mmu_three_levels(self):
         self.Samba_test_template("gupsgen_mmu_three_levels")
 
-    @unittest.skipIf(get_testing_num_ranks() > 2, "Samba: test_Samba_stencil3dbench_mmu skipped if ranks > 2")
+    @unittest.skipIf(testing_check_get_num_ranks() > 2, "Samba: test_Samba_stencil3dbench_mmu skipped if ranks > 2")
     def test_Samba_stencil3dbench_mmu(self):
         self.Samba_test_template("stencil3dbench_mmu")
 
-    @unittest.skipIf(get_testing_num_ranks() > 2, "Samba: test_Samba_streambench_mmu skipped if ranks > 2")
+    @unittest.skipIf(testing_check_get_num_ranks() > 2, "Samba: test_Samba_streambench_mmu skipped if ranks > 2")
     def test_Samba_streambench_mmu(self):
         self.Samba_test_template("streambench_mmu")
 
@@ -90,7 +90,7 @@ class testcase_Samba_Component(SSTTestCase):
         #       DEVELOPER AGAINST THE LATEST VERSION OF SST TO SEE IF THE
         #       TESTS & RESULT FILES ARE STILL VALID
 
-        cmp_result = compare_diff(outfile, reffile)
+        cmp_result = testing_compare_diff(outfile, reffile)
         if cmp_result != True:
             # We need to use some bailing wire to allow serialization
             # branch to work with same reference files

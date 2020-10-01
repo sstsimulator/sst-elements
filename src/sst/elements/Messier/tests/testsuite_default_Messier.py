@@ -75,7 +75,7 @@ class testcase_Messier_Component(SSTTestCase):
 
         self.run_sst(sdlfile, outfile, errfile, mpi_out_files=mpioutfiles, timeout_sec=120)
 
-        remove_component_warning_from_file(outfile)
+        testing_remove_component_warning_from_file(outfile)
 
         # Perform the tests
         self.assertFalse(os_test_file(errfile, "-s"), "Messier test {0} has Non-empty Error File {1}".format(testDataFileName, errfile))
@@ -86,7 +86,7 @@ class testcase_Messier_Component(SSTTestCase):
         #       TESTS & RESULT FILES ARE STILL VALID
 
         # Perform the test
-        cmp_result = compare_sorted_diff(testcase, outfile, reffile)
+        cmp_result = testing_compare_sorted_diff(testcase, outfile, reffile)
 
         # Special case handling of stencil3dbench_messier
         if not cmp_result and testcase == "stencil3dbench_messier":

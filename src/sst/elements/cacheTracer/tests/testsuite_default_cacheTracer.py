@@ -42,7 +42,7 @@ class testcase_cacheTracer_Component(SSTTestCase):
     def test_cacheTracer_1(self):
         self.cacheTracer_test_template_1()
 
-    @unittest.skipIf(get_testing_num_ranks() > 1, "CacheTracer: test_cacheTracer_2 skipped if ranks > 1")
+    @unittest.skipIf(testing_check_get_num_ranks() > 1, "CacheTracer: test_cacheTracer_2 skipped if ranks > 1")
     def test_cacheTracer_2(self):
         self.cacheTracer_test_template_2()
 
@@ -51,8 +51,8 @@ class testcase_cacheTracer_Component(SSTTestCase):
     def cacheTracer_test_template_1(self):
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
-        outdir = get_test_output_run_dir()
-        tmpdir = get_test_output_tmp_dir()
+        outdir = self.get_test_output_run_dir()
+        tmpdir = self.get_test_output_tmp_dir()
 
         # Set the various file paths
         testDataFileName="test_cacheTracer_1"
@@ -71,7 +71,7 @@ class testcase_cacheTracer_Component(SSTTestCase):
         #       TESTS & RESULT FILES ARE STILL VALID
 
         # Perform the test
-        cmp_result = compare_sorted_diff(testDataFileName, outfile, reffile)
+        cmp_result = testing_compare_sorted_diff(testDataFileName, outfile, reffile)
         self.assertTrue(cmp_result, "Sorted Output file {0} does not match sorted Reference File {1}".format(outfile, reffile))
 
 ###
@@ -106,6 +106,6 @@ class testcase_cacheTracer_Component(SSTTestCase):
         #       TESTS & RESULT FILES ARE STILL VALID
 
         # Perform the test
-        cmp_result = compare_diff(out_memRefFile, reffile, ignore_ws=True)
+        cmp_result = testing_compare_diff(out_memRefFile, reffile, ignore_ws=True)
         self.assertTrue(cmp_result, "File {0} does not match Reference File {1} ignoring whitespace".format(out_memRefFile, reffile))
 

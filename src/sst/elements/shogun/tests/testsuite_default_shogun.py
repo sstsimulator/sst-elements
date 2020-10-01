@@ -64,7 +64,7 @@ class testcase_shogun(SSTTestCase):
 
         self.run_sst(sdlfile, outfile, errfile, mpi_out_files=mpioutfiles)
 
-        remove_component_warning_from_file(outfile)
+        testing_remove_component_warning_from_file(outfile)
 
         # NOTE: THE PASS / FAIL EVALUATIONS ARE PORTED FROM THE SQE BAMBOO
         #       BASED testSuite_XXX.sh THESE SHOULD BE RE-EVALUATED BY THE
@@ -74,6 +74,6 @@ class testcase_shogun(SSTTestCase):
         # Perform the tests
         self.assertFalse(os_test_file(errfile, "-s"), "shogun test {0} has Non-empty Error File {1}".format(testDataFileName, errfile))
 
-        cmp_result = compare_sorted_diff(testcase, outfile, reffile)
+        cmp_result = testing_compare_sorted_diff(testcase, outfile, reffile)
         self.assertTrue(cmp_result, "Sorted Output file {0} does not match sorted Reference File {1}".format(outfile, reffile))
 

@@ -67,5 +67,5 @@ class testcase_kingsley_Component(SSTTestCase):
         #       TESTS & RESULT FILES ARE STILL VALID
 
         # Perform the test
-        cmp_result = compare_sorted_diff(testcase, outfile, reffile)
+        cmp_result = testing_compare_sorted_diff(testcase, outfile, reffile)
         self.assertTrue(cmp_result, "Sorted Output file {0} does not match sorted Reference File {1}".format(outfile, reffile))

@@ -39,7 +39,7 @@ class testcase_miranda_Component(SSTTestCase):
 
 #####
 
-    @unittest.skipIf(get_testing_num_ranks() > 2, "miranda: test_miranda_singlestream skipped if ranks > 2")
+    @unittest.skipIf(testing_check_get_num_ranks() > 2, "miranda: test_miranda_singlestream skipped if ranks > 2")
     def test_miranda_singlestream(self):
         self.miranda_test_template("singlestream")
 
@@ -83,7 +83,7 @@ class testcase_miranda_Component(SSTTestCase):
 
         self.run_sst(sdlfile, outfile, errfile, mpi_out_files=mpioutfiles, timeout_sec=timeout)
 
-#        remove_component_warning_from_file(outfile)
+#        testing_remove_component_warning_from_file(outfile)
 
         # NOTE: THE PASS / FAIL EVALUATIONS ARE PORTED FROM THE SQE BAMBOO
         #       BASED testSuite_XXX.sh THESE SHOULD BE RE-EVALUATED BY THE
@@ -94,5 +94,5 @@ class testcase_miranda_Component(SSTTestCase):
         self.assertFalse(os_test_file(errfile, "-s"), "miranda test {0} has Non-empty Error File {1}".format(testDataFileName, errfile))
 
         # Perform the test
-        cmp_result = compare_sorted_diff(testcase, outfile, reffile)
+        cmp_result = testing_compare_sorted_diff(testcase, outfile, reffile)
 

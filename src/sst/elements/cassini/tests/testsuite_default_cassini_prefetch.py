@@ -39,18 +39,18 @@ class testcase_cassini_prefetch(SSTTestCase):
 
 #####
 
-    @unittest.skipIf(get_testing_num_ranks() > 3, "memH: test_cassini_prefetch_none skipped if ranks > 3")
-    @unittest.skipIf(get_testing_num_threads() > 3, "memH: test_cassini_prefetch_none skipped if threads > 3")
+    @unittest.skipIf(testing_check_get_num_ranks() > 3, "memH: test_cassini_prefetch_none skipped if ranks > 3")
+    @unittest.skipIf(testing_check_get_num_threads() > 3, "memH: test_cassini_prefetch_none skipped if threads > 3")
     def test_cassini_prefetch_none(self):
         self.cassini_prefetch_test_template("nopf")
 
-    @unittest.skipIf(get_testing_num_ranks() > 3, "memH: test_cassini_prefetch_stride skipped if ranks > 3")
-    @unittest.skipIf(get_testing_num_threads() > 3, "memH: test_cassini_prefetch_stride skipped if threads > 3")
+    @unittest.skipIf(testing_check_get_num_ranks() > 3, "memH: test_cassini_prefetch_stride skipped if ranks > 3")
+    @unittest.skipIf(testing_check_get_num_threads() > 3, "memH: test_cassini_prefetch_stride skipped if threads > 3")
     def test_cassini_prefetch_stride(self):
         self.cassini_prefetch_test_template("sp")
 
-    @unittest.skipIf(get_testing_num_ranks() > 3, "memH: test_cassini_prefetch_nextblock skipped if ranks > 3")
-    @unittest.skipIf(get_testing_num_threads() > 3, "memH: test_cassini_prefetch_nextblock skipped if threads > 3")
+    @unittest.skipIf(testing_check_get_num_ranks() > 3, "memH: test_cassini_prefetch_nextblock skipped if ranks > 3")
+    @unittest.skipIf(testing_check_get_num_threads() > 3, "memH: test_cassini_prefetch_nextblock skipped if threads > 3")
     def test_cassini_prefetch_nextblock(self):
         self.cassini_prefetch_test_template("nbp")
 
@@ -81,5 +81,5 @@ class testcase_cassini_prefetch(SSTTestCase):
         # Perform the tests
         self.assertFalse(os_test_file(errfile, "-s"), "cassini_prefetch test {0} has Non-empty Error File {1}".format(testDataFileName, errfile))
 
-        cmp_result = compare_sorted_diff(testcase, outfile, reffile)
+        cmp_result = testing_compare_sorted_diff(testcase, outfile, reffile)
         self.assertTrue(cmp_result, "Sorted Output file {0} does not match sorted Reference File {1}".format(outfile, reffile))

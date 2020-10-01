@@ -100,7 +100,7 @@ class testcase_QOS(SSTTestCase):
 
 
         # Look for a direct match
-        cmp_result = compare_diff(outfile, reffile)
+        cmp_result = testing_compare_diff(outfile, reffile)
         if cmp_result:
             # Is it a direct match
             log_debug("Direct Match\n")
@@ -108,7 +108,7 @@ class testcase_QOS(SSTTestCase):
             return
 
         # Look for a sorted compare match
-        cmp_result = compare_sorted_diff(testcase, outfile, reffile)
+        cmp_result = testing_compare_sorted_diff(testcase, outfile, reffile)
         if cmp_result:
             # Is it a sorted match
             log_debug("Sorted Match\n")
@@ -132,8 +132,8 @@ class testcase_QOS(SSTTestCase):
     def _setupQOSTestFiles(self):
         log_debug("_setupQOSTestFiles() Running")
         test_path = self.get_testsuite_dir()
-        outdir = get_test_output_run_dir()
-        tmpdir = get_test_output_tmp_dir()
+        outdir = self.get_test_output_run_dir()
+        tmpdir = self.get_test_output_tmp_dir()
 
         self.qostest_Folder = "{0}/qostest_Folder".format(tmpdir)
         self.emberelement_testdir = "{0}/../test/".format(test_path)

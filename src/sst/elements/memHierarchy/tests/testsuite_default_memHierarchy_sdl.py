@@ -89,17 +89,17 @@ class testcase_memHierarchy_Component(SSTTestCase):
 
 #####
 
-    @unittest.skipIf(get_testing_num_ranks() > 3, "memH: test_memHierarchy_sdl_1 skipped if ranks > 3")
+    @unittest.skipIf(testing_check_get_num_ranks() > 3, "memH: test_memHierarchy_sdl_1 skipped if ranks > 3")
     def test_memHierarchy_sdl_1(self):
         #  sdl-1   Simple CPU + 1 level cache + Memory
         self.memHierarchy_Template("sdl-1")
 
-    @unittest.skipIf(get_testing_num_ranks() > 3, "memH: test_memHierarchy_sdl_2 skipped if ranks > 3")
+    @unittest.skipIf(testing_check_get_num_ranks() > 3, "memH: test_memHierarchy_sdl_2 skipped if ranks > 3")
     def test_memHierarchy_sdl_2(self):
         #  sdl-2  Simple CPU + 1 level cache + DRAMSim Memory
         self.memHierarchy_Template("sdl-2")
 
-    @unittest.skipIf(get_testing_num_ranks() > 3, "memH: test_memHierarchy_sdl_3 skipped if ranks > 3")
+    @unittest.skipIf(testing_check_get_num_ranks() > 3, "memH: test_memHierarchy_sdl_3 skipped if ranks > 3")
     def test_memHierarchy_sdl_3(self):
         #  sdl-3  Simple CPU + 1 level cache + DRAMSim Memory (alternate block size)
         self.memHierarchy_Template("sdl-3")
@@ -138,7 +138,7 @@ class testcase_memHierarchy_Component(SSTTestCase):
 
     @skipOnSSTSimulatorConfEmptyStr ("RAMULATOR", "LIBDIR", "RAMULATOR is not included as part of this build")
     def test_memHierarchy_sdl5_1_ramulator(self):
-        if get_testing_num_threads() > 1:
+        if testing_check_get_num_threads() > 1:
             self.memHierarchy_Template("sdl5-1-ramulator_MC")
         else:
 #            self.memHierarchy_Template("sdl5-1-ramulator")
@@ -148,7 +148,7 @@ class testcase_memHierarchy_Component(SSTTestCase):
     def test_memHierarchy_sdl8_1(self):
         self.memHierarchy_Template("sdl8-1")
 
-    @unittest.skipIf(get_testing_num_ranks() > 3, "memH: test_memHierarchy_sdl8_3 skipped if ranks > 3")
+    @unittest.skipIf(testing_check_get_num_ranks() > 3, "memH: test_memHierarchy_sdl8_3 skipped if ranks > 3")
     def test_memHierarchy_sdl8_3(self):
         self.memHierarchy_Template("sdl-3")
 
@@ -156,7 +156,7 @@ class testcase_memHierarchy_Component(SSTTestCase):
         self.memHierarchy_Template("sdl8-4")
 
     def test_memHierarchy_sdl9_1(self):
-        if get_testing_num_threads() > 1:
+        if testing_check_get_num_threads() > 1:
             self.memHierarchy_Template("sdl9-1_MC")
         else:
             self.memHierarchy_Template("sdl9-1")
@@ -204,7 +204,7 @@ class testcase_memHierarchy_Component(SSTTestCase):
 #        notAlignedCount = os.system(cmd)
 
         # if not multi-rank run, append the errfile onto the output file
-        if get_testing_num_ranks() < 2:
+        if testing_check_get_num_ranks() < 2:
             self._grep_v_cleanup_file("not aligned to the request size", errfile, outfile, append=True)
             pass
 
@@ -249,7 +249,7 @@ class testcase_memHierarchy_Component(SSTTestCase):
 
         if not filesAreTheSame:
             # Perform the test to see if they match when sorted
-            cmp_result = compare_sorted_diff(testcase, outfile, fixedreffile)
+            cmp_result = testing_compare_sorted_diff(testcase, outfile, fixedreffile)
             self.assertTrue(cmp_result, "Sorted Output file {0} does not match Sorted (fixed) Reference File {1}".format(outfile, fixedreffile))
 
         # Make sure the simulation completed

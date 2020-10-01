@@ -75,7 +75,7 @@ class testcase_EmberNightly(SSTTestCase):
         # Run SST
         self.run_sst(sdlfile, outfile, errfile, other_args=otherargs, set_cwd=self.emberSweep_Folder, mpi_out_files=mpioutfiles)
 
-#        remove_component_warning_from_file(outfile)
+#        testing_remove_component_warning_from_file(outfile)
 
         # NOTE: THE PASS / FAIL EVALUATIONS ARE PORTED FROM THE SQE BAMBOO
         #       BASED testSuite_XXX.sh THESE SHOULD BE RE-EVALUATED BY THE
@@ -83,7 +83,7 @@ class testcase_EmberNightly(SSTTestCase):
         #       TESTS & RESULT FILES ARE STILL VALID
 
         if testoutput:
-            cmp_result = compare_diff(outfile, reffile)
+            cmp_result = testing_compare_diff(outfile, reffile)
             self.assertTrue(cmp_result, "Diffed compared Output file {0} does not match Reference File {1}".format(outfile, reffile))
 
         self.assertFalse(os_test_file(errfile, "-s"), "Ember test {0} has Non-empty Error File {1}".format(testDataFileName, errfile))
@@ -94,8 +94,8 @@ class testcase_EmberNightly(SSTTestCase):
     def _setupEmberTestFiles(self):
         log_debug("_setupEmberTestFiles() Running")
         test_path = self.get_testsuite_dir()
-        outdir = get_test_output_run_dir()
-        tmpdir = get_test_output_tmp_dir()
+        outdir = self.get_test_output_run_dir()
+        tmpdir = self.get_test_output_tmp_dir()
 
         self.emberSweep_Folder = "{0}/emberSweep_folder".format(tmpdir)
         self.emberelement_testdir = "{0}/../test/".format(test_path)
