@@ -122,21 +122,21 @@ class testcase_memHierarchy_Component(SSTTestCase):
     def test_memHierarchy_sdl4_1(self):
         self.memHierarchy_Template("sdl4-1")
 
-    @skipOnSSTSimulatorConfEmptyStr ("DRAMSIM", "LIBDIR", "DRAMSIM is not included as part of this build")
+    @skip_on_sstsimulator_conf_empty_str ("DRAMSIM", "LIBDIR", "DRAMSIM is not included as part of this build")
     def test_memHierarchy_sdl4_2_dramsim(self):
         self.memHierarchy_Template("sdl4-2")
 
-    @skipOnSSTSimulatorConfEmptyStr ("RAMULATOR", "LIBDIR", "RAMULATOR is not included as part of this build")
+    @skip_on_sstsimulator_conf_empty_str ("RAMULATOR", "LIBDIR", "RAMULATOR is not included as part of this build")
     def test_memHierarchy_sdl4_2_ramulator(self):
         self.memHierarchy_Template("sdl4-2-ramulator")
 
-    @skipOnSSTSimulatorConfEmptyStr ("DRAMSIM", "LIBDIR", "DRAMSIM is not included as part of this build")
+    @skip_on_sstsimulator_conf_empty_str ("DRAMSIM", "LIBDIR", "DRAMSIM is not included as part of this build")
     def test_memHierarchy_sdl5_1_dramsim(self):
 #        self.memHierarchy_Template("sdl5-1")
         # For some reason, this test perfers the _MC version
         self.memHierarchy_Template("sdl5-1_MC")
 
-    @skipOnSSTSimulatorConfEmptyStr ("RAMULATOR", "LIBDIR", "RAMULATOR is not included as part of this build")
+    @skip_on_sstsimulator_conf_empty_str ("RAMULATOR", "LIBDIR", "RAMULATOR is not included as part of this build")
     def test_memHierarchy_sdl5_1_ramulator(self):
         if testing_check_get_num_threads() > 1:
             self.memHierarchy_Template("sdl5-1-ramulator_MC")
