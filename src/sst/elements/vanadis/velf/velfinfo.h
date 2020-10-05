@@ -300,6 +300,7 @@ public:
 	void setHeaderImageLength( const uint64_t new_len ) { imgDataLen = new_len; }
 	void setHeaderMemoryLength( const uint64_t new_len ) { memDataLen = new_len; }
 	void setAlignment( const uint64_t new_align ) { alignment = new_align; }
+	void setSegmentFlags( const uint64_t new_flags ) { segment_flags = new_flags; }
 
 	VanadisELFProgramHeaderType getHeaderType() const { return hdr_type; }
 	uint64_t getHeaderTypeNumber() const { return hdr_type_num; }
@@ -309,6 +310,7 @@ public:
 	uint64_t getHeaderImageLength() const { return imgDataLen; }
 	uint64_t getHeaderMemoryLength() const { return memDataLen; }
 	uint64_t getAlignment() const { return alignment; }
+	uint64_t getSegmentFlags() const { return segment_flags; }
 
 	void print( SST::Output* output, uint64_t index ) {
 		output->verbose(CALL_INFO, 16, 0, ">> Program Header Entry:    %" PRIu64 "\n", index );
@@ -319,6 +321,7 @@ public:
 		output->verbose(CALL_INFO, 16, 0, "---> Phys. Memory Start:    %" PRIu64 " / %p\n", physMemAddrStart, (void*) physMemAddrStart);
 		output->verbose(CALL_INFO, 16, 0, "---> Image Data Length:     %" PRIu64 " / %p\n", imgDataLen, (void*) imgDataLen);
 		output->verbose(CALL_INFO, 16, 0, "---> Image Mem Length:      %" PRIu64 " / %p\n", memDataLen, (void*) memDataLen);
+		output->verbose(CALL_INFO, 16, 0, "---> Flags:                 %" PRIu64 " / 0x%0llx\n", segment_flags, segment_flags );
 		output->verbose(CALL_INFO, 16, 0, "---> Alignment:             %" PRIu64 " / %p\n", alignment, (void*) alignment);
 	}
 private:
@@ -331,6 +334,7 @@ private:
 		memDataLen = 0;
 		alignment = 0;
 		hdr_type_num = 0;
+		segment_flags = 0;
 	}
 
 	VanadisELFProgramHeaderType hdr_type;
@@ -341,6 +345,7 @@ private:
 	uint64_t imgDataLen;
 	uint64_t memDataLen;
 	uint64_t alignment;
+	uint64_t segment_flags;
 };
 
 class VanadisELFProgramSectionEntry {
@@ -1014,6 +1019,7 @@ VanadisELFInfo* readBinaryELFInfo( SST::Output* output, const char* path ) {
 
 			// Segment dependent flags - ignore?
 			fread( &tmp_4byte, 4, 1, bin_file);
+			new_prg_hdr->setSegmentFlags( tmp_4byte );
 
 			fread( &tmp_4byte, 4, 1, bin_file);
 			new_prg_hdr->setAlignment( tmp_4byte );

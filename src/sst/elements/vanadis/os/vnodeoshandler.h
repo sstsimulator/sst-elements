@@ -15,6 +15,7 @@
 
 #include "os/node/vnodeoshstate.h"
 #include "os/node/vnodeosfd.h"
+#include "os/node/vnodeosunameh.h"
 #include "os/node/vnodeoswritevh.h"
 #include "os/node/vnodeosopenath.h"
 #include "os/node/vnodeosreadlink.h"
@@ -110,7 +111,8 @@ public:
 				}
 
 				sendBlockToMemory( uname_ev->getUnameInfoAddress(), uname_payload );
-				output->fatal(CALL_INFO, -1, "uname handler not implemented.\n");
+
+				handler_state = new VanadisUnameHandlerState( output->getVerboseLevel() );
 			}
 			break;
 
@@ -260,11 +262,16 @@ public:
 				VanadisSyscallBRKEvent* brk_ev = dynamic_cast< VanadisSyscallBRKEvent* >( sys_ev );
 				output->verbose(CALL_INFO, 16, 0, "[syscall-brk] recv brk( 0x%0llx ) call.\n", brk_ev->getUpdatedBRK() );
 
-				uint64_t old_brk  = current_brk_point;
-				current_brk_point = brk_ev->getUpdatedBRK();
+				if( brk_ev->getUpdatedBRK() < current_brk_point ) {
+					output->verbose(CALL_INFO, 16, 0, "[syscall-brl]: brk provided (0x%llx) is less than existing brk point (0x%llx), so returning current brk point\n",
+						brk_ev->getUpdatedBRK(), current_brk_point );
+				} else {
+					uint64_t old_brk  = current_brk_point;
+					current_brk_point = brk_ev->getUpdatedBRK();
 
-				output->verbose(CALL_INFO, 16, 0, "[syscall-brk] old brk: 0x%llx -> new brk: 0x%llx (diff: %" PRIu64 ")\n",
-					old_brk, current_brk_point, (current_brk_point - old_brk) );
+					output->verbose(CALL_INFO, 16, 0, "[syscall-brk] old brk: 0x%llx -> new brk: 0x%llx (diff: %" PRIu64 ")\n",
+						old_brk, current_brk_point, (current_brk_point - old_brk) );
+				}
 
 				// Linux syscall for brk returns the BRK point on success
 				VanadisSyscallResponse* resp = new VanadisSyscallResponse( current_brk_point );

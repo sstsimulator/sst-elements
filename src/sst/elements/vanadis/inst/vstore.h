@@ -37,10 +37,10 @@ public:
 			phys_int_regs_out = new uint16_t[1];
 
 			isa_int_regs_out[0] = valueReg;
-		} else {
-			isa_int_regs_in[0] = memoryAddr;
-			isa_int_regs_in[1] = valueReg;
 		}
+
+		isa_int_regs_in[0] = memoryAddr;
+		isa_int_regs_in[1] = valueReg;
 	}
 
 	VanadisStoreInstruction* clone() {

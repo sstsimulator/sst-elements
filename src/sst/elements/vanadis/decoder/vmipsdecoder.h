@@ -4,6 +4,7 @@
 #define _H_VANADIS_MIPS_DECODER
 
 #include "decoder/vdecoder.h"
+#include "decoder/vauxvec.h"
 #include "inst/isatable.h"
 #include "vinsloader.h"
 #include "inst/vinstall.h"
@@ -229,75 +230,87 @@ public:
 			vanadis_vec_copy_in<int>( phdr_data_block, (int) nxt_entry->getImageOffset() );
 			vanadis_vec_copy_in<int>( phdr_data_block, (int) nxt_entry->getVirtualMemoryStart() );
 			// Physical address - just ignore this for now
-			vanadis_vec_copy_in<int>( phdr_data_block, (int) 0 );
+			vanadis_vec_copy_in<int>( phdr_data_block, (int) nxt_entry->getPhysicalMemoryStart() );
 			vanadis_vec_copy_in<int>( phdr_data_block, (int) nxt_entry->getHeaderImageLength() );
 			vanadis_vec_copy_in<int>( phdr_data_block, (int) nxt_entry->getHeaderMemoryLength() );
-			vanadis_vec_copy_in<int>( phdr_data_block, (int) 0 );
+			vanadis_vec_copy_in<int>( phdr_data_block, (int) nxt_entry->getSegmentFlags() );
 			vanadis_vec_copy_in<int>( phdr_data_block, (int) nxt_entry->getAlignment() );
 		}
 
 		const uint64_t phdr_address = params.find<uint64_t>("program_header_address", 0x60000000 );
 
+		std::vector<uint8_t> random_values_data_block;
+
+		for(int i = 0; i < 8; ++i ) {
+			random_values_data_block.push_back( rand() % 255 );
+		}
+
+		const uint64_t rand_values_address = phdr_address + phdr_data_block.size() + 64;
+
 		std::vector<uint8_t> aux_data_block;
 
 		// AT_EXECFD (file descriptor of the executable)
-		vanadis_vec_copy_in<int>( aux_data_block, 2    );
+		vanadis_vec_copy_in<int>( aux_data_block, VANADIS_AT_EXECFD );
 		vanadis_vec_copy_in<int>( aux_data_block, 4    );
 
-		vanadis_vec_copy_in<int>( aux_data_block, 3    );
+		vanadis_vec_copy_in<int>( aux_data_block, VANADIS_AT_PHDR );
 		vanadis_vec_copy_in<int>( aux_data_block, (int) phdr_address );
 
-		vanadis_vec_copy_in<int>( aux_data_block, 4    );
+		vanadis_vec_copy_in<int>( aux_data_block, VANADIS_AT_PHENT );
 		vanadis_vec_copy_in<int>( aux_data_block, (int) elf_info->getProgramHeaderEntrySize() );
 
-		vanadis_vec_copy_in<int>( aux_data_block, 5    );
+		vanadis_vec_copy_in<int>( aux_data_block, VANADIS_AT_PHNUM );
 		vanadis_vec_copy_in<int>( aux_data_block, (int) elf_info->getProgramHeaderEntryCount() );
 
 		// System page size
-		vanadis_vec_copy_in<int>( aux_data_block, 6    );
+		vanadis_vec_copy_in<int>( aux_data_block, VANADIS_AT_PAGESZ );
 		vanadis_vec_copy_in<int>( aux_data_block, 4096 );
 
-		vanadis_vec_copy_in<int>( aux_data_block, 9    );
+		vanadis_vec_copy_in<int>( aux_data_block, VANADIS_AT_ENTRY );
 		vanadis_vec_copy_in<int>( aux_data_block, (int) elf_info->getEntryPoint() );
 
 		// AT_BASE (base address loaded into)
-		vanadis_vec_copy_in<int>( aux_data_block, 7    );
+		vanadis_vec_copy_in<int>( aux_data_block, VANADIS_AT_BASE );
 		vanadis_vec_copy_in<int>( aux_data_block, 0    );
 
 		// Not ELF
-		vanadis_vec_copy_in<int>( aux_data_block, 10   );
+		vanadis_vec_copy_in<int>( aux_data_block, VANADIS_AT_NOTELF );
 		vanadis_vec_copy_in<int>( aux_data_block, 0    );
 
 		// Real UID
-		vanadis_vec_copy_in<int>( aux_data_block, 11   );
+		vanadis_vec_copy_in<int>( aux_data_block, VANADIS_AT_UID );
 		vanadis_vec_copy_in<int>( aux_data_block, 2000 );
 
 		// Effective UID
-		vanadis_vec_copy_in<int>( aux_data_block, 12   );
+		vanadis_vec_copy_in<int>( aux_data_block, VANADIS_AT_EUID );
 		vanadis_vec_copy_in<int>( aux_data_block, 2000 );
 
 		// Real GID
-		vanadis_vec_copy_in<int>( aux_data_block, 13   );
+		vanadis_vec_copy_in<int>( aux_data_block, VANADIS_AT_GID );
 		vanadis_vec_copy_in<int>( aux_data_block, 2000 );
 
 		// Effective GID
-		vanadis_vec_copy_in<int>( aux_data_block, 14   );
+		vanadis_vec_copy_in<int>( aux_data_block, VANADIS_AT_EGID );
 		vanadis_vec_copy_in<int>( aux_data_block, 2000 );
 
 		// D-Cache Line Size
-		vanadis_vec_copy_in<int>( aux_data_block, 19 	);
+		vanadis_vec_copy_in<int>( aux_data_block, VANADIS_AT_DCACHEBSIZE );
 		vanadis_vec_copy_in<int>( aux_data_block, 64    );
 
 		// I-Cache Line Size
-		vanadis_vec_copy_in<int>( aux_data_block, 20 	);
+		vanadis_vec_copy_in<int>( aux_data_block, VANADIS_AT_ICACHEBSIZE );
 		vanadis_vec_copy_in<int>( aux_data_block, 64 	);
 
 		// AT_SECURE?
-		vanadis_vec_copy_in<int>( aux_data_block, 23   );
-		vanadis_vec_copy_in<int>( aux_data_block, 0    );
+		vanadis_vec_copy_in<int>( aux_data_block, VANADIS_AT_SECURE );
+		vanadis_vec_copy_in<int>( aux_data_block, 0                 );
+
+		// AT_RANDOM - 8 bytes of random stuff
+		vanadis_vec_copy_in<int>( aux_data_block, VANADIS_AT_RANDOM    );
+		vanadis_vec_copy_in<int>( aux_data_block, rand_values_address  );
 
 		// End the Auxillary vector
-		vanadis_vec_copy_in<int>( aux_data_block, 0    );
+		vanadis_vec_copy_in<int>( aux_data_block, VANADIS_AT_NULL );
 		vanadis_vec_copy_in<int>( aux_data_block, 0    );
 
 		// Find out how many AUX entries we added, these should be an int (identifier) and then an int (value) so div by 8
@@ -400,7 +413,16 @@ public:
 			start_stack_address, stack_data.size(), stack_data );
 		mem_if->sendInitData( stack_req );
 
-		output->verbose(CALL_INFO, 16, 0, "-> Sending initial data for program headers (addr: 0x%llx)\n", phdr_address );
+		output->verbose(CALL_INFO, 16, 0, "-> Sending initial write of AT_RANDOM values to memory (0x%llx, len: %" PRIu64 ")\n",
+			rand_values_address, (uint64_t) random_values_data_block.size());
+
+		SimpleMem::Request* rand_req = new SimpleMem::Request( SimpleMem::Request::Write,
+			rand_values_address, random_values_data_block.size(), random_values_data_block );
+
+		mem_if->sendInitData( rand_req );
+
+		output->verbose(CALL_INFO, 16, 0, "-> Sending initial data for program headers (addr: 0x%llx, len: %" PRIu64 ")\n", phdr_address,
+			phdr_data_block.size() );
 
 		// Send request for program header tables
 		SimpleMem::Request* phdr_req = new SimpleMem::Request( SimpleMem::Request::Write,

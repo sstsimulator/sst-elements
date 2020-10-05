@@ -3,12 +3,31 @@
 #define _H_VANADIS_LSQ_SEQUENTIAL
 
 #include <deque>
+#include <unordered_set>
 
 #include "lsq/vlsq.h"
 #include "inst/vinst.h"
+#include "inst/vstore.h"
 
 namespace SST {
 namespace Vanadis {
+
+class VanadisSequentualLoadStoreSCRecord {
+public:
+	VanadisSequentualLoadStoreSCRecord( VanadisStoreInstruction* instr,
+		SimpleMem::Request::id_t req ) {
+
+		ins = instr;
+		req_id = req;
+	}
+
+	SimpleMem::Request::id_t getRequestID() const { return req_id; }
+	VanadisStoreInstruction* getInstruction() const { return ins; }
+	
+protected:
+	VanadisStoreInstruction* ins;
+	SimpleMem::Request::id_t req_id;
+};
 
 class VanadisSequentialLoadStoreRecord {
 public:
@@ -106,12 +125,20 @@ public:
 		return op_q.size() >= max_q_size;
 	}
 	
+	virtual bool storeEmpty() {
+		return op_q.size() == 0;
+	}
+	
+	virtual bool loadEmpty() {
+		return op_q.size() == 0;
+	}
+	
 	virtual size_t storeSize() {
-		return max_q_size;
+		return op_q.size();
 	}
 	
 	virtual size_t loadSize() {
-		return max_q_size;
+		return op_q.size();
 	}
 	
 	virtual void push( VanadisStoreInstruction* store_me ) {
@@ -160,7 +187,7 @@ public:
 				uint64_t load_addr  = 0;
 				uint16_t load_width = 0;
 				
-				load_ins->computeLoadAddress( reg_file, &load_addr, &load_width );
+				load_ins->computeLoadAddress( output, reg_file, &load_addr, &load_width );
 
 				output->verbose( CALL_INFO, 8, 0, "--> issue load for 0x%llx width: %" PRIu16 " bytes.\n",
 					load_addr, load_width );
@@ -168,6 +195,24 @@ public:
 				
 				SimpleMem::Request* load_req = new SimpleMem::Request( SimpleMem::Request::Read,
 					load_addr, load_width );
+				load_req->instrPtr = load_ins->getInstructionAddress();
+				
+				switch( load_ins->getTransactionType() ) {
+				case MEM_TRANSACTION_LLSC_LOAD:
+					{
+						load_req->flags |= SST::Interfaces::SimpleMem::Request::F_LLSC;
+						output->verbose(CALL_INFO, 16, 0, "----> marked as LLSC (memory request F_LLSC)\n");
+					}
+					break;
+				case MEM_TRANSACTION_LOCK:
+					{
+						load_req->flags |= SST::Interfaces::SimpleMem::Request::F_LOCKED;
+						output->verbose(CALL_INFO, 16, 0, "----> marked as F_LOCKED\n");
+					}
+					break;
+				case MEM_TRANSACTION_NONE:
+					break;
+				}
 					
 				if( load_addr < 4096 ) {
 					output->verbose(CALL_INFO, 16, 0, "[fault] address for load 0x%llx is less than 4096, indicates segmentation-fault, mark load error (load-ins: 0x%llx)\n",
@@ -200,21 +245,46 @@ public:
 						payload.push_back( reg_ptr[reg_offset + i] );
 					}
 					
-					output->verbose( CALL_INFO, 8, 0, "--> issue store at 0x%llx width: %" PRIu16 " bytes, value-reg: %" PRIu16 " / partial? %s / offset: %" PRIu16 "\n",
+					output->verbose( CALL_INFO, 8, 0, "--> issue store at 0x%llx width: %" PRIu16 " bytes, value-reg: %" PRIu16 " / partial: %s / offset: %" PRIu16 "\n",
 						store_addr, store_width, value_reg,
 						store_ins->isPartialStore() ? "yes" : "no",
 						reg_offset );
-						
+					
 					if( store_addr < 4096 ) {
 						output->verbose(CALL_INFO, 16, 0, "[fault] - address 0x%llx is less than 4096, indicates a segmentation fault (store-ins: 0x%llx)\n",
 							store_addr, store_ins->getInstructionAddress() );
 						store_ins->flagError();
+						store_ins->markExecuted();
 					} else {
-						memInterface->sendRequest( new SimpleMem::Request( SimpleMem::Request::Write,
-							store_addr, store_width, payload ) );
+						SimpleMem::Request* store_req = new SimpleMem::Request( SimpleMem::Request::Write,
+							store_addr, store_width, payload );
+						store_req->instrPtr = store_ins->getInstructionAddress();
+						
+						switch( store_ins->getTransactionType() ) {
+							case MEM_TRANSACTION_LLSC_STORE:
+							{
+								store_req->flags |= SST::Interfaces::SimpleMem::Request::F_LLSC;
+								sc_inflight.insert( new VanadisSequentualLoadStoreSCRecord( store_ins, store_req->id ) );
+								output->verbose(CALL_INFO, 16, 0, "----> marked as LLSC (memory request F_LLSC)\n");
+							}
+							break;
+							case MEM_TRANSACTION_LOCK:
+							{
+								store_req->flags |= SST::Interfaces::SimpleMem::Request::F_LOCKED;
+								output->verbose(CALL_INFO, 16, 0, "----> marked as F_LOCKED\n");
+								store_ins->markExecuted();
+							}
+							break;
+							case MEM_TRANSACTION_NONE:
+							{
+								store_ins->markExecuted();
+							}
+							break;
+						}
+						
+						memInterface->sendRequest( store_req );
 					}
-					
-					store_ins->markExecuted();
+
 					op_q.erase( op_q_itr );
 				}
 				
@@ -250,7 +320,7 @@ public:
 					load_ins->computeLoadAddress( output, reg_file, &load_addr, &load_width );
 					reg_offset = load_ins->getRegisterOffset();
 					
-					output->verbose(CALL_INFO, 8, 0, "--> load info: addr: 0x%llx / width: %" PRIu16 " / target-reg: %" PRIu16 " / partial? %s / reg-offset: %" PRIu16 "\n",
+					output->verbose(CALL_INFO, 8, 0, "--> load info: addr: 0x%llx / width: %" PRIu16 " / target-reg: %" PRIu16 " / partial: %s / reg-offset: %" PRIu16 "\n",
 						load_addr, load_width, target_reg,
 						load_ins->isPartialLoad() ? "yes" : "no",
 						reg_offset);
@@ -312,6 +382,36 @@ public:
 			}
 		}
 		
+		for( auto sc_itr = sc_inflight.begin(); sc_itr != sc_inflight.end(); ) {
+			if( ev->id == (*sc_itr)->getRequestID() ) {
+				output->verbose(CALL_INFO, 16, 0, "matched an inflight SC operation\n");
+				VanadisStoreInstruction* store_ins = (*sc_itr)->getInstruction();
+				
+				const uint16_t value_reg = store_ins->getPhysIntRegOut(0);
+				
+				if( (ev->flags & SST::Interfaces::SimpleMem::Request::F_LLSC_RESP)  != 0 ) {
+					output->verbose(CALL_INFO, 16, 0, "---> LSQ LLSC-STORE ins: 0x%llx / addr: 0x%llx / rt: %" PRIu16 " <- 1 (success)\n",
+						store_ins->getInstructionAddress(), ev->addr, value_reg );
+					registerFiles->at( store_ins->getHWThread() )->setIntReg( value_reg, (uint64_t) 1 );
+				} else {
+					output->verbose(CALL_INFO, 16, 0, "---> LSQ LLSC-STORE ins: 0x%llx / addr: 0x%llx rt: %" PRIu16 " <- 0 (failed)\n",
+						store_ins->getInstructionAddress(), ev->addr, value_reg );
+					registerFiles->at( store_ins->getHWThread() )->setIntReg( value_reg, (uint64_t) 0 );
+				}
+				
+				// Mark store instruction as executed
+				(*sc_itr)->getInstruction()->markExecuted();
+				sc_inflight.erase(sc_itr);
+				
+				delete (*sc_itr);
+				processed = true;
+				
+				break;
+			} else {
+				sc_itr++;
+			}
+		}
+		
 		if( ! processed ) {
 			output->verbose(CALL_INFO, 16, 0, "did not match any request.\n");
 		}
@@ -350,6 +450,7 @@ public:
 protected:
 	size_t max_q_size;
 	std::deque<VanadisSequentialLoadStoreRecord*> op_q;
+	std::unordered_set<VanadisSequentualLoadStoreSCRecord*> sc_inflight;
 	SimpleMem* memInterface;
 	
 };

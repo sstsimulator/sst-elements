@@ -775,34 +775,34 @@ int VanadisComponent::allocateFunctionalUnit( VanadisInstruction* ins ) {
 				if( nullptr == fence_ins ) {
 					output->fatal(CALL_INFO, -1, "Error: instruction (0x%0llu) is a fence but not convertable to a fence instruction.\n",
 						ins->getInstructionAddress());
+				}
 
 
-					allocated_fu = true;
+				allocated_fu = true;
 
-					output->verbose(CALL_INFO, 16, 0, "[fence]: processing ins: 0x%0llx functional unit allocation for fencing (lsq-load size: %" PRIu32 " / lsq-store size: %" PRIu32 ")\n",
-								ins->getInstructionAddress(), (uint32_t) lsq->loadSize(), (uint32_t) lsq->storeSize());
+				output->verbose(CALL_INFO, 16, 0, "[fence]: processing ins: 0x%0llx functional unit allocation for fencing (lsq-load size: %" PRIu32 " / lsq-store size: %" PRIu32 ")\n",
+							ins->getInstructionAddress(), (uint32_t) lsq->loadSize(), (uint32_t) lsq->storeSize());
 
-					if( fence_ins->createsStoreFence() ) {
-						if( lsq->storeSize() == 0 ) {
-							allocated_fu = true;
-						} else {
-							allocated_fu = false;
-						}
+				if( fence_ins->createsStoreFence() ) {
+					if( lsq->storeSize() == 0 ) {
+						allocated_fu = true;
+					} else {
+						allocated_fu = false;
 					}
+				}
 					
-					if( fence_ins->createsLoadFence() ) {
-						if( lsq->loadSize() == 0 ) {
-							allocated_fu = allocated_fu & true;
-						} else {
-							allocated_fu = false;
-						}
+				if( fence_ins->createsLoadFence() ) {
+					if( lsq->loadSize() == 0 ) {
+						allocated_fu = allocated_fu & true;
+					} else {
+						allocated_fu = false;
 					}
+				}
 
-					output->verbose(CALL_INFO, 16, 0, "[fence]: can proceed? %s\n", allocated_fu ? "yes" : "no");
+				output->verbose(CALL_INFO, 16, 0, "[fence]: can proceed? %s\n", allocated_fu ? "yes" : "no");
 
-					if( allocated_fu ) {
-						ins->markExecuted();
-					}
+				if( allocated_fu ) {
+					ins->markExecuted();
 				}
 			}
 			break;
@@ -1313,8 +1313,10 @@ void VanadisComponent::init(unsigned int phase) {
 				lsq->setInitialMemory( 0, initial_mem_contents );
 //				memInstInterface->sendInitData( writeExe );
 
+				const uint64_t page_size = 4096;
+
 				uint64_t initial_brk = (uint64_t) initial_mem_contents.size();
-				initial_brk = initial_brk + (64 - (initial_brk % 64));
+				initial_brk = initial_brk + (page_size - (initial_brk % page_size));
 
 				output->verbose(CALL_INFO, 2, 0, ">> Setting initial break point to image size in memory ( brk: 0x%llx )\n", initial_brk );
 				thread_decoders[0]->getOSHandler()->registerInitParameter( SYSCALL_INIT_PARAM_INIT_BRK, &initial_brk );

@@ -82,7 +82,8 @@ public:
 	virtual void computeLoadAddress( SST::Output* output, VanadisRegisterFile* regFile, uint64_t* out_addr, uint16_t* width ) {
 		uint64_t mem_addr_reg_val = regFile->getIntReg<uint64_t>( phys_int_regs_in[0] );
 
-		output->verbose(CALL_INFO, 16, 0, "[execute-load]: transaction-type:  %s\n", getTransactionTypeString( memAccessType ) );
+		output->verbose(CALL_INFO, 16, 0, "[execute-load]: transaction-type:  %s / ins: 0x%llx\n", getTransactionTypeString( memAccessType ),
+			getInstructionAddress() );
                 output->verbose(CALL_INFO, 16, 0, "[execute-load]: reg[%5" PRIu16 "]:       %" PRIu64 "\n", phys_int_regs_in[0], mem_addr_reg_val);
                 output->verbose(CALL_INFO, 16, 0, "[execute-load]: offset           : %" PRIu64 "\n", offset);
                 output->verbose(CALL_INFO, 16, 0, "[execute-load]: (add)            : %" PRIu64 "\n", (mem_addr_reg_val + offset));
