@@ -147,6 +147,6 @@ class testcase_QOS(SSTTestCase):
         for f in os.listdir(self.emberelement_testdir):
             filename, ext = os.path.splitext(f)
             if ext == ".py":
-                os_file_symlink(self.emberelement_testdir, self.qostest_Folder, f)
+                os_symlink_file(self.emberelement_testdir, self.qostest_Folder, f)
 
-        os_file_symlink(test_path, self.qostest_Folder, "qos.load")
+        os_symlink_file(test_path, self.qostest_Folder, "qos.load")

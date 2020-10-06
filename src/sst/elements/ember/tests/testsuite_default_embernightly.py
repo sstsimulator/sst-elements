@@ -109,7 +109,7 @@ class testcase_EmberNightly(SSTTestCase):
         for f in os.listdir(self.emberelement_testdir):
             filename, ext = os.path.splitext(f)
             if ext == ".py":
-                os_file_symlink(self.emberelement_testdir, self.emberSweep_Folder, f)
+                os_symlink_file(self.emberelement_testdir, self.emberSweep_Folder, f)
 
 ####
 

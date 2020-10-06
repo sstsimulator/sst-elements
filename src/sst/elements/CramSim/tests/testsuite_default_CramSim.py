@@ -152,11 +152,11 @@ class testcase_CramSim_Component(SSTTestCase):
         os.makedirs(self.testCramSimTestsDir)
 
         # Create a simlink of the ddr4_verimem.cfg file
-        os_file_symlink(self.CramSimElementDir, self.testCramSimDir, "ddr4_verimem.cfg")
+        os_symlink_file(self.CramSimElementDir, self.testCramSimDir, "ddr4_verimem.cfg")
 
         # Create a simlink of each file in the CramSim/Tests directory
         for f in os.listdir(self.CramSimElementTestsDir):
-            os_file_symlink(self.CramSimElementTestsDir, self.testCramSimTestsDir, f)
+            os_symlink_file(self.CramSimElementTestsDir, self.testCramSimTestsDir, f)
 
         # wget a test file tar.gz
         testfile = "sst-CramSim_trace_verimem_trace_files.tar.gz"
