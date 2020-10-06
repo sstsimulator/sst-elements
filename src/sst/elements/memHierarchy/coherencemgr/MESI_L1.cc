@@ -781,6 +781,9 @@ bool MESIL1::handleGetSResp(MemEvent* event, bool inMSHR) {
     line->setData(event->getPayload(), 0);
     line->setState(S);
 
+    if (req->isLoadLink())
+        line->atomicStart();
+
     if (is_debug_addr(addr))
         printData(line->getData(), true);
 
@@ -866,7 +869,7 @@ bool MESIL1::handleGetXResp(MemEvent* event, bool inMSHR) {
                         if (is_debug_addr(addr))
                             printData(line->getData(), true);
 
-                        line->atomicEnd();
+                        line->atomicEnd(); // Any write causes a future SC to fail 
                     }
 
                     if (req->queryFlag(MemEventBase::F_LOCKED)) {
