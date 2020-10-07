@@ -58,7 +58,19 @@ bool Nic::RecvMachine::Ctx::processStdPkt( FireflyNetworkEvent* ev ) {
             m_streamMap[srcKey] = stream;
         }
 
-        return false;
+        if ( stream->isBlocked(true) ) {
+            m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_CTX,"stream is blocked stream=%p\n",stream );
+            stream->setWakeup(
+                [=]() {
+                    m_dbg.verbosePrefix(prefix(),CALL_INFO_LAMBDA,"processStdPkt",2,NIC_DBG_RECV_CTX,"stream is unblocked stream=%p\n",stream );
+                    stream->processPkt( ev );
+                    m_rm.checkNetworkForData();
+                }
+            );
+            return true;
+        } else {
+            return false;
+        }
     } else {
         assert ( m_streamMap.find(srcKey) != m_streamMap.end() );
 

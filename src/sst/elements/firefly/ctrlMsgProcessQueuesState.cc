@@ -296,7 +296,7 @@ void ProcessQueuesState::enterRecv( _CommReq* req, uint64_t exitDelay )
         }
     }
 
-    m_pstdRcvQ.push_front( req );
+    m_pstdRcvQ.push_back( req );
 
     m_statPstdRcv->addData( m_pstdRcvQ.size() );
 
