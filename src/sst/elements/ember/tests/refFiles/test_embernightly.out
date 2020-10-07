@@ -7,4 +7,4 @@ EMBER: Job=0, nidList='0-63'
 EMBER: Motif='Init'
 EMBER: Motif='Sweep3D nx=30 ny=30 nz=30 computetime=140 pex=4 pey=16 pez=0 kba=10'
 EMBER: Motif='Fini'
-Simulation is complete, simulated time: 4.08782 ms
+Simulation is complete, simulated time: 4.08083 ms
