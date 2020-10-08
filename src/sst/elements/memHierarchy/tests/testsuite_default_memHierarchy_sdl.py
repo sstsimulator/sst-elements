@@ -21,53 +21,6 @@ def initializeTestModule_SingleInstance(class_inst):
     module_sema.release()
 
 ################################################################################
-
-#    NOTE: THIS IS AN EXPERIMENTAL TESTCASE TO SHOW HOW TO IMPLEMENT
-#          A FAILURES, ERRORS, SKIPS, EXPECTED FAILS & UNEXPECTED SUCCESS
-#          IT WILL BE DELETED IN THE FUTURE
-
-###class testcase_memHierarchy_Testing(SSTTestCase):
-###
-###    def initializeClass(self, testName):
-###        super(type(self), self).initializeClass(testName)
-###        # Put test based setup code here. it is called before testing starts
-###        # NOTE: This method is called once for every test
-###
-###    def setUp(self):
-###        super(type(self), self).setUp()
-###        initializeTestModule_SingleInstance(self)
-###        # Put test based setup code here. it is called once before every test
-###
-###    def tearDown(self):
-###        # Put test based teardown code here. it is called once after every test
-###        super(type(self), self).tearDown()
-###
-########
-###
-###    # PASSING TESTS
-###    def test_verify_pass(self):
-###        self.assertTrue(True, "Verify Pass Test")
-###
-###    @unittest.skip("Expected Skip Test")
-###    def test_verify_skip(self):
-###        self.assertTrue(True, "Verify Skip Test")
-###
-###    @unittest.expectedFailure
-###    def test_verify_expected_fail(self):
-###        self.assertTrue(False, "Verify Expected Failure Test")
-###
-###    # FAILING TESTS
-###    def test_verify_fail(self):
-###        self.assertTrue(False, "Verify Fail Test")
-###
-###    def test_verify_error(self):
-###        x = 10/0
-###        self.assertTrue(True, "Verify Error Test")
-###
-###    @unittest.expectedFailure
-###    def test_verify_unexpected_pass(self):
-###        self.assertTrue(True, "Verify Unexpected Pass Test")
-
 ################################################################################
 ################################################################################
 
@@ -132,18 +85,14 @@ class testcase_memHierarchy_Component(SSTTestCase):
 
     @skip_on_sstsimulator_conf_empty_str ("DRAMSIM", "LIBDIR", "DRAMSIM is not included as part of this build")
     def test_memHierarchy_sdl5_1_dramsim(self):
-#        self.memHierarchy_Template("sdl5-1")
-        # For some reason, this test perfers the _MC version
-        self.memHierarchy_Template("sdl5-1_MC")
+        self.memHierarchy_Template("sdl5-1")
 
     @skip_on_sstsimulator_conf_empty_str ("RAMULATOR", "LIBDIR", "RAMULATOR is not included as part of this build")
     def test_memHierarchy_sdl5_1_ramulator(self):
-        if testing_check_get_num_threads() > 1:
+        if testing_check_get_num_ranks() > 1 or testing_check_get_num_threads() > 1:
             self.memHierarchy_Template("sdl5-1-ramulator_MC")
         else:
-#            self.memHierarchy_Template("sdl5-1-ramulator")
-            # For some reason, this test perfers the _MC version
-            self.memHierarchy_Template("sdl5-1-ramulator_MC")
+            self.memHierarchy_Template("sdl5-1-ramulator")
 
     def test_memHierarchy_sdl8_1(self):
         self.memHierarchy_Template("sdl8-1")
@@ -156,7 +105,7 @@ class testcase_memHierarchy_Component(SSTTestCase):
         self.memHierarchy_Template("sdl8-4")
 
     def test_memHierarchy_sdl9_1(self):
-        if testing_check_get_num_threads() > 1:
+        if testing_check_get_num_ranks() > 1 or testing_check_get_num_threads() > 1:
             self.memHierarchy_Template("sdl9-1_MC")
         else:
             self.memHierarchy_Template("sdl9-1")
@@ -187,6 +136,10 @@ class testcase_memHierarchy_Component(SSTTestCase):
         self.grep_tmp_file = tmpfile
         mpioutfiles = "{0}/{1}.testfile".format(outdir, testDataFileName)
         difffile = "{0}/{1}.raw_diff".format(tmpdir, testDataFileName)
+
+        log_debug("testcase = {0}".format(testcase))
+        log_debug("sdl file = {0}".format(sdlfile))
+        log_debug("ref file = {0}".format(reffile))
 
         # Delete any leftover dramsim*.log files that might have been left over
         cmd = "rm -f {0}/dramsim*.log".format(test_path)
