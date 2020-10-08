@@ -42,17 +42,14 @@ class testcase_memHierarchy_Component(SSTTestCase):
 
 #####
 
-    @unittest.skipIf(testing_check_get_num_ranks() > 3, "memH: test_memHierarchy_sdl_1 skipped if ranks > 3")
     def test_memHierarchy_sdl_1(self):
         #  sdl-1   Simple CPU + 1 level cache + Memory
         self.memHierarchy_Template("sdl-1")
 
-    @unittest.skipIf(testing_check_get_num_ranks() > 3, "memH: test_memHierarchy_sdl_2 skipped if ranks > 3")
     def test_memHierarchy_sdl_2(self):
         #  sdl-2  Simple CPU + 1 level cache + DRAMSim Memory
         self.memHierarchy_Template("sdl-2")
 
-    @unittest.skipIf(testing_check_get_num_ranks() > 3, "memH: test_memHierarchy_sdl_3 skipped if ranks > 3")
     def test_memHierarchy_sdl_3(self):
         #  sdl-3  Simple CPU + 1 level cache + DRAMSim Memory (alternate block size)
         self.memHierarchy_Template("sdl-3")
@@ -75,19 +72,19 @@ class testcase_memHierarchy_Component(SSTTestCase):
     def test_memHierarchy_sdl4_1(self):
         self.memHierarchy_Template("sdl4-1")
 
-    @skip_on_sstsimulator_conf_empty_str ("DRAMSIM", "LIBDIR", "DRAMSIM is not included as part of this build")
+    @skip_on_sstsimulator_conf_empty_str("DRAMSIM", "LIBDIR", "DRAMSIM is not included as part of this build")
     def test_memHierarchy_sdl4_2_dramsim(self):
         self.memHierarchy_Template("sdl4-2")
 
-    @skip_on_sstsimulator_conf_empty_str ("RAMULATOR", "LIBDIR", "RAMULATOR is not included as part of this build")
+    @skip_on_sstsimulator_conf_empty_str("RAMULATOR", "LIBDIR", "RAMULATOR is not included as part of this build")
     def test_memHierarchy_sdl4_2_ramulator(self):
         self.memHierarchy_Template("sdl4-2-ramulator")
 
-    @skip_on_sstsimulator_conf_empty_str ("DRAMSIM", "LIBDIR", "DRAMSIM is not included as part of this build")
+    @skip_on_sstsimulator_conf_empty_str("DRAMSIM", "LIBDIR", "DRAMSIM is not included as part of this build")
     def test_memHierarchy_sdl5_1_dramsim(self):
         self.memHierarchy_Template("sdl5-1")
 
-    @skip_on_sstsimulator_conf_empty_str ("RAMULATOR", "LIBDIR", "RAMULATOR is not included as part of this build")
+    @skip_on_sstsimulator_conf_empty_str("RAMULATOR", "LIBDIR", "RAMULATOR is not included as part of this build")
     def test_memHierarchy_sdl5_1_ramulator(self):
         if testing_check_get_num_ranks() > 1 or testing_check_get_num_threads() > 1:
             self.memHierarchy_Template("sdl5-1-ramulator_MC")
@@ -97,7 +94,6 @@ class testcase_memHierarchy_Component(SSTTestCase):
     def test_memHierarchy_sdl8_1(self):
         self.memHierarchy_Template("sdl8-1")
 
-    @unittest.skipIf(testing_check_get_num_ranks() > 3, "memH: test_memHierarchy_sdl8_3 skipped if ranks > 3")
     def test_memHierarchy_sdl8_3(self):
         self.memHierarchy_Template("sdl-3")
 
@@ -189,7 +185,7 @@ class testcase_memHierarchy_Component(SSTTestCase):
         self._grep_v_cleanup_file("WARNING: UNKNOWN KEY 'DEBUG_TRANS_FLOW' IN INI FILE", fixedreffile)
 
 #        # This may be needed in the future
-#        remove_component_warning()
+        testing_remove_component_warning_from_file(outfile)
 
         # NOTE: THE PASS / FAIL EVALUATIONS ARE PORTED FROM THE SQE BAMBOO
         #       BASED testSuite_XXX.sh THESE SHOULD BE RE-EVALUATED BY THE
@@ -200,10 +196,28 @@ class testcase_memHierarchy_Component(SSTTestCase):
         cmd = "diff -b {0} {1} > {2}".format(fixedreffile, outfile, difffile)
         filesAreTheSame = (os.system(cmd) == 0)
 
-        if not filesAreTheSame:
+        if filesAreTheSame:
+            log_debug(" -- Output file {0} is an exact match to (fixed) Reference File {1}".format(outfile, fixedreffile))
+        else:
             # Perform the test to see if they match when sorted
             cmp_result = testing_compare_sorted_diff(testcase, outfile, fixedreffile)
-            self.assertTrue(cmp_result, "Sorted Output file {0} does not match Sorted (fixed) Reference File {1}".format(outfile, fixedreffile))
+            if cmp_result:
+                log_debug(" -- Output file {0} is an exact match to SORTED (fixed) Reference File {1}".format(outfile, fixedreffile))
+            else:
+                # Not matching sorted, if DRAMSIM, then we have one last chance...
+                if sstsimulator_conf_does_have_key("DRAMSIM", "LIBDIR"):
+                    wc_out_data = os_wc(outfile, [1, 2])
+                    log_debug("{0} : wc_out_data ={1}".format(outfile, wc_out_data))
+                    wc_ref_data = os_wc(fixedreffile, [1, 2])
+                    log_debug("{0} : wc_ref_data ={1}".format(reffile, wc_ref_data))
+
+                    wc_line_word_count_diff = wc_out_data == wc_ref_data
+                    if wc_line_word_count_diff:
+                        log_debug("Line Word Count Match\n")
+                    self.assertTrue(wc_line_word_count_diff, "Line & Word count between file {0} does not match Reference File {1}".format(outfile, reffile))
+                else:
+                    # Well we tried, but failed
+                    self.assertTrue(cmp_result, "(NO DRAMSIM) Sorted Output file {0} does not match Sorted (fixed) Reference File {1} ".format(outfile, fixedreffile))
 
         # Make sure the simulation completed
         cmd = "grep 'Simulation is complete, simulated time:' {0} >> /dev/null".format(outfile)
