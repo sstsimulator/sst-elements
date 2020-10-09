@@ -167,6 +167,10 @@ public:
 		output->verbose(CALL_INFO, 16, 0, "ticking load/store queue at cycle %" PRIu64 " lsq size: %" PRIu64 "\n",
 			(uint64_t) cycle, op_q.size() );
 	
+		if( sc_inflight.size() > 0 ) {
+			output->verbose(CALL_INFO, 16, 0, "-> LLSC_STORE operation in flight, stalling this cycle until returns\n");
+		}
+	
 		VanadisSequentialLoadStoreRecord* next_item = nullptr;
 		auto op_q_itr = op_q.begin();
 		
@@ -305,10 +309,22 @@ public:
 			// is the operation issued to the memory system and do we match ID
 			if( (*op_q_itr)->isOperationIssued() && (
 				ev->id == (*op_q_itr)->getRequestID() ) ) {
-				
+
 				output->verbose(CALL_INFO, 8, 0, "matched a load record (addr: 0x%llx)\n",
 					(*op_q_itr)->getInstruction()->getInstructionAddress());
-				
+
+				if( output->getVerboseLevel() >= 16 ) {
+					char* payload_print = new char[256];
+					snprintf(payload_print, 256, "0x%x 0x%x 0x%x 0x%x",
+						( ev->data.size() > 0 ? ev->data[0] : 0 ),
+						( ev->data.size() > 1 ? ev->data[1] : 0 ),
+						( ev->data.size() > 2 ? ev->data[2] : 0 ),
+						( ev->data.size() > 3 ? ev->data[3] : 0 ) );
+
+					output->verbose(CALL_INFO, 16, 0, "-> payload (first 4 bytes): %s\n", payload_print);
+					delete[] payload_print;
+				}
+
 				if( (*op_q_itr)->isLoad() ) {
 					VanadisLoadInstruction* load_ins = dynamic_cast<VanadisLoadInstruction*>( (*op_q_itr)->getInstruction() );
 					VanadisRegisterFile* reg_file = registerFiles->at( load_ins->getHWThread() );
@@ -320,17 +336,19 @@ public:
 					load_ins->computeLoadAddress( output, reg_file, &load_addr, &load_width );
 					reg_offset = load_ins->getRegisterOffset();
 					
-					output->verbose(CALL_INFO, 8, 0, "--> load info: addr: 0x%llx / width: %" PRIu16 " / target-reg: %" PRIu16 " / partial: %s / reg-offset: %" PRIu16 "\n",
-						load_addr, load_width, target_reg,
-						load_ins->isPartialLoad() ? "yes" : "no",
+					output->verbose(CALL_INFO, 8, 0, "--> load info: addr: 0x%llx / width: %" PRIu16 " / isa: %" PRIu16 " = target-reg: %" PRIu16 " / partial: %s / reg-offset: %" PRIu16 "\n",
+						load_addr, load_width, load_ins->getISAIntRegOut(0),
+						target_reg, load_ins->isPartialLoad() ? "yes" : "no",
 						reg_offset);
 
 					if( target_reg != load_ins->getISAOptions()->getRegisterIgnoreWrites() ) {
+						// if we are doing a partial copy and we aren't starting at
+						// zero then we need to copy bytewise, if not, we can do a 
+						// single copy
 						if( load_ins->isPartialLoad() ) {
 							char* reg_ptr = reg_file->getIntReg( target_reg );
-							reg_file->setIntReg( target_reg, (uint64_t) 0 );
-						
-							for( uint16_t i = 0; i < ev->size; ++i ) {
+
+							for( uint16_t i = 0; i < load_width; ++i ) {
 								reg_ptr[ reg_offset + i ] = ev->data[i];
 							}
 						} else {
@@ -384,7 +402,9 @@ public:
 		
 		for( auto sc_itr = sc_inflight.begin(); sc_itr != sc_inflight.end(); ) {
 			if( ev->id == (*sc_itr)->getRequestID() ) {
-				output->verbose(CALL_INFO, 16, 0, "matched an inflight SC operation\n");
+				output->verbose(CALL_INFO, 16, 0, "matched an inflight LLSC_STORE operation\n");
+				printEventFlags(ev);
+				
 				VanadisStoreInstruction* store_ins = (*sc_itr)->getInstruction();
 				
 				const uint16_t value_reg = store_ins->getPhysIntRegOut(0);
@@ -448,6 +468,21 @@ public:
 	}
 
 protected:
+	void printEventFlags( SimpleMem::Request* ev ) {
+		bool f_noncache   = (ev->flags & Interfaces::SimpleMem::Request::F_NONCACHEABLE) != 0;
+		bool f_locked     = (ev->flags & Interfaces::SimpleMem::Request::F_LOCKED) != 0;
+		bool f_llsc       = (ev->flags & Interfaces::SimpleMem::Request::F_LLSC) != 0;
+		bool f_llsc_resp  = (ev->flags & Interfaces::SimpleMem::Request::F_LLSC_RESP) != 0;
+		bool f_flush_suc  = (ev->flags & Interfaces::SimpleMem::Request::F_FLUSH_SUCCESS) != 0;
+		bool f_trans      = (ev->flags & Interfaces::SimpleMem::Request::F_TRANSACTION) != 0;
+		
+		output->verbose(CALL_INFO, 16, 0, "-> addr: 0x%llx / size: %" PRIu64 " / NONCACHE: %c / LOCKED: %c / LLSC: %c / LLSC_R: %c / FLUSH_S: %c / TRANSC: %c\n",
+			ev->addr, ev->data.size(), f_noncache ? 'Y' : 'N', f_locked ? 'Y' : 'N', 
+			f_llsc ? 'Y' : 'N', f_llsc_resp ? 'Y' : 'N', 
+			f_flush_suc ? 'Y' : 'N', f_trans ? 'Y' : 'N');
+	}
+	
+	
 	size_t max_q_size;
 	std::deque<VanadisSequentialLoadStoreRecord*> op_q;
 	std::unordered_set<VanadisSequentualLoadStoreSCRecord*> sc_inflight;

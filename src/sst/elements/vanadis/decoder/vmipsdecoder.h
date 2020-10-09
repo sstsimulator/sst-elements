@@ -62,8 +62,11 @@
 #define MIPS_SPEC_OP_MASK_SLTIU   0x2C000000
 #define MIPS_SPEC_OP_MASK_JAL     0x0C000000
 #define MIPS_SPEC_OP_MASK_J       0x08000000
+#define MIPS_SPEC_OP_MASK_COP1	  0x44000000
+#define MIPS_SPEC_OP_MASK_XORI    0x38000000
 
 #define MIPS_SPEC_OP_MASK_BLTZ    0x0
+#define MIPS_SPEC_OP_MASK_BGEZ    0x10000
 #define MIPS_SPEC_OP_MASK_BREAK   0x0D
 #define MIPS_SPEC_OP_MASK_DADD    0x2C
 #define MIPS_SPEC_OP_MASK_DADDU   0x2D
@@ -110,6 +113,9 @@
 #define MIPS_SPEC_OP_MASK_SYSCALL 0x0C
 #define MIPS_SPEC_OP_MASK_SYNC    0x0F
 #define MIPS_SPEC_OP_MASK_XOR     0x26
+
+#define MIPS_SPEC_COP_MASK_CF	  0x2
+#define MIPS_SPEC_COP_MASK_CT     0x6
 
 namespace SST {
 namespace Vanadis {
@@ -869,6 +875,11 @@ protected:
 						break;
 
 					case MIPS_SPEC_OP_MASK_SLLV:
+						{
+							bundle->addInstruction( new VanadisShiftLeftLogicalInstruction( next_ins_id++, ins_addr,
+								hw_thr, options, rd, rt, rs ) );
+							insertDecodeFault = false;
+						}
 						break;
 
 					case MIPS_SPEC_OP_MASK_SLT:
@@ -941,6 +952,7 @@ protected:
 							insertDecodeFault = false;
 						}
 						break;
+
 					case MIPS_SPEC_OP_MASK_SRL:
 						{
 							const uint64_t shf_amnt = ((uint64_t) (next_ins & MIPS_SHFT_MASK)) >> 6;
@@ -988,6 +1000,13 @@ protected:
 					{
 						bundle->addInstruction( new VanadisBranchRegCompareImmLinkInstruction( next_ins_id++, ins_addr, hw_thr, options,
 							rs, 0, offset_value_64, (uint16_t) 31, VANADIS_SINGLE_DELAY_SLOT, REG_COMPARE_GTE ) );
+						insertDecodeFault = false;
+					}
+					break;
+				case MIPS_SPEC_OP_MASK_BGEZ:
+					{
+						bundle->addInstruction( new VanadisBranchRegCompareImmInstruction(next_ins_id++, ins_addr, hw_thr, options,
+							rs, 0, offset_value_64, VANADIS_SINGLE_DELAY_SLOT, REG_COMPARE_GTE ) );
 						insertDecodeFault = false;
 					}
 					break;
@@ -1066,7 +1085,7 @@ protected:
 				output->verbose(CALL_INFO, 16, 0, "[decoder/LWL (PARTLOAD)]: -> reg: %" PRIu16 " <- base: %" PRIu16 " + offset=%" PRId64 "\n",
                                         rt, rs, imm_value_64);
 				bundle->addInstruction( new VanadisPartialLoadInstruction( next_ins_id++, ins_addr, hw_thr, options, rs, imm_value_64,
-					rt, 4, true, true ) );
+					rt, 4, true, false ) );
 				insertDecodeFault = false;
 			}
 			break;
@@ -1079,7 +1098,7 @@ protected:
 				output->verbose(CALL_INFO, 16, 0, "[decoder/LWR (PARTLOAD)]: -> reg: %" PRIu16 " <- base: %" PRIu16 " + offset=%" PRId64 "\n",
                                         rt, rs, imm_value_64);
 				bundle->addInstruction( new VanadisPartialLoadInstruction( next_ins_id++, ins_addr, hw_thr, options, rs, imm_value_64,
-					rt, 4, true, false ) );
+					rt, 4, true, true ) );
 				insertDecodeFault = false;
 			}
 			break;
@@ -1267,8 +1286,8 @@ protected:
 				const uint32_t upper_bits   = ((ins_addr + 4) & MIPS_J_UPPER_MASK);
 
 				uint64_t jump_to = 0;
-				jump_to = jump_to + (uint64_t) j_addr_index;
-				jump_to = jump_to + (uint64_t) upper_bits;
+				jump_to += (uint64_t) j_addr_index;
+				jump_to |= (uint64_t) upper_bits;
 
 				output->verbose(CALL_INFO, 16, 0, "[decoder/J]: -> jump-to: %" PRIu64 " / 0x%0llx\n",
 					jump_to, jump_to);
@@ -1292,6 +1311,15 @@ protected:
 				insertDecodeFault = false;
 			}
 			break;
+
+
+		case MIPS_SPEC_OP_MASK_XORI:
+			{
+				const uint64_t xor_mask = (uint64_t) (next_ins & MIPS_IMM_MASK);
+				bundle->addInstruction( new VanadisXorImmInstruction( next_ins_id++, ins_addr,
+					hw_thr, options, rt, rs, xor_mask ) );
+				insertDecodeFault = false;
+			}
 
 		case MIPS_SPEC_OP_SPECIAL3:
 			{
@@ -1319,6 +1347,28 @@ protected:
 			}
 			break;
 
+		case MIPS_SPEC_OP_MASK_COP1:
+			{
+				switch( rs ) {
+				case MIPS_SPEC_COP_MASK_CF:
+					{
+						bundle->addInstruction( new VanadisFP2GPRInstruction(
+							next_ins_id++, ins_addr, hw_thr, options,
+							rt, rd, VANADIS_WIDTH_F32 ) );
+						insertDecodeFault = false;
+					}
+					break;
+				case MIPS_SPEC_COP_MASK_CT:
+					{
+						bundle->addInstruction( new VanadisGPR2FPInstruction(
+							next_ins_id++, ins_addr, hw_thr, options,
+							rd, rt, VANADIS_WIDTH_F32 ) );
+						insertDecodeFault = false;
+					}
+					break;
+				}
+			}
+			break;
 		default:
 			break;
 		}

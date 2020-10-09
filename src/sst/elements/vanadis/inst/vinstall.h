@@ -59,4 +59,8 @@
 #include "inst/vsetreg.h"
 #include "inst/vsyscall.h"
 
+// FP Convert/Move
+#include "inst/vfp2gpr.h"
+#include "inst/vgpr2fp.h"
+
 #endif

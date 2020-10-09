@@ -63,38 +63,31 @@ public:
 			return T();
 		}
 	}
-/*
-	void getIntReg( const uint16_t reg, uint64_t* val ) {
-		*val = getIntReg<uint64_t>(reg);
-	}
 
-	void getIntReg( const uint16_t reg, int64_t* val ) {
+	template<typename T>
+	T getFPReg( const uint16_t reg ) {
 		if( reg != decoder_opts->getRegisterIgnoreWrites() ) {
-			int64_t* reg_ptr = (int64_t*) int_reg_storage;
-			*val = reg_ptr[reg];
+			char* reg_start = &fp_reg_storage[reg * 8];
+			T* reg_start_T = (T*) reg_start;
+			return *(reg_start_T);
 		} else {
-			*val = 0;
+			return T();
 		}
 	}
 
-	void getIntReg( const uint16_t reg, uint32_t* val ) {
+	template<typename T>
+	void setIntReg( const uint16_t reg, const T val ) {
 		if( reg != decoder_opts->getRegisterIgnoreWrites() ) {
-			uint32_t* reg_ptr = (uint32_t*) (int_reg_storage + (8 * reg));
-			*val = reg_ptr[reg];
-		} else {
-			*val = 0;
+			*((T*) &int_reg_storage[8*reg]) = val;
 		}
 	}
 
-	void getIntReg( const uint16_t reg, int32_t* val ) {
+	template<typename T>
+	void setFPReg( const uint16_t reg, const T val ) {
 		if( reg != decoder_opts->getRegisterIgnoreWrites() ) {
-			int32_t* reg_ptr = (int32_t*) (int_reg_storage + (8 * reg));
-			*val = reg_ptr[reg];
-		} else {
-			*val = 0;
+			*((T*) &fp_reg_storage[8*reg]) = val;
 		}
 	}
-*/
 
 	void setIntReg( const uint16_t reg, const uint64_t val ) {
 		if( reg != decoder_opts->getRegisterIgnoreWrites() ) {

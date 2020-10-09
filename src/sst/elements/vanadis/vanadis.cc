@@ -656,7 +656,7 @@ int VanadisComponent::performRetire( VanadisCircularQueue<VanadisInstruction*>* 
 				retire_isa_tables[rob_front->getHWThread()] );
 			
 			if( pipelineTrace != nullptr ) {
-				fprintf( pipelineTrace, "0x%llx %s\n",
+				fprintf( pipelineTrace, "0x%08llx %s\n",
 					rob_front->getInstructionAddress(), rob_front->getInstCode() );
 			}
 
@@ -667,7 +667,7 @@ int VanadisComponent::performRetire( VanadisCircularQueue<VanadisInstruction*>* 
 					delay_ins->getID(), delay_ins->getInstructionAddress(), delay_ins->getInstCode() );
 					
 				if( pipelineTrace != nullptr ) {
-					fprintf( pipelineTrace, "0x%llx %s\n",
+					fprintf( pipelineTrace, "0x%08llx %s\n",
 						delay_ins->getInstructionAddress(), delay_ins->getInstCode() );
 				}
 				
@@ -970,7 +970,7 @@ int VanadisComponent::checkInstructionResources(
 	}
 
 	for( uint16_t i = 0; i < ins->countISAFPRegOut(); ++i ) {
-		const uint16_t ins_isa_reg = ins->getISAIntRegOut(i);
+		const uint16_t ins_isa_reg = ins->getISAFPRegOut(i);
 		isa_fp_regs_written_ahead.insert(ins_isa_reg);
 	}
 

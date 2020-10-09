@@ -20,6 +20,7 @@
 #include "os/node/vnodeosopenath.h"
 #include "os/node/vnodeosreadlink.h"
 #include "os/node/vnodeosaccessh.h"
+#include "os/node/vnodeosbrk.h"
 
 #include "util/vlinesplit.h"
 
@@ -265,17 +266,23 @@ public:
 				if( brk_ev->getUpdatedBRK() < current_brk_point ) {
 					output->verbose(CALL_INFO, 16, 0, "[syscall-brl]: brk provided (0x%llx) is less than existing brk point (0x%llx), so returning current brk point\n",
 						brk_ev->getUpdatedBRK(), current_brk_point );
+
+					// Linux syscall for brk returns the BRK point on success
+					VanadisSyscallResponse* resp = new VanadisSyscallResponse( current_brk_point );
+					core_link->send( resp );
 				} else {
 					uint64_t old_brk  = current_brk_point;
 					current_brk_point = brk_ev->getUpdatedBRK();
 
+					std::vector<uint8_t> payload;
+					payload.resize( brk_ev->getUpdatedBRK() - old_brk, 0 );
+
+					sendBlockToMemory( old_brk, payload );
+					handler_state = new VanadisBRKHandlerState( output->getVerboseLevel(), current_brk_point );
+
 					output->verbose(CALL_INFO, 16, 0, "[syscall-brk] old brk: 0x%llx -> new brk: 0x%llx (diff: %" PRIu64 ")\n",
 						old_brk, current_brk_point, (current_brk_point - old_brk) );
 				}
-
-				// Linux syscall for brk returns the BRK point on success
-				VanadisSyscallResponse* resp = new VanadisSyscallResponse( current_brk_point );
-				core_link->send( resp );
 			}
 			break;
 
@@ -358,13 +365,15 @@ public:
 				start_address + prolog_size + (i*64), block_payload.size(), block_payload) );
 		}
 
-		std::vector<uint8_t> remainder_payload;
-		for( uint64_t i = 0; i < remainder; ++i ) {
-			remainder_payload.push_back( data_block[ prolog_size + (blocks * 64) + i ] );
-		}
+		if( remainder > 0 ) {
+			std::vector<uint8_t> remainder_payload;
+			for( uint64_t i = 0; i < remainder; ++i ) {
+				remainder_payload.push_back( data_block[ prolog_size + (blocks * 64) + i ] );
+			}
 
-		sendMemRequest( new SimpleMem::Request( SimpleMem::Request::Write,
-			start_address + prolog_size + (blocks * 64), remainder_payload.size(), remainder_payload) );
+			sendMemRequest( new SimpleMem::Request( SimpleMem::Request::Write,
+				start_address + prolog_size + (blocks * 64), remainder_payload.size(), remainder_payload) );
+		}
 	}
 
 	void handleIncomingMemory( SimpleMem::Request* ev ) {

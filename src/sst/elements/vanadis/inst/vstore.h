@@ -26,9 +26,13 @@ public:
 		const uint16_t valueReg,
 		const uint16_t store_bytes,
 		VanadisMemoryTransaction accessT) :
-		VanadisInstruction(id, addr, hw_thr, isa_opts, 2, 0, 2, 0, 0, 0, 0, 0),
+		VanadisInstruction(id, addr, hw_thr, isa_opts,
+			2, accessT == MEM_TRANSACTION_LLSC_STORE ? 1 : 0,
+			2, accessT == MEM_TRANSACTION_LLSC_STORE ? 1 : 0,
+			0, 0, 0, 0),
 		store_width(store_bytes), offset(offst), memAccessType(accessT) {
 
+/*
 		if( memAccessType == MEM_TRANSACTION_LLSC_STORE ) {
 			count_isa_int_reg_out = 1;
 			isa_int_regs_out = new uint16_t[1];
@@ -38,9 +42,14 @@ public:
 
 			isa_int_regs_out[0] = valueReg;
 		}
+*/
 
 		isa_int_regs_in[0] = memoryAddr;
 		isa_int_regs_in[1] = valueReg;
+
+		if( MEM_TRANSACTION_LLSC_STORE == accessT ) {
+			isa_int_regs_out[0] = valueReg;
+		}
 	}
 
 	VanadisStoreInstruction* clone() {
@@ -89,8 +98,8 @@ public:
                 (*store_addr)  = (uint64_t)( reg_tmp + offset );
 		(*op_width)    = store_width;
 
-		output->verbose(CALL_INFO, 16, 0, "Execute: store addr-reg: %" PRIu16 " / val-reg: %" PRIu16 " / offset: %" PRId64 " / width: %" PRIu16 " / store-addr: %" PRIu64 "\n",
-			phys_int_regs_in[0], phys_int_regs_in[1], offset, store_width, (*store_addr) );
+		output->verbose(CALL_INFO, 16, 0, "Execute: (addr=0x%llx) STORE addr-reg: %" PRIu16 " / val-reg: %" PRIu16 " / offset: %" PRId64 " / width: %" PRIu16 " / store-addr: %" PRIu64 " (0x%llx)\n",
+			getInstructionAddress(), phys_int_regs_in[0], phys_int_regs_in[1], offset, store_width, (*store_addr), (*store_addr) );
         }
 
 	uint16_t getStoreWidth() const {

@@ -18,9 +18,9 @@ public:
 		const uint16_t tgtReg,
 		const uint16_t load_bytes,
 		const bool extend_sign,
-		const bool isLeftLoad
+		const bool isLowerLoad
 		) : VanadisLoadInstruction(id, addr, hw_thr, isa_opts, memAddrReg, offst, tgtReg, load_bytes, extend_sign, MEM_TRANSACTION_NONE),
-			is_load_lower(isLeftLoad) {
+			is_load_lower(isLowerLoad) {
 
 		// We need an extra in register here
 
@@ -63,46 +63,23 @@ public:
 			phys_int_regs_out[0], phys_int_regs_in[0], offset, load_width);
 	}
 
-	void computeLoadAddress( VanadisRegisterFile* reg, uint64_t* out_addr, uint16_t* width ) {
-		const uint64_t width_64       = (uint64_t) load_width;
-
-		uint64_t reg_tmp = reg->getIntReg<uint64_t>( phys_int_regs_in[0] );
-
-		const uint64_t base_address   = reg_tmp + offset;
-		const uint64_t right_read_len = (base_address % width_64) == 0 ? width_64 : (base_address % width_64);
-		const uint64_t left_read_len  = (width_64 - right_read_len) == 0 ? width_64 : (width_64 - right_read_len);
-
-		if( is_load_lower ) {
-			(*out_addr) = base_address;
-			(*width)    = left_read_len;
-			register_offset = 0;
-		} else {
-			// if LWR and LWL are both performing full loads, then ensure they load from the same address
-			if( width_64 == left_read_len ) {
-				(*out_addr) = base_address;
-				register_offset = 0;
-			} else {
-				(*out_addr) = base_address + left_read_len;
-				register_offset = left_read_len;
-			}
-
-			(*width)    = right_read_len;
-		}
-	}
-
 	void computeLoadAddress( SST::Output* output, VanadisRegisterFile* regFile, uint64_t* out_addr, uint16_t* width ) {
 		const uint64_t mem_addr_reg_val = regFile->getIntReg<uint64_t>( phys_int_regs_in[0] );
 
-                output->verbose(CALL_INFO, 16, 0, "[execute-partload]: reg[%5" PRIu16 "]: %" PRIu64 "\n", phys_int_regs_in[0], mem_addr_reg_val);
-                output->verbose(CALL_INFO, 16, 0, "[execute-partload]: offset           : %" PRIu64 "\n", offset);
-                output->verbose(CALL_INFO, 16, 0, "[execute-partload]: (add)            : %" PRIu64 "\n", (mem_addr_reg_val + offset));
+                output->verbose(CALL_INFO, 16, 0, "[execute-partload]: reg[%5" PRIu16 "]: %" PRIu64 " / 0x%llx\n", phys_int_regs_in[0], mem_addr_reg_val,
+			mem_addr_reg_val);
+                output->verbose(CALL_INFO, 16, 0, "[execute-partload]: offset           : %" PRIu64 " / 0x%llx\n", offset,
+			offset);
+                output->verbose(CALL_INFO, 16, 0, "[execute-partload]: (add)            : %" PRIu64 " / 0x%llx\n",
+			(mem_addr_reg_val + offset), (mem_addr_reg_val + offset));
 
 		computeLoadAddress( regFile, out_addr, width );
 
 		output->verbose(CALL_INFO, 16, 0, "[execute-partload]: full width: %" PRIu16 "\n", load_width);
-		output->verbose(CALL_INFO, 16, 0, "[execute-partload]: (left/right load ? %s)\n", is_load_lower ? "left" : "right");
-		output->verbose(CALL_INFO, 16, 0, "[execute-partload]: load-addr: 0x%0llx / load-width: %" PRIu16 "\n",
-			(*out_addr), (*width) );
+		output->verbose(CALL_INFO, 16, 0, "[execute-partload]: (lower/upper load ? %s)\n",
+			is_load_lower ? "lower" : "upper");
+		output->verbose(CALL_INFO, 16, 0, "[execute-partload]: load-addr: %" PRIu64 " / 0x%0llx / load-width: %" PRIu16 "\n",
+			(*out_addr), (*out_addr), (*width) );
 		output->verbose(CALL_INFO, 16, 0, "[execute-partload]: register-offset: %" PRIu16 "\n", register_offset);
 	}
 
@@ -117,6 +94,37 @@ public:
 	}
 
 protected:
+	void computeLoadAddress( VanadisRegisterFile* reg, uint64_t* out_addr, uint16_t* width ) {
+		const uint64_t width_64       = (uint64_t) load_width;
+
+		int64_t reg_tmp = reg->getIntReg<int64_t>( phys_int_regs_in[0] );
+
+		const uint64_t base_address    = is_load_lower ? (uint64_t) (reg_tmp + offset) :
+			(uint64_t) (reg_tmp + offset) - width_64;
+
+		const uint64_t read_lower_addr = base_address;
+		const uint64_t read_lower_len  = (base_address % width_64) == 0 ? width_64 : width_64 - (base_address % width_64);
+		const uint64_t read_upper_addr = (read_lower_len == width_64) ? read_lower_addr :
+			read_lower_addr + read_lower_len;
+		const uint64_t read_upper_len  = (read_lower_len == width_64 ) ? width_64 : width_64 - read_lower_len;
+
+		if( is_load_lower ) {
+			(*out_addr) = read_lower_addr;
+			(*width)    = read_lower_len;
+
+			register_offset = 0;
+		} else {
+			(*out_addr) = read_upper_addr;
+			(*width)    = read_upper_len;
+
+			if( read_lower_len == width_64 ) {
+				register_offset = 0;
+			} else {
+				register_offset = read_lower_len;
+			}
+		}
+	}
+
 	uint16_t register_offset;
 	const bool is_load_lower;
 

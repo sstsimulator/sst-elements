@@ -54,14 +54,14 @@ public:
 			delayType  = delayT;
 
 			// default speculated, branch not-taken address
-/*
+
 			if( delayT == VANADIS_NO_DELAY_SLOT ) {
 				speculatedAddress = getInstructionAddress() + 4;
 			} else {
 				speculatedAddress = getInstructionAddress() + 8;
 			}
-*/
-			speculatedAddress = UINT64_MAX;
+
+			// speculatedAddress = (addr + 4);
 			takenAddress      = UINT64_MAX;
 		}
 
