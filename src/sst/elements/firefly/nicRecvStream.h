@@ -34,7 +34,7 @@ class StreamBase {
             virtual void processPktHdr( FireflyNetworkEvent* ev ) { assert(0); }
             virtual void processPktBody( FireflyNetworkEvent* ev );
 
-            virtual bool isBlocked();
+            virtual bool isBlocked( bool head = false );
             void needRecv( FireflyNetworkEvent* ev );
 
             void qSend( SendEntryBase* entry ) {

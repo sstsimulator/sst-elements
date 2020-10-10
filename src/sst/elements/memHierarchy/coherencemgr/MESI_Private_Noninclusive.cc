@@ -59,6 +59,7 @@ bool MESIPrivNoninclusive::handleGetS(MemEvent* event, bool inMSHR) {
                 if (!mshr_->getProfiled(addr)) {
                     stat_eventState[(int)Command::GetS][I]->addData(1);
                     stat_miss[0][inMSHR]->addData(1);
+                    stat_misses->addData(1);
                     notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::MISS);
                     mshr_->setProfiled(addr);
                 }
@@ -74,6 +75,7 @@ bool MESIPrivNoninclusive::handleGetS(MemEvent* event, bool inMSHR) {
             if (!inMSHR || !mshr_->getProfiled(addr)) {
                 stat_eventState[(int)Command::GetS][S]->addData(1);
                 stat_hit[0][inMSHR]->addData(1);
+                stat_hits->addData(1);
                 notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
             }
             line->setShared(true);
@@ -89,6 +91,7 @@ bool MESIPrivNoninclusive::handleGetS(MemEvent* event, bool inMSHR) {
             if (!inMSHR || !mshr_->getProfiled(addr)) {
                 stat_eventState[(int)Command::GetS][state]->addData(1);
                 stat_hit[0][inMSHR]->addData(1);
+                stat_hits->addData(1);
                 notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
             }
             if (is_debug_event(event))
@@ -151,6 +154,7 @@ bool MESIPrivNoninclusive::handleGetX(MemEvent* event, bool inMSHR) {
                 if (!mshr_->getProfiled(addr)) {
                     stat_eventState[(int)event->getCmd()][state]->addData(1);
                     stat_miss[(event->getCmd() == Command::GetX ? 1 : 2)][inMSHR]->addData(1);
+                    stat_misses->addData(1);
                     notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::MISS);
                     mshr_->setProfiled(addr);
                 }
@@ -173,6 +177,7 @@ bool MESIPrivNoninclusive::handleGetX(MemEvent* event, bool inMSHR) {
             if (!inMSHR || !mshr_->getProfiled(addr)) {
                 stat_eventState[(int)event->getCmd()][state]->addData(1);
                 stat_hit[(event->getCmd() == Command::GetX ? 1 : 2)][inMSHR]->addData(1);
+                stat_hits->addData(1);
                 notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::HIT);
             }
             line->setOwned(true);
