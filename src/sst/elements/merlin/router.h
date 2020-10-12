@@ -361,15 +361,27 @@ private:
 class Topology : public SubComponent {
 public:
 
-    // Parameters are:  num_ports, id
-    SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Merlin::Topology, int, int)
+    // Parameters are:  num_ports, id, num_vns
+    SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Merlin::Topology, int, int, int)
     
     enum PortState {R2R, R2N, UNCONNECTED};
     Topology(ComponentId_t cid) : SubComponent(cid), output(Simulation::getSimulation()->getSimulationOutput()) {}
     virtual ~Topology() {}
 
-    virtual void route(int port, int vc, internal_router_event* ev) = 0;
-    virtual void reroute(int port, int vc, internal_router_event* ev)  { route(port,vc,ev); }
+    virtual void route(int port, int vc, internal_router_event* ev) __attribute__ ((deprecated("route() is deprecated and will be removed in SST 11. Please use route_packet(), which is now called when a packet reaches the head of the input queue."))) { }
+
+    virtual void reroute(int port, int vc, internal_router_event* ev) __attribute__ ((deprecated("reroute() is deprecated and will be removed in SST 11. Please use route_packet(), which is now called when a packet reaches the head of the input queue."))) {
+        DISABLE_WARN_DEPRECATED_DECLARATION
+        route(port,vc,ev);
+        REENABLE_WARNING
+    }
+
+    virtual void route_packet(int port, int vc, internal_router_event* ev)  {
+        DISABLE_WARN_DEPRECATED_DECLARATION 
+        route(port,vc,ev);
+        reroute(port,vc,ev);
+        REENABLE_WARNING
+    }
     virtual internal_router_event* process_input(RtrEvent* ev) = 0;
 	
     // Returns whether the port is a router to router, router to nic, or unconnected
@@ -382,7 +394,17 @@ public:
     virtual internal_router_event* process_InitData_input(RtrEvent* ev) = 0;
 
     // Method used for autodiscovery of VC/VN
-    virtual int computeNumVCs(int vns) {return vns;}
+    virtual int computeNumVCs(int vns) __attribute__ ((deprecated("computeNumVCs() is deprecated and will be removed in SST 11. Please use getVCsPerVN() instead."))) {return vns;}
+
+    // Gets the number of VCs per VN for each VN.  Vector that is
+    // passed in must have it's size set to num_vns before making this
+    // call.
+    virtual void getVCsPerVN(std::vector<int>& vns_per_vn) {
+        DISABLE_WARN_DEPRECATED_DECLARATION
+        int vcs = computeNumVCs(1);
+        REENABLE_WARNING
+        for ( int& val : vns_per_vn ) val = vcs;
+    }
     // Method used to set endpoint ID
     virtual int getEndpointID(int port) {return -1;}
     
@@ -403,6 +425,7 @@ public:
 protected:
     Output &output;
 };
+
 
 // Class to manage link between NIC and router.  A single NIC can have
 // more than one link_control (and thus link to router).
@@ -470,9 +493,7 @@ public:
         virtual void setVCs(int num_vns, int* vcs_per_vn) = 0;
         virtual int arbitrate(Cycle_t cycle, PortInterface::port_queue_t* out_q, int* port_out_credits, bool isHostPort, bool& have_packets) = 0;
         virtual void dumpState(std::ostream& stream) {};
-};
-
-
+    };
 
 };
 

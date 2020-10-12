@@ -171,6 +171,8 @@ TrivialCPU cpu7 Finished after 5000 issued reads, 5000 returned (15989437 clocks
  l3cache.GetSMiss_Blocked : Accumulator : Sum.u64 = 32919; SumSQ.u64 = 32919; Count.u64 = 32919; Min.u64 = 1; Max.u64 = 1; 
  l3cache.GetXMiss_Blocked : Accumulator : Sum.u64 = 3573; SumSQ.u64 = 3573; Count.u64 = 3573; Min.u64 = 1; Max.u64 = 1; 
  l3cache.GetSXMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l3cache.CacheHits : Accumulator : Sum.u64 = 2037; SumSQ.u64 = 2037; Count.u64 = 2037; Min.u64 = 1; Max.u64 = 1; 
+ l3cache.CacheMisses : Accumulator : Sum.u64 = 37524; SumSQ.u64 = 37524; Count.u64 = 37524; Min.u64 = 1; Max.u64 = 1; 
  l3cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 36500; SumSQ.u64 = 36500; Count.u64 = 36500; Min.u64 = 1; Max.u64 = 1; 
  l3cache.evict_E : Accumulator : Sum.u64 = 65412; SumSQ.u64 = 65412; Count.u64 = 65412; Min.u64 = 1; Max.u64 = 1; 
  l3cache.evict_EInv : Accumulator : Sum.u64 = 17715; SumSQ.u64 = 17715; Count.u64 = 17715; Min.u64 = 1; Max.u64 = 1; 
@@ -356,6 +358,8 @@ TrivialCPU cpu7 Finished after 5000 issued reads, 5000 returned (15989437 clocks
  c0.l1cache.GetSMiss_Blocked : Accumulator : Sum.u64 = 40; SumSQ.u64 = 40; Count.u64 = 40; Min.u64 = 1; Max.u64 = 1; 
  c0.l1cache.GetXMiss_Blocked : Accumulator : Sum.u64 = 3; SumSQ.u64 = 3; Count.u64 = 3; Min.u64 = 1; Max.u64 = 1; 
  c0.l1cache.GetSXMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c0.l1cache.CacheHits : Accumulator : Sum.u64 = 3; SumSQ.u64 = 3; Count.u64 = 3; Min.u64 = 1; Max.u64 = 1; 
+ c0.l1cache.CacheMisses : Accumulator : Sum.u64 = 4997; SumSQ.u64 = 4997; Count.u64 = 4997; Min.u64 = 1; Max.u64 = 1; 
  c0.l1cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c0.l1cache.eventSent_PutS : Accumulator : Sum.u64 = 332; SumSQ.u64 = 332; Count.u64 = 332; Min.u64 = 1; Max.u64 = 1; 
  c0.l1cache.eventSent_PutE : Accumulator : Sum.u64 = 1025; SumSQ.u64 = 1025; Count.u64 = 1025; Min.u64 = 1; Max.u64 = 1; 
@@ -552,6 +556,8 @@ TrivialCPU cpu7 Finished after 5000 issued reads, 5000 returned (15989437 clocks
  c0.l2cache.GetSMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c0.l2cache.GetXMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c0.l2cache.GetSXMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c0.l2cache.CacheHits : Accumulator : Sum.u64 = 42; SumSQ.u64 = 42; Count.u64 = 42; Min.u64 = 1; Max.u64 = 1; 
+ c0.l2cache.CacheMisses : Accumulator : Sum.u64 = 4955; SumSQ.u64 = 4955; Count.u64 = 4955; Min.u64 = 1; Max.u64 = 1; 
  c0.l2cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c0.l2cache.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c0.l2cache.evict_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -737,6 +743,8 @@ TrivialCPU cpu7 Finished after 5000 issued reads, 5000 returned (15989437 clocks
  c1.l1cache.GetSMiss_Blocked : Accumulator : Sum.u64 = 21; SumSQ.u64 = 21; Count.u64 = 21; Min.u64 = 1; Max.u64 = 1; 
  c1.l1cache.GetXMiss_Blocked : Accumulator : Sum.u64 = 3; SumSQ.u64 = 3; Count.u64 = 3; Min.u64 = 1; Max.u64 = 1; 
  c1.l1cache.GetSXMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c1.l1cache.CacheHits : Accumulator : Sum.u64 = 12; SumSQ.u64 = 12; Count.u64 = 12; Min.u64 = 1; Max.u64 = 1; 
+ c1.l1cache.CacheMisses : Accumulator : Sum.u64 = 4988; SumSQ.u64 = 4988; Count.u64 = 4988; Min.u64 = 1; Max.u64 = 1; 
  c1.l1cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c1.l1cache.eventSent_PutS : Accumulator : Sum.u64 = 331; SumSQ.u64 = 331; Count.u64 = 331; Min.u64 = 1; Max.u64 = 1; 
  c1.l1cache.eventSent_PutE : Accumulator : Sum.u64 = 1029; SumSQ.u64 = 1029; Count.u64 = 1029; Min.u64 = 1; Max.u64 = 1; 
@@ -933,6 +941,8 @@ TrivialCPU cpu7 Finished after 5000 issued reads, 5000 returned (15989437 clocks
  c1.l2cache.GetSMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c1.l2cache.GetXMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c1.l2cache.GetSXMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c1.l2cache.CacheHits : Accumulator : Sum.u64 = 39; SumSQ.u64 = 39; Count.u64 = 39; Min.u64 = 1; Max.u64 = 1; 
+ c1.l2cache.CacheMisses : Accumulator : Sum.u64 = 4949; SumSQ.u64 = 4949; Count.u64 = 4949; Min.u64 = 1; Max.u64 = 1; 
  c1.l2cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c1.l2cache.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c1.l2cache.evict_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -1118,6 +1128,8 @@ TrivialCPU cpu7 Finished after 5000 issued reads, 5000 returned (15989437 clocks
  c2.l1cache.GetSMiss_Blocked : Accumulator : Sum.u64 = 20; SumSQ.u64 = 20; Count.u64 = 20; Min.u64 = 1; Max.u64 = 1; 
  c2.l1cache.GetXMiss_Blocked : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; Min.u64 = 1; Max.u64 = 1; 
  c2.l1cache.GetSXMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c2.l1cache.CacheHits : Accumulator : Sum.u64 = 13; SumSQ.u64 = 13; Count.u64 = 13; Min.u64 = 1; Max.u64 = 1; 
+ c2.l1cache.CacheMisses : Accumulator : Sum.u64 = 4987; SumSQ.u64 = 4987; Count.u64 = 4987; Min.u64 = 1; Max.u64 = 1; 
  c2.l1cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c2.l1cache.eventSent_PutS : Accumulator : Sum.u64 = 316; SumSQ.u64 = 316; Count.u64 = 316; Min.u64 = 1; Max.u64 = 1; 
  c2.l1cache.eventSent_PutE : Accumulator : Sum.u64 = 1065; SumSQ.u64 = 1065; Count.u64 = 1065; Min.u64 = 1; Max.u64 = 1; 
@@ -1314,6 +1326,8 @@ TrivialCPU cpu7 Finished after 5000 issued reads, 5000 returned (15989437 clocks
  c2.l2cache.GetSMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c2.l2cache.GetXMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c2.l2cache.GetSXMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c2.l2cache.CacheHits : Accumulator : Sum.u64 = 36; SumSQ.u64 = 36; Count.u64 = 36; Min.u64 = 1; Max.u64 = 1; 
+ c2.l2cache.CacheMisses : Accumulator : Sum.u64 = 4951; SumSQ.u64 = 4951; Count.u64 = 4951; Min.u64 = 1; Max.u64 = 1; 
  c2.l2cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c2.l2cache.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c2.l2cache.evict_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -1499,6 +1513,8 @@ TrivialCPU cpu7 Finished after 5000 issued reads, 5000 returned (15989437 clocks
  c3.l1cache.GetSMiss_Blocked : Accumulator : Sum.u64 = 23; SumSQ.u64 = 23; Count.u64 = 23; Min.u64 = 1; Max.u64 = 1; 
  c3.l1cache.GetXMiss_Blocked : Accumulator : Sum.u64 = 2; SumSQ.u64 = 2; Count.u64 = 2; Min.u64 = 1; Max.u64 = 1; 
  c3.l1cache.GetSXMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c3.l1cache.CacheHits : Accumulator : Sum.u64 = 16; SumSQ.u64 = 16; Count.u64 = 16; Min.u64 = 1; Max.u64 = 1; 
+ c3.l1cache.CacheMisses : Accumulator : Sum.u64 = 4984; SumSQ.u64 = 4984; Count.u64 = 4984; Min.u64 = 1; Max.u64 = 1; 
  c3.l1cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c3.l1cache.eventSent_PutS : Accumulator : Sum.u64 = 325; SumSQ.u64 = 325; Count.u64 = 325; Min.u64 = 1; Max.u64 = 1; 
  c3.l1cache.eventSent_PutE : Accumulator : Sum.u64 = 1051; SumSQ.u64 = 1051; Count.u64 = 1051; Min.u64 = 1; Max.u64 = 1; 
@@ -1695,6 +1711,8 @@ TrivialCPU cpu7 Finished after 5000 issued reads, 5000 returned (15989437 clocks
  c3.l2cache.GetSMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c3.l2cache.GetXMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c3.l2cache.GetSXMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c3.l2cache.CacheHits : Accumulator : Sum.u64 = 40; SumSQ.u64 = 40; Count.u64 = 40; Min.u64 = 1; Max.u64 = 1; 
+ c3.l2cache.CacheMisses : Accumulator : Sum.u64 = 4944; SumSQ.u64 = 4944; Count.u64 = 4944; Min.u64 = 1; Max.u64 = 1; 
  c3.l2cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c3.l2cache.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c3.l2cache.evict_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -1880,6 +1898,8 @@ TrivialCPU cpu7 Finished after 5000 issued reads, 5000 returned (15989437 clocks
  c4.l1cache.GetSMiss_Blocked : Accumulator : Sum.u64 = 23; SumSQ.u64 = 23; Count.u64 = 23; Min.u64 = 1; Max.u64 = 1; 
  c4.l1cache.GetXMiss_Blocked : Accumulator : Sum.u64 = 4; SumSQ.u64 = 4; Count.u64 = 4; Min.u64 = 1; Max.u64 = 1; 
  c4.l1cache.GetSXMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c4.l1cache.CacheHits : Accumulator : Sum.u64 = 12; SumSQ.u64 = 12; Count.u64 = 12; Min.u64 = 1; Max.u64 = 1; 
+ c4.l1cache.CacheMisses : Accumulator : Sum.u64 = 4988; SumSQ.u64 = 4988; Count.u64 = 4988; Min.u64 = 1; Max.u64 = 1; 
  c4.l1cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c4.l1cache.eventSent_PutS : Accumulator : Sum.u64 = 343; SumSQ.u64 = 343; Count.u64 = 343; Min.u64 = 1; Max.u64 = 1; 
  c4.l1cache.eventSent_PutE : Accumulator : Sum.u64 = 1060; SumSQ.u64 = 1060; Count.u64 = 1060; Min.u64 = 1; Max.u64 = 1; 
@@ -2076,6 +2096,8 @@ TrivialCPU cpu7 Finished after 5000 issued reads, 5000 returned (15989437 clocks
  c4.l2cache.GetSMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c4.l2cache.GetXMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c4.l2cache.GetSXMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c4.l2cache.CacheHits : Accumulator : Sum.u64 = 42; SumSQ.u64 = 42; Count.u64 = 42; Min.u64 = 1; Max.u64 = 1; 
+ c4.l2cache.CacheMisses : Accumulator : Sum.u64 = 4946; SumSQ.u64 = 4946; Count.u64 = 4946; Min.u64 = 1; Max.u64 = 1; 
  c4.l2cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c4.l2cache.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c4.l2cache.evict_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -2261,6 +2283,8 @@ TrivialCPU cpu7 Finished after 5000 issued reads, 5000 returned (15989437 clocks
  c5.l1cache.GetSMiss_Blocked : Accumulator : Sum.u64 = 18; SumSQ.u64 = 18; Count.u64 = 18; Min.u64 = 1; Max.u64 = 1; 
  c5.l1cache.GetXMiss_Blocked : Accumulator : Sum.u64 = 3; SumSQ.u64 = 3; Count.u64 = 3; Min.u64 = 1; Max.u64 = 1; 
  c5.l1cache.GetSXMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c5.l1cache.CacheHits : Accumulator : Sum.u64 = 6; SumSQ.u64 = 6; Count.u64 = 6; Min.u64 = 1; Max.u64 = 1; 
+ c5.l1cache.CacheMisses : Accumulator : Sum.u64 = 4994; SumSQ.u64 = 4994; Count.u64 = 4994; Min.u64 = 1; Max.u64 = 1; 
  c5.l1cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c5.l1cache.eventSent_PutS : Accumulator : Sum.u64 = 316; SumSQ.u64 = 316; Count.u64 = 316; Min.u64 = 1; Max.u64 = 1; 
  c5.l1cache.eventSent_PutE : Accumulator : Sum.u64 = 1046; SumSQ.u64 = 1046; Count.u64 = 1046; Min.u64 = 1; Max.u64 = 1; 
@@ -2457,6 +2481,8 @@ TrivialCPU cpu7 Finished after 5000 issued reads, 5000 returned (15989437 clocks
  c5.l2cache.GetSMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c5.l2cache.GetXMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c5.l2cache.GetSXMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c5.l2cache.CacheHits : Accumulator : Sum.u64 = 51; SumSQ.u64 = 51; Count.u64 = 51; Min.u64 = 1; Max.u64 = 1; 
+ c5.l2cache.CacheMisses : Accumulator : Sum.u64 = 4943; SumSQ.u64 = 4943; Count.u64 = 4943; Min.u64 = 1; Max.u64 = 1; 
  c5.l2cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c5.l2cache.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c5.l2cache.evict_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -2642,6 +2668,8 @@ TrivialCPU cpu7 Finished after 5000 issued reads, 5000 returned (15989437 clocks
  c6.l1cache.GetSMiss_Blocked : Accumulator : Sum.u64 = 22; SumSQ.u64 = 22; Count.u64 = 22; Min.u64 = 1; Max.u64 = 1; 
  c6.l1cache.GetXMiss_Blocked : Accumulator : Sum.u64 = 3; SumSQ.u64 = 3; Count.u64 = 3; Min.u64 = 1; Max.u64 = 1; 
  c6.l1cache.GetSXMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c6.l1cache.CacheHits : Accumulator : Sum.u64 = 13; SumSQ.u64 = 13; Count.u64 = 13; Min.u64 = 1; Max.u64 = 1; 
+ c6.l1cache.CacheMisses : Accumulator : Sum.u64 = 4987; SumSQ.u64 = 4987; Count.u64 = 4987; Min.u64 = 1; Max.u64 = 1; 
  c6.l1cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c6.l1cache.eventSent_PutS : Accumulator : Sum.u64 = 340; SumSQ.u64 = 340; Count.u64 = 340; Min.u64 = 1; Max.u64 = 1; 
  c6.l1cache.eventSent_PutE : Accumulator : Sum.u64 = 1051; SumSQ.u64 = 1051; Count.u64 = 1051; Min.u64 = 1; Max.u64 = 1; 
@@ -2838,6 +2866,8 @@ TrivialCPU cpu7 Finished after 5000 issued reads, 5000 returned (15989437 clocks
  c6.l2cache.GetSMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c6.l2cache.GetXMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c6.l2cache.GetSXMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c6.l2cache.CacheHits : Accumulator : Sum.u64 = 60; SumSQ.u64 = 60; Count.u64 = 60; Min.u64 = 1; Max.u64 = 1; 
+ c6.l2cache.CacheMisses : Accumulator : Sum.u64 = 4927; SumSQ.u64 = 4927; Count.u64 = 4927; Min.u64 = 1; Max.u64 = 1; 
  c6.l2cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c6.l2cache.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c6.l2cache.evict_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -3023,6 +3053,8 @@ TrivialCPU cpu7 Finished after 5000 issued reads, 5000 returned (15989437 clocks
  c7.l1cache.GetSMiss_Blocked : Accumulator : Sum.u64 = 13; SumSQ.u64 = 13; Count.u64 = 13; Min.u64 = 1; Max.u64 = 1; 
  c7.l1cache.GetXMiss_Blocked : Accumulator : Sum.u64 = 2; SumSQ.u64 = 2; Count.u64 = 2; Min.u64 = 1; Max.u64 = 1; 
  c7.l1cache.GetSXMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c7.l1cache.CacheHits : Accumulator : Sum.u64 = 13; SumSQ.u64 = 13; Count.u64 = 13; Min.u64 = 1; Max.u64 = 1; 
+ c7.l1cache.CacheMisses : Accumulator : Sum.u64 = 4987; SumSQ.u64 = 4987; Count.u64 = 4987; Min.u64 = 1; Max.u64 = 1; 
  c7.l1cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c7.l1cache.eventSent_PutS : Accumulator : Sum.u64 = 301; SumSQ.u64 = 301; Count.u64 = 301; Min.u64 = 1; Max.u64 = 1; 
  c7.l1cache.eventSent_PutE : Accumulator : Sum.u64 = 1078; SumSQ.u64 = 1078; Count.u64 = 1078; Min.u64 = 1; Max.u64 = 1; 
@@ -3219,6 +3251,8 @@ TrivialCPU cpu7 Finished after 5000 issued reads, 5000 returned (15989437 clocks
  c7.l2cache.GetSMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c7.l2cache.GetXMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c7.l2cache.GetSXMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c7.l2cache.CacheHits : Accumulator : Sum.u64 = 41; SumSQ.u64 = 41; Count.u64 = 41; Min.u64 = 1; Max.u64 = 1; 
+ c7.l2cache.CacheMisses : Accumulator : Sum.u64 = 4946; SumSQ.u64 = 4946; Count.u64 = 4946; Min.u64 = 1; Max.u64 = 1; 
  c7.l2cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c7.l2cache.evict_E : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c7.l2cache.evict_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 

@@ -1,19 +1,19 @@
-0:cpu:RequestGenCPU[RequestGenCPU:42]: Configured CPU to allow 16 maximum Load requests to be memory to be outstanding.
-0:cpu:RequestGenCPU[RequestGenCPU:44]: Configured CPU to allow 16 maximum Store requests to be memory to be outstanding.
-0:cpu:RequestGenCPU[RequestGenCPU:46]: Configured CPU to allow 16 maximum Custom requests to be memory to be outstanding.
-0:cpu:RequestGenCPU[RequestGenCPU:53]: CPU clock configured for 2GHz
-0:cpu:RequestGenCPU[RequestGenCPU:58]: Memory interface to be loaded is: memHierarchy.memInterface
-0:cpu:RequestGenCPU[RequestGenCPU:71]: Loaded memory interface successfully.
-0:cpu:RequestGenCPU[RequestGenCPU:105]: Generator loaded successfully.
-0:cpu:RequestGenCPU[RequestGenCPU:161]: Miranda CPU Configuration:
-0:cpu:RequestGenCPU[RequestGenCPU:162]: - Max requests per cycle:         2
-0:cpu:RequestGenCPU[RequestGenCPU:163]: - Max reorder lookups             16
-0:cpu:RequestGenCPU[RequestGenCPU:164]: - Clock:                          2GHz
-0:cpu:RequestGenCPU[RequestGenCPU:165]: - Cache line size:                64 bytes
-0:cpu:RequestGenCPU[RequestGenCPU:166]: - Max Load requests pending:      16
-0:cpu:RequestGenCPU[RequestGenCPU:167]: - Max Store requests pending:     16
-0:cpu:RequestGenCPU[RequestGenCPU:168]: - Max Custom requests pending:     16
-0:cpu:RequestGenCPU[RequestGenCPU:169]: Configuration completed.
+0:cpu:RequestGenCPU[RequestGenCPU:44]: Configured CPU to allow 16 maximum Load requests to be memory to be outstanding.
+0:cpu:RequestGenCPU[RequestGenCPU:46]: Configured CPU to allow 16 maximum Store requests to be memory to be outstanding.
+0:cpu:RequestGenCPU[RequestGenCPU:48]: Configured CPU to allow 16 maximum Custom requests to be memory to be outstanding.
+0:cpu:RequestGenCPU[RequestGenCPU:55]: CPU clock configured for 2GHz
+0:cpu:RequestGenCPU[RequestGenCPU:60]: Memory interface to be loaded is: memHierarchy.memInterface
+0:cpu:RequestGenCPU[RequestGenCPU:73]: Loaded memory interface successfully.
+0:cpu:RequestGenCPU[RequestGenCPU:107]: Generator loaded successfully.
+0:cpu:RequestGenCPU[RequestGenCPU:163]: Miranda CPU Configuration:
+0:cpu:RequestGenCPU[RequestGenCPU:164]: - Max requests per cycle:         2
+0:cpu:RequestGenCPU[RequestGenCPU:165]: - Max reorder lookups             16
+0:cpu:RequestGenCPU[RequestGenCPU:166]: - Clock:                          2GHz
+0:cpu:RequestGenCPU[RequestGenCPU:167]: - Cache line size:                64 bytes
+0:cpu:RequestGenCPU[RequestGenCPU:168]: - Max Load requests pending:      16
+0:cpu:RequestGenCPU[RequestGenCPU:169]: - Max Store requests pending:     16
+0:cpu:RequestGenCPU[RequestGenCPU:170]: - Max Custom requests pending:     16
+0:cpu:RequestGenCPU[RequestGenCPU:171]: Configuration completed.
 Initialized with 1 cores
 Before initialization 
 Assigning the PTW correctly
@@ -150,6 +150,8 @@ After initialization
  l1cache.GetSMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.GetXMiss_Blocked : Accumulator : Sum.u64 = 2; SumSQ.u64 = 2; Count.u64 = 2; Min.u64 = 1; Max.u64 = 1; 
  l1cache.GetSXMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache.CacheHits : Accumulator : Sum.u64 = 9926; SumSQ.u64 = 9926; Count.u64 = 9926; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.CacheMisses : Accumulator : Sum.u64 = 14974; SumSQ.u64 = 14974; Count.u64 = 14974; Min.u64 = 1; Max.u64 = 1; 
  l1cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.eventSent_PutS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.eventSent_PutE : Accumulator : Sum.u64 = 4935; SumSQ.u64 = 4935; Count.u64 = 4935; Min.u64 = 1; Max.u64 = 1; 
@@ -177,9 +179,9 @@ After initialization
  l1cache.CustomReq_uncache_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.CustomResp_uncache_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.CustomAck_uncache_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.NULLCMD_recv : Accumulator : Sum.u64 = 2; SumSQ.u64 = 2; Count.u64 = 2; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.NULLCMD_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.GetS_recv : Accumulator : Sum.u64 = 14900; SumSQ.u64 = 14900; Count.u64 = 14900; Min.u64 = 1; Max.u64 = 1; 
- l1cache.GetX_recv : Accumulator : Sum.u64 = 10002; SumSQ.u64 = 10002; Count.u64 = 10002; Min.u64 = 1; Max.u64 = 1; 
+ l1cache.GetX_recv : Accumulator : Sum.u64 = 10000; SumSQ.u64 = 10000; Count.u64 = 10000; Min.u64 = 1; Max.u64 = 1; 
  l1cache.GetSX_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.FlushLine_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.FlushLineInv_recv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
