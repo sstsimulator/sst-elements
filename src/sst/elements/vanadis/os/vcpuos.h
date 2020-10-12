@@ -49,6 +49,9 @@ public:
 	void setHWThread( const uint32_t newThr ) { hw_thr = newThr; }
 	void setRegisterFile( VanadisRegisterFile* newFile ) { regFile = newFile; }
 	void setISATable( VanadisISATable* newTable ) { isaTable = newTable; }
+	void setHaltThreadCallback( std::function<void(uint32_t, int64_t)> cb ) {
+		haltThrCallBack = cb;
+	}
 
 	virtual void handleSysCall( VanadisSysCallInstruction* syscallIns ) = 0;
 
@@ -62,6 +65,8 @@ protected:
 	std::vector< std::function<void(uint32_t)> > returnCallbacks;
 	uint32_t core_id;
 	uint32_t hw_thr;
+
+	std::function<void(uint32_t, int64_t)> haltThrCallBack;
 
 	VanadisRegisterFile* regFile;
 	VanadisISATable* isaTable;

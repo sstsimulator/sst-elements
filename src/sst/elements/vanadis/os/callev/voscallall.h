@@ -11,5 +11,8 @@
 #include "os/callev/voscallread.h"
 #include "os/callev/voscallreadlink.h"
 #include "os/callev/voscallwritev.h"
+#include "os/callev/voscallwrite.h"
+#include "os/callev/voscallfstat.h"
+#include "os/callev/voscallexitgrp.h"
 
 #endif

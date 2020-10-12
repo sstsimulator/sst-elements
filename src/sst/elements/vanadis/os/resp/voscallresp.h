@@ -35,7 +35,6 @@ private:
 	}
 
 	ImplementSerializable( SST::Vanadis::VanadisSyscallResponse );
-
 	int64_t return_code;
 	bool    mark_success;
 

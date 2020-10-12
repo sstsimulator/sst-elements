@@ -4,7 +4,8 @@
 
 #include <functional>
 
-#include "os/voscallresp.h"
+#include "os/resp/voscallresp.h"
+#include "os/resp/vosexitresp.h"
 #include "os/voscallev.h"
 #include "os/vnodeos.h"
 

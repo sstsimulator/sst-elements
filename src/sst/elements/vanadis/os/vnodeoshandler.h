@@ -9,14 +9,21 @@
 #include <sst/core/interfaces/simpleMem.h>
 #include <sst/core/output.h>
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
 #include "os/callev/voscallall.h"
-#include "os/voscallresp.h"
+#include "os/resp/voscallresp.h"
+#include "os/resp/vosexitresp.h"
 #include "os/voscallev.h"
 
 #include "os/node/vnodeoshstate.h"
 #include "os/node/vnodeosfd.h"
+#include "os/node/vnodeosfstath.h"
 #include "os/node/vnodeosunameh.h"
 #include "os/node/vnodeoswritevh.h"
+#include "os/node/vnodeoswriteh.h"
 #include "os/node/vnodeosopenath.h"
 #include "os/node/vnodeosreadlink.h"
 #include "os/node/vnodeosaccessh.h"
@@ -114,6 +121,54 @@ public:
 				sendBlockToMemory( uname_ev->getUnameInfoAddress(), uname_payload );
 
 				handler_state = new VanadisUnameHandlerState( output->getVerboseLevel() );
+			}
+			break;
+
+		case SYSCALL_OP_FSTAT:
+			{
+				output->verbose(CALL_INFO, 16, 0, "-> call is fstat()\n");
+				VanadisSyscallFstatEvent* fstat_ev = dynamic_cast<VanadisSyscallFstatEvent*>( sys_ev );
+
+				if( nullptr == fstat_ev ) {
+					output->fatal(CALL_INFO, -1, "-> error: unable to case syscall to a fstat event.\n");
+				}
+
+				output->verbose(CALL_INFO, 16, 0, "[syscall-fstat] ---> file-handle: %" PRId32 "\n",
+					fstat_ev->getFileHandle() );
+				output->verbose(CALL_INFO, 16, 0, "[syscall-fstat] ---> stat-struct-addr: %" PRIu64 " / 0x%llx\n",
+					fstat_ev->getStructAddress(), fstat_ev->getStructAddress() );
+
+				bool success = false;
+				struct stat stat_output;
+
+				if( fstat_ev->getFileHandle() <= 2 ) {
+					if( 0 == fstat( fstat_ev->getFileHandle(), &stat_output ) ) {
+						success = true;
+					}
+				} else {
+					if( file_descriptors.find( fstat_ev->getFileHandle() ) == file_descriptors.end() ) {
+						// Fail - cannot find the descriptor, so its not open
+					} else {
+						// Found, now map it.
+					}
+				}
+
+				if( success ) {
+					std::vector<uint8_t> stat_write_payload;
+					stat_write_payload.reserve( sizeof( stat_output ) );
+
+					uint8_t* stat_output_ptr = (uint8_t*)( &stat_output );
+					for( int i = 0; i < sizeof(stat_output); ++i ) {
+						stat_write_payload.push_back( stat_output_ptr[i] );
+					}
+
+					sendBlockToMemory( fstat_ev->getStructAddress(), stat_write_payload );
+
+					handler_state = new VanadisFstatHandlerState( output->getVerboseLevel(),
+						fstat_ev->getFileHandle(), fstat_ev->getStructAddress() );
+				} else {
+					output->fatal(CALL_INFO, -1, "not implemented.\n");
+				}
 			}
 			break;
 
@@ -258,6 +313,53 @@ public:
 				}
 			}
 			break;
+
+		case SYSCALL_OP_WRITE:
+			{
+				output->verbose(CALL_INFO, 16, 0, "-> call is write()\n");
+				VanadisSyscallWriteEvent* write_ev = dynamic_cast< VanadisSyscallWriteEvent* >(sys_ev);
+
+				if( nullptr == write_ev ) {
+					output->fatal(CALL_INFO, -1, "-> error unable to cast syscall to a write event.\n");
+				}
+
+				output->verbose(CALL_INFO, 16, 0, "[syscall-write] -> call is write( %" PRId64 ", 0x%0llx, %" PRId64 " )\n",
+					write_ev->getFileDescriptor(), write_ev->getBufferAddress(),
+					write_ev->getBufferCount() );
+
+				auto file_des = file_descriptors.find( write_ev->getFileDescriptor() );
+
+				if( file_des == file_descriptors.end() ) {
+					output->verbose(CALL_INFO, 16, 0, "[syscall-write] -> file handle %" PRId64 " is not currently open, return an error code.\n",
+						write_ev->getFileDescriptor());
+
+					// EINVAL = 22
+					VanadisSyscallResponse* resp = new VanadisSyscallResponse( -22 );
+                                                core_link->send( resp );
+				} else {
+					if( write_ev->getBufferCount() > 0 ) {
+						const uint64_t line_offset = (write_ev->getBufferAddress() % 64);
+						const uint64_t start_read_len = ((line_offset + write_ev->getBufferCount()) < 64) ?
+							write_ev->getBufferCount() : 64 - line_offset;
+
+						std::function<void(SimpleMem::Request*)> send_req_func = std::bind(
+								&VanadisNodeOSCoreHandler::sendMemRequest, this, std::placeholders::_1 );
+
+						handler_state = new VanadisWriteHandlerState( output->getVerboseLevel(),
+							file_des->second->getFileHandle(),
+							write_ev->getFileDescriptor(), write_ev->getBufferAddress(),
+							write_ev->getBufferCount(), send_req_func );
+
+						sendMemRequest( new SimpleMem::Request( SimpleMem::Request::Read,
+							write_ev->getBufferAddress(), start_read_len ));
+					} else {
+						VanadisSyscallResponse* resp = new VanadisSyscallResponse( 0 );
+                                                core_link->send( resp );
+					}
+				}
+			}
+			break;
+
 		case SYSCALL_OP_BRK:
 			{
 				VanadisSyscallBRKEvent* brk_ev = dynamic_cast< VanadisSyscallBRKEvent* >( sys_ev );
@@ -308,6 +410,13 @@ public:
 			{
 				VanadisSyscallResponse* resp = new VanadisSyscallResponse();
 				core_link->send( resp );
+			}
+			break;
+
+		case SYSCALL_OP_EXIT_GROUP:
+			{
+				VanadisExitResponse* exit_resp = new VanadisExitResponse();
+				core_link->send( exit_resp );
 			}
 			break;
 

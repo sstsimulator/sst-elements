@@ -155,6 +155,7 @@ public:
     void clearFuncUnit( const uint32_t hw_thr, std::vector<VanadisFunctionalUnit*>& unit );
 
     void syscallReturnCallback( uint32_t thr );
+    void setHalt( uint32_t thr, int64_t halt_code );
 
 private:
     VanadisComponent();  // for serialization only

@@ -6,14 +6,19 @@
 #include "os/vcpuos.h"
 #include "os/voscallev.h"
 #include "os/callev/voscallall.h"
-#include "os/voscallresp.h"
+#include "os/resp/voscallresp.h"
+#include "os/resp/vosexitresp.h"
 
 #define VANADIS_SYSCALL_READ             4003
+#define VANADIS_SYSCALL_WRITE		 4004
 #define VANADIS_SYSCALL_ACCESS           4033
 #define VANADIS_SYSCALL_BRK              4045
 #define VANADIS_SYSCALL_READLINK         4085
+#define VANADIS_SYSCALL_MMAP		 4090
 #define VANADIS_SYSCALL_UNAME            4122
 #define VANADIS_SYSCALL_WRITEV           4146
+#define VANADIS_SYSCALL_FSTAT		 4215
+#define VANADIS_SYSCALL_EXIT_GROUP       4246
 #define VANADIS_SYSCALL_SET_THREAD_AREA  4283
 #define VANADIS_SYSCALL_RM_INOTIFY       4286
 #define VANADIS_SYSCALL_OPENAT		 4288
@@ -163,6 +168,20 @@ public:
 				call_ev = new VanadisSyscallUnameEvent( core_id, hw_thr, uname_addr );
 			}
 			break;
+		case VANADIS_SYSCALL_FSTAT:
+			{
+				const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
+				int32_t file_handle = regFile->getIntReg<int32_t>( phys_reg_4 );
+
+				const uint16_t phys_reg_5 = isaTable->getIntPhysReg(5);
+				uint64_t fstat_addr = regFile->getIntReg<uint64_t>( phys_reg_5 );
+
+				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to fstat( %" PRId32 ", %" PRIu64 " )\n",
+					file_handle, fstat_addr);
+
+				call_ev = new VanadisSyscallFstatEvent( core_id, hw_thr, file_handle, fstat_addr );
+			}
+			break;
 		case VANADIS_SYSCALL_OPENAT:
 			{
 				const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
@@ -178,6 +197,7 @@ public:
 				call_ev = new VanadisSyscallOpenAtEvent( core_id, hw_thr, openat_dirfd, openat_path_ptr, openat_flags );
 			}
 			break;
+
 		case VANADIS_SYSCALL_WRITEV:
 			{
 				const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
@@ -192,6 +212,62 @@ public:
 				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to writev( %" PRId64 ", 0x%llx, %" PRId64 " )\n",
 					writev_fd, writev_iovec_ptr, writev_iovec_count);
 				call_ev = new VanadisSyscallWritevEvent( core_id, hw_thr, writev_fd, writev_iovec_ptr, writev_iovec_count );
+			}
+			break;
+
+		case VANADIS_SYSCALL_EXIT_GROUP:
+			{
+				const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
+                                int64_t exit_code = regFile->getIntReg<int64_t>( phys_reg_4 );
+
+				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to exit_group( %" PRId64 " )\n", exit_code );
+				call_ev = new VanadisSyscallExitGroupEvent( core_id, hw_thr, exit_code );
+			}
+			break;
+
+		case VANADIS_SYSCALL_WRITE:
+			{
+				const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
+                                int64_t write_fd = regFile->getIntReg<int64_t>( phys_reg_4 );
+
+                                const uint16_t phys_reg_5 = isaTable->getIntPhysReg(5);
+                                uint64_t write_buff = regFile->getIntReg<uint64_t>( phys_reg_5 );
+
+                                const uint16_t phys_reg_6 = isaTable->getIntPhysReg(6);
+                                uint64_t write_count = regFile->getIntReg<int64_t>( phys_reg_6);
+
+				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to write( %" PRId64 ", 0x%llx, %" PRIu64 " )\n",
+					write_fd, write_buff, write_count);
+				call_ev = new VanadisSyscallWriteEvent( core_id, hw_thr, write_fd, write_buff, write_count );
+			}
+			break;
+
+		case VANADIS_SYSCALL_MMAP:
+			{
+				const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
+                                uint64_t map_addr = regFile->getIntReg<uint64_t>( phys_reg_4 );
+
+                                const uint16_t phys_reg_5 = isaTable->getIntPhysReg(5);
+                                uint64_t map_len = regFile->getIntReg<uint64_t>( phys_reg_5 );
+
+                                const uint16_t phys_reg_6 = isaTable->getIntPhysReg(6);
+                                int32_t map_prot = regFile->getIntReg<int32_t>( phys_reg_6);
+
+                                const uint16_t phys_reg_7 = isaTable->getIntPhysReg(7);
+                                int32_t map_flags = regFile->getIntReg<int32_t>( phys_reg_7);
+
+				const uint16_t phys_reg_sp = isaTable->getIntPhysReg(25);
+				uint64_t stack_ptr = regFile->getIntReg<uint64_t>( phys_reg_sp );
+
+				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to mmap( 0x%llx, %" PRIu64 ", %" PRId32 ", %" PRId32 ", sp: 0x%llx (> 4 arguments) )\n",
+					map_addr, map_len, map_prot, map_flags, stack_ptr);
+//				call_ev = new VanadisSyscallWritevEvent( core_id, hw_thr, writev_fd, writev_iovec_ptr, writev_iovec_count );
+
+				if( (0 == map_addr) && (0==map_len) ) {
+					recvOSEvent( new VanadisSyscallResponse(-22) );
+				} else {
+					output->fatal(CALL_INFO, -1, "STOP\n");
+				}
 			}
 			break;
 
@@ -231,27 +307,32 @@ protected:
 
 		VanadisSyscallResponse* os_resp = dynamic_cast<VanadisSyscallResponse*>( ev );
 
-		if( nullptr == os_resp ) {
-			output->fatal(CALL_INFO, -1, "Error - got a OS response, but cannot convert to a correct response.\n");
-		}
+		if( nullptr != os_resp ) {
+			output->verbose(CALL_INFO, 8, 0, "syscall return-code: %" PRId64 "\n", os_resp->getReturnCode() );
+			output->verbose(CALL_INFO, 8, 0, "-> issuing call-backs to clear syscall ROB stops...\n");
 
-		output->verbose(CALL_INFO, 8, 0, "syscall return-code: %" PRId64 "\n", os_resp->getReturnCode() );
-		output->verbose(CALL_INFO, 8, 0, "-> issuing call-backs to clear syscall ROB stops...\n");
+			// Set up the return code (according to ABI, this goes in r2)
+			const uint16_t rc_reg   = isaTable->getIntPhysReg(2);
+			const int64_t  rc_val = (int64_t) os_resp->getReturnCode();
+			regFile->setIntReg( rc_reg, rc_val );
 
-		// Set up the return code (according to ABI, this goes in r2)
-		const uint16_t rc_reg   = isaTable->getIntPhysReg(2);
-		const int64_t  rc_val = (int64_t) os_resp->getReturnCode();
-		regFile->setIntReg( rc_reg, rc_val );
+			if( rc_val < 0 ) {
+				writeSyscallResult( false );
+			} else {
+				// Generate correct markers for OS return code checks
+				writeSyscallResult( os_resp->isSuccessful() );
+			}
 
-		if( rc_val < 0 ) {
-			writeSyscallResult( false );
+			for( int i = 0; i < returnCallbacks.size(); ++i ) {
+				returnCallbacks[i](hw_thr);
+			}
 		} else {
-			// Generate correct markers for OS return code checks
-			writeSyscallResult( os_resp->isSuccessful() );
-		}
+			VanadisExitResponse* os_exit = dynamic_cast<VanadisExitResponse*>( ev );
 
-		for( int i = 0; i < returnCallbacks.size(); ++i ) {
-			returnCallbacks[i](hw_thr);
+			output->verbose(CALL_INFO, 8, 0, "received an exit command from the operating system (return-code: %" PRId64 " )\n",
+				os_exit->getReturnCode() );
+
+			haltThrCallBack( hw_thr, os_exit->getReturnCode() );
 		}
 
 		delete ev;

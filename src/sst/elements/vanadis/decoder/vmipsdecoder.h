@@ -14,6 +14,9 @@
 
 #include <list>
 
+#include <unistd.h>
+#include <sys/types.h>
+
 #define MIPS_REG_ZERO		  0
 #define MIPS_REG_LO		  32
 #define MIPS_REG_HI		  33
@@ -41,6 +44,7 @@
 #define MIPS_SPEC_OP_MASK_ORI     0x34000000
 #define MIPS_SPEC_OP_MASK_REGIMM  0x04000000
 #define MIPS_SPEC_OP_MASK_BGEZAL  0x00110000
+#define MIPS_SPEC_OP_MASK_BGTZ    0x1C000000
 #define MIPS_SPEC_OP_MASK_LUI     0x3C000000
 #define MIPS_SPEC_OP_MASK_ADDIU   0x24000000
 #define MIPS_SPEC_OP_MASK_LB      0x80000000
@@ -285,19 +289,19 @@ public:
 
 		// Real UID
 		vanadis_vec_copy_in<int>( aux_data_block, VANADIS_AT_UID );
-		vanadis_vec_copy_in<int>( aux_data_block, 2000 );
+		vanadis_vec_copy_in<int>( aux_data_block, (int) getuid() );
 
 		// Effective UID
 		vanadis_vec_copy_in<int>( aux_data_block, VANADIS_AT_EUID );
-		vanadis_vec_copy_in<int>( aux_data_block, 2000 );
+		vanadis_vec_copy_in<int>( aux_data_block, (int) geteuid() );
 
 		// Real GID
 		vanadis_vec_copy_in<int>( aux_data_block, VANADIS_AT_GID );
-		vanadis_vec_copy_in<int>( aux_data_block, 2000 );
+		vanadis_vec_copy_in<int>( aux_data_block, (int) getgid() );
 
 		// Effective GID
 		vanadis_vec_copy_in<int>( aux_data_block, VANADIS_AT_EGID );
-		vanadis_vec_copy_in<int>( aux_data_block, 2000 );
+		vanadis_vec_copy_in<int>( aux_data_block, (int) getegid() );
 
 		// D-Cache Line Size
 		vanadis_vec_copy_in<int>( aux_data_block, VANADIS_AT_DCACHEBSIZE );
@@ -1199,6 +1203,18 @@ protected:
                                         rt, rs, imm_value_64, (imm_value_64 << 2) );
 				bundle->addInstruction( new VanadisBranchRegCompareInstruction( next_ins_id++, ins_addr, hw_thr, options, rt, rs,
 					(imm_value_64 << 2), VANADIS_SINGLE_DELAY_SLOT, REG_COMPARE_EQ) );
+				insertDecodeFault = false;
+			}
+			break;
+
+		case MIPS_SPEC_OP_MASK_BGTZ:
+			{
+				const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins );
+
+				output->verbose(CALL_INFO, 16, 0, "[decoder/BGTZ]: -> r1: %" PRIu16 " offset: %" PRId64 " << 2 : %" PRId64 "\n",
+                                        rs, imm_value_64, (imm_value_64 << 2) );
+				bundle->addInstruction( new VanadisBranchRegCompareImmInstruction( next_ins_id++, ins_addr, hw_thr, options, rs, 0,
+					(imm_value_64 << 2), VANADIS_SINGLE_DELAY_SLOT, REG_COMPARE_GT) );
 				insertDecodeFault = false;
 			}
 			break;

@@ -313,11 +313,15 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 
 	//////////////////////////////////////////////////////////////////////////////////////
 
+	std::function<void(uint32_t, int64_t)> haltThreadCB = std::bind(
+		&VanadisComponent::setHalt, this, std::placeholders::_1, std::placeholders::_2 );
+
 	for( uint32_t i = 0; i < hw_threads; ++i ) {
 		thread_decoders[i]->getOSHandler()->setCoreID( core_id );
 		thread_decoders[i]->getOSHandler()->setHWThread(i);
 		thread_decoders[i]->getOSHandler()->setRegisterFile( register_files[i] );
 		thread_decoders[i]->getOSHandler()->setISATable( retire_isa_tables[i]  );
+		thread_decoders[i]->getOSHandler()->setHaltThreadCallback( haltThreadCB );
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -374,9 +378,40 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 VanadisComponent::~VanadisComponent() {
 	delete[] instPrintBuffer;
 	delete lsq;
-	
+
 	if( pipelineTrace != nullptr ) {
 		fclose( pipelineTrace );
+	}
+}
+
+void VanadisComponent::setHalt( uint32_t thr, int64_t halt_code ) {
+	output->verbose(CALL_INFO, 2, 0, "-> Receive halt request on thread %" PRIu32 " / code: %" PRId64 "\n",
+		thr, halt_code);
+
+	if( thr >= hw_threads ) {
+		// Incorrect thread, ignore? error?
+	} else {
+		switch( halt_code ) {
+		default:
+			{
+				halted_masks[thr] = true;
+
+				// Reset address to zero
+				handleMisspeculate( thr, 0 );
+
+				bool all_halted = true;
+
+				for( uint32_t i = 0; i < hw_threads; ++i ) {
+					all_halted = all_halted & halted_masks[i];
+				}
+
+				if( all_halted ) {
+					output->verbose(CALL_INFO, 2, 0, "-> all threads on core are halted, tell core we can exit further simulation unless we recv a wake up.\n");
+					primaryComponentOKToEndSim();
+				}
+			}
+			break;
+		}
 	}
 }
 
