@@ -30,13 +30,10 @@ topo_fattree::parseShape(const std::string &shape, int *downs, int *ups) const
     size_t end = 0;
 
     int levels = std::count(shape.begin(), shape.end(), ':') + 1;
-    // cout << "levels: " << levels << endl;
-    // cout << "shape: " << shape << endl;
     for ( int i = 0; i < levels; i++ ) {
         end = shape.find(':',start);
         size_t length = end - start;
         std::string sub = shape.substr(start,length);
-        // cout << "sub: " << sub << endl;
         
         // Get the up and down
         size_t comma = sub.find(',');
@@ -60,40 +57,57 @@ topo_fattree::parseShape(const std::string &shape, int *downs, int *ups) const
 }
 
 
-topo_fattree::topo_fattree(ComponentId_t cid, Params& params, int num_ports, int rtr_id) :
+topo_fattree::topo_fattree(ComponentId_t cid, Params& params, int num_ports, int rtr_id, int num_vns) :
     Topology(cid),
     id(rtr_id),
     num_ports(num_ports),
-    num_vcs(-1),
-    allow_adaptive(false)
+    num_vns(num_vns),
+    num_vcs(-1)
 {
     string shape = params.find<std::string>("shape");
 
-    string routing_alg = params.find<std::string>("routing_alg", "deterministic");
-    if ( routing_alg == "adaptive" ) {
-        allow_adaptive = true;
+    vns = new vn_info[num_vns];
+
+    std::vector<std::string> vn_route_algos;
+    if ( params.is_value_array("routing_alg") ) {
+        params.find_array<std::string>("routing_alg", vn_route_algos);
+        if ( vn_route_algos.size() != num_vns ) {
+            fatal(CALL_INFO, -1, "ERROR: When specifying routing algorithms per VN, algorithm list length must match number of VNs (%d VNs, %lu algorithms).\n",num_vns,vn_route_algos.size());        
+        }
+    }
+    else {
+        std::string route_algo = params.find<std::string>("algorithm", "deterministic");
+        for ( int i = 0; i < num_vns; ++i ) vn_route_algos.push_back(route_algo);
     }
 
+    int curr_vc = 0;
+    for ( int i = 0; i < num_vns; ++i ) {
+        vns[i].start_vc = curr_vc;
+        if ( vn_route_algos[i] == "adaptive" ) {
+            vns[i].allow_adaptive = true;
+            vns[i].num_vcs = 1;
+        }
+        else if ( vn_route_algos[i] == "deterministic" ) {
+            vns[i].allow_adaptive = false;
+            vns[i].num_vcs = 1;
+        }
+        else {
+            output.fatal(CALL_INFO,-1,"Unknown routing mode specified: %s\n",vn_route_algos[i].c_str());
+        }
+        curr_vc += vns[i].num_vcs;
+    }
     adaptive_threshold = params.find<double>("adaptive_threshold", 0.5);
-    // std::cout << "routing_alg: " << routing_alg << std::endl;
-    // std::cout << "adaptive_threshold: " << adaptive_threshold << std::endl;
     
     int levels = std::count(shape.begin(), shape.end(), ':') + 1;
     int* ups = new int[levels];
     int* downs= new int[levels];
 
-    // cout << "shape: " << shape << endl;
-    // cout << "levels: " << levels << endl;
     parseShape(shape, downs, ups);
-    // for ( int i = 0; i < levels; i++ ) {
-    //     cout << "Level " << i << ": down = " << downs[i] << ", up = " << ups[i] << endl;
-    // }
 
     int total_hosts = 1;
     for ( int i = 0; i < levels; i++ ) {
         total_hosts *= downs[i];
     }
-    // cout << "total_hosts = " << total_hosts << endl;
 
     int* routers_per_level = new int[levels];
     routers_per_level[0] = total_hosts / downs[0];
@@ -102,17 +116,12 @@ topo_fattree::topo_fattree(ComponentId_t cid, Params& params, int num_ports, int
         routers_per_level[i] = routers_per_level[i-1] * ups[i-1] / downs[i];
     }
 
-    // for ( int i = 0; i < levels; i++ ) {
-    //     cout << "Level " << i << " routers = " << routers_per_level[i] << endl;
-    // }
-
     int count = 0;
     rtr_level = -1;
     int routers_per_level_group = 1;
     for ( int i = 0; i < levels; i++ ) {
         int lid = id - count;
         count += routers_per_level[i];
-        // cout << i << " " << count << " " << id << " " << lid << endl;
         if ( id < count ) {
             rtr_level = i;
             level_id = lid;
@@ -122,8 +131,6 @@ topo_fattree::topo_fattree(ComponentId_t cid, Params& params, int num_ports, int
         routers_per_level_group *= ups[i];
     }
 
-    // cout << "my router level = " << rtr_level << ", level id = " << level_id <<
-    //     ", level_group = " << level_group << endl;
     down_ports = downs[rtr_level];
     up_ports = ups[rtr_level];
     
@@ -137,25 +144,15 @@ topo_fattree::topo_fattree(ComponentId_t cid, Params& params, int num_ports, int
     low_host = level_group * rid;
     high_host = low_host + rid - 1;
     
-    // cout << "low host = " << low_host << ", high host = " << high_host <<
-    //     ", down_route_factor = " << down_route_factor << endl;
-
-    // cout << "Routing Table:" << endl;
-    // RtrEvent* rev = new RtrEvent();
-    // internal_router_event* ev = new internal_router_event(rev);
-    // for ( int i = 0; i < total_hosts; i++ ) {
-    //     ev->getEncapsulatedEvent()->dest = i;
-    //     route(0, 0, ev);
-    //     cout << "  " << i << "   " << ev->getNextPort() << endl; 
-    // }
 }
 
 
 topo_fattree::~topo_fattree()
 {
+    delete[] vns;
 }
 
-void topo_fattree::route(int port, int vc, internal_router_event* ev)  {
+void topo_fattree::route_deterministic(int port, int vc, internal_router_event* ev)  {
     int dest = ev->getDest();
     // Down routes
     if ( dest >= low_host && dest <= high_host ) {
@@ -168,8 +165,10 @@ void topo_fattree::route(int port, int vc, internal_router_event* ev)  {
 }
 
 
-void topo_fattree::reroute(int port, int vc, internal_router_event* ev)
+void topo_fattree::route_packet(int port, int vc, internal_router_event* ev)
 {
+    route_deterministic(port,vc,ev);
+    
     int dest = ev->getDest();
     // Down routes are always deterministic and are already done in route
     if ( dest >= low_host && dest <= high_host ) {
@@ -177,8 +176,9 @@ void topo_fattree::reroute(int port, int vc, internal_router_event* ev)
     }
     // Up routes can be adaptive, so things can change from the normal path
     else {
+        int vn = ev->getVN();
         // If we're not adaptive, then we're already routed
-        if ( !allow_adaptive ) return;
+        if ( !vns[vn].allow_adaptive ) return;
 
         // If the port we're supposed to be going to has a buffer with
         // fewer credits than the threshold, adaptively route
@@ -187,9 +187,6 @@ void topo_fattree::reroute(int port, int vc, internal_router_event* ev)
         int index  = next_port*num_vcs + vc;
         if ( outputCredits[index] >= thresholds[index] ) return;
         
-        // std::cout << "Going to adaptively route" << std::endl;
-        // std::cout << down_ports << ", " << num_vcs << ", " << vc << ", " << num_ports << std::endl;
-
         // Send this on the least loaded port.  For now, just look at
         // current VC, later we may look at overall port loading.  Set
         // the max to be the "natural" port and only adaptively route
@@ -198,19 +195,15 @@ void topo_fattree::reroute(int port, int vc, internal_router_event* ev)
         // If all ports have zero credits left, then we just set
         // it to the port that it would normally go to without
         // adaptive routing.
-        // int port = down_ports + ((dest/down_route_factor) % up_ports);
         int port = next_port;
         for ( int i = (down_ports * num_vcs) + vc; i < num_ports * num_vcs; i += num_vcs ) {
             if ( outputCredits[i] > max ) {
                 max = outputCredits[i];
                 port = i / num_vcs;
-                // std::cout << port << std::endl;
             }
         }
-        // std::cout << "Port: " << port << std::endl;
         ev->setNextPort(port);
     }
-    // cout << "id: " << id << ", dest = " << dest << ", next port = " << (down_ports + (dest % up_ports)) << endl;
 }
 
 
@@ -238,54 +231,9 @@ void topo_fattree::routeInitData(int inPort, internal_router_event* ev, std::vec
         }
     }
     else {
-        route(inPort, 0, ev);
+        route_deterministic(inPort, 0, ev);
         outPorts.push_back(ev->getNextPort());
     }
-    // cout << "routeInitData()" << endl;
-    // if ( ev->getDest() == INIT_BROADCAST_ADDR ) {
-    //     switch (rtr_level) {
-    //     case 1:
-    //         /* Downstream  - send to hosts*/
-    //         for ( int port = 0 ; port < edge_loading ; port++ ) {
-    //             if ( port != inPort )
-    //                 outPorts.push_back(port);
-    //         }
-
-    //         if ( inPort < num_ports/2 ) {
-    //             /* Upstream  - send to 1 upper-level router*/
-    //             outPorts.push_back(num_ports/2);
-    //         }
-    //         break;
-    //     case 2:
-    //         if ( inPort < (num_ports/2) ) {
-    //             /* came from Downstream, send to 1 upper-level router */
-    //             outPorts.push_back(num_ports/2);
-    //             for ( int port = 0 ; port < num_ports/2 ; port++ ) {
-    //                 /* also, send downstream withing this router */
-    //                 if ( port != inPort )
-    //                     outPorts.push_back(port);
-    //             }
-    //         } else {
-    //             /* came from Upstream */
-    //             for ( int port = 0 ; port < num_ports/2 ; port++ ) {
-    //                 outPorts.push_back(port);
-    //             }
-    //         }
-    //         break;
-    //     case 3:
-    //         /* Send to all Downstream (except from incoming port) */
-    //         for ( int port = 0 ; port < num_ports ; port++ ) {
-    //             if ( port != inPort )
-    //                 outPorts.push_back(port);
-    //         }
-    //         break;
-    //     default:
-    //         output.fatal(CALL_INFO, -1, "Bad level %d\n", rtr_level);
-    //     }
-    // } else {
-    //     route(inPort, 0, ev);
-    //     outPorts.push_back(ev->getNextPort());
-    // }
 }
 
 
@@ -314,12 +262,6 @@ Topology::PortState topo_fattree::getPortState(int port) const
 void topo_fattree::setOutputBufferCreditArray(int const* array, int vcs) {
         num_vcs = vcs;
         outputCredits = array;
-        // std::cout << "id = " << id << std::endl;
-        // for ( int i = 0; i < num_ports; i++ ) {
-        //     for ( int j = 0; j < num_vcs; j++ ) {
-        //         std::cout << "Port " << i << ", VC " << j << " credits = " << outputCredits[i*num_vcs+j] << std::endl;
-        //     }
-        // }
         thresholds = new int[num_vcs * num_ports];
         for ( int i = 0; i < num_vcs * num_ports; i++ ) {
             thresholds[i] = outputCredits[i] * adaptive_threshold;

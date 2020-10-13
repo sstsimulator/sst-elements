@@ -24,9 +24,10 @@ using namespace SST::Merlin;
 
 #define DPRINTF( fmt, args...) __DBG( DBG_NETWORK, topo_singlerouter, fmt, ## args )
 
-topo_singlerouter::topo_singlerouter(ComponentId_t cid, Params& params, int num_ports, int rtr_id) :
+topo_singlerouter::topo_singlerouter(ComponentId_t cid, Params& params, int num_ports, int rtr_id, int num_vns) :
     Topology(cid),
-    num_ports(num_ports)
+    num_ports(num_ports),
+    num_vns(num_vns)
 {
 }
 
@@ -35,7 +36,7 @@ topo_singlerouter::~topo_singlerouter()
 }
 
 void
-topo_singlerouter::route(int port, int vc, internal_router_event* ev)
+topo_singlerouter::route_packet(int port, int vc, internal_router_event* ev)
 {
     ev->setNextPort(ev->getDest());
 }
@@ -59,7 +60,7 @@ void topo_singlerouter::routeInitData(int port, internal_router_event* ev, std::
         }
 
     } else {
-        route(port, 0, ev);
+        route_packet(port, 0, ev);
         outPorts.push_back(ev->getNextPort());
     }
 }
