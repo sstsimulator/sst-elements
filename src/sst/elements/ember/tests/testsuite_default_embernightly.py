@@ -60,7 +60,7 @@ class testcase_EmberNightly(SSTTestCase):
         outdir = self.get_test_output_run_dir()
         tmpdir = self.get_test_output_tmp_dir()
 
-        self.emberSweep_Folder = "{0}/emberSweep_folder".format(tmpdir)
+        self.emberSweep_Folder = "{0}/embernightly_sweep_folder".format(tmpdir)
         self.emberelement_testdir = "{0}/../test/".format(test_path)
 
         # Set the various file paths
@@ -92,15 +92,15 @@ class testcase_EmberNightly(SSTTestCase):
 ###############################################
 
     def _setupEmberTestFiles(self):
-        log_debug("_setupEmberTestFiles() Running")
+        log_debug("_setupEmberNightlyTestFiles() Running")
         test_path = self.get_testsuite_dir()
         outdir = self.get_test_output_run_dir()
         tmpdir = self.get_test_output_tmp_dir()
 
-        self.emberSweep_Folder = "{0}/emberSweep_folder".format(tmpdir)
+        self.emberSweep_Folder = "{0}/embernightly_sweep_folder".format(tmpdir)
         self.emberelement_testdir = "{0}/../test/".format(test_path)
 
-        # Create a clean version of the emberSweep_folder Directory
+        # Create a clean version of the embernightly_sweep_folder Directory
         if os.path.isdir(self.emberSweep_Folder):
             shutil.rmtree(self.emberSweep_Folder, True)
         os.makedirs(self.emberSweep_Folder)
