@@ -2,15 +2,140 @@
 
 from sst_unittest import *
 from sst_unittest_support import *
+from sst_unittest_parameterized import parameterized
 
 import hashlib
+import os
 
-################################################################################
-# Code to support a single instance module initialize, must be called setUp method
+dirpath = os.path.dirname(sys.modules[__name__].__file__)
+sys.path.insert(1, "{0}/../test/".format(dirpath))
+import CrossProduct
+from CrossProduct import *
 
 module_init = 0
 module_sema = threading.Semaphore()
 sweep_sdl_file = "emberLoad.py"
+sweep_test_matrix = []
+
+################################################################################
+# NOTES:
+# This is a parameterized test, we setup the sweep test matrix ahead of time and
+# then use the sst_unittest_parameterized module to load the list of testcases.
+#
+# Running specific sweeps: Setting the Environment variable
+# SST_TEST_ES_LIST=9-150 will run Sweeps 9 - 150.  All other sweeps testcases
+# will be skipped.
+################################################################################
+
+def build_sweep_test_matrix():
+    global sweep_test_matrix
+    sweep_test_matrix = []
+    networks = []
+    testtypes = []
+
+    # Build the network matrix
+    net = { 'topo' : 'torus',
+            'args' : [
+                        [ '--shape', ['2','4x4x4','8x8x8','16x16x16'] ]
+                     ]
+          }
+
+    networks.append(net);
+
+    net = { 'topo' : 'fattree',
+            'args' : [
+                        ['--shape',   ['9,9:9,9:18']]
+                     ]
+          }
+    networks.append(net);
+
+    net = { 'topo' : 'dragonfly',
+            'args' : [
+                        ['--shape',   ['8:8:4:8']]
+                     ]
+          }
+    networks.append(net);
+
+    # Build the test type matrix
+    test = { 'motif' : 'AllPingPong',
+             'args'  : [
+                            [ 'iterations'  , ['1','10']],
+                            [ 'messageSize' , ['0','1','10000','20000']]
+                       ]
+            }
+    testtypes.append(test)
+
+    test = { 'motif' : 'Allreduce',
+             'args'  : [
+                            [ 'iterations'  , ['1','10']],
+                            [ 'count' , ['1']]
+                       ]
+            }
+    testtypes.append(test)
+
+    test = { 'motif' : 'Barrier',
+             'args'  : [
+                            [ 'iterations'  , ['1','10']]
+                       ]
+            }
+    testtypes.append(test)
+
+    test = { 'motif' : 'PingPong',
+             'args'  : [
+                            [ 'iterations'  , ['1','10']],
+                            [ 'messageSize' , ['0','1','10000','20000']]
+                       ]
+            }
+    testtypes.append(test)
+
+    test = { 'motif' : 'Reduce',
+             'args'  : [
+                            [ 'iterations'  , ['1','10']],
+                            [ 'count' , ['1']]
+                       ]
+            }
+    testtypes.append(test)
+
+    test = { 'motif' : 'Ring',
+             'args'  : [
+                            [ 'iterations'  , ['1','10']],
+                            [ 'messagesize' , ['0','1','10000','20000']]
+                       ]
+            }
+    testtypes.append(test)
+
+    # Build the final Sweeps Tests Matrix
+    index = 1
+    for network in networks:
+        for test in testtypes:
+            for net_args in CrossProduct(network['args']) :
+                for test_args in CrossProduct(test['args']):
+
+                    hash_str = "sst --model-options=\"--topo={0} {1} --cmdLine=\\\"{2} {3}\\\"\" {4}".format(network['topo'], net_args, test['motif'], test_args, sweep_sdl_file)
+                    hash_object  = hashlib.md5(hash_str.encode("UTF-8"))
+                    hex_dig = hash_object.hexdigest()
+
+                    test_data = (index, hex_dig, network['topo'], net_args, test['motif'], test_args)
+                    sweep_test_matrix.append(test_data)
+                    #log_debug("BUILDING SWEEP TEST MATRIX #{0} : Hex={1}; Topo{2}; Net arg = {3}; Test = {4}; Test Arg = {5}".format(index, hex_dig, network['topo'], net_args, test['motif'], test_args))
+                    index += 1
+
+################################################################################
+
+# At startup, build the sweep test matrix
+build_sweep_test_matrix()
+
+def gen_custom_name(testcase_func, param_num, param):
+# Full TestCaseName
+    testcasename = "{0}_{1}".format(testcase_func.__name__,
+        parameterized.to_safe_name("_".join(str(x) for x in param.args)))
+# Abbreviated TestCaseName
+#    testcasename = "{0}_{1}".format(testcase_func.__name__,
+#        parameterized.to_safe_name(str(param.args[0])))
+    return testcasename
+
+################################################################################
+# Code to support a single instance module initialize, must be called setUp method
 
 def initializeTestModule_SingleInstance(class_inst):
     global module_init
@@ -19,16 +144,8 @@ def initializeTestModule_SingleInstance(class_inst):
     module_sema.acquire()
     if module_init != 1:
         # Put your single instance Init Code Here
-        class_inst.networks = []
-        class_inst.tests = []
-        class_inst.final_test_matrix = []
-        class_inst._build_network_parameters()
-        class_inst._build_test_parameters()
-        class_inst._build_final_test_matrix()
         class_inst._setupEmberTestFiles()
-
         module_init = 1
-
     module_sema.release()
 
 ################################################################################
@@ -48,18 +165,14 @@ class testcase_EmberSweep(SSTTestCase):
         # Put test based teardown code here. it is called once after every test
         super(type(self), self).tearDown()
 
-#####
+####
 
-    def test_EmberSweep(self):
-        for testdata in self.final_test_matrix:
-            index = testdata[0]
-            hex_dig = testdata[1]
-            topo = testdata[2]
-            net_args = testdata[3]
-            test = testdata[4]
-            test_args = testdata[5]
-            log_debug("Running Ember Sweep Test {0} ({1}): {2}; Net arg = {3}; Test = {4}; Test Arg = {5}".format(index, hex_dig, topo, net_args, test, test_args))
-            self.EmberSweep_test_template(index, hex_dig, topo, net_args, test, test_args)
+    @parameterized.expand(sweep_test_matrix, name_func=gen_custom_name)
+    def test_EmberSweep(self, index, hex_dig, topo, net_args, test, test_args):
+        self._checkSkipConditions(index)
+
+        log_debug("Running Ember Sweep #{0} ({1}): {2}; Net arg = {3}; Test = {4}; Test Arg = {5}".format(index, hex_dig, topo, net_args, test, test_args))
+        self.EmberSweep_test_template(index, hex_dig, topo, net_args, test, test_args)
 
 ####
 
@@ -81,7 +194,7 @@ class testcase_EmberSweep(SSTTestCase):
         errfile = "{0}/{1}.err".format(outdir, testDataFileName)
         mpioutfiles = "{0}/{1}.testfile".format(outdir, testDataFileName)
         sdlfile = "{0}/../test/{1}".format(test_path, sweep_sdl_file)
-        testtimeout = 300
+        testtimeout = 600
 
         otherargs = '--model-options=\"--topo={0} {1} --cmdLine=\\\"Init\\\" --cmdLine=\\\"{2} {3}\\\" --cmdLine=\\\"Fini\\\" \"'.format(topo, net_args, test, test_args)
 
@@ -120,6 +233,31 @@ class testcase_EmberSweep(SSTTestCase):
 
 ###############################################
 
+    def _checkSkipConditions(self, sweepindex):
+        # Check to see if Env Var SST_TEST_ES_LIST is set limiting which sweeps to run
+        env_var = 'SST_TEST_ES_LIST'
+        try:
+            sweeplist = os.environ[env_var]
+            log_debug("SST_TEST_ES_LIST = {0}; type = {1}".format(sweeplist, type(sweeplist)))
+            index = sweeplist.find('-')
+            if index > 0 and len(sweeplist) >= 3:
+                startnumstr = int(sweeplist[0:index])
+                stopnumstr = int(sweeplist[index+1:])
+                try:
+                    startnum = int(startnumstr)
+                    stopnum = int(stopnumstr)
+                except ValueError:
+                    log_debug("Cannot decode start/stop index strings: startstr = {0}; stopstr = {1}".format(startnumstr, stopnumstr))
+                    return
+                log_debug("Current Sweep Index = {0}; Skip Number: startnum = {1}; stopnum = {2}".format(sweepindex, startnum, stopnum))
+                if sweepindex < startnum or sweepindex > stopnum:
+                    self.skipTest("Skipping Sweep #{0} - Per {1} = {2}".format(sweepindex, env_var, sweeplist))
+            else:
+                log_debug("Env Var {0} - not formatted correctly = {1}".format(env_var, sweeplist))
+                return
+        except KeyError:
+            return
+
     def _setupEmberTestFiles(self):
         log_debug("_setupEmberSweepTestFiles() Running")
         test_path = self.get_testsuite_dir()
@@ -140,133 +278,5 @@ class testcase_EmberSweep(SSTTestCase):
             if ext == ".py":
                 os_symlink_file(self.emberelement_testdir, self.emberSweep_Folder, f)
 
-####
-
-    def _build_network_parameters(self):
-        self.networks = []
-        net = { 'topo' : 'torus',
-                'args' : [
-                            [ '--shape', ['2','4x4x4','8x8x8','16x16x16'] ]
-                         ]
-              }
-
-        self.networks.append(net);
-
-        net = { 'topo' : 'fattree',
-                'args' : [
-                            ['--shape',   ['9,9:9,9:18']]
-                         ]
-              }
-        self.networks.append(net);
-
-        net = { 'topo' : 'dragonfly',
-                'args' : [
-                            ['--shape',   ['8:8:4:8']]
-                         ]
-              }
-        self.networks.append(net);
-
-####
-
-    def _build_test_parameters(self):
-        self.tests = []
-        test = { 'motif' : 'AllPingPong',
-                 'args'  : [
-                                [ 'iterations'  , ['1','10']],
-                                [ 'messageSize' , ['0','1','10000','20000']]
-                           ]
-                }
-        self.tests.append(test)
-
-        test = { 'motif' : 'Allreduce',
-                 'args'  : [
-                                [ 'iterations'  , ['1','10']],
-                                [ 'count' , ['1']]
-                           ]
-                }
-        self.tests.append(test)
-
-        test = { 'motif' : 'Barrier',
-                 'args'  : [
-                                [ 'iterations'  , ['1','10']]
-                           ]
-                }
-        self.tests.append(test)
-
-        test = { 'motif' : 'PingPong',
-                 'args'  : [
-                                [ 'iterations'  , ['1','10']],
-                                [ 'messageSize' , ['0','1','10000','20000']]
-                           ]
-                }
-        self.tests.append(test)
-
-        test = { 'motif' : 'Reduce',
-                 'args'  : [
-                                [ 'iterations'  , ['1','10']],
-                                [ 'count' , ['1']]
-                           ]
-                }
-        self.tests.append(test)
-
-        test = { 'motif' : 'Ring',
-                 'args'  : [
-                                [ 'iterations'  , ['1','10']],
-                                [ 'messagesize' , ['0','1','10000','20000']]
-                           ]
-                }
-        self.tests.append(test)
-
-####
-
-    def _build_final_test_matrix(self):
-        self.final_test_matrix = []
-        index = 1
-        for network in self.networks:
-            for test in self.tests:
-                for net_args in CrossProduct(network['args']) :
-                    for test_args in CrossProduct(test['args']):
-
-                        hash_str = "sst --model-options=\"--topo={0} {1} --cmdLine=\\\"{2} {3}\\\"\" {4}".format(network['topo'], net_args, test['motif'], test_args, sweep_sdl_file)
-                        hash_object  = hashlib.md5(hash_str.encode("UTF-8"))
-                        hex_dig = hash_object.hexdigest()
-
-                        test_data = (index, hex_dig, network['topo'], net_args, test['motif'], test_args)
-                        self.final_test_matrix.append(test_data)
-                        #log_debug("BUILDING TEST MATRIX #{0} : Hex={[1}; Topo{2}; Net arg = {3}; Test = {4}; Test Arg = {5}".format(index, hex_dig, network['topo'], net_args, test['motif'], test_args))
-                        index += 1
-
 ###############################################################################
 
-class CrossProduct:
-    def __init__(self,xxx):
-        self.xxx = xxx
-        self.cnts = []
-        for i, x in enumerate( xxx ) :
-            self.cnts.insert( i, len( x[1] ) )
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        if self.cnts[0] == 0:
-            raise StopIteration
-        else:
-            tmp = ''
-            for i, x in enumerate(self.xxx) :
-                tmp += "{0}={1} ".format( x[0], x[1][ self.cnts[i] - 1 ] )
-
-            for i in reversed(range( 0, len(self.xxx) )):
-                self.cnts[i] -= 1
-                if  i == 0 and self.cnts[i] == 0:
-                    break
-
-                if self.cnts[i] > 0 :
-                    break
-                else :
-                    self.cnts[i] = len(self.xxx[i][1])
-
-            return tmp
-
-    def next(self):
-        return self.__next__()
