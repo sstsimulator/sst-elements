@@ -35,7 +35,7 @@ public:
     )
 
     SST_ELI_DOCUMENT_PARAMS(
-        { "arg.iterations", "Sets the number of ping pong operations to perform",   "1"},
+        { "arg.iterations", "Sets the number of FFT iterations to perform",   "1"},
         { "arg.nx",         "Sets the size of a block in X", "8" },
         { "arg.ny",         "Sets the size of a block in Y", "8" },
         { "arg.nz",         "Sets the size of a block in Z", "8" },
