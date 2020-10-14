@@ -44,8 +44,9 @@ c_Controller::c_Controller(ComponentId_t id, Params &params) :
         Component(id){
 
     int verbosity = params.find<int>("verbose", 0);
-    output = new SST::Output("CramSim.Controller[@f:@l:@p] ",
+    debug = new SST::Output("CramSim.Controller[@f:@l:@p] ",
                              verbosity, 0, SST::Output::STDOUT);
+    output = new SST::Output("", verbosity, 0, SST::Output::STDOUT);
 
     m_simCycle=0;
 
@@ -55,51 +56,51 @@ c_Controller::c_Controller(ComponentId_t id, Params &params) :
 
     // set device controller
     using std::placeholders::_1;
-    m_deviceDriver = loadUserSubComponent<c_DeviceDriver>("DeviceDriver", ComponentInfo::SHARE_NONE, output, std::bind(&SST::CramSim::c_Controller::sendCommand, this, _1));
+    m_deviceDriver = loadUserSubComponent<c_DeviceDriver>("DeviceDriver", ComponentInfo::SHARE_NONE, debug, std::bind(&SST::CramSim::c_Controller::sendCommand, this, _1));
     if (!m_deviceDriver) {
         l_subCompName  = params.find<std::string>("DeviceDriver", "CramSim.c_DeviceDriver",l_found);
         if(l_found){
             output->output("%s, Warning: loading DeviceDriver subcomponent from params. In the future use 'DeviceDriver' subcomponent slot instead\n", getName().c_str());
         }
         m_deviceDriver = loadAnonymousSubComponent<c_DeviceDriver>(l_subCompName, "DeviceDriver", 0, ComponentInfo::INSERT_STATS, params,
-                output, std::bind(&SST::CramSim::c_Controller::sendCommand, this, _1));
+                debug, std::bind(&SST::CramSim::c_Controller::sendCommand, this, _1));
     }
 
     // set cmd schduler
-    m_cmdScheduler = loadUserSubComponent<c_CmdScheduler>("CmdScheduler", ComponentInfo::SHARE_NONE, output, m_deviceDriver);
+    m_cmdScheduler = loadUserSubComponent<c_CmdScheduler>("CmdScheduler", ComponentInfo::SHARE_NONE, debug, m_deviceDriver);
     if (!m_cmdScheduler) {
         l_subCompName = params.find<std::string>("CmdScheduler", "CramSim.c_CmdScheduler", l_found);
         if (l_found) {
             output->output("%s, Warning: loading CmdScheduler subcomponent from params. In the future use 'CmdScheduler' subcomponent slot instead\n", getName().c_str());
         }
-        m_cmdScheduler = loadAnonymousSubComponent<c_CmdScheduler>(l_subCompName, "CmdScheduler", 0, ComponentInfo::INSERT_STATS, params, output, m_deviceDriver);
+        m_cmdScheduler = loadAnonymousSubComponent<c_CmdScheduler>(l_subCompName, "CmdScheduler", 0, ComponentInfo::INSERT_STATS, params, debug, m_deviceDriver);
     }
 
     // set transaction converter
-    m_txnConverter = loadUserSubComponent<c_TxnConverter>("TxnConverter", ComponentInfo::SHARE_NONE, output, m_deviceDriver->getTotalNumBank(), m_cmdScheduler);
+    m_txnConverter = loadUserSubComponent<c_TxnConverter>("TxnConverter", ComponentInfo::SHARE_NONE, debug, m_deviceDriver->getTotalNumBank(), m_cmdScheduler);
     if (!m_txnConverter) {
         l_subCompName = params.find<std::string>("TxnConverter", "CramSim.c_TxnConverter",l_found);
         if(l_found){
             output->output("%s, Warning: loading TxnConverter subcomponent from params. In the future use 'TxnConverter' subcomponent slot instead\n", getName().c_str());
         }
-        m_txnConverter = loadAnonymousSubComponent<c_TxnConverter>(l_subCompName, "TxnConverter", 0, ComponentInfo::INSERT_STATS, params, output,
+        m_txnConverter = loadAnonymousSubComponent<c_TxnConverter>(l_subCompName, "TxnConverter", 0, ComponentInfo::INSERT_STATS, params, debug,
                 m_deviceDriver->getTotalNumBank(), m_cmdScheduler);
     }
 
     // set transaction scheduler
-    m_txnScheduler = loadUserSubComponent<c_TxnScheduler>("TxnScheduler", ComponentInfo::SHARE_NONE, output, m_deviceDriver->getNumChannel(),
+    m_txnScheduler = loadUserSubComponent<c_TxnScheduler>("TxnScheduler", ComponentInfo::SHARE_NONE, debug, m_deviceDriver->getNumChannel(),
             m_txnConverter, m_cmdScheduler);
     if (!m_txnScheduler) {
         l_subCompName = params.find<std::string>("TxnScheduler", "CramSim.c_TxnScheduler",l_found);
         if(l_found){
             output->output("%s, Warning: loading TxnScheduler subcomponent from params. In the future use 'TxnScheduler' subcomponent slot instead\n", getName().c_str());
         }
-        m_txnScheduler = loadAnonymousSubComponent<c_TxnScheduler>(l_subCompName, "TxnScheduler", 0, ComponentInfo::INSERT_STATS, params, output,
+        m_txnScheduler = loadAnonymousSubComponent<c_TxnScheduler>(l_subCompName, "TxnScheduler", 0, ComponentInfo::INSERT_STATS, params, debug,
                 m_deviceDriver->getNumChannel(), m_txnConverter, m_cmdScheduler);
     }
 
     // set address hasher
-    m_addrHasher = loadUserSubComponent<c_AddressHasher>("AddrMapper", ComponentInfo::SHARE_NONE, output, m_deviceDriver->getNumChannel(),
+    m_addrHasher = loadUserSubComponent<c_AddressHasher>("AddrMapper", ComponentInfo::SHARE_NONE, debug, m_deviceDriver->getNumChannel(),
             m_deviceDriver->getNumRanksPerChannel(), m_deviceDriver->getNumBankGroupsPerRank(), m_deviceDriver->getNumBanksPerBankGroup(),
             m_deviceDriver->getNumRowsPerBank(), m_deviceDriver->getNumColPerBank(), m_deviceDriver->getNumPChPerChannel());
     if (!m_addrHasher) {
@@ -107,15 +108,14 @@ c_Controller::c_Controller(ComponentId_t id, Params &params) :
         if(l_found){
             output->output("%s, Warning: loading AddrMapper subcomponent from params. In the future use 'AddrMapper' subcomponent slot instead\n", getName().c_str());
         }
-        m_addrHasher = loadAnonymousSubComponent<c_AddressHasher>(l_subCompName, "AddrMapper", 0, ComponentInfo::INSERT_STATS, params, output,
+        m_addrHasher = loadAnonymousSubComponent<c_AddressHasher>(l_subCompName, "AddrMapper", 0, ComponentInfo::INSERT_STATS, params, debug,
                 m_deviceDriver->getNumChannel(), m_deviceDriver->getNumRanksPerChannel(), m_deviceDriver->getNumBankGroupsPerRank(),
                 m_deviceDriver->getNumBanksPerBankGroup(), m_deviceDriver->getNumRowsPerBank(), m_deviceDriver->getNumColPerBank(), m_deviceDriver->getNumPChPerChannel());
     }
 
     k_enableQuickResponse = (uint32_t)params.find<uint32_t>("boolEnableQuickRes", 0,l_found);
     if (!l_found) {
-        std::cout << "boolEnableQuickRes param value is missing... disabled"
-                  << std::endl;
+        output->output("boolEnableQuickRes param value is missing... disabled\n");
     }
 
     // get configured clock frequency
@@ -183,7 +183,7 @@ bool c_Controller::clockTic(SST::Cycle_t clock) {
             l_it=m_ReqQ.erase(l_it);
 
             #ifdef __SST_DEBUG_OUTPUT__
-                newTxn->print(output,"[TxnQueue hit]",m_simCycle);
+                newTxn->print(debug,"[TxnQueue hit]",m_simCycle);
             #endif
             continue;
         }
@@ -202,7 +202,7 @@ bool c_Controller::clockTic(SST::Cycle_t clock) {
             l_it = m_ReqQ.erase(l_it);
 
             #ifdef __SST_DEBUG_OUTPUT__
-                newTxn->print(output,"[Controller queues new txn]",m_simCycle);
+                newTxn->print(debug,"[Controller queues new txn]",m_simCycle);
             #endif
         }
         else
@@ -274,7 +274,7 @@ void c_Controller::handleIncomingTransaction(SST::Event *ev){
         c_Transaction* newTxn=l_txnReqEventPtr->m_payload;
 
         #ifdef __SST_DEBUG_OUTPUT__
-        newTxn->print(output,"[c_Controller.handleIncommingTransaction]",m_simCycle);
+        newTxn->print(debug,"[c_Controller.handleIncommingTransaction]",m_simCycle);
         #endif
 
         m_ReqQ.push_back(newTxn);
@@ -283,8 +283,7 @@ void c_Controller::handleIncomingTransaction(SST::Event *ev){
 
         delete l_txnReqEventPtr;
     } else {
-        std::cout << __PRETTY_FUNCTION__ << "ERROR:: Bad event type!"
-                  << std::endl;
+        output->output("%s ERROR:: Bad event type!\n");
     }
 }
 
@@ -305,8 +304,7 @@ void c_Controller::handleInDeviceResPtrEvent(SST::Event *ev){
         }
 
         if(l_txnRes == nullptr) {
-            std::cout << "Error! Couldn't find transaction to match cmdSeqnum " << l_resSeqNum << std::endl;
-            exit(-1);
+            output->fatal(CALL_INFO, -1, "Error! Couldn't find transaction to match cmdSeqnum %lu\n", l_resSeqNum);
         }
 
         const unsigned l_cmdsLeft = l_txnRes->getWaitingCommands() - 1;
@@ -325,8 +323,7 @@ void c_Controller::handleInDeviceResPtrEvent(SST::Event *ev){
         delete l_cmdResEventPtr;
 
     } else {
-        std::cout << __PRETTY_FUNCTION__ << "ERROR:: Bad event type!"
-                  << std::endl;
+        output->output("%s ERROR:: Bad event type!\n");
     }
 }
 

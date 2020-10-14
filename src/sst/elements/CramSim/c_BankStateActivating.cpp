@@ -44,7 +44,7 @@ using namespace SST::CramSim;
 c_BankStateActivating::c_BankStateActivating(std::map<std::string, unsigned>* x_bankParams) :
 	m_receivedCommandPtr(nullptr) {
 
-	//std::cout << "Entered " << __PRETTY_FUNCTION__ << std::endl;
+        //Simulation::getSimulation()->getSimulationOutput().output("Entered %s\n", __PRETTY_FUNCTION__);
 	m_timer = 0;
 	m_currentState = e_BankState::ACTNG;
 	m_bankParams = x_bankParams;
@@ -52,16 +52,15 @@ c_BankStateActivating::c_BankStateActivating(std::map<std::string, unsigned>* x_
 }
 
 c_BankStateActivating::~c_BankStateActivating() {
-	// std::cout << std::endl << __PRETTY_FUNCTION__ << std::endl;
+        //Simulation::getSimulation()->getSimulationOutput().output("\n%s\n", __PRETTY_FUNCTION__);
 }
 
 // handle the command based state changes in function handleCommand( ... )
 // handle automatic state changes in function update( ... )
 
 void c_BankStateActivating::handleCommand(c_BankInfo* x_bank, c_BankCommand* x_bankCommandPtr, SimTime_t x_cycle) {
-	std::cout << __PRETTY_FUNCTION__
-			<< " ERROR: should not receive a command in this state. This is a transitory state."
-			<< std::endl;
+        Simulation::getSimulation()->getSimulationOutput().output(
+                "%s ERROR: should not receive a command in this state. This is a transitory state.\n", __PRETTY_FUNCTION__);
 }
 
 void c_BankStateActivating::clockTic(c_BankInfo* x_bank, SimTime_t x_cycle) {
@@ -78,7 +77,7 @@ void c_BankStateActivating::clockTic(c_BankInfo* x_bank, SimTime_t x_cycle) {
 
 void c_BankStateActivating::enter(c_BankInfo* x_bank,
 		c_BankState* x_prevState, c_BankCommand* x_cmdPtr, SimTime_t x_cycle) {
-	//std::cout << "Entered " << __PRETTY_FUNCTION__ << std::endl;
+        //Simulation::getSimulation()->getSimulationOutput().output("Entered %s\n", __PRETTY_FUNCTION__);
 
 	// set timer for auto precharge countdown used in the pseudo-open page policy
 	x_bank->setAutoPreTimer(m_bankParams->at("nRAS"));

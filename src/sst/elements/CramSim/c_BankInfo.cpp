@@ -64,44 +64,46 @@ c_BankInfo::~c_BankInfo() {
 }
 
 void c_BankInfo::print() {
-	std::cout << "m_bankId = " << m_bankId << std::endl;
-	printf("Current state: ");
+    std::stringstream str;
+        str << "m_bankId = " << m_bankId << std::endl;
+	str << "Current state: ";
 	switch (m_bankState->getCurrentState()) {
 	case e_BankState::IDLE:
-		printf("IDLE\n");
+		str<< "IDLE\n";
 		break;
 	case e_BankState::ACTNG:
-		printf("ACTNG\n");
+		str << "ACTNG\n";
 		break;
 	case e_BankState::ACTIVE:
-		printf("ACTIVE\n");
+		str << "ACTIVE\n";
 		break;
 	case e_BankState::READ:
-		printf("READ\n");
+		str << "READ\n";
 		break;
 	case e_BankState::READA:
-		printf("READA\n");
+		str << "READA\n";
 		break;
 	case e_BankState::WRITE:
-		printf("WRITE\n");
+		str << "WRITE\n";
 		break;
 	case e_BankState::WRITEA:
-		printf("WRITEA\n");
+		str << "WRITEA\n";
 		break;
 	case e_BankState::PRE:
-		printf("PRE\n");
+		str << "PRE\n";
 		break;
 	case e_BankState::REF:
-		printf("REF\n");
+		str << "REF\n";
 		break;
 	default:
 	    break;
 	}
-	std::cout << "m_nextCommandCycleMap: " << std::endl;
+	str << "m_nextCommandCycleMap: " << std::endl;
 	for (auto l_mapEntry : m_nextCommandCycleMap) {
-		std::cout << m_cmdToString[l_mapEntry.first] << ":" << std::dec
+		str << m_cmdToString[l_mapEntry.first] << ":" << std::dec
 				<< l_mapEntry.second << std::endl;
 	}
+        Simulation::getSimulation()->getSimulationOutput().output("%s", str.str().c_str());
 }
 
 void c_BankInfo::reset() {

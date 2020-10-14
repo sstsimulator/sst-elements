@@ -38,6 +38,7 @@
 // SST includes
 #include <sst/core/component.h>
 #include <sst/core/link.h>
+#include <sst/core/output.h>
 
 // CramSim includes
 //#include "c_BankCommand.hpp"
@@ -58,18 +59,19 @@ public:
 	void print();
 
 	void finish() {
-		printf("Bank %u\n", m_bankNum);
-		printf("\tTotal ACT-Cmd received: %" PRIu32 "\n", m_ACTCmdsReceived);
-		printf("\tTotal READ-Cmd received: %" PRIu32 "\n", m_READCmdsReceived);
-		printf("\tTotal WRITE-Cmd received: %" PRIu32 "\n", m_WRITECmdsReceived);
-		printf("\tTotal PRE-Cmd received: %" PRIu32 "\n", m_PRECmdsReceived);
-		printf("\t\tTotal CMDs received: %" PRIu32 "\n", (m_ACTCmdsReceived + m_READCmdsReceived + m_WRITECmdsReceived + m_PRECmdsReceived));
-		// printf("\tTotal ACT-Cmd sent: %" PRIu32 "\n", m_ACTCmdsSent);
-		// printf("\tTotal READ-Cmd sent: %" PRIu32 "\n", m_READCmdsSent);
-		// printf("\tTotal WRITE-Cmd sent: %" PRIu32 "\n", m_WRITECmdsSent);
-		// printf("\tTotal PRE-Cmd sent: %" PRIu32 "\n", m_PRECmdsSent);
-		printf("\t\tTotal CMDs sent: %" PRIu32 "\n", (m_ACTCmdsSent + m_READCmdsSent + m_WRITECmdsSent + m_PRECmdsSent));
-		printf("Component Finished.\n");
+            Output out = Simulation::getSimulation()->getSimulationOutput();
+            out.output("Bank %u\n", m_bankNum);
+	    out.output("\tTotal ACT-Cmd received: %" PRIu32 "\n", m_ACTCmdsReceived);
+	    out.output("\tTotal READ-Cmd received: %" PRIu32 "\n", m_READCmdsReceived);
+	    out.output("\tTotal WRITE-Cmd received: %" PRIu32 "\n", m_WRITECmdsReceived);
+	    out.output("\tTotal PRE-Cmd received: %" PRIu32 "\n", m_PRECmdsReceived);
+	    out.output("\t\tTotal CMDs received: %" PRIu32 "\n", (m_ACTCmdsReceived + m_READCmdsReceived + m_WRITECmdsReceived + m_PRECmdsReceived));
+	    // out.output("\tTotal ACT-Cmd sent: %" PRIu32 "\n", m_ACTCmdsSent);
+	    // out.output("\tTotal READ-Cmd sent: %" PRIu32 "\n", m_READCmdsSent);
+	    // out.output("\tTotal WRITE-Cmd sent: %" PRIu32 "\n", m_WRITECmdsSent);
+	    // out.output("\tTotal PRE-Cmd sent: %" PRIu32 "\n", m_PRECmdsSent);
+	    out.output("\t\tTotal CMDs sent: %" PRIu32 "\n", (m_ACTCmdsSent + m_READCmdsSent + m_WRITECmdsSent + m_PRECmdsSent));
+	    out.output("Component Finished.\n");
 	}
 
 	virtual void handleCommand(c_BankCommand* x_bankCommandPtr);

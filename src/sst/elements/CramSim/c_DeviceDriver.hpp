@@ -228,6 +228,7 @@ private:
 
 	//debug
 	Output *output;
+	Output *debug;
 	uint64_t m_issued_cmd;
 };
 }
