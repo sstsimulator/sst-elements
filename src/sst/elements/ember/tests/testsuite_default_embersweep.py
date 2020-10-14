@@ -58,9 +58,8 @@ class testcase_EmberSweep(SSTTestCase):
             net_args = testdata[3]
             test = testdata[4]
             test_args = testdata[5]
-            if index >= 3 and index <= 5:
-                log_debug("Running Ember Sweep Test {0} ({1}): {2}; Net arg = {3}; Test = {4}; Test Arg = {5}".format(index, hex_dig, topo, net_args, test, test_args))
-                self.EmberSweep_test_template(index, hex_dig, topo, net_args, test, test_args)
+            log_debug("Running Ember Sweep Test {0} ({1}): {2}; Net arg = {3}; Test = {4}; Test Arg = {5}".format(index, hex_dig, topo, net_args, test, test_args))
+            self.EmberSweep_test_template(index, hex_dig, topo, net_args, test, test_args)
 
 ####
 
