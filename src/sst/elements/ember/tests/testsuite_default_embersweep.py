@@ -3,25 +3,14 @@
 from sst_unittest import *
 from sst_unittest_support import *
 
-#from parameterized import parameterized, parameterized_class
-
-
-#import sys,os
-#from subprocess import call
-#import CrossProduct
-#from CrossProduct import *
-#import hashlib
-#import binascii
-#import math
-
-#add_nulls = lambda number, zero_count : "{0:0{1}d}".format(number, zero_count)
+import hashlib
 
 ################################################################################
 # Code to support a single instance module initialize, must be called setUp method
 
-
 module_init = 0
 module_sema = threading.Semaphore()
+sweep_sdl_file = "emberLoad.py"
 
 def initializeTestModule_SingleInstance(class_inst):
     global module_init
@@ -41,7 +30,6 @@ def initializeTestModule_SingleInstance(class_inst):
         module_init = 1
 
     module_sema.release()
-
 
 ################################################################################
 
@@ -63,19 +51,20 @@ class testcase_EmberSweep(SSTTestCase):
 #####
 
     def test_EmberSweep(self):
-        for idx, testdata in enumerate(self.final_test_matrix):
-            index = idx + 1
-            topo = testdata[0]
-            net_args = testdata[1]
-            test = testdata[2]
-            test_args = testdata[3]
-#            if index == 1:
-            log_debug("Running TEST {0} : {1}; Net arg = {2}; Test = {3}; Test Arg = {4}".format(index, topo, net_args, test, test_args))
-            self.EmberSweep_test_template(index, topo, net_args, test, test_args)
+        for testdata in self.final_test_matrix:
+            index = testdata[0]
+            hex_dig = testdata[1]
+            topo = testdata[2]
+            net_args = testdata[3]
+            test = testdata[4]
+            test_args = testdata[5]
+            if index >= 3 and index <= 5:
+                log_debug("Running Ember Sweep Test {0} ({1}): {2}; Net arg = {3}; Test = {4}; Test Arg = {5}".format(index, hex_dig, topo, net_args, test, test_args))
+                self.EmberSweep_test_template(index, hex_dig, topo, net_args, test, test_args)
 
 ####
 
-    def EmberSweep_test_template(self, index, topo, net_args, test, test_args):
+    def EmberSweep_test_template(self, index, hex_dig, topo, net_args, test, test_args):
 
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
@@ -86,37 +75,49 @@ class testcase_EmberSweep(SSTTestCase):
         self.emberelement_testdir = "{0}/../test/".format(test_path)
 
         # Set the various file paths
-        testDataFileName="{0}".format("TestSweep_{0}".format(index))
+        testDataFileName="{0}".format("testEemberSweep_{0}".format(index))
 
-#        reffile = "{0}/refFiles/{1}.out".format(test_path, testDataFileName)
+        reffile = "{0}/refFiles/test_EmberSweep.out".format(test_path)
         outfile = "{0}/{1}.out".format(outdir, testDataFileName)
         errfile = "{0}/{1}.err".format(outdir, testDataFileName)
         mpioutfiles = "{0}/{1}.testfile".format(outdir, testDataFileName)
-        sdlfile = "{0}/../test/emberLoad.py".format(test_path)
+        sdlfile = "{0}/../test/{1}".format(test_path, sweep_sdl_file)
+        testtimeout = 300
 
         otherargs = '--model-options=\"--topo={0} {1} --cmdLine=\\\"Init\\\" --cmdLine=\\\"{2} {3}\\\" --cmdLine=\\\"Fini\\\" \"'.format(topo, net_args, test, test_args)
 
         # Run SST
-        self.run_sst(sdlfile, outfile, errfile, other_args=otherargs, set_cwd=self.emberSweep_Folder, mpi_out_files=mpioutfiles, timeout_sec=300)
-
-
-#ES_start " torus --shape=16x16x16  AllPingPong iterations=10 messageSize=20000 "
-#sst  --model-options="--topo=torus --shape=16x16x16  --cmdLine=\"Init\" --cmdLine=\"AllPingPong iterations=10 messageSize=20000 \" --cmdLine=\"Fini\"" emberLoad.py > tmp_file
-#sst  --model-options="--topo=torus --shape=16x16x16  --cmdLine=\"Init\" --cmdLine=\"AllPingPong iterations=10 messageSize=20000 \" --cmdLine=\"Fini\" " /Users/allevin/devel/sst/allevin_sst-elements/src/sst/elements/ember/tests/../test/emberLoad.py
-
-#        testing_remove_component_warning_from_file(outfile)
+        self.run_sst(sdlfile, outfile, errfile, other_args=otherargs, set_cwd=self.emberSweep_Folder, mpi_out_files=mpioutfiles, timeout_sec=testtimeout)
 
         # NOTE: THE PASS / FAIL EVALUATIONS ARE PORTED FROM THE SQE BAMBOO
         #       BASED testSuite_XXX.sh THESE SHOULD BE RE-EVALUATED BY THE
         #       DEVELOPER AGAINST THE LATEST VERSION OF SST TO SEE IF THE
         #       TESTS & RESULT FILES ARE STILL VALID
 
-#        if testoutput:
-#            cmp_result = testing_compare_diff(outfile, reffile)
-#            self.assertTrue(cmp_result, "Diffed compared Output file {0} does not match Reference File {1}".format(outfile, reffile))
+        self.assertFalse(os_test_file(errfile, "-s"), "Ember Sweep Test {0} has Non-empty Error File {1}".format(index, errfile))
 
-#        self.assertFalse(os_test_file(errfile, "-s"), "Ember test {0} has Non-empty Error File {1}".format(testDataFileName, errfile))
+        # Dig through the output file looking for Simulation is complete
+        outfoundline = ""
+        grepstr = 'Simulation is complete'
+        with open(outfile, 'r') as f:
+            for line in f.readlines():
+                if grepstr in line:
+                    outfoundline = line
 
+        outtestresult = outfoundline is not ""
+        self.assertTrue(outtestresult, "Ember Sweep Test {0} - Cannot find string \"{1}\" in output file {2}".format(index, grepstr, outfile))
+
+        reffoundline = ""
+        grepstr = '{0} {1}'.format(hex_dig, outfoundline)
+        with open(reffile, 'r') as f:
+            for line in f.readlines():
+                if grepstr in line:
+                    reffoundline = line
+
+        reftestresult = reffoundline is not ""
+        self.assertTrue(reftestresult, "Ember Sweep Test {0} - Cannot find string \"{1}\" in reference file {2}".format(index, grepstr, outfile))
+
+        log_debug("Ember Sweep Test {0} - PASSED\n--------".format(index))
 
 ###############################################
 
@@ -221,15 +222,20 @@ class testcase_EmberSweep(SSTTestCase):
 
     def _build_final_test_matrix(self):
         self.final_test_matrix = []
-        index = 0
+        index = 1
         for network in self.networks:
             for test in self.tests:
                 for net_args in CrossProduct(network['args']) :
                     for test_args in CrossProduct(test['args']):
-                        test_data = (network['topo'], net_args, test['motif'], test_args)
+
+                        hash_str = "sst --model-options=\"--topo={0} {1} --cmdLine=\\\"{2} {3}\\\"\" {4}".format(network['topo'], net_args, test['motif'], test_args, sweep_sdl_file)
+                        hash_object  = hashlib.md5(hash_str.encode("UTF-8"))
+                        hex_dig = hash_object.hexdigest()
+
+                        test_data = (index, hex_dig, network['topo'], net_args, test['motif'], test_args)
                         self.final_test_matrix.append(test_data)
+                        #log_debug("BUILDING TEST MATRIX #{0} : Hex={[1}; Topo{2}; Net arg = {3}; Test = {4}; Test Arg = {5}".format(index, hex_dig, network['topo'], net_args, test['motif'], test_args))
                         index += 1
-                        #log_debug("BUILDING MATRIX TEST {0} : {1}; Net arg = {2}; Test = {3}; Test Arg = {4}".format(index, network['topo'], net_args, test['motif'], test_args))
 
 ###############################################################################
 
@@ -265,47 +271,3 @@ class CrossProduct:
 
     def next(self):
         return self.__next__()
-
-
-#
-#
-#config = "emberLoad.py"
-#
-#testi = 0
-#
-#add_nulls = lambda number, zero_count : "{0:0{1}d}".format(number, zero_count)
-#
-#for network in networks :
-#    for test in tests :
-#        for x in CrossProduct( network['args'] ) :
-#            for y in CrossProduct( test['args'] ):
-#                testi = testi + 1
-#                hash_str = "sst --model-options=\"--topo={0} {1} --cmdLine=\\\"{2} {3}\\\"\" {4}".format(network['topo'], x, test['motif'], y, config)
-#                hash_object  = hashlib.md5(hash_str.encode("UTF-8"))
-#                hex_dig = hash_object.hexdigest()
-#                print("test_EmberSweep_" + add_nulls(testi,3) + "_" + hex_dig + "() {")
-##                print("echo \"    \" {0} {1} {2} {3}".format(network['topo'], x, test['motif'], y))
-#
-#                print("ES_start \" {0} {1} {2} {3}\"".format(network['topo'], x, test['motif'], y))
-#                print("sst --model-options=\"--topo={0} {1} --cmdLine=\\\"Init\\\" --cmdLine=\\\"{2} {3}\\\" --cmdLine=\\\"Fini\\\"\" {4} > tmp_file".format(network['topo'], x, test['motif'], y, config))
-#                print("ES_fini " + hex_dig)
-#
-#                print("popd")
-#                print("}")
-#                #call("sst --model-options=\"--topo={0} {1} --cmdLine=\\\"{2} {3}\\\"\" {4}".format(network['topo'], x, test['motif'], y, config), shell=True )
-#
-#
-
-
-
-
-
-
-
-
-
-
-
-
-
-

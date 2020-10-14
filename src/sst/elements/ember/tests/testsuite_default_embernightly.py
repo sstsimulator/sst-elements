@@ -60,7 +60,7 @@ class testcase_EmberNightly(SSTTestCase):
         outdir = self.get_test_output_run_dir()
         tmpdir = self.get_test_output_tmp_dir()
 
-        self.emberSweep_Folder = "{0}/embernightly_sweep_folder".format(tmpdir)
+        self.emberSweep_Folder = "{0}/embernightly_folder".format(tmpdir)
         self.emberelement_testdir = "{0}/../test/".format(test_path)
 
         # Set the various file paths
@@ -86,7 +86,7 @@ class testcase_EmberNightly(SSTTestCase):
             cmp_result = testing_compare_diff(outfile, reffile)
             self.assertTrue(cmp_result, "Diffed compared Output file {0} does not match Reference File {1}".format(outfile, reffile))
 
-        self.assertFalse(os_test_file(errfile, "-s"), "Ember test {0} has Non-empty Error File {1}".format(testDataFileName, errfile))
+        self.assertFalse(os_test_file(errfile, "-s"), "Ember Nightly Test {0} has Non-empty Error File {1}".format(testDataFileName, errfile))
 
 
 ###############################################
@@ -97,10 +97,10 @@ class testcase_EmberNightly(SSTTestCase):
         outdir = self.get_test_output_run_dir()
         tmpdir = self.get_test_output_tmp_dir()
 
-        self.emberSweep_Folder = "{0}/embernightly_sweep_folder".format(tmpdir)
+        self.emberSweep_Folder = "{0}/embernightly_folder".format(tmpdir)
         self.emberelement_testdir = "{0}/../test/".format(test_path)
 
-        # Create a clean version of the embernightly_sweep_folder Directory
+        # Create a clean version of the embernightly_folder Directory
         if os.path.isdir(self.emberSweep_Folder):
             shutil.rmtree(self.emberSweep_Folder, True)
         os.makedirs(self.emberSweep_Folder)
