@@ -89,6 +89,7 @@ EXTRA_DIST = \
 	test_system.cfg \
 	test_device.cfg \
 	ddr3_power.cfg \
+	tests/testsuite_default_CramSim.py \
 	tests/VeriMem/test_verimem1.py \
 	tests/test_txngen.py \
 	tests/test_txntrace.py

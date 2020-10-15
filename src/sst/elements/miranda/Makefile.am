@@ -33,6 +33,7 @@ libmiranda_la_SOURCES = \
 	generators/streambench_customcmd.cc
 
 EXTRA_DIST = \
+	tests/testsuite_default_miranda.py \
 	tests/randomgen.py \
 	tests/singlestream.py \
 	tests/revsinglestream.py \

@@ -14,6 +14,7 @@ libcacheTracer_la_SOURCES = \
 
 EXTRA_DIST = \
     README \
+    tests/testsuite_default_cacheTracer.py \
     tests/test_cacheTracer_1.py \
     tests/test_cacheTracer_2.py
 

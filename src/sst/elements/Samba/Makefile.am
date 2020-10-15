@@ -33,6 +33,7 @@ libSamba_la_LIBADD = \
 	$(SST_SYSTEMC_LIB)
 
 EXTRA_DIST = \
+	tests/testsuite_default_Samba.py \
 	tests/gupsgen_mmu_4KB.py \
 	tests/gupsgen_mmu.py \
 	tests/gupsgen_mmu_three_levels.py \

@@ -4,6 +4,7 @@
 
 
 EXTRA_DIST = \
+	tests/testsuite_default_VaultSim.py \
 	tests/sdl1.ref \
 	tests/sdl2.ref \
 	tests/sdl3.xml.ref \

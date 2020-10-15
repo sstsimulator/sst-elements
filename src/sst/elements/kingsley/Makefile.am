@@ -16,6 +16,7 @@ libkingsley_la_SOURCES = \
 	linkControl.cc
 
 EXTRA_DIST = \
+	tests/testsuite_default_kingsley.py \
 	tests/noc_mesh_32_test.py
 
 libkingsley_la_LDFLAGS = -module -avoid-version

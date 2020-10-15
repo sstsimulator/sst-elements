@@ -127,12 +127,13 @@ libmemHierarchy_la_SOURCES = \
 	memNetBridge.cc
 
 EXTRA_DIST = \
-        Sieve/tests/StatisticOutput.csv.gold \
-        Sieve/tests/sieveprospero-0.trace \
-        Sieve/tests/trace-text.py \
-        Sieve/tests/Makefile \
-        Sieve/tests/ompsievetest.c \
-        Sieve/tests/sieve-test.py \
+	tests/testsuite_default_memHierarchy_sdl.py \
+    Sieve/tests/StatisticOutput.csv.gold \
+    Sieve/tests/sieveprospero-0.trace \
+    Sieve/tests/trace-text.py \
+    Sieve/tests/Makefile \
+    Sieve/tests/ompsievetest.c \
+    Sieve/tests/sieve-test.py \
 	tests/miranda.cfg \
 	tests/sdl-1.py \
 	tests/sdl2-1.py \

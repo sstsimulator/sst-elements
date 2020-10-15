@@ -36,6 +36,7 @@ libMessier_la_LIBADD = \
 
 
 EXTRA_DIST = \
+	tests/testsuite_default_Messier.py \
 	tests/gupsgen_2RANKS.py \
 	tests/gupsgen_fastNVM.py \
 	tests/gupsgen.py \

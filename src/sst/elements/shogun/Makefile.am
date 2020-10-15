@@ -22,6 +22,7 @@ libshogun_la_SOURCES = \
 	arb/shogunarb.h
 
 EXTRA_DIST = \
+	tests/testsuite_default_shogun.py \
 	tests/basic_miranda.py \
 	tests/hierarchy_test.py
 

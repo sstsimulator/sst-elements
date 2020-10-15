@@ -23,6 +23,7 @@ libcassini_la_SOURCES = \
 	cacheLineTrack.h
 
 EXTRA_DIST = \
+	tests/testsuite_default_cassini_prefetch.py \
 	tests/streamcpu-nbp.py \
 	tests/streamcpu-nopf.py \
 	tests/streamcpu-sp.py
