@@ -157,6 +157,8 @@ public:
 		setInstructionPointer( params.find<uint64_t>("entry_point", 0) );
 
 		next_ins_id = 0;
+
+		haltOnDecodeZero = true;
 	}
 
 	~VanadisMIPSDecoder() {}
@@ -691,6 +693,12 @@ protected:
 			output->verbose( CALL_INFO, 16, 0, "[decode] ---> fault address 0x%llu is not aligned at 4 bytes.\n",
 				ins_addr);
 			bundle->addInstruction( new VanadisInstructionDecodeFault( next_ins_id++, ins_addr, hw_thr, options ) );
+			return;
+		}
+
+		if( haltOnDecodeZero && ( 0 == ins_addr ) ) {
+			bundle->addInstruction( new VanadisInstructionDecodeFault( next_ins_id++,
+                                ins_addr, getHardwareThread(), options) );
 			return;
 		}
 
@@ -1405,6 +1413,8 @@ protected:
 
 	uint64_t next_ins_id;
 	uint64_t start_stack_address;
+
+	bool haltOnDecodeZero;
 
 	uint16_t icache_max_bytes_per_cycle;
 	uint16_t max_decodes_per_cycle;
