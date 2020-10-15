@@ -46,23 +46,23 @@ using namespace SST::CramSim;
 c_BankStateRefresh::c_BankStateRefresh(
 		std::map<std::string, unsigned>* x_bankParams) :
 		m_receivedCommandPtr(nullptr), m_timer(0) {
-	// std::cout << "Entered " << __PRETTY_FUNCTION__ << std::endl;
+        // Simulation::getSimulation()->getSimulationOutput().output("Entered %s\n", __PRETTY_FUNCTION);
 	m_bankParams = x_bankParams;
 	m_currentState = e_BankState::REF;
 	m_allowedCommands.clear();
 }
 
 c_BankStateRefresh::~c_BankStateRefresh() {
-	// std::cout << std::endl << __PRETTY_FUNCTION__ << std::endl;
+        // Simulation::getSimulation()->getSimulationOutput().output("\n%s\n", __PRETTY_FUNCTION__);
 
 }
 
 // this function is called by the c_Bank that contains this state
 void c_BankStateRefresh::handleCommand(c_BankInfo* x_bank,
 		c_BankCommand* x_bankCommandPtr, SimTime_t x_cycle) {
-	std::cout << __PRETTY_FUNCTION__
-			<< " ERROR: should not receive a command in this state. This is a transitory state."
-			<< std::endl;
+        Simulation::getSimulation()->getSimulationOutput().output(
+			"%s ERROR: should not receive a command in this state. This is a transitory state.\n",
+                        __PRETTY_FUNCTION__);
 }
 
 // returns the list of allowed commands in this state

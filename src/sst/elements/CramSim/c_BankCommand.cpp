@@ -108,21 +108,23 @@ e_BankCommandType c_BankCommand::getCommandMnemonic() const {
 
 
 void c_BankCommand::print(SimTime_t x_cycle) const {
-  std::cout << "[" << this << " Cycle:" <<  x_cycle
-			<< " CMD: " << this->getCommandString()
-			<< ", SEQNUM: " << std::dec << this->getSeqNum()
-			<< ", ADDR: 0x" << std::hex << this->getAddress()
-			<< ", isResponseReady: " << std::boolalpha << this->isResponseReady()
-		    << ", BankId: " << std::dec << this->getHashedAddress()->getBankId()
-			<< ", Ch: " << std::dec << this->getHashedAddress()->getChannel()
-			<< ", Pch: " << std::dec << this->getHashedAddress()->getPChannel()
-		    << ", Rank: " << std::dec << this->getHashedAddress()->getRank()
-			<< ", BG: " << std::dec << this->getHashedAddress()->getBankGroup()
+    std::stringstream str;
+    str << "[" << this  << " Cycle:" <<  x_cycle
+		        << " CMD: " << this->getCommandString()
+                        << ", SEQNUM: " << std::dec << this->getSeqNum()
+		        << ", ADDR: 0x" << std::hex << this->getAddress()
+		        << ", isResponseReady: " << std::boolalpha << this->isResponseReady()
+		        << ", BankId: " << std::dec << this->getHashedAddress()->getBankId()
+		        << ", Ch: " << std::dec << this->getHashedAddress()->getChannel()
+		        << ", Pch: " << std::dec << this->getHashedAddress()->getPChannel()
+		        << ", Rank: " << std::dec << this->getHashedAddress()->getRank()
+		        << ", BG: " << std::dec << this->getHashedAddress()->getBankGroup()
 			<< ", Bank: " << std::dec << this->getHashedAddress()->getBank()
 			<< ", Row: " << std::dec << this->getHashedAddress()->getRow()
 			<< ", Col: " << std::dec << this->getHashedAddress()->getCol()
 		  	<< ", Cacheline: " << std::dec << this->getHashedAddress()->getCacheline() << "]"
 			<< std::endl;
+    Simulation::getSimulation()->getSimulationOutput().output("%s", str.str().c_str());
 
 }
 
