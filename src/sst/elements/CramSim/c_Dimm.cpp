@@ -65,6 +65,8 @@ c_Dimm::c_Dimm(SST::ComponentId_t x_id, SST::Params& x_params) :
 			new Event::Handler<c_Dimm>(this,
 					&c_Dimm::handleInCmdUnitReqPtrEvent));
 
+        output = new Output("", 1, 0, SST::Output::STDOUT);
+
 	// read params here
 	bool l_found = false;
 
