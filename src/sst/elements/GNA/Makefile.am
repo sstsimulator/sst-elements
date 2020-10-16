@@ -18,8 +18,8 @@ libGNA_la_SOURCES = \
 
 EXTRA_DIST = \
 	tests/testsuite_default_GNA.py \
-	tests/test.py \
-	tests/test.ref.out \
+	tests/test_GNA_1.py \
+	tests/refFiles/test_GNA_1.out \
 	README
 
 
