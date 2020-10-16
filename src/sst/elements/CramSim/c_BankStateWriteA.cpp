@@ -44,7 +44,7 @@ using namespace SST::CramSim;
 
 c_BankStateWriteA::c_BankStateWriteA(
 		std::map<std::string, unsigned>* x_bankParams) {
-	// std::cout << "Entered " << __PRETTY_FUNCTION__ << std::endl;
+        // Simulation::getSimulation()->getSimulationOutput().output("Entered %s\n", __PRETTY_FUNCTION__);
 	m_timerEnter = 0;
 	m_timerExit = 0;
 	m_currentState = e_BankState::WRITEA;
@@ -60,9 +60,9 @@ c_BankStateWriteA::~c_BankStateWriteA() {
 
 void c_BankStateWriteA::handleCommand(c_BankInfo* x_bank,
 		c_BankCommand* x_bankCommandPtr, SimTime_t x_cycle) {
-	// std::cout << __PRETTY_FUNCTION__
-	// 		<< "ERROR: Bank commands are irrelevant in the current state ... exiting simulation"
-	// 		<< std::endl;
+        // Simulation::getSimulation()->getSimulationOutput().output(
+	// 		"%s ERROR: Bank commands are irrelevant in the current state ... exiting simulation\n",
+        // 		__PRETTY_FUNCTION);
 }
 
 void c_BankStateWriteA::clockTic(c_BankInfo* x_bank, SimTime_t x_cycle) {
@@ -96,7 +96,7 @@ void c_BankStateWriteA::clockTic(c_BankInfo* x_bank, SimTime_t x_cycle) {
 
 void c_BankStateWriteA::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 		c_BankCommand* x_cmdPtr, SimTime_t x_cycle) {
-//	 std::cout << "Entered " << __PRETTY_FUNCTION__ << std::endl;
+        // Simulation::getSimulation()->getSimulationOutput().output("Entered %s\n", __PRETTY_FUNCTION__);
 
 	// Being in the WriteA state does not make a READA cmd response ready.
 	// Therefore it is forwarded to BankStatePrecharge
@@ -110,9 +110,8 @@ void c_BankStateWriteA::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 			m_timerEnter = std::max(m_bankParams->at("nCCD_L"),m_bankParams->at("nBL"))-1;
 			break;
 		default:
-			std::cout << __PRETTY_FUNCTION__ << ": Unrecognized command"
-					<< std::endl;
-			exit(-1);
+                        Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO,
+                                -1, "%s: Unrecognized command\n", __PRETTY_FUNCTION__);
 			break;
 		}
 		m_prevCommandPtr = nullptr;

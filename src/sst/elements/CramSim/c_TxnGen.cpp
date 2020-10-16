@@ -37,8 +37,9 @@ c_TxnGenBase::c_TxnGenBase(ComponentId_t x_id, Params& x_params) :
 
 
     int verbosity = x_params.find<int>("verbose", 0);
-    output = new SST::Output("CramSim.TxnGen[@f:@l:@p] ",
-                             verbosity, 0, SST::Output::STDOUT);
+    debug = new SST::Output("CramSim.TxnGen[@f:@l:@p] ",
+            verbosity, 0, SST::Output::STDOUT);
+    output = new SST::Output("", 1, 0, SST::Output::STDOUT);
 
     m_simCycle=0;
     /*---- LOAD PARAMS ----*/
@@ -56,29 +57,23 @@ c_TxnGenBase::c_TxnGenBase(ComponentId_t x_id, Params& x_params) :
 
     k_numTxnPerCycle =  x_params.find<std::uint32_t>("numTxnPerCycle", 1, l_found);
     if (!l_found) {
-        std::cout << "TxnGen:: numTxnPerCycle is missing... exiting"
-                  << std::endl;
-        exit(-1);
+        output->fatal(CALL_INFO, -1, "TxnGen:: numTxnPerCycle is missing... exiting\n");
     }
 
     k_maxOutstandingReqs =  x_params.find<std::uint32_t>("maxOutstandingReqs", 0, l_found);
     if (!l_found) {
-        std::cout << "TxnGen:: maxOutstandingReqs is missing... No limit to the maximum number of outstanding transactions"
-                  << std::endl;
+        output->output("TxnGen:: maxOutstandingReqs is missing... No limit to the maximum number of outstanding transactions\n");
     }
 
     k_maxTxns =  x_params.find<std::uint32_t>("maxTxns", 0, l_found);
     if (!l_found) {
-        std::cout << "TxnGen:: maxTxns is missing... No limit to the maximum number of transactions"
-                  << std::endl;
+        output->output("TxnGen:: maxTxns is missing... No limit to the maximum number of transactions\n");
         //exit(-1);
     }
 
     uint32_t k_numBytesPerTransaction = x_params.find<std::uint32_t>("numBytesPerTransaction", 32, l_found);
     if (!l_found) {
-        std::cout << "TxnGen:: numBytesPerTransaction is missing...  exiting"
-                  << std::endl;
-        exit(-1);
+        output->fatal(CALL_INFO, -1, "TxnGen:: numBytesPerTransaction is missing...  exiting\n");
     }
     m_sizeOffset = (uint)log2(k_numBytesPerTransaction);
 
@@ -121,19 +116,18 @@ c_TxnGenBase::c_TxnGenBase() :
 
 void c_TxnGenBase::finish()
 {
-    printf("\n======= CramSim Simulation Report [Transaction Generator] ============================\n");
-    printf("Total Read-Txns Requests sent: %llu\n", m_resReadCount);
-    printf("Total Write-Txns Requests sent: %llu\n", m_resWriteCount);
-    printf("Total Txns Sents: %llu\n", m_resReadCount + m_resWriteCount);
+    output->output("\n======= CramSim Simulation Report [Transaction Generator] ============================\n");
+    output->output("Total Read-Txns Requests sent: %llu\n", m_resReadCount);
+    output->output("Total Write-Txns Requests sent: %llu\n", m_resWriteCount);
+    output->output("Total Txns Sents: %llu\n", m_resReadCount + m_resWriteCount);
 
-    printf("Total Read-Txns Responses received: %llu\n", m_resReadCount);
-    printf("Total Write-Txns Responses received: %llu\n", m_resWriteCount);
-    printf("Total Txns Received: %llu\n", m_resReadCount + m_resWriteCount);
-    std::cout << "Cycles Per Transaction (CPT) = "
-                << std::dec << static_cast<double>(m_simCycle)
-                               / static_cast<double>(m_resReadCount + m_resWriteCount) << std::endl;
-    printf("Component Finished.\n");
-    printf("========================================================================================\n\n");
+    output->output("Total Read-Txns Responses received: %llu\n", m_resReadCount);
+    output->output("Total Write-Txns Responses received: %llu\n", m_resWriteCount);
+    output->output("Total Txns Received: %llu\n", m_resReadCount + m_resWriteCount);
+    output->output("Cycles Per Transaction (CPT) = %d\n",
+        static_cast<double>(m_simCycle) / static_cast<double>(m_resReadCount + m_resWriteCount));
+    output->output("Component Finished.\n");
+    output->output("========================================================================================\n\n");
 
     double l_txnsPerCycle=  static_cast<double>(m_resReadCount + m_resWriteCount) /static_cast<double>(m_simCycle);
 
@@ -212,16 +206,18 @@ void c_TxnGenBase::handleResEvent(SST::Event* ev) {
         s_txnsLatency->addData(l_latency);
 
 #ifdef __SST_DEBUG_OUTPUT__
-        output->verbose(CALL_INFO,1,0,"[cycle:%lld] addr: 0x%lx isRead:%d seqNum:%lld birthTime:%lld latency:%lld \n",l_currentCycle,l_txn->getAddress(),l_txn->isRead(), l_seqnum,m_outstandingReqs[l_seqnum],l_latency);
+        debug->verbose(CALL_INFO,1,0,"[cycle:%lld] addr: 0x%lx isRead:%d seqNum:%lld birthTime:%lld latency:%lld \n",l_currentCycle,l_txn->getAddress(),l_txn->isRead(), l_seqnum,m_outstandingReqs[l_seqnum],l_latency);
 #endif
 
 
         m_outstandingReqs.erase(l_seqnum);
 
     } else {
-        std::cout << std::endl << std::endl << "TxnGen:: "
-                  << __PRETTY_FUNCTION__ << " ERROR:: Bad Event Type!"
-                  << std::endl;
+        std::stringstream str;
+        str << std::endl << std::endl << "TxnGen:: " 
+            << __PRETTY_FUNCTION__ << " ERROR:: Bad Event Type!"
+            << std::endl;
+        output->output("%s", str.str().c_str());
     }
 }
 
@@ -236,10 +232,12 @@ bool c_TxnGenBase::sendRequest()
 
         // confirm that interval timer has run out before contiuing
         if (m_txnReqQ.front().second > l_cycle) {
-            // std::cout << __PRETTY_FUNCTION__ << ": Interval timer for front txn is not done"
+            // std::stringstream str
+            // str << __PRETTY_FUNCTION__ << ": Interval timer for front txn is not done"
             // << std::endl;
+            // output->output("%s", str.str().c_str());
             // m_txnReqQ.front().first->print();
-            // std::cout << " - Interval:" << m_txnReqQ.front().second << std::endl;
+            // output->output(" - Interval: %d\n", m_txnReqQ.front().second);
             return false;
         }
 
@@ -265,7 +263,7 @@ bool c_TxnGenBase::sendRequest()
 
         c_Transaction *l_txn=l_txnReqEvPtr->m_payload;
     #ifdef __SST_DEBUG_OUTPUT__
-        output->verbose(CALL_INFO,1,0,"[cycle:%lld] addr: 0x%x isRead:%d seqNum:%lld\n",l_cycle,l_txn->getAddress(),l_txn->isRead(),l_txn->getSeqNum());
+        debug->verbose(CALL_INFO,1,0,"[cycle:%lld] addr: 0x%x isRead:%d seqNum:%lld\n",l_cycle,l_txn->getAddress(),l_txn->isRead(),l_txn->getSeqNum());
     #endif
 
         m_outstandingReqs.insert(std::pair<uint64_t, uint64_t>(l_txn->getSeqNum(),l_cycle));
@@ -282,12 +280,11 @@ bool c_TxnGenBase::readResponse() {
 		delete l_txn;
 
 		m_txnResQ.pop_front();
-		// std::cout << "TxnGen::readResponse() Transaction printed: Addr-"
-		// 		<< l_txn->getAddress() << std::endl;
+		// output->output("TxnGen::readResponse() Transaction printed: Addr-%" PRIu64 "\n",
+		// 		l_txn->getAddress());
                 return true;
 	} else {
-		// std::cout << "TxnGen::readResponse(): No transactions in res q to read"
-		// 		<< std::endl;
+		// output->output("TxnGen::readResponse(): No transactions in res q to read\n");
                 return false;
 	}
 }
@@ -310,27 +307,21 @@ c_TxnGen::c_TxnGen(ComponentId_t x_id, Params& x_params) :
     k_readWriteTxnRatio
             = x_params.find<float>("readWriteRatio", 0.5, l_found);
     if (!l_found) {
-        std::cout << "TxnGen:: readWriteRatio value is missing... it will be 0.5 (default)"
-                  << std::endl;
+        output->output("TxnGen:: readWriteRatio value is missing... it will be 0.5 (default)\n");
         //exit(-1);
     }
 
     //set mode (random or sequential)
     std::string l_mode = x_params.find<std::string>("mode", "rand", l_found);
     if (!l_found) {
-        std::cout << "TxnGen:: mode is missing... exiting"
-                  << std::endl;
-        exit(-1);
+        output->fatal(CALL_INFO, -1, "TxnGen:: mode is missing... exiting");
     } else {
         if (l_mode == "rand")
             m_mode = e_TxnMode::RAND;
         else if (l_mode == "seq")
             m_mode = e_TxnMode::SEQ;
         else {
-            std::cout << "TxnGen:: mode (" << l_mode
-                      << ").. It should be \"rand\" or \"seq\" .. exiting"
-                      << std::endl;
-            exit(-1);
+            output->fatal(CALL_INFO, -1, "TxnGen:: mode (%s).. It should be \"rand\" or \"seq\" .. exiting\n", l_mode.c_str());
         }
     }
 

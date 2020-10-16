@@ -409,7 +409,7 @@ void c_AddressHasher::fillHashedAddress(c_HashedAddress *x_hashAddr, const ulong
 
   x_hashAddr->setBankId(l_bankId);
   x_hashAddr->setRankId(l_rankId);
-   // cout << "0x" << std::hex << x_address << std::dec << "\t";  x_hashAddr->print();
+   // output->output("0x%" PRIx64 "\t", x_address);  x_hashAddr->print();
 
 } // fillHashedAddress(c_HashedAddress, x_address)
 
@@ -515,7 +515,7 @@ ulong c_AddressHasher::getAddressForBankId(const unsigned x_bankId) {
     l_address += l_tOut;
   }
 
- // cout << "Returning address 0x" << std::hex << l_address << std::dec << endl;
+ // output->output("Returning address 0x%" PRIx64 "\n", l_address);
 
   return(l_address);
 } // getAddressForBankId(const unsigned x_bankId)
@@ -563,7 +563,7 @@ void c_AddressHasher::parsePattern(string *x_inStr, std::pair<string,uint> *x_ou
       }
 
       x_inStr->erase(next(l_sIter).base(),x_inStr->end()); // remove the matched portion
-      //cout << "Returning " << x_outPair->first << " " << x_outPair->second << endl;
+      //output->output("Returning %s %d\n", x_outPair->first.c_str(), x_outPair->second);
       break;
     } else if(*l_sIter == ':') {
       l_sizeMatched = true;

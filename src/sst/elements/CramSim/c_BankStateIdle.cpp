@@ -47,13 +47,13 @@ using namespace SST::CramSim;
 
 c_BankStateIdle::c_BankStateIdle(std::map<std::string, unsigned>* x_bankParams) :
 		m_receivedCommandPtr(nullptr), m_timer(0) {
-	//std::cout << "Entered " << __PRETTY_FUNCTION__ << std::endl;
+	//Simulation::getSimulation()->getSimulationOutput().output("Entered %s\n", __PRETTY_FUNCTION__);
 	m_bankParams = x_bankParams;
 	m_currentState = e_BankState::IDLE;
 }
 
 c_BankStateIdle::~c_BankStateIdle() {
-	// std::cout << std::endl << __PRETTY_FUNCTION__ << std::endl;
+	//Simulation::getSimulation()->getSimulationOutput().output("\n%s\n", __PRETTY_FUNCTION__);
 
 }
 

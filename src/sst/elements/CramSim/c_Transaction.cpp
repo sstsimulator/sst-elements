@@ -113,12 +113,14 @@ void c_Transaction::isProcessed(bool x_processed) {
 //
 // FIXME: print function should be actually be overloaded in operator<< but for some reason operator overloading does not working when creating the library, so for now we will have the print function.
 void c_Transaction::print() const {
-  std::cout << this << " " << getTransactionString() << ", seqNum: " << std::dec << m_seqNum
+    std::stringstream str;
+    str << this << " " << getTransactionString() << ", seqNum: " << std::dec << m_seqNum
 	    << ", address: 0x" << std::hex << getAddress() << std::dec
 	    << ", dataWidth = " << m_dataWidth << ", m_numWaitingCommands = "
 	    << std::dec << m_numWaitingCommands << ", isProcessed = "
 	    << std::boolalpha << m_processed << ", isResponseReady = "
 	    << std::boolalpha << m_isResponseReady <<std::endl;
+    Simulation::getSimulation()->getSimulationOutput().output("%s", str.str().c_str());
 }
 
 

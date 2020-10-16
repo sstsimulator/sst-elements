@@ -83,7 +83,7 @@ c_Rank* c_BankGroup::getRankPtr() const{
 void c_BankGroup::updateOtherBanksNextCommandCycles(c_BankInfo* x_initBankPtr,
 		c_BankCommand* x_cmdPtr, SimTime_t x_cycle) {
 
-//	std::cout << "Entered " << __PRETTY_FUNCTION__ << std::endl;
+//	Simulation::getSimulation()->getSimulationOutput().output("Entered %s\n", __PRETTY_FUNCTION__);
 
 	SimTime_t l_time = x_cycle;
 	for (std::vector<c_BankInfo*>::iterator l_iter = m_bankPtrs.begin();
