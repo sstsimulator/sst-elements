@@ -38,7 +38,12 @@ EXTRA_DIST = \
 	tests/gupsgen_mmu.py \
 	tests/gupsgen_mmu_three_levels.py \
 	tests/stencil3dbench_mmu.py \
-	tests/streambench_mmu.py
+	tests/streambench_mmu.py \
+    tests/refFiles/test_Samba_gupsgen_mmu.out \
+    tests/refFiles/test_Samba_gupsgen_mmu_4KB.out \
+    tests/refFiles/test_Samba_gupsgen_mmu_three_levels.out \
+    tests/refFiles/test_Samba_stencil3dbench_mmu.out \
+    tests/refFiles/test_Samba_streambench_mmu.out
 
 #noinst_PROGRAMS = infogather
 #infogather_SOURCES = infogather.cc

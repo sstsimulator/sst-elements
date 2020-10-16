@@ -41,7 +41,12 @@ EXTRA_DIST = \
 	tests/gupsgen_fastNVM.py \
 	tests/gupsgen.py \
 	tests/stencil3dbench_messier.py \
-	tests/streambench_messier.py
+	tests/streambench_messier.py \
+    tests/refFiles/test_Messier_gupsgen.out \
+    tests/refFiles/test_Messier_gupsgen_2RANKS.out \
+    tests/refFiles/test_Messier_gupsgen_fastNVM.out \
+    tests/refFiles/test_Messier_stencil3dbench_messier.out \
+    tests/refFiles/test_Messier_streambench_messier.out
 
 #noinst_PROGRAMS = infogather
 #infogather_SOURCES = infogather.cc

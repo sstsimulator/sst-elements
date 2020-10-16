@@ -294,7 +294,13 @@ EXTRA_DIST = \
 	tests/qos-dragonfly.sh \
 	tests/qos-fattree.sh \
 	tests/qos-hyperx.sh \
-	tests/qos.load
+	tests/qos.load \
+    tests/refFiles/ESshmem_cumulative.out \
+    tests/refFiles/test_EmberSweep.out \
+    tests/refFiles/test_embernightly.out \
+    tests/refFiles/test_qos-dragonfly.out \
+    tests/refFiles/test_qos-fattree.out \
+    tests/refFiles/test_qos-hyperx.out
 
 if USE_EMBER_CONTEXTS
 libember_la_SOURCES += \
