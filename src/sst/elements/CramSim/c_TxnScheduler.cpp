@@ -50,12 +50,15 @@ c_TxnScheduler::c_TxnScheduler(SST::ComponentId_t id, SST::Params& x_params, Out
 void c_TxnScheduler::build(Params& x_params) {
     //initialize member variables
     assert(m_numChannels>0);
-
+    
+    // Create output object
+    m_out = new Output("", 0, 0, SST::Output::STDOUT);
+    
     bool l_found=false;
 
     string l_txnSchedulingPolicy= (string) x_params.find<std::string>("txnSchedulingPolicy","FCFS", l_found);
     if(!l_found) {
-        std::cout << "txnSchedulingPolicy value is missing... FCFS policy will be used" << std::endl;
+        m_out->output("txnSchedulingPolicy value is missing... FCFS policy will be used\n");
     }
 
     if(l_txnSchedulingPolicy=="FCFS")
@@ -67,19 +70,18 @@ void c_TxnScheduler::build(Params& x_params) {
         k_txnSchedulingPolicy=e_txnSchedulingPolicy::FRFCFS;
     } else
     {
-        std::cout << "unsupported txnSchedulingPolicy ("<<l_txnSchedulingPolicy<<"),, exit"<< std::endl;
-        exit(1);
+        m_out->fatal(CALL_INFO, 1, "unsupported txnSchedulingPolicy (%s),, exit\n", l_txnSchedulingPolicy.c_str());
     }
 
 
     k_numTxnQEntries = (unsigned) x_params.find<unsigned>("numTxnQEntries", 32, l_found);
     if (!l_found) {
-        std::cout << "numTxnQEntries value is missing... it will be 32 (default)" << std::endl;
+        m_out->output("numTxnQEntries value is missing... it will be 32 (default)\n");
     }
 
     k_isReadFirstScheduling = (unsigned) x_params.find<unsigned>("boolReadFirstTxnScheduling",0,l_found);
     if (!l_found) {
-        std::cout << "boolReadFirstTxnScheduling value is missing... disabled" << std::endl;
+        m_out->output("boolReadFirstTxnScheduling value is missing... disabled\n");
     }
 
 
@@ -92,23 +94,19 @@ void c_TxnScheduler::build(Params& x_params) {
 
         k_maxPendingWriteThreshold = (float) x_params.find<float>("maxPendingWriteThreshold", 1, l_found);
         if (!l_found) {
-            std::cout << "maxPendingWriteThreshold value is missing... it will be 1.0 (default)" << std::endl;
+            m_out->output("maxPendingWriteThreshold value is missing... it will be 1.0 (default)\n");
         } else {
             if (k_maxPendingWriteThreshold > 1) {
-                std::cout << "maxPendingWriteThreshold value should be greater than 0 and less than (or equal to) one"
-                          << std::endl;
-                exit(1);
+                m_out->fatal(CALL_INFO, 1, "maxPendingWriteThreshold value should be greater than 0 and less than (or equal to) one\n");
             }
         }
 
         k_minPendingWriteThreshold = (float) x_params.find<float>("minPendingWriteThreshold", 0.2, l_found);
         if (!l_found) {
-            std::cout << "minPendingWriteThreshold value is missing... it will be 0.2 (default)" << std::endl;
+            m_out->output("minPendingWriteThreshold value is missing... it will be 0.2 (default)\n");
         } else {
             if (k_minPendingWriteThreshold > k_maxPendingWriteThreshold) {
-                std::cout << "minPendingWriteThreshold value should be smaller than maxPendingWriteThreshold"
-                          << std::endl;
-                exit(1);
+                m_out->fatal(CALL_INFO, 1, "minPendingWriteThreshold value should be smaller than maxPendingWriteThreshold\n");
             }
         }
 
@@ -217,8 +215,7 @@ c_Transaction* c_TxnScheduler::getNextTxn(TxnQueue& x_queue, int x_ch)
         }
         else
         {
-            printf("unsupported transaction scheduling policy.. exit(1)");
-            exit(1);
+            m_out->fatal(CALL_INFO, 1, "unsupported transaction scheduling policy.. exit(1)\n");
         }
 
         return l_nxtTxn;

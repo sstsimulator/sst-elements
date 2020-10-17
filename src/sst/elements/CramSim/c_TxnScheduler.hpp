@@ -101,6 +101,7 @@ namespace SST {
             unsigned m_minNumPendingWrite;
 
             Output *output;
+            Output *m_out;
             unsigned m_numChannels;
             bool m_flushWriteQueue;
 

@@ -35,18 +35,16 @@ using namespace SST;
 using namespace SST::CramSim;
 
 c_TxnDispatcher::c_TxnDispatcher(ComponentId_t id, Params &params) {
+    output = new Output("", 1, 0, Output::STDOUT);
+    
     //*------ get parameters ----*//
     uint32_t k_numLanes= (uint32_t) params.find<uint32_t>("numLanes", 1, l_found);
     if (!l_found) {
-        std::cout << "numLanes param value is missing... exiting"
-                  << std::endl;
-        exit(-1);
+        output->fatal(CALL_INFO, -1, "numLanes param value is missing... exiting\n");
     }
     std::string l_laneIdxString = (std::string) params.find<std::string>("laneIdxPosition", "[13:12]", l_found);
     if (!l_found) {
-        std::cout << "the bit position of lane index is not specified... it should be [end:start]"
-                  << std::endl;
-        exit(-1);
+        output->fatal(CALL_INFO, -1, "the bit position of lane index is not specified... it should be [end:start]\n");
     }
     else
     {
@@ -63,8 +61,7 @@ c_TxnDispatcher::c_TxnDispatcher(ComponentId_t id, Params &params) {
         }
         if(strings.size()!=2)
         {
-            std::cout<<"laneIdxPosition error! =>"<<l_laneIdxString<<std::end;
-            exit(-1);
+            output->fatal(CALL_INFO, -1, "laneIdxPosition error! =>%s\n", l_laneIdxString,c_str());
         }
         else {
             m_laneIdxStart = strings[0].to_Integer();
@@ -76,8 +73,7 @@ c_TxnDispatcher::c_TxnDispatcher(ComponentId_t id, Params &params) {
     //*---- configure link ----*//
     m_txnGenLink = configureLink("txnGen",new Event::Handler<c_TxnDispatcher>(this,&c_TxnDispatcher::handleTxnGenEvent));
     if(!l_link) {
-        std::cout<<"txnGen link is not found.. exit";
-        exit(-1);
+        output->fatal(CALL_INFO, -1, "txnGen link is not found.. exit\n");
     }
 
     for (int i = 0; i < numLanes; i++) {
@@ -87,10 +83,9 @@ c_TxnDispatcher::c_TxnDispatcher(ComponentId_t id, Params &params) {
         if (l_link) {
             m_outLaneLinks.push_back(l_link,  new Event::Handler<c_TxnDispatcher>(this,
                                                                                &c_TxnDispatcher::handleCtrlEvent));
-            std::cout<<l_linkName<<" is connected"<<std::endl;
+            output->output("%s is connected", l_linkName.c_str());
         } else {
-            std::cout<<l_linkName<<" is not found.. exit"<<std::endl;
-            exit(-1);
+            output->fatal(CALL_INFO, -1, "%s is not found.. exit\n", l_linkName.c_str());
         }
     }
 }

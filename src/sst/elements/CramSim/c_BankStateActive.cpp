@@ -52,7 +52,7 @@ using namespace SST::CramSim;
 c_BankStateActive::c_BankStateActive(
 		std::map<std::string, unsigned>* x_bankParams) :
 		m_receivedCommandPtr(nullptr) {
-	//std::cout << "Entered " << __PRETTY_FUNCTION__ << std::endl;
+                // Simulation::getSimulation()->getSimulationOutput().output("Entered %s\n", __PRETTY_FUNCTION__);
 
 	m_currentState = e_BankState::ACTIVE;
 	m_bankParams = x_bankParams;
@@ -60,7 +60,7 @@ c_BankStateActive::c_BankStateActive(
 }
 
 c_BankStateActive::~c_BankStateActive() {
-	// std::cout << std::endl << __PRETTY_FUNCTION__ << std::endl;
+        // Simulation::getSimulation()->getSimulationOutput().output("Entered %s\n", __PRETTY_FUNCTION__);
 
 }
 
@@ -97,9 +97,8 @@ void c_BankStateActive::handleCommand(c_BankInfo* x_bank,
 			x_bank->setLastCommandCycle(e_BankCommandType::PRE, l_time);
 			break;
 		default:
-			std::cout << __PRETTY_FUNCTION__ << ": Unrecognized state"
-					<< std::endl;
-			exit(-1);
+                        Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, -1, 
+                                "%s: Unrecognized state\n", __PRETTY_FUNCTION__);
 			break;
 		}
 

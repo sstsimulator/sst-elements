@@ -45,21 +45,18 @@ c_TxnDispatcher::c_TxnDispatcher(ComponentId_t x_id, Params &params):Component(x
 
     dbg.init("[TxnDispatcher]",params.find<int>("debug_level",0),0,
              (Output::output_location_t)params.find<int>("debug_location",Output::STDOUT));
+    output = new Output("", 1, 0, Output::STDOUT);
 
     k_numLanes= (uint32_t) params.find<uint32_t>("numLanes", 1, l_found);
     if (!l_found) {
-        cout << "numLanes param value is missing... exiting"
-                  << endl;
-        exit(-1);
+        output->fatal(CALL_INFO, -1, "numLanes param value is missing... exiting\n");
     }
     assert(k_numLanes>0);
 
     string l_laneIdxString = (string) params.find<string>("laneIdxPos", "13:12", l_found);
     if(k_numLanes>1) {
         if (!l_found) {
-            cout << "the bit position of lane index is not specified... it should be \"end:start\""
-                 << endl;
-            exit(-1);
+            output->fatal(CALL_INFO, -1, "the bit position of lane index is not specified... it should be \"end:start\"\n");
         } else {
 
             stringstream string_stream;
@@ -71,18 +68,14 @@ c_TxnDispatcher::c_TxnDispatcher(ComponentId_t x_id, Params &params):Component(x
             }
 
             if (strings.size() != 2) {
-                cout << "laneIdxPosition error! =>" << l_laneIdxString << endl;
-                exit(-1);
+                output->fatal(CALL_INFO, -1, "laneIdxPosition error! =>%s\n", l_laneIdxString.c_str());
             } else {
                 m_laneIdxEnd = atoi(strings[0].c_str());
                 m_laneIdxStart = atoi(strings[1].c_str());
                 m_laneIdxMask = ~((int64_t) -1 << (m_laneIdxEnd + 1));
                 if (m_laneIdxEnd < m_laneIdxStart) {
-                    cout << "landIdxPos error!!"
-                         << "End position: " << m_laneIdxEnd
-                         << "Start position: " << m_laneIdxStart
-                         << endl;
-                    exit(-1);
+                    output->fatal(CALL_INFO, -1, "landIdxPos error!! End position: %d Start position: %d\n", 
+                            m_laneIdxEnd, m_laneIdxStart);
                 }
             }
         }
@@ -98,8 +91,7 @@ c_TxnDispatcher::c_TxnDispatcher(ComponentId_t x_id, Params &params):Component(x
     //---- configure link ----//
     m_txnGenLink = configureLink("txnGen",new Event::Handler<c_TxnDispatcher>(this,&c_TxnDispatcher::handleTxnGenEvent));
     if(!m_txnGenLink) {
-        cout<<"txnGen link is not found.. exit";
-        exit(-1);
+        output->fatal(CALL_INFO, -1, "txnGen link is not found.. exit\n");
     }
 
     for (int i = 0; i < k_numLanes; i++) {
@@ -108,10 +100,9 @@ c_TxnDispatcher::c_TxnDispatcher(ComponentId_t x_id, Params &params):Component(x
 
         if (l_link) {
             m_laneLinks.push_back(l_link);
-            cout<<l_linkName<<" is connected"<<endl;
+            output->output("%s is connected\n", l_linkName.c_str());
         } else {
-            cout<<l_linkName<<" is not found.. exit"<<endl;
-            exit(-1);
+            output->fatal(CALL_INFO, -1, "%s is not found.. exit\n", l_linkName.c_str());
         }
     }
 

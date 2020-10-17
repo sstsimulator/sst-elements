@@ -63,26 +63,23 @@ void c_TxnConverter::build(SST::Params& x_params, unsigned l_bankNum) {
 
 	k_relCommandWidth = (uint32_t) x_params.find<uint32_t>("relCommandWidth", 1, l_found);
 	if (!l_found) {
-		std::cout << "relCommandWidth value is missing ... exiting" << std::endl;
-		exit(-1);
+	        output->fatal(CALL_INFO, -1, "relCommandWidth value is missing ... exiting\n");
 	}
 
 
 	k_useReadA = (uint32_t) x_params.find<uint32_t>("boolUseReadA", 1, l_found);
 	if (!l_found) {
-		std::cout << "boolUseWriteA param value is missing... exiting" << std::endl;
-		exit(-1);
+		output->fatal(CALL_INFO, -1, "boolUseWriteA param value is missing... exiting\n");
 	}
 
 	k_useWriteA = (uint32_t) x_params.find<uint32_t>("boolUseWriteA", 1, l_found);
 	if (!l_found) {
-		std::cout << "boolUseWriteA param value is missing... exiting" << std::endl;
-		exit(-1);
+		output->fatal(CALL_INFO, -1, "boolUseWriteA param value is missing... exiting\n");
 	}
 
 	std::string l_bankPolicy = (std::string) x_params.find<std::string>("bankPolicy", "CLOSE", l_found);
 	if (!l_found) {
-		std::cout << "bankPolicy value is missing... it will be \"close-page policy\" (Default)" << std::endl;
+		output->output("bankPolicy value is missing... it will be \"close-page policy\" (Default)\n");
 	}
 	if(l_bankPolicy=="CLOSE")
 		k_bankPolicy=0;
@@ -93,8 +90,7 @@ void c_TxnConverter::build(SST::Params& x_params, unsigned l_bankNum) {
         k_bankPolicy=2;
 		k_bankCloseTime =(SimTime_t) x_params.find<SimTime_t>("bankCloseTime",1000, l_found);
 		if(!l_found){
-			std::cout <<"bank policy is set to pseudo open policy, but bankCloseTime value is missing... exiting" <<std::endl;
-			exit(-1);
+			output->fatal(CALL_INFO, -1, "bank policy is set to pseudo open policy, but bankCloseTime value is missing... exiting\n");
 		}
 		if(k_bankPolicy==2) {
 			for (auto &it:m_bankInfo)
@@ -103,13 +99,11 @@ void c_TxnConverter::build(SST::Params& x_params, unsigned l_bankNum) {
     }
 	else
 	{
-		std::cout << "TxnConverter: bank policy error!!\n";
-		exit(-1);
+		output->fatal(CALL_INFO, -1, "TxnConverter: bank policy error!!\n");
 	}
 
 	if ((k_bankPolicy == 1 || k_bankPolicy==2 ) && (k_useReadA || k_useWriteA)) {
-		std::cout << "Open bank/row and READA or WRITEA makes no sense" << std::endl;
-		exit(-1);
+		output->fatal(CALL_INFO, -1, "Open bank/row and READA or WRITEA makes no sense\n");
 	}
 
 
@@ -315,8 +309,7 @@ void c_TxnConverter::getPostCommands(
 			}
 		}
 	} else{
-		printf("bank policy error!!");
-		exit(1);
+		output->fatal(CALL_INFO, 1, "bank policy error!!\n");
 	}
 }
 
@@ -348,8 +341,7 @@ void c_TxnConverter::updateBankInfo(c_Transaction* x_txn)
 		}
 	}
 	else{
-		printf("bank policy error!!");
-		exit(1);
+		output->fatal(CALL_INFO, 1, "bank policy error!!");
 	}
 }
 

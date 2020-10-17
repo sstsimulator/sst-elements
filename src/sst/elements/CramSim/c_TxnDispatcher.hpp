@@ -89,6 +89,7 @@ namespace SST{
 
              uint32_t k_numLanes;
              Output dbg;
+             Output* output;
          };
     }
 }
