@@ -137,6 +137,8 @@ Channel 7 statistics
  c0.l1cache.GetSMiss_Blocked : Accumulator : Sum.u64 = 3274; SumSQ.u64 = 3274; Count.u64 = 3274; Min.u64 = 1; Max.u64 = 1; 
  c0.l1cache.GetXMiss_Blocked : Accumulator : Sum.u64 = 376; SumSQ.u64 = 376; Count.u64 = 376; Min.u64 = 1; Max.u64 = 1; 
  c0.l1cache.GetSXMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c0.l1cache.CacheHits : Accumulator : Sum.u64 = 49; SumSQ.u64 = 49; Count.u64 = 49; Min.u64 = 1; Max.u64 = 1; 
+ c0.l1cache.CacheMisses : Accumulator : Sum.u64 = 9951; SumSQ.u64 = 9951; Count.u64 = 9951; Min.u64 = 1; Max.u64 = 1; 
  c0.l1cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c0.l1cache.eventSent_PutS : Accumulator : Sum.u64 = 56; SumSQ.u64 = 56; Count.u64 = 56; Min.u64 = 1; Max.u64 = 1; 
  c0.l1cache.eventSent_PutE : Accumulator : Sum.u64 = 8365; SumSQ.u64 = 8365; Count.u64 = 8365; Min.u64 = 1; Max.u64 = 1; 
@@ -291,6 +293,8 @@ Channel 7 statistics
  c1.l1cache.GetSMiss_Blocked : Accumulator : Sum.u64 = 318; SumSQ.u64 = 318; Count.u64 = 318; Min.u64 = 1; Max.u64 = 1; 
  c1.l1cache.GetXMiss_Blocked : Accumulator : Sum.u64 = 40; SumSQ.u64 = 40; Count.u64 = 40; Min.u64 = 1; Max.u64 = 1; 
  c1.l1cache.GetSXMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c1.l1cache.CacheHits : Accumulator : Sum.u64 = 4; SumSQ.u64 = 4; Count.u64 = 4; Min.u64 = 1; Max.u64 = 1; 
+ c1.l1cache.CacheMisses : Accumulator : Sum.u64 = 996; SumSQ.u64 = 996; Count.u64 = 996; Min.u64 = 1; Max.u64 = 1; 
  c1.l1cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c1.l1cache.eventSent_PutS : Accumulator : Sum.u64 = 35; SumSQ.u64 = 35; Count.u64 = 35; Min.u64 = 1; Max.u64 = 1; 
  c1.l1cache.eventSent_PutE : Accumulator : Sum.u64 = 692; SumSQ.u64 = 692; Count.u64 = 692; Min.u64 = 1; Max.u64 = 1; 
@@ -487,6 +491,8 @@ Channel 7 statistics
  n0.l2cache.GetSMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  n0.l2cache.GetXMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  n0.l2cache.GetSXMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ n0.l2cache.CacheHits : Accumulator : Sum.u64 = 281; SumSQ.u64 = 281; Count.u64 = 281; Min.u64 = 1; Max.u64 = 1; 
+ n0.l2cache.CacheMisses : Accumulator : Sum.u64 = 10666; SumSQ.u64 = 10666; Count.u64 = 10666; Min.u64 = 1; Max.u64 = 1; 
  n0.l2cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  n0.l2cache.evict_E : Accumulator : Sum.u64 = 5035; SumSQ.u64 = 5035; Count.u64 = 5035; Min.u64 = 1; Max.u64 = 1; 
  n0.l2cache.evict_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -672,6 +678,8 @@ Channel 7 statistics
  c2.l1cache.GetSMiss_Blocked : Accumulator : Sum.u64 = 333; SumSQ.u64 = 333; Count.u64 = 333; Min.u64 = 1; Max.u64 = 1; 
  c2.l1cache.GetXMiss_Blocked : Accumulator : Sum.u64 = 39; SumSQ.u64 = 39; Count.u64 = 39; Min.u64 = 1; Max.u64 = 1; 
  c2.l1cache.GetSXMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c2.l1cache.CacheHits : Accumulator : Sum.u64 = 2; SumSQ.u64 = 2; Count.u64 = 2; Min.u64 = 1; Max.u64 = 1; 
+ c2.l1cache.CacheMisses : Accumulator : Sum.u64 = 998; SumSQ.u64 = 998; Count.u64 = 998; Min.u64 = 1; Max.u64 = 1; 
  c2.l1cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c2.l1cache.eventSent_PutS : Accumulator : Sum.u64 = 23; SumSQ.u64 = 23; Count.u64 = 23; Min.u64 = 1; Max.u64 = 1; 
  c2.l1cache.eventSent_PutE : Accumulator : Sum.u64 = 697; SumSQ.u64 = 697; Count.u64 = 697; Min.u64 = 1; Max.u64 = 1; 
@@ -826,6 +834,8 @@ Channel 7 statistics
  c3.l1cache.GetSMiss_Blocked : Accumulator : Sum.u64 = 332; SumSQ.u64 = 332; Count.u64 = 332; Min.u64 = 1; Max.u64 = 1; 
  c3.l1cache.GetXMiss_Blocked : Accumulator : Sum.u64 = 42; SumSQ.u64 = 42; Count.u64 = 42; Min.u64 = 1; Max.u64 = 1; 
  c3.l1cache.GetSXMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ c3.l1cache.CacheHits : Accumulator : Sum.u64 = 5; SumSQ.u64 = 5; Count.u64 = 5; Min.u64 = 1; Max.u64 = 1; 
+ c3.l1cache.CacheMisses : Accumulator : Sum.u64 = 995; SumSQ.u64 = 995; Count.u64 = 995; Min.u64 = 1; Max.u64 = 1; 
  c3.l1cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c3.l1cache.eventSent_PutS : Accumulator : Sum.u64 = 24; SumSQ.u64 = 24; Count.u64 = 24; Min.u64 = 1; Max.u64 = 1; 
  c3.l1cache.eventSent_PutE : Accumulator : Sum.u64 = 681; SumSQ.u64 = 681; Count.u64 = 681; Min.u64 = 1; Max.u64 = 1; 
@@ -1022,6 +1032,8 @@ Channel 7 statistics
  n1.l2cache.GetSMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  n1.l2cache.GetXMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  n1.l2cache.GetSXMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ n1.l2cache.CacheHits : Accumulator : Sum.u64 = 45; SumSQ.u64 = 45; Count.u64 = 45; Min.u64 = 1; Max.u64 = 1; 
+ n1.l2cache.CacheMisses : Accumulator : Sum.u64 = 1948; SumSQ.u64 = 1948; Count.u64 = 1948; Min.u64 = 1; Max.u64 = 1; 
  n1.l2cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  n1.l2cache.evict_E : Accumulator : Sum.u64 = 336; SumSQ.u64 = 336; Count.u64 = 336; Min.u64 = 1; Max.u64 = 1; 
  n1.l2cache.evict_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -1253,6 +1265,8 @@ Channel 7 statistics
  l3cache.GetSMiss_Blocked : Accumulator : Sum.u64 = 5397; SumSQ.u64 = 5397; Count.u64 = 5397; Min.u64 = 1; Max.u64 = 1; 
  l3cache.GetXMiss_Blocked : Accumulator : Sum.u64 = 602; SumSQ.u64 = 602; Count.u64 = 602; Min.u64 = 1; Max.u64 = 1; 
  l3cache.GetSXMiss_Blocked : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l3cache.CacheHits : Accumulator : Sum.u64 = 420; SumSQ.u64 = 420; Count.u64 = 420; Min.u64 = 1; Max.u64 = 1; 
+ l3cache.CacheMisses : Accumulator : Sum.u64 = 12194; SumSQ.u64 = 12194; Count.u64 = 12194; Min.u64 = 1; Max.u64 = 1; 
  l3cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 11170; SumSQ.u64 = 11170; Count.u64 = 11170; Min.u64 = 1; Max.u64 = 1; 
  l3cache.evict_E : Accumulator : Sum.u64 = 15393; SumSQ.u64 = 15393; Count.u64 = 15393; Min.u64 = 1; Max.u64 = 1; 
  l3cache.evict_EInv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 

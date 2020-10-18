@@ -68,6 +68,7 @@ bool MESISharNoninclusive::handleGetS(MemEvent* event, bool inMSHR) {
                 if (!mshr_->getProfiled(addr)) {
                     stat_eventState[(int)Command::GetS][state]->addData(1);
                     stat_miss[0][inMSHR]->addData(1);
+                    stat_misses->addData(1);
                     notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::MISS);
                     mshr_->setProfiled(addr);
                 }
@@ -85,6 +86,7 @@ bool MESISharNoninclusive::handleGetS(MemEvent* event, bool inMSHR) {
             if (!inMSHR || !mshr_->getProfiled(addr)) {
                 stat_eventState[(int)Command::GetS][S]->addData(1);
                 stat_hit[0][inMSHR]->addData(1);
+                stat_hits->addData(1);
                 notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
                 if (inMSHR) mshr_->setProfiled(addr);
             }
@@ -134,6 +136,7 @@ bool MESISharNoninclusive::handleGetS(MemEvent* event, bool inMSHR) {
             if (!inMSHR || !mshr_->getProfiled(addr)) {
                 stat_eventState[(int)Command::GetS][state]->addData(1);
                 stat_hit[0][inMSHR]->addData(1);
+                stat_hits->addData(1);
                 notifyListenerOfAccess(event, NotifyAccessType::READ, NotifyResultType::HIT);
                 if (inMSHR) mshr_->setProfiled(addr);
             }
@@ -247,6 +250,7 @@ bool MESISharNoninclusive::handleGetX(MemEvent * event, bool inMSHR) {
                 if (!mshr_->getProfiled(addr)) {
                     stat_eventState[(int)event->getCmd()][I]->addData(1);
                     stat_miss[(event->getCmd() == Command::GetX ? 1 : 2)][inMSHR]->addData(1);
+                    stat_misses->addData(1);
                     notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::MISS);
                     mshr_->setProfiled(addr);
                 }
@@ -266,6 +270,7 @@ bool MESISharNoninclusive::handleGetX(MemEvent * event, bool inMSHR) {
                     if (!mshr_->getProfiled(addr)) {
                         stat_eventState[(int)event->getCmd()][S]->addData(1);
                         stat_miss[(event->getCmd() == Command::GetX ? 1 : 2)][inMSHR]->addData(1);
+                        stat_misses->addData(1);
                         notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::MISS);
                         mshr_->setProfiled(addr);
                     }
@@ -296,6 +301,7 @@ bool MESISharNoninclusive::handleGetX(MemEvent * event, bool inMSHR) {
                     notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::HIT);
                     stat_eventState[(int)event->getCmd()][state]->addData(1);
                     stat_hit[(event->getCmd() == Command::GetX ? 1 : 2)][inMSHR]->addData(1);
+                    stat_hits->addData(1);
                 }
                 tag->setOwner(event->getSrc());
                 if (tag->isSharer(event->getSrc())) {
@@ -317,6 +323,7 @@ bool MESISharNoninclusive::handleGetX(MemEvent * event, bool inMSHR) {
                     notifyListenerOfAccess(event, NotifyAccessType::WRITE, NotifyResultType::HIT);
                     stat_eventState[(int)event->getCmd()][state]->addData(1);
                     stat_hit[(event->getCmd() == Command::GetX ? 1 : 2)][inMSHR]->addData(1);
+                    stat_hits->addData(1);
                     mshr_->setProfiled(addr);
                 }
                 recordLatencyType(event->getID(), LatType::INV);

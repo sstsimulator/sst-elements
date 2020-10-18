@@ -23,9 +23,10 @@
 using namespace SST::Merlin;
 
 
-topo_mesh::topo_mesh(ComponentId_t cid, Params& params, int num_ports, int rtr_id) :
+topo_mesh::topo_mesh(ComponentId_t cid, Params& params, int num_ports, int rtr_id, int num_vns) :
     Topology(cid),
-    router_id(rtr_id)
+    router_id(rtr_id),
+    num_vns(num_vns)
 {
 
     // Get the various parameters
@@ -87,7 +88,7 @@ topo_mesh::~topo_mesh()
 }
 
 void
-topo_mesh::route(int port, int vc, internal_router_event* ev)
+topo_mesh::route_packet(int port, int vc, internal_router_event* ev)
 {
     int dest_router = get_dest_router(ev->getDest());
     if ( dest_router == router_id ) {
@@ -150,7 +151,7 @@ void topo_mesh::routeInitData(int port, internal_router_event* ev, std::vector<i
             /* Broadcast has arrived at 0.  Switch Phases */
             tt_ev->phase = 1;
         } else {
-            route(port, 0, ev);
+            route_packet(port, 0, ev);
             outPorts.push_back(ev->getNextPort());
             return;
         }
@@ -283,12 +284,6 @@ topo_mesh::choose_multipath(int start_port, int num_ports, int dest_dist)
     } else {
         return start_port + (dest_dist % num_ports);
     }
-}
-
-int
-topo_mesh::computeNumVCs(int vns)
-{
-    return 2*vns;
 }
 
 int

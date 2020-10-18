@@ -174,6 +174,8 @@ libember_la_SOURCES = \
 	mpi/motifs/emberrandomgen.cc \
 	mpi/motifs/emberunstructured.h \
 	mpi/motifs/emberunstructured.cc \
+	mpi/motifs/emberNtoM.h \
+	mpi/motifs/emberNtoM.cc \
 	libs/emberShmemLib.h \
 	libs/shmem/emberFamEvent.h \
 	libs/shmem/emberFamAddEv.h \

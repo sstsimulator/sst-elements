@@ -131,20 +131,27 @@ private:
     int num_local_ports;
     int local_port_start;
 
+    int num_vns;
+    
 public:
-    topo_mesh(ComponentId_t cid, Params& params, int num_ports, int rtr_id);
+    topo_mesh(ComponentId_t cid, Params& params, int num_ports, int rtr_id, int num_vns);
     ~topo_mesh();
 
-    virtual void route(int port, int vc, internal_router_event* ev);
+    virtual void route_packet(int port, int vc, internal_router_event* ev);
     virtual internal_router_event* process_input(RtrEvent* ev);
 
     virtual void routeInitData(int port, internal_router_event* ev, std::vector<int> &outPorts);
     virtual internal_router_event* process_InitData_input(RtrEvent* ev);
 
     virtual PortState getPortState(int port) const;
-    virtual int computeNumVCs(int vns);
     virtual int getEndpointID(int port);
 
+    virtual void getVCsPerVN(std::vector<int>& vcs_per_vn) {
+        for ( int i = 0; i < num_vns; ++i ) {
+            vcs_per_vn[i] = 1;
+        }
+    }
+    
 protected:
     virtual int choose_multipath(int start_port, int num_ports, int dest_dist);
 

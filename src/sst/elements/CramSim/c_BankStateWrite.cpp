@@ -49,20 +49,20 @@ using namespace SST::CramSim;
 c_BankStateWrite::c_BankStateWrite(
 		std::map<std::string, unsigned>* x_bankParams) :
 		m_receivedCommandPtr(nullptr) {
-	// std::cout << std::endl << __PRETTY_FUNCTION__ << std::endl;
+	// Simulation::getSimulation()->getSimulationOutput().output("\n%s\n", __PRETTY_FUNCTION__);
 	m_bankParams = x_bankParams;
 	m_currentState = e_BankState::WRITE;
 }
 
 c_BankStateWrite::~c_BankStateWrite() {
-	// std::cout << std::endl << __PRETTY_FUNCTION__ << std::endl;
+	// Simulation::getSimulation()->getSimulationOutput().output("\n%s\n", __PRETTY_FUNCTION__);
 
 }
 
 void c_BankStateWrite::handleCommand(c_BankInfo* x_bank,
 		c_BankCommand* x_bankCommandPtr, SimTime_t x_cycle) {
 
-	// std::cout << std::endl << __PRETTY_FUNCTION__ << std::endl;
+	// Simulation::getSimulation()->getSimulationOutput().output("\n%s\n", __PRETTY_FUNCTION__);
 	if (nullptr == m_receivedCommandPtr) {
 		m_receivedCommandPtr = x_bankCommandPtr;
 
@@ -91,8 +91,8 @@ void c_BankStateWrite::handleCommand(c_BankInfo* x_bank,
 			x_bank->setLastCommandCycle(e_BankCommandType::PRE, l_time);
 			break;
 		default:
-			std::cout << "Unrecognized state" << std::endl;
-			exit(-1);
+	                Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, 
+                                -1, "Unrecognized state");
 			break;
 		}
 
@@ -166,8 +166,8 @@ void c_BankStateWrite::clockTic(c_BankInfo* x_bank, SimTime_t x_cycle) {
 					}
 					break;
 				default:
-					std::cout << "Unrecognized state" << std::endl;
-					exit(-1);
+	                            Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, 
+                                            -1, "Unrecognized state");
 					break;
 				}
 			}
@@ -203,8 +203,8 @@ void c_BankStateWrite::enter(c_BankInfo* x_bank, c_BankState* x_prevState,
 			m_timer = m_bankParams->at("nBL") + m_bankParams->at("nCWL");
 			break;
 		default:
-			std::cout << "Unrecognized state" << std::endl;
-			exit(-1);
+	                Simulation::getSimulation()->getSimulationOutput().fatal(CALL_INFO, 
+                                -1, "Unrecognized state");
 			break;
 		}
 
