@@ -86,6 +86,7 @@ libmerlin_la_SOURCES = \
 	topology/pymerlin-topo-mesh.py
 
 EXTRA_DIST = \
+	tests/testsuite_default_merlin.py \
 	tests/hyperx_128_test.py \
 	tests/dragon_128_test.py \
 	tests/dragon_72_test.py \
@@ -95,7 +96,16 @@ EXTRA_DIST = \
 	tests/torus_5_trafficgen.py \
 	tests/torus_64_test.py \
 	tests/dragon_128_platform_test.py \
-	tests/platform_file_dragon_128.py
+	tests/platform_file_dragon_128.py \
+    tests/refFiles/test_merlin_dragon_128_platform_test.out \
+    tests/refFiles/test_merlin_dragon_128_test.out \
+    tests/refFiles/test_merlin_dragon_72_test.out \
+    tests/refFiles/test_merlin_fattree_128_test.out \
+    tests/refFiles/test_merlin_fattree_256_test.out \
+    tests/refFiles/test_merlin_hyperx_128_test.out \
+    tests/refFiles/test_merlin_torus_128_test.out \
+    tests/refFiles/test_merlin_torus_5_trafficgen.out \
+    tests/refFiles/test_merlin_torus_64_test.out
 
 sstdir = $(includedir)/sst/elements/merlin
 nobase_sst_HEADERS = \

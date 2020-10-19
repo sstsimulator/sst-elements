@@ -16,3 +16,4 @@ config.status
 configure
 libtool
 tags
+.DS_Store
