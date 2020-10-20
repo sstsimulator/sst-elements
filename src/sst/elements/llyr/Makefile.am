@@ -10,9 +10,9 @@ comp_LTLIBRARIES = libllyr.la
 libllyr_la_SOURCES = \
 	llyr.h \
 	llyr.cc \
+	graph.h \
 	processingElement.h \
 	processingElement.cc \
-	graph.h \
 	mappers/llyrMapper.h \
 	mappers/simpleMapper.h
 

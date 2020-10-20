@@ -33,7 +33,7 @@ public:
     LlyrMapper() : Module() {}
     virtual ~LlyrMapper() {}
 
-    virtual void mapGraph(LlyrGraph<opType> hardwareGraph, LlyrGraph<opType> appGraph, LlyrGraph<opType> &graphOut) = 0;
+    virtual void mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType > appGraph, LlyrGraph< ProcessingElement* > &graphOut) = 0;
 
 };
 

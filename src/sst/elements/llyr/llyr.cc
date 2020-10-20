@@ -17,13 +17,13 @@
 #include <sst/core/params.h>
 
 #include <regex>
+#include <queue>
 #include <vector>
 #include <string>
 #include <fstream>
 #include <algorithm>
 
 #include "llyr.h"
-#include "processingElement.h"
 #include "mappers/simpleMapper.h"
 
 namespace SST {
@@ -32,7 +32,8 @@ namespace Llyr {
 LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
   Component(id)
 {
-    //get initial params
+    //initial params
+    compute_complete = 0;
     const uint32_t verbosity = params.find< uint32_t >("verbose", 0);
     clock_count = params.find< int64_t >("clockcount", 10);
 
@@ -48,38 +49,42 @@ LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
     //set our Main Clock
     const std::string clock_rate = params.find< std::string >("clock", "1.0GHz");
     std::cout << "Clock is configured for: " << clock_rate << std::endl;
-    clockTickHandler = new Clock::Handler<LlyrComponent>(this, &LlyrComponent::tick);
-    registerClock(clock_rate, clockTickHandler);
+    clock_tick_handler_ = new Clock::Handler<LlyrComponent>(this, &LlyrComponent::tick);
+    registerClock(clock_rate, clock_tick_handler_);
 
-    memInterface = loadUserSubComponent<Interfaces::SimpleMem>("memory", ComponentInfo::SHARE_NONE, timeConverter, new
+    //set up memory interfaces
+    mem_interface_ = loadUserSubComponent<Interfaces::SimpleMem>("memory", ComponentInfo::SHARE_NONE, time_converter_, new
         Interfaces::SimpleMem::Handler<LlyrComponent>(this, &LlyrComponent::handleEvent));
 
-    if( !memInterface ) {
-        std::string interfaceName = params.find<std::string>("memoryinterface", "memHierarchy.memInterface");
+    if( !mem_interface_ ) {
+        std::string interfaceName = params.find<std::string>("memoryinterface", "memHierarchy.mem_interface_");
         output->verbose(CALL_INFO, 1, 0, "Memory interface to be loaded is: %s\n", interfaceName.c_str());
 
         Params interfaceParams = params.find_prefix_params("memoryinterfaceparams.");
         interfaceParams.insert("port", "cache_link");
-        memInterface = loadAnonymousSubComponent<Interfaces::SimpleMem>(interfaceName, "memory", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS,
-                interfaceParams, timeConverter, new Interfaces::SimpleMem::Handler<LlyrComponent>(this, &LlyrComponent::handleEvent));
+        mem_interface_ = loadAnonymousSubComponent<Interfaces::SimpleMem>(interfaceName, "memory", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS,
+                interfaceParams, time_converter_, new Interfaces::SimpleMem::Handler<LlyrComponent>(this, &LlyrComponent::handleEvent));
 
-        if( !memInterface ) {
+        if( !mem_interface_ ) {
             output->fatal(CALL_INFO, -1, "%s, Error loading memory interface\n", getName().c_str());
         }
     }
 
     //construct hardware graph
     std::string const& hwFileName = params.find< std::string >("hardwareGraph", "grid.cfg");
+    output->verbose(CALL_INFO, 1, 0, "Constructing Hardware Graph From: %s\n", hwFileName.c_str());
     constructHardwareGraph(hwFileName);
 
     std::string const& swFileName = params.find< std::string >("hardwareGraph", "app.in");
+    output->verbose(CALL_INFO, 1, 0, "Constructing Application Graph From: %s\n", swFileName.c_str());
     constructSoftwareGraph(swFileName);
 
     //do the mapping
     Params mapperParams;    //empty but needed for loadModule API
     std::string mapperName = params.find<std::string>("mapper", "llyr.simpleMapper");
-    llyrMapper = dynamic_cast<LlyrMapper*>( loadModule(mapperName, mapperParams) );
-    llyrMapper->mapGraph(hardwareGraph, applicationGraph, mappedGraph);
+    llyr_mapper_ = dynamic_cast<LlyrMapper*>( loadModule(mapperName, mapperParams) );
+    output->verbose(CALL_INFO, 1, 0, "Mapping application to hardware\n");
+    llyr_mapper_->mapGraph(hardwareGraph, applicationGraph, mappedGraph);
 
     //all done
     output->verbose(CALL_INFO, 1, 0, "Initialization done.\n");
@@ -88,14 +93,18 @@ LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
 LlyrComponent::~LlyrComponent()
 {
     output->verbose(CALL_INFO, 1, 0, "Llyr destructor fired, closing down.\n");
+
+    output->verbose(CALL_INFO, 1, 0, "Dumping hardware graph\n");
     hardwareGraph.printGraph();
-    hardwareGraph.printDot("hdwr.dot");
+    hardwareGraph.printDot("llyr_hdwr.dot");
 
+    output->verbose(CALL_INFO, 1, 0, "Dumping application graph\n");
     applicationGraph.printGraph();
-    applicationGraph.printDot("app.dot");
+    applicationGraph.printDot("llyr_app.dot");
 
+    output->verbose(CALL_INFO, 1, 0, "Dumping mapping\n");
     mappedGraph.printGraph();
-    mappedGraph.printDot("mapp.dot");
+//     mappedGraph.printDot("llyr_mapped.dot");
 }
 
 LlyrComponent::LlyrComponent() :
@@ -104,40 +113,96 @@ LlyrComponent::LlyrComponent() :
     // for serialization only
 }
 
-void LlyrComponent::init( uint32_t phase ) {
-    memInterface->init( phase );
+void LlyrComponent::init( uint32_t phase )
+{
+    mem_interface_->init( phase );
 
-//     if( 0 == phase ) {
-//         const size_t initLen = static_cast<size_t>( progReader->getDataLength() + progReader->getInstLength() );
-//
-//         std::vector<uint8_t> exeImage;
-//         exeImage.reserve( initLen );
-//
-//         for( size_t i = 0; i < initLen; ++i ) {
-//             exeImage.push_back( progReader->getBinaryBuffer()[i] );
-//         }
-//
-// 	for( size_t i = 0; i < progReader->getPadding(); ++i ) {
-// 	    exeImage.push_back( static_cast<uint8_t>(0) );
-// 	}
-//
-//         SimpleMem::Request* writeExe = new SimpleMem::Request(SimpleMem::Request::Write, 0, exeImage.size(), exeImage);
-//         output.verbose(CALL_INFO, 1, 0, "Sending initialization data to memory...\n");
-//
-//         mem->sendInitData(writeExe);
-//
-//         output.verbose(CALL_INFO, 1, 0, "Initialization data sent.\n");
-//     }
+    const uint32_t mooCows = 10;
+    if( 0 == phase ) {
+        std::vector<uint8_t> memInit;
+        memInit.reserve( mooCows );
+
+        for( size_t i = 0; i < mooCows; ++i ) {
+            memInit.push_back(i);
+        }
+
+        output->verbose(CALL_INFO, 2, 0, ">> Writing memory contents (%" PRIu64 " bytes at index 0)\n",
+                        (uint64_t) memInit.size());
+        for( std::vector< uint8_t >::iterator it = memInit.begin() ; it != memInit.end(); ++it ) {
+            std::cout << uint32_t(*it) << ' ';
+        }
+
+        std::cout << "\n";
+
+        SimpleMem::Request* initMemory = new SimpleMem::Request(SimpleMem::Request::Write, 0, memInit.size(), memInit);
+        output->verbose(CALL_INFO, 1, 0, "Sending initialization data to memory...\n");
+        mem_interface_->sendInitData(initMemory);
+        output->verbose(CALL_INFO, 1, 0, "Initialization data sent.\n");
+    }
 }
 
-void LlyrComponent::setup() {
+void LlyrComponent::setup()
+{
 }
 
-void LlyrComponent::finish() {
+void LlyrComponent::finish()
+{
 }
 
 bool LlyrComponent::tick( Cycle_t )
 {
+    //On each tick perform BFS on graph and compute based on operand availability
+    //NOTE node0 is a dummy node to simplify the algorithm
+    uint32_t currentNode;
+    std::queue< uint32_t > nodeQueue;
+
+    output->verbose(CALL_INFO, 1, 0, "Device clock tick\n");
+
+    //Mark all nodes in the PE graph un-visited
+    std::map< uint32_t, Vertex< ProcessingElement* > >* vertex_map_ = mappedGraph.getVertexMap();
+    typename std::map< uint32_t, Vertex< ProcessingElement* > >::iterator vertexIterator;
+    for(vertexIterator = vertex_map_->begin(); vertexIterator != vertex_map_->end(); ++vertexIterator)
+    {
+        vertexIterator->second.setVisited(0);
+    }
+
+    //Node 0 is a dummy node and is always the entry point
+    nodeQueue.push(0);
+
+    //BFS and do operations if values available in input queues
+    while( nodeQueue.empty() == 0 )
+    {
+        currentNode = nodeQueue.front();
+        nodeQueue.pop();
+
+//         std::cout << "\n Adjacency list of vertex " << currentNode << "\n head ";
+
+        std::vector< Edge* >* adjacencyList = vertex_map_->at(currentNode).getAdjacencyList();
+
+        uint32_t destinationVertx;
+        std::vector< Edge* >::iterator it;
+        for( it = adjacencyList->begin(); it != adjacencyList->end(); it++ )
+        {
+            destinationVertx = (*it)->getDestination();
+            if( vertex_map_->at(destinationVertx).getVisited() == 0 )
+            {
+//                 std::cout << " -> " << destinationVertx;
+                nodeQueue.push(destinationVertx);
+                vertex_map_->at(destinationVertx).setVisited(1);
+
+                //Let the PE decide whether or not it can do the compute
+                vertex_map_->at(destinationVertx).getType()->doCompute();
+            }
+            else
+            {
+                std::cout << " -> (" << destinationVertx << ")";
+            }
+        }
+        std::cout << std::endl;
+
+        vertexIterator->second.setVisited(1);
+    }
+
     clock_count--;
 
     // return false so we keep going
@@ -149,7 +214,7 @@ bool LlyrComponent::tick( Cycle_t )
     }
 }
 
-void LlyrComponent::handleEvent( Interfaces::SimpleMem::Request* ev ) {
+void LlyrComponent::handleEvent( SimpleMem::Request* ev ) {
     output->verbose(CALL_INFO, 4, 0, "Recv response from cache\n");
 
     if( ev->cmd == Interfaces::SimpleMem::Request::Command::ReadResp ) {
@@ -171,7 +236,6 @@ void LlyrComponent::handleEvent( Interfaces::SimpleMem::Request* ev ) {
 
 void LlyrComponent::constructHardwareGraph(std::string fileName)
 {
-    std::cout << "Constructing Hardware Graph From " << fileName << "\n";
     std::ifstream inputStream(fileName, std::ios::in);
 
     if( inputStream.is_open() )
@@ -226,7 +290,6 @@ void LlyrComponent::constructHardwareGraph(std::string fileName)
 
 void LlyrComponent::constructSoftwareGraph(std::string fileName)
 {
-    std::cout << "Constructing Software Graph From " << fileName << "\n";
     std::ifstream inputStream(fileName, std::ios::in);
 
     if( inputStream.is_open() )
@@ -285,6 +348,10 @@ opType LlyrComponent::getOptype(std::string opString)
 
     if( opString == "ANY" )
         operation = ANY;
+    else if( opString == "LD" )
+        operation = LD;
+    else if( opString == "ST" )
+        operation = ST;
     else if( opString == "ADD" )
         operation = ADD;
     else if( opString == "SUB" )
@@ -307,8 +374,6 @@ opType LlyrComponent::getOptype(std::string opString)
     return operation;
 }
 
-
-// Serialization
 } // namespace llyr
 } // namespace SST
 

@@ -12,26 +12,31 @@ tile_clk_mhz = 1
 df_0 = sst.Component("df_0", "llyr.LlyrDataflow")
 df_0.addParams({
       "verbose": 10,
-      "clockcount" : """100000000""",
+      "clockcount" : """4""",
       "clock" : str(tile_clk_mhz) + "GHz",
 })
 
 df_l1cache = sst.Component("l1cache", "memHierarchy.Cache")
 df_l1cache.addParams({
-      "access_latency_cycles" : "2",
-      "cache_frequency" : str(tile_clk_mhz) + "GHz",
-      "replacement_policy" : "lru",
-      "coherence_protocol" : "MESI",
-      "associativity" : "4",
-      "cache_line_size" : "64",
-      "debug" : "0",
-      "L1" : "1",
-      "cache_size" : "512B"
+    "access_latency_cycles" : "2",
+    "cache_frequency" : str(tile_clk_mhz) + "GHz",
+    "replacement_policy" : "lru",
+    "coherence_protocol" : "MESI",
+    "associativity" : "4",
+    "cache_line_size" : "64",
+    "debug" : "1",
+    "debug_level" : "10",
+    "L1" : "1",
+    "cache_size" : "512B"
 })
 
 df_memory = sst.Component("memory", "memHierarchy.MemController")
 df_memory.addParams({
-      "clock" : "1GHz"
+    "backing" : "mmap",
+    "verbose" : 10,
+    "debug" : 1,
+    "debug_level" : 10,
+    "clock" : "1.2GHz",
 })
 
 backend = df_memory.setSubComponent("backend", "memHierarchy.simpleMem")

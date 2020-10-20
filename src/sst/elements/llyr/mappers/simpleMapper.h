@@ -16,13 +16,9 @@
 #ifndef _SIMPLE_MAPPER_H
 #define _SIMPLE_MAPPER_H
 
-#include <sst/core/module.h>
-
-#include "../graph.h"
-#include "../processingElement.h"
-#include "llyrMapper.h"
-
 #include <iostream>
+
+#include "llyrMapper.h"
 
 namespace SST {
 namespace Llyr {
@@ -31,9 +27,12 @@ class SimpleMapper : public LlyrMapper
 {
 
 public:
-    SimpleMapper(Params& params) : LlyrMapper()
+    SimpleMapper(Params& params) :
+        LlyrMapper()
     {
     }
+
+    ~SimpleMapper() { }
 
     SST_ELI_REGISTER_MODULE_DERIVED(
         SimpleMapper,
@@ -44,35 +43,70 @@ public:
         SST::Llyr::LlyrMapper
     )
 
-    void mapGraph(LlyrGraph<opType> hardwareGraph, LlyrGraph<opType> appGraph, LlyrGraph<opType> &graphOut);
+    void mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType > appGraph, LlyrGraph< ProcessingElement* > &graphOut);
 
 private:
 
 
 };
 
-// template<class T>
-// void SimpleMapper<T>::mapGraph(LlyrGraph<T> hardwareGraph, LlyrGraph<T> appGraph, LlyrGraph<T> graphOut)
-// {
-//     std::cout << "FDSLAFKDLSKFLDKSFKDSLKFLDSKAFDSALFKDSLAKFDSKAFDSAFDKSLAFKDLSKFDLSA\n\n\n\n";
-//
-// }
-
-void SimpleMapper::mapGraph(LlyrGraph<opType> hardwareGraph, LlyrGraph<opType> appGraph, LlyrGraph<opType> &graphOut)
+void SimpleMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType > appGraph, LlyrGraph< ProcessingElement* > &graphOut)
 {
-    graphOut.addVertex( 0, LD );
-    graphOut.addVertex( 1, LD );
-    graphOut.addVertex( 3, ADD );
-    graphOut.addVertex( 4, ST );
+    //Dummy node to make BFS easier
+    ProcessingElement* tempPE = new ProcessingElement(DUMMY, 0, 0);
+    graphOut.addVertex( 0, tempPE );
 
-    graphOut.addEdge( 0, 3 );
+    tempPE = new ProcessingElement( LD, 1, 2 );
+    graphOut.addVertex( 1, tempPE );
+
+    tempPE = new ProcessingElement( LD, 2, 2 );
+    graphOut.addVertex( 2, tempPE );
+
+    tempPE = new ProcessingElement( ADD, 3, 2 );
+    graphOut.addVertex( 3, tempPE );
+
+    tempPE = new ProcessingElement( ST, 4, 2 );
+    graphOut.addVertex( 4, tempPE );
+
+//     tempPE = new ProcessingElement( ST, 22, 2 );
+//     graphOut.addVertex( 22, tempPE );
+//
+//     tempPE = new ProcessingElement( ST, 8, 2 );
+//     graphOut.addVertex( 8, tempPE );
+//
+//     tempPE = new ProcessingElement( ST, 9, 2 );
+//     graphOut.addVertex( 9, tempPE );
+//
+//     tempPE = new ProcessingElement( ST, 10, 2 );
+//     graphOut.addVertex( 10, tempPE );
+
+    graphOut.addEdge( 0, 1 );
+    graphOut.addEdge( 0, 2 );
     graphOut.addEdge( 1, 3 );
+    graphOut.addEdge( 2, 3 );
     graphOut.addEdge( 3, 4 );
+
+//     graphOut.addEdge( 4, 8 );
+//     graphOut.addEdge( 4, 9 );
+//     graphOut.addEdge( 4, 10 );
+//     graphOut.addEdge( 8, 22 );
+//     graphOut.addEdge( 9, 22 );
+//     graphOut.addEdge( 10, 22 );
 
 }
 
+
+//     graphOut.addVertex( 0, LD );
+//     graphOut.addVertex( 1, LD );
+//     graphOut.addVertex( 3, ADD );
+//     graphOut.addVertex( 4, ST );
+//
+//     graphOut.addEdge( 0, 3 );
+//     graphOut.addEdge( 1, 3 );
+//     graphOut.addEdge( 3, 4 );
 
 }
 } // namespace SST
 
 #endif // _SIMPLE_MAPPER_H
+

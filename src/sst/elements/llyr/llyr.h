@@ -25,6 +25,8 @@
 #include "mappers/llyrMapper.h"
 #include "processingElement.h"
 
+using namespace SST::Interfaces;
+
 namespace SST {
 namespace Llyr {
 
@@ -81,18 +83,19 @@ private:
     void operator=( const LlyrComponent& );     // do not implement
 
     virtual bool tick( SST::Cycle_t currentCycle );
-    void handleEvent( Interfaces::SimpleMem::Request* ev );
+    void handleEvent( SimpleMem::Request* ev );
 
-    Interfaces::SimpleMem*  memInterface;
+    SimpleMem*  mem_interface_;
 
-    SST::TimeConverter*     timeConverter;
-    Clock::HandlerBase*     clockTickHandler;
-    bool                    handlerRegistered;
+    SST::TimeConverter*     time_converter_;
+    Clock::HandlerBase*     clock_tick_handler_;
+    bool                    handler_registered_;
 
-    int clock_count;
+    int64_t clock_count;
+    bool    compute_complete;
 
-    SST::Link** links;
-    SST::Link* clockLink;
+    SST::Link**  links;
+    SST::Link*   clockLink;
     SST::Output* output;
 
     Statistic< uint64_t >* zeroEventCycles;
@@ -100,9 +103,9 @@ private:
 
     LlyrGraph< opType > hardwareGraph;
     LlyrGraph< opType > applicationGraph;
-    LlyrGraph< opType > mappedGraph;
+    LlyrGraph< ProcessingElement* > mappedGraph;
 
-    LlyrMapper* llyrMapper;
+    LlyrMapper* llyr_mapper_;
 
     void constructHardwareGraph( std::string fileName );
     void constructSoftwareGraph( std::string fileName );

@@ -17,42 +17,68 @@
 #ifndef _LLYR_PE_H
 #define _LLYR_PE_H
 
+#include <sst/core/output.h>
+
+#include <queue>
 #include <vector>
+#include <bitset>
 #include <cstdint>
+
+#define Bit_Length 64
 
 namespace SST {
 namespace Llyr {
 
 typedef enum {
-    ANY,
-    LD,
-    ST,
-    ADD,
-    SUB,
-    MUL,
-    DIV,
-    FPADD,
-    FPSUB,
-    FPMUL,
-    FPDIV,
-    OTHER
+    ANY,        //0
+    LD,         //1
+    ST,         //2
+    ADD,        //3
+    SUB,        //4
+    MUL,        //5
+    DIV,        //6
+    FPADD,      //7
+    FPSUB,      //8
+    FPMUL,      //9
+    FPDIV,      //10
+    DUMMY,      //11
+    OTHER       //12
 } opType;
-
 
 class ProcessingElement
 {
 public:
     ProcessingElement();
-    virtual ~ProcessingElement();
+    ProcessingElement(SST::Llyr::opType op_binding, uint32_t processor_id, uint32_t queue_depth);
+
+    ~ProcessingElement();
+
+    void setOpBinding(opType binding);
+    opType getOpBinding() const { return op_binding_; }
+
+    void setProcessorId(uint32_t id) { processor_id_ = id; }
+    uint32_t getProcessorId() const { return processor_id_; }
+
+    bool doCompute();
+    std::bitset< Bit_Length > popOutput();
+
+    bool fakeInit();
 
 protected:
 
 
 private:
-    uint32_t processorId;
+    opType op_binding_;
+    uint32_t processor_id_;
 
-    std::vector< std::vector< opType > >* inputQueues;
-    std::vector< std::vector< opType > >* outputQueues;
+    std::vector< std::queue< std::bitset< 64 > >* >* input_queues_;
+    std::vector< std::queue< std::bitset< 64 > >* >* output_queues_;
+
+    uint32_t num_inputs_;
+    uint32_t num_outputs_;
+    uint32_t queue_depth_;
+
+    SST::Output* output;
 
 };
 
