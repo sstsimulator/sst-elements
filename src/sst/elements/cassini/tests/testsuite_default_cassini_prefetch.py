@@ -39,18 +39,12 @@ class testcase_cassini_prefetch(SSTTestCase):
 
 #####
 
-    @unittest.skipIf(testing_check_get_num_ranks() > 3, "memH: test_cassini_prefetch_none skipped if ranks > 3")
-    @unittest.skipIf(testing_check_get_num_threads() > 3, "memH: test_cassini_prefetch_none skipped if threads > 3")
     def test_cassini_prefetch_none(self):
         self.cassini_prefetch_test_template("nopf")
 
-    @unittest.skipIf(testing_check_get_num_ranks() > 3, "memH: test_cassini_prefetch_stride skipped if ranks > 3")
-    @unittest.skipIf(testing_check_get_num_threads() > 3, "memH: test_cassini_prefetch_stride skipped if threads > 3")
     def test_cassini_prefetch_stride(self):
         self.cassini_prefetch_test_template("sp")
 
-    @unittest.skipIf(testing_check_get_num_ranks() > 3, "memH: test_cassini_prefetch_nextblock skipped if ranks > 3")
-    @unittest.skipIf(testing_check_get_num_threads() > 3, "memH: test_cassini_prefetch_nextblock skipped if threads > 3")
     def test_cassini_prefetch_nextblock(self):
         self.cassini_prefetch_test_template("nbp")
 
