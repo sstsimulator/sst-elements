@@ -14,8 +14,11 @@ libcacheTracer_la_SOURCES = \
 
 EXTRA_DIST = \
     README \
+    tests/testsuite_default_cacheTracer.py \
     tests/test_cacheTracer_1.py \
-    tests/test_cacheTracer_2.py
+    tests/test_cacheTracer_2.py \
+    tests/refFiles/test_cacheTracer_1.out \
+    tests/refFiles/test_cacheTracer_2_memRef.out
 
 libcacheTracer_la_LDFLAGS = -module -avoid-version
 

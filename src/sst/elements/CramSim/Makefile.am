@@ -89,9 +89,22 @@ EXTRA_DIST = \
 	test_system.cfg \
 	test_device.cfg \
 	ddr3_power.cfg \
+	tests/testsuite_default_CramSim.py \
 	tests/VeriMem/test_verimem1.py \
 	tests/test_txngen.py \
-	tests/test_txntrace.py
+	tests/test_txntrace.py \
+    tests/refFiles/test_CramSim_1_R.out \
+    tests/refFiles/test_CramSim_1_RW.out \
+    tests/refFiles/test_CramSim_1_W.out \
+    tests/refFiles/test_CramSim_2_R.out \
+    tests/refFiles/test_CramSim_2_W.out \
+    tests/refFiles/test_CramSim_4_R.out \
+    tests/refFiles/test_CramSim_4_W.out \
+    tests/refFiles/test_CramSim_5_R.out \
+    tests/refFiles/test_CramSim_5_W.out \
+    tests/refFiles/test_CramSim_6_R.out \
+    tests/refFiles/test_CramSim_6_W.out
+
 
 libCramSim_la_LDFLAGS = -module -avoid-version
 
