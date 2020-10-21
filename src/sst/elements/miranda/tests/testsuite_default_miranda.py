@@ -47,7 +47,7 @@ class testcase_miranda_Component(SSTTestCase):
         self.miranda_test_template("revsinglestream")
 
     def test_miranda_randomgen(self):
-        self.miranda_test_template("randomgen", timeout=3500)
+        self.miranda_test_template("randomgen", timeout=360)
 
     def test_miranda_stencil3dbench(self):
         self.miranda_test_template("stencil3dbench")
