@@ -39,13 +39,16 @@ class testcase_miranda_Component(SSTTestCase):
 
 #####
 
-    @unittest.skipIf(testing_check_get_num_ranks() > 2, "miranda: test_miranda_singlestream skipped if ranks > 2")
+    @unittest.skipIf(testing_check_get_num_ranks() > 1, "miranda: test_miranda_singlestream skipped if ranks > 1")
+    @unittest.skipIf(testing_check_get_num_threads() > 1, "miranda: test_miranda_singlestream skipped if threads > 1")
     def test_miranda_singlestream(self):
         self.miranda_test_template("singlestream")
 
     def test_miranda_revsinglestream(self):
         self.miranda_test_template("revsinglestream")
 
+    @unittest.skipIf(testing_check_get_num_ranks() > 1, "miranda: test_miranda_randomgen skipped if ranks > 1")
+    @unittest.skipIf(testing_check_get_num_threads() > 1, "miranda: test_miranda_randomgen skipped if threads > 1")
     def test_miranda_randomgen(self):
         self.miranda_test_template("randomgen", timeout=360)
 
