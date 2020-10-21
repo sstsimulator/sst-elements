@@ -73,6 +73,8 @@ class testcase_cassini_prefetch(SSTTestCase):
 
         self.run_sst(sdlfile, outfile, errfile, mpi_out_files=mpioutfiles)
 
+        testing_remove_component_warning_from_file(outfile)
+
         # NOTE: THE PASS / FAIL EVALUATIONS ARE PORTED FROM THE SQE BAMBOO
         #       BASED testSuite_XXX.sh THESE SHOULD BE RE-EVALUATED BY THE
         #       DEVELOPER AGAINST THE LATEST VERSION OF SST TO SEE IF THE
@@ -82,4 +84,7 @@ class testcase_cassini_prefetch(SSTTestCase):
         self.assertFalse(os_test_file(errfile, "-s"), "cassini_prefetch test {0} has Non-empty Error File {1}".format(testDataFileName, errfile))
 
         cmp_result = testing_compare_sorted_diff(testcase, outfile, reffile)
+        diff_data = testing_get_sorted_diff_data(testcase)
+        if not cmp_result:
+            log_debug("{0} - DIFF DATA =\n{1}".format(self.get_testcase_name(), diff_data))
         self.assertTrue(cmp_result, "Sorted Output file {0} does not match sorted Reference File {1}".format(outfile, reffile))

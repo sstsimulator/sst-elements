@@ -90,7 +90,7 @@ class testcase_Samba_Component(SSTTestCase):
         #       DEVELOPER AGAINST THE LATEST VERSION OF SST TO SEE IF THE
         #       TESTS & RESULT FILES ARE STILL VALID
 
-        cmp_result = testing_compare_diff(outfile, reffile)
+        cmp_result = testing_compare_diff(testDataFileName, outfile, reffile)
         if cmp_result != True:
             # We need to use some bailing wire to allow serialization
             # branch to work with same reference files
