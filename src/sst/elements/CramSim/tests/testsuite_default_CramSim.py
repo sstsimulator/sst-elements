@@ -122,7 +122,7 @@ class testcase_CramSim_Component(SSTTestCase):
         #       testing_compare_diff will always fail, so all it looks for is the
         #       "Simulation complete" message to decide pass/fail
         #       This should be improved upon to check for real data...
-        cmp_result = testing_compare_diff(outfile, reffile)
+        cmp_result = testing_compare_diff(testDataFileName, outfile, reffile)
         if not cmp_result:
             cmd = 'grep -q "Simulation is complete" {0} '.format(outfile)
             grep_result = os.system(cmd) == 0

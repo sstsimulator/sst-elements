@@ -40,23 +40,18 @@ class testcase_Samba_Component(SSTTestCase):
 
 #####
 
-    @unittest.skipIf(testing_check_get_num_ranks() > 2, "Samba: test_Samba_gupsgen_mmu skipped if ranks > 2")
     def test_Samba_gupsgen_mmu(self):
         self.Samba_test_template("gupsgen_mmu")
 
-    @unittest.skipIf(testing_check_get_num_ranks() > 2, "Samba: test_Samba_gupsgen_mmu_4KB skipped if ranks > 2")
     def test_Samba_gupsgen_mmu_4KB(self):
         self.Samba_test_template("gupsgen_mmu_4KB")
 
-    @unittest.skipIf(testing_check_get_num_ranks() > 2, "Samba: test_Samba_gupsgen_mmu_three_levels skipped if ranks > 2")
     def test_Samba_gupsgen_mmu_three_levels(self):
         self.Samba_test_template("gupsgen_mmu_three_levels")
 
-    @unittest.skipIf(testing_check_get_num_ranks() > 2, "Samba: test_Samba_stencil3dbench_mmu skipped if ranks > 2")
     def test_Samba_stencil3dbench_mmu(self):
         self.Samba_test_template("stencil3dbench_mmu")
 
-    @unittest.skipIf(testing_check_get_num_ranks() > 2, "Samba: test_Samba_streambench_mmu skipped if ranks > 2")
     def test_Samba_streambench_mmu(self):
         self.Samba_test_template("streambench_mmu")
 
@@ -82,16 +77,18 @@ class testcase_Samba_Component(SSTTestCase):
 
         self.run_sst(sdlfile, outfile, errfile, mpi_out_files=mpioutfiles)
 
-#        # This may be needed in the future
-#        remove_component_warning()
+        testing_remove_component_warning_from_file(outfile)
 
         # NOTE: THE PASS / FAIL EVALUATIONS ARE PORTED FROM THE SQE BAMBOO
         #       BASED testSuite_XXX.sh THESE SHOULD BE RE-EVALUATED BY THE
         #       DEVELOPER AGAINST THE LATEST VERSION OF SST TO SEE IF THE
         #       TESTS & RESULT FILES ARE STILL VALID
 
-        cmp_result = testing_compare_diff(outfile, reffile)
+        cmp_result = testing_compare_diff(testDataFileName, outfile, reffile)
         if cmp_result != True:
+            diff_data = testing_get_diff_data(testDataFileName)
+            log_debug("{0} - DIFF DATA =\n{1}".format(self.get_testcase_name(), diff_data))
+
             # We need to use some bailing wire to allow serialization
             # branch to work with same reference files
             cmd = "sed s/' (.*)'// {0} > {1}".format(reffile, newreffile)
@@ -103,8 +100,9 @@ class testcase_Samba_Component(SSTTestCase):
             out_wc_data = self._get_file_data_counts(newoutfile)
 
             cmp_result = ref_wc_data == out_wc_data
+            if not cmp_result:
+                log_debug("{0} - DIFF DATA\nref_wc_data = {1}\nout_wc_data = {2}".format(self.get_testcase_name(), ref_wc_data, out_wc_data))
             self.assertTrue(cmp_result, "Output file {0} word/line count does NOT match Reference file {1} word/line count".format(outfile, reffile))
-
         else:
             self.assertTrue(cmp_result, "Diffed compared Output file {0} does not match Reference File {1}".format(outfile, reffile))
 
