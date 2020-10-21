@@ -506,6 +506,9 @@ void Cache::finish() {
     if (!clockIsOn_) { // Correct statistics
         turnClockOn();
     }
+
+    printStatus(*out_);
+
     for (int i = 0; i < listeners_.size(); i++)
         listeners_[i]->printStats(*out_);
     linkDown_->finish();
