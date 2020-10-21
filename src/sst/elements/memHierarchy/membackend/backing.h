@@ -34,6 +34,8 @@ public:
 
     virtual uint8_t get( Addr addr) = 0;
     virtual void get( Addr addr, size_t size, std::vector<uint8_t>& data) = 0;
+
+    virtual void printContents( Output &contentsOut ) = 0;
 };
 
 class BackingMMAP : public Backing {
@@ -78,6 +80,20 @@ public:
     void get( Addr addr, size_t size, std::vector<uint8_t> &data) {
         for (size_t i = 0; i < size; i++)
             data[i] = m_buffer[addr + i];
+    }
+
+    void printContents( Output &contentsOut) {
+        const uint32_t width = 10;
+        contentsOut.output("MemHierarchy::BackingMMAP Contents\n");
+//         for( uint32_t i = 0; i < m_size; ) {
+        for( uint32_t i = 0; i < 30; ) {
+            for( uint32_t j = i; j < i + width; ++j ) {
+                std::cout << "i " << i << " j " << j << ":  ";
+                contentsOut.output( "%" PRIx32 " ", uint32_t(m_buffer[j - m_offset]) );
+            }
+            contentsOut.output( "\n" );
+            i = i + width;
+        }
     }
 
 private:
@@ -151,6 +167,24 @@ public:
         Addr offset = addr - (bAddr << m_shift);
         allocIfNeeded(bAddr);
         return m_buffer[bAddr][offset];
+    }
+
+    void printContents( Output &contentsOut) {
+        const uint32_t width = 10;
+        contentsOut.output("MemHierarchy::BackingMMAP Contents\n");
+        for (auto const& x : m_buffer) {
+            const uint8_t* tempBuffer = x.second;
+
+//             for( uint32_t i = 0; i < m_allocUnit; ) {
+            for( uint32_t i = 0; i < 30; ) {
+                for( uint32_t j = i; j < i + width; ++j ) {
+                    std::cout << "i " << i << " j " << j << ":  ";
+                    contentsOut.output( "%" PRIx32 " ", uint32_t(tempBuffer[j]) );
+                }
+                contentsOut.output( "\n" );
+                i = i + width;
+            }
+        }
     }
 
 private:
