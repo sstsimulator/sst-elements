@@ -434,7 +434,7 @@ public:
 		mem_if->sendInitData( rand_req );
 
 		output->verbose(CALL_INFO, 16, 0, "-> Sending initial data for program headers (addr: 0x%llx, len: %" PRIu64 ")\n", phdr_address,
-			phdr_data_block.size() );
+			(uint64_t) phdr_data_block.size() );
 
 		// Send request for program header tables
 		SimpleMem::Request* phdr_req = new SimpleMem::Request( SimpleMem::Request::Write,

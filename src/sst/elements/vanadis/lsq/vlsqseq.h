@@ -117,7 +117,7 @@ public:
 		max_q_size = params.find<size_t>("load_store_entries", 8);
 		
 		output->verbose(CALL_INFO, 2, 0, "LSQ Load/Store Queue entry count:     %" PRIu32 "\n",
-			(size_t) max_q_size);
+			(uint32_t) max_q_size);
 
 		std::string trace_file_path = params.find<std::string>("address_trace", "");
 
@@ -252,6 +252,10 @@ public:
 						break;
 					case MEM_TRANSACTION_NONE:
 						break;
+					case MEM_TRANSACTION_LLSC_STORE:
+						{
+							output->fatal(CALL_INFO, -1, "Error - found a LLSC_STORE transaction while processing a LOAD\n");
+						}
 					}
 
 					if( load_addr < 4096 ) {
@@ -339,7 +343,7 @@ public:
 
 	void processIncomingDataCacheEvent( SimpleMem::Request* ev ) {
 		output->verbose(CALL_INFO, 16, 0, "recv incoming d-cache event, addr: 0x%llx, size: %" PRIu32 "\n",
-			ev->addr, ev->data.size() );
+			ev->addr, (uint32_t) ev->data.size() );
 
 		bool processed = false;
 
@@ -524,7 +528,7 @@ public:
 
 	virtual void clearLSQByThreadID( const uint32_t thread ) {
 		output->verbose(CALL_INFO, 8, 0, "clear for thread %" PRIu32 ", size: %" PRIu32 "\n",
-			thread, op_q.size() );
+			thread, (uint32_t) op_q.size() );
 
 		for( auto op_q_itr = op_q.begin(); op_q_itr != op_q.end(); ) {
 			if( (*op_q_itr)->getInstruction()->getHWThread() == thread ) {
@@ -535,7 +539,7 @@ public:
 		}
 
 		output->verbose(CALL_INFO, 8, 0, "clear complete, size: %" PRIu32 "\n",
-			op_q.size() );
+			(uint32_t) op_q.size() );
 	}
 
 	virtual void init( unsigned int phase ) {
@@ -570,7 +574,7 @@ protected:
 				sub_type = "LOCK";
 			}
 
-			fprintf( address_trace_file, "%8s %5s 0x%016x %5" PRIu64 " 0x%016x\n",
+			fprintf( address_trace_file, "%8s %5s 0x%016llx %5" PRIu64 " 0x%016llx\n",
 				req_type, sub_type, req->addr, (uint64_t) req->size,
 				ins->getInstructionAddress() );
 			fflush( address_trace_file );
@@ -586,7 +590,7 @@ protected:
 		bool f_trans      = (ev->flags & Interfaces::SimpleMem::Request::F_TRANSACTION) != 0;
 
 		output->verbose(CALL_INFO, 16, 0, "-> addr: 0x%llx / size: %" PRIu64 " / NONCACHE: %c / LOCKED: %c / LLSC: %c / LLSC_R: %c / FLUSH_S: %c / TRANSC: %c\n",
-			ev->addr, ev->data.size(), f_noncache ? 'Y' : 'N', f_locked ? 'Y' : 'N',
+			ev->addr, (uint64_t) ev->data.size(), f_noncache ? 'Y' : 'N', f_locked ? 'Y' : 'N',
 			f_llsc ? 'Y' : 'N', f_llsc_resp ? 'Y' : 'N',
 			f_flush_suc ? 'Y' : 'N', f_trans ? 'Y' : 'N');
 	}
