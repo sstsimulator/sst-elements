@@ -49,20 +49,20 @@ uint64_t vanadis_sign_extend( const uint32_t value ) {
 };
 
 int64_t vanadis_sign_extend_offset_16( const uint32_t value ) {
-	printf("sign_extend v: %" PRIu32 " / 0x%0x\n", value, value);
+//	printf("sign_extend v: %" PRIu32 " / 0x%0x\n", value, value);
 
 	int64_t value_64 = (value & VANADIS_4BYTE_EXTRACT);
 
-	printf("sign_extend v_64 = %" PRId64 "\n", value_64);
+//	printf("sign_extend v_64 = %" PRId64 "\n", value_64);
 
 	if( (value_64 & VANADIS_2BYTE_SIGN_MASK) != 0 ) {
-		printf("sign_extend - 16th bit is not zero\n");
+//		printf("sign_extend - 16th bit is not zero\n");
 		value_64 |= VANADIS_EXTEND_2BYTE_SET;
 	} else {
-		printf("sign_extend - 16th bit is zero\n");
+//		printf("sign_extend - 16th bit is zero\n");
 	}
 
-	printf("sign_extend result: %" PRId64 "\n", value_64);
+//	printf("sign_extend result: %" PRId64 "\n", value_64);
 
 	return value_64;
 };

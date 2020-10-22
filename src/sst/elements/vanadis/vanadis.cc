@@ -371,8 +371,19 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 
 	lsq->setRegisterFiles( &register_files );
 
+
+	// Register statistics ///////////////////////////////////////////////////////
+	stat_ins_retired   = registerStatistic<uint64_t>( "instructions_retired", "1" );
+	stat_ins_decoded   = registerStatistic<uint64_t>( "instructions_decoded", "1" );
+	stat_ins_issued    = registerStatistic<uint64_t>( "instructions_issued",  "1" );
+	stat_loads_issued  = registerStatistic<uint64_t>( "loads_issued",  "1" );
+	stat_stores_issued = registerStatistic<uint64_t>( "stores_issued", "1" );
+	stat_branch_mispredicts = registerStatistic<uint64_t>( "branch_mispredicts", "1" );
+	stat_branches      = registerStatistic<uint64_t>( "branches", "1" );
+	stat_cycles        = registerStatistic<uint64_t>( "cycles", "1" );
+
 	registerAsPrimaryComponent();
-    	primaryComponentDoNotEndSim();
+    primaryComponentDoNotEndSim();
 }
 
 VanadisComponent::~VanadisComponent() {
@@ -536,6 +547,10 @@ int VanadisComponent::performIssue( const uint64_t cycle ) {
 						}
 						
 						ins->markIssued();
+						
+//						if( ins->endsMicroOpGroup() ) {
+							stat_ins_issued->addData(1);
+//						}
 					}
 				}
 			} else {
@@ -621,6 +636,10 @@ int VanadisComponent::performRetire( VanadisCircularQueue<VanadisInstruction*>* 
 				output->fatal(CALL_INFO, -1, "Error - instruction is speculated, but not able to perform a cast to a speculated instruction.\n");
 			}
 			
+//			if( rob_front->endsMicroOpGroup() ) {
+				stat_branches->addData(1);
+//			}
+			
 			switch( spec_ins->getDelaySlotType() ) {
 			case VANADIS_SINGLE_DELAY_SLOT:
 			case VANADIS_CONDITIONAL_SINGLE_DELAY_SLOT:
@@ -673,6 +692,10 @@ int VanadisComponent::performRetire( VanadisCircularQueue<VanadisInstruction*>* 
 						pipeline_reset_addr);
 					thread_decoders[rob_front->getHWThread()]->getBranchPredictor()->push( 
 						spec_ins->getInstructionAddress(), pipeline_reset_addr );
+						
+//					if( spec_ins->endsMicroOpGroup() ) {
+						stat_branch_mispredicts->addData(1);
+//					}
 				}
 			}
 		}
@@ -685,44 +708,58 @@ int VanadisComponent::performRetire( VanadisCircularQueue<VanadisInstruction*>* 
 			output->verbose(CALL_INFO, 8, 0, "----> Retire: %" PRIu64 " (0x%0llx / %s)\n",
 				rob_front->getID(), rob_front->getInstructionAddress(), rob_front->getInstCode() );
 
-			recoverRetiredRegisters( rob_front, int_register_stacks[rob_front->getHWThread()],
-				fp_register_stacks[rob_front->getHWThread()],
-				issue_isa_tables[rob_front->getHWThread()],
-				retire_isa_tables[rob_front->getHWThread()] );
-			
 			if( pipelineTrace != nullptr ) {
 				fprintf( pipelineTrace, "0x%08llx %s\n",
 					rob_front->getInstructionAddress(), rob_front->getInstCode() );
 			}
-
-			if( perform_delay_cleanup ) {
-				VanadisInstruction* delay_ins = rob->pop();
 			
-				output->verbose(CALL_INFO, 8, 0, "----> Retire delay: %" PRIu64 " (0x%llx / %s)\n",
-					delay_ins->getID(), delay_ins->getInstructionAddress(), delay_ins->getInstCode() );
-					
-				if( pipelineTrace != nullptr ) {
-					fprintf( pipelineTrace, "0x%08llx %s\n",
-						delay_ins->getInstructionAddress(), delay_ins->getInstCode() );
+			//if( INST_SYSCALL == rob_front->getInstFuncType() ) {
+			//	output->verbose(CALL_INFO, 8, 0, "----> perform a syscall pipeline clear thread %" PRIu32 ", reset to address: 0x%llx\n",
+			//			rob_front->getHWThread(), rob_front->getInstructionAddress() + 4 );
+			//	handleMisspeculate( rob_front->getHWThread(), rob_front->getInstructionAddress() + 4 );
+			//} else {
+				recoverRetiredRegisters( rob_front, int_register_stacks[rob_front->getHWThread()],
+					fp_register_stacks[rob_front->getHWThread()],
+					issue_isa_tables[rob_front->getHWThread()],
+					retire_isa_tables[rob_front->getHWThread()] );
+
+//				if( rob_front->endsMicroOpGroup() ) {
+					stat_ins_retired->addData(1);
+//				}
+
+				if( perform_delay_cleanup ) {
+
+					VanadisInstruction* delay_ins = rob->pop();
+					output->verbose(CALL_INFO, 8, 0, "----> Retire delay: %" PRIu64 " (0x%llx / %s)\n",
+						delay_ins->getID(), delay_ins->getInstructionAddress(), delay_ins->getInstCode() );
+
+					if( pipelineTrace != nullptr ) {
+						fprintf( pipelineTrace, "0x%08llx %s\n",
+							delay_ins->getInstructionAddress(), delay_ins->getInstCode() );
+					}
+
+					recoverRetiredRegisters( delay_ins, int_register_stacks[delay_ins->getHWThread()],
+						fp_register_stacks[delay_ins->getHWThread()],
+						issue_isa_tables[delay_ins->getHWThread()],
+						retire_isa_tables[delay_ins->getHWThread()] );
+						
+//					if( delay_ins->endsMicroOpGroup() ) {
+						stat_ins_retired->addData(1);
+//					}
+
+					delete delay_ins;
 				}
-				
-				recoverRetiredRegisters( delay_ins, int_register_stacks[delay_ins->getHWThread()],
-					fp_register_stacks[delay_ins->getHWThread()],
-					issue_isa_tables[delay_ins->getHWThread()],
-					retire_isa_tables[delay_ins->getHWThread()] );
-				
-				delete delay_ins;
-			}
 
-			retire_isa_tables[rob_front->getHWThread()]->print(output,
-				register_files[rob_front->getHWThread()], print_int_reg, print_fp_reg);
+				retire_isa_tables[rob_front->getHWThread()]->print(output,
+					register_files[rob_front->getHWThread()], print_int_reg, print_fp_reg);
 
-			if( perform_pipelne_clear ) {
-				output->verbose(CALL_INFO, 8, 0, "----> perform a pipeline clear thread %" PRIu32 ", reset to address: 0x%llx\n",
-					rob_front->getHWThread(), pipeline_reset_addr);
-				handleMisspeculate( rob_front->getHWThread(), pipeline_reset_addr );
-			}
-			
+				if( perform_pipelne_clear ) {
+					output->verbose(CALL_INFO, 8, 0, "----> perform a pipeline clear thread %" PRIu32 ", reset to address: 0x%llx\n",
+						rob_front->getHWThread(), pipeline_reset_addr);
+					handleMisspeculate( rob_front->getHWThread(), pipeline_reset_addr );
+				}
+			//}
+
 			delete rob_front;
 		}
 	} else {
@@ -779,6 +816,10 @@ int VanadisComponent::allocateFunctionalUnit( VanadisInstruction* ins ) {
 			
 		case INST_LOAD:
 			if( ! lsq->loadFull() ) {
+//				if( ins->endsMicroOpGroup() ) {
+					stat_loads_issued->addData(1);
+//				}
+			
 				lsq->push( (VanadisLoadInstruction*) ins );
 				allocated_fu = true;
 			}
@@ -786,6 +827,10 @@ int VanadisComponent::allocateFunctionalUnit( VanadisInstruction* ins ) {
 			
 		case INST_STORE:
 			if( ! lsq->storeFull() ) {
+//				if( ins->endsMicroOpGroup() ) {
+					stat_stores_issued->addData(1);
+//				}
+			
 				lsq->push( (VanadisStoreInstruction*) ins );
 				allocated_fu = true;
 			}
@@ -866,6 +911,8 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 		primaryComponentOKToEndSim();
 		return true;
 	}
+
+	stat_cycles->addData(1);
 
 	bool should_process = false;
 	for( uint32_t i = 0; i < hw_threads; ++i ) {
@@ -957,6 +1004,8 @@ int VanadisComponent::checkInstructionResources(
 	resources_good &= (fp_regs->unused() >= ins->countISAFPRegOut());
 
 	if( ! resources_good ) {
+		output->verbose(CALL_INFO, 16, 0, "----> insufficient output / req: int: %" PRIu16 " fp: %" PRIu16 " / free: int: %" PRIu16 " fp: %" PRIu16 "\n",
+			(uint16_t) ins->countISAIntRegOut(), (uint16_t) ins->countISAFPRegOut(), (uint16_t) int_regs->unused(), (uint16_t) fp_regs->unused() );
 		return 1;
 	}
 
@@ -1020,6 +1069,8 @@ int VanadisComponent::assignRegistersToInstruction(
         VanadisRegisterStack* fp_regs,
         VanadisISATable* isa_table) {
 
+	// PROCESS INPUT REGISTERS  ///////////////////////////////////////////////////////
+
 	// Set the current ISA registers required for input
 	for( uint16_t i = 0; i < ins->countISAIntRegIn(); ++i ) {
 		if( ins->getISAIntRegIn(i) >= int_reg_count ) {
@@ -1030,7 +1081,7 @@ int VanadisComponent::assignRegistersToInstruction(
 		ins->setPhysIntRegIn(i, isa_table->getIntPhysReg( ins->getISAIntRegIn(i) ));
 		isa_table->incIntRead( ins->getISAIntRegIn(i) );
 	}
-
+		
 	for( uint16_t i = 0; i < ins->countISAFPRegIn(); ++i ) {
 		if( ins->getISAFPRegIn(i) >= fp_reg_count ) {
 			output->fatal(CALL_INFO, -1, "Error: ins request in-fp-reg: %" PRIu16 " but ISA has only %" PRIu16 " available\n",
@@ -1040,65 +1091,125 @@ int VanadisComponent::assignRegistersToInstruction(
 		ins->setPhysFPRegIn(i, isa_table->getFPPhysReg( ins->getISAFPRegIn(i) ));
 		isa_table->incFPRead( ins->getISAFPRegIn(i) );
 	}
+	
+	// PROCESS OUTPUT REGISTERS ///////////////////////////////////////////////////////
 
-	// Set current ISA registers required for output
-	for( uint16_t i = 0; i < ins->countISAIntRegOut(); ++i ) {
-		if( ins->getISAIntRegOut(i) >= int_reg_count ) {
-			output->fatal(CALL_INFO, -1, "Error: ins request out-int-reg: %" PRIu16 " but ISA has only %" PRIu16 " available\n",
-				ins->getISAIntRegOut(i), int_reg_count);
-		}
-
-		const uint16_t ins_isa_reg = ins->getISAIntRegOut(i);
-		bool reg_is_also_in = false;
-
-		for( uint16_t j = 0; j < ins->countISAIntRegIn(); ++j ) {
-			if( ins_isa_reg == ins->getISAIntRegIn(j) ) {
-				reg_is_also_in = true;
-				break;
+	// SYSCALLs have special handling because they request *every* register to lock up
+	// the pipeline. We just give them full access to the register file without requiring
+	// anything from the register file (otherwise we exhaust registers). This REQUIRES
+	// that SYSCALL doesn't muck with the registers itself at execute and relies on the
+	// OS handlers, otherwise this is not out-of-order compliant (since mis-predicts would
+	// corrupt the register file contents
+	if( INST_SYSCALL == ins->getInstFuncType() ) {
+		for( uint16_t i = 0; i < ins->countISAIntRegOut(); ++i ) {
+			if( ins->getISAIntRegOut(i) >= int_reg_count ) {
+				output->fatal(CALL_INFO, -1, "Error: ins request out-int-reg: %" PRIu16 " but ISA has only %" PRIu16 " available\n",
+					ins->getISAIntRegOut(i), int_reg_count);
 			}
+
+			const uint16_t ins_isa_reg = ins->getISAIntRegOut(i);
+			const uint16_t out_reg = isa_table->getIntPhysReg( ins_isa_reg );
+	
+			ins->setPhysIntRegOut(i, out_reg);
+			isa_table->incIntWrite( ins_isa_reg );
 		}
 
-		uint16_t out_reg;
-
-		if( reg_is_also_in ) {
-			out_reg = isa_table->getIntPhysReg( ins_isa_reg );
-		} else {
-			out_reg = int_regs->pop();
-			isa_table->setIntPhysReg( ins_isa_reg, out_reg );
-		}
-
-		ins->setPhysIntRegOut(i, out_reg);
-		isa_table->incIntWrite( ins_isa_reg );
-	}
-
-	// Set current ISA registers required for output
-	for( uint16_t i = 0; i < ins->countISAFPRegOut(); ++i ) {
-		if( ins->getISAFPRegOut(i) >= fp_reg_count ) {
-			output->fatal(CALL_INFO, -1, "Error: ins request out-fp-reg: %" PRIu16 " but ISA has only %" PRIu16 " available\n",
-				ins->getISAFPRegOut(i), fp_reg_count);
-		}
-
-		const uint16_t ins_isa_reg = ins->getISAFPRegOut(i);
-		bool reg_is_also_in = false;
-
-		for( uint16_t j = 0; j < ins->countISAFPRegIn(); ++j ) {
-			if( ins_isa_reg == ins->getISAFPRegIn(j) ) {
-				reg_is_also_in = true;
-				break;
+		// Set current ISA registers required for output
+		for( uint16_t i = 0; i < ins->countISAFPRegOut(); ++i ) {
+			if( ins->getISAFPRegOut(i) >= fp_reg_count ) {
+				output->fatal(CALL_INFO, -1, "Error: ins request out-fp-reg: %" PRIu16 " but ISA has only %" PRIu16 " available\n",
+					ins->getISAFPRegOut(i), fp_reg_count);
 			}
+
+			const uint16_t ins_isa_reg = ins->getISAFPRegOut(i);
+			const uint16_t out_reg = isa_table->getFPPhysReg( ins_isa_reg );
+
+			ins->setPhysFPRegOut(i, out_reg);
+			isa_table->incFPWrite( ins_isa_reg );
+		}
+	} else {
+
+		// Set the current ISA registers required for input
+/*		for( uint16_t i = 0; i < ins->countISAIntRegIn(); ++i ) {
+			if( ins->getISAIntRegIn(i) >= int_reg_count ) {
+				output->fatal(CALL_INFO, -1, "Error: ins request in-int-reg: %" PRIu16 " but ISA has only %" PRIu16 " available\n",
+					ins->getISAIntRegIn(i), int_reg_count );
+			}
+
+			ins->setPhysIntRegIn(i, isa_table->getIntPhysReg( ins->getISAIntRegIn(i) ));
+			isa_table->incIntRead( ins->getISAIntRegIn(i) );
 		}
 
-		uint16_t out_reg;
+		for( uint16_t i = 0; i < ins->countISAFPRegIn(); ++i ) {
+			if( ins->getISAFPRegIn(i) >= fp_reg_count ) {
+				output->fatal(CALL_INFO, -1, "Error: ins request in-fp-reg: %" PRIu16 " but ISA has only %" PRIu16 " available\n",
+					ins->getISAFPRegIn(i), fp_reg_count);
+			}
 
-		if( reg_is_also_in ) {
-			out_reg = isa_table->getFPPhysReg( ins_isa_reg );
-		} else {
-			out_reg = fp_regs->pop();
-			isa_table->setFPPhysReg( ins_isa_reg, out_reg );
+			ins->setPhysFPRegIn(i, isa_table->getFPPhysReg( ins->getISAFPRegIn(i) ));
+			isa_table->incFPRead( ins->getISAFPRegIn(i) );
+		}
+*/
+		// Set current ISA registers required for output
+		for( uint16_t i = 0; i < ins->countISAIntRegOut(); ++i ) {
+			if( ins->getISAIntRegOut(i) >= int_reg_count ) {
+				output->fatal(CALL_INFO, -1, "Error: ins request out-int-reg: %" PRIu16 " but ISA has only %" PRIu16 " available\n",
+					ins->getISAIntRegOut(i), int_reg_count);
+			}
+
+			const uint16_t ins_isa_reg = ins->getISAIntRegOut(i);
+			bool reg_is_also_in = false;
+
+			for( uint16_t j = 0; j < ins->countISAIntRegIn(); ++j ) {
+				if( ins_isa_reg == ins->getISAIntRegIn(j) ) {
+					reg_is_also_in = true;
+					break;
+				}
+			}
+
+			//if( reg_is_also_in ) {
+			//	out_reg = isa_table->getIntPhysReg( ins_isa_reg );
+			
+				//if( ins_isa_reg > 0 ) 
+				//	output->fatal(CALL_INFO, -1, "STOP INSTRUCTION 0x%llx\n", ins->getInstructionAddress());
+			//} else {
+				const uint16_t out_reg = int_regs->pop();
+				isa_table->setIntPhysReg( ins_isa_reg, out_reg );
+			//}
+
+			ins->setPhysIntRegOut(i, out_reg);
+			isa_table->incIntWrite( ins_isa_reg );
 		}
 
-		ins->setPhysFPRegOut(i, out_reg);
-		isa_table->incFPWrite( ins_isa_reg );
+		// Set current ISA registers required for output
+		for( uint16_t i = 0; i < ins->countISAFPRegOut(); ++i ) {
+			if( ins->getISAFPRegOut(i) >= fp_reg_count ) {
+				output->fatal(CALL_INFO, -1, "Error: ins request out-fp-reg: %" PRIu16 " but ISA has only %" PRIu16 " available\n",
+					ins->getISAFPRegOut(i), fp_reg_count);
+			}
+
+			const uint16_t ins_isa_reg = ins->getISAFPRegOut(i);
+/*			bool reg_is_also_in = false;
+
+			for( uint16_t j = 0; j < ins->countISAFPRegIn(); ++j ) {
+				if( ins_isa_reg == ins->getISAFPRegIn(j) ) {
+					reg_is_also_in = true;
+					break;
+				}
+			}
+
+			uint16_t out_reg;
+
+			if( reg_is_also_in ) {
+				out_reg = isa_table->getFPPhysReg( ins_isa_reg );
+			} else {*/
+				const uint16_t out_reg = fp_regs->pop();
+				isa_table->setFPPhysReg( ins_isa_reg, out_reg );
+//			}
+
+			ins->setPhysFPRegOut(i, out_reg);
+			isa_table->incFPWrite( ins_isa_reg );
+		}
 	}
 
 	return 0;
@@ -1108,12 +1219,12 @@ int VanadisComponent::recoverRetiredRegisters(
         VanadisInstruction* ins,
         VanadisRegisterStack* int_regs,
         VanadisRegisterStack* fp_regs,
-	VanadisISATable* issue_isa_table,
+		VanadisISATable* issue_isa_table,
         VanadisISATable* retire_isa_table) {
 
 	std::vector<uint16_t> recovered_phys_reg_int;
 	std::vector<uint16_t> recovered_phys_reg_fp;
-
+	
 	for( uint16_t i = 0; i < ins->countISAIntRegIn(); ++i ) {
 		const uint16_t isa_reg = ins->getISAIntRegIn(i);
 		issue_isa_table->decIntRead( isa_reg );
@@ -1123,57 +1234,79 @@ int VanadisComponent::recoverRetiredRegisters(
 		const uint16_t isa_reg = ins->getISAFPRegIn(i);
 		issue_isa_table->decFPRead( isa_reg );
 	}
+	
+	if( ins->performIntRegisterRecovery() ) {
+		for( uint16_t i = 0; i < ins->countISAIntRegOut(); ++i ) {
+			const uint16_t isa_reg = ins->getISAIntRegOut(i);
+   			const uint16_t cur_phys_reg = retire_isa_table->getIntPhysReg(isa_reg);
 
-	for( uint16_t i = 0; i < ins->countISAIntRegOut(); ++i ) {
-		const uint16_t isa_reg = ins->getISAIntRegOut(i);
-   		const uint16_t cur_phys_reg = retire_isa_table->getIntPhysReg(isa_reg);
+			issue_isa_table->decIntWrite( isa_reg );
 
-		issue_isa_table->decIntWrite( isa_reg );
+			// Check this register isn't also in our input set because then we
+			// wouldn't have allocated a new register for it
+			//bool reg_also_input = false;
 
-		// Check this register isn't also in our input set because then we
-		// wouldn't have allocated a new register for it
-		bool reg_also_input = false;
+			//for( uint16_t j = 0; j < ins->countISAIntRegIn(); ++j ) {
+			//	if( isa_reg == ins->getISAIntRegIn(j) ) {
+			//		reg_also_input = true;
+			//	}
+			//}
 
-		for( uint16_t j = 0; j < ins->countISAIntRegIn(); ++j ) {
-			if( isa_reg == ins->getISAIntRegIn(j) ) {
-				reg_also_input = true;
-			}
+			//if( ! reg_also_input ) {
+				recovered_phys_reg_int.push_back( cur_phys_reg );
+
+				// Set the ISA register in the retirement table to point
+				// to the physical register used by this instruction
+				retire_isa_table->setIntPhysReg( isa_reg, ins->getPhysIntRegOut(i) );
+			//}
 		}
-
-		if( ! reg_also_input ) {
-			recovered_phys_reg_int.push_back( cur_phys_reg );
-
-			// Set the ISA register in the retirement table to point
-			// to the physical register used by this instruction
-			retire_isa_table->setIntPhysReg( isa_reg, ins->getPhysIntRegOut(i) );
-		}
-	}
-
-	for( uint16_t i = 0; i < ins->countISAFPRegOut(); ++i ) {
-		const uint16_t isa_reg = ins->getISAFPRegOut(i);
-		const uint16_t cur_phys_reg = retire_isa_table->getFPPhysReg(isa_reg);
-
-		issue_isa_table->decFPWrite( isa_reg );
-
-		// Check this register isn't also in our input set because then we
-		// wouldn't have allocated a new register for it
-		bool reg_also_input = false;
-
-		for( uint16_t j = 0; j < ins->countISAIntRegIn(); ++j ) {
-			if( isa_reg == ins->getISAIntRegIn(j) ) {
-				reg_also_input = true;
-			}
-		}
-
-		if( ! reg_also_input ) {
-			recovered_phys_reg_fp.push_back( cur_phys_reg );
-
-			// Set the ISA register in the retirement table to point
-			// to the physical register used by this instruction
-			retire_isa_table->setFPPhysReg( isa_reg, ins->getPhysFPRegOut(i) );
+	} else {
+		output->verbose(CALL_INFO, 16, 0, "-> instruction bypasses integer register recovery\n");
+		
+		for( uint16_t i = 0; i < ins->countISAIntRegOut(); ++i ) {
+			const uint16_t isa_reg = ins->getISAIntRegOut(i);
+   			const uint16_t cur_phys_reg = retire_isa_table->getIntPhysReg(isa_reg);
+		
+			issue_isa_table->decIntWrite( isa_reg );
 		}
 	}
+	
+	if( ins->performFPRegisterRecovery() ) {	
+		for( uint16_t i = 0; i < ins->countISAFPRegOut(); ++i ) {
+			const uint16_t isa_reg = ins->getISAFPRegOut(i);
+			const uint16_t cur_phys_reg = retire_isa_table->getFPPhysReg(isa_reg);
 
+			issue_isa_table->decFPWrite( isa_reg );
+
+			// Check this register isn't also in our input set because then we
+			// wouldn't have allocated a new register for it
+			//bool reg_also_input = false;
+//
+			//for( uint16_t j = 0; j < ins->countISAIntRegIn(); ++j ) {
+			//	if( isa_reg == ins->getISAIntRegIn(j) ) {
+			//		reg_also_input = true;
+			//	}
+			//}
+
+			//if( ! reg_also_input ) {
+				recovered_phys_reg_fp.push_back( cur_phys_reg );
+
+				// Set the ISA register in the retirement table to point
+				// to the physical register used by this instruction
+				retire_isa_table->setFPPhysReg( isa_reg, ins->getPhysFPRegOut(i) );
+			//}
+		}
+	} else {
+		output->verbose(CALL_INFO, 16, 0, "-> instruction bypasses fp register recovery\n");
+		
+		for( uint16_t i = 0; i < ins->countISAFPRegOut(); ++i ) {
+			const uint16_t isa_reg = ins->getISAFPRegOut(i);
+			const uint16_t cur_phys_reg = retire_isa_table->getFPPhysReg(isa_reg);
+
+			issue_isa_table->decFPWrite( isa_reg );
+		}
+	}
+	
 	output->verbose(CALL_INFO, 16, 0, "Recovering: %d int-reg and %d fp-reg\n",
 		(int) recovered_phys_reg_int.size(), (int) recovered_phys_reg_fp.size());
 

@@ -60,6 +60,14 @@ public:
 		markExecuted();
 	}
 
+        virtual bool performIntRegisterRecovery() const {
+                return false;
+        }
+
+        virtual bool performFPRegisterRecovery() const {
+                return false;
+        }
+
 };
 
 }

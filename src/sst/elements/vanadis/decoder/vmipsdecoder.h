@@ -406,15 +406,15 @@ public:
 			uint64_t inner_index = 0;
 
 			while(inner_index < 4) {
-				if( index < stack_data.size() ) {
-					printf("0x%x ", stack_data[index]);
-				}
+				//if( index < stack_data.size() ) {
+				//	printf("0x%x ", stack_data[index]);
+				//}
 
 				index++;
 				inner_index++;
 			}
 
-			printf("\n");
+			//printf("\n");
 		}
 
 		output->verbose(CALL_INFO, 16, 0, "-> Sending inital write of auxillary vector to memory, forms basis of stack start (addr: 0x%llx)\n",
@@ -1405,6 +1405,11 @@ protected:
 
 		for( uint32_t i = 0; i < bundle->getInstructionCount(); ++i ) {
 			output->verbose(CALL_INFO, 16, 0, "-> [%3" PRIu32 "]: %s\n", i, bundle->getInstructionByIndex(i)->getInstCode());
+		}
+
+		// Mark the end of a micro-op group so we can count real instructions and not just micro-ops
+		if( bundle->getInstructionCount() > 0 ) {
+			bundle->getInstructionByIndex( bundle->getInstructionCount() - 1 )->markEndOfMicroOpGroup();
 		}
 
 	}

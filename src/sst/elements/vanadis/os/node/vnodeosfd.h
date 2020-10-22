@@ -15,14 +15,14 @@ public:
                 file_id( desc_id ) {
 
 		if( nullptr != file_path ) {
-			printf("OPENING FILE: %s, result: ", file_path);
+			//printf("OPENING FILE: %s, result: ", file_path);
 			file_handle = fopen( file_path, "w+" );
 
-			if( nullptr == file_handle ) {
-				printf(" failed\n");
-			} else {
-				printf(" success\n");
-			}
+			//if( nullptr == file_handle ) {
+			//	printf(" failed\n");
+			//} else {
+			//	printf(" success\n");
+			//}
 		} else {
 	                file_handle = nullptr;
 		}

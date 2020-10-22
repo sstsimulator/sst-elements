@@ -4,6 +4,7 @@
 
 #include <deque>
 #include <unordered_set>
+#include <unordered_map>
 
 #include "lsq/vlsq.h"
 #include "inst/vinst.h"
@@ -65,6 +66,12 @@ public:
 		return ins->getInstFuncType() == INST_LOAD;
 	}
 
+	void print( SST::Output* output ) {
+		output->verbose(CALL_INFO, 16, 0, "-> type: %s / ins: 0x%llx / issued: %c\n",
+			isStore() ? "STORE" : "LOAD ", ins->getInstructionAddress(),
+			issued ? 'Y' : 'N');
+	}
+
 protected:
 	SimpleMem::Request::id_t req_id;
 	VanadisInstruction* ins;
@@ -111,36 +118,50 @@ public:
 		
 		output->verbose(CALL_INFO, 2, 0, "LSQ Load/Store Queue entry count:     %" PRIu32 "\n",
 			(size_t) max_q_size);
+
+		std::string trace_file_path = params.find<std::string>("address_trace", "");
+
+		if( "" != trace_file_path ) {
+			address_trace_file = fopen( trace_file_path.c_str(), "wt" );
+		} else {
+			address_trace_file = nullptr;
+		}
+
+		allow_speculated_operations = params.find<bool>("allow_speculated_operations", true);
 	}
-	
+
 	virtual ~VanadisSequentialLoadStoreQueue() {
+		if( address_trace_file != nullptr ) {
+			fclose( address_trace_file );
+		}
+
 		delete memInterface;
 	}
-	
+
 	virtual bool storeFull() {
 		return op_q.size() >= max_q_size;
 	}
-	
+
 	virtual bool loadFull() {
 		return op_q.size() >= max_q_size;
 	}
-	
+
 	virtual bool storeEmpty() {
 		return op_q.size() == 0;
 	}
-	
+
 	virtual bool loadEmpty() {
 		return op_q.size() == 0;
 	}
-	
+
 	virtual size_t storeSize() {
 		return op_q.size();
 	}
-	
+
 	virtual size_t loadSize() {
 		return op_q.size();
 	}
-	
+
 	virtual void push( VanadisStoreInstruction* store_me ) {
 		if( op_q.size() < max_q_size ) {
 			output->verbose(CALL_INFO, 8, 0, "enqueue store ins-addr: 0x%llx\n",
@@ -151,7 +172,7 @@ public:
 				(uint32_t) max_q_size, (uint32_t) op_q.size());
 		}
 	}
-	
+
 	virtual void push( VanadisLoadInstruction* load_me ) {
 		if( op_q.size() < max_q_size ) {
 			output->verbose(CALL_INFO, 8, 0, "enqueue load ins-addr: 0x%llx\n",
@@ -163,9 +184,21 @@ public:
 		}	
 	}
 	
+	void printLSQ() {
+		output->verbose(CALL_INFO, 16, 0, "-- LSQ Seq / Size: %" PRIu64 " ----------------\n", (uint64_t) op_q.size() );
+
+		for( auto op_q_itr = op_q.begin(); op_q_itr != op_q.end(); op_q_itr++ ) {
+			(*op_q_itr)->print( output );
+		}
+	}
+
 	virtual void tick( uint64_t cycle ) {
 		output->verbose(CALL_INFO, 16, 0, "ticking load/store queue at cycle %" PRIu64 " lsq size: %" PRIu64 "\n",
 			(uint64_t) cycle, op_q.size() );
+
+		if( output->getVerboseLevel() >= 16 ) {
+			printLSQ();
+		}
 	
 		if( sc_inflight.size() > 0 ) {
 			output->verbose(CALL_INFO, 16, 0, "-> LLSC_STORE operation in flight, stalling this cycle until returns\n");
@@ -187,47 +220,53 @@ public:
 		
 			if( next_item->isLoad() ) {
 				VanadisLoadInstruction* load_ins = dynamic_cast<VanadisLoadInstruction*>( next_item->getInstruction() );
-				
-				uint64_t load_addr  = 0;
-				uint16_t load_width = 0;
-				
-				load_ins->computeLoadAddress( output, reg_file, &load_addr, &load_width );
 
-				output->verbose( CALL_INFO, 8, 0, "--> issue load for 0x%llx width: %" PRIu16 " bytes.\n",
-					load_addr, load_width );
-				load_addr = load_addr & address_mask;
-				
-				SimpleMem::Request* load_req = new SimpleMem::Request( SimpleMem::Request::Read,
-					load_addr, load_width );
-				load_req->instrPtr = load_ins->getInstructionAddress();
-				
-				switch( load_ins->getTransactionType() ) {
-				case MEM_TRANSACTION_LLSC_LOAD:
-					{
-						load_req->flags |= SST::Interfaces::SimpleMem::Request::F_LLSC;
-						output->verbose(CALL_INFO, 16, 0, "----> marked as LLSC (memory request F_LLSC)\n");
+				// we are either allowed to issue the load because speculated loads are OK
+				// or we don't permit speculated loads but now we are at the front of the ROB
+				if( allow_speculated_operations || load_ins->checkFrontOfROB() ) {
+					uint64_t load_addr  = 0;
+					uint16_t load_width = 0;
+
+					load_ins->computeLoadAddress( output, reg_file, &load_addr, &load_width );
+
+					output->verbose( CALL_INFO, 8, 0, "--> issue load for 0x%llx width: %" PRIu16 " bytes.\n",
+						load_addr, load_width );
+					load_addr = load_addr & address_mask;
+
+					SimpleMem::Request* load_req = new SimpleMem::Request( SimpleMem::Request::Read,
+						load_addr, load_width );
+					load_req->instrPtr = load_ins->getInstructionAddress();
+
+					switch( load_ins->getTransactionType() ) {
+					case MEM_TRANSACTION_LLSC_LOAD:
+						{
+							load_req->flags |= SST::Interfaces::SimpleMem::Request::F_LLSC;
+							output->verbose(CALL_INFO, 16, 0, "----> marked as LLSC (memory request F_LLSC)\n");
+						}
+						break;
+					case MEM_TRANSACTION_LOCK:
+						{
+							load_req->flags |= SST::Interfaces::SimpleMem::Request::F_LOCKED;
+							output->verbose(CALL_INFO, 16, 0, "----> marked as F_LOCKED\n");
+						}
+						break;
+					case MEM_TRANSACTION_NONE:
+						break;
 					}
-					break;
-				case MEM_TRANSACTION_LOCK:
-					{
-						load_req->flags |= SST::Interfaces::SimpleMem::Request::F_LOCKED;
-						output->verbose(CALL_INFO, 16, 0, "----> marked as F_LOCKED\n");
+
+					if( load_addr < 4096 ) {
+						output->verbose(CALL_INFO, 16, 0, "[fault] address for load 0x%llx is less than 4096, indicates segmentation-fault, mark load error (load-ins: 0x%llx)\n",
+							load_addr, load_ins->getInstructionAddress() );
+						load_ins->flagError();
+					} else {
+						writeTrace( load_ins, load_req );
+
+						memInterface->sendRequest( load_req );
+						next_item->setRequestID( load_req->id );
 					}
-					break;
-				case MEM_TRANSACTION_NONE:
-					break;
+
+					next_item->markOperationIssued();
 				}
-					
-				if( load_addr < 4096 ) {
-					output->verbose(CALL_INFO, 16, 0, "[fault] address for load 0x%llx is less than 4096, indicates segmentation-fault, mark load error (load-ins: 0x%llx)\n",
-						load_addr, load_ins->getInstructionAddress() );
-					load_ins->flagError();
-				} else {			
-					memInterface->sendRequest( load_req );
-					next_item->setRequestID( load_req->id );
-				}
-				
-				next_item->markOperationIssued();
 			} else if( next_item->isStore() ) {
 				VanadisStoreInstruction* store_ins = dynamic_cast<VanadisStoreInstruction*>( next_item->getInstruction() );
 				
@@ -263,7 +302,7 @@ public:
 						SimpleMem::Request* store_req = new SimpleMem::Request( SimpleMem::Request::Write,
 							store_addr, store_width, payload );
 						store_req->instrPtr = store_ins->getInstructionAddress();
-						
+
 						switch( store_ins->getTransactionType() ) {
 							case MEM_TRANSACTION_LLSC_STORE:
 							{
@@ -285,26 +324,25 @@ public:
 							}
 							break;
 						}
-						
+
+						writeTrace( store_ins, store_req );
 						memInterface->sendRequest( store_req );
 					}
 
 					op_q.erase( op_q_itr );
 				}
-				
 			} else {
 				output->fatal(CALL_INFO, 8, 0, "Unknown type of item in LSQ, neither load nor store?\n");
 			}
 		}
-		
 	}
-	
-	virtual void processIncomingDataCacheEvent( SimpleMem::Request* ev ) {
+
+	void processIncomingDataCacheEvent( SimpleMem::Request* ev ) {
 		output->verbose(CALL_INFO, 16, 0, "recv incoming d-cache event, addr: 0x%llx, size: %" PRIu32 "\n",
 			ev->addr, ev->data.size() );
-			
+
 		bool processed = false;
-		
+
 		for( auto op_q_itr = op_q.begin(); op_q_itr != op_q.end(); ) {
 			// is the operation issued to the memory system and do we match ID
 			if( (*op_q_itr)->isOperationIssued() && (
@@ -332,18 +370,19 @@ public:
 					uint16_t load_width = 0;
 					uint16_t target_reg = load_ins->getPhysIntRegOut(0);
 					uint16_t reg_offset = 0;
-					
+
 					load_ins->computeLoadAddress( output, reg_file, &load_addr, &load_width );
 					reg_offset = load_ins->getRegisterOffset();
-					
-					output->verbose(CALL_INFO, 8, 0, "--> load info: addr: 0x%llx / width: %" PRIu16 " / isa: %" PRIu16 " = target-reg: %" PRIu16 " / partial: %s / reg-offset: %" PRIu16 "\n",
+
+					output->verbose(CALL_INFO, 8, 0, "--> load info: addr: 0x%llx / width: %" PRIu16 " / isa: %" PRIu16 " = target-reg: %" PRIu16 " / partial: %s / reg-offset: %" PRIu16 " / sgn-exd: %s\n",
 						load_addr, load_width, load_ins->getISAIntRegOut(0),
 						target_reg, load_ins->isPartialLoad() ? "yes" : "no",
-						reg_offset);
+						reg_offset,
+						load_ins->performSignExtension() ? "yes" : "no");
 
 					if( target_reg != load_ins->getISAOptions()->getRegisterIgnoreWrites() ) {
 						// if we are doing a partial copy and we aren't starting at
-						// zero then we need to copy bytewise, if not, we can do a 
+						// zero then we need to copy bytewise, if not, we can do a
 						// single copy
 						if( load_ins->isPartialLoad() ) {
 							char* reg_ptr = reg_file->getIntReg( target_reg );
@@ -351,64 +390,108 @@ public:
 							for( uint16_t i = 0; i < load_width; ++i ) {
 								reg_ptr[ reg_offset + i ] = ev->data[i];
 							}
-						} else {
-							int64_t value = 0;
-					
-							switch( load_width ) {
-							case 1:
-								{
-									int8_t* v_8 = (int8_t*) &ev->data[0];
-									value = (*v_8);
-								}
-								break;
-							case 2:
-								{
-									int16_t* v_16 = (int16_t*) &ev->data[0];
-									value = (*v_16);
-								}
-								break;
-							case 4:
-								{
-									int32_t* v_32 = (int32_t*) &ev->data[0];
-									value = (*v_32);
-								}
-								break;
-							case 8:
-								{
-									int64_t* v_64 = (int64_t*) &ev->data[0];
-									value = (*v_64);
-								}
-								break;
-							}
 
-							reg_file->setIntReg( target_reg, value );
+							output->verbose(CALL_INFO, 8, 0, "----> partial-load addr: 0x%llx / reg-offset: %" PRIu16 " / load-width: %" PRIu16 " / full-width: %" PRIu16 "\n",
+								load_addr, reg_offset, load_width, load_ins->getLoadWidth());
+
+							if( (reg_offset + load_width) >= load_ins->getLoadWidth() ) {
+								if( (reg_ptr[reg_offset + load_width - 1] & 0x80) != 0 ) {
+									// We need to perform sign extension, fill every byte with all 1s 
+									for( uint16_t i = reg_offset + load_width; i < 8; ++i ) {
+										reg_ptr[i] = 0xFF;
+									}
+								}
+							}
+						} else {
+							if( load_ins->performSignExtension() ) {
+								int64_t value = 0;
+
+								switch( load_width ) {
+								case 1:
+									{
+										int8_t* v_8 = (int8_t*) &ev->data[0];
+										value = (*v_8);
+									}
+									break;
+								case 2:
+									{
+										int16_t* v_16 = (int16_t*) &ev->data[0];
+										value = (*v_16);
+									}
+									break;
+								case 4:
+									{
+										int32_t* v_32 = (int32_t*) &ev->data[0];
+										value = (*v_32);
+									}
+									break;
+								case 8:
+									{
+										int64_t* v_64 = (int64_t*) &ev->data[0];
+										value = (*v_64);
+									}
+									break;
+								}
+
+								reg_file->setIntReg( target_reg, value );
+							} else {
+								uint64_t value = 0;
+
+								switch( load_width ) {
+								case 1:
+									{
+										uint8_t* v_8 = (uint8_t*) &ev->data[0];
+										value = (*v_8);
+									}
+									break;
+								case 2:
+									{
+										uint16_t* v_16 = (uint16_t*) &ev->data[0];
+										value = (*v_16);
+									}
+									break;
+								case 4:
+									{
+										uint32_t* v_32 = (uint32_t*) &ev->data[0];
+										value = (*v_32);
+									}
+									break;
+								case 8:
+									{
+										uint64_t* v_64 = (uint64_t*) &ev->data[0];
+										value = (*v_64);
+									}
+									break;
+								}
+
+								reg_file->setIntReg( target_reg, value );
+							}
 						}
 					}
-					
+
 					// mark instruction as executed
 					load_ins->markExecuted();
 				}
-				
+
 				// Clean up
 				delete (*op_q_itr);
 				op_q.erase(op_q_itr);
 				processed = true;
-				
+
 				break;
 			} else {
 				op_q_itr++;
 			}
 		}
-		
+
 		for( auto sc_itr = sc_inflight.begin(); sc_itr != sc_inflight.end(); ) {
 			if( ev->id == (*sc_itr)->getRequestID() ) {
 				output->verbose(CALL_INFO, 16, 0, "matched an inflight LLSC_STORE operation\n");
 				printEventFlags(ev);
-				
+
 				VanadisStoreInstruction* store_ins = (*sc_itr)->getInstruction();
-				
 				const uint16_t value_reg = store_ins->getPhysIntRegOut(0);
-				
+
 				if( (ev->flags & SST::Interfaces::SimpleMem::Request::F_LLSC_RESP)  != 0 ) {
 					output->verbose(CALL_INFO, 16, 0, "---> LSQ LLSC-STORE ins: 0x%llx / addr: 0x%llx / rt: %" PRIu16 " <- 1 (success)\n",
 						store_ins->getInstructionAddress(), ev->addr, value_reg );
@@ -418,31 +501,31 @@ public:
 						store_ins->getInstructionAddress(), ev->addr, value_reg );
 					registerFiles->at( store_ins->getHWThread() )->setIntReg( value_reg, (uint64_t) 0 );
 				}
-				
+
 				// Mark store instruction as executed
 				(*sc_itr)->getInstruction()->markExecuted();
 				sc_inflight.erase(sc_itr);
-				
+
 				delete (*sc_itr);
 				processed = true;
-				
+
 				break;
 			} else {
 				sc_itr++;
 			}
 		}
-		
+
 		if( ! processed ) {
 			output->verbose(CALL_INFO, 16, 0, "did not match any request.\n");
 		}
-		
+
 		delete ev;
 	}
-	
+
 	virtual void clearLSQByThreadID( const uint32_t thread ) {
 		output->verbose(CALL_INFO, 8, 0, "clear for thread %" PRIu32 ", size: %" PRIu32 "\n",
 			thread, op_q.size() );
-	
+
 		for( auto op_q_itr = op_q.begin(); op_q_itr != op_q.end(); ) {
 			if( (*op_q_itr)->getInstruction()->getHWThread() == thread ) {
 				op_q_itr = op_q.erase(op_q_itr);
@@ -450,16 +533,16 @@ public:
 				op_q_itr++;
 			}
 		}
-		
+
 		output->verbose(CALL_INFO, 8, 0, "clear complete, size: %" PRIu32 "\n",
 			op_q.size() );
 	}
-	
+
 	virtual void init( unsigned int phase ) {
 		output->verbose(CALL_INFO, 2, 0, "LSQ Memory Interface Init, Phase %u\n", phase);
 		memInterface->init( phase );
 	}
-	
+
 	virtual void setInitialMemory( const uint64_t addr, std::vector<uint8_t>& payload ) {
 		output->verbose(CALL_INFO, 2, 0, "setting initial memory contents for address 0x%llx / size: %" PRIu64 "\n",
 			addr, (uint64_t) payload.size() );
@@ -468,6 +551,32 @@ public:
 	}
 
 protected:
+	void writeTrace( VanadisInstruction* ins, SimpleMem::Request* req ) {
+		if( nullptr != address_trace_file ) {
+			char* req_type = nullptr;
+
+			switch( req->cmd ) {
+			case SimpleMem::Request::Read:   req_type = "READ";    break;
+			case SimpleMem::Request::Write:  req_type = "WRITE";   break;
+			default:     			 req_type = "UNKNOWN"; break;
+			}
+
+			char* sub_type = "";
+			if( (req->flags & Interfaces::SimpleMem::Request::F_LLSC) != 0 ) {
+				sub_type = "LLSC";
+			}
+
+			if( (req->flags & Interfaces::SimpleMem::Request::F_LOCKED) != 0 ) {
+				sub_type = "LOCK";
+			}
+
+			fprintf( address_trace_file, "%8s %5s 0x%016x %5" PRIu64 " 0x%016x\n",
+				req_type, sub_type, req->addr, (uint64_t) req->size,
+				ins->getInstructionAddress() );
+			fflush( address_trace_file );
+		}
+	}
+
 	void printEventFlags( SimpleMem::Request* ev ) {
 		bool f_noncache   = (ev->flags & Interfaces::SimpleMem::Request::F_NONCACHEABLE) != 0;
 		bool f_locked     = (ev->flags & Interfaces::SimpleMem::Request::F_LOCKED) != 0;
@@ -475,19 +584,23 @@ protected:
 		bool f_llsc_resp  = (ev->flags & Interfaces::SimpleMem::Request::F_LLSC_RESP) != 0;
 		bool f_flush_suc  = (ev->flags & Interfaces::SimpleMem::Request::F_FLUSH_SUCCESS) != 0;
 		bool f_trans      = (ev->flags & Interfaces::SimpleMem::Request::F_TRANSACTION) != 0;
-		
+
 		output->verbose(CALL_INFO, 16, 0, "-> addr: 0x%llx / size: %" PRIu64 " / NONCACHE: %c / LOCKED: %c / LLSC: %c / LLSC_R: %c / FLUSH_S: %c / TRANSC: %c\n",
-			ev->addr, ev->data.size(), f_noncache ? 'Y' : 'N', f_locked ? 'Y' : 'N', 
-			f_llsc ? 'Y' : 'N', f_llsc_resp ? 'Y' : 'N', 
+			ev->addr, ev->data.size(), f_noncache ? 'Y' : 'N', f_locked ? 'Y' : 'N',
+			f_llsc ? 'Y' : 'N', f_llsc_resp ? 'Y' : 'N',
 			f_flush_suc ? 'Y' : 'N', f_trans ? 'Y' : 'N');
 	}
-	
-	
+
 	size_t max_q_size;
+
 	std::deque<VanadisSequentialLoadStoreRecord*> op_q;
 	std::unordered_set<VanadisSequentualLoadStoreSCRecord*> sc_inflight;
+
 	SimpleMem* memInterface;
-	
+	FILE* address_trace_file;
+
+	bool allow_speculated_operations;
+
 };
 
 }

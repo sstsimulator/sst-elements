@@ -36,7 +36,7 @@ public:
 		output = new SST::Output( "[lsq]: ", verbosity, 0, SST::Output::STDOUT );
 
 		address_mask = params.find<uint64_t>("address_mask", 0xFFFFFFFFFFFFFFFF );
-		
+
 		registerFiles = nullptr;
 	}
 
@@ -63,7 +63,6 @@ public:
 
 	virtual void tick( uint64_t cycle ) = 0;
 
-	virtual void processIncomingDataCacheEvent( SimpleMem::Request* ev ) = 0;
 	virtual void clearLSQByThreadID( const uint32_t thread ) = 0;
 
 	virtual void init( unsigned int phase ) = 0;

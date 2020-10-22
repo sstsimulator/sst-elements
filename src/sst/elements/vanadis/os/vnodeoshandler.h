@@ -376,11 +376,20 @@ public:
 					uint64_t old_brk  = current_brk_point;
 					current_brk_point = brk_ev->getUpdatedBRK();
 
-					std::vector<uint8_t> payload;
-					payload.resize( brk_ev->getUpdatedBRK() - old_brk, 0 );
+					if( brk_ev->requestZeroMemory() ) {
+						output->verbose(CALL_INFO, 16, 0, "[syscall-brk] - zeroing memory requested, producing a zero payload for write\n");
 
-					sendBlockToMemory( old_brk, payload );
-					handler_state = new VanadisBRKHandlerState( output->getVerboseLevel(), current_brk_point );
+						std::vector<uint8_t> payload;
+						payload.resize( brk_ev->getUpdatedBRK() - old_brk, 0 );
+
+						sendBlockToMemory( old_brk, payload );
+
+						handler_state = new VanadisBRKHandlerState( output->getVerboseLevel(), current_brk_point );
+					} else {
+						output->verbose(CALL_INFO, 16, 0, "[syscall-brk] - zeroing is not requested, immediate return.\n");
+						VanadisSyscallResponse* resp = new VanadisSyscallResponse( current_brk_point );
+						core_link->send( resp );
+					}
 
 					output->verbose(CALL_INFO, 16, 0, "[syscall-brk] old brk: 0x%llx -> new brk: 0x%llx (diff: %" PRIu64 ")\n",
 						old_brk, current_brk_point, (current_brk_point - old_brk) );

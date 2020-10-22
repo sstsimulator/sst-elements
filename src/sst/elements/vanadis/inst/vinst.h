@@ -229,6 +229,15 @@ public:
 	}
 
 	void flagError() { trapError = true; }
+
+	virtual bool performIntRegisterRecovery() const {
+		return true;
+	}
+
+	virtual bool performFPRegisterRecovery() const {
+		return true;
+	}
+
 protected:
 	uint64_t id;
 	const uint64_t ins_address;

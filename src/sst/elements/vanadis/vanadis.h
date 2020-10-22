@@ -121,7 +121,14 @@ public:
     )
 
     SST_ELI_DOCUMENT_STATISTICS(
-        { "cycles",  "Number of cycles where there were no events to process, x-bar was quiet", "cycles", 1 },
+        { "cycles",  "Number of cycles the core executed", "cycles", 1 },
+        { "instructions_issued",  "Number of instructions issued",  "instructions", 1 },
+        { "instructions_retired", "Number of instructions retired", "instructions", 1 },
+        { "instructions_decoded", "Number of instructions decoded", "instructions", 1 },
+        { "branch_mispredicts",   "Number of retired branches which were mis-predicted", "instructions", 1 },
+        { "branches",             "Number of retired branches", "instructions", 1     },
+        { "loads_issued", 		  "Number of load instructions issued to the LSQ",  "instructions", 1 },
+        { "stores_issued",        "Number of store instructions issued to the LSQ", "instructions", 1 }
     )
 
     SST_ELI_DOCUMENT_PORTS(
@@ -248,6 +255,15 @@ private:
     FILE* pipelineTrace;
     VanadisELFInfo* binary_elf_info;
     bool handlingSysCall;
+    
+    Statistic<uint64_t>* stat_ins_retired;
+    Statistic<uint64_t>* stat_ins_decoded;
+    Statistic<uint64_t>* stat_ins_issued;
+    Statistic<uint64_t>* stat_loads_issued;
+    Statistic<uint64_t>* stat_stores_issued;
+    Statistic<uint64_t>* stat_branch_mispredicts;
+    Statistic<uint64_t>* stat_branches;
+	Statistic<uint64_t>* stat_cycles;
 };
 
 
