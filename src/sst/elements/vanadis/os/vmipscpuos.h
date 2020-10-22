@@ -42,11 +42,17 @@ public:
 		{ "os_link", "Connects this handler to the main operating system of the node", {} }
 	)
 
+	SST_ELI_DOCUMENT_PARAMS(
+		{ "brk_zero_memory", 	"Zero memory during OS calls to brk",	"0" }
+	)
+
 	VanadisMIPSOSHandler( ComponentId_t id, Params& params ) :
 		VanadisCPUOSHandler(id, params) {
 
 		os_link = configureLink( "os_link", "0ns", new Event::Handler<VanadisMIPSOSHandler>(this,
 			&VanadisMIPSOSHandler::recvOSEvent ) );
+
+		brk_zero_memory = params.find<bool>("brk_zero_memory", false);
 	}
 
 	virtual ~VanadisMIPSOSHandler() {
@@ -125,9 +131,9 @@ public:
 				const uint64_t phys_reg_4 = isaTable->getIntPhysReg(4);
 				uint64_t newBrk = regFile->getIntReg<uint64_t>( phys_reg_4 );
 
-				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to brk( value: %" PRIu64 " )\n",
-					newBrk);
-				call_ev = new VanadisSyscallBRKEvent( core_id, hw_thr, newBrk );
+				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to brk( value: %" PRIu64 " ), zero: %s\n",
+					newBrk, brk_zero_memory ? "yes" : "no");
+				call_ev = new VanadisSyscallBRKEvent( core_id, hw_thr, newBrk, brk_zero_memory );
 			}
 			break;
 		case VANADIS_SYSCALL_SET_THREAD_AREA:
@@ -339,6 +345,7 @@ protected:
 	}
 
 	SST::Link* os_link;
+	bool brk_zero_memory;
 
 };
 
