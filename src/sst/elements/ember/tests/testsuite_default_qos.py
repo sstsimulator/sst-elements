@@ -100,7 +100,7 @@ class testcase_QOS(SSTTestCase):
 
 
         # Look for a direct match
-        cmp_result = testing_compare_diff(outfile, reffile)
+        cmp_result = testing_compare_diff(testDataFileName, outfile, reffile)
         if cmp_result:
             # Is it a direct match
             log_debug("Direct Match\n")

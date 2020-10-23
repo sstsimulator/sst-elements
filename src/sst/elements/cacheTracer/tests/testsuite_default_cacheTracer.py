@@ -106,6 +106,6 @@ class testcase_cacheTracer_Component(SSTTestCase):
         #       TESTS & RESULT FILES ARE STILL VALID
 
         # Perform the test
-        cmp_result = testing_compare_diff(out_memRefFile, reffile, ignore_ws=True)
+        cmp_result = testing_compare_diff(testDataFileName, out_memRefFile, reffile, ignore_ws=True)
         self.assertTrue(cmp_result, "File {0} does not match Reference File {1} ignoring whitespace".format(out_memRefFile, reffile))
 
