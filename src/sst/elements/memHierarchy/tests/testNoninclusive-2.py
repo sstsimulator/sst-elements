@@ -162,7 +162,7 @@ for x in range(memories):
     memory = memctrl.setSubComponent("backend", "memHierarchy.simpleDRAM")
     memory.addParams({
         "max_requests_per_cycle" : 2,
-        "mem_size" : "512MiB",
+        "mem_size" : "1GiB",
         "tCAS" : 2,
         "tRCD" : 2,
         "tRP" : 3,
