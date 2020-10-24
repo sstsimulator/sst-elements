@@ -280,12 +280,12 @@ private:
 		delete gen;
 	}
 
-        int getNextValue(void)
-        {
-            for (;;) {
-                int val = (int) dist->getNextDouble();
-                if ( val < maxValue && val >= minValue ) return val;
+        int getNextValue(void) {
+            double val = -1.0;
+            while ((int)val >= maxValue || (int)val < minValue || val < 0){
+                val = dist->getNextDouble();
             }
+            return (int) val;
         }
 
         void seed(uint32_t val)
