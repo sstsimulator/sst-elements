@@ -13,11 +13,13 @@
 #define VANADIS_SYSCALL_WRITE		 4004
 #define VANADIS_SYSCALL_ACCESS           4033
 #define VANADIS_SYSCALL_BRK              4045
+#define VANADIS_SYSCALL_IOCTL		 4054
 #define VANADIS_SYSCALL_READLINK         4085
 #define VANADIS_SYSCALL_MMAP		 4090
 #define VANADIS_SYSCALL_UNAME            4122
 #define VANADIS_SYSCALL_WRITEV           4146
 #define VANADIS_SYSCALL_FSTAT		 4215
+#define VANADIS_SYSCALL_SET_TID		 4252
 #define VANADIS_SYSCALL_EXIT_GROUP       4246
 #define VANADIS_SYSCALL_SET_THREAD_AREA  4283
 #define VANADIS_SYSCALL_RM_INOTIFY       4286
@@ -245,6 +247,49 @@ public:
 				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to write( %" PRId64 ", 0x%llx, %" PRIu64 " )\n",
 					write_fd, write_buff, write_count);
 				call_ev = new VanadisSyscallWriteEvent( core_id, hw_thr, write_fd, write_buff, write_count );
+			}
+			break;
+
+		case VANADIS_SYSCALL_SET_TID:
+			{
+				const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
+                                int64_t new_tid = regFile->getIntReg<int64_t>( phys_reg_4 );
+
+				setThreadID( new_tid );
+				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found call to set_tid( %" PRId64 " )\n",
+					new_tid);
+
+				recvOSEvent( new VanadisSyscallResponse( new_tid ) );
+			}
+			break;
+
+		case VANADIS_SYSCALL_IOCTL:
+			{
+				const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
+                                int64_t fd = regFile->getIntReg<int64_t>( phys_reg_4 );
+
+                                const uint16_t phys_reg_5 = isaTable->getIntPhysReg(5);
+                                uint64_t io_req = regFile->getIntReg<uint64_t>( phys_reg_5 );
+
+                                const uint16_t phys_reg_6 = isaTable->getIntPhysReg(6);
+                                uint64_t ptr = regFile->getIntReg<uint64_t>( phys_reg_6 );
+
+				uint64_t access_type = (io_req & 0xE0000000) >> 29;
+
+				bool is_read       = (access_type & 0x1) != 0;
+				bool is_write      = (access_type & 0x2) != 0;
+
+				uint64_t data_size = ((io_req) & 0x1FFF0000) >> 16;
+				uint64_t io_op     = ((io_req) & 0xFF);
+
+				uint64_t io_driver = ((io_req) &  0xFF00) >> 8;
+
+				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to ioctl( %" PRId64 ", %" PRIu64 " / 0x%llx, %" PRIu64 " / 0x%llx )\n",
+					fd, io_req, io_req, ptr, ptr);
+				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] -> R: %c W: %c / size: %" PRIu64 " / op: %" PRIu64 " / drv: %" PRIu64 "\n",
+					is_read ? 'y' : 'n', is_write ? 'y' : 'n', data_size, io_op, io_driver );
+
+				call_ev = new VanadisSyscallIOCtlEvent( core_id, hw_thr, fd, is_read, is_write, io_op, io_driver, ptr, data_size );
 			}
 			break;
 

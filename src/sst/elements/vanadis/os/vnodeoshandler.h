@@ -397,6 +397,28 @@ public:
 			}
 			break;
 
+		case SYSCALL_OP_IOCTL:
+			{
+				VanadisSyscallIOCtlEvent* ioctl_ev = dynamic_cast< VanadisSyscallIOCtlEvent* >( sys_ev );
+				if( nullptr == ioctl_ev ) {
+					output->fatal(CALL_INFO, -1, "Unable to convert to an ioctl event.\n");
+				}
+
+				output->verbose(CALL_INFO, 16, 0, "[syscall-ioctl] ioctl( %" PRId64 ", r: %c / w: %c / ptr: 0x%llx / size: %" PRIu64 " / op: %" PRIu64 " / drv: %" PRIu64 " )\n",
+					ioctl_ev->getFileDescriptor(), ioctl_ev->isRead() ? 'y' : 'n',
+					ioctl_ev->isWrite() ? 'y' : 'n', ioctl_ev->getDataPointer(),
+					ioctl_ev->getDataLength(), ioctl_ev->getIOOperation(),
+					ioctl_ev->getIODriver() );
+
+				if( 1 == ioctl_ev->getFileDescriptor() ) {
+					VanadisSyscallResponse* resp = new VanadisSyscallResponse( 0 );
+        	                        core_link->send( resp );
+				} else {
+					output->fatal(CALL_INFO, -1, "Not implemented\n");
+				}
+			}
+			break;
+
 		case SYSCALL_OP_ACCESS:
 			{
 				VanadisSyscallAccessEvent* access_ev = dynamic_cast< VanadisSyscallAccessEvent* >( sys_ev );

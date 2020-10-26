@@ -263,10 +263,16 @@ public:
 							load_addr, load_ins->getInstructionAddress() );
 						load_ins->flagError();
 					} else {
-						writeTrace( load_ins, load_req );
+						if( ( ! load_ins->isPartialLoad()) && ( (load_addr % load_width) > 0 ) ) {
+							output->verbose(CALL_INFO, 16, 0, "[fault] load is not partial and 0x%llx is not aligned to load width (%" PRIu64 ")\n",
+								load_addr, load_width);
+							load_ins->flagError();
+						} else {
+							writeTrace( load_ins, load_req );
 
-						memInterface->sendRequest( load_req );
-						next_item->setRequestID( load_req->id );
+							memInterface->sendRequest( load_req );
+							next_item->setRequestID( load_req->id );
+						}
 					}
 
 					next_item->markOperationIssued();

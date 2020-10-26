@@ -116,6 +116,7 @@ public:
 						printStatus();
 
                                                 state = 3;
+						markComplete();
                                         }
                                 }
                         }

@@ -35,6 +35,7 @@ public:
 
 		hw_thr   = 0;
 		core_id  = 0;
+		tid      = 0;
 	}
 
 	virtual ~VanadisCPUOSHandler() {
@@ -60,6 +61,9 @@ public:
 	}
 
 	virtual void registerInitParameter( VanadisCPUOSInitParameter paramType, void* param_val ) = 0;
+
+	void setThreadID( int64_t new_tid ) { tid = new_tid; }
+	int64_t getThreadID() const { return tid; }
 protected:
 	SST::Output* output;
 	std::vector< std::function<void(uint32_t)> > returnCallbacks;
@@ -72,6 +76,7 @@ protected:
 	VanadisISATable* isaTable;
 
 	uint64_t* tls_address;
+	int64_t tid;
 };
 
 }

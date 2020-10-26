@@ -14,5 +14,6 @@
 #include "os/callev/voscallwrite.h"
 #include "os/callev/voscallfstat.h"
 #include "os/callev/voscallexitgrp.h"
+#include "os/callev/voscallioctl.h"
 
 #endif
