@@ -73,7 +73,8 @@ public:
 	       	        const uint64_t src_2 = regFile->getIntReg<uint64_t>( phys_int_regs_in[1] );
 
 			if( 0 == src_2 ) {
-				flagError();
+				// Behavior of a DIVU in MIPS is undefined
+				// flagError();
 			} else {
 				const uint64_t quo = (src_1) / (src_2);
 				const uint64_t mod = (src_1) % (src_2);

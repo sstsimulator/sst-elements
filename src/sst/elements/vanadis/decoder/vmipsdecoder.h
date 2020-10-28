@@ -914,6 +914,11 @@ protected:
 						break;
 
 					case MIPS_SPEC_OP_MASK_SRLV:
+						{
+							bundle->addInstruction( new VanadisShiftRightLogicalInstruction( next_ins_id++, ins_addr, hw_thr, options,
+								rd, rt, rs) );
+							insertDecodeFault = false;
+						}
 						break;
 
 					case MIPS_SPEC_OP_MASK_SUB:
@@ -977,6 +982,7 @@ protected:
 							insertDecodeFault = false;
 						}
 						break;
+
 					case MIPS_SPEC_OP_MASK_SRA:
 						{
 							const uint64_t shf_amnt = ((uint64_t) (next_ins & MIPS_SHFT_MASK)) >> 6;
@@ -1135,7 +1141,7 @@ protected:
 				output->verbose(CALL_INFO, 16, 0, "[decoder/SB]: -> reg: %" PRIu16 " -> base: %" PRIu16 " + offset=%" PRId64 "\n",
 					rt, rs, imm_value_64);
 				bundle->addInstruction( new VanadisStoreInstruction( next_ins_id++, ins_addr, hw_thr, options, rs, imm_value_64,
-					rt, 1, MEM_TRANSACTION_NONE) );
+					rt, 1, MEM_TRANSACTION_NONE, STORE_INT_REGISTER) );
 				insertDecodeFault = false;
 			}
 			break;
@@ -1148,7 +1154,7 @@ protected:
 				output->verbose(CALL_INFO, 16, 0, "[decoder/SC]: -> reg: %" PRIu16 " -> base: %" PRIu16 " + offset=%" PRId64 "\n",
 					rt, rs, imm_value_64);
 				bundle->addInstruction( new VanadisStoreInstruction( next_ins_id++, ins_addr, hw_thr, options, rs, imm_value_64,
-					rt, 4, MEM_TRANSACTION_LLSC_STORE) );
+					rt, 4, MEM_TRANSACTION_LLSC_STORE, STORE_INT_REGISTER) );
 				insertDecodeFault = false;
 			}
 			break;
@@ -1161,7 +1167,7 @@ protected:
 				output->verbose(CALL_INFO, 16, 0, "[decoder/SW]: -> reg: %" PRIu16 " -> base: %" PRIu16 " + offset=%" PRId64 "\n",
 					rt, rs, imm_value_64);
 				bundle->addInstruction( new VanadisStoreInstruction( next_ins_id++, ins_addr, hw_thr, options, rs, imm_value_64,
-					rt, 4, MEM_TRANSACTION_NONE) );
+					rt, 4, MEM_TRANSACTION_NONE, STORE_INT_REGISTER) );
 				insertDecodeFault = false;
 			}
 			break;
@@ -1174,7 +1180,7 @@ protected:
 				output->verbose(CALL_INFO, 16, 0, "[decoder/SWL]: -> reg: %" PRIu16 " -> base: %" PRIu16 " + offset=%" PRId64 "\n",
 					rt, rs, imm_value_64);
 				bundle->addInstruction( new VanadisPartialStoreInstruction( next_ins_id++, ins_addr, hw_thr, options, rs, imm_value_64,
-					rt, 4, true ) );
+					rt, 4, true, STORE_INT_REGISTER ) );
 				insertDecodeFault = false;
 			}
 			break;
@@ -1187,7 +1193,7 @@ protected:
 				output->verbose(CALL_INFO, 16, 0, "[decoder/SWR]: -> reg: %" PRIu16 " -> base: %" PRIu16 " + offset=%" PRId64 "\n",
 					rt, rs, imm_value_64);
 				bundle->addInstruction( new VanadisPartialStoreInstruction( next_ins_id++, ins_addr, hw_thr, options, rs, imm_value_64,
-					rt, 4, false ) );
+					rt, 4, false, STORE_INT_REGISTER ) );
 				insertDecodeFault = false;
 			}
 			break;

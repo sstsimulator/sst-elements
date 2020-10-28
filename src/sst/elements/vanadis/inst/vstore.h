@@ -25,24 +25,14 @@ public:
 		const int64_t offst,
 		const uint16_t valueReg,
 		const uint16_t store_bytes,
-		VanadisMemoryTransaction accessT) :
+		VanadisMemoryTransaction accessT,
+		VanadisStoreRegisterType regT) :
 		VanadisInstruction(id, addr, hw_thr, isa_opts,
 			2, accessT == MEM_TRANSACTION_LLSC_STORE ? 1 : 0,
 			2, accessT == MEM_TRANSACTION_LLSC_STORE ? 1 : 0,
 			0, 0, 0, 0),
-		store_width(store_bytes), offset(offst), memAccessType(accessT) {
-
-/*
-		if( memAccessType == MEM_TRANSACTION_LLSC_STORE ) {
-			count_isa_int_reg_out = 1;
-			isa_int_regs_out = new uint16_t[1];
-
-			count_phys_int_reg_out = 1;
-			phys_int_regs_out = new uint16_t[1];
-
-			isa_int_regs_out[0] = valueReg;
-		}
-*/
+		store_width(store_bytes), offset(offst),
+		memAccessType(accessT), regType(regT) {
 
 		isa_int_regs_in[0] = memoryAddr;
 		isa_int_regs_in[1] = valueReg;
@@ -112,12 +102,13 @@ public:
 
 	uint16_t getMemoryAddressRegister() const { return phys_int_regs_in[0]; }
 	uint16_t getValueRegister() const { return phys_int_regs_in[1]; }
-	VanadisStoreRegisterType getValueRegisterType() const { return STORE_INT_REGISTER; }
+	VanadisStoreRegisterType getValueRegisterType() const { return regType; }
 
 protected:
 	const int64_t offset;
 	const uint16_t store_width;
 	VanadisMemoryTransaction memAccessType;
+	VanadisStoreRegisterType regType;
 
 };
 

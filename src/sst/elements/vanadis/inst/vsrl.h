@@ -24,6 +24,10 @@ public:
 		isa_int_regs_out[0] = dest;
 	}
 
+	virtual VanadisShiftRightLogicalInstruction* clone() {
+		return new VanadisShiftRightLogicalInstruction( *this );
+	}
+
 	virtual VanadisFunctionalUnitType getInstFuncType() const {
 		return INST_INT_ARITH;
 	}

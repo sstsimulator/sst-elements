@@ -19,8 +19,10 @@ public:
 		const uint64_t offst,
 		const uint16_t valueReg,
 		const uint16_t store_bytes,
-		const bool isLeftStore) :
-		VanadisStoreInstruction(id, addr, hw_thr, isa_opts, memoryAddr, offst, valueReg, store_bytes, MEM_TRANSACTION_NONE),
+		const bool isLeftStore,
+		VanadisStoreRegisterType regT) :
+		VanadisStoreInstruction(id, addr, hw_thr, isa_opts, memoryAddr, offst, valueReg,
+			store_bytes, MEM_TRANSACTION_NONE, regT),
 			is_left_store(isLeftStore) {
 
 		register_offset = 0;
