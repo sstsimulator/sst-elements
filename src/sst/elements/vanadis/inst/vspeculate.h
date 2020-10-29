@@ -65,6 +65,17 @@ public:
 			takenAddress      = UINT64_MAX;
 		}
 
+	VanadisSpeculatedInstruction( const VanadisSpeculatedInstruction& copy_me ) :
+		VanadisInstruction(copy_me) {
+
+		spec_dir   = copy_me.spec_dir;
+		result_dir = copy_me.result_dir;
+		delayType  = copy_me.delayType;
+
+		speculatedAddress = copy_me.speculatedAddress;
+		takenAddress      = copy_me.takenAddress;
+	}
+
 	virtual ~VanadisSpeculatedInstruction() {}
 
 	virtual VanadisBranchDirection getSpeculatedDirection() const { return spec_dir; }
@@ -72,7 +83,6 @@ public:
 	virtual uint64_t getSpeculatedAddress() const { return speculatedAddress; }
 	virtual void setSpeculatedAddress( const uint64_t spec_ad ) { speculatedAddress = spec_ad; }
 
-//	virtual uint64_t calculateAddress( SST::Output* output, VanadisRegisterFile* reg_file, const uint64_t current_ip ) = 0;
 	virtual uint64_t getTakenAddress() const { return takenAddress; }
 
 	virtual VanadisBranchDirection getResultDirection( const VanadisRegisterFile* reg_file ) {

@@ -634,6 +634,7 @@ public:
 
 		for( auto op_q_itr = op_q.begin(); op_q_itr != op_q.end(); ) {
 			if( (*op_q_itr)->getInstruction()->getHWThread() == thread ) {
+				delete (*op_q_itr);
 				op_q_itr = op_q.erase(op_q_itr);
 			} else {
 				op_q_itr++;

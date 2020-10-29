@@ -478,9 +478,15 @@ public:
 					}
 
 					bool q_contains_store = false;
+					
+					output->verbose(CALL_INFO, 16, 0, "----> decode-q contains %" PRIu32 " entries.\n", (uint32_t) decoded_q->size());
 
 					// Do we have a store in the queue
 					for( uint32_t j = 0; j < decoded_q->size(); ++j ) {
+						output->verbose(CALL_INFO, 16, 0, "---> %5" PRIu32 " : 0x%llx / %s\n",
+							j, decoded_q->peekAt(j)->getInstructionAddress(), 
+							decoded_q->peekAt(j)->getInstCode());
+					
 						if( decoded_q->peekAt(j)->getInstFuncType() == INST_STORE ) {
 							q_contains_store = true;
 							break;
@@ -578,10 +584,10 @@ public:
 
 									// This is essential a predicted not taken branch
 									if( predicted_address == (ip + 8) ) {
-										output->verbose(CALL_INFO, 16, 0, "---> Branch predicted not taken, ip set to: %0llx\n", predicted_address );
+										output->verbose(CALL_INFO, 16, 0, "---> Branch 0x%llx predicted not taken, ip set to: 0x%0llx\n", ip, predicted_address );
 										speculated_ins->setSpeculatedDirection( BRANCH_NOT_TAKEN );
 									} else {
-										output->verbose(CALL_INFO, 16, 0, "---> Branch predicted taken, jump to %0llx\n", predicted_address);
+										output->verbose(CALL_INFO, 16, 0, "---> Branch 0x%llx predicted taken, jump to 0x%0llx\n", ip, predicted_address);
 										speculated_ins->setSpeculatedDirection( BRANCH_TAKEN );
 									}
 

@@ -598,7 +598,8 @@ int VanadisComponent::performExecute( const uint64_t cycle ) {
 int VanadisComponent::performRetire( VanadisCircularQueue<VanadisInstruction*>* rob, const uint64_t cycle ) {
 	output->verbose(CALL_INFO, 8, 0, "-- ROB: %" PRIu32 " out of %" PRIu32 " entries:\n",
 		(uint32_t) rob->size(), (uint32_t) rob->capacity() );
-	for( int j = std::min(3, (int) rob->size() - 1); j >= 0; --j ) {
+//	for( int j = std::min(3, (int) rob->size() - 1); j >= 0; --j ) {
+	for( int j = (int) rob->size() - 1; j >= 0; --j ) {
 		output->verbose(CALL_INFO, 8, 0, "----> ROB[%2d]: ins: 0x%016llx / %10s / error: %3s / issued: %3s / spec: %3s / rob-front: %3s / exe: %3s\n",
 			j, rob->peekAt(j)->getInstructionAddress(), rob->peekAt(j)->getInstCode(),
 			rob->peekAt(j)->trapsError() ? "yes" : "no", 
@@ -687,12 +688,13 @@ int VanadisComponent::performRetire( VanadisCircularQueue<VanadisInstruction*>* 
 					spec_ins->getSpeculatedAddress(), pipeline_reset_addr,
 					perform_pipelne_clear ? "yes" : "no" );
 				
-				if( perform_pipeline_clear ) {
+				//if( perform_pipeline_clear ) {
 					output->verbose(CALL_INFO, 8, 0, "----> Updating branch predictor with new information (new addr: 0x%llx)\n",
 						pipeline_reset_addr);
 					thread_decoders[rob_front->getHWThread()]->getBranchPredictor()->push( 
 						spec_ins->getInstructionAddress(), pipeline_reset_addr );
 						
+				if( perform_pipeline_clear ) {
 //					if( spec_ins->endsMicroOpGroup() ) {
 						stat_branch_mispredicts->addData(1);
 //					}
@@ -764,22 +766,27 @@ int VanadisComponent::performRetire( VanadisCircularQueue<VanadisInstruction*>* 
 		}
 	} else {
 		if( INST_SYSCALL == rob_front->getInstFuncType() ) {
-			// have we been marked front on ROB yet? if yes, then we have issued our syscall
-			if( ! rob_front->checkFrontOfROB() ) {
-				VanadisSysCallInstruction* the_syscall_ins = dynamic_cast<VanadisSysCallInstruction*>( rob_front );
+			if( rob_front->completedIssue() ) {
+				// have we been marked front on ROB yet? if yes, then we have issued our syscall
+				if( ! rob_front->checkFrontOfROB() ) {
+					VanadisSysCallInstruction* the_syscall_ins = dynamic_cast<VanadisSysCallInstruction*>( rob_front );
 
-				if( nullptr == the_syscall_ins ) {
-					output->fatal(CALL_INFO, -1, "Error: SYSCALL cannot be converted to an actual sys-call instruction.\n");
+					if( nullptr == the_syscall_ins ) {
+						output->fatal(CALL_INFO, -1, "Error: SYSCALL cannot be converted to an actual sys-call instruction.\n");
+					}
+
+					output->verbose(CALL_INFO, 8, 0, "[syscall] -> calling OS handler in decode engine (ins-addr: 0x%0llx)...\n",
+						the_syscall_ins->getInstructionAddress());
+					thread_decoders[ rob_front->getHWThread() ]->getOSHandler()->handleSysCall( the_syscall_ins );
+
+					// mark as front of ROB now we can proceed
+					rob_front->markFrontOfROB();
 				}
-
-				output->verbose(CALL_INFO, 8, 0, "[syscall] -> calling OS handler in decode engine (ins-addr: 0x%0llx)...\n",
-					the_syscall_ins->getInstructionAddress());
-				thread_decoders[ rob_front->getHWThread() ]->getOSHandler()->handleSysCall( the_syscall_ins );
 			}
-		}
-	
-		if( ! rob_front->checkFrontOfROB() ) {
-			rob_front->markFrontOfROB();
+		} else {
+			if( ! rob_front->checkFrontOfROB() ) {
+				rob_front->markFrontOfROB();
+			}
 		}
 	}
 	
