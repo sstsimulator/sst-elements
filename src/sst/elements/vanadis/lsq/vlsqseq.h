@@ -279,30 +279,47 @@ public:
 				}
 			} else if( next_item->isStore() ) {
 				VanadisStoreInstruction* store_ins = dynamic_cast<VanadisStoreInstruction*>( next_item->getInstruction() );
-				
+
 				// Stores must be at the front of the ROB to be executed or else we will
 				// potentially violate correct execution in OoO pipelines
 				if( store_ins->checkFrontOfROB() ) {
 					uint64_t store_addr  = 0;
 					uint16_t store_width = 0;
-					uint16_t value_reg   = store_ins->getPhysIntRegIn(1); // reg-0 = addr, reg-1 = value
+					uint16_t value_reg   = 0; //store_ins->getPhysIntRegIn(1); // reg-0 = addr, reg-1 = value
 					uint16_t reg_offset  = store_ins->getRegisterOffset();
-					
+
 					std::vector<uint8_t> payload;
-					char* reg_ptr = reg_file->getIntReg( value_reg );
-					
+					char* reg_ptr = nullptr;
+
+					switch( store_ins->getValueRegisterType() ) {
+					case STORE_INT_REGISTER:
+						{
+							output->verbose(CALL_INFO, 16, 0, "--> store is integer register\n");
+							value_reg = store_ins->getPhysIntRegIn(1);
+							reg_ptr = reg_file->getIntReg( value_reg );
+						}
+						break;
+					case STORE_FP_REGISTER:
+						{
+							output->verbose(CALL_INFO, 16, 0, "--> store is floating-point register\n");
+							value_reg = store_ins->getPhysFPRegIn(0);
+							reg_ptr = reg_file->getFPReg( value_reg );
+						}
+						break;
+					}
+
 					store_ins->computeStoreAddress( output, reg_file, &store_addr, &store_width );
 					store_addr = store_addr & address_mask;
-					
+
 					for( uint16_t i = 0; i < store_width; ++i ) {
 						payload.push_back( reg_ptr[reg_offset + i] );
 					}
-					
+
 					output->verbose( CALL_INFO, 8, 0, "--> issue store at 0x%llx width: %" PRIu16 " bytes, value-reg: %" PRIu16 " / partial: %s / offset: %" PRIu16 "\n",
 						store_addr, store_width, value_reg,
 						store_ins->isPartialStore() ? "yes" : "no",
 						reg_offset );
-					
+
 					if( store_addr < 4096 ) {
 						output->verbose(CALL_INFO, 16, 0, "[fault] - address 0x%llx is less than 4096, indicates a segmentation fault (store-ins: 0x%llx)\n",
 							store_addr, store_ins->getInstructionAddress() );
@@ -376,107 +393,163 @@ public:
 				if( (*op_q_itr)->isLoad() ) {
 					VanadisLoadInstruction* load_ins = dynamic_cast<VanadisLoadInstruction*>( (*op_q_itr)->getInstruction() );
 					VanadisRegisterFile* reg_file = registerFiles->at( load_ins->getHWThread() );
+
 					uint64_t load_addr  = 0;
 					uint16_t load_width = 0;
-					uint16_t target_reg = load_ins->getPhysIntRegOut(0);
+					uint16_t target_reg = 0; //load_ins->getPhysIntRegOut(0);
+					uint16_t target_isa = 0;
 					uint16_t reg_offset = 0;
+
+					switch( load_ins->getValueRegisterType() ) {
+					case LOAD_INT_REGISTER:
+						{
+							output->verbose(CALL_INFO, 8, 0, "--> load is integer register\n");
+							target_reg = load_ins->getPhysIntRegOut(0);
+							target_isa = load_ins->getISAIntRegOut(0);
+						}
+						break;
+					case LOAD_FP_REGISTER:
+						{
+							output->verbose(CALL_INFO, 8, 0, "--> load is floating point register\n");
+							target_reg = load_ins->getPhysFPRegOut(0);
+							target_isa = load_ins->getISAFPRegOut(0);
+						}
+						break;
+					}
 
 					load_ins->computeLoadAddress( output, reg_file, &load_addr, &load_width );
 					reg_offset = load_ins->getRegisterOffset();
 
 					output->verbose(CALL_INFO, 8, 0, "--> load info: addr: 0x%llx / width: %" PRIu16 " / isa: %" PRIu16 " = target-reg: %" PRIu16 " / partial: %s / reg-offset: %" PRIu16 " / sgn-exd: %s\n",
-						load_addr, load_width, load_ins->getISAIntRegOut(0),
+						load_addr, load_width, target_isa,
 						target_reg, load_ins->isPartialLoad() ? "yes" : "no",
 						reg_offset,
 						load_ins->performSignExtension() ? "yes" : "no");
 
-					if( target_reg != load_ins->getISAOptions()->getRegisterIgnoreWrites() ) {
-						// if we are doing a partial copy and we aren't starting at
-						// zero then we need to copy bytewise, if not, we can do a
-						// single copy
-						if( load_ins->isPartialLoad() ) {
-							char* reg_ptr = reg_file->getIntReg( target_reg );
+					switch( load_ins->getValueRegisterType() ) {
+					case LOAD_INT_REGISTER:
+						{
+							if( target_reg != load_ins->getISAOptions()->getRegisterIgnoreWrites() ) {
+								// if we are doing a partial copy and we aren't starting at
+								// zero then we need to copy bytewise, if not, we can do a
+								// single copy
+								if( load_ins->isPartialLoad() ) {
+									char* reg_ptr = reg_file->getIntReg( target_reg );
 
-							for( uint16_t i = 0; i < load_width; ++i ) {
-								reg_ptr[ reg_offset + i ] = ev->data[i];
-							}
+									for( uint16_t i = 0; i < load_width; ++i ) {
+										reg_ptr[ reg_offset + i ] = ev->data[i];
+									}
 
-							output->verbose(CALL_INFO, 8, 0, "----> partial-load addr: 0x%llx / reg-offset: %" PRIu16 " / load-width: %" PRIu16 " / full-width: %" PRIu16 "\n",
-								load_addr, reg_offset, load_width, load_ins->getLoadWidth());
+									output->verbose(CALL_INFO, 8, 0, "----> partial-load addr: 0x%llx / reg-offset: %" PRIu16 " / load-width: %" PRIu16 " / full-width: %" PRIu16 "\n",
+										load_addr, reg_offset, load_width, load_ins->getLoadWidth());
 
-							if( (reg_offset + load_width) >= load_ins->getLoadWidth() ) {
-								if( (reg_ptr[reg_offset + load_width - 1] & 0x80) != 0 ) {
-									// We need to perform sign extension, fill every byte with all 1s 
-									for( uint16_t i = reg_offset + load_width; i < 8; ++i ) {
-										reg_ptr[i] = 0xFF;
+									if( (reg_offset + load_width) >= load_ins->getLoadWidth() ) {
+										if( (reg_ptr[reg_offset + load_width - 1] & 0x80) != 0 ) {
+											// We need to perform sign extension, fill every byte with all 1s 
+											for( uint16_t i = reg_offset + load_width; i < 8; ++i ) {
+												reg_ptr[i] = 0xFF;
+											}
+										}
+									}
+								} else {
+									if( load_ins->performSignExtension() ) {
+										int64_t value = 0;
+
+										switch( load_width ) {
+										case 1:
+											{
+												int8_t* v_8 = (int8_t*) &ev->data[0];
+												value = (*v_8);
+											}
+										break;
+										case 2:
+											{
+												int16_t* v_16 = (int16_t*) &ev->data[0];
+												value = (*v_16);
+											}
+											break;
+										case 4:
+											{
+												int32_t* v_32 = (int32_t*) &ev->data[0];
+												value = (*v_32);
+											}
+											break;
+										case 8:
+											{
+												int64_t* v_64 = (int64_t*) &ev->data[0];
+												value = (*v_64);
+											}
+											break;
+										}
+
+										reg_file->setIntReg( target_reg, value );
+									} else {
+										uint64_t value = 0;
+
+										switch( load_width ) {
+										case 1:
+											{
+												uint8_t* v_8 = (uint8_t*) &ev->data[0];
+												value = (*v_8);
+											}
+											break;
+										case 2:
+											{
+												uint16_t* v_16 = (uint16_t*) &ev->data[0];
+												value = (*v_16);
+											}
+										break;
+										case 4:
+											{
+												uint32_t* v_32 = (uint32_t*) &ev->data[0];
+												value = (*v_32);
+											}
+											break;
+										case 8:
+											{
+												uint64_t* v_64 = (uint64_t*) &ev->data[0];
+												value = (*v_64);
+											}
+											break;
+										}
+
+										reg_file->setIntReg( target_reg, value );
 									}
 								}
-							}
-						} else {
-							if( load_ins->performSignExtension() ) {
-								int64_t value = 0;
-
-								switch( load_width ) {
-								case 1:
-									{
-										int8_t* v_8 = (int8_t*) &ev->data[0];
-										value = (*v_8);
-									}
-									break;
-								case 2:
-									{
-										int16_t* v_16 = (int16_t*) &ev->data[0];
-										value = (*v_16);
-									}
-									break;
-								case 4:
-									{
-										int32_t* v_32 = (int32_t*) &ev->data[0];
-										value = (*v_32);
-									}
-									break;
-								case 8:
-									{
-										int64_t* v_64 = (int64_t*) &ev->data[0];
-										value = (*v_64);
-									}
-									break;
-								}
-
-								reg_file->setIntReg( target_reg, value );
-							} else {
-								uint64_t value = 0;
-
-								switch( load_width ) {
-								case 1:
-									{
-										uint8_t* v_8 = (uint8_t*) &ev->data[0];
-										value = (*v_8);
-									}
-									break;
-								case 2:
-									{
-										uint16_t* v_16 = (uint16_t*) &ev->data[0];
-										value = (*v_16);
-									}
-									break;
-								case 4:
-									{
-										uint32_t* v_32 = (uint32_t*) &ev->data[0];
-										value = (*v_32);
-									}
-									break;
-								case 8:
-									{
-										uint64_t* v_64 = (uint64_t*) &ev->data[0];
-										value = (*v_64);
-									}
-									break;
-								}
-
-								reg_file->setIntReg( target_reg, value );
 							}
 						}
+						break;
+						
+					case LOAD_FP_REGISTER:
+						{
+							if( load_ins->isPartialLoad() ) {
+								output->fatal(CALL_INFO, -1, "Error - does not support partial load of a floating point register.\n");
+							} else {
+								char* reg_ptr = reg_file->getFPReg( target_reg );
+								
+								switch( load_width ) {
+								case 4:
+									{
+										float* v_f = (float*) &ev->data[0];
+										reg_file->setFPReg( target_reg, (*v_f) );
+									}
+									break;
+								case 8:
+									{
+										double* v_d = (double*) &ev->data[0];
+										reg_file->setFPReg( target_reg, (*v_d) );
+									}
+									break;
+								default:
+									{
+										output->fatal(CALL_INFO, -1, "Error - load to floating point register in not supported size (%" PRIu16 ")\n",
+											load_width);
+									}
+									break;
+								}
+							}
+						}
+						break;
 					}
 
 					// mark instruction as executed
@@ -500,16 +573,39 @@ public:
 				printEventFlags(ev);
 
 				VanadisStoreInstruction* store_ins = (*sc_itr)->getInstruction();
-				const uint16_t value_reg = store_ins->getPhysIntRegOut(0);
 
-				if( (ev->flags & SST::Interfaces::SimpleMem::Request::F_LLSC_RESP)  != 0 ) {
-					output->verbose(CALL_INFO, 16, 0, "---> LSQ LLSC-STORE ins: 0x%llx / addr: 0x%llx / rt: %" PRIu16 " <- 1 (success)\n",
-						store_ins->getInstructionAddress(), ev->addr, value_reg );
-					registerFiles->at( store_ins->getHWThread() )->setIntReg( value_reg, (uint64_t) 1 );
-				} else {
-					output->verbose(CALL_INFO, 16, 0, "---> LSQ LLSC-STORE ins: 0x%llx / addr: 0x%llx rt: %" PRIu16 " <- 0 (failed)\n",
-						store_ins->getInstructionAddress(), ev->addr, value_reg );
-					registerFiles->at( store_ins->getHWThread() )->setIntReg( value_reg, (uint64_t) 0 );
+				switch( store_ins->getValueRegisterType() ) {
+				case STORE_INT_REGISTER:
+					{
+						const uint16_t value_reg = store_ins->getPhysIntRegOut(0);
+
+						if( (ev->flags & SST::Interfaces::SimpleMem::Request::F_LLSC_RESP)  != 0 ) {
+							output->verbose(CALL_INFO, 16, 0, "---> LSQ LLSC-STORE ins: 0x%llx / addr: 0x%llx / rt: %" PRIu16 " <- 1 (success)\n",
+								store_ins->getInstructionAddress(), ev->addr, value_reg );
+							registerFiles->at( store_ins->getHWThread() )->setIntReg( value_reg, (uint64_t) 1 );
+						} else {
+							output->verbose(CALL_INFO, 16, 0, "---> LSQ LLSC-STORE ins: 0x%llx / addr: 0x%llx rt: %" PRIu16 " <- 0 (failed)\n",
+								store_ins->getInstructionAddress(), ev->addr, value_reg );
+							registerFiles->at( store_ins->getHWThread() )->setIntReg( value_reg, (uint64_t) 0 );
+						}
+					}
+					break;
+				case STORE_FP_REGISTER:
+					{
+						const uint16_t value_reg = store_ins->getPhysFPRegOut(0);
+
+						if( (ev->flags & SST::Interfaces::SimpleMem::Request::F_LLSC_RESP)  != 0 ) {
+							output->verbose(CALL_INFO, 16, 0, "---> LSQ LLSC-STOREFP ins: 0x%llx / addr: 0x%llx / rt: %" PRIu16 " <- 1.0 (success)\n",
+								store_ins->getInstructionAddress(), ev->addr, value_reg );
+							registerFiles->at( store_ins->getHWThread() )->setFPReg( value_reg, 1.0f );
+						} else {
+							output->verbose(CALL_INFO, 16, 0, "---> LSQ LLSC-STOREFP ins: 0x%llx / addr: 0x%llx rt: %" PRIu16 " <- 0.0 (failed)\n",
+								store_ins->getInstructionAddress(), ev->addr, value_reg );
+							registerFiles->at( store_ins->getHWThread() )->setFPReg( value_reg, 0.0f );
+						}
+					}
+					break;
+
 				}
 
 				// Mark store instruction as executed

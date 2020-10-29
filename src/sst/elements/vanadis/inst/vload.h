@@ -92,10 +92,24 @@ public:
 	}
 
 	virtual void printToBuffer( char* buffer, size_t buffer_size ) {
-		snprintf( buffer, buffer_size, "LOAD (%s)  %5" PRIu16 " <- memory[ %5" PRIu16 " + %20" PRId64 " (phys: %5" PRIu16 " <- memory[%5" PRIu16 " + %20" PRId64 "])\n",
-			getTransactionTypeString( memAccessType ),
-			isa_int_regs_out[0], isa_int_regs_in[0], offset,
-			phys_int_regs_out[0], phys_int_regs_in[0], offset);
+		switch( regType ) {
+		case LOAD_INT_REGISTER:
+			{
+				snprintf( buffer, buffer_size, "LOAD (%s)  %5" PRIu16 " <- memory[ %5" PRIu16 " + %20" PRId64 " (phys: %5" PRIu16 " <- memory[%5" PRIu16 " + %20" PRId64 "])\n",
+					getTransactionTypeString( memAccessType ),
+					isa_int_regs_out[0], isa_int_regs_in[0], offset,
+					phys_int_regs_out[0], phys_int_regs_in[0], offset);
+			}
+			break;
+		case LOAD_FP_REGISTER:
+			{
+				snprintf( buffer, buffer_size, "LOADFP (%s)  %5" PRIu16 " <- memory[ %5" PRIu16 " + %20" PRId64 " (phys: %5" PRIu16 " <- memory[%5" PRIu16 " + %20" PRId64 "])\n",
+					getTransactionTypeString( memAccessType ),
+					isa_fp_regs_out[0], isa_int_regs_in[0], offset,
+					phys_fp_regs_out[0], phys_int_regs_in[0], offset);
+			}
+			break;
+		}
 	}
 
 	virtual void computeLoadAddress( VanadisRegisterFile* reg, uint64_t* out_addr, uint16_t* width ) {
@@ -108,8 +122,21 @@ public:
 	virtual void computeLoadAddress( SST::Output* output, VanadisRegisterFile* regFile, uint64_t* out_addr, uint16_t* width ) {
 		uint64_t mem_addr_reg_val = regFile->getIntReg<uint64_t>( phys_int_regs_in[0] );
 
-		output->verbose(CALL_INFO, 16, 0, "Execute: (0x%llx) LOAD addr-reg: %" PRIu16 " phys: %" PRIu16 " / offset: %" PRId64 " / target: %" PRIu16 " phys: %" PRIu16 "\n",
-			getInstructionAddress(), isa_int_regs_in[0], phys_int_regs_in[0], offset, isa_int_regs_out[0], phys_int_regs_out[0] );
+		switch( regType ) {
+		case LOAD_INT_REGISTER:
+			{
+				output->verbose(CALL_INFO, 16, 0, "Execute: (0x%llx) LOAD addr-reg: %" PRIu16 " phys: %" PRIu16 " / offset: %" PRId64 " / target: %" PRIu16 " phys: %" PRIu16 "\n",
+					getInstructionAddress(), isa_int_regs_in[0], phys_int_regs_in[0], offset, isa_int_regs_out[0], phys_int_regs_out[0] );
+			}
+			break;
+		case LOAD_FP_REGISTER:
+			{
+				output->verbose(CALL_INFO, 16, 0, "Execute: (0x%llx) LOAD addr-reg: %" PRIu16 " phys: %" PRIu16 " / offset: %" PRId64 " / target: %" PRIu16 " phys: %" PRIu16 "\n",
+					getInstructionAddress(), isa_int_regs_in[0], phys_int_regs_in[0], offset, isa_fp_regs_out[0], phys_fp_regs_out[0] );
+			}
+			break;
+		}
+
 		output->verbose(CALL_INFO, 16, 0, "[execute-load]: transaction-type:  %s / ins: 0x%llx\n", getTransactionTypeString( memAccessType ),
 			getInstructionAddress() );
                 output->verbose(CALL_INFO, 16, 0, "[execute-load]: reg[%5" PRIu16 "]:       %" PRIu64 "\n", phys_int_regs_in[0], mem_addr_reg_val);

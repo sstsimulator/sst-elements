@@ -101,9 +101,22 @@ public:
 	}
 
 	virtual void printToBuffer(char* buffer, size_t buffer_size) {
-		snprintf(buffer, buffer_size, "STORE (%s)   %5" PRIu16 " -> memory[%5" PRIu16 " + %" PRId64 "] (phys: %5" PRIu16 " -> memory[%5" PRIu16 " + %" PRId64 "])",
-			getTransactionTypeString(memAccessType), isa_int_regs_in[1], isa_int_regs_in[0], offset,
-			phys_int_regs_in[1], phys_int_regs_in[0], offset);
+		switch( regType ) {
+		case STORE_INT_REGISTER:
+			{
+				snprintf(buffer, buffer_size, "STORE (%s)   %5" PRIu16 " -> memory[%5" PRIu16 " + %" PRId64 "] (phys: %5" PRIu16 " -> memory[%5" PRIu16 " + %" PRId64 "])",
+					getTransactionTypeString(memAccessType), isa_int_regs_in[1], isa_int_regs_in[0], offset,
+					phys_int_regs_in[1], phys_int_regs_in[0], offset);
+			}
+			break;
+		case STORE_FP_REGISTER:
+			{
+				snprintf(buffer, buffer_size, "STOREFP (%s)   %5" PRIu16 " -> memory[%5" PRIu16 " + %" PRId64 "] (phys: %5" PRIu16 " -> memory[%5" PRIu16 " + %" PRId64 "])",
+					getTransactionTypeString(memAccessType), isa_fp_regs_in[0], isa_int_regs_in[0], offset,
+					phys_fp_regs_in[0], phys_int_regs_in[0], offset);
+			}
+			break;
+		}
         }
 
 	virtual void execute( SST::Output* output, VanadisRegisterFile* regFile ) {
@@ -118,8 +131,20 @@ public:
                 (*store_addr)  = (uint64_t)( reg_tmp + offset );
 		(*op_width)    = store_width;
 
-		output->verbose(CALL_INFO, 16, 0, "Execute: (addr=0x%llx) STORE addr-reg: %" PRIu16 " / val-reg: %" PRIu16 " / offset: %" PRId64 " / width: %" PRIu16 " / store-addr: %" PRIu64 " (0x%llx)\n",
-			getInstructionAddress(), phys_int_regs_in[0], phys_int_regs_in[1], offset, store_width, (*store_addr), (*store_addr) );
+		switch( regType ) {
+		case STORE_INT_REGISTER:
+			{
+				output->verbose(CALL_INFO, 16, 0, "Execute: (addr=0x%llx) STORE addr-reg: %" PRIu16 " / val-reg: %" PRIu16 " / offset: %" PRId64 " / width: %" PRIu16 " / store-addr: %" PRIu64 " (0x%llx)\n",
+					getInstructionAddress(), phys_int_regs_in[0], phys_int_regs_in[1], offset, store_width, (*store_addr), (*store_addr) );
+			}
+			break;
+		case STORE_FP_REGISTER:
+			{
+				output->verbose(CALL_INFO, 16, 0, "Execute: (addr=0x%llx) STOREFP addr-reg: %" PRIu16 " / val-reg: %" PRIu16 " / offset: %" PRId64 " / width: %" PRIu16 " / store-addr: %" PRIu64 " (0x%llx)\n",
+					getInstructionAddress(), phys_int_regs_in[0], phys_fp_regs_in[0], offset, store_width, (*store_addr), (*store_addr) );
+			}
+			break;
+		}
         }
 
 	uint16_t getStoreWidth() const {
@@ -131,7 +156,15 @@ public:
 	}
 
 	uint16_t getMemoryAddressRegister() const { return phys_int_regs_in[0]; }
-	uint16_t getValueRegister() const { return phys_int_regs_in[1]; }
+	uint16_t getValueRegister() const {
+			switch( regType ) {
+			case STORE_INT_REGISTER:
+				return phys_int_regs_in[1];
+			case STORE_FP_REGISTER:
+				return phys_fp_regs_in[0];
+			}
+		}
+
 	VanadisStoreRegisterType getValueRegisterType() const { return regType; }
 
 protected:
