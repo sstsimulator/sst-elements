@@ -18,8 +18,9 @@ public:
 		const uint16_t tgtReg,
 		const uint16_t load_bytes,
 		const bool extend_sign,
-		const bool isLowerLoad
-		) : VanadisLoadInstruction(id, addr, hw_thr, isa_opts, memAddrReg, offst, tgtReg, load_bytes, extend_sign, MEM_TRANSACTION_NONE),
+		const bool isLowerLoad,
+		VanadisLoadRegisterType regT
+		) : VanadisLoadInstruction(id, addr, hw_thr, isa_opts, memAddrReg, offst, tgtReg, load_bytes, extend_sign, MEM_TRANSACTION_NONE, regT),
 			is_load_lower(isLowerLoad) {
 
 		// We need an extra in register here

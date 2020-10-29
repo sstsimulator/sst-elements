@@ -25,13 +25,34 @@ public:
 		const uint16_t tgtReg,
 		const uint16_t load_bytes,
 		const bool extend_sign,
-		const VanadisMemoryTransaction accessT
-		) : VanadisInstruction(id, addr, hw_thr, isa_opts, 1, 1, 1, 1, 0, 0, 0, 0),
+		const VanadisMemoryTransaction accessT,
+		VanadisLoadRegisterType regT
+		) : VanadisInstruction(id, addr, hw_thr, isa_opts,
+			1,
+			regT == LOAD_INT_REGISTER ? 1 : 0,
+			1,
+			regT == LOAD_INT_REGISTER ? 1 : 0,
+			0,
+			regT == LOAD_FP_REGISTER ? 1 : 0,
+			0,
+			regT == LOAD_FP_REGISTER ? 1 : 0),
 			offset(offst), load_width(load_bytes), signed_extend(extend_sign),
-			memAccessType(accessT) {
+			memAccessType(accessT), regType(regT) {
 
-		isa_int_regs_out[0] = tgtReg;
 		isa_int_regs_in[0]  = memAddrReg;
+
+		switch( regT ) {
+		case LOAD_INT_REGISTER:
+			{
+				isa_int_regs_out[0] = tgtReg;
+			}
+			break;
+		case LOAD_FP_REGISTER:
+			{
+				isa_fp_regs_out[0] = tgtReg;
+			}
+			break;
+		}
 	}
 
 	VanadisLoadInstruction* clone() {
@@ -50,7 +71,12 @@ public:
 			return "LOCK_LOAD";
 		case MEM_TRANSACTION_NONE:
 		default:
-			return "LOAD";
+			switch( regType ) {
+			case LOAD_INT_REGISTER:
+				return "LOAD";
+			case LOAD_FP_REGISTER:
+				return "LOADFP";
+			}
 		}
 	}
 
@@ -99,7 +125,7 @@ public:
 	virtual uint16_t getLoadWidth() const { return load_width; }
 
 	VanadisLoadRegisterType getValueRegisterType() const {
-		return LOAD_INT_REGISTER;
+		return regType;
 	}
 
 	virtual uint16_t getRegisterOffset() const {
@@ -111,6 +137,7 @@ protected:
 	VanadisMemoryTransaction memAccessType;
 	const int64_t offset;
 	const uint16_t load_width;
+	VanadisLoadRegisterType regType;
 
 };
 

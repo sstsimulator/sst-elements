@@ -28,18 +28,39 @@ public:
 		VanadisMemoryTransaction accessT,
 		VanadisStoreRegisterType regT) :
 		VanadisInstruction(id, addr, hw_thr, isa_opts,
-			2, accessT == MEM_TRANSACTION_LLSC_STORE ? 1 : 0,
-			2, accessT == MEM_TRANSACTION_LLSC_STORE ? 1 : 0,
-			0, 0, 0, 0),
+			regT == STORE_INT_REGISTER ? 2 : 1,
+			accessT == MEM_TRANSACTION_LLSC_STORE ? 1 : 0,
+			regT == STORE_INT_REGISTER ? 2 : 1,
+			accessT == MEM_TRANSACTION_LLSC_STORE ? 1 : 0,
+			regT == STORE_FP_REGISTER ? 1 : 0, 0,
+			regT == STORE_FP_REGISTER ? 1 : 0, 0),
 		store_width(store_bytes), offset(offst),
 		memAccessType(accessT), regType(regT) {
 
-		isa_int_regs_in[0] = memoryAddr;
-		isa_int_regs_in[1] = valueReg;
+		switch( regT ) {
+		case STORE_INT_REGISTER:
+			{
+				isa_int_regs_in[0] = memoryAddr;
+				isa_int_regs_in[1] = valueReg;
 
-		if( MEM_TRANSACTION_LLSC_STORE == accessT ) {
-			isa_int_regs_out[0] = valueReg;
+				if( MEM_TRANSACTION_LLSC_STORE == accessT ) {
+					isa_int_regs_out[0] = valueReg;
+				}
+
+			}
+			break;
+		case STORE_FP_REGISTER:
+			{
+				isa_int_regs_in[0] = memoryAddr;
+				isa_fp_regs_in[0] = valueReg;
+
+				if( MEM_TRANSACTION_LLSC_STORE == accessT ) {
+					isa_fp_regs_out[0] = valueReg;
+				}
+			}
+			break;
 		}
+
 	}
 
 	VanadisStoreInstruction* clone() {
@@ -66,7 +87,16 @@ public:
 			return "LOCK_STORE";
 		case MEM_TRANSACTION_NONE:
 		default:
-			return "STORE";
+			{
+				switch( regType ) {
+				case STORE_INT_REGISTER:
+					return "STORE";
+					break;
+				case STORE_FP_REGISTER:
+					return "STOREFP";
+					break;
+				}
+			}
 		}
 	}
 
