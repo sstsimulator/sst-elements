@@ -43,29 +43,31 @@ public:
         SST::Llyr::LlyrMapper
     )
 
-    void mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType > appGraph, LlyrGraph< ProcessingElement* > &graphOut);
+    void mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType > appGraph,
+                  LlyrGraph< ProcessingElement* > &graphOut, SimpleMem*  mem_interface);
 
 private:
 
 
 };
 
-void SimpleMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType > appGraph, LlyrGraph< ProcessingElement* > &graphOut)
+void SimpleMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType > appGraph,
+                            LlyrGraph< ProcessingElement* > &graphOut,  SimpleMem*  mem_interface)
 {
     //Dummy node to make BFS easier
-    ProcessingElement* tempPE = new ProcessingElement(DUMMY, 0, 0);
+    ProcessingElement* tempPE = new ProcessingElement(DUMMY, 0, 0, mem_interface);
     graphOut.addVertex( 0, tempPE );
 
-    tempPE = new ProcessingElement( LD, 1, 2 );
+    tempPE = new ProcessingElement( LD, 1, 2, mem_interface );
     graphOut.addVertex( 1, tempPE );
 
-    tempPE = new ProcessingElement( LD, 2, 2 );
+    tempPE = new ProcessingElement( LD, 2, 2, mem_interface );
     graphOut.addVertex( 2, tempPE );
 
-    tempPE = new ProcessingElement( ADD, 3, 2 );
+    tempPE = new ProcessingElement( ADD, 3, 2, mem_interface );
     graphOut.addVertex( 3, tempPE );
 
-    tempPE = new ProcessingElement( ST, 4, 2 );
+    tempPE = new ProcessingElement( ST, 4, 2, mem_interface );
     graphOut.addVertex( 4, tempPE );
 
 //     tempPE = new ProcessingElement( ST, 22, 2 );
@@ -92,6 +94,47 @@ void SimpleMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType
 //     graphOut.addEdge( 8, 22 );
 //     graphOut.addEdge( 9, 22 );
 //     graphOut.addEdge( 10, 22 );
+
+    uint32_t currentNode;
+    std::queue< uint32_t > nodeQueue;
+
+    //Mark all nodes in the PE graph un-visited
+    std::map< uint32_t, Vertex< ProcessingElement* > >* vertex_map_ = graphOut.getVertexMap();
+    typename std::map< uint32_t, Vertex< ProcessingElement* > >::iterator vertexIterator;
+    for(vertexIterator = vertex_map_->begin(); vertexIterator != vertex_map_->end(); ++vertexIterator)
+    {
+        vertexIterator->second.setVisited(0);
+    }
+
+    //Node 0 is a dummy node and is always the entry point
+    nodeQueue.push(0);
+
+    //BFS and add input/output edges
+    while( nodeQueue.empty() == 0 )
+    {
+        currentNode = nodeQueue.front();
+        nodeQueue.pop();
+
+        vertex_map_->at(currentNode).setVisited(1);
+
+        std::vector< Edge* >* adjacencyList = vertex_map_->at(currentNode).getAdjacencyList();
+
+        //add the destination vertices from this node to the node queue
+        uint32_t destinationVertx;
+        std::vector< Edge* >::iterator it;
+        for( it = adjacencyList->begin(); it != adjacencyList->end(); it++ )
+        {
+            destinationVertx = (*it)->getDestination();
+
+            vertex_map_->at(currentNode).getType()->bindOutputQueue(destinationVertx);
+            vertex_map_->at(destinationVertx).getType()->bindInputQueue(currentNode);
+
+            if( vertex_map_->at(destinationVertx).getVisited() == 0 )
+            {
+                nodeQueue.push(destinationVertx);
+            }
+        }
+    }
 
 }
 

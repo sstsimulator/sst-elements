@@ -17,6 +17,7 @@
 #ifndef _LLYR_GRAPH_H
 #define _LLYR_GRAPH_H
 
+#include <sst/core/sst_config.h>
 #include <sst/core/output.h>
 
 #include <map>
@@ -48,6 +49,7 @@ public:
         weight = weightIn;
         destinationVertex = vertexIn;
     }
+    ~Edge();
 
     bool setWeight( float weightIn )
     {
@@ -83,6 +85,7 @@ public:
     Vertex()
     {
         adjacencyList = new std::vector< Edge* >;
+
         visited = 0;
     }
 
@@ -97,6 +100,7 @@ public:
     bool setType( T typeIn )
     {
         type = typeIn;
+
         return true;
     }
 
@@ -108,6 +112,7 @@ public:
     bool setVisited( bool visitIn )
     {
         visited = visitIn;
+
         return true;
     }
 
@@ -147,10 +152,22 @@ public:
     void printGraph();
     void printDot( std::string fileName );
 
+    uint32_t outEdges( uint32_t vertexId );
     uint32_t numVertices();
+
     void addEdge( uint32_t beginVertex, uint32_t endVertex );
     void addEdge( uint32_t beginVertex, uint32_t endVertex, float weightIn );
     void addVertex( uint32_t vertexNum, T type );
+
+    Vertex<T>* getVertex( uint32_t vertexNum )
+    {
+        return &vertex_map_[vertexNum];
+    }
+
+    void setVertex( uint32_t vertexNum, Vertex<T> &vertex )
+    {
+        vertex_map_[vertexNum] = vertex;
+    }
 
     std::map< uint32_t, Vertex<T> >* getVertexMap( void ) const
     {
@@ -225,6 +242,12 @@ void LlyrGraph<T>::printDot( std::string fileName )
 }
 
 template<class T>
+uint32_t LlyrGraph<T>::outEdges(uint32_t vertexId)
+{
+    return vertex_map_->at(vertexId).adjacencyList->size();
+}
+
+template<class T>
 uint32_t LlyrGraph<T>::numVertices(void)
 {
     return vertices;
@@ -256,8 +279,9 @@ void LlyrGraph<T>::addVertex(uint32_t vertexNum, T type)
     Vertex<T> vertex;
     vertex.setType(type);
 
-    std::pair< typename std::map< uint32_t, Vertex<T> >::iterator,bool > retVal;
-    retVal = vertex_map_->insert( std::pair< uint32_t, Vertex<T> >( vertexNum, vertex) );
+//     std::pair< typename std::map< uint32_t, Vertex<T> >::iterator,bool > retVal;
+//     retVal = vertex_map_->insert( std::pair< uint32_t, Vertex<T> >( vertexNum, vertex) );
+    auto retVal = vertex_map_->emplace( vertexNum, vertex );
     if( retVal.second == false )
     {
         ///TODO

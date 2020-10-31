@@ -16,7 +16,9 @@
 #ifndef _LLYR_MAPPER_H
 #define _LLYR_MAPPER_H
 
+#include <sst/core/sst_config.h>
 #include <sst/core/module.h>
+#include <sst/core/interfaces/simpleMem.h>
 
 #include "../graph.h"
 #include "../processingElement.h"
@@ -33,7 +35,8 @@ public:
     LlyrMapper() : Module() {}
     virtual ~LlyrMapper() {}
 
-    virtual void mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType > appGraph, LlyrGraph< ProcessingElement* > &graphOut) = 0;
+    virtual void mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType > appGraph,
+                          LlyrGraph< ProcessingElement* > &graphOut, SimpleMem*  mem_interface) = 0;
 
 };
 

@@ -22,6 +22,7 @@
 #include <sst/core/interfaces/simpleMem.h>
 
 #include "graph.h"
+#include "lsQueue.h"
 #include "mappers/llyrMapper.h"
 #include "processingElement.h"
 
@@ -94,16 +95,16 @@ private:
     int64_t clock_count;
     bool    compute_complete;
 
-    SST::Link**  links;
-    SST::Link*   clockLink;
-    SST::Output* output;
+    SST::Link**  links_;
+    SST::Link*   clockLink_;
+    SST::Output* output_;
 
-    Statistic< uint64_t >* zeroEventCycles;
-    Statistic< uint64_t >* eventCycles;
+    Statistic< uint64_t >* zeroEventCycles_;
+    Statistic< uint64_t >* eventCycles_;
 
-    LlyrGraph< opType > hardwareGraph;
-    LlyrGraph< opType > applicationGraph;
-    LlyrGraph< ProcessingElement* > mappedGraph;
+    LlyrGraph< opType > hardwareGraph_;
+    LlyrGraph< opType > applicationGraph_;
+    LlyrGraph< ProcessingElement* > mappedGraph_;
 
     LlyrMapper* llyr_mapper_;
 
@@ -111,6 +112,8 @@ private:
     void constructSoftwareGraph( std::string fileName );
 
     opType getOptype( std::string opString );
+
+    LSQueue* ls_queue_;
 
 };
 
