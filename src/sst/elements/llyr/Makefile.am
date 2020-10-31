@@ -14,7 +14,8 @@ libllyr_la_SOURCES = \
 	processingElement.h \
 	processingElement.cc \
 	mappers/llyrMapper.h \
-	mappers/simpleMapper.h
+	mappers/simpleMapper.h \
+	lsQueue.h
 
 deprecated_libllyr_sources =
 
