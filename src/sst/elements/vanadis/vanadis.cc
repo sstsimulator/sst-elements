@@ -457,6 +457,8 @@ int VanadisComponent::performIssue( const uint64_t cycle ) {
 	
 	for( uint32_t i = 0 ; i < hw_threads; ++i ) {
 		if( ! halted_masks[i] ) {
+			issue_isa_tables[i]->print(output, register_files[i], print_int_reg, print_fp_reg);
+		
 			//output->verbose(CALL_INFO, 8, 0, "thread %" PRIu32 " issuing / %" PRIu32 " pending issue\n",
 			//	i, (uint32_t) thread_decoders[i]->getDecodedQueue()->size());
 
@@ -1583,10 +1585,11 @@ void VanadisComponent::resetRegisterStacks( const uint32_t hw_thr ) {
 
 void VanadisComponent::clearROBMisspeculate( const uint32_t hw_thr ) {
 	VanadisCircularQueue<VanadisInstruction*>* thr_rob = rob[hw_thr];
-
+	
 	// Delete all the instructions which we aren't going to process
 	for( size_t i = 0; i < thr_rob->size(); ++i ) {
-		delete thr_rob->peekAt(i);
+		VanadisInstruction* next_ins = thr_rob->peekAt(i);
+		delete next_ins;
 	}
 	
 	// clear the ROB entries and reset
