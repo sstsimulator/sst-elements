@@ -8,7 +8,7 @@
 namespace SST {
 namespace Vanadis {
 
-template<class T>
+template<typename T>
 class VanadisCircularQueue {
 public:
 	VanadisCircularQueue( const size_t size ) :

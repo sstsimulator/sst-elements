@@ -10,7 +10,7 @@
 namespace SST {
 namespace Vanadis {
 
-template<class I, class T>
+template< typename I, typename T >
 class VanadisCache {
 public:
 	VanadisCache( const size_t cache_entries ) {
