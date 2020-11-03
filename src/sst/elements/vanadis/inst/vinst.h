@@ -42,16 +42,28 @@ public:
 
 
 		phys_int_regs_in  = (count_phys_int_reg_in > 0)  ? new uint16_t[ count_phys_int_reg_in  ] : nullptr;
+		for( int i = 0 ; i < count_phys_int_reg_in; ++i ) { phys_int_regs_in[i] = 0; }
+
 		phys_int_regs_out = (count_phys_int_reg_out > 0) ? new uint16_t[ count_phys_int_reg_out ] : nullptr;
+		for( int i = 0 ; i < count_phys_int_reg_out; ++i ) { phys_int_regs_out[i] = 0; }
 
 		isa_int_regs_in   = (count_isa_int_reg_in > 0)   ? new uint16_t[ count_isa_int_reg_in   ] : nullptr;
+		for( int i = 0 ; i < count_isa_int_reg_in; ++i ) { isa_int_regs_in[i] = 0; }
+
 		isa_int_regs_out  = (count_isa_int_reg_out> 0)   ? new uint16_t[ count_isa_int_reg_out  ] : nullptr;
+		for( int i = 0 ; i < count_isa_int_reg_out; ++i ) { isa_int_regs_out[i] = 0; }
 
 		phys_fp_regs_in   = (count_phys_fp_reg_in > 0)   ? new uint16_t[ count_phys_fp_reg_in   ] : nullptr;
+		for( int i = 0 ; i < count_phys_fp_reg_in; ++i ) { phys_fp_regs_in[i] = 0; }
+
 		phys_fp_regs_out  = (count_phys_fp_reg_out> 0)   ? new uint16_t[ count_phys_fp_reg_out  ] : nullptr;
+		for( int i = 0 ; i < count_phys_fp_reg_out; ++i ) { phys_fp_regs_out[i] = 0; }
 
 		isa_fp_regs_in    = (count_isa_fp_reg_in > 0 )   ? new uint16_t[ count_isa_fp_reg_in    ] : nullptr;
+		for( int i = 0 ; i < count_isa_fp_reg_in; ++i ) { isa_fp_regs_in[i] = 0; }
+
 		isa_fp_regs_out   = (count_isa_fp_reg_out > 0 )  ? new uint16_t[ count_isa_fp_reg_out   ] : nullptr;
+		for( int i = 0 ; i < count_isa_fp_reg_out; ++i ) { isa_fp_regs_out[i] = 0; }
 
 		trapError = false;
 		hasExecuted = false;
