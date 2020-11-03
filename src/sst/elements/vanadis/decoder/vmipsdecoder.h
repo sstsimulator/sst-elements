@@ -466,7 +466,7 @@ public:
 			if( ! thread_rob->full() ) {
 				if( ins_loader->hasBundleAt( ip ) ) {
 					output->verbose(CALL_INFO, 16, 0, "---> Found uop bundle for ip=0x0%llx, loading from cache...\n", ip);
-					VanadisInstructionBundle* bundle = ins_loader->getBundleAt( ip )->clone();
+					VanadisInstructionBundle* bundle = ins_loader->getBundleAt( ip );
 
 					output->verbose(CALL_INFO, 16, 0, "-----> Bundle contains %" PRIu32 " entries.\n", bundle->getInstructionCount());
 
@@ -479,38 +479,6 @@ public:
 					
 					output->verbose(CALL_INFO, 16, 0, "----> thr-rob contains %" PRIu32 " entries.\n", (uint32_t) thread_rob->size());
 
-					// Do we have a store in the queue
-					//for( uint32_t j = 0; j < decoded_q->size(); ++j ) {
-					//	output->verbose(CALL_INFO, 16, 0, "---> %5" PRIu32 " : 0x%llx / %s\n",
-					//		j, decoded_q->peekAt(j)->getInstructionAddress(), 
-					//		decoded_q->peekAt(j)->getInstCode());
-					//
-					//	if( decoded_q->peekAt(j)->getInstFuncType() == INST_STORE ) {
-					//		q_contains_store = true;
-					//		break;
-					//	}
-					//}
-
-					// Does the bundle have a LOAD
-					//bool bundle_contains_load = false;
-					//for( uint32_t j = 0; j < bundle->getInstructionCount(); ++j ) {
-					//	if( bundle->getInstructionByIndex( j )->getInstFuncType() == INST_LOAD ) {
-					//		bundle_contains_load = true;
-					//		break;
-					//	}
-					//}
-
-					// We have a store in the queue and we want to issue a load, we have to wait until the store is
-					// issued first to prevent a potential ordering violation
-					//if( q_contains_store ) {
-					//	output->verbose(CALL_INFO, 16, 0, "-----> Decode-q contains a store operation, checking for loads...\n");
-					//
-					//	if( bundle_contains_load ) {
-					//		output->verbose(CALL_INFO, 16, 0, "-----> Decode pending queue contains a store and the instruction bundle contains a load, stalling decode-q insertion to prevent race.\n");
-					//		continue;
-					//	}
-					//}
-
 					// Check if last instruction is a BRANCH, if yes, we need to also decode the branch-delay slot AND handle the prediction
 					if( bundle->getInstructionByIndex( bundle->getInstructionCount() - 1 )->getInstFuncType() == INST_BRANCH ) {
 						output->verbose(CALL_INFO, 16, 0, "-----> Last instruction in the bundle causes potential branch, checking on branch delay slot\n");
@@ -520,7 +488,7 @@ public:
 
 						if( ins_loader->hasBundleAt( ip + 4 ) ) {
 							// We have also decoded the branch-delay
-							delay_bundle = ins_loader->getBundleAt( ip + 4 )->clone();
+							delay_bundle = ins_loader->getBundleAt( ip + 4 );
 						} else {
 							output->verbose(CALL_INFO, 16, 0, "-----> Branch delay slot is not currently decoded into a bundle.\n");
 							if( ins_loader->hasPredecodeAt( ip + 4 ) ) {
@@ -529,7 +497,7 @@ public:
 
 								if( ins_loader->getPredecodeBytes( output, ip + 4, (uint8_t*) &temp_delay, sizeof( temp_delay ) ) ) {
 									decode( output, ip + 4, temp_delay, delay_bundle );
-									ins_loader->cacheDecodedBundle( delay_bundle->clone( ) );
+									ins_loader->cacheDecodedBundle( delay_bundle );
 									decodes_performed++;
 								} else {
 									output->fatal(CALL_INFO, -1, "Error: instruction loader has bytes for delay slot at %0llx, but they cannot be retrieved.\n",
@@ -549,60 +517,58 @@ public:
 								output->verbose(CALL_INFO, 16, 0, "---> Proceeding with issue the branch and its delay slot...\n");
 
 								for( uint32_t i = 0; i < bundle->getInstructionCount(); ++i ) {
-									VanadisInstruction* next_ins = bundle->getInstructionByIndex( i );
+									VanadisInstruction* next_ins = bundle->getInstructionByIndex( i )->clone();
 
 									output->verbose(CALL_INFO, 16, 0, "---> --> issuing ins addr: 0x0%llx, %s...\n",
 										next_ins->getInstructionAddress(),
 										next_ins->getInstCode());
+										
 									thread_rob->push( next_ins );
+									
+									// if this is the last instruction in the bundle
+									// we need to obtain a branch prediction
+									if( i == ( bundle->getInstructionCount() - 1 ) ) {
+										VanadisSpeculatedInstruction* speculated_ins = 
+											dynamic_cast< VanadisSpeculatedInstruction* >( next_ins );
+									
+										// Do we have an entry for the branch instruction we just issued
+										if( branch_predictor->contains(ip) ) {
+											const uint64_t predicted_address = branch_predictor->predictAddress( ip );
+											speculated_ins->setSpeculatedAddress( predicted_address );
+
+											// This is essential a predicted not taken branch
+											if( predicted_address == (ip + 8) ) {
+												output->verbose(CALL_INFO, 16, 0, "---> Branch 0x%llx predicted not taken, ip set to: 0x%0llx\n", ip, predicted_address );
+												speculated_ins->setSpeculatedDirection( BRANCH_NOT_TAKEN );
+											} else {
+												output->verbose(CALL_INFO, 16, 0, "---> Branch 0x%llx predicted taken, jump to 0x%0llx\n", ip, predicted_address);
+												speculated_ins->setSpeculatedDirection( BRANCH_TAKEN );
+											}
+
+											ip = predicted_address;
+											output->verbose(CALL_INFO, 16, 0, "---> Forcing IP update according to branch prediction table, new-ip: %0llx\n", ip);
+										} else {
+											output->verbose(CALL_INFO, 16, 0, "---> Branch table does not contain an entry for ins: 0x%0llx, continue with normal ip += 8 = 0x%0llx\n",
+												ip, (ip+8) );
+
+											speculated_ins->setSpeculatedDirection( BRANCH_NOT_TAKEN );
+											speculated_ins->setSpeculatedAddress( ip + 8 );
+
+											// We don't urgh.. let's just carry on
+											// remember we increment the IP by 2 instructions (me + delay)
+											ip += 8;
+										}
+									}
 								}
 
 								for( uint32_t i = 0; i < delay_bundle->getInstructionCount(); ++i ) {
-									VanadisInstruction* next_ins = delay_bundle->getInstructionByIndex( i );
+									VanadisInstruction* next_ins = delay_bundle->getInstructionByIndex( i )->clone();
 
 									output->verbose(CALL_INFO, 16, 0, "---> --> issuing ins addr: 0x0%llx, %s...\n",
 										next_ins->getInstructionAddress(),
 										next_ins->getInstCode());
-									thread_rob->push( next_ins );
+									thread_rob->push( next_ins);
 								}
-
-								VanadisSpeculatedInstruction* speculated_ins = dynamic_cast<VanadisSpeculatedInstruction*>(
-									bundle->getInstructionByIndex( bundle->getInstructionCount() - 1 ));
-
-								if( nullptr == speculated_ins ) {
-									output->fatal(CALL_INFO, -1, "Error: unable to cast into a speculated instruction despite this being a branch.\n");
-								}
-
-								// Do we have an entry for the branch instruction we just issued
-								if( branch_predictor->contains(ip) ) {
-									const uint64_t predicted_address = branch_predictor->predictAddress( ip );
-									speculated_ins->setSpeculatedAddress( predicted_address );
-
-									// This is essential a predicted not taken branch
-									if( predicted_address == (ip + 8) ) {
-										output->verbose(CALL_INFO, 16, 0, "---> Branch 0x%llx predicted not taken, ip set to: 0x%0llx\n", ip, predicted_address );
-										speculated_ins->setSpeculatedDirection( BRANCH_NOT_TAKEN );
-									} else {
-										output->verbose(CALL_INFO, 16, 0, "---> Branch 0x%llx predicted taken, jump to 0x%0llx\n", ip, predicted_address);
-										speculated_ins->setSpeculatedDirection( BRANCH_TAKEN );
-									}
-
-									ip = predicted_address;
-									output->verbose(CALL_INFO, 16, 0, "---> Forcing IP update according to branch prediction table, new-ip: %0llx\n", ip);
-								} else {
-									output->verbose(CALL_INFO, 16, 0, "---> Branch table does not contain an entry for ins: 0x%0llx, continue with normal ip += 8 = 0x%0llx\n",
-										ip, (ip+8) );
-
-									speculated_ins->setSpeculatedDirection( BRANCH_NOT_TAKEN );
-									speculated_ins->setSpeculatedAddress( ip + 8 );
-
-									// We don't urgh.. let's just carry on
-									// remember we increment the IP by 2 instructions (me + delay)
-									ip += 8;
-								}
-
-								delete bundle;
-								delete delay_bundle;
 
 								uop_bundles_used += 2;
 							} else {
@@ -618,17 +584,12 @@ public:
 							for( uint32_t i = 0; i < bundle->getInstructionCount(); ++i ) {
 								VanadisInstruction* next_ins = bundle->getInstructionByIndex( i );
 
-								if( thread_rob == nullptr ) {
-									output->fatal(CALL_INFO, -1, "THREAD ROB IS NULL\n");
-								}
-
 								output->verbose(CALL_INFO, 16, 0, "---> --> issuing ins addr: 0x0%llx, %s...\n",
 									next_ins->getInstructionAddress(),
 									next_ins->getInstCode());
-								thread_rob->push( next_ins );
+								thread_rob->push( next_ins->clone() );
 							}
 
-							delete bundle;
 							uop_bundles_used++;
 
 							// Push the instruction pointer along by the standard amount
@@ -654,7 +615,7 @@ public:
 
 						output->verbose(CALL_INFO, 16, 0, "---> performing a decode of the bytes found (generates %" PRIu32 " micro-op bundle).\n",
 							(uint32_t) decoded_bundle->getInstructionCount());
-						ins_loader->cacheDecodedBundle( decoded_bundle->clone() );
+						ins_loader->cacheDecodedBundle( decoded_bundle );
 						decodes_performed++;
 
 						break;

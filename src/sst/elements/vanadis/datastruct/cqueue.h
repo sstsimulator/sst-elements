@@ -24,17 +24,10 @@ public:
 	}
 
 	bool full() {
-//		printf("full check - back: %" PRIu32 " front: %" PRIu32 "\n",
-//			(uint32_t) back, (uint32_t) front);
 		return max_capacity == data.size();
 	}
 
 	void push(T item) {
-		if( nullptr == item ) {
-			fprintf(stderr, "QUEUE INSERT GIVEN A NULL\n");
-			assert(0);
-		}
-
 		data.push_back(item);
 	}
 

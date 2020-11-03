@@ -19,13 +19,15 @@ public:
 	}
 
 	~VanadisInstructionBundle() {
-		inst_bundle.clear();
+		clear();
 	}
 
 	void clear() {
 		for( VanadisInstruction* next_ins : inst_bundle ) {
 			delete next_ins;
 		}
+
+		inst_bundle.clear();
 	}
 
 	uint32_t getInstructionCount() const {
