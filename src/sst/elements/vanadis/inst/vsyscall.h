@@ -10,11 +10,10 @@ namespace Vanadis {
 class VanadisSysCallInstruction : public VanadisInstruction {
 public:
 	VanadisSysCallInstruction(
-		const uint64_t id,
                 const uint64_t addr,
                 const uint32_t hw_thr,
                 const VanadisDecoderOptions* isa_opts) :
-			VanadisInstruction(id, addr, hw_thr, isa_opts,
+			VanadisInstruction(addr, hw_thr, isa_opts,
 			isa_opts->countISAIntRegisters(),
 			isa_opts->countISAIntRegisters(),
 			isa_opts->countISAIntRegisters(),

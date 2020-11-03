@@ -10,7 +10,6 @@ namespace Vanadis {
 class VanadisSubInstruction : public VanadisInstruction {
 public:
 	VanadisSubInstruction(
-		const uint64_t id,
 		const uint64_t addr,
 		const uint32_t hw_thr,
 		const VanadisDecoderOptions* isa_opts,
@@ -18,7 +17,7 @@ public:
 		const uint16_t src_1,
 		const uint16_t src_2,
 		bool trapOverflw):
-		VanadisInstruction(id, addr, hw_thr, isa_opts, 2, 1, 2, 1, 0, 0, 0, 0),
+		VanadisInstruction(addr, hw_thr, isa_opts, 2, 1, 2, 1, 0, 0, 0, 0),
 			trapOverflow(trapOverflw) {
 
 		isa_int_regs_in[0]  = src_1;

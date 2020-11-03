@@ -16,7 +16,6 @@ class VanadisLoadInstruction : public VanadisInstruction {
 
 public:
 	VanadisLoadInstruction(
-		const uint64_t id,
 		const uint64_t addr,
 		const uint32_t hw_thr,
 		const VanadisDecoderOptions* isa_opts,
@@ -27,7 +26,7 @@ public:
 		const bool extend_sign,
 		const VanadisMemoryTransaction accessT,
 		VanadisLoadRegisterType regT
-		) : VanadisInstruction(id, addr, hw_thr, isa_opts,
+		) : VanadisInstruction(addr, hw_thr, isa_opts,
 			1,
 			regT == LOAD_INT_REGISTER ? 1 : 0,
 			1,

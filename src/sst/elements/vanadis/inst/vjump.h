@@ -14,14 +14,13 @@ class VanadisJumpInstruction : public VanadisSpeculatedInstruction {
 
 public:
 	VanadisJumpInstruction(
-		const uint64_t id,
                 const uint64_t addr,
                 const uint32_t hw_thr,
                 const VanadisDecoderOptions* isa_opts,
 		const uint64_t pc,
 		const VanadisDelaySlotRequirement delayT
 		) :
-		VanadisSpeculatedInstruction(id, addr, hw_thr, isa_opts,
+		VanadisSpeculatedInstruction(addr, hw_thr, isa_opts,
 			0,0,0,0,0,0,0,0, delayT ) {
 
 		result_dir = BRANCH_TAKEN;

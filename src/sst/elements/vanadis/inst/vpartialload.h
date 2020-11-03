@@ -9,7 +9,6 @@ class VanadisPartialLoadInstruction : public VanadisLoadInstruction {
 
 public:
 	VanadisPartialLoadInstruction(
-		const uint64_t id,
 		const uint64_t addr,
 		const uint32_t hw_thr,
 		const VanadisDecoderOptions* isa_opts,
@@ -20,7 +19,7 @@ public:
 		const bool extend_sign,
 		const bool isLowerLoad,
 		VanadisLoadRegisterType regT
-		) : VanadisLoadInstruction(id, addr, hw_thr, isa_opts, memAddrReg, offst, tgtReg, load_bytes, extend_sign, MEM_TRANSACTION_NONE, regT),
+		) : VanadisLoadInstruction(addr, hw_thr, isa_opts, memAddrReg, offst, tgtReg, load_bytes, extend_sign, MEM_TRANSACTION_NONE, regT),
 			is_load_lower(isLowerLoad) {
 
 		// We need an extra in register here

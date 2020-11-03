@@ -15,6 +15,7 @@
 
 #include <map>
 #include <set>
+#include <cassert>
 
 using namespace SST::Interfaces;
 
@@ -39,7 +40,7 @@ public:
 	VanadisStoreRecord(VanadisStoreInstruction* genIns) :
 		gen_ins(genIns) {}
 
-	bool predates( VanadisInstruction* check ) { return gen_ins->getID() < check->getID(); }
+	bool predates( VanadisInstruction* check ) { assert(0); return true; }
 	bool checkIssueToMemory() { return gen_ins->checkFrontOfROB(); }
 
 	VanadisStoreInstruction* getAssociatedInstruction() { return gen_ins; }

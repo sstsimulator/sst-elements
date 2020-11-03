@@ -14,7 +14,6 @@ namespace Vanadis {
 class VanadisInstruction {
 public:
 	VanadisInstruction(
-		const uint64_t ins_id,
 		const uint64_t address,
 		const uint32_t hw_thr,
 		const VanadisDecoderOptions* isa_opts,
@@ -26,7 +25,6 @@ public:
 		const uint16_t c_phys_fp_reg_out,
 		const uint16_t c_isa_fp_reg_in,
 		const uint16_t c_isa_fp_reg_out) :
-		id(ins_id),
 		ins_address(address),
 		hw_thread(hw_thr),
 		isa_options(isa_opts),
@@ -86,7 +84,6 @@ public:
 	}
 
 	VanadisInstruction( const VanadisInstruction& copy_me ) :
-		id(copy_me.id),
 		ins_address(copy_me.ins_address),
 		hw_thread(copy_me.hw_thread),
 		isa_options(copy_me.isa_options),
@@ -190,7 +187,6 @@ public:
 
 	virtual VanadisInstruction* clone() = 0;
 
-	uint64_t getID() const { return id; }
 	void markEndOfMicroOpGroup() { enduOpGroup = true; }
 	bool endsMicroOpGroup() const { return enduOpGroup; }
 	bool trapsError() const { return trapError; }
@@ -224,14 +220,6 @@ public:
 
 	bool checkFrontOfROB() { return isFrontOfROB; }
 	void markFrontOfROB() { isFrontOfROB = true; }
-	void setID( const uint64_t new_id ) {
-		id = new_id;
-
-//		if( new_id > 10000 ) {
-//			printf("NEW INSTRUCTION ID: %" PRIu64 "\n", new_id);
-//		}
-//		assert( new_id < 10000 );
-	}
 
 	bool hasROBSlotIssued() const { return hasROBSlot; }
 	void markROBSlotIssued() { hasROBSlot = true; }
@@ -251,7 +239,6 @@ public:
 	}
 
 protected:
-	uint64_t id;
 	const uint64_t ins_address;
 	const uint32_t hw_thread;
 

@@ -625,8 +625,8 @@ int VanadisComponent::performRetire( VanadisCircularQueue<VanadisInstruction*>* 
 	
 	// Instruction is flagging error, print out and halt
 	if( rob_front->trapsError() ) {
-		output->fatal( CALL_INFO, -1, "Instruction %" PRIu64 " at 0x%llx flags an error (instruction-type=%s)\n",
-			rob_front->getID(), rob_front->getInstructionAddress(), rob_front->getInstCode() );
+		output->fatal( CALL_INFO, -1, "Instruction 0x%llx flags an error (instruction-type=%s)\n",
+			rob_front->getInstructionAddress(), rob_front->getInstCode() );
 	}
 	
 	if( rob_front->completedIssue() && rob_front->completedExecution() ) {
@@ -657,8 +657,8 @@ int VanadisComponent::performRetire( VanadisCircularQueue<VanadisInstruction*>* 
 						
 						if( delay_ins->completedExecution() ) {
 							if( delay_ins->trapsError() ) {
-								output->fatal(CALL_INFO, -1, "Instruction (delay-slot) %" PRIu64 " at 0x%llx flags an error (instruction-type: %s)\n",
-									delay_ins->getID(), delay_ins->getInstructionAddress(), delay_ins->getInstCode() );
+								output->fatal(CALL_INFO, -1, "Instruction (delay-slot) 0x%llx flags an error (instruction-type: %s)\n",
+									delay_ins->getInstructionAddress(), delay_ins->getInstCode() );
 							}
 							
 							perform_delay_cleanup = true;
@@ -713,8 +713,8 @@ int VanadisComponent::performRetire( VanadisCircularQueue<VanadisInstruction*>* 
 		if( perform_cleanup ) {
 			rob->pop();
 		
-			output->verbose(CALL_INFO, 8, 0, "----> Retire: %" PRIu64 " (0x%0llx / %s)\n",
-				rob_front->getID(), rob_front->getInstructionAddress(), rob_front->getInstCode() );
+			output->verbose(CALL_INFO, 8, 0, "----> Retire: 0x%0llx / %s\n",
+				rob_front->getInstructionAddress(), rob_front->getInstCode() );
 
 			if( pipelineTrace != nullptr ) {
 				fprintf( pipelineTrace, "0x%08llx %s\n",
@@ -738,8 +738,8 @@ int VanadisComponent::performRetire( VanadisCircularQueue<VanadisInstruction*>* 
 				if( perform_delay_cleanup ) {
 
 					VanadisInstruction* delay_ins = rob->pop();
-					output->verbose(CALL_INFO, 8, 0, "----> Retire delay: %" PRIu64 " (0x%llx / %s)\n",
-						delay_ins->getID(), delay_ins->getInstructionAddress(), delay_ins->getInstCode() );
+					output->verbose(CALL_INFO, 8, 0, "----> Retire delay: 0x%llx / %s\n",
+						delay_ins->getInstructionAddress(), delay_ins->getInstCode() );
 
 					if( pipelineTrace != nullptr ) {
 						fprintf( pipelineTrace, "0x%08llx %s\n",

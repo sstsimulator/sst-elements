@@ -16,12 +16,11 @@ enum VanadisFenceType {
 class VanadisFenceInstruction : public VanadisInstruction {
 public:
 	VanadisFenceInstruction(
-		const uint64_t ins_id,
 		const uint64_t address,
 		const uint32_t hw_thr,
 		const VanadisDecoderOptions* isa_opts,
 		const VanadisFenceType fenceT
-		) : VanadisInstruction( ins_id, address, hw_thr, isa_opts, 0,0,0,0,0,0,0,0 ) {
+		) : VanadisInstruction( address, hw_thr, isa_opts, 0,0,0,0,0,0,0,0 ) {
 		fence = fenceT;
 	}
 

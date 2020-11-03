@@ -10,13 +10,12 @@ namespace Vanadis {
 class VanadisJumpRegInstruction : public VanadisSpeculatedInstruction {
 public:
 	VanadisJumpRegInstruction(
-		const uint64_t id,
                 const uint64_t addr,
                 const uint32_t hw_thr,
                 const VanadisDecoderOptions* isa_opts,
 		const uint16_t jump_to_reg,
 		const VanadisDelaySlotRequirement delayT ) :
-		VanadisSpeculatedInstruction(id, addr, hw_thr, isa_opts,
+		VanadisSpeculatedInstruction(addr, hw_thr, isa_opts,
 			1, 0, 1, 0, 0, 0, 0, 0, delayT ) {
 
 		isa_int_regs_in[0] = jump_to_reg;

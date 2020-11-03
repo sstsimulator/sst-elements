@@ -10,13 +10,12 @@ namespace Vanadis {
 class VanadisSetRegisterInstruction : public VanadisInstruction {
 public:
 	VanadisSetRegisterInstruction(
-		const uint64_t id,
 		const uint64_t addr,
 		const uint32_t hw_thr,
 		const VanadisDecoderOptions* isa_opts,
 		const uint16_t dest,
 		const int64_t immediate) :
-		VanadisInstruction(id, addr, hw_thr, isa_opts, 0, 1, 0, 1, 0, 0, 0, 0) {
+		VanadisInstruction(addr, hw_thr, isa_opts, 0, 1, 0, 1, 0, 0, 0, 0) {
 
 		isa_int_regs_out[0] = dest;
 		imm_value = immediate;

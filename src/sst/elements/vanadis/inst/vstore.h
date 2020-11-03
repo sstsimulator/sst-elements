@@ -17,7 +17,6 @@ class VanadisStoreInstruction : public VanadisInstruction {
 
 public:
 	VanadisStoreInstruction(
-		const uint64_t id,
 		const uint64_t addr,
 		const uint32_t hw_thr,
 		const VanadisDecoderOptions* isa_opts,
@@ -27,7 +26,7 @@ public:
 		const uint16_t store_bytes,
 		VanadisMemoryTransaction accessT,
 		VanadisStoreRegisterType regT) :
-		VanadisInstruction(id, addr, hw_thr, isa_opts,
+		VanadisInstruction(addr, hw_thr, isa_opts,
 			regT == STORE_INT_REGISTER ? 2 : 1,
 			accessT == MEM_TRANSACTION_LLSC_STORE ? 1 : 0,
 			regT == STORE_INT_REGISTER ? 2 : 1,

@@ -11,7 +11,6 @@ namespace Vanadis {
 class VanadisFP2GPRInstruction : public VanadisInstruction {
 public:
 	VanadisFP2GPRInstruction(
-		const uint64_t id,
 		const uint64_t addr,
 		const uint32_t hw_thr,
 		const VanadisDecoderOptions* isa_opts,
@@ -19,7 +18,7 @@ public:
 		const uint16_t fp_src,
 		VanadisFPWidth fp_w
 		 ) :
-		VanadisInstruction(id, addr, hw_thr, isa_opts, 0, 1, 0, 1, 1, 0, 1, 0),
+		VanadisInstruction(addr, hw_thr, isa_opts, 0, 1, 0, 1, 1, 0, 1, 0),
 			move_width(fp_w) {
 
 		isa_int_regs_out[0]  = int_dest;

@@ -11,7 +11,6 @@ class VanadisPartialStoreInstruction : public VanadisStoreInstruction {
 
 public:
 	VanadisPartialStoreInstruction(
-		const uint64_t id,
 		const uint64_t addr,
 		const uint32_t hw_thr,
 		const VanadisDecoderOptions* isa_opts,
@@ -21,7 +20,7 @@ public:
 		const uint16_t store_bytes,
 		const bool isLeftStore,
 		VanadisStoreRegisterType regT) :
-		VanadisStoreInstruction(id, addr, hw_thr, isa_opts, memoryAddr, offst, valueReg,
+		VanadisStoreInstruction(addr, hw_thr, isa_opts, memoryAddr, offst, valueReg,
 			store_bytes, MEM_TRANSACTION_NONE, regT),
 			is_left_store(isLeftStore) {
 

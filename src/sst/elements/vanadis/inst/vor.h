@@ -10,14 +10,13 @@ namespace Vanadis {
 class VanadisOrInstruction : public VanadisInstruction {
 public:
 	VanadisOrInstruction(
-		const uint64_t id,
 		const uint64_t addr,
 		const uint32_t hw_thr,
 		const VanadisDecoderOptions* isa_opts,
 		const uint16_t dest,
 		const uint16_t src_1,
 		const uint16_t src_2) :
-		VanadisInstruction(id, addr, hw_thr, isa_opts, 2, 1, 2, 1, 0, 0, 0, 0) {
+		VanadisInstruction(addr, hw_thr, isa_opts, 2, 1, 2, 1, 0, 0, 0, 0) {
 
 		isa_int_regs_in[0]  = src_1;
 		isa_int_regs_in[1]  = src_2;

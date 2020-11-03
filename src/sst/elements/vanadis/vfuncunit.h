@@ -15,7 +15,7 @@ namespace Vanadis {
 class VanadisNoInstruction : public VanadisInstruction {
 public:
 	VanadisNoInstruction(const VanadisDecoderOptions* opts) :
-		VanadisInstruction(UINT64_MAX, UINT64_MAX, UINT32_MAX, opts, 0, 0, 0, 0, 0, 0, 0, 0) {}
+		VanadisInstruction( UINT64_MAX, UINT32_MAX, opts, 0, 0, 0, 0, 0, 0, 0, 0 ) {}
 
 	virtual const char* getInstCode() const { return "VOID"; }
 	VanadisInstruction* clone() { return new VanadisNoInstruction( *this ); };

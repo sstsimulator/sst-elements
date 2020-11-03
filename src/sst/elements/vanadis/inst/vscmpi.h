@@ -11,7 +11,6 @@ namespace Vanadis {
 class VanadisSetRegCompareImmInstruction : public VanadisInstruction {
 public:
 	VanadisSetRegCompareImmInstruction(
-		const uint64_t id,
                 const uint64_t addr,
                 const uint32_t hw_thr,
                 const VanadisDecoderOptions* isa_opts,
@@ -21,7 +20,7 @@ public:
 		const bool sgnd,
 		const VanadisRegisterCompareType cType
 		) :
-		VanadisInstruction(id, addr, hw_thr, isa_opts, 1, 1, 1, 1, 0, 0, 0, 0 ) ,
+		VanadisInstruction(addr, hw_thr, isa_opts, 1, 1, 1, 1, 0, 0, 0, 0 ) ,
 			performSigned(sgnd), compareType(cType), imm_value(imm) {
 
 		isa_int_regs_in[0]  = src_1;

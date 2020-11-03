@@ -11,7 +11,6 @@ namespace Vanadis {
 class VanadisBranchRegCompareInstruction : public VanadisSpeculatedInstruction {
 public:
 	VanadisBranchRegCompareInstruction(
-		const uint64_t id,
                 const uint64_t addr,
                 const uint32_t hw_thr,
                 const VanadisDecoderOptions* isa_opts,
@@ -21,7 +20,7 @@ public:
 		const VanadisDelaySlotRequirement delayT,
 		const VanadisRegisterCompareType cType
 		) :
-		VanadisSpeculatedInstruction(id, addr, hw_thr, isa_opts, 2, 0, 2, 0, 0, 0, 0, 0, delayT),
+		VanadisSpeculatedInstruction(addr, hw_thr, isa_opts, 2, 0, 2, 0, 0, 0, 0, 0, delayT),
 			offset(offst), compareType(cType) {
 		isa_int_regs_in[0] = src_1;
 		isa_int_regs_in[1] = src_2;

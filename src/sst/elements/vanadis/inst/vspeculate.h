@@ -30,7 +30,6 @@ class VanadisSpeculatedInstruction : public VanadisInstruction {
 
 public:
 	VanadisSpeculatedInstruction(
-		const uint64_t id,
 		const uint64_t addr,
 		const uint32_t hw_thr,
 		const VanadisDecoderOptions* isa_opts,
@@ -43,7 +42,7 @@ public:
 		const uint16_t c_isa_fp_reg_in,
 		const uint16_t c_isa_fp_reg_out,
 		const VanadisDelaySlotRequirement delayT) :
-		VanadisInstruction(id, addr, hw_thr, isa_opts,
+		VanadisInstruction(addr, hw_thr, isa_opts,
 			c_phys_int_reg_in, c_phys_int_reg_out,
 			c_isa_int_reg_in, c_isa_int_reg_out,
 			c_phys_fp_reg_in, c_phys_fp_reg_out,

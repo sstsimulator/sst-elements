@@ -10,11 +10,10 @@ namespace Vanadis {
 class VanadisNoOpInstruction : public VanadisInstruction {
 public:
 	VanadisNoOpInstruction(
-		const uint64_t id,
 		const uint64_t addr,
 		const uint32_t hw_thr,
 		const VanadisDecoderOptions* isa_opts) :
-		VanadisInstruction(id, addr, hw_thr, isa_opts, 0, 0, 0, 0, 0, 0, 0, 0) {}
+		VanadisInstruction(addr, hw_thr, isa_opts, 0, 0, 0, 0, 0, 0, 0, 0) {}
 
 	VanadisNoOpInstruction* clone() {
 		return new VanadisNoOpInstruction( *this );

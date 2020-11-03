@@ -10,7 +10,6 @@ namespace Vanadis {
 class VanadisMultiplySplitInstruction : public VanadisInstruction {
 public:
 	VanadisMultiplySplitInstruction(
-		const uint64_t id,
 		const uint64_t addr,
 		const uint32_t hw_thr,
 		const VanadisDecoderOptions* isa_opts,
@@ -19,7 +18,7 @@ public:
 		const uint16_t src_1,
 		const uint16_t src_2,
 		bool performSgnd ) :
-		VanadisInstruction(id, addr, hw_thr, isa_opts, 2, 2, 2, 2, 0, 0, 0, 0),
+		VanadisInstruction(addr, hw_thr, isa_opts, 2, 2, 2, 2, 0, 0, 0, 0),
 			performSigned(performSgnd) {
 
 		isa_int_regs_in[0]  = src_1;
