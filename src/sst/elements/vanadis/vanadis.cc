@@ -133,6 +133,8 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 		// WE NEED ISA INTEGER AND FP COUNTS HERE NOT ZEROS
 		issue_isa_tables.push_back( new VanadisISATable( thread_decoders[i]->getDecoderOptions(),
 			thread_decoders[i]->countISAIntReg(), thread_decoders[i]->countISAFPReg() ) );
+		
+		thread_decoders[i]->setThreadROB( rob[i] );
 
 		for( uint16_t j = 0; j < thread_decoders[i]->countISAIntReg(); ++j ) {
 			issue_isa_tables[i]->setIntPhysReg( j, int_register_stacks[i]->pop() );
@@ -439,8 +441,8 @@ int VanadisComponent::performDecode( const uint64_t cycle ) {
 			thread_decoders[i]->tick(output, (uint64_t) cycle);
 		}
 
-		output->verbose(CALL_INFO, 16, 0, "---> Decode [hw: %5" PRIu32 "] queue-size: %" PRIu32 "\n", i,
-			(uint32_t) thread_decoders[i]->getDecodedQueue()->size());
+		//output->verbose(CALL_INFO, 16, 0, "---> Decode [hw: %5" PRIu32 "] thread-rob: %" PRIu32 "\n", i,
+		//	(uint32_t) thread_decoders[i]->getDecodedQueue()->size());
 	}
 	
 	return 0;
@@ -455,109 +457,86 @@ int VanadisComponent::performIssue( const uint64_t cycle ) {
 	
 	for( uint32_t i = 0 ; i < hw_threads; ++i ) {
 		if( ! halted_masks[i] ) {
-			output->verbose(CALL_INFO, 8, 0, "thread %" PRIu32 " issuing / %" PRIu32 " pending issue\n",
-				i, (uint32_t) thread_decoders[i]->getDecodedQueue()->size());
-		
-			////////////////////////////////////////////////////////////////////////////
-			// See if we can find ROB slots for instructions in the decode
-			VanadisInstruction* ins = nullptr;
-			uint32_t ins_index = UINT32_MAX;
-			
-			for( uint32_t j = 0; j < thread_decoders[i]->getDecodedQueue()->size(); ++j ) {
-				if( rob[i]->full() ) {
-					break;
-				}
-			
-				ins = thread_decoders[i]->getDecodedQueue()->peekAt(j);
-			
-				if( ! ins->hasROBSlotIssued() ) {
-					rob[i]->push( ins );
-					ins->markROBSlotIssued();
-				}
-			}
-			
-			////////////////////////////////////////////////////////////////////////////
-			// Find an instruction which has ROB but isn't issued yet
-			ins = nullptr;
-			
-			// Find the first instruction which has an ROB allocated for us to 
-			// allocate and issue
-			for( uint32_t j = 0; j < thread_decoders[i]->getDecodedQueue()->size(); ++j ) {
-				ins = thread_decoders[i]->getDecodedQueue()->peekAt(j);
-				ins_index = j;
-				
-				if( ins->hasROBSlotIssued() ) {
-					break;
-				} else {
-					ins = nullptr;
-				}
-			}
-			
-			// if we are a load and there is a store in front of us then it must not
-			// just have an ROB but it must also have issued to the LSQ or else we 
-			// could get a memory order violation
-			//if( ins != nullptr ) {
-			//	if( ins->getInstFuncType() == INST_LOAD ) {
-			//		for( uint32_t j = 0; i < ins_index; ++j ) {
-			//			if( thread_decoders[i]->getDecodedQueue()->peekAt(j)->getInstFuncType() == INST_STORE ) {
-			//				if( ! thread_decoders[i]->getDecodedQueue()->peekAt(j)->completedIssue() ) {
-			//					ins = nullptr;
-			//					ins_index = UINT32_MAX;
-			//					break;
-			//				}
-			//			}
-			//		}
-			//	}
-			//}
-		
-			// if the instruction isn't null we can try to allocate it
-			if( ins != nullptr ) {
-				ins->printToBuffer(instPrintBuffer, 1024);
-				output->verbose(CALL_INFO, 8, 0, "--> Attempting issue for: 0x%llx / %s\n",
-					ins->getInstructionAddress(), instPrintBuffer );
-				
-				const int resource_check = checkInstructionResources( ins, int_register_stacks[i], 
-					fp_register_stacks[i], issue_isa_tables[i], tmp_raw_int, tmp_raw_fp);
-					
-				output->verbose(CALL_INFO, 8, 0, "----> Check if registers are usable? result: %d (%s)\n",
-					resource_check, (0 == resource_check) ? "success" : "cannot issue");
-					
-				if( 0 == resource_check ) {
-					int allocate_fu = allocateFunctionalUnit( ins );
-					output->verbose(CALL_INFO, 8, 0, "----> allocated functional unit: %s\n",
-						(0 == allocate_fu) ? "yes" : "no");
-					
-					if( 0 == allocate_fu ) {
-						const int status = assignRegistersToInstruction(
-							thread_decoders[i]->countISAIntReg(),
-							thread_decoders[i]->countISAFPReg(),
-							ins,
-							int_register_stacks[i],
-							fp_register_stacks[i],
-							issue_isa_tables[i]);
+			//output->verbose(CALL_INFO, 8, 0, "thread %" PRIu32 " issuing / %" PRIu32 " pending issue\n",
+			//	i, (uint32_t) thread_decoders[i]->getDecodedQueue()->size());
 
-						ins->printToBuffer(instPrintBuffer, 1024);
-						output->verbose(CALL_INFO, 8, 0, "----> Issued for: %s / 0x%llx / status: %d\n", instPrintBuffer,
-							ins->getInstructionAddress(), status);
+			bool found_store = false;
+			bool found_load  = false;
+			
+			bool issued_an_ins = false;
+			
+			// Find the next instruction which has not been issued yet
+			for( uint32_t j = 0; j < rob[i]->size(); ++j ) {
+				VanadisInstruction* ins = rob[i]->peekAt(j);
+				
+				if( ! ins->completedIssue() ) {
+					ins->printToBuffer(instPrintBuffer, 1024);
+					output->verbose(CALL_INFO, 8, 0, "--> Attempting issue for: rob[%" PRIu32 "]: 0x%llx / %s\n",
+						j, ins->getInstructionAddress(), instPrintBuffer );
+						
+					const int resource_check = checkInstructionResources( ins, int_register_stacks[i], 
+						fp_register_stacks[i], issue_isa_tables[i], tmp_raw_int, tmp_raw_fp);
+						
+					output->verbose(CALL_INFO, 8, 0, "----> Check if registers are usable? result: %d (%s)\n",
+						resource_check, (0 == resource_check) ? "success" : "cannot issue");
+						
+					if( 0 == resource_check ) {
+						int allocate_fu = allocateFunctionalUnit( ins );
+						output->verbose(CALL_INFO, 8, 0, "----> allocated functional unit: %s\n",
+							(0 == allocate_fu) ? "yes" : "no");
+							
+						if( 0 == allocate_fu ) {
+							if( (INST_STORE == ins->getInstFuncType()) && (found_load || found_store) ) {
+								// We cannot issue 
+							} else {
+								if( (INST_LOAD == ins->getInstFuncType()) && (found_load || found_store) ) {
+									// We cannot issue
+								} else {
+									const int status = assignRegistersToInstruction(
+										thread_decoders[i]->countISAIntReg(),
+										thread_decoders[i]->countISAFPReg(),
+										ins,
+										int_register_stacks[i],
+										fp_register_stacks[i],
+										issue_isa_tables[i]);
 
-					//	thread_decoders[i]->getDecodedQueue()->pop();
-					// REMOVE FROM THE DECODER
-						if( ins_index != UINT32_MAX ) {
-							thread_decoders[i]->getDecodedQueue()->removeAt( ins_index );
+									ins->printToBuffer(instPrintBuffer, 1024);
+									output->verbose(CALL_INFO, 8, 0, "----> Issued for: %s / 0x%llx / status: %d\n", instPrintBuffer,
+										ins->getInstructionAddress(), status);
+								
+									ins->markIssued();
+									stat_ins_issued->addData(1);
+									issued_an_ins = true;
+								}
+							}
 						}
-						
-						ins->markIssued();
-						
-//						if( ins->endsMicroOpGroup() ) {
-							stat_ins_issued->addData(1);
-//						}
 					}
 				}
-			} else {
-				output->verbose(CALL_INFO, 8, 0, "--> no instruction has ROB and can be allocated.\n");
+				
+				// Keep track of whether we have seen a load or a store ahead of us
+				// that hasn't been issued, because that means the LSQ hasn't seen it
+				// yet and so we could get an ordering violation in the memory system
+				found_store |= (INST_STORE == ins->getInstFuncType()) && (! ins->completedIssue());
+				found_load  |= (INST_LOAD  == ins->getInstFuncType()) && (! ins->completedIssue());
+				
+				// Keep track of whether we have seen any fences, we just ensure we
+				// cannot issue load/stores until fences complete
+				if( INST_FENCE == ins->getInstFuncType() ) {
+					found_store = true;
+					found_load  = true;
+				}
+				
+				// We issued an instruction this cycle, so exit
+				if( issued_an_ins ) {
+					break;
+				}
 			}
-			
-			issue_isa_tables[i]->print(output, register_files[i], print_int_reg, print_fp_reg);
+
+			// Only print the table if we issued an instruction, reduce print out 
+			// clutter
+			if( issued_an_ins ) {
+				issue_isa_tables[i]->print(output, register_files[i], print_int_reg, print_fp_reg);
+			}
 		} else {
 			output->verbose(CALL_INFO, 8, 0, "thread %" PRIu32 " is halted, did not process for issue this cycle.\n", i);
 		}
@@ -623,7 +602,7 @@ int VanadisComponent::performRetire( VanadisCircularQueue<VanadisInstruction*>* 
 			rob_front->getID(), rob_front->getInstructionAddress(), rob_front->getInstCode() );
 	}
 	
-	if( rob_front->completedExecution() ) {
+	if( rob_front->completedIssue() && rob_front->completedExecution() ) {
 		bool perform_cleanup         = true;
 		bool perform_delay_cleanup   = false;
 		bool perform_pipelne_clear   = false;

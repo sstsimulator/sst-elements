@@ -39,8 +39,10 @@ public:
 		ip = 0;
 		tls_ptr = 0;
 
-		const size_t decode_q_len = params.find<size_t>("decode_q_len", 8);
-		decoded_q = new VanadisCircularQueue< VanadisInstruction* >( decode_q_len );
+		//const size_t decode_q_len = params.find<size_t>("decode_q_len", 8);
+		//decoded_q = new VanadisCircularQueue< VanadisInstruction* >( decode_q_len );
+		
+		thread_rob = nullptr;
 
 		icache_line_width = params.find<uint64_t>("icache_line_width", 64);
 
@@ -62,7 +64,7 @@ public:
 	}
 
 	virtual ~VanadisDecoder() {
-		delete decoded_q;
+		//delete decoded_q;
 		delete os_handler;
 	}
 
@@ -125,38 +127,33 @@ public:
 		output->verbose(CALL_INFO, 16, 0, "[decoder] -> clear decode-q and set new ip: 0x%llx\n", newIP);
 
 		// Clear out the decode queue, need to restart
-		decoded_q->clear();
+		//decoded_q->clear();
 
 		clearDecoderAfterMisspeculate( output );
 	}
 
-	void setThreadLocalStoragePointer( uint64_t new_tls ) {
-		tls_ptr = new_tls;
-	}
+	void setThreadLocalStoragePointer( uint64_t new_tls ) { tls_ptr = new_tls; }
 
-	uint64_t getThreadLocalStoragePointer() const {
-		return tls_ptr;
-	}
+	uint64_t getThreadLocalStoragePointer() const { return tls_ptr; }
 
-	VanadisCircularQueue<VanadisInstruction*>* getDecodedQueue() { return decoded_q; }
+	//VanadisCircularQueue<VanadisInstruction*>* getDecodedQueue() { return decoded_q; }
+	
+	virtual void setThreadROB( VanadisCircularQueue<VanadisInstruction*>* thr_rob ) {
+		thread_rob = thr_rob; 
+	}
 
 	void setHardwareThread( const uint32_t thr ) { hw_thr = thr; }
 	uint32_t getHardwareThread() const { return hw_thr; }
 
-	VanadisInstructionLoader* getInstructionLoader() {
-		return ins_loader;
-	}
-
-	VanadisBranchUnit* getBranchPredictor() {
-		return branch_predictor;
-	}
+	VanadisInstructionLoader* getInstructionLoader() { return ins_loader; }
+	VanadisBranchUnit* getBranchPredictor() { return branch_predictor; }
 
 	virtual void configureApplicationLaunch( SST::Output* output, VanadisISATable* isa_tbl,
 		VanadisRegisterFile* regFile, Interfaces::SimpleMem* mem_if,
 		VanadisELFInfo* elf_info, SST::Params& app_params ) = 0;
-	virtual VanadisCPUOSHandler* getOSHandler() {
-		return os_handler;
-	}
+	
+	virtual VanadisCPUOSHandler* getOSHandler() { return os_handler; }
+	
 protected:
 	virtual void clearDecoderAfterMisspeculate( SST::Output* output ) {};
 
@@ -168,7 +165,9 @@ protected:
 	uint64_t tls_ptr;
 
 	bool wantDelegatedLoad;
-	VanadisCircularQueue<VanadisInstruction*>* decoded_q;
+	VanadisCircularQueue< VanadisInstruction* >* thread_rob;
+	
+	//VanadisCircularQueue<VanadisInstruction*>* decoded_q;
 
 	VanadisInstructionLoader* ins_loader;
 	VanadisBranchUnit* branch_predictor;

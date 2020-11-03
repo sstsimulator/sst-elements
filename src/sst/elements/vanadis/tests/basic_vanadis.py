@@ -14,9 +14,9 @@ v_cpu_0.addParams({
        "clock" : "2.0GHz",
 #       "executable" : "./tests/hello-gem5",
 #       "executable" : "./tests/hello-mips",
-#       "executable" : "./tests/hello-musl",
+       "executable" : "./tests/hello-musl",
 #       "executable" : "./tests/core-perf-musl",
-       "executable" : "./tests/stream-musl",
+#       "executable" : "./tests/stream-musl",
 #       "executable" : "./tests/inst-test/and",
        "app.env_count" : 1,
        "app.env0" : "HOME=/home/sdhammo",
@@ -26,9 +26,9 @@ v_cpu_0.addParams({
        "print_int_reg" : 1,
 #      "pipeline_trace_file" : "pipe-lsq2.trace",
        "reorder_slots" : 128,
-      "decodes_per_cycle" : 2,
-      "issues_per_cycle" :  2,
-      "retires_per_cycle" : 2
+      "decodes_per_cycle" : 4,
+      "issues_per_cycle" :  4,
+      "retires_per_cycle" : 4
 })
 
 decode0   = v_cpu_0.setSubComponent( "decoder0", "vanadis.VanadisMIPSDecoder" )
@@ -52,7 +52,7 @@ v_cpu_0_lsq.addParams({
 	"address_mask" : 0xFFFFFFFF,
 #	"address_trace" : "address-lsq2.trace",
 #	"allow_speculated_operations" : 0,
-	"load_store_entries" : 8
+	"load_store_entries" : 16
 })
 
 dcache_if = v_cpu_0_lsq.setSubComponent( "memory_interface", "memHierarchy.memInterface" )

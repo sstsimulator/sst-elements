@@ -17,9 +17,9 @@
 #include <unistd.h>
 #include <sys/types.h>
 
-#define MIPS_REG_ZERO		  0
-#define MIPS_REG_LO		  32
-#define MIPS_REG_HI		  33
+#define MIPS_REG_ZERO		  	  0
+#define MIPS_REG_LO		          32
+#define MIPS_REG_HI		          33
 
 #define MIPS_OP_MASK              0xFC000000
 #define MIPS_RS_MASK              0x3E00000
@@ -463,9 +463,9 @@ public:
 		uint16_t uop_bundles_used  = 0;
 
 		for( uint16_t i = 0; i < max_decodes_per_cycle; ++i ) {
-			// if the decoded queue has space, then lets go ahead and
+			// if the ROB has space, then lets go ahead and
 			// decode the input, put it in the queue for issue.
-			if( ! decoded_q->full() ) {
+			if( ! thread_rob->full() ) {
 				if( ins_loader->hasBundleAt( ip ) ) {
 					output->verbose(CALL_INFO, 16, 0, "---> Found uop bundle for ip=0x0%llx, loading from cache...\n", ip);
 					VanadisInstructionBundle* bundle = ins_loader->getBundleAt( ip )->clone( &next_ins_id );
@@ -479,39 +479,39 @@ public:
 
 					bool q_contains_store = false;
 					
-					output->verbose(CALL_INFO, 16, 0, "----> decode-q contains %" PRIu32 " entries.\n", (uint32_t) decoded_q->size());
+					output->verbose(CALL_INFO, 16, 0, "----> thr-rob contains %" PRIu32 " entries.\n", (uint32_t) thread_rob->size());
 
 					// Do we have a store in the queue
-					for( uint32_t j = 0; j < decoded_q->size(); ++j ) {
-						output->verbose(CALL_INFO, 16, 0, "---> %5" PRIu32 " : 0x%llx / %s\n",
-							j, decoded_q->peekAt(j)->getInstructionAddress(), 
-							decoded_q->peekAt(j)->getInstCode());
-					
-						if( decoded_q->peekAt(j)->getInstFuncType() == INST_STORE ) {
-							q_contains_store = true;
-							break;
-						}
-					}
+					//for( uint32_t j = 0; j < decoded_q->size(); ++j ) {
+					//	output->verbose(CALL_INFO, 16, 0, "---> %5" PRIu32 " : 0x%llx / %s\n",
+					//		j, decoded_q->peekAt(j)->getInstructionAddress(), 
+					//		decoded_q->peekAt(j)->getInstCode());
+					//
+					//	if( decoded_q->peekAt(j)->getInstFuncType() == INST_STORE ) {
+					//		q_contains_store = true;
+					//		break;
+					//	}
+					//}
 
 					// Does the bundle have a LOAD
-					bool bundle_contains_load = false;
-					for( uint32_t j = 0; j < bundle->getInstructionCount(); ++j ) {
-						if( bundle->getInstructionByIndex( j )->getInstFuncType() == INST_LOAD ) {
-							bundle_contains_load = true;
-							break;
-						}
-					}
+					//bool bundle_contains_load = false;
+					//for( uint32_t j = 0; j < bundle->getInstructionCount(); ++j ) {
+					//	if( bundle->getInstructionByIndex( j )->getInstFuncType() == INST_LOAD ) {
+					//		bundle_contains_load = true;
+					//		break;
+					//	}
+					//}
 
 					// We have a store in the queue and we want to issue a load, we have to wait until the store is
 					// issued first to prevent a potential ordering violation
-					if( q_contains_store ) {
-						output->verbose(CALL_INFO, 16, 0, "-----> Decode-q contains a store operation, checking for loads...\n");
-
-						if( bundle_contains_load ) {
-							output->verbose(CALL_INFO, 16, 0, "-----> Decode pending queue contains a store and the instruction bundle contains a load, stalling decode-q insertion to prevent race.\n");
-							continue;
-						}
-					}
+					//if( q_contains_store ) {
+					//	output->verbose(CALL_INFO, 16, 0, "-----> Decode-q contains a store operation, checking for loads...\n");
+					//
+					//	if( bundle_contains_load ) {
+					//		output->verbose(CALL_INFO, 16, 0, "-----> Decode pending queue contains a store and the instruction bundle contains a load, stalling decode-q insertion to prevent race.\n");
+					//		continue;
+					//	}
+					//}
 
 					// Check if last instruction is a BRANCH, if yes, we need to also decode the branch-delay slot AND handle the prediction
 					if( bundle->getInstructionByIndex( bundle->getInstructionCount() - 1 )->getInstFuncType() == INST_BRANCH ) {
@@ -547,7 +547,7 @@ public:
 						// We have the branch AND the delay, now lets issue them.
 						if( nullptr != delay_bundle ) {
 							if( ( bundle->getInstructionCount() + delay_bundle->getInstructionCount() ) <
-								( decoded_q->capacity() - decoded_q->size() ) ) {
+								( thread_rob->capacity() - thread_rob->size() ) ) {
 
 								output->verbose(CALL_INFO, 16, 0, "---> Proceeding with issue the branch and its delay slot...\n");
 
@@ -558,7 +558,7 @@ public:
 										next_ins->getID(),
 										next_ins->getInstructionAddress(),
 										next_ins->getInstCode());
-									decoded_q->push( next_ins );
+									thread_rob->push( next_ins );
 								}
 
 								for( uint32_t i = 0; i < delay_bundle->getInstructionCount(); ++i ) {
@@ -568,10 +568,11 @@ public:
 										next_ins->getID(),
 										next_ins->getInstructionAddress(),
 										next_ins->getInstCode());
-									decoded_q->push( next_ins );
+									thread_rob->push( next_ins );
 								}
 
-								VanadisSpeculatedInstruction* speculated_ins = dynamic_cast<VanadisSpeculatedInstruction*>(bundle->getInstructionByIndex( bundle->getInstructionCount() - 1 ));
+								VanadisSpeculatedInstruction* speculated_ins = dynamic_cast<VanadisSpeculatedInstruction*>(
+									bundle->getInstructionByIndex( bundle->getInstructionCount() - 1 ));
 
 								if( nullptr == speculated_ins ) {
 									output->fatal(CALL_INFO, -1, "Error: unable to cast into a speculated instruction despite this being a branch.\n");
@@ -617,17 +618,21 @@ public:
 					} else {
 						output->verbose(CALL_INFO, 16, 0, "---> Instruction for issue is not a branch, continuing with normal copy to issue-queue...\n");
 						// Do we have enough space in the decode queue for the bundle contents?
-						if( bundle->getInstructionCount() < (decoded_q->capacity() - decoded_q->size()) ) {
+						if( bundle->getInstructionCount() < (thread_rob->capacity() - thread_rob->size()) ) {
 							// Put in the queue
 							for( uint32_t i = 0; i < bundle->getInstructionCount(); ++i ) {
 								VanadisInstruction* next_ins = bundle->getInstructionByIndex( i );
 								next_ins->setID( next_ins_id++ );
 
+								if( thread_rob == nullptr ) {
+									output->fatal(CALL_INFO, -1, "THREAD ROB IS NULL\n");
+								}
+
 								output->verbose(CALL_INFO, 16, 0, "---> --> issuing ins id: %" PRIu64 " (addr: 0x0%llx, %s)...\n",
 									next_ins->getID(),
 									next_ins->getInstructionAddress(),
 									next_ins->getInstCode());
-								decoded_q->push( next_ins );
+								thread_rob->push( next_ins );
 							}
 
 							delete bundle;
@@ -638,7 +643,7 @@ public:
 						} else {
 							output->verbose(CALL_INFO, 16, 0, "---> --> micro-op bundle for %p contains %" PRIu32 " ops, we only have %" PRIu32 " slots available in the decode q, wait for resources to become available.\n",
 								(void*) ip, (uint32_t) bundle->getInstructionCount(),
-								(uint32_t) (decoded_q->capacity() - decoded_q->size()));
+								(uint32_t) (thread_rob->capacity() - thread_rob->size()));
 							// We don't have enough space, so we have to stop and wait for more entries to free up.
 							break;
 						}
