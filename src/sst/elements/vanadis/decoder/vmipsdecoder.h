@@ -681,8 +681,8 @@ public:
 			}
 		}
 
-		output->verbose(CALL_INFO, 16, 0, "---> Performed %" PRIu16 " decodes this cycle, %" PRIu16 " uop-bundles used.\n",
-			decodes_performed, uop_bundles_used);
+		output->verbose(CALL_INFO, 16, 0, "---> Performed %" PRIu16 " decodes this cycle, %" PRIu16 " uop-bundles used / updated-ip: 0x%llx.\n",
+			decodes_performed, uop_bundles_used, ip);
 	}
 
 protected:

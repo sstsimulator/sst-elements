@@ -138,9 +138,9 @@ public:
 
     // Optional since there is nothing to document
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-	{ "lsq",                "Load-Store Queue for Memory Access", "SST::Vanadis::VanadisLoadStoreQueue" },
-	{ "mem_interface_inst", "Interface to memory system for instructions", "SST::Interfaces::SimpleMem" },
-	{ "decoder%(hardware_threads)d", "Instruction decoder for a hardware thread", "SST::Vanadis::VanadisDecoder" }
+		{ "lsq",                "Load-Store Queue for Memory Access", "SST::Vanadis::VanadisLoadStoreQueue" },
+		{ "mem_interface_inst", "Interface to memory system for instructions", "SST::Interfaces::SimpleMem" },
+		{ "decoder%(hardware_threads)d", "Instruction decoder for a hardware thread", "SST::Vanadis::VanadisDecoder" }
     )
 
     VanadisComponent( SST::ComponentId_t id, SST::Params& params );
@@ -172,20 +172,22 @@ private:
     virtual bool tick(SST::Cycle_t);
 
     int assignRegistersToInstruction(
-	const uint16_t int_reg_count,
-    const uint16_t fp_reg_count,
-	VanadisInstruction* ins,
-	VanadisRegisterStack* int_regs,
-	VanadisRegisterStack* fp_regs,
-	VanadisISATable* isa_table);
+		const uint16_t int_reg_count,
+    	const uint16_t fp_reg_count,
+		VanadisInstruction* ins,
+		VanadisRegisterStack* int_regs,
+		VanadisRegisterStack* fp_regs,
+		VanadisISATable* isa_table);
 
     int checkInstructionResources(
         VanadisInstruction* ins,
         VanadisRegisterStack* int_regs,
         VanadisRegisterStack* fp_regs,
         VanadisISATable* isa_table,
-        std::set<uint16_t>& isa_int_regs_written_ahead,
-        std::set<uint16_t>& isa_fp_regs_written_ahead );
+        std::unordered_set<uint16_t>& isa_int_regs_read,
+        std::unordered_set<uint16_t>& isa_int_regs_write,
+        std::unordered_set<uint16_t>& isa_fp_regs_read,
+        std::unordered_set<uint16_t>& isa_fp_regs_write );
 
     int recoverRetiredRegisters( 
 		VanadisInstruction* ins,
@@ -233,8 +235,10 @@ private:
     std::vector<VanadisISATable*> issue_isa_tables;
     std::vector<VanadisISATable*> retire_isa_tables;
 
-    std::set<uint16_t> tmp_raw_int;
-    std::set<uint16_t> tmp_raw_fp;
+    std::unordered_set<uint16_t> tmp_not_issued_int_reg_read;
+    std::unordered_set<uint16_t> tmp_int_reg_write;
+    std::unordered_set<uint16_t> tmp_not_issued_fp_reg_read;
+    std::unordered_set<uint16_t> tmp_fp_reg_write;
 
     std::list<VanadisInsCacheLoadRecord*>* icache_load_records;
 
