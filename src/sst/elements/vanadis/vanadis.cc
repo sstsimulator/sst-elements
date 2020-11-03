@@ -1582,12 +1582,15 @@ void VanadisComponent::resetRegisterStacks( const uint32_t hw_thr ) {
 }
 
 void VanadisComponent::clearROBMisspeculate( const uint32_t hw_thr ) {
-	VanadisCircularQueue<VanadisInstruction*>* rob_tmp = new
-		VanadisCircularQueue<VanadisInstruction*>( rob[hw_thr]->capacity() );
+	VanadisCircularQueue<VanadisInstruction*>* thr_rob = rob[hw_thr];
 
-	// Delete the old ROB since this is not clear and reset to an empty one
-	delete rob[hw_thr];
-	rob[hw_thr] = rob_tmp;
+	// Delete all the instructions which we aren't going to process
+	for( size_t i = 0; i < thr_rob->size(); ++i ) {
+		delete thr_rob->peekAt(i);
+	}
+	
+	// clear the ROB entries and reset
+	thr_rob->clear();
 }
 
 void VanadisComponent::syscallReturnCallback( uint32_t thr ) {
