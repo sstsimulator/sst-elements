@@ -32,6 +32,8 @@ VanadisNodeOSComponent::VanadisNodeOSComponent( SST::ComponentId_t id, SST::Para
 	const char* stdout_path = "stdout";
 	const char* stderr_path = "stderr";
 
+	get_sim_nano = std::bind( &VanadisNodeOSComponent::getSimNanoSeconds, this );
+
 	for( uint32_t i = 0; i < core_count; ++i ) {
 		snprintf( port_name_buffer, 128, "core%" PRIu32 "", i );
 		output->verbose(CALL_INFO, 1, 0, "---> processing link %s...\n", port_name_buffer);
@@ -49,6 +51,7 @@ VanadisNodeOSComponent::VanadisNodeOSComponent( SST::ComponentId_t id, SST::Para
 		VanadisNodeOSCoreHandler* new_core_handler = new VanadisNodeOSCoreHandler( verbosity, i,
 			stdin_path, stdout_path, stderr_path );
 		new_core_handler->setLink( core_link );
+		new_core_handler->setSimTimeNano( get_sim_nano );
 
 		std::function<void( SimpleMem::Request*, uint32_t )> core_callback = std::bind( &VanadisNodeOSComponent::sendMemoryEvent,
 			this, std::placeholders::_1, std::placeholders::_2 );

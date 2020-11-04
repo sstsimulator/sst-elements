@@ -63,11 +63,16 @@ public:
 		mem_if->sendRequest(ev);
 	}
 
+	uint64_t getSimNanoSeconds() {
+		return getCurrentSimTimeNano();
+	}
+
 private:
 	VanadisNodeOSComponent();  // for serialization only
     	VanadisNodeOSComponent(const VanadisNodeOSComponent&); // do not implement
     	void operator=(const VanadisNodeOSComponent&); // do not implement
 
+	std::function<uint64_t()> get_sim_nano;
 	std::unordered_map< SimpleMem::Request::id_t, uint32_t > ev_core_map;
 	std::vector< SST::Link* > core_links;
 	std::vector< VanadisNodeOSCoreHandler* > core_handlers;

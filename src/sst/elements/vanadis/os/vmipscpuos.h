@@ -24,6 +24,7 @@
 #define VANADIS_SYSCALL_SET_THREAD_AREA  4283
 #define VANADIS_SYSCALL_RM_INOTIFY       4286
 #define VANADIS_SYSCALL_OPENAT		 4288
+#define VANADIS_SYSCALL_GETTIME64        4403
 
 namespace SST {
 namespace Vanadis {
@@ -319,6 +320,21 @@ public:
 				} else {
 					output->fatal(CALL_INFO, -1, "STOP\n");
 				}
+			}
+			break;
+
+		case VANADIS_SYSCALL_GETTIME64:
+			{
+				const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
+                                int64_t clk_type = regFile->getIntReg<int64_t>( phys_reg_4 );
+
+                                const uint16_t phys_reg_5 = isaTable->getIntPhysReg(5);
+                                uint64_t time_addr = regFile->getIntReg<uint64_t>( phys_reg_5 );
+
+				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to clock_gettime64( %" PRId64 ", %" PRIu64 " )\n",
+					clk_type, time_addr );
+
+				call_ev = new VanadisSyscallGetTime64Event( core_id, hw_thr, clk_type, time_addr );
 			}
 			break;
 

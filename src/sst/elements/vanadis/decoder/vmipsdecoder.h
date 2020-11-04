@@ -1,5 +1,4 @@
 
-
 #ifndef _H_VANADIS_MIPS_DECODER
 #define _H_VANADIS_MIPS_DECODER
 
@@ -25,6 +24,12 @@
 #define MIPS_RS_MASK              0x3E00000
 #define MIPS_RT_MASK              0x1F0000
 #define MIPS_RD_MASK              0xF800
+
+#define MIPS_FD_MASK              0x7C0
+#define MIPS_FS_MASK              0xF800
+#define MIPS_FT_MASK              0x1F0000
+#define MIPS_FR_MASK              0x3E00000
+
 #define MIPS_ADDR_MASK            0x7FFFFFF
 #define MIPS_J_ADDR_MASK          0x3FFFFFF
 #define MIPS_J_UPPER_MASK         0xF0000000
@@ -123,6 +128,7 @@
 
 #define MIPS_SPEC_COP_MASK_CF	  0x2
 #define MIPS_SPEC_COP_MASK_CT     0x6
+#define MIPS_SPEC_COP_MASK_MOV	  0x6
 
 namespace SST {
 namespace Vanadis {
@@ -648,6 +654,13 @@ protected:
 		(*rt) = (ins & MIPS_RT_MASK) >> 16;
 		(*rs) = (ins & MIPS_RS_MASK) >> 21;
 		(*rd) = (ins & MIPS_RD_MASK) >> 11;
+	}
+
+	void extract_fp_regs( const uint32_t ins, uint16_t* fr, uint16_t* ft, uint16_t* fs, uint16_t* fd ) const {
+		(*fr) = (ins & MIPS_FR_MASK) >> 21;
+		(*ft) = (ins & MIPS_FT_MASK) >> 16;
+		(*fs) = (ins & MIPS_FS_MASK) >> 11;
+		(*fd) = (ins & MIPS_FD_MASK) >> 6;
 	}
 
 	void decode( SST::Output* output, const uint64_t ins_addr, const uint32_t next_ins, VanadisInstructionBundle* bundle ) {
@@ -1364,21 +1377,58 @@ protected:
 
 		case MIPS_SPEC_OP_MASK_COP1:
 			{
-				switch( rs ) {
-				case MIPS_SPEC_COP_MASK_CF:
+				uint16_t fr = 0;
+				uint16_t ft = 0;
+				uint16_t fs = 0;
+				uint16_t fd = 0;
+
+				extract_fp_regs( next_ins, &fr, &ft, &fs, &fd );
+
+				switch( next_ins & MIPS_FUNC_MASK ) {
+				case 0:
 					{
-						bundle->addInstruction( new VanadisFP2GPRInstruction(
-							ins_addr, hw_thr, options,
-							rt, rd, VANADIS_WIDTH_F32 ) );
-						insertDecodeFault = false;
+						switch( rs ) {
+						case MIPS_SPEC_COP_MASK_CF:
+							{
+								bundle->addInstruction( new VanadisFP2GPRInstruction(
+									ins_addr, hw_thr, options,
+									rt, rd, VANADIS_WIDTH_F32 ) );
+								insertDecodeFault = false;
+							}
+							break;
+						case MIPS_SPEC_COP_MASK_CT:
+							{
+								bundle->addInstruction( new VanadisGPR2FPInstruction(
+									ins_addr, hw_thr, options,
+									rd, rt, VANADIS_WIDTH_F32 ) );
+								insertDecodeFault = false;
+							}
+							break;
+						}
 					}
 					break;
-				case MIPS_SPEC_COP_MASK_CT:
+
+				case MIPS_SPEC_COP_MASK_MOV:
 					{
-						bundle->addInstruction( new VanadisGPR2FPInstruction(
-							ins_addr, hw_thr, options,
-							rd, rt, VANADIS_WIDTH_F32 ) );
-						insertDecodeFault = false;
+						// Decide operand format
+						switch( fr ) {
+						case 16:
+							{
+								bundle->addInstruction( new VanadisFP2FPInstruction(
+									ins_addr, hw_thr, options,
+									fd, fs, VANADIS_WIDTH_F32 ) );
+								insertDecodeFault = false;
+							}
+							break;
+						case 17:
+							{
+								bundle->addInstruction( new VanadisFP2FPInstruction(
+									ins_addr, hw_thr, options,
+									fd, fs, VANADIS_WIDTH_F64 ) );
+								insertDecodeFault = false;
+							}
+							break;
+						}
 					}
 					break;
 				}

@@ -28,6 +28,7 @@
 #include "os/node/vnodeosreadlink.h"
 #include "os/node/vnodeosaccessh.h"
 #include "os/node/vnodeosbrk.h"
+#include "os/node/vnodenoactionh.h"
 
 #include "util/vlinesplit.h"
 
@@ -437,6 +438,35 @@ public:
 			}
 			break;
 
+		case SYSCALL_OP_GETTIME64:
+			{
+				VanadisSyscallGetTime64Event* gettime_ev = dynamic_cast< VanadisSyscallGetTime64Event* >( sys_ev );
+				output->verbose(CALL_INFO, 16, 0, "[syscall-gettime64] gettime64( %" PRId64 ", %" PRIu64 " )\n",
+					gettime_ev->getClockType(), gettime_ev->getTimeStructAddress() );
+
+				handler_state = new VanadisNoActionHandlerState( output->getVerboseLevel(), 0 );
+
+				uint64_t sim_time_ns = getSimTimeNano();
+				uint32_t sim_seconds = (uint32_t)(sim_time_ns / 1000000000);
+				uint32_t sim_ns      = (uint32_t)(sim_time_ns % 1000000000);
+
+				std::vector<uint8_t> time_payload;
+				time_payload.resize(sizeof(sim_seconds) + sizeof(sim_ns));
+				uint8_t* sec_ptr    = (uint8_t*) &sim_seconds;
+				uint8_t* ns_ptr     = (uint8_t*) &sim_ns;
+
+				for( size_t i = 0; i < sizeof(sim_seconds); ++i ) {
+					time_payload[i] = sec_ptr[i];
+				}
+
+				for( size_t i = 0; i < sizeof(sim_ns); ++i ) {
+					time_payload[i + sizeof(sim_seconds)] = ns_ptr[i];
+				}
+
+				sendBlockToMemory( gettime_ev->getTimeStructAddress(), time_payload );
+			}
+			break;
+
 		case SYSCALL_OP_SET_THREAD_AREA:
 			{
 				VanadisSyscallResponse* resp = new VanadisSyscallResponse();
@@ -479,6 +509,8 @@ public:
 		} else {
 			prolog_size = 64 - (start_address % 64);
 		}
+
+		output->verbose(CALL_INFO, 16, 0, "prolog is %" PRIu64 " bytes.\n", prolog_size );
 
 		std::vector<uint8_t> offset_payload;
 		for( uint64_t i = 0; i < prolog_size; ++i ) {
@@ -595,9 +627,14 @@ public:
 		}
 	}
 
+	void setSimTimeNano( std::function<uint64_t()>& sim_time ) {
+		getSimTimeNano = sim_time;
+	}
+
 protected:
 	std::function<void( SimpleMem::Request* )> handlerSendMemCallback;
 	std::function<void( SimpleMem::Request*, uint32_t )> sendMemEventCallback;
+	std::function<uint64_t()> getSimTimeNano;
 
 	std::unordered_set< SimpleMem::Request::id_t > pending_mem;
 	std::unordered_map<uint32_t, VanadisOSFileDescriptor*> file_descriptors;

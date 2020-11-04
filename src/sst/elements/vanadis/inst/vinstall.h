@@ -62,5 +62,6 @@
 // FP Convert/Move
 #include "inst/vfp2gpr.h"
 #include "inst/vgpr2fp.h"
+#include "inst/vfp2fp.h"
 
 #endif
