@@ -24,7 +24,7 @@ def initializeTestModule_SingleInstance(class_inst):
 ################################################################################
 ################################################################################
 
-class testcase_memHierarchy_Component(SSTTestCase):
+class testcase_memHierarchy_sdl(SSTTestCase):
 
     def initializeClass(self, testName):
         super(type(self), self).initializeClass(testName)
@@ -191,6 +191,9 @@ class testcase_memHierarchy_Component(SSTTestCase):
         #       BASED testSuite_XXX.sh THESE SHOULD BE RE-EVALUATED BY THE
         #       DEVELOPER AGAINST THE LATEST VERSION OF SST TO SEE IF THE
         #       TESTS & RESULT FILES ARE STILL VALID
+
+        # Perform the tests
+        self.assertFalse(os_test_file(errfile, "-s"), "memHierarchy SDL test {0} has Non-empty Error File {1}".format(testDataFileName, errfile))
 
         # Use diff (ignore whitespace) to see if the files are the same
         cmd = "diff -b {0} {1} > {2}".format(fixedreffile, outfile, difffile)
