@@ -128,7 +128,13 @@
 
 #define MIPS_SPEC_COP_MASK_CF	  0x2
 #define MIPS_SPEC_COP_MASK_CT     0x6
+#define MIPS_SPEC_COP_MASK_MFC    0x0
+#define MIPS_SPEC_COP_MASK_MTC	  0x4
 #define MIPS_SPEC_COP_MASK_MOV	  0x6
+#define MIPS_SPEC_COP_MASK_CVTD   0x21
+#define MIPS_SPEC_COP_MASK_MULD   0x2
+#define MIPS_SPEC_COP_MASK_ADDD   0x0
+#define MIPS_SPEC_COP_MASK_SUBD   0x1
 
 namespace SST {
 namespace Vanadis {
@@ -1387,23 +1393,47 @@ protected:
 				switch( next_ins & MIPS_FUNC_MASK ) {
 				case 0:
 					{
-						switch( rs ) {
-						case MIPS_SPEC_COP_MASK_CF:
-							{
-								bundle->addInstruction( new VanadisFP2GPRInstruction(
+						if( ( 0 == fd ) && ( MIPS_SPEC_COP_MASK_MTC == fr ) ) {
+							bundle->addInstruction( new VanadisGPR2FPInstruction(
+								ins_addr, hw_thr, options,
+								fs, rt, VANADIS_WIDTH_F32 ) );
+							insertDecodeFault = false;
+						} else if( ( 0 == fd ) && ( MIPS_SPEC_COP_MASK_MFC == fr ) ) {
+							bundle->addInstruction( new VanadisFP2GPRInstruction(
+								ins_addr, hw_thr, options,
+								rt, fs, VANADIS_WIDTH_F32 ) );
+							insertDecodeFault = false;
+						} else if( ( 0 == fd ) && ( MIPS_SPEC_COP_MASK_CF == fr ) ) {
+							bundle->addInstruction( new VanadisFP2GPRInstruction(
+								ins_addr, hw_thr, options,
+								rt, rd, VANADIS_WIDTH_F32 ) );
+							insertDecodeFault = false;
+						} else if( ( 0 == fd ) && ( MIPS_SPEC_COP_MASK_CT == fr ) ) {
+							bundle->addInstruction( new VanadisGPR2FPInstruction(
+								ins_addr, hw_thr, options,
+								rd, rt, VANADIS_WIDTH_F32 ) );
+							insertDecodeFault = false;
+						} else {
+							// assume this is an FADD and begin decode
+							VanadisFPRegisterFormat input_format = VANADIS_FORMAT_FP64;
+       		                                        bool format_fault = false;
+
+                	                                switch( fr ) {
+                        	                        case 16: input_format = VANADIS_FORMAT_FP32;  break;
+                                	                case 17: input_format = VANADIS_FORMAT_FP64;  break;
+                                       	         	case 20: input_format = VANADIS_FORMAT_INT32; break;
+                                                	case 21: input_format = VANADIS_FORMAT_INT64; break;
+                                                	default:
+                                                        	format_fault = true;
+                                                        	break;
+                                                	}
+
+                                                	if( ! format_fault ) {
+								bundle->addInstruction( new VanadisFPAddInstruction(
 									ins_addr, hw_thr, options,
-									rt, rd, VANADIS_WIDTH_F32 ) );
+									fd, fs, ft, input_format) );
 								insertDecodeFault = false;
 							}
-							break;
-						case MIPS_SPEC_COP_MASK_CT:
-							{
-								bundle->addInstruction( new VanadisGPR2FPInstruction(
-									ins_addr, hw_thr, options,
-									rd, rt, VANADIS_WIDTH_F32 ) );
-								insertDecodeFault = false;
-							}
-							break;
 						}
 					}
 					break;
@@ -1430,6 +1460,79 @@ protected:
 							break;
 						}
 					}
+					break;
+
+				case MIPS_SPEC_COP_MASK_MULD:
+					{
+						VanadisFPRegisterFormat input_format = VANADIS_FORMAT_FP64;
+                                                bool format_fault = false;
+
+                                                switch( fr ) {
+                                                case 16: input_format = VANADIS_FORMAT_FP32;  break;
+                                                case 17: input_format = VANADIS_FORMAT_FP64;  break;
+                                                case 20: input_format = VANADIS_FORMAT_INT32; break;
+                                                case 21: input_format = VANADIS_FORMAT_INT64; break;
+                                                default:
+                                                        format_fault = true;
+                                                        break;
+                                                }
+
+                                                if( ! format_fault ) {
+							bundle->addInstruction( new VanadisFPMultiplyInstruction(
+								ins_addr, hw_thr, options,
+								fd, fs, ft, input_format) );
+							insertDecodeFault = false;
+						}
+					}
+					break;
+
+				case MIPS_SPEC_COP_MASK_SUBD:
+					{
+						VanadisFPRegisterFormat input_format = VANADIS_FORMAT_FP64;
+                                                bool format_fault = false;
+
+                                                switch( fr ) {
+                                                case 16: input_format = VANADIS_FORMAT_FP32;  break;
+                                                case 17: input_format = VANADIS_FORMAT_FP64;  break;
+                                                case 20: input_format = VANADIS_FORMAT_INT32; break;
+                                                case 21: input_format = VANADIS_FORMAT_INT64; break;
+                                                default:
+                                                        format_fault = true;
+                                                        break;
+                                                }
+
+                                                if( ! format_fault ) {
+							bundle->addInstruction( new VanadisFPSubInstruction(
+								ins_addr, hw_thr, options,
+								fd, fs, ft, input_format) );
+							insertDecodeFault = false;
+						}
+					}
+					break;
+
+				case MIPS_SPEC_COP_MASK_CVTD:
+					{
+						VanadisFPRegisterFormat input_format = VANADIS_FORMAT_FP64;
+						bool format_fault = false;
+
+						switch( fr ) {
+						case 16: input_format = VANADIS_FORMAT_FP32;  break;
+						case 17: input_format = VANADIS_FORMAT_FP64;  break;
+						case 20: input_format = VANADIS_FORMAT_INT32; break;
+						case 21: input_format = VANADIS_FORMAT_INT64; break;
+						default:
+							format_fault = true;
+							break;
+						}
+
+						if( ! format_fault ) {
+							bundle->addInstruction( new VanadisFPConvertInstruction(
+								ins_addr, hw_thr, options,
+								fd, fs, input_format, VANADIS_FORMAT_FP64 ) );
+							insertDecodeFault = false;
+						}
+					}
+
 					break;
 				}
 			}

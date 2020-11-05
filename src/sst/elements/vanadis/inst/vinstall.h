@@ -63,5 +63,11 @@
 #include "inst/vfp2gpr.h"
 #include "inst/vgpr2fp.h"
 #include "inst/vfp2fp.h"
+#include "inst/vfpconv.h"
+
+// FP Arith
+#include "inst/vfpmul.h"
+#include "inst/vfpadd.h"
+#include "inst/vfpsub.h"
 
 #endif

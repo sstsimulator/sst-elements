@@ -10,6 +10,13 @@ enum VanadisFPWidth {
         VANADIS_WIDTH_F64
 };
 
+enum VanadisFPRegisterFormat {
+	VANADIS_FORMAT_FP32,
+	VANADIS_FORMAT_FP64,
+	VANADIS_FORMAT_INT32,
+	VANADIS_FORMAT_INT64
+};
+
 }
 }
 
