@@ -43,104 +43,100 @@ class testcase_memHierarchy_memHA(SSTTestCase):
 
 #####
 
-#NOTE: Single #  - Verified, but removed for testing
-#      Three ### - Not Tested Yet
+    def test_memHA_BackendChaining(self):
+        self.memHA_Template("BackendChaining")
 
+    def test_memHA_BackendDelayBuffer (self):
+        self.memHA_Template("BackendDelayBuffer")
 
-#    def test_memHA_BackendChaining(self):
-#        self.memHA_Template("BackendChaining")
-#
-#    def test_memHA_BackendDelayBuffer (self):
-#        self.memHA_Template("BackendDelayBuffer")
-
-#    @skip_on_sstsimulator_conf_empty_str("DRAMSIM", "LIBDIR", "DRAMSIM is not included as part of this build")
+    @skip_on_sstsimulator_conf_empty_str("DRAMSIM", "LIBDIR", "DRAMSIM is not included as part of this build")
     def test_memHA_BackendPagedMulti(self):
         self.memHA_Template("BackendPagedMulti")
 
-#    def test_memHA_BackendReorderRow(self):
-#        self.memHA_Template("BackendReorderRow")
-#
-#    def test_memHA_BackendReorderSimple(self):
-#        self.memHA_Template("BackendReorderSimple")
-#
-#    def test_memHA_BackendSimpleDRAM_1(self):
-#        self.memHA_Template("BackendSimpleDRAM_1")
-#
-#    def test_memHA_BackendSimpleDRAM_2(self):
-#        self.memHA_Template("BackendSimpleDRAM_2")
-#
-#    def test_memHA_BackendVaultSim(self):
-#        self.memHA_Template("BackendVaultSim", lcwc_match_allowed=True)
-#
-#    def test_memHA_DistributedCaches(self):
-#        self.memHA_Template("DistributedCaches", lcwc_match_allowed=True)
-#
-#    def test_memHA_Flushes_2(self):
-#        self.memHA_Template("Flushes_2")
-#
-#    def test_memHA_Flushes(self):
-#        self.memHA_Template("Flushes")
-#
-#    def test_memHA_HashXor(self):
-#        self.memHA_Template("HashXor")
-#
-#    def test_memHA_Incoherent(self):
-#        self.memHA_Template("Incoherent")
-#
-#    def test_memHA_Noninclusive_1(self):
-#        self.memHA_Template("Noninclusive_1")
-#
-#    def test_memHA_Noninclusive_2(self):
-#        self.memHA_Template("Noninclusive_2")
-#
-#    def test_memHA_PrefetchParams(self):
-#        self.memHA_Template("PrefetchParams")
-#
-#    def test_memHA_ThroughputThrottling(self):
-#        self.memHA_Template("ThroughputThrottling")
+    def test_memHA_BackendReorderRow(self):
+        self.memHA_Template("BackendReorderRow")
 
-#    @skip_on_sstsimulator_conf_empty_str("GOBLIN_HMCSIM", "LIBDIR", "GOBLIN_HMCSIM is not included as part of this build")
-#    def test_memHA_BackendGoblinHMC(self):
-#        self.memHA_Template("BackendGoblinHMC")
+    def test_memHA_BackendReorderSimple(self):
+        self.memHA_Template("BackendReorderSimple")
 
-#    @skip_on_sstsimulator_conf_empty_str("GOBLIN_HMCSIM", "LIBDIR", "GOBLIN_HMCSIM is not included as part of this build")
-#    def test_memHA_CustomCmdGoblin_1(self):
-#        self.memHA_Template("CustomCmdGoblin_1")
+    def test_memHA_BackendSimpleDRAM_1(self):
+        self.memHA_Template("BackendSimpleDRAM_1")
 
-#    @skip_on_sstsimulator_conf_empty_str("GOBLIN_HMCSIM", "LIBDIR", "GOBLIN_HMCSIM is not included as part of this build")
-#    def test_memHA_CustomCmdGoblin_2(self):
-#        self.memHA_Template("CustomCmdGoblin_2")
+    def test_memHA_BackendSimpleDRAM_2(self):
+        self.memHA_Template("BackendSimpleDRAM_2")
 
-#    @skip_on_sstsimulator_conf_empty_str("GOBLIN_HMCSIM", "LIBDIR", "GOBLIN_HMCSIM is not included as part of this build")
-#    def test_memHA_CustomCmdGoblin_3(self):
-#        self.memHA_Template("CustomCmdGoblin_3")
+    def test_memHA_BackendVaultSim(self):
+        self.memHA_Template("BackendVaultSim", lcwc_match_allowed=True)
 
-#    def test_memHA_BackendTimingDRAM_1(self):
-#        self.memHA_Template("BackendTimingDRAM_1")
-#
-#    def test_memHA_BackendTimingDRAM_2(self):
-#        self.memHA_Template("BackendTimingDRAM_2")
-#
-#    def test_memHA_BackendTimingDRAM_3(self):
-#        self.memHA_Template("BackendTimingDRAM_3")
-#
-#    def test_memHA_BackendTimingDRAM_4(self):
-#        self.memHA_Template("BackendTimingDRAM_4")
+    def test_memHA_DistributedCaches(self):
+        self.memHA_Template("DistributedCaches", lcwc_match_allowed=True)
 
-###    @skip_on_sstsimulator_conf_empty_str("HBMDRAMSIM", "LIBDIR", "HBMDRAMSIM is not included as part of this build")
-#    @unittest.skipIf(testing_check_get_num_threads() > 1, "memHA: multi-thread can fail due to DramSim's use of static variables")
+    def test_memHA_Flushes_2(self):
+        self.memHA_Template("Flushes_2")
+
+    def test_memHA_Flushes(self):
+        self.memHA_Template("Flushes")
+
+    def test_memHA_HashXor(self):
+        self.memHA_Template("HashXor")
+
+    def test_memHA_Incoherent(self):
+        self.memHA_Template("Incoherent")
+
+    def test_memHA_Noninclusive_1(self):
+        self.memHA_Template("Noninclusive_1")
+
+    def test_memHA_Noninclusive_2(self):
+        self.memHA_Template("Noninclusive_2")
+
+    def test_memHA_PrefetchParams(self):
+        self.memHA_Template("PrefetchParams")
+
+    def test_memHA_ThroughputThrottling(self):
+        self.memHA_Template("ThroughputThrottling")
+
+    @skip_on_sstsimulator_conf_empty_str("GOBLIN_HMCSIM", "LIBDIR", "GOBLIN_HMCSIM is not included as part of this build")
+    def test_memHA_BackendGoblinHMC(self):
+        self.memHA_Template("BackendGoblinHMC")
+
+    @skip_on_sstsimulator_conf_empty_str("GOBLIN_HMCSIM", "LIBDIR", "GOBLIN_HMCSIM is not included as part of this build")
+    def test_memHA_CustomCmdGoblin_1(self):
+        self.memHA_Template("CustomCmdGoblin_1")
+
+    @skip_on_sstsimulator_conf_empty_str("GOBLIN_HMCSIM", "LIBDIR", "GOBLIN_HMCSIM is not included as part of this build")
+    def test_memHA_CustomCmdGoblin_2(self):
+        self.memHA_Template("CustomCmdGoblin_2")
+
+    @skip_on_sstsimulator_conf_empty_str("GOBLIN_HMCSIM", "LIBDIR", "GOBLIN_HMCSIM is not included as part of this build")
+    def test_memHA_CustomCmdGoblin_3(self):
+        self.memHA_Template("CustomCmdGoblin_3")
+
+    def test_memHA_BackendTimingDRAM_1(self):
+        self.memHA_Template("BackendTimingDRAM_1")
+
+    def test_memHA_BackendTimingDRAM_2(self):
+        self.memHA_Template("BackendTimingDRAM_2")
+
+    def test_memHA_BackendTimingDRAM_3(self):
+        self.memHA_Template("BackendTimingDRAM_3")
+
+    def test_memHA_BackendTimingDRAM_4(self):
+        self.memHA_Template("BackendTimingDRAM_4")
+
+    @skip_on_sstsimulator_conf_empty_str("DRAMSIM", "LIBDIR", "DRAMSIM is not included as part of this build")
+    @skip_on_sstsimulator_conf_empty_str("HBMDRAMSIM", "LIBDIR", "HBMDRAMSIM is not included as part of this build")
     def test_memHA_BackendHBMDramsim(self):
         self.memHA_Template("BackendHBMDramsim")
 
-###    @skip_on_sstsimulator_conf_empty_str("HBMDRAMSIM", "LIBDIR", "HBMDRAMSIM is not included as part of this build")
+    @skip_on_sstsimulator_conf_empty_str("HBMDRAMSIM", "LIBDIR", "HBMDRAMSIM is not included as part of this build")
     def test_memHA_BackendHBMPagedMulti(self):
         self.memHA_Template("BackendHBMPagedMulti")
 
-#    def test_memHA_MemoryCache(self):
-#        self.memHA_Template("MemoryCache")
-#
-#    def test_memHA_Kingsley(self):
-#        self.memHA_Template("Kingsley")
+    def test_memHA_MemoryCache(self):
+        self.memHA_Template("MemoryCache")
+
+    def test_memHA_Kingsley(self):
+        self.memHA_Template("Kingsley")
 
 #####
 
@@ -149,6 +145,9 @@ class testcase_memHierarchy_memHA(SSTTestCase):
         test_path = self.get_testsuite_dir()
         outdir = self.get_test_output_run_dir()
         tmpdir = self.get_test_output_tmp_dir()
+
+        # Set the default timeout
+        self.timeout_sec = 120
 
         # Some tweeking of file names are due to inconsistencys with testcase name
         testcasename_sdl = testcase.replace("_", "-")
@@ -165,6 +164,9 @@ class testcase_memHierarchy_memHA(SSTTestCase):
                 reffile = mc_checkfile
             elif os.path.exists(mr_checkfile) and testing_check_get_num_ranks() > 1:
                 reffile = mr_checkfile
+        fixedreffile = "{0}/{1}_fixedreffile.out".format(outdir, testDataFileName)
+        tmpfile = "{0}/{1}.tmp".format(outdir, testDataFileName)
+        self.grep_tmp_file = tmpfile
 
         outfile = "{0}/{1}.out".format(outdir, testDataFileName)
         errfile = "{0}/{1}.err".format(outdir, testDataFileName)
@@ -176,12 +178,34 @@ class testcase_memHierarchy_memHA(SSTTestCase):
         log_debug("ref file = {0}".format(reffile))
 
         # Run SST in the tests directory
-        self.run_sst(sdlfile, outfile, errfile, set_cwd=test_path, mpi_out_files=mpioutfiles)
+        self.run_sst(sdlfile, outfile, errfile, set_cwd=test_path,
+                     timeout_sec = self.timeout_sec, mpi_out_files=mpioutfiles)
 
-        fixedreffile = reffile
+        # Copy the orig reffile to the fixedreffile
+        cmd = "cat {0} > {1}".format(reffile, fixedreffile)
+        os.system(cmd)
 
-###        # This may be needed in the future
-###        testing_remove_component_warning_from_file(outfile)
+        # Cleanup any DRAMSIM Debug messages; from both the output file and fixedreffile
+        # (this is a bit of hammer, but it works)
+        self._grep_v_cleanup_file("===== MemorySystem", outfile)
+        self._grep_v_cleanup_file("===== MemorySystem", fixedreffile)
+        self._grep_v_cleanup_file("TOTAL_STORAGE : 2048MB | 1 Ranks | 16 Devices per rank", outfile)
+        self._grep_v_cleanup_file("TOTAL_STORAGE : 2048MB | 1 Ranks | 16 Devices per rank", fixedreffile)
+        self._grep_v_cleanup_file("== Loading", outfile)
+        self._grep_v_cleanup_file("== Loading", fixedreffile)
+        self._grep_v_cleanup_file("DRAMSim2 Clock Frequency =1Hz, CPU Clock Frequency=1Hz", outfile)
+        self._grep_v_cleanup_file("DRAMSim2 Clock Frequency =1Hz, CPU Clock Frequency=1Hz", fixedreffile)
+        self._grep_v_cleanup_file("WARNING: UNKNOWN KEY 'DEBUG_TRANS_FLOW' IN INI FILE", outfile)
+        self._grep_v_cleanup_file("WARNING: UNKNOWN KEY 'DEBUG_TRANS_FLOW' IN INI FILE", fixedreffile)
+
+        if testing_check_get_num_ranks() > 1 and "BackendTimingDRAM" in testcase :
+            # NOTE: Removing these two lines as we can get a 1 count diff on multi-ranks tests on DRAMSIM TESTS
+            self._grep_v_cleanup_file("memory.outstanding_requests", outfile)
+            self._grep_v_cleanup_file("memory.outstanding_requests", fixedreffile)
+            self._grep_v_cleanup_file("memory.total_cycles", outfile)
+            self._grep_v_cleanup_file("memory.total_cycles", fixedreffile)
+
+        testing_remove_component_warning_from_file(outfile)
 
         # NOTE: THE PASS / FAIL EVALUATIONS ARE PORTED FROM THE SQE BAMBOO
         #       BASED testSuite_XXX.sh THESE SHOULD BE RE-EVALUATED BY THE
@@ -216,3 +240,17 @@ class testcase_memHierarchy_memHA(SSTTestCase):
                 else:
                     self.assertTrue(cmp_result, "Sorted Output file {0} does not match Sorted Reference File {1} ".format(outfile, fixedreffile))
 
+###
+
+    def _grep_v_cleanup_file(self, grep_str, grep_file, out_file = None, append = False):
+        cmd = 'grep -v \"{0}\" {1} > {2}'.format(grep_str, grep_file, self.grep_tmp_file)
+        os.system(cmd)
+        redirecttype = ">"
+        if append == True:
+            redirecttype = ">>"
+
+        if out_file == None:
+            cmd = "cat {0} {1} {2}".format(self.grep_tmp_file, redirecttype, grep_file)
+        else:
+            cmd = "cat {0} {1} {2}".format(self.grep_tmp_file, redirecttype, out_file)
+        os.system(cmd)
