@@ -74,7 +74,7 @@ class testcase_memHierarchy_sdl(SSTTestCase):
 
     @skip_on_sstsimulator_conf_empty_str("DRAMSIM", "LIBDIR", "DRAMSIM is not included as part of this build")
     def test_memHierarchy_sdl4_2_dramsim(self):
-        self.memHierarchy_Template("sdl4-2")
+        self.memHierarchy_Template("sdl4-2", ignore_err_file=True)
 
     @skip_on_sstsimulator_conf_empty_str("RAMULATOR", "LIBDIR", "RAMULATOR is not included as part of this build")
     def test_memHierarchy_sdl4_2_ramulator(self):
@@ -82,7 +82,7 @@ class testcase_memHierarchy_sdl(SSTTestCase):
 
     @skip_on_sstsimulator_conf_empty_str("DRAMSIM", "LIBDIR", "DRAMSIM is not included as part of this build")
     def test_memHierarchy_sdl5_1_dramsim(self):
-        self.memHierarchy_Template("sdl5-1")
+        self.memHierarchy_Template("sdl5-1", ignore_err_file=True)
 
     @skip_on_sstsimulator_conf_empty_str("RAMULATOR", "LIBDIR", "RAMULATOR is not included as part of this build")
     def test_memHierarchy_sdl5_1_ramulator(self):
@@ -111,7 +111,7 @@ class testcase_memHierarchy_sdl(SSTTestCase):
 
 #####
 
-    def memHierarchy_Template(self, testcase):
+    def memHierarchy_Template(self, testcase, ignore_err_file=False):
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
         outdir = self.get_test_output_run_dir()
@@ -193,7 +193,8 @@ class testcase_memHierarchy_sdl(SSTTestCase):
         #       TESTS & RESULT FILES ARE STILL VALID
 
         # Perform the tests
-        self.assertFalse(os_test_file(errfile, "-s"), "memHierarchy SDL test {0} has Non-empty Error File {1}".format(testDataFileName, errfile))
+        if ignore_err_file is False:
+            self.assertFalse(os_test_file(errfile, "-s"), "memHierarchy SDL test {0} has Non-empty Error File {1}".format(testDataFileName, errfile))
 
         # Use diff (ignore whitespace) to see if the files are the same
         cmd = "diff -b {0} {1} > {2}".format(fixedreffile, outfile, difffile)

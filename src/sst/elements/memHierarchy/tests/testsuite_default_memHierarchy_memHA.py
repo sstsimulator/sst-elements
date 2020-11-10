@@ -51,7 +51,7 @@ class testcase_memHierarchy_memHA(SSTTestCase):
 
     @skip_on_sstsimulator_conf_empty_str("DRAMSIM", "LIBDIR", "DRAMSIM is not included as part of this build")
     def test_memHA_BackendPagedMulti(self):
-        self.memHA_Template("BackendPagedMulti")
+        self.memHA_Template("BackendPagedMulti", ignore_err_file=True)
 
     def test_memHA_BackendReorderRow(self):
         self.memHA_Template("BackendReorderRow")
@@ -126,7 +126,7 @@ class testcase_memHierarchy_memHA(SSTTestCase):
     @skip_on_sstsimulator_conf_empty_str("DRAMSIM", "LIBDIR", "DRAMSIM is not included as part of this build")
     @skip_on_sstsimulator_conf_empty_str("HBMDRAMSIM", "LIBDIR", "HBMDRAMSIM is not included as part of this build")
     def test_memHA_BackendHBMDramsim(self):
-        self.memHA_Template("BackendHBMDramsim")
+        self.memHA_Template("BackendHBMDramsim", ignore_err_file=True)
 
     @skip_on_sstsimulator_conf_empty_str("HBMDRAMSIM", "LIBDIR", "HBMDRAMSIM is not included as part of this build")
     def test_memHA_BackendHBMPagedMulti(self):
@@ -140,7 +140,7 @@ class testcase_memHierarchy_memHA(SSTTestCase):
 
 #####
 
-    def memHA_Template(self, testcase, lcwc_match_allowed=False):
+    def memHA_Template(self, testcase, lcwc_match_allowed=False, ignore_err_file=False):
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
         outdir = self.get_test_output_run_dir()
@@ -213,7 +213,8 @@ class testcase_memHierarchy_memHA(SSTTestCase):
         #       TESTS & RESULT FILES ARE STILL VALID
 
         # Perform the tests
-        self.assertFalse(os_test_file(errfile, "-s"), "memHA test {0} has Non-empty Error File {1}".format(testDataFileName, errfile))
+        if ignore_err_file is False:
+            self.assertFalse(os_test_file(errfile, "-s"), "memHA test {0} has Non-empty Error File {1}".format(testDataFileName, errfile))
 
         # Use diff (ignore whitespace) to see if the files are the same
         cmd = "diff -b {0} {1} > {2}".format(fixedreffile, outfile, difffile)

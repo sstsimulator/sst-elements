@@ -84,6 +84,9 @@ class testcase_Samba_Component(SSTTestCase):
         #       DEVELOPER AGAINST THE LATEST VERSION OF SST TO SEE IF THE
         #       TESTS & RESULT FILES ARE STILL VALID
 
+        # Perform the tests
+        self.assertFalse(os_test_file(errfile, "-s"), "Samba test {0} has Non-empty Error File {1}".format(testDataFileName, errfile))
+
         cmp_result = testing_compare_diff(testDataFileName, outfile, reffile)
         if cmp_result != True:
             diff_data = testing_get_diff_data(testDataFileName)

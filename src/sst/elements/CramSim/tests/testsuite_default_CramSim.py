@@ -117,7 +117,9 @@ class testcase_CramSim_Component(SSTTestCase):
         #       DEVELOPER AGAINST THE LATEST VERSION OF SST TO SEE IF THE
         #       TESTS & RESULT FILES ARE STILL VALID
 
-        # Perform the test
+        # Perform the tests
+        self.assertFalse(os_test_file(errfile, "-s"), "CramSim test {0} has Non-empty Error File {1}".format(testDataFileName, errfile))
+
         # NOTE: This is how the bamboo tests does it, and its very crude.  The
         #       testing_compare_diff will always fail, so all it looks for is the
         #       "Simulation complete" message to decide pass/fail

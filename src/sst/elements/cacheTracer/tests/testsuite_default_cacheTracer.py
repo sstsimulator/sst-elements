@@ -70,7 +70,9 @@ class testcase_cacheTracer_Component(SSTTestCase):
         #       DEVELOPER AGAINST THE LATEST VERSION OF SST TO SEE IF THE
         #       TESTS & RESULT FILES ARE STILL VALID
 
-        # Perform the test
+        # Perform the tests
+        self.assertFalse(os_test_file(errfile, "-s"), "cacheTracer1 test {0} has Non-empty Error File {1}".format(testDataFileName, errfile))
+
         cmp_result = testing_compare_sorted_diff(testDataFileName, outfile, reffile)
         self.assertTrue(cmp_result, "Sorted Output file {0} does not match sorted Reference File {1}".format(outfile, reffile))
 
@@ -105,7 +107,9 @@ class testcase_cacheTracer_Component(SSTTestCase):
         #       DEVELOPER AGAINST THE LATEST VERSION OF SST TO SEE IF THE
         #       TESTS & RESULT FILES ARE STILL VALID
 
-        # Perform the test
+        # Perform the tests
+        self.assertFalse(os_test_file(errfile, "-s"), "cacheTracer2 test {0} has Non-empty Error File {1}".format(testDataFileName, errfile))
+
         cmp_result = testing_compare_diff(testDataFileName, out_memRefFile, reffile, ignore_ws=True)
         self.assertTrue(cmp_result, "File {0} does not match Reference File {1} ignoring whitespace".format(out_memRefFile, reffile))
 

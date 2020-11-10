@@ -40,13 +40,17 @@ class testcase_simpleRNGComponent(SSTTestCase):
         tmpdir = self.get_test_output_tmp_dir()
 
         # Set the various file paths
-        sdlfile = "{0}/test_simpleRNGComponent_{1}.py".format(test_path, testcase)
-        reffile = "{0}/refFiles/test_simpleRNGComponent_{1}.out".format(test_path, testcase)
-        outfile = "{0}/test_simpleRNGComponent_{1}.out".format(outdir, testcase)
-        tmpfile = "{0}/test_simpleRNGComponent_{1}.tmp".format(tmpdir, testcase)
-        cmpfile = "{0}/test_simpleRNGComponent_{1}.cmp".format(tmpdir, testcase)
+        testDataFileName="test_simpleRNGComponent_{0}".format(testcase)
 
-        self.run_sst(sdlfile, outfile)
+        sdlfile = "{0}/{1}.py".format(test_path, testDataFileName)
+        reffile = "{0}/refFiles/{1}.out".format(test_path, testDataFileName)
+        outfile = "{0}/.out".format(outdir, testDataFileName)
+        tmpfile = "{0}/.tmp".format(tmpdir, testDataFileName)
+        cmpfile = "{0}/.cmp".format(tmpdir, testDataFileName)
+        errfile = "{0}/.err".format(outdir, testDataFileName)
+        mpioutfiles = "{0}/{1}.testfile".format(outdir, testDataFileName)
+
+        self.run_sst(sdlfile, outfile, errfile, mpi_out_files=mpioutfiles)
 
         # Post processing of the output data to scrub it into a format to compare
         os.system("grep Random {0} > {1}".format(outfile, tmpfile))
@@ -57,7 +61,9 @@ class testcase_simpleRNGComponent(SSTTestCase):
         #       DEVELOPER AGAINST THE LATEST VERSION OF SST TO SEE IF THE
         #       TESTS & RESULT FILES ARE STILL VALID
 
-        # Perform the test
+        # Perform the tests
+        self.assertFalse(os_test_file(errfile, "-s"), "simpleRNGComponent test {0} has Non-empty Error File {1}".format(testDataFileName, errfile))
+
         testresult = filecmp.cmp(cmpfile, reffile)
         testerror = "Output/Compare file {0} does not match Reference File {1}".format(cmpfile, reffile)
         self.assertTrue(testresult, testerror)
