@@ -123,7 +123,7 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 			thread_decoders[i]->countISAFPReg());
 
 		register_files.push_back( new VanadisRegisterFile( i, thread_decoders[i]->getDecoderOptions(),
-			int_reg_count, fp_reg_count ) );
+			int_reg_count, fp_reg_count, thr_decoder->getFPRegisterMode() ) );
 		int_register_stacks.push_back( new VanadisRegisterStack( int_reg_count ) );
 		fp_register_stacks.push_back( new VanadisRegisterStack( fp_reg_count ));
 

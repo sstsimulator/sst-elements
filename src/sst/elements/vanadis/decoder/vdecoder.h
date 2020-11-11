@@ -15,6 +15,7 @@
 #include "vbranchunit.h"
 #include "vinsloader.h"
 #include "os/vcpuos.h"
+#include "inst/fpregmode.h"
 
 namespace SST {
 namespace Vanadis {
@@ -104,6 +105,8 @@ public:
 	}
 
 	uint64_t getInsCacheLineWidth() const { return icache_line_width; }
+
+	virtual VanadisFPRegisterMode getFPRegisterMode() const = 0;
 
 	virtual const char* getISAName() const = 0;
 	virtual uint16_t countISAIntReg() const = 0;

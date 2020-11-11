@@ -166,12 +166,13 @@ public:
 					output->verbose(CALL_INFO, 16, 0, "| isa:%5" PRIu16 " -> phys:%5" PRIu16 " | r:%5" PRIu32 " | w:%5" PRIu32 " |\n",
 						i, fp_reg_ptr[i], fp_reg_pending_read[i], fp_reg_pending_write[i]);
 				} else {
-					int64_t* val = (int64_t*) regFile->getFPReg( i );
-					toBinaryString(reg_bin_str, *((int64_t*) regFile->getFPReg(i)));
+// TODO NEED TO FIX THIS UP
+//					int64_t* val = (int64_t*) regFile->getFPReg( i );
+//					toBinaryString(reg_bin_str, *((int64_t*) regFile->getFPReg(i)));
 
 //				output->verbose(CALL_INFO, 16, 0, "ISA  FP-Reg %5" PRIu16 " Phys: %5" PRIu16 " Read: %8" PRIu32 " / Write: %8" PRIu32 " / Value: %s\n",
-					output->verbose(CALL_INFO, 16, 0, "| isa:%5" PRIu16 " -> phys:%5" PRIu16 " | r:%5" PRIu32 " | w:%5" PRIu32 " | value=%s\n",
-						i, fp_reg_ptr[i], fp_reg_pending_read[i], fp_reg_pending_write[i], reg_bin_str);
+//					output->verbose(CALL_INFO, 16, 0, "| isa:%5" PRIu16 " -> phys:%5" PRIu16 " | r:%5" PRIu32 " | w:%5" PRIu32 " | value=%s\n",
+//						i, fp_reg_ptr[i], fp_reg_pending_read[i], fp_reg_pending_write[i], reg_bin_str);
 				}
 			}
 		}

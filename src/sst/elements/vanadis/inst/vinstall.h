@@ -69,5 +69,6 @@
 #include "inst/vfpmul.h"
 #include "inst/vfpadd.h"
 #include "inst/vfpsub.h"
+#include "inst/vfpscmp.h"
 
 #endif

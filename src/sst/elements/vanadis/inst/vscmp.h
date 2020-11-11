@@ -28,8 +28,6 @@ public:
 		isa_int_regs_out[0] = dest;
 	}
 
-	~VanadisSetRegCompareInstruction() {}
-
 	VanadisSetRegCompareInstruction* clone() {
 		return new VanadisSetRegCompareInstruction( *this );
 	}

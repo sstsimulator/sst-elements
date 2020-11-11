@@ -126,15 +126,18 @@
 #define MIPS_SPEC_OP_MASK_SYNC    0x0F
 #define MIPS_SPEC_OP_MASK_XOR     0x26
 
-#define MIPS_SPEC_COP_MASK_CF	  0x2
-#define MIPS_SPEC_COP_MASK_CT     0x6
-#define MIPS_SPEC_COP_MASK_MFC    0x0
-#define MIPS_SPEC_COP_MASK_MTC	  0x4
-#define MIPS_SPEC_COP_MASK_MOV	  0x6
-#define MIPS_SPEC_COP_MASK_CVTD   0x21
-#define MIPS_SPEC_COP_MASK_MULD   0x2
-#define MIPS_SPEC_COP_MASK_ADDD   0x0
-#define MIPS_SPEC_COP_MASK_SUBD   0x1
+#define MIPS_SPEC_COP_MASK_CF	    0x2
+#define MIPS_SPEC_COP_MASK_CT       0x6
+#define MIPS_SPEC_COP_MASK_MFC      0x0
+#define MIPS_SPEC_COP_MASK_MTC	    0x4
+#define MIPS_SPEC_COP_MASK_MOV	    0x6
+#define MIPS_SPEC_COP_MASK_CVTD     0x21
+#define MIPS_SPEC_COP_MASK_MULD     0x2
+#define MIPS_SPEC_COP_MASK_ADDD     0x0
+#define MIPS_SPEC_COP_MASK_SUBD     0x1
+
+#define MIPS_SPEC_COP_MASK_CMP_LT   0x3C
+#define MIPS_SPEC_COP_MASK_CMP_LTE  0x3E
 
 namespace SST {
 namespace Vanadis {
@@ -161,7 +164,7 @@ public:
 
 		// 32 int, 32 fp, reg-2 is for sys-call codes
 		// plus 2 for LO/HI registers in INT
-		options = new VanadisDecoderOptions( (uint16_t) 0, 34, 32, 2 );
+		options = new VanadisDecoderOptions( (uint16_t) 0, 34, 32, 2, VANADIS_REGISTER_MODE_FP32 );
 		max_decodes_per_cycle      = params.find<uint16_t>("decode_max_ins_per_cycle",  2);
 
 		// MIPS default is 0x7fffffff according to SYS-V manual
@@ -180,6 +183,8 @@ public:
 	virtual uint16_t countISAIntReg() const { return options->countISAIntRegisters(); }
 	virtual uint16_t countISAFPReg() const { return options->countISAFPRegisters(); }
 	virtual const VanadisDecoderOptions* getDecoderOptions() const { return options; }
+
+	virtual VanadisFPRegisterMode getFPRegisterMode() const { return VANADIS_REGISTER_MODE_FP32; }
 
 	virtual void configureApplicationLaunch( SST::Output* output, VanadisISATable* isa_tbl,
 		VanadisRegisterFile* regFile, Interfaces::SimpleMem* mem_if,
@@ -1533,6 +1538,44 @@ protected:
 						}
 					}
 
+					break;
+
+				case MIPS_SPEC_COP_MASK_CMP_LT:
+				case MIPS_SPEC_COP_MASK_CMP_LTE:
+					{
+						VanadisFPRegisterFormat input_format = VANADIS_FORMAT_FP64;
+						bool format_fault = false;
+
+						switch( fr ) {
+						case 16: input_format = VANADIS_FORMAT_FP32;  break;
+						case 17: input_format = VANADIS_FORMAT_FP64;  break;
+						case 20: input_format = VANADIS_FORMAT_INT32; break;
+						case 21: input_format = VANADIS_FORMAT_INT64; break;
+						default:
+							format_fault = true;
+							break;
+						}
+
+						VanadisRegisterCompareType compare_type = REG_COMPARE_EQ;
+						bool compare_fault = false;
+
+						switch( next_ins & 0xF ) {
+						case 0xC:  compare_type = REG_COMPARE_LT;  break;
+						case 0xE:  compare_type = REG_COMPARE_LTE; break;
+						default:
+							compare_fault = true;
+							break;
+						}
+
+						// if neither are true, then we have a good decode, otherwise a problem.
+						// register 31 is where condition codes and rounding modes are kept
+						if( ! (format_fault | compare_fault) ) {
+							bundle->addInstruction( new VanadisFPSetRegCompareInstruction(
+								ins_addr, hw_thr, options,
+								31, fs, ft, input_format, compare_type ) );
+							insertDecodeFault = false;
+						}
+					}
 					break;
 				}
 			}
