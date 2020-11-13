@@ -1409,7 +1409,7 @@ protected:
 					const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins );
 
 					bundle->addInstruction( new VanadisBranchFPInstruction(
-						ins_addr, hw_thr, options, 31, (imm_value_64 << 2), VANADIS_SINGLE_DELAY_SLOT ) );
+						ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, (imm_value_64 << 2), VANADIS_SINGLE_DELAY_SLOT ) );
 					insertDecodeFault = false;
 				} else {
 
@@ -1676,7 +1676,7 @@ protected:
 						if( ! (format_fault | compare_fault) ) {
 							bundle->addInstruction( new VanadisFPSetRegCompareInstruction(
 								ins_addr, hw_thr, options,
-								31, fs, ft, input_format, compare_type ) );
+								MIPS_FP_STATUS_REG, fs, ft, input_format, compare_type ) );
 							insertDecodeFault = false;
 						}
 					}
