@@ -1,5 +1,4 @@
 
-
 #ifndef _H_VANADIS_REG_FILE
 #define _H_VANADIS_REG_FILE
 
@@ -7,6 +6,8 @@
 
 #include "decoder/visaopts.h"
 #include "inst/fpregmode.h"
+
+#include <cstring>
 
 namespace SST {
 namespace Vanadis {
@@ -26,32 +27,21 @@ public:
 			decoder_opts(decoder_ots),
 			fp_reg_mode(fp_rmode) {
 
-		// Registers are always 64-bits
-		int_reg_storage = new char[ 8 * int_regs ];
+		int_reg_width = 8;
 
-		for(int i = 0; i < (8 * int_regs); ++i) {
-			int_reg_storage[i] = 0;
-		}
+		// Registers are always 64-bits
+		int_reg_storage = new char[ int_reg_width * count_int_regs ];
+		std:memset( int_reg_storage, 0, ( int_reg_width * count_int_regs ) );
 
 		switch( fp_reg_mode ) {
 		case VANADIS_REGISTER_MODE_FP32:
-			{
-				fp_reg_width = 4;
-			}
-			break;
+			{ fp_reg_width = 4; } break;
 		case VANADIS_REGISTER_MODE_FP64:
-			{
-				fp_reg_width = 8;
-			}
-			break;
+			{ fp_reg_width = 8; } break;
 		}
 
-		fp_reg_storage  = new char[ fp_reg_width * fp_regs  ];
-
-		for(int i = 0; i < (fp_reg_width * fp_regs); ++i) {
-			fp_reg_storage[i] = 0;
-		}
-
+		fp_reg_storage  = new char[ fp_reg_width * count_fp_regs ];
+		std::memset( fp_reg_storage, 0, ( fp_reg_width * count_fp_regs ) );
 	}
 
 	~VanadisRegisterFile() {
@@ -65,7 +55,7 @@ public:
 
 	char* getIntReg( const uint16_t reg ) {
 		assert( reg < count_int_regs );
-		return int_reg_storage + (8 * reg);
+		return int_reg_storage + (int_reg_width * reg);
 	}
 
 	char* getFPReg( const uint16_t reg ) {
@@ -78,7 +68,7 @@ public:
 		assert( reg < count_int_regs );
 
 		if( reg != decoder_opts->getRegisterIgnoreWrites() ) {
-			char* reg_start = &int_reg_storage[reg * 8];
+			char* reg_start = &int_reg_storage[reg * int_reg_width];
 			T* reg_start_T = (T*) reg_start;
 			return *(reg_start_T);
 		} else {
@@ -104,7 +94,7 @@ public:
 		assert( reg < count_int_regs );
 
 		if( reg != decoder_opts->getRegisterIgnoreWrites() ) {
-			*((T*) &int_reg_storage[8*reg]) = val;
+			*((T*) &int_reg_storage[int_reg_width*reg]) = val;
 		}
 	}
 
@@ -117,31 +107,6 @@ public:
 		}
 	}
 
-/*
-	void setIntReg( const uint16_t reg, const uint64_t val ) {
-		if( reg != decoder_opts->getRegisterIgnoreWrites() ) {
-			*((uint64_t*) &int_reg_storage[8*reg]) = val;
-		}
-	}
-
-	void setIntReg( const uint16_t reg, const int64_t val ) {
-		if( reg != decoder_opts->getRegisterIgnoreWrites() ) {
-			*((int64_t*) &int_reg_storage[8*reg]) = val;
-		}
-	}
-
-	void setFPReg( const uint16_t reg, const double val ) {
-		if( reg != decoder_opts->getRegisterIgnoreWrites() ) {
-			*((double*) &fp_reg_storage[fp_reg_width*reg]) = val;
-		}
-	}
-
-	void setFPReg( const uint16_t reg, const float val ) {
-		if( reg != decoder_opts->getRegisterIgnoreWrites() ) {
-			*((float*) &fp_reg_storage[fp_reg_width*reg]) = val;
-		}
-	}
-*/
 	uint32_t getHWThread() const { return hw_thread; }
 	uint16_t countIntRegs() const { return count_int_regs; }
 	uint16_t countFPRegs() const { return count_fp_regs; }
@@ -194,6 +159,7 @@ private:
 
 	VanadisFPRegisterMode fp_reg_mode;
 	uint32_t fp_reg_width;
+	uint32_t int_reg_width;
 };
 
 }

@@ -133,7 +133,7 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 		// WE NEED ISA INTEGER AND FP COUNTS HERE NOT ZEROS
 		issue_isa_tables.push_back( new VanadisISATable( thread_decoders[i]->getDecoderOptions(),
 			thread_decoders[i]->countISAIntReg(), thread_decoders[i]->countISAFPReg() ) );
-		
+
 		thread_decoders[i]->setThreadROB( rob[i] );
 
 		for( uint16_t j = 0; j < thread_decoders[i]->countISAIntReg(); ++j ) {

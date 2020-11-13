@@ -1413,7 +1413,7 @@ protected:
 					insertDecodeFault = false;
 				} else {
 
-				output->verbose(CALL_INFO, 16, 0, "[decoder] ----> decoding function mask: %" PRIu32 " / 0x%lx\n",
+				output->verbose(CALL_INFO, 16, 0, "[decoder] ----> decoding function mask: %" PRIu32 " / 0x%x\n",
 					(next_ins & MIPS_FUNC_MASK), (next_ins & MIPS_FUNC_MASK) );
 
 				switch( next_ins & MIPS_FUNC_MASK ) {
