@@ -7,7 +7,7 @@ sst.setProgramOption("stopAtCycle", "0 ns")
 # Tell SST what statistics handling we want
 sst.setStatisticLoadLevel(4)
 
-verbosity = 16
+verbosity = 0
 
 v_cpu_0 = sst.Component("v0", "vanadis.VanadisCPU")
 v_cpu_0.addParams({
@@ -16,7 +16,8 @@ v_cpu_0.addParams({
 #       "executable" : "./tests/hello-mips",
 #       "executable" : "./tests/hello-musl",
 #       "executable" : "./tests/core-perf-musl",
-       "executable" : "./tests/stream-musl",
+#       "executable" : "./tests/stream-musl",
+       "executable" : "./tests/stream-mini-musl",
 #       "executable" : "./tests/inst-test/and",
        "app.env_count" : 1,
        "app.env0" : "HOME=/home/sdhammo",
@@ -24,7 +25,7 @@ v_cpu_0.addParams({
        "verbose" : verbosity,
        "physical_fp_registers" : 96,
        "print_int_reg" : 1,
-#      "pipeline_trace_file" : "pipe-lsq2.trace",
+#      "pipeline_trace_file" : "pipe.trace",
        "reorder_slots" : 8,
       "decodes_per_cycle" : 4,
       "issues_per_cycle" :  4,
@@ -52,7 +53,7 @@ v_cpu_0_lsq.addParams({
 	"address_mask" : 0xFFFFFFFF,
 #	"address_trace" : "address-lsq2.trace",
 #	"allow_speculated_operations" : 0,
-	"load_store_entries" : 16
+	"load_store_entries" : 8
 })
 
 dcache_if = v_cpu_0_lsq.setSubComponent( "memory_interface", "memHierarchy.memInterface" )
