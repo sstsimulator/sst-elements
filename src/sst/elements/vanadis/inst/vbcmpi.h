@@ -26,28 +26,10 @@ public:
 		isa_int_regs_in[0] = src_1;
 	}
 
-	~VanadisBranchRegCompareImmInstruction() {}
-
 	VanadisBranchRegCompareImmInstruction* clone() {
 		return new VanadisBranchRegCompareImmInstruction( *this );
 	}
 
-/*
-	virtual uint64_t calculateAddress( SST::Output* output, VanadisRegisterFile* reg_file, const uint64_t current_ip ) {
-		if( result_dir == BRANCH_TAKEN ) {
-			const uint64_t updated_address = (uint64_t) (((int64_t) getInstructionAddress()) + 4 + offset);
-
-			output->verbose(CALL_INFO, 16, 0, "calculate-address: (taken) (ip): %" PRIu64" / 0x%llx + (4 + offset: %" PRId64 " / 0x%llx = %" PRIu64 " / 0x%llx\n",
-				current_ip, current_ip, offset, offset, updated_address, updated_address);
-			return updated_address;
-		} else {
-			const uint64_t updated_address = calculateStandardNotTakenAddress();
-			output->verbose(CALL_INFO, 16, 0, "calculate-address: (not-taken) ins-addr: 0x%0llx, result: 0x%0llx\n",
-				getInstructionAddress(), updated_address);
-			return updated_address;
-		}
-	}
-*/
 	virtual const char* getInstCode() const { return "BCMPI"; }
 
 	virtual void printToBuffer(char* buffer, size_t buffer_size ) {
@@ -105,10 +87,10 @@ public:
 		}
 
 		if( compare_result ) {
-			result_dir = BRANCH_TAKEN;
+//			result_dir = BRANCH_TAKEN;
 			takenAddress = (uint64_t) ( ((int64_t) getInstructionAddress()) +  offset + VANADIS_SPECULATE_JUMP_ADDR_ADD );
 		} else {
-			result_dir = BRANCH_NOT_TAKEN;
+//			result_dir = BRANCH_NOT_TAKEN;
 			takenAddress = calculateStandardNotTakenAddress();
 		}
 

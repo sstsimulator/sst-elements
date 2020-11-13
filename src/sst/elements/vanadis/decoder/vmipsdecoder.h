@@ -132,9 +132,11 @@
 #define MIPS_SPEC_COP_MASK_MTC	    0x4
 #define MIPS_SPEC_COP_MASK_MOV	    0x6
 #define MIPS_SPEC_COP_MASK_CVTD     0x21
-#define MIPS_SPEC_COP_MASK_MULD     0x2
-#define MIPS_SPEC_COP_MASK_ADDD     0x0
-#define MIPS_SPEC_COP_MASK_SUBD     0x1
+#define MIPS_SPEC_COP_MASK_CVTW     0x24
+#define MIPS_SPEC_COP_MASK_MUL      0x2
+#define MIPS_SPEC_COP_MASK_ADD      0x0
+#define MIPS_SPEC_COP_MASK_SUB      0x1
+#define MIPS_SPEC_COP_MASK_DIV      0x3
 
 #define MIPS_SPEC_COP_MASK_CMP_LT   0x3C
 #define MIPS_SPEC_COP_MASK_CMP_LTE  0x3E
@@ -556,10 +558,10 @@ public:
 											// This is essential a predicted not taken branch
 											if( predicted_address == (ip + 8) ) {
 												output->verbose(CALL_INFO, 16, 0, "---> Branch 0x%llx predicted not taken, ip set to: 0x%0llx\n", ip, predicted_address );
-												speculated_ins->setSpeculatedDirection( BRANCH_NOT_TAKEN );
+//												speculated_ins->setSpeculatedDirection( BRANCH_NOT_TAKEN );
 											} else {
 												output->verbose(CALL_INFO, 16, 0, "---> Branch 0x%llx predicted taken, jump to 0x%0llx\n", ip, predicted_address);
-												speculated_ins->setSpeculatedDirection( BRANCH_TAKEN );
+//												speculated_ins->setSpeculatedDirection( BRANCH_TAKEN );
 											}
 
 											ip = predicted_address;
@@ -568,7 +570,7 @@ public:
 											output->verbose(CALL_INFO, 16, 0, "---> Branch table does not contain an entry for ins: 0x%0llx, continue with normal ip += 8 = 0x%0llx\n",
 												ip, (ip+8) );
 
-											speculated_ins->setSpeculatedDirection( BRANCH_NOT_TAKEN );
+//											speculated_ins->setSpeculatedDirection( BRANCH_NOT_TAKEN );
 											speculated_ins->setSpeculatedAddress( ip + 8 );
 
 											// We don't urgh.. let's just carry on
@@ -1388,12 +1390,26 @@ protected:
 
 		case MIPS_SPEC_OP_MASK_COP1:
 			{
+				output->verbose(CALL_INFO, 16, 0, "[decode] --> reached co-processor function decoder\n");
+
 				uint16_t fr = 0;
 				uint16_t ft = 0;
 				uint16_t fs = 0;
 				uint16_t fd = 0;
 
 				extract_fp_regs( next_ins, &fr, &ft, &fs, &fd );
+
+				if( ( next_ins & 0x3E30000 ) == 0x1010000 ) {
+					// this decodes to a BRANCH
+					const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins );
+
+					bundle->addInstruction( new VanadisBranchFPInstruction(
+						ins_addr, hw_thr, options, 31, (imm_value_64 << 2), VANADIS_SINGLE_DELAY_SLOT ) );
+					insertDecodeFault = false;
+				} else {
+
+				output->verbose(CALL_INFO, 16, 0, "[decoder] ----> decoding function mask: %" PRIu32 " / 0x%lx\n",
+					(next_ins & MIPS_FUNC_MASK), (next_ins & MIPS_FUNC_MASK) );
 
 				switch( next_ins & MIPS_FUNC_MASK ) {
 				case 0:
@@ -1467,7 +1483,7 @@ protected:
 					}
 					break;
 
-				case MIPS_SPEC_COP_MASK_MULD:
+				case MIPS_SPEC_COP_MASK_MUL:
 					{
 						VanadisFPRegisterFormat input_format = VANADIS_FORMAT_FP64;
                                                 bool format_fault = false;
@@ -1487,11 +1503,39 @@ protected:
 								ins_addr, hw_thr, options,
 								fd, fs, ft, input_format) );
 							insertDecodeFault = false;
+						} else {
+							output->verbose(CALL_INFO, 16, 0, "[decoder] ---> convert function failed because of input-format error (fmt: %" PRIu16 ")\n", fr);
 						}
 					}
 					break;
 
-				case MIPS_SPEC_COP_MASK_SUBD:
+				case MIPS_SPEC_COP_MASK_DIV:
+					{
+						VanadisFPRegisterFormat input_format = VANADIS_FORMAT_FP64;
+                                                bool format_fault = false;
+
+                                                switch( fr ) {
+                                                case 16: input_format = VANADIS_FORMAT_FP32;  break;
+                                                case 17: input_format = VANADIS_FORMAT_FP64;  break;
+                                                case 20: input_format = VANADIS_FORMAT_INT32; break;
+                                                case 21: input_format = VANADIS_FORMAT_INT64; break;
+                                                default:
+                                                        format_fault = true;
+                                                        break;
+                                                }
+
+                                                if( ! format_fault ) {
+							bundle->addInstruction( new VanadisFPMultiplyInstruction(
+								ins_addr, hw_thr, options,
+								fd, fs, ft, input_format) );
+							insertDecodeFault = false;
+						} else {
+							output->verbose(CALL_INFO, 16, 0, "[decoder] ---> convert function failed because of input-format error (fmt: %" PRIu16 ")\n", fr);
+						}
+					}
+					break;
+
+				case MIPS_SPEC_COP_MASK_SUB:
 					{
 						VanadisFPRegisterFormat input_format = VANADIS_FORMAT_FP64;
                                                 bool format_fault = false;
@@ -1511,6 +1555,8 @@ protected:
 								ins_addr, hw_thr, options,
 								fd, fs, ft, input_format) );
 							insertDecodeFault = false;
+						} else {
+							output->verbose(CALL_INFO, 16, 0, "[decoder] ---> convert function failed because of input-format error (fmt: %" PRIu16 ")\n", fr);
 						}
 					}
 					break;
@@ -1535,6 +1581,35 @@ protected:
 								ins_addr, hw_thr, options,
 								fd, fs, input_format, VANADIS_FORMAT_FP64 ) );
 							insertDecodeFault = false;
+						} else {
+							output->verbose(CALL_INFO, 16, 0, "[decoder] ---> convert function failed because of input-format error (fmt: %" PRIu16 ")\n", fr);
+						}
+					}
+
+					break;
+
+				case MIPS_SPEC_COP_MASK_CVTW:
+					{
+						VanadisFPRegisterFormat input_format = VANADIS_FORMAT_FP64;
+						bool format_fault = false;
+
+						switch( fr ) {
+						case 16: input_format = VANADIS_FORMAT_FP32;  break;
+						case 17: input_format = VANADIS_FORMAT_FP64;  break;
+						case 20: input_format = VANADIS_FORMAT_INT32; break;
+						case 21: input_format = VANADIS_FORMAT_INT64; break;
+						default:
+							format_fault = true;
+							break;
+						}
+
+						if( ! format_fault ) {
+							bundle->addInstruction( new VanadisFPConvertInstruction(
+								ins_addr, hw_thr, options,
+								fd, fs, input_format, VANADIS_FORMAT_INT32 ) );
+							insertDecodeFault = false;
+						} else {
+							output->verbose(CALL_INFO, 16, 0, "[decoder] ---> convert function failed because of input-format error (fmt: %" PRIu16 ")\n", fr);
 						}
 					}
 
@@ -1577,6 +1652,7 @@ protected:
 						}
 					}
 					break;
+				}
 				}
 			}
 			break;

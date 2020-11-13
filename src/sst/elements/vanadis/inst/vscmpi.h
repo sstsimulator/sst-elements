@@ -27,8 +27,6 @@ public:
 		isa_int_regs_out[0] = dest;
 	}
 
-	~VanadisSetRegCompareImmInstruction() {}
-
 	VanadisSetRegCompareImmInstruction* clone() {
 		return new VanadisSetRegCompareImmInstruction( *this );
 	}

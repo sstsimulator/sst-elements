@@ -25,7 +25,7 @@ public:
 			0,1,0,1,0,0,0,0, delayT ) {
 
 		isa_int_regs_out[0] = link_reg;
-		result_dir = BRANCH_TAKEN;
+//		result_dir = BRANCH_TAKEN;
 
 		takenAddress = pc;
 	}

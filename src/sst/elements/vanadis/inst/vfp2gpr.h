@@ -58,13 +58,13 @@ public:
 		switch( move_width ) {
 		case VANADIS_WIDTH_F32:
 			{
-				const uint32_t fp_v = regFile->getFPReg<uint32_t>( phys_fp_regs_in[0] );
+				const int32_t fp_v = regFile->getFPReg<int32_t>( phys_fp_regs_in[0] );
 				regFile->setIntReg( phys_int_regs_out[0], fp_v );
 			}
 			break;
 		case VANADIS_WIDTH_F64:
 			{
-				const uint64_t fp_v = regFile->getFPReg<uint64_t>( phys_fp_regs_in[0] );
+				const int64_t fp_v = regFile->getFPReg<int64_t>( phys_fp_regs_in[0] );
 				regFile->setIntReg( phys_int_regs_out[0], fp_v );
 			}
 			break;

@@ -41,6 +41,7 @@
 #include "inst/vjl.h"
 #include "inst/vjr.h"
 #include "inst/vbcmp.h"
+#include "inst/vbfp.h"
 
 // Load instructions
 #include "inst/vload.h"
@@ -70,5 +71,6 @@
 #include "inst/vfpadd.h"
 #include "inst/vfpsub.h"
 #include "inst/vfpscmp.h"
+#include "inst/vfpdiv.h"
 
 #endif

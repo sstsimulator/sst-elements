@@ -34,8 +34,6 @@ public:
 		}
 	}
 
-	~VanadisSysCallInstruction() {}
-
 	VanadisSysCallInstruction* clone() {
 		return new VanadisSysCallInstruction( *this );
 	}

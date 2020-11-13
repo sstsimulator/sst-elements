@@ -28,7 +28,7 @@ public:
 			isa_int_regs_out[0] = returnAddrReg;
 
 			// JLR means we will ALWAYS take the branch
-			result_dir = BRANCH_TAKEN;
+//			result_dir = BRANCH_TAKEN;
 		}
 
 		VanadisJumpRegLinkInstruction* clone() {

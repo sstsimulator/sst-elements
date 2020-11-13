@@ -64,15 +64,19 @@ public:
 	}
 
 	char* getIntReg( const uint16_t reg ) {
+		assert( reg < count_int_regs );
 		return int_reg_storage + (8 * reg);
 	}
 
 	char* getFPReg( const uint16_t reg ) {
+		assert( reg < count_fp_regs );
 		return fp_reg_storage + (fp_reg_width * reg);
 	}
 
 	template<typename T>
 	T getIntReg( const uint16_t reg ) {
+		assert( reg < count_int_regs );
+
 		if( reg != decoder_opts->getRegisterIgnoreWrites() ) {
 			char* reg_start = &int_reg_storage[reg * 8];
 			T* reg_start_T = (T*) reg_start;
@@ -84,6 +88,8 @@ public:
 
 	template<typename T>
 	T getFPReg( const uint16_t reg ) {
+		assert( reg < count_fp_regs );
+
 		if( reg != decoder_opts->getRegisterIgnoreWrites() ) {
 			char* reg_start = &fp_reg_storage[reg * fp_reg_width];
 			T* reg_start_T = (T*) reg_start;
@@ -95,6 +101,8 @@ public:
 
 	template<typename T>
 	void setIntReg( const uint16_t reg, const T val ) {
+		assert( reg < count_int_regs );
+
 		if( reg != decoder_opts->getRegisterIgnoreWrites() ) {
 			*((T*) &int_reg_storage[8*reg]) = val;
 		}
@@ -102,6 +110,8 @@ public:
 
 	template<typename T>
 	void setFPReg( const uint16_t reg, const T val ) {
+		assert( reg < count_fp_regs );
+
 		if( reg != decoder_opts->getRegisterIgnoreWrites() ) {
 			*((T*) &fp_reg_storage[fp_reg_width*reg]) = val;
 		}

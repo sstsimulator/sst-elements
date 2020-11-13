@@ -19,30 +19,13 @@ public:
 			1, 0, 1, 0, 0, 0, 0, 0, delayT ) {
 
 		isa_int_regs_in[0] = jump_to_reg;
-		result_dir = BRANCH_TAKEN;
+//		result_dir = BRANCH_TAKEN;
 	}
-
-	~VanadisJumpRegInstruction() {}
 
 	VanadisJumpRegInstruction* clone() {
 		return new VanadisJumpRegInstruction( *this );
 	}
-/*
-	virtual uint64_t calculateAddress( SST::Output* output, VanadisRegisterFile* reg_file, const uint64_t current_ip ) {
-		const uint64_t jump_to = reg_file->getIntReg<uint64_t>( phys_int_regs_in[0] );
 
-		// Last two bits MUST be zero
-		if( (jump_to & 0x3) == 0 ) {
-			output->verbose(CALL_INFO, 16, 0, "[jump]: jump-to: 0x%0llx\n", jump_to);
-		} else {
-			output->fatal(CALL_INFO, -1, "[flag-error]: flagging error for JR instruction, jump address (0x%0llx) is not naturally aligned.\n",
-				jump_to);
-			flagError();
-		}
-
-		return jump_to;
-	}
-*/
 	virtual const char* getInstCode() const { return "JR"; }
 
 	virtual void printToBuffer(char* buffer, size_t buffer_size ) {

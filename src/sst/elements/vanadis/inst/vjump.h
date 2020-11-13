@@ -23,7 +23,7 @@ public:
 		VanadisSpeculatedInstruction(addr, hw_thr, isa_opts,
 			0,0,0,0,0,0,0,0, delayT ) {
 
-		result_dir = BRANCH_TAKEN;
+//		result_dir = BRANCH_TAKEN;
 		takenAddress = pc;
 	}
 
