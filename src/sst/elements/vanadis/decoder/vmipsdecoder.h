@@ -16,9 +16,12 @@
 #include <unistd.h>
 #include <sys/types.h>
 
-#define MIPS_REG_ZERO		  	  0
-#define MIPS_REG_LO		          32
-#define MIPS_REG_HI		          33
+#define MIPS_REG_ZERO		  0
+#define MIPS_REG_LO		  32
+#define MIPS_REG_HI		  33
+
+#define MIPS_FP_VER_REG           32
+#define MIPS_FP_STATUS_REG        33
 
 #define MIPS_OP_MASK              0xFC000000
 #define MIPS_RS_MASK              0x3E00000
@@ -164,9 +167,11 @@ public:
 	VanadisMIPSDecoder( ComponentId_t id, Params& params ) :
 		VanadisDecoder( id, params ) {
 
-		// 32 int, 32 fp, reg-2 is for sys-call codes
+		// 32 int + hi/lo (2) = 34
+		// 32 fp + ver + status (2) = 34
+		// reg-2 is for sys-call codes
 		// plus 2 for LO/HI registers in INT
-		options = new VanadisDecoderOptions( (uint16_t) 0, 34, 32, 2, VANADIS_REGISTER_MODE_FP32 );
+		options = new VanadisDecoderOptions( (uint16_t) 0, 34, 34, 2, VANADIS_REGISTER_MODE_FP32 );
 		max_decodes_per_cycle      = params.find<uint16_t>("decode_max_ins_per_cycle",  2);
 
 		// MIPS default is 0x7fffffff according to SYS-V manual
@@ -1425,15 +1430,39 @@ protected:
 								rt, fs, VANADIS_WIDTH_F32 ) );
 							insertDecodeFault = false;
 						} else if( ( 0 == fd ) && ( MIPS_SPEC_COP_MASK_CF == fr ) ) {
-							bundle->addInstruction( new VanadisFP2GPRInstruction(
-								ins_addr, hw_thr, options,
-								rt, rd, VANADIS_WIDTH_F32 ) );
-							insertDecodeFault = false;
+							uint16_t fp_ctrl_reg = 0;
+                                                        bool fp_matched = false;
+
+                                                        switch( rd ) {
+                                                        case 0:  fp_ctrl_reg = MIPS_FP_VER_REG; fp_matched = true; break;
+                                                        case 31: fp_ctrl_reg = MIPS_FP_STATUS_REG; fp_matched = true; break;
+                                                        default:
+                                                                break;
+                                                        }
+
+                                                        if( fp_matched ) {
+								bundle->addInstruction( new VanadisFP2GPRInstruction(
+									ins_addr, hw_thr, options,
+									rt, fp_ctrl_reg, VANADIS_WIDTH_F32 ) );
+								insertDecodeFault = false;
+							}
 						} else if( ( 0 == fd ) && ( MIPS_SPEC_COP_MASK_CT == fr ) ) {
-							bundle->addInstruction( new VanadisGPR2FPInstruction(
-								ins_addr, hw_thr, options,
-								rd, rt, VANADIS_WIDTH_F32 ) );
-							insertDecodeFault = false;
+							uint16_t fp_ctrl_reg = 0;
+							bool fp_matched = false;
+
+							switch( rd ) {
+							case 0:  fp_ctrl_reg = MIPS_FP_VER_REG; fp_matched = true; break;
+							case 31: fp_ctrl_reg = MIPS_FP_STATUS_REG; fp_matched = true; break;
+							default:
+								break;
+							}
+
+							if( fp_matched ) {
+								bundle->addInstruction( new VanadisGPR2FPInstruction(
+									ins_addr, hw_thr, options,
+									fp_ctrl_reg, rt, VANADIS_WIDTH_F32 ) );
+								insertDecodeFault = false;
+							}
 						} else {
 							// assume this is an FADD and begin decode
 							VanadisFPRegisterFormat input_format = VANADIS_FORMAT_FP64;
