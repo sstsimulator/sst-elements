@@ -5,6 +5,8 @@
 #include "inst/vinst.h"
 #include "inst/vcmptype.h"
 
+#include "util/vfpreghandler.h"
+
 #define VANADIS_MIPS_FP_COMPARE_BIT 0x800000
 #define VANADIS_MIPS_FP_COMPARE_BIT_INVERSE 0xFF7FFFFF
 
@@ -23,13 +25,24 @@ public:
 		const VanadisFPRegisterFormat r_fmt,
 		const VanadisRegisterCompareType cType
 		) :
-		VanadisInstruction(addr, hw_thr, isa_opts, 0, 0, 0, 0, 3, 1, 3, 1 ) ,
+		VanadisInstruction(addr, hw_thr, isa_opts, 0, 0, 0, 0,
+			( (r_fmt == VANADIS_FORMAT_FP64) && ( VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode() ) ) ? 5 : 3, 1,
+			( (r_fmt == VANADIS_FORMAT_FP64) && ( VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode() ) ) ? 5 : 3, 1),
 			reg_fmt(r_fmt), compareType(cType) {
 
-		isa_fp_regs_in[0]  = src_1;
-		isa_fp_regs_in[1]  = src_2;
-		isa_fp_regs_in[2]  = dest;
-		isa_fp_regs_out[0] = dest;
+		if( (r_fmt == VANADIS_FORMAT_FP64) && ( VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode() ) ) {
+			isa_fp_regs_in[0]  = src_1;
+			isa_fp_regs_in[1]  = src_1 + 1;
+			isa_fp_regs_in[2]  = src_2;
+			isa_fp_regs_in[3]  = src_2 + 1;
+			isa_fp_regs_in[4]  = dest;
+			isa_fp_regs_out[0] = dest;
+		} else {
+			isa_fp_regs_in[0]  = src_1;
+			isa_fp_regs_in[1]  = src_2;
+			isa_fp_regs_in[2]  = dest;
+			isa_fp_regs_out[0] = dest;
+		}
 	}
 
 	VanadisFPSetRegCompareInstruction* clone() {
@@ -50,9 +63,11 @@ public:
 	}
 
 	template<typename T>
-	bool performCompare( SST::Output* output, VanadisRegisterFile* regFile, uint16_t left, uint16_t right ) {
-		const T left_value  = regFile->getFPReg<T>( left  );
-		const T right_value = regFile->getFPReg<T>( right );
+	bool performCompare( SST::Output* output, VanadisRegisterFile* regFile ) {
+		const T left_value  = ( (8 == sizeof(T)) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()) ) ?
+			combineFromRegisters<T>( regFile, phys_fp_regs_in[0], phys_fp_regs_in[1] ) : regFile->getFPReg<T>( phys_fp_regs_in[0] );
+		const T right_value = ( (8 == sizeof(T)) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()) ) ?
+                        combineFromRegisters<T>( regFile, phys_fp_regs_in[2], phys_fp_regs_in[3] ) : regFile->getFPReg<T>( phys_fp_regs_in[1] );
 
 		switch( compareType ) {
 		case REG_COMPARE_EQ:
@@ -81,25 +96,28 @@ public:
 			phys_fp_regs_out[0], phys_fp_regs_in[0], phys_fp_regs_in[1]);
 
 		bool compare_result = false;
+		bool byte8_type     = false;
 
 		switch( reg_fmt ) {
 		case VANADIS_FORMAT_FP32:
-			compare_result = performCompare<float>( output, regFile, phys_fp_regs_in[0], phys_fp_regs_in[1] );
+			compare_result = performCompare<float>( output, regFile );
 			break;
 		case VANADIS_FORMAT_FP64:
-			compare_result = performCompare<double>( output, regFile, phys_fp_regs_in[0], phys_fp_regs_in[1] );
+			compare_result = performCompare<double>( output, regFile );
+			byte8_type = true;
 			break;
 		case VANADIS_FORMAT_INT32:
-			compare_result = performCompare<int32_t>( output, regFile, phys_fp_regs_in[0], phys_fp_regs_in[1] );
+			compare_result = performCompare<int32_t>( output, regFile );
 			break;
 		case VANADIS_FORMAT_INT64:
-			compare_result = performCompare<int64_t>( output, regFile, phys_fp_regs_in[0], phys_fp_regs_in[1] );
+			compare_result = performCompare<int64_t>( output, regFile );
+			byte8_type = true;
 			break;
 		default:
 			output->fatal(CALL_INFO, -1, "Unknown data format type.\n");
 		}
 
-		const uint16_t cond_reg_in  = phys_fp_regs_in[2];
+		const uint16_t cond_reg_in  = byte8_type ? phys_fp_regs_in[4] : phys_fp_regs_in[2];
 		const uint16_t cond_reg_out = phys_fp_regs_out[0];
 		uint32_t cond_val = (regFile->getFPReg<uint32_t>( cond_reg_in ) & VANADIS_MIPS_FP_COMPARE_BIT_INVERSE);
 

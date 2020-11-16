@@ -5,6 +5,8 @@
 #include "inst/vinst.h"
 #include "inst/vfpwidth.h"
 
+#include "util/vfpreghandler.h"
+
 namespace SST {
 namespace Vanadis {
 
@@ -16,13 +18,24 @@ public:
 		const VanadisDecoderOptions* isa_opts,
 		const uint16_t int_dest,
 		const uint16_t fp_src,
-		VanadisFPWidth fp_w
+		VanadisFPRegisterFormat fp_w
 		 ) :
-		VanadisInstruction(addr, hw_thr, isa_opts, 0, 1, 0, 1, 1, 0, 1, 0),
+		VanadisInstruction(addr, hw_thr, isa_opts, 0, 1, 0, 1,
+			( (fp_w == VANADIS_FORMAT_FP64 || fp_w == VANADIS_FORMAT_INT64) && ( VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode() ) ) ? 2 : 1,
+			0,
+			( (fp_w == VANADIS_FORMAT_FP64 || fp_w == VANADIS_FORMAT_INT64) && ( VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode() ) ) ? 2 : 1,
+			0),
 			move_width(fp_w) {
 
 		isa_int_regs_out[0]  = int_dest;
-		isa_fp_regs_in[0]   = fp_src;
+
+		if( ( (fp_w == VANADIS_FORMAT_FP64 || fp_w == VANADIS_FORMAT_INT64) &&
+			( VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode() ) ) ) {
+			isa_fp_regs_in[0]   = fp_src;
+			isa_fp_regs_in[1]   = fp_src + 1;
+		} else {
+			isa_fp_regs_in[0]   = fp_src;
+		}
 	}
 
 	virtual VanadisFP2GPRInstruction* clone() {
@@ -35,9 +48,11 @@ public:
 
 	virtual const char* getInstCode() const {
 		switch( move_width ) {
-		case VANADIS_WIDTH_F32:
+		case VANADIS_FORMAT_INT32:
+		case VANADIS_FORMAT_FP32:
 			return "FP2GPR32";
-		case VANADIS_WIDTH_F64:
+		case VANADIS_FORMAT_INT64:
+		case VANADIS_FORMAT_FP64:
 			return "FP2GPR64";
 		}
 	}
@@ -56,16 +71,23 @@ public:
 			isa_fp_regs_in[0], phys_fp_regs_in[0] );
 
 		switch( move_width ) {
-		case VANADIS_WIDTH_F32:
+		case VANADIS_FORMAT_INT32:
+		case VANADIS_FORMAT_FP32:
 			{
 				const int32_t fp_v = regFile->getFPReg<int32_t>( phys_fp_regs_in[0] );
 				regFile->setIntReg( phys_int_regs_out[0], fp_v );
 			}
 			break;
-		case VANADIS_WIDTH_F64:
+		case VANADIS_FORMAT_INT64:
+		case VANADIS_FORMAT_FP64:
 			{
-				const int64_t fp_v = regFile->getFPReg<int64_t>( phys_fp_regs_in[0] );
-				regFile->setIntReg( phys_int_regs_out[0], fp_v );
+				if( VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode() ) {
+					const int64_t fp_v = combineFromRegisters<int64_t>( regFile, phys_fp_regs_in[0], phys_fp_regs_in[1] );
+					regFile->setIntReg( phys_int_regs_out[0], fp_v );
+				} else {
+					const int64_t fp_v = regFile->getFPReg<int64_t>( phys_fp_regs_in[0] );
+					regFile->setIntReg( phys_int_regs_out[0], fp_v );
+				}
 			}
 			break;
 		}
@@ -74,7 +96,7 @@ public:
 	}
 
 protected:
-	VanadisFPWidth move_width;
+	VanadisFPRegisterFormat move_width;
 
 };
 

@@ -5,10 +5,10 @@
 namespace SST {
 namespace Vanadis {
 
-enum VanadisFPWidth {
-        VANADIS_WIDTH_F32,
-        VANADIS_WIDTH_F64
-};
+//enum VanadisFPWidth {
+//        VANADIS_WIDTH_F32,
+//        VANADIS_WIDTH_F64
+//};
 
 enum VanadisFPRegisterFormat {
 	VANADIS_FORMAT_FP32,

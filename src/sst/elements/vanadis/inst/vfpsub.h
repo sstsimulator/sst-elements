@@ -3,6 +3,7 @@
 #define _H_VANADIS_FP_SUB
 
 #include "inst/vinst.h"
+#include "util/vfpreghandler.h"
 
 namespace SST {
 namespace Vanadis {
@@ -17,12 +18,25 @@ public:
 		const uint16_t src_1,
 		const uint16_t src_2,
 		const VanadisFPRegisterFormat input_f) :
-		VanadisInstruction(addr, hw_thr, isa_opts, 0, 0, 0, 0, 2, 1, 2, 1),
+		VanadisInstruction(addr, hw_thr, isa_opts, 0, 0, 0, 0,
+			( (input_f == VANADIS_FORMAT_FP64) && ( VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode() ) ) ? 4 : 2,
+			( (input_f == VANADIS_FORMAT_FP64) && ( VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode() ) ) ? 2 : 1,
+			( (input_f == VANADIS_FORMAT_FP64) && ( VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode() ) ) ? 4 : 2,
+                        ( (input_f == VANADIS_FORMAT_FP64) && ( VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode() ) ) ? 2 : 1),
 			input_format(input_f) {
 
-		isa_fp_regs_in[0]  = src_1;
-		isa_fp_regs_in[1]  = src_2;
-		isa_fp_regs_out[0] = dest;
+		if( (input_f == VANADIS_FORMAT_FP64) && ( VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode() ) ) {
+			isa_fp_regs_in[0]  = src_1;
+			isa_fp_regs_in[1]  = src_1 + 1;
+			isa_fp_regs_in[2]  = src_2;
+			isa_fp_regs_in[3]  = src_2 + 1;
+			isa_fp_regs_out[0] = dest;
+			isa_fp_regs_out[1] = dest + 1;
+		} else {
+			isa_fp_regs_in[0]  = src_1;
+			isa_fp_regs_in[1]  = src_2;
+			isa_fp_regs_out[0] = dest;
+		}
 	}
 
 	VanadisFPSubInstruction* clone() {
@@ -60,10 +74,17 @@ public:
 			break;
 		case VANADIS_FORMAT_FP64:
 			{
-				const double src_1 = regFile->getFPReg<double>( phys_fp_regs_in[0] );
-				const double src_2 = regFile->getFPReg<double>( phys_fp_regs_in[1] );
+				if( VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode() ) {
+					const double src_1 = combineFromRegisters<double>( regFile, phys_fp_regs_in[0], phys_fp_regs_in[1] );
+					const double src_2 = combineFromRegisters<double>( regFile, phys_fp_regs_in[2], phys_fp_regs_in[3] );
 
-				regFile->setFPReg( phys_fp_regs_out[0], ((src_1) - (src_2)));
+					fractureToRegisters<double>( regFile, phys_fp_regs_out[0], phys_fp_regs_out[1], src_1 - src_2 );
+				} else {
+					const double src_1 = regFile->getFPReg<double>( phys_fp_regs_in[0] );
+					const double src_2 = regFile->getFPReg<double>( phys_fp_regs_in[1] );
+
+					regFile->setFPReg( phys_fp_regs_out[0], src_1 - src_2 );
+				}
 			}
 			break;
 		default:

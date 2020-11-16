@@ -1422,12 +1422,12 @@ protected:
 						if( ( 0 == fd ) && ( MIPS_SPEC_COP_MASK_MTC == fr ) ) {
 							bundle->addInstruction( new VanadisGPR2FPInstruction(
 								ins_addr, hw_thr, options,
-								fs, rt, VANADIS_WIDTH_F32 ) );
+								fs, rt, VANADIS_FORMAT_FP32 ) );
 							insertDecodeFault = false;
 						} else if( ( 0 == fd ) && ( MIPS_SPEC_COP_MASK_MFC == fr ) ) {
 							bundle->addInstruction( new VanadisFP2GPRInstruction(
 								ins_addr, hw_thr, options,
-								rt, fs, VANADIS_WIDTH_F32 ) );
+								rt, fs, VANADIS_FORMAT_FP32 ) );
 							insertDecodeFault = false;
 						} else if( ( 0 == fd ) && ( MIPS_SPEC_COP_MASK_CF == fr ) ) {
 							uint16_t fp_ctrl_reg = 0;
@@ -1443,7 +1443,7 @@ protected:
                                                         if( fp_matched ) {
 								bundle->addInstruction( new VanadisFP2GPRInstruction(
 									ins_addr, hw_thr, options,
-									rt, fp_ctrl_reg, VANADIS_WIDTH_F32 ) );
+									rt, fp_ctrl_reg, VANADIS_FORMAT_FP32 ) );
 								insertDecodeFault = false;
 							}
 						} else if( ( 0 == fd ) && ( MIPS_SPEC_COP_MASK_CT == fr ) ) {
@@ -1460,7 +1460,7 @@ protected:
 							if( fp_matched ) {
 								bundle->addInstruction( new VanadisGPR2FPInstruction(
 									ins_addr, hw_thr, options,
-									fp_ctrl_reg, rt, VANADIS_WIDTH_F32 ) );
+									fp_ctrl_reg, rt, VANADIS_FORMAT_FP32 ) );
 								insertDecodeFault = false;
 							}
 						} else {
@@ -1496,7 +1496,7 @@ protected:
 							{
 								bundle->addInstruction( new VanadisFP2FPInstruction(
 									ins_addr, hw_thr, options,
-									fd, fs, VANADIS_WIDTH_F32 ) );
+									fd, fs, VANADIS_FORMAT_FP32 ) );
 								insertDecodeFault = false;
 							}
 							break;
@@ -1504,7 +1504,7 @@ protected:
 							{
 								bundle->addInstruction( new VanadisFP2FPInstruction(
 									ins_addr, hw_thr, options,
-									fd, fs, VANADIS_WIDTH_F64 ) );
+									fd, fs, VANADIS_FORMAT_FP64 ) );
 								insertDecodeFault = false;
 							}
 							break;

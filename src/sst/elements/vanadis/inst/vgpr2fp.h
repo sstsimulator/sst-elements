@@ -16,13 +16,25 @@ public:
 		const VanadisDecoderOptions* isa_opts,
 		const uint16_t fp_dest,
 		const uint16_t int_src,
-		VanadisFPWidth fp_w
+		VanadisFPRegisterFormat fp_w
 		 ) :
-		VanadisInstruction(addr, hw_thr, isa_opts, 1, 0, 1, 0, 0, 1, 0, 1),
+		VanadisInstruction(addr, hw_thr, isa_opts, 1, 0, 1, 0,
+			0,
+			( (fp_w == VANADIS_FORMAT_FP64 || fp_w == VANADIS_FORMAT_INT64) && ( VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode() ) ) ? 2 : 1,
+			0,
+			( (fp_w == VANADIS_FORMAT_FP64 || fp_w == VANADIS_FORMAT_INT64) && ( VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode() ) ) ? 2 : 1),
 			move_width(fp_w) {
 
 		isa_int_regs_in[0]  = int_src;
-		isa_fp_regs_out[0]  = fp_dest;
+
+		if( ( (fp_w == VANADIS_FORMAT_FP64 || fp_w == VANADIS_FORMAT_INT64) &&
+			( VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode() ) ) ) {
+
+			isa_fp_regs_out[0]  = fp_dest;
+			isa_fp_regs_out[1]  = fp_dest + 1;
+		} else {
+			isa_fp_regs_out[0]  = fp_dest;
+		}
 	}
 
 	virtual VanadisGPR2FPInstruction* clone() {
@@ -35,9 +47,11 @@ public:
 
 	virtual const char* getInstCode() const {
 		switch( move_width ) {
-		case VANADIS_WIDTH_F32:
+		case VANADIS_FORMAT_INT32:
+		case VANADIS_FORMAT_FP32:
 			return "GPR2FP32";
-		case VANADIS_WIDTH_F64:
+		case VANADIS_FORMAT_INT64:
+		case VANADIS_FORMAT_FP64:
 			return "GPR2FP64";
 		}
 	}
@@ -56,16 +70,23 @@ public:
 			isa_int_regs_in[0], phys_int_regs_in[0] );
 
 		switch( move_width ) {
-		case VANADIS_WIDTH_F32:
+		case VANADIS_FORMAT_INT32:
+		case VANADIS_FORMAT_FP32:
 			{
 				const int32_t v = regFile->getIntReg<int32_t>( phys_int_regs_in[0] );
 				regFile->setFPReg( phys_fp_regs_out[0], v );
 			}
 			break;
-		case VANADIS_WIDTH_F64:
+		case VANADIS_FORMAT_INT64:
+		case VANADIS_FORMAT_FP64:
 			{
-				const int64_t v = regFile->getIntReg<int64_t>( phys_int_regs_in[0] );
-				regFile->setFPReg( phys_fp_regs_out[0], v );
+				if( VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode() ) {
+					const int64_t v = regFile->getIntReg<int64_t>( phys_int_regs_in[0] );
+					fractureToRegisters<int64_t>( regFile, phys_fp_regs_out[0], phys_fp_regs_out[1], v );
+				} else {
+					const int64_t v = regFile->getIntReg<int64_t>( phys_int_regs_in[0] );
+					regFile->setFPReg( phys_fp_regs_out[0], v );
+				}
 			}
 			break;
 		}
@@ -74,7 +95,7 @@ public:
 	}
 
 protected:
-	VanadisFPWidth move_width;
+	VanadisFPRegisterFormat move_width;
 
 };
 
