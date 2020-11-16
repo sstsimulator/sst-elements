@@ -119,9 +119,11 @@ public:
 
 		const uint16_t cond_reg_in  = byte8_type ? phys_fp_regs_in[4] : phys_fp_regs_in[2];
 		const uint16_t cond_reg_out = phys_fp_regs_out[0];
+
 		uint32_t cond_val = (regFile->getFPReg<uint32_t>( cond_reg_in ) & VANADIS_MIPS_FP_COMPARE_BIT_INVERSE);
 
 		if( compare_result ) {
+			// true, keep everything else the same and set the compare bit to 1
 			cond_val = (cond_val | VANADIS_MIPS_FP_COMPARE_BIT);
 			output->verbose(CALL_INFO, 16, 0, "---> result: true\n");
 		} else {

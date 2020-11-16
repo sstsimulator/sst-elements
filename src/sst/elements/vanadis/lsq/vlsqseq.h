@@ -608,11 +608,11 @@ public:
 
 				}
 
-				// Mark store instruction as executed
+				// Mark store instruction as executed and ensure we delete it
 				(*sc_itr)->getInstruction()->markExecuted();
-				sc_inflight.erase(sc_itr);
-
 				delete (*sc_itr);
+
+				sc_inflight.erase(sc_itr);
 				processed = true;
 
 				break;

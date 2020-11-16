@@ -84,13 +84,17 @@ public:
 				output->verbose(CALL_INFO, 16, 0, "-----> compare: greater-than-eq / result: %s\n", (compare_result ? "true" : "false") );
 			}
 			break;
+		default:
+			{
+				output->fatal(CALL_INFO, -1, "Unknown comparison operation. Halt.\n");
+				compare_result = false;
+			}
+			break;
 		}
 
 		if( compare_result ) {
-//			result_dir = BRANCH_TAKEN;
 			takenAddress = (uint64_t) ( ((int64_t) getInstructionAddress()) +  offset + VANADIS_SPECULATE_JUMP_ADDR_ADD );
 		} else {
-//			result_dir = BRANCH_NOT_TAKEN;
 			takenAddress = calculateStandardNotTakenAddress();
 		}
 
