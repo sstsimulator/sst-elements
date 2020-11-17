@@ -68,6 +68,7 @@ void MemHierarchyScratchInterface::init(unsigned int phase) {
             if (memEvent->getInitCmd() == MemEventInit::InitCommand::Coherence) {
                 MemEventInitCoherence * memEventC = static_cast<MemEventInitCoherence*>(memEvent);
                 baseAddrMask_ = ~(memEventC->getLineSize() - 1);
+                lineSize_ = memEventC->getLineSize();
                 rqstr_ = memEventC->getSrc();
                 allNoncache_ = (Endpoint::Scratchpad == memEventC->getType());
                 initDone_ = true;
