@@ -38,13 +38,12 @@ private:
 protected:
 
 public:
-    Edge();
-    Edge( uint32_t vertexIn )
+    explicit Edge( uint32_t vertexIn )
     {
         weight = 0.00;
         destinationVertex = vertexIn;
     }
-    Edge( float weightIn, uint32_t vertexIn )
+    explicit Edge( float weightIn, uint32_t vertexIn )
     {
         weight = weightIn;
         destinationVertex = vertexIn;
@@ -77,31 +76,27 @@ private:
     T type;
     bool visited;
 
-    std::vector< Edge* >* adjacencyList;
+    std::vector< Edge* >* adjacencyList_;
 
 protected:
 
 public:
     Vertex()
     {
-        adjacencyList = new std::vector< Edge* >;
-
+        adjacencyList_ = new std::vector< Edge* >;
         visited = 0;
     }
 
     Vertex( T typeIn )
     {
-        adjacencyList = new std::vector< Edge* >;
-
+        adjacencyList_ = new std::vector< Edge* >;
         type = typeIn;
         visited = 0;
     }
 
-    bool setType( T typeIn )
+    void setType( T typeIn )
     {
         type = typeIn;
-
-        return true;
     }
 
     T getType( void ) const
@@ -109,11 +104,9 @@ public:
         return type;
     }
 
-    bool setVisited( bool visitIn )
+    void setVisited( bool visitIn )
     {
         visited = visitIn;
-
-        return true;
     }
 
     bool getVisited( void ) const
@@ -123,12 +116,12 @@ public:
 
     std::vector< Edge* >* getAdjacencyList( void ) const
     {
-        return adjacencyList;
+        return adjacencyList_;
     }
 
     void addEdge( Edge* edgeIn )
     {
-        adjacencyList->push_back(edgeIn);
+        adjacencyList_->push_back(edgeIn);
     }
 
 };
@@ -161,12 +154,12 @@ public:
 
     Vertex<T>* getVertex( uint32_t vertexNum )
     {
-        return &vertex_map_[vertexNum];
+        return &vertex_map_->at(vertexNum);
     }
 
     void setVertex( uint32_t vertexNum, Vertex<T> &vertex )
     {
-        vertex_map_[vertexNum] = vertex;
+        vertex_map_->at(vertexNum) = vertex;
     }
 
     std::map< uint32_t, Vertex<T> >* getVertexMap( void ) const
@@ -197,8 +190,7 @@ void LlyrGraph<T>::printGraph(void)
 
         std::vector< Edge* >* adjacencyList = vertexIterator->second.getAdjacencyList();
 
-        std::vector< Edge* >::iterator it;
-        for( it = adjacencyList->begin(); it != adjacencyList->end(); it++ )
+        for( auto it = adjacencyList->begin(); it != adjacencyList->end(); ++it )
         {
             std::cout << "-> " << (*it)->getDestination();
         }
@@ -227,8 +219,7 @@ void LlyrGraph<T>::printDot( std::string fileName )
     {
         std::vector< Edge* >* adjacencyList = vertexIterator->second.getAdjacencyList();
 
-        std::vector< Edge* >::iterator it;
-        for( it = adjacencyList->begin(); it != adjacencyList->end(); it++ )
+        for( auto it = adjacencyList->begin(); it != adjacencyList->end(); ++it )
         {
             outputFile << vertexIterator->first;
             outputFile << "->";
@@ -244,7 +235,7 @@ void LlyrGraph<T>::printDot( std::string fileName )
 template<class T>
 uint32_t LlyrGraph<T>::outEdges(uint32_t vertexId)
 {
-    return vertex_map_->at(vertexId).adjacencyList->size();
+    return vertex_map_->at(vertexId).adjacencyList_->size();
 }
 
 template<class T>

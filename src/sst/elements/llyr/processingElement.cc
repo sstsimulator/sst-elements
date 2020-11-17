@@ -8,63 +8,21 @@
 namespace SST {
 namespace Llyr {
 
-ProcessingElement::ProcessingElement(void)
-{
-}
-
 ProcessingElement::ProcessingElement(opType op_binding, uint32_t processor_id, uint32_t queue_depth,
-                                     SimpleMem*  mem_interface)  :
-    processor_id_(processor_id), queue_depth_(queue_depth), mem_interface_(mem_interface)
+                                     LSQueue* lsqueue, SimpleMem*  mem_interface)  :
+                    op_binding_(op_binding), processor_id_(processor_id), queue_depth_(queue_depth),
+                    lsqueue_(lsqueue), mem_interface_(mem_interface)
 {
+    //setup up i/o for messages
     char prefix[256];
-    sprintf(prefix, "[t=@t][ProcessingElement]: ");
+    sprintf(prefix, "[t=@t][ProcessingElement-%u]: ", processor_id_);
     output_ = new SST::Output(prefix, 0, 0, Output::STDOUT);
 
-    input_queues_= new std::vector< std::queue< std::bitset< Bit_Length > >* >;
-    output_queues_ = new std::vector< std::queue< std::bitset< Bit_Length > >* >;
-    setOpBinding(op_binding);
+    input_queues_= new std::vector< std::queue< LlyrData >* >;
+    output_queues_ = new std::vector< std::queue< LlyrData >* >;
 
     pending_op_ = 0;
 }
-
-ProcessingElement::ProcessingElement(opType op_binding, uint32_t processor_id, uint32_t queue_depth,
-                                     SimpleMem*  mem_interface,
-                                     std::queue< std::bitset< Bit_Length > >* init_input_0) :
-    processor_id_(processor_id), queue_depth_(queue_depth), mem_interface_(mem_interface)
-{
-    char prefix[256];
-    sprintf(prefix, "[t=@t][ProcessingElement]: ");
-    output_ = new SST::Output(prefix, 0, 0, Output::STDOUT);
-
-    input_queues_= new std::vector< std::queue< std::bitset< Bit_Length > >* >;
-    output_queues_ = new std::vector< std::queue< std::bitset< Bit_Length > >* >;
-    setOpBinding(op_binding);
-
-    input_queues_->push_back(init_input_0);
-
-    pending_op_ = 0;
-}
-
-ProcessingElement::ProcessingElement(opType op_binding, uint32_t processor_id, uint32_t queue_depth,
-                                     SimpleMem*  mem_interface,
-                                     std::queue< std::bitset< Bit_Length > >* init_input_0,
-                                     std::queue< std::bitset< Bit_Length > >* init_input_1) :
-    processor_id_(processor_id), queue_depth_(queue_depth), mem_interface_(mem_interface)
-{
-    char prefix[256];
-    sprintf(prefix, "[t=@t][ProcessingElement]: ");
-    output_ = new SST::Output(prefix, 0, 0, Output::STDOUT);
-
-    input_queues_= new std::vector< std::queue< std::bitset< Bit_Length > >* >;
-    output_queues_ = new std::vector< std::queue< std::bitset< Bit_Length > >* >;
-    setOpBinding(op_binding);
-
-    input_queues_->push_back(init_input_0);
-    input_queues_->push_back(init_input_1);
-
-    pending_op_ = 0;
-}
-
 
 ProcessingElement::~ProcessingElement()
 {
@@ -86,7 +44,7 @@ bool ProcessingElement::fakeInit()
             addr = 0x40;
         for( uint32_t i = 0; i < input_queues_->size(); ++i )
         {
-            std::bitset< Bit_Length > temp = std::bitset< Bit_Length >(addr);
+            LlyrData temp = LlyrData(addr);
             std::cout << "Init(" << processor_id_ << "-" << i << ")::" << "0" << "::" << temp << "::" << temp << std::endl;
             input_queues_->at(i)->push(temp);
         }
@@ -96,7 +54,7 @@ bool ProcessingElement::fakeInit()
 //         for( uint32_t i = 0; i < input_queues_->size(); ++i )
 //         {
 //             int64_t my_int = int_dist( generator );
-//             std::bitset< Bit_Length > temp = std::bitset< Bit_Length >(my_int);
+//             LlyrData temp = LlyrData(my_int);
 //             std::cout << "Init(" << processor_id_ << "-" << i << ")::" << my_int << "::" << temp << "::" << temp << std::endl;
 //             input_queues_->at(i)->push(temp);
 //         }
@@ -112,14 +70,14 @@ uint32_t ProcessingElement::bindInputQueue(uint32_t id)
     output_->verbose(CALL_INFO, 0, 0, ">> Binding Input Queue-%" PRIu32 " on PE-%" PRIu32 " to PE-%" PRIu32 "\n",
                      queueId, processor_id_, id );
 
-    std::queue< std::bitset< Bit_Length > >* tempQueue = new std::queue< std::bitset< Bit_Length > >;
-    input_queues_->push_back(tempQueue);
-
-    auto retVal = input_queue_map_.emplace( queueId, id );
-    if( retVal.second == false )
-    {
+    auto retVal = input_queue_map_.emplace( id, queueId );
+    if( retVal.second == false ) {
         return 0;
     }
+
+    //if insert succeeded need to create the queue
+    std::queue< LlyrData >* tempQueue = new std::queue< LlyrData >;
+    input_queues_->push_back(tempQueue);
 
     return queueId;
 }
@@ -131,83 +89,164 @@ uint32_t ProcessingElement::bindOutputQueue(uint32_t id)
     output_->verbose(CALL_INFO, 0, 0, ">> Binding Output Queue-%" PRIu32 " on PE-%" PRIu32 " to PE-%" PRIu32 "\n",
                      queueId, processor_id_, id );
 
-    std::queue< std::bitset< Bit_Length > >* tempQueue = new std::queue< std::bitset< Bit_Length > >;
-    output_queues_->push_back(tempQueue);
-
-    auto retVal = output_queue_map_.emplace( queueId, id );
-    if( retVal.second == false )
-    {
+    auto retVal = output_queue_map_.emplace( id, queueId );
+    if( retVal.second == false ) {
         return 0;
     }
+
+    //if insert succeeded need to create the queue
+    std::queue< LlyrData >* tempQueue = new std::queue< LlyrData >;
+    output_queues_->push_back(tempQueue);
 
     return queueId;
 }
 
-void ProcessingElement::setOpBinding(opType binding)
+uint32_t ProcessingElement::getInputQueueSrc(uint32_t id)
 {
-    op_binding_ = binding;
-
-    switch( op_binding_ )
-    {
-        case ANY :
-            num_inputs_ = 0;
-            num_outputs_ = 0;
-            break;
-        case LD :
-            num_inputs_ = 0;
-            num_outputs_ = 0;
-            break;
-        case ST :
-        case ADD :
-        case SUB :
-        case MUL :
-        case DIV :
-        case FPADD :
-        case FPSUB :
-        case FPMUL :
-        case FPDIV :
-            num_inputs_ = 0;
-            num_outputs_ = 0;
-            break;
-        case OTHER :
-            num_inputs_ = 0;
-            num_outputs_ = 0;
-            break;
-        case DUMMY :
-            num_inputs_ = 0;
-            num_outputs_ = 0;
-            break;
+    auto it = input_queue_map_.begin();
+    for( ; it != input_queue_map_.end(); ++it ) {
+        if( it->second == id ) {
+            return it->first;
+        }
     }
 
-//     //Allocate queues for the inputs
-//     for( uint32_t numQueues = 0; numQueues < num_inputs_; ++numQueues )
-//     {
-//         std::queue< std::bitset< Bit_Length > >* tempQueue = new std::queue< std::bitset< Bit_Length > >;
-//         input_queues_->push_back(tempQueue);
-//     }
-//
-//     //Allocate queues for the outputs
-//     for( uint32_t numQueues = 0; numQueues < num_outputs_; ++numQueues )
-//     {
-//         std::queue< std::bitset< Bit_Length > >* tempQueue = new std::queue< std::bitset< Bit_Length > >;
-//         output_queues_->push_back(tempQueue);
-//     }
-
+    return 0;
 }
 
-bool ProcessingElement::doCompute()
+uint32_t ProcessingElement::getOutputQueueDst(uint32_t id)
 {
-    output_->verbose(CALL_INFO, 0, 0, ">> Compute on %" PRIu32 " with %" PRIu32 "\n", processor_id_, op_binding_ );
+    auto it = output_queue_map_.begin();
+    for( ; it != output_queue_map_.end(); ++it ) {
+        if( it->second == id ) {
+            return it->first;
+        }
+    }
 
-    uint64_t intResult = 0x0F;
+    return 0;
+}
 
-    std::bitset< Bit_Length > arg0;
-    std::bitset< Bit_Length > arg1;
-    std::bitset< Bit_Length > retVal;
+bool ProcessingElement::doSend(std::vector< Edge* >* adjacencyList)
+{
+    LlyrData sendVal;
+    uint32_t dstPe;
+    uint32_t num_outputs  = output_queues_->size();
+
+    for( auto boo = adjacencyList->begin(); boo != adjacencyList->end(); ++boo ) {
+        std::cout << (*boo)->getDestination() << " ";
+    }
+    std::cout << std::endl;
+
+    //skip dummy nodes
+    if( op_binding_ == DUMMY )
+        return 1;
+
+    output_->verbose(CALL_INFO, 0, 0, ">> Sending\n");
+
+    //
+    for( uint32_t i = 0; i < num_outputs; ++i) {
+        if( output_queues_->at(i)->size() > 0 ) {
+            dstPe = getOutputQueueDst(i);
+            sendVal = output_queues_->at(i)->front();
+            output_queues_->at(i)->pop();
+
+            for( auto moop = output_queue_map_.begin(); moop != output_queue_map_.end(); ++moop) {
+                std::cout << "First " << moop->first;
+                std::cout << " Second " << moop->second;
+                std::cout << "\n" << std::endl;
+            }
+
+            for( auto moop = input_queue_map_.begin(); moop != input_queue_map_.end(); ++moop) {
+                std::cout << "First " << moop->first;
+                std::cout << " Second " << moop->second;
+                std::cout << std::endl;
+            }
+
+//             input_queues_->at(getInputQueueId(i));
+
+            output_->verbose(CALL_INFO, 0, 0, ">> Sending from %" PRIu32 " to %" PRIu32 "\n", i, dstPe );
+        }
+    }
 
     printInputQueue();
     printOutputQueue();
 
+    return true;
+}
+
+bool ProcessingElement::doCompute()
+{
+    if( op_binding_ == DUMMY )
+        return 1;
+
+    output_->verbose(CALL_INFO, 0, 0, ">> Compute 0x%" PRIx32 " on PE %" PRIu32 "\n", op_binding_, processor_id_ );
+
+    uint64_t intResult = 0x0F;
+
+    std::vector< LlyrData > argList;
+    LlyrData retVal;
+
+    printInputQueue();
+    printOutputQueue();
+
+    uint32_t num_ready = 0;
+    uint32_t num_inputs  = input_queues_->size();
+
+    //check to see if all of the input queues have data
+    for( uint32_t i = 0; i < num_inputs; ++i) {
+        if( input_queues_->at(i)->size() > 0 ) {
+            num_ready = num_ready + 1;
+        }
+    }
+
+    //if all inputs are available pull from queue and add to arg list
+    if( num_ready < num_inputs ) {
+        std::cout << "-Inputs " << num_inputs << " Ready " << num_ready <<std::endl;
+        return false;
+    } else {
+        std::cout << "+Inputs " << num_inputs << " Ready " << num_ready <<std::endl;
+        for( uint32_t i = 0; i < num_inputs; ++i) {
+            argList.push_back(input_queues_->at(i)->front());
+            input_queues_->at(i)->pop();
+        }
+    }
+
+    switch( op_binding_ ) {
+        case LD :
+            doLoad(argList[0].to_ullong());
+            return true;
+            break;
+        case ST :
+            return true;
+            break;
+        case ADD :
+            intResult = argList[0].to_ullong() + argList[1].to_ullong();
+            break;
+        case SUB :
+            intResult = argList[0].to_ullong() - argList[1].to_ullong();
+            break;
+        case MUL :
+            intResult = argList[0].to_ullong() * argList[1].to_ullong();
+            break;
+        case DIV :
+            intResult = argList[0].to_ullong() / argList[1].to_ullong();
+            break;
+        case FPADD :
+        case FPSUB :
+        case FPMUL :
+        case FPDIV :
+            break;
+        case OTHER :
+            break;
+        case ANY :
+        case DUMMY :
+            break;
+    }
+
+    retVal = LlyrData(intResult);
+
+
+
+/*
     //TODO better way to test for variable number of input queues instead of hard coding
     if( num_inputs_ == 1 ) {
         //check to see if all operands are available
@@ -234,19 +273,19 @@ bool ProcessingElement::doCompute()
 
             if( op_binding_ == ADD ) {
                 intResult = arg0.to_ullong() + arg1.to_ullong();
-                retVal = std::bitset< Bit_Length >(intResult);
+                retVal = LlyrData(intResult);
             }
             else if( op_binding_ == SUB ) {
                 intResult = arg0.to_ullong() - arg1.to_ullong();
-                retVal = std::bitset< Bit_Length >(intResult);
+                retVal = LlyrData(intResult);
             }
             else if( op_binding_ == MUL ) {
                 intResult = arg0.to_ullong() * arg1.to_ullong();
-                retVal = std::bitset< Bit_Length >(intResult);
+                retVal = LlyrData(intResult);
             }
             else if( op_binding_ == DIV ) {
                 intResult = arg0.to_ullong() / arg1.to_ullong();
-                retVal = std::bitset< Bit_Length >(intResult);
+                retVal = LlyrData(intResult);
             }
             else if( op_binding_ == FPADD ) {
                 double fpResult;
@@ -259,7 +298,7 @@ bool ProcessingElement::doCompute()
 
                 const auto temp0 = arg0.to_ullong();
                 std::memcpy(bufferA, std::addressof(temp0), size);
-                std::memcpy(std::addressof(fpArg1), bufferA, size);
+                std::memcpy(std::addressof(fpArg0), bufferA, size);
 
                 const auto temp1 = arg1.to_ullong();
                 std::memcpy(bufferB, std::addressof(temp1), size);
@@ -269,7 +308,7 @@ bool ProcessingElement::doCompute()
 
                 std::memcpy(bufferA, std::addressof(fpResult), size);
                 std::memcpy(std::addressof(intResult), bufferA, size);
-                retVal = std::bitset< Bit_Length >(intResult);
+                retVal = LlyrData(intResult);
             }
             else if( op_binding_ == FPSUB ) {
                 double fpResult;
@@ -282,7 +321,7 @@ bool ProcessingElement::doCompute()
 
                 const auto temp0 = arg0.to_ullong();
                 std::memcpy(bufferA, std::addressof(temp0), size);
-                std::memcpy(std::addressof(fpArg1), bufferA, size);
+                std::memcpy(std::addressof(fpArg0), bufferA, size);
 
                 const auto temp1 = arg1.to_ullong();
                 std::memcpy(bufferB, std::addressof(temp1), size);
@@ -292,7 +331,7 @@ bool ProcessingElement::doCompute()
 
                 std::memcpy(bufferA, std::addressof(fpResult), size);
                 std::memcpy(std::addressof(intResult), bufferA, size);
-                retVal = std::bitset< Bit_Length >(intResult);
+                retVal = LlyrData(intResult);
             }
             else if( op_binding_ == FPMUL ) {
                 double fpResult;
@@ -305,7 +344,7 @@ bool ProcessingElement::doCompute()
 
                 const auto temp0 = arg0.to_ullong();
                 std::memcpy(bufferA, std::addressof(temp0), size);
-                std::memcpy(std::addressof(fpArg1), bufferA, size);
+                std::memcpy(std::addressof(fpArg0), bufferA, size);
 
                 const auto temp1 = arg1.to_ullong();
                 std::memcpy(bufferB, std::addressof(temp1), size);
@@ -315,7 +354,7 @@ bool ProcessingElement::doCompute()
 
                 std::memcpy(bufferA, std::addressof(fpResult), size);
                 std::memcpy(std::addressof(intResult), bufferA, size);
-                retVal = std::bitset< Bit_Length >(intResult);
+                retVal = LlyrData(intResult);
             }
             else if( op_binding_ == FPDIV ) {
                 double fpResult;
@@ -328,7 +367,7 @@ bool ProcessingElement::doCompute()
 
                 const auto temp0 = arg0.to_ullong();
                 std::memcpy(bufferA, std::addressof(temp0), size);
-                std::memcpy(std::addressof(fpArg1), bufferA, size);
+                std::memcpy(std::addressof(fpArg0), bufferA, size);
 
                 const auto temp1 = arg1.to_ullong();
                 std::memcpy(bufferB, std::addressof(temp1), size);
@@ -338,7 +377,7 @@ bool ProcessingElement::doCompute()
 
                 std::memcpy(bufferA, std::addressof(fpResult), size);
                 std::memcpy(std::addressof(intResult), bufferA, size);
-                retVal = std::bitset< Bit_Length >(intResult);
+                retVal = LlyrData(intResult);
             }
 
         } else {
@@ -349,51 +388,62 @@ bool ProcessingElement::doCompute()
     if( num_outputs_ == 1 ) {
         output_queues_->at(0)->push(retVal);
     }
-
-    if( num_inputs_ > 0 )
-        printInputQueue();
-    if( num_outputs_ > 0 )
-        printOutputQueue();;
+*/
 
     std::cout << "intResult = " << intResult << std::endl;
     std::cout << "retVal = " << retVal << std::endl;
+
+    //for now push the result to all output queues
+    for( uint32_t i = 0; i < output_queues_->size(); ++i) {
+        output_queues_->at(i)->push(retVal);
+    }
+
+    printInputQueue();
+    printOutputQueue();
 
     return true;
 }
 
 bool ProcessingElement::doLoad(uint64_t addr)
 {
+    output_->verbose(CALL_INFO, 0, 0, "Creating a load from address: %" PRIu64 "\n", addr);
 
-//             void createLoadRequest( uint64_t addr, uint8_t reg ) {
-    output_->verbose(CALL_INFO, 1, 0, "Creating a load from address: %" PRIu64 "\n", addr);
-//
-// 		if( addr >= maxAddr ) {
-// 			output->fatal(CALL_INFO, -1, "Address requested: %" PRIu64 " but maximum address is: %" PRIu64 "\n",
-// 				addr, maxAddr);
-// 		}
-//
+    uint32_t targetPe;
     SimpleMem::Request* req = new SimpleMem::Request(SimpleMem::Request::Read, addr, 8);
+
+    //find out where the load actually needs to go
+    auto it = output_queue_map_.begin();
+    for( ; it != output_queue_map_.end(); ++it ) {
+        if( it->second == 0 ) {
+            targetPe = it->first;
+            break;
+        }
+    }
+
+    //exit the simulation if there is not a corresponding destination
+    if( it == output_queue_map_.end() ) {
+        output_->verbose(CALL_INFO, 0, 0, "Error: could not find corresponding PE.\n");
+        exit(-1);
+    }
+
+    LSEntry* tempEntry = new LSEntry( req->id, processor_id_, targetPe );
+    lsqueue_->addEntry( tempEntry );
+
     mem_interface_->sendRequest( req );
-//
-//                 JunoLoadStoreEntry* entry = new JunoLoadStoreEntry( req->id, reg );
-//                 addEntry( entry );
-//
-//                 mem->sendRequest( req );
-//             }
 
     return 1;
 
 }
 
-std::bitset< Bit_Length > ProcessingElement::popOutput()
+void ProcessingElement::pushInputQueue(uint32_t id, uint64_t &inVal )
 {
-
-    return true;
+    LlyrData newValue = LlyrData(inVal);
+    input_queues_->at(id)->push(newValue);
 }
 
 void ProcessingElement::printInputQueue()
 {
-    for( uint32_t i = 0; i < num_inputs_; ++i )
+    for( uint32_t i = 0; i < input_queues_->size(); ++i )
     {
         std::cout << "i:" << i << ": " << input_queues_->at(i)->size();
         if( input_queues_->at(i)->size() > 0 )
@@ -405,7 +455,7 @@ void ProcessingElement::printInputQueue()
 
 void ProcessingElement::printOutputQueue()
 {
-    for( uint32_t i = 0; i < num_outputs_; ++i )
+    for( uint32_t i = 0; i < output_queues_->size(); ++i )
     {
         std::cout << "o:" << i << ": " << output_queues_->at(i)->size();
         if( output_queues_->at(i)->size() )

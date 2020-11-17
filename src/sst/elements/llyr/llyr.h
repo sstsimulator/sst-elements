@@ -111,7 +111,7 @@ private:
     void constructHardwareGraph( std::string fileName );
     void constructSoftwareGraph( std::string fileName );
 
-    opType getOptype( std::string opString );
+    opType getOptype( std::string &opString ) const;
 
     LSQueue* ls_queue_;
 

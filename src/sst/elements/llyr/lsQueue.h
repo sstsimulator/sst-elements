@@ -22,6 +22,8 @@
 
 #include <map>
 #include <queue>
+#include <bitset>
+#include <utility>
 #include <cstdint>
 
 using namespace SST::Interfaces;
@@ -33,16 +35,18 @@ namespace Llyr {
 class LSEntry
 {
 public:
-    LSEntry(const SimpleMem::Request::id_t reqId, uint32_t targetProc) :
-            req_id_(reqId), target_proc_(targetProc) {}
+    LSEntry(const SimpleMem::Request::id_t reqId, uint32_t srcProc, uint32_t dstProc) :
+            req_id_(reqId), src_proc_(srcProc), dst_proc_(dstProc) {}
     ~LSEntry() {}
 
-    uint32_t getTargetPe() { return target_proc_; }
-    SimpleMem::Request::id_t getReqId() { return req_id_; }
+    uint32_t getSourcePe() const { return src_proc_; }
+    uint32_t getTargetPe() const { return dst_proc_; }
+    SimpleMem::Request::id_t getReqId() const { return req_id_; }
 
 protected:
     SimpleMem::Request::id_t req_id_;
-    uint32_t target_proc_;
+    uint32_t src_proc_;
+    uint32_t dst_proc_;
 
 private:
 
@@ -51,34 +55,50 @@ private:
 class LSQueue
 {
 public:
-    LSQueue(SST::Output* output) :
-            output_(output) {}
+    LSQueue()
+    {
+        //setup up i/o for messages
+        char prefix[256];
+        sprintf(prefix, "[t=@t][LSQueue]: ");
+        output_ = new SST::Output(prefix, 0, 0, Output::STDOUT);
+    }
+    LSQueue(const LSQueue &copy)
+    {
+        output_ = copy.output_;
+        memory_queue_ = copy.memory_queue_;
+        pending_ = copy.pending_;
+    }
     ~LSQueue() {}
 
     void addEntry( LSEntry* entry )
     {
         memory_queue_.push( entry->getReqId() );
-//         pending_.insert( std::pair< SimpleMem::Request::id_t, LSEntry* >( entry->getReqId(), entry ) );
         pending_.emplace( entry->getReqId(), entry );
     }
 
-    uint32_t lookupEntry( SimpleMem::Request::id_t id )
+    bool checkEntry( SimpleMem::Request::id_t id ) const
+    {
+        if( memory_queue_.front() == id )
+            return true;
+        else
+            return false;
+    }
+
+    std::pair< uint32_t, uint32_t > lookupEntry( SimpleMem::Request::id_t id )
     {
         auto entry = pending_.find( id );
-
         if( entry == pending_.end() )
         {
-            fprintf(stderr, "Error: response from memory could not be found.\n");
+            output_->verbose(CALL_INFO, 0, 0, "Error: response from memory could not be found.\n");
             exit(-1);
         }
 
-        return entry->second->getTargetPe();
+        return std::make_pair( entry->second->getSourcePe(), entry->second->getTargetPe() );
     }
 
     void removeEntry( SimpleMem::Request::id_t id )
     {
         auto entry = pending_.find( id );
-
         if( entry != pending_.end() )
         {
             pending_.erase(entry);

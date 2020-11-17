@@ -8,6 +8,7 @@ AM_CPPFLAGS = \
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libllyr.la
 libllyr_la_SOURCES = \
+	llyrTypes.h \
 	llyr.h \
 	llyr.cc \
 	graph.h \

@@ -21,6 +21,7 @@
 #include <sst/core/interfaces/simpleMem.h>
 
 #include "../graph.h"
+#include "../lsQueue.h"
 #include "../processingElement.h"
 
 namespace SST {
@@ -36,7 +37,8 @@ public:
     virtual ~LlyrMapper() {}
 
     virtual void mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType > appGraph,
-                          LlyrGraph< ProcessingElement* > &graphOut, SimpleMem*  mem_interface) = 0;
+                          LlyrGraph< ProcessingElement* > &graphOut,
+                          LSQueue* lsqueue, SimpleMem*  mem_interface) = 0;
 
 };
 

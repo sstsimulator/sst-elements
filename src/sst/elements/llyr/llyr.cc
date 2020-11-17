@@ -24,6 +24,7 @@
 #include <algorithm>
 
 #include "llyr.h"
+#include "llyrTypes.h"
 #include "mappers/simpleMapper.h"
 
 namespace SST {
@@ -71,7 +72,7 @@ LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
     }
 
     //need a 'global' LS queue for reordering
-    ls_queue_ = new LSQueue(output_);
+    ls_queue_ = new LSQueue();
 
     //construct hardware graph
     std::string const& hwFileName = params.find< std::string >("hardwareGraph", "grid.cfg");
@@ -87,7 +88,7 @@ LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
     std::string mapperName = params.find<std::string>("mapper", "llyr.simpleMapper");
     llyr_mapper_ = dynamic_cast<LlyrMapper*>( loadModule(mapperName, mapperParams) );
     output_->verbose(CALL_INFO, 1, 0, "Mapping application to hardware\n");
-    llyr_mapper_->mapGraph(hardwareGraph_, applicationGraph_, mappedGraph_, mem_interface_);
+    llyr_mapper_->mapGraph(hardwareGraph_, applicationGraph_, mappedGraph_, ls_queue_, mem_interface_);
 
     //all done
     output_->verbose(CALL_INFO, 1, 0, "Initialization done.\n");
@@ -126,7 +127,10 @@ void LlyrComponent::init( uint32_t phase )
         memInit.reserve( mooCows );
 
         for( size_t i = 0; i < mooCows; ++i ) {
-            memInit.push_back(i);
+            if( i % 8 == 0 )
+                memInit.push_back(i);
+            else
+                memInit.push_back(0);
         }
 
         output_->verbose(CALL_INFO, 2, 0, ">> Writing memory contents (%" PRIu64 " bytes at index 0)\n",
@@ -156,7 +160,6 @@ bool LlyrComponent::tick( Cycle_t )
 {
     //On each tick perform BFS on graph and compute based on operand availability
     //NOTE node0 is a dummy node to simplify the algorithm
-    uint32_t currentNode;
     std::queue< uint32_t > nodeQueue;
 
     output_->verbose(CALL_INFO, 1, 0, "Device clock tick\n");
@@ -164,8 +167,7 @@ bool LlyrComponent::tick( Cycle_t )
     //Mark all nodes in the PE graph un-visited
     std::map< uint32_t, Vertex< ProcessingElement* > >* vertex_map_ = mappedGraph_.getVertexMap();
     typename std::map< uint32_t, Vertex< ProcessingElement* > >::iterator vertexIterator;
-    for(vertexIterator = vertex_map_->begin(); vertexIterator != vertex_map_->end(); ++vertexIterator)
-    {
+    for(vertexIterator = vertex_map_->begin(); vertexIterator != vertex_map_->end(); ++vertexIterator) {
         vertexIterator->second.setVisited(0);
     }
 
@@ -173,26 +175,26 @@ bool LlyrComponent::tick( Cycle_t )
     nodeQueue.push(0);
 
     //BFS and do operations if values available in input queues
-    while( nodeQueue.empty() == 0 )
-    {
-        currentNode = nodeQueue.front();
+    while( nodeQueue.empty() == 0 ) {
+        uint32_t currentNode = nodeQueue.front();
         nodeQueue.pop();
 
 //         std::cout << "\n Adjacency list of vertex " << currentNode << "\n head ";
         std::vector< Edge* >* adjacencyList = vertex_map_->at(currentNode).getAdjacencyList();
 
-        //Let the PE decide whether or not it can do the compute
-        vertex_map_->at(currentNode).getType()->doCompute();
+        //set visited for bfs
         vertex_map_->at(currentNode).setVisited(1);
 
+        //send one item from each output queue to destination
+        vertex_map_->at(currentNode).getType()->doSend(vertex_map_->at(currentNode).getAdjacencyList());
+
+        //Let the PE decide whether or not it can do the compute
+        vertex_map_->at(currentNode).getType()->doCompute();
+
         //add the destination vertices from this node to the node queue
-        uint32_t destinationVertx;
-        std::vector< Edge* >::iterator it;
-        for( it = adjacencyList->begin(); it != adjacencyList->end(); it++ )
-        {
-            destinationVertx = (*it)->getDestination();
-            if( vertex_map_->at(destinationVertx).getVisited() == 0 )
-            {
+        for( auto it = adjacencyList->begin(); it != adjacencyList->end(); it++ ) {
+            uint32_t destinationVertx = (*it)->getDestination();
+            if( vertex_map_->at(destinationVertx).getVisited() == 0 ) {
 //                 std::cout << " -> " << destinationVertx;
                 nodeQueue.push(destinationVertx);
             }
@@ -225,7 +227,7 @@ void LlyrComponent::handleEvent( SimpleMem::Request* ev ) {
         }
         std::cout << std::endl;
 
-        std::bitset< Bit_Length > testArg;
+        LlyrData testArg;
         for( auto &it : ev->data ) {
             testArg = it;
             std::cout << testArg << " ";
@@ -237,7 +239,23 @@ void LlyrComponent::handleEvent( SimpleMem::Request* ev ) {
         testArg = memValue;
         std::cout << testArg << std::endl;
 
-        output_->verbose(CALL_INFO, 8, 0, "Response to a read, payload=%" PRId64 ", for addr: %" PRIu64 "\n", memValue, addr);
+        output_->verbose(CALL_INFO, 8, 0, "Response to a read, payload=%" PRIu64 ", for addr: %" PRIu64
+                         " to PE %" PRIu32 "\n", memValue, addr, ls_queue_->lookupEntry( ev->id ).second );
+
+        //pass the value to the appropriate PE
+        uint32_t dstPe = ls_queue_->lookupEntry( ev->id ).second;
+        uint32_t srcPe = ls_queue_->lookupEntry( ev->id ).first;
+
+        uint32_t dstQueue = mappedGraph_.getVertex(dstPe)->getType()->getInputQueueId(srcPe);
+        mappedGraph_.getVertex(dstPe)->getType()->pushInputQueue(dstQueue, memValue);
+        std::cout << "src PE " << srcPe;
+        std::cout << " dst PE " << dstPe;
+        std::cout << "-" << dstQueue;
+        std::cout << std::endl;
+
+
+//         vertex_map_->at(currentNode).getType()->bindOutputQueue(destinationVertx);
+
 //         regFile->writeReg(regTarget, memValue);
     }
 
@@ -356,7 +374,7 @@ void LlyrComponent::constructSoftwareGraph(std::string fileName)
 
 }
 
-opType LlyrComponent::getOptype(std::string opString)
+opType LlyrComponent::getOptype(std::string &opString) const
 {
     opType operation;
 

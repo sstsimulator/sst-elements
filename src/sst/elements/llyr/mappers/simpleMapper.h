@@ -27,11 +27,8 @@ class SimpleMapper : public LlyrMapper
 {
 
 public:
-    SimpleMapper(Params& params) :
-        LlyrMapper()
-    {
-    }
-
+    explicit SimpleMapper(Params& params) :
+        LlyrMapper() {}
     ~SimpleMapper() { }
 
     SST_ELI_REGISTER_MODULE_DERIVED(
@@ -44,7 +41,8 @@ public:
     )
 
     void mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType > appGraph,
-                  LlyrGraph< ProcessingElement* > &graphOut, SimpleMem*  mem_interface);
+                  LlyrGraph< ProcessingElement* > &graphOut,
+                  LSQueue* lsqueue, SimpleMem*  mem_interface);
 
 private:
 
@@ -52,22 +50,23 @@ private:
 };
 
 void SimpleMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType > appGraph,
-                            LlyrGraph< ProcessingElement* > &graphOut,  SimpleMem*  mem_interface)
+                            LlyrGraph< ProcessingElement* > &graphOut,
+                            LSQueue* lsqueue, SimpleMem*  mem_interface)
 {
     //Dummy node to make BFS easier
-    ProcessingElement* tempPE = new ProcessingElement(DUMMY, 0, 0, mem_interface);
+    ProcessingElement* tempPE = new ProcessingElement(DUMMY, 0, 0, lsqueue, mem_interface);
     graphOut.addVertex( 0, tempPE );
 
-    tempPE = new ProcessingElement( LD, 1, 2, mem_interface );
+    tempPE = new ProcessingElement( LD, 1, 2, lsqueue, mem_interface );
     graphOut.addVertex( 1, tempPE );
 
-    tempPE = new ProcessingElement( LD, 2, 2, mem_interface );
+    tempPE = new ProcessingElement( LD, 2, 2, lsqueue, mem_interface );
     graphOut.addVertex( 2, tempPE );
 
-    tempPE = new ProcessingElement( ADD, 3, 2, mem_interface );
+    tempPE = new ProcessingElement( ADD, 3, 2, lsqueue, mem_interface );
     graphOut.addVertex( 3, tempPE );
 
-    tempPE = new ProcessingElement( ST, 4, 2, mem_interface );
+    tempPE = new ProcessingElement( ST, 4, 2, lsqueue, mem_interface );
     graphOut.addVertex( 4, tempPE );
 
 //     tempPE = new ProcessingElement( ST, 22, 2 );
@@ -95,7 +94,6 @@ void SimpleMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType
 //     graphOut.addEdge( 9, 22 );
 //     graphOut.addEdge( 10, 22 );
 
-    uint32_t currentNode;
     std::queue< uint32_t > nodeQueue;
 
     //Mark all nodes in the PE graph un-visited
@@ -112,22 +110,26 @@ void SimpleMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType
     //BFS and add input/output edges
     while( nodeQueue.empty() == 0 )
     {
-        currentNode = nodeQueue.front();
+        uint32_t currentNode = nodeQueue.front();
         nodeQueue.pop();
 
         vertex_map_->at(currentNode).setVisited(1);
 
         std::vector< Edge* >* adjacencyList = vertex_map_->at(currentNode).getAdjacencyList();
+        ProcessingElement* srcNode;
+        ProcessingElement* dstNode;
 
         //add the destination vertices from this node to the node queue
-        uint32_t destinationVertx;
-        std::vector< Edge* >::iterator it;
-        for( it = adjacencyList->begin(); it != adjacencyList->end(); it++ )
+        for( auto it = adjacencyList->begin(); it != adjacencyList->end(); it++ )
         {
-            destinationVertx = (*it)->getDestination();
+            uint32_t destinationVertx = (*it)->getDestination();
 
-            vertex_map_->at(currentNode).getType()->bindOutputQueue(destinationVertx);
-            vertex_map_->at(destinationVertx).getType()->bindInputQueue(currentNode);
+            srcNode = vertex_map_->at(currentNode).getType();
+            dstNode = vertex_map_->at(destinationVertx).getType();
+//             vertex_map_->at(currentNode).getType()->bindOutputQueue(destinationVertx);
+//             vertex_map_->at(destinationVertx).getType()->bindInputQueue(currentNode);
+
+            vertex_map_->at(currentNode).getType()->fakeInit();
 
             if( vertex_map_->at(destinationVertx).getVisited() == 0 )
             {
