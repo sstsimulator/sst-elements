@@ -7,21 +7,20 @@ sst.setProgramOption("stopAtCycle", "0 ns")
 # Tell SST what statistics handling we want
 sst.setStatisticLoadLevel(4)
 
-verbosity = 0
+verbosity = 32
 
 v_cpu_0 = sst.Component("v0", "vanadis.VanadisCPU")
 v_cpu_0.addParams({
        "clock" : "2.0GHz",
-#       "executable" : "./tests/hello-gem5",
 #       "executable" : "./tests/hello-mips",
 #       "executable" : "./tests/hello-musl",
 #       "executable" : "./tests/core-perf-musl",
 #       "executable" : "./tests/stream-musl",
        "executable" : "./tests/stream-mini-musl",
-#       "executable" : "./tests/inst-test/and",
+#       "executable" : "./tests/test-fp",
        "app.env_count" : 1,
        "app.env0" : "HOME=/home/sdhammo",
-       "max_cycle" : 10000000,
+       "max_cycle" : 100000000,
        "verbose" : verbosity,
        "physical_fp_registers" : 96,
        "print_int_reg" : 1,
@@ -60,7 +59,7 @@ dcache_if = v_cpu_0_lsq.setSubComponent( "memory_interface", "memHierarchy.memIn
 
 node_os = sst.Component("os", "vanadis.VanadisNodeOS")
 node_os.addParams({
-	"verbose" : verbosity,
+	"verbose" : 16,
 	"cores" : 1
 })
 
