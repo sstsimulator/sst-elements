@@ -143,6 +143,7 @@
 
 #define MIPS_SPEC_COP_MASK_CMP_LT   0x3C
 #define MIPS_SPEC_COP_MASK_CMP_LTE  0x3E
+#define MIPS_SPEC_COP_MASK_CMP_EQ   0x32
 
 namespace SST {
 namespace Vanadis {
@@ -1405,11 +1406,20 @@ protected:
 				extract_fp_regs( next_ins, &fr, &ft, &fs, &fd );
 
 				if( ( next_ins & 0x3E30000 ) == 0x1010000 ) {
-					// this decodes to a BRANCH
+					// this decodes to a BRANCH on TRUE
 					const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins );
 
 					bundle->addInstruction( new VanadisBranchFPInstruction(
-						ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, (imm_value_64 << 2), VANADIS_SINGLE_DELAY_SLOT ) );
+						ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, (imm_value_64 << 2),
+						/* branch on true */ true, VANADIS_SINGLE_DELAY_SLOT ) );
+					insertDecodeFault = false;
+				} else if( ( next_ins & 0x3E30000 ) == 0x1000000 ) {
+					// this decodes to a BRANCH on FALSE
+					const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins );
+
+					bundle->addInstruction( new VanadisBranchFPInstruction(
+						ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, (imm_value_64 << 2),
+						/* branch on false */ false, VANADIS_SINGLE_DELAY_SLOT ) );
 					insertDecodeFault = false;
 				} else {
 
@@ -1646,6 +1656,7 @@ protected:
 
 				case MIPS_SPEC_COP_MASK_CMP_LT:
 				case MIPS_SPEC_COP_MASK_CMP_LTE:
+				case MIPS_SPEC_COP_MASK_CMP_EQ:
 					{
 						VanadisFPRegisterFormat input_format = VANADIS_FORMAT_FP64;
 						bool format_fault = false;
@@ -1664,6 +1675,7 @@ protected:
 						bool compare_fault = false;
 
 						switch( next_ins & 0xF ) {
+						case 0x2:  compare_type = REG_COMPARE_EQ;  break;
 						case 0xC:  compare_type = REG_COMPARE_LT;  break;
 						case 0xE:  compare_type = REG_COMPARE_LTE; break;
 						default:
