@@ -150,6 +150,114 @@ public:
 		}
 	}
 
+	void writeIntRegs( char* buffer, size_t max_buff_size ) {
+		size_t index_so_far = 0;
+
+		index_so_far += snprintf( &buffer[index_so_far], max_buff_size - index_so_far, "in: { " );
+
+		if( count_isa_int_reg_in > 0 ) {
+			index_so_far += snprintf( &buffer[index_so_far], max_buff_size - index_so_far, "%" PRIu16 "",
+				isa_int_regs_in[0]);
+
+			for( int i = 1; i < count_isa_int_reg_in; ++i ) {
+				index_so_far += snprintf( &buffer[index_so_far], max_buff_size - index_so_far, ", %" PRIu16 "",
+					isa_int_regs_in[i]);
+			}
+		}
+
+		index_so_far += snprintf( &buffer[index_so_far], max_buff_size - index_so_far, " } -> { " );
+
+		if( count_phys_int_reg_in > 0 ) {
+			index_so_far += snprintf( &buffer[index_so_far], max_buff_size - index_so_far, "%" PRIu16 "",
+				phys_int_regs_in[0]);
+
+			for( int i = 1; i < count_phys_int_reg_in; ++i ) {
+				index_so_far += snprintf( &buffer[index_so_far], max_buff_size - index_so_far, ", %" PRIu16 "",
+					phys_int_regs_in[i]);
+			}
+		}
+
+		index_so_far += snprintf( &buffer[index_so_far], max_buff_size - index_so_far, " } / out: { " );
+
+		if( count_isa_int_reg_out > 0 ) {
+			index_so_far += snprintf( &buffer[index_so_far], max_buff_size - index_so_far, "%" PRIu16 "",
+				isa_int_regs_out[0]);
+
+			for( int i = 1; i < count_isa_int_reg_out; ++i ) {
+				index_so_far += snprintf( &buffer[index_so_far], max_buff_size - index_so_far, ", %" PRIu16 "",
+					isa_int_regs_out[i]);
+			}
+		}
+
+		index_so_far += snprintf( &buffer[index_so_far], max_buff_size - index_so_far, " } -> { " );
+
+		if( count_phys_int_reg_out > 0 ) {
+			index_so_far += snprintf( &buffer[index_so_far], max_buff_size - index_so_far, "%" PRIu16 "",
+				phys_int_regs_out[0]);
+
+			for( int i = 1; i < count_phys_int_reg_out; ++i ) {
+				index_so_far += snprintf( &buffer[index_so_far], max_buff_size - index_so_far, ", %" PRIu16 "",
+					phys_int_regs_out[i]);
+			}
+		}
+
+		index_so_far += snprintf( &buffer[index_so_far], max_buff_size - index_so_far, " }" );
+	}
+
+	void writeFPRegs( char* buffer, size_t max_buff_size ) {
+		size_t index_so_far = 0;
+
+		index_so_far += snprintf( &buffer[index_so_far], max_buff_size - index_so_far, "in: { " );
+
+		if( count_isa_fp_reg_in > 0 ) {
+			index_so_far += snprintf( &buffer[index_so_far], max_buff_size - index_so_far, "%" PRIu16 "",
+				isa_fp_regs_in[0]);
+
+			for( int i = 1; i < count_isa_fp_reg_in; ++i ) {
+				index_so_far += snprintf( &buffer[index_so_far], max_buff_size - index_so_far, ", %" PRIu16 "",
+					isa_fp_regs_in[i]);
+			}
+		}
+
+		index_so_far += snprintf( &buffer[index_so_far], max_buff_size - index_so_far, " } -> { " );
+
+		if( count_phys_fp_reg_in > 0 ) {
+			index_so_far += snprintf( &buffer[index_so_far], max_buff_size - index_so_far, "%" PRIu16 "",
+				phys_fp_regs_in[0]);
+
+			for( int i = 1; i < count_phys_fp_reg_in; ++i ) {
+				index_so_far += snprintf( &buffer[index_so_far], max_buff_size - index_so_far, ", %" PRIu16 "",
+					phys_fp_regs_in[i]);
+			}
+		}
+
+		index_so_far += snprintf( &buffer[index_so_far], max_buff_size - index_so_far, " } / out: { " );
+
+		if( count_isa_fp_reg_out > 0 ) {
+			index_so_far += snprintf( &buffer[index_so_far], max_buff_size - index_so_far, "%" PRIu16 "",
+				isa_fp_regs_out[0]);
+
+			for( int i = 1; i < count_isa_fp_reg_out; ++i ) {
+				index_so_far += snprintf( &buffer[index_so_far], max_buff_size - index_so_far, ", %" PRIu16 "",
+					isa_fp_regs_out[i]);
+			}
+		}
+
+		index_so_far += snprintf( &buffer[index_so_far], max_buff_size - index_so_far, " } -> { " );
+
+		if( count_phys_fp_reg_out > 0 ) {
+			index_so_far += snprintf( &buffer[index_so_far], max_buff_size - index_so_far, "%" PRIu16 "",
+				phys_fp_regs_out[0]);
+
+			for( int i = 1; i < count_phys_fp_reg_out; ++i ) {
+				index_so_far += snprintf( &buffer[index_so_far], max_buff_size - index_so_far, ", %" PRIu16 "",
+					phys_fp_regs_out[i]);
+			}
+		}
+
+		index_so_far += snprintf( &buffer[index_so_far], max_buff_size - index_so_far, " }" );
+	}
+
 	uint16_t countPhysIntRegIn()  const { return count_phys_int_reg_in;  }
 	uint16_t countPhysIntRegOut() const { return count_phys_int_reg_out; }
 	uint16_t countISAIntRegIn()   const { return count_isa_int_reg_in;  }

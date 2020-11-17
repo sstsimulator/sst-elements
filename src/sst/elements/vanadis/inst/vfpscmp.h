@@ -52,7 +52,19 @@ public:
 	virtual VanadisFunctionalUnitType getInstFuncType() const {
 		return INST_FP_ARITH;
 	}
-	virtual const char* getInstCode() const { return "FPCMPST"; }
+
+	virtual const char* getInstCode() const {
+		switch( reg_fmt ) {
+		case VANADIS_FORMAT_FP64:
+			return "FP64CMP";
+		case VANADIS_FORMAT_FP32:
+			return "FP32CMP";
+		case VANADIS_FORMAT_INT64:
+			return "FPINT64ACMP";
+		case VANADIS_FORMAT_INT32:
+			return "FPINT32CMP";
+		}
+	}
 
 	virtual void printToBuffer(char* buffer, size_t buffer_size ) {
 		snprintf( buffer, buffer_size, "FPCMPST (op: %s, %s) isa-out: %" PRIu16 " isa-in: %" PRIu16 ", %" PRIu16 " / phys-out: %" PRIu16 " phys-in: %" PRIu16 ", %" PRIu16 "\n",
@@ -89,11 +101,19 @@ public:
 	}
 
 	virtual void execute( SST::Output* output, VanadisRegisterFile* regFile ) {
-		output->verbose(CALL_INFO, 16, 0, "Execute: (addr=0x%0llx) FPCMPST (op: %s, %s) isa-out: %" PRIu16 " isa-in: %" PRIu16 ", %" PRIu16 " / phys-out: %" PRIu16 " phys-in: %" PRIu16 ", %" PRIu16 "\n",
-			getInstructionAddress(), convertCompareTypeToString(compareType),
-			registerFormatToString(reg_fmt),
-			isa_fp_regs_out[0], isa_fp_regs_in[0], isa_fp_regs_in[1],
-			phys_fp_regs_out[0], phys_fp_regs_in[0], phys_fp_regs_in[1]);
+		char* int_register_buffer = new char[256];
+		char* fp_register_buffer = new char[256];
+
+		writeIntRegs( int_register_buffer, 256 );
+		writeFPRegs(  fp_register_buffer,  256 );
+
+		output->verbose(CALL_INFO, 16, 0, "Execute: (addr=0x%llx) %s (%s) int: %s / fp: %s\n",
+			getInstructionAddress(), getInstCode(),
+			convertCompareTypeToString(compareType),
+			int_register_buffer, fp_register_buffer);
+
+		delete[] int_register_buffer;
+		delete[] fp_register_buffer;
 
 		bool compare_result = false;
 		bool byte8_type     = false;
