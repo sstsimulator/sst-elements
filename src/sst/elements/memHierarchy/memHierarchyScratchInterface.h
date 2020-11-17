@@ -66,6 +66,8 @@ public:
     virtual void sendRequest(Request *req);
     virtual Request* recvResponse(void);
 
+    virtual Addr getLineSize() { return lineSize_; }
+
     Output output;
 
 private:
@@ -87,6 +89,7 @@ private:
     SST::Link*      link_;
     std::map<SST::Event::id_type, Interfaces::SimpleMem::Request*> requests_;
     Addr baseAddrMask_;
+    Addr lineSize_;
     std::string rqstr_;
     Addr remoteMemStart_;
     bool allNoncache_;
