@@ -35,25 +35,17 @@ public:
 	}
 
 	void addInstruction( VanadisInstruction* newIns ) {
+//		inst_bundle.push_back(newIns->clone() );
 		inst_bundle.push_back(newIns->clone() );
 	}
 
 	VanadisInstruction* getInstructionByIndex( const uint32_t index ) {
-		return inst_bundle[index]->clone();
+//		return inst_bundle[index]->clone();
+		return inst_bundle[index];
 	}
 
 	uint64_t getInstructionAddress() const {
 		return ins_addr;
-	}
-
-	VanadisInstructionBundle* clone() {
-		VanadisInstructionBundle* new_bundle = new VanadisInstructionBundle( ins_addr );
-
-		for( VanadisInstruction* next_ins : inst_bundle ) {
-			new_bundle->addInstruction( next_ins->clone() );
-		}
-
-		return new_bundle;
 	}
 
 private:
