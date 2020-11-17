@@ -87,7 +87,7 @@ namespace SST {
 
             // Debug Output
             Output* output;
-
+            Output* debug;
         };
 
         class c_TxnGen: public c_TxnGenBase{

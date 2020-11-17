@@ -114,6 +114,7 @@ namespace SST {
             SimTime_t m_simCycle;
 
             SST::Output *output;
+            SST::Output *debug;
 
             std::deque<c_Transaction*> m_ReqQ;
             std::deque<c_Transaction*> m_ResQ;

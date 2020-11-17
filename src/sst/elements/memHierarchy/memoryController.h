@@ -115,6 +115,8 @@ protected:
 
     virtual bool clock( SST::Cycle_t );
 
+    void adjustRegionToMemSize();
+
     Output out;
     Output dbg;
     std::set<Addr> DEBUG_ADDR;

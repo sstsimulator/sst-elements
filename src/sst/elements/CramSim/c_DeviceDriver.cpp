@@ -65,13 +65,15 @@ using namespace SST::CramSim;
  * @param params
  */
 
-c_DeviceDriver::c_DeviceDriver(ComponentId_t id, Params& params, Output* out, std::function<void(c_BankCommand*)> sendFunc) : SubComponent(id), output(out), m_sendCmdFunc(sendFunc) {
+c_DeviceDriver::c_DeviceDriver(ComponentId_t id, Params& params, Output* out, std::function<void(c_BankCommand*)> sendFunc) : SubComponent(id), debug(out), m_sendCmdFunc(sendFunc) {
     build(params);
 }
 
 void c_DeviceDriver::build(Params& params) {
 	// read params here
 	bool l_found = false;
+    
+        output = new SST::Output("", 1, 0, SST::Output::STDOUT);
 
 	k_useDualCommandBus = (uint32_t) params.find<uint32_t>("boolDualCommandBus", 0, l_found);
 	if (!l_found) {
@@ -303,7 +305,7 @@ void c_DeviceDriver::build(Params& params) {
 		m_channel.push_back(l_channel);
 		//   int l_i = 0;
 		for (unsigned l_j = 0; l_j != k_numRanksPerChannel; ++l_j) {
-			//std::cout << "Attaching Channel" << l_i << " to Rank" << l_rankNum << std::endl;
+			//output->output("Attaching Channel %u to Rank %u\n", l_i, l_rankNum);
 			m_channel.at(l_i)->acceptRank(m_ranks.at(l_rankNum));
 			m_ranks.at(l_rankNum)->acceptChannel(m_channel.at(l_i));
 			++l_rankNum;
@@ -314,8 +316,7 @@ void c_DeviceDriver::build(Params& params) {
 	unsigned l_bankGroupNum = 0;
 	for (unsigned l_i = 0; l_i != m_numRanks; ++l_i) {
 		for (unsigned l_j = 0; l_j != k_numBankGroupsPerRank; ++l_j) {
-			//std::cout << "Attaching Rank" << l_i <<
-			//	  " to BankGroup" << l_bankGroupNum << std::endl;
+			//output->output("Attaching Rank %u to BankGroup %u\n", l_i, l_bankGroupNum);
 			m_ranks.at(l_i)->acceptBankGroup(m_bankGroups.at(l_bankGroupNum));
 			m_bankGroups.at(l_bankGroupNum)->acceptRank(m_ranks.at(l_i));
 			++l_bankGroupNum;
@@ -326,8 +327,7 @@ void c_DeviceDriver::build(Params& params) {
 	unsigned l_bankNum = 0;
 	for (int l_i = 0; l_i != m_numBankGroups; ++l_i) {
 		for (int l_j = 0; l_j != k_numBanksPerBankGroup; ++l_j) {
-			//	std::cout << "Attaching BankGroup" << l_i <<
-			//	  " to Bank" << l_bankNum << std::endl;
+			//	output->output("Attaching BankGroup %u to Bank %u\n", l_i, l_bankNum);
 			m_bankGroups.at(l_i)->acceptBank(m_banks.at(l_bankNum));
 			m_banks.at(l_bankNum)->acceptBankGroup(m_bankGroups.at(l_i));
 			l_bankNum++;
@@ -360,15 +360,16 @@ void c_DeviceDriver::build(Params& params) {
 	//k_cmdTraceFileName.pop_back(); // remove trailing newline (??)
 	if (k_printCmdTrace) {
 		if (k_cmdTraceFileName.compare("-") == 0) {// set output to std::cout
-			std::cout << "Setting cmd trace output to std::cout" << std::endl;
+			output->output("Setting cmd trace output to std::cout\n");
 			m_cmdTraceStreamBuf = std::cout.rdbuf();
 		} else { // open the file and direct the cmdTraceStream to it
-			std::cout << "Setting cmd trace output to " << k_cmdTraceFileName << std::endl;
+			output->output("Setting cmd trace output to %s\n", k_cmdTraceFileName.c_str());
 			m_cmdTraceOFStream.open(k_cmdTraceFileName);
 			if (m_cmdTraceOFStream) {
 				m_cmdTraceStreamBuf = m_cmdTraceOFStream.rdbuf();
 			} else {
-				std::cerr << "Failed to open cmd trace output file " << k_cmdTraceFileName << ", redirecting to stdout";
+				output->output("Failed to open cmd trace output file %s, redirecting to stdout\n", 
+                                        k_cmdTraceFileName.c_str());
 				m_cmdTraceStreamBuf = std::cout.rdbuf();
 			}
 		}
@@ -387,7 +388,7 @@ void c_DeviceDriver::build(Params& params) {
  *
  */
 c_DeviceDriver::~c_DeviceDriver() {
-	std::cout << __PRETTY_FUNCTION__ << std::endl;
+	output->output("%s", __PRETTY_FUNCTION__);
 	// for (unsigned l_i = 0; l_i != m_numBanks; ++l_i)
 	// 	delete m_banks.at(l_i);
 	//
@@ -850,7 +851,7 @@ bool c_DeviceDriver::sendCommand(c_BankCommand* x_bankCommandPtr,
 	  }
 
 		#ifdef __SST_DEBUG_OUTPUT__
-				output->verbose(CALL_INFO,1,0,"Cycle:%lld Cmd:%s CH:%d PCH:%d Rank:%d BG:%d B:%d Row:%d Col:%d BankId:%d CmdSeq:%lld\n",
+				debug->verbose(CALL_INFO,1,0,"Cycle:%lld Cmd:%s CH:%d PCH:%d Rank:%d BG:%d B:%d Row:%d Col:%d BankId:%d CmdSeq:%lld\n",
 				    m_simCycle,
 				     x_bankCommandPtr->getCommandString().c_str(),
 				     x_bankCommandPtr->getHashedAddress()->getChannel(),

@@ -233,10 +233,13 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     link_->setRecvHandler( new Event::Handler<MemController>(this, &MemController::handleEvent));
     link_->setName(getName());
 
-    if (gotRegion)
+    if (gotRegion) {
         link_->setRegion(region_);
-    else
+    } else
         region_ = link_->getRegion();
+
+    adjustRegionToMemSize();
+
     privateMemOffset_ = 0;
 
     // Set up backing store if needed
@@ -516,6 +519,8 @@ void MemController::init(unsigned int phase) {
 
     region_ = link_->getRegion(); // This can change during init, but should stabilize before we start receiving init data
 
+    adjustRegionToMemSize();
+
     /* Inherit region from our source(s) */
     if (!phase) {
         /* Announce our presence on link */
@@ -647,6 +652,44 @@ void MemController::processInitEvent( MemEventInit* me ) {
     }
 
     delete me;
+}
+    
+
+void MemController::adjustRegionToMemSize() {
+    // Check memSize_ against region
+    // Set region_ to the smaller of the two
+    // It's sometimes useful to be able to adjust one of the params and not the other
+    // So, a mismatch is likely not an error, but alert the user in debug mode just in case
+    // TODO deprecate mem_size & just use region? 
+    uint64_t regSize = region_.end - region_.start;
+    if (regSize != ((uint64_t) - 1)) {  // The default is for region_.end = uint64_t -1, but then if we add one we wrap to 0...
+        regSize--;
+    }
+    if (region_.interleaveStep != 0) {
+        uint64_t steps = regSize / region_.interleaveStep;
+        regSize = steps * region_.interleaveSize;
+
+        if (regSize > memSize_) { /* Reduce the end point so that regSize is no larger than memSize */
+#ifdef __SST_DEBUG_OUTPUT__
+            out.output("%s, Notice: memory controller's region is larger than the backend's mem_size, controller is limiting accessible memory to mem_size\n"
+                    "Region: start=%" PRIu64 ", end=%" PRIu64 ", interleaveStep=%" PRIu64 ", interleaveSize=%" PRIu64 ". MemSize: %" PRIu64 "B\n",
+                    getName().c_str(), region_.start, region_.end, region_.interleaveStep, region_.interleaveSize, memSize_);
+#endif
+            steps = memSize_ / region_.interleaveSize;
+            regSize = steps * region_.interleaveStep;
+            region_.end = region_.start + regSize - 1;
+        }
+    } else if (regSize > memSize_) {
+#ifdef __SST_DEBUG_OUTPUT__
+        out.output("%s, Notice: memory controller's region is larger than the backend's mem_size, controller is limiting accessible memory to mem_size\n"
+                "Region: start=%" PRIu64 ", end=%" PRIu64 ", interleaveStep=%" PRIu64 ", interleaveSize=%" PRIu64 ". MemSize: %" PRIu64 "B\n",
+                getName().c_str(), region_.start, region_.end, region_.interleaveStep, region_.interleaveSize, memSize_);
+#endif
+        region_.end = region_.start + memSize_ - 1;
+    }
+
+    // Synchronize our region with link in case we adjusted it above
+    link_->setRegion(region_);
 }
 
 void MemController::printStatus(Output &statusOut) {

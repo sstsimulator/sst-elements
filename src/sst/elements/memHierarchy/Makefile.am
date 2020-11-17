@@ -127,12 +127,13 @@ libmemHierarchy_la_SOURCES = \
 	memNetBridge.cc
 
 EXTRA_DIST = \
-        Sieve/tests/StatisticOutput.csv.gold \
-        Sieve/tests/sieveprospero-0.trace \
-        Sieve/tests/trace-text.py \
-        Sieve/tests/Makefile \
-        Sieve/tests/ompsievetest.c \
-        Sieve/tests/sieve-test.py \
+	tests/testsuite_default_memHierarchy_sdl.py \
+    Sieve/tests/StatisticOutput.csv.gold \
+    Sieve/tests/sieveprospero-0.trace \
+    Sieve/tests/trace-text.py \
+    Sieve/tests/Makefile \
+    Sieve/tests/ompsievetest.c \
+    Sieve/tests/sieve-test.py \
 	tests/miranda.cfg \
 	tests/sdl-1.py \
 	tests/sdl2-1.py \
@@ -190,7 +191,91 @@ EXTRA_DIST = \
 	tests/hbm_device.ini \
 	tests/hbm_system.ini \
 	tests/utils.py \
-	tests/mhlib.py
+	tests/mhlib.py \
+    tests/refFiles/test_hybridsim.out \
+    tests/refFiles/test_memHA_BackendChaining.out \
+    tests/refFiles/test_memHA_BackendChaining_MC.out \
+    tests/refFiles/test_memHA_BackendDelayBuffer.out \
+    tests/refFiles/test_memHA_BackendDelayBuffer_MC.out \
+    tests/refFiles/test_memHA_BackendGoblinHMC.out \
+    tests/refFiles/test_memHA_BackendGoblinHMC_MC.out \
+    tests/refFiles/test_memHA_BackendHBMDramsim.out \
+    tests/refFiles/test_memHA_BackendHBMDramsim_MC.out \
+    tests/refFiles/test_memHA_BackendHBMDramsim_MR.out \
+    tests/refFiles/test_memHA_BackendHBMPagedMulti.out \
+    tests/refFiles/test_memHA_BackendPagedMulti.out \
+    tests/refFiles/test_memHA_BackendPagedMulti_MC.out \
+    tests/refFiles/test_memHA_BackendReorderRow.out \
+    tests/refFiles/test_memHA_BackendReorderRow_MC.out \
+    tests/refFiles/test_memHA_BackendReorderSimple.out \
+    tests/refFiles/test_memHA_BackendReorderSimple_MC.out \
+    tests/refFiles/test_memHA_BackendSimpleDRAM_1.out \
+    tests/refFiles/test_memHA_BackendSimpleDRAM_1_MC.out \
+    tests/refFiles/test_memHA_BackendSimpleDRAM_2.out \
+    tests/refFiles/test_memHA_BackendSimpleDRAM_2_MC.out \
+    tests/refFiles/test_memHA_BackendTimingDRAM_1.out \
+    tests/refFiles/test_memHA_BackendTimingDRAM_1_MC.out \
+    tests/refFiles/test_memHA_BackendTimingDRAM_2.out \
+    tests/refFiles/test_memHA_BackendTimingDRAM_2_MC.out \
+    tests/refFiles/test_memHA_BackendTimingDRAM_3.out \
+    tests/refFiles/test_memHA_BackendTimingDRAM_3_MC.out \
+    tests/refFiles/test_memHA_BackendTimingDRAM_4.out \
+    tests/refFiles/test_memHA_BackendTimingDRAM_4_MC.out \
+    tests/refFiles/test_memHA_BackendVaultSim.out \
+    tests/refFiles/test_memHA_BackendVaultSim_MC.out \
+    tests/refFiles/test_memHA_CustomCmdGoblin_1.out \
+    tests/refFiles/test_memHA_CustomCmdGoblin_1_MC.out \
+    tests/refFiles/test_memHA_CustomCmdGoblin_2.out \
+    tests/refFiles/test_memHA_CustomCmdGoblin_2_MC.out \
+    tests/refFiles/test_memHA_CustomCmdGoblin_3.out \
+    tests/refFiles/test_memHA_CustomCmdGoblin_3_MC.out \
+    tests/refFiles/test_memHA_DistributedCaches.out \
+    tests/refFiles/test_memHA_DistributedCaches_MC.out \
+    tests/refFiles/test_memHA_Flushes.out \
+    tests/refFiles/test_memHA_Flushes_2.out \
+    tests/refFiles/test_memHA_Flushes_2_MC.out \
+    tests/refFiles/test_memHA_Flushes_MC.out \
+    tests/refFiles/test_memHA_HashXor.out \
+    tests/refFiles/test_memHA_HashXor_MC.out \
+    tests/refFiles/test_memHA_Incoherent.out \
+    tests/refFiles/test_memHA_Incoherent_2.out \
+    tests/refFiles/test_memHA_Incoherent_MC.out \
+    tests/refFiles/test_memHA_Kingsley.out \
+    tests/refFiles/test_memHA_MemoryCache.out \
+    tests/refFiles/test_memHA_MemoryCache_MC.out \
+    tests/refFiles/test_memHA_Noninclusive_1.out \
+    tests/refFiles/test_memHA_Noninclusive_1_MC.out \
+    tests/refFiles/test_memHA_Noninclusive_2.out \
+    tests/refFiles/test_memHA_Noninclusive_2_MC.out \
+    tests/refFiles/test_memHA_PrefetchParams.out \
+    tests/refFiles/test_memHA_PrefetchParams_MC.out \
+    tests/refFiles/test_memHA_ScratchCache_1.out \
+    tests/refFiles/test_memHA_ScratchCache_2.out \
+    tests/refFiles/test_memHA_ScratchCache_3.out \
+    tests/refFiles/test_memHA_ScratchDirect.out \
+    tests/refFiles/test_memHA_ScratchNetwork.out \
+    tests/refFiles/test_memHA_ThroughputThrottling.out \
+    tests/refFiles/test_memHA_ThroughputThrottling_MC.out \
+    tests/refFiles/test_memHierarchy_sdl2_1.out \
+    tests/refFiles/test_memHierarchy_sdl3_1.out \
+    tests/refFiles/test_memHierarchy_sdl3_2.out \
+    tests/refFiles/test_memHierarchy_sdl3_3.out \
+    tests/refFiles/test_memHierarchy_sdl4_1.out \
+    tests/refFiles/test_memHierarchy_sdl4_2.out \
+    tests/refFiles/test_memHierarchy_sdl4_2_ramulator.out \
+    tests/refFiles/test_memHierarchy_sdl5_1.out \
+    tests/refFiles/test_memHierarchy_sdl5_1_MC.out \
+    tests/refFiles/test_memHierarchy_sdl5_1_ramulator.out \
+    tests/refFiles/test_memHierarchy_sdl5_1_ramulator_MC.out \
+    tests/refFiles/test_memHierarchy_sdl8_1.out \
+    tests/refFiles/test_memHierarchy_sdl8_3.out \
+    tests/refFiles/test_memHierarchy_sdl8_4.out \
+    tests/refFiles/test_memHierarchy_sdl9_1.out \
+    tests/refFiles/test_memHierarchy_sdl9_1_MC.out \
+    tests/refFiles/test_memHierarchy_sdl9_2.out \
+    tests/refFiles/test_memHierarchy_sdl_1.out \
+    tests/refFiles/test_memHierarchy_sdl_2.out \
+    tests/refFiles/test_memHierarchy_sdl_3.out
 
 sstdir = $(includedir)/sst/elements/memHierarchy
 nobase_sst_HEADERS = \

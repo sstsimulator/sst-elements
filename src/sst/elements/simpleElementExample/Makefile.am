@@ -39,6 +39,7 @@ endif
 
 EXTRA_DIST = \
     README \
+    tests/testsuite_default_simpleRNGComponent.py \
     tests/test_simpleParamComponent.py \
     tests/test_simpleComponent.py \
     tests/test_simpleClockerComponent.py \
@@ -65,10 +66,21 @@ EXTRA_DIST = \
     tests/subcomponent_tests/test_sc_2uu.py \
     tests/subcomponent_tests/test_sc_u2a.py \
     tests/subcomponent_tests/test_sc_ua.py \
-    tests/subcomponent_tests/test_sc_uu.py
+    tests/subcomponent_tests/test_sc_uu.py \
+    tests/refFiles/test_simpleComponent.out \
+    tests/refFiles/test_simpleDistribComponent_discrete.out \
+    tests/refFiles/test_simpleDistribComponent_expon.out \
+    tests/refFiles/test_simpleDistribComponent_gaussian.out \
+    tests/refFiles/test_simpleLookupTableComponent.out \
+    tests/refFiles/test_simpleMessageGeneratorComponent.out \
+    tests/refFiles/test_simpleRNGComponent_marsaglia.out \
+    tests/refFiles/test_simpleRNGComponent_mersenne.out \
+    tests/refFiles/test_simpleRNGComponent_xorshift.out \
+    tests/refFiles/test_simpleStatisticsComponent.out \
+    tests/refFiles/test_simpleSubComponent.out \
+    tests/refFiles/test_simpleSubComponent_2.out
 
-
-deprecated_EXTRA_DIST = 
+deprecated_EXTRA_DIST =
 
 if !SST_ENABLE_PREVIEW_BUILD
 EXTRA_DIST += $(deprecated_EXTRA_DIST)

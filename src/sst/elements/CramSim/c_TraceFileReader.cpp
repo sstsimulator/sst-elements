@@ -41,28 +41,23 @@ c_TraceFileReader::c_TraceFileReader(SST::ComponentId_t x_id, SST::Params& x_par
     m_traceFileName = x_params.find<std::string>("traceFile", "nil", l_found);
     if (!l_found)
     {
-        std::cout << "TraceFileReader: traceFile name is missing... exiting"<<
-        std::endl;
-        exit(-1);
+        output->fatal(CALL_INFO, -1, "TraceFileReader: traceFile name is missing... exiting\n");
     }
     else
     {
-        std::cout<< "TraceFileReader: tracefile name is" <<m_traceFileName<<std::endl;
+        output->output("TraceFileReader: tracefile name is %s\n", m_traceFileName.c_str());
     }
     m_traceFileStream = new std::ifstream(m_traceFileName, std::ifstream::in);
     if(!(*m_traceFileStream))
     {
-        std::cerr << "Unable to open trace file " << m_traceFileName << " Aborting!" <<
-        std::endl;
-        exit(-1);
+        output->fatal(CALL_INFO, -1, "Unable to open trace file %s Aborting!\n", m_traceFileName.c_str());
     }
 
     // get trace file type
     std::string l_traceFileType= x_params.find<std::string>("traceFileType", "DEFAULT", l_found);
     if (!l_found)
     {
-        std::cout << "TraceFileReader: traceFile type is missing... default (DRAMSim2 type)"<<
-        std::endl;
+        output->output("TraceFileReader: traceFile type is missing... default (DRAMSim2 type)\n");
     }
     if(l_traceFileType=="DEFAULT" || l_traceFileType=="DRAMSIM2")
     {
@@ -74,8 +69,7 @@ c_TraceFileReader::c_TraceFileReader(SST::ComponentId_t x_id, SST::Params& x_par
     }
     else
     {
-        std::cout << "TraceFileReader: trace file type error!!"<< std::endl;
-        exit(-1);
+        output->fatal(CALL_INFO, -1, "TraceFileReader: trace file type error!!\n");
     }
 
     // tell the simulator not to end without us
@@ -121,10 +115,7 @@ void c_TraceFileReader::createTxn()
                             l_txnInterval = std::atoi((*l_iter).c_str());
                             break;
                         default:
-                            std::cout
-                                    << "TraceFileReader Should not be in this stage of switch statement"
-                                    << std::endl;
-                            exit(-1);
+                            output->fatal(CALL_INFO, -1, "TraceFileReader Should not be in this stage of switch statement\n");
                             break;
                     }
                 }//Trace file type is USIMM
@@ -146,16 +137,12 @@ void c_TraceFileReader::createTxn()
                         case 3:
                             break;
                         default:
-                            std::cout
-                                    << "TraceFileReader Should not be in this stage of switch statement"
-                                    << std::endl;
-                            exit(-1);
+                            output->fatal(CALL_INFO, -1, "TraceFileReader Should not be in this stage of switch statement\n");
                     }
                 }
                 else
                 {
-                    std::cout<< "TraceFieReader: trace file type error!!"<<std::endl;
-                    exit(-1);
+                    output->fatal(CALL_INFO, -1, "TraceFieReader: trace file type error!!\n");
                 }
 
                 ++l_tokNum;
@@ -168,7 +155,7 @@ void c_TraceFileReader::createTxn()
         } else {
 
             primaryComponentOKToEndSim();
-            std::cout << "TraceFileReader: Ran out of txn's to read" << std::endl;
+            output->output("TraceFileReader: Ran out of txn's to read\n");
 
             break;
         }
