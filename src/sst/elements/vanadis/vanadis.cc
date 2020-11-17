@@ -1372,7 +1372,30 @@ void VanadisComponent::finish() {
 }
 
 void VanadisComponent::printStatus( SST::Output& output ) {
+	output.verbose(CALL_INFO, 0, 0, "----------------------------------------------------------------------------------------------------------------------------\n");
+	output.verbose(CALL_INFO, 0, 0, "Vanadis (Core: %" PRIu16 " / Threads: %" PRIu16 " / executing max cycle: %" PRIu64 ")\n\n",
+		core_id, hw_threads,  max_cycle);
 
+	uint32_t thread_num = 0;
+
+	for( VanadisCircularQueue< VanadisInstruction* >* next_rob : rob ) {
+		output.verbose(CALL_INFO, 0, 0, "-> ROB Information for Thread %" PRIu32 "\n", thread_num++ );
+		for( size_t i = next_rob->size(); i > 0; i-- ) {
+			VanadisInstruction* next_ins = next_rob->peekAt(i-1);
+			output.verbose(CALL_INFO, 0, 0, "---> rob[%5" PRIu16 "]: addr: 0x%08llx / %10s / spec: %3s / issued: %3s / exe: %3s / front: %3s / err: %3s\n",
+				(uint16_t) i-1,
+				next_ins->getInstructionAddress(), next_ins->getInstCode(),
+				next_ins->isSpeculated() ? "yes" : "no",
+				next_ins->completedIssue() ? "yes" : "no",
+				next_ins->completedExecution() ? "yes" : "no",
+				next_ins->checkFrontOfROB() ? "yes" : "no",
+				next_ins->trapsError() ? "yes" : "no");
+		}
+	}
+
+	output.verbose(CALL_INFO, 0, 0, "\n");
+	output.verbose(CALL_INFO, 0, 0, "-> LSQ-Size: %" PRIu32 "\n", (uint32_t) (lsq->storeSize() + lsq->loadSize()) );
+	output.verbose(CALL_INFO, 0, 0, "----------------------------------------------------------------------------------------------------------------------------\n");
 }
 
 void VanadisComponent::init(unsigned int phase) {
