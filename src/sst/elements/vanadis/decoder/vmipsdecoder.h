@@ -1564,7 +1564,7 @@ protected:
                                                 }
 
                                                 if( ! format_fault ) {
-							bundle->addInstruction( new VanadisFPMultiplyInstruction(
+							bundle->addInstruction( new VanadisFPDivideInstruction(
 								ins_addr, hw_thr, options,
 								fd, fs, ft, input_format) );
 							insertDecodeFault = false;
