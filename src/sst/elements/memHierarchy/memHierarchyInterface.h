@@ -66,6 +66,8 @@ public:
 
     void init(unsigned int phase);
 
+    virtual Addr getLineSize() { return lineSize_; }
+
 protected:
     /** Function to create the custom memEvent that will be used by MemHierarchy */
     virtual MemEventBase* createCustomEvent(Interfaces::SimpleMem::Request* req) const;
@@ -75,6 +77,7 @@ protected:
 
     Output      output;
     Addr        baseAddrMask_;
+    Addr        lineSize_;
     std::string rqstr_;
     std::map<MemEventBase::id_type, Interfaces::SimpleMem::Request*> requests_;
     SST::Link*  link_;
