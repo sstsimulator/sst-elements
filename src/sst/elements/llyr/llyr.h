@@ -51,6 +51,7 @@ public:
         { "clockcount",     "Number of clock ticks to execute", "100000" },
         { "application",    "Application in affine IR", "" },
         { "hardwareGraph",  "Hardware connectivity graph", "grid.cfg" },
+        { "ls_entries",     "Number of L/S entries to process each tick", "1" },
         { "intLatency",     "Number of clock ticks for integer operations", "1" },
         { "fpLatency",      "Number of clock ticks for integer operations", "4" }
     )
@@ -113,7 +114,9 @@ private:
 
     opType getOptype( std::string &opString ) const;
 
+    uint32_t ls_entries_;
     LSQueue* ls_queue_;
+    void doLoadStoreOps( uint32_t numOps );
 
 };
 

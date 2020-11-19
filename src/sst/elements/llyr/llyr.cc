@@ -73,6 +73,7 @@ LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
 
     //need a 'global' LS queue for reordering
     ls_queue_ = new LSQueue();
+    ls_entries_ = params.find< uint32_t >("ls_entries", 1);
 
     //construct hardware graph
     std::string const& hwFileName = params.find< std::string >("hardwareGraph", "grid.cfg");
@@ -186,7 +187,10 @@ bool LlyrComponent::tick( Cycle_t )
         vertex_map_->at(currentNode).setVisited(1);
 
         //send one item from each output queue to destination
-        vertex_map_->at(currentNode).getType()->doSend(vertex_map_->at(currentNode).getAdjacencyList());
+        vertex_map_->at(currentNode).getType()->doSend();
+
+        //send n responses from L/S unit to destination
+        doLoadStoreOps(ls_entries_);
 
         //Let the PE decide whether or not it can do the compute
         vertex_map_->at(currentNode).getType()->doCompute();
@@ -196,6 +200,7 @@ bool LlyrComponent::tick( Cycle_t )
             uint32_t destinationVertx = (*it)->getDestination();
             if( vertex_map_->at(destinationVertx).getVisited() == 0 ) {
 //                 std::cout << " -> " << destinationVertx;
+                vertex_map_->at(destinationVertx).setVisited(1);
                 nodeQueue.push(destinationVertx);
             }
         }
@@ -216,16 +221,15 @@ bool LlyrComponent::tick( Cycle_t )
 void LlyrComponent::handleEvent( SimpleMem::Request* ev ) {
     output_->verbose(CALL_INFO, 4, 0, "Recv response from cache\n");
 
+    for( auto &it : ev->data ) {
+        std::cout << unsigned(it) << " ";
+    }
+    std::cout << std::endl;
+
     if( ev->cmd == SimpleMem::Request::Command::ReadResp ) {
         // Read request needs some special handling
-//         uint8_t regTarget = ldStUnit->lookupEntry( ev->id );
         uint64_t addr = ev->addr;
         uint64_t memValue = 0;
-
-        for( auto &it : ev->data ) {
-            std::cout << unsigned(it) << " ";
-        }
-        std::cout << std::endl;
 
         LlyrData testArg;
         for( auto &it : ev->data ) {
@@ -234,36 +238,55 @@ void LlyrComponent::handleEvent( SimpleMem::Request* ev ) {
         }
         std::cout << std::endl;
 
-        std::memcpy( (void*)&memValue, &ev->data[0], sizeof(memValue) );
+        std::memcpy( std::addressof(memValue), std::addressof(ev->data[0]), sizeof(memValue) );
 
         testArg = memValue;
-        std::cout << testArg << std::endl;
+        std::cout << "*" << testArg << std::endl;
 
         output_->verbose(CALL_INFO, 8, 0, "Response to a read, payload=%" PRIu64 ", for addr: %" PRIu64
                          " to PE %" PRIu32 "\n", memValue, addr, ls_queue_->lookupEntry( ev->id ).second );
 
-        //pass the value to the appropriate PE
-        uint32_t dstPe = ls_queue_->lookupEntry( ev->id ).second;
-        uint32_t srcPe = ls_queue_->lookupEntry( ev->id ).first;
-
-        uint32_t dstQueue = mappedGraph_.getVertex(dstPe)->getType()->getInputQueueId(srcPe);
-        mappedGraph_.getVertex(dstPe)->getType()->pushInputQueue(dstQueue, memValue);
-        std::cout << "src PE " << srcPe;
-        std::cout << " dst PE " << dstPe;
-        std::cout << "-" << dstQueue;
-        std::cout << std::endl;
-
-
-//         vertex_map_->at(currentNode).getType()->bindOutputQueue(destinationVertx);
-
-//         regFile->writeReg(regTarget, memValue);
+        ls_queue_->setEntryData( ev->id, testArg );
+        ls_queue_->setEntryReady( ev->id, 1 );
+    } else {
+        output_->verbose(CALL_INFO, 8, 0, "Response to a write for addr: %" PRIu64 " to PE %" PRIu32 "\n",
+                         ev->addr, ls_queue_->lookupEntry( ev->id ).second );
+        ls_queue_->setEntryReady( ev->id, 2 );
     }
-
-//     ldStUnit->removeEntry( ev->id );
 
     // Need to clean up the events coming back from the cache
     delete ev;
     output_->verbose(CALL_INFO, 4, 0, "Complete cache response handling.\n");
+}
+
+void LlyrComponent::doLoadStoreOps( uint32_t numOps )
+{
+    output_->verbose(CALL_INFO, 0, 0, "Doing L/S ops\n");
+    for(uint32_t i = 0; i < numOps; ++i ) {
+        if( ls_queue_->getNumEntries() > 0 ) {
+            SimpleMem::Request::id_t next = ls_queue_->getNextEntry();
+
+            if( ls_queue_->getEntryReady(next) == 1) {
+                output_->verbose(CALL_INFO, 0, 0, "Mem Req ID %" PRIu32 "\n", uint32_t(next));
+                LlyrData data = ls_queue_->getEntryData(next);
+                //pass the value to the appropriate PE
+                uint32_t dstPe = ls_queue_->lookupEntry( next ).second;
+                uint32_t srcPe = ls_queue_->lookupEntry( next ).first;
+
+                uint32_t dstQueue = mappedGraph_.getVertex(dstPe)->getType()->getInputQueueId(srcPe);
+                mappedGraph_.getVertex(dstPe)->getType()->pushInputQueue(dstQueue, data);
+                std::cout << "src PE " << srcPe;
+                std::cout << " dst PE " << dstPe;
+                std::cout << "-" << dstQueue;
+                std::cout << std::endl;
+
+                ls_queue_->removeEntry( next );
+            } else if( ls_queue_->getEntryReady(next) == 2 ){
+                output_->verbose(CALL_INFO, 0, 0, "Mem Req ID %" PRIu32 "\n", uint32_t(next));
+                ls_queue_->removeEntry( next );
+            }
+        }
+    }
 }
 
 void LlyrComponent::constructHardwareGraph(std::string fileName)

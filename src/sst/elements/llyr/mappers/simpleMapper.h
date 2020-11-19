@@ -42,7 +42,7 @@ public:
 
     void mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType > appGraph,
                   LlyrGraph< ProcessingElement* > &graphOut,
-                  LSQueue* lsqueue, SimpleMem*  mem_interface);
+                  LSQueue* lsqueue, SimpleMem* mem_interface);
 
 private:
 
@@ -51,7 +51,7 @@ private:
 
 void SimpleMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType > appGraph,
                             LlyrGraph< ProcessingElement* > &graphOut,
-                            LSQueue* lsqueue, SimpleMem*  mem_interface)
+                            LSQueue* lsqueue, SimpleMem* mem_interface)
 {
     //Dummy node to make BFS easier
     ProcessingElement* tempPE = new ProcessingElement(DUMMY, 0, 0, lsqueue, mem_interface);
@@ -96,11 +96,12 @@ void SimpleMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType
 
     std::queue< uint32_t > nodeQueue;
 
+    graphOut.printGraph();
+
     //Mark all nodes in the PE graph un-visited
     std::map< uint32_t, Vertex< ProcessingElement* > >* vertex_map_ = graphOut.getVertexMap();
     typename std::map< uint32_t, Vertex< ProcessingElement* > >::iterator vertexIterator;
-    for(vertexIterator = vertex_map_->begin(); vertexIterator != vertex_map_->end(); ++vertexIterator)
-    {
+    for(vertexIterator = vertex_map_->begin(); vertexIterator != vertex_map_->end(); ++vertexIterator) {
         vertexIterator->second.setVisited(0);
     }
 
@@ -108,34 +109,36 @@ void SimpleMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType
     nodeQueue.push(0);
 
     //BFS and add input/output edges
-    while( nodeQueue.empty() == 0 )
-    {
+    while( nodeQueue.empty() == 0 ) {
         uint32_t currentNode = nodeQueue.front();
         nodeQueue.pop();
 
         vertex_map_->at(currentNode).setVisited(1);
 
+        std::cout << "\n Adjacency list of vertex " << currentNode << "\n head ";
         std::vector< Edge* >* adjacencyList = vertex_map_->at(currentNode).getAdjacencyList();
         ProcessingElement* srcNode;
         ProcessingElement* dstNode;
 
         //add the destination vertices from this node to the node queue
-        for( auto it = adjacencyList->begin(); it != adjacencyList->end(); it++ )
-        {
+        for( auto it = adjacencyList->begin(); it != adjacencyList->end(); it++ ) {
             uint32_t destinationVertx = (*it)->getDestination();
 
             srcNode = vertex_map_->at(currentNode).getType();
             dstNode = vertex_map_->at(destinationVertx).getType();
-//             vertex_map_->at(currentNode).getType()->bindOutputQueue(destinationVertx);
-//             vertex_map_->at(destinationVertx).getType()->bindInputQueue(currentNode);
 
-            vertex_map_->at(currentNode).getType()->fakeInit();
+            srcNode->bindOutputQueue(dstNode);
+            dstNode->bindInputQueue(srcNode);
 
-            if( vertex_map_->at(destinationVertx).getVisited() == 0 )
-            {
+            if( vertex_map_->at(destinationVertx).getVisited() == 0 ) {
+                std::cout << " -> " << destinationVertx;
+                vertex_map_->at(destinationVertx).setVisited(1);
                 nodeQueue.push(destinationVertx);
             }
         }
+
+        vertex_map_->at(currentNode).getType()->fakeInit();
+        std::cout << std::endl;
     }
 
 }

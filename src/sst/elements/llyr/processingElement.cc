@@ -35,8 +35,10 @@ bool ProcessingElement::fakeInit()
     std::uniform_int_distribution< uint64_t > int_dist(0, 50);
 //     std::uniform_real_distribution< double > int_dist(0.0, 50.0);
 
-    if( op_binding_ == LD )
-    {
+     output_->verbose(CALL_INFO, 0, 0, ">> Fake Init(%" PRIu32 "), Op %" PRIu32 " \n",
+                     processor_id_, op_binding_ );
+
+    if( op_binding_ == LD ) {
         uint64_t addr;
         if(processor_id_ % 2 != 0)
             addr = 0x00;
@@ -48,9 +50,14 @@ bool ProcessingElement::fakeInit()
             std::cout << "Init(" << processor_id_ << "-" << i << ")::" << "0" << "::" << temp << "::" << temp << std::endl;
             input_queues_->at(i)->push(temp);
         }
-    }
-    else
-    {
+    } else if( op_binding_ == ST ) {
+        std::queue< LlyrData >* tempQueue = new std::queue< LlyrData >;
+        input_queues_->push_back(tempQueue);
+
+        LlyrData temp = LlyrData(0xF0);
+        std::cout << "Init(" << processor_id_ << "-" << input_queues_->size() << ")::" << "0" << "::" << temp << "::" << temp << std::endl;
+        input_queues_->back()->push(temp);
+    } else {
 //         for( uint32_t i = 0; i < input_queues_->size(); ++i )
 //         {
 //             int64_t my_int = int_dist( generator );
@@ -63,14 +70,14 @@ bool ProcessingElement::fakeInit()
     return true;
 }
 
-uint32_t ProcessingElement::bindInputQueue(uint32_t id)
+uint32_t ProcessingElement::bindInputQueue(ProcessingElement* src)
 {
     uint32_t queueId = input_queues_->size();
 
     output_->verbose(CALL_INFO, 0, 0, ">> Binding Input Queue-%" PRIu32 " on PE-%" PRIu32 " to PE-%" PRIu32 "\n",
-                     queueId, processor_id_, id );
+                     queueId, processor_id_, src->getProcessorId() );
 
-    auto retVal = input_queue_map_.emplace( id, queueId );
+    auto retVal = input_queue_map_.emplace( queueId, src );
     if( retVal.second == false ) {
         return 0;
     }
@@ -82,14 +89,15 @@ uint32_t ProcessingElement::bindInputQueue(uint32_t id)
     return queueId;
 }
 
-uint32_t ProcessingElement::bindOutputQueue(uint32_t id)
+
+uint32_t ProcessingElement::bindOutputQueue(ProcessingElement* dst)
 {
     uint32_t queueId = output_queues_->size();
 
     output_->verbose(CALL_INFO, 0, 0, ">> Binding Output Queue-%" PRIu32 " on PE-%" PRIu32 " to PE-%" PRIu32 "\n",
-                     queueId, processor_id_, id );
+                     queueId, processor_id_, dst->getProcessorId() );
 
-    auto retVal = output_queue_map_.emplace( id, queueId );
+    auto retVal = output_queue_map_.emplace( queueId, dst );
     if( retVal.second == false ) {
         return 0;
     }
@@ -101,69 +109,53 @@ uint32_t ProcessingElement::bindOutputQueue(uint32_t id)
     return queueId;
 }
 
-uint32_t ProcessingElement::getInputQueueSrc(uint32_t id)
+int32_t ProcessingElement::getInputQueueId(uint32_t id) const
 {
     auto it = input_queue_map_.begin();
     for( ; it != input_queue_map_.end(); ++it ) {
-        if( it->second == id ) {
+        if( it->second->getProcessorId() == id ) {
             return it->first;
         }
     }
 
-    return 0;
+    return -1;
 }
 
-uint32_t ProcessingElement::getOutputQueueDst(uint32_t id)
+int32_t ProcessingElement::getOutputQueueId(uint32_t id) const
 {
     auto it = output_queue_map_.begin();
     for( ; it != output_queue_map_.end(); ++it ) {
-        if( it->second == id ) {
+        if( it->second->getProcessorId() == id ) {
             return it->first;
         }
     }
 
-    return 0;
+    return -1;
 }
 
-bool ProcessingElement::doSend(std::vector< Edge* >* adjacencyList)
+bool ProcessingElement::doSend()
 {
+    uint32_t queueId;
     LlyrData sendVal;
-    uint32_t dstPe;
-    uint32_t num_outputs  = output_queues_->size();
-
-    for( auto boo = adjacencyList->begin(); boo != adjacencyList->end(); ++boo ) {
-        std::cout << (*boo)->getDestination() << " ";
-    }
-    std::cout << std::endl;
+    ProcessingElement* dstPe;
 
     //skip dummy nodes
-    if( op_binding_ == DUMMY )
+    if( op_binding_ == DUMMY ) {
         return 1;
+    }
 
-    output_->verbose(CALL_INFO, 0, 0, ">> Sending\n");
+    for(auto it = output_queue_map_.begin() ; it != output_queue_map_.end(); ++it ) {
+        queueId = it->first;
+        dstPe = it->second;
 
-    //
-    for( uint32_t i = 0; i < num_outputs; ++i) {
-        if( output_queues_->at(i)->size() > 0 ) {
-            dstPe = getOutputQueueDst(i);
-            sendVal = output_queues_->at(i)->front();
-            output_queues_->at(i)->pop();
+        if( output_queues_->at(queueId)->size() > 0 ) {
+            output_->verbose(CALL_INFO, 0, 0, ">> Sending...%" PRIu32 "-%" PRIu32 " to %" PRIu32 "\n",
+                             processor_id_, queueId, dstPe->getProcessorId());
 
-            for( auto moop = output_queue_map_.begin(); moop != output_queue_map_.end(); ++moop) {
-                std::cout << "First " << moop->first;
-                std::cout << " Second " << moop->second;
-                std::cout << "\n" << std::endl;
-            }
+            sendVal = output_queues_->at(queueId)->front();
+            output_queues_->at(queueId)->pop();
 
-            for( auto moop = input_queue_map_.begin(); moop != input_queue_map_.end(); ++moop) {
-                std::cout << "First " << moop->first;
-                std::cout << " Second " << moop->second;
-                std::cout << std::endl;
-            }
-
-//             input_queues_->at(getInputQueueId(i));
-
-            output_->verbose(CALL_INFO, 0, 0, ">> Sending from %" PRIu32 " to %" PRIu32 "\n", i, dstPe );
+            dstPe->pushInputQueue(dstPe->getInputQueueId(this->getProcessorId()), sendVal);
         }
     }
 
@@ -173,10 +165,79 @@ bool ProcessingElement::doSend(std::vector< Edge* >* adjacencyList)
     return true;
 }
 
+bool ProcessingElement::doLoad(uint64_t addr)
+{
+    uint32_t targetPe;
+    SimpleMem::Request* req = new SimpleMem::Request(SimpleMem::Request::Read, addr, 8);
+
+    output_->verbose(CALL_INFO, 0, 0, "Creating a load request (%" PRIu32 " from address: %" PRIu64 "\n", uint32_t(req->id), addr);
+
+    //find out where the load actually needs to go
+    auto it = output_queue_map_.begin();
+    for( ; it != output_queue_map_.end(); ++it ) {
+        if( it->first == 0 ) {
+            targetPe = it->second->getProcessorId();
+            break;
+        }
+    }
+
+    //exit the simulation if there is not a corresponding destination
+    if( it == output_queue_map_.end() ) {
+        output_->verbose(CALL_INFO, 0, 0, "Error: could not find corresponding PE.\n");
+        exit(-1);
+    }
+
+    LSEntry* tempEntry = new LSEntry( req->id, processor_id_, targetPe );
+    lsqueue_->addEntry( tempEntry );
+
+    mem_interface_->sendRequest( req );
+
+    return 1;
+
+}
+
+bool ProcessingElement::doStore(LlyrData data, uint64_t addr)
+{
+    uint32_t targetPe = processor_id_;
+    SimpleMem::Request* req = new SimpleMem::Request(SimpleMem::Request::Write, addr, 8);
+
+    output_->verbose(CALL_INFO, 0, 0, "Creating a store request (%" PRIu32 " from address: %" PRIu64 "\n", uint32_t(req->id), addr);
+
+    const auto newValue = data.to_ullong();
+
+    constexpr auto size = sizeof(uint64_t);
+    uint8_t buffer[size] = {};
+    std::memcpy(buffer, std::addressof(newValue), size);
+
+    std::cout << "llyr:  " << data << "\n";
+    std::cout << "conv:  " << newValue << "\n";
+    for(uint32_t i = 0; i < size; ++i) {
+        std::cout << static_cast<unsigned int>(buffer[i]) << ", ";
+    }
+    std::cout << std::endl;
+
+    std::vector< uint8_t > payload(8);
+    memcpy( std::addressof(payload[0]), std::addressof(newValue), size );
+    for( auto it = payload.begin(); it != payload.end(); ++it ) {
+        std::cout << static_cast<unsigned int>(*it) << ", ";
+    }
+    std::cout << std::endl;
+    req->setPayload( payload );
+
+    LSEntry* tempEntry = new LSEntry( req->id, processor_id_, targetPe );
+    lsqueue_->addEntry( tempEntry );
+
+    mem_interface_->sendRequest( req );
+
+    return 1;
+
+}
+
 bool ProcessingElement::doCompute()
 {
-    if( op_binding_ == DUMMY )
+    if( op_binding_ == DUMMY ) {
         return 1;
+    }
 
     output_->verbose(CALL_INFO, 0, 0, ">> Compute 0x%" PRIx32 " on PE %" PRIu32 "\n", op_binding_, processor_id_ );
 
@@ -216,6 +277,7 @@ bool ProcessingElement::doCompute()
             return true;
             break;
         case ST :
+            doStore(argList[0].to_ullong(), argList[1].to_ullong());
             return true;
             break;
         case ADD :
@@ -404,64 +466,38 @@ bool ProcessingElement::doCompute()
     return true;
 }
 
-bool ProcessingElement::doLoad(uint64_t addr)
-{
-    output_->verbose(CALL_INFO, 0, 0, "Creating a load from address: %" PRIu64 "\n", addr);
-
-    uint32_t targetPe;
-    SimpleMem::Request* req = new SimpleMem::Request(SimpleMem::Request::Read, addr, 8);
-
-    //find out where the load actually needs to go
-    auto it = output_queue_map_.begin();
-    for( ; it != output_queue_map_.end(); ++it ) {
-        if( it->second == 0 ) {
-            targetPe = it->first;
-            break;
-        }
-    }
-
-    //exit the simulation if there is not a corresponding destination
-    if( it == output_queue_map_.end() ) {
-        output_->verbose(CALL_INFO, 0, 0, "Error: could not find corresponding PE.\n");
-        exit(-1);
-    }
-
-    LSEntry* tempEntry = new LSEntry( req->id, processor_id_, targetPe );
-    lsqueue_->addEntry( tempEntry );
-
-    mem_interface_->sendRequest( req );
-
-    return 1;
-
-}
-
 void ProcessingElement::pushInputQueue(uint32_t id, uint64_t &inVal )
 {
     LlyrData newValue = LlyrData(inVal);
     input_queues_->at(id)->push(newValue);
 }
 
+void ProcessingElement::pushInputQueue(uint32_t id, LlyrData &inVal )
+{
+    input_queues_->at(id)->push(inVal);
+}
+
 void ProcessingElement::printInputQueue()
 {
-    for( uint32_t i = 0; i < input_queues_->size(); ++i )
-    {
+    for( uint32_t i = 0; i < input_queues_->size(); ++i ) {
         std::cout << "i:" << i << ": " << input_queues_->at(i)->size();
-        if( input_queues_->at(i)->size() > 0 )
+        if( input_queues_->at(i)->size() > 0 ) {
             std::cout << ":" << input_queues_->at(i)->front().to_ullong() << ":" << input_queues_->at(i)->front() << "\n";
-        else
+        } else {
             std::cout << ":x" << ":x" << "\n";
+        }
     }
 }
 
 void ProcessingElement::printOutputQueue()
 {
-    for( uint32_t i = 0; i < output_queues_->size(); ++i )
-    {
+    for( uint32_t i = 0; i < output_queues_->size(); ++i ) {
         std::cout << "o:" << i << ": " << output_queues_->at(i)->size();
-        if( output_queues_->at(i)->size() )
+        if( output_queues_->at(i)->size() > 0 ) {
             std::cout << ":" << output_queues_->at(i)->back().to_ullong() << ":" << output_queues_->at(i)->front() << "\n";
-        else
+        } else {
             std::cout << ":x" << ":x" << "\n";
+        }
     }
 }
 

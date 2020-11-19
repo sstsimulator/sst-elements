@@ -42,15 +42,14 @@ public:
                       LSQueue* lsqueue, SimpleMem*  mem_interface);
     ~ProcessingElement();
 
-    uint32_t bindInputQueue(uint32_t id);
-    uint32_t bindOutputQueue(uint32_t id);
-
-    uint32_t getInputQueueId(uint32_t id) const { return input_queue_map_.at(id); }
-    uint32_t getOutputQueueId(uint32_t id) const { return output_queue_map_.at(id); }
-    uint32_t getInputQueueSrc(uint32_t id);
-    uint32_t getOutputQueueDst(uint32_t id);
+    uint32_t bindInputQueue(ProcessingElement* src);
+    uint32_t bindOutputQueue(ProcessingElement* dst);
 
     void     pushInputQueue(uint32_t id, uint64_t &inVal );
+    void     pushInputQueue(uint32_t id, LlyrData &inVal );
+
+    int32_t  getInputQueueId(uint32_t id) const;
+    int32_t  getOutputQueueId(uint32_t id) const;
 
     void     setOpBinding(opType binding) { op_binding_ = binding; }
     opType   getOpBinding() const { return op_binding_; }
@@ -60,9 +59,10 @@ public:
 
     bool     getPendingOp() const { return pending_op_; }
 
-    bool     doSend(std::vector< Edge* >* adjacencyList);
+    bool     doSend();
     bool     doCompute();
     bool     doLoad(uint64_t addr);
+    bool     doStore(LlyrData data, uint64_t addr);
 
     //TODO for testing only
     bool     fakeInit();
@@ -83,9 +83,9 @@ private:
     std::vector< std::queue< LlyrData >* >* input_queues_;
     std::vector< std::queue< LlyrData >* >* output_queues_;
 
-    //need to connect PEs to queues -- src/dst, queue_id
-    std::map< uint32_t, uint32_t > input_queue_map_;
-    std::map< uint32_t, uint32_t > output_queue_map_;
+    //need to connect PEs to queues -- queue_id, src/dst
+    std::map< uint32_t, ProcessingElement* > input_queue_map_;
+    std::map< uint32_t, ProcessingElement* > output_queue_map_;
 
     LSQueue* lsqueue_;
 

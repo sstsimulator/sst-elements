@@ -26,6 +26,8 @@
 #include <utility>
 #include <cstdint>
 
+#include "llyrTypes.h"
+
 using namespace SST::Interfaces;
 
 namespace SST {
@@ -36,17 +38,27 @@ class LSEntry
 {
 public:
     LSEntry(const SimpleMem::Request::id_t reqId, uint32_t srcProc, uint32_t dstProc) :
-            req_id_(reqId), src_proc_(srcProc), dst_proc_(dstProc) {}
+            req_id_(reqId), src_proc_(srcProc), dst_proc_(dstProc), ready_(0) {}
     ~LSEntry() {}
 
     uint32_t getSourcePe() const { return src_proc_; }
     uint32_t getTargetPe() const { return dst_proc_; }
     SimpleMem::Request::id_t getReqId() const { return req_id_; }
 
+    void setData( LlyrData data ) { data_ = data; }
+    LlyrData getData() const{ return data_; }
+
+    void setReady( uint32_t ready ) { ready_ = ready; }
+    uint32_t getReady() const{ return ready_; }
+
 protected:
     SimpleMem::Request::id_t req_id_;
+
     uint32_t src_proc_;
     uint32_t dst_proc_;
+
+    uint32_t ready_;
+    LlyrData data_;
 
 private:
 
@@ -70,18 +82,13 @@ public:
     }
     ~LSQueue() {}
 
+    uint32_t getNumEntries() const { return memory_queue_.size(); }
+    SimpleMem::Request::id_t getNextEntry() const { return memory_queue_.front(); }
+
     void addEntry( LSEntry* entry )
     {
         memory_queue_.push( entry->getReqId() );
         pending_.emplace( entry->getReqId(), entry );
-    }
-
-    bool checkEntry( SimpleMem::Request::id_t id ) const
-    {
-        if( memory_queue_.front() == id )
-            return true;
-        else
-            return false;
     }
 
     std::pair< uint32_t, uint32_t > lookupEntry( SimpleMem::Request::id_t id )
@@ -98,10 +105,51 @@ public:
 
     void removeEntry( SimpleMem::Request::id_t id )
     {
+        memory_queue_.pop();
         auto entry = pending_.find( id );
         if( entry != pending_.end() )
         {
             pending_.erase(entry);
+        }
+    }
+
+    LlyrData getEntryData( SimpleMem::Request::id_t id ) const
+    {
+        auto entry = pending_.find( id );
+        if( entry != pending_.end() )
+        {
+            return entry->second->getData();
+        }
+
+        return 0;
+    }
+
+    void setEntryData( SimpleMem::Request::id_t id, LlyrData data )
+    {
+        auto entry = pending_.find( id );
+        if( entry != pending_.end() )
+        {
+            entry->second->setData(data);
+        }
+    }
+
+    uint32_t getEntryReady( SimpleMem::Request::id_t id ) const
+    {
+        auto entry = pending_.find( id );
+        if( entry != pending_.end() )
+        {
+            return entry->second->getReady();
+        }
+
+        return 0;
+    }
+
+    void setEntryReady( SimpleMem::Request::id_t id, uint32_t ready )
+    {
+        auto entry = pending_.find( id );
+        if( entry != pending_.end() )
+        {
+            entry->second->setReady(ready);
         }
     }
 
