@@ -127,9 +127,7 @@ libvanadis_la_SOURCES = \
 	vinsbundle.h \
 	vinsloader.h
 
-EXTRA_DIST = \
-	tests/basic_miranda.py \
-	tests/hierarchy_test.py
+EXTRA_DIST =
 
 libvanadis_la_LDFLAGS = -module -avoid-version
 
