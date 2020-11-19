@@ -159,6 +159,7 @@ void LlyrComponent::finish()
 
 bool LlyrComponent::tick( Cycle_t )
 {
+    compute_complete = 0;
     //On each tick perform BFS on graph and compute based on operand availability
     //NOTE node0 is a dummy node to simplify the algorithm
     std::queue< uint32_t > nodeQueue;
@@ -194,6 +195,7 @@ bool LlyrComponent::tick( Cycle_t )
 
         //Let the PE decide whether or not it can do the compute
         vertex_map_->at(currentNode).getType()->doCompute();
+        compute_complete = compute_complete | vertex_map_->at(currentNode).getType()->getPendingOp();
 
         //add the destination vertices from this node to the node queue
         for( auto it = adjacencyList->begin(); it != adjacencyList->end(); it++ ) {
@@ -210,11 +212,13 @@ bool LlyrComponent::tick( Cycle_t )
     clock_count--;
 
     // return false so we keep going
-    if(clock_count == 0) {
-    primaryComponentOKToEndSim();
-        return true;
-    } else {
+    if( ls_queue_->getNumEntries() > 0 ) {
         return false;
+    } else if (compute_complete == 1 ){
+        return false;
+    } else {
+        primaryComponentOKToEndSim();
+        return true;
     }
 }
 

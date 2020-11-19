@@ -11,7 +11,7 @@ namespace Llyr {
 ProcessingElement::ProcessingElement(opType op_binding, uint32_t processor_id, uint32_t queue_depth,
                                      LSQueue* lsqueue, SimpleMem*  mem_interface)  :
                     op_binding_(op_binding), processor_id_(processor_id), queue_depth_(queue_depth),
-                    lsqueue_(lsqueue), mem_interface_(mem_interface)
+                    lsqueue_(lsqueue), mem_interface_(mem_interface), pending_op_(0)
 {
     //setup up i/o for messages
     char prefix[256];
@@ -20,8 +20,6 @@ ProcessingElement::ProcessingElement(opType op_binding, uint32_t processor_id, u
 
     input_queues_= new std::vector< std::queue< LlyrData >* >;
     output_queues_ = new std::vector< std::queue< LlyrData >* >;
-
-    pending_op_ = 0;
 }
 
 ProcessingElement::~ProcessingElement()
@@ -257,6 +255,13 @@ bool ProcessingElement::doCompute()
         if( input_queues_->at(i)->size() > 0 ) {
             num_ready = num_ready + 1;
         }
+    }
+
+    //if there are values waiting on any of the inputs, this PE could still fire
+    if( num_ready < num_inputs && num_ready > 0) {
+        pending_op_ = 1;
+    } else {
+        pending_op_ = 0;
     }
 
     //if all inputs are available pull from queue and add to arg list

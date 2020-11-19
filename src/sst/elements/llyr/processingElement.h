@@ -74,12 +74,8 @@ private:
     opType   op_binding_;
     uint32_t processor_id_;
 
-    //used to stall execution - waiting on mem/queues full
-    bool pending_op_;
-
     //input and output queues per PE
     uint32_t queue_depth_;
-
     std::vector< std::queue< LlyrData >* >* input_queues_;
     std::vector< std::queue< LlyrData >* >* output_queues_;
 
@@ -87,10 +83,14 @@ private:
     std::map< uint32_t, ProcessingElement* > input_queue_map_;
     std::map< uint32_t, ProcessingElement* > output_queue_map_;
 
+    //track outstanding L/S requests (passed from top-level)
     LSQueue* lsqueue_;
 
     SimpleMem*  mem_interface_;
     SST::Output* output_;
+
+    //used to stall execution - waiting on mem/queues full
+    bool pending_op_;
 
     void printInputQueue();
     void printOutputQueue();
