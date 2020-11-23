@@ -147,7 +147,7 @@ public:
     }
 
     //TODO for testing only
-    virtual bool fakeInit() {};
+    virtual void fakeInit() {};
 
 };
 

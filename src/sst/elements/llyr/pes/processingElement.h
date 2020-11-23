@@ -164,7 +164,7 @@ public:
     virtual bool doCompute() = 0;
 
     //TODO for testing only
-    virtual bool fakeInit() = 0;
+    virtual void fakeInit() = 0;
 
 protected:
 

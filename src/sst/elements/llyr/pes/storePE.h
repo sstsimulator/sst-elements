@@ -130,7 +130,7 @@ public:
         return true;
     }
 
-    virtual bool fakeInit()
+    virtual void fakeInit()
     {
         std::random_device some_rand;
         std::mt19937 generator( some_rand() );
@@ -147,7 +147,6 @@ public:
         std::cout << "Init(" << processor_id_ << "-" << input_queues_->size() << ")::" << "0" << "::" << temp << "::" << temp << std::endl;
         input_queues_->back()->push(temp);
 
-        return true;
     }
 
 private:
