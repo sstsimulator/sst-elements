@@ -24,7 +24,7 @@
 #include "graph.h"
 #include "lsQueue.h"
 #include "mappers/llyrMapper.h"
-#include "processingElement.h"
+#include "pes/peList.h"
 
 using namespace SST::Interfaces;
 

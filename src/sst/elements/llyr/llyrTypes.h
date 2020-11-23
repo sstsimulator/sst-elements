@@ -28,6 +28,7 @@ namespace Llyr {
 typedef enum {
     ANY,
     LD,
+    LD_ST,
     ST,
     ADD = 0x40,
     SUB,

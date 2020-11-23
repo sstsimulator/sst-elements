@@ -12,10 +12,16 @@ libllyr_la_SOURCES = \
 	llyr.h \
 	llyr.cc \
 	graph.h \
-	processingElement.h \
-	processingElement.cc \
 	mappers/llyrMapper.h \
 	mappers/simpleMapper.h \
+	processingElement.h \
+	pes/peList.h \
+	pes/dummyPE.h \
+	pes/fpPE.h \
+	pes/intPE.h \
+	pes/logicPE.h \
+	pes/loadPE.h \
+	pes/storePE.h \
 	lsQueue.h
 
 deprecated_libllyr_sources =

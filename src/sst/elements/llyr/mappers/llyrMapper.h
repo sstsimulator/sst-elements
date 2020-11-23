@@ -20,9 +20,9 @@
 #include <sst/core/module.h>
 #include <sst/core/interfaces/simpleMem.h>
 
-#include "../graph.h"
-#include "../lsQueue.h"
-#include "../processingElement.h"
+#include "graph.h"
+#include "lsQueue.h"
+#include "pes/peList.h"
 
 namespace SST {
 namespace Llyr {

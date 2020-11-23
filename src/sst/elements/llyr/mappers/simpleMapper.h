@@ -54,19 +54,19 @@ void SimpleMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType
                             LSQueue* lsqueue, SimpleMem* mem_interface)
 {
     //Dummy node to make BFS easier
-    ProcessingElement* tempPE = new ProcessingElement(DUMMY, 0, 0, lsqueue, mem_interface);
+    ProcessingElement* tempPE = new DummyProcessingElement(DUMMY, 0, 0, lsqueue, mem_interface);
     graphOut.addVertex( 0, tempPE );
 
-    tempPE = new ProcessingElement( LD, 1, 2, lsqueue, mem_interface );
+    tempPE = new LoadProcessingElement( LD, 1, 2, lsqueue, mem_interface );
     graphOut.addVertex( 1, tempPE );
 
-    tempPE = new ProcessingElement( LD, 2, 2, lsqueue, mem_interface );
+    tempPE = new LoadProcessingElement( LD, 2, 2, lsqueue, mem_interface );
     graphOut.addVertex( 2, tempPE );
 
-    tempPE = new ProcessingElement( ADD, 3, 2, lsqueue, mem_interface );
+    tempPE = new IntProcessingElement( ADD, 3, 2, lsqueue, mem_interface );
     graphOut.addVertex( 3, tempPE );
 
-    tempPE = new ProcessingElement( ST, 4, 2, lsqueue, mem_interface );
+    tempPE = new StoreProcessingElement( ST, 4, 2, lsqueue, mem_interface );
     graphOut.addVertex( 4, tempPE );
 
 //     tempPE = new ProcessingElement( ST, 22, 2 );
