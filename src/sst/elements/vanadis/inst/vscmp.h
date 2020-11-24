@@ -97,6 +97,11 @@ public:
 					output->verbose(CALL_INFO, 16, 0, "-----> compare: greater-than-eq / result: %s\n", (compare_result ? "true" : "false") );
 				}
 				break;
+			default:
+				{
+					output->fatal(CALL_INFO, -1, "Error - unknown comparison operation\n");
+				}
+				break;
 			}
 		} else {
 			const uint64_t reg1_ptr = regFile->getIntReg<uint64_t>( phys_int_regs_in[0] );
@@ -141,13 +146,22 @@ public:
 					output->verbose(CALL_INFO, 16, 0, "-----> compare: greater-than-eq / result: %s\n", (compare_result ? "true" : "false") );
 				}
 				break;
+			default:
+				{
+					output->fatal(CALL_INFO, -1, "Error - unknown comparison operation\n");
+				}
+				break;
 			}
 		}
 
+		const uint16_t result_reg = phys_int_regs_out[0];
+
 		if( compare_result ) {
-			regFile->setIntReg( phys_int_regs_out[0], (uint64_t) 1 );
+			const uint64_t vanadis_one  = 1;
+			regFile->setIntReg( result_reg, vanadis_one  );
 		} else {
-			regFile->setIntReg( phys_int_regs_out[0], (uint64_t) 0 );
+			const uint64_t vanadis_zero = 0;
+			regFile->setIntReg( result_reg, vanadis_zero );
 		}
 
 		markExecuted();

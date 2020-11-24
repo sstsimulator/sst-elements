@@ -93,7 +93,10 @@ public:
 		}
 
 		if( compare_result ) {
-			takenAddress = (uint64_t) ( ((int64_t) getInstructionAddress()) +  offset + VANADIS_SPECULATE_JUMP_ADDR_ADD );
+			const int64_t instruction_address = getInstructionAddress();
+			const int64_t ins_addr_and_offset = instruction_address + offset + VANADIS_SPECULATE_JUMP_ADDR_ADD;
+
+			takenAddress = static_cast<uint64_t>( ins_addr_and_offset );
 		} else {
 			takenAddress = calculateStandardNotTakenAddress();
 		}
