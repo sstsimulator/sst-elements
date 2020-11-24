@@ -5,6 +5,7 @@ import sst
 sst.setProgramOption("timebase", "1 ps")
 sst.setProgramOption("stopAtCycle", "10000s")
 
+statLevel = 16
 max_addr_gb = 1
 tile_clk_mhz = 1
 
@@ -41,16 +42,14 @@ df_memory.addParams({
 
 backend = df_memory.setSubComponent("backend", "memHierarchy.simpleMem")
 backend.addParams({
-    "access_time" : "1 ns",
+    "access_time" : "4 ns",
     "mem_size" : str(max_addr_gb) + "GiB",
 })
 
-sst.setStatisticOutput("sst.statOutputCSV")
-sst.enableAllStatisticsForAllComponents()
-
-sst.setStatisticOutputOptions( {
-        "filepath"  : "output.csv"
-} )
+# Enable SST Statistics Outputs for this simulation
+sst.setStatisticLoadLevel(statLevel)
+sst.enableAllStatisticsForAllComponents({"type":"sst.AccumulatorStatistic"})
+sst.setStatisticOutput("sst.statOutputTXT", { "filepath" : "output.csv" })
 
 # Define the simulation links
 link_df_cache_link = sst.Link("link_cpu_cache_link")
