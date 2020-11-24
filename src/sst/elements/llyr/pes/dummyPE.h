@@ -15,8 +15,8 @@
  * // distribution.
  */
 
-#ifndef DUMMY_PE_H
-#define DUMMY_PE_H
+#ifndef _DUMMY_PE_H
+#define _DUMMY_PE_H
 
 #include "pes/processingElement.h"
 
@@ -45,6 +45,7 @@ public:
     }
 
     virtual bool doSend() {};
+    virtual bool doReceive(LlyrData data) {};
     virtual bool doCompute() {};
 
     //TODO for testing only
@@ -55,4 +56,4 @@ public:
 }//SST
 }//Llyr
 
-#endif // DUMMY_PE_H
+#endif // _DUMMY_PE_H

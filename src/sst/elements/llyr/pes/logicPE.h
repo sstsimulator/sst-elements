@@ -15,8 +15,8 @@
  * // distribution.
  */
 
-#ifndef LOGIC_PE_H
-#define LOGIC_PE_H
+#ifndef _LOGIC_PE_H
+#define _LOGIC_PE_H
 
 #include "pes/processingElement.h"
 
@@ -70,6 +70,8 @@ public:
 
         return true;
     }
+
+    virtual bool doReceive(LlyrData data) {};
 
     virtual bool doCompute()
     {
@@ -154,4 +156,4 @@ public:
 }//SST
 }//Llyr
 
-#endif // LOGIC_PE_H
+#endif // _LOGIC_PE_H

@@ -15,8 +15,8 @@
  * // distribution.
  */
 
-#ifndef LOAD_PE_H
-#define LOAD_PE_H
+#ifndef _LOAD_PE_H
+#define _LOAD_PE_H
 
 #include <random>
 
@@ -46,7 +46,6 @@ public:
         output_queues_ = new std::vector< std::queue< LlyrData >* >;
     }
 
-
     virtual bool doSend()
     {
         uint32_t queueId;
@@ -68,8 +67,17 @@ public:
             }
         }
 
-        printInputQueue();
-        printOutputQueue();
+        return true;
+    }
+
+    virtual bool doReceive(LlyrData data)
+    {
+        output_->verbose(CALL_INFO, 0, 0, ">> Receive 0x%" PRIx64 " on PE %" PRIu32 "\n", uint64_t(data.to_ullong()), processor_id_ );
+
+        //for now push the result to all output queues
+        for( uint32_t i = 0; i < output_queues_->size(); ++i) {
+            output_queues_->at(i)->push(data);
+        }
 
         return true;
     }
@@ -78,14 +86,10 @@ public:
     {
         output_->verbose(CALL_INFO, 0, 0, ">> Compute 0x%" PRIx32 " on PE %" PRIu32 "\n", op_binding_, processor_id_ );
 
-        uint64_t intResult = 0x0F;
-
-        std::vector< LlyrData > argList;
-        LlyrData retVal;
-
         printInputQueue();
         printOutputQueue();
 
+        std::vector< LlyrData > argList;
         uint32_t num_ready = 0;
         uint32_t num_inputs  = input_queues_->size();
 
@@ -130,14 +134,6 @@ public:
                 exit(-1);
         }
 
-        std::cout << "intResult = " << intResult << std::endl;
-        std::cout << "retVal = " << retVal << std::endl;
-
-        //for now push the result to all output queues
-        for( uint32_t i = 0; i < output_queues_->size(); ++i) {
-            output_queues_->at(i)->push(retVal);
-        }
-
         printInputQueue();
         printOutputQueue();
 
@@ -156,14 +152,18 @@ public:
                         processor_id_, op_binding_ );
 
         uint64_t addr;
-        if(processor_id_ % 2 != 0)
+        if(processor_id_ == 1)
             addr = 0x00;
+        else if (processor_id_ == 2)
+            addr = 0x08;
+        else if (processor_id_ == 3)
+            addr = 0x10;
         else
-            addr = 0x40;
+            addr = 0x20;
         for( uint32_t i = 0; i < input_queues_->size(); ++i )
         {
             LlyrData temp = LlyrData(addr);
-            std::cout << "Init(" << processor_id_ << "-" << i << ")::" << "0" << "::" << temp << "::" << temp << std::endl;
+            std::cout << "Init(" << processor_id_ << "-" << i << ")::" << addr << "::" << temp << std::endl;
             input_queues_->at(i)->push(temp);
         }
     }
@@ -174,7 +174,7 @@ private:
         uint32_t targetPe;
         SimpleMem::Request* req = new SimpleMem::Request(SimpleMem::Request::Read, addr, 8);
 
-        output_->verbose(CALL_INFO, 0, 0, "Creating a load request (%" PRIu32 " from address: %" PRIu64 "\n", uint32_t(req->id), addr);
+        output_->verbose(CALL_INFO, 0, 0, "Creating a load request (%" PRIu32 ") from address: %" PRIu64 "\n", uint32_t(req->id), addr);
 
         //find out where the load actually needs to go
         auto it = output_queue_map_.begin();
@@ -205,4 +205,4 @@ private:
 }//SST
 }//Llyr
 
-#endif // LOAD_PE_H
+#endif // _LOAD_PE_H

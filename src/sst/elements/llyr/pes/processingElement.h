@@ -161,6 +161,7 @@ public:
     }
 
     virtual bool doSend() = 0;
+    virtual bool doReceive(LlyrData data) = 0;
     virtual bool doCompute() = 0;
 
     //TODO for testing only
@@ -195,7 +196,7 @@ private:
 };
 
 
-}
-}
+}//SST
+}//Llyr
 
-#endif
+#endif //_LLYR_PE_H

@@ -15,8 +15,8 @@
  * // distribution.
  */
 
-#ifndef FP_PE_H
-#define FP_PE_H
+#ifndef _FP_PE_H
+#define _FP_PE_H
 
 #include "pes/processingElement.h"
 
@@ -70,6 +70,8 @@ public:
 
         return true;
     }
+
+    virtual bool doReceive(LlyrData data) {};
 
     virtual bool doCompute()
     {
@@ -147,4 +149,4 @@ public:
 }//SST
 }//Llyr
 
-#endif // FP_PE_H
+#endif // _FP_PE_H

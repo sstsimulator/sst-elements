@@ -12,7 +12,6 @@ tile_clk_mhz = 1
 df_0 = sst.Component("df_0", "llyr.LlyrDataflow")
 df_0.addParams({
       "verbose": 10,
-      "clockcount" : """1000""",
       "clock" : str(tile_clk_mhz) + "GHz",
 })
 

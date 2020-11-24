@@ -15,8 +15,8 @@
  * // distribution.
  */
 
-#ifndef STORE_PE_H
-#define STORE_PE_H
+#ifndef _STORE_PE_H
+#define _STORE_PE_H
 
 #include <random>
 
@@ -67,8 +67,17 @@ public:
             }
         }
 
-        printInputQueue();
-        printOutputQueue();
+        return true;
+    }
+
+    virtual bool doReceive(LlyrData data)
+    {
+        output_->verbose(CALL_INFO, 0, 0, ">> Receive 0x%" PRIx64 " on PE %" PRIu32 "\n", uint64_t(data.to_ullong()), processor_id_ );
+
+        //for now push the result to all output queues
+        for( uint32_t i = 0; i < output_queues_->size(); ++i) {
+            output_queues_->at(i)->push(data);
+        }
 
         return true;
     }
@@ -77,14 +86,10 @@ public:
     {
         output_->verbose(CALL_INFO, 0, 0, ">> Compute 0x%" PRIx32 " on PE %" PRIu32 "\n", op_binding_, processor_id_ );
 
-        uint64_t intResult = 0x0F;
-
-        std::vector< LlyrData > argList;
-        LlyrData retVal;
-
         printInputQueue();
         printOutputQueue();
 
+        std::vector< LlyrData > argList;
         uint32_t num_ready = 0;
         uint32_t num_inputs  = input_queues_->size();
 
@@ -116,14 +121,6 @@ public:
 
         doStore(argList[0].to_ullong(), argList[1].to_ullong());
 
-        std::cout << "intResult = " << intResult << std::endl;
-        std::cout << "retVal = " << retVal << std::endl;
-
-        //for now push the result to all output queues
-        for( uint32_t i = 0; i < output_queues_->size(); ++i) {
-            output_queues_->at(i)->push(retVal);
-        }
-
         printInputQueue();
         printOutputQueue();
 
@@ -143,8 +140,16 @@ public:
         std::queue< LlyrData >* tempQueue = new std::queue< LlyrData >;
         input_queues_->push_back(tempQueue);
 
-        LlyrData temp = LlyrData(0xF0);
-        std::cout << "Init(" << processor_id_ << "-" << input_queues_->size() << ")::" << "0" << "::" << temp << "::" << temp << std::endl;
+        uint64_t addr;
+        if(processor_id_ == 6)
+            addr = 0x18;
+        else if (processor_id_ == 7)
+            addr = 0x20;
+        else
+            addr = 0xFF;
+
+        LlyrData temp = LlyrData(addr);
+        std::cout << "Init(" << processor_id_ << "-" << input_queues_->size() << ")::" << addr << "::" << temp << std::endl;
         input_queues_->back()->push(temp);
 
     }
@@ -155,7 +160,7 @@ private:
         uint32_t targetPe = processor_id_;
         SimpleMem::Request* req = new SimpleMem::Request(SimpleMem::Request::Write, addr, 8);
 
-        output_->verbose(CALL_INFO, 0, 0, "Creating a store request (%" PRIu32 " from address: %" PRIu64 "\n", uint32_t(req->id), addr);
+        output_->verbose(CALL_INFO, 0, 0, "Creating a store request (%" PRIu32 ") to address: %" PRIu64 "\n", uint32_t(req->id), addr);
 
         const auto newValue = data.to_ullong();
 
@@ -166,14 +171,14 @@ private:
         std::cout << "llyr:  " << data << "\n";
         std::cout << "conv:  " << newValue << "\n";
         for(uint32_t i = 0; i < size; ++i) {
-            std::cout << static_cast<unsigned int>(buffer[i]) << ", ";
+            std::cout << static_cast<uint16_t>(buffer[i]) << ", ";
         }
         std::cout << std::endl;
 
         std::vector< uint8_t > payload(8);
         memcpy( std::addressof(payload[0]), std::addressof(newValue), size );
         for( auto it = payload.begin(); it != payload.end(); ++it ) {
-            std::cout << static_cast<unsigned int>(*it) << ", ";
+            std::cout << static_cast<uint16_t>(*it) << ", ";
         }
         std::cout << std::endl;
         req->setPayload( payload );
@@ -191,4 +196,4 @@ private:
 }//SST
 }//Llyr
 
-#endif // STORE_PE_H
+#endif // _STORE_PE_H
