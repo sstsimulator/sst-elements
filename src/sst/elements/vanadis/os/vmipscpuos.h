@@ -18,7 +18,9 @@
 #define VANADIS_SYSCALL_MMAP		 4090
 #define VANADIS_SYSCALL_UNAME            4122
 #define VANADIS_SYSCALL_WRITEV           4146
+#define VANADIS_SYSCALL_MMAP2            4210
 #define VANADIS_SYSCALL_FSTAT		 4215
+#define VANADIS_SYSCALL_FUTEX		 4238
 #define VANADIS_SYSCALL_SET_TID		 4252
 #define VANADIS_SYSCALL_EXIT_GROUP       4246
 #define VANADIS_SYSCALL_SET_THREAD_AREA  4283
@@ -264,6 +266,30 @@ public:
 			}
 			break;
 
+		case VANADIS_SYSCALL_FUTEX:
+			{
+				const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
+                                uint64_t futex_addr = regFile->getIntReg<uint64_t>( phys_reg_4 );
+
+                                const uint16_t phys_reg_5 = isaTable->getIntPhysReg(5);
+                                int32_t futex_op = regFile->getIntReg<uint64_t>( phys_reg_5 );
+
+                                const uint16_t phys_reg_6 = isaTable->getIntPhysReg(6);
+                                uint32_t futex_val = regFile->getIntReg<int32_t>( phys_reg_6);
+
+                                const uint16_t phys_reg_7 = isaTable->getIntPhysReg(7);
+                                uint64_t futex_timeout_addr = regFile->getIntReg<int32_t>( phys_reg_7);
+
+                                const uint16_t phys_reg_sp = isaTable->getIntPhysReg(25);
+                                uint64_t stack_ptr = regFile->getIntReg<uint64_t>( phys_reg_sp );
+
+                                output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to futex( 0x%llx, %" PRId32 ", %" PRIu32 ", %" PRIu64 ", sp: 0x%llx (arg-count is greater than 4))\n",
+					futex_addr, futex_op, futex_val, futex_timeout_addr, stack_ptr );
+
+				recvOSEvent( new VanadisSyscallResponse( 0 ) );
+			}
+			break;
+
 		case VANADIS_SYSCALL_IOCTL:
 			{
 				const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
@@ -313,7 +339,6 @@ public:
 
 				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to mmap( 0x%llx, %" PRIu64 ", %" PRId32 ", %" PRId32 ", sp: 0x%llx (> 4 arguments) )\n",
 					map_addr, map_len, map_prot, map_flags, stack_ptr);
-//				call_ev = new VanadisSyscallWritevEvent( core_id, hw_thr, writev_fd, writev_iovec_ptr, writev_iovec_count );
 
 				if( (0 == map_addr) && (0==map_len) ) {
 					recvOSEvent( new VanadisSyscallResponse(-22) );
@@ -383,11 +408,15 @@ protected:
 			const int64_t  rc_val = (int64_t) os_resp->getReturnCode();
 			regFile->setIntReg( rc_reg, rc_val );
 
-			if( rc_val < 0 ) {
-				writeSyscallResult( false );
+			if( os_resp->isSuccessful() ) {
+				if( rc_val < 0 ) {
+					writeSyscallResult( false );
+				} else {
+					// Generate correct markers for OS return code checks
+					writeSyscallResult( os_resp->isSuccessful() );
+				}
 			} else {
-				// Generate correct markers for OS return code checks
-				writeSyscallResult( os_resp->isSuccessful() );
+				writeSyscallResult( false );
 			}
 
 			for( int i = 0; i < returnCallbacks.size(); ++i ) {

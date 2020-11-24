@@ -411,12 +411,17 @@ public:
 					ioctl_ev->getDataLength(), ioctl_ev->getIOOperation(),
 					ioctl_ev->getIODriver() );
 
-				if( 1 == ioctl_ev->getFileDescriptor() ) {
-					VanadisSyscallResponse* resp = new VanadisSyscallResponse( 0 );
-        	                        core_link->send( resp );
-				} else {
-					output->fatal(CALL_INFO, -1, "Not implemented\n");
-				}
+				//if( 1 == ioctl_ev->getFileDescriptor() ) {
+				//	VanadisSyscallResponse* resp = new VanadisSyscallResponse( 0 );
+        	                //        core_link->send( resp );
+				//} else {
+				//	output->fatal(CALL_INFO, -1, "Not implemented\n");
+				//}
+
+				VanadisSyscallResponse* resp = new VanadisSyscallResponse( 25 );
+				resp->markFailed();
+
+				core_link->send( resp );
 			}
 			break;
 
@@ -441,7 +446,7 @@ public:
 		case SYSCALL_OP_GETTIME64:
 			{
 				VanadisSyscallGetTime64Event* gettime_ev = dynamic_cast< VanadisSyscallGetTime64Event* >( sys_ev );
-				output->verbose(CALL_INFO, 16, 0, "[syscall-gettime64] gettime64( %" PRId64 ", %" PRIu64 " )\n",
+				output->verbose(CALL_INFO, 16, 0, "[syscall-gettime64] gettime64( %" PRId64 ", 0x%llx )\n",
 					gettime_ev->getClockType(), gettime_ev->getTimeStructAddress() );
 
 				handler_state = new VanadisNoActionHandlerState( output->getVerboseLevel(), 0 );
@@ -449,6 +454,9 @@ public:
 				uint64_t sim_time_ns = getSimTimeNano();
 				uint32_t sim_seconds = (uint32_t)(sim_time_ns / 1000000000);
 				uint32_t sim_ns      = (uint32_t)(sim_time_ns % 1000000000);
+
+				output->verbose(CALL_INFO, 16, 0, "[syscall-gettime64] --> sim-time: %" PRIu64 " ns -> %" PRIu32 " secs + %" PRIu32 " ns\n",
+					sim_time_ns, sim_seconds, sim_ns);
 
 				std::vector<uint8_t> time_payload;
 				time_payload.resize(sizeof(sim_seconds) + sizeof(sim_ns));

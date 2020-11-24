@@ -23,6 +23,10 @@ public:
 		isa_int_regs_out[0] = dest;
 	}
 
+	virtual VanadisShiftRightArithmeticInstruction* clone() {
+                return new VanadisShiftRightArithmeticInstruction( *this );
+        }
+
 	virtual VanadisFunctionalUnitType getInstFuncType() const {
 		return INST_INT_ARITH;
 	}
