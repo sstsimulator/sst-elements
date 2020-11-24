@@ -13,8 +13,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef _SIMPLE_MAPPER_H
-#define _SIMPLE_MAPPER_H
+#ifndef _GEMM_MAPPER_H
+#define _GEMM_MAPPER_H
 
 #include <iostream>
 
@@ -23,20 +23,20 @@
 namespace SST {
 namespace Llyr {
 
-class SimpleMapper : public LlyrMapper
+class GEMMMapper : public LlyrMapper
 {
 
 public:
-    explicit SimpleMapper(Params& params) :
+    explicit GEMMMapper(Params& params) :
         LlyrMapper() {}
-    ~SimpleMapper() { }
+    ~GEMMMapper() { }
 
     SST_ELI_REGISTER_MODULE_DERIVED(
-        SimpleMapper,
+        GEMMMapper,
         "llyr",
-        "mapper.simple",
+        "mapper.gemm",
         SST_ELI_ELEMENT_VERSION(1,0,0),
-        "Greedy subgraph mapper.",
+        "GEMM optimized mapper",
         SST::Llyr::LlyrMapper
     )
 
@@ -49,31 +49,45 @@ private:
 
 };
 
-void SimpleMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType > appGraph,
+void GEMMMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType > appGraph,
                             LlyrGraph< ProcessingElement* > &graphOut,
                             LSQueue* lsqueue, SimpleMem* mem_interface)
 {
+    uint32_t queueDepth = 256;
     //Dummy node to make BFS easier
     ProcessingElement* tempPE = new DummyProcessingElement(DUMMY, 0, 0, lsqueue, mem_interface);
     graphOut.addVertex( 0, tempPE );
 
-    tempPE = new LoadProcessingElement( LD, 1, 2, lsqueue, mem_interface );
+    tempPE = new LoadProcessingElement( LD, 1, queueDepth, lsqueue, mem_interface );
     graphOut.addVertex( 1, tempPE );
 
-    tempPE = new LoadProcessingElement( LD, 2, 2, lsqueue, mem_interface );
+    tempPE = new LoadProcessingElement( LD, 2, queueDepth, lsqueue, mem_interface );
     graphOut.addVertex( 2, tempPE );
 
-    tempPE = new IntProcessingElement( ADD, 3, 2, lsqueue, mem_interface );
+    tempPE = new LoadProcessingElement( LD, 3, queueDepth, lsqueue, mem_interface );
     graphOut.addVertex( 3, tempPE );
 
-    tempPE = new StoreProcessingElement( ST, 4, 2, lsqueue, mem_interface );
+    tempPE = new IntProcessingElement( MUL, 4, queueDepth, lsqueue, mem_interface );
     graphOut.addVertex( 4, tempPE );
+
+    tempPE = new IntProcessingElement( MUL, 5, queueDepth, lsqueue, mem_interface );
+    graphOut.addVertex( 5, tempPE );
+
+    tempPE = new StoreProcessingElement( ST, 6, queueDepth, lsqueue, mem_interface );
+    graphOut.addVertex( 6, tempPE );
+
+    tempPE = new StoreProcessingElement( ST, 7, queueDepth, lsqueue, mem_interface );
+    graphOut.addVertex( 7, tempPE );
 
     graphOut.addEdge( 0, 1 );
     graphOut.addEdge( 0, 2 );
-    graphOut.addEdge( 1, 3 );
-    graphOut.addEdge( 2, 3 );
+    graphOut.addEdge( 0, 3 );
+    graphOut.addEdge( 1, 4 );
     graphOut.addEdge( 3, 4 );
+    graphOut.addEdge( 2, 5 );
+    graphOut.addEdge( 3, 5 );
+    graphOut.addEdge( 4, 6 );
+    graphOut.addEdge( 5, 7 );
 
     std::queue< uint32_t > nodeQueue;
 
@@ -127,5 +141,5 @@ void SimpleMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType
 }
 } // namespace SST
 
-#endif // _SIMPLE_MAPPER_H
+#endif // _GEMM_MAPPER_H
 

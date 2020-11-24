@@ -14,8 +14,8 @@ libllyr_la_SOURCES = \
 	graph.h \
 	mappers/llyrMapper.h \
 	mappers/simpleMapper.h \
+	mappers/gemmMapper.h \
 	processingElement.h \
-	pes/peList.h \
 	pes/dummyPE.h \
 	pes/fpPE.h \
 	pes/intPE.h \

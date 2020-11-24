@@ -93,7 +93,6 @@ private:
     Clock::HandlerBase*     clock_tick_handler_;
     bool                    handler_registered_;
 
-    int64_t clock_count;
     bool    compute_complete;
 
     SST::Link**  links_;

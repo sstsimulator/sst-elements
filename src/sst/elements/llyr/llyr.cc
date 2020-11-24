@@ -25,7 +25,7 @@
 
 #include "llyr.h"
 #include "llyrTypes.h"
-#include "mappers/simpleMapper.h"
+#include "mappers/mapperList.h"
 
 namespace SST {
 namespace Llyr {
@@ -36,7 +36,6 @@ LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
     //initial params
     compute_complete = 0;
     const uint32_t verbosity = params.find< uint32_t >("verbose", 0);
-    clock_count = params.find< int64_t >("clockcount", 10);
 
     //setup up i/o for messages
     char prefix[256];
@@ -86,7 +85,7 @@ LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
 
     //do the mapping
     Params mapperParams;    //empty but needed for loadModule API
-    std::string mapperName = params.find<std::string>("mapper", "llyr.simpleMapper");
+    std::string mapperName = params.find<std::string>("mapper", "llyr.mapper.gemm");
     llyr_mapper_ = dynamic_cast<LlyrMapper*>( loadModule(mapperName, mapperParams) );
     output_->verbose(CALL_INFO, 1, 0, "Mapping application to hardware\n");
     llyr_mapper_->mapGraph(hardwareGraph_, applicationGraph_, mappedGraph_, ls_queue_, mem_interface_);
@@ -109,7 +108,7 @@ LlyrComponent::~LlyrComponent()
 
     output_->verbose(CALL_INFO, 1, 0, "Dumping mapping\n");
     mappedGraph_.printGraph();
-//     mappedGraph.printDot("llyr_mapped.dot");
+    mappedGraph_.printDot("llyr_mapped.dot");
 }
 
 LlyrComponent::LlyrComponent() :
@@ -124,15 +123,26 @@ void LlyrComponent::init( uint32_t phase )
 
     const uint32_t mooCows = 128;
     if( 0 == phase ) {
-        std::vector<uint8_t> memInit;
-        memInit.reserve( mooCows );
+//         std::vector< uint64_t > initVector{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 2, 7, 1, 2, 3, 6};
+        std::vector< uint64_t > initVector{16, 64, 32, 0 , 16382, 0, 0};
+        std::cout << "Init Vector(" << initVector.size() << "): ";
+//         for( auto it = initVector.begin(); it != initVector.end(); ++it ) {
+//             std::cout << *it << ", ";
+//         }
+//         std::cout << std::endl;
 
-        for( size_t i = 0; i < mooCows; ++i ) {
-            if( i % 8 == 0 )
-                memInit.push_back(i);
-            else
-                memInit.push_back(0);
+        std::vector<uint8_t> memInit;
+        constexpr auto buff_size = sizeof(uint64_t);
+        uint8_t buffer[buff_size] = {};
+        for( auto it = initVector.begin(); it != initVector.end(); ++it ) {
+            std::memcpy(buffer, std::addressof(*it), buff_size);
+            for( uint32_t i = 0; i < buff_size; ++i ){
+//                 std::cout << uint32_t(buffer[i]) << ", ";
+                memInit.push_back(buffer[i]);
+            }
+//             std::cout << std::endl;
         }
+//         std::cout << std::endl;
 
         output_->verbose(CALL_INFO, 2, 0, ">> Writing memory contents (%" PRIu64 " bytes at index 0)\n",
                         (uint64_t) memInit.size());
@@ -209,12 +219,10 @@ bool LlyrComponent::tick( Cycle_t )
         std::cout << std::endl;
     }
 
-    clock_count--;
-
     // return false so we keep going
     if( ls_queue_->getNumEntries() > 0 ) {
         return false;
-    } else if (compute_complete == 1 ){
+    } else if( compute_complete == 1 ){
         return false;
     } else {
         primaryComponentOKToEndSim();
@@ -271,22 +279,24 @@ void LlyrComponent::doLoadStoreOps( uint32_t numOps )
             SimpleMem::Request::id_t next = ls_queue_->getNextEntry();
 
             if( ls_queue_->getEntryReady(next) == 1) {
-                output_->verbose(CALL_INFO, 0, 0, "Mem Req ID %" PRIu32 "\n", uint32_t(next));
+                output_->verbose(CALL_INFO, 0, 0, "--(1)Mem Req ID %" PRIu32 "\n", uint32_t(next));
                 LlyrData data = ls_queue_->getEntryData(next);
                 //pass the value to the appropriate PE
-                uint32_t dstPe = ls_queue_->lookupEntry( next ).second;
+//                 uint32_t dstPe = ls_queue_->lookupEntry( next ).second;
                 uint32_t srcPe = ls_queue_->lookupEntry( next ).first;
+//
+//                 uint32_t dstQueue = mappedGraph_.getVertex(dstPe)->getType()->getInputQueueId(srcPe);
+//                 mappedGraph_.getVertex(dstPe)->getType()->pushInputQueue(dstQueue, data);
+//                 std::cout << "src PE " << srcPe;
+//                 std::cout << " dst PE " << dstPe;
+//                 std::cout << "-" << dstQueue;
+//                 std::cout << std::endl;
 
-                uint32_t dstQueue = mappedGraph_.getVertex(dstPe)->getType()->getInputQueueId(srcPe);
-                mappedGraph_.getVertex(dstPe)->getType()->pushInputQueue(dstQueue, data);
-                std::cout << "src PE " << srcPe;
-                std::cout << " dst PE " << dstPe;
-                std::cout << "-" << dstQueue;
-                std::cout << std::endl;
+                mappedGraph_.getVertex(srcPe)->getType()->doReceive(data);
 
                 ls_queue_->removeEntry( next );
             } else if( ls_queue_->getEntryReady(next) == 2 ){
-                output_->verbose(CALL_INFO, 0, 0, "Mem Req ID %" PRIu32 "\n", uint32_t(next));
+                output_->verbose(CALL_INFO, 0, 0, "--(2)Mem Req ID %" PRIu32 "\n", uint32_t(next));
                 ls_queue_->removeEntry( next );
             }
         }
