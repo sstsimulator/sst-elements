@@ -168,7 +168,7 @@ public:
 					if( VANADIS_REGISTER_MODE_FP32 ==  decoder_opts->getFPRegisterMode() ) {
 						output->verbose(CALL_INFO, 16, 0, "| isa:%5" PRIu16 " -> phys:%5" PRIu16 " | r:%5" PRIu32 " | w:%5" PRIu32 " | v: 0x%016llx |\n",
 							i, fp_reg_ptr[i], fp_reg_pending_read[i], fp_reg_pending_write[i],
-							regFile->getFPReg<uint32_t>( fp_reg_ptr[i] ) );
+							(uint64_t) regFile->getFPReg<uint32_t>( fp_reg_ptr[i] ) );
 					} else {
 						output->verbose(CALL_INFO, 16, 0, "| isa:%5" PRIu16 " -> phys:%5" PRIu16 " | r:%5" PRIu32 " | w:%5" PRIu32 " | v: 0x%016llx |\n",
 							i, fp_reg_ptr[i], fp_reg_pending_read[i], fp_reg_pending_write[i],
