@@ -194,7 +194,7 @@ public:
 
 	virtual void tick( uint64_t cycle ) {
 		output->verbose(CALL_INFO, 16, 0, "ticking load/store queue at cycle %" PRIu64 " lsq size: %" PRIu64 "\n",
-			(uint64_t) cycle, op_q.size() );
+			(uint64_t) cycle, (uint64_t) op_q.size() );
 
 		if( output->getVerboseLevel() >= 16 ) {
 			printLSQ();
@@ -264,7 +264,7 @@ public:
 						load_ins->flagError();
 					} else {
 						if( ( ! load_ins->isPartialLoad()) && ( (load_addr % load_width) > 0 ) ) {
-							output->verbose(CALL_INFO, 16, 0, "[fault] load is not partial and 0x%llx is not aligned to load width (%" PRIu64 ")\n",
+							output->verbose(CALL_INFO, 16, 0, "[fault] load is not partial and 0x%llx is not aligned to load width (%" PRIu16 ")\n",
 								load_addr, load_width);
 							load_ins->flagError();
 						} else {
@@ -348,6 +348,11 @@ public:
 							case MEM_TRANSACTION_NONE:
 							{
 								store_ins->markExecuted();
+							}
+							break;
+							case MEM_TRANSACTION_LLSC_LOAD:
+							{
+								output->fatal(CALL_INFO, -1, "Executing an LLSC LOAD operation for a STORE instruction - logical error.\n");
 							}
 							break;
 						}
