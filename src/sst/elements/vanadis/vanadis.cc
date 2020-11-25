@@ -1373,7 +1373,7 @@ void VanadisComponent::finish() {
 
 void VanadisComponent::printStatus( SST::Output& output ) {
 	output.verbose(CALL_INFO, 0, 0, "----------------------------------------------------------------------------------------------------------------------------\n");
-	output.verbose(CALL_INFO, 0, 0, "Vanadis (Core: %" PRIu16 " / Threads: %" PRIu16 " / cycle: %" PRIu64 " / max-cycle: %" PRIu64 ")\n",
+	output.verbose(CALL_INFO, 0, 0, "Vanadis (Core: %" PRIu16 " / Threads: %" PRIu32 " / cycle: %" PRIu64 " / max-cycle: %" PRIu64 ")\n",
 		core_id, hw_threads, current_cycle, max_cycle);
 	output.verbose(CALL_INFO, 0, 0, "\n");
 
@@ -1384,7 +1384,7 @@ void VanadisComponent::printStatus( SST::Output& output ) {
 		for( size_t i = next_rob->size(); i > 0; i-- ) {
 			VanadisInstruction* next_ins = next_rob->peekAt(i-1);
 			output.verbose(CALL_INFO, 0, 0, "---> rob[%5" PRIu16 "]: addr: 0x%08llx / %10s / spec: %3s / err: %3s / issued: %3s / front: %3s / exe: %3s\n",
-				(uint16_t) i-1,
+				(uint16_t) (i-1),
 				next_ins->getInstructionAddress(), next_ins->getInstCode(),
 				next_ins->isSpeculated() ? "yes" : "no",
 				next_ins->trapsError() ? "yes" : "no",
