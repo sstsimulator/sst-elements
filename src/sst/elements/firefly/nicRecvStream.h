@@ -23,19 +23,17 @@ class StreamBase {
 
             virtual SimTime_t getRxMatchDelay() { return m_ctx->getRxMatchDelay(); }
             bool postedRecv( DmaRecvEntry* entry );
-
-            virtual void processPkt( FireflyNetworkEvent* ev ) {
-                if ( ev->isHdr() ) {
-                    processPktHdr(ev);
-                } else {
-                    processPktBody(ev);
-                }
-            }
-            virtual void processPktHdr( FireflyNetworkEvent* ev ) { assert(0); }
             virtual void processPktBody( FireflyNetworkEvent* ev );
 
-            virtual bool isBlocked( bool head = false );
-            void needRecv( FireflyNetworkEvent* ev );
+            virtual bool isBlocked( ) {
+                m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_STREAM,"%d\n",m_numPending == m_ctx->getMaxQsize());
+                return m_numPending == m_ctx->getMaxQsize();
+            }
+
+            void needRecv() {
+                m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_STREAM,"stream=%p\n",this);
+                m_ctx->needRecv( this );
+            }
 
             void qSend( SendEntryBase* entry ) {
                 m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_STREAM,"\n");
@@ -48,7 +46,6 @@ class StreamBase {
                 m_wakeupCallback = callback;
             }
 
-            SrcKey getSrcKey()              { return (SrcKey) m_srcNode << 32 | m_srcPid; }
             RecvEntryBase* getRecvEntry()   { return m_recvEntry; }
             virtual size_t length()         { return m_matched_len; }
             int getSrcPid()                 { return m_srcPid; }
@@ -60,7 +57,7 @@ class StreamBase {
 
             void ready( bool, uint64_t pktNum );
 
-            FireflyNetworkEvent* m_blockedNeedRecv;
+            FireflyNetworkEvent* m_hdrPkt;
             Callback        m_wakeupCallback;
             Output&         m_dbg;
             Ctx*            m_ctx;
