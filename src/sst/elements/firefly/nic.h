@@ -502,15 +502,6 @@ struct X {
 
 	uint64_t m_linkBytesPerSec;
 
-	std::vector< int >		m_sendStreamNum;
-
-	int getSendStreamNum( int pid ) {
-		unsigned int val = m_sendStreamNum[pid]++;
-
-		m_dbg.debug(CALL_INFO,3,NIC_DBG_SEND_MACHINE,"pid=%d stream=%d next=%d\n",pid,val, m_sendStreamNum[pid] );
-		return val;
-	}
-
     Output                  m_dbg;
     std::vector<VirtNic*>   m_vNicV;
     std::vector<Thornhill::DetailedCompute*> m_detailedCompute;
