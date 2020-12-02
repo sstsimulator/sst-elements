@@ -18,17 +18,7 @@ class RecvMachine {
 
     #include "nicShmemRecvMachine.h"
 
-
-    typedef uint64_t SrcKey;
     typedef std::function<void()> Callback;
-
-    static SrcKey getSrcKey(uint32_t srcNode, uint32_t srcPid, uint32_t srcStream) {
-		SrcKey value;
-		value = srcNode;
-		value |= srcStream << 20;
-		value |= (uint64_t) srcPid << ( 20 + STREAM_NUM_SIZE);
-		return value;
-	}
 
 	typedef uint64_t ProcessPairId;
 	static ProcessPairId getPPI(FireflyNetworkEvent* ev) {
