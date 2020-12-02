@@ -50,7 +50,7 @@ class testcase_miranda_Component(SSTTestCase):
     @unittest.skipIf(testing_check_get_num_ranks() > 1, "miranda: test_miranda_randomgen skipped if ranks > 1")
     @unittest.skipIf(testing_check_get_num_threads() > 1, "miranda: test_miranda_randomgen skipped if threads > 1")
     def test_miranda_randomgen(self):
-        self.miranda_test_template("randomgen", timeout=360)
+        self.miranda_test_template("randomgen", testtimeout=360)
 
     def test_miranda_stencil3dbench(self):
         self.miranda_test_template("stencil3dbench")
@@ -69,7 +69,7 @@ class testcase_miranda_Component(SSTTestCase):
 
 #####
 
-    def miranda_test_template(self, testcase, timeout=240):
+    def miranda_test_template(self, testcase, testtimeout=240):
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
         outdir = self.get_test_output_run_dir()
@@ -84,7 +84,7 @@ class testcase_miranda_Component(SSTTestCase):
         errfile = "{0}/{1}.err".format(outdir, testDataFileName)
         mpioutfiles = "{0}/{1}.testfile".format(outdir, testDataFileName)
 
-        self.run_sst(sdlfile, outfile, errfile, mpi_out_files=mpioutfiles, timeout_sec=timeout)
+        self.run_sst(sdlfile, outfile, errfile, mpi_out_files=mpioutfiles, timeout_sec=testtimeout)
 
 #        testing_remove_component_warning_from_file(outfile)
 
