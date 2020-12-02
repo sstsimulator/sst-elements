@@ -18,15 +18,13 @@
             const char* prefix() { return m_prefix.c_str(); }
           public:
             Ctx( Output& output, RecvMachine& rm, int pid, int qsize ) :
-                    m_dbg(output), m_rm(rm), m_pid(pid), m_maxQsize(qsize), m_blockedStream(NULL)
+                    m_dbg(output), m_rm(rm), m_pid(pid), m_maxQsize(qsize)
             {
                 m_prefix = "@t:"+ std::to_string(rm.nic().getNodeId()) +":Nic::RecvMachine::Ctx" + std::to_string(pid) + "::@p():@l ";
             }
 
             int getHostReadDelay() { return m_rm.m_hostReadDelay; }
-            bool processPkt( FireflyNetworkEvent* ev );
-            bool processCtrlPkt( FireflyNetworkEvent* ev );
-            bool processStdPkt( FireflyNetworkEvent* ev );
+            StreamBase* newStream( FireflyNetworkEvent* );
             DmaRecvEntry* findPut( int src, MsgHdr& hdr, RdmaMsgHdr& rdmahdr );
             EntryBase* findRecv( int srcNode, int srcPid, MsgHdr& hdr, MatchMsgHdr& matchHdr  );
             SendEntryBase* findGet( int srcNode, int srcPid, RdmaMsgHdr& rdmaHdr );
@@ -43,9 +41,10 @@
                 // check to see if there are active streams for this pid
                 // if there are they may be blocked waiting for the host to post a recv
 
-                if (  m_blockedStream ) {
-                    if ( m_blockedStream->postedRecv( entry ) ) {
-                        m_blockedStream = NULL;
+                if (  ! m_blockedStreamQ.empty() ) {
+                    if ( m_blockedStreamQ.front()->postedRecv( entry ) ) {
+                        m_blockedStreamQ.pop();
+                        m_dbg.verbosePrefix(prefix(),CALL_INFO,1,NIC_DBG_RECV_CTX,"m_blockedStreamQ.size()=%zu\n",m_blockedStreamQ.size());
                         return;
                     }
                 }
@@ -56,12 +55,12 @@
                 return  m_rm.m_nic.m_shmem;
             }
 
-            StreamBase* m_blockedStream;
+            std::queue<StreamBase*> m_blockedStreamQ;
             void needRecv( StreamBase* stream ) {
 
-                m_blockedStream = stream;
-                m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_CTX, "pid %d blocked, srcNode=%d srcPid=%d\n",
-                    stream->getSrcPid(), stream->getSrcNode(), stream->getSrcPid() );
+                m_blockedStreamQ.push( stream );
+                m_dbg.verbosePrefix(prefix(),CALL_INFO,1,NIC_DBG_RECV_CTX, "pid %d blocked, srcNode=%d srcPid=%d m_blockedStreamQ.size()=%zu\n",
+                    stream->getSrcPid(), stream->getSrcNode(), stream->getSrcPid(), m_blockedStreamQ.size() );
 
                 m_rm.m_nic.notifyNeedRecv( stream->getMyPid(), stream->getSrcNode(), stream->getSrcPid(), stream->length() );
             }
@@ -117,10 +116,8 @@
             int getMaxQsize() { return m_maxQsize; }
 
           private:
-            StreamBase* newStream( FireflyNetworkEvent* );
             Output&         m_dbg;
             RecvMachine&    m_rm;
             int                              m_pid;
-            std::unordered_map< SrcKey, StreamBase*>   m_streamMap;
             int             m_maxQsize;
         };

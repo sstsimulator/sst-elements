@@ -219,6 +219,17 @@ class VirtNic : public SST::SubComponent {
 
   private:
 
+	SimTime_t m_nextTimeSlot;
+	uint32_t m_latPerSend_ns;
+	SimTime_t calcDelay() {
+		SimTime_t curTime = Simulation::getSimulation()->getCurrentSimCycle()/1000;
+
+		SimTime_t ret = curTime < m_nextTimeSlot ? m_nextTimeSlot - curTime: 0;	
+		m_dbg.debug(CALL_INFO,2,0,"curTime_ns=%" PRIu64 " delay_ns=%" PRIu64"\n",curTime,ret);
+		m_nextTimeSlot += m_latPerSend_ns;
+		return ret;
+	}
+
     void sendCmd( SimTime_t delay ,Event* ev) {
 		m_dbg.debug(CALL_INFO,2,0,"%d %d\n", m_curNicQdepth, m_maxNicQdepth);
         assert( m_curNicQdepth < m_maxNicQdepth );

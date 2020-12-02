@@ -31,13 +31,16 @@ VirtNic::VirtNic( ComponentId_t id, Params& params ) :
     m_notifyRecvDmaDone(NULL),
     m_notifyNeedRecv(NULL),
     m_curNicQdepth(0),
-    m_blockedCallback(NULL)
+    m_blockedCallback(NULL),
+    m_nextTimeSlot(0)
 {
     m_dbg.init("@t:VirtNic::@p():@l ",
         params.find<uint32_t>("verboseLevel",0),
         0,
         Output::STDOUT );
+
     m_maxNicQdepth = params.find<int>("maxNicQdepth",32);
+    m_latPerSend_ns = params.find<int>("latPerSend_ns",2);
 
     m_toNicLink = configureLink( params.find<std::string>("portName","nic"),
 			"1 ns", new Event::Handler<VirtNic>(this,&VirtNic::handleEvent) );
@@ -147,28 +150,28 @@ bool VirtNic::canDmaRecv()
 void VirtNic::dmaRecv( int src, int tag, std::vector<IoVec>& vec, void* key )
 {
     m_dbg.debug(CALL_INFO,2,0,"src=%d\n",src);
-    m_toNicLink->send(0, new NicCmdEvent( NicCmdEvent::DmaRecv,
+    m_toNicLink->send(calcDelay(), new NicCmdEvent( NicCmdEvent::DmaRecv,
             calcCoreId(src), calcRealNicId(src), tag, vec, key ) );
 }
 
 void VirtNic::pioSend( int vn, int dest, int tag, std::vector<IoVec>& vec, void* key )
 {
     m_dbg.debug(CALL_INFO,2,0,"dest=%d\n",dest);
-    m_toNicLink->send(0, new NicCmdEvent( NicCmdEvent::PioSend,
+    m_toNicLink->send(calcDelay(), new NicCmdEvent( NicCmdEvent::PioSend,
 			calcCoreId(dest), calcRealNicId(dest), tag, vec, key, vn ) );
 }
 
 void VirtNic::get( int node, int tag, std::vector<IoVec>& vec, void* key )
 {
     m_dbg.debug(CALL_INFO,2,0,"node=%d\n",node);
-    m_toNicLink->send(0, new NicCmdEvent( NicCmdEvent::Get,
+    m_toNicLink->send(calcDelay(), new NicCmdEvent( NicCmdEvent::Get,
 			calcCoreId(node), calcRealNicId(node), tag, vec, key ) );
 }
 
 void VirtNic::regMem( int node, int tag, std::vector<IoVec>& vec, void* key )
 {
     m_dbg.debug(CALL_INFO,2,0,"node=%d\n",node);
-    m_toNicLink->send(0, new NicCmdEvent( NicCmdEvent::RegMemRgn,
+    m_toNicLink->send(calcDelay(), new NicCmdEvent( NicCmdEvent::RegMemRgn,
 			calcCoreId(node), calcRealNicId(node), tag, vec, key ) );
 }
 

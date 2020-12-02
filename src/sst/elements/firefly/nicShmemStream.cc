@@ -118,7 +118,7 @@ void Nic::RecvMachine::ShmemStream::processPut( ShmemMsgHdr& hdr, FireflyNetwork
 	m_matched_len = hdr.length;
 
     ev->clearHdr();
-    processPkt( ev );
+    processPktBody( ev );
 }
 
 void Nic::RecvMachine::ShmemStream::processGetResp( ShmemMsgHdr& hdr, FireflyNetworkEvent* ev, int local_pid, int dest_pid )
@@ -144,7 +144,7 @@ void Nic::RecvMachine::ShmemStream::processGetResp( ShmemMsgHdr& hdr, FireflyNet
 	m_matched_len = hdr.length;
 
     ev->clearHdr();
-    processPkt( ev );
+    processPktBody( ev );
 }
 
 void Nic::RecvMachine::ShmemStream::processGet( ShmemMsgHdr& hdr, FireflyNetworkEvent* ev, int local_pid, int dest_pid )
