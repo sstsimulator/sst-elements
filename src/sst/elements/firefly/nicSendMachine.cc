@@ -38,7 +38,11 @@ void Nic::SendMachine::streamInit( SendEntryBase* entry )
     ev->setDestPid( entry->dst_vNic() );
     ev->setSrcPid( entry->local_vNic() );
     ev->setHdr();
+#if 0
+	the stream number is no longer used by the receive machine
+    remove send side stream code on phase 2 
     ev->setSrcStream( entry->streamNum() );
+#endif
 
     entry->m_start = m_nic.getCurrentSimTimeNano();
     if ( entry->isCtrl() || entry->isAck() ) {
@@ -56,7 +60,9 @@ void Nic::SendMachine::getPayload( SendEntryBase* entry, FireflyNetworkEvent* ev
     int pid = entry->local_vNic();
     ev->setDestPid( entry->dst_vNic() );
     ev->setSrcPid( pid );
+#if 0
     ev->setSrcStream( entry->streamNum() );
+#endif
     if ( ! m_inQ->isFull() ) {
 	    std::vector< MemOp >* vec = new std::vector< MemOp >;
         entry->copyOut( m_dbg, m_packetSizeInBytes, *ev, *vec );

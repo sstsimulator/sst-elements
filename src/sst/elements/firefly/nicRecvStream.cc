@@ -22,7 +22,7 @@ using namespace SST::Firefly;
 
 Nic::RecvMachine::StreamBase::StreamBase(Output& output, Ctx* ctx, int srcNode, int srcPid, int myPid ) :
     m_dbg(output), m_ctx(ctx), m_unit(-1), m_srcNode(srcNode), m_srcPid(srcPid), m_myPid( myPid ),
-    m_recvEntry(NULL),m_sendEntry(NULL), m_numPending(0), m_pktNum(0), m_expectedPkt(0), m_blockedNeedRecv(NULL)
+    m_recvEntry(NULL),m_sendEntry(NULL), m_numPending(0), m_pktNum(0), m_expectedPkt(0), m_hdrPkt(NULL)
 {
     m_prefix = "@t:"+ std::to_string(ctx->nic().getNodeId()) +":Nic::RecvMachine::StreamBase::@p():@l ";
     m_dbg.verbosePrefix(prefix(),CALL_INFO,1,NIC_DBG_RECV_STREAM,"this=%p\n",this);
@@ -46,17 +46,6 @@ Nic::RecvMachine::StreamBase::~StreamBase() {
                 getMyPid(), m_sendEntry->dest(), m_sendEntry->dst_vNic() );
         m_ctx->nic().qSendEntry( m_sendEntry );
     }
-}
-
-bool Nic::RecvMachine::StreamBase::isBlocked( bool )    {
-    m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_STREAM,"%d\n",m_numPending == m_ctx->getMaxQsize());
-    return m_numPending == m_ctx->getMaxQsize();
-}
-
-void Nic::RecvMachine::StreamBase::needRecv( FireflyNetworkEvent* ev ) {
-    m_dbg.verbosePrefix(prefix(),CALL_INFO,2,NIC_DBG_RECV_STREAM,"\n");
-    m_blockedNeedRecv = ev;
-    m_ctx->needRecv( this );
 }
 
 void Nic::RecvMachine::StreamBase::processPktBody( FireflyNetworkEvent* ev  ) {
@@ -101,9 +90,9 @@ void Nic::RecvMachine::StreamBase::ready( bool finished, uint64_t pktNum ) {
 
 bool Nic::RecvMachine::StreamBase::postedRecv( DmaRecvEntry* entry ) {
     m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_STREAM,"\n");
-    if ( ! m_blockedNeedRecv ) return false;
+    if ( ! m_hdrPkt ) return false;
 
-    FireflyNetworkEvent* event = m_blockedNeedRecv;
+    FireflyNetworkEvent* event = m_hdrPkt;
 
     MsgHdr& hdr = *(MsgHdr*) event->bufPtr();
     MatchMsgHdr& matchHdr = *(MatchMsgHdr*) ((unsigned char*)event->bufPtr() + sizeof( MsgHdr ));
@@ -125,16 +114,13 @@ bool Nic::RecvMachine::StreamBase::postedRecv( DmaRecvEntry* entry ) {
     if ( entry->totalBytes() < matchHdr.len ) {
         assert(0);
     }
-    m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_STREAM, "matched\n");
+    m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_STREAM, "matched stream=%p\n",this);
 
     m_recvEntry = entry;
     event->bufPop( sizeof(MsgHdr) + sizeof(MatchMsgHdr));
-
-    m_blockedNeedRecv = NULL;
     event->clearHdr();
-    assert ( m_wakeupCallback );
 
-    m_ctx->schedCallback( m_wakeupCallback );
-    m_wakeupCallback = NULL;
+    processPktBody(m_hdrPkt);
+    m_hdrPkt = NULL;
     return true;
 }
