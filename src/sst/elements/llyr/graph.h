@@ -32,38 +32,38 @@ namespace Llyr {
 class Edge
 {
 private:
-    float weight;
-    uint32_t destinationVertex;
+    float weight_;
+    uint32_t destinationVertex_;
 
 protected:
 
 public:
     explicit Edge( uint32_t vertexIn )
     {
-        weight = 0.00;
-        destinationVertex = vertexIn;
+        weight_ = 0.00;
+        destinationVertex_ = vertexIn;
     }
     explicit Edge( float weightIn, uint32_t vertexIn )
     {
-        weight = weightIn;
-        destinationVertex = vertexIn;
+        weight_ = weightIn;
+        destinationVertex_ = vertexIn;
     }
     ~Edge();
 
     bool setWeight( float weightIn )
     {
-        weight = weightIn;
+        weight_ = weightIn;
         return true;
     }
 
     float getWeight( void ) const
     {
-        return weight;
+        return weight_;
     }
 
     uint32_t getDestination( void ) const
     {
-        return destinationVertex;
+        return destinationVertex_;
     }
 
 };
@@ -73,8 +73,8 @@ template<class T>
 class Vertex
 {
 private:
-    T type;
-    bool visited;
+    T type_;
+    bool visited_;
 
     std::vector< Edge* >* adjacencyList_;
 
@@ -84,34 +84,34 @@ public:
     Vertex()
     {
         adjacencyList_ = new std::vector< Edge* >;
-        visited = 0;
+        visited_ = 0;
     }
 
     Vertex( T typeIn )
     {
         adjacencyList_ = new std::vector< Edge* >;
-        type = typeIn;
-        visited = 0;
+        type_ = typeIn;
+        visited_ = 0;
     }
 
     void setType( T typeIn )
     {
-        type = typeIn;
+        type_ = typeIn;
     }
 
     T getType( void ) const
     {
-        return type;
+        return type_;
     }
 
     void setVisited( bool visitIn )
     {
-        visited = visitIn;
+        visited_ = visitIn;
     }
 
     bool getVisited( void ) const
     {
-        return visited;
+        return visited_;
     }
 
     std::vector< Edge* >* getAdjacencyList( void ) const
@@ -131,7 +131,7 @@ class LlyrGraph
 {
 
 private:
-    uint32_t vertices;
+    uint32_t vertices_;
     std::map< uint32_t, Vertex<T> >* vertex_map_;
 
     SST::Output* output;
@@ -173,7 +173,7 @@ template<class T>
 LlyrGraph<T>::LlyrGraph()
 {
     vertex_map_ = new std::map< uint32_t, Vertex<T> >;
-    vertices = 0;
+    vertices_ = 0;
 }
 
 template<class T>
@@ -241,7 +241,7 @@ uint32_t LlyrGraph<T>::outEdges(uint32_t vertexId)
 template<class T>
 uint32_t LlyrGraph<T>::numVertices(void)
 {
-    return vertices;
+    return vertices_;
 }
 
 template<class T>
@@ -278,7 +278,7 @@ void LlyrGraph<T>::addVertex(uint32_t vertexNum, T type)
         ///TODO
     }
 
-    vertices = vertices + 1;
+    vertices_ = vertices_ + 1;
 }
 
 
