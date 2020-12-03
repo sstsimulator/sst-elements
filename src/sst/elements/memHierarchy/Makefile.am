@@ -127,6 +127,8 @@ libmemHierarchy_la_SOURCES = \
 	memNetBridge.cc
 
 EXTRA_DIST = \
+	tests/testsuite_default_memHierarchy_hybridsim.py \
+	tests/testsuite_default_memHierarchy_memHA.py \
 	tests/testsuite_default_memHierarchy_sdl.py \
     Sieve/tests/StatisticOutput.csv.gold \
     Sieve/tests/sieveprospero-0.trace \
