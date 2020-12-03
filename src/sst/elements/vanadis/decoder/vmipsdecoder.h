@@ -196,7 +196,7 @@ public:
 	virtual VanadisFPRegisterMode getFPRegisterMode() const { return VANADIS_REGISTER_MODE_FP32; }
 
 	virtual void configureApplicationLaunch( SST::Output* output, VanadisISATable* isa_tbl,
-		VanadisRegisterFile* regFile, Interfaces::SimpleMem* mem_if,
+		VanadisRegisterFile* regFile, VanadisLoadStoreQueue* lsq,
 		VanadisELFInfo* elf_info, SST::Params& params ) {
 
 		output->verbose(CALL_INFO, 16, 0, "Application Startup Processing:\n");
@@ -210,10 +210,16 @@ public:
 
 		for( uint32_t arg = 0; arg < arg_count; ++arg ) {
 			snprintf( arg_name, 32, "arg%" PRIu32 "", arg );
-			std::string arg_value = params.find<std::string>(arg_name, (0 == arg) ? elf_info->getBinaryPath() : "" );
+			std::string arg_value = params.find<std::string>(arg_name, "" );
 
 			if( "" == arg_value ) {
-				output->fatal( CALL_INFO, -1, "Error - unable to find argument %s, value is empty string which is not allowed in Linux.\n", arg_name );
+				if( 0 == arg ) {
+					arg_value = elf_info->getBinaryPath();
+					output->verbose(CALL_INFO, 8, 0, "--> auto-set \"%s\" to \"%s\"\n",
+						arg_name, arg_value.c_str());
+				} else {
+					output->fatal( CALL_INFO, -1, "Error - unable to find argument %s, value is empty string which is not allowed in Linux.\n", arg_name );
+				}
 			}
 
 			output->verbose(CALL_INFO, 16, 0, "--> Found %s = \"%s\"\n", arg_name, arg_value.c_str() );
@@ -311,6 +317,18 @@ public:
 		// AT_BASE (base address loaded into)
 		vanadis_vec_copy_in<int>( aux_data_block, VANADIS_AT_BASE );
 		vanadis_vec_copy_in<int>( aux_data_block, 0    );
+
+		// AT_FLAGS
+		vanadis_vec_copy_in<int>( aux_data_block, VANADIS_AT_FLAGS );
+		vanadis_vec_copy_in<int>( aux_data_block, 0    );
+
+		// AT_HWCAP
+		vanadis_vec_copy_in<int>( aux_data_block, VANADIS_AT_HWCAP );
+		vanadis_vec_copy_in<int>( aux_data_block, 0    );
+
+		// AT_CLKTCK (Clock Tick Resolution)
+		vanadis_vec_copy_in<int>( aux_data_block, VANADIS_AT_CLKTCK );
+		vanadis_vec_copy_in<int>( aux_data_block, 100  );
 
 		// Not ELF
 		vanadis_vec_copy_in<int>( aux_data_block, VANADIS_AT_NOTELF );
@@ -447,34 +465,24 @@ public:
 		output->verbose(CALL_INFO, 16, 0, "-> Sending inital write of auxillary vector to memory, forms basis of stack start (addr: 0x%llx)\n",
 			start_stack_address);
 
-		// Send request for application stack
-		SimpleMem::Request* stack_req = new SimpleMem::Request( SimpleMem::Request::Write,
-			start_stack_address, stack_data.size(), stack_data );
-		mem_if->sendInitData( stack_req );
+		lsq->setInitialMemory( start_stack_address, stack_data );
 
 		output->verbose(CALL_INFO, 16, 0, "-> Sending initial write of AT_RANDOM values to memory (0x%llx, len: %" PRIu64 ")\n",
 			rand_values_address, (uint64_t) random_values_data_block.size());
 
-		SimpleMem::Request* rand_req = new SimpleMem::Request( SimpleMem::Request::Write,
-			rand_values_address, random_values_data_block.size(), random_values_data_block );
-
-		mem_if->sendInitData( rand_req );
+		lsq->setInitialMemory( rand_values_address, random_values_data_block );
 
 		output->verbose(CALL_INFO, 16, 0, "-> Sending initial data for program headers (addr: 0x%llx, len: %" PRIu64 ")\n", phdr_address,
 			(uint64_t) phdr_data_block.size() );
 
-		// Send request for program header tables
-		SimpleMem::Request* phdr_req = new SimpleMem::Request( SimpleMem::Request::Write,
-			phdr_address, phdr_data_block.size(), phdr_data_block );
-		mem_if->sendInitData( phdr_req );
+		lsq->setInitialMemory( phdr_address, phdr_data_block );
 
 		output->verbose(CALL_INFO, 16, 0, "-> Setting SP to (64B-aligned):          %" PRIu64 " / 0x%0llx\n",
-			aligned_start_stack_address, aligned_start_stack_address );
+			start_stack_address, start_stack_address );
 
 		// Set up the stack pointer
 		// Register 29 is MIPS for Stack Pointer
-		regFile->setIntReg( sp_phys_reg, aligned_start_stack_address );
-
+		regFile->setIntReg( sp_phys_reg, start_stack_address );
 	}
 
 	virtual void tick( SST::Output* output, uint64_t cycle ) {

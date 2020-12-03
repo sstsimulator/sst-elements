@@ -189,6 +189,14 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 		thread_decoders[i]->getInstructionLoader()->setMemoryInterface( memInstInterface );
 	}
 
+	lsq = loadUserSubComponent<SST::Vanadis::VanadisLoadStoreQueue>("lsq");
+
+	if( nullptr == lsq ) {
+		output->fatal(CALL_INFO, -1, "Error - unable to load the load-store queue (lsq subcomponent)\n");
+	}
+
+	lsq->setRegisterFiles( &register_files );
+
 	if( 0 == core_id ) {
 		halted_masks[0] = false;
 		uint64_t initial_config_ip = thread_decoders[0]->getInstructionPointer();
@@ -206,7 +214,7 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 
 		output->verbose(CALL_INFO, 8, 0, "Configuring core-0, thread-0 application info...\n");
 		thread_decoders[0]->configureApplicationLaunch( output, issue_isa_tables[0], register_files[0],
-			memInstInterface, binary_elf_info, app_params );
+			lsq, binary_elf_info, app_params );
 
 		// Force retire table to sync with issue table
 		retire_isa_tables[0]->reset( issue_isa_tables[0] );
@@ -364,15 +372,6 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
     			output->fatal(CALL_INFO, -1, "Failed to open pipeline trace file.\n");
     		}
     	}
-
-	lsq = loadUserSubComponent<SST::Vanadis::VanadisLoadStoreQueue>("lsq");
-
-	if( nullptr == lsq ) {
-		output->fatal(CALL_INFO, -1, "Error - unable to load the load-store queue (lsq subcomponent)\n");
-	}
-
-	lsq->setRegisterFiles( &register_files );
-
 
 	// Register statistics ///////////////////////////////////////////////////////
 	stat_ins_retired   = registerStatistic<uint64_t>( "instructions_retired", "1" );

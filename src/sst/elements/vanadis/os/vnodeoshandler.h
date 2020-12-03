@@ -13,6 +13,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "os/memmgr/vmemmgr.h"
+
 #include "os/callev/voscallall.h"
 #include "os/resp/voscallresp.h"
 #include "os/resp/vosexitresp.h"
@@ -418,7 +420,7 @@ public:
 				//	output->fatal(CALL_INFO, -1, "Not implemented\n");
 				//}
 
-				VanadisSyscallResponse* resp = new VanadisSyscallResponse( 25 );
+				VanadisSyscallResponse* resp = new VanadisSyscallResponse( -25 );
 				resp->markFailed();
 
 				core_link->send( resp );
@@ -639,6 +641,10 @@ public:
 		getSimTimeNano = sim_time;
 	}
 
+	void setMemoryManager( VanadisMemoryManager* mem_m ) {
+		memory_mgr = mem_m;
+	}
+
 protected:
 	std::function<void( SimpleMem::Request* )> handlerSendMemCallback;
 	std::function<void( SimpleMem::Request*, uint32_t )> sendMemEventCallback;
@@ -647,6 +653,7 @@ protected:
 	std::unordered_set< SimpleMem::Request::id_t > pending_mem;
 	std::unordered_map<uint32_t, VanadisOSFileDescriptor*> file_descriptors;
 
+	VanadisMemoryManager* memory_mgr;
 	VanadisHandlerState* handler_state;
 
 	SST::Link* core_link;

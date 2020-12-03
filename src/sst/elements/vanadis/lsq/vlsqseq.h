@@ -7,6 +7,8 @@
 #include <unordered_map>
 
 #include "lsq/vlsq.h"
+#include "lsq/vmemwriterec.h"
+
 #include "inst/vinst.h"
 #include "inst/vstore.h"
 
@@ -24,7 +26,7 @@ public:
 
 	SimpleMem::Request::id_t getRequestID() const { return req_id; }
 	VanadisStoreInstruction* getInstruction() const { return ins; }
-	
+
 protected:
 	VanadisStoreInstruction* ins;
 	SimpleMem::Request::id_t req_id;
@@ -37,11 +39,11 @@ public:
 		issued = false;
 		req_id = 0;
 	}
-	
+
 	bool isOperationIssued() {
 		return issued;
 	}
-	
+
 	void markOperationIssued() {
 		issued = true;
 	}
@@ -49,19 +51,19 @@ public:
 	VanadisInstruction* getInstruction() {
 		return ins;
 	}
-	
+
 	SimpleMem::Request::id_t getRequestID() {
 		return req_id;
 	}
-	
+
 	void setRequestID( SimpleMem::Request::id_t new_id ) {
 		req_id = new_id;
 	}
-	
+
 	bool isStore() {
 		return ins->getInstFuncType() == INST_STORE;
 	}
-	
+
 	bool isLoad() {
 		return ins->getInstFuncType() == INST_LOAD;
 	}
@@ -99,23 +101,24 @@ public:
 	)
 
 	SST_ELI_DOCUMENT_PARAMS(
-		{ "load_store_entries",		"Set the number of load/stores that can be pending",	"8"		}
+		{ "load_store_entries",		"Set the number of load/stores that can be pending",	"8"		},
+		{ "check_memory_loads", 	"Check memory loads come from memory locations that have been written",  "0" },
 	)
-	
+
 	VanadisSequentialLoadStoreQueue( ComponentId_t id, Params& params ) :
 		VanadisLoadStoreQueue( id, params ) {
-		
+
 		memInterface = loadUserSubComponent<Interfaces::SimpleMem>("memory_interface", ComponentInfo::SHARE_PORTS |
 			ComponentInfo::INSERT_STATS, getTimeConverter("1ps"),
 			new SimpleMem::Handler<SST::Vanadis::VanadisSequentialLoadStoreQueue>(this,
 			&VanadisSequentialLoadStoreQueue::processIncomingDataCacheEvent));
-			
+
 		if( nullptr == memInterface ) {
 			output->fatal(CALL_INFO, -1, "Error - unable to load \"memory_interface\"\n");
 		}
-		
+
 		max_q_size = params.find<size_t>("load_store_entries", 8);
-		
+
 		output->verbose(CALL_INFO, 2, 0, "LSQ Load/Store Queue entry count:     %" PRIu32 "\n",
 			(uint32_t) max_q_size);
 
@@ -128,6 +131,18 @@ public:
 		}
 
 		allow_speculated_operations = params.find<bool>("allow_speculated_operations", true);
+		fault_on_memory_not_written = params.find<bool>("check_memory_loads", false);
+
+		// Check for up to 4GB
+		if( fault_on_memory_not_written ) {
+			uint64_t mem_gb = 4;
+			uint64_t mem_bytes = mem_gb * 1024 * 1024 * 1024;
+			flag_non_written_loads_count = params.find<uint64_t>("fault_non_written_loads_after", 0);
+
+			memory_check_table = new VanadisMemoryWrittenRecord( 16, mem_bytes );
+		} else {
+			memory_check_table = nullptr;
+		}
 	}
 
 	virtual ~VanadisSequentialLoadStoreQueue() {
@@ -136,6 +151,7 @@ public:
 		}
 
 		delete memInterface;
+		delete memory_check_table;
 	}
 
 	virtual bool storeFull() {
@@ -359,6 +375,12 @@ public:
 
 						writeTrace( store_ins, store_req );
 						memInterface->sendRequest( store_req );
+
+						if( fault_on_memory_not_written ) {
+							for( uint64_t i = store_req->addr; i < (store_req->addr + store_req->size); ++i ) {
+								memory_check_table->markByte(i);
+							}
+						}
 					}
 
 					op_q.erase( op_q_itr );
@@ -404,6 +426,30 @@ public:
 					uint16_t target_reg = 0; //load_ins->getPhysIntRegOut(0);
 					uint16_t target_isa = 0;
 					uint16_t reg_offset = 0;
+
+
+					if( fault_on_memory_not_written ) {
+						uint64_t load_unwritten_address = 0;
+
+						for( uint64_t i = ev->addr; i < (ev->addr + ev->size); ++i ) {
+							// if the address is not marked as written, potential error condition
+							if( ! memory_check_table->isMarked(i) ) {
+								load_unwritten_address = i;
+								break;
+							}
+						}
+
+						// We have an unwritten value from memory, so flag an error
+						if( load_unwritten_address > 0 ) {
+							if( flag_non_written_loads_count > 0 ) {
+								flag_non_written_loads_count--;
+							} else {
+								output->verbose(CALL_INFO, 8, 0, "--> [load-unwritten-memory-fault]: load-ins: 0x%llx -> memory is not written at addr 0x%llx\n",
+									load_ins->getInstructionAddress(), load_unwritten_address);
+								load_ins->flagError();
+							}
+						}
+					}
 
 					switch( load_ins->getValueRegisterType() ) {
 					case LOAD_INT_REGISTER:
@@ -660,6 +706,13 @@ public:
 			addr, (uint64_t) payload.size() );
 		memInterface->sendInitData( new SimpleMem::Request( SimpleMem::Request::Write, addr,
 			payload.size(), payload) );
+
+		if( fault_on_memory_not_written ) {
+			// Mark every byte which we are initializing
+			for( uint64_t i = addr; i < (addr + payload.size()); ++i ) {
+				memory_check_table->markByte( i );
+			}
+		}
 	}
 
 protected:
@@ -712,6 +765,11 @@ protected:
 	FILE* address_trace_file;
 
 	bool allow_speculated_operations;
+	bool fault_on_memory_not_written;
+
+	uint64_t flag_non_written_loads_count;
+
+	VanadisMemoryWrittenRecord* memory_check_table;
 
 };
 

@@ -10,6 +10,8 @@
 #include "os/vnodeoshandler.h"
 #include "os/callev/voscallall.h"
 
+#include "os/memmgr/vmemmgr.h"
+
 using namespace SST::Interfaces;
 
 namespace SST {
@@ -76,7 +78,10 @@ private:
 	std::unordered_map< SimpleMem::Request::id_t, uint32_t > ev_core_map;
 	std::vector< SST::Link* > core_links;
 	std::vector< VanadisNodeOSCoreHandler* > core_handlers;
+
 	SimpleMem* mem_if;
+	VanadisMemoryManager* memory_mgr;
+
 	SST::Output* output;
 };
 
