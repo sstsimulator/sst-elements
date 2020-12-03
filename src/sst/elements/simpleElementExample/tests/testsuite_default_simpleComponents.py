@@ -39,8 +39,6 @@ class testcase_simpleComponents(SSTTestCase):
     def test_simple_rng_component_xorshift_component(self):
         self.simple_components_template("simpleRNGComponent_xorshift", striptotail=1)
 
-
-
     def test_simple_distrib_component_expon(self):
        self.simple_components_template("simpleDistribComponent_expon")
 
