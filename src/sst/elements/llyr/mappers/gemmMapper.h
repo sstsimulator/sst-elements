@@ -53,32 +53,29 @@ void GEMMMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType >
                             LlyrGraph< ProcessingElement* > &graphOut,
                             LlyrConfig* llyr_config)
 {
-    uint32_t queueDepth = llyr_config->queueDepth_;
-    LSQueue* lsqueue  = llyr_config->lsqueue_;
-    SimpleMem* mem_interface = llyr_config->mem_interface_;
     //Dummy node to make BFS easier
-    ProcessingElement* tempPE = new DummyProcessingElement(DUMMY, 0, 0, lsqueue, mem_interface);
+    ProcessingElement* tempPE = new DummyProcessingElement(DUMMY, 0, llyr_config);
     graphOut.addVertex( 0, tempPE );
 
-    tempPE = new LoadProcessingElement( LD, 1, queueDepth, lsqueue, mem_interface );
+    tempPE = new LoadProcessingElement( LD, 1, llyr_config );
     graphOut.addVertex( 1, tempPE );
 
-    tempPE = new LoadProcessingElement( LD, 2, queueDepth, lsqueue, mem_interface );
+    tempPE = new LoadProcessingElement( LD, 2, llyr_config );
     graphOut.addVertex( 2, tempPE );
 
-    tempPE = new LoadProcessingElement( LD, 3, queueDepth, lsqueue, mem_interface );
+    tempPE = new LoadProcessingElement( LD, 3, llyr_config );
     graphOut.addVertex( 3, tempPE );
 
-    tempPE = new IntProcessingElement( MUL, 4, queueDepth, lsqueue, mem_interface );
+    tempPE = new IntProcessingElement( MUL, 4, llyr_config );
     graphOut.addVertex( 4, tempPE );
 
-    tempPE = new IntProcessingElement( MUL, 5, queueDepth, lsqueue, mem_interface );
+    tempPE = new IntProcessingElement( MUL, 5, llyr_config );
     graphOut.addVertex( 5, tempPE );
 
-    tempPE = new StoreProcessingElement( ST, 6, queueDepth, lsqueue, mem_interface );
+    tempPE = new StoreProcessingElement( ST, 6, llyr_config );
     graphOut.addVertex( 6, tempPE );
 
-    tempPE = new StoreProcessingElement( ST, 7, queueDepth, lsqueue, mem_interface );
+    tempPE = new StoreProcessingElement( ST, 7, llyr_config );
     graphOut.addVertex( 7, tempPE );
 
     graphOut.addEdge( 0, 1 );

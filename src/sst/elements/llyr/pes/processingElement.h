@@ -39,16 +39,17 @@ namespace Llyr {
 class ProcessingElement
 {
 public:
-    ProcessingElement(opType op_binding, uint32_t processor_id, uint32_t queue_depth,
-                    LSQueue* lsqueue, SimpleMem*  mem_interface)  :
-                    op_binding_(op_binding), processor_id_(processor_id), queue_depth_(queue_depth),
-                    lsqueue_(lsqueue), mem_interface_(mem_interface), pending_op_(0)
+    ProcessingElement(opType op_binding, uint32_t processor_id, LlyrConfig* llyr_config)  :
+                    op_binding_(op_binding), processor_id_(processor_id),
+                    pending_op_(0), llyr_config_(llyr_config)
     {
         //setup up i/o for messages
         char prefix[256];
         sprintf(prefix, "[t=@t][ProcessingElement-%u]: ", processor_id_);
         output_ = new SST::Output(prefix, 0, 0, Output::STDOUT);
 
+        lsqueue_ = llyr_config->lsqueue_;
+        mem_interface_ = llyr_config->mem_interface_;
         input_queues_= new std::vector< std::queue< LlyrData >* >;
         output_queues_ = new std::vector< std::queue< LlyrData >* >;
     }
@@ -191,6 +192,7 @@ protected:
     //used to stall execution - waiting on mem/queues full
     bool pending_op_;
 
+    LlyrConfig* llyr_config_;
 
 private:
 

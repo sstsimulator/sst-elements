@@ -29,10 +29,8 @@ namespace Llyr {
 class DummyProcessingElement : public ProcessingElement
 {
 public:
-    DummyProcessingElement(opType op_binding, uint32_t processor_id, uint32_t queue_depth,
-                    LSQueue* lsqueue, SimpleMem*  mem_interface)  :
-                    ProcessingElement(op_binding, processor_id, queue_depth,
-                    lsqueue, mem_interface)
+    DummyProcessingElement(opType op_binding, uint32_t processor_id, LlyrConfig* llyr_config)  :
+                    ProcessingElement(op_binding, processor_id, llyr_config)
     {
         pending_op_ = 0;
         //setup up i/o for messages

@@ -31,10 +31,8 @@ namespace Llyr {
 class StoreProcessingElement : public ProcessingElement
 {
 public:
-    StoreProcessingElement(opType op_binding, uint32_t processor_id, uint32_t queue_depth,
-                    LSQueue* lsqueue, SimpleMem*  mem_interface, uint32_t cycles = 1)  :
-                    ProcessingElement(op_binding, processor_id, queue_depth,
-                    lsqueue, mem_interface)
+    StoreProcessingElement(opType op_binding, uint32_t processor_id, LlyrConfig* llyr_config, uint32_t cycles = 1)  :
+                    ProcessingElement(op_binding, processor_id, llyr_config)
     {
         pending_op_ = 0;
         //setup up i/o for messages
@@ -43,15 +41,16 @@ public:
         output_ = new SST::Output(prefix, 0, 0, Output::STDOUT);
 
         cycles_ = cycles;
+        lsqueue_ = llyr_config->lsqueue_;
+        mem_interface_ = llyr_config->mem_interface_;
         input_queues_= new std::vector< std::queue< LlyrData >* >;
         output_queues_ = new std::vector< std::queue< LlyrData >* >;
     }
 
-    StoreProcessingElement(opType op_binding, uint32_t processor_id, uint32_t queue_depth,
+    StoreProcessingElement(opType op_binding, uint32_t processor_id, LlyrConfig* llyr_config,
                     std::vector< std::queue< LlyrData >* >* input_queues_init,
-                    LSQueue* lsqueue, SimpleMem*  mem_interface, uint32_t cycles = 1)  :
-                    ProcessingElement(op_binding, processor_id, queue_depth,
-                    lsqueue, mem_interface)
+                    uint32_t cycles = 1)  :
+                    ProcessingElement(op_binding, processor_id, llyr_config)
     {
         pending_op_ = 0;
         //setup up i/o for messages
@@ -60,6 +59,8 @@ public:
         output_ = new SST::Output(prefix, 0, 0, Output::STDOUT);
 
         cycles_ = cycles;
+        lsqueue_ = llyr_config->lsqueue_;
+        mem_interface_ = llyr_config->mem_interface_;
         input_queues_= new std::vector< std::queue< LlyrData >* >(*input_queues_init);
         output_queues_ = new std::vector< std::queue< LlyrData >* >;
     }

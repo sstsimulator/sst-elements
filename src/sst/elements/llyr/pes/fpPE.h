@@ -29,10 +29,8 @@ namespace Llyr {
 class FPProcessingElement : public ProcessingElement
 {
 public:
-    FPProcessingElement(opType op_binding, uint32_t processor_id, uint32_t queue_depth,
-                    LSQueue* lsqueue, SimpleMem*  mem_interface, uint32_t cycles = 1)  :
-                    ProcessingElement(op_binding, processor_id, queue_depth,
-                    lsqueue, mem_interface)
+    FPProcessingElement(opType op_binding, uint32_t processor_id, LlyrConfig* llyr_config, uint32_t cycles = 1)  :
+                    ProcessingElement(op_binding, processor_id, llyr_config)
     {
         pending_op_ = 0;
         //setup up i/o for messages
@@ -41,6 +39,8 @@ public:
         output_ = new SST::Output(prefix, 0, 0, Output::STDOUT);
 
         cycles_ = cycles;
+        lsqueue_ = llyr_config->lsqueue_;
+        mem_interface_ = llyr_config->mem_interface_;
         input_queues_= new std::vector< std::queue< LlyrData >* >;
         output_queues_ = new std::vector< std::queue< LlyrData >* >;
     }
