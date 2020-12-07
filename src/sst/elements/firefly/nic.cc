@@ -39,7 +39,6 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_useDetailedCompute(false),
     m_getKey(10),
     m_memoryModel(NULL),
-    m_nic2host_base_lat_ns(0),
     m_respKey(1),
 	m_predNetIdleTime(0),
     m_linkBytesPerSec(0),
@@ -66,9 +65,6 @@ Nic::Nic(ComponentId_t id, Params &params) :
 	// so the latency has been dropped to 1ns. The bus latency must still be added for some messages so the
 	// NIC now sends these message to itself with a time of nic2host_lat_ns - "the latency of the link".
 	m_nic2host_lat_ns = calcDelay_ns( params.find<SST::UnitAlgebra>("nic2host_lat", SST::UnitAlgebra("150ns")));
-	if ( m_nic2host_lat_ns > m_nic2host_base_lat_ns ) {
-		m_nic2host_base_lat_ns = 1;
-	}
 
     m_numVN = params.find<int>("numVNs",1);
     m_getHdrVN = params.find<int>("getHdrVN",0);
@@ -96,11 +92,6 @@ Nic::Nic(ComponentId_t id, Params &params) :
 
 
     m_num_vNics = params.find<int>("num_vNics", 1 );
-
-	for ( unsigned i = 0; i < m_num_vNics; i++  ) {
-		m_sendStreamNum.push_back(0);
-	}
-
 
     m_tracedNode =     params.find<int>( "tracedNode", -1 );
     m_tracedPkt  =     params.find<int>( "tracedPkt", -1 );
@@ -179,7 +170,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
 
     for ( int i = 0; i < m_num_vNics; i++ ) {
         m_vNicV.push_back( new VirtNic( *this, i,
-			params.find<std::string>("corePortName","core") ) );
+			params.find<std::string>("corePortName","core"), getDelay_ns() ) );
     }
 
 	Params shmemParams = params.find_prefix_params( "shmem." );
@@ -266,7 +257,8 @@ Nic::Nic(ComponentId_t id, Params &params) :
                 params.find<uint32_t>("verboseLevel",0),
                 params.find<uint32_t>("verboseMask",-1),
                 rxMatchDelay, hostReadDelay, maxRecvMachineQsize,
-                params.find<>( "maxActiveRecvStreams", 1024*1024) ) );
+                params.find<int>( "maxActiveRecvStreams", 16 ),
+                params.find<int>( "maxPendingRecvPkts", 64) ) );
     }
 
     m_recvCtxData.resize( m_num_vNics );
@@ -384,6 +376,8 @@ void Nic::handleVnicEvent( Event* ev, int id )
 {
     NicCmdBaseEvent* event = static_cast<NicCmdBaseEvent*>(ev);
 
+    m_dbg.debug(CALL_INFO,1,1,"got message from the host\n");
+
     switch ( event->base_type ) {
 
       case NicCmdBaseEvent::Msg:
@@ -462,7 +456,7 @@ void Nic::dmaSend( NicCmdEvent *e, int vNicNum )
 {
     std::function<void(void*)> callback = std::bind( &Nic::notifySendPioDone, this, vNicNum, _1 );
 
-    CmdSendEntry* entry = new CmdSendEntry( vNicNum, getSendStreamNum(vNicNum), e, callback );
+    CmdSendEntry* entry = new CmdSendEntry( vNicNum, e, callback );
 
     m_dbg.debug(CALL_INFO,1,1,"dest=%#x tag=%#x vecLen=%lu totalBytes=%lu\n",
                     e->node, e->tag, e->iovec.size(), entry->totalBytes() );
@@ -474,7 +468,7 @@ void Nic::pioSend( NicCmdEvent *e, int vNicNum )
 {
     std::function<void(void*)> callback = std::bind( &Nic::notifySendPioDone, this, vNicNum, _1 );
 
-    CmdSendEntry* entry = new CmdSendEntry( vNicNum, getSendStreamNum(vNicNum), e, callback );
+    CmdSendEntry* entry = new CmdSendEntry( vNicNum,  e, callback );
 
     m_dbg.debug(CALL_INFO,1,1,"src_vNic=%d dest=%#x dst_vNic=%d tag=%#x "
         "vecLen=%lu totalBytes=%lu vn=%d\n", vNicNum, e->node, e->dst_vNic,
@@ -507,7 +501,7 @@ void Nic::get( NicCmdEvent *e, int vNicNum )
     m_dbg.debug(CALL_INFO,1,1,"src_vNic=%d dest=%#x dst_vNic=%d tag=%#x vecLen=%lu totalBytes=%lu\n",
                 vNicNum, e->node, e->dst_vNic, e->tag, e->iovec.size(), entry->totalBytes() );
 
-    qSendEntry( new GetOrgnEntry( vNicNum, getSendStreamNum(vNicNum), e->node, e->dst_vNic, e->tag, getKey, m_getHdrVN ) );
+    qSendEntry( new GetOrgnEntry( vNicNum, e->node, e->dst_vNic, e->tag, getKey, m_getHdrVN ) );
 }
 
 void Nic::put( NicCmdEvent *e, int vNicNum )
@@ -515,7 +509,7 @@ void Nic::put( NicCmdEvent *e, int vNicNum )
     assert(0);
 
     std::function<void(void*)> callback = std::bind(  &Nic::notifyPutDone, this, vNicNum, _1 );
-    CmdSendEntry* entry = new CmdSendEntry( vNicNum, getSendStreamNum(vNicNum), e, callback );
+    CmdSendEntry* entry = new CmdSendEntry( vNicNum, e, callback );
     m_dbg.debug(CALL_INFO,1,1,"src_vNic=%d dest=%#x dst_vNic=%d tag=%#x "
                         "vecLen=%lu totalBytes=%lu\n",
                 vNicNum, e->node, e->dst_vNic, e->tag, e->iovec.size(),
@@ -646,8 +640,7 @@ void Nic::sendPkt( FireflyNetworkEvent* ev, int dest, int vn )
         ++m_packetId;
     }
     m_dbg.debug(CALL_INFO,3,NIC_DBG_SEND_NETWORK,
-                    "node=%" PRIu64 " stream=%d bytes=%zu packetId=%" PRIu64 " %s %s\n",req->dest,
-													ev->getSrcStream(),
+                    "node=%" PRIu64 " bytes=%zu packetId=%" PRIu64 " %s %s\n",req->dest,
                                                     ev->bufSize(), (uint64_t)m_packetId,
                                                     ev->isHdr() ? "Hdr":"",
                                                     ev->isTail() ? "Tail":"" );

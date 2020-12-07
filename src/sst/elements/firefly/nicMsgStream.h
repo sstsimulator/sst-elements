@@ -19,18 +19,14 @@ class MsgStream : public StreamBase {
     ~MsgStream() {
         m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_STREAM,"\n");
     }
-    bool isBlocked( bool head ) {
-        if ( head ) {
-            return m_recvEntry == NULL;
-        } else {
-            return m_blocked;
-        }
+    bool isBlocked() {
+        return m_hdrPkt || m_blockedFirstPktDelay || StreamBase::isBlocked();
     }
   protected:
     void processFirstPkt( FireflyNetworkEvent* ev ) {
-        m_blocked = false;
-        processPkt(ev);
+        m_blockedFirstPktDelay = false;
+        processPktBody(ev);
     }
   private:
-    bool m_blocked;
+    bool m_blockedFirstPktDelay;
 };
