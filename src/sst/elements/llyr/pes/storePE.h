@@ -35,16 +35,7 @@ public:
                     ProcessingElement(op_binding, processor_id, llyr_config)
     {
         pending_op_ = 0;
-        //setup up i/o for messages
-        char prefix[256];
-        sprintf(prefix, "[t=@t][ProcessingElement-%u]: ", processor_id_);
-        output_ = new SST::Output(prefix, 0, 0, Output::STDOUT);
-
         cycles_ = cycles;
-        lsqueue_ = llyr_config->lsqueue_;
-        mem_interface_ = llyr_config->mem_interface_;
-        input_queues_= new std::vector< std::queue< LlyrData >* >;
-        output_queues_ = new std::vector< std::queue< LlyrData >* >;
     }
 
     StoreProcessingElement(opType op_binding, uint32_t processor_id, LlyrConfig* llyr_config,
@@ -53,16 +44,8 @@ public:
                     ProcessingElement(op_binding, processor_id, llyr_config)
     {
         pending_op_ = 0;
-        //setup up i/o for messages
-        char prefix[256];
-        sprintf(prefix, "[t=@t][ProcessingElement-%u]: ", processor_id_);
-        output_ = new SST::Output(prefix, 0, 0, Output::STDOUT);
-
         cycles_ = cycles;
-        lsqueue_ = llyr_config->lsqueue_;
-        mem_interface_ = llyr_config->mem_interface_;
         input_queues_= new std::vector< std::queue< LlyrData >* >(*input_queues_init);
-        output_queues_ = new std::vector< std::queue< LlyrData >* >;
     }
 
     virtual bool doSend()

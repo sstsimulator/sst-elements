@@ -33,13 +33,6 @@ public:
                     ProcessingElement(op_binding, processor_id, llyr_config)
     {
         pending_op_ = 0;
-        //setup up i/o for messages
-        char prefix[256];
-        sprintf(prefix, "[t=@t][ProcessingElement-%u]: ", processor_id_);
-        output_ = new SST::Output(prefix, 0, 0, Output::STDOUT);
-
-        input_queues_= new std::vector< std::queue< LlyrData >* >;
-        output_queues_ = new std::vector< std::queue< LlyrData >* >;
     }
 
     virtual bool doSend() {};
