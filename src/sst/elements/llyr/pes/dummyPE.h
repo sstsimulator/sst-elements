@@ -32,7 +32,6 @@ public:
     DummyProcessingElement(opType op_binding, uint32_t processor_id, LlyrConfig* llyr_config)  :
                     ProcessingElement(op_binding, processor_id, llyr_config)
     {
-        pending_op_ = 0;
     }
 
     virtual bool doSend() {};

@@ -48,6 +48,7 @@ public:
         sprintf(prefix, "[t=@t][ProcessingElement-%u]: ", processor_id_);
         output_ = new SST::Output(prefix, 0, 0, Output::STDOUT);
 
+        pending_op_ = 0;
         lsqueue_ = llyr_config->lsqueue_;
         mem_interface_ = llyr_config->mem_interface_;
         input_queues_= new std::vector< std::queue< LlyrData >* >;
