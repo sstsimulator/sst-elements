@@ -83,12 +83,23 @@ LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
     output_->verbose(CALL_INFO, 1, 0, "Constructing Application Graph From: %s\n", swFileName.c_str());
     constructSoftwareGraph(swFileName);
 
+    //set up param struct
+    uint16_t queue_depth = params.find< uint16_t >("queue_depth", 256);
+    uint16_t arith_latency = params.find< uint16_t >("arith_latency", 1);
+    uint16_t int_latency = params.find< uint16_t >("int_latency", 1);
+    uint16_t fp_latency = params.find< uint16_t >("fp_latency", 1);
+    uint16_t fp_mul_latency = params.find< uint16_t >("fp_mul_latency", 1);
+    uint16_t fp_div_latency = params.find< uint16_t >("fp_div_latency", 1);
+
+    configData_ = new LlyrConfig { ls_queue_, mem_interface_, queue_depth, arith_latency,
+                                   int_latency, fp_latency, fp_mul_latency, fp_div_latency };
+
     //do the mapping
     Params mapperParams;    //empty but needed for loadModule API
     std::string mapperName = params.find<std::string>("mapper", "llyr.mapper.gemm");
     llyr_mapper_ = dynamic_cast<LlyrMapper*>( loadModule(mapperName, mapperParams) );
     output_->verbose(CALL_INFO, 1, 0, "Mapping application to hardware\n");
-    llyr_mapper_->mapGraph(hardwareGraph_, applicationGraph_, mappedGraph_, ls_queue_, mem_interface_);
+    llyr_mapper_->mapGraph(hardwareGraph_, applicationGraph_, mappedGraph_, configData_);
 
     //all done
     output_->verbose(CALL_INFO, 1, 0, "Initialization done.\n");
@@ -123,13 +134,16 @@ void LlyrComponent::init( uint32_t phase )
 
     const uint32_t mooCows = 128;
     if( 0 == phase ) {
-//         std::vector< uint64_t > initVector{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 2, 7, 1, 2, 3, 6};
-        std::vector< uint64_t > initVector{16, 64, 32, 0 , 16382, 0, 0};
+//         std::vector< uint64_t > initVector{16, 64, 32, 0 , 16382, 0, 0};
+        std::vector< uint64_t > initVector;
+        for( auto num_vars = 0; num_vars < 100; ++num_vars ) {
+            initVector.push_back(num_vars);
+        }
         std::cout << "Init Vector(" << initVector.size() << "): ";
-//         for( auto it = initVector.begin(); it != initVector.end(); ++it ) {
-//             std::cout << *it << ", ";
-//         }
-//         std::cout << std::endl;
+        for( auto it = initVector.begin(); it != initVector.end(); ++it ) {
+            std::cout << *it << ", ";
+        }
+        std::cout << std::endl;
 
         std::vector<uint8_t> memInit;
         constexpr auto buff_size = sizeof(uint64_t);

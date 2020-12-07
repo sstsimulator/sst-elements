@@ -18,7 +18,7 @@
 
 #include <iostream>
 
-#include "llyrMapper.h"
+#include "mappers/llyrMapper.h"
 
 namespace SST {
 namespace Llyr {
@@ -42,7 +42,7 @@ public:
 
     void mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType > appGraph,
                   LlyrGraph< ProcessingElement* > &graphOut,
-                  LSQueue* lsqueue, SimpleMem* mem_interface);
+                  LlyrConfig* llyr_config);
 
 private:
 
@@ -51,9 +51,11 @@ private:
 
 void GEMMMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType > appGraph,
                             LlyrGraph< ProcessingElement* > &graphOut,
-                            LSQueue* lsqueue, SimpleMem* mem_interface)
+                            LlyrConfig* llyr_config)
 {
-    uint32_t queueDepth = 256;
+    uint32_t queueDepth = llyr_config->queueDepth_;
+    LSQueue* lsqueue  = llyr_config->lsqueue_;
+    SimpleMem* mem_interface = llyr_config->mem_interface_;
     //Dummy node to make BFS easier
     ProcessingElement* tempPE = new DummyProcessingElement(DUMMY, 0, 0, lsqueue, mem_interface);
     graphOut.addVertex( 0, tempPE );
@@ -88,6 +90,8 @@ void GEMMMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType >
     graphOut.addEdge( 3, 5 );
     graphOut.addEdge( 4, 6 );
     graphOut.addEdge( 5, 7 );
+
+
 
     std::queue< uint32_t > nodeQueue;
 

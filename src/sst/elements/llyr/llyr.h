@@ -52,8 +52,12 @@ public:
         { "application",    "Application in affine IR", "" },
         { "hardwareGraph",  "Hardware connectivity graph", "grid.cfg" },
         { "ls_entries",     "Number of L/S entries to process each tick", "1" },
-        { "intLatency",     "Number of clock ticks for integer operations", "1" },
-        { "fpLatency",      "Number of clock ticks for integer operations", "4" }
+        { "queue_depth",    "Number of buffer elements", "256" },
+        { "arith_latency",  "Number of clock ticks for ARITH operations", "1" },
+        { "int_latency",    "Number of clock ticks for INT operations", "1" },
+        { "fp_latency",     "Number of clock ticks for FP OTHER operations", "4" },
+        { "fp_mul_latency", "Number of clock ticks for FP MUL operations", "4" },
+        { "fp_div_latency", "Number of clock ticks for FP DIV operations", "4" }
     )
 
     ///TODO
@@ -102,6 +106,7 @@ private:
     Statistic< uint64_t >* zeroEventCycles_;
     Statistic< uint64_t >* eventCycles_;
 
+    LlyrConfig* configData_;
     LlyrGraph< opType > hardwareGraph_;
     LlyrGraph< opType > applicationGraph_;
     LlyrGraph< ProcessingElement* > mappedGraph_;

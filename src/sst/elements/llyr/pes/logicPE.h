@@ -30,7 +30,7 @@ class LogicProcessingElement : public ProcessingElement
 {
 public:
     LogicProcessingElement(opType op_binding, uint32_t processor_id, uint32_t queue_depth,
-                    LSQueue* lsqueue, SimpleMem*  mem_interface)  :
+                    LSQueue* lsqueue, SimpleMem*  mem_interface, uint32_t cycles = 1)  :
                     ProcessingElement(op_binding, processor_id, queue_depth,
                     lsqueue, mem_interface)
     {
@@ -40,6 +40,7 @@ public:
         sprintf(prefix, "[t=@t][ProcessingElement-%u]: ", processor_id_);
         output_ = new SST::Output(prefix, 0, 0, Output::STDOUT);
 
+        cycles_ = cycles;
         input_queues_= new std::vector< std::queue< LlyrData >* >;
         output_queues_ = new std::vector< std::queue< LlyrData >* >;
     }

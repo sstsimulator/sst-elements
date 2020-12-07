@@ -18,12 +18,31 @@
 #define _LLYR_TYPES
 
 #include <bitset>
+#include <sst/core/interfaces/simpleMem.h>
 
 #define Bit_Length 64
 typedef std::bitset< Bit_Length > LlyrData;
 
+using namespace SST::Interfaces;
+
 namespace SST {
 namespace Llyr {
+
+// forward declaration of LSQueue
+class LSQueue;
+
+// data type to pass between Llyr, mapper, and PEs
+typedef struct alignas(64) {
+    LSQueue*    lsqueue_;
+    SimpleMem*  mem_interface_;
+
+    uint16_t    queueDepth_;
+    uint16_t    arith_latency_;
+    uint16_t    int_latency_;
+    uint16_t    fp_latency_;
+    uint16_t    fp_mul_Latency_;
+    uint16_t    fp_div_Latency_;
+} LlyrConfig;
 
 typedef enum {
     ANY,

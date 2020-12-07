@@ -20,8 +20,9 @@
 #include <sst/core/module.h>
 #include <sst/core/interfaces/simpleMem.h>
 
-#include "graph.h"
-#include "lsQueue.h"
+#include "../graph.h"
+#include "../lsQueue.h"
+#include "../llyrTypes.h"
 #include "pes/peList.h"
 
 namespace SST {
@@ -38,7 +39,7 @@ public:
 
     virtual void mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType > appGraph,
                           LlyrGraph< ProcessingElement* > &graphOut,
-                          LSQueue* lsqueue, SimpleMem*  mem_interface) = 0;
+                          LlyrConfig* llyr_config) = 0;
 
 };
 

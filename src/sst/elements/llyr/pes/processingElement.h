@@ -27,9 +27,9 @@
 #include <cstdint>
 #include <cstring>
 
-#include "graph.h"
-#include "lsQueue.h"
-#include "llyrTypes.h"
+#include "../graph.h"
+#include "../lsQueue.h"
+#include "../llyrTypes.h"
 
 using namespace SST::Interfaces;
 
@@ -170,6 +170,7 @@ public:
 protected:
 
     opType   op_binding_;
+    uint32_t cycles_;
     uint32_t processor_id_;
 
     //input and output queues per PE
