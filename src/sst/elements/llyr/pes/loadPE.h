@@ -31,15 +31,15 @@ namespace Llyr {
 class LoadProcessingElement : public ProcessingElement
 {
 public:
-    LoadProcessingElement(opType op_binding, uint32_t processor_id, LlyrConfig* llyr_config, uint32_t cycles = 1)  :
+    LoadProcessingElement(opType op_binding, uint32_t processor_id, LlyrConfig* llyr_config,
+                          uint32_t cycles = 1)  :
                     ProcessingElement(op_binding, processor_id, llyr_config)
     {
         cycles_ = cycles;
     }
 
     LoadProcessingElement(opType op_binding, uint32_t processor_id, LlyrConfig* llyr_config,
-                    std::vector< std::queue< LlyrData >* >* input_queues_init,
-                    uint32_t cycles = 1)  :
+                          std::vector< std::queue< LlyrData >* >* input_queues_init, uint32_t cycles = 1)  :
                     ProcessingElement(op_binding, processor_id, llyr_config)
     {
         cycles_ = cycles;

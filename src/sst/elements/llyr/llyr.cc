@@ -74,15 +74,6 @@ LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
     ls_queue_ = new LSQueue();
     ls_entries_ = params.find< uint32_t >("ls_entries", 1);
 
-    //construct hardware graph
-    std::string const& hwFileName = params.find< std::string >("hardwareGraph", "grid.cfg");
-    output_->verbose(CALL_INFO, 1, 0, "Constructing Hardware Graph From: %s\n", hwFileName.c_str());
-    constructHardwareGraph(hwFileName);
-
-    std::string const& swFileName = params.find< std::string >("hardwareGraph", "app.in");
-    output_->verbose(CALL_INFO, 1, 0, "Constructing Application Graph From: %s\n", swFileName.c_str());
-    constructSoftwareGraph(swFileName);
-
     //set up param struct
     uint16_t queue_depth = params.find< uint16_t >("queue_depth", 256);
     uint16_t arith_latency = params.find< uint16_t >("arith_latency", 1);
@@ -94,6 +85,18 @@ LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
     configData_ = new LlyrConfig { ls_queue_, mem_interface_, queue_depth, arith_latency,
                                    int_latency, fp_latency, fp_mul_latency, fp_div_latency };
 
+    memFileName_ = params.find<std::string>("mem_init", "");
+
+    //construct hardware graph
+    std::string const& hwFileName = params.find< std::string >("hardware_graph", "grid.cfg");
+    output_->verbose(CALL_INFO, 1, 0, "Constructing Hardware Graph From: %s\n", hwFileName.c_str());
+    constructHardwareGraph(hwFileName);
+
+    //construct application graph
+    std::string const& swFileName = params.find< std::string >("application", "app.in");
+    output_->verbose(CALL_INFO, 1, 0, "Constructing Application Graph From: %s\n", swFileName.c_str());
+    constructSoftwareGraph(swFileName);
+
     //do the mapping
     Params mapperParams;    //empty but needed for loadModule API
     std::string mapperName = params.find<std::string>("mapper", "llyr.mapper.gemm");
@@ -103,6 +106,12 @@ LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
 
     //all done
     output_->verbose(CALL_INFO, 1, 0, "Initialization done.\n");
+}
+
+LlyrComponent::LlyrComponent() :
+    Component(-1)
+{
+    // for serialization only
 }
 
 LlyrComponent::~LlyrComponent()
@@ -122,41 +131,30 @@ LlyrComponent::~LlyrComponent()
     mappedGraph_.printDot("llyr_mapped.dot");
 }
 
-LlyrComponent::LlyrComponent() :
-    Component(-1)
-{
-    // for serialization only
-}
-
 void LlyrComponent::init( uint32_t phase )
 {
     mem_interface_->init( phase );
 
     const uint32_t mooCows = 128;
     if( 0 == phase ) {
-//         std::vector< uint64_t > initVector{16, 64, 32, 0 , 16382, 0, 0};
-        std::vector< uint64_t > initVector;
-        for( auto num_vars = 0; num_vars < 100; ++num_vars ) {
-            initVector.push_back(num_vars);
+        std::vector< uint64_t >* initVector;
+
+        //Check to see if there is any memory being initialized
+        if( memFileName_ != "" ) {
+            initVector = constructMemory(memFileName_);
+        } else {
+            initVector = new std::vector< uint64_t > {16, 64, 32, 0 , 16382, 0, 0};
         }
-        std::cout << "Init Vector(" << initVector.size() << "): ";
-        for( auto it = initVector.begin(); it != initVector.end(); ++it ) {
-            std::cout << *it << ", ";
-        }
-        std::cout << std::endl;
 
         std::vector<uint8_t> memInit;
         constexpr auto buff_size = sizeof(uint64_t);
         uint8_t buffer[buff_size] = {};
-        for( auto it = initVector.begin(); it != initVector.end(); ++it ) {
+        for( auto it = initVector->begin(); it != initVector->end(); ++it ) {
             std::memcpy(buffer, std::addressof(*it), buff_size);
             for( uint32_t i = 0; i < buff_size; ++i ){
-//                 std::cout << uint32_t(buffer[i]) << ", ";
                 memInit.push_back(buffer[i]);
             }
-//             std::cout << std::endl;
         }
-//         std::cout << std::endl;
 
         output_->verbose(CALL_INFO, 2, 0, ">> Writing memory contents (%" PRIu64 " bytes at index 0)\n",
                         (uint64_t) memInit.size());
@@ -321,22 +319,18 @@ void LlyrComponent::constructHardwareGraph(std::string fileName)
 {
     std::ifstream inputStream(fileName, std::ios::in);
 
-    if( inputStream.is_open() )
-    {
+    if( inputStream.is_open() ) {
         std::string thisLine;
         std::uint64_t position;
-        while( std::getline( inputStream, thisLine ) )
-        {
+        while( std::getline( inputStream, thisLine ) ) {
 //             std::cout << "Parse " << thisLine << std::endl;
 
             //Ignore blank lines
-            if( std::all_of(thisLine.begin(), thisLine.end(), isspace) == 0 )
-            {
+            if( std::all_of(thisLine.begin(), thisLine.end(), isspace) == 0 ) {
                 //First read all nodes
                 //If all nodes read, must mean we're at edge list
                 position = thisLine.find_first_of( "[" );
-                if( position !=  std::string::npos )
-                {
+                if( position !=  std::string::npos ) {
                     uint32_t vertex = std::stoi( thisLine.substr( 0, position ) );
 
                     std::uint64_t posA = thisLine.find_first_of( "\"" ) + 1;
@@ -346,9 +340,7 @@ void LlyrComponent::constructHardwareGraph(std::string fileName)
 
                     std::cout << "OpString " << op << "\t\t" << operation << std::endl;
                     hardwareGraph_.addVertex( vertex, operation );
-                }
-                else
-                {
+                } else {
 //                     std::cout << "\t*Parse " << thisLine << std::endl;
                     std::regex delimiter( "\\->" );
 
@@ -363,8 +355,7 @@ void LlyrComponent::constructHardwareGraph(std::string fileName)
 
         inputStream.close();
     }
-    else
-    {
+    else {
         std::cout << "Unable to open file";
         exit(0);
     }
@@ -375,22 +366,18 @@ void LlyrComponent::constructSoftwareGraph(std::string fileName)
 {
     std::ifstream inputStream(fileName, std::ios::in);
 
-    if( inputStream.is_open() )
-    {
+    if( inputStream.is_open() ) {
         std::string thisLine;
         std::uint64_t position;
-        while( std::getline( inputStream, thisLine ) )
-        {
+        while( std::getline( inputStream, thisLine ) ) {
             std::cout << "Parse " << thisLine << std::endl;
 
             //Ignore blank lines
-            if( std::all_of(thisLine.begin(), thisLine.end(), isspace) == 0 )
-            {
+            if( std::all_of(thisLine.begin(), thisLine.end(), isspace) == 0 ) {
                 //First read all nodes
                 //If all nodes read, must mean we're at edge list
                 position = thisLine.find_first_of( "[" );
-                if( position !=  std::string::npos )
-                {
+                if( position !=  std::string::npos ) {
                     uint32_t vertex = std::stoi( thisLine.substr( 0, position ) );
 
                     std::uint64_t posA = thisLine.find_first_of( "\"" ) + 1;
@@ -400,9 +387,7 @@ void LlyrComponent::constructSoftwareGraph(std::string fileName)
 
                     std::cout << "OpString " << op << "\t\t" << operation << std::endl;
                     applicationGraph_.addVertex( vertex, operation );
-                }
-                else
-                {
+                } else {
                     std::cout << "\t*Parse " << thisLine << std::endl;
                     std::regex delimiter( "\\->" );
 
@@ -416,13 +401,44 @@ void LlyrComponent::constructSoftwareGraph(std::string fileName)
         }
 
         inputStream.close();
-    }
-    else
-    {
+    } else {
         std::cout << "Unable to open file";
         exit(0);
     }
 
+}
+
+std::vector< uint64_t >* LlyrComponent::constructMemory(std::string fileName)
+{
+    std::vector< uint64_t >* tempVector = new std::vector< uint64_t >;
+
+    std::ifstream inputStream(fileName, std::ios::in);
+    if( inputStream.is_open() ) {
+
+        std::string thisLine;
+        while( std::getline( inputStream, thisLine ) )
+        {
+            std::string value;
+            std::stringstream stringIn(thisLine);
+            while( std::getline(stringIn, value, ',') ) {
+                tempVector->push_back(std::stoull(value));
+            }
+        }
+
+        std::cout << "Init Vector(" << tempVector->size() << "):  ";
+        for( auto it = tempVector->begin(); it != tempVector->end(); ++it ) {
+            std::cout << *it;
+            std::cout << " ";
+        }
+        std::cout << std::endl;
+
+        inputStream.close();
+    } else {
+        std::cout << "Unable to open file";
+        exit(0);
+    }
+
+    return tempVector;
 }
 
 opType LlyrComponent::getOptype(std::string &opString) const

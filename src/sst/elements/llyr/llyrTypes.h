@@ -62,6 +62,7 @@ typedef enum {
     FPMUL,
     FPDIV,
     DUMMY = 0xFF,
+    BUFFER,
     OTHER
 } opType;
 

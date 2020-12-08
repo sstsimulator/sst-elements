@@ -50,7 +50,8 @@ public:
         { "clock",          "Clock frequency", "1GHz" },
         { "clockcount",     "Number of clock ticks to execute", "100000" },
         { "application",    "Application in affine IR", "" },
-        { "hardwareGraph",  "Hardware connectivity graph", "grid.cfg" },
+        { "hardware_graph", "Hardware connectivity graph", "grid.cfg" },
+        { "mem_init",       "Memory initialization file", "" },
         { "ls_entries",     "Number of L/S entries to process each tick", "1" },
         { "queue_depth",    "Number of buffer elements", "256" },
         { "arith_latency",  "Number of clock ticks for ARITH operations", "1" },
@@ -97,7 +98,7 @@ private:
     Clock::HandlerBase*     clock_tick_handler_;
     bool                    handler_registered_;
 
-    bool    compute_complete;
+    bool compute_complete;
 
     SST::Link**  links_;
     SST::Link*   clockLink_;
@@ -115,6 +116,8 @@ private:
 
     void constructHardwareGraph( std::string fileName );
     void constructSoftwareGraph( std::string fileName );
+    std::vector< uint64_t >* constructMemory( std::string fileName );
+    std::string memFileName_;
 
     opType getOptype( std::string &opString ) const;
 

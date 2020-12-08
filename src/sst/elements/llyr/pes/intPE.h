@@ -29,7 +29,8 @@ namespace Llyr {
 class IntProcessingElement : public ProcessingElement
 {
 public:
-    IntProcessingElement(opType op_binding, uint32_t processor_id, LlyrConfig* llyr_config, uint32_t cycles = 1)  :
+    IntProcessingElement(opType op_binding, uint32_t processor_id, LlyrConfig* llyr_config,
+                         uint32_t cycles = 1)  :
                     ProcessingElement(op_binding, processor_id, llyr_config)
     {
         cycles_ = cycles;

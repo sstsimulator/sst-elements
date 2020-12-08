@@ -14,6 +14,7 @@ df_0 = sst.Component("df_0", "llyr.LlyrDataflow")
 df_0.addParams({
       "verbose": 10,
       "clock" : str(tile_clk_mhz) + "GHz",
+      "mem_init" : "mem.in"
 })
 
 df_l1cache = sst.Component("l1cache", "memHierarchy.Cache")
@@ -43,7 +44,8 @@ df_memory.addParams({
 backend = df_memory.setSubComponent("backend", "memHierarchy.simpleMem")
 backend.addParams({
     "access_time" : "4 ns",
-    "mem_size" : str(max_addr_gb) + "GiB",
+    #"mem_size" : str(max_addr_gb) + "GiB",
+    "mem_size" : str(1024) + "B",
 })
 
 # Enable SST Statistics Outputs for this simulation
