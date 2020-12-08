@@ -36,6 +36,7 @@ typedef struct alignas(64) {
     LSQueue*    lsqueue_;
     SimpleMem*  mem_interface_;
 
+    uint32_t    verbosity_;
     uint16_t    queueDepth_;
     uint16_t    arith_latency_;
     uint16_t    int_latency_;

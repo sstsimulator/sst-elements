@@ -53,6 +53,11 @@ void GEMMMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType >
                             LlyrGraph< ProcessingElement* > &graphOut,
                             LlyrConfig* llyr_config)
 {
+    //setup up i/o for messages
+    char prefix[256];
+    sprintf(prefix, "[t=@t][gemmMapper]: ");
+    SST::Output* output_ = new SST::Output(prefix, llyr_config->verbosity_, 0, Output::STDOUT);
+
     //Dummy node to make BFS easier
     ProcessingElement* tempPE = new DummyProcessingElement(DUMMY, 0, llyr_config);
     graphOut.addVertex( 0, tempPE );
@@ -92,7 +97,10 @@ void GEMMMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType >
 
     std::queue< uint32_t > nodeQueue;
 
-    graphOut.printGraph();
+    //debugging
+    if( output_->getVerboseLevel() >= 10 ) {
+        graphOut.printGraph();
+    }
 
     //Mark all nodes in the PE graph un-visited
     std::map< uint32_t, Vertex< ProcessingElement* > >* vertex_map_ = graphOut.getVertexMap();
@@ -111,7 +119,8 @@ void GEMMMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType >
 
         vertex_map_->at(currentNode).setVisited(1);
 
-        std::cout << "\n Adjacency list of vertex " << currentNode << "\n head ";
+        output_->verbose(CALL_INFO, 10, 0, "Adjacency list of vertex:  %" PRIu32 "\n head ", currentNode);
+//         std::cout << "\n Adjacency list of vertex " << currentNode << "\n head ";
         std::vector< Edge* >* adjacencyList = vertex_map_->at(currentNode).getAdjacencyList();
         ProcessingElement* srcNode;
         ProcessingElement* dstNode;
@@ -127,7 +136,8 @@ void GEMMMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType >
             dstNode->bindInputQueue(srcNode);
 
             if( vertex_map_->at(destinationVertx).getVisited() == 0 ) {
-                std::cout << " -> " << destinationVertx;
+                output_->verbose(CALL_INFO, 10, 0, " -> %" PRIu32, destinationVertx);
+//                 std::cout << " -> " << destinationVertx;
                 vertex_map_->at(destinationVertx).setVisited(1);
                 nodeQueue.push(destinationVertx);
             }

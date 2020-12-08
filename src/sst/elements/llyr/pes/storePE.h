@@ -64,7 +64,7 @@ public:
             dstPe = it->second;
 
             if( output_queues_->at(queueId)->size() > 0 ) {
-                output_->verbose(CALL_INFO, 0, 0, ">> Sending...%" PRIu32 "-%" PRIu32 " to %" PRIu32 "\n",
+                output_->verbose(CALL_INFO, 8, 0, ">> Sending...%" PRIu32 "-%" PRIu32 " to %" PRIu32 "\n",
                                 processor_id_, queueId, dstPe->getProcessorId());
 
                 sendVal = output_queues_->at(queueId)->front();
@@ -79,7 +79,7 @@ public:
 
     virtual bool doReceive(LlyrData data)
     {
-        output_->verbose(CALL_INFO, 0, 0, ">> Receive 0x%" PRIx64 " on PE %" PRIu32 "\n", uint64_t(data.to_ullong()), processor_id_ );
+        output_->verbose(CALL_INFO, 8, 0, ">> Receive 0x%" PRIx64 "\n", uint64_t(data.to_ullong()));
 
         //for now push the result to all output queues
         for( uint32_t i = 0; i < output_queues_->size(); ++i) {
@@ -91,10 +91,12 @@ public:
 
     virtual bool doCompute()
     {
-        output_->verbose(CALL_INFO, 0, 0, ">> Compute 0x%" PRIx32 " on PE %" PRIu32 "\n", op_binding_, processor_id_ );
+        output_->verbose(CALL_INFO, 4, 0, ">> Compute 0x%" PRIx32 "\n", op_binding_);
 
-        printInputQueue();
-        printOutputQueue();
+        if( output_->getVerboseLevel() >= 10 ) {
+            printInputQueue();
+            printOutputQueue();
+        }
 
         std::vector< LlyrData > argList;
         uint32_t num_ready = 0;
@@ -116,10 +118,12 @@ public:
 
         //if all inputs are available pull from queue and add to arg list
         if( num_ready < num_inputs ) {
-            std::cout << "-Inputs " << num_inputs << " Ready " << num_ready <<std::endl;
+            output_->verbose(CALL_INFO, 4, 0, "-Inputs %" PRIu32 " Ready %" PRIu32 "\n", num_inputs, num_ready);
+//             std::cout << "-Inputs " << num_inputs << " Ready " << num_ready <<std::endl;
             return false;
         } else {
-            std::cout << "+Inputs " << num_inputs << " Ready " << num_ready <<std::endl;
+            output_->verbose(CALL_INFO, 4, 0, "+Inputs %" PRIu32 " Ready %" PRIu32 "\n", num_inputs, num_ready);
+//             std::cout << "+Inputs " << num_inputs << " Ready " << num_ready <<std::endl;
             for( uint32_t i = 0; i < num_inputs; ++i) {
                 argList.push_back(input_queues_->at(i)->front());
                 input_queues_->at(i)->pop();
@@ -128,23 +132,24 @@ public:
 
         doStore(argList[0].to_ullong(), argList[1].to_ullong());
 
-        printInputQueue();
-        printOutputQueue();
+        if( output_->getVerboseLevel() >= 10 ) {
+            printInputQueue();
+            printOutputQueue();
+        }
 
         return true;
     }
 
     virtual void fakeInit()
     {
-         output_->verbose(CALL_INFO, 0, 0, ">> Fake Init(%" PRIu32 "), Op %" PRIu32 " \n",
+         output_->verbose(CALL_INFO, 4, 0, ">> Fake Init(%" PRIu32 "), Op %" PRIu32 " \n",
                         processor_id_, op_binding_ );
 
         //for now assume that the address queue is on in-0
         uint64_t addr = (processor_id_ - 1) * (Bit_Length / 8);
         if( input_queues_->size() > 0 ) {
             LlyrData temp = LlyrData(addr);
-            output_->verbose(CALL_INFO, 0, 0, "Init(%" PRIu32 ")::%" PRIx64 "::%" PRIu64 "\n", 0, addr, temp.to_ulong());
-//             std::cout << "Init(" << processor_id_ << "-" << 0 << ")::" << addr << "::" << temp << std::endl;
+            output_->verbose(CALL_INFO, 8, 0, "Init(%" PRIu32 ")::%" PRIx64 "::%" PRIu64 "\n", 0, addr, temp.to_ulong());
             input_queues_->at(0)->push(temp);
 
             addr = addr + (Bit_Length / 8);
@@ -157,7 +162,7 @@ private:
         uint32_t targetPe = processor_id_;
         SimpleMem::Request* req = new SimpleMem::Request(SimpleMem::Request::Write, addr, 8);
 
-        output_->verbose(CALL_INFO, 0, 0, "Creating a store request (%" PRIu32 ") to address: %" PRIu64 "\n", uint32_t(req->id), addr);
+        output_->verbose(CALL_INFO, 4, 0, "Creating a store request (%" PRIu32 ") to address: %" PRIu64 "\n", uint32_t(req->id), addr);
 
         const auto newValue = data.to_ullong();
 

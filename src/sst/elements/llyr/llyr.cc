@@ -82,19 +82,17 @@ LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
     uint16_t fp_mul_latency = params.find< uint16_t >("fp_mul_latency", 1);
     uint16_t fp_div_latency = params.find< uint16_t >("fp_div_latency", 1);
 
-    configData_ = new LlyrConfig { ls_queue_, mem_interface_, queue_depth, arith_latency,
+    configData_ = new LlyrConfig { ls_queue_, mem_interface_, verbosity, queue_depth, arith_latency,
                                    int_latency, fp_latency, fp_mul_latency, fp_div_latency };
 
     memFileName_ = params.find<std::string>("mem_init", "");
 
     //construct hardware graph
     std::string const& hwFileName = params.find< std::string >("hardware_graph", "grid.cfg");
-    output_->verbose(CALL_INFO, 1, 0, "Constructing Hardware Graph From: %s\n", hwFileName.c_str());
     constructHardwareGraph(hwFileName);
 
     //construct application graph
     std::string const& swFileName = params.find< std::string >("application", "app.in");
-    output_->verbose(CALL_INFO, 1, 0, "Constructing Application Graph From: %s\n", swFileName.c_str());
     constructSoftwareGraph(swFileName);
 
     //do the mapping
@@ -118,17 +116,23 @@ LlyrComponent::~LlyrComponent()
 {
     output_->verbose(CALL_INFO, 1, 0, "Llyr destructor fired, closing down.\n");
 
-    output_->verbose(CALL_INFO, 1, 0, "Dumping hardware graph\n");
-    hardwareGraph_.printGraph();
-    hardwareGraph_.printDot("llyr_hdwr.dot");
+    output_->verbose(CALL_INFO, 10, 0, "Dumping hardware graph\n");
+    if( output_->getVerboseLevel() >= 10 ) {
+        hardwareGraph_.printGraph();
+        hardwareGraph_.printDot("llyr_hdwr.dot");
+    }
 
-    output_->verbose(CALL_INFO, 1, 0, "Dumping application graph\n");
-    applicationGraph_.printGraph();
-    applicationGraph_.printDot("llyr_app.dot");
+    output_->verbose(CALL_INFO, 10, 0, "Dumping application graph\n");
+    if( output_->getVerboseLevel() >= 10 ) {
+        applicationGraph_.printGraph();
+        applicationGraph_.printDot("llyr_app.dot");
+    }
 
-    output_->verbose(CALL_INFO, 1, 0, "Dumping mapping\n");
-    mappedGraph_.printGraph();
-    mappedGraph_.printDot("llyr_mapped.dot");
+    output_->verbose(CALL_INFO, 10, 0, "Dumping mapping\n");
+    if( output_->getVerboseLevel() >= 10 ) {
+        mappedGraph_.printGraph();
+        mappedGraph_.printDot("llyr_mapped.dot");
+    }
 }
 
 void LlyrComponent::init( uint32_t phase )
@@ -158,11 +162,11 @@ void LlyrComponent::init( uint32_t phase )
 
         output_->verbose(CALL_INFO, 2, 0, ">> Writing memory contents (%" PRIu64 " bytes at index 0)\n",
                         (uint64_t) memInit.size());
-        for( std::vector< uint8_t >::iterator it = memInit.begin() ; it != memInit.end(); ++it ) {
-            std::cout << uint32_t(*it) << ' ';
-        }
-
-        std::cout << "\n";
+//         for( std::vector< uint8_t >::iterator it = memInit.begin() ; it != memInit.end(); ++it ) {
+//             std::cout << uint32_t(*it) << ' ';
+//         }
+//
+//         std::cout << "\n";
 
         SimpleMem::Request* initMemory = new SimpleMem::Request(SimpleMem::Request::Write, 0, memInit.size(), memInit);
         output_->verbose(CALL_INFO, 1, 0, "Sending initialization data to memory...\n");
@@ -285,30 +289,22 @@ void LlyrComponent::handleEvent( SimpleMem::Request* ev ) {
 
 void LlyrComponent::doLoadStoreOps( uint32_t numOps )
 {
-    output_->verbose(CALL_INFO, 0, 0, "Doing L/S ops\n");
+    output_->verbose(CALL_INFO, 10, 0, "Doing L/S ops\n");
     for(uint32_t i = 0; i < numOps; ++i ) {
         if( ls_queue_->getNumEntries() > 0 ) {
             SimpleMem::Request::id_t next = ls_queue_->getNextEntry();
 
             if( ls_queue_->getEntryReady(next) == 1) {
-                output_->verbose(CALL_INFO, 0, 0, "--(1)Mem Req ID %" PRIu32 "\n", uint32_t(next));
+                output_->verbose(CALL_INFO, 10, 0, "--(1)Mem Req ID %" PRIu32 "\n", uint32_t(next));
                 LlyrData data = ls_queue_->getEntryData(next);
                 //pass the value to the appropriate PE
-//                 uint32_t dstPe = ls_queue_->lookupEntry( next ).second;
                 uint32_t srcPe = ls_queue_->lookupEntry( next ).first;
-//
-//                 uint32_t dstQueue = mappedGraph_.getVertex(dstPe)->getType()->getInputQueueId(srcPe);
-//                 mappedGraph_.getVertex(dstPe)->getType()->pushInputQueue(dstQueue, data);
-//                 std::cout << "src PE " << srcPe;
-//                 std::cout << " dst PE " << dstPe;
-//                 std::cout << "-" << dstQueue;
-//                 std::cout << std::endl;
 
                 mappedGraph_.getVertex(srcPe)->getType()->doReceive(data);
 
                 ls_queue_->removeEntry( next );
             } else if( ls_queue_->getEntryReady(next) == 2 ){
-                output_->verbose(CALL_INFO, 0, 0, "--(2)Mem Req ID %" PRIu32 "\n", uint32_t(next));
+                output_->verbose(CALL_INFO, 10, 0, "--(2)Mem Req ID %" PRIu32 "\n", uint32_t(next));
                 ls_queue_->removeEntry( next );
             }
         }
@@ -317,13 +313,14 @@ void LlyrComponent::doLoadStoreOps( uint32_t numOps )
 
 void LlyrComponent::constructHardwareGraph(std::string fileName)
 {
-    std::ifstream inputStream(fileName, std::ios::in);
+    output_->verbose(CALL_INFO, 1, 0, "Constructing Hardware Graph From: %s\n", fileName.c_str());
 
+    std::ifstream inputStream(fileName, std::ios::in);
     if( inputStream.is_open() ) {
         std::string thisLine;
         std::uint64_t position;
         while( std::getline( inputStream, thisLine ) ) {
-//             std::cout << "Parse " << thisLine << std::endl;
+            output_->verbose(CALL_INFO, 15, 0, "Parsing:  %s\n", thisLine.c_str());
 
             //Ignore blank lines
             if( std::all_of(thisLine.begin(), thisLine.end(), isspace) == 0 ) {
@@ -338,7 +335,7 @@ void LlyrComponent::constructHardwareGraph(std::string fileName)
                     std::string op = thisLine.substr( posA, posB-posA );
                     opType operation = getOptype(op);
 
-                    std::cout << "OpString " << op << "\t\t" << operation << std::endl;
+                    output_->verbose(CALL_INFO, 10, 0, "OpString:  %s\t\t%" PRIu32 "\n", op.c_str(), operation);
                     hardwareGraph_.addVertex( vertex, operation );
                 } else {
 //                     std::cout << "\t*Parse " << thisLine << std::endl;
@@ -356,7 +353,7 @@ void LlyrComponent::constructHardwareGraph(std::string fileName)
         inputStream.close();
     }
     else {
-        std::cout << "Unable to open file";
+        output_->fatal(CALL_INFO, -1, "Error: Unable to open file\n");
         exit(0);
     }
 
@@ -364,13 +361,14 @@ void LlyrComponent::constructHardwareGraph(std::string fileName)
 
 void LlyrComponent::constructSoftwareGraph(std::string fileName)
 {
-    std::ifstream inputStream(fileName, std::ios::in);
+    output_->verbose(CALL_INFO, 1, 0, "Constructing Application Graph From: %s\n", fileName.c_str());
 
+    std::ifstream inputStream(fileName, std::ios::in);
     if( inputStream.is_open() ) {
         std::string thisLine;
         std::uint64_t position;
         while( std::getline( inputStream, thisLine ) ) {
-            std::cout << "Parse " << thisLine << std::endl;
+            output_->verbose(CALL_INFO, 15, 0, "Parsing:  %s\n", thisLine.c_str());
 
             //Ignore blank lines
             if( std::all_of(thisLine.begin(), thisLine.end(), isspace) == 0 ) {
@@ -385,10 +383,10 @@ void LlyrComponent::constructSoftwareGraph(std::string fileName)
                     std::string op = thisLine.substr( posA, posB-posA );
                     opType operation = getOptype(op);
 
-                    std::cout << "OpString " << op << "\t\t" << operation << std::endl;
+                    output_->verbose(CALL_INFO, 10, 0, "OpString:  %s\t\t%" PRIu32 "\n", op.c_str(), operation);
                     applicationGraph_.addVertex( vertex, operation );
                 } else {
-                    std::cout << "\t*Parse " << thisLine << std::endl;
+//                     std::cout << "\t*Parse " << thisLine << std::endl;
                     std::regex delimiter( "\\->" );
 
                     std::sregex_token_iterator iterA(thisLine.begin(), thisLine.end(), delimiter, -1);
@@ -402,7 +400,7 @@ void LlyrComponent::constructSoftwareGraph(std::string fileName)
 
         inputStream.close();
     } else {
-        std::cout << "Unable to open file";
+        output_->fatal(CALL_INFO, -1, "Error: Unable to open file\n");
         exit(0);
     }
 
@@ -425,16 +423,16 @@ std::vector< uint64_t >* LlyrComponent::constructMemory(std::string fileName)
             }
         }
 
-        std::cout << "Init Vector(" << tempVector->size() << "):  ";
-        for( auto it = tempVector->begin(); it != tempVector->end(); ++it ) {
-            std::cout << *it;
-            std::cout << " ";
-        }
-        std::cout << std::endl;
+//         std::cout << "Init Vector(" << tempVector->size() << "):  ";
+//         for( auto it = tempVector->begin(); it != tempVector->end(); ++it ) {
+//             std::cout << *it;
+//             std::cout << " ";
+//         }
+//         std::cout << std::endl;
 
         inputStream.close();
     } else {
-        std::cout << "Unable to open file";
+        output_->fatal(CALL_INFO, -1, "Error: Unable to open file\n");
         exit(0);
     }
 

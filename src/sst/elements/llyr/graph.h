@@ -134,8 +134,6 @@ private:
     uint32_t vertices_;
     std::map< uint32_t, Vertex<T> >* vertex_map_;
 
-    SST::Output* output;
-
 protected:
 
 public:
@@ -247,7 +245,7 @@ uint32_t LlyrGraph<T>::numVertices(void)
 template<class T>
 void LlyrGraph<T>::addEdge( uint32_t beginVertex, uint32_t endVertex )
 {
-    std::cout << "add edge:  " << beginVertex << " --> " << endVertex << std::endl;
+//     std::cout << "add edge:  " << beginVertex << " --> " << endVertex << std::endl;
     Edge* edge = new Edge( endVertex );
 
     vertex_map_->at(beginVertex).addEdge(edge);
@@ -256,7 +254,7 @@ void LlyrGraph<T>::addEdge( uint32_t beginVertex, uint32_t endVertex )
 template<class T>
 void LlyrGraph<T>::addEdge( uint32_t beginVertex, uint32_t endVertex, float weightIn )
 {
-    std::cout << "add edge:  " << beginVertex << " --> " << endVertex << std::endl;
+//     std::cout << "add edge:  " << beginVertex << " --> " << endVertex << std::endl;
     Edge* edge = new Edge( weightIn, endVertex );
 
     vertex_map_->at(beginVertex).addEdge(edge);
@@ -265,13 +263,11 @@ void LlyrGraph<T>::addEdge( uint32_t beginVertex, uint32_t endVertex, float weig
 template<class T>
 void LlyrGraph<T>::addVertex(uint32_t vertexNum, T type)
 {
-    std::cout << "add vertex:  " << vertexNum << std::endl;
+//     std::cout << "add vertex:  " << vertexNum << std::endl;
 
     Vertex<T> vertex;
     vertex.setType(type);
 
-//     std::pair< typename std::map< uint32_t, Vertex<T> >::iterator,bool > retVal;
-//     retVal = vertex_map_->insert( std::pair< uint32_t, Vertex<T> >( vertexNum, vertex) );
     auto retVal = vertex_map_->emplace( vertexNum, vertex );
     if( retVal.second == false )
     {

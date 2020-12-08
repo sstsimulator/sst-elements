@@ -53,6 +53,11 @@ void SimpleMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType
                             LlyrGraph< ProcessingElement* > &graphOut,
                             LlyrConfig* llyr_config)
 {
+    //setup up i/o for messages
+    char prefix[256];
+    sprintf(prefix, "[t=@t][simpleMapper]: ");
+    SST::Output* output_ = new SST::Output(prefix, llyr_config->verbosity_, 0, Output::STDOUT);
+
     //Dummy node to make BFS easier
     ProcessingElement* tempPE = new DummyProcessingElement(DUMMY, 0, llyr_config);
     graphOut.addVertex( 0, tempPE );
@@ -77,7 +82,9 @@ void SimpleMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType
 
     std::queue< uint32_t > nodeQueue;
 
-    graphOut.printGraph();
+    if( output_->getVerboseLevel() >= 10 ) {
+        graphOut.printGraph();
+    }
 
     //Mark all nodes in the PE graph un-visited
     std::map< uint32_t, Vertex< ProcessingElement* > >* vertex_map_ = graphOut.getVertexMap();

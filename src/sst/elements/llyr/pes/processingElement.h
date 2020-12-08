@@ -46,7 +46,7 @@ public:
         //setup up i/o for messages
         char prefix[256];
         sprintf(prefix, "[t=@t][ProcessingElement-%u]: ", processor_id_);
-        output_ = new SST::Output(prefix, 0, 0, Output::STDOUT);
+        output_ = new SST::Output(prefix, llyr_config_->verbosity_, 0, Output::STDOUT);
 
         pending_op_ = 0;
         lsqueue_ = llyr_config->lsqueue_;
@@ -59,7 +59,7 @@ public:
     {
         uint32_t queueId = input_queues_->size();
 
-        output_->verbose(CALL_INFO, 0, 0, ">> Binding Input Queue-%" PRIu32 " on PE-%" PRIu32 " to PE-%" PRIu32 "\n",
+        output_->verbose(CALL_INFO, 4, 0, ">> Binding Input Queue-%" PRIu32 " on PE-%" PRIu32 " to PE-%" PRIu32 "\n",
                         queueId, processor_id_, src->getProcessorId() );
 
         auto retVal = input_queue_map_.emplace( queueId, src );
@@ -78,7 +78,7 @@ public:
     {
         uint32_t queueId = output_queues_->size();
 
-        output_->verbose(CALL_INFO, 0, 0, ">> Binding Output Queue-%" PRIu32 " on PE-%" PRIu32 " to PE-%" PRIu32 "\n",
+        output_->verbose(CALL_INFO, 4, 0, ">> Binding Output Queue-%" PRIu32 " on PE-%" PRIu32 " to PE-%" PRIu32 "\n",
                         queueId, processor_id_, dst->getProcessorId() );
 
         auto retVal = output_queue_map_.emplace( queueId, dst );
