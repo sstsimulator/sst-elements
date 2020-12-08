@@ -34,6 +34,8 @@ public:
                     ProcessingElement(op_binding, processor_id, llyr_config)
     {
         cycles_ = cycles;
+        input_queues_= new std::vector< std::queue< LlyrData >* >;
+        output_queues_ = new std::vector< std::queue< LlyrData >* >;
     }
 
     virtual bool doSend()

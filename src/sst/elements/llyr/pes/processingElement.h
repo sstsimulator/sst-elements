@@ -51,8 +51,6 @@ public:
         pending_op_ = 0;
         lsqueue_ = llyr_config->lsqueue_;
         mem_interface_ = llyr_config->mem_interface_;
-        input_queues_= new std::vector< std::queue< LlyrData >* >;
-        output_queues_ = new std::vector< std::queue< LlyrData >* >;
     }
 
     virtual ~ProcessingElement() {};

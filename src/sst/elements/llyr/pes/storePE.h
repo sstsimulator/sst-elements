@@ -36,6 +36,12 @@ public:
                     ProcessingElement(op_binding, processor_id, llyr_config)
     {
         cycles_ = cycles;
+        output_queues_ = new std::vector< std::queue< LlyrData >* >;
+
+        //stores need an address queue and an input queue
+        input_queues_= new std::vector< std::queue< LlyrData >* >;
+        std::queue< LlyrData >* tempQueue = new std::queue< LlyrData >;
+        input_queues_->push_back(tempQueue);
     }
 
     StoreProcessingElement(opType op_binding, uint32_t processor_id, LlyrConfig* llyr_config,
@@ -43,6 +49,7 @@ public:
                     ProcessingElement(op_binding, processor_id, llyr_config)
     {
         cycles_ = cycles;
+        output_queues_ = new std::vector< std::queue< LlyrData >* >;
         input_queues_= new std::vector< std::queue< LlyrData >* >(*input_queues_init);
     }
 
@@ -129,33 +136,23 @@ public:
 
     virtual void fakeInit()
     {
-        std::random_device some_rand;
-        std::mt19937 generator( some_rand() );
-        std::uniform_int_distribution< uint64_t > int_dist(0, 50);
-    //     std::uniform_real_distribution< double > int_dist(0.0, 50.0);
-
-        output_->verbose(CALL_INFO, 0, 0, ">> Fake Init(%" PRIu32 "), Op %" PRIu32 " \n",
+         output_->verbose(CALL_INFO, 0, 0, ">> Fake Init(%" PRIu32 "), Op %" PRIu32 " \n",
                         processor_id_, op_binding_ );
 
-        std::queue< LlyrData >* tempQueue = new std::queue< LlyrData >;
-        input_queues_->push_back(tempQueue);
+        //for now assume that the address queue is on in-0
+        uint64_t addr = (processor_id_ - 1) * (Bit_Length / 8);
+        if( input_queues_->size() > 0 ) {
+            LlyrData temp = LlyrData(addr);
+            output_->verbose(CALL_INFO, 0, 0, "Init(%" PRIu32 ")::%" PRIx64 "::%" PRIu64 "\n", 0, addr, temp.to_ulong());
+//             std::cout << "Init(" << processor_id_ << "-" << 0 << ")::" << addr << "::" << temp << std::endl;
+            input_queues_->at(0)->push(temp);
 
-        uint64_t addr;
-        if(processor_id_ == 6)
-            addr = 0x18;
-        else if (processor_id_ == 7)
-            addr = 0x20;
-        else
-            addr = 0xFF;
-
-        LlyrData temp = LlyrData(addr);
-        std::cout << "Init(" << processor_id_ << "-" << input_queues_->size() << ")::" << addr << "::" << temp << std::endl;
-        input_queues_->back()->push(temp);
-
+            addr = addr + (Bit_Length / 8);
+        }
     }
 
 private:
-    bool doStore(LlyrData data, uint64_t addr)
+    bool doStore(uint64_t addr, LlyrData data)
     {
         uint32_t targetPe = processor_id_;
         SimpleMem::Request* req = new SimpleMem::Request(SimpleMem::Request::Write, addr, 8);

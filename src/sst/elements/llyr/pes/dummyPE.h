@@ -32,6 +32,8 @@ public:
     DummyProcessingElement(opType op_binding, uint32_t processor_id, LlyrConfig* llyr_config)  :
                     ProcessingElement(op_binding, processor_id, llyr_config)
     {
+        input_queues_= new std::vector< std::queue< LlyrData >* >;
+        output_queues_ = new std::vector< std::queue< LlyrData >* >;
     }
 
     virtual bool doSend() {};
