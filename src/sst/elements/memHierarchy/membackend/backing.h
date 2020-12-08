@@ -83,12 +83,11 @@ public:
     }
 
     void printContents( Output &contentsOut) {
-        const uint32_t width = 10;
+        const uint32_t width = 16;
         contentsOut.output("MemHierarchy::BackingMMAP Contents\n");
-//         for( uint32_t i = 0; i < m_size; ) {
-        for( uint32_t i = 0; i < 30; ) {
+        for( uint32_t i = 0; i < m_size; ) {
+            contentsOut.output( "%" PRIx32 ": ", i );
             for( uint32_t j = i; j < i + width; ++j ) {
-                std::cout << "i " << i << " j " << j << ":  ";
                 contentsOut.output( "%" PRIx32 " ", uint32_t(m_buffer[j - m_offset]) );
             }
             contentsOut.output( "\n" );
