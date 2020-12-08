@@ -5,6 +5,8 @@
 #include <sst/core/output.h>
 
 #include "decoder/visaopts.h"
+
+#include "inst/vregfmt.h"
 #include "inst/vinsttype.h"
 #include "inst/regfile.h"
 

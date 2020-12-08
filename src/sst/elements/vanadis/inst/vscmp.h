@@ -5,6 +5,8 @@
 #include "inst/vinst.h"
 #include "inst/vcmptype.h"
 
+#include "util/vcmpop.h"
+
 namespace SST {
 namespace Vanadis {
 
@@ -18,10 +20,11 @@ public:
 		const uint16_t src_1,
 		const uint16_t src_2,
 		const bool sgnd,
-		const VanadisRegisterCompareType cType
+		const VanadisRegisterCompareType cType,
+		const VanadisRegisterFormat fmt
 		) :
 		VanadisInstruction(addr, hw_thr, isa_opts, 2, 1, 2, 1, 0, 0, 0, 0 ) ,
-			performSigned(sgnd), compareType(cType) {
+			performSigned(sgnd), compareType(cType), reg_format(fmt) {
 
 		isa_int_regs_in[0]  = src_1;
 		isa_int_regs_in[1]  = src_2;
@@ -55,100 +58,38 @@ public:
 		bool compare_result = false;
 
 		if( performSigned ) {
-			const int64_t reg1_ptr = regFile->getIntReg<int64_t>( phys_int_regs_in[0] );
-			const int64_t reg2_ptr = regFile->getIntReg<int64_t>( phys_int_regs_in[1] );
-
-			output->verbose(CALL_INFO, 16, 0, "---> reg-left: %" PRId64 " reg-right: %" PRId64 "\n", (reg1_ptr), (reg2_ptr) );
-
-			switch( compareType ) {
-			case REG_COMPARE_EQ:
+			switch(reg_format) {
+			case VANADIS_FORMAT_INT64:
 				{
-					compare_result = (reg1_ptr) == (reg2_ptr);
-					output->verbose(CALL_INFO, 16, 0, "-----> compare: equal     / result: %s\n", (compare_result ? "true" : "false") );
+					compare_result = registerCompare<int64_t>( compareType, regFile, this, output, phys_int_regs_in[0], phys_int_regs_in[1] );
 				}
 				break;
-			case REG_COMPARE_NEQ:
+			case VANADIS_FORMAT_INT32:
 				{
-					compare_result = (reg1_ptr) != (reg2_ptr);
-					output->verbose(CALL_INFO, 16, 0, "-----> compare: not-equal / result: %s\n", (compare_result ? "true" : "false") );
-				}
-				break;
-			case REG_COMPARE_LT:
-				{
-					compare_result = (reg1_ptr) < (reg2_ptr);
-					output->verbose(CALL_INFO, 16, 0, "-----> compare: less-than / result: %s\n", (compare_result ? "true" : "false") );
-				}
-				break;
-			case REG_COMPARE_LTE:
-				{
-					compare_result = (reg1_ptr) <= (reg2_ptr);
-					output->verbose(CALL_INFO, 16, 0, "-----> compare: less-than-eq / result: %s\n", (compare_result ? "true" : "false") );
-				}
-				break;
-			case REG_COMPARE_GT:
-				{
-					compare_result = (reg1_ptr) > (reg2_ptr);
-					output->verbose(CALL_INFO, 16, 0, "-----> compare: greater-than / result: %s\n", (compare_result ? "true" : "false") );
-				}
-				break;
-			case REG_COMPARE_GTE:
-				{
-					compare_result = (reg1_ptr) >= (reg2_ptr);
-					output->verbose(CALL_INFO, 16, 0, "-----> compare: greater-than-eq / result: %s\n", (compare_result ? "true" : "false") );
+					compare_result = registerCompare<int32_t>( compareType, regFile, this, output, phys_int_regs_in[0], phys_int_regs_in[1] );
 				}
 				break;
 			default:
 				{
-					output->fatal(CALL_INFO, -1, "Error - unknown comparison operation\n");
+					flagError();
 				}
 				break;
 			}
 		} else {
-			const uint64_t reg1_ptr = regFile->getIntReg<uint64_t>( phys_int_regs_in[0] );
-			const uint64_t reg2_ptr = regFile->getIntReg<uint64_t>( phys_int_regs_in[1] );
-
-			output->verbose(CALL_INFO, 16, 0, "---> reg-left: %" PRIu64 " reg-right: %" PRIu64 "\n", (reg1_ptr), (reg2_ptr) );
-
-			switch( compareType ) {
-			case REG_COMPARE_EQ:
+			switch( reg_format ) {
+			case VANADIS_FORMAT_INT64:
 				{
-					compare_result = (reg1_ptr) == (reg2_ptr);
-					output->verbose(CALL_INFO, 16, 0, "-----> compare: equal     / result: %s\n", (compare_result ? "true" : "false") );
+					compare_result = registerCompare<uint64_t>( compareType, regFile, this, output, phys_int_regs_in[0], phys_int_regs_in[1] );
 				}
 				break;
-			case REG_COMPARE_NEQ:
+			case VANADIS_FORMAT_INT32:
 				{
-					compare_result = (reg1_ptr) != (reg2_ptr);
-					output->verbose(CALL_INFO, 16, 0, "-----> compare: not-equal / result: %s\n", (compare_result ? "true" : "false") );
-				}
-				break;
-			case REG_COMPARE_LT:
-				{
-					compare_result = (reg1_ptr) < (reg2_ptr);
-					output->verbose(CALL_INFO, 16, 0, "-----> compare: less-than / result: %s\n", (compare_result ? "true" : "false") );
-				}
-				break;
-			case REG_COMPARE_LTE:
-				{
-					compare_result = (reg1_ptr) <= (reg2_ptr);
-					output->verbose(CALL_INFO, 16, 0, "-----> compare: less-than-eq / result: %s\n", (compare_result ? "true" : "false") );
-				}
-				break;
-			case REG_COMPARE_GT:
-				{
-					compare_result = (reg1_ptr) > (reg2_ptr);
-					output->verbose(CALL_INFO, 16, 0, "-----> compare: greater-than / result: %s\n", (compare_result ? "true" : "false") );
-				}
-				break;
-			case REG_COMPARE_GTE:
-				{
-					compare_result = (reg1_ptr) >= (reg2_ptr);
-					output->verbose(CALL_INFO, 16, 0, "-----> compare: greater-than-eq / result: %s\n", (compare_result ? "true" : "false") );
+					compare_result = registerCompare<uint32_t>( compareType, regFile, this, output, phys_int_regs_in[0], phys_int_regs_in[1] );
 				}
 				break;
 			default:
 				{
-					output->fatal(CALL_INFO, -1, "Error - unknown comparison operation\n");
+					flagError();
 				}
 				break;
 			}
@@ -169,8 +110,8 @@ public:
 
 protected:
 	const bool performSigned;
-	VanadisRegisterCompareType compareType;
-
+	const VanadisRegisterCompareType compareType;
+	const VanadisRegisterFormat reg_format;
 };
 
 }

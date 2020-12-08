@@ -4,7 +4,7 @@
 
 #include "inst/vinst.h"
 #include "inst/vcmptype.h"
-
+#include "inst/vregfmt.h"
 #include "util/vfpreghandler.h"
 
 #define VANADIS_MIPS_FP_COMPARE_BIT 0x800000
@@ -22,7 +22,7 @@ public:
 		const uint16_t dest,
 		const uint16_t src_1,
 		const uint16_t src_2,
-		const VanadisFPRegisterFormat r_fmt,
+		const VanadisRegisterFormat r_fmt,
 		const VanadisRegisterCompareType cType
 		) :
 		VanadisInstruction(addr, hw_thr, isa_opts, 0, 0, 0, 0,
@@ -156,7 +156,7 @@ public:
 	}
 
 protected:
-	VanadisFPRegisterFormat reg_fmt;
+	VanadisRegisterFormat reg_fmt;
 	VanadisRegisterCompareType compareType;
 
 };

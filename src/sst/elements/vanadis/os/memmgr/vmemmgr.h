@@ -20,11 +20,13 @@ public:
 		assert( (region_end   % region_page_size) == 0 );
 		assert( region_start < region_end );
 
-		output = new SST::Output("[os-memgmr] ", verbosity, 0, Output::STDOUT);
+		output = new SST::Output("[os-memgmr] ", 16, 0, Output::STDOUT);
 
-		for( uint64_t page_start = region_start; page_start < region_page_size; page_start += region_page_size ) {
+		for( uint64_t page_start = region_start; page_start < region_end; page_start += region_page_size ) {
 			free_pages.insert( page_start );
 		}
+
+		region_pages_in_use_count = 0;
 	}
 
 	~VanadisMemoryManager() {
@@ -33,6 +35,8 @@ public:
 	}
 
 	int allocateRange( uint64_t allocation_size, uint64_t* allocation_address ) {
+		output->verbose( CALL_INFO, 16, 0, "requested allocation size: %" PRIu64 "\n", allocation_size );
+
 		bool found_allocation = false;
 		uint64_t allocation_start = 0;
 
@@ -42,15 +46,20 @@ public:
 			(allocation_size / region_page_size) + 1 :
 			(allocation_size / region_page_size);
 
+		output->verbose( CALL_INFO, 16, 0, "-> page-size:            %" PRIu64 "\n", region_page_size);
+		output->verbose( CALL_INFO, 16, 0, "-> requested page count: %" PRIu64 "\n", allocation_page_count);
+		output->verbose( CALL_INFO, 16, 0, "-> free-pages:           %" PRIu64 "\n", (uint64_t) free_pages.size());
+		output->verbose( CALL_INFO, 16, 0, "-> used-pages:           %" PRIu64 "\n", region_pages_in_use_count);
+
 		for( uint64_t page_start = region_start;
 			page_start < (region_end - allocation_page_count);
-			++page_start ) {
+			page_start += region_page_size ) {
 
 			bool is_contiguous = true;
 
 			for( uint64_t i = 0; i < allocation_page_count; ++i ) {
 				// if the page is found in the set of free pages we can use it
-				if( free_pages.find( page_start + (i * region_page_size)) != free_pages.end() ) {
+				if( free_pages.find( page_start + (i * region_page_size)) == free_pages.end() ) {
 					is_contiguous = false;
 					break;
 				}

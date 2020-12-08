@@ -14,8 +14,10 @@ public:
 		const uint32_t hw_thr,
 		const VanadisDecoderOptions* isa_opts,
 		const uint16_t dest,
-		const int64_t immediate) :
-		VanadisInstruction(addr, hw_thr, isa_opts, 0, 1, 0, 1, 0, 0, 0, 0) {
+		const int64_t immediate,
+		VanadisRegisterFormat fmt) :
+		VanadisInstruction(addr, hw_thr, isa_opts, 0, 1, 0, 1, 0, 0, 0, 0),
+			reg_format(fmt) {
 
 		isa_int_regs_out[0] = dest;
 		imm_value = immediate;
@@ -42,7 +44,23 @@ public:
 		output->verbose(CALL_INFO, 16, 0, "Execute: (addr=0x%0llx) SETREG phys: out=%" PRIu16 " imm=%" PRId64 ", isa: out=%" PRIu16 "\n",
 			getInstructionAddress(), phys_int_regs_out[0], imm_value, isa_int_regs_out[0] );
 
-		regFile->setIntReg( phys_int_regs_out[0], imm_value );
+		switch( reg_format ) {
+		case VANADIS_FORMAT_INT64:
+			{
+				regFile->setIntReg<int64_t>( phys_int_regs_out[0], imm_value );
+			}
+			break;
+		case VANADIS_FORMAT_INT32:
+			{
+				regFile->setIntReg<int32_t>( phys_int_regs_out[0], static_cast<int32_t>(imm_value) );
+			}
+			break;
+		default:
+			{
+				flagError();
+			}
+			break;
+		}
 
 		output->verbose(CALL_INFO, 16, 0, "Result-reg %" PRIu16 ": %" PRId64 "\n",
 			phys_int_regs_out[0], imm_value);
@@ -51,6 +69,7 @@ public:
 	}
 
 private:
+	VanadisRegisterFormat reg_format;
 	int64_t imm_value;
 
 };

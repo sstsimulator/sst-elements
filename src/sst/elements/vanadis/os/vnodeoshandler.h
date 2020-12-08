@@ -30,6 +30,7 @@
 #include "os/node/vnodeosreadlink.h"
 #include "os/node/vnodeosaccessh.h"
 #include "os/node/vnodeosbrk.h"
+#include "os/node/vnodemmaph.h"
 #include "os/node/vnodenoactionh.h"
 
 #include "util/vlinesplit.h"
@@ -474,6 +475,36 @@ public:
 				}
 
 				sendBlockToMemory( gettime_ev->getTimeStructAddress(), time_payload );
+			}
+			break;
+
+		case SYSCALL_OP_MMAP:
+			{
+				VanadisSyscallMemoryMapEvent* mmap_ev = dynamic_cast< VanadisSyscallMemoryMapEvent* >( sys_ev );
+				assert( mmap_ev != NULL );
+
+				output->verbose(CALL_INFO, 16, 0, "[syscall-mmap] --> \n");
+
+				uint64_t map_address = mmap_ev->getAllocationAddress();
+				uint64_t map_length  = mmap_ev->getAllocationLength();
+				int64_t  map_protect = mmap_ev->getProtectionFlags();
+				int64_t  map_flags   = mmap_ev->getAllocationFlags();
+				uint64_t call_stack  = mmap_ev->getStackPointer();
+				uint64_t map_offset_units = mmap_ev->getOffsetUnits();
+
+				std::function<void(SimpleMem::Request*)> send_req_func = std::bind(
+                                                                &VanadisNodeOSCoreHandler::sendMemRequest, this, std::placeholders::_1 );
+				std::function<void(const uint64_t, std::vector<uint8_t>&)> send_block_func = std::bind(
+                                                &VanadisNodeOSCoreHandler::sendBlockToMemory, this, std::placeholders::_1, std::placeholders::_2 );
+
+				handler_state = new VanadisMemoryMapHandlerState( output->getVerboseLevel(),
+					map_address, map_length, map_protect, map_flags, call_stack, map_offset_units,
+					send_req_func, send_block_func, memory_mgr);
+
+				// need to read in the file descriptor so get a memory read in place
+				// file descriptor is the 5th argument (each is 4 bytes, so 5 * 4)
+				sendMemRequest( new SimpleMem::Request( SimpleMem::Request::Read,
+                                        call_stack + 4 * 4, 4 ) );
 			}
 			break;
 

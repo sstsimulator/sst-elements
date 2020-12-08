@@ -3,7 +3,7 @@
 #define _H_VANADIS_GPR_2_FP
 
 #include "inst/vinst.h"
-#include "inst/vfpwidth.h"
+#include "inst/vregfmt.h"
 
 namespace SST {
 namespace Vanadis {
@@ -16,7 +16,7 @@ public:
 		const VanadisDecoderOptions* isa_opts,
 		const uint16_t fp_dest,
 		const uint16_t int_src,
-		VanadisFPRegisterFormat fp_w
+		VanadisRegisterFormat fp_w
 		 ) :
 		VanadisInstruction(addr, hw_thr, isa_opts, 1, 0, 1, 0,
 			0,
@@ -95,7 +95,7 @@ public:
 	}
 
 protected:
-	VanadisFPRegisterFormat move_width;
+	VanadisRegisterFormat move_width;
 
 };
 

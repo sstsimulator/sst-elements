@@ -747,14 +747,14 @@ protected:
 					switch( func_mask ) {
 					case MIPS_SPEC_OP_MASK_ADD:
 						{
-							bundle->addInstruction( new VanadisAddInstruction( ins_addr, hw_thr, options, rd, rs, rt ) );
+							bundle->addInstruction( new VanadisAddInstruction( ins_addr, hw_thr, options, rd, rs, rt, VANADIS_FORMAT_INT32 ) );
 							insertDecodeFault = false;
 						}
 						break;
 
 					case MIPS_SPEC_OP_MASK_ADDU:
 						{
-							bundle->addInstruction( new VanadisAddInstruction( ins_addr, hw_thr, options, rd, rs, rt ) );
+							bundle->addInstruction( new VanadisAddInstruction( ins_addr, hw_thr, options, rd, rs, rt, VANADIS_FORMAT_INT32 ) );
 							insertDecodeFault = false;
 						}
 						break;
@@ -783,7 +783,7 @@ protected:
 					case MIPS_SPEC_OP_MASK_DIV:
 						{
 							bundle->addInstruction( new VanadisDivideRemainderInstruction( ins_addr,
-								hw_thr, options, MIPS_REG_LO, MIPS_REG_HI, rs, rt, true ) );
+								hw_thr, options, MIPS_REG_LO, MIPS_REG_HI, rs, rt, true, VANADIS_FORMAT_INT32 ) );
 							insertDecodeFault = false;
 						}
 						break;
@@ -791,7 +791,7 @@ protected:
 					case MIPS_SPEC_OP_MASK_DIVU:
 						{
 							bundle->addInstruction( new VanadisDivideRemainderInstruction( ins_addr,
-								hw_thr, options, MIPS_REG_LO, MIPS_REG_HI, rs, rt, false ) );
+								hw_thr, options, MIPS_REG_LO, MIPS_REG_HI, rs, rt, false, VANADIS_FORMAT_INT32 ) );
 							insertDecodeFault = false;
 						}
 						break;
@@ -836,9 +836,9 @@ protected:
 
 					case MIPS_SPEC_OP_MASK_MFHI:
 						{
-							// Special instruction, 32 is LO, 33 is HI
+							// Special instruction_, 32 is LO, 33 is HI
 							bundle->addInstruction( new VanadisAddImmInstruction( ins_addr, hw_thr, options, rd,
-								MIPS_REG_HI, 0) );
+								MIPS_REG_HI, 0, VANADIS_FORMAT_INT32 ) );
 							insertDecodeFault = false;
 						}
 						break;
@@ -847,7 +847,7 @@ protected:
 						{
 							// Special instruction, 32 is LO, 33 is HI
 							bundle->addInstruction( new VanadisAddImmInstruction( ins_addr, hw_thr, options, rd,
-								MIPS_REG_LO, 0) );
+								MIPS_REG_LO, 0, VANADIS_FORMAT_INT32 ) );
 							insertDecodeFault = false;
 						}
 						break;
@@ -867,7 +867,7 @@ protected:
 					case MIPS_SPEC_OP_MASK_MULT:
 						{
 							bundle->addInstruction( new VanadisMultiplySplitInstruction( ins_addr, hw_thr, options,
-								MIPS_REG_LO, MIPS_REG_HI, rs, rt, true ) );
+								MIPS_REG_LO, MIPS_REG_HI, rs, rt, true, VANADIS_FORMAT_INT32 ) );
 							insertDecodeFault = false;
 						}
 						break;
@@ -875,7 +875,7 @@ protected:
 					case MIPS_SPEC_OP_MASK_MULTU:
 						{
 							bundle->addInstruction( new VanadisMultiplySplitInstruction( ins_addr, hw_thr, options,
-								MIPS_REG_LO, MIPS_REG_HI, rs, rt, false ) );
+								MIPS_REG_LO, MIPS_REG_HI, rs, rt, false, VANADIS_FORMAT_INT32 ) );
 							insertDecodeFault = false;
 						}
 						break;
@@ -897,7 +897,7 @@ protected:
 					case MIPS_SPEC_OP_MASK_SLLV:
 						{
 							bundle->addInstruction( new VanadisShiftLeftLogicalInstruction( ins_addr,
-								hw_thr, options, rd, rt, rs ) );
+								hw_thr, options, rd, rt, rs, VANADIS_FORMAT_INT32 ) );
 							insertDecodeFault = false;
 						}
 						break;
@@ -905,7 +905,7 @@ protected:
 					case MIPS_SPEC_OP_MASK_SLT:
 						{
 							bundle->addInstruction( new VanadisSetRegCompareInstruction( ins_addr, hw_thr, options,
-								rd, rs, rt, true, REG_COMPARE_LT) );
+								rd, rs, rt, true, REG_COMPARE_LT, VANADIS_FORMAT_INT32 ) );
 							insertDecodeFault = false;
 						}
 						break;
@@ -913,7 +913,7 @@ protected:
 					case MIPS_SPEC_OP_MASK_SLTU:
 						{
 							bundle->addInstruction( new VanadisSetRegCompareInstruction( ins_addr, hw_thr, options,
-								rd, rs, rt, false, REG_COMPARE_LT) );
+								rd, rs, rt, false, REG_COMPARE_LT, VANADIS_FORMAT_INT32 ) );
 							insertDecodeFault = false;
 						}
 						break;
@@ -921,7 +921,7 @@ protected:
 					case MIPS_SPEC_OP_MASK_SRAV:
 						{
 							bundle->addInstruction( new VanadisShiftRightArithmeticInstruction( ins_addr, hw_thr, options,
-								rd, rt, rs) );
+								rd, rt, rs, VANADIS_FORMAT_INT32 ) );
 							insertDecodeFault = false;
 						}
 						break;
@@ -929,21 +929,23 @@ protected:
 					case MIPS_SPEC_OP_MASK_SRLV:
 						{
 							bundle->addInstruction( new VanadisShiftRightLogicalInstruction( ins_addr, hw_thr, options,
-								rd, rt, rs) );
+								rd, rt, rs, VANADIS_FORMAT_INT32) );
 							insertDecodeFault = false;
 						}
 						break;
 
 					case MIPS_SPEC_OP_MASK_SUB:
 						{
-							bundle->addInstruction( new VanadisSubInstruction( ins_addr, hw_thr, options, rd, rs, rt, true ) );
+							bundle->addInstruction( new VanadisSubInstruction( ins_addr, hw_thr, options, rd, rs, rt, true,
+								VANADIS_FORMAT_INT32  ) );
 							insertDecodeFault = false;
 						}
 						break;
 
 					case MIPS_SPEC_OP_MASK_SUBU:
 						{
-							bundle->addInstruction( new VanadisSubInstruction( ins_addr, hw_thr, options, rd, rs, rt, false ) );
+							bundle->addInstruction( new VanadisSubInstruction( ins_addr, hw_thr, options, rd, rs, rt, false,
+								VANADIS_FORMAT_INT32 ) );
 							insertDecodeFault = false;
 						}
 						break;
@@ -978,7 +980,7 @@ protected:
 								rd, rt, shf_amnt);
 
 							bundle->addInstruction( new VanadisShiftLeftLogicalImmInstruction( ins_addr,
-								hw_thr, options, rd, rt, shf_amnt ) );
+								hw_thr, options, rd, rt, shf_amnt, VANADIS_FORMAT_INT32 ) );
 							insertDecodeFault = false;
 						}
 						break;
@@ -991,7 +993,7 @@ protected:
 								rd, rt, shf_amnt);
 
 							bundle->addInstruction( new VanadisShiftRightLogicalImmInstruction( ins_addr, hw_thr, options,
-								rd, rs, shf_amnt ) );
+								rd, rt, shf_amnt, VANADIS_FORMAT_INT32 ) );
 							insertDecodeFault = false;
 						}
 						break;
@@ -1001,7 +1003,7 @@ protected:
 							const uint64_t shf_amnt = ((uint64_t) (next_ins & MIPS_SHFT_MASK)) >> 6;
 
 							bundle->addInstruction( new VanadisShiftRightArithmeticImmInstruction( ins_addr, hw_thr, options,
-								rd, rt, shf_amnt ) );
+								rd, rt, shf_amnt, VANADIS_FORMAT_INT32 ) );
 							insertDecodeFault = false;
 						}
 						break;
@@ -1023,21 +1025,21 @@ protected:
 				case MIPS_SPEC_OP_MASK_BLTZ:
 					{
 						bundle->addInstruction( new VanadisBranchRegCompareImmInstruction(ins_addr, hw_thr, options,
-							rs, 0, offset_value_64, VANADIS_SINGLE_DELAY_SLOT, REG_COMPARE_LT ) );
+							rs, 0, offset_value_64, VANADIS_SINGLE_DELAY_SLOT, REG_COMPARE_LT, VANADIS_FORMAT_INT32 ) );
 						insertDecodeFault = false;
 					}
 					break;
 				case MIPS_SPEC_OP_MASK_BGEZAL:
 					{
 						bundle->addInstruction( new VanadisBranchRegCompareImmLinkInstruction( ins_addr, hw_thr, options,
-							rs, 0, offset_value_64, (uint16_t) 31, VANADIS_SINGLE_DELAY_SLOT, REG_COMPARE_GTE ) );
+							rs, 0, offset_value_64, (uint16_t) 31, VANADIS_SINGLE_DELAY_SLOT, REG_COMPARE_GTE, VANADIS_FORMAT_INT32 ) );
 						insertDecodeFault = false;
 					}
 					break;
 				case MIPS_SPEC_OP_MASK_BGEZ:
 					{
 						bundle->addInstruction( new VanadisBranchRegCompareImmInstruction(ins_addr, hw_thr, options,
-							rs, 0, offset_value_64, VANADIS_SINGLE_DELAY_SLOT, REG_COMPARE_GTE ) );
+							rs, 0, offset_value_64, VANADIS_SINGLE_DELAY_SLOT, REG_COMPARE_GTE, VANADIS_FORMAT_INT32 ) );
 						insertDecodeFault = false;
 					}
 					break;
@@ -1048,12 +1050,14 @@ protected:
 
 		case MIPS_SPEC_OP_MASK_LUI:
 			{
-				const int64_t imm_value_64 = ( vanadis_sign_extend_offset_16( next_ins ) << 16 ) & 0xFFFFFFFFFFFF0000;
+				const int32_t ins_imm      = (int32_t)( next_ins & 0xFFFF );
+				const int64_t ins_imm_64   = (int64_t)( ins_imm << 16 );
+				const int64_t imm_value_64 = ins_imm_64 & 0xFFFFFFFFFFFF0000;
 
 				output->verbose(CALL_INFO, 16, 0, "[decoder/LUI] -> reg: %" PRIu16 " / imm=%" PRId64 "\n",
 					rt, imm_value_64);
 
-				bundle->addInstruction( new VanadisSetRegisterInstruction( ins_addr, hw_thr, options, rt, imm_value_64) );
+				bundle->addInstruction( new VanadisSetRegisterInstruction( ins_addr, hw_thr, options, rt, imm_value_64, VANADIS_FORMAT_INT32 ) );
 				insertDecodeFault = false;
 			}
 			break;
@@ -1243,61 +1247,58 @@ protected:
 
 		case MIPS_SPEC_OP_MASK_ADDIU:
 			{
-				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
+				const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins );
 				output->verbose(CALL_INFO, 16, 0, "[decoder/ADDIU]: -> reg: %" PRIu16 " rs=%" PRIu16 " / imm=%" PRId64 "\n",
 					rt, rs, imm_value_64);
-				bundle->addInstruction( new VanadisAddImmInstruction( ins_addr, hw_thr, options, rt, rs, imm_value_64) );
+				bundle->addInstruction( new VanadisAddImmInstruction( ins_addr, hw_thr, options, rt, rs, imm_value_64, VANADIS_FORMAT_INT32 ) );
 				insertDecodeFault = false;
 			}
 			break;
 
 		case MIPS_SPEC_OP_MASK_BEQ:
 			{
-//				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
-				const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins );
+				const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins << 2 );
 
-				output->verbose(CALL_INFO, 16, 0, "[decoder/BEQ]: -> r1: %" PRIu16 " r2: %" PRIu16 " offset: %" PRId64 " << 2 : %" PRId64 "\n",
-                                        rt, rs, imm_value_64, (imm_value_64 << 2) );
+				output->verbose(CALL_INFO, 16, 0, "[decoder/BEQ]: -> r1: %" PRIu16 " r2: %" PRIu16 " offset: %" PRId64 "\n",
+                                        rt, rs, imm_value_64 );
 				bundle->addInstruction( new VanadisBranchRegCompareInstruction( ins_addr, hw_thr, options, rt, rs,
-					(imm_value_64 << 2), VANADIS_SINGLE_DELAY_SLOT, REG_COMPARE_EQ) );
+					imm_value_64, VANADIS_SINGLE_DELAY_SLOT, REG_COMPARE_EQ, VANADIS_FORMAT_INT32) );
 				insertDecodeFault = false;
 			}
 			break;
 
 		case MIPS_SPEC_OP_MASK_BGTZ:
 			{
-				const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins );
+				const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins << 2 );
 
-				output->verbose(CALL_INFO, 16, 0, "[decoder/BGTZ]: -> r1: %" PRIu16 " offset: %" PRId64 " << 2 : %" PRId64 "\n",
-                                        rs, imm_value_64, (imm_value_64 << 2) );
+				output->verbose(CALL_INFO, 16, 0, "[decoder/BGTZ]: -> r1: %" PRIu16 " offset: %" PRId64 "\n",
+                                        rs, imm_value_64);
 				bundle->addInstruction( new VanadisBranchRegCompareImmInstruction( ins_addr, hw_thr, options, rs, 0,
-					(imm_value_64 << 2), VANADIS_SINGLE_DELAY_SLOT, REG_COMPARE_GT) );
+					imm_value_64, VANADIS_SINGLE_DELAY_SLOT, REG_COMPARE_GT, VANADIS_FORMAT_INT32) );
 				insertDecodeFault = false;
 			}
 			break;
 
 		case MIPS_SPEC_OP_MASK_BLEZ:
 			{
-//				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
-				const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins );
+				const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins << 2 );
 
-				output->verbose(CALL_INFO, 16, 0, "[decoder/BLEZ]: -> r1: %" PRIu16 " offset: %" PRId64 " << 2 : %" PRId64 "\n",
-                                        rs, imm_value_64, (imm_value_64 << 2) );
+				output->verbose(CALL_INFO, 16, 0, "[decoder/BLEZ]: -> r1: %" PRIu16 " offset: %" PRId64 "\n",
+                                        rs, imm_value_64);
 				bundle->addInstruction( new VanadisBranchRegCompareImmInstruction( ins_addr, hw_thr, options, rs, 0,
-					(imm_value_64 << 2), VANADIS_SINGLE_DELAY_SLOT, REG_COMPARE_LTE) );
+					imm_value_64, VANADIS_SINGLE_DELAY_SLOT, REG_COMPARE_LTE, VANADIS_FORMAT_INT32) );
 				insertDecodeFault = false;
 			}
 			break;
 
 		case MIPS_SPEC_OP_MASK_BNE:
 			{
-//				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
-				const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins );
+				const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins << 2 );
 
-				output->verbose(CALL_INFO, 16, 0, "[decoder/BNE]: -> r1: %" PRIu16 " r2: %" PRIu16 " offset: %" PRId64 " << 2 : %" PRId64 "\n",
-                                        rt, rs, imm_value_64, (imm_value_64 << 2) );
+				output->verbose(CALL_INFO, 16, 0, "[decoder/BNE]: -> r1: %" PRIu16 " r2: %" PRIu16 " offset: %" PRId64 "\n",
+                                        rt, rs, imm_value_64 );
 				bundle->addInstruction( new VanadisBranchRegCompareInstruction( ins_addr, hw_thr, options, rt, rs,
-					(imm_value_64 << 2), VANADIS_SINGLE_DELAY_SLOT, REG_COMPARE_NEQ) );
+					imm_value_64, VANADIS_SINGLE_DELAY_SLOT, REG_COMPARE_NEQ, VANADIS_FORMAT_INT32) );
 				insertDecodeFault = false;
 			}
 			break;
@@ -1305,34 +1306,33 @@ protected:
 		case MIPS_SPEC_OP_MASK_SLTI:
 			{
 				const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins );
-//				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
+
 				output->verbose(CALL_INFO, 16, 0, "[decoder/SLTI]: -> r1: %" PRIu16 " r2: %" PRIu16 " offset: %" PRId64 "\n",
                                         rt, rs, imm_value_64 );
 				bundle->addInstruction( new VanadisSetRegCompareImmInstruction( ins_addr, hw_thr, options,
-					rt, rs, imm_value_64, true, REG_COMPARE_LT) );
+					rt, rs, imm_value_64, true, REG_COMPARE_LT, VANADIS_FORMAT_INT32 ) );
 				insertDecodeFault = false;
 			}
 			break;
 
 		case MIPS_SPEC_OP_MASK_SLTIU:
 			{
-//				const int64_t imm_value_64 = (uint64_t) ((uint16_t) (next_ins & MIPS_IMM_MASK));
 				const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins );
 
 				output->verbose(CALL_INFO, 16, 0, "[decoder/SLTIU]: -> r1: %" PRIu16 " r2: %" PRIu16 " offset: %" PRId64 "\n",
                                         rt, rs, imm_value_64 );
 				bundle->addInstruction( new VanadisSetRegCompareImmInstruction( ins_addr, hw_thr, options,
-					rt, rs, imm_value_64, false, REG_COMPARE_LT) );
+					rt, rs, imm_value_64, false, REG_COMPARE_LT, VANADIS_FORMAT_INT32 ) );
 				insertDecodeFault = false;
 			}
 			break;
 
 		case MIPS_SPEC_OP_MASK_ANDI:
 			{
-//				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
-				const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins );
+				// note - ANDI is zero extended, not sign extended
+				const uint64_t imm_value_64 = static_cast<uint64_t>( next_ins & MIPS_IMM_MASK );
 
-				output->verbose(CALL_INFO, 16, 0, "[decoder/ANDI]: -> %" PRIu16 " <- r2: %" PRIu16 " imm: %" PRId64 "\n",
+				output->verbose(CALL_INFO, 16, 0, "[decoder/ANDI]: -> %" PRIu16 " <- r2: %" PRIu16 " imm: %" PRIu64 "\n",
                                         rt, rs, imm_value_64 );
 				bundle->addInstruction( new VanadisAndImmInstruction( ins_addr, hw_thr, options,
 					rt, rs, imm_value_64) );
@@ -1342,8 +1342,7 @@ protected:
 
 		case MIPS_SPEC_OP_MASK_ORI:
 			{
-//				const int64_t imm_value_64 = (int16_t) (next_ins & MIPS_IMM_MASK);
-				const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins );
+				const uint64_t imm_value_64 = static_cast<uint64_t>( next_ins & MIPS_IMM_MASK );
 
 				output->verbose(CALL_INFO, 16, 0, "[decoder/ORI]: -> %" PRIu16 " <- r2: %" PRIu16 " imm: %" PRId64 "\n",
                                         rt, rs, imm_value_64 );
@@ -1388,7 +1387,8 @@ protected:
 
 		case MIPS_SPEC_OP_MASK_XORI:
 			{
-				const uint64_t xor_mask = (uint64_t) (next_ins & MIPS_IMM_MASK);
+				const uint64_t xor_mask = static_cast<uint64_t>( next_ins & MIPS_IMM_MASK );
+
 				bundle->addInstruction( new VanadisXorImmInstruction( ins_addr,
 					hw_thr, options, rt, rs, xor_mask ) );
 				insertDecodeFault = false;
@@ -1410,7 +1410,7 @@ protected:
 						switch( rd ) {
 						case 29:
 							bundle->addInstruction( new VanadisSetRegisterInstruction( ins_addr, hw_thr, options,
-								target_reg, (int64_t) getThreadLocalStoragePointer() ) );
+								target_reg, (int64_t) getThreadLocalStoragePointer(), VANADIS_FORMAT_INT32 ) );
 							insertDecodeFault = false;
 							break;
 						}
@@ -1501,7 +1501,7 @@ protected:
 							}
 						} else {
 							// assume this is an FADD and begin decode
-							VanadisFPRegisterFormat input_format = VANADIS_FORMAT_FP64;
+							VanadisRegisterFormat input_format = VANADIS_FORMAT_FP64;
        		                                        bool format_fault = false;
 
                 	                                switch( fr ) {
@@ -1550,7 +1550,7 @@ protected:
 
 				case MIPS_SPEC_COP_MASK_MUL:
 					{
-						VanadisFPRegisterFormat input_format = VANADIS_FORMAT_FP64;
+						VanadisRegisterFormat input_format = VANADIS_FORMAT_FP64;
                                                 bool format_fault = false;
 
                                                 switch( fr ) {
@@ -1576,7 +1576,7 @@ protected:
 
 				case MIPS_SPEC_COP_MASK_DIV:
 					{
-						VanadisFPRegisterFormat input_format = VANADIS_FORMAT_FP64;
+						VanadisRegisterFormat input_format = VANADIS_FORMAT_FP64;
                                                 bool format_fault = false;
 
                                                 switch( fr ) {
@@ -1602,7 +1602,7 @@ protected:
 
 				case MIPS_SPEC_COP_MASK_SUB:
 					{
-						VanadisFPRegisterFormat input_format = VANADIS_FORMAT_FP64;
+						VanadisRegisterFormat input_format = VANADIS_FORMAT_FP64;
                                                 bool format_fault = false;
 
                                                 switch( fr ) {
@@ -1628,7 +1628,7 @@ protected:
 
 				case MIPS_SPEC_COP_MASK_CVTD:
 					{
-						VanadisFPRegisterFormat input_format = VANADIS_FORMAT_FP64;
+						VanadisRegisterFormat input_format = VANADIS_FORMAT_FP64;
 						bool format_fault = false;
 
 						switch( fr ) {
@@ -1655,7 +1655,7 @@ protected:
 
 				case MIPS_SPEC_COP_MASK_CVTW:
 					{
-						VanadisFPRegisterFormat input_format = VANADIS_FORMAT_FP64;
+						VanadisRegisterFormat input_format = VANADIS_FORMAT_FP64;
 						bool format_fault = false;
 
 						switch( fr ) {
@@ -1684,7 +1684,7 @@ protected:
 				case MIPS_SPEC_COP_MASK_CMP_LTE:
 				case MIPS_SPEC_COP_MASK_CMP_EQ:
 					{
-						VanadisFPRegisterFormat input_format = VANADIS_FORMAT_FP64;
+						VanadisRegisterFormat input_format = VANADIS_FORMAT_FP64;
 						bool format_fault = false;
 
 						switch( fr ) {

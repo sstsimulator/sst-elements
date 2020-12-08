@@ -53,7 +53,7 @@ public:
 		output->verbose(CALL_INFO, 16, 0, "Execute: JL jump-to: %" PRIu64 " / 0x%llx / link: %" PRIu16 " phys: %" PRIu16 " v: %" PRIu64 "/ 0x%llx\n",
 			takenAddress, takenAddress, isa_int_regs_out[0], phys_int_regs_out[0], link_value, link_value);
 
-		regFile->setIntReg( phys_int_regs_out[0], link_value );
+		regFile->setIntReg<uint64_t>( phys_int_regs_out[0], link_value );
 
 		if( (takenAddress & 0x3) != 0 ) {
 			flagError();

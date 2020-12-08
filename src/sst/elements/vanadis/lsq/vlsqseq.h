@@ -496,7 +496,7 @@ public:
 
 									if( (reg_offset + load_width) >= load_ins->getLoadWidth() ) {
 										if( (reg_ptr[reg_offset + load_width - 1] & 0x80) != 0 ) {
-											// We need to perform sign extension, fill every byte with all 1s 
+											// We need to perform sign extension, fill every byte with all 1s
 											for( uint16_t i = reg_offset + load_width; i < 8; ++i ) {
 												reg_ptr[i] = 0xFF;
 											}
@@ -504,80 +504,72 @@ public:
 									}
 								} else {
 									if( load_ins->performSignExtension() ) {
-										int64_t value = 0;
-
 										switch( load_width ) {
 										case 1:
 											{
 												int8_t* v_8 = (int8_t*) &ev->data[0];
-												value = (*v_8);
+												reg_file->setIntReg<int8_t>( target_reg, *v_8, true );
 											}
-										break;
+											break;
 										case 2:
 											{
 												int16_t* v_16 = (int16_t*) &ev->data[0];
-												value = (*v_16);
+												reg_file->setIntReg<int16_t>( target_reg, *v_16, true );
 											}
 											break;
 										case 4:
 											{
 												int32_t* v_32 = (int32_t*) &ev->data[0];
-												value = (*v_32);
+												reg_file->setIntReg<int32_t>( target_reg, *v_32, true );
 											}
 											break;
 										case 8:
 											{
 												int64_t* v_64 = (int64_t*) &ev->data[0];
-												value = (*v_64);
+												reg_file->setIntReg<int64_t>( target_reg, *v_64, true );
 											}
 											break;
 										}
-
-										reg_file->setIntReg( target_reg, value );
 									} else {
-										uint64_t value = 0;
-
 										switch( load_width ) {
 										case 1:
 											{
 												uint8_t* v_8 = (uint8_t*) &ev->data[0];
-												value = (*v_8);
+												reg_file->setIntReg<uint8_t>( target_reg, *v_8, false );
 											}
 											break;
 										case 2:
 											{
 												uint16_t* v_16 = (uint16_t*) &ev->data[0];
-												value = (*v_16);
+												reg_file->setIntReg<uint16_t>( target_reg, *v_16, false );
 											}
 										break;
 										case 4:
 											{
 												uint32_t* v_32 = (uint32_t*) &ev->data[0];
-												value = (*v_32);
+												reg_file->setIntReg<uint32_t>( target_reg, *v_32, false );
 											}
 											break;
 										case 8:
 											{
 												uint64_t* v_64 = (uint64_t*) &ev->data[0];
-												value = (*v_64);
+												reg_file->setIntReg<uint64_t>( target_reg, *v_64, false );
 											}
 											break;
 										}
-
-										reg_file->setIntReg( target_reg, value );
 									}
 								}
 							}
 						}
 						break;
-						
+
 					case LOAD_FP_REGISTER:
 						{
 							if( load_ins->isPartialLoad() ) {
 								output->fatal(CALL_INFO, -1, "Error - does not support partial load of a floating point register.\n");
 							} else {
 								char* reg_ptr = reg_file->getFPReg( target_reg );
-								
+
 								switch( load_width ) {
 								case 4:
 									{
@@ -633,11 +625,11 @@ public:
 						if( (ev->flags & SST::Interfaces::SimpleMem::Request::F_LLSC_RESP)  != 0 ) {
 							output->verbose(CALL_INFO, 16, 0, "---> LSQ LLSC-STORE ins: 0x%llx / addr: 0x%llx / rt: %" PRIu16 " <- 1 (success)\n",
 								store_ins->getInstructionAddress(), ev->addr, value_reg );
-							registerFiles->at( store_ins->getHWThread() )->setIntReg( value_reg, (uint64_t) 1 );
+							registerFiles->at( store_ins->getHWThread() )->setIntReg<uint64_t>( value_reg, (uint64_t) 1 );
 						} else {
 							output->verbose(CALL_INFO, 16, 0, "---> LSQ LLSC-STORE ins: 0x%llx / addr: 0x%llx rt: %" PRIu16 " <- 0 (failed)\n",
 								store_ins->getInstructionAddress(), ev->addr, value_reg );
-							registerFiles->at( store_ins->getHWThread() )->setIntReg( value_reg, (uint64_t) 0 );
+							registerFiles->at( store_ins->getHWThread() )->setIntReg<uint64_t>( value_reg, (uint64_t) 0 );
 						}
 					}
 					break;
