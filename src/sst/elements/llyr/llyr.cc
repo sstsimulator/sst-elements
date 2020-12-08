@@ -88,7 +88,7 @@ LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
     memFileName_ = params.find<std::string>("mem_init", "");
 
     //construct hardware graph
-    std::string const& hwFileName = params.find< std::string >("hardware_graph", "grid.cfg");
+    std::string const& hwFileName = params.find< std::string >("hardware_graph", "hardware.cfg");
     constructHardwareGraph(hwFileName);
 
     //construct application graph
@@ -139,7 +139,6 @@ void LlyrComponent::init( uint32_t phase )
 {
     mem_interface_->init( phase );
 
-    const uint32_t mooCows = 128;
     if( 0 == phase ) {
         std::vector< uint64_t >* initVector;
 
@@ -322,6 +321,10 @@ void LlyrComponent::constructHardwareGraph(std::string fileName)
         while( std::getline( inputStream, thisLine ) ) {
             output_->verbose(CALL_INFO, 15, 0, "Parsing:  %s\n", thisLine.c_str());
 
+            if( thisLine.find( "{" ) != std::string::npos || thisLine.find( "}" ) != std::string::npos) {
+                continue;
+            }
+
             //Ignore blank lines
             if( std::all_of(thisLine.begin(), thisLine.end(), isspace) == 0 ) {
                 //First read all nodes
@@ -330,22 +333,27 @@ void LlyrComponent::constructHardwareGraph(std::string fileName)
                 if( position !=  std::string::npos ) {
                     uint32_t vertex = std::stoi( thisLine.substr( 0, position ) );
 
-                    std::uint64_t posA = thisLine.find_first_of( "\"" ) + 1;
-                    std::uint64_t posB = thisLine.find_last_of( "\"" );
+                    std::uint64_t posA = thisLine.find_first_of( "=" ) + 1;
+                    std::uint64_t posB = thisLine.find_last_of( "]" );
                     std::string op = thisLine.substr( posA, posB-posA );
                     opType operation = getOptype(op);
 
                     output_->verbose(CALL_INFO, 10, 0, "OpString:  %s\t\t%" PRIu32 "\n", op.c_str(), operation);
                     hardwareGraph_.addVertex( vertex, operation );
                 } else {
-//                     std::cout << "\t*Parse " << thisLine << std::endl;
-                    std::regex delimiter( "\\->" );
+                    //edge delimiter
+                    std::regex delimiter( "\\--" );
 
                     std::sregex_token_iterator iterA(thisLine.begin(), thisLine.end(), delimiter, -1);
                     std::sregex_token_iterator iterB;
                     std::vector<std::string> edges( iterA, iterB );
 
-                    hardwareGraph_.addEdge( std::stoi(edges[0].substr(0, edges[0].find(" "))), std::stoi(edges[1].substr(0, edges[1].find(" "))) );
+                    edges[0].erase(remove_if(edges[0].begin(), edges[0].end(), isspace), edges[0].end());
+                    edges[1].erase(remove_if(edges[1].begin(), edges[1].end(), isspace), edges[1].end());
+
+                    output_->verbose(CALL_INFO, 10, 0, "Edges %s--%s\n", edges[0].c_str(), edges[1].c_str());
+
+                    hardwareGraph_.addEdge( std::stoi(edges[0]), std::stoi(edges[1]) );
                 }
             }
         }
@@ -442,6 +450,11 @@ std::vector< uint64_t >* LlyrComponent::constructMemory(std::string fileName)
 opType LlyrComponent::getOptype(std::string &opString) const
 {
     opType operation;
+
+    //transform to make opString case insensitive
+    std::transform(opString.begin(), opString.end(), opString.begin(),
+                   [](unsigned char c){ return std::toupper(c); }
+                  );
 
     if( opString == "ANY" )
         operation = ANY;
