@@ -3,6 +3,8 @@
 #define _H_VANADIS_OS_WRITEV_STATE
 
 #include <cstdio>
+#include <vector>
+
 #include <sst/core/interfaces/simpleMem.h>
 #include "os/node/vnodeoshstate.h"
 
@@ -32,28 +34,16 @@ public:
                 current_iovec_length    = INT64_MAX;
         }
 
-/*
-        uint64_t getCurrentIOVecBase() const   { return current_iovec_base_addr; }
-        int64_t  getCurrentIOVecLength() const { return current_iovec_length;    }
-
-        void setCurrentIOVecBase( const uint64_t new_addr ) {
-                current_iovec_base_addr = new_addr;
-        }
-
-        void setCurrentIOVecLength( const int64_t new_len ) {
-                current_iovec_length = new_len;
-        }
-*/
         virtual void handleIncomingRequest( SimpleMem::Request* req ) {
 		output->verbose(CALL_INFO, 16, 0, "[syscall-writev] processing incoming request (addr: 0x%llx, size: %" PRIu64 ")\n",
 			req->addr, (uint64_t) req->size );
-
-		printStatus();
 
                 switch( state ) {
                 case 0:
                         {
                                 current_iovec_base_addr = (uint64_t) (*( (uint32_t*)( &req->data[0] ) ));
+				output->verbose(CALL_INFO, 16, 0, "iovec-data-address: 0x%llx\n", current_iovec_base_addr);
+
                                 send_mem_req( new SimpleMem::Request( SimpleMem::Request::Read,
                                         writev_iovec_addr + (current_iovec * 8) + 4, 4 ) );
                                 state++;
@@ -64,8 +54,8 @@ public:
                                 current_iovec_length = (int64_t)( *( (int32_t*)( &req->data[0] ) ) );
                                 uint64_t base_addr_offset = (current_iovec_base_addr % 64);
 
-				output->verbose(CALL_INFO, 16, 0, "iovec-len: %" PRIu64 " / offset: %" PRIu64 "\n",
-					current_iovec_length, base_addr_offset);
+				output->verbose(CALL_INFO, 16, 0, "iovec-data-len: %" PRIu64 "\n",
+					current_iovec_length);
 
                                 if( (base_addr_offset + current_iovec_length) <= 64 ) {
                                         // we only need to do one read and we are done
@@ -83,13 +73,13 @@ public:
                 case 2:
                         {
                                 // Write out the payload
-				output->verbose(CALL_INFO, 16, 0, "fwrite output addr: 0x%0llx size: %" PRIu32 "\n",
-					req->addr, (uint32_t) req->size);
+				output->verbose(CALL_INFO, 16, 0, "--> update buffer data-offset: %" PRIu64 " + payload: %" PRIu64 " (iovec-data-len: %" PRIu64 ")\n",
+					current_offset, req->size, current_iovec_length );
 
-                                fwrite( &req->data[0], req->size, 1, file_handle );
-				fflush( file_handle );
+//				output->verbose(CALL_INFO, 16, 0, "fwrite output addr: 0x%0llx size: %" PRIu32 "\n",
+//					req->addr, (uint32_t) req->size);
 
-                                total_bytes_written += req->size;
+				merge_to_buffer( req->data );
                                 current_offset += req->size;
 
                                 if( current_offset < current_iovec_length ) {
@@ -116,6 +106,7 @@ public:
 						printStatus();
 
                                                 state = 3;
+						dump_buffer();
 						markComplete();
                                         }
                                 }
@@ -123,6 +114,8 @@ public:
                         break;
                 case 3:
                         {
+				dump_buffer();
+
                                 // We are done here, don't do anything.
 				markComplete();
                         }
@@ -133,6 +126,33 @@ public:
 
 	virtual VanadisSyscallResponse* generateResponse() {
 		return new VanadisSyscallResponse( total_bytes_written );
+	}
+
+	void merge_to_buffer( std::vector<uint8_t>& payload ) {
+		for( size_t i = 0; i < payload.size(); ++i ) {
+			buffer.push_back( payload[i] );
+		}
+
+		print_buffer();
+	}
+
+	void dump_buffer() {
+		if( buffer.size() > 0 ) {
+			fwrite( &buffer[0], buffer.size(), 1, file_handle );
+			fflush( file_handle );
+
+			total_bytes_written += buffer.size();
+		}
+
+		buffer.clear();
+	}
+
+	void print_buffer() {
+		for( size_t i = 0; i < buffer.size(); ++i ) {
+			printf("%c", buffer[i]);
+		}
+
+		printf("\n");
 	}
 
 	void printStatus() {
@@ -165,6 +185,7 @@ protected:
 
         FILE* file_handle;
         std::function<void(SimpleMem::Request*)> send_mem_req;
+	std::vector<uint8_t> buffer;
 };
 
 }

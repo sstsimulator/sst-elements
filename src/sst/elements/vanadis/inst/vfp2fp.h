@@ -3,7 +3,7 @@
 #define _H_VANADIS_FP_2_FP
 
 #include "inst/vinst.h"
-#include "inst/vfpwidth.h"
+#include "inst/vregfmt.h"
 
 #include "util/vfpreghandler.h"
 
@@ -18,7 +18,7 @@ public:
 		const VanadisDecoderOptions* isa_opts,
 		const uint16_t fp_dest,
 		const uint16_t fp_src,
-		VanadisFPRegisterFormat fp_w
+		VanadisRegisterFormat fp_w
 		) :
 		VanadisInstruction(addr, hw_thr, isa_opts, 0, 0, 0, 0,
 			( (fp_w == VANADIS_FORMAT_FP64 || fp_w == VANADIS_FORMAT_INT64) && ( VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode() ) ) ? 2 : 1,
@@ -99,7 +99,7 @@ public:
 	}
 
 protected:
-	VanadisFPRegisterFormat move_width;
+	VanadisRegisterFormat move_width;
 
 };
 

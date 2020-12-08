@@ -16,6 +16,7 @@
 #include "vinsloader.h"
 #include "os/vcpuos.h"
 #include "inst/fpregmode.h"
+#include "lsq/vlsq.h"
 
 namespace SST {
 namespace Vanadis {
@@ -152,7 +153,7 @@ public:
 	VanadisBranchUnit* getBranchPredictor() { return branch_predictor; }
 
 	virtual void configureApplicationLaunch( SST::Output* output, VanadisISATable* isa_tbl,
-		VanadisRegisterFile* regFile, Interfaces::SimpleMem* mem_if,
+		VanadisRegisterFile* regFile, VanadisLoadStoreQueue* lsq,
 		VanadisELFInfo* elf_info, SST::Params& app_params ) = 0;
 	
 	virtual VanadisCPUOSHandler* getOSHandler() { return os_handler; }

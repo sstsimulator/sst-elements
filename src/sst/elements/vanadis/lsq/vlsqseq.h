@@ -7,6 +7,8 @@
 #include <unordered_map>
 
 #include "lsq/vlsq.h"
+#include "lsq/vmemwriterec.h"
+
 #include "inst/vinst.h"
 #include "inst/vstore.h"
 
@@ -24,7 +26,7 @@ public:
 
 	SimpleMem::Request::id_t getRequestID() const { return req_id; }
 	VanadisStoreInstruction* getInstruction() const { return ins; }
-	
+
 protected:
 	VanadisStoreInstruction* ins;
 	SimpleMem::Request::id_t req_id;
@@ -37,11 +39,11 @@ public:
 		issued = false;
 		req_id = 0;
 	}
-	
+
 	bool isOperationIssued() {
 		return issued;
 	}
-	
+
 	void markOperationIssued() {
 		issued = true;
 	}
@@ -49,19 +51,19 @@ public:
 	VanadisInstruction* getInstruction() {
 		return ins;
 	}
-	
+
 	SimpleMem::Request::id_t getRequestID() {
 		return req_id;
 	}
-	
+
 	void setRequestID( SimpleMem::Request::id_t new_id ) {
 		req_id = new_id;
 	}
-	
+
 	bool isStore() {
 		return ins->getInstFuncType() == INST_STORE;
 	}
-	
+
 	bool isLoad() {
 		return ins->getInstFuncType() == INST_LOAD;
 	}
@@ -99,23 +101,24 @@ public:
 	)
 
 	SST_ELI_DOCUMENT_PARAMS(
-		{ "load_store_entries",		"Set the number of load/stores that can be pending",	"8"		}
+		{ "load_store_entries",		"Set the number of load/stores that can be pending",	"8"		},
+		{ "check_memory_loads", 	"Check memory loads come from memory locations that have been written",  "0" },
 	)
-	
+
 	VanadisSequentialLoadStoreQueue( ComponentId_t id, Params& params ) :
 		VanadisLoadStoreQueue( id, params ) {
-		
+
 		memInterface = loadUserSubComponent<Interfaces::SimpleMem>("memory_interface", ComponentInfo::SHARE_PORTS |
 			ComponentInfo::INSERT_STATS, getTimeConverter("1ps"),
 			new SimpleMem::Handler<SST::Vanadis::VanadisSequentialLoadStoreQueue>(this,
 			&VanadisSequentialLoadStoreQueue::processIncomingDataCacheEvent));
-			
+
 		if( nullptr == memInterface ) {
 			output->fatal(CALL_INFO, -1, "Error - unable to load \"memory_interface\"\n");
 		}
-		
+
 		max_q_size = params.find<size_t>("load_store_entries", 8);
-		
+
 		output->verbose(CALL_INFO, 2, 0, "LSQ Load/Store Queue entry count:     %" PRIu32 "\n",
 			(uint32_t) max_q_size);
 
@@ -128,6 +131,18 @@ public:
 		}
 
 		allow_speculated_operations = params.find<bool>("allow_speculated_operations", true);
+		fault_on_memory_not_written = params.find<bool>("check_memory_loads", false);
+
+		// Check for up to 4GB
+		if( fault_on_memory_not_written ) {
+			uint64_t mem_gb = 4;
+			uint64_t mem_bytes = mem_gb * 1024 * 1024 * 1024;
+			flag_non_written_loads_count = params.find<uint64_t>("fault_non_written_loads_after", 0);
+
+			memory_check_table = new VanadisMemoryWrittenRecord( 16, mem_bytes );
+		} else {
+			memory_check_table = nullptr;
+		}
 	}
 
 	virtual ~VanadisSequentialLoadStoreQueue() {
@@ -136,6 +151,7 @@ public:
 		}
 
 		delete memInterface;
+		delete memory_check_table;
 	}
 
 	virtual bool storeFull() {
@@ -194,7 +210,7 @@ public:
 
 	virtual void tick( uint64_t cycle ) {
 		output->verbose(CALL_INFO, 16, 0, "ticking load/store queue at cycle %" PRIu64 " lsq size: %" PRIu64 "\n",
-			(uint64_t) cycle, op_q.size() );
+			(uint64_t) cycle, (uint64_t) op_q.size() );
 
 		if( output->getVerboseLevel() >= 16 ) {
 			printLSQ();
@@ -264,7 +280,7 @@ public:
 						load_ins->flagError();
 					} else {
 						if( ( ! load_ins->isPartialLoad()) && ( (load_addr % load_width) > 0 ) ) {
-							output->verbose(CALL_INFO, 16, 0, "[fault] load is not partial and 0x%llx is not aligned to load width (%" PRIu64 ")\n",
+							output->verbose(CALL_INFO, 16, 0, "[fault] load is not partial and 0x%llx is not aligned to load width (%" PRIu16 ")\n",
 								load_addr, load_width);
 							load_ins->flagError();
 						} else {
@@ -350,10 +366,21 @@ public:
 								store_ins->markExecuted();
 							}
 							break;
+							case MEM_TRANSACTION_LLSC_LOAD:
+							{
+								output->fatal(CALL_INFO, -1, "Executing an LLSC LOAD operation for a STORE instruction - logical error.\n");
+							}
+							break;
 						}
 
 						writeTrace( store_ins, store_req );
 						memInterface->sendRequest( store_req );
+
+						if( fault_on_memory_not_written ) {
+							for( uint64_t i = store_req->addr; i < (store_req->addr + store_req->size); ++i ) {
+								memory_check_table->markByte(i);
+							}
+						}
 					}
 
 					op_q.erase( op_q_itr );
@@ -400,6 +427,30 @@ public:
 					uint16_t target_isa = 0;
 					uint16_t reg_offset = 0;
 
+
+					if( fault_on_memory_not_written ) {
+						uint64_t load_unwritten_address = 0;
+
+						for( uint64_t i = ev->addr; i < (ev->addr + ev->size); ++i ) {
+							// if the address is not marked as written, potential error condition
+							if( ! memory_check_table->isMarked(i) ) {
+								load_unwritten_address = i;
+								break;
+							}
+						}
+
+						// We have an unwritten value from memory, so flag an error
+						if( load_unwritten_address > 0 ) {
+							if( flag_non_written_loads_count > 0 ) {
+								flag_non_written_loads_count--;
+							} else {
+								output->verbose(CALL_INFO, 8, 0, "--> [load-unwritten-memory-fault]: load-ins: 0x%llx -> memory is not written at addr 0x%llx\n",
+									load_ins->getInstructionAddress(), load_unwritten_address);
+								load_ins->flagError();
+							}
+						}
+					}
+
 					switch( load_ins->getValueRegisterType() ) {
 					case LOAD_INT_REGISTER:
 						{
@@ -445,7 +496,7 @@ public:
 
 									if( (reg_offset + load_width) >= load_ins->getLoadWidth() ) {
 										if( (reg_ptr[reg_offset + load_width - 1] & 0x80) != 0 ) {
-											// We need to perform sign extension, fill every byte with all 1s 
+											// We need to perform sign extension, fill every byte with all 1s
 											for( uint16_t i = reg_offset + load_width; i < 8; ++i ) {
 												reg_ptr[i] = 0xFF;
 											}
@@ -453,80 +504,72 @@ public:
 									}
 								} else {
 									if( load_ins->performSignExtension() ) {
-										int64_t value = 0;
-
 										switch( load_width ) {
 										case 1:
 											{
 												int8_t* v_8 = (int8_t*) &ev->data[0];
-												value = (*v_8);
+												reg_file->setIntReg<int8_t>( target_reg, *v_8, true );
 											}
-										break;
+											break;
 										case 2:
 											{
 												int16_t* v_16 = (int16_t*) &ev->data[0];
-												value = (*v_16);
+												reg_file->setIntReg<int16_t>( target_reg, *v_16, true );
 											}
 											break;
 										case 4:
 											{
 												int32_t* v_32 = (int32_t*) &ev->data[0];
-												value = (*v_32);
+												reg_file->setIntReg<int32_t>( target_reg, *v_32, true );
 											}
 											break;
 										case 8:
 											{
 												int64_t* v_64 = (int64_t*) &ev->data[0];
-												value = (*v_64);
+												reg_file->setIntReg<int64_t>( target_reg, *v_64, true );
 											}
 											break;
 										}
-
-										reg_file->setIntReg( target_reg, value );
 									} else {
-										uint64_t value = 0;
-
 										switch( load_width ) {
 										case 1:
 											{
 												uint8_t* v_8 = (uint8_t*) &ev->data[0];
-												value = (*v_8);
+												reg_file->setIntReg<uint8_t>( target_reg, *v_8, false );
 											}
 											break;
 										case 2:
 											{
 												uint16_t* v_16 = (uint16_t*) &ev->data[0];
-												value = (*v_16);
+												reg_file->setIntReg<uint16_t>( target_reg, *v_16, false );
 											}
 										break;
 										case 4:
 											{
 												uint32_t* v_32 = (uint32_t*) &ev->data[0];
-												value = (*v_32);
+												reg_file->setIntReg<uint32_t>( target_reg, *v_32, false );
 											}
 											break;
 										case 8:
 											{
 												uint64_t* v_64 = (uint64_t*) &ev->data[0];
-												value = (*v_64);
+												reg_file->setIntReg<uint64_t>( target_reg, *v_64, false );
 											}
 											break;
 										}
-
-										reg_file->setIntReg( target_reg, value );
 									}
 								}
 							}
 						}
 						break;
-						
+
 					case LOAD_FP_REGISTER:
 						{
 							if( load_ins->isPartialLoad() ) {
 								output->fatal(CALL_INFO, -1, "Error - does not support partial load of a floating point register.\n");
 							} else {
 								char* reg_ptr = reg_file->getFPReg( target_reg );
-								
+
 								switch( load_width ) {
 								case 4:
 									{
@@ -582,11 +625,11 @@ public:
 						if( (ev->flags & SST::Interfaces::SimpleMem::Request::F_LLSC_RESP)  != 0 ) {
 							output->verbose(CALL_INFO, 16, 0, "---> LSQ LLSC-STORE ins: 0x%llx / addr: 0x%llx / rt: %" PRIu16 " <- 1 (success)\n",
 								store_ins->getInstructionAddress(), ev->addr, value_reg );
-							registerFiles->at( store_ins->getHWThread() )->setIntReg( value_reg, (uint64_t) 1 );
+							registerFiles->at( store_ins->getHWThread() )->setIntReg<uint64_t>( value_reg, (uint64_t) 1 );
 						} else {
 							output->verbose(CALL_INFO, 16, 0, "---> LSQ LLSC-STORE ins: 0x%llx / addr: 0x%llx rt: %" PRIu16 " <- 0 (failed)\n",
 								store_ins->getInstructionAddress(), ev->addr, value_reg );
-							registerFiles->at( store_ins->getHWThread() )->setIntReg( value_reg, (uint64_t) 0 );
+							registerFiles->at( store_ins->getHWThread() )->setIntReg<uint64_t>( value_reg, (uint64_t) 0 );
 						}
 					}
 					break;
@@ -655,6 +698,13 @@ public:
 			addr, (uint64_t) payload.size() );
 		memInterface->sendInitData( new SimpleMem::Request( SimpleMem::Request::Write, addr,
 			payload.size(), payload) );
+
+		if( fault_on_memory_not_written ) {
+			// Mark every byte which we are initializing
+			for( uint64_t i = addr; i < (addr + payload.size()); ++i ) {
+				memory_check_table->markByte( i );
+			}
+		}
 	}
 
 protected:
@@ -707,6 +757,11 @@ protected:
 	FILE* address_trace_file;
 
 	bool allow_speculated_operations;
+	bool fault_on_memory_not_written;
+
+	uint64_t flag_non_written_loads_count;
+
+	VanadisMemoryWrittenRecord* memory_check_table;
 
 };
 

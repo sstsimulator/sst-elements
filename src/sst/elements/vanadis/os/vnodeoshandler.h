@@ -13,6 +13,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "os/memmgr/vmemmgr.h"
+
 #include "os/callev/voscallall.h"
 #include "os/resp/voscallresp.h"
 #include "os/resp/vosexitresp.h"
@@ -28,6 +30,7 @@
 #include "os/node/vnodeosreadlink.h"
 #include "os/node/vnodeosaccessh.h"
 #include "os/node/vnodeosbrk.h"
+#include "os/node/vnodemmaph.h"
 #include "os/node/vnodenoactionh.h"
 
 #include "util/vlinesplit.h"
@@ -411,12 +414,17 @@ public:
 					ioctl_ev->getDataLength(), ioctl_ev->getIOOperation(),
 					ioctl_ev->getIODriver() );
 
-				if( 1 == ioctl_ev->getFileDescriptor() ) {
-					VanadisSyscallResponse* resp = new VanadisSyscallResponse( 0 );
-        	                        core_link->send( resp );
-				} else {
-					output->fatal(CALL_INFO, -1, "Not implemented\n");
-				}
+				//if( 1 == ioctl_ev->getFileDescriptor() ) {
+				//	VanadisSyscallResponse* resp = new VanadisSyscallResponse( 0 );
+        	                //        core_link->send( resp );
+				//} else {
+				//	output->fatal(CALL_INFO, -1, "Not implemented\n");
+				//}
+
+				VanadisSyscallResponse* resp = new VanadisSyscallResponse( -25 );
+				resp->markFailed();
+
+				core_link->send( resp );
 			}
 			break;
 
@@ -441,7 +449,7 @@ public:
 		case SYSCALL_OP_GETTIME64:
 			{
 				VanadisSyscallGetTime64Event* gettime_ev = dynamic_cast< VanadisSyscallGetTime64Event* >( sys_ev );
-				output->verbose(CALL_INFO, 16, 0, "[syscall-gettime64] gettime64( %" PRId64 ", %" PRIu64 " )\n",
+				output->verbose(CALL_INFO, 16, 0, "[syscall-gettime64] gettime64( %" PRId64 ", 0x%llx )\n",
 					gettime_ev->getClockType(), gettime_ev->getTimeStructAddress() );
 
 				handler_state = new VanadisNoActionHandlerState( output->getVerboseLevel(), 0 );
@@ -449,6 +457,9 @@ public:
 				uint64_t sim_time_ns = getSimTimeNano();
 				uint32_t sim_seconds = (uint32_t)(sim_time_ns / 1000000000);
 				uint32_t sim_ns      = (uint32_t)(sim_time_ns % 1000000000);
+
+				output->verbose(CALL_INFO, 16, 0, "[syscall-gettime64] --> sim-time: %" PRIu64 " ns -> %" PRIu32 " secs + %" PRIu32 " ns\n",
+					sim_time_ns, sim_seconds, sim_ns);
 
 				std::vector<uint8_t> time_payload;
 				time_payload.resize(sizeof(sim_seconds) + sizeof(sim_ns));
@@ -464,6 +475,36 @@ public:
 				}
 
 				sendBlockToMemory( gettime_ev->getTimeStructAddress(), time_payload );
+			}
+			break;
+
+		case SYSCALL_OP_MMAP:
+			{
+				VanadisSyscallMemoryMapEvent* mmap_ev = dynamic_cast< VanadisSyscallMemoryMapEvent* >( sys_ev );
+				assert( mmap_ev != NULL );
+
+				output->verbose(CALL_INFO, 16, 0, "[syscall-mmap] --> \n");
+
+				uint64_t map_address = mmap_ev->getAllocationAddress();
+				uint64_t map_length  = mmap_ev->getAllocationLength();
+				int64_t  map_protect = mmap_ev->getProtectionFlags();
+				int64_t  map_flags   = mmap_ev->getAllocationFlags();
+				uint64_t call_stack  = mmap_ev->getStackPointer();
+				uint64_t map_offset_units = mmap_ev->getOffsetUnits();
+
+				std::function<void(SimpleMem::Request*)> send_req_func = std::bind(
+                                                                &VanadisNodeOSCoreHandler::sendMemRequest, this, std::placeholders::_1 );
+				std::function<void(const uint64_t, std::vector<uint8_t>&)> send_block_func = std::bind(
+                                                &VanadisNodeOSCoreHandler::sendBlockToMemory, this, std::placeholders::_1, std::placeholders::_2 );
+
+				handler_state = new VanadisMemoryMapHandlerState( output->getVerboseLevel(),
+					map_address, map_length, map_protect, map_flags, call_stack, map_offset_units,
+					send_req_func, send_block_func, memory_mgr);
+
+				// need to read in the file descriptor so get a memory read in place
+				// file descriptor is the 5th argument (each is 4 bytes, so 5 * 4)
+				sendMemRequest( new SimpleMem::Request( SimpleMem::Request::Read,
+                                        call_stack + 4 * 4, 4 ) );
 			}
 			break;
 
@@ -631,6 +672,10 @@ public:
 		getSimTimeNano = sim_time;
 	}
 
+	void setMemoryManager( VanadisMemoryManager* mem_m ) {
+		memory_mgr = mem_m;
+	}
+
 protected:
 	std::function<void( SimpleMem::Request* )> handlerSendMemCallback;
 	std::function<void( SimpleMem::Request*, uint32_t )> sendMemEventCallback;
@@ -639,6 +684,7 @@ protected:
 	std::unordered_set< SimpleMem::Request::id_t > pending_mem;
 	std::unordered_map<uint32_t, VanadisOSFileDescriptor*> file_descriptors;
 
+	VanadisMemoryManager* memory_mgr;
 	VanadisHandlerState* handler_state;
 
 	SST::Link* core_link;

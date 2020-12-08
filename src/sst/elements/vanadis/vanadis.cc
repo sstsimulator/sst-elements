@@ -189,6 +189,14 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 		thread_decoders[i]->getInstructionLoader()->setMemoryInterface( memInstInterface );
 	}
 
+	lsq = loadUserSubComponent<SST::Vanadis::VanadisLoadStoreQueue>("lsq");
+
+	if( nullptr == lsq ) {
+		output->fatal(CALL_INFO, -1, "Error - unable to load the load-store queue (lsq subcomponent)\n");
+	}
+
+	lsq->setRegisterFiles( &register_files );
+
 	if( 0 == core_id ) {
 		halted_masks[0] = false;
 		uint64_t initial_config_ip = thread_decoders[0]->getInstructionPointer();
@@ -206,7 +214,7 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 
 		output->verbose(CALL_INFO, 8, 0, "Configuring core-0, thread-0 application info...\n");
 		thread_decoders[0]->configureApplicationLaunch( output, issue_isa_tables[0], register_files[0],
-			memInstInterface, binary_elf_info, app_params );
+			lsq, binary_elf_info, app_params );
 
 		// Force retire table to sync with issue table
 		retire_isa_tables[0]->reset( issue_isa_tables[0] );
@@ -364,15 +372,6 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
     			output->fatal(CALL_INFO, -1, "Failed to open pipeline trace file.\n");
     		}
     	}
-
-	lsq = loadUserSubComponent<SST::Vanadis::VanadisLoadStoreQueue>("lsq");
-
-	if( nullptr == lsq ) {
-		output->fatal(CALL_INFO, -1, "Error - unable to load the load-store queue (lsq subcomponent)\n");
-	}
-
-	lsq->setRegisterFiles( &register_files );
-
 
 	// Register statistics ///////////////////////////////////////////////////////
 	stat_ins_retired   = registerStatistic<uint64_t>( "instructions_retired", "1" );
@@ -625,6 +624,11 @@ int VanadisComponent::performRetire( VanadisCircularQueue<VanadisInstruction*>* 
 	
 	// Instruction is flagging error, print out and halt
 	if( rob_front->trapsError() ) {
+		output->verbose(CALL_INFO, 4, 0, "Error has detected in retired instruction. Retired register status:\n");
+
+		retire_isa_tables[rob_front->getHWThread()]->print(output,
+                                        register_files[rob_front->getHWThread()], print_int_reg, print_fp_reg);
+
 		output->fatal( CALL_INFO, -1, "Instruction 0x%llx flags an error (instruction-type=%s)\n",
 			rob_front->getInstructionAddress(), rob_front->getInstCode() );
 	}
@@ -1373,7 +1377,7 @@ void VanadisComponent::finish() {
 
 void VanadisComponent::printStatus( SST::Output& output ) {
 	output.verbose(CALL_INFO, 0, 0, "----------------------------------------------------------------------------------------------------------------------------\n");
-	output.verbose(CALL_INFO, 0, 0, "Vanadis (Core: %" PRIu16 " / Threads: %" PRIu16 " / cycle: %" PRIu64 " / max-cycle: %" PRIu64 ")\n",
+	output.verbose(CALL_INFO, 0, 0, "Vanadis (Core: %" PRIu16 " / Threads: %" PRIu32 " / cycle: %" PRIu64 " / max-cycle: %" PRIu64 ")\n",
 		core_id, hw_threads, current_cycle, max_cycle);
 	output.verbose(CALL_INFO, 0, 0, "\n");
 
@@ -1384,7 +1388,7 @@ void VanadisComponent::printStatus( SST::Output& output ) {
 		for( size_t i = next_rob->size(); i > 0; i-- ) {
 			VanadisInstruction* next_ins = next_rob->peekAt(i-1);
 			output.verbose(CALL_INFO, 0, 0, "---> rob[%5" PRIu16 "]: addr: 0x%08llx / %10s / spec: %3s / err: %3s / issued: %3s / front: %3s / exe: %3s\n",
-				(uint16_t) i-1,
+				(uint16_t) (i-1),
 				next_ins->getInstructionAddress(), next_ins->getInstCode(),
 				next_ins->isSpeculated() ? "yes" : "no",
 				next_ins->trapsError() ? "yes" : "no",
