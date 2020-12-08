@@ -86,7 +86,7 @@ public:
         const uint32_t width = 16;
         contentsOut.output("MemHierarchy::BackingMMAP Contents\n");
         for( uint32_t i = 0; i < m_size; ) {
-            contentsOut.output( "%" PRIx32 ": ", i );
+            contentsOut.output( "%" PRIx32 ":\t", i );
             for( uint32_t j = i; j < i + width; ++j ) {
                 contentsOut.output( "%" PRIx32 " ", uint32_t(m_buffer[j - m_offset]) );
             }
