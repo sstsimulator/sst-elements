@@ -27,7 +27,7 @@ num_add = (k - 1) * (m * n)
 num_store = m * n
 
 pe_string_pre = "tempPE = new"
-pe_string_app = "queueDepth, lsqueue, mem_interface"
+pe_string_app = "llyr_config"
 
 vertex_string_pre = "graphOut.addVertex"
 vertex_string_app = "tempPE"
@@ -51,7 +51,7 @@ if( debug == 1 ):
 file = open("gemm.out", "wb")
 
 #create dummy
-file.write("ProcessingElement* tempPE = new DummyProcessingElement(DUMMY, 0, 0, lsqueue, mem_interface);\n")
+file.write("ProcessingElement* tempPE = new DummyProcessingElement(DUMMY, 0, llyr_config);\n")
 file.write("graphOut.addVertex( 0, tempPE );\n")
 file.write("\n")
 
@@ -73,7 +73,6 @@ for counter in range( 0, num_mul ):
     pe_num = pe_num + 1
 
 # write add
-global add_start
 add_start = pe_num
 for counter in range( 0, num_add ):
     write_pe( "IntProcessingElement", "ADD", pe_num )
@@ -103,7 +102,7 @@ b_end = b_start + ((k * n) - 1)
 b_next = b_start
 if( debug == 1 ):
     print("LD-MUL  A:%s-%s B:%s-%s\n" % (a_start, a_end, b_start, b_end))
-    #file.write("LD-MUL  A:%s-%s B:%s-%s\n" % (a_start, a_end, b_start, b_end))
+    file.write("LD-MUL  A:%s-%s B:%s-%s\n" % (a_start, a_end, b_start, b_end))
 
 mul_pe_dict = defaultdict(list)
 add_pe_list = []
@@ -147,9 +146,11 @@ for key in mul_pe_dict.keys():
 
 # connect adds to muls
 test = []
-#file.write("MUL-ADD  A:%s-%s B:%s-%s\n" % (a_start, a_end, b_start, b_end))
+if( debug == 1 ):
+    file.write("MUL-ADD  A:%s-%s B:%s-%s\n" % (a_start, a_end, b_start, b_end))
 
 def add_tree( boop, next_add ):
+    global add_start
     add_pe_groups = []
     if( len(boop) > 1 ):
         if( debug == 1 ):
@@ -193,7 +194,6 @@ def add_tree( boop, next_add ):
                 if( debug == 1 ):
                     print(x)
 
-        #global add_start
         add_start = next_add
         if( debug == 1 ):
             print(add_pe_groups)
