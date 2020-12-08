@@ -56,8 +56,6 @@ EmberSweep3DGenerator::EmberSweep3DGenerator(SST::ComponentId_t id, Params& para
 		(compute_time_d / node_flops) * NANO_SECONDS);
 
 	assert(nsCompute != 0);
-
-	//configure();
 }
 
 void EmberSweep3DGenerator::configure()
