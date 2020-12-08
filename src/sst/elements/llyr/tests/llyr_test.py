@@ -23,7 +23,7 @@ df_l1cache.addParams({
     "cache_frequency" : str(tile_clk_mhz) + "GHz",
     "replacement_policy" : "lru",
     "coherence_protocol" : "MESI",
-    "associativity" : "4",
+    "associativity" : "8",
     "cache_line_size" : "64",
     "verbose" : 10,
     "debug" : 1,
