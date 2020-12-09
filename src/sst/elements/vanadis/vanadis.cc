@@ -449,29 +449,25 @@ int VanadisComponent::performDecode( const uint64_t cycle ) {
 
 int VanadisComponent::performIssue( const uint64_t cycle ) {
 	// clear the temporary register set that we keep for pending instructions
-    tmp_not_issued_int_reg_read.clear();
-    tmp_int_reg_write.clear();
-    tmp_not_issued_fp_reg_read.clear();
-    tmp_fp_reg_write.clear();
+    	tmp_not_issued_int_reg_read.clear();
+    	tmp_int_reg_write.clear();
+    	tmp_not_issued_fp_reg_read.clear();
+    	tmp_fp_reg_write.clear();
 
-	char* inst_buffer = new char[1024];
-	
 	for( uint32_t i = 0 ; i < hw_threads; ++i ) {
 		if( ! halted_masks[i] ) {
-			issue_isa_tables[i]->print(output, register_files[i], print_int_reg, print_fp_reg);
-		
-			//output->verbose(CALL_INFO, 8, 0, "thread %" PRIu32 " issuing / %" PRIu32 " pending issue\n",
-			//	i, (uint32_t) thread_decoders[i]->getDecodedQueue()->size());
+			if( output->getVerboseLevel() >= 4 ) {
+				issue_isa_tables[i]->print(output, register_files[i], print_int_reg, print_fp_reg);
+			}
 
 			bool found_store = false;
 			bool found_load  = false;
-			
 			bool issued_an_ins = false;
-			
+
 			// Find the next instruction which has not been issued yet
 			for( uint32_t j = 0; j < rob[i]->size(); ++j ) {
 				VanadisInstruction* ins = rob[i]->peekAt(j);
-				
+
 				if( ! ins->completedIssue() ) {
 					if( output->getVerboseLevel() >= 8 ) {
 						ins->printToBuffer(instPrintBuffer, 1024);
@@ -483,10 +479,10 @@ int VanadisComponent::performIssue( const uint64_t cycle ) {
 						fp_register_stacks[i], issue_isa_tables[i],
 						tmp_not_issued_int_reg_read, tmp_int_reg_write,
 						tmp_not_issued_fp_reg_read, tmp_fp_reg_write);
-						
+
 					output->verbose(CALL_INFO, 8, 0, "----> Check if registers are usable? result: %d (%s)\n",
 						resource_check, (0 == resource_check) ? "success" : "cannot issue");
-						
+
 					if( 0 == resource_check ) {
 						if( (INST_STORE == ins->getInstFuncType()) && (found_load || found_store) ) {
 								// We cannot issue 
@@ -495,10 +491,10 @@ int VanadisComponent::performIssue( const uint64_t cycle ) {
 									// We cannot issue
 							} else {
 								const int allocate_fu = allocateFunctionalUnit( ins );
-									
+
 								output->verbose(CALL_INFO, 8, 0, "----> allocated functional unit: %s\n",
 									(0 == allocate_fu) ? "yes" : "no");
-							
+
 								if( 0 == allocate_fu ) {
 									const int status = assignRegistersToInstruction(
 										thread_decoders[i]->countISAIntReg(),
@@ -521,23 +517,23 @@ int VanadisComponent::performIssue( const uint64_t cycle ) {
 							}
 						}
 					}
-					
+
 					// if the instruction is *not* issued yet, we need to keep track
 					// of which instructions are being read
 					for( uint16_t k = 0; k < ins->countISAIntRegIn(); ++k ) {
 						tmp_not_issued_int_reg_read.insert( ins->getISAIntRegIn(k) );
 					}
-				
+
 					for( uint16_t k = 0; k < ins->countISAFPRegIn(); ++k ) {
 						tmp_not_issued_fp_reg_read.insert( ins->getISAFPRegIn(k) );
 					}
 				}
-				
+
 				// Collect up all integer registers we write to
 				for( uint16_t k = 0; k < ins->countISAIntRegOut(); ++k ) {
 					tmp_int_reg_write.insert( ins->getISAIntRegOut(k) );
 				}
-				
+
 				// Collect up all fp registers we write to
 				for( uint16_t k = 0; k < ins->countISAFPRegOut(); ++k ) {
 					tmp_fp_reg_write.insert( ins->getISAFPRegOut(k) );
@@ -548,14 +544,14 @@ int VanadisComponent::performIssue( const uint64_t cycle ) {
 				// yet and so we could get an ordering violation in the memory system
 				found_store |= (INST_STORE == ins->getInstFuncType()) && (! ins->completedIssue());
 				found_load  |= (INST_LOAD  == ins->getInstFuncType()) && (! ins->completedIssue());
-				
+
 				// Keep track of whether we have seen any fences, we just ensure we
 				// cannot issue load/stores until fences complete
 				if( INST_FENCE == ins->getInstFuncType() ) {
 					found_store = true;
 					found_load  = true;
 				}
-				
+
 				// We issued an instruction this cycle, so exit
 				if( issued_an_ins ) {
 					break;
@@ -571,9 +567,7 @@ int VanadisComponent::performIssue( const uint64_t cycle ) {
 			output->verbose(CALL_INFO, 8, 0, "thread %" PRIu32 " is halted, did not process for issue this cycle.\n", i);
 		}
 	}
-	
-	delete[] inst_buffer;
-	
+
 	return 0;
 }
 
