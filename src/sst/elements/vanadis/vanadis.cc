@@ -713,7 +713,6 @@ int VanadisComponent::performRetire( VanadisCircularQueue<VanadisInstruction*>* 
 						
 				if( perform_pipeline_clear ) {
 //					if( spec_ins->endsMicroOpGroup() ) {
-						stat_branch_mispredicts->addData(1);
 //					}
 				}
 			}
@@ -731,12 +730,6 @@ int VanadisComponent::performRetire( VanadisCircularQueue<VanadisInstruction*>* 
 				fprintf( pipelineTrace, "0x%08llx %s\n",
 					rob_front->getInstructionAddress(), rob_front->getInstCode() );
 			}
-			
-			//if( INST_SYSCALL == rob_front->getInstFuncType() ) {
-			//	output->verbose(CALL_INFO, 8, 0, "----> perform a syscall pipeline clear thread %" PRIu32 ", reset to address: 0x%llx\n",
-			//			rob_front->getHWThread(), rob_front->getInstructionAddress() + 4 );
-			//	handleMisspeculate( rob_front->getHWThread(), rob_front->getInstructionAddress() + 4 );
-			//} else {
 				recoverRetiredRegisters( rob_front, int_register_stacks[rob_front->getHWThread()],
 					fp_register_stacks[rob_front->getHWThread()],
 					issue_isa_tables[rob_front->getHWThread()],
@@ -776,8 +769,9 @@ int VanadisComponent::performRetire( VanadisCircularQueue<VanadisInstruction*>* 
 					output->verbose(CALL_INFO, 8, 0, "----> perform a pipeline clear thread %" PRIu32 ", reset to address: 0x%llx\n",
 						rob_front->getHWThread(), pipeline_reset_addr);
 					handleMisspeculate( rob_front->getHWThread(), pipeline_reset_addr );
+
+					stat_branch_mispredicts->addData(1);
 				}
-			//}
 
 			delete rob_front;
 		}
