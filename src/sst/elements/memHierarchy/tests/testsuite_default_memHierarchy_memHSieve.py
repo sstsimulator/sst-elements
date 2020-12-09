@@ -139,14 +139,30 @@ class testcase_memHierarchy_memHSieve(SSTTestCase):
         ######
         # Test Statistics
         stats_good = True
-        statfilepath = "{0}/StatisticOutput.csv".format(testMemHSieveDir)
-        stats_list = [" ReadHits", " ReadMisses", " WriteHits", "WriteMisses", \
+        pattern = "StatisticOutput*.csv"
+        stats_list = [" ReadHits", " ReadMisses", " WriteHits", " WriteMisses", \
                       " UnassociatedReadMisses", " UnassociatedWriteMisses"]
+        # Look at each of the statnames in the list and if the statname exists in
+        # at least one of files; also, if it exists is the data correct?
         for statname in stats_list:
-            stat_check_result = self._sieve_check_stat(statfilepath, statname)
-            if stat_check_result == False:
+            statnamefoundinfile = False
+            for filename in os.listdir(testMemHSieveDir):
+                if fnmatch.fnmatch(filename, pattern):
+                    statfilepath = "{0}/{1}".format(testMemHSieveDir, filename)
+                    # See if stat exists in the file
+                    stat_check_result = self._sieve_check_stat_exists(statfilepath, statname)
+                    if stat_check_result == True:
+                        statnamefoundinfile = True
+                        # Its found, now check its data fields
+                        stat_check_result = self._sieve_check_stat_data(statfilepath, statname)
+                        if stat_check_result == False:
+                            stats_good = False
+                            TestFailureMsg += "Statistic '{0}' in file {1} contains a 0 in one of last 3 fields; ".format(statname, statfilepath)
+
+            # Check to see if stat name found in file
+            if statnamefoundinfile == False:
                 stats_good = False
-                TestFailureMsg += "Statistic '{0}' in file {1} contains a 0 in one of last 3 fields or does not exist; ".format(statname, statfilepath)
+                TestFailureMsg += "Statistic '{0}' Not found in any statistics file; ".format(statname, statfilepath)
         TestPassed &= stats_good
 
         ######
@@ -199,7 +215,8 @@ class testcase_memHierarchy_memHSieve(SSTTestCase):
 
 ###
 
-    def _sieve_check_stat(self, statfile, stattocheck):
+    def _sieve_check_stat_exists(self, statfile, stattocheck):
+        # Verify that a stat exists in the file
         rtn_result = True
         found_row = False
         with open(statfile, 'rb') as csvfile:
@@ -207,15 +224,24 @@ class testcase_memHierarchy_memHSieve(SSTTestCase):
             for row in statreader:
                 if stattocheck in row:
                     found_row = True
-                    log("*** Found Stat {0} in {1}; Last 3 Data Fields = {2}, {3}, {4}".format(stattocheck, statfile, int(row[-3]), int(row[-2]), int(row[-1])))
-                    rtn_result &= int(row[-3]) != 0
-                    rtn_result &= int(row[-2]) != 0
-                    rtn_result &= int(row[-1]) != 0
-
+                    break
         # Final eval to ensure we found the row
         rtn_result &= found_row
         return rtn_result
 
+    def _sieve_check_stat_data(self, statfile, stattocheck):
+        # Verify that the last 3 fields of the stat data is != 0
+        rtn_result = True
+        with open(statfile, 'rb') as csvfile:
+            statreader = csv.reader(csvfile, delimiter=',')
+            for row in statreader:
+                if stattocheck in row:
+                    log_debug("*** Found Stat {0} in {1}; Last 3 Data Fields = {2}, {3}, {4}".format(stattocheck, statfile, int(row[-3]), int(row[-2]), int(row[-1])))
+                    rtn_result &= int(row[-3]) != 0
+                    rtn_result &= int(row[-2]) != 0
+                    rtn_result &= int(row[-1]) != 0
+                    break
+        return rtn_result
 
 
 
