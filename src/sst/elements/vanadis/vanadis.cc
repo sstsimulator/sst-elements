@@ -473,11 +473,13 @@ int VanadisComponent::performIssue( const uint64_t cycle ) {
 				VanadisInstruction* ins = rob[i]->peekAt(j);
 				
 				if( ! ins->completedIssue() ) {
-					ins->printToBuffer(instPrintBuffer, 1024);
-					output->verbose(CALL_INFO, 8, 0, "--> Attempting issue for: rob[%" PRIu32 "]: 0x%llx / %s\n",
-						j, ins->getInstructionAddress(), instPrintBuffer );
-						
-					const int resource_check = checkInstructionResources( ins, int_register_stacks[i], 
+					if( output->getVerboseLevel() >= 8 ) {
+						ins->printToBuffer(instPrintBuffer, 1024);
+						output->verbose(CALL_INFO, 8, 0, "--> Attempting issue for: rob[%" PRIu32 "]: 0x%llx / %s\n",
+							j, ins->getInstructionAddress(), instPrintBuffer );
+					}
+
+					const int resource_check = checkInstructionResources( ins, int_register_stacks[i],
 						fp_register_stacks[i], issue_isa_tables[i],
 						tmp_not_issued_int_reg_read, tmp_int_reg_write,
 						tmp_not_issued_fp_reg_read, tmp_fp_reg_write);
@@ -506,10 +508,12 @@ int VanadisComponent::performIssue( const uint64_t cycle ) {
 										fp_register_stacks[i],
 										issue_isa_tables[i]);
 
-									ins->printToBuffer(instPrintBuffer, 1024);
-									output->verbose(CALL_INFO, 8, 0, "----> Issued for: %s / 0x%llx / status: %d\n", instPrintBuffer,
-										ins->getInstructionAddress(), status);
-								
+									if( output->getVerboseLevel() >= 8 ) {
+										ins->printToBuffer(instPrintBuffer, 1024);
+										output->verbose(CALL_INFO, 8, 0, "----> Issued for: %s / 0x%llx / status: %d\n", instPrintBuffer,
+											ins->getInstructionAddress(), status);
+									}
+
 									ins->markIssued();
 									stat_ins_issued->addData(1);
 									issued_an_ins = true;
@@ -558,7 +562,7 @@ int VanadisComponent::performIssue( const uint64_t cycle ) {
 				}
 			}
 
-			// Only print the table if we issued an instruction, reduce print out 
+			// Only print the table if we issued an instruction, reduce print out
 			// clutter
 			if( issued_an_ins ) {
 				issue_isa_tables[i]->print(output, register_files[i], print_int_reg, print_fp_reg);
@@ -601,27 +605,30 @@ int VanadisComponent::performExecute( const uint64_t cycle ) {
 }
 
 int VanadisComponent::performRetire( VanadisCircularQueue<VanadisInstruction*>* rob, const uint64_t cycle ) {
-	output->verbose(CALL_INFO, 8, 0, "-- ROB: %" PRIu32 " out of %" PRIu32 " entries:\n",
-		(uint32_t) rob->size(), (uint32_t) rob->capacity() );
-//	for( int j = std::min(3, (int) rob->size() - 1); j >= 0; --j ) {
-	for( int j = (int) rob->size() - 1; j >= 0; --j ) {
-		output->verbose(CALL_INFO, 8, 0, "----> ROB[%2d]: ins: 0x%016llx / %10s / error: %3s / issued: %3s / spec: %3s / rob-front: %3s / exe: %3s\n",
-			j, rob->peekAt(j)->getInstructionAddress(), rob->peekAt(j)->getInstCode(),
-			rob->peekAt(j)->trapsError() ? "yes" : "no", 
-			rob->peekAt(j)->completedIssue() ? "yes" : "no",
-			rob->peekAt(j)->isSpeculated() ? "yes" : "no", 
-			rob->peekAt(j)->checkFrontOfROB() ? "yes" : "no",
-			rob->peekAt(j)->completedExecution() ? "yes" : "no" );
+
+	if( output->getVerboseLevel() >= 8 ) {
+		output->verbose(CALL_INFO, 8, 0, "-- ROB: %" PRIu32 " out of %" PRIu32 " entries:\n",
+			(uint32_t) rob->size(), (uint32_t) rob->capacity() );
+
+		for( int j = (int) rob->size() - 1; j >= 0; --j ) {
+			output->verbose(CALL_INFO, 8, 0, "----> ROB[%2d]: ins: 0x%016llx / %10s / error: %3s / issued: %3s / spec: %3s / rob-front: %3s / exe: %3s\n",
+				j, rob->peekAt(j)->getInstructionAddress(), rob->peekAt(j)->getInstCode(),
+				rob->peekAt(j)->trapsError() ? "yes" : "no",
+				rob->peekAt(j)->completedIssue() ? "yes" : "no",
+				rob->peekAt(j)->isSpeculated() ? "yes" : "no",
+				rob->peekAt(j)->checkFrontOfROB() ? "yes" : "no",
+				rob->peekAt(j)->completedExecution() ? "yes" : "no" );
+		}
 	}
-	
+
 	// if empty, nothing to do here
 	if( rob->empty() ) {
 		return 0;
 	}
-	
+
 	VanadisInstruction* rob_front = rob->peek();
 	bool perform_pipeline_clear = false;
-	
+
 	// Instruction is flagging error, print out and halt
 	if( rob_front->trapsError() ) {
 		output->verbose(CALL_INFO, 4, 0, "Error has detected in retired instruction. Retired register status:\n");
@@ -632,13 +639,13 @@ int VanadisComponent::performRetire( VanadisCircularQueue<VanadisInstruction*>* 
 		output->fatal( CALL_INFO, -1, "Instruction 0x%llx flags an error (instruction-type=%s)\n",
 			rob_front->getInstructionAddress(), rob_front->getInstCode() );
 	}
-	
+
 	if( rob_front->completedIssue() && rob_front->completedExecution() ) {
 		bool perform_cleanup         = true;
 		bool perform_delay_cleanup   = false;
 		bool perform_pipelne_clear   = false;
 		uint64_t pipeline_reset_addr = 0;
-	
+
 		if( rob_front->isSpeculated() ) {
 			output->verbose(CALL_INFO, 8, 0, "--> instruction is speculated\n");
 			VanadisSpeculatedInstruction* spec_ins = dynamic_cast<VanadisSpeculatedInstruction*>( rob_front );
@@ -646,11 +653,11 @@ int VanadisComponent::performRetire( VanadisCircularQueue<VanadisInstruction*>* 
 			if( nullptr == spec_ins ) {
 				output->fatal(CALL_INFO, -1, "Error - instruction is speculated, but not able to perform a cast to a speculated instruction.\n");
 			}
-			
+
 //			if( rob_front->endsMicroOpGroup() ) {
 				stat_branches->addData(1);
 //			}
-			
+
 			switch( spec_ins->getDelaySlotType() ) {
 			case VANADIS_SINGLE_DELAY_SLOT:
 			case VANADIS_CONDITIONAL_SINGLE_DELAY_SLOT:

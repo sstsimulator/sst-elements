@@ -452,29 +452,39 @@ public:
 				output->verbose(CALL_INFO, 16, 0, "[syscall-gettime64] gettime64( %" PRId64 ", 0x%llx )\n",
 					gettime_ev->getClockType(), gettime_ev->getTimeStructAddress() );
 
+				// Need to do a handler state to force memory writes to complete before we return
 				handler_state = new VanadisNoActionHandlerState( output->getVerboseLevel(), 0 );
 
 				uint64_t sim_time_ns = getSimTimeNano();
-				uint32_t sim_seconds = (uint32_t)(sim_time_ns / 1000000000);
-				uint32_t sim_ns      = (uint32_t)(sim_time_ns % 1000000000);
+				uint64_t sim_seconds = (uint64_t)( sim_time_ns / 1000000000ULL );
+				uint32_t sim_ns      = (uint32_t)( sim_time_ns % 1000000000ULL );
 
-				output->verbose(CALL_INFO, 16, 0, "[syscall-gettime64] --> sim-time: %" PRIu64 " ns -> %" PRIu32 " secs + %" PRIu32 " ns\n",
+				output->verbose(CALL_INFO, 16, 0, "[syscall-gettime64] --> sim-time: %" PRIu64 " ns -> %" PRIu32 " secs + %" PRIu32 " us\n",
 					sim_time_ns, sim_seconds, sim_ns);
 
-				std::vector<uint8_t> time_payload;
-				time_payload.resize(sizeof(sim_seconds) + sizeof(sim_ns));
+				std::vector<uint8_t> seconds_payload;
+				seconds_payload.resize( sizeof(sim_seconds), 0 );
+
 				uint8_t* sec_ptr    = (uint8_t*) &sim_seconds;
-				uint8_t* ns_ptr     = (uint8_t*) &sim_ns;
-
 				for( size_t i = 0; i < sizeof(sim_seconds); ++i ) {
-					time_payload[i] = sec_ptr[i];
+					seconds_payload[i] = sec_ptr[i];
 				}
 
+				sendMemRequest( new SimpleMem::Request( SimpleMem::Request::Write,
+					gettime_ev->getTimeStructAddress(), sizeof(sim_seconds),
+					seconds_payload ) );
+
+				std::vector<uint8_t> ns_payload;
+				ns_payload.resize( sizeof( sim_ns ), 0 );
+
+				uint8_t* ns_ptr     = (uint8_t*) &sim_ns;
 				for( size_t i = 0; i < sizeof(sim_ns); ++i ) {
-					time_payload[i + sizeof(sim_seconds)] = ns_ptr[i];
+					ns_payload[i] = ns_ptr[i];
 				}
 
-				sendBlockToMemory( gettime_ev->getTimeStructAddress(), time_payload );
+				sendMemRequest( new SimpleMem::Request( SimpleMem::Request::Write,
+					gettime_ev->getTimeStructAddress() + sizeof(sim_seconds), sizeof(sim_ns),
+					ns_payload ) );
 			}
 			break;
 

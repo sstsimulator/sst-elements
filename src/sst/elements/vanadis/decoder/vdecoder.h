@@ -49,7 +49,7 @@ public:
 		icache_line_width = params.find<uint64_t>("icache_line_width", 64);
 
 		const size_t uop_cache_size          = params.find<size_t>("uop_cache_entries", 128);
-		const size_t predecode_cache_entries = params.find<size_t>("predecode_cache_entries", 32);
+		const size_t predecode_cache_entries = params.find<size_t>("predecode_cache_entries", 4);
 
 		ins_loader = new VanadisInstructionLoader( uop_cache_size, predecode_cache_entries, icache_line_width );
 

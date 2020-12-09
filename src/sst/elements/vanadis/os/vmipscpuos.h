@@ -380,7 +380,7 @@ public:
                                 const uint16_t phys_reg_5 = isaTable->getIntPhysReg(5);
                                 uint64_t time_addr = regFile->getIntReg<uint64_t>( phys_reg_5 );
 
-				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to clock_gettime64( %" PRId64 ", %" PRIu64 " )\n",
+				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to clock_gettime64( %" PRId64 ", 0x%llx )\n",
 					clk_type, time_addr );
 
 				call_ev = new VanadisSyscallGetTime64Event( core_id, hw_thr, clk_type, time_addr );
