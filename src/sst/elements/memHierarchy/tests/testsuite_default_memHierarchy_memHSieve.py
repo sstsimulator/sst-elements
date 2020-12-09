@@ -3,6 +3,8 @@
 from sst_unittest import *
 from sst_unittest_support import *
 import os
+import shutil
+import fnmatch
 
 ################################################################################
 # Code to support a single instance module initialize, must be called setUp method
@@ -17,6 +19,7 @@ def initializeTestModule_SingleInstance(class_inst):
     module_sema.acquire()
     if module_init != 1:
         # Put your single instance Init Code Here
+        class_inst._setup_sieve_test_files()
         module_init = 1
 
     module_sema.release()
@@ -42,32 +45,34 @@ class testcase_memHierarchy_memHSieve(SSTTestCase):
         super(type(self), self).tearDown()
 
 #####
+    # Look to see if PIN is available
+    pindir_found = False
+    pin_path = os.environ.get('INTEL_PIN_DIRECTORY')
+    if pin_path is not None:
+        pindir_found = os.path.isdir(pin_path)
+    log_debug("memHSieve Test - Intel_PIN_Path = {0}; Valid Dir = {1}".format(pin_path, pindir_found))
 
-    @unittest.skipIf(host_os_is_osx(), "memHSieve: Requires PIN, but PIN is not available for OSX")
-    @skip_on_sstsimulator_conf_empty_str("HYBRIDSIM", "LIBDIR", "HYBRIDSIM is not included as part of this build")
+    @unittest.skipIf(not pindir_found, "memHSieve: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
     def test_memHSieve(self):
         self.memHSieve_Template("memHSieve")
 
 #####
 
     def memHSieve_Template(self, testcase):
+
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
         outdir = self.get_test_output_run_dir()
         tmpdir = self.get_test_output_tmp_dir()
 
-        memHElementDir = os.path.abspath("{0}/../".format(test_path))
-
-#    referenceFile="${SST_REFERENCE_ELEMENTS}/memHierarchy/Sieve/tests/refFiles/${testDataFileBase}.out"
-#    csvFile="${SST_ROOT}/sst-elements/src/sst/elements/memHierarchy/Sieve/tests/StatisticOutput.csv"
-#    csvFileBase="${SST_ROOT}/sst-elements/src/sst/elements/memHierarchy/Sieve/tests/StatisticOutput"
-#    outFile="${SST_TEST_OUTPUTS}/${testDataFileBase}.out"
-#    sutArgs="${SST_ROOT}/sst-elements/src/sst/elements/memHierarchy/Sieve/tests/sieve-test.py"
+        MemHElementDir = os.path.abspath("{0}/../".format(test_path))
+        MemHElementSieveTestsDir = "{0}/Sieve/tests".format(self.MemHElementDir)
+        testMemHSieveDir = "{0}/testmemhsieve".format(tmpdir)
 
         # Set the various file paths
         testDataFileName=("test_{0}".format(testcase))
-        sdlfile = "{0}/Sieve/tests/sieve-test.py".format(memHElementDir, testDataFileName)
-        reffile = "{0}/Sieve/tests/refFiles/{1}.out".format(memHElementDir, testDataFileName)
+        sdlfile = "{0}/sieve-test.py".format(MemHElementSieveTestsDir, testDataFileName)
+        reffile = "{0}/refFiles/{1}.out".format(MemHElementSieveTestsDir, testDataFileName)
         outfile = "{0}/{1}.out".format(outdir, testDataFileName)
         errfile = "{0}/{1}.err".format(outdir, testDataFileName)
         mpioutfiles = "{0}/{1}.testfile".format(outdir, testDataFileName)
@@ -79,20 +84,100 @@ class testcase_memHierarchy_memHSieve(SSTTestCase):
         log_debug("err file = {0}".format(errfile))
 
         # Run SST in the tests directory
-        self.run_sst(sdlfile, outfile, errfile, set_cwd=test_path, mpi_out_files=mpioutfiles)
-
-#        testing_remove_component_warning_from_file(outfile)
+        self.run_sst(sdlfile, outfile, errfile, set_cwd=testMemHSieveDir, mpi_out_files=mpioutfiles)
 
         # NOTE: THE PASS / FAIL EVALUATIONS ARE PORTED FROM THE SQE BAMBOO
         #       BASED testSuite_XXX.sh THESE SHOULD BE RE-EVALUATED BY THE
         #       DEVELOPER AGAINST THE LATEST VERSION OF SST TO SEE IF THE
         #       TESTS & RESULT FILES ARE STILL VALID
 
-        # Perform the tests
-        # This test uses DRAMSim2 which dumps data to the error output, we cannot
-        # test for an empty errfile.
-        #self.assertFalse(os_test_file(errfile, "-s"), "hybridsim test {0} has Non-empty Error File {1}".format(testDataFileName, errfile))
+        TestPassed = True
+        TestFailureMsg = ""
 
-#        cmp_result = testing_compare_sorted_diff(testcase, outfile, reffile)
-#        self.assertTrue(cmp_result, "Diffed compared Output file {0} does not match Reference File {1}".format(outfile, reffile))
+        ######
+        # Test if ANY Backtrace files exist
+        # THIS IS THE PIN3 CHECKS
+        pattern = "backtrace_*.txt"
+        file_found = False
+        backtrace_good = False
+        for filename in os.listdir(testMemHSieveDir):
+            if fnmatch.fnmatch(filename, pattern):
+                file_found = True
+                break
+        if file_found == True:
+            backtrace_good = True
+        else:
+            TestFailureMsg += "Did not find any {0} files in directory {1}; ".format(pattern, testMemHSieveDir)
+        TestPassed &= backtrace_good
+
+        ######
+        # Test if ANY mallocRank files to contain words
+        pattern = "mallocRank.txt*"
+        file_found = False
+        mallocrank_good = False
+        for filename in os.listdir(testMemHSieveDir):
+            if fnmatch.fnmatch(filename, pattern):
+                file_found = True
+                break
+        if file_found == True:
+            filepath = "{0}/{1}".format(testMemHSieveDir, filename)
+            file = open(filepath, "rt")
+            data = file.read()
+            words = data.split()
+
+            if len(words) > 0:
+                mallocrank_good = True
+            else:
+                TestFailureMsg += "File {0} does not contain any words; ".format(filepath)
+        else:
+            TestFailureMsg += "Did not find any {0} files in directory {1}; ".format(pattern, testMemHSieveDir)
+        TestPassed &= mallocrank_good
+
+        ######
+        # Test Statistics
+
+        ######
+        # Test Reference File
+
+
+
+        self.assertTrue(TestPassed, TestFailureMsg)
+
+#######################
+
+    def _setup_sieve_test_files(self):
+        # NOTE: This routine is called a single time at module startup, so it
+        #       may have some redunant
+        log_debug("_setup_sieve_test_files() Running")
+        test_path = self.get_testsuite_dir()
+        outdir = self.get_test_output_run_dir()
+        tmpdir = self.get_test_output_tmp_dir()
+
+        self.MemHElementDir = os.path.abspath("{0}/../".format(test_path))
+        self.MemHElementSieveTestsDir = "{0}/Sieve/tests".format(self.MemHElementDir)
+        self.testMemHSieveDir = "{0}/testmemhsieve".format(tmpdir)
+
+        # Create a clean version of the testCramSim Directory
+        if os.path.isdir(self.testMemHSieveDir):
+            shutil.rmtree(self.testMemHSieveDir, True)
+        os.makedirs(self.testMemHSieveDir)
+
+        # Copy the Makefile to the test directory
+        shutil.copy("{0}/Makefile".format(self.MemHElementSieveTestsDir), self.testMemHSieveDir)
+
+        # Create a simlink of the ompsievetest.c file
+        os_symlink_file(self.MemHElementSieveTestsDir, self.testMemHSieveDir, "ompsievetest.c")
+
+        # Now run the make on it
+        cmd = "make"
+        rtn = OSCommand(cmd, set_cwd=self.testMemHSieveDir).run()
+        log_debug("Make result = {0}; output =\n{1}".format(rtn.result(), rtn.output()))
+        self.assertTrue(rtn.result() == 0, "ompsievetest.c failed to compile")
+
+
+
+
+
+
+
 
