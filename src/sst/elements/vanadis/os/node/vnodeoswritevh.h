@@ -57,17 +57,36 @@ public:
 				output->verbose(CALL_INFO, 16, 0, "iovec-data-len: %" PRIu64 "\n",
 					current_iovec_length);
 
-                                if( (base_addr_offset + current_iovec_length) <= 64 ) {
-                                        // we only need to do one read and we are done
-                                        send_mem_req( new SimpleMem::Request( SimpleMem::Request::Read,
-                                                current_iovec_base_addr, current_iovec_length ) );
-                                        state++;
-                                } else {
-                                        send_mem_req( new SimpleMem::Request( SimpleMem::Request::Read,
-                                                current_iovec_base_addr, 64 - base_addr_offset ) );
-                                        state++;
-                                }
+				if( current_iovec_length > 0 ) {
+	                                if( (base_addr_offset + current_iovec_length) <= 64 ) {
+		                        	// we only need to do one read and we are done
+       	                                 	send_mem_req( new SimpleMem::Request( SimpleMem::Request::Read,
+                                                	current_iovec_base_addr, current_iovec_length ) );
+                                        	state++;
+                                	} else {
+                                        	send_mem_req( new SimpleMem::Request( SimpleMem::Request::Read,
+                                                	current_iovec_base_addr, 64 - base_addr_offset ) );
+                                        	state++;
+                                	}
+				} else {
+					current_iovec++;
 
+                                        if( current_iovec < writev_iovec_count ) {
+                                                current_offset = 0;
+
+                                                // Launch the next iovec read
+                                                send_mem_req( new SimpleMem::Request( SimpleMem::Request::Read,
+                                                        writev_iovec_addr + (current_iovec * 8), 4 ) );
+                                                state = 0;
+                                        } else {
+                                                output->verbose(CALL_INFO, 16, 0, "iovec processing is completed.\n");
+                                                printStatus();
+
+                                                state = 3;
+                                                dump_buffer();
+                                                markComplete();
+                                        }
+				}
                         }
                         break;
                 case 2:
@@ -75,9 +94,6 @@ public:
                                 // Write out the payload
 				output->verbose(CALL_INFO, 16, 0, "--> update buffer data-offset: %" PRIu64 " + payload: %" PRIu64 " (iovec-data-len: %" PRIu64 ")\n",
 					current_offset, req->size, current_iovec_length );
-
-//				output->verbose(CALL_INFO, 16, 0, "fwrite output addr: 0x%0llx size: %" PRIu32 "\n",
-//					req->addr, (uint32_t) req->size);
 
 				merge_to_buffer( req->data );
                                 current_offset += req->size;
