@@ -83,7 +83,7 @@ public:
                                                 printStatus();
 
                                                 state = 3;
-                                                dump_buffer();
+						dump_buffer();
                                                 markComplete();
                                         }
 				}
@@ -149,7 +149,11 @@ public:
 			buffer.push_back( payload[i] );
 		}
 
-		print_buffer();
+		//print_buffer();
+	}
+
+	void clear_buffer() {
+		buffer.clear();
 	}
 
 	void dump_buffer() {
