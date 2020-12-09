@@ -5,6 +5,7 @@ from sst_unittest_support import *
 import os
 import shutil
 import fnmatch
+import csv
 
 ################################################################################
 # Code to support a single instance module initialize, must be called setUp method
@@ -76,6 +77,8 @@ class testcase_memHierarchy_memHSieve(SSTTestCase):
         outfile = "{0}/{1}.out".format(outdir, testDataFileName)
         errfile = "{0}/{1}.err".format(outdir, testDataFileName)
         mpioutfiles = "{0}/{1}.testfile".format(outdir, testDataFileName)
+        grep_outfile = "{0}/{1}_grep_lines_23_43.out".format(tmpdir, testDataFileName)
+        grep_reffile = "{0}/{1}_grep_lines_23_43.ref".format(tmpdir, testDataFileName)
 
         log_debug("testcase = {0}".format(testcase))
         log_debug("sdl file = {0}".format(sdlfile))
@@ -135,12 +138,32 @@ class testcase_memHierarchy_memHSieve(SSTTestCase):
 
         ######
         # Test Statistics
+        stats_good = True
+        statfilepath = "{0}/StatisticOutput.csv".format(testMemHSieveDir)
+        stats_list = [" ReadHits", " ReadMisses", " WriteHits", "WriteMisses", \
+                      " UnassociatedReadMisses", " UnassociatedWriteMisses"]
+        for statname in stats_list:
+            stat_check_result = self._sieve_check_stat(statfilepath, statname)
+            if stat_check_result == False:
+                stats_good = False
+                TestFailureMsg += "Statistic '{0}' in file {1} contains a 0 in one of last 3 fields or does not exist; ".format(statname, statfilepath)
+        TestPassed &= stats_good
 
         ######
         # Test Reference File
+        # This will do a grep of both the output file and ref file looking at lines 23- 43
+        cmd = 'grep -w -e \"^.$\" -e \"^..$\" {0} > {1}'.format(outfile, grep_outfile)
+        os.system(cmd)
+        cmd = 'grep -w -e \"^.$\" -e \"^..$\" {0} > {1}'.format(reffile, grep_reffile)
+        os.system(cmd)
 
+        cmp_result = testing_compare_diff(testDataFileName, grep_outfile, grep_reffile)
+        if cmp_result == False:
+                TestFailureMsg += "Diffed grepped (lines 23-43) compared Output file {0} does not match Reference File {1}".format(grep_outfile, grep_reffile)
+        TestPassed &= cmp_result
 
-
+        ######
+        # The final Test Assertion
         self.assertTrue(TestPassed, TestFailureMsg)
 
 #######################
@@ -174,7 +197,24 @@ class testcase_memHierarchy_memHSieve(SSTTestCase):
         log_debug("Make result = {0}; output =\n{1}".format(rtn.result(), rtn.output()))
         self.assertTrue(rtn.result() == 0, "ompsievetest.c failed to compile")
 
+###
 
+    def _sieve_check_stat(self, statfile, stattocheck):
+        rtn_result = True
+        found_row = False
+        with open(statfile, 'rb') as csvfile:
+            statreader = csv.reader(csvfile, delimiter=',')
+            for row in statreader:
+                if stattocheck in row:
+                    found_row = True
+                    log("*** Found Stat {0} in {1}; Last 3 Data Fields = {2}, {3}, {4}".format(stattocheck, statfile, int(row[-3]), int(row[-2]), int(row[-1])))
+                    rtn_result &= int(row[-3]) != 0
+                    rtn_result &= int(row[-2]) != 0
+                    rtn_result &= int(row[-1]) != 0
+
+        # Final eval to ensure we found the row
+        rtn_result &= found_row
+        return rtn_result
 
 
 
