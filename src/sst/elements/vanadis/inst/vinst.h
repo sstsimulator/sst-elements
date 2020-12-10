@@ -282,15 +282,15 @@ public:
 	uint16_t* getISAFPRegIn()    { return isa_fp_regs_in; }
 	uint16_t* getISAFPRegOut()   { return isa_fp_regs_out; }
 
-	uint16_t getPhysIntRegIn(const uint16_t index)  { return phys_int_regs_in[index]; }
-	uint16_t getPhysIntRegOut(const uint16_t index) { return phys_int_regs_out[index]; }
-	uint16_t getISAIntRegIn(const uint16_t index)   { return isa_int_regs_in[index]; }
-	uint16_t getISAIntRegOut(const uint16_t index)  { return isa_int_regs_out[index]; }
+	uint16_t getPhysIntRegIn(const uint16_t index)  const { return phys_int_regs_in[index]; }
+	uint16_t getPhysIntRegOut(const uint16_t index) const { return phys_int_regs_out[index]; }
+	uint16_t getISAIntRegIn(const uint16_t index)   const { return isa_int_regs_in[index]; }
+	uint16_t getISAIntRegOut(const uint16_t index)  const { return isa_int_regs_out[index]; }
 
-	uint16_t getPhysFPRegIn(const uint16_t index)   { return phys_fp_regs_in[index]; }
-	uint16_t getPhysFPRegOut(const uint16_t index)  { return phys_fp_regs_out[index]; }
-	uint16_t getISAFPRegIn(const uint16_t index)    { return isa_fp_regs_in[index]; }
-	uint16_t getISAFPRegOut(const uint16_t index)   { return isa_fp_regs_out[index]; }
+	uint16_t getPhysFPRegIn(const uint16_t index)   const { return phys_fp_regs_in[index]; }
+	uint16_t getPhysFPRegOut(const uint16_t index)  const { return phys_fp_regs_out[index]; }
+	uint16_t getISAFPRegIn(const uint16_t index)    const { return isa_fp_regs_in[index]; }
+	uint16_t getISAFPRegOut(const uint16_t index)   const { return isa_fp_regs_out[index]; }
 
 	void setPhysIntRegIn(const uint16_t index, const uint16_t reg)  { phys_int_regs_in[index] = reg; }
 	void setPhysIntRegOut(const uint16_t index, const uint16_t reg) { phys_int_regs_out[index] = reg; }
