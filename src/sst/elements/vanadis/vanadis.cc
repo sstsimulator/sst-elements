@@ -455,6 +455,7 @@ int VanadisComponent::performIssue( const uint64_t cycle ) {
     	tmp_fp_reg_write.clear();
 
 	const int output_verbosity = output->getVerboseLevel();
+	bool issued_an_ins = false;;
 
 	for( uint32_t i = 0 ; i < hw_threads; ++i ) {
 		if( ! halted_masks[i] ) {
@@ -464,7 +465,7 @@ int VanadisComponent::performIssue( const uint64_t cycle ) {
 
 			bool found_store = false;
 			bool found_load  = false;
-			bool issued_an_ins = false;
+			issued_an_ins = false;
 
 			// Find the next instruction which has not been issued yet
 			for( uint32_t j = 0; j < rob[i]->size(); ++j ) {
@@ -574,7 +575,14 @@ int VanadisComponent::performIssue( const uint64_t cycle ) {
 		}
 	}
 
-	return 0;
+	// if we issued an instruction tell the caller we want to be called again (return 0)
+	if( issued_an_ins ) {
+		return 0;
+	} else {
+		// we didn't issue this time, don't call us again this cycle because we will just repeat the work
+		// and conclude we cannot issue again as well
+		return 1;
+	}
 }
 
 int VanadisComponent::performExecute( const uint64_t cycle ) {
