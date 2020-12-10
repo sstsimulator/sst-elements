@@ -18,8 +18,12 @@ def initializeTestModule_SingleInstance(class_inst):
 
     module_sema.acquire()
     if module_init != 1:
-        # Put your single instance Init Code Here
-        class_inst._setupCramSimTestFiles()
+        try:
+            # Put your single instance Init Code Here
+            class_inst._setupCramSimTestFiles()
+            module_init = 1
+        except:
+            pass
         module_init = 1
 
     module_sema.release()

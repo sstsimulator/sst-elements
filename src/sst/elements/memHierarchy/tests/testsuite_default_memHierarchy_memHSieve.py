@@ -20,10 +20,12 @@ def initializeTestModule_SingleInstance(class_inst):
 
     module_sema.acquire()
     if module_init != 1:
-        # Put your single instance Init Code Here
-        class_inst._setup_sieve_test_files()
+        try:
+            # Put your single instance Init Code Here
+            class_inst._setup_sieve_test_files()
+        except:
+            pass
         module_init = 1
-
     module_sema.release()
 
 ###
