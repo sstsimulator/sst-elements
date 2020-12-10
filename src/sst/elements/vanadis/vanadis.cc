@@ -454,6 +454,8 @@ int VanadisComponent::performIssue( const uint64_t cycle ) {
     	tmp_not_issued_fp_reg_read.clear();
     	tmp_fp_reg_write.clear();
 
+	const int output_verbosity = output->getVerboseLevel();
+
 	for( uint32_t i = 0 ; i < hw_threads; ++i ) {
 		if( ! halted_masks[i] ) {
 			if( output->getVerboseLevel() >= 4 ) {
@@ -469,7 +471,7 @@ int VanadisComponent::performIssue( const uint64_t cycle ) {
 				VanadisInstruction* ins = rob[i]->peekAt(j);
 
 				if( ! ins->completedIssue() ) {
-					if( output->getVerboseLevel() >= 8 ) {
+					if( output_verbosity >= 8 ) {
 						ins->printToBuffer(instPrintBuffer, 1024);
 						output->verbose(CALL_INFO, 8, 0, "--> Attempting issue for: rob[%" PRIu32 "]: 0x%llx / %s\n",
 							j, ins->getInstructionAddress(), instPrintBuffer );
@@ -480,20 +482,24 @@ int VanadisComponent::performIssue( const uint64_t cycle ) {
 						tmp_not_issued_int_reg_read, tmp_int_reg_write,
 						tmp_not_issued_fp_reg_read, tmp_fp_reg_write);
 
-					output->verbose(CALL_INFO, 8, 0, "----> Check if registers are usable? result: %d (%s)\n",
-						resource_check, (0 == resource_check) ? "success" : "cannot issue");
+					if( output_verbosity >= 8 ) {
+						output->verbose(CALL_INFO, 8, 0, "----> Check if registers are usable? result: %d (%s)\n",
+							resource_check, (0 == resource_check) ? "success" : "cannot issue");
+					}
 
 					if( 0 == resource_check ) {
 						if( (INST_STORE == ins->getInstFuncType()) && (found_load || found_store) ) {
-								// We cannot issue 
+								// We cannot issue
 						} else {
 							if( (INST_LOAD == ins->getInstFuncType()) && (found_load || found_store) ) {
 									// We cannot issue
 							} else {
 								const int allocate_fu = allocateFunctionalUnit( ins );
 
-								output->verbose(CALL_INFO, 8, 0, "----> allocated functional unit: %s\n",
-									(0 == allocate_fu) ? "yes" : "no");
+								if( output_verbosity >= 8 ) {
+									output->verbose(CALL_INFO, 8, 0, "----> allocated functional unit: %s\n",
+										(0 == allocate_fu) ? "yes" : "no");
+								}
 
 								if( 0 == allocate_fu ) {
 									const int status = assignRegistersToInstruction(
@@ -504,7 +510,7 @@ int VanadisComponent::performIssue( const uint64_t cycle ) {
 										fp_register_stacks[i],
 										issue_isa_tables[i]);
 
-									if( output->getVerboseLevel() >= 8 ) {
+									if( output_verbosity  >= 8 ) {
 										ins->printToBuffer(instPrintBuffer, 1024);
 										output->verbose(CALL_INFO, 8, 0, "----> Issued for: %s / 0x%llx / status: %d\n", instPrintBuffer,
 											ins->getInstructionAddress(), status);
@@ -1003,15 +1009,16 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 
 int VanadisComponent::checkInstructionResources(
 	VanadisInstruction* ins,
-    VanadisRegisterStack* int_regs,
-    VanadisRegisterStack* fp_regs,
-    VanadisISATable* isa_table,
+    	VanadisRegisterStack* int_regs,
+    	VanadisRegisterStack* fp_regs,
+    	VanadisISATable* isa_table,
 	std::unordered_set<uint16_t>& not_issued_isa_int_regs_read,
-    std::unordered_set<uint16_t>& isa_int_regs_write,
-    std::unordered_set<uint16_t>& not_issued_isa_fp_regs_read,
-    std::unordered_set<uint16_t>& isa_fp_regs_write ) {
+    	std::unordered_set<uint16_t>& isa_int_regs_write,
+    	std::unordered_set<uint16_t>& not_issued_isa_fp_regs_read,
+    	std::unordered_set<uint16_t>& isa_fp_regs_write ) {
 
 	bool resources_good = true;
+	const int output_verbosity = output->getVerboseLevel();
 
 	// We need places to store our output registers
 	resources_good &= (int_regs->unused() >= ins->countISAIntRegOut());
@@ -1025,80 +1032,76 @@ int VanadisComponent::checkInstructionResources(
 
 	// If there are any pending writes against our reads, we can't issue until
 	// they are done
-	for( uint16_t i = 0; i < ins->countISAIntRegIn(); ++i ) {
+	const uint16_t int_reg_in_count = ins->countISAIntRegIn();
+	for( uint16_t i = 0; i < int_reg_in_count; ++i ) {
 		const uint16_t ins_isa_reg = ins->getISAIntRegIn(i);
 		resources_good &= (!isa_table->pendingIntWrites(ins_isa_reg));
 
 		// Check there are no RAW in the pending instruction queue
 		resources_good &= (isa_int_regs_write.find(ins_isa_reg) == isa_int_regs_write.end());
 	}
-	
-	output->verbose(CALL_INFO, 16, 0, "--> Check input integer registers, issue-status: %s\n",
-		(resources_good ? "yes" : "no") );
+
+	if( output_verbosity >= 16 ) {
+		output->verbose(CALL_INFO, 16, 0, "--> Check input integer registers, issue-status: %s\n",
+			(resources_good ? "yes" : "no") );
+	}
 
 	if( ! resources_good ) {
 		return 2;
 	}
 
-	for( uint16_t i = 0; i < ins->countISAFPRegIn(); ++i ) {
+	const uint16_t fp_reg_in_count = ins->countISAFPRegIn();
+	for( uint16_t i = 0; i < fp_reg_in_count; ++i ) {
 		const uint16_t ins_isa_reg = ins->getISAFPRegIn(i);
 		resources_good &= (!isa_table->pendingFPWrites(ins_isa_reg));
 
 		// Check there are no RAW in the pending instruction queue
 		resources_good &= (isa_fp_regs_write.find(ins_isa_reg) == isa_fp_regs_write.end());
 	}
-	
-	output->verbose(CALL_INFO, 16, 0, "--> Check input floating-point registers, issue-status: %s\n",
-		(resources_good ? "yes" : "no") );
+
+	if( output_verbosity >= 16 ) {
+		output->verbose(CALL_INFO, 16, 0, "--> Check input floating-point registers, issue-status: %s\n",
+			(resources_good ? "yes" : "no") );
+	}
 
 	if( ! resources_good ) {
 		return 3;
 	}
-	
-	for( uint16_t i = 0; i < ins->countISAIntRegOut(); ++i ) {
+
+	const uint16_t int_reg_out_count = ins->countISAIntRegOut();
+	for( uint16_t i = 0; i < int_reg_out_count; ++i ) {
 		const uint16_t ins_isa_reg = ins->getISAIntRegOut(i);
 
 		// Check there are no RAW in the pending instruction queue
 		resources_good &= (not_issued_isa_int_regs_read.find(ins_isa_reg) == not_issued_isa_int_regs_read.end());
 	}
-	
-	output->verbose(CALL_INFO, 16, 0, "--> Check output integer registers, issue-status: %s\n",
-		(resources_good ? "yes" : "no") );
+
+	if( output_verbosity >= 16 ) {
+		output->verbose(CALL_INFO, 16, 0, "--> Check output integer registers, issue-status: %s\n",
+			(resources_good ? "yes" : "no") );
+	}
 
 	if( ! resources_good ) {
 		return 4;
 	}
-	
+
+	const uint16_t fp_reg_out_count = ins->countISAFPRegOut();
 	for( uint16_t i = 0; i < ins->countISAFPRegOut(); ++i ) {
 		const uint16_t ins_isa_reg = ins->getISAFPRegOut(i);
 
 		// Check there are no RAW in the pending instruction queue
 		resources_good &= (not_issued_isa_fp_regs_read.find(ins_isa_reg) == not_issued_isa_fp_regs_read.end());
 	}
-	
-	output->verbose(CALL_INFO, 16, 0, "--> Check output floating-point registers, issue-status: %s\n",
-		(resources_good ? "yes" : "no") );
+
+	if( output_verbosity >= 16 ) {
+		output->verbose(CALL_INFO, 16, 0, "--> Check output floating-point registers, issue-status: %s\n",
+			(resources_good ? "yes" : "no") );
+	}
 
 	if( ! resources_good ) {
 		return 5;
 	}
 
-/*
-	// Update RAW table
-	for( uint16_t i = 0; i < ins->countISAIntRegOut(); ++i ) {
-		const uint16_t ins_isa_reg = ins->getISAIntRegOut(i);
-		isa_int_regs_write.insert(ins_isa_reg);
-	}
-	
-	if( ! resources_good ) {
-		return 4;
-	}
-
-	for( uint16_t i = 0; i < ins->countISAFPRegOut(); ++i ) {
-		const uint16_t ins_isa_reg = ins->getISAFPRegOut(i);
-		isa_fp_regs_write.insert(ins_isa_reg);
-	}
-.*/
 	return 0;
 }
 
