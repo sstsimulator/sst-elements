@@ -257,7 +257,7 @@ private:
     FILE* pipelineTrace;
     VanadisELFInfo* binary_elf_info;
     bool handlingSysCall;
-    
+
     Statistic<uint64_t>* stat_ins_retired;
     Statistic<uint64_t>* stat_ins_decoded;
     Statistic<uint64_t>* stat_ins_issued;
@@ -265,7 +265,12 @@ private:
     Statistic<uint64_t>* stat_stores_issued;
     Statistic<uint64_t>* stat_branch_mispredicts;
     Statistic<uint64_t>* stat_branches;
-	Statistic<uint64_t>* stat_cycles;
+    Statistic<uint64_t>* stat_cycles;
+
+    uint32_t ins_issued_this_cycle;
+    uint32_t ins_retired_this_cycle;
+    uint32_t ins_decoded_this_cycle;
+
 };
 
 

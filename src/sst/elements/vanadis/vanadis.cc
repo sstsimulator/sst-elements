@@ -450,17 +450,21 @@ int VanadisComponent::performFetch( const uint64_t cycle ) {
 }
 
 int VanadisComponent::performDecode( const uint64_t cycle ) {
-	
+
 	for( uint32_t i = 0 ; i < hw_threads; ++i ) {
+		const int64_t rob_before_decode = (int64_t) rob[i]->size();
+
 		// If thread is not masked then decode from it
 		if( ! halted_masks[i] ) {
 			thread_decoders[i]->tick(output, (uint64_t) cycle);
 		}
 
-		//output->verbose(CALL_INFO, 16, 0, "---> Decode [hw: %5" PRIu32 "] thread-rob: %" PRIu32 "\n", i,
-		//	(uint32_t) thread_decoders[i]->getDecodedQueue()->size());
+		const int64_t rob_after_decode = (int64_t) rob[i]->size();
+		const int64_t decoded_cycle = (rob_after_decode - rob_before_decode);
+		ins_decoded_this_cycle += (decoded_cycle > 0) ?
+			static_cast<uint64_t>( decoded_cycle ) : 0;
 	}
-	
+
 	return 0;
 }
 
@@ -479,12 +483,6 @@ void VanadisComponent::resetRegisterUseTemps( const uint16_t int_reg_count,
 }
 
 int VanadisComponent::performIssue( const uint64_t cycle ) {
-	// clear the temporary register set that we keep for pending instructions
-    	//tmp_not_issued_int_reg_read.clear();
-    	//tmp_int_reg_write.clear();
-    	//tmp_not_issued_fp_reg_read.clear();
-    	//tmp_fp_reg_write.clear();
-
 	const int output_verbosity = output->getVerboseLevel();
 	bool issued_an_ins = false;;
 
@@ -521,12 +519,13 @@ int VanadisComponent::performIssue( const uint64_t cycle ) {
 					}
 
 					if( 0 == resource_check ) {
-						if( (INST_STORE == ins->getInstFuncType()) && (found_load || found_store) ) {
+						if( ((INST_STORE == ins->getInstFuncType()) || (INST_LOAD == ins->getInstFuncType()))
+							 && (found_load || found_store) ) {
 								// We cannot issue
 						} else {
-							if( (INST_LOAD == ins->getInstFuncType()) && (found_load || found_store) ) {
-									// We cannot issue
-							} else {
+//							if( (INST_LOAD == ins->getInstFuncType()) && (found_load || found_store) ) {
+//									// We cannot issue
+//							} else {
 								const int allocate_fu = allocateFunctionalUnit( ins );
 
 								if( output_verbosity >= 8 ) {
@@ -550,10 +549,11 @@ int VanadisComponent::performIssue( const uint64_t cycle ) {
 									}
 
 									ins->markIssued();
-									stat_ins_issued->addData(1);
+									ins_issued_this_cycle++;
+//									stat_ins_issued->addData(1);
 									issued_an_ins = true;
 								}
-							}
+//							}
 						}
 					}
 
@@ -778,7 +778,8 @@ int VanadisComponent::performRetire( VanadisCircularQueue<VanadisInstruction*>* 
 					retire_isa_tables[rob_front->getHWThread()] );
 
 //				if( rob_front->endsMicroOpGroup() ) {
-					stat_ins_retired->addData(1);
+				ins_retired_this_cycle++;
+//					stat_ins_retired->addData(1);
 //				}
 
 				if( perform_delay_cleanup ) {
@@ -798,7 +799,8 @@ int VanadisComponent::performRetire( VanadisCircularQueue<VanadisInstruction*>* 
 						retire_isa_tables[delay_ins->getHWThread()] );
 						
 //					if( delay_ins->endsMicroOpGroup() ) {
-						stat_ins_retired->addData(1);
+//						stat_ins_retired->addData(1);
+					ins_retired_this_cycle++;
 //					}
 
 					delete delay_ins;
@@ -973,6 +975,9 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 	}
 
 	stat_cycles->addData(1);
+	ins_issued_this_cycle = 0;
+	ins_retired_this_cycle = 0;
+	ins_decoded_this_cycle = 0;
 
 	bool should_process = false;
 	for( uint32_t i = 0; i < hw_threads; ++i ) {
@@ -1011,11 +1016,14 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 
 	// Decode //////////////////////////////////////////////////////////////////////////
 	output->verbose(CALL_INFO, 8, 0, "=> Decode Stage <==========================================================\n");
+
 	for( uint32_t i = 0; i < decodes_per_cycle; ++i ) {
 		if( performDecode( cycle ) != 0 ) {
 			break;
 		}
 	}
+
+	stat_ins_decoded->addData( ins_decoded_this_cycle );
 
 	// Issue  //////////////////////////////////////////////////////////////////////////
 	output->verbose(CALL_INFO, 8, 0, "=> Issue Stage  <==========================================================\n");
@@ -1024,6 +1032,9 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 			break;
 		}
 	}
+
+	// Record how many instructions we issued this cycle
+	stat_ins_issued->addData( ins_issued_this_cycle );
 
 	// Execute //////////////////////////////////////////////////////////////////////////
 	output->verbose(CALL_INFO, 8, 0, "=> Execute Stage <==========================================================\n");
@@ -1035,6 +1046,9 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 			performRetire( rob[j], cycle );
 		}
 	}
+
+	// Record how many instructions we retired this cycle
+	stat_ins_retired->addData( ins_retired_this_cycle );
 
 	output->verbose(CALL_INFO, 2, 0, "================================ End of Cycle ==============================\n" );
 
