@@ -171,6 +171,8 @@ private:
 
     virtual bool tick(SST::Cycle_t);
 
+    void resetRegisterUseTemps( const uint16_t i_reg, const uint16_t f_reg );
+
     int assignRegistersToInstruction(
 		const uint16_t int_reg_count,
     	const uint16_t fp_reg_count,
@@ -183,11 +185,7 @@ private:
         VanadisInstruction* ins,
         VanadisRegisterStack* int_regs,
         VanadisRegisterStack* fp_regs,
-        VanadisISATable* isa_table,
-        std::unordered_set<uint16_t>& isa_int_regs_read,
-        std::unordered_set<uint16_t>& isa_int_regs_write,
-        std::unordered_set<uint16_t>& isa_fp_regs_read,
-        std::unordered_set<uint16_t>& isa_fp_regs_write );
+        VanadisISATable* isa_table);
 
     int recoverRetiredRegisters( 
 		VanadisInstruction* ins,
@@ -235,10 +233,10 @@ private:
     std::vector<VanadisISATable*> issue_isa_tables;
     std::vector<VanadisISATable*> retire_isa_tables;
 
-    std::unordered_set<uint16_t> tmp_not_issued_int_reg_read;
-    std::unordered_set<uint16_t> tmp_int_reg_write;
-    std::unordered_set<uint16_t> tmp_not_issued_fp_reg_read;
-    std::unordered_set<uint16_t> tmp_fp_reg_write;
+    std::vector<bool> tmp_not_issued_int_reg_read;
+    std::vector<bool> tmp_int_reg_write;
+    std::vector<bool> tmp_not_issued_fp_reg_read;
+    std::vector<bool> tmp_fp_reg_write;
 
     std::list<VanadisInsCacheLoadRecord*>* icache_load_records;
 
