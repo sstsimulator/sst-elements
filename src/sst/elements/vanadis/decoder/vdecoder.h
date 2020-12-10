@@ -16,6 +16,7 @@
 #include "vinsloader.h"
 #include "os/vcpuos.h"
 #include "inst/fpregmode.h"
+#include "lsq/vlsq.h"
 
 namespace SST {
 namespace Vanadis {
@@ -48,7 +49,7 @@ public:
 		icache_line_width = params.find<uint64_t>("icache_line_width", 64);
 
 		const size_t uop_cache_size          = params.find<size_t>("uop_cache_entries", 128);
-		const size_t predecode_cache_entries = params.find<size_t>("predecode_cache_entries", 32);
+		const size_t predecode_cache_entries = params.find<size_t>("predecode_cache_entries", 4);
 
 		ins_loader = new VanadisInstructionLoader( uop_cache_size, predecode_cache_entries, icache_line_width );
 
@@ -152,7 +153,7 @@ public:
 	VanadisBranchUnit* getBranchPredictor() { return branch_predictor; }
 
 	virtual void configureApplicationLaunch( SST::Output* output, VanadisISATable* isa_tbl,
-		VanadisRegisterFile* regFile, Interfaces::SimpleMem* mem_if,
+		VanadisRegisterFile* regFile, VanadisLoadStoreQueue* lsq,
 		VanadisELFInfo* elf_info, SST::Params& app_params ) = 0;
 	
 	virtual VanadisCPUOSHandler* getOSHandler() { return os_handler; }

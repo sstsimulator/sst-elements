@@ -5,6 +5,8 @@
 #include "inst/vinst.h"
 #include "inst/vcmptype.h"
 
+#include "util/vcmpop.h"
+
 namespace SST {
 namespace Vanadis {
 
@@ -18,10 +20,12 @@ public:
 		const uint16_t src_1,
 		const int64_t imm,
 		const bool sgnd,
-		const VanadisRegisterCompareType cType
+		const VanadisRegisterCompareType cType,
+		const VanadisRegisterFormat fmt
 		) :
 		VanadisInstruction(addr, hw_thr, isa_opts, 1, 1, 1, 1, 0, 0, 0, 0 ) ,
-			performSigned(sgnd), compareType(cType), imm_value(imm) {
+			performSigned(sgnd), compareType(cType), imm_value(imm),
+			reg_format(fmt) {
 
 		isa_int_regs_in[0]  = src_1;
 		isa_int_regs_out[0] = dest;
@@ -54,95 +58,47 @@ public:
 		bool compare_result = false;
 
 		if( performSigned ) {
-			const int64_t reg1_ptr = regFile->getIntReg<int64_t>( phys_int_regs_in[0] );
-			output->verbose(CALL_INFO, 16, 0, "---> reg-left: %" PRId64 " imm: %" PRId64 "\n", (reg1_ptr), imm_value );
-
-			switch( compareType ) {
-			case REG_COMPARE_EQ:
+			switch( reg_format ) {
+			case VANADIS_FORMAT_INT64:
 				{
-					compare_result = (reg1_ptr) == imm_value;
-					output->verbose(CALL_INFO, 16, 0, "-----> compare: equal     / result: %s\n", (compare_result ? "true" : "false") );
+					compare_result = registerCompareImm<int64_t>( compareType, regFile, this, output, phys_int_regs_in[0], imm_value );
 				}
 				break;
-			case REG_COMPARE_NEQ:
+			case VANADIS_FORMAT_INT32:
 				{
-					compare_result = (reg1_ptr) != imm_value;
-					output->verbose(CALL_INFO, 16, 0, "-----> compare: not-equal / result: %s\n", (compare_result ? "true" : "false") );
+					compare_result = registerCompareImm<int32_t>( compareType, regFile, this, output, phys_int_regs_in[0], static_cast<int32_t>(imm_value) );
 				}
 				break;
-			case REG_COMPARE_LT:
+			default:
 				{
-					compare_result = (reg1_ptr) < imm_value;
-					output->verbose(CALL_INFO, 16, 0, "-----> compare: less-than / result: %s\n", (compare_result ? "true" : "false") );
-				}
-				break;
-			case REG_COMPARE_LTE:
-				{
-					compare_result = (reg1_ptr) <= imm_value;
-					output->verbose(CALL_INFO, 16, 0, "-----> compare: less-than-eq / result: %s\n", (compare_result ? "true" : "false") );
-				}
-				break;
-			case REG_COMPARE_GT:
-				{
-					compare_result = (reg1_ptr) > imm_value;
-					output->verbose(CALL_INFO, 16, 0, "-----> compare: greater-than / result: %s\n", (compare_result ? "true" : "false") );
-				}
-				break;
-			case REG_COMPARE_GTE:
-				{
-					compare_result = (reg1_ptr) >= imm_value;
-					output->verbose(CALL_INFO, 16, 0, "-----> compare: greater-than-eq / result: %s\n", (compare_result ? "true" : "false") );
+					flagError();
 				}
 				break;
 			}
 		} else {
-			const uint64_t reg1_ptr = regFile->getIntReg<uint64_t>( phys_int_regs_in[0] );
-			output->verbose(CALL_INFO, 16, 0, "---> reg-left: %" PRIu64 " imm: %" PRId64 "\n", (reg1_ptr), imm_value );
-
-			switch( compareType ) {
-			case REG_COMPARE_EQ:
+			switch( reg_format ) {
+			case VANADIS_FORMAT_INT64:
 				{
-					compare_result = (reg1_ptr) == imm_value;
-					output->verbose(CALL_INFO, 16, 0, "-----> compare: equal     / result: %s\n", (compare_result ? "true" : "false") );
+					compare_result = registerCompareImm<uint64_t>( compareType, regFile, this, output, phys_int_regs_in[0], static_cast<uint64_t>(imm_value) );
 				}
 				break;
-			case REG_COMPARE_NEQ:
+			case VANADIS_FORMAT_INT32:
 				{
-					compare_result = (reg1_ptr) != imm_value;
-					output->verbose(CALL_INFO, 16, 0, "-----> compare: not-equal / result: %s\n", (compare_result ? "true" : "false") );
+					compare_result = registerCompareImm<uint32_t>( compareType, regFile, this, output, phys_int_regs_in[0], static_cast<uint32_t>(imm_value) );
 				}
 				break;
-			case REG_COMPARE_LT:
+			default:
 				{
-					compare_result = (reg1_ptr) < imm_value;
-					output->verbose(CALL_INFO, 16, 0, "-----> compare: less-than / result: %s\n", (compare_result ? "true" : "false") );
-				}
-				break;
-			case REG_COMPARE_LTE:
-				{
-					compare_result = (reg1_ptr) <= imm_value;
-					output->verbose(CALL_INFO, 16, 0, "-----> compare: less-than-eq / result: %s\n", (compare_result ? "true" : "false") );
-				}
-				break;
-			case REG_COMPARE_GT:
-				{
-					compare_result = (reg1_ptr) > imm_value;
-					output->verbose(CALL_INFO, 16, 0, "-----> compare: greater-than / result: %s\n", (compare_result ? "true" : "false") );
-				}
-				break;
-			case REG_COMPARE_GTE:
-				{
-					compare_result = (reg1_ptr) >= imm_value;
-					output->verbose(CALL_INFO, 16, 0, "-----> compare: greater-than-eq / result: %s\n", (compare_result ? "true" : "false") );
+					flagError();
 				}
 				break;
 			}
 		}
 
 		if( compare_result ) {
-			regFile->setIntReg( phys_int_regs_out[0], (uint64_t) 1 );
+			regFile->setIntReg<uint64_t>( phys_int_regs_out[0], 1UL );
 		} else {
-			regFile->setIntReg( phys_int_regs_out[0], (uint64_t) 0 );
+			regFile->setIntReg<uint64_t>( phys_int_regs_out[0], 0UL );
 		}
 
 		markExecuted();
@@ -151,6 +107,7 @@ public:
 protected:
 	const bool performSigned;
 	VanadisRegisterCompareType compareType;
+	const VanadisRegisterFormat reg_format;
 	const int64_t imm_value;
 
 };

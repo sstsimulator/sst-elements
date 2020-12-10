@@ -17,9 +17,10 @@ public:
 		const uint16_t remain_dest,
 		const uint16_t src_1,
 		const uint16_t src_2,
-		bool treatSignd) :
+		bool treatSignd,
+		VanadisRegisterFormat fmt) :
 		VanadisInstruction(addr, hw_thr, isa_opts, 2, 2, 2, 2, 0, 0, 0, 0),
-			performSigned(treatSignd) {
+			performSigned(treatSignd), reg_format(fmt) {
 
 		isa_int_regs_in[0]  = src_1;
 		isa_int_regs_in[1]  = src_2;
@@ -52,37 +53,98 @@ public:
 			phys_int_regs_out[0], phys_int_regs_out[1], phys_int_regs_in[0], phys_int_regs_in[1]);
 
 		if( performSigned ) {
-	                const int64_t src_1 = regFile->getIntReg<int64_t>( phys_int_regs_in[0] );
-	       	        const int64_t src_2 = regFile->getIntReg<int64_t>( phys_int_regs_in[1] );
+			switch( reg_format ) {
+			case VANADIS_FORMAT_INT64:
+				{
+			                const int64_t src_1 = regFile->getIntReg<int64_t>( phys_int_regs_in[0] );
+			       	        const int64_t src_2 = regFile->getIntReg<int64_t>( phys_int_regs_in[1] );
 
-			if( 0 == src_2 ) {
-				flagError();
-			} else {
-				const int64_t quo = (src_1) / (src_2);
-				const int64_t mod = (src_1) % (src_2);
+					if( 0 == src_2 ) {
+						flagError();
+					} else {
+						const int64_t quo = (src_1) / (src_2);
+						const int64_t mod = (src_1) % (src_2);
 
-				output->verbose(CALL_INFO, 16, 0, "--> Execute: (detailed, signed, DIVREM) %" PRId64 " / %" PRId64 " = (q: %" PRId64 ", r: %" PRId64 ")\n",
-					src_1, src_2, quo, mod);
+						output->verbose(CALL_INFO, 16, 0, "--> Execute: (detailed, signed, DIVREM64) %" PRId64 " / %" PRId64 " = (q: %" PRId64 ", r: %" PRId64 ")\n",
+							src_1, src_2, quo, mod);
 
-				regFile->setIntReg( phys_int_regs_out[0], quo );
-				regFile->setIntReg( phys_int_regs_out[1], mod );
+						regFile->setIntReg<int64_t>( phys_int_regs_out[0], quo, true );
+						regFile->setIntReg<int64_t>( phys_int_regs_out[1], mod, true );
+					}
+				}
+				break;
+			case VANADIS_FORMAT_INT32:
+				{
+			                const int32_t src_1 = regFile->getIntReg<int32_t>( phys_int_regs_in[0] );
+			       	        const int32_t src_2 = regFile->getIntReg<int32_t>( phys_int_regs_in[1] );
+
+					if( 0 == src_2 ) {
+						flagError();
+					} else {
+						const int32_t quo = (src_1) / (src_2);
+						const int32_t mod = (src_1) % (src_2);
+
+						output->verbose(CALL_INFO, 16, 0, "--> Execute: (detailed, signed, DIVREM32) %" PRId64 " / %" PRId64 " = (q: %" PRId64 ", r: %" PRId64 ")\n",
+							src_1, src_2, quo, mod);
+
+						regFile->setIntReg<int32_t>( phys_int_regs_out[0], quo, true );
+						regFile->setIntReg<int32_t>( phys_int_regs_out[1], mod, true );
+					}
+				}
+				break;
+			default:
+				{
+					flagError();
+				}
+				break;
 			}
 		} else {
-	                const uint64_t src_1 = regFile->getIntReg<uint64_t>( phys_int_regs_in[0] );
-	       	        const uint64_t src_2 = regFile->getIntReg<uint64_t>( phys_int_regs_in[1] );
+			switch( reg_format ) {
+			case VANADIS_FORMAT_INT64:
+				{
+			                const uint64_t src_1 = regFile->getIntReg<uint64_t>( phys_int_regs_in[0] );
+			       	        const uint64_t src_2 = regFile->getIntReg<uint64_t>( phys_int_regs_in[1] );
 
-			if( 0 == src_2 ) {
-				// Behavior of a DIVU in MIPS is undefined
-				// flagError();
-			} else {
-				const uint64_t quo = (src_1) / (src_2);
-				const uint64_t mod = (src_1) % (src_2);
+					if( 0 == src_2 ) {
+						// Behavior of a DIVU in MIPS is undefined
+						// flagError();
+					} else {
+						const uint64_t quo = (src_1) / (src_2);
+						const uint64_t mod = (src_1) % (src_2);
 
-				output->verbose(CALL_INFO, 16, 0, "--> Execute: (detailed, unsigned, DIVREM) %" PRIu64 " / %" PRIu64 " = (q: %" PRIu64 ", r: %" PRIu64 ")\n",
-					src_1, src_2, quo, mod);
+						output->verbose(CALL_INFO, 16, 0, "--> Execute: (detailed, unsigned, DIVREM64) %" PRIu64 " / %" PRIu64 " = (q: %" PRIu64 ", r: %" PRIu64 ")\n",
+							src_1, src_2, quo, mod);
 
-				regFile->setIntReg( phys_int_regs_out[0], quo );
-				regFile->setIntReg( phys_int_regs_out[1], mod );
+						regFile->setIntReg<uint64_t>( phys_int_regs_out[0], quo, false );
+						regFile->setIntReg<uint64_t>( phys_int_regs_out[1], mod, false );
+					}
+				}
+				break;
+			case VANADIS_FORMAT_INT32:
+				{
+			                const uint32_t src_1 = regFile->getIntReg<uint32_t>( phys_int_regs_in[0] );
+			       	        const uint32_t src_2 = regFile->getIntReg<uint32_t>( phys_int_regs_in[1] );
+
+					if( 0 == src_2 ) {
+						// Behavior of a DIVU in MIPS is undefined
+						// flagError();
+					} else {
+						const uint32_t quo = (src_1) / (src_2);
+						const uint32_t mod = (src_1) % (src_2);
+
+						output->verbose(CALL_INFO, 16, 0, "--> Execute: (detailed, unsigned, DIVREM32) %" PRIu64 " / %" PRIu64 " = (q: %" PRIu64 ", r: %" PRIu64 ")\n",
+							src_1, src_2, quo, mod);
+
+						regFile->setIntReg<uint32_t>( phys_int_regs_out[0], quo, false );
+						regFile->setIntReg<uint32_t>( phys_int_regs_out[1], mod, false );
+					}
+				}
+				break;
+			default:
+				{
+					flagError();
+				}
+				break;
 			}
 		}
 
@@ -90,6 +152,7 @@ public:
 	}
 
 protected:
+	VanadisRegisterFormat reg_format;
 	const bool performSigned;
 
 };
