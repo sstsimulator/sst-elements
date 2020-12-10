@@ -600,7 +600,9 @@ int VanadisComponent::performIssue( const uint64_t cycle ) {
 			// Only print the table if we issued an instruction, reduce print out
 			// clutter
 			if( issued_an_ins ) {
-				issue_isa_tables[i]->print(output, register_files[i], print_int_reg, print_fp_reg);
+				if( output_verbosity >= 8 ) {
+					issue_isa_tables[i]->print(output, register_files[i], print_int_reg, print_fp_reg);
+				}
 			}
 		} else {
 			output->verbose(CALL_INFO, 8, 0, "thread %" PRIu32 " is halted, did not process for issue this cycle.\n", i);
