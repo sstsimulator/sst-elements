@@ -115,8 +115,6 @@ public:
 	virtual void tick( SST::Output* output, uint64_t cycle ) = 0;
 	virtual const VanadisDecoderOptions* getDecoderOptions() const = 0;
 
-	uint64_t getNextInsID() { return next_ins_id++; }
-
 	uint64_t getInstructionPointer() const { return ip; }
 
 	void setInstructionPointer( const uint64_t newIP ) {
@@ -162,7 +160,6 @@ protected:
 	virtual void clearDecoderAfterMisspeculate( SST::Output* output ) {};
 
 	uint64_t ip;
-	uint64_t next_ins_id;
 	uint64_t icache_line_width;
 	uint32_t hw_thr;
 
