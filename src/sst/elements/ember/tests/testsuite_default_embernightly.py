@@ -86,6 +86,9 @@ class testcase_EmberNightly(SSTTestCase):
 
         if testoutput:
             cmp_result = testing_compare_diff(testDataFileName, outfile, reffile)
+            if (cmp_result == False):
+                diffdata = testing_get_diff_data(testDataFileName)
+                log_failure(diffdata)
             self.assertTrue(cmp_result, "Diffed compared Output file {0} does not match Reference File {1}".format(outfile, reffile))
 
         self.assertFalse(os_test_file(errfile, "-s"), "Ember Nightly Test {0} has Non-empty Error File {1}".format(testDataFileName, errfile))

@@ -77,6 +77,9 @@ class testcase_GNA_Component(SSTTestCase):
         self.assertFalse(os_test_file(errfile, "-s"), "GNA test {0} has Non-empty Error File {1}".format(testDataFileName, errfile))
 
         cmp_result = testing_compare_sorted_diff(testcase, outfile, reffile)
+        if (cmp_result == False):
+            diffdata = testing_get_diff_data(testcase)
+            log_failure(diffdata)
         self.assertTrue(cmp_result, "Output file {0} does not match Reference File {1}".format(outfile, reffile))
 
 

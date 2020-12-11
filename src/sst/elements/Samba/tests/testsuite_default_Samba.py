@@ -107,7 +107,7 @@ class testcase_Samba_Component(SSTTestCase):
 
             cmp_result = ref_wc_data == out_wc_data
             if not cmp_result:
-                log_debug("{0} - DIFF DATA\nref_wc_data = {1}\nout_wc_data = {2}".format(self.get_testcase_name(), ref_wc_data, out_wc_data))
+                log_failure("{0} - DIFF DATA\nref_wc_data = {1}\nout_wc_data = {2}".format(self.get_testcase_name(), ref_wc_data, out_wc_data))
             self.assertTrue(cmp_result, "Output file {0} word/line count does NOT match Reference file {1} word/line count".format(outfile, reffile))
         else:
             self.assertTrue(cmp_result, "Diffed compared Output file {0} does not match Reference File {1}".format(outfile, reffile))

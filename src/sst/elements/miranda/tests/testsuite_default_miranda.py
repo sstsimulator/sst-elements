@@ -102,4 +102,7 @@ class testcase_miranda_Component(SSTTestCase):
 
         # Perform the test
         cmp_result = testing_compare_sorted_diff(testcase, outfile, reffile)
+        if (cmp_result == False):
+            diffdata = testing_get_diff_data(testcase)
+            log_failure(diffdata)
         self.assertTrue(cmp_result, "Sorted Output file {0} does not match sorted Reference File {1}".format(outfile, reffile))

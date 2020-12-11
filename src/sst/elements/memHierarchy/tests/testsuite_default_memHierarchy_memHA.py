@@ -242,6 +242,8 @@ class testcase_memHierarchy_memHA(SSTTestCase):
                         log_debug("Line Word Count Match\n")
                         self.assertTrue(wc_line_word_count_diff, "Line & Word count between file {0} does not match Reference File {1}".format(outfile, reffile))
                 else:
+                    diffdata = testing_get_diff_data(testcase)
+                    log_failure(diffdata)
                     self.assertTrue(cmp_result, "Sorted Output file {0} does not match Sorted Reference File {1} ".format(outfile, fixedreffile))
 
 ###

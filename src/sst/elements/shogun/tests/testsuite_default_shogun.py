@@ -79,5 +79,8 @@ class testcase_shogun(SSTTestCase):
         self.assertFalse(os_test_file(errfile, "-s"), "shogun test {0} has Non-empty Error File {1}".format(testDataFileName, errfile))
 
         cmp_result = testing_compare_sorted_diff(testcase, outfile, reffile)
+        if (cmp_result == False):
+            diffdata = testing_get_diff_data(testcase)
+            log_failure(diffdata)
         self.assertTrue(cmp_result, "Sorted Output file {0} does not match sorted Reference File {1}".format(outfile, reffile))
 

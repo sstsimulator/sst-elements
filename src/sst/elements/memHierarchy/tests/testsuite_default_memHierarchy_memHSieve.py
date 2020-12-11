@@ -265,6 +265,8 @@ class testcase_memHierarchy_memHSieve(SSTTestCase):
         cmp_result = testing_compare_diff(testDataFileName, grep_outfile, grep_reffile)
         if cmp_result == False:
                 TestFailureMsg += "Diffed grepped (lines 23-43) compared Output file {0} does not match Reference File {1}".format(grep_outfile, grep_reffile)
+                diffdata = testing_get_diff_data(testDataFileName)
+                log_failure(diffdata)
 
         TestPassed &= cmp_result
 
