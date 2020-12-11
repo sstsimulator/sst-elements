@@ -5,8 +5,12 @@
 #include <sst/core/output.h>
 
 #include "decoder/visaopts.h"
+
+#include "inst/vregfmt.h"
 #include "inst/vinsttype.h"
 #include "inst/regfile.h"
+
+#include <cstring>
 
 namespace SST {
 namespace Vanadis {
@@ -40,28 +44,28 @@ public:
 
 
 		phys_int_regs_in  = (count_phys_int_reg_in > 0)  ? new uint16_t[ count_phys_int_reg_in  ] : nullptr;
-		for( int i = 0 ; i < count_phys_int_reg_in; ++i ) { phys_int_regs_in[i] = 0; }
+		std::memset( phys_int_regs_in, 0, count_phys_int_reg_in );
 
 		phys_int_regs_out = (count_phys_int_reg_out > 0) ? new uint16_t[ count_phys_int_reg_out ] : nullptr;
-		for( int i = 0 ; i < count_phys_int_reg_out; ++i ) { phys_int_regs_out[i] = 0; }
+		std::memset( phys_int_regs_out, 0, count_phys_int_reg_out );
 
 		isa_int_regs_in   = (count_isa_int_reg_in > 0)   ? new uint16_t[ count_isa_int_reg_in   ] : nullptr;
-		for( int i = 0 ; i < count_isa_int_reg_in; ++i ) { isa_int_regs_in[i] = 0; }
+		std::memset( isa_int_regs_in, 0, count_isa_int_reg_in );
 
 		isa_int_regs_out  = (count_isa_int_reg_out> 0)   ? new uint16_t[ count_isa_int_reg_out  ] : nullptr;
-		for( int i = 0 ; i < count_isa_int_reg_out; ++i ) { isa_int_regs_out[i] = 0; }
+		std::memset( isa_int_regs_out, 0, count_isa_int_reg_out );
 
 		phys_fp_regs_in   = (count_phys_fp_reg_in > 0)   ? new uint16_t[ count_phys_fp_reg_in   ] : nullptr;
-		for( int i = 0 ; i < count_phys_fp_reg_in; ++i ) { phys_fp_regs_in[i] = 0; }
+		std::memset( phys_fp_regs_in, 0, count_phys_fp_reg_in );
 
 		phys_fp_regs_out  = (count_phys_fp_reg_out> 0)   ? new uint16_t[ count_phys_fp_reg_out  ] : nullptr;
-		for( int i = 0 ; i < count_phys_fp_reg_out; ++i ) { phys_fp_regs_out[i] = 0; }
+		std::memset( phys_fp_regs_out, 0, count_phys_fp_reg_out );
 
 		isa_fp_regs_in    = (count_isa_fp_reg_in > 0 )   ? new uint16_t[ count_isa_fp_reg_in    ] : nullptr;
-		for( int i = 0 ; i < count_isa_fp_reg_in; ++i ) { isa_fp_regs_in[i] = 0; }
+		std::memset( isa_fp_regs_in, 0, count_isa_fp_reg_in );
 
 		isa_fp_regs_out   = (count_isa_fp_reg_out > 0 )  ? new uint16_t[ count_isa_fp_reg_out   ] : nullptr;
-		for( int i = 0 ; i < count_isa_fp_reg_out; ++i ) { isa_fp_regs_out[i] = 0; }
+		std::memset( isa_fp_regs_out, 0, count_isa_fp_reg_out );
 
 		trapError = false;
 		hasExecuted = false;
@@ -278,15 +282,15 @@ public:
 	uint16_t* getISAFPRegIn()    { return isa_fp_regs_in; }
 	uint16_t* getISAFPRegOut()   { return isa_fp_regs_out; }
 
-	uint16_t getPhysIntRegIn(const uint16_t index)  { return phys_int_regs_in[index]; }
-	uint16_t getPhysIntRegOut(const uint16_t index) { return phys_int_regs_out[index]; }
-	uint16_t getISAIntRegIn(const uint16_t index)   { return isa_int_regs_in[index]; }
-	uint16_t getISAIntRegOut(const uint16_t index)  { return isa_int_regs_out[index]; }
+	uint16_t getPhysIntRegIn(const uint16_t index)  const { return phys_int_regs_in[index]; }
+	uint16_t getPhysIntRegOut(const uint16_t index) const { return phys_int_regs_out[index]; }
+	uint16_t getISAIntRegIn(const uint16_t index)   const { return isa_int_regs_in[index]; }
+	uint16_t getISAIntRegOut(const uint16_t index)  const { return isa_int_regs_out[index]; }
 
-	uint16_t getPhysFPRegIn(const uint16_t index)   { return phys_fp_regs_in[index]; }
-	uint16_t getPhysFPRegOut(const uint16_t index)  { return phys_fp_regs_out[index]; }
-	uint16_t getISAFPRegIn(const uint16_t index)    { return isa_fp_regs_in[index]; }
-	uint16_t getISAFPRegOut(const uint16_t index)   { return isa_fp_regs_out[index]; }
+	uint16_t getPhysFPRegIn(const uint16_t index)   const { return phys_fp_regs_in[index]; }
+	uint16_t getPhysFPRegOut(const uint16_t index)  const { return phys_fp_regs_out[index]; }
+	uint16_t getISAFPRegIn(const uint16_t index)    const { return isa_fp_regs_in[index]; }
+	uint16_t getISAFPRegOut(const uint16_t index)   const { return isa_fp_regs_out[index]; }
 
 	void setPhysIntRegIn(const uint16_t index, const uint16_t reg)  { phys_int_regs_in[index] = reg; }
 	void setPhysIntRegOut(const uint16_t index, const uint16_t reg) { phys_int_regs_out[index] = reg; }

@@ -34,6 +34,18 @@ VanadisNodeOSComponent::VanadisNodeOSComponent( SST::ComponentId_t id, SST::Para
 
 	get_sim_nano = std::bind( &VanadisNodeOSComponent::getSimNanoSeconds, this );
 
+	uint64_t heap_start = params.find<uint64_t>("heap_start",       0);
+	uint64_t heap_end   = params.find<uint64_t>("heap_end",         0);
+	uint64_t heap_page_size = params.find<uint64_t>("page_size", 4096);
+	int      heap_verbose   = params.find<int>("heap_verbose", 0);
+
+	output->verbose(CALL_INFO, 1, 0, "-> configuring mmap page range start: 0x%llx\n", heap_start);
+	output->verbose(CALL_INFO, 1, 0, "-> configuring mmap page range end:   0x%llx\n", heap_end);
+	output->verbose(CALL_INFO, 1, 0, "-> implies:                           %" PRIu64 " pages\n", (heap_end - heap_start) / heap_page_size);
+	output->verbose(CALL_INFO, 1, 0, "-> configuring mmap page size:        %" PRIu64 " bytes\n", heap_page_size);
+
+	memory_mgr = new VanadisMemoryManager( heap_verbose, heap_start, heap_end, heap_page_size );
+
 	for( uint32_t i = 0; i < core_count; ++i ) {
 		snprintf( port_name_buffer, 128, "core%" PRIu32 "", i );
 		output->verbose(CALL_INFO, 1, 0, "---> processing link %s...\n", port_name_buffer);
@@ -52,6 +64,7 @@ VanadisNodeOSComponent::VanadisNodeOSComponent( SST::ComponentId_t id, SST::Para
 			stdin_path, stdout_path, stderr_path );
 		new_core_handler->setLink( core_link );
 		new_core_handler->setSimTimeNano( get_sim_nano );
+		new_core_handler->setMemoryManager( memory_mgr );
 
 		std::function<void( SimpleMem::Request*, uint32_t )> core_callback = std::bind( &VanadisNodeOSComponent::sendMemoryEvent,
 			this, std::placeholders::_1, std::placeholders::_2 );
@@ -69,6 +82,7 @@ VanadisNodeOSComponent::~VanadisNodeOSComponent() {
 	}
 
 	delete output;
+	delete memory_mgr;
 }
 
 void VanadisNodeOSComponent::init( unsigned int phase ) {

@@ -416,7 +416,8 @@ public:
 		assert(0);
 	}
 	SimTime_t getDelay_ns( ) {
-		return m_nic2host_lat_ns - m_nic2host_base_lat_ns;
+		SimTime_t val = m_nic2host_lat_ns - ( m_nic2host_lat_ns > 0 ? 1 : 0 );
+		return val; 
 	}
 
     void schedEvent( SelfEvent* event, SimTime_t delay = 0 ) {
@@ -501,15 +502,6 @@ struct X {
 
 	uint64_t m_linkBytesPerSec;
 
-	std::vector< int >		m_sendStreamNum;
-
-	int getSendStreamNum( int pid ) {
-		unsigned int val = m_sendStreamNum[pid]++;
-
-		m_dbg.debug(CALL_INFO,3,NIC_DBG_SEND_MACHINE,"pid=%d stream=%d next=%d\n",pid,val, m_sendStreamNum[pid] );
-		return val;
-	}
-
     Output                  m_dbg;
     std::vector<VirtNic*>   m_vNicV;
     std::vector<Thornhill::DetailedCompute*> m_detailedCompute;
@@ -517,7 +509,6 @@ struct X {
 	bool m_useDetailedCompute;
     Shmem* m_shmem;
 	SimTime_t m_nic2host_lat_ns;
-	SimTime_t m_nic2host_base_lat_ns;
 	SimTime_t m_shmemRxDelay_ns;
 
     UnitPool* m_unitPool;

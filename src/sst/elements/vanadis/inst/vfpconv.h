@@ -3,8 +3,7 @@
 #define _H_VANADIS_FP_CONVERT
 
 #include "inst/vinst.h"
-#include "inst/vfpwidth.h"
-
+#include "inst/vregfmt.h"
 #include "util/vfpreghandler.h"
 
 namespace SST {
@@ -18,8 +17,8 @@ public:
 		const VanadisDecoderOptions* isa_opts,
 		const uint16_t fp_dest,
 		const uint16_t fp_src,
-		VanadisFPRegisterFormat input_f,
-		VanadisFPRegisterFormat output_f
+		VanadisRegisterFormat input_f,
+		VanadisRegisterFormat output_f
 		 ) :
 		VanadisInstruction(addr, hw_thr, isa_opts, 0, 0, 0, 0,
 			( (input_f  == VANADIS_FORMAT_FP64) && ( VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode() ) ) ? 2 : 1,
@@ -324,8 +323,8 @@ public:
 	}
 
 protected:
-	VanadisFPRegisterFormat input_format;
-	VanadisFPRegisterFormat output_format;
+	VanadisRegisterFormat input_format;
+	VanadisRegisterFormat output_format;
 };
 
 }

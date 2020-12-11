@@ -18,15 +18,14 @@ class RecvMachine {
 
     #include "nicShmemRecvMachine.h"
 
-
-    typedef uint64_t SrcKey;
     typedef std::function<void()> Callback;
 
-    static SrcKey getSrcKey(uint32_t srcNode, uint32_t srcPid, uint32_t srcStream) {
-		SrcKey value;
-		value = srcNode;
-		value |= srcStream << 20;
-		value |= (uint64_t) srcPid << ( 20 + STREAM_NUM_SIZE);
+	typedef uint64_t ProcessPairId;
+	static ProcessPairId getPPI(FireflyNetworkEvent* ev) {
+		ProcessPairId value;
+		value = (uint64_t) ev->getSrcNode() << 32;
+		value |= ev->getSrcPid() << 16;
+		value |= ev->getDestPid();
 		return value;
 	}
 
@@ -38,19 +37,21 @@ class RecvMachine {
 
       public:
 
+
         RecvMachine( Nic& nic, int vn, int numVnics,
                 int nodeId, int verboseLevel, int verboseMask,
-                int rxMatchDelay, int hostReadDelay, int maxQsize, int maxActiveStreams ) :
+                int rxMatchDelay, int hostReadDelay, int maxQsize, int maxActiveStreams, int maxPendingPkts ) :
             m_nic(nic),
             m_vn(vn),
             m_rxMatchDelay( rxMatchDelay ),
             m_hostReadDelay( hostReadDelay ),
-            m_notifyCallback( false ),
             m_numActiveStreams( 0 ),
             m_maxActiveStreams( maxActiveStreams ),
-            m_blockedPkt(NULL),
             m_numMsgRcvd(0),
-            m_hostBlockingTime(0)
+            m_clockLat(1),
+            m_clocking(false),
+            m_numPendingPkts(0),
+            m_maxPendingPkts(maxPendingPkts)
         {
             char buffer[100];
             snprintf(buffer,100,"@t:%d:Nic::RecvMachine::@p():@l vn=%d ",nodeId,m_vn);
@@ -80,14 +81,8 @@ class RecvMachine {
 
         void decActiveStream() {
             --m_numActiveStreams;
+            m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"numActiveStreams=%d\n",m_numActiveStreams);
             assert( m_numActiveStreams >= 0 );
-
-            if ( m_blockedPkt ) {
-      		    m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"unblocked\n");
-                assert( m_blockedPkt );
-                processPkt2( m_blockedPkt );
-                m_blockedPkt = NULL;
-            }
         }
 
     protected:
@@ -96,78 +91,86 @@ class RecvMachine {
         int         m_hostReadDelay;
         std::vector< Ctx* >   m_ctxMap;
 
-        void checkNetworkForData() {
-            FireflyNetworkEvent* ev = getNetworkEvent( m_vn );
-            if ( ev ) {
-                m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"packet available\n");
-                m_nic.schedCallback( std::bind( &Nic::RecvMachine::processPkt, this, ev ));
-            } else {
-                m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"network idle\n");
-                setNotify();
-            }
-        }
-
 	private:
+        void processPkt( FireflyNetworkEvent* ev );
+        void processStdPkt( FireflyNetworkEvent* ev );
+
         void setNotify( ) {
-            assert( ! m_notifyCallback );
-            if( ! m_notifyCallback ) {
-                m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE, "\n");
-                m_nic.m_linkRecvWidget->setNotify(
-                                    std::bind(&Nic::RecvMachine::processNetworkData, this), m_vn );
-                m_notifyCallback = true;
-            }
+            m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE, "\n");
+            m_nic.m_linkRecvWidget->setNotify( std::bind(&Nic::RecvMachine::networkHasPkt, this), m_vn );
         }
 
-        void processNetworkData() {
+        void networkHasPkt() {
+            // when this function is call, we will nod longer be notified
             m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_MACHINE, "\n");
-
-            // this notifier was called by the LinkControl object, the RecvMachine may
-            // re-install the LinkControl notifier, if it does there would be a cycle
-            // this schedCallback breaks the cycle
-            m_nic.schedCallback(  [=](){ processPkt( getNetworkEvent( m_vn ) ); } );
-            m_notifyCallback = false;
-        }
-
-
-        int m_maxActiveStreams;
-        int m_numActiveStreams;
-        FireflyNetworkEvent* m_blockedPkt;
-        virtual void processPkt( FireflyNetworkEvent* ev ) {
-
-            if ( ev->isHdr() ) {
-                ++m_numActiveStreams;
+            if ( ! m_clocking ) {
+                nic().schedCallback( std::bind(  &Nic::RecvMachine::clockHandler, this ), 0 );
+                m_clocking = true;
             }
+        }
+        void clockHandler() {
+            m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE, "\n");
 
-            if ( m_numActiveStreams == m_maxActiveStreams + 1) {
-      		    m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_MACHINE,"blocked on available streams\n");
-                assert( ! m_blockedPkt );
-                m_blockedPkt = ev;
+            if ( m_numPendingPkts < m_maxPendingPkts ) {
+
+                FireflyNetworkEvent* ev = getNetworkEvent( m_vn );
+                if ( ev ) {
+                    ++m_numPendingPkts;
+                    m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_MACHINE, "got packet numPendingPkts=%d\n", m_numPendingPkts );
+                    m_pktBuf[ getPPI(ev) ].push( ev );
+                }
             } else {
-                processPkt2( ev );
-            }
+                m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE, "reached max buffered packets, numPendingPkts=%d\n", m_numPendingPkts );
+			}
+
+			auto iter = m_pktBuf.begin();
+			while ( iter != m_pktBuf.end() ) {
+				FireflyNetworkEvent* ev = iter->second.front();
+
+				m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE, "packet from node=%d pid=%d for pid=%d %s %s PPI=0x%" PRIx64 "\n",
+						ev->getSrcNode(),ev->getSrcPid(),ev->getDestPid(),ev->isHdr() ? "hdr":"",ev->isTail() ? "tail":"",getPPI(ev));
+
+				if ( m_streamMap.find(iter->first) == m_streamMap.end() ) {
+					if ( m_numActiveStreams < m_maxActiveStreams ) {
+						++m_numActiveStreams;
+						m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_MACHINE, "new stream numActiveStreams=%d m_numPendingPkts=%d\n",m_numActiveStreams,m_numPendingPkts-1);
+						processPkt( ev );
+						--m_numPendingPkts;
+						iter->second.pop();
+					} else {
+						m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE, "can't start new stream numActiveStreams=%d\n",m_numActiveStreams);
+					}
+				} else {
+					if ( ! m_streamMap[iter->first]->isBlocked( ) ) {
+						processPkt( ev );
+						--m_numPendingPkts;
+						m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_MACHINE, "stream consumed packet, m_numPendingPkts=%d\n",m_numPendingPkts);
+						iter->second.pop();
+					} else {
+						m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE, "stream blocked\n");
+					}
+				}
+				if ( iter->second.empty() ) {
+					m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_MACHINE, "queue is empty clear pktBuf slot\n");
+					iter = m_pktBuf.erase( iter );
+				} else {
+					++iter;
+				}
+			}
+
+			if ( m_pktBuf.empty() ) {
+				m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_MACHINE, "pktBuf is empty\n");
+                setNotify();
+                m_clocking = false;
+			} else {
+				m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE, "schedule clockHandler m_numPendingPkts=%d m_numActiveStreams=%d\n",m_numPendingPkts,m_numActiveStreams);
+                nic().schedCallback( std::bind(  &Nic::RecvMachine::clockHandler, this ), m_clockLat );
+			}
         }
 
-        virtual void processPkt2( FireflyNetworkEvent* ev ) {
-            // if the event was consumed, we can can check for the next
-            if ( ! m_ctxMap[ ev->getDestPid() ]->processPkt( ev ) ) {
-                checkNetworkForData();
-            } else {
-      		    m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE,"blocked by context\n");
-				m_hostBlockingTime = Simulation::getSimulation()->getCurrentSimCycle();
-            }
-        }
 
         FireflyNetworkEvent* getNetworkEvent(int vn ) {
-            SST::Interfaces::SimpleNetwork::Request* req =
-                m_nic.m_linkControl->recv(vn);
-
-            if ( m_hostBlockingTime ) {
-                uint64_t latency = Simulation::getSimulation()->getCurrentSimCycle() - m_hostBlockingTime;
-				if ( latency ) {
-                	m_nic.m_hostStall->addData( latency );
-				}
-                m_hostBlockingTime = 0;
-            }
+            SST::Interfaces::SimpleNetwork::Request* req = m_nic.m_linkControl->recv(vn);
 
             if ( req ) {
 
@@ -194,11 +197,18 @@ class RecvMachine {
             }
         }
 
-        SimTime_t m_hostBlockingTime;
+        int m_numPendingPkts;
+        int m_maxPendingPkts;
+        int m_maxActiveStreams;
+        int m_numActiveStreams;
         int m_numMsgRcvd;
         int m_receivedPkts;
-        int         m_vn;
-        int         m_rxMatchDelay;
-        bool        m_notifyCallback;
+        int m_vn;
+        int m_rxMatchDelay;
 
+        SimTime_t   m_clockLat;
+        bool        m_clocking;
+
+        std::unordered_map<ProcessPairId, std::queue<FireflyNetworkEvent*> > m_pktBuf;
+        std::unordered_map<ProcessPairId, StreamBase* >  m_streamMap;
 };

@@ -46,7 +46,7 @@ void Nic::RecvMachine::RdmaStream::processPktHdr( FireflyNetworkEvent* ev ) {
           ev->clearHdr();
           m_matched_len = m_recvEntry->totalBytes();
 
-          callback  = std::bind( &Nic::RecvMachine::StreamBase::processPkt, this, ev );
+          callback  = std::bind( &Nic::RecvMachine::StreamBase::processPktBody, this, ev );
         }
         break;
       case RdmaMsgHdr::Get:

@@ -31,14 +31,13 @@ void Nic::SendMachine::streamInit( SendEntryBase* entry )
     hdr.op= entry->getOp();
 
     m_dbg.debug(CALL_INFO,1,NIC_DBG_SEND_MACHINE,
-        "%p setup hdr, srcPid=%d, srcStream=%d destNode=%d dstPid=%d bytes=%lu\n", entry,
-        entry->local_vNic(), entry->streamNum(), entry->dest(), entry->dst_vNic(), entry->totalBytes() ) ;
+        "%p setup hdr, srcPid=%d, destNode=%d dstPid=%d bytes=%lu\n", entry,
+        entry->local_vNic(), entry->dest(), entry->dst_vNic(), entry->totalBytes() ) ;
 
     FireflyNetworkEvent* ev = new FireflyNetworkEvent(m_pktOverhead );
     ev->setDestPid( entry->dst_vNic() );
     ev->setSrcPid( entry->local_vNic() );
     ev->setHdr();
-    ev->setSrcStream( entry->streamNum() );
 
     entry->m_start = m_nic.getCurrentSimTimeNano();
     if ( entry->isCtrl() || entry->isAck() ) {
@@ -56,7 +55,6 @@ void Nic::SendMachine::getPayload( SendEntryBase* entry, FireflyNetworkEvent* ev
     int pid = entry->local_vNic();
     ev->setDestPid( entry->dst_vNic() );
     ev->setSrcPid( pid );
-    ev->setSrcStream( entry->streamNum() );
     if ( ! m_inQ->isFull() ) {
 	    std::vector< MemOp >* vec = new std::vector< MemOp >;
         entry->copyOut( m_dbg, m_packetSizeInBytes, *ev, *vec );

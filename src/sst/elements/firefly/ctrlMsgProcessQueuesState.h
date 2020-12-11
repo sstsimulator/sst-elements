@@ -136,9 +136,9 @@ class ProcessQueuesState : public SubComponent
         NotSerializable(LoopBackEvent)
     };
 
-    static const unsigned long MaxPostedShortBuffers = 512;
-    static const unsigned long MinPostedShortBuffers = 5;
-
+    int m_maxPostedShortBuffers;
+    int m_minPostedShortBuffers;
+    int m_maxUnexpectedMsg;
 
   public:
     ProcessQueuesState( ComponentId_t id, Params& params );

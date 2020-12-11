@@ -3,7 +3,7 @@
 #define _H_VANADIS_FP_2_GPR
 
 #include "inst/vinst.h"
-#include "inst/vfpwidth.h"
+#include "inst/vregfmt.h"
 
 #include "util/vfpreghandler.h"
 
@@ -18,7 +18,7 @@ public:
 		const VanadisDecoderOptions* isa_opts,
 		const uint16_t int_dest,
 		const uint16_t fp_src,
-		VanadisFPRegisterFormat fp_w
+		VanadisRegisterFormat fp_w
 		 ) :
 		VanadisInstruction(addr, hw_thr, isa_opts, 0, 1, 0, 1,
 			( (fp_w == VANADIS_FORMAT_FP64 || fp_w == VANADIS_FORMAT_INT64) && ( VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode() ) ) ? 2 : 1,
@@ -75,7 +75,7 @@ public:
 		case VANADIS_FORMAT_FP32:
 			{
 				const int32_t fp_v = regFile->getFPReg<int32_t>( phys_fp_regs_in[0] );
-				regFile->setIntReg( phys_int_regs_out[0], fp_v );
+				regFile->setIntReg<int32_t>( phys_int_regs_out[0], fp_v );
 			}
 			break;
 		case VANADIS_FORMAT_INT64:
@@ -83,10 +83,10 @@ public:
 			{
 				if( VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode() ) {
 					const int64_t fp_v = combineFromRegisters<int64_t>( regFile, phys_fp_regs_in[0], phys_fp_regs_in[1] );
-					regFile->setIntReg( phys_int_regs_out[0], fp_v );
+					regFile->setIntReg<int64_t>( phys_int_regs_out[0], fp_v );
 				} else {
 					const int64_t fp_v = regFile->getFPReg<int64_t>( phys_fp_regs_in[0] );
-					regFile->setIntReg( phys_int_regs_out[0], fp_v );
+					regFile->setIntReg<int64_t>( phys_int_regs_out[0], fp_v );
 				}
 			}
 			break;
@@ -96,7 +96,7 @@ public:
 	}
 
 protected:
-	VanadisFPRegisterFormat move_width;
+	VanadisRegisterFormat move_width;
 
 };
 
