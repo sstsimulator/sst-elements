@@ -3,6 +3,7 @@
 #define _H_VANADIS_SRL
 
 #include "inst/vinst.h"
+#include "inst/vregfmt.h"
 
 namespace SST {
 namespace Vanadis {
@@ -15,8 +16,10 @@ public:
 		const VanadisDecoderOptions* isa_opts,
 		const uint16_t dest,
 		const uint16_t src_1,
-		const uint16_t src_2) :
-		VanadisInstruction(addr, hw_thr, isa_opts, 2, 1, 2, 1, 0, 0, 0, 0) {
+		const uint16_t src_2,
+		VanadisRegisterFormat fmt) :
+		VanadisInstruction(addr, hw_thr, isa_opts, 2, 1, 2, 1, 0, 0, 0, 0),
+			reg_format(fmt) {
 
 		isa_int_regs_in[0]  = src_1;
 		isa_int_regs_in[1]  = src_2;
@@ -47,13 +50,36 @@ public:
 			phys_int_regs_in[0], phys_int_regs_in[1],
 			isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1] );
 
-		const uint64_t src_1 = regFile->getIntReg<uint64_t>( phys_int_regs_in[0] );
-		const uint64_t src_2 = regFile->getIntReg<uint64_t>( phys_int_regs_in[1] );
+		switch( reg_format ) {
+		case VANADIS_FORMAT_INT64:
+			{
+				const uint64_t src_1 = regFile->getIntReg<uint64_t>( phys_int_regs_in[0] );
+				const uint64_t src_2 = regFile->getIntReg<uint64_t>( phys_int_regs_in[1] );
 
-		regFile->setIntReg( phys_int_regs_out[0], (src_1) >> (src_2) );
+				regFile->setIntReg<uint64_t>( phys_int_regs_out[0], (src_1) >> (src_2) );
+			}
+			break;
+		case VANADIS_FORMAT_INT32:
+			{
+				const uint32_t src_1 = regFile->getIntReg<uint32_t>( phys_int_regs_in[0] );
+                                const uint32_t src_2 = regFile->getIntReg<uint32_t>( phys_int_regs_in[1] );
+
+                                regFile->setIntReg<uint32_t>( phys_int_regs_out[0], (src_1) >> (src_2) );
+			}
+			break;
+		case VANADIS_FORMAT_FP32:
+		case VANADIS_FORMAT_FP64:
+			{
+				flagError();
+			}
+			break;
+		}
 
 		markExecuted();
 	}
+
+protected:
+	VanadisRegisterFormat reg_format;
 
 };
 

@@ -80,21 +80,59 @@ public:
 	T getFPReg( const uint16_t reg ) {
 		assert( reg < count_fp_regs );
 
-		if( reg != decoder_opts->getRegisterIgnoreWrites() ) {
-			char* reg_start = &fp_reg_storage[reg * fp_reg_width];
-			T* reg_start_T = (T*) reg_start;
-			return *(reg_start_T);
-		} else {
-			return T();
-		}
+		char* reg_start = &fp_reg_storage[reg * fp_reg_width];
+		T* reg_start_T = (T*) reg_start;
+		return *(reg_start_T);
 	}
 
 	template<typename T>
-	void setIntReg( const uint16_t reg, const T val ) {
+	void setIntReg( const uint16_t reg, const T val, const bool sign_extend = true ) {
 		assert( reg < count_int_regs );
 
+		T* reg_ptr_t    = (T*)( &int_reg_storage[ int_reg_width * reg ] );
+		char* reg_ptr_c = (char*)( &int_reg_storage[ int_reg_width * reg ] );
+
 		if( reg != decoder_opts->getRegisterIgnoreWrites() ) {
-			*((T*) &int_reg_storage[int_reg_width*reg]) = val;
+			if( sizeof(T) < int_reg_width ) {
+				if( sign_extend ) {
+					const uint64_t check_sign_bit = 1UL << ((sizeof(T) * 8) - 1);
+					(*reg_ptr_t) = val;
+
+					if( (val & check_sign_bit) != 0 ) {
+						// we need to perform sign extension
+						for( int next_reg_byte = int_reg_width - 1;
+							next_reg_byte >= sizeof(T);
+							next_reg_byte-- ) {
+
+							// Push 0xFF (negative) into each preceeding byte
+							reg_ptr_c[ next_reg_byte ] = 0xFF;
+						}
+					} else {
+						// we need to perform sign extension
+						for( int next_reg_byte = int_reg_width - 1;
+							next_reg_byte >= sizeof(T);
+							next_reg_byte-- ) {
+
+							// Push 0 into each preceeding byte
+							reg_ptr_c[ next_reg_byte ] = 0x00;
+						}
+					}
+				} else {
+					(*reg_ptr_t) = val;
+
+					// we are going to zero out the preceeding bytes because
+					// we are not sign extending
+					for( int next_reg_byte = int_reg_width - 1;
+						next_reg_byte >= sizeof(T);
+						next_reg_byte-- ) {
+
+						// Push 0xFF (negative) into each preceeding byte
+						reg_ptr_c[ next_reg_byte ] = 0;
+					}
+				}
+			} else {
+				(*reg_ptr_t) = val;
+			}
 		}
 	}
 
@@ -102,9 +140,7 @@ public:
 	void setFPReg( const uint16_t reg, const T val ) {
 		assert( reg < count_fp_regs );
 
-		if( reg != decoder_opts->getRegisterIgnoreWrites() ) {
-			*((T*) &fp_reg_storage[fp_reg_width*reg]) = val;
-		}
+		*((T*) &fp_reg_storage[fp_reg_width*reg]) = val;
 	}
 
 	uint32_t getHWThread() const { return hw_thread; }

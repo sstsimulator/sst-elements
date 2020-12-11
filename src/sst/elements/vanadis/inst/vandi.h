@@ -15,7 +15,7 @@ public:
 		const VanadisDecoderOptions* isa_opts,
 		const uint16_t dest,
 		const uint16_t src_1,
-		const int64_t immediate) :
+		const uint64_t immediate) :
 		VanadisInstruction(addr, hw_thr, isa_opts, 1, 1, 1, 1, 0, 0, 0, 0),
 			imm_value(immediate) {
 
@@ -42,19 +42,19 @@ public:
         }
 
 	virtual void execute( SST::Output* output, VanadisRegisterFile* regFile ) {
-		output->verbose(CALL_INFO, 16, 0, "Execute: (addr=%p) ANDI phys: out=%" PRIu16 " in=%" PRIu16 " imm=%" PRId64 ", isa: out=%" PRIu16 " / in=%" PRIu16 "\n",
+		output->verbose(CALL_INFO, 16, 0, "Execute: (addr=%p) ANDI phys: out=%" PRIu16 " in=%" PRIu16 " imm=%" PRIu64 ", isa: out=%" PRIu16 " / in=%" PRIu16 "\n",
 			(void*) getInstructionAddress(), phys_int_regs_out[0],
 			phys_int_regs_in[0], imm_value,
 			isa_int_regs_out[0], isa_int_regs_in[0] );
 
-		const int64_t src_1 = regFile->getIntReg<int64_t>( phys_int_regs_in[0] );
-		regFile->setIntReg( phys_int_regs_out[0], (src_1 & imm_value) );
+		const int64_t src_1 = regFile->getIntReg<uint64_t>( phys_int_regs_in[0] );
+		regFile->setIntReg<uint64_t>( phys_int_regs_out[0], (src_1 & imm_value) );
 
 		markExecuted();
 	}
 
 private:
-	const int64_t imm_value;
+	const uint64_t imm_value;
 
 };
 

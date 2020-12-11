@@ -50,7 +50,7 @@ public:
 		const uint64_t src_1 = regFile->getIntReg<uint64_t>( phys_int_regs_in[0] );
 		const uint64_t src_2 = regFile->getIntReg<uint64_t>( phys_int_regs_in[1] );
 
-		regFile->setIntReg( phys_int_regs_out[0], (src_1) | (src_2) );
+		regFile->setIntReg<uint64_t>( phys_int_regs_out[0], (src_1) | (src_2) );
 
 		markExecuted();
 	}

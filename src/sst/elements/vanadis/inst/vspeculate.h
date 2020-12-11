@@ -10,22 +10,6 @@
 namespace SST {
 namespace Vanadis {
 
-//enum VanadisBranchDirection {
-//	BRANCH_TAKEN,
-//	BRANCH_NOT_TAKEN
-//};
-
-//const char* directionToChar( const VanadisBranchDirection dir ) {
-//	switch( dir ) {
-//	case BRANCH_TAKEN:
-//		return "TAKEN";
-//	case BRANCH_NOT_TAKEN:
-//		return "NOT-TAKEN";
-//	default:
-//		return "UNKNOWN";
-//	}
-//}
-
 class VanadisSpeculatedInstruction : public VanadisInstruction {
 
 public:
@@ -48,8 +32,6 @@ public:
 			c_phys_fp_reg_in, c_phys_fp_reg_out,
 			c_isa_fp_reg_in, c_isa_fp_reg_out) {
 
-//			spec_dir   = BRANCH_NOT_TAKEN;
-//			result_dir = BRANCH_NOT_TAKEN;
 			delayType  = delayT;
 
 			// default speculated, branch not-taken address
@@ -64,28 +46,20 @@ public:
 			takenAddress      = UINT64_MAX;
 		}
 
+/*
 	VanadisSpeculatedInstruction( const VanadisSpeculatedInstruction& copy_me ) :
 		VanadisInstruction(copy_me) {
 
-//		spec_dir   = copy_me.spec_dir;
-//		result_dir = copy_me.result_dir;
 		delayType  = copy_me.delayType;
 
 		speculatedAddress = copy_me.speculatedAddress;
 		takenAddress      = copy_me.takenAddress;
 	}
+*/
 
-//	virtual VanadisBranchDirection getSpeculatedDirection() const { return spec_dir; }
-//	virtual void setSpeculatedDirection( const VanadisBranchDirection dir ) { spec_dir = dir; }
 	virtual uint64_t getSpeculatedAddress() const { return speculatedAddress; }
 	virtual void setSpeculatedAddress( const uint64_t spec_ad ) { speculatedAddress = spec_ad; }
-
 	virtual uint64_t getTakenAddress() const { return takenAddress; }
-
-//	virtual VanadisBranchDirection getResultDirection( const VanadisRegisterFile* reg_file ) {
-//		return result_dir;
-//	}
-
 	virtual bool isSpeculated() const { return true; }
 
 	virtual VanadisFunctionalUnitType getInstFuncType() const {
@@ -109,9 +83,6 @@ protected:
 		return new_addr;
 	}
 
-
-//	VanadisBranchDirection spec_dir;
-//	VanadisBranchDirection result_dir;
 	VanadisDelaySlotRequirement delayType;
 	uint64_t speculatedAddress;
 	uint64_t takenAddress;
