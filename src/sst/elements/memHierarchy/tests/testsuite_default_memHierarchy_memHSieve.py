@@ -309,7 +309,7 @@ class testcase_memHierarchy_memHSieve(SSTTestCase):
         # Verify that a stat exists in the file
         rtn_result = True
         found_row = False
-        with open(statfile, 'rb') as csvfile:
+        with open(statfile, 'rt') as csvfile:
             statreader = csv.reader(csvfile, delimiter=',')
             for row in statreader:
                 if stattocheck in row:
