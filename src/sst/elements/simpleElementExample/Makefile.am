@@ -47,6 +47,7 @@ EXTRA_DIST = \
     tests/test_simpleDistribComponent_expon.py \
     tests/test_simpleDistribComponent_gaussian.py \
     tests/test_simpleDistribComponent_poisson.py \
+    tests/test_simpleLookupTable.py \
     tests/test_simpleLookupTableComponent.py \
     tests/test_simpleRNGComponent_mersenne.py \
     tests/test_simpleRNGComponent_marsaglia.py \
