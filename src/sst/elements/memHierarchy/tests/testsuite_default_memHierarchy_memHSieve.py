@@ -324,7 +324,7 @@ class testcase_memHierarchy_memHSieve(SSTTestCase):
     def _sieve_check_stat_data(self, statfile, stattocheck):
         # Verify that the last 3 fields of the stat data is != 0
         rtn_result = True
-        with open(statfile, 'rb') as csvfile:
+        with open(statfile, 'rt') as csvfile:
             statreader = csv.reader(csvfile, delimiter=',')
             for row in statreader:
                 if stattocheck in row:
