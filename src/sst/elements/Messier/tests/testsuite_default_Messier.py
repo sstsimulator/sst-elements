@@ -15,7 +15,11 @@ def initializeTestModule_SingleInstance(class_inst):
 
     module_sema.acquire()
     if module_init != 1:
-        # Put your single instance Init Code Here
+        try:
+            # Put your single instance Init Code Here
+            pass
+        except:
+            pass
         module_init = 1
     module_sema.release()
 
@@ -100,4 +104,7 @@ class testcase_Messier_Component(SSTTestCase):
             self.assertTrue(wc_line_word_count_diff, "Line & Word count between file {0} does not match Reference File {1}".format(outfile, reffile))
 
         else:
+            if (cmp_result == False):
+                diffdata = testing_get_diff_data(testcase)
+                log_failure(diffdata)
             self.assertTrue(cmp_result, "Sorted Output file {0} does not match sorted Reference File {1}".format(outfile, reffile))
