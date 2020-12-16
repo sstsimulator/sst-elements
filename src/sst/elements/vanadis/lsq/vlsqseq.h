@@ -38,6 +38,7 @@ public:
 		ins = instr;
 		issued = false;
 		req_id = 0;
+		opAddr = 0;
 	}
 
 	bool isOperationIssued() {
@@ -68,6 +69,14 @@ public:
 		return ins->getInstFuncType() == INST_LOAD;
 	}
 
+	uint64_t getOperationAddress() const {
+		return opAddr;
+	}
+
+	void setOperationAddress( const uint64_t newAddr ) {
+		opAddr = newAddr;
+	}
+
 	void print( SST::Output* output ) {
 		output->verbose(CALL_INFO, 16, 0, "-> type: %s / ins: 0x%llx / issued: %c\n",
 			isStore() ? "STORE" : "LOAD ", ins->getInstructionAddress(),
@@ -78,7 +87,7 @@ protected:
 	SimpleMem::Request::id_t req_id;
 	VanadisInstruction* ins;
 	bool issued;
-
+	uint64_t opAddr;
 };
 
 class VanadisSequentialLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue {
@@ -176,6 +185,25 @@ public:
 
 	virtual size_t loadSize() {
 		return op_q.size();
+	}
+
+	virtual void printStatus( SST::Output& output ) {
+		int next_index = 0;
+
+		for( auto q_itr = op_q.begin(); q_itr != op_q.end(); q_itr++ ) {
+			if( (*q_itr)->isLoad() ) {
+				output.verbose(CALL_INFO, 0, 0, "---> lsq[%5d]: ins: 0x%llx / LOAD  / 0x%llx / rob-issued: %c / lsq-issued: %c\n", next_index++,
+					(*q_itr)->getInstruction()->getInstructionAddress(),
+					(*q_itr)->getOperationAddress(),
+					(*q_itr)->getInstruction()->completedIssue() ? 'y' : 'n',
+					(*q_itr)->isOperationIssued() ? 'y' : 'n' );
+			} else {
+				output.verbose(CALL_INFO, 0, 0, "---> lsq[%5d]: ins: 0x%llx / STORE / rob-issued: %c / lsq-issued: %c\n", next_index++,
+					(*q_itr)->getInstruction()->getInstructionAddress(),
+					(*q_itr)->getInstruction()->completedIssue() ? 'y' : 'n',
+					(*q_itr)->isOperationIssued() ? 'y' : 'n' );
+			}
+		}
 	}
 
 	virtual void push( VanadisStoreInstruction* store_me ) {
@@ -288,6 +316,7 @@ public:
 
 							memInterface->sendRequest( load_req );
 							next_item->setRequestID( load_req->id );
+							next_item->setOperationAddress( load_addr );
 						}
 					}
 
