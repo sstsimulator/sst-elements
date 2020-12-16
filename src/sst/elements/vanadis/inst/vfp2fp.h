@@ -74,22 +74,22 @@ public:
 		case VANADIS_FORMAT_INT32:
 		case VANADIS_FORMAT_FP32:
 			{
-				const uint32_t fp_v = regFile->getFPReg<uint32_t>( phys_fp_regs_in[0] );
-				regFile->setFPReg<uint32_t>( phys_fp_regs_out[0], fp_v );
+				const int32_t fp_v = regFile->getFPReg<int32_t>( phys_fp_regs_in[0] );
+				regFile->setFPReg<int32_t>( phys_fp_regs_out[0], fp_v );
 			}
 			break;
 		case VANADIS_FORMAT_INT64:
 		case VANADIS_FORMAT_FP64:
 			{
 				if( VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode() ) {
-					const uint32_t v_0 = regFile->getFPReg<uint32_t>( phys_fp_regs_in[0] );
-					regFile->setFPReg<uint32_t>( phys_fp_regs_out[0], v_0 );
+					const int32_t v_0 = regFile->getFPReg<int32_t>( phys_fp_regs_in[0] );
+					regFile->setFPReg<int32_t>( phys_fp_regs_out[0], v_0 );
 
-					const uint32_t v_1 = regFile->getFPReg<uint32_t>( phys_fp_regs_in[1] );
-					regFile->setFPReg<uint32_t>( phys_fp_regs_out[1], v_1 );
+					const int32_t v_1 = regFile->getFPReg<int32_t>( phys_fp_regs_in[1] );
+					regFile->setFPReg<int32_t>( phys_fp_regs_out[1], v_1 );
 				} else {
-					const uint64_t fp_v = regFile->getFPReg<uint64_t>( phys_fp_regs_in[0] );
-					regFile->setFPReg<uint64_t>( phys_fp_regs_out[0], fp_v );
+					const int64_t fp_v = regFile->getFPReg<int64_t>( phys_fp_regs_in[0] );
+					regFile->setFPReg<int64_t>( phys_fp_regs_out[0], fp_v );
 				}
 			}
 			break;

@@ -74,7 +74,7 @@ public:
 		case VANADIS_FORMAT_FP32:
 			{
 				const int32_t v = regFile->getIntReg<int32_t>( phys_int_regs_in[0] );
-				regFile->setFPReg( phys_fp_regs_out[0], v );
+				regFile->setFPReg<int32_t>( phys_fp_regs_out[0], v );
 			}
 			break;
 		case VANADIS_FORMAT_INT64:
@@ -85,7 +85,7 @@ public:
 					fractureToRegisters<int64_t>( regFile, phys_fp_regs_out[0], phys_fp_regs_out[1], v );
 				} else {
 					const int64_t v = regFile->getIntReg<int64_t>( phys_int_regs_in[0] );
-					regFile->setFPReg( phys_fp_regs_out[0], v );
+					regFile->setFPReg<int64_t>( phys_fp_regs_out[0], v );
 				}
 			}
 			break;

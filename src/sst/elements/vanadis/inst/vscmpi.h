@@ -96,9 +96,9 @@ public:
 		}
 
 		if( compare_result ) {
-			regFile->setIntReg<uint64_t>( phys_int_regs_out[0], 1UL );
+			regFile->setIntReg<uint64_t>( phys_int_regs_out[0], static_cast<uint64_t>(1) );
 		} else {
-			regFile->setIntReg<uint64_t>( phys_int_regs_out[0], 0UL );
+			regFile->setIntReg<uint64_t>( phys_int_regs_out[0], static_cast<uint64_t>(0) );
 		}
 
 		markExecuted();
