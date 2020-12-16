@@ -73,8 +73,9 @@ template<class T>
 class Vertex
 {
 private:
-    T type_;
+    T    type_;
     bool visited_;
+    uint32_t numInEdges_;
 
     std::vector< Edge* >* adjacencyList_;
 
@@ -85,6 +86,7 @@ public:
     {
         adjacencyList_ = new std::vector< Edge* >;
         visited_ = 0;
+        numInEdges_ = 0;
     }
 
     Vertex( T typeIn )
@@ -92,6 +94,7 @@ public:
         adjacencyList_ = new std::vector< Edge* >;
         type_ = typeIn;
         visited_ = 0;
+        numInEdges_ = 0;
     }
 
     void setType( T typeIn )
@@ -122,6 +125,16 @@ public:
     void addEdge( Edge* edgeIn )
     {
         adjacencyList_->push_back(edgeIn);
+    }
+
+    void addInDegree()
+    {
+        ++numInEdges_;
+    }
+
+    uint32_t getInDegree() const
+    {
+        return numInEdges_;
     }
 
 };
@@ -245,25 +258,27 @@ uint32_t LlyrGraph<T>::numVertices(void)
 template<class T>
 void LlyrGraph<T>::addEdge( uint32_t beginVertex, uint32_t endVertex )
 {
-//     std::cout << "add edge:  " << beginVertex << " --> " << endVertex << std::endl;
+    std::cout << "add edge:  " << beginVertex << " --> " << endVertex << "\n" << std::endl;
     Edge* edge = new Edge( endVertex );
 
     vertex_map_->at(beginVertex).addEdge(edge);
+    vertex_map_->at(endVertex).addInDegree();
 }
 
 template<class T>
 void LlyrGraph<T>::addEdge( uint32_t beginVertex, uint32_t endVertex, float weightIn )
 {
-//     std::cout << "add edge:  " << beginVertex << " --> " << endVertex << std::endl;
+    std::cout << "add edge:  " << beginVertex << " --> " << endVertex << "\n" << std::endl;
     Edge* edge = new Edge( weightIn, endVertex );
 
     vertex_map_->at(beginVertex).addEdge(edge);
+    vertex_map_->at(endVertex).addInDegree();
 }
 
 template<class T>
 void LlyrGraph<T>::addVertex(uint32_t vertexNum, T type)
 {
-//     std::cout << "add vertex:  " << vertexNum << std::endl;
+    std::cout << "add vertex:  " << vertexNum << "\n" << std::endl;
 
     Vertex<T> vertex;
     vertex.setType(type);
