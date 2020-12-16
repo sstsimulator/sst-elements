@@ -97,9 +97,9 @@ LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
 
     //do the mapping
     Params mapperParams;    //empty but needed for loadModule API
-    std::string mapperName = params.find<std::string>("mapper", "llyr.mapper.gemm");
+    std::string mapperName = params.find<std::string>("mapper", "llyr.mapper.simple");
     llyr_mapper_ = dynamic_cast<LlyrMapper*>( loadModule(mapperName, mapperParams) );
-    output_->verbose(CALL_INFO, 1, 0, "Mapping application to hardware\n");
+    output_->verbose(CALL_INFO, 1, 0, "Mapping application to hardware with %s\n", mapperName.c_str());
     llyr_mapper_->mapGraph(hardwareGraph_, applicationGraph_, mappedGraph_, configData_);
 
     //all done
@@ -386,22 +386,27 @@ void LlyrComponent::constructSoftwareGraph(std::string fileName)
                 if( position !=  std::string::npos ) {
                     uint32_t vertex = std::stoi( thisLine.substr( 0, position ) );
 
-                    std::uint64_t posA = thisLine.find_first_of( "\"" ) + 1;
-                    std::uint64_t posB = thisLine.find_last_of( "\"" );
+                    std::uint64_t posA = thisLine.find_first_of( "=" ) + 1;
+                    std::uint64_t posB = thisLine.find_last_of( "]" );
                     std::string op = thisLine.substr( posA, posB-posA );
                     opType operation = getOptype(op);
 
                     output_->verbose(CALL_INFO, 10, 0, "OpString:  %s\t\t%" PRIu32 "\n", op.c_str(), operation);
                     applicationGraph_.addVertex( vertex, operation );
                 } else {
-//                     std::cout << "\t*Parse " << thisLine << std::endl;
-                    std::regex delimiter( "\\->" );
+
+                    std::regex delimiter( "\\--" );
 
                     std::sregex_token_iterator iterA(thisLine.begin(), thisLine.end(), delimiter, -1);
                     std::sregex_token_iterator iterB;
                     std::vector<std::string> edges( iterA, iterB );
 
-                    applicationGraph_.addEdge( std::stoi(edges[0].substr(0, edges[0].find(" "))), std::stoi(edges[1].substr(0, edges[1].find(" "))) );
+                    edges[0].erase(remove_if(edges[0].begin(), edges[0].end(), isspace), edges[0].end());
+                    edges[1].erase(remove_if(edges[1].begin(), edges[1].end(), isspace), edges[1].end());
+
+                    output_->verbose(CALL_INFO, 10, 0, "Edges %s--%s\n", edges[0].c_str(), edges[1].c_str());
+
+                    applicationGraph_.addEdge( std::stoi(edges[0]), std::stoi(edges[1]) );
                 }
             }
         }

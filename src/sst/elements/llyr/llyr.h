@@ -49,7 +49,7 @@ public:
         { "verbose",        "Level of output verbosity, higher is more output, 0 is no output", 0 },
         { "clock",          "Clock frequency", "1GHz" },
         { "clockcount",     "Number of clock ticks to execute", "100000" },
-        { "application",    "Application in affine IR", "" },
+        { "application",    "Application in affine IR", "app.in" },
         { "hardware_graph", "Hardware connectivity graph", "grid.cfg" },
         { "mem_init",       "Memory initialization file", "" },
         { "ls_entries",     "Number of L/S entries to process each tick", "1" },
