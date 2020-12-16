@@ -26,12 +26,7 @@ num_mul = k * m * n
 num_add = (k - 1) * (m * n)
 num_store = m * n
 
-pe_string_pre = "tempPE = new"
-pe_string_app = "llyr_config"
-
-vertex_string_pre = "graphOut.addVertex"
-vertex_string_app = "tempPE"
-
+pe_string_pre = "pe_type="
 edge_string_pre = "graphOut.addEdge"
 
 ##
@@ -48,18 +43,11 @@ if( debug == 1 ):
 
 
 # open the file
-file = open("gemm.out", "w")
-
-#create dummy
-file.write("ProcessingElement* tempPE = new DummyProcessingElement(DUMMY, 0, llyr_config);\n")
-file.write("graphOut.addVertex( 0, tempPE );\n")
-file.write("\n")
+file = open("gemm.in", "w")
 
 pe_num = 1
 def write_pe( pe_string, pe, num_pes ):
-    file.write("%s %s( %s, %s, %s ); \n" % (pe_string_pre, pe_string, pe, pe_num, pe_string_app))
-    file.write("%s( %s, %s ); \n" % (vertex_string_pre, pe_num, vertex_string_app))
-    file.write("\n")
+    file.write("%s [%s%s]\n" % (pe_num, pe_string_pre, pe))
 
 # write loads
 for counter in range( 0, num_load ):
@@ -84,15 +72,12 @@ for counter in range( 0, num_store ):
     write_pe( "StoreProcessingElement", "ST", pe_num )
     pe_num = pe_num + 1
 
+file.write("\n")
+
 if( debug == 1 ):
     print(" %s %s %s" % (mul_start, add_start, store_start))
 
 # write edges
-# first edges are from dummy (node 0) to all of the loads
-for counter in range( 1, num_load + 1 ):
-    file.write("%s( 0, %s ); \n" % (edge_string_pre, counter))
-file.write("\n")
-
 # connect loads to muls (first load is PE-1)
 a_start = 1
 a_end = (k * m)
@@ -121,7 +106,7 @@ for x in range( 0, m ):
             mul_pe_dict[a_next].append(mul_pe)
             mul_pe_dict[b_next].append(mul_pe)
             temp_list.append(mul_pe)
-            #file.write("%s( %s, %s ); \n" % (edge_string_pre, a_next, b_next))
+            #file.write("%s -- %s\n" % (a_next, b_next))
             b_next = b_next + n
             mul_pe = mul_pe + 1
         #for key in mul_pe_dict.keys():
@@ -141,7 +126,7 @@ if( debug == 1 ):
 for key in mul_pe_dict.keys():
     value = mul_pe_dict[key]
     for val in value:
-        file.write("%s( %s, %s ); \n" % (edge_string_pre, key, val))
+        file.write("%s -- %s\n" % (key, val))
     file.write("\n")
 
 # connect adds to muls
@@ -158,8 +143,8 @@ def add_tree( boop, next_add ):
             print(boop)
         for x in boop:
             if( x.count(-1) == 0 ):
-                file.write("%s( %s, %s ); \n" % (edge_string_pre, x[0], next_add))
-                file.write("%s( %s, %s ); \n" % (edge_string_pre, x[1], next_add))
+                file.write("%s -- %s\n" % (x[0], next_add))
+                file.write("%s -- %s\n" % (x[1], next_add))
                 add_pe_groups.append(next_add)
                 next_add = next_add + 1
                 if( debug == 1 ):
@@ -182,8 +167,8 @@ def add_tree( boop, next_add ):
             print(boop)
         for x in boop:
             if( x.count(-1) == 0 ):
-                file.write("%s( %s, %s ); \n" % (edge_string_pre, x[0], next_add))
-                file.write("%s( %s, %s ); \n" % (edge_string_pre, x[1], next_add))
+                file.write("%s -- %s\n" % (x[0], next_add))
+                file.write("%s -- %s\n" % (x[1], next_add))
                 add_pe_groups.append(next_add)
                 final_add_pe_list.append(next_add)
                 next_add = next_add + 1
@@ -215,7 +200,7 @@ for value in final_add_pe_list:
     if( debug == 1 ):
         print("ST")
         print(value)
-    file.write("%s( %s, %s ); \n" % (edge_string_pre, value, next_store))
+    file.write("%s -- %s\n" % (value, next_store))
     next_store = next_store + 1
 
 file.write("\n")

@@ -12,9 +12,12 @@ tile_clk_mhz = 1
 # Define the simulation components
 df_0 = sst.Component("df_0", "llyr.LlyrDataflow")
 df_0.addParams({
-      "verbose": 10,
-      "clock" : str(tile_clk_mhz) + "GHz",
-      "mem_init" : "mem.in"
+    "verbose": 20,
+    "clock" : str(tile_clk_mhz) + "GHz",
+    "mem_init"      : "mem.in",
+    "application"   : "gemm.in",
+    "hardware_graph": "hardware.cfg",
+    "mapper"        : "llyr.mapper.simple"
 })
 
 df_l1cache = sst.Component("l1cache", "memHierarchy.Cache")
