@@ -1257,7 +1257,7 @@ protected:
 
 		case MIPS_SPEC_OP_MASK_BEQ:
 			{
-				const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins << 2 );
+				const int64_t imm_value_64 = vanadis_sign_extend_offset_16_and_shift( next_ins, 2 );
 
 				output->verbose(CALL_INFO, 16, 0, "[decoder/BEQ]: -> r1: %" PRIu16 " r2: %" PRIu16 " offset: %" PRId64 "\n",
                                         rt, rs, imm_value_64 );
@@ -1269,7 +1269,7 @@ protected:
 
 		case MIPS_SPEC_OP_MASK_BGTZ:
 			{
-				const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins << 2 );
+				const int64_t imm_value_64 = vanadis_sign_extend_offset_16_and_shift( next_ins, 2 );
 
 				output->verbose(CALL_INFO, 16, 0, "[decoder/BGTZ]: -> r1: %" PRIu16 " offset: %" PRId64 "\n",
                                         rs, imm_value_64);
@@ -1281,7 +1281,7 @@ protected:
 
 		case MIPS_SPEC_OP_MASK_BLEZ:
 			{
-				const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins << 2 );
+				const int64_t imm_value_64 = vanadis_sign_extend_offset_16_and_shift( next_ins, 2 );
 
 				output->verbose(CALL_INFO, 16, 0, "[decoder/BLEZ]: -> r1: %" PRIu16 " offset: %" PRId64 "\n",
                                         rs, imm_value_64);
@@ -1293,7 +1293,7 @@ protected:
 
 		case MIPS_SPEC_OP_MASK_BNE:
 			{
-				const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins << 2 );
+				const int64_t imm_value_64 = vanadis_sign_extend_offset_16_and_shift( next_ins, 2 );
 
 				output->verbose(CALL_INFO, 16, 0, "[decoder/BNE]: -> r1: %" PRIu16 " r2: %" PRIu16 " offset: %" PRId64 "\n",
                                         rt, rs, imm_value_64 );
