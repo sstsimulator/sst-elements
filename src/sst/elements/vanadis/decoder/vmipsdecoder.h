@@ -747,14 +747,14 @@ protected:
 					switch( func_mask ) {
 					case MIPS_SPEC_OP_MASK_ADD:
 						{
-							bundle->addInstruction( new VanadisAddInstruction( ins_addr, hw_thr, options, rd, rs, rt, VANADIS_FORMAT_INT32 ) );
+							bundle->addInstruction( new VanadisAddInstruction( ins_addr, hw_thr, options, rd, rs, rt, true, VANADIS_FORMAT_INT32 ) );
 							insertDecodeFault = false;
 						}
 						break;
 
 					case MIPS_SPEC_OP_MASK_ADDU:
 						{
-							bundle->addInstruction( new VanadisAddInstruction( ins_addr, hw_thr, options, rd, rs, rt, VANADIS_FORMAT_INT32 ) );
+							bundle->addInstruction( new VanadisAddInstruction( ins_addr, hw_thr, options, rd, rs, rt, true, VANADIS_FORMAT_INT32 ) );
 							insertDecodeFault = false;
 						}
 						break;
@@ -1014,11 +1014,9 @@ protected:
 
 		case MIPS_SPEC_OP_MASK_REGIMM:
 			{
-				const uint16_t offset_value_16 = (uint16_t) (next_ins & MIPS_IMM_MASK);
-				const uint64_t offset_value_64 = vanadis_sign_extend( offset_value_16 ) << 2;
+				const uint64_t offset_value_64 = vanadis_sign_extend_offset_16_and_shift( next_ins, 2 );;
 
-				output->verbose(CALL_INFO, 16, 0, "[decoder/REGIMM] -> offset-16: %" PRIu16 " shifted: %" PRIu64 "\n", offset_value_16,
-					offset_value_64);
+				output->verbose(CALL_INFO, 16, 0, "[decoder/REGIMM] -> imm: %" PRIu64 "\n", offset_value_64);
 				output->verbose(CALL_INFO, 16, 0, "[decoder]        -> rt: 0x%08x\n", (next_ins & MIPS_RT_MASK));
 
 				switch( ( next_ins & MIPS_RT_MASK ) ) {
@@ -1050,9 +1048,7 @@ protected:
 
 		case MIPS_SPEC_OP_MASK_LUI:
 			{
-				const int32_t ins_imm      = (int32_t)( next_ins & 0xFFFF );
-				const int64_t ins_imm_64   = (int64_t)( ins_imm << 16 );
-				const int64_t imm_value_64 = ins_imm_64 & 0xFFFFFFFFFFFF0000;
+				const int64_t imm_value_64 = vanadis_sign_extend_offset_16_and_shift( next_ins, 16 );
 
 				output->verbose(CALL_INFO, 16, 0, "[decoder/LUI] -> reg: %" PRIu16 " / imm=%" PRId64 "\n",
 					rt, imm_value_64);
@@ -1257,7 +1253,7 @@ protected:
 
 		case MIPS_SPEC_OP_MASK_BEQ:
 			{
-				const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins << 2 );
+				const int64_t imm_value_64 = vanadis_sign_extend_offset_16_and_shift( next_ins, 2 );
 
 				output->verbose(CALL_INFO, 16, 0, "[decoder/BEQ]: -> r1: %" PRIu16 " r2: %" PRIu16 " offset: %" PRId64 "\n",
                                         rt, rs, imm_value_64 );
@@ -1269,7 +1265,7 @@ protected:
 
 		case MIPS_SPEC_OP_MASK_BGTZ:
 			{
-				const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins << 2 );
+				const int64_t imm_value_64 = vanadis_sign_extend_offset_16_and_shift( next_ins, 2 );
 
 				output->verbose(CALL_INFO, 16, 0, "[decoder/BGTZ]: -> r1: %" PRIu16 " offset: %" PRId64 "\n",
                                         rs, imm_value_64);
@@ -1281,7 +1277,7 @@ protected:
 
 		case MIPS_SPEC_OP_MASK_BLEZ:
 			{
-				const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins << 2 );
+				const int64_t imm_value_64 = vanadis_sign_extend_offset_16_and_shift( next_ins, 2 );
 
 				output->verbose(CALL_INFO, 16, 0, "[decoder/BLEZ]: -> r1: %" PRIu16 " offset: %" PRId64 "\n",
                                         rs, imm_value_64);
@@ -1293,7 +1289,7 @@ protected:
 
 		case MIPS_SPEC_OP_MASK_BNE:
 			{
-				const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins << 2 );
+				const int64_t imm_value_64 = vanadis_sign_extend_offset_16_and_shift( next_ins, 2 );
 
 				output->verbose(CALL_INFO, 16, 0, "[decoder/BNE]: -> r1: %" PRIu16 " r2: %" PRIu16 " offset: %" PRId64 "\n",
                                         rt, rs, imm_value_64 );
@@ -1433,18 +1429,18 @@ protected:
 
 				if( ( next_ins & 0x3E30000 ) == 0x1010000 ) {
 					// this decodes to a BRANCH on TRUE
-					const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins );
+					const int64_t imm_value_64 = vanadis_sign_extend_offset_16_and_shift( next_ins, 2 );
 
 					bundle->addInstruction( new VanadisBranchFPInstruction(
-						ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, (imm_value_64 << 2),
+						ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, imm_value_64,
 						/* branch on true */ true, VANADIS_SINGLE_DELAY_SLOT ) );
 					insertDecodeFault = false;
 				} else if( ( next_ins & 0x3E30000 ) == 0x1000000 ) {
 					// this decodes to a BRANCH on FALSE
-					const int64_t imm_value_64 = vanadis_sign_extend_offset_16( next_ins );
+					const int64_t imm_value_64 = vanadis_sign_extend_offset_16_and_shift( next_ins, 2 );
 
 					bundle->addInstruction( new VanadisBranchFPInstruction(
-						ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, (imm_value_64 << 2),
+						ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, imm_value_64,
 						/* branch on false */ false, VANADIS_SINGLE_DELAY_SLOT ) );
 					insertDecodeFault = false;
 				} else {

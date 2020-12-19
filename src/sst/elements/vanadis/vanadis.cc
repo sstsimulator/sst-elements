@@ -1450,6 +1450,7 @@ void VanadisComponent::printStatus( SST::Output& output ) {
 
 	output.verbose(CALL_INFO, 0, 0, "\n");
 	output.verbose(CALL_INFO, 0, 0, "-> LSQ-Size: %" PRIu32 "\n", (uint32_t) (lsq->storeSize() + lsq->loadSize()) );
+	lsq->printStatus( output );
 	output.verbose(CALL_INFO, 0, 0, "----------------------------------------------------------------------------------------------------------------------------\n");
 }
 

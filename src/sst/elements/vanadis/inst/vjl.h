@@ -25,20 +25,13 @@ public:
 			0,1,0,1,0,0,0,0, delayT ) {
 
 		isa_int_regs_out[0] = link_reg;
-//		result_dir = BRANCH_TAKEN;
-
 		takenAddress = pc;
 	}
 
 	virtual VanadisJumpLinkInstruction* clone() {
 		return new VanadisJumpLinkInstruction( *this );
 	}
-/*
-	virtual uint64_t calculateAddress( SST::Output* output, VanadisRegisterFile* reg_file, const uint64_t current_ip ) {
-		output->verbose(CALL_INFO, 16, 0, "[jump-link]: jump-to: %" PRIu64 " / 0x%0llx\n", new_pc, new_pc);
-		return new_pc;
-	}
-*/
+
 	virtual const char* getInstCode() const {
                	return "JL";
        	}

@@ -63,8 +63,7 @@ public:
 				const int32_t src_1 = regFile->getIntReg<int32_t>( phys_int_regs_in[0] );
 				const int32_t imm_value_32 = static_cast<int32_t>(imm_value);
 
-				const int64_t result = static_cast<int64_t>( (src_1) >> imm_value_32 );
-                                regFile->setIntReg<int64_t>( phys_int_regs_out[0], result );
+                                regFile->setIntReg<int32_t>( phys_int_regs_out[0], (src_1) >> imm_value_32 );
 			}
 			break;
 		case VANADIS_FORMAT_FP32:

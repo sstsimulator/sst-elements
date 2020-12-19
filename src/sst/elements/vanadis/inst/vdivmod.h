@@ -84,7 +84,7 @@ public:
 						const int32_t quo = (src_1) / (src_2);
 						const int32_t mod = (src_1) % (src_2);
 
-						output->verbose(CALL_INFO, 16, 0, "--> Execute: (detailed, signed, DIVREM32) %" PRId64 " / %" PRId64 " = (q: %" PRId64 ", r: %" PRId64 ")\n",
+						output->verbose(CALL_INFO, 16, 0, "--> Execute: (detailed, signed, DIVREM32) %" PRId32 " / %" PRId32 " = (q: %" PRId32 ", r: %" PRId32 ")\n",
 							src_1, src_2, quo, mod);
 
 						regFile->setIntReg<int32_t>( phys_int_regs_out[0], quo, true );
@@ -132,7 +132,7 @@ public:
 						const uint32_t quo = (src_1) / (src_2);
 						const uint32_t mod = (src_1) % (src_2);
 
-						output->verbose(CALL_INFO, 16, 0, "--> Execute: (detailed, unsigned, DIVREM32) %" PRIu64 " / %" PRIu64 " = (q: %" PRIu64 ", r: %" PRIu64 ")\n",
+						output->verbose(CALL_INFO, 16, 0, "--> Execute: (detailed, unsigned, DIVREM32) %" PRIu32 " / %" PRIu32 " = (q: %" PRIu32 ", r: %" PRIu32 ")\n",
 							src_1, src_2, quo, mod);
 
 						regFile->setIntReg<uint32_t>( phys_int_regs_out[0], quo, false );
