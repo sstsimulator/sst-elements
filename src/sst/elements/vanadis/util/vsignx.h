@@ -58,9 +58,9 @@ int64_t vanadis_sign_extend_offset_16( const uint32_t value ) {
 	return value_64;
 };
 
-int64_t vanadis_sign_extend_offset_16_and_shift( const uint32_t value, const uint32_t shift ) {
+int64_t vanadis_sign_extend_offset_16_and_shift( const uint32_t value, const int64_t shift ) {
 	int64_t value_64 = vanadis_sign_extend_offset_16( value );
-	value_64 = value_64 << shift;
+	value_64 <<= shift;
 
 	return value_64;
 };
