@@ -721,6 +721,21 @@ class SystemEndpoint(Buildable):
         else:
             return (None, None)
 
+class EmptyJob(Job):
+    def __init__(self,job_id,size):
+        Job.__init__(self,job_id,size)
+
+    def getName(self):
+        return "Empty Job"
+
+    def build(self, nID, extraKeys):
+        nic = sst.Component("incast.%d"%nID, "merlin.simple_patterns.empty")
+        id = self._nid_map.index(nID)
+
+        #  Add the linkcontrol
+        networkif, port_name = self.network_interface.build(nic,"networkIF",0,self.job_id,self.size,id)
+        return (networkif, port_name)
+
 
 class System(TemplateBase):
     
@@ -748,6 +763,10 @@ class System(TemplateBase):
 
     # Build the system
     def build(self):
+        # For any unallocated nodes, use EmptyJob
+        if len(self._available_nodes) > 0:
+            remainder = EmptyJob(-1,len(self._available_nodes))
+            self.allocateNodes(remainder,"linear");
         system_ep = SystemEndpoint(self)
         self.topology.build(system_ep)
 

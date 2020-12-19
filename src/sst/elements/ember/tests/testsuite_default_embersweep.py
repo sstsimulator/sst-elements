@@ -143,8 +143,11 @@ def initializeTestModule_SingleInstance(class_inst):
 
     module_sema.acquire()
     if module_init != 1:
-        # Put your single instance Init Code Here
-        class_inst._setupEmberTestFiles()
+        try:
+            # Put your single instance Init Code Here
+            class_inst._setupEmberTestFiles()
+        except:
+            pass
         module_init = 1
     module_sema.release()
 
@@ -216,7 +219,7 @@ class testcase_EmberSweep(SSTTestCase):
                 if grepstr in line:
                     outfoundline = line
 
-        outtestresult = outfoundline is not ""
+        outtestresult = outfoundline != ""
         self.assertTrue(outtestresult, "Ember Sweep Test {0} - Cannot find string \"{1}\" in output file {2}".format(index, grepstr, outfile))
 
         reffoundline = ""
@@ -226,7 +229,7 @@ class testcase_EmberSweep(SSTTestCase):
                 if grepstr in line:
                     reffoundline = line
 
-        reftestresult = reffoundline is not ""
+        reftestresult = reffoundline != ""
         self.assertTrue(reftestresult, "Ember Sweep Test {0} - Cannot find string \"{1}\" in reference file {2}".format(index, grepstr, outfile))
 
         log_debug("Ember Sweep Test {0} - PASSED\n--------".format(index))

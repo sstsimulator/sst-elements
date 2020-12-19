@@ -15,9 +15,12 @@ def initializeTestModule_SingleInstance(class_inst):
 
     module_sema.acquire()
     if module_init != 1:
-        # Put your single instance Init Code Here
+        try:
+            # Put your single instance Init Code Here
+            pass
+        except:
+            pass
         module_init = 1
-
     module_sema.release()
 
 ################################################################################
@@ -50,14 +53,14 @@ class testcase_Samba_Component(SSTTestCase):
         self.Samba_test_template("gupsgen_mmu_three_levels")
 
     def test_Samba_stencil3dbench_mmu(self):
-        self.Samba_test_template("stencil3dbench_mmu")
+        self.Samba_test_template("stencil3dbench_mmu", testtimeout=120)
 
     def test_Samba_streambench_mmu(self):
         self.Samba_test_template("streambench_mmu")
 
 #####
 
-    def Samba_test_template(self, testcase):
+    def Samba_test_template(self, testcase, testtimeout=60):
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
         outdir = self.get_test_output_run_dir()
@@ -75,7 +78,7 @@ class testcase_Samba_Component(SSTTestCase):
         newoutfile = "{0}/{1}.newout".format(outdir, testDataFileName)
         newreffile = "{0}/{1}.newref".format(outdir, testDataFileName)
 
-        self.run_sst(sdlfile, outfile, errfile, mpi_out_files=mpioutfiles)
+        self.run_sst(sdlfile, outfile, errfile, mpi_out_files=mpioutfiles, timeout_sec=testtimeout)
 
         testing_remove_component_warning_from_file(outfile)
 
@@ -83,6 +86,9 @@ class testcase_Samba_Component(SSTTestCase):
         #       BASED testSuite_XXX.sh THESE SHOULD BE RE-EVALUATED BY THE
         #       DEVELOPER AGAINST THE LATEST VERSION OF SST TO SEE IF THE
         #       TESTS & RESULT FILES ARE STILL VALID
+
+        # Perform the tests
+        self.assertFalse(os_test_file(errfile, "-s"), "Samba test {0} has Non-empty Error File {1}".format(testDataFileName, errfile))
 
         cmp_result = testing_compare_diff(testDataFileName, outfile, reffile)
         if cmp_result != True:
@@ -101,7 +107,7 @@ class testcase_Samba_Component(SSTTestCase):
 
             cmp_result = ref_wc_data == out_wc_data
             if not cmp_result:
-                log_debug("{0} - DIFF DATA\nref_wc_data = {1}\nout_wc_data = {2}".format(self.get_testcase_name(), ref_wc_data, out_wc_data))
+                log_failure("{0} - DIFF DATA\nref_wc_data = {1}\nout_wc_data = {2}".format(self.get_testcase_name(), ref_wc_data, out_wc_data))
             self.assertTrue(cmp_result, "Output file {0} word/line count does NOT match Reference file {1} word/line count".format(outfile, reffile))
         else:
             self.assertTrue(cmp_result, "Diffed compared Output file {0} does not match Reference File {1}".format(outfile, reffile))

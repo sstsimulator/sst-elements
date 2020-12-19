@@ -2,6 +2,7 @@
 
 from sst_unittest import *
 from sst_unittest_support import *
+import os
 
 ################################################################################
 # Code to support a single instance module initialize, must be called setUp method
@@ -24,8 +25,10 @@ def initializeTestModule_SingleInstance(class_inst):
     module_sema.release()
 
 ################################################################################
+################################################################################
+################################################################################
 
-class testcase_miranda_Component(SSTTestCase):
+class testcase_memHierarchy_hybridsim(SSTTestCase):
 
     def initializeClass(self, testName):
         super(type(self), self).initializeClass(testName)
@@ -43,52 +46,40 @@ class testcase_miranda_Component(SSTTestCase):
 
 #####
 
-    @unittest.skipIf(testing_check_get_num_ranks() > 1, "miranda: test_miranda_singlestream skipped if ranks > 1")
-    @unittest.skipIf(testing_check_get_num_threads() > 1, "miranda: test_miranda_singlestream skipped if threads > 1")
-    def test_miranda_singlestream(self):
-        self.miranda_test_template("singlestream")
-
-    def test_miranda_revsinglestream(self):
-        self.miranda_test_template("revsinglestream")
-
-    @unittest.skipIf(testing_check_get_num_ranks() > 1, "miranda: test_miranda_randomgen skipped if ranks > 1")
-    @unittest.skipIf(testing_check_get_num_threads() > 1, "miranda: test_miranda_randomgen skipped if threads > 1")
-    def test_miranda_randomgen(self):
-        self.miranda_test_template("randomgen", testtimeout=360)
-
-    def test_miranda_stencil3dbench(self):
-        self.miranda_test_template("stencil3dbench")
-
-    def test_miranda_streambench(self):
-        self.miranda_test_template("streambench")
-
-    def test_miranda_copybench(self):
-        self.miranda_test_template("copybench")
-
-    def test_miranda_inorderstream(self):
-        self.miranda_test_template("inorderstream")
-
-    def test_miranda_gupsgen(self):
-        self.miranda_test_template("gupsgen")
+    @skip_on_sstsimulator_conf_empty_str("HYBRIDSIM", "LIBDIR", "HYBRIDSIM is not included as part of this build")
+    def test_hybridsim_hybridsim(self):
+        self.hybridsim_Template("hybridsim")
 
 #####
 
-    def miranda_test_template(self, testcase, testtimeout=240):
+    def hybridsim_Template(self, testcase):
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
         outdir = self.get_test_output_run_dir()
         tmpdir = self.get_test_output_tmp_dir()
 
-        # Set the various file paths
-        testDataFileName="test_miranda_{0}".format(testcase)
+        # Set the Path of the HybridSim Lib into the Env so that the SDL file
+        # can pull it
+        lib_dir = sstsimulator_conf_get_value_str("HYBRIDSIM", "LIBDIR", "LIBDIR_UNDEFINED")
+        os.environ['SST_HYBRIDSIM_LIB_DIR'] = lib_dir
 
-        sdlfile = "{0}/{1}.py".format(test_path, testcase)
+        # Set the various file paths
+        testDataFileName=("test_{0}".format(testcase))
+        sdlfile = "{0}/{1}.py".format(test_path, testDataFileName)
         reffile = "{0}/refFiles/{1}.out".format(test_path, testDataFileName)
+
         outfile = "{0}/{1}.out".format(outdir, testDataFileName)
         errfile = "{0}/{1}.err".format(outdir, testDataFileName)
         mpioutfiles = "{0}/{1}.testfile".format(outdir, testDataFileName)
 
-        self.run_sst(sdlfile, outfile, errfile, mpi_out_files=mpioutfiles, timeout_sec=testtimeout)
+        log_debug("testcase = {0}".format(testcase))
+        log_debug("sdl file = {0}".format(sdlfile))
+        log_debug("ref file = {0}".format(reffile))
+        log_debug("out file = {0}".format(outfile))
+        log_debug("err file = {0}".format(errfile))
+
+        # Run SST in the tests directory
+        self.run_sst(sdlfile, outfile, errfile, set_cwd=test_path, mpi_out_files=mpioutfiles)
 
         testing_remove_component_warning_from_file(outfile)
 
@@ -98,11 +89,13 @@ class testcase_miranda_Component(SSTTestCase):
         #       TESTS & RESULT FILES ARE STILL VALID
 
         # Perform the tests
-        self.assertFalse(os_test_file(errfile, "-s"), "miranda test {0} has Non-empty Error File {1}".format(testDataFileName, errfile))
+        # This test uses DRAMSim2 which dumps data to the error output, we cannot
+        # test for an empty errfile.
+        #self.assertFalse(os_test_file(errfile, "-s"), "hybridsim test {0} has Non-empty Error File {1}".format(testDataFileName, errfile))
 
-        # Perform the test
         cmp_result = testing_compare_sorted_diff(testcase, outfile, reffile)
         if (cmp_result == False):
             diffdata = testing_get_diff_data(testcase)
             log_failure(diffdata)
-        self.assertTrue(cmp_result, "Sorted Output file {0} does not match sorted Reference File {1}".format(outfile, reffile))
+        self.assertTrue(cmp_result, "Diffed compared Output file {0} does not match Reference File {1}".format(outfile, reffile))
+

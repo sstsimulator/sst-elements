@@ -64,3 +64,24 @@ class OfferedLoadJob(Job):
         return (networkif, portname)
 
 
+class IncastJob(Job):
+    def __init__(self,job_id,size):
+        Job.__init__(self,job_id,size)
+        self._declareParams("main",["num_peers","target_nids","packets_to_send","packet_size"])
+        self.num_peers = size
+        self._lockVariable("num_peers")
+
+    def getName(self):
+        return "Incast Job"
+
+    def build(self, nID, extraKeys):
+        nic = sst.Component("incast.%d"%nID, "merlin.simple_patterns.incast")
+        self._applyStatisticsSettings(nic)
+        nic.addParams(self._getGroupParams("main"))
+        nic.addParams(extraKeys)
+        id = self._nid_map.index(nID)
+
+        #  Add the linkcontrol
+        networkif, port_name = self.network_interface.build(nic,"networkIF",0,self.job_id,self.size,id,True)
+        return (networkif, port_name)
+

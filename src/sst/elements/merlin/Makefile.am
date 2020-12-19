@@ -31,8 +31,12 @@ libmerlin_la_SOURCES = \
 	test/pt2pt/pt2pt_test.cc \
 	test/bisection/bisection_test.h \
 	test/bisection/bisection_test.cc \
+	test/simple_patterns/empty.h \
+	test/simple_patterns/empty.cc \
 	test/simple_patterns/shift.h \
 	test/simple_patterns/shift.cc \
+	test/simple_patterns/incast.h \
+	test/simple_patterns/incast.cc \
 	topology/torus.h \
 	topology/torus.cc \
 	topology/mesh.h \
