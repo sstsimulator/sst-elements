@@ -19,7 +19,6 @@ public:
 			1, 0, 1, 0, 0, 0, 0, 0, delayT ) {
 
 		isa_int_regs_in[0] = jump_to_reg;
-//		result_dir = BRANCH_TAKEN;
 	}
 
 	VanadisJumpRegInstruction* clone() {

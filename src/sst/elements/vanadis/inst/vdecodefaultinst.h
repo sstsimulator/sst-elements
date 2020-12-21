@@ -37,7 +37,7 @@ public:
 	}
 
 	virtual void execute( SST::Output* output, VanadisRegisterFile* regFile ) {
-		
+
 	}
 
 };

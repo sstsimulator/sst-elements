@@ -18,6 +18,7 @@
 #define VANADIS_SYSCALL_MMAP		 4090
 #define VANADIS_SYSCALL_UNAME            4122
 #define VANADIS_SYSCALL_WRITEV           4146
+#define VANADIS_SYSCALL_RT_SETSIGMASK    4195
 #define VANADIS_SYSCALL_MMAP2            4210
 #define VANADIS_SYSCALL_FSTAT		 4215
 #define VANADIS_SYSCALL_FUTEX		 4238
@@ -387,8 +388,35 @@ public:
 			}
 			break;
 
+		case VANADIS_SYSCALL_RT_SETSIGMASK:
+			{
+				const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
+                                int32_t how = regFile->getIntReg<int32_t>( phys_reg_4 );
+
+                                const uint16_t phys_reg_5 = isaTable->getIntPhysReg(5);
+                                uint64_t signal_set_in = regFile->getIntReg<uint64_t>( phys_reg_5 );
+
+                                const uint16_t phys_reg_6 = isaTable->getIntPhysReg(6);
+                                uint64_t signal_set_out = regFile->getIntReg<uint64_t>( phys_reg_6);
+
+				const uint16_t phys_reg_7 = isaTable->getIntPhysReg(7);
+				int32_t signal_set_size = regFile->getIntReg<int32_t>( phys_reg_7 );
+
+				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to rt_sigprocmask( %" PRId32 ", 0x%llx, 0x%llx, %" PRId32 ")\n",
+					how, signal_set_in, signal_set_out, signal_set_size);
+
+				recvOSEvent( new VanadisSyscallResponse( 0 ) );
+			}
+			break;
+
 		default:
-			output->fatal(CALL_INFO, -1, "[syscall-handler] Error: unknown code %" PRIu64 "\n", os_code);
+			{
+				const uint16_t phys_reg_31 = isaTable->getIntPhysReg(31);
+				uint64_t link_reg = regFile->getIntReg<int32_t>( phys_reg_31 );
+
+				output->fatal(CALL_INFO, -1, "[syscall-handler] Error: unknown code %" PRIu64 " (ins: 0x%llx, link-reg: 0x%llx)\n",
+					os_code, syscallIns->getInstructionAddress(), link_reg);
+			}
 			break;
 		}
 

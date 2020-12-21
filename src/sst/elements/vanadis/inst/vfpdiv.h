@@ -89,7 +89,7 @@ public:
 
 				output->verbose(CALL_INFO, 16, 0, "---> %f + %f = %f\n", src_1, src_2, (src_1 / src_2));
 
-				regFile->setFPReg( phys_fp_regs_out[0], src_1 / src_2 );
+				regFile->setFPReg<float>( phys_fp_regs_out[0], src_1 / src_2 );
 			}
 			break;
 		case VANADIS_FORMAT_FP64:
@@ -107,7 +107,7 @@ public:
 
 					output->verbose(CALL_INFO, 16, 0, "---> %f + %f = %f\n", src_1, src_2, (src_1 / src_2));
 
-					regFile->setFPReg( phys_fp_regs_out[0], src_1 / src_2 );
+					regFile->setFPReg<double>( phys_fp_regs_out[0], src_1 / src_2 );
 				}
 			}
 			break;

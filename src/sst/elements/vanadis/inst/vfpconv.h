@@ -137,7 +137,7 @@ public:
 					break;
 				case VANADIS_FORMAT_FP64:
 					{
-						const double fp_v = (float)( regFile->getFPReg<float>( phys_fp_regs_in[0] ) );
+						const double fp_v = (double)( regFile->getFPReg<float>( phys_fp_regs_in[0] ) );
 
 						if( VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode() ) {
 							fractureToRegisters<double>( regFile, phys_fp_regs_out[0], phys_fp_regs_out[1], fp_v );
@@ -149,7 +149,7 @@ public:
 				case VANADIS_FORMAT_INT32:
 					{
 						const int32_t i_v = (int32_t)( regFile->getFPReg<float>( phys_fp_regs_in[0] ) );
-						regFile->setFPReg( phys_fp_regs_out[0], i_v );
+						regFile->setFPReg<int32_t>( phys_fp_regs_out[0], i_v );
 					}
 					break;
 				case VANADIS_FORMAT_INT64:
@@ -178,7 +178,7 @@ public:
 							regFile->setFPReg<float>( phys_fp_regs_out[0], fp_v );
 						} else {
 							const float fp_v = (float)( regFile->getFPReg<double>( phys_fp_regs_in[0] ) );
-							regFile->setFPReg( phys_fp_regs_out[0], fp_v );
+							regFile->setFPReg<float>( phys_fp_regs_out[0], fp_v );
 						}
 					}
 					break;
@@ -189,7 +189,7 @@ public:
 							fractureToRegisters<double>( regFile, phys_fp_regs_out[0], phys_fp_regs_out[1], fp_v );
 						} else {
 							const double fp_v = (double)( regFile->getFPReg<double>( phys_fp_regs_in[0] ) );
-							regFile->setFPReg( phys_fp_regs_out[0], fp_v );
+							regFile->setFPReg<double>( phys_fp_regs_out[0], fp_v );
 						}
 					}
 					break;
@@ -201,7 +201,7 @@ public:
 							regFile->setFPReg<int32_t>( phys_fp_regs_out[0], i_v );
 						} else {
 							const int32_t i_v = (int32_t)( regFile->getFPReg<double>( phys_fp_regs_in[0] ) );
-							regFile->setFPReg( phys_fp_regs_out[0], i_v );
+							regFile->setFPReg<int32_t>( phys_fp_regs_out[0], i_v );
 						}
 					}
 					break;
@@ -213,7 +213,7 @@ public:
 							fractureToRegisters<int64_t>( regFile, phys_fp_regs_out[0], phys_fp_regs_out[1], i_v );
 						} else {
 							const int64_t i_v = (int64_t)( regFile->getFPReg<double>( phys_fp_regs_in[0] ) );
-							regFile->setFPReg( phys_fp_regs_out[0], i_v );
+							regFile->setFPReg<int64_t>( phys_fp_regs_out[0], i_v );
 						}
 					}
 					break;
@@ -227,7 +227,7 @@ public:
 				case VANADIS_FORMAT_FP32:
 					{
 						const float fp_v = (float)( regFile->getFPReg<int32_t>( phys_fp_regs_in[0] ) );
-						regFile->setFPReg( phys_fp_regs_out[0], fp_v );
+						regFile->setFPReg<float>( phys_fp_regs_out[0], fp_v );
 					}
 					break;
 				case VANADIS_FORMAT_FP64:
@@ -237,14 +237,14 @@ public:
 							fractureToRegisters<double>( regFile, phys_fp_regs_out[0], phys_fp_regs_out[1], fp_v );
 						} else {
 							const double fp_v = (double)( regFile->getFPReg<int32_t>( phys_fp_regs_in[0] ) );
-							regFile->setFPReg( phys_fp_regs_out[0], fp_v );
+							regFile->setFPReg<double>( phys_fp_regs_out[0], fp_v );
 						}
 					}
 					break;
 				case VANADIS_FORMAT_INT32:
 					{
 						const int32_t i_v = (int32_t)( regFile->getFPReg<int32_t>( phys_fp_regs_in[0] ) );
-						regFile->setFPReg( phys_fp_regs_out[0], i_v );
+						regFile->setFPReg<int32_t>( phys_fp_regs_out[0], i_v );
 					}
 					break;
 				case VANADIS_FORMAT_INT64:
@@ -254,7 +254,7 @@ public:
 							fractureToRegisters<int64_t>( regFile, phys_fp_regs_out[0], phys_fp_regs_out[1], i_v );
 						} else {
 							const int64_t i_v = (int64_t)( regFile->getFPReg<int32_t>( phys_fp_regs_in[0] ) );
-							regFile->setFPReg( phys_fp_regs_out[0], i_v );
+							regFile->setFPReg<int64_t>( phys_fp_regs_out[0], i_v );
 						}
 					}
 					break;
@@ -270,10 +270,10 @@ public:
 						if( VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode() ) {
 							const int64_t input_v = combineFromRegisters<int64_t>( regFile, phys_fp_regs_in[0], phys_fp_regs_in[1] );
 							const float   fp_v    = static_cast<float>( input_v );
-							regFile->setFPReg( phys_fp_regs_out[0], fp_v );
+							regFile->setFPReg<float>( phys_fp_regs_out[0], fp_v );
 						} else {
 							const float fp_v = (float)( regFile->getFPReg<int64_t>( phys_fp_regs_in[0] ) );
-							regFile->setFPReg( phys_fp_regs_out[0], fp_v );
+							regFile->setFPReg<float>( phys_fp_regs_out[0], fp_v );
 						}
 					}
 					break;
@@ -285,7 +285,7 @@ public:
 							fractureToRegisters<double>( regFile, phys_fp_regs_out[0], phys_fp_regs_out[1], fp_v );
 						} else {
 							const double fp_v = (double)( regFile->getFPReg<int64_t>( phys_fp_regs_in[0] ) );
-							regFile->setFPReg( phys_fp_regs_out[0], fp_v );
+							regFile->setFPReg<double>( phys_fp_regs_out[0], fp_v );
 						}
 					}
 					break;
@@ -294,10 +294,10 @@ public:
 						if( VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode() ) {
 							const int64_t input_v = combineFromRegisters<int64_t>( regFile, phys_fp_regs_in[0], phys_fp_regs_in[1] );
 							const int32_t i_v     = static_cast<int32_t>( input_v );
-							regFile->setFPReg( phys_fp_regs_out[0], i_v );
+							regFile->setFPReg<int32_t>( phys_fp_regs_out[0], i_v );
 						} else {
 							const int32_t i_v = (int32_t)( regFile->getFPReg<int64_t>( phys_fp_regs_in[0] ) );
-							regFile->setFPReg( phys_fp_regs_out[0], i_v );
+							regFile->setFPReg<int32_t>( phys_fp_regs_out[0], i_v );
 						}
 					}
 					break;
@@ -308,7 +308,7 @@ public:
 							fractureToRegisters<int64_t>(regFile, phys_fp_regs_out[0], phys_fp_regs_out[1], input_v );
 						} else {
 							const int64_t i_v = (int64_t)( regFile->getFPReg<int64_t>( phys_fp_regs_in[0] ) );
-							regFile->setFPReg( phys_fp_regs_out[0], i_v );
+							regFile->setFPReg<int64_t>( phys_fp_regs_out[0], i_v );
 						}
 					}
 					break;

@@ -57,7 +57,7 @@ public:
 		case VANADIS_FORMAT_INT32:
 			{
 		                const int32_t src_1 = regFile->getIntReg<int32_t>( phys_int_regs_in[0] );
-				regFile->setIntReg<int32_t>( phys_int_regs_out[0], src_1 + imm_value );
+				regFile->setIntReg<int32_t>( phys_int_regs_out[0], src_1 + static_cast<int32_t>(imm_value) );
 			}
 			break;
 		default:

@@ -68,6 +68,8 @@ public:
 	virtual void init( unsigned int phase ) = 0;
 	virtual void setInitialMemory( const uint64_t address, std::vector<uint8_t>& payload ) = 0;
 
+	virtual void printStatus( SST::Output& output ) {}
+
 protected:
 	uint64_t address_mask;
 	std::vector<VanadisRegisterFile*>* registerFiles;
