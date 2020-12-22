@@ -51,7 +51,7 @@ public:
 		uint32_t fp_cond_val = regFile->getFPReg<uint32_t>( fp_cond_reg );
 
 		// is the CC code set on the compare bit in the status register?
-		const bool compare_result = ((fp_cond_val & 0x800000) == (branch_on_true ? 1 : 0) );
+		const bool compare_result = ((fp_cond_val & 0x800000) == (branch_on_true ? 0x800000 : 0) );
 
 		if( compare_result ) {
 			takenAddress = (uint64_t) ( ((int64_t) getInstructionAddress()) +  offset + VANADIS_SPECULATE_JUMP_ADDR_ADD );
