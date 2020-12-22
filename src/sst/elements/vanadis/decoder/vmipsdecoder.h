@@ -744,231 +744,237 @@ protected:
 				if( 0 == (next_ins & MIPS_SHFT_MASK ) ) {
 					output->verbose( CALL_INFO, 16, 0, "[decode] -> special-class, func-mask: 0x%x\n", func_mask);
 
-					switch( func_mask ) {
-					case MIPS_SPEC_OP_MASK_ADD:
-						{
-							bundle->addInstruction( new VanadisAddInstruction( ins_addr, hw_thr, options, rd, rs, rt, true, VANADIS_FORMAT_INT32 ) );
-							insertDecodeFault = false;
-						}
-						break;
-
-					case MIPS_SPEC_OP_MASK_ADDU:
-						{
-							bundle->addInstruction( new VanadisAddInstruction( ins_addr, hw_thr, options, rd, rs, rt, true, VANADIS_FORMAT_INT32 ) );
-							insertDecodeFault = false;
-						}
-						break;
-
-					case MIPS_SPEC_OP_MASK_AND:
-						{
-							bundle->addInstruction( new VanadisAndInstruction( ins_addr, hw_thr, options, rd, rs, rt ) );
-							insertDecodeFault = false;
-						}
-						break;
-
-					// _BREAK NEEDS TO GO HERE?
-
-					case MIPS_SPEC_OP_MASK_DADD:
-						break;
-
-					case MIPS_SPEC_OP_MASK_DADDU:
-						break;
-
-					case MIPS_SPEC_OP_MASK_DDIV:
-						break;
-
-					case MIPS_SPEC_OP_MASK_DDIVU:
-						break;
-
-					case MIPS_SPEC_OP_MASK_DIV:
-						{
-							bundle->addInstruction( new VanadisDivideRemainderInstruction( ins_addr,
-								hw_thr, options, MIPS_REG_LO, MIPS_REG_HI, rs, rt, true, VANADIS_FORMAT_INT32 ) );
-							insertDecodeFault = false;
-						}
-						break;
-
-					case MIPS_SPEC_OP_MASK_DIVU:
-						{
-							bundle->addInstruction( new VanadisDivideRemainderInstruction( ins_addr,
-								hw_thr, options, MIPS_REG_LO, MIPS_REG_HI, rs, rt, false, VANADIS_FORMAT_INT32 ) );
-							insertDecodeFault = false;
-						}
-						break;
-
-					case MIPS_SPEC_OP_MASK_DMULT:
-						break;
-
-					case MIPS_SPEC_OP_MASK_DMULTU:
-						break;
-
-					case MIPS_SPEC_OP_MASK_DSLLV:
-						break;
-
-					case MIPS_SPEC_OP_MASK_DSRAV:
-						break;
-
-					case MIPS_SPEC_OP_MASK_DSRLV:
-						break;
-
-					case MIPS_SPEC_OP_MASK_DSUB:
-						break;
-
-					case MIPS_SPEC_OP_MASK_DSUBU:
-						break;
-
-					case MIPS_SPEC_OP_MASK_JR:
-						{
-
-							bundle->addInstruction( new VanadisJumpRegInstruction( ins_addr, hw_thr, options, rs,
-								VANADIS_SINGLE_DELAY_SLOT ) );
-							insertDecodeFault = false;
-						}
-						break;
-
-					case MIPS_SPEC_OP_MASK_JALR:
-						{
-							bundle->addInstruction( new VanadisJumpRegLinkInstruction( ins_addr, hw_thr, options,
-								rd, rs, VANADIS_SINGLE_DELAY_SLOT ) );
-							insertDecodeFault = false;
-						}
-						break;
-
-					case MIPS_SPEC_OP_MASK_MFHI:
-						{
-							// Special instruction_, 32 is LO, 33 is HI
-							bundle->addInstruction( new VanadisAddImmInstruction( ins_addr, hw_thr, options, rd,
-								MIPS_REG_HI, 0, VANADIS_FORMAT_INT32 ) );
-							insertDecodeFault = false;
-						}
-						break;
-
-					case MIPS_SPEC_OP_MASK_MFLO:
-						{
-							// Special instruction, 32 is LO, 33 is HI
-							bundle->addInstruction( new VanadisAddImmInstruction( ins_addr, hw_thr, options, rd,
-								MIPS_REG_LO, 0, VANADIS_FORMAT_INT32 ) );
-							insertDecodeFault = false;
-						}
-						break;
-
-					case MIPS_SPEC_OP_MASK_MOVN:
-						break;
-
-					case MIPS_SPEC_OP_MASK_MOVZ:
-						break;
-
-					case MIPS_SPEC_OP_MASK_MTHI:
-						break;
-
-					case MIPS_SPEC_OP_MASK_MTLO:
-						break;
-
-					case MIPS_SPEC_OP_MASK_MULT:
-						{
-							bundle->addInstruction( new VanadisMultiplySplitInstruction( ins_addr, hw_thr, options,
-								MIPS_REG_LO, MIPS_REG_HI, rs, rt, true, VANADIS_FORMAT_INT32 ) );
-							insertDecodeFault = false;
-						}
-						break;
-
-					case MIPS_SPEC_OP_MASK_MULTU:
-						{
-							bundle->addInstruction( new VanadisMultiplySplitInstruction( ins_addr, hw_thr, options,
-								MIPS_REG_LO, MIPS_REG_HI, rs, rt, false, VANADIS_FORMAT_INT32 ) );
-							insertDecodeFault = false;
-						}
-						break;
-
-					case MIPS_SPEC_OP_MASK_NOR:
-						{
-							bundle->addInstruction( new VanadisNorInstruction( ins_addr, hw_thr, options, rd, rs, rt ) );
-                                                        insertDecodeFault = false;
-						}
-						break;
-
-					case MIPS_SPEC_OP_MASK_OR:
-						{
-							bundle->addInstruction( new VanadisOrInstruction( ins_addr, hw_thr, options, rd, rs, rt ) );
-							insertDecodeFault = false;
-						}
-						break;
-
-					case MIPS_SPEC_OP_MASK_SLLV:
-						{
-							bundle->addInstruction( new VanadisShiftLeftLogicalInstruction( ins_addr,
-								hw_thr, options, rd, rt, rs, VANADIS_FORMAT_INT32 ) );
-							insertDecodeFault = false;
-						}
-						break;
-
-					case MIPS_SPEC_OP_MASK_SLT:
-						{
-							bundle->addInstruction( new VanadisSetRegCompareInstruction( ins_addr, hw_thr, options,
-								rd, rs, rt, true, REG_COMPARE_LT, VANADIS_FORMAT_INT32 ) );
-							insertDecodeFault = false;
-						}
-						break;
-
-					case MIPS_SPEC_OP_MASK_SLTU:
-						{
-							bundle->addInstruction( new VanadisSetRegCompareInstruction( ins_addr, hw_thr, options,
-								rd, rs, rt, false, REG_COMPARE_LT, VANADIS_FORMAT_INT32 ) );
-							insertDecodeFault = false;
-						}
-						break;
-
-					case MIPS_SPEC_OP_MASK_SRAV:
-						{
-							bundle->addInstruction( new VanadisShiftRightArithmeticInstruction( ins_addr, hw_thr, options,
-								rd, rt, rs, VANADIS_FORMAT_INT32 ) );
-							insertDecodeFault = false;
-						}
-						break;
-
-					case MIPS_SPEC_OP_MASK_SRLV:
-						{
-							bundle->addInstruction( new VanadisShiftRightLogicalInstruction( ins_addr, hw_thr, options,
-								rd, rt, rs, VANADIS_FORMAT_INT32) );
-							insertDecodeFault = false;
-						}
-						break;
-
-					case MIPS_SPEC_OP_MASK_SUB:
-						{
-							bundle->addInstruction( new VanadisSubInstruction( ins_addr, hw_thr, options, rd, rs, rt, true,
-								VANADIS_FORMAT_INT32  ) );
-							insertDecodeFault = false;
-						}
-						break;
-
-					case MIPS_SPEC_OP_MASK_SUBU:
-						{
-							bundle->addInstruction( new VanadisSubInstruction( ins_addr, hw_thr, options, rd, rs, rt, false,
-								VANADIS_FORMAT_INT32 ) );
-							insertDecodeFault = false;
-						}
-						break;
-
-					case MIPS_SPEC_OP_MASK_SYSCALL:
-						{
-							bundle->addInstruction( new VanadisSysCallInstruction( ins_addr, hw_thr, options ) );
-							insertDecodeFault = false;
-						}
-						break;
-
-					case MIPS_SPEC_OP_MASK_SYNC:
-						{
-							bundle->addInstruction( new VanadisFenceInstruction( ins_addr, hw_thr, options,
-								VANADIS_LOAD_STORE_FENCE) );
-							insertDecodeFault = false;
-						}
-						break;
-
-					case MIPS_SPEC_OP_MASK_XOR:
-						bundle->addInstruction( new VanadisXorInstruction( ins_addr, hw_thr, options, rd, rs, rt ) );
+					if( (0 == func_mask) && (0 == rs) ) {
+						output->verbose( CALL_INFO, 16, 0, "[decode] -> rs is also zero, implies truncate (generate: 64 to 32 truncate)\n");
+						bundle->addInstruction( new VanadisTruncateInstruction( ins_addr, hw_thr, options, rd, rt, VANADIS_FORMAT_INT64, VANADIS_FORMAT_INT32 ) );
 						insertDecodeFault = false;
-						break;
+					} else {
+						switch( func_mask ) {
+						case MIPS_SPEC_OP_MASK_ADD:
+							{
+								bundle->addInstruction( new VanadisAddInstruction( ins_addr, hw_thr, options, rd, rs, rt, true, VANADIS_FORMAT_INT32 ) );
+								insertDecodeFault = false;
+							}
+							break;
+
+						case MIPS_SPEC_OP_MASK_ADDU:
+							{
+								bundle->addInstruction( new VanadisAddInstruction( ins_addr, hw_thr, options, rd, rs, rt, true, VANADIS_FORMAT_INT32 ) );
+								insertDecodeFault = false;
+							}
+							break;
+
+						case MIPS_SPEC_OP_MASK_AND:
+							{
+								bundle->addInstruction( new VanadisAndInstruction( ins_addr, hw_thr, options, rd, rs, rt ) );
+								insertDecodeFault = false;
+							}
+							break;
+
+						// _BREAK NEEDS TO GO HERE?
+
+						case MIPS_SPEC_OP_MASK_DADD:
+							break;
+
+						case MIPS_SPEC_OP_MASK_DADDU:
+							break;
+
+						case MIPS_SPEC_OP_MASK_DDIV:
+							break;
+
+						case MIPS_SPEC_OP_MASK_DDIVU:
+							break;
+
+						case MIPS_SPEC_OP_MASK_DIV:
+							{
+								bundle->addInstruction( new VanadisDivideRemainderInstruction( ins_addr,
+									hw_thr, options, MIPS_REG_LO, MIPS_REG_HI, rs, rt, true, VANADIS_FORMAT_INT32 ) );
+								insertDecodeFault = false;
+							}
+							break;
+
+						case MIPS_SPEC_OP_MASK_DIVU:
+							{
+								bundle->addInstruction( new VanadisDivideRemainderInstruction( ins_addr,
+									hw_thr, options, MIPS_REG_LO, MIPS_REG_HI, rs, rt, false, VANADIS_FORMAT_INT32 ) );
+								insertDecodeFault = false;
+							}
+							break;
+
+						case MIPS_SPEC_OP_MASK_DMULT:
+							break;
+
+						case MIPS_SPEC_OP_MASK_DMULTU:
+							break;
+
+						case MIPS_SPEC_OP_MASK_DSLLV:
+							break;
+
+						case MIPS_SPEC_OP_MASK_DSRAV:
+							break;
+
+						case MIPS_SPEC_OP_MASK_DSRLV:
+							break;
+
+						case MIPS_SPEC_OP_MASK_DSUB:
+							break;
+
+						case MIPS_SPEC_OP_MASK_DSUBU:
+							break;
+
+						case MIPS_SPEC_OP_MASK_JR:
+							{
+
+								bundle->addInstruction( new VanadisJumpRegInstruction( ins_addr, hw_thr, options, rs,
+									VANADIS_SINGLE_DELAY_SLOT ) );
+								insertDecodeFault = false;
+							}
+							break;
+
+						case MIPS_SPEC_OP_MASK_JALR:
+							{
+								bundle->addInstruction( new VanadisJumpRegLinkInstruction( ins_addr, hw_thr, options,
+									rd, rs, VANADIS_SINGLE_DELAY_SLOT ) );
+								insertDecodeFault = false;
+							}
+							break;
+
+						case MIPS_SPEC_OP_MASK_MFHI:
+							{
+								// Special instruction_, 32 is LO, 33 is HI
+								bundle->addInstruction( new VanadisAddImmInstruction( ins_addr, hw_thr, options, rd,
+									MIPS_REG_HI, 0, VANADIS_FORMAT_INT32 ) );
+								insertDecodeFault = false;
+							}
+							break;
+
+						case MIPS_SPEC_OP_MASK_MFLO:
+							{
+								// Special instruction, 32 is LO, 33 is HI
+								bundle->addInstruction( new VanadisAddImmInstruction( ins_addr, hw_thr, options, rd,
+									MIPS_REG_LO, 0, VANADIS_FORMAT_INT32 ) );
+								insertDecodeFault = false;
+							}
+							break;
+
+						case MIPS_SPEC_OP_MASK_MOVN:
+							break;
+
+						case MIPS_SPEC_OP_MASK_MOVZ:
+							break;
+
+						case MIPS_SPEC_OP_MASK_MTHI:
+							break;
+
+						case MIPS_SPEC_OP_MASK_MTLO:
+							break;
+
+						case MIPS_SPEC_OP_MASK_MULT:
+							{
+								bundle->addInstruction( new VanadisMultiplySplitInstruction( ins_addr, hw_thr, options,
+									MIPS_REG_LO, MIPS_REG_HI, rs, rt, true, VANADIS_FORMAT_INT32 ) );
+								insertDecodeFault = false;
+							}
+							break;
+
+						case MIPS_SPEC_OP_MASK_MULTU:
+							{
+								bundle->addInstruction( new VanadisMultiplySplitInstruction( ins_addr, hw_thr, options,
+									MIPS_REG_LO, MIPS_REG_HI, rs, rt, false, VANADIS_FORMAT_INT32 ) );
+								insertDecodeFault = false;
+							}
+							break;
+
+						case MIPS_SPEC_OP_MASK_NOR:
+							{
+								bundle->addInstruction( new VanadisNorInstruction( ins_addr, hw_thr, options, rd, rs, rt ) );
+															insertDecodeFault = false;
+							}
+							break;
+
+						case MIPS_SPEC_OP_MASK_OR:
+							{
+								bundle->addInstruction( new VanadisOrInstruction( ins_addr, hw_thr, options, rd, rs, rt ) );
+								insertDecodeFault = false;
+							}
+							break;
+
+						case MIPS_SPEC_OP_MASK_SLLV:
+							{
+								bundle->addInstruction( new VanadisShiftLeftLogicalInstruction( ins_addr,
+									hw_thr, options, rd, rt, rs, VANADIS_FORMAT_INT32 ) );
+								insertDecodeFault = false;
+							}
+							break;
+
+						case MIPS_SPEC_OP_MASK_SLT:
+							{
+								bundle->addInstruction( new VanadisSetRegCompareInstruction( ins_addr, hw_thr, options,
+									rd, rs, rt, true, REG_COMPARE_LT, VANADIS_FORMAT_INT32 ) );
+								insertDecodeFault = false;
+							}
+							break;
+
+						case MIPS_SPEC_OP_MASK_SLTU:
+							{
+								bundle->addInstruction( new VanadisSetRegCompareInstruction( ins_addr, hw_thr, options,
+									rd, rs, rt, false, REG_COMPARE_LT, VANADIS_FORMAT_INT32 ) );
+								insertDecodeFault = false;
+							}
+							break;
+
+						case MIPS_SPEC_OP_MASK_SRAV:
+							{
+								bundle->addInstruction( new VanadisShiftRightArithmeticInstruction( ins_addr, hw_thr, options,
+									rd, rt, rs, VANADIS_FORMAT_INT32 ) );
+								insertDecodeFault = false;
+							}
+							break;
+
+						case MIPS_SPEC_OP_MASK_SRLV:
+							{
+								bundle->addInstruction( new VanadisShiftRightLogicalInstruction( ins_addr, hw_thr, options,
+									rd, rt, rs, VANADIS_FORMAT_INT32) );
+								insertDecodeFault = false;
+							}
+							break;
+
+						case MIPS_SPEC_OP_MASK_SUB:
+							{
+								bundle->addInstruction( new VanadisSubInstruction( ins_addr, hw_thr, options, rd, rs, rt, true,
+									VANADIS_FORMAT_INT32  ) );
+								insertDecodeFault = false;
+							}
+							break;
+
+						case MIPS_SPEC_OP_MASK_SUBU:
+							{
+								bundle->addInstruction( new VanadisSubInstruction( ins_addr, hw_thr, options, rd, rs, rt, false,
+									VANADIS_FORMAT_INT32 ) );
+								insertDecodeFault = false;
+							}
+							break;
+
+						case MIPS_SPEC_OP_MASK_SYSCALL:
+							{
+								bundle->addInstruction( new VanadisSysCallInstruction( ins_addr, hw_thr, options ) );
+								insertDecodeFault = false;
+							}
+							break;
+
+						case MIPS_SPEC_OP_MASK_SYNC:
+							{
+								bundle->addInstruction( new VanadisFenceInstruction( ins_addr, hw_thr, options,
+									VANADIS_LOAD_STORE_FENCE) );
+								insertDecodeFault = false;
+							}
+							break;
+
+						case MIPS_SPEC_OP_MASK_XOR:
+							bundle->addInstruction( new VanadisXorInstruction( ins_addr, hw_thr, options, rd, rs, rt ) );
+							insertDecodeFault = false;
+							break;
+						}
 					}
 				} else {
 					switch( func_mask ) {

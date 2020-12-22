@@ -73,4 +73,7 @@
 #include "inst/vfpscmp.h"
 #include "inst/vfpdiv.h"
 
+// Truncate
+#include "inst/vtrunc.h"
+
 #endif
