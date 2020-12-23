@@ -56,9 +56,45 @@ public:
 	virtual const char* getInstCode() const {
 		switch( reg_fmt ) {
 		case VANADIS_FORMAT_FP64:
-			return "FP64CMP";
+			{
+				switch( compareType ) {
+				case REG_COMPARE_EQ:
+					return "FP64CMPEQ";
+				case REG_COMPARE_NEQ:
+					return "FP64CMPNEQ";
+				case REG_COMPARE_LT:
+					return "FP64CMPLT";
+				case REG_COMPARE_LTE:
+					return "FP64CMPLTE";
+				case REG_COMPARE_GT:
+					return "FP64CMPGT";
+				case REG_COMPARE_GTE:
+					return "FP64CMPGTE";
+				default:
+					return "FP64CMPUKN";
+				}
+			}
+			break;
 		case VANADIS_FORMAT_FP32:
-			return "FP32CMP";
+			{
+				switch( compareType ) {
+				case REG_COMPARE_EQ:
+					return "FP32CMPEQ";
+				case REG_COMPARE_NEQ:
+					return "FP32CMPNEQ";
+				case REG_COMPARE_LT:
+					return "FP32CMPLT";
+				case REG_COMPARE_LTE:
+					return "FP32CMPLTE";
+				case REG_COMPARE_GT:
+					return "FP32CMPGT";
+				case REG_COMPARE_GTE:
+					return "FP32CMPGTE";
+				default:
+					return "FP32CMPUKN";
+				}
+			}
+			break;
 		case VANADIS_FORMAT_INT64:
 			return "FPINT64ACMP";
 		case VANADIS_FORMAT_INT32:

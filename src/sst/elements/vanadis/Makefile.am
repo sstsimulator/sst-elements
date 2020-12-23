@@ -81,6 +81,7 @@ inst/vsrli.h \
 inst/vstore.h \
 inst/vsub.h \
 inst/vsyscall.h \
+inst/vtrunc.h \
 inst/vxor.h \
 inst/vxori.h \
 lsq/vlsq.h \
