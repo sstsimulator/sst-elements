@@ -678,8 +678,8 @@ int VanadisComponent::performRetire( VanadisCircularQueue<VanadisInstruction*>* 
 		retire_isa_tables[rob_front->getHWThread()]->print(output,
                                         register_files[rob_front->getHWThread()], print_int_reg, print_fp_reg);
 
-		output->fatal( CALL_INFO, -1, "Instruction 0x%llx flags an error (instruction-type=%s)\n",
-			rob_front->getInstructionAddress(), rob_front->getInstCode() );
+		output->fatal( CALL_INFO, -1, "Instruction 0x%llx flags an error (instruction-type=%s) at cycle %" PRIu64 "\n",
+			rob_front->getInstructionAddress(), rob_front->getInstCode(), cycle );
 	}
 
 	if( rob_front->completedIssue() && rob_front->completedExecution() ) {
