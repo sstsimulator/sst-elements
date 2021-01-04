@@ -86,9 +86,10 @@ public:
 					} else {
 						output->verbose(CALL_INFO, 16, 0, "[syscall-mmap] ---> requested address 0x%llx automatically returned.\n",
 							map_address);
+
 						std::vector<uint8_t> payload;
     		                                payload.resize( map_length, 0 );
-               	                                send_block_mem( allocation_start, payload );
+               	                                send_block_mem( map_address, payload );
 
 						return_value = (int64_t) map_address;
 					}
