@@ -63,9 +63,8 @@ public:
 
 				uint64_t allocation_start = 0;
 
-				assert( -1 == file_descriptor );
-
-				if( -1 == file_descriptor ) {
+				// Check if the allocation request is MAP_ANONYMOUS in which case we ignore the file descriptor and offsets
+				if( (map_flags & 0x800) != 0x0 ) {
 					output->verbose(CALL_INFO, 16, 0, "[syscall-mmap] --> calling memory manager to allocate pages...\n");
 
 					if( 0 == map_address ) {
@@ -75,9 +74,9 @@ public:
 							status, allocation_start);
 
 						if( 0 == status ) {
-							std::vector<uint8_t> payload;
-       		                                        payload.resize( map_length, 0 );
-                	                                send_block_mem( allocation_start, payload );
+//							std::vector<uint8_t> payload;
+//       		                                        payload.resize( map_length, 0 );
+//                	                                send_block_mem( allocation_start, payload );
 
 							return_value = (int64_t) allocation_start;
 						} else {
