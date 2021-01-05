@@ -67,14 +67,14 @@ public:
 		case VANADIS_FORMAT_INT32:
 			{
 				const int32_t src_1 = regFile->getIntReg<int32_t>( phys_int_regs_in[0] );
-//                                const int32_t src_2 = (int32_t)(regFile->getIntReg<uint32_t>( phys_int_regs_in[1] ) & 0x1F);
-                                const int32_t src_2 = regFile->getIntReg<int32_t>( phys_int_regs_in[1] );
+                                const int32_t src_2 = (int32_t)(regFile->getIntReg<uint32_t>( phys_int_regs_in[1] ) & 0x1F);
+//                                const int32_t src_2 = regFile->getIntReg<int32_t>( phys_int_regs_in[1] );
 
-//				if( 0 == src_2 ) {
-//					regFile->setIntReg<int32_t>( phys_int_regs_out[0], src_1 );
-//				} else {
+				if( 0 == src_2 ) {
+					regFile->setIntReg<int32_t>( phys_int_regs_out[0], src_1 );
+				} else {
                                 	regFile->setIntReg<int32_t>( phys_int_regs_out[0], src_1 >> src_2 );
-//				}
+				}
 			}
 			break;
 		case VANADIS_FORMAT_FP32:
