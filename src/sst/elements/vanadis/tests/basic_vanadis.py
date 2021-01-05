@@ -9,6 +9,8 @@ sst.setProgramOption("stopAtCycle", "0 ns")
 sst.setStatisticLoadLevel(4)
 
 verbosity = os.getenv("VANADIS_VERBOSE", 0)
+os_verbosity = os.getenv("VANADIS_OS_VERBOSE", verbosity)
+pipe_trace_file = os.getenv("VANADIS_PIPE_TRACE", "")
 
 v_cpu_0 = sst.Component("v0", "vanadis.VanadisCPU")
 v_cpu_0.addParams({
@@ -24,21 +26,42 @@ v_cpu_0.addParams({
 #       "executable" : "./tests/luxtxt",
 #       "executable" : "./tests/stream-fortran",
 #       "executable" : "./tests/test-fp",
-       "executable" : os.getenv("EXE", "./tests/stream-mini-musl"),
+       "executable" : os.getenv("VANADIS_EXE", "./tests/stream-mini-musl"),
        "app.env_count" : 2,
        "app.env0" : "HOME=/home/sdhammo",
        "app.env1" : "NEWHOME=/home/sdhammo2",
-       "max_cycle" : 100000000,
+#       "app.argc" : 4,
+#       "app.arg1" : "16",
+#       "app.arg2" : "8",
+#       "app.arg3" : "8",
+#       "max_cycle" : 100000000,
        "verbose" : verbosity,
        "physical_fp_registers" : 168,
        "physical_int_registers" : 180,
        "print_int_reg" : 1,
-#      "pipeline_trace_file" : "pipe.trace",
+       "pipeline_trace_file" : pipe_trace_file,
        "reorder_slots" : 224,
        "decodes_per_cycle" : 5,
        "issues_per_cycle" :  6,
        "retires_per_cycle" : 8
+#       "reorder_slots" : 32,
+#       "decodes_per_cycle" : 2,
+#       "issues_per_cycle" :  1,
+#       "retires_per_cycle" : 1
 })
+
+app_args = os.getenv("VANADIS_EXE_ARGS", "")
+
+if app_args != "":
+	app_args_list = app_args.split(" ")
+	# We have a plus 1 because the executable name is arg0
+	app_args_count = len( app_args_list ) + 1
+	v_cpu_0.addParams({ "app.argc" : app_args_count })
+	arg_start = 1
+	for next_arg in app_args_list:
+		print "arg" + str(arg_start) + " = " + next_arg
+		v_cpu_0.addParams({ "app.arg" + str(arg_start) : next_arg })
+		arg_start = arg_start + 1
 
 decode0   = v_cpu_0.setSubComponent( "decoder0", "vanadis.VanadisMIPSDecoder" )
 os_hdlr   = decode0.setSubComponent( "os_handler", "vanadis.VanadisMIPSOSHandler" )
@@ -49,7 +72,7 @@ decode0.addParams({
 })
 
 os_hdlr.addParams({
-	"verbose" : verbosity,
+	"verbose" : os_verbosity,
 	"brk_zero_memory" : "yes"
 })
 
@@ -71,12 +94,12 @@ dcache_if = v_cpu_0_lsq.setSubComponent( "memory_interface", "memHierarchy.memIn
 
 node_os = sst.Component("os", "vanadis.VanadisNodeOS")
 node_os.addParams({
-	"verbose" : verbosity,
+	"verbose" : os_verbosity,
 	"cores" : 1,
 	"heap_start" : 512 * 1024 * 1024,
 	"heap_end"   : (2 * 1024 * 1024 * 1024) - 4096,
 	"page_size"  : 4096,
-	"heap_verbose" : verbosity
+	"heap_verbose" : 0 #verbosity
 })
 
 node_os_mem_if = node_os.setSubComponent( "mem_interface", "memHierarchy.memInterface" )
