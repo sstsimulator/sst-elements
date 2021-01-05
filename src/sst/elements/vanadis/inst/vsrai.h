@@ -51,6 +51,8 @@ public:
 			phys_int_regs_in[0], imm_value,
 			isa_int_regs_out[0], isa_int_regs_in[0] );
 
+		assert( imm_value > 0 );
+
 		switch( reg_format ) {
 		case VANADIS_FORMAT_INT64:
 			{

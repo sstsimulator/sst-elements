@@ -56,15 +56,24 @@ public:
 				const uint64_t src_1 = regFile->getIntReg<uint64_t>( phys_int_regs_in[0] );
 				const uint64_t src_2 = regFile->getIntReg<uint64_t>( phys_int_regs_in[1] );
 
-				regFile->setIntReg<uint64_t>( phys_int_regs_out[0], (src_1) >> (src_2) );
+				if( 0 == src_2 ) {
+					const uint32_t src_1_32 = regFile->getIntReg<uint32_t>( phys_int_regs_in[0] );
+					regFile->setIntReg<uint32_t>( phys_int_regs_out[0], src_1_32 );
+				} else {
+					regFile->setIntReg<uint64_t>( phys_int_regs_out[0], (src_1) >> (src_2) );
+				}
 			}
 			break;
 		case VANADIS_FORMAT_INT32:
 			{
 				const uint32_t src_1 = regFile->getIntReg<uint32_t>( phys_int_regs_in[0] );
-                                const uint32_t src_2 = regFile->getIntReg<uint32_t>( phys_int_regs_in[1] );
+                                const uint32_t src_2 = regFile->getIntReg<uint32_t>( phys_int_regs_in[1] ) & 0x1F;
 
-                                regFile->setIntReg<uint32_t>( phys_int_regs_out[0], (src_1) >> (src_2) );
+				if( 0 == src_2 ) {
+					regFile->setIntReg<uint32_t>( phys_int_regs_out[0], src_1 );
+				} else {
+                                	regFile->setIntReg<uint32_t>( phys_int_regs_out[0], (src_1) >> (src_2) );
+				}
 			}
 			break;
 		case VANADIS_FORMAT_FP32:
