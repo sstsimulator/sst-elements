@@ -40,6 +40,7 @@ endif
 EXTRA_DIST = \
     README \
     tests/testsuite_default_simpleComponents.py \
+    tests/testsuite_default_check_maxrss.py \
     tests/test_simpleParamComponent.py \
     tests/test_simpleComponent.py \
     tests/test_simpleClockerComponent.py \
