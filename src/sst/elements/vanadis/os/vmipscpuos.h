@@ -16,6 +16,7 @@
 #define VANADIS_SYSCALL_IOCTL		 4054
 #define VANADIS_SYSCALL_READLINK         4085
 #define VANADIS_SYSCALL_MMAP		 4090
+#define VANADIS_SYSCALL_UNMAP            4091
 #define VANADIS_SYSCALL_UNAME            4122
 #define VANADIS_SYSCALL_WRITEV           4146
 #define VANADIS_SYSCALL_RT_SETSIGMASK    4195
@@ -365,6 +366,25 @@ public:
 					recvOSEvent( new VanadisSyscallResponse(-22) );
 				} else {
 					output->fatal(CALL_INFO, -1, "STOP\n");
+				}
+			}
+			break;
+
+		case VANADIS_SYSCALL_UNMAP:
+			{
+				const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
+                                uint64_t unmap_addr = regFile->getIntReg<uint64_t>( phys_reg_4 );
+
+                                const uint16_t phys_reg_5 = isaTable->getIntPhysReg(5);
+                                uint64_t unmap_len = regFile->getIntReg<uint64_t>( phys_reg_5 );
+
+				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to unmap( 0x%llx, %" PRIu64 " )\n",
+					unmap_addr, unmap_len );
+
+				if( (0 == unmap_addr) ) {
+					recvOSEvent( new VanadisSyscallResponse(-22) );
+				} else {
+					call_ev = new VanadisSyscallMemoryUnMapEvent( core_id, hw_thr, unmap_addr, unmap_len );
 				}
 			}
 			break;

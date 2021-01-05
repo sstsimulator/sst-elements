@@ -488,6 +488,38 @@ public:
 			}
 			break;
 
+		case SYSCALL_OP_UNMAP:
+			{
+				VanadisSyscallMemoryUnMapEvent* unmap_ev = dynamic_cast< VanadisSyscallMemoryUnMapEvent*>( sys_ev );
+				assert( unmap_ev != NULL );
+
+				output->verbose(CALL_INFO, 16, 0, "[syscall-unmap] --> called.\n");
+
+				uint64_t unmap_address = unmap_ev->getDeallocationAddress();
+				uint64_t unmap_len     = unmap_ev->getDeallocationLength();
+
+				int unmap_result = memory_mgr->deallocateRange( unmap_address, unmap_len );
+
+				switch( unmap_result ) {
+				case 0:
+					{
+						output->verbose(CALL_INFO, 16, 0, "[syscall-unmap] --> success, returning response.\n");
+						VanadisSyscallResponse* resp = new VanadisSyscallResponse();
+		                                core_link->send( resp );
+					}
+					break;
+				default:
+					{
+						output->verbose(CALL_INFO, 16, 0, "[syscall-unmap] --> call failed, returning -22 as EINVAL\n");
+						VanadisSyscallResponse* resp = new VanadisSyscallResponse( -22 );
+						resp->markFailed();
+		                                core_link->send( resp );
+					}
+					break;
+				}
+			}
+			break;
+
 		case SYSCALL_OP_MMAP:
 			{
 				VanadisSyscallMemoryMapEvent* mmap_ev = dynamic_cast< VanadisSyscallMemoryMapEvent* >( sys_ev );
