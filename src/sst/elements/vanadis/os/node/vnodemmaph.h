@@ -74,9 +74,9 @@ public:
 							status, allocation_start);
 
 						if( 0 == status ) {
-//							std::vector<uint8_t> payload;
-//       		                                        payload.resize( map_length, 0 );
-//                	                                send_block_mem( allocation_start, payload );
+							std::vector<uint8_t> payload;
+       		                                        payload.resize( map_length, 0 );
+                	                                send_block_mem( allocation_start, payload );
 
 							return_value = (int64_t) allocation_start;
 						} else {
