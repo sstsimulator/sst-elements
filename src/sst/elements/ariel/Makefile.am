@@ -1,7 +1,7 @@
 
 AM_CPPFLAGS = \
         $(MPI_CPPFLAGS) \
-	-I$(top_srcdir)/src 
+	-I$(top_srcdir)/src
 
 if HAVE_SET_PTRACER
 AM_CPPFLAGS += "-DHAVE_SET_PTRACER=1"
@@ -61,8 +61,16 @@ EXTRA_DIST = \
 	frontend/simple/examples/stream/ariel_snb_mlm.py \
 	frontend/simple/examples/stream/malloc.txt \
 	frontend/simple/examples/stream/stream.c \
-	frontend/simple/examples/stream/stream_malloc.c
-
+	frontend/simple/examples/stream/stream_malloc.c \
+	frontend/simple/examples/stream/tests/reffiles/test_Ariel_ariel_ivb.out \
+	frontend/simple/examples/stream/tests/reffiles/test_Ariel_ariel_snb.out \
+	frontend/simple/examples/stream/tests/reffiles/test_Ariel_memHstream \
+	frontend/simple/examples/stream/tests/reffiles/test_Ariel_runstream.out \
+	frontend/simple/examples/stream/tests/reffiles/test_Ariel_runstreamNB.out \
+	frontend/simple/examples/stream/tests/reffiles/test_Ariel_runstreamSt.out \
+	tests/testsuite_default_Ariel.py \
+	tests/testopenMP/ompmybarrier/ompmybarrier.c \
+	tests/testopenMP/ompmybarrier/Makefile \
 
 libariel_la_LDFLAGS = -module -avoid-version
 libariel_la_LIBADD = $(SHM_LIB)
@@ -187,7 +195,7 @@ install-exec-hook:
 	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     ariel=$(abs_srcdir)
 	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      ariel=$(abs_srcdir)/tests
 	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTSUITES ariel=$(abs_srcdir)/testsuites
-	    
+
 
 else
 
