@@ -80,7 +80,8 @@ EXTRA_DIST = \
     tests/refFiles/test_simpleRNGComponent_xorshift.out \
     tests/refFiles/test_simpleStatisticsComponent.out \
     tests/refFiles/test_simpleSubComponent.out \
-    tests/refFiles/test_simpleSubComponent_2.out
+    tests/refFiles/test_simpleSubComponent_2.out \
+    tests/refFiles/test_check_maxrss.out
 
 deprecated_EXTRA_DIST =
 
