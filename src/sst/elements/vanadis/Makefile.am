@@ -137,6 +137,10 @@ EXTRA_DIST =
 
 libvanadis_la_LDFLAGS = -module -avoid-version
 
+bin_PROGRAMS = sst-vanadis-tracediff
+
+sst_vanadis_tracediff_SOURCES = tools/tracediff/tracediff.cc
+
 install-exec-hook:
 	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     vanadis=$(abs_srcdir)
 	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      vanadis=$(abs_srcdir)/tests
