@@ -12,7 +12,6 @@ import csv
 
 module_init = 0
 module_sema = threading.Semaphore()
-pin_exec_path = ""
 
 def initializeTestModule_SingleInstance(class_inst):
     global module_init
@@ -27,52 +26,6 @@ def initializeTestModule_SingleInstance(class_inst):
             pass
         module_init = 1
     module_sema.release()
-
-###
-
-def is_PIN_loaded():
-    # Look to see if PIN is available
-    pindir_found = False
-    pin_path = os.environ.get('INTEL_PIN_DIRECTORY')
-    if pin_path is not None:
-        pindir_found = os.path.isdir(pin_path)
-    log_debug("memHSieve Test - Intel_PIN_Path = {0}; Valid Dir = {1}".format(pin_path, pindir_found))
-    return pindir_found
-
-def is_PIN_Compiled():
-    global pin_exec_path
-    pin_crt = sst_elements_config_include_file_get_value_int("HAVE_PINCRT", 0, True)
-    pin_exec = sst_elements_config_include_file_get_value_str("PINTOOL_EXECUTABLE", "", True)
-    log_debug("memHSieve Test - Detected PIN_CRT = {0}".format(pin_crt))
-    log_debug("memHSieve Test - Detected PIN_EXEC = {0}".format(pin_exec))
-    pin_exec_path = pin_exec
-    return pin_exec != ""
-
-def is_Pin2_used():
-    global pin_exec_path
-    if is_PIN_Compiled():
-        if "/pin.sh" in pin_exec_path:
-            return True
-        else:
-            return False
-    else:
-        return False
-
-def is_Pin3_used():
-    global pin_exec_path
-    if is_PIN_Compiled():
-        if is_Pin2_used():
-            return False
-        else:
-            # Make sure pin is at the end of the string
-            pinstr = "/pin"
-            idx = pin_exec_path.rfind(pinstr)
-            if idx == -1:
-                return False
-            else:
-                return (idx+len(pinstr)) == len(pin_exec_path)
-    else:
-        return False
 
 ################################################################################
 ################################################################################
@@ -95,9 +48,9 @@ class testcase_memHierarchy_memHSieve(SSTTestCase):
         super(type(self), self).tearDown()
 
 #####
-    pin_compiled = is_PIN_Compiled()
-    pin_version_valid = is_Pin2_used() | is_Pin3_used()
-    pin_loaded = is_PIN_loaded()
+    pin_compiled = testing_is_PIN_Compiled()
+    pin_version_valid = testing_is_PIN2_used() | testing_is_PIN3_used()
+    pin_loaded = testing_is_PIN_loaded()
 
     @unittest.skipIf(not pin_compiled, "memHSieve: Requires PIN, but PinTool is not compiled with Elements. In sst_element_config.h PINTOOL_EXECUTABLE={0}".format(pin_exec_path))
     @unittest.skipIf(not pin_version_valid, "memHSieve: Requires PIN, but PinTool does not seem to be a valid version. PINTOOL_EXECUTABLE={0}".format(pin_exec_path))
@@ -109,8 +62,8 @@ class testcase_memHierarchy_memHSieve(SSTTestCase):
 
     def memHSieve_Template(self, testcase):
 
-        pin2defined = is_Pin2_used()
-        pin3defined = is_Pin3_used()
+        pin2defined = testing_is_PIN2_used()
+        pin3defined = testing_is_PIN3_used()
 
         # Get the path to the test files
         test_path = self.get_testsuite_dir()

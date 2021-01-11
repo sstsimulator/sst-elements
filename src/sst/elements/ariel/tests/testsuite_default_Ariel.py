@@ -25,52 +25,6 @@ def initializeTestModule_SingleInstance(class_inst):
         module_init = 1
     module_sema.release()
 
-###
-
-def is_PIN_loaded():
-    # Look to see if PIN is available
-    pindir_found = False
-    pin_path = os.environ.get('INTEL_PIN_DIRECTORY')
-    if pin_path is not None:
-        pindir_found = os.path.isdir(pin_path)
-    log_debug("memHSieve Test - Intel_PIN_Path = {0}; Valid Dir = {1}".format(pin_path, pindir_found))
-    return pindir_found
-
-def is_PIN_Compiled():
-    global pin_exec_path
-    pin_crt = sst_elements_config_include_file_get_value_int("HAVE_PINCRT", 0, True)
-    pin_exec = sst_elements_config_include_file_get_value_str("PINTOOL_EXECUTABLE", "", True)
-    log_debug("memHSieve Test - Detected PIN_CRT = {0}".format(pin_crt))
-    log_debug("memHSieve Test - Detected PIN_EXEC = {0}".format(pin_exec))
-    pin_exec_path = pin_exec
-    return pin_exec != ""
-
-def is_Pin2_used():
-    global pin_exec_path
-    if is_PIN_Compiled():
-        if "/pin.sh" in pin_exec_path:
-            return True
-        else:
-            return False
-    else:
-        return False
-
-def is_Pin3_used():
-    global pin_exec_path
-    if is_PIN_Compiled():
-        if is_Pin2_used():
-            return False
-        else:
-            # Make sure pin is at the end of the string
-            pinstr = "/pin"
-            idx = pin_exec_path.rfind(pinstr)
-            if idx == -1:
-                return False
-            else:
-                return (idx+len(pinstr)) == len(pin_exec_path)
-    else:
-        return False
-
 ################################################################################
 ################################################################################
 ################################################################################
@@ -92,7 +46,7 @@ class testcase_Ariel(SSTTestCase):
         super(type(self), self).tearDown()
 
 #####
-    pin_loaded = is_PIN_loaded()
+    pin_loaded = testing_is_PIN_loaded()
 
     @unittest.skipIf(not pin_loaded, "Ariel: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
     def test_Ariel_runstream(self):
