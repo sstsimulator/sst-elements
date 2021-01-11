@@ -70,7 +70,7 @@ EXTRA_DIST = \
 	frontend/simple/examples/stream/tests/reffiles/test_Ariel_runstreamSt.out \
 	tests/testsuite_default_Ariel.py \
 	tests/testopenMP/ompmybarrier/ompmybarrier.c \
-	tests/testopenMP/ompmybarrier/Makefile \
+	tests/testopenMP/ompmybarrier/Makefile
 
 libariel_la_LDFLAGS = -module -avoid-version
 libariel_la_LIBADD = $(SHM_LIB)
