@@ -9,7 +9,6 @@ import os
 
 module_init = 0
 module_sema = threading.Semaphore()
-pin_exec_path = ""
 
 def initializeTestModule_SingleInstance(class_inst):
     global module_init
