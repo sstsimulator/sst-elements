@@ -11,6 +11,7 @@ sst.setStatisticLoadLevel(4)
 verbosity = os.getenv("VANADIS_VERBOSE", 0)
 os_verbosity = os.getenv("VANADIS_OS_VERBOSE", verbosity)
 pipe_trace_file = os.getenv("VANADIS_PIPE_TRACE", "")
+lsq_entries = os.getenv("VANADIS_LSQ_ENTRIES", 32)
 
 v_cpu_0 = sst.Component("v0", "vanadis.VanadisCPU")
 v_cpu_0.addParams({
@@ -43,7 +44,8 @@ v_cpu_0.addParams({
        "reorder_slots" : 224,
        "decodes_per_cycle" : 5,
        "issues_per_cycle" :  6,
-       "retires_per_cycle" : 8
+       "retires_per_cycle" : 8,
+       "pause_when_retire_address" : os.getenv("VANADIS_HALT_AT_ADDRESS", 0)
 #       "reorder_slots" : 32,
 #       "decodes_per_cycle" : 2,
 #       "issues_per_cycle" :  1,
@@ -57,11 +59,14 @@ if app_args != "":
 	# We have a plus 1 because the executable name is arg0
 	app_args_count = len( app_args_list ) + 1
 	v_cpu_0.addParams({ "app.argc" : app_args_count })
+	print "Identified " + str(app_args_count) + " application arguments, adding to input parameters."
 	arg_start = 1
 	for next_arg in app_args_list:
 		print "arg" + str(arg_start) + " = " + next_arg
 		v_cpu_0.addParams({ "app.arg" + str(arg_start) : next_arg })
 		arg_start = arg_start + 1
+else:
+	print "No application arguments found, continuing with argc=0"
 
 decode0   = v_cpu_0.setSubComponent( "decoder0", "vanadis.VanadisMIPSDecoder" )
 os_hdlr   = decode0.setSubComponent( "os_handler", "vanadis.VanadisMIPSOSHandler" )
@@ -85,7 +90,8 @@ v_cpu_0_lsq.addParams({
 	"address_mask" : 0xFFFFFFFF,
 #	"address_trace" : "address-lsq2.trace",
 #	"allow_speculated_operations" : 0,
-	"load_store_entries" : 56,
+#	"load_store_entries" : 56,
+	"load_store_entries" : lsq_entries,
 	"fault_non_written_loads_after" : 0,
 	"check_memory_loads" : "no"
 })
