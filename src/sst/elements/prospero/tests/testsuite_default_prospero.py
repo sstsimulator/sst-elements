@@ -3,6 +3,12 @@
 from sst_unittest import *
 from sst_unittest_support import *
 import os
+import glob
+
+USE_PIN_TRACES = True
+USE_TAR_TRACES = False
+WITH_DRAMSIM = True
+NO_DRAMSIM = False
 
 ################################################################################
 # Code to support a single instance module initialize, must be called setUp method
@@ -48,36 +54,10 @@ class testcase_prospero(SSTTestCase):
 
 #####
     pin_loaded = testing_is_PIN_loaded()
+    pin2_used = testing_is_PIN2_used()
 
-#    @unittest.skipIf(not pin_loaded, "Ariel: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
-#    def test_Ariel_runstream(self):
-#        self.ariel_Template("runstream", use_openmp_bin=False, use_memh=False)
-#
-#    @unittest.skipIf(not pin_loaded, "Ariel: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
-#    def test_Ariel_testSt(self):
-#        self.ariel_Template("runstreamSt", use_openmp_bin=False, use_memh=False)
-#
-#    @unittest.skipIf(not pin_loaded, "Ariel: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
-#    def test_Ariel_testNB(self):
-#        self.ariel_Template("runstreamNB", use_openmp_bin=False, use_memh=False)
-#
-#    @unittest.skipIf(not pin_loaded, "Ariel: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
-#    def test_Ariel_memH_test(self):
-#        self.ariel_Template("memHstream", use_openmp_bin=False, use_memh=True)
-#
-#    @unittest.skipIf(not pin_loaded, "Ariel: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
-#    @unittest.skipIf(host_os_is_osx(), "Ariel: Open MP is not supported on OSX.")
-#    def test_Ariel_test_ivb(self):
-#        self.ariel_Template("ariel_ivb", use_openmp_bin=True, use_memh=False)
-#
-#    @unittest.skipIf(not pin_loaded, "Ariel: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
-#    @unittest.skipIf(host_os_is_osx(), "Ariel: Open MP is not supported on OSX.")
-#    @unittest.skipIf(testing_check_get_num_ranks() > 1, "Ariel: test_Ariel_test_snb skipped if ranks > 1 - Sandy Bridge test is incompatible with Multi-Rank.")
-#    def test_Ariel_test_snb(self):
-#        self.prospero_test_template("ariel_snb", use_openmp_bin=True, use_memh=False)
-#
-
-
+#    @unittest.skipIf(not pin_loaded, "Prospero: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
+#    @unittest.skipIf(not pin2_used, "Prospero test: Requires PIN2.")
 #    def test_prospero_compressed_using_TAR_traces(self):
 #        # We can only test the compressed trace file on PIN2 or PIN3 With Downloaded traces
 #        if [[ ${SST_USING_PIN3:+isSet} == isSet ]] && [[ ${SST_BUILD_PROSPERO_TRACE_FILE:+isSet} == isSet ]] ; then
@@ -97,97 +77,99 @@ class testcase_prospero(SSTTestCase):
 
 
     def test_prospero_text_using_TAR_traces(self):
-        self.prospero_test_template(" text none")
+        self.prospero_test_template("text", NO_DRAMSIM, USE_TAR_TRACES)
 
+    def test_prospero_binary_using_TAR_traces(self):
+        self.prospero_test_template("binary", NO_DRAMSIM, USE_TAR_TRACES)
 
-#    def test_prospero_text_withdramsim_using_TAR_traces(self):
-#        self.prospero_test_template( text DramSim)
-#
-#    def test_prospero_binary_using_TAR_traces(self):
-#        self.prospero_test_template( binary none)
-#
-#
-#    def test_prospero_binary_withdramsim_using_TAR_traces(self):
-#        self.prospero_test_template(binary DramSim)
+    def test_prospero_text_withdramsim_using_TAR_traces(self):
+        self.prospero_test_template("text", WITH_DRAMSIM, USE_TAR_TRACES)
+
+    def test_prospero_binary_withdramsim_using_TAR_traces(self):
+        self.prospero_test_template("binary", WITH_DRAMSIM, USE_TAR_TRACES)
+
+    @unittest.skipIf(not pin_loaded, "test_prospero_text_using_PIN_traces: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
+    def test_prospero_text_using_PIN_traces(self):
+        self.prospero_test_template("text", NO_DRAMSIM, USE_PIN_TRACES)
+
+    @unittest.skipIf(not pin_loaded, "test_prospero_binary_using_PIN_traces: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
+    def test_prospero_binary_using_PIN_traces(self):
+        self.prospero_test_template("binary", NO_DRAMSIM, USE_PIN_TRACES)
+
+    @unittest.skipIf(not pin_loaded, "test_prospero_text_withdramsim_using_PIN_traces: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
+    def test_prospero_text_withdramsim_using_PIN_traces(self):
+        self.prospero_test_template("text", WITH_DRAMSIM, USE_PIN_TRACES)
+
+    @unittest.skipIf(not pin_loaded, "test_prospero_binary_withdramsim_using_PIN_traces: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
+    def test_prospero_binary_withdramsim_using_PIN_traces(self):
+        self.prospero_test_template("binary", WITH_DRAMSIM, USE_PIN_TRACES)
 
 #####
 
-    def prospero_test_template(self, testcase, use_openmp_bin=False, use_memh=False):
+    def prospero_test_template(self, trace_name, with_dramsim, use_pin_traces):
         pass
-#        # Get the path to the test files
-#        test_path = self.get_testsuite_dir()
-#        outdir = self.get_test_output_run_dir()
-#        tmpdir = self.get_test_output_tmp_dir()
-#
-#        # Set the paths to the various directories
-#        ArielElementDir = os.path.abspath("{0}/../".format(test_path))
-#        ArielElementFrontendDir = "{0}/frontend/simple".format(ArielElementDir)
-#        ArielElementStreamDir = "{0}/frontend/simple/examples/stream".format(ArielElementDir)
-#        ArielElementompmybarrierDir = "{0}/testopenMP/ompmybarrier".format(test_path)
-#        Ariel_test_stream_app = "{0}/stream".format(ArielElementStreamDir)
-#        Ariel_ompmybarrier_app = "{0}/ompmybarrier".format(ArielElementompmybarrierDir)
-#        sst_elements_parent_dir = os.path.abspath("{0}/../../../../../".format(ArielElementDir))
-#        memHElementsTestsDir = os.path.abspath("{0}/../memHierarchy/tests".format(ArielElementDir))
-#
-#        # Set the Path to the stream applications
-#        os.environ["ARIEL_TEST_STREAM_APP"] = Ariel_test_stream_app
-#        os.environ["OMP_EXE"] = Ariel_ompmybarrier_app
-#
-#        # Set the various file paths
-#        testDataFileName=("test_Ariel_{0}".format(testcase))
-#        sdlfile = "{0}/{1}.py".format(ArielElementStreamDir, testcase)
-#        reffile = "{0}/tests/refFiles/{1}.out".format(ArielElementStreamDir, testDataFileName)
-#        outfile = "{0}/{1}.out".format(outdir, testDataFileName)
-#        errfile = "{0}/{1}.err".format(outdir, testDataFileName)
-#        mpioutfiles = "{0}/{1}.testfile".format(outdir, testDataFileName)
-#
-#        log_debug("testcase = {0}".format(testcase))
-#        log_debug("sdl file = {0}".format(sdlfile))
-#        log_debug("ref file = {0}".format(reffile))
-#        log_debug("out file = {0}".format(outfile))
-#        log_debug("err file = {0}".format(errfile))
-#        log_debug("sst_elements_parent_dir = {0}".format(sst_elements_parent_dir))
-#        log_debug("memHElementsTestsDir = {0}".format(memHElementsTestsDir))
-#        log_debug("Env:ARIEL_TEST_STREAM_APP = {0}".format(Ariel_test_stream_app))
-#        log_debug("Env:OMP_EXE = {0}".format(Ariel_ompmybarrier_app))
-#
-#        if use_memh == True:
-#          # Create a simlink of the memH ini files files
-#            filename = "DDR3_micron_32M_8B_x4_sg125.ini"
-#            filepath = "{0}/{1}".format(ArielElementFrontendDir, filename)
-#            if os.path.islink(filepath) == False:
-#                os_symlink_file(memHElementsTestsDir, ArielElementFrontendDir, filename)
-#
-#            filename = "system.ini"
-#            filepath = "{0}/{1}".format(ArielElementFrontendDir, filename)
-#            if os.path.islink(filepath) == False:
-#                os_symlink_file(memHElementsTestsDir, ArielElementFrontendDir, filename)
-#
-#        # Run SST in the tests directory
-#        self.run_sst(sdlfile, outfile, errfile, set_cwd=ArielElementStreamDir, mpi_out_files=mpioutfiles)
-#
-#        testing_remove_component_warning_from_file(outfile)
-#
-#        # NOTE: THE PASS / FAIL EVALUATIONS ARE PORTED FROM THE SQE BAMBOO
-#        #       BASED testSuite_XXX.sh THESE SHOULD BE RE-EVALUATED BY THE
-#        #       DEVELOPER AGAINST THE LATEST VERSION OF SST TO SEE IF THE
-#        #       TESTS & RESULT FILES ARE STILL VALID
-#
-#        # Look for the word "FATAL" in the output file
-#        cmd = 'grep "FATAL" {0} '.format(outfile)
-#        grep_result = os.system(cmd) != 0
-#        self.assertTrue(grep_result, "Output file {0} contains the word 'FATAL'...".format(outfile))
-#
-#        num_out_lines  = int(os_wc(outfile, [0]))
-#        log_debug("{0} : num_out_lines = {1}".format(outfile, num_out_lines))
-#        num_ref_lines = int(os_wc(reffile, [0]))
-#        log_debug("{0} : num_ref_lines = {1}".format(reffile, num_ref_lines))
-#
-#        line_count_diff = abs(num_ref_lines - num_out_lines)
-#        log_debug("Line Count diff = {0}".format(line_count_diff))
-#
-#        if line_count_diff > 15:
-#            self.assertFalse(line_count_diff > 15, "Line count between output file {0} does not match Reference File {1}; They contain {2} different lines".format(outfile, reffile, line_count_diff))
+        # Get the path to the test files
+        test_path = self.get_testsuite_dir()
+        outdir = self.get_test_output_run_dir()
+        tmpdir = self.get_test_output_tmp_dir()
+
+        # Set the paths to the various directories
+        self.testProsperoPINTracesDir = "{0}/testProsperoPINTraces".format(tmpdir)
+        self.testProsperoTARTracesDir = "{0}/testProsperoTARTraces".format(tmpdir)
+
+        if use_pin_traces:
+            propero_trace_dir = self.testProsperoPINTracesDir
+        else:
+            propero_trace_dir = self.testProsperoTARTracesDir
+
+        # Verify that some trace files exist
+        wildcard_filepath = "{0}/*.trace".format(propero_trace_dir)
+        trace_files_list = glob.glob(wildcard_filepath)
+        self.assertTrue(len(trace_files_list) > 0, "Prosepro - No Trace files found in dir {0}".format(propero_trace_dir))
+
+        # Set the various file paths
+        if with_dramsim:
+            testDataFileName = ("test_prospero_with_dramsim_{0}".format(trace_name))
+            otherargs = '--model-options=\"--TraceType={0} --UseDramSim=yes\"'.format(trace_name)
+        else:
+            testDataFileName = ("test_prospero_wo_dramsim_{0}".format(trace_name))
+            otherargs = '--model-options=\"--TraceType={0} --UseDramSim=no\"'.format(trace_name)
+
+        sdlfile = "{0}/array/trace-common.py".format(test_path)
+        reffile = "{0}/refFiles/{1}.out".format(test_path, testDataFileName)
+        outfile = "{0}/{1}.out".format(outdir, testDataFileName)
+        errfile = "{0}/{1}.err".format(outdir, testDataFileName)
+        mpioutfiles = "{0}/{1}.testfile".format(outdir, testDataFileName)
+
+        log_debug("trace_name = {0}".format(trace_name))
+        log_debug("testDataFileName = {0}".format(testDataFileName))
+        log_debug("sdl file = {0}".format(sdlfile))
+        log_debug("ref file = {0}".format(reffile))
+        log_debug("out file = {0}".format(outfile))
+        log_debug("err file = {0}".format(errfile))
+
+        # Run SST in the tests directory
+        self.run_sst(sdlfile, outfile, errfile, other_args = otherargs,
+                     set_cwd=propero_trace_dir, mpi_out_files=mpioutfiles)
+
+        # NOTE: THE PASS / FAIL EVALUATIONS ARE PORTED FROM THE SQE BAMBOO
+        #       BASED testSuite_XXX.sh THESE SHOULD BE RE-EVALUATED BY THE
+        #       DEVELOPER AGAINST THE LATEST VERSION OF SST TO SEE IF THE
+        #       TESTS & RESULT FILES ARE STILL VALID
+
+        cmp_result = testing_compare_diff(testDataFileName, outfile, reffile)
+        if cmp_result:
+            log_debug(" -- Output file {0} is an exact match to Reference File {1}".format(outfile, reffile))
+        else:
+            wc_out_data = os_wc(outfile, [0, 1])
+            log_debug("{0} : wc_out_data = {1}".format(outfile, wc_out_data))
+            wc_ref_data = os_wc(reffile, [0, 1])
+            log_debug("{0} : wc_ref_data = {1}".format(reffile, wc_ref_data))
+
+            wc_line_word_count_diff = wc_out_data == wc_ref_data
+            if wc_line_word_count_diff:
+                log_debug("Line Word Count Match\n")
+            self.assertTrue(wc_line_word_count_diff, "Line & Word count between file {0} does not match Reference File {1}".format(outfile, reffile))
 
 #######################
 
@@ -202,6 +184,14 @@ class testcase_prospero(SSTTestCase):
         # Set the paths to the various directories
         self.testProsperoPINTracesDir = "{0}/testProsperoPINTraces".format(tmpdir)
         self.testProsperoTARTracesDir = "{0}/testProsperoTARTraces".format(tmpdir)
+        ProsperoElementDir = os.path.abspath("{0}/../".format(test_path))
+        sst_elements_parent_dir = os.path.abspath("{0}/../../../../../".format(ProsperoElementDir))
+        memHElementsTestsDir = os.path.abspath("{0}/../memHierarchy/tests".format(ProsperoElementDir))
+
+        log_debug("testProsperoPINTraces dir = {0}".format(self.testProsperoPINTracesDir))
+        log_debug("testProsperoTARTraces dir = {0}".format(self.testProsperoTARTracesDir))
+        log_debug("sst_elements_parent_dir = {0}".format(sst_elements_parent_dir))
+        log_debug("memHElementsTestsDir = {0}".format(memHElementsTestsDir))
 
         # Create a clean version of the testProsperoPINTraces Directory
         if os.path.isdir(self.testProsperoPINTracesDir):
@@ -212,6 +202,15 @@ class testcase_prospero(SSTTestCase):
         if os.path.isdir(self.testProsperoTARTracesDir):
             shutil.rmtree(self.testProsperoTARTracesDir, True)
         os.makedirs(self.testProsperoTARTracesDir)
+
+        # Create a simlink of the memH ini files files
+        filename = "DDR3_micron_32M_8B_x4_sg125.ini"
+        os_symlink_file(memHElementsTestsDir, self.testProsperoPINTracesDir, filename)
+        os_symlink_file(memHElementsTestsDir, self.testProsperoTARTracesDir, filename)
+
+        filename = "system.ini"
+        os_symlink_file(memHElementsTestsDir, self.testProsperoPINTracesDir, filename)
+        os_symlink_file(memHElementsTestsDir, self.testProsperoTARTracesDir, filename)
 
 ####
 
