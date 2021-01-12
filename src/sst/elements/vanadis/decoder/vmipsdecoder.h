@@ -135,6 +135,7 @@
 #define MIPS_SPEC_COP_MASK_MFC      0x0
 #define MIPS_SPEC_COP_MASK_MTC	    0x4
 #define MIPS_SPEC_COP_MASK_MOV	    0x6
+#define MIPS_SPEC_COP_MASK_CVTS     0x20
 #define MIPS_SPEC_COP_MASK_CVTD     0x21
 #define MIPS_SPEC_COP_MASK_CVTW     0x24
 #define MIPS_SPEC_COP_MASK_MUL      0x2
@@ -1626,6 +1627,33 @@ protected:
 							output->verbose(CALL_INFO, 16, 0, "[decoder] ---> convert function failed because of input-format error (fmt: %" PRIu16 ")\n", fr);
 						}
 					}
+					break;
+
+				case MIPS_SPEC_COP_MASK_CVTS:
+					{
+						VanadisRegisterFormat input_format = VANADIS_FORMAT_FP32;
+						bool format_fault = false;
+
+						switch( fr ) {
+						case 16: input_format = VANADIS_FORMAT_FP32;  break;
+						case 17: input_format = VANADIS_FORMAT_FP64;  break;
+						case 20: input_format = VANADIS_FORMAT_INT32; break;
+						case 21: input_format = VANADIS_FORMAT_INT64; break;
+						default:
+							format_fault = true;
+							break;
+						}
+
+						if( ! format_fault ) {
+							bundle->addInstruction( new VanadisFPConvertInstruction(
+								ins_addr, hw_thr, options,
+								fd, fs, input_format, VANADIS_FORMAT_FP32 ) );
+							insertDecodeFault = false;
+						} else {
+							output->verbose(CALL_INFO, 16, 0, "[decoder] ---> convert function failed because of input-format error (fmt: %" PRIu16 ")\n", fr);
+						}
+					}
+
 					break;
 
 				case MIPS_SPEC_COP_MASK_CVTD:
