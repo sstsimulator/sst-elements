@@ -54,27 +54,13 @@ class testcase_prospero(SSTTestCase):
 
 #####
     pin_loaded = testing_is_PIN_loaded()
-    pin2_used = testing_is_PIN2_used()
+    pin3_used = testing_is_PIN3_used()
 
-#    @unittest.skipIf(not pin_loaded, "Prospero: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
-#    @unittest.skipIf(not pin2_used, "Prospero test: Requires PIN2.")
-#    def test_prospero_compressed_using_TAR_traces(self):
-#        # We can only test the compressed trace file on PIN2 or PIN3 With Downloaded traces
-#        if [[ ${SST_USING_PIN3:+isSet} == isSet ]] && [[ ${SST_BUILD_PROSPERO_TRACE_FILE:+isSet} == isSet ]] ; then
-#            skip_this_test
-#            return
-#        fi
-#        self.prospero_test_template(compressed none)
-#
-#
-#    def test_prospero_compressed_withdramsim_using_TAR_traces(self):
-#        # We can only test the compressed trace file on PIN2 or PIN3 With Downloaded traces
-#        if [[ ${SST_USING_PIN3:+isSet} == isSet ]] && [[ ${SST_BUILD_PROSPERO_TRACE_FILE:+isSet} == isSet ]] ; then
-#            skip_this_test
-#            return
-#        fi
-#        self.prospero_test_template( compressed DramSim)
+    def test_prospero_compressed_using_TAR_traces(self):
+        self.prospero_test_template("compressed", NO_DRAMSIM, USE_TAR_TRACES)
 
+    def test_prospero_compressed_withdramsim_using_TAR_traces(self):
+        self.prospero_test_template("compressed", WITH_DRAMSIM, USE_TAR_TRACES)
 
     def test_prospero_text_using_TAR_traces(self):
         self.prospero_test_template("text", NO_DRAMSIM, USE_TAR_TRACES)
@@ -87,6 +73,16 @@ class testcase_prospero(SSTTestCase):
 
     def test_prospero_binary_withdramsim_using_TAR_traces(self):
         self.prospero_test_template("binary", WITH_DRAMSIM, USE_TAR_TRACES)
+
+    @unittest.skipIf(not pin_loaded, "test_prospero_compressed_using_PIN_traces: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
+    @unittest.skipIf(pin3_used, "test_prospero_compressed_using_PIN_traces test: Requires PIN2, but PIN3 is COMPILED.")
+    def test_prospero_compressed_using_PIN_traces(self):
+        self.prospero_test_template("compressed", NO_DRAMSIM, USE_PIN_TRACES)
+
+    @unittest.skipIf(not pin_loaded, "test_prospero_compressed_withdramsim_using_PIN_traces: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
+    @unittest.skipIf(pin3_used, "test_prospero_compressed_using_PIN_traces test: Requires PIN2, but PIN3 is COMPILED.")
+    def test_prospero_compressed_withdramsim_using_PIN_traces(self):
+        self.prospero_test_template("compressed", WITH_DRAMSIM, USE_PIN_TRACES)
 
     @unittest.skipIf(not pin_loaded, "test_prospero_text_using_PIN_traces: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
     def test_prospero_text_using_PIN_traces(self):
@@ -106,7 +102,7 @@ class testcase_prospero(SSTTestCase):
 
 #####
 
-    def prospero_test_template(self, trace_name, with_dramsim, use_pin_traces):
+    def prospero_test_template(self, trace_name, with_dramsim, use_pin_traces, testtimeout=180):
         pass
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
@@ -150,7 +146,8 @@ class testcase_prospero(SSTTestCase):
 
         # Run SST in the tests directory
         self.run_sst(sdlfile, outfile, errfile, other_args = otherargs,
-                     set_cwd=propero_trace_dir, mpi_out_files=mpioutfiles)
+                     set_cwd=propero_trace_dir, mpi_out_files=mpioutfiles,
+                     timeout_sec=testtimeout)
 
         # NOTE: THE PASS / FAIL EVALUATIONS ARE PORTED FROM THE SQE BAMBOO
         #       BASED testSuite_XXX.sh THESE SHOULD BE RE-EVALUATED BY THE
