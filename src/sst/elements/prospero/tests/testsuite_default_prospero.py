@@ -102,7 +102,7 @@ class testcase_prospero(SSTTestCase):
 
 #####
 
-    def prospero_test_template(self, trace_name, with_dramsim, use_pin_traces, testtimeout=180):
+    def prospero_test_template(self, trace_name, with_dramsim, use_pin_traces, testtimeout=240):
         pass
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
@@ -148,6 +148,8 @@ class testcase_prospero(SSTTestCase):
         self.run_sst(sdlfile, outfile, errfile, other_args = otherargs,
                      set_cwd=propero_trace_dir, mpi_out_files=mpioutfiles,
                      timeout_sec=testtimeout)
+
+        testing_remove_component_warning_from_file(outfile)
 
         # NOTE: THE PASS / FAIL EVALUATIONS ARE PORTED FROM THE SQE BAMBOO
         #       BASED testSuite_XXX.sh THESE SHOULD BE RE-EVALUATED BY THE
