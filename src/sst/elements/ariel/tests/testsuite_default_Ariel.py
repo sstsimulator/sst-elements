@@ -76,7 +76,7 @@ class testcase_Ariel(SSTTestCase):
 
 #####
 
-    def ariel_Template(self, testcase, use_openmp_bin=False, use_memh=False, testtimeout=120):
+    def ariel_Template(self, testcase, use_openmp_bin=False, use_memh=False, testtimeout=240):
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
         outdir = self.get_test_output_run_dir()
