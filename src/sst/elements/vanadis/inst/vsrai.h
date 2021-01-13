@@ -51,11 +51,13 @@ public:
 			phys_int_regs_in[0], imm_value,
 			isa_int_regs_out[0], isa_int_regs_in[0] );
 
+		assert( imm_value > 0 );
+
 		switch( reg_format ) {
 		case VANADIS_FORMAT_INT64:
 			{
 				const int64_t src_1 = regFile->getIntReg<int64_t>( phys_int_regs_in[0] );
-				regFile->setIntReg<int64_t>( phys_int_regs_out[0], (src_1) >> imm_value );
+				regFile->setIntReg<int64_t>( phys_int_regs_out[0], src_1 >> imm_value );
 			}
 			break;
 		case VANADIS_FORMAT_INT32:
@@ -63,7 +65,7 @@ public:
 				const int32_t src_1 = regFile->getIntReg<int32_t>( phys_int_regs_in[0] );
 				const int32_t imm_value_32 = static_cast<int32_t>(imm_value);
 
-                                regFile->setIntReg<int32_t>( phys_int_regs_out[0], (src_1) >> imm_value_32 );
+                                regFile->setIntReg<int32_t>( phys_int_regs_out[0], src_1 >> imm_value_32 );
 			}
 			break;
 		case VANADIS_FORMAT_FP32:

@@ -271,6 +271,8 @@ private:
     uint32_t ins_retired_this_cycle;
     uint32_t ins_decoded_this_cycle;
 
+    uint64_t pause_on_retire_address;
+
 };
 
 
