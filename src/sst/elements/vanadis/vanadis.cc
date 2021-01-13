@@ -41,6 +41,12 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 		output->verbose(CALL_INFO, 2, 0, "Executable: %s\n", binary_img.c_str());
 		binary_elf_info = readBinaryELFInfo( output, binary_img.c_str() );
 		binary_elf_info->print( output );
+
+		if( binary_elf_info->isDynamicExecutable() ) {
+                        output->fatal( CALL_INFO, -1, "--> error - executable is dynamically linked. Only static executables are currently supported for simulation.\n");
+                } else {
+                        output->verbose(CALL_INFO, 2, 0, "--> executable is identified as static linked\n");
+                }
 	}
 
 	std::string clock_rate = params.find<std::string>("clock", "1GHz");
