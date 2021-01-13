@@ -153,6 +153,7 @@ EXTRA_DIST = \
 	tests/sdl8-4.py \
 	tests/sdl9-1.py \
 	tests/sdl9-2.py \
+	tests/test_hybridsim.py \
 	tests/sdl4-2-ramulator.py \
 	tests/sdl5-1-ramulator.py \
 	tests/testBackendChaining.py \
