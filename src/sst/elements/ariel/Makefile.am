@@ -64,7 +64,7 @@ EXTRA_DIST = \
 	frontend/simple/examples/stream/stream_malloc.c \
 	frontend/simple/examples/stream/tests/reffiles/test_Ariel_ariel_ivb.out \
 	frontend/simple/examples/stream/tests/reffiles/test_Ariel_ariel_snb.out \
-	frontend/simple/examples/stream/tests/reffiles/test_Ariel_memHstream \
+	frontend/simple/examples/stream/tests/reffiles/test_Ariel_memHstream.out \
 	frontend/simple/examples/stream/tests/reffiles/test_Ariel_runstream.out \
 	frontend/simple/examples/stream/tests/reffiles/test_Ariel_runstreamNB.out \
 	frontend/simple/examples/stream/tests/reffiles/test_Ariel_runstreamSt.out \

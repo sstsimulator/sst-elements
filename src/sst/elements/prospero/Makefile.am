@@ -27,6 +27,7 @@ EXTRA_DIST = \
         tests/array/trace-common.py \
         tests/array/array.c \
         tests/array/Makefile \
+        tests/testsuite_default_prospero.py \
         tracetool/Makefile \
         tracetool/Makefile.osx \
         tracetool/sstmemtrace.cc \
