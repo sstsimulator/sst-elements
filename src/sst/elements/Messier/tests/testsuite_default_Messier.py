@@ -60,7 +60,7 @@ class testcase_Messier_Component(SSTTestCase):
 
 #####
 
-    def Messier_test_template(self, testcase):
+    def Messier_test_template(self, testcase, testtimeout=240):
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
         outdir = self.get_test_output_run_dir()
@@ -77,7 +77,7 @@ class testcase_Messier_Component(SSTTestCase):
         newreffile = "{0}/refFiles/{1}.newref".format(outdir, testDataFileName)
         newoutfile = "{0}/{1}.newout".format(outdir, testDataFileName)
 
-        self.run_sst(sdlfile, outfile, errfile, mpi_out_files=mpioutfiles, timeout_sec=120)
+        self.run_sst(sdlfile, outfile, errfile, mpi_out_files=mpioutfiles, timeout_sec=testtimeout)
 
         testing_remove_component_warning_from_file(outfile)
 

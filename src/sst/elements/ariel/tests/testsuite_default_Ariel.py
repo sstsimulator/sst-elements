@@ -76,7 +76,7 @@ class testcase_Ariel(SSTTestCase):
 
 #####
 
-    def ariel_Template(self, testcase, use_openmp_bin=False, use_memh=False):
+    def ariel_Template(self, testcase, use_openmp_bin=False, use_memh=False, testtimeout=120):
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
         outdir = self.get_test_output_run_dir()
@@ -127,7 +127,8 @@ class testcase_Ariel(SSTTestCase):
                 os_symlink_file(memHElementsTestsDir, ArielElementFrontendDir, filename)
 
         # Run SST in the tests directory
-        self.run_sst(sdlfile, outfile, errfile, set_cwd=ArielElementStreamDir, mpi_out_files=mpioutfiles)
+        self.run_sst(sdlfile, outfile, errfile, set_cwd=ArielElementStreamDir,
+                     mpi_out_files=mpioutfiles, timeout_sec=testtimeout)
 
         testing_remove_component_warning_from_file(outfile)
 

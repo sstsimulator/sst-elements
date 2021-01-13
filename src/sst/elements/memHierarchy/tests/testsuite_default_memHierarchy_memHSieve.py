@@ -60,7 +60,7 @@ class testcase_memHierarchy_memHSieve(SSTTestCase):
 
 #####
 
-    def memHSieve_Template(self, testcase):
+    def memHSieve_Template(self, testcase, testtimeout=120):
 
         pin2defined = testing_is_PIN2_used()
         pin3defined = testing_is_PIN3_used()
@@ -91,7 +91,8 @@ class testcase_memHierarchy_memHSieve(SSTTestCase):
         log_debug("err file = {0}".format(errfile))
 
         # Run SST in the tests directory
-        self.run_sst(sdlfile, outfile, errfile, set_cwd=testMemHSieveDir, mpi_out_files=mpioutfiles)
+        self.run_sst(sdlfile, outfile, errfile, set_cwd=testMemHSieveDir,
+                     mpi_out_files=mpioutfiles, timeout_sec=testtimeout)
 
         # NOTE: THE PASS / FAIL EVALUATIONS ARE PORTED FROM THE SQE BAMBOO
         #       BASED testSuite_XXX.sh THESE SHOULD BE RE-EVALUATED BY THE
