@@ -60,7 +60,7 @@ class testcase_memHierarchy_memHSieve(SSTTestCase):
 
 #####
 
-    def memHSieve_Template(self, testcase, testtimeout=120):
+    def memHSieve_Template(self, testcase, testtimeout=360):
 
         pin2defined = testing_is_PIN2_used()
         pin3defined = testing_is_PIN3_used()
