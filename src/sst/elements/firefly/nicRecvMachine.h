@@ -158,7 +158,7 @@ class RecvMachine {
 				}
 			}
 
-			if ( m_pktBuf.empty() ) {
+			if ( m_pktBuf.empty() && ! m_nic.m_linkControl->requestToReceive( m_vn )) {
 				m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_MACHINE, "pktBuf is empty\n");
                 setNotify();
                 m_clocking = false;
