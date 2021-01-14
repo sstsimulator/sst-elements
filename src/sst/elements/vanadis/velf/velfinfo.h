@@ -625,6 +625,19 @@ public:
 		progRelDyn.push_back( new_rel );
 	}
 
+	bool isDynamicExecutable() const {
+		bool found_interp = false;
+
+		for( VanadisELFProgramHeaderEntry* next_entry : progHeaders ) {
+			if( PROG_HEADER_INTERPRETER == next_entry->getHeaderType() ) {
+				found_interp = true;
+				break;
+			}
+		}
+
+		return found_interp;
+	}
+
 	~VanadisELFInfo() {
 		if( nullptr != bin_path ) {
 			delete[] bin_path;
