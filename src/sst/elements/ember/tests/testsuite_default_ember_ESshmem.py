@@ -45,10 +45,10 @@ def build_ESshmem_test_matrix():
             log_debug("Error: Cannot find last \" in test string {0}".format(test_str))
             continue
 
-        sdlfile = test_str[index+1:].replace("\n", "")
+        sdlfile = test_str[index+1:].replace("\n", "").lstrip()
 
         # Strip the sst from the front and sdl filename from back
-        modelstr = test_str[0:index].replace("sst ", "")
+        modelstr = test_str[0:index+1].replace("sst ", "")
         log_debug("ESshmem Test Matrix:TestNum={0:03}; HASH={1}; sdlfile={2}; modelstr={3}".format(testnum, hash_str, sdlfile, modelstr))
 
         # Build the test_data structure
@@ -112,73 +112,73 @@ class testcase_Ember_ESshmem(SSTTestCase):
 #        self._checkSkipConditions(index)
 
         log_debug("Running Ember ESshmem #{0} ({1}): model={2} using sdl={3}".format(testnum, hash_str, modelstr, sdlfile))
-#        self.Ember_ESshmem_test_template(index, hex_dig, topo, net_args, test, test_args)
+        self.Ember_ESshmem_test_template(testnum, hash_str, modelstr, sdlfile)
 
 ####
 
-    def Ember_ESshmem_test_template(self, index, hex_dig, topo, net_args, test, test_args):
+    def Ember_ESshmem_test_template(self, testnum, hash_str, modelstr, sdlfile):
 
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
         outdir = self.get_test_output_run_dir()
         tmpdir = self.get_test_output_tmp_dir()
 
-        self.emberSweep_Folder = "{0}/embersweep_folder".format(tmpdir)
+        self.ember_ESshmem_Folder = "{0}/ember_ESshmem_folder".format(tmpdir)
         self.emberelement_testdir = "{0}/../test/".format(test_path)
 
         # Set the various file paths
-        testDataFileName="{0}".format("testEemberSweep_{0}".format(index))
+        testDataFileName="{0}".format("testESshmem_{0:03}".format(testnum))
 
-        reffile = "{0}/refFiles/test_EmberSweep.out".format(test_path)
+        reffile = "{0}/refFiles/ESshmem_cumulative.out".format(test_path)
         outfile = "{0}/{1}.out".format(outdir, testDataFileName)
         errfile = "{0}/{1}.err".format(outdir, testDataFileName)
         mpioutfiles = "{0}/{1}.testfile".format(outdir, testDataFileName)
-        sdlfile = "{0}/../test/{1}".format(test_path, sweep_sdl_file)
-        testtimeout = 600
+        sdlfile = "{0}/../test/{1}".format(test_path, sdlfile)
+        testtimeout = 120
 
-        otherargs = '--model-options=\"--topo={0} {1} --cmdLine=\\\"Init\\\" --cmdLine=\\\"{2} {3}\\\" --cmdLine=\\\"Fini\\\" \"'.format(topo, net_args, test, test_args)
+        otherargs = modelstr
 
         # Run SST
-        self.run_sst(sdlfile, outfile, errfile, other_args=otherargs, set_cwd=self.emberSweep_Folder, mpi_out_files=mpioutfiles, timeout_sec=testtimeout)
+        self.run_sst(sdlfile, outfile, errfile, other_args=otherargs, set_cwd=self.ember_ESshmem_Folder, mpi_out_files=mpioutfiles, timeout_sec=testtimeout)
 
         # NOTE: THE PASS / FAIL EVALUATIONS ARE PORTED FROM THE SQE BAMBOO
         #       BASED testSuite_XXX.sh THESE SHOULD BE RE-EVALUATED BY THE
         #       DEVELOPER AGAINST THE LATEST VERSION OF SST TO SEE IF THE
         #       TESTS & RESULT FILES ARE STILL VALID
 
-        self.assertFalse(os_test_file(errfile, "-s"), "Ember Sweep Test {0} has Non-empty Error File {1}".format(index, errfile))
+        self.assertFalse(os_test_file(errfile, "-s"), "Ember Sweep Test {0} has Non-empty Error File {1}".format(testnum, errfile))
 
-        # Dig through the output file looking for Simulation is complete
-        outfoundline = ""
-        grepstr = 'Simulation is complete'
-        with open(outfile, 'r') as f:
-            for line in f.readlines():
-                if grepstr in line:
-                    outfoundline = line
-
-        outtestresult = outfoundline != ""
-        self.assertTrue(outtestresult, "Ember Sweep Test {0} - Cannot find string \"{1}\" in output file {2}".format(index, grepstr, outfile))
-
-        reffoundline = ""
-        grepstr = '{0} {1}'.format(hex_dig, outfoundline)
-        with open(reffile, 'r') as f:
-            for line in f.readlines():
-                if grepstr in line:
-                    reffoundline = line
-
-        reftestresult = reffoundline != ""
-        self.assertTrue(reftestresult, "Ember Sweep Test {0} - Cannot find string \"{1}\" in reference file {2}".format(index, grepstr, outfile))
-
-        log_debug("Ember Sweep Test {0} - PASSED\n--------".format(index))
+#        # Dig through the output file looking for Simulation is complete
+#        outfoundline = ""
+#        grepstr = 'Simulation is complete'
+#        with open(outfile, 'r') as f:
+#            for line in f.readlines():
+#                if grepstr in line:
+#                    outfoundline = line
+#
+#        outtestresult = outfoundline != ""
+#        self.assertTrue(outtestresult, "Ember Sweep Test {0} - Cannot find string \"{1}\" in output file {2}".format(index, grepstr, outfile))
+#
+#        reffoundline = ""
+#        grepstr = '{0} {1}'.format(hex_dig, outfoundline)
+#        with open(reffile, 'r') as f:
+#            for line in f.readlines():
+#                if grepstr in line:
+#                    reffoundline = line
+#
+#        reftestresult = reffoundline != ""
+#        self.assertTrue(reftestresult, "Ember Sweep Test {0} - Cannot find string \"{1}\" in reference file {2}".format(index, grepstr, outfile))
+#
+#        log_debug("Ember Sweep Test {0} - PASSED\n--------".format(index))
 
 ###############################################
 
     def _checkSkipConditions(self, sweepindex):
-        # Check to see if Env Var SST_TEST_ES_LIST is set limiting which sweeps to run
-        env_var = 'SST_TEST_ES_LIST'
+        # Check to see if Env Var SST_TEST_ESshmem_LIST is set limiting which tests to run
+        env_var = 'SST_TEST_ESshmem_LIST'
         try:
             sweeplist = os.environ[env_var]
-            log_debug("SST_TEST_ES_LIST = {0}; type = {1}".format(sweeplist, type(sweeplist)))
+            log_debug("SST_TEST_ESshmem_LIST = {0}; type = {1}".format(sweeplist, type(sweeplist)))
             index = sweeplist.find('-')
             if index > 0 and len(sweeplist) >= 3:
                 startnumstr = int(sweeplist[0:index])

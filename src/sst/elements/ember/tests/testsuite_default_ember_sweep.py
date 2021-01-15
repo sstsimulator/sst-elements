@@ -190,7 +190,7 @@ class testcase_EmberSweep(SSTTestCase):
         self.emberelement_testdir = "{0}/../test/".format(test_path)
 
         # Set the various file paths
-        testDataFileName="{0}".format("testEemberSweep_{0}".format(index))
+        testDataFileName="{0}".format("testEmberSweep_{0}".format(index))
 
         reffile = "{0}/refFiles/test_EmberSweep.out".format(test_path)
         outfile = "{0}/{1}.out".format(outdir, testDataFileName)
