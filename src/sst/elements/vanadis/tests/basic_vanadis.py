@@ -13,9 +13,16 @@ os_verbosity = os.getenv("VANADIS_OS_VERBOSE", verbosity)
 pipe_trace_file = os.getenv("VANADIS_PIPE_TRACE", "")
 lsq_entries = os.getenv("VANADIS_LSQ_ENTRIES", 32)
 
+rob_slots = os.getenv("VANADIS_ROB_SLOTS", 64)
+retires_per_cycle = os.getenv("VANADIS_RETIRES_PER_CYCLE", 4)
+issues_per_cycle = os.getenv("VANADIS_ISSUES_PER_CYCLE", 4)
+decodes_per_cycle = os.getenv("VANADIS_DECODES_PER_CYCLE", 4)
+
+cpu_clock = os.getenv("VANADIS_CPU_CLOCK", "2.3GHz")
+
 v_cpu_0 = sst.Component("v0", "vanadis.VanadisCPU")
 v_cpu_0.addParams({
-       "clock" : "2.3GHz",
+       "clock" : cpu_clock,
 #       "executable" : "./tests/hello-mips",
 #       "executable" : "./tests/hello-musl",
 #       "executable" : "./tests/core-perf-musl",
@@ -41,10 +48,10 @@ v_cpu_0.addParams({
        "physical_int_registers" : 180,
        "print_int_reg" : 1,
        "pipeline_trace_file" : pipe_trace_file,
-       "reorder_slots" : 224,
-       "decodes_per_cycle" : 5,
-       "issues_per_cycle" :  6,
-       "retires_per_cycle" : 8,
+       "reorder_slots" : rob_slots,
+       "decodes_per_cycle" : decodes_per_cycle,
+       "issues_per_cycle" :  issues_per_cycle,
+       "retires_per_cycle" : retires_per_cycle,
        "pause_when_retire_address" : os.getenv("VANADIS_HALT_AT_ADDRESS", 0)
 #       "reorder_slots" : 32,
 #       "decodes_per_cycle" : 2,
@@ -68,8 +75,9 @@ if app_args != "":
 else:
 	print "No application arguments found, continuing with argc=0"
 
-decode0   = v_cpu_0.setSubComponent( "decoder0", "vanadis.VanadisMIPSDecoder" )
-os_hdlr   = decode0.setSubComponent( "os_handler", "vanadis.VanadisMIPSOSHandler" )
+decode0     = v_cpu_0.setSubComponent( "decoder0", "vanadis.VanadisMIPSDecoder" )
+os_hdlr     = decode0.setSubComponent( "os_handler", "vanadis.VanadisMIPSOSHandler" )
+branch_pred = decode0.setSubComponent( "branch_unit", "vanadis.VanadisBasicBranchUnit")
 
 decode0.addParams({
 	"uop_cache_entries" : 1536,
@@ -79,6 +87,10 @@ decode0.addParams({
 os_hdlr.addParams({
 	"verbose" : os_verbosity,
 	"brk_zero_memory" : "yes"
+})
+
+branch_pred.addParams({
+	"branch_entries" : 32
 })
 
 icache_if = v_cpu_0.setSubComponent( "mem_interface_inst", "memHierarchy.memInterface" )
@@ -113,7 +125,7 @@ node_os_mem_if = node_os.setSubComponent( "mem_interface", "memHierarchy.memInte
 os_l1dcache = sst.Component("node_os.l1dcache", "memHierarchy.Cache")
 os_l1dcache.addParams({
       "access_latency_cycles" : "2",
-      "cache_frequency" : "2.3GHz",
+      "cache_frequency" : cpu_clock,
       "replacement_policy" : "lru",
       "coherence_protocol" : "MESI",
       "associativity" : "8",
@@ -127,7 +139,7 @@ os_l1dcache.addParams({
 cpu0_l1dcache = sst.Component("cpu0.l1dcache", "memHierarchy.Cache")
 cpu0_l1dcache.addParams({
       "access_latency_cycles" : "2",
-      "cache_frequency" : "2.3GHz",
+      "cache_frequency" : cpu_clock,
       "replacement_policy" : "lru",
       "coherence_protocol" : "MESI",
       "associativity" : "8",
@@ -141,7 +153,7 @@ cpu0_l1dcache.addParams({
 cpu0_l1icache = sst.Component("cpu0.l1icache", "memHierarchy.Cache")
 cpu0_l1icache.addParams({
       "access_latency_cycles" : "2",
-      "cache_frequency" : "2.3GHz",
+      "cache_frequency" : cpu_clock,
       "replacement_policy" : "lru",
       "coherence_protocol" : "MESI",
       "associativity" : "8",
@@ -155,7 +167,7 @@ cpu0_l1icache.addParams({
 cpu0_l2cache = sst.Component("l2cache", "memHierarchy.Cache")
 cpu0_l2cache.addParams({
       "access_latency_cycles" : "14",
-      "cache_frequency" : "2.3GHz",
+      "cache_frequency" : cpu_clock,
       "replacement_policy" : "lru",
       "coherence_protocol" : "MESI",
       "associativity" : "16",
@@ -165,12 +177,12 @@ cpu0_l2cache.addParams({
 
 cache_bus = sst.Component("bus", "memHierarchy.Bus")
 cache_bus.addParams({
-      "bus_frequency" : "2.3GHz",
+      "bus_frequency" : cpu_clock,
 })
 
 memctrl = sst.Component("memory", "memHierarchy.MemController")
 memctrl.addParams({
-      "clock" : "2.3Ghz",
+      "clock" : cpu_clock,
       "backend.mem_size" : "4GiB",
       "backing" : "malloc"
 })
@@ -183,6 +195,9 @@ memory.addParams({
 
 sst.setStatisticOutput("sst.statOutputConsole")
 v_cpu_0.enableAllStatistics()
+decode0.enableAllStatistics()
+v_cpu_0_lsq.enableAllStatistics()
+branch_pred.enableAllStatistics()
 
 link_cpu0_l1dcache_link = sst.Link("link_cpu0_l1dcache_link")
 link_cpu0_l1dcache_link.connect( (dcache_if, "port", "1ns"), (cpu0_l1dcache, "high_network_0", "1ns") )
