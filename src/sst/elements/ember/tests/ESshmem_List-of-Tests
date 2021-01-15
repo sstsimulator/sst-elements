@@ -1,0 +1,2 @@
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=5 --motifAPI=HadesSHMEM --cmdLine=\"ShmemBarrier iterations=99\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=4x4x4 --motifAPI=HadesSHMEM --cmdLine=\"ShmemBarrier iterations=99\"" emberLoad.py

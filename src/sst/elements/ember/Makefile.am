@@ -288,9 +288,11 @@ EXTRA_DIST = \
 	test/generateNidListGroup.py \
 	test/generateNidListInterval.py \
 	test/generateNidListRandom.py \
-	tests/testsuite_default_embernightly.py \
-	tests/testsuite_default_embersweep.py \
-	tests/testsuite_default_qos.py \
+	tests/testsuite_default_ember_nightly.py \
+	tests/testsuite_default_ember_sweep.py \
+	tests/testsuite_default_ember_qos.py \
+	tests/testsuite_default_ember_ESshmem.py \
+	tests/ESshmem_List-of-Tests \
 	tests/qos-dragonfly.sh \
 	tests/qos-fattree.sh \
 	tests/qos-hyperx.sh \
