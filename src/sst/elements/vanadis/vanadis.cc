@@ -407,6 +407,8 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 	stat_branch_mispredicts = registerStatistic<uint64_t>( "branch_mispredicts", "1" );
 	stat_branches      = registerStatistic<uint64_t>( "branches", "1" );
 	stat_cycles        = registerStatistic<uint64_t>( "cycles", "1" );
+	stat_rob_entries   = registerStatistic<uint64_t>( "rob_entries", "1" );
+	stat_rob_cleared_entries = registerStatistic<uint64_t>( "rob_cleared_entries", "1" );
 
 	registerAsPrimaryComponent();
     	primaryComponentDoNotEndSim();
@@ -1091,6 +1093,12 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 	// Record how many instructions we retired this cycle
 	stat_ins_retired->addData( ins_retired_this_cycle );
 
+	uint64_t rob_total_count = 0;
+	for( uint32_t i = 0; i < hw_threads; ++i ) {
+		rob_total_count += rob[i]->size();
+	}
+	stat_rob_entries->addData( rob_total_count );
+
 	output->verbose(CALL_INFO, 2, 0, "================================ End of Cycle ==============================\n" );
 
 	current_cycle++;
@@ -1759,13 +1767,14 @@ void VanadisComponent::resetRegisterStacks( const uint32_t hw_thr ) {
 
 void VanadisComponent::clearROBMisspeculate( const uint32_t hw_thr ) {
 	VanadisCircularQueue<VanadisInstruction*>* thr_rob = rob[hw_thr];
-	
+	stat_rob_cleared_entries->addData(thr_rob->size());
+
 	// Delete all the instructions which we aren't going to process
 	for( size_t i = 0; i < thr_rob->size(); ++i ) {
 		VanadisInstruction* next_ins = thr_rob->peekAt(i);
 		delete next_ins;
 	}
-	
+
 	// clear the ROB entries and reset
 	thr_rob->clear();
 }
