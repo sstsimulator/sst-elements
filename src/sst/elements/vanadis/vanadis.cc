@@ -41,6 +41,12 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 		output->verbose(CALL_INFO, 2, 0, "Executable: %s\n", binary_img.c_str());
 		binary_elf_info = readBinaryELFInfo( output, binary_img.c_str() );
 		binary_elf_info->print( output );
+
+		if( binary_elf_info->isDynamicExecutable() ) {
+                        output->fatal( CALL_INFO, -1, "--> error - executable is dynamically linked. Only static executables are currently supported for simulation.\n");
+                } else {
+                        output->verbose(CALL_INFO, 2, 0, "--> executable is identified as static linked\n");
+                }
 	}
 
 	std::string clock_rate = params.find<std::string>("clock", "1GHz");
@@ -390,6 +396,8 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
     		}
     	}
 
+        pause_on_retire_address = params.find<uint64_t>("pause_when_retire_address", 0);
+
 	// Register statistics ///////////////////////////////////////////////////////
 	stat_ins_retired   = registerStatistic<uint64_t>( "instructions_retired", "1" );
 	stat_ins_decoded   = registerStatistic<uint64_t>( "instructions_decoded", "1" );
@@ -678,14 +686,14 @@ int VanadisComponent::performRetire( VanadisCircularQueue<VanadisInstruction*>* 
 		retire_isa_tables[rob_front->getHWThread()]->print(output,
                                         register_files[rob_front->getHWThread()], print_int_reg, print_fp_reg);
 
-		output->fatal( CALL_INFO, -1, "Instruction 0x%llx flags an error (instruction-type=%s)\n",
-			rob_front->getInstructionAddress(), rob_front->getInstCode() );
+		output->fatal( CALL_INFO, -1, "Instruction 0x%llx flags an error (instruction-type=%s) at cycle %" PRIu64 "\n",
+			rob_front->getInstructionAddress(), rob_front->getInstCode(), cycle );
 	}
 
 	if( rob_front->completedIssue() && rob_front->completedExecution() ) {
 		bool perform_cleanup         = true;
 		bool perform_delay_cleanup   = false;
-		bool perform_pipelne_clear   = false;
+//		bool perform_pipelne_clear   = false;
 		uint64_t pipeline_reset_addr = 0;
 
 		if( rob_front->isSpeculated() ) {
@@ -737,21 +745,38 @@ int VanadisComponent::performRetire( VanadisCircularQueue<VanadisInstruction*>* 
 			// processed OK, then we are good to calculate branch-to locations.
 			if( perform_cleanup ) {
 				pipeline_reset_addr   = spec_ins->getTakenAddress();
-					//spec_ins->calculateAddress( output, register_files[rob_front->getHWThread()],
-					//spec_ins->getInstructionAddress() );
-				// we have to clear the pipeline if we predict a branch to an address but we
-				// don't end up taking when we actually calculate the branch-to location
-				perform_pipelne_clear = spec_ins->getSpeculatedAddress() != pipeline_reset_addr;
-			
+				perform_pipeline_clear = (pipeline_reset_addr != spec_ins->getSpeculatedAddress());
+
 				output->verbose(CALL_INFO, 8, 0, "----> speculated addr: 0x%llx / result addr: 0x%llx / pipeline-clear: %s\n",
 					spec_ins->getSpeculatedAddress(), pipeline_reset_addr,
-					perform_pipelne_clear ? "yes" : "no" );
-				
-				//if( perform_pipeline_clear ) {
-					output->verbose(CALL_INFO, 8, 0, "----> Updating branch predictor with new information (new addr: 0x%llx)\n",
-						pipeline_reset_addr);
-					thread_decoders[rob_front->getHWThread()]->getBranchPredictor()->push( 
-						spec_ins->getInstructionAddress(), pipeline_reset_addr );
+					perform_pipeline_clear ? "yes" : "no" );
+
+				output->verbose(CALL_INFO, 8, 0, "----> Updating branch predictor with new information (new addr: 0x%llx)\n",
+					pipeline_reset_addr);
+				thread_decoders[rob_front->getHWThread()]->getBranchPredictor()->push(
+					spec_ins->getInstructionAddress(), pipeline_reset_addr );
+
+
+			if( (pause_on_retire_address > 0) &&
+				(rob_front->getInstructionAddress() == pause_on_retire_address) ) {
+
+				// print the register and pipeline status
+				printStatus((*output));
+
+				output->verbose(CALL_INFO, 0, 0, "ins: 0x%llx / speculated-address: 0x%llx / taken: 0x%llx / reset: 0x%llx / clear-check: %3s / pipe-clear: %3s / delay-cleanup: %3s\n",
+					spec_ins->getInstructionAddress(),
+					spec_ins->getSpeculatedAddress(),
+					spec_ins->getTakenAddress(),
+					pipeline_reset_addr,
+					spec_ins->getSpeculatedAddress() != pipeline_reset_addr ? "yes" : "no",
+					perform_pipeline_clear ? "yes" : "no",
+					perform_delay_cleanup  ? "yes" : "no");
+
+				// stop simulation
+				output->fatal(CALL_INFO, -2, "Retired instruction address 0x%llx, requested terminate on retire this address.\n",
+					pause_on_retire_address);
+			}
+
 						
 				if( perform_pipeline_clear ) {
 //					if( spec_ins->endsMicroOpGroup() ) {
@@ -809,13 +834,29 @@ int VanadisComponent::performRetire( VanadisCircularQueue<VanadisInstruction*>* 
 				retire_isa_tables[rob_front->getHWThread()]->print(output,
 					register_files[rob_front->getHWThread()], print_int_reg, print_fp_reg);
 
-				if( perform_pipelne_clear ) {
+			if( (pause_on_retire_address > 0) &&
+				(rob_front->getInstructionAddress() == pause_on_retire_address) ) {
+
+				// print the register and pipeline status
+				printStatus((*output));
+
+				output->verbose(CALL_INFO, 0, 0, "pipe-clear: %3s / delay-cleanup: %3s\n",
+					perform_pipeline_clear ? "yes" : "no",
+					perform_delay_cleanup  ? "yes" : "no");
+
+				// stop simulation
+				output->fatal(CALL_INFO, -2, "Retired instruction address 0x%llx, requested terminate on retire this address.\n",
+					pause_on_retire_address);
+			}
+
+				if( perform_pipeline_clear ) {
 					output->verbose(CALL_INFO, 8, 0, "----> perform a pipeline clear thread %" PRIu32 ", reset to address: 0x%llx\n",
 						rob_front->getHWThread(), pipeline_reset_addr);
 					handleMisspeculate( rob_front->getHWThread(), pipeline_reset_addr );
 
 					stat_branch_mispredicts->addData(1);
 				}
+
 
 			delete rob_front;
 		}

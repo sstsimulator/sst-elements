@@ -49,8 +49,8 @@ inst/vfpmul.h \
 inst/vfpscmp.h \
 inst/vfpsub.h \
 inst/vgpr2fp.h \
-inst/vinst.h \
 inst/vinstall.h \
+inst/vinst.h \
 inst/vinsttype.h \
 inst/vjl.h \
 inst/vjlr.h \
@@ -114,6 +114,7 @@ os/callev/voscallread.h \
 os/callev/voscallreadlink.h \
 os/callev/voscallsta.h \
 os/callev/voscalluname.h \
+os/callev/voscallunmap.h \
 os/callev/voscallwrite.h \
 os/callev/voscallwritev.h \
 os/callev/vosinitbrk.h \
@@ -136,6 +137,10 @@ os/resp/vosexitresp.h
 EXTRA_DIST =
 
 libvanadis_la_LDFLAGS = -module -avoid-version
+
+bin_PROGRAMS = sst-vanadis-tracediff
+
+sst_vanadis_tracediff_SOURCES = tools/tracediff/tracediff.cc
 
 install-exec-hook:
 	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     vanadis=$(abs_srcdir)

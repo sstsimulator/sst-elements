@@ -54,6 +54,7 @@ public:
 	bool acceptResponse( SST::Output* output, SST::Interfaces::SimpleMem::Request* req ) {
 		// Looks like we created this request, so we should accept and process it
 		auto check_hit_local = pending_loads.find( req->id );
+
 		if( check_hit_local != pending_loads.end() ) {
 			if( req->data.size() != cache_line_width ) {
 				output->fatal(CALL_INFO, -1, "Error: request to the instruction cache was not for a full line, req=%d, line-width=%d\n",
@@ -123,32 +124,11 @@ public:
 			addr, inst_line_offset, cache_line_start, cache_line_start);
 
 		if( predecode_cache->contains( cache_line_start ) ) {
-/*
-			if( (addr + buffer_req) > (cache_line_start + cache_line_width) ) {
-				if( predecode_cache->contains( cache_line_start + cache_line_width ) ) {
-					// Needs two cache lines
-					std::vector<uint8_t>* cached_bytes = predecode_cache->find( cache_line_start );
+			std::vector<uint8_t>* cached_bytes = predecode_cache->find( cache_line_start );
 
-					for( uint64_t i = 0; i < (cache_line_width - inst_line_offset); ++i ) {
-						buffer[i] = cached_bytes->at( inst_line_offset + i );
-					}
-
-					cached_bytes = predecode_cache->find( cache_line_start + cache_line_width );
-
-					for( uint64_t i = 0; i < (buffer_req - (cache_line_width - inst_line_offset)); ++i ) {
-						buffer[(cache_line_width - inst_line_offset) + i] = cached_bytes->at(i);
-					}
-				} else {
-					filled = false;
-				}
-			} else {
-*/
-				std::vector<uint8_t>* cached_bytes = predecode_cache->find( cache_line_start );
-
-				for( uint64_t i = 0; i < buffer_req; ++i ) {
-					buffer[i] = cached_bytes->at( inst_line_offset + i );
-				}
-//			}
+			for( uint64_t i = 0; i < buffer_req; ++i ) {
+				buffer[i] = cached_bytes->at( inst_line_offset + i );
+			}
 		} else {
 			filled = false;
 		}

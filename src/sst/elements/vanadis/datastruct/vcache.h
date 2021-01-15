@@ -23,6 +23,10 @@ public:
 	}
 
 	void clear() {
+		for( auto next_value : data_values ) {
+			delete next_value.second;
+		}
+
 		ordering_q.clear();
 		data_values.clear();
 	}
