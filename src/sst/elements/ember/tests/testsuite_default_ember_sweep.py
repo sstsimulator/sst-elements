@@ -230,7 +230,7 @@ class testcase_EmberSweep(SSTTestCase):
                     reffoundline = line
 
         reftestresult = reffoundline != ""
-        self.assertTrue(reftestresult, "Ember Sweep Test {0} - Cannot find string \"{1}\" in reference file {2}".format(index, grepstr, outfile))
+        self.assertTrue(reftestresult, "Ember Sweep Test {0} - Cannot find string \"{1}\" in reference file {2}".format(index, grepstr, reffile))
 
         log_debug("Ember Sweep Test {0} - PASSED\n--------".format(index))
 

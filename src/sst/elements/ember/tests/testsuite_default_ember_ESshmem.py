@@ -35,6 +35,9 @@ def build_ESshmem_test_matrix():
 
     # Process each line and crack up into an index, hash, options and sdl file
     for testnum, test_str in enumerate(testlist):
+        # Make testnum start at 1
+        testnum = testnum + 1
+
         # Get the Hash
         hash_object = hashlib.md5(test_str)
         hash_str = hash_object.hexdigest()
@@ -66,8 +69,8 @@ def gen_custom_name(testcase_func, param_num, param):
     testcasename = "{0}_{1}".format(testcase_func.__name__,
         parameterized.to_safe_name("_".join(str(x) for x in param.args)))
 # Abbreviated TestCaseName
-    testcasename = "{0}_{1}_{2}".format(testcase_func.__name__,
-        parameterized.to_safe_name(str(param.args[0])),
+    testcasename = "{0}_{1:03}_{2}".format(testcase_func.__name__,
+        int(parameterized.to_safe_name(str(param.args[0]))),
         parameterized.to_safe_name(str(param.args[1])))
     return testcasename
 
@@ -148,28 +151,28 @@ class testcase_Ember_ESshmem(SSTTestCase):
 
         self.assertFalse(os_test_file(errfile, "-s"), "Ember Sweep Test {0} has Non-empty Error File {1}".format(testnum, errfile))
 
-#        # Dig through the output file looking for Simulation is complete
-#        outfoundline = ""
-#        grepstr = 'Simulation is complete'
-#        with open(outfile, 'r') as f:
-#            for line in f.readlines():
-#                if grepstr in line:
-#                    outfoundline = line
-#
-#        outtestresult = outfoundline != ""
-#        self.assertTrue(outtestresult, "Ember Sweep Test {0} - Cannot find string \"{1}\" in output file {2}".format(index, grepstr, outfile))
-#
-#        reffoundline = ""
-#        grepstr = '{0} {1}'.format(hex_dig, outfoundline)
-#        with open(reffile, 'r') as f:
-#            for line in f.readlines():
-#                if grepstr in line:
-#                    reffoundline = line
-#
-#        reftestresult = reffoundline != ""
-#        self.assertTrue(reftestresult, "Ember Sweep Test {0} - Cannot find string \"{1}\" in reference file {2}".format(index, grepstr, outfile))
-#
-#        log_debug("Ember Sweep Test {0} - PASSED\n--------".format(index))
+        # Dig through the output file looking for "Simulation is complete"
+        outfoundline = ""
+        grepstr = 'Simulation is complete'
+        with open(outfile, 'r') as f:
+            for line in f.readlines():
+                if grepstr in line:
+                    outfoundline = line
+
+        outtestresult = outfoundline != ""
+        self.assertTrue(outtestresult, "Ember Sweep Test {0} - Cannot find string \"{1}\" in output file {2}".format(testnum, grepstr, outfile))
+
+        reffoundline = ""
+        grepstr = '{0} {1}'.format(hash_str, outfoundline)
+        with open(reffile, 'r') as f:
+            for line in f.readlines():
+                if grepstr in line:
+                    reffoundline = line
+
+        reftestresult = reffoundline != ""
+        self.assertTrue(reftestresult, "Ember Sweep Test {0} - Cannot find string \"{1}\" in reference file {2}".format(testnum, grepstr, reffile))
+
+        log_debug("Ember Sweep Test {0} - PASSED\n--------".format(testnum))
 
 ###############################################
 
