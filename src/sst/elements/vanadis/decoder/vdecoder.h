@@ -12,11 +12,12 @@
 #include "decoder/visaopts.h"
 #include "inst/vinst.h"
 #include "inst/isatable.h"
-#include "vbranchunit.h"
 #include "vinsloader.h"
 #include "os/vcpuos.h"
 #include "inst/fpregmode.h"
 #include "lsq/vlsq.h"
+#include "vbranch/vbranchunit.h"
+#include "vbranch/vbranchbasic.h"
 
 namespace SST {
 namespace Vanadis {
@@ -26,7 +27,8 @@ public:
 	SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Vanadis::VanadisDecoder)
 
 	SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-		{ "os_handler",		"Handler for SYSCALL instructions",	"SST::Vanadis::VanadisCPUOSHandler" }
+		{ "os_handler",		"Handler for SYSCALL instructions",	"SST::Vanadis::VanadisCPUOSHandler" 	},
+		{ "branch_unit",	"Branch prediction unit",	"SST::Vanadis::VanadisBranchUnit" 		}
 	)
 
 	SST_ELI_DOCUMENT_PARAMS(
@@ -58,10 +60,9 @@ public:
 
 		ins_loader = new VanadisInstructionLoader( uop_cache_size, predecode_cache_entries, icache_line_width );
 
-		const size_t branch_pred_entries     = params.find<size_t>("branch_predictor_entries", 32);
-		branch_predictor = new VanadisBranchUnit( branch_pred_entries );
-
+		branch_predictor = loadUserSubComponent<SST::Vanadis::VanadisBranchUnit>("branch_unit");
 		os_handler = loadUserSubComponent<SST::Vanadis::VanadisCPUOSHandler>("os_handler");
+
 		hw_thr = 0;
 
 		os_handler->setThreadLocalStoragePointer( &tls_ptr );
@@ -77,8 +78,8 @@ public:
 	}
 
 	virtual ~VanadisDecoder() {
-		//delete decoded_q;
 		delete os_handler;
+		delete branch_predictor;
 	}
 
 	virtual void markLoadFencing() {
