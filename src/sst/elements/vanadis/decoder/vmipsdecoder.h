@@ -502,6 +502,7 @@ public:
 				if( ins_loader->hasBundleAt( ip ) ) {
 					output->verbose(CALL_INFO, 16, 0, "---> Found uop bundle for ip=0x0%llx, loading from cache...\n", ip);
 					VanadisInstructionBundle* bundle = ins_loader->getBundleAt( ip );
+					stat_uop_hit->addData(1);
 
 					output->verbose(CALL_INFO, 16, 0, "-----> Bundle contains %" PRIu32 " entries.\n", bundle->getInstructionCount());
 
@@ -524,6 +525,7 @@ public:
 						if( ins_loader->hasBundleAt( ip + 4 ) ) {
 							// We have also decoded the branch-delay
 							delay_bundle = ins_loader->getBundleAt( ip + 4 );
+							stat_uop_hit->addData(1);
 						} else {
 							output->verbose(CALL_INFO, 16, 0, "-----> Branch delay slot is not currently decoded into a bundle.\n");
 							if( ins_loader->hasPredecodeAt( ip + 4 ) ) {
@@ -531,6 +533,8 @@ public:
 								delay_bundle = new VanadisInstructionBundle( ip + 4 );
 
 								if( ins_loader->getPredecodeBytes( output, ip + 4, (uint8_t*) &temp_delay, sizeof( temp_delay ) ) ) {
+									stat_predecode_hit->addData(1);
+
 									decode( output, ip + 4, temp_delay, delay_bundle );
 									ins_loader->cacheDecodedBundle( delay_bundle );
 									decodes_performed++;
@@ -541,6 +545,7 @@ public:
 							} else {
 								output->verbose(CALL_INFO, 16, 0, "-----> Branch delay slot also misses in pre-decode cache, need to request it.\n");
 								ins_loader->requestLoadAt( output, ip + 4, 4 );
+								stat_predecode_miss->addData(1);
 							}
 						}
 
@@ -640,6 +645,7 @@ public:
 				} else if( ins_loader->hasPredecodeAt( ip ) ) {
 					// We do have a locally cached copy of the data at the IP though, so decode into a bundle
 					output->verbose(CALL_INFO, 16, 0, "---> uop not found, but matched in predecoded L0-icache (ip=%p)\n", (void*) ip);
+					stat_predecode_hit->addData(1);
 
 					uint32_t temp_ins = 0;
 					VanadisInstructionBundle* decoded_bundle = new VanadisInstructionBundle( ip );
@@ -662,6 +668,7 @@ public:
 					output->verbose(CALL_INFO, 16, 0, "---> uop bundle and pre-decoded bytes are not found (ip=%p), requesting icache read (line-width=%" PRIu64 ")\n",
 						(void*) ip, ins_loader->getCacheLineWidth() );
 					ins_loader->requestLoadAt( output, ip, 4 );
+					stat_predecode_miss->addData(1);
 					break;
 				}
 			} else {
@@ -1760,6 +1767,9 @@ protected:
 
 		if( insertDecodeFault ) {
 			bundle->addInstruction( new VanadisInstructionDecodeFault( ins_addr, getHardwareThread(), options) );
+			stat_decode_fault->addData(1);
+		} else {
+			stat_uop_generated->addData( bundle->getInstructionCount() );
 		}
 
 		for( uint32_t i = 0; i < bundle->getInstructionCount(); ++i ) {
