@@ -315,6 +315,8 @@ public:
 							writeTrace( load_ins, load_req );
 
 							memInterface->sendRequest( load_req );
+							stat_load_issued->addData(1);
+
 							next_item->setRequestID( load_req->id );
 							next_item->setOperationAddress( load_addr );
 						}
@@ -404,6 +406,8 @@ public:
 
 						writeTrace( store_ins, store_req );
 						memInterface->sendRequest( store_req );
+
+						stat_store_issued->addData(1);
 
 						if( fault_on_memory_not_written ) {
 							for( uint64_t i = store_req->addr; i < (store_req->addr + store_req->size); ++i ) {
