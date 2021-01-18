@@ -11,7 +11,6 @@ libvanadis_la_SOURCES = \
 vanadis.cc \
 os/vnodeos.cc \
 vanadis.h \
-vbranchunit.h \
 vfuncunit.h \
 vinsbundle.h \
 vinsloader.h \
@@ -132,7 +131,9 @@ os/node/vnodeosunameh.h \
 os/node/vnodeoswriteh.h \
 os/node/vnodeoswritevh.h \
 os/resp/voscallresp.h \
-os/resp/vosexitresp.h
+os/resp/vosexitresp.h \
+vbranch/vbranchunit.h \
+vbranch/vbranchbasic.h
 
 EXTRA_DIST =
 

@@ -29,6 +29,11 @@ public:
 		{ "verbose", 		"Set the verbosity of output for the LSQ", 	"0" },
 	)
 
+	SST_ELI_DOCUMENT_STATISTICS(
+		{ "laods_issued",	"Count the number of loads issued", "operations", 1 },
+		{ "stores_issued",      "Count the number of stores issued", "operations", 1 }
+	)
+
 	VanadisLoadStoreQueue( ComponentId_t id, Params& params ) :
 		SubComponent( id ) {
 
@@ -38,6 +43,9 @@ public:
 		address_mask = params.find<uint64_t>("address_mask", 0xFFFFFFFFFFFFFFFF );
 
 		registerFiles = nullptr;
+
+		stat_load_issued  = registerStatistic<uint64_t>( "laods_issued", "1" );
+		stat_store_issued = registerStatistic<uint64_t>( "stores_issued", "1" );
 	}
 
 	virtual ~VanadisLoadStoreQueue() {
@@ -74,6 +82,9 @@ protected:
 	uint64_t address_mask;
 	std::vector<VanadisRegisterFile*>* registerFiles;
 	SST::Output* output;
+
+	Statistic<uint64_t>* stat_load_issued;
+	Statistic<uint64_t>* stat_store_issued;
 
 };
 
