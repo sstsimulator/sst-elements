@@ -112,7 +112,7 @@ class testcase_Ember_ESshmem(SSTTestCase):
 
     @parameterized.expand(ESshmem_test_matrix, name_func=gen_custom_name)
     def test_Ember_ESshmem(self, testnum, hash_str, modelstr, sdlfile):
-#        self._checkSkipConditions(index)
+        self._checkSkipConditions(testnum)
 
         log_debug("Running Ember ESshmem #{0} ({1}): model={2} using sdl={3}".format(testnum, hash_str, modelstr, sdlfile))
         self.Ember_ESshmem_test_template(testnum, hash_str, modelstr, sdlfile)
@@ -149,7 +149,7 @@ class testcase_Ember_ESshmem(SSTTestCase):
         #       DEVELOPER AGAINST THE LATEST VERSION OF SST TO SEE IF THE
         #       TESTS & RESULT FILES ARE STILL VALID
 
-        self.assertFalse(os_test_file(errfile, "-s"), "Ember Sweep Test {0} has Non-empty Error File {1}".format(testnum, errfile))
+        self.assertFalse(os_test_file(errfile, "-s"), "Ember Test Test {0} has Non-empty Error File {1}".format(testnum, errfile))
 
         # Dig through the output file looking for "Simulation is complete"
         outfoundline = ""
@@ -160,7 +160,7 @@ class testcase_Ember_ESshmem(SSTTestCase):
                     outfoundline = line
 
         outtestresult = outfoundline != ""
-        self.assertTrue(outtestresult, "Ember Sweep Test {0} - Cannot find string \"{1}\" in output file {2}".format(testnum, grepstr, outfile))
+        self.assertTrue(outtestresult, "Ember Test Test {0} - Cannot find string \"{1}\" in output file {2}".format(testnum, grepstr, outfile))
 
         reffoundline = ""
         grepstr = '{0} {1}'.format(hash_str, outfoundline)
@@ -170,33 +170,34 @@ class testcase_Ember_ESshmem(SSTTestCase):
                     reffoundline = line
 
         reftestresult = reffoundline != ""
-        self.assertTrue(reftestresult, "Ember Sweep Test {0} - Cannot find string \"{1}\" in reference file {2}".format(testnum, grepstr, reffile))
+        self.assertTrue(reftestresult, "Ember Test Test {0} - Cannot find string \"{1}\" in reference file {2}".format(testnum, grepstr, reffile))
 
-        log_debug("Ember Sweep Test {0} - PASSED\n--------".format(testnum))
+        log_debug("Ember Test Test {0} - PASSED\n--------".format(testnum))
 
 ###############################################
 
-    def _checkSkipConditions(self, sweepindex):
+    def _checkSkipConditions(self, testindex):
         # Check to see if Env Var SST_TEST_ESshmem_LIST is set limiting which tests to run
+        #   An inclusive sub-list may be specified as "first-last"  (e.g. 7-10)
         env_var = 'SST_TEST_ESshmem_LIST'
         try:
-            sweeplist = os.environ[env_var]
-            log_debug("SST_TEST_ESshmem_LIST = {0}; type = {1}".format(sweeplist, type(sweeplist)))
-            index = sweeplist.find('-')
-            if index > 0 and len(sweeplist) >= 3:
-                startnumstr = int(sweeplist[0:index])
-                stopnumstr = int(sweeplist[index+1:])
+            testlist = os.environ[env_var]
+            log_debug("SST_TEST_ESshmem_LIST = {0}; type = {1}".format(testlist, type(testlist)))
+            index = testlist.find('-')
+            if index > 0 and len(testlist) >= 3:
+                startnumstr = int(testlist[0:index])
+                stopnumstr = int(testlist[index+1:])
                 try:
                     startnum = int(startnumstr)
                     stopnum = int(stopnumstr)
                 except ValueError:
                     log_debug("Cannot decode start/stop index strings: startstr = {0}; stopstr = {1}".format(startnumstr, stopnumstr))
                     return
-                log_debug("Current Sweep Index = {0}; Skip Number: startnum = {1}; stopnum = {2}".format(sweepindex, startnum, stopnum))
-                if sweepindex < startnum or sweepindex > stopnum:
-                    self.skipTest("Skipping Sweep #{0} - Per {1} = {2}".format(sweepindex, env_var, sweeplist))
+                log_debug("Current Test Index = {0}; Skip Number: startnum = {1}; stopnum = {2}".format(testindex, startnum, stopnum))
+                if testindex < startnum or testindex > stopnum:
+                    self.skipTest("Skipping Test #{0} - Per {1} = {2}".format(testindex, env_var, testlist))
             else:
-                log_debug("Env Var {0} - not formatted correctly = {1}".format(env_var, sweeplist))
+                log_debug("Env Var {0} - not formatted correctly = {1}".format(env_var, testlist))
                 return
         except KeyError:
             return
