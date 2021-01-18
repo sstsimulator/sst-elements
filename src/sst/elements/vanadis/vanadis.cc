@@ -13,7 +13,13 @@
 
 using namespace SST::Vanadis;
 
-VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
+#ifdef VANADIS_BUILD_DEBUG
+#define VANADIS_COMPONENT VanadisDebugComponent
+#else
+#define VANADIS_COMPONENT VanadisComponent
+#endif
+
+VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params) :
 	Component(id),
 	current_cycle(0) {
 
@@ -51,7 +57,7 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 
 	std::string clock_rate = params.find<std::string>("clock", "1GHz");
 	output->verbose(CALL_INFO, 2, 0, "Registering clock at %s.\n", clock_rate.c_str());
-	cpuClockTC = registerClock( clock_rate, new Clock::Handler<VanadisComponent>(this, &VanadisComponent::tick) );
+	cpuClockTC = registerClock( clock_rate, new Clock::Handler<VANADIS_COMPONENT>(this, &VANADIS_COMPONENT::tick) );
 
 	const uint32_t rob_count = params.find<uint32_t>("reorder_slots", 64);
 	dCacheLineWidth = params.find<uint64_t>("dcache_line_width", 64);
@@ -103,7 +109,7 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 		thread_decoders.push_back( thr_decoder );
 
 		output->verbose(CALL_INFO, 8, 0, "Registering SYSCALL return interface...\n");
-		std::function<void(uint32_t)> sys_callback = std::bind( &VanadisComponent::syscallReturnCallback, this, std::placeholders::_1 );
+		std::function<void(uint32_t)> sys_callback = std::bind( &VANADIS_COMPONENT::syscallReturnCallback, this, std::placeholders::_1 );
 		thread_decoders[i]->getOSHandler()->registerReturnCallback( sys_callback );
 
 		if( 0 == thread_decoders[i]->getInsCacheLineWidth() ) {
@@ -179,7 +185,7 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 //	memDataInterface = loadUserSubComponent<Interfaces::SimpleMem>("mem_interface_data", ComponentInfo::SHARE_NONE, cpuClockTC,
 //		new SimpleMem::Handler<SST::Vanadis::VanadisComponent>(this, &VanadisComponent::handleIncomingDataCacheEvent ));
 	memInstInterface = loadUserSubComponent<Interfaces::SimpleMem>("mem_interface_inst", ComponentInfo::SHARE_NONE, cpuClockTC,
-		new SimpleMem::Handler<SST::Vanadis::VanadisComponent>(this, &VanadisComponent::handleIncomingInstCacheEvent));
+		new SimpleMem::Handler<SST::Vanadis::VANADIS_COMPONENT>(this, &VANADIS_COMPONENT::handleIncomingInstCacheEvent));
 
     	// Load anonymously if not found in config
 /*
@@ -347,7 +353,7 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 	//////////////////////////////////////////////////////////////////////////////////////
 
 	std::function<void(uint32_t, int64_t)> haltThreadCB = std::bind(
-		&VanadisComponent::setHalt, this, std::placeholders::_1, std::placeholders::_2 );
+		&VANADIS_COMPONENT::setHalt, this, std::placeholders::_1, std::placeholders::_2 );
 
 	for( uint32_t i = 0; i < hw_threads; ++i ) {
 		thread_decoders[i]->getOSHandler()->setCoreID( core_id );
@@ -414,7 +420,7 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
     	primaryComponentDoNotEndSim();
 }
 
-VanadisComponent::~VanadisComponent() {
+VANADIS_COMPONENT::~VANADIS_COMPONENT() {
 	delete[] instPrintBuffer;
 	delete lsq;
 
@@ -423,7 +429,7 @@ VanadisComponent::~VanadisComponent() {
 	}
 }
 
-void VanadisComponent::setHalt( uint32_t thr, int64_t halt_code ) {
+void VANADIS_COMPONENT::setHalt( uint32_t thr, int64_t halt_code ) {
 	output->verbose(CALL_INFO, 2, 0, "-> Receive halt request on thread %" PRIu32 " / code: %" PRId64 "\n",
 		thr, halt_code);
 
@@ -454,12 +460,12 @@ void VanadisComponent::setHalt( uint32_t thr, int64_t halt_code ) {
 	}
 }
 
-int VanadisComponent::performFetch( const uint64_t cycle ) {
+int VANADIS_COMPONENT::performFetch( const uint64_t cycle ) {
 	// This is handled by the decoder step, so just keep it empty.
 	return 0;
 }
 
-int VanadisComponent::performDecode( const uint64_t cycle ) {
+int VANADIS_COMPONENT::performDecode( const uint64_t cycle ) {
 
 	for( uint32_t i = 0 ; i < hw_threads; ++i ) {
 		const int64_t rob_before_decode = (int64_t) rob[i]->size();
@@ -478,7 +484,7 @@ int VanadisComponent::performDecode( const uint64_t cycle ) {
 	return 0;
 }
 
-void VanadisComponent::resetRegisterUseTemps( const uint16_t int_reg_count,
+void VANADIS_COMPONENT::resetRegisterUseTemps( const uint16_t int_reg_count,
 	const uint16_t fp_reg_count ) {
 
 	for( uint16_t i = 0; i < int_reg_count; ++i ) {
@@ -492,7 +498,7 @@ void VanadisComponent::resetRegisterUseTemps( const uint16_t int_reg_count,
 	}
 }
 
-int VanadisComponent::performIssue( const uint64_t cycle ) {
+int VANADIS_COMPONENT::performIssue( const uint64_t cycle ) {
 	const int output_verbosity = output->getVerboseLevel();
 	bool issued_an_ins = false;;
 
@@ -629,7 +635,7 @@ int VanadisComponent::performIssue( const uint64_t cycle ) {
 	}
 }
 
-int VanadisComponent::performExecute( const uint64_t cycle ) {
+int VANADIS_COMPONENT::performExecute( const uint64_t cycle ) {
 	for( VanadisFunctionalUnit* next_fu : fu_int_arith ) {
 		next_fu->tick(cycle, output, register_files);
 	}
@@ -656,7 +662,7 @@ int VanadisComponent::performExecute( const uint64_t cycle ) {
 	return 0;
 }
 
-int VanadisComponent::performRetire( VanadisCircularQueue<VanadisInstruction*>* rob, const uint64_t cycle ) {
+int VANADIS_COMPONENT::performRetire( VanadisCircularQueue<VanadisInstruction*>* rob, const uint64_t cycle ) {
 
 	if( output->getVerboseLevel() >= 8 ) {
 		output->verbose(CALL_INFO, 8, 0, "-- ROB: %" PRIu32 " out of %" PRIu32 " entries:\n",
@@ -891,7 +897,7 @@ int VanadisComponent::performRetire( VanadisCircularQueue<VanadisInstruction*>* 
 	return 0;
 }
 
-bool VanadisComponent::mapInstructiontoFunctionalUnit( VanadisInstruction* ins, 
+bool VANADIS_COMPONENT::mapInstructiontoFunctionalUnit( VanadisInstruction* ins, 
 	std::vector< VanadisFunctionalUnit* >& functional_units ) {
 	
 	bool allocated = false;
@@ -907,7 +913,7 @@ bool VanadisComponent::mapInstructiontoFunctionalUnit( VanadisInstruction* ins,
 	return allocated;
 }
 
-int VanadisComponent::allocateFunctionalUnit( VanadisInstruction* ins ) {
+int VANADIS_COMPONENT::allocateFunctionalUnit( VanadisInstruction* ins ) {
 	bool allocated_fu = false;
 
 	switch( ins->getInstFuncType() ) {
@@ -1010,7 +1016,7 @@ int VanadisComponent::allocateFunctionalUnit( VanadisInstruction* ins ) {
 	}
 }
 
-bool VanadisComponent::tick(SST::Cycle_t cycle) {
+bool VANADIS_COMPONENT::tick(SST::Cycle_t cycle) {
 	if( current_cycle >= max_cycle ) {
 		output->verbose(CALL_INFO, 1, 0, "Reached maximum cycle %" PRIu64 ". Core stops processing.\n", current_cycle );
 		primaryComponentOKToEndSim();
@@ -1112,7 +1118,7 @@ bool VanadisComponent::tick(SST::Cycle_t cycle) {
 	}
 }
 
-int VanadisComponent::checkInstructionResources(
+int VANADIS_COMPONENT::checkInstructionResources(
 	VanadisInstruction* ins,
     	VanadisRegisterStack* int_regs,
     	VanadisRegisterStack* fp_regs,
@@ -1206,7 +1212,7 @@ int VanadisComponent::checkInstructionResources(
 	return 0;
 }
 
-int VanadisComponent::assignRegistersToInstruction(
+int VANADIS_COMPONENT::assignRegistersToInstruction(
 	const uint16_t int_reg_count,
 	const uint16_t fp_reg_count,
         VanadisInstruction* ins,
@@ -1360,7 +1366,7 @@ int VanadisComponent::assignRegistersToInstruction(
 	return 0;
 }
 
-int VanadisComponent::recoverRetiredRegisters(
+int VANADIS_COMPONENT::recoverRetiredRegisters(
         VanadisInstruction* ins,
         VanadisRegisterStack* int_regs,
         VanadisRegisterStack* fp_regs,
@@ -1466,15 +1472,15 @@ int VanadisComponent::recoverRetiredRegisters(
 	return 0;
 }
 
-void VanadisComponent::setup() {
+void VANADIS_COMPONENT::setup() {
 
 }
 
-void VanadisComponent::finish() {
+void VANADIS_COMPONENT::finish() {
 
 }
 
-void VanadisComponent::printStatus( SST::Output& output ) {
+void VANADIS_COMPONENT::printStatus( SST::Output& output ) {
 	output.verbose(CALL_INFO, 0, 0, "----------------------------------------------------------------------------------------------------------------------------\n");
 	output.verbose(CALL_INFO, 0, 0, "Vanadis (Core: %" PRIu16 " / Threads: %" PRIu32 " / cycle: %" PRIu64 " / max-cycle: %" PRIu64 ")\n",
 		core_id, hw_threads, current_cycle, max_cycle);
@@ -1503,7 +1509,7 @@ void VanadisComponent::printStatus( SST::Output& output ) {
 	output.verbose(CALL_INFO, 0, 0, "----------------------------------------------------------------------------------------------------------------------------\n");
 }
 
-void VanadisComponent::init(unsigned int phase) {
+void VANADIS_COMPONENT::init(unsigned int phase) {
 	output->verbose(CALL_INFO, 2, 0, "Start: init-phase: %" PRIu32 "...\n", (uint32_t) phase );
 	output->verbose(CALL_INFO, 2, 0, "-> Initializing memory interfaces with this phase...\n");
 
@@ -1669,13 +1675,13 @@ void VanadisComponent::init(unsigned int phase) {
 	output->verbose(CALL_INFO, 2, 0, "End: init-phase: %" PRIu32 "...\n", (uint32_t) phase );
 }
 
-//void VanadisComponent::handleIncomingDataCacheEvent( SimpleMem::Request* ev ) {
+//void VANADIS_COMPONENT::handleIncomingDataCacheEvent( SimpleMem::Request* ev ) {
 //	output->verbose(CALL_INFO, 16, 0, "-> Incoming d-cache event (addr=%p)...\n",
 //		(void*) ev->addr);
 //	lsq->processIncomingDataCacheEvent( output, ev );
 //}
 
-void VanadisComponent::handleIncomingInstCacheEvent( SimpleMem::Request* ev ) {
+void VANADIS_COMPONENT::handleIncomingInstCacheEvent( SimpleMem::Request* ev ) {
 	output->verbose(CALL_INFO, 16, 0, "-> Incoming i-cache event (addr=%p)...\n",
 		(void*) ev->addr);
 
@@ -1696,7 +1702,7 @@ void VanadisComponent::handleIncomingInstCacheEvent( SimpleMem::Request* ev ) {
 	delete ev;
 }
 
-void VanadisComponent::handleMisspeculate( const uint32_t hw_thr, const uint64_t new_ip ) {
+void VANADIS_COMPONENT::handleMisspeculate( const uint32_t hw_thr, const uint64_t new_ip ) {
 	output->verbose(CALL_INFO, 16, 0, "-> Handle mis-speculation on %" PRIu32 " (new-ip: 0x%llx)...\n", hw_thr, new_ip);
 
 	clearFuncUnit( hw_thr, fu_int_arith );
@@ -1718,13 +1724,13 @@ void VanadisComponent::handleMisspeculate( const uint32_t hw_thr, const uint64_t
 	output->verbose(CALL_INFO, 16, 0, "-> Mis-speculate repair finished.\n");
 }
 
-void VanadisComponent::clearFuncUnit( const uint32_t hw_thr, std::vector<VanadisFunctionalUnit*>& unit ) {
+void VANADIS_COMPONENT::clearFuncUnit( const uint32_t hw_thr, std::vector<VanadisFunctionalUnit*>& unit ) {
 	for( VanadisFunctionalUnit* next_fu : unit ) {
 		next_fu->clearByHWThreadID( output, hw_thr );
 	}
 }
 
-void VanadisComponent::resetRegisterStacks( const uint32_t hw_thr ) {
+void VANADIS_COMPONENT::resetRegisterStacks( const uint32_t hw_thr ) {
 	output->verbose(CALL_INFO, 16, 0, "-> Resetting register stacks on thread %" PRIu32 "...\n", hw_thr);
 	output->verbose(CALL_INFO, 16, 0, "---> Reclaiming integer registers...\n");
 
@@ -1765,7 +1771,7 @@ void VanadisComponent::resetRegisterStacks( const uint32_t hw_thr ) {
 		(uint32_t) thr_fp_stack->size());
 }
 
-void VanadisComponent::clearROBMisspeculate( const uint32_t hw_thr ) {
+void VANADIS_COMPONENT::clearROBMisspeculate( const uint32_t hw_thr ) {
 	VanadisCircularQueue<VanadisInstruction*>* thr_rob = rob[hw_thr];
 	stat_rob_cleared_entries->addData(thr_rob->size());
 
@@ -1779,7 +1785,7 @@ void VanadisComponent::clearROBMisspeculate( const uint32_t hw_thr ) {
 	thr_rob->clear();
 }
 
-void VanadisComponent::syscallReturnCallback( uint32_t thr ) {
+void VANADIS_COMPONENT::syscallReturnCallback( uint32_t thr ) {
 	if( rob[thr]->empty() ) {
 		output->fatal(CALL_INFO, -1, "Error - syscall return called on thread: %" PRIu32 " but ROB is empty.\n", thr);
 	}

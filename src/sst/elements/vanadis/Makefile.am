@@ -6,9 +6,9 @@ AM_CPPFLAGS = \
 	$(MPI_CPPFLAGS)
 
 compdir = $(pkglibdir)
-comp_LTLIBRARIES = libvanadis.la
-libvanadis_la_SOURCES = \
-vanadis.cc \
+comp_LTLIBRARIES = libvanadis.la libvanadisdbg.la
+
+VANADIS_SRC_FILES = \
 os/vnodeos.cc \
 vanadis.h \
 vfuncunit.h \
@@ -137,11 +137,24 @@ vbranch/vbranchbasic.h
 
 EXTRA_DIST =
 
+libvanadis_la_SOURCES = \
+	vanadis.cc \
+	$(VANADIS_SRC_FILES)
+libvanadisdbg_la_SOURCES = \
+	vanadisdbg.cc \
+	$(VANADIS_SRC_FILES)
+
 libvanadis_la_LDFLAGS = -module -avoid-version
+libvanadisdbg_la_LDFLAGS = -module -avoid-version
 
 bin_PROGRAMS = sst-vanadis-tracediff
 
 sst_vanadis_tracediff_SOURCES = tools/tracediff/tracediff.cc
+
+vanadisdbg.cc: vanadis.cc
+	$(CXXCPP) -DVANADIS_BUILD_DEBUG $(CXXFLAGS) $(CPPFLAGS) -I./ vanadis.cc > $@
+
+CLEANFILES = vanadisdbg.cc
 
 install-exec-hook:
 	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     vanadis=$(abs_srcdir)

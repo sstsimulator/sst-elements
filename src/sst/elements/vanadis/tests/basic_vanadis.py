@@ -8,7 +8,7 @@ sst.setProgramOption("stopAtCycle", "0 ns")
 # Tell SST what statistics handling we want
 sst.setStatisticLoadLevel(4)
 
-verbosity = os.getenv("VANADIS_VERBOSE", 0)
+verbosity = int(os.getenv("VANADIS_VERBOSE", 0))
 os_verbosity = os.getenv("VANADIS_OS_VERBOSE", verbosity)
 pipe_trace_file = os.getenv("VANADIS_PIPE_TRACE", "")
 lsq_entries = os.getenv("VANADIS_LSQ_ENTRIES", 32)
@@ -20,7 +20,15 @@ decodes_per_cycle = os.getenv("VANADIS_DECODES_PER_CYCLE", 4)
 
 cpu_clock = os.getenv("VANADIS_CPU_CLOCK", "2.3GHz")
 
-v_cpu_0 = sst.Component("v0", "vanadis.VanadisCPU")
+vanadis_cpu_type = "vanadis.VanadisCPU"
+
+if (verbosity > 0):
+	print "Verbosity (" + str(verbosity) + ") is non-zero, using debug version of Vanadis."
+	vanadis_cpu_type = "vanadisdbg.VanadisCPU"
+
+print "Verbosity: " + str(verbosity) + " -> loading Vanadis CPU type: " + vanadis_cpu_type
+
+v_cpu_0 = sst.Component("v0", vanadis_cpu_type)
 v_cpu_0.addParams({
        "clock" : cpu_clock,
 #       "executable" : "./tests/hello-mips",
