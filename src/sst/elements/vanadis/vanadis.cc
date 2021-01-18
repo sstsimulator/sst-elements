@@ -407,7 +407,7 @@ VanadisComponent::VanadisComponent(SST::ComponentId_t id, SST::Params& params) :
 	stat_branch_mispredicts = registerStatistic<uint64_t>( "branch_mispredicts", "1" );
 	stat_branches      = registerStatistic<uint64_t>( "branches", "1" );
 	stat_cycles        = registerStatistic<uint64_t>( "cycles", "1" );
-	stat_rob_entries   = registerStatistic<uint64_t>( "rob_entries", "1" );
+	stat_rob_entries   = registerStatistic<uint64_t>( "rob_slots_in_use", "1" );
 	stat_rob_cleared_entries = registerStatistic<uint64_t>( "rob_cleared_entries", "1" );
 
 	registerAsPrimaryComponent();
