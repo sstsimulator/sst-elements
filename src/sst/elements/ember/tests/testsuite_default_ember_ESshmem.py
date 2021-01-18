@@ -66,8 +66,8 @@ build_ESshmem_test_matrix()
 
 def gen_custom_name(testcase_func, param_num, param):
 # Full TestCaseName
-    testcasename = "{0}_{1}".format(testcase_func.__name__,
-        parameterized.to_safe_name("_".join(str(x) for x in param.args)))
+#    testcasename = "{0}_{1}".format(testcase_func.__name__,
+#        parameterized.to_safe_name("_".join(str(x) for x in param.args)))
 # Abbreviated TestCaseName
     testcasename = "{0}_{1:03}_{2}".format(testcase_func.__name__,
         int(parameterized.to_safe_name(str(param.args[0]))),
