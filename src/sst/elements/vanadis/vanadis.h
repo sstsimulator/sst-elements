@@ -135,6 +135,7 @@ public:
 
     SST_ELI_DOCUMENT_STATISTICS(
         { "cycles",  "Number of cycles the core executed", "cycles", 1 },
+	{ "syscall-cycles", "Number of cycles spent waiting on execution of SYSCALL in OS components", "cycles", 1 },
 	{ "rob_slots_in_use", 	"Number of micro-ops in the ROB each cycle", "instructions", 1 },
 	{ "rob_cleared_entries",  "Number of micro-ops that are cleared during a pipeline clear", "instructions", 1 },
         { "instructions_issued",  "Number of instructions issued",  "instructions", 1 },
@@ -294,6 +295,7 @@ private:
     Statistic<uint64_t>* stat_cycles;
     Statistic<uint64_t>* stat_rob_entries;
     Statistic<uint64_t>* stat_rob_cleared_entries;
+    Statistic<uint64_t>* stat_syscall_cycles;
 
     uint32_t ins_issued_this_cycle;
     uint32_t ins_retired_this_cycle;
