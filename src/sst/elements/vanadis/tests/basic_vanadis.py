@@ -18,6 +18,12 @@ retires_per_cycle = os.getenv("VANADIS_RETIRES_PER_CYCLE", 4)
 issues_per_cycle = os.getenv("VANADIS_ISSUES_PER_CYCLE", 4)
 decodes_per_cycle = os.getenv("VANADIS_DECODES_PER_CYCLE", 4)
 
+integer_arith_cycles = int(os.getenv("VANADIS_INTEGER_ARITH_CYCLES", 2))
+integer_arith_units = int(os.getenv("VANADIS_INTEGER_ARITH_UNITS", 2))
+fp_arith_cycles = int(os.getenv("VANADIS_FP_ARITH_CYCLES", 8))
+fp_arith_units = int(os.getenv("VANADIS_FP_ARITH_UNITS", 2))
+branch_arith_cycles = int(os.getenv("VANADIS_BRANCH_ARITH_CYCLES", 2))
+
 cpu_clock = os.getenv("VANADIS_CPU_CLOCK", "2.3GHz")
 
 vanadis_cpu_type = "vanadis.VanadisCPU"
@@ -54,6 +60,11 @@ v_cpu_0.addParams({
        "verbose" : verbosity,
        "physical_fp_registers" : 168,
        "physical_int_registers" : 180,
+       "integer_arith_cycles" : integer_arith_cycles,
+       "integer_arith_units" : integer_arith_units,
+       "fp_arith_cycles" : fp_arith_cycles,
+       "fp_arith_units" : fp_arith_units,
+       "branch_unit_cycles" : branch_arith_cycles,
        "print_int_reg" : 1,
        "pipeline_trace_file" : pipe_trace_file,
        "reorder_slots" : rob_slots,
