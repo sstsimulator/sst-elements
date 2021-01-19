@@ -690,9 +690,10 @@ int VANADIS_COMPONENT::performRetire( VanadisCircularQueue<VanadisInstruction*>*
 	}
 #endif
 
-	// if empty, nothing to do here
+	// if empty, nothing to do here, return 1 to prevent being called again as nothing we can
+	// do this cycle. This is likely the result of a branch mis-predict
 	if( rob->empty() ) {
-		return 0;
+		return 1;
 	}
 
 	VanadisInstruction* rob_front = rob->peek();
@@ -712,7 +713,6 @@ int VANADIS_COMPONENT::performRetire( VanadisCircularQueue<VanadisInstruction*>*
 	if( rob_front->completedIssue() && rob_front->completedExecution() ) {
 		bool perform_cleanup         = true;
 		bool perform_delay_cleanup   = false;
-//		bool perform_pipelne_clear   = false;
 		uint64_t pipeline_reset_addr = 0;
 
 		if( rob_front->isSpeculated() ) {
@@ -725,9 +725,7 @@ int VANADIS_COMPONENT::performRetire( VanadisCircularQueue<VanadisInstruction*>*
 				output->fatal(CALL_INFO, -1, "Error - instruction is speculated, but not able to perform a cast to a speculated instruction.\n");
 			}
 
-//			if( rob_front->endsMicroOpGroup() ) {
-				stat_branches->addData(1);
-//			}
+			stat_branches->addData(1);
 
 			switch( spec_ins->getDelaySlotType() ) {
 			case VANADIS_SINGLE_DELAY_SLOT:
@@ -736,13 +734,13 @@ int VANADIS_COMPONENT::performRetire( VanadisCircularQueue<VanadisInstruction*>*
 					// is there an instruction behind us in the ROB queue?
 					if( rob->size() >= 2 ) {
 						VanadisInstruction* delay_ins = rob->peekAt(1);
-						
+
 						if( delay_ins->completedExecution() ) {
 							if( delay_ins->trapsError() ) {
 								output->fatal(CALL_INFO, -1, "Instruction (delay-slot) 0x%llx flags an error (instruction-type: %s)\n",
 									delay_ins->getInstructionAddress(), delay_ins->getInstCode() );
 							}
-							
+
 							perform_delay_cleanup = true;
 						} else {
 #ifdef VANADIS_BUILD_DEBUG
@@ -751,6 +749,7 @@ int VANADIS_COMPONENT::performRetire( VanadisCircularQueue<VanadisInstruction*>*
 							if( ! delay_ins->checkFrontOfROB() ) {
 								delay_ins->markFrontOfROB();
 							}
+
 							perform_cleanup = false;
 						}
 					} else {
@@ -763,7 +762,7 @@ int VANADIS_COMPONENT::performRetire( VanadisCircularQueue<VanadisInstruction*>*
 			case VANADIS_NO_DELAY_SLOT:
 				break;
 			}
-			
+
 			// If we are performing a clean up (means we executed and the delays are
 			// processed OK, then we are good to calculate branch-to locations.
 			if( perform_cleanup ) {
@@ -782,34 +781,29 @@ int VANADIS_COMPONENT::performRetire( VanadisCircularQueue<VanadisInstruction*>*
 					spec_ins->getInstructionAddress(), pipeline_reset_addr );
 
 
-			if( (pause_on_retire_address > 0) &&
-				(rob_front->getInstructionAddress() == pause_on_retire_address) ) {
+				if( (pause_on_retire_address > 0) &&
+					(rob_front->getInstructionAddress() == pause_on_retire_address) ) {
 
-				// print the register and pipeline status
-				printStatus((*output));
+					// print the register and pipeline status
+					printStatus((*output));
 
-				output->verbose(CALL_INFO, 0, 0, "ins: 0x%llx / speculated-address: 0x%llx / taken: 0x%llx / reset: 0x%llx / clear-check: %3s / pipe-clear: %3s / delay-cleanup: %3s\n",
-					spec_ins->getInstructionAddress(),
-					spec_ins->getSpeculatedAddress(),
-					spec_ins->getTakenAddress(),
-					pipeline_reset_addr,
-					spec_ins->getSpeculatedAddress() != pipeline_reset_addr ? "yes" : "no",
-					perform_pipeline_clear ? "yes" : "no",
-					perform_delay_cleanup  ? "yes" : "no");
+					output->verbose(CALL_INFO, 0, 0, "ins: 0x%llx / speculated-address: 0x%llx / taken: 0x%llx / reset: 0x%llx / clear-check: %3s / pipe-clear: %3s / delay-cleanup: %3s\n",
+						spec_ins->getInstructionAddress(),
+						spec_ins->getSpeculatedAddress(),
+						spec_ins->getTakenAddress(),
+						pipeline_reset_addr,
+						spec_ins->getSpeculatedAddress() != pipeline_reset_addr ? "yes" : "no",
+						perform_pipeline_clear ? "yes" : "no",
+						perform_delay_cleanup  ? "yes" : "no");
 
-				// stop simulation
-				output->fatal(CALL_INFO, -2, "Retired instruction address 0x%llx, requested terminate on retire this address.\n",
-					pause_on_retire_address);
-			}
-
-						
-				if( perform_pipeline_clear ) {
-//					if( spec_ins->endsMicroOpGroup() ) {
-//					}
+					// stop simulation
+					output->fatal(CALL_INFO, -2, "Retired instruction address 0x%llx, requested terminate on retire this address.\n",
+						pause_on_retire_address);
 				}
+
 			}
 		}
-		
+
 		// is the instruction completed (including anything like delay slots) and can
 		// be cleared from the ROB
 		if( perform_cleanup ) {
@@ -828,10 +822,7 @@ int VANADIS_COMPONENT::performRetire( VanadisCircularQueue<VanadisInstruction*>*
 					issue_isa_tables[rob_front->getHWThread()],
 					retire_isa_tables[rob_front->getHWThread()] );
 
-//				if( rob_front->endsMicroOpGroup() ) {
 				ins_retired_this_cycle++;
-//					stat_ins_retired->addData(1);
-//				}
 
 				if( perform_delay_cleanup ) {
 
@@ -917,18 +908,22 @@ int VANADIS_COMPONENT::performRetire( VanadisCircularQueue<VanadisInstruction*>*
 		} else {
 			if( ! rob_front->checkFrontOfROB() ) {
 				rob_front->markFrontOfROB();
+			} else {
+				// Return 2 because instruction is front of ROB but has not executed and so we cannot make progress
+				// any more this cycle
+				return 2;
 			}
 		}
 	}
-	
+
 	return 0;
 }
 
-bool VANADIS_COMPONENT::mapInstructiontoFunctionalUnit( VanadisInstruction* ins, 
+bool VANADIS_COMPONENT::mapInstructiontoFunctionalUnit( VanadisInstruction* ins,
 	std::vector< VanadisFunctionalUnit* >& functional_units ) {
-	
+
 	bool allocated = false;
-	
+
 	for( VanadisFunctionalUnit* next_fu : functional_units ) {
 		if( next_fu->isInstructionSlotFree() ) {
 			next_fu->setSlotInstruction( ins );
@@ -1129,7 +1124,10 @@ bool VANADIS_COMPONENT::tick(SST::Cycle_t cycle) {
 	// Retire //////////////////////////////////////////////////////////////////////////
 	for( uint32_t i = 0; i < retires_per_cycle; ++i ) {
 		for( uint32_t j = 0; j < rob.size(); ++j ) {
-			performRetire( rob[j], cycle );
+			// Signal from retire calls that we can't make progress is non-zero
+			if( performRetire( rob[j], cycle ) != 0 ) {
+				break;
+			}
 		}
 	}
 
