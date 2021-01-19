@@ -151,7 +151,7 @@ bin_PROGRAMS = sst-vanadis-tracediff
 
 sst_vanadis_tracediff_SOURCES = tools/tracediff/tracediff.cc
 
-vanadisdbg.cc: vanadis.cc
+vanadisdbg.cc: vanadis.cc $(VANADIS_SRC_FILES)
 	$(CXXCPP) -DVANADIS_BUILD_DEBUG $(CXXFLAGS) $(CPPFLAGS) -I./ vanadis.cc > $@
 
 CLEANFILES = vanadisdbg.cc
