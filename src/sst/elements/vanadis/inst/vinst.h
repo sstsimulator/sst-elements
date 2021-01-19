@@ -315,7 +315,6 @@ public:
 	virtual void print( SST::Output* output ) {
 		output->verbose(CALL_INFO, 8, 0, "%s", getInstCode());
 	}
-	virtual bool performDeleteAtFuncUnit() const { return false; }
 
 	// Is the instruction predicted (speculation point).
 	// for normal instructions this is false
