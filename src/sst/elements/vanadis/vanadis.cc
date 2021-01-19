@@ -701,10 +701,10 @@ int VANADIS_COMPONENT::performRetire( VanadisCircularQueue<VanadisInstruction*>*
 
 	// Instruction is flagging error, print out and halt
 	if( rob_front->trapsError() ) {
-		output->verbose(CALL_INFO, 0, 0, "Error has detected in retired instruction. Retired register status:\n");
+		output->verbose(CALL_INFO, 0, 0, "Error has been detected in retired instruction. Retired register status:\n");
 
 		retire_isa_tables[rob_front->getHWThread()]->print(output,
-                                        register_files[rob_front->getHWThread()], print_int_reg, print_fp_reg);
+                                        register_files[rob_front->getHWThread()], print_int_reg, print_fp_reg, 0);
 
 		output->fatal( CALL_INFO, -1, "Instruction 0x%llx flags an error (instruction-type=%s) at cycle %" PRIu64 "\n",
 			rob_front->getInstructionAddress(), rob_front->getInstCode(), cycle );
