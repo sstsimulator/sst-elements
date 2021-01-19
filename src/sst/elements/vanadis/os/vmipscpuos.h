@@ -10,6 +10,8 @@
 #include "os/resp/vosexitresp.h"
 
 #define VANADIS_SYSCALL_READ             4003
+#define VANADIS_SYSCALL_OPEN             4005
+#define VANADIS_SYSCALL_CLOSE            4006
 #define VANADIS_SYSCALL_WRITE		 4004
 #define VANADIS_SYSCALL_ACCESS           4033
 #define VANADIS_SYSCALL_BRK              4045
@@ -79,7 +81,10 @@ public:
 	}
 
 	virtual void handleSysCall( VanadisSysCallInstruction* syscallIns ) {
-		output->verbose(CALL_INFO, 8, 0, "System Call (syscall-ins: 0x%0llx)\n", syscallIns->getInstructionAddress() );
+		const uint16_t call_link_reg = isaTable->getIntPhysReg(31);
+		uint64_t call_link_value = regFile->getIntReg<uint64_t>( call_link_reg );
+		output->verbose(CALL_INFO, 8, 0, "System Call (syscall-ins: 0x%0llx, link-reg: 0x%llx)\n",
+			syscallIns->getInstructionAddress(), call_link_value );
 
 		const uint32_t hw_thr = syscallIns->getHWThread();
 
@@ -121,6 +126,7 @@ public:
 				call_ev = new VanadisSyscallReadEvent( core_id, hw_thr, read_fd, read_buff_ptr, read_count );
 			}
 			break;
+
 		case VANADIS_SYSCALL_ACCESS:
 			{
                                 const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
@@ -134,6 +140,7 @@ public:
 				call_ev = new VanadisSyscallAccessEvent( core_id, hw_thr, path_ptr, access_mode );
 			}
 			break;
+
 		case VANADIS_SYSCALL_BRK:
 			{
 				const uint64_t phys_reg_4 = isaTable->getIntPhysReg(4);
@@ -144,6 +151,7 @@ public:
 				call_ev = new VanadisSyscallBRKEvent( core_id, hw_thr, newBrk, brk_zero_memory );
 			}
 			break;
+
 		case VANADIS_SYSCALL_SET_THREAD_AREA:
 			{
 				const uint64_t phys_reg_4 = isaTable->getIntPhysReg(4);
@@ -159,6 +167,7 @@ public:
 				call_ev = new VanadisSyscallSetThreadAreaEvent( core_id, hw_thr, thread_area_ptr );
 			}
 			break;
+
 		case VANADIS_SYSCALL_RM_INOTIFY:
 			{
 				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to inotify_rm_watch(), by-passing and removing.\n");
@@ -172,6 +181,7 @@ public:
                 		}
 			}
 			break;
+
 		case VANADIS_SYSCALL_UNAME:
 			{
 				const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
@@ -182,6 +192,7 @@ public:
 				call_ev = new VanadisSyscallUnameEvent( core_id, hw_thr, uname_addr );
 			}
 			break;
+
 		case VANADIS_SYSCALL_FSTAT:
 			{
 				const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
@@ -196,6 +207,37 @@ public:
 				call_ev = new VanadisSyscallFstatEvent( core_id, hw_thr, file_handle, fstat_addr );
 			}
 			break;
+
+		case VANADIS_SYSCALL_CLOSE:
+			{
+				const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
+                                uint32_t close_file = regFile->getIntReg<uint32_t>( phys_reg_4 );
+
+				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to close( %" PRIu32 " )\n",
+					close_file);
+
+				call_ev = new VanadisSyscallCloseEvent( core_id, hw_thr, close_file );
+			}
+			break;
+
+		case VANADIS_SYSCALL_OPEN:
+			{
+				const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
+                                uint64_t open_path_ptr = regFile->getIntReg<uint64_t>( phys_reg_4 );
+
+				const uint16_t phys_reg_5 = isaTable->getIntPhysReg(5);
+				uint64_t open_flags = regFile->getIntReg<uint64_t>( phys_reg_5 );
+
+				const uint16_t phys_reg_6 = isaTable->getIntPhysReg(6);
+				uint64_t open_mode = regFile->getIntReg<uint64_t>( phys_reg_6 );
+
+				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to open( 0x%llx, %" PRIu64 ", %" PRIu64 " )\n",
+					open_path_ptr, open_flags, open_mode);
+
+				call_ev = new VanadisSyscallOpenEvent( core_id, hw_thr, open_path_ptr, open_flags, open_mode );
+			}
+			break;
+
 		case VANADIS_SYSCALL_OPENAT:
 			{
 				const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);

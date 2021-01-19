@@ -1,6 +1,6 @@
 
-#ifndef _H_VANADIS_OS_WRITEAT_HANDLER
-#define _H_VANADIS_OS_WRITEAT_HANDLER
+#ifndef _H_VANADIS_OS_OPENAT_HANDLER
+#define _H_VANADIS_OS_OPENAT_HANDLER
 
 #include <cstdint>
 #include <cinttypes>
