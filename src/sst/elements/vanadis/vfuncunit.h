@@ -18,15 +18,11 @@ public:
 		ins(base_ins), cycles_left(cycles) {}
 	~VanadisFunctionalUnitInsRecord() {}
 
-	void markExecuted() {
-		ins->markExecuted();
-	}
-
 	uint16_t getCycles() const {
 		return cycles_left;
 	}
 
-	bool completed() const {
+	bool readyToExecute() const {
 		return (0 == cycles_left);
 	}
 
@@ -68,7 +64,9 @@ public:
 		return fu_type;
 	}
 
-	bool isInstructionSlotFree() const { return slot_inst == nullptr; }
+	bool isInstructionSlotFree() const {
+		return slot_inst == nullptr;
+	}
 
 	void setSlotInstruction( VanadisInstruction* ins ) {
 		slot_inst = ins;
@@ -78,20 +76,20 @@ public:
 		return fu_id;
 	}
 
-	void tick(const uint64_t cycle, SST::Output* output, std::vector<VanadisRegisterFile*>& regFile) {
+	void tick( const uint64_t cycle, SST::Output* output, std::vector<VanadisRegisterFile*>& regFile ) {
 		if( pending_execute.size() > 0 ) {
 			VanadisFunctionalUnitInsRecord* q_front = pending_execute.front();
 
-			if( q_front->completed() ) {
-				VanadisInstruction* inner_ins = q_front->getInstruction();
-				inner_ins->execute(output, regFile[inner_ins->getHWThread()]);
-
-				q_front->markExecuted();
+			if( q_front->readyToExecute() ) {
+				// ready to execute, remove from pending queue
 				pending_execute.pop_front();
 
-				if( inner_ins->performDeleteAtFuncUnit() ) {
-					delete q_front;
-				}
+				// Perform execute
+				VanadisInstruction* inner_ins = q_front->getInstruction();
+				inner_ins->execute( output, regFile[inner_ins->getHWThread()] );
+
+				// Delete the record entry for functional unit
+				delete q_front;
 			}
 
 			for( auto q_itr = pending_execute.begin(); q_itr != pending_execute.end(); q_itr++ ) {
@@ -114,6 +112,8 @@ public:
 			if( (*q_itr)->getHardwareThread() == hw_thr ) {
 				delete (*q_itr);
 				q_itr = pending_execute.erase( q_itr );
+			} else {
+				q_itr++;
 			}
 		}
 
