@@ -39,7 +39,7 @@ def build_ESshmem_test_matrix():
         testnum = testnum + 1
 
         # Get the Hash
-        hash_object = hashlib.md5(test_str)
+        hash_object = hashlib.md5(test_str.encode('utf-8'))
         hash_str = hash_object.hexdigest()
 
         # Find the index to where the sdl file lives and then extract it
