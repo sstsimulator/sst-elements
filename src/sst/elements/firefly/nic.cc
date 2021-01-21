@@ -70,7 +70,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_getHdrVN = params.find<int>("getHdrVN",0);
     m_getRespLargeVN = params.find<int>("getRespLargeVN", 0 );
     m_getRespSmallVN = params.find<int>("getRespSmallVN", 0 );
-    m_getRespSize = params.find<size_t>("getRespSize", 0 );
+    m_getRespSize = params.find<size_t>("getRespSize", 1500 );
 
     m_shmemAckVN = params.find<int>( "shmemAckVN", 0 );
 
@@ -241,9 +241,9 @@ Nic::Nic(ComponentId_t id, Params &params) :
 			static_cast<SimpleMemoryModel*>(m_memoryModel)->setDetailedInterface( m_detailedInterface );
 		}
     }
-    if ( params.find<int>( "useTrivialMemoryModel", 0 ) ) {
+    if ( params.find<bool>( "useTrivialMemoryModel", false ) ) {
 		if ( m_memoryModel ) {
-			m_dbg.fatal(CALL_INFO,0,"can't used TrivialMemoryModel, memoryModel already configured\n" );
+			m_dbg.fatal(CALL_INFO,0,"can't use TrivialMemoryModel, memoryModel already configured\n" );
 		}
         Params smmParams = params.find_prefix_params( "simpleMemoryModel." );
     	// m_memoryModel = new TrivialMemoryModel( this, smmParams );

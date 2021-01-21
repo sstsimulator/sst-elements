@@ -316,6 +316,7 @@ public:
 
 							memInterface->sendRequest( load_req );
 							stat_load_issued->addData(1);
+							stat_data_bytes_read->addData(load_width);
 
 							next_item->setRequestID( load_req->id );
 							next_item->setOperationAddress( load_addr );
@@ -408,6 +409,7 @@ public:
 						memInterface->sendRequest( store_req );
 
 						stat_store_issued->addData(1);
+						stat_data_bytes_written->addData(store_width);
 
 						if( fault_on_memory_not_written ) {
 							for( uint64_t i = store_req->addr; i < (store_req->addr + store_req->size); ++i ) {

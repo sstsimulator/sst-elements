@@ -545,6 +545,7 @@ public:
 							} else {
 								output->verbose(CALL_INFO, 16, 0, "-----> Branch delay slot also misses in pre-decode cache, need to request it.\n");
 								ins_loader->requestLoadAt( output, ip + 4, 4 );
+								stat_ins_bytes_loaded->addData(4);
 								stat_predecode_miss->addData(1);
 							}
 						}
@@ -668,6 +669,7 @@ public:
 					output->verbose(CALL_INFO, 16, 0, "---> uop bundle and pre-decoded bytes are not found (ip=%p), requesting icache read (line-width=%" PRIu64 ")\n",
 						(void*) ip, ins_loader->getCacheLineWidth() );
 					ins_loader->requestLoadAt( output, ip, 4 );
+					stat_ins_bytes_loaded->addData(4);
 					stat_predecode_miss->addData(1);
 					break;
 				}
