@@ -103,12 +103,14 @@ velf/velfinfo.h \
 os/callev/voscallaccessev.h \
 os/callev/voscallall.h \
 os/callev/voscallbrk.h \
+os/callev/voscallclose.h \
 os/callev/voscallexitgrp.h \
 os/callev/voscallfstat.h \
 os/callev/voscallgettime64.h \
 os/callev/voscallioctl.h \
 os/callev/voscallmmap.h \
 os/callev/voscallopenat.h \
+os/callev/voscallopen.h \
 os/callev/voscallread.h \
 os/callev/voscallreadlink.h \
 os/callev/voscallsta.h \
@@ -127,6 +129,7 @@ os/node/vnodeosfstath.h \
 os/node/vnodeoshstate.h \
 os/node/vnodeosopenath.h \
 os/node/vnodeosreadlink.h \
+os/node/vnodeosstattype.h \
 os/node/vnodeosunameh.h \
 os/node/vnodeoswriteh.h \
 os/node/vnodeoswritevh.h \

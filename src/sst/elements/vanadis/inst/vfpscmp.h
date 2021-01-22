@@ -137,6 +137,7 @@ public:
 	}
 
 	virtual void execute( SST::Output* output, VanadisRegisterFile* regFile ) {
+#ifdef VANADIS_BUILD_DEBUG
 		char* int_register_buffer = new char[256];
 		char* fp_register_buffer = new char[256];
 
@@ -150,7 +151,7 @@ public:
 
 		delete[] int_register_buffer;
 		delete[] fp_register_buffer;
-
+#endif
 		bool compare_result = false;
 		bool byte8_type     = false;
 

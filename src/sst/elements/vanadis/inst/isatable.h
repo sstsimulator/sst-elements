@@ -136,19 +136,23 @@ public:
 	}
 
 	void print(SST::Output* output, VanadisRegisterFile* regFile, bool print_int, bool print_fp) {
-		char* reg_bin_str = new char[65];
+		print(output, regFile, print_int, print_fp, 16);
+	}
+
+	void print(SST::Output* output, VanadisRegisterFile* regFile, bool print_int, bool print_fp, uint32_t output_v ) {
+		//char* reg_bin_str = new char[65];
 
 		if( print_int ) {
-			output->verbose(CALL_INFO, 16, 0, "Integer Registers (Count=%" PRIu16 ")\n", count_int_reg);
+			output->verbose(CALL_INFO, output_v, 0, "Integer Registers (Count=%" PRIu16 ")\n", count_int_reg);
 			for( uint16_t i = 0; i < count_int_reg; ++i ) {
 				if( nullptr == regFile ) {
-					output->verbose(CALL_INFO, 16, 0, "| isa:%5" PRIu16 " -> phys:%5" PRIu16 " | r:%6" PRIu32 " | w:%6" PRIu32 " |\n",
+					output->verbose(CALL_INFO, output_v, 0, "| isa:%5" PRIu16 " -> phys:%5" PRIu16 " | r:%6" PRIu32 " | w:%6" PRIu32 " |\n",
 						i, int_reg_ptr[i], int_reg_pending_read[i], int_reg_pending_write[i]);
 				} else {
 					int64_t* val = (int64_t*) regFile->getIntReg( i );
-					toBinaryString(reg_bin_str, *val);
+					//toBinaryString(reg_bin_str, *val);
 
-					output->verbose(CALL_INFO, 16, 0, "| isa:%5" PRIu16 " -> phys:%5" PRIu16 " | r:%5" PRIu32 " | w:%5" PRIu32 " | v: 0x%016llx | v: %" PRIu64 " / %" PRId64 "\n",
+					output->verbose(CALL_INFO, output_v, 0, "| isa:%5" PRIu16 " -> phys:%5" PRIu16 " | r:%5" PRIu32 " | w:%5" PRIu32 " | v: 0x%016llx | v: %" PRIu64 " / %" PRId64 "\n",
 						i, int_reg_ptr[i], int_reg_pending_read[i], int_reg_pending_write[i],
 						regFile->getIntReg<int64_t>( int_reg_ptr[i] ),
 						regFile->getIntReg<uint64_t>( int_reg_ptr[i] ),
@@ -159,18 +163,18 @@ public:
 
 		if( print_fp ) {
 
-		output->verbose(CALL_INFO, 16, 0, "Floating-Point Registers (Count=%" PRIu16 ")\n", count_fp_reg);
+		output->verbose(CALL_INFO, output_v, 0, "Floating-Point Registers (Count=%" PRIu16 ")\n", count_fp_reg);
 			for( uint16_t i = 0; i < count_fp_reg; ++i ) {
 				if( nullptr == regFile ) {
-					output->verbose(CALL_INFO, 16, 0, "| isa:%5" PRIu16 " -> phys:%5" PRIu16 " | r:%5" PRIu32 " | w:%5" PRIu32 " |\n",
+					output->verbose(CALL_INFO, output_v, 0, "| isa:%5" PRIu16 " -> phys:%5" PRIu16 " | r:%5" PRIu32 " | w:%5" PRIu32 " |\n",
 						i, fp_reg_ptr[i], fp_reg_pending_read[i], fp_reg_pending_write[i]);
 				} else {
 					if( VANADIS_REGISTER_MODE_FP32 ==  decoder_opts->getFPRegisterMode() ) {
-						output->verbose(CALL_INFO, 16, 0, "| isa:%5" PRIu16 " -> phys:%5" PRIu16 " | r:%5" PRIu32 " | w:%5" PRIu32 " | v: 0x%016llx |\n",
+						output->verbose(CALL_INFO, output_v, 0, "| isa:%5" PRIu16 " -> phys:%5" PRIu16 " | r:%5" PRIu32 " | w:%5" PRIu32 " | v: 0x%016llx |\n",
 							i, fp_reg_ptr[i], fp_reg_pending_read[i], fp_reg_pending_write[i],
 							(uint64_t) regFile->getFPReg<uint32_t>( fp_reg_ptr[i] ) );
 					} else {
-						output->verbose(CALL_INFO, 16, 0, "| isa:%5" PRIu16 " -> phys:%5" PRIu16 " | r:%5" PRIu32 " | w:%5" PRIu32 " | v: 0x%016llx |\n",
+						output->verbose(CALL_INFO, output_v, 0, "| isa:%5" PRIu16 " -> phys:%5" PRIu16 " | r:%5" PRIu32 " | w:%5" PRIu32 " | v: 0x%016llx |\n",
 							i, fp_reg_ptr[i], fp_reg_pending_read[i], fp_reg_pending_write[i],
 							regFile->getFPReg<uint64_t>( fp_reg_ptr[i] ) );
 					}
@@ -178,7 +182,7 @@ public:
 			}
 		}
 
-		delete[] reg_bin_str;
+		//delete[] reg_bin_str;
 	}
 
 	void print(SST::Output* output, bool print_int, bool print_fp ) {

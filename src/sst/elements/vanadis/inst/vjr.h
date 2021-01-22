@@ -33,9 +33,10 @@ public:
 	}
 
 	virtual void execute( SST::Output* output, VanadisRegisterFile* regFile ) {
+#ifdef VANADIS_BUILD_DEBUG
 		output->verbose(CALL_INFO, 16, 0, "Execute: (addr=0x%0llx) JR   isa-in: %" PRIu16 " / phys-in: %" PRIu16 "\n",
 			getInstructionAddress(), isa_int_regs_in[0], phys_int_regs_in[0] );
-
+#endif
 		takenAddress = regFile->getIntReg<uint64_t>( phys_int_regs_in[0] );
 
 		if( (takenAddress & 0x3) != 0 ) {

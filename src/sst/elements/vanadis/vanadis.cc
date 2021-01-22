@@ -411,6 +411,8 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
 	stat_rob_entries   = registerStatistic<uint64_t>( "rob_slots_in_use", "1" );
 	stat_rob_cleared_entries = registerStatistic<uint64_t>( "rob_cleared_entries", "1" );
 	stat_syscall_cycles = registerStatistic<uint64_t>( "syscall-cycles", "1" );
+	stat_int_phys_regs_in_use = registerStatistic<uint64_t>( "phys_int_reg_in_use", "1" );
+	stat_fp_phys_regs_in_use = registerStatistic<uint64_t>( "phys_fp_reg_in_use", "1" );
 
 	registerAsPrimaryComponent();
     	primaryComponentDoNotEndSim();
@@ -696,10 +698,10 @@ int VANADIS_COMPONENT::performRetire( VanadisCircularQueue<VanadisInstruction*>*
 
 	// Instruction is flagging error, print out and halt
 	if( rob_front->trapsError() ) {
-		output->verbose(CALL_INFO, 0, 0, "Error has detected in retired instruction. Retired register status:\n");
+		output->verbose(CALL_INFO, 0, 0, "Error has been detected in retired instruction. Retired register status:\n");
 
 		retire_isa_tables[rob_front->getHWThread()]->print(output,
-                                        register_files[rob_front->getHWThread()], print_int_reg, print_fp_reg);
+                                        register_files[rob_front->getHWThread()], print_int_reg, print_fp_reg, 0);
 
 		output->fatal( CALL_INFO, -1, "Instruction 0x%llx flags an error (instruction-type=%s) at cycle %" PRIu64 "\n",
 			rob_front->getInstructionAddress(), rob_front->getInstCode(), cycle );
@@ -1154,6 +1156,20 @@ bool VANADIS_COMPONENT::tick(SST::Cycle_t cycle) {
 #endif
 
 	current_cycle++;
+
+	uint64_t used_phys_int = 0;
+	uint64_t used_phys_fp  = 0;
+
+	for( uint16_t i = 0; i < hw_threads; ++i ) {
+		VanadisRegisterStack* thr_reg_stack = int_register_stacks[i];
+		used_phys_int += ( thr_reg_stack->capacity() - thr_reg_stack->size() );
+
+		thr_reg_stack = fp_register_stacks[i];
+		used_phys_fp += ( thr_reg_stack->capacity() - thr_reg_stack->size() );
+	}
+
+	stat_int_phys_regs_in_use->addData( used_phys_int );
+	stat_fp_phys_regs_in_use->addData( used_phys_fp );
 
 	if( current_cycle >= max_cycle ) {
 		output->verbose(CALL_INFO, 1, 0, "Reached maximum cycle %" PRIu64 ". Core stops processing.\n", current_cycle );

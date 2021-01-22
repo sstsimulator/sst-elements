@@ -150,7 +150,9 @@ public:
         { "branch_mispredicts",   "Number of retired branches which were mis-predicted", "instructions", 1 },
         { "branches",             "Number of retired branches", "instructions", 1     },
         { "loads_issued", 		  "Number of load instructions issued to the LSQ",  "instructions", 1 },
-        { "stores_issued",        "Number of store instructions issued to the LSQ", "instructions", 1 }
+        { "stores_issued",        "Number of store instructions issued to the LSQ", "instructions", 1 },
+	{ "phys_int_reg_in_use", "Number of physical integer registers that are in use each cycle", "registers", 1 },
+	{ "phys_fp_reg_in_use", "Number of physical floating point registers than are in use each cycle", "registers", 1 }
     )
 
     SST_ELI_DOCUMENT_PORTS(
@@ -303,6 +305,8 @@ private:
     Statistic<uint64_t>* stat_rob_entries;
     Statistic<uint64_t>* stat_rob_cleared_entries;
     Statistic<uint64_t>* stat_syscall_cycles;
+    Statistic<uint64_t>* stat_int_phys_regs_in_use;
+    Statistic<uint64_t>* stat_fp_phys_regs_in_use;
 
     uint32_t ins_issued_this_cycle;
     uint32_t ins_retired_this_cycle;

@@ -49,11 +49,12 @@ public:
         }
 
 	virtual void execute( SST::Output* output, VanadisRegisterFile* regFile ) {
+#ifdef VANADIS_BUILD_DEBUG
 		output->verbose(CALL_INFO, 16, 0, "Execute: (addr=%p) MULSPLIT phys: out-lo: %" PRIu16 " out-hi: %" PRIu16 " in=%" PRIu16 ", %" PRIu16 ", isa: out-lo: %" PRIu16 " out-hi: %" PRIu16 " / in=%" PRIu16 ", %" PRIu16 "\n",
 			(void*) getInstructionAddress(), phys_int_regs_out[0], phys_int_regs_out[1],
 			phys_int_regs_in[0], phys_int_regs_in[1],
 			isa_int_regs_out[0], isa_int_regs_out[1], isa_int_regs_in[0], isa_int_regs_in[1] );
-
+#endif
 		if( performSigned ) {
 			switch( reg_format ) {
 			case VANADIS_FORMAT_INT64:
