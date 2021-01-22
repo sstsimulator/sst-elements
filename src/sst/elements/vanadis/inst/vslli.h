@@ -46,11 +46,12 @@ public:
         }
 
 	virtual void execute( SST::Output* output, VanadisRegisterFile* regFile ) {
+#ifdef VANADIS_BUILD_DEBUG
 		output->verbose(CALL_INFO, 16, 0, "Execute: (addr=%p) SLLI phys: out=%" PRIu16 " in=%" PRIu16 " imm=%" PRId64 ", isa: out=%" PRIu16 " / in=%" PRIu16 "\n",
 			(void*) getInstructionAddress(), phys_int_regs_out[0],
 			phys_int_regs_in[0], imm_value,
 			isa_int_regs_out[0], isa_int_regs_in[0] );
-
+#endif
 		assert( imm_value > 0 );
 
 		switch( reg_format ) {

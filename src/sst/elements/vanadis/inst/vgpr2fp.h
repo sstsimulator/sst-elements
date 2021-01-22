@@ -64,11 +64,12 @@ public:
         }
 
 	virtual void execute( SST::Output* output, VanadisRegisterFile* regFile ) {
+#ifdef VANADIS_BUILD_DEBUG
 		output->verbose(CALL_INFO, 16, 0, "Execute (addr=0x%llx) %s fp-dest isa: %" PRIu16 " phys: %" PRIu16 " <- int-src: isa: %" PRIu16 " phys: %" PRIu16 "\n",
 			getInstructionAddress(), getInstCode(),
 			isa_fp_regs_out[0], phys_fp_regs_out[0],
 			isa_int_regs_in[0], phys_int_regs_in[0] );
-
+#endif
 		switch( move_width ) {
 		case VANADIS_FORMAT_INT32:
 		case VANADIS_FORMAT_FP32:

@@ -41,9 +41,10 @@ public:
         }
 
 	virtual void execute( SST::Output* output, VanadisRegisterFile* regFile ) {
+#ifdef VANADIS_BUILD_DEBUG
 		output->verbose(CALL_INFO, 16, 0, "Execute: (addr=0x%0llx) SETREG phys: out=%" PRIu16 " imm=%" PRId64 ", isa: out=%" PRIu16 "\n",
 			getInstructionAddress(), phys_int_regs_out[0], imm_value, isa_int_regs_out[0] );
-
+#endif
 		switch( reg_format ) {
 		case VANADIS_FORMAT_INT64:
 			{
@@ -61,10 +62,10 @@ public:
 			}
 			break;
 		}
-
+#ifdef VANADIS_BUILD_DEBUG
 		output->verbose(CALL_INFO, 16, 0, "Result-reg %" PRIu16 ": %" PRId64 "\n",
 			phys_int_regs_out[0], imm_value);
-
+#endif
 		markExecuted();
 	}
 
