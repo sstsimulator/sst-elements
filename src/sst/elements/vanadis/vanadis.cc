@@ -13,12 +13,6 @@
 
 using namespace SST::Vanadis;
 
-#ifdef VANADIS_BUILD_DEBUG
-#define VANADIS_COMPONENT VanadisDebugComponent
-#else
-#define VANADIS_COMPONENT VanadisComponent
-#endif
-
 VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params) :
 	Component(id),
 	current_cycle(0) {
@@ -57,7 +51,8 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
 
 	std::string clock_rate = params.find<std::string>("clock", "1GHz");
 	output->verbose(CALL_INFO, 2, 0, "Registering clock at %s.\n", clock_rate.c_str());
-	cpuClockTC = registerClock( clock_rate, new Clock::Handler<VANADIS_COMPONENT>(this, &VANADIS_COMPONENT::tick) );
+        cpuClockHandler = new Clock::Handler<VANADIS_COMPONENT>(this, &VANADIS_COMPONENT::tick);
+	cpuClockTC = registerClock( clock_rate, cpuClockHandler );
 
 	const uint32_t rob_count = params.find<uint32_t>("reorder_slots", 64);
 	dCacheLineWidth = params.find<uint64_t>("dcache_line_width", 64);
@@ -893,7 +888,7 @@ int VANADIS_COMPONENT::performRetire( VanadisCircularQueue<VanadisInstruction*>*
 
 #ifdef VANADIS_BUILD_DEBUG
 					output->verbose(CALL_INFO, 8, 0, "[syscall] -> calling OS handler in decode engine (ins-addr: 0x%0llx)...\n",
-			the_syscall_ins->getInstructionAddress());
+						the_syscall_ins->getInstructionAddress());
 #endif
 					thread_decoders[ rob_front->getHWThread() ]->getOSHandler()->handleSysCall( the_syscall_ins );
 
@@ -904,6 +899,8 @@ int VANADIS_COMPONENT::performRetire( VanadisCircularQueue<VanadisInstruction*>*
 				// We spent this cycle waiting on an issued SYSCALL, it has not resolved at the emulated OS component
 				// yet so we have to wait, potentiallty for a lot longer
 				stat_syscall_cycles->addData(1);
+
+				return INT_MAX;
 			}
 		} else {
 			if( ! rob_front->checkFrontOfROB() ) {
@@ -1121,12 +1118,24 @@ bool VANADIS_COMPONENT::tick(SST::Cycle_t cycle) {
 #endif
 	performExecute( cycle );
 
+	bool tick_return = false;
+
 	// Retire //////////////////////////////////////////////////////////////////////////
 	for( uint32_t i = 0; i < retires_per_cycle; ++i ) {
 		for( uint32_t j = 0; j < rob.size(); ++j ) {
-			// Signal from retire calls that we can't make progress is non-zero
-			if( performRetire( rob[j], cycle ) != 0 ) {
-				break;
+			const int retire_rc = performRetire( rob[j], cycle );
+
+			if( retire_rc == INT_MAX ) {
+				// we will return true and tell the handler not to clock us until re-register
+				tick_return = true;
+#ifdef VANADIS_BUILD_DEBUG
+				output->verbose(CALL_INFO, 8, 0, "--> declocking core, result from retire is SYSCALL pending front of ROB\n");
+#endif
+			} else {
+				// Signal from retire calls that we can't make progress is non-zero
+				if( retire_rc != 0 ) {
+					break;
+				}
 			}
 		}
 	}
@@ -1151,7 +1160,7 @@ bool VANADIS_COMPONENT::tick(SST::Cycle_t cycle) {
 		primaryComponentOKToEndSim();
 		return true;
 	} else{
-		return false;
+		return tick_return;
 	}
 }
 
@@ -1863,4 +1872,7 @@ void VANADIS_COMPONENT::syscallReturnCallback( uint32_t thr ) {
 
 	// Set back to false ready for the next SYSCALL
 	handlingSysCall = false;
+
+	// re-register the CPU clock, it will fire on the next cycle
+	reregisterClock( cpuClockTC, cpuClockHandler );
 }

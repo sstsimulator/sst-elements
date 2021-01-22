@@ -41,6 +41,12 @@
 namespace SST {
 namespace Vanadis {
 
+#ifdef VANADIS_BUILD_DEBUG
+#define VANADIS_COMPONENT VanadisDebugComponent
+#else
+#define VANADIS_COMPONENT VanadisComponent
+#endif
+
 class VanadisInsCacheLoadRecord {
 public:
 	VanadisInsCacheLoadRecord(
@@ -280,6 +286,7 @@ private:
     uint64_t iCacheLineWidth;
 
     TimeConverter* cpuClockTC;
+    Clock::Handler<VANADIS_COMPONENT>* cpuClockHandler;
 
     FILE* pipelineTrace;
     VanadisELFInfo* binary_elf_info;
