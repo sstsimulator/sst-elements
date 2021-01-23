@@ -30,6 +30,8 @@ public:
 	)
 
 	SST_ELI_DOCUMENT_STATISTICS(
+		{ "bytes_read",         "Count all the bytes read for data operations", "bytes", 1 },
+		{ "bytes_stored",	"Count all the bytes written for data operations", "bytes", 1 },
 		{ "laods_issued",	"Count the number of loads issued", "operations", 1 },
 		{ "stores_issued",      "Count the number of stores issued", "operations", 1 }
 	)
@@ -46,6 +48,8 @@ public:
 
 		stat_load_issued  = registerStatistic<uint64_t>( "laods_issued", "1" );
 		stat_store_issued = registerStatistic<uint64_t>( "stores_issued", "1" );
+		stat_data_bytes_read = registerStatistic<uint64_t>( "bytes_read", "1" );
+		stat_data_bytes_written = registerStatistic<uint64_t>( "bytes_stored", "1" );
 	}
 
 	virtual ~VanadisLoadStoreQueue() {
@@ -85,6 +89,8 @@ protected:
 
 	Statistic<uint64_t>* stat_load_issued;
 	Statistic<uint64_t>* stat_store_issued;
+	Statistic<uint64_t>* stat_data_bytes_read;
+	Statistic<uint64_t>* stat_data_bytes_written;
 
 };
 

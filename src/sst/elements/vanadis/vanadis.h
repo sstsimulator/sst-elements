@@ -122,7 +122,7 @@ public:
 
     SST_ELI_DOCUMENT_STATISTICS(
         { "cycles",  "Number of cycles the core executed", "cycles", 1 },
-	{ "rob_entries", 	"Number of micro-ops in the ROB each cycle", "instructions", 1 },
+	{ "rob_slots_in_use", 	"Number of micro-ops in the ROB each cycle", "instructions", 1 },
 	{ "rob_cleared_entries",  "Number of micro-ops that are cleared during a pipeline clear", "instructions", 1 },
         { "instructions_issued",  "Number of instructions issued",  "instructions", 1 },
         { "instructions_retired", "Number of instructions retired", "instructions", 1 },

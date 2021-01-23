@@ -27,14 +27,16 @@ public:
 
 	SST_ELI_DOCUMENT_STATISTICS(
 		{ "branch_cache_hit",		"Counts the number of times a speculated address is found in the branch cache", "hits", 1 },
-		{ "branch_cache_miss",	"Counts the number of times a speculated address is not found in the branch cache", "misses", 1 }
+		{ "branch_cache_miss",		"Counts the number of times a speculated address is not found in the branch cache", "misses", 1 },
+		{ "branch_cache_castout",	"Counts the number of entries that are thrown out because of capacity limits", "entries", 1 }
 	)
 
 	VanadisBasicBranchUnit( ComponentId_t id, Params& params ) : VanadisBranchUnit(id, params) {
 		max_entries = params.find<uint32_t>("branch_entries", 64);
 
-		stat_branch_hits   = registerStatistic<uint64_t>("branch_cache_hit",  "1");
-		stat_branch_misses = registerStatistic<uint64_t>("branch_cache_miss", "1");
+		stat_branch_hits   = registerStatistic<uint64_t>("branch_cache_hit",  		"1");
+		stat_branch_misses = registerStatistic<uint64_t>("branch_cache_miss", 		"1");
+		stat_branch_cache_castout = registerStatistic<uint64_t>("branch_cache_castout", "1");
 	}
 
 	virtual ~VanadisBasicBranchUnit() {
@@ -48,6 +50,7 @@ public:
                         if( lru_keeper.size() >= max_entries ) {
                                 const uint64_t lru_victim = lru_expire();
                                 predict.erase( predict.find( lru_victim ) );
+				stat_branch_cache_castout->addData(1);
                         }
 
                         lru_keeper.push_front( ins_addr );
@@ -102,9 +105,9 @@ protected:
         std::list<uint64_t> lru_keeper;
         std::unordered_map<uint64_t, uint64_t> predict;
 
+	Statistic<uint64_t>* stat_branch_cache_castout;
 	Statistic<uint64_t>* stat_branch_hits;
 	Statistic<uint64_t>* stat_branch_misses;
-
 };
 
 }
