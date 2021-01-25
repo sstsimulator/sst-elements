@@ -24,15 +24,18 @@ fp_arith_cycles = int(os.getenv("VANADIS_FP_ARITH_CYCLES", 8))
 fp_arith_units = int(os.getenv("VANADIS_FP_ARITH_UNITS", 2))
 branch_arith_cycles = int(os.getenv("VANADIS_BRANCH_ARITH_CYCLES", 2))
 
+auto_clock_sys = os.getenv("VANADIS_AUTO_CLOCK_SYSCALLS", "no")
+
 cpu_clock = os.getenv("VANADIS_CPU_CLOCK", "2.3GHz")
 
-vanadis_cpu_type = "vanadis.VanadisCPU"
+vanadis_cpu_type = "vanadisdbg.VanadisCPU"
 
-if (verbosity > 0):
-	print "Verbosity (" + str(verbosity) + ") is non-zero, using debug version of Vanadis."
-	vanadis_cpu_type = "vanadisdbg.VanadisCPU"
+#if (verbosity > 0):
+#	print "Verbosity (" + str(verbosity) + ") is non-zero, using debug version of Vanadis."
+#	vanadis_cpu_type = "vanadisdbg.VanadisCPU"
 
 print "Verbosity: " + str(verbosity) + " -> loading Vanadis CPU type: " + vanadis_cpu_type
+print "Auto-clock syscalls: " + str(auto_clock_sys)
 
 v_cpu_0 = sst.Component("v0", vanadis_cpu_type)
 v_cpu_0.addParams({
@@ -71,6 +74,7 @@ v_cpu_0.addParams({
        "decodes_per_cycle" : decodes_per_cycle,
        "issues_per_cycle" :  issues_per_cycle,
        "retires_per_cycle" : retires_per_cycle,
+       "auto_clock_syscall" : auto_clock_sys,
        "pause_when_retire_address" : os.getenv("VANADIS_HALT_AT_ADDRESS", 0)
 #       "reorder_slots" : 32,
 #       "decodes_per_cycle" : 2,
