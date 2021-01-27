@@ -127,11 +127,12 @@ build_sweep_test_matrix()
 
 def gen_custom_name(testcase_func, param_num, param):
 # Full TestCaseName
-    testcasename = "{0}_{1}".format(testcase_func.__name__,
-        parameterized.to_safe_name("_".join(str(x) for x in param.args)))
-# Abbreviated TestCaseName
 #    testcasename = "{0}_{1}".format(testcase_func.__name__,
-#        parameterized.to_safe_name(str(param.args[0])))
+#        parameterized.to_safe_name("_".join(str(x) for x in param.args)))
+# Abbreviated TestCaseName
+    testcasename = "{0}_{1:03}_{2}".format(testcase_func.__name__,
+        int(parameterized.to_safe_name(str(param.args[0]))),
+        parameterized.to_safe_name(str(param.args[1])))
     return testcasename
 
 ################################################################################
@@ -190,7 +191,7 @@ class testcase_EmberSweep(SSTTestCase):
         self.emberelement_testdir = "{0}/../test/".format(test_path)
 
         # Set the various file paths
-        testDataFileName="{0}".format("testEemberSweep_{0}".format(index))
+        testDataFileName="{0}".format("testEmberSweep_{0}".format(index))
 
         reffile = "{0}/refFiles/test_EmberSweep.out".format(test_path)
         outfile = "{0}/{1}.out".format(outdir, testDataFileName)
@@ -230,7 +231,7 @@ class testcase_EmberSweep(SSTTestCase):
                     reffoundline = line
 
         reftestresult = reffoundline != ""
-        self.assertTrue(reftestresult, "Ember Sweep Test {0} - Cannot find string \"{1}\" in reference file {2}".format(index, grepstr, outfile))
+        self.assertTrue(reftestresult, "Ember Sweep Test {0} - Cannot find string \"{1}\" in reference file {2}".format(index, grepstr, reffile))
 
         log_debug("Ember Sweep Test {0} - PASSED\n--------".format(index))
 

@@ -1,0 +1,126 @@
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=5 --motifAPI=HadesSHMEM --cmdLine=\"ShmemBarrier iterations=99\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=4x4x4 --motifAPI=HadesSHMEM --cmdLine=\"ShmemBarrier iterations=99\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=5 --motifAPI=HadesSHMEM --cmdLine=\"ShmemBarrierAll iterations=77\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=4x4x4 --motifAPI=HadesSHMEM --cmdLine=\"ShmemBarrierAll iterations=77\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=5 --motifAPI=HadesSHMEM --cmdLine=\"ShmemAlltoall32\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=4x4x4 --motifAPI=HadesSHMEM --cmdLine=\"ShmemAlltoall32\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=4x4x4 --motifAPI=HadesSHMEM --cmdLine=\"ShmemAlltoall32 nelems=99\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=5 --motifAPI=HadesSHMEM --cmdLine=\"ShmemAlltoall64\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=4x4x4 --motifAPI=HadesSHMEM --cmdLine=\"ShmemAlltoall64\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=4x4x4 --motifAPI=HadesSHMEM --cmdLine=\"ShmemAlltoall64 nelems=99\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=10 --motifAPI=HadesSHMEM --cmdLine=\"ShmemAlltoall32 printResults=0 logPE_stride=2 PE_start=1 nelems=2\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=5 --motifAPI=HadesSHMEM --cmdLine=\"ShmemAlltoalls32\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=4x4x4 --motifAPI=HadesSHMEM --cmdLine=\"ShmemAlltoalls32\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=4x4x4 --motifAPI=HadesSHMEM --cmdLine=\"ShmemAlltoalls32 nelems=99 \"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=4x4x4 --motifAPI=HadesSHMEM --cmdLine=\"ShmemAlltoalls32 nelems=99 dst=2 sst=2\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=4x4x4 --motifAPI=HadesSHMEM --cmdLine=\"ShmemAlltoalls32 nelems=99 dst=4 sst=2\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=4x4x4 --motifAPI=HadesSHMEM --cmdLine=\"ShmemAlltoalls32 nelems=9 dst=2 sst=6\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=5 --motifAPI=HadesSHMEM --cmdLine=\"ShmemAlltoalls64\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=4x4x4 --motifAPI=HadesSHMEM --cmdLine=\"ShmemAlltoalls64\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=4x4x4 --motifAPI=HadesSHMEM --cmdLine=\"ShmemAlltoalls64 nelems=99 \"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=4x4x4 --motifAPI=HadesSHMEM --cmdLine=\"ShmemAlltoalls64 nelems=99 dst=2 sst=2\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=4x4x4 --motifAPI=HadesSHMEM --cmdLine=\"ShmemAlltoalls64 nelems=99 dst=4 sst=2\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=4x4x4 --motifAPI=HadesSHMEM --cmdLine=\"ShmemAlltoalls64 nelems=9 dst=2 sst=6\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=5 --motifAPI=HadesSHMEM --cmdLine=\"ShmemBroadcast64 root=4 nelems=5\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=4x4x4 --motifAPI=HadesSHMEM --cmdLine=\"ShmemBroadcast64 root=4 nelems=5\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=5 --motifAPI=HadesSHMEM --cmdLine=\"ShmemBroadcast32 root=4 nelems=5\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=4x4x4 --motifAPI=HadesSHMEM --cmdLine=\"ShmemBroadcast32 root=4 nelems=5\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=5 --motifAPI=HadesSHMEM --cmdLine=\"ShmemCollect32\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=4x4x4 --motifAPI=HadesSHMEM --cmdLine=\"ShmemCollect32\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=4x4x4 --motifAPI=HadesSHMEM --cmdLine=\"ShmemCollect32 nelems=45\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=5 --motifAPI=HadesSHMEM --cmdLine=\"ShmemCollect64\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=4x4x4 --motifAPI=HadesSHMEM --cmdLine=\"ShmemCollect64\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=4x4x4 --motifAPI=HadesSHMEM --cmdLine=\"ShmemCollect64 nelems=45\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=5 --motifAPI=HadesSHMEM --cmdLine=\"ShmemFcollect32\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=4x4x4 --motifAPI=HadesSHMEM --cmdLine=\"ShmemFcollect32\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=4x4x4 --motifAPI=HadesSHMEM --cmdLine=\"ShmemFcollect32 nelems=45\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=5 --motifAPI=HadesSHMEM --cmdLine=\"ShmemFcollect64\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=4x4x4 --motifAPI=HadesSHMEM --cmdLine=\"ShmemFcollect64\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=4x4x4 --motifAPI=HadesSHMEM --cmdLine=\"ShmemFcollect64 nelems=45\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=2 --motifAPI=HadesSHMEM --cmdLine=\"ShmemCswapInt\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=2 --motifAPI=HadesSHMEM --cmdLine=\"ShmemCswapLong\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=2 --motifAPI=HadesSHMEM --cmdLine=\"ShmemCswapFloat\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=2 --motifAPI=HadesSHMEM --cmdLine=\"ShmemCswapDouble\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=2 --motifAPI=HadesSHMEM --cmdLine=\"ShmemFaddInt\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=2 --motifAPI=HadesSHMEM --cmdLine=\"ShmemFaddLong\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=2 --motifAPI=HadesSHMEM --cmdLine=\"ShmemFaddFloat\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=2 --motifAPI=HadesSHMEM --cmdLine=\"ShmemFaddDouble\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=2 --motifAPI=HadesSHMEM --cmdLine=\"ShmemGetInt nelems=10\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=2 --motifAPI=HadesSHMEM --cmdLine=\"ShmemGetLong nelems=14\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=2 --motifAPI=HadesSHMEM --cmdLine=\"ShmemGetFloat nelems=1000\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=2 --motifAPI=HadesSHMEM --cmdLine=\"ShmemGetDouble nelems=101\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=2 --motifAPI=HadesSHMEM --cmdLine=\"ShmemGetvInt\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=2 --motifAPI=HadesSHMEM --cmdLine=\"ShmemGetvLong\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=2 --motifAPI=HadesSHMEM --cmdLine=\"ShmemGetvFloat\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=2 --motifAPI=HadesSHMEM --cmdLine=\"ShmemGetvDouble\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=2 --motifAPI=HadesSHMEM --cmdLine=\"ShmemPutInt nelems=10\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=2 --motifAPI=HadesSHMEM --cmdLine=\"ShmemPutLong nelems=14\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=2 --motifAPI=HadesSHMEM --cmdLine=\"ShmemPutFloat nelems=1000\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=2 --motifAPI=HadesSHMEM --cmdLine=\"ShmemPutDouble nelems=101\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=2 --motifAPI=HadesSHMEM --cmdLine=\"ShmemPutvInt\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=2 --motifAPI=HadesSHMEM --cmdLine=\"ShmemPutvLong\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=2 --motifAPI=HadesSHMEM --cmdLine=\"ShmemPutvFloat\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=2 --motifAPI=HadesSHMEM --cmdLine=\"ShmemPutvDouble\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=5 --motifAPI=HadesSHMEM --cmdLine=\"ShmemReductionInt nelems=3 op=PROD\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=5 --motifAPI=HadesSHMEM --cmdLine=\"ShmemReductionInt nelems=3 op=SUM\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=5 --motifAPI=HadesSHMEM --cmdLine=\"ShmemReductionInt nelems=3 op=MIN\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=5 --motifAPI=HadesSHMEM --cmdLine=\"ShmemReductionInt nelems=3 op=MAX\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=5 --motifAPI=HadesSHMEM --cmdLine=\"ShmemReductionInt nelems=3 op=AND\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=5 --motifAPI=HadesSHMEM --cmdLine=\"ShmemReductionInt nelems=3 op=OR\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=5 --motifAPI=HadesSHMEM --cmdLine=\"ShmemReductionInt nelems=3 op=XOR\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=5 --motifAPI=HadesSHMEM --cmdLine=\"ShmemReductionLong nelems=3 op=PROD\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=5 --motifAPI=HadesSHMEM --cmdLine=\"ShmemReductionLong nelems=3 op=SUM\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=5 --motifAPI=HadesSHMEM --cmdLine=\"ShmemReductionLong nelems=3 op=MIN\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=5 --motifAPI=HadesSHMEM --cmdLine=\"ShmemReductionLong nelems=3 op=MAX\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=5 --motifAPI=HadesSHMEM --cmdLine=\"ShmemReductionLong nelems=3 op=AND\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=5 --motifAPI=HadesSHMEM --cmdLine=\"ShmemReductionLong nelems=3 op=OR\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=5 --motifAPI=HadesSHMEM --cmdLine=\"ShmemReductionLong nelems=3 op=XOR\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=7 --motifAPI=HadesSHMEM --cmdLine=\"ShmemReductionFloat nelems=5 op=PROD\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=7 --motifAPI=HadesSHMEM --cmdLine=\"ShmemReductionFloat nelems=5 op=SUM\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=7 --motifAPI=HadesSHMEM --cmdLine=\"ShmemReductionFloat nelems=5 op=MIN\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=7 --motifAPI=HadesSHMEM --cmdLine=\"ShmemReductionFloat nelems=5 op=MAX\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=3x3 --motifAPI=HadesSHMEM --cmdLine=\"ShmemReductionDouble nelems=2 op=PROD\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=3x3 --motifAPI=HadesSHMEM --cmdLine=\"ShmemReductionDouble nelems=2 op=SUM\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=3x3 --motifAPI=HadesSHMEM --cmdLine=\"ShmemReductionDouble nelems=2 op=MIN\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=3x3 --motifAPI=HadesSHMEM --cmdLine=\"ShmemReductionDouble nelems=2 op=MAX\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=2 --motifAPI=HadesSHMEM --cmdLine=\"ShmemSwapInt\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=2 --motifAPI=HadesSHMEM --cmdLine=\"ShmemSwapLong\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=2 --motifAPI=HadesSHMEM --cmdLine=\"ShmemWaitInt\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=2 --motifAPI=HadesSHMEM --cmdLine=\"ShmemWaitLong\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=2 --motifAPI=HadesSHMEM --cmdLine=\"ShmemWaitUntilInt op=LTE\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=2 --motifAPI=HadesSHMEM --cmdLine=\"ShmemWaitUntilInt op=LT\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=2 --motifAPI=HadesSHMEM --cmdLine=\"ShmemWaitUntilInt op=EQ\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=2 --motifAPI=HadesSHMEM --cmdLine=\"ShmemWaitUntilInt op=NE\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=2 --motifAPI=HadesSHMEM --cmdLine=\"ShmemWaitUntilInt op=GT\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=2 --motifAPI=HadesSHMEM --cmdLine=\"ShmemWaitUntilInt op=GTE\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=2 --motifAPI=HadesSHMEM --cmdLine=\"ShmemWaitUntilLong op=LTE\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=2 --motifAPI=HadesSHMEM --cmdLine=\"ShmemWaitUntilLong op=LT\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=2 --motifAPI=HadesSHMEM --cmdLine=\"ShmemWaitUntilLong op=EQ\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=2 --motifAPI=HadesSHMEM --cmdLine=\"ShmemWaitUntilLong op=NE\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=2 --motifAPI=HadesSHMEM --cmdLine=\"ShmemWaitUntilLong op=GT\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --shape=2 --motifAPI=HadesSHMEM --cmdLine=\"ShmemWaitUntilLong op=GTE\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --numCores=2 --shape=1 --motifAPI=HadesSHMEM --cmdLine=\"ShmemPutInt nelems=10\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --numCores=2 --shape=1 --motifAPI=HadesSHMEM --cmdLine=\"ShmemPutvInt\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --numCores=2 --shape=1 --motifAPI=HadesSHMEM --cmdLine=\"ShmemGetInt nelems=10\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --numCores=2 --shape=1 --motifAPI=HadesSHMEM --cmdLine=\"ShmemGetvInt\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --numCores=2 --shape=1 --motifAPI=HadesSHMEM --cmdLine=\"ShmemCswapInt\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --numCores=2 --shape=1 --motifAPI=HadesSHMEM --cmdLine=\"ShmemFaddInt\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --numCores=2 --shape=1 --motifAPI=HadesSHMEM --cmdLine=\"ShmemSwapInt\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --numCores=2 --shape=1 --motifAPI=HadesSHMEM --cmdLine=\"ShmemWaitInt\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --numCores=2 --shape=1 --motifAPI=HadesSHMEM --cmdLine=\"ShmemWaitUntilInt op=NE\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --numCores=4 --shape=1 --motifAPI=HadesSHMEM --cmdLine=\"ShmemBarrier iterations=99\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --numCores=4 --shape=4x4 --motifAPI=HadesSHMEM --cmdLine=\"ShmemBarrier iterations=99\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --numCores=4 --shape=1 --motifAPI=HadesSHMEM --cmdLine=\"ShmemBarrierAll iterations=77\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --numCores=4 --shape=4x4 --motifAPI=HadesSHMEM --cmdLine=\"ShmemBarrierAll iterations=77\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --numCores=5 --shape=1 --motifAPI=HadesSHMEM --cmdLine=\"ShmemReductionInt nelems=3 op=PROD\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --numCores=4 --shape=4x4 --motifAPI=HadesSHMEM --cmdLine=\"ShmemReductionInt nelems=3 op=PROD\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --numCores=5 --shape=1 --motifAPI=HadesSHMEM --cmdLine=\"ShmemAlltoall32 nelems=99\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --numCores=4 --shape=4x4 --motifAPI=HadesSHMEM --cmdLine=\"ShmemAlltoall32 nelems=99\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --numCores=5 --shape=1 --motifAPI=HadesSHMEM --cmdLine=\"ShmemAlltoalls32 nelems=99 dst=2 sst=2\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --numCores=4 --shape=4x4 --motifAPI=HadesSHMEM --cmdLine=\"ShmemAlltoalls32 nelems=99 dst=2 sst=2\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --numCores=5 --shape=1 --motifAPI=HadesSHMEM --cmdLine=\"ShmemBroadcast64 root=4 nelems=5\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --numCores=4 --shape=4x4 --motifAPI=HadesSHMEM --cmdLine=\"ShmemBroadcast64 root=4 nelems=5\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --numCores=5 --shape=1 --motifAPI=HadesSHMEM --cmdLine=\"ShmemCollect32 nelems=45\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --numCores=4 --shape=4x4 --motifAPI=HadesSHMEM --cmdLine=\"ShmemCollect32 nelems=45\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --numCores=5 --shape=1 --motifAPI=HadesSHMEM --cmdLine=\"ShmemFcollect32 nelems=45\"" emberLoad.py
+sst --model-options="--useSimpleMemoryModel --topo=torus --numCores=4 --shape=4x4 --motifAPI=HadesSHMEM --cmdLine=\"ShmemFcollect32 nelems=45\"" emberLoad.py

@@ -143,14 +143,12 @@ class testcase_memHierarchy_memHA(SSTTestCase):
 
 #####
 
-    def memHA_Template(self, testcase, lcwc_match_allowed=False, ignore_err_file=False):
+    def memHA_Template(self, testcase, lcwc_match_allowed=False,
+                       ignore_err_file=False, testtimeout=240):
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
         outdir = self.get_test_output_run_dir()
         tmpdir = self.get_test_output_tmp_dir()
-
-        # Set the default timeout
-        self.timeout_sec = 120
 
         # Some tweeking of file names are due to inconsistencys with testcase name
         testcasename_sdl = testcase.replace("_", "-")
@@ -182,7 +180,7 @@ class testcase_memHierarchy_memHA(SSTTestCase):
 
         # Run SST in the tests directory
         self.run_sst(sdlfile, outfile, errfile, set_cwd=test_path,
-                     timeout_sec = self.timeout_sec, mpi_out_files=mpioutfiles)
+                     timeout_sec=testtimeout, mpi_out_files=mpioutfiles)
 
         # Copy the orig reffile to the fixedreffile
         cmd = "cat {0} > {1}".format(reffile, fixedreffile)

@@ -1,8 +1,8 @@
 """
 Sample script
 Simulating System
-Every core with Private L1 and L2 caches. 
-All L2 cache are connected to shared L3 cache via bus. 
+Every core with Private L1 and L2 caches.
+All L2 cache are connected to shared L3 cache via bus.
 L3 connects to MainMemory through memory Controller.
 
 core_0   core_1   core_2   core_3   core_4   core_5   core_6   core_7
@@ -14,7 +14,7 @@ L2_0     L2_1     L2_2     L2_3     L2_4     L2_5     L2_6     L2_7
                          Main Memory (DRAMSIM)
 """
 
-import sst 
+import sst
 import os
 
 ## Flags
@@ -33,16 +33,21 @@ corecount = 8
 os.environ['SIM_DESC'] = 'EIGHT_CORES'
 os.environ['OMP_NUM_THREADS'] = str(corecount)
 
-sst_root = os.getenv( "SST_ROOT" )
-app = sst_root + "/sst-elements/src/sst/elements/ariel/frontend/simple/examples/stream/stream"
+stream_app = os.getenv("ARIEL_TEST_STREAM_APP")
+if stream_app == None:
+    sst_root = os.getenv( "SST_ROOT" )
+    app = sst_root + "/sst-elements/src/sst/elements/ariel/frontend/simple/examples/stream/stream"
+else:
+    app = stream_app
+
 if not os.path.exists(app):
     app = os.getenv( "OMP_EXE" )
 
 ## Application Info:
 ## Executable  -> exe_file
 ## appargcount -> Number of commandline arguments after <exec_file> name
-## apparg<#>   -> arguments 
-## Commandline execution for the below example would be 
+## apparg<#>   -> arguments
+## Commandline execution for the below example would be
 ## /home/amdeshp/arch/benchmarks/PathFinder_1.0.0/PathFinder_ref/PathFinder.x -x /home/amdeshp/arch/benchmarks/PathFinder_1.0.0/generatedData/small1.adj_list
 ## AppArgs = ({
 ##    "executable"  : "/home/amdeshp/arch/benchmarks/PathFinder_1.0.0/PathFinder_ref/PathFinder.x",
@@ -70,10 +75,10 @@ ariel.addParams({
 
 ariel.setSubComponent("memmgr", "ariel.MemoryManagerSimple")
 
-## MemHierarchy 
+## MemHierarchy
 
 def genMemHierarchy(cores):
-   
+
    membus = sst.Component("membus", "memHierarchy.Bus")
    membus.addParams({
        "bus_frequency" : cacheFrequency,
@@ -120,8 +125,8 @@ def genMemHierarchy(cores):
             "coherence_protocol"    : coherenceProtocol,
             "replacement_policy"    : rplPolicy,
             "L1"                    : "1",
-            "debug"                 : memDebug,  
-            "debug_level"           : memDebugLevel, 
+            "debug"                 : memDebug,
+            "debug_level"           : memDebugLevel,
             "verbose"               : 2,
        })
 
@@ -135,22 +140,22 @@ def genMemHierarchy(cores):
             "coherence_protocol"    : coherenceProtocol,
             "replacement_policy"    : rplPolicy,
             "L1"                    : "0",
-            "debug"                 : memDebug,  
-            "debug_level"           : memDebugLevel, 
+            "debug"                 : memDebug,
+            "debug_level"           : memDebugLevel,
             "verbose"               : 2,
             "mshr_num_entries"      : 16,
             "mshr_latency_cycles"   : 2,
        })
-       
+
        ## SST Links
-       # Ariel -> L1(PRIVATE) -> L2(PRIVATE)  -> L3 (SHARED) -> DRAM 
+       # Ariel -> L1(PRIVATE) -> L2(PRIVATE)  -> L3 (SHARED) -> DRAM
        ArielL1Link = sst.Link("cpu_cache_%d"%core)
        ArielL1Link.connect((ariel, "cache_link_%d"%core, busLat), (l1, "high_network_0", busLat))
        L1L2Link = sst.Link("l1_l2_%d"%core)
        L1L2Link.connect((l1, "low_network_0", busLat), (l2, "high_network_0", busLat))
        L2MembusLink = sst.Link("l2_membus_%d"%core)
        L2MembusLink.connect((l2, "low_network_0", busLat), (membus, "high_network_%d"%core, busLat))
-   
+
 
    l3 = sst.Component("L3cache", "memHierarchy.Cache")
    l3.addParams({
@@ -162,8 +167,8 @@ def genMemHierarchy(cores):
         "coherence_protocol"    : coherenceProtocol,
         "replacement_policy"    : rplPolicy,
         "L1"                    : "0",
-        "debug"                 : memDebug,  
-        "debug_level"           : memDebugLevel, 
+        "debug"                 : memDebug,
+        "debug_level"           : memDebugLevel,
         "mshr_num_entries"      : "16",
         "mshr_latency_cycles"   : 2,
         "verbose"               : 2,
@@ -175,5 +180,5 @@ def genMemHierarchy(cores):
    L3MemCtrlLink = sst.Link("L3MemCtrl")
    L3MemCtrlLink.connect((l3, "low_network_0", busLat), (memctrl, "direct_link", busLat))
 
-genMemHierarchy(corecount)        
+genMemHierarchy(corecount)
 
