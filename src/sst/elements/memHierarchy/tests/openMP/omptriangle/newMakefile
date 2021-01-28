@@ -1,0 +1,11 @@
+CXX=g++ 
+
+omptriangle: omptriangle.o
+	$(CXX) -O3 -o omptriangle -fopenmp omptriangle.o
+
+omptriangle.o: omptriangle.c
+	$(CXX) -O3 -o omptriangle.o -fopenmp -c omptriangle.c
+
+clean:
+	rm omptriangle omptriangle.o
+

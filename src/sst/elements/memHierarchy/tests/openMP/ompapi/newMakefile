@@ -1,0 +1,11 @@
+CXX=g++ 
+
+ompapi: ompapi.o
+	$(CXX) -O3 -o ompapi -fopenmp ompapi.o
+
+ompapi.o: ompapi.c
+	$(CXX) -O3 -o ompapi.o -fopenmp -c ompapi.c
+
+clean:
+	rm ompapi ompapi.o
+
