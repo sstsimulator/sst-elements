@@ -289,12 +289,12 @@ EXTRA_DIST = \
     tests/refFiles/test_OMP_ompreduce.out \
     tests/refFiles/test_OMP_omptriangle.out \
     tests/openMP/ompapi/ompapi \
-    tests/openMP/ompapi/ompatomic \
-    tests/openMP/ompapi/ompbarrier \
-    tests/openMP/ompapi/ompcritical \
-    tests/openMP/ompapi/ompdynamic \
-    tests/openMP/ompapi/ompreduce \
-    tests/openMP/ompapi/omptriangle
+    tests/openMP/ompatomic/ompatomic \
+    tests/openMP/ompbarrier/ompbarrier \
+    tests/openMP/ompcritical/ompcritical \
+    tests/openMP/ompdynamic/ompdynamic \
+    tests/openMP/ompreduce/ompreduce \
+    tests/openMP/omptriangle/omptriangle
 
 sstdir = $(includedir)/sst/elements/memHierarchy
 nobase_sst_HEADERS = \
