@@ -282,12 +282,12 @@ EXTRA_DIST = \
     tests/refFiles/test_memHierarchy_sdl_2.out \
     tests/refFiles/test_memHierarchy_sdl_3.out \
     tests/refFiles/test_OMP_ompapi.out \
-    tests/refFiles/test_OMP_ompatomic \
-    tests/refFiles/test_OMP_ompbarrier \
-    tests/refFiles/test_OMP_ompcritical \
-    tests/refFiles/test_OMP_ompdynamic \
-    tests/refFiles/test_OMP_ompreduce \
-    tests/refFiles/test_OMP_omptriangle \
+    tests/refFiles/test_OMP_ompatomic.out \
+    tests/refFiles/test_OMP_ompbarrier.out \
+    tests/refFiles/test_OMP_ompcritical.out \
+    tests/refFiles/test_OMP_ompdynamic.out \
+    tests/refFiles/test_OMP_ompreduce.out \
+    tests/refFiles/test_OMP_omptriangle.out \
     tests/openMP/ompapi/ompapi \
     tests/openMP/ompapi/ompatomic \
     tests/openMP/ompapi/ompbarrier \
