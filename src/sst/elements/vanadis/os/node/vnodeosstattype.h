@@ -72,12 +72,21 @@ void vanadis_copy_native_stat( const struct stat* native_stat, struct vanadis_st
 	v_stat->st_size = native_stat->st_size;
 	v_stat->st_blksize = (int32_t) native_stat->st_blksize;
 	v_stat->st_blocks = native_stat->st_blocks;
+#ifdef SST_COMPILE_MACOSX
+	v_stat->st_atim.tv_sec = (int32_t) native_stat->st_atimespec.tv_sec;
+	v_stat->st_atim.tv_nsec = (int32_t) native_stat->st_atimespec.tv_nsec;
+	v_stat->st_mtim.tv_sec = (int32_t) native_stat->st_mtimespec.tv_sec;
+	v_stat->st_mtim.tv_nsec = (int32_t) native_stat->st_mtimespec.tv_nsec;
+	v_stat->st_ctim.tv_sec = (int32_t) native_stat->st_ctimespec.tv_sec;
+	v_stat->st_ctim.tv_nsec = (int32_t) native_stat->st_ctimespec.tv_nsec;
+#else
 	v_stat->st_atim.tv_sec = (int32_t) native_stat->st_atim.tv_sec;
 	v_stat->st_atim.tv_nsec = (int32_t) native_stat->st_atim.tv_nsec;
 	v_stat->st_mtim.tv_sec = (int32_t) native_stat->st_mtim.tv_sec;
 	v_stat->st_mtim.tv_nsec = (int32_t) native_stat->st_mtim.tv_nsec;
 	v_stat->st_ctim.tv_sec = (int32_t) native_stat->st_ctim.tv_sec;
 	v_stat->st_ctim.tv_nsec = (int32_t) native_stat->st_ctim.tv_nsec;
+#endif
 };
 
 }
