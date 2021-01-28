@@ -15,17 +15,16 @@ public:
                 file_id( desc_id ) {
 
 		if( nullptr != file_path ) {
-			//printf("OPENING FILE: %s, result: ", file_path);
 			file_handle = fopen( file_path, "w+" );
-
-			//if( nullptr == file_handle ) {
-			//	printf(" failed\n");
-			//} else {
-			//	printf(" success\n");
-			//}
 		} else {
 	                file_handle = nullptr;
 		}
+
+                path = file_path ;
+        }
+
+        VanadisOSFileDescriptor( uint32_t desc_id, const char* file_path, FILE* f_handle ) :
+                file_id( desc_id ), file_handle(f_handle) {
 
                 path = file_path ;
         }
@@ -35,6 +34,7 @@ public:
         }
 
         uint32_t getHandle() const { return file_id; }
+
         const char* getPath() const {
                 if( path.size() == 0 ) {
                         return "";
