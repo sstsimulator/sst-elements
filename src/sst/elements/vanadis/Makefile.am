@@ -100,6 +100,8 @@ util/vdatacopy.h \
 util/vfpreghandler.h \
 util/vlinesplit.h \
 util/vsignx.h \
+vbranch/vbranchbasic.h \
+vbranch/vbranchunit.h \
 velf/velfinfo.h \
 os/callev/voscallaccessev.h \
 os/callev/voscallall.h \
@@ -129,15 +131,14 @@ os/node/vnodeosfd.h \
 os/node/vnodeosfstath.h \
 os/node/vnodeoshstate.h \
 os/node/vnodeosopenath.h \
+os/node/vnodeosopenh.h \
 os/node/vnodeosreadlink.h \
 os/node/vnodeosstattype.h \
 os/node/vnodeosunameh.h \
 os/node/vnodeoswriteh.h \
 os/node/vnodeoswritevh.h \
 os/resp/voscallresp.h \
-os/resp/vosexitresp.h \
-vbranch/vbranchunit.h \
-vbranch/vbranchbasic.h
+os/resp/vosexitresp.h
 
 EXTRA_DIST =
 
