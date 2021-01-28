@@ -42,11 +42,12 @@ public:
         }
 
 	virtual void execute( SST::Output* output, VanadisRegisterFile* regFile ) {
+#ifdef VANADIS_BUILD_DEBUG
 		output->verbose(CALL_INFO, 16, 0, "Execute: (addr=%p) AND phys: out=%" PRIu16 " in=%" PRIu16 ", %" PRIu16 ", isa: out=%" PRIu16 " / in=%" PRIu16 ", %" PRIu16 "\n",
 			(void*) getInstructionAddress(), phys_int_regs_out[0],
 			phys_int_regs_in[0], phys_int_regs_in[1],
 			isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1] );
-
+#endif
                 const uint64_t src_1 = regFile->getIntReg<uint64_t>( phys_int_regs_in[0] );
                 const uint64_t src_2 = regFile->getIntReg<uint64_t>( phys_int_regs_in[1] );
 

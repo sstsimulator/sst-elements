@@ -65,22 +65,25 @@ public:
 
 	void computeLoadAddress( SST::Output* output, VanadisRegisterFile* regFile, uint64_t* out_addr, uint16_t* width ) {
 		const uint64_t mem_addr_reg_val = regFile->getIntReg<uint64_t>( phys_int_regs_in[0] );
-
+#ifdef VANADIS_BUILD_DEBUG
                 output->verbose(CALL_INFO, 16, 0, "[execute-partload]: reg[%5" PRIu16 "]: %" PRIu64 " / 0x%llx\n", phys_int_regs_in[0], mem_addr_reg_val,
 			mem_addr_reg_val);
                 output->verbose(CALL_INFO, 16, 0, "[execute-partload]: offset           : %" PRIu64 " / 0x%llx\n", offset,
 			offset);
                 output->verbose(CALL_INFO, 16, 0, "[execute-partload]: (add)            : %" PRIu64 " / 0x%llx\n",
 			(mem_addr_reg_val + offset), (mem_addr_reg_val + offset));
+#endif
 
 		computeLoadAddress( regFile, out_addr, width );
 
+#ifdef VANADIS_BUILD_DEBUG
 		output->verbose(CALL_INFO, 16, 0, "[execute-partload]: full width: %" PRIu16 "\n", load_width);
 		output->verbose(CALL_INFO, 16, 0, "[execute-partload]: (lower/upper load ? %s)\n",
 			is_load_lower ? "lower" : "upper");
 		output->verbose(CALL_INFO, 16, 0, "[execute-partload]: load-addr: %" PRIu64 " / 0x%0llx / load-width: %" PRIu16 "\n",
 			(*out_addr), (*out_addr), (*width) );
 		output->verbose(CALL_INFO, 16, 0, "[execute-partload]: register-offset: %" PRIu16 "\n", register_offset);
+#endif
 	}
 
 	uint16_t getLoadWidth() const { return load_width; }

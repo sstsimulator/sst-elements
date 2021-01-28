@@ -42,11 +42,12 @@ public:
 	}
 
 	virtual void execute( SST::Output* output, VanadisRegisterFile* regFile ) {
+#ifdef VANADIS_BUILD_DEBUG
 		output->verbose(CALL_INFO, 16, 0, "Execute: (addr=0x%llx) BFP%c isa-in: %" PRIu16 ", / phys-in: %" PRIu16 " / offset: %" PRId64 "\n",
 			getInstructionAddress(),
 			branch_on_true ? 'T' : 'F',
 			isa_fp_regs_in[0], phys_fp_regs_in[0], offset);
-
+#endif
 		const uint16_t fp_cond_reg = phys_fp_regs_in[0];
 		uint32_t fp_cond_val = regFile->getFPReg<uint32_t>( fp_cond_reg );
 

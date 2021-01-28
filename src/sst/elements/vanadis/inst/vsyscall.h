@@ -52,8 +52,10 @@ public:
 
 	virtual void execute( SST::Output* output, VanadisRegisterFile* regFile ) {
 		const uint64_t code_reg_ptr = regFile->getIntReg<uint64_t>( isa_options->getISASysCallCodeReg() );
+#ifdef VANADIS_BUILD_DEBUG
 		output->verbose(CALL_INFO, 16, 0, "Execute: (addr=0x%0llx) SYSCALL (isa: %" PRIu16 ", os-code: %" PRIu64 ")\n",
 			getInstructionAddress(), isa_options->getISASysCallCodeReg(),  code_reg_ptr );
+#endif
 		markExecuted();
 	}
 

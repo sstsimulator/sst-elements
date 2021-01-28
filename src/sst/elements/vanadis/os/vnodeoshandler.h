@@ -27,12 +27,14 @@
 #include "os/node/vnodeoswritevh.h"
 #include "os/node/vnodeoswriteh.h"
 #include "os/node/vnodeosopenath.h"
+#include "os/node/vnodeosopenh.h"
 #include "os/node/vnodeosreadlink.h"
 #include "os/node/vnodeosaccessh.h"
 #include "os/node/vnodeosbrk.h"
 #include "os/node/vnodemmaph.h"
 #include "os/node/vnodenoactionh.h"
 
+#include "os/node/vnodeosstattype.h"
 #include "util/vlinesplit.h"
 
 using namespace SST::Interfaces;
@@ -143,25 +145,40 @@ public:
 					fstat_ev->getStructAddress(), fstat_ev->getStructAddress() );
 
 				bool success = false;
+				struct vanadis_stat32 v32_stat_output;
 				struct stat stat_output;
+				int fstat_return_code = 0;
 
 				if( fstat_ev->getFileHandle() <= 2 ) {
 					if( 0 == fstat( fstat_ev->getFileHandle(), &stat_output ) ) {
+						vanadis_copy_native_stat( &stat_output, &v32_stat_output );
 						success = true;
+					} else {
+						fstat_return_code = -13;
 					}
 				} else {
-					if( file_descriptors.find( fstat_ev->getFileHandle() ) == file_descriptors.end() ) {
+					auto vos_descriptor_itr = file_descriptors.find( fstat_ev->getFileHandle() );
+
+					if( vos_descriptor_itr == file_descriptors.end() ) {
 						// Fail - cannot find the descriptor, so its not open
+						fstat_return_code = -9;
 					} else {
-						// Found, now map it.
+						VanadisOSFileDescriptor* vos_descriptor = vos_descriptor_itr->second;
+
+						if( 0 == fstat( fileno( vos_descriptor->getFileHandle() ), &stat_output ) ) {
+							vanadis_copy_native_stat( &stat_output, &v32_stat_output );
+	                                               	success = true;
+						} else {
+							fstat_return_code = -13;
+						}
 					}
 				}
 
 				if( success ) {
 					std::vector<uint8_t> stat_write_payload;
-					stat_write_payload.reserve( sizeof( stat_output ) );
+					stat_write_payload.reserve( sizeof( v32_stat_output ) );
 
-					uint8_t* stat_output_ptr = (uint8_t*)( &stat_output );
+					uint8_t* stat_output_ptr = (uint8_t*)( &v32_stat_output );
 					for( int i = 0; i < sizeof(stat_output); ++i ) {
 						stat_write_payload.push_back( stat_output_ptr[i] );
 					}
@@ -171,7 +188,12 @@ public:
 					handler_state = new VanadisFstatHandlerState( output->getVerboseLevel(),
 						fstat_ev->getFileHandle(), fstat_ev->getStructAddress() );
 				} else {
-					output->fatal(CALL_INFO, -1, "not implemented.\n");
+					output->verbose(CALL_INFO, 16, 0, "[syscall-fstat] - response is operation failed code: %" PRId32 "\n", fstat_return_code);
+
+					VanadisSyscallResponse* resp = new VanadisSyscallResponse( fstat_return_code );
+					resp->markFailed();
+
+                                       	core_link->send( resp );
 				}
 			}
 			break;
@@ -198,6 +220,63 @@ public:
 					openat_ev->getPathPointer(), start_read_len );
 
 				sendMemRequest( openat_start_req );
+			}
+			break;
+
+		case SYSCALL_OP_CLOSE:
+			{
+				output->verbose(CALL_INFO, 16, 0, "-> call is close()\n");
+				VanadisSyscallCloseEvent* close_ev = dynamic_cast< VanadisSyscallCloseEvent* >(sys_ev);
+
+				if( nullptr == close_ev ) {
+					output->fatal(CALL_INFO, -1, "[syscall-close] -> error unable to cast syscall to a close event.\n");
+				}
+
+				output->verbose(CALL_INFO, 16, 0, "[syscall-close] -> call is close( %" PRIu32 " )\n",
+					close_ev->getFileDescriptor());
+
+				auto close_file_itr = file_descriptors.find( close_ev->getFileDescriptor() );
+				VanadisSyscallResponse* resp = nullptr;
+
+				if( close_file_itr == file_descriptors.end() ) {
+					// return failure of a EBADF (bad file descriptor)
+					resp = new VanadisSyscallResponse( -9 );
+					resp->markFailed();
+				} else {
+					// this will automatically close any open file handles
+					delete close_file_itr->second;
+
+					// remove from the descriptor listing
+					file_descriptors.erase(close_file_itr);
+
+					resp = new VanadisSyscallResponse( 0 );
+				}
+
+                              	core_link->send( resp );
+			}
+			break;
+
+		case SYSCALL_OP_OPEN:
+			{
+				output->verbose(CALL_INFO, 16, 0, "-> call is open()\n");
+				VanadisSyscallOpenEvent* open_ev = dynamic_cast< VanadisSyscallOpenEvent* >(sys_ev);
+
+				if( nullptr == open_ev ) {
+					output->fatal(CALL_INFO, -1, "[syscall-open] -> error unable ot cast syscall to an open event.\n");
+				}
+
+				output->verbose(CALL_INFO, 16, 0, "[syscall-open] -> call is open( 0x%0llx, %" PRId64 " )\n",
+					open_ev->getPathPointer(), open_ev->getFlags() );
+
+				handler_state = new VanadisOpenHandlerState( output->getVerboseLevel(), open_ev->getPathPointer(),
+					open_ev->getFlags(), open_ev->getMode(), &file_descriptors, handlerSendMemCallback );
+
+				const uint64_t start_read_len = (open_ev->getPathPointer() % 64) == 0 ? 64 : open_ev->getPathPointer() % 64;
+
+				SimpleMem::Request* open_start_req = new SimpleMem::Request( SimpleMem::Request::Read,
+					open_ev->getPathPointer(), start_read_len );
+
+				sendMemRequest( open_start_req );
 			}
 			break;
 
@@ -653,9 +732,11 @@ public:
 
 			// if we are completed and all the memory events are processed
 			if( handler_state->isComplete() && (pending_mem.size() == 0) ) {
-				output->verbose(CALL_INFO, 16, 0, "handler is completed and all memory events are processed, sending response to core.\n");
-
 				VanadisSyscallResponse* resp = handler_state->generateResponse();
+				output->verbose(CALL_INFO, 16, 0, "handler is completed and all memory events are processed, sending response (= %" PRId64 " / 0x%llx, %s) to core.\n",
+					resp->getReturnCode(), resp->getReturnCode(),
+					resp->isSuccessful() ? "success" : "failed" );
+
 				core_link->send( resp );
 
 				delete handler_state;
