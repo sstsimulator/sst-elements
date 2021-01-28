@@ -10,7 +10,7 @@ platdef.addParamSet("topology",{
     "routers_per_group" : 8,
     "intergroup_links" : 4,
     "num_groups" : 4,
-    "algorithm" : "minimal",
+    "algorithm" : "adaptive-local",
     "link_latency" : "20ns"
 })
 
@@ -44,4 +44,10 @@ platdef.addParamSet("network_interface",{
 })
 
 #platdef.addClassType("network_interface","sst.merlin.base.ReorderLinkControl")
-platdef.addClassType("network_interface","sst.merlin.interface.LinkControl")
+platdef.addClassType("network_interface","sst.merlin.interface.ReorderLinkControl")
+
+
+platdef_cm = PlatformDefinition.compose("platform_dragon_128_cm",[("platform_dragon_128","ALL")])
+platdef_cm.addParamSet("router",{"enable_congestion_management":True})
+platdef_cm.addClassType("topology","sst.merlin.topology.topoDragonFly")
+platdef_cm.addClassType("network_interface","sst.merlin.interface.ReorderLinkControl")

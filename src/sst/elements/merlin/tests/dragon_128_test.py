@@ -78,11 +78,11 @@ if __name__ == "__main__":
     system.build()
     
 
-    sst.setStatisticLoadLevel(9)
+    # sst.setStatisticLoadLevel(9)
 
-    sst.setStatisticOutput("sst.statOutputCSV");
-    sst.setStatisticOutputOptions({
-        "filepath" : "stats.csv",
-        "separator" : ", "
-    })
+    # sst.setStatisticOutput("sst.statOutputCSV");
+    # sst.setStatisticOutputOptions({
+    #     "filepath" : "stats.csv",
+    #     "separator" : ", "
+    # })
 
