@@ -41,9 +41,10 @@ public:
 	}
 
 	virtual void execute( SST::Output* output, VanadisRegisterFile* regFile ) {
+#ifdef VANADIS_BUILD_DEBUG
 		output->verbose(CALL_INFO, 16, 0, "Execute: (addr=0x%0llx) BCMPI isa-in: %" PRIu16 " / phys-in: %" PRIu16 " / imm: %" PRId64 " / offset: %" PRId64 "\n",
 			getInstructionAddress(), isa_int_regs_in[0], phys_int_regs_in[0], imm_value, offset );
-
+#endif
 		bool compare_result = false;
 
 		switch( reg_format ) {

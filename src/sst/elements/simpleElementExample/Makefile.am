@@ -40,6 +40,7 @@ endif
 EXTRA_DIST = \
     README \
     tests/testsuite_default_simpleComponents.py \
+    tests/testsuite_default_check_maxrss.py \
     tests/test_simpleParamComponent.py \
     tests/test_simpleComponent.py \
     tests/test_simpleClockerComponent.py \
@@ -79,7 +80,8 @@ EXTRA_DIST = \
     tests/refFiles/test_simpleRNGComponent_xorshift.out \
     tests/refFiles/test_simpleStatisticsComponent.out \
     tests/refFiles/test_simpleSubComponent.out \
-    tests/refFiles/test_simpleSubComponent_2.out
+    tests/refFiles/test_simpleSubComponent_2.out \
+    tests/refFiles/test_check_maxrss.out
 
 deprecated_EXTRA_DIST =
 

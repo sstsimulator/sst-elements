@@ -27,6 +27,7 @@ EXTRA_DIST = \
         tests/array/trace-common.py \
         tests/array/array.c \
         tests/array/Makefile \
+        tests/testsuite_default_prospero.py \
         tracetool/Makefile \
         tracetool/Makefile.osx \
         tracetool/sstmemtrace.cc \
@@ -37,6 +38,10 @@ EXTRA_DIST = \
 
 libprospero_la_LDFLAGS = -module -avoid-version
 libprospero_la_LIBADD = $(SHM_LIB)
+
+install-exec-local:
+	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     prospero=$(abs_srcdir)
+	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      prospero=$(abs_srcdir)/tests
 
 if USE_LIBZ
 libprospero_la_LIBADD += -lz
@@ -78,8 +83,6 @@ all-local: tracetool/sstmemtrace.cc
 
 install-exec-hook: prosperotrace.dylib
 	cp prosperotrace.dylib $(libexecdir)/prosperotrace.dylib
-	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     prospero=$(abs_srcdir)
-	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      prospero=$(abs_srcdir)/tests
 
 else
 
@@ -149,8 +152,6 @@ endif
 
 install-exec-hook: prosperotrace.so
 	cp prosperotrace.so $(libexecdir)/prosperotrace.so
-	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     prospero=$(abs_srcdir)
-	$(SST_REGISTER_TOOL) SST_ELEMENT_TESTS      prospero=$(abs_srcdir)/tests
 
 endif
 endif

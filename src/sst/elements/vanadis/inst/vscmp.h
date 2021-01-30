@@ -49,12 +49,13 @@ public:
 	}
 
 	virtual void execute( SST::Output* output, VanadisRegisterFile* regFile ) {
+#ifdef VANADIS_BUILD_DEBUG
 		output->verbose(CALL_INFO, 16, 0, "Execute: (addr=0x%0llx) CMPSET (op: %s, %s) isa-out: %" PRIu16 " isa-in: %" PRIu16 ", %" PRIu16 " / phys-out: %" PRIu16 " phys-in: %" PRIu16 ", %" PRIu16 "\n",
 			getInstructionAddress(), convertCompareTypeToString(compareType),
 			performSigned ? "signed" : "unsigned",
 			isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1],
 			phys_int_regs_out[0], phys_int_regs_in[0], phys_int_regs_in[1]);
-
+#endif
 		bool compare_result = false;
 
 		if( performSigned ) {

@@ -52,7 +52,7 @@ class testcase_memHierarchy_hybridsim(SSTTestCase):
 
 #####
 
-    def hybridsim_Template(self, testcase):
+    def hybridsim_Template(self, testcase, testtimeout=120):
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
         outdir = self.get_test_output_run_dir()
@@ -79,7 +79,8 @@ class testcase_memHierarchy_hybridsim(SSTTestCase):
         log_debug("err file = {0}".format(errfile))
 
         # Run SST in the tests directory
-        self.run_sst(sdlfile, outfile, errfile, set_cwd=test_path, mpi_out_files=mpioutfiles)
+        self.run_sst(sdlfile, outfile, errfile, set_cwd=test_path,
+                     mpi_out_files=mpioutfiles, timeout_sec=testtimeout)
 
         testing_remove_component_warning_from_file(outfile)
 

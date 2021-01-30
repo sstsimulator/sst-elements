@@ -41,6 +41,12 @@
 namespace SST {
 namespace Vanadis {
 
+#ifdef VANADIS_BUILD_DEBUG
+#define VANADIS_COMPONENT VanadisDebugComponent
+#else
+#define VANADIS_COMPONENT VanadisComponent
+#endif
+
 class VanadisInsCacheLoadRecord {
 public:
 	VanadisInsCacheLoadRecord(
@@ -78,15 +84,28 @@ private:
 
 };
 
+#ifdef VANADIS_BUILD_DEBUG
+class VanadisDebugComponent : public SST::Component {
+#else
 class VanadisComponent : public SST::Component {
+#endif
+
 public:
 
     SST_ELI_REGISTER_COMPONENT(
+#ifdef VANADIS_BUILD_DEBUG
+        VanadisDebugComponent,
+        "vanadisdbg",
+        "VanadisCPU",
+        SST_ELI_ELEMENT_VERSION(1,0,0),
+	"Vanadis Debug Processor Component",
+#else
         VanadisComponent,
         "vanadis",
         "VanadisCPU",
         SST_ELI_ELEMENT_VERSION(1,0,0),
 	"Vanadis Processor Component",
+#endif
         COMPONENT_CATEGORY_PROCESSOR
     )
 
@@ -96,32 +115,33 @@ public:
 	{ "reorder_slots", 	"Number of slots in the reorder buffer" },
 	{ "core_id", 		"Identifier for this core" },
 	{ "hardware_threads", 	"Number of hardware threads in this core" },
-    { "physical_integer_registers", "Number of physical integer registers per hardware thread" },
+     	{ "physical_integer_registers", "Number of physical integer registers per hardware thread" },
 	{ "physical_fp_registers", "Number of physical floating point registers per hardware thread" },
 	{ "integer_arith_units", "Number of integer arithemetic units" },
-    { "integer_arith_cycles", "Cycles per instruction for integer arithmetic" },
-    { "integer_div_units", "Number of integer division units" },
-    { "integer_div_cycles", "Cycles per instruction for integer division" },
-    { "fp_arith_units",     "Number of floating point arithmetic units" },
-    { "fp_arith_cycles",    "Cycles per floating point arithmetic" },
+    	{ "integer_arith_cycles", "Cycles per instruction for integer arithmetic" },
+    	{ "integer_div_units", "Number of integer division units" },
+    	{ "integer_div_cycles", "Cycles per instruction for integer division" },
+    	{ "fp_arith_units",     "Number of floating point arithmetic units" },
+    	{ "fp_arith_cycles",    "Cycles per floating point arithmetic" },
 	{ "fp_div_units",       "Number of floating point division units" },
-    { "fp_div_cycles",      "Cycles per floating point division" },
-    { "load_units",         "Number of memory load units" },
-    { "store_units",        "Number of memory store units" },
+    	{ "fp_div_cycles",      "Cycles per floating point division" },
+    	{ "load_units",         "Number of memory load units" },
+    	{ "store_units",        "Number of memory store units" },
 	{ "max_loads_per_cycle",    "Maximum number of loads that can issue to the cache per cycle" },
 	{ "max_stores_per_cycle",   "Maximum number of stores that can issue to the cache per cycle" },
-    { "branch_units",       "Number of branch units" },
-    { "special_units",      "Number of special instruction units" },
-    { "issues_per_cycle",   "Number of instruction issues per cycle" },
-    { "fetches_per_cycle",  "Number of instruction fetches per cycle" },
-    { "retires_per_cycle",   "Number of instruction retires per cycle" },
-    { "decodes_per_cycle",   "Number of instruction decodes per cycle" },
+    	{ "branch_units",       "Number of branch units" },
+    	{ "special_units",      "Number of special instruction units" },
+    	{ "issues_per_cycle",   "Number of instruction issues per cycle" },
+    	{ "fetches_per_cycle",  "Number of instruction fetches per cycle" },
+    	{ "retires_per_cycle",   "Number of instruction retires per cycle" },
+    	{ "decodes_per_cycle",   "Number of instruction decodes per cycle" },
 	{ "print_int_reg",      "Print integer registers true/false, auto set to true if verbose > 16" },
 	{ "print_fp_reg",		"Print floating-point registers true/false, auto set to true if verbose > 16" }
     )
 
     SST_ELI_DOCUMENT_STATISTICS(
         { "cycles",  "Number of cycles the core executed", "cycles", 1 },
+	{ "syscall-cycles", "Number of cycles spent waiting on execution of SYSCALL in OS components", "cycles", 1 },
 	{ "rob_slots_in_use", 	"Number of micro-ops in the ROB each cycle", "instructions", 1 },
 	{ "rob_cleared_entries",  "Number of micro-ops that are cleared during a pipeline clear", "instructions", 1 },
         { "instructions_issued",  "Number of instructions issued",  "instructions", 1 },
@@ -130,7 +150,9 @@ public:
         { "branch_mispredicts",   "Number of retired branches which were mis-predicted", "instructions", 1 },
         { "branches",             "Number of retired branches", "instructions", 1     },
         { "loads_issued", 		  "Number of load instructions issued to the LSQ",  "instructions", 1 },
-        { "stores_issued",        "Number of store instructions issued to the LSQ", "instructions", 1 }
+        { "stores_issued",        "Number of store instructions issued to the LSQ", "instructions", 1 },
+	{ "phys_int_reg_in_use", "Number of physical integer registers that are in use each cycle", "registers", 1 },
+	{ "phys_fp_reg_in_use", "Number of physical floating point registers than are in use each cycle", "registers", 1 }
     )
 
     SST_ELI_DOCUMENT_PORTS(
@@ -140,13 +162,18 @@ public:
 
     // Optional since there is nothing to document
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-		{ "lsq",                "Load-Store Queue for Memory Access", "SST::Vanadis::VanadisLoadStoreQueue" },
-		{ "mem_interface_inst", "Interface to memory system for instructions", "SST::Interfaces::SimpleMem" },
-		{ "decoder%(hardware_threads)d", "Instruction decoder for a hardware thread", "SST::Vanadis::VanadisDecoder" }
+	{ "lsq",                "Load-Store Queue for Memory Access", "SST::Vanadis::VanadisLoadStoreQueue" },
+	{ "mem_interface_inst", "Interface to memory system for instructions", "SST::Interfaces::SimpleMem" },
+	{ "decoder%(hardware_threads)d", "Instruction decoder for a hardware thread", "SST::Vanadis::VanadisDecoder" }
     )
 
+#ifdef VANADIS_BUILD_DEBUG
+    VanadisDebugComponent( SST::ComponentId_t id, SST::Params& params );
+    ~VanadisDebugComponent();
+#else
     VanadisComponent( SST::ComponentId_t id, SST::Params& params );
     ~VanadisComponent();
+#endif
 
     virtual void init(unsigned int phase);
 
@@ -167,9 +194,15 @@ public:
     void setHalt( uint32_t thr, int64_t halt_code );
 
 private:
+#ifdef VANADIS_BUILD_DEBUG
+    VanadisDebugComponent();  // for serialization only
+    VanadisDebugComponent(const VanadisDebugComponent&); // do not implement
+    void operator=(const VanadisDebugComponent&); // do not implement
+#else
     VanadisComponent();  // for serialization only
     VanadisComponent(const VanadisComponent&); // do not implement
     void operator=(const VanadisComponent&); // do not implement
+#endif
 
     virtual bool tick(SST::Cycle_t);
 
@@ -255,6 +288,7 @@ private:
     uint64_t iCacheLineWidth;
 
     TimeConverter* cpuClockTC;
+    Clock::Handler<VANADIS_COMPONENT>* cpuClockHandler;
 
     FILE* pipelineTrace;
     VanadisELFInfo* binary_elf_info;
@@ -270,6 +304,9 @@ private:
     Statistic<uint64_t>* stat_cycles;
     Statistic<uint64_t>* stat_rob_entries;
     Statistic<uint64_t>* stat_rob_cleared_entries;
+    Statistic<uint64_t>* stat_syscall_cycles;
+    Statistic<uint64_t>* stat_int_phys_regs_in_use;
+    Statistic<uint64_t>* stat_fp_phys_regs_in_use;
 
     uint32_t ins_issued_this_cycle;
     uint32_t ins_retired_this_cycle;
