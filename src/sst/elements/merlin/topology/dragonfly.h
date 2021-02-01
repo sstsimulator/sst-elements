@@ -126,7 +126,11 @@ public:
     struct dgnflyParams params;
     double adaptive_threshold;
     uint32_t group_id;
+    // Router id within group
     uint32_t router_id;
+
+    // Actual id of router
+    uint32_t rtr_id;
 
     RNG::SSTRandom* rng;
 
@@ -152,6 +156,9 @@ public:
 
     virtual void route_packet(int port, int vc, internal_router_event* ev);
     virtual internal_router_event* process_input(RtrEvent* ev);
+
+    virtual std::pair<int,int> getDeliveryPortForEndpointID(int ep_id);
+    virtual int routeControlPacket(CtrlRtrEvent* ev);
 
     virtual PortState getPortState(int port) const;
     virtual std::string getPortLogicalGroup(int port) const;
@@ -187,7 +194,7 @@ private:
     void route_nonadaptive(int port, int vc, internal_router_event* ev);
     void route_adaptive_local(int port, int vc, internal_router_event* ev);
 
-    
+
 };
 
 

@@ -67,9 +67,16 @@ class testcase_merlin_Component(SSTTestCase):
     def test_merlin_hyperx_128(self):
          self.merlin_test_template("hyperx_128_test")
 
+    def test_merlin_dragon_128_platform(self):
+        self.merlin_test_template("dragon_128_platform_test", True)
+
+    def test_merlin_dragon_128_platform_cm(self):
+        self.merlin_test_template("dragon_128_platform_test_cm", True)
+
+         
 #####
 
-    def merlin_test_template(self, testcase):
+    def merlin_test_template(self, testcase, cwd=False):
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
         outdir = self.get_test_output_run_dir()
@@ -84,7 +91,10 @@ class testcase_merlin_Component(SSTTestCase):
         errfile = "{0}/{1}.err".format(outdir, testDataFileName)
         mpioutfiles = "{0}/{1}.testfile".format(outdir, testDataFileName)
 
-        self.run_sst(sdlfile, outfile, errfile, mpi_out_files=mpioutfiles)
+        if cwd:
+            self.run_sst(sdlfile, outfile, errfile, mpi_out_files=mpioutfiles, set_cwd=test_path)
+        else:
+            self.run_sst(sdlfile, outfile, errfile, mpi_out_files=mpioutfiles)
 
         # NOTE: THE PASS / FAIL EVALUATIONS ARE PORTED FROM THE SQE BAMBOO
         #       BASED testSuite_XXX.sh THESE SHOULD BE RE-EVALUATED BY THE
