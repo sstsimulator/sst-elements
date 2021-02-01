@@ -75,7 +75,7 @@ public:
         { "send_bit_count",     "Count number of bits sent on link", "bits", 1},
         { "output_port_stalls", "Time output port is stalled (in units of core timebase)", "time in stalls", 1},
         { "idle_time",          "Number of (in unites of core timebas) that port was idle", "time spent idle", 1},
-        { "recv_bit_count",     "Count number of bits received on the link", "bits", 1},
+        // { "recv_bit_count",     "Count number of bits received on the link", "bits", 1},
     )
 
     SST_ELI_DOCUMENT_PORTS(
