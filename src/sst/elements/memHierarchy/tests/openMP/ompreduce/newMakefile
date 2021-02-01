@@ -1,0 +1,11 @@
+CXX=g++ 
+
+ompreduce: ompreduce.o
+	$(CXX) -O3 -o ompreduce -fopenmp ompreduce.o
+
+ompreduce.o: ompreduce.c
+	$(CXX) -O3 -o ompreduce.o -fopenmp -c ompreduce.c
+
+clean:
+	rm ompreduce ompreduce.o
+

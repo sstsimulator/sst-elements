@@ -1,0 +1,11 @@
+CXX=g++ 
+
+ompbarrier: ompbarrier.o
+	$(CXX) -O3 -o ompbarrier -fopenmp ompbarrier.o
+
+ompbarrier.o: ompbarrier.c
+	$(CXX) -O3 -o ompbarrier.o -fopenmp -c ompbarrier.c
+
+clean:
+	rm ompbarrier ompbarrier.o
+

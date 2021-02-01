@@ -280,7 +280,21 @@ EXTRA_DIST = \
     tests/refFiles/test_memHierarchy_sdl9_2.out \
     tests/refFiles/test_memHierarchy_sdl_1.out \
     tests/refFiles/test_memHierarchy_sdl_2.out \
-    tests/refFiles/test_memHierarchy_sdl_3.out
+    tests/refFiles/test_memHierarchy_sdl_3.out \
+    tests/refFiles/test_OMP_ompapi.out \
+    tests/refFiles/test_OMP_ompatomic.out \
+    tests/refFiles/test_OMP_ompbarrier.out \
+    tests/refFiles/test_OMP_ompcritical.out \
+    tests/refFiles/test_OMP_ompdynamic.out \
+    tests/refFiles/test_OMP_ompreduce.out \
+    tests/refFiles/test_OMP_omptriangle.out \
+    tests/openMP/ompapi/ompapi \
+    tests/openMP/ompatomic/ompatomic \
+    tests/openMP/ompbarrier/ompbarrier \
+    tests/openMP/ompcritical/ompcritical \
+    tests/openMP/ompdynamic/ompdynamic \
+    tests/openMP/ompreduce/ompreduce \
+    tests/openMP/omptriangle/omptriangle
 
 sstdir = $(includedir)/sst/elements/memHierarchy
 nobase_sst_HEADERS = \

@@ -4,8 +4,8 @@ from sst_unittest import *
 from sst_unittest_support import *
 from sst_unittest_parameterized import parameterized
 
-import hashlib
-#import os
+import os
+import subprocess
 
 dirpath = os.path.dirname(sys.modules[__name__].__file__)
 
@@ -22,11 +22,7 @@ dir3levelsweep_test_matrix = []
 # that will affect testing operations:
 # SST_SWEEP_MSIMESI_OPT = MSI | MESI
 # SST_SWEEP_OPENMP = ompatomic | ompapi | ompcritical | ompdynamic | ompreduce | omptriangle | ompbarrier
-# SST_TEST_dir3levelsweep_LIST=first-last  -- Sweek Tests to be run
-#
-#
-#
-#
+# SST_TEST_dir3levelsweep_LIST=first-last  -- Sweep Tests to be run
 #
 ################################################################################
 
@@ -110,12 +106,11 @@ def _add_data_to_test_matrix(testnum, omp_app, L1_size, L1_repl, L1_asso, L2_siz
 #    log_debug("dir3levelsweep Test Matrix:TestNum={0:04}; App={13}; L1:size={1}; repl={2}; asso={3}; L2:size={4}; repl={5}; asso={6}; mshr={7}; L3:size={8}; repl={9}; asso={10}; mshr={11}; test_type={12}".format(testnum, L1_size, L1_repl, L1_asso, L2_size, L2_repl, L2_asso, L2_mshr, L3_size, L3_repl, L3_asso, L3_mshr, test_type, omp_app))
     test_data = (testnum, omp_app, L1_size, L1_repl, L1_asso, L2_size, L2_repl, L2_asso, L2_mshr, L3_size, L3_repl, L3_asso, L3_mshr, test_type)
 
-    #DEBUG
+    # FOR DEBUG - disable tests above a certain number
 #    if testnum > 1:
 #        return
 
     dir3levelsweep_test_matrix.append(test_data)
-
 
 ################################################################################
 
@@ -202,9 +197,6 @@ class testcase_memH_sweep_dir3levelsweep(SSTTestCase):
         outdir = self.get_test_output_run_dir()
         tmpdir = self.get_test_output_tmp_dir()
 
-#        self.ember_ESshmem_Folder = "{0}/ember_ESshmem_folder".format(tmpdir)
-#        self.emberelement_testdir = "{0}/../test/".format(test_path)
-#
         # Set the various file paths
         testDataFileName="test_dirSweep_{0}_case".format(omp_app)
 
@@ -216,10 +208,13 @@ class testcase_memH_sweep_dir3levelsweep(SSTTestCase):
         testtimeout = 120
 
         # Set the environment path to the omp application used by the SDL file
-        os.environ["OMP_EXE"] = "{0}/openMP/{1}/{1}".format(test_path, omp_app)
+        # and verify it exists
+        ompapppath = "{0}/openMP/{1}/{1}".format(test_path, omp_app)
+        self.assertTrue(os.path.isfile(ompapppath), "dir3LevelSweep Test; ompfile {0} - not found".format(ompapppath))
+        os.environ["OMP_EXE"] = ompapppath
 
+        # Set the model options for the test (This is what we sweep)
         otherargs = '--model-options="--L1cachesz={0} --L2cachesz={1} --L3cachesz={2} --L1Replacp={3} --L2Replacp={4} --L3Replacp={5} --L1assoc={6} --L2assoc={7} --L3assoc={8} --L2MSHR={9} --L3MSHR={10} --MSIMESI={11}" '.format(
-#        otherargs = '--model-options="--L1cachesz={0} --L2cachesz={1}" '.format(
                     L1_size,
                     L2_size,
                     L3_size,
@@ -235,37 +230,45 @@ class testcase_memH_sweep_dir3levelsweep(SSTTestCase):
 
         # Run SST
         self.run_sst(sdlfile, outfile, errfile, other_args=otherargs, mpi_out_files=mpioutfiles, timeout_sec=testtimeout)
-#        self.run_sst(sdlfile, outfile, errfile, other_args=otherargs, set_cwd=self.ember_ESshmem_Folder, mpi_out_files=mpioutfiles, timeout_sec=testtimeout)
 
-#        # NOTE: THE PASS / FAIL EVALUATIONS ARE PORTED FROM THE SQE BAMBOO
-#        #       BASED testSuite_XXX.sh THESE SHOULD BE RE-EVALUATED BY THE
-#        #       DEVELOPER AGAINST THE LATEST VERSION OF SST TO SEE IF THE
-#        #       TESTS & RESULT FILES ARE STILL VALID
-#
-#        self.assertFalse(os_test_file(errfile, "-s"), "Ember Test Test {0} has Non-empty Error File {1}".format(testnum, errfile))
-#
-#        # Dig through the output file looking for "Simulation is complete"
-#        outfoundline = ""
-#        grepstr = 'Simulation is complete'
-#        with open(outfile, 'r') as f:
-#            for line in f.readlines():
-#                if grepstr in line:
-#                    outfoundline = line
-#
-#        outtestresult = outfoundline != ""
-#        self.assertTrue(outtestresult, "Ember Test Test {0} - Cannot find string \"{1}\" in output file {2}".format(testnum, grepstr, outfile))
-#
-#        reffoundline = ""
-#        grepstr = '{0} {1}'.format(hash_str, outfoundline)
-#        with open(reffile, 'r') as f:
-#            for line in f.readlines():
-#                if grepstr in line:
-#                    reffoundline = line
-#
-#        reftestresult = reffoundline != ""
-#        self.assertTrue(reftestresult, "Ember Test Test {0} - Cannot find string \"{1}\" in reference file {2}".format(testnum, grepstr, reffile))
-#
-#        log_debug("Ember Test Test {0} - PASSED\n--------".format(testnum))
+        # NOTE: THE PASS / FAIL EVALUATIONS ARE PORTED FROM THE SQE BAMBOO
+        #       BASED testSuite_XXX.sh THESE SHOULD BE RE-EVALUATED BY THE
+        #       DEVELOPER AGAINST THE LATEST VERSION OF SST TO SEE IF THE
+        #       TESTS & RESULT FILES ARE STILL VALID
+
+        # Dig through the output file looking for "Simulation is complete"
+        outfoundline = ""
+        grepstr = 'Simulation is complete'
+        with open(outfile, 'r') as f:
+            for line in f.readlines():
+                if grepstr in line:
+                    outfoundline = line
+
+        outtestresult = outfoundline != ""
+        self.assertTrue(outtestresult, "dir3LevelSweep Test {0} - Cannot find string \"{1}\" in output file {2}".format(testnum, grepstr, outfile))
+
+        # Now dig throught the reference file line by line and then grep the counts
+        # of each line in both the reffile and outfile to ensure they match
+        outcount = 0
+        refcount = 0
+        with open(reffile, 'r') as f:
+            for line in f.readlines():
+                testline = line.strip()
+                # Grep the
+                cmd = 'grep -c "{0}" {1}'.format(testline, reffile)
+                rtn = OSCommand(cmd).run()
+                self.assertEquals(rtn.result(), 0, "dir3LevelSweep Test failed running cmdline {0} - grepping reffile {1}".format(cmd, reffile))
+                refcount = int(rtn.output())
+
+                cmd = 'grep -c "{0}" {1}'.format(testline, outfile)
+                rtn = OSCommand(cmd).run()
+                if rtn.result() == 0:
+                    outcount = int(rtn.output())
+                else:
+                    log_failure("FAILURE: dir3LevelSweep Test failed running cmdline {0} - grepping outfile {1}".format(cmd, outfile))
+
+                # Compare the count
+                self.assertEquals(outcount, refcount, "dir3LevelSweep testing line '{0}': outfile count = {1} does not match reffile count = {2}".format(testline, outcount, refcount))
 
 ###############################################
 
@@ -295,27 +298,6 @@ class testcase_memH_sweep_dir3levelsweep(SSTTestCase):
         except KeyError:
             return
 
-###
-
-    def _setupdir3LevelSweepTestFiles(self):
-        log_debug("_setupdir3LevelSweepTestFiles() Running")
-        test_path = self.get_testsuite_dir()
-        outdir = self.get_test_output_run_dir()
-        tmpdir = self.get_test_output_tmp_dir()
-
-#        self.ember_ESshmem_Folder = "{0}/ember_ESshmem_folder".format(tmpdir)
-#        self.emberelement_testdir = "{0}/../test/".format(test_path)
-#
-#        # Create a clean version of the ember_ESshmem_folder Directory
-#        if os.path.isdir(self.ember_ESshmem_Folder):
-#            shutil.rmtree(self.ember_ESshmem_Folder, True)
-#        os.makedirs(self.ember_ESshmem_Folder)
-#
-#        # Create a simlink of each file in the ember/test directory
-#        for f in os.listdir(self.emberelement_testdir):
-#            filename, ext = os.path.splitext(f)
-#            if ext == ".py":
-#                os_symlink_file(self.emberelement_testdir, self.ember_ESshmem_Folder, f)
 
 ###############################################################################
 
