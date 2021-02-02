@@ -69,14 +69,20 @@ public:
         {"vn_remap_shm_size",  "Size of shared memory region for vn remapping.  If empty, no remapping is done", "-1"},
         {"oql_track_port",     ""},
         {"oql_track_remote",   ""},
-        {"output_arb",         "Arbitration unit to be used for port output", "merlin.arb.output.basic"}
+        {"output_arb",         "Arbitration unit to be used for port output", "merlin.arb.output.basic"},
+        {"mtu",                "Maximum transfer unit on network in b or B (can include SI prefix).","2kB"},
+        {"enable_congestion_management", "Turn on congestion management","false"},
+        {"cm_outstanding_threshold", "Threshold for the amount of data outstanding to a host before congestion management can trigger","2*output_buf_size"},
+        {"cm_pktsize_threshold", "Minimum size of a packet to be considered part of a stream with regards to congestion management","128B"},
+        {"cm_incast_threshold", "Numbr of hosts sending to an enpoint needed to trigger congestion management","6"}
     )
 
     // SST_ELI_DOCUMENT_STATISTICS(
-    //     { "packet_latency",     "Histogram of latencies for received packets", "latency", 1},
     //     { "send_bit_count",     "Count number of bits sent on link", "bits", 1},
+    //     { "send_packet_count",  "Count number of packets sent on link", "packets", 1},
     //     { "output_port_stalls", "Time output port is stalled (in units of core timebase)", "time in stalls", 1},
     //     { "idle_time",          "Number of (in unites of core timebas) that port was idle", "time spent idle", 1},
+    //     { "width_adj_count",    "Number of times the width of a link was adjusted to change the power on the link", "times", 1},
     // )
 
     // SST_ELI_DOCUMENT_PORTS(
@@ -141,7 +147,7 @@ private:
 
     // Need an output queue for topology events.  Incoming topology
     // events will be directed right to the topolgy object.
-    topo_queue_t topo_queue;
+    ctrl_queue_t ctrl_queue;
 
     // We need to avoid checking all the queues every time we clock
     // the arbitration logic, so we'll have each PortControl put the
@@ -238,9 +244,69 @@ private:
 
     SharedRegion* shared_region;
 
+    // For supporting congestion management
+    struct CongestionInfo {
+        const int32_t  src;
+        uint32_t  count;
+        uint32_t  total_count;
+        uint32_t  flit_count;
+        uint32_t  throttle;
+        SimTime_t last_seen;
+        SimTime_t expiration_time;
+        bool active;
+        bool reported_done;
+
+        CongestionInfo(uint32_t src) : src(src), count(0), total_count(0), flit_count(0), throttle(0),last_seen(0), expiration_time(0), active(false), reported_done(false)  {}
+
+    };
+
+    class congestion_info_expiration_pq_order {
+    public:
+        /** Compare based off pointers */
+        inline bool operator()(const CongestionInfo* lhs, const CongestionInfo* rhs) const {
+            return lhs->expiration_time > rhs->expiration_time;
+        }
+
+        /** Compare based off references */
+        inline bool operator()(const CongestionInfo& lhs, const CongestionInfo& rhs) const {
+            return lhs.expiration_time > rhs.expiration_time;
+        }
+    };
+
+    class congestion_info_src_set_order {
+    public:
+        /** Compare based off pointers */
+        inline bool operator()(const CongestionInfo* lhs, const CongestionInfo* rhs) const {
+            return lhs->src < rhs->src;
+        }
+
+        /** Compare based off references */
+        inline bool operator()(const CongestionInfo& lhs, const CongestionInfo& rhs) const {
+            return lhs.src < rhs.src;
+        }
+    };
+
+    SimTime_t mtu_ser_time;
+    SimTime_t flit_ser_time;
+    bool enable_congestion_management;
+    bool cm_activated;
+    int cm_outstanding_threshold;
+    int cm_incast_threshold;
+    int cm_pktsize_threshold;
+    double cm_window_factor;
+
+    std::map<uint32_t,CongestionInfo> congestion_map;
+    std::priority_queue<CongestionInfo*, std::vector<CongestionInfo* >, congestion_info_expiration_pq_order> expiration_queue;
+    int current_incast;
+    int total_flits_incoming;
+    int total_incast_flits;
+    int congestion_events;
+    int congestion_count_at_last_throttle;
+
 public:
 
-    void sendTopologyEvent(TopologyEvent* ev);
+    void recvCtrlEvent(CtrlRtrEvent* ev);
+    void sendCtrlEvent(CtrlRtrEvent* ev);
     // Returns true if there is space in the output buffer and false
     // otherwise.
     void send(internal_router_event* ev, int vc);
@@ -253,6 +319,7 @@ public:
     internal_router_event** getVCHeads() {
     	return vc_heads;
     }
+    virtual void reportIncomingEvent(internal_router_event* ev);
 
     // time_base is a frequency which represents the bandwidth of the link in flits/second.
     PortControl(ComponentId_t cid, Params& params, Router* rif, int rtr_id, int port_number, Topology *topo);
@@ -275,7 +342,6 @@ public:
     void dumpState(std::ostream& stream);
     void printStatus(Output& out, int out_port_busy, int in_port_busy);
 
-    // void setupVCs(int vcs, internal_router_event** vc_heads
 	bool decreaseLinkWidth();
 	bool increaseLinkWidth();
 
@@ -294,6 +360,7 @@ private:
 
 	uint64_t increaseActive();
 
+    void updateCongestionState(internal_router_event* send_event);
 };
 
 
