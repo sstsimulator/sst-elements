@@ -67,7 +67,7 @@ class OfferedLoadJob(Job):
 class IncastJob(Job):
     def __init__(self,job_id,size):
         Job.__init__(self,job_id,size)
-        self._declareParams("main",["num_peers","target_nids","packets_to_send","packet_size"])
+        self._declareParams("main",["num_peers","target_nids","packets_to_send","packet_size","delay_start"])
         self.num_peers = size
         self._lockVariable("num_peers")
 
@@ -84,4 +84,3 @@ class IncastJob(Job):
         #  Add the linkcontrol
         networkif, port_name = self.network_interface.build(nic,"networkIF",0,self.job_id,self.size,id,True)
         return (networkif, port_name)
-

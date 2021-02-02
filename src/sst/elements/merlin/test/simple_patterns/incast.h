@@ -47,7 +47,7 @@ public:
         {"target_nids",     "List of NIDs to target incast to.  All other nids will round robin packets to target nids"},
         {"packets_to_send", "Number of packets to send to each target nid.  If set to -1, it will send continuously, but won't register as a primary component","10"},
         {"packet_size",     "Packet size specified in either b or B (can include SI prefix).","64B"},
-        {"start_delay",     "How long to wait before sending first message","0ns"},
+        {"delay_start",     "Amount of time to wait before starting to send packets","0ns"},
     )
 
     SST_ELI_DOCUMENT_PORTS(
@@ -75,7 +75,9 @@ private:
 
     SimTime_t start_time;
     SimTime_t end_time;
-    
+
+    UnitAlgebra delay_start;
+
     Output& output;
 
 public:
@@ -94,6 +96,7 @@ private:
 
     // for sources
     bool handle_sends(int vn);
+    void handle_start(Event* ev);
 
 };
 
