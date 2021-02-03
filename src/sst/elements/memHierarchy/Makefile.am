@@ -294,7 +294,9 @@ EXTRA_DIST = \
     tests/openMP/ompcritical/ompcritical \
     tests/openMP/ompdynamic/ompdynamic \
     tests/openMP/ompreduce/ompreduce \
-    tests/openMP/omptriangle/omptriangle
+    tests/openMP/omptriangle/omptriangle \
+    tests/openMP/sweepdirectory-8cores-2nodes.py \
+    tests/openMP/test-distributed-caches.py
 
 sstdir = $(includedir)/sst/elements/memHierarchy
 nobase_sst_HEADERS = \
