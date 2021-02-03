@@ -176,6 +176,7 @@ class topoDragonFly(Topology):
                         link = sst.Link("link:g%dr%dh%d"%(g, r, p))
                         #network_interface.build(nic,slot,0,link,self.host_link_latency)
                         link.connect( (nic, port_name, self.host_link_latency), (rtr, "port%d"%port, self.host_link_latency) )
+                        #link.setNoCut()
                         #rtr.addLink(link,"port%d"%port,self.host_link_latency)
                     nic_num = nic_num + 1
                     port = port + 1

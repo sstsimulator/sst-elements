@@ -685,9 +685,10 @@ class hr_router(RouterTemplate):
                                       "xbar_arb","network_inspectors","oql_track_port","oql_track_remote","num_vns","vn_remap","vn_remap_shm"])
 
         self._declareParams("params",["qos_settings"],"portcontrol:arbitration:")
-        self._declareParams("params",["output_arb"],"portcontrol:")
+        self._declareParams("params",["output_arb", "enable_congestion_management", "cm_outstanding_threshold", "cm_incast_threshold"],"portcontrol:")
 
         self._setCallbackOnWrite("qos_settings",self._qos_callback)
+
         self._subscribeToPlatformParamSet("router")
 
 
@@ -720,6 +721,7 @@ class SystemEndpoint(Buildable):
             return self._system._endpoints[nID].build(nID, extraKeys)
         else:
             return (None, None)
+
 
 class EmptyJob(Job):
     def __init__(self,job_id,size):
@@ -832,7 +834,7 @@ def _allocate_random(available_nodes, num_nodes, seed = None):
 
 
 def _allocate_linear(available_nodes, num_nodes):
-    
+
     available_nodes.sort()
     
     nid_list = available_nodes[0:num_nodes]

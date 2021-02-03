@@ -73,6 +73,7 @@ incast_nic::incast_nic(ComponentId_t cid, Params& params) :
     link_control = loadUserSubComponent<SST::Interfaces::SimpleNetwork>
         ("networkIF", ComponentInfo::SHARE_NONE, 1 /* vns */);
 
+    delay_start = params.find<UnitAlgebra>("delay_start", UnitAlgebra("0ns"));
 }
 
 
@@ -94,7 +95,7 @@ incast_nic::init(unsigned int phase) {
             if ( id == x ) {
                 target = true;
                 // Compute total packets to recv          --> because we multiplied by targets.size in const <--
-                total_packets = ( num_peers - targets.size() ) * ( total_packets / targets.size() );                
+                total_packets = ( num_peers - targets.size() ) * ( total_packets / targets.size() );
             }
         }
 
@@ -103,14 +104,20 @@ incast_nic::init(unsigned int phase) {
             if ( bw.hasUnits("B/s") ) bw *= UnitAlgebra("8b/B");
             UnitAlgebra size = UnitAlgebra("1 b") * packet_size_in_bits;
             UnitAlgebra ser_time = size / bw;
-            
+
             self_link = configureSelfLink("complete_link", ser_time.toString(), new Event::Handler<incast_nic>(this,&incast_nic::handle_complete));
             link_control->setNotifyOnReceive(new SST::Interfaces::SimpleNetwork::Handler<incast_nic>(this,&incast_nic::handle_event));
         }
         else {
             link_control->setNotifyOnSend(new SST::Interfaces::SimpleNetwork::Handler<incast_nic>(this,&incast_nic::handle_sends));
+            self_link = configureSelfLink("start_link", delay_start.toString(), new Event::Handler<incast_nic>(this,&incast_nic::handle_start));
         }
     }
+}
+
+void incast_nic::handle_start(Event* ev)
+{
+    handle_sends(0);
 }
 
 void incast_nic::setup()
@@ -118,14 +125,15 @@ void incast_nic::setup()
     link_control->setup();
 
     if ( !target ) {
-        handle_sends(0);
+        // handle_sends(0);
+        self_link->send(1,nullptr);
     }
 }
 
 void incast_nic::finish()
 {
     link_control->finish();
-    
+
     if ( !target ) return;
 
     if ( end_time == 0 ) {
@@ -210,7 +218,7 @@ incast_nic::handle_sends(int vn)
         primaryComponentOKToEndSim();
         return false;
     }
-    
+
     // Just send until there is no more space
     while ( link_control->spaceToSend(0,packet_size_in_bits) ) {
         SimpleNetwork::Request* req = new SimpleNetwork::Request();
@@ -229,4 +237,3 @@ incast_nic::handle_sends(int vn)
 
 } // namespace Merlin
 } // namespace SST
-
