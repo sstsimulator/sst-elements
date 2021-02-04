@@ -133,9 +133,9 @@ class testcase_prospero(SSTTestCase):
 
         sdlfile = "{0}/array/trace-common.py".format(test_path)
         reffile = "{0}/refFiles/{1}.out".format(test_path, testDataFileName)
-        outfile = "{0}/{1}.out".format(outdir, testDataFileName)
-        errfile = "{0}/{1}.err".format(outdir, testDataFileName)
-        mpioutfiles = "{0}/{1}.testfile".format(outdir, testDataFileName)
+        outfile = "{0}/{1}_usepintraces_{2}.out".format(outdir, testDataFileName, use_pin_traces)
+        errfile = "{0}/{1}_usepintraces_{2}.out.err".format(outdir, testDataFileName, use_pin_traces)
+        mpioutfiles = "{0}/{1}_usepintraces_{2}.out.testfile".format(outdir, testDataFileName, use_pin_traces)
 
         log_debug("trace_name = {0}".format(trace_name))
         log_debug("testDataFileName = {0}".format(testDataFileName))
