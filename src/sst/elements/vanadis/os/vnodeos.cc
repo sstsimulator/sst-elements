@@ -28,9 +28,9 @@ VanadisNodeOSComponent::VanadisNodeOSComponent( SST::ComponentId_t id, SST::Para
 
 	char* port_name_buffer = new char[128];
 
-	const char* stdin_path  = nullptr;
-	const char* stdout_path = "stdout";
-	const char* stderr_path = "stderr";
+	std::string stdout_path = params.find<std::string>("stdout", "stdout-" + getName());
+	std::string stderr_path = params.find<std::string>("stderr", "stderr-" + getName());
+	std::string stdin_path  = params.find<std::string>("stdin", "");
 
 	get_sim_nano = std::bind( &VanadisNodeOSComponent::getSimNanoSeconds, this );
 
@@ -61,7 +61,9 @@ VanadisNodeOSComponent::VanadisNodeOSComponent( SST::ComponentId_t id, SST::Para
 		}
 
 		VanadisNodeOSCoreHandler* new_core_handler = new VanadisNodeOSCoreHandler( verbosity, i,
-			stdin_path, stdout_path, stderr_path );
+			(stdin_path == "") ? nullptr : stdin_path.c_str(),
+			stdout_path.c_str(),
+			stderr_path.c_str() );
 		new_core_handler->setLink( core_link );
 		new_core_handler->setSimTimeNano( get_sim_nano );
 		new_core_handler->setMemoryManager( memory_mgr );

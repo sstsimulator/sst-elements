@@ -31,7 +31,10 @@ public:
 
 	SST_ELI_DOCUMENT_PARAMS(
 		{ "verbose", 		"Set the output verbosity, 0 is no output, higher is more." },
-		{ "cores",		"Number of cores that can request OS services via a link."  }
+		{ "cores",		"Number of cores that can request OS services via a link."  },
+		{ "stdout",		"File path to place stdout" },
+		{ "stderr",		"File path to place stderr" },
+		{ "stdin",		"File path to place stdin"  }
 	)
 
 	SST_ELI_DOCUMENT_PORTS(
