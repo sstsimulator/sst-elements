@@ -254,18 +254,20 @@ class testcase_memH_sweep_dir3levelsweep(SSTTestCase):
         with open(reffile, 'r') as f:
             for line in f.readlines():
                 testline = line.strip()
-                # Grep the
-                cmd = 'grep -c "{0}" {1}'.format(testline, reffile)
-                rtn = OSCommand(cmd).run()
-                self.assertEquals(rtn.result(), 0, "dir3LevelSweep Test failed running cmdline {0} - grepping reffile {1}".format(cmd, reffile))
-                refcount = int(rtn.output())
+                if testline != "":
+                    # Grep the ref file for the count of this line occuring
+                    cmd = 'grep -c "{0}" {1}'.format(testline, reffile)
+                    rtn = OSCommand(cmd).run()
+                    self.assertEquals(rtn.result(), 0, "dir3LevelSweep Test failed running cmdline {0} - grepping reffile {1}".format(cmd, reffile))
+                    refcount = int(rtn.output())
 
-                cmd = 'grep -c "{0}" {1}'.format(testline, outfile)
-                rtn = OSCommand(cmd).run()
-                if rtn.result() == 0:
-                    outcount = int(rtn.output())
-                else:
-                    log_failure("FAILURE: dir3LevelSweep Test failed running cmdline {0} - grepping outfile {1}".format(cmd, outfile))
+                    # Grep the out file for the count of this line occuring
+                    cmd = 'grep -c "{0}" {1}'.format(testline, outfile)
+                    rtn = OSCommand(cmd).run()
+                    if rtn.result() == 0:
+                        outcount = int(rtn.output())
+                    else:
+                        log_failure("FAILURE: dir3LevelSweep Test failed running cmdline {0} - grepping outfile {1}".format(cmd, outfile))
 
                 # Compare the count
                 self.assertEquals(outcount, refcount, "dir3LevelSweep testing line '{0}': outfile count = {1} does not match reffile count = {2}".format(testline, outcount, refcount))
