@@ -83,13 +83,13 @@ def _add_data_to_test_matrix(testnum, omp_app, L1_size, L1_asso, L2_size, L2_ass
     global dirsweep_test_matrix
 
     # FOR DEVELOPMENT - Hard code the specific test of list ["ompatomic", "ompapi", "ompcritical", "ompdynamic", "ompreduce", "omptriangle", "ompbarrier"]
-    omp_app = "omptriangle"
+#    omp_app = "ompbarrier"
 
 #    log_debug("dirsweep Test Matrix:TestNum={0:04}; App={1}; L1:size={2}; asso={3}; L2:size={4}; asso={5}; mshr={6}; cache_repl={7}; test_type={8}; prefetch={9}".format(testnum, omp_app, L1_size, L1_asso, L2_size, L2_asso, L2_mshr, repl, test_type, prefetch))
     test_data = (testnum, omp_app, L1_size, L1_asso, L2_size, L2_asso, L2_mshr, repl, test_type, prefetch)
 
     # FOR DEVELOPMENT - disable tests above a certain number
-#    if testnum > 1:
+#    if testnum > 10:
 #        return
 
 
@@ -227,18 +227,20 @@ class testcase_memH_sweep_dirsweep(SSTTestCase):
         with open(reffile, 'r') as f:
             for line in f.readlines():
                 testline = line.strip()
-                # Grep the
-                cmd = 'grep -c "{0}" {1}'.format(testline, reffile)
-                rtn = OSCommand(cmd).run()
-                self.assertEquals(rtn.result(), 0, "dirsweep Test failed running cmdline {0} - grepping reffile {1}".format(cmd, reffile))
-                refcount = int(rtn.output())
+                if testline != "":
+                    # Grep the ref file for the count of this line occuring
+                    cmd = 'grep -c "{0}" {1}'.format(testline, reffile)
+                    rtn = OSCommand(cmd).run()
+                    self.assertEquals(rtn.result(), 0, "dirsweep Test failed running cmdline {0} - grepping reffile {1}".format(cmd, reffile))
+                    refcount = int(rtn.output())
 
-                cmd = 'grep -c "{0}" {1}'.format(testline, outfile)
-                rtn = OSCommand(cmd).run()
-                if rtn.result() == 0:
-                    outcount = int(rtn.output())
-                else:
-                    log_failure("FAILURE: dirsweep Test failed running cmdline {0} - grepping outfile {1}".format(cmd, outfile))
+                    # Grep the out file for the count of this line occuring
+                    cmd = 'grep -c "{0}" {1}'.format(testline, outfile)
+                    rtn = OSCommand(cmd).run()
+                    if rtn.result() == 0:
+                        outcount = int(rtn.output())
+                    else:
+                        log_failure("FAILURE: dirsweep Test failed running cmdline {0} - grepping outfile {1}".format(cmd, outfile))
 
                 # Compare the count
                 self.assertEquals(outcount, refcount, "dirsweep testing line '{0}': outfile count = {1} does not match reffile count = {2}".format(testline, outcount, refcount))
