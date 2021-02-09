@@ -12,24 +12,23 @@ dirpath = os.path.dirname(sys.modules[__name__].__file__)
 
 module_init = 0
 module_sema = threading.Semaphore()
-dirsweep_test_matrix = []
+sweep_test_matrix = []
 
 ################################################################################
 # NOTES:
-# This is a parameterized test, we setup the dirsweep test matrix ahead of time and
+# This is a parameterized test, we setup the sweep test matrix ahead of time and
 # then use the sst_unittest_parameterized module to load the list of testcases.
 #
 # There are a lot of environment options that can be set by exporting a env variable
 # that will affect testing operations:
-# SST_SWEEP_MSIMESI_OPT = MSI | MESI
 # SST_SWEEP_OPENMP = ompatomic | ompapi | ompcritical | ompdynamic | ompreduce | omptriangle | ompbarrier
-# SST_TEST_dirsweep_LIST=first-last  -- Sweep Tests to be run
+# SST_SWEEP_dirsweep_LIST=first-last  -- Sweep Tests to be run
 #
 ################################################################################
 
-def build_dirsweep_test_matrix():
-    global dirsweep_test_matrix
-    dirsweep_test_matrix = []
+def build_sweep_test_matrix():
+    global sweep_test_matrix
+    sweep_test_matrix = []
     testnum = 1
 
     # OMP App names
@@ -80,25 +79,24 @@ def build_dirsweep_test_matrix():
                                                 testnum += 1
 
 def _add_data_to_test_matrix(testnum, omp_app, L1_size, L1_asso, L2_size, L2_asso, L2_mshr, repl, test_type, prefetch):
-    global dirsweep_test_matrix
+    global sweep_test_matrix
 
     # FOR DEVELOPMENT - Hard code the specific test of list ["ompatomic", "ompapi", "ompcritical", "ompdynamic", "ompreduce", "omptriangle", "ompbarrier"]
 #    omp_app = "ompbarrier"
 
-#    log_debug("dirsweep Test Matrix:TestNum={0:04}; App={1}; L1:size={2}; asso={3}; L2:size={4}; asso={5}; mshr={6}; cache_repl={7}; test_type={8}; prefetch={9}".format(testnum, omp_app, L1_size, L1_asso, L2_size, L2_asso, L2_mshr, repl, test_type, prefetch))
+#    log_debug("sweep Test Matrix:TestNum={0:04}; App={1}; L1:size={2}; asso={3}; L2:size={4}; asso={5}; mshr={6}; cache_repl={7}; test_type={8}; prefetch={9}".format(testnum, omp_app, L1_size, L1_asso, L2_size, L2_asso, L2_mshr, repl, test_type, prefetch))
     test_data = (testnum, omp_app, L1_size, L1_asso, L2_size, L2_asso, L2_mshr, repl, test_type, prefetch)
 
     # FOR DEVELOPMENT - disable tests above a certain number
 #    if testnum > 10:
 #        return
 
-
-    dirsweep_test_matrix.append(test_data)
+    sweep_test_matrix.append(test_data)
 
 ################################################################################
 
 # At startup, build the test matrix
-build_dirsweep_test_matrix()
+build_sweep_test_matrix()
 
 def gen_custom_name(testcase_func, param_num, param):
 # Full TestCaseName
@@ -133,7 +131,7 @@ def initializeTestModule_SingleInstance(class_inst):
     if module_init != 1:
         try:
             # Put your single instance Init Code Here
-            class_inst._setupdirsweepTestFiles()
+            pass
         except:
             pass
         module_init = 1
@@ -158,16 +156,16 @@ class testcase_memH_sweep_dirsweep(SSTTestCase):
 
 ####
 
-    @parameterized.expand(dirsweep_test_matrix, name_func=gen_custom_name)
-    def test_memH_dirsweep(self, testnum, omp_app, L1_size, L1_asso, L2_size, L2_asso, L2_mshr, repl, test_type, prefetch):
+    @parameterized.expand(sweep_test_matrix, name_func=gen_custom_name)
+    def test_memH_sweep_dirsweep(self, testnum, omp_app, L1_size, L1_asso, L2_size, L2_asso, L2_mshr, repl, test_type, prefetch):
         self._checkSkipConditions(testnum)
 
-        log_debug("Running memH dirsweep #{0:04}; App={1}; L1:size={2}; asso={3}; L2:size={4}; asso={5}; mshr={6}; cache_repl={7}; test_type={8}; prefetch={9}".format(testnum, omp_app, L1_size, L1_asso, L2_size, L2_asso, L2_mshr, repl, test_type, prefetch))
-        self.memH_dir3levelsweek_test_template(testnum, omp_app, L1_size, L1_asso, L2_size, L2_asso, L2_mshr, repl, test_type, prefetch)
+        log_debug("Running memH sweep dirsweep #{0:04}; App={1}; L1:size={2}; asso={3}; L2:size={4}; asso={5}; mshr={6}; cache_repl={7}; test_type={8}; prefetch={9}".format(testnum, omp_app, L1_size, L1_asso, L2_size, L2_asso, L2_mshr, repl, test_type, prefetch))
+        self.memH_sweep_test_template(testnum, omp_app, L1_size, L1_asso, L2_size, L2_asso, L2_mshr, repl, test_type, prefetch)
 
 ####
 
-    def memH_dir3levelsweek_test_template(self, testnum, omp_app, L1_size, L1_asso, L2_size, L2_asso, L2_mshr, repl, test_type, prefetch):
+    def memH_sweep_test_template(self, testnum, omp_app, L1_size, L1_asso, L2_size, L2_asso, L2_mshr, repl, test_type, prefetch):
 
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
@@ -175,7 +173,7 @@ class testcase_memH_sweep_dirsweep(SSTTestCase):
         tmpdir = self.get_test_output_tmp_dir()
 
         # Set the various file paths
-        testDataFileName="test_dirSweep_{0}_case".format(omp_app)
+        testDataFileName="test_memH_sweep_dirSweep_{0}_case".format(omp_app)
 
         reffile = "{0}/refFiles/test_OMP_{1}.out".format(test_path, omp_app)
         outfile = "{0}/{1}_{2:04}.out".format(outdir, testDataFileName, testnum)
@@ -187,7 +185,7 @@ class testcase_memH_sweep_dirsweep(SSTTestCase):
         # Set the environment path to the omp application used by the SDL file
         # and verify it exists
         ompapppath = "{0}/openMP/{1}/{1}".format(test_path, omp_app)
-        self.assertTrue(os.path.isfile(ompapppath), "dirsweep Test; ompfile {0} - not found".format(ompapppath))
+        self.assertTrue(os.path.isfile(ompapppath), "Sweep dirsweep Test; ompfile {0} - not found".format(ompapppath))
         os.environ["OMP_EXE"] = ompapppath
 
         # Set the model options for the test (This is what we sweep)
@@ -218,7 +216,7 @@ class testcase_memH_sweep_dirsweep(SSTTestCase):
                     outfoundline = line
 
         outtestresult = outfoundline != ""
-        self.assertTrue(outtestresult, "dirsweep Test {0} - Cannot find string \"{1}\" in output file {2}".format(testnum, grepstr, outfile))
+        self.assertTrue(outtestresult, "Sweep dirsweep Test {0} - Cannot find string \"{1}\" in output file {2}".format(testnum, grepstr, outfile))
 
         # Now dig throught the reference file line by line and then grep the counts
         # of each line in both the reffile and outfile to ensure they match
@@ -231,7 +229,7 @@ class testcase_memH_sweep_dirsweep(SSTTestCase):
                     # Grep the ref file for the count of this line occuring
                     cmd = 'grep -c "{0}" {1}'.format(testline, reffile)
                     rtn = OSCommand(cmd).run()
-                    self.assertEquals(rtn.result(), 0, "dirsweep Test failed running cmdline {0} - grepping reffile {1}".format(cmd, reffile))
+                    self.assertEquals(rtn.result(), 0, "Sweep dirsweep Test failed running cmdline {0} - grepping reffile {1}".format(cmd, reffile))
                     refcount = int(rtn.output())
 
                     # Grep the out file for the count of this line occuring
@@ -240,20 +238,20 @@ class testcase_memH_sweep_dirsweep(SSTTestCase):
                     if rtn.result() == 0:
                         outcount = int(rtn.output())
                     else:
-                        log_failure("FAILURE: dirsweep Test failed running cmdline {0} - grepping outfile {1}".format(cmd, outfile))
+                        log_failure("FAILURE: Sweep dirsweep Test failed running cmdline {0} - grepping outfile {1}".format(cmd, outfile))
 
                 # Compare the count
-                self.assertEquals(outcount, refcount, "dirsweep testing line '{0}': outfile count = {1} does not match reffile count = {2}".format(testline, outcount, refcount))
+                self.assertEquals(outcount, refcount, "Sweep dirsweep testing line '{0}': outfile count = {1} does not match reffile count = {2}".format(testline, outcount, refcount))
 
 ###############################################
 
     def _checkSkipConditions(self, testindex):
-        # Check to see if Env Var SST_TEST_dirsweep_LIST is set limiting which tests to run
+        # Check to see if Env Var SST_SWEEP_dirsweep_LIST is set limiting which tests to run
         #   An inclusive sub-list may be specified as "first-last"  (e.g. 7-10)
-        env_var = 'SST_TEST_dirsweep_LIST'
+        env_var = 'SST_SWEEP_dirsweep_LIST'
         try:
             testlist = os.environ[env_var]
-            log_debug("SST_TEST_dirsweep_LIST = {0}; type = {1}".format(testlist, type(testlist)))
+            log_debug("SST_SWEEP_dirsweep_LIST = {0}; type = {1}".format(testlist, type(testlist)))
             index = testlist.find('-')
             if index > 0 and len(testlist) >= 3:
                 startnumstr = int(testlist[0:index])

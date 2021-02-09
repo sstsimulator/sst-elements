@@ -6,6 +6,7 @@ from sst_unittest_parameterized import parameterized
 
 import os
 import subprocess
+import datetime
 
 dirpath = os.path.dirname(sys.modules[__name__].__file__)
 
@@ -20,9 +21,9 @@ sweep_test_matrix = []
 #
 # There are a lot of environment options that can be set by exporting a env variable
 # that will affect testing operations:
-# SST_SWEEP_MSIMESI_OPT = MSI | MESI
+# SST_SWEEP_MEMH_EXCLUSIVE = 1 - Use omp_app sweepdirectory-exclusive.py
 # SST_SWEEP_OPENMP = ompatomic | ompapi | ompcritical | ompdynamic | ompreduce | omptriangle | ompbarrier
-# SST_SWEEP_dir3levelsweep_LIST=first-last  -- Sweep Tests to be run
+# SST_SWEEP_dirsweepI_LIST=first-last  -- Sweep Tests to be run
 #
 ################################################################################
 
@@ -33,82 +34,65 @@ def build_sweep_test_matrix():
 
     # OMP App names
     omp_app_list = ["ompatomic", "ompapi", "ompcritical", "ompdynamic", "ompreduce", "omptriangle", "ompbarrier"]
+    dayofweek = datetime.datetime.today().weekday()
 
-    # Get the OpenMP application to run is defined in env (ompdynamic is default)
+    # Get the OpenMP application to run if defined in env based otherwise get the
+    # app based upon the day of the week
     env_var = 'SST_SWEEP_OPENMP'
     try:
         omp_app = os.environ[env_var]
         if not omp_app in omp_app_list:
             log_error ("Env Var {0} = {1}; is not valid; valid options = {2}".format(env_var, omp_app, omp_app_list))
-            omp_app = "ompdynamic"
+            omp_app = "ompatomic"
     except KeyError:
-        omp_app = "ompdynamic"
+        omp_app = omp_app_list[dayofweek]
+
 
     # L1 Cache Options
     L1_cache_size_list = ["8KB", "32KB"]
-    L1_replacement_policy_list = ["random", "mru"]
     L1_associativity_list = ["2", "4"]
 
     # L2 Cache Options
-    L2_cache_size_list = ["32KB", "128KB"]
-    L2_replacement_policy_list = ["random", "mru"]
+    L2_cache_size_list = ["32KB", "512KB"]
     L2_associativity_list = ["8", "16"]
     L2_mshr_size_list = ["8", "64"]
 
-    # L3 Cache Options
-    L3_cache_size_list = ["32KB", "128KB"]
-    L3_replacement_policy_list = ["random", "mru"]
-    L3_associativity_list = ["8", "16"]
-    L3_mshr_size_list = ["8", "64"]
+    # Both Cache Replacment Policy
+    replacement_policy_list = ["mru", "random", "nmru"]
 
     # Test type options
     test_type_list = ["MSI", "MESI"]
 
-    # See if an Test Type has been defined in the env
-    env_var = 'SST_SWEEP_MSIMESI_OPT'
-    try:
-        forced_test_type = os.environ[env_var]
-        if not forced_test_type in test_type_list:
-            log_error ("Env Var {0} = {1}; is not valid; valid options = {2}".format(env_var, forced_test_type, test_type_list))
-            forced_test_type = None
-    except KeyError:
-        forced_test_type = None
+    # Prefetcher enabled options
+    ptest_type_list = ["yes", "no"]
 
     # Now loop through the options and build the Test Matrix
     log_debug("*** BUILDING THE TEST MATRIX")
-    for L1_size in L1_cache_size_list:
-        if L1_size == "8 KB":
-            L1_repl = "mru"
-            L1_asso = "2"
-        else:
-            L1_repl = "random"
-            L1_asso = "4"
-        for L2_size in L2_cache_size_list:
-            for L3_size in L3_cache_size_list:
-                for L2_repl in L2_replacement_policy_list:
-                    for L3_repl in L3_replacement_policy_list:
-                        for L2_asso in L2_associativity_list:
-                            for L3_asso in L3_associativity_list:
-                                for L2_mshr in L2_mshr_size_list:
-                                    for L3_mshr in L3_mshr_size_list:
-                                        if forced_test_type == None:
-                                            for test_type in test_type_list:
-                                                _add_data_to_test_matrix(testnum, omp_app, L1_size, L1_repl, L1_asso, L2_size, L2_repl, L2_asso, L2_mshr, L3_size, L3_repl, L3_asso, L3_mshr, test_type)
-                                                testnum += 1
-                                        else:
-                                            test_type = forced_test_type
-                                            _add_data_to_test_matrix(testnum, omp_app, L1_size, L1_repl, L1_asso, L2_size, L2_repl, L2_asso, L2_mshr, L3_size, L3_repl, L3_asso, L3_mshr, test_type)
-                                            testnum += 1
+    for omp_app in omp_app_list:
+        for L1_size in L1_cache_size_list:
+            for L2_size in L2_cache_size_list:
+                for L1_asso in L1_associativity_list:
+                    for repl in replacement_policy_list:
+                            for L2_asso in L2_associativity_list:
+                                    for L2_mshr in L2_mshr_size_list:
+                                        for test_type in test_type_list:
+                                            for prefetch in ptest_type_list:
+                                                    _add_data_to_test_matrix(testnum, omp_app, L1_size, L1_asso, L2_size, L2_asso, L2_mshr, repl, test_type, prefetch)
+                                                    testnum += 1
 
-def _add_data_to_test_matrix(testnum, omp_app, L1_size, L1_repl, L1_asso, L2_size, L2_repl, L2_asso, L2_mshr, L3_size, L3_repl, L3_asso, L3_mshr, test_type):
+def _add_data_to_test_matrix(testnum, omp_app, L1_size, L1_asso, L2_size, L2_asso, L2_mshr, repl, test_type, prefetch):
     global sweep_test_matrix
 
-#    log_debug("sweep Test Matrix:TestNum={0:04}; App={13}; L1:size={1}; repl={2}; asso={3}; L2:size={4}; repl={5}; asso={6}; mshr={7}; L3:size={8}; repl={9}; asso={10}; mshr={11}; test_type={12}".format(testnum, L1_size, L1_repl, L1_asso, L2_size, L2_repl, L2_asso, L2_mshr, L3_size, L3_repl, L3_asso, L3_mshr, test_type, omp_app))
-    test_data = (testnum, omp_app, L1_size, L1_repl, L1_asso, L2_size, L2_repl, L2_asso, L2_mshr, L3_size, L3_repl, L3_asso, L3_mshr, test_type)
+    # FOR DEVELOPMENT - Hard code the specific test of list ["ompatomic", "ompapi", "ompcritical", "ompdynamic", "ompreduce", "omptriangle", "ompbarrier"]
+    #omp_app = "ompbarrier"
 
-    # FOR DEBUG - disable tests above a certain number
-#    if testnum > 1:
-#        return
+    #log_debug("sweep Test Matrix:TestNum={0:04}; App={1}; L1:size={2}; asso={3}; L2:size={4}; asso={5}; mshr={6}; cache_repl={7}; test_type={8}; prefetch={9}".format(testnum, omp_app, L1_size, L1_asso, L2_size, L2_asso, L2_mshr, repl, test_type, prefetch))
+    test_data = (testnum, omp_app, L1_size, L1_asso, L2_size, L2_asso, L2_mshr, repl, test_type, prefetch)
+
+    # FOR DEVELOPMENT - disable tests above a certain number
+    if testnum > 10:
+        return
+
 
     sweep_test_matrix.append(test_data)
 
@@ -122,27 +106,21 @@ def gen_custom_name(testcase_func, param_num, param):
 #    testcasename = "{0}_{1:03}".format(testcase_func.__name__,
 #        parameterized.to_safe_name("_".join(str(x) for x in param.args)))
 # Abbreviated TestCaseName
-    testcasename = "{0}_{1:04}_{2}_L1:{3}-{4}-{5}_L2:{6}-{7}-{8}-{9}_L3:{10}-{11}-{12}-{13}_Type:{14}".format(
+    testcasename = "{0}_{1:04}_{2}_L1:{3}-{4}_L2:{5}-{6}-{7}_Repl:{8}_Type:{9}_Prefetch:{10}".format(
         testcase_func.__name__,                                   # Test Name
         int(parameterized.to_safe_name(str(param.args[0]))),      # Test Num
         parameterized.to_safe_name(str(param.args[1])),           # OMP App
 
         parameterized.to_safe_name(str(param.args[2])),           # L1 Cache
         parameterized.to_safe_name(str(param.args[3])),
-        parameterized.to_safe_name(str(param.args[4])),
 
-        parameterized.to_safe_name(str(param.args[5])),           # L2 Cache
+        parameterized.to_safe_name(str(param.args[4])),           # L2 Cache
+        parameterized.to_safe_name(str(param.args[5])),
         parameterized.to_safe_name(str(param.args[6])),
-        parameterized.to_safe_name(str(param.args[7])),
-        parameterized.to_safe_name(str(param.args[8])),
 
-        parameterized.to_safe_name(str(param.args[9])),           # L3 Cache
-        parameterized.to_safe_name(str(param.args[10])),
-        parameterized.to_safe_name(str(param.args[11])),
-        parameterized.to_safe_name(str(param.args[12])),
-
-        parameterized.to_safe_name(str(param.args[13]))           # Test Type
-        )
+        parameterized.to_safe_name(str(param.args[7])),           # Cache Repl
+        parameterized.to_safe_name(str(param.args[8])),           # Test Type
+        parameterized.to_safe_name(str(param.args[9])))           # prefetch
     return testcasename
 
 ################################################################################
@@ -164,7 +142,7 @@ def initializeTestModule_SingleInstance(class_inst):
 
 ################################################################################
 
-class testcase_memH_sweep_dir3levelsweep(SSTTestCase):
+class testcase_memH_sweep_dirsweepI(SSTTestCase):
 
     def initializeClass(self, testName):
         super(type(self), self).initializeClass(testName)
@@ -182,15 +160,15 @@ class testcase_memH_sweep_dir3levelsweep(SSTTestCase):
 ####
 
     @parameterized.expand(sweep_test_matrix, name_func=gen_custom_name)
-    def test_memH_sweep_dir3levelsweep(self, testnum, omp_app, L1_size, L1_repl, L1_asso, L2_size, L2_repl, L2_asso, L2_mshr, L3_size, L3_repl, L3_asso, L3_mshr, test_type):
+    def test_memH_dirsweepI(self, testnum, omp_app, L1_size, L1_asso, L2_size, L2_asso, L2_mshr, repl, test_type, prefetch):
         self._checkSkipConditions(testnum)
 
-        log_debug("Running memH sweep dir3levelsweep #{0:04}; App={13}; L1:size={1}; repl={2}; asso={3}; L2:size={4}; repl={5}; asso={6}; mshr={7}; L3:size={8}; repl={9}; asso={10}; mshr={11}; test_type={12}".format(testnum, omp_app, L1_size, L1_repl, L1_asso, L2_size, L2_repl, L2_asso, L2_mshr, L3_size, L3_repl, L3_asso, L3_mshr, test_type))
-        self.memH_sweep_test_template(testnum, omp_app, L1_size, L1_repl, L1_asso, L2_size, L2_repl, L2_asso, L2_mshr, L3_size, L3_repl, L3_asso, L3_mshr, test_type)
+        log_debug("Running memH sweep dirsweepI #{0:04}; App={1}; L1:size={2}; asso={3}; L2:size={4}; asso={5}; mshr={6}; cache_repl={7}; test_type={8}; prefetch={9}".format(testnum, omp_app, L1_size, L1_asso, L2_size, L2_asso, L2_mshr, repl, test_type, prefetch))
+        self.memH_sweep_test_template(testnum, omp_app, L1_size, L1_asso, L2_size, L2_asso, L2_mshr, repl, test_type, prefetch)
 
 ####
 
-    def memH_sweep_test_template(self, testnum, omp_app, L1_size, L1_repl, L1_asso, L2_size, L2_repl, L2_asso, L2_mshr, L3_size, L3_repl, L3_asso, L3_mshr, test_type):
+    def memH_sweep_test_template(self, testnum, omp_app, L1_size, L1_asso, L2_size, L2_asso, L2_mshr, repl, test_type, prefetch):
 
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
@@ -198,35 +176,41 @@ class testcase_memH_sweep_dir3levelsweep(SSTTestCase):
         tmpdir = self.get_test_output_tmp_dir()
 
         # Set the various file paths
-        testDataFileName="test_memH_sweep_dir3LevelSweep_{0}_case".format(omp_app)
+        testDataFileName="test_memH_sweep_dirSweepI_{0}_case".format(omp_app)
 
         reffile = "{0}/refFiles/test_OMP_{1}.out".format(test_path, omp_app)
         outfile = "{0}/{1}_{2:04}.out".format(outdir, testDataFileName, testnum)
         errfile = "{0}/{1}_{2:04}.err".format(outdir, testDataFileName, testnum)
         mpioutfiles = "{0}/{1}_{2:04}.testfile".format(outdir, testDataFileName, testnum)
-        sdlfile = "{0}/openMP/test-distributed-caches.py".format(test_path)
+        sdlfile = "{0}/openMP/sweepdirectory-8cores-2nodes.py".format(test_path)
         testtimeout = 120
+
+        # Check to see if the user overrode the sdl
+        env_var = 'SST_SWEEP_MEMH_EXCLUSIVE'
+        try:
+            # If the env var is set to anything, then we use the overriddent sdl file
+            # Note: if nothing is set, then the os.environ[env_var] will fire exception
+            use_memh_exclusive = os.environ[env_var]
+            sdlfile = "{0}/openMP/sweepdirectory-exclusive.py".format(test_path)
+        except KeyError:
+            pass
 
         # Set the environment path to the omp application used by the SDL file
         # and verify it exists
         ompapppath = "{0}/openMP/{1}/{1}".format(test_path, omp_app)
-        self.assertTrue(os.path.isfile(ompapppath), "Sweep dir3LevelSweep Test; ompfile {0} - not found".format(ompapppath))
+        self.assertTrue(os.path.isfile(ompapppath), "Sweep dirsweepI Test; ompfile {0} - not found".format(ompapppath))
         os.environ["OMP_EXE"] = ompapppath
 
         # Set the model options for the test (This is what we sweep)
-        otherargs = '--model-options="--L1cachesz={0} --L2cachesz={1} --L3cachesz={2} --L1Replacp={3} --L2Replacp={4} --L3Replacp={5} --L1assoc={6} --L2assoc={7} --L3assoc={8} --L2MSHR={9} --L3MSHR={10} --MSIMESI={11}" '.format(
+        otherargs = '--model-options="--L1cachesz={0} --L1assoc={1} --L2cachesz={2} --L2assoc={3} --L2MSHR={4} --Replacp={5} --MSIMESI={6} --Pref2={7}" '.format(
                     L1_size,
-                    L2_size,
-                    L3_size,
-                    L1_repl,
-                    L2_repl,
-                    L3_repl,
                     L1_asso,
+                    L2_size,
                     L2_asso,
-                    L3_asso,
                     L2_mshr,
-                    L3_mshr,
-                    test_type)
+                    repl,
+                    test_type,
+                    prefetch)
 
         # Run SST
         self.run_sst(sdlfile, outfile, errfile, other_args=otherargs, mpi_out_files=mpioutfiles, timeout_sec=testtimeout)
@@ -245,7 +229,7 @@ class testcase_memH_sweep_dir3levelsweep(SSTTestCase):
                     outfoundline = line
 
         outtestresult = outfoundline != ""
-        self.assertTrue(outtestresult, "Sweep dir3LevelSweep Test {0} - Cannot find string \"{1}\" in output file {2}".format(testnum, grepstr, outfile))
+        self.assertTrue(outtestresult, "Sweep dirsweepI Test {0} - Cannot find string \"{1}\" in output file {2}".format(testnum, grepstr, outfile))
 
         # Now dig throught the reference file line by line and then grep the counts
         # of each line in both the reffile and outfile to ensure they match
@@ -258,7 +242,7 @@ class testcase_memH_sweep_dir3levelsweep(SSTTestCase):
                     # Grep the ref file for the count of this line occuring
                     cmd = 'grep -c "{0}" {1}'.format(testline, reffile)
                     rtn = OSCommand(cmd).run()
-                    self.assertEquals(rtn.result(), 0, "Sweep dir3LevelSweep Test failed running cmdline {0} - grepping reffile {1}".format(cmd, reffile))
+                    self.assertEquals(rtn.result(), 0, "Sweep dirsweepI Test failed running cmdline {0} - grepping reffile {1}".format(cmd, reffile))
                     refcount = int(rtn.output())
 
                     # Grep the out file for the count of this line occuring
@@ -267,20 +251,20 @@ class testcase_memH_sweep_dir3levelsweep(SSTTestCase):
                     if rtn.result() == 0:
                         outcount = int(rtn.output())
                     else:
-                        log_failure("FAILURE: Sweep dir3LevelSweep Test failed running cmdline {0} - grepping outfile {1}".format(cmd, outfile))
+                        log_failure("FAILURE: Sweep dirsweepI Test failed running cmdline {0} - grepping outfile {1}".format(cmd, outfile))
 
                 # Compare the count
-                self.assertEquals(outcount, refcount, "Sweep dir3LevelSweep testing line '{0}': outfile count = {1} does not match reffile count = {2}".format(testline, outcount, refcount))
+                self.assertEquals(outcount, refcount, "Sweep dirsweepI testing line '{0}': outfile count = {1} does not match reffile count = {2}".format(testline, outcount, refcount))
 
 ###############################################
 
     def _checkSkipConditions(self, testindex):
-        # Check to see if Env Var SST_SWEEP_dir3levelsweep_LIST is set limiting which tests to run
+        # Check to see if Env Var SST_SWEEP_dirsweepI_LIST is set limiting which tests to run
         #   An inclusive sub-list may be specified as "first-last"  (e.g. 7-10)
-        env_var = 'SST_SWEEP_dir3levelsweep_LIST'
+        env_var = 'SST_SWEEP_dirsweepI_LIST'
         try:
             testlist = os.environ[env_var]
-            log_debug("SST_SWEEP_dir3levelsweep_LIST = {0}; type = {1}".format(testlist, type(testlist)))
+            log_debug("SST_SWEEP_dirsweepI_LIST = {0}; type = {1}".format(testlist, type(testlist)))
             index = testlist.find('-')
             if index > 0 and len(testlist) >= 3:
                 startnumstr = int(testlist[0:index])

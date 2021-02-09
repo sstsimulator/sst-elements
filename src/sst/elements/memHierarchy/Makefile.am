@@ -132,7 +132,11 @@ EXTRA_DIST = \
 	tests/testsuite_default_memHierarchy_sdl.py \
 	tests/testsuite_default_memHierarchy_memHSieve.py \
 	tests/testsuite_sweep_memHierarchy_dir3LevelSweep.py \
-    Sieve/tests/StatisticOutput.csv.gold \
+	tests/testsuite_sweep_memHierarchy_dirSweep.py \
+	tests/testsuite_sweep_memHierarchy_dirSweepB.py \
+	tests/testsuite_sweep_memHierarchy_dirSweepI.py \
+	tests/testsuite_sweep_memHierarchy_openMP.py \
+	Sieve/tests/StatisticOutput.csv.gold \
     Sieve/tests/sieveprospero-0.trace \
     Sieve/tests/trace-text.py \
     Sieve/tests/Makefile \
@@ -295,6 +299,8 @@ EXTRA_DIST = \
     tests/openMP/ompdynamic/ompdynamic \
     tests/openMP/ompreduce/ompreduce \
     tests/openMP/omptriangle/omptriangle \
+    tests/openMP/sweepopenmp.py \
+    tests/openMP/sweepdirectory-exclusive.py \
     tests/openMP/sweepdirectory-8cores-2nodes.py \
     tests/openMP/test-distributed-caches.py
 
