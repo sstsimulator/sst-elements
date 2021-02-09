@@ -90,8 +90,8 @@ def _add_data_to_test_matrix(testnum, omp_app, L1_size, L1_asso, L2_size, L2_ass
     test_data = (testnum, omp_app, L1_size, L1_asso, L2_size, L2_asso, L2_mshr, repl, test_type, prefetch)
 
     # FOR DEVELOPMENT - disable tests above a certain number
-    if testnum > 10:
-        return
+    #if testnum > 10:
+    #    return
 
 
     sweep_test_matrix.append(test_data)
