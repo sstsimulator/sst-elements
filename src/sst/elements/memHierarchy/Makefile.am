@@ -136,6 +136,8 @@ EXTRA_DIST = \
 	tests/testsuite_sweep_memHierarchy_dirSweepB.py \
 	tests/testsuite_sweep_memHierarchy_dirSweepI.py \
 	tests/testsuite_sweep_memHierarchy_openMP.py \
+	tests/testsuite_openMP_memHierarchy_dirnoncacheable.py \
+	tests/testsuite_openMP_memHierarchy_noncacheable.py \
 	Sieve/tests/StatisticOutput.csv.gold \
     Sieve/tests/sieveprospero-0.trace \
     Sieve/tests/trace-text.py \
@@ -285,12 +287,21 @@ EXTRA_DIST = \
     tests/refFiles/test_memHierarchy_sdl_1.out \
     tests/refFiles/test_memHierarchy_sdl_2.out \
     tests/refFiles/test_memHierarchy_sdl_3.out \
+    tests/refFiles/test_OMP_noncacheable_ompapi.out \
+    tests/refFiles/test_OMP_noncacheable_ompatomic.out \
+    tests/refFiles/test_OMP_noncacheable_ompbarrier.out \
+    tests/refFiles/test_OMP_noncacheable_ompcritical.out \
+    tests/refFiles/test_OMP_noncacheable_ompdynamic.out \
+    tests/refFiles/test_OMP_noncacheable_ompreduce.out \
+    tests/refFiles/test_OMP_noncacheable_ompthrcount.out \
+    tests/refFiles/test_OMP_noncacheable_omptriangle.out \
     tests/refFiles/test_OMP_ompapi.out \
     tests/refFiles/test_OMP_ompatomic.out \
     tests/refFiles/test_OMP_ompbarrier.out \
     tests/refFiles/test_OMP_ompcritical.out \
     tests/refFiles/test_OMP_ompdynamic.out \
     tests/refFiles/test_OMP_ompreduce.out \
+    tests/refFiles/test_OMP_ompthrcount.out \
     tests/refFiles/test_OMP_omptriangle.out \
     tests/openMP/ompapi/ompapi \
     tests/openMP/ompatomic/ompatomic \
@@ -298,10 +309,13 @@ EXTRA_DIST = \
     tests/openMP/ompcritical/ompcritical \
     tests/openMP/ompdynamic/ompdynamic \
     tests/openMP/ompreduce/ompreduce \
+    tests/openMP/ompthrcount/ompthrcount \
     tests/openMP/omptriangle/omptriangle \
-    tests/openMP/sweepopenmp.py \
-    tests/openMP/sweepdirectory-exclusive.py \
+    tests/openMP/dir-non-cacheable-8cores-2nodes.py \
+    tests/openMP/noncacheable-openmp.py \
     tests/openMP/sweepdirectory-8cores-2nodes.py \
+    tests/openMP/sweepdirectory-exclusive.py \
+    tests/openMP/sweepopenmp.py \
     tests/openMP/test-distributed-caches.py
 
 sstdir = $(includedir)/sst/elements/memHierarchy
