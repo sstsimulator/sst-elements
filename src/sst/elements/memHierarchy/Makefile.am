@@ -138,6 +138,8 @@ EXTRA_DIST = \
 	tests/testsuite_sweep_memHierarchy_openMP.py \
 	tests/testsuite_openMP_memHierarchy_dirnoncacheable.py \
 	tests/testsuite_openMP_memHierarchy_noncacheable.py \
+	tests/testsuite_openMP_memHierarchy_diropenMP.py \
+	tests/testsuite_openMP_memHierarchy_openMP.py \
 	Sieve/tests/StatisticOutput.csv.gold \
     Sieve/tests/sieveprospero-0.trace \
     Sieve/tests/trace-text.py \
@@ -297,22 +299,28 @@ EXTRA_DIST = \
     tests/refFiles/test_OMP_noncacheable_omptriangle.out \
     tests/refFiles/test_OMP_ompapi.out \
     tests/refFiles/test_OMP_ompatomic.out \
+    tests/refFiles/test_OMP_ompatomicShort.out \
     tests/refFiles/test_OMP_ompbarrier.out \
     tests/refFiles/test_OMP_ompcritical.out \
     tests/refFiles/test_OMP_ompdynamic.out \
+    tests/refFiles/test_OMP_ompmybarrier.out \
     tests/refFiles/test_OMP_ompreduce.out \
     tests/refFiles/test_OMP_ompthrcount.out \
     tests/refFiles/test_OMP_omptriangle.out \
     tests/openMP/ompapi/ompapi \
     tests/openMP/ompatomic/ompatomic \
+    tests/openMP/ompatomicShort/ompatomicShort \
     tests/openMP/ompbarrier/ompbarrier \
     tests/openMP/ompcritical/ompcritical \
     tests/openMP/ompdynamic/ompdynamic \
+    tests/openMP/ompmybarrier/ompmybarrier \
     tests/openMP/ompreduce/ompreduce \
     tests/openMP/ompthrcount/ompthrcount \
     tests/openMP/omptriangle/omptriangle \
     tests/openMP/dir-non-cacheable-8cores-2nodes.py \
+    tests/openMP/directory-8cores-2nodes.py \
     tests/openMP/noncacheable-openmp.py \
+    tests/openMP/openmp.py \
     tests/openMP/sweepdirectory-8cores-2nodes.py \
     tests/openMP/sweepdirectory-exclusive.py \
     tests/openMP/sweepopenmp.py \
