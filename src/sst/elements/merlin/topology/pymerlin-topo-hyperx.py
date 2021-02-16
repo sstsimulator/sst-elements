@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 #
-# Copyright 2009-2020 NTESS. Under the terms
+# Copyright 2009-2021 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2020, NTESS
+# Copyright (c) 2009-2021, NTESS
 # All rights reserved.
 #
 # Portions are copyright of other developers:
@@ -20,7 +20,7 @@ from sst.merlin.base import *
 
 
 class topoHyperX(Topology):
-        
+
 
     def __init__(self):
         Topology.__init__(self)
@@ -41,7 +41,7 @@ class topoHyperX(Topology):
                 return
             shape = self.shape
             width = value
-            
+
         # Get the size in dimension
         self._dim_size = [int(x) for x in shape.split('x')]
 
@@ -54,7 +54,7 @@ class topoHyperX(Topology):
         if len(self._dim_size) != len(self._dim_width):
             print("topoHyperX:  Incompatible number of dimensions set for shape and width."%getName())
             exit(1)
-        
+
     def getName(self):
         return "HyperX"
 
@@ -75,7 +75,7 @@ class topoHyperX(Topology):
         this.width = width
         this.local_ports = local_ports
 
-        
+
     def _formatShape(self, arr):
         return 'x'.join([str(x) for x in arr])
 
@@ -95,14 +95,14 @@ class topoHyperX(Topology):
 
     def getRouterNameForId(self,rtr_id):
         return self.getRouterNameForLocation(self._idToLoc(rtr_id))
-        
+
     def getRouterNameForLocation(self,location):
         return "%srtr.%s"%(self._prefix,self._formatShape(location))
-    
+
     def findRouterByLocation(self,location):
         return sst.findComponentByName(self.getRouterNameForLocation(location))
-        
-    
+
+
     def build(self, endpoint):
         if self.host_link_latency is None:
             self.host_link_latency = self.link_latency
@@ -110,8 +110,8 @@ class topoHyperX(Topology):
         # get some local variables from the parameters
         local_ports = int(self.local_ports)
         num_dims = len(self._dim_size)
-        
-        
+
+
         # Calculate number of routers and endpoints
         num_routers = 1
         for x in self._dim_size:
@@ -122,7 +122,7 @@ class topoHyperX(Topology):
         radix = local_ports
         for x in range(num_dims):
             radix += (self._dim_width[x] * (self._dim_size[x]-1))
-        
+
         links = dict()
         def getLink(name1, name2, num):
             # Sort name1 and name2 so order doesn't matter

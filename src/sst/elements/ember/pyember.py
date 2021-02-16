@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 #
-# Copyright 2009-2020 NTESS. Under the terms
+# Copyright 2009-2021 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2020, NTESS
+# Copyright (c) 2009-2021, NTESS
 # All rights reserved.
 #
 # Portions are copyright of other developers:
@@ -271,7 +271,7 @@ class EmberMPIJob(Job):
         # allocation will have to be a multiple of any of the number
         # of nics per node values used.
         my_id_name = str( (nodeID // self._nicsPerNode) * self._nicsPerNode)
-        
+
         loopBackName = "loopBack" + my_id_name
         if nodeID % self._nicsPerNode == 0:
             loopBack = sst.Component(loopBackName, "firefly.loopBack")

@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 #
-# Copyright 2009-2020 NTESS. Under the terms
+# Copyright 2009-2021 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2020, NTESS
+# Copyright (c) 2009-2021, NTESS
 # All rights reserved.
 #
 # Portions are copyright of other developers:
@@ -51,14 +51,14 @@ class topoDragonFly(Topology):
 
     def getRouterNameForId(self,rtr_id):
         return self.getRouterNameForLocation(rtr_id // self.routers_per_group, rtr_id % self.routers_per_group)
-        
+
     def getRouterNameForLocation(self,group,rtr):
         return "%srtr.G%dR%d"%(self._prefix,group,rtr)
-    
+
     def findRouterByLocation(self,group,rtr):
         return sst.findComponentByName(self.getRouterNameForLocation(group,rtr))
-    
-        
+
+
     def build(self, endpoint):
         if self.host_link_latency is None:
             self.host_link_latency = self.link_latency

@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 #
-# Copyright 2009-2020 NTESS. Under the terms
+# Copyright 2009-2021 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2020, NTESS
+# Copyright (c) 2009-2021, NTESS
 # All rights reserved.
 #
 # Portions are copyright of other developers:
@@ -86,7 +86,7 @@ class TemplateBase(object):
 
     def _setCallbackOnWrite(self,variable,func):
         self._callbacks[variable] = func
-        
+
     def addParams(self,p):
         for x in p:
             #if x in self._req_params or x in self._opt_params:
@@ -133,7 +133,7 @@ class TemplateBase(object):
 
     def setStatisticLoadLevel(self,level,apply_to_children=False):
         self._stat_load_level = (level,apply_to_children)
-        
+
 
     def _applyStatisticsSettings(self,component):
         for stat in self._enabled_stats:
@@ -273,7 +273,7 @@ class hr_router(RouterTemplate):
         rtr.addParam("num_ports",radix)
         rtr.addParam("id",rtr_id)
         return rtr
-    
+
     def getTopologySlotName(self):
         return "topology"
 
@@ -301,12 +301,12 @@ class System:
 
     # Functions used to allocated endpoints to jobs
     _allocate_functions = {}
-    
+
     @classmethod
     def addAllocationFunction(cls,name,func):
         cls._allocate_functions[name] = func
 
-        
+
     def __init__(self):
         self._topology = None
         #self.num_rails = 0
@@ -344,7 +344,7 @@ class System:
         # does a celing divide (note, only works in python, in C the
         # result is truncated instead of floored)
         num_units = -(-size // self._allocation_block_size)
-        
+
         allocated, available = self._allocate_functions[method](self._available_nodes,num_units,*args)
         self._available_nodes = available
 
@@ -366,25 +366,25 @@ class System:
 
 # Built-in allocation functions for System
 def _allocate_random(available_nodes, num_nodes, seed = None):
-    
+
     if seed is not None:
         random.seed(seed)
 
     random.shuffle(available_nodes)
-    
+
     nid_list = available_nodes[0:num_nodes]
     available_nodes = available_nodes[num_nodes:]
-    
+
     return nid_list, available_nodes
 
 
 def _allocate_linear(available_nodes, num_nodes):
-    
+
     available_nodes.sort()
-    
+
     nid_list = available_nodes[0:num_nodes]
     available_nodes = available_nodes[num_nodes:]
-    
+
     return nid_list, available_nodes
 
 
@@ -418,20 +418,20 @@ def _allocate_interval(available_nodes, num_nodes, start_index, interval, count 
                 nid_list.append(available_nodes.pop(index))
                 left -= 1
                 # No need to increment index bacause we popped the last value
-            
+
             index += (interval - count)
     except IndexError as e:
         print("ERROR: call to _allocate_interval caused index to exceed nid array bounds")
         print("start_index = %d, interval = %d, count = %d, available_nids at start of function = %d"%(start_index,interval,count,available_nids))
         raise
-        
+
     return nid_list, available_nodes
 
 def _allocate_indexed(available_nodes, num_nodes, nids):
     if len(nids) != num_nodes:
         print("ERROR: in call to _allocate_indexed length of index list does not equal number of endpoints to allocate")
         sst.exit()
-        
+
     nid_list = []
 
     available_nodes.sort()
@@ -442,7 +442,7 @@ def _allocate_indexed(available_nodes, num_nodes, nids):
         for i in nids:
             nid_list.append(available_nodes[i])
 
-        
+
     except IndexError as e:
         print("ERROR: call to _allocate_indexed caused index to exceed nid array bounds, check index list")
         raise
@@ -453,7 +453,7 @@ def _allocate_indexed(available_nodes, num_nodes, nids):
         available_nodes.pop(i)
 
     return nid_list, available_nodes
-        
+
 System.addAllocationFunction("random", _allocate_random)
 System.addAllocationFunction("linear", _allocate_linear)
 System.addAllocationFunction("random-linear",_allocate_random_linear)

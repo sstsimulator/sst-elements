@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 #
-# Copyright 2009-2020 NTESS. Under the terms
+# Copyright 2009-2021 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2020, NTESS
+# Copyright (c) 2009-2021, NTESS
 # All rights reserved.
 #
 # Portions are copyright of other developers:
@@ -39,7 +39,7 @@ class _topoMeshBase(Topology):
                 return
             shape = self.shape
             width = value
-            
+
         # Get the size in dimension
         self._dim_size = [int(x) for x in shape.split('x')]
 
@@ -55,7 +55,7 @@ class _topoMeshBase(Topology):
 
     def _getTopologyName():
         pass
-        
+
     def _includeWrapLinks():
         pass
 
@@ -75,7 +75,7 @@ class _topoMeshBase(Topology):
         this.shape = shape
         this.width = width
         this.local_ports = local_ports
-        
+
     def _formatShape(self, arr):
         return 'x'.join([str(x) for x in arr])
 
@@ -94,22 +94,22 @@ class _topoMeshBase(Topology):
 
     def getRouterNameForId(self,rtr_id):
         return self.getRouterNameForLocation(self._idToLoc(rtr_id))
-        
+
     def getRouterNameForLocation(self,location):
         return "%srtr.%s"%(self._prefix,self._formatShape(location))
-    
+
     def findRouterByLocation(self,location):
         return sst.findComponentByName(self.getRouterNameForLocation(location))
-        
+
     def build(self, endpoint):
         if self.host_link_latency is None:
             self.host_link_latency = self.link_latency
-        
+
         # get some local variables from the parameters
         local_ports = int(self.local_ports)
         num_dims = len(self._dim_size)
 
-        
+
 
         # Calculate number of routers and endpoints
         num_routers = 1
@@ -121,8 +121,8 @@ class _topoMeshBase(Topology):
         radix = local_ports
         for x in range(num_dims):
             radix = radix + (self._dim_width[x] * 2)
-            
-        
+
+
         links = dict()
         def getLink(leftName, rightName, num):
             name = "link.%s:%s:%d"%(leftName, rightName, num)
@@ -130,14 +130,14 @@ class _topoMeshBase(Topology):
                 links[name] = sst.Link(name)
             return links[name]
 
-        
+
         for i in range(num_routers):
             # set up 'mydims'
             mydims = self._idToLoc(i)
             mylocstr = self._formatShape(mydims)
 
             rtr = self._instanceRouter(radix,i)
-            
+
             topology = rtr.setSubComponent(self._router_template.getTopologySlotName(),self._getTopologyName())
             self._applyStatisticsSettings(topology)
             topology.addParams(self._params)
@@ -227,7 +227,7 @@ class topoSingle(Topology):
         topo = rtr.setSubComponent(self._router_template.getTopologySlotName(),"merlin.singlerouter",0)
         self._applyStatisticsSettings(topo)
         topo.addParams(self._params)
-        
+
         for l in range(self.num_ports):
             (ep, portname) = endpoint.build(l, {})
             if ep:

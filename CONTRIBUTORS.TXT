@@ -1,5 +1,5 @@
-Copyright 2009-2020, Sandia National Laboratories
+Copyright 2009-2021, Sandia National Laboratories
 Portions are copyright of other developers including:
-International Business Machines (IBM) 2016-2020
-Cray Inc 2014-2020
+International Business Machines (IBM) 2016-2021
+Cray Inc 2014-2021
 

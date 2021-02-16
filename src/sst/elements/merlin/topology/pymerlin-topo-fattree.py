@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 #
-# Copyright 2009-2020 NTESS. Under the terms
+# Copyright 2009-2021 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2020, NTESS
+# Copyright (c) 2009-2021, NTESS
 # All rights reserved.
 #
 # Portions are copyright of other developers:
@@ -27,13 +27,13 @@ class topoFatTree(Topology):
                                      "_groups_per_level","_ups","_downs","_routers_per_level","_groups_per_level","_start_ids",
                                      "_total_hosts"])
         self._defineRequiredParams(["shape"])
-        self._defineOptionalParams(["routing_alg","adaptive_threshold"])        
+        self._defineOptionalParams(["routing_alg","adaptive_threshold"])
         self._setCallbackOnWrite("shape",self._shape_callback)
 
 
     def _shape_callback(self,variable_name,value):
         shape = value
-        
+
         # Process the shape
         self._ups = []
         self._downs = []
@@ -71,7 +71,7 @@ class topoFatTree(Topology):
         for i in range(1,len(self._downs)-1):
             self._groups_per_level[i] = self._groups_per_level[i-1] // self._downs[i]
 
-        
+
 
     def getName(self):
         return "Fat Tree"
@@ -103,21 +103,21 @@ class topoFatTree(Topology):
         group = remainder // routers_per_group
         router = remainder % routers_per_group
         return self.getRouterNameForLocation((level,group,router))
-            
-    
+
+
     def getRouterNameForLocation(self,location):
         return "%srtr_l%s_g%d_r%d"%(self._prefix,location[0],location[1],location[2])
-    
+
     def findRouterByLocation(self,location):
         return sst.findComponentByName(self.getRouterNameForLocation(location));
-    
-    
-    
+
+
+
     def build(self, endpoint):
 
         if not self.host_link_latency:
             self.host_link_latency = self.link_latency
-        
+
         #Recursive function to build levels
         def fattree_rb(self, level, group, links):
             id = self._start_ids[level] + group * (self._routers_per_level[level]//self._groups_per_level[level])
@@ -140,7 +140,7 @@ class topoFatTree(Topology):
                 # Create the edge router
                 rtr_id = id
                 rtr = self._instanceRouter(self._ups[0] + self._downs[0], rtr_id)
-                
+
                 topology = rtr.setSubComponent(self._router_template.getTopologySlotName(),"merlin.fattree")
                 self._applyStatisticsSettings(topology)
                 topology.addParams(self._params)
