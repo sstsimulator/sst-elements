@@ -82,14 +82,14 @@ def _add_data_to_test_matrix(testnum, omp_app, L1_size, L1_asso, L2_size, L2_ass
     global sweep_test_matrix
 
     # FOR DEVELOPMENT - Hard code the specific test of list ["ompatomic", "ompapi", "ompcritical", "ompdynamic", "ompreduce", "omptriangle", "ompbarrier"]
-#    omp_app = "ompbarrier"
+    #omp_app = "ompbarrier"
 
 #    log_debug("sweep Test Matrix:TestNum={0:04}; App={1}; L1:size={2}; asso={3}; L2:size={4}; asso={5}; mshr={6}; cache_repl={7}; test_type={8}; prefetch={9}".format(testnum, omp_app, L1_size, L1_asso, L2_size, L2_asso, L2_mshr, repl, test_type, prefetch))
     test_data = (testnum, omp_app, L1_size, L1_asso, L2_size, L2_asso, L2_mshr, repl, test_type, prefetch)
 
     # FOR DEVELOPMENT - disable tests above a certain number
-#    if testnum > 10:
-#        return
+    #if testnum > 10:
+    #    return
 
     sweep_test_matrix.append(test_data)
 
@@ -226,6 +226,8 @@ class testcase_memH_sweep_dirsweep(SSTTestCase):
             for line in f.readlines():
                 testline = line.strip()
                 if testline != "":
+                    outcount = 0
+                    refcount = 0
                     # Grep the ref file for the count of this line occuring
                     cmd = 'grep -c "{0}" {1}'.format(testline, reffile)
                     rtn = OSCommand(cmd).run()
@@ -240,8 +242,10 @@ class testcase_memH_sweep_dirsweep(SSTTestCase):
                     else:
                         log_failure("FAILURE: Sweep dirsweep Test failed running cmdline {0} - grepping outfile {1}".format(cmd, outfile))
 
-                # Compare the count
-                self.assertEquals(outcount, refcount, "Sweep dirsweep testing line '{0}': outfile count = {1} does not match reffile count = {2}".format(testline, outcount, refcount))
+                    log_debug("Testline='{0}'; refcount={1}; outcount={2}".format(testline, refcount, outcount))
+                    
+                    # Compare the count
+                    self.assertEquals(outcount, refcount, "Sweep dirsweep testing line '{0}': outfile count = {1} does not match reffile count = {2}".format(testline, outcount, refcount))
 
 ###############################################
 
