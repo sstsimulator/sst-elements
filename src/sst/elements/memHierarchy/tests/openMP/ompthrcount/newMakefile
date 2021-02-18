@@ -1,0 +1,11 @@
+CXX=g++ 
+
+ompthrcount: ompthrcount.o
+	$(CXX) -O3 -o ompthrcount -fopenmp ompthrcount.o
+
+ompthrcount.o: ompthrcount.c
+	$(CXX) -O3 -o ompthrcount.o -fopenmp -c ompthrcount.c
+
+clean:
+	rm ompthrcount ompthrcount.o
+

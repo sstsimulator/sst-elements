@@ -1,0 +1,11 @@
+CXX=g++ 
+
+ompatomicShort: ompatomicShort.o
+	$(CXX) -O3 -o ompatomicShort -fopenmp ompatomicShort.o
+
+ompatomicShort.o: ompatomicShort.c
+	$(CXX) -O3 -o ompatomicShort.o -fopenmp -c ompatomicShort.c
+
+clean:
+	rm ompatomicShort ompatomicShort.o
+

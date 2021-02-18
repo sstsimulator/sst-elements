@@ -27,7 +27,7 @@ def build_ESshmem_test_matrix():
 
     # Add all the tests to the matrix
     testlist_filepath = "{0}/ESshmem_List-of-Tests".format(dirpath)
-    log_debug("ESshmem: testlist_filepath = {0}".format(testlist_filepath))
+    #log_debug("ESshmem: testlist_filepath = {0}".format(testlist_filepath))
 
     with open(testlist_filepath, 'r') as f:
             for line in f:
@@ -52,7 +52,7 @@ def build_ESshmem_test_matrix():
 
         # Strip the sst from the front and sdl filename from back
         modelstr = test_str[0:index+1].replace("sst ", "")
-        log_debug("ESshmem Test Matrix:TestNum={0:03}; HASH={1}; sdlfile={2}; modelstr={3}".format(testnum, hash_str, sdlfile, modelstr))
+        #log_debug("ESshmem Test Matrix:TestNum={0:03}; HASH={1}; sdlfile={2}; modelstr={3}".format(testnum, hash_str, sdlfile, modelstr))
 
         # Build the test_data structure
         test_data = (testnum, hash_str, modelstr, sdlfile)

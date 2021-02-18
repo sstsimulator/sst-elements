@@ -131,11 +131,16 @@ class testcase_prospero(SSTTestCase):
             testDataFileName = ("test_prospero_wo_dramsim_{0}".format(trace_name))
             otherargs = '--model-options=\"--TraceType={0} --UseDramSim=no\"'.format(trace_name)
 
+        if use_pin_traces:
+            tracetype = "pin"
+        else:
+            tracetype = "tar"
+
         sdlfile = "{0}/array/trace-common.py".format(test_path)
         reffile = "{0}/refFiles/{1}.out".format(test_path, testDataFileName)
-        outfile = "{0}/{1}.out".format(outdir, testDataFileName)
-        errfile = "{0}/{1}.err".format(outdir, testDataFileName)
-        mpioutfiles = "{0}/{1}.testfile".format(outdir, testDataFileName)
+        outfile = "{0}/{1}_using_{2}_traces.out".format(outdir, testDataFileName, tracetype)
+        errfile = "{0}/{1}_using_{2}_traces.out.err".format(outdir, testDataFileName, tracetype)
+        mpioutfiles = "{0}/{1}_using_{2}_traces.out.testfile".format(outdir, testDataFileName, tracetype)
 
         log_debug("trace_name = {0}".format(trace_name))
         log_debug("testDataFileName = {0}".format(testDataFileName))
