@@ -45,7 +45,9 @@ libariel_la_SOURCES = \
 	arieltracegen.h \
 	arieltexttracegen.h \
 	arieltexttracegen.cc \
-	arielfrontend.h
+	arielfrontend.h \
+	gpu_enum.h \
+	arielgpuev.h
 
 EXTRA_DIST = \
 	frontend/pin3/fesimple.cc \
