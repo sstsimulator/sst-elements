@@ -55,10 +55,13 @@ class testcase_prospero(SSTTestCase):
 #####
     pin_loaded = testing_is_PIN_loaded()
     pin3_used = testing_is_PIN3_used()
+    libz_missing = not sst_elements_config_include_file_get_value_int("HAVE_LIBZ", default=0, disable_warning=True)
 
+    @unittest.skipIf(libz_missing, "test_prospero_compressed_using_TAR_traces test: Requires LIBZ, but LIBZ is not found in build configuration.")
     def test_prospero_compressed_using_TAR_traces(self):
         self.prospero_test_template("compressed", NO_DRAMSIM, USE_TAR_TRACES)
 
+    @unittest.skipIf(libz_missing, "test_prospero_compressed_withdramsim_using_TAR_traces test: Requires LIBZ, but LIBZ is not found in build configuration.")
     def test_prospero_compressed_withdramsim_using_TAR_traces(self):
         self.prospero_test_template("compressed", WITH_DRAMSIM, USE_TAR_TRACES)
 
@@ -74,13 +77,15 @@ class testcase_prospero(SSTTestCase):
     def test_prospero_binary_withdramsim_using_TAR_traces(self):
         self.prospero_test_template("binary", WITH_DRAMSIM, USE_TAR_TRACES)
 
+    @unittest.skipIf(libz_missing, "test_prospero_compressed_using_PIN_traces test: Requires LIBZ, but LIBZ is not found in build configuration.")
     @unittest.skipIf(not pin_loaded, "test_prospero_compressed_using_PIN_traces: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
     @unittest.skipIf(pin3_used, "test_prospero_compressed_using_PIN_traces test: Requires PIN2, but PIN3 is COMPILED.")
     def test_prospero_compressed_using_PIN_traces(self):
         self.prospero_test_template("compressed", NO_DRAMSIM, USE_PIN_TRACES)
 
+    @unittest.skipIf(libz_missing, "test_prospero_compressed_withdramsim_using_PIN_traces test: Requires LIBZ, but LIBZ is not found in build configuration.")
     @unittest.skipIf(not pin_loaded, "test_prospero_compressed_withdramsim_using_PIN_traces: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
-    @unittest.skipIf(pin3_used, "test_prospero_compressed_using_PIN_traces test: Requires PIN2, but PIN3 is COMPILED.")
+    @unittest.skipIf(pin3_used, "test_prospero_compressed_withdramsim_using_PIN_traces test: Requires PIN2, but PIN3 is COMPILED.")
     def test_prospero_compressed_withdramsim_using_PIN_traces(self):
         self.prospero_test_template("compressed", WITH_DRAMSIM, USE_PIN_TRACES)
 
@@ -131,11 +136,16 @@ class testcase_prospero(SSTTestCase):
             testDataFileName = ("test_prospero_wo_dramsim_{0}".format(trace_name))
             otherargs = '--model-options=\"--TraceType={0} --UseDramSim=no\"'.format(trace_name)
 
+        if use_pin_traces:
+            tracetype = "pin"
+        else:
+            tracetype = "tar"
+
         sdlfile = "{0}/array/trace-common.py".format(test_path)
         reffile = "{0}/refFiles/{1}.out".format(test_path, testDataFileName)
-        outfile = "{0}/{1}.out".format(outdir, testDataFileName)
-        errfile = "{0}/{1}.err".format(outdir, testDataFileName)
-        mpioutfiles = "{0}/{1}.testfile".format(outdir, testDataFileName)
+        outfile = "{0}/{1}_using_{2}_traces.out".format(outdir, testDataFileName, tracetype)
+        errfile = "{0}/{1}_using_{2}_traces.out.err".format(outdir, testDataFileName, tracetype)
+        mpioutfiles = "{0}/{1}_using_{2}_traces.out.testfile".format(outdir, testDataFileName, tracetype)
 
         log_debug("trace_name = {0}".format(trace_name))
         log_debug("testDataFileName = {0}".format(testDataFileName))

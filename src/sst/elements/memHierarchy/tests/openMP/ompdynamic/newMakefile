@@ -1,0 +1,11 @@
+CXX=g++ 
+
+ompdynamic: ompdynamic.o
+	$(CXX) -O3 -o ompdynamic -fopenmp ompdynamic.o
+
+ompdynamic.o: ompdynamic.c
+	$(CXX) -O3 -o ompdynamic.o -fopenmp -c ompdynamic.c
+
+clean:
+	rm ompdynamic ompdynamic.o
+
