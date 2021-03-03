@@ -46,7 +46,6 @@ class testcase_balar(SSTTestCase):
     pin3_used = testing_is_PIN3_used()
     missing_cuda_root = os.getenv("CUDA_ROOT") == None
     missing_cuda_install_path = os.getenv("CUDA_INSTALL_PATH") == None
-    missing_nvcc_path = os.getenv("NVCC_PATH") == None
     missing_gpgpusim_root = os.getenv("GPGPUSIM_ROOT") == None
     found_mem_pools_config = sst_core_config_include_file_get_value_str("USE_MEMPOOL", default="", disable_warning=True) != ""
     found_mpi_config = sst_core_config_include_file_get_value_str("SST_CONFIG_HAVE_MPI", default="", disable_warning=True) != ""
@@ -55,7 +54,6 @@ class testcase_balar(SSTTestCase):
     @unittest.skipIf(pin3_used, "test_balar_runvecadd test: Requires PIN2, but PIN3 is COMPILED.")
     @unittest.skipIf(missing_cuda_root, "test_balar_runvecadd test: Requires missing environment variable CUDA_ROOT.")
     @unittest.skipIf(missing_cuda_install_path, "test_balar_runvecadd test: Requires missing environment variable CUDA_INSTALL_PATH.")
-    @unittest.skipIf(missing_nvcc_path, "test_balar_runvecadd test: Requires missing environment variable NVCC_PATH.")
     @unittest.skipIf(missing_gpgpusim_root, "test_balar_runvecadd test: Requires missing environment variable GPGPUSIM_ROOT.")
     @unittest.skipIf(found_mem_pools_config, "test_balar_runvecadd test: Found mem-pools configured in core, test requires core to be built using --disable-mem-pools.")
     @unittest.skipIf(found_mpi_config, "test_balar_runvecadd test: Found mpi configured in core, test requires core to be built using --disable-mpi.")
@@ -66,6 +64,10 @@ class testcase_balar(SSTTestCase):
 ####
 
     def balar_test_template(self, testcase, testtimeout=60):
+        # Have to test for NVCC_PATH inside of the test as decorated skips happen
+        # before init of testsuite
+        missing_nvcc_path = os.getenv("NVCC_PATH") == None
+        self.assertFalse(missing_nvcc_path, "test_balar_runvecadd test: Requires missing environment variable NVCC_PATH.")
 
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
@@ -157,3 +159,12 @@ class testcase_balar(SSTTestCase):
         rtn = OSCommand(cmd, set_cwd=self.testbalarVectorAddDir).run()
         log_debug("Balar vectorAdd Make result = {0}; output =\n{1}".format(rtn.result(), rtn.output()))
         self.assertTrue(rtn.result() == 0, "vecAdd.cu failed to compile")
+
+        # Figure out path to NVCC and set NVCC_PATH in the OS ENV
+        # NOTE: In sst-gpgpusim, the setup_environment script sets the NVCC_PATH
+        #       but does not export it to to the OS Env.  So we need to do it here
+        cmd = "which nvcc"
+        rtn = OSCommand(cmd).run()
+        log_debug("which nvcc result = {0}; output = {1}".format(rtn.result(), rtn.output()))
+        self.assertTrue(rtn.result() == 0, "'which nvcc' command failed")
+        os.environ["NVCC_PATH"] = rtn.output()
