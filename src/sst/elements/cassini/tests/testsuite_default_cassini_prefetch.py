@@ -57,7 +57,7 @@ class testcase_cassini_prefetch(SSTTestCase):
 
 #####
 
-    def cassini_prefetch_test_template(self, testcase):
+    def cassini_prefetch_test_template(self, testcase, testtimeout=180):
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
         outdir = self.get_test_output_run_dir()
@@ -72,7 +72,7 @@ class testcase_cassini_prefetch(SSTTestCase):
         errfile = "{0}/{1}.err".format(outdir, testDataFileName)
         mpioutfiles = "{0}/{1}.testfile".format(outdir, testDataFileName)
 
-        self.run_sst(sdlfile, outfile, errfile, mpi_out_files=mpioutfiles)
+        self.run_sst(sdlfile, outfile, errfile, mpi_out_files=mpioutfiles, timeout_sec=testtimeout)
 
         testing_remove_component_warning_from_file(outfile)
 
