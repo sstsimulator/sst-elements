@@ -1,10 +1,10 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2020 NTESS. Under the terms
+// Copyright 2009-2021 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2020, NTESS
+// Copyright (c) 2009-2021, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -126,7 +126,11 @@ public:
     struct dgnflyParams params;
     double adaptive_threshold;
     uint32_t group_id;
+    // Router id within group
     uint32_t router_id;
+
+    // Actual id of router
+    uint32_t rtr_id;
 
     RNG::SSTRandom* rng;
 
@@ -152,6 +156,9 @@ public:
 
     virtual void route_packet(int port, int vc, internal_router_event* ev);
     virtual internal_router_event* process_input(RtrEvent* ev);
+
+    virtual std::pair<int,int> getDeliveryPortForEndpointID(int ep_id);
+    virtual int routeControlPacket(CtrlRtrEvent* ev);
 
     virtual PortState getPortState(int port) const;
     virtual std::string getPortLogicalGroup(int port) const;
@@ -187,7 +194,7 @@ private:
     void route_nonadaptive(int port, int vc, internal_router_event* ev);
     void route_adaptive_local(int port, int vc, internal_router_event* ev);
 
-    
+
 };
 
 

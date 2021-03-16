@@ -1,3 +1,17 @@
+// Copyright 2009-2021 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2009-2021, NTESS
+// All rights reserved.
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
 
 #ifndef _H_VANADIS_LSQ_BASE
 #define _H_VANADIS_LSQ_BASE
@@ -29,6 +43,13 @@ public:
 		{ "verbose", 		"Set the verbosity of output for the LSQ", 	"0" },
 	)
 
+	SST_ELI_DOCUMENT_STATISTICS(
+		{ "bytes_read",         "Count all the bytes read for data operations", "bytes", 1 },
+		{ "bytes_stored",	"Count all the bytes written for data operations", "bytes", 1 },
+		{ "laods_issued",	"Count the number of loads issued", "operations", 1 },
+		{ "stores_issued",      "Count the number of stores issued", "operations", 1 }
+	)
+
 	VanadisLoadStoreQueue( ComponentId_t id, Params& params ) :
 		SubComponent( id ) {
 
@@ -38,6 +59,11 @@ public:
 		address_mask = params.find<uint64_t>("address_mask", 0xFFFFFFFFFFFFFFFF );
 
 		registerFiles = nullptr;
+
+		stat_load_issued  = registerStatistic<uint64_t>( "laods_issued", "1" );
+		stat_store_issued = registerStatistic<uint64_t>( "stores_issued", "1" );
+		stat_data_bytes_read = registerStatistic<uint64_t>( "bytes_read", "1" );
+		stat_data_bytes_written = registerStatistic<uint64_t>( "bytes_stored", "1" );
 	}
 
 	virtual ~VanadisLoadStoreQueue() {
@@ -68,10 +94,17 @@ public:
 	virtual void init( unsigned int phase ) = 0;
 	virtual void setInitialMemory( const uint64_t address, std::vector<uint8_t>& payload ) = 0;
 
+	virtual void printStatus( SST::Output& output ) {}
+
 protected:
 	uint64_t address_mask;
 	std::vector<VanadisRegisterFile*>* registerFiles;
 	SST::Output* output;
+
+	Statistic<uint64_t>* stat_load_issued;
+	Statistic<uint64_t>* stat_store_issued;
+	Statistic<uint64_t>* stat_data_bytes_read;
+	Statistic<uint64_t>* stat_data_bytes_written;
 
 };
 

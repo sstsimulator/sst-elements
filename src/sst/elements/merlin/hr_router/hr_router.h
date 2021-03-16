@@ -1,8 +1,8 @@
-// Copyright 2009-2020 NTESS. Under the terms
+// Copyright 2009-2021 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2020, NTESS
+// Copyright (c) 2009-2021, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -99,7 +99,7 @@ private:
     int vn_remap_shm_size;
     int num_vcs;
     std::vector<int> vcs_per_vn;
-    
+
     Topology* topo;
     XbarArbitration* arb;
 
@@ -116,8 +116,6 @@ private:
     int* out_port_busy;
     int* progress_vcs;
 
-    /* int input_buf_size; */
-    /* int output_buf_size; */
     UnitAlgebra input_buf_size;
     UnitAlgebra output_buf_size;
 
@@ -149,12 +147,13 @@ public:
     int const* getOutputBufferCredits() {return xbar_in_credits;}
     int const* getOutputQueueLengths() {return output_queue_lengths;}
 
-    void sendTopologyEvent(int port, TopologyEvent* ev);
-    void recvTopologyEvent(int port, TopologyEvent* ev);
+    void sendCtrlEvent(CtrlRtrEvent* ev, int port = -1);
+    void recvCtrlEvent(int port, CtrlRtrEvent* ev);
 
     void dumpState(std::ostream& stream);
     void printStatus(Output& out);
 
+    void reportIncomingEvent(internal_router_event* ev);
 };
 
 }

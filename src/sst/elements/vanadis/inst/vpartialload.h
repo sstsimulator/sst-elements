@@ -1,3 +1,17 @@
+// Copyright 2009-2021 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2009-2021, NTESS
+// All rights reserved.
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
 
 #ifndef _H_VANADIS_PARTIAL_LOAD
 #define _H_VANADIS_PARTIAL_LOAD
@@ -65,22 +79,25 @@ public:
 
 	void computeLoadAddress( SST::Output* output, VanadisRegisterFile* regFile, uint64_t* out_addr, uint16_t* width ) {
 		const uint64_t mem_addr_reg_val = regFile->getIntReg<uint64_t>( phys_int_regs_in[0] );
-
+#ifdef VANADIS_BUILD_DEBUG
                 output->verbose(CALL_INFO, 16, 0, "[execute-partload]: reg[%5" PRIu16 "]: %" PRIu64 " / 0x%llx\n", phys_int_regs_in[0], mem_addr_reg_val,
 			mem_addr_reg_val);
                 output->verbose(CALL_INFO, 16, 0, "[execute-partload]: offset           : %" PRIu64 " / 0x%llx\n", offset,
 			offset);
                 output->verbose(CALL_INFO, 16, 0, "[execute-partload]: (add)            : %" PRIu64 " / 0x%llx\n",
 			(mem_addr_reg_val + offset), (mem_addr_reg_val + offset));
+#endif
 
 		computeLoadAddress( regFile, out_addr, width );
 
+#ifdef VANADIS_BUILD_DEBUG
 		output->verbose(CALL_INFO, 16, 0, "[execute-partload]: full width: %" PRIu16 "\n", load_width);
 		output->verbose(CALL_INFO, 16, 0, "[execute-partload]: (lower/upper load ? %s)\n",
 			is_load_lower ? "lower" : "upper");
 		output->verbose(CALL_INFO, 16, 0, "[execute-partload]: load-addr: %" PRIu64 " / 0x%0llx / load-width: %" PRIu16 "\n",
 			(*out_addr), (*out_addr), (*width) );
 		output->verbose(CALL_INFO, 16, 0, "[execute-partload]: register-offset: %" PRIu16 "\n", register_offset);
+#endif
 	}
 
 	uint16_t getLoadWidth() const { return load_width; }

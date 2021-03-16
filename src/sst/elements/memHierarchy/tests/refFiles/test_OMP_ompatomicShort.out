@@ -1,0 +1,15 @@
+Creating thread 1
+Creating thread 2
+Hello from thread 1
+Creating thread 3
+Hello from thread 2
+Creating thread 4
+Hello from thread 3
+Creating thread 5
+Hello from thread 4
+Creating thread 6
+Hello from thread 5
+Creating thread 7
+Hello from thread 6
+Hello from thread 0
+Hello from thread 7

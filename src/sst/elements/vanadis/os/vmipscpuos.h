@@ -1,3 +1,17 @@
+// Copyright 2009-2021 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2009-2021, NTESS
+// All rights reserved.
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
 
 #ifndef _H_VANADIS_MIPS_CPU_OS
 #define _H_VANADIS_MIPS_CPU_OS
@@ -10,16 +24,21 @@
 #include "os/resp/vosexitresp.h"
 
 #define VANADIS_SYSCALL_READ             4003
+#define VANADIS_SYSCALL_OPEN             4005
+#define VANADIS_SYSCALL_CLOSE            4006
 #define VANADIS_SYSCALL_WRITE		 4004
 #define VANADIS_SYSCALL_ACCESS           4033
 #define VANADIS_SYSCALL_BRK              4045
 #define VANADIS_SYSCALL_IOCTL		 4054
 #define VANADIS_SYSCALL_READLINK         4085
 #define VANADIS_SYSCALL_MMAP		 4090
+#define VANADIS_SYSCALL_UNMAP            4091
 #define VANADIS_SYSCALL_UNAME            4122
 #define VANADIS_SYSCALL_WRITEV           4146
+#define VANADIS_SYSCALL_RT_SETSIGMASK    4195
 #define VANADIS_SYSCALL_MMAP2            4210
 #define VANADIS_SYSCALL_FSTAT		 4215
+#define VANADIS_SYSCALL_MADVISE          4218
 #define VANADIS_SYSCALL_FUTEX		 4238
 #define VANADIS_SYSCALL_SET_TID		 4252
 #define VANADIS_SYSCALL_EXIT_GROUP       4246
@@ -76,7 +95,10 @@ public:
 	}
 
 	virtual void handleSysCall( VanadisSysCallInstruction* syscallIns ) {
-		output->verbose(CALL_INFO, 8, 0, "System Call (syscall-ins: 0x%0llx)\n", syscallIns->getInstructionAddress() );
+		const uint16_t call_link_reg = isaTable->getIntPhysReg(31);
+		uint64_t call_link_value = regFile->getIntReg<uint64_t>( call_link_reg );
+		output->verbose(CALL_INFO, 8, 0, "System Call (syscall-ins: 0x%0llx, link-reg: 0x%llx)\n",
+			syscallIns->getInstructionAddress(), call_link_value );
 
 		const uint32_t hw_thr = syscallIns->getHWThread();
 
@@ -118,6 +140,7 @@ public:
 				call_ev = new VanadisSyscallReadEvent( core_id, hw_thr, read_fd, read_buff_ptr, read_count );
 			}
 			break;
+
 		case VANADIS_SYSCALL_ACCESS:
 			{
                                 const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
@@ -131,6 +154,7 @@ public:
 				call_ev = new VanadisSyscallAccessEvent( core_id, hw_thr, path_ptr, access_mode );
 			}
 			break;
+
 		case VANADIS_SYSCALL_BRK:
 			{
 				const uint64_t phys_reg_4 = isaTable->getIntPhysReg(4);
@@ -141,6 +165,7 @@ public:
 				call_ev = new VanadisSyscallBRKEvent( core_id, hw_thr, newBrk, brk_zero_memory );
 			}
 			break;
+
 		case VANADIS_SYSCALL_SET_THREAD_AREA:
 			{
 				const uint64_t phys_reg_4 = isaTable->getIntPhysReg(4);
@@ -156,6 +181,7 @@ public:
 				call_ev = new VanadisSyscallSetThreadAreaEvent( core_id, hw_thr, thread_area_ptr );
 			}
 			break;
+
 		case VANADIS_SYSCALL_RM_INOTIFY:
 			{
 				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to inotify_rm_watch(), by-passing and removing.\n");
@@ -169,6 +195,7 @@ public:
                 		}
 			}
 			break;
+
 		case VANADIS_SYSCALL_UNAME:
 			{
 				const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
@@ -179,6 +206,7 @@ public:
 				call_ev = new VanadisSyscallUnameEvent( core_id, hw_thr, uname_addr );
 			}
 			break;
+
 		case VANADIS_SYSCALL_FSTAT:
 			{
 				const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
@@ -193,6 +221,37 @@ public:
 				call_ev = new VanadisSyscallFstatEvent( core_id, hw_thr, file_handle, fstat_addr );
 			}
 			break;
+
+		case VANADIS_SYSCALL_CLOSE:
+			{
+				const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
+                                uint32_t close_file = regFile->getIntReg<uint32_t>( phys_reg_4 );
+
+				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to close( %" PRIu32 " )\n",
+					close_file);
+
+				call_ev = new VanadisSyscallCloseEvent( core_id, hw_thr, close_file );
+			}
+			break;
+
+		case VANADIS_SYSCALL_OPEN:
+			{
+				const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
+                                uint64_t open_path_ptr = regFile->getIntReg<uint64_t>( phys_reg_4 );
+
+				const uint16_t phys_reg_5 = isaTable->getIntPhysReg(5);
+				uint64_t open_flags = regFile->getIntReg<uint64_t>( phys_reg_5 );
+
+				const uint16_t phys_reg_6 = isaTable->getIntPhysReg(6);
+				uint64_t open_mode = regFile->getIntReg<uint64_t>( phys_reg_6 );
+
+				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to open( 0x%llx, %" PRIu64 ", %" PRIu64 " )\n",
+					open_path_ptr, open_flags, open_mode);
+
+				call_ev = new VanadisSyscallOpenEvent( core_id, hw_thr, open_path_ptr, open_flags, open_mode );
+			}
+			break;
+
 		case VANADIS_SYSCALL_OPENAT:
 			{
 				const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
@@ -263,6 +322,25 @@ public:
 					new_tid);
 
 				recvOSEvent( new VanadisSyscallResponse( new_tid ) );
+			}
+			break;
+
+		case VANADIS_SYSCALL_MADVISE:
+			{
+				const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
+                                uint64_t advise_addr = regFile->getIntReg<int64_t>( phys_reg_4 );
+
+				const uint16_t phys_reg_5 = isaTable->getIntPhysReg(5);
+                                uint64_t advise_len = regFile->getIntReg<int64_t>( phys_reg_5 );
+
+				const uint16_t phys_reg_6 = isaTable->getIntPhysReg(6);
+                                uint64_t advise_advice = regFile->getIntReg<int64_t>( phys_reg_6 );
+
+				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found call to madvise( 0x%llx, %" PRIu64 ", %" PRIu64 " )\n",
+					advise_addr, advise_len, advise_advice);
+
+				// output->fatal(CALL_INFO, -1, "STOP\n");
+				recvOSEvent( new VanadisSyscallResponse( 0 ) );
 			}
 			break;
 
@@ -348,6 +426,25 @@ public:
 			}
 			break;
 
+		case VANADIS_SYSCALL_UNMAP:
+			{
+				const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
+                                uint64_t unmap_addr = regFile->getIntReg<uint64_t>( phys_reg_4 );
+
+                                const uint16_t phys_reg_5 = isaTable->getIntPhysReg(5);
+                                uint64_t unmap_len = regFile->getIntReg<uint64_t>( phys_reg_5 );
+
+				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to unmap( 0x%llx, %" PRIu64 " )\n",
+					unmap_addr, unmap_len );
+
+				if( (0 == unmap_addr) ) {
+					recvOSEvent( new VanadisSyscallResponse(-22) );
+				} else {
+					call_ev = new VanadisSyscallMemoryUnMapEvent( core_id, hw_thr, unmap_addr, unmap_len );
+				}
+			}
+			break;
+
 		case VANADIS_SYSCALL_MMAP2:
 			{
 				const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
@@ -387,8 +484,35 @@ public:
 			}
 			break;
 
+		case VANADIS_SYSCALL_RT_SETSIGMASK:
+			{
+				const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
+                                int32_t how = regFile->getIntReg<int32_t>( phys_reg_4 );
+
+                                const uint16_t phys_reg_5 = isaTable->getIntPhysReg(5);
+                                uint64_t signal_set_in = regFile->getIntReg<uint64_t>( phys_reg_5 );
+
+                                const uint16_t phys_reg_6 = isaTable->getIntPhysReg(6);
+                                uint64_t signal_set_out = regFile->getIntReg<uint64_t>( phys_reg_6);
+
+				const uint16_t phys_reg_7 = isaTable->getIntPhysReg(7);
+				int32_t signal_set_size = regFile->getIntReg<int32_t>( phys_reg_7 );
+
+				output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to rt_sigprocmask( %" PRId32 ", 0x%llx, 0x%llx, %" PRId32 ")\n",
+					how, signal_set_in, signal_set_out, signal_set_size);
+
+				recvOSEvent( new VanadisSyscallResponse( 0 ) );
+			}
+			break;
+
 		default:
-			output->fatal(CALL_INFO, -1, "[syscall-handler] Error: unknown code %" PRIu64 "\n", os_code);
+			{
+				const uint16_t phys_reg_31 = isaTable->getIntPhysReg(31);
+				uint64_t link_reg = regFile->getIntReg<int32_t>( phys_reg_31 );
+
+				output->fatal(CALL_INFO, -1, "[syscall-handler] Error: unknown code %" PRIu64 " (ins: 0x%llx, link-reg: 0x%llx)\n",
+					os_code, syscallIns->getInstructionAddress(), link_reg);
+			}
 			break;
 		}
 

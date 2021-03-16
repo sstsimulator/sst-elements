@@ -1,3 +1,17 @@
+// Copyright 2009-2021 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2009-2021, NTESS
+// All rights reserved.
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
 
 #ifndef _H_VANADIS_FP_DIV
 #define _H_VANADIS_FP_DIV
@@ -68,6 +82,7 @@ public:
         }
 
 	virtual void execute( SST::Output* output, VanadisRegisterFile* regFile ) {
+#ifdef VANADIS_BUILD_DEBUG
 		char* int_register_buffer = new char[256];
                 char* fp_register_buffer = new char[256];
 
@@ -80,7 +95,7 @@ public:
 
                 delete[] int_register_buffer;
                 delete[] fp_register_buffer;
-
+#endif
 		switch( input_format ) {
 		case VANADIS_FORMAT_FP32:
 			{
@@ -89,7 +104,7 @@ public:
 
 				output->verbose(CALL_INFO, 16, 0, "---> %f + %f = %f\n", src_1, src_2, (src_1 / src_2));
 
-				regFile->setFPReg( phys_fp_regs_out[0], src_1 / src_2 );
+				regFile->setFPReg<float>( phys_fp_regs_out[0], src_1 / src_2 );
 			}
 			break;
 		case VANADIS_FORMAT_FP64:
@@ -107,7 +122,7 @@ public:
 
 					output->verbose(CALL_INFO, 16, 0, "---> %f + %f = %f\n", src_1, src_2, (src_1 / src_2));
 
-					regFile->setFPReg( phys_fp_regs_out[0], src_1 / src_2 );
+					regFile->setFPReg<double>( phys_fp_regs_out[0], src_1 / src_2 );
 				}
 			}
 			break;

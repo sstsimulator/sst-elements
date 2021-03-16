@@ -13,7 +13,9 @@ libsimpleSimulation_la_SOURCES = \
 
 EXTRA_DIST = \
     README \
-    tests/test_simpleCarWash.py
+    tests/test_simpleCarWash.py \
+    tests/test_simpleSimulationCarWash.py \
+    tests/testsuite_default_simpleSimulation.py
 
 libsimpleSimulation_la_LDFLAGS = -module -avoid-version
 

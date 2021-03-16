@@ -1,3 +1,17 @@
+// Copyright 2009-2021 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2009-2021, NTESS
+// All rights reserved.
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
 
 #ifndef _H_VANADIS_BRANCH_REG_COMPARE
 #define _H_VANADIS_BRANCH_REG_COMPARE
@@ -58,11 +72,11 @@ public:
 	}
 
 	virtual void execute( SST::Output* output, VanadisRegisterFile* regFile ) {
-
+#ifdef VANADIS_BUILD_DEBUG
 		output->verbose(CALL_INFO, 16, 0, "Execute: (addr=0x%0llx) BCMP (%s) isa-in: %" PRIu16 ", %" PRIu16 " / phys-in: %" PRIu16 ", %" PRIu16 " offset: %" PRId64 "\n",
 			getInstructionAddress(), convertCompareTypeToString(compareType),isa_int_regs_in[0],
 			isa_int_regs_in[1], phys_int_regs_in[0], phys_int_regs_in[1], offset );
-
+#endif
 		bool compare_result = false;
 
 		switch( reg_format ) {
@@ -85,13 +99,15 @@ public:
 
 		if( compare_result ) {
 			takenAddress = (uint64_t) ( ((int64_t) getInstructionAddress()) +  offset + VANADIS_SPECULATE_JUMP_ADDR_ADD );
-
+#ifdef VANADIS_BUILD_DEBUG
 			output->verbose(CALL_INFO, 16, 0, "-----> taken-address: 0x%llx + %" PRId64 " + %d = 0x%llx\n",
 				getInstructionAddress(), offset, VANADIS_SPECULATE_JUMP_ADDR_ADD, takenAddress);
+#endif
 		} else {
 			takenAddress = calculateStandardNotTakenAddress();
-
+#ifdef VANADIS_BUILD_DEBUG
 			output->verbose(CALL_INFO, 16, 0, "-----> not-taken-address: 0x%llx\n", takenAddress);
+#endif
 		}
 
 		markExecuted();

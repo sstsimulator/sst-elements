@@ -1,3 +1,17 @@
+// Copyright 2009-2021 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2009-2021, NTESS
+// All rights reserved.
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
 
 #ifndef _H_VANADIS_STORE_PARTIAL
 #define _H_VANADIS_STORE_PARTIAL
@@ -54,9 +68,10 @@ public:
 	}
 
 	virtual void computeStoreAddress( SST::Output* output, VanadisRegisterFile* reg, uint64_t* store_addr, uint16_t* op_width ) {
+#ifdef VANADIS_BUILD_DEBUG
 		output->verbose(CALL_INFO, 16, 0, "[partial-store]: compute base address: phys-reg: %" PRIu16 " / offset: %" PRIu64 " / 0x%0llx\n",
 			phys_int_regs_in[0], offset, offset);
-
+#endif
 		uint64_t reg_tmp = reg->getIntReg<uint64_t>( phys_int_regs_in[0] );
 
 		const uint64_t base_addr = reg_tmp + offset;
@@ -64,12 +79,12 @@ public:
 
 		const uint64_t right_len = (base_addr % width_64) == 0 ? width_64 : (base_addr % width_64);
 		const uint64_t left_len  = (width_64 - right_len) == 0 ? width_64 : (width_64 - right_len);
-
+#ifdef VANADIS_BUILD_DEBUG
 		output->verbose(CALL_INFO, 16, 0, "[partial-store]: base_addr: 0x%0llx full-width: %" PRIu64 "\n", base_addr, width_64);
 		output->verbose(CALL_INFO, 16, 0, "[partial-store]: store-type: %s\n", (is_left_store) ? "left" : "right");
 		output->verbose(CALL_INFO, 16, 0, "[partial-store]: partial-width: %" PRIu64 "\n",
 			(is_left_store) ? left_len : right_len );
-
+#endif
 		if( is_left_store ) {
 			(*store_addr) = base_addr;
 			(*op_width) = left_len;
@@ -85,9 +100,10 @@ public:
 
 			(*op_width) = right_len;
 		}
-
+#ifdef VANADIS_BUILD_DEBUG
 		output->verbose(CALL_INFO, 16, 0, "[partial-store]: store-addr: 0x%0llu / store-width: %" PRIu16 " / reg-offset: %" PRIu16 "\n",
 			(*store_addr), (*op_width), register_offset);
+#endif
 	}
 
 	uint16_t getStoreWidth() const {

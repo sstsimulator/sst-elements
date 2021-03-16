@@ -1,3 +1,17 @@
+// Copyright 2009-2021 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2009-2021, NTESS
+// All rights reserved.
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
 
 #ifndef _H_VANADIS_SIGN_UTILS
 #define _H_VANADIS_SIGN_UTILS
@@ -49,20 +63,18 @@ uint64_t vanadis_sign_extend( const uint32_t value ) {
 };
 
 int64_t vanadis_sign_extend_offset_16( const uint32_t value ) {
-//	printf("sign_extend v: %" PRIu32 " / 0x%0x\n", value, value);
-
 	int64_t value_64 = (value & VANADIS_4BYTE_EXTRACT);
 
-//	printf("sign_extend v_64 = %" PRId64 "\n", value_64);
-
 	if( (value_64 & VANADIS_2BYTE_SIGN_MASK) != 0 ) {
-//		printf("sign_extend - 16th bit is not zero\n");
 		value_64 |= VANADIS_EXTEND_2BYTE_SET;
-	} else {
-//		printf("sign_extend - 16th bit is zero\n");
 	}
 
-//	printf("sign_extend result: %" PRId64 "\n", value_64);
+	return value_64;
+};
+
+int64_t vanadis_sign_extend_offset_16_and_shift( const uint32_t value, const int64_t shift ) {
+	int64_t value_64 = vanadis_sign_extend_offset_16( value );
+	value_64 <<= shift;
 
 	return value_64;
 };

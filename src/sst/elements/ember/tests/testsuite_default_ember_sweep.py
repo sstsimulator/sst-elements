@@ -127,11 +127,12 @@ build_sweep_test_matrix()
 
 def gen_custom_name(testcase_func, param_num, param):
 # Full TestCaseName
-    testcasename = "{0}_{1}".format(testcase_func.__name__,
-        parameterized.to_safe_name("_".join(str(x) for x in param.args)))
-# Abbreviated TestCaseName
 #    testcasename = "{0}_{1}".format(testcase_func.__name__,
-#        parameterized.to_safe_name(str(param.args[0])))
+#        parameterized.to_safe_name("_".join(str(x) for x in param.args)))
+# Abbreviated TestCaseName
+    testcasename = "{0}_{1:03}_{2}".format(testcase_func.__name__,
+        int(parameterized.to_safe_name(str(param.args[0]))),
+        parameterized.to_safe_name(str(param.args[1])))
     return testcasename
 
 ################################################################################
@@ -143,8 +144,11 @@ def initializeTestModule_SingleInstance(class_inst):
 
     module_sema.acquire()
     if module_init != 1:
-        # Put your single instance Init Code Here
-        class_inst._setupEmberTestFiles()
+        try:
+            # Put your single instance Init Code Here
+            class_inst._setupEmberTestFiles()
+        except:
+            pass
         module_init = 1
     module_sema.release()
 
@@ -187,7 +191,7 @@ class testcase_EmberSweep(SSTTestCase):
         self.emberelement_testdir = "{0}/../test/".format(test_path)
 
         # Set the various file paths
-        testDataFileName="{0}".format("testEemberSweep_{0}".format(index))
+        testDataFileName="{0}".format("testEmberSweep_{0}".format(index))
 
         reffile = "{0}/refFiles/test_EmberSweep.out".format(test_path)
         outfile = "{0}/{1}.out".format(outdir, testDataFileName)
@@ -216,7 +220,7 @@ class testcase_EmberSweep(SSTTestCase):
                 if grepstr in line:
                     outfoundline = line
 
-        outtestresult = outfoundline is not ""
+        outtestresult = outfoundline != ""
         self.assertTrue(outtestresult, "Ember Sweep Test {0} - Cannot find string \"{1}\" in output file {2}".format(index, grepstr, outfile))
 
         reffoundline = ""
@@ -226,8 +230,8 @@ class testcase_EmberSweep(SSTTestCase):
                 if grepstr in line:
                     reffoundline = line
 
-        reftestresult = reffoundline is not ""
-        self.assertTrue(reftestresult, "Ember Sweep Test {0} - Cannot find string \"{1}\" in reference file {2}".format(index, grepstr, outfile))
+        reftestresult = reffoundline != ""
+        self.assertTrue(reftestresult, "Ember Sweep Test {0} - Cannot find string \"{1}\" in reference file {2}".format(index, grepstr, reffile))
 
         log_debug("Ember Sweep Test {0} - PASSED\n--------".format(index))
 

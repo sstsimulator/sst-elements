@@ -1,3 +1,17 @@
+// Copyright 2009-2021 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2009-2021, NTESS
+// All rights reserved.
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
 
 #ifndef _H_VANADIS_ADD
 #define _H_VANADIS_ADD
@@ -16,9 +30,10 @@ public:
 		const uint16_t dest,
 		const uint16_t src_1,
 		const uint16_t src_2,
+		const bool signd,
 		VanadisRegisterFormat fmt) :
 		VanadisInstruction(addr, hw_thr, isa_opts, 2, 1, 2, 1, 0, 0, 0, 0),
-			reg_format(fmt) {
+			perform_signed(signd), reg_format(fmt) {
 
 		isa_int_regs_in[0]  = src_1;
 		isa_int_regs_in[1]  = src_2;
@@ -34,36 +49,57 @@ public:
 	}
 
 	virtual const char* getInstCode() const {
-		return "ADD";
+		if( perform_signed ) {
+			return "ADD";
+		} else {
+			return "ADDU";
+		}
 	}
 
 	virtual void printToBuffer(char* buffer, size_t buffer_size) {
-                snprintf(buffer, buffer_size, "ADD     %5" PRIu16 " <- %5" PRIu16 " + %5" PRIu16 " (phys: %5" PRIu16 " <- %5" PRIu16 " + %5" PRIu16 ")",
-			isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1],
+                snprintf(buffer, buffer_size, "%s    %5" PRIu16 " <- %5" PRIu16 " + %5" PRIu16 " (phys: %5" PRIu16 " <- %5" PRIu16 " + %5" PRIu16 ")",
+			getInstCode(), isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1],
 			phys_int_regs_out[0], phys_int_regs_in[0], phys_int_regs_in[1] );
         }
 
 	virtual void execute( SST::Output* output, VanadisRegisterFile* regFile ) {
-		output->verbose(CALL_INFO, 16, 0, "Execute: (addr=%p) ADD phys: out=%" PRIu16 " in=%" PRIu16 ", %" PRIu16 ", isa: out=%" PRIu16 " / in=%" PRIu16 ", %" PRIu16 "\n",
-			(void*) getInstructionAddress(), phys_int_regs_out[0],
+#ifdef VANADIS_BUILD_DEBUG
+		output->verbose(CALL_INFO, 16, 0, "Execute: (addr=%p) %s phys: out=%" PRIu16 " in=%" PRIu16 ", %" PRIu16 ", isa: out=%" PRIu16 " / in=%" PRIu16 ", %" PRIu16 "\n",
+			(void*) getInstructionAddress(), getInstCode(),
+			phys_int_regs_out[0],
 			phys_int_regs_in[0], phys_int_regs_in[1],
 			isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1] );
+#endif
 
 		switch( reg_format ) {
 		case VANADIS_FORMAT_INT64:
 			{
-				const int64_t src_1 = regFile->getIntReg<int64_t>( phys_int_regs_in[0] );
-				const int64_t src_2 = regFile->getIntReg<int64_t>( phys_int_regs_in[1] );
+				if( perform_signed ) {
+					const int64_t src_1 = regFile->getIntReg<int64_t>( phys_int_regs_in[0] );
+					const int64_t src_2 = regFile->getIntReg<int64_t>( phys_int_regs_in[1] );
 
-				regFile->setIntReg<int64_t>( phys_int_regs_out[0], ((src_1) + (src_2)));
+					regFile->setIntReg<int64_t>( phys_int_regs_out[0], ((src_1) + (src_2)));
+				} else {
+					const uint64_t src_1 = regFile->getIntReg<uint64_t>( phys_int_regs_in[0] );
+					const uint64_t src_2 = regFile->getIntReg<uint64_t>( phys_int_regs_in[1] );
+
+					regFile->setIntReg<uint64_t>( phys_int_regs_out[0], ((src_1) + (src_2)));
+				}
 			}
 			break;
 		case VANADIS_FORMAT_INT32:
 			{
-				const int32_t src_1 = regFile->getIntReg<int32_t>( phys_int_regs_in[0] );
-				const int32_t src_2 = regFile->getIntReg<int32_t>( phys_int_regs_in[1] );
+				if( perform_signed ) {
+					const int32_t src_1 = regFile->getIntReg<int32_t>( phys_int_regs_in[0] );
+					const int32_t src_2 = regFile->getIntReg<int32_t>( phys_int_regs_in[1] );
 
-				regFile->setIntReg<int32_t>( phys_int_regs_out[0], ((src_1) + (src_2)));
+					regFile->setIntReg<int32_t>( phys_int_regs_out[0], ((src_1) + (src_2)));
+				} else {
+					const uint32_t src_1 = regFile->getIntReg<uint32_t>( phys_int_regs_in[0] );
+					const uint32_t src_2 = regFile->getIntReg<uint32_t>( phys_int_regs_in[1] );
+
+					regFile->setIntReg<uint32_t>( phys_int_regs_out[0], ((src_1) + (src_2)));
+				}
 			}
 			break;
 		default:
@@ -77,6 +113,7 @@ public:
 	}
 
 protected:
+	bool perform_signed;
 	VanadisRegisterFormat reg_format;
 
 };

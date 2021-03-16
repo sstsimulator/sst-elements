@@ -1,3 +1,17 @@
+// Copyright 2009-2021 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2009-2021, NTESS
+// All rights reserved.
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
 
 #ifndef _H_VANADIS_OS_MMAP_STATE
 #define _H_VANADIS_OS_MMAP_STATE
@@ -63,9 +77,8 @@ public:
 
 				uint64_t allocation_start = 0;
 
-				assert( -1 == file_descriptor );
-
-				if( -1 == file_descriptor ) {
+				// Check if the allocation request is MAP_ANONYMOUS in which case we ignore the file descriptor and offsets
+				if( (map_flags & 0x800) != 0x0 ) {
 					output->verbose(CALL_INFO, 16, 0, "[syscall-mmap] --> calling memory manager to allocate pages...\n");
 
 					if( 0 == map_address ) {
@@ -86,9 +99,10 @@ public:
 					} else {
 						output->verbose(CALL_INFO, 16, 0, "[syscall-mmap] ---> requested address 0x%llx automatically returned.\n",
 							map_address);
+
 						std::vector<uint8_t> payload;
     		                                payload.resize( map_length, 0 );
-               	                                send_block_mem( allocation_start, payload );
+               	                                send_block_mem( map_address, payload );
 
 						return_value = (int64_t) map_address;
 					}

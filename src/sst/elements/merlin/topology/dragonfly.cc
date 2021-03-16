@@ -1,10 +1,10 @@
-// Copyright 2009-2020 NTESS. Under the terms
+// Copyright 2009-2021 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
-// 
-// Copyright (c) 2009-2020, NTESS
+//
+// Copyright (c) 2009-2021, NTESS
 // All rights reserved.
-// 
+//
 // Portions are copyright of other developers:
 // See the file CONTRIBUTORS.TXT in the top level directory
 // the distribution for more information.
@@ -34,7 +34,7 @@ RouteToGroup::init(SharedRegion* sr, size_t g, size_t r)
     data = sr->getPtr<const RouterPortPair*>();
     groups = g;
     routes = r;
-    
+
 }
 
 const RouterPortPair&
@@ -46,14 +46,14 @@ RouteToGroup::getRouterPortPair(int group, int route_number)
 
 void
 RouteToGroup::setRouterPortPair(int group, int route_number, const RouterPortPair& pair) {
-    // output.output("%d, %d, %d, %d\n",group,route_number,pair.router,pair.port);
     region->modifyArray(group*routes+route_number,pair);
 }
 
 
 topo_dragonfly::topo_dragonfly(ComponentId_t cid, Params &p, int num_ports, int rtr_id, int num_vns) :
     Topology(cid),
-    num_vns(num_vns)
+    num_vns(num_vns),
+    rtr_id(rtr_id)
 {
     params.p = p.find<uint32_t>("hosts_per_router");
     params.a = p.find<uint32_t>("routers_per_group");
@@ -66,7 +66,7 @@ topo_dragonfly::topo_dragonfly(ComponentId_t cid, Params &p, int num_ports, int 
     if ( global_route_mode_s == "absolute" ) global_route_mode = ABSOLUTE;
     else if ( global_route_mode_s == "relative" ) global_route_mode = RELATIVE;
     else {
-        output.fatal(CALL_INFO, -1, "Invalid global_route_mode specified: %s.\n",global_route_mode_s.c_str());        
+        output.fatal(CALL_INFO, -1, "Invalid global_route_mode specified: %s.\n",global_route_mode_s.c_str());
     }
 
     vns = new vn_info[num_vns];
@@ -74,20 +74,20 @@ topo_dragonfly::topo_dragonfly(ComponentId_t cid, Params &p, int num_ports, int 
     if ( p.is_value_array("algorithm") ) {
         p.find_array<std::string>("algorithm", vn_route_algos);
         if ( vn_route_algos.size() != num_vns ) {
-            fatal(CALL_INFO, -1, "ERROR: When specifying routing algorithms per VN, algorithm list length must match number of VNs (%d VNs, %lu algorithms).\n",num_vns,vn_route_algos.size());        
+            fatal(CALL_INFO, -1, "ERROR: When specifying routing algorithms per VN, algorithm list length must match number of VNs (%d VNs, %lu algorithms).\n",num_vns,vn_route_algos.size());
         }
     }
     else {
         std::string route_algo = p.find<std::string>("algorithm", "minimal");
         for ( int i = 0; i < num_vns; ++i ) vn_route_algos.push_back(route_algo);
     }
-    
+
     adaptive_threshold = p.find<double>("adaptive_threshold",2.0);
-    
+
     // Get the global link map
     std::vector<int64_t> global_link_map;
     p.find_array<int64_t>("global_link_map", global_link_map);
-    
+
     // Get a shared region
     SharedRegion* sr = Simulation::getSharedRegionManager()->getGlobalSharedRegion("group_to_global_port",
                                                                                   ((params.g-1) * params.n) * sizeof(RouterPortPair),
@@ -102,19 +102,19 @@ topo_dragonfly::topo_dragonfly(ComponentId_t cid, Params &p, int num_ports, int 
         // Figure out all the mappings
         int64_t value = global_link_map[i];
         if ( value == -1 ) continue;
-        
+
         int group = value % (params.g - 1);
         int route_num = value / (params.g - 1);
         int router = i / params.h;
         int port = (i % params.h) + params.p + params.a - 1;
-        
+
         RouterPortPair rpp;
         rpp.router = router;
         rpp.port = port;
         group_to_global_port.setRouterPortPair(group, route_num, rpp);
     }
 
-    
+
     // Publish the shared region to make sure everyone has the data.
     sr->publish();
 
@@ -146,7 +146,7 @@ topo_dragonfly::topo_dragonfly(ComponentId_t cid, Params &p, int num_ports, int 
         }
         curr_vc += vns[i].num_vcs;
     }
-    
+
     group_id = rtr_id / params.a;
     router_id = rtr_id % params.a;
 
@@ -169,7 +169,7 @@ void topo_dragonfly::route_nonadaptive(int port, int vc, internal_router_event* 
 
     // Break this up by port type
     uint32_t next_port = 0;
-    if ( (uint32_t)port < params.p ) { 
+    if ( (uint32_t)port < params.p ) {
         // Host ports
 
         if ( td_ev->dest.group == td_ev->src_group ) {
@@ -190,7 +190,7 @@ void topo_dragonfly::route_nonadaptive(int port, int vc, internal_router_event* 
             // specified by mid_group.  If this is a direct route then
             // mid_group will be set to group.
             next_port = port_for_group(td_ev->dest.mid_group, td_ev->global_slice);
-        }        
+        }
     }
     else if ( (uint32_t)port < ( params.p + params.a - 1) ) {
         // Intragroup links
@@ -254,7 +254,7 @@ void topo_dragonfly::route_adaptive_local(int port, int vc, internal_router_even
     // routed packets
     if ( port >= params.p && port < (params.p + params.a-1) ) return;
 
-    
+
     topo_dragonfly_event *td_ev = static_cast<topo_dragonfly_event*>(ev);
 
     // Adaptive routing when packet stays in group
@@ -274,14 +274,14 @@ void topo_dragonfly::route_adaptive_local(int port, int vc, internal_router_even
         else {
             td_ev->setNextPort(direct_route_port);
         }
-        
+
         return;
     }
-    
+
     // If the dest is in the same group, no need to adaptively route
     if ( td_ev->dest.group == group_id ) return;
 
-    
+
     // Based on the output queue depths, choose minimal or valiant
     // route.  We'll chose the direct route unless the remaining
     // output credits for the direct route is half of the valiant
@@ -307,7 +307,7 @@ void topo_dragonfly::route_adaptive_local(int port, int vc, internal_router_even
     else {
         direct_slice = direct_slice2;
         direct_route_port = direct_route_port2;
-        direct_route_credits = direct_route_credits2;        
+        direct_route_credits = direct_route_credits2;
     }
 
     int valiant_slice = 0;
@@ -335,11 +335,11 @@ void topo_dragonfly::route_adaptive_local(int port, int vc, internal_router_even
         else {
             valiant_slice = valiant_slice2;
             valiant_route_port = valiant_route_port2;
-            valiant_route_credits = valiant_route_credits2;        
+            valiant_route_credits = valiant_route_credits2;
         }
     }
 
-    
+
     if ( valiant_route_credits > (int)((double)direct_route_credits * adaptive_threshold) ) { // Use valiant route
         td_ev->dest.mid_group = td_ev->dest.mid_group_shadow;
         td_ev->setNextPort(valiant_route_port);
@@ -363,7 +363,7 @@ internal_router_event* topo_dragonfly::process_input(RtrEvent* ev)
     dgnflyAddr dstAddr = {0, 0, 0, 0};
     idToLocation(ev->getDest(), &dstAddr);
     int vn = ev->getRouteVN();
-    
+
     switch (vns[vn].algorithm) {
     case MINIMAL:
         if ( dstAddr.group == group_id ) {
@@ -407,6 +407,54 @@ internal_router_event* topo_dragonfly::process_input(RtrEvent* ev)
                       td_ev->dest.mid_group_shadow);
     }
     return td_ev;
+}
+
+std::pair<int,int>
+topo_dragonfly::getDeliveryPortForEndpointID(int ep_id)
+{
+    return std::make_pair<int,int>(ep_id / params.p, ep_id % params.p);
+}
+
+
+int
+topo_dragonfly::routeControlPacket(CtrlRtrEvent* ev)
+{
+    const auto& dest = ev->getDest();
+
+    int dest_id = dest.addr;
+
+    // Check to see if this event is for the current router. If so,
+    // return -1/
+    if ( dest.addr_is_router ) {
+        if ( dest_id == rtr_id ) return -1;
+        // If this is a router ID, multiply by number of hosts per
+        // router (params.p) in order to get the id for an endpoint in
+        // this router.  Then we can use the idToLocation() function.
+        else dest_id *= params.p;
+    }
+    // Addr is an endpoint id, check to see if the event is actually
+    // for a router and, if so, if it is for the current router
+    else if ( dest.addr_for_router && ((dest_id / params.p) == rtr_id) ) {
+        return -1;
+    }
+
+    dgnflyAddr addr;
+    idToLocation(dest_id,&addr);
+
+    // Just get next port on minimal route
+    int next_port;
+    if ( addr.group != group_id ) {
+        next_port = port_for_group(addr.group, 0 /* global slice */);
+    }
+    else if ( addr.router != router_id ) {
+        next_port = port_for_router(addr.router);
+    }
+    else {
+        next_port = addr.host;
+    }
+    return next_port;
+
+
 }
 
 
@@ -591,5 +639,3 @@ uint32_t topo_dragonfly::port_for_router(uint32_t router)
     if ( router > router_id ) tgt--;
     return tgt;
 }
-
-

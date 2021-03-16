@@ -1,3 +1,17 @@
+// Copyright 2009-2021 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2009-2021, NTESS
+// All rights reserved.
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
 
 #ifndef _H_VANADIS_NODE_OS
 #define _H_VANADIS_NODE_OS
@@ -31,7 +45,10 @@ public:
 
 	SST_ELI_DOCUMENT_PARAMS(
 		{ "verbose", 		"Set the output verbosity, 0 is no output, higher is more." },
-		{ "cores",		"Number of cores that can request OS services via a link."  }
+		{ "cores",		"Number of cores that can request OS services via a link."  },
+		{ "stdout",		"File path to place stdout" },
+		{ "stderr",		"File path to place stderr" },
+		{ "stdin",		"File path to place stdin"  }
 	)
 
 	SST_ELI_DOCUMENT_PORTS(

@@ -1,3 +1,17 @@
+// Copyright 2009-2021 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2009-2021, NTESS
+// All rights reserved.
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
 
 #ifndef _H_VANADIS_FP_2_GPR
 #define _H_VANADIS_FP_2_GPR
@@ -65,11 +79,12 @@ public:
         }
 
 	virtual void execute( SST::Output* output, VanadisRegisterFile* regFile ) {
+#ifdef VANADIS_BUILD_DEBUG
 		output->verbose(CALL_INFO, 16, 0, "Execute (addr=0x%llx) %s int-dest isa: %" PRIu16 " phys: %" PRIu16 " <- fp-src: isa: %" PRIu16 " phys: %" PRIu16 "\n",
 			getInstructionAddress(), getInstCode(),
 			isa_int_regs_out[0], phys_int_regs_out[0],
 			isa_fp_regs_in[0], phys_fp_regs_in[0] );
-
+#endif
 		switch( move_width ) {
 		case VANADIS_FORMAT_INT32:
 		case VANADIS_FORMAT_FP32:

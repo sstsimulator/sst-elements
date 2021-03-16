@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 #
-# Copyright 2009-2020 NTESS. Under the terms
+# Copyright 2009-2021 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2020, NTESS
+# Copyright (c) 2009-2021, NTESS
 # All rights reserved.
 #
 # Portions are copyright of other developers:
@@ -64,3 +64,23 @@ class OfferedLoadJob(Job):
         return (networkif, portname)
 
 
+class IncastJob(Job):
+    def __init__(self,job_id,size):
+        Job.__init__(self,job_id,size)
+        self._declareParams("main",["num_peers","target_nids","packets_to_send","packet_size","delay_start"])
+        self.num_peers = size
+        self._lockVariable("num_peers")
+
+    def getName(self):
+        return "Incast Job"
+
+    def build(self, nID, extraKeys):
+        nic = sst.Component("incast.%d"%nID, "merlin.simple_patterns.incast")
+        self._applyStatisticsSettings(nic)
+        nic.addParams(self._getGroupParams("main"))
+        nic.addParams(extraKeys)
+        id = self._nid_map.index(nID)
+
+        #  Add the linkcontrol
+        networkif, port_name = self.network_interface.build(nic,"networkIF",0,self.job_id,self.size,id,True)
+        return (networkif, port_name)

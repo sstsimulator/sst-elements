@@ -1,3 +1,17 @@
+// Copyright 2009-2021 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2009-2021, NTESS
+// All rights reserved.
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
 
 #ifndef _H_VANADIS_SET_REG_COMPARE
 #define _H_VANADIS_SET_REG_COMPARE
@@ -49,12 +63,13 @@ public:
 	}
 
 	virtual void execute( SST::Output* output, VanadisRegisterFile* regFile ) {
+#ifdef VANADIS_BUILD_DEBUG
 		output->verbose(CALL_INFO, 16, 0, "Execute: (addr=0x%0llx) CMPSET (op: %s, %s) isa-out: %" PRIu16 " isa-in: %" PRIu16 ", %" PRIu16 " / phys-out: %" PRIu16 " phys-in: %" PRIu16 ", %" PRIu16 "\n",
 			getInstructionAddress(), convertCompareTypeToString(compareType),
 			performSigned ? "signed" : "unsigned",
 			isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1],
 			phys_int_regs_out[0], phys_int_regs_in[0], phys_int_regs_in[1]);
-
+#endif
 		bool compare_result = false;
 
 		if( performSigned ) {

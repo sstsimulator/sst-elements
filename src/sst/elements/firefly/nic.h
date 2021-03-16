@@ -1,8 +1,8 @@
-// Copyright 2013-2020 NTESS. Under the terms
+// Copyright 2013-2021 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2013-2020, NTESS
+// Copyright (c) 2013-2021, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -71,36 +71,64 @@ class Nic : public SST::Component  {
         { "nid", "node id on network", "-1"},
         { "verboseLevel", "Sets the output verbosity of the component", "0"},
         { "verboseMask", "Sets the output mask of the component", "-1"},
+        { "printConfig", "Controls whether configuration data is printed", "no"},
         { "nic2host_lat", "Sets the latency over the Host to NIC bus", "150ns"},
+        { "numVNs","Number of VNs to be used","1"},
+        { "getHdrVN", "VN to send headers on", "0"},
+        { "getRespLargeVN", "VN to send large get responses on", "0"},
+        { "getRespSmallVN", "VN to send small get responses on", "0"},
+        { "getRespSize", "Currently Unused", "1500"},
+
+        { "shmemAckVN", "VN to send Shmem acks on", "0"},
+        { "shmemGetReqVN", "VN to send Shmem get requests on", "0"},
+        { "shmemGetLargeVN", "VN to send large get responses on", "0"},
+        { "shmemGetSmallVN", "VN to send small get responses on", "0"},
+        { "shmemGetThresholdLength", "Currently unused", "0"},
+
+        { "shmemPutLargeVN", "VN to send large puts on", "0"},
+        { "shmemPutSmallVN", "VN to send small puts on", "0"},
+        { "shmemPutThresholdLength", "Currently unused", "0"},
+
         { "rxMatchDelay_ns", "Sets the delay for a receive match", "100"},
-        { "txDelay_ns", "Sets the delay for a send", "100"},
+        { "txDelay_ns", "Sets the delay for a send", "50"},
         { "hostReadDelay_ns", "Sets the delay for a read from the host", "200"},
         { "shmemRxDelay_ns", "Sets the delay for a SHMEM receive operation", "0"},
         { "num_vNics", "Sets number of cores", "1"},
         { "tracedPkt", "packet to trace", "-1"},
         { "tracedNode", "node to trace", "-1"},
-        { "numShmemCmdSlots", "Sets the size of the Host to NIC SHMEM command queue", "32"},
+
         { "maxSendMachineQsize", "Sets the number of pending memory operations", "1"},
         { "maxRecvMachineQsize", "Sets the number of pending memory operations", "1"},
         { "shmemSendAlignment", "Sets the send stream transfer alignment", "64"},
         { "numSendMachines", "Sets the number of send machines", "1"},
         { "numRecvNicUnits", "Sets the number of receive units", "1"},
+        { "nicAllocationPolicy", "Allocation policy for Nic", "RoundRobin"},
         { "packetOverhead", "Sets the overhead of a network packet", "0"},
-        { "packetSize", "Sets the size of the network packet in bytes", "64"},
-        { "input_buf_size", "Sets the buffer size of the link connected to the router", "128"},
-        { "output_buf_size", "Sets the buffer size of the link connected to the router", "128"},
-        { "link_bw", "Sets the bandwidth of link connected to the router", "500Mhz"},
-        { "module", "Sets the link control module", "merlin.linkcontrol"},
-        { "rtrPortName", "Port connected to the router", "rtr"},
+        { "packetSize", "Sets the size of the network packet in bits or bytes" },
+
         { "corePortName", "Port connected to the core", "core"},
 
-        { "useSimpleMemoryModel", "If set to 1 use the simple memory model", "0"},
+        { "shmem.nicCmdLatency", "Latency for posting shmem command on NIC", "10"},
+        { "shmem.hostCmdLatency", "Host latency for posting shmem command", "10"},
+
+        { "FAM_memsize", "", "0"},
+        { "FAM_backed", "Controls whether FAM memory is backed in the simlation", "yes"},
+
+        { "maxActiveRecvStreams", "Set max number of active receive streams", "16" },
+        { "maxPendingRecvPkts", "Set max number of pending receive packets", "64" },
 
         { "dmaBW_GBs", "set the one way DMA bandwidth", "100"},
         { "dmaContentionMult", "set the DMA contention mult", "100"},
 
+        { "useSimpleMemoryModel", "If set to 1 use the simple memory model", "0"},
+
         { "simpleMemoryModel.verboseLevel","Sets the verbosity level of output","0"},
         { "simpleMemoryModel.verboseMask","Set the output mask","-1"},
+        { "simpleMemoryModel.printConfig","Controls printing of configuration information","no"},
+
+        { "simpleMemoryModel.useHostCache","Sets model to use host cache.  If set to yes, all nids will use host cache.  Can also provide a list of nids that should use the host cache.","yes" },
+        { "simpleMemoryModel.useBusBridge","Sets model to use bus bridge.  If set to yes, all nids will use bus bridge.  Can also provide a list of nids that should use the host cache.","yes" },
+        { "simpleMemoryModel.useDetailedModel","Sets model to use detailed memory model.  If set to yes, all nids will use detailed model.  Can also provide a list of nids that should use the detialed model.","no"},
 
         { "simpleMemoryModel.memReadLat_ns","Sets the latency for a memory read","150"},
         { "simpleMemoryModel.memWriteLat_ns","Sets the latency for a memory write","150"},
@@ -123,12 +151,14 @@ class Nic : public SST::Component  {
         { "simpleMemoryModel.hostCacheNumMSHR","Sets the max number of outstanding request to memory","10"},
         { "simpleMemoryModel.hostCacheLineSize","Sets the cache line size","64"},
 
-
         { "simpleMemoryModel.tlbPageSize","Sets the TLB page size","2097152"},
         { "simpleMemoryModel.tlbSize","Sets the number of slots in the TLB","0"},
         { "simpleMemoryModel.tlbMissLat_ns","Sets the latency for a TLB miss","0"},
         { "simpleMemoryModel.numWalkers","Sets the number of outsanding TLB misses","1"},
         { "simpleMemoryModel.numTlbSlots","Sets the number of requests the TLB will queue","1"},
+
+        { "useTrivialMemoryModel", "Use the trivial memory model", "false" },
+        {" useDetailed", "Use detailed compute model", "false"},
 
     )
 

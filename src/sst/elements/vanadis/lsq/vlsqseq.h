@@ -1,3 +1,17 @@
+// Copyright 2009-2021 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2009-2021, NTESS
+// All rights reserved.
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
 
 #ifndef _H_VANADIS_LSQ_SEQUENTIAL
 #define _H_VANADIS_LSQ_SEQUENTIAL
@@ -38,6 +52,7 @@ public:
 		ins = instr;
 		issued = false;
 		req_id = 0;
+		opAddr = 0;
 	}
 
 	bool isOperationIssued() {
@@ -68,6 +83,14 @@ public:
 		return ins->getInstFuncType() == INST_LOAD;
 	}
 
+	uint64_t getOperationAddress() const {
+		return opAddr;
+	}
+
+	void setOperationAddress( const uint64_t newAddr ) {
+		opAddr = newAddr;
+	}
+
 	void print( SST::Output* output ) {
 		output->verbose(CALL_INFO, 16, 0, "-> type: %s / ins: 0x%llx / issued: %c\n",
 			isStore() ? "STORE" : "LOAD ", ins->getInstructionAddress(),
@@ -78,7 +101,7 @@ protected:
 	SimpleMem::Request::id_t req_id;
 	VanadisInstruction* ins;
 	bool issued;
-
+	uint64_t opAddr;
 };
 
 class VanadisSequentialLoadStoreQueue : public SST::Vanadis::VanadisLoadStoreQueue {
@@ -176,6 +199,25 @@ public:
 
 	virtual size_t loadSize() {
 		return op_q.size();
+	}
+
+	virtual void printStatus( SST::Output& output ) {
+		int next_index = 0;
+
+		for( auto q_itr = op_q.begin(); q_itr != op_q.end(); q_itr++ ) {
+			if( (*q_itr)->isLoad() ) {
+				output.verbose(CALL_INFO, 0, 0, "---> lsq[%5d]: ins: 0x%llx / LOAD  / 0x%llx / rob-issued: %c / lsq-issued: %c\n", next_index++,
+					(*q_itr)->getInstruction()->getInstructionAddress(),
+					(*q_itr)->getOperationAddress(),
+					(*q_itr)->getInstruction()->completedIssue() ? 'y' : 'n',
+					(*q_itr)->isOperationIssued() ? 'y' : 'n' );
+			} else {
+				output.verbose(CALL_INFO, 0, 0, "---> lsq[%5d]: ins: 0x%llx / STORE / rob-issued: %c / lsq-issued: %c\n", next_index++,
+					(*q_itr)->getInstruction()->getInstructionAddress(),
+					(*q_itr)->getInstruction()->completedIssue() ? 'y' : 'n',
+					(*q_itr)->isOperationIssued() ? 'y' : 'n' );
+			}
+		}
 	}
 
 	virtual void push( VanadisStoreInstruction* store_me ) {
@@ -287,7 +329,11 @@ public:
 							writeTrace( load_ins, load_req );
 
 							memInterface->sendRequest( load_req );
+							stat_load_issued->addData(1);
+							stat_data_bytes_read->addData(load_width);
+
 							next_item->setRequestID( load_req->id );
+							next_item->setOperationAddress( load_addr );
 						}
 					}
 
@@ -375,6 +421,9 @@ public:
 
 						writeTrace( store_ins, store_req );
 						memInterface->sendRequest( store_req );
+
+						stat_store_issued->addData(1);
+						stat_data_bytes_written->addData(store_width);
 
 						if( fault_on_memory_not_written ) {
 							for( uint64_t i = store_req->addr; i < (store_req->addr + store_req->size); ++i ) {

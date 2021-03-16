@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 #
-# Copyright 2009-2020 NTESS. Under the terms
+# Copyright 2009-2021 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2020, NTESS
+# Copyright (c) 2009-2021, NTESS
 # All rights reserved.
 #
 # This file is part of the SST software package. For license
@@ -35,11 +35,11 @@ if __name__ == "__main__":
     system.build()
     
 
-    sst.setStatisticLoadLevel(9)
+    # sst.setStatisticLoadLevel(9)
 
-    sst.setStatisticOutput("sst.statOutputCSV");
-    sst.setStatisticOutputOptions({
-        "filepath" : "stats.csv",
-        "separator" : ", "
-    })
+    # sst.setStatisticOutput("sst.statOutputCSV");
+    # sst.setStatisticOutputOptions({
+    #     "filepath" : "stats.csv",
+    #     "separator" : ", "
+    # })
 

@@ -1,0 +1,10 @@
+OpenMP API Test
+Maximum number of OpenMP threads is: 8
+There are 1 threads active now (should equal 1 since not in parallel region)
+There are now 8 threads active (should equal OMP_NUM_THREADS since in parallel region)
+CORE ID: 0 PROCESSED AN EXIT EVENT
+
+Ariel Memory Management Statistics:
+Page Table Sizes:
+Page Table Coverages:
+Simulation is complete, simulated time: 287.104 us

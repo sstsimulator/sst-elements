@@ -15,7 +15,11 @@ def initializeTestModule_SingleInstance(class_inst):
 
     module_sema.acquire()
     if module_init != 1:
-        # Put your single instance Init Code Here
+        try:
+            # Put your single instance Init Code Here
+            pass
+        except:
+            pass
         module_init = 1
     module_sema.release()
 
@@ -50,7 +54,7 @@ class testcase_miranda_Component(SSTTestCase):
     @unittest.skipIf(testing_check_get_num_ranks() > 1, "miranda: test_miranda_randomgen skipped if ranks > 1")
     @unittest.skipIf(testing_check_get_num_threads() > 1, "miranda: test_miranda_randomgen skipped if threads > 1")
     def test_miranda_randomgen(self):
-        self.miranda_test_template("randomgen", timeout=360)
+        self.miranda_test_template("randomgen", testtimeout=360)
 
     def test_miranda_stencil3dbench(self):
         self.miranda_test_template("stencil3dbench")
@@ -69,7 +73,7 @@ class testcase_miranda_Component(SSTTestCase):
 
 #####
 
-    def miranda_test_template(self, testcase, timeout=240):
+    def miranda_test_template(self, testcase, testtimeout=240):
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
         outdir = self.get_test_output_run_dir()
@@ -84,9 +88,9 @@ class testcase_miranda_Component(SSTTestCase):
         errfile = "{0}/{1}.err".format(outdir, testDataFileName)
         mpioutfiles = "{0}/{1}.testfile".format(outdir, testDataFileName)
 
-        self.run_sst(sdlfile, outfile, errfile, mpi_out_files=mpioutfiles, timeout_sec=timeout)
+        self.run_sst(sdlfile, outfile, errfile, mpi_out_files=mpioutfiles, timeout_sec=testtimeout)
 
-#        testing_remove_component_warning_from_file(outfile)
+        testing_remove_component_warning_from_file(outfile)
 
         # NOTE: THE PASS / FAIL EVALUATIONS ARE PORTED FROM THE SQE BAMBOO
         #       BASED testSuite_XXX.sh THESE SHOULD BE RE-EVALUATED BY THE
@@ -98,4 +102,7 @@ class testcase_miranda_Component(SSTTestCase):
 
         # Perform the test
         cmp_result = testing_compare_sorted_diff(testcase, outfile, reffile)
-
+        if (cmp_result == False):
+            diffdata = testing_get_diff_data(testcase)
+            log_failure(diffdata)
+        self.assertTrue(cmp_result, "Sorted Output file {0} does not match sorted Reference File {1}".format(outfile, reffile))

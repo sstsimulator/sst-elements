@@ -1,10 +1,10 @@
 // -*- mode: c++ -*-
 
-// Copyright 2009-2020 NTESS. Under the terms
+// Copyright 2009-2021 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2020, NTESS
+// Copyright (c) 2009-2021, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -75,6 +75,7 @@ public:
         { "send_bit_count",     "Count number of bits sent on link", "bits", 1},
         { "output_port_stalls", "Time output port is stalled (in units of core timebase)", "time in stalls", 1},
         { "idle_time",          "Number of (in unites of core timebas) that port was idle", "time spent idle", 1},
+        // { "recv_bit_count",     "Count number of bits received on the link", "bits", 1},
     )
 
     SST_ELI_DOCUMENT_PORTS(
@@ -95,12 +96,14 @@ private:
             {}
     };
 
-
     // Link to router
     Link* rtr_link;
     // Self link for timing output.  This is how we manage bandwidth
     // usage
     Link* output_timing;
+    // Self link to use when waiting to send because of a congestion
+    // eveng
+    Link* congestion_timing;
 
     // Perforamne paramters
     UnitAlgebra link_bw;
@@ -143,9 +146,12 @@ private:
     // Input queues.  Size is req_vn
     network_queue_t* input_queues;
 
+    SimTime_t last_time;
+    SimTime_t last_recv_time;
 
     nid_t id;
     nid_t logical_nid;
+    int job_id;
     SharedRegion* nid_map_shm;
     const nid_t* nid_map;
 
@@ -168,6 +174,27 @@ private:
     bool have_packets;
     SimTime_t start_block;
 
+
+    // Tracks congenstion state
+    struct CongestionState {
+        // Keeps track of how much we should backoff on sends.
+        // Defaults to 1 (no backoff), will be set to a higher number
+        // if congenstion management detects congestion and requests a
+        // backoff.  Higher numbers will backoff more.
+        int backoff;
+        // If non-zero, this represents the next time data can be sent
+        // to the target
+        SimTime_t throttle_time;
+        // Keep track of how many messages I have targeting this dest
+        int count;
+
+        // Need to be able to have an argument so we can emplace into
+        // maps
+        CongestionState(int backoff = 1) : backoff(backoff), throttle_time(0), count(0) {}
+    };
+
+    std::map<int,CongestionState> congestion_state;
+
     // Functors for notifying the parent when there is more space in
     // output queue or when a new packet arrives
     HandlerBase* receiveFunctor;
@@ -181,6 +208,7 @@ private:
     Statistic<uint64_t>* send_bit_count;
     Statistic<uint64_t>* output_port_stalls;
     Statistic<uint64_t>* idle_time;
+    Statistic<uint64_t>* recv_bit_count;
 
     Output& output;
 
@@ -237,8 +265,11 @@ private:
 
     void handle_input(Event* ev);
     void handle_output(Event* ev);
+    void handle_congestion(Event* ev);
 
+    int sent;
 
+    SimTime_t foo;
 };
 
 }

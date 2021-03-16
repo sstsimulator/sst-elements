@@ -1,3 +1,17 @@
+// Copyright 2009-2021 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2009-2021, NTESS
+// All rights reserved.
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
 
 #ifndef _H_VANADIS_GPR_2_FP
 #define _H_VANADIS_GPR_2_FP
@@ -64,17 +78,18 @@ public:
         }
 
 	virtual void execute( SST::Output* output, VanadisRegisterFile* regFile ) {
+#ifdef VANADIS_BUILD_DEBUG
 		output->verbose(CALL_INFO, 16, 0, "Execute (addr=0x%llx) %s fp-dest isa: %" PRIu16 " phys: %" PRIu16 " <- int-src: isa: %" PRIu16 " phys: %" PRIu16 "\n",
 			getInstructionAddress(), getInstCode(),
 			isa_fp_regs_out[0], phys_fp_regs_out[0],
 			isa_int_regs_in[0], phys_int_regs_in[0] );
-
+#endif
 		switch( move_width ) {
 		case VANADIS_FORMAT_INT32:
 		case VANADIS_FORMAT_FP32:
 			{
 				const int32_t v = regFile->getIntReg<int32_t>( phys_int_regs_in[0] );
-				regFile->setFPReg( phys_fp_regs_out[0], v );
+				regFile->setFPReg<int32_t>( phys_fp_regs_out[0], v );
 			}
 			break;
 		case VANADIS_FORMAT_INT64:
@@ -85,7 +100,7 @@ public:
 					fractureToRegisters<int64_t>( regFile, phys_fp_regs_out[0], phys_fp_regs_out[1], v );
 				} else {
 					const int64_t v = regFile->getIntReg<int64_t>( phys_int_regs_in[0] );
-					regFile->setFPReg( phys_fp_regs_out[0], v );
+					regFile->setFPReg<int64_t>( phys_fp_regs_out[0], v );
 				}
 			}
 			break;

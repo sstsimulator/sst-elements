@@ -1,3 +1,17 @@
+// Copyright 2009-2021 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2009-2021, NTESS
+// All rights reserved.
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
 
 #ifndef _H_VANADIS_JUMP_REG_LINK
 #define _H_VANADIS_JUMP_REG_LINK
@@ -26,9 +40,6 @@ public:
 
 			isa_int_regs_in[0]  = jumpToAddrReg;
 			isa_int_regs_out[0] = returnAddrReg;
-
-			// JLR means we will ALWAYS take the branch
-//			result_dir = BRANCH_TAKEN;
 		}
 
 		VanadisJumpRegLinkInstruction* clone() {
@@ -45,16 +56,18 @@ public:
 		}
 
 		virtual void execute( SST::Output* output, VanadisRegisterFile* regFile ) {
+#ifdef VANADIS_BUILD_DEBUG
 			output->verbose(CALL_INFO, 16, 0, "Execute: addr=(0x%0llx) JLR isa-link: %" PRIu16 " isa-addr: %" PRIu16 " phys-link: %" PRIu16 " phys-addr: %" PRIu16 "\n",
 				getInstructionAddress(), isa_int_regs_out[0], isa_int_regs_in[0], phys_int_regs_out[0], phys_int_regs_in[0]);
-
+#endif
 			const uint64_t jump_to = regFile->getIntReg<uint64_t>( phys_int_regs_in[0] );
 			const uint64_t link_value = calculateStandardNotTakenAddress();
 
 			regFile->setIntReg<uint64_t>( phys_int_regs_out[0], link_value );
 
+#ifdef VANADIS_BUILD_DEBUG
 			output->verbose(CALL_INFO, 16, 0, "Execute JLR jump-to: 0x%0llx link-value: 0x%0llx\n", jump_to, link_value);
-
+#endif
 			takenAddress = regFile->getIntReg<uint64_t>( phys_int_regs_in[0] );
 
 			if( (takenAddress & 0x3) != 0 ) {

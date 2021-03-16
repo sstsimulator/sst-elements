@@ -3,8 +3,12 @@ import os
 
 sst.setProgramOption("timebase", "1ps")
 
-sst_root = os.getenv( "SST_ROOT" )
-app = sst_root + "/sst-elements/src/sst/elements/ariel/frontend/simple/examples/stream/stream"
+stream_app = os.getenv("ARIEL_TEST_STREAM_APP")
+if stream_app == None:
+    sst_root = os.getenv( "SST_ROOT" )
+    app = sst_root + "/sst-elements/src/sst/elements/ariel/frontend/simple/examples/stream/stream"
+else:
+    app = stream_app
 
 if not os.path.exists(app):
     app = os.getenv( "OMP_EXE" )

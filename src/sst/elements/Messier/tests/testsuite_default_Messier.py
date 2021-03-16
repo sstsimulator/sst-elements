@@ -15,7 +15,11 @@ def initializeTestModule_SingleInstance(class_inst):
 
     module_sema.acquire()
     if module_init != 1:
-        # Put your single instance Init Code Here
+        try:
+            # Put your single instance Init Code Here
+            pass
+        except:
+            pass
         module_init = 1
     module_sema.release()
 
@@ -56,7 +60,7 @@ class testcase_Messier_Component(SSTTestCase):
 
 #####
 
-    def Messier_test_template(self, testcase):
+    def Messier_test_template(self, testcase, testtimeout=240):
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
         outdir = self.get_test_output_run_dir()
@@ -73,7 +77,7 @@ class testcase_Messier_Component(SSTTestCase):
         newreffile = "{0}/refFiles/{1}.newref".format(outdir, testDataFileName)
         newoutfile = "{0}/{1}.newout".format(outdir, testDataFileName)
 
-        self.run_sst(sdlfile, outfile, errfile, mpi_out_files=mpioutfiles, timeout_sec=120)
+        self.run_sst(sdlfile, outfile, errfile, mpi_out_files=mpioutfiles, timeout_sec=testtimeout)
 
         testing_remove_component_warning_from_file(outfile)
 
@@ -100,4 +104,7 @@ class testcase_Messier_Component(SSTTestCase):
             self.assertTrue(wc_line_word_count_diff, "Line & Word count between file {0} does not match Reference File {1}".format(outfile, reffile))
 
         else:
+            if (cmp_result == False):
+                diffdata = testing_get_diff_data(testcase)
+                log_failure(diffdata)
             self.assertTrue(cmp_result, "Sorted Output file {0} does not match sorted Reference File {1}".format(outfile, reffile))

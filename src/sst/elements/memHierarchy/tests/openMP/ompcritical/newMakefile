@@ -1,0 +1,11 @@
+CXX=g++ 
+
+ompcritical: ompcritical.o
+	$(CXX) -O3 -o ompcritical -fopenmp ompcritical.o
+
+ompcritical.o: ompcritical.c
+	$(CXX) -O3 -o ompcritical.o -fopenmp -c ompcritical.c
+
+clean:
+	rm ompcritical ompcritical.o
+

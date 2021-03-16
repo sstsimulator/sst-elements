@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 #
-# Copyright 2009-2020 NTESS. Under the terms
+# Copyright 2009-2021 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2020, NTESS
+# Copyright (c) 2009-2021, NTESS
 # All rights reserved.
 #
 # Portions are copyright of other developers:
@@ -685,9 +685,10 @@ class hr_router(RouterTemplate):
                                       "xbar_arb","network_inspectors","oql_track_port","oql_track_remote","num_vns","vn_remap","vn_remap_shm"])
 
         self._declareParams("params",["qos_settings"],"portcontrol:arbitration:")
-        self._declareParams("params",["output_arb"],"portcontrol:")
+        self._declareParams("params",["output_arb", "enable_congestion_management", "cm_outstanding_threshold", "cm_incast_threshold"],"portcontrol:")
 
         self._setCallbackOnWrite("qos_settings",self._qos_callback)
+
         self._subscribeToPlatformParamSet("router")
 
 
@@ -722,6 +723,22 @@ class SystemEndpoint(Buildable):
             return (None, None)
 
 
+class EmptyJob(Job):
+    def __init__(self,job_id,size):
+        Job.__init__(self,job_id,size)
+
+    def getName(self):
+        return "Empty Job"
+
+    def build(self, nID, extraKeys):
+        nic = sst.Component("incast.%d"%nID, "merlin.simple_patterns.empty")
+        id = self._nid_map.index(nID)
+
+        #  Add the linkcontrol
+        networkif, port_name = self.network_interface.build(nic,"networkIF",0,self.job_id,self.size,id)
+        return (networkif, port_name)
+
+
 class System(TemplateBase):
     
     # Functions used to allocated endpoints to jobs
@@ -748,6 +765,10 @@ class System(TemplateBase):
 
     # Build the system
     def build(self):
+        # For any unallocated nodes, use EmptyJob
+        if len(self._available_nodes) > 0:
+            remainder = EmptyJob(-1,len(self._available_nodes))
+            self.allocateNodes(remainder,"linear");
         system_ep = SystemEndpoint(self)
         self.topology.build(system_ep)
 
@@ -813,7 +834,7 @@ def _allocate_random(available_nodes, num_nodes, seed = None):
 
 
 def _allocate_linear(available_nodes, num_nodes):
-    
+
     available_nodes.sort()
     
     nid_list = available_nodes[0:num_nodes]

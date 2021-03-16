@@ -1,3 +1,17 @@
+// Copyright 2009-2021 NTESS. Under the terms
+// of Contract DE-NA0003525 with NTESS, the U.S.
+// Government retains certain rights in this software.
+//
+// Copyright (c) 2009-2021, NTESS
+// All rights reserved.
+//
+// Portions are copyright of other developers:
+// See the file CONTRIBUTORS.TXT in the top level directory
+// the distribution for more information.
+//
+// This file is part of the SST software package. For license
+// information, see the LICENSE file in the top level directory of the
+// distribution.
 
 #ifndef _H_VANADIS_FP_SET_REG_COMPARE
 #define _H_VANADIS_FP_SET_REG_COMPARE
@@ -56,9 +70,45 @@ public:
 	virtual const char* getInstCode() const {
 		switch( reg_fmt ) {
 		case VANADIS_FORMAT_FP64:
-			return "FP64CMP";
+			{
+				switch( compareType ) {
+				case REG_COMPARE_EQ:
+					return "FP64CMPEQ";
+				case REG_COMPARE_NEQ:
+					return "FP64CMPNEQ";
+				case REG_COMPARE_LT:
+					return "FP64CMPLT";
+				case REG_COMPARE_LTE:
+					return "FP64CMPLTE";
+				case REG_COMPARE_GT:
+					return "FP64CMPGT";
+				case REG_COMPARE_GTE:
+					return "FP64CMPGTE";
+				default:
+					return "FP64CMPUKN";
+				}
+			}
+			break;
 		case VANADIS_FORMAT_FP32:
-			return "FP32CMP";
+			{
+				switch( compareType ) {
+				case REG_COMPARE_EQ:
+					return "FP32CMPEQ";
+				case REG_COMPARE_NEQ:
+					return "FP32CMPNEQ";
+				case REG_COMPARE_LT:
+					return "FP32CMPLT";
+				case REG_COMPARE_LTE:
+					return "FP32CMPLTE";
+				case REG_COMPARE_GT:
+					return "FP32CMPGT";
+				case REG_COMPARE_GTE:
+					return "FP32CMPGTE";
+				default:
+					return "FP32CMPUKN";
+				}
+			}
+			break;
 		case VANADIS_FORMAT_INT64:
 			return "FPINT64ACMP";
 		case VANADIS_FORMAT_INT32:
@@ -101,6 +151,7 @@ public:
 	}
 
 	virtual void execute( SST::Output* output, VanadisRegisterFile* regFile ) {
+#ifdef VANADIS_BUILD_DEBUG
 		char* int_register_buffer = new char[256];
 		char* fp_register_buffer = new char[256];
 
@@ -114,7 +165,7 @@ public:
 
 		delete[] int_register_buffer;
 		delete[] fp_register_buffer;
-
+#endif
 		bool compare_result = false;
 		bool byte8_type     = false;
 

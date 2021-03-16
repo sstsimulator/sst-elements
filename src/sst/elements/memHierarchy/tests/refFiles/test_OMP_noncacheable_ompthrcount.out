@@ -1,0 +1,8 @@
+Test will create many threads and increment a counter...
+Hello OpenMP World just created: 8 threads!
+CORE ID: 0 PROCESSED AN EXIT EVENT
+
+Ariel Memory Management Statistics:
+Page Table Sizes:
+Page Table Coverages:
+Simulation is complete, simulated time: 257.404 us

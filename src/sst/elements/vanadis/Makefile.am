@@ -3,15 +3,15 @@
 #
 
 AM_CPPFLAGS = \
-	$(MPI_CPPFLAGS)
+	$(MPI_CPPFLAGS) \
+	-DVANADIS_BUILD_DEBUG
 
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libvanadis.la
-libvanadis_la_SOURCES = \
-vanadis.cc \
+
+VANADIS_SRC_FILES = \
 os/vnodeos.cc \
 vanadis.h \
-vbranchunit.h \
 vfuncunit.h \
 vinsbundle.h \
 vinsloader.h \
@@ -49,8 +49,8 @@ inst/vfpmul.h \
 inst/vfpscmp.h \
 inst/vfpsub.h \
 inst/vgpr2fp.h \
-inst/vinst.h \
 inst/vinstall.h \
+inst/vinst.h \
 inst/vinsttype.h \
 inst/vjl.h \
 inst/vjlr.h \
@@ -81,6 +81,7 @@ inst/vsrli.h \
 inst/vstore.h \
 inst/vsub.h \
 inst/vsyscall.h \
+inst/vtrunc.h \
 inst/vxor.h \
 inst/vxori.h \
 lsq/vlsq.h \
@@ -99,20 +100,25 @@ util/vdatacopy.h \
 util/vfpreghandler.h \
 util/vlinesplit.h \
 util/vsignx.h \
+vbranch/vbranchbasic.h \
+vbranch/vbranchunit.h \
 velf/velfinfo.h \
 os/callev/voscallaccessev.h \
 os/callev/voscallall.h \
 os/callev/voscallbrk.h \
+os/callev/voscallclose.h \
 os/callev/voscallexitgrp.h \
 os/callev/voscallfstat.h \
 os/callev/voscallgettime64.h \
 os/callev/voscallioctl.h \
 os/callev/voscallmmap.h \
 os/callev/voscallopenat.h \
+os/callev/voscallopen.h \
 os/callev/voscallread.h \
 os/callev/voscallreadlink.h \
 os/callev/voscallsta.h \
 os/callev/voscalluname.h \
+os/callev/voscallunmap.h \
 os/callev/voscallwrite.h \
 os/callev/voscallwritev.h \
 os/callev/vosinitbrk.h \
@@ -125,7 +131,9 @@ os/node/vnodeosfd.h \
 os/node/vnodeosfstath.h \
 os/node/vnodeoshstate.h \
 os/node/vnodeosopenath.h \
+os/node/vnodeosopenh.h \
 os/node/vnodeosreadlink.h \
+os/node/vnodeosstattype.h \
 os/node/vnodeosunameh.h \
 os/node/vnodeoswriteh.h \
 os/node/vnodeoswritevh.h \
@@ -134,7 +142,26 @@ os/resp/vosexitresp.h
 
 EXTRA_DIST =
 
+libvanadis_la_SOURCES = \
+	vanadis.cc \
+	$(VANADIS_SRC_FILES)
+
+#libvanadisdbg_la_SOURCES = \
+#	vanadisdbg.cc \
+#	$(VANADIS_SRC_FILES)
+
 libvanadis_la_LDFLAGS = -module -avoid-version
+
+#libvanadisdbg_la_LDFLAGS = -module -avoid-version
+
+bin_PROGRAMS = sst-vanadis-tracediff
+
+sst_vanadis_tracediff_SOURCES = tools/tracediff/tracediff.cc
+
+#vanadisdbg.cc: vanadis.cc $(VANADIS_SRC_FILES)
+#	$(CXXCPP) -DVANADIS_BUILD_DEBUG $(CXXFLAGS) $(CPPFLAGS) -I./ vanadis.cc > $@
+
+#CLEANFILES = vanadisdbg.cc
 
 install-exec-hook:
 	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     vanadis=$(abs_srcdir)

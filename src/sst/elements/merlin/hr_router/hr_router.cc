@@ -1,8 +1,8 @@
-// Copyright 2009-2020 NTESS. Under the terms
+// Copyright 2009-2021 NTESS. Under the terms
 // of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
-// Copyright (c) 2009-2020, NTESS
+// Copyright (c) 2009-2021, NTESS
 // All rights reserved.
 //
 // Portions are copyright of other developers:
@@ -144,7 +144,7 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
     // Get the topology
     topo = (Topology*)loadUserSubComponent<SST::Merlin::Topology>
         ("topology", ComponentInfo::SHARE_NONE, num_ports, id, num_vns);
-    
+
     if ( !topo ) {
         merlin_abort.fatal(CALL_INFO_LONG, 1, "hr_router requires topology to be specified in input file\n");
     }
@@ -152,7 +152,7 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
     topo->getVCsPerVN(vcs_per_vn);
     num_vcs = 0;
     for ( int vcs : vcs_per_vn ) num_vcs += vcs;
-    
+
     // Check to see if remap is on
     vn_remap_shm = params.find<std::string>("vn_remap_shm","");
     if ( vn_remap_shm != "" ) {
@@ -257,7 +257,7 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
         port_name << i;
 
         // For each port, some default parameters can be overwritten
-         // by logical group parameters (link_bw, input_buf_size,
+        // by logical group parameters (link_bw, input_buf_size,
         // output_buf_size, input_latency, output_latency).
 
         pc_params.insert("port_name", port_name.str());
@@ -546,16 +546,49 @@ hr_router::complete(unsigned int phase)
 }
 
 void
-hr_router::sendTopologyEvent(int port, TopologyEvent* ev) {
+hr_router::sendCtrlEvent(CtrlRtrEvent* ev, int port) {
+    if ( port == -1 ) {
+        // Need to route packet
+        port = topo->routeControlPacket(ev);
+    }
+
+    if ( port >= num_ports ) {
+        auto dest = ev->getDest();
+    }
     // Event just gets forwarded to appropriate PortControl object
-    ports[port]->sendTopologyEvent(ev);
+    ports[port]->sendCtrlEvent(ev);
 }
 
 void
-hr_router::recvTopologyEvent(int port, TopologyEvent* ev) {
-    // Event just get's sent on to topolgy object
-    topo->recvTopologyEvent(port,ev);
-
+hr_router::recvCtrlEvent(int port, CtrlRtrEvent* ev) {
+    // Check to see what type of event it is
+    switch ( ev->getCtrlType() ) {
+    case CtrlRtrEvent::TOPOLOGY:
+        // Event just gets sent on to topolgy object
+        topo->recvTopologyEvent(port,static_cast<TopologyEvent*>(ev));
+        break;
+    default:
+        // Route the ctrl event
+        const auto& dest = ev->getDest();
+        int port = topo->routeControlPacket(ev);
+        if ( port == -1 ) {
+            // Destined for this router
+            if ( dest.addr_is_router ) {
+                // Packet was sent to me, but I don't know what to do with
+                // it
+                fatal(CALL_INFO_LONG,-1,"ERROR: router %d received unknown ctrl event\n",id);
+            }
+            else {
+                auto d = topo->getDeliveryPortForEndpointID(dest.addr);
+                ports[d.second]->recvCtrlEvent(ev);
+            }
+        }
+        else {
+            int port = topo->routeControlPacket(ev);
+            ports[port]->sendCtrlEvent(ev);
+        }
+        break;
+    }
 }
 
 
@@ -583,4 +616,15 @@ hr_router::init_vcs()
     arb->setPorts(num_ports,num_vcs);
 
 
+}
+
+void
+hr_router::reportIncomingEvent(internal_router_event* ev)
+{
+    // If this is destined for this router, let appropriate
+    // PortControl know
+    auto dest = topo->getDeliveryPortForEndpointID(ev->getDest());
+    if ( dest.first == id ) {
+        ports[dest.second]->reportIncomingEvent(ev);
+    }
 }

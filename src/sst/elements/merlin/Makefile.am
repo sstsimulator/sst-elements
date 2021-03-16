@@ -31,8 +31,12 @@ libmerlin_la_SOURCES = \
 	test/pt2pt/pt2pt_test.cc \
 	test/bisection/bisection_test.h \
 	test/bisection/bisection_test.cc \
+	test/simple_patterns/empty.h \
+	test/simple_patterns/empty.cc \
 	test/simple_patterns/shift.h \
 	test/simple_patterns/shift.cc \
+	test/simple_patterns/incast.h \
+	test/simple_patterns/incast.cc \
 	topology/torus.h \
 	topology/torus.cc \
 	topology/mesh.h \
@@ -96,16 +100,18 @@ EXTRA_DIST = \
 	tests/torus_5_trafficgen.py \
 	tests/torus_64_test.py \
 	tests/dragon_128_platform_test.py \
+	tests/dragon_128_platform_test_cm.py \
 	tests/platform_file_dragon_128.py \
-    tests/refFiles/test_merlin_dragon_128_platform_test.out \
-    tests/refFiles/test_merlin_dragon_128_test.out \
-    tests/refFiles/test_merlin_dragon_72_test.out \
-    tests/refFiles/test_merlin_fattree_128_test.out \
-    tests/refFiles/test_merlin_fattree_256_test.out \
-    tests/refFiles/test_merlin_hyperx_128_test.out \
-    tests/refFiles/test_merlin_torus_128_test.out \
-    tests/refFiles/test_merlin_torus_5_trafficgen.out \
-    tests/refFiles/test_merlin_torus_64_test.out
+	tests/refFiles/test_merlin_dragon_128_platform_test.out \
+	tests/refFiles/test_merlin_dragon_128_platform_test_cm.out \
+	tests/refFiles/test_merlin_dragon_128_test.out \
+	tests/refFiles/test_merlin_dragon_72_test.out \
+	tests/refFiles/test_merlin_fattree_128_test.out \
+	tests/refFiles/test_merlin_fattree_256_test.out \
+	tests/refFiles/test_merlin_hyperx_128_test.out \
+	tests/refFiles/test_merlin_torus_128_test.out \
+	tests/refFiles/test_merlin_torus_5_trafficgen.out \
+	tests/refFiles/test_merlin_torus_64_test.out
 
 sstdir = $(includedir)/sst/elements/merlin
 nobase_sst_HEADERS = \

@@ -15,7 +15,11 @@ def initializeTestModule_SingleInstance(class_inst):
 
     module_sema.acquire()
     if module_init != 1:
-        # Put your single instance Init Code Here
+        try:
+            # Put your single instance Init Code Here
+            pass
+        except:
+            pass
         module_init = 1
     module_sema.release()
 
@@ -63,9 +67,16 @@ class testcase_merlin_Component(SSTTestCase):
     def test_merlin_hyperx_128(self):
          self.merlin_test_template("hyperx_128_test")
 
+    def test_merlin_dragon_128_platform(self):
+        self.merlin_test_template("dragon_128_platform_test", True)
+
+    def test_merlin_dragon_128_platform_cm(self):
+        self.merlin_test_template("dragon_128_platform_test_cm", True)
+
+         
 #####
 
-    def merlin_test_template(self, testcase):
+    def merlin_test_template(self, testcase, cwd=False):
         # Get the path to the test files
         test_path = self.get_testsuite_dir()
         outdir = self.get_test_output_run_dir()
@@ -80,13 +91,21 @@ class testcase_merlin_Component(SSTTestCase):
         errfile = "{0}/{1}.err".format(outdir, testDataFileName)
         mpioutfiles = "{0}/{1}.testfile".format(outdir, testDataFileName)
 
-        self.run_sst(sdlfile, outfile, errfile, mpi_out_files=mpioutfiles)
+        if cwd:
+            self.run_sst(sdlfile, outfile, errfile, mpi_out_files=mpioutfiles, set_cwd=test_path)
+        else:
+            self.run_sst(sdlfile, outfile, errfile, mpi_out_files=mpioutfiles)
 
         # NOTE: THE PASS / FAIL EVALUATIONS ARE PORTED FROM THE SQE BAMBOO
         #       BASED testSuite_XXX.sh THESE SHOULD BE RE-EVALUATED BY THE
         #       DEVELOPER AGAINST THE LATEST VERSION OF SST TO SEE IF THE
         #       TESTS & RESULT FILES ARE STILL VALID
 
-        # Perform the test
+        # Perform the tests
+        self.assertFalse(os_test_file(errfile, "-s"), "merlin test {0} has Non-empty Error File {1}".format(testDataFileName, errfile))
+
         cmp_result = testing_compare_sorted_diff(testcase, outfile, reffile)
+        if (cmp_result == False):
+            diffdata = testing_get_diff_data(testcase)
+            log_failure(diffdata)
         self.assertTrue(cmp_result, "Sorted Output file {0} does not match sorted Reference File {1}".format(outfile, reffile))
