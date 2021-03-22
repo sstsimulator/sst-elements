@@ -22,6 +22,7 @@ libllyr_la_SOURCES = \
 	pes/logicPE.h \
 	pes/loadPE.h \
 	pes/storePE.h \
+	pes/complexPE.h \
 	lsQueue.h
 
 deprecated_libllyr_sources =

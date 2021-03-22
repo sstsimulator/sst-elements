@@ -65,6 +65,10 @@ typedef enum {
     FPSUB,
     FPMUL,
     FPDIV,
+    FPMATMUL,
+    ANY_CP = 0xF0,
+    TSIN,
+    TCOS,
     DUMMY = 0xFF,
     BUFFER,
     OTHER
