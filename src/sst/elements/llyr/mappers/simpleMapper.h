@@ -36,7 +36,7 @@ public:
         "llyr",
         "mapper.simple",
         SST_ELI_ELEMENT_VERSION(1,0,0),
-        "Greedy subgraph mapper.",
+        "App to HW",
         SST::Llyr::LlyrMapper
     )
 

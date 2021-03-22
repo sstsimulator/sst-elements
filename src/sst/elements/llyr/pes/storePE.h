@@ -38,7 +38,7 @@ public:
         cycles_ = cycles;
         output_queues_ = new std::vector< std::queue< LlyrData >* >;
 
-        //stores need an address queue and an input queue
+        //stores need two input queues -- address and data
         input_queues_= new std::vector< std::queue< LlyrData >* >;
         std::queue< LlyrData >* tempQueue = new std::queue< LlyrData >;
         input_queues_->push_back(tempQueue);

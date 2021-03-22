@@ -18,6 +18,8 @@
 #ifndef _FP_PE_H
 #define _FP_PE_H
 
+#include <limits>
+
 #include "pes/processingElement.h"
 
 namespace SST {
@@ -76,6 +78,7 @@ public:
         uint64_t intResult = 0x0F;
 
         std::vector< LlyrData > argList;
+        std::vector< double > convList;
         LlyrData retVal;
 
         if( output_->getVerboseLevel() >= 10 ) {
@@ -114,19 +117,59 @@ public:
             }
         }
 
+        //need to convert from the raw bits to floating point
+        for(auto it = argList.begin() ; it != argList.end(); ++it ) {
+            const auto newValue = it->to_ullong();
+            constexpr auto size = sizeof(double);
+            uint8_t fpBuffer[size] = {};
+            std::memcpy(fpBuffer, std::addressof(newValue), size);
+
+            double fpResult;
+            std::memcpy(std::addressof(fpResult), fpBuffer, size);
+            convList.push_back(fpResult);
+        }
+
+        double fpResult;
         switch( op_binding_ ) {
             case FPADD :
+                fpResult = convList[0] + convList[1];
+                std::cout << std::setprecision(std::numeric_limits<decltype(fpResult)>::max_digits10) << fpResult << " = ";
+                std::cout << std::setprecision(std::numeric_limits<decltype(fpResult)>::max_digits10) << convList[0] << " + " << convList[1];
+                std::cout << std::endl;
+                break;
             case FPSUB :
+                fpResult = convList[0] - convList[1];
+                std::cout << std::setprecision(std::numeric_limits<decltype(fpResult)>::max_digits10) << fpResult << " = ";
+                std::cout << std::setprecision(std::numeric_limits<decltype(fpResult)>::max_digits10) << convList[0] << " - " << convList[1];
+                std::cout << std::endl;
+                break;
             case FPMUL :
+                fpResult = convList[0] * convList[1];
+                std::cout << std::setprecision(std::numeric_limits<decltype(fpResult)>::max_digits10) << fpResult << " = ";
+                std::cout << std::setprecision(std::numeric_limits<decltype(fpResult)>::max_digits10) << convList[0] << " * " << convList[1];
+                std::cout << std::endl;
+                break;
             case FPDIV :
+                fpResult = convList[0] / convList[1];
+                std::cout << std::setprecision(std::numeric_limits<decltype(fpResult)>::max_digits10) << fpResult << " = ";
+                std::cout << std::setprecision(std::numeric_limits<decltype(fpResult)>::max_digits10) << convList[0] << " / " << convList[1];
+                std::cout << std::endl;
                 break;
             default :
                 output_->verbose(CALL_INFO, 0, 0, "Error: could not find corresponding op.\n");
                 exit(-1);
         }
 
+        //convert the fp value back to raw bits for storage
+        constexpr auto size = sizeof(double);
+        uint8_t intBuffer[size] = {};
+        std::memcpy(intBuffer, std::addressof(fpResult), size);
+        std::memcpy(std::addressof(intResult), intBuffer, size);
+        std::bitset<64> myBits = std::bitset<64>(intResult);
+
         retVal = LlyrData(intResult);
 
+        std::cout << "fpResult = " << fpResult << std::endl;
         std::cout << "intResult = " << intResult << std::endl;
         std::cout << "retVal = " << retVal << std::endl;
 
