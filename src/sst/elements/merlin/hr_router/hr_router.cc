@@ -482,7 +482,9 @@ hr_router::init(unsigned int phase)
                 case Topology::R2N:
                     ports[*j]->sendUntimedData(ire->getEncapsulatedEvent()->clone());
                     break;
-                case Topology::R2R: {
+                case Topology::R2R:
+                // Ignore failed links during init
+                case Topology::FAILED: {
                     internal_router_event *new_ire = ire->clone();
                     new_ire->setEncapsulatedEvent(ire->getEncapsulatedEvent()->clone());
                     ports[*j]->sendUntimedData(new_ire);
@@ -530,7 +532,9 @@ hr_router::complete(unsigned int phase)
                 case Topology::R2N:
                     ports[*j]->sendUntimedData(ire->getEncapsulatedEvent()->clone());
                     break;
-                case Topology::R2R: {
+                case Topology::R2R:
+                // Ignore failed links during init
+                case Topology::FAILED: {
                     internal_router_event *new_ire = ire->clone();
                     new_ire->setEncapsulatedEvent(ire->getEncapsulatedEvent()->clone());
                     ports[*j]->sendUntimedData(new_ire);

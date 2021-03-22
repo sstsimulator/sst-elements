@@ -355,8 +355,9 @@ private:
     void handle_input_n2r(Event* ev);
     void handle_input_r2r(Event* ev);
     void handle_output(Event* ev);
-	void handleSAIWindow(Event* ev);
-	void reenablePort(Event* ev);
+    void handle_failed(Event* ev);
+    void handleSAIWindow(Event* ev);
+    void reenablePort(Event* ev);
 
 	uint64_t increaseActive();
 

@@ -307,6 +307,12 @@ PortControl::PortControl(ComponentId_t cid, Params& params,  Router* rif, int rt
         }
         break;
     case Topology::R2R:
+    case Topology::FAILED:
+        // We connect things even if it is marked as failed link.  Not
+        // all routers are guaranteed to be able to see the FAILED
+        // flag until the first round of init.  Plus, we ignore failed
+        // links during init, so we'll configure things during setup
+        // to abort on sends from then on.
         host_port = false;
         port_link = configureLink(link_port_name, output_latency_timebase,
                                   new Event::Handler<PortControl>(this,&PortControl::handle_input_r2r));
@@ -554,6 +560,10 @@ PortControl::~PortControl() {
 void
 PortControl::setup() {
     if ( !connected ) return;
+    if ( topo->getPortState(port_number) == Topology::FAILED ) {
+        port_link->replaceFunctor(new Event::Handler<PortControl>(this,&PortControl::handle_failed));
+        output_timing->replaceFunctor(new Event::Handler<PortControl>(this,&PortControl::handle_failed));
+    }
 	if (dlink_thresh >= 0) dynlink_timing->send(1,NULL);
     while ( init_events.size() ) {
         delete init_events.front();
@@ -1184,6 +1194,12 @@ PortControl::handle_output(Event* ev) {
         printStatus(Simulation::getSimulation()->getSimulationOutput(),0,0);
     }
 #endif
+}
+
+void
+PortControl::handle_failed(Event* ev) {
+    merlin_abort.fatal(CALL_INFO, 1, "INTERNAL ERROR: Event sent to port that has been marked as failed.  There must be something wrong with the routing algorithm being used.\n");
+    return;
 }
 
 
