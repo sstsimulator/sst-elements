@@ -12,6 +12,8 @@ libllyr_la_SOURCES = \
 	llyr.h \
 	llyr.cc \
 	graph.h \
+	parser/parser.h \
+	parser/parser.cc \
 	mappers/llyrMapper.h \
 	mappers/simpleMapper.h \
 	mappers/gemmMapper.h \
