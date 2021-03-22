@@ -22,6 +22,7 @@ libmerlin_la_SOURCES = \
 	target_generator/target_generator.h \
 	target_generator/target_generator.cc \
 	target_generator/bit_complement.h \
+	target_generator/shift.h \
 	target_generator/uniform.h \
 	test/nic.h \
 	test/nic.cc \
@@ -84,6 +85,7 @@ libmerlin_la_SOURCES = \
 	pymerlin-endpoint.py \
 	pymerlin-router.py \
 	interfaces/pymerlin-interface.py \
+	target_generator/pymerlin-targetgen.py \
 	topology/pymerlin-topo-dragonfly.py \
 	topology/pymerlin-topo-hyperx.py \
 	topology/pymerlin-topo-fattree.py \
@@ -125,6 +127,7 @@ BUILT_SOURCES = \
 	pymerlin-endpoint.inc \
 	pymerlin-router.inc \
 	interfaces/pymerlin-interface.inc \
+	target_generator/pymerlin-targetgen.inc \
 	topology/pymerlin-topo-dragonfly.inc \
 	topology/pymerlin-topo-hyperx.inc \
 	topology/pymerlin-topo-fattree.inc \
