@@ -115,24 +115,37 @@ public:
         }
 
         switch( op_binding_ ) {
+            case AND :
+                retVal = argList[0];
+                retVal &= argList[1];
+                break;
+            case OR :
+                retVal = argList[0];
+                retVal |= argList[1];
+                break;
+            case XOR :
+                retVal = argList[0];
+                retVal ^= argList[1];
+                break;
+            case NOT :
+                retVal = ~argList[0];
+                break;
             case SLL :
-                intResult = argList[0].to_ullong() + argList[1].to_ullong();
+                retVal = argList[0] << argList[1].to_ullong();
                 break;
             case SLR :
-                intResult = argList[0].to_ullong() - argList[1].to_ullong();
+                retVal = argList[0] >> argList[1].to_ullong();
                 break;
             case ROL :
-                intResult = argList[0].to_ullong() * argList[1].to_ullong();
+                retVal = (argList[0] << argList[1].to_ullong()) | (argList[0] >> (Bit_Length - argList[1].to_ullong()));
                 break;
             case ROR :
-                intResult = argList[0].to_ullong() / argList[1].to_ullong();
+                retVal = (argList[0] >> argList[1].to_ullong()) | (argList[0] << (Bit_Length - argList[1].to_ullong()));
                 break;
             default :
                 output_->verbose(CALL_INFO, 0, 0, "Error: could not find corresponding op.\n");
                 exit(-1);
         }
-
-        retVal = LlyrData(intResult);
 
         std::cout << "intResult = " << intResult << std::endl;
         std::cout << "retVal = " << retVal << std::endl;
