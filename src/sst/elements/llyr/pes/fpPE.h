@@ -119,13 +119,7 @@ public:
 
         //need to convert from the raw bits to floating point
         for(auto it = argList.begin() ; it != argList.end(); ++it ) {
-            const auto newValue = it->to_ullong();
-            constexpr auto size = sizeof(double);
-            uint8_t fpBuffer[size] = {};
-            std::memcpy(fpBuffer, std::addressof(newValue), size);
-
-            double fpResult;
-            std::memcpy(std::addressof(fpResult), fpBuffer, size);
+            double fpResult = bits_to_double(*it);
             convList.push_back(fpResult);
         }
 
@@ -161,13 +155,7 @@ public:
         }
 
         //convert the fp value back to raw bits for storage
-        constexpr auto size = sizeof(double);
-        uint8_t intBuffer[size] = {};
-        std::memcpy(intBuffer, std::addressof(fpResult), size);
-        std::memcpy(std::addressof(intResult), intBuffer, size);
-        std::bitset<64> myBits = std::bitset<64>(intResult);
-
-        retVal = LlyrData(intResult);
+        retVal = LlyrData(fp_to_bits(&fpResult));
 
         std::cout << "fpResult = " << fpResult << std::endl;
         std::cout << "intResult = " << intResult << std::endl;
@@ -188,6 +176,57 @@ public:
 
     //TODO for testing only
     virtual void fakeInit() {};
+
+private:
+    //helper to convert from bitset to float
+    float bits_to_float( std::bitset<Bit_Length> valIn )
+    {
+        const auto newValue = valIn.to_ullong();
+        constexpr auto size = sizeof(float);
+        uint8_t fpBuffer[size] = {};
+        std::memcpy(fpBuffer, std::addressof(newValue), size);
+
+        float fpResult;
+        std::memcpy(std::addressof(fpResult), fpBuffer, size);
+
+        return fpResult;
+    }
+
+    //helper to convert from bitset to double
+    double bits_to_double( std::bitset<Bit_Length> valIn )
+    {
+        const auto newValue = valIn.to_ullong();
+        constexpr auto size = sizeof(double);
+        uint8_t fpBuffer[size] = {};
+        std::memcpy(fpBuffer, std::addressof(newValue), size);
+
+        double fpResult;
+        std::memcpy(std::addressof(fpResult), fpBuffer, size);
+
+        return fpResult;
+    }
+
+    //helper to convert from fp to bitset
+    template <typename T>
+    std::bitset<Bit_Length> fp_to_bits( T* fpIn )
+    {
+        uint64_t intResult = 0;
+        constexpr auto size = sizeof(T);
+        uint8_t bufferA[size] = {};
+
+        std::memcpy(bufferA, std::addressof(*fpIn), size);
+        std::memcpy(std::addressof(intResult), bufferA, size);
+        std::bitset<Bit_Length> myBits = std::bitset<Bit_Length>(intResult);
+
+        return myBits;
+    }
+
+    std::string bits_to_string( std::bitset<Bit_Length> valIn )
+    {
+        return valIn.to_string<char,std::string::traits_type,std::string::allocator_type>();
+    }
+
+
 
 };
 

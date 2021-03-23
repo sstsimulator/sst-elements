@@ -4,22 +4,27 @@ import itertools
 from collections import defaultdict
 
 debug = 0
+data_type = 0   #0 int, 1 fp64
 
 #m = 2
 #k = 1
 #n = 1
 
-#m = 2
-#k = 4
-#n = 2
-
 m = 2
-k = 3
+k = 4
 n = 2
+
+#m = 2
+#k = 3
+#n = 2
 
 #m = 6
 #k = 3
 #n = 10
+
+#m = 60
+#k = 30
+#n = 100
 
 num_load = (m * k) + (k * n)
 num_mul = k * m * n
@@ -57,13 +62,19 @@ for counter in range( 0, num_load ):
 # write mul
 mul_start = pe_num
 for counter in range( 0, num_mul ):
-    write_pe( "IntProcessingElement", "MUL", pe_num )
+    if( data_type == 1 ):
+        write_pe( "IntProcessingElement", "FPMUL", pe_num )
+    else:
+        write_pe( "IntProcessingElement", "MUL", pe_num )
     pe_num = pe_num + 1
 
 # write add
 add_start = pe_num
 for counter in range( 0, num_add ):
-    write_pe( "IntProcessingElement", "ADD", pe_num )
+    if( data_type == 1 ):
+        write_pe( "IntProcessingElement", "FPADD", pe_num )
+    else:
+        write_pe( "IntProcessingElement", "ADD", pe_num )
     pe_num = pe_num + 1
 
 # write store
