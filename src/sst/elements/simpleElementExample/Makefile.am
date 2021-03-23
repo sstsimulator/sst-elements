@@ -8,28 +8,19 @@ AM_CPPFLAGS = \
 compdir = $(pkglibdir)
 comp_LTLIBRARIES = libsimpleElementExample.la
 libsimpleElementExample_la_SOURCES = \
-	simpleComponent.h \
-	simpleComponent.cc \
-	simpleComponentEvent.h \
-	simpleClockerComponent.h \
-	simpleClockerComponent.cc \
-	simpleDistribComponent.h \
-	simpleDistribComponent.cc \
-	simpleRNGComponent.h \
-	simpleRNGComponent.cc \
-	simpleStatisticsComponent.h \
-	simpleStatisticsComponent.cc \
-	simpleMessage.h \
-	simpleMessageGeneratorComponent.h \
-	simpleMessageGeneratorComponent.cc \
-	simpleLookupTableComponent.h \
-	simpleLookupTableComponent.cc \
-	simpleSubComponent.h \
-	simpleSubComponent.cc \
-	simpleModule.h \
-	simpleModule.cc \
-	simpleParamComponent.h \
-	simpleParamComponent.cc
+	basicEvent.h \
+	example0.h \
+	example0.cc \
+	example1.h \
+	example1.cc \
+	basicLinks.h \
+	basicLinks.cc \
+ 	basicStatistics.h \
+     	basicStatistics.cc \
+     	basicClocks.h \
+     	basicClocks.cc \
+	basicParams.h \
+	basicParams.cc
 
 deprecated_libsimpleElementExample_sources =
 
@@ -39,49 +30,14 @@ endif
 
 EXTRA_DIST = \
     README \
-    tests/testsuite_default_simpleComponents.py \
-    tests/testsuite_default_check_maxrss.py \
-    tests/test_simpleParamComponent.py \
-    tests/test_simpleComponent.py \
-    tests/test_simpleClockerComponent.py \
-    tests/test_simpleDistribComponent_discrete.py \
-    tests/test_simpleDistribComponent_expon.py \
-    tests/test_simpleDistribComponent_gaussian.py \
-    tests/test_simpleDistribComponent_poisson.py \
-    tests/test_simpleLookupTable.py \
-    tests/test_simpleLookupTableComponent.py \
-    tests/test_simpleRNGComponent_mersenne.py \
-    tests/test_simpleRNGComponent_marsaglia.py \
-    tests/test_simpleRNGComponent_xorshift.py \
-    tests/test_simpleStatisticsComponent.py \
-    tests/test_simpleMessageGeneratorComponent.py \
-    tests/test_simpleSubComponent.py \
-    tests/test_simpleSubComponent_2.py \
-    tests/subcomponent_tests/test_sc_2a.py \
-    tests/subcomponent_tests/test_sc_2u2u.py \
-    tests/subcomponent_tests/test_sc_2u.py \
-    tests/subcomponent_tests/test_sc_a.py \
-    tests/subcomponent_tests/test_sc_u2u.py \
-    tests/subcomponent_tests/test_sc_u.py \
-    tests/subcomponent_tests/test_sc_2u2a.py \
-    tests/subcomponent_tests/test_sc_2ua.py \
-    tests/subcomponent_tests/test_sc_2uu.py \
-    tests/subcomponent_tests/test_sc_u2a.py \
-    tests/subcomponent_tests/test_sc_ua.py \
-    tests/subcomponent_tests/test_sc_uu.py \
-    tests/refFiles/test_simpleComponent.out \
-    tests/refFiles/test_simpleDistribComponent_discrete.out \
-    tests/refFiles/test_simpleDistribComponent_expon.out \
-    tests/refFiles/test_simpleDistribComponent_gaussian.out \
-    tests/refFiles/test_simpleLookupTableComponent.out \
-    tests/refFiles/test_simpleMessageGeneratorComponent.out \
-    tests/refFiles/test_simpleRNGComponent_marsaglia.out \
-    tests/refFiles/test_simpleRNGComponent_mersenne.out \
-    tests/refFiles/test_simpleRNGComponent_xorshift.out \
-    tests/refFiles/test_simpleStatisticsComponent.out \
-    tests/refFiles/test_simpleSubComponent.out \
-    tests/refFiles/test_simpleSubComponent_2.out \
-    tests/refFiles/test_check_maxrss.out
+    tests/example0.py \
+    tests/example1.py \
+    tests/basicClocks.py \
+    tests/basicLinks.py \
+    tests/basicParams.py \
+    tests/basicStatistics0.py \
+    tests/basicStatistics1.py \
+    tests/basicStatistics2.py
 
 deprecated_EXTRA_DIST =
 

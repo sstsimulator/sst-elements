@@ -1,0 +1,25 @@
+Component 'c0' found 3 links for the vector of links
+Component 'c1' found 3 links for the vector of links
+Component 'c2' found 3 links for the vector of links
+Component 'c3' found 3 links for the vector of links
+ c0.EventSize_PortHandler : Accumulator : Sum.u64 = 93; SumSQ.u64 = 757; Count.u64 = 13; Min.u64 = 2; Max.u64 = 11; 
+ c0.EventSize_PortVector.0 : Accumulator : Sum.u64 = 92; SumSQ.u64 = 806; Count.u64 = 12; Min.u64 = 4; Max.u64 = 15; 
+ c0.EventSize_PortVector.1 : Accumulator : Sum.u64 = 28; SumSQ.u64 = 262; Count.u64 = 3; Min.u64 = 9; Max.u64 = 10; 
+ c0.EventSize_PortVector.2 : Accumulator : Sum.u64 = 75; SumSQ.u64 = 651; Count.u64 = 9; Min.u64 = 5; Max.u64 = 10; 
+ c0.EventSize_PortPolled : Accumulator : Sum.u64 = 67; SumSQ.u64 = 577; Count.u64 = 11; Min.u64 = 1; Max.u64 = 14; 
+ c1.EventSize_PortHandler : Accumulator : Sum.u64 = 53; SumSQ.u64 = 827; Count.u64 = 5; Min.u64 = 2; Max.u64 = 19; 
+ c1.EventSize_PortVector.0 : Accumulator : Sum.u64 = 92; SumSQ.u64 = 806; Count.u64 = 12; Min.u64 = 4; Max.u64 = 15; 
+ c1.EventSize_PortVector.1 : Accumulator : Sum.u64 = 6; SumSQ.u64 = 18; Count.u64 = 2; Min.u64 = 3; Max.u64 = 3; 
+ c1.EventSize_PortVector.2 : Accumulator : Sum.u64 = 85; SumSQ.u64 = 1621; Count.u64 = 5; Min.u64 = 8; Max.u64 = 24; 
+ c1.EventSize_PortPolled : Accumulator : Sum.u64 = 80; SumSQ.u64 = 662; Count.u64 = 13; Min.u64 = 1; Max.u64 = 14; 
+ c2.EventSize_PortHandler : Accumulator : Sum.u64 = 95; SumSQ.u64 = 1017; Count.u64 = 13; Min.u64 = 1; Max.u64 = 15; 
+ c2.EventSize_PortVector.0 : Accumulator : Sum.u64 = 79; SumSQ.u64 = 1513; Count.u64 = 7; Min.u64 = 1; Max.u64 = 23; 
+ c2.EventSize_PortVector.1 : Accumulator : Sum.u64 = 20; SumSQ.u64 = 166; Count.u64 = 3; Min.u64 = 3; Max.u64 = 11; 
+ c2.EventSize_PortVector.2 : Accumulator : Sum.u64 = 77; SumSQ.u64 = 827; Count.u64 = 9; Min.u64 = 2; Max.u64 = 15; 
+ c2.EventSize_PortPolled : Accumulator : Sum.u64 = 44; SumSQ.u64 = 420; Count.u64 = 6; Min.u64 = 3; Max.u64 = 15; 
+ c3.EventSize_PortHandler : Accumulator : Sum.u64 = 71; SumSQ.u64 = 727; Count.u64 = 11; Min.u64 = 1; Max.u64 = 15; 
+ c3.EventSize_PortVector.0 : Accumulator : Sum.u64 = 84; SumSQ.u64 = 726; Count.u64 = 12; Min.u64 = 1; Max.u64 = 10; 
+ c3.EventSize_PortVector.1 : Accumulator : Sum.u64 = 14; SumSQ.u64 = 130; Count.u64 = 2; Min.u64 = 3; Max.u64 = 11; 
+ c3.EventSize_PortVector.2 : Accumulator : Sum.u64 = 77; SumSQ.u64 = 827; Count.u64 = 9; Min.u64 = 2; Max.u64 = 15; 
+ c3.EventSize_PortPolled : Accumulator : Sum.u64 = 83; SumSQ.u64 = 601; Count.u64 = 13; Min.u64 = 2; Max.u64 = 10; 
+Simulation is complete, simulated time: 1.05 us
