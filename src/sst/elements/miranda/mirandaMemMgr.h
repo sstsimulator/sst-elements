@@ -20,7 +20,8 @@
 #include <vector>
 #include <sst/core/rng/marsaglia.h>
 #include <sst/core/output.h>
-#include <sst/core/sharedRegion.h>
+//#include <sst/core/sharedRegion.h>
+#include <sst/core/shared/sharedArray.h>
 
 using namespace SST::RNG;
 
@@ -35,72 +36,73 @@ enum MirandaPageMappingPolicy {
 class MirandaMemoryManager {
 
 public:
-	MirandaMemoryManager(
-		SST::Output* mgrOutput,
-		const uint64_t _pageSize,
-		const uint64_t _pageCount,
-		const MirandaPageMappingPolicy mapPolicy,
-                SharedRegion* mapRegion) :
+	MirandaMemoryManager(SST::Output* mgrOutput,
+                         const uint64_t _pageSize,
+                         const uint64_t _pageCount,
+                         const MirandaPageMappingPolicy mapPolicy) :
 		pageSize(_pageSize),
 		pageCount(_pageCount),
 		maxMemoryAddress(_pageSize * _pageCount),
-		output(mgrOutput) {
+		output(mgrOutput)
+   {
 
-		output->verbose(CALL_INFO, 2, 0, "Creating memory manager, page size=%" PRIu64 ", page count=%" PRIu64 ", max address=%" PRIu64 "\n",
-			pageSize, pageCount, maxMemoryAddress);
+       output->verbose(CALL_INFO, 2, 0, "Creating memory manager, page size=%" PRIu64 ", page count=%" PRIu64 ", max address=%" PRIu64 "\n",
+                       pageSize, pageCount, maxMemoryAddress);
 
 
-                if (mapRegion->getLocalShareID() == 0) { // First sharer, we're in charge
-		    uint64_t * pageArr = (uint64_t*) malloc(pageCount * sizeof(uint64_t));
-		    // Allocate pages into their standard linear mapping scheme
-        	    for(uint64_t i = 0; i < pageCount; ++i) {
-	    	        pageArr[i] = i *pageSize;
-	            }
+       int order = pageMap.initialize("miranda_pagemap", pageCount);
+       if ( order == 0 ) {
+           // First sharer, we're in charge for this rank.  Managers
+           // on other ranks will also fill in the table, but as long
+           // as they put in the same values it will be okay.
+           uint64_t * pageArr = (uint64_t*) malloc(pageCount * sizeof(uint64_t));
+           // Allocate pages into their standard linear mapping scheme
+           for(uint64_t i = 0; i < pageCount; ++i) {
+               pageArr[i] = i *pageSize;
+           }
 
-		    switch(mapPolicy) {
-		        case LINEAR:
-			    output->verbose(CALL_INFO, 2, 0, "Memory is set to LINEAR mapping, will not adjust current page maps\n");
-			    // Nothing to do
-			    break;
+           switch(mapPolicy) {
+           case LINEAR:
+               output->verbose(CALL_INFO, 2, 0, "Memory is set to LINEAR mapping, will not adjust current page maps\n");
+               // Nothing to do
+               break;
+               
+           case RANDOMIZED:
+               output->verbose(CALL_INFO, 2, 0, "Memory is set to RANDOMIZED mapping, will perform a randomized shuffle of pages...\n");
+               MarsagliaRNG rng(11, 200009011);
+               
+               // Random swap pages all over the space so we can distribute accesses
+               // across the memory system unevenly
+               for(uint64_t i = 0; i < (pageCount * 2); ++i) {
+                   const uint64_t selectA = (rng.generateNextUInt64() % pageCount);
+                   const uint64_t selectB = (rng.generateNextUInt64() % pageCount);
+                   
+                   if( selectA != selectB ) {
+                       const uint64_t pageA = pageArr[selectA];
+                       pageArr[selectA] = pageArr[selectB];
+                       pageArr[selectB] = pageA;
+                       
+                       output->verbose(CALL_INFO, 64, 0, "Swapping index %" PRIu64 " with index %" PRIu64 ", pageA=%" PRIu64 ", pageB=%" PRIu64 "\n",
+                                       selectA, selectB, pageA, pageArr[selectA]);
+                   }
+               }
 
-		        case RANDOMIZED:
-			    output->verbose(CALL_INFO, 2, 0, "Memory is set to RANDOMIZED mapping, will perform a randomized shuffle of pages...\n");
-			    MarsagliaRNG rng(11, 200009011);
+               for(uint64_t i = 0; i < pageCount; ++i) {
+                   output->verbose(CALL_INFO, 32, 0, "Virtual Start = %20" PRIu64 " Physical Start = %20" PRIu64 "\n",
+                                   (i * pageSize), pageArr[i]);
+               }
+               
+               break;
+           }
 
-			    // Random swap pages all over the space so we can distribute accesses
-			    // across the memory system unevenly
-			    for(uint64_t i = 0; i < (pageCount * 2); ++i) {
-				const uint64_t selectA = (rng.generateNextUInt64() % pageCount);
-				const uint64_t selectB = (rng.generateNextUInt64() % pageCount);
-
-				if( selectA != selectB ) {
-					const uint64_t pageA = pageArr[selectA];
-					pageArr[selectA] = pageArr[selectB];
-					pageArr[selectB] = pageA;
-
-					output->verbose(CALL_INFO, 64, 0, "Swapping index %" PRIu64 " with index %" PRIu64 ", pageA=%" PRIu64 ", pageB=%" PRIu64 "\n",
-						selectA, selectB, pageA, pageArr[selectA]);
-				}
-			    }
-
-			    for(uint64_t i = 0; i < pageCount; ++i) {
-				output->verbose(CALL_INFO, 32, 0, "Virtual Start = %20" PRIu64 " Physical Start = %20" PRIu64 "\n",
-					(i * pageSize), pageArr[i]);
-			    }
-
-			    break;
-		    }
-
-                    mapRegion->modifyRegion(0, pageCount * sizeof(uint64_t), pageArr);
-                    free(pageArr);
-
-                } // End mapping by 'first' sharer
-	}
-
-        void setSharedAddressMap(const uint64_t * addrmap) {
-            pageMap = addrmap;
-        }
-
+           // Copy temp data in SharedArray
+           for ( int i = 0; i < pageCount; ++i ) {
+               pageMap.write(i, pageArr[i]);
+           }
+           free(pageArr);
+           
+       } // End mapping by 'first' sharer
+   }
 
 	uint64_t mapAddress(const uint64_t addrIn) const {
 		if( __builtin_expect(addrIn >= maxMemoryAddress, 0) ) {
@@ -132,7 +134,8 @@ private:
 	uint64_t maxMemoryAddress;
 	SST::Output* output;
 
-	const uint64_t * pageMap;
+    Shared::SharedArray<uint64_t> pageMap;    
+	// const uint64_t * pageMap;
 
 };
 

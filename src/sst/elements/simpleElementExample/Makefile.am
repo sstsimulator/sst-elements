@@ -22,8 +22,6 @@ libsimpleElementExample_la_SOURCES = \
 	simpleMessage.h \
 	simpleMessageGeneratorComponent.h \
 	simpleMessageGeneratorComponent.cc \
-	simpleLookupTableComponent.h \
-	simpleLookupTableComponent.cc \
 	simpleSubComponent.h \
 	simpleSubComponent.cc \
 	simpleModule.h \
@@ -48,8 +46,6 @@ EXTRA_DIST = \
     tests/test_simpleDistribComponent_expon.py \
     tests/test_simpleDistribComponent_gaussian.py \
     tests/test_simpleDistribComponent_poisson.py \
-    tests/test_simpleLookupTable.py \
-    tests/test_simpleLookupTableComponent.py \
     tests/test_simpleRNGComponent_mersenne.py \
     tests/test_simpleRNGComponent_marsaglia.py \
     tests/test_simpleRNGComponent_xorshift.py \
@@ -73,7 +69,6 @@ EXTRA_DIST = \
     tests/refFiles/test_simpleDistribComponent_discrete.out \
     tests/refFiles/test_simpleDistribComponent_expon.out \
     tests/refFiles/test_simpleDistribComponent_gaussian.out \
-    tests/refFiles/test_simpleLookupTableComponent.out \
     tests/refFiles/test_simpleMessageGeneratorComponent.out \
     tests/refFiles/test_simpleRNGComponent_marsaglia.out \
     tests/refFiles/test_simpleRNGComponent_mersenne.out \

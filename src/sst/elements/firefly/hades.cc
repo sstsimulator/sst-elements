@@ -114,14 +114,14 @@ Hades::Hades( ComponentId_t id, Params& params ) :
         m_netMapName = params.find<std::string>( "netMapName" );
         assert( ! m_netMapName.empty() );
 
-        m_sreg = getGlobalSharedRegion( m_netMapName,
-                    m_netMapSize*sizeof(int), new SharedRegionMerger());
+        // m_sreg = getGlobalSharedRegion( m_netMapName,
+        //             m_netMapSize*sizeof(int), new SharedRegionMerger());
 
+        m_sreg.initialize(m_netMapName, m_netMapSize);
         if ( 0 == params.find<int>("coreId",0) ) {
-            m_sreg->modifyArray( netMapId, netId );
+            m_sreg.write( netMapId, netId );
         }
-
-        m_sreg->publish();
+        m_sreg.publish();
 	}
 }
 
@@ -143,7 +143,7 @@ void Hades::_componentSetup()
 
     	Group* group = m_info.getGroup(
         	m_info.newGroup( MP::GroupWorld, Info::NetMap ) );
-    	group->initMapping( m_sreg->getPtr<const int*>(),
+    	group->initMapping( &(*m_sreg.begin()),
 					m_netMapSize, m_virtNic->getNumCores() );
 
     	int nid = m_virtNic->getNodeId();
