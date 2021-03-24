@@ -142,6 +142,18 @@ public:
             case ROR :
                 retVal = (argList[0] >> argList[1].to_ullong()) | (argList[0] << (Bit_Length - argList[1].to_ullong()));
                 break;
+            case EQ :
+            case NE :
+            case UGT :
+            case UGE :
+            case SGT :
+            case SGE :
+            case ULT :
+            case ULE :
+            case SLT :
+            case SLE :
+                retVal = testFunction(op_binding_, argList[0], argList[1]);
+                break;
             default :
                 output_->verbose(CALL_INFO, 0, 0, "Error: could not find corresponding op.\n");
                 exit(-1);
@@ -165,6 +177,113 @@ public:
 
     //TODO for testing only
     virtual void fakeInit() {};
+
+private:
+    LlyrData testFunction( opType op, LlyrData arg0, LlyrData arg1 )
+    {
+        //TODO might need this for data length conversion?
+//         std::bitset<8> x("10000010");
+//         std::bitset<64> y;
+//
+//         //if msb == 1, then it's negative and must sign extend
+//         y = y | std::bitset<64>(x.to_ullong());
+//         if( x.test(x.size() - 1) == 1 ) {
+//             y |= 0xFFFFFFFFFFFFFF00;
+//         }
+//
+//         std::cout << "x:" << x << "::" << x.size() << "\n";
+//         std::cout << "y:" << y << "::" << y.size() << "\n";
+//
+//         int64_t boo = (int64_t)(y.to_ulong());
+//         std::bitset<64> bitTestL  = boo;
+
+        if( op == EQ ) {
+            if( arg0.to_ullong() == arg1.to_ullong() ) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+        else if( op == NE ) {
+            if( arg0.to_ullong() != arg1.to_ullong() ) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+        else if( op == UGT ) {
+            if( arg0.to_ullong() > arg1.to_ullong() ) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+        else if( op == UGE ) {
+            if( arg0.to_ullong() >= arg1.to_ullong() ) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+        else if( op == ULT ) {
+            if( arg0.to_ullong() < arg1.to_ullong() ) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+        else if( op == ULE ) {
+            if( arg0.to_ullong() <= arg1.to_ullong() ) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+        else if( op == SGT ) {
+            int64_t arg0s = (int64_t)(arg0.to_ullong());
+            int64_t arg1s = (int64_t)(arg1.to_ullong());
+
+            if( arg0s > arg1s ) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+        else if( op == SGE ) {
+            int64_t arg0s = (int64_t)(arg0.to_ullong());
+            int64_t arg1s = (int64_t)(arg1.to_ullong());
+
+            if( arg0s >= arg1s ) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+        else if( op == SLT ) {
+            int64_t arg0s = (int64_t)(arg0.to_ullong());
+            int64_t arg1s = (int64_t)(arg1.to_ullong());
+
+            if( arg0s < arg1s ) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+        else if( op == SLE ) {
+            int64_t arg0s = (int64_t)(arg0.to_ullong());
+            int64_t arg1s = (int64_t)(arg1.to_ullong());
+
+            if( arg0s <= arg1s ) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+        else {
+            output_->verbose(CALL_INFO, 0, 0, "Error: could not find corresponding op.\n");
+            exit(-1);
+        }
+    }
 
 };
 

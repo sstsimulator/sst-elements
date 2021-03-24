@@ -19,6 +19,7 @@
 #define _FP_PE_H
 
 #include <limits>
+#include <string>
 
 #include "pes/processingElement.h"
 
@@ -221,6 +222,7 @@ private:
         return myBits;
     }
 
+    //helper for debugging -- convert bitset to string
     std::string bits_to_string( std::bitset<Bit_Length> valIn )
     {
         return valIn.to_string<char,std::string::traits_type,std::string::allocator_type>();
