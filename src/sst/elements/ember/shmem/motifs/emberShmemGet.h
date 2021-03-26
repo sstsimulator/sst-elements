@@ -124,6 +124,11 @@ public:
     int m_num_pes;
 };
 
+#define ELI_params \
+	{"arg.nelems","Sets the number of data elements","1"},\
+	{"arg.printResults","Sets if the results are printed","false"},\
+	{"arg.blocking","Sets if memory is backed","true"},\
+
 class EmberShmemGetIntGenerator : public EmberShmemGetGenerator<int> {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
@@ -135,7 +140,9 @@ public:
         SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS()
+    SST_ELI_DOCUMENT_PARAMS(
+		ELI_params
+	)
 
 public:
     EmberShmemGetIntGenerator( SST::ComponentId_t id, Params& params ) :
@@ -153,7 +160,9 @@ public:
         SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS()
+    SST_ELI_DOCUMENT_PARAMS(
+		ELI_params
+	)
 
 public:
     EmberShmemGetLongGenerator( SST::ComponentId_t id, Params& params ) :
@@ -171,7 +180,9 @@ public:
         SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS()
+    SST_ELI_DOCUMENT_PARAMS(
+		ELI_params
+	)
 
 public:
     EmberShmemGetDoubleGenerator( SST::ComponentId_t id, Params& params ) :
@@ -189,12 +200,16 @@ public:
         SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS()
+    SST_ELI_DOCUMENT_PARAMS(
+		ELI_params
+	)
 
 public:
     EmberShmemGetFloatGenerator( SST::ComponentId_t id, Params& params ) :
         EmberShmemGetGenerator(id,  params) { }
 };
+
+#undef ELI_params
 }
 }
 

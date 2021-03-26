@@ -34,7 +34,9 @@ public:
         SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS()
+    SST_ELI_DOCUMENT_PARAMS(
+		{"arg.iterations","Sets the number of interations","1"},
+	)
 
 public:
 	EmberShmemBarrierGenerator(SST::ComponentId_t id, Params& params) :

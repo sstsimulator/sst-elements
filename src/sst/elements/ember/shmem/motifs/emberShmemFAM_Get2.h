@@ -43,6 +43,17 @@ public:
     )
 
     SST_ELI_DOCUMENT_PARAMS(
+		{"arg.totalBytes","Sets total size of FAM memory space",""},\
+		{"arg.getLoop","Sets the number of gets to queue each call to work()","1"},\
+		{"arg.maxDelay","Sets the max delay when using random compute time ","20"},\
+		{"arg.blockSize","Sets the size of transfer","4096"},\
+		{"arg.partitionSize","Sets the size of local memory used for incoming get data",""},\
+		{"arg.backed","Sets if FAM memory is backed","false"},\
+		{"arg.randomGet","Sets if address of each get is random","false"},\
+		{"arg.stream_n","Sets the size of the stream for the detailed model","1000"},\
+		{"arg.useRand","Sets if random compute time is used","false"},\
+		{"arg.blocking","Sets if blocking FAM calls are used","false"},\
+		{"arg.detailedCompute","Sets the list of PEs that use detailed model for compute delay",""},\
     )
 
 public:

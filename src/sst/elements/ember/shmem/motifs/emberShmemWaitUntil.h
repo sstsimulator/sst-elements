@@ -128,6 +128,9 @@ public:
     int m_n_pes;
 };
 
+#define ELI_params \
+	{ "arg.op","Sets wait condition LTE | LT | EQ | NE | GT | GTE ","NE" },\
+
 class EmberShmemWaitUntilIntGenerator : public EmberShmemWaitUntilGenerator<int> {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
@@ -139,7 +142,9 @@ public:
         SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS()
+    SST_ELI_DOCUMENT_PARAMS(
+		ELI_params
+	)
 
 public:
     EmberShmemWaitUntilIntGenerator( SST::ComponentId_t id, Params& params ) :
@@ -157,12 +162,15 @@ public:
         SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS()
+    SST_ELI_DOCUMENT_PARAMS(
+		ELI_params
+	)
 
 public:
     EmberShmemWaitUntilLongGenerator( SST::ComponentId_t id, Params& params ) :
         EmberShmemWaitUntilGenerator(id,  params) { }
 };
+#undef ELI_params
 }
 }
 

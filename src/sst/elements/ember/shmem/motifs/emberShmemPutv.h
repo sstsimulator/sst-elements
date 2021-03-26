@@ -121,6 +121,10 @@ public:
     int m_num_pes;
 };
 
+#define ELI_params \
+	{"arg.printResults","Sets is results are printed","false"},\
+	{"arg.iterations","Sets the number of iterations","1"},\
+
 class EmberShmemPutvIntGenerator : public EmberShmemPutvGenerator<int> {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
@@ -132,7 +136,9 @@ public:
         SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS()
+    SST_ELI_DOCUMENT_PARAMS(
+		ELI_params
+	)
 
 public:
     EmberShmemPutvIntGenerator( SST::ComponentId_t id, Params& params ) :
@@ -150,7 +156,9 @@ public:
         SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS()
+    SST_ELI_DOCUMENT_PARAMS(
+		ELI_params
+	)
 
 public:
     EmberShmemPutvLongGenerator( SST::ComponentId_t id, Params& params ) :
@@ -168,7 +176,9 @@ public:
         SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS()
+    SST_ELI_DOCUMENT_PARAMS(
+		ELI_params
+	)
 
 public:
     EmberShmemPutvDoubleGenerator( SST::ComponentId_t id, Params& params ) :
@@ -186,12 +196,16 @@ public:
         SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS()
+    SST_ELI_DOCUMENT_PARAMS(
+		ELI_params
+	)
 
 public:
     EmberShmemPutvFloatGenerator( SST::ComponentId_t id, Params& params ) :
         EmberShmemPutvGenerator(id,  params) { }
 };
+
+#undef ELI_params
 
 }
 }

@@ -155,6 +155,10 @@ public:
     )
 
     SST_ELI_DOCUMENT_PARAMS(
+        {   "args.nelems","Sets number of data items", "1"},
+        {   "args.dst","Sets stride between consecutive elements of the dest data object", "1"},
+        {   "args.sst","Sets stride between consecutive elements of the source data object", "1"},
+        {   "args.printResults","", "false"},
     )
 
 public:

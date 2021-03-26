@@ -43,6 +43,12 @@ public:
     )
 
     SST_ELI_DOCUMENT_PARAMS(
+		{"arg.blocking","Sets if FAM ops are blocking","false"},\
+		{"arg.blockSize","Sets size of each block of data transfer","4096"},\
+		{"arg.numBlocks","Sets the number of blocks","0"},\
+		{"arg.firstBlock","Sets the first block","0"},\
+		{"arg.blockStride","Sets the stride between block","0"},\
+		{"arg.backed","Sets if FAM memory is backed","false"},\
     )
 
 public:

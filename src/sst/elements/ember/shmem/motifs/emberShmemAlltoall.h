@@ -169,7 +169,11 @@ public:
     )
 
     SST_ELI_DOCUMENT_PARAMS(
-    )
+		{ "arg.nelems","Sets number of data elements","1"},
+		{ "arg.printResults","Should we print results","false"},
+		{ "arg.PE_start","Sets the start PE","0"},
+		{ "arg.logPE_stride","Sets the log PE stride","0"},
+	)
 
 public:
     EmberShmemAlltoall32Generator(SST::ComponentId_t id, Params& params) :
