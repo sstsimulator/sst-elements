@@ -23,6 +23,7 @@
 #include <sst/core/link.h>
 #include <sst/core/output.h>
 #include <sst/core/timeConverter.h>
+#include <sst/core/shared/sharedArray.h>
 
 #include <sst/core/statapi/stataccumulator.h>
 
@@ -125,7 +126,7 @@ private:
     int local_ports;
     bool use_dense_map;
     bool port_priority_equal;
-    const int* dense_map;
+    Shared::SharedArray<int> dense_map;
 
     std::vector< lru_unit<int> > lru_units;
     // lru_unit<int> local_lru;

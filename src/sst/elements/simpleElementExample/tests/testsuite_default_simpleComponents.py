@@ -24,9 +24,6 @@ class testcase_simpleComponents(SSTTestCase):
     def test_simple_messagegenerator_component(self):
        self.simple_components_template("simpleMessageGeneratorComponent")
 
-    def test_simple_lookuptable_component(self):
-       self.simple_components_template("simpleLookupTableComponent")
-
     def test_simple_statistics_component(self):
        self.simple_components_template("simpleStatisticsComponent")
 
