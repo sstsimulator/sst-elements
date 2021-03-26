@@ -32,6 +32,10 @@ class SimpleNodePerf : public NodePerf {
         "",
         "SST::Firefly::SimpleNodePerf"
     )
+	SST_ELI_DOCUMENT_PARAMS(
+		{"flops","Sets the FLOPS for the node","0"},
+		{"bandwidth","Sets the bandwidth for the node","0"},
+	)
   private:
 
   public:

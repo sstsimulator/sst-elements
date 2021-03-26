@@ -38,6 +38,11 @@ class ScaleLatMod : public LatencyMod {
         "",
         "SST::Firefly::ScaleLatMod"
     )
+
+	SST_ELI_DOCUMENT_PARAMS()
+	/*  PARAMS
+		range.*
+	*/
   private:
 
     struct Entry {

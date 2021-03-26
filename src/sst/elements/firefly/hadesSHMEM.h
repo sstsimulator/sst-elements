@@ -62,6 +62,11 @@ class HadesSHMEM : public Shmem::Interface
         {"enterLat_ns","Sets the latency of entering a SHMEM call","" },
         {"returnLat_ns","Sets the latency of returning from a SHMEM call","" },
         {"blockingReturnLat_ns","Sets the latency of returning from a SHMEM call that blocked on response","" },
+
+		/* PARAMS passed to another module
+			famNodeMapper.*
+			famAddrMapper.*
+		*/
     )
 
     typedef std::function<void()> Callback;

@@ -138,6 +138,10 @@ class GathervFuncSM :  public FunctionSMInterface
         "",
         ""
     )
+    SST_ELI_DOCUMENT_PARAMS(
+        {"smallCollectiveVN","Sets the VN to use for small collectives","0"},
+        {"smallCollectiveSize","Sets the size of small collectives","0"},
+    )
 
   private:
     enum StateEnum {

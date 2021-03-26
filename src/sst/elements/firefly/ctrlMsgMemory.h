@@ -49,6 +49,18 @@ class Memory : public MemoryBase {
         "",
         SST::Firefly::CtrlMsg::Memory
     )
+	SST_ELI_DOCUMENT_PARAMS(
+		{"matchDelay_ns","","1"},
+		{"txMemcpyMod","Sets the TX memory copy module",""},
+		{"rxMemcpyMod","Sets the RX memory copy module",""},
+		{"regRegionBaseDelay_ns","Sets the default delay for a memory region pin","0"},
+		{"regRegionPerPageDelay_ns","Sets the per page delay for memory region pin","0"},
+		{"regRegionXoverLength","Sets the page size fo memory pin","4096"},
+	)
+	/* PARAMS
+		txMemcpyModParams.*
+		rxMemcpyModParams.*
+	*/
 
     Memory( ComponentId_t id, Params& params );
     ~Memory();
