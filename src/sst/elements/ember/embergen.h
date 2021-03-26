@@ -55,6 +55,14 @@ class EmberGenerator : public SubComponent {
 
 	SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Ember::EmberGenerator)
 
+    SST_ELI_DOCUMENT_PARAMS(
+        { "primary", "is this a primary motif", "0"},
+        { "_motifNum", "used internally", "-1"},
+        { "_jobId", "used internally", "-1"},
+        { "_enginePtr", "used internally", "-1"},
+		{ "distribModule", "Sets the distribution SST module for compute modeling, default is a constant distribution of mean 1", "1.0"},
+	)
+
     EmberGenerator( ComponentId_t id, Params& params ) : SubComponent(id) { assert(0); }
     EmberGenerator( ComponentId_t id, Params& params, std::string name ="" );
 
