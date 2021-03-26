@@ -37,8 +37,8 @@ public:
     SST_ELI_DOCUMENT_PARAMS(
         {   "arg.messageSize",      "Sets the message size of the ping pong operation", "1024"},
         {   "arg.iterations",       "Sets the number of ping pong operations to perform",   "1"},
-        {   "arg.rank2",            "Sets the 2nd rank to pingpong with (0 is the 1st)",    "1"},
         {   "arg.numRecvBufs",      "Sets the number of preposted recv buffers",   "1"},
+        {   "arg.targetRankList",   "Sets the targer ranks", "0"},
     )
     SST_ELI_DOCUMENT_STATISTICS(
         { "time-Init", "Time spent in Init event",          "ns",  0},

@@ -35,19 +35,18 @@ public:
     )
 
     SST_ELI_DOCUMENT_PARAMS(
-        {   "arg.iterations",       "Sets the number of ping pong operations to perform",   "1"},
         {   "arg.pex",          "Sets the processor array size in X-dimension, 0 means auto-calculate", "0"},
         {   "arg.pey",          "Sets the processor array size in Y-dimension, 0 means auto-calculate", "0"},
+        {   "arg.iterations",       "Sets the number of ping pong operations to perform",   "1"},
         {   "arg.nx",           "Sets the problem size in the X-dimension", "50"},
         {   "arg.ny",           "Sets the problem size in the Y-dimension", "50"},
         {   "arg.nz",           "Sets the problem size in the Z-dimension", "50"},
         {   "arg.kba",          "Sets the KBA (Nz-K blocking factor, default is 1 (no blocking))", "1"},
-        {   "arg.computetime",      "Sets the compute time per nx * ny block in picoseconds", "1000"},
-        {   "arg.fields_per_cell",          "Sets the number of fields at each cell point", "8"},
         {   "arg.datatype_width",           "Sets the width of the datatype used at the cell", "8"},
-        {   "arg.nodeflops",                "Sets the FLOP/s count for the MPI rank", "1000000000"},
+        {   "arg.fields_per_cell",          "Sets the number of fields at each cell point", "8"},
         {   "arg.flops_per_cell",           "Sets the number of FLOPs per cell", "275" },
-
+        {   "arg.nodeflops",                "Sets the FLOP/s count for the MPI rank", "1000000000"},
+        {   "arg.computetime",      "Sets the compute time per nx * ny block in picoseconds", "1000"},
     )
 
     SST_ELI_DOCUMENT_STATISTICS(

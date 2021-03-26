@@ -35,7 +35,7 @@ public:
     )
 
     SST_ELI_DOCUMENT_PARAMS(
-        {   "arg.iterations",       "Sets the number of barrier operations to perform",     "1024"},
+        {   "arg.iterations",   "Sets the number of barrier operations to perform",     "1024"},
         {   "arg.compute",      "Sets the time spent computing",        "1"},
     )
 
