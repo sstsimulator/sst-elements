@@ -94,13 +94,7 @@ RequestGenCPU::RequestGenCPU(SST::ComponentId_t id, SST::Params& params) :
 		out->fatal(CALL_INFO, -8, "Error: unknown page mapping type: \'%s\'\n", policyStr.c_str());
 	}
 
-        // Use shared region instead of replicating mapping on each core
-        addrMap = Simulation::getSharedRegionManager()->getGlobalSharedRegion("miranda", pageCount * sizeof(uint64_t), new SharedRegionMerger());
-
-	memMgr = new MirandaMemoryManager(out, pageSize, pageCount, policy, addrMap);
-        addrMap->publish();
-
-        memMgr->setSharedAddressMap(addrMap->getPtr<const uint64_t*>());
+        memMgr = new MirandaMemoryManager(out, pageSize, pageCount, policy);
 
         reqGen = loadUserSubComponent<RequestGenerator>("generator");
         if (reqGen) {

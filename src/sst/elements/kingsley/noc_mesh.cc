@@ -16,7 +16,6 @@
 #include "noc_mesh.h"
 
 #include <sst/core/params.h>
-#include <sst/core/sharedRegion.h>
 #include <sst/core/simulation.h>
 #include <sst/core/timeLord.h>
 #include <sst/core/unitAlgebra.h>
@@ -48,7 +47,6 @@ noc_mesh::noc_mesh(ComponentId_t cid, Params& params) :
     edge_status(0),
     endpoint_locations(0),
     use_dense_map(false),
-    dense_map(NULL),
     output(Simulation::getSimulation()->getSimulationOutput())
 {
     // Get the options for the router
@@ -1024,23 +1022,19 @@ noc_mesh::init(unsigned int phase)
         // output.output("Endpoint_Start = %d\n",endpoint_start);
         // output.output("x_size = %d, y_size = %d\n",x_size, y_size);
 
-        // Create a shared region that gives a dense to sparse mapping
+        // Use a SharedArray to create a sparse mapping
         // for network addresses.  This is only used if the
         // use_dense_map param is set to true
         if ( use_dense_map ) {
-            SharedRegion* sr = Simulation::getSharedRegionManager()->getGlobalSharedRegion(
-                "noc_mesh_dense_map",
-                16 * total_endpoints * sizeof(int),
-                new SharedRegionMerger());
+            dense_map.initialize("noc_mesh_dense_map", 16 * total_endpoints);
 
             std::sort(ep_ids.begin(), ep_ids.end());
 
             for ( int i = 0; i < ep_ids.size(); ++i ) {
-                sr->modifyArray<int>(endpoint_start + i, ep_ids[i].first);
+                dense_map.write(endpoint_start + i, ep_ids[i].first);
                 ep_ids[i].first = endpoint_start + i;
             }
-            sr->publish();
-            dense_map = sr->getPtr<const int*>();
+            dense_map.publish();
         }
 
         // Send all the endpoint notifications

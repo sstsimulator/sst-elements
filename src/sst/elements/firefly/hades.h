@@ -20,7 +20,7 @@
 #include <sst/core/output.h>
 #include <sst/core/params.h>
 
-#include <sst/core/sharedRegion.h>
+#include <sst/core/shared/sharedArray.h>
 
 #include "sst/elements/hermes/hermes.h"
 #include "sst/elements/thornhill/memoryHeapLink.h"
@@ -108,7 +108,8 @@ class Hades : public OS
     Thornhill::DetailedCompute*          m_detailedCompute;
     Thornhill::MemoryHeapLink*           m_memHeapLink;
     NodePerf*                            m_nodePerf;
-    SharedRegion*                        m_sreg;
+    // SharedRegion*                        m_sreg;
+    Shared::SharedArray<int>             m_sreg;
     int                                  m_netMapSize;
     std::string                          m_netMapName;
     int                                  m_numNodes;
