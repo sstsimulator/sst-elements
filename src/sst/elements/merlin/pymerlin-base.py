@@ -19,6 +19,7 @@ import sst
 import random
 import copy
 import re
+from collections import deque
 
 # importlib didn't exist until 2.7, so if we're running on 2.6, then
 # import statement will fail.
@@ -908,7 +909,32 @@ def _allocate_indexed(available_nodes, num_nodes, nids):
         available_nodes.pop(i)
 
     return nid_list, available_nodes
-        
+
+def _allocate_system(a_list, b_list, method):
+    #a_list precedes b_list
+    #b_list must not exceed system
+    #method in allocate_functions, _allocate_interval and _allocate_indexed not allowed
+    available_nodes = System._available_nodes
+    nid_list_queue = deque()
+    for num_nodes in a_list:
+        while num_nodes > len(available_nodes):
+            nid_list = nid_list_queue.popleft()
+            for i in nid_list:
+                available_nodes.append(i)
+        nid_list, available_nodes = _allocate_functions[method](available_nodes, num_nodes)
+        nid_list_queue.append(nid_list)
+    for num_nodes in b_list:
+        while num_nodes > len(available_nodes):
+            nid_list = nid_list_queue.popleft()
+            for i in nid_list:
+                available_nodes.append(i)
+        nid_list, available_nodes = _allocate_functions[method](available_nodes, num_nodes)
+        b_nid_lists.append(nid_list)
+    for nid_list in nid_list_deque:
+        for i in nid_list:
+            available_nodes.append(i)
+    return b_nid_lists, available_nodes
+
 System.addAllocationFunction("random", _allocate_random)
 System.addAllocationFunction("linear", _allocate_linear)
 System.addAllocationFunction("random-linear",_allocate_random_linear)
