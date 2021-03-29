@@ -35,14 +35,14 @@ public:
     )
 
     SST_ELI_DOCUMENT_PARAMS(
-        {   "arg.iterations",       "Sets the number of ping pong operations to perform",   "1"},
+        {   "arg.computetime",      "Sets the compute time per KBA-data block in nanoseconds", "1000"},
         {   "arg.pex",          "Sets the processor array size in X-dimension, 0 means auto-calculate", "0"},
         {   "arg.pey",          "Sets the processor array size in Y-dimension, 0 means auto-calculate", "0"},
+        {   "arg.iterations",       "Sets the number of ping pong operations to perform",   "1"},
         {   "arg.nx",           "Sets the problem size in the X-dimension", "50"},
         {   "arg.ny",           "Sets the problem size in the Y-dimension", "50"},
         {   "arg.nz",           "Sets the problem size in the Z-dimension", "50"},
         {   "arg.nzblock",      "Sets the Z-dimensional block size (Nz % Nzblock == 0, default is 1)", "1"},
-        {   "arg.computetime",      "Sets the compute time per KBA-data block in nanoseconds", "1000"},
     )
 
     SST_ELI_DOCUMENT_STATISTICS(

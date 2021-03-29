@@ -46,7 +46,6 @@ public:
         m_printResults = params.find<bool>("arg.printResults", false );
         m_nelems = params.find<int>("arg.nelems", 1 );
         m_opName = params.find<std::string>("arg.op", "SUM");
-		m_nelems = params.find<int>("arg.nelems", 1 );
 
         int status;
         std::string tname = typeid(TYPE).name();
@@ -381,6 +380,12 @@ public:
     int m_phase;
 };
 
+
+#define ELI_params \
+	{"arg.printResults","Set to print results","false"},\
+	{"arg.nelems","Sets the number of data elements","1"},\
+	{"arg.op","Sets the reduction operation","SUM"},\
+
 class EmberShmemReductionIntGenerator : public EmberShmemReductionGenerator<int> {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
@@ -392,7 +397,9 @@ public:
         SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS()
+    SST_ELI_DOCUMENT_PARAMS(
+		ELI_params
+	)
 
 public:
     EmberShmemReductionIntGenerator( SST::ComponentId_t id, Params& params ) :
@@ -410,7 +417,9 @@ public:
         SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS()
+    SST_ELI_DOCUMENT_PARAMS(
+		ELI_params
+	)
 
 public:
     EmberShmemReductionLongGenerator( SST::ComponentId_t id, Params& params ) :
@@ -428,7 +437,9 @@ public:
         SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS()
+    SST_ELI_DOCUMENT_PARAMS(
+		ELI_params
+	)
 
 public:
     EmberShmemReductionLongLongGenerator( SST::ComponentId_t id, Params& params ) :
@@ -446,7 +457,9 @@ public:
         SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS()
+    SST_ELI_DOCUMENT_PARAMS(
+		ELI_params
+	)
 
 public:
     EmberShmemReductionDoubleGenerator( SST::ComponentId_t id, Params& params ) :
@@ -464,13 +477,16 @@ public:
         SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS()
+    SST_ELI_DOCUMENT_PARAMS(
+		ELI_params
+	)
 
 public:
     EmberShmemReductionFloatGenerator( SST::ComponentId_t id, Params& params ) :
         EmberShmemReductionGenerator(id,  params) { }
 };
 
+#undef ELI_params
 }
 }
 

@@ -40,6 +40,15 @@ public:
         SST::Firefly::DetailedInterface
     )
 
+	SST_ELI_DOCUMENT_PARAMS(
+		{"id","Sets the id for output","-1"},
+		{"verboseLevel","Sets the verbose level for output","0"},
+		{"verboseMask","Sets the mask for output","-1"},
+		{"maxloadmemreqpending","Sets the maximum number of pending loads","16"},
+		{"maxstorememreqpending","Sets the maximum number of pending stores","16"},
+		{"freq","Sets the frequency","1Ghz"},
+	)
+
 private:
 
 	enum Op { Read, Write };

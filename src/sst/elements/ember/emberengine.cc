@@ -46,14 +46,6 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 
 	output.init( prefix.str(), verbosity, mask, Output::STDOUT);
 
-    Params osParams = params.find_prefix_params("os.");
-
-    // std::string osName = osParams.find<std::string>("name");
-    // assert( ! osName.empty() );
-    // std::string osModuleName = osParams.find<std::string>("module");
-    // assert( ! osModuleName.empty() );
-
-    // Params modParams = params.find_prefix_params( osName + "." );
     std::ostringstream tmp;
     tmp << m_jobId;
 
@@ -66,11 +58,6 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
 
     std::string motifLogFile = params.find<std::string>("motifLog", "");
     if("" != motifLogFile) {
-        // std::ostringstream logPrefix;
-        // logPrefix << motifLogFile << "-" << m_jobId << "-" << Simulation::getSimulation()->getRank().rank << ".log";
-        // //logPrefix << motifLogFile << "-" << id << "-" << m_jobId << ".log";
-        // output.verbose(CALL_INFO, 4, ENGINE_MASK, "Motif log file will write to: %s\n", logPrefix.str().c_str());
-        // m_motifLogger = new EmberMotifLog(logPrefix.str(), m_jobId);
         m_motifLogger = new EmberMotifLog(motifLogFile, m_jobId);
     } else {
         m_motifLogger = NULL;
@@ -90,11 +77,9 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
     	tmp << i;
 
         //NetworkSim: Add the rankmapper parameter as motif parameters and pass it.
-        //Params::value_type addedparam = std::make_pair("motif" + tmp.str() + ".rankmapper", params.find_string("rankmapper", "ember.LinearMap"));
         params.insert("motif" + tmp.str() + ".rankmapper", params.find<string>("rankmapper", "ember.LinearMap"), true);
 
         //NetworkSim: Add the mapFile parameter as motif parameters and pass it.
-        //Params::value_type addedparam2 = std::make_pair("motif" + tmp.str() + ".rankmap.mapFile", params.find_string("mapFile", "mapFile.txt"));
         params.insert("motif" + tmp.str() + ".rankmap.mapFile", params.find<string>("mapFile", "mapFile.txt"), true);
         //NetworkSim->end
 
@@ -141,7 +126,6 @@ EmberEngine::ApiMap EmberEngine::createApiMap( OS* os,
 
 	    std::ostringstream numStr;
    	    numStr << apiNum++;
-
 
         Params apiParams = apiList.find_prefix_params( numStr.str() + "." );
         if ( apiParams.empty() ) {

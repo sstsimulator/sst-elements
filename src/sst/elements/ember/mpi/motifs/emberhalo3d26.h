@@ -35,20 +35,20 @@ public:
     )
 
     SST_ELI_DOCUMENT_PARAMS(
-        {   "arg.iterations",       "Sets the number of ping pong operations to perform",   "10"},
-        {   "arg.computetime",      "Sets the number of nanoseconds to compute for",    "10"},
-        {   "arg.flopspercell",     "Sets the number of number of floating point operations per cell, default is 26 (27 point stencil)",    "26"},
-        {   "arg.peflops",      "Sets the FLOP/s rate of the processor (used to calculate compute time if not supplied, default is 10000000000 FLOP/s)", "10000000000"},
         {   "arg.nx",           "Sets the problem size in X-dimension",         "100"},
         {   "arg.ny",           "Sets the problem size in Y-dimension",         "100"},
         {   "arg.nz",           "Sets the problem size in Z-dimension",         "100"},
         {   "arg.pex",          "Sets the processors in X-dimension (0=auto)",      "0"},
         {   "arg.pey",          "Sets the processors in Y-dimension (0=auto)",      "0"},
         {   "arg.pez",          "Sets the processors in Z-dimension (0=auto)",      "0"},
-        {   "arg.copytime",     "Sets the time spent copying data between messages",    "5"},
-        {   "arg.doreduce",     "How often to do reduces, 1 = each iteration",      "1"},
         {   "arg.fields_per_cell",  "Specify how many variables are being computed per cell (this is one of the dimensions in message size. Default is 1", "1"},
+        {   "arg.doreduce",     "How often to do reduces, 1 = each iteration",      "1"},
         {   "arg.datatype_width",   "Specify the size of a single variable, single grid point, typically 8 for double, 4 for float, default is 8 (double). This scales message size to ensure byte count is correct.", "8"},
+        {   "arg.flopspercell",     "Sets the number of number of floating point operations per cell, default is 26 (27 point stencil)",    "26"},
+        {   "arg.computetime",      "Sets the number of nanoseconds to compute for",    "10"},
+        {   "arg.peflops",      "Sets the FLOP/s rate of the processor (used to calculate compute time if not supplied, default is 10000000000 FLOP/s)", "10000000000"},
+        {   "arg.copytime",     "Sets the time spent copying data between messages",    "5"},
+        {   "arg.iterations",       "Sets the number of ping pong operations to perform",   "10"},
     )
 
     SST_ELI_DOCUMENT_STATISTICS(

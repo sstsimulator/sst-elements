@@ -127,6 +127,10 @@ class EmberMpiLib : public EmberLib {
         "SST::Ember::EmberMpiLib"
     )
 
+    SST_ELI_DOCUMENT_PARAMS(
+		{ "spyplotmode", "Sets the spyplot generation mode, 0 = none, 1 = spy on sends", "0" },
+	)
+
     typedef std::queue<EmberEvent*> Queue;
 
 	EmberMpiLib( Params& params );

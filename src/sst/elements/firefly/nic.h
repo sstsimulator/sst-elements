@@ -100,6 +100,7 @@ class Nic : public SST::Component  {
         { "maxSendMachineQsize", "Sets the number of pending memory operations", "1"},
         { "maxRecvMachineQsize", "Sets the number of pending memory operations", "1"},
         { "shmemSendAlignment", "Sets the send stream transfer alignment", "64"},
+        { "messageSendAlignment", "Sets the message alignment","1"},
         { "numSendMachines", "Sets the number of send machines", "1"},
         { "numRecvNicUnits", "Sets the number of receive units", "1"},
         { "nicAllocationPolicy", "Allocation policy for Nic", "RoundRobin"},
@@ -114,53 +115,23 @@ class Nic : public SST::Component  {
         { "FAM_memsize", "", "0"},
         { "FAM_backed", "Controls whether FAM memory is backed in the simlation", "yes"},
 
+        { "useSimpleMemoryModel", "If set to 1 use the simple memory model", "0"},
+        { "useTrivialMemoryModel", "Use the trivial memory model", "false" },
+
         { "maxActiveRecvStreams", "Set max number of active receive streams", "16" },
         { "maxPendingRecvPkts", "Set max number of pending receive packets", "64" },
 
         { "dmaBW_GBs", "set the one way DMA bandwidth", "100"},
         { "dmaContentionMult", "set the DMA contention mult", "100"},
 
-        { "useSimpleMemoryModel", "If set to 1 use the simple memory model", "0"},
-
-        { "simpleMemoryModel.verboseLevel","Sets the verbosity level of output","0"},
-        { "simpleMemoryModel.verboseMask","Set the output mask","-1"},
-        { "simpleMemoryModel.printConfig","Controls printing of configuration information","no"},
-
-        { "simpleMemoryModel.useHostCache","Sets model to use host cache.  If set to yes, all nids will use host cache.  Can also provide a list of nids that should use the host cache.","yes" },
-        { "simpleMemoryModel.useBusBridge","Sets model to use bus bridge.  If set to yes, all nids will use bus bridge.  Can also provide a list of nids that should use the host cache.","yes" },
-        { "simpleMemoryModel.useDetailedModel","Sets model to use detailed memory model.  If set to yes, all nids will use detailed model.  Can also provide a list of nids that should use the detialed model.","no"},
-
-        { "simpleMemoryModel.memReadLat_ns","Sets the latency for a memory read","150"},
-        { "simpleMemoryModel.memWriteLat_ns","Sets the latency for a memory write","150"},
-        { "simpleMemoryModel.memNumSlots","Sets the max number of outstanding memory operations","10"},
-
-        { "simpleMemoryModel.nicNumLoadSlots","Sets the max number of outstanding loads for units on the NIC","32"},
-        { "simpleMemoryModel.nicNumStoreSlots","Sets the max number of outstanding stores for the units on the NIC","32"},
-        { "simpleMemoryModel.hostNumLoadSlots","Sets the max number of outstanding loads for the units on the Host","32"},
-        { "simpleMemoryModel.hostNumStoreSlots","Sets the max number of outstanding stores for the units on the Host","32"},
-
-        { "simpleMemoryModel.busBandwidth_Gbs","Sets the Host to NIC bus link bandwidth","7.8"},
-        { "simpleMemoryModel.busNumLinks","Sets the number of Host to NIC bus links","16"},
-        { "simpleMemoryModel.busLatency","Set the Host to NIC bus overhead","0"},
-        { "simpleMemoryModel.DLL_bytes","Sets the number of bytes of overhead for a packet at the data link level","16"},
-        { "simpleMemoryModel.TLP_overhead","Sets the number of bytes of overhead for a packet at the transaction level","30"},
-        { "simpleMemoryModel.nicToHostMTU","Sets the size the MTU between the Host and NIC","256"},
-        { "simpleMemoryModel.widgetSlots","Set the depth of queues between the Host to NIC bus and the cache","64"},
-
-        { "simpleMemoryModel.hostCacheUnitSize","Sets the number of slots in the Host cache","32"},
-        { "simpleMemoryModel.hostCacheNumMSHR","Sets the max number of outstanding request to memory","10"},
-        { "simpleMemoryModel.hostCacheLineSize","Sets the cache line size","64"},
-
-        { "simpleMemoryModel.tlbPageSize","Sets the TLB page size","2097152"},
-        { "simpleMemoryModel.tlbSize","Sets the number of slots in the TLB","0"},
-        { "simpleMemoryModel.tlbMissLat_ns","Sets the latency for a TLB miss","0"},
-        { "simpleMemoryModel.numWalkers","Sets the number of outsanding TLB misses","1"},
-        { "simpleMemoryModel.numTlbSlots","Sets the number of requests the TLB will queue","1"},
-
-        { "useTrivialMemoryModel", "Use the trivial memory model", "false" },
         {" useDetailed", "Use detailed compute model", "false"},
-
     )
+
+	/* PARAMS
+		shmem.*
+		simpleMemoryModel.*
+		detailedCompute.*
+	*/
 
    SST_ELI_DOCUMENT_STATISTICS(
         { "sentByteCount",  "number of bytes sent on network", "bytes", 1},

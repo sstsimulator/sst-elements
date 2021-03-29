@@ -50,6 +50,12 @@ class RR_FamAddrMapper : public FamAddrMapper {
         "SST::Firefly::RR_FamAddrMapper"
     )
 
+	SST_ELI_DOCUMENT_PARAMS(
+		{"bytesPerNode","Sets bytes per FAM node","16MiB"},
+		{"blockSize","Sets block size","4KiB"},
+		{"numNodes","Sets number of FAM nodes","0"},
+	)
+
   public:
 	RR_FamAddrMapper( Params& params ) {
 		m_bytesPerNode = (size_t) params.find<SST::UnitAlgebra>("bytesPerNode","16MiB").getRoundedValue();

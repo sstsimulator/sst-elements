@@ -37,7 +37,6 @@ public:
     SST_ELI_DOCUMENT_PARAMS(
         {   "arg.iterations",       "Sets the number of reduce operations to perform",  "1"},
         {   "arg.count",        "Sets the number of elements to reduce",        "1"},
-        {   "arg.compute",      "Sets the time spent computing",        "1"},
         {   "arg.root",         "Sets the root of the reduction",           "0"},
     )
 

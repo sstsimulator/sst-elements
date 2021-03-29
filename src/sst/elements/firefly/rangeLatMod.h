@@ -41,6 +41,14 @@ class RangeLatMod : public LatencyMod {
         "",
         "SST::Firefly::RangeLatMod"
     )
+
+    SST_ELI_DOCUMENT_PARAMS(
+		{"base","",""},
+		{"op","",""},
+    )
+    /* PARAMS
+        range.*
+    */
   private:
 
     struct Entry {

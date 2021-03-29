@@ -35,8 +35,13 @@ public:
     )
 
     SST_ELI_DOCUMENT_PARAMS(
-        {   "arg.iterations",       "Sets the number of ping pong operations to perform",   "1"},
-        {   "arg.messagesize",      "Sets the size of the message in bytes",        "1024"},
+        {   "arg.messagesize",     "Sets the size of the message in bytes",        "1024"},
+        {   "arg.iterations",      "Sets the number of ping pong operations to perform",   "1"},
+        {   "arg.stream_n",        "Sets the size number of items to stream",   "1000"},
+        {   "arg.printRank",       "Sets the rank that prints results",   "0"},
+        {   "arg.detailedCompute", "Sets the list or ranks that do detailed compute",   ""},
+        {   "arg.computeTime",     "Sets the compute time",   "0"},
+        {   "arg.computeWindow",   "Sets the maximum compute time",   "0"},
     )
 
     SST_ELI_DOCUMENT_STATISTICS(

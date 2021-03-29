@@ -335,6 +335,17 @@ public:
     )
 
     SST_ELI_DOCUMENT_PARAMS(
+        { "arg.computeTime","Sets the compute time between SHMEM operations","50"},
+        { "arg.dataSize","Sets the size of the SHMEM data region","33554432"},
+        { "arg.updates","Sets the number of SHMEM updates","4096"},
+        { "arg.iterations","Sets the number of inner loops","1"},
+        { "arg.op","Set the SHMEM op","add"},
+        { "arg.hotMult","Sets the Hot spot multiplier","4"},
+        { "arg.printTotals","Print out the totals","flase"},
+        { "arg.backed","Configures backing of SHMEM memory","false"},
+        { "arg.outLoop","Sets the number of outer loops","1"},
+        { "arg.numNodes","Sets the number of nodes","-1"},
+        { "arg.randAddr","Use a random address for the SHMEM op","1"},
     )
 public:
 	EmberShmemAtomicIncIntGenerator(SST::ComponentId_t id, Params& params) :

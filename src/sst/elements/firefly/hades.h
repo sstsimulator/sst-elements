@@ -49,20 +49,25 @@ class Hades : public OS
     )
 
     SST_ELI_DOCUMENT_PARAMS(
-        {"mapType","Sets the type of data structure to use for mapping ranks to NICs", ""},
+        {"verboseLevel","Sets the output level","0"},
+        {"verboseMask","Sets the output mask","0"},
+        {"numNodes","Sets the number of nodes","0"},
+        {"nicModule", "Sets the NIC module", "firefly.VirtNic"},
+        {"nodePerf", "Sets the node performance module ", "1"},
+        {"netMapSize","Sets the network map Size of the endpoint", ""},
         {"netId","Sets the network id of the endpoint", ""},
         {"netMapId","Sets the network mapping id of the endpoint", ""},
-        {"netMapSize","Sets the network map Size of the endpoint", ""},
         {"netMapName","Sets the network map Name of the endpoint", ""},
-        {"nicModule", "Sets the NIC module", "firefly.VirtNic"},
-        {"verboseLevel", "Sets the output verbosity of the component", "1"},
-        {"verboseMask", "Sets the output mask of the component", "1"},
-        {"debug", "Sets the messaging API of the end point", "0"},
-        {"defaultVerbose","Sets the default function verbose level","0"},
-        {"defaultDebug","Sets the default function debug level","0"},
-        {"flops", "Sets the FLOP rate of the endpoint ", "1"},
-        {"bandwidth", "Sets the bandwidth of the endpoint ", "1"},
-        {"nodePerf", "Sets the node performance module ", "1"},
+        {"coreId","Sets the core ID","0"},
+
+		/* PARAMS
+			ctrlmsg.*
+			functionSM.*
+			nicParams.*
+			nodePerf.*
+			detailedCompute.*
+			memoryHeapLink.*
+		*/
     )
 
     Hades(ComponentId_t id, Params& params);

@@ -41,7 +41,14 @@ public:
         SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS()
+    SST_ELI_DOCUMENT_PARAMS(
+		{"arg.blocking","Sets if FAM ops are blocking","false"},
+		{"arg.blockSize","Sets size of each block of data transfers","4096"},
+		{"arg.numBlocks","Sets number of blacks","0"},
+		{"arg.firstBlock","Sets first block","0"},
+		{"arg.blockStride","Sets stride between blocks","0"},
+		{"arg.backed","Sets SHMEM memory backing","no"},
+	)
 
 public:
 	EmberShmemFAM_GathervGenerator(SST::ComponentId_t id, Params& params) :

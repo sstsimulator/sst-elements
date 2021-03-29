@@ -35,8 +35,8 @@ public:
     )
 
     SST_ELI_DOCUMENT_PARAMS(
-        {   "arg.messageSize",      "Sets the message size of the ping pong operation", "128"},
         {   "arg.iterations",       "Sets the number of ping pong operations to perform",   "1024"},
+        {   "arg.messageSize",      "Sets the message size of the ping pong operation", "128"},
         {   "arg.computetime",      "Sets the time spent computing some values",        "1000"},
     )
 

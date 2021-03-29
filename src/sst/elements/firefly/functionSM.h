@@ -78,6 +78,20 @@ class FunctionSM : public SubComponent {
         "",
         SST::Firefly::FunctionSM
     )
+
+	SST_ELI_DOCUMENT_PARAMS(
+		{"verboseLevel","Sets the output level","0"},
+		{"defaultModule","Sets the component where functions reside","firefly"},
+		{"defaultEnterLatency","Sets the default latency to enter a function","0"},
+		{"defaultReturnLatency","Sets the default latency to return from a function","0"},
+		{"smallCollectiveVN","Sets the VN to use for small collectives","0"},
+		{"smallCollectiveSize","Sets the size of small collectives","0"},
+		{"nodeId","Sets the node ID",""},
+	)
+	/* PARAMS
+		This component also looks for function names as the top of a parameter hierarchy such as "Fini.*"
+	*/
+
     typedef std::function<void()> Callback;
 
     enum FunctionEnum{
