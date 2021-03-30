@@ -57,6 +57,14 @@ void LlyrMapper::addNode(opType op_binding, uint32_t nodeNum, LlyrGraph< Process
         tempPE = new LoadProcessingElement( LD_ST, nodeNum, llyr_config );
     } else if( op_binding == ST ) {
         tempPE = new StoreProcessingElement( ST, nodeNum, llyr_config );
+    } else if( op_binding == AND ) {
+        tempPE = new LogicProcessingElement( AND, nodeNum, llyr_config );
+    } else if( op_binding == OR ) {
+        tempPE = new LogicProcessingElement( OR, nodeNum, llyr_config );
+    } else if( op_binding == XOR ) {
+        tempPE = new LogicProcessingElement( XOR, nodeNum, llyr_config );
+    } else if( op_binding == NOT ) {
+        tempPE = new LogicProcessingElement( NOT, nodeNum, llyr_config );
     } else if( op_binding == SLL ) {
         tempPE = new LogicProcessingElement( SLL, nodeNum, llyr_config );
     } else if( op_binding == SLR ) {
@@ -65,6 +73,26 @@ void LlyrMapper::addNode(opType op_binding, uint32_t nodeNum, LlyrGraph< Process
         tempPE = new LogicProcessingElement( ROL, nodeNum, llyr_config );
     } else if( op_binding == ROR ) {
         tempPE = new LogicProcessingElement( ROR, nodeNum, llyr_config );
+    } else if( op_binding == EQ ) {
+        tempPE = new LogicProcessingElement( EQ, nodeNum, llyr_config );
+    } else if( op_binding == NE ) {
+        tempPE = new LogicProcessingElement( NE, nodeNum, llyr_config );
+    } else if( op_binding == UGT ) {
+        tempPE = new LogicProcessingElement( UGT, nodeNum, llyr_config );
+    } else if( op_binding == UGE ) {
+        tempPE = new LogicProcessingElement( UGE, nodeNum, llyr_config );
+    } else if( op_binding == SGT ) {
+        tempPE = new LogicProcessingElement( SGT, nodeNum, llyr_config );
+    } else if( op_binding == SGE ) {
+        tempPE = new LogicProcessingElement( SGE, nodeNum, llyr_config );
+    } else if( op_binding == ULT ) {
+        tempPE = new LogicProcessingElement( ULT, nodeNum, llyr_config );
+    } else if( op_binding == ULE ) {
+        tempPE = new LogicProcessingElement( ULE, nodeNum, llyr_config );
+    } else if( op_binding == SLT ) {
+        tempPE = new LogicProcessingElement( SLT, nodeNum, llyr_config );
+    } else if( op_binding == SLE ) {
+        tempPE = new LogicProcessingElement( SLE, nodeNum, llyr_config );
     } else if( op_binding == ADD ) {
         tempPE = new IntProcessingElement( ADD, nodeNum, llyr_config );
     } else if( op_binding == SUB ) {
@@ -81,13 +109,18 @@ void LlyrMapper::addNode(opType op_binding, uint32_t nodeNum, LlyrGraph< Process
         tempPE = new FPProcessingElement( FPMUL, nodeNum, llyr_config );
     } else if( op_binding == FPDIV ) {
         tempPE = new FPProcessingElement( FPDIV, nodeNum, llyr_config );
+    } else if( op_binding == FPMATMUL ) {
+        tempPE = new FPProcessingElement( FPMATMUL, nodeNum, llyr_config );
+    } else if( op_binding == TSIN ) {
+        tempPE = new ComplexProcessingElement( TSIN, nodeNum, llyr_config );
+    } else if( op_binding == TCOS ) {
+        tempPE = new ComplexProcessingElement( TCOS, nodeNum, llyr_config );
     } else if( op_binding == DUMMY ) {
         tempPE = new DummyProcessingElement( DUMMY, nodeNum, llyr_config );
-//     } else if( op_binding == BUFFER ) {
-//         operation = FPADD;
-//     } else {
-//         operation = OTHER;
-//     }
+    } else if( op_binding == BUFFER ) {
+        tempPE = new ControlProcessingElement( BUFFER, nodeNum, llyr_config );
+    } else if( op_binding == SEL ) {
+        tempPE = new ControlProcessingElement( SEL, nodeNum, llyr_config );
     } else {
         exit(0);
     }
