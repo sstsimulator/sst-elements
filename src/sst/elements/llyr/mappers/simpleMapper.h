@@ -16,6 +16,7 @@
 #ifndef _SIMPLE_MAPPER_H
 #define _SIMPLE_MAPPER_H
 
+#include <stack>
 #include <iostream>
 
 #include "mappers/llyrMapper.h"
@@ -60,21 +61,21 @@ void SimpleMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType
 
     std::queue< uint32_t > nodeQueue;
 
-    //-------------- DFS ---------------------------------
     //Mark all nodes in the PE graph un-visited
     std::map< uint32_t, Vertex< opType > >* app_vertex_map_ = appGraph.getVertexMap();
     typename std::map< uint32_t, Vertex< opType > >::iterator appIterator;
     for(appIterator = app_vertex_map_->begin(); appIterator != app_vertex_map_->end(); ++appIterator) {
         appIterator->second.setVisited(0);
 
-//         std::cout << "Vertex " << appIterator->first << " -- In Degree " << appIterator->second.getInDegree();
-//         std::cout << std::endl;
+        std::cout << "Vertex " << appIterator->first << " -- In Degree " << appIterator->second.getInDegree();
+        std::cout << std::endl;
 
         if( appIterator->second.getInDegree() == 0 ) {
             nodeQueue.push(appIterator->first);
         }
     }
 
+//     std::cout << "(0)nodeQueue size: " << nodeQueue.size() << "\n";
     //assign new ID to mapped nodes in the graph and track mapping between app and graph
     uint32_t newNodeNum = 1;
     std::map< uint32_t, uint32_t > mapping;
@@ -87,9 +88,9 @@ void SimpleMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType
 
         // create a record of the mapping (new, old)
         auto retVal = mapping.emplace( currentAppNode, newNodeNum );
-//         std::cout << " Current " << currentAppNode << " New " << newNodeNum << std::endl;
-//
-//         std::cout << "\n Adjacency list of vertex " << currentAppNode << "\n head ";
+        std::cout << " Current " << currentAppNode << " New " << newNodeNum << std::endl;
+
+        std::cout << "\n Adjacency list of vertex " << currentAppNode << "\n head ";
         std::vector< Edge* >* adjacencyList = app_vertex_map_->at(currentAppNode).getAdjacencyList();
 
         //add the destination vertices from this node to the node queue
@@ -97,19 +98,23 @@ void SimpleMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType
             uint32_t destinationVertex = (*it)->getDestination();
 
             if( app_vertex_map_->at(destinationVertex).getVisited() == 0 ) {
-//                 std::cout << " -> " << destinationVertex;
+                std::cout << " -> " << destinationVertex;
                 app_vertex_map_->at(destinationVertex).setVisited(1);
                 nodeQueue.push(destinationVertex);
             }
             else {
-//                 std::cout << " +> " << destinationVertex;
+                std::cout << " +> " << destinationVertex;
             }
+
+//             std::cout << "nodeQueue size: " << nodeQueue.size() << "\n";
         }
 
+//         std::cout << "(1)nodeQueue size: " << nodeQueue.size() << "\n";
         newNodeNum = newNodeNum + 1;
-//         std::cout << std::endl;
+        std::cout << std::endl;
     }
 
+//     std::cout << "(2)nodeQueue size: " << nodeQueue.size() << "\n";
     // insert dummy as node 0 to make BFS easier
     addNode( DUMMY, 0, graphOut, llyr_config );
 
@@ -118,11 +123,11 @@ void SimpleMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType
     typename std::map< uint32_t, Vertex< ProcessingElement* > >::iterator vertexIterator;
     for(vertexIterator = vertex_map_->begin(); vertexIterator != vertex_map_->end(); ++vertexIterator) {
 
-        // lookup the matched app PE, skipping
+        // lookup the matched app PE
         bool found  = 0;
         uint32_t appPE;
         for( auto it = mapping.begin(); it != mapping.end(); ++it) {
-//             std::cout << " Looking " << vertexIterator->first << std::endl;
+            std::cout << " Looking " << vertexIterator->first << std::endl;
             if( it->second == vertexIterator->first ) {
                 found = 1;
                 appPE = it->first;
@@ -142,8 +147,8 @@ void SimpleMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType
         }
 
         // add edges from the dummy root
-//         std::cout << "Vertex " << vertexIterator->first << " -- In Degree " << vertexIterator->second.getInDegree();
-//         std::cout << std::endl;
+        std::cout << "Vertex " << vertexIterator->first << " -- In Degree " << vertexIterator->second.getInDegree();
+        std::cout << std::endl;
         if( vertexIterator->second.getInDegree() == 0 ) {
             graphOut.addEdge( 0, vertexIterator->first );
         }
