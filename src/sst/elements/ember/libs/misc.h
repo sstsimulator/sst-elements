@@ -40,6 +40,8 @@ class EmberMiscLib : public EmberLib {
         "",
         "SST::Ember::EmberMiscLib"
     )
+    SST_ELI_DOCUMENT_PARAMS(
+	)
 
     EmberMiscLib( Params& params ) {}
 

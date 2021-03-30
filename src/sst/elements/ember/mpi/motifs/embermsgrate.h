@@ -35,9 +35,9 @@ public:
     )
 
     SST_ELI_DOCUMENT_PARAMS(
-        {   "arg.iterations",       "Sets the number of ping pong operations to perform",   "1"},
         {   "arg.msgSize",      "Sets the size of the message in bytes",        "0"},
         {   "arg.numMsgs",      "Sets the size of the message in bytes",        "128"},
+        {   "arg.iterations",       "Sets the number of ping pong operations to perform",   "1"},
     )
 
     SST_ELI_DOCUMENT_STATISTICS(

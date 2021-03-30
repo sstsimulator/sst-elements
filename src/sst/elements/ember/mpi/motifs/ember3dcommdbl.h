@@ -38,9 +38,9 @@ public:
         {   "pex",      "Sets the processors in the X-dimension", "1"   },
         {   "pey",      "Sets the processors in the Y-dimension", "1"   },
         {   "pez",      "Sets the processors in the Z-dimension", "1"   },
-        {       "basephase",    "Starts the phase at offset.", "0" },
-        {   "compute_at_step",  "Sets the computation time in between each communication phase in nanoseconds", "1000"  },
+        {   "basephase",        "Starts the phase at offset.", "0" },
         {   "items_per_node",   "Sets the number of items to exchange between nodes per phase", "100" },
+        {   "compute_at_step",  "Sets the computation time in between each communication phase in nanoseconds", "1000"  },
     )
 
     SST_ELI_DOCUMENT_STATISTICS(

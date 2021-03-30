@@ -147,6 +147,14 @@ public:
     int m_num_pes;
 };
 
+#define ELI_params \
+	{"arg.biDir","Sets if test is bidirectional","0"},\
+	{"arg.nelems","Sets the number of data elements","1"},\
+	{"arg.printResults","Sets if results are printed","false"},\
+	{"arg.iterations","Sets the number of iterations","1"},\
+	{"arg.blocking","Sets if memory is backed","true"},\
+
+
 class EmberShmemPutIntGenerator : public EmberShmemPutGenerator<int> {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
@@ -158,7 +166,9 @@ public:
         SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS()
+    SST_ELI_DOCUMENT_PARAMS(
+		ELI_params
+	)
 
 public:
     EmberShmemPutIntGenerator( SST::ComponentId_t id, Params& params ) :
@@ -176,7 +186,9 @@ public:
         SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS()
+    SST_ELI_DOCUMENT_PARAMS(
+		ELI_params
+	)
 
 public:
     EmberShmemPutLongGenerator( SST::ComponentId_t id, Params& params ) :
@@ -194,7 +206,9 @@ public:
         SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS()
+    SST_ELI_DOCUMENT_PARAMS(
+		ELI_params
+	)
 
 public:
     EmberShmemPutDoubleGenerator( SST::ComponentId_t id, Params& params ) :
@@ -212,12 +226,15 @@ public:
         SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS()
+    SST_ELI_DOCUMENT_PARAMS(
+		ELI_params
+	)
 
 public:
     EmberShmemPutFloatGenerator( SST::ComponentId_t id, Params& params ) :
         EmberShmemPutGenerator(id,  params) { }
 };
+#undef ELI_params
 }
 }
 

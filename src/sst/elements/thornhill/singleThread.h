@@ -34,6 +34,10 @@ class SingleThread : public DetailedCompute {
         "",
        	SST::Thornhill::SingleThread
     )
+	SST_ELI_DOCUMENT_PARAMS( 
+		{"portName","Sets the portname of the detailed compute model","detailed0"}
+	)
+
 	struct Entry {
       Entry( std::function<int()>& _finiHandler ) : finiHandler( _finiHandler ) {}
     	std::function<int()> finiHandler;

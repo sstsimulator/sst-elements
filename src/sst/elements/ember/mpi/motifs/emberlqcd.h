@@ -67,14 +67,13 @@ public:
     )
 
     SST_ELI_DOCUMENT_PARAMS(
-        { "arg.iterations",	"Sets the number of ping pong operations to perform", 	"1"},
         { "arg.nx", 	    "Sets the size of a lattice site in X", "8" },
         { "arg.ny",         "Sets the size of a lattice site in Y", "8" },
         { "arg.nz",         "Sets the size of a lattice site in Z", "8" },
         { "arg.nt",         "Sets the size of a lattice site in T", "8" },
         { "arg.peflops", "Processor element flops per second", "1000000000000"},
         { "arg.computetime", "", ""},
-        {       "arg.verbose",                  "Sets the verbosity of the output", "0" },
+        { "arg.iterations",	"Sets the number of ping pong operations to perform", 	"1"},
     )
 
     SST_ELI_DOCUMENT_STATISTICS(

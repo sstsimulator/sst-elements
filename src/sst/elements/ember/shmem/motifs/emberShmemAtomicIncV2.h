@@ -457,6 +457,20 @@ private:
     }
 };
 
+
+#define ELI_params \
+		{ "arg.computeTime","Configure the compute time between SHMEM ops","0"},\
+		{ "arg.dataSize","Configure the size of the SHMEM region","33554432"},\
+		{ "arg.updates","Configure the number of SHMEM op","4096"},\
+		{ "arg.op","Configure the SHMEM op","add"},\
+		{ "arg.hotMult","Configure hot spot node multiplier","4"},\
+		{ "arg.detailedCompute","Configure list of nodes to use detailed compute model",""},\
+		{ "arg.printTotals","Configure to print totals","false"},\
+		{ "arg.backed","Configure if SHMEM memory is back","false"},\
+		{ "arg.outLoop","Configure the number of outer loops","1"},\
+		{ "arg.randAddr","Configure to use random address for SHMEM op","1"},\
+		{ "arg.run4ever","Configure the detailed compute model to run forever","false"},\
+
 class EmberShmemAtomicIncV2IntGenerator : public EmberShmemAtomicIncV2Generator<int, 0> {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
@@ -468,7 +482,9 @@ public:
         SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS()
+    SST_ELI_DOCUMENT_PARAMS(
+		ELI_params
+	)
 
 public:
 	EmberShmemAtomicIncV2IntGenerator(SST::ComponentId_t id, Params& params) :
@@ -486,7 +502,9 @@ public:
         SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS()
+    SST_ELI_DOCUMENT_PARAMS(
+		ELI_params
+	)
 
 public:
 	EmberShmemNSAtomicIncV2IntGenerator(SST::ComponentId_t id, Params& params) :
@@ -504,7 +522,9 @@ public:
         SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS()
+    SST_ELI_DOCUMENT_PARAMS(
+		ELI_params
+	)
 
 public:
 	EmberShmemHotAtomicIncV2IntGenerator(SST::ComponentId_t id, Params& params) :
@@ -522,7 +542,9 @@ public:
         SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS()
+    SST_ELI_DOCUMENT_PARAMS(
+		ELI_params
+	)
 
 public:
 	EmberShmemAtomicIncV2LongGenerator(SST::ComponentId_t id, Params& params) :
@@ -541,11 +563,14 @@ public:
     )
 
     SST_ELI_DOCUMENT_PARAMS(
+		ELI_params
     )
 public:
 	EmberShmemHotAtomicIncV2LongGenerator(SST::ComponentId_t id, Params& params) :
 	    EmberShmemAtomicIncV2Generator(id, params, "ShmemHotAtomicIncV2Long") {}
 };
+
+#undef ELI_params
 
 }
 }

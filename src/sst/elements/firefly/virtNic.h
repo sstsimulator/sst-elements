@@ -48,8 +48,9 @@ class VirtNic : public SST::SubComponent {
     )
     
     SST_ELI_DOCUMENT_PARAMS(
-        {"debugLevel", "Sets the output verbosity of the component", "1"},
-        {"debug", "Sets the messaging API of the end point", "0"},
+        {"verboseLevel","Sets the level of output","0"},
+        {"maxNicQdepth","Sets maximum number of entries before blocking","32"},
+        {"latPerSend_ns","Sets the time each send takes","2"},
         {"portName", "Sets the name of the port for the link", "nic"},
     )
 

@@ -43,6 +43,17 @@ public:
     )
 
     SST_ELI_DOCUMENT_PARAMS(
+        {"arg.totalBytes","Sets total size of FAM memory space",""},\
+        {"arg.putLoop","Sets the number of puts to queue each call to work()","1"},\
+        {"arg.maxDelay","Sets the max delay when using random compute time ","20"},\
+        {"arg.blockSize","Sets the size of transfer","4096"},\
+        {"arg.partitionSize","Sets the size of local memory used for outgoing put data",""},\
+        {"arg.backed","Sets if FAM memory is backed","false"},\
+        {"arg.randomPut","Sets if address of each put is random","false"},\
+        {"arg.stream_n","Sets the size of the stream for the detailed model","1000"},\
+        {"arg.useRand","Sets if random compute time is used","false"},\
+        {"arg.blocking","Sets if blocking FAM calls are used","false"},\
+        {"arg.detailedCompute","Sets the list of PEs that use detailed model for compute delay",""},\
     )
 
 public:
@@ -50,12 +61,12 @@ public:
 		EmberShmemGenerator(id, params, "ShmemFAM_Put" ), m_phase(Init), m_groupName("MyApplication"),m_curBlock(0),m_rng(NULL)
 	{
 		m_totalBytes = (size_t) params.find<SST::UnitAlgebra>("arg.totalBytes").getRoundedValue();
-		m_getLoop       = params.find<int>("arg.getLoop", 1);
+		m_putLoop       = params.find<int>("arg.putLoop", 1);
 		m_maxDelay      = params.find<int>("arg.maxDelay",20);
 		m_blockSize	    = params.find<int>("arg.blockSize", 4096);
 		m_partitionSize = (size_t) params.find<SST::UnitAlgebra>("arg.partitionSize","16MiB").getRoundedValue();
 		m_backed	    = (bool) ( 0 == params.find<std::string>("arg.backed", "yes").compare("yes") );
-		m_randomGet     = params.find<bool>("arg.randomGet",false);
+		m_randomPut     = params.find<bool>("arg.randomPut",false);
 		m_stream_n = params.find<int32_t>("arg.stream_n", 1000);
 		m_randCompute = params.find<int>("arg.useRand",false);
 		m_blocking = params.find<bool>("arg.blocking",false);
@@ -67,7 +78,7 @@ public:
 		m_numBlocks = m_totalBytes/m_blockSize;
 		m_numBlocksPerPartition = m_partitionSize/m_blockSize;
 
-		if ( m_randCompute || m_randomGet ) {
+		if ( m_randCompute || m_randomPut ) {
 			m_rng = new SST::RNG::XORShiftRNG();
         	struct timeval start;
         	gettimeofday( &start, NULL );
@@ -95,9 +106,9 @@ public:
 				printf("number of pes:           %d\n",	m_num_pes );
 				printf("block size:              %d\n",	m_blockSize );
 				printf("number of blocks:        %d\n",	m_numBlocks );
-				printf("loop:                    %d\n",	m_getLoop );
-				if ( m_randomGet ) {
-					printf("randomGet                yes\n" );
+				printf("loop:                    %d\n",	m_putLoop );
+				if ( m_randomPut ) {
+					printf("randomPut                yes\n" );
 				}
 				if ( m_randCompute ) {
 					printf("random compute, maxDelay: %d\n", m_maxDelay );
@@ -149,10 +160,10 @@ public:
 
 	bool work(  std::queue<EmberEvent*>& evQ ) {
 
-		for ( int i = 0; i < m_getLoop && m_curBlock < m_numBlocks; i++ ) {
+		for ( int i = 0; i < m_putLoop && m_curBlock < m_numBlocks; i++ ) {
 
 			uint32_t block;
-			if ( m_randomGet ) {
+			if ( m_randomPut ) {
 				block = m_rng->generateNextUInt32();
 			} else {
 				block = (m_curBlock + m_blockOffset);
@@ -269,7 +280,7 @@ public:
 	int m_blockSize;
 	int m_maxDelay;
 	int m_blockOffset;
-	int m_getLoop;
+	int m_putLoop;
 	size_t m_totalBytes;
 	int m_numBlocks;
 	int m_curBlock;
@@ -280,7 +291,7 @@ public:
     int m_num_pes;
     uint64_t m_startTime;
     uint64_t m_stopTime;
-    bool m_randomGet;
+    bool m_randomPut;
 	bool m_blocking;
 };
 

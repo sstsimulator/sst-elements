@@ -130,6 +130,10 @@ public:
     int m_phase;
 };
 
+#define ELI_params\
+	{"arg.nelems","Sets the number of elements","1"},\
+	{"arg.printResults","Sets if results are printed","flase"},\
+
 class EmberShmemFcollect32Generator : public EmberShmemFcollectGenerator<uint32_t> {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(
@@ -141,7 +145,9 @@ public:
         SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS()
+    SST_ELI_DOCUMENT_PARAMS(
+		ELI_params
+	)
 
 public:
     EmberShmemFcollect32Generator(SST::ComponentId_t id, Params& params) :
@@ -159,12 +165,16 @@ public:
         SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS()
+    SST_ELI_DOCUMENT_PARAMS(
+		ELI_params
+	)
 
 public:
     EmberShmemFcollect64Generator(SST::ComponentId_t id, Params& params) :
     	EmberShmemFcollectGenerator( id, params) {}
 };
+
+#undef ELI_params
 
 }
 }

@@ -72,6 +72,9 @@ class EmberShmemLib : public EmberLib {
         "SST::Ember::EmberShmemLib"
     )
 
+    SST_ELI_DOCUMENT_PARAMS(
+	)
+
     typedef std::queue<EmberEvent*> Queue;
 
 	EmberShmemLib( Params& params ) {}

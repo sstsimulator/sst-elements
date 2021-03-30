@@ -31,6 +31,11 @@ class MemoryHeap : public Component {
         "",
         COMPONENT_CATEGORY_UNCATEGORIZED
     )
+	SST_ELI_DOCUMENT_PARAMS(
+		{"nid","Sets the node ID","-1"},
+		{"verboseLevel","Sets the output level","0"},
+		{"verboseMask","Sets the output mask","-1"},
+	)
     SST_ELI_DOCUMENT_PORTS(
         {"detailed%(num_ports)d", "Port connected to Memory Heap client", {}},
     )

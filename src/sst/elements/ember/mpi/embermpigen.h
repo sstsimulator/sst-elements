@@ -61,6 +61,13 @@ class EmberMessagePassingGenerator : public EmberGenerator {
 
 public:
 
+	SST_ELI_DOCUMENT_PARAMS(
+		{"rankmapper","Sets the rank mapper module",""},
+	)
+	/* PARAMS
+		rankmap.*
+	*/
+
 	EmberMessagePassingGenerator( ComponentId_t id, Params& params, std::string name = "" );
 	~EmberMessagePassingGenerator();
 

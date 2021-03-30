@@ -35,9 +35,9 @@ public:
     )
 
     SST_ELI_DOCUMENT_PARAMS(
-        {   "arg.iterations",       "Sets the number of alltoall operations to perform",    "1"},
-        {   "arg.bytes",        "Sets the number of bytes per rank",        "1"},
+        {   "arg.iterations",   "Sets the number of alltoall operations to perform",    "1"},
         {   "arg.compute",      "Sets the time spent computing",        "1"},
+        {   "arg.bytes",        "Sets the number of bytes per rank",        "1"},
     )
 
     SST_ELI_DOCUMENT_STATISTICS(

@@ -116,7 +116,10 @@ public:
         SST::Ember::EmberGenerator
     )
 
-    SST_ELI_DOCUMENT_PARAMS()
+    SST_ELI_DOCUMENT_PARAMS(
+		{"arg.iterations","Sets the number of iterations","1"},
+		{"arg.count","Sets the number of data items","1"},
+	)
 
 public:
     EmberShmemRingIntGenerator( SST::ComponentId_t id, Params& params ) :
