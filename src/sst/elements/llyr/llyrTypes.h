@@ -86,6 +86,7 @@ typedef enum {
     TCOS,
     DUMMY = 0xFF,
     BUFFER,
+    SEL,
     OTHER
 } opType;
 

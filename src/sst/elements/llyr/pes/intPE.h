@@ -103,11 +103,9 @@ public:
         //if all inputs are available pull from queue and add to arg list
         if( num_ready < num_inputs ) {
             output_->verbose(CALL_INFO, 4, 0, "-Inputs %" PRIu32 " Ready %" PRIu32 "\n", num_inputs, num_ready);
-//             std::cout << "-Inputs " << num_inputs << " Ready " << num_ready <<std::endl;
             return false;
         } else {
             output_->verbose(CALL_INFO, 4, 0, "+Inputs %" PRIu32 " Ready %" PRIu32 "\n", num_inputs, num_ready);
-//             std::cout << "+Inputs " << num_inputs << " Ready " << num_ready <<std::endl;
             for( uint32_t i = 0; i < num_inputs; ++i) {
                 argList.push_back(input_queues_->at(i)->front());
                 input_queues_->at(i)->pop();
@@ -128,7 +126,7 @@ public:
                 intResult = argList[0].to_ullong() / argList[1].to_ullong();
                 break;
             default :
-                output_->verbose(CALL_INFO, 0, 0, "Error: could not find corresponding op.\n");
+                output_->verbose(CALL_INFO, 0, 0, "Error: could not find corresponding op-%" PRIu32 ".\n", op_binding_);
                 exit(-1);
         }
 

@@ -101,7 +101,7 @@ LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
     llyr_mapper_ = dynamic_cast<LlyrMapper*>( loadModule(mapperName, mapperParams) );
     output_->verbose(CALL_INFO, 1, 0, "Mapping application to hardware with %s\n", mapperName.c_str());
     llyr_mapper_->mapGraph(hardwareGraph_, applicationGraph_, mappedGraph_, configData_);
-
+    mappedGraph_.printDot("llyr_mapped.dot");
     //all done
     output_->verbose(CALL_INFO, 1, 0, "Initialization done.\n");
 }
@@ -463,10 +463,54 @@ opType LlyrComponent::getOptype(std::string &opString) const
 
     if( opString == "ANY" )
         operation = ANY;
+    else if( opString == "ANY_MEM" )
+        operation = ANY_MEM;
     else if( opString == "LD" )
         operation = LD;
+    else if( opString == "LD_ST" )
+        operation = LD_ST;
     else if( opString == "ST" )
         operation = ST;
+    else if( opString == "ANY_LOGIC" )
+        operation = ANY_LOGIC;
+    else if( opString == "AND" )
+        operation = AND;
+    else if( opString == "OR" )
+        operation = OR;
+    else if( opString == "XOR" )
+        operation = XOR;
+    else if( opString == "NOT" )
+        operation = NOT;
+    else if( opString == "SLL" )
+        operation = SLL;
+    else if( opString == "SLR" )
+        operation = SLR;
+    else if( opString == "ROL" )
+        operation = ROL;
+    else if( opString == "ROR" )
+        operation = ROR;
+    else if( opString == "EQ" )
+        operation = EQ;
+    else if( opString == "NE" )
+        operation = NE;
+    else if( opString == "UGT" )
+        operation = UGT;
+    else if( opString == "UGE" )
+        operation = UGE;
+    else if( opString == "SGT" )
+        operation = SGT;
+    else if( opString == "SGE" )
+        operation = SGE;
+    else if( opString == "ULT" )
+        operation = ULT;
+    else if( opString == "ULE" )
+        operation = ULE;
+    else if( opString == "SLT" )
+        operation = SLT;
+    else if( opString == "SLE" )
+        operation = SLE;
+    else if( opString == "ANY_INT" )
+        operation = ANY_INT;
     else if( opString == "ADD" )
         operation = ADD;
     else if( opString == "SUB" )
@@ -475,6 +519,8 @@ opType LlyrComponent::getOptype(std::string &opString) const
         operation = MUL;
     else if( opString == "DIV" )
         operation = DIV;
+    else if( opString == "ANY_FP" )
+        operation = ANY_FP;
     else if( opString == "FPADD" )
         operation = FPADD;
     else if( opString == "FPSUB" )
@@ -483,6 +529,20 @@ opType LlyrComponent::getOptype(std::string &opString) const
         operation = FPMUL;
     else if( opString == "FPDIV" )
         operation = FPDIV;
+    else if( opString == "FPMATMUL" )
+        operation = FPMATMUL;
+    else if( opString == "ANY_CP" )
+        operation = ANY_CP;
+    else if( opString == "TSIN" )
+        operation = TSIN;
+    else if( opString == "TCOS" )
+        operation = TCOS;
+    else if( opString == "DUMMY" )
+        operation = DUMMY;
+    else if( opString == "BUFFER" )
+        operation = BUFFER;
+    else if( opString == "SEL" )
+        operation = SEL;
     else
         operation = OTHER;
 

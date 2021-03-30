@@ -15,10 +15,8 @@
  * // distribution.
  */
 
-#ifndef _COMPLEX_PE_H
-#define _COMPLEX_PE_H
-
-#include <cmath>
+#ifndef _CONTROL_PE_H
+#define _CONTROL_PE_H
 
 #include "pes/processingElement.h"
 
@@ -28,10 +26,10 @@ namespace Llyr {
 /**
  * @todo write docs
  */
-class ComplexProcessingElement : public ProcessingElement
+class ControlProcessingElement : public ProcessingElement
 {
 public:
-    ComplexProcessingElement(opType op_binding, uint32_t processor_id, LlyrConfig* llyr_config,
+    ControlProcessingElement(opType op_binding, uint32_t processor_id, LlyrConfig* llyr_config,
                            uint32_t cycles = 1)  :
                     ProcessingElement(op_binding, processor_id, llyr_config)
     {
@@ -115,13 +113,10 @@ public:
         }
 
         switch( op_binding_ ) {
-            case TSIN :
-                intResult = sin(argList[0].to_ullong());
+            case SEL :
+                retVal = helperFunction(op_binding_, argList[0], argList[1], argList[2]);
                 break;
-            case TCOS :
-                intResult = cos(argList[0].to_ullong());
-                break;
-            default :
+             default :
                 output_->verbose(CALL_INFO, 0, 0, "Error: could not find corresponding op-%" PRIu32 ".\n", op_binding_);
                 exit(-1);
         }
@@ -146,6 +141,28 @@ public:
 
     //TODO for testing only
     virtual void fakeInit() {};
+
+private:
+    LlyrData helperFunction( opType op, LlyrData arg0, LlyrData arg1, LlyrData arg2 )
+    {
+        uint32_t select_signal = arg2.to_ullong();
+        if( op == SEL ) {
+            switch( select_signal ) {
+                case 0 :
+                    return arg0;
+                    break;
+                case 1 :
+                    return arg1;
+                    break;
+                default :
+                    output_->verbose(CALL_INFO, 0, 0, "Error: could not find corresponding op-%" PRIu32 ".\n", op_binding_);
+                    exit(-1);
+            }
+        } else {
+            output_->verbose(CALL_INFO, 0, 0, "Error: could not find corresponding op-%" PRIu32 ".\n", op_binding_);
+            exit(-1);
+        }
+    }
 
 };
 

@@ -16,11 +16,13 @@
 #ifndef _PE_LIST_H
 #define _PE_LIST_H
 
+#include "complexPE.h"
+#include "controlPE.h"
+#include "dummyPE.h"
 #include "fpPE.h"
 #include "intPE.h"
-#include "logicPE.h"
 #include "loadPE.h"
+#include "logicPE.h"
 #include "storePE.h"
-#include "dummyPE.h"
 
 #endif //_PE_LIST_H
