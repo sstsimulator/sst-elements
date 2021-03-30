@@ -1,19 +1,37 @@
 README for simpleElementExample
 -------------------------------
 
-The simpleElementExample provides an example element that contains a number of 
-various component types:
+The simpleElementExample provides a number of examples for using SST core.
+Start with the scripts in the tests/ directory. Each script lists the relevant
+implementation files in this directory as well as the expected output in the tests/refFiles directory.
 
-- simpleComponent           : An example of a basic component with event handling.
-                            
-- simpleClockerComponent    : An example of a SST clocking and benchmarking. 
-                            
-- simpleRNGComponent        : Random number generator example
+Each header in this directory additionally has a comment indicating what concepts it covers.
 
-- simpleDistribComponent    : Random number distribution example 
-                            
-- simpleStatisticsComponent : Example on how to build/run statistics in components
-                              along with example of OneShot operation.
 
-- simpleMessageGeneratorComponent : Example of a Messaging Rate benchmark component
+First Concepts
+-------------------------------
+- example0          : Parameter parsing, sending an event, clocks, ending simulation
+- example1          : Random number generators, statistics
+
+
+Basic Concepts
+-------------------------------
+- basicClocks       : Clocks, clock handlers, time converters, UnitAlgebra for error checking
+- basicLinks        : Event handlers, multiple links, optional ports, polling links, port vectors
+- basicParams       : Parsing different parameter types, UnitAlgebra, parameter arrays, required and 
+                      default parameter values
+- basicStatistics0  : C++: Statistic types, statistics with SubIDs, obtaining multiple pointers to the same statistic
+                      Python: Print statistics with various output formats (CSV, string, etc.)
+- basicStatistics1  : C++: Statistic types, statistics with SubIDs, obtaining multiple pointers to the same statistic
+                      Python: Selecting which statistics are generated, controlling frequency of statistic generation
+- basicStatistics2  : C++: Statistic types, statistics with SubIDs, obtaining multiple pointers to the same statistic
+                      Python: Controlling the type of generated statistics (histogram, accumulator, etc.)
+
+
+Intermediate Concepts
+-------------------------------
+
+
+Advanced Concepts
+-------------------------------
 
