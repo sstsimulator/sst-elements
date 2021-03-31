@@ -31,11 +31,11 @@ cpu_clock = os.getenv("VANADIS_CPU_CLOCK", "2.3GHz")
 vanadis_cpu_type = "vanadisdbg.VanadisCPU"
 
 #if (verbosity > 0):
-#	print "Verbosity (" + str(verbosity) + ") is non-zero, using debug version of Vanadis."
+#	print("Verbosity (" + str(verbosity) + ") is non-zero, using debug version of Vanadis.")
 #	vanadis_cpu_type = "vanadisdbg.VanadisCPU"
 
-print "Verbosity: " + str(verbosity) + " -> loading Vanadis CPU type: " + vanadis_cpu_type
-print "Auto-clock syscalls: " + str(auto_clock_sys)
+print("Verbosity: " + str(verbosity) + " -> loading Vanadis CPU type: " + vanadis_cpu_type)
+print("Auto-clock syscalls: " + str(auto_clock_sys))
 
 v_cpu_0 = sst.Component("v0", vanadis_cpu_type)
 v_cpu_0.addParams({
@@ -51,7 +51,8 @@ v_cpu_0.addParams({
 #       "executable" : "./tests/luxtxt",
 #       "executable" : "./tests/stream-fortran",
 #       "executable" : "./tests/test-fp",
-       "executable" : os.getenv("VANADIS_EXE", "./tests/stream-mini-musl"),
+#       "executable" : os.getenv("VANADIS_EXE", "./tests/stream-mini-musl"),
+       "executable" : os.getenv("VANADIS_EXE", "./tests/small/basic-io/hello-world"),
        "app.env_count" : 2,
        "app.env0" : "HOME=/home/sdhammo",
        "app.env1" : "NEWHOME=/home/sdhammo2",
@@ -89,14 +90,14 @@ if app_args != "":
 	# We have a plus 1 because the executable name is arg0
 	app_args_count = len( app_args_list ) + 1
 	v_cpu_0.addParams({ "app.argc" : app_args_count })
-	print "Identified " + str(app_args_count) + " application arguments, adding to input parameters."
+	print("Identified " + str(app_args_count) + " application arguments, adding to input parameters.")
 	arg_start = 1
 	for next_arg in app_args_list:
-		print "arg" + str(arg_start) + " = " + next_arg
+		print("arg" + str(arg_start) + " = " + next_arg)
 		v_cpu_0.addParams({ "app.arg" + str(arg_start) : next_arg })
 		arg_start = arg_start + 1
 else:
-	print "No application arguments found, continuing with argc=0"
+	print("No application arguments found, continuing with argc=0")
 
 decode0     = v_cpu_0.setSubComponent( "decoder0", "vanadis.VanadisMIPSDecoder" )
 os_hdlr     = decode0.setSubComponent( "os_handler", "vanadis.VanadisMIPSOSHandler" )
