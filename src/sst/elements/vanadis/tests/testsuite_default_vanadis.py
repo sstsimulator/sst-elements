@@ -183,7 +183,7 @@ class testcase_vanadis(SSTTestCase):
         outdir = self.get_test_output_run_dir()
         tmpdir = self.get_test_output_tmp_dir()
 
-        # TODO: Detect if the musl compilier is available
+        # Detect if the musl compilier is available
         if self._is_musl_compilier_available() == False:
             log_debug("NOTICE: Vanadis Testing - musl compilier not found")
             return
