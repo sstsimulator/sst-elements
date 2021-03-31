@@ -32,14 +32,14 @@ EXTRA_DIST = \
     README \
     tests/testsuite_default_simpleComponents.py \
     tests/basicClocks.py \
-    tests/basicParams.py \ 
+    tests/basicParams.py \
     tests/basicStatistics1.py \
     tests/example0.py \
     tests/example1.py \
     tests/basicLinks.py \
     tests/basicStatistics0.py \
     tests/basicStatistics2.py \
-    tests/refFiles.basicClocks.out \
+    tests/refFiles/basicClocks.out \
     tests/refFiles/basicLinks.out \
     tests/refFiles/basicParams.out \
     tests/refFiles/basicStatistics0.out \
