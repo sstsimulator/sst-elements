@@ -389,6 +389,16 @@ nobase_sst_HEADERS += membackend/pagedMultiBackend.h
 
 endif
 
+if HAVE_DRAMSIM3
+libmemHierarchy_la_LDFLAGS += $(DRAMSIM3_LDFLAGS)
+libmemHierarchy_la_LIBADD += $(DRAMSIM3_LIB)
+libmemHierarchy_la_SOURCES += membackend/dramSim3Backend.cc \
+	membackend/dramSim3Backend.h
+nobase_sst_HEADERS += membackend/dramSim3Backend.h
+AM_CPPFLAGS += $(DRAMSIM3_CPPFLAGS) -DHAVE_LIBDRAMSIM3
+
+endif
+
 if HAVE_HBMDRAMSIM
 libmemHierarchy_la_LDFLAGS += $(HBMDRAMSIM_LDFLAGS)
 libmemHierarchy_la_LIBADD += $(HBMDRAMSIM_LIB)
