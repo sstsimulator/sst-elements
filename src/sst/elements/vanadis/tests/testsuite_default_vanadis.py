@@ -156,9 +156,9 @@ class testcase_vanadis(SSTTestCase):
 ###############################################
 
     def _checkSkipConditions(self):
-        # Check to see if the musl compilier is missing
-        if self._is_musl_compilier_available() == False:
-            self.skipTest("Vanadis Skipping Test - musl compilier not available")
+        # Check to see if the musl compiler is missing
+        if self._is_musl_compiler_available() == False:
+            self.skipTest("Vanadis Skipping Test - musl compiler not available")
 
         if testing_check_get_num_ranks() > 1:
             self.skipTest("Vanadis Skipping Test - ranks > 1 not supported")
@@ -167,12 +167,12 @@ class testcase_vanadis(SSTTestCase):
             self.skipTest("Vanadis Skipping Test - threads > 1 not supported")
 
 ###
-    def _is_musl_compilier_available(self):
+    def _is_musl_compiler_available(self):
 
         # Now build the array application
         cmd = "which mipsel-linux-musl-gcc"
         rtn = OSCommand(cmd).run()
-        log_debug("Vanadis detecting musl compilier [mipsel-linux-musl-gcc] - result = {0}; output =\n{1}".format(rtn.result(), rtn.output()))
+        log_debug("Vanadis detecting musl compiler [mipsel-linux-musl-gcc] - result = {0}; output =\n{1}".format(rtn.result(), rtn.output()))
         return rtn.result() == 0
 
 ###
@@ -183,9 +183,9 @@ class testcase_vanadis(SSTTestCase):
         outdir = self.get_test_output_run_dir()
         tmpdir = self.get_test_output_tmp_dir()
 
-        # Detect if the musl compilier is available
-        if self._is_musl_compilier_available() == False:
-            log_debug("NOTICE: Vanadis Testing - musl compilier not found")
+        # Detect if the musl compiler is available
+        if self._is_musl_compiler_available() == False:
+            log_debug("NOTICE: Vanadis Testing - musl compiler not found")
             return
 
         # Walk the directory of source files and try to compile each of them
