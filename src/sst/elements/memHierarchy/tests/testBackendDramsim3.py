@@ -99,10 +99,10 @@ comp_chiprtr.addParams({
 comp_chiprtr.setSubComponent("topology","merlin.singlerouter")
 dirctrl = sst.Component("dirctrl", "memHierarchy.DirectoryController")
 dirctrl.addParams({
-      "coherence_protocol" : "MESI",
-      "debug" : "0",
-      "entry_cache_size" : "32768",
-      "verbose" : 2,
+    "coherence_protocol" : "MESI",
+    "debug" : "0",
+    "entry_cache_size" : "32768",
+    "verbose" : 2,
     "addr_range_end" : "0x1F000000",
     "addr_range_start" : "0x0"
 })
@@ -119,6 +119,7 @@ memctrl.addParams({
     "debug" : 0,
     "debug_level" : 5,
     "clock" : "1.2GHz",
+    "addr_range_end" : 512*1024*1024 - 1
 })
 
 memory = memctrl.setSubComponent("backend", "memHierarchy.dramsim3")
