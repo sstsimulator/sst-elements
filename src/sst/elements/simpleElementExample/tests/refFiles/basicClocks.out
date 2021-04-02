@@ -1,0 +1,35 @@
+WARNING: Building component "ClockComponent" with no links assigned.
+Registering clock0 at 1GHz
+Registering clock1 at 5ns (that's 5e-09 s or 5 ns if we convert the UnitAlgebra to string)
+Registering clock2 at 15ns
+Clock #1 - TICK num: 1
+Clock #1 - TICK num: 2
+Clock #2 - TICK num: 1
+Clock #1 - TICK num: 3
+Clock #1 - TICK num: 4
+Clock #1 - TICK num: 5
+Clock0 cycles: 25, Clock1 cycles: 5, Clock2 cycles: 1, SimulationCycles: 25000, Simulation ns: 25
+Clock #2 - TICK num: 2
+Clock #1 - TICK num: 6
+Clock #1 - TICK num: 7
+Clock #1 - TICK num: 8
+Clock #2 - TICK num: 3
+Clock #1 - TICK num: 9
+Clock #1 - TICK num: 10
+Clock0 cycles: 50, Clock1 cycles: 10, Clock2 cycles: 3, SimulationCycles: 50000, Simulation ns: 50
+Clock #2 - TICK num: 4
+Clock #2 - TICK num: 5
+Clock0 cycles: 75, Clock1 cycles: 15, Clock2 cycles: 5, SimulationCycles: 75000, Simulation ns: 75
+Clock #2 - TICK num: 6
+Clock0 cycles: 100, Clock1 cycles: 20, Clock2 cycles: 6, SimulationCycles: 100000, Simulation ns: 100
+Clock #2 - TICK num: 7
+Clock #2 - TICK num: 8
+Clock0 cycles: 125, Clock1 cycles: 25, Clock2 cycles: 8, SimulationCycles: 125000, Simulation ns: 125
+Clock #2 - TICK num: 9
+Clock #2 - TICK num: 10
+Clock0 cycles: 150, Clock1 cycles: 30, Clock2 cycles: 10, SimulationCycles: 150000, Simulation ns: 150
+Clock0 cycles: 175, Clock1 cycles: 35, Clock2 cycles: 11, SimulationCycles: 175000, Simulation ns: 175
+Clock0 cycles: 200, Clock1 cycles: 40, Clock2 cycles: 13, SimulationCycles: 200000, Simulation ns: 200
+Clock0 cycles: 225, Clock1 cycles: 45, Clock2 cycles: 15, SimulationCycles: 225000, Simulation ns: 225
+Clock0 cycles: 250, Clock1 cycles: 50, Clock2 cycles: 16, SimulationCycles: 250000, Simulation ns: 250
+Simulation is complete, simulated time: 250 ns
