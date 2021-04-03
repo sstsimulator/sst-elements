@@ -140,7 +140,27 @@ os/node/vnodeoswritevh.h \
 os/resp/voscallresp.h \
 os/resp/vosexitresp.h
 
-EXTRA_DIST =
+EXTRA_DIST = \
+	tests/small/basic-io/Makefile \
+	tests/small/basic-io/hello-world.c \
+	tests/small/basic-io/hello-world.stderr.gold \
+	tests/small/basic-io/hello-world.stdout.gold \
+	tests/small/basic-math/Makefile \
+	tests/small/basic-math/sqrt-double.c \
+	tests/small/basic-math/sqrt-double.stderr.gold \
+	tests/small/basic-math/sqrt-double.stdout.gold \
+	tests/small/basic-math/sqrt-float.c \
+	tests/small/basic-math/sqrt-float.stderr.gold \
+	tests/small/basic-math/sqrt-float.stdout.gold \
+	tests/small/basic-ops/Makefile \
+	tests/small/basic-ops/test-branch.c \
+	tests/small/basic-ops/test-branch.stderr.gold \
+	tests/small/basic-ops/test-branch.stdout.gold \
+	tests/small/basic-ops/test-shift.c \
+	tests/small/basic-ops/test-shift.stderr.gold \
+	tests/small/basic-ops/test-shift.stdout.gold \
+	tests/basic_vanadis.py \
+	tests/testsuite_default_vanadis.py
 
 libvanadis_la_SOURCES = \
 	vanadis.cc \
