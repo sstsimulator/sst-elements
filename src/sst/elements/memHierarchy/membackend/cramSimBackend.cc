@@ -24,9 +24,7 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 using namespace SST::CramSim;
 
-CramSimMemory::CramSimMemory(ComponentId_t id, Params &params) : SimpleMemBackend(id, params){ build(params); }
-
-void CramSimMemory::build(Params& params) {
+CramSimMemory::CramSimMemory(ComponentId_t id, Params &params) : SimpleMemBackend(id, params){ 
     std::string access_time = params.find<std::string>("access_time", "100 ns");
     if (isPortConnected("cramsim_link"))
         cramsim_link = configureLink( "cramsim_link", access_time,

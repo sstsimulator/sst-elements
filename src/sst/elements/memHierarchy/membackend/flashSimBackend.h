@@ -54,7 +54,6 @@ public:
     void finish();
 
 private:
-    void build(Params& params);
     void FlashDIMMSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle);
     uint32_t pendingRequests;
     uint32_t maxPendingRequests;

@@ -331,7 +331,6 @@ public:
     virtual void finish() {}
 
 private:
-    void build(Params&);
     std::vector<Channel*> m_channels;
     AddrMapper* m_mapper;
     SimTime_t   m_cycle;

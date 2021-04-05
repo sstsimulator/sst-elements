@@ -106,7 +106,6 @@ private:
 
 private:
 
-    void build(Params &params);
 };
 
 } //namespace memHierarchy

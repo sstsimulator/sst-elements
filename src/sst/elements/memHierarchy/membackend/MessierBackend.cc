@@ -29,9 +29,7 @@ using namespace SST::MemHierarchy;
 //using namespace SST::MessierComponent;
 
 
-Messier::Messier(ComponentId_t id, Params &params) : SimpleMemBackend(id,params){ build(params); }
-
-void Messier::build(Params& params) {
+Messier::Messier(ComponentId_t id, Params &params) : SimpleMemBackend(id,params){ 
 	std::string access_time = "1ns"; //params.find<std::string>("access_time", "1 ns");
 	nvm_link = configureLink( "nvm_link", access_time,
 			new Event::Handler<Messier>(this, &Messier::handleMessierResp));

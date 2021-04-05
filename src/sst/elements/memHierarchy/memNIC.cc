@@ -38,11 +38,7 @@ using namespace SST::Interfaces;
 /* Constructor */
 
 MemNIC::MemNIC(ComponentId_t id, Params &params) : MemNICBase(id, params) {
-    build(params);
-}
-
-void MemNIC::build(Params& params) {
-
+    
     link_control = loadUserSubComponent<SimpleNetwork>("linkcontrol", ComponentInfo::SHARE_NONE, 1); // 1 is the num virtual networks
     if (!link_control) {
         Params netparams;

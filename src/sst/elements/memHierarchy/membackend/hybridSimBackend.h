@@ -52,7 +52,6 @@ public:
     bool clock(Cycle_t cycle);
     void finish();
 private:
-    void build(Params& params);
     void hybridSimDone(unsigned int id, uint64_t addr, uint64_t clockcycle);
 
     HybridSim::HybridSystem *memSystem;

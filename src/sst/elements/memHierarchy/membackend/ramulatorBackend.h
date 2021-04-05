@@ -58,7 +58,6 @@ protected:
     void ramulatorDone(ramulator::Request& req);
 
 private:
-    void build(Params& params);
 };
 
 }

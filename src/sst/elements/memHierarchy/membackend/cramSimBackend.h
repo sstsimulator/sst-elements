@@ -44,7 +44,6 @@ public:
     virtual bool isClocked() { return false; }
 
 private:
-    void build(Params& params);
     void handleCramsimEvent(SST::Event *event);
 
 	std::set<ReqId> memReqs;
