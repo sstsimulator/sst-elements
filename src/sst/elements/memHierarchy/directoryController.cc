@@ -151,7 +151,6 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
             memLink->setRegion(region);
 
         cpuLink->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
-        cpuLink->setName(getName());
         memoryName = "";
         if (!memLink) {
             memoryName  = params.find<std::string>("net_memory_name", "");
@@ -161,7 +160,6 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
                         "In the future, the directory controller will NOT automatically force its region parameters on its named memory controller\n", getName().c_str());
         } else {
             memLink->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
-            memLink->setName(getName());
         }
     } else {
         /* Set up links/network to cache & memory the old way -> and fixup params accordingly */
@@ -221,8 +219,6 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
                         "In the future, the directory controller will NOT automatically force its region parameters on its named memory controller\n", getName().c_str());
             memLink = nullptr;
         }
-        cpuLink->setName(getName());
-        if (memLink) memLink->setName(getName());
     }
 
     clockHandler = new Clock::Handler<DirectoryController>(this, &DirectoryController::clock);

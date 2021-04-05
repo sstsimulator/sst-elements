@@ -42,7 +42,6 @@ public:
     virtual bool isClocked() { return false; }
 
 private:
-    void build(Params& params);
     std::set<ReqId> outToNVM;
     SST::Link *nvm_link;
 

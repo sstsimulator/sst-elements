@@ -26,9 +26,7 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 using namespace HBMDRAMSim;
 
-HBMDRAMSimMemory::HBMDRAMSimMemory(ComponentId_t id, Params &params) : SimpleMemBackend(id, params){ build(params); }
-
-void HBMDRAMSimMemory::build(Params& params) {
+HBMDRAMSimMemory::HBMDRAMSimMemory(ComponentId_t id, Params &params) : SimpleMemBackend(id, params){ 
     std::string deviceIniFilename = params.find<std::string>("device_ini", NO_STRING_DEFINED);
     if(NO_STRING_DEFINED == deviceIniFilename)
         output->fatal(CALL_INFO, -1, "Model must define a 'device_ini' file parameter\n");

@@ -109,10 +109,11 @@ dirMemLink = comp_dirctrl.setSubComponent("memlink", "memHierarchy.MemLink") # N
 
 memctrl = sst.Component("memory", "memHierarchy.MemController")
 memctrl.addParams({
-      "debug" : DEBUG_MEM,
-      "debug_level" : 10,
-      "clock" : "1GHz",
-      "verbose" : 2,
+    "debug" : DEBUG_MEM,
+    "debug_level" : 10,
+    "clock" : "1GHz",
+    "verbose" : 2,
+    "addr_range_end" : 512*1024*1024-1,
 })
 memToDir = memctrl.setSubComponent("cpulink", "memHierarchy.MemLink")
 memory = memctrl.setSubComponent("backend", "memHierarchy.simpleMem")

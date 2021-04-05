@@ -28,9 +28,7 @@
 using namespace SST;
 using namespace SST::MemHierarchy;
 
-pagedMultiMemory::pagedMultiMemory(ComponentId_t id, Params &params) : DRAMSimMemory(id, params), pagesInFast(0), lastMin(0) { build(params); }
-
-void pagedMultiMemory::build(Params& params) {
+pagedMultiMemory::pagedMultiMemory(ComponentId_t id, Params &params) : DRAMSimMemory(id, params), pagesInFast(0), lastMin(0) { 
     dbg.init("@R:pagedMultiMemory::@p():@l " + getName() + ": ", 0, 0,
              (Output::output_location_t)params.find<int>("debug", 0));
     dbg.output(CALL_INFO, "making pagedMultiMemory controller\n");

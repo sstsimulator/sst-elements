@@ -171,7 +171,8 @@ memctrl = sst.Component("memory", "memHierarchy.MemController")
 memctrl.addParams({
     "debug" : "0",
     "clock" : "1GHz",
-    "request_width" : "64"
+    "request_width" : "64",
+    "addr_range_end" : 512*1024*1024-1,
 })
 memory = memctrl.setSubComponent("backend", "memHierarchy.vaultsim")
 memory.addParams({

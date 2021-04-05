@@ -184,8 +184,6 @@ public:
     virtual void finish();
 
 private:
-    void build(Params& params);
-
     Output dbg;
     RNG::SSTRandom*  rng;
 

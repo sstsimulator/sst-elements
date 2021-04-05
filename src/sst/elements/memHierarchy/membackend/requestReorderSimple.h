@@ -47,7 +47,6 @@ public:
     bool clock(Cycle_t cycle);
 
 private:
-    void build(Params& params);
 
     void handleMemReponse( ReqId id ) {
         SimpleMemBackend::handleMemResponse( id );

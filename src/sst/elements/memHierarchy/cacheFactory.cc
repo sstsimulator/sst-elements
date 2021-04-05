@@ -205,7 +205,6 @@ void Cache::createCoherenceManager(Params &params) {
     coherenceMgr_->setMSHR(mshr_);
     coherenceMgr_->setCacheListener(listeners_, dropPrefetchLevel, maxOutstandingPrefetch);
     coherenceMgr_->setDebug(DEBUG_ADDR);
-    coherenceMgr_->setName(getName());
     coherenceMgr_->setSliceAware(region_.interleaveSize, region_.interleaveStep);
 
 }
@@ -312,9 +311,6 @@ void Cache::configureLinks(Params &params) {
 
         clockUpLink_ = linkUp_->isClocked();
         clockDownLink_ = linkDown_->isClocked();
-
-        linkUp_->setName(getName());
-        linkDown_->setName(getName());
 
         return;
     }
@@ -575,9 +571,6 @@ void Cache::configureLinks(Params &params) {
         region_ = linkDown_->getRegion();
         linkUp_->setRegion(region_);
     }
-
-    linkUp_->setName(getName());
-    linkDown_->setName(getName());
 }
 
 /*

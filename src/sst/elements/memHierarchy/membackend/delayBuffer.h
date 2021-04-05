@@ -48,7 +48,6 @@ public:
     virtual bool isClocked() { return backend->isClocked(); }
 
 private:
-    void build(Params& params);
     void handleMemReponse( ReqId id ) {
         SimpleMemBackend::handleMemResponse( id );
     }

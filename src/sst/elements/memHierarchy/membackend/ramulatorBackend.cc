@@ -29,9 +29,7 @@ using namespace ramulator;
 ramulatorMemory::ramulatorMemory(ComponentId_t id, Params &params) :
     SimpleMemBackend(id, params),
     callBackFunc(std::bind(&ramulatorMemory::ramulatorDone, this, std::placeholders::_1))
-{ build(params); }
-
-void ramulatorMemory::build(Params& params) {
+{
     std::string ramulatorCfg = params.find<std::string>("configFile",
                                                         NO_STRING_DEFINED);
     if (ramulatorCfg == NO_STRING_DEFINED) {
