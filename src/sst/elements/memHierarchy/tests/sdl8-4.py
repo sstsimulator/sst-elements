@@ -187,6 +187,7 @@ memctrl.addParams({
     "debug" : DEBUG_MEM,
     "clock" : "1GHz",
     "request_width" : "64",
+    "addr_range_end" : 512*1024*1024-1,
 })
 memtoD = memctrl.setSubComponent("cpulink", "memHierarchy.MemLink")
 memory = memctrl.setSubComponent("backend", "memHierarchy.simpleMem")

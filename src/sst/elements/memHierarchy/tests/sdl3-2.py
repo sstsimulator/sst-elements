@@ -111,9 +111,10 @@ l4toM = l4cache.setSubComponent("memlink", "memHierarchy.MemLink")
 
 memctrl = sst.Component("memory", "memHierarchy.MemController")
 memctrl.addParams({
-      "debug" : DEBUG_MEM,
-      "debug_level" : 10,
-      "clock" : "1GHz",
+    "debug" : DEBUG_MEM,
+    "debug_level" : 10,
+    "clock" : "1GHz",
+    "addr_range_end" : 512*1024*1024-1,
 })
 mtol4 = memctrl.setSubComponent("cpulink", "memHierarchy.MemLink")
 

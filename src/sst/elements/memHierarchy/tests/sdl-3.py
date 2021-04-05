@@ -36,10 +36,10 @@ l1toM = l1cache.setSubComponent("memlink", "memHierarchy.MemLink")
 
 memctrl = sst.Component("memory", "memHierarchy.MemController")
 memctrl.addParams({
-    "coherence_protocol" : "MSI",
     "debug" : "0",
     "clock" : "1GHz",
     "request_width" : "64",
+    "addr_range_end" : 512*1024*1024-1,
 })
 mtol1 = memctrl.setSubComponent("cpulink", "memHierarchy.MemLink")
 

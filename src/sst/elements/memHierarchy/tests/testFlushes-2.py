@@ -169,7 +169,7 @@ for x in range(memories):
     memctrl.addParams({
         "clock" : "500MHz",
         "backing" : "none",
-        # Backend parameters
+        "addr_range_end" : 512*1024*1024-1,
         "verbose" : verbose,
         "debug" : DEBUG_MEM,
         "debug_level" : 10,

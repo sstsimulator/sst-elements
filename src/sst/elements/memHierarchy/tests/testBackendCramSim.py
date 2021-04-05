@@ -241,9 +241,10 @@ comp_dirctrl.addParams({
 })
 comp_memctrl = sst.Component("memory", "memHierarchy.MemController")
 comp_memctrl.addParams({
-      "debug" : "0",
-      "clock" : "1GHz",
-      "request_width" : "64"
+    "debug" : "0",
+    "clock" : "1GHz",
+    "request_width" : "64",
+    "addr_range_end" : 512*1024*1024-1,
 })
 comp_memory = comp_memctrl.setSubComponent("backend", "memHierarchy.cramsim")
 comp_memory.addParams({

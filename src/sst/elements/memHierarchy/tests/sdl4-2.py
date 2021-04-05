@@ -69,9 +69,10 @@ comp_l2cache.addParams({
 })
 memctrl = sst.Component("memory", "memHierarchy.MemController")
 memctrl.addParams({
-      "debug" : DEBUG_MEM,
-      "debug_level" : 10,
-      "clock" : "1GHz",
+    "debug" : DEBUG_MEM,
+    "debug_level" : 10,
+    "clock" : "1GHz",
+    "addr_range_end" : 512*1024*1024-1,
 })
 
 memory = memctrl.setSubComponent("backend", "memHierarchy.dramsim")

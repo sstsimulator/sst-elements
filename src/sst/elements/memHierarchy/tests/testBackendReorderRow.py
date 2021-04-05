@@ -177,6 +177,7 @@ memctrl = sst.Component("memory", "memHierarchy.MemController")
 memctrl.addParams({
     "clock" : "500MHz",
     "backing" : "none",
+    "addr_range_end" : 512*1024*1024-1,
 })
 memreorder = memctrl.setSubComponent("backend", "memHierarchy.reorderByRow")
 memreorder.addParams({
