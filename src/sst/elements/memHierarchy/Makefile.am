@@ -167,6 +167,7 @@ EXTRA_DIST = \
 	tests/sdl5-1-ramulator.py \
 	tests/testBackendChaining.py \
 	tests/testBackendDelayBuffer.py \
+	tests/testBackendDramsim3.py \
 	tests/testBackendGoblinHMC.py \
 	tests/testBackendHBMDramsim.py \
 	tests/testBackendHBMPagedMulti.py \
@@ -210,6 +211,7 @@ EXTRA_DIST = \
     tests/refFiles/test_memHA_BackendChaining_MC.out \
     tests/refFiles/test_memHA_BackendDelayBuffer.out \
     tests/refFiles/test_memHA_BackendDelayBuffer_MC.out \
+    tests/refFiles/test_memHA_BackendDramsim3.out \
     tests/refFiles/test_memHA_BackendGoblinHMC.out \
     tests/refFiles/test_memHA_BackendGoblinHMC_MC.out \
     tests/refFiles/test_memHA_BackendHBMDramsim.out \
