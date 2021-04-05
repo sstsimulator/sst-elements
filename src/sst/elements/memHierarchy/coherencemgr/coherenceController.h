@@ -148,9 +148,6 @@ public:
     /* Controller records received events, but valid types are determined by coherence manager. Share those here */
     virtual std::set<Command> getValidReceiveEvents() = 0;
 
-    /* Memory components are identified by their names (e.g., source, destination, requestor) */
-    void setName(std::string name) { cachename_ = name; }
-
     /* Call through to cache array to configure banking/slicing */
     virtual void setSliceAware(uint64_t interleaveSize, uint64_t interleaveStep) = 0;
 

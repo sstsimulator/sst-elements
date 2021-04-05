@@ -82,8 +82,9 @@ CoherenceController::CoherenceController(ComponentId_t id, Params &params, Param
     // Just in case, we give an initial value here
     dropPrefetchLevel_ = ((size_t) - 1);
     maxOutstandingPrefetch_ = ((size_t) - 2);
-    cachename_ = getName().c_str();
 
+    // Get parent component's name
+    cachename_ = getParentComponentName();
 
     // Register statistics - only those that are common across all coherence managers
     // Give  all array entries a default statistic so we don't end up with segfaults during execution
