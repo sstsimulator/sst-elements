@@ -441,23 +441,23 @@ void c_Dimm::finish(){
 	}
 	l_totalRecvd=l_actRecvd+l_readRecvd+l_writeRecvd+l_prechRecvd+l_refreshRecvd;
 
-        output->output(" 1. Received Commands\n");
-	output->output("  - Total : " PRIu64 "\n", l_totalRecvd);
-	output->output("  - Active : %" PRIu64 "(%.2f\%)\n",
+    output->output(" 1. Received Commands\n");
+	output->output("  - Total : %" PRIu64 "\n", l_totalRecvd);
+	output->output("  - Active : %" PRIu64 "(%.2f%%)\n",
 			  l_actRecvd,
 			  (double)l_actRecvd/(double)l_totalRecvd*100);
-	output->output("  - Read : %" PRIu64 "(%.2f\%)\n",
+	output->output("  - Read : %" PRIu64 "(%.2f%%)\n",
 			  l_readRecvd,
-                          (double)l_readRecvd/(double)l_totalRecvd*100);
-	output->output("  - Write : %" PRIu64 "(%.2f\%\n",
+              (double)l_readRecvd/(double)l_totalRecvd*100);
+	output->output("  - Write : %" PRIu64 "(%.2f%%\n",
 			  l_writeRecvd,
-                          (double)l_writeRecvd/(double)l_totalRecvd*100);
-	output->output("  - Precharge : %" PRIu64 "(%.2f\%)\n",
+              (double)l_writeRecvd/(double)l_totalRecvd*100);
+	output->output("  - Precharge : %" PRIu64 "(%.2f%%)\n",
 			  l_prechRecvd,
-                          (double)l_prechRecvd/(double)l_totalRecvd*100);
-	output->output("  - Refresh : %" PRIu64 " (%.2f\%)\n",
+              (double)l_prechRecvd/(double)l_totalRecvd*100);
+	output->output("  - Refresh : %" PRIu64 " (%.2f%%)\n",
 			  l_refreshRecvd,
-                          (double)l_refreshRecvd/(double)l_totalRecvd*100);
+              (double)l_refreshRecvd/(double)l_totalRecvd*100);
 
     if(k_boolPowerCalc)
     {
@@ -472,19 +472,19 @@ void c_Dimm::finish(){
         output->output("\n");
         output->output(" 2. Power Consumption\n");
         output->output("  - Total Power (mW) : %.2f\n", l_totalPower);
-        output->output("  - Active/Precharge Power (mW) : %.2f(%.2f\%)\n",
+        output->output("  - Active/Precharge Power (mW) : %.2f(%.2f%%)\n",
                   l_actprePower,
                   l_actprePower/l_totalPower*100);
-        output->output("  - Read Power (mW) : %.2f(%.2f\%)\n",
+        output->output("  - Read Power (mW) : %.2f(%.2f%%)\n",
                   l_readPower,
                   l_readPower/l_totalPower*100);
-        output->output("  - Write Power (mW) : %.2f(%.2f\%)\n",
+        output->output("  - Write Power (mW) : %.2f(%.2f%%)\n",
                   l_writePower,
                   l_writePower/l_totalPower*100);
-        output->output("  - Refresh Power (mW) : %.2f(%.2f\%)\n",
+        output->output("  - Refresh Power (mW) : %.2f(%.2f%%)\n",
                   l_refreshPower,
                   l_refreshPower/l_totalPower*100);
-        output->output("  - Background Power (mW) : %.2f(%.2f\%)\n",
+        output->output("  - Background Power (mW) : %.2f(%.2f%%)\n",
                   l_backgroundPower,
                   l_backgroundPower/l_totalPower*100);
 	}
