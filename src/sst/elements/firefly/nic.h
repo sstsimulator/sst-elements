@@ -249,9 +249,9 @@ class Nic : public SST::Component  {
         uint64_t vaddr;
         uint32_t length;
         enum Op { Ack, Put, Get, GetResp, Add, Fadd, Swap, Cswap };
-        unsigned char op : 3;
-        unsigned char op2 : 3;
-        unsigned char dataType : 3;
+        unsigned short op : 3;
+        unsigned short op2 : 3;
+        unsigned short dataType : 3;
         uint32_t respKey : 24;
 
         std::string getOpStr( ) {
