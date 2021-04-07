@@ -145,7 +145,6 @@ class MemBackendConvertor : public SubComponent {
   public:
 
     MemBackendConvertor(ComponentId_t id, Params& params, MemBackend* backend, uint32_t request_width);
-    void build(Params& params);
     void finish(void);
     virtual size_t getMemSize();
     virtual bool clock( Cycle_t cycle );

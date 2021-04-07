@@ -23,9 +23,7 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 
 /*------------------------------- Simple Backend ------------------------------- */
-DelayBuffer::DelayBuffer(ComponentId_t id, Params &params) : SimpleMemBackend(id, params){ build(params); }
-
-void DelayBuffer::build(Params& params) {
+DelayBuffer::DelayBuffer(ComponentId_t id, Params &params) : SimpleMemBackend(id, params){ 
     // Get parameters
     fixupParams( params, "clock", "backend.clock" );
 

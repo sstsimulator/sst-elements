@@ -89,7 +89,6 @@ protected:
     std::map<uint64_t, std::deque<ReqId> > dramReqs;
 
 private:
-    void build(Params& params);
 };
 
 }

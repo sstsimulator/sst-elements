@@ -240,7 +240,6 @@ public:
 	virtual bool clock(Cycle_t cycle);
 
 private:
-        void build(Params& params);
 	struct hmcsim_t the_hmc;
 
 	uint32_t hmc_link_count;

@@ -69,9 +69,10 @@ comp_l2cache.addParams({
 })
 memctrl = sst.Component("memory", "memHierarchy.MemController")
 memctrl.addParams({
-      "clock" : "1THz",
-      "debug" : DEBUG_MEM,
-      "debug_level" : 10,
+    "clock" : "1THz",
+    "debug" : DEBUG_MEM,
+    "debug_level" : 10,
+    "addr_range_end" : 512*1024*1024-1,
 })
 memory = memctrl.setSubComponent("backend", "memHierarchy.simpleMem")
 memory.addParams({

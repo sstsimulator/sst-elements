@@ -118,7 +118,8 @@ memctrl.addParams({
     "verbose" : 2,
     "clock" : "1.2GHz",
     "debug" : 0,
-    "debug_level" : 5
+    "debug_level" : 5,
+    "addr_range_end" : 512*1024*1024-1,
 })
 memory = memctrl.setSubComponent( "backend", "memHierarchy.timingDRAM")
 memory.addParams({

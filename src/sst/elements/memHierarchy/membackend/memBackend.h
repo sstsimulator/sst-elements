@@ -50,9 +50,7 @@ public:
     typedef MemBackendConvertor::ReqId ReqId;
     MemBackend();
 
-    MemBackend(ComponentId_t id, Params &params) : SubComponent(id) { build(params); }
-    void build(Params& params)
-    {
+    MemBackend(ComponentId_t id, Params &params) : SubComponent(id) { 
     	output = new SST::Output("@t:MemoryBackend[@p:@l]: ",
                 params.find<uint32_t>("debug_level", 0),
                 params.find<uint32_t>("debug_mask", 0),

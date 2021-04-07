@@ -123,7 +123,7 @@ protected:
     std::set<EndpointInfo> remotes;
 
 private:
-    void build(Params &params);
+
 };
 
 } //namespace memHierarchy

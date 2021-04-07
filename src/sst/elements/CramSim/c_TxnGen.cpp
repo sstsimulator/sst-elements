@@ -124,7 +124,7 @@ void c_TxnGenBase::finish()
     output->output("Total Read-Txns Responses received: %llu\n", m_resReadCount);
     output->output("Total Write-Txns Responses received: %llu\n", m_resWriteCount);
     output->output("Total Txns Received: %llu\n", m_resReadCount + m_resWriteCount);
-    output->output("Cycles Per Transaction (CPT) = %d\n",
+    output->output("Cycles Per Transaction (CPT) = %.2f\n",
         static_cast<double>(m_simCycle) / static_cast<double>(m_resReadCount + m_resWriteCount));
     output->output("Component Finished.\n");
     output->output("========================================================================================\n\n");
@@ -214,7 +214,7 @@ void c_TxnGenBase::handleResEvent(SST::Event* ev) {
 
     } else {
         std::stringstream str;
-        str << std::endl << std::endl << "TxnGen:: " 
+        str << std::endl << std::endl << "TxnGen:: "
             << __PRETTY_FUNCTION__ << " ERROR:: Bad Event Type!"
             << std::endl;
         output->output("%s", str.str().c_str());

@@ -22,9 +22,7 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 
 /*------------------------------- Simple Backend ------------------------------- */
-RequestReorderSimple::RequestReorderSimple(ComponentId_t id, Params &params) : SimpleMemBackend(id, params){ build(params); }
-
-void RequestReorderSimple::build(Params& params) {
+RequestReorderSimple::RequestReorderSimple(ComponentId_t id, Params &params) : SimpleMemBackend(id, params){ 
     fixupParams( params, "clock", "backend.clock" );
 
     reqsPerCycle = params.find<int>("max_issue_per_cycle", -1);

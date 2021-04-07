@@ -24,10 +24,6 @@ using namespace SST::MemHierarchy;
 /* Constructor */
 
 MemLink::MemLink(ComponentId_t id, Params &params) : MemLinkBase(id, params) {
-    build(params);
-}
-
-void MemLink::build(Params &params) {
     // Configure link
     std::string latency = params.find<std::string>("latency", "50ps");
     std::string port = params.find<std::string>("port", "port");

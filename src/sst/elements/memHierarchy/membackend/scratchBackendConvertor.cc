@@ -31,9 +31,7 @@ using namespace SST::MemHierarchy;
 
 ScratchBackendConvertor::ScratchBackendConvertor(ComponentId_t id, Params& params ) :
     SubComponent(id), m_reqId(0)
-{ build(params); }
-
-void ScratchBackendConvertor::build(Params& params) {
+{ 
     m_dbg.init("",
             params.find<uint32_t>("debug_level", 0),
             params.find<uint32_t>("debug_mask", 0),

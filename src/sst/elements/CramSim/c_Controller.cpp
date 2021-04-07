@@ -283,7 +283,7 @@ void c_Controller::handleIncomingTransaction(SST::Event *ev){
 
         delete l_txnReqEventPtr;
     } else {
-        output->output("%s ERROR:: Bad event type!\n");
+        output->output("ERROR:: Bad event type!\n");
     }
 }
 
@@ -323,7 +323,7 @@ void c_Controller::handleInDeviceResPtrEvent(SST::Event *ev){
         delete l_cmdResEventPtr;
 
     } else {
-        output->output("%s ERROR:: Bad event type!\n");
+        output->output("ERROR:: Bad event type!\n");
     }
 }
 

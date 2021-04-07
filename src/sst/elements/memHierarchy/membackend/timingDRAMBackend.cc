@@ -22,15 +22,13 @@ bool TimingDRAM::Channel::m_printConfig = true;
 bool TimingDRAM::Rank::m_printConfig = true;
 bool TimingDRAM::Bank::m_printConfig = true;
 
-TimingDRAM::TimingDRAM(ComponentId_t id, Params &params) : SimpleMemBackend(id, params), m_cycle(0) { build(params); }
+TimingDRAM::TimingDRAM(ComponentId_t id, Params &params) : SimpleMemBackend(id, params), m_cycle(0) { 
 
-void TimingDRAM::build(Params& params) {
-
-    int id = params.find<int>("id", -1);
-    assert( id != -1 );
+    int dram_id = params.find<int>("id", -1);
+    assert( dram_id != -1 );
 
     std::ostringstream tmp;
-    tmp << "@t:TimingDRAM::@p():@l:mc=" << id << ": ";
+    tmp << "@t:TimingDRAM::@p():@l:mc=" << dram_id << ": ";
 
     int dbg_level = params.find<int>("dbg_level", 1);
     int dbg_mask = params.find<int>("dbg_mask", -1);
@@ -61,7 +59,7 @@ void TimingDRAM::build(Params& params) {
     tmpParams = params.find_prefix_params("channel." );
     for ( unsigned i=0; i < numChannels; i++ ) {
         using std::placeholders::_1;
-        m_channels.push_back(loadComponentExtension<Channel>( std::bind(&TimingDRAM::handleResponse, this, _1), tmpParams, id, i, output, m_mapper ));
+        m_channels.push_back(loadComponentExtension<Channel>( std::bind(&TimingDRAM::handleResponse, this, _1), tmpParams, dram_id, i, output, m_mapper ));
     }
 }
 

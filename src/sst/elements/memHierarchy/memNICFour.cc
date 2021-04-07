@@ -36,10 +36,6 @@ using namespace SST::Interfaces;
 /* Constructor */
 
 MemNICFour::MemNICFour(ComponentId_t id, Params &params) : MemNICBase(id, params) {
-    build(params);
-}
-
-void MemNICFour::build(Params& params) {
     bool found;
     std::array<std::string,4> pref = {"req", "ack", "fwd", "data"};
 

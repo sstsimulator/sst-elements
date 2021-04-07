@@ -127,7 +127,6 @@ MemCacheController::MemCacheController(ComponentId_t id, Params &params) : Compo
 
     clockLink_ = link_->isClocked();
     link_->setRecvHandler( new Event::Handler<MemCacheController>(this, &MemCacheController::handleEvent));
-    link_->setName(getName());
 
     link_->setRegion(region_);
 

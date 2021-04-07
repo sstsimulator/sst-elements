@@ -231,7 +231,6 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
 
     clockLink_ = link_->isClocked();
     link_->setRecvHandler( new Event::Handler<MemController>(this, &MemController::handleEvent));
-    link_->setName(getName());
 
     if (gotRegion) {
         link_->setRegion(region_);
