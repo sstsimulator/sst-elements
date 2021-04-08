@@ -167,6 +167,7 @@ EXTRA_DIST = \
 	tests/sdl5-1-ramulator.py \
 	tests/testBackendChaining.py \
 	tests/testBackendDelayBuffer.py \
+	tests/testBackendDramsim3.py \
 	tests/testBackendGoblinHMC.py \
 	tests/testBackendHBMDramsim.py \
 	tests/testBackendHBMPagedMulti.py \
@@ -198,6 +199,7 @@ EXTRA_DIST = \
 	tests/testScratchNetwork.py \
 	tests/DDR3_micron_32M_8B_x4_sg125.ini \
 	tests/system.ini \
+    	tests/DDR4_8Gb_x16_3200.ini \
 	tests/ramulator-ddr3.cfg \
 	tests/ddr_device.ini \
 	tests/ddr_system.ini \
@@ -210,6 +212,7 @@ EXTRA_DIST = \
     tests/refFiles/test_memHA_BackendChaining_MC.out \
     tests/refFiles/test_memHA_BackendDelayBuffer.out \
     tests/refFiles/test_memHA_BackendDelayBuffer_MC.out \
+    tests/refFiles/test_memHA_BackendDramsim3.out \
     tests/refFiles/test_memHA_BackendGoblinHMC.out \
     tests/refFiles/test_memHA_BackendGoblinHMC_MC.out \
     tests/refFiles/test_memHA_BackendHBMDramsim.out \
@@ -389,6 +392,16 @@ nobase_sst_HEADERS += membackend/pagedMultiBackend.h
 
 endif
 
+if HAVE_DRAMSIM3
+libmemHierarchy_la_LDFLAGS += $(DRAMSIM3_LDFLAGS)
+libmemHierarchy_la_LIBADD += $(DRAMSIM3_LIB)
+libmemHierarchy_la_SOURCES += membackend/dramSim3Backend.cc \
+	membackend/dramSim3Backend.h
+nobase_sst_HEADERS += membackend/dramSim3Backend.h
+AM_CPPFLAGS += $(DRAMSIM3_CPPFLAGS) -DHAVE_LIBDRAMSIM3
+
+endif
+
 if HAVE_HBMDRAMSIM
 libmemHierarchy_la_LDFLAGS += $(HBMDRAMSIM_LDFLAGS)
 libmemHierarchy_la_LIBADD += $(HBMDRAMSIM_LIB)
@@ -443,6 +456,7 @@ AM_CPPFLAGS += $(HMC_FLAG)
 
 install-exec-hook:
 	$(SST_REGISTER_TOOL) DRAMSIM LIBDIR=$(DRAMSIM_LIBDIR)
+	$(SST_REGISTER_TOOL) DRAMSIM3 LIBDIR=$(DRAMSIM3_LIBDIR)
 	$(SST_REGISTER_TOOL) HBMDRAMSIM LIBDIR=$(HBMDRAMSIM_LIBDIR)
 	$(SST_REGISTER_TOOL) HYBRIDSIM LIBDIR=$(HYBRIDSIM_LIBDIR)
 	$(SST_REGISTER_TOOL) NVDIMMSIM LIBDIR=$(NVDIMMSIM_LIBDIR)
