@@ -73,6 +73,8 @@ public:
                 case VANADIS_FORMAT_INT32:
                         return "FPINT32SUB";
                 }
+
+		return "FPUNK";
 	}
 
 	virtual void printToBuffer(char* buffer, size_t buffer_size) {
