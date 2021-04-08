@@ -42,7 +42,7 @@ void read_line( FILE* input_file, char* buffer ) {
 	buffer[next_index] = '\0';
 };
 
-void generate_error( int left_line, int right_line, char* error_msg ) {
+void generate_error( int left_line, int right_line, const char* error_msg ) {
 	fprintf(stderr, "Error left-line: %d, right-line: %d, cause: %s\n",
 		left_line, right_line, error_msg);
 }

@@ -73,6 +73,8 @@ public:
 		case VANADIS_FORMAT_INT64:
 			return "FPINT64ADD";
 		}
+
+		return "FPUNK";
 	}
 
 	virtual void printToBuffer(char* buffer, size_t buffer_size) {

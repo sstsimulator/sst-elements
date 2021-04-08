@@ -759,7 +759,7 @@ public:
 protected:
 	void writeTrace( VanadisInstruction* ins, SimpleMem::Request* req ) {
 		if( nullptr != address_trace_file ) {
-			char* req_type = nullptr;
+			const char* req_type = nullptr;
 
 			switch( req->cmd ) {
 			case SimpleMem::Request::Read:   req_type = "READ";    break;
@@ -767,7 +767,7 @@ protected:
 			default:     			 req_type = "UNKNOWN"; break;
 			}
 
-			char* sub_type = "";
+			const char* sub_type = "";
 			if( (req->flags & Interfaces::SimpleMem::Request::F_LLSC) != 0 ) {
 				sub_type = "LLSC";
 			}

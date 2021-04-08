@@ -123,6 +123,8 @@ public:
 			}
 			break;
 		}
+
+		return "FPCONVUNK";
 	}
 
 	virtual void printToBuffer(char* buffer, size_t buffer_size) {
