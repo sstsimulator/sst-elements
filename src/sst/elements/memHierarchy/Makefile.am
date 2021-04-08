@@ -199,6 +199,7 @@ EXTRA_DIST = \
 	tests/testScratchNetwork.py \
 	tests/DDR3_micron_32M_8B_x4_sg125.ini \
 	tests/system.ini \
+    	tests/DDR4_8Gb_x16_3200.ini \
 	tests/ramulator-ddr3.cfg \
 	tests/ddr_device.ini \
 	tests/ddr_system.ini \
