@@ -111,6 +111,8 @@ public:
 				}
 			}
 		}
+
+		return "STOREUNK";
 	}
 
 	virtual void printToBuffer(char* buffer, size_t buffer_size) {

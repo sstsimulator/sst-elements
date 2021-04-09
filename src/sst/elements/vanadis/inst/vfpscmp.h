@@ -114,6 +114,8 @@ public:
 		case VANADIS_FORMAT_INT32:
 			return "FPINT32CMP";
 		}
+
+		return "FPCNVUNK";
 	}
 
 	virtual void printToBuffer(char* buffer, size_t buffer_size ) {

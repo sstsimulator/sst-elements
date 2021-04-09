@@ -91,6 +91,8 @@ public:
 				return "LOADFP";
 			}
 		}
+
+		return "LOADUNK";
 	}
 
 	uint16_t getMemoryAddressRegister() const { return phys_int_regs_in[1]; }
