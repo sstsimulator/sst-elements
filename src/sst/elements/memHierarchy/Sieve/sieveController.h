@@ -123,7 +123,7 @@ private:
     void createProfiler(const Params &params);
 
     /** Handler for incoming link events.  */
-    void processEvent(SST::Event* event);
+    void processEvent(SST::Event* event, int link);
     /** Handler for incoming allocation events.  */
     void processAllocEvent(SST::Event* event);
 

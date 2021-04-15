@@ -244,10 +244,11 @@ MemNICFour::OrderedMemRtrEvent* MemNICFour::processRecv(SimpleNetwork::Request *
 
         if (mre->hasClientData()) {
             OrderedMemRtrEvent * smre = static_cast<OrderedMemRtrEvent*>(mre);
-            if (smre->event != nullptr) {
+            /*if (smre->event != nullptr) {
+             * This should not be needed, we shouldn't be using the link IDs for anything in elements
                 MemEventBase * ev = static_cast<MemEventBase*>(smre->event);
                 ev->setDeliveryLink(smre->getLinkId(), NULL);
-            }
+            }*/
             return smre;
         } else {
             InitMemRtrEvent *imre = static_cast<InitMemRtrEvent*>(mre);
