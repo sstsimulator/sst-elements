@@ -552,7 +552,7 @@ public:
 				uint64_t sim_seconds = (uint64_t)( sim_time_ns / 1000000000ULL );
 				uint32_t sim_ns      = (uint32_t)( sim_time_ns % 1000000000ULL );
 
-				output->verbose(CALL_INFO, 16, 0, "[syscall-gettime64] --> sim-time: %" PRIu64 " ns -> %" PRIu32 " secs + %" PRIu32 " us\n",
+				output->verbose(CALL_INFO, 16, 0, "[syscall-gettime64] --> sim-time: %" PRIu64 " ns -> %" PRIu64 " secs + %" PRIu32 " us\n",
 					sim_time_ns, sim_seconds, sim_ns);
 
 				std::vector<uint8_t> seconds_payload;
