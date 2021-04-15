@@ -113,7 +113,7 @@ void Sieve::processAllocEvent(SST::Event* event) {
     }
 }
 
-void Sieve::processEvent(SST::Event* ev) {
+void Sieve::processEvent(SST::Event* ev, int link) {
     MemEvent* event = static_cast<MemEvent*>(ev);
     Command cmd     = event->getCmd();
 
@@ -171,8 +171,8 @@ void Sieve::processEvent(SST::Event* ev) {
     // there is no need to construct the payload.
 
     responseEvent->setDst(event->getSrc());
-    SST::Link * link = event->getDeliveryLink();
-    link->send(responseEvent);
+    SST::Link * ret = cpuLinks_[link];
+    ret->send(responseEvent);
 
     //output_->debug(_L3_,"%s, Sending Response, Addr = %" PRIx64 "\n", getName().c_str(), event->getAddr());
 
