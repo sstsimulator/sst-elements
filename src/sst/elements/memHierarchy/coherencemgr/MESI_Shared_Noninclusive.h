@@ -281,7 +281,7 @@ public:
         uint64_t dLines = params.find<uint64_t>("dlines");
         uint64_t dAssoc = params.find<uint64_t>("dassoc");
         params.insert("replacement_policy", params.find<std::string>("drpolicy", "lru"));
-        ReplacementPolicy *drmgr = createReplacementPolicy(dLines, dAssoc, params, 1, false);
+        ReplacementPolicy *drmgr = createReplacementPolicy(dLines, dAssoc, params, false, 1);
         dirArray_ = new CacheArray<DirectoryLine>(debug, dLines, dAssoc, lineSize_, drmgr, ht);
         dirArray_->setBanked(params.find<uint64_t>("banks", 0));
 
