@@ -53,15 +53,19 @@ class topoDragonFly(Topology):
 
     def getRouterNameForId(self,rtr_id):
         return self.getRouterNameForLocation(rtr_id // self.routers_per_group, rtr_id % self.routers_per_group)
-        
+
     def getRouterNameForLocation(self,group,rtr):
         return "%srtr.G%dR%d"%(self._prefix,group,rtr)
-    
+
     def findRouterByLocation(self,group,rtr):
         return sst.findComponentByName(self.getRouterNameForLocation(group,rtr))
-    
-        
+
+
     def build(self, endpoint):
+        if self._check_first_build():
+            sst.addGlobalParams("params_%s"%self._instance_name, self._getGroupParams("main"))
+
+
         if self.host_link_latency is None:
             self.host_link_latency = self.link_latency
 
@@ -160,7 +164,7 @@ class topoDragonFly(Topology):
                 # Insert the topology object
                 sub = rtr.setSubComponent(self.router.getTopologySlotName(),"merlin.dragonfly",0)
                 self._applyStatisticsSettings(sub)
-                sub.addParams(self._getGroupParams("main"))
+                sub.addGlobalParamSet("params_%s"%self._instance_name)
                 sub.addParam("intergroup_per_router",intergroup_per_router)
                 if router_num == 0:
                     # Need to send in the global_port_map
