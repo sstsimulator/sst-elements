@@ -76,6 +76,9 @@ public:
         "ember",
         SST_ELI_ELEMENT_VERSION(1,0,0)
     )
+
+    SST_ELI_EXPORT(SST::Merlin::EmberPyModule)    
+    
 };
 }
 }
