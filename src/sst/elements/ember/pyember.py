@@ -33,14 +33,14 @@ _basic_nic_defaults = {
     "hostReadDelay_ns" : 200,
     "packetSize" : "2048B",
     "packetOverhead" : 0,
-    
+
     #"numVNs" : 1, # total number of VN used
     #"getHdrVN" : 0, # VN used for sending a get request
     #"getRespSmallVN" : 0, # VN used for sending a get response <= getRespSize
     #"getRespLargeVN" : 0, # VN used for sending a get response > getRespSize
     #"getRespSize" : 15000
 }
-    
+
 defaults.addParamSet("nic",_basic_nic_defaults)
 
 _embermain_defaults = {
@@ -69,21 +69,21 @@ _ctrl_defaults = {
     'waitanyStateDelay_ps' : 0,
     'matchDelay_ns': 150,
     'regRegionBaseDelay_ns': 3000,
-    
+
     'txMemcpyMod': 'firefly.LatencyMod',
     'txSetupMod': 'firefly.LatencyMod',
     'rxSetupMod': 'firefly.LatencyMod',
     'rxMemcpyMod': 'firefly.LatencyMod',
-    
+
     'regRegionPerPageDelay_ns': 100,
     'verboseLevel': 0,
     'sendAckDelay_ns': 0,
     'shortMsgLength': 12000,
     'regRegionXoverLength': 4096,
-    
+
     'rendezvousVN' : 0, # VN used to send a match header that requires a get by the target
     'ackVN' : 0,  # VN used to send an ACK back to originator after target does a get
-    
+
     'pqs.verboseMask': -1,
     'pqs.verboseLevel': 0,
     'rxMemcpyModParams.base': '344ps',
@@ -126,12 +126,15 @@ class BasicNicConfiguration(TemplateBase):
 
 
     def build(self,nID,num_vNics):
+        if self._check_first_build():
+            sst.addGlobalParams("params_%s"%self._instance_name,self._getGroupParams("main"))
+            sst.addGlobalParam("params_%s"%self._instance_name,"num_vNics",num_vNics)
+
         nic = sst.Component("nic" + str(nID), "firefly.nic")
         self._applyStatisticsSettings(nic)
-        #nic.addParams(self.combineParams(self.nic_defaults,self._getGroupParams("main")))
-        nic.addParams(self._getGroupParams("main"))
+        nic.addGlobalParamSet("params_%s"%self._instance_name)
         nic.addParam("nid",nID)
-        nic.addParam("num_vNics",num_vNics)
+        #nic.addParam("num_vNics",num_vNics)
         return nic, "rtrLink"
 
     def getVirtNicPortName(self, index):
@@ -197,7 +200,7 @@ class FireflyHades(FireflyOS):
         #self._declareClassVariables(["_final_hades_params","_final_ctrl_params"])
         self._declareParams("main",["verboseLevel","verboseMask"])
         #self._subscribeToPlatformParamSet("ember")
-        
+
         ### functionSM variables ###
         self._declareParamsWithUserPrefix(
             "main",  # dictionary params will end up in
@@ -262,23 +265,30 @@ class FireflyHades(FireflyOS):
                 [ 'range.%d' ],
                 var + "Params.range."
             )
-            
+
         # Subscribe to ember.ctrl platform param set.  Need to
         # prefix the keys with ctrl so that the end use doesn't
         # have to put it on each key entry
         self._subscribeToPlatformParamSetAndPrefix("ember.ctrl","ctrl")
-        
+
 
     def build(self,engine,nicLink,loopLink,size,nicsPerNode,job_id,pid,lid,coreId):
 
+        if self._check_first_build():
+            set_name = "params_%s"%self._instance_name
+            sst.addGlobalParams(set_name, self._getGroupParams("main"))
+            sst.addGlobalParam(set_name, 'numNodes', size )
+            sst.addGlobalParam(set_name, 'netMapName', 'Ember' + str(job_id) )
+            sst.addGlobalParam(set_name, 'netMapSize', size )
+
+            sst.addGlobalParams("ctrl_params_%s"%self._instance_name, self._getGroupParams("ctrl"))
+            sst.addGlobalParam("ctrl_params_%s"%self._instance_name, "nicsPerNode", nicsPerNode)
+
         os = engine.setSubComponent( "OS", "firefly.hades" )
 
-        os.addParams(self._getGroupParams("main"))
-        os.addParam( 'numNodes', size )
-        os.addParam( 'netMapName', 'Ember' + str(job_id) )
+        os.addGlobalParamSet("params_%s"%self._instance_name)
         os.addParam( 'netId', pid )
         os.addParam( 'netMapId', lid )
-        os.addParam( 'netMapSize', size )
         os.addParam( 'coreId', coreId )
 
         virtNic = os.setSubComponent( "virtNic", "firefly.VirtNic" )
@@ -293,15 +303,15 @@ class FireflyHades(FireflyOS):
         process = proto.setSubComponent( "process", "firefly.ctrlMsg" )
 
 
-        proto.addParams(self._getGroupParams("ctrl"))
-        process.addParams(self._getGroupParams("ctrl"))
+        proto.addGlobalParamSet("ctrl_params_%s"%self._instance_name)
+        process.addGlobalParamSet("ctrl_params_%s"%self._instance_name)
 
         # Should figure out how to put this into the main param group
         # object
-        proto.addParam("nicsPerNode", nicsPerNode)
-        process.addParam("nicsPerNode", nicsPerNode)
+        #proto.addParam("nicsPerNode", nicsPerNode)
+        #process.addParam("nicsPerNode", nicsPerNode)
 
-        
+
         #nicLink.connect( (virtNic,'nic','1ns' ),(nic,'core'+str(x),'1ns'))
         virtNic.addLink(nicLink,'nic','1ns')
 
@@ -334,7 +344,7 @@ class EmberJob(Job):
         self._nicsPerNode = nicsPerNode
         self._motifNum = 0
         self._motifs = dict()
-        self._apis = apis 
+        self._apis = apis
         self._loopBackDict = dict()
         # set default nic configuration
 
@@ -382,6 +392,15 @@ class EmberJob(Job):
 
 
     def build(self, nodeID, extraKeys):
+        if self._check_first_build():
+            sst.addGlobalParams("lookback_params_%s"%self._instance_name,
+                            { "numCores" : self._numCores,
+                              "nicsPerNode" : self._nicsPerNode })
+
+            sst.addGlobalParams("params_%s"%self._instance_name, self._getGroupParams("ember"))
+            sst.addGlobalParam("params_%s"%self._instance_name, 'jobId', self.job_id)
+            sst.addGlobalParams("params_%s"%self._instance_name, self._motifs);
+            sst.addGlobalParams("params_%s"%self._instance_name, self._apis);
 
         nic, slot_name = self.nic.build(nodeID,self._numCores // self._nicsPerNode)
 
@@ -390,7 +409,7 @@ class EmberJob(Job):
         # not needed: nic.addParams( self._getGroupParams("nic") ).  This is done already in the nic.build call
 
         # Build NetworkInterface
-        logical_id = self._nid_map.index(nodeID)
+        logical_id = self._nid_map[nodeID]
         networkif, port_name = self.network_interface.build(nic,slot_name,0,self.job_id,self.size,logical_id,False)
 
         # Store return value for later
@@ -404,12 +423,13 @@ class EmberJob(Job):
         # allocation will have to be a multiple of any of the number
         # of nics per node values used.
         my_id_name = str( (nodeID // self._nicsPerNode) * self._nicsPerNode)
-        
+
         loopBackName = "loopBack" + my_id_name
         if nodeID % self._nicsPerNode == 0:
             loopBack = sst.Component(loopBackName, "firefly.loopBack")
-            loopBack.addParam( "numCores", self._numCores )
-            loopBack.addParam( "nicsPerNode", self._nicsPerNode )
+            #loopBack.addParam( "numCores", self._numCores )
+            #loopBack.addParam( "nicsPerNode", self._nicsPerNode )
+            loopBack.addGlobalParamSet("loopback_params_%s"%self._instance_name);
             self._loopBackDict[loopBackName] = loopBack
         else:
             loopBack = self._loopBackDict[loopBackName]
@@ -420,14 +440,12 @@ class EmberJob(Job):
             ep = sst.Component("nic" + str(nodeID) + "core" + str(x) + "_EmberEP", "ember.EmberEngine")
             self._applyStatisticsSettings(ep)
 
-            ep.addParams( self._getGroupParams("ember") )
+            ep.addGlobalParamSet("params_%s"%self._instance_name )
 
             # Add the params to the EmberEngine
-            ep.addParam('jobId',self.job_id)
+            #ep.addParam('jobId',self.job_id)
 
             # Add the parameters defining the motifs
-            ep.addParams(self._motifs)
-            ep.addParams(self._apis)
 
             # Check to see if we need to enable motif logging
             if self._logfilePrefix:
@@ -451,7 +469,7 @@ class EmberJob(Job):
 
 
             # Create the OS layer
-            self.os.build(ep,nicLink,loopLink,self.size,self._nicsPerNode,self.job_id,nodeID,self._nid_map.index(nodeID),x)
+            self.os.build(ep,nicLink,loopLink,self.size,self._nicsPerNode,self.job_id,nodeID,logical_id,x)
 
         return retval
 

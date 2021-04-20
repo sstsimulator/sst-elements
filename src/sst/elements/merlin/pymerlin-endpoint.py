@@ -34,7 +34,7 @@ class TestJob(Job):
         nic.addParams(self._getGroupParams("main"))
         nic.addParams(extraKeys)
         # Get the logical node id
-        id = self._nid_map.index(nID)
+        id = self._nid_map[nID]
         nic.addParam("id", id)
 
         #  Add the linkcontrol
@@ -58,7 +58,7 @@ class OfferedLoadJob(Job):
         self._applyStatisticsSettings(nic)
         nic.addParams(self._getGroupParams("main"))
         nic.addParams(extraKeys)
-        id = self._nid_map.index(nID)
+        id = self._nid_map[nID]
         nic.addParam("id", id)
 
         return (networkif, portname)
@@ -79,7 +79,7 @@ class IncastJob(Job):
         self._applyStatisticsSettings(nic)
         nic.addParams(self._getGroupParams("main"))
         nic.addParams(extraKeys)
-        id = self._nid_map.index(nID)
+        id = self._nid_map[nID]
 
         #  Add the linkcontrol
         networkif, port_name = self.network_interface.build(nic,"networkIF",0,self.job_id,self.size,id,True)
