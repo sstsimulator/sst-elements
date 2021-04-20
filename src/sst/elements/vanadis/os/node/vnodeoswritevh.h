@@ -107,7 +107,7 @@ public:
                         {
                                 // Write out the payload
 				output->verbose(CALL_INFO, 16, 0, "--> update buffer data-offset: %" PRIu64 " + payload: %" PRIu64 " (iovec-data-len: %" PRIu64 ")\n",
-					current_offset, req->size, current_iovec_length );
+					current_offset, (uint64_t) req->size, current_iovec_length );
 
 				merge_to_buffer( req->data );
                                 current_offset += req->size;

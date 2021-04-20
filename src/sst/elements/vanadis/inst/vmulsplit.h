@@ -96,7 +96,7 @@ public:
 					const int32_t result_lo       = (int32_t)( multiply_result & 0xFFFFFFFF );
 					const int32_t result_hi       = (int32_t)( multiply_result >> 32UL );
 
-					output->verbose(CALL_INFO, 16, 0, "-> Execute: (detail, signed, MULSPLIT32) %" PRId64 " * %" PRId64 " = %" PRId64 " = (lo: %" PRId64 ", hi: %" PRId64 " )\n",
+					output->verbose(CALL_INFO, 16, 0, "-> Execute: (detail, signed, MULSPLIT32) %" PRId32 " * %" PRId32 " = %" PRId64 " = (lo: %" PRId32 ", hi: %" PRId32 " )\n",
 						src_1, src_2, multiply_result, result_lo, result_hi );
 
 					regFile->setIntReg<int32_t>( phys_int_regs_out[0], result_lo );
@@ -136,7 +136,7 @@ public:
 					const uint32_t result_lo       = (uint32_t)( multiply_result & 0xFFFFFFFF );
 					const uint32_t result_hi       = (uint32_t)( multiply_result >> 32UL );
 
-					output->verbose(CALL_INFO, 16, 0, "-> Execute: (detail, unsigned, MULSPLIT32) %" PRIu64 " * %" PRIu64 " = %" PRIu64 " = (lo: %" PRIu64 ", hi: %" PRIu64 " )\n",
+					output->verbose(CALL_INFO, 16, 0, "-> Execute: (detail, unsigned, MULSPLIT32) %" PRIu32 " * %" PRIu32 " = %" PRIu64 " = (lo: %" PRIu32 ", hi: %" PRIu32 " )\n",
 							src_1, src_2, multiply_result, result_lo, result_hi );
 
 					regFile->setIntReg<uint32_t>( phys_int_regs_out[0], result_lo );

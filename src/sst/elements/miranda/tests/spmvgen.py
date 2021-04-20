@@ -79,7 +79,8 @@ l2cache.addParams({
 
 comp_memctrl = sst.Component("memory", "memHierarchy.MemController")
 comp_memctrl.addParams({
-    "clock" : "1GHz"
+    "clock" : "1GHz",
+    "addr_range_end" : 4096 * 1024 * 1024 - 1
 })
 memory = comp_memctrl.setSubComponent("backend", "memHierarchy.simpleMem")
 memory.addParams({

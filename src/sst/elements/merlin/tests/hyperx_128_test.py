@@ -64,7 +64,7 @@ if __name__ == "__main__":
     #ep.send_untimed_bcast = False
         
     ep2 = TestJob(1,topo.getNumNodes() // 2)
-    ep2.network_interface = networkif
+    ep2.network_interface = networkif2
     #ep.num_messages = 10
     #ep.message_size = "8B"
     #ep.send_untimed_bcast = False

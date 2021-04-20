@@ -127,7 +127,7 @@ CoherenceController::CoherenceController(ComponentId_t id, Params &params, Param
 ReplacementPolicy* CoherenceController::createReplacementPolicy(uint64_t lines, uint64_t assoc, Params& params, bool L1, int slotnum) {
     SubComponentSlotInfo* rslots = getSubComponentSlotInfo("replacement");
     if (rslots && rslots->isPopulated(slotnum))
-        return rslots->create<ReplacementPolicy>(0, ComponentInfo::SHARE_NONE, lines, assoc);
+        return rslots->create<ReplacementPolicy>(slotnum, ComponentInfo::SHARE_NONE, lines, assoc);
 
     // Default to the replacement policy that was used before all the recent memH changes
     Params emptyparams;

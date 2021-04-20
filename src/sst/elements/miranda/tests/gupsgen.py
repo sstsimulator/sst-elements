@@ -43,7 +43,8 @@ comp_l1cache.enableAllStatistics({"type":"sst.AccumulatorStatistic"})
 
 comp_memctrl = sst.Component("memory", "memHierarchy.MemController")
 comp_memctrl.addParams({
-      "clock" : "1GHz"
+      "clock" : "1GHz",
+      "addr_range_end" : memory_mb * 1024 * 1024 - 1
 })
 memory = comp_memctrl.setSubComponent("backend", "memHierarchy.simpleMem")
 memory.addParams({
