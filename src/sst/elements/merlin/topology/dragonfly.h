@@ -164,6 +164,9 @@ public:
 
     inline bool isFailedPortForGroup(uint32_t src_group, const RouterPortPair& rp ) const {
         if ( !consider_failed_links ) return false;
+        // If the SharedArray is ready yet, then we are still in
+        // construct phase and just return false for now.
+        if ( failed_links.size() == 0 ) return false;
         return failed_links[(src_group * routers * links) + (rp.router * links) + rp.port - global_start];
     }
 };

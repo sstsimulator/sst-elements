@@ -103,6 +103,7 @@ EXTRA_DIST = \
 	tests/platform_file_dragon_128.py \
 	tests/refFiles/test_merlin_dragon_128_platform_test.out \
 	tests/refFiles/test_merlin_dragon_128_platform_test_cm.out \
+	tests/refFiles/test_merlin_dragon_128_platform_test_fl.out \
 	tests/refFiles/test_merlin_dragon_128_test.out \
 	tests/refFiles/test_merlin_dragon_128_test_fl.out \
 	tests/refFiles/test_merlin_dragon_72_test.out \
