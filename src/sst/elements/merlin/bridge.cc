@@ -27,7 +27,7 @@ Bridge::Bridge(SST::ComponentId_t id, SST::Params &params) :
     dbg.init("@t:Bridge::@p():@l " + getName() + ": ",
             debugLevel, 0, (Output::output_location_t)params.find<int>("debug", 0));
 
-    Params transParams = params.find_prefix_params("translator.");
+    Params transParams = params.get_scoped_params("translator");
     // translator = dynamic_cast<Translator*>(loadSubComponent(
     //             params.find<std::string>("translator"),
     //             this, transParams));

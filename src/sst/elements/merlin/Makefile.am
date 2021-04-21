@@ -46,10 +46,6 @@ libmerlin_la_SOURCES = \
 	topology/fattree.cc \
 	topology/dragonfly.h \
 	topology/dragonfly.cc \
-	topology/dragonfly_legacy.h \
-	topology/dragonfly_legacy.cc \
-	topology/dragonfly2.h \
-	topology/dragonfly2.cc \
 	topology/singlerouter.h \
 	topology/singlerouter.cc \
 	topology/hyperx.h \

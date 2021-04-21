@@ -25,6 +25,7 @@
 #include <sst/core/output.h>
 #include <sst/core/timeConverter.h>
 #include <sst/core/unitAlgebra.h>
+#include <sst/core/shared/sharedArray.h>
 
 #include <sst/core/statapi/stataccumulator.h>
 
@@ -35,8 +36,6 @@
 using namespace SST;
 
 namespace SST {
-
-class SharedRegion;
 
 namespace Merlin {
 
@@ -120,6 +119,7 @@ private:
     int num_vns;
     std::string vn_remap_shm;
     int vn_remap_shm_size;
+    Shared::SharedArray<int> vn_remap;
 
 	int max_link_width;
 	int cur_link_width;
@@ -241,8 +241,6 @@ private:
     Output& output;
 
     PortInterface::OutputArbitration* output_arb;
-
-    SharedRegion* shared_region;
 
     // For supporting congestion management
     struct CongestionInfo {

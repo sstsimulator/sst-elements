@@ -56,7 +56,7 @@ struct dgnflyParams {
 enum global_route_mode_t { ABSOLUTE, RELATIVE };
 
 
-struct RouterPortPair {
+struct RouterPortPair : public SST::Core::Serialization::serializable {
     uint16_t router;
     uint16_t port;
 
@@ -65,36 +65,29 @@ struct RouterPortPair {
         port(port)
         {}
 
-    RouterPortPair() {}
-};
+    RouterPortPair() :
+        router(0),
+        port(0)
+        {}
 
-class bit_array {
-
-    const uint8_t* data;
-    size_t size;
-
-    // static const uint8_t masks[8];
-
-public:
-    bit_array() :
-        data(nullptr)
-    {}
-
-    void init(const uint8_t* data_in, size_t size_in) {
-        size = size_in;
-        data = data_in;
+    bool operator==(const RouterPortPair& rhs) {
+        if ( router != rhs.router || port != rhs.port ) return false;
+        return true;
     }
 
-    bool operator[](int index) const {
-        return (data[index / 8] >> index % 8) & 0x1;
+    bool operator!=(const RouterPortPair& rhs) {
+        if ( router == rhs.router && port == rhs.port ) return false;
+        return true;
     }
 
-    static void setBit(uint8_t* data, int index, bool value) {
-        int shift = index % 8;
-        if (value) data[index / 8] = data[index / 8] | ( 0x1 << shift );
-        // else data[index / 8] = data[index / 8] & masks[shift];
-        else data[index / 8] = data[index / 8] & ( 0xff ^ ( 0x1 << shift ) );
+    void serialize_order(SST::Core::Serialization::serializer &ser)  override {
+        ser & router;
+        ser & port;
     }
+
+private:
+    ImplementSerializable(SST::Merlin::RouterPortPair)
+
 };
 
 
@@ -128,9 +121,11 @@ struct FailedLink {
 
 class RouteToGroup {
 private:
-    const RouterPortPair* data;
-    bit_array failed_links;
-    const uint8_t* link_counts;
+    Shared::SharedArray<RouterPortPair> data;
+    //const RouterPortPair* data;
+    Shared::SharedArray<bool> failed_links;
+    // const uint8_t* link_counts;
+    Shared::SharedArray<uint8_t> link_counts;
     size_t groups;  // Number of groups
     size_t routers; // Number of routers per groupt
     size_t slices;  // number of links between each pair of groups

@@ -20,8 +20,6 @@
 #include "output_arb_basic.h"
 #include "output_arb_qos_multi.h"
 
-#include <sst/core/sharedRegion.h>
-
 #define TRACK 0
 #define TRACK_ID 131
 #define TRACK_PORT 4
@@ -447,7 +445,7 @@ PortControl::PortControl(ComponentId_t cid, Params& params,  Router* rif, int rt
 
 
 
-    Params arb_params = params.find_prefix_params("arbitration:");
+    Params arb_params = params.get_scoped_params("arbitration");
 
     std::string output_arb_name = params.find<std::string>("output_arb","merlin.arb.output.basic");
     output_arb = loadAnonymousSubComponent<OutputArbitration>
@@ -459,9 +457,8 @@ PortControl::PortControl(ComponentId_t cid, Params& params,  Router* rif, int rt
         vn_remap_shm = params.find<std::string>("vn_remap_shm","");
         if ( vn_remap_shm != "" ) {
             int size = params.find<int>("vn_remap_shm_size",-1);
-            shared_region = Simulation::getSharedRegionManager()->
-                getGlobalSharedRegion(vn_remap_shm, size, new SharedRegionMerger());
-            shared_region->publish();
+            vn_remap.initialize(vn_remap_shm, size);
+            vn_remap.publish();
         }
     }
 
@@ -687,10 +684,10 @@ PortControl::init(unsigned int phase) {
                     init_ev->int_value = i;
                 }
                 else {
-                    int* map = (int*)shared_region->getRawPtr();
+                    // int* map = (int*)shared_region->getRawPtr();
                     int endpoint_id = topo->getEndpointID(port_number);
                     for ( int j = 0; j < num_vns; ++j ) {
-                        if ( map[endpoint_id*num_vns + j] == i ) {
+                        if ( vn_remap[endpoint_id*num_vns + j] == i ) {
                             init_ev->int_value = j;
                             break;
                         }

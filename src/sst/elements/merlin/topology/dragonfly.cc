@@ -15,7 +15,7 @@
 //
 
 #include <sst_config.h>
-#include <sst/core/sharedRegion.h>
+#include <sst/core/shared/sharedArray.h>
 #include "sst/core/rng/xorshift.h"
 
 #include "merlin.h"
@@ -35,10 +35,9 @@ RouteToGroup::init_write(const std::string& basename, int group_id, global_route
                          bool config_failed_links, const std::vector<FailedLink>& failed_links_vec)
 {
     // Get a shared region
-    SharedRegion* sr = Simulation::getSharedRegionManager()->
-        getGlobalSharedRegion(basename+"group_to_global_port",
-                              ((params.g-1) * params.n) * sizeof(RouterPortPair),
-                              new SharedRegionMerger());
+    data.initialize(basename+"group_to_global_port",
+                    ((params.g-1) * params.n) * sizeof(RouterPortPair));
+
 
     groups = params.g;
     routers = params.a;
@@ -63,10 +62,12 @@ RouteToGroup::init_write(const std::string& basename, int group_id, global_route
         RouterPortPair rpp;
         rpp.router = router;
         rpp.port = port;
-        sr->modifyArray(group * params.n + route_num, rpp);
+        // sr->modifyArray(group * params.n + route_num, rpp);
+        data.write(group * params.n + route_num, rpp);
     }
-    sr->publish();
-    data = sr->getPtr<const RouterPortPair*>();
+    data.publish();
+    // sr->publish();
+    // data = sr->getPtr<const RouterPortPair*>();
 
     // If we're not doing failed links, we're done
     if ( !config_failed_links ) return;
@@ -77,82 +78,54 @@ RouteToGroup::init_write(const std::string& basename, int group_id, global_route
     // array and then copy it becuase multiple modification within
     // the shared region is inefficient at best and breaks at
     // worst.
-    SharedRegion* sr_count = Simulation::getSharedRegionManager()->
-        getGlobalSharedRegion(basename + "group_link_counts",
-                              groups * groups * sizeof(uint8_t),
-                              new SharedRegionMerger());
+    link_counts.initialize(basename + "group_link_counts",groups * groups,
+                           params.n,Shared::SharedObject::NO_VERIFY);
 
     // Need to have a bit field where each element tells us whether or
     // not that global link is active.  Start at group 0, global link
-    // 0 and count from there.  So, size in bytes is:
-    // ceiling(groups * params.n / 8)
-    size_t bf_size = (groups * params.a * params.h + 7) / 8;
-    SharedRegion* sr_dl = Simulation::getSharedRegionManager()->
-        getGlobalSharedRegion(basename + "downed_links",
-                              bf_size * sizeof(uint8_t),
-                              new SharedRegionMerger());
+    // 0 and count from there.
+    size_t bf_size = groups * params.a * params.h;
+    failed_links.initialize(basename + "downed_links", bf_size);
 
-    uint8_t* link_counts_ld = new uint8_t[groups * groups];
-    std::fill_n(link_counts_ld, groups * groups, params.n);
+
+    // uint8_t* link_counts_ld = new uint8_t[groups * groups];
+    // std::fill_n(link_counts_ld, groups * groups, params.n);
 
     // uint8_t* bf_down = static_cast<uint8_t*>(sr_dl->getRawPtr());
-    uint8_t* bf_down = new uint8_t[bf_size];
-    std::fill_n(bf_down, bf_size, 0);
-
-
-    failed_links.init(sr_dl->getPtr<const uint8_t*>(), bf_size);
+    // uint8_t* bf_down = new uint8_t[bf_size];
+    // std::fill_n(bf_down, bf_size, 0);
 
     for ( auto x : failed_links_vec ) {
         if ( x.low_group >= groups || x.high_group >= groups || x.slice >= params.n ) {
             merlin_abort.fatal(CALL_INFO,1,"Illegal link specification: %d:%d:%d\n",x.low_group, x.high_group, x.slice);
         }
-        link_counts_ld[x.low_group * groups + x.high_group]--;
-        link_counts_ld[x.high_group * groups + x.low_group]--;
+        link_counts.write(x.low_group * groups + x.high_group, link_counts[x.low_group * groups + x.high_group] - 1);
+        link_counts.write(x.high_group * groups + x.low_group, link_counts[x.high_group * groups + x.low_group] - 1);
 
         const RouterPortPair& rp = getRouterPortPairForGroup(x.low_group, x.high_group, x.slice);
         int bit_index = (x.low_group * params.a * params.h) + (rp.router * params.h + rp.port - global_start);
-        failed_links.setBit(bf_down,bit_index,1);
-        // int byte_index = bit_index / 8;
-        // int shift = bit_index % 8;
-        // bf_down[byte_index] = bf_down[byte_index] | (0x1 << shift);
+        failed_links.write(bit_index,true);
 
         const RouterPortPair& rp2 = getRouterPortPairForGroup(x.high_group, x.low_group, x.slice);
         bit_index = (x.high_group * params.a * params.h) + (rp2.router * params.h + rp2.port - global_start);
-        failed_links.setBit(bf_down,bit_index,1);
-        // byte_index = bit_index / 8;
-        // shift = bit_index % 8;
-        // bf_down[byte_index] = bf_down[byte_index] | (0x1 << shift);
+        failed_links.write(bit_index,true);
     }
 
-    // Copy data to SharedRegion and publish it
-    sr_count->modifyRegion(0, groups * groups, link_counts_ld);
-    link_counts = sr_count->getPtr<const uint8_t*>();
-    sr_count->publish();
-    delete[] link_counts_ld;
+    // Publish the link counts
+    link_counts.publish();
 
     // Published the down links data.  Already have a pointer to the
     // data.
-    sr_dl->modifyRegion(0,bf_size,bf_down);
-    sr_dl->publish();
-    delete[] bf_down;
+    failed_links.publish();
 }
 
 void
 RouteToGroup::init(const std::string& basename, int group_id, global_route_mode_t route_mode,
                    const dgnflyParams& params, bool config_failed_links)
 {
-    // Get a shared region
-    // SharedRegion* sr = Simulation::getSharedRegionManager()->
-    //     getGlobalSharedRegion(basename+"group_to_global_port",
-    //                           ((params.g-1) * params.n) * sizeof(RouterPortPair),
-    //                           new SharedRegionMerger());
-    SharedRegion* sr = Simulation::getSharedRegionManager()->
-        getGlobalSharedRegion(basename+"group_to_global_port",
-                              0,
-                              new SharedRegionMerger());
-    sr->publish();
-    // data = sr->getPtr<const RouterPortPair*>();
-    sr->getPtrDeferred<const RouterPortPair*>(data);
+    data.initialize(basename+"group_to_global_port");
+    data.publish();
+
     groups = params.g;
     routers = params.a;
     slices = params.n;
@@ -165,33 +138,15 @@ RouteToGroup::init(const std::string& basename, int group_id, global_route_mode_
     if ( !config_failed_links ) return;
 
     // Get the shared regions and publish them.
-    SharedRegion* sr_count = Simulation::getSharedRegionManager()->
-        getGlobalSharedRegion(basename + "group_link_counts",
-                              groups * groups * sizeof(uint8_t),
-                              new SharedRegionMerger());
-    sr_count->publish();
-    link_counts = sr_count->getPtr<const uint8_t*>();
+    link_counts.initialize(basename + "group_link_counts");
+    link_counts.publish();
 
     size_t bf_size = (groups * params.a * params.h + 7) / 8;
-    SharedRegion* sr_dl = Simulation::getSharedRegionManager()->
-        getGlobalSharedRegion(basename + "downed_links",
-                              bf_size * sizeof(uint8_t),
-                              new SharedRegionMerger());
-    sr_dl->publish();
-    failed_links.init(sr_dl->getPtr<const uint8_t*>(),bf_size);
+    failed_links.initialize(basename + "downed_links");
+    failed_links.publish();
 }
 
 
-
-// void
-// RouteToGroup::init(SharedRegion* sr, size_t g, size_t r)
-// {
-//     region = sr;
-//     data = sr->getPtr<const RouterPortPair*>();
-//     groups = g;
-//     routes = r;
-
-// }
 
 const RouterPortPair&
 RouteToGroup::getRouterPortPair(int group, int route_number) const
@@ -311,14 +266,7 @@ topo_dragonfly::topo_dragonfly(ComponentId_t cid, Params &p, int num_ports, int 
 
     bool config_failed_links = p.find<bool>("config_failed_links","false");
 
-    // // Get a shared region
-    // SharedRegion* sr = Simulation::getSharedRegionManager()->
-    //     getGlobalSharedRegion("group_to_global_port",
-    //                           ((params.g-1) * params.n) * sizeof(RouterPortPair),
-    //                           new SharedRegionMerger());
-
-    // // Set up the RouteToGroup object
-    // group_to_global_port.init(sr, params.g, params.n);
+    // Set up the RouteToGroup object
 
     if ( rtr_id == 0 ) {
         // Get the global link map
@@ -333,30 +281,6 @@ topo_dragonfly::topo_dragonfly(ComponentId_t cid, Params &p, int num_ports, int 
     else {
         group_to_global_port.init("network_", group_id, global_route_mode, params, config_failed_links);
     }
-#if 0
-    // Fill in the shared region using the RouteToGroupObject (if
-    // vector for param dragonfly:global_link_map is empty, then
-    // nothing will be intialized.
-    for ( int i = 0; i < global_link_map.size(); i++ ) {
-        // Figure out all the mappings
-        int64_t value = global_link_map[i];
-        if ( value == -1 ) continue;
-
-        int group = value % (params.g - 1);
-        int route_num = value / (params.g - 1);
-        int router = i / params.h;
-        int port = (i % params.h) + params.p + params.a - 1;
-
-        RouterPortPair rpp;
-        rpp.router = router;
-        rpp.port = port;
-        group_to_global_port.setRouterPortPair(group, route_num, rpp);
-    }
-
-
-    // Publish the shared region to make sure everyone has the data.
-    sr->publish();
-#endif
 
     // Setup the routing algorithms
     int curr_vc = 0;
