@@ -1,0 +1,21 @@
+{
+"jobs" : {
+        "dll_path": "${FABSIM_APPS_PATH}/dll/many_to_many.so",
+        "size": 8,
+        "cfg": {
+            "app": "many_to_many",
+            "iteration_cnt": 1,
+            "compute_delay": 0,
+            "msg_req_bytes": 100,
+            "msg_rsp_bytes": 0,
+            "start_delay_max" : 10000,
+            "scattered_start" : false,
+            "randomize_communication_order": false,
+            "fixed_pairs" : true, 
+            "debug" : false, 
+            "src_rank_id_interval": [4,7],
+            "dst_rank_id_interval": [0,3],
+            "cpu_freq" : 4e9
+       }
+    }
+}

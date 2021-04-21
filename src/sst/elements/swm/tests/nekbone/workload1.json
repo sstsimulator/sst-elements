@@ -1,0 +1,31 @@
+
+{
+    "jobs": 
+    {
+        "name": "StandaloneSWM",
+            "app":  "nekbone",
+            "size": 729 ,
+            "time": 0,
+            "cfg": { 
+                "request_vc": 0,
+                "response_vc": 1,
+                "iteration_cnt": 1,
+                "rcube" : 13,
+                "ecube" : 13,
+                "Rx" : 9,
+                "Ry" : 9,
+                "Rz" : 9,
+                "Ex" : 13,
+                "Ey" : 13,
+                "Ez" : 13,
+                "Pbegin" : 8,
+                "Pend" : 12,
+                "Pstep" : 3,
+                "CGcount" : 15,
+                "NeighborCount" : 26,
+                "ByteSizeOf1DOF" : 8,
+                "cpu_freq" : 4e9,
+                "cpu_sim_speedup" : 1e6 
+            }
+    } 
+}

@@ -1,0 +1,21 @@
+{
+    "jobs": {
+            "name": "StandaloneSWM",
+            "app": "dll",
+            "dll_path": "apps/dll/lammps.so",      
+            "size": 512,
+            "time": 0,
+            "cfg":
+            { 
+                "num_x_replicas": 3,
+                "num_y_replicas": 3,
+                "num_z_replicas": 3,
+                "num_time_steps": 10,
+                "req_vc" : 0,
+                "resp_vc" : 1,
+                "router_freq" : 800e6,
+                "cpu_freq" : 4e9,
+                "cpu_sim_speedup" : 1e6 
+            }
+        }
+}
