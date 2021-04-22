@@ -105,7 +105,7 @@ OfferedLoad::OfferedLoad(ComponentId_t cid, Params& params) :
 
     pattern_params = new Params();
     // packetDestGen = static_cast<TargetGenerator*>(loadSubComponent(pattern, this, params));
-    pattern_params->insert(params.find_prefix_params("pattern"));
+    pattern_params->insert(params.get_scoped_params("pattern"));
     pattern_params->insert("pattern_gen",pattern);
 
     UnitAlgebra warmup_time_ua = params.find<UnitAlgebra>("warmup_time","5us");
@@ -211,7 +211,6 @@ OfferedLoad::init(unsigned int phase) {
     if ( id == -1 && link_if->isNetworkInitialized() ) {
         id = link_if->getEndpointID();
         std::string pattern = pattern_params->find<std::string>("pattern_gen");
-        // packetDestGen = static_cast<TargetGenerator*>(loadSubComponent(pattern, this, *pattern_params));
         packetDestGen = loadAnonymousSubComponent<TargetGenerator>(pattern, "pattern_gen", 0, ComponentInfo::SHARE_NONE, *pattern_params, id, num_peers);
         delete pattern_params;
     }
@@ -324,13 +323,9 @@ OfferedLoad::output_timing(Event* ev)
 
 void
 OfferedLoad::progress_messages(SimTime_t current_time) {
-    // TraceFunction trace(CALL_INFO);
     while ( (next_time <= current_time) && link_if->spaceToSend(0,packet_size) ) {
-        // trace.getOutput().output("loop start: %p, %p\n",packetDestGen, link_if);
         offered_load_event* ev = new offered_load_event(next_time);
-        // trace.getOutput().output("  loop middle 1\n");
         SimpleNetwork::Request* req = new SimpleNetwork::Request(packetDestGen->getNextValue(), id, packet_size, true, true, ev);
-        // trace.getOutput().output("  loop middle 2\n");
         link_if->send(req,0);
 
         next_time += send_interval;

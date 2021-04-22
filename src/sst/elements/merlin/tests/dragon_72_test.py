@@ -16,7 +16,7 @@ from sst.merlin import *
 
 if __name__ == "__main__":
 
-    topo = topoDragonFly2()
+    topo = topoDragonFly()
     endPoint = TestEndPoint()
 
 

@@ -25,6 +25,7 @@
 #include <sst/core/timeConverter.h>
 
 #include <sst/core/statapi/stataccumulator.h>
+#include <sst/core/shared/sharedArray.h>
 
 #include <queue>
 
@@ -133,6 +134,8 @@ private:
     Statistic<uint64_t>** xbar_stalls;
 
     Output& output;
+
+    Shared::SharedArray<int> shared_array;
 
 public:
     hr_router(ComponentId_t cid, Params& params);

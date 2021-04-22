@@ -85,7 +85,7 @@ public:
 
     int getNextValue(void) {
         // TraceFunction trace(CALL_INFO);
-        return (int)dist->getNextDouble() + min - 1;
+        return (int)dist->getNextDouble() + min;
     }
 
     void seed(uint32_t val) {

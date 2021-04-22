@@ -19,6 +19,8 @@
 #ifndef COMPONENTS_MERLIN_TOPOLOGY_DRAGONFLY_H
 #define COMPONENTS_MERLIN_TOPOLOGY_DRAGONFLY_H
 
+#include <algorithm>
+
 #include <sst/core/event.h>
 #include <sst/core/link.h>
 #include <sst/core/params.h>
@@ -35,7 +37,26 @@ namespace Merlin {
 
 class topo_dragonfly_event;
 
-struct RouterPortPair {
+
+/* Assumed connectivity of each router:
+ * ports [0, p-1]:      Hosts
+ * ports [p, p+a-2]:    Intra-group
+ * ports [p+a-1, k-1]:  Inter-group
+ */
+
+struct dgnflyParams {
+    uint32_t p;  /* # of hosts / router */
+    uint32_t a;  /* # of routers / group */
+    uint32_t k;  /* Router Radix */
+    uint32_t h;  /* # of ports / router to connect to other groups */
+    uint32_t g;  /* # of Groups */
+    uint32_t n;  /* # of links between groups in a pair */
+};
+
+enum global_route_mode_t { ABSOLUTE, RELATIVE };
+
+
+struct RouterPortPair : public SST::Core::Serialization::serializable {
     uint16_t router;
     uint16_t port;
 
@@ -44,26 +65,112 @@ struct RouterPortPair {
         port(port)
         {}
 
-    RouterPortPair() {}
+    RouterPortPair() :
+        router(0),
+        port(0)
+        {}
+
+    bool operator==(const RouterPortPair& rhs) {
+        if ( router != rhs.router || port != rhs.port ) return false;
+        return true;
+    }
+
+    bool operator!=(const RouterPortPair& rhs) {
+        if ( router == rhs.router && port == rhs.port ) return false;
+        return true;
+    }
+
+    void serialize_order(SST::Core::Serialization::serializer &ser)  override {
+        ser & router;
+        ser & port;
+    }
+
+private:
+    ImplementSerializable(SST::Merlin::RouterPortPair)
+
 };
+
+
+// Class to parse the failed link format.  Designed to be used with
+// Paras::find_array<FailedLink>().
+struct FailedLink {
+    uint16_t low_group;
+    uint16_t high_group;
+    uint16_t slice;
+
+    // Format for string is group1:group2:slice
+    FailedLink(const std::string& format) {
+        size_t start = 0;
+
+        size_t index = format.find_first_of(":");
+        uint16_t value1 = SST::Core::from_string<uint16_t>(format.substr(0,index));
+        start = index + 1;
+
+        index = format.find_first_of(":",start);
+        uint16_t value2 = SST::Core::from_string<uint16_t>(format.substr(start,index-start));
+        start = index + 1;
+
+        low_group = value1 < value2 ? value1 : value2;
+        high_group = value1 < value2 ? value2 : value1;
+
+        slice = SST::Core::from_string<uint16_t>(format.substr(start,std::string::npos));
+    }
+};
+
+
 
 class RouteToGroup {
 private:
-    const RouterPortPair* data;
-    SharedRegion* region;
-    size_t groups;
-    size_t routes;
-
+    Shared::SharedArray<RouterPortPair> data;
+    //const RouterPortPair* data;
+    Shared::SharedArray<bool> failed_links;
+    // const uint8_t* link_counts;
+    Shared::SharedArray<uint8_t> link_counts;
+    size_t groups;  // Number of groups
+    size_t routers; // Number of routers per groupt
+    size_t slices;  // number of links between each pair of groups
+    size_t links;   // number global links per router
+    int gid;        // group id
+    int global_start;  // start of global ports
+    global_route_mode_t mode;   // routing mode
+    bool consider_failed_links; // whether or not we are simulating failed links
 
 public:
     RouteToGroup() {}
 
-    void init(SharedRegion* sr, size_t g, size_t r);
+    // void init(SharedRegion* sr, size_t g, size_t r);
+    void init_write(const std::string& basename, int group_id, global_route_mode_t route_mode,
+                    const dgnflyParams& params, const std::vector<int64_t>& global_link_map,
+                    bool config_failed_links, const std::vector<FailedLink>& failed_links);
 
-    const RouterPortPair& getRouterPortPair(int group, int route_number);
+    void init(const std::string& basename, int group_id, global_route_mode_t route_mode,
+              const dgnflyParams& params, bool config_failed_links);
 
-    void setRouterPortPair(int group, int route_number, const RouterPortPair& pair);
+    const RouterPortPair& getRouterPortPair(int group, int route_number) const;
+    const RouterPortPair& getRouterPortPairForGroup(uint32_t src_group, uint32_t dest_group, uint32_t slice) const;
+
+    // const RouterPortPair& getRouterPortPair(int src_group, int dest_group, int route_number);
+    // void setRouterPortPair(int group, int route_number, const RouterPortPair& pair);
+
+    int getValiantGroup(int dest_group, RNG::SSTRandom* rng) const;
+
+    inline uint8_t getLinkCount(int src_group, int dest_group) const {
+        return link_counts[src_group * groups + dest_group];
+    }
+
+    inline bool isFailedPort(const RouterPortPair& rp ) const {
+        return isFailedPortForGroup(gid,rp);
+    }
+
+    inline bool isFailedPortForGroup(uint32_t src_group, const RouterPortPair& rp ) const {
+        if ( !consider_failed_links ) return false;
+        // If the SharedArray is ready yet, then we are still in
+        // construct phase and just return false for now.
+        if ( failed_links.size() == 0 ) return false;
+        return failed_links[(src_group * routers * links) + (rp.router * links) + rp.port - global_start];
+    }
 };
+
 
 
 class topo_dragonfly: public Topology {
@@ -98,30 +205,20 @@ public:
         {"adaptive_threshold",    "Threshold to use when make adaptive routing decisions.", "2.0"},
         {"global_link_map",       "Array specifying connectivity of global links in each dragonfly group."},
         {"global_route_mode",     "Mode for intepreting global link map [absolute (default) | relative].","absolute"},
+        {"config_failed_links",   "Controls whether or not failed links are considered","False"},
+        {"failed_links",          "List of global links to mark as failed.  Only needs to be passed to router 0. Format is \"group1:group2:slice\"",""},
     )
-
-    /* Assumed connectivity of each router:
-     * ports [0, p-1]:      Hosts
-     * ports [p, p+a-2]:    Intra-group
-     * ports [p+a-1, k-1]:  Inter-group
-     */
-
-    struct dgnflyParams {
-        uint32_t p;  /* # of hosts / router */
-        uint32_t a;  /* # of routers / group */
-        uint32_t k;  /* Router Radix */
-        uint32_t h;  /* # of ports / router to connect to other groups */
-        uint32_t g;  /* # of Groups */
-        uint32_t n;  /* # of links between groups in a pair */
-    };
 
     enum RouteAlgo {
         MINIMAL,
         VALIANT,
-        ADAPTIVE_LOCAL
+        ADAPTIVE_LOCAL,
+        UGAL,
+        MIN_A
     };
 
     RouteToGroup group_to_global_port;
+
 
     struct dgnflyParams params;
     double adaptive_threshold;
@@ -139,7 +236,6 @@ public:
     int num_vcs;
     int num_vns;
 
-    enum global_route_mode_t { ABSOLUTE, RELATIVE };
     global_route_mode_t global_route_mode;
 
 public:
@@ -179,13 +275,20 @@ public:
 
 private:
     void idToLocation(int id, dgnflyAddr *location);
-    uint32_t router_to_group(uint32_t group);
-    uint32_t port_for_router(uint32_t router);
-    uint32_t port_for_group(uint32_t group, uint32_t global_slice, int id = -1);
+    int32_t router_to_group(uint32_t group);
+    int32_t port_for_router(uint32_t router);
+    int32_t port_for_group(uint32_t group, uint32_t global_slice, int id = -1);
+    int32_t port_for_group_init(uint32_t group, uint32_t global_slice);
+    int32_t hops_to_router(uint32_t group, uint32_t router, uint32_t slice);
+
+    inline bool is_port_endpoint(uint32_t port) const { return ( port < params.p ); }
+    inline bool is_port_local_group(uint32_t port) const { return (port >= params.p && port < (params.p + params.a -1 )); }
+    inline bool is_port_global(uint32_t port) const { return ( port >= params.p + params.a - 1 ); }
 
     struct vn_info {
         int start_vc;
         int num_vcs;
+        int bias;
         RouteAlgo algorithm;
     };
 
@@ -193,6 +296,8 @@ private:
 
     void route_nonadaptive(int port, int vc, internal_router_event* ev);
     void route_adaptive_local(int port, int vc, internal_router_event* ev);
+    void route_ugal(int port, int vc, internal_router_event* ev);
+    void route_mina(int port, int vc, internal_router_event* ev);
 
 
 };

@@ -73,6 +73,9 @@ class testcase_merlin_Component(SSTTestCase):
     def test_merlin_dragon_128_platform_cm(self):
         self.merlin_test_template("dragon_128_platform_test_cm", True)
 
+    def test_merlin_dragon_128_fl(self):
+        self.merlin_test_template("dragon_128_test_fl")
+
          
 #####
 

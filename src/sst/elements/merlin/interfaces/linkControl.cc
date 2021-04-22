@@ -20,7 +20,6 @@
 
 #include <sst/core/simulation.h>
 #include <sst/core/timeLord.h>
-#include <sst/core/sharedRegion.h>
 
 #include "merlin.h"
 
@@ -35,7 +34,7 @@ LinkControl::LinkControl(ComponentId_t cid, Params &params, int vns) :
     req_vns(vns), used_vns(0), total_vns(0), vn_out_map(nullptr),
     vn_remap_out(nullptr), output_queues(nullptr), router_credits(nullptr),
     router_return_credits(nullptr), input_queues(nullptr),
-    id(-1), logical_nid(-1), nid_map_shm(nullptr), nid_map(nullptr), job_id(0),
+    id(-1), logical_nid(-1), use_nid_map(false), job_id(0),
     curr_out_vn(0), waiting(true), have_packets(false), start_block(0),
     idle_start(0), is_idle(true),
     receiveFunctor(nullptr), sendFunctor(nullptr),
@@ -110,8 +109,9 @@ LinkControl::LinkControl(ComponentId_t cid, Params &params, int vns) :
     // See if we need to set up a nid map
     bool found = false;
     job_id = params.find<int>("job_id",-1,found);
+    use_nid_map = params.find<bool>("use_nid_remap",false);
     if ( found ) {
-        if ( params.find<bool>("use_nid_remap",false) ) {
+        if ( use_nid_map ) {
             std::string nid_map_name = std::string("job_") + std::to_string(job_id) + "_nid_map";
 
             int job_size = params.find<int>("job_size",-1);
@@ -119,11 +119,12 @@ LinkControl::LinkControl(ComponentId_t cid, Params &params, int vns) :
                 merlin_abort.fatal(CALL_INFO,1,"LinkControl: job_size must be set\n");
             }
             logical_nid = params.find<nid_t>("logical_nid",-1);
-            if ( job_size == -1 ) {
+            if ( logical_nid == -1 ) {
                 merlin_abort.fatal(CALL_INFO,1,"LinkControl: logical_nid must be set\n");
             }
-            nid_map_shm = Simulation::getSharedRegionManager()->
-                getGlobalSharedRegion(nid_map_name, job_size * sizeof(nid_t), new SharedRegionMerger());
+            // nid_map_shm = Simulation::getSharedRegionManager()->
+            //     getGlobalSharedRegion(nid_map_name, job_size * sizeof(nid_t), new SharedRegionMerger());
+            nid_map.initialize(nid_map_name, job_size * sizeof(nid_t));
         }
     }
     else {
@@ -134,11 +135,11 @@ LinkControl::LinkControl(ComponentId_t cid, Params &params, int vns) :
                 merlin_abort.fatal(CALL_INFO,1,"LinkControl: job_size must be set if nid_map_name is set\n");
             }
             logical_nid = params.find<nid_t>("logical_nid",-1);
-            if ( job_size == -1 ) {
+            if ( logical_nid == -1 ) {
                 merlin_abort.fatal(CALL_INFO,1,"LinkControl: logical_nid must be set if nid_map_name is set\n");
             }
-            nid_map_shm = Simulation::getSharedRegionManager()->
-                getGlobalSharedRegion(nid_map_name, job_size * sizeof(nid_t), new SharedRegionMerger());
+            nid_map.initialize(nid_map_name, job_size * sizeof(nid_t));
+            use_nid_map = true;
         }
     }
 
@@ -162,10 +163,6 @@ LinkControl::~LinkControl()
     delete [] router_credits;
     delete [] router_return_credits;
     delete [] input_queues;
-
-    // Delete shared region manager for nid map if we're using one
-    if ( nid_map_shm ) delete nid_map_shm;
-
 }
 
 void LinkControl::setup()
@@ -235,10 +232,9 @@ void LinkControl::init(unsigned int phase)
         id = init_ev->int_value;
         if ( logical_nid == -1 ) logical_nid = id;
         // If we have a nid_map, fill in my mapping
-        if ( nid_map_shm ) {
-            nid_map_shm->modifyArray(logical_nid,id);
-            nid_map_shm->publish();
-            nid_map = nid_map_shm->getPtr<const nid_t*>();
+        if ( use_nid_map ) {
+            nid_map.write(logical_nid,id);
+            nid_map.publish();
         }
         delete ev;
 
@@ -425,7 +421,7 @@ bool LinkControl::send(SimpleNetwork::Request* req, int vn) {
     req->vn = vn;
 
     // Check to see if we need to do a nid translation
-    if ( nid_map ) req->dest = nid_map[req->dest];
+    if ( use_nid_map ) req->dest = nid_map[req->dest];
 
     // Get the output queue information for that vn
     output_queue_bundle_t& out_handle = *(vn_remap_out[vn]);
@@ -498,7 +494,7 @@ SST::Interfaces::SimpleNetwork::Request* LinkControl::recv(int vn) {
     }
 
     SST::Interfaces::SimpleNetwork::Request* ret = event->takeRequest();
-    if ( nid_map ) ret->dest = logical_nid;
+    if ( use_nid_map ) ret->dest = logical_nid;
     delete event;
 ;
     return ret;
@@ -506,7 +502,7 @@ SST::Interfaces::SimpleNetwork::Request* LinkControl::recv(int vn) {
 
 void LinkControl::sendUntimedData(SST::Interfaces::SimpleNetwork::Request* req)
 {
-    if ( nid_map ) {
+    if ( use_nid_map ) {
         req->dest = nid_map[req->dest];
     }
     rtr_link->sendUntimedData(new RtrEvent(req,id,0));

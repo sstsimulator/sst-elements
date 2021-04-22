@@ -25,7 +25,8 @@ class topoDragonFly(Topology):
         Topology.__init__(self)
         self._declareClassVariables(["link_latency","host_link_latency","global_link_map"])
         self._declareParams("main",["hosts_per_router","routers_per_group","intergroup_links","num_groups",
-                                    "algorithm","adaptive_threshold","global_routes"])
+                                    "algorithm","adaptive_threshold","global_routes","config_failed_links",
+                                    "failed_links"])
         self.global_routes = "absolute"
         self._subscribeToPlatformParamSet("topology")
 
