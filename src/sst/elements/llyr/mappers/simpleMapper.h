@@ -127,7 +127,7 @@ void SimpleMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType
         bool found  = 0;
         uint32_t appPE;
         for( auto it = mapping.begin(); it != mapping.end(); ++it) {
-            std::cout << " Looking " << vertexIterator->first << std::endl;
+//             std::cout << " Looking " << vertexIterator->first << std::endl;
             if( it->second == vertexIterator->first ) {
                 found = 1;
                 appPE = it->first;
@@ -181,6 +181,10 @@ void SimpleMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType
 
             srcNode = vertex_map_->at(currentNode).getType();
             dstNode = vertex_map_->at(destinationVertex).getType();
+
+//             std::cout << "\n";
+//             std::cout << "srcNode " << srcNode->getProcessorId() << "(" << srcNode->getOpBinding() << ")\n";
+//             std::cout << "dstNode " << dstNode->getProcessorId() << "(" << dstNode->getOpBinding() << ")" << std::endl;
 
             srcNode->bindOutputQueue(dstNode);
             dstNode->bindInputQueue(srcNode);

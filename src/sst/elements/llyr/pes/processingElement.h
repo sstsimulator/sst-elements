@@ -128,6 +128,21 @@ public:
         return -1;
     }
 
+    ProcessingElement* getProcInputQueueBinding(uint32_t id) const
+    {
+        auto it = input_queue_map_.begin();
+        for( ; it != input_queue_map_.end(); ++it ) {
+            if( it->first == id ) {
+                return it->second;
+            }
+        }
+
+        return NULL;
+    }
+
+    uint32_t getNumInputQueues() const { return input_queues_->size(); }
+    uint32_t getNumOutputQueues() const { return output_queues_->size(); }
+
     void     setOpBinding(opType binding) { op_binding_ = binding; }
     opType   getOpBinding() const { return op_binding_; }
 

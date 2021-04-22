@@ -14,7 +14,7 @@ df_0 = sst.Component("df_0", "llyr.LlyrDataflow")
 df_0.addParams({
     "verbose": 20,
     "clock" : str(tile_clk_mhz) + "GHz",
-    "mem_init"      : "mem.in",
+    "mem_init"      : "mem-fp-2.in",
     "application"   : "gemm.in",
     "hardware_graph": "hardware.cfg",
     "mapper"        : "llyr.mapper.simple"
@@ -26,8 +26,8 @@ df_l1cache.addParams({
     "cache_frequency" : str(tile_clk_mhz) + "GHz",
     "replacement_policy" : "lru",
     "coherence_protocol" : "MESI",
-    "associativity" : "8",
-    "cache_line_size" : "64",
+    "associativity" : "1",
+    "cache_line_size" : "16",
     "verbose" : 10,
     "debug" : 1,
     "debug_level" : 100,
@@ -48,7 +48,7 @@ backend = df_memory.setSubComponent("backend", "memHierarchy.simpleMem")
 backend.addParams({
     "access_time" : "4 ns",
     #"mem_size" : str(max_addr_gb) + "GiB",
-    "mem_size" : str(1024) + "B",
+    "mem_size" : str(16384) + "B",
 })
 
 # Enable SST Statistics Outputs for this simulation

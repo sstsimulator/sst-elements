@@ -145,14 +145,14 @@ public:
 private:
     LlyrData helperFunction( opType op, LlyrData arg0, LlyrData arg1, LlyrData arg2 )
     {
-        uint32_t select_signal = arg2.to_ullong();
+        uint32_t select_signal = arg0.to_ullong();
         if( op == SEL ) {
             switch( select_signal ) {
                 case 0 :
-                    return arg0;
+                    return arg1;
                     break;
                 case 1 :
-                    return arg1;
+                    return arg2;
                     break;
                 default :
                     output_->verbose(CALL_INFO, 0, 0, "Error: could not find corresponding op-%" PRIu32 ".\n", op_binding_);
