@@ -97,13 +97,12 @@ EXTRA_DIST = \
 	tests/torus_128_test.py \
 	tests/torus_5_trafficgen.py \
 	tests/torus_64_test.py \
+	tests/dragon_128_test_fl.py \
 	tests/dragon_128_platform_test.py \
-	tests/dragon_128_platform_test_fl.py \
 	tests/dragon_128_platform_test_cm.py \
 	tests/platform_file_dragon_128.py \
 	tests/refFiles/test_merlin_dragon_128_platform_test.out \
 	tests/refFiles/test_merlin_dragon_128_platform_test_cm.out \
-	tests/refFiles/test_merlin_dragon_128_platform_test_fl.out \
 	tests/refFiles/test_merlin_dragon_128_test.out \
 	tests/refFiles/test_merlin_dragon_128_test_fl.out \
 	tests/refFiles/test_merlin_dragon_72_test.out \
