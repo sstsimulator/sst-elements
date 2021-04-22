@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 #
-# Copyright 2009-2021 NTESS. Under the terms
+# Copyright 2009-2020 NTESS. Under the terms
 # of Contract DE-NA0003525 with NTESS, the U.S.
 # Government retains certain rights in this software.
 #
-# Copyright (c) 2009-2021, NTESS
+# Copyright (c) 2009-2020, NTESS
 # All rights reserved.
 #
 # This file is part of the SST software package. For license
@@ -26,7 +26,11 @@ if __name__ == "__main__":
     topo.routers_per_group = 8
     topo.intergroup_links = 4
     topo.num_groups = 4
-    topo.algorithm = ["minimal","ugal"]
+    topo.algorithm = ["ugal","ugal"]
+    #topo.algorithm = ["min-a","min-a"]
+
+    topo.config_failed_links = True
+    topo.failed_links = [ "2:3:0", "2:3:2", "2:3:1", "2:3:3" ]
     
     # Set up the routers
     router = hr_router()
@@ -39,9 +43,10 @@ if __name__ == "__main__":
     router.output_buf_size = "4kB"
     router.num_vns = 2
     router.xbar_arb = "merlin.xbar_arb_lru"
-
+    
     topo.router = router
     topo.link_latency = "20ns"
+
     
     ### set up the endpoint
     networkif = LinkControl()
@@ -74,10 +79,11 @@ if __name__ == "__main__":
     system.setTopology(topo)
     system.allocateNodes(ep,"linear")
     system.allocateNodes(ep2,"linear")
-
+    
     system.build()
     
-
+    # sst.enableStatisticsForComponentType("merlin.hr_router","send_bit_count")
+    
     # sst.setStatisticLoadLevel(9)
 
     # sst.setStatisticOutput("sst.statOutputCSV");

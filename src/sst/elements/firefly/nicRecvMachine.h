@@ -130,7 +130,13 @@ class RecvMachine {
 				m_dbg.debug(CALL_INFO,2,NIC_DBG_RECV_MACHINE, "packet from node=%d pid=%d for pid=%d %s %s PPI=0x%" PRIx64 "\n",
 						ev->getSrcNode(),ev->getSrcPid(),ev->getDestPid(),ev->isHdr() ? "hdr":"",ev->isTail() ? "tail":"",getPPI(ev));
 
-				if ( m_streamMap.find(iter->first) == m_streamMap.end() ) {
+				if ( ev->isCtrl() ) {
+					++m_numActiveStreams;
+					m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_MACHINE, "ctrl packet numActiveStreams=%d m_numPendingPkts=%d\n",m_numActiveStreams,m_numPendingPkts-1);
+					processPkt( ev );
+					--m_numPendingPkts;
+					iter->second.pop();
+				} else if ( m_streamMap.find(iter->first) == m_streamMap.end() ) {
 					if ( m_numActiveStreams < m_maxActiveStreams ) {
 						++m_numActiveStreams;
 						m_dbg.debug(CALL_INFO,1,NIC_DBG_RECV_MACHINE, "new stream numActiveStreams=%d m_numPendingPkts=%d\n",m_numActiveStreams,m_numPendingPkts-1);

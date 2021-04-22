@@ -1,6 +1,8 @@
 
 import sys,getopt,copy,pprint,random,os
 
+USING_EMBER_LOAD = True
+
 import sst
 from sst.merlin import *
 from loadInfo import *

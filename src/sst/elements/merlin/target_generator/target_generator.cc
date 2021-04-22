@@ -18,6 +18,7 @@
 
 #include <sst/elements/merlin/target_generator/uniform.h>
 #include <sst/elements/merlin/target_generator/bit_complement.h>
+#include <sst/elements/merlin/target_generator/shift.h>
 
 namespace SST {
 namespace Merlin {

@@ -28,7 +28,7 @@ class FireflyNetworkEvent : public Event {
 
   public:
 
-    FireflyNetworkEvent( ) : offset(0), bufLen(0), m_isHdr(false), m_isCtrl(false), pktOverhead(0) {
+    FireflyNetworkEvent( ) : offset(0), bufLen(0), m_isHdr(false), m_isTail(false), m_isCtrl(false), pktOverhead(0) {
         buf.reserve( 1000 );
         assert( 0 == buf.size() );
     }

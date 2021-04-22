@@ -46,7 +46,8 @@ class TestJob(Job):
 class OfferedLoadJob(Job):
     def __init__(self,job_id,size):
         Job.__init__(self,job_id,size)
-        self._declareParams("main",["offered_load","pattern","num_peers","message_size","link_bw","warmup_time","collect_time","drain_time"])
+        self._declareParams("main",["offered_load","num_peers","message_size","link_bw","warmup_time","collect_time","drain_time"])
+        self._declareClassVariables(["pattern"])
         self.num_peers = size
         self._lockVariable("num_peers")
 
@@ -61,7 +62,13 @@ class OfferedLoadJob(Job):
         id = self._nid_map[nID]
         nic.addParam("id", id)
 
-        return (networkif, portname)
+        # Add pattern generator
+        self.pattern.addAsAnonymous(nic, "pattern", "pattern.")
+
+        #  Add the linkcontrol
+        networkif, port_name = self.network_interface.build(nic,"networkIF",0,self.job_id,self.size,id,True)
+
+        return (networkif, port_name)
 
 
 class IncastJob(Job):

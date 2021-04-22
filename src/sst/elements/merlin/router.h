@@ -490,7 +490,7 @@ public:
     // Parameters are:  num_ports, id, num_vns
     SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Merlin::Topology, int, int, int)
 
-    enum PortState {R2R, R2N, UNCONNECTED};
+    enum PortState {R2R, R2N, UNCONNECTED, FAILED};
     Topology(ComponentId_t cid) : SubComponent(cid), output(Simulation::getSimulation()->getSimulationOutput()) {}
     virtual ~Topology() {}
 
