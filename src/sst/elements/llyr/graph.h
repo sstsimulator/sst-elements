@@ -161,8 +161,8 @@ public:
 
     void addEdge( uint32_t beginVertex, uint32_t endVertex );
     void addEdge( uint32_t beginVertex, uint32_t endVertex, float weightIn );
-    void addVertex( T type );
-    void addVertex( uint32_t vertexNum, T type );
+    uint32_t addVertex( T type );
+    uint32_t addVertex( uint32_t vertexNum, T type );
 
     Vertex<T>* getVertex( uint32_t vertexNum )
     {
@@ -172,6 +172,17 @@ public:
     void setVertex( uint32_t vertexNum, Vertex<T> &vertex )
     {
         vertex_map_->at(vertexNum) = vertex;
+    }
+
+    Vertex<T>* findVertex( T value )
+    {
+        for( auto it = vertex_map_->begin(); it != vertex_map_ ->end(); ++it ) {
+            if( it->second.getValue() == value ) {
+                return vertex_map_->second;
+            }
+        }
+
+        return NULL;
     }
 
     std::map< uint32_t, Vertex<T> >* getVertexMap( void ) const
@@ -277,23 +288,25 @@ void LlyrGraph<T>::addEdge( uint32_t beginVertex, uint32_t endVertex, float weig
 }
 
 template<class T>
-void LlyrGraph<T>::addVertex(T type)
+uint32_t LlyrGraph<T>::addVertex(T type)
 {
     Vertex<T> vertex;
     vertex.setValue(type);
 
-    std::cout << "add vertex:  " << vertices_ << "\n" << std::endl;
-    auto retVal = vertex_map_->emplace( vertices_, vertex );
+    uint32_t vertexNum = vertices_;
+    std::cout << "add vertex:  " << vertexNum << "\n" << std::endl;
+    auto retVal = vertex_map_->emplace( vertexNum, vertex );
     if( retVal.second == false )
     {
         ///TODO
     }
 
     vertices_ = vertices_ + 1;
+    return vertexNum;
 }
 
 template<class T>
-void LlyrGraph<T>::addVertex(uint32_t vertexNum, T type)
+uint32_t LlyrGraph<T>::addVertex(uint32_t vertexNum, T type)
 {
     Vertex<T> vertex;
     vertex.setValue(type);
@@ -306,6 +319,7 @@ void LlyrGraph<T>::addVertex(uint32_t vertexNum, T type)
     }
 
     vertices_ = vertices_ + 1;
+    return vertexNum;
 }
 
 
