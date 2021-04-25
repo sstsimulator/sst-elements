@@ -29,10 +29,20 @@
 namespace SST {
 namespace Llyr {
 
+struct EdgeProperties
+{
+    float weight_;
+};
+
+struct VertexProperties
+{
+
+};
+
 class Edge
 {
 private:
-    float weight_;
+    EdgeProperties* properties_;
     uint32_t destinationVertex_;
 
 protected:
@@ -40,25 +50,25 @@ protected:
 public:
     explicit Edge( uint32_t vertexIn )
     {
-        weight_ = 0.00;
+        properties_ = NULL;
         destinationVertex_ = vertexIn;
     }
-    explicit Edge( float weightIn, uint32_t vertexIn )
+    explicit Edge( EdgeProperties* properties, uint32_t vertexIn )
     {
-        weight_ = weightIn;
+        properties_ = properties;
         destinationVertex_ = vertexIn;
     }
     ~Edge();
 
-    bool setWeight( float weightIn )
+    bool setProperties( EdgeProperties* properties )
     {
-        weight_ = weightIn;
+        properties_ = properties;
         return true;
     }
 
-    float getWeight( void ) const
+    EdgeProperties* getProperties( void ) const
     {
-        return weight_;
+        return properties_;
     }
 
     uint32_t getDestination( void ) const
@@ -185,6 +195,17 @@ public:
         return NULL;
     }
 
+    Vertex<T>* operator []( T value )
+    {
+        for( auto it = vertex_map_->begin(); it != vertex_map_ ->end(); ++it ) {
+            if( it->second.getValue() == value ) {
+                return vertex_map_->second;
+            }
+        }
+
+        return NULL;
+    }
+
     std::map< uint32_t, Vertex<T> >* getVertexMap( void ) const
     {
         return vertex_map_;
@@ -281,7 +302,10 @@ template<class T>
 void LlyrGraph<T>::addEdge( uint32_t beginVertex, uint32_t endVertex, float weightIn )
 {
     std::cout << "add edge:  " << beginVertex << " --> " << endVertex << "\n" << std::endl;
-    Edge* edge = new Edge( weightIn, endVertex );
+
+    EdgeProperties* tempProp = new EdgeProperties;
+    tempProp->weight_ = weightIn;
+    Edge* edge = new Edge( tempProp, endVertex );
 
     vertex_map_->at(beginVertex).addEdge(edge);
     vertex_map_->at(endVertex).addInDegree();
