@@ -19,12 +19,11 @@
 #include <regex>
 #include <queue>
 #include <vector>
-#include <string>
-#include <fstream>
 #include <algorithm>
 
 #include "llyr.h"
 #include "llyrTypes.h"
+#include "parser/parser.h"
 #include "mappers/mapperList.h"
 
 namespace SST {
@@ -213,14 +212,14 @@ bool LlyrComponent::tick( Cycle_t )
         vertex_map_->at(currentNode).setVisited(1);
 
         //send one item from each output queue to destination
-        vertex_map_->at(currentNode).getType()->doSend();
+        vertex_map_->at(currentNode).getValue()->doSend();
 
         //send n responses from L/S unit to destination
         doLoadStoreOps(ls_entries_);
 
         //Let the PE decide whether or not it can do the compute
-        vertex_map_->at(currentNode).getType()->doCompute();
-        compute_complete = compute_complete | vertex_map_->at(currentNode).getType()->getPendingOp();
+        vertex_map_->at(currentNode).getValue()->doCompute();
+        compute_complete = compute_complete | vertex_map_->at(currentNode).getValue()->getPendingOp();
 
         //add the destination vertices from this node to the node queue
         for( auto it = adjacencyList->begin(); it != adjacencyList->end(); it++ ) {
@@ -299,7 +298,7 @@ void LlyrComponent::doLoadStoreOps( uint32_t numOps )
                 //pass the value to the appropriate PE
                 uint32_t srcPe = ls_queue_->lookupEntry( next ).first;
 
-                mappedGraph_.getVertex(srcPe)->getType()->doReceive(data);
+                mappedGraph_.getVertex(srcPe)->getValue()->doReceive(data);
 
                 ls_queue_->removeEntry( next );
             } else if( ls_queue_->getEntryReady(next) == 2 ){
@@ -375,40 +374,17 @@ void LlyrComponent::constructSoftwareGraph(std::string fileName)
     if( inputStream.is_open() ) {
         std::string thisLine;
         std::uint64_t position;
-        while( std::getline( inputStream, thisLine ) ) {
-            output_->verbose(CALL_INFO, 15, 0, "Parsing:  %s\n", thisLine.c_str());
 
-            //Ignore blank lines
-            if( std::all_of(thisLine.begin(), thisLine.end(), isspace) == 0 ) {
-                //First read all nodes
-                //If all nodes read, must mean we're at edge list
-                position = thisLine.find_first_of( "[" );
-                if( position !=  std::string::npos ) {
-                    uint32_t vertex = std::stoi( thisLine.substr( 0, position ) );
+        std::getline( inputStream, thisLine );
+//         position = thisLine.find( "Function Attrs" );
+        position = thisLine.find( "ModuleID" );
 
-                    std::uint64_t posA = thisLine.find_first_of( "=" ) + 1;
-                    std::uint64_t posB = thisLine.find_last_of( "]" );
-                    std::string op = thisLine.substr( posA, posB-posA );
-                    opType operation = getOptype(op);
-
-                    output_->verbose(CALL_INFO, 10, 0, "OpString:  %s\t\t%" PRIu32 "\n", op.c_str(), operation);
-                    applicationGraph_.addVertex( vertex, operation );
-                } else {
-
-                    std::regex delimiter( "\\--" );
-
-                    std::sregex_token_iterator iterA(thisLine.begin(), thisLine.end(), delimiter, -1);
-                    std::sregex_token_iterator iterB;
-                    std::vector<std::string> edges( iterA, iterB );
-
-                    edges[0].erase(remove_if(edges[0].begin(), edges[0].end(), isspace), edges[0].end());
-                    edges[1].erase(remove_if(edges[1].begin(), edges[1].end(), isspace), edges[1].end());
-
-                    output_->verbose(CALL_INFO, 10, 0, "Edges %s--%s\n", edges[0].c_str(), edges[1].c_str());
-
-                    applicationGraph_.addEdge( std::stoi(edges[0]), std::stoi(edges[1]) );
-                }
-            }
+        output_->verbose(CALL_INFO, 15, 0, "Parsing:  %s\n", thisLine.c_str());
+        std::cout << ::std::endl;
+        if( position !=  std::string::npos ) {
+            constructSoftwareGraphIR(inputStream);
+        } else {
+            constructSoftwareGraphApp(inputStream);
         }
 
         inputStream.close();
@@ -416,6 +392,63 @@ void LlyrComponent::constructSoftwareGraph(std::string fileName)
         output_->fatal(CALL_INFO, -1, "Error: Unable to open file\n");
         exit(0);
     }
+}
+
+void LlyrComponent::constructSoftwareGraphApp(std::ifstream& inputStream)
+{
+    std::string thisLine;
+    std::uint64_t position;
+
+    inputStream.seekg (0, inputStream.beg);
+    while( std::getline( inputStream, thisLine ) ) {
+        output_->verbose(CALL_INFO, 15, 0, "Parsing:  %s\n", thisLine.c_str());
+
+        //Ignore blank lines
+        if( std::all_of(thisLine.begin(), thisLine.end(), isspace) == 0 ) {
+            //First read all nodes
+            //If all nodes read, must mean we're at edge list
+            position = thisLine.find_first_of( "[" );
+            if( position !=  std::string::npos ) {
+                uint32_t vertex = std::stoi( thisLine.substr( 0, position ) );
+
+                std::uint64_t posA = thisLine.find_first_of( "=" ) + 1;
+                std::uint64_t posB = thisLine.find_last_of( "]" );
+                std::string op = thisLine.substr( posA, posB-posA );
+                opType operation = getOptype(op);
+
+                output_->verbose(CALL_INFO, 10, 0, "OpString:  %s\t\t%" PRIu32 "\n", op.c_str(), operation);
+                applicationGraph_.addVertex( vertex, operation );
+            } else {
+
+                std::regex delimiter( "\\--" );
+
+                std::sregex_token_iterator iterA(thisLine.begin(), thisLine.end(), delimiter, -1);
+                std::sregex_token_iterator iterB;
+                std::vector< std::string > edges( iterA, iterB );
+
+                edges[0].erase(remove_if(edges[0].begin(), edges[0].end(), isspace), edges[0].end());
+                edges[1].erase(remove_if(edges[1].begin(), edges[1].end(), isspace), edges[1].end());
+
+                output_->verbose(CALL_INFO, 10, 0, "Edges %s--%s\n", edges[0].c_str(), edges[1].c_str());
+
+                applicationGraph_.addEdge( std::stoi(edges[0]), std::stoi(edges[1]) );
+            }
+        }
+    }
+}
+
+void LlyrComponent::constructSoftwareGraphIR(std::ifstream& inputStream)
+{
+    std::string thisLine;
+    std::uint64_t position;
+
+    output_->verbose(CALL_INFO, 15, 0, "Sending to LLVM parser\n");
+    std::cout << ::std::endl;
+    inputStream.seekg (0, inputStream.beg);
+    std::string irString( (std::istreambuf_iterator< char >( inputStream )),
+                          (std::istreambuf_iterator< char >() ));
+    Parser parser(irString, output_);
+    parser.generateAppGraph("offload_test");
 
 }
 

@@ -73,7 +73,7 @@ template<class T>
 class Vertex
 {
 private:
-    T    type_;
+    T    value_;
     bool visited_;
     uint32_t numInEdges_;
 
@@ -92,19 +92,19 @@ public:
     Vertex( T typeIn )
     {
         adjacencyList_ = new std::vector< Edge* >;
-        type_ = typeIn;
+        value_ = typeIn;
         visited_ = 0;
         numInEdges_ = 0;
     }
 
-    void setType( T typeIn )
+    void setValue( T typeIn )
     {
-        type_ = typeIn;
+        value_ = typeIn;
     }
 
-    T getType( void ) const
+    T getValue( void ) const
     {
-        return type_;
+        return value_;
     }
 
     void setVisited( bool visitIn )
@@ -161,6 +161,7 @@ public:
 
     void addEdge( uint32_t beginVertex, uint32_t endVertex );
     void addEdge( uint32_t beginVertex, uint32_t endVertex, float weightIn );
+    void addVertex( T type );
     void addVertex( uint32_t vertexNum, T type );
 
     Vertex<T>* getVertex( uint32_t vertexNum )
@@ -222,7 +223,7 @@ void LlyrGraph<T>::printDot( std::string fileName )
     for(vertexIterator = vertex_map_->begin(); vertexIterator != vertex_map_->end(); ++vertexIterator)
     {
         outputFile << vertexIterator->first << "[label=\"";
-        outputFile << vertexIterator->second.getType();
+        outputFile << vertexIterator->second.getValue();
         outputFile << "\"];\n";
     }
 
@@ -276,13 +277,28 @@ void LlyrGraph<T>::addEdge( uint32_t beginVertex, uint32_t endVertex, float weig
 }
 
 template<class T>
+void LlyrGraph<T>::addVertex(T type)
+{
+    Vertex<T> vertex;
+    vertex.setValue(type);
+
+    std::cout << "add vertex:  " << vertices_ << "\n" << std::endl;
+    auto retVal = vertex_map_->emplace( vertices_, vertex );
+    if( retVal.second == false )
+    {
+        ///TODO
+    }
+
+    vertices_ = vertices_ + 1;
+}
+
+template<class T>
 void LlyrGraph<T>::addVertex(uint32_t vertexNum, T type)
 {
-    std::cout << "add vertex:  " << vertexNum << "\n" << std::endl;
-
     Vertex<T> vertex;
-    vertex.setType(type);
+    vertex.setValue(type);
 
+    std::cout << "add vertex:  " << vertexNum << "\n" << std::endl;
     auto retVal = vertex_map_->emplace( vertexNum, vertex );
     if( retVal.second == false )
     {

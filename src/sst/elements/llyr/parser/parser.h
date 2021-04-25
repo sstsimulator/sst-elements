@@ -18,9 +18,69 @@
 
 #include <sst/core/sst_config.h>
 
+#include <vector>
+#include <string>
+#include <llvm/IR/BasicBlock.h>
+#include <llvm/IR/Instruction.h>
+
+#include "graph.h"
+#include "llyrTypes.h"
+#include "pes/peList.h"
+
 namespace SST {
 namespace Llyr {
 
+struct alignas(double) CDFGVertex
+{
+   llvm::Instruction*  instruction_;
+   std::string         valueName_;
+   int64_t             intConst_;
+   float               floatConst_;
+   double              doubleConst_;
+   std::string         instructionName_;
+};
+
+typedef LlyrGraph< CDFGVertex* > CDFG;
+
+class Parser
+{
+public:
+    Parser(std::string offloadString, SST::Output* output) :
+                    output_(output), offloadString_(offloadString)
+    {
+
+        defNode_ = new std::map< llvm::BasicBlock*, std::map< CDFGVertex*, std::vector< llvm::Instruction* >* >* >;
+        useNode_ = new std::map< llvm::BasicBlock*, std::map< CDFGVertex*, std::vector< llvm::Instruction* >* >* >;
+
+        flowGraph_ = new std::map< llvm::BasicBlock*, CDFG* >;
+        bbGraph_   = new LlyrGraph< llvm::BasicBlock* >;
+    }
+
+    ~Parser() {};
+
+    void generateAppGraph(std::string functionName);
+    LlyrGraph< opType > getApplicationGraph() { return applicationGraph_; };
+
+protected:
+
+private:
+    SST::Output* output_;
+    std::string offloadString_;
+    std::string offloadTarget_;
+
+    LlyrGraph< opType > applicationGraph_;
+    LlyrGraph< llvm::BasicBlock* >* bbGraph_;
+    std::map< llvm::BasicBlock*, CDFG* >* flowGraph_;
+
+   std::map< llvm::BasicBlock*, std::vector< CDFGVertex* > >* vertexList_;
+   std::map< llvm::Instruction*, CDFGVertex* >* instructionMap_;
+
+   std::map< llvm::BasicBlock*, std::map< CDFGVertex*, std::vector< llvm::Instruction* >* >* >* defNode_;
+   std::map< llvm::BasicBlock*, std::map< CDFGVertex*, std::vector< llvm::Instruction* >* >* >* useNode_;
+
+    void generatebBasicBlockGraph(llvm::Function* func);
+    void doTheseThings(llvm::Function* func);
+};
 
 } // namespace LLyr
 } // namespace SST

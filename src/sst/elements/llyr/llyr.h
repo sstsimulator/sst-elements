@@ -21,10 +21,14 @@
 #include <sst/core/component.h>
 #include <sst/core/interfaces/simpleMem.h>
 
+#include <string>
+#include <fstream>
+
 #include "graph.h"
 #include "lsQueue.h"
-#include "mappers/llyrMapper.h"
+#include "llyrTypes.h"
 #include "pes/peList.h"
+#include "mappers/llyrMapper.h"
 
 using namespace SST::Interfaces;
 
@@ -116,6 +120,8 @@ private:
 
     void constructHardwareGraph( std::string fileName );
     void constructSoftwareGraph( std::string fileName );
+    void constructSoftwareGraphIR( std::ifstream& inputStream );
+    void constructSoftwareGraphApp( std::ifstream& inputStream );
     std::vector< uint64_t >* constructMemory( std::string fileName );
     std::string memFileName_;
 
