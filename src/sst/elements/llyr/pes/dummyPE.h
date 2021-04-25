@@ -36,9 +36,9 @@ public:
         output_queues_ = new std::vector< std::queue< LlyrData >* >;
     }
 
-    virtual bool doSend() {};
-    virtual bool doReceive(LlyrData data) {};
-    virtual bool doCompute() {};
+    virtual bool doSend() { return 0; };
+    virtual bool doReceive(LlyrData data) { return 0; };
+    virtual bool doCompute() { return 0; };
 
     //TODO for testing only
     virtual void fakeInit() {};

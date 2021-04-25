@@ -84,7 +84,7 @@ void SimpleMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType
         nodeQueue.pop();
 
         app_vertex_map_->at(currentAppNode).setVisited(1);
-        addNode( app_vertex_map_->at(currentAppNode).getType(), newNodeNum, graphOut, llyr_config );
+        addNode( app_vertex_map_->at(currentAppNode).getValue(), newNodeNum, graphOut, llyr_config );
 
         // create a record of the mapping (new, old)
         auto retVal = mapping.emplace( currentAppNode, newNodeNum );
@@ -179,8 +179,8 @@ void SimpleMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType
         for( auto it = adjacencyList->begin(); it != adjacencyList->end(); it++ ) {
             uint32_t destinationVertex = (*it)->getDestination();
 
-            srcNode = vertex_map_->at(currentNode).getType();
-            dstNode = vertex_map_->at(destinationVertex).getType();
+            srcNode = vertex_map_->at(currentNode).getValue();
+            dstNode = vertex_map_->at(destinationVertex).getValue();
 
 //             std::cout << "\n";
 //             std::cout << "srcNode " << srcNode->getProcessorId() << "(" << srcNode->getOpBinding() << ")\n";
@@ -196,7 +196,7 @@ void SimpleMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType
             }
         }
 
-        vertex_map_->at(currentNode).getType()->fakeInit();
+        vertex_map_->at(currentNode).getValue()->fakeInit();
         std::cout << std::endl;
     }
 

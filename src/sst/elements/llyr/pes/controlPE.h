@@ -67,7 +67,7 @@ public:
         return true;
     }
 
-    virtual bool doReceive(LlyrData data) {};
+    virtual bool doReceive(LlyrData data) { return 0; };
 
     virtual bool doCompute()
     {

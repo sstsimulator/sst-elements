@@ -2140,8 +2140,8 @@ graphOut.addEdge( 348, 408 );
         for( auto it = adjacencyList->begin(); it != adjacencyList->end(); it++ ) {
             uint32_t destinationVertx = (*it)->getDestination();
 
-            srcNode = vertex_map_->at(currentNode).getType();
-            dstNode = vertex_map_->at(destinationVertx).getType();
+            srcNode = vertex_map_->at(currentNode).getValue();
+            dstNode = vertex_map_->at(destinationVertx).getValue();
 
             srcNode->bindOutputQueue(dstNode);
             dstNode->bindInputQueue(srcNode);
@@ -2154,7 +2154,7 @@ graphOut.addEdge( 348, 408 );
             }
         }
 
-        vertex_map_->at(currentNode).getType()->fakeInit();
+        vertex_map_->at(currentNode).getValue()->fakeInit();
         std::cout << std::endl;
     }
 
