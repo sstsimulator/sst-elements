@@ -99,15 +99,20 @@ void Parser::generatebBasicBlockGraph(llvm::Function* func)
     }// basic block loop
 
     // bb_Graph should be complete here
+    std::cout << "...Basic Block Graph Done." << std::endl;
     bbGraph_->printDot("00_test.dot");
 }// generatebBasicBlockGraph
 
 
 void Parser::doTheseThings(llvm::Function* func)
 {
-    std::cout << "Generating Other Graph..." << std::endl;
+    std::cout << "\n\nGenerating Other Graph..." << std::endl;
+    CDFGVertex* entryVertex;
+    CDFGVertex* outputVertex;
+    CDFGVertex* inputVertex;
     instructionMap_ = new std::map< llvm::Instruction*, CDFGVertex* >;
 
+    uint32_t tempOpcode;
     for( auto blockIter = func->getBasicBlockList().begin(), blockEnd = func->getBasicBlockList().end(); blockIter != blockEnd; ++blockIter ) {
         (*flowGraph_)[&*blockIter] = new CDFG;
         CDFG &g = *((*flowGraph_)[&*blockIter]);
@@ -115,10 +120,78 @@ void Parser::doTheseThings(llvm::Function* func)
         (*useNode_)[&*blockIter] = new std::map< CDFGVertex*, std::vector< llvm::Instruction* >* >;
         (*defNode_)[&*blockIter] = new std::map< CDFGVertex*, std::vector< llvm::Instruction* >* >;
 
+        llvm::errs() << "\t+++Basic Block Name(" << &*blockIter << "): ";
+        llvm::errs().write_escaped(blockIter->getName()) << '\n';
 
+        for( auto instructionIter = blockIter->begin(), instructionEnd = blockIter->end(); instructionIter != instructionEnd; ++instructionIter ) {
+            tempOpcode = instructionIter->getOpcode();
+
+            llvm::errs() << "\t\t**(" << &*instructionIter << ")  " << *instructionIter   << "  --  ";
+            llvm::errs() << "Opcode Name:  ";
+            llvm::errs().write_escaped(instructionIter->getName()) << "  ";
+            llvm::errs().write_escaped(std::to_string(instructionIter->getOpcode())) << "\n";
+
+            CDFGVertex* outputVertex = new CDFGVertex;
+            std::string tutu;
+            llvm::raw_string_ostream rso(tutu);
+            instructionIter->print(rso);
+            outputVertex->instructionName_ = rso.str();
+            outputVertex->instruction_ = &*instructionIter;
+            outputVertex->intConst_ = 0x00;
+            outputVertex->floatConst_ = 0x00;
+            outputVertex->doubleConst_ = 0x00;
+
+            uint32_t vertexID = g.addVertex(outputVertex);
+
+            (*vertexList_)[&*blockIter].push_back(outputVertex);
+
+            if( g.numVertices() == 1 )
+                entryVertex = outputVertex;
+
+            instructionMap_->insert( std::pair< llvm::Instruction*, CDFGVertex* >(&*instructionIter, outputVertex) );
+
+            llvm::errs() << "-------------------------------------------- Users List --------------------------------------------\n";
+            for( llvm::User *U : instructionIter->users() )
+            {
+                if( llvm::Instruction *Inst = llvm::dyn_cast<llvm::Instruction>(U) )
+                {
+                    llvm::errs() << *instructionIter << " is used in instruction:\t";
+                    llvm::errs() << "(" << &*Inst << ") " << *Inst << "\n";
+                }
+
+            }
+            llvm::errs() << "----------------------------------------------------------------------------------------------------\n";
+
+            //determine operation
+            if( tempOpcode == llvm::Instruction::Alloca ) {                                     // BEGIN Allocate
+
+                std::vector< llvm::Instruction* > *tempUseVector = new std::vector< llvm::Instruction* >;
+                std::vector< llvm::Instruction* > *tempDefVector = new std::vector< llvm::Instruction* >;
+
+                // create the node/use entries (this should be empty)
+                (*useNode_)[&*blockIter]->insert( std::pair< CDFGVertex*, std::vector< llvm::Instruction* >* >(outputVertex, tempUseVector) );
+
+                //create the node/def entries
+                tempDefVector->push_back(&*instructionIter);
+                (*defNode_)[&*blockIter]->insert( std::pair< CDFGVertex*, std::vector< llvm::Instruction* >* >(outputVertex, tempDefVector) );
+
+                for( auto nodeUseEntry = (*useNode_)[&*blockIter]->at(outputVertex)->begin(); nodeUseEntry != (*useNode_)[&*blockIter]->at(outputVertex)->end(); nodeUseEntry++ ) {
+                    CDFGVertex* tempVal = g.getVertex(vertexID)->getValue();
+                    llvm::errs() << "Node-Use Entry (" << tempVal->instruction_ << "):  " << *nodeUseEntry << "\n";
+                }
+
+                for( auto nodeDefEntry = (*defNode_)[&*blockIter]->at(outputVertex)->begin(); nodeDefEntry != (*defNode_)[&*blockIter]->at(outputVertex)->end(); nodeDefEntry++ ) {
+                    CDFGVertex* tempVal = g.getVertex(vertexID)->getValue();
+                    llvm::errs() << "Node-Def Entry (" << tempVal->instruction_ << "):  " << *nodeDefEntry << "\n";
+                }
+            }// END Allocate
+
+        }
     }
 
-
+    // should be complete here
+    std::cout << "...Other Graph Done." << std::endl;
+//     bbGraph_->printDot("00_test.dot");
 }// doTheseThings
 
 } // namespace llyr

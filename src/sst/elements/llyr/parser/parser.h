@@ -48,6 +48,7 @@ public:
     Parser(std::string offloadString, SST::Output* output) :
                     output_(output), offloadString_(offloadString)
     {
+        vertexList_ = new std::map< llvm::BasicBlock*, std::vector< CDFGVertex* > >;
 
         defNode_ = new std::map< llvm::BasicBlock*, std::map< CDFGVertex*, std::vector< llvm::Instruction* >* >* >;
         useNode_ = new std::map< llvm::BasicBlock*, std::map< CDFGVertex*, std::vector< llvm::Instruction* >* >* >;
@@ -72,11 +73,11 @@ private:
     LlyrGraph< llvm::BasicBlock* >* bbGraph_;
     std::map< llvm::BasicBlock*, CDFG* >* flowGraph_;
 
-   std::map< llvm::BasicBlock*, std::vector< CDFGVertex* > >* vertexList_;
-   std::map< llvm::Instruction*, CDFGVertex* >* instructionMap_;
+    std::map< llvm::BasicBlock*, std::vector< CDFGVertex* > >* vertexList_;
+    std::map< llvm::Instruction*, CDFGVertex* >* instructionMap_;
 
-   std::map< llvm::BasicBlock*, std::map< CDFGVertex*, std::vector< llvm::Instruction* >* >* >* defNode_;
-   std::map< llvm::BasicBlock*, std::map< CDFGVertex*, std::vector< llvm::Instruction* >* >* >* useNode_;
+    std::map< llvm::BasicBlock*, std::map< CDFGVertex*, std::vector< llvm::Instruction* >* >* >* defNode_;
+    std::map< llvm::BasicBlock*, std::map< CDFGVertex*, std::vector< llvm::Instruction* >* >* >* useNode_;
 
     void generatebBasicBlockGraph(llvm::Function* func);
     void doTheseThings(llvm::Function* func);
