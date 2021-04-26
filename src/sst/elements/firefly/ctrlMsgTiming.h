@@ -101,28 +101,28 @@ MsgTiming::MsgTiming( ComponentId_t id, Params& params ) :
     m_sendAckDelay = params.find<int>( "sendAckDelay_ns", 0 );
 
     std::string tmpName = params.find<std::string>("txSetupMod");
-    Params tmpParams = params.find_prefix_params("txSetupModParams.");
+    Params tmpParams = params.get_scoped_params("txSetupModParams");
     m_txSetupMod = dynamic_cast<LatencyMod*>( loadModule( tmpName, tmpParams ) );
     assert( m_txSetupMod );
 
     tmpName = params.find<std::string>("rxSetupMod");
-    tmpParams = params.find_prefix_params("rxSetupModParams.");
+    tmpParams = params.get_scoped_params("rxSetupModParams");
     m_rxSetupMod = dynamic_cast<LatencyMod*>( loadModule( tmpName, tmpParams ) );
     assert( m_rxSetupMod );
 
     tmpName = params.find<std::string>("rxPostMod");
     if ( ! tmpName.empty() ) {
-        tmpParams = params.find_prefix_params("rxPostModParams.");
+        tmpParams = params.get_scoped_params("rxPostModParams");
         m_rxPostMod = dynamic_cast<LatencyMod*>( loadModule( tmpName, tmpParams ) );
     }
 
     tmpName = params.find<std::string>("txFiniMod","firefly.LatencyMod");
-    tmpParams = params.find_prefix_params("txFiniModParams.");
+    tmpParams = params.get_scoped_params("txFiniModParams");
     m_txFiniMod = dynamic_cast<LatencyMod*>( loadModule( tmpName, tmpParams ) );
     assert( m_txFiniMod );
 
     tmpName = params.find<std::string>("rxFiniMod","firefly.LatencyMod");
-    tmpParams = params.find_prefix_params("rxFiniModParams.");
+    tmpParams = params.get_scoped_params("rxFiniModParams");
     m_rxFiniMod = dynamic_cast<LatencyMod*>( loadModule( tmpName, tmpParams ) );
     assert( m_rxFiniMod );
 }

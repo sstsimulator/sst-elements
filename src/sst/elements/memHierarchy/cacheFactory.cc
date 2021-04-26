@@ -362,18 +362,18 @@ void Cache::configureLinks(Params &params) {
     std::string opalShMem = params.find<std::string>("shared_memory", "0");
     std::string opalSize = params.find<std::string>("local_memory_size", "0");
 
-    Params nicParams = params.find_prefix_params("memNIC." );
+    Params nicParams = params.get_scoped_params("memNIC" );
     nicParams.insert("node", opalNode);
     nicParams.insert("shared_memory", opalShMem);
     nicParams.insert("local_memory_size", opalSize);
 
-    Params memlink = params.find_prefix_params("memlink.");
+    Params memlink = params.get_scoped_params("memlink");
     memlink.insert("port", "low_network_0");
     memlink.insert("node", opalNode);
     memlink.insert("shared_memory", opalShMem);
     memlink.insert("local_memory_size", opalSize);
 
-    Params cpulink = params.find_prefix_params("cpulink.");
+    Params cpulink = params.get_scoped_params("cpulink");
     cpulink.insert("port", "high_network_0");
     cpulink.insert("node", opalNode);
     cpulink.insert("shared_memory", opalShMem);
@@ -596,7 +596,7 @@ void Cache::createListeners(Params &params) {
         std::string prefetcher = params.find<std::string>("prefetcher", "");
         Params prefParams;
         if (!prefetcher.empty()) {
-            prefParams = params.find_prefix_params("prefetcher.");
+            prefParams = params.get_scoped_params("prefetcher");
             listeners_.push_back(loadAnonymousSubComponent<CacheListener>(prefetcher, "prefetcher", 0, ComponentInfo::INSERT_STATS, prefParams));
             listeners_[0]->registerResponseCallback(new Event::Handler<Cache>(this, &Cache::handlePrefetchEvent));
         }

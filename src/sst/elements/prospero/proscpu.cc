@@ -39,7 +39,7 @@ ProsperoComponent::ProsperoComponent(ComponentId_t id, Params& params) :
 	    std::string traceModule = params.find<std::string>("reader", "prospero.ProsperoTextTraceReader");
 	    output->verbose(CALL_INFO, 1, 0, "Reader module is: %s\n", traceModule.c_str());
 
-	    Params readerParams = params.find_prefix_params("readerParams.");
+	    Params readerParams = params.get_scoped_params("readerParams");
 	    reader = loadAnonymousSubComponent<ProsperoTraceReader>(traceModule, "reader", 0, ComponentInfo::INSERT_STATS, readerParams, output);
 
 	}

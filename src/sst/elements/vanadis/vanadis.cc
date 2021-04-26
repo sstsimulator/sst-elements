@@ -201,7 +201,7 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
     	if (!memInterface) {
         	std::string memIFace = params.find<std::string>("meminterface", "memHierarchy.memInterface");
         	output.verbose(CALL_INFO, 1, 0, "Loading memory interface: %s ...\n", memIFace.c_str());
-        	Params interfaceParams = params.find_prefix_params("meminterface.");
+        	Params interfaceParams = params.get_scoped_params("meminterface");
         	interfaceParams.insert("port", "dcache_link");
 
         	memInterface = loadAnonymousSubComponent<Interfaces::SimpleMem>(memIFace, "memory", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS,
@@ -248,7 +248,7 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
 
 		uint64_t stack_start = 0;
 
-		Params app_params = params.find_prefix_params("app.");
+		Params app_params = params.get_scoped_params("app");
 
 		output->verbose(CALL_INFO, 8, 0, "Configuring core-0, thread-0 application info...\n");
 		thread_decoders[0]->configureApplicationLaunch( output, issue_isa_tables[0], register_files[0],

@@ -170,12 +170,12 @@ inline Memory::Memory( ComponentId_t id, Params& params ) : MemoryBase(id)
     m_matchDelay_ns = params.find<int>( "matchDelay_ns", 1 );
 
     std::string tmpName = params.find<std::string>("txMemcpyMod");
-    Params tmpParams = params.find_prefix_params("txMemcpyModParams.");
+    Params tmpParams = params.get_scoped_params("txMemcpyModParams");
     m_txMemcpyMod = dynamic_cast<LatencyMod*>( loadModule( tmpName, tmpParams ) );
     assert( m_txMemcpyMod );
 
     tmpName = params.find<std::string>("rxMemcpyMod");
-    tmpParams = params.find_prefix_params("rxMemcpyModParams.");
+    tmpParams = params.get_scoped_params("rxMemcpyModParams");
     m_rxMemcpyMod = dynamic_cast<LatencyMod*>( loadModule( tmpName, tmpParams ) );
     assert( m_rxMemcpyMod );
 
