@@ -86,6 +86,7 @@ private:
     T    value_;
     bool visited_;
     uint32_t numInEdges_;
+    uint32_t numOutEdges_;
 
     std::vector< Edge* >* adjacencyList_;
 
@@ -97,6 +98,7 @@ public:
         adjacencyList_ = new std::vector< Edge* >;
         visited_ = 0;
         numInEdges_ = 0;
+        numOutEdges_ = 0;
     }
 
     Vertex( T typeIn )
@@ -105,6 +107,12 @@ public:
         value_ = typeIn;
         visited_ = 0;
         numInEdges_ = 0;
+        numOutEdges_ = 0;
+    }
+
+    bool operator == (const Vertex &valueIn) const
+    {
+        return(this->value_ == valueIn.getValue());
     }
 
     void setValue( T typeIn )
@@ -147,6 +155,16 @@ public:
         return numInEdges_;
     }
 
+    void addOutDegree()
+    {
+        ++numOutEdges_;
+    }
+
+    uint32_t getOutDegree() const
+    {
+        return numOutEdges_;
+    }
+
 };
 
 template<class T>
@@ -184,26 +202,15 @@ public:
         vertex_map_->at(vertexNum) = vertex;
     }
 
-    Vertex<T>* findVertex( T value )
+    uint32_t operator []( Vertex<T> value )
     {
         for( auto it = vertex_map_->begin(); it != vertex_map_ ->end(); ++it ) {
-            if( it->second.getValue() == value ) {
-                return vertex_map_->second;
+            if( it->second == value ) {
+                return it->first;
             }
         }
 
-        return NULL;
-    }
-
-    Vertex<T>* operator []( T value )
-    {
-        for( auto it = vertex_map_->begin(); it != vertex_map_ ->end(); ++it ) {
-            if( it->second.getValue() == value ) {
-                return vertex_map_->second;
-            }
-        }
-
-        return NULL;
+        return 0;
     }
 
     std::map< uint32_t, Vertex<T> >* getVertexMap( void ) const
@@ -234,8 +241,7 @@ void LlyrGraph<T>::printGraph(void)
 
         std::vector< Edge* >* adjacencyList = vertexIterator->second.getAdjacencyList();
 
-        for( auto it = adjacencyList->begin(); it != adjacencyList->end(); ++it )
-        {
+        for( auto it = adjacencyList->begin(); it != adjacencyList->end(); ++it ) {
             std::cout << "-> " << (*it)->getDestination();
         }
         std::cout << std::endl;
@@ -252,19 +258,16 @@ void LlyrGraph<T>::printDot( std::string fileName )
     outputFile << "digraph G {" << "\n";
 
     typename std::map< uint32_t, Vertex<T> >::iterator vertexIterator;
-    for(vertexIterator = vertex_map_->begin(); vertexIterator != vertex_map_->end(); ++vertexIterator)
-    {
+    for(vertexIterator = vertex_map_->begin(); vertexIterator != vertex_map_->end(); ++vertexIterator) {
         outputFile << vertexIterator->first << "[label=\"";
         outputFile << vertexIterator->second.getValue();
         outputFile << "\"];\n";
     }
 
-    for(vertexIterator = vertex_map_->begin(); vertexIterator != vertex_map_->end(); ++vertexIterator)
-    {
+    for(vertexIterator = vertex_map_->begin(); vertexIterator != vertex_map_->end(); ++vertexIterator) {
         std::vector< Edge* >* adjacencyList = vertexIterator->second.getAdjacencyList();
 
-        for( auto it = adjacencyList->begin(); it != adjacencyList->end(); ++it )
-        {
+        for( auto it = adjacencyList->begin(); it != adjacencyList->end(); ++it ) {
             outputFile << vertexIterator->first;
             outputFile << "->";
             outputFile << (*it)->getDestination();
@@ -295,6 +298,7 @@ void LlyrGraph<T>::addEdge( uint32_t beginVertex, uint32_t endVertex )
     Edge* edge = new Edge( endVertex );
 
     vertex_map_->at(beginVertex).addEdge(edge);
+    vertex_map_->at(beginVertex).addOutDegree();
     vertex_map_->at(endVertex).addInDegree();
 }
 
@@ -306,6 +310,7 @@ void LlyrGraph<T>::addEdge( uint32_t beginVertex, uint32_t endVertex, EdgeProper
     Edge* edge = new Edge( properties, endVertex );
 
     vertex_map_->at(beginVertex).addEdge(edge);
+    vertex_map_->at(beginVertex).addOutDegree();
     vertex_map_->at(endVertex).addInDegree();
 }
 
@@ -318,8 +323,7 @@ uint32_t LlyrGraph<T>::addVertex(T type)
     uint32_t vertexNum = vertices_;
     std::cout << "add vertex:  " << vertexNum << "\n" << std::endl;
     auto retVal = vertex_map_->emplace( vertexNum, vertex );
-    if( retVal.second == false )
-    {
+    if( retVal.second == false ) {
         ///TODO
     }
 
@@ -335,8 +339,7 @@ uint32_t LlyrGraph<T>::addVertex(uint32_t vertexNum, T type)
 
     std::cout << "add vertex:  " << vertexNum << "\n" << std::endl;
     auto retVal = vertex_map_->emplace( vertexNum, vertex );
-    if( retVal.second == false )
-    {
+    if( retVal.second == false ) {
         ///TODO
     }
 
