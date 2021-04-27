@@ -25,6 +25,23 @@
 namespace SST {
 namespace Vanadis {
 
+inline void register_compare_values_print_msg(uint32_t line, const char* file, const char* func, SST::Output* output, int32_t left_value, int32_t right_value) {
+	output->verbose(line, file, func, 16, 0, "---> reg-val: %" PRId32 " reg-val: %" PRId32 "\n", left_value, right_value );
+}
+
+inline void register_compare_values_print_msg(uint64_t line, const char* file, const char* func, SST::Output* output, int64_t left_value, int64_t right_value) {
+	output->verbose(line, file, func, 16, 0, "---> reg-val: %" PRId64 " reg-val: %" PRId64 "\n", left_value, right_value );
+}
+
+inline void register_compare_values_print_msg(uint32_t line, const char* file, const char* func, SST::Output* output, uint32_t left_value, uint32_t right_value) {
+	output->verbose(line, file, func, 16, 0, "---> reg-val: %" PRIu32 " reg-val: %" PRIu32 "\n", left_value, right_value );
+}
+
+inline void register_compare_values_print_msg(uint64_t line, const char* file, const char* func, SST::Output* output, uint64_t left_value, uint64_t right_value) {
+	output->verbose(line, file, func, 16, 0, "---> reg-val: %" PRIu64 " reg-val: %" PRIu64 "\n", left_value, right_value );
+}
+
+
 template<typename T>
 bool registerCompareValues( VanadisRegisterCompareType compareType,
 	VanadisRegisterFile* regFile,
@@ -32,7 +49,7 @@ bool registerCompareValues( VanadisRegisterCompareType compareType,
 	SST::Output* output,
 	T left_value, T right_value ) {
 
-	output->verbose(CALL_INFO, 16, 0, "---> reg-val: %" PRId64 " reg-val: %" PRId64 "\n", left_value, right_value );
+    register_compare_values_print_msg(CALL_INFO, output, left_value, right_value );
 
 	bool compare_result = false;
 
