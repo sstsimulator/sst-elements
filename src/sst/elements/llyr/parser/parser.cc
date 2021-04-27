@@ -56,7 +56,8 @@ void Parser::generateAppGraph(std::string functionName)
         //check each located function to see if it's the offload target
         if( functionIter->getName().find(functionName) != std::string::npos ) {
             generatebBasicBlockGraph(&*functionIter);
-            doTheseThings(&*functionIter);
+            expandBBGraph(&*functionIter);
+            assembleGraph();
 
             break;
         }
@@ -112,13 +113,13 @@ void Parser::generatebBasicBlockGraph(llvm::Function* func)
 }// generatebBasicBlockGraph
 
 
-void Parser::doTheseThings(llvm::Function* func)
+void Parser::expandBBGraph(llvm::Function* func)
 {
     std::cout << "\n\nGenerating Other Graph..." << std::endl;
     CDFGVertex* entryVertex;
     CDFGVertex* outputVertex;
     CDFGVertex* inputVertex;
-    instructionMap_ = new std::map< llvm::Instruction*, CDFGVertex* >;
+    std::map< llvm::Instruction*, CDFGVertex* >* instructionMap_ = new std::map< llvm::Instruction*, CDFGVertex* >;
 
     uint32_t tempOpcode;
     for( auto blockIter = func->getBasicBlockList().begin(), blockEnd = func->getBasicBlockList().end(); blockIter != blockEnd; ++blockIter ) {
@@ -152,8 +153,9 @@ void Parser::doTheseThings(llvm::Function* func)
             uint32_t outputVertexID = g.addVertex(outputVertex);
             (*vertexList_)[&*blockIter].push_back(outputVertex);
 
-            if( g.numVertices() == 1 )
+            if( g.numVertices() == 1 ) {
                 entryVertex = outputVertex;
+            }
 
             instructionMap_->insert( std::pair< llvm::Instruction*, CDFGVertex* >(&*instructionIter, outputVertex) );
 
@@ -1193,7 +1195,7 @@ void Parser::doTheseThings(llvm::Function* func)
 
             #ifdef DEBUG
             llvm::errs() <<   "********************************************* Ins Map  *********************************************\n";
-            for( std::map< llvm::Instruction*,CDFGVertex* >::iterator it = instructionMap_->begin(); it != instructionMap_->end(); it++ )
+            for( std::map< llvm::Instruction*,CDFGVertex* >::iterator it = instructionMap_->begin(); it != instructionMap_->end(); ++it )
             {
                 llvm::errs() << it->first;
                 llvm::errs() << "  ";
@@ -1227,8 +1229,133 @@ void Parser::doTheseThings(llvm::Function* func)
 
     // should be complete here
     std::cout << "...Other Graph Done." << std::endl;
-//     bbGraph_->printDot("00_test.dot");
-}// doTheseThings
+
+}//END expandBBGraph
+
+void Parser::assembleGraph(void)
+{
+    // Need to assemble the actual graph -- insert edges for def-use chains
+    // This is done for each vertex in the BB graph and then merged
+    LlyrGraph< llvm::BasicBlock* > &bbg = *bbGraph_;
+
+    auto vertexMap = bbg.getVertexMap();
+    for(auto bbGraphIter = vertexMap->begin(); bbGraphIter != vertexMap->end(); ++bbGraphIter) {
+//         std::cout << bbGraphIter->first << "[label=\"";
+//         std::cout << bbGraphIter->second.getValue();
+//         std::cout << "\"];\n";
+        llvm::errs() << "\nConstructing graph for basic block " << bbGraphIter->second.getValue() << "...\n";
+
+        bool inserted;
+        llvm::BasicBlock* basicBlock = bbGraphIter->second.getValue();
+        CDFG &g = *((*flowGraph_)[basicBlock]);
+
+        #ifdef DEBUG
+        // Prints list of all instructions in the basic block before processing
+        for( auto revIt = (*vertexList_)[basicBlock].rbegin(); revIt != (*vertexList_)[basicBlock].rend(); ++revIt) {
+            llvm::errs() << "\t" << (*revIt)->instruction_  << "\n";
+        }
+        llvm::errs() << "\n\n";
+        #endif
+
+        for( auto revIt = (*vertexList_)[basicBlock].rbegin(); revIt != (*vertexList_)[basicBlock].rend(); ++revIt) {
+
+            #ifdef DEBUG
+            llvm::errs() << "\n\t" << (*revIt)->instruction_  << "\n";
+            #endif
+
+            // For each vertex, iterate through the instruction's use list -- insert an edge between the uses and the next def.
+            // Defs may be origin node, previous store, etc.
+            for( auto nodeUseEntry = (*useNode_)[basicBlock]->at(*revIt)->begin(); nodeUseEntry != (*useNode_)[basicBlock]->at(*revIt)->end(); ++nodeUseEntry ) {
+                #ifdef DEBUG
+                llvm::errs() << "\t\t" << *nodeUseEntry << "\n";
+                #endif
+
+                bool found = 0;
+
+                // Check for actual instructions used in this vertex
+                for( auto innerRevIt = revIt; innerRevIt != (*vertexList_)[basicBlock].rend(); ++innerRevIt ) {
+                    llvm::Instruction* innerInst = (*innerRevIt)->instruction_;
+                    llvm::errs() << "\t\t\t" << innerInst << "\n";
+                    if( innerRevIt == revIt || innerInst == 0x00 ) {
+                        continue;
+                    }
+
+                    if( innerInst == *nodeUseEntry ) {
+                        found = 1;
+
+                        #ifdef DEBUG
+                        llvm::errs() << "\t\t\t\tinstruction " << innerInst << "\n";
+                        #endif
+
+                        ParserEdgeProperties* edgeProp = new ParserEdgeProperties;
+                        edgeProp->value_ = 0x00;
+                        g.addEdge(g[*innerRevIt], g[*revIt], edgeProp);
+                    }
+
+                    // Check for operands in preceeding instructions used in this vertex
+                    for( auto operandIter = innerInst->op_begin(), operandEnd = innerInst->op_end(); operandIter != operandEnd; ++operandIter ) {
+                        if( llvm::isa<llvm::Instruction>(*operandIter) ) {
+                            // Don't care about RAR
+                            if( (*revIt)->instruction_->getOpcode() == llvm::Instruction::Load && innerInst->getOpcode() == llvm::Instruction::Load ) {
+                                break;
+                            }
+
+                            // Don't want to look at PHI instructions
+                            if( llvm::isa<llvm::PHINode>(*operandIter) ) {
+                                break;
+                            }
+
+                            if( *operandIter == *nodeUseEntry ) {
+                                found = 1;
+
+                                #ifdef DEBUG
+                                llvm::errs() << "\t\t\t\t(" << innerInst << ") operand " << *operandIter << "\n";
+                                #endif
+
+                                ParserEdgeProperties* edgeProp = new ParserEdgeProperties;
+                                edgeProp->value_ = 0x00;
+                                g.addEdge(g[*innerRevIt], g[*revIt], edgeProp);
+
+                                break;
+                            }
+                        }
+                    }
+
+                    if( found == 1 ) {
+                        break;
+                    }
+                }
+            }
+        }//END dep chain
+
+        // Finally, check for orphaned nodes
+        // Want to connect them with any previous node that is non-zero and has zero out-edges
+        llvm::errs() << "\nChecking for orphans...\n";
+        auto cdfgVertexMap = g.getVertexMap();
+        for(auto cdfgGraphIter = cdfgVertexMap->begin(); cdfgGraphIter != cdfgVertexMap->end(); ++cdfgGraphIter) {
+
+            llvm::Instruction* tempIns = cdfgGraphIter->second.getValue()->instruction_;
+            if( tempIns != 0x00 ) {
+                if( tempIns->getOpcode() != llvm::Instruction::Alloca ) {
+                    if( cdfgGraphIter->second.getInDegree() <= 0 && cdfgGraphIter->second.getOutDegree() <= 0 ) {
+                        for( auto revIt = (*vertexList_)[basicBlock].rbegin(); revIt != (*vertexList_)[basicBlock].rend(); ++revIt) {
+                            if( (*revIt)->instruction_ != 0x00 && g.getVertex(g[*revIt])->getOutDegree() <= 0 && (*revIt)->instruction_ != tempIns) {
+                                #ifdef DEBUG
+                                llvm::errs() << "@@@@@@@@@@@@@@@@@@@@@@@@@    " << (*revIt)->instruction_;
+                                llvm::errs() << "   to   " << tempIns << "\n";
+                                #endif
+
+                                ParserEdgeProperties* edgeProp = new ParserEdgeProperties;
+                                edgeProp->value_ = 0x00;
+                                g.addEdge(g[*revIt], cdfgGraphIter->first, edgeProp);
+                            }
+                        }
+                    }
+                }
+            }
+        }//END orphan check
+    }
+}//END assembleGraph
 
 } // namespace llyr
 } // namespace SST
