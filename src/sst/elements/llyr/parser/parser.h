@@ -16,10 +16,13 @@
 #ifndef _PARSER_H
 #define _PARSER_H
 
+#define DEBUG
+
 #include <sst/core/sst_config.h>
 
 #include <vector>
 #include <string>
+#include "llvm/IR/Value.h"
 #include <llvm/IR/BasicBlock.h>
 #include <llvm/IR/Instruction.h>
 
@@ -29,6 +32,12 @@
 
 namespace SST {
 namespace Llyr {
+
+struct alignas(double) ParserEdgeProperties : EdgeProperties
+{
+   llvm::Value*  value_;
+   int64_t const_;
+};
 
 struct alignas(double) CDFGVertex
 {
