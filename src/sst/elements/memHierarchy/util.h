@@ -104,14 +104,20 @@ inline bool fixupParam( SST::Params& params, const std::string oldKey, const std
 }
 
 inline void fixupParams( Params& params, const std::string oldKey, const std::string newKey ) {
-    Params tmp = params.find_prefix_params( oldKey );
+    // Params tmp = params.find_prefix_params( oldKey );
 
-    std::set<std::string> keys = tmp.getKeys();
+    // std::set<std::string> keys = tmp.getKeys();
+    // std::set<std::string>::iterator iter = keys.begin();
+
+    std::set<std::string> keys = params.getKeys();
     std::set<std::string>::iterator iter = keys.begin();
     for ( ; iter != keys.end(); ++iter ) {
-        std::string value = tmp.find<std::string>( (*iter) );
-        params.insert( newKey + (*iter), value );
-    //    params.erase( oldKey + (*iter) );
+        std::string prefix_key = iter->substr(0,oldKey.length());
+        if ( prefix_key == oldKey ) {
+            std::string value = params.find<std::string>( (*iter) );
+            params.insert( newKey + (iter->substr(oldKey.length())), value );
+            //    params.erase( oldKey + (*iter) );
+        }
     }
 }
 /*

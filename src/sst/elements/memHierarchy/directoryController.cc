@@ -172,7 +172,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
         fixupParam(params, "interleave_step", "memNIC.interleave_step");
         fixupParam(params, "min_packet_size", "memNIC.min_packet_size");
 
-        Params nicParams = params.find_prefix_params("memNIC.");
+        Params nicParams = params.get_scoped_params("memNIC");
 
         nicParams.insert("group", "3", false);
         int cl = nicParams.find<int>("group");
@@ -198,7 +198,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
         cpuLink->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
 
         if (isPortConnected("memory")) {
-            Params memParams = params.find_prefix_params("memlink.");
+            Params memParams = params.get_scoped_params("memlink");
             memParams.insert("port", "memory");
             memParams.insert("latency", "1ns");
             memParams.insert("addr_range_start", std::to_string(region.start), false);

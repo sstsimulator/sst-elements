@@ -125,7 +125,7 @@ void Sieve::createProfiler(const Params &params) {
     if (profiler.empty()) {
 	listener_ = 0;
     } else {
-	Params profilerParams = params.find_prefix_params("profiler." );
+	Params profilerParams = params.get_scoped_params("profiler" );
         listener_ = loadAnonymousSubComponent<CacheListener>(profiler, "profiler", 0, ComponentInfo::INSERT_STATS, profilerParams);
     }
 

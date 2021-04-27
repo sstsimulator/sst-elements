@@ -49,17 +49,17 @@ Hades::Hades( ComponentId_t id, Params& params ) :
         params.find<uint32_t>("verboseMask",0),
         Output::STDOUT );
 
-    Params tmpParams = params.find_prefix_params("ctrlMsg.");
+    Params tmpParams = params.get_scoped_params("ctrlMsg");
 
     m_proto = loadUserSubComponent<CtrlMsg::API>( "proto" );
 
-    Params funcParams = params.find_prefix_params("functionSM.");
+    Params funcParams = params.get_scoped_params("functionSM");
 
     m_numNodes = params.find<int>("numNodes",0);
 
     m_functionSM = loadAnonymousSubComponent<FunctionSM>( "firefly.functionSM","", 0, ComponentInfo::SHARE_NONE, funcParams, m_proto );
 
-    tmpParams = params.find_prefix_params("nicParams." );
+    tmpParams = params.get_scoped_params("nicParams" );
 
     std::string moduleName = params.find<std::string>("nicModule");
 
@@ -71,7 +71,7 @@ Hades::Hades( ComponentId_t id, Params& params ) :
 
     moduleName = params.find<std::string>("nodePerf", "firefly.SimpleNodePerf");
 
-    tmpParams = params.find_prefix_params("nodePerf." );
+    tmpParams = params.get_scoped_params("nodePerf" );
     m_nodePerf = dynamic_cast<NodePerf*>(loadModule(
                                         moduleName, tmpParams ) );
     if ( !m_nodePerf ) {
@@ -79,14 +79,14 @@ Hades::Hades( ComponentId_t id, Params& params ) :
                                         moduleName.c_str());
     }
 
-    Params dtldParams = params.find_prefix_params( "detailedCompute." );
+    Params dtldParams = params.get_scoped_params( "detailedCompute" );
     std::string dtldName =  dtldParams.find<std::string>( "name" );
 
     if ( ! dtldName.empty() ) {
         m_detailedCompute = loadUserSubComponent<Thornhill::DetailedCompute>("detailedCompute", ComponentInfo::SHARE_NONE);
     }
 
-    std::string memName = params.find_prefix_params( "memoryHeapLink." ).find<std::string>( "name" );
+    std::string memName = params.get_scoped_params( "memoryHeapLink" ).find<std::string>( "name" );
 
     if ( ! memName.empty() ) {
         m_memHeapLink = loadUserSubComponent<Thornhill::MemoryHeapLink>( "memoryHeap", ComponentInfo::SHARE_NONE );

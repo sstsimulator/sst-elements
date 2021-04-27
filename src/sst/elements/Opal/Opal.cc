@@ -59,15 +59,15 @@ Opal::Opal(SST::ComponentId_t id, SST::Params& params): Component(id) {
 	num_shared_mempools = params.find<uint32_t>("shared_mempools", 0);
 	std::cerr << getName().c_str() << "Number of Shared Memory Pools: "<< num_shared_mempools << endl;
 
-	Params sharedMemParams = params.find_prefix_params("shared_mem.");
+	Params sharedMemParams = params.get_scoped_params("shared_mem");
 	shared_mem_size = 0;
 
 	sharedMemoryInfo = new MemoryPrivateInfo*[num_shared_mempools];
 
 	for(uint32_t i = 0; i < num_shared_mempools; i++) {
 		memset(buffer, 0 , 256);
-		sprintf(buffer, "mempool%" PRIu32 ".", i);
-		Params memPoolParams = sharedMemParams.find_prefix_params(buffer);
+		sprintf(buffer, "mempool%" PRIu32 "", i);
+		Params memPoolParams = sharedMemParams.get_scoped_params(buffer);
 		sharedMemoryInfo[i] = new MemoryPrivateInfo(opalBase, i, memPoolParams);
 		std::cerr << getName().c_str() << "Configuring Shared " << buffer << std::endl;
 		shared_mem_size += memPoolParams.find<uint64_t>("size", 0);
@@ -80,8 +80,8 @@ Opal::Opal(SST::ComponentId_t id, SST::Params& params): Component(id) {
 	/*----------------------------------------------------------------------------------------*/
 	for(uint32_t i = 0; i < num_nodes; i++) {
 		memset(buffer, 0 , 256);
-		sprintf(buffer, "node%" PRIu32 ".", i);
-		Params nodePrivateParams = params.find_prefix_params(buffer);
+		sprintf(buffer, "node%" PRIu32 "", i);
+		Params nodePrivateParams = params.get_scoped_params(buffer);
 		nodeInfo[i] = new NodePrivateInfo(opalBase, i, nodePrivateParams);
 		for(uint32_t j=0; j<nodeInfo[i]->cores; j++) {
 			memset(buffer, 0 , 256);

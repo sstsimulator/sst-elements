@@ -24,7 +24,7 @@ EmberMessagePassingGenerator::EmberMessagePassingGenerator(
             ComponentId_t id, Params& params, std::string name ) :
     EmberGenerator(id, params, name )
 {
-    Params mapParams = params.find_prefix_params("rankmap.");
+    Params mapParams = params.get_scoped_params("rankmap");
     std::string rankMapModule = params.find<std::string>("rankmapper", "ember.LinearMap");
 
     //NetworkSim: each job has its own custom map, so pass jobId info

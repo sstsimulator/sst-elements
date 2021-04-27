@@ -99,11 +99,11 @@ void EmberMotifLog::logMotifEnd(const std::string& name, const int motifNum) {
 		FILE* logFile = logRecord->getFile();
 
 		const char* nameChar = name.c_str();
-		const char* endTimeChar = Simulation::getSimulation()->getElapsedSimTime().toStringBestSI().c_str();
+        std::string endTime = Simulation::getSimulation()->getElapsedSimTime().toStringBestSI();
         const char* startTimeChar = start_time.c_str();
 
         // File format:  job rank motifnum motif_name start_time end_time
-		fprintf(logFile, "%d %d %d %s %s %s\n", jobID, rank, motifNum, nameChar, startTimeChar, endTimeChar);
+		fprintf(logFile, "%d %d %d %s %s %s\n", jobID, rank, motifNum, nameChar, startTimeChar, endTime.c_str());
 		fflush(logFile);
 
 	}

@@ -173,7 +173,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
 			params.find<std::string>("corePortName","core"), getDelay_ns() ) );
     }
 
-	Params shmemParams = params.find_prefix_params( "shmem." );
+	Params shmemParams = params.get_scoped_params( "shmem" );
     m_shmem = new Shmem( *this, shmemParams, m_myNodeId, m_num_vNics, m_dbg, getDelay_ns(), getDelay_ns() );
 	size_t FAM_memSizeBytes = params.find<SST::UnitAlgebra>("FAM_memSize" ).getRoundedValue();
 	if ( FAM_memSizeBytes ) {
@@ -189,7 +189,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
 	}
 
     if ( params.find<int>( "useSimpleMemoryModel", 0 ) ) {
-        Params smmParams = params.find_prefix_params( "simpleMemoryModel." );
+        Params smmParams = params.get_scoped_params( "simpleMemoryModel" );
         smmParams.insert( "busLatency",  std::to_string(m_nic2host_lat_ns), false );
 
 		std::string useCache = smmParams.find<std::string>("useHostCache","yes");
@@ -245,7 +245,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
 		if ( m_memoryModel ) {
 			m_dbg.fatal(CALL_INFO,0,"can't use TrivialMemoryModel, memoryModel already configured\n" );
 		}
-        Params smmParams = params.find_prefix_params( "simpleMemoryModel." );
+        Params smmParams = params.get_scoped_params( "simpleMemoryModel" );
     	// m_memoryModel = new TrivialMemoryModel( this, smmParams );
     	m_memoryModel = loadAnonymousSubComponent<MemoryModel>(
             "firefly.TrivialMemory","", 0,
@@ -283,7 +283,7 @@ Nic::Nic(ComponentId_t id, Params &params) :
     m_arbitrateDMA = new ArbitrateDMA( *this, m_dbg, dmaBW,
                                     dmaContentionMult, 100000 );
 
-    Params dtldParams = params.find_prefix_params( "detailedCompute." );
+    Params dtldParams = params.get_scoped_params( "detailedCompute" );
     std::string dtldName =  dtldParams.find<std::string>( "name" );
 
     if ( ! params.find<int>( "useSimpleMemoryModel", 0 ) && ! dtldName.empty() ) {
