@@ -37,7 +37,7 @@ EmberGenerator::EmberGenerator( ComponentId_t id, Params& params, std::string na
 
     setVerbosePrefix();
 
-    Params distribParams = params.find_prefix_params("distribParams.");
+    Params distribParams = params.get_scoped_params("distribParams");
     std::string distribModule = params.find<std::string>("distribModule", "ember.ConstDistrib");
 
 	m_computeDistrib = dynamic_cast<EmberComputeDistribution*>( loadModule(distribModule, distribParams) );

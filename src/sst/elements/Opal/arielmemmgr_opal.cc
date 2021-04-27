@@ -49,7 +49,7 @@ MemoryManagerOpal::MemoryManagerOpal(ComponentId_t id, Params& params) :
             params.insert("memmgr.memorylevels", "1", true);
         }
         output->verbose(CALL_INFO, 1, 0, "Loading memory manager: %s\n", translatorstr.c_str());
-        Params translatorParams = params.find_prefix_params("memmgr.");
+        Params translatorParams = params.get_scoped_params("memmgr");
         temp_translator = loadAnonymousSubComponent<ArielMemoryManager>(translatorstr, "translator", 0, ComponentInfo::SHARE_STATS | ComponentInfo::INSERT_STATS, translatorParams);
         if (NULL == temp_translator)
             output->fatal(CALL_INFO, -1, "Failed to load memory manager: %s\n", translatorstr.c_str());

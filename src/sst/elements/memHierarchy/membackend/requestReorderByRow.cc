@@ -56,7 +56,7 @@ RequestReorderRow::RequestReorderRow(ComponentId_t id, Params &params) : SimpleM
     backend = loadUserSubComponent<SimpleMemBackend>("backend");
     if (!backend) {
         std::string backendName = params.find<std::string>("backend", "memHierarchy.simpleDRAM");
-        Params backendParams = params.find_prefix_params("backend.");
+        Params backendParams = params.get_scoped_params("backend");
         backendParams.insert("mem_size", params.find<std::string>("mem_size"));
         backend = loadAnonymousSubComponent<SimpleMemBackend>(backendName, "backend", 0, ComponentInfo::INSERT_STATS | ComponentInfo::SHARE_PORTS, backendParams);
     }

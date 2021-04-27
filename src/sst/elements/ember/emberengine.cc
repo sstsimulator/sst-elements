@@ -83,7 +83,7 @@ EmberEngine::EmberEngine(SST::ComponentId_t id, SST::Params& params) :
         params.insert("motif" + tmp.str() + ".rankmap.mapFile", params.find<string>("mapFile", "mapFile.txt"), true);
         //NetworkSim->end
 
-		motifParams[i] = params.find_prefix_params( "motif" + tmp.str() + "." );
+		motifParams[i] = params.get_scoped_params( "motif" + tmp.str() );
 	}
 
     registerAsPrimaryComponent();
@@ -119,7 +119,7 @@ EmberEngine::ApiMap EmberEngine::createApiMap( OS* os,
 {
     ApiMap tmp;
 
-    Params apiList = params.find_prefix_params( "api." );
+    Params apiList = params.get_scoped_params( "api" );
 
     int apiNum = 0;
     while ( 1 ) {
@@ -127,7 +127,7 @@ EmberEngine::ApiMap EmberEngine::createApiMap( OS* os,
 	    std::ostringstream numStr;
    	    numStr << apiNum++;
 
-        Params apiParams = apiList.find_prefix_params( numStr.str() + "." );
+        Params apiParams = apiList.get_scoped_params( numStr.str() );
         if ( apiParams.empty() ) {
             break;
         }
@@ -135,7 +135,7 @@ EmberEngine::ApiMap EmberEngine::createApiMap( OS* os,
         std::string moduleName = apiParams.find<std::string>( "module" );
         assert( ! moduleName.empty() );
 
-        Params modParams = params.find_prefix_params( moduleName + "." );
+        Params modParams = params.get_scoped_params( moduleName );
 
         output.verbose(CALL_INFO, 2, ENGINE_MASK, "moduleName=%s\n", moduleName.c_str());
 

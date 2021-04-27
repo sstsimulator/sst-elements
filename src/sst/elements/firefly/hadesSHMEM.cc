@@ -42,13 +42,13 @@ HadesSHMEM::HadesSHMEM(ComponentId_t id, Params& params) :
 	m_returnLat_ns = params.find<int>("returnLat_ns",30);
 	m_blockingReturnLat_ns = params.find<int>("blockingReturnLat_ns",300);
 
-	Params famMapperParams = params.find_prefix_params( "famNodeMapper." );
+	Params famMapperParams = params.get_scoped_params( "famNodeMapper" );
 	if ( famMapperParams.size() ) {
 		m_famNodeMapper = dynamic_cast<FamNodeMapper*>( loadModule( famMapperParams.find<std::string>("name"), famMapperParams ) );
 		m_famNodeMapper->setDbg( &m_dbg );
 	}
 
-	famMapperParams = params.find_prefix_params( "famAddrMapper." );
+	famMapperParams = params.get_scoped_params( "famAddrMapper" );
 	if ( famMapperParams.size() ) {
 		m_famAddrMapper = dynamic_cast<FamAddrMapper*>( loadModule( famMapperParams.find<std::string>("name"), famMapperParams ) );
 		m_famAddrMapper->setDbg( &m_dbg );

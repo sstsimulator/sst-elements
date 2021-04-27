@@ -107,7 +107,7 @@ void FunctionSM::setup( Info* info )
 
     for ( int i = 0; i < NumFunctions; i++ ) {
         std::string name = functionName( (FunctionEnum) i );
-        Params tmp = m_params.find_prefix_params( name + "." );
+        Params tmp = m_params.get_scoped_params( name );
         defaultParams.insert( "name", name, true );
         initFunction( info, (FunctionEnum) i,
                                         name, defaultParams, tmp );

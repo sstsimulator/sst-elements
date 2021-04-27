@@ -80,7 +80,7 @@ class RangeLatMod : public LatencyMod {
         printf("%s() op=%s base=%.3f\n", __func__, tmpStr.c_str(), base * 1000000000.0);
 #endif
 
-        Params range = params.find_prefix_params("range.");
+        Params range = params.get_scoped_params("range");
         range.enableVerify(false);
 
         std::set<std::string> keys = range.getKeys();
