@@ -101,13 +101,21 @@ public:
         numOutEdges_ = 0;
     }
 
-    Vertex( T typeIn )
+    Vertex( T typeIn ) : value_(typeIn)
     {
         adjacencyList_ = new std::vector< Edge* >;
-        value_ = typeIn;
         visited_ = 0;
         numInEdges_ = 0;
         numOutEdges_ = 0;
+    }
+
+    Vertex(const Vertex &valueIn)
+    {
+        value_ = valueIn.value_;
+        visited_ = valueIn.visited_;
+        numInEdges_ = valueIn.numInEdges_;
+        numOutEdges_ = valueIn.numOutEdges_;
+        adjacencyList_ = new std::vector< Edge* >(*(valueIn.adjacencyList_));
     }
 
     bool operator == (const Vertex &valueIn) const
@@ -197,12 +205,12 @@ public:
         return &vertex_map_->at(vertexNum);
     }
 
-    void setVertex( uint32_t vertexNum, Vertex<T> &vertex )
+    void setVertex( uint32_t vertexNum, const Vertex<T> &vertex )
     {
         vertex_map_->at(vertexNum) = vertex;
     }
 
-    uint32_t operator []( Vertex<T> value )
+    uint32_t operator []( const Vertex<T>& value )
     {
         for( auto it = vertex_map_->begin(); it != vertex_map_ ->end(); ++it ) {
             if( it->second == value ) {
