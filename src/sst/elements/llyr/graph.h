@@ -170,7 +170,7 @@ public:
     uint32_t numVertices();
 
     void addEdge( uint32_t beginVertex, uint32_t endVertex );
-    void addEdge( uint32_t beginVertex, uint32_t endVertex, float weightIn );
+    void addEdge( uint32_t beginVertex, uint32_t endVertex, EdgeProperties* properties );
     uint32_t addVertex( T type );
     uint32_t addVertex( uint32_t vertexNum, T type );
 
@@ -299,13 +299,11 @@ void LlyrGraph<T>::addEdge( uint32_t beginVertex, uint32_t endVertex )
 }
 
 template<class T>
-void LlyrGraph<T>::addEdge( uint32_t beginVertex, uint32_t endVertex, float weightIn )
+void LlyrGraph<T>::addEdge( uint32_t beginVertex, uint32_t endVertex, EdgeProperties* properties )
 {
     std::cout << "add edge:  " << beginVertex << " --> " << endVertex << "\n" << std::endl;
 
-    EdgeProperties* tempProp = new EdgeProperties;
-    tempProp->weight_ = weightIn;
-    Edge* edge = new Edge( tempProp, endVertex );
+    Edge* edge = new Edge( properties, endVertex );
 
     vertex_map_->at(beginVertex).addEdge(edge);
     vertex_map_->at(endVertex).addInDegree();
