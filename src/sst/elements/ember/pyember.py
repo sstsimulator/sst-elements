@@ -393,7 +393,7 @@ class EmberJob(Job):
 
     def build(self, nodeID, extraKeys):
         if self._check_first_build():
-            sst.addGlobalParams("lookback_params_%s"%self._instance_name,
+            sst.addGlobalParams("loopback_params_%s"%self._instance_name,
                             { "numCores" : self._numCores,
                               "nicsPerNode" : self._nicsPerNode })
 
