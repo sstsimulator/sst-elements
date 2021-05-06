@@ -1029,7 +1029,7 @@ void Scratchpad::handleRemoteGetResponse(MemEvent * response, SST::Event::id_typ
         // Create write
         uint32_t size = (baseAddr + scratchLineSize_) - addr;
         if (size > bytesLeft) size = bytesLeft;
-        std::vector<uint8_t> data(response->getPayload()[payloadOffset],response->getPayload()[payloadOffset+size]);
+        std::vector<uint8_t> data((response->getPayload()).begin() + payloadOffset, (response->getPayload()).begin() + payloadOffset + size);
         MemEvent * write = new MemEvent(getName(), addr, baseAddr, Command::PutM, data);
         write->setRqstr(request->getRqstr());
         write->setVirtualAddress(request->getDstVirtualAddress());
