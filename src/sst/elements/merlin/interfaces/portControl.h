@@ -238,6 +238,8 @@ private:
 	bool ongoing_transmit;
 	uint64_t time_active_nano_remaining;
 
+    RtrInitEvent* checkInitProtocol(Event* ev, RtrInitEvent::Commands command, uint32_t line, const char* file, const char* func);
+
     Output& output;
 
     PortInterface::OutputArbitration* output_arb;

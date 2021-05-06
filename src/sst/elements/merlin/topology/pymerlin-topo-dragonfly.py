@@ -157,7 +157,6 @@ class topoDragonFly(Topology):
         nic_num = 0
         # GROUPS
         for g in range(self.num_groups):
-
             # GROUP ROUTERS
             for r in range(self.routers_per_group):
                 rtr = self._instanceRouter(num_ports,router_num)

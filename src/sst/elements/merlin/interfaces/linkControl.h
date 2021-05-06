@@ -211,6 +211,8 @@ private:
     Statistic<uint64_t>* idle_time;
     Statistic<uint64_t>* recv_bit_count;
 
+    RtrInitEvent* checkInitProtocol(Event* ev, RtrInitEvent::Commands command, uint32_t line, const char* file, const char* func);
+
     Output& output;
 
 public:
