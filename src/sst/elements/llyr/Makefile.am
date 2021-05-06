@@ -11,7 +11,9 @@ libllyr_la_SOURCES = \
 	llyrTypes.h \
 	llyr.h \
 	llyr.cc \
-	graph.h \
+	graph/graph.h \
+	graph/edge.h \
+	graph/vertex.h \
 	parser/parser.h \
 	parser/parser.cc \
 	mappers/llyrMapper.h \
