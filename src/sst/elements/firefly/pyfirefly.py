@@ -105,7 +105,7 @@ class BasicNicConfiguration(TemplateBase):
             "nic2host_lat",
             "numVNs", "getHdrVN", "getRespLargeVN",
             "getRespSmallVN", "getRespSize",
-            "reMatchDelay_ns", "txDelay_ns",
+            "rxMatchDelay_ns", "txDelay_ns",
             "hostReadDelay_ns",
             "tracedPkt", "tracedNode",
             "maxSendMachineQsize", "maxRecvMachineQSize",
