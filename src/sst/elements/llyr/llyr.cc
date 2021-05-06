@@ -115,23 +115,23 @@ LlyrComponent::~LlyrComponent()
 {
     output_->verbose(CALL_INFO, 1, 0, "Llyr destructor fired, closing down.\n");
 
-    output_->verbose(CALL_INFO, 10, 0, "Dumping hardware graph\n");
-    if( output_->getVerboseLevel() >= 10 ) {
-        hardwareGraph_.printGraph();
-        hardwareGraph_.printDot("llyr_hdwr.dot");
-    }
-
-    output_->verbose(CALL_INFO, 10, 0, "Dumping application graph\n");
-    if( output_->getVerboseLevel() >= 10 ) {
-        applicationGraph_.printGraph();
-        applicationGraph_.printDot("llyr_app.dot");
-    }
-
-    output_->verbose(CALL_INFO, 10, 0, "Dumping mapping\n");
-    if( output_->getVerboseLevel() >= 10 ) {
-        mappedGraph_.printGraph();
-        mappedGraph_.printDot("llyr_mapped.dot");
-    }
+//     output_->verbose(CALL_INFO, 10, 0, "Dumping hardware graph\n");
+//     if( output_->getVerboseLevel() >= 10 ) {
+//         hardwareGraph_.printGraph();
+//         hardwareGraph_.printDot("llyr_hdwr.dot");
+//     }
+//
+//     output_->verbose(CALL_INFO, 10, 0, "Dumping application graph\n");
+//     if( output_->getVerboseLevel() >= 10 ) {
+//         applicationGraph_.printGraph();
+//         applicationGraph_.printDot("llyr_app.dot");
+//     }
+//
+//     output_->verbose(CALL_INFO, 10, 0, "Dumping mapping\n");
+//     if( output_->getVerboseLevel() >= 10 ) {
+//         mappedGraph_.printGraph();
+//         mappedGraph_.printDot("llyr_mapped.dot");
+//     }
 }
 
 void LlyrComponent::init( uint32_t phase )

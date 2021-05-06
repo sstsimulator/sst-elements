@@ -26,7 +26,7 @@
 #include <llvm/IR/BasicBlock.h>
 #include <llvm/IR/Instruction.h>
 
-#include "graph.h"
+#include "graph/graph.h"
 #include "llyrTypes.h"
 #include "pes/peList.h"
 
@@ -49,6 +49,7 @@ struct alignas(double) CDFGVertex
    std::string         instructionName_;
 };
 
+typedef LlyrGraph< llvm::BasicBlock* > BBGraph;
 typedef LlyrGraph< CDFGVertex* > CDFG;
 
 class Parser
@@ -63,7 +64,7 @@ public:
         useNode_ = new std::map< llvm::BasicBlock*, std::map< CDFGVertex*, std::vector< llvm::Instruction* >* >* >;
 
         flowGraph_ = new std::map< llvm::BasicBlock*, CDFG* >;
-        bbGraph_   = new LlyrGraph< llvm::BasicBlock* >;
+        bbGraph_   = new BBGraph;
     }
 
     ~Parser() {};
@@ -79,7 +80,9 @@ private:
     std::string offloadTarget_;
 
     LlyrGraph< opType > applicationGraph_;
-    LlyrGraph< llvm::BasicBlock* >* bbGraph_;
+    BBGraph* bbGraph_;
+    CDFG* functionGraph_;
+    CDFG* completeGraph_;
     std::map< llvm::BasicBlock*, CDFG* >* flowGraph_;
 
     std::map< llvm::BasicBlock*, std::vector< CDFGVertex* > >* vertexList_;
@@ -91,6 +94,7 @@ private:
     void generatebBasicBlockGraph(llvm::Function* func);
     void expandBBGraph(llvm::Function* func);
     void assembleGraph();
+    void mergeGraphs();
 };
 
 } // namespace LLyr

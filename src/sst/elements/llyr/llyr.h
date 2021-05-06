@@ -24,7 +24,7 @@
 #include <string>
 #include <fstream>
 
-#include "graph.h"
+#include "graph/graph.h"
 #include "lsQueue.h"
 #include "llyrTypes.h"
 #include "pes/peList.h"

@@ -58,6 +58,9 @@ void Parser::generateAppGraph(std::string functionName)
             generatebBasicBlockGraph(&*functionIter);
             expandBBGraph(&*functionIter);
             assembleGraph();
+            mergeGraphs();
+
+            functionGraph_->printDot("00_func.dot");
 
             break;
         }
@@ -109,7 +112,7 @@ void Parser::generatebBasicBlockGraph(llvm::Function* func)
 
     // bb_Graph should be complete here
     std::cout << "...Basic Block Graph Done." << std::endl;
-    bbGraph_->printDot("00_test.dot");
+    bbGraph_->printDot("00_bb.dot");
 }// generatebBasicBlockGraph
 
 
@@ -1236,7 +1239,7 @@ void Parser::assembleGraph(void)
 {
     // Need to assemble the actual graph -- insert edges for def-use chains
     // This is done for each vertex in the BB graph and then merged
-    LlyrGraph< llvm::BasicBlock* > &bbg = *bbGraph_;
+    BBGraph &bbg = *bbGraph_;
 
     auto vertexMap = bbg.getVertexMap();
     for(auto bbGraphIter = vertexMap->begin(); bbGraphIter != vertexMap->end(); ++bbGraphIter) {
@@ -1245,7 +1248,6 @@ void Parser::assembleGraph(void)
 //         std::cout << "\"];\n";
         llvm::errs() << "\nConstructing graph for basic block " << bbGraphIter->second.getValue() << "...\n";
 
-        bool inserted;
         llvm::BasicBlock* basicBlock = bbGraphIter->second.getValue();
         CDFG &g = *((*flowGraph_)[basicBlock]);
 
@@ -1356,6 +1358,22 @@ void Parser::assembleGraph(void)
         }//END orphan check
     }
 }//END assembleGraph
+
+void Parser::mergeGraphs()
+{
+    functionGraph_ = new CDFG;
+
+    llvm::errs() << "\nMerging graphs\n";
+    BBGraph &bbg = *bbGraph_;
+    auto vertexMap = bbg.getVertexMap();
+    for(auto bbGraphIter = vertexMap->begin(); bbGraphIter != vertexMap->end(); ++bbGraphIter) {
+        llvm::BasicBlock* basicBlock = bbGraphIter->second.getValue();
+        CDFG &g = *((*flowGraph_)[basicBlock]);
+        CDFG::copyGraph(g, *functionGraph_);
+    }
+
+}//END mergeGraphs
+
 
 } // namespace llyr
 } // namespace SST

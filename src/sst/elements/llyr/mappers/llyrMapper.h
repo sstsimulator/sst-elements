@@ -20,7 +20,7 @@
 #include <sst/core/module.h>
 #include <sst/core/interfaces/simpleMem.h>
 
-#include "../graph.h"
+#include "../graph/graph.h"
 #include "../lsQueue.h"
 #include "../llyrTypes.h"
 #include "pes/peList.h"

@@ -27,7 +27,7 @@
 #include <cstdint>
 #include <cstring>
 
-#include "../graph.h"
+#include "../graph/graph.h"
 #include "../lsQueue.h"
 #include "../llyrTypes.h"
 
