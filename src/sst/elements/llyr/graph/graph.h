@@ -111,7 +111,6 @@ void LlyrGraph<T>::copyGraph( const LlyrGraph<T> &graphIn, LlyrGraph<T> &graphOu
         }
 
         std::cout << "Old: " << vertexIterator->first << "  New: " << newVertex << std::endl;
-
     }
 
     //go back and add all of the outEdges

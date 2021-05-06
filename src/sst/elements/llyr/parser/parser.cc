@@ -17,6 +17,7 @@
 
 #include <regex>
 #include <iostream>
+#include <algorithm>
 
 #include "llvm/Pass.h"
 #include "llvm/IR/Attributes.h"
@@ -60,7 +61,7 @@ void Parser::generateAppGraph(std::string functionName)
             assembleGraph();
             mergeGraphs();
 
-            functionGraph_->printDot("00_func.dot");
+
 
             break;
         }
@@ -1365,12 +1366,104 @@ void Parser::mergeGraphs()
 
     llvm::errs() << "\nMerging graphs\n";
     BBGraph &bbg = *bbGraph_;
-    auto vertexMap = bbg.getVertexMap();
-    for(auto bbGraphIter = vertexMap->begin(); bbGraphIter != vertexMap->end(); ++bbGraphIter) {
+    auto bbVertexMap = bbg.getVertexMap();
+    for(auto bbGraphIter = bbVertexMap->begin(); bbGraphIter != bbVertexMap->end(); ++bbGraphIter) {
         llvm::BasicBlock* basicBlock = bbGraphIter->second.getValue();
         CDFG &g = *((*flowGraph_)[basicBlock]);
         CDFG::copyGraph(g, *functionGraph_);
     }
+
+    functionGraph_->printDot("00_func.dot");
+
+    // Connect the individual basic blocks back together
+    llvm::errs() << "...Adding edges...\n";
+    auto funcVertexMap = functionGraph_->getVertexMap();
+    for( auto vertexIterator = funcVertexMap->begin(); vertexIterator != funcVertexMap ->end(); ++vertexIterator ) {
+        llvm::Instruction* tempIns = vertexIterator->second.getValue()->instruction_;
+
+        if( tempIns != 0x00 ) {
+            if( tempIns->getOpcode() == llvm::Instruction::Br ) {
+                llvm::BasicBlock* currentBB = tempIns->getParent();
+
+                #ifdef DEBUG
+                llvm::errs() << "Ins " << &*tempIns << " located in " << &*currentBB << "\n";
+                #endif
+
+                // Identify all successor basic bloacks and identify all entry instructions for each one
+                // An entry instruction is a non-zero instruction with no in-edges
+                llvm::BasicBlock* nextBB;
+                std::vector < llvm::Instruction* > connectorList;
+                uint32_t totalSuccessors = currentBB->getTerminator()->getNumSuccessors();
+                for( uint32_t successor = 0; successor < totalSuccessors; successor++ ) {
+                    nextBB = currentBB->getTerminator()->getSuccessor(successor);
+
+                    #ifdef DEBUG
+                    llvm::errs() << "-----Next BB:  " << nextBB << "\n";
+                    #endif
+
+                    CDFG &g = *((*flowGraph_)[nextBB]);
+                    auto vertexMap = g.getVertexMap();
+                    for( auto vertexIteratorInner = vertexMap->begin(); vertexIteratorInner != vertexMap ->end(); ++vertexIteratorInner ) {
+                        bool found = 0;
+                        llvm::Instruction* targetIns = vertexIteratorInner->second.getValue()->instruction_;
+                        std::vector< CDFGVertex* >::reverse_iterator targetIter = std::find((*vertexList_)[nextBB].rbegin(), (*vertexList_)[nextBB].rend(), vertexIteratorInner->second.getValue());
+
+                        if( targetIns != 0x00 ) {
+                            // If there's only a single instruction then we can link directly
+                            // otherwise we need to check for backward deps
+                            if( (*vertexList_)[nextBB].size() == 1 ) {
+                                connectorList.push_back(targetIns);
+                            } else {
+                                for( auto operandIter = targetIns->op_begin(), operandEnd = targetIns->op_end(); operandIter != operandEnd; operandIter++ ) {
+                                    if( llvm::isa<llvm::Instruction>(*operandIter) ) {
+                                        for( std::vector< CDFGVertex* >::reverse_iterator revIt = targetIter + 1; revIt != (*vertexList_)[nextBB].rend(); ++revIt) {
+                                            if( (*revIt)->instruction_ == *operandIter ) {
+                                                found = 1;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // If the operands do not depend on a previous ins, then we can safely link
+                                if( found == 0 && targetIns->getOpcode() > 10 ) {
+                                    connectorList.push_back(targetIns);
+                                }
+                            }
+                        }
+                    }
+
+                    #ifdef DEBUG
+                    llvm::errs() << "Dumping connector list for " << &*currentBB << ":  ";
+                    for( auto connectorIter = connectorList.begin(); connectorIter != connectorList.end(); connectorIter++ ) {
+                        llvm::errs() << *connectorIter << ", ";
+                    }
+                    llvm::errs() << "\n";
+                    #endif
+                }
+
+                for( auto connectorIter = connectorList.begin(); connectorIter != connectorList.end(); connectorIter++ ) {
+                    for( auto vertexIteratorInner = funcVertexMap->begin(); vertexIteratorInner != funcVertexMap ->end(); ++vertexIteratorInner ) {
+                        if( *connectorIter == vertexIteratorInner->second.getValue()->instruction_ ) {
+                            #ifdef DEBUG
+                            llvm::errs() << "\tConnecting (" << &*currentBB;
+                            llvm::errs() << ") " << vertexIterator->second.getValue()->instruction_ << " in " << vertexIterator->second.getValue()->instruction_->getParent();
+                            llvm::errs() << " to (" << &*nextBB;
+                            llvm::errs() << ") " << vertexIteratorInner->second.getValue()->instruction_ << " in " << vertexIteratorInner->second.getValue()->instruction_->getParent() << "\n";
+                            #endif
+
+                            ParserEdgeProperties* edgeProp = new ParserEdgeProperties;
+                            edgeProp->value_ = 0x00;
+                            functionGraph_->addEdge(vertexIterator->first, vertexIteratorInner->first, edgeProp  );
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    llvm::errs() << "...merge finished\n";
+    functionGraph_->printDot("00_func-m.dot");
 
 }//END mergeGraphs
 
