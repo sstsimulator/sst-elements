@@ -20,6 +20,9 @@
 #include <sst/core/sst_config.h>
 #include <sst/core/output.h>
 
+#include "edge.h"
+#include "vertex.h"
+
 #include <map>
 #include <string>
 #include <vector>
@@ -29,151 +32,6 @@
 namespace SST {
 namespace Llyr {
 
-struct EdgeProperties
-{
-    float weight_;
-};
-
-struct VertexProperties
-{
-
-};
-
-class Edge
-{
-private:
-    EdgeProperties* properties_;
-    uint32_t destinationVertex_;
-
-protected:
-
-public:
-    explicit Edge( uint32_t vertexIn )
-    {
-        properties_ = NULL;
-        destinationVertex_ = vertexIn;
-    }
-    explicit Edge( EdgeProperties* properties, uint32_t vertexIn )
-    {
-        properties_ = properties;
-        destinationVertex_ = vertexIn;
-    }
-    ~Edge();
-
-    bool setProperties( EdgeProperties* properties )
-    {
-        properties_ = properties;
-        return true;
-    }
-
-    EdgeProperties* getProperties( void ) const
-    {
-        return properties_;
-    }
-
-    uint32_t getDestination( void ) const
-    {
-        return destinationVertex_;
-    }
-
-};
-
-
-template<class T>
-class Vertex
-{
-private:
-    T    value_;
-    bool visited_;
-    uint32_t numInEdges_;
-    uint32_t numOutEdges_;
-
-    std::vector< Edge* >* adjacencyList_;
-
-protected:
-
-public:
-    Vertex()
-    {
-        adjacencyList_ = new std::vector< Edge* >;
-        visited_ = 0;
-        numInEdges_ = 0;
-        numOutEdges_ = 0;
-    }
-
-    Vertex( T typeIn ) : value_(typeIn)
-    {
-        adjacencyList_ = new std::vector< Edge* >;
-        visited_ = 0;
-        numInEdges_ = 0;
-        numOutEdges_ = 0;
-    }
-
-    Vertex(const Vertex &valueIn)
-    {
-        value_ = valueIn.value_;
-        visited_ = valueIn.visited_;
-        numInEdges_ = valueIn.numInEdges_;
-        numOutEdges_ = valueIn.numOutEdges_;
-        adjacencyList_ = new std::vector< Edge* >(*(valueIn.adjacencyList_));
-    }
-
-    bool operator == (const Vertex &valueIn) const
-    {
-        return(this->value_ == valueIn.getValue());
-    }
-
-    void setValue( T typeIn )
-    {
-        value_ = typeIn;
-    }
-
-    T getValue( void ) const
-    {
-        return value_;
-    }
-
-    void setVisited( bool visitIn )
-    {
-        visited_ = visitIn;
-    }
-
-    bool getVisited( void ) const
-    {
-        return visited_;
-    }
-
-    std::vector< Edge* >* getAdjacencyList( void ) const
-    {
-        return adjacencyList_;
-    }
-
-    void addEdge( Edge* edgeIn )
-    {
-        adjacencyList_->push_back(edgeIn);
-    }
-
-    void addInDegree()
-    {
-        ++numInEdges_;
-    }
-
-    uint32_t getInDegree() const
-    {
-        return numInEdges_;
-    }
-
-    void addOutDegree()
-    {
-        ++numOutEdges_;
-    }
-
-    uint32_t getOutDegree() const
-    {
-        return numOutEdges_;
-    }
-
-};
 
 template<class T>
 class LlyrGraph
@@ -189,42 +47,26 @@ public:
     LlyrGraph();
     ~LlyrGraph();
 
+    uint32_t operator []( const Vertex<T>& value ) const;
+
+    static void copyGraph( const LlyrGraph<T> &graphIn, LlyrGraph<T> &graphOut );
+
     void printGraph();
     void printDot( std::string fileName );
 
     uint32_t outEdges( uint32_t vertexId );
-    uint32_t numVertices();
+    uint32_t numVertices() const;
 
     void addEdge( uint32_t beginVertex, uint32_t endVertex );
     void addEdge( uint32_t beginVertex, uint32_t endVertex, EdgeProperties* properties );
+
     uint32_t addVertex( T type );
     uint32_t addVertex( uint32_t vertexNum, T type );
 
-    Vertex<T>* getVertex( uint32_t vertexNum )
-    {
-        return &vertex_map_->at(vertexNum);
-    }
+    Vertex<T>* getVertex( uint32_t vertexNum ) const;
+    void setVertex( uint32_t vertexNum, const Vertex<T> &vertex );
 
-    void setVertex( uint32_t vertexNum, const Vertex<T> &vertex )
-    {
-        vertex_map_->at(vertexNum) = vertex;
-    }
-
-    uint32_t operator []( const Vertex<T>& value )
-    {
-        for( auto it = vertex_map_->begin(); it != vertex_map_ ->end(); ++it ) {
-            if( it->second == value ) {
-                return it->first;
-            }
-        }
-
-        return 0;
-    }
-
-    std::map< uint32_t, Vertex<T> >* getVertexMap( void ) const
-    {
-        return vertex_map_;
-    }
+    std::map< uint32_t, Vertex<T> >* getVertexMap( void ) const;
 
 };
 
@@ -240,15 +82,66 @@ LlyrGraph<T>::~LlyrGraph()
 {}
 
 template<class T>
+uint32_t LlyrGraph<T>::operator []( const Vertex<T>& value ) const
+{
+    for( auto it = vertex_map_->begin(); it != vertex_map_ ->end(); ++it ) {
+        if( it->second == value ) {
+            return it->first;
+        }
+    }
+
+    return 0;
+}
+
+template<class T>
+void LlyrGraph<T>::copyGraph( const LlyrGraph<T> &graphIn, LlyrGraph<T> &graphOut )
+{
+    //container of input -> output vertex mappings
+    std::map< uint32_t, uint32_t > vertexMappings;
+
+    //add all of the vertices in the input graph to the output graph
+    auto vertexMap = graphIn.getVertexMap();
+    for( auto vertexIterator = vertexMap->begin(); vertexIterator != vertexMap ->end(); ++vertexIterator ) {
+        auto vertexIn = vertexIterator->second;
+        uint32_t newVertex = graphOut.addVertex(vertexIn.getValue());
+
+        auto retVal = vertexMappings.emplace( vertexIterator->first, newVertex );
+        if( retVal.second == false ) {
+            ///TODO
+        }
+
+        std::cout << "Old: " << vertexIterator->first << "  New: " << newVertex << std::endl;
+
+    }
+
+    //go back and add all of the outEdges
+    for( auto vertexIterator = vertexMap->begin(); vertexIterator != vertexMap ->end(); ++vertexIterator ) {
+        uint32_t sourceVertex = vertexMappings[vertexIterator->first];
+//         std::cout << "\n Adjacency list of vertex " << vertexIterator->first << "\n head ";
+        std::vector< Edge* >* adjacencyList = vertexIterator->second.getAdjacencyList();
+        for( auto it = adjacencyList->begin(); it != adjacencyList->end(); ++it ) {
+//             std::cout << "-> " << (*it)->getDestination();
+
+            EdgeProperties* tempProperties = (*it)->getProperties();
+            uint32_t destinationVertex = vertexMappings[(*it)->getDestination()];
+//             std::cout << "SRC: " << vertexIterator->first << "  DST: " << (*it)->getDestination() << std::endl;
+//             std::cout << "SRC: " << sourceVertex << "  DST: " << destinationVertex << std::endl;
+            graphOut.addEdge(sourceVertex, destinationVertex, tempProperties);
+
+        }
+        std::cout << std::endl;
+    }
+
+}
+
+template<class T>
 void LlyrGraph<T>::printGraph(void)
 {
     typename std::map< uint32_t, Vertex<T> >::iterator vertexIterator;
-    for(vertexIterator = vertex_map_->begin(); vertexIterator != vertex_map_->end(); ++vertexIterator)
-    {
+    for(vertexIterator = vertex_map_->begin(); vertexIterator != vertex_map_->end(); ++vertexIterator) {
         std::cout << "\n Adjacency list of vertex " << vertexIterator->first << "\n head ";
 
         std::vector< Edge* >* adjacencyList = vertexIterator->second.getAdjacencyList();
-
         for( auto it = adjacencyList->begin(); it != adjacencyList->end(); ++it ) {
             std::cout << "-> " << (*it)->getDestination();
         }
@@ -294,7 +187,7 @@ uint32_t LlyrGraph<T>::outEdges(uint32_t vertexId)
 }
 
 template<class T>
-uint32_t LlyrGraph<T>::numVertices(void)
+uint32_t LlyrGraph<T>::numVertices(void) const
 {
     return vertices_;
 }
@@ -355,6 +248,23 @@ uint32_t LlyrGraph<T>::addVertex(uint32_t vertexNum, T type)
     return vertexNum;
 }
 
+template<class T>
+Vertex<T>* LlyrGraph<T>::getVertex( uint32_t vertexNum ) const
+{
+    return &vertex_map_->at(vertexNum);
+}
+
+template<class T>
+void LlyrGraph<T>::setVertex( uint32_t vertexNum, const Vertex<T> &vertex )
+{
+    vertex_map_->at(vertexNum) = vertex;
+}
+
+template<class T>
+std::map< uint32_t, Vertex<T> >* LlyrGraph<T>::getVertexMap( void ) const
+{
+    return vertex_map_;
+}
 
 } // namespace LLyr
 } // namespace SST
