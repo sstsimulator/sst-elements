@@ -699,10 +699,12 @@ class RouterTemplate(TemplateBase):
         pass
     def getPortConnectionInfo(port_num):
         pass
-
+    def getDefaultNetworkInterface(self):
+        pass
 
 class hr_router(RouterTemplate):
     _instance_num = 0
+    _default_linkcontrol = "sst.merlin.interface.LinkControl"
 
     def __init__(self):
         RouterTemplate.__init__(self)
@@ -717,6 +719,10 @@ class hr_router(RouterTemplate):
 
         self._subscribeToPlatformParamSet("router")
 
+
+    def getDefaultNetworkInterface(self):
+        module_name, class_name = hr_router._default_linkcontrol.rsplit(".", 1)
+        return getattr(import_module(module_name), class_name)()
 
     def _qos_callback(self,variable_name,value):
         self._lockVariable(variable_name)
@@ -760,7 +766,7 @@ class EmptyJob(Job):
         return "Empty Job"
 
     def build(self, nID, extraKeys):
-        nic = sst.Component("incast.%d"%nID, "merlin.simple_patterns.empty")
+        nic = sst.Component("empty_node.%d"%nID, "merlin.simple_patterns.empty")
         id = self._nid_map[nID]
 
         #  Add the linkcontrol
@@ -797,6 +803,8 @@ class System(TemplateBase):
         # For any unallocated nodes, use EmptyJob
         if len(self._available_nodes) > 0:
             remainder = EmptyJob(-1,len(self._available_nodes))
+            remainder.network_interface = self.topology.router.getDefaultNetworkInterface()
+            remainder.network_interface.link_bw = "1 GB/s"
             self.allocateNodes(remainder,"linear");
         system_ep = SystemEndpoint(self)
         self.topology.build(system_ep)
