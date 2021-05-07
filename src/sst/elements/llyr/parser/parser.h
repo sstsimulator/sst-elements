@@ -95,6 +95,8 @@ private:
     void expandBBGraph(llvm::Function* func);
     void assembleGraph();
     void mergeGraphs();
+
+    void printCDFG( const std::string fileName ) const;
 };
 
 } // namespace LLyr

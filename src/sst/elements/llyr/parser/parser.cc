@@ -68,6 +68,7 @@ void Parser::generateAppGraph(std::string functionName)
     }// function loop
 
     std::cout << "Finished parsing..." << std::endl;
+    printCDFG( "00_func-ins.dot" );
 
 }// generateAppGraph
 
@@ -1467,6 +1468,38 @@ void Parser::mergeGraphs()
 
 }//END mergeGraphs
 
+void Parser::printCDFG( const std::string fileName ) const
+{
+    std::ofstream outputFile(fileName.c_str(), std::ios::trunc);         //open a file for writing (truncate the current contents)
+    if ( !outputFile )                                                   //check to be sure file is open
+        std::cerr << "Error opening file.";
+
+    outputFile << "digraph G {" << "\n";
+
+    auto funcVertexMap = functionGraph_->getVertexMap();
+    for( auto vertexIterator = funcVertexMap->begin(); vertexIterator != funcVertexMap ->end(); ++vertexIterator ) {
+
+        outputFile << vertexIterator->first << "[label=\"";
+        outputFile << vertexIterator->second.getValue()->instructionName_;
+        outputFile << "\"];\n";
+    }
+
+    for(auto vertexIterator = funcVertexMap->begin(); vertexIterator != funcVertexMap->end(); ++vertexIterator) {
+        std::vector< Edge* >* adjacencyList = vertexIterator->second.getAdjacencyList();
+
+        for( auto it = adjacencyList->begin(); it != adjacencyList->end(); ++it ) {
+            outputFile << vertexIterator->first;
+            outputFile << "->";
+            outputFile << (*it)->getDestination();
+            outputFile << "\n";
+        }
+    }
+
+    outputFile << "}";
+    outputFile.close();
+
+
+}
 
 } // namespace llyr
 } // namespace SST

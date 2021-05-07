@@ -31,6 +31,20 @@ libllyr_la_SOURCES = \
 
 deprecated_libllyr_sources =
 
+libllyr_la_CFLAGS = \
+	$(LLVM_CFLAGS)
+
+libllyr_la_CPPFLAGS = \
+	-I$(top_srcdir)/src \
+	$(SST_CXX0X_FLAGS) -fPIC -Wall \
+	$(MPI_CPPFLAGS) \
+	$(LLVM_CPPFLAGS)
+
+libllyr_la_LDFLAGS = \
+	-module \
+	-avoid-version \
+	$(LLVM_LDFLAGS)
+
 if !SST_ENABLE_PREVIEW_BUILD
 libllyr_la_SOURCES += $(deprecated_libsimpleElementExample_sources)
 endif
@@ -43,9 +57,6 @@ deprecated_EXTRA_DIST =
 if !SST_ENABLE_PREVIEW_BUILD
 EXTRA_DIST += $(deprecated_EXTRA_DIST)
 endif
-
-
-libllyr_la_LDFLAGS = -module -avoid-version
 
 install-exec-hook:
 	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     llyr=$(abs_srcdir)
