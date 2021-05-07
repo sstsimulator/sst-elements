@@ -1,16 +1,20 @@
 AC_DEFUN([SST_CHECK_LLVM_CONFIG],
 [
    sst_check_llvm_config_happy="yes"
-   AS_IF([test "$with_llvm_config" = "no"], [sst_check_llvm_config_happy="no"])
 
    AC_ARG_WITH([llvm-config],
                [AS_HELP_STRING([--with-llvm-config],
                   [llvm-config must be in the PATH])],
    )
 
+   AS_IF([test ! -z "$with_llvm_config" -a "$with_llvm_config" = "yes"],
+         [],
+         [sst_check_llvm_config_happy="no"]
+         )
+
    AC_MSG_CHECKING(for llvm-config)
    llvm_config_test=$(llvm-config --version 2> /dev/null || echo no)
-   if test ! -z x"$llvm_config_test" -a x"$llvm_config_test" != x"no"; then
+   if test ! -z "$llvm_config_test" -a "$llvm_config_test" != "no" -a "$with_llvm_config" = "yes"; then
       AC_MSG_RESULT([yes])
       LLVM_CFLAGS="`llvm-config --cflags`"
       LLVM_CPPFLAGS="`llvm-config --cxxflags`"
