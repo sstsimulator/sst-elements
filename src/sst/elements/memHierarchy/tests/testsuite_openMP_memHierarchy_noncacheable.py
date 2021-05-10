@@ -41,28 +41,37 @@ class testcase_memH_openMP_noncacheable(SSTTestCase):
         super(type(self), self).tearDown()
 
 ####
+    pin_loaded = testing_is_PIN_loaded()
 
+    @unittest.skipIf(not pin_loaded, "openMP_memHierarchy: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
     def test_noncacheable_ompatomic(self):
         self.memH_test_template("ompatomic")
 
+    @unittest.skipIf(not pin_loaded, "openMP_memHierarchy: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
     def test_noncacheable_ompapi(self):
         self.memH_test_template("ompapi")
 
+    @unittest.skipIf(not pin_loaded, "openMP_memHierarchy: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
     def test_noncacheable_ompbarrier(self):
         self.memH_test_template("ompbarrier")
 
+    @unittest.skipIf(not pin_loaded, "openMP_memHierarchy: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
     def test_noncacheable_ompcritical(self):
         self.memH_test_template("ompcritical")
 
+    @unittest.skipIf(not pin_loaded, "openMP_memHierarchy: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
     def test_noncacheable_ompdynamic(self):
         self.memH_test_template("ompdynamic")
 
+    @unittest.skipIf(not pin_loaded, "openMP_memHierarchy: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
     def test_noncacheable_ompreduce(self):
         self.memH_test_template("ompreduce")
 
+    @unittest.skipIf(not pin_loaded, "openMP_memHierarchy: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
     def test_noncacheable_ompthrcount(self):
         self.memH_test_template("ompthrcount")
 
+    @unittest.skipIf(not pin_loaded, "openMP_memHierarchy: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
     def test_noncacheable_omptriangle(self):
         self.memH_test_template("omptriangle")
 
@@ -135,7 +144,7 @@ class testcase_memH_openMP_noncacheable(SSTTestCase):
                         log_failure("FAILURE: openMP noncacheable Test failed running cmdline {0} - grepping outfile {1}".format(cmd, outfile))
 
                     log_debug("Testline='{0}'; refcount={1}; outcount={2}".format(testline, refcount, outcount))
-                    
+
                     # Compare the count
                     self.assertEquals(outcount, refcount, "openMP noncacheable testing line '{0}': outfile count = {1} does not match reffile count = {2}".format(testline, outcount, refcount))
 
