@@ -410,15 +410,15 @@ uint64_t CoherenceController::forwardTowardsCPU(MemEventBase * event, std::strin
 /* Parse an init coherence vent. Coherence managers can override this */
 void CoherenceController::processInitCoherenceEvent(MemEventInitCoherence* event, bool source) {
     // If something besides memory is below us, we are not the last level doing coherence
-    if (event->getType() != Endpoint::Memory)
+    if (!source && event->getType() != Endpoint::Memory)
         lastLevel_ = false;
 
     // If the component below us tracks whether a block is present above, then we can't silently evict (per current protocols)
-    if (event->getTracksPresence() || lastLevel_)
+    if (!source && (event->getTracksPresence() || lastLevel_))
         silentEvictClean_ = false;
 
     // The component below us is noninclusive, therefore we need to write back data when evicting clean blocks
-    if (!event->getInclusive())
+    if (!source && !event->getInclusive())
         writebackCleanBlocks_ = true;
 
     // The component below us will send writeback acks, we should wait for them
@@ -428,8 +428,9 @@ void CoherenceController::processInitCoherenceEvent(MemEventInitCoherence* event
     if (source && event->getRecvWBAck())
         sendWritebackAck_ = true;
 
-    debug->debug(_L3_, "%s processInitCoherenceEvent. Result is: LL ? %s, silentEvict ? %s, WBClean ? %s, sendWBAck ? %s, recvWBAck ? %s\n",
+    debug->debug(_L3_, "%s processInitCoherenceEvent. Result is (source=%s): LL ? %s, silentEvict ? %s, WBClean ? %s, sendWBAck ? %s, recvWBAck ? %s\n",
             cachename_.c_str(),
+            source ? "true" : "false",
             lastLevel_ ? "Y" : "N",
             silentEvictClean_ ? "Y" : "N",
             writebackCleanBlocks_ ? "Y" : "N",
