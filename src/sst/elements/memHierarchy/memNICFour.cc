@@ -35,7 +35,7 @@ using namespace SST::Interfaces;
 
 /* Constructor */
 
-MemNICFour::MemNICFour(ComponentId_t id, Params &params) : MemNICBase(id, params) {
+MemNICFour::MemNICFour(ComponentId_t id, Params &params, TimeConverter* tc) : MemNICBase(id, params, tc) {
     bool found;
     std::array<std::string,4> pref = {"req", "ack", "fwd", "data"};
 
@@ -74,8 +74,9 @@ MemNICFour::MemNICFour(ComponentId_t id, Params &params) : MemNICBase(id, params
     totalOOO = 0;
 
     // TimeBase for statistics
-    std::string timebase = params.find<std::string>("clock", "1GHz");
-    setDefaultTimeBase(getTimeConverter(timebase));
+    std::string timebase = params.find<std::string>("clock", "1GHz", found);
+    if (found)
+        setDefaultTimeBase(getTimeConverter(timebase));
 }
 
 void MemNICFour::init(unsigned int phase) {

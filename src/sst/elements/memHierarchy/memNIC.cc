@@ -37,7 +37,7 @@ using namespace SST::Interfaces;
 
 /* Constructor */
 
-MemNIC::MemNIC(ComponentId_t id, Params &params) : MemNICBase(id, params) {
+MemNIC::MemNIC(ComponentId_t id, Params &params, TimeConverter* tc) : MemNICBase(id, params, tc) {
     
     link_control = loadUserSubComponent<SimpleNetwork>("linkcontrol", ComponentInfo::SHARE_NONE, 1); // 1 is the num virtual networks
     if (!link_control) {
@@ -58,6 +58,9 @@ MemNIC::MemNIC(ComponentId_t id, Params &params) : MemNICBase(id, params) {
 
     // Packet size
     packetHeaderBytes = extractPacketHeaderSize(params, "min_packet_size");
+
+    clockHandler = new Clock::Handler<MemNIC>(this, &MemNIC::clock);
+    clockTC = registerClock(tc, clockHandler);
 }
 
 void MemNIC::init(unsigned int phase) {
@@ -69,11 +72,9 @@ void MemNIC::init(unsigned int phase) {
  * Called by parent on a clock
  * Returns whether anything sent this cycle
  */
-bool MemNIC::clock() {
-    if (sendQueue.empty()) return true;
-
+bool MemNIC::clock(SimTime_t cycle) {
     drainQueue(&sendQueue, link_control);
-
+    if (sendQueue.empty()) return true; /* turn off clock */
     return false;
 }
 
@@ -114,6 +115,11 @@ void MemNIC::send(MemEventBase *ev) {
 
     req->givePayload(mre);
     sendQueue.push(req);
+    //printf("%s, %" PRIu64 ", Receive %s, 0x%" PRIx64 "\n", getName().c_str(), getCurrentSimTime("1ps"), CommandString[(int)ev->getCmd()], ev->getRoutingAddress() );
+    if (sendQueue.size() == 1)
+        drainQueue(&sendQueue, link_control);
+    if (sendQueue.size() == 1) /* Attempt again in 1 cycle */
+        reregisterClock(clockTC, clockHandler);
 }
 
 

@@ -46,7 +46,7 @@ class MemNICBase : public MemLinkBase {
         SST_ELI_REGISTER_SUBCOMPONENT_DERIVED_API(SST::MemHierarchy::MemNICBase, SST::MemHierarchy::MemLinkBase)
 
         /* Constructor */
-        MemNICBase(ComponentId_t id, Params &params) : MemLinkBase(id, params) {
+        MemNICBase(ComponentId_t id, Params &params, TimeConverter* tc) : MemLinkBase(id, params, tc) {
             build(params);
         }
 
@@ -288,6 +288,7 @@ class MemNICBase : public MemLinkBase {
                 bool doDebug = ev ? is_debug_event(ev) : false;
 #endif
                 if (linkcontrol->spaceToSend(0, head->size_in_bits) && linkcontrol->send(head, 0)) {
+
 #ifdef __SST_DEBUG_OUTPUT__
                     if (!debugEvStr.empty() && doDebug) {
                         dbg.debug(_L9_, "%s (memNICBase), Sending message %s to dst addr %" PRIu64 "\n",

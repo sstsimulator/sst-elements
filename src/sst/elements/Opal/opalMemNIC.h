@@ -51,8 +51,7 @@ public:
 /* Begin class definition */
 
     /* Constructor */
-    OpalMemNIC(Component * comp, Params &params);
-    OpalMemNIC(ComponentId_t id, Params &params);
+    OpalMemNIC(ComponentId_t id, Params &params, TimeConverter* tc);
 
     /* Destructor */
     virtual ~OpalMemNIC() { }
@@ -100,8 +99,6 @@ protected:
     virtual void processInitMemRtrEvent(MemHierarchy::MemNICBase::InitMemRtrEvent* ev);
 
 private:
-    void build(Params& params); // Temporary function called by both constructors until both are no longer required
-
     bool enable;
     uint64_t localMemSize;
     uint32_t node;

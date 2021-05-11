@@ -23,19 +23,23 @@ using namespace SST::MemHierarchy;
 
 /* Constructor */
 
-MemLink::MemLink(ComponentId_t id, Params &params) : MemLinkBase(id, params) {
+MemLink::MemLink(ComponentId_t id, Params &params, TimeConverter* tc) : MemLinkBase(id, params, tc) {
     // Configure link
-    std::string latency = params.find<std::string>("latency", "50ps");
+    bool found;
+    std::string latency = params.find<std::string>("latency", "0ps", found);
     std::string port = params.find<std::string>("port", "port");
 
-    link = configureLink(port, latency, new Event::Handler<MemLink>(this, &MemLink::recvNotify));
+    if (found) {
+        link = configureLink(port, latency, new Event::Handler<MemLink>(this, &MemLink::recvNotify));
+    } else {
+        link = configureLink(port, new Event::Handler<MemLink>(this, &MemLink::recvNotify));
+    }
 
     if (!link)
         dbg.fatal(CALL_INFO, -1, "%s, Error: unable to configure link on port '%s'\n", getName().c_str(), port.c_str());
 
     dbg.debug(_L10_, "%s memLink info is: Name: %s, addr: %" PRIu64 ", id: %" PRIu32 "\n",
             getName().c_str(), info.name.c_str(), info.addr, info.id);
-
 }
 
 /* init function */

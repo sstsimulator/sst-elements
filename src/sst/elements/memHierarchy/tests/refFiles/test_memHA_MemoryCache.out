@@ -2629,7 +2629,7 @@ Model complete
  l2cache_0:memlink.outoforder_data_events : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 750; Min.u64 = 0; Max.u64 = 0; 
  l2cache_0:memlink.outoforder_depth_at_event_receive : Accumulator : Sum.u64 = 76; SumSQ.u64 = 76; Count.u64 = 1226; Min.u64 = 0; Max.u64 = 1; 
  l2cache_0:memlink.outoforder_depth_at_event_receive_src : Accumulator : Sum.u64 = 64; SumSQ.u64 = 64; Count.u64 = 1226; Min.u64 = 0; Max.u64 = 1; 
- l2cache_0:memlink.ordering_latency : Accumulator : Sum.u64 = 88; SumSQ.u64 = 364; Count.u64 = 61; Min.u64 = 0; Max.u64 = 9; 
+ l2cache_0:memlink.ordering_latency : Accumulator : Sum.u64 = 164; SumSQ.u64 = 1332; Count.u64 = 61; Min.u64 = 0; Max.u64 = 18; 
  l2cache_0.prefetch_opportunities : Accumulator : Sum.u64 = 750; SumSQ.u64 = 750; Count.u64 = 750; Min.u64 = 1; Max.u64 = 1; 
  l2cache_0.prefetches_issued : Accumulator : Sum.u64 = 738; SumSQ.u64 = 738; Count.u64 = 738; Min.u64 = 1; Max.u64 = 1; 
  l2cache_0.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 390; SumSQ.u64 = 390; Count.u64 = 390; Min.u64 = 1; Max.u64 = 1; 
@@ -3313,7 +3313,7 @@ Model complete
  l2cache_1:memlink.outoforder_data_events : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 751; Min.u64 = 0; Max.u64 = 0; 
  l2cache_1:memlink.outoforder_depth_at_event_receive : Accumulator : Sum.u64 = 77; SumSQ.u64 = 77; Count.u64 = 1245; Min.u64 = 0; Max.u64 = 1; 
  l2cache_1:memlink.outoforder_depth_at_event_receive_src : Accumulator : Sum.u64 = 65; SumSQ.u64 = 65; Count.u64 = 1245; Min.u64 = 0; Max.u64 = 1; 
- l2cache_1:memlink.ordering_latency : Accumulator : Sum.u64 = 79; SumSQ.u64 = 257; Count.u64 = 60; Min.u64 = 0; Max.u64 = 7; 
+ l2cache_1:memlink.ordering_latency : Accumulator : Sum.u64 = 161; SumSQ.u64 = 1031; Count.u64 = 60; Min.u64 = 0; Max.u64 = 14; 
  l2cache_1.prefetch_opportunities : Accumulator : Sum.u64 = 750; SumSQ.u64 = 750; Count.u64 = 750; Min.u64 = 1; Max.u64 = 1; 
  l2cache_1.prefetches_issued : Accumulator : Sum.u64 = 736; SumSQ.u64 = 736; Count.u64 = 736; Min.u64 = 1; Max.u64 = 1; 
  l2cache_1.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 100; SumSQ.u64 = 100; Count.u64 = 100; Min.u64 = 1; Max.u64 = 1; 
@@ -3970,7 +3970,7 @@ Model complete
  l2cache_2:memlink.outoforder_data_events : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 751; Min.u64 = 0; Max.u64 = 0; 
  l2cache_2:memlink.outoforder_depth_at_event_receive : Accumulator : Sum.u64 = 70; SumSQ.u64 = 70; Count.u64 = 1252; Min.u64 = 0; Max.u64 = 1; 
  l2cache_2:memlink.outoforder_depth_at_event_receive_src : Accumulator : Sum.u64 = 60; SumSQ.u64 = 60; Count.u64 = 1252; Min.u64 = 0; Max.u64 = 1; 
- l2cache_2:memlink.ordering_latency : Accumulator : Sum.u64 = 67; SumSQ.u64 = 197; Count.u64 = 58; Min.u64 = 0; Max.u64 = 5; 
+ l2cache_2:memlink.ordering_latency : Accumulator : Sum.u64 = 134; SumSQ.u64 = 792; Count.u64 = 58; Min.u64 = 0; Max.u64 = 11; 
  l2cache_2.prefetch_opportunities : Accumulator : Sum.u64 = 750; SumSQ.u64 = 750; Count.u64 = 750; Min.u64 = 1; Max.u64 = 1; 
  l2cache_2.prefetches_issued : Accumulator : Sum.u64 = 741; SumSQ.u64 = 741; Count.u64 = 741; Min.u64 = 1; Max.u64 = 1; 
  l2cache_2.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 111; SumSQ.u64 = 111; Count.u64 = 111; Min.u64 = 1; Max.u64 = 1; 
@@ -4627,7 +4627,7 @@ Model complete
  l2cache_3:memlink.outoforder_data_events : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 751; Min.u64 = 0; Max.u64 = 0; 
  l2cache_3:memlink.outoforder_depth_at_event_receive : Accumulator : Sum.u64 = 92; SumSQ.u64 = 98; Count.u64 = 1251; Min.u64 = 0; Max.u64 = 2; 
  l2cache_3:memlink.outoforder_depth_at_event_receive_src : Accumulator : Sum.u64 = 78; SumSQ.u64 = 78; Count.u64 = 1251; Min.u64 = 0; Max.u64 = 1; 
- l2cache_3:memlink.ordering_latency : Accumulator : Sum.u64 = 88; SumSQ.u64 = 324; Count.u64 = 72; Min.u64 = 0; Max.u64 = 9; 
+ l2cache_3:memlink.ordering_latency : Accumulator : Sum.u64 = 182; SumSQ.u64 = 1320; Count.u64 = 72; Min.u64 = 0; Max.u64 = 17; 
  l2cache_3.prefetch_opportunities : Accumulator : Sum.u64 = 750; SumSQ.u64 = 750; Count.u64 = 750; Min.u64 = 1; Max.u64 = 1; 
  l2cache_3.prefetches_issued : Accumulator : Sum.u64 = 750; SumSQ.u64 = 750; Count.u64 = 750; Min.u64 = 1; Max.u64 = 1; 
  l2cache_3.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 92; SumSQ.u64 = 92; Count.u64 = 92; Min.u64 = 1; Max.u64 = 1; 
@@ -5222,7 +5222,7 @@ Model complete
  dc_3:cpulink.outoforder_data_events : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 750; Min.u64 = 0; Max.u64 = 0; 
  dc_3:cpulink.outoforder_depth_at_event_receive : Accumulator : Sum.u64 = 4; SumSQ.u64 = 4; Count.u64 = 1506; Min.u64 = 0; Max.u64 = 1; 
  dc_3:cpulink.outoforder_depth_at_event_receive_src : Accumulator : Sum.u64 = 2; SumSQ.u64 = 2; Count.u64 = 1506; Min.u64 = 0; Max.u64 = 1; 
- dc_3:cpulink.ordering_latency : Accumulator : Sum.u64 = 4; SumSQ.u64 = 16; Count.u64 = 2; Min.u64 = 0; Max.u64 = 4; 
+ dc_3:cpulink.ordering_latency : Accumulator : Sum.u64 = 7; SumSQ.u64 = 49; Count.u64 = 2; Min.u64 = 0; Max.u64 = 7; 
  dc_3.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dc_3.replacement_request_latency : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dc_3.get_request_latency : Accumulator : Sum.u64 = 84662; SumSQ.u64 = 19809338; Count.u64 = 753; Min.u64 = 16; Max.u64 = 1473; 
@@ -5311,7 +5311,7 @@ Model complete
  l2cache_4:memlink.outoforder_data_events : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 751; Min.u64 = 0; Max.u64 = 0; 
  l2cache_4:memlink.outoforder_depth_at_event_receive : Accumulator : Sum.u64 = 95; SumSQ.u64 = 97; Count.u64 = 1243; Min.u64 = 0; Max.u64 = 2; 
  l2cache_4:memlink.outoforder_depth_at_event_receive_src : Accumulator : Sum.u64 = 82; SumSQ.u64 = 82; Count.u64 = 1243; Min.u64 = 0; Max.u64 = 1; 
- l2cache_4:memlink.ordering_latency : Accumulator : Sum.u64 = 106; SumSQ.u64 = 340; Count.u64 = 78; Min.u64 = 0; Max.u64 = 7; 
+ l2cache_4:memlink.ordering_latency : Accumulator : Sum.u64 = 202; SumSQ.u64 = 1258; Count.u64 = 78; Min.u64 = 0; Max.u64 = 14; 
  l2cache_4.prefetch_opportunities : Accumulator : Sum.u64 = 750; SumSQ.u64 = 750; Count.u64 = 750; Min.u64 = 1; Max.u64 = 1; 
  l2cache_4.prefetches_issued : Accumulator : Sum.u64 = 741; SumSQ.u64 = 741; Count.u64 = 741; Min.u64 = 1; Max.u64 = 1; 
  l2cache_4.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 92; SumSQ.u64 = 92; Count.u64 = 92; Min.u64 = 1; Max.u64 = 1; 
@@ -5995,7 +5995,7 @@ Model complete
  l2cache_5:memlink.outoforder_data_events : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 751; Min.u64 = 0; Max.u64 = 0; 
  l2cache_5:memlink.outoforder_depth_at_event_receive : Accumulator : Sum.u64 = 94; SumSQ.u64 = 96; Count.u64 = 1255; Min.u64 = 0; Max.u64 = 2; 
  l2cache_5:memlink.outoforder_depth_at_event_receive_src : Accumulator : Sum.u64 = 77; SumSQ.u64 = 77; Count.u64 = 1255; Min.u64 = 0; Max.u64 = 1; 
- l2cache_5:memlink.ordering_latency : Accumulator : Sum.u64 = 101; SumSQ.u64 = 435; Count.u64 = 70; Min.u64 = 0; Max.u64 = 13; 
+ l2cache_5:memlink.ordering_latency : Accumulator : Sum.u64 = 201; SumSQ.u64 = 1711; Count.u64 = 70; Min.u64 = 0; Max.u64 = 26; 
  l2cache_5.prefetch_opportunities : Accumulator : Sum.u64 = 750; SumSQ.u64 = 750; Count.u64 = 750; Min.u64 = 1; Max.u64 = 1; 
  l2cache_5.prefetches_issued : Accumulator : Sum.u64 = 738; SumSQ.u64 = 738; Count.u64 = 738; Min.u64 = 1; Max.u64 = 1; 
  l2cache_5.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 96; SumSQ.u64 = 96; Count.u64 = 96; Min.u64 = 1; Max.u64 = 1; 
@@ -6590,7 +6590,7 @@ Model complete
  dc_5:cpulink.outoforder_data_events : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 750; Min.u64 = 0; Max.u64 = 0; 
  dc_5:cpulink.outoforder_depth_at_event_receive : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1506; Min.u64 = 0; Max.u64 = 1; 
  dc_5:cpulink.outoforder_depth_at_event_receive_src : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1506; Min.u64 = 0; Max.u64 = 1; 
- dc_5:cpulink.ordering_latency : Accumulator : Sum.u64 = 2; SumSQ.u64 = 4; Count.u64 = 1; Min.u64 = 2; Max.u64 = 2; 
+ dc_5:cpulink.ordering_latency : Accumulator : Sum.u64 = 3; SumSQ.u64 = 9; Count.u64 = 1; Min.u64 = 3; Max.u64 = 3; 
  dc_5.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dc_5.replacement_request_latency : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dc_5.get_request_latency : Accumulator : Sum.u64 = 85739; SumSQ.u64 = 16089107; Count.u64 = 753; Min.u64 = 19; Max.u64 = 1488; 
@@ -6675,7 +6675,7 @@ Model complete
  l2cache_6:memlink.outoforder_data_events : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 750; Min.u64 = 0; Max.u64 = 0; 
  l2cache_6:memlink.outoforder_depth_at_event_receive : Accumulator : Sum.u64 = 62; SumSQ.u64 = 64; Count.u64 = 1255; Min.u64 = 0; Max.u64 = 2; 
  l2cache_6:memlink.outoforder_depth_at_event_receive_src : Accumulator : Sum.u64 = 49; SumSQ.u64 = 49; Count.u64 = 1255; Min.u64 = 0; Max.u64 = 1; 
- l2cache_6:memlink.ordering_latency : Accumulator : Sum.u64 = 39; SumSQ.u64 = 103; Count.u64 = 48; Min.u64 = 0; Max.u64 = 6; 
+ l2cache_6:memlink.ordering_latency : Accumulator : Sum.u64 = 83; SumSQ.u64 = 441; Count.u64 = 48; Min.u64 = 0; Max.u64 = 13; 
  l2cache_6.prefetch_opportunities : Accumulator : Sum.u64 = 750; SumSQ.u64 = 750; Count.u64 = 750; Min.u64 = 1; Max.u64 = 1; 
  l2cache_6.prefetches_issued : Accumulator : Sum.u64 = 742; SumSQ.u64 = 742; Count.u64 = 742; Min.u64 = 1; Max.u64 = 1; 
  l2cache_6.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 220; SumSQ.u64 = 220; Count.u64 = 220; Min.u64 = 1; Max.u64 = 1; 
@@ -7332,7 +7332,7 @@ Model complete
  l2cache_7:memlink.outoforder_data_events : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 751; Min.u64 = 0; Max.u64 = 0; 
  l2cache_7:memlink.outoforder_depth_at_event_receive : Accumulator : Sum.u64 = 28; SumSQ.u64 = 28; Count.u64 = 1254; Min.u64 = 0; Max.u64 = 1; 
  l2cache_7:memlink.outoforder_depth_at_event_receive_src : Accumulator : Sum.u64 = 27; SumSQ.u64 = 27; Count.u64 = 1254; Min.u64 = 0; Max.u64 = 1; 
- l2cache_7:memlink.ordering_latency : Accumulator : Sum.u64 = 21; SumSQ.u64 = 51; Count.u64 = 26; Min.u64 = 0; Max.u64 = 4; 
+ l2cache_7:memlink.ordering_latency : Accumulator : Sum.u64 = 46; SumSQ.u64 = 224; Count.u64 = 26; Min.u64 = 0; Max.u64 = 8; 
  l2cache_7.prefetch_opportunities : Accumulator : Sum.u64 = 750; SumSQ.u64 = 750; Count.u64 = 750; Min.u64 = 1; Max.u64 = 1; 
  l2cache_7.prefetches_issued : Accumulator : Sum.u64 = 742; SumSQ.u64 = 742; Count.u64 = 742; Min.u64 = 1; Max.u64 = 1; 
  l2cache_7.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 149; SumSQ.u64 = 149; Count.u64 = 149; Min.u64 = 1; Max.u64 = 1; 
@@ -8646,7 +8646,7 @@ Model complete
  l2cache_9:memlink.outoforder_data_events : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 750; Min.u64 = 0; Max.u64 = 0; 
  l2cache_9:memlink.outoforder_depth_at_event_receive : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1253; Min.u64 = 0; Max.u64 = 1; 
  l2cache_9:memlink.outoforder_depth_at_event_receive_src : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1253; Min.u64 = 0; Max.u64 = 1; 
- l2cache_9:memlink.ordering_latency : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 1; Min.u64 = 0; Max.u64 = 0; 
+ l2cache_9:memlink.ordering_latency : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; Min.u64 = 1; Max.u64 = 1; 
  l2cache_9.prefetch_opportunities : Accumulator : Sum.u64 = 750; SumSQ.u64 = 750; Count.u64 = 750; Min.u64 = 1; Max.u64 = 1; 
  l2cache_9.prefetches_issued : Accumulator : Sum.u64 = 746; SumSQ.u64 = 746; Count.u64 = 746; Min.u64 = 1; Max.u64 = 1; 
  l2cache_9.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 96; SumSQ.u64 = 96; Count.u64 = 96; Min.u64 = 1; Max.u64 = 1; 
@@ -9303,7 +9303,7 @@ Model complete
  l2cache_10:memlink.outoforder_data_events : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 750; Min.u64 = 0; Max.u64 = 0; 
  l2cache_10:memlink.outoforder_depth_at_event_receive : Accumulator : Sum.u64 = 4; SumSQ.u64 = 4; Count.u64 = 1256; Min.u64 = 0; Max.u64 = 1; 
  l2cache_10:memlink.outoforder_depth_at_event_receive_src : Accumulator : Sum.u64 = 3; SumSQ.u64 = 3; Count.u64 = 1256; Min.u64 = 0; Max.u64 = 1; 
- l2cache_10:memlink.ordering_latency : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 3; Min.u64 = 0; Max.u64 = 1; 
+ l2cache_10:memlink.ordering_latency : Accumulator : Sum.u64 = 5; SumSQ.u64 = 11; Count.u64 = 3; Min.u64 = 1; Max.u64 = 3; 
  l2cache_10.prefetch_opportunities : Accumulator : Sum.u64 = 750; SumSQ.u64 = 750; Count.u64 = 750; Min.u64 = 1; Max.u64 = 1; 
  l2cache_10.prefetches_issued : Accumulator : Sum.u64 = 747; SumSQ.u64 = 747; Count.u64 = 747; Min.u64 = 1; Max.u64 = 1; 
  l2cache_10.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 106; SumSQ.u64 = 106; Count.u64 = 106; Min.u64 = 1; Max.u64 = 1; 
@@ -9983,7 +9983,7 @@ Model complete
  l2cache_11:memlink.outoforder_data_events : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 751; Min.u64 = 0; Max.u64 = 0; 
  l2cache_11:memlink.outoforder_depth_at_event_receive : Accumulator : Sum.u64 = 2; SumSQ.u64 = 2; Count.u64 = 1259; Min.u64 = 0; Max.u64 = 1; 
  l2cache_11:memlink.outoforder_depth_at_event_receive_src : Accumulator : Sum.u64 = 2; SumSQ.u64 = 2; Count.u64 = 1259; Min.u64 = 0; Max.u64 = 1; 
- l2cache_11:memlink.ordering_latency : Accumulator : Sum.u64 = 4; SumSQ.u64 = 10; Count.u64 = 2; Min.u64 = 1; Max.u64 = 3; 
+ l2cache_11:memlink.ordering_latency : Accumulator : Sum.u64 = 7; SumSQ.u64 = 37; Count.u64 = 2; Min.u64 = 1; Max.u64 = 6; 
  l2cache_11.prefetch_opportunities : Accumulator : Sum.u64 = 750; SumSQ.u64 = 750; Count.u64 = 750; Min.u64 = 1; Max.u64 = 1; 
  l2cache_11.prefetches_issued : Accumulator : Sum.u64 = 743; SumSQ.u64 = 743; Count.u64 = 743; Min.u64 = 1; Max.u64 = 1; 
  l2cache_11.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 93; SumSQ.u64 = 93; Count.u64 = 93; Min.u64 = 1; Max.u64 = 1; 
@@ -10663,7 +10663,7 @@ Model complete
  l2cache_12:memlink.outoforder_data_events : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 751; Min.u64 = 0; Max.u64 = 0; 
  l2cache_12:memlink.outoforder_depth_at_event_receive : Accumulator : Sum.u64 = 3; SumSQ.u64 = 3; Count.u64 = 1261; Min.u64 = 0; Max.u64 = 1; 
  l2cache_12:memlink.outoforder_depth_at_event_receive_src : Accumulator : Sum.u64 = 3; SumSQ.u64 = 3; Count.u64 = 1261; Min.u64 = 0; Max.u64 = 1; 
- l2cache_12:memlink.ordering_latency : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 3; Min.u64 = 0; Max.u64 = 1; 
+ l2cache_12:memlink.ordering_latency : Accumulator : Sum.u64 = 2; SumSQ.u64 = 4; Count.u64 = 3; Min.u64 = 0; Max.u64 = 2; 
  l2cache_12.prefetch_opportunities : Accumulator : Sum.u64 = 750; SumSQ.u64 = 750; Count.u64 = 750; Min.u64 = 1; Max.u64 = 1; 
  l2cache_12.prefetches_issued : Accumulator : Sum.u64 = 740; SumSQ.u64 = 740; Count.u64 = 740; Min.u64 = 1; Max.u64 = 1; 
  l2cache_12.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 106; SumSQ.u64 = 106; Count.u64 = 106; Min.u64 = 1; Max.u64 = 1; 
@@ -11258,7 +11258,7 @@ Model complete
  dc_12:cpulink.outoforder_data_events : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 750; Min.u64 = 0; Max.u64 = 0; 
  dc_12:cpulink.outoforder_depth_at_event_receive : Accumulator : Sum.u64 = 2; SumSQ.u64 = 2; Count.u64 = 1508; Min.u64 = 0; Max.u64 = 1; 
  dc_12:cpulink.outoforder_depth_at_event_receive_src : Accumulator : Sum.u64 = 2; SumSQ.u64 = 2; Count.u64 = 1508; Min.u64 = 0; Max.u64 = 1; 
- dc_12:cpulink.ordering_latency : Accumulator : Sum.u64 = 2; SumSQ.u64 = 4; Count.u64 = 2; Min.u64 = 0; Max.u64 = 2; 
+ dc_12:cpulink.ordering_latency : Accumulator : Sum.u64 = 3; SumSQ.u64 = 9; Count.u64 = 2; Min.u64 = 0; Max.u64 = 3; 
  dc_12.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dc_12.replacement_request_latency : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dc_12.get_request_latency : Accumulator : Sum.u64 = 79344; SumSQ.u64 = 20174586; Count.u64 = 754; Min.u64 = 20; Max.u64 = 1794; 
@@ -11977,7 +11977,7 @@ Model complete
  l2cache_14:memlink.outoforder_data_events : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 751; Min.u64 = 0; Max.u64 = 0; 
  l2cache_14:memlink.outoforder_depth_at_event_receive : Accumulator : Sum.u64 = 3; SumSQ.u64 = 3; Count.u64 = 1257; Min.u64 = 0; Max.u64 = 1; 
  l2cache_14:memlink.outoforder_depth_at_event_receive_src : Accumulator : Sum.u64 = 2; SumSQ.u64 = 2; Count.u64 = 1257; Min.u64 = 0; Max.u64 = 1; 
- l2cache_14:memlink.ordering_latency : Accumulator : Sum.u64 = 4; SumSQ.u64 = 8; Count.u64 = 2; Min.u64 = 2; Max.u64 = 2; 
+ l2cache_14:memlink.ordering_latency : Accumulator : Sum.u64 = 8; SumSQ.u64 = 34; Count.u64 = 2; Min.u64 = 3; Max.u64 = 5; 
  l2cache_14.prefetch_opportunities : Accumulator : Sum.u64 = 750; SumSQ.u64 = 750; Count.u64 = 750; Min.u64 = 1; Max.u64 = 1; 
  l2cache_14.prefetches_issued : Accumulator : Sum.u64 = 746; SumSQ.u64 = 746; Count.u64 = 746; Min.u64 = 1; Max.u64 = 1; 
  l2cache_14.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 183; SumSQ.u64 = 183; Count.u64 = 183; Min.u64 = 1; Max.u64 = 1; 
@@ -12572,7 +12572,7 @@ Model complete
  dc_14:cpulink.outoforder_data_events : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 750; Min.u64 = 0; Max.u64 = 0; 
  dc_14:cpulink.outoforder_depth_at_event_receive : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1508; Min.u64 = 0; Max.u64 = 1; 
  dc_14:cpulink.outoforder_depth_at_event_receive_src : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1508; Min.u64 = 0; Max.u64 = 1; 
- dc_14:cpulink.ordering_latency : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 1; Min.u64 = 0; Max.u64 = 0; 
+ dc_14:cpulink.ordering_latency : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; Min.u64 = 1; Max.u64 = 1; 
  dc_14.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dc_14.replacement_request_latency : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dc_14.get_request_latency : Accumulator : Sum.u64 = 86414; SumSQ.u64 = 19269862; Count.u64 = 754; Min.u64 = 20; Max.u64 = 1511; 
@@ -12634,7 +12634,7 @@ Model complete
  l2cache_15:memlink.outoforder_data_events : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 751; Min.u64 = 0; Max.u64 = 0; 
  l2cache_15:memlink.outoforder_depth_at_event_receive : Accumulator : Sum.u64 = 3; SumSQ.u64 = 3; Count.u64 = 1252; Min.u64 = 0; Max.u64 = 1; 
  l2cache_15:memlink.outoforder_depth_at_event_receive_src : Accumulator : Sum.u64 = 3; SumSQ.u64 = 3; Count.u64 = 1252; Min.u64 = 0; Max.u64 = 1; 
- l2cache_15:memlink.ordering_latency : Accumulator : Sum.u64 = 3; SumSQ.u64 = 9; Count.u64 = 3; Min.u64 = 0; Max.u64 = 3; 
+ l2cache_15:memlink.ordering_latency : Accumulator : Sum.u64 = 5; SumSQ.u64 = 25; Count.u64 = 3; Min.u64 = 0; Max.u64 = 5; 
  l2cache_15.prefetch_opportunities : Accumulator : Sum.u64 = 750; SumSQ.u64 = 750; Count.u64 = 750; Min.u64 = 1; Max.u64 = 1; 
  l2cache_15.prefetches_issued : Accumulator : Sum.u64 = 737; SumSQ.u64 = 737; Count.u64 = 737; Min.u64 = 1; Max.u64 = 1; 
  l2cache_15.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 97; SumSQ.u64 = 97; Count.u64 = 97; Min.u64 = 1; Max.u64 = 1; 
@@ -13886,7 +13886,7 @@ Model complete
  dc_16:cpulink.outoforder_data_events : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 750; Min.u64 = 0; Max.u64 = 0; 
  dc_16:cpulink.outoforder_depth_at_event_receive : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1506; Min.u64 = 0; Max.u64 = 1; 
  dc_16:cpulink.outoforder_depth_at_event_receive_src : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1506; Min.u64 = 0; Max.u64 = 1; 
- dc_16:cpulink.ordering_latency : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; Min.u64 = 1; Max.u64 = 1; 
+ dc_16:cpulink.ordering_latency : Accumulator : Sum.u64 = 2; SumSQ.u64 = 4; Count.u64 = 1; Min.u64 = 2; Max.u64 = 2; 
  dc_16.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dc_16.replacement_request_latency : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dc_16.get_request_latency : Accumulator : Sum.u64 = 83843; SumSQ.u64 = 18467697; Count.u64 = 753; Min.u64 = 20; Max.u64 = 1619; 
@@ -13971,7 +13971,7 @@ Model complete
  l2cache_17:memlink.outoforder_data_events : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 751; Min.u64 = 0; Max.u64 = 0; 
  l2cache_17:memlink.outoforder_depth_at_event_receive : Accumulator : Sum.u64 = 2; SumSQ.u64 = 2; Count.u64 = 1260; Min.u64 = 0; Max.u64 = 1; 
  l2cache_17:memlink.outoforder_depth_at_event_receive_src : Accumulator : Sum.u64 = 2; SumSQ.u64 = 2; Count.u64 = 1260; Min.u64 = 0; Max.u64 = 1; 
- l2cache_17:memlink.ordering_latency : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 2; Min.u64 = 0; Max.u64 = 1; 
+ l2cache_17:memlink.ordering_latency : Accumulator : Sum.u64 = 3; SumSQ.u64 = 5; Count.u64 = 2; Min.u64 = 1; Max.u64 = 2; 
  l2cache_17.prefetch_opportunities : Accumulator : Sum.u64 = 750; SumSQ.u64 = 750; Count.u64 = 750; Min.u64 = 1; Max.u64 = 1; 
  l2cache_17.prefetches_issued : Accumulator : Sum.u64 = 750; SumSQ.u64 = 750; Count.u64 = 750; Min.u64 = 1; Max.u64 = 1; 
  l2cache_17.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 92; SumSQ.u64 = 92; Count.u64 = 92; Min.u64 = 1; Max.u64 = 1; 
@@ -14651,7 +14651,7 @@ Model complete
  l2cache_18:memlink.outoforder_data_events : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 751; Min.u64 = 0; Max.u64 = 0; 
  l2cache_18:memlink.outoforder_depth_at_event_receive : Accumulator : Sum.u64 = 6; SumSQ.u64 = 6; Count.u64 = 802; Min.u64 = 0; Max.u64 = 1; 
  l2cache_18:memlink.outoforder_depth_at_event_receive_src : Accumulator : Sum.u64 = 6; SumSQ.u64 = 6; Count.u64 = 802; Min.u64 = 0; Max.u64 = 1; 
- l2cache_18:memlink.ordering_latency : Accumulator : Sum.u64 = 7; SumSQ.u64 = 37; Count.u64 = 6; Min.u64 = 0; Max.u64 = 6; 
+ l2cache_18:memlink.ordering_latency : Accumulator : Sum.u64 = 13; SumSQ.u64 = 123; Count.u64 = 6; Min.u64 = 0; Max.u64 = 11; 
  l2cache_18.prefetch_opportunities : Accumulator : Sum.u64 = 750; SumSQ.u64 = 750; Count.u64 = 750; Min.u64 = 1; Max.u64 = 1; 
  l2cache_18.prefetches_issued : Accumulator : Sum.u64 = 737; SumSQ.u64 = 737; Count.u64 = 737; Min.u64 = 1; Max.u64 = 1; 
  l2cache_18.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 168; SumSQ.u64 = 168; Count.u64 = 168; Min.u64 = 1; Max.u64 = 1; 
@@ -15246,7 +15246,7 @@ Model complete
  dc_18:cpulink.outoforder_data_events : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 750; Min.u64 = 0; Max.u64 = 0; 
  dc_18:cpulink.outoforder_depth_at_event_receive : Accumulator : Sum.u64 = 2; SumSQ.u64 = 2; Count.u64 = 1506; Min.u64 = 0; Max.u64 = 1; 
  dc_18:cpulink.outoforder_depth_at_event_receive_src : Accumulator : Sum.u64 = 2; SumSQ.u64 = 2; Count.u64 = 1506; Min.u64 = 0; Max.u64 = 1; 
- dc_18:cpulink.ordering_latency : Accumulator : Sum.u64 = 3; SumSQ.u64 = 9; Count.u64 = 2; Min.u64 = 0; Max.u64 = 3; 
+ dc_18:cpulink.ordering_latency : Accumulator : Sum.u64 = 5; SumSQ.u64 = 25; Count.u64 = 2; Min.u64 = 0; Max.u64 = 5; 
  dc_18.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dc_18.replacement_request_latency : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dc_18.get_request_latency : Accumulator : Sum.u64 = 88236; SumSQ.u64 = 20513872; Count.u64 = 753; Min.u64 = 20; Max.u64 = 1742; 
@@ -15308,7 +15308,7 @@ Model complete
  l2cache_19:memlink.outoforder_data_events : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 752; Min.u64 = 0; Max.u64 = 0; 
  l2cache_19:memlink.outoforder_depth_at_event_receive : Accumulator : Sum.u64 = 6; SumSQ.u64 = 6; Count.u64 = 780; Min.u64 = 0; Max.u64 = 1; 
  l2cache_19:memlink.outoforder_depth_at_event_receive_src : Accumulator : Sum.u64 = 4; SumSQ.u64 = 4; Count.u64 = 780; Min.u64 = 0; Max.u64 = 1; 
- l2cache_19:memlink.ordering_latency : Accumulator : Sum.u64 = 5; SumSQ.u64 = 11; Count.u64 = 4; Min.u64 = 0; Max.u64 = 3; 
+ l2cache_19:memlink.ordering_latency : Accumulator : Sum.u64 = 11; SumSQ.u64 = 59; Count.u64 = 4; Min.u64 = 0; Max.u64 = 7; 
  l2cache_19.prefetch_opportunities : Accumulator : Sum.u64 = 750; SumSQ.u64 = 750; Count.u64 = 750; Min.u64 = 1; Max.u64 = 1; 
  l2cache_19.prefetches_issued : Accumulator : Sum.u64 = 740; SumSQ.u64 = 740; Count.u64 = 740; Min.u64 = 1; Max.u64 = 1; 
  l2cache_19.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 102; SumSQ.u64 = 102; Count.u64 = 102; Min.u64 = 1; Max.u64 = 1; 
@@ -15903,7 +15903,7 @@ Model complete
  dc_19:cpulink.outoforder_data_events : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 750; Min.u64 = 0; Max.u64 = 0; 
  dc_19:cpulink.outoforder_depth_at_event_receive : Accumulator : Sum.u64 = 3; SumSQ.u64 = 3; Count.u64 = 1506; Min.u64 = 0; Max.u64 = 1; 
  dc_19:cpulink.outoforder_depth_at_event_receive_src : Accumulator : Sum.u64 = 2; SumSQ.u64 = 2; Count.u64 = 1506; Min.u64 = 0; Max.u64 = 1; 
- dc_19:cpulink.ordering_latency : Accumulator : Sum.u64 = 2; SumSQ.u64 = 4; Count.u64 = 2; Min.u64 = 0; Max.u64 = 2; 
+ dc_19:cpulink.ordering_latency : Accumulator : Sum.u64 = 4; SumSQ.u64 = 16; Count.u64 = 2; Min.u64 = 0; Max.u64 = 4; 
  dc_19.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dc_19.replacement_request_latency : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dc_19.get_request_latency : Accumulator : Sum.u64 = 85823; SumSQ.u64 = 19671131; Count.u64 = 753; Min.u64 = 18; Max.u64 = 1514; 
@@ -15965,7 +15965,7 @@ Model complete
  l2cache_20:memlink.outoforder_data_events : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 750; Min.u64 = 0; Max.u64 = 0; 
  l2cache_20:memlink.outoforder_depth_at_event_receive : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 766; Min.u64 = 0; Max.u64 = 1; 
  l2cache_20:memlink.outoforder_depth_at_event_receive_src : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 766; Min.u64 = 0; Max.u64 = 1; 
- l2cache_20:memlink.ordering_latency : Accumulator : Sum.u64 = 3; SumSQ.u64 = 9; Count.u64 = 1; Min.u64 = 3; Max.u64 = 3; 
+ l2cache_20:memlink.ordering_latency : Accumulator : Sum.u64 = 6; SumSQ.u64 = 36; Count.u64 = 1; Min.u64 = 6; Max.u64 = 6; 
  l2cache_20.prefetch_opportunities : Accumulator : Sum.u64 = 750; SumSQ.u64 = 750; Count.u64 = 750; Min.u64 = 1; Max.u64 = 1; 
  l2cache_20.prefetches_issued : Accumulator : Sum.u64 = 748; SumSQ.u64 = 748; Count.u64 = 748; Min.u64 = 1; Max.u64 = 1; 
  l2cache_20.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 100; SumSQ.u64 = 100; Count.u64 = 100; Min.u64 = 1; Max.u64 = 1; 
@@ -16560,7 +16560,7 @@ Model complete
  dc_20:cpulink.outoforder_data_events : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 750; Min.u64 = 0; Max.u64 = 0; 
  dc_20:cpulink.outoforder_depth_at_event_receive : Accumulator : Sum.u64 = 2; SumSQ.u64 = 2; Count.u64 = 1508; Min.u64 = 0; Max.u64 = 1; 
  dc_20:cpulink.outoforder_depth_at_event_receive_src : Accumulator : Sum.u64 = 2; SumSQ.u64 = 2; Count.u64 = 1508; Min.u64 = 0; Max.u64 = 1; 
- dc_20:cpulink.ordering_latency : Accumulator : Sum.u64 = 2; SumSQ.u64 = 2; Count.u64 = 2; Min.u64 = 1; Max.u64 = 1; 
+ dc_20:cpulink.ordering_latency : Accumulator : Sum.u64 = 3; SumSQ.u64 = 5; Count.u64 = 2; Min.u64 = 1; Max.u64 = 2; 
  dc_20.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dc_20.replacement_request_latency : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dc_20.get_request_latency : Accumulator : Sum.u64 = 81752; SumSQ.u64 = 16412066; Count.u64 = 754; Min.u64 = 18; Max.u64 = 1492; 
@@ -17217,7 +17217,7 @@ Model complete
  dc_21:cpulink.outoforder_data_events : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 750; Min.u64 = 0; Max.u64 = 0; 
  dc_21:cpulink.outoforder_depth_at_event_receive : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1508; Min.u64 = 0; Max.u64 = 1; 
  dc_21:cpulink.outoforder_depth_at_event_receive_src : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1508; Min.u64 = 0; Max.u64 = 1; 
- dc_21:cpulink.ordering_latency : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 1; Min.u64 = 0; Max.u64 = 0; 
+ dc_21:cpulink.ordering_latency : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1; Min.u64 = 1; Max.u64 = 1; 
  dc_21.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dc_21.replacement_request_latency : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dc_21.get_request_latency : Accumulator : Sum.u64 = 87863; SumSQ.u64 = 18394663; Count.u64 = 754; Min.u64 = 22; Max.u64 = 1420; 
@@ -17279,7 +17279,7 @@ Model complete
  l2cache_22:memlink.outoforder_data_events : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 752; Min.u64 = 0; Max.u64 = 0; 
  l2cache_22:memlink.outoforder_depth_at_event_receive : Accumulator : Sum.u64 = 2; SumSQ.u64 = 2; Count.u64 = 764; Min.u64 = 0; Max.u64 = 1; 
  l2cache_22:memlink.outoforder_depth_at_event_receive_src : Accumulator : Sum.u64 = 2; SumSQ.u64 = 2; Count.u64 = 764; Min.u64 = 0; Max.u64 = 1; 
- l2cache_22:memlink.ordering_latency : Accumulator : Sum.u64 = 3; SumSQ.u64 = 9; Count.u64 = 1; Min.u64 = 3; Max.u64 = 3; 
+ l2cache_22:memlink.ordering_latency : Accumulator : Sum.u64 = 7; SumSQ.u64 = 49; Count.u64 = 1; Min.u64 = 7; Max.u64 = 7; 
  l2cache_22.prefetch_opportunities : Accumulator : Sum.u64 = 750; SumSQ.u64 = 750; Count.u64 = 750; Min.u64 = 1; Max.u64 = 1; 
  l2cache_22.prefetches_issued : Accumulator : Sum.u64 = 742; SumSQ.u64 = 742; Count.u64 = 742; Min.u64 = 1; Max.u64 = 1; 
  l2cache_22.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 125; SumSQ.u64 = 125; Count.u64 = 125; Min.u64 = 1; Max.u64 = 1; 
@@ -17874,7 +17874,7 @@ Model complete
  dc_22:cpulink.outoforder_data_events : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 750; Min.u64 = 0; Max.u64 = 0; 
  dc_22:cpulink.outoforder_depth_at_event_receive : Accumulator : Sum.u64 = 3; SumSQ.u64 = 3; Count.u64 = 1508; Min.u64 = 0; Max.u64 = 1; 
  dc_22:cpulink.outoforder_depth_at_event_receive_src : Accumulator : Sum.u64 = 2; SumSQ.u64 = 2; Count.u64 = 1508; Min.u64 = 0; Max.u64 = 1; 
- dc_22:cpulink.ordering_latency : Accumulator : Sum.u64 = 4; SumSQ.u64 = 16; Count.u64 = 2; Min.u64 = 0; Max.u64 = 4; 
+ dc_22:cpulink.ordering_latency : Accumulator : Sum.u64 = 7; SumSQ.u64 = 49; Count.u64 = 2; Min.u64 = 0; Max.u64 = 7; 
  dc_22.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dc_22.replacement_request_latency : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dc_22.get_request_latency : Accumulator : Sum.u64 = 83519; SumSQ.u64 = 16655007; Count.u64 = 754; Min.u64 = 22; Max.u64 = 1378; 
@@ -19211,7 +19211,7 @@ Model complete
  dc_24:cpulink.outoforder_data_events : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 750; Min.u64 = 0; Max.u64 = 0; 
  dc_24:cpulink.outoforder_depth_at_event_receive : Accumulator : Sum.u64 = 2; SumSQ.u64 = 2; Count.u64 = 1510; Min.u64 = 0; Max.u64 = 1; 
  dc_24:cpulink.outoforder_depth_at_event_receive_src : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 1510; Min.u64 = 0; Max.u64 = 1; 
- dc_24:cpulink.ordering_latency : Accumulator : Sum.u64 = 2; SumSQ.u64 = 4; Count.u64 = 1; Min.u64 = 2; Max.u64 = 2; 
+ dc_24:cpulink.ordering_latency : Accumulator : Sum.u64 = 3; SumSQ.u64 = 9; Count.u64 = 1; Min.u64 = 3; Max.u64 = 3; 
  dc_24.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dc_24.replacement_request_latency : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dc_24.get_request_latency : Accumulator : Sum.u64 = 80188; SumSQ.u64 = 16408154; Count.u64 = 755; Min.u64 = 20; Max.u64 = 1576; 
@@ -19273,7 +19273,7 @@ Model complete
  l2cache_25:memlink.outoforder_data_events : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 752; Min.u64 = 0; Max.u64 = 0; 
  l2cache_25:memlink.outoforder_depth_at_event_receive : Accumulator : Sum.u64 = 3; SumSQ.u64 = 3; Count.u64 = 769; Min.u64 = 0; Max.u64 = 1; 
  l2cache_25:memlink.outoforder_depth_at_event_receive_src : Accumulator : Sum.u64 = 3; SumSQ.u64 = 3; Count.u64 = 769; Min.u64 = 0; Max.u64 = 1; 
- l2cache_25:memlink.ordering_latency : Accumulator : Sum.u64 = 14; SumSQ.u64 = 116; Count.u64 = 3; Min.u64 = 0; Max.u64 = 10; 
+ l2cache_25:memlink.ordering_latency : Accumulator : Sum.u64 = 28; SumSQ.u64 = 442; Count.u64 = 3; Min.u64 = 0; Max.u64 = 19; 
  l2cache_25.prefetch_opportunities : Accumulator : Sum.u64 = 750; SumSQ.u64 = 750; Count.u64 = 750; Min.u64 = 1; Max.u64 = 1; 
  l2cache_25.prefetches_issued : Accumulator : Sum.u64 = 745; SumSQ.u64 = 745; Count.u64 = 745; Min.u64 = 1; Max.u64 = 1; 
  l2cache_25.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 90; SumSQ.u64 = 90; Count.u64 = 90; Min.u64 = 1; Max.u64 = 1; 
@@ -19868,7 +19868,7 @@ Model complete
  dc_25:cpulink.outoforder_data_events : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 750; Min.u64 = 0; Max.u64 = 0; 
  dc_25:cpulink.outoforder_depth_at_event_receive : Accumulator : Sum.u64 = 3; SumSQ.u64 = 3; Count.u64 = 1510; Min.u64 = 0; Max.u64 = 1; 
  dc_25:cpulink.outoforder_depth_at_event_receive_src : Accumulator : Sum.u64 = 3; SumSQ.u64 = 3; Count.u64 = 1510; Min.u64 = 0; Max.u64 = 1; 
- dc_25:cpulink.ordering_latency : Accumulator : Sum.u64 = 5; SumSQ.u64 = 11; Count.u64 = 3; Min.u64 = 1; Max.u64 = 3; 
+ dc_25:cpulink.ordering_latency : Accumulator : Sum.u64 = 8; SumSQ.u64 = 30; Count.u64 = 3; Min.u64 = 1; Max.u64 = 5; 
  dc_25.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dc_25.replacement_request_latency : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dc_25.get_request_latency : Accumulator : Sum.u64 = 86755; SumSQ.u64 = 19112555; Count.u64 = 755; Min.u64 = 23; Max.u64 = 1447; 
@@ -20525,7 +20525,7 @@ Model complete
  dc_26:cpulink.outoforder_data_events : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 750; Min.u64 = 0; Max.u64 = 0; 
  dc_26:cpulink.outoforder_depth_at_event_receive : Accumulator : Sum.u64 = 3; SumSQ.u64 = 3; Count.u64 = 1510; Min.u64 = 0; Max.u64 = 1; 
  dc_26:cpulink.outoforder_depth_at_event_receive_src : Accumulator : Sum.u64 = 3; SumSQ.u64 = 3; Count.u64 = 1510; Min.u64 = 0; Max.u64 = 1; 
- dc_26:cpulink.ordering_latency : Accumulator : Sum.u64 = 4; SumSQ.u64 = 10; Count.u64 = 3; Min.u64 = 0; Max.u64 = 3; 
+ dc_26:cpulink.ordering_latency : Accumulator : Sum.u64 = 7; SumSQ.u64 = 37; Count.u64 = 3; Min.u64 = 0; Max.u64 = 6; 
  dc_26.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dc_26.replacement_request_latency : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dc_26.get_request_latency : Accumulator : Sum.u64 = 86915; SumSQ.u64 = 17511927; Count.u64 = 755; Min.u64 = 18; Max.u64 = 1346; 
@@ -20587,7 +20587,7 @@ Model complete
  l2cache_27:memlink.outoforder_data_events : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 751; Min.u64 = 0; Max.u64 = 0; 
  l2cache_27:memlink.outoforder_depth_at_event_receive : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 764; Min.u64 = 0; Max.u64 = 1; 
  l2cache_27:memlink.outoforder_depth_at_event_receive_src : Accumulator : Sum.u64 = 1; SumSQ.u64 = 1; Count.u64 = 764; Min.u64 = 0; Max.u64 = 1; 
- l2cache_27:memlink.ordering_latency : Accumulator : Sum.u64 = 2; SumSQ.u64 = 4; Count.u64 = 1; Min.u64 = 2; Max.u64 = 2; 
+ l2cache_27:memlink.ordering_latency : Accumulator : Sum.u64 = 5; SumSQ.u64 = 25; Count.u64 = 1; Min.u64 = 5; Max.u64 = 5; 
  l2cache_27.prefetch_opportunities : Accumulator : Sum.u64 = 750; SumSQ.u64 = 750; Count.u64 = 750; Min.u64 = 1; Max.u64 = 1; 
  l2cache_27.prefetches_issued : Accumulator : Sum.u64 = 743; SumSQ.u64 = 743; Count.u64 = 743; Min.u64 = 1; Max.u64 = 1; 
  l2cache_27.prefetches_canceled_by_page_boundary : Accumulator : Sum.u64 = 98; SumSQ.u64 = 98; Count.u64 = 98; Min.u64 = 1; Max.u64 = 1; 
@@ -21182,7 +21182,7 @@ Model complete
  dc_27:cpulink.outoforder_data_events : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 750; Min.u64 = 0; Max.u64 = 0; 
  dc_27:cpulink.outoforder_depth_at_event_receive : Accumulator : Sum.u64 = 3; SumSQ.u64 = 3; Count.u64 = 1512; Min.u64 = 0; Max.u64 = 1; 
  dc_27:cpulink.outoforder_depth_at_event_receive_src : Accumulator : Sum.u64 = 3; SumSQ.u64 = 3; Count.u64 = 1512; Min.u64 = 0; Max.u64 = 1; 
- dc_27:cpulink.ordering_latency : Accumulator : Sum.u64 = 8; SumSQ.u64 = 50; Count.u64 = 3; Min.u64 = 0; Max.u64 = 7; 
+ dc_27:cpulink.ordering_latency : Accumulator : Sum.u64 = 14; SumSQ.u64 = 126; Count.u64 = 3; Min.u64 = 1; Max.u64 = 11; 
  dc_27.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dc_27.replacement_request_latency : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dc_27.get_request_latency : Accumulator : Sum.u64 = 84898; SumSQ.u64 = 18009118; Count.u64 = 756; Min.u64 = 22; Max.u64 = 1486; 
@@ -21839,7 +21839,7 @@ Model complete
  dc_28:cpulink.outoforder_data_events : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 750; Min.u64 = 0; Max.u64 = 0; 
  dc_28:cpulink.outoforder_depth_at_event_receive : Accumulator : Sum.u64 = 10; SumSQ.u64 = 10; Count.u64 = 1508; Min.u64 = 0; Max.u64 = 1; 
  dc_28:cpulink.outoforder_depth_at_event_receive_src : Accumulator : Sum.u64 = 5; SumSQ.u64 = 5; Count.u64 = 1508; Min.u64 = 0; Max.u64 = 1; 
- dc_28:cpulink.ordering_latency : Accumulator : Sum.u64 = 15; SumSQ.u64 = 61; Count.u64 = 5; Min.u64 = 1; Max.u64 = 5; 
+ dc_28:cpulink.ordering_latency : Accumulator : Sum.u64 = 23; SumSQ.u64 = 149; Count.u64 = 5; Min.u64 = 1; Max.u64 = 8; 
  dc_28.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dc_28.replacement_request_latency : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dc_28.get_request_latency : Accumulator : Sum.u64 = 84625; SumSQ.u64 = 17062891; Count.u64 = 754; Min.u64 = 22; Max.u64 = 1438; 
@@ -22496,7 +22496,7 @@ Model complete
  dc_29:cpulink.outoforder_data_events : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 750; Min.u64 = 0; Max.u64 = 0; 
  dc_29:cpulink.outoforder_depth_at_event_receive : Accumulator : Sum.u64 = 3; SumSQ.u64 = 3; Count.u64 = 1510; Min.u64 = 0; Max.u64 = 1; 
  dc_29:cpulink.outoforder_depth_at_event_receive_src : Accumulator : Sum.u64 = 2; SumSQ.u64 = 2; Count.u64 = 1510; Min.u64 = 0; Max.u64 = 1; 
- dc_29:cpulink.ordering_latency : Accumulator : Sum.u64 = 6; SumSQ.u64 = 20; Count.u64 = 2; Min.u64 = 2; Max.u64 = 4; 
+ dc_29:cpulink.ordering_latency : Accumulator : Sum.u64 = 8; SumSQ.u64 = 34; Count.u64 = 2; Min.u64 = 3; Max.u64 = 5; 
  dc_29.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dc_29.replacement_request_latency : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dc_29.get_request_latency : Accumulator : Sum.u64 = 89747; SumSQ.u64 = 22179103; Count.u64 = 755; Min.u64 = 20; Max.u64 = 1732; 
@@ -24521,7 +24521,7 @@ Model complete
  dc_32:cpulink.outoforder_data_events : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 750; Min.u64 = 0; Max.u64 = 0; 
  dc_32:cpulink.outoforder_depth_at_event_receive : Accumulator : Sum.u64 = 3; SumSQ.u64 = 3; Count.u64 = 1508; Min.u64 = 0; Max.u64 = 1; 
  dc_32:cpulink.outoforder_depth_at_event_receive_src : Accumulator : Sum.u64 = 3; SumSQ.u64 = 3; Count.u64 = 1508; Min.u64 = 0; Max.u64 = 1; 
- dc_32:cpulink.ordering_latency : Accumulator : Sum.u64 = 8; SumSQ.u64 = 26; Count.u64 = 3; Min.u64 = 1; Max.u64 = 4; 
+ dc_32:cpulink.ordering_latency : Accumulator : Sum.u64 = 14; SumSQ.u64 = 78; Count.u64 = 3; Min.u64 = 2; Max.u64 = 7; 
  dc_32.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dc_32.replacement_request_latency : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dc_32.get_request_latency : Accumulator : Sum.u64 = 85200; SumSQ.u64 = 17914148; Count.u64 = 754; Min.u64 = 24; Max.u64 = 1430; 
@@ -25178,7 +25178,7 @@ Model complete
  dc_33:cpulink.outoforder_data_events : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 750; Min.u64 = 0; Max.u64 = 0; 
  dc_33:cpulink.outoforder_depth_at_event_receive : Accumulator : Sum.u64 = 3; SumSQ.u64 = 3; Count.u64 = 1506; Min.u64 = 0; Max.u64 = 1; 
  dc_33:cpulink.outoforder_depth_at_event_receive_src : Accumulator : Sum.u64 = 2; SumSQ.u64 = 2; Count.u64 = 1506; Min.u64 = 0; Max.u64 = 1; 
- dc_33:cpulink.ordering_latency : Accumulator : Sum.u64 = 4; SumSQ.u64 = 10; Count.u64 = 2; Min.u64 = 1; Max.u64 = 3; 
+ dc_33:cpulink.ordering_latency : Accumulator : Sum.u64 = 6; SumSQ.u64 = 20; Count.u64 = 2; Min.u64 = 2; Max.u64 = 4; 
  dc_33.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dc_33.replacement_request_latency : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dc_33.get_request_latency : Accumulator : Sum.u64 = 89291; SumSQ.u64 = 19258765; Count.u64 = 753; Min.u64 = 26; Max.u64 = 1358; 
@@ -25862,7 +25862,7 @@ Model complete
  dc_34:cpulink.outoforder_data_events : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 750; Min.u64 = 0; Max.u64 = 0; 
  dc_34:cpulink.outoforder_depth_at_event_receive : Accumulator : Sum.u64 = 4; SumSQ.u64 = 4; Count.u64 = 1506; Min.u64 = 0; Max.u64 = 1; 
  dc_34:cpulink.outoforder_depth_at_event_receive_src : Accumulator : Sum.u64 = 2; SumSQ.u64 = 2; Count.u64 = 1506; Min.u64 = 0; Max.u64 = 1; 
- dc_34:cpulink.ordering_latency : Accumulator : Sum.u64 = 7; SumSQ.u64 = 29; Count.u64 = 2; Min.u64 = 2; Max.u64 = 5; 
+ dc_34:cpulink.ordering_latency : Accumulator : Sum.u64 = 9; SumSQ.u64 = 53; Count.u64 = 2; Min.u64 = 2; Max.u64 = 7; 
  dc_34.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dc_34.replacement_request_latency : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dc_34.get_request_latency : Accumulator : Sum.u64 = 85452; SumSQ.u64 = 18348988; Count.u64 = 753; Min.u64 = 28; Max.u64 = 1483; 
@@ -26546,7 +26546,7 @@ Model complete
  dc_35:cpulink.outoforder_data_events : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 750; Min.u64 = 0; Max.u64 = 0; 
  dc_35:cpulink.outoforder_depth_at_event_receive : Accumulator : Sum.u64 = 4; SumSQ.u64 = 4; Count.u64 = 1506; Min.u64 = 0; Max.u64 = 1; 
  dc_35:cpulink.outoforder_depth_at_event_receive_src : Accumulator : Sum.u64 = 3; SumSQ.u64 = 3; Count.u64 = 1506; Min.u64 = 0; Max.u64 = 1; 
- dc_35:cpulink.ordering_latency : Accumulator : Sum.u64 = 7; SumSQ.u64 = 29; Count.u64 = 3; Min.u64 = 0; Max.u64 = 5; 
+ dc_35:cpulink.ordering_latency : Accumulator : Sum.u64 = 13; SumSQ.u64 = 81; Count.u64 = 3; Min.u64 = 1; Max.u64 = 8; 
  dc_35.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dc_35.replacement_request_latency : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dc_35.get_request_latency : Accumulator : Sum.u64 = 80254; SumSQ.u64 = 16887036; Count.u64 = 753; Min.u64 = 27; Max.u64 = 1673; 

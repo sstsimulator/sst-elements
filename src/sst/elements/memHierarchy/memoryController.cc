@@ -96,6 +96,16 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
         out.output("%s, ** Found deprecated parameter: direct_link ** The value of this parameter is now auto-detected by the link configuration in your input deck. Remove this parameter from your input deck to eliminate this message.\n", getName().c_str());
     }
 
+    /* Clock Handler */
+    std::string clockfreq = params.find<std::string>("clock");
+    UnitAlgebra clock_ua(clockfreq);
+    if (!(clock_ua.hasUnits("Hz") || clock_ua.hasUnits("s")) || clock_ua.getRoundedValue() <= 0) {
+        out.fatal(CALL_INFO, -1, "%s, Error - Invalid param: clock. Must have units of Hz or s and be > 0. (SI prefixes ok). You specified '%s'\n", getName().c_str(), clockfreq.c_str());
+    }
+    clockHandler_ = new Clock::Handler<MemController>(this, &MemController::clock);
+    clockTimeBase_ = registerClock(clockfreq, clockHandler_);
+    clockOn_ = true;
+
 
     string link_lat         = params.find<std::string>("direct_link_latency", "10 ns");
 
@@ -199,14 +209,14 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     region_.interleaveSize = UnitAlgebra(ilSize).getRoundedValue();
     region_.interleaveStep = UnitAlgebra(ilStep).getRoundedValue();
 
-    link_ = loadUserSubComponent<MemLinkBase>("cpulink");
+    link_ = loadUserSubComponent<MemLinkBase>("cpulink", ComponentInfo::SHARE_NONE, clockTimeBase_);
 
     if (!link_ && isPortConnected("direct_link")) {
         Params linkParams = params.get_scoped_params("cpulink");
         linkParams.insert("port", "direct_link");
         linkParams.insert("latency", link_lat, false);
         linkParams.insert("accept_region", "1", false);
-        link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, linkParams);
+        link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, linkParams, clockTimeBase_);
     } else if (!link_) {
 
         if (!isPortConnected("network")) {
@@ -222,10 +232,10 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
             nicParams.insert("ack.port", "network_ack");
             nicParams.insert("fwd.port", "network_fwd");
             nicParams.insert("data.port", "network_data");
-            link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNICFour", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams);
+            link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNICFour", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams, clockTimeBase_);
         } else {
             nicParams.insert("port", "network");
-            link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams);
+            link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams, clockTimeBase_);
         }
     }
 
@@ -293,16 +303,6 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     } else if (backingType == "malloc") {
         backing_ = new Backend::BackingMalloc(sizeBytes);
     }
-
-    /* Clock Handler */
-    std::string clockfreq = params.find<std::string>("clock");
-    UnitAlgebra clock_ua(clockfreq);
-    if (!(clock_ua.hasUnits("Hz") || clock_ua.hasUnits("s")) || clock_ua.getRoundedValue() <= 0) {
-        out.fatal(CALL_INFO, -1, "%s, Error - Invalid param: clock. Must have units of Hz or s and be > 0. (SI prefixes ok). You specified '%s'\n", getName().c_str(), clockfreq.c_str());
-    }
-    clockHandler_ = new Clock::Handler<MemController>(this, &MemController::clock);
-    clockTimeBase_ = registerClock(clockfreq, clockHandler_);
-    clockOn_ = true;
 
     /* Custom command handler */
     using std::placeholders::_3;
