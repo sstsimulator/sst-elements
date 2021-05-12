@@ -173,6 +173,26 @@ void LinkControl::setup()
     }
 }
 
+RtrInitEvent* LinkControl::checkInitProtocol(Event* ev, RtrInitEvent::Commands command, uint32_t line, const char* file, const char* func)
+{
+    bool good = true;
+    RtrInitEvent* init_ev = nullptr;
+    // Check to make sure the event isn't null and that it is an init event
+    if ( nullptr == ev || static_cast<BaseRtrEvent*>(ev)->getType() != BaseRtrEvent::INITIALIZATION ) good = false;
+
+    if ( good ) {
+        init_ev = static_cast<RtrInitEvent*>(ev);
+
+        // Now check to make sure this is the right protocol event
+        if ( init_ev->command != command ) {
+            good = false;
+        }
+    }
+
+    sst_assert(good, line, file, func, 1, "Error during LinkControl protocol initialization.  The most likely cause of this is connecting an endpoint to a router port expecting to be connnected to another router.\n");
+    return init_ev;
+}
+
 void LinkControl::init(unsigned int phase)
 {
     Event* ev;
@@ -198,13 +218,13 @@ void LinkControl::init(unsigned int phase)
         // Get the link speed from the other side.  Actual link speed
         // will be the minumum the two sides
         ev = rtr_link->recvUntimedData();
-        init_ev = dynamic_cast<RtrInitEvent*>(ev);
+        init_ev = checkInitProtocol(ev, RtrInitEvent::REPORT_BW, CALL_INFO);
         if ( link_bw > init_ev->ua_value ) link_bw = init_ev->ua_value;
         delete ev;
 
         // Get the flit size from the router
         ev = rtr_link->recvUntimedData();
-        init_ev = dynamic_cast<RtrInitEvent*>(ev);
+        init_ev = checkInitProtocol(ev, RtrInitEvent::REPORT_FLIT_SIZE, CALL_INFO);
         flit_size_ua = init_ev->ua_value;
         flit_size = flit_size_ua.getRoundedValue();
         delete ev;
@@ -217,17 +237,7 @@ void LinkControl::init(unsigned int phase)
         // Initialize links
         // Receive the endpoint ID from PortControl
         ev = rtr_link->recvUntimedData();
-        if ( ev == nullptr ) {
-            // fail
-        }
-        if ( static_cast<BaseRtrEvent*>(ev)->getType() != BaseRtrEvent::INITIALIZATION ) {
-            // fail
-        }
-        init_ev = static_cast<RtrInitEvent*>(ev);
-
-        if ( init_ev->command != RtrInitEvent::REPORT_ID ) {
-            // fail
-        }
+        init_ev = checkInitProtocol(ev, RtrInitEvent::REPORT_ID, CALL_INFO);
 
         id = init_ev->int_value;
         if ( logical_nid == -1 ) logical_nid = id;
@@ -245,7 +255,7 @@ void LinkControl::init(unsigned int phase)
         // Will receive information about total vns used and the
         // mapping of my VNs to all of them
         ev = rtr_link->recvUntimedData();
-        init_ev = dynamic_cast<RtrInitEvent*>(ev);
+        init_ev = checkInitProtocol(ev, RtrInitEvent::REQUEST_VNS, CALL_INFO);
         total_vns = init_ev->int_value;
         delete ev;
 
@@ -260,7 +270,7 @@ void LinkControl::init(unsigned int phase)
         // Will receive a message for each of my requested vns
         for ( int i = 0; i < req_vns; ++i ) {
             ev = rtr_link->recvUntimedData();
-            init_ev = dynamic_cast<RtrInitEvent*>(ev);
+            init_ev = checkInitProtocol(ev, RtrInitEvent::REQUEST_VNS, CALL_INFO);
             // If map was not set yet, get values from router
             if ( !vn_map_set ) {
                 int vn = init_ev->int_value;

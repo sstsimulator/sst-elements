@@ -598,6 +598,26 @@ PortControl::finish() {
     }
 }
 
+RtrInitEvent* PortControl::checkInitProtocol(Event* ev, RtrInitEvent::Commands command, uint32_t line, const char* file, const char* func)
+{
+    bool good = true;
+    RtrInitEvent* init_ev = nullptr;
+    // Check to make sure the event isn't null and that it is an init event
+    if ( nullptr == ev || static_cast<BaseRtrEvent*>(ev)->getType() != BaseRtrEvent::INITIALIZATION ) good = false;
+
+    if ( good ) {
+        init_ev = static_cast<RtrInitEvent*>(ev);
+
+        // Now check to make sure this is the right protocol event
+        if ( init_ev->command != command ) {
+            good = false;
+        }
+    }
+
+    sst_assert(good, line, file, func, 1, "Error during PortControl protocol initialization.  The most likely cause of this is connecting an endpoint to a router port expecting to be connnected to another router.\n");
+    return init_ev;
+}
+
 
 void
 PortControl::init(unsigned int phase) {
@@ -644,7 +664,7 @@ PortControl::init(unsigned int phase) {
         // Get the link speed from the other side.  Actual link speed
         // will be the minumum the two sides
         ev = port_link->recvInitData();
-        init_ev = dynamic_cast<RtrInitEvent*>(ev);
+        init_ev = checkInitProtocol(ev, RtrInitEvent::REPORT_BW, CALL_INFO);
         if ( link_bw > init_ev->ua_value ) link_bw = init_ev->ua_value;
 
         // Initialize links (or rather, reset the TimeBase to get the
@@ -658,7 +678,7 @@ PortControl::init(unsigned int phase) {
         if ( topo->isHostPort(port_number) ) {
             // Number of VNs used by the endpoint
             ev = port_link->recvInitData();
-            init_ev = dynamic_cast<RtrInitEvent*>(ev);
+            init_ev = checkInitProtocol(ev, RtrInitEvent::REQUEST_VNS, CALL_INFO);
             int req_vns = init_ev->int_value;
             if ( num_vns == -1 ) num_vns = req_vns;
 
@@ -700,12 +720,12 @@ PortControl::init(unsigned int phase) {
             // If not a host port, the other side sent us their rtr_id
             // and port_number
             ev = port_link->recvInitData();
-            init_ev = dynamic_cast<RtrInitEvent*>(ev);
+            init_ev = checkInitProtocol(ev, RtrInitEvent::REPORT_ID, CALL_INFO);
             remote_rtr_id = init_ev->int_value;
             delete init_ev;
 
             ev = port_link->recvInitData();
-            init_ev = dynamic_cast<RtrInitEvent*>(ev);
+            init_ev = checkInitProtocol(ev, RtrInitEvent::REPORT_PORT, CALL_INFO);
             remote_port_number = init_ev->int_value;
             delete init_ev;
 
