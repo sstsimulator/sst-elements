@@ -94,7 +94,7 @@ public:
     ~MemNICFour() { }
 
     /* Functions called by parent for handling events */
-    bool clock();
+    bool isClocked() { return false; }
     void send(MemEventBase * ev);
     bool recvNotifyReq(int);
     bool recvNotifyAck(int);
@@ -112,6 +112,9 @@ public:
             link_control[i]->finish();
     }
     void setup();
+
+    /* Internal clock function to handle buffered events */
+    bool clock(Cycle_t cycle);
 
     // Router events
     class OrderedMemRtrEvent : public MemNICBase::MemRtrEvent {
@@ -153,6 +156,11 @@ private:
 
     // Handlers and network
     std::array<SST::Interfaces::SimpleNetwork*, 4> link_control;
+
+    // Clocks
+    Clock::Handler<MemNICFour>* clockHandler;
+    TimeConverter* clockTC;
+    bool clockOn;
 
     // Event queues
     std::queue<SST::Interfaces::SimpleNetwork::Request*> sendQueue[4];
