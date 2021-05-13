@@ -5,7 +5,8 @@
 * SST-Elements is the repository for the Sandia developed SST Simulation Elements.  The repository is hosted on [GitHub](https://github.com).
    * An understanding of [git scm](https://git-scm.com/) is essential to developing code for SST.
    * There are 2 primary branches used for SST development
-      * **devel** - Contains the latest development codeset of SST-Elements.  **While this branch is fairly stable, unexpected events can cause it to be broken at any time.**
+      * **devel** - Contains the latest development codeset of SST-Elements.
+         * **While this branch is fairly stable, unexpected events can cause it to be broken at any time.**
       * **master** - Contains the latest fully tested stable version of SST-Elements that is under development.
 
 * [Tests must be created/updated for all elements](https://github.com/sstsimulator/sst-core/blob/master/src/sst/core/testingframework/readme.md)
