@@ -82,7 +82,8 @@ class testcase_Messier_Component(SSTTestCase):
         testing_remove_component_warning_from_file(outfile)
 
         # Perform the tests
-        self.assertFalse(os_test_file(errfile, "-s"), "Messier test {0} has Non-empty Error File {1}".format(testDataFileName, errfile))
+        if os_test_file(errfile, "-s"):
+            log_testing_note("Messier test {0} has a Non-Empty Error File {1}".format(testDataFileName, errfile))
 
         # NOTE: THE PASS / FAIL EVALUATIONS ARE PORTED FROM THE SQE BAMBOO
         #       BASED testSuite_XXX.sh THESE SHOULD BE RE-EVALUATED BY THE

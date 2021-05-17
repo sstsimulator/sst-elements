@@ -197,7 +197,8 @@ class testcase_memHierarchy_sdl(SSTTestCase):
 
         # Perform the tests
         if ignore_err_file is False:
-            self.assertFalse(os_test_file(errfile, "-s"), "memHierarchy SDL test {0} has Non-empty Error File {1}".format(testDataFileName, errfile))
+            if os_test_file(errfile, "-s"):
+                log_testing_note("memHierarchy SDL test {0} has a Non-Empty Error File {1}".format(testDataFileName, errfile))
 
         # Use diff (ignore whitespace) to see if the files are the same
         cmd = "diff -b {0} {1} > {2}".format(fixedreffile, outfile, difffile)

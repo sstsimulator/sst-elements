@@ -92,7 +92,8 @@ class testcase_memHierarchy_hybridsim(SSTTestCase):
         # Perform the tests
         # This test uses DRAMSim2 which dumps data to the error output, we cannot
         # test for an empty errfile.
-        #self.assertFalse(os_test_file(errfile, "-s"), "hybridsim test {0} has Non-empty Error File {1}".format(testDataFileName, errfile))
+        if os_test_file(errfile, "-s"):
+            log_testing_note("hybridsim test {0} has a Non-Empty Error File {1}".format(testDataFileName, errfile))
 
         cmp_result = testing_compare_sorted_diff(testcase, outfile, reffile)
         if (cmp_result == False):
