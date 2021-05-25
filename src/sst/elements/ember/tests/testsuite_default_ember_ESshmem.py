@@ -149,7 +149,8 @@ class testcase_Ember_ESshmem(SSTTestCase):
         #       DEVELOPER AGAINST THE LATEST VERSION OF SST TO SEE IF THE
         #       TESTS & RESULT FILES ARE STILL VALID
 
-        self.assertFalse(os_test_file(errfile, "-s"), "Ember Test Test {0} has Non-empty Error File {1}".format(testnum, errfile))
+        if os_test_file(errfile, "-s"):
+            log_testing_note("Ember test {0} has a Non-Empty Error File {1}".format(testDataFileName, errfile))
 
         # Dig through the output file looking for "Simulation is complete"
         outfoundline = ""
