@@ -88,7 +88,8 @@ class testcase_Samba_Component(SSTTestCase):
         #       TESTS & RESULT FILES ARE STILL VALID
 
         # Perform the tests
-        self.assertFalse(os_test_file(errfile, "-s"), "Samba test {0} has Non-empty Error File {1}".format(testDataFileName, errfile))
+        if os_test_file(errfile, "-s"):
+            log_testing_note("Samba test {0} has a Non-Empty Error File {1}".format(testDataFileName, errfile))
 
         cmp_result = testing_compare_diff(testDataFileName, outfile, reffile)
         if cmp_result != True:
