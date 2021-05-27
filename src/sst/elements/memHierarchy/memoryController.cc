@@ -661,8 +661,8 @@ void MemController::adjustRegionToMemSize() {
     // So, a mismatch is likely not an error, but alert the user in debug mode just in case
     // TODO deprecate mem_size & just use region? 
     uint64_t regSize = region_.end - region_.start;
-    if (regSize != ((uint64_t) - 1)) {  // The default is for region_.end = uint64_t -1, but then if we add one we wrap to 0...
-        regSize--;
+    if (regSize != region_.REGION_MAX) {  // The default is for region_.end = uint64_t -1, but then if we add one we wrap...
+        regSize++; // Since region_.end and region_.start are inclusive
     }
     if (region_.interleaveStep != 0) {
         uint64_t steps = regSize / region_.interleaveStep;

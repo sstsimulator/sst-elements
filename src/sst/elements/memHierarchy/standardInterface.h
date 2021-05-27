@@ -52,6 +52,12 @@ public:
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(StandardInterface, "memHierarchy", "standardInterface", SST_ELI_ELEMENT_VERSION(1,0,0),
             "Interface to memory hierarchy between endpoint and cache. Converts StandardMem requests into MemEventBases.", SST::Experimental::Interfaces::StandardMem)
     
+    SST_ELI_DOCUMENT_PARAMS( 
+        {"verbose",     "(uint) Output verbosity for warnings/errors. 0[fatal error only], 1[warnings], 2[full state dump on fatal error]", "1"},
+        {"debug",       "(uint) Where to send debug output. Options: 0[none], 1[stdout], 2[stderr], 3[file]", "0"},
+        {"debug_level", "(uint) Debugging level: 0 to 10. Must configure sst-core with '--enable-debug'. 1=info, 2-10=debug output", "0"},
+    )
+
     SST_ELI_DOCUMENT_PORTS( {"port", "Port to memory hierarchy (caches/memory/etc.). Required if subcomponent slot not filled.", {}} )
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
@@ -83,6 +89,8 @@ public:
 protected:
 
     Output      output;
+    Output      debug;
+
     Addr        baseAddrMask_;
     Addr        lineSize_;
     std::string rqstr_;
@@ -119,10 +127,6 @@ protected:
         void debugChecks(MemEvent* ev);
 
         SST::Output output;
-        std::string getName() { return name; }
-        std::string name;
-        Addr baseAddrMask_;
-        std::string rqstr_;
         StandardInterface* iface;
     };
 

@@ -69,14 +69,14 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
 
     MemRegion region;
     bool gotRegion = false;
-    region.start = params.find<uint64_t>("addr_range_start", 0, found);
-    if (!found) region.start = params.find<uint64_t>("memNIC.addr_range_start", 0, found);
-    if (!found) region.start = params.find<uint64_t>("memlink.addr_range_start", 0, found);
+    region.start = params.find<Addr>("addr_range_start", 0, found);
+    if (!found) region.start = params.find<Addr>("memNIC.addr_range_start", 0, found);
+    if (!found) region.start = params.find<Addr>("memlink.addr_range_start", 0, found);
     gotRegion |= found;
 
-    region.end = params.find<uint64_t>("addr_range_end", (uint64_t) - 1, found);
-    if (!found) region.end = params.find<uint64_t>("memNIC.addr_range_end", (uint64_t) - 1, found);
-    if (!found) region.end = params.find<uint64_t>("memlink.addr_range_end", (uint64_t) - 1, found);
+    region.end = params.find<Addr>("addr_range_end", region.REGION_MAX, found);
+    if (!found) region.end = params.find<Addr>("memNIC.addr_range_end", region.REGION_MAX, found);
+    if (!found) region.end = params.find<Addr>("memlink.addr_range_end", region.REGION_MAX, found);
     gotRegion |= found;
 
     string ilSize   = params.find<std::string>("interleave_size", "0B", found);
@@ -89,7 +89,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     if (!found) ilStep = params.find<std::string>("memlink.interleave_step", "0B", found);
     gotRegion |= found;
 
-    if(0 == region.end) region.end = (uint64_t)-1;
+    if(0 == region.end) region.end = region.REGION_MAX;
 
 
     memOffset = params.find<uint64_t>("mem_addr_start", 0);
@@ -618,19 +618,6 @@ void DirectoryController::emergencyShutdown() {
 
 bool DirectoryController::isRequestAddressValid(Addr addr){
     return cpuLink->isRequestAddressValid(addr);
-
-    if(0 == region.interleaveSize) {
-        return (addr >= region.start && addr < region.end);
-    } else {
-        if (addr < region.start) return false;
-        if (addr >= region.end) return false;
-
-        addr        = addr - region.start;
-        Addr offset = addr % region.interleaveStep;
-
-        if (offset >= region.interleaveSize) return false;
-        return true;
-    }
 }
 
 

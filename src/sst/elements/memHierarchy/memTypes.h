@@ -17,12 +17,14 @@
 #define MEMHIERARCHY_MEMTYPES_H
 
 #include <sst/core/sst_types.h>
+#include <limits>
 
 #include <sst/core/eli/elibase.h>   // For ElementInfoStatistic
 
-#include "sst/elements/memHierarchy/util.h"
+#include "util.h"
 
-namespace SST { namespace MemHierarchy {
+namespace SST { 
+namespace MemHierarchy {
 
 using namespace std;
 
@@ -225,20 +227,21 @@ enum class MemEventStatus { OK, Stall, Reject };
 
 /* Define an address region by start/end & interleaving */
 struct MemRegion {
-    uint64_t start;
-    uint64_t end;
-    uint64_t interleaveSize;
-    uint64_t interleaveStep;
+    SST::MemHierarchy::Addr start;             // First address that is part of the region
+    SST::MemHierarchy::Addr end;               // Last address that is part of the region
+    SST::MemHierarchy::Addr interleaveSize;    // Size of each interleaved chunk
+    SST::MemHierarchy::Addr interleaveStep;    // Distance between the start of each interleaved chunk
+    static const SST::MemHierarchy::Addr REGION_MAX = std::numeric_limits<SST::MemHierarchy::Addr>::max();
 
     void setDefault() {
         start = interleaveSize = interleaveStep = 0;
-        end = (uint64_t) - 1;
+        end = REGION_MAX;
     }
 
     bool contains(uint64_t addr) const {
-        if (addr >= start && addr < end) {
+        if (addr >= start && addr <= end) {
             if (interleaveSize == 0) return true;
-            uint64_t offset = (addr - start) % interleaveStep;
+            SST::MemHierarchy::Addr offset = (addr - start) % interleaveStep;
             return (offset < interleaveSize);
         }
         return false;

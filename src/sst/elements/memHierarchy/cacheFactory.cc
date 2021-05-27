@@ -282,7 +282,7 @@ void Cache::configureLinks(Params &params, TimeConverter* tc) {
             gotRegion = true;
             if (slicePolicy == "rr") {
                 region_.start = sliceID*lineSize_;
-                region_.end = (uint64_t) - 1;
+                region_.end = region_.REGION_MAX;
                 region_.interleaveSize = lineSize_;
                 region_.interleaveStep = sliceCount*lineSize_;
             }
@@ -343,7 +343,7 @@ void Cache::configureLinks(Params &params, TimeConverter* tc) {
                     getName().c_str());
     }
     region_.start = 0;
-    region_.end = (uint64_t) - 1;
+    region_.end = region_.REGION_MAX;
     region_.interleaveSize = 0;
     region_.interleaveStep = 0;
 

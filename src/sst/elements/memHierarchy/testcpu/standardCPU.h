@@ -21,20 +21,22 @@
 #endif
 #include <inttypes.h>
 
+#include <sst/core/interfaces/stdMem.h>
 #include <sst/core/event.h>
 #include <sst/core/sst_types.h>
 #include <sst/core/component.h>
 #include <sst/core/link.h>
 #include <sst/core/timeConverter.h>
 #include <sst/core/output.h>
-#include <sst/core/interfaces/stdMem.h>
 #include <sst/core/rng/marsaglia.h>
+
+#include "util.h"
 
 using namespace SST::Statistics;
 
 namespace SST {
 namespace MemHierarchy {
-
+using Req = SST::Experimental::Interfaces::StandardMem::Request;
 
 class standardCPU : public SST::Component {
 public:
@@ -57,6 +59,7 @@ public:
         {"flushinv_freq",           "(uint) Relative flush-inv frequency", "0"},
         {"custom_freq",             "(uint) Relative custom op frequency", "0"},
         {"llsc_freq",               "(uint) Relative LLSC frequency", "0"},
+        {"mmio_addr",               "(uint) Base address of the test MMIO component. 0 means not present.", "0"},
         {"noncacheableRangeStart",  "(uint) Beginning of range of addresses that are noncacheable.", "0x0"},
         {"noncacheableRangeEnd",    "(uint) End of range of addresses that are noncacheable.", "0x0"},
         {"addressoffset",           "(uint) Apply an offset to a calculated address to check for non-alignment issues", "0"} )
@@ -79,13 +82,12 @@ public:
 
 /* Begin class definition */
     standardCPU(SST::ComponentId_t id, SST::Params& params);
-    void init(int phase);
-    void setup();
-    void finish();
+    void init(unsigned int phase) override;
+    void setup() override;
+    void finish() override;
+    void emergencyShutdown() override;
 
 private:
-    void init(unsigned int phase);
-
     void handleEvent( Experimental::Interfaces::StandardMem::Request *ev );
     virtual bool clockTic( SST::Cycle_t );
 
@@ -93,6 +95,7 @@ private:
     uint64_t ops;
     uint64_t memFreq;
     uint64_t maxAddr;
+    uint64_t mmioAddr;
     uint64_t lineSize;
     uint64_t maxOutstanding;
     unsigned high_mark;
@@ -101,6 +104,7 @@ private:
     unsigned flushinv_mark;
     unsigned custom_mark;
     unsigned llsc_mark;
+    unsigned mmio_mark;
     uint32_t maxReqsPerIssue;
     uint64_t noncacheableRangeStart, noncacheableRangeEnd, noncacheableSize;
     uint64_t clock_ticks;
@@ -117,6 +121,7 @@ private:
 
     bool ll_issued;
     Experimental::Interfaces::StandardMem::Addr ll_addr;
+
     std::map<Experimental::Interfaces::StandardMem::Request::id_t, std::pair<SimTime_t, std::string>> requests;
 
     Experimental::Interfaces::StandardMem *memory;
@@ -126,6 +131,15 @@ private:
     TimeConverter *clockTC;
     Clock::HandlerBase *clockHandler;
 
+    /* Functions for creating the requests tested by this CPU */
+    Experimental::Interfaces::StandardMem::Request* createWrite(uint64_t addr);
+    Experimental::Interfaces::StandardMem::Request* createRead(Addr addr);
+    Experimental::Interfaces::StandardMem::Request* createFlush(Addr addr);
+    Experimental::Interfaces::StandardMem::Request* createFlushInv(Addr addr);
+    Experimental::Interfaces::StandardMem::Request* createLL(Addr addr);
+    Experimental::Interfaces::StandardMem::Request* createSC();
+    Experimental::Interfaces::StandardMem::Request* createMMIOWrite();
+    Experimental::Interfaces::StandardMem::Request* createMMIORead();
 };
 
 }

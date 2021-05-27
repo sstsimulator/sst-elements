@@ -128,7 +128,9 @@ libmemHierarchy_la_SOURCES = \
 	Sieve/memmgr_sieve.cc \
 	Sieve/memmgr_sieve.h \
 	memNetBridge.h \
-	memNetBridge.cc
+	memNetBridge.cc \
+	testcpu/standardMMIO.h \
+	testcpu/standardMMIO.cc
 
 EXTRA_DIST = \
 	tests/testsuite_default_memHierarchy_hybridsim.py \

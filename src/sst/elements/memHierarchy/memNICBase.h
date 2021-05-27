@@ -156,7 +156,7 @@ class MemNICBase : public MemLinkBase {
             }
 
             stringstream error;
-            error << getName() + " (MemNICBase) cannot find a destination for address " << addr << endl;
+            error << getName() + " (MemNICBase) cannot find a destination for address " << std::hex << addr << endl;
             error << "Known destinations: " << endl;
             for (std::set<EndpointInfo>::const_iterator it = destEndpointInfo.begin(); it != destEndpointInfo.end(); it++) {
                 error << it->name << " " << it->region.toString() << endl;
@@ -354,29 +354,43 @@ class MemNICBase : public MemLinkBase {
                 dbg.fatal(CALL_INFO, -1, "Param not specified(%s): group - group ID (or hierarchy level) for this NIC's component. Example: L2s in group 1, directories in group 2, memories (on network) in group 3.\n",
                         getName().c_str());
             }
+            
+            if (params.is_value_array("sources")) {
+                std::vector<uint32_t> srcArr;
+                params.find_array<uint32_t>("sources", srcArr);
+                sourceIDs = std::unordered_set<uint32_t>(srcArr.begin(), srcArr.end());
+
+            }
+            if (params.is_value_array("destinations")) {
+                std::vector<uint32_t> dstArr;
+                params.find_array<uint32_t>("destinations", dstArr);
+                destIDs = std::unordered_set<uint32_t>(dstArr.begin(), dstArr.end());
+            }
 
             std::stringstream sources, destinations;
-            sources.str(params.find<std::string>("sources", ""));
-            destinations.str(params.find<std::string>("destinations", ""));
-
             uint32_t id;
-            while (sources >> id) {
-                sourceIDs.insert(id);
-                while (sources.peek() == ',' || sources.peek() == ' ')
-                    sources.ignore();
+
+            if (sourceIDs.empty()) {
+                sources.str(params.find<std::string>("sources", ""));
+                while (sources >> id) {
+                    sourceIDs.insert(id);
+                    while (sources.peek() == ',' || sources.peek() == ' ')
+                        sources.ignore();
+                }
+                if (sourceIDs.empty())
+                    sourceIDs.insert(info.id - 1);
             }
 
-            if (sourceIDs.empty())
-                sourceIDs.insert(info.id - 1);
-
-            while (destinations >> id) {
-                destIDs.insert(id);
-                while (destinations.peek() == ',' || destinations.peek() == ' ')
-                    destinations.ignore();
+            if (destIDs.empty()) {
+                destinations.str(params.find<std::string>("destinations", ""));
+                while (destinations >> id) {
+                    destIDs.insert(id);
+                    while (destinations.peek() == ',' || destinations.peek() == ' ')
+                        destinations.ignore();
+                }
+                if (destIDs.empty())
+                    destIDs.insert(info.id + 1);
             }
-            if (destIDs.empty())
-                destIDs.insert(info.id + 1);
-
             initMsgSent = false;
 
             dbg.debug(_L10_, "%s memNICBase info is: Name: %s, group: %" PRIu32 "\n",

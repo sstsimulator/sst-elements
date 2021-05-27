@@ -19,7 +19,8 @@
 #include <sst/core/params.h>
 #include <sst/core/simulation.h>
 #include <sst/core/interfaces/stringEvent.h>
-#include <sst/core/interfaces/stdMem.h>
+
+#include "util.h"
 
 using namespace SST;
 using namespace SST::Experimental::Interfaces;
@@ -58,14 +59,16 @@ standardCPU::standardCPU(ComponentId_t id, Params& params) :
 
     maxAddr = memsize.getRoundedValue() - 1;
 
+    mmioAddr = params.find<uint64_t>("mmio_addr", "0", found);
+    if (found) {
+        sst_assert(mmioAddr > maxAddr, CALL_INFO, -1, "incompatible parameters: mmio_addr must be >= memSize (mmio above physical memory addresses).\n");
+    }
+
     maxOutstanding = params.find<uint64_t>("maxOutstanding", 10);
 
     /* Required parameter - opCount */
     ops = params.find<uint64_t>("opCount", 0, found);
-    if (!found) {
-        out.fatal(CALL_INFO, -1, "%s, Error: parameter 'opCount' was not provided\n", 
-                getName().c_str());
-    }
+    sst_assert(found, CALL_INFO, -1, "%s, Error: parameter 'opCount' was not provided\n", getName().c_str());
 
     /* Frequency of different ops */
     unsigned readf = params.find<unsigned>("read_freq", 25);
@@ -74,8 +77,13 @@ standardCPU::standardCPU(ComponentId_t id, Params& params) :
     unsigned flushinvf = params.find<unsigned>("flushinv_freq", 0);
     unsigned customf = params.find<unsigned>("custom_freq", 0);
     unsigned llscf = params.find<unsigned>("llsc_freq", 0);
+    unsigned mmiof = params.find<unsigned>("mmio_freq", 0);
 
-    high_mark = readf + writef + flushf + flushinvf + customf + llscf; /* Numbers less than this and above other marks indicate read */
+    if (mmiof != 0 && mmioAddr == 0) {
+        out.fatal(CALL_INFO, -1, "%s, Error: mmio_freq is > 0 but no mmio device has been specified via mmio_addr\n", getName().c_str());
+    }
+
+    high_mark = readf + writef + flushf + flushinvf + customf + llscf + mmiof; /* Numbers less than this and above other marks indicate read */
     if (high_mark == 0) {
         out.fatal(CALL_INFO, -1, "%s, Error: The input doesn't indicate a frequency for any command type.\n", getName().c_str());
     }
@@ -83,7 +91,8 @@ standardCPU::standardCPU(ComponentId_t id, Params& params) :
     flush_mark = write_mark + flushf; /* Numbers less than this indicate flush */
     flushinv_mark = flush_mark + flushinvf; /* Numbers less than this indicate flush-inv */
     custom_mark = flushinv_mark + customf; /* Numbers less than this indicate flush */
-    llsc_mark = custom_mark + llscf;
+    llsc_mark = custom_mark + llscf; /* Numbers less than this indicate LL-SC */
+    mmio_mark = llsc_mark + mmiof; /* Numbers less than this indicate MMIO read or write */
 
     noncacheableRangeStart = params.find<uint64_t>("noncacheableRangeStart", 0);
     noncacheableRangeEnd = params.find<uint64_t>("noncacheableRangeEnd", 0);
@@ -198,69 +207,34 @@ bool standardCPU::clockTic( Cycle_t )
                 Experimental::Interfaces::StandardMem::Request* req;
                 
                 if (ll_issued) {
-                    req = new Experimental::Interfaces::StandardMem::StoreConditional(ll_addr, size, data);
-                    num_llsc_issued->addData(1);
-                    ll_issued = false;
-                    cmdString = "StoreConditional";
-
-                // Write
+                    req = createSC();
                 }else if (instNum < write_mark) {
-                    cmdString = "Write";
-                    addr = ((addr % maxAddr)>>2) << 2;
-                    req = new Experimental::Interfaces::StandardMem::Write(addr, size, data);
-                    num_writes_issued->addData(1);
-                // Flush
+                    req = createWrite(addr);
                 } else if (instNum < flush_mark) {
-                    cmdString = "FlushLine";
-                    size = lineSize;
-                    addr = ((addr % (maxAddr - noncacheableSize)>>2) << 2);
-                    if (addr >= noncacheableRangeStart && addr < noncacheableRangeEnd)
-                        addr += noncacheableRangeEnd;
-                    addr = addr - (addr % lineSize);
-                    req = new Experimental::Interfaces::StandardMem::FlushAddr(addr, size, false, 10);
-                    num_flushes_issued->addData(1);
+                    req = createFlush(addr);
                 } else if (instNum < flushinv_mark) {
-                    cmdString = "FlushLineInv";
-                    size = lineSize;
-                    addr = ((addr % (maxAddr - noncacheableRangeEnd)>>2) << 2) + noncacheableRangeEnd;
-                    addr = ((addr % (maxAddr - noncacheableSize)>>2) << 2);
-                    if (addr >= noncacheableRangeStart && addr < noncacheableRangeEnd)
-                        addr += noncacheableRangeEnd;
-                    addr = addr - (addr % lineSize);
-                    req = new Experimental::Interfaces::StandardMem::FlushAddr(addr, size, true, 10);
-                    num_flushinvs_issued->addData(1);
-                // Read
+                    req = createFlushInv(addr);
                 } else if (instNum < custom_mark) {
                 } else if (instNum < llsc_mark) {
-                    addr = ((addr % (maxAddr - noncacheableRangeEnd)>>2) << 2) + noncacheableRangeEnd;
-                    addr = ((addr % (maxAddr - noncacheableSize)>>2) << 2);
-                    if (addr >= noncacheableRangeStart && addr < noncacheableRangeEnd)
-                        addr += noncacheableRangeEnd;
-                    cmdString = "LoadLink";
-                    req = new Experimental::Interfaces::StandardMem::LoadLink(addr, size);
-                    ll_addr = addr;
-                    ll_issued = true;
+                    req = createLL(addr);
+                } else if (instNum < mmio_mark) {
+                    bool opType = rng.generateNextUInt32() % 2;
+                    if (opType) {
+                        req = createMMIORead();
+                    } else {
+                        req = createMMIOWrite();
+                    }
                 } else {
-                    addr = ((addr % maxAddr)>>2) << 2;
-                    req = new Experimental::Interfaces::StandardMem::Read(addr, size);
-                    num_reads_issued->addData(1);
+                    req = createRead(addr);
                 }
 
-                bool noncacheable = ( addr >= noncacheableRangeStart && addr < noncacheableRangeEnd );
-                if ( noncacheable ) {
-                    req->setNoncacheable();
-                    if ( cmdString == "Write" ) { noncacheableWrites->addData(1); }
-                    else if (cmdString == "Read" ) { noncacheableReads->addData(1); }
+                if (req->needsResponse()) {
+		            requests[req->getID()] =  std::make_pair(getCurrentSimTime(), cmdString);
                 }
-
-		requests[req->getID()] =  std::make_pair(getCurrentSimTime(), cmdString);
-		memory->send(req);
-
-		out.verbose(CALL_INFO, 2, 0, "%s: %d Issued %s%s for address 0x%" PRIx64 "\n",
-                            getName().c_str(), ops, noncacheable ? "Noncacheable " : "" , cmdString.c_str(), addr);
+		        memory->send(req);
 
                 ops--;
-	    }
+	        }
         }
     }
 
@@ -275,4 +249,122 @@ bool standardCPU::clockTic( Cycle_t )
     return false;
 }
 
+/* Methods for sending different kinds of requests */
+StandardMem::Request* standardCPU::createWrite(Addr addr) {
+    addr = ((addr % maxAddr)>>2) << 2;
+    // Dummy payload
+    std::vector<uint8_t> data;
+    data.resize(4);
+    data[0] = (addr >> 24) & 0xff;
+    data[1] = (addr >> 16) & 0xff;
+    data[2] = (addr >>  8) & 0xff;
+    data[3] = (addr >>  0) & 0xff;
 
+    StandardMem::Request* req = new Experimental::Interfaces::StandardMem::Write(addr, data.size(), data);
+    num_writes_issued->addData(1);
+    if (addr >= noncacheableRangeStart && addr < noncacheableRangeEnd) {
+        req->setNoncacheable();
+        noncacheableWrites->addData(1);
+    }
+    out.verbose(CALL_INFO, 2, 0, "%s: %d Issued %sWrite for address 0x%" PRIx64 "\n", getName().c_str(), ops, req->getNoncacheable() ? "Noncacheable " : "", addr);
+    return req;
+}
+
+StandardMem::Request* standardCPU::createRead(Addr addr) {
+    addr = ((addr % maxAddr)>>2) << 2;
+    StandardMem::Request* req = new Experimental::Interfaces::StandardMem::Read(addr, 4);
+    num_reads_issued->addData(1);
+    if (addr >= noncacheableRangeStart && addr < noncacheableRangeEnd) {
+        req->setNoncacheable();
+        noncacheableReads->addData(1);
+    }
+    out.verbose(CALL_INFO, 2, 0, "%s: %d Issued %sRead for address 0x%" PRIx64 "\n", getName().c_str(), ops, req->getNoncacheable() ? "Noncacheable " : "", addr);
+    return req;
+}
+
+StandardMem::Request* standardCPU::createFlush(Addr addr) {
+    addr = ((addr % (maxAddr - noncacheableSize)>>2) << 2);
+    if (addr >= noncacheableRangeStart && addr < noncacheableRangeEnd)
+        addr += noncacheableRangeEnd;
+    addr = addr - (addr % lineSize);
+    StandardMem::Request* req = new Experimental::Interfaces::StandardMem::FlushAddr(addr, lineSize, false, 10);
+    num_flushes_issued->addData(1);
+    out.verbose(CALL_INFO, 2, 0, "%s: %d Issued FlushAddr for address 0x%" PRIx64 "\n", getName().c_str(), ops,  addr);
+    return req;
+}
+
+StandardMem::Request* standardCPU::createFlushInv(Addr addr) {
+    addr = ((addr % (maxAddr - noncacheableSize)>>2) << 2);
+    if (addr >= noncacheableRangeStart && addr < noncacheableRangeEnd)
+        addr += noncacheableRangeEnd;
+    addr = addr - (addr % lineSize);
+    StandardMem::Request* req = new Experimental::Interfaces::StandardMem::FlushAddr(addr, lineSize, true, 10);
+    num_flushinvs_issued->addData(1);
+    out.verbose(CALL_INFO, 2, 0, "%s: %d Issued FlushAddrInv for address 0x%" PRIx64 "\n", getName().c_str(), ops,  addr);
+    return req;
+}
+
+StandardMem::Request* standardCPU::createLL(Addr addr) {
+    // Addr needs to be a cacheable range
+    Addr cacheableSize = maxAddr + 1 - noncacheableRangeEnd + noncacheableRangeStart;
+    addr = (addr % (cacheableSize >> 2)) << 2;
+    if (addr >= noncacheableRangeStart && addr < noncacheableRangeEnd) {
+        addr += noncacheableRangeEnd;
+    }
+    // Align addr
+    addr = (addr >> 2) << 2;
+
+    StandardMem::Request* req = new Experimental::Interfaces::StandardMem::LoadLink(addr, 4);
+    // Set these so we issue a matching sc 
+    ll_addr = addr;
+    ll_issued = true;
+
+    out.verbose(CALL_INFO, 2, 0, "%s: %d Issued LoadLink for address 0x%" PRIx64 "\n", getName().c_str(), ops, addr);
+    return req;
+}
+
+StandardMem::Request* standardCPU::createSC() {
+    std::vector<uint8_t> data;
+    data.resize(4);
+    data[0] = (ll_addr >> 24) & 0xff;
+    data[1] = (ll_addr >> 16) & 0xff;
+    data[2] = (ll_addr >>  8) & 0xff;
+    data[3] = (ll_addr >>  0) & 0xff;
+    StandardMem::Request* req = new Experimental::Interfaces::StandardMem::StoreConditional(ll_addr, data.size(), data);
+    num_llsc_issued->addData(1);
+    ll_issued = false;
+    out.verbose(CALL_INFO, 2, 0, "%s: %d Issued StoreConditional for address 0x%" PRIx64 "\n", getName().c_str(), ops, ll_addr);
+    return req;
+}
+
+StandardMem::Request* standardCPU::createMMIOWrite() {
+    bool posted = rng.generateNextUInt32() % 2;
+    int32_t payload = rng.generateNextInt32();
+    payload >>= 16; // Shrink the number a bit
+    int32_t payload_cp = payload;
+    std::vector<uint8_t> data;
+    for (int i = 0; i < sizeof(int32_t); i++) {
+        data.push_back(payload & 0xFF);
+        payload >>=8;
+    }
+    StandardMem::Request* req = new Experimental::Interfaces::StandardMem::Write(mmioAddr, sizeof(int32_t), data, posted);
+    out.verbose(CALL_INFO, 2, 0, "%s: %d Issued MMIO Write for address 0x%" PRIx64 " with payload %d\n", getName().c_str(), ops, mmioAddr, payload_cp);
+    return req;
+}
+
+StandardMem::Request* standardCPU::createMMIORead() {
+    StandardMem::Request* req = new Experimental::Interfaces::StandardMem::Read(mmioAddr, sizeof(int32_t));
+    out.verbose(CALL_INFO, 2, 0, "%s: %d Issued MMIO Read for address 0x%" PRIx64 "\n", getName().c_str(), ops, mmioAddr);
+    return req;
+}
+
+void standardCPU::emergencyShutdown() {
+    if (out.getVerboseLevel() > 1) {
+        if (out.getOutputLocation() == Output::STDOUT)
+            out.setOutputLocation(Output::STDERR);
+        
+        out.output("MemHierarchy::standardCPU %s\n", getName().c_str());
+        out.output("  Outstanding events: %zu\n", requests.size());
+        out.output("End MemHierarchy::standardCPU %s\n", getName().c_str());
+    }
+}

@@ -34,15 +34,14 @@ StandardInterface::StandardInterface(SST::ComponentId_t id, Params &params, Time
     setDefaultTimeBase(time); // Links are required to have a timebase
 
     // Output object for warnings/debug/etc.
-    output.init("", 1, 0, Output::STDOUT);
+    output.init("", params.find<int>("verbose", 1), 0, Output::STDOUT);
+    debug.init("", params.find<int>("debug_level", 0), 0, (Output::output_location_t)params.find<int>("debug", 0));
+
     rqstr_ = "";
     initDone_ = false;
 
     converter_ = new StandardInterface::MemEventConverter(this);
-    converter_->output = output;
-    converter_->name = getName();
-    converter_->baseAddrMask_ = baseAddrMask_;
-    converter_->rqstr_ = rqstr_;
+    converter_->output = debug;
 
     // Handler - if nullptr then polling will be assumed
     recvHandler_ = handler;
@@ -69,7 +68,7 @@ StandardInterface::StandardInterface(SST::ComponentId_t id, Params &params, Time
 
     /* Set region to default (all addresses) */
     region.start = 0;
-    region.end = (uint64_t) - 1;
+    region.end = std::numeric_limits<uint64_t>::max();
     region.interleaveStep = 0;
     region.interleaveSize = 0;
     epType = Endpoint::CPU;
@@ -99,15 +98,16 @@ void StandardInterface::init(unsigned int phase) {
         MemEventInit * memEvent = dynamic_cast<MemEventInit*>(ev);
         if (memEvent) {
             if (memEvent->getCmd() == Command::NULLCMD) {
-                rqstr_ = memEvent->getSrc();
-                converter_->rqstr_ = rqstr_;
                 if (memEvent->getInitCmd() == MemEventInit::InitCommand::Coherence) {
                     MemEventInitCoherence * memEventC = static_cast<MemEventInitCoherence*>(memEvent);
-                    baseAddrMask_ = ~(memEventC->getLineSize() - 1);
-                    converter_->baseAddrMask_ = baseAddrMask_;
-                    lineSize_ = memEventC->getLineSize();
-                    if (memEventC->getType() == Endpoint::Cache)
+                    if (memEventC->getType() == Endpoint::Cache) {
                         cacheDst_ = true; // Cache takes care of figuring out whether GetXResp is read or write response and other address-related issues
+                    }
+                    if (memEventC->getType() == Endpoint::Cache || memEventC->getType() == Endpoint::Directory) {
+                        baseAddrMask_ = ~(memEventC->getLineSize() - 1);
+                        lineSize_ = memEventC->getLineSize();
+                        debug.debug(_L10_, "%s, Mask: 0x%" PRIx64 ", Line size: %" PRIu64 "\n", getName().c_str(), baseAddrMask_, lineSize_);
+                    }
                     initDone_ = true;
                 }
             }
@@ -151,11 +151,20 @@ StandardMem::Request* StandardInterface::recvUntimedData() {
 
 /* This could be a request or a response. */
 void StandardInterface::send(StandardMem::Request* req) {
+#ifdef __SST_DEBUG_OUTPUT__
+      debug.debug(_L5_, "E: %-40" PRIu64 "  %-20s Req:Convert   (%s)\n", Simulation::getSimulation()->getCurrentSimCycle(), getName().c_str(), req->getString().c_str());
+    //debug.debug(_L5_, "E: %-40" PRIu64 "  %-20s Req:Convert   (%s)\n", Simulation::getSimulation()->getCurrentSimCycle(), getName().c_str(), req->getString().c_str());
+    fflush(stdout);
+#endif
     MemEventBase *me = static_cast<MemEventBase*>(req->convert(converter_));
     if (req->needsResponse())
         requests_[me->getID()] = std::make_pair(req,me->getCmd());   /* Save this request so we can use it when a response is returned */
     else
         delete req;
+#ifdef __SST_DEBUG_OUTPUT__
+    debug.debug(_L4_, "E: %-40" PRIu64 "  %-20s Event:Send    (%s)\n", 
+        Simulation::getSimulation()->getCurrentSimCycle(), getName().c_str(), me->getBriefString().c_str());
+#endif
     link_->send(me);
 }
 
@@ -169,7 +178,9 @@ void StandardInterface::receive(SST::Event* ev) {
     StandardMem::Request* deliverReq = nullptr;
     Command cmd = me->getCmd();
     bool isResponse = (BasicCommandClassArr[(int)cmd] == BasicCommandClass::Response);
-
+#ifdef __SST_DEBUG_OUTPUT__ 
+    //debug.debug(_L4_, "E: %-40" PRIu64 "  %-20s Event:Recv    (%s)\n", Simulation::getSimulation()->getCurrentSimCycle(), getName().c_str(), me->getBriefString().c_str());
+#endif
     /* Handle responses to requests we sent */
     if (isResponse) {
         MemEventBase::id_type origID = me->getResponseToID();
@@ -246,6 +257,10 @@ void StandardInterface::receive(SST::Event* ev) {
         else 
             delete me;
     }
+
+#ifdef __SST_DEBUG_OUTPUT__
+    debug.debug(_L5_, "E: %-40" PRIu64 "  %-20s Req:Deliver   (%s)\n", Simulation::getSimulation()->getCurrentSimCycle(), getName().c_str(), deliverReq->getString().c_str());
+#endif
     (*recvHandler_)(deliverReq);
 }
 
@@ -254,10 +269,10 @@ void StandardInterface::receive(SST::Event* ev) {
  ********************************************************************************************/
 
 SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::Read* req) {
-    Addr bAddr = req->pAddr & iface->baseAddrMask_; // Line address
-    MemEvent* read = new MemEvent(getName(), req->pAddr, bAddr, Command::GetS, req->size);
-    read->setRqstr(iface->rqstr_);
-    read->setDst(iface->rqstr_);
+    Addr bAddr = (iface->lineSize_ == 0 || req->getNoncacheable()) ? req->pAddr : req->pAddr & iface->baseAddrMask_; // Line address
+    MemEvent* read = new MemEvent(iface->getName(), req->pAddr, bAddr, Command::GetS, req->size);
+    read->setRqstr(iface->getName());
+    read->setDst(iface->link_->findTargetDestination(bAddr));
     read->setVirtualAddress(req->vAddr);
     read->setInstructionPointer(req->iPtr);
     if (req->getNoncacheable())
@@ -270,11 +285,11 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::Read* req
 
 
 SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::Write* req) {
-    Addr bAddr = req->pAddr & iface->baseAddrMask_; // Line address
-    MemEvent* write = new MemEvent(getName(), req->pAddr, bAddr, Command::GetX, req->data);
+    Addr bAddr = (iface->lineSize_ == 0 || req->getNoncacheable()) ? req->pAddr : req->pAddr & iface->baseAddrMask_;
+    MemEvent* write = new MemEvent(iface->getName(), req->pAddr, bAddr, Command::GetX, req->data);
     
-    write->setRqstr(iface->rqstr_);
-    write->setDst(iface->rqstr_);
+    write->setRqstr(iface->getName());
+    write->setDst(iface->link_->findTargetDestination(bAddr));
     write->setVirtualAddress(req->vAddr);
     write->setInstructionPointer(req->iPtr);
     
@@ -288,7 +303,7 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::Write* re
     }
 #ifdef __SST_DEBUG_OUTPUT__
     else if (req->data.size() != req->size) {
-        output.output("Warning (%s): Write request size is %zu and payload size is %zu. MemEvent will use payload size.\n",
+        output.verbose(CALL_INFO, 1, 0, "Warning (%s): Write request size is %zu and payload size is %zu. MemEvent will use payload size.\n",
             iface->getName().c_str(), req->size, req->data.size());
     } 
     debugChecks(write);
@@ -298,12 +313,12 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::Write* re
 
 
 SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::FlushAddr* req) {
-    Addr bAddr = req->pAddr & iface->baseAddrMask_; // Line address
+    Addr bAddr = (iface->lineSize_ == 0 || req->getNoncacheable()) ? req->pAddr : req->pAddr & iface->baseAddrMask_;
     Command cmd = req->inv ? Command::FlushLineInv : Command::FlushLine;
 
-    MemEvent* flush = new MemEvent(getName(), req->pAddr, bAddr, cmd, req->size);
-    flush->setRqstr(iface->rqstr_);
-    flush->setDst(iface->rqstr_);
+    MemEvent* flush = new MemEvent(iface->getName(), req->pAddr, bAddr, cmd, req->size);
+    flush->setRqstr(iface->getName());
+    flush->setDst(iface->link_->findTargetDestination(bAddr));
     flush->setVirtualAddress(req->vAddr);
     flush->setInstructionPointer(req->iPtr);
 #ifdef __SST_DEBUG_OUTPUT__
@@ -316,10 +331,10 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::FlushAddr
 }
 
 Event* StandardInterface::MemEventConverter::convert(StandardMem::ReadLock* req) {
-    Addr bAddr = req->pAddr & baseAddrMask_; // Line address
-    MemEvent* read = new MemEvent(getName(), req->pAddr, bAddr, Command::GetSX, req->size);
-    read->setRqstr(rqstr_);
-    read->setDst(rqstr_);
+    Addr bAddr = (iface->lineSize_ == 0 || req->getNoncacheable()) ? req->pAddr : req->pAddr & iface->baseAddrMask_;
+    MemEvent* read = new MemEvent(iface->getName(), req->pAddr, bAddr, Command::GetSX, req->size);
+    read->setRqstr(iface->getName());
+    read->setDst(iface->link_->findTargetDestination(bAddr));
     read->setVirtualAddress(req->vAddr);
     read->setInstructionPointer(req->iPtr);
     read->setFlag(MemEvent::F_LOCKED);
@@ -332,10 +347,10 @@ Event* StandardInterface::MemEventConverter::convert(StandardMem::ReadLock* req)
     return read;
 }
 SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::WriteUnlock* req) {
-    Addr bAddr = req->pAddr & baseAddrMask_; // Line address
-    MemEvent* write = new MemEvent(getName(), req->pAddr, bAddr, Command::GetX, req->data);
-    write->setRqstr(rqstr_);
-    write->setDst(rqstr_);
+    Addr bAddr = (iface->lineSize_ == 0 || req->getNoncacheable()) ? req->pAddr : req->pAddr & iface->baseAddrMask_;
+    MemEvent* write = new MemEvent(iface->getName(), req->pAddr, bAddr, Command::GetX, req->data);
+    write->setRqstr(iface->getName());
+    write->setDst(iface->link_->findTargetDestination(bAddr));
     write->setVirtualAddress(req->vAddr);
     write->setInstructionPointer(req->iPtr);
     write->setFlag(MemEvent::F_LOCKED);
@@ -352,11 +367,11 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::WriteUnlo
 
 
 SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::LoadLink* req) {
-    Addr bAddr = req->pAddr & baseAddrMask_; // Line address
-    MemEvent* load = new MemEvent(getName(), req->pAddr, bAddr, Command::GetS, req->size);
+    Addr bAddr = (iface->lineSize_ == 0 || req->getNoncacheable()) ? req->pAddr : req->pAddr & iface->baseAddrMask_;
+    MemEvent* load = new MemEvent(iface->getName(), req->pAddr, bAddr, Command::GetS, req->size);
     load->setFlag(MemEvent::F_LLSC);
-    load->setRqstr(rqstr_);
-    load->setDst(rqstr_);
+    load->setRqstr(iface->getName());
+    load->setDst(iface->link_->findTargetDestination(bAddr));
     load->setVirtualAddress(req->vAddr);
     load->setInstructionPointer(req->iPtr);
     if (req->getNoncacheable())
@@ -369,11 +384,11 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::LoadLink*
 
 
 SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::StoreConditional* req) {
-    Addr bAddr = req->pAddr & baseAddrMask_; // Line address
-    MemEvent* store = new MemEvent(getName(), req->pAddr, bAddr, Command::GetX, req->data);
+    Addr bAddr = (iface->lineSize_ == 0 || req->getNoncacheable()) ? req->pAddr : req->pAddr & iface->baseAddrMask_;
+    MemEvent* store = new MemEvent(iface->getName(), req->pAddr, bAddr, Command::GetX, req->data);
     store->setFlag(MemEvent::F_LLSC);
-    store->setRqstr(rqstr_);
-    store->setDst(rqstr_);
+    store->setRqstr(iface->getName());
+    store->setDst(iface->link_->findTargetDestination(bAddr));
     store->setVirtualAddress(req->vAddr);
     store->setInstructionPointer(req->iPtr);
     
@@ -391,18 +406,16 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::StoreCond
 
 
 Event* StandardInterface::MemEventConverter::convert(StandardMem::MoveData* req) {
-    Addr bAddr = req->pSrc & baseAddrMask_; // Line address
     MemEvent* move = nullptr;
-    output.fatal(CALL_INFO, -1, "%s, Error: MoveData converter not implemented\n", getName().c_str());
+    output.fatal(CALL_INFO, -1, "%s, Error: MoveData converter not implemented\n", iface->getName().c_str());
 #ifdef __SST_DEBUG_OUTPUT__
     //debugChecks(move);
 #endif
     return move;
 }
 Event* StandardInterface::MemEventConverter::convert(StandardMem::CustomReq* req) {
-    Addr bAddr = req->data->getRoutingAddress() & baseAddrMask_;
     MemEvent* creq = nullptr;
-    output.fatal(CALL_INFO, -1, "%s, Error: CustomReq converter not implemented\n", getName().c_str());
+    output.fatal(CALL_INFO, -1, "%s, Error: CustomReq converter not implemented\n", iface->getName().c_str());
 #ifdef __SST_DEBUG_OUTPUT__
     //debugChecks(creq);
 #endif
@@ -435,15 +448,15 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::WriteResp
     return meresp;
 }
 SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::FlushResp* req) { 
-    output.fatal(CALL_INFO, -1, "%s, Error: FlushResp converter not implemented\n", getName().c_str());
+    output.fatal(CALL_INFO, -1, "%s, Error: FlushResp converter not implemented\n", iface->getName().c_str());
     return nullptr; 
 }
 
 SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::CustomResp* req) { 
-    output.fatal(CALL_INFO, -1, "%s, Error: CustomResp converter not implemented\n", getName().c_str());
+    output.fatal(CALL_INFO, -1, "%s, Error: CustomResp converter not implemented\n", iface->getName().c_str());
     return nullptr; }
 SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::InvNotify* req) { 
-    output.fatal(CALL_INFO, -1, "%s, Error: InvNotify converter not implemented\n", getName().c_str());
+    output.fatal(CALL_INFO, -1, "%s, Error: InvNotify converter not implemented\n", iface->getName().c_str());
     return nullptr; }
 
 /********************************************************************************************
@@ -483,12 +496,14 @@ StandardMem::Request* StandardInterface::convertRequestInv(MemEventBase* ev) {
         0, event->getVirtualAddress(), event->getInstructionPointer(), 0);
     return req;
 }
+
 StandardMem::Request* StandardInterface::convertRequestGetS(MemEventBase* ev) {
     MemEvent* event = static_cast<MemEvent*>(ev);
     StandardMem::Read* req = new StandardMem::Read(event->getAddr(), event->getSize(), 0, 
         event->getVirtualAddress(), event->getInstructionPointer(), 0);
     return req;
 }
+
 StandardMem::Request* StandardInterface::convertRequestGetX(MemEventBase* ev) {
     MemEvent* event = static_cast<MemEvent*>(ev);
     StandardMem::Write* req = new StandardMem::Write(event->getAddr(), event->getSize(), event->getPayload(),
@@ -496,11 +511,13 @@ StandardMem::Request* StandardInterface::convertRequestGetX(MemEventBase* ev) {
         event->getInstructionPointer(), 0);
     return req;
 }
+
 StandardMem::Request* StandardInterface::convertRequestLL(MemEventBase* ev) {
     MemEvent* event = static_cast<MemEvent*>(ev);
     return new StandardMem::LoadLink(event->getAddr(), event->getSize(), 0, event->getVirtualAddress(), 
         event->getInstructionPointer(), 0);
 }
+
 StandardMem::Request* StandardInterface::convertRequestSC(MemEventBase* ev) {
     MemEvent* event = static_cast<MemEvent*>(ev);
     return new StandardMem::StoreConditional(event->getAddr(), event->getSize(), event->getPayload(), 0, 
@@ -535,10 +552,12 @@ void StandardInterface::MemEventConverter::debugChecks(MemEvent* me) {
     }
 */
     // Check that the request doesn't span cache lines
-    Addr lastAddr = me->getAddr() + me->getSize() - 1;
-    lastAddr &= baseAddrMask_;
-    if (lastAddr != me->getBaseAddr()) {
-        output.fatal(CALL_INFO, -1, "Error: In memHierarchy Interface (%s), Request cannot span multiple cache lines! Line mask = %" PRIu64 ". Event is: %s\n", 
-                getName().c_str(), baseAddrMask_, me->getVerboseString().c_str());
+    if (iface->lineSize_ != 0 && !(me->queryFlag(MemEventBase::F_NONCACHEABLE))) {
+        Addr lastAddr = me->getAddr() + me->getSize() - 1;
+        lastAddr &= iface->baseAddrMask_;
+        if (lastAddr != me->getBaseAddr()) {
+            output.fatal(CALL_INFO, -1, "Error: In memHierarchy Interface (%s), Request cannot span multiple cache lines! Line mask = 0x%" PRIx64 ". Event is: %s\n", 
+                    iface->getName().c_str(), iface->baseAddrMask_, me->getVerboseString().c_str());
+        }
     }
 }
