@@ -23,28 +23,23 @@ namespace Vanadis {
 
 class VanadisSyscallWriteEvent : public VanadisSyscallEvent {
 public:
-	VanadisSyscallWriteEvent() : VanadisSyscallEvent() {}
-	VanadisSyscallWriteEvent( uint32_t core, uint32_t thr,
-		int64_t fd, uint64_t buff_addr, int64_t buff_count ) :
-		VanadisSyscallEvent(core, thr),
-		write_fd(fd), write_buffer(buff_addr), write_count(buff_count) {}
+    VanadisSyscallWriteEvent() : VanadisSyscallEvent() {}
+    VanadisSyscallWriteEvent(uint32_t core, uint32_t thr, int64_t fd, uint64_t buff_addr, int64_t buff_count)
+        : VanadisSyscallEvent(core, thr), write_fd(fd), write_buffer(buff_addr), write_count(buff_count) {}
 
-	VanadisSyscallOp getOperation() {
-		return SYSCALL_OP_WRITE;
-	}
+    VanadisSyscallOp getOperation() { return SYSCALL_OP_WRITE; }
 
-	int64_t  getFileDescriptor() const { return write_fd; }
-	uint64_t getBufferAddress() const { return write_buffer; }
-	uint64_t getBufferCount() const { return write_count; }
+    int64_t getFileDescriptor() const { return write_fd; }
+    uint64_t getBufferAddress() const { return write_buffer; }
+    uint64_t getBufferCount() const { return write_count; }
 
 private:
-	int64_t   write_fd;
-	uint64_t  write_buffer;
-	uint64_t  write_count;
-
+    int64_t write_fd;
+    uint64_t write_buffer;
+    uint64_t write_count;
 };
 
-}
-}
+} // namespace Vanadis
+} // namespace SST
 
 #endif

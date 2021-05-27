@@ -23,24 +23,19 @@ namespace Vanadis {
 
 class VanadisSyscallSetThreadAreaEvent : public VanadisSyscallEvent {
 public:
-	VanadisSyscallSetThreadAreaEvent() : VanadisSyscallEvent() {}
-	VanadisSyscallSetThreadAreaEvent( uint32_t core, uint32_t thr, uint64_t ta ) :
-		VanadisSyscallEvent(core, thr), ta_ptr(ta) {}
+    VanadisSyscallSetThreadAreaEvent() : VanadisSyscallEvent() {}
+    VanadisSyscallSetThreadAreaEvent(uint32_t core, uint32_t thr, uint64_t ta)
+        : VanadisSyscallEvent(core, thr), ta_ptr(ta) {}
 
-	VanadisSyscallOp getOperation() {
-		return SYSCALL_OP_SET_THREAD_AREA;
-	}
+    VanadisSyscallOp getOperation() { return SYSCALL_OP_SET_THREAD_AREA; }
 
-	uint64_t getThreadAreaInfoPtr() const {
-		return ta_ptr;
-	}
+    uint64_t getThreadAreaInfoPtr() const { return ta_ptr; }
 
 private:
-	uint64_t ta_ptr;
-
+    uint64_t ta_ptr;
 };
 
-}
-}
+} // namespace Vanadis
+} // namespace SST
 
 #endif
