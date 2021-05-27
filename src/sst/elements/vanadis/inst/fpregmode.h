@@ -19,12 +19,9 @@
 namespace SST {
 namespace Vanadis {
 
-enum VanadisFPRegisterMode {
-        VANADIS_REGISTER_MODE_FP32,
-        VANADIS_REGISTER_MODE_FP64
-};
+enum VanadisFPRegisterMode { VANADIS_REGISTER_MODE_FP32, VANADIS_REGISTER_MODE_FP64 };
 
 }
-}
+} // namespace SST
 
 #endif
