@@ -16,76 +16,55 @@
 #ifndef _H_VANADIS_CIRC_Q
 #define _H_VANADIS_CIRC_Q
 
-#include <deque>
 #include <cassert>
+#include <deque>
 
 namespace SST {
 namespace Vanadis {
 
-template<typename T>
-class VanadisCircularQueue {
+template <typename T> class VanadisCircularQueue {
 public:
-	VanadisCircularQueue( const size_t size ) :
-		max_capacity(size) {
-	}
+    VanadisCircularQueue(const size_t size) : max_capacity(size) {}
 
-	~VanadisCircularQueue() {
+    ~VanadisCircularQueue() {}
 
-	}
+    bool empty() { return 0 == data.size(); }
 
-	bool empty() {
-		return 0 == data.size();
-	}
+    bool full() { return max_capacity == data.size(); }
 
-	bool full() {
-		return max_capacity == data.size();
-	}
+    void push(T item) { data.push_back(item); }
 
-	void push(T item) {
-		data.push_back(item);
-	}
+    T peek() { return data.front(); }
 
-	T peek() {
-		return data.front();
-	}
+    T peekAt(const size_t index) { return data.at(index); }
 
-	T peekAt( const size_t index ) {
-		return data.at( index );
-	}
+    T pop() {
+        T tmp = data.front();
+        data.pop_front();
+        return tmp;
+    }
 
-	T pop() {
-		T tmp = data.front();
-		data.pop_front();
-		return tmp;
-	}
+    size_t size() const { return data.size(); }
 
-	size_t size() const {
-		return data.size();
-	}
+    size_t capacity() const { return max_capacity; }
 
-	size_t capacity() const {
-		return max_capacity;
-	}
+    void clear() { data.clear(); }
 
-	void clear() {
-		data.clear();
-	}
+    void removeAt(const size_t index) {
+        auto remove_itr = data.begin();
 
-	void removeAt( const size_t index ) {
-		auto remove_itr = data.begin();
+        for (size_t i = 0; i < index; ++i, remove_itr++) {
+        }
 
-		for( size_t i = 0; i < index; ++i, remove_itr++ ) {}
-
-		data.erase(remove_itr);
-	}
+        data.erase(remove_itr);
+    }
 
 private:
-	const size_t max_capacity;
-	std::deque<T> data;
-
+    const size_t max_capacity;
+    std::deque<T> data;
 };
 
-}
-}
+} // namespace Vanadis
+} // namespace SST
 
 #endif
