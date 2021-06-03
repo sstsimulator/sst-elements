@@ -16,7 +16,9 @@
 #ifndef _H_VANADIS_ISA_TABLE
 #define _H_VANADIS_ISA_TABLE
 
+#include <cstdint>
 #include "decoder/visaopts.h"
+#include "inst/regfile.h"
 
 namespace SST {
 namespace Vanadis {
