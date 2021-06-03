@@ -61,9 +61,11 @@ void Parser::generateAppGraph(std::string functionName)
             assembleGraph();
             mergeGraphs();
 
-
-
             break;
+        }
+        else {
+            output_->fatal(CALL_INFO, -1, "Error: No offload target\n");
+            exit(0);
         }
     }// function loop
 

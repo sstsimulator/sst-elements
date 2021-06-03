@@ -448,7 +448,7 @@ void LlyrComponent::constructSoftwareGraphIR(std::ifstream& inputStream)
     std::string irString( (std::istreambuf_iterator< char >( inputStream )),
                           (std::istreambuf_iterator< char >() ));
     Parser parser(irString, output_);
-    parser.generateAppGraph("offload_test");
+    parser.generateAppGraph("offload_");
 
 }
 

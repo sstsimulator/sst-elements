@@ -70,7 +70,7 @@ public:
     ~Parser() {};
 
     void generateAppGraph(std::string functionName);
-    LlyrGraph< opType > getApplicationGraph() { return applicationGraph_; };
+    LlyrGraph< opType > getApplicationGraph() const { return applicationGraph_; } ;
 
 protected:
 
