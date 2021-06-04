@@ -92,6 +92,10 @@ void StandardInterface::init(unsigned int phase) {
         /* Broadcast our name, type, and coherence configuration parameters on link */
         MemEventInitCoherence * event = new MemEventInitCoherence(getName(), epType, false, false, 0, false);
         link_->sendInitData(event);
+
+        /* Broadcast our interface to all other interfaces in the system */
+        MemEventInitEndpoint * epEv = new MemEventInitEndpoint(getName().c_str(), epType, region);
+        link_->sendInitData(epEv);
     }
 
     while (SST::Event * ev = link_->recvInitData()) {
@@ -102,13 +106,22 @@ void StandardInterface::init(unsigned int phase) {
                     MemEventInitCoherence * memEventC = static_cast<MemEventInitCoherence*>(memEvent);
                     if (memEventC->getType() == Endpoint::Cache) {
                         cacheDst_ = true; // Cache takes care of figuring out whether GetXResp is read or write response and other address-related issues
-                    }
+                    } 
                     if (memEventC->getType() == Endpoint::Cache || memEventC->getType() == Endpoint::Directory) {
                         baseAddrMask_ = ~(memEventC->getLineSize() - 1);
                         lineSize_ = memEventC->getLineSize();
                         debug.debug(_L10_, "%s, Mask: 0x%" PRIx64 ", Line size: %" PRIu64 "\n", getName().c_str(), baseAddrMask_, lineSize_);
                     }
                     initDone_ = true;
+                } else if (memEvent->getInitCmd() == MemEventInit::InitCommand::Endpoint) {
+                    MemEventInitEndpoint * memEventE = static_cast<MemEventInitEndpoint*>(memEvent);
+                    debug.debug(_L10_, "%s, Received initEndpoint message: %s\n", getName().c_str(), memEventE->getVerboseString().c_str());
+                    if (memEventE->getType() == Endpoint::MMIO) {
+                        std::vector<MemRegion> regs = memEventE->getNoncacheableRegions();
+                        for (std::vector<MemRegion>::iterator it = regs.begin(); it != regs.end(); it++) {
+                            noncacheableRegions.insert(std::make_pair(it->start, *it));
+                        }
+                    }
                 }
             }
         }
@@ -124,7 +137,21 @@ void StandardInterface::init(unsigned int phase) {
 
 }
 
-void StandardInterface::setup() { }
+/* Nothing to do, just report some debug info about our configuration */
+void StandardInterface::setup() { 
+    debug.debug(_L9_, "%s, INFO: Line size: %" PRIu64 ", Mask: 0x%" PRIx64 "\n", getName().c_str(), lineSize_, baseAddrMask_);
+    if (noncacheableRegions.empty()) {
+        debug.debug(_L9_, "%s, INFO: No noncacheable regions discovered\n", getName().c_str());
+    } else {
+        std::ostringstream regstr;
+        regstr << getName() << ", INFO: Discovered noncacheable regions:";
+        for (std::multimap<Addr, MemRegion>::iterator it = noncacheableRegions.begin(); it != noncacheableRegions.end(); it++) {
+            regstr << " [" << it->second.toString() << "]";
+        }
+        debug.debug(_L9_, "%s\n", regstr.str().c_str());
+    }
+    link_->setup();
+}
 
 void StandardInterface::finish() { }
 
@@ -153,7 +180,6 @@ StandardMem::Request* StandardInterface::recvUntimedData() {
 void StandardInterface::send(StandardMem::Request* req) {
 #ifdef __SST_DEBUG_OUTPUT__
       debug.debug(_L5_, "E: %-40" PRIu64 "  %-20s Req:Convert   (%s)\n", Simulation::getSimulation()->getCurrentSimCycle(), getName().c_str(), req->getString().c_str());
-    //debug.debug(_L5_, "E: %-40" PRIu64 "  %-20s Req:Convert   (%s)\n", Simulation::getSimulation()->getCurrentSimCycle(), getName().c_str(), req->getString().c_str());
     fflush(stdout);
 #endif
     MemEventBase *me = static_cast<MemEventBase*>(req->convert(converter_));
@@ -275,8 +301,20 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::Read* req
     read->setDst(iface->link_->findTargetDestination(bAddr));
     read->setVirtualAddress(req->vAddr);
     read->setInstructionPointer(req->iPtr);
-    if (req->getNoncacheable())
+    if (req->getNoncacheable()) {
         read->setFlag(MemEvent::F_NONCACHEABLE);
+    } else if (!((iface->noncacheableRegions).empty())) {
+        // Check if addr lies in noncacheable regions. 
+        // For simplicity we are not dealing with the case where the address range splits a noncacheable + cacheable region
+        std::multimap<Addr, MemRegion>::iterator ep = (iface->noncacheableRegions).upper_bound(req->pAddr);
+        for (std::multimap<Addr, MemRegion>::iterator it = (iface->noncacheableRegions).begin(); it != ep; it++) {
+            if (it->second.contains(req->pAddr)) {
+                read->setFlag(MemEvent::F_NONCACHEABLE);
+                break;
+            }
+        }
+    }
+
 #ifdef __SST_DEBUG_OUTPUT__
     debugChecks(read);
 #endif
@@ -293,8 +331,20 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::Write* re
     write->setVirtualAddress(req->vAddr);
     write->setInstructionPointer(req->iPtr);
     
-    if (req->getNoncacheable())
+    if (req->getNoncacheable()) {
         write->setFlag(MemEvent::F_NONCACHEABLE);
+    } else if (!((iface->noncacheableRegions).empty())) {
+        // Check if addr lies in noncacheable regions. 
+        // For simplicity we are not dealing with the case where the address range splits a noncacheable + cacheable region
+        std::multimap<Addr, MemRegion>::iterator ep = (iface->noncacheableRegions).upper_bound(req->pAddr);
+        for (std::multimap<Addr, MemRegion>::iterator it = (iface->noncacheableRegions).begin(); it != ep; it++) {
+            if (it->second.contains(req->pAddr)) {
+                write->setFlag(MemEvent::F_NONCACHEABLE);
+                break;
+            }
+        }
+    }
+
     if (req->posted)
         write->setFlag(MemEvent::F_NORESPONSE);
     

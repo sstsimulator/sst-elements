@@ -155,7 +155,9 @@ private:
     StandardMem::Request* convertRequestLock(MemEventBase* req);
     StandardMem::Request* convertRequestUnlock(MemEventBase* req);
 
-
+    /* Record noncacheable regions (e.g., MMIO device addresses) */
+    std::multimap<Addr, MemRegion> noncacheableRegions;
+   
     /** Perform some sanity checks to assist with debugging
      * These are only called if SST Core is configured with --enable-debug
      */

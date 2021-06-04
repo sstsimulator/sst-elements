@@ -20,6 +20,7 @@
 #include <limits>
 
 #include <sst/core/eli/elibase.h>   // For ElementInfoStatistic
+#include <sst/core/serialization/serializable.h> // For serializable MemRegion
 
 #include "util.h"
 
@@ -220,13 +221,12 @@ static State NextState[] __attribute__((unused)) = {
 
 static const std::string NONE = "None";
 
-}}
-
 // Define status types used internally to classify event handling resutls
 enum class MemEventStatus { OK, Stall, Reject };
 
 /* Define an address region by start/end & interleaving */
-struct MemRegion {
+class MemRegion : public SST::Core::Serialization::serializable, SST::Core::Serialization::serializable_type<MemRegion> {
+public:
     SST::MemHierarchy::Addr start;             // First address that is part of the region
     SST::MemHierarchy::Addr end;               // Last address that is part of the region
     SST::MemHierarchy::Addr interleaveSize;    // Size of each interleaved chunk
@@ -268,7 +268,17 @@ struct MemRegion {
         str << " InterleaveStep: " << interleaveStep;
         return str.str();
     }
+
+    void serialize_order(SST::Core::Serialization::serializer &ser) override {
+        ser & start;
+        ser & end;
+        ser & interleaveSize;
+        ser & interleaveStep;
+    }
+private:
+    ImplementSerializable(SST::MemHierarchy::MemRegion)
 };
 
-
+} /* End namespace MemHierarchy */
+} /* End namespace SST */
 #endif
