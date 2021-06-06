@@ -23,6 +23,7 @@
 #include <vector>
 #include <string>
 #include "llvm/IR/Value.h"
+#include "llvm/IR/Module.h"
 #include <llvm/IR/BasicBlock.h>
 #include <llvm/IR/Instruction.h>
 
@@ -47,6 +48,7 @@ struct alignas(double) CDFGVertex
    float               floatConst_;
    double              doubleConst_;
    std::string         instructionName_;
+   std::string         sizeType_;
 };
 
 typedef LlyrGraph< llvm::BasicBlock* > BBGraph;
@@ -86,7 +88,6 @@ private:
     std::map< llvm::BasicBlock*, CDFG* >* flowGraph_;
 
     std::map< llvm::BasicBlock*, std::vector< CDFGVertex* > >* vertexList_;
-//     std::map< llvm::Instruction*, CDFGVertex* >* instructionMap_;
 
     std::map< llvm::BasicBlock*, std::map< CDFGVertex*, std::vector< llvm::Instruction* >* >* >* defNode_;
     std::map< llvm::BasicBlock*, std::map< CDFGVertex*, std::vector< llvm::Instruction* >* >* >* useNode_;
@@ -97,6 +98,7 @@ private:
     void mergeGraphs();
 
     void printCDFG( const std::string fileName ) const;
+    void printPyomo( const std::string fileName, llvm::Module* mod ) const;
 };
 
 } // namespace LLyr

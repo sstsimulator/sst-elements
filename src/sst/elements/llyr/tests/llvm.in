@@ -1,0 +1,17 @@
+; ModuleID = 'cdfg_example-02.ll'
+source_filename = "cdfg_example-02.ll"
+
+define dso_local double @_Z17offload_loop_testd(double %temp) {
+entry:
+  %temp.addr = alloca double, align 8
+  %x = alloca double, align 8
+  %y = alloca double, align 8
+  %z = alloca double, align 8
+  %a = alloca double, align 8
+}
+
+declare dso_local double @sin(double)
+
+declare dso_local double @tan(double)
+
+declare dso_local double @cos(double)

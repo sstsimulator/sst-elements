@@ -35,6 +35,10 @@
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Demangle/Demangle.h"
 
+#include "llvm/IR/LegacyPassManager.h"
+#include "llvm/Transforms/Utils.h"
+#include "llvm/Transforms/Utils/InstructionNamer.h"
+
 #include "parser.h"
 
 namespace SST {
@@ -45,11 +49,14 @@ void Parser::generateAppGraph(std::string functionName)
     llvm::SMDiagnostic Err;
     llvm::LLVMContext Context;
     std::unique_ptr< llvm::MemoryBuffer > irBuff = llvm::MemoryBuffer::getMemBuffer(offloadString_);
-
     std::unique_ptr< llvm::Module > mod(llvm::parseIR(irBuff->getMemBufferRef(), Err, Context));
 
-    for( auto functionIter = mod->getFunctionList().begin(), functionEnd = mod->getFunctionList().end(); functionIter != functionEnd; ++functionIter )
-    {
+    //get names for anonymous instructions
+    llvm::legacy::PassManager pm;
+    pm.add(llvm::createInstructionNamerPass());
+    pm.run(*mod);
+
+    for( auto functionIter = mod->getFunctionList().begin(), functionEnd = mod->getFunctionList().end(); functionIter != functionEnd; ++functionIter ) {
         llvm::errs() << "Function Name: ";
         llvm::errs().write_escaped(functionIter->getName()) << "     ";
         llvm::errs().write_escaped(llvm::demangle(functionIter->getName().str() )) << '\n';
@@ -71,6 +78,7 @@ void Parser::generateAppGraph(std::string functionName)
 
     std::cout << "Finished parsing..." << std::endl;
     printCDFG( "00_func-ins.dot" );
+    printPyomo( "00_pyomo.out", mod.release() );
 
 }// generateAppGraph
 
@@ -79,8 +87,7 @@ void Parser::generatebBasicBlockGraph(llvm::Function* func)
     std::cout << "Generating BB Graph..." << std::endl;
     llvm::errs().write_escaped(llvm::demangle(func->getName().str() )) << '\n';
 
-    for( auto blockIter = func->getBasicBlockList().begin(), blockEnd = func->getBasicBlockList().end(); blockIter != blockEnd; ++blockIter )
-    {
+    for( auto blockIter = func->getBasicBlockList().begin(), blockEnd = func->getBasicBlockList().end(); blockIter != blockEnd; ++blockIter ) {
         llvm::Instruction *Inst = llvm::dyn_cast<llvm::Instruction>(blockIter->getTerminator());
 
         llvm::errs() << "\t+++Basic Block Name(" << &*blockIter << "): ";
@@ -122,7 +129,7 @@ void Parser::generatebBasicBlockGraph(llvm::Function* func)
 
 void Parser::expandBBGraph(llvm::Function* func)
 {
-    std::cout << "\n\nGenerating Other Graph..." << std::endl;
+    std::cout << "\n\nGenerating Flow Graph..." << std::endl;
     CDFGVertex* entryVertex;
     CDFGVertex* outputVertex;
     CDFGVertex* inputVertex;
@@ -236,7 +243,7 @@ void Parser::expandBBGraph(llvm::Function* func)
                         inputVertex->floatConst_ = 0x00;
                         inputVertex->doubleConst_ = 0x00;
 
-                        uint32_t inputVertexID = g.addVertex(inputVertex);
+                        __attribute__((unused)) uint32_t inputVertexID = g.addVertex(inputVertex);
                         (*vertexList_)[&*blockIter].push_back(inputVertex);
 
                         // create the node/use entries
@@ -303,7 +310,7 @@ void Parser::expandBBGraph(llvm::Function* func)
                             inputVertex->floatConst_ = 0x00;
                             inputVertex->doubleConst_ = 0x00;
 
-                            uint32_t inputVertexID = g.addVertex(inputVertex);
+                            __attribute__((unused)) uint32_t inputVertexID = g.addVertex(inputVertex);
                             (*vertexList_)[&*blockIter].push_back(inputVertex);
 
                             // create the node/use entries
@@ -355,7 +362,7 @@ void Parser::expandBBGraph(llvm::Function* func)
                         inputVertex->floatConst_ = 0x00;
                         inputVertex->doubleConst_ = 0x00;
 
-                        uint32_t inputVertexID = g.addVertex(inputVertex);
+                        __attribute__((unused)) uint32_t inputVertexID = g.addVertex(inputVertex);
                         (*vertexList_)[&*blockIter].push_back(inputVertex);
 
                         // create the node/use entries
@@ -407,7 +414,7 @@ void Parser::expandBBGraph(llvm::Function* func)
                         inputVertex->floatConst_ = 0x00;
                         inputVertex->doubleConst_ = 0x00;
 
-                        uint32_t inputVertexID = g.addVertex(inputVertex);
+                        __attribute__((unused)) uint32_t inputVertexID = g.addVertex(inputVertex);
                         (*vertexList_)[&*blockIter].push_back(inputVertex);
 
                         // create the node/use entries
@@ -485,7 +492,7 @@ void Parser::expandBBGraph(llvm::Function* func)
                         inputVertex->floatConst_ = 0x00;
                         inputVertex->doubleConst_ = 0x00;
 
-                        uint32_t inputVertexID = g.addVertex(inputVertex);
+                        __attribute__((unused)) uint32_t inputVertexID = g.addVertex(inputVertex);
                         (*vertexList_)[&*blockIter].push_back(inputVertex);
 
                         // create the node/use entries
@@ -608,7 +615,7 @@ void Parser::expandBBGraph(llvm::Function* func)
                         inputVertex->floatConst_ = 0x00;
                         inputVertex->doubleConst_ = 0x00;
 
-                        uint32_t inputVertexID = g.addVertex(inputVertex);
+                        __attribute__((unused)) uint32_t inputVertexID = g.addVertex(inputVertex);
                         (*vertexList_)[&*blockIter].push_back(inputVertex);
 
                         // create the node/use entries
@@ -806,7 +813,7 @@ void Parser::expandBBGraph(llvm::Function* func)
                             inputVertex->floatConst_ = 0x00;
                             inputVertex->doubleConst_ = 0x00;
 
-                            uint32_t inputVertexID = g.addVertex(inputVertex);
+                            __attribute__((unused)) uint32_t inputVertexID = g.addVertex(inputVertex);
                             (*vertexList_)[&*blockIter].push_back(inputVertex);
 
                             // create the node/use entries
@@ -913,7 +920,7 @@ void Parser::expandBBGraph(llvm::Function* func)
                             inputVertex->floatConst_ = 0x00;
                             inputVertex->doubleConst_ = 0x00;
 
-                            uint32_t inputVertexID = g.addVertex(inputVertex);
+                            __attribute__((unused)) uint32_t inputVertexID = g.addVertex(inputVertex);
                             (*vertexList_)[&*blockIter].push_back(inputVertex);
 
                             // create the node/use entries
@@ -1043,7 +1050,7 @@ void Parser::expandBBGraph(llvm::Function* func)
                             inputVertex->floatConst_ = 0x00;
                             inputVertex->doubleConst_ = 0x00;
 
-                            uint32_t inputVertexID = g.addVertex(inputVertex);
+                            __attribute__((unused)) uint32_t inputVertexID = g.addVertex(inputVertex);
                             (*vertexList_)[&*blockIter].push_back(inputVertex);
 
                             // create the node/use entries
@@ -1151,7 +1158,7 @@ void Parser::expandBBGraph(llvm::Function* func)
                             inputVertex->floatConst_ = 0x00;
                             inputVertex->doubleConst_ = 0x00;
 
-                            uint32_t inputVertexID = g.addVertex(inputVertex);
+                            __attribute__((unused))uint32_t inputVertexID = g.addVertex(inputVertex);
                             (*vertexList_)[&*blockIter].push_back(inputVertex);
 
                             // create the node/use entries
@@ -1235,7 +1242,7 @@ void Parser::expandBBGraph(llvm::Function* func)
     }
 
     // should be complete here
-    std::cout << "...Other Graph Done." << std::endl;
+    std::cout << "...Flow Graph Done." << std::endl;
 
 }//END expandBBGraph
 
@@ -1500,6 +1507,82 @@ void Parser::printCDFG( const std::string fileName ) const
     outputFile << "}";
     outputFile.close();
 
+
+}
+
+void Parser::printPyomo( const std::string fileName, llvm::Module* mod ) const
+{
+    std::ofstream outputFile(fileName.c_str(), std::ios::trunc);         //open a file for writing (truncate the current contents)
+    if ( !outputFile )                                                   //check to be sure file is open
+        std::cerr << "Error opening file.";
+
+    outputFile << "## model intput" << "\n";
+
+    llvm::DataLayout* dataLayout = new llvm::DataLayout(mod);
+
+    auto funcVertexMap = functionGraph_->getVertexMap();
+    for( auto vertexIterator = funcVertexMap->begin(); vertexIterator != funcVertexMap ->end(); ++vertexIterator ) {
+
+        llvm::Instruction* tempInstruction = vertexIterator->second.getValue()->instruction_;
+        if( tempInstruction != NULL ) {
+            //write node ID
+            outputFile << vertexIterator->first << ":  ";
+            outputFile << std::flush;
+
+            //write operands
+            bool first = 0;
+            outputFile << "input[ ";
+            for( auto operandIter = tempInstruction->op_begin(), operandEnd = tempInstruction->op_end(); operandIter != operandEnd; ++operandIter ) {
+                if( operandIter->get()->hasName() == 1 ) {
+                    if( first != 0 ) {
+                        outputFile << ", ";
+                    }
+                    first = 1;
+                    outputFile << operandIter->get()->getName().str() << " ";
+                }
+
+            }
+            outputFile << " ]";
+
+            //write outputs
+            llvm::Value* returnval = llvm::cast<llvm::Value>(tempInstruction);
+            outputFile << " output[ ";
+            if( returnval->hasName() == 1 ) {
+                outputFile << returnval->getName().str();
+            }
+            outputFile << " ]";
+
+            //write op
+            outputFile << " op[ ";
+            outputFile << tempInstruction->getOpcodeName();
+            outputFile << " ]";
+
+            //write type
+            outputFile << " type[ ";
+            if( tempInstruction->getType()->isSized() ) {
+                outputFile << dataLayout->getTypeStoreSize(tempInstruction->getType());
+            }
+            outputFile << " ]";
+
+            //finish
+            outputFile << "\n";
+        }
+    }
+
+    outputFile << std::endl;
+    for(auto vertexIterator = funcVertexMap->begin(); vertexIterator != funcVertexMap->end(); ++vertexIterator) {
+        std::vector< Edge* >* adjacencyList = vertexIterator->second.getAdjacencyList();
+
+        for( auto it = adjacencyList->begin(); it != adjacencyList->end(); ++it ) {
+            outputFile << vertexIterator->first;
+            outputFile << "->";
+            outputFile << (*it)->getDestination();
+            outputFile << "\n";
+        }
+    }
+
+    outputFile << "}";
+    outputFile.close();
 
 }
 
