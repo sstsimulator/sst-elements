@@ -15,7 +15,7 @@ df_0.addParams({
     "verbose": 20,
     "clock" : str(tile_clk_mhz) + "GHz",
     "mem_init"      : "mem-int.in",
-    "application"   : "llvm.in",
+    "application"   : "llvm-example02.in",
     "hardware_graph": "hardware.cfg",
     "mapper"        : "llyr.mapper.simple"
 })
