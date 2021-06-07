@@ -1518,6 +1518,7 @@ void Parser::printPyomo( const std::string fileName, llvm::Module* mod ) const
 
     outputFile << "## model intput" << "\n";
 
+    //need this for type size but there should be a better way
     llvm::DataLayout* dataLayout = new llvm::DataLayout(mod);
 
     auto funcVertexMap = functionGraph_->getVertexMap();
