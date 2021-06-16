@@ -1,0 +1,22 @@
+1 [pe_type=LD]
+2 [pe_type=LD]
+3 [pe_type=LD]
+4 [pe_type=ADDCONST,10]
+5 [pe_type=LD]
+6 [pe_type=MUL]
+7 [pe_type=ADD]
+8 [pe_type=ST]
+
+1 -- 7
+
+2 -- 6
+
+3 -- 4
+
+4 -- 5
+
+5 -- 6
+6 -- 7
+7 -- 8
+
+
