@@ -18,6 +18,7 @@
 #define _LLYR_TYPES
 
 #include <bitset>
+#include <string>
 #include <sst/core/interfaces/simpleMem.h>
 
 #define Bit_Length 64
@@ -76,6 +77,10 @@ typedef enum {
     SUB,
     MUL,
     DIV,
+    ADDCONST,
+    SUBCONST,
+    MULCONST,
+    DIVCONST,
     ANY_FP = 0xC0,
     FPADD,
     FPSUB,
@@ -90,6 +95,12 @@ typedef enum {
     SEL,
     OTHER
 } opType;
+
+// application graph node
+typedef struct alignas(64) {
+    opType      optype_;
+    std::string constant_val_;
+} AppNode;
 
 }//Llyr
 }//SST

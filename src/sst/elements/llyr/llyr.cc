@@ -376,7 +376,6 @@ void LlyrComponent::constructSoftwareGraph(std::string fileName)
         std::uint64_t position;
 
         std::getline( inputStream, thisLine );
-//         position = thisLine.find( "Function Attrs" );
         position = thisLine.find( "ModuleID" );
 
         output_->verbose(CALL_INFO, 15, 0, "Parsing:  %s\n", thisLine.c_str());
@@ -409,15 +408,25 @@ void LlyrComponent::constructSoftwareGraphApp(std::ifstream& inputStream)
             //If all nodes read, must mean we're at edge list
             position = thisLine.find_first_of( "[" );
             if( position !=  std::string::npos ) {
+                AppNode tempNode;
                 uint32_t vertex = std::stoi( thisLine.substr( 0, position ) );
 
                 std::uint64_t posA = thisLine.find_first_of( "=" ) + 1;
-                std::uint64_t posB = thisLine.find_last_of( "]" );
+                std::uint64_t posB = thisLine.find_last_of( "," );
+                if( posB !=  std::string::npos ) {
+                    std::uint64_t posC = thisLine.find_last_of( "]" );
+                    tempNode.constant_val_ = thisLine.substr( posB + 1, posC - posB - 1 );
+//                     std::cout << "CONSTANT " << tempNode.constant_val_ << std::endl;
+                } else {
+                    posB = thisLine.find_last_of( "]" );
+                }
+
                 std::string op = thisLine.substr( posA, posB-posA );
                 opType operation = getOptype(op);
-
                 output_->verbose(CALL_INFO, 10, 0, "OpString:  %s\t\t%" PRIu32 "\n", op.c_str(), operation);
-                applicationGraph_.addVertex( vertex, operation );
+                tempNode.optype_ = operation;
+
+                applicationGraph_.addVertex( vertex, tempNode );
             } else {
 
                 std::regex delimiter( "\\--" );
@@ -552,6 +561,14 @@ opType LlyrComponent::getOptype(std::string &opString) const
         operation = MUL;
     else if( opString == "DIV" )
         operation = DIV;
+    else if( opString == "ADDCONST" )
+        operation = ADDCONST;
+    else if( opString == "SUBCONST" )
+        operation = SUBCONST;
+    else if( opString == "MULCONST" )
+        operation = MULCONST;
+    else if( opString == "DIVCONST" )
+        operation = DIVCONST;
     else if( opString == "ANY_FP" )
         operation = ANY_FP;
     else if( opString == "FPADD" )

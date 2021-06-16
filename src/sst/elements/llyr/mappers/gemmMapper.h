@@ -40,7 +40,7 @@ public:
         SST::Llyr::LlyrMapper
     )
 
-    void mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType > appGraph,
+    void mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNode > appGraph,
                   LlyrGraph< ProcessingElement* > &graphOut,
                   LlyrConfig* llyr_config);
 
@@ -49,7 +49,7 @@ private:
 
 };
 
-void GEMMMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType > appGraph,
+void GEMMMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNode > appGraph,
                             LlyrGraph< ProcessingElement* > &graphOut,
                             LlyrConfig* llyr_config)
 {

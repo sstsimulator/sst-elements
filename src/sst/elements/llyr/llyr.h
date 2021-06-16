@@ -113,7 +113,7 @@ private:
 
     LlyrConfig* configData_;
     LlyrGraph< opType > hardwareGraph_;
-    LlyrGraph< opType > applicationGraph_;
+    LlyrGraph< AppNode > applicationGraph_;
     LlyrGraph< ProcessingElement* > mappedGraph_;
 
     LlyrMapper* llyr_mapper_;

@@ -37,12 +37,16 @@ public:
     LlyrMapper() : Module() {}
     virtual ~LlyrMapper() {}
 
-    virtual void mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType > appGraph,
+    virtual void mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNode > appGraph,
                           LlyrGraph< ProcessingElement* > &graphOut,
                           LlyrConfig* llyr_config) = 0;
 
     void addNode(opType op_binding, uint32_t nodeNum, LlyrGraph< ProcessingElement* > &graphOut,
                   LlyrConfig* llyr_config);
+    void addNode(opType op_binding, int64_t intConst, uint32_t nodeNum, LlyrGraph< ProcessingElement* > &graphOut,
+                 LlyrConfig* llyr_config);
+    void addNode(opType op_binding, double dblConst, uint32_t nodeNum, LlyrGraph< ProcessingElement* > &graphOut,
+                 LlyrConfig* llyr_config);
 
 };
 
@@ -128,6 +132,28 @@ void LlyrMapper::addNode(opType op_binding, uint32_t nodeNum, LlyrGraph< Process
     graphOut.addVertex( nodeNum, tempPE );
 
 }// addNode
+
+void LlyrMapper::addNode(opType op_binding, int64_t intConst, uint32_t nodeNum, LlyrGraph< ProcessingElement* > &graphOut,
+                         LlyrConfig* llyr_config)
+{
+    ProcessingElement* tempPE;
+
+    if( op_binding == ADDCONST ) {
+        tempPE = new IntConstProcessingElement( ADDCONST, nodeNum, llyr_config, intConst );
+    } else if( op_binding == SUBCONST ) {
+        tempPE = new IntConstProcessingElement( SUBCONST, nodeNum, llyr_config, intConst );
+    } else if( op_binding == MULCONST ) {
+        tempPE = new IntConstProcessingElement( MULCONST, nodeNum, llyr_config, intConst );
+    } else if( op_binding == DIVCONST ) {
+        tempPE = new IntConstProcessingElement( DIVCONST, nodeNum, llyr_config, intConst );
+    } else {
+        exit(0);
+    }
+
+    graphOut.addVertex( nodeNum, tempPE );
+
+}// addNode
+
 
 }// namespace Llyr
 }// namespace SST

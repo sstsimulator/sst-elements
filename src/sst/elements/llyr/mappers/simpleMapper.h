@@ -41,7 +41,7 @@ public:
         SST::Llyr::LlyrMapper
     )
 
-    void mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType > appGraph,
+    void mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNode > appGraph,
                   LlyrGraph< ProcessingElement* > &graphOut,
                   LlyrConfig* llyr_config);
 
@@ -50,7 +50,7 @@ private:
 
 };
 
-void SimpleMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType > appGraph,
+void SimpleMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNode > appGraph,
                             LlyrGraph< ProcessingElement* > &graphOut,
                             LlyrConfig* llyr_config)
 {
@@ -62,8 +62,8 @@ void SimpleMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType
     std::queue< uint32_t > nodeQueue;
 
     //Mark all nodes in the PE graph un-visited
-    std::map< uint32_t, Vertex< opType > >* app_vertex_map_ = appGraph.getVertexMap();
-    typename std::map< uint32_t, Vertex< opType > >::iterator appIterator;
+    std::map< uint32_t, Vertex< AppNode > >* app_vertex_map_ = appGraph.getVertexMap();
+    typename std::map< uint32_t, Vertex< AppNode > >::iterator appIterator;
     for(appIterator = app_vertex_map_->begin(); appIterator != app_vertex_map_->end(); ++appIterator) {
         appIterator->second.setVisited(0);
 
@@ -84,7 +84,13 @@ void SimpleMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< opType
         nodeQueue.pop();
 
         app_vertex_map_->at(currentAppNode).setVisited(1);
-        addNode( app_vertex_map_->at(currentAppNode).getValue(), newNodeNum, graphOut, llyr_config );
+        opType tempOp = app_vertex_map_->at(currentAppNode).getValue().optype_;
+        if( tempOp == ADDCONST || tempOp == SUBCONST || tempOp == MULCONST || tempOp == DIVCONST ) {
+            int64_t intConst = std::stol(app_vertex_map_->at(currentAppNode).getValue().constant_val_);
+            addNode( tempOp, intConst, newNodeNum, graphOut, llyr_config );
+        } else {
+            addNode( tempOp, newNodeNum, graphOut, llyr_config );
+        }
 
         // create a record of the mapping (new, old)
         auto retVal = mapping.emplace( currentAppNode, newNodeNum );
