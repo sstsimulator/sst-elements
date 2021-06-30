@@ -138,7 +138,15 @@ void LlyrMapper::addNode(opType op_binding, int64_t intConst, uint32_t nodeNum, 
 {
     ProcessingElement* tempPE;
 
-    if( op_binding == ADDCONST ) {
+    if( op_binding == LDADDR ) {
+        std::queue< LlyrData > tempData;
+        tempData.push(LlyrData(intConst));
+        tempPE = new LoadProcessingElement( LD, nodeNum, llyr_config, tempData );
+    } else if( op_binding == STADDR ) {
+        std::queue< LlyrData > tempData;
+        tempData.push(LlyrData(intConst));
+        tempPE = new StoreProcessingElement( ST, nodeNum, llyr_config, tempData );
+    } else if( op_binding == ADDCONST ) {
         tempPE = new IntConstProcessingElement( ADDCONST, nodeNum, llyr_config, intConst );
     } else if( op_binding == SUBCONST ) {
         tempPE = new IntConstProcessingElement( SUBCONST, nodeNum, llyr_config, intConst );

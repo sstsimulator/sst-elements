@@ -45,12 +45,16 @@ public:
     }
 
     StoreProcessingElement(opType op_binding, uint32_t processor_id, LlyrConfig* llyr_config,
-                           std::vector< std::queue< LlyrData >* >* input_queues_init, uint32_t cycles = 1)  :
-                    ProcessingElement(op_binding, processor_id, llyr_config)
+                           std::queue< LlyrData > input_queues_init, uint32_t cycles = 1)  :
+                           ProcessingElement(op_binding, processor_id, llyr_config), input_queues_init_(input_queues_init)
     {
         cycles_ = cycles;
         output_queues_ = new std::vector< std::queue< LlyrData >* >;
-        input_queues_= new std::vector< std::queue< LlyrData >* >(*input_queues_init);
+
+        //stores need two input queues -- address and data
+        input_queues_= new std::vector< std::queue< LlyrData >* >;
+        std::queue< LlyrData >* tempQueue = new std::queue< LlyrData >;
+        input_queues_->push_back(tempQueue);
     }
 
     virtual bool doSend()
@@ -138,23 +142,32 @@ public:
         return true;
     }
 
-    virtual void fakeInit()
+    virtual void queueInit()
     {
-         output_->verbose(CALL_INFO, 4, 0, ">> Fake Init(%" PRIu32 "), Op %" PRIu32 " \n",
-                        processor_id_, op_binding_ );
+        output_->verbose(CALL_INFO, 4, 0, ">> Fake Init(%" PRIu32 "), Op %" PRIu32 " \n",
+                         processor_id_, op_binding_ );
 
-        //for now assume that the address queue is on in-0
-        uint64_t addr = (processor_id_ - 1) * (Bit_Length / 8);
-        if( input_queues_->size() > 0 ) {
-            LlyrData temp = LlyrData(addr);
-            output_->verbose(CALL_INFO, 8, 0, "Init(%" PRIu32 ")::%" PRIx64 "::%" PRIu64 "\n", 0, addr, temp.to_ulong());
-            input_queues_->at(0)->push(temp);
+        //TODO Need a more elegant way to initialize these queues
+        if( input_queues_init_.size() > 0 ) {
+            std::queue< LlyrData >* tempQueue(&input_queues_init_);
+            input_queues_->at(0) = tempQueue;
 
-            addr = addr + (Bit_Length / 8);
+        } else {
+            //for now assume that the address queue is on in-0
+            uint64_t addr = (processor_id_ - 1) * (Bit_Length / 8);
+            if( input_queues_->size() > 0 ) {
+                LlyrData temp = LlyrData(addr);
+                output_->verbose(CALL_INFO, 8, 0, "Init(%" PRIu32 ")::%" PRIx64 "::%" PRIu64 "\n", 0, addr, temp.to_ulong());
+                input_queues_->at(0)->push(temp);
+
+                addr = addr + (Bit_Length / 8);
+            }
         }
     }
 
 private:
+    std::queue< LlyrData > input_queues_init_;
+
     bool doStore(uint64_t addr, LlyrData data)
     {
         uint32_t targetPe = processor_id_;

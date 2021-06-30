@@ -177,7 +177,7 @@ public:
     }
 
     //TODO for testing only
-    virtual void fakeInit() {};
+    virtual void queueInit() {};
 
 private:
     LlyrData helperFunction( opType op, LlyrData arg0, LlyrData arg1 )

@@ -174,7 +174,7 @@ public:
     }
 
     //TODO for testing only
-    virtual void fakeInit() {};
+    virtual void queueInit() {};
 
 private:
     //helper to convert from bitset to float

@@ -86,7 +86,10 @@ void SimpleMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNod
         app_vertex_map_->at(currentAppNode).setVisited(1);
         opType tempOp = app_vertex_map_->at(currentAppNode).getValue().optype_;
         if( tempOp == ADDCONST || tempOp == SUBCONST || tempOp == MULCONST || tempOp == DIVCONST ) {
-            int64_t intConst = std::stol(app_vertex_map_->at(currentAppNode).getValue().constant_val_);
+            int64_t intConst = std::stoll(app_vertex_map_->at(currentAppNode).getValue().constant_val_);
+            addNode( tempOp, intConst, newNodeNum, graphOut, llyr_config );
+        } else if( tempOp == LDADDR || tempOp == STADDR ) {
+            int64_t intConst = std::stoll(app_vertex_map_->at(currentAppNode).getValue().constant_val_);
             addNode( tempOp, intConst, newNodeNum, graphOut, llyr_config );
         } else {
             addNode( tempOp, newNodeNum, graphOut, llyr_config );
@@ -188,9 +191,9 @@ void SimpleMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNod
             srcNode = vertex_map_->at(currentNode).getValue();
             dstNode = vertex_map_->at(destinationVertex).getValue();
 
-//             std::cout << "\n";
-//             std::cout << "srcNode " << srcNode->getProcessorId() << "(" << srcNode->getOpBinding() << ")\n";
-//             std::cout << "dstNode " << dstNode->getProcessorId() << "(" << dstNode->getOpBinding() << ")" << std::endl;
+            std::cout << "\n";
+            std::cout << "srcNode " << srcNode->getProcessorId() << "(" << srcNode->getOpBinding() << ")\n";
+            std::cout << "dstNode " << dstNode->getProcessorId() << "(" << dstNode->getOpBinding() << ")" << std::endl;
 
             srcNode->bindOutputQueue(dstNode);
             dstNode->bindInputQueue(srcNode);
@@ -202,8 +205,23 @@ void SimpleMapper::mapGraph(LlyrGraph< opType > hardwareGraph, LlyrGraph< AppNod
             }
         }
 
-        vertex_map_->at(currentNode).getValue()->fakeInit();
+        //FIXME Need to use a fake init on ST for now
+        opType tempOp = vertex_map_->at(currentNode).getValue()->getOpBinding();
+        if( tempOp == ST ) {
+            vertex_map_->at(currentNode).getValue()->queueInit();
+        } else if( tempOp == LDADDR || tempOp == STADDR ) {
+            vertex_map_->at(currentNode).getValue()->queueInit();
+        }
+
         std::cout << std::endl;
+    }
+
+    //FIXME Fake init for now, need to read values from stack
+    //Initialize any L/S PEs at the top of the graph
+    std::vector< Edge* >* rootAdjacencyList = vertex_map_->at(0).getAdjacencyList();
+    for( auto it = rootAdjacencyList->begin(); it != rootAdjacencyList->end(); it++ ) {
+        uint32_t destinationVertex = (*it)->getDestination();
+        vertex_map_->at(destinationVertex).getValue()->queueInit();
     }
 
 }// mapGraph

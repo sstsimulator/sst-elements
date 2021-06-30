@@ -41,7 +41,7 @@ public:
     virtual bool doCompute() { return 0; };
 
     //TODO for testing only
-    virtual void fakeInit() {};
+    virtual void queueInit() {};
 
 };
 

@@ -159,7 +159,7 @@ public:
     }
 
     //TODO for testing only
-    virtual void fakeInit() {};
+    virtual void queueInit() {};
 
 };// IntProcessingElement
 
@@ -173,37 +173,6 @@ public:
         input_queues_= new std::vector< std::queue< LlyrData >* >;
         output_queues_ = new std::vector< std::queue< LlyrData >* >;
     }
-
-    virtual bool doSend()
-    {
-        uint32_t queueId;
-        LlyrData sendVal;
-        ProcessingElement* dstPe;
-
-        for(auto it = output_queue_map_.begin() ; it != output_queue_map_.end(); ++it ) {
-            queueId = it->first;
-            dstPe = it->second;
-
-            if( output_queues_->at(queueId)->size() > 0 ) {
-                output_->verbose(CALL_INFO, 8, 0, ">> Sending...%" PRIu32 "-%" PRIu32 " to %" PRIu32 "\n",
-                                 processor_id_, queueId, dstPe->getProcessorId());
-
-                sendVal = output_queues_->at(queueId)->front();
-                output_queues_->at(queueId)->pop();
-
-                dstPe->pushInputQueue(dstPe->getInputQueueId(this->getProcessorId()), sendVal);
-            }
-        }
-
-        if( output_->getVerboseLevel() >= 10 ) {
-            printInputQueue();
-            printOutputQueue();
-        }
-
-        return true;
-    }
-
-    virtual bool doReceive(LlyrData data) { return 0; };
 
     virtual bool doCompute()
     {
@@ -285,7 +254,7 @@ public:
     }
 
     //TODO for testing only
-    virtual void fakeInit() {};
+    virtual void queueInit() {};
 
 private:
     int64_t int_const_;

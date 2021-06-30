@@ -2154,7 +2154,7 @@ graphOut.addEdge( 348, 408 );
             }
         }
 
-        vertex_map_->at(currentNode).getValue()->fakeInit();
+        vertex_map_->at(currentNode).getValue()->queueInit();
         std::cout << std::endl;
     }
 

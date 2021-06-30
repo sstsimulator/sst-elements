@@ -180,7 +180,7 @@ public:
     virtual bool doCompute() = 0;
 
     //TODO for testing only
-    virtual void fakeInit() = 0;
+    virtual void queueInit() = 0;
 
 protected:
 

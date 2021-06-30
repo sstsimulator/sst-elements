@@ -423,8 +423,8 @@ void LlyrComponent::constructSoftwareGraphApp(std::ifstream& inputStream)
 
                 std::string op = thisLine.substr( posA, posB-posA );
                 opType operation = getOptype(op);
-                output_->verbose(CALL_INFO, 10, 0, "OpString:  %s\t\t%" PRIu32 "\n", op.c_str(), operation);
                 tempNode.optype_ = operation;
+                output_->verbose(CALL_INFO, 10, 0, "OpString:  %s\t\t%" PRIu32 "\n", op.c_str(), tempNode.optype_);
 
                 applicationGraph_.addVertex( vertex, tempNode );
             } else {
@@ -509,10 +509,14 @@ opType LlyrComponent::getOptype(std::string &opString) const
         operation = ANY_MEM;
     else if( opString == "LD" )
         operation = LD;
+    else if( opString == "LDADDR" )
+        operation = LDADDR;
     else if( opString == "LD_ST" )
         operation = LD_ST;
     else if( opString == "ST" )
         operation = ST;
+    else if( opString == "STADDR" )
+        operation = STADDR;
     else if( opString == "ANY_LOGIC" )
         operation = ANY_LOGIC;
     else if( opString == "AND" )
