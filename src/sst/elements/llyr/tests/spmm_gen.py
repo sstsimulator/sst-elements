@@ -99,9 +99,9 @@ for i in range( m ):
 # open the file
 file = open("spmm.in", "w")
 
-for x in result:
-   converted_list = [str(element) for element in x]
-   print(",".join(converted_list))
+#for x in result:
+   #converted_list = [str(element) for element in x]
+   #print(",".join(converted_list))
 
 v_start_addr = 8
 r_start_addr = v_start_addr + (8 * len(non_zeroes))
@@ -182,47 +182,47 @@ for x in range( 0, m ):
 
          file.write( "\n" )
 
-   for key in sp_ld_dict.keys():
-      val = sp_ld_dict[key]
-      print("SP Key", key, 'points to', val)
+   #for key in sp_ld_dict.keys():
+      #val = sp_ld_dict[key]
+      #print("SP Key", key, 'points to', val)
 
-   for key in col_ld_dict.keys():
-      val = col_ld_dict[key]
-      print("COL Key", key, 'points to', val)
+   #for key in col_ld_dict.keys():
+      #val = col_ld_dict[key]
+      #print("COL Key", key, 'points to', val)
 
    for key in partial_product.keys():
       val = partial_product[key]
-      print("PP Key", key, 'points to', val)
+      #print("PP Key", key, 'points to', val)
 
       # match the accumulators
       if( len(val) > 1 ):
          acc_list = []
-         print("Moo! Cows! " + str(len(val)))
+         #print("Moo! Cows! " + str(len(val)))
          while( len(val) > 1 ):
-            print("A " + str(len(val)))
+            #print("A " + str(len(val)))
             adj_list[val.pop()].append(pe_id)
             adj_list[val.pop()].append(pe_id)
             acc_list.append(pe_id)
             file.write(str(pe_id) + pe_string_pre + "ADD" + "]" + "\n")
             pe_id = pe_id + 1
          if( len(val) > 0 ):
-            print("B " + str(len(val)))
+            #print("B " + str(len(val)))
             adj_list[val.pop()].append(pe_id)
             acc_list.append(pe_id)
             file.write(str(pe_id) + pe_string_pre + "ADD" + "]" + "\n")
             pe_id = pe_id + 1
          # adder tree
          if( len(acc_list) > 1 ):
-            print("Boo! Who? " + str(len(acc_list)))
+            #print("Boo! Who? " + str(len(acc_list)))
             while( len(acc_list) > 1 ):
-               print("C " + str(len(acc_list)))
+               #print("C " + str(len(acc_list)))
                # check if the adder has a single input
                num_found = 0
                for key in adj_list.keys():
                   top = adj_list[key]
                   if( acc_list[-1] in top ):
                      num_found = num_found + 1
-                     print("Found " + str(top))
+                     #print("Found " + str(top))
 
                # if the tail has a single input, it's the bottom of the tree because muls are grouped above
                if( num_found == 1 ):
@@ -235,11 +235,13 @@ for x in range( 0, m ):
                   file.write(str(pe_id) + pe_string_pre + "ADD" + "]" + "\n")
                   pe_id = pe_id + 1
 
-               print(str(acc_list.pop()))
-               print(str(acc_list.pop()))
+               #print(str(acc_list.pop()))
+               #print(str(acc_list.pop()))
+               acc_list.pop()
+               acc_list.pop()
 
             if( len(acc_list) > 0 ):
-               print("D " + str(len(acc_list)))
+               #print("D " + str(len(acc_list)))
                adj_list[pe_id - 1].append(pe_id)
                file.write(str(pe_id) + pe_string_pre + "ADD" + "]" + "\n")
                pe_id = pe_id + 1
@@ -252,7 +254,7 @@ for x in range( 0, m ):
             pe_id = pe_id + 1
 
          else:
-            print("Boo! " + str(acc_list[0]))
+            #print("Boo! " + str(acc_list[0]))
 
             # ST final value
             file.write(str(pe_id) + pe_string_pre + "STADDR," + str(store_start_addr) + "]" + "\n")
@@ -260,18 +262,18 @@ for x in range( 0, m ):
             pe_id = pe_id + 1
 
       else:
-         print("Narf! " + str(partial_product[key][0]))
+         #print("Narf! " + str(partial_product[key][0]))
          # ST final value
          adj_list[partial_product[key][0]].append(pe_id)
          file.write(str(pe_id) + pe_string_pre + "STADDR," + str(store_start_addr) + "]" + "\n")
          store_start_addr = store_start_addr + 8
          pe_id = pe_id + 1
 
-   print( "\n" )
+   #print( "\n" )
 
 for key in adj_list.keys():
    val = adj_list[key]
-   print("ADJ Key", key, 'points to', val)
+   #print("ADJ Key", key, 'points to', val)
    for i in val:
       file.write(str(key) + " -- " + str(i) + "\n")
    file.write("\n")
