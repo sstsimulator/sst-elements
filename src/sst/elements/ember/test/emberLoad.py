@@ -74,7 +74,7 @@ motifDefaults = {
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], "", ["topo=", "shape=","hostsPerRtr=",
-                 "simConfig=","platParams=",",debug=","platform=","numNodes=",
+                 "simConfig=","platParams=","debug=","platform=","numNodes=",
                  "numCores=","loadFile=","loadFileVar=","cmdLine=","printStats=","randomPlacement=",
                  "emberVerbose=","netBW=","netPktSize=","netFlitSize=",
                  "rtrArb=","embermotifLog=","rankmapper=", "motifAPI=",
