@@ -161,6 +161,8 @@
 #define MIPS_SPEC_COP_MASK_CMP_LTE 0x3E
 #define MIPS_SPEC_COP_MASK_CMP_EQ 0x32
 
+#define MIPS_INC_DECODE_STAT(stat_name) (stat_name)->addData(1);
+
 namespace SST {
 namespace Vanadis {
 
@@ -179,6 +181,92 @@ public:
                               "Number of cache lines that a cached prior to decoding (these support "
                               "loading from cache prior to decode)" },
                             { "stack_start_address", "Sets the start of the stack and dynamic program segments" })
+
+    SST_ELI_DOCUMENT_STATISTICS(
+				VANADIS_DECODER_ELI_STATISTICS,
+				{ "ins_decode_add", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_addu", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_and", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_dadd", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_daddu", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_ddiv", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_div", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_divu", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_dmult", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_dmultu", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_dsllv", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_dsrav", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_dsrlv", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_dsub", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_dsubu", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_jr", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_jalr", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_mfhi", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_mflo", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_mult", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_multu", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_nor", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_or", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_sllv", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_slt", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_sltu", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_srav", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_srlv", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_sub", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_subu", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_syscall", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_sync", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_xor", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_sll", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_srl", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_sra", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_bltz", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_bgezal", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_bgez", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_lui", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_lb", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_lbu", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_lhu", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_lw", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_lfp32", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_ll", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_lwl", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_lwr", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_sb", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_sc", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_sw", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_sh", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_sfp32", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_swr", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_swl", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_addiu", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_beq", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_bgtz", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_blez", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_bne", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_slti", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_sltiu", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_andi", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_ori", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_j", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_jal", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_xori", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_rdhwr", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_cop1_mtc", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_cop1_mfc", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_cop1_cf", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_cop1_ct", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_cop1_mov", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_cop1_mul", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_cop1_div", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_cop1_sub", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_cop1_cvts", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_cop1_cvtd", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_cop1_cvtw", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_cop1_lt", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_cop1_lte", "Count number of instructions decoded", "ins", 1 },
+     { "ins_decode_cop1_eq", "Count number of instructions decoded", "ins", 1 }
+			       )
 
     VanadisMIPSDecoder(ComponentId_t id, Params& params) : VanadisDecoder(id, params) {
 
@@ -519,6 +607,90 @@ public:
         // Set up the stack pointer
         // Register 29 is MIPS for Stack Pointer
         regFile->setIntReg(sp_phys_reg, start_stack_address);
+
+	stat_decode_add    = registerStatistic<uint64_t>("ins_decode_add",   "1");
+	stat_decode_addu   = registerStatistic<uint64_t>("ins_decode_addu",  "1");
+	stat_decode_and    = registerStatistic<uint64_t>("ins_decode_and",   "1");
+	stat_decode_dadd   = registerStatistic<uint64_t>("ins_decode_dadd",  "1");
+	stat_decode_daddu  = registerStatistic<uint64_t>("ins_decode_daddu", "1");
+	stat_decode_ddiv   = registerStatistic<uint64_t>("ins_decode_ddiv",  "1");
+	stat_decode_div    = registerStatistic<uint64_t>("ins_decode_div",   "1");
+	stat_decode_divu   = registerStatistic<uint64_t>("ins_decode_divu",  "1");
+	stat_decode_dmult  = registerStatistic<uint64_t>("ins_decode_dmult", "1");
+	stat_decode_dmultu = registerStatistic<uint64_t>("ins_decode_dmultu", "1");
+	stat_decode_dsllv  = registerStatistic<uint64_t>("ins_decode_dsllv", "1");
+	stat_decode_dsrav  = registerStatistic<uint64_t>("ins_decode_dsrav", "1");
+	stat_decode_dsrlv  = registerStatistic<uint64_t>("ins_decode_dsrlv", "1");
+	stat_decode_dsub   = registerStatistic<uint64_t>("ins_decode_dsub", "1");
+	stat_decode_dsubu  = registerStatistic<uint64_t>("ins_decode_dsubu", "1");
+	stat_decode_jr     = registerStatistic<uint64_t>("ins_decode_jr", "1");
+	stat_decode_jalr   = registerStatistic<uint64_t>("ins_decode_jalr", "1");
+	stat_decode_mfhi   = registerStatistic<uint64_t>("ins_decode_mfhi", "1");
+	stat_decode_mflo   = registerStatistic<uint64_t>("ins_decode_mflo", "1");
+	stat_decode_mult   = registerStatistic<uint64_t>("ins_decode_mult", "1");
+	stat_decode_multu  = registerStatistic<uint64_t>("ins_decode_multu", "1");
+	stat_decode_nor    = registerStatistic<uint64_t>("ins_decode_nor", "1");
+	stat_decode_or     = registerStatistic<uint64_t>("ins_decode_or", "1");
+	stat_decode_sllv   = registerStatistic<uint64_t>("ins_decode_sllv", "1");
+	stat_decode_slt    = registerStatistic<uint64_t>("ins_decode_slt", "1");
+	stat_decode_sltu   = registerStatistic<uint64_t>("ins_decode_sltu", "1");
+	stat_decode_srav   = registerStatistic<uint64_t>("ins_decode_srav", "1");
+	stat_decode_srlv   = registerStatistic<uint64_t>("ins_decode_srlv", "1");
+	stat_decode_sub    = registerStatistic<uint64_t>("ins_decode_sub", "1");
+	stat_decode_subu   = registerStatistic<uint64_t>("ins_decode_subu", "1");
+	stat_decode_syscall = registerStatistic<uint64_t>("ins_decode_syscall", "1");
+	stat_decode_sync    = registerStatistic<uint64_t>("ins_decode_sync", "1");
+	stat_decode_xor    = registerStatistic<uint64_t>("ins_decode_xor", "1");
+	stat_decode_sll    = registerStatistic<uint64_t>("ins_decode_sll", "1");
+	stat_decode_srl    = registerStatistic<uint64_t>("ins_decode_srl", "1");
+	stat_decode_sra    = registerStatistic<uint64_t>("ins_decode_sra", "1");
+	stat_decode_bltz   = registerStatistic<uint64_t>("ins_decode_bltz", "1");
+	stat_decode_bgezal = registerStatistic<uint64_t>("ins_decode_bgezal", "1");
+	stat_decode_bgez   = registerStatistic<uint64_t>("ins_decode_bgez", "1");
+	stat_decode_lui    = registerStatistic<uint64_t>("ins_decode_lui", "1");
+	stat_decode_lb     = registerStatistic<uint64_t>("ins_decode_lb", "1");
+	stat_decode_lbu    = registerStatistic<uint64_t>("ins_decode_lbu", "1");
+	stat_decode_lhu    = registerStatistic<uint64_t>("ins_decode_lhu", "1");
+	stat_decode_lw     = registerStatistic<uint64_t>("ins_decode_lw", "1");
+	stat_decode_lfp32  = registerStatistic<uint64_t>("ins_decode_lfp32", "1");
+	stat_decode_ll     = registerStatistic<uint64_t>("ins_decode_ll", "1");
+	stat_decode_lwl    = registerStatistic<uint64_t>("ins_decode_lwl", "1");
+	stat_decode_lwr    = registerStatistic<uint64_t>("ins_decode_lwr", "1");
+	stat_decode_sb     = registerStatistic<uint64_t>("ins_decode_sb", "1");
+	stat_decode_sc     = registerStatistic<uint64_t>("ins_decode_sc", "1");
+	stat_decode_sw     = registerStatistic<uint64_t>("ins_decode_sw", "1");
+	stat_decode_sh     = registerStatistic<uint64_t>("ins_decode_sh", "1");
+	stat_decode_sfp32  = registerStatistic<uint64_t>("ins_decode_sfp32", "1");
+	stat_decode_swr    = registerStatistic<uint64_t>("ins_decode_swr", "1");
+	stat_decode_swl    = registerStatistic<uint64_t>("ins_decode_swl", "1");
+	stat_decode_addiu  = registerStatistic<uint64_t>("ins_decode_addiu", "1");
+	stat_decode_beq    = registerStatistic<uint64_t>("ins_decode_beq", "1");
+	stat_decode_bgtz   = registerStatistic<uint64_t>("ins_decode_bgtz", "1");
+	stat_decode_blez   = registerStatistic<uint64_t>("ins_decode_blez", "1");
+	stat_decode_bne    = registerStatistic<uint64_t>("ins_decode_bne", "1");
+	stat_decode_slti   = registerStatistic<uint64_t>("ins_decode_slti", "1");
+	stat_decode_sltiu  = registerStatistic<uint64_t>("ins_decode_sltiu", "1");
+	stat_decode_andi   = registerStatistic<uint64_t>("ins_decode_andi", "1");
+	stat_decode_ori    = registerStatistic<uint64_t>("ins_decode_ori", "1");
+	stat_decode_j      = registerStatistic<uint64_t>("ins_decode_j", "1");
+	stat_decode_jal    = registerStatistic<uint64_t>("ins_decode_jal", "1");
+	stat_decode_xori   = registerStatistic<uint64_t>("ins_decode_xori", "1");
+	stat_decode_rdhwr  = registerStatistic<uint64_t>("ins_decode_rdhwr", "1");
+	stat_decode_cop1_mtc  = registerStatistic<uint64_t>("ins_decode_cop1_mtc", "1");
+	stat_decode_cop1_mfc  = registerStatistic<uint64_t>("ins_decode_cop1_mfc", "1");
+	stat_decode_cop1_cf   = registerStatistic<uint64_t>("ins_decode_cop1_cf", "1");
+	stat_decode_cop1_ct   = registerStatistic<uint64_t>("ins_decode_cop1_ct", "1");
+	stat_decode_cop1_mov  = registerStatistic<uint64_t>("ins_decode_cop1_mov", "1");
+	stat_decode_cop1_mul  = registerStatistic<uint64_t>("ins_decode_cop1_mul", "1");
+	stat_decode_cop1_div  = registerStatistic<uint64_t>("ins_decode_cop1_div", "1");
+	stat_decode_cop1_sub  = registerStatistic<uint64_t>("ins_decode_cop1_sub", "1");
+	stat_decode_cop1_cvts = registerStatistic<uint64_t>("ins_decode_cop1_cvts", "1");
+	stat_decode_cop1_cvtd = registerStatistic<uint64_t>("ins_decode_cop1_cvtd", "1");
+	stat_decode_cop1_cvtw = registerStatistic<uint64_t>("ins_decode_cop1_cvtw", "1");
+	stat_decode_cop1_lt   = registerStatistic<uint64_t>("ins_decode_cop1_lt", "1");
+	stat_decode_cop1_lte  = registerStatistic<uint64_t>("ins_decode_cop1_lte", "1");
+	stat_decode_cop1_eq   = registerStatistic<uint64_t>("ins_decode_cop1_eq", "1");
+
     }
 
     virtual void tick(SST::Output* output, uint64_t cycle) {
@@ -859,17 +1031,20 @@ protected:
                             bundle->addInstruction(new VanadisAddInstruction(ins_addr, hw_thr, options, rd, rs, rt,
                                                                              true, VANADIS_FORMAT_INT32));
                             insertDecodeFault = false;
+			    MIPS_INC_DECODE_STAT(stat_decode_add);
                         } break;
 
                         case MIPS_SPEC_OP_MASK_ADDU: {
                             bundle->addInstruction(new VanadisAddInstruction(ins_addr, hw_thr, options, rd, rs, rt,
                                                                              true, VANADIS_FORMAT_INT32));
                             insertDecodeFault = false;
+			    MIPS_INC_DECODE_STAT(stat_decode_addu);
                         } break;
 
                         case MIPS_SPEC_OP_MASK_AND: {
                             bundle->addInstruction(new VanadisAndInstruction(ins_addr, hw_thr, options, rd, rs, rt));
                             insertDecodeFault = false;
+			    MIPS_INC_DECODE_STAT(stat_decode_and);
                         } break;
 
                             // _BREAK NEEDS TO GO HERE?
@@ -891,6 +1066,7 @@ protected:
                                 new VanadisDivideRemainderInstruction(ins_addr, hw_thr, options, MIPS_REG_LO,
                                                                       MIPS_REG_HI, rs, rt, true, VANADIS_FORMAT_INT32));
                             insertDecodeFault = false;
+			    MIPS_INC_DECODE_STAT(stat_decode_div);
                         } break;
 
                         case MIPS_SPEC_OP_MASK_DIVU: {
@@ -898,6 +1074,7 @@ protected:
                                 ins_addr, hw_thr, options, MIPS_REG_LO, MIPS_REG_HI, rs, rt, false,
                                 VANADIS_FORMAT_INT32));
                             insertDecodeFault = false;
+			    MIPS_INC_DECODE_STAT(stat_decode_divu);
                         } break;
 
                         case MIPS_SPEC_OP_MASK_DMULT:
@@ -926,12 +1103,14 @@ protected:
                             bundle->addInstruction(new VanadisJumpRegInstruction(ins_addr, hw_thr, options, rs,
                                                                                  VANADIS_SINGLE_DELAY_SLOT));
                             insertDecodeFault = false;
+			    MIPS_INC_DECODE_STAT(stat_decode_jr);
                         } break;
 
                         case MIPS_SPEC_OP_MASK_JALR: {
                             bundle->addInstruction(new VanadisJumpRegLinkInstruction(ins_addr, hw_thr, options, rd, rs,
                                                                                      VANADIS_SINGLE_DELAY_SLOT));
                             insertDecodeFault = false;
+			    MIPS_INC_DECODE_STAT(stat_decode_jalr);
                         } break;
 
                         case MIPS_SPEC_OP_MASK_MFHI: {
@@ -939,6 +1118,7 @@ protected:
                             bundle->addInstruction(new VanadisAddImmInstruction(ins_addr, hw_thr, options, rd,
                                                                                 MIPS_REG_HI, 0, VANADIS_FORMAT_INT32));
                             insertDecodeFault = false;
+			    MIPS_INC_DECODE_STAT(stat_decode_mfhi);
                         } break;
 
                         case MIPS_SPEC_OP_MASK_MFLO: {
@@ -946,6 +1126,7 @@ protected:
                             bundle->addInstruction(new VanadisAddImmInstruction(ins_addr, hw_thr, options, rd,
                                                                                 MIPS_REG_LO, 0, VANADIS_FORMAT_INT32));
                             insertDecodeFault = false;
+			    MIPS_INC_DECODE_STAT(stat_decode_mflo);
                         } break;
 
                         case MIPS_SPEC_OP_MASK_MOVN:
@@ -965,6 +1146,7 @@ protected:
                                                                                        MIPS_REG_LO, MIPS_REG_HI, rs, rt,
                                                                                        true, VANADIS_FORMAT_INT32));
                             insertDecodeFault = false;
+			    MIPS_INC_DECODE_STAT(stat_decode_mult);
                         } break;
 
                         case MIPS_SPEC_OP_MASK_MULTU: {
@@ -972,74 +1154,87 @@ protected:
                                                                                        MIPS_REG_LO, MIPS_REG_HI, rs, rt,
                                                                                        false, VANADIS_FORMAT_INT32));
                             insertDecodeFault = false;
+			    MIPS_INC_DECODE_STAT(stat_decode_multu);;
                         } break;
 
                         case MIPS_SPEC_OP_MASK_NOR: {
                             bundle->addInstruction(new VanadisNorInstruction(ins_addr, hw_thr, options, rd, rs, rt));
                             insertDecodeFault = false;
+			    MIPS_INC_DECODE_STAT(stat_decode_nor);
                         } break;
 
                         case MIPS_SPEC_OP_MASK_OR: {
                             bundle->addInstruction(new VanadisOrInstruction(ins_addr, hw_thr, options, rd, rs, rt));
                             insertDecodeFault = false;
+			    MIPS_INC_DECODE_STAT(stat_decode_or);
                         } break;
 
                         case MIPS_SPEC_OP_MASK_SLLV: {
                             bundle->addInstruction(new VanadisShiftLeftLogicalInstruction(
                                 ins_addr, hw_thr, options, rd, rt, rs, VANADIS_FORMAT_INT32));
                             insertDecodeFault = false;
+			    MIPS_INC_DECODE_STAT(stat_decode_sllv);
                         } break;
 
                         case MIPS_SPEC_OP_MASK_SLT: {
                             bundle->addInstruction(new VanadisSetRegCompareInstruction(
                                 ins_addr, hw_thr, options, rd, rs, rt, true, REG_COMPARE_LT, VANADIS_FORMAT_INT32));
                             insertDecodeFault = false;
+			    MIPS_INC_DECODE_STAT(stat_decode_slt);
                         } break;
 
                         case MIPS_SPEC_OP_MASK_SLTU: {
                             bundle->addInstruction(new VanadisSetRegCompareInstruction(
                                 ins_addr, hw_thr, options, rd, rs, rt, false, REG_COMPARE_LT, VANADIS_FORMAT_INT32));
                             insertDecodeFault = false;
+			    MIPS_INC_DECODE_STAT(stat_decode_sltu);
                         } break;
 
                         case MIPS_SPEC_OP_MASK_SRAV: {
                             bundle->addInstruction(new VanadisShiftRightArithmeticInstruction(
                                 ins_addr, hw_thr, options, rd, rt, rs, VANADIS_FORMAT_INT32));
                             insertDecodeFault = false;
+			    MIPS_INC_DECODE_STAT(stat_decode_srav);
                         } break;
 
                         case MIPS_SPEC_OP_MASK_SRLV: {
                             bundle->addInstruction(new VanadisShiftRightLogicalInstruction(
                                 ins_addr, hw_thr, options, rd, rt, rs, VANADIS_FORMAT_INT32));
                             insertDecodeFault = false;
+			    MIPS_INC_DECODE_STAT(stat_decode_srlv);
                         } break;
 
                         case MIPS_SPEC_OP_MASK_SUB: {
                             bundle->addInstruction(new VanadisSubInstruction(ins_addr, hw_thr, options, rd, rs, rt,
                                                                              true, VANADIS_FORMAT_INT32));
                             insertDecodeFault = false;
+			    MIPS_INC_DECODE_STAT(stat_decode_sub);
                         } break;
 
                         case MIPS_SPEC_OP_MASK_SUBU: {
                             bundle->addInstruction(new VanadisSubInstruction(ins_addr, hw_thr, options, rd, rs, rt,
                                                                              false, VANADIS_FORMAT_INT32));
                             insertDecodeFault = false;
+			    MIPS_INC_DECODE_STAT(stat_decode_subu);
                         } break;
 
                         case MIPS_SPEC_OP_MASK_SYSCALL: {
                             bundle->addInstruction(new VanadisSysCallInstruction(ins_addr, hw_thr, options));
                             insertDecodeFault = false;
+			    MIPS_INC_DECODE_STAT(stat_decode_syscall);
                         } break;
 
                         case MIPS_SPEC_OP_MASK_SYNC: {
                             bundle->addInstruction(
                                 new VanadisFenceInstruction(ins_addr, hw_thr, options, VANADIS_LOAD_STORE_FENCE));
                             insertDecodeFault = false;
+			    MIPS_INC_DECODE_STAT(stat_decode_sync);
                         } break;
 
                         case MIPS_SPEC_OP_MASK_XOR:
                             bundle->addInstruction(new VanadisXorInstruction(ins_addr, hw_thr, options, rd, rs, rt));
                             insertDecodeFault = false;
+			    MIPS_INC_DECODE_STAT(stat_decode_xor);
                             break;
                         }
                     }
@@ -1055,6 +1250,7 @@ protected:
                         bundle->addInstruction(new VanadisShiftLeftLogicalImmInstruction(
                             ins_addr, hw_thr, options, rd, rt, shf_amnt, VANADIS_FORMAT_INT32));
                         insertDecodeFault = false;
+                        MIPS_INC_DECODE_STAT(stat_decode_sll);
                     } break;
 
                     case MIPS_SPEC_OP_MASK_SRL: {
@@ -1067,6 +1263,7 @@ protected:
                         bundle->addInstruction(new VanadisShiftRightLogicalImmInstruction(
                             ins_addr, hw_thr, options, rd, rt, shf_amnt, VANADIS_FORMAT_INT32));
                         insertDecodeFault = false;
+                        MIPS_INC_DECODE_STAT(stat_decode_srl);
                     } break;
 
                     case MIPS_SPEC_OP_MASK_SRA: {
@@ -1075,6 +1272,7 @@ protected:
                         bundle->addInstruction(new VanadisShiftRightArithmeticImmInstruction(
                             ins_addr, hw_thr, options, rd, rt, shf_amnt, VANADIS_FORMAT_INT32));
                         insertDecodeFault = false;
+                        MIPS_INC_DECODE_STAT(stat_decode_sra);
                     } break;
                     }
                 }
@@ -1095,18 +1293,21 @@ protected:
                         ins_addr, hw_thr, options, rs, 0, offset_value_64, VANADIS_SINGLE_DELAY_SLOT, REG_COMPARE_LT,
                         VANADIS_FORMAT_INT32));
                     insertDecodeFault = false;
+		    MIPS_INC_DECODE_STAT(stat_decode_bltz);
                 } break;
                 case MIPS_SPEC_OP_MASK_BGEZAL: {
                     bundle->addInstruction(new VanadisBranchRegCompareImmLinkInstruction(
                         ins_addr, hw_thr, options, rs, 0, offset_value_64, (uint16_t)31, VANADIS_SINGLE_DELAY_SLOT,
                         REG_COMPARE_GTE, VANADIS_FORMAT_INT32));
                     insertDecodeFault = false;
+		    MIPS_INC_DECODE_STAT(stat_decode_bgezal);
                 } break;
                 case MIPS_SPEC_OP_MASK_BGEZ: {
                     bundle->addInstruction(new VanadisBranchRegCompareImmInstruction(
                         ins_addr, hw_thr, options, rs, 0, offset_value_64, VANADIS_SINGLE_DELAY_SLOT, REG_COMPARE_GTE,
                         VANADIS_FORMAT_INT32));
                     insertDecodeFault = false;
+		    MIPS_INC_DECODE_STAT(stat_decode_bgez);
                 } break;
                 }
 
@@ -1121,6 +1322,7 @@ protected:
                 bundle->addInstruction(new VanadisSetRegisterInstruction(ins_addr, hw_thr, options, rt, imm_value_64,
                                                                          VANADIS_FORMAT_INT32));
                 insertDecodeFault = false;
+                MIPS_INC_DECODE_STAT(stat_decode_lui);
             } break;
 
             case MIPS_SPEC_OP_MASK_LB: {
@@ -1149,6 +1351,7 @@ protected:
                 bundle->addInstruction(new VanadisLoadInstruction(ins_addr, hw_thr, options, rs, imm_value_64, rt, 1,
                                                                   false, MEM_TRANSACTION_NONE, LOAD_INT_REGISTER));
                 insertDecodeFault = false;
+                MIPS_INC_DECODE_STAT(stat_decode_lbu);
             } break;
 
             case MIPS_SPEC_OP_MASK_LW: {
@@ -1160,6 +1363,7 @@ protected:
                 bundle->addInstruction(new VanadisLoadInstruction(ins_addr, hw_thr, options, rs, imm_value_64, rt, 4,
                                                                   true, MEM_TRANSACTION_NONE, LOAD_INT_REGISTER));
                 insertDecodeFault = false;
+                MIPS_INC_DECODE_STAT(stat_decode_lw);
             } break;
 
             case MIPS_SPEC_OP_MASK_LFP32: {
@@ -1171,6 +1375,7 @@ protected:
                 bundle->addInstruction(new VanadisLoadInstruction(ins_addr, hw_thr, options, rs, imm_value_64, rt, 4,
                                                                   true, MEM_TRANSACTION_NONE, LOAD_FP_REGISTER));
                 insertDecodeFault = false;
+                MIPS_INC_DECODE_STAT(stat_decode_lfp32);
             } break;
 
             case MIPS_SPEC_OP_MASK_LL: {
@@ -1182,6 +1387,7 @@ protected:
                 bundle->addInstruction(new VanadisLoadInstruction(ins_addr, hw_thr, options, rs, imm_value_64, rt, 4,
                                                                   true, MEM_TRANSACTION_LLSC_LOAD, LOAD_INT_REGISTER));
                 insertDecodeFault = false;
+                MIPS_INC_DECODE_STAT(stat_decode_ll);
             } break;
 
             case MIPS_SPEC_OP_MASK_LWL: {
@@ -1194,6 +1400,7 @@ protected:
                 bundle->addInstruction(new VanadisPartialLoadInstruction(ins_addr, hw_thr, options, rs, imm_value_64,
                                                                          rt, 4, true, false, LOAD_INT_REGISTER));
                 insertDecodeFault = false;
+                MIPS_INC_DECODE_STAT(stat_decode_lwl);
             } break;
 
             case MIPS_SPEC_OP_MASK_LWR: {
@@ -1206,6 +1413,7 @@ protected:
                 bundle->addInstruction(new VanadisPartialLoadInstruction(ins_addr, hw_thr, options, rs, imm_value_64,
                                                                          rt, 4, true, true, LOAD_INT_REGISTER));
                 insertDecodeFault = false;
+                MIPS_INC_DECODE_STAT(stat_decode_lwr);
             } break;
 
             case MIPS_SPEC_OP_MASK_LHU: {
@@ -1217,6 +1425,7 @@ protected:
                 bundle->addInstruction(new VanadisLoadInstruction(ins_addr, hw_thr, options, rs, imm_value_64, rt, 2,
                                                                   false, MEM_TRANSACTION_NONE, LOAD_INT_REGISTER));
                 insertDecodeFault = false;
+                MIPS_INC_DECODE_STAT(stat_decode_lhu);
             } break;
 
             case MIPS_SPEC_OP_MASK_SB: {
@@ -1228,6 +1437,7 @@ protected:
                 bundle->addInstruction(new VanadisStoreInstruction(ins_addr, hw_thr, options, rs, imm_value_64, rt, 1,
                                                                    MEM_TRANSACTION_NONE, STORE_INT_REGISTER));
                 insertDecodeFault = false;
+                MIPS_INC_DECODE_STAT(stat_decode_sb);
             } break;
 
             case MIPS_SPEC_OP_MASK_SC: {
@@ -1239,6 +1449,7 @@ protected:
                 bundle->addInstruction(new VanadisStoreInstruction(ins_addr, hw_thr, options, rs, imm_value_64, rt, 4,
                                                                    MEM_TRANSACTION_LLSC_STORE, STORE_INT_REGISTER));
                 insertDecodeFault = false;
+                MIPS_INC_DECODE_STAT(stat_decode_sc);
             } break;
 
             case MIPS_SPEC_OP_MASK_SW: {
@@ -1250,6 +1461,7 @@ protected:
                 bundle->addInstruction(new VanadisStoreInstruction(ins_addr, hw_thr, options, rs, imm_value_64, rt, 4,
                                                                    MEM_TRANSACTION_NONE, STORE_INT_REGISTER));
                 insertDecodeFault = false;
+                MIPS_INC_DECODE_STAT(stat_decode_sw);
             } break;
 
             case MIPS_SPEC_OP_MASK_SH: {
@@ -1261,6 +1473,7 @@ protected:
                 bundle->addInstruction(new VanadisStoreInstruction(ins_addr, hw_thr, options, rs, imm_value_64, rt, 2,
                                                                    MEM_TRANSACTION_NONE, STORE_INT_REGISTER));
                 insertDecodeFault = false;
+                MIPS_INC_DECODE_STAT(stat_decode_sh);
             } break;
 
             case MIPS_SPEC_OP_MASK_SFP32: {
@@ -1272,6 +1485,7 @@ protected:
                 bundle->addInstruction(new VanadisStoreInstruction(ins_addr, hw_thr, options, rs, imm_value_64, rt, 4,
                                                                    MEM_TRANSACTION_NONE, STORE_FP_REGISTER));
                 insertDecodeFault = false;
+                MIPS_INC_DECODE_STAT(stat_decode_sfp32);
             } break;
 
             case MIPS_SPEC_OP_MASK_SWL: {
@@ -1283,6 +1497,7 @@ protected:
                 bundle->addInstruction(new VanadisPartialStoreInstruction(ins_addr, hw_thr, options, rs, imm_value_64,
                                                                           rt, 4, true, STORE_INT_REGISTER));
                 insertDecodeFault = false;
+                MIPS_INC_DECODE_STAT(stat_decode_swl);
             } break;
 
             case MIPS_SPEC_OP_MASK_SWR: {
@@ -1294,6 +1509,7 @@ protected:
                 bundle->addInstruction(new VanadisPartialStoreInstruction(ins_addr, hw_thr, options, rs, imm_value_64,
                                                                           rt, 4, false, STORE_INT_REGISTER));
                 insertDecodeFault = false;
+                MIPS_INC_DECODE_STAT(stat_decode_swr);
             } break;
 
             case MIPS_SPEC_OP_MASK_ADDIU: {
@@ -1304,6 +1520,7 @@ protected:
                 bundle->addInstruction(new VanadisAddImmInstruction(ins_addr, hw_thr, options, rt, rs, imm_value_64,
                                                                     VANADIS_FORMAT_INT32));
                 insertDecodeFault = false;
+                MIPS_INC_DECODE_STAT(stat_decode_addiu);
             } break;
 
             case MIPS_SPEC_OP_MASK_BEQ: {
@@ -1317,6 +1534,7 @@ protected:
                                                                               imm_value_64, VANADIS_SINGLE_DELAY_SLOT,
                                                                               REG_COMPARE_EQ, VANADIS_FORMAT_INT32));
                 insertDecodeFault = false;
+                MIPS_INC_DECODE_STAT(stat_decode_beq);
             } break;
 
             case MIPS_SPEC_OP_MASK_BGTZ: {
@@ -1329,6 +1547,7 @@ protected:
                     ins_addr, hw_thr, options, rs, 0, imm_value_64, VANADIS_SINGLE_DELAY_SLOT, REG_COMPARE_GT,
                     VANADIS_FORMAT_INT32));
                 insertDecodeFault = false;
+                MIPS_INC_DECODE_STAT(stat_decode_bgtz);
             } break;
 
             case MIPS_SPEC_OP_MASK_BLEZ: {
@@ -1341,6 +1560,7 @@ protected:
                     ins_addr, hw_thr, options, rs, 0, imm_value_64, VANADIS_SINGLE_DELAY_SLOT, REG_COMPARE_LTE,
                     VANADIS_FORMAT_INT32));
                 insertDecodeFault = false;
+                MIPS_INC_DECODE_STAT(stat_decode_blez);
             } break;
 
             case MIPS_SPEC_OP_MASK_BNE: {
@@ -1354,6 +1574,7 @@ protected:
                                                                               imm_value_64, VANADIS_SINGLE_DELAY_SLOT,
                                                                               REG_COMPARE_NEQ, VANADIS_FORMAT_INT32));
                 insertDecodeFault = false;
+                MIPS_INC_DECODE_STAT(stat_decode_bne);
             } break;
 
             case MIPS_SPEC_OP_MASK_SLTI: {
@@ -1366,6 +1587,7 @@ protected:
                 bundle->addInstruction(new VanadisSetRegCompareImmInstruction(
                     ins_addr, hw_thr, options, rt, rs, imm_value_64, true, REG_COMPARE_LT, VANADIS_FORMAT_INT32));
                 insertDecodeFault = false;
+                MIPS_INC_DECODE_STAT(stat_decode_slti);
             } break;
 
             case MIPS_SPEC_OP_MASK_SLTIU: {
@@ -1378,6 +1600,7 @@ protected:
                 bundle->addInstruction(new VanadisSetRegCompareImmInstruction(
                     ins_addr, hw_thr, options, rt, rs, imm_value_64, false, REG_COMPARE_LT, VANADIS_FORMAT_INT32));
                 insertDecodeFault = false;
+                MIPS_INC_DECODE_STAT(stat_decode_sltiu);
             } break;
 
             case MIPS_SPEC_OP_MASK_ANDI: {
@@ -1390,6 +1613,7 @@ protected:
                 //                                        rt, rs, imm_value_64 );
                 bundle->addInstruction(new VanadisAndImmInstruction(ins_addr, hw_thr, options, rt, rs, imm_value_64));
                 insertDecodeFault = false;
+                MIPS_INC_DECODE_STAT(stat_decode_andi);
             } break;
 
             case MIPS_SPEC_OP_MASK_ORI: {
@@ -1400,6 +1624,7 @@ protected:
                 //                                        rt, rs, imm_value_64 );
                 bundle->addInstruction(new VanadisOrImmInstruction(ins_addr, hw_thr, options, rt, rs, imm_value_64));
                 insertDecodeFault = false;
+                MIPS_INC_DECODE_STAT(stat_decode_ori);
             } break;
 
             case MIPS_SPEC_OP_MASK_J: {
@@ -1417,6 +1642,7 @@ protected:
                 bundle->addInstruction(
                     new VanadisJumpInstruction(ins_addr, hw_thr, options, jump_to, VANADIS_SINGLE_DELAY_SLOT));
                 insertDecodeFault = false;
+                MIPS_INC_DECODE_STAT(stat_decode_j);
             } break;
             case MIPS_SPEC_OP_MASK_JAL: {
                 const uint32_t j_addr_index = (next_ins & MIPS_J_ADDR_MASK) << 2;
@@ -1432,6 +1658,7 @@ protected:
                 bundle->addInstruction(
                     new VanadisJumpLinkInstruction(ins_addr, hw_thr, options, 31, jump_to, VANADIS_SINGLE_DELAY_SLOT));
                 insertDecodeFault = false;
+                MIPS_INC_DECODE_STAT(stat_decode_jal);
             } break;
 
             case MIPS_SPEC_OP_MASK_XORI: {
@@ -1439,6 +1666,7 @@ protected:
 
                 bundle->addInstruction(new VanadisXorImmInstruction(ins_addr, hw_thr, options, rt, rs, xor_mask));
                 insertDecodeFault = false;
+                MIPS_INC_DECODE_STAT(stat_decode_xori);
             }
 
             case MIPS_SPEC_OP_SPECIAL3: {
@@ -1599,6 +1827,8 @@ protected:
                             insertDecodeFault = false;
                         } break;
                         }
+
+                        MIPS_INC_DECODE_STAT(stat_decode_cop1_mov);
                     } break;
 
                     case MIPS_SPEC_COP_MASK_MUL: {
@@ -1632,6 +1862,8 @@ protected:
                             // 16, 0, "[decoder] ---> convert function failed because of
                             // input-format error (fmt: %" PRIu16 ")\n", fr);
                         }
+
+                        MIPS_INC_DECODE_STAT(stat_decode_cop1_mul);
                     } break;
 
                     case MIPS_SPEC_COP_MASK_DIV: {
@@ -1665,6 +1897,8 @@ protected:
                             // 16, 0, "[decoder] ---> convert function failed because of
                             // input-format error (fmt: %" PRIu16 ")\n", fr);
                         }
+
+                        MIPS_INC_DECODE_STAT(stat_decode_cop1_div);
                     } break;
 
                     case MIPS_SPEC_COP_MASK_SUB: {
@@ -1698,6 +1932,8 @@ protected:
                             // 16, 0, "[decoder] ---> convert function failed because of
                             // input-format error (fmt: %" PRIu16 ")\n", fr);
                         }
+
+                        MIPS_INC_DECODE_STAT(stat_decode_cop1_sub);
                     } break;
 
                     case MIPS_SPEC_COP_MASK_CVTS: {
@@ -1731,9 +1967,9 @@ protected:
                             // 16, 0, "[decoder] ---> convert function failed because of
                             // input-format error (fmt: %" PRIu16 ")\n", fr);
                         }
-                    }
 
-                    break;
+                        MIPS_INC_DECODE_STAT(stat_decode_cop1_cvts);
+                    } break;
 
                     case MIPS_SPEC_COP_MASK_CVTD: {
                         VanadisRegisterFormat input_format = VANADIS_FORMAT_FP64;
@@ -1766,6 +2002,8 @@ protected:
                             // 16, 0, "[decoder] ---> convert function failed because of
                             // input-format error (fmt: %" PRIu16 ")\n", fr);
                         }
+
+                        MIPS_INC_DECODE_STAT(stat_decode_cop1_cvtd);
                     }
 
                     break;
@@ -1801,6 +2039,8 @@ protected:
                             // 16, 0, "[decoder] ---> convert function failed because of
                             // input-format error (fmt: %" PRIu16 ")\n", fr);
                         }
+
+                        MIPS_INC_DECODE_STAT(stat_decode_cop1_cvtw);
                     }
 
                     break;
@@ -1835,12 +2075,15 @@ protected:
                         switch (next_ins & 0xF) {
                         case 0x2:
                             compare_type = REG_COMPARE_EQ;
+                            MIPS_INC_DECODE_STAT(stat_decode_cop1_eq);
                             break;
                         case 0xC:
                             compare_type = REG_COMPARE_LT;
+                            MIPS_INC_DECODE_STAT(stat_decode_cop1_lt);
                             break;
                         case 0xE:
                             compare_type = REG_COMPARE_LTE;
+                            MIPS_INC_DECODE_STAT(stat_decode_cop1_lte);
                             break;
                         default:
                             compare_fault = true;
@@ -1892,6 +2135,90 @@ protected:
     uint16_t icache_max_bytes_per_cycle;
     uint16_t max_decodes_per_cycle;
     uint16_t decode_buffer_max_entries;
+
+    Statistic<uint64_t>* stat_decode_add;
+    Statistic<uint64_t>* stat_decode_addu;
+    Statistic<uint64_t>* stat_decode_and;
+    Statistic<uint64_t>* stat_decode_dadd;
+    Statistic<uint64_t>* stat_decode_daddu;
+    Statistic<uint64_t>* stat_decode_ddiv;
+    Statistic<uint64_t>* stat_decode_div;
+    Statistic<uint64_t>* stat_decode_divu;
+    Statistic<uint64_t>* stat_decode_dmult;
+    Statistic<uint64_t>* stat_decode_dmultu;
+    Statistic<uint64_t>* stat_decode_dsllv;
+    Statistic<uint64_t>* stat_decode_dsrav;
+    Statistic<uint64_t>* stat_decode_dsrlv;
+    Statistic<uint64_t>* stat_decode_dsub;
+    Statistic<uint64_t>* stat_decode_dsubu;
+    Statistic<uint64_t>* stat_decode_jr;
+    Statistic<uint64_t>* stat_decode_jalr;
+    Statistic<uint64_t>* stat_decode_mfhi;
+    Statistic<uint64_t>* stat_decode_mflo;
+    Statistic<uint64_t>* stat_decode_mult;
+    Statistic<uint64_t>* stat_decode_multu;
+    Statistic<uint64_t>* stat_decode_nor;
+    Statistic<uint64_t>* stat_decode_or;
+    Statistic<uint64_t>* stat_decode_sllv;
+    Statistic<uint64_t>* stat_decode_slt;
+    Statistic<uint64_t>* stat_decode_sltu;
+    Statistic<uint64_t>* stat_decode_srav;
+    Statistic<uint64_t>* stat_decode_srlv;
+    Statistic<uint64_t>* stat_decode_sub;
+    Statistic<uint64_t>* stat_decode_subu;
+    Statistic<uint64_t>* stat_decode_syscall;
+    Statistic<uint64_t>* stat_decode_sync;
+    Statistic<uint64_t>* stat_decode_xor;
+    Statistic<uint64_t>* stat_decode_sll;
+    Statistic<uint64_t>* stat_decode_srl;
+    Statistic<uint64_t>* stat_decode_sra;
+    Statistic<uint64_t>* stat_decode_bltz;
+    Statistic<uint64_t>* stat_decode_bgezal;
+    Statistic<uint64_t>* stat_decode_bgez;
+    Statistic<uint64_t>* stat_decode_lui;
+    Statistic<uint64_t>* stat_decode_lb;
+    Statistic<uint64_t>* stat_decode_lbu;
+    Statistic<uint64_t>* stat_decode_lhu;
+    Statistic<uint64_t>* stat_decode_lw;
+    Statistic<uint64_t>* stat_decode_lfp32;
+    Statistic<uint64_t>* stat_decode_ll;
+    Statistic<uint64_t>* stat_decode_lwl;
+    Statistic<uint64_t>* stat_decode_lwr;
+    Statistic<uint64_t>* stat_decode_sb;
+    Statistic<uint64_t>* stat_decode_sc;
+    Statistic<uint64_t>* stat_decode_sw;
+    Statistic<uint64_t>* stat_decode_sh;
+    Statistic<uint64_t>* stat_decode_sfp32;
+    Statistic<uint64_t>* stat_decode_swr;
+    Statistic<uint64_t>* stat_decode_swl;
+    Statistic<uint64_t>* stat_decode_addiu;
+    Statistic<uint64_t>* stat_decode_beq;
+    Statistic<uint64_t>* stat_decode_bgtz;
+    Statistic<uint64_t>* stat_decode_blez;
+    Statistic<uint64_t>* stat_decode_bne;
+    Statistic<uint64_t>* stat_decode_slti;
+    Statistic<uint64_t>* stat_decode_sltiu;
+    Statistic<uint64_t>* stat_decode_andi;
+    Statistic<uint64_t>* stat_decode_ori;
+    Statistic<uint64_t>* stat_decode_j;
+    Statistic<uint64_t>* stat_decode_jal;
+    Statistic<uint64_t>* stat_decode_xori;
+    Statistic<uint64_t>* stat_decode_rdhwr;
+    Statistic<uint64_t>* stat_decode_cop1_mtc;
+    Statistic<uint64_t>* stat_decode_cop1_mfc;
+    Statistic<uint64_t>* stat_decode_cop1_cf;
+    Statistic<uint64_t>* stat_decode_cop1_ct;
+    Statistic<uint64_t>* stat_decode_cop1_mov;
+    Statistic<uint64_t>* stat_decode_cop1_mul;
+    Statistic<uint64_t>* stat_decode_cop1_div;
+    Statistic<uint64_t>* stat_decode_cop1_sub;
+    Statistic<uint64_t>* stat_decode_cop1_cvts;
+    Statistic<uint64_t>* stat_decode_cop1_cvtd;
+    Statistic<uint64_t>* stat_decode_cop1_cvtw;
+    Statistic<uint64_t>* stat_decode_cop1_lt;
+    Statistic<uint64_t>* stat_decode_cop1_lte;
+    Statistic<uint64_t>* stat_decode_cop1_eq;
+
 };
 
 } // namespace Vanadis
