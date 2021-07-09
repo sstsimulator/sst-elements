@@ -52,7 +52,7 @@ EXTRA_DIST = \
 	sirius/tests/refFiles/test_Sirius_allred_4x4.out \
 	sirius/tests/refFiles/test_Sirius_allred_64.out \
 	sirius/tests/refFiles/test_Sirius_allred_8x8.out \
-	sirius/tests/refFiles/test_Sirius_allred_8x8x2.out \	
+	sirius/tests/refFiles/test_Sirius_allred_8x8x2.out \
 	test/testsuite_default_SiriusZodiacTrace.py
 
 libzodiac_la_LDFLAGS = -module -avoid-version
