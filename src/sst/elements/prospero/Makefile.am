@@ -27,6 +27,14 @@ EXTRA_DIST = \
         tests/array/trace-common.py \
         tests/array/array.c \
         tests/array/Makefile \
+        tests/refFiles/test_prospero_with_dramsim.out \
+        tests/refFiles/test_prospero_with_dramsim_binary.out \
+        tests/refFiles/test_prospero_with_dramsim_compressed.out \
+        tests/refFiles/test_prospero_with_dramsim_text.out \
+        tests/refFiles/test_prospero_wo_dramsim.out \
+        tests/refFiles/test_prospero_wo_dramsim_binary.out \
+        tests/refFiles/test_prospero_wo_dramsim_compressed.out \
+        tests/refFiles/test_prospero_wo_dramsim_text.out \
         tests/testsuite_default_prospero.py \
         tracetool/Makefile \
         tracetool/Makefile.osx \
