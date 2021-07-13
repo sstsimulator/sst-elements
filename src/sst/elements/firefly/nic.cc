@@ -454,7 +454,7 @@ void Nic::handleVnicEvent2( Event* ev, int id )
 
 void Nic::dmaSend( NicCmdEvent *e, int vNicNum )
 {
-    std::function<void(void*)> callback = std::bind( &Nic::notifySendPioDone, this, vNicNum, _1 );
+    std::function<void(void*)> callback = std::bind( &Nic::notifySendDmaDone, this, vNicNum, _1 );
 
     CmdSendEntry* entry = new CmdSendEntry( vNicNum, e, callback );
 
