@@ -2,14 +2,13 @@
 import sst
 from mhlib import componentlist
 
-DEBUG_L1 = 1
-DEBUG_MEM = 1
-DEBUG_CORE = 1
-DEBUG_DIR = 1
-DEBUG_NIC = 1
+DEBUG_L1 = 0
+DEBUG_MEM = 0
+DEBUG_CORE = 0
+DEBUG_DIR = 0
 DEBUG_LEVEL = 10
 
-debug_params = { "debug" : 1, "debug_level" : 10 }
+debug_params = { "debug" : 0, "debug_level" : 10 }
 
 # On network: (Core, L1), MMIO device, (dir, memory)
 # Logical communication: Core->L1->dir->memory
@@ -66,9 +65,11 @@ l1_nic.addParams({ "group" : l1_group,
 
 mmio = sst.Component("mmio", "memHierarchy.mmioEx")
 mmio.addParams({
-      "verbose" : 3,
-      "clock" : clock,
-      "base_addr" : mmio_addr,
+    "verbose" : 3,
+    "clock" : clock,
+    "base_addr" : mmio_addr,
+    "mem_accesses" : 4,
+    "max_addr" : "1023"
 })
 mmio_iface = mmio.setSubComponent("iface", "memHierarchy.standardInterface")
 mmio_iface.addParams(debug_params)

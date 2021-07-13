@@ -54,6 +54,32 @@ StandardMMIO::StandardMMIO(ComponentId_t id, Params &params) : SST::Component(id
     iface->setMemoryMappedAddressRegion(mmio_addr, 1);
 
     handlers = new mmioHandlers(this, &out);
+
+    // Configure access types
+    // Default is just accepting reads/writes
+    // But this component can also issue memory accesses
+    mem_access = params.find<uint32_t>("mem_accesses", false);
+    if (mem_access > 0) {
+        // Need an RNG so we can generate memory addresses
+        rng = *(new SST::RNG::MarsagliaRNG(21, 101));
+
+        // Need a clock so that we can decide whether to issue requests on each clock
+        registerClock(tc, new Clock::Handler<StandardMMIO>(this, &StandardMMIO::clockTic));
+
+        // Don't end simulation until we've finished sending requests & receiving responses
+        primaryComponentDoNotEndSim();
+
+        // Figure out max address we can give a memory access
+        bool found;
+        max_addr = params.find<Addr>("max_addr", 0, found);
+        if (!found) {
+            out.fatal(CALL_INFO, 0-1, "%s, Error: Invalid param, 'max_addr' must be specified if mem_accesses > 0\n");
+        }
+
+        // Register related statistics
+        statReadLatency = registerStatistic<uint64_t>("read_latency");
+        statWriteLatency = registerStatistic<uint64_t>("write_latency");
+    }
 }
 
 void StandardMMIO::init(unsigned int phase) {
@@ -64,12 +90,43 @@ void StandardMMIO::setup() {
     iface->setup();
 }
 
+bool StandardMMIO::clockTic(Cycle_t cycle) {
+    // Decide whether to send a request
+    if (mem_access > 0) {
+        uint32_t req = rng.generateNextUInt32() % 10;
+        if (req < 2) {
+            // Issue read
+            Addr addr = ((rng.generateNextUInt64() % max_addr)>>2) << 2;
+            StandardMem::Request* req = new Experimental::Interfaces::StandardMem::Read(addr, 4);
+            out.verbose(CALL_INFO, 2, 0, "%s: %d Issued Read for address 0x%" PRIx64 "\n", getName().c_str(), mem_access, addr);
+        
+            requests.insert(std::make_pair(req->getID(), std::make_pair(getCurrentSimTime(), "Read")));
+            iface->send(req);
+            mem_access--;
+
+        } else if (req < 4) {
+            // Issue write
+            Addr addr = (rng.generateNextUInt64() % max_addr);
+            addr = (addr / iface->getLineSize()) * iface->getLineSize();
+            std::vector<uint8_t> payload;
+            payload.resize(iface->getLineSize(), 0);
+            StandardMem::Request* req = new Experimental::Interfaces::StandardMem::Write(addr, iface->getLineSize(), payload);
+            out.verbose(CALL_INFO, 2, 0, "%s: Issued Write for address 0x%" PRIx64 "\n", getName().c_str(), mem_access, addr);
+            mem_access--;
+        }
+    }
+    if (mem_access == 0) { 
+        return true; // Stop clock
+    }
+    return false; // Do not stop clock
+}
+
 void StandardMMIO::handleEvent(StandardMem::Request* req) {
     req->handle(handlers);
 }
 
 /* Handler for incoming Write requests */
-void StandardMMIO::mmioHandlers::handle(StandardMem::Write* write) {
+void StandardMMIO::mmioHandlers::handle(SST::Experimental::Interfaces::StandardMem::Write* write) {
 
     // Convert 8 bytes of the payload into an int
     std::vector<uint8_t> buff = write->data;
@@ -99,6 +156,36 @@ void StandardMMIO::mmioHandlers::handle(SST::Experimental::Interfaces::StandardM
     resp->data = payload;
     mmio->iface->send(resp);
     delete read;
+}
+
+/* Handler for incoming Read responses - should be a response to a Read we issued */
+void StandardMMIO::mmioHandlers::handle(SST::Experimental::Interfaces::StandardMem::ReadResp* resp) {
+    std::map<uint64_t, std::pair<SimTime_t,std::string>>::iterator i = mmio->requests.find(resp->getID());
+    if ( mmio->requests.end() == i ) {
+        out->fatal(CALL_INFO, -1, "Event (%" PRIx64 ") not found!\n", resp->getID());
+    } else {
+        SimTime_t et = mmio->getCurrentSimTime() - i->second.first;
+        mmio->statReadLatency->addData(et);
+        mmio->requests.erase(i);
+    }
+    delete resp;
+    if (mmio->mem_access == 0 && mmio->requests.empty())
+        mmio->primaryComponentOKToEndSim();
+}
+
+/* Handler for incoming Write responses - should be a response to a Write we issued */
+void StandardMMIO::mmioHandlers::handle(SST::Experimental::Interfaces::StandardMem::WriteResp* resp) {
+    std::map<uint64_t, std::pair<SimTime_t,std::string>>::iterator i = mmio->requests.find(resp->getID());
+    if (mmio->requests.end() == i) {
+        out->fatal(CALL_INFO, -1, "Event (%" PRIx64 ") not found!\n", resp->getID());
+    } else {
+        SimTime_t et = mmio->getCurrentSimTime() - i->second.first;
+        mmio->statWriteLatency->addData(et);
+        mmio->requests.erase(i);
+    }
+    delete resp;
+    if (mmio->mem_access == 0 && mmio->requests.empty())
+        mmio->primaryComponentOKToEndSim();
 }
 
 void StandardMMIO::mmioHandlers::intToData(int32_t num, vector<uint8_t>* data) {

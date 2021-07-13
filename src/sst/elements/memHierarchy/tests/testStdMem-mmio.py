@@ -8,7 +8,7 @@ DEBUG_CORE = 0
 DEBUG_NIC = 0
 DEBUG_LEVEL = 10
 
-debug_params = { "debug" : 1, "debug_level" : 10 }
+debug_params = { "debug" : 0, "debug_level" : 10 }
 
 # On network: Core, L1, MMIO device, memory
 # Logical communication: Core->L1->memory

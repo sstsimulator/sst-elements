@@ -14,6 +14,7 @@ uncoreclock = "1.4GHz"
 coherence = "MESI"
 network_bw = "60GB/s"
 
+DEBUG_IFACE = 0
 DEBUG_L1 = 0
 DEBUG_L2 = 0
 DEBUG_L3 = 0
@@ -54,7 +55,7 @@ for x in range(cores):
         "noncacheableRangeEnd" : "0x100",
     })
     iface = comp_cpu.setSubComponent("memory", "memHierarchy.standardInterface")
-    
+    iface.addParams({"debug" : DEBUG_IFACE, "debug_level" : 10 })
     comp_l1cache = sst.Component("l1cache" + str(x), "memHierarchy.Cache")
     comp_l1cache.addParams({
         "cache_frequency" : coreclock,

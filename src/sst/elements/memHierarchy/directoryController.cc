@@ -225,7 +225,6 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
         }
     }
 
-    
     if (memLink)
         clockMemLink = memLink->isClocked();
     else
@@ -663,6 +662,9 @@ void DirectoryController::init(unsigned int phase) {
                 MemEventInitCoherence * mEv = static_cast<MemEventInitCoherence*>(ev);
                 if (mEv->getType() == Endpoint::Scratchpad)
                     waitWBAck = true;
+                if (!(mEv->getTracksPresence()) && cpuLink->isSource(mEv->getSrc())) {
+                    incoherentSrc.insert(mEv->getSrc());
+                }
             }
             delete ev;
         } else {
@@ -750,7 +752,9 @@ bool DirectoryController::handleGetS(MemEvent * event, bool inMSHR) {
                 if (!inMSHR)
                     out.output("ALERT (%s): mshr should NOT have data for 0x%" PRIx64 " but it does...\n", getName().c_str(), addr);
                 else {
-                    if (protocol == CoherenceProtocol::MESI) {
+                    if (incoherentSrc.find(event->getSrc()) != incoherentSrc.end()) {
+                        sendDataResponse(event, entry, mshr->getData(addr), Command::GetSResp);
+                    } else if (protocol == CoherenceProtocol::MESI) {
                         entry->setState(M);
                         entry->setOwner(event->getSrc());
                         sendDataResponse(event, entry, mshr->getData(addr), Command::GetXResp);
@@ -779,7 +783,9 @@ bool DirectoryController::handleGetS(MemEvent * event, bool inMSHR) {
             break;
         case S:
             if (mshr->hasData(addr)) { // saved from earlier request
-                entry->addSharer(event->getSrc());
+                if (incoherentSrc.find(event->getSrc()) == incoherentSrc.end()) {
+                    entry->addSharer(event->getSrc());
+                }
                 sendDataResponse(event, entry, mshr->getData(addr), Command::GetSResp);
                 if (is_debug_event(event)) {
                     eventDI.reason = "hit";
@@ -849,11 +855,13 @@ bool DirectoryController::handleGetX(MemEvent * event, bool inMSHR) {
     switch (state) {
         case I:
             if (mshr->hasData(addr)) {
-                if (!inMSHR)
+                if (!inMSHR) {
                     out.output("ALERT (%s): mshr should NOT have data for 0x%" PRIx64 " but it does...\n", getName().c_str(), addr);
-                else {
-                    entry->setState(M);
-                    entry->setOwner(event->getSrc());
+                } else {
+                    if (incoherentSrc.find(event->getSrc()) == incoherentSrc.end()) {
+                        entry->setState(M);
+                        entry->setOwner(event->getSrc());
+                    }
                     sendDataResponse(event, entry, mshr->getData(addr), Command::GetXResp);
                     mshr->clearData(addr);
                     if (is_debug_event(event)) {
@@ -1631,9 +1639,14 @@ bool DirectoryController::handleGetSResp(MemEvent * event, bool inMSHR) {
         out.fatal(CALL_INFO, -1, "%s, Error: Received GetSResp in unhandled state '%s'. Event: %s. Time: %" PRIu64 "ns\n",
                 getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
-
-    entry->setState(S);
-    entry->addSharer(reqEv->getSrc());
+    if (incoherentSrc.find(reqEv->getSrc()) == incoherentSrc.end()) {
+        entry->setState(S);
+        entry->addSharer(reqEv->getSrc());
+    } else if (state == IS) {
+        entry->setState(I);
+    } else {
+        entry->setState(S);
+    }
 
     sendDataResponse(reqEv, entry, event->getPayload(), Command::GetSResp);
     mshr->setData(addr, event->getPayload(), false); // Save data for a subsequent GetS
@@ -1659,7 +1672,11 @@ bool DirectoryController::handleGetXResp(MemEvent * event, bool inMSHR) {
 
     switch (state) {
         case IS:
-            if (protocol == CoherenceProtocol::MESI) {
+            if (incoherentSrc.find(reqEv->getSrc()) != incoherentSrc.end()) {
+                entry->setState(I);
+                sendDataResponse(reqEv, entry, event->getPayload(), Command::GetSResp);
+                break;
+            } else if (protocol == CoherenceProtocol::MESI) {
                 entry->setState(M);
                 entry->setOwner(reqEv->getSrc());
                 sendDataResponse(reqEv, entry, event->getPayload(), Command::GetXResp);
@@ -1667,13 +1684,19 @@ bool DirectoryController::handleGetXResp(MemEvent * event, bool inMSHR) {
             }
         case S_D:
             entry->setState(S);
-            entry->addSharer(reqEv->getSrc());
+            if (incoherentSrc.find(reqEv->getSrc()) == incoherentSrc.end()) {
+                entry->addSharer(reqEv->getSrc());
+            }
             sendDataResponse(reqEv, entry, event->getPayload(), Command::GetSResp);
             mshr->setData(addr, event->getPayload(), false); // So subsequent GetS can get data
             break;
         case IM:
-            entry->setState(M);
-            entry->setOwner(reqEv->getSrc());
+            if (incoherentSrc.find(reqEv->getSrc()) == incoherentSrc.end()) {
+                entry->setState(M);
+                entry->setOwner(reqEv->getSrc());
+            } else {
+                entry->setState(I);
+            }
             sendDataResponse(reqEv, entry, event->getPayload(), Command::GetXResp);
             break;
         case SM_Inv:
