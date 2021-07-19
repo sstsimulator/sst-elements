@@ -22,7 +22,7 @@
 namespace SST {
 namespace Vanadis {
 
-enum VanadisELFEndianness { LITTLE_ENDIAN, BIG_ENDIAN };
+enum VanadisELFEndianness { VANADIS_LITTLE_ENDIAN, VANADIS_BIG_ENDIAN };
 
 enum VanadisELFISA { ISA_X86, ISA_MIPS, ISA_AMD64, ISA_RISC_V, ISA_UNKNOWN };
 
@@ -431,7 +431,7 @@ public:
     VanadisELFInfo() {
         bin_path = nullptr;
         elf_class = UINT8_MAX;
-        elf_endian = UINT8_MAX;
+        elf_endian = VANADIS_LITTLE_ENDIAN;
         elf_os_abi = UINT8_MAX;
         elf_abi_version = UINT8_MAX;
         elf_obj_type = UINT16_MAX;
@@ -456,6 +456,7 @@ public:
                                     : "Unknown");
         output->verbose(CALL_INFO, 2, 0, "Instruction-Set:      %" PRIu16 " / %s\n", elf_isa,
                         getELFISAString(getISA()));
+	output->verbose(CALL_INFO, 2, 0, "Endian:               %s\n", elf_endian == VANADIS_LITTLE_ENDIAN ? "Little Endian" : "Big Endian");
         output->verbose(CALL_INFO, 2, 0, "Object Type:          %s\n", getELFObjectTypeString(getObjectType()));
         output->verbose(CALL_INFO, 2, 0, "OS-ABI:               %" PRIu8 " / %s\n", elf_os_abi,
                         getELFOSABIString(getOSABI()));
@@ -856,7 +857,7 @@ readBinaryELFInfo(SST::Output* output, const char* path) {
     elf_info->setClass(tmp_byte);
 
     fread(&tmp_byte, 1, 1, bin_file);
-    elf_info->setEndian(tmp_byte == 1 ? LITTLE_ENDIAN : BIG_ENDIAN);
+    elf_info->setEndian(tmp_byte == 1 ? VANADIS_LITTLE_ENDIAN : VANADIS_BIG_ENDIAN);
 
     fread(&tmp_byte, 1, 1, bin_file);
     // Discard this read, it is set to 1 for modern ELF
