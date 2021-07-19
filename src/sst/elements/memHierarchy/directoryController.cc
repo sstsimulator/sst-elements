@@ -151,7 +151,6 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
             memLink->setRegion(region);
 
         cpuLink->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
-        cpuLink->setName(getName());
         memoryName = "";
         if (!memLink) {
             memoryName  = params.find<std::string>("net_memory_name", "");
@@ -161,7 +160,6 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
                         "In the future, the directory controller will NOT automatically force its region parameters on its named memory controller\n", getName().c_str());
         } else {
             memLink->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
-            memLink->setName(getName());
         }
     } else {
         /* Set up links/network to cache & memory the old way -> and fixup params accordingly */
@@ -174,7 +172,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
         fixupParam(params, "interleave_step", "memNIC.interleave_step");
         fixupParam(params, "min_packet_size", "memNIC.min_packet_size");
 
-        Params nicParams = params.find_prefix_params("memNIC.");
+        Params nicParams = params.get_scoped_params("memNIC");
 
         nicParams.insert("group", "3", false);
         int cl = nicParams.find<int>("group");
@@ -200,7 +198,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
         cpuLink->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
 
         if (isPortConnected("memory")) {
-            Params memParams = params.find_prefix_params("memlink.");
+            Params memParams = params.get_scoped_params("memlink");
             memParams.insert("port", "memory");
             memParams.insert("latency", "1ns");
             memParams.insert("addr_range_start", std::to_string(region.start), false);
@@ -221,8 +219,6 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
                         "In the future, the directory controller will NOT automatically force its region parameters on its named memory controller\n", getName().c_str());
             memLink = nullptr;
         }
-        cpuLink->setName(getName());
-        if (memLink) memLink->setName(getName());
     }
 
     clockHandler = new Clock::Handler<DirectoryController>(this, &DirectoryController::clock);

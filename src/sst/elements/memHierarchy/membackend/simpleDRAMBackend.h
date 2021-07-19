@@ -55,7 +55,6 @@ public:
     typedef enum {OPEN, CLOSED, DYNAMIC, TIMEOUT } RowPolicy;
 
 private:
-    void build(Params& params);
     void handleSelfEvent(SST::Event *event);
 
     Link *self_link;

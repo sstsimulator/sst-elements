@@ -144,7 +144,6 @@ for x in range(memories):
         "network_output_buffer_size" : "2KiB",
 #        "debug" : 1,
         "debug_level" : 10,
-        
     })
 
     memory = memctrl.setSubComponent("backend", "memHierarchy.simpleDRAM")

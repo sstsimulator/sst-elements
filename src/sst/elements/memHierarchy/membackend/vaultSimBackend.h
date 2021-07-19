@@ -40,7 +40,6 @@ public:
     virtual bool isClocked() { return false; }
 
 private:
-    void build(Params& params);
     void handleCubeEvent(SST::Event *event);
 
     std::set<ReqId> outToCubes;

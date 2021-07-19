@@ -156,10 +156,6 @@ const HMCPacket __PACKETS[] = {
 
 
 GOBLINHMCSimBackend::GOBLINHMCSimBackend(ComponentId_t id, Params& params) : ExtMemBackend(id, params) {
-    build(params);
-}
-
-void GOBLINHMCSimBackend::build(Params& params) {
 
 	int verbose = params.find<int>("verbose", 0);
 
@@ -339,7 +335,7 @@ void GOBLINHMCSimBackend::build(Params& params) {
             libpath[cmclibs[i].size()] = '\0';
 
             rc = hmcsim_load_cmc(&the_hmc, libpath );
-            delete libpath;
+            delete[] libpath;
             if( rc != 0 ){
 	      output->fatal(CALL_INFO, -1,
                             "Unable to load HMC-Sim CMC Library and the return code is %d\n", rc);
@@ -505,7 +501,7 @@ void GOBLINHMCSimBackend::handleCMCConfig(){
     std::copy(path.begin(), path.end(), libpath);
     libpath[path.size()] = '\0';
     int rc = hmcsim_load_cmc(&the_hmc, &libpath[0] );
-    delete libpath;
+    delete[] libpath;
     if( rc != 0 ){
       output->fatal(CALL_INFO, -1,
         "Unable to load the mapped HMC-Sim CMC Library %s and the return code is %d\n", path.c_str(), rc);

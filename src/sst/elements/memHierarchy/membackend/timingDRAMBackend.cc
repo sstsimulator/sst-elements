@@ -22,15 +22,13 @@ bool TimingDRAM::Channel::m_printConfig = true;
 bool TimingDRAM::Rank::m_printConfig = true;
 bool TimingDRAM::Bank::m_printConfig = true;
 
-TimingDRAM::TimingDRAM(ComponentId_t id, Params &params) : SimpleMemBackend(id, params), m_cycle(0) { build(params); }
+TimingDRAM::TimingDRAM(ComponentId_t id, Params &params) : SimpleMemBackend(id, params), m_cycle(0) { 
 
-void TimingDRAM::build(Params& params) {
-
-    int id = params.find<int>("id", -1);
-    assert( id != -1 );
+    int dram_id = params.find<int>("id", -1);
+    assert( dram_id != -1 );
 
     std::ostringstream tmp;
-    tmp << "@t:TimingDRAM::@p():@l:mc=" << id << ": ";
+    tmp << "@t:TimingDRAM::@p():@l:mc=" << dram_id << ": ";
 
     int dbg_level = params.find<int>("dbg_level", 1);
     int dbg_mask = params.find<int>("dbg_mask", -1);
@@ -38,7 +36,7 @@ void TimingDRAM::build(Params& params) {
 
     std::string addrMapper = params.find<std::string>("addrMapper","memHierarchy.simpleAddrMapper");
 
-    Params tmpParams = params.find_prefix_params("addrMapper." );
+    Params tmpParams = params.get_scoped_params("addrMapper" );
     m_mapper = dynamic_cast<AddrMapper*>(loadModule( addrMapper, tmpParams ) );
 
     if ( ! m_mapper ) {
@@ -58,10 +56,10 @@ void TimingDRAM::build(Params& params) {
 
     m_mapper->setNumChannels( numChannels );
 
-    tmpParams = params.find_prefix_params("channel." );
+    tmpParams = params.get_scoped_params("channel" );
     for ( unsigned i=0; i < numChannels; i++ ) {
         using std::placeholders::_1;
-        m_channels.push_back(loadComponentExtension<Channel>( std::bind(&TimingDRAM::handleResponse, this, _1), tmpParams, id, i, output, m_mapper ));
+        m_channels.push_back(loadComponentExtension<Channel>( std::bind(&TimingDRAM::handleResponse, this, _1), tmpParams, dram_id, i, output, m_mapper ));
     }
 }
 
@@ -115,7 +113,7 @@ TimingDRAM::Channel::Channel( ComponentId_t id, std::function<void(ReqId)> handl
         m_printConfig = false;
     }
 
-    Params tmpParams = params.find_prefix_params("rank." );
+    Params tmpParams = params.get_scoped_params("rank" );
     for ( unsigned i=0; i<numRanks; i++ ) {
         m_ranks.push_back( loadComponentExtension<Rank>( tmpParams, mc, myNum, i, output, mapper ) );
     }
@@ -224,7 +222,7 @@ TimingDRAM::Rank::Rank( ComponentId_t id, Params& params, unsigned mc, unsigned 
         m_printConfig = false;
     }
 
-    Params tmpParams = params.find_prefix_params("bank." );
+    Params tmpParams = params.get_scoped_params("bank" );
     for ( unsigned i=0; i<banks; i++ ) {
         m_banks.push_back( loadComponentExtension<Bank>( tmpParams, mc, chan, myNum, i, output ) );
     }
@@ -278,11 +276,11 @@ TimingDRAM::Bank::Bank( ComponentId_t id, Params& params, unsigned mc, unsigned 
     m_data_lat = params.find<unsigned int>("dataCycles", 4);
 
     std::string name = params.find<std::string>("transactionQ", "memHierarchy.fifoTransactionQ");
-    Params tmpParams = params.find_prefix_params("transactionQ." );
+    Params tmpParams = params.get_scoped_params("transactionQ" );
     m_transQ = loadAnonymousSubComponent<TransactionQ>(name, "transactionQ", 0, ComponentInfo::INSERT_STATS, tmpParams);
 
     std::string ppName = params.find<std::string>("pagePolicy", "memHierarchy.simplePagePolicy");
-    tmpParams = params.find_prefix_params("pagePolicy." );
+    tmpParams = params.get_scoped_params("pagePolicy" );
     m_pagePolicy = loadAnonymousSubComponent<PagePolicy>(ppName, "pagePolicy", 0, ComponentInfo::INSERT_STATS, tmpParams);
 
     if (m_printConfig)

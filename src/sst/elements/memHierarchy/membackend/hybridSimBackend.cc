@@ -22,9 +22,7 @@
 using namespace SST;
 using namespace SST::MemHierarchy;
 
-HybridSimMemory::HybridSimMemory(ComponentId_t id, Params &params) : SimpleMemBackend(id, params){ build(params); }
-
-void HybridSimMemory::build(Params& params) {
+HybridSimMemory::HybridSimMemory(ComponentId_t id, Params &params) : SimpleMemBackend(id, params){ 
     output->init("@R:HybridSimMemory::@p():@l " + getName() + ": ", 0, 0,
                          (Output::output_location_t)params.find<int>("debug", 0));
     std::string hybridIniFilename = params.find<std::string>("system_ini", NO_STRING_DEFINED);

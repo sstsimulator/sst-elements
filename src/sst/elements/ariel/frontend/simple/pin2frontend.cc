@@ -394,9 +394,17 @@ int Pin2Frontend::forkPINChild(const char* app, char** args, std::map<std::strin
 #if defined(HAVE_SET_PTRACER)
         prctl(PR_SET_PTRACER, getppid(), 0, 0 ,0);
 #endif // End of HAVE_SET_PTRACER
+        // Try to make child die if parent does.
+        // This isn't foolproof
+        int ret = prctl(PR_SET_PDEATHSIG, SIGKILL);
+        if (ret == -1) { 
+            perror("prctl");
+            output->verbose(CALL_INFO, 1, 0, "Warning: Call to prctl returned %d. Pin process may be orphaned after simulation.\n", ret);
+        }
+
 #endif // End SST_COMPILE_MACOSX (else branch)
             int ret_code = execvp(app, args);
-            perror("execve");
+            perror("execvp");
 
             output->verbose(CALL_INFO, 1, 0,
                 "Call to execvp returned: %d\n", ret_code);
@@ -427,7 +435,7 @@ int Pin2Frontend::forkPINChild(const char* app, char** args, std::map<std::strin
             int ret_code = execve(app, args, execute_env_cp);
             perror("execvep");
 
-            output->verbose(CALL_INFO, 1, 0, "Call to execvpe returned %d\n", ret_code);
+            output->verbose(CALL_INFO, 1, 0, "Call to execve returned %d\n", ret_code);
             output->fatal(CALL_INFO, -1, "Error executing %s under a PIN fork\n", app);
         }
     }

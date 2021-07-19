@@ -97,7 +97,7 @@ void Sieve::configureLinks() {
         std::ostringstream linkName;
         linkName << "cpu_link_" << cpuLinkCount_;
         std::string ln = linkName.str();
-        link = configureLink(ln, "100 ps", new Event::Handler<Sieve>(this, &Sieve::processEvent));
+        link = configureLink(ln, "100 ps", new Event::Handler<Sieve, int>(this, &Sieve::processEvent, cpuLinkCount_));
         if (link) {
             cpuLinks_.push_back(link);
             output_->output(CALL_INFO, "Port %d = Link %d\n", cpuLinks_[cpuLinkCount_]->getId(), cpuLinkCount_);
@@ -125,7 +125,7 @@ void Sieve::createProfiler(const Params &params) {
     if (profiler.empty()) {
 	listener_ = 0;
     } else {
-	Params profilerParams = params.find_prefix_params("profiler." );
+	Params profilerParams = params.get_scoped_params("profiler" );
         listener_ = loadAnonymousSubComponent<CacheListener>(profiler, "profiler", 0, ComponentInfo::INSERT_STATS, profilerParams);
     }
 

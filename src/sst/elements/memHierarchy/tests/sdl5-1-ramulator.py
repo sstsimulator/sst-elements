@@ -137,8 +137,9 @@ l3cache.addParams({
 })
 memctrl = sst.Component("memory", "memHierarchy.MemController")
 memctrl.addParams({
-      "debug" : "0",
-      "clock" : "1GHz",
+    "debug" : "0",
+    "clock" : "1GHz",
+    "addr_range_end" : 512*1024*1024-1,
 })
 
 memory = memctrl.setSubComponent("backend", "memHierarchy.ramulator")

@@ -245,13 +245,18 @@ class testcase_memH_sweep_dirsweepB(SSTTestCase):
                         log_failure("FAILURE: Sweep dirsweepB Test failed running cmdline {0} - grepping outfile {1}".format(cmd, outfile))
 
                     log_debug("Testline='{0}'; refcount={1}; outcount={2}".format(testline, refcount, outcount))
-                    
+
                     # Compare the count
                     self.assertEquals(outcount, refcount, "Sweep dirsweepB testing line '{0}': outfile count = {1} does not match reffile count = {2}".format(testline, outcount, refcount))
 
 ###############################################
 
     def _checkSkipConditions(self, testindex):
+        # Check to see if PIN is loaded
+        pin_loaded = testing_is_PIN_loaded()
+        if not pin_loaded:
+            self.skipTest("Skipping Test #{0} - sweep_memHierarchy: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.".format(testindex))
+
         # Check to see if Env Var SST_SWEEP_dirsweepB_LIST is set limiting which tests to run
         #   An inclusive sub-list may be specified as "first-last"  (e.g. 7-10)
         env_var = 'SST_SWEEP_dirsweepB_LIST'

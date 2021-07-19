@@ -115,7 +115,7 @@ Scratchpad::Scratchpad(ComponentId_t id, Params &params) : Component(id) {
         std::string bkName = params.find<std::string>("backendConvertor", "memHierarchy.scratchBackendConvertor");
 
         // Copy some parameters into the backend
-        Params bkParams = params.find_prefix_params("backendConvertor.");
+        Params bkParams = params.get_scoped_params("backendConvertor");
         bkParams.insert("backend.clock", clock_freq);
         bkParams.insert("backend.request_width", std::to_string(scratchLineSize_));
         bkParams.insert("backend.mem_size", size.toString());
@@ -212,13 +212,13 @@ Scratchpad::Scratchpad(ComponentId_t id, Params &params) : Component(id) {
     }
 
     if (cpuDirect) {
-        Params cpulink = params.find_prefix_params("cpulink.");
+        Params cpulink = params.get_scoped_params("cpulink");
         cpulink.insert("port", "cpu");
         linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, cpulink);
         linkUp_->setRecvHandler(new Event::Handler<Scratchpad>(this, &Scratchpad::processIncomingCPUEvent));
     }
     if (memoryDirect) {
-        Params memlink = params.find_prefix_params("memlink.");
+        Params memlink = params.get_scoped_params("memlink");
         memlink.insert("port", "memory");
         linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "memlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, memlink);
         linkDown_->setRecvHandler(new Event::Handler<Scratchpad>(this, &Scratchpad::processIncomingRemoteEvent));
@@ -236,7 +236,7 @@ Scratchpad::Scratchpad(ComponentId_t id, Params &params) : Component(id) {
             out.output(CALL_INFO, "Note (%s): Changed 'min_packet_size' to 'memNIC.min_packet_size' in params. Change your input file to remove this notice.\n", getName().c_str());
 
         // These are defaults and will not overwrite user provided
-        Params nicParams = params.find_prefix_params("memNIC.");
+        Params nicParams = params.get_scoped_params("memNIC");
         nicParams.insert("addr_range_start", "0", false);
         nicParams.insert("addr_range_end", std::to_string((uint64_t) - 1), false);
         nicParams.insert("interleave_size", "0B", false);
@@ -1029,7 +1029,7 @@ void Scratchpad::handleRemoteGetResponse(MemEvent * response, SST::Event::id_typ
         // Create write
         uint32_t size = (baseAddr + scratchLineSize_) - addr;
         if (size > bytesLeft) size = bytesLeft;
-        std::vector<uint8_t> data(response->getPayload()[payloadOffset],response->getPayload()[payloadOffset+size]);
+        std::vector<uint8_t> data((response->getPayload()).begin() + payloadOffset, (response->getPayload()).begin() + payloadOffset + size);
         MemEvent * write = new MemEvent(getName(), addr, baseAddr, Command::PutM, data);
         write->setRqstr(request->getRqstr());
         write->setVirtualAddress(request->getDstVirtualAddress());

@@ -34,10 +34,6 @@ using namespace HBMDRAMSim;
 
 HBMpagedMultiMemory::HBMpagedMultiMemory(ComponentId_t id, Params &params)
   : HBMDRAMSimMemory(id, params), pagesInFast(0), lastMin(0) {
-      build(params);
-  }
-
-void HBMpagedMultiMemory::build(Params& params) {
     dbg.init("@R:HBMpagedMultiMemory::@p():@l " + getName() + ": ", 0, 0,
              (Output::output_location_t)params.find<int>("debug", 0));
     dbg.output(CALL_INFO, "making HBMpagedMultiMemory controller\n");

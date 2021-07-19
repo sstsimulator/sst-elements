@@ -82,8 +82,9 @@ CoherenceController::CoherenceController(ComponentId_t id, Params &params, Param
     // Just in case, we give an initial value here
     dropPrefetchLevel_ = ((size_t) - 1);
     maxOutstandingPrefetch_ = ((size_t) - 2);
-    cachename_ = getName().c_str();
 
+    // Get parent component's name
+    cachename_ = getParentComponentName();
 
     // Register statistics - only those that are common across all coherence managers
     // Give  all array entries a default statistic so we don't end up with segfaults during execution
@@ -126,7 +127,7 @@ CoherenceController::CoherenceController(ComponentId_t id, Params &params, Param
 ReplacementPolicy* CoherenceController::createReplacementPolicy(uint64_t lines, uint64_t assoc, Params& params, bool L1, int slotnum) {
     SubComponentSlotInfo* rslots = getSubComponentSlotInfo("replacement");
     if (rslots && rslots->isPopulated(slotnum))
-        return rslots->create<ReplacementPolicy>(0, ComponentInfo::SHARE_NONE, lines, assoc);
+        return rslots->create<ReplacementPolicy>(slotnum, ComponentInfo::SHARE_NONE, lines, assoc);
 
     // Default to the replacement policy that was used before all the recent memH changes
     Params emptyparams;

@@ -160,7 +160,7 @@ class Config:
             "clock" : "1GHz",
             #"clock" : self.memory_clock,
             "customCmdHandler" : "memHierarchy.amoCustomCmdHandler",
-
+            "addr_range_end" : (int(''.join(filter(str.isdigit, self.memory_capacity))) * 1024 * 1024) - 1,
             })
     def getMemParams(self):
         return dict({

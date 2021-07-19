@@ -23,9 +23,7 @@ using namespace SST;
 using namespace SST::MemHierarchy;
 
 /*------------------------------- Simple Backend ------------------------------- */
-DelayBuffer::DelayBuffer(ComponentId_t id, Params &params) : SimpleMemBackend(id, params){ build(params); }
-
-void DelayBuffer::build(Params& params) {
+DelayBuffer::DelayBuffer(ComponentId_t id, Params &params) : SimpleMemBackend(id, params){ 
     // Get parameters
     fixupParams( params, "clock", "backend.clock" );
 
@@ -39,7 +37,7 @@ void DelayBuffer::build(Params& params) {
     backend = loadUserSubComponent<SimpleMemBackend>("backend");
     if (!backend) {
         std::string backendName = params.find<std::string>("backend", "memHierarchy.simpleDRAM");
-        Params backendParams = params.find_prefix_params("backend.");
+        Params backendParams = params.get_scoped_params("backend");
         backendParams.insert("mem_size", params.find<std::string>("mem_size"));
         backend = loadAnonymousSubComponent<SimpleMemBackend>(backendName, "backend", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, backendParams);
     }

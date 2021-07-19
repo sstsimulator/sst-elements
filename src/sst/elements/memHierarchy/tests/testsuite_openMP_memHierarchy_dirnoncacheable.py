@@ -42,27 +42,37 @@ class testcase_memH_openMP_dirnoncacheable(SSTTestCase):
 
 ####
 
+    pin_loaded = testing_is_PIN_loaded()
+
+    @unittest.skipIf(not pin_loaded, "openMP_memHierarchy: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
     def test_dirnoncacheable_ompatomic(self):
         self.memH_test_template("ompatomic")
 
+    @unittest.skipIf(not pin_loaded, "openMP_memHierarchy: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
     def test_dirnoncacheable_ompapi(self):
         self.memH_test_template("ompapi")
 
+    @unittest.skipIf(not pin_loaded, "openMP_memHierarchy: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
     def test_dirnoncacheable_ompbarrier(self):
         self.memH_test_template("ompbarrier")
 
+    @unittest.skipIf(not pin_loaded, "openMP_memHierarchy: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
     def test_dirnoncacheable_ompcritical(self):
         self.memH_test_template("ompcritical")
 
+    @unittest.skipIf(not pin_loaded, "openMP_memHierarchy: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
     def test_dirnoncacheable_ompdynamic(self):
         self.memH_test_template("ompdynamic")
 
+    @unittest.skipIf(not pin_loaded, "openMP_memHierarchy: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
     def test_dirnoncacheable_ompreduce(self):
         self.memH_test_template("ompreduce")
 
+    @unittest.skipIf(not pin_loaded, "openMP_memHierarchy: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
     def test_dirnoncacheable_ompthrcount(self):
         self.memH_test_template("ompthrcount")
 
+    @unittest.skipIf(not pin_loaded, "openMP_memHierarchy: Requires PIN, but Env Var 'INTEL_PIN_DIR' is not found or path does not exist.")
     def test_dirnoncacheable_omptriangle(self):
         self.memH_test_template("omptriangle")
 

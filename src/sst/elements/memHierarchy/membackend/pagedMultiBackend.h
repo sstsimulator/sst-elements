@@ -177,7 +177,6 @@ public:
 
 /* Begin class definition */
     pagedMultiMemory(ComponentId_t id, Params &params);
-    void build(Params& params);
 
     virtual bool issueRequest(ReqId, Addr, bool, unsigned );
     virtual bool clock(Cycle_t cycle);

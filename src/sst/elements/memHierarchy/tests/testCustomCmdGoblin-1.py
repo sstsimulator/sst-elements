@@ -51,6 +51,7 @@ comp_memctrl = sst.Component("memory", "memHierarchy.CoherentMemController")
 comp_memctrl.addParams({
       "clock" : "1GHz",
       "customCmdHandler" : "memHierarchy.amoCustomCmdHandler",
+      "addr_range_end" : 512*1024*1024-1,
 })
 
 comp_memory = comp_memctrl.setSubComponent("backend", "memHierarchy.goblinHMCSim")

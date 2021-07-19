@@ -140,7 +140,12 @@ for x in range(memories):
     memctrl.addParams({
         "clock" : "500MHz",
         "backing" : "none",
+        "addr_range_start" : x*64,
+        "addr_range_end" : 1024*1024*1024 - ((memories -x) * 64) + 63,
+        "interleave_size" : "64B",
+        "interleave_step" : str(memories * 64) + "B",
     })
+
     memory = memctrl.setSubComponent("backend", "memHierarchy.simpleDRAM")
     memory.addParams({
         "max_requests_per_cycle" : 2,

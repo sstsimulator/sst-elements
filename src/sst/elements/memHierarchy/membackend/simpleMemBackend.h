@@ -38,10 +38,6 @@ public:
     bool issueRequest(ReqId, Addr, bool, unsigned );
     virtual bool isClocked() { return false; }
 
-private:
-    void build(Params& params);
-
-public:
     class MemCtrlEvent : public SST::Event {
     public:
         MemCtrlEvent( ReqId id_) : SST::Event(), reqId(id_)

@@ -67,7 +67,57 @@ public:
 
     /* Constructor */
     MemLinkBase(ComponentId_t id, Params &params) : SubComponent(id) {
-        build(params);
+        /* Create debug output */
+        int debugLevel = params.find<int>("debug_level", 0);
+        int debugLoc = params.find<int>("debug", 0);
+        dbg.init("", debugLevel, 0, (Output::output_location_t)debugLoc);
+
+        // Filter debug by address
+        std::vector<uint64_t> addrArray;
+        params.find_array<uint64_t>("debug_addr", addrArray);
+        for (std::vector<uint64_t>::iterator it = addrArray.begin(); it != addrArray.end(); it++) {
+            DEBUG_ADDR.insert(*it);
+        }
+
+        // Set up address region TODO deprecate in the next major release (SST 10)
+        bool found, foundany;
+        uint64_t addrStart = params.find<uint64_t>("addr_range_start", 0, found);
+        foundany = found;
+        uint64_t addrEnd = params.find<uint64_t>("addr_range_end", (uint64_t) - 1, found);
+        foundany |= found;
+        string ilSize = params.find<std::string>("interleave_size", "0B", found);
+        foundany |= found;
+        string ilStep = params.find<std::string>("interleave_step", "0B", found);
+        foundany |= found;
+        if (foundany) {
+            dbg.output("%s, Warning: Region parameters given to link managers (addr_range_start/end, interleave_size/step) will be overwritten if the component sets them; specify region via component to eliminate this message\n",
+                    getName().c_str());
+        }
+
+        // Ensure SI units are power-2 not power-10 - for backward compability
+        fixByteUnits(ilSize);
+        fixByteUnits(ilStep);
+
+        if (!UnitAlgebra(ilSize).hasUnits("B")) {
+            dbg.fatal(CALL_INFO, -1, "Invalid param(%s): interleave_size - must be specified in bytes with units (SI units OK). For example, '1KiB'. You specified '%s'\n",
+                    getName().c_str(), ilSize.c_str());
+        }
+
+        if (!UnitAlgebra(ilStep).hasUnits("B")) {
+            dbg.fatal(CALL_INFO, -1, "Invalid param(%s): interleave_step - must be specified in bytes with units (SI units OK). For example, '1KiB'. You specified '%s'\n",
+                    getName().c_str(), ilSize.c_str());
+        }
+
+        info.region.start = addrStart;
+        info.region.end = addrEnd;
+        info.region.interleaveSize = UnitAlgebra(ilSize).getRoundedValue();
+        info.region.interleaveStep = UnitAlgebra(ilStep).getRoundedValue();
+        info.name = getParentComponentName();
+        info.addr = 0;
+        info.id = 0;
+
+        // Check whether we should accept a region push by someone else
+        acceptRegion = params.find<bool>("accept_region", false);
     }
 
     /* Destructor */
@@ -118,6 +168,9 @@ public:
     EndpointInfo getEndpointInfo() { return info; }
     void setEndpointInfo(EndpointInfo i) { info = i; }
 
+    // Optional. This sets the name used for src/destination/requestor/etc.
+    // This should be set correctly by default but occasionally 
+    // a specific implementation may require a different setting
     void setName(std::string name) { info.name = name; }
 
 protected:
@@ -138,60 +191,6 @@ protected:
 
 private:
 
-    void build(Params &params) {
-        /* Create debug output */
-        int debugLevel = params.find<int>("debug_level", 0);
-        int debugLoc = params.find<int>("debug", 0);
-        dbg.init("", debugLevel, 0, (Output::output_location_t)debugLoc);
-
-        // Filter debug by address
-        std::vector<uint64_t> addrArray;
-        params.find_array<uint64_t>("debug_addr", addrArray);
-        for (std::vector<uint64_t>::iterator it = addrArray.begin(); it != addrArray.end(); it++) {
-            DEBUG_ADDR.insert(*it);
-        }
-
-        // Set up address region TODO deprecate in the next major release (SST 10)
-        bool found, foundany;
-        uint64_t addrStart = params.find<uint64_t>("addr_range_start", 0, found);
-        foundany = found;
-        uint64_t addrEnd = params.find<uint64_t>("addr_range_end", (uint64_t) - 1, found);
-        foundany |= found;
-        string ilSize = params.find<std::string>("interleave_size", "0B", found);
-        foundany |= found;
-        string ilStep = params.find<std::string>("interleave_step", "0B", found);
-        foundany |= found;
-        if (foundany) {
-            dbg.output("%s, Warning: Region parameters given to link managers (addr_range_start/end, interleave_size/step) will be overwritten if the component sets them; specify region via component to eliminate this message\n",
-                    getName().c_str());
-        }
-
-        // Ensure SI units are power-2 not power-10 - for backward compability
-        fixByteUnits(ilSize);
-        fixByteUnits(ilStep);
-
-        if (!UnitAlgebra(ilSize).hasUnits("B")) {
-            dbg.fatal(CALL_INFO, -1, "Invalid param(%s): interleave_size - must be specified in bytes with units (SI units OK). For example, '1KiB'. You specified '%s'\n",
-                    getName().c_str(), ilSize.c_str());
-        }
-
-        if (!UnitAlgebra(ilStep).hasUnits("B")) {
-            dbg.fatal(CALL_INFO, -1, "Invalid param(%s): interleave_step - must be specified in bytes with units (SI units OK). For example, '1KiB'. You specified '%s'\n",
-                    getName().c_str(), ilSize.c_str());
-        }
-
-        info.region.start = addrStart;
-        info.region.end = addrEnd;
-        info.region.interleaveSize = UnitAlgebra(ilSize).getRoundedValue();
-        info.region.interleaveStep = UnitAlgebra(ilStep).getRoundedValue();
-        std::size_t pos = getName().find(":");
-        info.name = getName().substr(0,pos);
-        info.addr = 0;
-        info.id = 0;
-
-        // Check whether we should accept a region push by someone else
-        acceptRegion = params.find<bool>("accept_region", false);
-    }
 };
 
 } //namespace memHierarchy
