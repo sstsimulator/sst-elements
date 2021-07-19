@@ -388,6 +388,11 @@ public:
             vanadis_vec_copy_in<int>(phdr_data_block, (int)nxt_entry->getAlignment());
         }
 
+	// Check endian-ness
+	if( elf_info->getEndian() != 1 ) {
+	    output->fatal(CALL_INFO, -1, "Error: binary executable ELF information shows this was not compiled for little-endian processors (\"mipsel\"), please recompile to a supported format.\n");
+	}
+
         const uint64_t phdr_address = params.find<uint64_t>("program_header_address", 0x60000000);
 
         std::vector<uint8_t> random_values_data_block;

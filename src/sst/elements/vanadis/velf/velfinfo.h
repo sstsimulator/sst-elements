@@ -560,6 +560,7 @@ public:
     const char* getBinaryPath() const { return bin_path; }
 
     uint64_t getEntryPoint() const { return elf_entry_point; }
+    uint8_t  getEndian() const { return elf_endian; }
     uint64_t getProgramHeaderOffset() const { return elf_prog_header_start; }
     uint64_t getSectionHeaderOffset() const { return elf_prog_section_start; }
 
