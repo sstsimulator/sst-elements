@@ -19,7 +19,6 @@
 #include <sst/core/simulation.h>
 #include <sst/core/timeLord.h>
 #include <sst/core/unitAlgebra.h>
-#include <sst/core/sharedRegion.h>
 
 #include <sstream>
 #include <string>
@@ -164,12 +163,11 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
         }
         vn_remap_shm_size = vec.size() * sizeof(int);
         if ( id == 0 ) {
-            SharedRegion* sr = Simulation::getSharedRegionManager()->
-                getGlobalSharedRegion(vn_remap_shm, vn_remap_shm_size, new SharedRegionMerger());
+            shared_array.initialize(vn_remap_shm, vn_remap_shm_size);
             for ( int i = 0; i < vec.size(); ++i ) {
-                sr->modifyArray(i,vec[i]);
+                shared_array.write(i,vec[i]);
             }
-            sr->publish();
+            shared_array.publish();
         }
     }
 
@@ -240,7 +238,7 @@ hr_router::hr_router(ComponentId_t cid, Params& params) :
 
     params.enableVerify(false);
 
-    Params pc_params = params.find_prefix_params("portcontrol:");
+    Params pc_params = params.get_scoped_params("portcontrol");
 
     pc_params.insert("flit_size", flit_size.toStringBestSI());
     if (pc_params.contains("network_inspectors")) pc_params.insert("network_inspectors", params.find<std::string>("network_inspectors", ""));
@@ -482,7 +480,9 @@ hr_router::init(unsigned int phase)
                 case Topology::R2N:
                     ports[*j]->sendUntimedData(ire->getEncapsulatedEvent()->clone());
                     break;
-                case Topology::R2R: {
+                case Topology::R2R:
+                // Ignore failed links during init
+                case Topology::FAILED: {
                     internal_router_event *new_ire = ire->clone();
                     new_ire->setEncapsulatedEvent(ire->getEncapsulatedEvent()->clone());
                     ports[*j]->sendUntimedData(new_ire);
@@ -530,7 +530,9 @@ hr_router::complete(unsigned int phase)
                 case Topology::R2N:
                     ports[*j]->sendUntimedData(ire->getEncapsulatedEvent()->clone());
                     break;
-                case Topology::R2R: {
+                case Topology::R2R:
+                // Ignore failed links during init
+                case Topology::FAILED: {
                     internal_router_event *new_ire = ire->clone();
                     new_ire->setEncapsulatedEvent(ire->getEncapsulatedEvent()->clone());
                     ports[*j]->sendUntimedData(new_ire);

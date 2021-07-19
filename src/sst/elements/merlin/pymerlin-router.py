@@ -25,8 +25,8 @@ class hr_router(RouterTemplate):
         self._declareParams("params",["link_bw","flit_size","xbar_bw","input_latency","output_latency","input_buf_size","output_buf_size",
                                       "xbar_arb","network_inspectors","oql_track_port","oql_track_remote","num_vns","vn_remap","vn_remap_shm"])
 
-        self._declareParams("params",["qos_settings"],"portcontrol:arbitration:")
-        self._declareParams("params",["output_arb"],"portcontrol:")
+        self._declareParams("params",["qos_settings"],"portcontrol.arbitration.")
+        self._declareParams("params",["output_arb"],"portcontrol.")
 
         self._setCallbackOnWrite("qos_settings",self._qos_callback)
         self._subscribeToPlatformParamSet("router")

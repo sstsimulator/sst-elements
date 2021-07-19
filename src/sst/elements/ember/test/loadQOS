@@ -1,0 +1,55 @@
+# This file must be ordered
+#
+# [JOB_ID]
+# [NID_LIST]
+# [MOTIF_API]
+# [PARAM]
+# [MOTIF]
+# [MOTIF]
+#
+# keywords must be left justified and not contain white space
+# all characters between keywords will be considered part of the leading keyword 
+# you can have multiple MOTIF keywords for a given JOB_ID 
+# you can have multiple jobs
+# two jobs can not have the same NID 
+
+[JOB_ID] 15
+[NID_LIST] generateNidList=generateNidListQOS(64,3,interval,0,4,16)
+[MOTIF] <merlin.background_traffic:networkIF>
+ offered_load=0.02
+ message_size=64B
+ pattern=merlin.targetgen.uniform
+[PARAM] merlin:portcontrol:output_arb=merlin.arb.output.qos.multi
+[PARAM] merlin:portcontrol:arbitration:qos_settings=[30,-1,30,-1,30,-1,-1,-1]
+
+[JOB_ID] 10 
+[NID_LIST] generateNidList=generateNidListQOS(64,0,linear,16)
+[PARAM] ember:verbose=1
+[PARAM] ember:verboseMask=4
+[PARAM] merlin:link_bw=16GB/s
+[PARAM] merlin:xbar_bw=24GB/s
+[PARAM] merlin:flit_size=24B
+[MOTIF] Init
+[MOTIF] Sweep3D pex=4 pey=4 nx=16 ny=16 nz=10 iterations=1
+[MOTIF] Fini
+
+
+[JOB_ID] 11 
+[NID_LIST] generateNidList=generateNidListQOS(64,1,linear,16)
+[PARAM] ember:verbose=1
+[PARAM] ember:verboseMask=4
+[MOTIF] Init
+[MOTIF] Halo3D26 nx=64 ny=64 nz=64 pex=4 pey=4 pey=4 iterations=1
+[MOTIF] Fini
+[NUM_CORES] 4
+
+
+[JOB_ID] 12 
+[NID_LIST] generateNidList=generateNidListQOS(64,2,linear,16)
+[PARAM] ember:verbose=1
+[PARAM] ember:verboseMask=4
+[MOTIF] Init
+[MOTIF] Sweep3D pex=4 pey=4 nx=16 ny=16 nz=10 iterations=1
+[MOTIF] Fini
+[NUM_CORES] 1
+

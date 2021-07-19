@@ -1,0 +1,10 @@
+
+sst --model-options="\
+--rtrArb=merlin.xbar_arb_lru \
+--netBW=8GB/s \
+--netFlitSize=16B \
+--netPktSize=100B \
+--topo=torus \
+--shape=16 \
+--jobFile=loadfile \
+" ../script/emberLoadFile.py

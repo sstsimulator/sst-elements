@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+<sdl version="2.0"/>
+
+<config>
+  run-mode=both
+</config>
+
+<param_include>
+
+  <nic_params>
+  </nic_params>
+
+  <driverParams>
+     <msgapi> firefly.hades </msgapi>
+     <trace> /home/sdhammo/subversion/sst-simulator/sst/elements/zodiac/test/barrier/barrier-2.stf </trace>
+     <buffer> 524288 </buffer>
+     <bufLen> 10 </bufLen>
+     <verbose>16</verbose>
+     <hermesModule> firefly.hades </hermesModule>
+     <hermesParams.numRanks> 2 </hermesParams.numRanks>
+     <hermesParams.nidListFile> nidlist.txt </hermesParams.nidListFile>
+     <hermesParams.ioModule> firefly.testIO </hermesParams.ioModule>
+     <hermesParams.policy> adjacent </hermesParams.policy>
+     <hermesParams.nodeParams.numCores> 1 </hermesParams.nodeParams.numCores>
+     <hermesParams.nodeParams.coreNum> 0 </hermesParams.nodeParams.coreNum>
+  </driverParams>
+
+</param_include>
+
+<sst>
+
+    <component name="0.driver" type=zodiac.ZodiacSiriusTraceReader >
+        <params include=driverParams>
+        </params>
+        <link name=link.0 port=link latency=1ns />
+    </component>
+
+    <component name="1.driver" type=zodiac.ZodiacSiriusTraceReader >
+        <params include=driverParams>
+        </params>
+        <link name=link.1 port=link latency=1ns />
+    </component>
+
+    <component name="ioSwitch" type=firefly.ioSwitch >
+        <params>
+            <numPorts> 2 </numPorts>
+        </params>
+        <link name=link.0 port=port0 latency=1ns />
+        <link name=link.1 port=port1 latency=1ns />
+    </component>
+
+
+</sst>

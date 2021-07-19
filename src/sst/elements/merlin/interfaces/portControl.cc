@@ -20,8 +20,6 @@
 #include "output_arb_basic.h"
 #include "output_arb_qos_multi.h"
 
-#include <sst/core/sharedRegion.h>
-
 #define TRACK 0
 #define TRACK_ID 131
 #define TRACK_PORT 4
@@ -307,6 +305,12 @@ PortControl::PortControl(ComponentId_t cid, Params& params,  Router* rif, int rt
         }
         break;
     case Topology::R2R:
+    case Topology::FAILED:
+        // We connect things even if it is marked as failed link.  Not
+        // all routers are guaranteed to be able to see the FAILED
+        // flag until the first round of init.  Plus, we ignore failed
+        // links during init, so we'll configure things during setup
+        // to abort on sends from then on.
         host_port = false;
         port_link = configureLink(link_port_name, output_latency_timebase,
                                   new Event::Handler<PortControl>(this,&PortControl::handle_input_r2r));
@@ -441,7 +445,7 @@ PortControl::PortControl(ComponentId_t cid, Params& params,  Router* rif, int rt
 
 
 
-    Params arb_params = params.find_prefix_params("arbitration:");
+    Params arb_params = params.get_scoped_params("arbitration");
 
     std::string output_arb_name = params.find<std::string>("output_arb","merlin.arb.output.basic");
     output_arb = loadAnonymousSubComponent<OutputArbitration>
@@ -453,9 +457,8 @@ PortControl::PortControl(ComponentId_t cid, Params& params,  Router* rif, int rt
         vn_remap_shm = params.find<std::string>("vn_remap_shm","");
         if ( vn_remap_shm != "" ) {
             int size = params.find<int>("vn_remap_shm_size",-1);
-            shared_region = Simulation::getSharedRegionManager()->
-                getGlobalSharedRegion(vn_remap_shm, size, new SharedRegionMerger());
-            shared_region->publish();
+            vn_remap.initialize(vn_remap_shm, size);
+            vn_remap.publish();
         }
     }
 
@@ -554,6 +557,10 @@ PortControl::~PortControl() {
 void
 PortControl::setup() {
     if ( !connected ) return;
+    if ( topo->getPortState(port_number) == Topology::FAILED ) {
+        port_link->replaceFunctor(new Event::Handler<PortControl>(this,&PortControl::handle_failed));
+        output_timing->replaceFunctor(new Event::Handler<PortControl>(this,&PortControl::handle_failed));
+    }
 	if (dlink_thresh >= 0) dynlink_timing->send(1,NULL);
     while ( init_events.size() ) {
         delete init_events.front();
@@ -589,6 +596,26 @@ PortControl::finish() {
     for ( unsigned int i = 0; i < network_inspectors.size(); i++ ) {
         network_inspectors[i]->finish();
     }
+}
+
+RtrInitEvent* PortControl::checkInitProtocol(Event* ev, RtrInitEvent::Commands command, uint32_t line, const char* file, const char* func)
+{
+    bool good = true;
+    RtrInitEvent* init_ev = nullptr;
+    // Check to make sure the event isn't null and that it is an init event
+    if ( nullptr == ev || static_cast<BaseRtrEvent*>(ev)->getType() != BaseRtrEvent::INITIALIZATION ) good = false;
+
+    if ( good ) {
+        init_ev = static_cast<RtrInitEvent*>(ev);
+
+        // Now check to make sure this is the right protocol event
+        if ( init_ev->command != command ) {
+            good = false;
+        }
+    }
+
+    sst_assert(good, line, file, func, 1, "Error during PortControl protocol initialization.  The most likely cause of this is connecting an endpoint to a router port expecting to be connnected to another router.\n");
+    return init_ev;
 }
 
 
@@ -637,7 +664,7 @@ PortControl::init(unsigned int phase) {
         // Get the link speed from the other side.  Actual link speed
         // will be the minumum the two sides
         ev = port_link->recvInitData();
-        init_ev = dynamic_cast<RtrInitEvent*>(ev);
+        init_ev = checkInitProtocol(ev, RtrInitEvent::REPORT_BW, CALL_INFO);
         if ( link_bw > init_ev->ua_value ) link_bw = init_ev->ua_value;
 
         // Initialize links (or rather, reset the TimeBase to get the
@@ -651,7 +678,7 @@ PortControl::init(unsigned int phase) {
         if ( topo->isHostPort(port_number) ) {
             // Number of VNs used by the endpoint
             ev = port_link->recvInitData();
-            init_ev = dynamic_cast<RtrInitEvent*>(ev);
+            init_ev = checkInitProtocol(ev, RtrInitEvent::REQUEST_VNS, CALL_INFO);
             int req_vns = init_ev->int_value;
             if ( num_vns == -1 ) num_vns = req_vns;
 
@@ -677,10 +704,10 @@ PortControl::init(unsigned int phase) {
                     init_ev->int_value = i;
                 }
                 else {
-                    int* map = (int*)shared_region->getRawPtr();
+                    // int* map = (int*)shared_region->getRawPtr();
                     int endpoint_id = topo->getEndpointID(port_number);
                     for ( int j = 0; j < num_vns; ++j ) {
-                        if ( map[endpoint_id*num_vns + j] == i ) {
+                        if ( vn_remap[endpoint_id*num_vns + j] == i ) {
                             init_ev->int_value = j;
                             break;
                         }
@@ -693,12 +720,12 @@ PortControl::init(unsigned int phase) {
             // If not a host port, the other side sent us their rtr_id
             // and port_number
             ev = port_link->recvInitData();
-            init_ev = dynamic_cast<RtrInitEvent*>(ev);
+            init_ev = checkInitProtocol(ev, RtrInitEvent::REPORT_ID, CALL_INFO);
             remote_rtr_id = init_ev->int_value;
             delete init_ev;
 
             ev = port_link->recvInitData();
-            init_ev = dynamic_cast<RtrInitEvent*>(ev);
+            init_ev = checkInitProtocol(ev, RtrInitEvent::REPORT_PORT, CALL_INFO);
             remote_port_number = init_ev->int_value;
             delete init_ev;
 
@@ -1184,6 +1211,12 @@ PortControl::handle_output(Event* ev) {
         printStatus(Simulation::getSimulation()->getSimulationOutput(),0,0);
     }
 #endif
+}
+
+void
+PortControl::handle_failed(Event* ev) {
+    merlin_abort.fatal(CALL_INFO, 1, "INTERNAL ERROR: Event sent to port that has been marked as failed.  There must be something wrong with the routing algorithm being used.\n");
+    return;
 }
 
 

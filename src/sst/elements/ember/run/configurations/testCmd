@@ -1,0 +1,13 @@
+
+sst --model-options="\
+--cmdLine=Init --cmdLine=\"Ring interations=100\" --cmdLine=Fini \
+--numNodes=8 \
+--numRanksPerNode=2 \
+--topo=torus \
+--shape=4x4 \
+--netPktSize=100B \
+--netBW=8GB/s \
+--netFlitSize=16B \
+--rtrArb=merlin.xbar_arb_lru \
+--emberRankmapper=fff \
+" ../script/emberLoadCmd.py

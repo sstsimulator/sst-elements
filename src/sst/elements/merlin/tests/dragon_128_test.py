@@ -25,8 +25,10 @@ if __name__ == "__main__":
     topo.hosts_per_router = 4
     topo.routers_per_group = 8
     topo.intergroup_links = 4
-    topo.num_groups = 4
-    topo.algorithm = ["minimal","adaptive-local"]
+    topo.num_groups = 5
+    topo.algorithm = ["minimal","ugal"]
+
+    group_size = topo.hosts_per_router * topo.routers_per_group
     
     # Set up the routers
     router = hr_router()
@@ -58,14 +60,14 @@ if __name__ == "__main__":
     networkif.vn_remap = [0]
     networkif2.vn_remap = [1]
     
-    ep = TestJob(0,topo.getNumNodes() // 2)
+    ep = TestJob(0,(topo.getNumNodes() - group_size) // 2)
     ep.network_interface = networkif
     #ep.num_messages = 10
     #ep.message_size = "8B"
     #ep.send_untimed_bcast = False
         
-    ep2 = TestJob(1,topo.getNumNodes() // 2)
-    ep2.network_interface = networkif
+    ep2 = TestJob(1,(topo.getNumNodes() - group_size) // 2)
+    ep2.network_interface = networkif2
     #ep.num_messages = 10
     #ep.message_size = "8B"
     #ep.send_untimed_bcast = False

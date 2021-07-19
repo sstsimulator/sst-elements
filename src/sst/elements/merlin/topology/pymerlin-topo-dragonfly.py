@@ -25,7 +25,8 @@ class topoDragonFly(Topology):
         Topology.__init__(self)
         self._declareClassVariables(["link_latency","host_link_latency","global_link_map"])
         self._declareParams("main",["hosts_per_router","routers_per_group","intergroup_links","num_groups",
-                                    "algorithm","adaptive_threshold","global_routes"])
+                                    "algorithm","adaptive_threshold","global_routes","config_failed_links",
+                                    "failed_links"])
         self.global_routes = "absolute"
         self._subscribeToPlatformParamSet("topology")
 
@@ -53,15 +54,19 @@ class topoDragonFly(Topology):
 
     def getRouterNameForId(self,rtr_id):
         return self.getRouterNameForLocation(rtr_id // self.routers_per_group, rtr_id % self.routers_per_group)
-        
+
     def getRouterNameForLocation(self,group,rtr):
         return "%srtr.G%dR%d"%(self._prefix,group,rtr)
-    
+
     def findRouterByLocation(self,group,rtr):
         return sst.findComponentByName(self.getRouterNameForLocation(group,rtr))
-    
-        
+
+
     def build(self, endpoint):
+        if self._check_first_build():
+            sst.addGlobalParams("params_%s"%self._instance_name, self._getGroupParams("main"))
+
+
         if self.host_link_latency is None:
             self.host_link_latency = self.link_latency
 
@@ -152,7 +157,6 @@ class topoDragonFly(Topology):
         nic_num = 0
         # GROUPS
         for g in range(self.num_groups):
-
             # GROUP ROUTERS
             for r in range(self.routers_per_group):
                 rtr = self._instanceRouter(num_ports,router_num)
@@ -160,7 +164,7 @@ class topoDragonFly(Topology):
                 # Insert the topology object
                 sub = rtr.setSubComponent(self.router.getTopologySlotName(),"merlin.dragonfly",0)
                 self._applyStatisticsSettings(sub)
-                sub.addParams(self._getGroupParams("main"))
+                sub.addGlobalParamSet("params_%s"%self._instance_name)
                 sub.addParam("intergroup_per_router",intergroup_per_router)
                 if router_num == 0:
                     # Need to send in the global_port_map

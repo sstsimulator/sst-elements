@@ -18,32 +18,32 @@ class testcase_simpleComponents(SSTTestCase):
 
 #####
 
-    def test_simple_component(self):
-        self.simple_components_template("simpleComponent")
+    def test_example_0(self):
+        self.simple_components_template("example0")
 
-    def test_simple_messagegenerator_component(self):
-       self.simple_components_template("simpleMessageGeneratorComponent")
+    def test_example_1(self):
+        self.simple_components_template("example1")
 
-    def test_simple_statistics_component(self):
-       self.simple_components_template("simpleStatisticsComponent")
+    def test_basic_clocks(self):
+        self.simple_components_template("basicClocks")
 
-    def test_simple_rng_component_mersenne(self):
-        self.simple_components_template("simpleRNGComponent_mersenne", striptotail=1)
+    def test_basic_links(self):
+        self.simple_components_template("basicLinks")
 
-    def test_simple_rng_component_marsaglia(self):
-        self.simple_components_template("simpleRNGComponent_marsaglia", striptotail=1)
+    def test_basic_params(self):
+        self.simple_components_template("basicParams")
 
-    def test_simple_rng_component_xorshift_component(self):
-        self.simple_components_template("simpleRNGComponent_xorshift", striptotail=1)
+    def test_basic_statistics_0(self):
+        self.simple_components_template("basicStatistics0")
 
-    def test_simple_distrib_component_expon(self):
-       self.simple_components_template("simpleDistribComponent_expon")
+    def test_basic_statistics_1(self):
+        self.simple_components_template("basicStatistics1")
 
-    def test_simple_distrib_component_gaussian(self):
-       self.simple_components_template("simpleDistribComponent_gaussian")
+    def test_basic_statistics_2(self):
+        self.simple_components_template("basicStatistics2")
 
-    def test_simple_distrib_component_discrete(self):
-       self.simple_components_template("simpleDistribComponent_discrete")
+    #def test_simple_rng_component_marsaglia(self):
+    #    self.simple_components_template("simpleRNGComponent_marsaglia", striptotail=1)
 
 #####
 
@@ -54,7 +54,7 @@ class testcase_simpleComponents(SSTTestCase):
         tmpdir = self.get_test_output_tmp_dir()
 
         # Set the various file paths
-        testDataFileName="test_{0}".format(testcase)
+        testDataFileName="{0}".format(testcase)
 
         sdlfile = "{0}/{1}.py".format(test_path, testDataFileName)
         reffile = "{0}/refFiles/{1}.out".format(test_path, testDataFileName)
@@ -82,7 +82,8 @@ class testcase_simpleComponents(SSTTestCase):
         #       TESTS & RESULT FILES ARE STILL VALID
 
         # Perform the tests
-        self.assertFalse(os_test_file(errfile, "-s"), "simpleComponents test {0} has Non-empty Error File {1}".format(testDataFileName, errfile))
+        if os_test_file(errfile, "-s"):
+            log_testing_note("simpleComponents test {0} has a Non-Empty Error File {1}".format(testDataFileName, errfile))
 
         cmp_result = testing_compare_sorted_diff(testcase, cmpfile, reffile)
         if (cmp_result == False):

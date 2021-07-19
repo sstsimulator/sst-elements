@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+<sdl version="2.0"/>
+<timebase>1ns</timebase>
+
+<config>
+ stopAtCycle=1000000ns
+</config>
+
+<variables>
+	<lat> 1ns </lat>
+        <buslat> 50 ps </buslat>
+</variables>
+
+
+<sst>
+        <component name="cpu" type="prospero.prospero" rank=0>
+                <params>
+			<outputlevel>1</outputlevel>
+			<tracetype>file</tracetype>
+			<trace> traces/pinatrace.out </trace>
+			<cache_line> 64 </cache_line>
+			<physlimit> 512 </physlimit>
+                </params>
+                <link name=cpu_cache_link port=cache_link latency=$lat />
+        </component>
+
+        <component name="l1cache" type="memHierarchy.Cache" rank=0>
+                <params>
+                        <num_ways> 8 </num_ways>
+                        <num_rows> 128 </num_rows>
+                        <blocksize> 64 </blocksize>
+                        <access_time> 1ns </access_time>
+                        <num_upstream> 1 </num_upstream>
+                </params>
+                <link name=cpu_cache_link port=upstream0 latency=$lat />
+                <link name=cache_bus_link port=snoop_link latency=$buslat />
+        </component>
+
+
+        <component name="membus" type="memHierarchy.Bus" rank=0>
+                <params>
+                        <numPorts> 2 </numPorts>
+                        <busDelay> 1ns </busDelay>
+                </params>
+                <link name=cache_bus_link port=port0 latency=$buslat />
+                <link name=mem_bus_link port=port1 latency=$buslat />
+        </component>
+
+
+	<component name="memory" type="memHierarchy.MemController" rank=1>
+		<params>
+			<access_time> 1000 ns </access_time>
+			<mem_size> 512 </mem_size>
+			<clock> 1GHz </clock>
+		</params>
+		<link name=mem_bus_link port=snoop_link latency=$buslat />
+	</component>
+
+</sst>

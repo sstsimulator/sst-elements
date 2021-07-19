@@ -1,0 +1,8 @@
+WARNING: Building component "ParamComponent" with no links assigned.
+Found basic parameters: bool_param = 1, uint32_param = 678, double_param = 12.500000, string_param = i am string
+Found the required parameter 'int_param' and got 20
+Read ua_param = 10 MB/s
+Read example_param. key = a, value = 92
+Read an array from array_param. Elements are: 
+12, 50, -8, 0, 0, 48939, 
+Simulation is complete, simulated time: 20 us

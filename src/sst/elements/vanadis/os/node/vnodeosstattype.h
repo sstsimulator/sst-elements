@@ -25,13 +25,13 @@ namespace SST {
 namespace Vanadis {
 
 struct vanadis_timespec32 {
-	int32_t tv_sec;
-	int32_t tv_nsec;
+    int32_t tv_sec;
+    int32_t tv_nsec;
 };
 
 /*
 struct stat {
-	dev_t st_dev;                   int64_t
+        dev_t st_dev;                   int64_t
         long __st_padding1[2];	        long[2]
         ino_t st_ino;	                uint64_t
         mode_t st_mode;	                unsigned
@@ -56,54 +56,53 @@ struct stat {
 */
 
 struct vanadis_stat32 {
-	int64_t  st_dev;
-	uint64_t st_ino;
-	uint32_t st_mode;
-	uint32_t st_nlink;
-	uint32_t st_uid;
-	uint32_t st_gid;
-	uint64_t st_rdev;
-	int64_t	 st_size;
-	int32_t  st_blksize;
-	int64_t st_blocks;
-	vanadis_timespec32 st_atim;
-	vanadis_timespec32 st_mtim;
-	vanadis_timespec32 st_ctim;
+    int64_t st_dev;
+    uint64_t st_ino;
+    uint32_t st_mode;
+    uint32_t st_nlink;
+    uint32_t st_uid;
+    uint32_t st_gid;
+    uint64_t st_rdev;
+    int64_t st_size;
+    int32_t st_blksize;
+    int64_t st_blocks;
+    vanadis_timespec32 st_atim;
+    vanadis_timespec32 st_mtim;
+    vanadis_timespec32 st_ctim;
 };
 
-struct vanadis_stat64 {
+struct vanadis_stat64 {};
 
-};
-
-void vanadis_copy_native_stat( const struct stat* native_stat, struct vanadis_stat32* v_stat ) {
-	v_stat->st_dev = native_stat->st_dev;
-	v_stat->st_ino = native_stat->st_ino;
-	v_stat->st_mode = (uint32_t) native_stat->st_mode;
-	v_stat->st_nlink = (uint32_t) native_stat->st_nlink;
-	v_stat->st_uid = (uint32_t) native_stat->st_uid;
-	v_stat->st_gid = (uint32_t) native_stat->st_gid;
-	v_stat->st_rdev = native_stat->st_rdev;
-	v_stat->st_size = native_stat->st_size;
-	v_stat->st_blksize = (int32_t) native_stat->st_blksize;
-	v_stat->st_blocks = native_stat->st_blocks;
+void
+vanadis_copy_native_stat(const struct stat* native_stat, struct vanadis_stat32* v_stat) {
+    v_stat->st_dev = native_stat->st_dev;
+    v_stat->st_ino = native_stat->st_ino;
+    v_stat->st_mode = (uint32_t)native_stat->st_mode;
+    v_stat->st_nlink = (uint32_t)native_stat->st_nlink;
+    v_stat->st_uid = (uint32_t)native_stat->st_uid;
+    v_stat->st_gid = (uint32_t)native_stat->st_gid;
+    v_stat->st_rdev = native_stat->st_rdev;
+    v_stat->st_size = native_stat->st_size;
+    v_stat->st_blksize = (int32_t)native_stat->st_blksize;
+    v_stat->st_blocks = native_stat->st_blocks;
 #ifdef SST_COMPILE_MACOSX
-	v_stat->st_atim.tv_sec = (int32_t) native_stat->st_atimespec.tv_sec;
-	v_stat->st_atim.tv_nsec = (int32_t) native_stat->st_atimespec.tv_nsec;
-	v_stat->st_mtim.tv_sec = (int32_t) native_stat->st_mtimespec.tv_sec;
-	v_stat->st_mtim.tv_nsec = (int32_t) native_stat->st_mtimespec.tv_nsec;
-	v_stat->st_ctim.tv_sec = (int32_t) native_stat->st_ctimespec.tv_sec;
-	v_stat->st_ctim.tv_nsec = (int32_t) native_stat->st_ctimespec.tv_nsec;
+    v_stat->st_atim.tv_sec = (int32_t)native_stat->st_atimespec.tv_sec;
+    v_stat->st_atim.tv_nsec = (int32_t)native_stat->st_atimespec.tv_nsec;
+    v_stat->st_mtim.tv_sec = (int32_t)native_stat->st_mtimespec.tv_sec;
+    v_stat->st_mtim.tv_nsec = (int32_t)native_stat->st_mtimespec.tv_nsec;
+    v_stat->st_ctim.tv_sec = (int32_t)native_stat->st_ctimespec.tv_sec;
+    v_stat->st_ctim.tv_nsec = (int32_t)native_stat->st_ctimespec.tv_nsec;
 #else
-	v_stat->st_atim.tv_sec = (int32_t) native_stat->st_atim.tv_sec;
-	v_stat->st_atim.tv_nsec = (int32_t) native_stat->st_atim.tv_nsec;
-	v_stat->st_mtim.tv_sec = (int32_t) native_stat->st_mtim.tv_sec;
-	v_stat->st_mtim.tv_nsec = (int32_t) native_stat->st_mtim.tv_nsec;
-	v_stat->st_ctim.tv_sec = (int32_t) native_stat->st_ctim.tv_sec;
-	v_stat->st_ctim.tv_nsec = (int32_t) native_stat->st_ctim.tv_nsec;
+    v_stat->st_atim.tv_sec = (int32_t)native_stat->st_atim.tv_sec;
+    v_stat->st_atim.tv_nsec = (int32_t)native_stat->st_atim.tv_nsec;
+    v_stat->st_mtim.tv_sec = (int32_t)native_stat->st_mtim.tv_sec;
+    v_stat->st_mtim.tv_nsec = (int32_t)native_stat->st_mtim.tv_nsec;
+    v_stat->st_ctim.tv_sec = (int32_t)native_stat->st_ctim.tv_sec;
+    v_stat->st_ctim.tv_nsec = (int32_t)native_stat->st_ctim.tv_nsec;
 #endif
 };
 
-}
-}
+} // namespace Vanadis
+} // namespace SST
 
 #endif

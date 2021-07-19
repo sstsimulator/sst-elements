@@ -1,0 +1,10 @@
+EMBER: using param directory: paramFiles
+EMBER: platform: default
+EMBER: network: topology=torus shape=4x4x4
+EMBER: numNodes=64 numNics=64
+EMBER: network: BW=4GB/s pktSize=2048B flitSize=8B
+EMBER: Job=0, nidList='0-63'
+EMBER: Motif='Init'
+EMBER: Motif='Sweep3D nx=30 ny=30 nz=30 computetime=140 pex=4 pey=16 pez=0 kba=10'
+EMBER: Motif='Fini'
+Simulation is complete, simulated time: 4.08083 ms

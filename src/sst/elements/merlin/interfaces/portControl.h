@@ -25,6 +25,7 @@
 #include <sst/core/output.h>
 #include <sst/core/timeConverter.h>
 #include <sst/core/unitAlgebra.h>
+#include <sst/core/shared/sharedArray.h>
 
 #include <sst/core/statapi/stataccumulator.h>
 
@@ -35,8 +36,6 @@
 using namespace SST;
 
 namespace SST {
-
-class SharedRegion;
 
 namespace Merlin {
 
@@ -120,6 +119,7 @@ private:
     int num_vns;
     std::string vn_remap_shm;
     int vn_remap_shm_size;
+    Shared::SharedArray<int> vn_remap;
 
 	int max_link_width;
 	int cur_link_width;
@@ -238,11 +238,11 @@ private:
 	bool ongoing_transmit;
 	uint64_t time_active_nano_remaining;
 
+    RtrInitEvent* checkInitProtocol(Event* ev, RtrInitEvent::Commands command, uint32_t line, const char* file, const char* func);
+
     Output& output;
 
     PortInterface::OutputArbitration* output_arb;
-
-    SharedRegion* shared_region;
 
     // For supporting congestion management
     struct CongestionInfo {
@@ -355,8 +355,9 @@ private:
     void handle_input_n2r(Event* ev);
     void handle_input_r2r(Event* ev);
     void handle_output(Event* ev);
-	void handleSAIWindow(Event* ev);
-	void reenablePort(Event* ev);
+    void handle_failed(Event* ev);
+    void handleSAIWindow(Event* ev);
+    void reenablePort(Event* ev);
 
 	uint64_t increaseActive();
 

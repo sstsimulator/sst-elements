@@ -1,0 +1,64 @@
+##################################################
+##
+## MODEL_PARAMS
+##  simpleMem = basicDetailedModelParams
+##  timingDRAM = timingDetailedModelParams
+##  Cramsim = cramsimDetailedModelParams
+##
+##################################################
+
+SHAPE="5,5:5,5:8"
+LOADFILE="loadFAM200detailed"
+
+STATMODULE='statModule'
+STATFILE='myStats.out'
+
+MODEL="detailedShmemModel"
+MODEL_PARAMS="basicDetailedModelParams"
+MODEL_NODES=1
+
+#time sst -v -v -v -v -n8 \
+
+time sst -n8 \
+--print-timing-info \
+--partitioner=roundrobin \
+--model-options=" \
+--detailedModelName=$MODEL \
+--detailedModelParams=$MODEL_PARAMS \
+--detailedModelNodes=$MODEL_NODES \
+--statsModule=$STATMODULE \
+--statsFile=$STATFILE \
+--loadFile=$LOADFILE \
+--platform=default \
+--topo=fattree \
+--shape=$SHAPE \
+--param=nic:simpleMemoryModel.nicNumLoadSlots=1000 \
+--param=nic:simpleMemoryModel.nicNumStoreSlots=1000 \
+--param=nic:nic2host_lat=170ns \
+--param=nic:shmemRxDelay_ns=0 \
+--param=nic:txDelay_ns=0 \
+--param=nic:numSendMachines=256 \
+--param=nic:numRecvNicUnits=1 \
+--param=nic:maxRecvMachineQsize=72 \
+--param=nic:maxSendMachineQsize=8 \
+--param=nic:numShmemCmdSlots=256 \
+--param=nic:simpleMemoryModel.numWalkers=32 \
+--param=nic:simpleMemoryModel.tlbSize=0 \
+--param=nic:simpleMemoryModel.tlbMissLat_ns=850 \
+--param=nic:simpleMemoryModel.tlbPageSize=8388608 \
+--param=nic:simpleMemoryModel.hostCacheUnitSize=2048 \
+--param=nic:simpleMemoryModel.hostCacheNumMSHR=1000 \
+--param=nic:simpleMemoryModel.memNumSlots=10000 \
+--param=nic:simpleMemoryModel.memReadLat_ns=120 \
+--param=nic:simpleMemoryModel.memWriteLat_ns=20 \
+--param=nic:simpleMemoryModel.widgetSlots=20000 \
+--param=nic:simpleMemoryModel.busBandwidth_Gbs=10000 \
+--param=nic:simpleMemoryModel.TLP_overhead=0 \
+--param=nic:simpleMemoryModel.DLL_bytes=0 \
+--param=nic:shmem.nicCmdLatency=0 \
+--param=nic:shmem.hostCmdLatency=14 \
+--param=ember:firefly.hadesSHMEM.enterLat_ns=0 \
+--param=ember:firefly.hadesSHMEM.returnLat_ns=0 \
+--param=ember:firefly.hadesSHMEM.blockingReturnLat_ns=0 \
+" \
+emberLoad.py

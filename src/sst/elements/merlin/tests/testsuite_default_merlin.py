@@ -73,7 +73,10 @@ class testcase_merlin_Component(SSTTestCase):
     def test_merlin_dragon_128_platform_cm(self):
         self.merlin_test_template("dragon_128_platform_test_cm", True)
 
-         
+    def test_merlin_dragon_128_fl(self):
+        self.merlin_test_template("dragon_128_test_fl")
+
+
 #####
 
     def merlin_test_template(self, testcase, cwd=False):
@@ -102,7 +105,8 @@ class testcase_merlin_Component(SSTTestCase):
         #       TESTS & RESULT FILES ARE STILL VALID
 
         # Perform the tests
-        self.assertFalse(os_test_file(errfile, "-s"), "merlin test {0} has Non-empty Error File {1}".format(testDataFileName, errfile))
+        if os_test_file(errfile, "-s"):
+            log_testing_note("merlin test {0} has a Non-Empty Error File {1}".format(testDataFileName, errfile))
 
         cmp_result = testing_compare_sorted_diff(testcase, outfile, reffile)
         if (cmp_result == False):

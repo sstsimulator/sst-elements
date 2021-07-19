@@ -1,0 +1,25 @@
+# This file must be ordered
+#
+# [JOB_ID]
+# [NID_LIST]
+# [MOTIF]
+# [MOTIF]
+#
+# keywords must be left justified and not contain white space
+# all characters between keywords will be considered part of the leading keyword 
+# you can have multiple MOTIF keywords for a given JOB_ID 
+# you can have multiple jobs
+# two jobs can not have the same NID 
+
+
+[JOB_ID] 10 
+[API] HadesSHMEM
+[NID_LIST] 0-1
+[MOTIF] ShmemPutLong iterations=1 biDir=0 nelems=10000
+
+[JOB_ID] 1 
+[API] HadesSHMEM
+[NID_LIST]
+2,3
+
+[MOTIF] ShmemPutLong iterations=1 biDir=0 nelems=1000

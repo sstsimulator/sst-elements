@@ -1,0 +1,70 @@
+# This file must be ordered
+#
+# [JOB_ID]
+# [NID_LIST]
+# [MOTIF_API]
+# [PARAM]
+# [MOTIF]
+# [MOTIF]
+#
+# keywords must be left justified and not contain white space
+# all characters between keywords will be considered part of the leading keyword 
+# you can have multiple MOTIF keywords for a given JOB_ID 
+# you can have multiple jobs
+# two jobs can not have the same NID 
+
+[JOB_ID] 10 
+[NUM_CORES] 1 
+# 80 nodes started at network node 1, with an interval of 2
+[NID_LIST] generateNidList=generateNidListInterval(1,80,2) 
+[MOTIF_API]  HadesSHMEM
+[PARAM] nic:verboseLevel=0
+[PARAM] nic:verboseMask=256
+[PARAM] nic:useSimpleMemoryModel=1
+[PARAM] nic:simpleMemoryModel.useBusBridge=yes
+[PARAM] nic:simpleMemoryModel.useHostCache=yes
+[PARAM] nic:simpleMemoryModel.printConfig=no
+[PARAM] ember:firefly.hadesSHMEM.verboseLevel=0
+[PARAM] ember:firefly.hadesSHMEM.verboseMask=-1
+[PARAM] ember:verbose=0
+
+# use the Group node mapper 
+[PARAM] ember:firefly.hadesSHMEM.famNodeMapper.name=firefly.Group_FamNodeMapper
+# FAM nodes start at 0
+[PARAM] ember:firefly.hadesSHMEM.famNodeMapper.firstNode=0
+# FAM node groups have a stride of 2 
+[PARAM] ember:firefly.hadesSHMEM.famNodeMapper.nodeStride=2
+
+# use the Round Robin Addr mapper 
+[PARAM] ember:firefly.hadesSHMEM.famAddrMapper.name=firefly.RR_FamAddrMapper
+# every FAM nodes has X bytes, this number has to match the FAM_memSize of the FAM node
+[PARAM] ember:firefly.hadesSHMEM.famAddrMapper.bytesPerNode=2MiB
+# number of FAM nodes
+[PARAM] ember:firefly.hadesSHMEM.famAddrMapper.numNodes=100
+# size of a FAM block of memory  
+[PARAM] ember:firefly.hadesSHMEM.famAddrMapper.blockSize=1024
+
+# totalBYtes should be <= number of FAM nodes * memory per FAM node, blockSize specifies size of each get
+[MOTIF] ShmemFAM_Get2 totalBytes=200MiB getLoop=1 backed=no blockSize=4096
+
+[JOB_ID] 11
+# 100 FAM nodes starting at network node 0, with an interval of 2
+[NID_LIST] generateNidList=generateNidListInterval(0,100,2) 
+[PARAM] nic:verboseLevel=0
+[PARAM] nic:verboseMask=-1
+[PARAM] nic:printConfig=no
+[PARAM] nic:useSimpleMemoryModel=1
+[PARAM] nic:simpleMemoryModel.verboseLevel=0
+[PARAM] nic:simpleMemoryModel.verboseMask=-1
+[PARAM] nic:simpleMemoryModel.useHostCache=no
+[PARAM] nic:simpleMemoryModel.useBusBridge=no
+[PARAM] nic:simpleMemoryModel.printConfig=no
+# how much memory does the FAM node have
+[PARAM] nic:FAM_memSize=2MiB
+[PARAM] nic:FAM_backed=no
+[MOTIF] Null
+
+[JOB_ID] 12
+# idle nodes
+[NID_LIST] generateNidList=generateNidListInterval(161,20,2) 
+[MOTIF] Null

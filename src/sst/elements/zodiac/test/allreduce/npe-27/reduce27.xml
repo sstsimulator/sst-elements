@@ -1,0 +1,618 @@
+<?xml version="1.0"?>
+<sdl version="2.0" />
+
+<config>
+  run-mode=both
+</config>
+
+<param_include>
+  <rtr_params>
+    <debug> 0 </debug>
+    <num_ports> 7 </num_ports>
+    <num_vcs> 2 </num_vcs>
+    <link_bw> 1GHz </link_bw>
+    <xbar_bw> 1GHz </xbar_bw>
+    <topology> merlin.torus </topology>
+    <torus:shape> 3x3x3 </torus:shape>
+    <torus:width> 1x1x1 </torus:width>
+    <torus:local_ports> 1 </torus:local_ports>
+  </rtr_params>
+
+  <nicParams>
+    <hermesParams.nicParams.debug> 0 </hermesParams.nicParams.debug>
+    <hermesParams.nicParams.verboseLevel> 2 </hermesParams.nicParams.verboseLevel>
+    <hermesParams.nicParams.module> merlin.linkcontrol </hermesParams.nicParams.module>
+    <hermesParams.nicParams.topology> merlin.torus </hermesParams.nicParams.topology>
+    <hermesParams.nicParams.num_vcs> 2 </hermesParams.nicParams.num_vcs>
+    <hermesParams.nicParams.link_bw> 1GHz </hermesParams.nicParams.link_bw>
+  </nicParams>
+
+  <driverParams>
+    <scalecompute>0.0001</scalecompute>
+    <debug> 1 </debug>
+    <verbose> 16 </verbose>
+    <bufLen> 8 </bufLen>
+    <msgapi> firefly.hades </msgapi>
+    <hermesModule> firefly.hades </hermesModule>
+    <trace> allred-27.stf </trace>
+    <traceFile> allred-27.stf </traceFile>
+    <sharedTraceFile> allred-27.stf </sharedTraceFile>
+    <hermesParams.debug> 0 </hermesParams.debug>
+    <hermesParams.verboseLevel> 1 </hermesParams.verboseLevel>
+    <hermesParams.numRanks> 27 </hermesParams.numRanks>
+    <hermesParams.nidListFile> nidlist.txt </hermesParams.nidListFile>
+    <hermesParams.nicModule> firefly.nic </hermesParams.nicModule>
+    <hermesParams.policy> adjacent </hermesParams.policy>
+    <hermesParams.nodeParams.numCores> 1 </hermesParams.nodeParams.numCores>
+    <hermesParams.nodeParams.coreNum> 0 </hermesParams.nodeParams.coreNum>
+  </driverParams>
+</param_include>
+
+
+<sst>
+  <component name=rtr.0x0x0 type=merlin.hr_router>
+    <params include=rtr_params>
+      <id> 0 </id>
+    </params>
+    <link name=link.0x0x0:1x0x0:0 port=port0 latency=10ns />
+    <link name=link.2x0x0:0x0x0:0 port=port1 latency=10ns />
+    <link name=link.0x0x0:0x1x0:0 port=port2 latency=10ns />
+    <link name=link.0x2x0:0x0x0:0 port=port3 latency=10ns />
+    <link name=link.0x0x0:0x0x1:0 port=port4 latency=10ns />
+    <link name=link.0x0x2:0x0x0:0 port=port5 latency=10ns />
+    <link name=nic.0:0 port=port6 latency=10ns />
+  </component>
+
+  <component name=nic.0x0x0-0 type=zodiac.ZodiacSiriusTraceReader >
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 0 </hermesParams.nicParams.nid>
+    </params>
+    <link name=nic.0:0 port=rtr latency=10ns />
+  </component>
+
+  <component name=rtr.1x0x0 type=merlin.hr_router>
+    <params include=rtr_params>
+      <id> 1 </id>
+    </params>
+    <link name=link.1x0x0:2x0x0:0 port=port0 latency=10ns />
+    <link name=link.0x0x0:1x0x0:0 port=port1 latency=10ns />
+    <link name=link.1x0x0:1x1x0:0 port=port2 latency=10ns />
+    <link name=link.1x2x0:1x0x0:0 port=port3 latency=10ns />
+    <link name=link.1x0x0:1x0x1:0 port=port4 latency=10ns />
+    <link name=link.1x0x2:1x0x0:0 port=port5 latency=10ns />
+    <link name=nic.1:0 port=port6 latency=10ns />
+  </component>
+
+  <component name=nic.1x0x0-0 type=zodiac.ZodiacSiriusTraceReader >
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 1 </hermesParams.nicParams.nid>
+    </params>
+    <link name=nic.1:0 port=rtr latency=10ns />
+  </component>
+
+  <component name=rtr.2x0x0 type=merlin.hr_router>
+    <params include=rtr_params>
+      <id> 2 </id>
+    </params>
+    <link name=link.2x0x0:0x0x0:0 port=port0 latency=10ns />
+    <link name=link.1x0x0:2x0x0:0 port=port1 latency=10ns />
+    <link name=link.2x0x0:2x1x0:0 port=port2 latency=10ns />
+    <link name=link.2x2x0:2x0x0:0 port=port3 latency=10ns />
+    <link name=link.2x0x0:2x0x1:0 port=port4 latency=10ns />
+    <link name=link.2x0x2:2x0x0:0 port=port5 latency=10ns />
+    <link name=nic.2:0 port=port6 latency=10ns />
+  </component>
+
+  <component name=nic.2x0x0-0 type=zodiac.ZodiacSiriusTraceReader >
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 2 </hermesParams.nicParams.nid>
+    </params>
+    <link name=nic.2:0 port=rtr latency=10ns />
+  </component>
+
+  <component name=rtr.0x1x0 type=merlin.hr_router>
+    <params include=rtr_params>
+      <id> 3 </id>
+    </params>
+    <link name=link.0x1x0:1x1x0:0 port=port0 latency=10ns />
+    <link name=link.2x1x0:0x1x0:0 port=port1 latency=10ns />
+    <link name=link.0x1x0:0x2x0:0 port=port2 latency=10ns />
+    <link name=link.0x0x0:0x1x0:0 port=port3 latency=10ns />
+    <link name=link.0x1x0:0x1x1:0 port=port4 latency=10ns />
+    <link name=link.0x1x2:0x1x0:0 port=port5 latency=10ns />
+    <link name=nic.3:0 port=port6 latency=10ns />
+  </component>
+
+  <component name=nic.0x1x0-0 type=zodiac.ZodiacSiriusTraceReader >
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 3 </hermesParams.nicParams.nid>
+    </params>
+    <link name=nic.3:0 port=rtr latency=10ns />
+  </component>
+
+  <component name=rtr.1x1x0 type=merlin.hr_router>
+    <params include=rtr_params>
+      <id> 4 </id>
+    </params>
+    <link name=link.1x1x0:2x1x0:0 port=port0 latency=10ns />
+    <link name=link.0x1x0:1x1x0:0 port=port1 latency=10ns />
+    <link name=link.1x1x0:1x2x0:0 port=port2 latency=10ns />
+    <link name=link.1x0x0:1x1x0:0 port=port3 latency=10ns />
+    <link name=link.1x1x0:1x1x1:0 port=port4 latency=10ns />
+    <link name=link.1x1x2:1x1x0:0 port=port5 latency=10ns />
+    <link name=nic.4:0 port=port6 latency=10ns />
+  </component>
+
+  <component name=nic.1x1x0-0 type=zodiac.ZodiacSiriusTraceReader >
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 4 </hermesParams.nicParams.nid>
+    </params>
+    <link name=nic.4:0 port=rtr latency=10ns />
+  </component>
+
+  <component name=rtr.2x1x0 type=merlin.hr_router>
+    <params include=rtr_params>
+      <id> 5 </id>
+    </params>
+    <link name=link.2x1x0:0x1x0:0 port=port0 latency=10ns />
+    <link name=link.1x1x0:2x1x0:0 port=port1 latency=10ns />
+    <link name=link.2x1x0:2x2x0:0 port=port2 latency=10ns />
+    <link name=link.2x0x0:2x1x0:0 port=port3 latency=10ns />
+    <link name=link.2x1x0:2x1x1:0 port=port4 latency=10ns />
+    <link name=link.2x1x2:2x1x0:0 port=port5 latency=10ns />
+    <link name=nic.5:0 port=port6 latency=10ns />
+  </component>
+
+  <component name=nic.2x1x0-0 type=zodiac.ZodiacSiriusTraceReader >
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 5 </hermesParams.nicParams.nid>
+    </params>
+    <link name=nic.5:0 port=rtr latency=10ns />
+  </component>
+
+  <component name=rtr.0x2x0 type=merlin.hr_router>
+    <params include=rtr_params>
+      <id> 6 </id>
+    </params>
+    <link name=link.0x2x0:1x2x0:0 port=port0 latency=10ns />
+    <link name=link.2x2x0:0x2x0:0 port=port1 latency=10ns />
+    <link name=link.0x2x0:0x0x0:0 port=port2 latency=10ns />
+    <link name=link.0x1x0:0x2x0:0 port=port3 latency=10ns />
+    <link name=link.0x2x0:0x2x1:0 port=port4 latency=10ns />
+    <link name=link.0x2x2:0x2x0:0 port=port5 latency=10ns />
+    <link name=nic.6:0 port=port6 latency=10ns />
+  </component>
+
+  <component name=nic.0x2x0-0 type=zodiac.ZodiacSiriusTraceReader >
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 6 </hermesParams.nicParams.nid>
+    </params>
+    <link name=nic.6:0 port=rtr latency=10ns />
+  </component>
+
+  <component name=rtr.1x2x0 type=merlin.hr_router>
+    <params include=rtr_params>
+      <id> 7 </id>
+    </params>
+    <link name=link.1x2x0:2x2x0:0 port=port0 latency=10ns />
+    <link name=link.0x2x0:1x2x0:0 port=port1 latency=10ns />
+    <link name=link.1x2x0:1x0x0:0 port=port2 latency=10ns />
+    <link name=link.1x1x0:1x2x0:0 port=port3 latency=10ns />
+    <link name=link.1x2x0:1x2x1:0 port=port4 latency=10ns />
+    <link name=link.1x2x2:1x2x0:0 port=port5 latency=10ns />
+    <link name=nic.7:0 port=port6 latency=10ns />
+  </component>
+
+  <component name=nic.1x2x0-0 type=zodiac.ZodiacSiriusTraceReader >
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 7 </hermesParams.nicParams.nid>
+    </params>
+    <link name=nic.7:0 port=rtr latency=10ns />
+  </component>
+
+  <component name=rtr.2x2x0 type=merlin.hr_router>
+    <params include=rtr_params>
+      <id> 8 </id>
+    </params>
+    <link name=link.2x2x0:0x2x0:0 port=port0 latency=10ns />
+    <link name=link.1x2x0:2x2x0:0 port=port1 latency=10ns />
+    <link name=link.2x2x0:2x0x0:0 port=port2 latency=10ns />
+    <link name=link.2x1x0:2x2x0:0 port=port3 latency=10ns />
+    <link name=link.2x2x0:2x2x1:0 port=port4 latency=10ns />
+    <link name=link.2x2x2:2x2x0:0 port=port5 latency=10ns />
+    <link name=nic.8:0 port=port6 latency=10ns />
+  </component>
+
+  <component name=nic.2x2x0-0 type=zodiac.ZodiacSiriusTraceReader >
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 8 </hermesParams.nicParams.nid>
+    </params>
+    <link name=nic.8:0 port=rtr latency=10ns />
+  </component>
+
+  <component name=rtr.0x0x1 type=merlin.hr_router>
+    <params include=rtr_params>
+      <id> 9 </id>
+    </params>
+    <link name=link.0x0x1:1x0x1:0 port=port0 latency=10ns />
+    <link name=link.2x0x1:0x0x1:0 port=port1 latency=10ns />
+    <link name=link.0x0x1:0x1x1:0 port=port2 latency=10ns />
+    <link name=link.0x2x1:0x0x1:0 port=port3 latency=10ns />
+    <link name=link.0x0x1:0x0x2:0 port=port4 latency=10ns />
+    <link name=link.0x0x0:0x0x1:0 port=port5 latency=10ns />
+    <link name=nic.9:0 port=port6 latency=10ns />
+  </component>
+
+  <component name=nic.0x0x1-0 type=zodiac.ZodiacSiriusTraceReader >
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 9 </hermesParams.nicParams.nid>
+    </params>
+    <link name=nic.9:0 port=rtr latency=10ns />
+  </component>
+
+  <component name=rtr.1x0x1 type=merlin.hr_router>
+    <params include=rtr_params>
+      <id> 10 </id>
+    </params>
+    <link name=link.1x0x1:2x0x1:0 port=port0 latency=10ns />
+    <link name=link.0x0x1:1x0x1:0 port=port1 latency=10ns />
+    <link name=link.1x0x1:1x1x1:0 port=port2 latency=10ns />
+    <link name=link.1x2x1:1x0x1:0 port=port3 latency=10ns />
+    <link name=link.1x0x1:1x0x2:0 port=port4 latency=10ns />
+    <link name=link.1x0x0:1x0x1:0 port=port5 latency=10ns />
+    <link name=nic.10:0 port=port6 latency=10ns />
+  </component>
+
+  <component name=nic.1x0x1-0 type=zodiac.ZodiacSiriusTraceReader >
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 10 </hermesParams.nicParams.nid>
+    </params>
+    <link name=nic.10:0 port=rtr latency=10ns />
+  </component>
+
+  <component name=rtr.2x0x1 type=merlin.hr_router>
+    <params include=rtr_params>
+      <id> 11 </id>
+    </params>
+    <link name=link.2x0x1:0x0x1:0 port=port0 latency=10ns />
+    <link name=link.1x0x1:2x0x1:0 port=port1 latency=10ns />
+    <link name=link.2x0x1:2x1x1:0 port=port2 latency=10ns />
+    <link name=link.2x2x1:2x0x1:0 port=port3 latency=10ns />
+    <link name=link.2x0x1:2x0x2:0 port=port4 latency=10ns />
+    <link name=link.2x0x0:2x0x1:0 port=port5 latency=10ns />
+    <link name=nic.11:0 port=port6 latency=10ns />
+  </component>
+
+  <component name=nic.2x0x1-0 type=zodiac.ZodiacSiriusTraceReader >
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 11 </hermesParams.nicParams.nid>
+    </params>
+    <link name=nic.11:0 port=rtr latency=10ns />
+  </component>
+
+  <component name=rtr.0x1x1 type=merlin.hr_router>
+    <params include=rtr_params>
+      <id> 12 </id>
+    </params>
+    <link name=link.0x1x1:1x1x1:0 port=port0 latency=10ns />
+    <link name=link.2x1x1:0x1x1:0 port=port1 latency=10ns />
+    <link name=link.0x1x1:0x2x1:0 port=port2 latency=10ns />
+    <link name=link.0x0x1:0x1x1:0 port=port3 latency=10ns />
+    <link name=link.0x1x1:0x1x2:0 port=port4 latency=10ns />
+    <link name=link.0x1x0:0x1x1:0 port=port5 latency=10ns />
+    <link name=nic.12:0 port=port6 latency=10ns />
+  </component>
+
+  <component name=nic.0x1x1-0 type=zodiac.ZodiacSiriusTraceReader >
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 12 </hermesParams.nicParams.nid>
+    </params>
+    <link name=nic.12:0 port=rtr latency=10ns />
+  </component>
+
+  <component name=rtr.1x1x1 type=merlin.hr_router>
+    <params include=rtr_params>
+      <id> 13 </id>
+    </params>
+    <link name=link.1x1x1:2x1x1:0 port=port0 latency=10ns />
+    <link name=link.0x1x1:1x1x1:0 port=port1 latency=10ns />
+    <link name=link.1x1x1:1x2x1:0 port=port2 latency=10ns />
+    <link name=link.1x0x1:1x1x1:0 port=port3 latency=10ns />
+    <link name=link.1x1x1:1x1x2:0 port=port4 latency=10ns />
+    <link name=link.1x1x0:1x1x1:0 port=port5 latency=10ns />
+    <link name=nic.13:0 port=port6 latency=10ns />
+  </component>
+
+  <component name=nic.1x1x1-0 type=zodiac.ZodiacSiriusTraceReader >
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 13 </hermesParams.nicParams.nid>
+    </params>
+    <link name=nic.13:0 port=rtr latency=10ns />
+  </component>
+
+  <component name=rtr.2x1x1 type=merlin.hr_router>
+    <params include=rtr_params>
+      <id> 14 </id>
+    </params>
+    <link name=link.2x1x1:0x1x1:0 port=port0 latency=10ns />
+    <link name=link.1x1x1:2x1x1:0 port=port1 latency=10ns />
+    <link name=link.2x1x1:2x2x1:0 port=port2 latency=10ns />
+    <link name=link.2x0x1:2x1x1:0 port=port3 latency=10ns />
+    <link name=link.2x1x1:2x1x2:0 port=port4 latency=10ns />
+    <link name=link.2x1x0:2x1x1:0 port=port5 latency=10ns />
+    <link name=nic.14:0 port=port6 latency=10ns />
+  </component>
+
+  <component name=nic.2x1x1-0 type=zodiac.ZodiacSiriusTraceReader >
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 14 </hermesParams.nicParams.nid>
+    </params>
+    <link name=nic.14:0 port=rtr latency=10ns />
+  </component>
+
+  <component name=rtr.0x2x1 type=merlin.hr_router>
+    <params include=rtr_params>
+      <id> 15 </id>
+    </params>
+    <link name=link.0x2x1:1x2x1:0 port=port0 latency=10ns />
+    <link name=link.2x2x1:0x2x1:0 port=port1 latency=10ns />
+    <link name=link.0x2x1:0x0x1:0 port=port2 latency=10ns />
+    <link name=link.0x1x1:0x2x1:0 port=port3 latency=10ns />
+    <link name=link.0x2x1:0x2x2:0 port=port4 latency=10ns />
+    <link name=link.0x2x0:0x2x1:0 port=port5 latency=10ns />
+    <link name=nic.15:0 port=port6 latency=10ns />
+  </component>
+
+  <component name=nic.0x2x1-0 type=zodiac.ZodiacSiriusTraceReader >
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 15 </hermesParams.nicParams.nid>
+    </params>
+    <link name=nic.15:0 port=rtr latency=10ns />
+  </component>
+
+  <component name=rtr.1x2x1 type=merlin.hr_router>
+    <params include=rtr_params>
+      <id> 16 </id>
+    </params>
+    <link name=link.1x2x1:2x2x1:0 port=port0 latency=10ns />
+    <link name=link.0x2x1:1x2x1:0 port=port1 latency=10ns />
+    <link name=link.1x2x1:1x0x1:0 port=port2 latency=10ns />
+    <link name=link.1x1x1:1x2x1:0 port=port3 latency=10ns />
+    <link name=link.1x2x1:1x2x2:0 port=port4 latency=10ns />
+    <link name=link.1x2x0:1x2x1:0 port=port5 latency=10ns />
+    <link name=nic.16:0 port=port6 latency=10ns />
+  </component>
+
+  <component name=nic.1x2x1-0 type=zodiac.ZodiacSiriusTraceReader >
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 16 </hermesParams.nicParams.nid>
+    </params>
+    <link name=nic.16:0 port=rtr latency=10ns />
+  </component>
+
+  <component name=rtr.2x2x1 type=merlin.hr_router>
+    <params include=rtr_params>
+      <id> 17 </id>
+    </params>
+    <link name=link.2x2x1:0x2x1:0 port=port0 latency=10ns />
+    <link name=link.1x2x1:2x2x1:0 port=port1 latency=10ns />
+    <link name=link.2x2x1:2x0x1:0 port=port2 latency=10ns />
+    <link name=link.2x1x1:2x2x1:0 port=port3 latency=10ns />
+    <link name=link.2x2x1:2x2x2:0 port=port4 latency=10ns />
+    <link name=link.2x2x0:2x2x1:0 port=port5 latency=10ns />
+    <link name=nic.17:0 port=port6 latency=10ns />
+  </component>
+
+  <component name=nic.2x2x1-0 type=zodiac.ZodiacSiriusTraceReader >
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 17 </hermesParams.nicParams.nid>
+    </params>
+    <link name=nic.17:0 port=rtr latency=10ns />
+  </component>
+
+  <component name=rtr.0x0x2 type=merlin.hr_router>
+    <params include=rtr_params>
+      <id> 18 </id>
+    </params>
+    <link name=link.0x0x2:1x0x2:0 port=port0 latency=10ns />
+    <link name=link.2x0x2:0x0x2:0 port=port1 latency=10ns />
+    <link name=link.0x0x2:0x1x2:0 port=port2 latency=10ns />
+    <link name=link.0x2x2:0x0x2:0 port=port3 latency=10ns />
+    <link name=link.0x0x2:0x0x0:0 port=port4 latency=10ns />
+    <link name=link.0x0x1:0x0x2:0 port=port5 latency=10ns />
+    <link name=nic.18:0 port=port6 latency=10ns />
+  </component>
+
+  <component name=nic.0x0x2-0 type=zodiac.ZodiacSiriusTraceReader >
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 18 </hermesParams.nicParams.nid>
+    </params>
+    <link name=nic.18:0 port=rtr latency=10ns />
+  </component>
+
+  <component name=rtr.1x0x2 type=merlin.hr_router>
+    <params include=rtr_params>
+      <id> 19 </id>
+    </params>
+    <link name=link.1x0x2:2x0x2:0 port=port0 latency=10ns />
+    <link name=link.0x0x2:1x0x2:0 port=port1 latency=10ns />
+    <link name=link.1x0x2:1x1x2:0 port=port2 latency=10ns />
+    <link name=link.1x2x2:1x0x2:0 port=port3 latency=10ns />
+    <link name=link.1x0x2:1x0x0:0 port=port4 latency=10ns />
+    <link name=link.1x0x1:1x0x2:0 port=port5 latency=10ns />
+    <link name=nic.19:0 port=port6 latency=10ns />
+  </component>
+
+  <component name=nic.1x0x2-0 type=zodiac.ZodiacSiriusTraceReader >
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 19 </hermesParams.nicParams.nid>
+    </params>
+    <link name=nic.19:0 port=rtr latency=10ns />
+  </component>
+
+  <component name=rtr.2x0x2 type=merlin.hr_router>
+    <params include=rtr_params>
+      <id> 20 </id>
+    </params>
+    <link name=link.2x0x2:0x0x2:0 port=port0 latency=10ns />
+    <link name=link.1x0x2:2x0x2:0 port=port1 latency=10ns />
+    <link name=link.2x0x2:2x1x2:0 port=port2 latency=10ns />
+    <link name=link.2x2x2:2x0x2:0 port=port3 latency=10ns />
+    <link name=link.2x0x2:2x0x0:0 port=port4 latency=10ns />
+    <link name=link.2x0x1:2x0x2:0 port=port5 latency=10ns />
+    <link name=nic.20:0 port=port6 latency=10ns />
+  </component>
+
+  <component name=nic.2x0x2-0 type=zodiac.ZodiacSiriusTraceReader >
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 20 </hermesParams.nicParams.nid>
+    </params>
+    <link name=nic.20:0 port=rtr latency=10ns />
+  </component>
+
+  <component name=rtr.0x1x2 type=merlin.hr_router>
+    <params include=rtr_params>
+      <id> 21 </id>
+    </params>
+    <link name=link.0x1x2:1x1x2:0 port=port0 latency=10ns />
+    <link name=link.2x1x2:0x1x2:0 port=port1 latency=10ns />
+    <link name=link.0x1x2:0x2x2:0 port=port2 latency=10ns />
+    <link name=link.0x0x2:0x1x2:0 port=port3 latency=10ns />
+    <link name=link.0x1x2:0x1x0:0 port=port4 latency=10ns />
+    <link name=link.0x1x1:0x1x2:0 port=port5 latency=10ns />
+    <link name=nic.21:0 port=port6 latency=10ns />
+  </component>
+
+  <component name=nic.0x1x2-0 type=zodiac.ZodiacSiriusTraceReader >
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 21 </hermesParams.nicParams.nid>
+    </params>
+    <link name=nic.21:0 port=rtr latency=10ns />
+  </component>
+
+  <component name=rtr.1x1x2 type=merlin.hr_router>
+    <params include=rtr_params>
+      <id> 22 </id>
+    </params>
+    <link name=link.1x1x2:2x1x2:0 port=port0 latency=10ns />
+    <link name=link.0x1x2:1x1x2:0 port=port1 latency=10ns />
+    <link name=link.1x1x2:1x2x2:0 port=port2 latency=10ns />
+    <link name=link.1x0x2:1x1x2:0 port=port3 latency=10ns />
+    <link name=link.1x1x2:1x1x0:0 port=port4 latency=10ns />
+    <link name=link.1x1x1:1x1x2:0 port=port5 latency=10ns />
+    <link name=nic.22:0 port=port6 latency=10ns />
+  </component>
+
+  <component name=nic.1x1x2-0 type=zodiac.ZodiacSiriusTraceReader >
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 22 </hermesParams.nicParams.nid>
+    </params>
+    <link name=nic.22:0 port=rtr latency=10ns />
+  </component>
+
+  <component name=rtr.2x1x2 type=merlin.hr_router>
+    <params include=rtr_params>
+      <id> 23 </id>
+    </params>
+    <link name=link.2x1x2:0x1x2:0 port=port0 latency=10ns />
+    <link name=link.1x1x2:2x1x2:0 port=port1 latency=10ns />
+    <link name=link.2x1x2:2x2x2:0 port=port2 latency=10ns />
+    <link name=link.2x0x2:2x1x2:0 port=port3 latency=10ns />
+    <link name=link.2x1x2:2x1x0:0 port=port4 latency=10ns />
+    <link name=link.2x1x1:2x1x2:0 port=port5 latency=10ns />
+    <link name=nic.23:0 port=port6 latency=10ns />
+  </component>
+
+  <component name=nic.2x1x2-0 type=zodiac.ZodiacSiriusTraceReader >
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 23 </hermesParams.nicParams.nid>
+    </params>
+    <link name=nic.23:0 port=rtr latency=10ns />
+  </component>
+
+  <component name=rtr.0x2x2 type=merlin.hr_router>
+    <params include=rtr_params>
+      <id> 24 </id>
+    </params>
+    <link name=link.0x2x2:1x2x2:0 port=port0 latency=10ns />
+    <link name=link.2x2x2:0x2x2:0 port=port1 latency=10ns />
+    <link name=link.0x2x2:0x0x2:0 port=port2 latency=10ns />
+    <link name=link.0x1x2:0x2x2:0 port=port3 latency=10ns />
+    <link name=link.0x2x2:0x2x0:0 port=port4 latency=10ns />
+    <link name=link.0x2x1:0x2x2:0 port=port5 latency=10ns />
+    <link name=nic.24:0 port=port6 latency=10ns />
+  </component>
+
+  <component name=nic.0x2x2-0 type=zodiac.ZodiacSiriusTraceReader >
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 24 </hermesParams.nicParams.nid>
+    </params>
+    <link name=nic.24:0 port=rtr latency=10ns />
+  </component>
+
+  <component name=rtr.1x2x2 type=merlin.hr_router>
+    <params include=rtr_params>
+      <id> 25 </id>
+    </params>
+    <link name=link.1x2x2:2x2x2:0 port=port0 latency=10ns />
+    <link name=link.0x2x2:1x2x2:0 port=port1 latency=10ns />
+    <link name=link.1x2x2:1x0x2:0 port=port2 latency=10ns />
+    <link name=link.1x1x2:1x2x2:0 port=port3 latency=10ns />
+    <link name=link.1x2x2:1x2x0:0 port=port4 latency=10ns />
+    <link name=link.1x2x1:1x2x2:0 port=port5 latency=10ns />
+    <link name=nic.25:0 port=port6 latency=10ns />
+  </component>
+
+  <component name=nic.1x2x2-0 type=zodiac.ZodiacSiriusTraceReader >
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 25 </hermesParams.nicParams.nid>
+    </params>
+    <link name=nic.25:0 port=rtr latency=10ns />
+  </component>
+
+  <component name=rtr.2x2x2 type=merlin.hr_router>
+    <params include=rtr_params>
+      <id> 26 </id>
+    </params>
+    <link name=link.2x2x2:0x2x2:0 port=port0 latency=10ns />
+    <link name=link.1x2x2:2x2x2:0 port=port1 latency=10ns />
+    <link name=link.2x2x2:2x0x2:0 port=port2 latency=10ns />
+    <link name=link.2x1x2:2x2x2:0 port=port3 latency=10ns />
+    <link name=link.2x2x2:2x2x0:0 port=port4 latency=10ns />
+    <link name=link.2x2x1:2x2x2:0 port=port5 latency=10ns />
+    <link name=nic.26:0 port=port6 latency=10ns />
+  </component>
+
+  <component name=nic.2x2x2-0 type=zodiac.ZodiacSiriusTraceReader >
+    <params include=driverParams,nicParams>
+      <hermesParams.nicParams.nid> 26 </hermesParams.nicParams.nid>
+    </params>
+    <link name=nic.26:0 port=rtr latency=10ns />
+  </component>
+
+</sst>
+
+
+
+<!-- 
+	Parameters
+peers = 27
+router_radix = 7
+topoNICParams = {}
+torus:shape = 3x3x3
+num_dims = 3
+xbar_bw = 1GHz
+num_vcs = 2
+link_bw = 1GHz
+nidlist = nidlist.txt
+torus:local_ports = 1
+torus:width = 1x1x1
+traceFile = allred-27.stf
+link_lat = 10ns
+sharedTraceFile = allred-27.stf
+dimsize = [3, 3, 3]
+dimwidth = [1, 1, 1]
+topology = merlin.torus
+
+-->
+

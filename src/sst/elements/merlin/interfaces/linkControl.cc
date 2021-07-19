@@ -20,7 +20,6 @@
 
 #include <sst/core/simulation.h>
 #include <sst/core/timeLord.h>
-#include <sst/core/sharedRegion.h>
 
 #include "merlin.h"
 
@@ -35,7 +34,7 @@ LinkControl::LinkControl(ComponentId_t cid, Params &params, int vns) :
     req_vns(vns), used_vns(0), total_vns(0), vn_out_map(nullptr),
     vn_remap_out(nullptr), output_queues(nullptr), router_credits(nullptr),
     router_return_credits(nullptr), input_queues(nullptr),
-    id(-1), logical_nid(-1), nid_map_shm(nullptr), nid_map(nullptr), job_id(0),
+    id(-1), logical_nid(-1), use_nid_map(false), job_id(0),
     curr_out_vn(0), waiting(true), have_packets(false), start_block(0),
     idle_start(0), is_idle(true),
     receiveFunctor(nullptr), sendFunctor(nullptr),
@@ -110,8 +109,9 @@ LinkControl::LinkControl(ComponentId_t cid, Params &params, int vns) :
     // See if we need to set up a nid map
     bool found = false;
     job_id = params.find<int>("job_id",-1,found);
+    use_nid_map = params.find<bool>("use_nid_remap",false);
     if ( found ) {
-        if ( params.find<bool>("use_nid_remap",false) ) {
+        if ( use_nid_map ) {
             std::string nid_map_name = std::string("job_") + std::to_string(job_id) + "_nid_map";
 
             int job_size = params.find<int>("job_size",-1);
@@ -119,11 +119,12 @@ LinkControl::LinkControl(ComponentId_t cid, Params &params, int vns) :
                 merlin_abort.fatal(CALL_INFO,1,"LinkControl: job_size must be set\n");
             }
             logical_nid = params.find<nid_t>("logical_nid",-1);
-            if ( job_size == -1 ) {
+            if ( logical_nid == -1 ) {
                 merlin_abort.fatal(CALL_INFO,1,"LinkControl: logical_nid must be set\n");
             }
-            nid_map_shm = Simulation::getSharedRegionManager()->
-                getGlobalSharedRegion(nid_map_name, job_size * sizeof(nid_t), new SharedRegionMerger());
+            // nid_map_shm = Simulation::getSharedRegionManager()->
+            //     getGlobalSharedRegion(nid_map_name, job_size * sizeof(nid_t), new SharedRegionMerger());
+            nid_map.initialize(nid_map_name, job_size * sizeof(nid_t));
         }
     }
     else {
@@ -134,11 +135,11 @@ LinkControl::LinkControl(ComponentId_t cid, Params &params, int vns) :
                 merlin_abort.fatal(CALL_INFO,1,"LinkControl: job_size must be set if nid_map_name is set\n");
             }
             logical_nid = params.find<nid_t>("logical_nid",-1);
-            if ( job_size == -1 ) {
+            if ( logical_nid == -1 ) {
                 merlin_abort.fatal(CALL_INFO,1,"LinkControl: logical_nid must be set if nid_map_name is set\n");
             }
-            nid_map_shm = Simulation::getSharedRegionManager()->
-                getGlobalSharedRegion(nid_map_name, job_size * sizeof(nid_t), new SharedRegionMerger());
+            nid_map.initialize(nid_map_name, job_size * sizeof(nid_t));
+            use_nid_map = true;
         }
     }
 
@@ -162,10 +163,6 @@ LinkControl::~LinkControl()
     delete [] router_credits;
     delete [] router_return_credits;
     delete [] input_queues;
-
-    // Delete shared region manager for nid map if we're using one
-    if ( nid_map_shm ) delete nid_map_shm;
-
 }
 
 void LinkControl::setup()
@@ -174,6 +171,26 @@ void LinkControl::setup()
         delete init_events.front();
         init_events.pop_front();
     }
+}
+
+RtrInitEvent* LinkControl::checkInitProtocol(Event* ev, RtrInitEvent::Commands command, uint32_t line, const char* file, const char* func)
+{
+    bool good = true;
+    RtrInitEvent* init_ev = nullptr;
+    // Check to make sure the event isn't null and that it is an init event
+    if ( nullptr == ev || static_cast<BaseRtrEvent*>(ev)->getType() != BaseRtrEvent::INITIALIZATION ) good = false;
+
+    if ( good ) {
+        init_ev = static_cast<RtrInitEvent*>(ev);
+
+        // Now check to make sure this is the right protocol event
+        if ( init_ev->command != command ) {
+            good = false;
+        }
+    }
+
+    sst_assert(good, line, file, func, 1, "Error during LinkControl protocol initialization.  The most likely cause of this is connecting an endpoint to a router port expecting to be connnected to another router.\n");
+    return init_ev;
 }
 
 void LinkControl::init(unsigned int phase)
@@ -201,13 +218,13 @@ void LinkControl::init(unsigned int phase)
         // Get the link speed from the other side.  Actual link speed
         // will be the minumum the two sides
         ev = rtr_link->recvUntimedData();
-        init_ev = dynamic_cast<RtrInitEvent*>(ev);
+        init_ev = checkInitProtocol(ev, RtrInitEvent::REPORT_BW, CALL_INFO);
         if ( link_bw > init_ev->ua_value ) link_bw = init_ev->ua_value;
         delete ev;
 
         // Get the flit size from the router
         ev = rtr_link->recvUntimedData();
-        init_ev = dynamic_cast<RtrInitEvent*>(ev);
+        init_ev = checkInitProtocol(ev, RtrInitEvent::REPORT_FLIT_SIZE, CALL_INFO);
         flit_size_ua = init_ev->ua_value;
         flit_size = flit_size_ua.getRoundedValue();
         delete ev;
@@ -220,25 +237,14 @@ void LinkControl::init(unsigned int phase)
         // Initialize links
         // Receive the endpoint ID from PortControl
         ev = rtr_link->recvUntimedData();
-        if ( ev == nullptr ) {
-            // fail
-        }
-        if ( static_cast<BaseRtrEvent*>(ev)->getType() != BaseRtrEvent::INITIALIZATION ) {
-            // fail
-        }
-        init_ev = static_cast<RtrInitEvent*>(ev);
-
-        if ( init_ev->command != RtrInitEvent::REPORT_ID ) {
-            // fail
-        }
+        init_ev = checkInitProtocol(ev, RtrInitEvent::REPORT_ID, CALL_INFO);
 
         id = init_ev->int_value;
         if ( logical_nid == -1 ) logical_nid = id;
         // If we have a nid_map, fill in my mapping
-        if ( nid_map_shm ) {
-            nid_map_shm->modifyArray(logical_nid,id);
-            nid_map_shm->publish();
-            nid_map = nid_map_shm->getPtr<const nid_t*>();
+        if ( use_nid_map ) {
+            nid_map.write(logical_nid,id);
+            nid_map.publish();
         }
         delete ev;
 
@@ -249,7 +255,7 @@ void LinkControl::init(unsigned int phase)
         // Will receive information about total vns used and the
         // mapping of my VNs to all of them
         ev = rtr_link->recvUntimedData();
-        init_ev = dynamic_cast<RtrInitEvent*>(ev);
+        init_ev = checkInitProtocol(ev, RtrInitEvent::REQUEST_VNS, CALL_INFO);
         total_vns = init_ev->int_value;
         delete ev;
 
@@ -264,7 +270,7 @@ void LinkControl::init(unsigned int phase)
         // Will receive a message for each of my requested vns
         for ( int i = 0; i < req_vns; ++i ) {
             ev = rtr_link->recvUntimedData();
-            init_ev = dynamic_cast<RtrInitEvent*>(ev);
+            init_ev = checkInitProtocol(ev, RtrInitEvent::REQUEST_VNS, CALL_INFO);
             // If map was not set yet, get values from router
             if ( !vn_map_set ) {
                 int vn = init_ev->int_value;
@@ -425,7 +431,7 @@ bool LinkControl::send(SimpleNetwork::Request* req, int vn) {
     req->vn = vn;
 
     // Check to see if we need to do a nid translation
-    if ( nid_map ) req->dest = nid_map[req->dest];
+    if ( use_nid_map ) req->dest = nid_map[req->dest];
 
     // Get the output queue information for that vn
     output_queue_bundle_t& out_handle = *(vn_remap_out[vn]);
@@ -498,7 +504,7 @@ SST::Interfaces::SimpleNetwork::Request* LinkControl::recv(int vn) {
     }
 
     SST::Interfaces::SimpleNetwork::Request* ret = event->takeRequest();
-    if ( nid_map ) ret->dest = logical_nid;
+    if ( use_nid_map ) ret->dest = logical_nid;
     delete event;
 ;
     return ret;
@@ -506,7 +512,7 @@ SST::Interfaces::SimpleNetwork::Request* LinkControl::recv(int vn) {
 
 void LinkControl::sendUntimedData(SST::Interfaces::SimpleNetwork::Request* req)
 {
-    if ( nid_map ) {
+    if ( use_nid_map ) {
         req->dest = nid_map[req->dest];
     }
     rtr_link->sendUntimedData(new RtrEvent(req,id,0));

@@ -66,7 +66,7 @@ class PlatformDefinition:
         if not cls._current_platform:return None
         type_name = cls._current_platform.getClassType(key)
         if not type_name: return None
-        
+
         module_name, class_name = type_name.rsplit(".", 1)
         return getattr(import_module(module_name), class_name)()
 
@@ -115,7 +115,7 @@ class PlatformDefinition:
             return self._instance_types[key]
         except KeyError:
             return None
-        
+
 """Base class for all the "templates" that will be using in the library.
 It overloads __setattr__ and __getattr__ to accomplish the following:
 
@@ -158,11 +158,11 @@ class _AttributeManager(object):
         object.__setattr__(self,"_format_vars",dict())
         object.__setattr__(self,"_name",None)
         object.__setattr__(self,"_passthrough_target",None)
-        
+
     def _addDirectAttribute(self,name,value=None):
         self._in_dict.add(name)
         object.__setattr__(self,name,value)
-                
+
     def _addVariable(self,var,dictionary=None,prefix=None):
         if not var in self._vars:
             if self._name:
@@ -197,14 +197,14 @@ class _AttributeManager(object):
             return self._parent.__class__.__name__
         else:
             return self.__class__.__name__
-        
+
     def __getErrorReportName(self,var_name):
         if self._name:
             return self._name + "." + var_name
         else:
             return var_name
-        
-            
+
+
     # Function that will be called when a class variable is accessed
     # to write
     def __setattr__(self,key,value):
@@ -220,7 +220,7 @@ class _AttributeManager(object):
                 raise LockedWriteError("attribute %s of class %r has been marked read only"%(key,self.__class__.__name__))
 
         else:
-            
+
             # Check to see if there is a formatted var that matches
             for match in self._format_vars:
                 if re.match(match,key):
@@ -248,7 +248,7 @@ class _AttributeManager(object):
                 return self._passthrough_target.__setattr__(key,value)
             else:
                 raise KeyError("%r has no attribute %r"%(self.__getErrorReportClass(),self.__getErrorReportName(key)))
-        
+
         # Set the value
         var.value = value
 
@@ -287,7 +287,7 @@ class _AttributeManager(object):
     def clone(self):
         return copy.deepcopy(self)
 
-    
+
 class _SubAttributeManager(_AttributeManager):
     def __init__(self,parent,name=None):
         _AttributeManager.__init__(self)
@@ -296,11 +296,33 @@ class _SubAttributeManager(_AttributeManager):
 
 
 class TemplateBase(_AttributeManager):
+    _instance_number = 0
+
+
     def __init__(self):
         _AttributeManager.__init__(self)
         self._addDirectAttribute("_groups",dict())
         self._addDirectAttribute("_enabled_stats",list())
         self._addDirectAttribute("_stat_load_level",None)
+
+        #self._addDirectAttribute("_instance_name","%s_%d"%(type(self).__name__,TemplateBase._instance_number))
+        self._declareClassVariables(["_instance_name", "_first_build"])
+        self._instance_name = "%s_%d"%(type(self).__name__,TemplateBase._instance_number)
+        self._lockVariable("_instance_name")
+        TemplateBase._instance_number = TemplateBase._instance_number + 1
+
+        self._first_build = True
+        self._lockVariable("_first_build")
+
+
+    def _check_first_build(self):
+        ret = self._first_build
+        if self._first_build:
+            self._unlockVariable("_first_build")
+            self._first_build = False
+            self._lockVariable("_first_build")
+        return ret
+
 
     def _setPassthroughTarget(self,target):
         self._passthrough_target = target
@@ -327,7 +349,7 @@ class TemplateBase(_AttributeManager):
                 # This means there was no addParams call, so not a
                 # valid name
                 pass
-            
+
         sub, var_name = self.__parseSubAttributeName(key)
 
         try:
@@ -347,7 +369,7 @@ class TemplateBase(_AttributeManager):
     def _lockVariable(self,variable):
         (_, var) = self.__parseSubAttribute(variable)
         var.locked = True
-        
+
     # Function to unlock a variable (make it writable)
     def _unlockVariable(self,variable):
         (_, var) = self.__parseSubAttribute(variable)
@@ -368,7 +390,7 @@ class TemplateBase(_AttributeManager):
         (_, var) = self.__parseSubAttribute(variable)
         var.call_back = func
 
-        
+
 
     # Declare variables used by the class, but not passed as
     # parameters to any Components/SubCompnoents.  Variable will be
@@ -398,7 +420,7 @@ class TemplateBase(_AttributeManager):
 
             fullname = fullname + "."
 
-            
+
     # Declare parameters (variables) of the class.  The group will
     # collect params together for easy passing as parameters to
     # Components/SubComponents
@@ -407,7 +429,7 @@ class TemplateBase(_AttributeManager):
             self._groups[group] = dict()
 
         group_dict = self._groups[group]
-        
+
         for v in plist:
             sub, var = self.__createSubItems(v)
             sub._addVariable(var,group_dict,prefix)
@@ -417,7 +439,7 @@ class TemplateBase(_AttributeManager):
         # Mostly we'll defer to _declareParams
         new_plist = [user_prefix + "." + sub for sub in plist]
         self._declareParams(group,new_plist,prefix)
-        
+
 
     def _declareFormattedParams(self,group,plist,prefix=None,callback=None):
         if not group in self._groups:
@@ -435,12 +457,12 @@ class TemplateBase(_AttributeManager):
         self._declareFormattedParams(group,new_plist,prefix,callback)
 
 
-                
+
     # Get the dictionary of parameters for a group
     def _getGroupParams(self,group):
         return self._groups[group]
 
-    
+
     def combineParams(self,defaultParams,userParams):
         returnParams = defaultParams.copy()
         returnParams.update(userParams)
@@ -455,7 +477,7 @@ class TemplateBase(_AttributeManager):
 
     def setStatisticLoadLevel(self,level,apply_to_children=False):
         self._stat_load_level = (level,apply_to_children)
-        
+
 
     def _applyStatisticsSettings(self,component):
         for stat in self._enabled_stats:
@@ -535,7 +557,7 @@ class TemplateBase(_AttributeManager):
             raise AttributeError("%r has no param %r"%(self.__class__.__name__,attribute))
 
         return (sub, sub._vars[var])
-    
+
     def __parseSubAttributeName(self,attribute):
         if "." not in attribute:
             return (self, attribute)
@@ -549,7 +571,7 @@ class TemplateBase(_AttributeManager):
             else:
                 raise AttributeError("%r has no param %r (%r not found)"%(self.__class__.__name__,attribute,level))
 
-        return (sub, var)                
+        return (sub, var)
 
 """
     @classmethod
@@ -573,12 +595,12 @@ class TemplateBase(_AttributeManager):
                         return cls
 
             return None
-                    
+
         seen = set()
         sub = findClass(base,name,seen)
-                
+
         return sub()
-"""        
+"""
 
 # Classes implementing topology
 class Topology(TemplateBase):
@@ -598,13 +620,13 @@ class Topology(TemplateBase):
         if not self.router:
             self.router = hr_router()
             self._unlockVariable("router")
-            
+
         self.endPointLinks = []
         self.built = False
 
     def _network_name_callback(self, variable_name, value):
         self._lockVariable(variable_name)
-        if value: 
+        if value:
             self._unlockVariable("_prefix")
             self._prefix = "%s."%value
             self._lockVariable("_prefix")
@@ -613,7 +635,7 @@ class Topology(TemplateBase):
         # Lock variable if it wasn't set to None
         if value: self._lockVariable(variable_name)
 
-        
+
     def getName(self):
         return "NoName"
     def build(self, endpoint):
@@ -677,34 +699,46 @@ class RouterTemplate(TemplateBase):
         pass
     def getPortConnectionInfo(port_num):
         pass
-
+    def getDefaultNetworkInterface(self):
+        pass
 
 class hr_router(RouterTemplate):
+    _instance_num = 0
+    _default_linkcontrol = "sst.merlin.interface.LinkControl"
+
     def __init__(self):
         RouterTemplate.__init__(self)
+
         self._declareParams("params",["link_bw","flit_size","xbar_bw","input_latency","output_latency","input_buf_size","output_buf_size",
                                       "xbar_arb","network_inspectors","oql_track_port","oql_track_remote","num_vns","vn_remap","vn_remap_shm"])
 
-        self._declareParams("params",["qos_settings"],"portcontrol:arbitration:")
-        self._declareParams("params",["output_arb", "enable_congestion_management", "cm_outstanding_threshold", "cm_incast_threshold"],"portcontrol:")
+        self._declareParams("params",["qos_settings"],"portcontrol.arbitration.")
+        self._declareParams("params",["output_arb", "enable_congestion_management", "cm_outstanding_threshold", "cm_incast_threshold"],"portcontrol.")
 
         self._setCallbackOnWrite("qos_settings",self._qos_callback)
 
         self._subscribeToPlatformParamSet("router")
 
 
+    def getDefaultNetworkInterface(self):
+        module_name, class_name = hr_router._default_linkcontrol.rsplit(".", 1)
+        return getattr(import_module(module_name), class_name)()
+
     def _qos_callback(self,variable_name,value):
         self._lockVariable(variable_name)
         if not self.output_arb: self.output_arb = "merlin.arb.output.qos.multi"
-        
+
     def instanceRouter(self, name, radix, rtr_id):
+        if self._check_first_build():
+            sst.addGlobalParams("%s_params"%self._instance_name, self._getGroupParams("params"))
+
         rtr = sst.Component(name, "merlin.hr_router")
         self._applyStatisticsSettings(rtr)
-        rtr.addParams(self._getGroupParams("params"))
+        rtr.addGlobalParamSet("%s_params"%self._instance_name)
         rtr.addParam("num_ports",radix)
         rtr.addParam("id",rtr_id)
         return rtr
-    
+
     def getTopologySlotName(self):
         return "topology"
 
@@ -732,8 +766,8 @@ class EmptyJob(Job):
         return "Empty Job"
 
     def build(self, nID, extraKeys):
-        nic = sst.Component("incast.%d"%nID, "merlin.simple_patterns.empty")
-        id = self._nid_map.index(nID)
+        nic = sst.Component("empty_node.%d"%nID, "merlin.simple_patterns.empty")
+        id = self._nid_map[nID]
 
         #  Add the linkcontrol
         networkif, port_name = self.network_interface.build(nic,"networkIF",0,self.job_id,self.size,id)
@@ -741,21 +775,21 @@ class EmptyJob(Job):
 
 
 class System(TemplateBase):
-    
+
     # Functions used to allocated endpoints to jobs
     _allocate_functions = {}
-    
+
     @classmethod
     def addAllocationFunction(cls,name,func):
         cls._allocate_functions[name] = func
 
-        
+
     def __init__(self):
         TemplateBase.__init__(self)
         self._declareClassVariables(["topology","allocation_block_size","_available_nodes","_num_nodes","_endpoints"])
         self._setCallbackOnWrite("topology",self._topology_config_callback)
         self._setCallbackOnWrite("allocation_block_size",self._block_size_config_callback)
-        
+
         self._subscribeToPlatformParamSet("system")
         self.topology = PlatformDefinition.getPlatformDefinedClassInstance("topology")
         #self.allocation_block_size = 1
@@ -769,6 +803,8 @@ class System(TemplateBase):
         # For any unallocated nodes, use EmptyJob
         if len(self._available_nodes) > 0:
             remainder = EmptyJob(-1,len(self._available_nodes))
+            remainder.network_interface = self.topology.router.getDefaultNetworkInterface()
+            remainder.network_interface.link_bw = "1 GB/s"
             self.allocateNodes(remainder,"linear");
         system_ep = SystemEndpoint(self)
         self.topology.build(system_ep)
@@ -788,7 +824,7 @@ class System(TemplateBase):
         self._lockVariable(variable_name)
         if self._areVariablesLocked(["topology","allocation_block_size"]):
             self._available_nodes = [i for i in range(self._num_nodes // value)]
-        
+
 
 
     def allocateNodes(self,job,method,*args):
@@ -800,21 +836,21 @@ class System(TemplateBase):
         # does a celing divide (note, only works in python, in C the
         # result is truncated instead of floored)
         num_units = -(-size // self.allocation_block_size)
-        
+
         allocated, available = self._allocate_functions[method](self._available_nodes,num_units,*args)
         self._available_nodes = available
 
         #  Record what type of endpoint is at each node, taking into
         #  account the allocation block size
-        nid_map = [0 for i in range(size)]
+        nid_map = dict()
 
         # Loop through and create a flattened map
         for i in range(num_units):
             for j in range(self.allocation_block_size):
-                nid_map[i*self.allocation_block_size+j] = allocated[i] * self.allocation_block_size + j
-
-        for i in nid_map:
-            self._endpoints[i] = job
+                lid = i*self.allocation_block_size+j
+                pid = allocated[i] * self.allocation_block_size + j
+                nid_map[pid] = lid
+                self._endpoints[pid] = job
 
         job._nid_map = nid_map
 
@@ -822,25 +858,25 @@ class System(TemplateBase):
 
 # Built-in allocation functions for System
 def _allocate_random(available_nodes, num_nodes, seed = None):
-    
+
     if seed is not None:
         random.seed(seed)
 
     random.shuffle(available_nodes)
-    
+
     nid_list = available_nodes[0:num_nodes]
     available_nodes = available_nodes[num_nodes:]
-    
+
     return nid_list, available_nodes
 
 
 def _allocate_linear(available_nodes, num_nodes):
 
     available_nodes.sort()
-    
+
     nid_list = available_nodes[0:num_nodes]
     available_nodes = available_nodes[num_nodes:]
-    
+
     return nid_list, available_nodes
 
 
@@ -874,20 +910,20 @@ def _allocate_interval(available_nodes, num_nodes, start_index, interval, count 
                 nid_list.append(available_nodes.pop(index))
                 left -= 1
                 # No need to increment index bacause we popped the last value
-            
+
             index += (interval - count)
     except IndexError as e:
         print("ERROR: call to _allocate_interval caused index to exceed nid array bounds")
         print("start_index = %d, interval = %d, count = %d, available_nids at start of function = %d"%(start_index,interval,count,available_nids))
         raise
-        
+
     return nid_list, available_nodes
 
 def _allocate_indexed(available_nodes, num_nodes, nids):
     if len(nids) != num_nodes:
         print("ERROR: in call to _allocate_indexed length of index list does not equal number of endpoints to allocate")
         sst.exit()
-        
+
     nid_list = []
 
     available_nodes.sort()
@@ -898,7 +934,7 @@ def _allocate_indexed(available_nodes, num_nodes, nids):
         for i in nids:
             nid_list.append(available_nodes[i])
 
-        
+
     except IndexError as e:
         print("ERROR: call to _allocate_indexed caused index to exceed nid array bounds, check index list")
         raise

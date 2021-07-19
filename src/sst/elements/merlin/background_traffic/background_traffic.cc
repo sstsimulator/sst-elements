@@ -83,7 +83,7 @@ BackgroundTraffic::BackgroundTraffic(ComponentId_t cid, Params& params) :
 
     pattern_params = new Params();
     // packetDestGen = static_cast<TargetGenerator*>(loadSubComponent(pattern, this, params));
-    pattern_params->insert(params.find_prefix_params("pattern"));
+    pattern_params->insert(params.get_scoped_params("pattern"));
     pattern_params->insert("pattern_gen",pattern);
 
     registerAsPrimaryComponent();

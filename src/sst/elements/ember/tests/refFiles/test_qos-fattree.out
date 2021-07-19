@@ -1,0 +1,32 @@
+EMBER: using param directory: paramFiles
+EMBER: platform: default
+EMBER: network: topology=fattree shape=16,16:32
+EMBER: numNodes=512 numNics=512
+EMBER: network: BW=4GB/s pktSize=2048B flitSize=8B
+set merlinParams portcontrol:output_arb=merlin.arb.output.qos.multi
+set merlinParams portcontrol:arbitration:qos_settings=[25,25,25,25]
+EMBER: Job=1, nidList='364,299,45,39,423,498,85,283,323,508,126...'
+EMBER: Motif='Init'
+EMBER: Motif='Sweep3D pex=16 pey=8 nx=16 ny=16 nz=10 kba=10 fields_per_cell=10 iterations=1 computetime=1'
+EMBER: Motif='Allreduce'
+EMBER: Motif='Fini'
+EMBER: Job=2, nidList='496,490,398,491,92,33,64,343,70,316,1,36...'
+EMBER: Motif='Init'
+EMBER: Motif='Sweep3D pex=16 pey=8 nx=16 ny=16 nz=10 kba=10 fields_per_cell=10 iterations=1 computetime=1'
+EMBER: Motif='Allreduce'
+EMBER: Motif='Fini'
+EMBER: Job=3, nidList='197,467,218,19,148,149,53,258,411,324,15...'
+EMBER: Motif='Init'
+EMBER: Motif='Sweep3D pex=16 pey=8 nx=16 ny=16 nz=10 kba=10 fields_per_cell=10 iterations=1 computetime=1'
+EMBER: Motif='Allreduce'
+EMBER: Motif='Fini'
+EMBER: Job=4, nidList='306,438,331,140,77,262,3,18,406,353,54,2...'
+EMBER: Motif='Init'
+EMBER: Motif='Sweep3D pex=16 pey=8 nx=16 ny=16 nz=10 kba=10 fields_per_cell=10 iterations=1 computetime=1'
+EMBER: Motif='Allreduce'
+EMBER: Motif='Fini'
+Allreduce: ranks 128, loop 1, 1 double(s), latency 364.656 us
+Allreduce: ranks 128, loop 1, 1 double(s), latency 364.342 us
+Allreduce: ranks 128, loop 1, 1 double(s), latency 374.204 us
+Allreduce: ranks 128, loop 1, 1 double(s), latency 369.238 us
+Simulation is complete, simulated time: 2.76856 ms

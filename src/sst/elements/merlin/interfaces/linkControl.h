@@ -25,6 +25,7 @@
 #include <sst/core/interfaces/simpleNetwork.h>
 
 #include <sst/core/statapi/statbase.h>
+#include <sst/core/shared/sharedArray.h>
 
 #include "sst/elements/merlin/router.h"
 
@@ -152,8 +153,8 @@ private:
     nid_t id;
     nid_t logical_nid;
     int job_id;
-    SharedRegion* nid_map_shm;
-    const nid_t* nid_map;
+    Shared::SharedArray<nid_t> nid_map;
+    bool use_nid_map;
 
     // Doing a round robin on the output.  Need to keep track of the
     // current virtual channel.
@@ -210,6 +211,8 @@ private:
     Statistic<uint64_t>* idle_time;
     Statistic<uint64_t>* recv_bit_count;
 
+    RtrInitEvent* checkInitProtocol(Event* ev, RtrInitEvent::Commands command, uint32_t line, const char* file, const char* func);
+
     Output& output;
 
 public:
@@ -250,7 +253,7 @@ public:
     inline bool isNetworkInitialized() const { return network_initialized; }
     // inline nid_t getEndpointID() const { return id; }
     inline nid_t getEndpointID() const {
-        if ( nid_map ) {
+        if ( use_nid_map ) {
             return logical_nid;
         }
         else {
