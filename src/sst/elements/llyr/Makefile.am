@@ -38,7 +38,7 @@ libllyr_la_CPPFLAGS = \
 	-I$(top_srcdir)/src \
 	$(SST_CXX0X_FLAGS) -fPIC -Wall \
 	$(MPI_CPPFLAGS) \
-	$(LLVM_CPPFLAGS)
+	$(LLVM_CPPFLAGS) -fexceptions
 
 libllyr_la_LDFLAGS = \
 	-module \
