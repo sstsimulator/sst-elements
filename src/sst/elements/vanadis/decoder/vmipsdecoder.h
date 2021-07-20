@@ -389,7 +389,7 @@ public:
         }
 
 	// Check endian-ness
-	if( elf_info->getEndian() != 1 ) {
+	if( elf_info->getEndian() != VANADIS_LITTLE_ENDIAN ) {
 	    output->fatal(CALL_INFO, -1, "Error: binary executable ELF information shows this was not compiled for little-endian processors (\"mipsel\"), please recompile to a supported format.\n");
 	}
 
