@@ -69,14 +69,14 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
 
     MemRegion region;
     bool gotRegion = false;
-    region.start = params.find<uint64_t>("addr_range_start", 0, found);
-    if (!found) region.start = params.find<uint64_t>("memNIC.addr_range_start", 0, found);
-    if (!found) region.start = params.find<uint64_t>("memlink.addr_range_start", 0, found);
+    region.start = params.find<Addr>("addr_range_start", 0, found);
+    if (!found) region.start = params.find<Addr>("memNIC.addr_range_start", 0, found);
+    if (!found) region.start = params.find<Addr>("memlink.addr_range_start", 0, found);
     gotRegion |= found;
 
-    region.end = params.find<uint64_t>("addr_range_end", (uint64_t) - 1, found);
-    if (!found) region.end = params.find<uint64_t>("memNIC.addr_range_end", (uint64_t) - 1, found);
-    if (!found) region.end = params.find<uint64_t>("memlink.addr_range_end", (uint64_t) - 1, found);
+    region.end = params.find<Addr>("addr_range_end", region.REGION_MAX, found);
+    if (!found) region.end = params.find<Addr>("memNIC.addr_range_end", region.REGION_MAX, found);
+    if (!found) region.end = params.find<Addr>("memlink.addr_range_end", region.REGION_MAX, found);
     gotRegion |= found;
 
     string ilSize   = params.find<std::string>("interleave_size", "0B", found);
@@ -89,7 +89,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     if (!found) ilStep = params.find<std::string>("memlink.interleave_step", "0B", found);
     gotRegion |= found;
 
-    if(0 == region.end) region.end = (uint64_t)-1;
+    if(0 == region.end) region.end = region.REGION_MAX;
 
 
     memOffset = params.find<uint64_t>("mem_addr_start", 0);
@@ -114,6 +114,10 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
                 getName().c_str(), ilStep.c_str());
     }
 
+    clockHandler = new Clock::Handler<DirectoryController>(this, &DirectoryController::clock);
+    defaultTimeBase = registerClock(params.find<std::string>("clock", "1GHz"), clockHandler);
+    clockOn = true;
+
     /*
      *  *****************************
      *  Regions & memory name
@@ -130,8 +134,8 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
      *  the MCs their own region. We cannot error check from the parameters...
      */
 
-    cpuLink = loadUserSubComponent<MemLinkBase>("cpulink");
-    memLink = loadUserSubComponent<MemLinkBase>("memlink");
+    cpuLink = loadUserSubComponent<MemLinkBase>("cpulink", ComponentInfo::SHARE_NONE, defaultTimeBase);
+    memLink = loadUserSubComponent<MemLinkBase>("memlink", ComponentInfo::SHARE_NONE, defaultTimeBase);
     if (cpuLink || memLink) {
         if (!cpuLink) {
             cpuLink = memLink;
@@ -189,10 +193,10 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
             nicParams.insert("ack.port", "network_ack");
             nicParams.insert("fwd.port", "network_fwd");
             nicParams.insert("data.port", "network_data");
-            cpuLink = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNICFour", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams);
+            cpuLink = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNICFour", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams, defaultTimeBase);
         } else {
             nicParams.insert("port", "network");
-            cpuLink = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams);
+            cpuLink = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams, defaultTimeBase);
         }
 
         cpuLink->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
@@ -205,7 +209,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
             memParams.insert("addr_range_end", std::to_string(region.end), false);
             memParams.insert("interleave_size", ilSize, false);
             memParams.insert("interleave_step", ilStep, false);
-            memLink = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "memlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, memParams);
+            memLink = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "memlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, memParams, defaultTimeBase);
             memLink->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
             if (!memLink) {
                 dbg.fatal(CALL_INFO, -1, "%s, Error creating link to memory from directory controller\n", getName().c_str());
@@ -221,9 +225,6 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
         }
     }
 
-    clockHandler = new Clock::Handler<DirectoryController>(this, &DirectoryController::clock);
-    defaultTimeBase = registerClock(params.find<std::string>("clock", "1GHz"), clockHandler);
-    clockOn = true;
     if (memLink)
         clockMemLink = memLink->isClocked();
     else
@@ -616,19 +617,6 @@ void DirectoryController::emergencyShutdown() {
 
 bool DirectoryController::isRequestAddressValid(Addr addr){
     return cpuLink->isRequestAddressValid(addr);
-
-    if(0 == region.interleaveSize) {
-        return (addr >= region.start && addr < region.end);
-    } else {
-        if (addr < region.start) return false;
-        if (addr >= region.end) return false;
-
-        addr        = addr - region.start;
-        Addr offset = addr % region.interleaveStep;
-
-        if (offset >= region.interleaveSize) return false;
-        return true;
-    }
 }
 
 
@@ -674,6 +662,9 @@ void DirectoryController::init(unsigned int phase) {
                 MemEventInitCoherence * mEv = static_cast<MemEventInitCoherence*>(ev);
                 if (mEv->getType() == Endpoint::Scratchpad)
                     waitWBAck = true;
+                if (!(mEv->getTracksPresence()) && cpuLink->isSource(mEv->getSrc())) {
+                    incoherentSrc.insert(mEv->getSrc());
+                }
             }
             delete ev;
         } else {
@@ -761,7 +752,9 @@ bool DirectoryController::handleGetS(MemEvent * event, bool inMSHR) {
                 if (!inMSHR)
                     out.output("ALERT (%s): mshr should NOT have data for 0x%" PRIx64 " but it does...\n", getName().c_str(), addr);
                 else {
-                    if (protocol == CoherenceProtocol::MESI) {
+                    if (incoherentSrc.find(event->getSrc()) != incoherentSrc.end()) {
+                        sendDataResponse(event, entry, mshr->getData(addr), Command::GetSResp);
+                    } else if (protocol == CoherenceProtocol::MESI) {
                         entry->setState(M);
                         entry->setOwner(event->getSrc());
                         sendDataResponse(event, entry, mshr->getData(addr), Command::GetXResp);
@@ -790,7 +783,9 @@ bool DirectoryController::handleGetS(MemEvent * event, bool inMSHR) {
             break;
         case S:
             if (mshr->hasData(addr)) { // saved from earlier request
-                entry->addSharer(event->getSrc());
+                if (incoherentSrc.find(event->getSrc()) == incoherentSrc.end()) {
+                    entry->addSharer(event->getSrc());
+                }
                 sendDataResponse(event, entry, mshr->getData(addr), Command::GetSResp);
                 if (is_debug_event(event)) {
                     eventDI.reason = "hit";
@@ -860,11 +855,13 @@ bool DirectoryController::handleGetX(MemEvent * event, bool inMSHR) {
     switch (state) {
         case I:
             if (mshr->hasData(addr)) {
-                if (!inMSHR)
+                if (!inMSHR) {
                     out.output("ALERT (%s): mshr should NOT have data for 0x%" PRIx64 " but it does...\n", getName().c_str(), addr);
-                else {
-                    entry->setState(M);
-                    entry->setOwner(event->getSrc());
+                } else {
+                    if (incoherentSrc.find(event->getSrc()) == incoherentSrc.end()) {
+                        entry->setState(M);
+                        entry->setOwner(event->getSrc());
+                    }
                     sendDataResponse(event, entry, mshr->getData(addr), Command::GetXResp);
                     mshr->clearData(addr);
                     if (is_debug_event(event)) {
@@ -1642,9 +1639,14 @@ bool DirectoryController::handleGetSResp(MemEvent * event, bool inMSHR) {
         out.fatal(CALL_INFO, -1, "%s, Error: Received GetSResp in unhandled state '%s'. Event: %s. Time: %" PRIu64 "ns\n",
                 getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
-
-    entry->setState(S);
-    entry->addSharer(reqEv->getSrc());
+    if (incoherentSrc.find(reqEv->getSrc()) == incoherentSrc.end()) {
+        entry->setState(S);
+        entry->addSharer(reqEv->getSrc());
+    } else if (state == IS) {
+        entry->setState(I);
+    } else {
+        entry->setState(S);
+    }
 
     sendDataResponse(reqEv, entry, event->getPayload(), Command::GetSResp);
     mshr->setData(addr, event->getPayload(), false); // Save data for a subsequent GetS
@@ -1670,7 +1672,11 @@ bool DirectoryController::handleGetXResp(MemEvent * event, bool inMSHR) {
 
     switch (state) {
         case IS:
-            if (protocol == CoherenceProtocol::MESI) {
+            if (incoherentSrc.find(reqEv->getSrc()) != incoherentSrc.end()) {
+                entry->setState(I);
+                sendDataResponse(reqEv, entry, event->getPayload(), Command::GetSResp);
+                break;
+            } else if (protocol == CoherenceProtocol::MESI) {
                 entry->setState(M);
                 entry->setOwner(reqEv->getSrc());
                 sendDataResponse(reqEv, entry, event->getPayload(), Command::GetXResp);
@@ -1678,13 +1684,19 @@ bool DirectoryController::handleGetXResp(MemEvent * event, bool inMSHR) {
             }
         case S_D:
             entry->setState(S);
-            entry->addSharer(reqEv->getSrc());
+            if (incoherentSrc.find(reqEv->getSrc()) == incoherentSrc.end()) {
+                entry->addSharer(reqEv->getSrc());
+            }
             sendDataResponse(reqEv, entry, event->getPayload(), Command::GetSResp);
             mshr->setData(addr, event->getPayload(), false); // So subsequent GetS can get data
             break;
         case IM:
-            entry->setState(M);
-            entry->setOwner(reqEv->getSrc());
+            if (incoherentSrc.find(reqEv->getSrc()) == incoherentSrc.end()) {
+                entry->setState(M);
+                entry->setOwner(reqEv->getSrc());
+            } else {
+                entry->setState(I);
+            }
             sendDataResponse(reqEv, entry, event->getPayload(), Command::GetXResp);
             break;
         case SM_Inv:

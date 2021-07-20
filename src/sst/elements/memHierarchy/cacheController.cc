@@ -455,10 +455,14 @@ void Cache::init(unsigned int phase) {
         if (memEvent->getCmd() == Command::NULLCMD) {
             dbg_->debug(_L10_, "I: %-20s   Event:Init      (%s)\n",
                     getName().c_str(), memEvent->getVerboseString().c_str());
-            coherenceMgr_->hasUpperLevelCacheName(memEvent->getSrc());
             if (memEvent->getInitCmd() == MemEventInit::InitCommand::Coherence) {
+                coherenceMgr_->hasUpperLevelCacheName(memEvent->getSrc());
                 MemEventInitCoherence * eventC = static_cast<MemEventInitCoherence*>(memEvent);
                 processInitCoherenceEvent(eventC, true);
+            } else if (memEvent->getInitCmd() == MemEventInit::InitCommand::Endpoint ) {
+                MemEventInit * mEv = memEvent->clone();
+                mEv->setSrc(getName());
+                linkDown_->sendInitData(mEv);
             }
         } else {
             dbg_->debug(_L10_, "I: %-20s   Event:Init      (%s)\n",
@@ -479,6 +483,10 @@ void Cache::init(unsigned int phase) {
             if (linkDown_->isDest(memEvent->getSrc()) && memEvent->getInitCmd() == MemEventInit::InitCommand::Coherence) {
                 MemEventInitCoherence * eventC = static_cast<MemEventInitCoherence*>(memEvent);
                 processInitCoherenceEvent(eventC, false);
+            } else if (memEvent->getInitCmd() == MemEventInitEndpoint::InitCommand::Endpoint) {
+                MemEventInit * mEv = memEvent->clone();
+                mEv->setSrc(getName());
+                linkUp_->sendInitData(mEv);
             }
         }
         delete memEvent;

@@ -9,6 +9,7 @@ componentlist = (
     "memHierarchy.Scratchpad",
     "memHierarchy.Sieve",
     "memHierarchy.multithreadL1",
+    "memHierarchy.standardCPU",
     "memHierarchy.streamCPU",
     "memHierarchy.trivialCPU",
     "memHierarchy.DelayBuffer",

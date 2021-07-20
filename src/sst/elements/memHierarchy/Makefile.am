@@ -84,6 +84,8 @@ libmemHierarchy_la_SOURCES = \
 	memHierarchyInterface.h \
 	memHierarchyScratchInterface.cc \
 	memHierarchyScratchInterface.h \
+	standardInterface.cc \
+	standardInterface.h \
 	coherencemgr/MESI_L1.h \
 	coherencemgr/MESI_L1.cc \
 	coherencemgr/MESI_Inclusive.h \
@@ -108,6 +110,8 @@ libmemHierarchy_la_SOURCES = \
 	testcpu/streamCPU.cc \
 	testcpu/scratchCPU.h \
 	testcpu/scratchCPU.cc \
+	testcpu/standardCPU.h \
+	testcpu/standardCPU.cc \
 	util.h \
 	memTypes.h \
 	dmaEngine.h \
@@ -124,7 +128,9 @@ libmemHierarchy_la_SOURCES = \
 	Sieve/memmgr_sieve.cc \
 	Sieve/memmgr_sieve.h \
 	memNetBridge.h \
-	memNetBridge.cc
+	memNetBridge.cc \
+	testcpu/standardMMIO.h \
+	testcpu/standardMMIO.cc
 
 EXTRA_DIST = \
 	tests/testsuite_default_memHierarchy_hybridsim.py \

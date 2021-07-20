@@ -419,6 +419,7 @@ private:
     bool waitWBAck;
     bool sendWBAck;
 
+    std::set<std::string> incoherentSrc;
 
 };
 

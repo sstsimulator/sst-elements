@@ -205,7 +205,7 @@ private:
     void createCoherenceManager(Params &params);
 
     // Configure links
-    void configureLinks(Params &params);
+    void configureLinks(Params &params, TimeConverter* tc);
 
     /** Cache operation ********************************************************/
 

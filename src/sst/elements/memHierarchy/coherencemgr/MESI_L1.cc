@@ -827,6 +827,7 @@ bool MESIL1::handleGetXResp(MemEvent* event, bool inMSHR) {
 
     std::vector<uint8_t> data;
     Addr offset = req->getAddr() - addr;
+    bool success = false;
 
     switch (state) {
         case IS:
@@ -868,7 +869,8 @@ bool MESIL1::handleGetXResp(MemEvent* event, bool inMSHR) {
 
                         if (is_debug_addr(addr))
                             printData(line->getData(), true);
-
+                        if (line->isAtomic())
+                            success = true;
                         line->atomicEnd(); // Any write causes a future SC to fail 
                     }
 
@@ -879,7 +881,7 @@ bool MESIL1::handleGetXResp(MemEvent* event, bool inMSHR) {
                     line->incLock();
                 }
                 data.assign(line->getData()->begin() + offset, line->getData()->begin() + offset + req->getSize());
-                uint64_t sendTime = sendResponseUp(req, &data, true, line->getTimestamp(), false);
+                uint64_t sendTime = sendResponseUp(req, &data, true, line->getTimestamp(), success);
                 line->setTimestamp(sendTime-1);
                 break;
             }
