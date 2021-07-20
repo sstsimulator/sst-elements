@@ -857,7 +857,17 @@ readBinaryELFInfo(SST::Output* output, const char* path) {
     elf_info->setClass(tmp_byte);
 
     fread(&tmp_byte, 1, 1, bin_file);
-    elf_info->setEndian(tmp_byte == 1 ? VANADIS_LITTLE_ENDIAN : VANADIS_BIG_ENDIAN);
+    switch( tmp_byte ) {
+	case 1:
+		elf_info->setEndian(VANADIS_LITTLE_ENDIAN);
+		break;
+	case 2:
+		elf_info->setEndian(VANADIS_BIG_ENDIAN);
+		break;
+	default:
+		output->fatal(CALL_INFO, -1, "Error: unknown endian type: %" PRIu8 "\n", tmp_byte);
+		break;
+    }
 
     fread(&tmp_byte, 1, 1, bin_file);
     // Discard this read, it is set to 1 for modern ELF
