@@ -18,7 +18,7 @@
 #define _LLYR_PE_H
 
 #include <sst/core/output.h>
-#include <sst/core/interfaces/simpleMem.h>
+#include <sst/core/interfaces/stdMem.h>
 
 #include <map>
 #include <queue>
@@ -30,8 +30,6 @@
 #include "../graph/graph.h"
 #include "../lsQueue.h"
 #include "../llyrTypes.h"
-
-using namespace SST::Interfaces;
 
 namespace SST {
 namespace Llyr {
@@ -200,7 +198,7 @@ protected:
     //track outstanding L/S requests (passed from top-level)
     LSQueue* lsqueue_;
 
-    SimpleMem*  mem_interface_;
+    Experimental::Interfaces::StandardMem*  mem_interface_;
     SST::Output* output_;
 
     //used to stall execution - waiting on mem/queues full

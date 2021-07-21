@@ -19,7 +19,7 @@
 #include <sst/core/sst_config.h>
 
 #include <sst/core/component.h>
-#include <sst/core/interfaces/simpleMem.h>
+#include <sst/core/interfaces/stdMem.h>
 
 #include <string>
 #include <fstream>
@@ -30,7 +30,7 @@
 #include "pes/peList.h"
 #include "mappers/llyrMapper.h"
 
-using namespace SST::Interfaces;
+using namespace SST::Experimental::Interfaces;
 
 namespace SST {
 namespace Llyr {
@@ -74,7 +74,7 @@ public:
     )
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-        { "memory",         "The memory interface to use (e.g., interface to caches)", "SST::Interfaces::SimpleMem" }
+        { "memory",         "The memory interface to use (e.g., interface to caches)", "Experimental::Interfaces::SST::StandardMem" }
     )
 
     LlyrComponent(SST::ComponentId_t id, SST::Params& params);
@@ -94,9 +94,27 @@ private:
     void operator=( const LlyrComponent& );     // do not implement
 
     virtual bool tick( SST::Cycle_t currentCycle );
-    void handleEvent( SimpleMem::Request* ev );
 
-    SimpleMem*  mem_interface_;
+    void handleEvent(StandardMem::Request* req);
+    /* Handlers for StandardMem::Request types */
+    class LlyrMemHandlers : public StandardMem::RequestHandler {
+    public:
+        friend class LlyrComponent;
+        friend class LSQueue;
+
+        LlyrMemHandlers(LlyrComponent* llyr, LSQueue* ls_queue, SST::Output* out) :
+            StandardMem::RequestHandler(out), ls_queue_(ls_queue), llyr_(llyr) {}
+        virtual ~LlyrMemHandlers() {}
+
+        virtual void handle(StandardMem::ReadResp* resp) override;
+        virtual void handle(StandardMem::WriteResp* resp) override;
+
+        LSQueue*        ls_queue_;
+        LlyrComponent*  llyr_;
+    };
+
+    LlyrMemHandlers*    mem_handlers_;
+    StandardMem*        mem_interface_;
 
     SST::TimeConverter*     time_converter_;
     Clock::HandlerBase*     clock_tick_handler_;

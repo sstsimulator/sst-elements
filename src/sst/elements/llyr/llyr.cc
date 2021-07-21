@@ -52,17 +52,17 @@ LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
     time_converter_ = registerClock(clock_rate, clock_tick_handler_);
 
     //set up memory interfaces
-    mem_interface_ = loadUserSubComponent<SimpleMem>("memory", ComponentInfo::SHARE_NONE, time_converter_,
-        new SimpleMem::Handler<LlyrComponent>(this, &LlyrComponent::handleEvent));
+    mem_interface_ = loadUserSubComponent<SST::Experimental::Interfaces::StandardMem>("memory", ComponentInfo::SHARE_NONE, time_converter_,
+                                                                new StandardMem::Handler<LlyrComponent>(this, &LlyrComponent::handleEvent));
 
     if( !mem_interface_ ) {
-        std::string interfaceName = params.find<std::string>("memoryinterface", "memHierarchy.mem_interface_");
+        std::string interfaceName = params.find<std::string>("memoryinterface", "memHierarchy.memInterface");
         output_->verbose(CALL_INFO, 1, 0, "Memory interface to be loaded is: %s\n", interfaceName.c_str());
 
-        Params interfaceParams = params.find_prefix_params("memoryinterfaceparams.");
+        Params interfaceParams = params.get_scoped_params("memoryinterfaceparams");
         interfaceParams.insert("port", "cache_link");
-        mem_interface_ = loadAnonymousSubComponent<SimpleMem>(interfaceName, "memory", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS,
-                interfaceParams, time_converter_, new SimpleMem::Handler<LlyrComponent>(this, &LlyrComponent::handleEvent));
+        mem_interface_ = loadAnonymousSubComponent<SST::Experimental::Interfaces::StandardMem>(interfaceName, "memory", 0, ComponentInfo::SHARE_PORTS |
+            ComponentInfo::INSERT_STATS, interfaceParams, time_converter_, new StandardMem::Handler<LlyrComponent>(this, &LlyrComponent::handleEvent));
 
         if( !mem_interface_ ) {
             output_->fatal(CALL_INFO, -1, "%s, Error loading memory interface\n", getName().c_str());
@@ -72,6 +72,8 @@ LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
     //need a 'global' LS queue for reordering
     ls_queue_ = new LSQueue();
     ls_entries_ = params.find< uint32_t >("ls_entries", 1);
+
+    mem_handlers_ = new LlyrMemHandlers(this, ls_queue_, output_);
 
     //set up param struct
     uint16_t queue_depth = params.find< uint16_t >("queue_depth", 256);
@@ -166,9 +168,9 @@ void LlyrComponent::init( uint32_t phase )
 //
 //         std::cout << "\n";
 
-        SimpleMem::Request* initMemory = new SimpleMem::Request(SimpleMem::Request::Write, 0, memInit.size(), memInit);
+        StandardMem::Request* initMemory = new StandardMem::Write(0, memInit.size(), memInit);
         output_->verbose(CALL_INFO, 1, 0, "Sending initialization data to memory...\n");
-        mem_interface_->sendInitData(initMemory);
+        mem_interface_->sendUntimedData(initMemory);
         output_->verbose(CALL_INFO, 1, 0, "Initialization data sent.\n");
     }
 }
@@ -244,53 +246,106 @@ bool LlyrComponent::tick( Cycle_t )
     }
 }
 
-void LlyrComponent::handleEvent( SimpleMem::Request* ev ) {
-    output_->verbose(CALL_INFO, 4, 0, "Recv response from cache\n");
+void LlyrComponent::handleEvent(StandardMem::Request* req) {
+    req->handle(mem_handlers_);
+}
 
-    for( auto &it : ev->data ) {
+/* Handler for incoming Read responses - should be a response to a Read we issued */
+void LlyrComponent::LlyrMemHandlers::handle(StandardMem::ReadResp* resp) {
+
+    for( auto &it : resp->data ) {
         std::cout << unsigned(it) << " ";
     }
     std::cout << std::endl;
 
-    if( ev->cmd == SimpleMem::Request::Command::ReadResp ) {
-        // Read request needs some special handling
-        uint64_t addr = ev->addr;
-        uint64_t memValue = 0;
+    // Read request needs some special handling
+    uint64_t addr = resp->pAddr;
+    uint64_t memValue = 0;
 
-        LlyrData testArg;
-        for( auto &it : ev->data ) {
-            testArg = it;
-            std::cout << testArg << " ";
-        }
-        std::cout << std::endl;
-
-        std::memcpy( std::addressof(memValue), std::addressof(ev->data[0]), sizeof(memValue) );
-
-        testArg = memValue;
-        std::cout << "*" << testArg << std::endl;
-
-        output_->verbose(CALL_INFO, 8, 0, "Response to a read, payload=%" PRIu64 ", for addr: %" PRIu64
-                         " to PE %" PRIu32 "\n", memValue, addr, ls_queue_->lookupEntry( ev->id ).second );
-
-        ls_queue_->setEntryData( ev->id, testArg );
-        ls_queue_->setEntryReady( ev->id, 1 );
-    } else {
-        output_->verbose(CALL_INFO, 8, 0, "Response to a write for addr: %" PRIu64 " to PE %" PRIu32 "\n",
-                         ev->addr, ls_queue_->lookupEntry( ev->id ).second );
-        ls_queue_->setEntryReady( ev->id, 2 );
+    LlyrData testArg;
+    for( auto &it : resp->data ) {
+        testArg = it;
+        std::cout << testArg << " ";
     }
+    std::cout << std::endl;
+
+    std::memcpy( std::addressof(memValue), std::addressof(resp->data[0]), sizeof(memValue) );
+
+    testArg = memValue;
+    std::cout << "*" << testArg << std::endl;
+
+    out->verbose(CALL_INFO, 8, 0, "Response to a read, payload=%" PRIu64 ", for addr: %" PRIu64
+    " to PE %" PRIu32 "\n", memValue, addr, ls_queue_->lookupEntry( resp->getID() ).second );
+
+    ls_queue_->setEntryData( resp->getID(), testArg );
+    ls_queue_->setEntryReady( resp->getID(), 1 );
 
     // Need to clean up the events coming back from the cache
-    delete ev;
-    output_->verbose(CALL_INFO, 4, 0, "Complete cache response handling.\n");
+    delete resp;
+    out->verbose(CALL_INFO, 4, 0, "Complete cache response handling.\n");
 }
+
+/* Handler for incoming Write responses - should be a response to a Write we issued */
+void LlyrComponent::LlyrMemHandlers::handle(StandardMem::WriteResp* resp) {
+
+    out->verbose(CALL_INFO, 8, 0, "Response to a write for addr: %" PRIu64 " to PE %" PRIu32 "\n",
+                 resp->pAddr, ls_queue_->lookupEntry( resp->getID() ).second );
+    ls_queue_->setEntryReady( resp->getID(), 2 );
+
+    // Need to clean up the events coming back from the cache
+    delete resp;
+    out->verbose(CALL_INFO, 4, 0, "Complete cache response handling.\n");
+}
+
+
+
+// void LlyrComponent::handleEvent( SimpleMem::Request* ev ) {
+//     output_->verbose(CALL_INFO, 4, 0, "Recv response from cache\n");
+//
+//     for( auto &it : ev->data ) {
+//         std::cout << unsigned(it) << " ";
+//     }
+//     std::cout << std::endl;
+//
+//     if( ev->cmd == SimpleMem::Request::Command::ReadResp ) {
+//         // Read request needs some special handling
+//         uint64_t addr = ev->addr;
+//         uint64_t memValue = 0;
+//
+//         LlyrData testArg;
+//         for( auto &it : ev->data ) {
+//             testArg = it;
+//             std::cout << testArg << " ";
+//         }
+//         std::cout << std::endl;
+//
+//         std::memcpy( std::addressof(memValue), std::addressof(ev->data[0]), sizeof(memValue) );
+//
+//         testArg = memValue;
+//         std::cout << "*" << testArg << std::endl;
+//
+//         output_->verbose(CALL_INFO, 8, 0, "Response to a read, payload=%" PRIu64 ", for addr: %" PRIu64
+//                          " to PE %" PRIu32 "\n", memValue, addr, ls_queue_->lookupEntry( ev->id ).second );
+//
+//         ls_queue_->setEntryData( ev->id, testArg );
+//         ls_queue_->setEntryReady( ev->id, 1 );
+//     } else {
+//         output_->verbose(CALL_INFO, 8, 0, "Response to a write for addr: %" PRIu64 " to PE %" PRIu32 "\n",
+//                          ev->addr, ls_queue_->lookupEntry( ev->id ).second );
+//         ls_queue_->setEntryReady( ev->id, 2 );
+//     }
+//
+//     // Need to clean up the events coming back from the cache
+//     delete ev;
+//     output_->verbose(CALL_INFO, 4, 0, "Complete cache response handling.\n");
+// }
 
 void LlyrComponent::doLoadStoreOps( uint32_t numOps )
 {
     output_->verbose(CALL_INFO, 10, 0, "Doing L/S ops\n");
     for(uint32_t i = 0; i < numOps; ++i ) {
         if( ls_queue_->getNumEntries() > 0 ) {
-            SimpleMem::Request::id_t next = ls_queue_->getNextEntry();
+            StandardMem::Request::id_t next = ls_queue_->getNextEntry();
 
             if( ls_queue_->getEntryReady(next) == 1) {
                 output_->verbose(CALL_INFO, 10, 0, "--(1)Mem Req ID %" PRIu32 "\n", uint32_t(next));
@@ -449,7 +504,6 @@ void LlyrComponent::constructSoftwareGraphApp(std::ifstream& inputStream)
 void LlyrComponent::constructSoftwareGraphIR(std::ifstream& inputStream)
 {
     std::string thisLine;
-    std::uint64_t position;
 
     output_->verbose(CALL_INFO, 15, 0, "Sending to LLVM parser\n");
     std::cout << ::std::endl;

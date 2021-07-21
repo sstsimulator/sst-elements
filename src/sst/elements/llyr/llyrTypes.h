@@ -17,14 +17,15 @@
 #ifndef _LLYR_TYPES
 #define _LLYR_TYPES
 
+#include <sst/core/interfaces/stdMem.h>
+
 #include <bitset>
 #include <string>
-#include <sst/core/interfaces/simpleMem.h>
 
 #define Bit_Length 64
 typedef std::bitset< Bit_Length > LlyrData;
 
-using namespace SST::Interfaces;
+using namespace SST::Experimental::Interfaces;
 
 namespace SST {
 namespace Llyr {
@@ -34,8 +35,8 @@ class LSQueue;
 
 // data type to pass between Llyr, mapper, and PEs
 typedef struct alignas(64) {
-    LSQueue*    lsqueue_;
-    SimpleMem*  mem_interface_;
+    LSQueue*        lsqueue_;
+    StandardMem*    mem_interface_;
 
     uint32_t    verbosity_;
     uint16_t    queueDepth_;

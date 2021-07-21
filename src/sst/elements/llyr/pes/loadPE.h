@@ -174,9 +174,9 @@ private:
     bool doLoad(uint64_t addr)
     {
         uint32_t targetPe;
-        SimpleMem::Request* req = new SimpleMem::Request(SimpleMem::Request::Read, addr, 8);
+        StandardMem::Request* req = new StandardMem::Read(addr, 8);
 
-        output_->verbose(CALL_INFO, 4, 0, "Creating a load request (%" PRIu32 ") from address: %" PRIu64 "\n", uint32_t(req->id), addr);
+        output_->verbose(CALL_INFO, 4, 0, "Creating a load request (%" PRIu32 ") from address: %" PRIu64 "\n", uint32_t(req->getID()), addr);
 
         //find out where the load actually needs to go
         auto it = output_queue_map_.begin();
@@ -193,10 +193,10 @@ private:
             exit(-1);
         }
 
-        LSEntry* tempEntry = new LSEntry( req->id, processor_id_, targetPe );
+        LSEntry* tempEntry = new LSEntry( req->getID(), processor_id_, targetPe );
         lsqueue_->addEntry( tempEntry );
 
-        mem_interface_->sendRequest( req );
+        mem_interface_->send( req );
 
         return 1;
 

@@ -171,9 +171,6 @@ private:
     bool doStore(uint64_t addr, LlyrData data)
     {
         uint32_t targetPe = processor_id_;
-        SimpleMem::Request* req = new SimpleMem::Request(SimpleMem::Request::Write, addr, 8);
-
-        output_->verbose(CALL_INFO, 4, 0, "Creating a store request (%" PRIu32 ") to address: %" PRIu64 "\n", uint32_t(req->id), addr);
 
         const auto newValue = data.to_ullong();
 
@@ -194,12 +191,14 @@ private:
             std::cout << static_cast<uint16_t>(*it) << ", ";
         }
         std::cout << std::endl;
-        req->setPayload( payload );
+        StandardMem::Request* req = new StandardMem::Write(addr, 8, payload);
 
-        LSEntry* tempEntry = new LSEntry( req->id, processor_id_, targetPe );
+        output_->verbose(CALL_INFO, 4, 0, "Creating a store request (%" PRIu32 ") to address: %" PRIu64 "\n", uint32_t(req->getID()), addr);
+
+        LSEntry* tempEntry = new LSEntry( req->getID(), processor_id_, targetPe );
         lsqueue_->addEntry( tempEntry );
 
-        mem_interface_->sendRequest( req );
+        mem_interface_->send( req );
 
         return 1;
     }

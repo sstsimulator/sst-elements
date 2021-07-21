@@ -78,8 +78,8 @@ protected:
 
 private:
     SST::Output* output_;
-    std::string offloadString_;
-    std::string offloadTarget_;
+    std::string  offloadString_;
+    std::string  offloadTarget_;
 
     LlyrGraph< opType > applicationGraph_;
     BBGraph* bbGraph_;
