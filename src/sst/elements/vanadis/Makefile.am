@@ -21,6 +21,7 @@ decoder/vauxvec.h \
 decoder/vdecoder.h \
 decoder/visaopts.h \
 decoder/vmipsdecoder.h \
+decoder/vriscv64decoder.h \
 inst/fpregmode.h \
 inst/isatable.h \
 inst/regfile.h \
