@@ -21,13 +21,14 @@
 namespace SST {
 namespace Vanadis {
 
+template<typename T>
 class VanadisMoveCompareImmInstruction : public VanadisInstruction {
 public:
   VanadisMoveCompareImmInstruction(const uint64_t addr, const uint32_t hw_thr,
                                    const VanadisDecoderOptions *isa_opts,
                                    const uint16_t dest, const uint16_t src,
                                    const uint16_t reg_comp,
-                                   const uint64_t immediate,
+                                   const T immediate,
                                    VanadisRegisterCompareType c_type)
       : VanadisInstruction(addr, hw_thr, isa_opts, 2, 1, 2, 1, 0, 0, 0, 0),
         imm_value(immediate), cmp_type(c_type) {
@@ -70,7 +71,7 @@ public:
              " imm: %" PRIu64 ") (phys: %5" PRIu16 " <- %5" PRIu16
              " compare-reg: %5" PRIu16 ")",
              getInstCode(), isa_int_regs_out[0], isa_int_regs_in[0],
-             isa_int_regs_in[1], imm_value, phys_int_regs_out[0],
+             isa_int_regs_in[1], static_cast<uint64_t>(imm_value), phys_int_regs_out[0],
              phys_int_regs_in[0], phys_int_regs_in[1]);
   }
 
@@ -81,13 +82,11 @@ public:
                     " imm: %" PRIu64 ") (phys: %5" PRIu16 " <- %5" PRIu16
                     " compare-reg: %5" PRIu16 ")",
                     getInstCode(), isa_int_regs_out[0], isa_int_regs_in[0],
-                    isa_int_regs_in[1], imm_value, phys_int_regs_out[0],
+                    isa_int_regs_in[1], static_cast<uint64_t>(imm_value), phys_int_regs_out[0],
                     phys_int_regs_in[0], phys_int_regs_in[1]);
 #endif
-    const uint64_t reg_value =
-        regFile->getIntReg<uint64_t>(phys_int_regs_in[0]);
-    const uint64_t compare_check =
-        regFile->getIntReg<uint64_t>(phys_int_regs_in[1]);
+    const T reg_value = regFile->getIntReg<T>(phys_int_regs_in[0]);
+    const T compare_check = regFile->getIntReg<T>(phys_int_regs_in[1]);
     bool compare_result = false;
 
     switch (cmp_type) {
@@ -96,6 +95,7 @@ public:
       break;
     case REG_COMPARE_NEQ:
       compare_result = (compare_check != imm_value);
+      break;
     case REG_COMPARE_LT:
       compare_result = (compare_check < imm_value);
       break;
@@ -119,7 +119,7 @@ public:
 
 private:
   VanadisRegisterCompareType cmp_type;
-  const uint64_t imm_value;
+  const T imm_value;
 };
 
 } // namespace Vanadis
