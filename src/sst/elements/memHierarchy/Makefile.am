@@ -146,6 +146,7 @@ EXTRA_DIST = \
     Sieve/tests/Makefile \
     Sieve/tests/ompsievetest.c \
     Sieve/tests/sieve-test.py \
+    Sieve/tests/refFiles/test_memHSieve.out \
 	tests/miranda.cfg \
 	tests/sdl-1.py \
 	tests/sdl2-1.py \

@@ -22,6 +22,8 @@
 namespace SST {
 namespace Vanadis {
 
+enum VanadisELFEndianness { VANADIS_LITTLE_ENDIAN, VANADIS_BIG_ENDIAN };
+
 enum VanadisELFISA { ISA_X86, ISA_MIPS, ISA_AMD64, ISA_RISC_V, ISA_UNKNOWN };
 
 enum VanadisELFOSABI { OS_ABI_LINUX, OS_ABI_SYS_V, OS_ABI_UNKNOWN };
@@ -429,7 +431,7 @@ public:
     VanadisELFInfo() {
         bin_path = nullptr;
         elf_class = UINT8_MAX;
-        elf_endian = UINT8_MAX;
+        elf_endian = VANADIS_LITTLE_ENDIAN;
         elf_os_abi = UINT8_MAX;
         elf_abi_version = UINT8_MAX;
         elf_obj_type = UINT16_MAX;
@@ -454,6 +456,7 @@ public:
                                     : "Unknown");
         output->verbose(CALL_INFO, 2, 0, "Instruction-Set:      %" PRIu16 " / %s\n", elf_isa,
                         getELFISAString(getISA()));
+	output->verbose(CALL_INFO, 2, 0, "Endian:               %s\n", elf_endian == VANADIS_LITTLE_ENDIAN ? "Little Endian" : "Big Endian");
         output->verbose(CALL_INFO, 2, 0, "Object Type:          %s\n", getELFObjectTypeString(getObjectType()));
         output->verbose(CALL_INFO, 2, 0, "OS-ABI:               %" PRIu8 " / %s\n", elf_os_abi,
                         getELFOSABIString(getOSABI()));
@@ -491,7 +494,7 @@ public:
     }
 
     void setClass(const uint8_t new_class) { elf_class = new_class; }
-    void setEndian(const uint8_t new_endian) { elf_endian = new_endian; }
+    void setEndian(const VanadisELFEndianness new_endian) { elf_endian = new_endian; }
     void setOSABI(const uint8_t new_os_abi) { elf_os_abi = new_os_abi; }
     void setOSABIVersion(const uint8_t new_abi_ver) { elf_abi_version = new_abi_ver; }
     void setObjectType(const uint16_t new_obj_type) { elf_obj_type = new_obj_type; }
@@ -560,6 +563,7 @@ public:
     const char* getBinaryPath() const { return bin_path; }
 
     uint64_t getEntryPoint() const { return elf_entry_point; }
+    VanadisELFEndianness getEndian() const { return elf_endian; }
     uint64_t getProgramHeaderOffset() const { return elf_prog_header_start; }
     uint64_t getSectionHeaderOffset() const { return elf_prog_section_start; }
 
@@ -627,7 +631,7 @@ public:
 protected:
     char* bin_path;
     uint8_t elf_class;
-    uint8_t elf_endian;
+    VanadisELFEndianness elf_endian;
     uint8_t elf_os_abi;
     uint8_t elf_abi_version;
     uint16_t elf_obj_type;
@@ -853,7 +857,17 @@ readBinaryELFInfo(SST::Output* output, const char* path) {
     elf_info->setClass(tmp_byte);
 
     fread(&tmp_byte, 1, 1, bin_file);
-    elf_info->setEndian(tmp_byte);
+    switch( tmp_byte ) {
+	case 1:
+		elf_info->setEndian(VANADIS_LITTLE_ENDIAN);
+		break;
+	case 2:
+		elf_info->setEndian(VANADIS_BIG_ENDIAN);
+		break;
+	default:
+		output->fatal(CALL_INFO, -1, "Error: unknown endian type: %" PRIu8 "\n", tmp_byte);
+		break;
+    }
 
     fread(&tmp_byte, 1, 1, bin_file);
     // Discard this read, it is set to 1 for modern ELF

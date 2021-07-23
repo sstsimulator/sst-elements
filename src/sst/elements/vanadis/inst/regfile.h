@@ -38,8 +38,7 @@ public:
 
         // Registers are always 64-bits
         int_reg_storage = new char[int_reg_width * count_int_regs];
-    std:
-        memset(int_reg_storage, 0, (int_reg_width * count_int_regs));
+        std:memset(int_reg_storage, 0, (int_reg_width * count_int_regs));
 
         switch (fp_reg_mode) {
         case VANADIS_REGISTER_MODE_FP32: {
@@ -94,44 +93,16 @@ public:
     template <typename T> void setIntReg(const uint16_t reg, const T val, const bool sign_extend = true) {
         assert(reg < count_int_regs);
 
-        T* reg_ptr_t = (T*)(&int_reg_storage[int_reg_width * reg]);
-        char* reg_ptr_c = (char*)(&int_reg_storage[int_reg_width * reg]);
+        if (LIKELY(reg != decoder_opts->getRegisterIgnoreWrites())) {
+            T* reg_ptr_t = (T*)(&int_reg_storage[int_reg_width * reg]);
+            char* reg_ptr_c = (char*)(reg_ptr_t);
 
-        if (reg != decoder_opts->getRegisterIgnoreWrites()) {
-            if (sizeof(T) < int_reg_width) {
-                if (sign_extend) {
-                    const uint64_t check_sign_bit = 1UL << ((sizeof(T) * 8) - 1);
-                    (*reg_ptr_t) = val;
+	    reg_ptr_t[0] = val;
 
-                    if ((val & check_sign_bit) != 0) {
-                        // we need to perform sign extension
-                        for (int next_reg_byte = int_reg_width - 1; next_reg_byte >= sizeof(T); next_reg_byte--) {
-
-                            // Push 0xFF (negative) into each preceeding byte
-                            reg_ptr_c[next_reg_byte] = 0xFF;
-                        }
-                    } else {
-                        // we need to perform sign extension
-                        for (int next_reg_byte = int_reg_width - 1; next_reg_byte >= sizeof(T); next_reg_byte--) {
-
-                            // Push 0 into each preceeding byte
-                            reg_ptr_c[next_reg_byte] = 0x00;
-                        }
-                    }
-                } else {
-                    (*reg_ptr_t) = val;
-
-                    // we are going to zero out the preceeding bytes because
-                    // we are not sign extending
-                    for (int next_reg_byte = int_reg_width - 1; next_reg_byte >= sizeof(T); next_reg_byte--) {
-
-                        // Push 0xFF (negative) into each preceeding byte
-                        reg_ptr_c[next_reg_byte] = 0;
-                    }
-                }
-            } else {
-                (*reg_ptr_t) = val;
-            }
+	    // if we need to sign extend, check if the most-significant bit is a 1, if yes then
+	    // fill with 0xFF, otherwise fill with 0x00
+	    std::memset(&reg_ptr_c[sizeof(T)], sign_extend ? ((val & (static_cast<T>(1) << (sizeof(T) * 8 - 1))) == 0) ?
+		0x00 : 0xFF : 0x00, int_reg_width - sizeof(T));
         }
     }
 

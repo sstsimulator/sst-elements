@@ -59,6 +59,7 @@ public:
     void store(const I& key, T value) {
         if (contains(key)) {
             send_key_to_front(key);
+	    data_values[key] = value;
         } else {
             kill_lru_key();
             data_values.insert(std::pair<I, T>(key, value));
@@ -72,9 +73,8 @@ public:
         }
     }
 
-    size_t size() { return data_values.size(); }
-
-    size_t capacity() { return max_entries; }
+    size_t size() const { return data_values.size(); }
+    size_t capacity() const { return max_entries; }
 
 private:
     void kill_lru_key() {
