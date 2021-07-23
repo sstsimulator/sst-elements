@@ -37,7 +37,7 @@ public:
     isa_int_regs_out[0] = dest;
   }
 
-  VanadisMoveCompareImmInstruction *clone() {
+  VanadisMoveCompareImmInstruction *clone() override {
     return new VanadisMoveCompareImmInstruction(*this);
   }
 
