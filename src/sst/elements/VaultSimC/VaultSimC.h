@@ -22,25 +22,12 @@
 #include <sst/elements/memHierarchy/memEvent.h>
 #include <sst/core/output.h>
 
-/* If we have a PHX library to link to, we use that. Otherwise, we use
-   a greatly simplifed timing model */
-#if HAVE_LIBPHX == 1
-#include <Vault.h>
-#include <BusPacket.h>
-#endif  /* HAVE_LIBPHX */
-
 #include "vaultGlobals.h"
 
 using namespace std;
 
 namespace SST {
 namespace VaultSim {
-
-#if HAVE_LIBPHX == 1
-using namespace PHXSim;
-#endif  /* HAVE_LIBPHX */
-
-//#define STUPID_DEBUG
 
 class VaultSimC : public Component {
 
@@ -59,10 +46,7 @@ public: // functions
                             {"numVaults2",         "Number of bits to determine vault address (i.e. log_2(number of vaults per cube))"},
                             {"VaultID",            "Vault Unique ID (Unique to cube)."},
                             {"debug",              "0 (default): No debugging, 1: STDOUT, 2: STDERR, 3: FILE."},
-#if !(HAVE_LIBPHX == 1)
-                            {"delay", "Static vault delay", "40ns"}
-#endif /* HAVE_LIBPHX */
-                            )
+			   )
 
     SST_ELI_DOCUMENT_PORTS(
                            {"bus", "Link to the logic layer", {"MemEvent",""}},
@@ -85,26 +69,8 @@ private: // functions
 
     VaultSimC( const VaultSimC& c );
 
-#if HAVE_LIBPHX == 1
-    bool clock_phx( Cycle_t );
-
-    inline PHXSim::TransactionType convertType( SST::MemHierarchy::Command type );
-
-    void readData(BusPacket bp, unsigned clockcycle);
-    void writeData(BusPacket bp, unsigned clockcycle);
-
-    std::deque<Transaction> m_transQ;
-    t2MEMap_t transactionToMemEventMap; // maps original MemEvent to a Vault transaction ID
-    Vault* m_memorySystem;
-#else
-    // if not have PHX Lib...
-
     bool clock( Cycle_t );
     Link *delayLine;
-
-#endif /* HAVE_LIBPHX */
-
-
     uint8_t *memBuffer;
     memChan_t* m_memChan;
     size_t numVaults2;  // not clear if used
@@ -124,25 +90,6 @@ private: // functions
     Statistic<uint64_t>*  memOutStat;
 };
 
-#if HAVE_LIBPHX == 1
-inline PHXSim::TransactionType VaultSimC::convertType( SST::MemHierarchy::Command type )
-{
-    /*  Needs to be updated with current MemHierarchy Commands/States
-    switch( type )
-      {
-      case SST::MemHierarchy::ReadReq:
-      case SST::MemHierarchy::RequestData:
-	return PHXSim::DATA_READ;
-      case SST::MemHierarchy::SupplyData:
-      case SST::MemHierarchy::WriteReq:
-	return PHXSim::DATA_WRITE;
-      default:
-	_abort(VaultSimC,"Tried to convert unknown memEvent request type (%d) to PHXSim transaction type \n", type);
-    }
-    return (PHXSim::TransactionType)-1;
-    */
-}
-#endif /* HAVE_LIBPHX */
 }
 }
 
