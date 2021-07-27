@@ -32,13 +32,11 @@ public:
         isa_int_regs_out[0] = dest;
     }
 
-    VanadisAndInstruction* clone() { return new VanadisAndInstruction(*this); }
+    VanadisAndInstruction* clone() override { return new VanadisAndInstruction(*this); }
+    VanadisFunctionalUnitType getInstFuncType() const override { return INST_INT_ARITH; }
+    const char* getInstCode() const override { return "AND"; }
 
-    virtual VanadisFunctionalUnitType getInstFuncType() const { return INST_INT_ARITH; }
-
-    virtual const char* getInstCode() const { return "AND"; }
-
-    virtual void printToBuffer(char* buffer, size_t buffer_size) {
+    void printToBuffer(char* buffer, size_t buffer_size) override {
         snprintf(buffer, buffer_size,
                  "AND     %5" PRIu16 " <- %5" PRIu16 " + %5" PRIu16 " (phys: %5" PRIu16 " <- %5" PRIu16 " + %5" PRIu16
                  ")",
@@ -46,7 +44,7 @@ public:
                  phys_int_regs_in[1]);
     }
 
-    virtual void execute(SST::Output* output, VanadisRegisterFile* regFile) {
+    void execute(SST::Output* output, VanadisRegisterFile* regFile) override {
 #ifdef VANADIS_BUILD_DEBUG
         output->verbose(CALL_INFO, 16, 0,
                         "Execute: (addr=%p) AND phys: out=%" PRIu16 " in=%" PRIu16 ", %" PRIu16 ", isa: out=%" PRIu16
