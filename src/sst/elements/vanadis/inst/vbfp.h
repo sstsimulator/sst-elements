@@ -32,9 +32,9 @@ public:
         isa_fp_regs_in[0] = cond_reg;
     }
 
-    VanadisBranchFPInstruction* clone() { return new VanadisBranchFPInstruction(*this); }
+    VanadisBranchFPInstruction* clone() override { return new VanadisBranchFPInstruction(*this); }
 
-    virtual const char* getInstCode() const {
+    const char* getInstCode() const override {
         if (branch_on_true) {
             return "BFPT";
         } else {
@@ -42,12 +42,12 @@ public:
         }
     }
 
-    virtual void printToBuffer(char* buffer, size_t buffer_size) {
+    void printToBuffer(char* buffer, size_t buffer_size) override {
         snprintf(buffer, buffer_size, "BFP%c isa-in: %" PRIu16 ", / phys-in: %" PRIu16 " / offset: %" PRId64 "\n",
                  branch_on_true ? 'T' : 'F', isa_fp_regs_in[0], phys_fp_regs_in[0], offset);
     }
 
-    virtual void execute(SST::Output* output, VanadisRegisterFile* regFile) {
+    void execute(SST::Output* output, VanadisRegisterFile* regFile) override {
 #ifdef VANADIS_BUILD_DEBUG
         output->verbose(
             CALL_INFO, 16, 0,
