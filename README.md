@@ -13,6 +13,48 @@ The Structural Simulation Toolkit (SST) was developed to explore innovations in 
 
 ---
 
+## Install
+
+### Install with Spack
+
+```
+spack install sst-elements
+```
+
+### (TODO) Pull the docker container
+
+```
+docker pull sst-docker-image-name:latest-tag
+```
+
+## Building
+
+Build from source locally
+```
+./autogen.sh
+
+# make a build directory
+mkdir build && cd build
+
+# optionally build other elements
+OTHER_ELEMENTS=
+
+# configure
+../configure --with-sst-core=<Path to SST Core> --prefix=$PWD/../install $OTHER_ELEMENTS
+
+# build and install
+make -j && make install
+```
+
+Build the container
+```
+docker build -t sst-container:latest .
+```
+
+Visit the [site](http://sst-simulator.org/SSTPages/SSTTopDocBuildInfo/) for more detailed instructions, including steps for how to build with support for elements.
+
+---
+
 Visit [sst-simulator.org](http://sst-simulator.org) to learn more about SST.
 
 See [Contributing](https://github.com/sstsimulator/sst-elements/blob/devel/CONTRIBUTING.md) to learn how to contribute to SST.
