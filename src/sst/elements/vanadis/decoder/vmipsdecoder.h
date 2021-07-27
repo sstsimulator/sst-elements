@@ -388,6 +388,11 @@ public:
             vanadis_vec_copy_in<int>(phdr_data_block, (int)nxt_entry->getAlignment());
         }
 
+	// Check endian-ness
+	if( elf_info->getEndian() != VANADIS_LITTLE_ENDIAN ) {
+	    output->fatal(CALL_INFO, -1, "Error: binary executable ELF information shows this was not compiled for little-endian processors (\"mipsel\"), please recompile to a supported format.\n");
+	}
+
         const uint64_t phdr_address = params.find<uint64_t>("program_header_address", 0x60000000);
 
         std::vector<uint8_t> random_values_data_block;
@@ -1129,11 +1134,17 @@ protected:
 			    MIPS_INC_DECODE_STAT(stat_decode_mflo);
                         } break;
 
-                        case MIPS_SPEC_OP_MASK_MOVN:
-                            break;
+                        case MIPS_SPEC_OP_MASK_MOVN: {
+			    bundle->addInstruction(new VanadisMoveCompareImmInstruction<int32_t>(ins_addr, hw_thr, options, rd,
+										rs, rt, 0, REG_COMPARE_NEQ));
+			    insertDecodeFault = false;
+			} break;
 
-                        case MIPS_SPEC_OP_MASK_MOVZ:
-                            break;
+                        case MIPS_SPEC_OP_MASK_MOVZ: {
+			   bundle->addInstruction(new VanadisMoveCompareImmInstruction<int32_t>(ins_addr, hw_thr, options, rd,
+                                                                                rs, rt, 0, REG_COMPARE_EQ));
+                            insertDecodeFault = false;
+			} break;
 
                         case MIPS_SPEC_OP_MASK_MTHI:
                             break;

@@ -30,10 +30,8 @@ libVaultSimC_la_SOURCES = \
 	vaultGlobals.h
 
 libVaultSimC_la_CPPFLAGS = $(MPI_CPPFLAGS) \
-	$(LIBPHX_CPPFLAGS) -I$(top_srcdir)/src
-libVaultSimC_la_LDFLAGS = -module -avoid-version \
-	$(LIBPHX_LDFLAGS) $(LIBPHX_LIBDIR)
-libVaultSimC_la_LIBADD = $(LIBPHX_LIB)
+	-I$(top_srcdir)/src
+libVaultSimC_la_LDFLAGS = -module -avoid-version
 
 install-exec-hook:
 	$(SST_REGISTER_TOOL) SST_ELEMENT_SOURCE     VaultSimC=$(abs_srcdir)
