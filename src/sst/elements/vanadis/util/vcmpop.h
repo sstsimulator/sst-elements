@@ -16,8 +16,8 @@
 #ifndef _H_VANADIS_COMPARE_OP
 #define _H_VANADIS_COMPARE_OP
 
-#include "inst/vcmptype.h"
 #include "inst/regfile.h"
+#include "inst/vcmptype.h"
 
 #include <cinttypes>
 #include <cstdint>
@@ -25,108 +25,179 @@
 namespace SST {
 namespace Vanadis {
 
-inline void register_compare_values_print_msg(uint32_t line, const char* file, const char* func, SST::Output* output, int32_t left_value, int32_t right_value) {
-	output->verbose(line, file, func, 16, 0, "---> reg-val: %" PRId32 " reg-val: %" PRId32 "\n", left_value, right_value );
+inline void
+register_compare_values_print_msg(uint32_t line, const char* file, const char* func, SST::Output* output,
+                                  int32_t left_value, int32_t right_value) {
+    output->verbose(line, file, func, 16, 0, "---> reg-val: %" PRId32 " reg-val: %" PRId32 "\n", left_value,
+                    right_value);
 }
 
-inline void register_compare_values_print_msg(uint64_t line, const char* file, const char* func, SST::Output* output, int64_t left_value, int64_t right_value) {
-	output->verbose(line, file, func, 16, 0, "---> reg-val: %" PRId64 " reg-val: %" PRId64 "\n", left_value, right_value );
+inline void
+register_compare_values_print_msg(uint64_t line, const char* file, const char* func, SST::Output* output,
+                                  int64_t left_value, int64_t right_value) {
+    output->verbose(line, file, func, 16, 0, "---> reg-val: %" PRId64 " reg-val: %" PRId64 "\n", left_value,
+                    right_value);
 }
 
-inline void register_compare_values_print_msg(uint32_t line, const char* file, const char* func, SST::Output* output, uint32_t left_value, uint32_t right_value) {
-	output->verbose(line, file, func, 16, 0, "---> reg-val: %" PRIu32 " reg-val: %" PRIu32 "\n", left_value, right_value );
+inline void
+register_compare_values_print_msg(uint32_t line, const char* file, const char* func, SST::Output* output,
+                                  uint32_t left_value, uint32_t right_value) {
+    output->verbose(line, file, func, 16, 0, "---> reg-val: %" PRIu32 " reg-val: %" PRIu32 "\n", left_value,
+                    right_value);
 }
 
-inline void register_compare_values_print_msg(uint64_t line, const char* file, const char* func, SST::Output* output, uint64_t left_value, uint64_t right_value) {
-	output->verbose(line, file, func, 16, 0, "---> reg-val: %" PRIu64 " reg-val: %" PRIu64 "\n", left_value, right_value );
+inline void
+register_compare_values_print_msg(uint64_t line, const char* file, const char* func, SST::Output* output,
+                                  uint64_t left_value, uint64_t right_value) {
+    output->verbose(line, file, func, 16, 0, "---> reg-val: %" PRIu64 " reg-val: %" PRIu64 "\n", left_value,
+                    right_value);
 }
 
 
-template<typename T>
-bool registerCompareValues( VanadisRegisterCompareType compareType,
-	VanadisRegisterFile* regFile,
-	VanadisInstruction* ins,
-	SST::Output* output,
-	T left_value, T right_value ) {
+template <typename T>
+bool
+registerCompareValues(VanadisRegisterCompareType compareType, VanadisRegisterFile* regFile, VanadisInstruction* ins,
+                      SST::Output* output, T left_value, T right_value) {
 
-    register_compare_values_print_msg(CALL_INFO, output, left_value, right_value );
+    register_compare_values_print_msg(CALL_INFO, output, left_value, right_value);
 
-	bool compare_result = false;
+    bool compare_result = false;
 
-	switch( compareType ) {
-	case REG_COMPARE_EQ:
-		{
-			compare_result = (left_value) == (right_value);
-			output->verbose(CALL_INFO, 16, 0, "-----> compare: equal     / result: %s\n", (compare_result ? "true" : "false") );
-		}
-		break;
-	case REG_COMPARE_NEQ:
-		{
-			compare_result = (left_value) != (right_value);
-			output->verbose(CALL_INFO, 16, 0, "-----> compare: not-equal / result: %s\n", (compare_result ? "true" : "false") );
-		}
-		break;
-	case REG_COMPARE_LT:
-		{
-			compare_result = (left_value) < (right_value);
-			output->verbose(CALL_INFO, 16, 0, "-----> compare: less-than / result: %s\n", (compare_result ? "true" : "false") );
-		}
-		break;
-	case REG_COMPARE_LTE:
-		{
-			compare_result = (left_value) <= (right_value);
-			output->verbose(CALL_INFO, 16, 0, "-----> compare: less-than-eq / result: %s\n", (compare_result ? "true" : "false") );
-		}
-		break;
-	case REG_COMPARE_GT:
-		{
-			compare_result = (left_value) > (right_value);
-			output->verbose(CALL_INFO, 16, 0, "-----> compare: greater-than / result: %s\n", (compare_result ? "true" : "false") );
-		}
-		break;
-	case REG_COMPARE_GTE:
-		{
-			compare_result = (left_value) >= (right_value);
-			output->verbose(CALL_INFO, 16, 0, "-----> compare: greater-than-eq / result: %s\n", (compare_result ? "true" : "false") );
-		}
-		break;
-	default:
-		{
-			output->verbose(CALL_INFO, 16, 0, "-----> Unknown comparison operation at instruction: 0x%llx\n", ins->getInstructionAddress());
-			ins->flagError();
-		}
-		break;
-	}
+    switch (compareType) {
+    case REG_COMPARE_EQ: {
+        compare_result = (left_value) == (right_value);
+        output->verbose(CALL_INFO, 16, 0, "-----> compare: equal     / result: %s\n",
+                        (compare_result ? "true" : "false"));
+    } break;
+    case REG_COMPARE_NEQ: {
+        compare_result = (left_value) != (right_value);
+        output->verbose(CALL_INFO, 16, 0, "-----> compare: not-equal / result: %s\n",
+                        (compare_result ? "true" : "false"));
+    } break;
+    case REG_COMPARE_LT: {
+        compare_result = (left_value) < (right_value);
+        output->verbose(CALL_INFO, 16, 0, "-----> compare: less-than / result: %s\n",
+                        (compare_result ? "true" : "false"));
+    } break;
+    case REG_COMPARE_LTE: {
+        compare_result = (left_value) <= (right_value);
+        output->verbose(CALL_INFO, 16, 0, "-----> compare: less-than-eq / result: %s\n",
+                        (compare_result ? "true" : "false"));
+    } break;
+    case REG_COMPARE_GT: {
+        compare_result = (left_value) > (right_value);
+        output->verbose(CALL_INFO, 16, 0, "-----> compare: greater-than / result: %s\n",
+                        (compare_result ? "true" : "false"));
+    } break;
+    case REG_COMPARE_GTE: {
+        compare_result = (left_value) >= (right_value);
+        output->verbose(CALL_INFO, 16, 0, "-----> compare: greater-than-eq / result: %s\n",
+                        (compare_result ? "true" : "false"));
+    } break;
+    default: {
+        output->verbose(CALL_INFO, 16, 0, "-----> Unknown comparison operation at instruction: 0x%llx\n",
+                        ins->getInstructionAddress());
+        ins->flagError();
+    } break;
+    }
 
-	return compare_result;
+    return compare_result;
 };
 
-template<typename T>
-bool registerCompare( VanadisRegisterCompareType compareType,
-	VanadisRegisterFile* regFile,
-	VanadisInstruction* ins,
-	SST::Output* output,
-	uint16_t left, uint16_t right ) {
+template <VanadisRegisterCompareType compareType, typename T>
+bool
+registerCompareValues(VanadisRegisterFile* regFile, VanadisInstruction* ins,
+                      SST::Output* output, T left_value, T right_value) {
 
-	const T left_value  = regFile->getIntReg<T>( left  );
-	const T right_value = regFile->getIntReg<T>( right );
+    register_compare_values_print_msg(CALL_INFO, output, left_value, right_value);
 
-	return registerCompareValues<T>( compareType, regFile, ins, output, left_value, right_value );
+    bool compare_result = false;
+
+    switch (compareType) {
+    case REG_COMPARE_EQ: {
+        compare_result = (left_value) == (right_value);
+        output->verbose(CALL_INFO, 16, 0, "-----> compare: equal     / result: %s\n",
+                        (compare_result ? "true" : "false"));
+    } break;
+    case REG_COMPARE_NEQ: {
+        compare_result = (left_value) != (right_value);
+        output->verbose(CALL_INFO, 16, 0, "-----> compare: not-equal / result: %s\n",
+                        (compare_result ? "true" : "false"));
+    } break;
+    case REG_COMPARE_LT: {
+        compare_result = (left_value) < (right_value);
+        output->verbose(CALL_INFO, 16, 0, "-----> compare: less-than / result: %s\n",
+                        (compare_result ? "true" : "false"));
+    } break;
+    case REG_COMPARE_LTE: {
+        compare_result = (left_value) <= (right_value);
+        output->verbose(CALL_INFO, 16, 0, "-----> compare: less-than-eq / result: %s\n",
+                        (compare_result ? "true" : "false"));
+    } break;
+    case REG_COMPARE_GT: {
+        compare_result = (left_value) > (right_value);
+        output->verbose(CALL_INFO, 16, 0, "-----> compare: greater-than / result: %s\n",
+                        (compare_result ? "true" : "false"));
+    } break;
+    case REG_COMPARE_GTE: {
+        compare_result = (left_value) >= (right_value);
+        output->verbose(CALL_INFO, 16, 0, "-----> compare: greater-than-eq / result: %s\n",
+                        (compare_result ? "true" : "false"));
+    } break;
+    default: {
+        output->verbose(CALL_INFO, 16, 0, "-----> Unknown comparison operation at instruction: 0x%llx\n",
+                        ins->getInstructionAddress());
+        ins->flagError();
+    } break;
+    }
+
+    return compare_result;
 };
 
-template<typename T>
-bool registerCompareImm( VanadisRegisterCompareType compareType,
-	VanadisRegisterFile* regFile,
-	VanadisInstruction* ins,
-	SST::Output* output,
-	uint16_t left, T right_value ) {
 
-	const T left_value  = regFile->getIntReg<T>( left  );
+template <typename T>
+bool
+registerCompare(VanadisRegisterCompareType compareType, VanadisRegisterFile* regFile, VanadisInstruction* ins,
+                SST::Output* output, uint16_t left, uint16_t right) {
 
-	return registerCompareValues<T>( compareType, regFile, ins, output, left_value, right_value );
+    const T left_value = regFile->getIntReg<T>(left);
+    const T right_value = regFile->getIntReg<T>(right);
+
+    return registerCompareValues<T>(compareType, regFile, ins, output, left_value, right_value);
 };
 
-}
-}
+template <typename T>
+bool
+registerCompareImm(VanadisRegisterCompareType compareType, VanadisRegisterFile* regFile, VanadisInstruction* ins,
+                   SST::Output* output, uint16_t left, T right_value) {
+
+    const T left_value = regFile->getIntReg<T>(left);
+
+    return registerCompareValues<T>(compareType, regFile, ins, output, left_value, right_value);
+};
+
+template <VanadisRegisterCompareType compareType, typename T>
+bool
+registerCompare(VanadisRegisterFile* regFile, VanadisInstruction* ins,
+                SST::Output* output, uint16_t left, uint16_t right) {
+
+    const T left_value = regFile->getIntReg<T>(left);
+    const T right_value = regFile->getIntReg<T>(right);
+
+    return registerCompareValues<compareType, T>(regFile, ins, output, left_value, right_value);
+};
+
+template <VanadisRegisterCompareType compareType, typename T>
+bool
+registerCompareImm(VanadisRegisterFile* regFile, VanadisInstruction* ins,
+                   SST::Output* output, uint16_t left, T right_value) {
+
+    const T left_value = regFile->getIntReg<T>(left);
+
+    return registerCompareValues<compareType, T>(regFile, ins, output, left_value, right_value);
+};
+
+} // namespace Vanadis
+} // namespace SST
 
 #endif

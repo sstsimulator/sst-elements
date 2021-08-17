@@ -24,26 +24,16 @@ namespace Vanadis {
 class VanadisMIPSInstructionLoader : public VanadisInstructionLoader {
 
 public:
-	SST_ELI_REGISTER_SUBCOMPONENT_API( SST::Vanadis::VanadisMIPSInstructionLoader )
-	
+    SST_ELI_REGISTER_SUBCOMPONENT_API(SST::Vanadis::VanadisMIPSInstructionLoader)
 
-	VanadisMIPSInstructionLoader( ComponentId_t& id, Params& params ) :
-		VanadisInstructionLoader(id, params) {
+    VanadisMIPSInstructionLoader(ComponentId_t& id, Params& params) : VanadisInstructionLoader(id, params) {}
 
-	}
-
-	void hasEntryForAddress( const uint64_t ip ) const {
-		return instr_map.find(ip) != instr_map.end();
-	}
-
-	
+    void hasEntryForAddress(const uint64_t ip) const { return instr_map.find(ip) != instr_map.end(); }
 
 protected:
-	
-
 };
 
-}
-}
+} // namespace Vanadis
+} // namespace SST
 
 #endif

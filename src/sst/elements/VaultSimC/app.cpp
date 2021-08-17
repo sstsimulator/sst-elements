@@ -25,7 +25,6 @@ static unsigned int missRate[][3] = {{0,51,32},   //app 0
 				     {0,18,15}};  //app 1
 static unsigned int isLoad[] = {3,32}; // out of 64
 
-using namespace SST::MemHierarchy;
 using namespace SST::VaultSim;
 
 MemReqEvent *cpu::getInst(int cacheLevel, int app, int core) {
