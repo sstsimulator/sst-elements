@@ -729,18 +729,21 @@ void CoherenceController::removeRequestRecord(SST::Event::id_type id) {
 }
 
 void CoherenceController::recordLatencyType(Event::id_type id, int type) {
-    if (startTimes_.find(id) != startTimes_.end())
-        startTimes_.find(id)->second.missType = type;
+    auto it = startTimes_.find(id);
+    if(it != startTimes_.end())
+        it->second.missType = type;
 }
 
 void CoherenceController::recordMiss(Event::id_type id) {
-    if (startTimes_.find(id) != startTimes_.end())
-        startTimes_.find(id)->second.missType = LatType::MISS;
+    auto it = startTimes_.find(id);
+    if(it != startTimes_.end())
+        it->second.missType = LatType::MISS;
 }
 
 void CoherenceController::recordPrefetchLatency(Event::id_type id, int type) {
-    if (startTimes_.find(id) != startTimes_.end()) {
-        LatencyStat stat = startTimes_.find(id)->second;
+    auto it = startTimes_.find(id);
+    if(it != startTimes_.end()) {
+        LatencyStat stat = it->second;
         recordLatency(stat.cmd, type, timestamp_ - stat.time);
         startTimes_.erase(id);
     }
