@@ -74,6 +74,9 @@
 #include "inst/vsetreg.h"
 #include "inst/vsyscall.h"
 
+// int-reg move
+#include "inst/vmovci.h"
+
 // FP Convert/Move
 #include "inst/vfp2fp.h"
 #include "inst/vfp2gpr.h"

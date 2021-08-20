@@ -652,7 +652,7 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle) {
 
                 // Keep track of whether we have seen any fences, we just ensure we
                 // cannot issue load/stores until fences complete
-                if (INST_FENCE == ins->getInstFuncType()) {
+                if (UNLIKELY(INST_FENCE == ins->getInstFuncType())) {
                     found_store = true;
                     found_load = true;
                 }
@@ -747,7 +747,7 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
     bool perform_pipeline_clear = false;
 
     // Instruction is flagging error, print out and halt
-    if (rob_front->trapsError()) {
+    if (UNLIKELY(rob_front->trapsError())) {
         output->verbose(CALL_INFO, 0, 0,
                         "Error has been detected in retired instruction. Retired "
                         "register status:\n");
@@ -788,7 +788,7 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
                     VanadisInstruction* delay_ins = rob->peekAt(1);
 
                     if (delay_ins->completedExecution()) {
-                        if (delay_ins->trapsError()) {
+                        if (UNLIKELY(delay_ins->trapsError())) {
                             output->fatal(CALL_INFO, -1,
                                           "Instruction (delay-slot) 0x%llx flags an error "
                                           "(instruction-type: %s)\n",
@@ -905,10 +905,12 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
                 delete delay_ins;
             }
 
-            retire_isa_tables[rob_front->getHWThread()]->print(output, register_files[rob_front->getHWThread()],
+				if(output->getVerboseLevel() > 0) {
+               retire_isa_tables[rob_front->getHWThread()]->print(output, register_files[rob_front->getHWThread()],
                                                                print_int_reg, print_fp_reg);
+				}
 
-            if ((pause_on_retire_address > 0) && (rob_front->getInstructionAddress() == pause_on_retire_address)) {
+            if (UNLIKELY((pause_on_retire_address > 0) && (rob_front->getInstructionAddress() == pause_on_retire_address))) {
 
                 // print the register and pipeline status
                 printStatus((*output));
@@ -923,7 +925,7 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
                               pause_on_retire_address);
             }
 
-            if (perform_pipeline_clear) {
+            if (UNLIKELY(perform_pipeline_clear)) {
 #ifdef VANADIS_BUILD_DEBUG
                 output->verbose(CALL_INFO, 8, 0,
                                 "----> perform a pipeline clear thread %" PRIu32 ", reset to address: 0x%llx\n",
@@ -937,7 +939,7 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
             delete rob_front;
         }
     } else {
-        if (INST_SYSCALL == rob_front->getInstFuncType()) {
+        if (UNLIKELY(INST_SYSCALL == rob_front->getInstFuncType())) {
             if (rob_front->completedIssue()) {
                 // have we been marked front on ROB yet? if yes, then we have issued our
                 // syscall
@@ -1009,10 +1011,6 @@ VANADIS_COMPONENT::allocateFunctionalUnit(VanadisInstruction* ins) {
         allocated_fu = mapInstructiontoFunctionalUnit(ins, fu_int_arith);
         break;
 
-    case INST_FP_ARITH:
-        allocated_fu = mapInstructiontoFunctionalUnit(ins, fu_fp_arith);
-        break;
-
     case INST_LOAD:
         if (!lsq->loadFull()) {
             //				if( ins->endsMicroOpGroup() ) {
@@ -1035,16 +1033,20 @@ VANADIS_COMPONENT::allocateFunctionalUnit(VanadisInstruction* ins) {
         }
         break;
 
+    case INST_FP_ARITH:
+        allocated_fu = mapInstructiontoFunctionalUnit(ins, fu_fp_arith);
+        break;
+
+    case INST_BRANCH:
+        allocated_fu = mapInstructiontoFunctionalUnit(ins, fu_branch);
+        break;
+
     case INST_INT_DIV:
         allocated_fu = mapInstructiontoFunctionalUnit(ins, fu_int_div);
         break;
 
     case INST_FP_DIV:
         allocated_fu = mapInstructiontoFunctionalUnit(ins, fu_fp_div);
-        break;
-
-    case INST_BRANCH:
-        allocated_fu = mapInstructiontoFunctionalUnit(ins, fu_branch);
         break;
 
     case INST_FENCE: {
@@ -1145,8 +1147,7 @@ VANADIS_COMPONENT::tick(SST::Cycle_t cycle) {
         if (zero_reg < isa_options[i]->countISAIntRegisters()) {
             VanadisISATable* thr_issue_table = issue_isa_tables[i];
             const uint16_t zero_phys_reg = thr_issue_table->getIntPhysReg(zero_reg);
-            uint64_t* reg_ptr = (uint64_t*)register_files[i]->getIntReg(zero_phys_reg);
-            *(reg_ptr) = 0;
+				register_files[i]->setIntReg<uint64_t>(zero_phys_reg, 0);
         }
     }
 
@@ -1415,9 +1416,9 @@ VANADIS_COMPONENT::assignRegistersToInstruction(const uint16_t int_reg_count, co
     // itself at execute and relies on the OS handlers, otherwise this is not
     // out-of-order compliant (since mis-predicts would corrupt the register file
     // contents
-    if (INST_SYSCALL == ins->getInstFuncType()) {
+    if (UNLIKELY(INST_SYSCALL == ins->getInstFuncType())) {
         for (uint16_t i = 0; i < ins->countISAIntRegOut(); ++i) {
-            if (ins->getISAIntRegOut(i) >= int_reg_count) {
+            if (UNLIKELY(ins->getISAIntRegOut(i) >= int_reg_count)) {
                 output->fatal(CALL_INFO, -1,
                               "Error: ins request out-int-reg: %" PRIu16 " but ISA has only %" PRIu16 " available\n",
                               ins->getISAIntRegOut(i), int_reg_count);
@@ -1432,7 +1433,7 @@ VANADIS_COMPONENT::assignRegistersToInstruction(const uint16_t int_reg_count, co
 
         // Set current ISA registers required for output
         for (uint16_t i = 0; i < ins->countISAFPRegOut(); ++i) {
-            if (ins->getISAFPRegOut(i) >= fp_reg_count) {
+            if (UNLIKELY(ins->getISAFPRegOut(i) >= fp_reg_count)) {
                 output->fatal(CALL_INFO, -1,
                               "Error: ins request out-fp-reg: %" PRIu16 " but ISA has only %" PRIu16 " available\n",
                               ins->getISAFPRegOut(i), fp_reg_count);
@@ -1473,7 +1474,7 @@ VANADIS_COMPONENT::assignRegistersToInstruction(const uint16_t int_reg_count, co
         */
         // Set current ISA registers required for output
         for (uint16_t i = 0; i < ins->countISAIntRegOut(); ++i) {
-            if (ins->getISAIntRegOut(i) >= int_reg_count) {
+            if (UNLIKELY(ins->getISAIntRegOut(i) >= int_reg_count)) {
                 output->fatal(CALL_INFO, -1,
                               "Error: ins request out-int-reg: %" PRIu16 " but ISA has only %" PRIu16 " available\n",
                               ins->getISAIntRegOut(i), int_reg_count);
@@ -1506,7 +1507,7 @@ VANADIS_COMPONENT::assignRegistersToInstruction(const uint16_t int_reg_count, co
 
         // Set current ISA registers required for output
         for (uint16_t i = 0; i < ins->countISAFPRegOut(); ++i) {
-            if (ins->getISAFPRegOut(i) >= fp_reg_count) {
+            if (UNLIKELY(ins->getISAFPRegOut(i) >= fp_reg_count)) {
                 output->fatal(CALL_INFO, -1,
                               "Error: ins request out-fp-reg: %" PRIu16 " but ISA has only %" PRIu16 " available\n",
                               ins->getISAFPRegOut(i), fp_reg_count);
