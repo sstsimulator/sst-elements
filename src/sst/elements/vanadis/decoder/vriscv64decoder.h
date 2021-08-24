@@ -6,6 +6,7 @@
 #include <cstring>
 
 #include "decoder/vdecoder.h"
+#include "inst/vinstall.h"
 
 #define VANADIS_RISCV_OPCODE_MASK 0x7F
 #define VANADIS_RISCV_RD_MASK     0xF80
@@ -55,7 +56,107 @@ public:
 
     ~VanadisRISCV64Decoder() {}
 
-	
+	const char* getISAName() const override { return "RISCV64"; }
+	uint16_t countISAIntReg() const override { return options->countISAIntRegisters(); }
+	uint16_t countISAFPReg() const override { return options->countISAFPRegisters(); }
+	const VanadisDecoderOptions* getDecoderOptions() const override { return options; }
+	const VanadisFPRegisterMode getFPRegisterMode() const override { return VANADIS_REGISTER_MODE_FP64; }
+
+	void configureApplicationLaunch(SST::Output* output, VanadisISATable* isa_tbl, VanadisRegisterFile* regFile,
+                                            VanadisLoadStoreQueue* lsq, VanadisELFInfo* elf_info, SST::Params& params) override {
+
+	}
+
+	void tick(SST::Output* output, uint64_t cycle) override {
+		output->verbose(CALL_INFO, 16, 0, "-> Decode step for thr: %" PRIu32 "\n", hw_thr);
+       	output->verbose(CALL_INFO, 16, 0, "---> Max decodes per cycle: %" PRIu16 "\n", max_decodes_per_cycle);
+
+		for(uint16_t i = 0; i < max_decodes_per_cycle; ++i) {
+			if(!thread_rob->full()) {
+				if(ins_loader->hasBundleAt(ip)) {
+					// We have the instruction in our micro-op cache
+					output->verbose(CALL_INFO, 16, 0, "---> Found uop bundle for ip=0x%llx, loading from cache...\n", ip);
+
+					VanadisInstructionBundle* bundle = ins_loader->getBundleAt(ip);
+					output->verbose(CALL_INFO, 16, 0, "----> Bundle contains %" PRIu32 " entries.\n", bundle->getInstructionCount());
+
+					// Do we have enough space in the ROB to push the micro-op bundle into the queue?
+					if(bundle->getInstructionCount() < (thread_rob->capacity() - thread_rob->size())) {
+						bool bundle_has_branch = false;
+
+						for(uint32_t i = 0; i < bundle->getInstructionCount(); ++i) {
+							VanadisInstruction* next_ins = bundle->getInstructionByIndex(i);
+
+							if(next_ins->getInstFuncType() == INST_BRANCH) {
+								VanadisSpeculatedInstruction* next_spec_ins = dynamic_cast<VanadisSpeculatedInstruction*>(next_ins);
+
+								if(branch_predictor->contains(ip)) {
+									// We have an address predicton from the branching unit
+									const uint64_t predicted_address = branch_predictor->predictAddress(ip);
+									next_spec_ins->setSpeculatedAddress(predicted_address);
+
+									output->verbose(CALL_INFO, 16, 0, "----> contains a branch: 0x%llx / predicted (found in predictor): 0x%llx\n",
+										ip, predicted_address);
+
+									ip = predicted_address;
+									bundle_has_branch = true;
+								} else {
+									// We don't have an address prediction
+									// so just speculate that we are going to drop through to the next instruction
+									// as we aren't sure where this will go yet
+
+									output->verbose(CALL_INFO, 16, 0, "----> contains a branch: 0x%llx / predicted (not-found in predictor): 0x%llx\n",
+										ip, ip + 4);
+
+									ip += 4;
+									next_spec_ins->setSpeculatedAddress(ip);
+									bundle_has_branch = true;
+								}
+							}
+
+							thread_rob->push(next_ins->clone());
+						}
+
+						// Move to the next address, if we had a branch we should have already found a predicted
+						// target addeess to decode
+						ip = bundle_has_branch ? ip : ip + 4;
+					} else {
+						output->verbose(CALL_INFO, 16, 0, "----> Not enough space in the ROB, will stall this cycle.\n");
+					}
+				} else if(ins_loader->hasPredecodeAt(ip)) {
+					// We have a loaded instruction cache line but have not decoded it yet
+					output->verbose(CALL_INFO, 16, 0, "---> uop not found, but is located in the predecode i0-icache (ip=0x%llx)\n", ip);
+					VanadisInstructionBundle* decoded_bundle = new VanadisInstructionBundle(ip);
+
+					uint32_t temp_ins = 0;
+					if(ins_loader->getPredecodeBytes(output, ip, (uint8_t) &temp_ins, sizeof(temp_ins))) {
+						output->verbose(CALL_INFO, 16, 0, "---> performing a decode for ip=0x%llx\n", ip);
+						decode(output, ip, time_ins, decodd_bundle);
+
+						output->verbose(CALL_INFO, 16, 0, "---> bundle generates %" PRIu32 " micro-ops\n",
+							(uint32_t) decoded_bundle->getInstructionCount());
+
+						ins_loader->cacheDecodedBundle(decoded_bundle);
+
+						// Exit this cycle because results saved to cache are available next cycle
+						break;
+					} else {
+						output->fatal(CALL_INFO, -1, "Error - predecoded bytes for 0x%llu found, but retrieval of bytes failed.\n", ip);
+					}
+				} else {
+					// Not in micro or predecode cache, so we have to regenrata a request and stop further processing
+					output->verbose(CALL_INFO, 16, 0, "---> microop bundle and pre-decoded bytes are not found for 0x%llx, requested read for cache line (line=%" PRIu64 ")\n",
+						ip, ins_loader->getCacheLineWidth());
+					ins_loader->requestLoadAt(output, ip, 4);
+					break;
+				}
+			} else {
+				output->verbose(CALL_INFO, 16, 0, "---> Decode pending queue (ROB) is full, no more decoded permitted this cycle.\n");
+			}
+		}
+
+		output->verbose(CALL_INFO, 16, 0, "---> cycle is completed, ip=0x%llx\n", ip);
+	}
 
 protected:
     const VanadisDecoderOptions* options;
@@ -326,15 +427,33 @@ protected:
 			{
 				// AUIPC
 				processU<int64_t>(ins, rd, simm64);
-				// TODO - NEED PC RELVATIVE ADDRESS
+
+				bundle->addInstruction(new VanadisPCAddImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(ins_addr, hw_thr, options, rd, simm64));
+				decode_fault = false;
 			} break;
 		case 0x6F:
 			{
 				// JAL
+				processJ<int64_t>(ins, rd, simm64);
+				// Immediate specifies jump in multiples of 2 byts per RISCV spec
+				const int64_t jump_to = static_cast<int64_t>(ins_addr) + (simm64 << 1);
+
+				bundle->addInstruction(new VanadisJumpLinkInstruction(ins_addr, hw_thr, rd, jump_to, VANADIS_NO_DELAY_SLOT));
+				decode_fault = false;
 			} break;
 		case 0x67:
 			{
 				// JALR
+				processI<int64_t>(ins, rd, rs1, func_code3, simm64);
+
+				switch(func_code3) {
+				case 0:
+					{
+						// TODO - may need to zero bit 1 with an AND microop?
+						bundle->addInstruction(new VanadisJumpRegLinkInstruction(ins_addr, hw_thr, options, rd, rs1, VANADIS_NO_DELAY_SLOT));
+						decode_fault = false;
+					} break;
+				}
 			} break;
 		case 0x63:
 			{

@@ -49,6 +49,9 @@
 #include "inst/vscmp.h"
 #include "inst/vscmpi.h"
 
+// PC
+#include "inst/vpcaddi.h"
+
 // Jumps and PC change instructions
 #include "inst/vbcmp.h"
 #include "inst/vbfp.h"

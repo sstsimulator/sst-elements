@@ -68,6 +68,7 @@ inst/vor.h \
 inst/vori.h \
 inst/vpartialload.h \
 inst/vpartialstore.h \
+inst/vpcaddi.h \
 inst/vregfmt.h \
 inst/vscmp.h \
 inst/vscmpi.h \

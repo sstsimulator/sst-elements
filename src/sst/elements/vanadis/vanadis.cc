@@ -22,6 +22,7 @@
 #include "vanadis.h"
 
 #include "decoder/vmipsdecoder.h"
+#include "decoder/vriscv64decoder.h"
 #include "inst/vinstall.h"
 #include "velf/velfinfo.h"
 
