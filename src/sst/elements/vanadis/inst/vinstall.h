@@ -21,6 +21,7 @@
 #include "inst/vaddi.h"
 #include "inst/vaddiu.h"
 #include "inst/vdivmod.h"
+#include "inst/vdiv.h"
 #include "inst/vmul.h"
 #include "inst/vmuli.h"
 #include "inst/vmulsplit.h"
