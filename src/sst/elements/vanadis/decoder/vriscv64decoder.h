@@ -223,7 +223,7 @@ protected:
     output->verbose(CALL_INFO, 16, 0, "[decode -> addr: 0x%llx / ins: 0x%08x\n",
                     ins_address, ins);
 
-    const uint32_t op_code = extract_opcode(ins);
+    uint32_t op_code = extract_opcode(ins);
 
     uint16_t rd = 0;
     uint16_t rs1 = 0;
@@ -445,10 +445,9 @@ protected:
         switch (func_code7) {
         case 1: {
           // DIV
-          // CHECK REGISTER ORDERING
           bundle->addInstruction(new VanadisDivideInstruction<
-                                 VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
-              ins_address, hw_thr, options, rs1, rs2, rd));
+                                 VanadisRegisterFormat::VANADIS_FORMAT_INT32, true>(
+              ins_address, hw_thr, options, rd, rs1, rs2));
           decode_fault = false;
         } break;
         };
@@ -457,7 +456,10 @@ protected:
         switch (func_code7) {
         case 1: {
           // DIVU
-          // NOT SURE WHAT THIS IS?
+          bundle->addInstruction(new VanadisDivideInstruction<
+                                 VanadisRegisterFormat::VANADIS_FORMAT_INT32, false>(
+              ins_address, hw_thr, options, rd, rs1, rs2));
+          decode_fault = false;
         } break;
         };
       } break;
@@ -471,7 +473,7 @@ protected:
     } break;
     case 0x37: {
       // LUI
-      processU<int64_t>(ins, rd, simm64);
+      processU<int64_t>(ins, op_code, rd, simm64);
 
       bundle->addInstruction(new VanadisSetRegisterInstruction<
                              VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
@@ -480,7 +482,7 @@ protected:
     } break;
     case 0x17: {
       // AUIPC
-      processU<int64_t>(ins, rd, simm64);
+      processU<int64_t>(ins, op_code, rd, simm64);
 
       bundle->addInstruction(new VanadisPCAddImmInstruction<
                              VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
@@ -489,17 +491,17 @@ protected:
     } break;
     case 0x6F: {
       // JAL
-      processJ<int64_t>(ins, rd, simm64);
+      processJ<int64_t>(ins, op_code, rd, simm64);
       // Immediate specifies jump in multiples of 2 byts per RISCV spec
       const int64_t jump_to = static_cast<int64_t>(ins_address) + (simm64 << 1);
 
       bundle->addInstruction(new VanadisJumpLinkInstruction(
-          ins_address, hw_thr, rd, jump_to, VANADIS_NO_DELAY_SLOT));
+          ins_address, hw_thr, options, rd, jump_to, VANADIS_NO_DELAY_SLOT));
       decode_fault = false;
     } break;
     case 0x67: {
       // JALR
-      processI<int64_t>(ins, rd, rs1, func_code3, simm64);
+      processI<int64_t>(ins, op_code, rd, rs1, func_code3, simm64);
 
       switch (func_code3) {
       case 0: {
@@ -512,7 +514,7 @@ protected:
     } break;
     case 0x63: {
       // Branch
-      processB<uint64_t>(ins, rs1, rs2, func_code, imm64);
+      processB<int64_t>(ins, op_code, rs1, rs2, func_code, simm64);
 
       switch (func_code) {
       case 0: {
@@ -520,7 +522,7 @@ protected:
         bundle->addInstruction(
             new VanadisBranchRegCompareInstruction<
                 VanadisRegisterFormat::VANADIS_FORMAT_INT64, REG_COMPARE_EQ>(
-                ins_address, hw_thr, options, rs1, rs2, imm64,
+                ins_address, hw_thr, options, rs1, rs2, simm64,
                 VANADIS_NO_DELAY_SLOT));
         decode_fault = false;
       } break;
@@ -529,7 +531,7 @@ protected:
         bundle->addInstruction(
             new VanadisBranchRegCompareInstruction<
                 VanadisRegisterFormat::VANADIS_FORMAT_INT64, REG_COMPARE_NEQ>(
-                ins_address, hw_thr, options, rs1, rs2, imm64,
+                ins_address, hw_thr, options, rs1, rs2, simm64,
                 VANADIS_NO_DELAY_SLOT));
         decode_fault = false;
       } break;
@@ -538,7 +540,7 @@ protected:
         bundle->addInstruction(
             new VanadisBranchRegCompareInstruction<
                 VanadisRegisterFormat::VANADIS_FORMAT_INT64, REG_COMPARE_LT>(
-                ins_address, hw_thr, options, rs1, rs2, imm64,
+                ins_address, hw_thr, options, rs1, rs2, simm64,
                 VANADIS_NO_DELAY_SLOT));
         decode_fault = false;
       } break;
@@ -547,7 +549,7 @@ protected:
         bundle->addInstruction(
             new VanadisBranchRegCompareInstruction<
                 VanadisRegisterFormat::VANADIS_FORMAT_INT64, REG_COMPARE_GTE>(
-                ins_address, hw_thr, options, rs1, rs2, imm64,
+                ins_address, hw_thr, options, rs1, rs2, simm64,
                 VANADIS_NO_DELAY_SLOT));
         decode_fault = false;
       } break;
@@ -556,7 +558,7 @@ protected:
         bundle->addInstruction(
             new VanadisBranchRegCompareInstruction<
                 VanadisRegisterFormat::VANADIS_FORMAT_INT64, REG_COMPARE_LT>(
-                ins_address, hw_thr, options, rs1, rs2, imm64,
+                ins_address, hw_thr, options, rs1, rs2, simm64,
                 VANADIS_NO_DELAY_SLOT, false));
         decode_fault = false;
       } break;
@@ -565,7 +567,7 @@ protected:
         bundle->addInstruction(
             new VanadisBranchRegCompareInstruction<
                 VanadisRegisterFormat::VANADIS_FORMAT_INT64, REG_COMPARE_GTE>(
-                ins_address, hw_thr, options, rs1, rs2, imm64,
+                ins_address, hw_thr, options, rs1, rs2, simm64,
                 VANADIS_NO_DELAY_SLOT, false));
         decode_fault = false;
       } break;
@@ -602,8 +604,8 @@ protected:
           // SUBW
           // TODO - check register ordering
           bundle->addInstruction(
-              new VanadisSubInstructionVanadisRegisterFormat::
-                  VANADIS_FORMAT_INT64 >
+              new VanadisSubInstruction<VanadisRegisterFormat::
+                  VANADIS_FORMAT_INT64>
               (ins_address, hw_thr, options, rs1, rs2, rd, true));
           decode_fault = false;
         } break;
@@ -625,10 +627,9 @@ protected:
         switch (func_code7) {
         case 0x1: {
           // DIVW
-          // TODO - check register ordering
           bundle->addInstruction(new VanadisDivideInstruction<
-                                 VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
-              ins_address, hw_thr, options, rs1, rs2, rd));
+                                 VanadisRegisterFormat::VANADIS_FORMAT_INT64, true>(
+              ins_address, hw_thr, options, rd, rs1, rs2));
           decode_fault = false;
         } break;
         };
@@ -645,7 +646,10 @@ protected:
         } break;
         case 0x1: {
           // DIVUW
-          // DIVIDE UNSIGNED
+          bundle->addInstruction(new VanadisDivideInstruction<
+                                 VanadisRegisterFormat::VANADIS_FORMAT_INT64, false>(
+              ins_address, hw_thr, options, rd, rs1, rs2));
+          decode_fault = false;
         } break;
         case 0x20: {
           // SRAW
@@ -743,7 +747,7 @@ protected:
   int64_t sign_extend12(uint64_t value) const {
     // If sign at bit-12 is 1, then set all values 31:20 to 1
                 return (value & VANADIS_RISCV_SIGN12_MASK) == 0 ? static_cast<int64_t>(value) :
-			(static_cast<int64_t>)(value) | 0xFFFFFFFFFFFFF000LL);
+			(static_cast<int64_t>(value) | 0xFFFFFFFFFFFFF000LL);
   }
 
   int32_t sign_extend12(int32_t value) const {
@@ -755,7 +759,7 @@ protected:
   int32_t sign_extend12(uint32_t value) const {
     // If sign at bit-12 is 1, then set all values 31:20 to 1
                 return (value & VANADIS_RISCV_SIGN12_MASK) == 0 ? static_cast<int32_t>(value) :
-			(static_cast<int32_t>)(value) | 0xFFFFF000);
+			(static_cast<int32_t>(value) | 0xFFFFF000);
   }
 
   // Extract components for an R-type instruction
@@ -785,8 +789,8 @@ protected:
   }
 
   template <typename T>
-  void processS(const uint32_t ins, uint16_t &rs1, uint16_t &rs2,
-                uint32_t &func_code, T &imm) const {
+  void processS(const uint32_t ins, uint32_t &opcode, uint16_t &rs1,
+                uint16_t &rs2, uint32_t &func_code, T &imm) const {
     opcode = extract_opcode(ins);
     rs1 = extract_rs1(ins);
     rs2 = extract_rs2(ins);
@@ -799,7 +803,8 @@ protected:
   }
 
   template <typename T>
-  void processU(const uint32_t ins, uint16_t &rd, T &imm) const {
+  void processU(const uint32_t ins, uint32_t &opcode, uint16_t &rd,
+                T &imm) const {
     opcode = extract_opcode(ins);
     rd = extract_rd(ins);
 
@@ -808,7 +813,8 @@ protected:
   }
 
   template <typename T>
-  void processJ(const uint32_t ins, uint16_t &rd, T &imm) const {
+  void processJ(const uint32_t ins, uint32_t &opcode, uint16_t &rd,
+                T &imm) const {
     opcode = extract_opcode(ins);
     rd = extract_rd(ins);
 
@@ -825,8 +831,8 @@ protected:
   }
 
   template <typename T>
-  void processB(const uint32_t ins, uint16_t &rs1, uint16_t &rs2,
-                uint32_t &func_code, T &imm) const {
+  void processB(const uint32_t ins, uint32_t &opcode, uint16_t &rs1,
+                uint16_t &rs2, uint32_t &func_code, T &imm) const {
     opcode = extract_opcode(ins);
     rs1 = extract_rs1(ins);
     rs2 = extract_rs2(ins);
@@ -839,7 +845,7 @@ protected:
     const int32_t imm19_12 = (ins_i32 & 0xFF000) >> 11;
     const int32_t imm4_1 = (ins_i32 & 0x1F00) >> 7;
 
-    int32_t imm_tmp = (imm20 | imm19_12 | imm11 | imm10_5 | imm_4_1);
+    int32_t imm_tmp = (imm20 | imm19_12 | imm11 | imm10_5 | imm4_1);
     imm_tmp = (0 == imm20) ? imm_tmp : imm_tmp | 0xFFF00000;
 
     imm = static_cast<T>(imm_tmp);
