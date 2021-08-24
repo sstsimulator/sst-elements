@@ -332,10 +332,11 @@ protected:
         case 0: {
           bundle->addInstruction(new VanadisShiftLeftLogicalImmInstruction<
                                  VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
-              ins_address, hw_thr, options, rs1, rd, static_cast<uint64_t>(rs2)));
+              ins_address, hw_thr, options, rs1, rd,
+              static_cast<uint64_t>(rs2)));
           decode_fault = false;
         } break;
-        }
+        };
       } break;
       case 2: {
         // SLTI
@@ -370,16 +371,18 @@ protected:
         case 0: {
           bundle->addInstruction(new VanadisShiftRightLogicalImmInstruction<
                                  VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
-              ins_address, hw_thr, options, rs1, rd, static_cast<uint64_t>(rs2)));
+              ins_address, hw_thr, options, rs1, rd,
+              static_cast<uint64_t>(rs2)));
           decode_fault = false;
         } break;
         case 0x20: {
           bundle->addInstruction(new VanadisShiftRightArithmeticImmInstruction<
                                  VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
-              ins_address, hw_thr, options, rs1, rd, static_cast<uint64_t>(rs2)));
+              ins_address, hw_thr, options, rs1, rd,
+              static_cast<uint64_t>(rs2)));
           decode_fault = false;
         } break;
-        }
+        };
       } break;
       case 6: {
         // ORI
@@ -395,7 +398,7 @@ protected:
             ins_address, hw_thr, options, rd, rs1, simm64));
         decode_fault = false;
       } break;
-      }
+      };
     } break;
     case 0x33: {
       // 32b integer arithmetic/logical
@@ -464,8 +467,8 @@ protected:
       case 7: {
         // TODO - REMU INSTRUCTION
       } break;
-      }
-      break;
+      };
+    } break;
     case 0x37: {
       // LUI
       processU<int64_t>(ins, rd, simm64);
@@ -488,7 +491,7 @@ protected:
       // JAL
       processJ<int64_t>(ins, rd, simm64);
       // Immediate specifies jump in multiples of 2 byts per RISCV spec
-      const int64_t jump_to = static_cast<int64_t>(ins_addr) + (simm64 << 1);
+      const int64_t jump_to = static_cast<int64_t>(ins_address) + (simm64 << 1);
 
       bundle->addInstruction(new VanadisJumpLinkInstruction(
           ins_address, hw_thr, rd, jump_to, VANADIS_NO_DELAY_SLOT));
@@ -505,7 +508,7 @@ protected:
             ins_address, hw_thr, options, rd, rs1, VANADIS_NO_DELAY_SLOT));
         decode_fault = false;
       } break;
-      }
+      };
     } break;
     case 0x63: {
       // Branch
@@ -670,8 +673,8 @@ protected:
         } break;
         }
       }; break;
-      }
-      break;
+      };
+    } break;
     case 0xF: {
       // Fences (FENCE.I Zifencei)
     }
@@ -697,152 +700,152 @@ protected:
       // FNMADD
     } break;
     default: {
-
+      // op_code did not match an expected value
     } break;
     }
-    }
+  }
 
-      uint16_t extract_rd(const uint32_t ins) const {
-        return static_cast<uint16_t>((ins & VANADIS_RISCV_RD_MASK) >> 6);
-      }
+  uint16_t extract_rd(const uint32_t ins) const {
+    return static_cast<uint16_t>((ins & VANADIS_RISCV_RD_MASK) >> 6);
+  }
 
-      uint16_t extract_rs1(const uint32_t ins) const {
-        return static_cast<uint16_t>((ins & VANADIS_RISCV_RS1_MASK) >> 14);
-      }
+  uint16_t extract_rs1(const uint32_t ins) const {
+    return static_cast<uint16_t>((ins & VANADIS_RISCV_RS1_MASK) >> 14);
+  }
 
-      uint16_t extract_rs2(const uint32_t ins) const {
-        return static_cast<uint16_t>((ins & VANADIS_RISCV_RS1_MASK) >> 19);
-      }
+  uint16_t extract_rs2(const uint32_t ins) const {
+    return static_cast<uint16_t>((ins & VANADIS_RISCV_RS1_MASK) >> 19);
+  }
 
-      uint32_t extract_func3(const uint32_t ins) const {
-        return ((ins & VANADIS_RISCV_FUNC3_MASK) >> 11);
-      }
+  uint32_t extract_func3(const uint32_t ins) const {
+    return ((ins & VANADIS_RISCV_FUNC3_MASK) >> 11);
+  }
 
-      uint32_t extract_func7(const uint32_t ins) const {
-        return ((ins & VANADIS_RISCV_FUNC7_MASK) >> 24);
-      }
+  uint32_t extract_func7(const uint32_t ins) const {
+    return ((ins & VANADIS_RISCV_FUNC7_MASK) >> 24);
+  }
 
-      uint32_t extract_opcode(const uint32_t ins) const {
-        return (ins * VANADIS_RISCV_OPCODE_MASK);
-      }
+  uint32_t extract_opcode(const uint32_t ins) const {
+    return (ins * VANADIS_RISCV_OPCODE_MASK);
+  }
 
-      int32_t extract_imm12(const uint32_t ins) const {
-        const uint32_t imm12 = (ins & VANADIS_RISCV_IMM12_MASK) >> 20;
-        return sign_extend12(imm12);
-      }
+  int32_t extract_imm12(const uint32_t ins) const {
+    const uint32_t imm12 = (ins & VANADIS_RISCV_IMM12_MASK) >> 20;
+    return sign_extend12(imm12);
+  }
 
-      int64_t sign_extend12(int64_t value) const {
-        return (value & VANADIS_RISCV_SIGN12_MASK) == 0
-                   ? value
-                   : (value | 0xFFFFFFFFFFFFF000LL);
-      }
+  int64_t sign_extend12(int64_t value) const {
+    return (value & VANADIS_RISCV_SIGN12_MASK) == 0
+               ? value
+               : (value | 0xFFFFFFFFFFFFF000LL);
+  }
 
-      int64_t sign_extend12(uint64_t value) const {
-        // If sign at bit-12 is 1, then set all values 31:20 to 1
+  int64_t sign_extend12(uint64_t value) const {
+    // If sign at bit-12 is 1, then set all values 31:20 to 1
                 return (value & VANADIS_RISCV_SIGN12_MASK) == 0 ? static_cast<int64_t>(value) :
 			(static_cast<int64_t>)(value) | 0xFFFFFFFFFFFFF000LL);
-      }
+  }
 
-      int32_t sign_extend12(int32_t value) const {
-        // If sign at bit-12 is 1, then set all values 31:20 to 1
-        return (value & VANADIS_RISCV_SIGN12_MASK) == 0 ? value
-                                                        : (value | 0xFFFFF000);
-      }
+  int32_t sign_extend12(int32_t value) const {
+    // If sign at bit-12 is 1, then set all values 31:20 to 1
+    return (value & VANADIS_RISCV_SIGN12_MASK) == 0 ? value
+                                                    : (value | 0xFFFFF000);
+  }
 
-      int32_t sign_extend12(uint32_t value) const {
-        // If sign at bit-12 is 1, then set all values 31:20 to 1
+  int32_t sign_extend12(uint32_t value) const {
+    // If sign at bit-12 is 1, then set all values 31:20 to 1
                 return (value & VANADIS_RISCV_SIGN12_MASK) == 0 ? static_cast<int32_t>(value) :
 			(static_cast<int32_t>)(value) | 0xFFFFF000);
-      }
-
-      // Extract components for an R-type instruction
-      void processR(const uint32_t ins, uint32_t &opcode, uint16_t &rd,
-                    uint16_t &rs1, uint16_t &rs2, uint32_t &func_code_1,
-                    uint32_t &func_code_2) const {
-        opcode = extract_opcode(ins);
-        rd = extract_rd(ins);
-        rs1 = extract_rs1(ins);
-        rs2 = extract_rs2(ins);
-        func_code_1 = extract_func3(ins);
-        func_code_2 = extract_func7(ins);
-      }
-
-      // Extract components for an I-type instruction
-      template <typename T>
-      void processI(const uint32_t ins, uint32_t &opcode, uint16_t &rd,
-                    uint16_t &rs1, uint32_t &func_code, T &imm) const {
-        opcode = extract_opcode(ins);
-        rd = extract_rd(ins);
-        rs1 = extract_rs1(ins);
-        func_code = extract_func3(ins);
-
-        // This also performs sign extension which is required in the RISC-V ISA
-        int32_t imm_tmp = extract_imm12(ins);
-        imm = static_cast<T>(imm_tmp);
-      }
-
-      template <typename T>
-      void processS(const uint32_t ins, uint16_t &rs1, uint16_t &rs2,
-                    uint32_t &func_code, T &imm) const {
-        opcode = extract_opcode(ins);
-        rs1 = extract_rs1(ins);
-        rs2 = extract_rs2(ins);
-        func_code = extract_func3(ins);
-
-        const int32_t ins_i32 = static_cast<int32_t>(ins);
-        imm = static_cast<T>(
-            sign_extend12(((ins_i32 & VANADIS_RISCV_RD_MASK) >> 6) |
-                          ((ins_i32 & VANADIS_RISCV_FUNC7_MASK) >> 24)));
-      }
-
-      template <typename T>
-      void processU(const uint32_t ins, uint16_t &rd, T &imm) const {
-        opcode = extract_opcode(ins);
-        rd = extract_rd(ins);
-
-        const int32_t ins_i32 = static_cast<int32_t>(ins);
-        imm = static_cast<T>(ins_i32 & 0xFFFFF000);
-      }
-
-      template <typename T>
-      void processJ(const uint32_t ins, uint16_t &rd, T &imm) const {
-        opcode = extract_opcode(ins);
-        rd = extract_rd(ins);
-
-        const int32_t ins_i32 = static_cast<int32_t>(ins);
-        const int32_t imm20 = (ins_i32 & 0x80000000) >> 11;
-        const int32_t imm19_12 = (ins_i32 & 0xFF000);
-        const int32_t imm_10_1 = (ins_i32 & 0x3FF00000) >> 19;
-        const int32_t imm11 = (ins_i32 & 0x80000) >> 8;
-
-        int32_t imm_tmp = (imm20 | imm19_12 | imm11 | imm_10_1);
-        imm_tmp = (0 == imm20) ? imm_tmp : imm_tmp | 0xFFF00000;
-
-        imm = static_cast<T>(imm_tmp);
-      }
-
-      template <typename T>
-      void processB(const uint32_t ins, uint16_t &rs1, uint16_t &rs2,
-                    uint32_t &func_code, T &imm) const {
-        opcode = extract_opcode(ins);
-        rs1 = extract_rs1(ins);
-        rs2 = extract_rs2(ins);
-        func_code = extract_func3(ins);
-
-        const int32_t ins_i32 = static_cast<int32_t>(ins);
-        const int32_t imm20 = (ins_i32 & 0x80000000) >> 31;
-        const int32_t imm10_5 = (ins_i32 & 0x7E000000) >> 20;
-        const int32_t imm11 = (ins_i32 & 0x100000) >> 19;
-        const int32_t imm19_12 = (ins_i32 & 0xFF000) >> 11;
-        const int32_t imm4_1 = (ins_i32 & 0x1F00) >> 7;
-
-        int32_t imm_tmp = (imm20 | imm19_12 | imm11 | imm10_5 | imm_4_1);
-        imm_tmp = (0 == imm20) ? imm_tmp : imm_tmp | 0xFFF00000;
-
-        imm = static_cast<T>(imm_tmp);
-      }
-    };
   }
-}
+
+  // Extract components for an R-type instruction
+  void processR(const uint32_t ins, uint32_t &opcode, uint16_t &rd,
+                uint16_t &rs1, uint16_t &rs2, uint32_t &func_code_1,
+                uint32_t &func_code_2) const {
+    opcode = extract_opcode(ins);
+    rd = extract_rd(ins);
+    rs1 = extract_rs1(ins);
+    rs2 = extract_rs2(ins);
+    func_code_1 = extract_func3(ins);
+    func_code_2 = extract_func7(ins);
+  }
+
+  // Extract components for an I-type instruction
+  template <typename T>
+  void processI(const uint32_t ins, uint32_t &opcode, uint16_t &rd,
+                uint16_t &rs1, uint32_t &func_code, T &imm) const {
+    opcode = extract_opcode(ins);
+    rd = extract_rd(ins);
+    rs1 = extract_rs1(ins);
+    func_code = extract_func3(ins);
+
+    // This also performs sign extension which is required in the RISC-V ISA
+    int32_t imm_tmp = extract_imm12(ins);
+    imm = static_cast<T>(imm_tmp);
+  }
+
+  template <typename T>
+  void processS(const uint32_t ins, uint16_t &rs1, uint16_t &rs2,
+                uint32_t &func_code, T &imm) const {
+    opcode = extract_opcode(ins);
+    rs1 = extract_rs1(ins);
+    rs2 = extract_rs2(ins);
+    func_code = extract_func3(ins);
+
+    const int32_t ins_i32 = static_cast<int32_t>(ins);
+    imm = static_cast<T>(
+        sign_extend12(((ins_i32 & VANADIS_RISCV_RD_MASK) >> 6) |
+                      ((ins_i32 & VANADIS_RISCV_FUNC7_MASK) >> 24)));
+  }
+
+  template <typename T>
+  void processU(const uint32_t ins, uint16_t &rd, T &imm) const {
+    opcode = extract_opcode(ins);
+    rd = extract_rd(ins);
+
+    const int32_t ins_i32 = static_cast<int32_t>(ins);
+    imm = static_cast<T>(ins_i32 & 0xFFFFF000);
+  }
+
+  template <typename T>
+  void processJ(const uint32_t ins, uint16_t &rd, T &imm) const {
+    opcode = extract_opcode(ins);
+    rd = extract_rd(ins);
+
+    const int32_t ins_i32 = static_cast<int32_t>(ins);
+    const int32_t imm20 = (ins_i32 & 0x80000000) >> 11;
+    const int32_t imm19_12 = (ins_i32 & 0xFF000);
+    const int32_t imm_10_1 = (ins_i32 & 0x3FF00000) >> 19;
+    const int32_t imm11 = (ins_i32 & 0x80000) >> 8;
+
+    int32_t imm_tmp = (imm20 | imm19_12 | imm11 | imm_10_1);
+    imm_tmp = (0 == imm20) ? imm_tmp : imm_tmp | 0xFFF00000;
+
+    imm = static_cast<T>(imm_tmp);
+  }
+
+  template <typename T>
+  void processB(const uint32_t ins, uint16_t &rs1, uint16_t &rs2,
+                uint32_t &func_code, T &imm) const {
+    opcode = extract_opcode(ins);
+    rs1 = extract_rs1(ins);
+    rs2 = extract_rs2(ins);
+    func_code = extract_func3(ins);
+
+    const int32_t ins_i32 = static_cast<int32_t>(ins);
+    const int32_t imm20 = (ins_i32 & 0x80000000) >> 31;
+    const int32_t imm10_5 = (ins_i32 & 0x7E000000) >> 20;
+    const int32_t imm11 = (ins_i32 & 0x100000) >> 19;
+    const int32_t imm19_12 = (ins_i32 & 0xFF000) >> 11;
+    const int32_t imm4_1 = (ins_i32 & 0x1F00) >> 7;
+
+    int32_t imm_tmp = (imm20 | imm19_12 | imm11 | imm10_5 | imm_4_1);
+    imm_tmp = (0 == imm20) ? imm_tmp : imm_tmp | 0xFFF00000;
+
+    imm = static_cast<T>(imm_tmp);
+  }
+};
+} // namespace Vanadis
+} // namespace SST
 
 #endif
