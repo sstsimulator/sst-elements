@@ -60,7 +60,7 @@ public:
 	uint16_t countISAIntReg() const override { return options->countISAIntRegisters(); }
 	uint16_t countISAFPReg() const override { return options->countISAFPRegisters(); }
 	const VanadisDecoderOptions* getDecoderOptions() const override { return options; }
-	const VanadisFPRegisterMode getFPRegisterMode() const override { return VANADIS_REGISTER_MODE_FP64; }
+   VanadisFPRegisterMode getFPRegisterMode() const override { return VANADIS_REGISTER_MODE_FP64; }
 
 	void configureApplicationLaunch(SST::Output* output, VanadisISATable* isa_tbl, VanadisRegisterFile* regFile,
                                             VanadisLoadStoreQueue* lsq, VanadisELFInfo* elf_info, SST::Params& params) override {
@@ -129,9 +129,9 @@ public:
 					VanadisInstructionBundle* decoded_bundle = new VanadisInstructionBundle(ip);
 
 					uint32_t temp_ins = 0;
-					if(ins_loader->getPredecodeBytes(output, ip, (uint8_t) &temp_ins, sizeof(temp_ins))) {
+					if(ins_loader->getPredecodeBytes(output, ip, (uint8_t*) &temp_ins, sizeof(temp_ins))) {
 						output->verbose(CALL_INFO, 16, 0, "---> performing a decode for ip=0x%llx\n", ip);
-						decode(output, ip, time_ins, decodd_bundle);
+						decode(output, ip, temp_ins, decoded_bundle);
 
 						output->verbose(CALL_INFO, 16, 0, "---> bundle generates %" PRIu32 " micro-ops\n",
 							(uint32_t) decoded_bundle->getInstructionCount());
@@ -160,6 +160,10 @@ public:
 
 protected:
     const VanadisDecoderOptions* options;
+    uint64_t start_stack_address;
+	    uint16_t icache_max_bytes_per_cycle;
+    uint16_t max_decodes_per_cycle;
+    uint16_t decode_buffer_max_entries;
 
 	void decode(SST::Output* output, const uint64_t ins_address, const uint32_t ins,
 		VanadisInstructionBundle* bundle) {
