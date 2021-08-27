@@ -472,7 +472,7 @@ public:
                             CALL_INFO, 16, 0, "----> Not enough space in the ROB, will stall this cycle.\n");
                     }
                 }
-                else if ( ins_loader->hasPredecodeAt(ip) ) {
+                else if (ins_loader->hasPredecodeAt(ip, 4)) {
                     // We have a loaded instruction cache line but have not decoded it yet
                     output->verbose(
                         CALL_INFO, 16, 0,
@@ -482,7 +482,10 @@ public:
                     VanadisInstructionBundle* decoded_bundle = new VanadisInstructionBundle(ip);
 
                     uint32_t temp_ins = 0;
-                    if ( ins_loader->getPredecodeBytes(output, ip, (uint8_t*)&temp_ins, sizeof(temp_ins)) ) {
+
+						  const bool predecode_bytes = ins_loader->getPredecodeBytes(output, ip, (uint8_t*)&temp_ins, sizeof(temp_ins));
+
+                    if (predecode_bytes) {
                         output->verbose(CALL_INFO, 16, 0, "---> performing a decode for ip=0x%llx\n", ip);
                         decode(output, ip, temp_ins, decoded_bundle);
 
@@ -492,11 +495,15 @@ public:
 
                         ins_loader->cacheDecodedBundle(decoded_bundle);
 
+								if(0 == decoded_bundle->getInstructionCount()) {
+									output->fatal(CALL_INFO, -1, "Error - bundle at: 0x%llx generates no micro-ops.\n",
+										ip);
+								}
+
                         // Exit this cycle because results saved to cache are available next
                         // cycle
                         break;
-                    }
-                    else {
+					     } else {
                         output->fatal(
                             CALL_INFO, -1,
                             "Error - predecoded bytes for 0x%llu found, but "
@@ -536,8 +543,8 @@ protected:
 
     void decode(SST::Output* output, const uint64_t ins_address, const uint32_t ins, VanadisInstructionBundle* bundle)
     {
-
-        output->verbose(CALL_INFO, 16, 0, "[decode -> addr: 0x%llx / ins: 0x%08x\n", ins_address, ins);
+        output->verbose(CALL_INFO, 16, 0, "[decode] -> addr: 0x%llx / ins: 0x%08x\n", ins_address, ins);
+		  output->verbose(CALL_INFO, 16, 0, "[decode] -> ins-bytes: 0x%08x\n", ins);
 
         uint32_t op_code = extract_opcode(ins);
 
@@ -552,6 +559,8 @@ protected:
         int64_t  simm64     = 0;
 
         bool decode_fault = true;
+
+		  output->verbose(CALL_INFO, 16, 0, "[decode]-> ins-op-code-family: %" PRIu32 " / 0x%x\n", op_code, op_code);
 
         switch ( op_code ) {
         case 0x3:
@@ -1063,6 +1072,10 @@ protected:
             // op_code did not match an expected value
         } break;
         }
+
+//		  if(decode_fault) {
+//				bundle->addInstruction(new VanadisInstructionDecodeFault(ins_address, hw_thr, options));
+//			}
     }
 
     uint16_t extract_rd(const uint32_t ins) const { return static_cast<uint16_t>((ins & VANADIS_RISCV_RD_MASK) >> 6); }
@@ -1081,7 +1094,7 @@ protected:
 
     uint32_t extract_func7(const uint32_t ins) const { return ((ins & VANADIS_RISCV_FUNC7_MASK) >> 24); }
 
-    uint32_t extract_opcode(const uint32_t ins) const { return (ins * VANADIS_RISCV_OPCODE_MASK); }
+    uint32_t extract_opcode(const uint32_t ins) const { return (ins & VANADIS_RISCV_OPCODE_MASK); }
 
     int32_t extract_imm12(const uint32_t ins) const
     {
