@@ -748,7 +748,7 @@ public:
                             output->verbose(CALL_INFO, 16, 0,
                                             "-----> Branch delay slot is not currently "
                                             "decoded into a bundle.\n");
-                            if (ins_loader->hasPredecodeAt(ip + 4)) {
+                            if (ins_loader->hasPredecodeAt(ip + 4, 4)) {
                                 output->verbose(CALL_INFO, 16, 0,
                                                 "-----> Branch delay slot is a pre-decode "
                                                 "cache item, decode it and keep bundle.\n");
@@ -896,7 +896,7 @@ public:
                             break;
                         }
                     }
-                } else if (ins_loader->hasPredecodeAt(ip)) {
+                } else if (ins_loader->hasPredecodeAt(ip, 4)) {
                     // We do have a locally cached copy of the data at the IP though, so
                     // decode into a bundle
                     output->verbose(CALL_INFO, 16, 0,
