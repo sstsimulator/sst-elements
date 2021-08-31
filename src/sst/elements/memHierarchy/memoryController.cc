@@ -215,7 +215,6 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
         Params linkParams = params.get_scoped_params("cpulink");
         linkParams.insert("port", "direct_link");
         linkParams.insert("latency", link_lat, false);
-        linkParams.insert("accept_region", "1", false);
         link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, linkParams, clockTimeBase_);
     } else if (!link_) {
 
@@ -225,7 +224,6 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
 
         Params nicParams = params.get_scoped_params("memNIC");
         nicParams.insert("group", "4", false);
-        nicParams.insert("accept_region", "1", false);
 
         if (isPortConnected("network_ack") && isPortConnected("network_fwd") && isPortConnected("network_data")) {
             nicParams.insert("req.port", "network");

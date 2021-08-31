@@ -46,8 +46,7 @@ public:
 
 #define MEMLINKBASE_ELI_PARAMS { "debug",              "(int) Where to print debug output. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},\
     { "debug_level",        "(int) Debug verbosity level. Between 0 and 10", "0"},\
-    { "debug_addr",         "(comma separated uint) Address(es) to be debugged. Leave empty for all, otherwise specify one or more, comma-separated values. Start and end string with brackets",""},\
-    { "accept_region",      "(bool) Set by parent component but user should unset if region (addr_range_start/end, interleave_size/step) params are provided to memory. Provides backward compatibility for address translation between memory controller and directory.", "false"}
+    { "debug_addr",         "(comma separated uint) Address(es) to be debugged. Leave empty for all, otherwise specify one or more, comma-separated values. Start and end string with brackets",""}
 
 
     // Struct identifying an endpoint
@@ -118,8 +117,6 @@ public:
         info.addr = 0;
         info.id = 0;
 
-        // Check whether we should accept a region push by someone else
-        acceptRegion = params.find<bool>("accept_region", false);
     }
 
     /* Destructor */
@@ -183,7 +180,6 @@ protected:
 
     // Local EndpointInfo
     EndpointInfo info;
-    bool acceptRegion; // Accept a region push from a source
 
     // Handlers
     SST::Event::HandlerBase * recvHandler; // Event handler to call when an event is received

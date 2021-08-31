@@ -155,13 +155,9 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
             memLink->setRegion(region);
 
         cpuLink->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
-        memoryName = "";
         if (!memLink) {
-            memoryName  = params.find<std::string>("net_memory_name", "");
-            if (memoryName != "")
-                dbg.output(CALL_INFO,"%s, Warning: parameter 'net_memory_name' is deprecated in order to support many<->many communication between DCs and MCs.\n"
-                        "Instead of using net_memory_name, ensure that the directory and memory controllers all specify their own address regions (address_range_start/end, interleave_step/size).\n"
-                        "In the future, the directory controller will NOT automatically force its region parameters on its named memory controller\n", getName().c_str());
+            if (params.find<std::string>("net_memory_name", "") != "")
+                dbg.fatal(CALL_INFO, -1, "%s, Error: parameter 'net_memory_name' is no longer supported. Memory and directory components should specify their own address regions (address_range_start/end, interleave_step/size) and mapping will be inferred from that. Remove this parameter from your input deck to eliminate this error.\n", getName().c_str());
         } else {
             memLink->setRecvHandler(new Event::Handler<DirectoryController>(this, &DirectoryController::handlePacket));
         }
@@ -214,13 +210,10 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
             if (!memLink) {
                 dbg.fatal(CALL_INFO, -1, "%s, Error creating link to memory from directory controller\n", getName().c_str());
             }
-            memoryName = "";
         } else {
-            memoryName  = params.find<std::string>("net_memory_name", "");
-            if (memoryName != "")
-                dbg.output(CALL_INFO,"%s, Warning: parameter 'net_memory_name' is deprecated in order to support many<->many communication between DCs and MCs.\n"
-                        "Instead of using net_memory_name, ensure that the directory and memory controllers all specify their own address regions (address_range_start/end, interleave_step/size).\n"
-                        "In the future, the directory controller will NOT automatically force its region parameters on its named memory controller\n", getName().c_str());
+            if (params.find<std::string>("net_memory_name", "") != "")
+                dbg.fatal(CALL_INFO, -1, "%s, Error: parameter 'net_memory_name' is no longer supported. Memory and directory components should specify their own address regions (address_range_start/end, interleave_step/size) and mapping will be inferred from that. Remove this parameter from your input deck to eliminate this error.\n", getName().c_str());
+
             memLink = nullptr;
         }
     }
@@ -549,10 +542,7 @@ void DirectoryController::handleNoncacheableRequest(MemEventBase * ev) {
     stat_noncacheRecv[(int)ev->getCmd()]->addData(1);
 
     ev->setSrc(getName());
-    if (memoryName == "")
-        ev->setDst(memLink->findTargetDestination(ev->getRoutingAddress()));
-    else
-        ev->setDst(memoryName);
+    ev->setDst(memLink->findTargetDestination(ev->getRoutingAddress()));
 
     forwardTowardsMem(ev);
 }
@@ -640,14 +630,6 @@ void DirectoryController::init(unsigned int phase) {
     // Must happen after network init or merlin croaks
     // InitData: Name, NULLCMD, Endpoint type, inclusive of all upper levels, will send writeback acks, line size
     if (!phase) {
-        // Push our region to memory (backward compatibility)
-        // Only push if we got a memory name (old config script)
-        // or we are directly linked to a memory (always safe to push)
-        if (memoryName != "" || cpuLink != memLink) {
-            MemEventInitRegion * reg = new MemEventInitRegion(getName(), memLink->getRegion(), true);
-            reg->setDst(memoryName);
-            memLink->sendInitData(reg);
-        }
         if (cpuLink != memLink)
             cpuLink->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Directory, true, true, false, cacheLineSize, true));
         memLink->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Directory, true, true, false, cacheLineSize, true));
@@ -669,21 +651,13 @@ void DirectoryController::init(unsigned int phase) {
             delete ev;
         } else {
 
-            /* Check that memory name is valid - really only need to do this once, but since it's init, whatever */
-            if (cpuLink == memLink && memoryName != "" && !cpuLink->isDest(memoryName)) {
-                dbg.fatal(CALL_INFO,-1,"%s, Invalid param: net_memory_name - must name a valid memory component in the system. You specified: %s.\nNOTE this parameter is deprecated anyways in favor of giving memory and directory controllers their own region parameters\n",getName().c_str(), memoryName.c_str());
-            }
-
             dbg.debug(_L10_, "I: %-20s   Event:Init      (%s)\n",
                     getName().c_str(), ev->getVerboseString().c_str());
             if (isRequestAddressValid(ev->getAddr())){
                 dbg.debug(_L10_, "I: %-20s   Event:SendInitData    %" PRIx64 "\n",
                         getName().c_str(), ev->getAddr());
-                if (memoryName == "")
-                    ev->setDst(memLink->findTargetDestination(ev->getRoutingAddress()));
-                else
-                    ev->setDst(memoryName);
-                    memLink->sendInitData(ev);
+                ev->setDst(memLink->findTargetDestination(ev->getRoutingAddress()));
+                memLink->sendInitData(ev);
             } else
                 delete ev;
 
@@ -721,7 +695,6 @@ void DirectoryController::finish(void){
 void DirectoryController::setup(void){
     cpuLink->setup();
     //MemLinkBase * mem = memLink ? memLink : network;
-    // dircc->configure(getName(), memoryName, sendWBAck, recvWBAck, network, mem);
 }
 
 
@@ -2098,10 +2071,7 @@ void DirectoryController::sendEntryToMemory(DirEntry *entry) {
     me->setSize(entrySize);
 
     uint64_t deliveryTime = timestamp + accessLatency;
-    if (memoryName == "")
-        me->setDst(memLink->findTargetDestination(0));
-    else
-        me->setDst(memoryName);
+    me->setDst(memLink->findTargetDestination(0));
     memMsgQueue.insert(std::make_pair(deliveryTime, MemMsg(me, true)));
 }
 
@@ -2112,10 +2082,7 @@ void DirectoryController::sendEntryToMemory(DirEntry *entry) {
 void DirectoryController::issueMemoryRequest(MemEvent* event, DirEntry* entry) {
     MemEvent* reqEvent = new MemEvent(*event);
     reqEvent->setSrc(getName());
-    if (memoryName == "")
-        reqEvent->setDst(memLink->findTargetDestination(reqEvent->getRoutingAddress()));
-    else
-        reqEvent->setDst(memoryName);
+    reqEvent->setDst(memLink->findTargetDestination(reqEvent->getRoutingAddress()));
     memReqs[reqEvent->getID()] = event->getBaseAddr();
     uint64_t deliveryTime = timestamp + accessLatency;
 
@@ -2128,10 +2095,7 @@ void DirectoryController::issueFlush(MemEvent* event) {
     Addr addr = event->getBaseAddr();
     MemEvent * flush = new MemEvent(*event);
     flush->setSrc(getName());
-    if (memoryName == "")
-        flush->setDst(memLink->findTargetDestination(event->getRoutingAddress()));
-    else
-        flush->setDst(memoryName);
+    flush->setDst(memLink->findTargetDestination(event->getRoutingAddress()));
     memReqs[flush->getID()] = addr;
 
     if (mshr->hasData(addr) && mshr->getDataDirty(addr)) { // also writeback dirty data
@@ -2221,10 +2185,7 @@ void DirectoryController::writebackData(MemEvent* event) {
     MemEvent * wb = new MemEvent(getName(), event->getBaseAddr(), event->getBaseAddr(), Command::PutM, lineSize);
     wb->copyMetadata(event);
     wb->setRqstr(event->getRqstr());
-    if (memoryName == "")
-        wb->setDst(memLink->findTargetDestination(wb->getRoutingAddress()));
-    else
-        wb->setDst(memoryName);
+    wb->setDst(memLink->findTargetDestination(wb->getRoutingAddress()));
 
     if (waitWBAck)
         mshr->insertWriteback(event->getBaseAddr(), false);
@@ -2235,10 +2196,7 @@ void DirectoryController::writebackData(MemEvent* event) {
 
 void DirectoryController::writebackDataFromMSHR(Addr addr) {
     MemEvent * wb = new MemEvent(getName(), addr, addr, Command::PutM, lineSize);
-    if (memoryName == "")
-        wb->setDst(memLink->findTargetDestination(wb->getRoutingAddress()));
-    else
-        wb->setDst(memoryName);
+    wb->setDst(memLink->findTargetDestination(wb->getRoutingAddress()));
 
     mshr->setDataDirty(addr, false);
 
@@ -2252,10 +2210,7 @@ void DirectoryController::writebackDataFromMSHR(Addr addr) {
 void DirectoryController::sendFetchResponse(MemEvent * event) {
     Addr addr = event->getBaseAddr();
     MemEvent * ack = event->makeResponse();
-    if (memoryName == "")
-        ack->setDst(memLink->findTargetDestination(ack->getRoutingAddress()));
-    else
-        ack->setDst(memoryName);
+    ack->setDst(memLink->findTargetDestination(ack->getRoutingAddress()));
 
     ack->setPayload(mshr->getData(addr));
     ack->setDirty(mshr->getDataDirty(addr));
@@ -2268,10 +2223,7 @@ void DirectoryController::sendFetchResponse(MemEvent * event) {
 void DirectoryController::sendAckInv(MemEvent * event) {
     Addr addr = event->getBaseAddr();
     MemEvent * ack = event->makeResponse(Command::AckInv);
-    if (memoryName == "")
-        ack->setDst(memLink->findTargetDestination(ack->getRoutingAddress()));
-    else
-        ack->setDst(memoryName);
+    ack->setDst(memLink->findTargetDestination(ack->getRoutingAddress()));
 
     if (mshr->hasData(addr))
         mshr->clearData(addr);

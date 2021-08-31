@@ -65,10 +65,6 @@ void MemLink::init(unsigned int phase) {
                 epInfo.region = mEvRegion->getRegion();
                 addRemote(epInfo);
 
-                if (mEvRegion->getSetRegion() && acceptRegion) {
-                    dbg.debug(_L10_, "\tUpdating local region\n");
-                    info.region = mEvRegion->getRegion();
-                }
                 delete ev;
             } else { /* No need to filter by source since this is a direct link */
                 initReceiveQ.push(mEv);

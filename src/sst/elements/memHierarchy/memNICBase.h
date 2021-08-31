@@ -237,13 +237,6 @@ class MemNICBase : public MemLinkBase {
                      *      src is a src/dst?
                      */
                     if (ev->getInitCmd() == MemEventInit::InitCommand::Region) {
-                        if (ev->getDst() == info.name) {
-                            MemEventInitRegion * rEv = static_cast<MemEventInitRegion*>(ev);
-                            if (rEv->getSetRegion() && acceptRegion) {
-                                info.region = rEv->getRegion();
-                                dbg.debug(_L10_, "\tUpdating local region\n");
-                            }
-                        }
                         delete ev;
                         delete mre;
                     } else if ((ev->getCmd() == Command::NULLCMD && (isSource(mre->event->getSrc()) || isDest(mre->event->getSrc()))) || ev->getDst() == info.name) {

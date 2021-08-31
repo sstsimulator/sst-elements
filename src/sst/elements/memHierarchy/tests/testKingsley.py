@@ -164,7 +164,6 @@ ddr_backend_params = {
 
 ddr_nic_params = {
     "group" : 3,
-    "accept_region" : 0,
 }
 
 

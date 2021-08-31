@@ -234,8 +234,17 @@ public:
     static const SST::MemHierarchy::Addr REGION_MAX = std::numeric_limits<SST::MemHierarchy::Addr>::max();
 
     void setDefault() {
-        start = interleaveSize = interleaveStep = 0;
+        start = 0;
+        interleaveSize = 0;
+        interleaveStep = 0;
         end = REGION_MAX;
+    }
+
+    void setEmpty() {
+        start = 0;
+        interleaveSize = 0;
+        interleaveStep = 0;
+        end = 0;
     }
 
     bool contains(uint64_t addr) const {
