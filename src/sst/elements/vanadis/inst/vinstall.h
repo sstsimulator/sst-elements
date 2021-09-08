@@ -73,7 +73,9 @@
 #include "inst/vfence.h"
 
 // Special instructions
+#include "inst/vfault.h"
 #include "inst/vdecodefaultinst.h"
+#include "inst/vdecodealignfault.h"
 #include "inst/vnop.h"
 #include "inst/vsetreg.h"
 #include "inst/vsyscall.h"

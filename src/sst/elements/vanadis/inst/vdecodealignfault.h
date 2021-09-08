@@ -13,8 +13,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef _H_VANADIS_INSTRUCTION_DECODE_FAULT
-#define _H_VANADIS_INSTRUCTION_DECODE_FAULT
+#ifndef _H_VANADIS_INSTRUCTION_DECODE_ALIGN_FAULT
+#define _H_VANADIS_INSTRUCTION_DECODE_ALIGN_FAULT
 
 #include "decoder/visaopts.h"
 #include "inst/vfault.h"
@@ -23,16 +23,20 @@
 namespace SST {
 namespace Vanadis {
 
-class VanadisInstructionDecodeFault : public VanadisInstructionFault {
+class VanadisInstructionDecodeAlignmentFault : public VanadisInstructionFault {
 public:
-    VanadisInstructionDecodeFault(const uint64_t address, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts) :
+    VanadisInstructionDecodeAlignmentFault(const uint64_t address, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts) :
 		VanadisInstructionFault(address, hw_thr, isa_opts) {}
 
+    VanadisInstructionDecodeAlignmentFault(const uint64_t address, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts,
+		std::string msg) :
+		VanadisInstructionFault(address, hw_thr, isa_opts, msg) {}
+
     VanadisInstruction* clone() override {
-        return new VanadisInstructionDecodeFault(ins_address, hw_thread, isa_options);
+        return new VanadisInstructionDecodeAlignmentFault(ins_address, hw_thread, isa_options);
     }
 
-    const char* getInstCode() const override { return "DECODE_FAULT"; }
+    const char* getInstCode() const override { return "ALIGN_FAULT"; }
 };
 
 } // namespace Vanadis
