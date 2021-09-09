@@ -451,10 +451,10 @@ public:
                                     output->verbose(
                                         CALL_INFO, 16, 0,
                                         "----> contains a branch: 0x%llx / predicted "
-                                        "(not-found in predictor): 0x%llx\n",
-                                        ip, ip + 4);
+                                        "(not-found in predictor): 0x%llx, pc-increment: %" PRIu64 "\n",
+                                        ip, ip + 4, bundle->pcIncrement());
 
-                                    ip += 4;
+                                    ip += bundle->pcIncrement();
                                     next_spec_ins->setSpeculatedAddress(ip);
                                     bundle_has_branch = true;
                                 }
@@ -465,7 +465,11 @@ public:
 
                         // Move to the next address, if we had a branch we should have
                         // already found a predicted target addeess to decode
-                        ip = bundle_has_branch ? ip : ip + 4;
+                        output->verbose(
+                            CALL_INFO, 16, 0, "----> branch? %s, ip=0x%llx + inc=%" PRIu64 " = new-ip=0x%llx\n",
+                            bundle_has_branch ? "yes" : "no", ip, bundle_has_branch ? 0 : bundle->pcIncrement(),
+                            bundle_has_branch ? ip : ip + bundle->pcIncrement());
+                        ip = bundle_has_branch ? ip : ip + bundle->pcIncrement();
                     }
                     else {
                         output->verbose(
@@ -547,6 +551,12 @@ protected:
         output->verbose(CALL_INFO, 16, 0, "[decode] -> addr: 0x%llx / ins: 0x%08x\n", ins_address, ins);
         output->verbose(CALL_INFO, 16, 0, "[decode] -> ins-bytes: 0x%08x\n", ins);
 
+        // We are supposed to have 16b packets for RISCV instructions, if we don't then mark fault
+        if ( (ins_address & 0x1) != 0 ) {
+            bundle->addInstruction(new VanadisInstructionDecodeAlignmentFault(ins_address, hw_thr, options));
+            return;
+        }
+
         uint32_t op_code = extract_opcode(ins);
 
         uint16_t rd  = 0;
@@ -561,524 +571,761 @@ protected:
 
         bool decode_fault = true;
 
-        output->verbose(CALL_INFO, 16, 0, "[decode]-> ins-op-code-family: %" PRIu32 " / 0x%x\n", op_code, op_code);
 
-        switch ( op_code ) {
-        case 0x3:
-        {
-            // Load data
-            processI<int64_t>(ins, op_code, rd, rs1, func_code, simm64);
+		  // if the last two bits that are set are 11, then we are performing at least 32bit instruction formats, otherwise
+		  // we are performing decodes on the C-extension (16b) formats
+        if ( (ins & 0x3) == 0x3 ) {
+            output->verbose(CALL_INFO, 16, 0, "[decode] -> 32bit format / ins-op-code-family: %" PRIu32 " / 0x%x\n", op_code, op_code);
 
-            switch ( func_code ) {
-            case 0:
+            switch ( op_code ) {
+            case 0x3:
             {
-                // LB
-                bundle->addInstruction(new VanadisLoadInstruction(
-                    ins_address, hw_thr, options, rs1, simm64, rd, 1, true, MEM_TRANSACTION_NONE, LOAD_INT_REGISTER));
-                decode_fault = false;
-            } break;
-            case 1:
-            {
-                // LH
-                bundle->addInstruction(new VanadisLoadInstruction(
-                    ins_address, hw_thr, options, rs1, simm64, rd, 2, true, MEM_TRANSACTION_NONE, LOAD_INT_REGISTER));
-                decode_fault = false;
-            } break;
-            case 2:
-            {
-                // LW
-                bundle->addInstruction(new VanadisLoadInstruction(
-                    ins_address, hw_thr, options, rs1, simm64, rd, 4, true, MEM_TRANSACTION_NONE, LOAD_INT_REGISTER));
-                decode_fault = false;
-            } break;
-            case 3:
-            {
-                // LD
-                bundle->addInstruction(new VanadisLoadInstruction(
-                    ins_address, hw_thr, options, rs1, simm64, rd, 8, true, MEM_TRANSACTION_NONE, LOAD_INT_REGISTER));
-                decode_fault = false;
-            } break;
-            case 4:
-            {
-                // LBU
-                bundle->addInstruction(new VanadisLoadInstruction(
-                    ins_address, hw_thr, options, rs1, simm64, rd, 1, false, MEM_TRANSACTION_NONE, LOAD_INT_REGISTER));
-                decode_fault = false;
-            } break;
-            case 5:
-            {
-                // LHU
-                bundle->addInstruction(new VanadisLoadInstruction(
-                    ins_address, hw_thr, options, rs1, simm64, rd, 2, false, MEM_TRANSACTION_NONE, LOAD_INT_REGISTER));
-                decode_fault = false;
-            } break;
-            case 6:
-            {
-                // LWU
-                bundle->addInstruction(new VanadisLoadInstruction(
-                    ins_address, hw_thr, options, rs1, simm64, rd, 4, false, MEM_TRANSACTION_NONE, LOAD_INT_REGISTER));
-                decode_fault = false;
-            } break;
-            }
-        } break;
-        case 0x7:
-        {
-            // Floating point load
-        } break;
-        case 0x23:
-        {
-            // Store data
-            processS<int64_t>(ins, op_code, rs1, rs2, func_code3, simm64);
+                // Load data
+                processI<int64_t>(ins, op_code, rd, rs1, func_code, simm64);
 
-            if ( func_code < 4 ) {
-                // shift to get the power of 2 number of bytes to store
-                const uint32_t store_bytes = 1 << func_code;
-                bundle->addInstruction(new VanadisStoreInstruction(
-                    ins_address, hw_thr, options, rs1, simm64, rs2, store_bytes, MEM_TRANSACTION_NONE,
-                    STORE_INT_REGISTER));
-                decode_fault = false;
-            }
-        } break;
-        case 0x13:
-        {
-            // Immediate arithmetic
-            func_code = extract_func3(ins);
-
-            switch ( func_code ) {
-            case 0:
-            {
-                // ADDI
-                processI<int64_t>(ins, op_code, rd, rs1, func_code3, simm64);
-
-                bundle->addInstruction(new VanadisAddImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
-                    ins_address, hw_thr, options, rd, rs1, simm64));
-                decode_fault = false;
-            } break;
-            case 1:
-            {
-                // SLLI
-                processR(ins, op_code, rd, rs1, rs2, func_code3, func_code7);
-
-                switch ( func_code7 ) {
+                switch ( func_code ) {
                 case 0:
                 {
-                    bundle->addInstruction(
-                        new VanadisShiftLeftLogicalImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
-                            ins_address, hw_thr, options, rs1, rd, static_cast<uint64_t>(rs2)));
+                    // LB
+                    bundle->addInstruction(new VanadisLoadInstruction(
+                        ins_address, hw_thr, options, rs1, simm64, rd, 1, true, MEM_TRANSACTION_NONE,
+                        LOAD_INT_REGISTER));
                     decode_fault = false;
                 } break;
-                };
-            } break;
-            case 2:
-            {
-                // SLTI
-                processI<int64_t>(ins, op_code, rd, rs1, func_code3, simm64);
-                bundle->addInstruction(new VanadisSetRegCompareImmInstruction<
-                                       REG_COMPARE_LT, VanadisRegisterFormat::VANADIS_FORMAT_INT32, true>(
-                    ins_address, hw_thr, options, rd, rs1, simm64));
-                decode_fault = false;
-            } break;
-            case 3:
-            {
-                // SLTIU
-                processI<int64_t>(ins, op_code, rd, rs1, func_code3, simm64);
-                bundle->addInstruction(new VanadisSetRegCompareImmInstruction<
-                                       REG_COMPARE_LT, VanadisRegisterFormat::VANADIS_FORMAT_INT32, false>(
-                    ins_address, hw_thr, options, rd, rs1, simm64));
-                decode_fault = false;
-            } break;
-            case 4:
-            {
-                // XORI
-                processI<int64_t>(ins, op_code, rd, rs1, func_code3, simm64);
-                bundle->addInstruction(new VanadisXorImmInstruction(ins_address, hw_thr, options, rd, rs1, simm64));
-                decode_fault = false;
-            } break;
-            case 5:
-            {
-                // CHECK SRLI / SRAI
-                processR(ins, op_code, rd, rs1, rs2, func_code3, func_code7);
-
-                switch ( func_code7 ) {
-                case 0:
-                {
-                    bundle->addInstruction(
-                        new VanadisShiftRightLogicalImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
-                            ins_address, hw_thr, options, rs1, rd, static_cast<uint64_t>(rs2)));
-                    decode_fault = false;
-                } break;
-                case 0x20:
-                {
-                    bundle->addInstruction(
-                        new VanadisShiftRightArithmeticImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
-                            ins_address, hw_thr, options, rs1, rd, static_cast<uint64_t>(rs2)));
-                    decode_fault = false;
-                } break;
-                };
-            } break;
-            case 6:
-            {
-                // ORI
-                processI<int64_t>(ins, op_code, rd, rs1, func_code3, simm64);
-                bundle->addInstruction(new VanadisOrImmInstruction(ins_address, hw_thr, options, rd, rs1, simm64));
-                decode_fault = false;
-            } break;
-            case 7:
-            {
-                // ANDI
-                processI<int64_t>(ins, op_code, rd, rs1, func_code3, simm64);
-                bundle->addInstruction(new VanadisAndImmInstruction(ins_address, hw_thr, options, rd, rs1, simm64));
-                decode_fault = false;
-            } break;
-            };
-        } break;
-        case 0x33:
-        {
-            // 32b integer arithmetic/logical
-            processR(ins, op_code, rd, rs1, rs2, func_code3, func_code7);
-
-            switch ( func_code3 ) {
-            case 0:
-            {
-                switch ( func_code7 ) {
                 case 1:
                 {
-                    // MUL
-                    // TODO - check register ordering
-                    bundle->addInstruction(new VanadisMultiplyInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
-                        ins_address, hw_thr, options, rs1, rs2, rd));
+                    // LH
+                    bundle->addInstruction(new VanadisLoadInstruction(
+                        ins_address, hw_thr, options, rs1, simm64, rd, 2, true, MEM_TRANSACTION_NONE,
+                        LOAD_INT_REGISTER));
                     decode_fault = false;
                 } break;
-                };
-            } break;
-            case 1:
-            {
-                switch ( func_code7 ) {
-                case 1:
+                case 2:
                 {
-                    // MULH
-                    // NOT SURE WHAT THIS IS?
-                } break;
-                };
-            } break;
-            case 2:
-            {
-                switch ( func_code7 ) {
-                case 1:
-                {
-                    // MULHSU
-                    // NOT SURE WHAT THIS IS?
-                } break;
-                };
-            } break;
-            case 3:
-            {
-                switch ( func_code7 ) {
-                case 1:
-                {
-                    // MULHSU
-                    // NOT SURE WHAT THIS IS?
-                } break;
-                };
-            } break;
-            case 4:
-            {
-                switch ( func_code7 ) {
-                case 1:
-                {
-                    // DIV
-                    bundle->addInstruction(
-                        new VanadisDivideInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32, true>(
-                            ins_address, hw_thr, options, rd, rs1, rs2));
+                    // LW
+                    bundle->addInstruction(new VanadisLoadInstruction(
+                        ins_address, hw_thr, options, rs1, simm64, rd, 4, true, MEM_TRANSACTION_NONE,
+                        LOAD_INT_REGISTER));
                     decode_fault = false;
                 } break;
-                };
-            } break;
-            case 5:
-            {
-                switch ( func_code7 ) {
-                case 1:
+                case 3:
                 {
-                    // DIVU
-                    bundle->addInstruction(
-                        new VanadisDivideInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32, false>(
-                            ins_address, hw_thr, options, rd, rs1, rs2));
+                    // LD
+                    bundle->addInstruction(new VanadisLoadInstruction(
+                        ins_address, hw_thr, options, rs1, simm64, rd, 8, true, MEM_TRANSACTION_NONE,
+                        LOAD_INT_REGISTER));
                     decode_fault = false;
                 } break;
-                };
-            } break;
-            case 6:
-            {
-                // TODO - REM INSTRUCTION
-            } break;
-            case 7:
-            {
-                // TODO - REMU INSTRUCTION
-            } break;
-            };
-        } break;
-        case 0x37:
-        {
-            // LUI
-            processU<int64_t>(ins, op_code, rd, simm64);
-
-            bundle->addInstruction(new VanadisSetRegisterInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
-                ins_address, hw_thr, options, rd, simm64));
-            decode_fault = false;
-        } break;
-        case 0x17:
-        {
-            // AUIPC
-            processU<int64_t>(ins, op_code, rd, simm64);
-
-            bundle->addInstruction(new VanadisPCAddImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
-                ins_address, hw_thr, options, rd, simm64));
-            decode_fault = false;
-        } break;
-        case 0x6F:
-        {
-            // JAL
-            processJ<int64_t>(ins, op_code, rd, simm64);
-            // Immediate specifies jump in multiples of 2 byts per RISCV spec
-            const int64_t jump_to = static_cast<int64_t>(ins_address) + (simm64 << 1);
-
-            bundle->addInstruction(
-                new VanadisJumpLinkInstruction(ins_address, hw_thr, options, rd, jump_to, VANADIS_NO_DELAY_SLOT));
-            decode_fault = false;
-        } break;
-        case 0x67:
-        {
-            // JALR
-            processI<int64_t>(ins, op_code, rd, rs1, func_code3, simm64);
-
-            switch ( func_code3 ) {
-            case 0:
-            {
-                // TODO - may need to zero bit 1 with an AND microop?
-                bundle->addInstruction(
-                    new VanadisJumpRegLinkInstruction(ins_address, hw_thr, options, rd, rs1, VANADIS_NO_DELAY_SLOT));
-                decode_fault = false;
-            } break;
-            };
-        } break;
-        case 0x63:
-        {
-            // Branch
-            processB<int64_t>(ins, op_code, rs1, rs2, func_code, simm64);
-
-            switch ( func_code ) {
-            case 0:
-            {
-                // BEQ
-                bundle->addInstruction(
-                    new VanadisBranchRegCompareInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64, REG_COMPARE_EQ>(
-                        ins_address, hw_thr, options, rs1, rs2, simm64, VANADIS_NO_DELAY_SLOT));
-                decode_fault = false;
-            } break;
-            case 1:
-            {
-                // BNE
-                bundle->addInstruction(new VanadisBranchRegCompareInstruction<
-                                       VanadisRegisterFormat::VANADIS_FORMAT_INT64, REG_COMPARE_NEQ>(
-                    ins_address, hw_thr, options, rs1, rs2, simm64, VANADIS_NO_DELAY_SLOT));
-                decode_fault = false;
-            } break;
-            case 4:
-            {
-                // BLT
-                bundle->addInstruction(
-                    new VanadisBranchRegCompareInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64, REG_COMPARE_LT>(
-                        ins_address, hw_thr, options, rs1, rs2, simm64, VANADIS_NO_DELAY_SLOT));
-                decode_fault = false;
-            } break;
-            case 5:
-            {
-                // BGE
-                bundle->addInstruction(new VanadisBranchRegCompareInstruction<
-                                       VanadisRegisterFormat::VANADIS_FORMAT_INT64, REG_COMPARE_GTE>(
-                    ins_address, hw_thr, options, rs1, rs2, simm64, VANADIS_NO_DELAY_SLOT));
-                decode_fault = false;
-            } break;
-            case 6:
-            {
-                // BLTU
-                bundle->addInstruction(
-                    new VanadisBranchRegCompareInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64, REG_COMPARE_LT>(
-                        ins_address, hw_thr, options, rs1, rs2, simm64, VANADIS_NO_DELAY_SLOT, false));
-                decode_fault = false;
-            } break;
-            case 7:
-            {
-                // BGEU
-                bundle->addInstruction(new VanadisBranchRegCompareInstruction<
-                                       VanadisRegisterFormat::VANADIS_FORMAT_INT64, REG_COMPARE_GTE>(
-                    ins_address, hw_thr, options, rs1, rs2, simm64, VANADIS_NO_DELAY_SLOT, false));
-                decode_fault = false;
-            } break;
-            };
-        } break;
-        case 0x73:
-        {
-            // Syscall/ECALL and EBREAK
-            // Control registers
-        } break;
-        case 0x3B:
-        {
-            // 64b integer arithmetic-W
-            processR(ins, op_code, rd, rs1, rs2, func_code3, func_code7);
-
-            switch ( func_code3 ) {
-            case 0:
-            {
-                switch ( func_code7 ) {
-                case 0x0:
+                case 4:
                 {
-                    // ADDW
-                    // TODO - check register ordering
-                    bundle->addInstruction(new VanadisAddInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64, true>(
-                        ins_address, hw_thr, options, rs1, rs2, rd));
+                    // LBU
+                    bundle->addInstruction(new VanadisLoadInstruction(
+                        ins_address, hw_thr, options, rs1, simm64, rd, 1, false, MEM_TRANSACTION_NONE,
+                        LOAD_INT_REGISTER));
                     decode_fault = false;
                 } break;
-                case 0x1:
+                case 5:
                 {
-                    // MULW
-                    // TODO - check register ordering
-                    bundle->addInstruction(new VanadisMultiplyInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
-                        ins_address, hw_thr, options, rs1, rs2, rd));
-                } break;
-                case 0x20:
-                {
-                    // SUBW
-                    // TODO - check register ordering
-                    bundle->addInstruction(new VanadisSubInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
-                        ins_address, hw_thr, options, rs1, rs2, rd, true));
+                    // LHU
+                    bundle->addInstruction(new VanadisLoadInstruction(
+                        ins_address, hw_thr, options, rs1, simm64, rd, 2, false, MEM_TRANSACTION_NONE,
+                        LOAD_INT_REGISTER));
                     decode_fault = false;
                 } break;
-                };
-            } break;
-            case 1:
-            {
-                switch ( func_code7 ) {
-                case 0x0:
+                case 6:
                 {
-                    // SLLW
-                    // TODO - check register ordering
-                    bundle->addInstruction(
-                        new VanadisShiftLeftLogicalInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
-                            ins_address, hw_thr, options, rs1, rs2, rd));
+                    // LWU
+                    bundle->addInstruction(new VanadisLoadInstruction(
+                        ins_address, hw_thr, options, rs1, simm64, rd, 4, false, MEM_TRANSACTION_NONE,
+                        LOAD_INT_REGISTER));
                     decode_fault = false;
-                } break;
-                };
-            } break;
-            case 4:
-            {
-                switch ( func_code7 ) {
-                case 0x1:
-                {
-                    // DIVW
-                    bundle->addInstruction(
-                        new VanadisDivideInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64, true>(
-                            ins_address, hw_thr, options, rd, rs1, rs2));
-                    decode_fault = false;
-                } break;
-                };
-            } break;
-            case 5:
-            {
-                switch ( func_code7 ) {
-                case 0x0:
-                {
-                    // SRLW
-                    // TODO - check register ordering
-                    bundle->addInstruction(
-                        new VanadisShiftRightLogicalInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
-                            ins_address, hw_thr, options, rs1, rs2, rd));
-                    decode_fault = false;
-                } break;
-                case 0x1:
-                {
-                    // DIVUW
-                    bundle->addInstruction(
-                        new VanadisDivideInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64, false>(
-                            ins_address, hw_thr, options, rd, rs1, rs2));
-                    decode_fault = false;
-                } break;
-                case 0x20:
-                {
-                    // SRAW
-                    // TODO - check register ordering
-                    bundle->addInstruction(
-                        new VanadisShiftRightArithmeticInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
-                            ins_address, hw_thr, options, rs1, rs2, rd));
-                    decode_fault = false;
-                } break;
-                };
-            } break;
-            case 6:
-            {
-                switch ( func_code7 ) {
-                case 0x1:
-                {
-                    // REMW
-                    // TODO - Implement
-                } break;
-                };
-            } break;
-            case 7:
-            {
-                switch ( func_code7 ) {
-                case 0x1:
-                {
-                    // REMUW
-                    // TODO - Implement
                 } break;
                 }
-            }; break;
-            };
-        } break;
-        case 0xF:
-        {
-            // Fences (FENCE.I Zifencei)
-        }
-        case 0x2F:
-        {
-            // Atomic operations (A extension)
-        } break;
-        case 0x27:
-        {
-            // Floating point store
-        } break;
-        case 0x53:
-        {
-            // floating point arithmetic
-        } break;
-        case 0x43:
-        {
-            // FMADD
-        } break;
-        case 0x47:
-        {
-            // FMSUB
-        } break;
-        case 0x4B:
-        {
-            // FNMSUB
-        } break;
-        case 0x4F:
-        {
-            // FNMADD
-        } break;
-        default:
-        {
-            // op_code did not match an expected value
-        } break;
-        }
+            } break;
+            case 0x7:
+            {
+                // Floating point load
+            } break;
+            case 0x23:
+            {
+                // Store data
+                processS<int64_t>(ins, op_code, rs1, rs2, func_code3, simm64);
+
+                if ( func_code < 4 ) {
+                    // shift to get the power of 2 number of bytes to store
+                    const uint32_t store_bytes = 1 << func_code;
+                    bundle->addInstruction(new VanadisStoreInstruction(
+                        ins_address, hw_thr, options, rs1, simm64, rs2, store_bytes, MEM_TRANSACTION_NONE,
+                        STORE_INT_REGISTER));
+                    decode_fault = false;
+                }
+            } break;
+            case 0x13:
+            {
+                // Immediate arithmetic
+                func_code = extract_func3(ins);
+
+					output->verbose(CALL_INFO, 16, 0, "----> immediate-arith func: %" PRIu32 "\n", func_code);
+
+                switch ( func_code ) {
+                case 0:
+                {
+                    // ADDI
+                    processI<int64_t>(ins, op_code, rd, rs1, func_code3, simm64);
+
+                    bundle->addInstruction(new VanadisAddImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
+                        ins_address, hw_thr, options, rd, rs1, simm64));
+                    decode_fault = false;
+                } break;
+                case 1:
+                {
+                    // SLLI
+                    processR(ins, op_code, rd, rs1, rs2, func_code3, func_code7);
+
+                    switch ( func_code7 ) {
+                    case 0:
+                    {
+                        bundle->addInstruction(
+                            new VanadisShiftLeftLogicalImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
+                                ins_address, hw_thr, options, rs1, rd, static_cast<uint64_t>(rs2)));
+                        decode_fault = false;
+                    } break;
+                    };
+                } break;
+                case 2:
+                {
+                    // SLTI
+                    processI<int64_t>(ins, op_code, rd, rs1, func_code3, simm64);
+                    bundle->addInstruction(new VanadisSetRegCompareImmInstruction<
+                                           REG_COMPARE_LT, VanadisRegisterFormat::VANADIS_FORMAT_INT32, true>(
+                        ins_address, hw_thr, options, rd, rs1, simm64));
+                    decode_fault = false;
+                } break;
+                case 3:
+                {
+                    // SLTIU
+                    processI<int64_t>(ins, op_code, rd, rs1, func_code3, simm64);
+                    bundle->addInstruction(new VanadisSetRegCompareImmInstruction<
+                                           REG_COMPARE_LT, VanadisRegisterFormat::VANADIS_FORMAT_INT32, false>(
+                        ins_address, hw_thr, options, rd, rs1, simm64));
+                    decode_fault = false;
+                } break;
+                case 4:
+                {
+                    // XORI
+                    processI<int64_t>(ins, op_code, rd, rs1, func_code3, simm64);
+                    bundle->addInstruction(new VanadisXorImmInstruction(ins_address, hw_thr, options, rd, rs1, simm64));
+                    decode_fault = false;
+                } break;
+                case 5:
+                {
+                    // CHECK SRLI / SRAI
+                    processR(ins, op_code, rd, rs1, rs2, func_code3, func_code7);
+
+                    switch ( func_code7 ) {
+                    case 0:
+                    {
+                        bundle->addInstruction(
+                            new VanadisShiftRightLogicalImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
+                                ins_address, hw_thr, options, rs1, rd, static_cast<uint64_t>(rs2)));
+                        decode_fault = false;
+                    } break;
+                    case 0x20:
+                    {
+                        bundle->addInstruction(
+                            new VanadisShiftRightArithmeticImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
+                                ins_address, hw_thr, options, rs1, rd, static_cast<uint64_t>(rs2)));
+                        decode_fault = false;
+                    } break;
+                    };
+                } break;
+                case 6:
+                {
+                    // ORI
+                    processI<int64_t>(ins, op_code, rd, rs1, func_code3, simm64);
+                    bundle->addInstruction(new VanadisOrImmInstruction(ins_address, hw_thr, options, rd, rs1, simm64));
+                    decode_fault = false;
+                } break;
+                case 7:
+                {
+                    // ANDI
+                    processI<int64_t>(ins, op_code, rd, rs1, func_code3, simm64);
+                    bundle->addInstruction(new VanadisAndImmInstruction(ins_address, hw_thr, options, rd, rs1, simm64));
+                    decode_fault = false;
+                } break;
+                };
+            } break;
+            case 0x33:
+            {
+                // 32b integer arithmetic/logical
+                processR(ins, op_code, rd, rs1, rs2, func_code3, func_code7);
+
+                switch ( func_code3 ) {
+                case 0:
+                {
+                    switch ( func_code7 ) {
+                    case 1:
+                    {
+                        // MUL
+                        // TODO - check register ordering
+                        bundle->addInstruction(
+                            new VanadisMultiplyInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
+                                ins_address, hw_thr, options, rs1, rs2, rd));
+                        decode_fault = false;
+                    } break;
+                    };
+                } break;
+                case 1:
+                {
+                    switch ( func_code7 ) {
+                    case 1:
+                    {
+                        // MULH
+                        // NOT SURE WHAT THIS IS?
+                    } break;
+                    };
+                } break;
+                case 2:
+                {
+                    switch ( func_code7 ) {
+                    case 1:
+                    {
+                        // MULHSU
+                        // NOT SURE WHAT THIS IS?
+                    } break;
+                    };
+                } break;
+                case 3:
+                {
+                    switch ( func_code7 ) {
+                    case 1:
+                    {
+                        // MULHSU
+                        // NOT SURE WHAT THIS IS?
+                    } break;
+                    };
+                } break;
+                case 4:
+                {
+                    switch ( func_code7 ) {
+                    case 1:
+                    {
+                        // DIV
+                        bundle->addInstruction(
+                            new VanadisDivideInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32, true>(
+                                ins_address, hw_thr, options, rd, rs1, rs2));
+                        decode_fault = false;
+                    } break;
+                    };
+                } break;
+                case 5:
+                {
+                    switch ( func_code7 ) {
+                    case 1:
+                    {
+                        // DIVU
+                        bundle->addInstruction(
+                            new VanadisDivideInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32, false>(
+                                ins_address, hw_thr, options, rd, rs1, rs2));
+                        decode_fault = false;
+                    } break;
+                    };
+                } break;
+                case 6:
+                {
+                    // TODO - REM INSTRUCTION
+                } break;
+                case 7:
+                {
+                    // TODO - REMU INSTRUCTION
+                } break;
+                };
+            } break;
+            case 0x37:
+            {
+                // LUI
+                processU<int64_t>(ins, op_code, rd, simm64);
+
+                bundle->addInstruction(new VanadisSetRegisterInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
+                    ins_address, hw_thr, options, rd, simm64));
+                decode_fault = false;
+            } break;
+            case 0x17:
+            {
+                // AUIPC
+                processU<int64_t>(ins, op_code, rd, simm64);
+
+                bundle->addInstruction(new VanadisPCAddImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
+                    ins_address, hw_thr, options, rd, simm64));
+                decode_fault = false;
+            } break;
+            case 0x6F:
+            {
+                // JAL
+                processJ<int64_t>(ins, op_code, rd, simm64);
+                // Immediate specifies jump in multiples of 2 byts per RISCV spec
+                const int64_t jump_to = static_cast<int64_t>(ins_address) + (simm64 << 1);
+
+                bundle->addInstruction(
+                    new VanadisJumpLinkInstruction(ins_address, hw_thr, options, rd, jump_to, VANADIS_NO_DELAY_SLOT));
+                decode_fault = false;
+            } break;
+            case 0x67:
+            {
+                // JALR
+                processI<int64_t>(ins, op_code, rd, rs1, func_code3, simm64);
+
+                switch ( func_code3 ) {
+                case 0:
+                {
+                    // TODO - may need to zero bit 1 with an AND microop?
+                    bundle->addInstruction(new VanadisJumpRegLinkInstruction(
+                        ins_address, hw_thr, options, rd, rs1, VANADIS_NO_DELAY_SLOT));
+                    decode_fault = false;
+                } break;
+                };
+            } break;
+            case 0x63:
+            {
+                // Branch
+                processB<int64_t>(ins, op_code, rs1, rs2, func_code, simm64);
+
+                switch ( func_code ) {
+                case 0:
+                {
+                    // BEQ
+                    bundle->addInstruction(new VanadisBranchRegCompareInstruction<
+                                           VanadisRegisterFormat::VANADIS_FORMAT_INT64, REG_COMPARE_EQ>(
+                        ins_address, hw_thr, options, rs1, rs2, simm64, VANADIS_NO_DELAY_SLOT));
+                    decode_fault = false;
+                } break;
+                case 1:
+                {
+                    // BNE
+                    bundle->addInstruction(new VanadisBranchRegCompareInstruction<
+                                           VanadisRegisterFormat::VANADIS_FORMAT_INT64, REG_COMPARE_NEQ>(
+                        ins_address, hw_thr, options, rs1, rs2, simm64, VANADIS_NO_DELAY_SLOT));
+                    decode_fault = false;
+                } break;
+                case 4:
+                {
+                    // BLT
+                    bundle->addInstruction(new VanadisBranchRegCompareInstruction<
+                                           VanadisRegisterFormat::VANADIS_FORMAT_INT64, REG_COMPARE_LT>(
+                        ins_address, hw_thr, options, rs1, rs2, simm64, VANADIS_NO_DELAY_SLOT));
+                    decode_fault = false;
+                } break;
+                case 5:
+                {
+                    // BGE
+                    bundle->addInstruction(new VanadisBranchRegCompareInstruction<
+                                           VanadisRegisterFormat::VANADIS_FORMAT_INT64, REG_COMPARE_GTE>(
+                        ins_address, hw_thr, options, rs1, rs2, simm64, VANADIS_NO_DELAY_SLOT));
+                    decode_fault = false;
+                } break;
+                case 6:
+                {
+                    // BLTU
+                    bundle->addInstruction(new VanadisBranchRegCompareInstruction<
+                                           VanadisRegisterFormat::VANADIS_FORMAT_INT64, REG_COMPARE_LT>(
+                        ins_address, hw_thr, options, rs1, rs2, simm64, VANADIS_NO_DELAY_SLOT, false));
+                    decode_fault = false;
+                } break;
+                case 7:
+                {
+                    // BGEU
+                    bundle->addInstruction(new VanadisBranchRegCompareInstruction<
+                                           VanadisRegisterFormat::VANADIS_FORMAT_INT64, REG_COMPARE_GTE>(
+                        ins_address, hw_thr, options, rs1, rs2, simm64, VANADIS_NO_DELAY_SLOT, false));
+                    decode_fault = false;
+                } break;
+                };
+            } break;
+            case 0x73:
+            {
+                // Syscall/ECALL and EBREAK
+                // Control registers
+            } break;
+            case 0x3B:
+            {
+                // 64b integer arithmetic-W
+                processR(ins, op_code, rd, rs1, rs2, func_code3, func_code7);
+
+                switch ( func_code3 ) {
+                case 0:
+                {
+                    switch ( func_code7 ) {
+                    case 0x0:
+                    {
+                        // ADDW
+                        // TODO - check register ordering
+                        bundle->addInstruction(
+                            new VanadisAddInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64, true>(
+                                ins_address, hw_thr, options, rs1, rs2, rd));
+                        decode_fault = false;
+                    } break;
+                    case 0x1:
+                    {
+                        // MULW
+                        // TODO - check register ordering
+                        bundle->addInstruction(
+                            new VanadisMultiplyInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
+                                ins_address, hw_thr, options, rs1, rs2, rd));
+                    } break;
+                    case 0x20:
+                    {
+                        // SUBW
+                        // TODO - check register ordering
+                        bundle->addInstruction(new VanadisSubInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
+                            ins_address, hw_thr, options, rs1, rs2, rd, true));
+                        decode_fault = false;
+                    } break;
+                    };
+                } break;
+                case 1:
+                {
+                    switch ( func_code7 ) {
+                    case 0x0:
+                    {
+                        // SLLW
+                        // TODO - check register ordering
+                        bundle->addInstruction(
+                            new VanadisShiftLeftLogicalInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
+                                ins_address, hw_thr, options, rs1, rs2, rd));
+                        decode_fault = false;
+                    } break;
+                    };
+                } break;
+                case 4:
+                {
+                    switch ( func_code7 ) {
+                    case 0x1:
+                    {
+                        // DIVW
+                        bundle->addInstruction(
+                            new VanadisDivideInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64, true>(
+                                ins_address, hw_thr, options, rd, rs1, rs2));
+                        decode_fault = false;
+                    } break;
+                    };
+                } break;
+                case 5:
+                {
+                    switch ( func_code7 ) {
+                    case 0x0:
+                    {
+                        // SRLW
+                        // TODO - check register ordering
+                        bundle->addInstruction(
+                            new VanadisShiftRightLogicalInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
+                                ins_address, hw_thr, options, rs1, rs2, rd));
+                        decode_fault = false;
+                    } break;
+                    case 0x1:
+                    {
+                        // DIVUW
+                        bundle->addInstruction(
+                            new VanadisDivideInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64, false>(
+                                ins_address, hw_thr, options, rd, rs1, rs2));
+                        decode_fault = false;
+                    } break;
+                    case 0x20:
+                    {
+                        // SRAW
+                        // TODO - check register ordering
+                        bundle->addInstruction(
+                            new VanadisShiftRightArithmeticInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
+                                ins_address, hw_thr, options, rs1, rs2, rd));
+                        decode_fault = false;
+                    } break;
+                    };
+                } break;
+                case 6:
+                {
+                    switch ( func_code7 ) {
+                    case 0x1:
+                    {
+                        // REMW
+                        // TODO - Implement
+                    } break;
+                    };
+                } break;
+                case 7:
+                {
+                    switch ( func_code7 ) {
+                    case 0x1:
+                    {
+                        // REMUW
+                        // TODO - Implement
+                    } break;
+                    }
+                }; break;
+                };
+            } break;
+            case 0xF:
+            {
+                // Fences (FENCE.I Zifencei)
+            }
+            case 0x2F:
+            {
+                // Atomic operations (A extension)
+            } break;
+            case 0x27:
+            {
+                // Floating point store
+            } break;
+            case 0x53:
+            {
+                // floating point arithmetic
+            } break;
+            case 0x43:
+            {
+                // FMADD
+            } break;
+            case 0x47:
+            {
+                // FMSUB
+            } break;
+            case 0x4B:
+            {
+                // FNMSUB
+            } break;
+            case 0x4F:
+            {
+                // FNMADD
+            } break;
+            default:
+            {
+                // op_code did not match an expected value
+            } break;
+            }
+        } else {
+				const uint32_t c_op_code = ins & 0x3;
+
+				// this bundle only increments the PC by 2, not 4 in 32bit decodes
+				bundle->setPCIncrement(2);
+
+				switch(c_op_code) {
+				case 0x0:
+					{
+						const uint32_t c_func_code = ins & 0xE000;
+
+						switch(c_func_code) {
+						case 0x0:
+								{
+									if((ins & 0xFFFF) == 0) {
+										// This is an illegal instruction (all zeroes)
+									} else {
+										// ADDI4SPN
+									}
+								}
+								break;
+						case 0x2000:
+								{
+									// FLD
+								} break;
+						case 0x4000:
+								{
+									// LW
+								} break;
+						case 0x6000:
+								{
+									// LD
+								} break;
+						case 0x8000:
+								{
+									// Reserved, this is a decode fault
+								} break;
+						case 0xA000:
+								{
+									// FSD
+								} break;
+						case 0xC000:
+								{
+									// SW
+								} break;
+						case 0xE000:
+								{
+									// SD
+								} break;
+						}
+					} break;
+				case 0x1:
+					{
+						const uint32_t c_func_code = ins & 0xE000;
+
+						switch(c_func_code) {
+						case 0x0:
+								{
+									// NOP / ADDI
+								}
+								break;
+						case 0x2000:
+								{
+									// ADDIW
+								} break;
+						case 0x4000:
+								{
+									// LI
+								} break;
+						case 0x6000:
+								{
+									// ADDI16SP / LUI
+								} break;
+						case 0x8000:
+								{
+									const uint32_t c_func2_code = ins & 0xC00;
+
+									output->verbose(CALL_INFO, 16, 0, "------> RCV arith code: %" PRIu32 "\n", c_func2_code);
+
+									switch(c_func2_code) {
+									case 0x0:
+										{
+											// SRLI
+										} break;
+									case 0x400:
+										{
+											// SRAI
+										} break;
+									case 0x800:
+										{
+											// AND
+										} break;
+									case 0xC00:
+										{
+											// Arith
+										} break;
+									}
+								} break;
+						case 0xA000:
+								{
+									// JUMP
+								} break;
+						case 0xC000:
+								{
+									// BEQZ
+								} break;
+						case 0xE000:
+								{
+									// BNEZ
+								} break;
+						}
+					} break;
+				case 0x2:
+					{
+						const uint32_t c_func_code = ins & 0xE000;
+
+						switch(c_func_code) {
+						case 0x0:
+								{
+									// SLLI
+								}
+								break;
+						case 0x2000:
+								{
+									// FLDSP
+								} break;
+						case 0x4000:
+								{
+									// LWSP
+								} break;
+						case 0x6000:
+								{
+									// FLWSP
+								} break;
+						case 0x8000:
+								{
+									// Jumps
+									const uint32_t c_func_12 = ins & 0x1000;
+									const uint32_t c_func_12_rs2 = (ins & 0x7C) >> 2;
+									const uint32_t c_func_12_rs1 = (ins & 0xF80) >> 7;
+
+									output->verbose(CALL_INFO, 16, 0, "------> RVC 12b: %" PRIu32 " / rs1=%" PRIu32 " / rs2=%" PRIu32 "\n",
+										c_func_12, c_func_12_rs1, c_func_12_rs2);
+
+									if(c_func_12 == 0) {
+										if(c_func_12_rs2 == 0) {
+											// JR unless rs1 = 0
+										} else {
+											if(c_func_12_rs1 == 0) {
+												// HINT (turns into a NOP?)
+											} else {
+												bundle->addInstruction(new VanadisAddInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64, true>(ins_address, hw_thr, options, static_cast<uint16_t>(c_func_12_rs1),
+														static_cast<uint16_t>(c_func_12_rs2), options->getRegisterIgnoreWrites()));
+												decode_fault = false;
+											}
+										}
+									} else {
+
+									}
+								} break;
+						case 0xA000:
+								{
+									// FSDSP
+								} break;
+						case 0xC000:
+								{
+									// SWSP
+								} break;
+						case 0xE000:
+								{
+									// SDSP
+								} break;
+						}
+					} break;
+				}
+
+            output->verbose(CALL_INFO, 16, 0, "[decode] -> 16bit RVC format / ins-op-code-family: %" PRIu32 " / 0x%x\n", op_code, op_code);
+				if(decode_fault) {
+					output->fatal(CALL_INFO, -1, "STOP\n");
+				}
+			}
 
         //		  if(decode_fault) {
         //				bundle->addInstruction(new VanadisInstructionDecodeFault(ins_address, hw_thr,
-        //options));
+        // options));
         //			}
     }
+
+	 uint16_t extract_rd_rvc(const uint32_t ins) const {
+		return static_cast<uint16_t>((ins & 0x1C) >> 2);
+	 }
+
+	 uint16_t extract_rs1_rvc(const uint32_t ins) const {
+		return static_cast<uint16_t>((ins & 0x380) >> 7);
+	 }
+
+	uint64_t extract_uimm_rvc_t1(const uint32_t ins) const {
+		const uint64_t uimm_76 = ((ins & 0x60) << 1);
+		const uint64_t uimm_53 = ((ins & 0x1C00) >> 7);
+
+		return (uimm_76 | uimm_53);
+	}
+
+	uint64_t extract_uimm_rcv_t2(const uint32_t ins) const {
+		const uint64_t uimm_6 =  ((ins & 0x20) << 1);
+		const uint64_t uimm_2 =  ((ins & 0x40) >> 4);
+		const uint64_t uimm_53 = ((ins & 0x1C00) >> 7);
+
+		return (uimm_6 | uimm_53 | uimm_2);
+	}
+
+	uint64_t extract_uimm_rcv_t3(const uint32_t ins) const {
+		const uint64_t uimm_76 = ((ins & 0x60) << 1);
+		const uint64_t uimm_54 = ((ins & 0x1800) >> 6);
+		const uint64_t uimm_8  = ((ins & 0x400) >> 2);
+
+		return (uimm_76 | uimm_54 | uimm_8);
+	}
+
+	uint64_t extract_nzuimm_rcv(const uint32_t ins) const {
+		const uint64_t imm_3  = ((ins & 0x20) >> 2);
+		const uint64_t imm_2  = ((ins & 0x40) >> 4);
+		const uint64_t imm_96 = ((ins & 0x780) >> 1);
+		const uint64_t imm_54 = ((ins & 0x1800) >> 6);
+
+		return (imm_96 | imm_54 | imm_3 | imm_2);
+	}
 
     uint16_t extract_rd(const uint32_t ins) const { return static_cast<uint16_t>((ins & VANADIS_RISCV_RD_MASK) >> 6); }
 
@@ -1092,7 +1339,7 @@ protected:
         return static_cast<uint16_t>((ins & VANADIS_RISCV_RS1_MASK) >> 19);
     }
 
-    uint32_t extract_func3(const uint32_t ins) const { return ((ins & VANADIS_RISCV_FUNC3_MASK) >> 11); }
+    uint32_t extract_func3(const uint32_t ins) const { return ((ins & VANADIS_RISCV_FUNC3_MASK) >> 12); }
 
     uint32_t extract_func7(const uint32_t ins) const { return ((ins & VANADIS_RISCV_FUNC7_MASK) >> 24); }
 
