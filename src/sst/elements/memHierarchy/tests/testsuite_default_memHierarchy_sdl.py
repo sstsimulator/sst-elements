@@ -213,7 +213,8 @@ class testcase_memHierarchy_sdl(SSTTestCase):
                 log_debug(" -- Output file {0} is an exact match to SORTED (fixed) Reference File {1}".format(outfile, fixedreffile))
             else:
                 # Not matching sorted, if DRAMSIM, then we have one last chance...
-                if sstsimulator_conf_does_have_key("DRAMSIM", "LIBDIR"):
+                if usingDramSim:
+                    log_debug("DRAMSim involved...doing line/word count compare")
                     wc_out_data = os_wc(outfile, [1, 2])
                     log_debug("{0} : wc_out_data ={1}".format(outfile, wc_out_data))
                     wc_ref_data = os_wc(fixedreffile, [1, 2])
