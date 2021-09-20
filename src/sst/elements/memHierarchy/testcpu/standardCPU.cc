@@ -150,6 +150,7 @@ void standardCPU::init(unsigned int phase)
 }
 
 void standardCPU::setup() {
+    memory->setup();
     lineSize = memory->getLineSize();
 }
 

@@ -20,6 +20,7 @@ DEBUG_L2 = 0
 DEBUG_L3 = 0
 DEBUG_DIR = 0
 DEBUG_MEM = 0
+DEBUG_NOC = 0
 verbose = 2
 
 # Create merlin network - this is just simple single router
@@ -135,6 +136,8 @@ for x in range(caches):
         "network_bw" : network_bw,
         "network_input_buffer_size" : "2KiB",
         "network_output_buffer_size" : "2KiB",
+        "debug" : DEBUG_NOC,
+        "debug_level" : 10
     })
 
     portid = x + cores
@@ -159,6 +162,10 @@ for x in range(memories):
     })
 
     dirtoM = directory.setSubComponent("memlink", "memHierarchy.MemLink")
+    dirtoM.addParams({
+        "debug" : DEBUG_NOC,
+        "debug_level" : 10
+    })
     dirNIC = directory.setSubComponent("cpulink", "memHierarchy.MemNIC")
     dirNIC.addParams({
         "group" : 3,
@@ -166,13 +173,18 @@ for x in range(memories):
         "network_bw" : network_bw,
         "network_input_buffer_size" : "2KiB",
         "network_output_buffer_size" : "2KiB",
+        "debug" : DEBUG_NOC,
+        "debug_level" : 10
     })
 
     memctrl = sst.Component("memory" + str(x), "memHierarchy.MemController")
     memctrl.addParams({
         "clock" : "500MHz",
         "backing" : "none",
-        "addr_range_end" : 512*1024*1024-1,
+        "interleave_size" : "64B",    # Interleave at line granularity between memories
+        "interleave_step" : str(memories * 64) + "B",
+        "addr_range_start" : x*64,
+        "addr_range_end" :  1024*1024*1024 - ((memories - x) * 64) + 63,
         "verbose" : verbose,
         "debug" : DEBUG_MEM,
         "debug_level" : 10,

@@ -189,6 +189,14 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     gotRegion |= found;
     string ilStep = params.find<std::string>("interleave_step", "0B", found);
     gotRegion |= found;
+    
+    /* TODO remove this warning in SST 13 */
+    if (!gotRegion) {
+        out.output("%s, WARNING: Memories no longer inherit address regions from directories and no region parameters "
+                "(addr_range_start, addr_range_end, interleave_size, interleave_step) were detected. All addresses will map to "
+                "this memory: if this is intended, you may ignore this warning or set addr_range_start to 0 in your input deck "
+                "to eliminate this warning.\n", getName().c_str());
+    }
 
     // Ensure SI units are power-2 not power-10 - for backward compability
     fixByteUnits(ilSize);
@@ -240,10 +248,7 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     clockLink_ = link_->isClocked();
     link_->setRecvHandler( new Event::Handler<MemController>(this, &MemController::handleEvent));
 
-    if (gotRegion) {
-        link_->setRegion(region_);
-    } else
-        region_ = link_->getRegion();
+    link_->setRegion(region_);
 
     adjustRegionToMemSize();
 
@@ -518,10 +523,10 @@ void MemController::init(unsigned int phase) {
 
     adjustRegionToMemSize();
 
-    /* Inherit region from our source(s) */
     if (!phase) {
         /* Announce our presence on link */
         link_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Memory, true, false, memBackendConvertor_->getRequestWidth(), false));
+        link_->sendInitData(new MemEventInitEndpoint(getName().c_str(), Endpoint::Memory, region_, true));
     }
 
     while (MemEventInit *ev = link_->recvInitData()) {
@@ -532,7 +537,6 @@ void MemController::init(unsigned int phase) {
 void MemController::setup(void) {
     memBackendConvertor_->setup();
     link_->setup();
-
 }
 
 

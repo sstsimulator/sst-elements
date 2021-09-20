@@ -364,19 +364,20 @@ void Cache::updateAccessStatus(Addr addr) {
 
 /* For handling non-cache commands (including NONCACHEABLE data requests) */
 void Cache::processNoncacheable(MemEventBase* event) {
-
+    
     if (CommandCPUSide[(int)event->getCmd()]) {
         if (!(event->queryFlag(MemEvent::F_NORESPONSE))) {
             noncacheableResponseDst_.insert(std::make_pair(event->getID(), event->getSrc()));
         }
-        coherenceMgr_->forwardTowardsMem(event);
+        coherenceMgr_->forwardByAddress(event);
     } else {
         std::map<SST::Event::id_type,std::string>::iterator it = noncacheableResponseDst_.find(event->getResponseToID());
         if (it == noncacheableResponseDst_.end()) {
             out_->fatal(CALL_INFO, 01, "%s, Error: noncacheable response received does not match a request. Event: (%s). Time: %" PRIu64 "\n",
                     getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
         }
-        coherenceMgr_->forwardTowardsCPU(event, it->second);
+        event->setDst(it->second);
+        coherenceMgr_->forwardByDestination(event);
         noncacheableResponseDst_.erase(it);
     }
 }
@@ -436,6 +437,10 @@ void Cache::init(unsigned int phase) {
             if (event->getInitCmd() == MemEventInit::InitCommand::Coherence) {
                 MemEventInitCoherence * eventC = static_cast<MemEventInitCoherence*>(event);
                 processInitCoherenceEvent(eventC, linkDown_->isSource(eventC->getSrc()));
+            } else if (event->getInitCmd() == MemEventInit::InitCommand::Endpoint) {
+                MemEventInit * mEv = event->clone();
+                mEv->setSrc(getName());
+                linkDown_->sendInitData(mEv);
             }
             delete event;
         }
@@ -469,7 +474,7 @@ void Cache::init(unsigned int phase) {
                     getName().c_str(), memEvent->getVerboseString().c_str());
             MemEventInit * mEv = memEvent->clone();
             mEv->setSrc(getName());
-            mEv->setDst(linkDown_->findTargetDestination(mEv->getRoutingAddress()));
+            mEv->setDst(linkDown_->getTargetDestination(mEv->getRoutingAddress()));
             linkDown_->sendInitData(mEv);
         }
         delete memEvent;
@@ -500,9 +505,9 @@ void Cache::processInitCoherenceEvent(MemEventInitCoherence* event, bool src) {
 
 void Cache::setup() {
     // Check that our sources and destinations exist or configure if needed
-
     linkUp_->setup();
-    if (linkUp_ != linkDown_) linkDown_->setup();
+    if (linkUp_ != linkDown_) 
+        linkDown_->setup();
 
     // Enqueue the first wakeup event to check for deadlock
     if (timeout_ != 0)

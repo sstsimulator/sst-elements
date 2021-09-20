@@ -375,18 +375,20 @@ public:
      * TODO: Possibliy merge this with the coherence init messages and broadcast all topology info everywhere
      */
     
-    MemEventInitEndpoint(std::string src, Endpoint type, MemRegion region) : 
+    MemEventInitEndpoint(std::string src, Endpoint type, MemRegion region, bool cacheable) : 
         MemEventInit(src, InitCommand::Endpoint), type_(type), name_(src)  {
-        regions_.push_back(region);
+        regions_.push_back(std::make_pair(region, cacheable));
     }
 
     Endpoint getType() { return type_; }
     std::string getName() { return name_; }
-    std::vector<MemRegion> getNoncacheableRegions() { return regions_; }
-    void addNoncacheableRegion(MemRegion reg) { regions_.push_back(reg); }
+    std::vector<std::pair<MemRegion,bool>> getRegions() { return regions_; }
+    void addRegion(MemRegion reg, bool cacheable) { regions_.push_back(std::make_pair(reg, cacheable)); }
 
     virtual MemEventInitEndpoint* clone(void) override {
-        return new MemEventInitEndpoint(*this);
+        MemEventInitEndpoint* ep = new MemEventInitEndpoint(*this);
+        ep->regions_ = this->regions_;
+        return ep;
     }
 
     virtual std::string getBriefString() override {
@@ -399,8 +401,8 @@ public:
         std::ostringstream str;
         str << " Type: " << (int) type_ << " Name: " << name_;
         str << " Regions:";
-        for (std::vector<MemRegion>::iterator it = regions_.begin(); it != regions_.end(); it++) {
-            str << " [" << it->toString() << "]";
+        for (std::vector<std::pair<MemRegion,bool>>::iterator it = regions_.begin(); it != regions_.end(); it++) {
+            str << " [" << it->first.toString() << "; " << (it->second ? "cacheable" : "noncacheable") << "]";
         }
         return MemEventInit::getBriefString() + str.str();
     }
@@ -408,7 +410,7 @@ public:
 private:
     Endpoint type_;
     std::string name_;
-    std::vector<MemRegion> regions_;
+    std::vector<std::pair<MemRegion,bool>> regions_; // List of address regions accessible and whether they are cacheable or not
 
     MemEventInitEndpoint() {}
 public:

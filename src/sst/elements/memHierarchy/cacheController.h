@@ -170,6 +170,7 @@ public:
 
     /** Constructor for Cache Component */
     Cache(ComponentId_t id, Params &params);
+    ~Cache() { }
 
     /** Component API - pre- and post-simulation */
     virtual void init(unsigned int);

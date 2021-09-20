@@ -299,7 +299,7 @@ void Scratchpad::init(unsigned int phase) {
             }
         } else { // Not a NULLCMD
             MemEventInit * memRequest = new MemEventInit(getName(), initEv->getCmd(), initEv->getAddr() - remoteAddrOffset_, initEv->getPayload());
-            memRequest->setDst(linkDown_->findTargetDestination(memRequest->getAddr()));
+            memRequest->setDst(linkDown_->getTargetDestination(memRequest->getAddr()));
             linkDown_->sendInitData(memRequest);
         }
         delete initEv;
@@ -440,7 +440,7 @@ bool Scratchpad::clock(Cycle_t cycle) {
 
     while (!memMsgQueue_.empty() && memMsgQueue_.begin()->first < timestamp_) {
         MemEvent * sendEv = memMsgQueue_.begin()->second;
-        sendEv->setDst(linkDown_->findTargetDestination(sendEv->getBaseAddr()));
+        sendEv->setDst(linkDown_->getTargetDestination(sendEv->getBaseAddr()));
 
         if (is_debug_event(sendEv)) {
             debug = true;

@@ -150,7 +150,7 @@ private:
     uint32_t    cacheLineSize;
 
     /* Range of addresses supported by this directory */
-    MemRegion   region;
+    MemRegion   region; 
     Addr        memOffset; // Stack addresses if multiple DCs handle the same memory
 
     /* Timestamp & latencies */
@@ -252,9 +252,6 @@ public:
     bool handleNACK(MemEvent* event, bool inMSHR);
 
     void sendOutgoingEvents();
-
-    void forwardTowardsCPU(MemEventBase * ev);
-    void forwardTowardsMem(MemEventBase * ev);
 
 private:
     struct dbgin {
@@ -384,7 +381,7 @@ private:
     void sendAckInv(MemEvent* event);
     void sendAckPut(MemEvent* event);
     void sendNACK(MemEvent* event);
-
+    
     MSHR * mshr;
     std::unordered_map<Addr, DirEntry*> directory; // Master list of all directory entries, including noncached ones
 
@@ -398,6 +395,9 @@ private:
             dirAccess = da;
         }
     };
+
+    void forwardByDestination(MemEventBase* ev, Cycle_t timestamp, bool dirAccess = false);
+    void forwardByAddress(MemEventBase* ev, Cycle_t timestamp, bool dirAccess = false);
 
     std::multimap<uint64_t,MemEventBase*>   cpuMsgQueue;
     std::multimap<uint64_t,MemMsg>   memMsgQueue;

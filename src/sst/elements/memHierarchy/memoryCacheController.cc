@@ -442,14 +442,14 @@ void MemCacheController::handleLocalMemResponse( Event::id_type id, uint32_t fla
             remoteWr = new MemEvent(getName(), blockAddr, blockAddr, Command::PutM, lineSize_);
             readData(remoteWr);
             remoteWr->setFlag(MemEvent::F_NORESPONSE); // Don't send a response to this
-            remoteWr->setDst(link_->findTargetDestination(remoteWr->getBaseAddr()));
+            remoteWr->setDst(link_->getTargetDestination(remoteWr->getBaseAddr()));
             link_->send(remoteWr);
         case AccessStatus::MISS:
             /* Read new data from memory */
             remoteRd = new MemEvent(*ev);
             remoteRd->setCmd(Command::GetS);
             remoteRd->setSrc(getName());
-            remoteRd->setDst(link_->findTargetDestination(remoteRd->getBaseAddr()));
+            remoteRd->setDst(link_->getTargetDestination(remoteRd->getBaseAddr()));
             if (remoteRd->queryFlag(MemEvent::F_NORESPONSE))
                 remoteRd->clearFlag(MemEvent::F_NORESPONSE);
             it->second.reqev = remoteRd;
@@ -679,7 +679,7 @@ void MemCacheController::processInitEvent( MemEventInit* me ) {
         if (is_debug_event(me)) { Debug(_L9_,"Memory init %s - Received GetX for %" PRIx64 " size %zu\n", getName().c_str(), me->getAddr(),me->getPayload().size()); }
         MemEventInit * mEv = me->clone();
         mEv->setSrc(getName());
-        mEv->setDst(link_->findTargetDestination(mEv->getRoutingAddress()));
+        mEv->setDst(link_->getTargetDestination(mEv->getRoutingAddress()));
         link_->sendInitData(mEv);
     }
     delete me;

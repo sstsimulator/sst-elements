@@ -91,7 +91,7 @@ public:
     /* Initialization and finish */
     void init(unsigned int phase);
     void finish() { link_control->finish(); }
-    void setup() { link_control->setup(); MemLinkBase::setup(); }
+    void setup() { link_control->setup(); MemNICBase::setup(); }
 
     /* Debug */
     void printStatus(Output &out);

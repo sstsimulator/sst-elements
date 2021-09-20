@@ -67,7 +67,6 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
 
     std::string net_bw = params.find<std::string>("network_bw", "80GiB/s");
 
-    MemRegion region;
     bool gotRegion = false;
     region.start = params.find<Addr>("addr_range_start", 0, found);
     if (!found) region.start = params.find<Addr>("memNIC.addr_range_start", 0, found);
@@ -90,8 +89,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     gotRegion |= found;
 
     if(0 == region.end) region.end = region.REGION_MAX;
-
-
+    
     memOffset = params.find<uint64_t>("mem_addr_start", 0);
 
     UnitAlgebra packetSize = UnitAlgebra(params.find<std::string>("min_packet_size", "8B"));
@@ -432,8 +430,8 @@ bool DirectoryController::processPacket(MemEvent * ev, bool replay) {
     }
 
     if(! isRequestAddressValid(ev->getAddr()) ) {
-	dbg.fatal(CALL_INFO, -1, "%s, Error: Request address is not valid. Event: %s. Time = %" PRIu64 "ns\n",
-                getName().c_str(), ev->getVerboseString().c_str(), getCurrentSimTimeNano());
+	dbg.fatal(CALL_INFO, -1, "%s, Error: Request address is not valid. Event: %s. Time = %" PRIu64 "ns.\nRegion is %s\n",
+                getName().c_str(), ev->getVerboseString().c_str(), getCurrentSimTimeNano(), cpuLink->getRegion().toString().c_str());
     }
 
     Addr addr = ev->getBaseAddr();
@@ -542,9 +540,7 @@ void DirectoryController::handleNoncacheableRequest(MemEventBase * ev) {
     stat_noncacheRecv[(int)ev->getCmd()]->addData(1);
 
     ev->setSrc(getName());
-    ev->setDst(memLink->findTargetDestination(ev->getRoutingAddress()));
-
-    forwardTowardsMem(ev);
+    forwardByAddress(ev, timestamp + 1);
 }
 
 
@@ -560,7 +556,7 @@ void DirectoryController::handleNoncacheableResponse(MemEventBase * ev) {
 
     noncacheMemReqs.erase(ev->getID());
 
-    forwardTowardsCPU(ev);
+    forwardByDestination(ev, timestamp + 1);
 }
 
 void DirectoryController::printStatus(Output &statusOut) {
@@ -636,7 +632,7 @@ void DirectoryController::init(unsigned int phase) {
     }
 
     /* Pass data on to memory */
-    while(MemEventInit *ev = cpuLink->recvInitData()){
+    while(MemEventInit *ev = cpuLink->recvInitData()) {
         if (ev->getCmd() == Command::NULLCMD) {
             dbg.debug(_L10_, "I: %-20s   Event:Init      (%s)\n",
                 getName().c_str(), ev->getVerboseString().c_str());
@@ -647,16 +643,19 @@ void DirectoryController::init(unsigned int phase) {
                 if (!(mEv->getTracksPresence()) && cpuLink->isSource(mEv->getSrc())) {
                     incoherentSrc.insert(mEv->getSrc());
                 }
+            } else if (ev->getInitCmd() == MemEventInit::InitCommand::Endpoint) {
+                MemEventInit * mEv = ev->clone();
+                mEv->setSrc(getName());
+                memLink->sendInitData(mEv);
             }
             delete ev;
         } else {
-
             dbg.debug(_L10_, "I: %-20s   Event:Init      (%s)\n",
                     getName().c_str(), ev->getVerboseString().c_str());
             if (isRequestAddressValid(ev->getAddr())){
                 dbg.debug(_L10_, "I: %-20s   Event:SendInitData    %" PRIx64 "\n",
                         getName().c_str(), ev->getAddr());
-                ev->setDst(memLink->findTargetDestination(ev->getRoutingAddress()));
+                ev->setDst(memLink->getTargetDestination(ev->getRoutingAddress()));
                 memLink->sendInitData(ev);
             } else
                 delete ev;
@@ -677,6 +676,10 @@ void DirectoryController::init(unsigned int phase) {
                     MemEventInitCoherence * mEv = static_cast<MemEventInitCoherence*>(initEv);
                     if (mEv->getSendWBAck())
                         waitWBAck = true;
+                } else if (initEv->getInitCmd() == MemEventInit::InitCommand::Endpoint) {
+                    MemEventInit * mEv = initEv->clone();
+                    mEv->setSrc(getName());
+                    cpuLink->sendInitData(mEv);
                 }
             }
             delete ev;
@@ -694,6 +697,8 @@ void DirectoryController::finish(void){
 
 void DirectoryController::setup(void){
     cpuLink->setup();
+    if (cpuLink != memLink)
+        memLink->setup();
     //MemLinkBase * mem = memLink ? memLink : network;
 }
 
@@ -1910,7 +1915,7 @@ bool DirectoryController::handleNACK(MemEvent* event, bool inMSHR) {
                     getName().c_str(), StateString[state], nackedEvent->getVerboseString().c_str(), getCurrentSimTimeNano());
     }
     // Resend nack'd event
-    cpuMsgQueue.insert(std::make_pair(timestamp + mshrLatency, nackedEvent)); // Resend after MSHR lookup (assuming we store info about responses there)
+    forwardByDestination(nackedEvent, timestamp + mshrLatency);
 
     if (is_debug_addr(addr)) {
         eventDI.newst = entry->getState();
@@ -1969,6 +1974,7 @@ bool DirectoryController::retrieveDirEntry(DirEntry* entry, MemEvent* event, boo
 
     uint64_t deliveryTime = timestamp + accessLatency;
 
+    // Bypass destination lookup 
     memMsgQueue.insert(std::make_pair(deliveryTime, MemMsg(me, true)));
 
     return true;
@@ -2071,7 +2077,7 @@ void DirectoryController::sendEntryToMemory(DirEntry *entry) {
     me->setSize(entrySize);
 
     uint64_t deliveryTime = timestamp + accessLatency;
-    me->setDst(memLink->findTargetDestination(0));
+    me->setDst(memLink->getTargetDestination(0));
     memMsgQueue.insert(std::make_pair(deliveryTime, MemMsg(me, true)));
 }
 
@@ -2082,11 +2088,10 @@ void DirectoryController::sendEntryToMemory(DirEntry *entry) {
 void DirectoryController::issueMemoryRequest(MemEvent* event, DirEntry* entry) {
     MemEvent* reqEvent = new MemEvent(*event);
     reqEvent->setSrc(getName());
-    reqEvent->setDst(memLink->findTargetDestination(reqEvent->getRoutingAddress()));
     memReqs[reqEvent->getID()] = event->getBaseAddr();
     uint64_t deliveryTime = timestamp + accessLatency;
 
-    memMsgQueue.insert(std::make_pair(deliveryTime, MemMsg(reqEvent, false)));
+    forwardByAddress(reqEvent, deliveryTime);
 
     mshr->setInProgress(entry->getBaseAddr());
 }
@@ -2095,7 +2100,6 @@ void DirectoryController::issueFlush(MemEvent* event) {
     Addr addr = event->getBaseAddr();
     MemEvent * flush = new MemEvent(*event);
     flush->setSrc(getName());
-    flush->setDst(memLink->findTargetDestination(event->getRoutingAddress()));
     memReqs[flush->getID()] = addr;
 
     if (mshr->hasData(addr) && mshr->getDataDirty(addr)) { // also writeback dirty data
@@ -2110,7 +2114,7 @@ void DirectoryController::issueFlush(MemEvent* event) {
     mshr->setInProgress(addr);
 
     uint64_t deliveryTime = timestamp + accessLatency;
-    memMsgQueue.insert(std::make_pair(deliveryTime, MemMsg(flush, false)));
+    forwardByAddress(flush, deliveryTime);
 }
 
 void DirectoryController::issueFetch(MemEvent* event, DirEntry* entry, Command cmd) {
@@ -2128,7 +2132,7 @@ void DirectoryController::issueFetch(MemEvent* event, DirEntry* entry, Command c
 
     mshr->incrementAcksNeeded(addr);
 
-    cpuMsgQueue.insert(std::make_pair(timestamp+accessLatency, fetch));
+    forwardByDestination(fetch, timestamp+accessLatency);
 }
 
 void DirectoryController::issueInvalidations(MemEvent* event, DirEntry* entry, Command cmd) {
@@ -2162,7 +2166,7 @@ void DirectoryController::issueInvalidation(std::string dst, MemEvent* event, Di
     }
 
     uint64_t deliveryTime = timestamp + accessLatency;
-    cpuMsgQueue.insert(std::make_pair(deliveryTime, inv));
+    forwardByDestination(inv, deliveryTime);
 }
 
 void DirectoryController::sendDataResponse(MemEvent* event, DirEntry* entry, std::vector<uint8_t>& data, Command cmd, uint32_t flags) {
@@ -2170,7 +2174,7 @@ void DirectoryController::sendDataResponse(MemEvent* event, DirEntry* entry, std
     respEv->setSize(lineSize);
     respEv->setPayload(data);
     respEv->setMemFlags(flags);
-    cpuMsgQueue.insert(std::make_pair(timestamp+mshrLatency, respEv));
+    forwardByDestination(respEv, timestamp + mshrLatency);
 }
 
 void DirectoryController::sendResponse(MemEvent* event, uint32_t flags, uint32_t memflags) {
@@ -2178,25 +2182,23 @@ void DirectoryController::sendResponse(MemEvent* event, uint32_t flags, uint32_t
     respEv->setSize(lineSize);
     respEv->setMemFlags(memflags);
     respEv->setFlags(flags);
-    cpuMsgQueue.insert(std::make_pair(timestamp + mshrLatency, respEv));
+    forwardByDestination(respEv, timestamp + mshrLatency);
 }
 
 void DirectoryController::writebackData(MemEvent* event) {
     MemEvent * wb = new MemEvent(getName(), event->getBaseAddr(), event->getBaseAddr(), Command::PutM, lineSize);
     wb->copyMetadata(event);
     wb->setRqstr(event->getRqstr());
-    wb->setDst(memLink->findTargetDestination(wb->getRoutingAddress()));
 
     if (waitWBAck)
         mshr->insertWriteback(event->getBaseAddr(), false);
 
     uint64_t deliveryTime = timestamp + accessLatency;
-    memMsgQueue.insert(std::make_pair(deliveryTime, MemMsg(wb, false)));
+    forwardByAddress(wb, deliveryTime);
 }
 
 void DirectoryController::writebackDataFromMSHR(Addr addr) {
     MemEvent * wb = new MemEvent(getName(), addr, addr, Command::PutM, lineSize);
-    wb->setDst(memLink->findTargetDestination(wb->getRoutingAddress()));
 
     mshr->setDataDirty(addr, false);
 
@@ -2204,38 +2206,36 @@ void DirectoryController::writebackDataFromMSHR(Addr addr) {
         mshr->insertWriteback(addr, false);
 
     uint64_t deliveryTime = timestamp + mshrLatency;
-    memMsgQueue.insert(std::make_pair(deliveryTime, MemMsg(wb, false)));
+    forwardByAddress(wb, deliveryTime);
 }
 
 void DirectoryController::sendFetchResponse(MemEvent * event) {
     Addr addr = event->getBaseAddr();
     MemEvent * ack = event->makeResponse();
-    ack->setDst(memLink->findTargetDestination(ack->getRoutingAddress()));
 
     ack->setPayload(mshr->getData(addr));
     ack->setDirty(mshr->getDataDirty(addr));
 
     mshr->clearData(addr);
 
-    memMsgQueue.insert(std::make_pair(timestamp + accessLatency, MemMsg(ack, false)));
+    forwardByDestination(ack, timestamp + accessLatency);
 }
 
 void DirectoryController::sendAckInv(MemEvent * event) {
     Addr addr = event->getBaseAddr();
     MemEvent * ack = event->makeResponse(Command::AckInv);
-    ack->setDst(memLink->findTargetDestination(ack->getRoutingAddress()));
-
+    
     if (mshr->hasData(addr))
         mshr->clearData(addr);
 
-    memMsgQueue.insert(std::make_pair(timestamp + accessLatency, MemMsg(ack, false)));
+    forwardByDestination(ack, timestamp + accessLatency);
 }
 
 void DirectoryController::sendAckPut(MemEvent * event) {
     Addr addr = event->getBaseAddr();
     MemEvent * ack = event->makeResponse(Command::AckPut);
-
-    cpuMsgQueue.insert(std::make_pair(timestamp + accessLatency, ack));
+    
+    forwardByDestination(ack, timestamp + accessLatency);
 }
 
 void DirectoryController::sendNACK(MemEvent * event) {
@@ -2243,7 +2243,7 @@ void DirectoryController::sendNACK(MemEvent * event) {
 
     uint64_t deliveryTime = timestamp + accessLatency;
 
-    cpuMsgQueue.insert(std::make_pair(deliveryTime, nack));
+    forwardByDestination(nack, deliveryTime);
 }
 
 
@@ -2292,12 +2292,40 @@ void DirectoryController::sendOutgoingEvents() {
 
 }
 
-void DirectoryController::forwardTowardsMem(MemEventBase* ev) {
-    memMsgQueue.insert(std::make_pair(timestamp+1, MemMsg(ev, false)));
+/* Forward an event to another component by routing address
+ * dirAccess has default value of false
+ */
+void DirectoryController::forwardByAddress(MemEventBase * ev, Cycle_t ts, bool dirAccess) {
+    std::string dst = memLink->findTargetDestination(ev->getRoutingAddress());
+    if (dst != "") { /* Common case */
+        ev->setDst(dst);
+        memMsgQueue.insert(std::make_pair(ts, MemMsg(ev, dirAccess)));
+    } else {
+        dst = cpuLink->findTargetDestination(ev->getRoutingAddress());
+        if (dst != "") {
+            ev->setDst(dst);
+            cpuMsgQueue.insert(std::make_pair(ts, ev));
+        } else {
+            std::string availableDests = "cpulink:\n" + cpuLink->getAvailableDestinationsAsString();
+            if (cpuLink != memLink) availableDests = availableDests + "memlink:\n" + memLink->getAvailableDestinationsAsString();
+            out.fatal(CALL_INFO, -1, "%s, Error: Unable to find destination for address 0x%" PRIx64 ". Event: %s\nKnown Destinations: %s\n",
+                    getName().c_str(), ev->getRoutingAddress(), ev->getVerboseString().c_str(), availableDests.c_str());
+        }
+    }
 }
 
-void DirectoryController::forwardTowardsCPU(MemEventBase* ev) {
-    cpuMsgQueue.insert(std::make_pair(timestamp+1, ev));
+/* Forward an event to a specific destination 
+ * dirAccess has default value of false
+ */
+void DirectoryController::forwardByDestination(MemEventBase* ev, Cycle_t ts, bool dirAccess) {
+    if (cpuLink->isReachable(ev->getDst())) {
+        cpuMsgQueue.insert(std::make_pair(ts, ev));
+    } else if (memLink->isReachable(ev->getDst())) {
+        memMsgQueue.insert(std::make_pair(ts, MemMsg(ev, dirAccess)));
+    } else {
+        out.fatal(CALL_INFO, -1, "%s, Error: Destination %s appears unreachable on both links. Event: %s\n",
+                getName().c_str(), ev->getDst().c_str(), ev->getVerboseString().c_str());
+    }
 }
 
 void DirectoryController::recordStartLatency(MemEventBase* ev) {
