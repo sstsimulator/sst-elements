@@ -309,8 +309,6 @@ protected:
     virtual uint64_t sendResponseUp(MemEvent * event, Command cmd, vector<uint8_t>* data, bool replay, uint64_t baseTime, bool atomic = false);
     virtual uint64_t sendResponseUp(MemEvent * event, Command cmd, vector<uint8_t>* data, bool dirty, bool replay, uint64_t baseTime, bool atomic = false);
 
-    std::string getDestination(Addr addr) { return linkDown_->findTargetDestination(addr); }
-
     std::string getSrc();
 
     std::set<std::string> cpus; // If connected to CPUs or other endpoints (e.g., accelerator), list of CPU names in case we need to broadcast something

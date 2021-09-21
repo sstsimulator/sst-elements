@@ -274,8 +274,8 @@ private:
     void sendWriteback(Command cmd, L1CacheLine * line, bool dirty);
 
     /** Call through to coherenceController with statistic recording */
-    void addToOutgoingQueue(Response& resp);
-    void addToOutgoingQueueUp(Response& resp);
+    void forwardByAddress(MemEventBase* ev, Cycle_t timestamp);
+    void forwardByDestination(MemEventBase* ev, Cycle_t timestamp);
 
 /* Miscellaneous */
 
