@@ -365,7 +365,7 @@ void Cache::updateAccessStatus(Addr addr) {
 /* For handling non-cache commands (including NONCACHEABLE data requests) */
 void Cache::processNoncacheable(MemEventBase* event) {
     
-    if (CommandCPUSide[(int)event->getCmd()]) {
+    if (CommandRouteByAddress[(int)event->getCmd()]) { /* These events don't have a destination already */
         if (!(event->queryFlag(MemEvent::F_NORESPONSE))) {
             noncacheableResponseDst_.insert(std::make_pair(event->getID(), event->getSrc()));
         }

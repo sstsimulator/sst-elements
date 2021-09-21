@@ -41,7 +41,7 @@ enum class MemEventType { Cache, Move, Custom };                    // For parsi
  *  Commands used throughout MemH
  *  Not all components handle all types
  *
- *  Command, ResponseCmd, BasicCommandClass, CommandClass, cpuSideRequest, Writeback, EventType
+ *  Command, ResponseCmd, BasicCommandClass, CommandClass, routeByAddr, Writeback, EventType
  *****************************************************************************************/
 #define X_CMDS \
     X(NULLCMD,          NULLCMD,        Request,    Request,        1, 0,   Cache)   /* Dummy command */\
@@ -117,7 +117,7 @@ static const CommandClass CommandClassArr[] = {
 #undef X
 };
 
-static const bool CommandCPUSide[] = {
+static const bool CommandRouteByAddress[] = {
 #define X(a,b,c,d,e,f,g) e,
     X_CMDS
 #undef X

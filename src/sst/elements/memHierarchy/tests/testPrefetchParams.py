@@ -31,7 +31,6 @@ network.addParams({
       "flit_size" : "36B",
       "output_buf_size" : "2KiB",
       "id" : "0",  
-      "topology" : "merlin.singlerouter"
 })
 network.setSubComponent("topology","merlin.singlerouter")
 
