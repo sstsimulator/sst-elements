@@ -756,10 +756,16 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
         retire_isa_tables[rob_front->getHWThread()]->print(output, register_files[rob_front->getHWThread()],
                                                            print_int_reg, print_fp_reg, 0);
 
+		  char* inst_asm_buffer = new char[32768];
+		  rob_front->printToBuffer(inst_asm_buffer, 32768);
+
         output->fatal(CALL_INFO, -1,
                       "Instruction 0x%llx flags an error (instruction-type=%s) at "
-                      "cycle %" PRIu64 "\n",
-                      rob_front->getInstructionAddress(), rob_front->getInstCode(), cycle);
+                      "cycle %" PRIu64 " (inst: %s)\n",
+                      rob_front->getInstructionAddress(), rob_front->getInstCode(), cycle,
+							inst_asm_buffer);
+
+			delete[] inst_asm_buffer;
     }
 
     if (rob_front->completedIssue() && rob_front->completedExecution()) {
