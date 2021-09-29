@@ -47,7 +47,6 @@ comp_l1cache0.addParams({
       "cache_line_size" : "64",
       "L1" : "1",
       "cache_size" : "8KB",
-      "backing" : "none",
       "verbose" : 0
 })
 pref0 = comp_l1cache0.setSubComponent("prefetcher", "cassini.StridePrefetcher")
@@ -67,7 +66,6 @@ comp_l1cache1.addParams({
       "cache_line_size" : "64",
       "L1" : "1",
       "cache_size" : "8KB",
-      "backing" : "none",
 })
 pref1 = comp_l1cache1.setSubComponent("prefetcher", "cassini.StridePrefetcher")
 l1c1_cpulink = comp_l1cache1.setSubComponent("cpulink", "memHierarchy.MemLink")
@@ -87,6 +85,10 @@ comp_memctrl0.addParams({
       "debug" : 0,
       "debug_level" : 10,
       "clock" : "1GHz",
+      "addr_range_start" : "0x00",
+      "addr_range_end" : (1024 * 1024 * 1024) - 64,
+      "interleave_size" : "64B",
+      "interleave_step" : "128B",
 })
 memory0 = comp_memctrl0.setSubComponent("backend", "memHierarchy.simpleMem")
 memory0.addParams({
@@ -100,6 +102,10 @@ comp_memctrl1.addParams({
       "debug" : 0,
       "debug_level" : 10,
       "clock" : "1GHz",
+      "addr_range_start" : "0x40",
+      "addr_range_end" : (1024 * 1024 * 1024),
+      "interleave_size" : "64B",
+      "interleave_step" : "128B",
 })
 memory1 = comp_memctrl1.setSubComponent("backend", "memHierarchy.simpleMem")
 memory1.addParams({

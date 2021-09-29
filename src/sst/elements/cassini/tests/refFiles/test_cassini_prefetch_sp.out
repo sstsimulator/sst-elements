@@ -119,7 +119,7 @@ Completed @ 11074943 ns
  l1cache.CacheMisses : Accumulator : Sum.u64 = 12501; SumSQ.u64 = 12501; Count.u64 = 12501; Min.u64 = 1; Max.u64 = 1; 
  l1cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.eventSent_PutS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.eventSent_PutE : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache.eventSent_PutE : Accumulator : Sum.u64 = 5258; SumSQ.u64 = 5258; Count.u64 = 5258; Min.u64 = 1; Max.u64 = 1; 
  l1cache.prefetch_evict : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.prefetch_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.prefetch_useful : Accumulator : Sum.u64 = 5679; SumSQ.u64 = 5679; Count.u64 = 5679; Min.u64 = 1; Max.u64 = 1; 

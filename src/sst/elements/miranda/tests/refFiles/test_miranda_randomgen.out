@@ -134,7 +134,7 @@
  l1cache.CacheMisses : Accumulator : Sum.u64 = 615156; SumSQ.u64 = 615156; Count.u64 = 615156; Min.u64 = 1; Max.u64 = 1; 
  l1cache.stateEvent_AckPut_I : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.eventSent_PutS : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache.eventSent_PutE : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ l1cache.eventSent_PutE : Accumulator : Sum.u64 = 366729; SumSQ.u64 = 366729; Count.u64 = 366729; Min.u64 = 1; Max.u64 = 1; 
  l1cache.prefetch_evict : Accumulator : Sum.u64 = 121393; SumSQ.u64 = 121393; Count.u64 = 121393; Min.u64 = 1; Max.u64 = 1; 
  l1cache.prefetch_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache.prefetch_useful : Accumulator : Sum.u64 = 1539; SumSQ.u64 = 1539; Count.u64 = 1539; Min.u64 = 1; Max.u64 = 1; 

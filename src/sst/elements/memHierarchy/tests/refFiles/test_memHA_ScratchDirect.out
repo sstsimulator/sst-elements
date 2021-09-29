@@ -1,6 +1,4 @@
 memory, WARNING: Memories no longer inherit address regions from directories and no region parameters (addr_range_start, addr_range_end, interleave_size, interleave_step) were detected. All addresses will map to this memory: if this is intended, you may ignore this warning or set addr_range_start to 0 in your input deck to eliminate this warning.
-memory, Notice: memory controller's region is larger than the backend's mem_size, controller is limiting accessible memory to mem_size
-Region: start=0, end=18446744073709551615, interleaveStep=0, interleaveSize=0. MemSize: 536870912B
 ScratchCPU cpu Finished after 500 issued memory events, 500 returned, 13248 cycles
  scratch:backendConvertor.cycles_with_issue : Accumulator : Sum.u64 = 326; SumSQ.u64 = 326; Count.u64 = 326; Min.u64 = 1; Max.u64 = 1; 
  scratch:backendConvertor.cycles_attempted_issue_but_rejected : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
