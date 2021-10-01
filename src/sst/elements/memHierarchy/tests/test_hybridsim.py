@@ -69,7 +69,7 @@ comp_memory.addParams({
       "access_time" : """1000 ns""",
       "addr_range_start" : 0,
 })
-comp_hybridsim = comp_memory.setSubComponent("backend", "memHierarchy.hybrdisim")
+comp_hybridsim = comp_memory.setSubComponent("backend", "memHierarchy.hybridsim")
 comp_hybridsim.addParams({
       "access_time" : "1000 ns",
       "device_ini" : "DDR3_micron_32M_8B_x4_sg125.ini",
