@@ -221,10 +221,12 @@ class testcase_memHierarchy_sdl(SSTTestCase):
                     wc_line_word_count_diff = wc_out_data == wc_ref_data
                     if wc_line_word_count_diff:
                         log_debug("Line Word Count Match\n")
+                    else:
+                        diffdata = testing_get_diff_data(testcase)
+                        log_failure(diffdata)
                     self.assertTrue(wc_line_word_count_diff, "Line & Word count between file {0} does not match Reference File {1}".format(outfile, reffile))
                 else:
                     diffdata = testing_get_diff_data(testcase)
-                    print(diffdata)
                     log_failure(diffdata)
                     # Well we tried, but failed
                     self.assertTrue(cmp_result, "(NO DRAMSIM) Sorted Output file {0} does not match Sorted (fixed) Reference File {1} ".format(outfile, fixedreffile))
