@@ -1250,7 +1250,7 @@ Channel 7 statistics
  dirctrl0.eventSent_FlushLineResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dirctrl0.eventSent_read_directory_entry : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dirctrl0.eventSent_write_directory_entry : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- dirctrl0.MSHR_occupancy : Accumulator : Sum.u64 = 7145; SumSQ.u64 = 29469; Count.u64 = 9839; Min.u64 = 0; Max.u64 = 11; 
+ dirctrl0.MSHR_occupancy : Accumulator : Sum.u64 = 7145; SumSQ.u64 = 29469; Count.u64 = 9838; Min.u64 = 0; Max.u64 = 11; 
  dirctrl1:cpulink.packet_latency : Accumulator : Sum.u64 = 315; SumSQ.u64 = 315; Count.u64 = 380; Min.u64 = 0; Max.u64 = 1; 
  dirctrl1:cpulink.send_bit_count : Accumulator : Sum.u64 = 155392; SumSQ.u64 = 85442560; Count.u64 = 380; Min.u64 = 64; Max.u64 = 576; 
  dirctrl1:cpulink.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -1305,7 +1305,7 @@ Channel 7 statistics
  dirctrl1.eventSent_FlushLineResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dirctrl1.eventSent_read_directory_entry : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dirctrl1.eventSent_write_directory_entry : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- dirctrl1.MSHR_occupancy : Accumulator : Sum.u64 = 9875; SumSQ.u64 = 57041; Count.u64 = 9836; Min.u64 = 0; Max.u64 = 14; 
+ dirctrl1.MSHR_occupancy : Accumulator : Sum.u64 = 9875; SumSQ.u64 = 57041; Count.u64 = 9835; Min.u64 = 0; Max.u64 = 14; 
  ddr.requests_received_GetS : Accumulator : Sum.u64 = 222; SumSQ.u64 = 222; Count.u64 = 222; Min.u64 = 1; Max.u64 = 1; 
  ddr.requests_received_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  ddr.requests_received_GetX : Accumulator : Sum.u64 = 34; SumSQ.u64 = 34; Count.u64 = 34; Min.u64 = 1; Max.u64 = 1; 

@@ -202,6 +202,10 @@ EXTRA_DIST = \
 	tests/testNoninclusive-2.py \
 	tests/testPrefetchParams.py \
 	tests/testThroughputThrottling.py \
+	tests/testScratchCache-1.py \
+	tests/testScratchCache-2.py \
+	tests/testScratchCache-3.py \
+	tests/testScratchCache-4.py \
 	tests/testScratchDirect.py \
 	tests/testScratchNetwork.py \
 	tests/testStdMem.py \
@@ -221,17 +225,17 @@ EXTRA_DIST = \
 	tests/hbm_system.ini \
 	tests/utils.py \
 	tests/mhlib.py \
-    tests/refFiles/test_hybridsim.out \
-    tests/refFiles/test_memHA_BackendChaining.out \
-    tests/refFiles/test_memHA_BackendChaining_MC.out \
-    tests/refFiles/test_memHA_BackendDelayBuffer.out \
-    tests/refFiles/test_memHA_BackendDelayBuffer_MC.out \
-    tests/refFiles/test_memHA_BackendDramsim3.out \
-    tests/refFiles/test_memHA_BackendGoblinHMC.out \
-    tests/refFiles/test_memHA_BackendGoblinHMC_MC.out \
-    tests/refFiles/test_memHA_BackendHBMDramsim.out \
-    tests/refFiles/test_memHA_BackendHBMDramsim_MC.out \
-    tests/refFiles/test_memHA_BackendHBMDramsim_MR.out \
+    	tests/refFiles/test_hybridsim.out \
+    	tests/refFiles/test_memHA_BackendChaining.out \
+    	tests/refFiles/test_memHA_BackendChaining_MC.out \
+    	tests/refFiles/test_memHA_BackendDelayBuffer.out \
+    	tests/refFiles/test_memHA_BackendDelayBuffer_MC.out \
+    	tests/refFiles/test_memHA_BackendDramsim3.out \
+    	tests/refFiles/test_memHA_BackendGoblinHMC.out \
+    	tests/refFiles/test_memHA_BackendGoblinHMC_MC.out \
+    	tests/refFiles/test_memHA_BackendHBMDramsim.out \
+    	tests/refFiles/test_memHA_BackendHBMDramsim_MC.out \
+    	tests/refFiles/test_memHA_BackendHBMDramsim_MR.out \
     tests/refFiles/test_memHA_BackendHBMPagedMulti.out \
     tests/refFiles/test_memHA_BackendPagedMulti.out \
     tests/refFiles/test_memHA_BackendPagedMulti_MC.out \
@@ -264,30 +268,31 @@ EXTRA_DIST = \
     tests/refFiles/test_memHA_Flushes.out \
     tests/refFiles/test_memHA_Flushes_2.out \
     tests/refFiles/test_memHA_Flushes_2_MC.out \
-    tests/refFiles/test_memHA_Flushes_MC.out \
-    tests/refFiles/test_memHA_HashXor.out \
-    tests/refFiles/test_memHA_HashXor_MC.out \
-    tests/refFiles/test_memHA_Incoherent.out \
-    tests/refFiles/test_memHA_Incoherent_2.out \
-    tests/refFiles/test_memHA_Incoherent_MC.out \
-    tests/refFiles/test_memHA_Kingsley.out \
-    tests/refFiles/test_memHA_MemoryCache.out \
-    tests/refFiles/test_memHA_MemoryCache_MC.out \
-    tests/refFiles/test_memHA_Noninclusive_1.out \
-    tests/refFiles/test_memHA_Noninclusive_1_MC.out \
-    tests/refFiles/test_memHA_Noninclusive_2.out \
-    tests/refFiles/test_memHA_Noninclusive_2_MC.out \
-    tests/refFiles/test_memHA_PrefetchParams.out \
-    tests/refFiles/test_memHA_PrefetchParams_MC.out \
-    tests/refFiles/test_memHA_ScratchCache_1.out \
-    tests/refFiles/test_memHA_ScratchCache_2.out \
-    tests/refFiles/test_memHA_ScratchCache_3.out \
-    tests/refFiles/test_memHA_ScratchDirect.out \
-    tests/refFiles/test_memHA_ScratchNetwork.out \
-   	tests/refFiles/test_memHA_StdMem_flush.out \
-	tests/refFiles/test_memHA_StdMem_mmio3.out \
-	tests/refFiles/test_memHA_StdMem_nic.out \
-	tests/refFiles/test_memHA_StdMem.out \
+    	tests/refFiles/test_memHA_Flushes_MC.out \
+    	tests/refFiles/test_memHA_HashXor.out \
+    	tests/refFiles/test_memHA_HashXor_MC.out \
+    	tests/refFiles/test_memHA_Incoherent.out \
+    	tests/refFiles/test_memHA_Incoherent_2.out \
+    	tests/refFiles/test_memHA_Incoherent_MC.out \
+    	tests/refFiles/test_memHA_Kingsley.out \
+    	tests/refFiles/test_memHA_MemoryCache.out \
+    	tests/refFiles/test_memHA_MemoryCache_MC.out \
+    	tests/refFiles/test_memHA_Noninclusive_1.out \
+    	tests/refFiles/test_memHA_Noninclusive_1_MC.out \
+    	tests/refFiles/test_memHA_Noninclusive_2.out \
+    	tests/refFiles/test_memHA_Noninclusive_2_MC.out \
+    	tests/refFiles/test_memHA_PrefetchParams.out \
+    	tests/refFiles/test_memHA_PrefetchParams_MC.out \
+    	tests/refFiles/test_memHA_ScratchCache_1.out \
+    	tests/refFiles/test_memHA_ScratchCache_2.out \
+    	tests/refFiles/test_memHA_ScratchCache_3.out \
+    	tests/refFiles/test_memHA_ScratchCache_4.out \
+    	tests/refFiles/test_memHA_ScratchDirect.out \
+    	tests/refFiles/test_memHA_ScratchNetwork.out \
+    	tests/refFiles/test_memHA_StdMem_flush.out \
+    	tests/refFiles/test_memHA_StdMem_mmio3.out \
+    	tests/refFiles/test_memHA_StdMem_nic.out \
+    	tests/refFiles/test_memHA_StdMem.out \
 	tests/refFiles/test_memHA_StdMem_mmio2.out \
 	tests/refFiles/test_memHA_StdMem_mmio.out \
 	tests/refFiles/test_memHA_StdMem_noninclusive.out \
