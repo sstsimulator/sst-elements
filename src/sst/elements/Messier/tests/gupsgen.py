@@ -47,6 +47,7 @@ nvm_memory_backend = nvm_memory.setSubComponent("backend", "memHierarchy.Messier
 nvm_mem_params = {
     "clock" : "1024 MHz",
     "backing" : "none",
+    "addr_range_start" : 0,
 }
 nvm_backend_params = {
    # "max_requests_per_cycle" : 1,

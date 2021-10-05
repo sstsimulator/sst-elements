@@ -68,18 +68,22 @@ public:
 
 /* Begin class definition */
     /* Constructor */
-    MemNIC(ComponentId_t id, Params &params);
+    MemNIC(ComponentId_t id, Params &params, TimeConverter* tc);
 
     /* Destructor */
     virtual ~MemNIC() { }
 
     /* Functions called by parent for handling events */
-    bool clock();
     void send(MemEventBase * ev);
     MemEventBase * recv();
+    bool isClocked() override { return false; }
 
     /* Callback to notify when link_control receives a message */
     bool recvNotify(int);
+
+    /* Internal clock function to send events that we weren't able 
+     * to send immediately */
+    bool clock(SimTime_t cycle);
 
     /* Helper functions */
     size_t getSizeInBits(MemEventBase * ev);
@@ -87,7 +91,7 @@ public:
     /* Initialization and finish */
     void init(unsigned int phase);
     void finish() { link_control->finish(); }
-    void setup() { link_control->setup(); MemLinkBase::setup(); }
+    void setup() { link_control->setup(); MemNICBase::setup(); }
 
     /* Debug */
     void printStatus(Output &out);
@@ -104,8 +108,9 @@ private:
     // Event queues
     std::queue<SST::Interfaces::SimpleNetwork::Request*> sendQueue; // Queue of events waiting to be sent (sent on clock)
 
-private:
-
+    // Clocks
+    Clock::Handler<MemNIC>* clockHandler;
+    TimeConverter* clockTC;
 };
 
 } //namespace memHierarchy

@@ -7,13 +7,13 @@ import sst
 # Define the simulation components
 comp_cpu = sst.Component("cpu", "miranda.BaseCPU")
 comp_cpu.addParams({
-	"verbose" : 1,
+	"verbose" : 0,
 	"clock" : "2GHz",
 	"printStats" : 1,
 })
 cpugen = comp_cpu.setSubComponent("generator", "miranda.Stencil3DBenchGenerator")
 cpugen.addParams({
-        "verbose" : 1,
+        "verbose" : 0,
         "nx" : 30,
         "ny" : 20,
 	"nz" : 10,
@@ -50,6 +50,7 @@ nvm_memory_backend = nvm_memory.setSubComponent("backend", "memHierarchy.Messier
 nvm_mem_params = {
     "clock" : "1024 MHz",
     "backing" : "none",
+    "addr_range_start" : 0,
 }
 nvm_backend_params = {
    # "max_requests_per_cycle" : 1,

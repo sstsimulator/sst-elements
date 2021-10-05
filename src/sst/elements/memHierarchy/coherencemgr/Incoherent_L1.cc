@@ -681,8 +681,7 @@ uint64_t IncoherentL1::sendResponseUp(MemEvent * event, vector<uint8_t> * data, 
     // Compute latency, accounting for serialization of requests to the address
     if (time < timestamp_) time = timestamp_;
     uint64_t deliveryTime = time + (inMSHR ? mshrLatency_ : accessLatency_);
-    Response resp = {responseEvent, deliveryTime, packetHeaderBytes + responseEvent->getPayloadSize()};
-    addToOutgoingQueueUp(resp);
+    forwardByDestination(responseEvent, deliveryTime);
 
     // Debugging
     if (is_debug_event(responseEvent)) {
@@ -705,8 +704,7 @@ void IncoherentL1::sendResponseDown(MemEvent * event, L1CacheLine * line, bool d
     responseEvent->setSize(lineSize_);
 
     uint64_t deliverTime = timestamp_ + (data ? accessLatency_ : tagLatency_);
-    Response resp = {responseEvent, deliverTime, packetHeaderBytes + responseEvent->getPayloadSize() };
-    addToOutgoingQueue(resp);
+    forwardByDestination(responseEvent, deliverTime);
 
     if (is_debug_event(responseEvent)) {
         debug->debug(_L3_, "Sending response at cycle %" PRIu64 ". Current time = %" PRIu64 ". Response = (%s)\n",
@@ -717,9 +715,6 @@ void IncoherentL1::sendResponseDown(MemEvent * event, L1CacheLine * line, bool d
 
 void IncoherentL1::forwardFlush(MemEvent * event, L1CacheLine * line, bool evict) {
     MemEvent * flush = new MemEvent(*event);
-
-    flush->setSrc(cachename_);
-    flush->setDst(getDestination(event->getBaseAddr()));
 
     uint64_t latency = tagLatency_;
     if (evict) {
@@ -736,8 +731,7 @@ void IncoherentL1::forwardFlush(MemEvent * event, L1CacheLine * line, bool evict
     uint64_t baseTime = timestamp_;
     if (line && line->getTimestamp() > baseTime) baseTime = line->getTimestamp();
     uint64_t deliveryTime = baseTime + latency;
-    Response resp = {flush, deliveryTime, packetHeaderBytes + flush->getPayloadSize()};
-    addToOutgoingQueue(resp);
+    forwardByAddress(flush, deliveryTime);
     if (line)
         line->setTimestamp(deliveryTime-1);
 
@@ -760,7 +754,6 @@ void IncoherentL1::forwardFlush(MemEvent * event, L1CacheLine * line, bool evict
  */
 void IncoherentL1::sendWriteback(Command cmd, L1CacheLine* line, bool dirty) {
     MemEvent* writeback = new MemEvent(cachename_, line->getAddr(), line->getAddr(), cmd, getCurrentSimTimeNano());
-    writeback->setDst(getDestination(line->getAddr()));
     writeback->setSize(lineSize_);
 
     uint64_t latency = tagLatency_;
@@ -781,8 +774,7 @@ void IncoherentL1::sendWriteback(Command cmd, L1CacheLine* line, bool dirty) {
 
     uint64_t baseTime = (timestamp_ > line->getTimestamp()) ? timestamp_ : line->getTimestamp();
     uint64_t deliveryTime = baseTime + latency;
-    Response resp = {writeback, deliveryTime, packetHeaderBytes + writeback->getPayloadSize()};
-    addToOutgoingQueue(resp);
+    forwardByAddress(writeback, deliveryTime);
     line->setTimestamp(deliveryTime-1);
 
     if (is_debug_addr(line->getAddr()))
@@ -792,14 +784,14 @@ void IncoherentL1::sendWriteback(Command cmd, L1CacheLine* line, bool dirty) {
 /*----------------------------------------------------------------------------------------------------------------------
  *  Override message send functions with versions that record statistics & call parent class
  *---------------------------------------------------------------------------------------------------------------------*/
-void IncoherentL1::addToOutgoingQueue(Response& resp) {
-    stat_eventSent[(int)resp.event->getCmd()]->addData(1);
-    CoherenceController::addToOutgoingQueue(resp);
+void IncoherentL1::forwardByAddress(MemEventBase* ev, Cycle_t timestamp) {
+    stat_eventSent[(int)ev->getCmd()]->addData(1);
+    CoherenceController::forwardByAddress(ev, timestamp);
 }
 
-void IncoherentL1::addToOutgoingQueueUp(Response& resp) {
-    stat_eventSent[(int)resp.event->getCmd()]->addData(1);
-    CoherenceController::addToOutgoingQueueUp(resp);
+void IncoherentL1::forwardByDestination(MemEventBase* ev, Cycle_t timestamp) {
+    stat_eventSent[(int)ev->getCmd()]->addData(1);
+    CoherenceController::forwardByDestination(ev, timestamp);
 }
 
 /********************

@@ -395,8 +395,8 @@ private:
     void forwardFlush(MemEvent * event, L1CacheLine * line, bool evict);
     void sendWriteback(Command cmd, L1CacheLine * line, bool dirty);
     void snoopInvalidation(MemEvent * event, L1CacheLine * line);
-    void addToOutgoingQueue(Response& resp);
-    void addToOutgoingQueueUp(Response& resp);
+    void forwardByAddress(MemEventBase* ev, Cycle_t timestamp);
+    void forwardByDestination(MemEventBase* ev, Cycle_t timestamp);
 
     /** Statistics/Listeners */
     inline void recordPrefetchResult(L1CacheLine * line, Statistic<uint64_t>* stat);

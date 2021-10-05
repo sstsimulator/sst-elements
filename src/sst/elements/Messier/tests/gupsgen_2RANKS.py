@@ -46,6 +46,7 @@ nvm_mem_backend = nvm_memory.setSubComponent("backend", "memHierarchy.Messier")
 nvm_memctrl_params = {
     "clock" : "1024 MHz",
     "backing" : "none",
+    "addr_range_start" : 0,
 }
 
 nvm_mem_backend_params = {

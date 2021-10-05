@@ -96,7 +96,7 @@ class testcase_memHierarchy_hybridsim(SSTTestCase):
             log_testing_note("hybridsim test {0} has a Non-Empty Error File {1}".format(testDataFileName, errfile))
 
         cmp_result = testing_compare_sorted_diff(testcase, outfile, reffile)
-        if (cmp_result == False):
+        if not cmp_result:
             diffdata = testing_get_diff_data(testcase)
             log_failure(diffdata)
         self.assertTrue(cmp_result, "Diffed compared Output file {0} does not match Reference File {1}".format(outfile, reffile))

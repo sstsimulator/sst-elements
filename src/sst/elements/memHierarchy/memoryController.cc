@@ -96,6 +96,16 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
         out.output("%s, ** Found deprecated parameter: direct_link ** The value of this parameter is now auto-detected by the link configuration in your input deck. Remove this parameter from your input deck to eliminate this message.\n", getName().c_str());
     }
 
+    /* Clock Handler */
+    std::string clockfreq = params.find<std::string>("clock");
+    UnitAlgebra clock_ua(clockfreq);
+    if (!(clock_ua.hasUnits("Hz") || clock_ua.hasUnits("s")) || clock_ua.getRoundedValue() <= 0) {
+        out.fatal(CALL_INFO, -1, "%s, Error - Invalid param: clock. Must have units of Hz or s and be > 0. (SI prefixes ok). You specified '%s'\n", getName().c_str(), clockfreq.c_str());
+    }
+    clockHandler_ = new Clock::Handler<MemController>(this, &MemController::clock);
+    clockTimeBase_ = registerClock(clockfreq, clockHandler_);
+    clockOn_ = true;
+
 
     string link_lat         = params.find<std::string>("direct_link_latency", "10 ns");
 
@@ -179,6 +189,14 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     gotRegion |= found;
     string ilStep = params.find<std::string>("interleave_step", "0B", found);
     gotRegion |= found;
+    
+    /* TODO remove this warning in SST 13 */
+    if (!gotRegion) {
+        out.output("%s, WARNING: Memories no longer inherit address regions from directories and no region parameters "
+                "(addr_range_start, addr_range_end, interleave_size, interleave_step) were detected. All addresses will map to "
+                "this memory: if this is intended, you may ignore this warning or set addr_range_start to 0 in your input deck "
+                "to eliminate this warning.\n", getName().c_str());
+    }
 
     // Ensure SI units are power-2 not power-10 - for backward compability
     fixByteUnits(ilSize);
@@ -199,14 +217,13 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     region_.interleaveSize = UnitAlgebra(ilSize).getRoundedValue();
     region_.interleaveStep = UnitAlgebra(ilStep).getRoundedValue();
 
-    link_ = loadUserSubComponent<MemLinkBase>("cpulink");
+    link_ = loadUserSubComponent<MemLinkBase>("cpulink", ComponentInfo::SHARE_NONE, clockTimeBase_);
 
     if (!link_ && isPortConnected("direct_link")) {
         Params linkParams = params.get_scoped_params("cpulink");
         linkParams.insert("port", "direct_link");
         linkParams.insert("latency", link_lat, false);
-        linkParams.insert("accept_region", "1", false);
-        link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, linkParams);
+        link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, linkParams, clockTimeBase_);
     } else if (!link_) {
 
         if (!isPortConnected("network")) {
@@ -215,27 +232,23 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
 
         Params nicParams = params.get_scoped_params("memNIC");
         nicParams.insert("group", "4", false);
-        nicParams.insert("accept_region", "1", false);
 
         if (isPortConnected("network_ack") && isPortConnected("network_fwd") && isPortConnected("network_data")) {
             nicParams.insert("req.port", "network");
             nicParams.insert("ack.port", "network_ack");
             nicParams.insert("fwd.port", "network_fwd");
             nicParams.insert("data.port", "network_data");
-            link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNICFour", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams);
+            link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNICFour", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams, clockTimeBase_);
         } else {
             nicParams.insert("port", "network");
-            link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams);
+            link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams, clockTimeBase_);
         }
     }
 
     clockLink_ = link_->isClocked();
     link_->setRecvHandler( new Event::Handler<MemController>(this, &MemController::handleEvent));
 
-    if (gotRegion) {
-        link_->setRegion(region_);
-    } else
-        region_ = link_->getRegion();
+    link_->setRegion(region_);
 
     adjustRegionToMemSize();
 
@@ -293,16 +306,6 @@ MemController::MemController(ComponentId_t id, Params &params) : Component(id), 
     } else if (backingType == "malloc") {
         backing_ = new Backend::BackingMalloc(sizeBytes);
     }
-
-    /* Clock Handler */
-    std::string clockfreq = params.find<std::string>("clock");
-    UnitAlgebra clock_ua(clockfreq);
-    if (!(clock_ua.hasUnits("Hz") || clock_ua.hasUnits("s")) || clock_ua.getRoundedValue() <= 0) {
-        out.fatal(CALL_INFO, -1, "%s, Error - Invalid param: clock. Must have units of Hz or s and be > 0. (SI prefixes ok). You specified '%s'\n", getName().c_str(), clockfreq.c_str());
-    }
-    clockHandler_ = new Clock::Handler<MemController>(this, &MemController::clock);
-    clockTimeBase_ = registerClock(clockfreq, clockHandler_);
-    clockOn_ = true;
 
     /* Custom command handler */
     using std::placeholders::_3;
@@ -520,10 +523,10 @@ void MemController::init(unsigned int phase) {
 
     adjustRegionToMemSize();
 
-    /* Inherit region from our source(s) */
     if (!phase) {
         /* Announce our presence on link */
         link_->sendInitData(new MemEventInitCoherence(getName(), Endpoint::Memory, true, false, memBackendConvertor_->getRequestWidth(), false));
+        link_->sendInitData(new MemEventInitEndpoint(getName().c_str(), Endpoint::Memory, region_, true));
     }
 
     while (MemEventInit *ev = link_->recvInitData()) {
@@ -534,7 +537,6 @@ void MemController::init(unsigned int phase) {
 void MemController::setup(void) {
     memBackendConvertor_->setup();
     link_->setup();
-
 }
 
 
@@ -661,8 +663,8 @@ void MemController::adjustRegionToMemSize() {
     // So, a mismatch is likely not an error, but alert the user in debug mode just in case
     // TODO deprecate mem_size & just use region? 
     uint64_t regSize = region_.end - region_.start;
-    if (regSize != ((uint64_t) - 1)) {  // The default is for region_.end = uint64_t -1, but then if we add one we wrap to 0...
-        regSize--;
+    if (regSize != region_.REGION_MAX) {  // The default is for region_.end = uint64_t -1, but then if we add one we wrap...
+        regSize++; // Since region_.end and region_.start are inclusive
     }
     if (region_.interleaveStep != 0) {
         uint64_t steps = regSize / region_.interleaveStep;
