@@ -313,7 +313,6 @@ EXTRA_DIST = \
     	tests/refFiles/test_memHierarchy_sdl8_3.out \
     	tests/refFiles/test_memHierarchy_sdl8_4.out \
     	tests/refFiles/test_memHierarchy_sdl9_1.out \
-    	tests/refFiles/test_memHierarchy_sdl9_1_MC.out \
     	tests/refFiles/test_memHierarchy_sdl9_2.out \
     	tests/refFiles/test_memHierarchy_sdl_1.out \
     	tests/refFiles/test_memHierarchy_sdl_2.out \

@@ -98,7 +98,7 @@ bool StandardMMIO::clockTic(Cycle_t cycle) {
             // Issue read
             Addr addr = ((rng.generateNextUInt64() % max_addr)>>2) << 2;
             StandardMem::Request* req = new Experimental::Interfaces::StandardMem::Read(addr, 4);
-            out.verbose(CALL_INFO, 2, 0, "%s: %d Issued Read for address 0x%" PRIx64 "\n", getName().c_str(), addr);
+            out.verbose(CALL_INFO, 2, 0, "%s: %d Issued Read for address 0x%" PRIx64 "\n", getName().c_str(), mem_access, addr);
         
             requests.insert(std::make_pair(req->getID(), std::make_pair(getCurrentSimTime(), "Read")));
             iface->send(req);
@@ -111,7 +111,7 @@ bool StandardMMIO::clockTic(Cycle_t cycle) {
             std::vector<uint8_t> payload;
             payload.resize(iface->getLineSize(), 0);
             StandardMem::Request* req = new Experimental::Interfaces::StandardMem::Write(addr, iface->getLineSize(), payload);
-            out.verbose(CALL_INFO, 2, 0, "%s: Issued Write for address 0x%" PRIx64 "\n", getName().c_str(), addr);
+            out.verbose(CALL_INFO, 2, 0, "%s: %d Issued Write for address 0x%" PRIx64 "\n", getName().c_str(), mem_access, addr);
             mem_access--;
         }
     }

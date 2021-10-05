@@ -1,11 +1,11 @@
 cpu: 1000 Issued Write for address 0x284
-mmio: Issued Write for address 0x4
-mmio: Issued Write for address 0x3
+mmio: 4 Issued Write for address 0x280
+mmio: 3 Issued Write for address 0x300
 cpu: 999 Issued MMIO Read for address 0x400
 cpu: 998 Issued MMIO Write for address 0x400 with payload 24575
 mmio: 2 Issued Read for address 0x2f0
 cpu: 997 Issued MMIO Write for address 0x400 with payload 15862
-mmio: Issued Write for address 0x1
+mmio: 1 Issued Write for address 0x140
 cpu: 996 Issued MMIO Read for address 0x400
 cpu: 995 Issued Read for address 0x78
 cpu: 994 Issued Read for address 0x268
