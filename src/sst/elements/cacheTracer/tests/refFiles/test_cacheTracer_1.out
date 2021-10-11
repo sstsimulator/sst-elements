@@ -1,4 +1,5 @@
 l2cache: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 5 cycles.
+memory, WARNING: Memories no longer inherit address regions from directories and no region parameters (addr_range_start, addr_range_end, interleave_size, interleave_step) were detected. All addresses will map to this memory: if this is intended, you may ignore this warning or set addr_range_start to 0 in your input deck to eliminate this warning.
 TrivialCPU: Test Completed Successfuly
 FINAL STATS:
 -----------------------------------------------------------------
@@ -32,19 +33,19 @@ Address_Range: Count
 
 Access Latency Distribution (ns):
 -----------------------------------------------------------------
-Min-Latency(ns): 4  Max-Latency(ns): 234  #Bins: 10
+Min-Latency(ns): 4  Max-Latency(ns): 131  #Bins: 10
 -----------------------------------------------------------------
 Latency Range(ns): Count
-- [0-23]: 352
-- [24-47]: 0
-- [48-71]: 0
-- [72-95]: 0
-- [96-119]: 0
-- [120-143]: 647
-- [144-167]: 0
-- [168-191]: 0
-- [192-215]: 0
-- [216-239]: 1
+- [0-13]: 63
+- [14-27]: 320
+- [28-41]: 0
+- [42-55]: 0
+- [56-69]: 0
+- [70-83]: 0
+- [84-97]: 0
+- [98-111]: 0
+- [112-125]: 616
+- [126-139]: 1
 -----------------------------------------------------------------
 - Total_Events_Latency: 1000
 -----------------------------------------------------------------

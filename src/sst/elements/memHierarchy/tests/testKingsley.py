@@ -44,7 +44,7 @@ debugL2 = max(debugAll, 0)
 debugDDRDC = max(debugAll, 0)
 debugMemCtrl = max(debugAll, 0)
 debugNIC = max(debugAll, 0)
-debugLev = 3
+debugLev = 10
 
 # Verbose
 verbose = 2
@@ -132,6 +132,8 @@ ddr_dc_params = {
 
 dc_nic_params = {
     "group" : 2,
+    "debug" : debugNIC,
+    "debug_level" : debugLev,
 }
 
 ##### TimingDRAM #####
@@ -164,7 +166,8 @@ ddr_backend_params = {
 
 ddr_nic_params = {
     "group" : 3,
-    "accept_region" : 0,
+    "debug" : debugNIC,
+    "debug_level" : debugLev,
 }
 
 

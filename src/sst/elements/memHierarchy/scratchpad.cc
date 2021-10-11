@@ -184,7 +184,7 @@ Scratchpad::Scratchpad(ComponentId_t id, Params &params) : Component(id) {
     directory_ = false;
 
     // Create clock
-    registerClock(clock_freq, new Clock::Handler<Scratchpad>(this, &Scratchpad::clock));
+    TimeConverter* tc = registerClock(clock_freq, new Clock::Handler<Scratchpad>(this, &Scratchpad::clock));
 
     // Register statistics
     stat_ScratchReadReceived      = registerStatistic<uint64_t>("request_received_scratch_read");
@@ -199,61 +199,80 @@ Scratchpad::Scratchpad(ComponentId_t id, Params &params) : Component(id) {
     // Figure out port connections and set up links
     // Options: cpu and network; or cpu and memory;
     // cpu is a MoveEvent interface, memory & network are MemEvent interfaces (memory is a direct connect while network uses SimpleNetwork)
-    bool memoryDirect = isPortConnected("memory");
-    bool scratchNetwork = isPortConnected("network");
-    bool cpuDirect = isPortConnected("cpu");
-    if (!cpuDirect && !scratchNetwork) {
-        out.fatal(CALL_INFO, -1, "Invalid port configuration (%s): Did not detect port for cpu-side events. Connect either 'cpu' or 'network'\n", getName().c_str());
-    } else if (!memoryDirect && !scratchNetwork) {
-        out.fatal(CALL_INFO, -1, "Invalid port configuration (%s): Did not detect port for memory-side events. Connect either 'memory' or 'network'\n", getName().c_str());
-    } else if (cpuDirect && scratchNetwork && memoryDirect) {
-        out.fatal(CALL_INFO, -1, "Invalid port configuration (%s): Too many connected ports. Connect either 'cpu' or 'network' for cpu-side events and either 'memory' or 'network' for memory-side events\n",
-                getName().c_str());
-    }
-
-    if (cpuDirect) {
-        Params cpulink = params.get_scoped_params("cpulink");
-        cpulink.insert("port", "cpu");
-        linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, cpulink);
+    
+    linkUp_ = loadUserSubComponent<MemLinkBase>("cpulink", ComponentInfo::SHARE_NONE, tc);
+    if (linkUp_)
         linkUp_->setRecvHandler(new Event::Handler<Scratchpad>(this, &Scratchpad::processIncomingCPUEvent));
-    }
-    if (memoryDirect) {
-        Params memlink = params.get_scoped_params("memlink");
-        memlink.insert("port", "memory");
-        linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "memlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, memlink);
+
+    linkDown_ = loadUserSubComponent<MemLinkBase>("memlink", ComponentInfo::SHARE_NONE, tc);
+    if (linkDown_)
         linkDown_->setRecvHandler(new Event::Handler<Scratchpad>(this, &Scratchpad::processIncomingRemoteEvent));
+    
+    if (linkUp_ && !linkDown_) {
+        linkDown_ = linkUp_;
+        linkDown_->setRecvHandler(new Event::Handler<Scratchpad>(this, &Scratchpad::processIncomingNetworkEvent));
+    } else if (linkDown_ && !linkUp_) {
+        linkUp_ = linkDown_;
+        linkDown_->setRecvHandler(new Event::Handler<Scratchpad>(this, &Scratchpad::processIncomingNetworkEvent));
     }
 
-    if (scratchNetwork) {
-        // Fix up parameters for nic params & warn that we're doing it
-        if (fixupParam(params, "network_bw", "memNIC.network_bw"))
-            out.output(CALL_INFO, "Note (%s): Changed 'network_bw' to 'memNIC.network_bw' in params. Change your input file to remove this notice.\n", getName().c_str());
-        if (fixupParam(params, "network_input_buffer_size", "memNIC.network_input_buffer_size"))
-            out.output(CALL_INFO, "Note (%s): Changed 'network_input_buffer_size' to 'memNIC.network_input_buffer_size' in params. Change your input file to remove this notice.\n", getName().c_str());
-        if (fixupParam(params, "network_output_buffer_size", "memNIC.network_output_buffer_size"))
-            out.output(CALL_INFO, "Note (%s): Changed 'network_output_buffer_size' to 'memNIC.network_output_buffer_size' in params. Change your input file to remove this notice.\n", getName().c_str());
-        if (fixupParam(params, "min_packet_size", "memNIC.min_packet_size"))
-            out.output(CALL_INFO, "Note (%s): Changed 'min_packet_size' to 'memNIC.min_packet_size' in params. Change your input file to remove this notice.\n", getName().c_str());
+    if (!linkUp_) {
+        bool memoryDirect = isPortConnected("memory");
+        bool scratchNetwork = isPortConnected("network");
+        bool cpuDirect = isPortConnected("cpu");
+        if (!cpuDirect && !scratchNetwork) {
+            out.fatal(CALL_INFO, -1, "Invalid port configuration (%s): Did not detect port for cpu-side events. Connect either 'cpu' or 'network'\n", getName().c_str());
+        } else if (!memoryDirect && !scratchNetwork) {
+            out.fatal(CALL_INFO, -1, "Invalid port configuration (%s): Did not detect port for memory-side events. Connect either 'memory' or 'network'\n", getName().c_str());
+        } else if (cpuDirect && scratchNetwork && memoryDirect) {
+            out.fatal(CALL_INFO, -1, "Invalid port configuration (%s): Too many connected ports. Connect either 'cpu' or 'network' for cpu-side events and either 'memory' or 'network' for memory-side events\n",
+                    getName().c_str());
+        }
 
-        // These are defaults and will not overwrite user provided
-        Params nicParams = params.get_scoped_params("memNIC");
-        nicParams.insert("addr_range_start", "0", false);
-        nicParams.insert("addr_range_end", std::to_string((uint64_t) - 1), false);
-        nicParams.insert("interleave_size", "0B", false);
-        nicParams.insert("interleave_step", "0B", false);
-        nicParams.insert("port", "network");
-        nicParams.insert("group", "3", false); // 3 is the default for anything that talks to memory but this can be set by user too so don't overwrite
-
-        if (!memoryDirect) { /* Connect mem side to network */
-            linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "memlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams);
-            linkDown_->setRecvHandler(new Event::Handler<Scratchpad>(this, &Scratchpad::processIncomingRemoteEvent));
-            if (!cpuDirect) {
-                linkUp_ = linkDown_; /* Connect cpu side to same network */
-                linkDown_->setRecvHandler(new Event::Handler<Scratchpad>(this, &Scratchpad::processIncomingNetworkEvent));
-            }
-        } else {
-            linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams);
+        if (cpuDirect) {
+            Params cpulink = params.get_scoped_params("cpulink");
+            cpulink.insert("port", "cpu");
+            linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, cpulink, tc);
             linkUp_->setRecvHandler(new Event::Handler<Scratchpad>(this, &Scratchpad::processIncomingCPUEvent));
+        }
+        if (memoryDirect) {
+            Params memlink = params.get_scoped_params("memlink");
+            memlink.insert("port", "memory");
+            linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "memlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, memlink, tc);
+            linkDown_->setRecvHandler(new Event::Handler<Scratchpad>(this, &Scratchpad::processIncomingRemoteEvent));
+        }
+
+        if (scratchNetwork) {
+            // Fix up parameters for nic params & warn that we're doing it
+            if (fixupParam(params, "network_bw", "memNIC.network_bw"))
+                out.output(CALL_INFO, "Note (%s): Changed 'network_bw' to 'memNIC.network_bw' in params. Change your input file to remove this notice.\n", getName().c_str());
+            if (fixupParam(params, "network_input_buffer_size", "memNIC.network_input_buffer_size"))
+                out.output(CALL_INFO, "Note (%s): Changed 'network_input_buffer_size' to 'memNIC.network_input_buffer_size' in params. Change your input file to remove this notice.\n", getName().c_str());
+            if (fixupParam(params, "network_output_buffer_size", "memNIC.network_output_buffer_size"))
+                out.output(CALL_INFO, "Note (%s): Changed 'network_output_buffer_size' to 'memNIC.network_output_buffer_size' in params. Change your input file to remove this notice.\n", getName().c_str());
+            if (fixupParam(params, "min_packet_size", "memNIC.min_packet_size"))
+                out.output(CALL_INFO, "Note (%s): Changed 'min_packet_size' to 'memNIC.min_packet_size' in params. Change your input file to remove this notice.\n", getName().c_str());
+
+            // These are defaults and will not overwrite user provided
+            Params nicParams = params.get_scoped_params("memNIC");
+            nicParams.insert("addr_range_start", "0", false);
+            nicParams.insert("addr_range_end", std::to_string((uint64_t) - 1), false);
+            nicParams.insert("interleave_size", "0B", false);
+            nicParams.insert("interleave_step", "0B", false);
+            nicParams.insert("port", "network");
+            nicParams.insert("group", "3", false); // 3 is the default for anything that talks to memory but this can be set by user too so don't overwrite
+
+            if (!memoryDirect) { /* Connect mem side to network */
+                linkDown_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "memlink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams, tc);
+                linkDown_->setRecvHandler(new Event::Handler<Scratchpad>(this, &Scratchpad::processIncomingRemoteEvent));
+                if (!cpuDirect) {
+                    linkUp_ = linkDown_; /* Connect cpu side to same network */
+                    linkDown_->setRecvHandler(new Event::Handler<Scratchpad>(this, &Scratchpad::processIncomingNetworkEvent));
+                }
+            } else {
+                linkUp_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemNIC", "cpulink", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, nicParams, tc);
+                linkUp_->setRecvHandler(new Event::Handler<Scratchpad>(this, &Scratchpad::processIncomingCPUEvent));
+            }
         }
     }
 
@@ -299,7 +318,7 @@ void Scratchpad::init(unsigned int phase) {
             }
         } else { // Not a NULLCMD
             MemEventInit * memRequest = new MemEventInit(getName(), initEv->getCmd(), initEv->getAddr() - remoteAddrOffset_, initEv->getPayload());
-            memRequest->setDst(linkDown_->findTargetDestination(memRequest->getAddr()));
+            memRequest->setDst(linkDown_->getTargetDestination(memRequest->getAddr()));
             linkDown_->sendInitData(memRequest);
         }
         delete initEv;
@@ -440,7 +459,7 @@ bool Scratchpad::clock(Cycle_t cycle) {
 
     while (!memMsgQueue_.empty() && memMsgQueue_.begin()->first < timestamp_) {
         MemEvent * sendEv = memMsgQueue_.begin()->second;
-        sendEv->setDst(linkDown_->findTargetDestination(sendEv->getBaseAddr()));
+        sendEv->setDst(linkDown_->getTargetDestination(sendEv->getBaseAddr()));
 
         if (is_debug_event(sendEv)) {
             debug = true;

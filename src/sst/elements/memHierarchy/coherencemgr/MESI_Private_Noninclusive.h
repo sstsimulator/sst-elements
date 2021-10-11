@@ -506,8 +506,8 @@ private:
     void forwardMessageUp(MemEvent * event);
 
     /** Call through to coherenceController with statistic recording */
-    void addToOutgoingQueue(Response& resp);
-    void addToOutgoingQueueUp(Response& resp);
+    void forwardByAddress(MemEventBase* ev, Cycle_t timestamp);
+    void forwardByDestination(MemEventBase* ev, Cycle_t timestamp);
 
 /* Miscellaneous */
     void printData(vector<uint8_t> * data, bool set);

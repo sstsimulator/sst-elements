@@ -75,6 +75,16 @@ MemCacheController::MemCacheController(ComponentId_t id, Params &params) : Compo
     // Output for warnings
     out.init("", params.find<int>("verbose", 1), 0, Output::STDOUT);
 
+    /* Clock Handler */
+    std::string clockfreq = params.find<std::string>("clock");
+    UnitAlgebra clock_ua(clockfreq);
+    if (!(clock_ua.hasUnits("Hz") || clock_ua.hasUnits("s")) || clock_ua.getRoundedValue() <= 0) {
+        out.fatal(CALL_INFO, -1, "%s, Error - Invalid param: clock. Must have units of Hz or s and be > 0. (SI prefixes ok). You specified '%s'\n", getName().c_str(), clockfreq.c_str());
+    }
+    clockHandler_ = new Clock::Handler<MemCacheController>(this, &MemCacheController::clock);
+    clockTimeBase_ = registerClock(clockfreq, clockHandler_);
+    clockOn_ = true;
+
     /* MemCacheController only supports new way of loading backend:
      *  -> Fill backend slot with backend and memcontroller loads the compatible convertor */
     MemBackend * memory = loadUserSubComponent<MemBackend>("backend");
@@ -119,7 +129,7 @@ MemCacheController::MemCacheController(ComponentId_t id, Params &params) : Compo
 
     bool found;
 
-    link_ = loadUserSubComponent<MemLinkBase>("cpulink");
+    link_ = loadUserSubComponent<MemLinkBase>("cpulink", ComponentInfo::SHARE_NONE, clockTimeBase_);
 
     if (!link_) {
         out.fatal(CALL_INFO,-1,"%s, Error: No link handler loaded into 'cpulink' subcomponent slot.\n", getName().c_str());
@@ -174,16 +184,6 @@ MemCacheController::MemCacheController(ComponentId_t id, Params &params) : Compo
     } else if (backingType == "malloc") {
         backing_ = new Backend::BackingMalloc(sizeBytes);
     }
-
-    /* Clock Handler */
-    std::string clockfreq = params.find<std::string>("clock");
-    UnitAlgebra clock_ua(clockfreq);
-    if (!(clock_ua.hasUnits("Hz") || clock_ua.hasUnits("s")) || clock_ua.getRoundedValue() <= 0) {
-        out.fatal(CALL_INFO, -1, "%s, Error - Invalid param: clock. Must have units of Hz or s and be > 0. (SI prefixes ok). You specified '%s'\n", getName().c_str(), clockfreq.c_str());
-    }
-    clockHandler_ = new Clock::Handler<MemCacheController>(this, &MemCacheController::clock);
-    clockTimeBase_ = registerClock(clockfreq, clockHandler_);
-    clockOn_ = true;
 
     /* Initialize cache */
     uint64_t cachesize = memSize_ / lineSize_;
@@ -442,14 +442,14 @@ void MemCacheController::handleLocalMemResponse( Event::id_type id, uint32_t fla
             remoteWr = new MemEvent(getName(), blockAddr, blockAddr, Command::PutM, lineSize_);
             readData(remoteWr);
             remoteWr->setFlag(MemEvent::F_NORESPONSE); // Don't send a response to this
-            remoteWr->setDst(link_->findTargetDestination(remoteWr->getBaseAddr()));
+            remoteWr->setDst(link_->getTargetDestination(remoteWr->getBaseAddr()));
             link_->send(remoteWr);
         case AccessStatus::MISS:
             /* Read new data from memory */
             remoteRd = new MemEvent(*ev);
             remoteRd->setCmd(Command::GetS);
             remoteRd->setSrc(getName());
-            remoteRd->setDst(link_->findTargetDestination(remoteRd->getBaseAddr()));
+            remoteRd->setDst(link_->getTargetDestination(remoteRd->getBaseAddr()));
             if (remoteRd->queryFlag(MemEvent::F_NORESPONSE))
                 remoteRd->clearFlag(MemEvent::F_NORESPONSE);
             it->second.reqev = remoteRd;
@@ -679,7 +679,7 @@ void MemCacheController::processInitEvent( MemEventInit* me ) {
         if (is_debug_event(me)) { Debug(_L9_,"Memory init %s - Received GetX for %" PRIx64 " size %zu\n", getName().c_str(), me->getAddr(),me->getPayload().size()); }
         MemEventInit * mEv = me->clone();
         mEv->setSrc(getName());
-        mEv->setDst(link_->findTargetDestination(mEv->getRoutingAddress()));
+        mEv->setDst(link_->getTargetDestination(mEv->getRoutingAddress()));
         link_->sendInitData(mEv);
     }
     delete me;

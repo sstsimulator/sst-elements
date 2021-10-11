@@ -2,6 +2,7 @@
 
 from sst_unittest import *
 from sst_unittest_support import *
+import os.path
 
 ################################################################################
 # Code to support a single instance module initialize, must be called setUp method
@@ -104,10 +105,7 @@ class testcase_memHierarchy_sdl(SSTTestCase):
         self.memHierarchy_Template("sdl8-4")
 
     def test_memHierarchy_sdl9_1(self):
-        if testing_check_get_num_ranks() > 1 or testing_check_get_num_threads() > 1:
-            self.memHierarchy_Template("sdl9-1_MC")
-        else:
-            self.memHierarchy_Template("sdl9-1")
+        self.memHierarchy_Template("sdl9-1")
 
     def test_memHierarchy_sdl9_2(self):
         self.memHierarchy_Template("sdl9-2")
@@ -213,7 +211,8 @@ class testcase_memHierarchy_sdl(SSTTestCase):
                 log_debug(" -- Output file {0} is an exact match to SORTED (fixed) Reference File {1}".format(outfile, fixedreffile))
             else:
                 # Not matching sorted, if DRAMSIM, then we have one last chance...
-                if sstsimulator_conf_does_have_key("DRAMSIM", "LIBDIR"):
+                if usingDramSim:
+                    log_debug("DRAMSim involved...doing line/word count compare")
                     wc_out_data = os_wc(outfile, [1, 2])
                     log_debug("{0} : wc_out_data ={1}".format(outfile, wc_out_data))
                     wc_ref_data = os_wc(fixedreffile, [1, 2])
@@ -222,8 +221,13 @@ class testcase_memHierarchy_sdl(SSTTestCase):
                     wc_line_word_count_diff = wc_out_data == wc_ref_data
                     if wc_line_word_count_diff:
                         log_debug("Line Word Count Match\n")
+                    else:
+                        diffdata = testing_get_diff_data(testcase)
+                        log_failure(diffdata)
                     self.assertTrue(wc_line_word_count_diff, "Line & Word count between file {0} does not match Reference File {1}".format(outfile, reffile))
                 else:
+                    diffdata = testing_get_diff_data(testcase)
+                    log_failure(diffdata)
                     # Well we tried, but failed
                     self.assertTrue(cmp_result, "(NO DRAMSIM) Sorted Output file {0} does not match Sorted (fixed) Reference File {1} ".format(outfile, fixedreffile))
 

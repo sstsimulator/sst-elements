@@ -117,7 +117,9 @@ for next_core_id in range(config.cpu_cores):
 
 # Connect CPU Memory and Memory Controller to the ring
 mem = sst.Component("memory", "memHierarchy.MemController")
-mem.addParams(config.getMemParams())
+mem.addParams(config.getMemCtrlParams())
+membk = mem.setSubComponent("backend", "memHierarchy.simpleMem")
+membk.addParams(config.getMemBkParams())
 
 dc = sst.Component("dc", "memHierarchy.DirectoryController")
 dc.addParams(config.getDCParams(0))
@@ -218,22 +220,28 @@ for next_group_id in range(config.hbmStacks):
    for sub_group_id in range(sub_mems):
       memStartAddr = 0 + (256 * next_mem)
       endAddr = memStartAddr + config.gpu_memory_capacity_inB - (256 * total_mems)
-
+        
       if backend == "simple":
          # Create SimpleMem
          print ("Configuring Simple mem part" + str(next_mem) + " out of " + str(config.hbmStacks) + "...")
          mem = sst.Component("Simplehbm_" + str(next_mem), "memHierarchy.MemController")
-         mem.addParams(config.get_GPU_simple_mem_params(total_mems, memStartAddr, endAddr))
+         mem.addParams(config.get_GPU_mem_params(total_mems, memStartAddr, endAddr))
+         membk = mem.setSubComponent("backend", "memHierarchy.simpleMem")
+         membk.addParams(config.get_GPU_simple_mem_params())
       elif backend == "ddr":
          # Create DDR (Simple)
          print ("Configuring DDR-Simple mem part" + str(next_mem) + " out of " + str(config.hbmStacks) + "...")
          mem = sst.Component("DDR-shbm_" + str(next_mem), "memHierarchy.MemController")
-         mem.addParams(config.get_GPU_simple_ddr_params(total_mems, memStartAddr, endAddr, next_mem))
+         mem.addParams(config.get_GPU_ddr_memctrl_params(total_mems, memStartAddr, endAddr))
+         membk = mem.setSubComponent("backend", "memHierarchy.simpleDRAM")
+         membk.addParams(config.get_GPU_simple_ddr_params(next_mem))
       elif backend == "timing":
          # Create DDR (Timing)
          print ("Configuring DDR-Timing mem part" + str(next_mem) + " out of " + str(config.hbmStacks) + "...")
          mem = sst.Component("DDR-thbm_" + str(next_mem), "memHierarchy.MemController")
-         mem.addParams(config.get_GPU_ddr_timing_params(total_mems, memStartAddr, endAddr, next_mem))
+         mem.addParams(config.get_GPU_ddr_memctrl_params(total_mems, memStartAddr, endAddr))
+         membk = mem.setSubComponent("backend", "memHierarchy.timingDRAM")
+         membk.addParams(config.get_GPU_ddr_timing_params(next_mem))
       else :
          # Create CramSim HBM
          print ("Creating HBM controller " + str(next_mem) + " out of " + str(config.hbmStacks) + "...")
@@ -258,7 +266,7 @@ for next_group_id in range(config.hbmStacks):
 
       print (" - Capacity: " + str(config.gpu_memory_capacity_inB // config.hbmStacks) + " per HBM")
       print (" - Start Address: " + str(hex(memStartAddr)) + " End Address: " + str(hex(endAddr)))
-
+        
       connect("bus_mem_link_%d"%next_mem,
       mem_l2_bus, "low_network_%d"%sub_group_id,
       mem, "direct_link",

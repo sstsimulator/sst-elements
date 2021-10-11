@@ -144,7 +144,45 @@ class testcase_memHierarchy_memHA(SSTTestCase):
 
     def test_memHA_Kingsley(self):
         self.memHA_Template("Kingsley")
-
+    
+    def test_memHA_ScratchCache_1(self):
+        self.memHA_Template("ScratchCache_1")
+    
+    def test_memHA_ScratchCache_2(self):
+        self.memHA_Template("ScratchCache_2")
+    
+    def test_memHA_ScratchCache_3(self):
+        self.memHA_Template("ScratchCache_3")
+    
+    def test_memHA_ScratchCache_4(self):
+        self.memHA_Template("ScratchCache_4")
+    
+    def test_memHA_ScratchDirect(self):
+        self.memHA_Template("ScratchDirect")
+    
+    def test_memHA_ScratchNetwork(self):
+        self.memHA_Template("ScratchDirect")
+    
+    def test_memHA_StdMem(self):
+        self.memHA_Template("StdMem")
+    
+    def test_memHA_StdMem_flush(self):
+        self.memHA_Template("StdMem_flush")
+    
+    def test_memHA_StdMem_nic(self):
+        self.memHA_Template("StdMem_nic")
+    
+    def test_memHA_StdMem_noninclusive(self):
+        self.memHA_Template("StdMem_noninclusive")
+    
+    def test_memHA_StdMem_mmio(self):
+        self.memHA_Template("StdMem_mmio")
+    
+    def test_memHA_StdMem_mmio2(self):
+        self.memHA_Template("StdMem_mmio2")
+    
+    def test_memHA_StdMem_mmio3(self):
+        self.memHA_Template("StdMem_mmio3")
 #####
 
     def memHA_Template(self, testcase, lcwc_match_allowed=False,

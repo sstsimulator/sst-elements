@@ -86,12 +86,14 @@ public:
     /* Send commands when their timestamp expires. Return whether queue is empty or not */
     virtual bool sendOutgoingEvents();
 
-    /* Forward an event towards memory. Return expected send time */
-    uint64_t forwardTowardsMem(MemEventBase * event);
+    /* Forward an event using memory address to locate a destination. */
+    virtual void forwardByAddress(MemEventBase * event);                // Send time will be 1 + timestamp_
+    virtual void forwardByAddress(MemEventBase * event, Cycle_t ts);    // ts specifies the send time
 
-    /* Forward an event towards processor. Return expected send time */
-    uint64_t forwardTowardsCPU(MemEventBase * event, std::string dst);
-
+    /* Forward an event towards a specific destination. */
+    virtual void forwardByDestination(MemEventBase * event);             // Send time will be 1 + timestamp_
+    virtual void forwardByDestination(MemEventBase * event, Cycle_t ts); // ts specifies the send time
+    
     /* Send a NACK event */
     void sendNACK(MemEvent * event);
 
@@ -307,13 +309,13 @@ protected:
     virtual uint64_t sendResponseUp(MemEvent * event, Command cmd, vector<uint8_t>* data, bool replay, uint64_t baseTime, bool atomic = false);
     virtual uint64_t sendResponseUp(MemEvent * event, Command cmd, vector<uint8_t>* data, bool dirty, bool replay, uint64_t baseTime, bool atomic = false);
 
-    std::string getDestination(Addr addr) { return linkDown_->findTargetDestination(addr); }
-
     std::string getSrc();
+
+    std::set<std::string> cpus; // If connected to CPUs or other endpoints (e.g., accelerator), list of CPU names in case we need to broadcast something
 
 private:
     /* Outgoing event queues - events are stalled here to account for access latencies */
-    list<Response> outgoingEventQueue_;
+    list<Response> outgoingEventQueueDown_;
     list<Response> outgoingEventQueueUp_;
 
     MemLinkBase * linkUp_;

@@ -71,8 +71,8 @@ comp_l1cache.addParams({
 })
 comp_memctrl = sst.Component("memory", "memHierarchy.MemController")
 comp_memctrl.addParams({
-      "coherence_protocol" : "MESI",
-      "clock" : "1GHz"
+      "clock" : "1GHz",
+      "addr_range_start" : 0,
 })
 if useDramSim == "yes":
     memory = comp_memctrl.setSubComponent("backend", "memHierarchy.dramsim")

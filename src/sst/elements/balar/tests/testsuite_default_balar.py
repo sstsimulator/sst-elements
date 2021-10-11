@@ -63,7 +63,7 @@ class testcase_balar(SSTTestCase):
 
 ####
 
-    def balar_test_template(self, testcase, testtimeout=60):
+    def balar_test_template(self, testcase, testtimeout=400):
         # Have to test for NVCC_PATH inside of the test as decorated skips happen
         # before init of testsuite
         missing_nvcc_path = os.getenv("NVCC_PATH") == None

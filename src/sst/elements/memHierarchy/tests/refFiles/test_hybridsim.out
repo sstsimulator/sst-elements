@@ -1,5 +1,4 @@
 l2cache: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated to 2 cycles.
-memory, WARNING: loading backend in legacy mode (from parameter set). Instead, load backend into this controller's 'backend' slot via ctrl.setSubComponent() in configuration.
 got to save state in nvdimm 
 save file was state/nvdimm_restore.txt
 NVDIMM is saving the used table, dirty table and address map 

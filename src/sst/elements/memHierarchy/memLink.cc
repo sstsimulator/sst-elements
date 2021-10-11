@@ -23,19 +23,23 @@ using namespace SST::MemHierarchy;
 
 /* Constructor */
 
-MemLink::MemLink(ComponentId_t id, Params &params) : MemLinkBase(id, params) {
+MemLink::MemLink(ComponentId_t id, Params &params, TimeConverter* tc) : MemLinkBase(id, params, tc) {
     // Configure link
-    std::string latency = params.find<std::string>("latency", "50ps");
+    bool found;
+    std::string latency = params.find<std::string>("latency", "0ps", found);
     std::string port = params.find<std::string>("port", "port");
 
-    link = configureLink(port, latency, new Event::Handler<MemLink>(this, &MemLink::recvNotify));
+    if (found) {
+        link = configureLink(port, latency, new Event::Handler<MemLink>(this, &MemLink::recvNotify));
+    } else {
+        link = configureLink(port, new Event::Handler<MemLink>(this, &MemLink::recvNotify));
+    }
 
     if (!link)
         dbg.fatal(CALL_INFO, -1, "%s, Error: unable to configure link on port '%s'\n", getName().c_str(), port.c_str());
 
     dbg.debug(_L10_, "%s memLink info is: Name: %s, addr: %" PRIu64 ", id: %" PRIu32 "\n",
             getName().c_str(), info.name.c_str(), info.addr, info.id);
-
 }
 
 /* init function */
@@ -61,18 +65,42 @@ void MemLink::init(unsigned int phase) {
                 epInfo.region = mEvRegion->getRegion();
                 addRemote(epInfo);
 
-                if (mEvRegion->getSetRegion() && acceptRegion) {
-                    dbg.debug(_L10_, "\tUpdating local region\n");
-                    info.region = mEvRegion->getRegion();
-                }
                 delete ev;
-            } else { /* No need to filter by source since this is a direct link */
+            } else if (mEv->getInitCmd() == MemEventInit::InitCommand::Endpoint) { 
+                // Intercept and record so that we know how to find this endpoint.
+                // We don't need to record whether a particular region
+                // is noncacheable because the StandardMem interfaces will enforce
+                MemEventInitEndpoint * mEvEndPt = static_cast<MemEventInitEndpoint*>(mEv);
+                dbg.debug(_L10_, "%s received init message: %s\n", getName().c_str(), mEvEndPt->getVerboseString().c_str());
+                std::vector<std::pair<MemRegion,bool>> regions = mEvEndPt->getRegions();
+                for (auto it = regions.begin(); it != regions.end(); it++) {
+                    EndpointInfo epInfo;
+                    epInfo.name = mEvEndPt->getSrc();
+                    epInfo.addr = 0; // Not on a network so don't need it
+                    epInfo.id = 0; // Not on a network so don't need it
+                    epInfo.region = it->first;
+                    addEndpoint(epInfo);
+                }
+                initReceiveQ.push(mEv); // Our component will forward on all its other ports
+            } else {
                 initReceiveQ.push(mEv);
             }
         } else
             delete ev;
     }
 }
+
+
+void MemLink::setup() {
+    dbg.debug(_L10_, "Routing information for %s\n", getName().c_str());
+    for (auto it = remotes.begin(); it != remotes.end(); it++) {
+        dbg.debug(_L10_, "    Remote: %s\n", it->toString().c_str()); 
+    }
+    for (auto it = endpoints.begin(); it != endpoints.end(); it++) {
+        dbg.debug(_L10_, "    Endpoint: %s\n", it->toString().c_str()); 
+    }
+}
+
 
 /**
  * send init data
@@ -96,6 +124,11 @@ MemEventInit * MemLink::recvInitData() {
 
 void MemLink::addRemote(EndpointInfo info) {
     remotes.insert(info);
+    remoteNames.insert(info.name);
+}
+
+void MemLink::addEndpoint(EndpointInfo info) {
+    endpoints.insert(info);
 }
 
 bool MemLink::isDest(std::string UNUSED(str)) {
@@ -134,13 +167,13 @@ MemEventBase * MemLink::recv() {
     return nullptr;
 }
 
-std::string MemLink::findTargetDestination(Addr addr) {
-    for (std::set<EndpointInfo>::const_iterator it = remotes.begin(); it != remotes.end(); it++) {
-        if (it->region.contains(addr)) return it->name;
+std::string MemLink::getTargetDestination(Addr addr) {
+    std::string dst = findTargetDestination(addr);
+    if ("" != dst) {
+        return dst;
     }
-
     stringstream error;
-    error << getName() + " (MemLink) cannot find a destination for address " << addr << endl;
+    error << getName() + " (MemLink) cannot find a destination for address " << std::hex << addr << std::dec << endl;
     error << "Known destinations: " << endl;
     for (std::set<EndpointInfo>::const_iterator it = remotes.begin(); it != remotes.end(); it++) {
         error << it->name << " " << it->region.toString() << endl;
@@ -149,3 +182,21 @@ std::string MemLink::findTargetDestination(Addr addr) {
     return "";
 }
 
+std::string MemLink::findTargetDestination(Addr addr) {
+    for (std::set<EndpointInfo>::const_iterator it = remotes.begin(); it != remotes.end(); it++) {
+        if (it->region.contains(addr)) return it->name;
+    }
+    return "";
+}
+
+bool MemLink::isReachable(std::string dst) {
+   return remoteNames.find(dst) != remoteNames.end();
+}
+
+std::string MemLink::getAvailableDestinationsAsString() {
+    std::stringstream str;
+    for (std::set<EndpointInfo>::const_iterator it = endpoints.begin(); it != endpoints.end(); it++) {
+        str << it->toString() << std::endl;
+    }
+    return str.str();
+}

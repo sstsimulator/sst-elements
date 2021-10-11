@@ -827,6 +827,7 @@ bool MESIL1::handleGetXResp(MemEvent* event, bool inMSHR) {
 
     std::vector<uint8_t> data;
     Addr offset = req->getAddr() - addr;
+    bool success = false;
 
     switch (state) {
         case IS:
@@ -868,7 +869,8 @@ bool MESIL1::handleGetXResp(MemEvent* event, bool inMSHR) {
 
                         if (is_debug_addr(addr))
                             printData(line->getData(), true);
-
+                        if (line->isAtomic())
+                            success = true;
                         line->atomicEnd(); // Any write causes a future SC to fail 
                     }
 
@@ -879,7 +881,7 @@ bool MESIL1::handleGetXResp(MemEvent* event, bool inMSHR) {
                     line->incLock();
                 }
                 data.assign(line->getData()->begin() + offset, line->getData()->begin() + offset + req->getSize());
-                uint64_t sendTime = sendResponseUp(req, &data, true, line->getTimestamp(), false);
+                uint64_t sendTime = sendResponseUp(req, &data, true, line->getTimestamp(), success);
                 line->setTimestamp(sendTime-1);
                 break;
             }
@@ -1280,8 +1282,7 @@ uint64_t MESIL1::sendResponseUp(MemEvent* event, vector<uint8_t>* data, bool inM
     if (time < timestamp_)
         deliveryTime += timestamp_;
     else deliveryTime += time;
-    Response resp = {responseEvent, deliveryTime, packetHeaderBytes + responseEvent->getPayloadSize()};
-    addToOutgoingQueueUp(resp);
+    forwardByDestination(responseEvent, deliveryTime);
 
     // Debugging
     if (is_debug_event(responseEvent))
@@ -1307,8 +1308,7 @@ void MESIL1::sendResponseDown(MemEvent * event, L1CacheLine * line, bool data) {
     responseEvent->setSize(lineSize_);
 
     uint64_t deliverTime = timestamp_ + (data ? accessLatency_ : tagLatency_);
-    Response resp  = {responseEvent, deliverTime, packetHeaderBytes + responseEvent->getPayloadSize() };
-    addToOutgoingQueue(resp);
+    forwardByDestination(responseEvent, deliverTime);
 
     if (is_debug_event(responseEvent)) {
         eventDI.action = "Respond";
@@ -1319,9 +1319,6 @@ void MESIL1::sendResponseDown(MemEvent * event, L1CacheLine * line, bool data) {
 /* Forward a flush to the next cache/directory/memory */
 void MESIL1::forwardFlush(MemEvent* event, L1CacheLine* line, bool evict) {
     MemEvent* flush = new MemEvent(*event);
-
-    flush->setSrc(cachename_);
-    flush->setDst(getDestination(event->getBaseAddr()));
 
     uint64_t latency = tagLatency_; // Check coherence state/hitVmiss
     if (evict) {
@@ -1337,8 +1334,7 @@ void MESIL1::forwardFlush(MemEvent* event, L1CacheLine* line, bool evict) {
     uint64_t baseTime = timestamp_;
     if (line && line->getTimestamp() > baseTime) baseTime = line->getTimestamp();
     uint64_t deliveryTime = baseTime + latency;
-    Response resp = {flush, deliveryTime, packetHeaderBytes + flush->getPayloadSize()};
-    addToOutgoingQueue(resp);
+    forwardByAddress(flush, deliveryTime);
     if (line)
         line->setTimestamp(deliveryTime-1);
 
@@ -1353,7 +1349,6 @@ void MESIL1::forwardFlush(MemEvent* event, L1CacheLine* line, bool evict) {
  */
 void MESIL1::sendWriteback(Command cmd, L1CacheLine * line, bool dirty) {
     MemEvent* writeback = new MemEvent(cachename_, line->getAddr(), line->getAddr(), cmd);
-    writeback->setDst(getDestination(line->getAddr()));
     writeback->setSize(lineSize_);
 
     uint64_t latency = tagLatency_;
@@ -1373,8 +1368,7 @@ void MESIL1::sendWriteback(Command cmd, L1CacheLine * line, bool dirty) {
 
     uint64_t baseTime = (timestamp_ > line->getTimestamp()) ? timestamp_ : line->getTimestamp();
     uint64_t deliveryTime = baseTime + latency;
-    Response resp = {writeback, deliveryTime, packetHeaderBytes + writeback->getPayloadSize()};
-    addToOutgoingQueue(resp);
+    forwardByAddress(writeback, deliveryTime);
     line->setTimestamp(deliveryTime-1);
 }
 
@@ -1382,11 +1376,13 @@ void MESIL1::sendWriteback(Command cmd, L1CacheLine * line, bool dirty) {
 /* Send notification to the core that a line we have might have been lost */
 void MESIL1::snoopInvalidation(MemEvent * event, L1CacheLine * line) {
     if (snoopL1Invs_ && line) {
-        MemEvent * snoop = new MemEvent(cachename_, event->getAddr(), event->getBaseAddr(), Command::Inv);
-        uint64_t baseTime = timestamp_ > line->getTimestamp() ? timestamp_ : line->getTimestamp();
-        uint64_t deliveryTime = baseTime + tagLatency_;
-        Response resp = {snoop, deliveryTime, packetHeaderBytes};
-        addToOutgoingQueueUp(resp);
+        for (auto it = cpus.begin(); it != cpus.end(); it++) {
+            MemEvent * snoop = new MemEvent(cachename_, event->getAddr(), event->getBaseAddr(), Command::Inv);
+            uint64_t baseTime = timestamp_ > line->getTimestamp() ? timestamp_ : line->getTimestamp();
+            uint64_t deliveryTime = baseTime + tagLatency_;
+            snoop->setDst(*it);
+            forwardByDestination(snoop, deliveryTime);
+        }
     }
 }
 
@@ -1394,15 +1390,16 @@ void MESIL1::snoopInvalidation(MemEvent * event, L1CacheLine * line) {
 /*----------------------------------------------------------------------------------------------------------------------
  *  Override message send functions with versions that record statistics & call parent class
  *---------------------------------------------------------------------------------------------------------------------*/
-void MESIL1::addToOutgoingQueue(Response& resp) {
-    stat_eventSent[(int)resp.event->getCmd()]->addData(1);
-    CoherenceController::addToOutgoingQueue(resp);
+void MESIL1::forwardByAddress(MemEventBase* ev, Cycle_t ts) {
+    stat_eventSent[(int)ev->getCmd()]->addData(1);
+    CoherenceController::forwardByAddress(ev, ts);
 }
 
-void MESIL1::addToOutgoingQueueUp(Response& resp) {
-    stat_eventSent[(int)resp.event->getCmd()]->addData(1);
-    CoherenceController::addToOutgoingQueueUp(resp);
+void MESIL1::forwardByDestination(MemEventBase* ev, Cycle_t ts) {
+    stat_eventSent[(int)ev->getCmd()]->addData(1);
+    CoherenceController::forwardByDestination(ev, ts);
 }
+
 
 
 /***********************************************************************************************************
