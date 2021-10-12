@@ -281,7 +281,7 @@ public:
         }
 
         // Easy case, no interleaving
-        if (interleaveSize == 0 && interleaveStep == 0) {
+        if (interleaveSize == 0 && o.interleaveStep == 0) {
             MemRegion reg;
             reg.start = std::max(start, o.start);
             reg.end = std::min(end, o.end);
@@ -344,9 +344,7 @@ public:
             return (start < o.start);
         if (end != o.end)
             return (end < o.end);
-        if (interleaveSize != o.interleaveSize)
-            return (o.interleaveSize < o.interleaveSize);
-       return (interleaveStep > o.interleaveStep);
+        return (interleaveSize * o.interleaveStep) < (interleaveStep * o.interleaveSize);
     }
 
     bool operator==(const MemRegion &o) const {
