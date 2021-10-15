@@ -32,7 +32,7 @@ public:
         isa_int_regs_out[0] = dest;
     }
 
-    VanadisAddImmInstruction* clone() { return new VanadisAddImmInstruction(*this); }
+    VanadisAddImmInstruction* clone() override { return new VanadisAddImmInstruction(*this); }
     VanadisFunctionalUnitType getInstFuncType() const override { return INST_INT_ARITH; }
     const char* getInstCode() const override { return "ADDI"; }
 
