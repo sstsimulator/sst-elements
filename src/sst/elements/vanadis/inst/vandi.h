@@ -33,7 +33,7 @@ public:
 
     VanadisAndImmInstruction* clone() override { return new VanadisAndImmInstruction(*this); }
     VanadisFunctionalUnitType getInstFuncType() const override { return INST_INT_ARITH; }
-    const char* getInstCode() const { return "ANDI"; }
+    const char* getInstCode() const override { return "ANDI"; }
 
     void printToBuffer(char* buffer, size_t buffer_size) override {
         snprintf(

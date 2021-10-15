@@ -43,7 +43,7 @@ public:
     VanadisFunctionalUnitType getInstFuncType() const override { return INST_INT_ARITH; }
     const char* getInstCode() const override { return "SRLI"; }
 
-    void printToBuffer(char* buffer, size_t buffer_size) {
+    void printToBuffer(char* buffer, size_t buffer_size) override {
         snprintf(buffer, buffer_size,
                  "SRLI    %5" PRIu16 " <- %5" PRIu16 " >> imm=%" PRId64 " (phys: %5" PRIu16 " <- %5" PRIu16
                  " >> %" PRId64 ")",

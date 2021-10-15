@@ -109,7 +109,7 @@ void MemNIC::send(MemEventBase *ev) {
     req->vn = 0;
 
     if (is_debug_event(ev)) {
-        dbg.debug(_L5_, "N: %-40" PRIu64 "  %-20s Enqueue       Dst: %u, bits: %zu, (%s)\n", 
+        dbg.debug(_L5_, "N: %-40" PRIu64 "  %-20s Enqueue       Dst: %lld, bits: %zu, (%s)\n", 
             Simulation::getSimulation()->getCurrentSimCycle(), getName().c_str(), req->dest, req->size_in_bits, ev->getBriefString().c_str());
     }
 
