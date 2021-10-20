@@ -8,8 +8,20 @@ comp_LTLIBRARIES = libbalar.la
 libbalar_la_SOURCES = \
 	mempool.h \
 	mempool.cpp \
+	balar_event.h \
+	cuda_runtime_api.h \
 	balar.cc \
 	balar.h
+
+EXTRA_DIST = \
+	tests/ariel-gpu-v100.cfg \
+	tests/cuda-test.py \
+	tests/gpgpusim.config \
+	tests/testsuite_default_balar.py \
+	tests/utils.py \
+	tests/vectorAdd/vecAdd.cu \
+	tests/vectorAdd/Makefile \
+	tests/refFiles/test_gpgpu_vectorAdd.out
 
 libbalar_la_CPPFLAGS = \
 	-I$(top_srcdir)/src \

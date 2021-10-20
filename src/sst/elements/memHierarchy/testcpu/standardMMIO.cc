@@ -73,7 +73,8 @@ StandardMMIO::StandardMMIO(ComponentId_t id, Params &params) : SST::Component(id
         bool found;
         max_addr = params.find<Addr>("max_addr", 0, found);
         if (!found) {
-            out.fatal(CALL_INFO, 0-1, "%s, Error: Invalid param, 'max_addr' must be specified if mem_accesses > 0\n");
+            out.fatal(CALL_INFO, -1, "%s, Error: Invalid param, 'max_addr' must be specified if mem_accesses > 0\n", 
+                    getName().c_str());
         }
 
         // Register related statistics

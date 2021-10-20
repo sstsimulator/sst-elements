@@ -54,11 +54,11 @@ public:
         }
     }
 
-    VanadisFPSetRegCompareInstruction* clone() { return new VanadisFPSetRegCompareInstruction(*this); }
+    VanadisFPSetRegCompareInstruction* clone() override { return new VanadisFPSetRegCompareInstruction(*this); }
 
-    virtual VanadisFunctionalUnitType getInstFuncType() const { return INST_FP_ARITH; }
+    virtual VanadisFunctionalUnitType getInstFuncType() const override { return INST_FP_ARITH; }
 
-    virtual const char* getInstCode() const {
+    virtual const char* getInstCode() const override {
         switch (register_format) {
         case VanadisRegisterFormat::VANADIS_FORMAT_FP64: {
             switch (compare_type) {
