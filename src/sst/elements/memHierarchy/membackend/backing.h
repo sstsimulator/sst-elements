@@ -27,7 +27,7 @@ namespace Backend {
 class Backing {
 public:
     Backing( ) { }
-    ~Backing() { }
+    virtual ~Backing() { }
 
     virtual void set( Addr addr, uint8_t value ) = 0;
     virtual void set( Addr addr, size_t size, std::vector<uint8_t>& data) = 0;
@@ -39,7 +39,7 @@ public:
 class BackingMMAP : public Backing {
 public:
     BackingMMAP(std::string memoryFile, size_t size, size_t offset = 0) : Backing(), m_fd(-1), m_size(size), m_offset(offset) {
-        int flags = MAP_PRIVATE;
+        int flags = MAP_SHARED;
         if ( ! memoryFile.empty() ) {
             m_fd = open(memoryFile.c_str(), O_RDWR);
             if ( m_fd < 0) {
