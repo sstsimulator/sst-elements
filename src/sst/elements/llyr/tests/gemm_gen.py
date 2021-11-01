@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import itertools
 from collections import defaultdict
@@ -6,25 +6,45 @@ from collections import defaultdict
 debug = 0
 data_type = 0   #0 int, 1 fp64
 
+m = 1
+k = 3
+n = 2
+
 #m = 2
 #k = 1
 #n = 1
 
-m = 2
-k = 2
-n = 2
+#m = 2
+#k = 2
+#n = 2
+
+#m = 4
+#k = 2
+#n = 4
+
+#m = 8
+#k = 4
+#n = 8
 
 #m = 4
 #k = 4
-#n = 2
-
-#m = 2
-#k = 3
-#n = 2
+#n = 4
 
 #m = 6
 #k = 3
 #n = 10
+
+#m = 12
+#k = 12
+#n = 12
+
+#m = 24
+#k = 24
+#n = 24
+
+#m = 128
+#k = 128
+#n = 128
 
 #m = 60
 #k = 30

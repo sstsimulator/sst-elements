@@ -24,6 +24,7 @@
 
 #define Bit_Length 64
 typedef std::bitset< Bit_Length > LlyrData;
+typedef uint64_t Addr;
 
 using namespace SST::Experimental::Interfaces;
 

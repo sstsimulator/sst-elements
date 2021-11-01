@@ -2,75 +2,19 @@
 2 [pe_type=MULCONST,8]
 
 3 [pe_type=LDADDR,8]
-4 [pe_type=LDADDR,80]
+4 [pe_type=LDADDR,32]
 5 [pe_type=MUL]
-6 [pe_type=ADDCONST,120]
+6 [pe_type=ADDCONST,48]
 7 [pe_type=MUL]
 8 [pe_type=LD]
 
 9 [pe_type=MUL]
-10 [pe_type=ADDCONST,128]
+10 [pe_type=ADDCONST,56]
 11 [pe_type=MUL]
 12 [pe_type=LD]
 
 13 [pe_type=STADDR,256]
 14 [pe_type=STADDR,264]
-15 [pe_type=LDADDR,16]
-16 [pe_type=LDADDR,88]
-17 [pe_type=MUL]
-18 [pe_type=ADDCONST,120]
-19 [pe_type=MUL]
-20 [pe_type=LD]
-
-21 [pe_type=MUL]
-22 [pe_type=ADDCONST,128]
-23 [pe_type=MUL]
-24 [pe_type=LD]
-
-25 [pe_type=LDADDR,24]
-26 [pe_type=LDADDR,96]
-27 [pe_type=MUL]
-28 [pe_type=ADDCONST,120]
-29 [pe_type=MUL]
-30 [pe_type=LD]
-
-31 [pe_type=MUL]
-32 [pe_type=ADDCONST,128]
-33 [pe_type=MUL]
-34 [pe_type=LD]
-
-35 [pe_type=LDADDR,32]
-36 [pe_type=LDADDR,104]
-37 [pe_type=MUL]
-38 [pe_type=ADDCONST,120]
-39 [pe_type=MUL]
-40 [pe_type=LD]
-
-41 [pe_type=MUL]
-42 [pe_type=ADDCONST,128]
-43 [pe_type=MUL]
-44 [pe_type=LD]
-
-45 [pe_type=ADD]
-46 [pe_type=ADD]
-47 [pe_type=STADDR,272]
-48 [pe_type=ADD]
-49 [pe_type=ADD]
-50 [pe_type=STADDR,280]
-51 [pe_type=LDADDR,40]
-52 [pe_type=LDADDR,112]
-53 [pe_type=MUL]
-54 [pe_type=ADDCONST,120]
-55 [pe_type=MUL]
-56 [pe_type=LD]
-
-57 [pe_type=MUL]
-58 [pe_type=ADDCONST,128]
-59 [pe_type=MUL]
-60 [pe_type=LD]
-
-61 [pe_type=STADDR,288]
-62 [pe_type=STADDR,296]
 1 -- 2
 
 4 -- 5
@@ -78,14 +22,6 @@
 
 2 -- 5
 2 -- 9
-2 -- 17
-2 -- 21
-2 -- 27
-2 -- 31
-2 -- 37
-2 -- 41
-2 -- 53
-2 -- 57
 
 5 -- 6
 
@@ -105,100 +41,4 @@
 7 -- 13
 
 11 -- 14
-
-16 -- 17
-16 -- 21
-
-17 -- 18
-
-15 -- 19
-15 -- 23
-
-18 -- 20
-
-20 -- 19
-
-21 -- 22
-
-22 -- 24
-
-24 -- 23
-
-26 -- 27
-26 -- 31
-
-27 -- 28
-
-25 -- 29
-25 -- 33
-
-28 -- 30
-
-30 -- 29
-
-31 -- 32
-
-32 -- 34
-
-34 -- 33
-
-36 -- 37
-36 -- 41
-
-37 -- 38
-
-35 -- 39
-35 -- 43
-
-38 -- 40
-
-40 -- 39
-
-41 -- 42
-
-42 -- 44
-
-44 -- 43
-
-39 -- 45
-
-29 -- 45
-
-19 -- 46
-
-45 -- 46
-
-46 -- 47
-
-43 -- 48
-
-33 -- 48
-
-23 -- 49
-
-48 -- 49
-
-49 -- 50
-
-52 -- 53
-52 -- 57
-
-53 -- 54
-
-51 -- 55
-51 -- 59
-
-54 -- 56
-
-56 -- 55
-
-57 -- 58
-
-58 -- 60
-
-60 -- 59
-
-55 -- 61
-
-59 -- 62
 

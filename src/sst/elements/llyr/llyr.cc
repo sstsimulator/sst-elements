@@ -53,7 +53,7 @@ LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
 
     //set up memory interfaces
     mem_interface_ = loadUserSubComponent<SST::Experimental::Interfaces::StandardMem>("memory", ComponentInfo::SHARE_NONE, time_converter_,
-                                                                new StandardMem::Handler<LlyrComponent>(this, &LlyrComponent::handleEvent));
+                                        new StandardMem::Handler<LlyrComponent>(this, &LlyrComponent::handleEvent));
 
     if( !mem_interface_ ) {
         std::string interfaceName = params.find<std::string>("memoryinterface", "memHierarchy.memInterface");
@@ -68,6 +68,10 @@ LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
             output_->fatal(CALL_INFO, -1, "%s, Error loading memory interface\n", getName().c_str());
         }
     }
+
+    // set up MMIO address for device
+    device_addr_ = params.find< uint64_t >("device_addr", 0);
+    mem_interface_->setMemoryMappedAddressRegion(device_addr_, 1);
 
     //need a 'global' LS queue for reordering
     ls_queue_ = new LSQueue();
@@ -250,6 +254,17 @@ void LlyrComponent::handleEvent(StandardMem::Request* req) {
     req->handle(mem_handlers_);
 }
 
+/* Handler for incoming Read requests */
+void LlyrComponent::LlyrMemHandlers::handle(StandardMem::Write* write) {
+    out->verbose(CALL_INFO, 8, 0, "Handle Write.\n");
+
+    /* Send response (ack) if needed */
+    if (!(write->posted)) {
+        llyr_->mem_interface_->send(write->makeResponse());
+    }
+    delete write;
+}
+
 /* Handler for incoming Read responses - should be a response to a Read we issued */
 void LlyrComponent::LlyrMemHandlers::handle(StandardMem::ReadResp* resp) {
 
@@ -296,49 +311,6 @@ void LlyrComponent::LlyrMemHandlers::handle(StandardMem::WriteResp* resp) {
     delete resp;
     out->verbose(CALL_INFO, 4, 0, "Complete cache response handling.\n");
 }
-
-
-
-// void LlyrComponent::handleEvent( SimpleMem::Request* ev ) {
-//     output_->verbose(CALL_INFO, 4, 0, "Recv response from cache\n");
-//
-//     for( auto &it : ev->data ) {
-//         std::cout << unsigned(it) << " ";
-//     }
-//     std::cout << std::endl;
-//
-//     if( ev->cmd == SimpleMem::Request::Command::ReadResp ) {
-//         // Read request needs some special handling
-//         uint64_t addr = ev->addr;
-//         uint64_t memValue = 0;
-//
-//         LlyrData testArg;
-//         for( auto &it : ev->data ) {
-//             testArg = it;
-//             std::cout << testArg << " ";
-//         }
-//         std::cout << std::endl;
-//
-//         std::memcpy( std::addressof(memValue), std::addressof(ev->data[0]), sizeof(memValue) );
-//
-//         testArg = memValue;
-//         std::cout << "*" << testArg << std::endl;
-//
-//         output_->verbose(CALL_INFO, 8, 0, "Response to a read, payload=%" PRIu64 ", for addr: %" PRIu64
-//                          " to PE %" PRIu32 "\n", memValue, addr, ls_queue_->lookupEntry( ev->id ).second );
-//
-//         ls_queue_->setEntryData( ev->id, testArg );
-//         ls_queue_->setEntryReady( ev->id, 1 );
-//     } else {
-//         output_->verbose(CALL_INFO, 8, 0, "Response to a write for addr: %" PRIu64 " to PE %" PRIu32 "\n",
-//                          ev->addr, ls_queue_->lookupEntry( ev->id ).second );
-//         ls_queue_->setEntryReady( ev->id, 2 );
-//     }
-//
-//     // Need to clean up the events coming back from the cache
-//     delete ev;
-//     output_->verbose(CALL_INFO, 4, 0, "Complete cache response handling.\n");
-// }
 
 void LlyrComponent::doLoadStoreOps( uint32_t numOps )
 {

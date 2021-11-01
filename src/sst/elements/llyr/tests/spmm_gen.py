@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import itertools
 from collections import defaultdict
@@ -7,29 +7,39 @@ debug = 0
 data_type = 0   #0 int, 1 fp64
 
 ## mxn * nxk
-#m = 1
-#n = 3
-#k = 2
-m = 3
+m = 1
 n = 3
 k = 2
+
+#m = 3
+#n = 3
+#k = 2
+
 #m = 3
 #n = 3
 #k = 3
 
+#m = 12
+#n = 12
+#k = 12
+
+#m = 16
+#n = 16
+#k = 16
+
 ## init non-zeroes
-#non_zeroes = [1]
-non_zeroes = [1,2,3,4,5]
+non_zeroes = [1]
+#non_zeroes = [1,2,3,4,5]
 
 ## init row_ptr
-#row_ptr = [0,1]
+row_ptr = [0,1]
 #row_ptr = [0,1,3,5]
-row_ptr = [0,1,4,5]
+#row_ptr = [0,1,4,5]
 
 ## init col_ptr
-#col_ptr = [0,1]
+col_ptr = [0,1]
 #col_ptr = [0,0,1,1,2]
-col_ptr = [0,0,1,2,2]
+#col_ptr = [0,0,1,2,2]
 
 ## init dense mat
 dense_mat = []
@@ -121,11 +131,13 @@ file.write( str(2) + pe_string_pre + "MULCONST,8" + "]" + "\n" )
 file.write( "\n" )
 
 pe_id = 3
-for x in range( 0, m ):
+#for x in range( 0, m ):
+for x in range( 0, len(row_ptr) - 1 ):
    sp_ld_dict = defaultdict(int)
    col_ld_dict = defaultdict(int)
    partial_product = defaultdict(list)
 
+   print(x)
    for y in range( row_ptr[x], row_ptr[x+1] ):
       ## LD sparse[j]
       temp_addr = v_start_addr + (8 * y)

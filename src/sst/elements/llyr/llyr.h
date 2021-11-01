@@ -52,6 +52,7 @@ public:
     SST_ELI_DOCUMENT_PARAMS(
         { "verbose",        "Level of output verbosity, higher is more output, 0 is no output", 0 },
         { "clock",          "Clock frequency", "1GHz" },
+        { "device_addr",    "Address of device", "0" },
         { "clockcount",     "Number of clock ticks to execute", "100000" },
         { "application",    "Application in affine IR", "app.in" },
         { "hardware_graph", "Hardware connectivity graph", "grid.cfg" },
@@ -106,6 +107,7 @@ private:
             StandardMem::RequestHandler(out), ls_queue_(ls_queue), llyr_(llyr) {}
         virtual ~LlyrMemHandlers() {}
 
+        virtual void handle(StandardMem::Write* read) override;
         virtual void handle(StandardMem::ReadResp* resp) override;
         virtual void handle(StandardMem::WriteResp* resp) override;
 
@@ -115,6 +117,7 @@ private:
 
     LlyrMemHandlers*    mem_handlers_;
     StandardMem*        mem_interface_;
+    Addr                device_addr_;
 
     SST::TimeConverter*     time_converter_;
     Clock::HandlerBase*     clock_tick_handler_;
