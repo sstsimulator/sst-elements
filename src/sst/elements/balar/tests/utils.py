@@ -260,91 +260,87 @@ class Config:
             #"maxRequestDelay" : "1000000",
             })
 
-    def getMemParams(self):
+    def getMemCtrlParams(self):
         return dict({
             "verbose" : 0,
             "debug" : 0,
             "debug_level" : 10,
-            "backend" : "memHierarchy.simpleMem",
-            "backend.access_time" : "50ns",
-            "backend.mem_size" : self.memory_capacity,
             "max_requests_per_cycle": "4",
+            "addr_range_start" : 0,
             "clock" : self.memory_clock,
-            "network_bw": self.ring_bandwidth,
-            "do_not_back" : 1,
+            "backing" : "none"
             })
 
-    def get_GPU_simple_mem_params(self, numParts, startAddr, endAddr):
+    def getMemBkParams(self):
+        return dict({
+            "access_time" : "50ns",
+            "mem_size" : self.memory_capacity,
+            })
+    
+    def get_GPU_mem_params(self, numParts, startAddr, endAddr):
         return dict({
             "verbose" : 0,
             "debug" : 0,
             "debug_level" : 10,
-            "backend" : "memHierarchy.simpleMem",
-            "backend.access_time" : "45ns",
-            "backend.mem_size" : str(self.gpu_memory_capacity_per_part_inB)+ "B",
+            "clock" : self.memory_clock,
+            "backing" : "none",
             "max_requests_per_cycle": "100",
-            "clock" : self.gpu_memory_clock,
-            "network_bw": self.gpu_memory_network_bandwidth,
-            "do_not_back" : 1,
-            "cpulink.group" : 3,
-            "cpulink.addr_range_start" : startAddr,
-            "cpulink.addr_range_end" : endAddr,
-            "cpulink.interleave_size" : "256B",
-            "cpulink.interleave_step" : str(numParts * 256) + "B",
+            "addr_range_start" : startAddr,
+            "addr_range_end" : endAddr,
+            "interleave_size" : "256B",
+            "interleave_step" : str(numParts * 256) + "B",
+            })
+    
+    def get_GPU_simple_mem_params(self):
+        return dict({
+            "access_time" : "45ns",
+            "mem_size" : str(self.gpu_memory_capacity_per_part_inB)+ "B",
             })
 
-    def get_GPU_simple_ddr_params(self, numParts, startAddr, endAddr, memID):
-         return dict({
+    def get_GPU_ddr_memctrl_params(self, numParts, startAddr, endAddr):
+        return dict({
             "verbose" : 0,
             "debug" : 0,
             "debug_level" : 10,
             "clock" : ddr_clock,
             "backing" : "none",
             "max_requests_per_cycle" : "-1",
-            "backend" : "memHierarchy.simpleDRAM",
-            "backend.id" : memID,
-            "backend.mem_size" : str(self.gpu_memory_capacity_per_part_inB)+ "B",
-            "backend.tCAS" : 3, # 11@800MHz roughly coverted to 200MHz
-            "backend.tRCD" : ddr_tRCD,
-            "backend.tRP" : ddr_tRP,
-            "backend.cycle_time" : "5ns",
-            "backend.row_size" : "8KiB",
-            "backend.row_policy" : "open"
+            "addr_range_start" : startAddr,
+            "addr_range_end" : endAddr,
+            "interleave_size" : "256B",
+            "interleave_step" : str(numParts * 256) + "B",
             })
 
-    def get_GPU_ddr_timing_params(self, numParts, startAddr, endAddr, memID):
+    def get_GPU_simple_ddr_params(self, memID):
          return dict({
-            "verbose" : 0,
-            "debug" : 0,
-            "debug_level" : 10,
-            "do_not_back" : 1,
-            "max_requests_per_cycle": "-1",
-            "backend" : "memHierarchy.timingDRAM",
-            "backend.addrMapper" : "memHierarchy.roundRobinAddrMapper",
-            "backend.clock" : ddr_clock,
-            "backend.id" : memID,
-            "backend.channels" : 8,
-            "backend.channel.numRanks" : 8,
-            "backend.channel.transaction_Q_size" : 32,
-            "backend.channel.rank.numBanks" : 16,
-            "backend.channel.rank.bank.CL" : ddr_tCL,
-            "backend.channel.rank.bank.CL_WR" : ddr_tCWL,
-            "backend.channel.rank.bank.RCD" : ddr_tRCD,
-            "backend.channel.rank.bank.TRP" : ddr_tRP,
-            "backend.channel.rank.bank.dataCycles" : 4, # Cycles to return data (4 if burst8)
-            "backend.channel.rank.bank.pagePolicy" : "memHierarchy.simplePagePolicy",
-            "backend.channel.rank.bank.transactionQ" : "memHierarchy.reorderTransactionQ",
-            "backend.channel.rank.bank.pagePolicy.close" : 0,
-            "cpulink.group" : 3,
-            "cpulink.addr_range_start" : startAddr,
-            "cpulink.addr_range_end" : endAddr,
-            "cpulink.interleave_size" : "256B",
-            "cpulink.interleave_step" : str(numParts * 256) + "B",
-            "cpulink.req.network_bw" : self.gpu_memory_network_bandwidth,
-            "cpulink.ack.network_bw" : self.gpu_memory_network_bandwidth,
-            "cpulink.fwd.network_bw" : self.gpu_memory_network_bandwidth,
-            "cpulink.data.network_bw" : self.gpu_memory_network_bandwidth,
-            "backend.mem_size" : str(self.gpu_memory_capacity_per_part_inB)+ "B"
+            "id" : memID,
+            "mem_size" : str(self.gpu_memory_capacity_per_part_inB)+ "B",
+            "tCAS" : 3, # 11@800MHz roughly coverted to 200MHz
+            "tRCD" : ddr_tRCD,
+            "tRP" : ddr_tRP,
+            "cycle_time" : "5ns",
+            "row_size" : "8KiB",
+            "row_policy" : "open"
+            })
+
+    def get_GPU_ddr_timing_params(self, memID):
+         return dict({
+            "addrMapper" : "memHierarchy.roundRobinAddrMapper",
+            "clock" : ddr_clock,
+            "id" : memID,
+            "channels" : 8,
+            "channel.numRanks" : 8,
+            "channel.transaction_Q_size" : 32,
+            "channel.rank.numBanks" : 16,
+            "channel.rank.bank.CL" : ddr_tCL,
+            "channel.rank.bank.CL_WR" : ddr_tCWL,
+            "channel.rank.bank.RCD" : ddr_tRCD,
+            "channel.rank.bank.TRP" : ddr_tRP,
+            "channel.rank.bank.dataCycles" : 4, # Cycles to return data (4 if burst8)
+            "channel.rank.bank.pagePolicy" : "memHierarchy.simplePagePolicy",
+            "channel.rank.bank.transactionQ" : "memHierarchy.reorderTransactionQ",
+            "channel.rank.bank.pagePolicy.close" : 0,
+            "mem_size" : str(self.gpu_memory_capacity_per_part_inB)+ "B"
          })
 
     def getDCParams(self, dc_id):

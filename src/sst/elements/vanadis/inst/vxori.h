@@ -33,20 +33,18 @@ public:
         imm_value = immediate;
     }
 
-    VanadisXorImmInstruction* clone() { return new VanadisXorImmInstruction(*this); }
+    VanadisXorImmInstruction* clone() override { return new VanadisXorImmInstruction(*this); }
+    VanadisFunctionalUnitType getInstFuncType() const override { return INST_INT_ARITH; }
+    const char* getInstCode() const override { return "XORI"; }
 
-    virtual VanadisFunctionalUnitType getInstFuncType() const { return INST_INT_ARITH; }
-
-    virtual const char* getInstCode() const { return "XORI"; }
-
-    virtual void printToBuffer(char* buffer, size_t buffer_size) {
+    void printToBuffer(char* buffer, size_t buffer_size) override {
         snprintf(
             buffer, buffer_size,
             "XORI    %5" PRIu16 " <- %5" PRIu16 " ^ imm=%" PRIu64 " (phys: %5" PRIu16 " <- %5" PRIu16 " ^ %" PRIu64 ")",
             isa_int_regs_out[0], isa_int_regs_in[0], imm_value, phys_int_regs_out[0], phys_int_regs_in[0], imm_value);
     }
 
-    virtual void execute(SST::Output* output, VanadisRegisterFile* regFile) {
+    void execute(SST::Output* output, VanadisRegisterFile* regFile) override {
 #ifdef VANADIS_BUILD_DEBUG
         output->verbose(CALL_INFO, 16, 0,
                         "Execute: (addr=%p) XORI phys: out=%" PRIu16 " in=%" PRIu16 " imm=%" PRIu64

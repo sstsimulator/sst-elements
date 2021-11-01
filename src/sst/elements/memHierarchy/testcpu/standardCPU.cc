@@ -50,7 +50,8 @@ standardCPU::standardCPU(ComponentId_t id, Params& params) :
     /* Required parameter - memSize */
     UnitAlgebra memsize = params.find<UnitAlgebra>("memSize", UnitAlgebra("0B"), found);
     if ( !found ) {
-        out.fatal(CALL_INFO, -1, "%s, Error: parameter 'memSize' was not provided\n");
+        out.fatal(CALL_INFO, -1, "%s, Error: parameter 'memSize' was not provided\n",
+                getName().c_str());
     }
     if (!(memsize.hasUnits("B"))) {
         out.fatal(CALL_INFO, -1, "%s, Error: memSize parameter requires units of 'B' (SI OK). You provided '%s'\n",
@@ -150,6 +151,7 @@ void standardCPU::init(unsigned int phase)
 }
 
 void standardCPU::setup() {
+    memory->setup();
     lineSize = memory->getLineSize();
 }
 
@@ -266,7 +268,7 @@ StandardMem::Request* standardCPU::createWrite(Addr addr) {
         req->setNoncacheable();
         noncacheableWrites->addData(1);
     }
-    out.verbose(CALL_INFO, 2, 0, "%s: %d Issued %sWrite for address 0x%" PRIx64 "\n", getName().c_str(), ops, req->getNoncacheable() ? "Noncacheable " : "", addr);
+    out.verbose(CALL_INFO, 2, 0, "%s: %" PRIu64 " Issued %sWrite for address 0x%" PRIx64 "\n", getName().c_str(), ops, req->getNoncacheable() ? "Noncacheable " : "", addr);
     return req;
 }
 
@@ -278,7 +280,7 @@ StandardMem::Request* standardCPU::createRead(Addr addr) {
         req->setNoncacheable();
         noncacheableReads->addData(1);
     }
-    out.verbose(CALL_INFO, 2, 0, "%s: %d Issued %sRead for address 0x%" PRIx64 "\n", getName().c_str(), ops, req->getNoncacheable() ? "Noncacheable " : "", addr);
+    out.verbose(CALL_INFO, 2, 0, "%s: %" PRIu64 " Issued %sRead for address 0x%" PRIx64 "\n", getName().c_str(), ops, req->getNoncacheable() ? "Noncacheable " : "", addr);
     return req;
 }
 
@@ -289,7 +291,7 @@ StandardMem::Request* standardCPU::createFlush(Addr addr) {
     addr = addr - (addr % lineSize);
     StandardMem::Request* req = new Experimental::Interfaces::StandardMem::FlushAddr(addr, lineSize, false, 10);
     num_flushes_issued->addData(1);
-    out.verbose(CALL_INFO, 2, 0, "%s: %d Issued FlushAddr for address 0x%" PRIx64 "\n", getName().c_str(), ops,  addr);
+    out.verbose(CALL_INFO, 2, 0, "%s: %" PRIu64 " Issued FlushAddr for address 0x%" PRIx64 "\n", getName().c_str(), ops,  addr);
     return req;
 }
 
@@ -300,7 +302,7 @@ StandardMem::Request* standardCPU::createFlushInv(Addr addr) {
     addr = addr - (addr % lineSize);
     StandardMem::Request* req = new Experimental::Interfaces::StandardMem::FlushAddr(addr, lineSize, true, 10);
     num_flushinvs_issued->addData(1);
-    out.verbose(CALL_INFO, 2, 0, "%s: %d Issued FlushAddrInv for address 0x%" PRIx64 "\n", getName().c_str(), ops,  addr);
+    out.verbose(CALL_INFO, 2, 0, "%s: %" PRIu64 " Issued FlushAddrInv for address 0x%" PRIx64 "\n", getName().c_str(), ops,  addr);
     return req;
 }
 
@@ -319,7 +321,7 @@ StandardMem::Request* standardCPU::createLL(Addr addr) {
     ll_addr = addr;
     ll_issued = true;
 
-    out.verbose(CALL_INFO, 2, 0, "%s: %d Issued LoadLink for address 0x%" PRIx64 "\n", getName().c_str(), ops, addr);
+    out.verbose(CALL_INFO, 2, 0, "%s: %" PRIu64 " Issued LoadLink for address 0x%" PRIx64 "\n", getName().c_str(), ops, addr);
     return req;
 }
 
@@ -333,7 +335,7 @@ StandardMem::Request* standardCPU::createSC() {
     StandardMem::Request* req = new Experimental::Interfaces::StandardMem::StoreConditional(ll_addr, data.size(), data);
     num_llsc_issued->addData(1);
     ll_issued = false;
-    out.verbose(CALL_INFO, 2, 0, "%s: %d Issued StoreConditional for address 0x%" PRIx64 "\n", getName().c_str(), ops, ll_addr);
+    out.verbose(CALL_INFO, 2, 0, "%s: %" PRIu64 " Issued StoreConditional for address 0x%" PRIx64 "\n", getName().c_str(), ops, ll_addr);
     return req;
 }
 
@@ -348,13 +350,13 @@ StandardMem::Request* standardCPU::createMMIOWrite() {
         payload >>=8;
     }
     StandardMem::Request* req = new Experimental::Interfaces::StandardMem::Write(mmioAddr, sizeof(int32_t), data, posted);
-    out.verbose(CALL_INFO, 2, 0, "%s: %d Issued MMIO Write for address 0x%" PRIx64 " with payload %d\n", getName().c_str(), ops, mmioAddr, payload_cp);
+    out.verbose(CALL_INFO, 2, 0, "%s: %" PRIu64 " Issued MMIO Write for address 0x%" PRIx64 " with payload %d\n", getName().c_str(), ops, mmioAddr, payload_cp);
     return req;
 }
 
 StandardMem::Request* standardCPU::createMMIORead() {
     StandardMem::Request* req = new Experimental::Interfaces::StandardMem::Read(mmioAddr, sizeof(int32_t));
-    out.verbose(CALL_INFO, 2, 0, "%s: %d Issued MMIO Read for address 0x%" PRIx64 "\n", getName().c_str(), ops, mmioAddr);
+    out.verbose(CALL_INFO, 2, 0, "%s: %" PRIu64 " Issued MMIO Read for address 0x%" PRIx64 "\n", getName().c_str(), ops, mmioAddr);
     return req;
 }
 

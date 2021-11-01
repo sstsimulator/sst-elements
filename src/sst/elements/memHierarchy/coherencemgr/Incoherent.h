@@ -301,8 +301,8 @@ private:
 
     void sendWritebackAck(MemEvent * event);
 
-    void addToOutgoingQueue(Response& resp);
-    void addToOutgoingQueueUp(Response& resp);
+    void forwardByAddress(MemEventBase* ev, Cycle_t timestamp);
+    void forwardByDestination(MemEventBase* ev, Cycle_t timestamp);
 
     void recordPrefetchResult(PrivateCacheLine * line, Statistic<uint64_t> * stat);
 

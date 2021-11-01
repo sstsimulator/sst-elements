@@ -2,6 +2,7 @@
 
 from sst_unittest import *
 from sst_unittest_support import *
+import os.path
 
 ################################################################################
 # Code to support a single instance module initialize, must be called setUp method
@@ -104,10 +105,7 @@ class testcase_memHierarchy_sdl(SSTTestCase):
         self.memHierarchy_Template("sdl8-4")
 
     def test_memHierarchy_sdl9_1(self):
-        if testing_check_get_num_ranks() > 1 or testing_check_get_num_threads() > 1:
-            self.memHierarchy_Template("sdl9-1_MC")
-        else:
-            self.memHierarchy_Template("sdl9-1")
+        self.memHierarchy_Template("sdl9-1")
 
     def test_memHierarchy_sdl9_2(self):
         self.memHierarchy_Template("sdl9-2")
@@ -157,35 +155,21 @@ class testcase_memHierarchy_sdl(SSTTestCase):
 
         # if not multi-rank run, append the errfile onto the output file
         if testing_check_get_num_ranks() < 2:
-            self._grep_v_cleanup_file("not aligned to the request size", errfile, outfile, append=True)
+            lines = ["not aligned to the request size"]
+            self._remove_lines_cleanup_file(lines, errfile, outfile, append=True)
             pass
-
-        # Post processing clean up output file
-#        cmd = "grep -v ^cpu.*: {0} > {1}".format(outfile, tmpfile)
-#        os.system(cmd)
-#        cmd = "grep -v 'not aligned to the request size' {0} > {1}".format(tmpfile, outfile)
-#        os.system(cmd)
-
-        # Post processing clean up output file
-#        self._grep_v_cleanup_file("^cpu.*:", outfile)
-#        self._grep_v_cleanup_file("not aligned to the request size", outfile)
-
-        # Copy the orig reffile to the fixedreffile
-        cmd = "cat {0} > {1}".format(reffile, fixedreffile)
-        os.system(cmd)
 
         # Cleanup any DRAMSIM Debug messages; from both the output file and fixedreffile
         # (this is a bit of hammer, but it works)
-        self._grep_v_cleanup_file("===== MemorySystem", outfile)
-        self._grep_v_cleanup_file("===== MemorySystem", fixedreffile)
-        self._grep_v_cleanup_file("TOTAL_STORAGE : 2048MB | 1 Ranks | 16 Devices per rank", outfile)
-        self._grep_v_cleanup_file("TOTAL_STORAGE : 2048MB | 1 Ranks | 16 Devices per rank", fixedreffile)
-        self._grep_v_cleanup_file("== Loading", outfile)
-        self._grep_v_cleanup_file("== Loading", fixedreffile)
-        self._grep_v_cleanup_file("DRAMSim2 Clock Frequency =1Hz, CPU Clock Frequency=1Hz", outfile)
-        self._grep_v_cleanup_file("DRAMSim2 Clock Frequency =1Hz, CPU Clock Frequency=1Hz", fixedreffile)
-        self._grep_v_cleanup_file("WARNING: UNKNOWN KEY 'DEBUG_TRANS_FLOW' IN INI FILE", outfile)
-        self._grep_v_cleanup_file("WARNING: UNKNOWN KEY 'DEBUG_TRANS_FLOW' IN INI FILE", fixedreffile)
+        
+        lines = ["===== MemorySystem"]
+        lines.append("TOTAL_STORAGE : 2048MB | 1 Ranks | 16 Devices per rank")
+        lines.append("== Loading")
+        lines.append("DRAMSim2 Clock Frequency =1Hz, CPU Clock Frequency=1Hz")
+        lines.append("WARNING: UNKNOWN KEY 'DEBUG_TRANS_FLOW' IN INI FILE")
+        
+        self._remove_lines_cleanup_file(lines, outfile)
+        self._remove_lines_cleanup_file(lines, reffile, fixedreffile)
 
 #        # This may be needed in the future
         testing_remove_component_warning_from_file(outfile)
@@ -213,7 +197,8 @@ class testcase_memHierarchy_sdl(SSTTestCase):
                 log_debug(" -- Output file {0} is an exact match to SORTED (fixed) Reference File {1}".format(outfile, fixedreffile))
             else:
                 # Not matching sorted, if DRAMSIM, then we have one last chance...
-                if sstsimulator_conf_does_have_key("DRAMSIM", "LIBDIR"):
+                if usingDramSim:
+                    log_debug("DRAMSim involved...doing line/word count compare")
                     wc_out_data = os_wc(outfile, [1, 2])
                     log_debug("{0} : wc_out_data ={1}".format(outfile, wc_out_data))
                     wc_ref_data = os_wc(fixedreffile, [1, 2])
@@ -222,8 +207,13 @@ class testcase_memHierarchy_sdl(SSTTestCase):
                     wc_line_word_count_diff = wc_out_data == wc_ref_data
                     if wc_line_word_count_diff:
                         log_debug("Line Word Count Match\n")
+                    else:
+                        diffdata = testing_get_diff_data(testcase)
+                        log_failure(diffdata)
                     self.assertTrue(wc_line_word_count_diff, "Line & Word count between file {0} does not match Reference File {1}".format(outfile, reffile))
                 else:
+                    diffdata = testing_get_diff_data(testcase)
+                    log_failure(diffdata)
                     # Well we tried, but failed
                     self.assertTrue(cmp_result, "(NO DRAMSIM) Sorted Output file {0} does not match Sorted (fixed) Reference File {1} ".format(outfile, fixedreffile))
 
@@ -234,18 +224,30 @@ class testcase_memHierarchy_sdl(SSTTestCase):
 
 ###
 
-    def _grep_v_cleanup_file(self, grep_str, grep_file, out_file = None, append = False):
-        cmd = 'grep -v \"{0}\" {1} > {2}'.format(grep_str, grep_file, self.grep_tmp_file)
-        os.system(cmd)
-        redirecttype = ">"
-        if append == True:
-            redirecttype = ">>"
-
+    # Remove lines containing any string found in 'remove_strs' from in_file
+    # If out_file != None, output is out_file
+    # Otherwise, in_file is overwritten
+    def _remove_lines_cleanup_file(self, remove_strs, in_file, out_file = None, append = False):
+        with open(in_file, 'r') as fp:
+            lines = fp.readlines()
+        
         if out_file == None:
-            cmd = "cat {0} {1} {2}".format(self.grep_tmp_file, redirecttype, grep_file)
+            out_file = in_file
+
+        if append == True:
+            mode = 'a'
         else:
-            cmd = "cat {0} {1} {2}".format(self.grep_tmp_file, redirecttype, out_file)
-        os.system(cmd)
-
-
+            mode = 'w'
+        
+        with open(out_file, mode) as fp:
+            if not append:
+                fp.truncate(0)
+            for line in lines:
+                skip = False
+                for search in remove_strs:
+                    if search in line:
+                        skip = True
+                        continue
+                if not skip:
+                    fp.write(line)
 

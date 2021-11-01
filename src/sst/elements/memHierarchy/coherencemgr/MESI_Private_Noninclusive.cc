@@ -2118,8 +2118,7 @@ uint64_t MESIPrivNoninclusive::sendExclusiveResponse(MemEvent * event, vector<ui
 
     if (time < timestamp_) time = timestamp_;
     uint64_t deliveryTime = time + (inMSHR ? mshrLatency_ : accessLatency_);
-    Response resp = {responseEvent, deliveryTime, packetHeaderBytes + responseEvent->getPayloadSize()};
-    addToOutgoingQueueUp(resp);
+    forwardByDestination(responseEvent, deliveryTime); 
 
     // Debugging
     if (is_debug_event(responseEvent))
@@ -2152,8 +2151,7 @@ uint64_t MESIPrivNoninclusive::sendResponseUp(MemEvent * event, vector<uint8_t> 
     // Compute latency, accounting for serialization of requests to the address
     if (time < timestamp_) time = timestamp_;
     uint64_t deliveryTime = time + (inMSHR ? mshrLatency_ : accessLatency_);
-    Response resp = {responseEvent, deliveryTime, packetHeaderBytes + responseEvent->getPayloadSize()};
-    addToOutgoingQueueUp(resp);
+    forwardByDestination(responseEvent, deliveryTime);
 
     // Debugging
     if (is_debug_event(responseEvent)) {
@@ -2175,9 +2173,8 @@ void MESIPrivNoninclusive::sendResponseDown(MemEvent * event, uint32_t size, vec
 
     responseEvent->setSize(size);
 
-    uint64_t deliverTime = timestamp_ + (data ? accessLatency_ : tagLatency_);
-    Response resp = {responseEvent, deliverTime, packetHeaderBytes + responseEvent->getPayloadSize() };
-    addToOutgoingQueue(resp);
+    uint64_t deliveryTime = timestamp_ + (data ? accessLatency_ : tagLatency_);
+    forwardByDestination(responseEvent, deliveryTime);
 
     if (is_debug_event(responseEvent)) {
         eventDI.action = "Respond";
@@ -2189,9 +2186,6 @@ void MESIPrivNoninclusive::sendResponseDown(MemEvent * event, uint32_t size, vec
 
 uint64_t MESIPrivNoninclusive::forwardFlush(MemEvent * event, bool evict, std::vector<uint8_t>* data, bool dirty, uint64_t time) {
     MemEvent * flush = new MemEvent(*event);
-
-    flush->setSrc(cachename_);
-    flush->setDst(getDestination(event->getBaseAddr()));
 
     uint64_t latency = tagLatency_;
     if (evict) {
@@ -2207,8 +2201,7 @@ uint64_t MESIPrivNoninclusive::forwardFlush(MemEvent * event, bool evict, std::v
 
     uint64_t baseTime = (time > timestamp_) ? time : timestamp_;
     uint64_t sendTime = baseTime + latency;
-    Response resp = {flush, sendTime, packetHeaderBytes + flush->getPayloadSize()};
-    addToOutgoingQueue(resp);
+    forwardByAddress(flush, sendTime);
 
     if (is_debug_addr(event->getBaseAddr())) {
         eventDI.action = "Forward";
@@ -2232,7 +2225,6 @@ uint64_t MESIPrivNoninclusive::forwardFlush(MemEvent * event, bool evict, std::v
 
 uint64_t MESIPrivNoninclusive::sendWriteback(Addr addr, uint32_t size, Command cmd, std::vector<uint8_t>* data, bool dirty, uint64_t startTime) {
     MemEvent* writeback = new MemEvent(cachename_, addr, addr, cmd);
-    writeback->setDst(getDestination(addr));
     writeback->setSize(size);
 
     uint64_t latency = tagLatency_;
@@ -2253,8 +2245,7 @@ uint64_t MESIPrivNoninclusive::sendWriteback(Addr addr, uint32_t size, Command c
 
     uint64_t sendTime = timestamp_ > startTime ? timestamp_ : startTime;
     sendTime += latency;
-    Response resp = {writeback, sendTime, packetHeaderBytes + writeback->getPayloadSize()};
-    addToOutgoingQueue(resp);
+    forwardByAddress(writeback, sendTime);
 
     return sendTime;
     //if (is_debug_addr(addr))
@@ -2275,8 +2266,7 @@ uint64_t MESIPrivNoninclusive::sendFwdRequest(MemEvent * event, Command cmd, std
 
     uint64_t baseTime = timestamp_ > startTime ? timestamp_ : startTime;
     uint64_t deliveryTime = (inMSHR) ? baseTime + mshrLatency_ : baseTime + tagLatency_;
-    Response resp = {req, deliveryTime, packetHeaderBytes};
-    addToOutgoingQueueUp(resp);
+    forwardByDestination(req, deliveryTime);
     if (is_debug_addr(addr)) {
         eventDI.action = "Forward";
 //        debug->debug(_L7_, "Sending %s: Addr = 0x%" PRIx64 ", Dst = %s @ cycles = %" PRIu64 ".\n",
@@ -2287,14 +2277,9 @@ uint64_t MESIPrivNoninclusive::sendFwdRequest(MemEvent * event, Command cmd, std
 
 void MESIPrivNoninclusive::sendWritebackAck(MemEvent * event) {
     MemEvent * ack = event->makeResponse();
-    ack->setDst(event->getSrc());
-    ack->setRqstr(event->getSrc());
-    ack->setSize(event->getSize());
 
     uint64_t deliveryTime = timestamp_ + tagLatency_;
-
-    Response resp = {ack, deliveryTime, packetHeaderBytes};
-    addToOutgoingQueueUp(resp);
+    forwardByDestination(ack, deliveryTime);
 
     if (is_debug_event(event))
         eventDI.action = "Ack";
@@ -2304,14 +2289,14 @@ void MESIPrivNoninclusive::sendWritebackAck(MemEvent * event) {
 /*----------------------------------------------------------------------------------------------------------------------
  *  Override message send functions with versions that record statistics & call parent class
  *---------------------------------------------------------------------------------------------------------------------*/
-void MESIPrivNoninclusive::addToOutgoingQueue(Response& resp) {
-    stat_eventSent[(int)resp.event->getCmd()]->addData(1);
-    CoherenceController::addToOutgoingQueue(resp);
+void MESIPrivNoninclusive::forwardByAddress(MemEventBase* ev, Cycle_t timestamp) {
+    stat_eventSent[(int)ev->getCmd()]->addData(1);
+    CoherenceController::forwardByAddress(ev, timestamp);
 }
 
-void MESIPrivNoninclusive::addToOutgoingQueueUp(Response& resp) {
-    stat_eventSent[(int)resp.event->getCmd()]->addData(1);
-    CoherenceController::addToOutgoingQueueUp(resp);
+void MESIPrivNoninclusive::forwardByDestination(MemEventBase* ev, Cycle_t timestamp) {
+    stat_eventSent[(int)ev->getCmd()]->addData(1);
+    CoherenceController::forwardByDestination(ev, timestamp);
 }
 
 /********************

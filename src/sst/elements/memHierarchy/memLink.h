@@ -94,6 +94,7 @@ public:
 
     /* Initialization functions for parent */
     virtual void init(unsigned int phase);
+    virtual void setup();
 
     /* Remote endpoint info management */
     virtual std::set<EndpointInfo>* getSources();
@@ -101,6 +102,8 @@ public:
     virtual bool isDest(std::string UNUSED(str));
     virtual bool isSource(std::string UNUSED(str));
     virtual std::string findTargetDestination(Addr addr);
+    virtual std::string getTargetDestination(Addr addr);
+    virtual bool isReachable(std::string dst);
 
     /* Send and receive functions for MemLink */
     virtual void sendInitData(MemEventInit * ev);
@@ -112,15 +115,19 @@ public:
     virtual void printStatus(Output &out) {
         out.output("  MemHierarchy::MemLink: No status given\n");
     }
+    virtual std::string getAvailableDestinationsAsString();
 
 protected:
     void addRemote(EndpointInfo info);
+    void addEndpoint(EndpointInfo info);
 
     // Link
     SST::Link* link;
 
     // Data structures
-    std::set<EndpointInfo> remotes;
+    std::set<EndpointInfo> remotes;             // Tracks remotes immediately accessible on the other side of our link
+    std::set<EndpointInfo> endpoints;           // Tracks endpoints in the system with info on how to get there
+    std::set<std::string> remoteNames;          // Tracks remote names for faster lookup than iteratinv via remotes
 
 private:
 

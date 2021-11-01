@@ -1,16 +1,16 @@
-memory, WARNING: loading backend in legacy mode (from parameter set). Instead, load backend into this controller's 'backend' slot via ctrl.setSubComponent() in configuration.
+memory, WARNING: Memories no longer inherit address regions from directories and no region parameters (addr_range_start, addr_range_end, interleave_size, interleave_step) were detected. All addresses will map to this memory: if this is intended, you may ignore this warning or set addr_range_start to 0 in your input deck to eliminate this warning.
 ScratchCPU cpu Finished after 500 issued memory events, 500 returned, 13248 cycles
- scratch.cycles_with_issue : Accumulator : Sum.u64 = 326; SumSQ.u64 = 326; Count.u64 = 326; Min.u64 = 1; Max.u64 = 1; 
- scratch.cycles_attempted_issue_but_rejected : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- scratch.total_cycles : Accumulator : Sum.u64 = 26496; SumSQ.u64 = 26496; Count.u64 = 26496; Min.u64 = 1; Max.u64 = 1; 
- scratch.requests_received_GetS : Accumulator : Sum.u64 = 161; SumSQ.u64 = 161; Count.u64 = 161; Min.u64 = 1; Max.u64 = 1; 
- scratch.requests_received_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- scratch.requests_received_GetX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- scratch.requests_received_PutM : Accumulator : Sum.u64 = 165; SumSQ.u64 = 165; Count.u64 = 165; Min.u64 = 1; Max.u64 = 1; 
- scratch.latency_GetS : Accumulator : Sum.u64 = 3440; SumSQ.u64 = 73570; Count.u64 = 161; Min.u64 = 21; Max.u64 = 24; 
- scratch.latency_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- scratch.latency_GetX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- scratch.latency_PutM : Accumulator : Sum.u64 = 3502; SumSQ.u64 = 74366; Count.u64 = 165; Min.u64 = 21; Max.u64 = 23; 
+ scratch:backendConvertor.cycles_with_issue : Accumulator : Sum.u64 = 326; SumSQ.u64 = 326; Count.u64 = 326; Min.u64 = 1; Max.u64 = 1; 
+ scratch:backendConvertor.cycles_attempted_issue_but_rejected : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ scratch:backendConvertor.total_cycles : Accumulator : Sum.u64 = 26496; SumSQ.u64 = 26496; Count.u64 = 26496; Min.u64 = 1; Max.u64 = 1; 
+ scratch:backendConvertor.requests_received_GetS : Accumulator : Sum.u64 = 161; SumSQ.u64 = 161; Count.u64 = 161; Min.u64 = 1; Max.u64 = 1; 
+ scratch:backendConvertor.requests_received_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ scratch:backendConvertor.requests_received_GetX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ scratch:backendConvertor.requests_received_PutM : Accumulator : Sum.u64 = 165; SumSQ.u64 = 165; Count.u64 = 165; Min.u64 = 1; Max.u64 = 1; 
+ scratch:backendConvertor.latency_GetS : Accumulator : Sum.u64 = 3440; SumSQ.u64 = 73570; Count.u64 = 161; Min.u64 = 21; Max.u64 = 24; 
+ scratch:backendConvertor.latency_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ scratch:backendConvertor.latency_GetX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
+ scratch:backendConvertor.latency_PutM : Accumulator : Sum.u64 = 3502; SumSQ.u64 = 74366; Count.u64 = 165; Min.u64 = 21; Max.u64 = 23; 
  scratch.request_received_scratch_read : Accumulator : Sum.u64 = 80; SumSQ.u64 = 80; Count.u64 = 80; Min.u64 = 1; Max.u64 = 1; 
  scratch.request_received_scratch_write : Accumulator : Sum.u64 = 87; SumSQ.u64 = 87; Count.u64 = 87; Min.u64 = 1; Max.u64 = 1; 
  scratch.request_received_remote_read : Accumulator : Sum.u64 = 74; SumSQ.u64 = 74; Count.u64 = 74; Min.u64 = 1; Max.u64 = 1; 

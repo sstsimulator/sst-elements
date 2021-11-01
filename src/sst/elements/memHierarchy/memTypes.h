@@ -41,7 +41,7 @@ enum class MemEventType { Cache, Move, Custom };                    // For parsi
  *  Commands used throughout MemH
  *  Not all components handle all types
  *
- *  Command, ResponseCmd, BasicCommandClass, CommandClass, cpuSideRequest, Writeback, EventType
+ *  Command, ResponseCmd, BasicCommandClass, CommandClass, routeByAddr, Writeback, EventType
  *****************************************************************************************/
 #define X_CMDS \
     X(NULLCMD,          NULLCMD,        Request,    Request,        1, 0,   Cache)   /* Dummy command */\
@@ -117,7 +117,7 @@ static const CommandClass CommandClassArr[] = {
 #undef X
 };
 
-static const bool CommandCPUSide[] = {
+static const bool CommandRouteByAddress[] = {
 #define X(a,b,c,d,e,f,g) e,
     X_CMDS
 #undef X
@@ -234,8 +234,17 @@ public:
     static const SST::MemHierarchy::Addr REGION_MAX = std::numeric_limits<SST::MemHierarchy::Addr>::max();
 
     void setDefault() {
-        start = interleaveSize = interleaveStep = 0;
+        start = 0;
+        interleaveSize = 0;
+        interleaveStep = 0;
         end = REGION_MAX;
+    }
+
+    void setEmpty() {
+        start = 0;
+        interleaveSize = 0;
+        interleaveStep = 0;
+        end = 0;
     }
 
     bool contains(uint64_t addr) const {
@@ -247,12 +256,99 @@ public:
         return false;
     }
 
+    // Move into util if helpful elsewhere
+    // TODO replace with std function when Core moves to C++17 
+    // a > b
+    uint64_t gcd(const uint64_t a, const uint64_t b) const {
+        if (b == 0)
+            return a;
+        return gcd(b, a % b);
+    }
+
+    // TODO clean this up to something more succinct
+    // We need to compute the set intersection of this MemRegion with MemRegion 'o'
+    // The intersection may not be describable as a single MemRegion, so a set is returned
+    std::set<MemRegion> intersect(const MemRegion &o) const {
+        std::set<MemRegion> regions;
+        // Easy case, regions don't overlap
+        if (o.end < start || end < o.start)
+            return regions; // Empty
+
+        // Easy case, they're equal
+        if (*this == o) {
+            regions.insert(*this);
+            return regions;
+        }
+
+        // Easy case, no interleaving
+        if (interleaveSize == 0 && o.interleaveStep == 0) {
+            MemRegion reg;
+            reg.start = std::max(start, o.start);
+            reg.end = std::min(end, o.end);
+            reg.interleaveSize = 0;
+            reg.interleaveStep = 0;
+            regions.insert(reg);
+            return regions;
+        }
+       
+        // Otherwise, compute LCM of interleaveStep & o.interleaveStep
+        uint64_t lcm; 
+        if (interleaveStep == o.interleaveStep) {
+            lcm = interleaveStep;
+        } else if (interleaveStep > o.interleaveStep) {
+            lcm = (interleaveStep / gcd(interleaveStep, o.interleaveStep)) * o.interleaveStep;
+        } else {
+            lcm = (interleaveStep / gcd(o.interleaveStep, interleaveStep)) * o.interleaveStep;
+        }
+
+        // Check interval from max(start, o.start) to lcm + max(start, o.start)
+        // for overlap
+        // If overlap, add a region with (start_overlap, min(end, o.end), 1, lcm)
+        //  Consecutive regions can be merged
+        uint64_t check_start = std::max(start, o.start);
+        uint64_t check_end = check_start + lcm;
+        uint64_t region_start = check_start;
+        uint64_t region_size = 0;
+        for (uint64_t i = check_start; i < check_end; i++) {
+            bool in_region = false;
+            in_region = (*this).contains(i) && o.contains(i);
+            if (in_region) {
+                if (region_size == 0)
+                    region_start = i;
+                region_size++;
+            } else if (region_size != 0) {
+                MemRegion reg;
+                reg.start = region_start;
+                reg.end = std::min(end, o.end);
+                reg.interleaveSize = region_size;
+                reg.interleaveStep = lcm;
+                regions.insert(reg);
+                region_size = 0;
+            }
+        }
+
+        if (region_size != 0) {
+            MemRegion reg;
+            reg.start = region_start;
+            reg.end = std::min(end, o.end);
+            reg.interleaveSize = region_size;
+            reg.interleaveStep = lcm;
+            regions.insert(reg);
+        }
+        return regions;
+    }
+
+    /* The one whose range is < the other is <; otherwise the one that has few addresses is < */
     bool operator<(const MemRegion &o) const {
-        return (start < o.start);
+        if (start != o.start)
+            return (start < o.start);
+        if (end != o.end)
+            return (end < o.end);
+        return (interleaveSize * o.interleaveStep) < (interleaveStep * o.interleaveSize);
     }
 
     bool operator==(const MemRegion &o) const {
-        return (start == o.start && end == o.end);
+        return (start == o.start && end == o.end && interleaveSize == o.interleaveSize && interleaveStep == o.interleaveStep);
     }
 
     bool operator!=(const MemRegion &o) const {

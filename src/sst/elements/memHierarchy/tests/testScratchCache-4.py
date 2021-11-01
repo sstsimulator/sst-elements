@@ -87,9 +87,14 @@ comp_l2_0.addParams({
     "cache_line_size" : 64,
     "associativity" : 8,
     "replacement_policy" : "mru",
-    "memNIC.network_bw" : "80GiB/s",
-    "memNIC.group" : 1,
 })
+l2_link_0 = comp_l2_0.setSubComponent("cpulink", "memHierarchy.MemLink")
+l2_nic_0 = comp_l2_0.setSubComponent("memlink", "memHierarchy.MemNIC")
+l2_nic_0.addParams({
+    "network_bw" : "80GiB/s",
+    "group" : 1,
+})
+
 comp_cpu2 = sst.Component("cpu2", "memHierarchy.ScratchCPU")
 iface2 = comp_cpu2.setSubComponent("memory", "memHierarchy.scratchInterface")
 iface2.addParams({ "scratchpad_size" : "64KiB" })
@@ -160,8 +165,12 @@ comp_l2_1.addParams({
     "cache_line_size" : 64,
     "associativity" : 8,
     "replacement_policy" : "nmru",
-    "memNIC.network_bw" : "80GiB/s",
-    "memNIC.group" : 1,
+})
+l2_link_1 = comp_l2_1.setSubComponent("cpulink", "memHierarchy.MemLink")
+l2_nic_1 = comp_l2_1.setSubComponent("memlink", "memHierarchy.MemNIC")
+l2_nic_1.addParams({
+    "network_bw" : "80GiB/s",
+    "group" : 1,
 })
 comp_dir = sst.Component("dir", "memHierarchy.DirectoryController")
 comp_dir.addParams({
@@ -170,9 +179,12 @@ comp_dir.addParams({
     "verbose" : 2,
     "entry_cache_size" : 1024,
     "coherence_protocol" : "MESI",
-    "memNIC.network_bw" : "80GiB/s",
-    "memNIC.addr_range_start" : 0,
-    "memNIC.group" : 2,
+    "addr_range_start" : 0,
+})
+dir_nic = comp_dir.setSubComponent("cpulink", "memHierarchy.MemNIC")
+dir_nic.addParams({
+    "network_bw" : "80GiB/s",
+    "group" : 2,
 })
 scratch = sst.Component("scratch", "memHierarchy.Scratchpad")
 scratch.addParams({
@@ -184,12 +196,16 @@ scratch.addParams({
     "scratch_line_size" : 64,
     "memory_line_size" : 128,
     "backing" : "none",
-    "backendConvertor" : "memHierarchy.simpleMemScratchBackendConvertor",
-    "backendConvertor.backend" : "memHierarchy.simpleMem",
-    "backendConvertor.backend.access_time" : "10ns",
-    "memNIC.network_bw" : "50GB/s",
-    "memNIC.group" : 3,
 })
+conv = scratch.setSubComponent("backendConvertor", "memHierarchy.simpleMemScratchBackendConvertor")
+scratch_backend = conv.setSubComponent("backend", "memHierarchy.simpleMem")
+scratch_backend.addParam("access_time", "10ns")
+scratch_nic = scratch.setSubComponent("cpulink", "memHierarchy.MemNIC")
+scratch_nic.addParams({
+    "network_bw" : "50GB/s",
+    "group" : 3,
+})
+
 comp_net = sst.Component("network", "merlin.hr_router")
 comp_net.addParams({
     "xbar_bw" : "50GB/s",
@@ -205,19 +221,19 @@ comp_net.setSubComponent("topology","merlin.singlerouter")
 
 memctrl0 = sst.Component("memory0", "memHierarchy.MemController")
 memctrl0.addParams({
-      "debug" : DEBUG_MEM,
-      "debug_level" : 10,
-      "backing" : "none",
-      "clock" : "1GHz",
-      "verbose" : 2,
+    "debug" : DEBUG_MEM,
+    "debug_level" : 10,
+    "backing" : "none",
+    "clock" : "1GHz",
+    "verbose" : 2,
+    "addr_range_start" : 0,
+    "interleave_size" : "128B",
+    "interleave_step" : "256B",
 })
 
 memnic0 = memctrl0.setSubComponent("cpulink", "memHierarchy.MemNIC")
 memnic0.addParams({
     "network_bw" : "50GB/s",
-    "addr_range_start" : 0,
-    "interleave_size" : "128B",
-    "interleave_step" : "256B",
     "group" : 4,
 })
 
@@ -234,14 +250,14 @@ memctrl1.addParams({
     "backing" : "none",
     "clock" : "1GHz",
     "verbose" : 2,
+    "addr_range_start" : 128,
+    "interleave_size" : "128B",
+    "interleave_step" : "256B",
 })
 
 memnic1 = memctrl1.setSubComponent("cpulink", "memHierarchy.MemNIC")
 memnic1.addParams({
     "network_bw" : "50GB/s",
-    "addr_range_start" : 128,
-    "interleave_size" : "128B",
-    "interleave_step" : "256B",
     "group" : 4,
 })
 
@@ -297,22 +313,22 @@ link_cpu3_bus = sst.Link("link_cpu3_bus")
 link_cpu3_bus.connect( (comp_l1_3, "low_network_0", "100ps"), (comp_bus_1, "high_network_1", "100ps") )
 
 link_bus_l2_0 = sst.Link("link_bus_l2_0")
-link_bus_l2_0.connect( (comp_bus_0, "low_network_0", "100ps"), (comp_l2_0, "high_network_0", "100ps") )
+link_bus_l2_0.connect( (comp_bus_0, "low_network_0", "100ps"), (l2_link_0, "port", "100ps") )
 
 link_bus_l2_1 = sst.Link("link_bus_l2_1")
-link_bus_l2_1.connect( (comp_bus_1, "low_network_0", "100ps"), (comp_l2_1, "high_network_0", "100ps") )
+link_bus_l2_1.connect( (comp_bus_1, "low_network_0", "100ps"), (l2_link_1, "port", "100ps") )
 
 link_l2_net0 = sst.Link("link_l2_net_0")
-link_l2_net0.connect( (comp_l2_0, "directory", "100ps"), (comp_net, "port0", "100ps") )
+link_l2_net0.connect( (l2_nic_0, "port", "100ps"), (comp_net, "port0", "100ps") )
 
 link_l2_net1 = sst.Link("link_l2_net_1")
-link_l2_net1.connect( (comp_l2_1, "directory", "100ps"), (comp_net, "port1", "100ps") )
+link_l2_net1.connect( (l2_nic_1, "port", "100ps"), (comp_net, "port1", "100ps") )
 
 link_dir_net = sst.Link("link_dir_net")
-link_dir_net.connect( (comp_dir, "network", "100ps"), (comp_net, "port2", "100ps") )
+link_dir_net.connect( (dir_nic, "port", "100ps"), (comp_net, "port2", "100ps") )
 
 link_scratch_net = sst.Link("link_scratch_net")
-link_scratch_net.connect( (scratch, "network", "100ps"), (comp_net, "port3", "100ps") )
+link_scratch_net.connect( (scratch_nic, "port", "100ps"), (comp_net, "port3", "100ps") )
 
 link_mem0_net = sst.Link("link_mem0_net")
 link_mem0_net.connect( (memnic0, "port", "100ps"), (comp_net, "port4", "100ps") )

@@ -74,7 +74,7 @@ public:
     virtual ~MemNIC() { }
 
     /* Functions called by parent for handling events */
-    void send(MemEventBase * ev);
+    void send(MemEventBase * ev) override;
     MemEventBase * recv();
     bool isClocked() override { return false; }
 
@@ -89,13 +89,13 @@ public:
     size_t getSizeInBits(MemEventBase * ev);
 
     /* Initialization and finish */
-    void init(unsigned int phase);
-    void finish() { link_control->finish(); }
-    void setup() { link_control->setup(); MemLinkBase::setup(); }
+    void init(unsigned int phase) override;
+    void finish() override { link_control->finish(); }
+    void setup() override { link_control->setup(); MemNICBase::setup(); }
 
     /* Debug */
-    void printStatus(Output &out);
-    void emergencyShutdownDebug(Output &out);
+    void printStatus(Output &out) override;
+    void emergencyShutdownDebug(Output &out) override;
 
 private:
 

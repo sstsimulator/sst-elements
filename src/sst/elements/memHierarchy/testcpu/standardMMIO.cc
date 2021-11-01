@@ -73,7 +73,8 @@ StandardMMIO::StandardMMIO(ComponentId_t id, Params &params) : SST::Component(id
         bool found;
         max_addr = params.find<Addr>("max_addr", 0, found);
         if (!found) {
-            out.fatal(CALL_INFO, 0-1, "%s, Error: Invalid param, 'max_addr' must be specified if mem_accesses > 0\n");
+            out.fatal(CALL_INFO, -1, "%s, Error: Invalid param, 'max_addr' must be specified if mem_accesses > 0\n", 
+                    getName().c_str());
         }
 
         // Register related statistics
@@ -111,7 +112,7 @@ bool StandardMMIO::clockTic(Cycle_t cycle) {
             std::vector<uint8_t> payload;
             payload.resize(iface->getLineSize(), 0);
             StandardMem::Request* req = new Experimental::Interfaces::StandardMem::Write(addr, iface->getLineSize(), payload);
-            out.verbose(CALL_INFO, 2, 0, "%s: Issued Write for address 0x%" PRIx64 "\n", getName().c_str(), mem_access, addr);
+            out.verbose(CALL_INFO, 2, 0, "%s: %d Issued Write for address 0x%" PRIx64 "\n", getName().c_str(), mem_access, addr);
             mem_access--;
         }
     }

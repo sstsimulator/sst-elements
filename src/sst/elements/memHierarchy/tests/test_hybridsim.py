@@ -64,16 +64,17 @@ comp_l2cache.addParams({
 })
 comp_memory = sst.Component("memory", "memHierarchy.MemController")
 comp_memory.addParams({
-      "coherence_protocol" : """MSI""",
       "debug" : """0""",
-      "system_ini" : os.environ['SST_HYBRIDSIM_LIB_DIR'] + '/ini/hybridsim.ini',
       "clock" : """1GHz""",
       "access_time" : """1000 ns""",
-      "backend.access_time" : "1000 ns",
-      "backend.device_ini" : "DDR3_micron_32M_8B_x4_sg125.ini",
-      "backend.system_ini" : os.environ['SST_HYBRIDSIM_LIB_DIR'] + '/ini/hybridsim.ini',
-      "backend.mem_size" : "512MiB",
-      "backend" : """memHierarchy.hybridsim"""
+      "addr_range_start" : 0,
+})
+comp_hybridsim = comp_memory.setSubComponent("backend", "memHierarchy.hybridsim")
+comp_hybridsim.addParams({
+      "access_time" : "1000 ns",
+      "device_ini" : "DDR3_micron_32M_8B_x4_sg125.ini",
+      "system_ini" : os.environ['SST_HYBRIDSIM_LIB_DIR'] + '/ini/hybridsim.ini',
+      "mem_size" : "512MiB",
 })
 
 # Define the simulation links

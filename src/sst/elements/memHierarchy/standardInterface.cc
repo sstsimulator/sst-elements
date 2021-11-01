@@ -93,9 +93,14 @@ void StandardInterface::init(unsigned int phase) {
         MemEventInitCoherence * event = new MemEventInitCoherence(getName(), epType, false, false, 0, false);
         link_->sendInitData(event);
 
-        /* Broadcast our interface to all other interfaces in the system */
-        MemEventInitEndpoint * epEv = new MemEventInitEndpoint(getName().c_str(), epType, region);
-        link_->sendInitData(epEv);
+        /* 
+         * If we are addressable (MMIO), broadcast that info across the system 
+         * For now, treat all MMIO regions as noncacheable
+         */
+        if (epType == Endpoint::MMIO) {
+            MemEventInitEndpoint * epEv = new MemEventInitEndpoint(getName().c_str(), epType, region, false);
+            link_->sendInitData(epEv);
+        }
     }
 
     while (SST::Event * ev = link_->recvInitData()) {
@@ -116,10 +121,10 @@ void StandardInterface::init(unsigned int phase) {
                 } else if (memEvent->getInitCmd() == MemEventInit::InitCommand::Endpoint) {
                     MemEventInitEndpoint * memEventE = static_cast<MemEventInitEndpoint*>(memEvent);
                     debug.debug(_L10_, "%s, Received initEndpoint message: %s\n", getName().c_str(), memEventE->getVerboseString().c_str());
-                    if (memEventE->getType() == Endpoint::MMIO) {
-                        std::vector<MemRegion> regs = memEventE->getNoncacheableRegions();
-                        for (std::vector<MemRegion>::iterator it = regs.begin(); it != regs.end(); it++) {
-                            noncacheableRegions.insert(std::make_pair(it->start, *it));
+                    std::vector<std::pair<MemRegion,bool>> regions = memEventE->getRegions();
+                    for (auto it = regions.begin(); it != regions.end(); it++) {
+                        if (!it->second) {
+                            noncacheableRegions.insert(std::make_pair(it->first.start, it->first));
                         }
                     }
                 }
@@ -298,7 +303,7 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::Read* req
     Addr bAddr = (iface->lineSize_ == 0 || req->getNoncacheable()) ? req->pAddr : req->pAddr & iface->baseAddrMask_; // Line address
     MemEvent* read = new MemEvent(iface->getName(), req->pAddr, bAddr, Command::GetS, req->size);
     read->setRqstr(iface->getName());
-    read->setDst(iface->link_->findTargetDestination(bAddr));
+    read->setDst(iface->link_->getTargetDestination(bAddr));
     read->setVirtualAddress(req->vAddr);
     read->setInstructionPointer(req->iPtr);
     if (req->getNoncacheable()) {
@@ -327,7 +332,7 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::Write* re
     MemEvent* write = new MemEvent(iface->getName(), req->pAddr, bAddr, Command::GetX, req->data);
     
     write->setRqstr(iface->getName());
-    write->setDst(iface->link_->findTargetDestination(bAddr));
+    write->setDst(iface->link_->getTargetDestination(bAddr));
     write->setVirtualAddress(req->vAddr);
     write->setInstructionPointer(req->iPtr);
     
@@ -368,7 +373,7 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::FlushAddr
 
     MemEvent* flush = new MemEvent(iface->getName(), req->pAddr, bAddr, cmd, req->size);
     flush->setRqstr(iface->getName());
-    flush->setDst(iface->link_->findTargetDestination(bAddr));
+    flush->setDst(iface->link_->getTargetDestination(bAddr));
     flush->setVirtualAddress(req->vAddr);
     flush->setInstructionPointer(req->iPtr);
 #ifdef __SST_DEBUG_OUTPUT__
@@ -384,7 +389,7 @@ Event* StandardInterface::MemEventConverter::convert(StandardMem::ReadLock* req)
     Addr bAddr = (iface->lineSize_ == 0 || req->getNoncacheable()) ? req->pAddr : req->pAddr & iface->baseAddrMask_;
     MemEvent* read = new MemEvent(iface->getName(), req->pAddr, bAddr, Command::GetSX, req->size);
     read->setRqstr(iface->getName());
-    read->setDst(iface->link_->findTargetDestination(bAddr));
+    read->setDst(iface->link_->getTargetDestination(bAddr));
     read->setVirtualAddress(req->vAddr);
     read->setInstructionPointer(req->iPtr);
     read->setFlag(MemEvent::F_LOCKED);
@@ -400,7 +405,7 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::WriteUnlo
     Addr bAddr = (iface->lineSize_ == 0 || req->getNoncacheable()) ? req->pAddr : req->pAddr & iface->baseAddrMask_;
     MemEvent* write = new MemEvent(iface->getName(), req->pAddr, bAddr, Command::GetX, req->data);
     write->setRqstr(iface->getName());
-    write->setDst(iface->link_->findTargetDestination(bAddr));
+    write->setDst(iface->link_->getTargetDestination(bAddr));
     write->setVirtualAddress(req->vAddr);
     write->setInstructionPointer(req->iPtr);
     write->setFlag(MemEvent::F_LOCKED);
@@ -421,7 +426,7 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::LoadLink*
     MemEvent* load = new MemEvent(iface->getName(), req->pAddr, bAddr, Command::GetS, req->size);
     load->setFlag(MemEvent::F_LLSC);
     load->setRqstr(iface->getName());
-    load->setDst(iface->link_->findTargetDestination(bAddr));
+    load->setDst(iface->link_->getTargetDestination(bAddr));
     load->setVirtualAddress(req->vAddr);
     load->setInstructionPointer(req->iPtr);
     if (req->getNoncacheable())
@@ -438,7 +443,7 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::StoreCond
     MemEvent* store = new MemEvent(iface->getName(), req->pAddr, bAddr, Command::GetX, req->data);
     store->setFlag(MemEvent::F_LLSC);
     store->setRqstr(iface->getName());
-    store->setDst(iface->link_->findTargetDestination(bAddr));
+    store->setDst(iface->link_->getTargetDestination(bAddr));
     store->setVirtualAddress(req->vAddr);
     store->setInstructionPointer(req->iPtr);
     

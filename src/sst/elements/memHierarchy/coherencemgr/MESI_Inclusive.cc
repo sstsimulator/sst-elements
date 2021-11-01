@@ -1992,8 +1992,7 @@ SimTime_t MESIInclusive::sendResponseUp(MemEvent * event, vector<uint8_t>* data,
     // Compute latency, accounting for serialization of requests to the address
     if (time < timestamp_) time = timestamp_;
     uint64_t deliveryTime = time + (inMSHR ? mshrLatency_ : accessLatency_);
-    Response resp = {responseEvent, deliveryTime, packetHeaderBytes + responseEvent->getPayloadSize()};
-    addToOutgoingQueueUp(resp);
+    forwardByDestination(responseEvent, deliveryTime);
 
     // Debugging
     if (is_debug_event(responseEvent)) {
@@ -2018,8 +2017,7 @@ void MESIInclusive::sendResponseDown(MemEvent * event, SharedCacheLine * line, b
     responseEvent->setSize(lineSize_);
 
     uint64_t deliverTime = timestamp_ + (data ? accessLatency_ : tagLatency_);
-    Response resp = {responseEvent, deliverTime, packetHeaderBytes + responseEvent->getPayloadSize() };
-    addToOutgoingQueue(resp);
+    forwardByDestination(responseEvent, deliverTime);
 
     if (is_debug_event(responseEvent)) {
         eventDI.action = "Respond";
@@ -2029,9 +2027,6 @@ void MESIInclusive::sendResponseDown(MemEvent * event, SharedCacheLine * line, b
 
 void MESIInclusive::forwardFlush(MemEvent * event, SharedCacheLine * line, bool evict) {
     MemEvent * flush = new MemEvent(*event);
-
-    flush->setSrc(cachename_);
-    flush->setDst(getDestination(event->getBaseAddr()));
 
     uint64_t latency = tagLatency_;
     if (evict) {
@@ -2048,8 +2043,7 @@ void MESIInclusive::forwardFlush(MemEvent * event, SharedCacheLine * line, bool 
     uint64_t baseTime = timestamp_;
     if (line && line->getTimestamp() > baseTime) baseTime = line->getTimestamp();
     uint64_t deliveryTime = baseTime + latency;
-    Response resp = {flush, deliveryTime, packetHeaderBytes + flush->getPayloadSize()};
-    addToOutgoingQueue(resp);
+    forwardByAddress(flush, deliveryTime);
     if (line)
         line->setTimestamp(deliveryTime-1);
 
@@ -2065,7 +2059,6 @@ void MESIInclusive::forwardFlush(MemEvent * event, SharedCacheLine * line, bool 
  */
 void MESIInclusive::sendWriteback(Command cmd, SharedCacheLine* line, bool dirty) {
     MemEvent* writeback = new MemEvent(cachename_, line->getAddr(), line->getAddr(), cmd);
-    writeback->setDst(getDestination(line->getAddr()));
     writeback->setSize(lineSize_);
 
     uint64_t latency = tagLatency_;
@@ -2086,8 +2079,8 @@ void MESIInclusive::sendWriteback(Command cmd, SharedCacheLine* line, bool dirty
 
     uint64_t baseTime = (timestamp_ > line->getTimestamp()) ? timestamp_ : line->getTimestamp();
     uint64_t deliveryTime = baseTime + latency;
-    Response resp = {writeback, deliveryTime, packetHeaderBytes + writeback->getPayloadSize()};
-    addToOutgoingQueue(resp);
+    forwardByAddress(writeback, deliveryTime);
+    
     line->setTimestamp(deliveryTime-1);
 
    //f (is_debug_addr(line->getAddr()))
@@ -2097,14 +2090,11 @@ void MESIInclusive::sendWriteback(Command cmd, SharedCacheLine* line, bool dirty
 
 void MESIInclusive::sendAckPut(MemEvent * event) {
     MemEvent * ack = event->makeResponse();
-    ack->setDst(event->getSrc());
     ack->setRqstr(event->getSrc());
     ack->setSize(event->getSize());
 
     uint64_t deliveryTime = timestamp_ + tagLatency_;
-
-    Response resp = {ack, deliveryTime, packetHeaderBytes};
-    addToOutgoingQueueUp(resp);
+    forwardByDestination(ack, deliveryTime);
 
     if (is_debug_event(event))
         eventDI.action = "Ack";
@@ -2131,8 +2121,8 @@ void MESIInclusive::downgradeOwner(MemEvent * event, SharedCacheLine* line, bool
 
     uint64_t baseTime = timestamp_ > line->getTimestamp() ? timestamp_ : line->getTimestamp();
     uint64_t deliveryTime = (inMSHR) ? baseTime + mshrLatency_ : baseTime + tagLatency_;
-    Response resp = {fetch, deliveryTime, packetHeaderBytes};
-    addToOutgoingQueueUp(resp);
+    forwardByDestination(fetch, deliveryTime);
+    
     line->setTimestamp(deliveryTime);
 
 
@@ -2201,9 +2191,8 @@ uint64_t MESIInclusive::invalidateSharer(std::string shr, MemEvent * event, Shar
 
         uint64_t baseTime = timestamp_ > line->getTimestamp() ? timestamp_ : line->getTimestamp();
         uint64_t deliveryTime = (inMSHR) ? baseTime + mshrLatency_ : baseTime + tagLatency_;
-        Response resp = {inv, deliveryTime, packetHeaderBytes};
-        addToOutgoingQueueUp(resp);
-
+        forwardByDestination(inv, deliveryTime);
+        
         mshr_->incrementAcksNeeded(addr);
 
         if (is_debug_addr(addr)) {
@@ -2244,8 +2233,7 @@ bool MESIInclusive::invalidateOwner(MemEvent * event, SharedCacheLine * line, bo
 
     uint64_t baseTime = timestamp_ > line->getTimestamp() ? timestamp_ : line->getTimestamp();
     uint64_t deliveryTime = (inMSHR) ? baseTime + mshrLatency_ : baseTime + tagLatency_;
-    Response resp = {inv, deliveryTime, packetHeaderBytes};
-    addToOutgoingQueueUp(resp);
+    forwardByDestination(inv, deliveryTime);
     line->setTimestamp(deliveryTime);
 
     if (is_debug_addr(addr)) {
@@ -2260,17 +2248,15 @@ bool MESIInclusive::invalidateOwner(MemEvent * event, SharedCacheLine * line, bo
  *  Override message send functions with versions that record statistics & call parent class
  *---------------------------------------------------------------------------------------------------------------------*/
 
-void MESIInclusive::addToOutgoingQueue(Response& resp) {
-    stat_eventSent[(int)resp.event->getCmd()]->addData(1);
-    CoherenceController::addToOutgoingQueue(resp);
+void MESIInclusive::forwardByAddress(MemEventBase* ev, Cycle_t timestamp) {
+    stat_eventSent[(int)ev->getCmd()]->addData(1);
+    CoherenceController::forwardByAddress(ev, timestamp);
 }
 
-
-void MESIInclusive::addToOutgoingQueueUp(Response& resp) {
-    stat_eventSent[(int)resp.event->getCmd()]->addData(1);
-    CoherenceController::addToOutgoingQueueUp(resp);
+void MESIInclusive::forwardByDestination(MemEventBase* ev, Cycle_t timestamp) {
+    stat_eventSent[(int)ev->getCmd()]->addData(1);
+    CoherenceController::forwardByDestination(ev, timestamp);
 }
-
 
 /***********************************************************************************************************
  * Statistics and listeners

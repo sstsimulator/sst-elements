@@ -198,9 +198,6 @@ public:
     void setSuccess(bool b) { b ? setFlag(MemEventBase::F_SUCCESS) : clearFlag(MemEventBase::F_SUCCESS); }
     bool success() { return queryFlag(MemEventBase::F_SUCCESS); }
 
-    bool fromHighNetNACK()  { return !CommandCPUSide[(int)cmd_];}
-    bool fromLowNetNACK()   { return CommandCPUSide[(int)cmd_];}
-
     /** @return  the data payload. */
     dataVec& getPayload(void) {
         /* Lazily allocate space for payload */
@@ -251,8 +248,8 @@ public:
     bool isResponse(void) const { return BasicCommandClassArr[(int)cmd_] == BasicCommandClass::Response; }
     /** Returns true if this is a writeback */
     bool isWriteback(void) const { return CommandWriteback[(int)cmd_]; }
-    /** Returns true if this is a CPU-side event (i.e., sent from CPU side of hierarchy) */
-    bool isCPUSideEvent(void) const { return CommandCPUSide[(int)cmd_]; }
+    /** Returns true if this request type should be routed by address (versus destination) */
+    bool isRoutedByAddress(void) const { return CommandRouteByAddress[(int)cmd_]; }
 
     void setEvict(bool status) { isEvict_ = status; }
     bool getEvict() { return isEvict_; }

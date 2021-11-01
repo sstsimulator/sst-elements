@@ -46,8 +46,7 @@ public:
 
 #define MEMLINKBASE_ELI_PARAMS { "debug",              "(int) Where to print debug output. Options: 0[no output], 1[stdout], 2[stderr], 3[file]", "0"},\
     { "debug_level",        "(int) Debug verbosity level. Between 0 and 10", "0"},\
-    { "debug_addr",         "(comma separated uint) Address(es) to be debugged. Leave empty for all, otherwise specify one or more, comma-separated values. Start and end string with brackets",""},\
-    { "accept_region",      "(bool) Set by parent component but user should unset if region (addr_range_start/end, interleave_size/step) params are provided to memory. Provides backward compatibility for address translation between memory controller and directory.", "false"}
+    { "debug_addr",         "(comma separated uint) Address(es) to be debugged. Leave empty for all, otherwise specify one or more, comma-separated values. Start and end string with brackets",""}
 
 
     // Struct identifying an endpoint
@@ -58,10 +57,19 @@ public:
         MemRegion region;   /* Address region associated with this component */
 
         bool operator<(const EndpointInfo &o) const {
-            if (region != o.region)
+            if (region != o.region) {
                 return region < o.region;
-            else
+            } else {
                 return name < o.name;
+            }
+        }
+
+
+        std::string toString() const {
+            std::stringstream str;
+            str << "Name: " << name << std::hex << " Addr: " << addr;
+            str << std::dec << " ID: " << id << " Region: " << region.toString();
+            return str.str();
         }
     };
 
@@ -118,8 +126,6 @@ public:
         info.addr = 0;
         info.id = 0;
 
-        // Check whether we should accept a region push by someone else
-        acceptRegion = params.find<bool>("accept_region", false);
     }
 
     /* Destructor */
@@ -153,16 +159,22 @@ public:
     void recvNotify(SST::Event * ev) { (*recvHandler)(ev); }
 
     /* Functions for managing communication according to address */
-    virtual std::string findTargetDestination(Addr addr) =0;
-
+    virtual std::string findTargetDestination(Addr addr) =0;    /* Return destination and return "" if none found */
+    virtual std::string getTargetDestination(Addr addr) =0;     /* Return destination and error if none found */
+    
+    /* Check if a request address maps to our region */
     virtual bool isRequestAddressValid(Addr addr) { return info.region.contains(addr); }
+    
+    /* Get a string-ized list of available destinations on this link */
+    virtual std::string getAvailableDestinationsAsString() =0; // For debug
 
     /* Functions for managing source/destination information */
     virtual std::set<EndpointInfo>* getSources() =0;
     virtual std::set<EndpointInfo>* getDests() =0;
 
-    virtual bool isDest(std::string UNUSED(str)) =0;
-    virtual bool isSource(std::string UNUSED(str)) =0;
+    virtual bool isDest(std::string UNUSED(str)) =0;    /* Check whether a component is a destination on this link. May be slow (for init() only) */
+    virtual bool isSource(std::string UNUSED(str)) =0;  /* Check whether a component is a soruce on this link. May be slow (for init() only) */
+    virtual bool isReachable(std::string dst) =0;       /* Check whether a component is reachable on this link. Should be fast - used during simulation */
 
     MemRegion getRegion() { return info.region; }
     void setRegion(MemRegion region) { info.region = region; }
@@ -183,7 +195,6 @@ protected:
 
     // Local EndpointInfo
     EndpointInfo info;
-    bool acceptRegion; // Accept a region push from a source
 
     // Handlers
     SST::Event::HandlerBase * recvHandler; // Event handler to call when an event is received

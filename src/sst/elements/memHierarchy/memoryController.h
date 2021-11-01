@@ -96,7 +96,10 @@ public:
 
 protected:
     MemController();  // for serialization only
-    ~MemController() {}
+    ~MemController() {
+        if (backing_)
+            delete backing_;
+    }
 
     void notifyListeners( MemEvent* ev ) {
         if (  ! listeners_.empty()) {

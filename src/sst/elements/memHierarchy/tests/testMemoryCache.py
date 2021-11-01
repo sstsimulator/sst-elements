@@ -54,7 +54,6 @@ data_network_params = {
 }
 
 nic_params = {
-    "accept_region" : 0,
     "debug" : debugNIC,
     "debug_level" : debugLev,
 }

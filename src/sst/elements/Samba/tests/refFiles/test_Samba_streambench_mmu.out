@@ -1,3 +1,4 @@
+memory, WARNING: Memories no longer inherit address regions from directories and no region parameters (addr_range_start, addr_range_end, interleave_size, interleave_step) were detected. All addresses will map to this memory: if this is intended, you may ignore this warning or set addr_range_start to 0 in your input deck to eliminate this warning.
 Initialized with 1 cores
 Before initialization 
 Assigning the PTW correctly
