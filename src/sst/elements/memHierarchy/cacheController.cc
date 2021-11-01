@@ -62,6 +62,13 @@ void Cache::handleEvent(SST::Event * ev) {
  *  a prefetch target
  */
 void Cache::handlePrefetchEvent(SST::Event * ev) {
+    MemEventBase *event = static_cast<MemEventBase*>(ev);
+
+    // Record the time at which requests arrive for latency statistics
+    if (CommandClassArr[(int)event->getCmd()] == CommandClass::Request &&
+        !CommandWriteback[(int)event->getCmd()])
+        coherenceMgr_->recordIncomingRequest(event);
+
     prefetchSelfLink_->send(prefetchDelay_, ev);
 }
 
