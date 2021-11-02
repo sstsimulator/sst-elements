@@ -100,8 +100,8 @@ public:
                 delete[] temp_line;
             }
 
-            output->verbose(CALL_INFO, 16, 0, "[ins-loader] ---> hit (addr=%p), caching line in predecoder.\n",
-                            (void*)req->addr);
+            output->verbose(CALL_INFO, 16, 0, "[ins-loader] ---> hit (addr=0x%llx), caching line in predecoder.\n",
+                            req->addr);
 
             predecode_cache->store(req->addr, new_line);
 
@@ -186,7 +186,7 @@ public:
 		const uint64_t line_start    = addr - (addr % static_cast<uint64_t>(cache_line_width));
 		const uint64_t len_line_left = cache_line_width - (addr % static_cast<uint64_t>(cache_line_width));
 
-		if(len < len_line_left) {
+		if(len <= len_line_left) {
 			return predecode_cache->contains(line_start);
 		} else {
 			const uint64_t line_start_right = line_start + cache_line_width;
@@ -222,7 +222,7 @@ public:
 					// line is already in the cache, touch to make sure it is kept in LRU
 					predecode_cache->touch(line_start);
 
-					output->verbose(CALL_INFO, 8, 0, "[ins-loader] ----> line (start-addr: 0x%llu) is already in pre-decode cache, updated LRU priority\n",
+					output->verbose(CALL_INFO, 8, 0, "[ins-loader] ----> line (start-addr: 0x%llx) is already in pre-decode cache, updated LRU priority\n",
 						line_start);
 				} else {
 	            bool found_pending_load = false;
