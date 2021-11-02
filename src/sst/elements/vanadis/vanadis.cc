@@ -39,7 +39,7 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
     core_id = params.find<uint32_t>("core_id", 0);
 
     char* outputPrefix = (char*)malloc(sizeof(char) * 256);
-    sprintf(outputPrefix, "[Core: %3" PRIu32 "]: ", core_id);
+    sprintf(outputPrefix, "[Core: %4" PRIu32 "/@t]: ", core_id);
 
     output = new SST::Output(outputPrefix, verbosity, 0, Output::STDOUT);
     free(outputPrefix);
