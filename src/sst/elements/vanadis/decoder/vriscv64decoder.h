@@ -1377,21 +1377,21 @@ protected:
 		return (imm_96 | imm_54 | imm_3 | imm_2);
 	}
 
-    uint16_t extract_rd(const uint32_t ins) const { return static_cast<uint16_t>((ins & VANADIS_RISCV_RD_MASK) >> 6); }
+    uint16_t extract_rd(const uint32_t ins) const { return static_cast<uint16_t>((ins & VANADIS_RISCV_RD_MASK) >> 7); }
 
     uint16_t extract_rs1(const uint32_t ins) const
     {
-        return static_cast<uint16_t>((ins & VANADIS_RISCV_RS1_MASK) >> 14);
+        return static_cast<uint16_t>((ins & VANADIS_RISCV_RS1_MASK) >> 15);
     }
 
     uint16_t extract_rs2(const uint32_t ins) const
     {
-        return static_cast<uint16_t>((ins & VANADIS_RISCV_RS1_MASK) >> 19);
+        return static_cast<uint16_t>((ins & VANADIS_RISCV_RS1_MASK) >> 20);
     }
 
     uint32_t extract_func3(const uint32_t ins) const { return ((ins & VANADIS_RISCV_FUNC3_MASK) >> 12); }
 
-    uint32_t extract_func7(const uint32_t ins) const { return ((ins & VANADIS_RISCV_FUNC7_MASK) >> 24); }
+    uint32_t extract_func7(const uint32_t ins) const { return ((ins & VANADIS_RISCV_FUNC7_MASK) >> 25); }
 
     uint32_t extract_opcode(const uint32_t ins) const { return (ins & VANADIS_RISCV_OPCODE_MASK); }
 
