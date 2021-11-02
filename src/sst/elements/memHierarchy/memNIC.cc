@@ -37,7 +37,7 @@ using namespace SST::Interfaces;
 
 /* Constructor */
 
-MemNIC::MemNIC(ComponentId_t id, Params &params) : MemNICBase(id, params) {
+MemNIC::MemNIC(ComponentId_t id, Params &params, TimeConverter* tc) : MemNICBase(id, params, tc) {
     
     link_control = loadUserSubComponent<SimpleNetwork>("linkcontrol", ComponentInfo::SHARE_NONE, 1); // 1 is the num virtual networks
     if (!link_control) {
@@ -58,6 +58,9 @@ MemNIC::MemNIC(ComponentId_t id, Params &params) : MemNICBase(id, params) {
 
     // Packet size
     packetHeaderBytes = extractPacketHeaderSize(params, "min_packet_size");
+
+    clockHandler = new Clock::Handler<MemNIC>(this, &MemNIC::clock);
+    clockTC = registerClock(tc, clockHandler);
 }
 
 void MemNIC::init(unsigned int phase) {
@@ -69,11 +72,9 @@ void MemNIC::init(unsigned int phase) {
  * Called by parent on a clock
  * Returns whether anything sent this cycle
  */
-bool MemNIC::clock() {
-    if (sendQueue.empty()) return true;
-
+bool MemNIC::clock(SimTime_t cycle) {
     drainQueue(&sendQueue, link_control);
-
+    if (sendQueue.empty()) return true; /* turn off clock */
     return false;
 }
 
@@ -88,8 +89,8 @@ bool MemNIC::recvNotify(int) {
         delete mre;
         if (ev) {
             if (is_debug_event(ev)) {
-                dbg.debug(_L9_, "%s, memNIC recv: src: %s. cmd: %s\n",
-                        getName().c_str(), ev->getSrc().c_str(), CommandString[(int)ev->getCmd()]);
+                dbg.debug(_L5_, "E: %-40" PRIu64 "  %-20s NIC:Recv      (%s)\n", 
+                    Simulation::getSimulation()->getCurrentSimCycle(), getName().c_str(), ev->getBriefString().c_str());
             }
             (*recvHandler)(ev);
         }
@@ -108,12 +109,17 @@ void MemNIC::send(MemEventBase *ev) {
     req->vn = 0;
 
     if (is_debug_event(ev)) {
-        dbg.debug(_L9_, "%s, memNIC adding to send queue: dst: %s, bits: %zu, cmd: %s\n",
-                getName().c_str(), ev->getDst().c_str(), req->size_in_bits, CommandString[(int)ev->getCmd()]);
+        dbg.debug(_L5_, "N: %-40" PRIu64 "  %-20s Enqueue       Dst: %lld, bits: %zu, (%s)\n", 
+            Simulation::getSimulation()->getCurrentSimCycle(), getName().c_str(), req->dest, req->size_in_bits, ev->getBriefString().c_str());
     }
 
     req->givePayload(mre);
     sendQueue.push(req);
+    //printf("%s, %" PRIu64 ", Receive %s, 0x%" PRIx64 "\n", getName().c_str(), getCurrentSimTime("1ps"), CommandString[(int)ev->getCmd()], ev->getRoutingAddress() );
+    if (sendQueue.size() == 1)
+        drainQueue(&sendQueue, link_control);
+    if (sendQueue.size() == 1) /* Attempt again in 1 cycle */
+        reregisterClock(clockTC, clockHandler);
 }
 
 

@@ -91,7 +91,10 @@ public:
 
 private:
 
-    ~Scratchpad() {}
+    ~Scratchpad() {
+        if (backing_)
+            delete backing_;
+    }
 
     // Parameters - scratchpad
     uint64_t scratchSize_;      // Size of the total scratchpad in bytes - any address above this is assumed to address remote memory

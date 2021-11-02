@@ -606,9 +606,8 @@ private:
     uint64_t sendFetch(Command cmd, MemEvent * event, std::string dst, bool inMSHR, uint64_t ts);
 
     /** Call through to coherenceController with statistic recording */
-    void addToOutgoingQueue(Response& resp);
-    void addToOutgoingQueueUp(Response& resp);
-
+    void forwardByAddress(MemEventBase* ev, Cycle_t timestamp);
+    void forwardByDestination(MemEventBase* ev, Cycle_t timestamp);
 
     /** Helpers */
     void removeSharerViaInv(MemEvent* event, DirectoryLine * tag, DataLine * data, bool remove);

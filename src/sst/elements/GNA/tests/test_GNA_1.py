@@ -46,6 +46,7 @@ comp_memctrl.addParams({
       "debug_level" : 10,
       "backing" : "malloc", 
       "clock" : "1GHz",
+      "addr_range_start" : 0,
 })
 memory = comp_memctrl.setSubComponent("backend", "memHierarchy.simpleMem")
 memory.addParams({

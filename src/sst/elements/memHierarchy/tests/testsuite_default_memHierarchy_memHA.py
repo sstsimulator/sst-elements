@@ -144,7 +144,45 @@ class testcase_memHierarchy_memHA(SSTTestCase):
 
     def test_memHA_Kingsley(self):
         self.memHA_Template("Kingsley")
-
+    
+    def test_memHA_ScratchCache_1(self):
+        self.memHA_Template("ScratchCache_1")
+    
+    def test_memHA_ScratchCache_2(self):
+        self.memHA_Template("ScratchCache_2")
+    
+    def test_memHA_ScratchCache_3(self):
+        self.memHA_Template("ScratchCache_3")
+    
+    def test_memHA_ScratchCache_4(self):
+        self.memHA_Template("ScratchCache_4")
+    
+    def test_memHA_ScratchDirect(self):
+        self.memHA_Template("ScratchDirect")
+    
+    def test_memHA_ScratchNetwork(self):
+        self.memHA_Template("ScratchDirect")
+    
+    def test_memHA_StdMem(self):
+        self.memHA_Template("StdMem")
+    
+    def test_memHA_StdMem_flush(self):
+        self.memHA_Template("StdMem_flush")
+    
+    def test_memHA_StdMem_nic(self):
+        self.memHA_Template("StdMem_nic")
+    
+    def test_memHA_StdMem_noninclusive(self):
+        self.memHA_Template("StdMem_noninclusive")
+    
+    def test_memHA_StdMem_mmio(self):
+        self.memHA_Template("StdMem_mmio")
+    
+    def test_memHA_StdMem_mmio2(self):
+        self.memHA_Template("StdMem_mmio2")
+    
+    def test_memHA_StdMem_mmio3(self):
+        self.memHA_Template("StdMem_mmio3")
 #####
 
     def memHA_Template(self, testcase, lcwc_match_allowed=False,
@@ -171,7 +209,6 @@ class testcase_memHierarchy_memHA(SSTTestCase):
                 reffile = mr_checkfile
         fixedreffile = "{0}/{1}_fixedreffile.out".format(outdir, testDataFileName)
         tmpfile = "{0}/{1}.tmp".format(outdir, testDataFileName)
-        self.grep_tmp_file = tmpfile
 
         outfile = "{0}/{1}.out".format(outdir, testDataFileName)
         errfile = "{0}/{1}.err".format(outdir, testDataFileName)
@@ -185,31 +222,24 @@ class testcase_memHierarchy_memHA(SSTTestCase):
         # Run SST in the tests directory
         self.run_sst(sdlfile, outfile, errfile, set_cwd=test_path,
                      timeout_sec=testtimeout, mpi_out_files=mpioutfiles)
-
-        # Copy the orig reffile to the fixedreffile
-        cmd = "cat {0} > {1}".format(reffile, fixedreffile)
-        os.system(cmd)
-
+        
         # Cleanup any DRAMSIM Debug messages; from both the output file and fixedreffile
         # (this is a bit of hammer, but it works)
-        self._grep_v_cleanup_file("===== MemorySystem", outfile)
-        self._grep_v_cleanup_file("===== MemorySystem", fixedreffile)
-        self._grep_v_cleanup_file("TOTAL_STORAGE : 2048MB | 1 Ranks | 16 Devices per rank", outfile)
-        self._grep_v_cleanup_file("TOTAL_STORAGE : 2048MB | 1 Ranks | 16 Devices per rank", fixedreffile)
-        self._grep_v_cleanup_file("== Loading", outfile)
-        self._grep_v_cleanup_file("== Loading", fixedreffile)
-        self._grep_v_cleanup_file("DRAMSim2 Clock Frequency =1Hz, CPU Clock Frequency=1Hz", outfile)
-        self._grep_v_cleanup_file("DRAMSim2 Clock Frequency =1Hz, CPU Clock Frequency=1Hz", fixedreffile)
-        self._grep_v_cleanup_file("WARNING: UNKNOWN KEY 'DEBUG_TRANS_FLOW' IN INI FILE", outfile)
-        self._grep_v_cleanup_file("WARNING: UNKNOWN KEY 'DEBUG_TRANS_FLOW' IN INI FILE", fixedreffile)
-
+        lines = ["===== MemorySystem"]
+        lines.append("TOTAL_STORAGE : 2048MB | 1 Ranks | 16 Devices per rank") 
+        lines.append("== Loading")
+        lines.append("DRAMSim2 Clock Frequency =1Hz, CPU Clock Frequency=1Hz")
+        lines.append("WARNING: UNKNOWN KEY 'DEBUG_TRANS_FLOW' IN INI FILE")
+        
         if testing_check_get_num_ranks() > 1 and "BackendTimingDRAM" in testcase :
-            # NOTE: Removing these two lines as we can get a 1 count diff on multi-ranks tests on DRAMSIM TESTS
-            self._grep_v_cleanup_file("memory.outstanding_requests", outfile)
-            self._grep_v_cleanup_file("memory.outstanding_requests", fixedreffile)
-            self._grep_v_cleanup_file("memory.total_cycles", outfile)
-            self._grep_v_cleanup_file("memory.total_cycles", fixedreffile)
-
+            # NOTE: Removing these two lines as we can get a 1 count diff on multi-ranks tests on some tests
+            lines.append("memory.outstanding_requests")
+            lines.append("memory.total_cycles")
+        
+        # Remove unwanted lines from files
+        self._remove_lines_cleanup_file(lines, outfile)
+        self._remove_lines_cleanup_file(lines, reffile, fixedreffile)
+        
         testing_remove_component_warning_from_file(outfile)
 
         # NOTE: THE PASS / FAIL EVALUATIONS ARE PORTED FROM THE SQE BAMBOO
@@ -225,7 +255,7 @@ class testcase_memHierarchy_memHA(SSTTestCase):
         # Use diff (ignore whitespace) to see if the files are the same
         cmd = "diff -b {0} {1} > {2}".format(fixedreffile, outfile, difffile)
         filesAreTheSame = (os.system(cmd) == 0)
-
+        
         if filesAreTheSame:
             log_debug(" -- Output file {0} is an exact match to (fixed) Reference File {1}".format(outfile, fixedreffile))
         else:
@@ -250,16 +280,23 @@ class testcase_memHierarchy_memHA(SSTTestCase):
                     self.assertTrue(cmp_result, "Sorted Output file {0} does not match Sorted Reference File {1} ".format(outfile, fixedreffile))
 
 ###
-
-    def _grep_v_cleanup_file(self, grep_str, grep_file, out_file = None, append = False):
-        cmd = 'grep -v \"{0}\" {1} > {2}'.format(grep_str, grep_file, self.grep_tmp_file)
-        os.system(cmd)
-        redirecttype = ">"
-        if append == True:
-            redirecttype = ">>"
-
+    # Remove lines containing any string found in 'remove_strs' from in_file
+    # If out_file != None, output is out_file
+    # Otherwise, in_file is overwritten
+    def _remove_lines_cleanup_file(self, remove_strs, in_file, out_file = None):
+        with open(in_file, 'r') as fp:
+            lines = fp.readlines()
+        
         if out_file == None:
-            cmd = "cat {0} {1} {2}".format(self.grep_tmp_file, redirecttype, grep_file)
-        else:
-            cmd = "cat {0} {1} {2}".format(self.grep_tmp_file, redirecttype, out_file)
-        os.system(cmd)
+            out_file = in_file
+        
+        with open(out_file, 'w') as fp:
+            fp.truncate(0)
+            for line in lines:
+                skip = False
+                for search in remove_strs:
+                    if search in line:
+                        skip = True
+                        continue
+                if not skip:
+                    fp.write(line)

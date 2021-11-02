@@ -1395,7 +1395,7 @@ Channel 7 statistics
  dirctrl.eventSent_FlushLineResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dirctrl.eventSent_read_directory_entry : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dirctrl.eventSent_write_directory_entry : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- dirctrl.MSHR_occupancy : Accumulator : Sum.u64 = 618656; SumSQ.u64 = 710300; Count.u64 = 1693558; Min.u64 = 0; Max.u64 = 5; 
+ dirctrl.MSHR_occupancy : Accumulator : Sum.u64 = 618656; SumSQ.u64 = 710300; Count.u64 = 1693557; Min.u64 = 0; Max.u64 = 5; 
  memory.requests_received_GetS : Accumulator : Sum.u64 = 10970; SumSQ.u64 = 10970; Count.u64 = 10970; Min.u64 = 1; Max.u64 = 1; 
  memory.requests_received_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  memory.requests_received_GetX : Accumulator : Sum.u64 = 1224; SumSQ.u64 = 1224; Count.u64 = 1224; Min.u64 = 1; Max.u64 = 1; 

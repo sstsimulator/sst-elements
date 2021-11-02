@@ -84,7 +84,10 @@ public:
 
 protected:
     MemCacheController();  // for serialization only
-    ~MemCacheController() {}
+    ~MemCacheController() {
+        if (backing_)
+            delete backing_;
+    }
 
     /*
      *  HIT: When the response comes back we're done (tag + data or just data)

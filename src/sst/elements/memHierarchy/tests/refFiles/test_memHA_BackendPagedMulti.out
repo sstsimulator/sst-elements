@@ -1379,7 +1379,7 @@ TrivialCPU cpu3 Finished after 1000 issued reads, 1000 returned (472116 clocks)
  dirctrl.eventSent_FlushLineResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dirctrl.eventSent_read_directory_entry : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dirctrl.eventSent_write_directory_entry : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- dirctrl.MSHR_occupancy : Accumulator : Sum.u64 = 885620; SumSQ.u64 = 906184; Count.u64 = 1698916; Min.u64 = 0; Max.u64 = 4; 
+ dirctrl.MSHR_occupancy : Accumulator : Sum.u64 = 885620; SumSQ.u64 = 906184; Count.u64 = 1698915; Min.u64 = 0; Max.u64 = 4; 
  memory.requests_received_GetS : Accumulator : Sum.u64 = 11009; SumSQ.u64 = 11009; Count.u64 = 11009; Min.u64 = 1; Max.u64 = 1; 
  memory.requests_received_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  memory.requests_received_GetX : Accumulator : Sum.u64 = 1200; SumSQ.u64 = 1200; Count.u64 = 1200; Min.u64 = 1; Max.u64 = 1; 

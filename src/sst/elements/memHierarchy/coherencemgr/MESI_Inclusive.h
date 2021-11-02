@@ -569,8 +569,8 @@ private:
     State doEviction(MemEvent * event, SharedCacheLine * line, State state);
 
     /** Call through to coherenceController with statistic recording */
-    void addToOutgoingQueue(Response& resp);
-    void addToOutgoingQueueUp(Response& resp);
+    void forwardByAddress(MemEventBase* ev, Cycle_t timestamp);
+    void forwardByDestination(MemEventBase* ev, Cycle_t timestamp);
 
 /* Miscellaneous functions */
     /* Record prefetch statistics. Line cannot be null. */

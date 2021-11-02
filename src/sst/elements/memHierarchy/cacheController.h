@@ -170,6 +170,7 @@ public:
 
     /** Constructor for Cache Component */
     Cache(ComponentId_t id, Params &params);
+    ~Cache() { }
 
     /** Component API - pre- and post-simulation */
     virtual void init(unsigned int);
@@ -205,7 +206,7 @@ private:
     void createCoherenceManager(Params &params);
 
     // Configure links
-    void configureLinks(Params &params);
+    void configureLinks(Params &params, TimeConverter* tc);
 
     /** Cache operation ********************************************************/
 
