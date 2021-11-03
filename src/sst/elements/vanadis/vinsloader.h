@@ -138,7 +138,7 @@ public:
         if (predecode_cache->contains(cache_line_start)) {
             std::vector<uint8_t>* cached_bytes = predecode_cache->find(cache_line_start);
 
-				uint64_t bytes_from_this_line = std::min( buffer_req, cache_line_width - inst_line_offset );
+				uint64_t bytes_from_this_line = std::min( static_cast<uint64_t>(buffer_req), cache_line_width - inst_line_offset );
 
 				output->verbose(CALL_INFO, 16, 0, "[fill-decode]: load %" PRIu64 " bytes from this line.\n", bytes_from_this_line);
 
