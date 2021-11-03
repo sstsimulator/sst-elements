@@ -29,8 +29,9 @@ class VanadisJumpRegLinkInstruction : public VanadisSpeculatedInstruction {
 public:
     VanadisJumpRegLinkInstruction(const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts,
                                   const uint16_t returnAddrReg, const uint16_t jumpToAddrReg,
+											 const int64_t imm_jump,
                                   const VanadisDelaySlotRequirement delayT)
-        : VanadisSpeculatedInstruction(addr, hw_thr, isa_opts, 1, 1, 1, 1, 0, 0, 0, 0, delayT) {
+        : VanadisSpeculatedInstruction(addr, hw_thr, isa_opts, 1, 1, 1, 1, 0, 0, 0, 0, delayT), imm(imm_jump) {
 
         isa_int_regs_in[0] = jumpToAddrReg;
         isa_int_regs_out[0] = returnAddrReg;
@@ -41,19 +42,19 @@ public:
     virtual const char* getInstCode() const { return "JLR"; }
 
     virtual void printToBuffer(char* buffer, size_t buffer_size) {
-        snprintf(buffer, buffer_size, "JLR     link-reg: %" PRIu16 " addr-reg: %" PRIu16 "\n", isa_int_regs_out[0],
-                 isa_int_regs_in[0]);
+        snprintf(buffer, buffer_size, "JLR     link-reg: %" PRIu16 " addr-reg: %" PRIu16 " + %" PRIu64 "\n", isa_int_regs_out[0],
+                 isa_int_regs_in[0], imm);
     }
 
     virtual void execute(SST::Output* output, VanadisRegisterFile* regFile) {
 #ifdef VANADIS_BUILD_DEBUG
         output->verbose(CALL_INFO, 16, 0,
-                        "Execute: addr=(0x%0llx) JLR isa-link: %" PRIu16 " isa-addr: %" PRIu16 " phys-link: %" PRIu16
+                        "Execute: addr=(0x%0llx) JLR isa-link: %" PRIu16 " isa-addr: %" PRIu16 " + %" PRIu64 " phys-link: %" PRIu16
                         " phys-addr: %" PRIu16 "\n",
-                        getInstructionAddress(), isa_int_regs_out[0], isa_int_regs_in[0], phys_int_regs_out[0],
+                        getInstructionAddress(), isa_int_regs_out[0], isa_int_regs_in[0], imm, phys_int_regs_out[0],
                         phys_int_regs_in[0]);
 #endif
-        const uint64_t jump_to = regFile->getIntReg<uint64_t>(phys_int_regs_in[0]);
+        const uint64_t jump_to = static_cast<uint64_t>(regFile->getIntReg<int64_t>(phys_int_regs_in[0]) + imm);
         const uint64_t link_value = calculateStandardNotTakenAddress();
 
         regFile->setIntReg<uint64_t>(phys_int_regs_out[0], link_value);
@@ -63,12 +64,18 @@ public:
 #endif
         takenAddress = regFile->getIntReg<uint64_t>(phys_int_regs_in[0]);
 
+		  // TODO remove this code and check?
         if ((takenAddress & 0x3) != 0) {
             flagError();
         }
 
         markExecuted();
     }
+
+protected:
+
+int64_t imm;
+
 };
 
 } // namespace Vanadis
