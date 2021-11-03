@@ -687,7 +687,7 @@ protected:
                     {
                         bundle->addInstruction(
                             new VanadisShiftLeftLogicalImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
-                                ins_address, hw_thr, options, rs1, rd, static_cast<uint64_t>(rs2)));
+                                ins_address, hw_thr, options, rd, rs1, static_cast<uint64_t>(rs2)));
                         decode_fault = false;
                     } break;
                     };
@@ -727,14 +727,14 @@ protected:
                     {
                         bundle->addInstruction(
                             new VanadisShiftRightLogicalImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
-                                ins_address, hw_thr, options, rs1, rd, static_cast<uint64_t>(rs2)));
+                                ins_address, hw_thr, options, rd, rs1, static_cast<uint64_t>(rs2)));
                         decode_fault = false;
                     } break;
                     case 0x20:
                     {
                         bundle->addInstruction(
                             new VanadisShiftRightArithmeticImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
-                                ins_address, hw_thr, options, rs1, rd, static_cast<uint64_t>(rs2)));
+                                ins_address, hw_thr, options, rd, rs1, static_cast<uint64_t>(rs2)));
                         decode_fault = false;
                     } break;
                     };
@@ -770,7 +770,7 @@ protected:
                         // TODO - check register ordering
                         bundle->addInstruction(
                             new VanadisMultiplyInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
-                                ins_address, hw_thr, options, rs1, rs2, rd));
+                                ins_address, hw_thr, options, rd, rs1, rs2));
                         decode_fault = false;
                     } break;
                     };
@@ -880,7 +880,7 @@ protected:
                 {
                     // TODO - may need to zero bit 1 with an AND microop?
                     bundle->addInstruction(new VanadisJumpRegLinkInstruction(
-                        ins_address, hw_thr, options, rd, rs1, VANADIS_NO_DELAY_SLOT));
+                        ins_address, hw_thr, options, rd, rs1, simm64, VANADIS_NO_DELAY_SLOT));
                     decode_fault = false;
                 } break;
                 };
@@ -961,7 +961,7 @@ protected:
                         // TODO - check register ordering
                         bundle->addInstruction(
                             new VanadisAddInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64, true>(
-                                ins_address, hw_thr, options, rs1, rs2, rd));
+                                ins_address, hw_thr, options, rd, rs1, rs2));
                         decode_fault = false;
                     } break;
                     case 0x1:
@@ -970,14 +970,14 @@ protected:
                         // TODO - check register ordering
                         bundle->addInstruction(
                             new VanadisMultiplyInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
-                                ins_address, hw_thr, options, rs1, rs2, rd));
+                                ins_address, hw_thr, options, rd, rs1, rs2));
                     } break;
                     case 0x20:
                     {
                         // SUBW
                         // TODO - check register ordering
                         bundle->addInstruction(new VanadisSubInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
-                            ins_address, hw_thr, options, rs1, rs2, rd, true));
+                            ins_address, hw_thr, options, rd, rs1, rs2, true));
                         decode_fault = false;
                     } break;
                     };
@@ -991,7 +991,7 @@ protected:
                         // TODO - check register ordering
                         bundle->addInstruction(
                             new VanadisShiftLeftLogicalInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
-                                ins_address, hw_thr, options, rs1, rs2, rd));
+                                ins_address, hw_thr, options, rd, rs1, rs2));
                         decode_fault = false;
                     } break;
                     };
@@ -1018,7 +1018,7 @@ protected:
                         // TODO - check register ordering
                         bundle->addInstruction(
                             new VanadisShiftRightLogicalInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
-                                ins_address, hw_thr, options, rs1, rs2, rd));
+                                ins_address, hw_thr, options, rd, rs1, rs2));
                         decode_fault = false;
                     } break;
                     case 0x1:
@@ -1035,7 +1035,7 @@ protected:
                         // TODO - check register ordering
                         bundle->addInstruction(
                             new VanadisShiftRightArithmeticInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
-                                ins_address, hw_thr, options, rs1, rs2, rd));
+                                ins_address, hw_thr, options, rd, rs1, rs2));
                         decode_fault = false;
                     } break;
                     };
