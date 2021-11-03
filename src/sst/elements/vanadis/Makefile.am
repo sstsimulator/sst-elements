@@ -36,9 +36,12 @@ inst/vbcmpi.h \
 inst/vbcmpil.h \
 inst/vbfp.h \
 inst/vcmptype.h \
+inst/vdecodealignfault.h \
 inst/vdecodefaultinst.h \
 inst/vdelaytype.h \
+inst/vdiv.h \
 inst/vdivmod.h \
+inst/vfault.h \
 inst/vfence.h \
 inst/vfp2fp.h \
 inst/vfp2gpr.h \
