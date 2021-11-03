@@ -28,7 +28,7 @@ namespace Vanadis {
 class VanadisInstructionBundle {
 
 public:
-    VanadisInstructionBundle(const uint64_t addr) : ins_addr(addr) { inst_bundle.reserve(1); }
+    VanadisInstructionBundle(const uint64_t addr) : ins_addr(addr), pc_inc(4) { inst_bundle.reserve(1); }
 
     ~VanadisInstructionBundle() { clear(); }
 
@@ -43,19 +43,20 @@ public:
     uint32_t getInstructionCount() const { return inst_bundle.size(); }
 
     void addInstruction(VanadisInstruction* newIns) {
-        //		inst_bundle.push_back(newIns->clone() );
         inst_bundle.push_back(newIns->clone());
     }
 
     VanadisInstruction* getInstructionByIndex(const uint32_t index) {
-        //		return inst_bundle[index]->clone();
         return inst_bundle[index];
     }
 
     uint64_t getInstructionAddress() const { return ins_addr; }
+	 uint64_t pcIncrement() const { return pc_inc; }
+	 void setPCIncrement(uint64_t newPCInc) { pc_inc = newPCInc; }
 
 private:
     const uint64_t ins_addr;
+	 uint64_t pc_inc;
     std::vector<VanadisInstruction*> inst_bundle;
 };
 
