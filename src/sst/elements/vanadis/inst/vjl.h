@@ -28,8 +28,9 @@ class VanadisJumpLinkInstruction : public VanadisSpeculatedInstruction {
 
 public:
     VanadisJumpLinkInstruction(const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts,
+										 const uint64_t ins_width, 
                                const uint16_t link_reg, const uint64_t pc, const VanadisDelaySlotRequirement delayT)
-        : VanadisSpeculatedInstruction(addr, hw_thr, isa_opts, 0, 1, 0, 1, 0, 0, 0, 0, delayT) {
+        : VanadisSpeculatedInstruction(addr, hw_thr, isa_opts, ins_width, 0, 1, 0, 1, 0, 0, 0, 0, delayT) {
 
         isa_int_regs_out[0] = link_reg;
         takenAddress = pc;
