@@ -1184,7 +1184,7 @@ protected:
                         case MIPS_SPEC_OP_MASK_JALR:
                         {
                             bundle->addInstruction(new VanadisJumpRegLinkInstruction(
-                                ins_addr, hw_thr, options, rd, rs, VANADIS_SINGLE_DELAY_SLOT));
+                                ins_addr, hw_thr, options, rd, rs, 0, VANADIS_SINGLE_DELAY_SLOT));
                             insertDecodeFault = false;
                             MIPS_INC_DECODE_STAT(stat_decode_jalr);
                         } break;
