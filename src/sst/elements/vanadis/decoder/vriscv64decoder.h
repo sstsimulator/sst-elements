@@ -572,10 +572,12 @@ protected:
         bool decode_fault = true;
 
 
-		  // if the last two bits that are set are 11, then we are performing at least 32bit instruction formats, otherwise
-		  // we are performing decodes on the C-extension (16b) formats
+        // if the last two bits that are set are 11, then we are performing at least 32bit instruction formats,
+        // otherwise we are performing decodes on the C-extension (16b) formats
         if ( (ins & 0x3) == 0x3 ) {
-            output->verbose(CALL_INFO, 16, 0, "[decode] -> 32bit format / ins-op-code-family: %" PRIu32 " / 0x%x\n", op_code, op_code);
+            output->verbose(
+                CALL_INFO, 16, 0, "[decode] -> 32bit format / ins-op-code-family: %" PRIu32 " / 0x%x\n", op_code,
+                op_code);
 
             switch ( op_code ) {
             case 0x3:
@@ -665,7 +667,7 @@ protected:
                 // Immediate arithmetic
                 func_code = extract_func3(ins);
 
-					output->verbose(CALL_INFO, 16, 0, "----> immediate-arith func: %" PRIu32 "\n", func_code);
+                output->verbose(CALL_INFO, 16, 0, "----> immediate-arith func: %" PRIu32 "\n", func_code);
 
                 switch ( func_code ) {
                 case 0:
@@ -866,8 +868,8 @@ protected:
                 // Immediate specifies jump in multiples of 2 byts per RISCV spec
                 const int64_t jump_to = static_cast<int64_t>(ins_address) + (simm64 << 1);
 
-                bundle->addInstruction(
-                    new VanadisJumpLinkInstruction(ins_address, hw_thr, options, 4, rd, jump_to, VANADIS_NO_DELAY_SLOT));
+                bundle->addInstruction(new VanadisJumpLinkInstruction(
+                    ins_address, hw_thr, options, 4, rd, jump_to, VANADIS_NO_DELAY_SLOT));
                 decode_fault = false;
             } break;
             case 0x67:
@@ -1099,337 +1101,530 @@ protected:
                 // op_code did not match an expected value
             } break;
             }
-        } else {
-				const uint32_t c_op_code = ins & 0x3;
+        }
+        else {
+            const uint32_t c_op_code = ins & 0x3;
 
-				// this bundle only increments the PC by 2, not 4 in 32bit decodes
-				bundle->setPCIncrement(2);
+            // this bundle only increments the PC by 2, not 4 in 32bit decodes
+            bundle->setPCIncrement(2);
 
-				switch(c_op_code) {
-				case 0x0:
-					{
-						const uint32_t c_func_code = ins & 0xE000;
+            switch ( c_op_code ) {
+            case 0x0:
+            {
+                const uint32_t c_func_code = ins & 0xE000;
 
-						switch(c_func_code) {
-						case 0x0:
-								{
-									if((ins & 0xFFFF) == 0) {
-										// This is an illegal instruction (all zeroes)
-									} else {
-										// ADDI4SPN
-									}
+                switch ( c_func_code ) {
+                case 0x0:
+                {
+                    if ( (ins & 0xFFFF) == 0 ) {
+                        // This is an illegal instruction (all zeroes)
+                    }
+                    else {
+                        // ADDI4SPN
+                    }
+                } break;
+                case 0x2000:
+                {
+                    // FLD
+                } break;
+                case 0x4000:
+                {
+                    // LW
+                    uint64_t imm_address = extract_uimm_rcv_t2(ins);
+                    uint16_t rvc_rd      = expand_rvc_int_register(extract_rd_rvc(ins));
+                    uint16_t rvc_rs1     = expand_rvc_int_register(extract_rs1_rvc(ins));
+
+                    output->verbose(
+                        CALL_INFO, 16, 0, "-----> RVC LW rd=%" PRIu16 " <- rs1=%" PRIu16 ", imm=%" PRIu64 "\n", rvc_rd,
+                        rvc_rs1, imm_address);
+
+                    bundle->addInstruction(new VanadisLoadInstruction(
+                        ins_address, hw_thr, options, rvc_rs1, imm_address, rvc_rd, 4, true, MEM_TRANSACTION_NONE,
+                        LOAD_INT_REGISTER));
+                    decode_fault = false;
+                } break;
+                case 0x6000:
+                {
+                    // LD
+                    uint64_t imm_address = extract_uimm_rcv_t2(ins);
+                    uint16_t rvc_rd      = expand_rvc_int_register(extract_rd_rvc(ins));
+                    uint16_t rvc_rs1     = expand_rvc_int_register(extract_rs1_rvc(ins));
+
+                    output->verbose(
+                        CALL_INFO, 16, 0, "-----> RVC LD rd=%" PRIu16 " <- rs1=%" PRIu16 ", imm=%" PRIu64 "\n", rvc_rd,
+                        rvc_rs1, imm_address);
+
+                    bundle->addInstruction(new VanadisLoadInstruction(
+                        ins_address, hw_thr, options, rvc_rs1, imm_address, rvc_rd, 8, true, MEM_TRANSACTION_NONE,
+                        LOAD_INT_REGISTER));
+                    decode_fault = false;
+                } break;
+                case 0x8000:
+                {
+                    // Reserved, this is a decode fault
+                } break;
+                case 0xA000:
+                {
+                    // FSD
+                } break;
+                case 0xC000:
+                {
+                    // SW
+                } break;
+                case 0xE000:
+                {
+                    // SD
+						uint16_t rvc_rd      = expand_rvc_int_register(extract_rd_rvc(ins));
+                    uint16_t rvc_rs1     = expand_rvc_int_register(extract_rs1_rvc(ins));
+
+						uint32_t offset_53 = (ins & 0x1C00) >> 7;
+						uint32_t offset_6  = (ins & 0x20) << 1;
+						uint32_t offset_2  = (ins & 0x40) >> 4;
+
+						uint64_t offset = (offset_2 | offset_6 | offset_53);
+
+						output->verbose(CALL_INFO, 16, 0, "-----> RVC SD %" PRIu16 " -> %" PRIu16 " + %" PRIu64 "\n",
+							rvc_rs1, rvc_rd, offset);
+
+						bundle->addInstruction(new VanadisStoreInstruction(ins_address, hw_thr, options, rvc_rd, offset, rvc_rs1, 8, MEM_TRANSACTION_NONE,
+								STORE_INT_REGISTER));
+
+                } break;
+                }
+            } break;
+            case 0x1:
+            {
+                const uint32_t c_func_code = ins & 0xE000;
+
+                switch ( c_func_code ) {
+                case 0x0:
+                {
+                    // NOP / ADDI
+                    uint16_t rvc_rs1 = expand_rvc_int_register(extract_rs1_rvc(ins));
+
+							if(0== rvc_rs1) {
+								// This is a no-op?
+								output->verbose(CALL_INFO, 16, 0, "-----> creates a no-op.\n");
+								bundle->addInstruction(new VanadisAddImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
+									ins_address, hw_thr, options, 0, 0, 0));
+								decode_fault = false;
+							} else {
+                    uint32_t imm_40 = (ins & 0x7C) >> 2;
+                    uint32_t imm_5  = (ins & 0x1000) >> 7;
+
+                    int64_t imm = (imm_40 | imm_5);
+
+                    if ( imm_5 != 0 ) { imm |= 0xFFFFFFFFFFFFFFC0; }
+
+								if( imm_5 == 0) {
+									// Tehcnicall this is a HINT, now what do we do?
 								}
-								break;
-						case 0x2000:
-								{
-									// FLD
-								} break;
-						case 0x4000:
-								{
-									// LW
-									uint64_t imm_address = extract_uimm_rcv_t2(ins);
-									uint16_t rvc_rd = expand_rvc_int_register(extract_rd_rvc(ins));
-									uint16_t rvc_rs1 = expand_rvc_int_register(extract_rs1_rvc(ins));
 
-									output->verbose(CALL_INFO, 16, 0, "-----> RVC LW rd=%" PRIu16 ", rs1=%" PRIu16 ", imm=%" PRIu64 "\n",
-										rvc_rd, rvc_rs1, imm_address);
 
-									bundle->addInstruction(new VanadisLoadInstruction(
-		                       	ins_address, hw_thr, options, rvc_rs1, imm_address, rvc_rd, 4, true, MEM_TRANSACTION_NONE,
-      		                  LOAD_INT_REGISTER));
-            		        decode_fault = false;
-								} break;
-						case 0x6000:
-								{
-									// LD
-								} break;
-						case 0x8000:
-								{
-									// Reserved, this is a decode fault
-								} break;
-						case 0xA000:
-								{
-									// FSD
-								} break;
-						case 0xC000:
-								{
-									// SW
-								} break;
-						case 0xE000:
-								{
-									// SD
-								} break;
-						}
-					} break;
-				case 0x1:
-					{
-						const uint32_t c_func_code = ins & 0xE000;
+								output->verbose(CALL_INFO, 16, 0, "-----> RVC ADDI %" PRIu16 " = %" PRIu16 " + %" PRId64 "\n",
+									rvc_rs1, rvc_rs1, imm);
 
-						switch(c_func_code) {
-						case 0x0:
-								{
-									// NOP / ADDI
-								}
-								break;
-						case 0x2000:
-								{
-									// ADDIW
-								} break;
-						case 0x4000:
-								{
-									// LI
-									uint16_t rd = expand_rvc_int_register(static_cast<uint16_t>((ins & 0xF80) >> 7));
-									uint32_t imm_40 = (ins & 0x7C) >> 2;
-									uint32_t imm_5  = (ins & 0x1000) >> 6;
+								bundle->addInstruction(new VanadisAddImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
+                           ins_address, hw_thr, options, rvc_rs1, rvc_rs1, imm));
+                       	decode_fault = false;
 
-									int64_t imm = (imm_40 | imm_5);
+							}
+                } break;
+                case 0x2000:
+                {
+                    // ADDIW
+                } break;
+                case 0x4000:
+                {
+                    // LI
+                    uint16_t rd     = static_cast<uint16_t>((ins & 0xF80) >> 7);
+                    uint32_t imm_40 = (ins & 0x7C) >> 2;
+                    uint32_t imm_5  = (ins & 0x1000) >> 6;
 
-									if(imm_5 != 0) {
-										imm |= 0xFFFFFFFFFFFFFFC0;
-									}
+                    int64_t imm = (imm_40 | imm_5);
 
-									output->verbose(CALL_INFO, 16, 0, "-----> RVC load imediate (LI) reg: %" PRIu16 ", imm=%" PRId64 "\n",
-										rd, imm);
+                    if ( imm_5 != 0 ) { imm |= 0xFFFFFFFFFFFFFFC0; }
 
-									bundle->addInstruction(new VanadisSetRegisterInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(ins_address, hw_thr, options, rd, imm));
-									decode_fault = false;
-								} break;
-						case 0x6000:
-								{
-									// ADDI16SP / LUI
-								} break;
-						case 0x8000:
-								{
-									const uint32_t c_func2_code = ins & 0xC00;
+                    output->verbose(
+                        CALL_INFO, 16, 0, "-----> RVC load imediate (LI) reg: %" PRIu16 ", imm=%" PRId64 "\n", rd, imm);
 
-									output->verbose(CALL_INFO, 16, 0, "------> RCV arith code: %" PRIu32 "\n", c_func2_code);
+                    bundle->addInstruction(
+                        new VanadisSetRegisterInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
+                            ins_address, hw_thr, options, rd, imm));
+                    decode_fault = false;
+                } break;
+                case 0x6000:
+                {
+                    // ADDI16SP / LUI
+                    uint16_t rd     = static_cast<uint16_t>((ins & 0xF80) >> 7);
+                    uint32_t imm_1612 = (ins & 0x7C) << 9;
+                    uint32_t imm_17    = (ins & 0x1000) << 4;
 
-									switch(c_func2_code) {
-									case 0x0:
-										{
-											// SRLI
-										} break;
-									case 0x400:
-										{
-											// SRAI
-										} break;
-									case 0x800:
-										{
-											// AND
-										} break;
-									case 0xC00:
-										{
-											// Arith
-											uint16_t rvc_rd = expand_rvc_int_register(extract_rd_rvc(ins));
-                           		uint16_t rvc_rs1 = expand_rvc_int_register(extract_rs1_rvc(ins));
+                    int64_t imm = (imm_17 | imm_1612);
 
-											switch(ins & 0x1000) {
-											case 0x0:
-												{
-													switch(ins & 0x60) {
-														case 0x0:
-															{
-																// SUB
-																output->verbose(CALL_INFO, 16, 0, "--------> RVC SUB %" PRIu16 " <- %" PRIu16 " - %" PRIu16 "\n",
-																	rvc_rd, rvc_rd, rvc_rs1);
-																bundle->addInstruction(new VanadisSubInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
-																	ins_address, hw_thr, options, rvc_rd, rvc_rd, rvc_rs1, true));
-																decode_fault = false;
-															} break;
-														case 0x20:
-															{
-																// XOR
-																output->verbose(CALL_INFO, 16, 0, "--------> RVC XOR %" PRIu16 " <- %" PRIu16 " - %" PRIu16 "\n",
-																	rvc_rd, rvc_rd, rvc_rs1);
-																bundle->addInstruction(new VanadisXorInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
-																	ins_address, hw_thr, options, rvc_rd, rvc_rd, rvc_rs1));
-																decode_fault = false;
-															}
-															break;
-														case 0x40:
-															{
-																// OR
-																output->verbose(CALL_INFO, 16, 0, "--------> RVC OR %" PRIu16 " <- %" PRIu16 " - %" PRIu16 "\n",
-																	rvc_rd, rvc_rd, rvc_rs1);
-																bundle->addInstruction(new VanadisOrInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
-																	ins_address, hw_thr, options, rvc_rd, rvc_rd, rvc_rs1));
-																decode_fault = false;
-															}
-															break;
-														case 0x60:
-															{
-																// AND
-																output->verbose(CALL_INFO, 16, 0, "--------> RVC AND %" PRIu16 " <- %" PRIu16 " - %" PRIu16 "\n",
-																	rvc_rd, rvc_rd, rvc_rs1);
-																bundle->addInstruction(new VanadisAndInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
-																	ins_address, hw_thr, options, rvc_rd, rvc_rd, rvc_rs1));
-																decode_fault = false;
-															}
-															break;
-													}
-												} break;
-											case 0x1000:
-												{
-													switch(ins & 0x60) {
-														case 0x0:
-															{
-																// SUBW
-															} break;
-														case 0x20:
-															{
-																// ADDW
-															}
-															break;
-														case 0x40:
-															{
-																// Reserved, not used
-															}
-															break;
-														case 0x60:
-															{
-																// Reserved, not used
-															}
-															break;
-													}
-												} break;
-											}
-										} break;
-									}
-								} break;
-						case 0xA000:
-								{
-									// JUMP
-									const uint32_t imm_11 = (ins & 0x1000) >> 1;
-									const uint32_t imm_4  = (ins & 0x800)  >> 7;
-									const uint32_t imm_98 = (ins & 0x600)  >> 1;
-									const uint32_t imm_10 = (ins & 0x100)  << 2;
-									const uint32_t imm_6  = (ins & 0x80)   >> 1;
-									const uint32_t imm_7  = (ins & 0x40)   << 1;
-									const uint32_t imm_31 = (ins & 0x38)   >> 2;
-									const uint32_t imm_5  = (ins & 0x4)    << 3;
+							if( rd != 2 ) {
+								// LUI
+                    output->verbose(
+                        CALL_INFO, 16, 0, "-----> RVC load imediate (LUI) reg: %" PRIu16 ", imm=%" PRId64 " (0x%llx)\n", rd, imm, imm);
 
-									int64_t imm_final = static_cast<int64_t>(imm_11 | imm_4 | imm_98 | imm_10 | imm_6 | imm_7 | imm_31 | imm_5);
+                    bundle->addInstruction(
+                        new VanadisSetRegisterInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
+                            ins_address, hw_thr, options, rd, imm));
+                    decode_fault = false;
+							} else {
+								//ADDI16SP
+							}
+                } break;
+                case 0x8000:
+                {
+                    const uint32_t c_func2_code = ins & 0xC00;
 
-									// sign-extend the immediate if needed (is MSB 1, indicates negative)
-									if(imm_11 != 0) {
-										imm_final |= 0xFFFFFFFFFFFFF800;
-									}
+                    output->verbose(CALL_INFO, 16, 0, "------> RCV arith code: %" PRIu32 "\n", c_func2_code);
 
-									const int64_t pc_i64 = static_cast<int64_t>(ins_address);
-									const uint64_t jump_target = static_cast<uint64_t>(pc_i64 + imm_final);
+                    switch ( c_func2_code ) {
+                    case 0x0:
+                    {
+                        // SRLI
+								uint32_t shamt_5  = (ins & 0x1000) >> 7;
+								uint32_t shamt_40 = (ins & 0x7C) >> 2;
 
-									output->verbose(CALL_INFO, 16, 0, "----> decode RVC JUMP pc=0x%llx + imm=%" PRId64 " = 0x%llx\n",
-										ins_address, imm_final, jump_target);
+								uint64_t shift_by = shamt_5 | shamt_40;
 
-									bundle->addInstruction(new VanadisJumpInstruction(ins_address, hw_thr, options, 2, jump_target, VANADIS_NO_DELAY_SLOT));
-									decode_fault = false;
-								} break;
-						case 0xC000:
-								{
-									// BEQZ
-									uint16_t rvc_rs1 = expand_rvc_int_register(extract_rs1_rvc(ins));
+                        uint16_t rvc_rs1 = expand_rvc_int_register(extract_rs1_rvc(ins));
 
-									const uint32_t imm_8 = (ins & 0x1000) >> 4;
-									const uint32_t imm_43 = (ins & 0xC00) >> 7;
-									const uint32_t imm_76 = (ins & 0x60) << 1;
-									const uint32_t imm_21 = (ins & 0x18) >> 2;
-									const uint32_t imm_5 = (ins & 0x4) << 3;
+								output->verbose(CALL_INFO, 16, 0, "--------> RVC SRLI %" PRIu16 " = %" PRIu16 " >> %" PRIu64 " (0x%llx)\n",
+									rvc_rs1, rvc_rs1, shift_by, shift_by);
+								bundle->addInstruction(new VanadisShiftRightLogicalImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
+									ins_address, hw_thr, options, rvc_rs1, rvc_rs1, shift_by));
+								decode_fault = false;
+                    } break;
+                    case 0x400:
+                    {
+                        // SRAI
+								uint32_t shamt_5  = (ins & 0x1000) >> 7;
+								uint32_t shamt_40 = (ins & 0x7C) >> 2;
 
-									int64_t imm_final = static_cast<int64_t>(imm_8 | imm_76 | imm_5 | imm_43 | imm_21);
+								uint64_t shift_by = shamt_5 | shamt_40;
 
-									if(imm_8 != 0) {
-										imm_final |= 0xFFFFFFFFFFFFF00;
-									}
+                        uint16_t rvc_rs1 = expand_rvc_int_register(extract_rs1_rvc(ins));
 
-									output->verbose(CALL_INFO, 16, 0, "----> decode RVC BEQZ %" PRIu16 " jump to: 0x%llx\n",
-										rvc_rs1, ins_address + imm_final);
+								output->verbose(CALL_INFO, 16, 0, "--------> RVC SRAI %" PRIu16 " = %" PRIu16 " >> %" PRIu64 " (0x%llx)\n",
+									rvc_rs1, rvc_rs1, shift_by, shift_by);
+								bundle->addInstruction(new VanadisShiftRightArithmeticImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
+									ins_address, hw_thr, options, rvc_rs1, rvc_rs1, shift_by));
+								decode_fault = false;
+                    } break;
+                    case 0x800:
+                    {
+                        // AND
+                    } break;
+                    case 0xC00:
+                    {
+                        // Arith
+                        uint16_t rvc_rd  = expand_rvc_int_register(extract_rd_rvc(ins));
+                        uint16_t rvc_rs1 = expand_rvc_int_register(extract_rs1_rvc(ins));
 
-									bundle->addInstruction(new VanadisBranchRegCompareImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64, REG_COMPARE_EQ>(
-										ins_address, hw_thr, options, 2, rvc_rs1, 0, imm_final, VANADIS_NO_DELAY_SLOT));
-									decode_fault = false;
-								} break;
-						case 0xE000:
-								{
-									// BNEZ
-								} break;
-						}
-					} break;
-				case 0x2:
-					{
-						const uint32_t c_func_code = ins & 0xE000;
+                        switch ( ins & 0x1000 ) {
+                        case 0x0:
+                        {
+									output->verbose(CALL_INFO, 16, 0, "------> RVC arith check zero family\n");
 
-						switch(c_func_code) {
-						case 0x0:
-								{
-									// SLLI
-								}
-								break;
-						case 0x2000:
-								{
-									// FLDSP
-								} break;
-						case 0x4000:
-								{
-									// LWSP
-								} break;
-						case 0x6000:
-								{
-									// FLWSP
-								} break;
-						case 0x8000:
-								{
-									// Jumps
-									const uint32_t c_func_12 = ins & 0x1000;
-									const uint32_t c_func_12_rs2 = (ins & 0x7C) >> 2;
-									const uint32_t c_func_12_rs1 = (ins & 0xF80) >> 7;
+                            switch ( ins & 0x60 ) {
+                            case 0x0:
+                            {
+                                // SUB
+                                output->verbose(
+                                    CALL_INFO, 16, 0, "--------> RVC SUB %" PRIu16 " <- %" PRIu16 " - %" PRIu16 "\n",
+                                    rvc_rd, rvc_rd, rvc_rs1);
+                                bundle->addInstruction(
+                                    new VanadisSubInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
+                                        ins_address, hw_thr, options, rvc_rd, rvc_rd, rvc_rs1, true));
+                                decode_fault = false;
+                            } break;
+                            case 0x20:
+                            {
+                                // XOR
+                                output->verbose(
+                                    CALL_INFO, 16, 0, "--------> RVC XOR %" PRIu16 " <- %" PRIu16 " - %" PRIu16 "\n",
+                                    rvc_rd, rvc_rd, rvc_rs1);
+                                bundle->addInstruction(
+                                    new VanadisXorInstruction(
+                                        ins_address, hw_thr, options, rvc_rd, rvc_rd, rvc_rs1));
+                                decode_fault = false;
+                            } break;
+                            case 0x40:
+                            {
+                                // OR
+                                output->verbose(
+                                    CALL_INFO, 16, 0, "--------> RVC OR %" PRIu16 " <- %" PRIu16 " - %" PRIu16 "\n",
+                                    rvc_rd, rvc_rd, rvc_rs1);
+                                bundle->addInstruction(
+                                    new VanadisOrInstruction(
+                                        ins_address, hw_thr, options, rvc_rd, rvc_rd, rvc_rs1));
+                                decode_fault = false;
+                            } break;
+                            case 0x60:
+                            {
+                                // AND
+                                output->verbose(
+                                    CALL_INFO, 16, 0, "--------> RVC AND %" PRIu16 " <- %" PRIu16 " - %" PRIu16 "\n",
+                                    rvc_rd, rvc_rd, rvc_rs1);
+                                bundle->addInstruction(
+                                    new VanadisAndInstruction(
+                                        ins_address, hw_thr, options, rvc_rd, rvc_rd, rvc_rs1));
+                                decode_fault = false;
+                            } break;
+                            }
+                        } break;
+                        case 0x1000:
+                        {
+									output->verbose(CALL_INFO, 16, 0, "------> RVC arith check one family\n");
 
-									output->verbose(CALL_INFO, 16, 0, "------> RVC 12b: %" PRIu32 " / rs1=%" PRIu32 " / rs2=%" PRIu32 "\n",
-										c_func_12, c_func_12_rs1, c_func_12_rs2);
+                            switch ( ins & 0x60 ) {
+                            case 0x0:
+                            {
+                                // SUBW
+									output->verbose(CALL_INFO, 16, 0, "------> RVC SUBW\n");
 
-									if(c_func_12 == 0) {
-										if(c_func_12_rs2 == 0) {
-											// JR unless rs1 = 0
-											output->verbose(CALL_INFO, 16, 0, "--------> (generates) RVC JR %" PRIu16 "\n", c_func_12_rs1);
-											bundle->addInstruction(new VanadisJumpRegInstruction(ins_address, hw_thr, options, 2,
-												c_func_12_rs1, VANADIS_NO_DELAY_SLOT));
-											decode_fault = false;
-										} else {
-											if(c_func_12_rs1 == 0) {
-												// HINT (turns into a NOP?)
-											} else {
-												output->verbose(CALL_INFO, 16, 0, "--------> (generates) RVC MV %" PRIu16 " <- %" PRIu16 "\n",
-													c_func_12_rs1, c_func_12_rs2);
+                            } break;
+                            case 0x20:
+                            {
+                                // ADDW
+                            } break;
+                            case 0x40:
+                            {
+                                // Reserved, not used
+                            } break;
+                            case 0x60:
+                            {
+                                // Reserved, not used
+                            } break;
+                            }
+                        } break;
+                        }
+                    } break;
+                    }
+                } break;
+                case 0xA000:
+                {
+                    // JUMP
+                    const uint32_t imm_11 = (ins & 0x1000) >> 1;
+                    const uint32_t imm_4  = (ins & 0x800) >> 7;
+                    const uint32_t imm_98 = (ins & 0x600) >> 1;
+                    const uint32_t imm_10 = (ins & 0x100) << 2;
+                    const uint32_t imm_6  = (ins & 0x80) >> 1;
+                    const uint32_t imm_7  = (ins & 0x40) << 1;
+                    const uint32_t imm_31 = (ins & 0x38) >> 2;
+                    const uint32_t imm_5  = (ins & 0x4) << 3;
 
-												bundle->addInstruction(new VanadisAddInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64, true>(ins_address, hw_thr, options, static_cast<uint16_t>(c_func_12_rs1),
-														static_cast<uint16_t>(c_func_12_rs2), options->getRegisterIgnoreWrites()));
-												decode_fault = false;
-											}
-										}
-									} else {
+                    int64_t imm_final =
+                        static_cast<int64_t>(imm_11 | imm_4 | imm_98 | imm_10 | imm_6 | imm_7 | imm_31 | imm_5);
 
-									}
-								} break;
-						case 0xA000:
-								{
-									// FSDSP
-								} break;
-						case 0xC000:
-								{
-									// SWSP
-								} break;
-						case 0xE000:
-								{
-									// SDSP
-								} break;
-						}
-					} break;
-				}
+                    // sign-extend the immediate if needed (is MSB 1, indicates negative)
+                    if ( imm_11 != 0 ) { imm_final |= 0xFFFFFFFFFFFFF800; }
 
-            output->verbose(CALL_INFO, 16, 0, "[decode] -> 16bit RVC format / ins-op-code-family: %" PRIu32 " / 0x%x\n", op_code, op_code);
-				if(decode_fault) {
-					output->fatal(CALL_INFO, -1, "STOP\n");
-				}
-			}
+                    const int64_t  pc_i64      = static_cast<int64_t>(ins_address);
+                    const uint64_t jump_target = static_cast<uint64_t>(pc_i64 + imm_final);
+
+                    output->verbose(
+                        CALL_INFO, 16, 0, "----> decode RVC JUMP pc=0x%llx + imm=%" PRId64 " = 0x%llx\n", ins_address,
+                        imm_final, jump_target);
+
+                    bundle->addInstruction(new VanadisJumpInstruction(
+                        ins_address, hw_thr, options, 2, jump_target, VANADIS_NO_DELAY_SLOT));
+                    decode_fault = false;
+                } break;
+                case 0xC000:
+                {
+                    // BEQZ
+                    uint16_t rvc_rs1 = expand_rvc_int_register(extract_rs1_rvc(ins));
+
+                    const uint32_t imm_8  = (ins & 0x1000) >> 4;
+                    const uint32_t imm_43 = (ins & 0xC00) >> 7;
+                    const uint32_t imm_76 = (ins & 0x60) << 1;
+                    const uint32_t imm_21 = (ins & 0x18) >> 2;
+                    const uint32_t imm_5  = (ins & 0x4) << 3;
+
+                    int64_t imm_final = static_cast<int64_t>(imm_8 | imm_76 | imm_5 | imm_43 | imm_21);
+
+                    if ( imm_8 != 0 ) { imm_final |= 0xFFFFFFFFFFFFF00; }
+
+                    output->verbose(
+                        CALL_INFO, 16, 0, "----> decode RVC BEQZ %" PRIu16 " jump to: 0x%llx\n", rvc_rs1,
+                        ins_address + imm_final);
+
+                    bundle->addInstruction(new VanadisBranchRegCompareImmInstruction<
+                                           VanadisRegisterFormat::VANADIS_FORMAT_INT64, REG_COMPARE_EQ>(
+                        ins_address, hw_thr, options, 2, rvc_rs1, 0, imm_final, VANADIS_NO_DELAY_SLOT));
+                    decode_fault = false;
+                } break;
+                case 0xE000:
+                {
+                    // BNEZ
+                    uint16_t rvc_rs1 = expand_rvc_int_register(extract_rs1_rvc(ins));
+
+                    const uint32_t imm_8  = (ins & 0x1000) >> 4;
+                    const uint32_t imm_43 = (ins & 0xC00) >> 7;
+                    const uint32_t imm_76 = (ins & 0x60) << 1;
+                    const uint32_t imm_21 = (ins & 0x18) >> 2;
+                    const uint32_t imm_5  = (ins & 0x4) << 3;
+
+                    int64_t imm_final = static_cast<int64_t>(imm_8 | imm_76 | imm_5 | imm_43 | imm_21);
+
+                    if ( imm_8 != 0 ) { imm_final |= 0xFFFFFFFFFFFFF00; }
+
+                    output->verbose(
+                        CALL_INFO, 16, 0, "----> decode RVC BEQZ %" PRIu16 " jump to: 0x%llx\n", rvc_rs1,
+                        ins_address + imm_final);
+
+                    bundle->addInstruction(new VanadisBranchRegCompareImmInstruction<
+                                           VanadisRegisterFormat::VANADIS_FORMAT_INT64, REG_COMPARE_NEQ>(
+                        ins_address, hw_thr, options, 2, rvc_rs1, 0, imm_final, VANADIS_NO_DELAY_SLOT));
+                    decode_fault = false;
+                } break;
+                }
+            } break;
+            case 0x2:
+            {
+                const uint32_t c_func_code = ins & 0xE000;
+
+                switch ( c_func_code ) {
+                case 0x0:
+                {
+                    // SLLI
+                } break;
+                case 0x2000:
+                {
+                    // FLDSP
+                } break;
+                case 0x4000:
+                {
+                    // LWSP
+                } break;
+                case 0x6000:
+                {
+                    // FLWSP
+                    uint16_t rvc_rd      = (ins & 0xF80) >> 7;
+
+						  if( 0 == rvc_rd ) {
+								// FLWSP
+								output->verbose(CALL_INFO, 16, 0, "-----> RVC FLWSP STOP\n");
+							} else {
+								// LDSP
+								uint32_t offset_86 = (ins & 0x1C) << 4;
+								uint32_t offset_43 = (ins & 0x60) >> 2;
+								uint32_t offset_5  = (ins & 0x1000) >> 7;
+
+								int64_t offset = offset_43 | offset_5 | offset_86;
+
+                    output->verbose(
+                        CALL_INFO, 16, 0, "-----> RVC LDSP rd=%" PRIu16 " <- %" PRIu16 " + %" PRId64 "\n",
+                        rvc_rd, 2, offset);
+
+                    bundle->addInstruction(new VanadisLoadInstruction(
+                        ins_address, hw_thr, options, rvc_rd, offset, 2, 8, true, MEM_TRANSACTION_NONE,
+                        LOAD_INT_REGISTER));
+							decode_fault = false;
+							}
+                } break;
+                case 0x8000:
+                {
+                    // Jumps
+                    const uint32_t c_func_12     = ins & 0x1000;
+                    const uint32_t c_func_12_rs2 = (ins & 0x7C) >> 2;
+                    const uint32_t c_func_12_rs1 = (ins & 0xF80) >> 7;
+
+                    output->verbose(
+                        CALL_INFO, 16, 0, "------> RVC 12b: %" PRIu32 " / rs1=%" PRIu32 " / rs2=%" PRIu32 "\n",
+                        c_func_12, c_func_12_rs1, c_func_12_rs2);
+
+                    if ( c_func_12 == 0 ) {
+                        if ( c_func_12_rs2 == 0 ) {
+                            // JR unless rs1 = 0
+                            output->verbose(
+                                CALL_INFO, 16, 0, "--------> (generates) RVC JR %" PRIu16 "\n", c_func_12_rs1);
+                            bundle->addInstruction(new VanadisJumpRegInstruction(
+                                ins_address, hw_thr, options, 2, c_func_12_rs1, VANADIS_NO_DELAY_SLOT));
+                            decode_fault = false;
+                        }
+                        else {
+                            if ( c_func_12_rs1 == 0 ) {
+                                // HINT (turns into a NOP?)
+                            }
+                            else {
+                                output->verbose(
+                                    CALL_INFO, 16, 0, "--------> (generates) RVC MV %" PRIu16 " <- %" PRIu16 "\n",
+                                    c_func_12_rs1, c_func_12_rs2);
+
+                                bundle->addInstruction(
+                                    new VanadisAddInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64, true>(
+                                        ins_address, hw_thr, options, static_cast<uint16_t>(c_func_12_rs1),
+                                        static_cast<uint16_t>(c_func_12_rs2), options->getRegisterIgnoreWrites()));
+                                decode_fault = false;
+                            }
+                        }
+                    }
+                    else {
+							// ADD 
+                                output->verbose(
+                                    CALL_INFO, 16, 0, "--------> (generates) RVC ADD %" PRIu16 " <- %" PRIu16 " + %" PRIu16 "\n",
+                                    c_func_12_rs1, c_func_12_rs1, c_func_12_rs2);
+
+                                bundle->addInstruction(
+                                    new VanadisAddInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64, true>(
+                                        ins_address, hw_thr, options, static_cast<uint16_t>(c_func_12_rs1),
+													static_cast<uint16_t>(c_func_12_rs1),
+                                        static_cast<uint16_t>(c_func_12_rs2) ));
+                                decode_fault = false;
+                    }
+                } break;
+                case 0xA000:
+                {
+                    // FSDSP
+                } break;
+                case 0xC000:
+                {
+                    // SWSP
+							uint16_t rvc_src   = (ins & 0x7C) >> 2;;
+
+						uint32_t offset_52 = (ins & 0x1E00) >> 7;
+						uint32_t offset_76 = (ins & 0x180) >> 1;
+
+						uint32_t offset = offset_76 | offset_52;
+
+						output->verbose(CALL_INFO, 16, 0, "-----> RVC SWSP %" PRIu16 " -> %" PRIu16 " + %" PRIu64 "\n",
+							rvc_src, 2, offset);
+
+						bundle->addInstruction(new VanadisStoreInstruction(ins_address, hw_thr, options, 2, offset, rvc_src, 4, MEM_TRANSACTION_NONE,
+								STORE_INT_REGISTER));
+						decode_fault = false;
+                } break;
+                case 0xE000:
+                {
+                    // SDSP
+							uint16_t rvc_src   = (ins & 0x7C) >> 2;;
+
+						uint32_t offset_53 = (ins & 0x1C00) >> 7;
+						uint32_t offset_86 = (ins & 0x380) >> 1;
+
+						uint32_t offset = offset_86 | offset_53;
+
+						output->verbose(CALL_INFO, 16, 0, "-----> RVC SDSP %" PRIu16 " -> %" PRIu16 " + %" PRIu64 "\n",
+							rvc_src, 2, offset);
+
+						bundle->addInstruction(new VanadisStoreInstruction(ins_address, hw_thr, options, 2, offset, rvc_src, 8, MEM_TRANSACTION_NONE,
+								STORE_INT_REGISTER));
+						decode_fault = false;
+                } break;
+                }
+            } break;
+            }
+
+            output->verbose(
+                CALL_INFO, 16, 0, "[decode] -> 16bit RVC format / ins-op-code-family: %" PRIu32 " / 0x%x\n", op_code,
+                op_code);
+            if ( decode_fault ) { output->fatal(CALL_INFO, -1, "STOP\n"); }
+        }
 
         //		  if(decode_fault) {
         //				bundle->addInstruction(new VanadisInstructionDecodeFault(ins_address, hw_thr,
@@ -1437,49 +1632,47 @@ protected:
         //			}
     }
 
-    uint16_t expand_rvc_int_register(const uint16_t reg_in) const {
-		return reg_in + 8;
+    uint16_t expand_rvc_int_register(const uint16_t reg_in) const { return reg_in + 8; }
+
+    uint16_t extract_rd_rvc(const uint32_t ins) const { return static_cast<uint16_t>((ins & 0x1C) >> 2); }
+
+    uint16_t extract_rs1_rvc(const uint32_t ins) const { return static_cast<uint16_t>((ins & 0x380) >> 7); }
+
+    uint64_t extract_uimm_rvc_t1(const uint32_t ins) const
+    {
+        const uint64_t uimm_76 = ((ins & 0x60) << 1);
+        const uint64_t uimm_53 = ((ins & 0x1C00) >> 7);
+
+        return (uimm_76 | uimm_53);
     }
 
-	 uint16_t extract_rd_rvc(const uint32_t ins) const {
-		return static_cast<uint16_t>((ins & 0x1C) >> 2);
-	 }
+    uint64_t extract_uimm_rcv_t2(const uint32_t ins) const
+    {
+        const uint64_t uimm_6  = ((ins & 0x20) << 1);
+        const uint64_t uimm_2  = ((ins & 0x40) >> 4);
+        const uint64_t uimm_53 = ((ins & 0x1C00) >> 7);
 
-	 uint16_t extract_rs1_rvc(const uint32_t ins) const {
-		return static_cast<uint16_t>((ins & 0x380) >> 7);
-	 }
+        return (uimm_6 | uimm_53 | uimm_2);
+    }
 
-	uint64_t extract_uimm_rvc_t1(const uint32_t ins) const {
-		const uint64_t uimm_76 = ((ins & 0x60) << 1);
-		const uint64_t uimm_53 = ((ins & 0x1C00) >> 7);
+    uint64_t extract_uimm_rcv_t3(const uint32_t ins) const
+    {
+        const uint64_t uimm_76 = ((ins & 0x60) << 1);
+        const uint64_t uimm_54 = ((ins & 0x1800) >> 6);
+        const uint64_t uimm_8  = ((ins & 0x400) >> 2);
 
-		return (uimm_76 | uimm_53);
-	}
+        return (uimm_76 | uimm_54 | uimm_8);
+    }
 
-	uint64_t extract_uimm_rcv_t2(const uint32_t ins) const {
-		const uint64_t uimm_6 =  ((ins & 0x20) << 1);
-		const uint64_t uimm_2 =  ((ins & 0x40) >> 4);
-		const uint64_t uimm_53 = ((ins & 0x1C00) >> 7);
+    uint64_t extract_nzuimm_rcv(const uint32_t ins) const
+    {
+        const uint64_t imm_3  = ((ins & 0x20) >> 2);
+        const uint64_t imm_2  = ((ins & 0x40) >> 4);
+        const uint64_t imm_96 = ((ins & 0x780) >> 1);
+        const uint64_t imm_54 = ((ins & 0x1800) >> 6);
 
-		return (uimm_6 | uimm_53 | uimm_2);
-	}
-
-	uint64_t extract_uimm_rcv_t3(const uint32_t ins) const {
-		const uint64_t uimm_76 = ((ins & 0x60) << 1);
-		const uint64_t uimm_54 = ((ins & 0x1800) >> 6);
-		const uint64_t uimm_8  = ((ins & 0x400) >> 2);
-
-		return (uimm_76 | uimm_54 | uimm_8);
-	}
-
-	uint64_t extract_nzuimm_rcv(const uint32_t ins) const {
-		const uint64_t imm_3  = ((ins & 0x20) >> 2);
-		const uint64_t imm_2  = ((ins & 0x40) >> 4);
-		const uint64_t imm_96 = ((ins & 0x780) >> 1);
-		const uint64_t imm_54 = ((ins & 0x1800) >> 6);
-
-		return (imm_96 | imm_54 | imm_3 | imm_2);
-	}
+        return (imm_96 | imm_54 | imm_3 | imm_2);
+    }
 
     uint16_t extract_rd(const uint32_t ins) const { return static_cast<uint16_t>((ins & VANADIS_RISCV_RD_MASK) >> 7); }
 
