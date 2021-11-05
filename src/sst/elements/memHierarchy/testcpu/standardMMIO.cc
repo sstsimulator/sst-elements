@@ -19,7 +19,7 @@
 
 
 using namespace SST;
-using namespace SST::Experimental::Interfaces;
+using namespace SST::Interfaces;
 using namespace SST::MemHierarchy;
  
 /* Example MMIO device */
@@ -44,7 +44,7 @@ StandardMMIO::StandardMMIO(ComponentId_t id, Params &params) : SST::Component(id
     }
     TimeConverter* tc = getTimeConverter(clockfreq);
 
-    iface = loadUserSubComponent<SST::Experimental::Interfaces::StandardMem>("iface", ComponentInfo::SHARE_NONE, tc, 
+    iface = loadUserSubComponent<SST::Interfaces::StandardMem>("iface", ComponentInfo::SHARE_NONE, tc, 
             new StandardMem::Handler<StandardMMIO>(this, &StandardMMIO::handleEvent));
     
     if (!iface) {
@@ -98,7 +98,7 @@ bool StandardMMIO::clockTic(Cycle_t cycle) {
         if (req < 2) {
             // Issue read
             Addr addr = ((rng.generateNextUInt64() % max_addr)>>2) << 2;
-            StandardMem::Request* req = new Experimental::Interfaces::StandardMem::Read(addr, 4);
+            StandardMem::Request* req = new Interfaces::StandardMem::Read(addr, 4);
             out.verbose(CALL_INFO, 2, 0, "%s: %d Issued Read for address 0x%" PRIx64 "\n", getName().c_str(), mem_access, addr);
         
             requests.insert(std::make_pair(req->getID(), std::make_pair(getCurrentSimTime(), "Read")));
@@ -111,7 +111,7 @@ bool StandardMMIO::clockTic(Cycle_t cycle) {
             addr = (addr / iface->getLineSize()) * iface->getLineSize();
             std::vector<uint8_t> payload;
             payload.resize(iface->getLineSize(), 0);
-            StandardMem::Request* req = new Experimental::Interfaces::StandardMem::Write(addr, iface->getLineSize(), payload);
+            StandardMem::Request* req = new Interfaces::StandardMem::Write(addr, iface->getLineSize(), payload);
             out.verbose(CALL_INFO, 2, 0, "%s: %d Issued Write for address 0x%" PRIx64 "\n", getName().c_str(), mem_access, addr);
             mem_access--;
         }
@@ -127,7 +127,7 @@ void StandardMMIO::handleEvent(StandardMem::Request* req) {
 }
 
 /* Handler for incoming Write requests */
-void StandardMMIO::mmioHandlers::handle(SST::Experimental::Interfaces::StandardMem::Write* write) {
+void StandardMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Write* write) {
 
     // Convert 8 bytes of the payload into an int
     std::vector<uint8_t> buff = write->data;
@@ -143,7 +143,7 @@ void StandardMMIO::mmioHandlers::handle(SST::Experimental::Interfaces::StandardM
 }
 
 /* Handler for incoming Read requests */
-void StandardMMIO::mmioHandlers::handle(SST::Experimental::Interfaces::StandardMem::Read* read) {
+void StandardMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Read* read) {
     out->verbose(_INFO_, "Handle Read. Returning %d\n", mmio->squared);
 
     vector<uint8_t> payload;
@@ -160,7 +160,7 @@ void StandardMMIO::mmioHandlers::handle(SST::Experimental::Interfaces::StandardM
 }
 
 /* Handler for incoming Read responses - should be a response to a Read we issued */
-void StandardMMIO::mmioHandlers::handle(SST::Experimental::Interfaces::StandardMem::ReadResp* resp) {
+void StandardMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::ReadResp* resp) {
     std::map<uint64_t, std::pair<SimTime_t,std::string>>::iterator i = mmio->requests.find(resp->getID());
     if ( mmio->requests.end() == i ) {
         out->fatal(CALL_INFO, -1, "Event (%" PRIx64 ") not found!\n", resp->getID());
@@ -175,7 +175,7 @@ void StandardMMIO::mmioHandlers::handle(SST::Experimental::Interfaces::StandardM
 }
 
 /* Handler for incoming Write responses - should be a response to a Write we issued */
-void StandardMMIO::mmioHandlers::handle(SST::Experimental::Interfaces::StandardMem::WriteResp* resp) {
+void StandardMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::WriteResp* resp) {
     std::map<uint64_t, std::pair<SimTime_t,std::string>>::iterator i = mmio->requests.find(resp->getID());
     if (mmio->requests.end() == i) {
         out->fatal(CALL_INFO, -1, "Event (%" PRIx64 ") not found!\n", resp->getID());
