@@ -43,14 +43,14 @@ class MemEventBase;
 class MemEvent;
 
 /** Class is used to interface a compute mode (CPU, GPU) to MemHierarchy */
-class StandardInterface : public Experimental::Interfaces::StandardMem {
+class StandardInterface : public Interfaces::StandardMem {
 
 public:
     friend class MemEventConverter;
 
 /* Element Library Info */
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(StandardInterface, "memHierarchy", "standardInterface", SST_ELI_ELEMENT_VERSION(1,0,0),
-            "Interface to memory hierarchy between endpoint and cache. Converts StandardMem requests into MemEventBases.", SST::Experimental::Interfaces::StandardMem)
+            "Interface to memory hierarchy between endpoint and cache. Converts StandardMem requests into MemEventBases.", SST::Interfaces::StandardMem)
     
     SST_ELI_DOCUMENT_PARAMS( 
         {"verbose",     "(uint) Output verbosity for warnings/errors. 0[fatal error only], 1[warnings], 2[full state dump on fatal error]", "1"},
@@ -105,7 +105,7 @@ protected:
     MemRegion region;   // For MMIO
     Endpoint epType;    // Endpoint type -> CPU or MMIO 
     
-    class MemEventConverter : public Experimental::Interfaces::StandardMem::RequestConverter {
+    class MemEventConverter : public Interfaces::StandardMem::RequestConverter {
     public:
         MemEventConverter(StandardInterface* iface) : iface(iface) {}
         virtual ~MemEventConverter() {}
@@ -137,7 +137,7 @@ private:
     void receive(SST::Event *ev);
 
     /** Convert MemEvents into updated Requests*/
-    Experimental::Interfaces::StandardMem::Request* processIncoming(MemEventBase *ev);
+    Interfaces::StandardMem::Request* processIncoming(MemEventBase *ev);
 
 
     /** Conversion functions to convert internal memHierarchy events to StandardMem::Requests

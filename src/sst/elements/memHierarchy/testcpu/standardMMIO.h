@@ -46,7 +46,7 @@ public:
         {"max_addr",                "(uint64) Max memory address for requests issued by this device. Required if mem_accesses > 0.", "0"}
     )
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( 
-        {"iface", "Interface into memory subsystem", "SST::Experimental::Interfaces::StandardMem"}
+        {"iface", "Interface into memory subsystem", "SST::Interfaces::StandardMem"}
     )
     SST_ELI_DOCUMENT_STATISTICS(
         {"read_latency", "Latency of reads issued by this device to memory", "simulation time units", 1},
@@ -62,19 +62,19 @@ protected:
     ~StandardMMIO() {}
 
     /* Handle event from MMIO interface */
-    void handleEvent(Experimental::Interfaces::StandardMem::Request* req);
+    void handleEvent(Interfaces::StandardMem::Request* req);
     
     /* Handlers for StandardMem::Request types we handle */
-    class mmioHandlers : public Experimental::Interfaces::StandardMem::RequestHandler {
+    class mmioHandlers : public Interfaces::StandardMem::RequestHandler {
     public:
         friend class StandardMMIO;
 
-        mmioHandlers(StandardMMIO* mmio, SST::Output* out) : Experimental::Interfaces::StandardMem::RequestHandler(out), mmio(mmio) {}
+        mmioHandlers(StandardMMIO* mmio, SST::Output* out) : Interfaces::StandardMem::RequestHandler(out), mmio(mmio) {}
         virtual ~mmioHandlers() {}
-        virtual void handle(Experimental::Interfaces::StandardMem::Read* read) override;
-        virtual void handle(Experimental::Interfaces::StandardMem::Write* write) override;
-        virtual void handle(Experimental::Interfaces::StandardMem::ReadResp* resp) override;
-        virtual void handle(Experimental::Interfaces::StandardMem::WriteResp* resp) override;
+        virtual void handle(Interfaces::StandardMem::Read* read) override;
+        virtual void handle(Interfaces::StandardMem::Write* write) override;
+        virtual void handle(Interfaces::StandardMem::ReadResp* resp) override;
+        virtual void handle(Interfaces::StandardMem::WriteResp* resp) override;
 
         void intToData(int32_t num, std::vector<uint8_t>* data);
         int32_t dataToInt(std::vector<uint8_t>* data);
@@ -104,16 +104,16 @@ private:
     // If this device also is testing memory accesses, these are used
     uint32_t mem_access;
     SST::RNG::MarsagliaRNG rng;
-    Experimental::Interfaces::StandardMem::Request* createWrite(uint64_t addr);
-    Experimental::Interfaces::StandardMem::Request* createRead(Addr addr);
-    std::map<Experimental::Interfaces::StandardMem::Request::id_t, std::pair<SimTime_t, std::string>> requests;
+    Interfaces::StandardMem::Request* createWrite(uint64_t addr);
+    Interfaces::StandardMem::Request* createRead(Addr addr);
+    std::map<Interfaces::StandardMem::Request::id_t, std::pair<SimTime_t, std::string>> requests;
     virtual bool clockTic( SST::Cycle_t );
     Statistic<uint64_t>* statReadLatency;
     Statistic<uint64_t>* statWriteLatency;
     Addr max_addr;
 
     // The memH interface into the memory system
-    Experimental::Interfaces::StandardMem* iface;
+    Interfaces::StandardMem* iface;
 
 }; // end StandardMMIO
         
