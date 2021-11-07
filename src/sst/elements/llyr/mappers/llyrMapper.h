@@ -105,6 +105,8 @@ void LlyrMapper::addNode(opType op_binding, uint32_t nodeNum, LlyrGraph< Process
         tempPE = new IntProcessingElement( MUL, nodeNum, llyr_config );
     } else if( op_binding == DIV ) {
         tempPE = new IntProcessingElement( DIV, nodeNum, llyr_config );
+    } else if( op_binding == REM ) {
+        tempPE = new IntProcessingElement( REM, nodeNum, llyr_config );
     } else if( op_binding == FPADD ) {
         tempPE = new FPProcessingElement( FPADD, nodeNum, llyr_config );
     } else if( op_binding == FPSUB ) {
@@ -154,6 +156,8 @@ void LlyrMapper::addNode(opType op_binding, int64_t intConst, uint32_t nodeNum, 
         tempPE = new IntConstProcessingElement( MULCONST, nodeNum, llyr_config, intConst );
     } else if( op_binding == DIVCONST ) {
         tempPE = new IntConstProcessingElement( DIVCONST, nodeNum, llyr_config, intConst );
+    } else if( op_binding == REMCONST ) {
+        tempPE = new IntConstProcessingElement( REMCONST, nodeNum, llyr_config, intConst );
     } else {
         exit(0);
     }

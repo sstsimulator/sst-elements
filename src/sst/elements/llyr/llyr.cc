@@ -347,7 +347,13 @@ void LlyrComponent::constructHardwareGraph(std::string fileName)
         while( std::getline( inputStream, thisLine ) ) {
             output_->verbose(CALL_INFO, 15, 0, "Parsing:  %s\n", thisLine.c_str());
 
+            // skip first and last lines if this is truly dot
             if( thisLine.find( "{" ) != std::string::npos || thisLine.find( "}" ) != std::string::npos) {
+                continue;
+            }
+
+            // skip if this description includes dot layout information
+            if( thisLine.find( "layout" ) != std::string::npos ) {
                 continue;
             }
 
@@ -591,6 +597,8 @@ opType LlyrComponent::getOptype(std::string &opString) const
         operation = MUL;
     else if( opString == "DIV" )
         operation = DIV;
+    else if( opString == "REM" )
+        operation = REM;
     else if( opString == "ADDCONST" )
         operation = ADDCONST;
     else if( opString == "SUBCONST" )
@@ -599,6 +607,8 @@ opType LlyrComponent::getOptype(std::string &opString) const
         operation = MULCONST;
     else if( opString == "DIVCONST" )
         operation = DIVCONST;
+    else if( opString == "REMCONST" )
+        operation = REMCONST;
     else if( opString == "ANY_FP" )
         operation = ANY_FP;
     else if( opString == "FPADD" )

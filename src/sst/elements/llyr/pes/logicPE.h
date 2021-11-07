@@ -112,8 +112,8 @@ public:
             }
         }
 
-        std::cout << "ARG[0]:" << argList[0] << std::endl;
-        std::cout << "ARG[1]:" << argList[1] << std::endl;
+//         std::cout << "ARG[0]:" << argList[0] << std::endl;
+//         std::cout << "ARG[1]:" << argList[1] << std::endl;
 
         switch( op_binding_ ) {
             case AND :
@@ -198,8 +198,8 @@ private:
 //         int64_t boo = (int64_t)(y.to_ulong());
 //         std::bitset<64> bitTestL  = boo;
 
-        std::cout << "ARG[0]:" << arg0 << "::" << arg0.to_ullong() << std::endl;
-        std::cout << "ARG[1]:" << arg1 << "::" << arg1.to_ullong() << std::endl;
+//         std::cout << "ARG[0]:" << arg0 << "::" << arg0.to_ullong() << std::endl;
+//         std::cout << "ARG[1]:" << arg1 << "::" << arg1.to_ullong() << std::endl;
 
         if( op == EQ ) {
             if( arg0.to_ullong() == arg1.to_ullong() ) {

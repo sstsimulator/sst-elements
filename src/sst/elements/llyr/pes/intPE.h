@@ -123,17 +123,8 @@ public:
             case DIV :
                 intResult = argList[0].to_ullong() / argList[1].to_ullong();
                 break;
-            case ADDCONST :
-                intResult = argList[0].to_ullong() + argList[1].to_ullong();
-                break;
-            case SUBCONST :
-                intResult = argList[0].to_ullong() - argList[1].to_ullong();
-                break;
-            case MULCONST :
-                intResult = argList[0].to_ullong() * argList[1].to_ullong();
-                break;
-            case DIVCONST :
-                intResult = argList[0].to_ullong() / argList[1].to_ullong();
+            case REM :
+                intResult = argList[0].to_ullong() % argList[1].to_ullong();
                 break;
             default :
                 output_->verbose(CALL_INFO, 0, 0, "Error: could not find corresponding op-%" PRIu32 ".\n", op_binding_);
@@ -229,6 +220,9 @@ public:
                 break;
             case DIVCONST :
                 intResult = argList[0].to_ullong() / int_const_;
+                break;
+            case REMCONST :
+                intResult = argList[0].to_ullong() % int_const_;
                 break;
             default :
                 output_->verbose(CALL_INFO, 0, 0, "Error: could not find corresponding op-%" PRIu32 ".\n", op_binding_);
