@@ -10,14 +10,14 @@ TrivialCPU: Test Completed Successfuly
 TrivialCPU: Test Completed Successfuly
 TrivialCPU: Test Completed Successfuly
 TrivialCPU: Test Completed Successfuly
-TrivialCPU cpu7 Finished after 1500 issued reads, 1500 returned (116962 clocks)
+TrivialCPU cpu3 Finished after 1500 issued reads, 1500 returned (115581 clocks)
 TrivialCPU cpu2 Finished after 1500 issued reads, 1500 returned (116860 clocks)
 TrivialCPU cpu1 Finished after 1500 issued reads, 1500 returned (114868 clocks)
 TrivialCPU cpu0 Finished after 1500 issued reads, 1500 returned (114261 clocks)
-TrivialCPU cpu3 Finished after 1500 issued reads, 1500 returned (115581 clocks)
 TrivialCPU cpu4 Finished after 1500 issued reads, 1500 returned (116612 clocks)
 TrivialCPU cpu5 Finished after 1500 issued reads, 1500 returned (115576 clocks)
 TrivialCPU cpu6 Finished after 1500 issued reads, 1500 returned (116296 clocks)
+TrivialCPU cpu7 Finished after 1500 issued reads, 1500 returned (116962 clocks)
  cpu0.pendCycle : Accumulator : Sum.u64 = 1132404; SumSQ.u64 = 11254902; Count.u64 = 114261; Min.u64 = 0; Max.u64 = 10; 
  l1cache0.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache0.stateEvent_GetS_I : Accumulator : Sum.u64 = 1345; SumSQ.u64 = 1345; Count.u64 = 1345; Min.u64 = 1; Max.u64 = 1; 

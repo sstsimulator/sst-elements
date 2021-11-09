@@ -123,8 +123,8 @@
  l1cache0.evict_IM : Accumulator : Sum.u64 = 2309; SumSQ.u64 = 2309; Count.u64 = 2309; Min.u64 = 1; Max.u64 = 1; 
  l1cache0.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache0.evict_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache0.latency_GetS_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache0.latency_GetS_miss : Accumulator : Sum.u64 = 11871239; SumSQ.u64 = 2099244551; Count.u64 = 100000; Min.u64 = 24; Max.u64 = 474; 
+ l1cache0.latency_GetS_hit : Accumulator : Sum.u64 = 2704; SumSQ.u64 = 440404; Count.u64 = 319; Min.u64 = 1; Max.u64 = 219; 
+ l1cache0.latency_GetS_miss : Accumulator : Sum.u64 = 17393447; SumSQ.u64 = 3090051109; Count.u64 = 144910; Min.u64 = 21; Max.u64 = 520; 
  l1cache0.latency_GetX_hit : Accumulator : Sum.u64 = 284781; SumSQ.u64 = 854343; Count.u64 = 94927; Min.u64 = 3; Max.u64 = 3; 
  l1cache0.latency_GetX_miss : Accumulator : Sum.u64 = 1978881; SumSQ.u64 = 787686161; Count.u64 = 5073; Min.u64 = 49; Max.u64 = 737; 
  l1cache0.latency_GetX_upgrade : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -285,8 +285,8 @@
  l1cache1.evict_IM : Accumulator : Sum.u64 = 1333; SumSQ.u64 = 1333; Count.u64 = 1333; Min.u64 = 1; Max.u64 = 1; 
  l1cache1.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache1.evict_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache1.latency_GetS_hit : Accumulator : Sum.u64 = 9; SumSQ.u64 = 27; Count.u64 = 3; Min.u64 = 3; Max.u64 = 3; 
- l1cache1.latency_GetS_miss : Accumulator : Sum.u64 = 14110840; SumSQ.u64 = 2666168214; Count.u64 = 99997; Min.u64 = 22; Max.u64 = 618; 
+ l1cache1.latency_GetS_hit : Accumulator : Sum.u64 = 1351; SumSQ.u64 = 209911; Count.u64 = 301; Min.u64 = 1; Max.u64 = 262; 
+ l1cache1.latency_GetS_miss : Accumulator : Sum.u64 = 20634671; SumSQ.u64 = 3913918929; Count.u64 = 145041; Min.u64 = 21; Max.u64 = 618; 
  l1cache1.latency_GetX_hit : Accumulator : Sum.u64 = 288243; SumSQ.u64 = 864729; Count.u64 = 96081; Min.u64 = 3; Max.u64 = 3; 
  l1cache1.latency_GetX_miss : Accumulator : Sum.u64 = 1644613; SumSQ.u64 = 734024519; Count.u64 = 3919; Min.u64 = 73; Max.u64 = 825; 
  l1cache1.latency_GetX_upgrade : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
