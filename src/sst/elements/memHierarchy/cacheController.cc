@@ -76,6 +76,11 @@ void Cache::processPrefetchEvent(SST::Event * ev) {
         turnClockOn();
     }
 
+    // Record the time at which requests arrive for latency statistics
+    if (CommandClassArr[(int)event->getCmd()] == CommandClass::Request &&
+        !CommandWriteback[(int)event->getCmd()])
+        coherenceMgr_->recordIncomingRequest(static_cast<MemEventBase*>(event));
+
     // Record received prefetch
     statPrefetchRequest->addData(1);
     statCacheRecv[(int)event->getCmd()]->addData(1);
