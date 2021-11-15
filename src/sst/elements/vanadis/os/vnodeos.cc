@@ -33,9 +33,9 @@ VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Param
     const uint32_t core_count = params.find<uint32_t>("cores", 0);
 
     output->verbose(CALL_INFO, 1, 0, "Configuring the memory interface...\n");
-    mem_if = loadUserSubComponent<Interfaces::SimpleMem>("mem_interface", ComponentInfo::SHARE_NONE,
+    mem_if = loadUserSubComponent<Interfaces::StandardMem>("mem_interface", ComponentInfo::SHARE_NONE,
                                                          getTimeConverter("1ps"),
-                                                         new SimpleMem::Handler<SST::Vanadis::VanadisNodeOSComponent>(
+                                                         new StandardMem::Handler<SST::Vanadis::VanadisNodeOSComponent>(
                                                              this, &VanadisNodeOSComponent::handleIncomingMemory));
 
     output->verbose(CALL_INFO, 1, 0, "Configuring for %" PRIu32 " core links...\n", core_count);
@@ -83,7 +83,7 @@ VanadisNodeOSComponent::VanadisNodeOSComponent(SST::ComponentId_t id, SST::Param
         new_core_handler->setSimTimeNano(get_sim_nano);
         new_core_handler->setMemoryManager(memory_mgr);
 
-        std::function<void(SimpleMem::Request*, uint32_t)> core_callback
+        std::function<void(StandardMem::Request*, uint32_t)> core_callback
             = std::bind(&VanadisNodeOSComponent::sendMemoryEvent, this, std::placeholders::_1, std::placeholders::_2);
         new_core_handler->setSendMemoryCallback(core_callback);
 

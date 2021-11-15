@@ -16,7 +16,7 @@
 #ifndef _H_VANADIS_INST_LOADER
 #define _H_VANADIS_INST_LOADER
 
-#include <sst/core/interfaces/simpleMem.h>
+#include <sst/core/interfaces/stdMem.h>
 #include <sst/core/subcomponent.h>
 
 #include <cinttypes>
@@ -57,29 +57,30 @@ public:
         cache_line_width = new_line_width;
     }
 
-    void setMemoryInterface(SST::Interfaces::SimpleMem* new_if) { mem_if = new_if; }
+    void setMemoryInterface(SST::Interfaces::StandardMem* new_if) { mem_if = new_if; }
 
-    bool acceptResponse(SST::Output* output, SST::Interfaces::SimpleMem::Request* req) {
+    bool acceptResponse(SST::Output* output, SST::Interfaces::StandardMem::Request* req) {
         // Looks like we created this request, so we should accept and process it
-        auto check_hit_local = pending_loads.find(req->id);
+        auto check_hit_local = pending_loads.find(req->getID());
 
         if (check_hit_local != pending_loads.end()) {
-            if (req->data.size() != cache_line_width) {
+            SST::Interfaces::StandardMem::ReadResp* resp = static_cast<SST::Interfaces::StandardMem::ReadResp*>(req);
+            if (resp->data.size() != cache_line_width) {
                 output->fatal(CALL_INFO, -1,
                               "Error: request to the instruction cache was not for a "
                               "full line, req=%d, line-width=%d\n",
-                              (int)req->data.size(), (int)cache_line_width);
+                              (int)resp->data.size(), (int)cache_line_width);
             }
 
             std::vector<uint8_t>* new_line = new std::vector<uint8_t>();
             new_line->reserve(cache_line_width);
 
             for (uint64_t i = 0; i < cache_line_width; ++i) {
-                new_line->push_back(req->data[i]);
+                new_line->push_back(resp->data[i]);
             }
 
             output->verbose(CALL_INFO, 16, 0, "[ins-loader] ---> response has: %" PRIu64 " bytes in payload\n",
-                            (uint64_t)req->data.size());
+                            (uint64_t)resp->data.size());
 
             if (output->getVerboseLevel() >= 16) {
                 char* print_line = new char[2048];
@@ -91,7 +92,7 @@ public:
                         temp_line[j] = print_line[j];
                     }
 
-                    snprintf(print_line, 2048, "%s %" PRIu8 "", temp_line, req->data[i]);
+                    snprintf(print_line, 2048, "%s %" PRIu8 "", temp_line, resp->data[i]);
                 }
 
                 output->verbose(CALL_INFO, 16, 0, "[ins-loader] ---> cache-line: %s\n", print_line);
@@ -101,9 +102,9 @@ public:
             }
 
             output->verbose(CALL_INFO, 16, 0, "[ins-loader] ---> hit (addr=0x%llx), caching line in predecoder.\n",
-                            req->addr);
+                            resp->pAddr);
 
-            predecode_cache->store(req->addr, new_line);
+            predecode_cache->store(resp->pAddr, new_line);
 
             // Remove from pending load stores.
             pending_loads.erase(check_hit_local);
@@ -113,6 +114,8 @@ public:
             return false;
         }
     }
+
+    
 
     bool getPredecodeBytes(SST::Output* output, const uint64_t addr, uint8_t* buffer, const size_t buffer_req) {
 
@@ -228,7 +231,7 @@ public:
 	            bool found_pending_load = false;
 
 	            for (auto pending_load_itr : pending_loads) {
-	                if (pending_load_itr.second->addr == line_start) {
+	                if (pending_load_itr.second->pAddr == line_start) {
 	                    found_pending_load = true;
 	                    break;
 	                }
@@ -238,14 +241,15 @@ public:
 						output->verbose(CALL_INFO, 8, 0, "[ins-loader] ----> creating a load for line at 0x%llx, len=%" PRIu64 "\n",
 							line_start, cache_line_width);
 
-	                SST::Interfaces::SimpleMem::Request* req_line = new SST::Interfaces::SimpleMem::Request(
-	                    SST::Interfaces::SimpleMem::Request::Read, line_start, cache_line_width);
-
-	                mem_if->sendRequest(req_line);
+	                SST::Interfaces::StandardMem::Read* req_line = new SST::Interfaces::StandardMem::Read(
+                        line_start, cache_line_width);
 
 	                pending_loads.insert(
-	                    std::pair<SST::Interfaces::SimpleMem::Request::id_t, SST::Interfaces::SimpleMem::Request*>(
-	                        req_line->id, req_line));
+	                    std::pair<SST::Interfaces::StandardMem::Request::id_t, SST::Interfaces::StandardMem::Read*>(
+	                        req_line->getID(), req_line));
+
+	                mem_if->send(req_line);
+
 	            } else {
    	             output->verbose(CALL_INFO, 8, 0,
       	                          "[ins-loader] -----> load is already in progress, will "
@@ -266,7 +270,7 @@ public:
                         (uint32_t)pending_loads.size());
 
         for (auto pl_itr : pending_loads) {
-            output->verbose(CALL_INFO, 16, 0, "-----> Address:       %p\n", (void*)pl_itr.second->addr);
+            output->verbose(CALL_INFO, 16, 0, "-----> Address:       %p\n", (void*)pl_itr.second->pAddr);
         }
 
         output->verbose(CALL_INFO, 8, 0, "--> uop Cache Entries:         %" PRIu32 " / %" PRIu32 "\n",
@@ -281,17 +285,17 @@ private:
 		output->verbose(CALL_INFO, 8, 0, "[ins-loader]: Pending loads table\n");
 		for( auto next_load : pending_loads ) {
 			output->verbose(CALL_INFO, 8, 0, "[ins-loader]:   load: 0x%llx / size %" PRIu64 "\n",
-				next_load.second->addr, next_load.second->size);
+				next_load.second->pAddr, next_load.second->size);
 		}
 	}
 
     uint64_t cache_line_width;
-    SST::Interfaces::SimpleMem* mem_if;
+    SST::Interfaces::StandardMem* mem_if;
 
     VanadisCache<uint64_t, VanadisInstructionBundle*>* uop_cache;
     VanadisCache<uint64_t, std::vector<uint8_t>*>* predecode_cache;
 
-    std::unordered_map<SST::Interfaces::SimpleMem::Request::id_t, SST::Interfaces::SimpleMem::Request*> pending_loads;
+    std::unordered_map<SST::Interfaces::StandardMem::Request::id_t, SST::Interfaces::StandardMem::Read*> pending_loads;
 };
 
 } // namespace Vanadis

@@ -20,6 +20,7 @@
 #include <sst/core/link.h>
 #include <sst/core/output.h>
 #include <sst/core/params.h>
+#include <sst/core/interfaces/stdMem.h>
 
 #include <array>
 #include <limits>
@@ -150,7 +151,7 @@ public:
     // Optional since there is nothing to document
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
         { "lsq", "Load-Store Queue for Memory Access", "SST::Vanadis::VanadisLoadStoreQueue" },
-        { "mem_interface_inst", "Interface to memory system for instructions", "SST::Interfaces::SimpleMem" },
+        { "mem_interface_inst", "Interface to memory system for instructions", "SST::Interfaces::StandardMem" },
         { "decoder%(hardware_threads)d", "Instruction decoder for a hardware thread", "SST::Vanadis::VanadisDecoder" })
 
 #ifdef VANADIS_BUILD_DEBUG
@@ -168,8 +169,8 @@ public:
 
     void printStatus(SST::Output& output);
 
-    //    void handleIncomingDataCacheEvent( SimpleMem::Request* ev );
-    void handleIncomingInstCacheEvent(SimpleMem::Request* ev);
+    //    void handleIncomingDataCacheEvent( StandardMem::Request* ev );
+    void handleIncomingInstCacheEvent(StandardMem::Request* ev);
 
     void handleMisspeculate(const uint32_t hw_thr, const uint64_t new_ip);
     void clearROBMisspeculate(const uint32_t hw_thr);
@@ -249,7 +250,7 @@ private:
     std::list<VanadisInsCacheLoadRecord*>* icache_load_records;
 
     VanadisLoadStoreQueue* lsq;
-    SimpleMem* memInstInterface;
+    StandardMem* memInstInterface;
 
     bool* halted_masks;
     bool print_int_reg;

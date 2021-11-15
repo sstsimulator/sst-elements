@@ -30,9 +30,9 @@ public:
         completed = true;
     }
 
-    virtual void handleIncomingRequest(SimpleMem::Request* req) {
-        output->verbose(CALL_INFO, 16, 0, "-> [syscall-brk] handle incoming event for brk(), req->size: %" PRIu32 "\n",
-                        (uint32_t)req->size);
+    virtual void handleIncomingRequest(StandardMem::Request* req) {
+        output->verbose(CALL_INFO, 16, 0, "-> [syscall-brk] handle incoming event for brk(), %s\n",
+                        req->getString().c_str());
     }
 
     virtual VanadisSyscallResponse* generateResponse() { return new VanadisSyscallResponse(rc); }

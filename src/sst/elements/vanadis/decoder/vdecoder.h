@@ -16,7 +16,7 @@
 #ifndef _H_VANADIS_DECODER
 #define _H_VANADIS_DECODER
 
-#include <sst/core/interfaces/simpleMem.h>
+#include <sst/core/interfaces/stdMem.h>
 #include <sst/core/subcomponent.h>
 
 #include <cinttypes>
@@ -138,7 +138,7 @@ public:
         ins_loader->setCacheLineWidth(ic_width);
     }
 
-    bool acceptCacheResponse(SST::Output* output, SST::Interfaces::SimpleMem::Request* req) {
+    bool acceptCacheResponse(SST::Output* output, SST::Interfaces::StandardMem::Request* req) {
         return ins_loader->acceptResponse(output, req);
     }
 
