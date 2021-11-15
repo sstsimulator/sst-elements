@@ -35,7 +35,7 @@ public:
         completed = true;
     }
 
-    virtual void handleIncomingRequest(SimpleMem::Request* req) {}
+    virtual void handleIncomingRequest(StandardMem::Request* req) {}
 
     virtual VanadisSyscallResponse* generateResponse() { return new VanadisSyscallResponse(return_code); }
 

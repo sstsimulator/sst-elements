@@ -207,8 +207,8 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
     // SimpleMem::Handler<SST::Vanadis::VanadisComponent>(this,
     //&VanadisComponent::handleIncomingDataCacheEvent ));
     memInstInterface
-        = loadUserSubComponent<Interfaces::SimpleMem>("mem_interface_inst", ComponentInfo::SHARE_NONE, cpuClockTC,
-                                                      new SimpleMem::Handler<SST::Vanadis::VANADIS_COMPONENT>(
+        = loadUserSubComponent<Interfaces::StandardMem>("mem_interface_inst", ComponentInfo::SHARE_NONE, cpuClockTC,
+                                                      new StandardMem::Handler<SST::Vanadis::VANADIS_COMPONENT>(
                                                           this, &VANADIS_COMPONENT::handleIncomingInstCacheEvent));
 
     // Load anonymously if not found in config
@@ -1905,9 +1905,9 @@ VANADIS_COMPONENT::init(unsigned int phase) {
 // }
 
 void
-VANADIS_COMPONENT::handleIncomingInstCacheEvent(SimpleMem::Request* ev) {
+VANADIS_COMPONENT::handleIncomingInstCacheEvent(StandardMem::Request* ev) {
 #ifdef VANADIS_BUILD_DEBUG
-    output->verbose(CALL_INFO, 16, 0, "-> Incoming i-cache event (addr=%p)...\n", (void*)ev->addr);
+    output->verbose(CALL_INFO, 16, 0, "-> Incoming i-cache event (addr=%p)...\n", static_cast<StandardMem::ReadResp*>(ev)->pAddr);
 #endif
     // Needs to get attached to the decoder
     bool hit = false;
