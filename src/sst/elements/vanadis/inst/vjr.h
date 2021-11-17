@@ -47,9 +47,9 @@ public:
 #endif
         takenAddress = regFile->getIntReg<uint64_t>(phys_int_regs_in[0]);
 
-        if ((takenAddress & 0x3) != 0) {
-            flagError();
-        }
+//        if ((takenAddress & 0x3) != 0) {
+//            flagError();
+//        }
 
         markExecuted();
     }
