@@ -51,7 +51,12 @@ void Cache::handleEvent(SST::Event * ev) {
     } else {
         statCacheRecv[(int)event->getCmd()]->addData(1);
     }
-
+    if (is_debug_event((event))) {
+        dbg_->debug(_L3_, "E: %-20" PRIu64 " %-20" PRIu64 " %-20s Event:Recv    (%s)\n",
+                Simulation::getSimulation()->getCurrentSimCycle(), timestamp_, getName().c_str(), event->getVerboseString().c_str());
+        fflush(stdout);
+    }
+    
     eventBuffer_.push_back(event);
 }
 
@@ -202,11 +207,12 @@ void Cache::turnClockOn() {
     for (int64_t i = 0; i < cyclesOff; i++) {           // TODO more efficient way to do this? Don't want to add in one-shot or we get weird averages/sum sq.
         statMSHROccupancy->addData(mshr_->getSize());
     }
-    //d_->debug(_L3_, "%s turning clock ON at cycle %" PRIu64 ", timestamp %" PRIu64 ", ns %" PRIu64 "\n", this->getName().c_str(), time, timestamp_, getCurrentSimTimeNano());
+    //dbg_->debug(_L3_, "%s turning clock ON at cycle %" PRIu64 ", timestamp %" PRIu64 ", ns %" PRIu64 "\n", this->getName().c_str(), getCurrentSimCycle(), timestamp_, getCurrentSimTimeNano());
     clockIsOn_ = true;
 }
 
 void Cache::turnClockOff() {
+    //dbg_->debug(_L3_, "%s turning clock OFF at cycle %" PRIu64 ", timestamp %" PRIu64 ", ns %" PRIu64 "\n", this->getName().c_str(), getCurrentSimCycle(), timestamp_, getCurrentSimTimeNano());
     clockIsOn_ = false;
     lastActiveClockCycle_ = timestamp_;
 }

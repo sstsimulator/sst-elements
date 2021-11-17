@@ -99,7 +99,7 @@ class testcase_memHierarchy_sdl(SSTTestCase):
         self.memHierarchy_Template("sdl8-1")
 
     def test_memHierarchy_sdl8_3(self):
-        self.memHierarchy_Template("sdl-3")
+        self.memHierarchy_Template("sdl8-3")
 
     def test_memHierarchy_sdl8_4(self):
         self.memHierarchy_Template("sdl8-4")

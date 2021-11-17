@@ -300,25 +300,31 @@ void StandardInterface::receive(SST::Event* ev) {
  ********************************************************************************************/
 
 SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::Read* req) {
-    Addr bAddr = (iface->lineSize_ == 0 || req->getNoncacheable()) ? req->pAddr : req->pAddr & iface->baseAddrMask_; // Line address
-    MemEvent* read = new MemEvent(iface->getName(), req->pAddr, bAddr, Command::GetS, req->size);
-    read->setRqstr(iface->getName());
-    read->setDst(iface->link_->getTargetDestination(bAddr));
-    read->setVirtualAddress(req->vAddr);
-    read->setInstructionPointer(req->iPtr);
+    bool noncacheable = false;
+
     if (req->getNoncacheable()) {
-        read->setFlag(MemEvent::F_NONCACHEABLE);
+        noncacheable = true;
     } else if (!((iface->noncacheableRegions).empty())) {
         // Check if addr lies in noncacheable regions. 
         // For simplicity we are not dealing with the case where the address range splits a noncacheable + cacheable region
         std::multimap<Addr, MemRegion>::iterator ep = (iface->noncacheableRegions).upper_bound(req->pAddr);
         for (std::multimap<Addr, MemRegion>::iterator it = (iface->noncacheableRegions).begin(); it != ep; it++) {
             if (it->second.contains(req->pAddr)) {
-                read->setFlag(MemEvent::F_NONCACHEABLE);
+                noncacheable = true;
                 break;
             }
         }
     }
+
+    Addr bAddr = (iface->lineSize_ == 0 || noncacheable) ? req->pAddr : req->pAddr & iface->baseAddrMask_; // Line address
+    MemEvent* read = new MemEvent(iface->getName(), req->pAddr, bAddr, Command::GetS, req->size);
+    read->setRqstr(iface->getName());
+    read->setDst(iface->link_->getTargetDestination(bAddr));
+    read->setVirtualAddress(req->vAddr);
+    read->setInstructionPointer(req->iPtr);
+    
+    if (noncacheable)
+        read->setFlag(MemEvent::F_NONCACHEABLE);
 
 #ifdef __SST_DEBUG_OUTPUT__
     debugChecks(read);
@@ -328,27 +334,33 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::Read* req
 
 
 SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::Write* req) {
-    Addr bAddr = (iface->lineSize_ == 0 || req->getNoncacheable()) ? req->pAddr : req->pAddr & iface->baseAddrMask_;
-    MemEvent* write = new MemEvent(iface->getName(), req->pAddr, bAddr, Command::GetX, req->data);
-    
-    write->setRqstr(iface->getName());
-    write->setDst(iface->link_->getTargetDestination(bAddr));
-    write->setVirtualAddress(req->vAddr);
-    write->setInstructionPointer(req->iPtr);
+    bool noncacheable = false;
     
     if (req->getNoncacheable()) {
-        write->setFlag(MemEvent::F_NONCACHEABLE);
+        noncacheable = true;
     } else if (!((iface->noncacheableRegions).empty())) {
         // Check if addr lies in noncacheable regions. 
         // For simplicity we are not dealing with the case where the address range splits a noncacheable + cacheable region
         std::multimap<Addr, MemRegion>::iterator ep = (iface->noncacheableRegions).upper_bound(req->pAddr);
         for (std::multimap<Addr, MemRegion>::iterator it = (iface->noncacheableRegions).begin(); it != ep; it++) {
             if (it->second.contains(req->pAddr)) {
-                write->setFlag(MemEvent::F_NONCACHEABLE);
+                noncacheable = true;
                 break;
             }
         }
     }
+
+    Addr bAddr = (iface->lineSize_ == 0 || noncacheable) ? req->pAddr : req->pAddr & iface->baseAddrMask_;
+    MemEvent* write = new MemEvent(iface->getName(), req->pAddr, bAddr, Command::GetX, req->data);
+    
+    if (noncacheable)    
+        write->setFlag(MemEvent::F_NONCACHEABLE);
+    
+    write->setRqstr(iface->getName());
+    write->setDst(iface->link_->getTargetDestination(bAddr));
+    write->setVirtualAddress(req->vAddr);
+    write->setInstructionPointer(req->iPtr);
+    
 
     if (req->posted)
         write->setFlag(MemEvent::F_NORESPONSE);
