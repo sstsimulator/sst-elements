@@ -16,7 +16,7 @@
 #ifndef _H_VANADIS_OS_HANDLER_STATE
 #define _H_VANADIS_OS_HANDLER_STATE
 
-#include <sst/core/interfaces/simpleMem.h>
+#include <sst/core/interfaces/stdMem.h>
 
 using namespace SST::Interfaces;
 
@@ -32,7 +32,7 @@ public:
 
     virtual ~VanadisHandlerState() { delete output; }
 
-    virtual void handleIncomingRequest(SimpleMem::Request* req) {}
+    virtual void handleIncomingRequest(StandardMem::Request* req) {}
     virtual VanadisSyscallResponse* generateResponse() = 0;
     virtual bool isComplete() const { return completed; }
     virtual void markComplete() { completed = true; }

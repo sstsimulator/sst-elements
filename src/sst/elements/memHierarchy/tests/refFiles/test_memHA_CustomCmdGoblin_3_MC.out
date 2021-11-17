@@ -243,8 +243,8 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_0.evict_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_0.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_0.evict_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache_0.latency_GetS_hit : Accumulator : Sum.u64 = 88074; SumSQ.u64 = 24543946; Count.u64 = 368; Min.u64 = 5; Max.u64 = 438; 
- l1cache_0.latency_GetS_miss : Accumulator : Sum.u64 = 73029; SumSQ.u64 = 21605029; Count.u64 = 256; Min.u64 = 17; Max.u64 = 445; 
+ l1cache_0.latency_GetS_hit : Accumulator : Sum.u64 = 98744; SumSQ.u64 = 27057812; Count.u64 = 448; Min.u64 = 1; Max.u64 = 438; 
+ l1cache_0.latency_GetS_miss : Accumulator : Sum.u64 = 89190; SumSQ.u64 = 26283246; Count.u64 = 313; Min.u64 = 13; Max.u64 = 445; 
  l1cache_0.latency_GetX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_0.latency_GetX_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_0.latency_GetX_upgrade : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -455,7 +455,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_0.eventSent_CustomReq : Accumulator : Sum.u64 = 312; SumSQ.u64 = 312; Count.u64 = 312; Min.u64 = 1; Max.u64 = 1; 
  l2cache_0.eventSent_CustomResp : Accumulator : Sum.u64 = 312; SumSQ.u64 = 312; Count.u64 = 312; Min.u64 = 1; Max.u64 = 1; 
  l2cache_0.eventSent_CustomAck : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l2cache_0.latency_GetS_hit : Accumulator : Sum.u64 = 49; SumSQ.u64 = 343; Count.u64 = 7; Min.u64 = 7; Max.u64 = 7; 
+ l2cache_0.latency_GetS_hit : Accumulator : Sum.u64 = 76; SumSQ.u64 = 370; Count.u64 = 34; Min.u64 = 1; Max.u64 = 7; 
  l2cache_0.latency_GetS_miss : Accumulator : Sum.u64 = 86238; SumSQ.u64 = 24655472; Count.u64 = 306; Min.u64 = 65; Max.u64 = 435; 
  l2cache_0.latency_GetS_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_0.latency_GetX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -670,8 +670,8 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_1.evict_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_1.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_1.evict_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache_1.latency_GetS_hit : Accumulator : Sum.u64 = 125801; SumSQ.u64 = 31605783; Count.u64 = 706; Min.u64 = 5; Max.u64 = 439; 
- l1cache_1.latency_GetS_miss : Accumulator : Sum.u64 = 58737; SumSQ.u64 = 16369195; Count.u64 = 230; Min.u64 = 17; Max.u64 = 450; 
+ l1cache_1.latency_GetS_hit : Accumulator : Sum.u64 = 140384; SumSQ.u64 = 35147526; Count.u64 = 807; Min.u64 = 1; Max.u64 = 439; 
+ l1cache_1.latency_GetS_miss : Accumulator : Sum.u64 = 78816; SumSQ.u64 = 21693132; Count.u64 = 315; Min.u64 = 13; Max.u64 = 450; 
  l1cache_1.latency_GetX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_1.latency_GetX_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_1.latency_GetX_upgrade : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -882,7 +882,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_1.eventSent_CustomReq : Accumulator : Sum.u64 = 468; SumSQ.u64 = 468; Count.u64 = 468; Min.u64 = 1; Max.u64 = 1; 
  l2cache_1.eventSent_CustomResp : Accumulator : Sum.u64 = 468; SumSQ.u64 = 468; Count.u64 = 468; Min.u64 = 1; Max.u64 = 1; 
  l2cache_1.eventSent_CustomAck : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l2cache_1.latency_GetS_hit : Accumulator : Sum.u64 = 49; SumSQ.u64 = 343; Count.u64 = 7; Min.u64 = 7; Max.u64 = 7; 
+ l2cache_1.latency_GetS_hit : Accumulator : Sum.u64 = 67; SumSQ.u64 = 361; Count.u64 = 25; Min.u64 = 1; Max.u64 = 7; 
  l2cache_1.latency_GetS_miss : Accumulator : Sum.u64 = 75954; SumSQ.u64 = 20301490; Count.u64 = 308; Min.u64 = 77; Max.u64 = 440; 
  l2cache_1.latency_GetS_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_1.latency_GetX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -1097,8 +1097,8 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_2.evict_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_2.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_2.evict_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache_2.latency_GetS_hit : Accumulator : Sum.u64 = 83553; SumSQ.u64 = 22051371; Count.u64 = 386; Min.u64 = 5; Max.u64 = 447; 
- l1cache_2.latency_GetS_miss : Accumulator : Sum.u64 = 69946; SumSQ.u64 = 21013796; Count.u64 = 238; Min.u64 = 17; Max.u64 = 517; 
+ l1cache_2.latency_GetS_hit : Accumulator : Sum.u64 = 92211; SumSQ.u64 = 24010925; Count.u64 = 441; Min.u64 = 1; Max.u64 = 447; 
+ l1cache_2.latency_GetS_miss : Accumulator : Sum.u64 = 92018; SumSQ.u64 = 27621826; Count.u64 = 316; Min.u64 = 13; Max.u64 = 517; 
  l1cache_2.latency_GetX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_2.latency_GetX_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_2.latency_GetX_upgrade : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -1309,7 +1309,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_2.eventSent_CustomReq : Accumulator : Sum.u64 = 312; SumSQ.u64 = 312; Count.u64 = 312; Min.u64 = 1; Max.u64 = 1; 
  l2cache_2.eventSent_CustomResp : Accumulator : Sum.u64 = 312; SumSQ.u64 = 312; Count.u64 = 312; Min.u64 = 1; Max.u64 = 1; 
  l2cache_2.eventSent_CustomAck : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l2cache_2.latency_GetS_hit : Accumulator : Sum.u64 = 166; SumSQ.u64 = 10316; Count.u64 = 5; Min.u64 = 7; Max.u64 = 89; 
+ l2cache_2.latency_GetS_hit : Accumulator : Sum.u64 = 191; SumSQ.u64 = 10341; Count.u64 = 30; Min.u64 = 1; Max.u64 = 89; 
  l2cache_2.latency_GetS_miss : Accumulator : Sum.u64 = 88983; SumSQ.u64 = 25970155; Count.u64 = 311; Min.u64 = 87; Max.u64 = 508; 
  l2cache_2.latency_GetS_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_2.latency_GetX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -1524,8 +1524,8 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_3.evict_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_3.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_3.evict_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache_3.latency_GetS_hit : Accumulator : Sum.u64 = 125758; SumSQ.u64 = 32186034; Count.u64 = 708; Min.u64 = 5; Max.u64 = 413; 
- l1cache_3.latency_GetS_miss : Accumulator : Sum.u64 = 57845; SumSQ.u64 = 16082553; Count.u64 = 228; Min.u64 = 17; Max.u64 = 460; 
+ l1cache_3.latency_GetS_hit : Accumulator : Sum.u64 = 139780; SumSQ.u64 = 35563810; Count.u64 = 804; Min.u64 = 1; Max.u64 = 413; 
+ l1cache_3.latency_GetS_miss : Accumulator : Sum.u64 = 79853; SumSQ.u64 = 22068287; Count.u64 = 317; Min.u64 = 13; Max.u64 = 460; 
  l1cache_3.latency_GetX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_3.latency_GetX_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_3.latency_GetX_upgrade : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -1736,7 +1736,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_3.eventSent_CustomReq : Accumulator : Sum.u64 = 468; SumSQ.u64 = 468; Count.u64 = 468; Min.u64 = 1; Max.u64 = 1; 
  l2cache_3.eventSent_CustomResp : Accumulator : Sum.u64 = 468; SumSQ.u64 = 468; Count.u64 = 468; Min.u64 = 1; Max.u64 = 1; 
  l2cache_3.eventSent_CustomAck : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l2cache_3.latency_GetS_hit : Accumulator : Sum.u64 = 49; SumSQ.u64 = 343; Count.u64 = 7; Min.u64 = 7; Max.u64 = 7; 
+ l2cache_3.latency_GetS_hit : Accumulator : Sum.u64 = 61; SumSQ.u64 = 355; Count.u64 = 19; Min.u64 = 1; Max.u64 = 7; 
  l2cache_3.latency_GetS_miss : Accumulator : Sum.u64 = 76989; SumSQ.u64 = 20672397; Count.u64 = 310; Min.u64 = 91; Max.u64 = 450; 
  l2cache_3.latency_GetS_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_3.latency_GetX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -1951,8 +1951,8 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_4.evict_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_4.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_4.evict_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache_4.latency_GetS_hit : Accumulator : Sum.u64 = 87229; SumSQ.u64 = 24445019; Count.u64 = 369; Min.u64 = 5; Max.u64 = 417; 
- l1cache_4.latency_GetS_miss : Accumulator : Sum.u64 = 73235; SumSQ.u64 = 21725869; Count.u64 = 255; Min.u64 = 17; Max.u64 = 453; 
+ l1cache_4.latency_GetS_hit : Accumulator : Sum.u64 = 98023; SumSQ.u64 = 27039287; Count.u64 = 447; Min.u64 = 1; Max.u64 = 417; 
+ l1cache_4.latency_GetS_miss : Accumulator : Sum.u64 = 90376; SumSQ.u64 = 26753252; Count.u64 = 315; Min.u64 = 13; Max.u64 = 495; 
  l1cache_4.latency_GetX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_4.latency_GetX_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_4.latency_GetX_upgrade : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -2163,7 +2163,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_4.eventSent_CustomReq : Accumulator : Sum.u64 = 312; SumSQ.u64 = 312; Count.u64 = 312; Min.u64 = 1; Max.u64 = 1; 
  l2cache_4.eventSent_CustomResp : Accumulator : Sum.u64 = 312; SumSQ.u64 = 312; Count.u64 = 312; Min.u64 = 1; Max.u64 = 1; 
  l2cache_4.eventSent_CustomAck : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l2cache_4.latency_GetS_hit : Accumulator : Sum.u64 = 42; SumSQ.u64 = 294; Count.u64 = 6; Min.u64 = 7; Max.u64 = 7; 
+ l2cache_4.latency_GetS_hit : Accumulator : Sum.u64 = 66; SumSQ.u64 = 318; Count.u64 = 30; Min.u64 = 1; Max.u64 = 7; 
  l2cache_4.latency_GetS_miss : Accumulator : Sum.u64 = 87422; SumSQ.u64 = 25109118; Count.u64 = 309; Min.u64 = 71; Max.u64 = 489; 
  l2cache_4.latency_GetS_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_4.latency_GetX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -2378,8 +2378,8 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_5.evict_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_5.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_5.evict_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache_5.latency_GetS_hit : Accumulator : Sum.u64 = 126789; SumSQ.u64 = 31889845; Count.u64 = 716; Min.u64 = 5; Max.u64 = 417; 
- l1cache_5.latency_GetS_miss : Accumulator : Sum.u64 = 57130; SumSQ.u64 = 15995428; Count.u64 = 220; Min.u64 = 17; Max.u64 = 454; 
+ l1cache_5.latency_GetS_hit : Accumulator : Sum.u64 = 141401; SumSQ.u64 = 35424525; Count.u64 = 809; Min.u64 = 1; Max.u64 = 417; 
+ l1cache_5.latency_GetS_miss : Accumulator : Sum.u64 = 81703; SumSQ.u64 = 22738309; Count.u64 = 317; Min.u64 = 13; Max.u64 = 454; 
  l1cache_5.latency_GetX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_5.latency_GetX_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_5.latency_GetX_upgrade : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -2590,7 +2590,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_5.eventSent_CustomReq : Accumulator : Sum.u64 = 468; SumSQ.u64 = 468; Count.u64 = 468; Min.u64 = 1; Max.u64 = 1; 
  l2cache_5.eventSent_CustomResp : Accumulator : Sum.u64 = 468; SumSQ.u64 = 468; Count.u64 = 468; Min.u64 = 1; Max.u64 = 1; 
  l2cache_5.eventSent_CustomAck : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l2cache_5.latency_GetS_hit : Accumulator : Sum.u64 = 42; SumSQ.u64 = 294; Count.u64 = 6; Min.u64 = 7; Max.u64 = 7; 
+ l2cache_5.latency_GetS_hit : Accumulator : Sum.u64 = 57; SumSQ.u64 = 309; Count.u64 = 21; Min.u64 = 1; Max.u64 = 7; 
  l2cache_5.latency_GetS_miss : Accumulator : Sum.u64 = 78876; SumSQ.u64 = 21324706; Count.u64 = 311; Min.u64 = 75; Max.u64 = 444; 
  l2cache_5.latency_GetS_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_5.latency_GetX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -2805,8 +2805,8 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_6.evict_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_6.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_6.evict_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache_6.latency_GetS_hit : Accumulator : Sum.u64 = 84175; SumSQ.u64 = 21818649; Count.u64 = 381; Min.u64 = 5; Max.u64 = 488; 
- l1cache_6.latency_GetS_miss : Accumulator : Sum.u64 = 70733; SumSQ.u64 = 21144417; Count.u64 = 243; Min.u64 = 17; Max.u64 = 511; 
+ l1cache_6.latency_GetS_hit : Accumulator : Sum.u64 = 91113; SumSQ.u64 = 23117579; Count.u64 = 434; Min.u64 = 1; Max.u64 = 488; 
+ l1cache_6.latency_GetS_miss : Accumulator : Sum.u64 = 92350; SumSQ.u64 = 27933156; Count.u64 = 316; Min.u64 = 11; Max.u64 = 661; 
  l1cache_6.latency_GetX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_6.latency_GetX_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_6.latency_GetX_upgrade : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -3017,7 +3017,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_6.eventSent_CustomReq : Accumulator : Sum.u64 = 312; SumSQ.u64 = 312; Count.u64 = 312; Min.u64 = 1; Max.u64 = 1; 
  l2cache_6.eventSent_CustomResp : Accumulator : Sum.u64 = 312; SumSQ.u64 = 312; Count.u64 = 312; Min.u64 = 1; Max.u64 = 1; 
  l2cache_6.eventSent_CustomAck : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l2cache_6.latency_GetS_hit : Accumulator : Sum.u64 = 82; SumSQ.u64 = 3308; Count.u64 = 5; Min.u64 = 5; Max.u64 = 56; 
+ l2cache_6.latency_GetS_hit : Accumulator : Sum.u64 = 107; SumSQ.u64 = 3333; Count.u64 = 30; Min.u64 = 1; Max.u64 = 56; 
  l2cache_6.latency_GetS_miss : Accumulator : Sum.u64 = 89262; SumSQ.u64 = 26168886; Count.u64 = 311; Min.u64 = 85; Max.u64 = 655; 
  l2cache_6.latency_GetS_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_6.latency_GetX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -3232,8 +3232,8 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_7.evict_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_7.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_7.evict_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache_7.latency_GetS_hit : Accumulator : Sum.u64 = 126634; SumSQ.u64 = 33067910; Count.u64 = 712; Min.u64 = 5; Max.u64 = 451; 
- l1cache_7.latency_GetS_miss : Accumulator : Sum.u64 = 57568; SumSQ.u64 = 16143378; Count.u64 = 224; Min.u64 = 17; Max.u64 = 458; 
+ l1cache_7.latency_GetS_hit : Accumulator : Sum.u64 = 141181; SumSQ.u64 = 36697911; Count.u64 = 810; Min.u64 = 1; Max.u64 = 451; 
+ l1cache_7.latency_GetS_miss : Accumulator : Sum.u64 = 79917; SumSQ.u64 = 22233551; Count.u64 = 315; Min.u64 = 13; Max.u64 = 458; 
  l1cache_7.latency_GetX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_7.latency_GetX_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_7.latency_GetX_upgrade : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -3444,7 +3444,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_7.eventSent_CustomReq : Accumulator : Sum.u64 = 468; SumSQ.u64 = 468; Count.u64 = 468; Min.u64 = 1; Max.u64 = 1; 
  l2cache_7.eventSent_CustomResp : Accumulator : Sum.u64 = 468; SumSQ.u64 = 468; Count.u64 = 468; Min.u64 = 1; Max.u64 = 1; 
  l2cache_7.eventSent_CustomAck : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l2cache_7.latency_GetS_hit : Accumulator : Sum.u64 = 49; SumSQ.u64 = 343; Count.u64 = 7; Min.u64 = 7; Max.u64 = 7; 
+ l2cache_7.latency_GetS_hit : Accumulator : Sum.u64 = 68; SumSQ.u64 = 362; Count.u64 = 26; Min.u64 = 1; Max.u64 = 7; 
  l2cache_7.latency_GetS_miss : Accumulator : Sum.u64 = 77072; SumSQ.u64 = 20834844; Count.u64 = 308; Min.u64 = 89; Max.u64 = 448; 
  l2cache_7.latency_GetS_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_7.latency_GetX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -3659,8 +3659,8 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_8.evict_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_8.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_8.evict_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache_8.latency_GetS_hit : Accumulator : Sum.u64 = 87758; SumSQ.u64 = 24033698; Count.u64 = 368; Min.u64 = 5; Max.u64 = 442; 
- l1cache_8.latency_GetS_miss : Accumulator : Sum.u64 = 73303; SumSQ.u64 = 21681979; Count.u64 = 256; Min.u64 = 17; Max.u64 = 447; 
+ l1cache_8.latency_GetS_hit : Accumulator : Sum.u64 = 100582; SumSQ.u64 = 26888700; Count.u64 = 451; Min.u64 = 1; Max.u64 = 442; 
+ l1cache_8.latency_GetS_miss : Accumulator : Sum.u64 = 89779; SumSQ.u64 = 26495959; Count.u64 = 314; Min.u64 = 13; Max.u64 = 447; 
  l1cache_8.latency_GetX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_8.latency_GetX_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_8.latency_GetX_upgrade : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -3871,7 +3871,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_8.eventSent_CustomReq : Accumulator : Sum.u64 = 312; SumSQ.u64 = 312; Count.u64 = 312; Min.u64 = 1; Max.u64 = 1; 
  l2cache_8.eventSent_CustomResp : Accumulator : Sum.u64 = 312; SumSQ.u64 = 312; Count.u64 = 312; Min.u64 = 1; Max.u64 = 1; 
  l2cache_8.eventSent_CustomAck : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l2cache_8.latency_GetS_hit : Accumulator : Sum.u64 = 128; SumSQ.u64 = 7690; Count.u64 = 7; Min.u64 = 7; Max.u64 = 86; 
+ l2cache_8.latency_GetS_hit : Accumulator : Sum.u64 = 152; SumSQ.u64 = 7714; Count.u64 = 31; Min.u64 = 1; Max.u64 = 86; 
  l2cache_8.latency_GetS_miss : Accumulator : Sum.u64 = 86743; SumSQ.u64 = 24852185; Count.u64 = 307; Min.u64 = 69; Max.u64 = 437; 
  l2cache_8.latency_GetS_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_8.latency_GetX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -4086,8 +4086,8 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_9.evict_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_9.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_9.evict_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache_9.latency_GetS_hit : Accumulator : Sum.u64 = 128091; SumSQ.u64 = 32437145; Count.u64 = 721; Min.u64 = 5; Max.u64 = 416; 
- l1cache_9.latency_GetS_miss : Accumulator : Sum.u64 = 55987; SumSQ.u64 = 15705223; Count.u64 = 215; Min.u64 = 17; Max.u64 = 448; 
+ l1cache_9.latency_GetS_hit : Accumulator : Sum.u64 = 141044; SumSQ.u64 = 35589786; Count.u64 = 809; Min.u64 = 1; Max.u64 = 416; 
+ l1cache_9.latency_GetS_miss : Accumulator : Sum.u64 = 81182; SumSQ.u64 = 22581964; Count.u64 = 316; Min.u64 = 13; Max.u64 = 448; 
  l1cache_9.latency_GetX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_9.latency_GetX_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_9.latency_GetX_upgrade : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -4298,7 +4298,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_9.eventSent_CustomReq : Accumulator : Sum.u64 = 468; SumSQ.u64 = 468; Count.u64 = 468; Min.u64 = 1; Max.u64 = 1; 
  l2cache_9.eventSent_CustomResp : Accumulator : Sum.u64 = 468; SumSQ.u64 = 468; Count.u64 = 468; Min.u64 = 1; Max.u64 = 1; 
  l2cache_9.eventSent_CustomAck : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l2cache_9.latency_GetS_hit : Accumulator : Sum.u64 = 42; SumSQ.u64 = 294; Count.u64 = 6; Min.u64 = 7; Max.u64 = 7; 
+ l2cache_9.latency_GetS_hit : Accumulator : Sum.u64 = 64; SumSQ.u64 = 316; Count.u64 = 28; Min.u64 = 1; Max.u64 = 7; 
  l2cache_9.latency_GetS_miss : Accumulator : Sum.u64 = 78380; SumSQ.u64 = 21182940; Count.u64 = 310; Min.u64 = 73; Max.u64 = 438; 
  l2cache_9.latency_GetS_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_9.latency_GetX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -4513,8 +4513,8 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_10.evict_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_10.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_10.evict_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache_10.latency_GetS_hit : Accumulator : Sum.u64 = 86078; SumSQ.u64 = 23231080; Count.u64 = 387; Min.u64 = 5; Max.u64 = 425; 
- l1cache_10.latency_GetS_miss : Accumulator : Sum.u64 = 69102; SumSQ.u64 = 20690392; Count.u64 = 237; Min.u64 = 17; Max.u64 = 502; 
+ l1cache_10.latency_GetS_hit : Accumulator : Sum.u64 = 94000; SumSQ.u64 = 25111986; Count.u64 = 436; Min.u64 = 1; Max.u64 = 425; 
+ l1cache_10.latency_GetS_miss : Accumulator : Sum.u64 = 92315; SumSQ.u64 = 27798329; Count.u64 = 316; Min.u64 = 11; Max.u64 = 533; 
  l1cache_10.latency_GetX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_10.latency_GetX_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_10.latency_GetX_upgrade : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -4725,7 +4725,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_10.eventSent_CustomReq : Accumulator : Sum.u64 = 312; SumSQ.u64 = 312; Count.u64 = 312; Min.u64 = 1; Max.u64 = 1; 
  l2cache_10.eventSent_CustomResp : Accumulator : Sum.u64 = 312; SumSQ.u64 = 312; Count.u64 = 312; Min.u64 = 1; Max.u64 = 1; 
  l2cache_10.eventSent_CustomAck : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l2cache_10.latency_GetS_hit : Accumulator : Sum.u64 = 82; SumSQ.u64 = 3308; Count.u64 = 5; Min.u64 = 5; Max.u64 = 56; 
+ l2cache_10.latency_GetS_hit : Accumulator : Sum.u64 = 100; SumSQ.u64 = 3326; Count.u64 = 23; Min.u64 = 1; Max.u64 = 56; 
  l2cache_10.latency_GetS_miss : Accumulator : Sum.u64 = 89292; SumSQ.u64 = 26086128; Count.u64 = 311; Min.u64 = 83; Max.u64 = 527; 
  l2cache_10.latency_GetS_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_10.latency_GetX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -4940,8 +4940,8 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_11.evict_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_11.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_11.evict_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache_11.latency_GetS_hit : Accumulator : Sum.u64 = 130473; SumSQ.u64 = 33294585; Count.u64 = 709; Min.u64 = 5; Max.u64 = 462; 
- l1cache_11.latency_GetS_miss : Accumulator : Sum.u64 = 56100; SumSQ.u64 = 15459976; Count.u64 = 227; Min.u64 = 17; Max.u64 = 465; 
+ l1cache_11.latency_GetS_hit : Accumulator : Sum.u64 = 146335; SumSQ.u64 = 37287809; Count.u64 = 812; Min.u64 = 1; Max.u64 = 462; 
+ l1cache_11.latency_GetS_miss : Accumulator : Sum.u64 = 78220; SumSQ.u64 = 21516156; Count.u64 = 316; Min.u64 = 17; Max.u64 = 465; 
  l1cache_11.latency_GetX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_11.latency_GetX_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_11.latency_GetX_upgrade : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -5152,7 +5152,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_11.eventSent_CustomReq : Accumulator : Sum.u64 = 468; SumSQ.u64 = 468; Count.u64 = 468; Min.u64 = 1; Max.u64 = 1; 
  l2cache_11.eventSent_CustomResp : Accumulator : Sum.u64 = 468; SumSQ.u64 = 468; Count.u64 = 468; Min.u64 = 1; Max.u64 = 1; 
  l2cache_11.eventSent_CustomAck : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l2cache_11.latency_GetS_hit : Accumulator : Sum.u64 = 28; SumSQ.u64 = 196; Count.u64 = 4; Min.u64 = 7; Max.u64 = 7; 
+ l2cache_11.latency_GetS_hit : Accumulator : Sum.u64 = 50; SumSQ.u64 = 218; Count.u64 = 26; Min.u64 = 1; Max.u64 = 7; 
  l2cache_11.latency_GetS_miss : Accumulator : Sum.u64 = 75384; SumSQ.u64 = 20152166; Count.u64 = 312; Min.u64 = 57; Max.u64 = 455; 
  l2cache_11.latency_GetS_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_11.latency_GetX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -5367,8 +5367,8 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_12.evict_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_12.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_12.evict_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache_12.latency_GetS_hit : Accumulator : Sum.u64 = 87104; SumSQ.u64 = 24419210; Count.u64 = 370; Min.u64 = 5; Max.u64 = 440; 
- l1cache_12.latency_GetS_miss : Accumulator : Sum.u64 = 72867; SumSQ.u64 = 21665667; Count.u64 = 254; Min.u64 = 17; Max.u64 = 455; 
+ l1cache_12.latency_GetS_hit : Accumulator : Sum.u64 = 98105; SumSQ.u64 = 27021151; Count.u64 = 452; Min.u64 = 1; Max.u64 = 440; 
+ l1cache_12.latency_GetS_miss : Accumulator : Sum.u64 = 89507; SumSQ.u64 = 26419005; Count.u64 = 313; Min.u64 = 17; Max.u64 = 455; 
  l1cache_12.latency_GetX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_12.latency_GetX_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_12.latency_GetX_upgrade : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -5579,7 +5579,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_12.eventSent_CustomReq : Accumulator : Sum.u64 = 312; SumSQ.u64 = 312; Count.u64 = 312; Min.u64 = 1; Max.u64 = 1; 
  l2cache_12.eventSent_CustomResp : Accumulator : Sum.u64 = 312; SumSQ.u64 = 312; Count.u64 = 312; Min.u64 = 1; Max.u64 = 1; 
  l2cache_12.eventSent_CustomAck : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l2cache_12.latency_GetS_hit : Accumulator : Sum.u64 = 105; SumSQ.u64 = 4263; Count.u64 = 7; Min.u64 = 7; Max.u64 = 63; 
+ l2cache_12.latency_GetS_hit : Accumulator : Sum.u64 = 120; SumSQ.u64 = 4278; Count.u64 = 22; Min.u64 = 1; Max.u64 = 63; 
  l2cache_12.latency_GetS_miss : Accumulator : Sum.u64 = 86506; SumSQ.u64 = 24785216; Count.u64 = 306; Min.u64 = 67; Max.u64 = 445; 
  l2cache_12.latency_GetS_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_12.latency_GetX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -5794,8 +5794,8 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_13.evict_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_13.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_13.evict_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache_13.latency_GetS_hit : Accumulator : Sum.u64 = 127686; SumSQ.u64 = 32108078; Count.u64 = 709; Min.u64 = 5; Max.u64 = 430; 
- l1cache_13.latency_GetS_miss : Accumulator : Sum.u64 = 58257; SumSQ.u64 = 16231107; Count.u64 = 227; Min.u64 = 17; Max.u64 = 470; 
+ l1cache_13.latency_GetS_hit : Accumulator : Sum.u64 = 143117; SumSQ.u64 = 35772527; Count.u64 = 812; Min.u64 = 1; Max.u64 = 430; 
+ l1cache_13.latency_GetS_miss : Accumulator : Sum.u64 = 79926; SumSQ.u64 = 22328724; Count.u64 = 317; Min.u64 = 13; Max.u64 = 703; 
  l1cache_13.latency_GetX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_13.latency_GetX_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_13.latency_GetX_upgrade : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -6006,7 +6006,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_13.eventSent_CustomReq : Accumulator : Sum.u64 = 468; SumSQ.u64 = 468; Count.u64 = 468; Min.u64 = 1; Max.u64 = 1; 
  l2cache_13.eventSent_CustomResp : Accumulator : Sum.u64 = 468; SumSQ.u64 = 468; Count.u64 = 468; Min.u64 = 1; Max.u64 = 1; 
  l2cache_13.eventSent_CustomAck : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l2cache_13.latency_GetS_hit : Accumulator : Sum.u64 = 35; SumSQ.u64 = 245; Count.u64 = 5; Min.u64 = 7; Max.u64 = 7; 
+ l2cache_13.latency_GetS_hit : Accumulator : Sum.u64 = 59; SumSQ.u64 = 269; Count.u64 = 29; Min.u64 = 1; Max.u64 = 7; 
  l2cache_13.latency_GetS_miss : Accumulator : Sum.u64 = 77077; SumSQ.u64 = 20928229; Count.u64 = 312; Min.u64 = 79; Max.u64 = 697; 
  l2cache_13.latency_GetS_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_13.latency_GetX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -6221,8 +6221,8 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_14.evict_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_14.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_14.evict_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache_14.latency_GetS_hit : Accumulator : Sum.u64 = 86809; SumSQ.u64 = 23894827; Count.u64 = 381; Min.u64 = 5; Max.u64 = 424; 
- l1cache_14.latency_GetS_miss : Accumulator : Sum.u64 = 70728; SumSQ.u64 = 21131260; Count.u64 = 243; Min.u64 = 17; Max.u64 = 506; 
+ l1cache_14.latency_GetS_hit : Accumulator : Sum.u64 = 94193; SumSQ.u64 = 25612575; Count.u64 = 439; Min.u64 = 1; Max.u64 = 424; 
+ l1cache_14.latency_GetS_miss : Accumulator : Sum.u64 = 91943; SumSQ.u64 = 27498963; Count.u64 = 316; Min.u64 = 17; Max.u64 = 522; 
  l1cache_14.latency_GetX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_14.latency_GetX_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_14.latency_GetX_upgrade : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -6433,7 +6433,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_14.eventSent_CustomReq : Accumulator : Sum.u64 = 312; SumSQ.u64 = 312; Count.u64 = 312; Min.u64 = 1; Max.u64 = 1; 
  l2cache_14.eventSent_CustomResp : Accumulator : Sum.u64 = 312; SumSQ.u64 = 312; Count.u64 = 312; Min.u64 = 1; Max.u64 = 1; 
  l2cache_14.eventSent_CustomAck : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l2cache_14.latency_GetS_hit : Accumulator : Sum.u64 = 108; SumSQ.u64 = 4244; Count.u64 = 5; Min.u64 = 7; Max.u64 = 56; 
+ l2cache_14.latency_GetS_hit : Accumulator : Sum.u64 = 130; SumSQ.u64 = 4266; Count.u64 = 27; Min.u64 = 1; Max.u64 = 56; 
  l2cache_14.latency_GetS_miss : Accumulator : Sum.u64 = 88870; SumSQ.u64 = 25777058; Count.u64 = 311; Min.u64 = 81; Max.u64 = 496; 
  l2cache_14.latency_GetS_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_14.latency_GetX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -6648,8 +6648,8 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l1cache_15.evict_IM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_15.evict_SM : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_15.evict_SB : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l1cache_15.latency_GetS_hit : Accumulator : Sum.u64 = 128887; SumSQ.u64 = 33229877; Count.u64 = 717; Min.u64 = 5; Max.u64 = 452; 
- l1cache_15.latency_GetS_miss : Accumulator : Sum.u64 = 55518; SumSQ.u64 = 15486170; Count.u64 = 219; Min.u64 = 17; Max.u64 = 462; 
+ l1cache_15.latency_GetS_hit : Accumulator : Sum.u64 = 144789; SumSQ.u64 = 37378001; Count.u64 = 813; Min.u64 = 1; Max.u64 = 452; 
+ l1cache_15.latency_GetS_miss : Accumulator : Sum.u64 = 78306; SumSQ.u64 = 21560064; Count.u64 = 317; Min.u64 = 13; Max.u64 = 463; 
  l1cache_15.latency_GetX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_15.latency_GetX_miss : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l1cache_15.latency_GetX_upgrade : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
@@ -6860,7 +6860,7 @@ l2cache_15: No MSHR lookup latency provided (mshr_latency_cycles)...intrapolated
  l2cache_15.eventSent_CustomReq : Accumulator : Sum.u64 = 468; SumSQ.u64 = 468; Count.u64 = 468; Min.u64 = 1; Max.u64 = 1; 
  l2cache_15.eventSent_CustomResp : Accumulator : Sum.u64 = 468; SumSQ.u64 = 468; Count.u64 = 468; Min.u64 = 1; Max.u64 = 1; 
  l2cache_15.eventSent_CustomAck : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- l2cache_15.latency_GetS_hit : Accumulator : Sum.u64 = 49; SumSQ.u64 = 343; Count.u64 = 7; Min.u64 = 7; Max.u64 = 7; 
+ l2cache_15.latency_GetS_hit : Accumulator : Sum.u64 = 74; SumSQ.u64 = 368; Count.u64 = 32; Min.u64 = 1; Max.u64 = 7; 
  l2cache_15.latency_GetS_miss : Accumulator : Sum.u64 = 75473; SumSQ.u64 = 20199071; Count.u64 = 310; Min.u64 = 62; Max.u64 = 457; 
  l2cache_15.latency_GetS_inv : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  l2cache_15.latency_GetX_hit : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 

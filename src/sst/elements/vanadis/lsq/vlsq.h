@@ -16,7 +16,6 @@
 #ifndef _H_VANADIS_LSQ_BASE
 #define _H_VANADIS_LSQ_BASE
 
-#include <sst/core/interfaces/simpleMem.h>
 #include <sst/core/output.h>
 #include <sst/core/subcomponent.h>
 
@@ -43,7 +42,7 @@ public:
 
     SST_ELI_DOCUMENT_STATISTICS({ "bytes_read", "Count all the bytes read for data operations", "bytes", 1 },
                                 { "bytes_stored", "Count all the bytes written for data operations", "bytes", 1 },
-                                { "laods_issued", "Count the number of loads issued", "operations", 1 },
+                                { "loads_issued", "Count the number of loads issued", "operations", 1 },
                                 { "stores_issued", "Count the number of stores issued", "operations", 1 })
 
     VanadisLoadStoreQueue(ComponentId_t id, Params& params) : SubComponent(id) {
@@ -55,7 +54,7 @@ public:
 
         registerFiles = nullptr;
 
-        stat_load_issued = registerStatistic<uint64_t>("laods_issued", "1");
+        stat_load_issued = registerStatistic<uint64_t>("loads_issued", "1");
         stat_store_issued = registerStatistic<uint64_t>("stores_issued", "1");
         stat_data_bytes_read = registerStatistic<uint64_t>("bytes_read", "1");
         stat_data_bytes_written = registerStatistic<uint64_t>("bytes_stored", "1");

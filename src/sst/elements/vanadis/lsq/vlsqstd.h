@@ -16,7 +16,7 @@
 #ifndef _H_VANADIS_STD_LOAD_STORE_Q
 #define _H_VANADIS_STD_LOAD_STORE_Q
 
-#include "sst/core/interfaces/simpleMem.h"
+#include "sst/core/interfaces/stdMem.h"
 
 #include "inst/vinst.h"
 #include "inst/vload.h"
@@ -73,11 +73,11 @@ class VanadisStandardLoadStoreQueue : public VanadisLoadStoreQueue {
 public:
     SST_ELI_REGISTER_SUBCOMPONENT_DERIVED(VanadisStandardLoadStoreQueue, "vanadis", "VanadisStandardLoadStoreQueue",
                                           SST_ELI_ELEMENT_VERSION(1, 0, 0),
-                                          "Implements a basic laod-store queue for use with the SST memInterface",
+                                          "Implements a basic load-store queue for use with the SST standardInterface",
                                           SST::Vanadis::VanadisLoadStoreQueue)
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS({ "memory_interface", "Set the interface to memory",
-                                          "SST::Interfaces::SimpleMem" })
+                                          "SST::Interfaces::StandardMem" })
 
     SST_ELI_DOCUMENT_PORTS({ "dcache_link", "Connects the LSQ to the data cache", {} })
 
@@ -102,12 +102,14 @@ public:
         max_stores_issue_per_cycle = params.find<uint32_t>("max_store_issue_per_cycle", 2);
         max_load_issue_per_cycle = params.find<uint32_t>("max_load_issue_per_cycle", 2);
 
-        memInterface = loadUserSubComponent<Interfaces::SimpleMem>(
+        memInterface = loadUserSubComponent<Interfaces::StandardMem>(
             "memory_interface", ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, getTimeConverter("1ps"),
-            new SimpleMem::Handler<SST::Vanadis::VanadisStandardLoadStoreQueue>(
+            new StandardMem::Handler<SST::Vanadis::VanadisStandardLoadStoreQueue>(
                 this, &VanadisStandardLoadStoreQueue::processIncomingDataCacheEvent));
 
         store_q = new VanadisCircularQueue<VanadisStoreRecord*>(max_mem_issued_stores);
+        
+        std_mem_handlers = new StandardMemHandlers(this, output);
 
         output->verbose(CALL_INFO, 2, 0, "LSQ Store Queue Length:               %" PRIu32 "\n", max_mem_issued_stores);
         output->verbose(CALL_INFO, 2, 0, "LSQ Load Queue Length:                %" PRIu32 "\n", max_mem_issued_loads);
@@ -146,7 +148,7 @@ public:
     virtual void setInitialMemory(const uint64_t address, std::vector<uint8_t>& payload) {
         output->verbose(CALL_INFO, 2, 0, "setting initial memory contents for address 0x%llx / size: %" PRIu64 "\n",
                         address, (uint64_t)payload.size());
-        memInterface->sendInitData(new SimpleMem::Request(SimpleMem::Request::Write, address, payload.size(), payload));
+        memInterface->sendUntimedData(new StandardMem::Write(address, payload.size(), payload));
     }
 
     VanadisAddressOverlapType evaluateAddressOverlap(const uint64_t loadAddress, const uint16_t loadLen,
@@ -327,19 +329,20 @@ public:
 
                         if (!load_ins->trapsError()) {
                             if ((load_addr % load_width) == 0) {
-                                SimpleMem::Request* new_load_req
-                                    = new SimpleMem::Request(SimpleMem::Request::Read, load_addr, load_width);
-                                new_load_req->setInstructionPointer(load_ins->getInstructionAddress());
+                                StandardMem::Request* new_load_req;
 
                                 switch (load_ins->getTransactionType()) {
                                 case MEM_TRANSACTION_NONE:
                                     output->verbose(CALL_INFO, 16, 0, "---> [memory-transaction]: standard load\n");
+                                    new_load_req = new StandardMem::Read(load_addr, load_width, 0, 
+                                            load_addr, load_ins->getInstructionAddress());
                                     break;
                                 case MEM_TRANSACTION_LLSC_LOAD:
                                     output->verbose(CALL_INFO, 16, 0,
                                                     "---> [memory-transaction]: marked for LLSC "
                                                     "with load transaction type\n");
-                                    new_load_req->flags |= SST::Interfaces::SimpleMem::Request::F_LLSC;
+                                    new_load_req = new StandardMem::LoadLink(load_addr, load_width, 0, 
+                                            load_addr, load_ins->getInstructionAddress());
                                     break;
                                 case MEM_TRANSACTION_LLSC_STORE:
                                     output->fatal(CALL_INFO, -1,
@@ -349,13 +352,14 @@ public:
                                     output->verbose(CALL_INFO, 16, 0,
                                                     "---> [memory-transaction]: marked for LOCK "
                                                     "load transaction\n");
-                                    new_load_req->flags |= SST::Interfaces::SimpleMem::Request::F_LOCKED;
+                                    new_load_req = new StandardMem::ReadLock(load_addr, load_width, 0,
+                                            load_addr, load_ins->getInstructionAddress());
                                     break;
                                 }
 
-                                pending_loads.insert(std::pair<SimpleMem::Request::id_t, VanadisLoadRecord*>(
-                                    new_load_req->id, new VanadisLoadRecord(load_ins)));
-                                memInterface->sendRequest(new_load_req);
+                                pending_loads.insert(std::pair<StandardMem::Request::id_t, VanadisLoadRecord*>(
+                                    new_load_req->getID(), new VanadisLoadRecord(load_ins)));
+                                memInterface->send(new_load_req);
 
                                 pending_mem_issued_loads++;
                             } else {
@@ -468,13 +472,13 @@ public:
                                     "----> LSQ creating memory store request: payload-len: %" PRIu32 "\n",
                                     (uint32_t)payload.size());
 
-                    SimpleMem::Request* new_store_req
-                        = new SimpleMem::Request(SimpleMem::Request::Write, store_address, payload.size(), payload);
-                    new_store_req->setInstructionPointer(front_store->getInstructionAddress());
+                    StandardMem::Request* new_store_req;
 
                     switch (front_store->getTransactionType()) {
                     case MEM_TRANSACTION_NONE:
                         output->verbose(CALL_INFO, 16, 0, "---> [memory-transaction]: standard store\n");
+                        new_store_req = new StandardMem::Write(store_address, payload.size(), payload, 
+                                false, 0, store_address, front_store->getInstructionAddress());
                         break;
                     case MEM_TRANSACTION_LLSC_LOAD:
                         output->fatal(CALL_INFO, -1,
@@ -485,14 +489,16 @@ public:
                         output->verbose(CALL_INFO, 16, 0,
                                         "---> [memory-transaction]: marked for LLSC-STORE "
                                         "transaction\n");
-                        new_store_req->flags |= SST::Interfaces::SimpleMem::Request::F_LLSC;
+                        new_store_req = new StandardMem::StoreConditional(store_address, payload.size(), payload,
+                                0, store_address, front_store->getInstructionAddress());
                         processingLLSC = true;
                         break;
                     case MEM_TRANSACTION_LOCK:
                         output->verbose(CALL_INFO, 16, 0,
                                         "---> [memory-transaction]: marked for LOCK store "
                                         "transaction\n");
-                        new_store_req->flags |= SST::Interfaces::SimpleMem::Request::F_LOCKED;
+                        new_store_req = new StandardMem::WriteUnlock(store_address, payload.size(), payload,
+                                false, 0, store_address, front_store->getInstructionAddress());
                         break;
                     }
 
@@ -501,8 +507,8 @@ public:
                                     " bytes\n",
                                     (void*)store_address, store_address, store_width);
 
-                    memInterface->sendRequest(new_store_req);
-                    pending_stores.insert(new_store_req->id);
+                    memInterface->send(new_store_req);
+                    pending_stores.insert(new_store_req->getID());
 
                     pending_mem_issued_stores++;
 
@@ -529,202 +535,219 @@ public:
         return tick_rc;
     }
 
-    void processIncomingDataCacheEvent(SimpleMem::Request* ev) {
-        auto check_ev_exists = pending_stores.find(ev->id);
+    class StandardMemHandlers : public Interfaces::StandardMem::RequestHandler {
+    public:
+        friend class VanadisStandardLoadStoreQueue;
 
-        if (check_ev_exists == pending_stores.end()) {
-            output->verbose(CALL_INFO, 16, 0, "--> Does not match a store entry.\n");
-            auto check_ev_load_exists = pending_loads.find(ev->id);
+        StandardMemHandlers(VanadisStandardLoadStoreQueue* lsq, SST::Output* output) :
+                Interfaces::StandardMem::RequestHandler(output), lsq(lsq) {}
+        
+        virtual ~StandardMemHandlers() {}
 
-            if (check_ev_load_exists == pending_loads.end()) {
-                output->verbose(CALL_INFO, 16, 0, "--> Does not match a load entry.\n");
-            } else {
-                output->verbose(CALL_INFO, 16, 0,
-                                "--> LSQ match load entry, unpacking payload "
-                                "(load-addr: 0x%0llx).\n",
-                                ev->addr);
+        virtual void handle(StandardMem::ReadResp* ev) {
+            auto check_ev_load_exists = lsq->pending_loads.find(ev->getID());
 
-                VanadisLoadRecord* load_record = check_ev_load_exists->second;
-                VanadisLoadInstruction* load_ins = load_record->getAssociatedInstruction();
-
-                const uint16_t target_reg = load_ins->getPhysIntRegOut(0);
-                const uint16_t load_width = load_ins->getLoadWidth();
-                const uint32_t hw_thr = load_ins->getHWThread();
-
-                if (load_ins->isPartialLoad()) {
-                    uint64_t recompute_address = 0;
-                    uint16_t recompute_width = 0;
-
-                    load_ins->computeLoadAddress(registerFiles->at(hw_thr), &recompute_address, &recompute_width);
-                    const uint16_t reg_offset = load_ins->getRegisterOffset();
-
-                    output->verbose(CALL_INFO, 16, 0,
-                                    "-> LSQ matched an unaligned/partial load, target: %" PRIu16
-                                    " / reg-offset: %" PRIu16 " / full-width: %" PRIu16 " / partial-width: %" PRIu16
-                                    "\n",
-                                    target_reg, reg_offset, load_width, recompute_width);
-
-                    // check we aren't writing to a zero register, if we are just drop the
-                    // update
-                    if (target_reg != load_ins->getISAOptions()->getRegisterIgnoreWrites()) {
-                        uint8_t* reg_ptr = (uint8_t*)registerFiles->at(hw_thr)->getIntReg(target_reg);
-
-                        for (uint16_t i = 0; i < recompute_width; ++i) {
-                            reg_ptr[reg_offset + i] = ev->data[i];
-                        }
-
-                        // if we are not at offset zero then or we are loading the entire
-                        // width, we need to perform an update to the full register
-                        if ((reg_offset > 0) || (recompute_width == load_ins->getLoadWidth())) {
-                            // if we are loading less than 8 bytes, because otherwise the full
-                            // data width of the register is set
-                            if (load_ins->getLoadWidth() < 8) {
-                                uint64_t extended_value = 0;
-
-                                switch (load_ins->getLoadWidth()) {
-                                case 2: {
-                                    uint16_t* reg_ptr_16 = (uint16_t*)reg_ptr;
-                                    extended_value = vanadis_sign_extend((*reg_ptr_16));
-                                } break;
-
-                                case 4: {
-                                    uint32_t* reg_ptr_32 = (uint32_t*)reg_ptr;
-                                    extended_value = vanadis_sign_extend((*reg_ptr_32));
-                                } break;
-                                }
-
-                                // Put the sign extended value into the register
-                                registerFiles->at(hw_thr)->setIntReg(target_reg, extended_value);
-                            }
-                        }
-                    }
-                } else {
-                    output->verbose(CALL_INFO, 16, 0,
-                                    "-> LSQ matched to load hw_thr = %" PRIu32 ", target_reg = %" PRIu16
-                                    ", width=%" PRIu16 "\n",
-                                    hw_thr, target_reg, load_width);
-                    int64_t new_value = 0;
-
-                    switch (load_width) {
-
-                    case 1:
-                        new_value = vanadis_sign_extend(ev->data[0]);
-                        break;
-                    case 2: {
-                        uint16_t* val_16 = (uint16_t*)&ev->data[0];
-                        new_value = vanadis_sign_extend(*val_16);
-                    } break;
-                    case 4: {
-                        uint32_t* val_32 = (uint32_t*)&ev->data[0];
-                        new_value = vanadis_sign_extend(*val_32);
-                    } break;
-                    case 8: {
-                        uint64_t* val_64 = (uint64_t*)&ev->data[0];
-                        new_value = *val_64;
-                    } break;
-
-                    default:
-                        output->fatal(CALL_INFO, -1,
-                                      "Error: load-instruction forces a load which is not "
-                                      "power-of-2: width=%" PRIu16 "\n",
-                                      load_width);
-                        break;
-                    }
-
-                    output->verbose(CALL_INFO, 16, 0,
-                                    "---> LSQ (ins: 0x%0llx) set sign-extended register "
-                                    "value for r: %" PRIu16 ", v: %" PRId64 " / 0x%0llx\n",
-                                    load_ins->getInstructionAddress(), target_reg, new_value, new_value);
-
-                    // Set the register value
-                    registerFiles->at(hw_thr)->setIntReg(target_reg, new_value);
-                }
-
-                output->verbose(CALL_INFO, 16, 0,
-                                "---> LSQ Execute: %s (0x%llx) load data instruction "
-                                "marked executed.\n",
-                                load_ins->getInstCode(), load_ins->getInstructionAddress());
-
-                if (ev->addr < 64) {
-                    output->fatal(CALL_INFO, -1,
-                                  "Error - load operation at instruction 0x%llx address: "
-                                  "0x%llx is less than virtual address 64, this would be "
-                                  "a segmentation fault.\n",
-                                  load_ins->getInstructionAddress(), ev->addr);
-                }
-
-                load_ins->markExecuted();
-                pending_loads.erase(check_ev_load_exists);
-                pending_mem_issued_loads--;
-
-                delete load_record;
+            if (check_ev_load_exists == lsq->pending_loads.end()) {
+                out->fatal(CALL_INFO, -1,
+                                "Error: Received ReadResp but did not find"
+                                " a matching load in pending_loads\n");
             }
-        } else {
-            output->verbose(CALL_INFO, 16, 0, "-> LSQ match store entry, cleaning entry list.\n");
-            output->verbose(CALL_INFO, 16, 0, "---> ev-null? %s\n", nullptr == ev ? "yes" : "no");
-            output->verbose(CALL_INFO, 16, 0, "---> response flags: 0x%0llx\n", (uint64_t)ev->flags);
+            
+            StandardMem::ReadResp* resp = static_cast<StandardMem::ReadResp*>(ev);
+            out->verbose(CALL_INFO, 16, 0,
+                            "--> LSQ match load entry, unpacking payload "
+                            "(load-addr: 0x%0llx).\n",
+                            resp->pAddr);
+
+            VanadisLoadRecord* load_record = check_ev_load_exists->second;
+            VanadisLoadInstruction* load_ins = load_record->getAssociatedInstruction();
+
+            const uint16_t target_reg = load_ins->getPhysIntRegOut(0);
+            const uint16_t load_width = load_ins->getLoadWidth();
+            const uint32_t hw_thr = load_ins->getHWThread();
+
+            if (load_ins->isPartialLoad()) {
+                uint64_t recompute_address = 0;
+                uint16_t recompute_width = 0;
+
+                load_ins->computeLoadAddress(lsq->registerFiles->at(hw_thr), &recompute_address, &recompute_width);
+                const uint16_t reg_offset = load_ins->getRegisterOffset();
+
+                out->verbose(CALL_INFO, 16, 0,
+                                "-> LSQ matched an unaligned/partial load, target: %" PRIu16
+                                " / reg-offset: %" PRIu16 " / full-width: %" PRIu16 " / partial-width: %" PRIu16
+                                "\n",
+                                target_reg, reg_offset, load_width, recompute_width);
+
+                // check we aren't writing to a zero register, if we are just drop the
+                // update
+                if (target_reg != load_ins->getISAOptions()->getRegisterIgnoreWrites()) {
+                    uint8_t* reg_ptr = (uint8_t*)lsq->registerFiles->at(hw_thr)->getIntReg(target_reg);
+
+                    for (uint16_t i = 0; i < recompute_width; ++i) {
+                        reg_ptr[reg_offset + i] = resp->data[i];
+                    }
+
+                    // if we are not at offset zero then or we are loading the entire
+                    // width, we need to perform an update to the full register
+                    if ((reg_offset > 0) || (recompute_width == load_ins->getLoadWidth())) {
+                        // if we are loading less than 8 bytes, because otherwise the full
+                        // data width of the register is set
+                        if (load_ins->getLoadWidth() < 8) {
+                            uint64_t extended_value = 0;
+
+                            switch (load_ins->getLoadWidth()) {
+                            case 2: {
+                                uint16_t* reg_ptr_16 = (uint16_t*)reg_ptr;
+                                extended_value = vanadis_sign_extend((*reg_ptr_16));
+                            } break;
+
+                            case 4: {
+                                uint32_t* reg_ptr_32 = (uint32_t*)reg_ptr;
+                                extended_value = vanadis_sign_extend((*reg_ptr_32));
+                            } break;
+                            }
+
+                            // Put the sign extended value into the register
+                            lsq->registerFiles->at(hw_thr)->setIntReg(target_reg, extended_value);
+                        }
+                    }
+                }
+            } else {
+                out->verbose(CALL_INFO, 16, 0,
+                                "-> LSQ matched to load hw_thr = %" PRIu32 ", target_reg = %" PRIu16
+                                ", width=%" PRIu16 "\n",
+                                hw_thr, target_reg, load_width);
+                int64_t new_value = 0;
+
+                switch (load_width) {
+
+                case 1:
+                    new_value = vanadis_sign_extend(resp->data[0]);
+                    break;
+                case 2: {
+                    uint16_t* val_16 = (uint16_t*)&resp->data[0];
+                    new_value = vanadis_sign_extend(*val_16);
+                } break;
+                case 4: {
+                    uint32_t* val_32 = (uint32_t*)&resp->data[0];
+                    new_value = vanadis_sign_extend(*val_32);
+                } break;
+                case 8: {
+                    uint64_t* val_64 = (uint64_t*)&resp->data[0];
+                    new_value = *val_64;
+                } break;
+
+                default:
+                    out->fatal(CALL_INFO, -1,
+                                  "Error: load-instruction forces a load which is not "
+                                  "power-of-2: width=%" PRIu16 "\n",
+                                  load_width);
+                    break;
+                }
+
+                out->verbose(CALL_INFO, 16, 0,
+                                "---> LSQ (ins: 0x%0llx) set sign-extended register "
+                                "value for r: %" PRIu16 ", v: %" PRId64 " / 0x%0llx\n",
+                                load_ins->getInstructionAddress(), target_reg, new_value, new_value);
+
+                // Set the register value
+                lsq->registerFiles->at(hw_thr)->setIntReg(target_reg, new_value);
+            }
+
+            out->verbose(CALL_INFO, 16, 0,
+                            "---> LSQ Execute: %s (0x%llx) load data instruction "
+                            "marked executed.\n",
+                            load_ins->getInstCode(), load_ins->getInstructionAddress());
+
+            if (resp->vAddr < 64) {
+                out->fatal(CALL_INFO, -1,
+                              "Error - load operation at instruction 0x%llx address: "
+                              "0x%llx is less than virtual address 64, this would be "
+                              "a segmentation fault.\n",
+                              load_ins->getInstructionAddress(), resp->vAddr);
+            }
+
+            load_ins->markExecuted();
+            lsq->pending_loads.erase(check_ev_load_exists);
+            lsq->pending_mem_issued_loads--;
+
+            delete load_record;
+        } 
+        
+        virtual void handle(StandardMem::WriteResp* ev) {
+            auto check_ev_exists = lsq->pending_stores.find(ev->getID());
+
+            if (check_ev_exists == lsq->pending_stores.end()) {
+                out->fatal(CALL_INFO, -1,
+                                "Error: Received WriteResp but did not find"
+                                " a matching store in pending_stores");
+            }
+            
+            out->verbose(CALL_INFO, 16, 0, "-> LSQ match store entry, cleaning entry list.\n");
+            out->verbose(CALL_INFO, 16, 0, "---> ev-null? %s\n", nullptr == ev ? "yes" : "no");
 
             // This is an LLSC requested store (i.e. SC)
-            if ((ev->flags & SST::Interfaces::SimpleMem::Request::F_LLSC) != 0) {
-                if (processingLLSC) {
-                    // Check to see if this is a LLSC response event
-                    if (store_q->empty()) {
-                        output->fatal(CALL_INFO, -1,
-                                      "Error - received an LLSC response event, but store "
-                                      "queue is empty\n");
-                    } else {
-                        VanadisStoreRecord* front_record = store_q->pop();
-                        VanadisStoreInstruction* front_store = front_record->getAssociatedInstruction();
-
-                        if (front_store->getTransactionType() != MEM_TRANSACTION_LLSC_STORE) {
-                            output->fatal(CALL_INFO, -1,
-                                          "Error - received an LLSC response event, but "
-                                          "store queue front is not an LLSC transaction.\n");
-                        } else {
-                            output->verbose(CALL_INFO, 16, 0,
-                                            "---> LSQ LLSC-STORE handled for ins: 0x%0llx, marked "
-                                            "executed and LLSC/LSQ cleared for resuming operation\n",
-                                            front_store->getInstructionAddress());
-
-                            const uint16_t value_reg = front_store->getPhysIntRegOut(0);
-
-                            if ((ev->flags & SST::Interfaces::SimpleMem::Request::F_LLSC_RESP) != 0) {
-                                output->verbose(CALL_INFO, 16, 0,
-                                                "---> LSQ LLSC-STORE rt: %" PRIu16 " <- 1 (success)\n", value_reg);
-                                registerFiles->at(front_store->getHWThread())->setIntReg(value_reg, (uint64_t)1);
-                            } else {
-                                output->verbose(CALL_INFO, 16, 0, "---> LSQ LLSC-STORE rt: %" PRIu16 " <- 0 (failed)\n",
-                                                value_reg);
-                                registerFiles->at(front_store->getHWThread())->setIntReg(value_reg, (uint64_t)0);
-                            }
-
-                            output->verbose(CALL_INFO, 16, 0,
-                                            "---> LSQ Execute %s (0x%llx) store operation executed.\n",
-                                            front_store->getInstCode(), front_store->getInstructionAddress());
-
-                            if (ev->addr < 64) {
-                                output->fatal(CALL_INFO, -1,
-                                              "Error - store operation at 0x%llx address is less than "
-                                              "virtual address 64, this would be a segmentation fault.\n",
-                                              front_store->getInstructionAddress());
-                            }
-
-                            front_store->markExecuted();
-                        }
-                    }
+            if (lsq->processingLLSC) {
+                // Check to see if this is a LLSC response event
+                if (lsq->store_q->empty()) {
+                    out->fatal(CALL_INFO, -1,
+                                  "Error - received an LLSC response event, but store "
+                                  "queue is empty\n");
                 } else {
-                    output->fatal(CALL_INFO, -1,
-                                  "Response from cache was a store response with LLSC/SC marked, "
-                                  "but core is not processing an LLSC event. Logical error?\n");
+                    VanadisStoreRecord* front_record = lsq->store_q->pop();
+                    VanadisStoreInstruction* front_store = front_record->getAssociatedInstruction();
+
+                    if (front_store->getTransactionType() != MEM_TRANSACTION_LLSC_STORE) {
+                        out->fatal(CALL_INFO, -1,
+                                      "Error - received an LLSC response event, but "
+                                      "store queue front is not an LLSC transaction.\n");
+                    } else {
+                        out->verbose(CALL_INFO, 16, 0,
+                                        "---> LSQ LLSC-STORE handled for ins: 0x%0llx, marked "
+                                        "executed and LLSC/LSQ cleared for resuming operation\n",
+                                        front_store->getInstructionAddress());
+
+                        const uint16_t value_reg = front_store->getPhysIntRegOut(0);
+
+                        if (ev->getSuccess()) {
+                            out->verbose(CALL_INFO, 16, 0,
+                                            "---> LSQ LLSC-STORE rt: %" PRIu16 " <- 1 (success)\n", value_reg);
+                            lsq->registerFiles->at(front_store->getHWThread())->setIntReg(value_reg, (uint64_t)1);
+                        } else {
+                            out->verbose(CALL_INFO, 16, 0, "---> LSQ LLSC-STORE rt: %" PRIu16 " <- 0 (failed)\n",
+                                            value_reg);
+                            lsq->registerFiles->at(front_store->getHWThread())->setIntReg(value_reg, (uint64_t)0);
+                        }
+
+                        out->verbose(CALL_INFO, 16, 0,
+                                        "---> LSQ Execute %s (0x%llx) store operation executed.\n",
+                                        front_store->getInstCode(), front_store->getInstructionAddress());
+
+                        if (ev->vAddr < 64) {
+                            out->fatal(CALL_INFO, -1,
+                                          "Error - store operation at 0x%llx address is less than "
+                                          "virtual address 64, this would be a segmentation fault.\n",
+                                          front_store->getInstructionAddress());
+                        }
+
+                        front_store->markExecuted();
+                    }
                 }
             }
-
-            processingLLSC = false;
+            
+            lsq->processingLLSC = false;
 
             // Found in the Pending Store List
-            pending_stores.erase(check_ev_exists);
-            pending_mem_issued_stores--;
+            lsq->pending_stores.erase(check_ev_exists);
+            lsq->pending_mem_issued_stores--;
         }
+    
+        VanadisStandardLoadStoreQueue* lsq;
+    };
+
+    void processIncomingDataCacheEvent(StandardMem::Request* ev) {
+        ev->handle(std_mem_handlers);
     }
 
     void clearLSQByThreadID(const uint32_t thr) {
@@ -771,7 +794,7 @@ protected:
     VanadisCircularQueue<VanadisStoreRecord*>* store_q;
     std::list<VanadisLoadRecord*> load_q;
 
-    SimpleMem* memInterface;
+    StandardMem* memInterface;
 
     uint32_t max_queued_stores;
     uint32_t max_queued_loads;
@@ -789,10 +812,13 @@ protected:
 
     uint64_t max_mem_address_mask;
 
-    std::set<SimpleMem::Request::id_t> pending_stores;
-    std::map<SimpleMem::Request::id_t, VanadisLoadRecord*> pending_loads;
+    std::set<StandardMem::Request::id_t> pending_stores;
+    std::map<StandardMem::Request::id_t, VanadisLoadRecord*> pending_loads;
 
     bool processingLLSC;
+
+    StandardMemHandlers* std_mem_handlers;
+
 };
 
 } // namespace Vanadis

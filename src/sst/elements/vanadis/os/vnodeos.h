@@ -19,7 +19,7 @@
 #include <unordered_set>
 
 #include <sst/core/component.h>
-#include <sst/core/interfaces/simpleMem.h>
+#include <sst/core/interfaces/stdMem.h>
 
 #include "os/callev/voscallall.h"
 #include "os/vnodeoshandler.h"
@@ -45,7 +45,7 @@ public:
     SST_ELI_DOCUMENT_PORTS({ "core%(cores)d", "Connects to a CPU core", {} })
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS({ "mem_interface", "Interface to memory system for data access",
-                                          "SST::Interfaces::SimpleMem" })
+                                          "SST::Interface::StandardMem" })
 
     VanadisNodeOSComponent(SST::ComponentId_t id, SST::Params& params);
     ~VanadisNodeOSComponent();
@@ -53,8 +53,8 @@ public:
     virtual void init(unsigned int phase);
     void handleIncomingSysCall(SST::Event* ev);
 
-    void handleIncomingMemory(SimpleMem::Request* ev) {
-        auto lookup_result = ev_core_map.find(ev->id);
+    void handleIncomingMemory(StandardMem::Request* ev) {
+        auto lookup_result = ev_core_map.find(ev->getID());
 
         if (lookup_result == ev_core_map.end()) {
             output->fatal(CALL_INFO, -1, "Error - received a call which does not have a mapping to a core.\n");
@@ -65,9 +65,9 @@ public:
         }
     }
 
-    void sendMemoryEvent(SimpleMem::Request* ev, uint32_t core) {
-        ev_core_map.insert(std::pair<SimpleMem::Request::id_t, uint32_t>(ev->id, core));
-        mem_if->sendRequest(ev);
+    void sendMemoryEvent(StandardMem::Request* ev, uint32_t core) {
+        ev_core_map.insert(std::pair<StandardMem::Request::id_t, uint32_t>(ev->getID(), core));
+        mem_if->send(ev);
     }
 
     uint64_t getSimNanoSeconds() { return getCurrentSimTimeNano(); }
@@ -78,11 +78,11 @@ private:
     void operator=(const VanadisNodeOSComponent&);         // do not implement
 
     std::function<uint64_t()> get_sim_nano;
-    std::unordered_map<SimpleMem::Request::id_t, uint32_t> ev_core_map;
+    std::unordered_map<StandardMem::Request::id_t, uint32_t> ev_core_map;
     std::vector<SST::Link*> core_links;
     std::vector<VanadisNodeOSCoreHandler*> core_handlers;
 
-    SimpleMem* mem_if;
+    StandardMem* mem_if;
     VanadisMemoryManager* memory_mgr;
 
     SST::Output* output;

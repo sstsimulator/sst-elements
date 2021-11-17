@@ -36,7 +36,7 @@ using namespace SST::Statistics;
 
 namespace SST {
 namespace MemHierarchy {
-using Req = SST::Experimental::Interfaces::StandardMem::Request;
+using Req = SST::Interfaces::StandardMem::Request;
 
 class standardCPU : public SST::Component {
 public:
@@ -78,7 +78,7 @@ public:
     )
 
     /* Slot for a memory interface. This must be user defined (aka defined in Python config) */
-    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( { "memory", "Interface to memory hierarchy", "SST::Experimental::Interfaces::StandardMem" } )
+    SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS( { "memory", "Interface to memory hierarchy", "SST::Interfaces::StandardMem" } )
 
 /* Begin class definition */
     standardCPU(SST::ComponentId_t id, SST::Params& params);
@@ -88,7 +88,7 @@ public:
     void emergencyShutdown() override;
 
 private:
-    void handleEvent( Experimental::Interfaces::StandardMem::Request *ev );
+    void handleEvent( Interfaces::StandardMem::Request *ev );
     virtual bool clockTic( SST::Cycle_t );
 
     Output out;
@@ -120,11 +120,11 @@ private:
     Statistic<uint64_t>* noncacheableWrites;
 
     bool ll_issued;
-    Experimental::Interfaces::StandardMem::Addr ll_addr;
+    Interfaces::StandardMem::Addr ll_addr;
 
-    std::map<Experimental::Interfaces::StandardMem::Request::id_t, std::pair<SimTime_t, std::string>> requests;
+    std::map<Interfaces::StandardMem::Request::id_t, std::pair<SimTime_t, std::string>> requests;
 
-    Experimental::Interfaces::StandardMem *memory;
+    Interfaces::StandardMem *memory;
 
     SST::RNG::MarsagliaRNG rng;
 
@@ -132,14 +132,14 @@ private:
     Clock::HandlerBase *clockHandler;
 
     /* Functions for creating the requests tested by this CPU */
-    Experimental::Interfaces::StandardMem::Request* createWrite(uint64_t addr);
-    Experimental::Interfaces::StandardMem::Request* createRead(Addr addr);
-    Experimental::Interfaces::StandardMem::Request* createFlush(Addr addr);
-    Experimental::Interfaces::StandardMem::Request* createFlushInv(Addr addr);
-    Experimental::Interfaces::StandardMem::Request* createLL(Addr addr);
-    Experimental::Interfaces::StandardMem::Request* createSC();
-    Experimental::Interfaces::StandardMem::Request* createMMIOWrite();
-    Experimental::Interfaces::StandardMem::Request* createMMIORead();
+    Interfaces::StandardMem::Request* createWrite(uint64_t addr);
+    Interfaces::StandardMem::Request* createRead(Addr addr);
+    Interfaces::StandardMem::Request* createFlush(Addr addr);
+    Interfaces::StandardMem::Request* createFlushInv(Addr addr);
+    Interfaces::StandardMem::Request* createLL(Addr addr);
+    Interfaces::StandardMem::Request* createSC();
+    Interfaces::StandardMem::Request* createMMIOWrite();
+    Interfaces::StandardMem::Request* createMMIORead();
 };
 
 }

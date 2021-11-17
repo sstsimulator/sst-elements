@@ -6,16 +6,22 @@ TrivialCPU: Test Completed Successfuly
 TrivialCPU: Test Completed Successfuly
 TrivialCPU: Test Completed Successfuly
 TrivialCPU: Test Completed Successfuly
-TrivialCPU cpu3 Finished after 1000 issued reads, 1000 returned (104384 clocks)
+TrivialCPU cpu7 Finished after 1000 issued reads, 1000 returned (104578 clocks)
+	49 Noncacheable Reads
+	5 Noncacheable Writes
+TrivialCPU cpu6 Finished after 1000 issued reads, 1000 returned (104275 clocks)
 	50 Noncacheable Reads
 	5 Noncacheable Writes
-TrivialCPU cpu2 Finished after 1000 issued reads, 1000 returned (104382 clocks)
+TrivialCPU cpu0 Finished after 1000 issued reads, 1000 returned (104378 clocks)
 	50 Noncacheable Reads
 	5 Noncacheable Writes
 TrivialCPU cpu1 Finished after 1000 issued reads, 1000 returned (104380 clocks)
 	50 Noncacheable Reads
 	5 Noncacheable Writes
-TrivialCPU cpu0 Finished after 1000 issued reads, 1000 returned (104378 clocks)
+TrivialCPU cpu2 Finished after 1000 issued reads, 1000 returned (104382 clocks)
+	50 Noncacheable Reads
+	5 Noncacheable Writes
+TrivialCPU cpu3 Finished after 1000 issued reads, 1000 returned (104384 clocks)
 	50 Noncacheable Reads
 	5 Noncacheable Writes
 TrivialCPU cpu4 Finished after 1000 issued reads, 1000 returned (104270 clocks)
@@ -23,12 +29,6 @@ TrivialCPU cpu4 Finished after 1000 issued reads, 1000 returned (104270 clocks)
 	5 Noncacheable Writes
 TrivialCPU cpu5 Finished after 1000 issued reads, 1000 returned (104272 clocks)
 	50 Noncacheable Reads
-	5 Noncacheable Writes
-TrivialCPU cpu6 Finished after 1000 issued reads, 1000 returned (104275 clocks)
-	50 Noncacheable Reads
-	5 Noncacheable Writes
-TrivialCPU cpu7 Finished after 1000 issued reads, 1000 returned (104578 clocks)
-	49 Noncacheable Reads
 	5 Noncacheable Writes
  cpu0.pendCycle : Accumulator : Sum.u64 = 143447; SumSQ.u64 = 440813; Count.u64 = 104378; Min.u64 = 0; Max.u64 = 10; 
  c0.l1cache.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
