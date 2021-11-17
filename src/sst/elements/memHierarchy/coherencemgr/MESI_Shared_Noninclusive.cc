@@ -2765,7 +2765,7 @@ uint64_t MESISharNoninclusive::sendResponseUp(MemEvent * event, vector<uint8_t> 
         responseEvent->setPayload(*data);
         responseEvent->setSize(data->size()); // Return size that was written
         if (is_debug_event(event)) {
-            printData(data, false);
+            printDataValue(event->getAddr(), data, false);
         }
     }
 
@@ -2851,7 +2851,7 @@ void MESISharNoninclusive::sendWritebackFromCache(Command cmd, DirectoryLine* ta
         writeback->setDirty(dirty);
 
         if (is_debug_addr(tag->getAddr())) {
-            printData(data->getData(), false);
+            printDataValue(tag->getAddr(), data->getData(), false);
         }
 
         latency = accessLatency_;
@@ -2878,7 +2878,7 @@ void MESISharNoninclusive::sendWritebackFromMSHR(Command cmd, DirectoryLine* tag
         writeback->setDirty(dirty);
 
         if (is_debug_addr(tag->getAddr())) {
-            printData(&(mshr_->getData(tag->getAddr())), false);
+            printDataValue(tag->getAddr(), &(mshr_->getData(tag->getAddr())), false);
         }
 
         latency = accessLatency_;
