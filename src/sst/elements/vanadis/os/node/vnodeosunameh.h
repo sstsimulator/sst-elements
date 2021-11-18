@@ -27,11 +27,10 @@ class VanadisUnameHandlerState : public VanadisHandlerState {
 public:
     VanadisUnameHandlerState(uint32_t verbosity) : VanadisHandlerState(verbosity) { completed = true; }
 
-    virtual void handleIncomingRequest(SimpleMem::Request* req) {
+    virtual void handleIncomingRequest(StandardMem::Request* req) {
         output->verbose(CALL_INFO, 16, 0,
-                        "-> [syscall-uname] handle incoming event for uname(), "
-                        "req->size: %" PRIu32 "\n",
-                        (uint32_t)req->size);
+                        "-> [syscall-uname] handle incoming event for uname(), %s\n",
+                        req->getString().c_str());
     }
 
     virtual VanadisSyscallResponse* generateResponse() { return new VanadisSyscallResponse(0); }

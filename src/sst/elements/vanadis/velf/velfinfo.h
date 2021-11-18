@@ -511,7 +511,6 @@ public:
     }
 
     bool isELF64() const { return (2 == elf_class); }
-
     bool isELF32() const { return (1 == elf_class); }
 
     VanadisELFISA getISA() const {
@@ -711,18 +710,20 @@ readBinarySymbolTable(SST::Output* output, const char* path, VanadisELFInfo* elf
 
     std::vector<char> name_buffer;
 
-    if (binary_is_32) {
+	if(elf_info->isELF32()) {
+		output->verbose(CALL_INFO, 16, 0, "Binary is marked as 32bit\n");
+	}
 
-    } else {
-        output->fatal(CALL_INFO, -1, "Not implemented yet - 64-bit symbol reads are not yet implemented.\n");
-    }
+	if(elf_info->isELF64()) {
+		output->verbose(CALL_INFO, 16, 0, "Binary is marked as 64bit\n");
+	}
 
     for (uint64_t i = symbolSection->getImageOffset();
          i < (symbolSection->getImageOffset() + symbolSection->getImageLength()); i += symbol_size) {
 
         VanadisSymbolTableEntry* new_symbol = new VanadisSymbolTableEntry();
 
-        if (binary_is_32) {
+        if (elf_info->isELF32()) {
             fread(&tmp_u32, 4, 1, bin_file);
             new_symbol->setNameOffset(tmp_u32);
 
@@ -786,8 +787,73 @@ readBinarySymbolTable(SST::Output* output, const char* path, VanadisELFInfo* elf
             }
 
             elf_info->addSymbolTableEntry(new_symbol);
+        } else if(elf_info->isELF64()) {
+            fread(&tmp_u64, 8, 1, bin_file);
+            new_symbol->setNameOffset(tmp_u32);
+
+            fread(&tmp_u8, 1, 1, bin_file);
+            // output->verbose(CALL_INFO, 16, 0, "Symbol info >> 4 = %" PRIu64 "\n", (tmp_u8 >> 4));
+
+            switch ((tmp_u8 >> 4)) {
+            case 0:
+                new_symbol->setBindType(SYMBOL_BIND_LOCAL);
+                break;
+            case 1:
+                new_symbol->setBindType(SYMBOL_BIND_GLOBAL);
+                break;
+            case 2:
+                new_symbol->setBindType(SYMBOL_BIND_WEAK);
+                break;
+            default:
+                break;
+            }
+
+            // output->verbose(CALL_INFO, 16, 0, "Symbol type = %" PRIu64 "\n", (tmp_u8 & 0xf) );
+            switch ((tmp_u8 & 0xf)) {
+            case 0:
+                new_symbol->setType(SYMBOL_NO_TYPE);
+                break;
+            case 1:
+                new_symbol->setType(SYMBOL_OBJECT);
+                break;
+            case 2:
+                new_symbol->setType(SYMBOL_FUNCTION);
+                break;
+            case 3:
+                new_symbol->setType(SYMBOL_SECTION);
+                break;
+            case 4:
+                new_symbol->setType(SYMBOL_FILE);
+                break;
+            default:
+                break;
+            }
+
+            fread(&tmp_u8, 1, 1, bin_file);
+            fread(&tmp_u16, 2, 1, bin_file);
+
+            new_symbol->setSymbolSection(tmp_u16);
+
+            fread(&tmp_u64, 8, 1, bin_file);
+            new_symbol->setAddress(tmp_u32);
+
+            fread(&tmp_u64, 8, 1, bin_file);
+            new_symbol->setSize(tmp_u32);
+
+            if (nullptr != stringTableEntry) {
+                if (new_symbol->getNameOffset() > 0) {
+                    readString(bin_file, stringTableEntry->getImageOffset(), new_symbol->getNameOffset(), name_buffer);
+                    new_symbol->setName(&name_buffer[0]);
+                } else {
+                    const char* no_symbol_name = "";
+                    new_symbol->setName(no_symbol_name);
+                }
+            }
+
+            elf_info->addSymbolTableEntry(new_symbol);
         } else {
-        }
+				output->fatal(CALL_INFO, -1, "Error - image is not marked as either 32b or 64b, potential ELF read error.\n");
+			}
     }
 
     fclose(bin_file);
@@ -821,8 +887,24 @@ readELFRelocationInformation(SST::Output* output, const char* path, VanadisELFIn
 
             elf_info->addRelocationEntry(new_reloc);
         }
-    } else {
-        output->fatal(CALL_INFO, -1, "64bit relocation entry reads are not implemented yet.\n");
+    } else if(elf_info->isELF64()) {
+        uint64_t u64_tmp = 0;
+
+        for (size_t i = relocationEntry->getImageOffset();
+             i < (relocationEntry->getImageOffset() + relocationEntry->getImageLength()); i += 8) {
+
+            VanadisELFRelocationEntry* new_reloc = new VanadisELFRelocationEntry();
+
+            fread(&u64_tmp, 8, 1, bin_file);
+            new_reloc->setAddress(u64_tmp);
+
+            fread(&u64_tmp, 8, 1, bin_file);
+            new_reloc->setInfo(u64_tmp);
+
+            elf_info->addRelocationEntry(new_reloc);
+        }
+	} else {
+		output->fatal(CALL_INFO, -1, "ELF info does not show 32b or 64b executable type.\n");
     }
 
     fclose(bin_file);

@@ -28,10 +28,10 @@ template<VanadisRegisterFormat register_format, VanadisRegisterCompareType compa
 class VanadisBranchRegCompareImmLinkInstruction : public VanadisSpeculatedInstruction {
 public:
     VanadisBranchRegCompareImmLinkInstruction(const uint64_t addr, const uint32_t hw_thr,
-                                              const VanadisDecoderOptions* isa_opts, const uint16_t src_1,
+                                              const VanadisDecoderOptions* isa_opts, const uint64_t ins_width, const uint16_t src_1,
                                               const int64_t imm, const int64_t offst, const uint16_t link_reg,
                                               const VanadisDelaySlotRequirement delayT)
-        : VanadisSpeculatedInstruction(addr, hw_thr, isa_opts, 1, 1, 1, 1, 0, 0, 0, 0, delayT),
+        : VanadisSpeculatedInstruction(addr, hw_thr, isa_opts, ins_width, 1, 1, 1, 1, 0, 0, 0, 0, delayT),
           imm_value(imm), offset(offst) {
 
         isa_int_regs_in[0] = src_1;
@@ -73,7 +73,7 @@ public:
         }
 
         if (compare_result) {
-            takenAddress = (uint64_t)(((int64_t)getInstructionAddress()) + offset + VANADIS_SPECULATE_JUMP_ADDR_ADD);
+            takenAddress = (uint64_t)(((int64_t)getInstructionAddress()) + offset);
 
             // Update the link address
             // The link address is the address of the second instruction after the

@@ -28,10 +28,12 @@ template<VanadisRegisterFormat register_format, VanadisRegisterCompareType compa
 class VanadisBranchRegCompareInstruction : public VanadisSpeculatedInstruction {
 public:
     VanadisBranchRegCompareInstruction(const uint64_t addr, const uint32_t hw_thr,
-                                       const VanadisDecoderOptions* isa_opts, const uint16_t src_1,
+                                       const VanadisDecoderOptions* isa_opts, const uint64_t ins_width, const uint16_t src_1,
                                        const uint16_t src_2, const int64_t offst,
-                                       const VanadisDelaySlotRequirement delayT)
-        : VanadisSpeculatedInstruction(addr, hw_thr, isa_opts, 2, 0, 2, 0, 0, 0, 0, 0, delayT), offset(offst) {
+                                       const VanadisDelaySlotRequirement delayT,
+													const bool do_signed = true)
+        : VanadisSpeculatedInstruction(addr, hw_thr, isa_opts, ins_width, 2, 0, 2, 0, 0, 0, 0, 0, delayT), offset(offst),
+			perform_signed(do_signed) {
 
         isa_int_regs_in[0] = src_1;
         isa_int_regs_in[1] = src_2;
@@ -76,12 +78,22 @@ public:
 
         switch (register_format) {
         case VanadisRegisterFormat::VANADIS_FORMAT_INT64: {
-            compare_result = registerCompare<compare_type, int64_t>(regFile, this, output, phys_int_regs_in[0],
+				if(perform_signed) {
+            	compare_result = registerCompare<compare_type, int64_t>(regFile, this, output, phys_int_regs_in[0],
                                                       phys_int_regs_in[1]);
+				} else {
+            	compare_result = registerCompare<compare_type, uint64_t>(regFile, this, output, phys_int_regs_in[0],
+                                                      phys_int_regs_in[1]);
+				}
         } break;
         case VanadisRegisterFormat::VANADIS_FORMAT_INT32: {
-            compare_result = registerCompare<compare_type, int32_t>(regFile, this, output, phys_int_regs_in[0],
+				if(perform_signed) {
+            	compare_result = registerCompare<compare_type, int32_t>(regFile, this, output, phys_int_regs_in[0],
                                                       phys_int_regs_in[1]);
+				} else {
+            	compare_result = registerCompare<compare_type, uint32_t>(regFile, this, output, phys_int_regs_in[0],
+                                                      phys_int_regs_in[1]);
+				}
         } break;
         default: {
             flagError();
@@ -89,10 +101,10 @@ public:
         }
 
         if (compare_result) {
-            takenAddress = (uint64_t)(((int64_t)getInstructionAddress()) + offset + VANADIS_SPECULATE_JUMP_ADDR_ADD);
+            takenAddress = (uint64_t)(((int64_t)getInstructionAddress()) + offset);
 #ifdef VANADIS_BUILD_DEBUG
-            output->verbose(CALL_INFO, 16, 0, "-----> taken-address: 0x%llx + %" PRId64 " + %d = 0x%llx\n",
-                            getInstructionAddress(), offset, VANADIS_SPECULATE_JUMP_ADDR_ADD, takenAddress);
+            output->verbose(CALL_INFO, 16, 0, "-----> taken-address: 0x%llx + %" PRId64 " = 0x%llx\n",
+                            getInstructionAddress(), offset, takenAddress);
 #endif
         } else {
             takenAddress = calculateStandardNotTakenAddress();
@@ -106,6 +118,7 @@ public:
 
 protected:
     const int64_t offset;
+	const bool perform_signed;
 };
 
 } // namespace Vanadis

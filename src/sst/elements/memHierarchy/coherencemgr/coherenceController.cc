@@ -680,6 +680,27 @@ void CoherenceController::printDebugAlloc(bool alloc, Addr addr, std::string not
         debug->debug(_L5_, "\n");
 }
 
+void CoherenceController::printDataValue(Addr addr, vector<uint8_t> * data, bool set) {
+    if (dlevel < 11)
+        return;
+
+    std::string action = set ? "WRITE" : "READ";
+    std::stringstream value;
+    value << std::hex << std::setfill('0');
+    for (unsigned int i = 0; i < data->size(); i++) {
+        value << std::hex << std::setw(2) << (int)data->at(i);
+    }
+    
+    debug->debug(_L11_, "V: %-20" PRIu64 " %-20" PRIu64 " %-20s %-13s 0x%-16" PRIx64 " B: %-3zu %s\n",
+            Simulation::getSimulation()->getCurrentSimCycle(), timestamp_, cachename_.c_str(), action.c_str(), 
+            addr, data->size(), value.str().c_str());
+/*
+    for (unsigned int i = 0; i < data->size(); i++) {
+        printf("%02x", data->at(i));
+    }
+    */
+}
+
 void CoherenceController::printStatus(Output& out) {
     out.output("  Begin MemHierarchy::CoherenceController %s\n", getName().c_str());
 

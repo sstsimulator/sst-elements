@@ -21,7 +21,7 @@
 #include <functional>
 
 #include "os/node/vnodeoshstate.h"
-#include <sst/core/interfaces/simpleMem.h>
+#include <sst/core/interfaces/stdMem.h>
 
 using namespace SST::Interfaces;
 
@@ -32,7 +32,7 @@ class VanadisMemoryMapHandlerState : public VanadisHandlerState {
 public:
     VanadisMemoryMapHandlerState(uint32_t verbosity, uint64_t address, uint64_t length, int64_t prot_flg,
                                  int64_t map_flg, uint64_t stack_p, uint64_t offset_size,
-                                 std::function<void(SimpleMem::Request*)> send_mem_r,
+                                 std::function<void(StandardMem::Request*)> send_mem_r,
                                  std::function<void(const uint64_t, std::vector<uint8_t>&)> send_block,
                                  VanadisMemoryManager* mem_mgr)
         : VanadisHandlerState(verbosity), map_address(address), map_length(length), map_protect(prot_flg),
@@ -42,31 +42,38 @@ public:
         send_mem_req = send_mem_r;
         state = 0;
         return_value = 0;
+
+        std_mem_handlers = new StandardMemHandlers(this, output);
     }
 
-    virtual void handleIncomingRequest(SimpleMem::Request* req) {
+    ~VanadisMemoryMapHandlerState() { delete std_mem_handlers; }
+
+    virtual void handleIncomingRequest(StandardMem::Request* req) {
+        req->handle(std_mem_handlers);
+
         output->verbose(CALL_INFO, 16, 0,
                         "[syscall-mmap] processing incoming request (addr: 0x%llx, "
                         "size: %" PRIu64 ")\n",
-                        req->addr, (uint64_t)req->size);
+                        resp_addr, (uint64_t)resp_size);
 
         switch (state) {
         case 0: {
-            assert(req->size >= 4);
-            file_descriptor = (int64_t)(*((int32_t*)&req->data[0]));
+                assert(resp_size >= 4);
+                file_descriptor = (int64_t)(*((int32_t*)&resp_data[0]));
 
-            output->verbose(CALL_INFO, 16, 0, "[syscall-mmap] -> set file descriptor to %" PRId64 "\n",
-                            file_descriptor);
+                output->verbose(CALL_INFO, 16, 0, "[syscall-mmap] -> set file descriptor to %" PRId64 "\n",
+                                file_descriptor);
 
-            send_mem_req(new SimpleMem::Request(SimpleMem::Request::Read, req->addr + req->size, 4));
-            state++;
-        } break;
+                send_mem_req(new StandardMem::Read(resp_addr + resp_size, 4));
+                state++;
+            } break;
 
         case 1: {
-            assert(req->size >= 4);
-            file_offset = (uint64_t)(*((int32_t*)&req->data[0]));
+            assert(resp_size >= 4);
+            file_offset = (uint64_t)(*((int32_t*)&resp_data[0]));
 
-            output->verbose(CALL_INFO, 16, 0, "[syscall-mmap] -> set file offset to %" PRIu64 "\n", file_offset);
+            output->verbose(CALL_INFO, 16, 0, "[syscall-mmap] -> set file offset to %" PRIu64 "\n", 
+                            file_offset);
             output->verbose(CALL_INFO, 16, 0,
                             "[syscall-mmap] -> mmap( 0x%llx, %" PRIu64 ", %" PRId64 ", %" PRId64 ", %" PRId64
                             ", %" PRIu64 " ) file-offset-units: %" PRIu64 "\n",
@@ -122,6 +129,25 @@ public:
         }
     }
 
+    class StandardMemHandlers : public StandardMem::RequestHandler {
+    public:
+        friend class VanadisMemoryMapHandlerState;
+
+        StandardMemHandlers(VanadisMemoryMapHandlerState* state, Output* out) :
+            StandardMem::RequestHandler(out), state_handler(state) {}
+
+        ~StandardMemHandlers() {}
+
+        virtual void handle(StandardMem::ReadResp* req) override {
+            state_handler->resp_addr = req->pAddr;
+            state_handler->resp_size = req->size;
+            state_handler->resp_data = req->data;
+        }
+
+    protected:
+        VanadisMemoryMapHandlerState* state_handler;
+    };
+
     virtual VanadisSyscallResponse* generateResponse() {
         VanadisSyscallResponse* resp = new VanadisSyscallResponse(return_value);
 
@@ -141,13 +167,17 @@ protected:
     uint64_t file_offset;
     const uint64_t call_stack;
     const uint64_t offset_units;
-    std::function<void(SimpleMem::Request*)> send_mem_req;
+    std::function<void(StandardMem::Request*)> send_mem_req;
     std::function<void(const uint64_t, std::vector<uint8_t>&)> send_block_mem;
 
     int64_t return_value;
     int state;
 
     VanadisMemoryManager* memory_mgr;
+    StandardMemHandlers* std_mem_handlers;
+    uint64_t resp_addr;
+    size_t resp_size;
+    std::vector<uint8_t> resp_data;
 };
 
 } // namespace Vanadis

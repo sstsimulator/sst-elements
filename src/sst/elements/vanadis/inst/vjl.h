@@ -28,22 +28,23 @@ class VanadisJumpLinkInstruction : public VanadisSpeculatedInstruction {
 
 public:
     VanadisJumpLinkInstruction(const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts,
+										 const uint64_t ins_width, 
                                const uint16_t link_reg, const uint64_t pc, const VanadisDelaySlotRequirement delayT)
-        : VanadisSpeculatedInstruction(addr, hw_thr, isa_opts, 0, 1, 0, 1, 0, 0, 0, 0, delayT) {
+        : VanadisSpeculatedInstruction(addr, hw_thr, isa_opts, ins_width, 0, 1, 0, 1, 0, 0, 0, 0, delayT) {
 
         isa_int_regs_out[0] = link_reg;
         takenAddress = pc;
     }
 
-    virtual VanadisJumpLinkInstruction* clone() { return new VanadisJumpLinkInstruction(*this); }
+    VanadisJumpLinkInstruction* clone() override { return new VanadisJumpLinkInstruction(*this); }
 
-    virtual const char* getInstCode() const { return "JL"; }
+    const char* getInstCode() const override { return "JL"; }
 
-    virtual void printToBuffer(char* buffer, size_t buffer_size) {
+    void printToBuffer(char* buffer, size_t buffer_size) override {
         snprintf(buffer, buffer_size, "JL      %" PRIu64 "", takenAddress);
     }
 
-    virtual void execute(SST::Output* output, VanadisRegisterFile* regFile) {
+    void execute(SST::Output* output, VanadisRegisterFile* regFile) override {
         const uint64_t link_value = calculateStandardNotTakenAddress();
 
 #ifdef VANADIS_BUILD_DEBUG
@@ -54,9 +55,9 @@ public:
 #endif
         regFile->setIntReg<uint64_t>(phys_int_regs_out[0], link_value);
 
-        if ((takenAddress & 0x3) != 0) {
-            flagError();
-        }
+//        if ((takenAddress & 0x3) != 0) {
+//            flagError();
+//        }
 
         markExecuted();
     }

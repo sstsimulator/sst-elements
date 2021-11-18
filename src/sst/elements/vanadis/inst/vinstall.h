@@ -21,6 +21,7 @@
 #include "inst/vaddi.h"
 #include "inst/vaddiu.h"
 #include "inst/vdivmod.h"
+#include "inst/vdiv.h"
 #include "inst/vmul.h"
 #include "inst/vmuli.h"
 #include "inst/vmulsplit.h"
@@ -49,6 +50,9 @@
 #include "inst/vscmp.h"
 #include "inst/vscmpi.h"
 
+// PC
+#include "inst/vpcaddi.h"
+
 // Jumps and PC change instructions
 #include "inst/vbcmp.h"
 #include "inst/vbfp.h"
@@ -69,7 +73,9 @@
 #include "inst/vfence.h"
 
 // Special instructions
+#include "inst/vfault.h"
 #include "inst/vdecodefaultinst.h"
+#include "inst/vdecodealignfault.h"
 #include "inst/vnop.h"
 #include "inst/vsetreg.h"
 #include "inst/vsyscall.h"

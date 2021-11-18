@@ -24,9 +24,10 @@ namespace Vanadis {
 class VanadisBranchFPInstruction : public VanadisSpeculatedInstruction {
 public:
     VanadisBranchFPInstruction(const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts,
+										 const uint64_t ins_width,
                                const uint16_t cond_reg, const int64_t offst, const bool branch_true,
                                const VanadisDelaySlotRequirement delayT)
-        : VanadisSpeculatedInstruction(addr, hw_thr, isa_opts, 0, 0, 0, 0, 1, 0, 1, 0, delayT),
+        : VanadisSpeculatedInstruction(addr, hw_thr, isa_opts, ins_width, 0, 0, 0, 0, 1, 0, 1, 0, delayT),
           branch_on_true(branch_true), offset(offst) {
 
         isa_fp_regs_in[0] = cond_reg;
@@ -61,10 +62,10 @@ public:
         const bool compare_result = ((fp_cond_val & 0x800000) == (branch_on_true ? 0x800000 : 0));
 
         if (compare_result) {
-            takenAddress = (uint64_t)(((int64_t)getInstructionAddress()) + offset + VANADIS_SPECULATE_JUMP_ADDR_ADD);
+            takenAddress = (uint64_t)(((int64_t)getInstructionAddress()) + offset);
 
-            output->verbose(CALL_INFO, 16, 0, "-----> taken-address: 0x%llx + %" PRId64 " + %d = 0x%llx\n",
-                            getInstructionAddress(), offset, VANADIS_SPECULATE_JUMP_ADDR_ADD, takenAddress);
+            output->verbose(CALL_INFO, 16, 0, "-----> taken-address: 0x%llx + %" PRId64 " = 0x%llx\n",
+                            getInstructionAddress(), offset, takenAddress);
         } else {
             takenAddress = calculateStandardNotTakenAddress();
 

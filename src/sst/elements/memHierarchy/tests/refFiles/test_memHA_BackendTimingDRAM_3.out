@@ -7,13 +7,13 @@ TrivialCPU: Test Completed Successfuly
 TrivialCPU: Test Completed Successfuly
 TrivialCPU: Test Completed Successfuly
 TrivialCPU cpu7 Finished after 5000 issued reads, 5000 returned (15989437 clocks)
-TrivialCPU cpu2 Finished after 5000 issued reads, 5000 returned (15969113 clocks)
-TrivialCPU cpu1 Finished after 5000 issued reads, 5000 returned (15858410 clocks)
-TrivialCPU cpu0 Finished after 5000 issued reads, 5000 returned (16006302 clocks)
-TrivialCPU cpu3 Finished after 5000 issued reads, 5000 returned (15904248 clocks)
-TrivialCPU cpu4 Finished after 5000 issued reads, 5000 returned (15857113 clocks)
-TrivialCPU cpu5 Finished after 5000 issued reads, 5000 returned (15968248 clocks)
 TrivialCPU cpu6 Finished after 5000 issued reads, 5000 returned (15837221 clocks)
+TrivialCPU cpu5 Finished after 5000 issued reads, 5000 returned (15968248 clocks)
+TrivialCPU cpu4 Finished after 5000 issued reads, 5000 returned (15857113 clocks)
+TrivialCPU cpu0 Finished after 5000 issued reads, 5000 returned (16006302 clocks)
+TrivialCPU cpu1 Finished after 5000 issued reads, 5000 returned (15858410 clocks)
+TrivialCPU cpu2 Finished after 5000 issued reads, 5000 returned (15969113 clocks)
+TrivialCPU cpu3 Finished after 5000 issued reads, 5000 returned (15904248 clocks)
  l3cache:memlink.packet_latency : Accumulator : Sum.u64 = 7032280; SumSQ.u64 = 668066600; Count.u64 = 74024; Min.u64 = 95; Max.u64 = 95; 
  l3cache:memlink.send_bit_count : Accumulator : Sum.u64 = 6681088; SumSQ.u64 = 1547075584; Count.u64 = 74024; Min.u64 = 64; Max.u64 = 576; 
  l3cache:memlink.output_port_stalls : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 

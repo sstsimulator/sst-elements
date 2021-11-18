@@ -117,7 +117,7 @@ branch_pred.addParams({
 	"branch_entries" : 32
 })
 
-icache_if = v_cpu_0.setSubComponent( "mem_interface_inst", "memHierarchy.memInterface" )
+icache_if = v_cpu_0.setSubComponent( "mem_interface_inst", "memHierarchy.standardInterface" )
 
 #v_cpu_0_lsq = v_cpu_0.setSubComponent( "lsq", "vanadis.VanadisStandardLoadStoreQueue" )
 v_cpu_0_lsq = v_cpu_0.setSubComponent( "lsq", "vanadis.VanadisSequentialLoadStoreQueue" )
@@ -132,7 +132,8 @@ v_cpu_0_lsq.addParams({
 	"check_memory_loads" : "no"
 })
 
-dcache_if = v_cpu_0_lsq.setSubComponent( "memory_interface", "memHierarchy.memInterface" )
+dcache_if = v_cpu_0_lsq.setSubComponent( "memory_interface", "memHierarchy.standardInterface" )
+dcache_if.addParams({"debug" : 0, "debug_level" : 11 })
 
 node_os = sst.Component("os", "vanadis.VanadisNodeOS")
 node_os.addParams({
@@ -144,7 +145,7 @@ node_os.addParams({
 	"heap_verbose" : 0 #verbosity
 })
 
-node_os_mem_if = node_os.setSubComponent( "mem_interface", "memHierarchy.memInterface" )
+node_os_mem_if = node_os.setSubComponent( "mem_interface", "memHierarchy.standardInterface" )
 
 os_l1dcache = sst.Component("node_os.l1dcache", "memHierarchy.Cache")
 os_l1dcache.addParams({
@@ -157,7 +158,7 @@ os_l1dcache.addParams({
       "cache_size" : "32 KB",
       "L1" : "1",
       "debug" : 0,
-      "debug_level" : 0
+      "debug_level" : 11
 })
 
 cpu0_l1dcache = sst.Component("cpu0.l1dcache", "memHierarchy.Cache")
@@ -171,7 +172,7 @@ cpu0_l1dcache.addParams({
       "cache_size" : "32 KB",
       "L1" : "1",
       "debug" : 0,
-      "debug_level" : 0
+      "debug_level" : 11
 })
 l1dcache_2_cpu     = cpu0_l1dcache.setSubComponent("cpulink", "memHierarchy.MemLink")
 l1dcache_2_l2cache = cpu0_l1dcache.setSubComponent("memlink", "memHierarchy.MemLink")

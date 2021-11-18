@@ -233,6 +233,7 @@ protected:
 
     virtual void printDebugInfo(dbgin * diStruct);
     virtual void printDebugAlloc(bool alloc, Addr addr, std::string note);
+    virtual void printDataValue(Addr addr, vector<uint8_t> * data, bool set);
 
     /* Initialization */
     ReplacementPolicy * createReplacementPolicy(uint64_t lines, uint64_t assoc, Params& params, bool L1, int slotnum = 0);

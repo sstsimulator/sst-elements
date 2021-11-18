@@ -28,26 +28,23 @@ class VanadisOpenHandlerState : public VanadisHandlerState {
 public:
     VanadisOpenHandlerState(uint32_t verbosity, uint64_t path_ptr, uint64_t flags, uint64_t mode,
                             std::unordered_map<uint32_t, VanadisOSFileDescriptor*>* fds,
-                            std::function<void(SimpleMem::Request*)> send_m)
+                            std::function<void(StandardMem::Request*)> send_m)
         : VanadisHandlerState(verbosity), open_path_ptr(path_ptr), open_flags(flags), open_mode(mode),
           file_descriptors(fds) {
 
         send_mem_req = send_m;
         opened_fd_handle = 3;
+
+        std_mem_handlers = new StandardMemHandlers(this, output);
     }
 
-    virtual void handleIncomingRequest(SimpleMem::Request* req) {
+    ~VanadisOpenHandlerState() { delete std_mem_handlers; }
+
+    virtual void handleIncomingRequest(StandardMem::Request* req) {
         output->verbose(CALL_INFO, 16, 0, "[syscall-open] request processing...\n");
 
-        bool found_null = false;
-
-        for (size_t i = 0; i < req->size; ++i) {
-            open_path.push_back(req->data[i]);
-
-            if (req->data[i] == '\0') {
-                found_null = true;
-            }
-        }
+        // This function sets 'found_null'
+        req->handle(std_mem_handlers);
 
         if (found_null) {
             const char* open_path_cstr = (const char*)&open_path[0];
@@ -95,9 +92,30 @@ public:
 
             markComplete();
         } else {
-            send_mem_req(new SimpleMem::Request(SimpleMem::Request::Read, open_path_ptr + open_path.size(), 64));
+            send_mem_req(new StandardMem::Read(open_path_ptr + open_path.size(), 64));
         }
     }
+
+    class StandardMemHandlers : public StandardMem::RequestHandler {
+    public:
+        StandardMemHandlers(VanadisOpenHandlerState* state, SST::Output* out) :
+            StandardMem::RequestHandler(out), state_handler(state) {}
+        
+        virtual void handle(StandardMem::ReadResp* req) override {
+
+            state_handler->found_null = false;
+
+            for (size_t i = 0; i < req->size; ++i) {
+                state_handler->open_path.push_back(req->data[i]);
+
+                if (req->data[i] == '\0') {
+                    state_handler->found_null = true;
+                }
+            }
+        }
+    protected:
+        VanadisOpenHandlerState* state_handler;
+    };
 
     virtual VanadisSyscallResponse* generateResponse() {
         VanadisSyscallResponse* resp = new VanadisSyscallResponse(opened_fd_handle);
@@ -117,7 +135,9 @@ protected:
     std::vector<uint8_t> open_path;
     int32_t opened_fd_handle;
     std::unordered_map<uint32_t, VanadisOSFileDescriptor*>* file_descriptors;
-    std::function<void(SimpleMem::Request*)> send_mem_req;
+    std::function<void(StandardMem::Request*)> send_mem_req;
+    bool found_null;
+    StandardMemHandlers* std_mem_handlers;
 };
 
 } // namespace Vanadis

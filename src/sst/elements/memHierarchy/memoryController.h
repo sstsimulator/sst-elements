@@ -96,7 +96,7 @@ public:
 
 protected:
     MemController();  // for serialization only
-    ~MemController() {
+    virtual ~MemController() {
         if (backing_)
             delete backing_;
     }

@@ -4,24 +4,24 @@ TrivialCPU: Test Completed Successfuly
 TrivialCPU: Test Completed Successfuly
 TrivialCPU: Test Completed Successfuly
 TrivialCPU: Test Completed Successfuly
-TrivialCPU cpu2 Finished after 1500 issued reads, 1500 returned (19545 clocks)
+TrivialCPU cpu5 Finished after 1500 issued reads, 1500 returned (18668 clocks)
+	74 Noncacheable Reads
+	11 Noncacheable Writes
+TrivialCPU cpu4 Finished after 1500 issued reads, 1500 returned (20025 clocks)
 	78 Noncacheable Reads
-	10 Noncacheable Writes
-TrivialCPU cpu1 Finished after 1500 issued reads, 1500 returned (18322 clocks)
-	83 Noncacheable Reads
 	8 Noncacheable Writes
 TrivialCPU cpu0 Finished after 1500 issued reads, 1500 returned (18632 clocks)
 	64 Noncacheable Reads
 	12 Noncacheable Writes
+TrivialCPU cpu1 Finished after 1500 issued reads, 1500 returned (18322 clocks)
+	83 Noncacheable Reads
+	8 Noncacheable Writes
+TrivialCPU cpu2 Finished after 1500 issued reads, 1500 returned (19545 clocks)
+	78 Noncacheable Reads
+	10 Noncacheable Writes
 TrivialCPU cpu3 Finished after 1500 issued reads, 1500 returned (20186 clocks)
 	60 Noncacheable Reads
 	6 Noncacheable Writes
-TrivialCPU cpu4 Finished after 1500 issued reads, 1500 returned (20025 clocks)
-	78 Noncacheable Reads
-	8 Noncacheable Writes
-TrivialCPU cpu5 Finished after 1500 issued reads, 1500 returned (18668 clocks)
-	74 Noncacheable Reads
-	11 Noncacheable Writes
  network.send_bit_count.port0 : Accumulator : Sum.u64 = 480576; SumSQ.u64 = 234184704; Count.u64 = 1959; Min.u64 = 64; Max.u64 = 576; 
  network.send_packet_count.port0 : Accumulator : Sum.u64 = 1959; SumSQ.u64 = 1959; Count.u64 = 1959; Min.u64 = 1; Max.u64 = 1; 
  network.output_port_stalls.port0 : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 

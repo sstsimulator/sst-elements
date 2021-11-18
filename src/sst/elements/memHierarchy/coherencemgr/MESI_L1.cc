@@ -785,7 +785,7 @@ bool MESIL1::handleGetSResp(MemEvent* event, bool inMSHR) {
         line->atomicStart();
 
     if (is_debug_addr(addr))
-        printData(line->getData(), true);
+        printDataValue(addr, line->getData(), true);
 
     if (localPrefetch) {
         line->setPrefetch(true);
@@ -834,7 +834,7 @@ bool MESIL1::handleGetXResp(MemEvent* event, bool inMSHR) {
             {
                 line->setData(event->getPayload(), 0);
                 if (is_debug_addr(addr))
-                    printData(line->getData(), true);
+                    printDataValue(addr, line->getData(), true);
 
                 if (event->getDirty()) {
                     line->setState(M); // Sometimes get dirty data from a noninclusive cache
@@ -858,7 +858,7 @@ bool MESIL1::handleGetXResp(MemEvent* event, bool inMSHR) {
         case IM:
             line->setData(event->getPayload(), 0);
             if (is_debug_addr(addr))
-                printData(line->getData(), true);
+                printDataValue(addr, line->getData(), true);
         case SM:
             {
                 line->setState(M);
@@ -868,7 +868,7 @@ bool MESIL1::handleGetXResp(MemEvent* event, bool inMSHR) {
                         line->setData(req->getPayload(), offset);
 
                         if (is_debug_addr(addr))
-                            printData(line->getData(), true);
+                            printDataValue(addr, line->getData(), true);
                         if (line->isAtomic())
                             success = true;
                         line->atomicEnd(); // Any write causes a future SC to fail 
@@ -1269,7 +1269,7 @@ uint64_t MESIL1::sendResponseUp(MemEvent* event, vector<uint8_t>* data, bool inM
         responseEvent->setPayload(*data);
         responseEvent->setSize(data->size());
         if (is_debug_event(event)) {
-            printData(data, false);
+            printDataValue(event->getAddr(), data, false);
         }
         latency = accessLatency_;
     }
@@ -1358,7 +1358,7 @@ void MESIL1::sendWriteback(Command cmd, L1CacheLine * line, bool dirty) {
         writeback->setDirty(dirty);
 
         if (is_debug_addr(line->getAddr())) {
-            printData(line->getData(), false);
+            printDataValue(line->getAddr(), line->getData(), false);
         }
 
         latency = accessLatency_;
