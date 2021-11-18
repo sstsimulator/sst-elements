@@ -171,11 +171,18 @@ public:
 
         std::vector<uint8_t> random_values_data_block;
 
-        for ( int i = 0; i < 8; ++i ) {
+        for ( int i = 0; i < 16; ++i ) {
             random_values_data_block.push_back(rand() % 255);
         }
 
         const uint64_t rand_values_address = phdr_address + phdr_data_block.size() + 64;
+		  const char* exe_path = elf_info->getBinaryPath();
+
+		  for( int i = 0; i < std::strlen(exe_path); ++i) {
+				random_values_data_block.push_back(exe_path[i]);
+		  }
+
+		  random_values_data_block.push_back('\0');
 
         std::vector<uint8_t> aux_data_block;
 
@@ -221,19 +228,19 @@ public:
 
         // Real UID
         vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_UID);
-        vanadis_vec_copy_in<int64_t>(aux_data_block, (int)getuid());
+        vanadis_vec_copy_in<int64_t>(aux_data_block, (int64_t)getuid());
 
         // Effective UID
         vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_EUID);
-        vanadis_vec_copy_in<int64_t>(aux_data_block, (int)geteuid());
+        vanadis_vec_copy_in<int64_t>(aux_data_block, (int64_t)geteuid());
 
         // Real GID
         vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_GID);
-        vanadis_vec_copy_in<int64_t>(aux_data_block, (int)getgid());
+        vanadis_vec_copy_in<int64_t>(aux_data_block, (int64_t)getgid());
 
         // Effective GID
         vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_EGID);
-        vanadis_vec_copy_in<int64_t>(aux_data_block, (int)getegid());
+        vanadis_vec_copy_in<int64_t>(aux_data_block, (int64_t)getegid());
 
         // D-Cache Line Size
         vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_DCACHEBSIZE);
@@ -247,9 +254,13 @@ public:
         vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_SECURE);
         vanadis_vec_copy_in<int64_t>(aux_data_block, 0);
 
-        // AT_RANDOM - 8 bytes of random stuff
+        // AT_RANDOM - 16 bytes of random stuff
         vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_RANDOM);
         vanadis_vec_copy_in<int64_t>(aux_data_block, rand_values_address);
+
+        // AT_EXEFN - path to full executable
+        vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_EXECFN);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, rand_values_address + 16);
 
         // End the Auxillary vector
         vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_NULL);
@@ -303,11 +314,12 @@ public:
         // Allocate 64 zeros for now
         std::vector<uint8_t> stack_data;
 
-        const uint64_t arg_env_data_start = start_stack_address + (arg_env_space_needed * 4);
+        const uint64_t arg_env_data_start = start_stack_address + (arg_env_space_needed * 8);
 
         output->verbose(CALL_INFO, 16, 0, "-> Setting start of stack data to:       %" PRIu64 "\n", arg_env_data_start);
 
-        vanadis_vec_copy_in<uint32_t>(stack_data, arg_count);
+		  // Is this 32b or 64b for a 64b environment? (code looks like an int from Linux)
+        vanadis_vec_copy_in<uint64_t>(stack_data, arg_count);
 
         for ( size_t i = 0; i < arg_start_offsets.size(); ++i ) {
             output->verbose(
