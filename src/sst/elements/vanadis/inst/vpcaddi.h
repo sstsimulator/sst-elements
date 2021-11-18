@@ -38,17 +38,18 @@ public:
     void printToBuffer(char* buffer, size_t buffer_size) override {
         snprintf(
             buffer, buffer_size,
-            "PCADDI  %5" PRIu16 " <- 0x%llx + imm=%" PRId64 " (phys: %5" PRIu16 " <- 0x%llx + %" PRId64 ")",
-            isa_int_regs_out[0], getInstructionAddress(), imm_value, phys_int_regs_out[0], getInstructionAddress(), imm_value);
+            "PCADDI  %5" PRIu16 " <- 0x%llx + imm=%" PRId64 " (phys: %5" PRIu16 " <- 0x%llx + %" PRId64 ") = 0x%llx",
+            isa_int_regs_out[0], getInstructionAddress(), imm_value, phys_int_regs_out[0], getInstructionAddress(), imm_value,
+					getInstructionAddress() + imm_value);
     }
 
     void execute(SST::Output* output, VanadisRegisterFile* regFile) override {
 #ifdef VANADIS_BUILD_DEBUG
         output->verbose(CALL_INFO, 16, 0,
                         "Execute: (addr=%p) PCADDI phys: out=%" PRIu16 " in=0x%llx / imm=%" PRId64
-                        ", isa: out=%" PRIu16 "\n",
+                        ", isa: out=%" PRIu16 " = 0x%llx\n",
                         (void*)getInstructionAddress(), phys_int_regs_out[0], getInstructionAddress(), imm_value,
-                        isa_int_regs_out[0]);
+                        isa_int_regs_out[0], (static_cast<int64_t>(getInstructionAddress()) + imm_value));
 #endif
 
 		if(VanadisRegisterFormat::VANADIS_FORMAT_INT64 == register_format) {
