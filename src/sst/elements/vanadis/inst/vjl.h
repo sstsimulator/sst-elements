@@ -41,7 +41,7 @@ public:
     const char* getInstCode() const override { return "JL"; }
 
     void printToBuffer(char* buffer, size_t buffer_size) override {
-        snprintf(buffer, buffer_size, "JL      %" PRIu64 "", takenAddress);
+        snprintf(buffer, buffer_size, "JL      %" PRIu64 " (0x%llx)", takenAddress, takenAddress);
     }
 
     void execute(SST::Output* output, VanadisRegisterFile* regFile) override {

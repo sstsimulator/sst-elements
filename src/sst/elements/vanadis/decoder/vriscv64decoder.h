@@ -150,14 +150,14 @@ public:
             const VanadisELFProgramHeaderEntry* nxt_entry = elf_info->getProgramHeader(i);
 
             vanadis_vec_copy_in<int>(phdr_data_block, (int)nxt_entry->getHeaderTypeNumber());
-            vanadis_vec_copy_in<int>(phdr_data_block, (int)nxt_entry->getImageOffset());
-            vanadis_vec_copy_in<int>(phdr_data_block, (int)nxt_entry->getVirtualMemoryStart());
-            // Physical address - just ignore this for now
-            vanadis_vec_copy_in<int>(phdr_data_block, (int)nxt_entry->getPhysicalMemoryStart());
-            vanadis_vec_copy_in<int>(phdr_data_block, (int)nxt_entry->getHeaderImageLength());
-            vanadis_vec_copy_in<int>(phdr_data_block, (int)nxt_entry->getHeaderMemoryLength());
             vanadis_vec_copy_in<int>(phdr_data_block, (int)nxt_entry->getSegmentFlags());
-            vanadis_vec_copy_in<int>(phdr_data_block, (int)nxt_entry->getAlignment());
+            vanadis_vec_copy_in<uint64_t>(phdr_data_block, (uint64_t)nxt_entry->getImageOffset());
+            vanadis_vec_copy_in<uint64_t>(phdr_data_block, (uint64_t)nxt_entry->getVirtualMemoryStart());
+            // Physical address - just ignore this for now
+            vanadis_vec_copy_in<uint64_t>(phdr_data_block, (uint64_t)nxt_entry->getPhysicalMemoryStart());
+            vanadis_vec_copy_in<uint64_t>(phdr_data_block, (uint64_t)nxt_entry->getHeaderImageLength());
+            vanadis_vec_copy_in<uint64_t>(phdr_data_block, (uint64_t)nxt_entry->getHeaderMemoryLength());
+            vanadis_vec_copy_in<uint64_t>(phdr_data_block, (uint64_t)nxt_entry->getAlignment());
         }
 
         if ( elf_info->getEndian() != VANADIS_LITTLE_ENDIAN ) {
@@ -180,85 +180,83 @@ public:
         std::vector<uint8_t> aux_data_block;
 
         // AT_EXECFD (file descriptor of the executable)
-        vanadis_vec_copy_in<int>(aux_data_block, VANADIS_AT_EXECFD);
-        vanadis_vec_copy_in<int>(aux_data_block, 4);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_EXECFD);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, 4);
 
-        vanadis_vec_copy_in<int>(aux_data_block, VANADIS_AT_PHDR);
-        vanadis_vec_copy_in<int>(aux_data_block, (int)phdr_address);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_PHDR);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, (int)phdr_address);
 
-        vanadis_vec_copy_in<int>(aux_data_block, VANADIS_AT_PHENT);
-        vanadis_vec_copy_in<int>(aux_data_block, (int)elf_info->getProgramHeaderEntrySize());
+        vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_PHENT);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, (int)elf_info->getProgramHeaderEntrySize());
 
-        vanadis_vec_copy_in<int>(aux_data_block, VANADIS_AT_PHNUM);
-        vanadis_vec_copy_in<int>(aux_data_block, (int)elf_info->getProgramHeaderEntryCount());
+        vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_PHNUM);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, (int)elf_info->getProgramHeaderEntryCount());
 
         // System page size
-        vanadis_vec_copy_in<int>(aux_data_block, VANADIS_AT_PAGESZ);
-        vanadis_vec_copy_in<int>(aux_data_block, 4096);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_PAGESZ);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, 4096);
 
-        vanadis_vec_copy_in<int>(aux_data_block, VANADIS_AT_ENTRY);
-        vanadis_vec_copy_in<int>(aux_data_block, (int)elf_info->getEntryPoint());
+        vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_ENTRY);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, (int)elf_info->getEntryPoint());
 
         // AT_BASE (base address loaded into)
-        vanadis_vec_copy_in<int>(aux_data_block, VANADIS_AT_BASE);
-        vanadis_vec_copy_in<int>(aux_data_block, 0);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_BASE);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, 0);
 
         // AT_FLAGS
-        vanadis_vec_copy_in<int>(aux_data_block, VANADIS_AT_FLAGS);
-        vanadis_vec_copy_in<int>(aux_data_block, 0);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_FLAGS);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, 0);
 
         // AT_HWCAP
-        vanadis_vec_copy_in<int>(aux_data_block, VANADIS_AT_HWCAP);
-        vanadis_vec_copy_in<int>(aux_data_block, 0);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_HWCAP);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, 0);
 
         // AT_CLKTCK (Clock Tick Resolution)
-        vanadis_vec_copy_in<int>(aux_data_block, VANADIS_AT_CLKTCK);
-        vanadis_vec_copy_in<int>(aux_data_block, 100);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_CLKTCK);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, 100);
 
         // Not ELF
-        vanadis_vec_copy_in<int>(aux_data_block, VANADIS_AT_NOTELF);
-        vanadis_vec_copy_in<int>(aux_data_block, 0);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_NOTELF);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, 0);
 
         // Real UID
-        vanadis_vec_copy_in<int>(aux_data_block, VANADIS_AT_UID);
-        vanadis_vec_copy_in<int>(aux_data_block, (int)getuid());
+        vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_UID);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, (int)getuid());
 
         // Effective UID
-        vanadis_vec_copy_in<int>(aux_data_block, VANADIS_AT_EUID);
-        vanadis_vec_copy_in<int>(aux_data_block, (int)geteuid());
+        vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_EUID);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, (int)geteuid());
 
         // Real GID
-        vanadis_vec_copy_in<int>(aux_data_block, VANADIS_AT_GID);
-        vanadis_vec_copy_in<int>(aux_data_block, (int)getgid());
+        vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_GID);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, (int)getgid());
 
         // Effective GID
-        vanadis_vec_copy_in<int>(aux_data_block, VANADIS_AT_EGID);
-        vanadis_vec_copy_in<int>(aux_data_block, (int)getegid());
+        vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_EGID);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, (int)getegid());
 
         // D-Cache Line Size
-        vanadis_vec_copy_in<int>(aux_data_block, VANADIS_AT_DCACHEBSIZE);
-        vanadis_vec_copy_in<int>(aux_data_block, 64);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_DCACHEBSIZE);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, 64);
 
         // I-Cache Line Size
-        vanadis_vec_copy_in<int>(aux_data_block, VANADIS_AT_ICACHEBSIZE);
-        vanadis_vec_copy_in<int>(aux_data_block, 64);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_ICACHEBSIZE);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, 64);
 
         // AT_SECURE?
-        vanadis_vec_copy_in<int>(aux_data_block, VANADIS_AT_SECURE);
-        vanadis_vec_copy_in<int>(aux_data_block, 0);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_SECURE);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, 0);
 
         // AT_RANDOM - 8 bytes of random stuff
-        vanadis_vec_copy_in<int>(aux_data_block, VANADIS_AT_RANDOM);
-        vanadis_vec_copy_in<int>(aux_data_block, rand_values_address);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_RANDOM);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, rand_values_address);
 
         // End the Auxillary vector
-        vanadis_vec_copy_in<int>(aux_data_block, VANADIS_AT_NULL);
-        vanadis_vec_copy_in<int>(aux_data_block, 0);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_NULL);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, 0);
 
-        // Find out how many AUX entries we added, these should be an int
-        // (identifier) and then an int (value) so div by 8 but we need to count
-        // ints, so really div by 4
-        const int aux_entry_count = aux_data_block.size() / 4;
+		  // How many entries do we have, divide by 8 because we are running on a 64b system
+        const int aux_entry_count = aux_data_block.size() / 8;
 
         // Per RISCV Assembly Programemr's handbook, register x2 is for stack
         // pointer
@@ -287,7 +285,7 @@ public:
 
         uint64_t arg_env_space_needed = 1 + arg_count + 1 + env_count + 1 + aux_entry_count;
         uint64_t arg_env_space_and_data_needed =
-            (arg_env_space_needed * 4) + arg_data_block.size() + env_data_block.size() + aux_data_block.size();
+            (arg_env_space_needed * 8) + arg_data_block.size() + env_data_block.size() + aux_data_block.size();
 
         uint64_t       aligned_start_stack_address = (start_stack_address - arg_env_space_and_data_needed);
         const uint64_t padding_needed              = (aligned_start_stack_address % 64);
@@ -315,10 +313,10 @@ public:
             output->verbose(
                 CALL_INFO, 16, 0, "--> Setting arg%" PRIu32 " to point to address %" PRIu64 " / 0x%llx\n", (uint32_t)i,
                 arg_env_data_start + arg_start_offsets[i], arg_env_data_start + arg_start_offsets[i]);
-            vanadis_vec_copy_in<uint32_t>(stack_data, (uint32_t)(arg_env_data_start + arg_start_offsets[i]));
+            vanadis_vec_copy_in<uint64_t>(stack_data, (uint64_t)(arg_env_data_start + arg_start_offsets[i]));
         }
 
-        vanadis_vec_copy_in<uint32_t>(stack_data, 0);
+        vanadis_vec_copy_in<uint64_t>(stack_data, 0);
 
         for ( size_t i = 0; i < env_start_offsets.size(); ++i ) {
             output->verbose(
@@ -326,11 +324,11 @@ public:
                 arg_env_data_start + arg_data_block.size() + env_start_offsets[i],
                 arg_env_data_start + arg_data_block.size() + env_start_offsets[i]);
 
-            vanadis_vec_copy_in<uint32_t>(
-                stack_data, (uint32_t)(arg_env_data_start + arg_data_block.size() + env_start_offsets[i]));
+            vanadis_vec_copy_in<uint64_t>(
+                stack_data, (uint64_t)(arg_env_data_start + arg_data_block.size() + env_start_offsets[i]));
         }
 
-        vanadis_vec_copy_in<uint32_t>(stack_data, 0);
+        vanadis_vec_copy_in<uint64_t>(stack_data, 0);
 
         for ( size_t i = 0; i < aux_data_block.size(); ++i ) {
             stack_data.push_back(aux_data_block[i]);
