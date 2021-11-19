@@ -247,6 +247,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     stat_eventRecv[(int)Command::GetX] = registerStatistic<uint64_t>("GetX_recv");
     stat_eventRecv[(int)Command::GetS] = registerStatistic<uint64_t>("GetS_recv");
     stat_eventRecv[(int)Command::GetSX] = registerStatistic<uint64_t>("GetSX_recv");
+    stat_eventRecv[(int)Command::Write] = registerStatistic<uint64_t>("Write_recv");
     stat_eventRecv[(int)Command::PutM]  = registerStatistic<uint64_t>("PutM_recv");
     stat_eventRecv[(int)Command::PutX]  = registerStatistic<uint64_t>("PutX_recv");
     stat_eventRecv[(int)Command::PutE]  = registerStatistic<uint64_t>("PutE_recv");
@@ -256,6 +257,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     stat_eventRecv[(int)Command::FetchXResp]    = registerStatistic<uint64_t>("FetchXResp_recv");
     stat_eventRecv[(int)Command::GetSResp]      = registerStatistic<uint64_t>("GetSResp_recv");
     stat_eventRecv[(int)Command::GetXResp]      = registerStatistic<uint64_t>("GetXResp_recv");
+    stat_eventRecv[(int)Command::WriteResp]     = registerStatistic<uint64_t>("WriteResp_recv");
     stat_eventRecv[(int)Command::ForceInv]      = registerStatistic<uint64_t>("ForceInv_recv");
     stat_eventRecv[(int)Command::FetchInv]      = registerStatistic<uint64_t>("FetchInv_recv");
     stat_eventRecv[(int)Command::AckInv]        = registerStatistic<uint64_t>("AckInv_recv");
@@ -263,10 +265,10 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     stat_eventRecv[(int)Command::FlushLineInv]  = registerStatistic<uint64_t>("FlushLineInv_recv");
     stat_eventRecv[(int)Command::FlushLineResp] = registerStatistic<uint64_t>("FlushLineResp_recv");
     stat_noncacheRecv[(int)Command::GetS]       = registerStatistic<uint64_t>("GetS_uncache_recv");
-    stat_noncacheRecv[(int)Command::GetX]       = registerStatistic<uint64_t>("GetX_uncache_recv");
+    stat_noncacheRecv[(int)Command::Write]      = registerStatistic<uint64_t>("Write_uncache_recv");
     stat_noncacheRecv[(int)Command::GetSX]      = registerStatistic<uint64_t>("GetSX_uncache_recv");
     stat_noncacheRecv[(int)Command::GetSResp]   = registerStatistic<uint64_t>("GetSResp_uncache_recv");
-    stat_noncacheRecv[(int)Command::GetXResp]   = registerStatistic<uint64_t>("GetXResp_uncache_recv");
+    stat_noncacheRecv[(int)Command::WriteResp]  = registerStatistic<uint64_t>("WriteResp_uncache_recv");
     stat_noncacheRecv[(int)Command::CustomReq]  = registerStatistic<uint64_t>("CustomReq_uncache_recv");
     stat_noncacheRecv[(int)Command::CustomResp] = registerStatistic<uint64_t>("CustomResp_uncache_recv");
     stat_noncacheRecv[(int)Command::CustomAck]  = registerStatistic<uint64_t>("CustomAck_uncache_recv");
@@ -274,6 +276,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     stat_eventSent[(int)Command::GetS]          = registerStatistic<uint64_t>("eventSent_GetS");
     stat_eventSent[(int)Command::GetX]          = registerStatistic<uint64_t>("eventSent_GetX");
     stat_eventSent[(int)Command::GetSX]         = registerStatistic<uint64_t>("eventSent_GetSX");
+    stat_eventSent[(int)Command::Write]         = registerStatistic<uint64_t>("eventSent_Write");
     stat_eventSent[(int)Command::PutM]          = registerStatistic<uint64_t>("eventSent_PutM");
     stat_eventSent[(int)Command::Inv]           = registerStatistic<uint64_t>("eventSent_Inv");
     stat_eventSent[(int)Command::FetchInv]      = registerStatistic<uint64_t>("eventSent_FetchInv");
@@ -282,6 +285,7 @@ DirectoryController::DirectoryController(ComponentId_t id, Params &params) :
     stat_eventSent[(int)Command::NACK]          = registerStatistic<uint64_t>("eventSent_NACK");
     stat_eventSent[(int)Command::GetSResp]      = registerStatistic<uint64_t>("eventSent_GetSResp");
     stat_eventSent[(int)Command::GetXResp]      = registerStatistic<uint64_t>("eventSent_GetXResp");
+    stat_eventSent[(int)Command::WriteResp]     = registerStatistic<uint64_t>("eventSent_WriteResp");
     stat_eventSent[(int)Command::FetchResp]     = registerStatistic<uint64_t>("eventSent_FetchResp");
     stat_eventSent[(int)Command::AckInv]        = registerStatistic<uint64_t>("eventSent_AckInv");
     stat_eventSent[(int)Command::AckPut]        = registerStatistic<uint64_t>("eventSent_AckPut");
@@ -465,6 +469,9 @@ bool DirectoryController::processPacket(MemEvent * ev, bool replay) {
         case Command::GetX:
             retval = handleGetX(ev, replay);
             break;
+        case Command::Write:
+            retval = handleWrite(ev, replay);
+            break;
         case Command::PutS:
             retval = handlePutS(ev, replay);
             break;
@@ -494,6 +501,9 @@ bool DirectoryController::processPacket(MemEvent * ev, bool replay) {
             break;
         case Command::GetSResp:
             retval = handleGetSResp(ev, replay);
+            break;
+        case Command::WriteResp:
+            retval = handleWriteResp(ev, replay);
             break;
         case Command::FlushLineResp:
             retval = handleFlushLineResp(ev, replay);
@@ -905,6 +915,90 @@ bool DirectoryController::handleGetX(MemEvent * event, bool inMSHR) {
             }
             break;
         case M:
+            status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, false);
+            if (status == MemEventStatus::OK) {
+                entry->setState(M_Inv);
+                issueFetch(event, entry, Command::FetchInv);
+                if (is_debug_event(event)) {
+                    eventDI.reason = "miss";
+                }
+            }
+            break;
+        default:
+            if (!inMSHR)
+                status = allocateMSHR(event, false);
+            break;
+    }
+
+    if (is_debug_addr(addr)) {
+        eventDI.newst = entry->getState();
+        eventDI.verboseline = entry->getString();
+    }
+
+    if (status == MemEventStatus::Reject)
+        sendNACK(event);
+
+    return true;
+}
+
+/* If the dir receives a Write that is not flagged NONCACHEABLE, it is a request
+ * to write coherently by a non-caching device */
+bool DirectoryController::handleWrite(MemEvent * event, bool inMSHR) {
+    Addr addr = event->getBaseAddr();
+    DirEntry * entry = getDirEntry(addr);
+    State state = entry->getState();
+    bool cached = entry->isCached();
+    MemEventStatus status = MemEventStatus::OK;
+
+    if (is_debug_addr(addr))
+        eventDI.prefill(event->getID(), event->getCmd(), false, addr, state);
+
+    if (!cached)
+        return retrieveDirEntry(entry, event, inMSHR);
+
+    if (!inMSHR)
+        stat_cacheHits->addData(1);
+
+    switch (state) {
+        case I:
+            if (mshr->hasData(addr)) {
+                if (mshr->getDataDirty(addr)) // Data was temporarily buffered here due to racing accesses
+                    writebackDataFromMSHR(addr);
+                mshr->clearData(addr);
+            }
+
+            status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, false);
+            
+            if (status == MemEventStatus::OK) {
+                entry->setState(IM);
+                issueMemoryRequest(event, entry);
+            }
+            break;
+        case S:
+            if (mshr->hasData(addr)) {
+                if (mshr->getDataDirty(addr)) // Data was temporarily buffered here due to racing accesses
+                    writebackDataFromMSHR(addr);
+                mshr->clearData(addr);
+            }
+
+            // Invalidate sharers, forward Write to memory
+            status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, false);
+            if (status == MemEventStatus::OK) {
+                entry->setState(S_Inv);
+                issueInvalidations(event, entry, Command::Inv);
+                if (is_debug_event(event)) {
+                    eventDI.reason = "inv";
+                }
+            }
+            break;
+        case M:
+            if (mshr->hasData(addr)) {
+                if (mshr->getDataDirty(addr)) { // Data was temporarily buffered here due to racing accesses
+                    writebackDataFromMSHR(addr);
+                }
+                mshr->clearData(addr);
+            }
+
             status = inMSHR ? MemEventStatus::OK : allocateMSHR(event, false);
             if (status == MemEventStatus::OK) {
                 entry->setState(M_Inv);
@@ -1700,6 +1794,34 @@ bool DirectoryController::handleGetXResp(MemEvent * event, bool inMSHR) {
     return true;
 }
 
+bool DirectoryController::handleWriteResp(MemEvent * event, bool inMSHR) {
+    Addr addr = event->getBaseAddr();
+    DirEntry* entry = getDirEntry(addr);
+    State state = entry ? entry->getState() : NP;
+
+    if (is_debug_addr(addr))
+        eventDI.prefill(event->getID(), Command::WriteResp, false, addr, state);
+
+    MemEvent * reqEv = static_cast<MemEvent*>(mshr->getFrontEvent(addr));
+
+    if (state != IM) {
+        out.fatal(CALL_INFO, -1, "%s, Error: Received WriteResp in unhandled state '%s'. Event: %s. Time: %" PRIu64 "ns\n",
+                getName().c_str(), StateString[state], event->getVerboseString().c_str(), getCurrentSimTimeNano());
+
+    }
+
+    entry->setState(I);
+    forwardByDestination(reqEv->makeResponse(), timestamp + mshrLatency);
+    cleanUpAfterResponse(event, inMSHR);
+
+    if (is_debug_addr(addr)) {
+        eventDI.newst = entry->getState();
+        eventDI.verboseline = entry->getString();
+    }
+
+    return true;
+}
+
 bool DirectoryController::handleFlushLineResp(MemEvent * event, bool inMSHR) {
     Addr addr = event->getBaseAddr();
     DirEntry* entry = getDirEntry(addr);
@@ -1776,7 +1898,7 @@ bool DirectoryController::handleAckInv(MemEvent* event, bool inMSHR) {
     }
 
     switch (state) {
-        case M_Inv: // ForceInv or GetX
+        case M_Inv: // ForceInv or GetX/Write
             entry->setState(I);
             retryBuffer.push_back(static_cast<MemEvent*>(mshr->getFrontEvent(addr)));
             break;

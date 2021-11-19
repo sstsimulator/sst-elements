@@ -268,6 +268,9 @@ bool Cache::processEvent(MemEventBase* ev, bool inMSHR) {
         case Command::GetX:
             accepted = coherenceMgr_->handleGetX(event, inMSHR);
             break;
+        case Command::Write:
+            accepted = coherenceMgr_->handleWrite(event, inMSHR);
+            break;
         case Command::GetSX:
             accepted = coherenceMgr_->handleGetSX(event, inMSHR);
             break;
@@ -279,6 +282,9 @@ bool Cache::processEvent(MemEventBase* ev, bool inMSHR) {
             break;
         case Command::GetSResp:
             accepted = coherenceMgr_->handleGetSResp(event, inMSHR);
+            break;
+        case Command::WriteResp:
+            accepted = coherenceMgr_->handleWriteResp(event, inMSHR);
             break;
         case Command::GetXResp:
             accepted = coherenceMgr_->handleGetXResp(event, inMSHR);

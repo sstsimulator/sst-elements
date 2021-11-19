@@ -195,8 +195,9 @@ public:
     void setStoreConditional() { setFlag(MemEventBase::F_LLSC); }
     bool isStoreConditional() { return cmd_ == Command::GetX && queryFlag(MemEventBase::F_LLSC); }
 
-    void setSuccess(bool b) { b ? setFlag(MemEventBase::F_SUCCESS) : clearFlag(MemEventBase::F_SUCCESS); }
-    bool success() { return queryFlag(MemEventBase::F_SUCCESS); }
+    void setFail() { setFlag(MemEventBase::F_FAIL); }
+    void setSuccess(bool b) { b ? clearFlag(MemEventBase::F_FAIL) : setFlag(MemEventBase::F_FAIL); }
+    bool success() { return !queryFlag(MemEventBase::F_FAIL); }
 
     /** @return  the data payload. */
     dataVec& getPayload(void) {

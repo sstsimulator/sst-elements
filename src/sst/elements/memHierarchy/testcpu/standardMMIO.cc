@@ -124,6 +124,7 @@ bool StandardMMIO::clockTic(Cycle_t cycle) {
 
 void StandardMMIO::handleEvent(StandardMem::Request* req) {
     req->handle(handlers);
+    delete req;
 }
 
 /* Handler for incoming Write requests */
@@ -139,7 +140,6 @@ void StandardMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Write* wri
     if (!(write->posted)) {
         mmio->iface->send(write->makeResponse());
     }
-    delete write;
 }
 
 /* Handler for incoming Read requests */
@@ -156,7 +156,6 @@ void StandardMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::Read* read
     StandardMem::ReadResp* resp = static_cast<StandardMem::ReadResp*>(read->makeResponse());
     resp->data = payload;
     mmio->iface->send(resp);
-    delete read;
 }
 
 /* Handler for incoming Read responses - should be a response to a Read we issued */
@@ -169,7 +168,7 @@ void StandardMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::ReadResp* 
         mmio->statReadLatency->addData(et);
         mmio->requests.erase(i);
     }
-    delete resp;
+    
     if (mmio->mem_access == 0 && mmio->requests.empty())
         mmio->primaryComponentOKToEndSim();
 }
@@ -184,7 +183,7 @@ void StandardMMIO::mmioHandlers::handle(SST::Interfaces::StandardMem::WriteResp*
         mmio->statWriteLatency->addData(et);
         mmio->requests.erase(i);
     }
-    delete resp;
+    
     if (mmio->mem_access == 0 && mmio->requests.empty())
         mmio->primaryComponentOKToEndSim();
 }

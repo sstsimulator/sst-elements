@@ -54,12 +54,6 @@ StandardInterface::StandardInterface(SST::ComponentId_t id, Params &params, Time
         link_ = loadAnonymousSubComponent<MemLinkBase>("memHierarchy.MemLink", "link", 0, ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, lparams, getDefaultTimeBase());
     }
 
-/*
-    if ( NULL == recvHandler_)
-        link_ = configureLink("port");
-    else
-        link_ = configureLink("port", new Event::Handler<StandardInterface>(this, &StandardInterface::receive));
-*/
     if (!link_)
         output.fatal(CALL_INFO, -1, "%s, Error: unable to configure link on port 'port'\n", getName().c_str());
     
@@ -110,7 +104,7 @@ void StandardInterface::init(unsigned int phase) {
                 if (memEvent->getInitCmd() == MemEventInit::InitCommand::Coherence) {
                     MemEventInitCoherence * memEventC = static_cast<MemEventInitCoherence*>(memEvent);
                     if (memEventC->getType() == Endpoint::Cache) {
-                        cacheDst_ = true; // Cache takes care of figuring out whether GetXResp is read or write response and other address-related issues
+                        cacheDst_ = true; // Cache takes care of figuring out whether WriteResp is read or write response and other address-related issues
                     } 
                     if (memEventC->getType() == Endpoint::Cache || memEventC->getType() == Endpoint::Directory) {
                         baseAddrMask_ = ~(memEventC->getLineSize() - 1);
@@ -170,7 +164,7 @@ void StandardInterface::sendUntimedData(StandardMem::Request *req) {
     StandardMem::Write* wr = static_cast<StandardMem::Write*>(req);
 #endif
 
-    MemEventInit *me = new MemEventInit(getName(), Command::GetX, wr->pAddr, wr->data);
+    MemEventInit *me = new MemEventInit(getName(), Command::Write, wr->pAddr, wr->data);
     if (initDone_)
         link_->sendInitData(me);
     else
@@ -230,8 +224,8 @@ void StandardInterface::receive(SST::Event* ev) {
             case Command::GetSResp:
                 deliverReq = convertResponseGetSResp(origReq, me);
                 break;
-            case Command::GetXResp:
-                deliverReq = convertResponseGetXResp(origReq, me);
+            case Command::WriteResp:
+                deliverReq = convertResponseWriteResp(origReq, me);
                 break;
             case Command::FlushLineResp:
                 deliverReq = convertResponseFlushResp(origReq, me);
@@ -267,13 +261,13 @@ void StandardInterface::receive(SST::Event* ev) {
                     deliverReq = convertRequestGetS(me);
                 }
                 break;
-            case Command::GetX:
+            case Command::Write:
                 if (me->queryFlag(MemEventBase::F_LLSC))
                     deliverReq = convertRequestSC(me);
                 else if (me->queryFlag(MemEventBase::F_LOCKED)) {
                     deliverReq = convertRequestUnlock(me);
                 } else {
-                    deliverReq = convertRequestGetX(me);
+                    deliverReq = convertRequestWrite(me);
                 }
                 break;
             case Command::CustomReq:
@@ -336,6 +330,7 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::Read* req
 SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::Write* req) {
     bool noncacheable = false;
     
+    
     if (req->getNoncacheable()) {
         noncacheable = true;
     } else if (!((iface->noncacheableRegions).empty())) {
@@ -349,18 +344,17 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::Write* re
             }
         }
     }
-
-    Addr bAddr = (iface->lineSize_ == 0 || noncacheable) ? req->pAddr : req->pAddr & iface->baseAddrMask_;
-    MemEvent* write = new MemEvent(iface->getName(), req->pAddr, bAddr, Command::GetX, req->data);
     
-    if (noncacheable)    
-        write->setFlag(MemEvent::F_NONCACHEABLE);
+    Addr bAddr = (iface->lineSize_ == 0 || noncacheable) ? req->pAddr : req->pAddr & iface->baseAddrMask_;
+    MemEvent* write = new MemEvent(iface->getName(), req->pAddr, bAddr, Command::Write, req->data);
     
     write->setRqstr(iface->getName());
     write->setDst(iface->link_->getTargetDestination(bAddr));
     write->setVirtualAddress(req->vAddr);
     write->setInstructionPointer(req->iPtr);
     
+    if (noncacheable)    
+        write->setFlag(MemEvent::F_NONCACHEABLE);
 
     if (req->posted)
         write->setFlag(MemEvent::F_NORESPONSE);
@@ -415,7 +409,7 @@ Event* StandardInterface::MemEventConverter::convert(StandardMem::ReadLock* req)
 }
 SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::WriteUnlock* req) {
     Addr bAddr = (iface->lineSize_ == 0 || req->getNoncacheable()) ? req->pAddr : req->pAddr & iface->baseAddrMask_;
-    MemEvent* write = new MemEvent(iface->getName(), req->pAddr, bAddr, Command::GetX, req->data);
+    MemEvent* write = new MemEvent(iface->getName(), req->pAddr, bAddr, Command::Write, req->data);
     write->setRqstr(iface->getName());
     write->setDst(iface->link_->getTargetDestination(bAddr));
     write->setVirtualAddress(req->vAddr);
@@ -452,7 +446,7 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::LoadLink*
 
 SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::StoreConditional* req) {
     Addr bAddr = (iface->lineSize_ == 0 || req->getNoncacheable()) ? req->pAddr : req->pAddr & iface->baseAddrMask_;
-    MemEvent* store = new MemEvent(iface->getName(), req->pAddr, bAddr, Command::GetX, req->data);
+    MemEvent* store = new MemEvent(iface->getName(), req->pAddr, bAddr, Command::Write, req->data);
     store->setFlag(MemEvent::F_LLSC);
     store->setRqstr(iface->getName());
     store->setDst(iface->link_->getTargetDestination(bAddr));
@@ -497,8 +491,8 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::ReadResp*
     iface->responses_.erase(it);
     MemEvent* meresp = mereq->makeResponse();
     meresp->setPayload(resp->data);
-    if (resp->getSuccess()) {
-        meresp->setFlag(MemEventBase::F_SUCCESS);
+    if (!resp->getSuccess()) {
+        meresp->setFail();
     }
     return meresp;
 }
@@ -509,8 +503,8 @@ SST::Event* StandardInterface::MemEventConverter::convert(StandardMem::WriteResp
     MemEvent* mereq = static_cast<MemEvent*>(it->second); // Matching memEvent req
     iface->responses_.erase(it);
     MemEvent* meresp = mereq->makeResponse();
-    if (resp->getSuccess()) {
-        meresp->setFlag(MemEventBase::F_SUCCESS);
+    if (!resp->getSuccess()) {
+        meresp->setFail();
     }
     return meresp;
 }
@@ -533,17 +527,17 @@ StandardMem::Request* StandardInterface::convertResponseGetSResp(StandardMem::Re
     MemEvent* me = static_cast<MemEvent*>(meb);
     StandardMem::ReadResp* resp = static_cast<StandardMem::ReadResp*>(req->makeResponse());
     resp->data = me->getPayload();
-    if (me->queryFlag(MemEventBase::F_SUCCESS)) {
-        resp->setSuccess();
+    if (!me->success()) {
+        resp->setFail();
     }
     return resp;
 }
 
-StandardMem::Request* StandardInterface::convertResponseGetXResp(StandardMem::Request* req, MemEventBase* meb) {
+StandardMem::Request* StandardInterface::convertResponseWriteResp(StandardMem::Request* req, MemEventBase* meb) {
     MemEvent* me = static_cast<MemEvent*>(meb);
     StandardMem::Request* resp = req->makeResponse();
-    if (me->queryFlag(MemEventBase::F_SUCCESS)) {
-        resp->setSuccess();
+    if (!me->success()) {
+        resp->setFail();
     }
     return resp;
 }
@@ -551,7 +545,8 @@ StandardMem::Request* StandardInterface::convertResponseGetXResp(StandardMem::Re
 StandardMem::Request* StandardInterface::convertResponseFlushResp(StandardMem::Request* req, MemEventBase* meb) {
     MemEvent* me = static_cast<MemEvent*>(meb);
     StandardMem::Request* resp = req->makeResponse();
-    if (!(me->queryFlag(MemEventBase::F_SUCCESS))) {
+    if (!me->success()) {
+        resp->setFail();
         resp->unsetSuccess();
     }
     return resp;
@@ -571,7 +566,7 @@ StandardMem::Request* StandardInterface::convertRequestGetS(MemEventBase* ev) {
     return req;
 }
 
-StandardMem::Request* StandardInterface::convertRequestGetX(MemEventBase* ev) {
+StandardMem::Request* StandardInterface::convertRequestWrite(MemEventBase* ev) {
     MemEvent* event = static_cast<MemEvent*>(ev);
     StandardMem::Write* req = new StandardMem::Write(event->getAddr(), event->getSize(), event->getPayload(),
         event->queryFlag(MemEventBase::F_NORESPONSE), 0, event->getVirtualAddress(), 

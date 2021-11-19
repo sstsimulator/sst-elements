@@ -144,11 +144,11 @@ private:
      * Called by receive() on incoming requests
      */
     StandardMem::Request* convertResponseGetSResp(StandardMem::Request* req, MemEventBase* meb);
-    StandardMem::Request* convertResponseGetXResp(StandardMem::Request* req, MemEventBase* meb);
+    StandardMem::Request* convertResponseWriteResp(StandardMem::Request* req, MemEventBase* meb);
     StandardMem::Request* convertResponseFlushResp(StandardMem::Request* req, MemEventBase* meb);
     StandardMem::Request* convertRequestInv(MemEventBase* req);
     StandardMem::Request* convertRequestGetS(MemEventBase* req);
-    StandardMem::Request* convertRequestGetX(MemEventBase* req);
+    StandardMem::Request* convertRequestWrite(MemEventBase* req);
     StandardMem::Request* convertRequestCustom(MemEventBase* req);
     StandardMem::Request* convertRequestLL(MemEventBase* req);
     StandardMem::Request* convertRequestSC(MemEventBase* req);

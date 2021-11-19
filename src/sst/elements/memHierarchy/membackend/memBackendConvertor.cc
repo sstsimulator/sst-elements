@@ -52,11 +52,13 @@ MemBackendConvertor::MemBackendConvertor(ComponentId_t id, Params& params, MemBa
     stat_GetSReqReceived    = registerStatistic<uint64_t>("requests_received_GetS");
     stat_GetSXReqReceived   = registerStatistic<uint64_t>("requests_received_GetSX");
     stat_GetXReqReceived    = registerStatistic<uint64_t>("requests_received_GetX");
+    stat_WriteReqReceived    = registerStatistic<uint64_t>("requests_received_Write");
     stat_PutMReqReceived    = registerStatistic<uint64_t>("requests_received_PutM");
     stat_outstandingReqs    = registerStatistic<uint64_t>("outstanding_requests");
     stat_GetSLatency        = registerStatistic<uint64_t>("latency_GetS");
     stat_GetSXLatency       = registerStatistic<uint64_t>("latency_GetSX");
     stat_GetXLatency        = registerStatistic<uint64_t>("latency_GetX");
+    stat_WriteLatency        = registerStatistic<uint64_t>("latency_Write");
     stat_PutMLatency        = registerStatistic<uint64_t>("latency_PutM");
 
     stat_cyclesWithIssue = registerStatistic<uint64_t>( "cycles_with_issue" );
@@ -210,7 +212,7 @@ void MemBackendConvertor::doResponse( ReqId reqId, uint32_t flags ) {
                     (m_waitingFlushes.find(*it)->second).erase(evID);
                     if ((m_waitingFlushes.find(*it)->second).empty()) {
                         MemEvent * flush = *it;
-                        sendResponse(flush->getID(), (flush->getFlags() | MemEvent::F_SUCCESS));
+                        sendResponse(flush->getID(), flush->getFlags());
                         m_waitingFlushes.erase(flush);
                     }
                 }

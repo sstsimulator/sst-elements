@@ -91,8 +91,10 @@ public:
             {"GetS_recv",           "Event received: GetS (read-shared)", "count", 1},
             {"GetX_recv",           "Event received: GetX (write-exclusive)", "count", 1},
             {"GetSX_recv",          "Event received: GetSX (read-exclusive)", "count", 1},
+            {"Write_recv",          "Event received: Write (write)", "count", 1},
             {"GetSResp_recv",       "Event received: GetSResp (shared data)", "count", 1},
             {"GetXResp_recv",       "Event received: GetXResp (exclusive data)", "count", 1},
+            {"WriteResp_recv",      "Event received: WriteResp (write ack)", "count", 1},
             {"PutS_recv",           "Event received: PutS (shared replacement)", "count", 2},
             {"PutE_recv",           "Event received: PutE (clean exclusive replacement)", "count", 2},
             {"PutM_recv",           "Event received: PutM (dirty exclusive replacement)", "count", 2},
@@ -107,10 +109,10 @@ public:
             {"FlushLineResp_recv",  "Event received: FlushLineResp (response to FlushLine/Inv)", "count", 2},
             {"NACK_recv",           "Event received: NACK", "count", 2},
             {"GetS_uncache_recv",   "Noncacheable Event: GetS received", "count", 4},
-            {"GetX_uncache_recv",   "Noncacheable Event: GetX received", "count", 4},
+            {"Write_uncache_recv",  "Noncacheable Event: Write received", "count", 4},
             {"GetSX_uncache_recv",  "Noncacheable Event: GetSX received", "count", 4},
             {"GetSResp_uncache_recv",   "Noncacheable Event: GetSResp received", "count", 4},
-            {"GetXResp_uncache_recv",   "Noncacheable Event: GetXResp received", "count", 4},
+            {"WriteResp_uncache_recv",  "Noncacheable Event: WriteResp received", "count", 4},
             {"CustomReq_uncache_recv",  "Noncacheable Event: CustomReq received", "count", 4},
             {"CustomResp_uncache_recv", "Noncacheable Event: CustomResp received", "count", 4},
             {"CustomAck_uncache_recv",  "Noncacheable Event: CustomAck received", "count", 4},
@@ -119,7 +121,8 @@ public:
             {"eventSent_write_directory_entry", "Event sent: Write (PutM) a directory entry to memory", "count", 2},
             {"eventSent_GetS",          "Event sent: GetS", "count", 1},
             {"eventSent_GetX",          "Event sent: GetX", "count", 1},
-            {"eventSent_GetSX",         "Event sent: GetX", "count", 1},
+            {"eventSent_GetSX",         "Event sent: GetSX", "count", 1},
+            {"eventSent_Write",         "Event sent: Write", "count", 1},
             {"eventSent_PutM",          "Event sent: PutM", "count", 1},
             {"eventSent_Inv",           "Event sent: Inv", "count", 2},
             {"eventSent_FetchInv",      "Event sent: FetchInv", "count", 2},
@@ -128,6 +131,7 @@ public:
             {"eventSent_NACK",          "Event sent: NACK", "count", 2},
             {"eventSent_GetSResp",      "Event sent: GetSResp (shared data response)", "count", 1},
             {"eventSent_GetXResp",      "Event sent: GetXResp (exclusive data response)", "count", 1},
+            {"eventSent_WriteResp",      "Event sent: WriteResp (write ack)", "count", 1},
             {"eventSent_FetchResp",     "Event sent: FetchResp", "count", 2},
             {"eventSent_AckInv",        "Event sent: AckInv", "count", 2},
             {"eventSent_AckPut",        "Event sent: AckPut", "count", 2},
@@ -234,6 +238,7 @@ public:
     bool handleGetS(MemEvent* event, bool inMSHR);
     bool handleGetX(MemEvent* event, bool inMSHR);
     bool handleGetSX(MemEvent* event, bool inMSHR);
+    bool handleWrite(MemEvent* event, bool inMSHR);
     bool handlePutS(MemEvent* event, bool inMSHR);
     bool handlePutE(MemEvent* event, bool inMSHR);
     bool handlePutM(MemEvent* event, bool inMSHR);
@@ -244,6 +249,7 @@ public:
     bool handleForceInv(MemEvent* event, bool inMSHR);
     bool handleGetSResp(MemEvent* event, bool inMSHR);
     bool handleGetXResp(MemEvent* event, bool inMSHR);
+    bool handleWriteResp(MemEvent* event, bool inMSHR);
     bool handleFlushLineResp(MemEvent* event, bool inMSHR);
     bool handleAckPut(MemEvent* event, bool inMSHR);
     bool handleAckInv(MemEvent* event, bool inMSHR);
