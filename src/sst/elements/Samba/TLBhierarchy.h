@@ -68,7 +68,7 @@ namespace SST { namespace SambaComponent{
 
 		SST::Link * to_cpu;
 
-		std::map<int, TLB *> TLB_CACHE;
+		std::map<int, TLB *> TLB_CACHE; //1-indexed, TLB_CACHE[1] is L1 TLB
 
 		// Here is the defintion of the page table walker of the TLB hierarchy
 		PageTableWalker * PTW;
@@ -154,11 +154,22 @@ namespace SST { namespace SambaComponent{
 		void handleEvent_CPU(SST::Event * event);
 
 
-		void setPageTablePointers( Address_t * cr3, std::map<Address_t, Address_t> * pgd,  std::map<Address_t, Address_t> * pud,  std::map<Address_t, Address_t> * pmd, std::map<Address_t, Address_t> * pte,
-				std::map<Address_t,int> * gb,  std::map<Address_t,int> * mb,  std::map<Address_t,int> * kb, std::map<Address_t,int> * pr, int *cr3I, std::map<Address_t,int> *pf_pgd,
-				std::map<Address_t,int> *pf_pud,  std::map<Address_t,int> *pf_pmd, std::map<Address_t,int> * pf_pte)
+		void setPageTablePointers(  Address_t * cr3, 
+                                    std::map<Address_t, Address_t> * pgd,  
+                                    std::map<Address_t, Address_t> * pud,  
+                                    std::map<Address_t, Address_t> * pmd, 
+                                    std::map<Address_t, Address_t> * pte,
+                                    std::map<Address_t,int> * gb,  
+                                    std::map<Address_t,int> * mb,  
+                                    std::map<Address_t,int> * kb, 
+                                    std::map<Address_t,int> * pr, 
+                                    int *cr3I, 
+                                    std::map<Address_t,int> *pf_pgd,
+                                    std::map<Address_t,int> *pf_pud,  
+                                    std::map<Address_t,int> *pf_pmd, 
+                                    std::map<Address_t,int> * pf_pte)
 		{
-	                CR3 = cr3;
+                        CR3 = cr3;
                         PGD = pgd;
                         PUD = pud;
                         PMD = pmd;

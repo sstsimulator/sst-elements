@@ -53,23 +53,24 @@ namespace SST { namespace SambaComponent{
 
 		int fault_level; // indicates the step where the page fault handler is at
 
-		int sizes; // This indicates the number of sizes supported
+		int sizes; // number of levels of page table (TODO, JVOROBY: RENAME THIS)
 
 		uint64_t * page_size; // By default, lets assume 4KB pages
 
 		int * assoc; // This represents the associativiety
 
-		Address_t *** tags; // This will hold the tags
-
-		bool *** valid; // This will hold the status of tags
-
-		int *** lru; // This will hold the lru positions
+        // === PTWC data: arranged like so: [PTWC_level][set][ent_in_set]
+		Address_t *** tags; 
+		bool *** valid; 
+		int *** lru; // lru positions
 
 		SST::Link * to_mem; // This links the Page table walker to the memory hierarchy
 
-		int * hold; // This is used to tell the TLB hierarchy to stall, to emulate overhead of page fault handler
 
-		int * shootdown; // This is used to indicate TLB hierarchy that TLB shootdown from other cores is in progress
+        //== Signals: pointers are set using setHold(), etc, by the class that created this (TLBHierarchy)
+        //      we set (*hold=0 or *hold=1) to indicate holding
+		int * hold; // tells TLB hierarchy to stall, to emulate overhead of page fault handler
+		int * shootdown; // indicates to TLB hierarchy that TLB shootdown from other cores is in progress
 
 //		int shootdownId;
 
@@ -83,24 +84,19 @@ namespace SST { namespace SambaComponent{
 //		uint64_t tlb_shootdown_time;
 
 
-		// ------------- Note that we assume that for each Samba componenet instance, all units run the same VMA, thus all share the same page table
+		// ------------- Note that we assume that for each Samba component instance, all units run the same VMA, thus all share the same page table
 		// ------------- Our assumption is based on the fact that Ariel instances (mapped one-to-one to Samba instances) can only run one application
 
 		// Holds CR3 value of current context
 		Address_t *CR3;
 		int *cr3_init;
 
-		// Holds the PGD physical pointers, the key is the 9 bits 39-47, i.e., VA/(4096*512*512*512)
-		std::map<Address_t, Address_t> * PGD;
-
-		// Holds the PUD physical pointers, the key is the 9 bits 30-38, i.e., VA/(4096*512*512)
-		std::map<Address_t, Address_t> * PUD;
-
-		// Holds the PMD physical pointers, the key is the 9 bits 21-29, i.e., VA/(4096*512)
-		std::map<Address_t, Address_t> * PMD;
-
-		// Holds the PTE physical pointers, the key is the 9 bits 12-20, i.e., VA/(4096)
-		std::map<Address_t, Address_t> * PTE; // This should give you the exact physical address of the page
+		// Holds the PGD, PUD, PMT, PTE physical pointers
+		std::map<Address_t, Address_t> * PGD; // key is 9 bits 39-47, i.e., VA/(4096*512*512*512)
+		std::map<Address_t, Address_t> * PUD; // key is 9 bits 30-38, i.e., VA/(4096*512*512)
+		std::map<Address_t, Address_t> * PMD; // key is 9 bits 21-29, i.e., VA/(4096*512)
+		std::map<Address_t, Address_t> * PTE; // key is 9 bits 12-20, i.e., VA/(4096)         
+                                              // PTE should give you the exact physical address of the page
 
 
 		// The structures below are used to quickly check if the page is mapped or not
