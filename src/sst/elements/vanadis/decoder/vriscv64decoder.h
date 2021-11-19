@@ -928,12 +928,25 @@ protected:
 
                 output->verbose(CALL_INFO, 16, 0, "-----> decode R-type, func_code3=%" PRIu32 " / func_code7=%" PRIu32 "\n", func_code3, func_code7);
 
-					 switch(func_code7) {
-					 case 0:
-						{
-							switch(func_code3) {
-							case 0x1:
-								{
+					 switch(func_code3) {
+					 case 0x0:
+							{
+								//ADDIW?
+								int64_t addiw_imm = 0;
+								processI(ins, op_code, rd, rs1, func_code3, addiw_imm);
+
+								output->verbose(CALL_INFO, 16, 0, "-------> ADDIW %" PRIu16 " <- %" PRIu16 " + %" PRId64 "\n",
+									rd, rs1,addiw_imm);
+
+								bundle->addInstruction(new VanadisAddImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(ins_address,
+									hw_thr, options, rd, rs1, addiw_imm));
+								decode_fault = false;
+							} break;
+					case 0x1:
+							{
+								switch(func_code7) {
+								case 0x0:
+									{
 									// RS2 acts as an immediate
 									// SLLIW (32bit result generated)
 									output->verbose(CALL_INFO, 16, 0, "-------> SLLIW %" PRIu16 " <- %" PRIu16 " << %" PRIu16 "\n",
@@ -941,7 +954,12 @@ protected:
 									bundle->addInstruction(new VanadisShiftLeftLogicalImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
 										ins_address, hw_thr, options, rd, rs1, rs2));
 									decode_fault = false;
-								} break;
+									} break;
+								}
+							} break;
+					case 0x5:
+							{
+							switch(func_code7) {
 							case 0x5:
 								{
 									// RS2 acts as an immediate
@@ -951,11 +969,11 @@ protected:
 									bundle->addInstruction(new VanadisShiftRightLogicalImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
 										ins_address, hw_thr, options, rd, rs1, rs2));
 									decode_fault = false;
+
 								} break;
 							}
-						} break;
+							} break;
 					 }
-
 				} break;
             case 0x6F:
             {
