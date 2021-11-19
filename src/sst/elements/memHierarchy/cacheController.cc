@@ -82,9 +82,7 @@ void Cache::processPrefetchEvent(SST::Event * ev) {
     }
 
     // Record the time at which requests arrive for latency statistics
-    if (CommandClassArr[(int)event->getCmd()] == CommandClass::Request &&
-        !CommandWriteback[(int)event->getCmd()])
-        coherenceMgr_->recordIncomingRequest(static_cast<MemEventBase*>(event));
+    coherenceMgr_->recordIncomingRequest(event);
 
     // Record received prefetch
     statPrefetchRequest->addData(1);
@@ -178,6 +176,7 @@ bool Cache::clockTick(Cycle_t time) {
             // Accepted prefetches are profiled in the coherence manager
         } else {
             statPrefetchDrop->addData(1);
+            coherenceMgr_->removeRequestRecord(prefetchBuffer_.front()->getID());
         }
         prefetchBuffer_.pop();
     }

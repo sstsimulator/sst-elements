@@ -230,6 +230,10 @@ void StandardInterface::receive(SST::Event* ev) {
             case Command::FlushLineResp:
                 deliverReq = convertResponseFlushResp(origReq, me);
                 break;
+            case Command::NACK:
+                handleNACK(me);
+                delete me;
+                return;
             default:
                 output.fatal(CALL_INFO, -1, "%s, Error: Received response with unhandled command type '%s'. Event: %s\n",
                     getName().c_str(), CommandString[(int)cmd], me->getVerboseString().c_str());
@@ -603,6 +607,28 @@ StandardMem::Request* StandardInterface::convertRequestCustom(MemEventBase* ev) 
     return nullptr;
 }
 
+/********************************************************************************************
+ * NACK handling
+ ********************************************************************************************/
+
+void StandardInterface::handleNACK(MemEventBase* ev) {
+    MemEvent* nackedEvent = (static_cast<MemEvent*>(ev))->getNACKedEvent();
+    
+    // No backoff possible as MemLinkBase interface can't stall requests
+    // and we don't either
+    nackedEvent->incrementRetries();
+
+#ifdef __SST_DEBUG_OUTPUT__
+    debug.debug(_L4_, "E: %-40" PRIu64 "  %-20s Event:Resend  (%s)\n", 
+        Simulation::getSimulation()->getCurrentSimCycle(), getName().c_str(), nackedEvent->getBriefString().c_str());
+#endif
+
+    link_->send(nackedEvent);
+}
+
+/********************************************************************************************
+ * Debug functions
+ ********************************************************************************************/
 /* Debug checks for creating events 
  * Only enabled if sst-core is configured with "--enable-debug"
  */
