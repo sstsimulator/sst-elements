@@ -1593,9 +1593,10 @@ protected:
                 //				output->verbose(CALL_INFO, 16, 0,
                 //"[decoder/SC]: -> reg: %" PRIu16 " -> base: %" PRIu16 " + offset=%"
                 // PRId64 "\n", 					rt, rs, imm_value_64);
-                bundle->addInstruction(new VanadisStoreInstruction(
-                    ins_addr, hw_thr, options, rs, imm_value_64, rt, 4, MEM_TRANSACTION_LLSC_STORE,
-                    STORE_INT_REGISTER));
+					bundle->addInstruction( new VanadisStoreConditionalInstruction(ins_addr, hw_thr, options, rs, imm_value_64, rt, rt, 4, STORE_INT_REGISTER));
+//                bundle->addInstruction(new VanadisStoreInstruction(
+//                    ins_addr, hw_thr, options, rs, imm_value_64, rt, 4, MEM_TRANSACTION_LLSC_STORE,
+//                    STORE_INT_REGISTER));
                 insertDecodeFault = false;
                 MIPS_INC_DECODE_STAT(stat_decode_sc);
             } break;
