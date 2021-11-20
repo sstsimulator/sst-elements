@@ -4,6 +4,7 @@
 
 #include "decoder/vdecoder.h"
 #include "inst/vinstall.h"
+#include "os/vriscvcpuos.h"
 
 #include <cstdint>
 #include <cstring>
@@ -1209,6 +1210,40 @@ protected:
             case 0x2F:
             {
                 // Atomic operations (A extension)
+					processR(ins, op_code, rd, rs1, rs2, func_code3, func_code7);
+
+					switch(func_code7) {
+						case 0xB:
+							{
+								switch(func_code3) {
+								case 0x2:
+									{	if(rs2 == 0) {
+										// LR.W.AQ.RL
+										output->verbose(CALL_INFO, 16, 0, "-----> LR.W.AQ.RL (LLSC_LOAD) %" PRIu16 " <- memory[r%" PRIu16 "]\n", rd, rs1);
+										bundle->addInstruction(new VanadisLoadInstruction(
+     	               				ins_address, hw_thr, options, rs1, 0, rd, 4, true, MEM_TRANSACTION_LLSC_LOAD,
+     	               				LOAD_INT_REGISTER));
+     	          					decode_fault = false;
+									} else {
+										// ?
+									}
+									} break;
+								}
+							} break;
+						case 0xF:
+							{
+								switch(func_code3) {
+								case 0x2:
+									{
+										output->verbose(CALL_INFO, 16, 0, "-----> SC.W.AQ.RL (LLSC_STORE) %" PRIu16 " -> memory[r%" PRIu16 "], result: %" PRIu16 "\n",
+											rs2, rs1, rd);
+										bundle->addInstruction(new VanadisStoreConditionalInstruction(ins_address, hw_thr, options, rs1, 0, rs2, rd, 4, STORE_INT_REGISTER));
+										decode_fault = false;
+									} break;
+								}
+							} break;
+					}
+
             } break;
             case 0x27:
             {
