@@ -99,9 +99,14 @@ if app_args != "":
 else:
 	print("No application arguments found, continuing with argc=0")
 
-decode0     = v_cpu_0.setSubComponent( "decoder0", "vanadis.VanadisMIPSDecoder" )
-os_hdlr     = decode0.setSubComponent( "os_handler", "vanadis.VanadisMIPSOSHandler" )
-branch_pred = decode0.setSubComponent( "branch_unit", "vanadis.VanadisBasicBranchUnit")
+vanadis_isa = os.getenv("VANADIS_ISA", "MIPS")
+vanadis_decoder = "vanadis.Vanadis" + vanadis_isa + "Decoder"
+vanadis_os_hdlr = "vanadis.Vanadis" + vanadis_isa + "OSHandler"
+
+decode0     = v_cpu_0.setSubComponent( "decoder0", vanadis_decoder )
+os_hdlr     = decode0.setSubComponent( "os_handler", vanadis_os_hdlr )
+#os_hdlr     = decode0.setSubComponent( "os_handler", "vanadis.VanadisMIPSOSHandler" )
+branch_pred = decode0.setSubComponent( "branch_unit", "vanadis.VanadisBasicBranchUnit" )
 
 decode0.addParams({
 	"uop_cache_entries" : 1536,
@@ -117,7 +122,7 @@ branch_pred.addParams({
 	"branch_entries" : 32
 })
 
-icache_if = v_cpu_0.setSubComponent( "mem_interface_inst", "memHierarchy.memInterface" )
+icache_if = v_cpu_0.setSubComponent( "mem_interface_inst", "memHierarchy.standardInterface" )
 
 #v_cpu_0_lsq = v_cpu_0.setSubComponent( "lsq", "vanadis.VanadisStandardLoadStoreQueue" )
 v_cpu_0_lsq = v_cpu_0.setSubComponent( "lsq", "vanadis.VanadisSequentialLoadStoreQueue" )
@@ -132,7 +137,8 @@ v_cpu_0_lsq.addParams({
 	"check_memory_loads" : "no"
 })
 
-dcache_if = v_cpu_0_lsq.setSubComponent( "memory_interface", "memHierarchy.memInterface" )
+dcache_if = v_cpu_0_lsq.setSubComponent( "memory_interface", "memHierarchy.standardInterface" )
+dcache_if.addParams({"debug" : 0, "debug_level" : 11 })
 
 node_os = sst.Component("os", "vanadis.VanadisNodeOS")
 node_os.addParams({
@@ -144,7 +150,7 @@ node_os.addParams({
 	"heap_verbose" : 0 #verbosity
 })
 
-node_os_mem_if = node_os.setSubComponent( "mem_interface", "memHierarchy.memInterface" )
+node_os_mem_if = node_os.setSubComponent( "mem_interface", "memHierarchy.standardInterface" )
 
 os_l1dcache = sst.Component("node_os.l1dcache", "memHierarchy.Cache")
 os_l1dcache.addParams({
@@ -157,7 +163,7 @@ os_l1dcache.addParams({
       "cache_size" : "32 KB",
       "L1" : "1",
       "debug" : 0,
-      "debug_level" : 0
+      "debug_level" : 11
 })
 
 cpu0_l1dcache = sst.Component("cpu0.l1dcache", "memHierarchy.Cache")
@@ -171,7 +177,7 @@ cpu0_l1dcache.addParams({
       "cache_size" : "32 KB",
       "L1" : "1",
       "debug" : 0,
-      "debug_level" : 0
+      "debug_level" : 11
 })
 l1dcache_2_cpu     = cpu0_l1dcache.setSubComponent("cpulink", "memHierarchy.MemLink")
 l1dcache_2_l2cache = cpu0_l1dcache.setSubComponent("memlink", "memHierarchy.MemLink")

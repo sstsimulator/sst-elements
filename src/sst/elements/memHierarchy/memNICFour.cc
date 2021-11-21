@@ -275,7 +275,8 @@ MemNICFour::OrderedMemRtrEvent* MemNICFour::processRecv(SimpleNetwork::Request *
             }
             if (sourceIDs.find(imre->info.id) != sourceIDs.end()) {
                 sourceEndpointInfo.insert(imre->info);
-            } else if (destIDs.find(imre->info.id) != destIDs.end()) {
+            } 
+            if (destIDs.find(imre->info.id) != destIDs.end()) {
                 destEndpointInfo.insert(imre->info);
             }
             delete imre;

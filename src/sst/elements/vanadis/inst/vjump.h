@@ -43,7 +43,7 @@ public:
 
     void printToBuffer(char* buffer, size_t buffer_size) override
     {
-        snprintf(buffer, buffer_size, "JUMP    %" PRIu64 "", takenAddress);
+        snprintf(buffer, buffer_size, "JUMP    %" PRIu64 " / 0x%llx", takenAddress, takenAddress);
     }
 
     void execute(SST::Output* output, VanadisRegisterFile* regFile) override { markExecuted(); }

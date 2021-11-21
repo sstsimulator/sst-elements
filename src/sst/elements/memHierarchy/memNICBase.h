@@ -209,7 +209,8 @@ class MemNICBase : public MemLinkBase {
             if (sourceIDs.find(imre->info.id) != sourceIDs.end()) {
                 addSource(imre->info);
                 dbg.debug(_L10_, "\tAdding to sourceEndpointInfo. %zu sources found\n", sourceEndpointInfo.size());
-            } else if (destIDs.find(imre->info.id) != destIDs.end()) {
+            }
+            if (destIDs.find(imre->info.id) != destIDs.end()) {
                 addDest(imre->info);
                 dbg.debug(_L10_, "\tAdding to destEndpointInfo. %zu destinations found\n", destEndpointInfo.size());
             }
@@ -409,7 +410,8 @@ class MemNICBase : public MemLinkBase {
                     }
                     if (sourceIDs.find(imre->info.id) != sourceIDs.end()) {
                         addSource(imre->info);
-                    } else if (destIDs.find(imre->info.id) != destIDs.end()) {
+                    } 
+                    if (destIDs.find(imre->info.id) != destIDs.end()) {
                         addDest(imre->info);
                     }
                     delete imre;

@@ -83,6 +83,7 @@ inst/vsra.h \
 inst/vsrai.h \
 inst/vsrl.h \
 inst/vsrli.h \
+inst/vstorecond.h \
 inst/vstore.h \
 inst/vsub.h \
 inst/vsyscall.h \
@@ -95,6 +96,7 @@ lsq/vlsqstd.h \
 lsq/vmemwriterec.h \
 os/vcpuos.h \
 os/vmipscpuos.h \
+os/vriscvcpuos.h \
 os/vnodeos.h \
 os/vnodeoshandler.h \
 os/voscallev.h \

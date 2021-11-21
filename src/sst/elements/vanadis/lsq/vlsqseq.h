@@ -20,6 +20,8 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include "sst/core/interfaces/stdMem.h"
+
 #include "lsq/vlsq.h"
 #include "lsq/vmemwriterec.h"
 
@@ -29,20 +31,20 @@
 namespace SST {
 namespace Vanadis {
 
-class VanadisSequentualLoadStoreSCRecord {
+class VanadisSequentialLoadStoreSCRecord {
 public:
-    VanadisSequentualLoadStoreSCRecord(VanadisStoreInstruction* instr, SimpleMem::Request::id_t req) {
+    VanadisSequentialLoadStoreSCRecord(VanadisStoreInstruction* instr, StandardMem::Request::id_t req) {
 
         ins = instr;
         req_id = req;
     }
 
-    SimpleMem::Request::id_t getRequestID() const { return req_id; }
+    StandardMem::Request::id_t getRequestID() const { return req_id; }
     VanadisStoreInstruction* getInstruction() const { return ins; }
 
 protected:
     VanadisStoreInstruction* ins;
-    SimpleMem::Request::id_t req_id;
+    StandardMem::Request::id_t req_id;
 };
 
 class VanadisSequentialLoadStoreRecord {
@@ -60,9 +62,9 @@ public:
 
     VanadisInstruction* getInstruction() { return ins; }
 
-    SimpleMem::Request::id_t getRequestID() { return req_id; }
+    StandardMem::Request::id_t getRequestID() { return req_id; }
 
-    void setRequestID(SimpleMem::Request::id_t new_id) { req_id = new_id; }
+    void setRequestID(StandardMem::Request::id_t new_id) { req_id = new_id; }
 
     bool isStore() { return ins->getInstFuncType() == INST_STORE; }
 
@@ -78,7 +80,7 @@ public:
     }
 
 protected:
-    SimpleMem::Request::id_t req_id;
+    StandardMem::Request::id_t req_id;
     VanadisInstruction* ins;
     bool issued;
     uint64_t opAddr;
@@ -92,7 +94,7 @@ public:
                                           SST::Vanadis::VanadisLoadStoreQueue)
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS({ "memory_interface", "Set the interface to memory",
-                                          "SST::Interfaces::SimpleMem" })
+                                          "SST::Interfaces::StandardMem" })
 
     SST_ELI_DOCUMENT_PORTS({ "dcache_link", "Connects the LSQ to the data cache", {} })
 
@@ -102,9 +104,9 @@ public:
 
     VanadisSequentialLoadStoreQueue(ComponentId_t id, Params& params) : VanadisLoadStoreQueue(id, params) {
 
-        memInterface = loadUserSubComponent<Interfaces::SimpleMem>(
+        memInterface = loadUserSubComponent<Interfaces::StandardMem>(
             "memory_interface", ComponentInfo::SHARE_PORTS | ComponentInfo::INSERT_STATS, getTimeConverter("1ps"),
-            new SimpleMem::Handler<SST::Vanadis::VanadisSequentialLoadStoreQueue>(
+            new StandardMem::Handler<SST::Vanadis::VanadisSequentialLoadStoreQueue>(
                 this, &VanadisSequentialLoadStoreQueue::processIncomingDataCacheEvent));
 
         if (nullptr == memInterface) {
@@ -136,6 +138,7 @@ public:
         } else {
             memory_check_table = nullptr;
         }
+        std_mem_handlers = new StandardMemHandlers(this, output);
     }
 
     virtual ~VanadisSequentialLoadStoreQueue() {
@@ -145,6 +148,7 @@ public:
 
         delete memInterface;
         delete memory_check_table;
+        delete std_mem_handlers;
     }
 
     virtual bool storeFull() { return op_q.size() >= max_q_size; }
@@ -249,6 +253,7 @@ public:
                 if (allow_speculated_operations || load_ins->checkFrontOfROB()) {
                     uint64_t load_addr = 0;
                     uint16_t load_width = 0;
+                    std::string load_type = "";
 
                     load_ins->computeLoadAddress(output, reg_file, &load_addr, &load_width);
 
@@ -256,21 +261,25 @@ public:
                                     load_width);
                     load_addr = load_addr & address_mask;
 
-                    SimpleMem::Request* load_req
-                        = new SimpleMem::Request(SimpleMem::Request::Read, load_addr, load_width);
-                    load_req->instrPtr = load_ins->getInstructionAddress();
+                    StandardMem::Request* load_req;
 
                     switch (load_ins->getTransactionType()) {
                     case MEM_TRANSACTION_LLSC_LOAD: {
-                        load_req->flags |= SST::Interfaces::SimpleMem::Request::F_LLSC;
-                        output->verbose(CALL_INFO, 16, 0, "----> marked as LLSC (memory request F_LLSC)\n");
+                        load_req = new StandardMem::LoadLink(load_addr, load_width, 0, load_addr,
+                            load_ins->getInstructionAddress());
+                        load_type = "LLSC";
+                        output->verbose(CALL_INFO, 16, 0, "----> generated as LoadLink\n");
                     } break;
                     case MEM_TRANSACTION_LOCK: {
-                        load_req->flags |= SST::Interfaces::SimpleMem::Request::F_LOCKED;
-                        output->verbose(CALL_INFO, 16, 0, "----> marked as F_LOCKED\n");
+                        load_req = new StandardMem::ReadLock(load_addr, load_width, 0, load_addr,
+                            load_ins->getInstructionAddress());
+                        load_type = "LOCK";
+                        output->verbose(CALL_INFO, 16, 0, "----> generated as ReadLock\n");
                     } break;
-                    case MEM_TRANSACTION_NONE:
-                        break;
+                    case MEM_TRANSACTION_NONE: {
+                        load_req = new StandardMem::Read(load_addr, load_width, 0, load_addr,
+                            load_ins->getInstructionAddress());
+                    } break;
                     case MEM_TRANSACTION_LLSC_STORE: {
                         output->fatal(CALL_INFO, -1,
                                       "Error - found a LLSC_STORE transaction while "
@@ -292,13 +301,13 @@ public:
                                             load_addr, load_width);
                             load_ins->flagError();
                         } else {
-                            writeTrace(load_ins, load_req);
+                            writeTrace(load_ins, "LOAD", load_type, load_addr, load_width);
 
-                            memInterface->sendRequest(load_req);
+                            memInterface->send(load_req);
                             stat_load_issued->addData(1);
                             stat_data_bytes_read->addData(load_width);
 
-                            next_item->setRequestID(load_req->id);
+                            next_item->setRequestID(load_req->getID());
                             next_item->setOperationAddress(load_addr);
                         }
                     }
@@ -317,6 +326,7 @@ public:
                     uint16_t value_reg = 0; // store_ins->getPhysIntRegIn(1); // reg-0 =
                                             // addr, reg-1 = value
                     uint16_t reg_offset = store_ins->getRegisterOffset();
+                    std::string store_type = "";
 
                     std::vector<uint8_t> payload;
                     char* reg_ptr = nullptr;
@@ -355,22 +365,26 @@ public:
                         store_ins->flagError();
                         store_ins->markExecuted();
                     } else {
-                        SimpleMem::Request* store_req
-                            = new SimpleMem::Request(SimpleMem::Request::Write, store_addr, store_width, payload);
-                        store_req->instrPtr = store_ins->getInstructionAddress();
+                        StandardMem::Request* store_req;
 
                         switch (store_ins->getTransactionType()) {
                         case MEM_TRANSACTION_LLSC_STORE: {
-                            store_req->flags |= SST::Interfaces::SimpleMem::Request::F_LLSC;
-                            sc_inflight.insert(new VanadisSequentualLoadStoreSCRecord(store_ins, store_req->id));
-                            output->verbose(CALL_INFO, 16, 0, "----> marked as LLSC (memory request F_LLSC)\n");
+                            store_req = new StandardMem::StoreConditional(store_addr, store_width, payload, 0,
+                                store_addr, store_ins->getInstructionAddress());
+                            sc_inflight.insert(new VanadisSequentialLoadStoreSCRecord(store_ins, store_req->getID()));
+                            store_type = "LLSC";
+                            output->verbose(CALL_INFO, 16, 0, "----> generated as StoreConditional\n");
                         } break;
                         case MEM_TRANSACTION_LOCK: {
-                            store_req->flags |= SST::Interfaces::SimpleMem::Request::F_LOCKED;
-                            output->verbose(CALL_INFO, 16, 0, "----> marked as F_LOCKED\n");
+                            store_req = new StandardMem::WriteUnlock(store_addr, store_width, payload, 0,
+                                store_addr, store_ins->getInstructionAddress());
+                            store_type = "LOCK";
+                            output->verbose(CALL_INFO, 16, 0, "----> generated as WriteUnlock\n");
                             store_ins->markExecuted();
                         } break;
                         case MEM_TRANSACTION_NONE: {
+                            store_req = new StandardMem::Write(store_addr, store_width, payload, false, 0,
+                                store_addr, store_ins->getInstructionAddress());
                             store_ins->markExecuted();
                         } break;
                         case MEM_TRANSACTION_LLSC_LOAD: {
@@ -380,14 +394,14 @@ public:
                         } break;
                         }
 
-                        writeTrace(store_ins, store_req);
-                        memInterface->sendRequest(store_req);
+                        writeTrace(store_ins, "STORE", store_type, store_addr, store_width);
+                        memInterface->send(store_req);
 
                         stat_store_issued->addData(1);
                         stat_data_bytes_written->addData(store_width);
 
                         if (fault_on_memory_not_written) {
-                            for (uint64_t i = store_req->addr; i < (store_req->addr + store_req->size); ++i) {
+                            for (uint64_t i = store_addr; i < (store_addr + store_width); ++i) {
                                 memory_check_table->markByte(i);
                             }
                         }
@@ -401,265 +415,321 @@ public:
         }
     }
 
-    void processIncomingDataCacheEvent(SimpleMem::Request* ev) {
-        output->verbose(CALL_INFO, 16, 0, "recv incoming d-cache event, addr: 0x%llx, size: %" PRIu32 "\n", ev->addr,
-                        (uint32_t)ev->data.size());
+    class StandardMemHandlers : public StandardMem::RequestHandler {
+    public:
+        friend class VanadisSequentialLoadStoreQueue;
 
-        bool processed = false;
+        StandardMemHandlers(VanadisSequentialLoadStoreQueue* lsq, SST::Output* output) :
+            StandardMem::RequestHandler(output), lsq(lsq) {}
 
-        for (auto op_q_itr = op_q.begin(); op_q_itr != op_q.end();) {
-            // is the operation issued to the memory system and do we match ID
-            if ((*op_q_itr)->isOperationIssued() && (ev->id == (*op_q_itr)->getRequestID())) {
+        virtual ~StandardMemHandlers() {}
 
-                output->verbose(CALL_INFO, 8, 0, "matched a load record (addr: 0x%llx)\n",
-                                (*op_q_itr)->getInstruction()->getInstructionAddress());
+        virtual void handle(StandardMem::ReadResp* ev) override {
+            out->verbose(CALL_INFO, 16, 0, "recv incoming d-cache event, addr: 0x%llx, size: %" PRIu32 "\n", ev->vAddr,
+                            (uint32_t)ev->data.size());
 
-                if (output->getVerboseLevel() >= 16) {
-                    char* payload_print = new char[256];
-                    snprintf(payload_print, 256, "0x%x 0x%x 0x%x 0x%x", (ev->data.size() > 0 ? ev->data[0] : 0),
-                             (ev->data.size() > 1 ? ev->data[1] : 0), (ev->data.size() > 2 ? ev->data[2] : 0),
-                             (ev->data.size() > 3 ? ev->data[3] : 0));
+            bool processed = false;
+            for (auto op_q_itr = lsq->op_q.begin(); op_q_itr != lsq->op_q.end();) {
+                // is the operation issued to the memory system and do we match ID
+                if ((*op_q_itr)->isOperationIssued() && (ev->getID() == (*op_q_itr)->getRequestID())) {
 
-                    output->verbose(CALL_INFO, 16, 0, "-> payload (first 4 bytes): %s\n", payload_print);
-                    delete[] payload_print;
-                }
+                    out->verbose(CALL_INFO, 8, 0, "matched a load record (addr: 0x%llx)\n",
+                                    (*op_q_itr)->getInstruction()->getInstructionAddress());
 
-                if ((*op_q_itr)->isLoad()) {
-                    VanadisLoadInstruction* load_ins
-                        = dynamic_cast<VanadisLoadInstruction*>((*op_q_itr)->getInstruction());
-                    VanadisRegisterFile* reg_file = registerFiles->at(load_ins->getHWThread());
+                    if (out->getVerboseLevel() >= 16) {
+                        char* payload_print = new char[256];
+								char* payload_print_inner = new char[256];
 
-                    uint64_t load_addr = 0;
-                    uint16_t load_width = 0;
-                    uint16_t target_reg = 0; // load_ins->getPhysIntRegOut(0);
-                    uint16_t target_isa = 0;
-                    uint16_t reg_offset = 0;
+								payload_print[0] = '\0';
+								payload_print_inner[0] = '\0';
 
-                    if (fault_on_memory_not_written) {
-                        uint64_t load_unwritten_address = 0;
+								for( int s = 0; s < std::min((int)ev->data.size(), 8); ++s) {
+									std::strncpy(payload_print_inner, payload_print, 256);
+	                        snprintf(payload_print, 256, "%s 0x%02x", payload_print_inner, ev->data[s]);
+								}
 
-                        for (uint64_t i = ev->addr; i < (ev->addr + ev->size); ++i) {
-                            // if the address is not marked as written, potential error
-                            // condition
-                            if (!memory_check_table->isMarked(i)) {
-                                load_unwritten_address = i;
-                                break;
+                        out->verbose(CALL_INFO, 16, 0, "-> payload (first %d bytes): %s\n",
+									std::min((int)ev->data.size(), 8), payload_print);
+
+                        delete[] payload_print;
+								delete[] payload_print_inner;
+                    }
+
+                    if ((*op_q_itr)->isLoad()) { // TODO it better be since this is a ReadResp
+                        VanadisLoadInstruction* load_ins
+                            = dynamic_cast<VanadisLoadInstruction*>((*op_q_itr)->getInstruction());
+                        VanadisRegisterFile* reg_file = lsq->registerFiles->at(load_ins->getHWThread());
+
+                        uint64_t load_addr = 0;
+                        uint16_t load_width = 0;
+                        uint16_t target_reg = 0; // load_ins->getPhysIntRegOut(0);
+                        uint16_t target_isa = 0;
+                        uint16_t reg_offset = 0;
+
+                        if (lsq->fault_on_memory_not_written) {
+                            uint64_t load_unwritten_address = 0;
+
+                            for (uint64_t i = ev->vAddr; i < (ev->vAddr + ev->size); ++i) {
+                                // if the address is not marked as written, potential error
+                                // condition
+                                if (!lsq->memory_check_table->isMarked(i)) {
+                                    load_unwritten_address = i;
+                                    break;
+                                }
                             }
-                        }
 
-                        // We have an unwritten value from memory, so flag an error
-                        if (load_unwritten_address > 0) {
-                            if (flag_non_written_loads_count > 0) {
-                                flag_non_written_loads_count--;
-                            } else {
-                                output->verbose(CALL_INFO, 8, 0,
+                            // We have an unwritten value from memory, so flag an error
+                            if (load_unwritten_address > 0) {
+                                if (lsq->flag_non_written_loads_count > 0) {
+                                    lsq->flag_non_written_loads_count--;
+                                } else {
+                                    out->verbose(CALL_INFO, 8, 0,
                                                 "--> [load-unwritten-memory-fault]: load-ins: 0x%llx -> "
                                                 "memory is not written at addr 0x%llx\n",
                                                 load_ins->getInstructionAddress(), load_unwritten_address);
-                                load_ins->flagError();
+                                    load_ins->flagError();
+                                }
                             }
                         }
-                    }
 
-                    switch (load_ins->getValueRegisterType()) {
-                    case LOAD_INT_REGISTER: {
-                        output->verbose(CALL_INFO, 8, 0, "--> load is integer register\n");
-                        target_reg = load_ins->getPhysIntRegOut(0);
-                        target_isa = load_ins->getISAIntRegOut(0);
-                    } break;
-                    case LOAD_FP_REGISTER: {
-                        output->verbose(CALL_INFO, 8, 0, "--> load is floating point register\n");
-                        target_reg = load_ins->getPhysFPRegOut(0);
-                        target_isa = load_ins->getISAFPRegOut(0);
-                    } break;
-                    }
+                        switch (load_ins->getValueRegisterType()) {
+                        case LOAD_INT_REGISTER: {
+                            out->verbose(CALL_INFO, 8, 0, "--> load is integer register\n");
+                            target_reg = load_ins->getPhysIntRegOut(0);
+                            target_isa = load_ins->getISAIntRegOut(0);
+                        } break;
+                        case LOAD_FP_REGISTER: {
+                            out->verbose(CALL_INFO, 8, 0, "--> load is floating point register\n");
+                            target_reg = load_ins->getPhysFPRegOut(0);
+                            target_isa = load_ins->getISAFPRegOut(0);
+                        } break;
+                        }
 
-                    load_ins->computeLoadAddress(output, reg_file, &load_addr, &load_width);
-                    reg_offset = load_ins->getRegisterOffset();
+                        load_ins->computeLoadAddress(out, reg_file, &load_addr, &load_width);
+                        reg_offset = load_ins->getRegisterOffset();
 
-                    output->verbose(
-                        CALL_INFO, 8, 0,
-                        "--> load info: addr: 0x%llx / width: %" PRIu16 " / isa: %" PRIu16 " = target-reg: %" PRIu16
-                        " / partial: %s / reg-offset: %" PRIu16 " / sgn-exd: %s\n",
-                        load_addr, load_width, target_isa, target_reg, load_ins->isPartialLoad() ? "yes" : "no",
-                        reg_offset, load_ins->performSignExtension() ? "yes" : "no");
+                        out->verbose(
+                            CALL_INFO, 8, 0,
+                            "--> load info: addr: 0x%llx / width: %" PRIu16 " / isa: %" PRIu16 " = target-reg: %" PRIu16
+                            " / partial: %s / reg-offset: %" PRIu16 " / sgn-exd: %s\n",
+                            load_addr, load_width, target_isa, target_reg, load_ins->isPartialLoad() ? "yes" : "no",
+                            reg_offset, load_ins->performSignExtension() ? "yes" : "no");
 
-                    switch (load_ins->getValueRegisterType()) {
-                    case LOAD_INT_REGISTER: {
-                        if (target_reg != load_ins->getISAOptions()->getRegisterIgnoreWrites()) {
-                            // if we are doing a partial copy and we aren't starting at
-                            // zero then we need to copy bytewise, if not, we can do a
-                            // single copy
-                            if (load_ins->isPartialLoad()) {
-                                char* reg_ptr = reg_file->getIntReg(target_reg);
+                        switch (load_ins->getValueRegisterType()) {
+                        case LOAD_INT_REGISTER: {
+                            if (target_reg != load_ins->getISAOptions()->getRegisterIgnoreWrites()) {
+                                // if we are doing a partial copy and we aren't starting at
+                                // zero then we need to copy bytewise, if not, we can do a
+                                // single copy
+                                if (load_ins->isPartialLoad()) {
+                                    char* reg_ptr = reg_file->getIntReg(target_reg);
 
-                                for (uint16_t i = 0; i < load_width; ++i) {
-                                    reg_ptr[reg_offset + i] = ev->data[i];
-                                }
+                                    for (uint16_t i = 0; i < load_width; ++i) {
+                                        reg_ptr[reg_offset + i] = ev->data[i];
+                                    }
 
-                                output->verbose(CALL_INFO, 8, 0,
+                                    out->verbose(CALL_INFO, 8, 0,
                                                 "----> partial-load addr: 0x%llx / reg-offset: %" PRIu16
                                                 " / load-width: %" PRIu16 " / full-width: %" PRIu16 "\n",
                                                 load_addr, reg_offset, load_width, load_ins->getLoadWidth());
 
-                                if ((reg_offset + load_width) >= load_ins->getLoadWidth()) {
-                                    if ((reg_ptr[reg_offset + load_width - 1] & 0x80) != 0) {
-                                        // We need to perform sign extension, fill every byte with
-                                        // all 1s
-                                        for (uint16_t i = reg_offset + load_width; i < 8; ++i) {
-                                            reg_ptr[i] = 0xFF;
+                                    if ((reg_offset + load_width) >= load_ins->getLoadWidth()) {
+                                        if ((reg_ptr[reg_offset + load_width - 1] & 0x80) != 0) {
+                                            // We need to perform sign extension, fill every byte with
+                                            // all 1s
+                                            for (uint16_t i = reg_offset + load_width; i < 8; ++i) {
+                                                reg_ptr[i] = 0xFF;
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    if (load_ins->performSignExtension()) {
+                                        switch (load_width) {
+                                        case 1: {
+                                            int8_t* v_8 = (int8_t*)&ev->data[0];
+                                            reg_file->setIntReg<int8_t>(target_reg, *v_8, true);
+                                        } break;
+                                        case 2: {
+                                            int16_t* v_16 = (int16_t*)&ev->data[0];
+                                            reg_file->setIntReg<int16_t>(target_reg, *v_16, true);
+                                        } break;
+                                        case 4: {
+                                            int32_t* v_32 = (int32_t*)&ev->data[0];
+                                            reg_file->setIntReg<int32_t>(target_reg, *v_32, true);
+                                        } break;
+                                        case 8: {
+                                            int64_t* v_64 = (int64_t*)&ev->data[0];
+                                            reg_file->setIntReg<int64_t>(target_reg, *v_64, true);
+                                        } break;
+                                        }
+                                    } else {
+                                        switch (load_width) {
+                                        case 1: {
+                                            uint8_t* v_8 = (uint8_t*)&ev->data[0];
+                                            reg_file->setIntReg<uint8_t>(target_reg, *v_8, false);
+                                        } break;
+                                        case 2: {
+                                            uint16_t* v_16 = (uint16_t*)&ev->data[0];
+                                            reg_file->setIntReg<uint16_t>(target_reg, *v_16, false);
+                                        } break;
+                                        case 4: {
+                                            uint32_t* v_32 = (uint32_t*)&ev->data[0];
+                                            reg_file->setIntReg<uint32_t>(target_reg, *v_32, false);
+                                        } break;
+                                        case 8: {
+                                            uint64_t* v_64 = (uint64_t*)&ev->data[0];
+                                            reg_file->setIntReg<uint64_t>(target_reg, *v_64, false);
+                                        } break;
                                         }
                                     }
                                 }
-                            } else {
-                                if (load_ins->performSignExtension()) {
-                                    switch (load_width) {
-                                    case 1: {
-                                        int8_t* v_8 = (int8_t*)&ev->data[0];
-                                        reg_file->setIntReg<int8_t>(target_reg, *v_8, true);
-                                    } break;
-                                    case 2: {
-                                        int16_t* v_16 = (int16_t*)&ev->data[0];
-                                        reg_file->setIntReg<int16_t>(target_reg, *v_16, true);
-                                    } break;
-                                    case 4: {
-                                        int32_t* v_32 = (int32_t*)&ev->data[0];
-                                        reg_file->setIntReg<int32_t>(target_reg, *v_32, true);
-                                    } break;
-                                    case 8: {
-                                        int64_t* v_64 = (int64_t*)&ev->data[0];
-                                        reg_file->setIntReg<int64_t>(target_reg, *v_64, true);
-                                    } break;
-                                    }
-                                } else {
-                                    switch (load_width) {
-                                    case 1: {
-                                        uint8_t* v_8 = (uint8_t*)&ev->data[0];
-                                        reg_file->setIntReg<uint8_t>(target_reg, *v_8, false);
-                                    } break;
-                                    case 2: {
-                                        uint16_t* v_16 = (uint16_t*)&ev->data[0];
-                                        reg_file->setIntReg<uint16_t>(target_reg, *v_16, false);
-                                    } break;
-                                    case 4: {
-                                        uint32_t* v_32 = (uint32_t*)&ev->data[0];
-                                        reg_file->setIntReg<uint32_t>(target_reg, *v_32, false);
-                                    } break;
-                                    case 8: {
-                                        uint64_t* v_64 = (uint64_t*)&ev->data[0];
-                                        reg_file->setIntReg<uint64_t>(target_reg, *v_64, false);
-                                    } break;
-                                    }
-                                }
                             }
-                        }
-                    } break;
+                        } break;
 
-                    case LOAD_FP_REGISTER: {
-                        if (load_ins->isPartialLoad()) {
-                            output->fatal(CALL_INFO, -1,
+                        case LOAD_FP_REGISTER: {
+                            if (load_ins->isPartialLoad()) {
+                                out->fatal(CALL_INFO, -1,
                                           "Error - does not support partial load of a "
                                           "floating point register.\n");
-                        } else {
-                            char* reg_ptr = reg_file->getFPReg(target_reg);
+                            } else {
+                                char* reg_ptr = reg_file->getFPReg(target_reg);
 
-                            switch (load_width) {
-                            case 4: {
-                                float* v_f = (float*)&ev->data[0];
-                                reg_file->setFPReg(target_reg, (*v_f));
-                            } break;
-                            case 8: {
-                                double* v_d = (double*)&ev->data[0];
-                                reg_file->setFPReg(target_reg, (*v_d));
-                            } break;
-                            default: {
-                                output->fatal(CALL_INFO, -1,
+                                switch (load_width) {
+                                case 4: {
+                                    float* v_f = (float*)&ev->data[0];
+                                    reg_file->setFPReg(target_reg, (*v_f));
+                                } break;
+                                case 8: {
+                                    double* v_d = (double*)&ev->data[0];
+                                    reg_file->setFPReg(target_reg, (*v_d));
+                                } break;
+                                default: {
+                                    out->fatal(CALL_INFO, -1,
                                               "Error - load to floating point register in not "
                                               "supported size (%" PRIu16 ")\n",
                                               load_width);
-                            } break;
+                                } break;
+                                }
                             }
+                        } break;
+                        }
+
+                        // mark instruction as executed
+                        load_ins->markExecuted();
+                    }
+
+                    // Clean up
+                    delete (*op_q_itr);
+                    lsq->op_q.erase(op_q_itr);
+                    processed = true;
+
+                    break;
+                } else {
+                    op_q_itr++;
+                }
+            }
+
+            if (!processed) {
+                out->verbose(CALL_INFO, 16, 0, "did not match any request.\n");
+            }
+
+            delete ev;
+        }
+
+        virtual void handle(StandardMem::WriteResp* ev) override {
+            out->verbose(CALL_INFO, 16, 0, "recv incoming d-cache event, addr: 0x%llx, size: %" PRIu32 "\n", ev->vAddr,
+                        (uint32_t)ev->size);
+
+            bool processed = false;
+            for (auto op_q_itr = lsq->op_q.begin(); op_q_itr != lsq->op_q.end();) {
+                // is the operation issued to the memory system and do we match ID
+                if ((*op_q_itr)->isOperationIssued() && (ev->getID() == (*op_q_itr)->getRequestID())) {
+
+                    out->verbose(CALL_INFO, 8, 0, "matched a load record (addr: 0x%llx)\n",
+                                    (*op_q_itr)->getInstruction()->getInstructionAddress());
+
+                    // TODO assert (!(*op_q_itr)->isLoad()) ?
+
+                    // Clean up
+                    delete (*op_q_itr);
+                    lsq->op_q.erase(op_q_itr);
+                    processed = true;
+
+                    break;
+                } else {
+                    op_q_itr++;
+                }
+            }
+
+            for (auto sc_itr = lsq->sc_inflight.begin(); sc_itr != lsq->sc_inflight.end();) {
+                if (ev->getID() == (*sc_itr)->getRequestID()) {
+                    out->verbose(CALL_INFO, 16, 0, "matched an inflight LLSC_STORE operation\n");
+                    lsq->printEventFlags(ev);
+
+                    VanadisStoreInstruction* store_ins = (*sc_itr)->getInstruction();
+
+                    switch (store_ins->getValueRegisterType()) {
+                    case STORE_INT_REGISTER: {
+                        const uint16_t value_reg = store_ins->getPhysIntRegOut(0);
+
+                        if (ev->getSuccess()) {
+                            out->verbose(CALL_INFO, 16, 0,
+                                        "---> LSQ LLSC-STORE ins: 0x%llx / addr: 0x%llx / rt: %" PRIu16
+                                        " <- 1 (success)\n",
+                                        store_ins->getInstructionAddress(), ev->vAddr, value_reg);
+                            lsq->registerFiles->at(store_ins->getHWThread())->setIntReg<uint64_t>(value_reg, (uint64_t)1);
+                        } else {
+                            out->verbose(CALL_INFO, 16, 0,
+                                        "---> LSQ LLSC-STORE ins: 0x%llx / addr: 0x%llx rt: %" PRIu16
+                                        " <- 0 (failed)\n",
+                                        store_ins->getInstructionAddress(), ev->vAddr, value_reg);
+                            lsq->registerFiles->at(store_ins->getHWThread())->setIntReg<uint64_t>(value_reg, (uint64_t)0);
+                        }
+                    } break;
+                    case STORE_FP_REGISTER: {
+                        const uint16_t value_reg = store_ins->getPhysFPRegOut(0);
+
+                        if (ev->getSuccess()) {
+                            out->verbose(CALL_INFO, 16, 0,
+                                        "---> LSQ LLSC-STOREFP ins: 0x%llx / addr: 0x%llx "
+                                        "/ rt: %" PRIu16 " <- 1.0 (success)\n",
+                                        store_ins->getInstructionAddress(), ev->vAddr, value_reg);
+                            lsq->registerFiles->at(store_ins->getHWThread())->setFPReg(value_reg, 1.0f);
+                        } else {
+                            out->verbose(CALL_INFO, 16, 0,
+                                        "---> LSQ LLSC-STOREFP ins: 0x%llx / addr: 0x%llx rt: %" PRIu16
+                                        " <- 0.0 (failed)\n",
+                                        store_ins->getInstructionAddress(), ev->vAddr, value_reg);
+                            lsq->registerFiles->at(store_ins->getHWThread())->setFPReg(value_reg, 0.0f);
                         }
                     } break;
                     }
 
-                    // mark instruction as executed
-                    load_ins->markExecuted();
+                    // Mark store instruction as executed and ensure we delete it
+                    (*sc_itr)->getInstruction()->markExecuted();
+                    delete (*sc_itr);
+
+                    lsq->sc_inflight.erase(sc_itr);
+                    processed = true;
+
+                    break;
+                } else {
+                    sc_itr++;
                 }
-
-                // Clean up
-                delete (*op_q_itr);
-                op_q.erase(op_q_itr);
-                processed = true;
-
-                break;
-            } else {
-                op_q_itr++;
             }
-        }
 
-        for (auto sc_itr = sc_inflight.begin(); sc_itr != sc_inflight.end();) {
-            if (ev->id == (*sc_itr)->getRequestID()) {
-                output->verbose(CALL_INFO, 16, 0, "matched an inflight LLSC_STORE operation\n");
-                printEventFlags(ev);
-
-                VanadisStoreInstruction* store_ins = (*sc_itr)->getInstruction();
-
-                switch (store_ins->getValueRegisterType()) {
-                case STORE_INT_REGISTER: {
-                    const uint16_t value_reg = store_ins->getPhysIntRegOut(0);
-
-                    if ((ev->flags & SST::Interfaces::SimpleMem::Request::F_LLSC_RESP) != 0) {
-                        output->verbose(CALL_INFO, 16, 0,
-                                        "---> LSQ LLSC-STORE ins: 0x%llx / addr: 0x%llx / rt: %" PRIu16
-                                        " <- 1 (success)\n",
-                                        store_ins->getInstructionAddress(), ev->addr, value_reg);
-                        registerFiles->at(store_ins->getHWThread())->setIntReg<uint64_t>(value_reg, (uint64_t)1);
-                    } else {
-                        output->verbose(CALL_INFO, 16, 0,
-                                        "---> LSQ LLSC-STORE ins: 0x%llx / addr: 0x%llx rt: %" PRIu16
-                                        " <- 0 (failed)\n",
-                                        store_ins->getInstructionAddress(), ev->addr, value_reg);
-                        registerFiles->at(store_ins->getHWThread())->setIntReg<uint64_t>(value_reg, (uint64_t)0);
-                    }
-                } break;
-                case STORE_FP_REGISTER: {
-                    const uint16_t value_reg = store_ins->getPhysFPRegOut(0);
-
-                    if ((ev->flags & SST::Interfaces::SimpleMem::Request::F_LLSC_RESP) != 0) {
-                        output->verbose(CALL_INFO, 16, 0,
-                                        "---> LSQ LLSC-STOREFP ins: 0x%llx / addr: 0x%llx "
-                                        "/ rt: %" PRIu16 " <- 1.0 (success)\n",
-                                        store_ins->getInstructionAddress(), ev->addr, value_reg);
-                        registerFiles->at(store_ins->getHWThread())->setFPReg(value_reg, 1.0f);
-                    } else {
-                        output->verbose(CALL_INFO, 16, 0,
-                                        "---> LSQ LLSC-STOREFP ins: 0x%llx / addr: 0x%llx rt: %" PRIu16
-                                        " <- 0.0 (failed)\n",
-                                        store_ins->getInstructionAddress(), ev->addr, value_reg);
-                        registerFiles->at(store_ins->getHWThread())->setFPReg(value_reg, 0.0f);
-                    }
-                } break;
-                }
-
-                // Mark store instruction as executed and ensure we delete it
-                (*sc_itr)->getInstruction()->markExecuted();
-                delete (*sc_itr);
-
-                sc_inflight.erase(sc_itr);
-                processed = true;
-
-                break;
-            } else {
-                sc_itr++;
+            if (!processed) {
+                out->verbose(CALL_INFO, 16, 0, "did not match any request.\n");
             }
+
+            delete ev;
         }
 
-        if (!processed) {
-            output->verbose(CALL_INFO, 16, 0, "did not match any request.\n");
-        }
+            VanadisSequentialLoadStoreQueue* lsq;
+    };
 
-        delete ev;
+    void processIncomingDataCacheEvent(StandardMem::Request* ev) {
+        ev->handle(std_mem_handlers);
     }
 
     virtual void clearLSQByThreadID(const uint32_t thread) {
@@ -686,7 +756,7 @@ public:
     virtual void setInitialMemory(const uint64_t addr, std::vector<uint8_t>& payload) {
         output->verbose(CALL_INFO, 2, 0, "setting initial memory contents for address 0x%llx / size: %" PRIu64 "\n",
                         addr, (uint64_t)payload.size());
-        memInterface->sendInitData(new SimpleMem::Request(SimpleMem::Request::Write, addr, payload.size(), payload));
+        memInterface->sendUntimedData(new StandardMem::Write(addr, payload.size(), payload));
 
         if (fault_on_memory_not_written) {
             // Mark every byte which we are initializing
@@ -697,58 +767,26 @@ public:
     }
 
 protected:
-    void writeTrace(VanadisInstruction* ins, SimpleMem::Request* req) {
-        if (nullptr != address_trace_file) {
-            const char* req_type = nullptr;
-
-            switch (req->cmd) {
-            case SimpleMem::Request::Read:
-                req_type = "READ";
-                break;
-            case SimpleMem::Request::Write:
-                req_type = "WRITE";
-                break;
-            default:
-                req_type = "UNKNOWN";
-                break;
-            }
-
-            const char* sub_type = "";
-            if ((req->flags & Interfaces::SimpleMem::Request::F_LLSC) != 0) {
-                sub_type = "LLSC";
-            }
-
-            if ((req->flags & Interfaces::SimpleMem::Request::F_LOCKED) != 0) {
-                sub_type = "LOCK";
-            }
-
-            fprintf(address_trace_file, "%8s %5s 0x%016llx %5" PRIu64 " 0x%016llx\n", req_type, sub_type, req->addr,
-                    (uint64_t)req->size, ins->getInstructionAddress());
+    // TODO should we use getString() here or does it need to be terse?
+    void writeTrace(VanadisInstruction* ins, std::string req_type, std::string sub_type, uint64_t address, uint64_t size) {
+        if (nullptr != address_trace_file)
+            fprintf(address_trace_file, "%8s %5s 0x%016llx %5" PRIu64 " 0x%016llx\n", req_type.c_str(), sub_type.c_str(), address,
+                    size, ins->getInstructionAddress());
             fflush(address_trace_file);
-        }
+
     }
 
-    void printEventFlags(SimpleMem::Request* ev) {
-        bool f_noncache = (ev->flags & Interfaces::SimpleMem::Request::F_NONCACHEABLE) != 0;
-        bool f_locked = (ev->flags & Interfaces::SimpleMem::Request::F_LOCKED) != 0;
-        bool f_llsc = (ev->flags & Interfaces::SimpleMem::Request::F_LLSC) != 0;
-        bool f_llsc_resp = (ev->flags & Interfaces::SimpleMem::Request::F_LLSC_RESP) != 0;
-        bool f_flush_suc = (ev->flags & Interfaces::SimpleMem::Request::F_FLUSH_SUCCESS) != 0;
-        bool f_trans = (ev->flags & Interfaces::SimpleMem::Request::F_TRANSACTION) != 0;
-
-        output->verbose(CALL_INFO, 16, 0,
-                        "-> addr: 0x%llx / size: %" PRIu64 " / NONCACHE: %c / LOCKED: %c / LLSC: %c / LLSC_R: %c / "
-                        "FLUSH_S: %c / TRANSC: %c\n",
-                        ev->addr, (uint64_t)ev->data.size(), f_noncache ? 'Y' : 'N', f_locked ? 'Y' : 'N',
-                        f_llsc ? 'Y' : 'N', f_llsc_resp ? 'Y' : 'N', f_flush_suc ? 'Y' : 'N', f_trans ? 'Y' : 'N');
+    void printEventFlags(StandardMem::Request* ev) {
+        output->verbose(CALL_INFO, 16, 0, "-> %s", ev->getString().c_str());
     }
 
     size_t max_q_size;
 
     std::deque<VanadisSequentialLoadStoreRecord*> op_q;
-    std::unordered_set<VanadisSequentualLoadStoreSCRecord*> sc_inflight;
+    std::unordered_set<VanadisSequentialLoadStoreSCRecord*> sc_inflight;
 
-    SimpleMem* memInterface;
+    StandardMem* memInterface;
+    StandardMemHandlers* std_mem_handlers;
     FILE* address_trace_file;
 
     bool allow_speculated_operations;

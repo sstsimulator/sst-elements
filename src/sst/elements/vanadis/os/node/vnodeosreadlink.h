@@ -18,7 +18,7 @@
 
 #include "os/node/vnodeoshstate.h"
 #include <cstdio>
-#include <sst/core/interfaces/simpleMem.h>
+#include <sst/core/interfaces/stdMem.h>
 
 using namespace SST::Interfaces;
 
@@ -28,7 +28,7 @@ namespace Vanadis {
 class VanadisReadLinkHandlerState : public VanadisHandlerState {
 public:
     VanadisReadLinkHandlerState(uint32_t verbosity, uint64_t path_buff, uint64_t out_buff, int64_t buff_size,
-                                std::function<void(SimpleMem::Request*)> send_mem,
+                                std::function<void(StandardMem::Request*)> send_mem,
                                 std::function<void(const uint64_t, std::vector<uint8_t>&)> send_block)
         : VanadisHandlerState(verbosity), readlink_path_buff(path_buff), readlink_out_buff(out_buff),
           readlink_buff_size(buff_size) {
@@ -36,21 +36,15 @@ public:
         send_mem_req = send_mem;
         send_block_mem = send_block;
         readlink_buff_bytes_written = 0;
+        std_mem_handlers = new StandardMemHandlers(this, output);
     }
 
-    virtual void handleIncomingRequest(SimpleMem::Request* req) {
+    ~VanadisReadLinkHandlerState() { delete std_mem_handlers; }
+
+    virtual void handleIncomingRequest(StandardMem::Request* req) {
         output->verbose(CALL_INFO, 16, 0, "-> handle incoming for readlink()\n");
 
-        bool found_null = false;
-
-        for (size_t i = 0; i < req->size; ++i) {
-            path.push_back(req->data[i]);
-
-            if (req->data[i] == '\0') {
-                found_null = true;
-                break;
-            }
-        }
+        req->handle(std_mem_handlers);
 
         if (found_null) {
             output->verbose(CALL_INFO, 16, 0, "path: %s\n", (char*)(&path[0]));
@@ -67,7 +61,7 @@ public:
                                 (uint32_t)real_path.size());
 
                 send_block_mem(readlink_out_buff, real_path);
-                readlink_buff_bytes_written = strlen(path_self);
+                    readlink_buff_bytes_written = strlen(path_self);
             } else {
                 output->fatal(CALL_INFO, -1, "Haven't implemented this yet.\n");
             }
@@ -75,9 +69,32 @@ public:
             markComplete();
         } else {
             // Read the next cache line
-            send_mem_req(new SimpleMem::Request(SimpleMem::Request::Read, readlink_path_buff + path.size(), 64));
+            send_mem_req(new StandardMem::Read(readlink_path_buff + path.size(), 64));
         }
     }
+
+    class StandardMemHandlers : public StandardMem::RequestHandler {
+    public:
+        friend class VanadisReadLinkHandlerState;
+
+        StandardMemHandlers(VanadisReadLinkHandlerState* state, SST::Output* out) :
+                StandardMem::RequestHandler(out), state_handler(state) {}
+        
+        virtual void handle(StandardMem::ReadResp* req) override {
+            state_handler->found_null = false;
+
+            for (size_t i = 0; i < req->size; ++i) {
+                state_handler->path.push_back(req->data[i]);
+
+                if (req->data[i] == '\0') {
+                    state_handler->found_null = true;
+                    break;
+                }
+            }
+        }
+    protected:
+        VanadisReadLinkHandlerState* state_handler;
+    };
 
     virtual VanadisSyscallResponse* generateResponse() {
         return new VanadisSyscallResponse(readlink_buff_bytes_written);
@@ -88,9 +105,12 @@ protected:
     uint64_t readlink_out_buff;
     int64_t readlink_buff_size;
     int64_t readlink_buff_bytes_written;
-    std::function<void(SimpleMem::Request*)> send_mem_req;
+    std::function<void(StandardMem::Request*)> send_mem_req;
     std::function<void(const uint64_t, std::vector<uint8_t>&)> send_block_mem;
     std::vector<uint8_t> path;
+
+    StandardMemHandlers* std_mem_handlers;
+    bool found_null;
 };
 
 } // namespace Vanadis

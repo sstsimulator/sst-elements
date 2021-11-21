@@ -6,10 +6,10 @@ TrivialCPU: Test Completed Successfuly
 TrivialCPU: Test Completed Successfuly
 TrivialCPU: Test Completed Successfuly
 TrivialCPU: Test Completed Successfuly
-TrivialCPU cpu3 Finished after 1000 issued reads, 1000 returned (471954 clocks)
-TrivialCPU cpu2 Finished after 1000 issued reads, 1000 returned (470658 clocks)
-TrivialCPU cpu1 Finished after 1000 issued reads, 1000 returned (472242 clocks)
 TrivialCPU cpu0 Finished after 1000 issued reads, 1000 returned (471522 clocks)
+TrivialCPU cpu1 Finished after 1000 issued reads, 1000 returned (472242 clocks)
+TrivialCPU cpu2 Finished after 1000 issued reads, 1000 returned (470658 clocks)
+TrivialCPU cpu3 Finished after 1000 issued reads, 1000 returned (471954 clocks)
  cpu0.pendCycle : Accumulator : Sum.u64 = 4584129; SumSQ.u64 = 44799551; Count.u64 = 471522; Min.u64 = 0; Max.u64 = 10; 
  c0.l1cache.default_stat : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  c0.l1cache.stateEvent_GetS_I : Accumulator : Sum.u64 = 896; SumSQ.u64 = 896; Count.u64 = 896; Min.u64 = 1; Max.u64 = 1; 
@@ -1238,7 +1238,7 @@ TrivialCPU cpu0 Finished after 1000 issued reads, 1000 returned (471522 clocks)
  dirctrl.eventSent_FlushLineResp : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dirctrl.eventSent_read_directory_entry : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  dirctrl.eventSent_write_directory_entry : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
- dirctrl.MSHR_occupancy : Accumulator : Sum.u64 = 260544; SumSQ.u64 = 260544; Count.u64 = 471962; Min.u64 = 0; Max.u64 = 1; 
+ dirctrl.MSHR_occupancy : Accumulator : Sum.u64 = 260544; SumSQ.u64 = 260544; Count.u64 = 471961; Min.u64 = 0; Max.u64 = 1; 
  memory.requests_received_GetS : Accumulator : Sum.u64 = 3399; SumSQ.u64 = 3399; Count.u64 = 3399; Min.u64 = 1; Max.u64 = 1; 
  memory.requests_received_GetSX : Accumulator : Sum.u64 = 0; SumSQ.u64 = 0; Count.u64 = 0; Min.u64 = 0; Max.u64 = 0; 
  memory.requests_received_GetX : Accumulator : Sum.u64 = 377; SumSQ.u64 = 377; Count.u64 = 377; Min.u64 = 1; Max.u64 = 1; 

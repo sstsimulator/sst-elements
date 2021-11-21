@@ -4,6 +4,7 @@
 
 #include "decoder/vdecoder.h"
 #include "inst/vinstall.h"
+#include "os/vriscvcpuos.h"
 
 #include <cstdint>
 #include <cstring>
@@ -150,14 +151,14 @@ public:
             const VanadisELFProgramHeaderEntry* nxt_entry = elf_info->getProgramHeader(i);
 
             vanadis_vec_copy_in<int>(phdr_data_block, (int)nxt_entry->getHeaderTypeNumber());
-            vanadis_vec_copy_in<int>(phdr_data_block, (int)nxt_entry->getImageOffset());
-            vanadis_vec_copy_in<int>(phdr_data_block, (int)nxt_entry->getVirtualMemoryStart());
-            // Physical address - just ignore this for now
-            vanadis_vec_copy_in<int>(phdr_data_block, (int)nxt_entry->getPhysicalMemoryStart());
-            vanadis_vec_copy_in<int>(phdr_data_block, (int)nxt_entry->getHeaderImageLength());
-            vanadis_vec_copy_in<int>(phdr_data_block, (int)nxt_entry->getHeaderMemoryLength());
             vanadis_vec_copy_in<int>(phdr_data_block, (int)nxt_entry->getSegmentFlags());
-            vanadis_vec_copy_in<int>(phdr_data_block, (int)nxt_entry->getAlignment());
+            vanadis_vec_copy_in<uint64_t>(phdr_data_block, (uint64_t)nxt_entry->getImageOffset());
+            vanadis_vec_copy_in<uint64_t>(phdr_data_block, (uint64_t)nxt_entry->getVirtualMemoryStart());
+            // Physical address - just ignore this for now
+            vanadis_vec_copy_in<uint64_t>(phdr_data_block, (uint64_t)nxt_entry->getPhysicalMemoryStart());
+            vanadis_vec_copy_in<uint64_t>(phdr_data_block, (uint64_t)nxt_entry->getHeaderImageLength());
+            vanadis_vec_copy_in<uint64_t>(phdr_data_block, (uint64_t)nxt_entry->getHeaderMemoryLength());
+            vanadis_vec_copy_in<uint64_t>(phdr_data_block, (uint64_t)nxt_entry->getAlignment());
         }
 
         if ( elf_info->getEndian() != VANADIS_LITTLE_ENDIAN ) {
@@ -171,94 +172,103 @@ public:
 
         std::vector<uint8_t> random_values_data_block;
 
-        for ( int i = 0; i < 8; ++i ) {
+        for ( int i = 0; i < 16; ++i ) {
             random_values_data_block.push_back(rand() % 255);
         }
 
         const uint64_t rand_values_address = phdr_address + phdr_data_block.size() + 64;
+		  const char* exe_path = elf_info->getBinaryPath();
+
+		  for( int i = 0; i < std::strlen(exe_path); ++i) {
+				random_values_data_block.push_back(exe_path[i]);
+		  }
+
+		  random_values_data_block.push_back('\0');
 
         std::vector<uint8_t> aux_data_block;
 
         // AT_EXECFD (file descriptor of the executable)
-        vanadis_vec_copy_in<int>(aux_data_block, VANADIS_AT_EXECFD);
-        vanadis_vec_copy_in<int>(aux_data_block, 4);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_EXECFD);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, 4);
 
-        vanadis_vec_copy_in<int>(aux_data_block, VANADIS_AT_PHDR);
-        vanadis_vec_copy_in<int>(aux_data_block, (int)phdr_address);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_PHDR);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, (int)phdr_address);
 
-        vanadis_vec_copy_in<int>(aux_data_block, VANADIS_AT_PHENT);
-        vanadis_vec_copy_in<int>(aux_data_block, (int)elf_info->getProgramHeaderEntrySize());
+        vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_PHENT);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, (int)elf_info->getProgramHeaderEntrySize());
 
-        vanadis_vec_copy_in<int>(aux_data_block, VANADIS_AT_PHNUM);
-        vanadis_vec_copy_in<int>(aux_data_block, (int)elf_info->getProgramHeaderEntryCount());
+        vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_PHNUM);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, (int)elf_info->getProgramHeaderEntryCount());
 
         // System page size
-        vanadis_vec_copy_in<int>(aux_data_block, VANADIS_AT_PAGESZ);
-        vanadis_vec_copy_in<int>(aux_data_block, 4096);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_PAGESZ);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, 4096);
 
-        vanadis_vec_copy_in<int>(aux_data_block, VANADIS_AT_ENTRY);
-        vanadis_vec_copy_in<int>(aux_data_block, (int)elf_info->getEntryPoint());
+        vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_ENTRY);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, (int)elf_info->getEntryPoint());
 
         // AT_BASE (base address loaded into)
-        vanadis_vec_copy_in<int>(aux_data_block, VANADIS_AT_BASE);
-        vanadis_vec_copy_in<int>(aux_data_block, 0);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_BASE);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, 0);
 
         // AT_FLAGS
-        vanadis_vec_copy_in<int>(aux_data_block, VANADIS_AT_FLAGS);
-        vanadis_vec_copy_in<int>(aux_data_block, 0);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_FLAGS);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, 0);
 
         // AT_HWCAP
-        vanadis_vec_copy_in<int>(aux_data_block, VANADIS_AT_HWCAP);
-        vanadis_vec_copy_in<int>(aux_data_block, 0);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_HWCAP);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, 0);
 
         // AT_CLKTCK (Clock Tick Resolution)
-        vanadis_vec_copy_in<int>(aux_data_block, VANADIS_AT_CLKTCK);
-        vanadis_vec_copy_in<int>(aux_data_block, 100);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_CLKTCK);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, 100);
 
         // Not ELF
-        vanadis_vec_copy_in<int>(aux_data_block, VANADIS_AT_NOTELF);
-        vanadis_vec_copy_in<int>(aux_data_block, 0);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_NOTELF);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, 0);
 
         // Real UID
-        vanadis_vec_copy_in<int>(aux_data_block, VANADIS_AT_UID);
-        vanadis_vec_copy_in<int>(aux_data_block, (int)getuid());
+        vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_UID);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, (int64_t)getuid());
 
         // Effective UID
-        vanadis_vec_copy_in<int>(aux_data_block, VANADIS_AT_EUID);
-        vanadis_vec_copy_in<int>(aux_data_block, (int)geteuid());
+        vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_EUID);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, (int64_t)geteuid());
 
         // Real GID
-        vanadis_vec_copy_in<int>(aux_data_block, VANADIS_AT_GID);
-        vanadis_vec_copy_in<int>(aux_data_block, (int)getgid());
+        vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_GID);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, (int64_t)getgid());
 
         // Effective GID
-        vanadis_vec_copy_in<int>(aux_data_block, VANADIS_AT_EGID);
-        vanadis_vec_copy_in<int>(aux_data_block, (int)getegid());
+        vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_EGID);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, (int64_t)getegid());
 
         // D-Cache Line Size
-        vanadis_vec_copy_in<int>(aux_data_block, VANADIS_AT_DCACHEBSIZE);
-        vanadis_vec_copy_in<int>(aux_data_block, 64);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_DCACHEBSIZE);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, 64);
 
         // I-Cache Line Size
-        vanadis_vec_copy_in<int>(aux_data_block, VANADIS_AT_ICACHEBSIZE);
-        vanadis_vec_copy_in<int>(aux_data_block, 64);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_ICACHEBSIZE);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, 64);
 
         // AT_SECURE?
-        vanadis_vec_copy_in<int>(aux_data_block, VANADIS_AT_SECURE);
-        vanadis_vec_copy_in<int>(aux_data_block, 0);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_SECURE);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, 0);
 
-        // AT_RANDOM - 8 bytes of random stuff
-        vanadis_vec_copy_in<int>(aux_data_block, VANADIS_AT_RANDOM);
-        vanadis_vec_copy_in<int>(aux_data_block, rand_values_address);
+        // AT_RANDOM - 16 bytes of random stuff
+        vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_RANDOM);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, rand_values_address);
+
+        // AT_EXEFN - path to full executable
+        vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_EXECFN);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, rand_values_address + 16);
 
         // End the Auxillary vector
-        vanadis_vec_copy_in<int>(aux_data_block, VANADIS_AT_NULL);
-        vanadis_vec_copy_in<int>(aux_data_block, 0);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, VANADIS_AT_NULL);
+        vanadis_vec_copy_in<int64_t>(aux_data_block, 0);
 
-        // Find out how many AUX entries we added, these should be an int
-        // (identifier) and then an int (value) so div by 8 but we need to count
-        // ints, so really div by 4
-        const int aux_entry_count = aux_data_block.size() / 4;
+		  // How many entries do we have, divide by 8 because we are running on a 64b system
+        const int aux_entry_count = aux_data_block.size() / 8;
 
         // Per RISCV Assembly Programemr's handbook, register x2 is for stack
         // pointer
@@ -287,7 +297,7 @@ public:
 
         uint64_t arg_env_space_needed = 1 + arg_count + 1 + env_count + 1 + aux_entry_count;
         uint64_t arg_env_space_and_data_needed =
-            (arg_env_space_needed * 4) + arg_data_block.size() + env_data_block.size() + aux_data_block.size();
+            (arg_env_space_needed * 8) + arg_data_block.size() + env_data_block.size() + aux_data_block.size();
 
         uint64_t       aligned_start_stack_address = (start_stack_address - arg_env_space_and_data_needed);
         const uint64_t padding_needed              = (aligned_start_stack_address % 64);
@@ -305,20 +315,21 @@ public:
         // Allocate 64 zeros for now
         std::vector<uint8_t> stack_data;
 
-        const uint64_t arg_env_data_start = start_stack_address + (arg_env_space_needed * 4);
+        const uint64_t arg_env_data_start = start_stack_address + (arg_env_space_needed * 8);
 
         output->verbose(CALL_INFO, 16, 0, "-> Setting start of stack data to:       %" PRIu64 "\n", arg_env_data_start);
 
-        vanadis_vec_copy_in<uint32_t>(stack_data, arg_count);
+		  // Is this 32b or 64b for a 64b environment? (code looks like an int from Linux)
+        vanadis_vec_copy_in<uint64_t>(stack_data, arg_count);
 
         for ( size_t i = 0; i < arg_start_offsets.size(); ++i ) {
             output->verbose(
                 CALL_INFO, 16, 0, "--> Setting arg%" PRIu32 " to point to address %" PRIu64 " / 0x%llx\n", (uint32_t)i,
                 arg_env_data_start + arg_start_offsets[i], arg_env_data_start + arg_start_offsets[i]);
-            vanadis_vec_copy_in<uint32_t>(stack_data, (uint32_t)(arg_env_data_start + arg_start_offsets[i]));
+            vanadis_vec_copy_in<uint64_t>(stack_data, (uint64_t)(arg_env_data_start + arg_start_offsets[i]));
         }
 
-        vanadis_vec_copy_in<uint32_t>(stack_data, 0);
+        vanadis_vec_copy_in<uint64_t>(stack_data, 0);
 
         for ( size_t i = 0; i < env_start_offsets.size(); ++i ) {
             output->verbose(
@@ -326,11 +337,11 @@ public:
                 arg_env_data_start + arg_data_block.size() + env_start_offsets[i],
                 arg_env_data_start + arg_data_block.size() + env_start_offsets[i]);
 
-            vanadis_vec_copy_in<uint32_t>(
-                stack_data, (uint32_t)(arg_env_data_start + arg_data_block.size() + env_start_offsets[i]));
+            vanadis_vec_copy_in<uint64_t>(
+                stack_data, (uint64_t)(arg_env_data_start + arg_data_block.size() + env_start_offsets[i]));
         }
 
-        vanadis_vec_copy_in<uint32_t>(stack_data, 0);
+        vanadis_vec_copy_in<uint64_t>(stack_data, 0);
 
         for ( size_t i = 0; i < aux_data_block.size(); ++i ) {
             stack_data.push_back(aux_data_block[i]);
@@ -682,16 +693,20 @@ protected:
                 case 1:
                 {
                     // SLLI
-                    processR(ins, op_code, rd, rs1, rs2, func_code3, func_code7);
+							rd  = extract_rd(ins);
+							rs1 = extract_rs1(ins);
 
-							output->verbose(CALL_INFO, 16, 0, "------> func_code7 = %" PRIu32 "\n", func_code7);
+							uint32_t func_code6 = (ins & 0xFC000000);
+							uint32_t shift_by   = (ins & 0x3F00000) >> 20;
 
-                    switch ( func_code7 ) {
-                    case 0:
+							output->verbose(CALL_INFO, 16, 0, "------> func_code6 = %" PRIu32 " / shift = %" PRIu32 " (0x%lx)\n", func_code6, shift_by, shift_by);
+
+                    switch ( func_code6 ) {
+                    case 0x0:
                     {
                         bundle->addInstruction(
                             new VanadisShiftLeftLogicalImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
-                                ins_address, hw_thr, options, rd, rs1, static_cast<uint64_t>(rs2)));
+                                ins_address, hw_thr, options, rd, rs1, shift_by));
                         decode_fault = false;
                     } break;
                     };
@@ -701,7 +716,7 @@ protected:
                     // SLTI
                     processI<int64_t>(ins, op_code, rd, rs1, func_code3, simm64);
                     bundle->addInstruction(new VanadisSetRegCompareImmInstruction<
-                                           REG_COMPARE_LT, VanadisRegisterFormat::VANADIS_FORMAT_INT32, true>(
+                                           REG_COMPARE_LT, VanadisRegisterFormat::VANADIS_FORMAT_INT64, true>(
                         ins_address, hw_thr, options, rd, rs1, simm64));
                     decode_fault = false;
                 } break;
@@ -710,7 +725,7 @@ protected:
                     // SLTIU
                     processI<int64_t>(ins, op_code, rd, rs1, func_code3, simm64);
                     bundle->addInstruction(new VanadisSetRegCompareImmInstruction<
-                                           REG_COMPARE_LT, VanadisRegisterFormat::VANADIS_FORMAT_INT32, false>(
+                                           REG_COMPARE_LT, VanadisRegisterFormat::VANADIS_FORMAT_INT64, false>(
                         ins_address, hw_thr, options, rd, rs1, simm64));
                     decode_fault = false;
                 } break;
@@ -724,20 +739,30 @@ protected:
                 case 5:
                 {
                     // CHECK SRLI / SRAI
-                    processR(ins, op_code, rd, rs1, rs2, func_code3, func_code7);
+							rd  = extract_rd(ins);
+							rs1 = extract_rs1(ins);
 
-                    switch ( func_code7 ) {
-                    case 0:
+							uint32_t func_code6 = (ins & 0xFC000000);
+							uint32_t shift_by   = (ins & 0x3F00000) >> 20;
+
+							output->verbose(CALL_INFO, 16, 0, "------> func_code6 = %" PRIu32 " / shift = %" PRIu32 " (0x%lx)\n", func_code6, shift_by, shift_by);
+
+                    switch ( func_code6 ) {
+                    case 0x0:
                     {
+								  output->verbose(CALL_INFO, 16, 0, "--------> SRLI %" PRIu16 " <- %" PRIu16 " << %" PRIu32 "\n",
+										rd, rs1, shift_by);
                         bundle->addInstruction(
-                            new VanadisShiftRightLogicalImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
-                                ins_address, hw_thr, options, rd, rs1, static_cast<uint64_t>(rs2)));
+                            new VanadisShiftRightLogicalImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
+                                ins_address, hw_thr, options, rd, rs1, shift_by));
                         decode_fault = false;
                     } break;
-                    case 0x20:
+						  case 0x40000000:
                     {
+								  output->verbose(CALL_INFO, 16, 0, "--------> SRAI %" PRIu16 " <- %" PRIu16 " << %" PRIu32 "\n",
+										rd, rs1, shift_by);
                         bundle->addInstruction(
-                            new VanadisShiftRightArithmeticImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
+                            new VanadisShiftRightArithmeticImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
                                 ins_address, hw_thr, options, rd, rs1, static_cast<uint64_t>(rs2)));
                         decode_fault = false;
                     } break;
@@ -839,7 +864,7 @@ protected:
                     {
                         // DIV
                         bundle->addInstruction(
-                            new VanadisDivideInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32, true>(
+                            new VanadisDivideInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64, true>(
                                 ins_address, hw_thr, options, rd, rs1, rs2));
                         decode_fault = false;
                     } break;
@@ -852,7 +877,7 @@ protected:
                     {
                         // DIVU
                         bundle->addInstruction(
-                            new VanadisDivideInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32, false>(
+                            new VanadisDivideInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64, false>(
                                 ins_address, hw_thr, options, rd, rs1, rs2));
                         decode_fault = false;
                     } break;
@@ -861,6 +886,17 @@ protected:
                 case 6:
                 {
                     // TODO - REM INSTRUCTION
+						 switch( func_code7 ) {
+						case 0x0:
+							{
+							  // OR
+								output->verbose(CALL_INFO, 16, 0, "-----> OR %" PRIu16 " <- %" PRIu16 " | %" PRIu16 "\n",
+									rd, rs1, rs2);
+
+								bundle->addInstruction(new VanadisOrInstruction(ins_address, hw_thr, options, rd, rs1, rs2));
+								decode_fault = false;
+							} break;
+						}
                 } break;
                 case 7:
                 {
@@ -893,12 +929,25 @@ protected:
 
                 output->verbose(CALL_INFO, 16, 0, "-----> decode R-type, func_code3=%" PRIu32 " / func_code7=%" PRIu32 "\n", func_code3, func_code7);
 
-					 switch(func_code7) {
-					 case 0:
-						{
-							switch(func_code3) {
-							case 0x1:
-								{
+					 switch(func_code3) {
+					 case 0x0:
+							{
+								//ADDIW?
+								int64_t addiw_imm = 0;
+								processI(ins, op_code, rd, rs1, func_code3, addiw_imm);
+
+								output->verbose(CALL_INFO, 16, 0, "-------> ADDIW %" PRIu16 " <- %" PRIu16 " + %" PRId64 "\n",
+									rd, rs1,addiw_imm);
+
+								bundle->addInstruction(new VanadisAddImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(ins_address,
+									hw_thr, options, rd, rs1, addiw_imm));
+								decode_fault = false;
+							} break;
+					case 0x1:
+							{
+								switch(func_code7) {
+								case 0x0:
+									{
 									// RS2 acts as an immediate
 									// SLLIW (32bit result generated)
 									output->verbose(CALL_INFO, 16, 0, "-------> SLLIW %" PRIu16 " <- %" PRIu16 " << %" PRIu16 "\n",
@@ -906,7 +955,12 @@ protected:
 									bundle->addInstruction(new VanadisShiftLeftLogicalImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
 										ins_address, hw_thr, options, rd, rs1, rs2));
 									decode_fault = false;
-								} break;
+									} break;
+								}
+							} break;
+					case 0x5:
+							{
+							switch(func_code7) {
 							case 0x5:
 								{
 									// RS2 acts as an immediate
@@ -916,11 +970,11 @@ protected:
 									bundle->addInstruction(new VanadisShiftRightLogicalImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
 										ins_address, hw_thr, options, rd, rs1, rs2));
 									decode_fault = false;
+
 								} break;
 							}
-						} break;
+							} break;
 					 }
-
 				} break;
             case 0x6F:
             {
@@ -962,6 +1016,8 @@ protected:
                 case 0:
                 {
                     // BEQ
+						  output->verbose(CALL_INFO, 16, 0, "-----> BEQ %" PRIu16 " == %" PRIu16 " / offset: %" PRId64 "\n",
+								rs1, rs2, simm64);
                     bundle->addInstruction(new VanadisBranchRegCompareInstruction<
                                            VanadisRegisterFormat::VANADIS_FORMAT_INT64, REG_COMPARE_EQ>(
                         ins_address, hw_thr, options, 4, rs1, rs2, simm64, VANADIS_NO_DELAY_SLOT));
@@ -970,6 +1026,8 @@ protected:
                 case 1:
                 {
                     // BNE
+						  output->verbose(CALL_INFO, 16, 0, "-----> BNE %" PRIu16 " != %" PRIu16 " / offset: %" PRId64 " (ip+offset %" PRIu64 ")\n",
+								rs1, rs2, simm64, ins_address + simm64);
                     bundle->addInstruction(new VanadisBranchRegCompareInstruction<
                                            VanadisRegisterFormat::VANADIS_FORMAT_INT64, REG_COMPARE_NEQ>(
                         ins_address, hw_thr, options, 4, rs1, rs2, simm64, VANADIS_NO_DELAY_SLOT));
@@ -978,6 +1036,8 @@ protected:
                 case 4:
                 {
                     // BLT
+						  output->verbose(CALL_INFO, 16, 0, "-----> BLT %" PRIu16 " < %" PRIu16 " / offset: %" PRId64 "\n",
+								rs1, rs2, simm64);
                     bundle->addInstruction(new VanadisBranchRegCompareInstruction<
                                            VanadisRegisterFormat::VANADIS_FORMAT_INT64, REG_COMPARE_LT>(
                         ins_address, hw_thr, options, 4, rs1, rs2, simm64, VANADIS_NO_DELAY_SLOT));
@@ -986,6 +1046,8 @@ protected:
                 case 5:
                 {
                     // BGE
+						  output->verbose(CALL_INFO, 16, 0, "-----> BGE %" PRIu16 " >= %" PRIu16 " / offset: %" PRId64 "\n",
+								rs1, rs2, simm64);
                     bundle->addInstruction(new VanadisBranchRegCompareInstruction<
                                            VanadisRegisterFormat::VANADIS_FORMAT_INT64, REG_COMPARE_GTE>(
                         ins_address, hw_thr, options, 4, rs1, rs2, simm64, VANADIS_NO_DELAY_SLOT));
@@ -1013,6 +1075,17 @@ protected:
             {
                 // Syscall/ECALL and EBREAK
                 // Control registers
+
+					uint32_t func_code12 = (ins & 0xFFF00000);
+
+					switch(func_code12) {
+					case 0x0:
+						{
+							output->verbose(CALL_INFO, 16, 0, "------> ECALL/SYSCALL\n");
+							bundle->addInstruction(new VanadisSysCallInstruction(ins_address, hw_thr, options));
+							decode_fault = false;
+						} break;
+					}
             } break;
             case 0x3B:
             {
@@ -1137,6 +1210,40 @@ protected:
             case 0x2F:
             {
                 // Atomic operations (A extension)
+					processR(ins, op_code, rd, rs1, rs2, func_code3, func_code7);
+
+					switch(func_code7) {
+						case 0xB:
+							{
+								switch(func_code3) {
+								case 0x2:
+									{	if(rs2 == 0) {
+										// LR.W.AQ.RL
+										output->verbose(CALL_INFO, 16, 0, "-----> LR.W.AQ.RL (LLSC_LOAD) %" PRIu16 " <- memory[r%" PRIu16 "]\n", rd, rs1);
+										bundle->addInstruction(new VanadisLoadInstruction(
+     	               				ins_address, hw_thr, options, rs1, 0, rd, 4, true, MEM_TRANSACTION_LLSC_LOAD,
+     	               				LOAD_INT_REGISTER));
+     	          					decode_fault = false;
+									} else {
+										// ?
+									}
+									} break;
+								}
+							} break;
+						case 0xF:
+							{
+								switch(func_code3) {
+								case 0x2:
+									{
+										output->verbose(CALL_INFO, 16, 0, "-----> SC.W.AQ.RL (LLSC_STORE) %" PRIu16 " -> memory[r%" PRIu16 "], result: %" PRIu16 "\n",
+											rs2, rs1, rd);
+										bundle->addInstruction(new VanadisStoreConditionalInstruction(ins_address, hw_thr, options, rs1, 0, rs2, rd, 4, STORE_INT_REGISTER));
+										decode_fault = false;
+									} break;
+								}
+							} break;
+					}
+
             } break;
             case 0x27:
             {
@@ -1174,6 +1281,8 @@ protected:
             // this bundle only increments the PC by 2, not 4 in 32bit decodes
             bundle->setPCIncrement(2);
 
+				output->verbose(CALL_INFO, 16, 0, "-----> RVC op_code: %" PRIu32 "\n", c_op_code);
+
             switch ( c_op_code ) {
             case 0x0:
             {
@@ -1187,6 +1296,20 @@ protected:
                     }
                     else {
                         // ADDI4SPN
+	                    uint16_t rvc_rd     = expand_rvc_int_register(extract_rs2_rvc(ins));
+
+							   uint32_t imm_3 = (ins & 0x20) >> 2;
+								uint32_t imm_2 = (ins & 0x40) >> 4;
+								uint32_t imm_96 = (ins & 0x780) >> 1;
+								uint32_t imm_54 = (ins & 0x1800) >> 7;
+
+								uint32_t imm = (imm_2 | imm_3 | imm_54 | imm_96);
+
+								output->verbose(CALL_INFO, 16, 0, "-------> RVC ADDI4SPN %" PRIu16 " <- r2 (stack-ptr) + %" PRIu32 "\n", rvc_rd, imm);
+
+								bundle->addInstruction( new VanadisAddImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
+									ins_address, hw_thr, options, rvc_rd, 2, imm));
+								decode_fault = false;
                     }
                 } break;
                 case 0x2000:
@@ -1201,7 +1324,7 @@ protected:
                     uint16_t rvc_rs1     = expand_rvc_int_register(extract_rs1_rvc(ins));
 
                     output->verbose(
-                        CALL_INFO, 16, 0, "-----> RVC LW rd=%" PRIu16 " <- rs1=%" PRIu16 ", imm=%" PRIu64 "\n", rvc_rd,
+                        CALL_INFO, 16, 0, "-----> RVC LW rd=%" PRIu16 " <- rs1=%" PRIu16 " + imm=%" PRIu64 "\n", rvc_rd,
                         rvc_rs1, imm_address);
 
                     bundle->addInstruction(new VanadisLoadInstruction(
@@ -1217,7 +1340,7 @@ protected:
                     uint16_t rvc_rs1     = expand_rvc_int_register(extract_rs1_rvc(ins));
 
                     output->verbose(
-                        CALL_INFO, 16, 0, "-----> RVC LD rd=%" PRIu16 " <- rs1=%" PRIu16 ", imm=%" PRIu64 "\n", rvc_rd,
+                        CALL_INFO, 16, 0, "-----> RVC LD rd=%" PRIu16 " <- rs1=%" PRIu16 " + imm=%" PRIu64 "\n", rvc_rd,
                         rvc_rs1, imm_address);
 
                     bundle->addInstruction(new VanadisLoadInstruction(
@@ -1320,6 +1443,21 @@ protected:
                 case 0x2000:
                 {
                     // ADDIW
+                    uint16_t rd     = static_cast<uint16_t>((ins & 0xF80) >> 7);
+                    uint32_t imm_40 = (ins & 0x7C) >> 2;
+                    uint32_t imm_5  = (ins & 0x1000) >> 6;
+
+                    int64_t imm = (imm_40 | imm_5);
+
+                    if ( imm_5 != 0 ) { imm |= 0xFFFFFFFFFFFFFFC0; }
+
+                    output->verbose(
+                        CALL_INFO, 16, 0, "-----> RVC ADDIW  reg: %" PRIu16 ", imm=%" PRId64 "\n", rd, imm);
+
+						  // This really is a W-clipping instruction, so make INT32
+							bundle->addInstruction(new VanadisAddImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
+								ins_address, hw_thr, options, rd, rd, imm));
+						decode_fault = false;
                 } break;
                 case 0x4000:
                 {
@@ -1608,10 +1746,10 @@ protected:
 
                     int64_t imm_final = static_cast<int64_t>(imm_8 | imm_76 | imm_5 | imm_43 | imm_21);
 
-                    if ( imm_8 != 0 ) { imm_final |= 0xFFFFFFFFFFFFF00; }
+                    if ( imm_8 != 0 ) { imm_final |= 0xFFFFFFFFFFFFFE00; }
 
                     output->verbose(
-                        CALL_INFO, 16, 0, "----> decode RVC BEQZ %" PRIu16 " jump to: 0x%llx\n", rvc_rs1,
+                        CALL_INFO, 16, 0, "----> decode RVC BNEZ %" PRIu16 " jump to: 0x%llx\n", rvc_rs1,
                         ins_address + imm_final);
 
                     bundle->addInstruction(new VanadisBranchRegCompareImmInstruction<
@@ -1675,7 +1813,7 @@ protected:
                             2, offset);
 
                         bundle->addInstruction(new VanadisLoadInstruction(
-                            ins_address, hw_thr, options, rvc_rd, offset, 2, 8, true, MEM_TRANSACTION_NONE,
+                            ins_address, hw_thr, options, 2, offset, rvc_rd, 8, true, MEM_TRANSACTION_NONE,
                             LOAD_INT_REGISTER));
                         decode_fault = false;
                     }
@@ -1957,14 +2095,17 @@ protected:
         func_code = extract_func3(ins);
 
         const int32_t ins_i32  = static_cast<int32_t>(ins);
-        const int32_t imm20    = (ins_i32 & 0x80000000) >> 31;
-        const int32_t imm10_5  = (ins_i32 & 0x7E000000) >> 20;
-        const int32_t imm11    = (ins_i32 & 0x100000) >> 19;
-        const int32_t imm19_12 = (ins_i32 & 0xFF000) >> 11;
-        const int32_t imm4_1   = (ins_i32 & 0x1F00) >> 7;
 
-        int32_t imm_tmp = (imm20 | imm19_12 | imm11 | imm10_5 | imm4_1);
-        imm_tmp         = (0 == imm20) ? imm_tmp : imm_tmp | 0xFFF00000;
+		  const int32_t imm_12   = (ins_i32 & 0x80000000) >> 19;
+        const int32_t imm_11   = (ins_i32 & 0x80) << 4;
+		  const int32_t imm_105  = (ins_i32 & 0x7E000000) >> 20;
+		  const int32_t imm_41   = (ins_i32 & 0xF00) >> 7;
+
+		  int32_t imm_tmp = imm_12 | imm_11 | imm_105 | imm_41;
+
+		  if( imm_12 != 0 ) {
+			imm_tmp |= 0xFFFFF000;
+		  }
 
         imm = static_cast<T>(imm_tmp);
     }

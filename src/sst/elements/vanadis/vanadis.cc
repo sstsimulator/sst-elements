@@ -207,8 +207,8 @@ VANADIS_COMPONENT::VANADIS_COMPONENT(SST::ComponentId_t id, SST::Params& params)
     // SimpleMem::Handler<SST::Vanadis::VanadisComponent>(this,
     //&VanadisComponent::handleIncomingDataCacheEvent ));
     memInstInterface
-        = loadUserSubComponent<Interfaces::SimpleMem>("mem_interface_inst", ComponentInfo::SHARE_NONE, cpuClockTC,
-                                                      new SimpleMem::Handler<SST::Vanadis::VANADIS_COMPONENT>(
+        = loadUserSubComponent<Interfaces::StandardMem>("mem_interface_inst", ComponentInfo::SHARE_NONE, cpuClockTC,
+                                                      new StandardMem::Handler<SST::Vanadis::VANADIS_COMPONENT>(
                                                           this, &VANADIS_COMPONENT::handleIncomingInstCacheEvent));
 
     // Load anonymously if not found in config
@@ -875,8 +875,17 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
             rob->pop();
 
 #ifdef VANADIS_BUILD_DEBUG
-            output->verbose(CALL_INFO, 8, 0, "----> Retire: 0x%0llx / %s\n", rob_front->getInstructionAddress(),
-                            rob_front->getInstCode());
+				if(output->getVerboseLevel() >= 8) {
+					char* inst_asm_buffer = new char[32768];
+	        		rob_front->printToBuffer(inst_asm_buffer, 32768);
+
+					output->verbose(CALL_INFO, 8, 0, "----> Retire: 0x%0llx / %s\n", rob_front->getInstructionAddress(),
+									inst_asm_buffer);
+
+//                            rob_front->getInstCode());
+
+					delete[] inst_asm_buffer;
+				}
 #endif
             if (pipelineTrace != nullptr) {
                 fprintf(pipelineTrace, "0x%08llx %s\n", rob_front->getInstructionAddress(), rob_front->getInstCode());
@@ -1905,9 +1914,9 @@ VANADIS_COMPONENT::init(unsigned int phase) {
 // }
 
 void
-VANADIS_COMPONENT::handleIncomingInstCacheEvent(SimpleMem::Request* ev) {
+VANADIS_COMPONENT::handleIncomingInstCacheEvent(StandardMem::Request* ev) {
 #ifdef VANADIS_BUILD_DEBUG
-    output->verbose(CALL_INFO, 16, 0, "-> Incoming i-cache event (addr=%p)...\n", (void*)ev->addr);
+    output->verbose(CALL_INFO, 16, 0, "-> Incoming i-cache event (addr=%p)...\n", static_cast<StandardMem::ReadResp*>(ev)->pAddr);
 #endif
     // Needs to get attached to the decoder
     bool hit = false;

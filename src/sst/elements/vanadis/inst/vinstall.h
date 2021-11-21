@@ -68,6 +68,7 @@
 // Store instructions
 #include "inst/vpartialstore.h"
 #include "inst/vstore.h"
+#include "inst/vstorecond.h"
 
 // Fence Instructions
 #include "inst/vfence.h"
