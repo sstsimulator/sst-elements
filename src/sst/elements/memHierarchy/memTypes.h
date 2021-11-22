@@ -340,6 +340,57 @@ public:
         return regions;
     }
 
+    bool doesIntersect(const MemRegion &o) const {
+        // Easy case, regions don't overlap
+        if (o.end < start || end < o.start)
+            return false;
+
+        // Easy case, they're equal
+        if (*this == o) {
+            return true;
+        }
+
+        // Easy case, no interleaving
+        if (interleaveSize == 0 && o.interleaveStep == 0) {
+            return true;
+        }
+       
+        // Otherwise, compute LCM of interleaveStep & o.interleaveStep
+        uint64_t lcm; 
+        if (interleaveStep == o.interleaveStep) {
+            lcm = interleaveStep;
+        } else if (interleaveStep > o.interleaveStep) {
+            lcm = (interleaveStep / gcd(interleaveStep, o.interleaveStep)) * o.interleaveStep;
+        } else {
+            lcm = (interleaveStep / gcd(o.interleaveStep, interleaveStep)) * o.interleaveStep;
+        }
+
+        // Check interval from max(start, o.start) to lcm + max(start, o.start)
+        // for overlap
+        // If overlap, add a region with (start_overlap, min(end, o.end), 1, lcm)
+        //  Consecutive regions can be merged
+        uint64_t check_start = std::max(start, o.start);
+        uint64_t check_end = check_start + lcm;
+        uint64_t region_start = check_start;
+        uint64_t region_size = 0;
+        for (uint64_t i = check_start; i < check_end; i++) {
+            bool in_region = false;
+            in_region = (*this).contains(i) && o.contains(i);
+            if (in_region) {
+                if (region_size == 0)
+                    region_start = i;
+                region_size++;
+            } else if (region_size != 0) {
+                return true;
+            }
+        }
+
+        if (region_size != 0) {
+            return true;
+        }
+        return false;
+    }
+
     /* The one whose range is < the other is <; otherwise the one that has few addresses is < */
     bool operator<(const MemRegion &o) const {
         if (start != o.start)
