@@ -299,8 +299,8 @@ class MemNICBase : public MemLinkBase {
             }
         }
         
-        // Setup step
-        // Just debug info for now
+        // Setup
+        // Clean up state generated during init() and perform some sanity checks
         virtual void setup() {
             /* Limit destinations to the memory regions reported by endpoint messages that came through them */
             
@@ -332,6 +332,16 @@ class MemNICBase : public MemLinkBase {
                 }
             }
             destEndpointInfo = newDests;
+
+            for (auto et = destEndpointInfo.begin(); et != destEndpointInfo.end(); et++) {
+                for (auto it = std::next(et,1); it != destEndpointInfo.end(); it++) {
+                    std::set<MemRegion> reg = (it->region).intersect(et->region);
+                    if (!reg.empty()) {
+                        dbg.fatal(CALL_INFO, -1, "%s, Error: Found destinations on the network with overlapping address regions. Cannot generate routing table."
+                                "\n  Destination 1: %s\n  Destination 2: %s\n", it->toString().c_str(), et->toString().c_str());
+                    }
+                }
+            }
 
             for (auto it = networkAddressMap.begin(); it != networkAddressMap.end(); it++) {
                 dbg.debug(_L10_, "    Address: %s -> %" PRIu64 "\n", it->first.c_str(), it->second);
