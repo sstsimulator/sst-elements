@@ -129,7 +129,7 @@ MemEvent * MemHierarchyScratchInterface::createMemEvent(SimpleMem::Request * req
 
     switch (req->cmd) {
         case SimpleMem::Request::Read :         cmd = Command::GetS;            break;
-        case SimpleMem::Request::Write :        cmd = Command::GetX;            break;
+        case SimpleMem::Request::Write :        cmd = Command::Write;           break;
         case SimpleMem::Request::FlushLine:     cmd = Command::FlushLine;       break;
         case SimpleMem::Request::FlushLineInv:  cmd = Command::FlushLineInv;    break;
         default: output.fatal(CALL_INFO, -1, "MemHierarchyScratchInterface received unknown command in createMemEvent\n");
@@ -224,7 +224,7 @@ void MemHierarchyScratchInterface::updateRequest(SimpleMem::Request* req, MemEve
             req->data = static_cast<MemEvent*>(me)->getPayload();
             req->size  = req->data.size();
             break;
-        case Command::GetXResp:
+        case Command::WriteResp:
             req->cmd   = SimpleMem::Request::WriteResp;
             break;
         default:

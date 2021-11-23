@@ -92,11 +92,16 @@ bool IncoherentL1::handleGetS(MemEvent* event, bool inMSHR){
     return ((status == MemEventStatus::Reject) ? false : true);
 }
 
+/* Handle cacheable GetX requests */
+bool IncoherentL1::handleWrite(MemEvent* event, bool inMSHR) {
+    event->setCmd(Command::GetX);
+    return handleGetX(event, inMSHR);
+}
 
 /* Handle GetX (store/write) requests
  * GetX may also be a store-conditional or write-unlock
  */
-bool IncoherentL1::handleGetX(MemEvent* event, bool inMSHR){
+bool IncoherentL1::handleGetX(MemEvent* event, bool inMSHR) {
     Addr addr = event->getBaseAddr();
     L1CacheLine * line = cacheArray_->lookup(addr, true);
     State state = line ? line->getState() : I;
@@ -109,7 +114,7 @@ bool IncoherentL1::handleGetX(MemEvent* event, bool inMSHR){
     }
 
     MemEventStatus status = MemEventStatus::OK;
-    bool atomic = true;
+    bool success = true;
     uint64_t sendTime = 0;
 
     printLine(addr);
@@ -141,14 +146,15 @@ bool IncoherentL1::handleGetX(MemEvent* event, bool inMSHR){
             // Handle
             if (!event->isStoreConditional() || line->isAtomic()) { /* Don't write on a non-atomic SC */
                 line->setData(event->getPayload(), event->getAddr() - event->getBaseAddr());
-                atomic = line->isAtomic();
                 line->atomicEnd();
+            } else {
+                success = false;
             }
             if (event->queryFlag(MemEvent::F_LOCKED)) {
                 line->decLock();
             }
 
-            sendTime = sendResponseUp(event, nullptr, inMSHR, line->getTimestamp(), atomic);
+            sendTime = sendResponseUp(event, nullptr, inMSHR, line->getTimestamp(), success);
             line->setTimestamp(sendTime-1);
             cleanUpAfterRequest(event, inMSHR);
             break;
@@ -236,7 +242,7 @@ bool IncoherentL1::handleFlushLine(MemEvent* event, bool inMSHR) {
         if (!inMSHR || !mshr_->getProfiled(addr)) {
             stat_eventState[(int)Command::FlushLine][state]->addData(1);
         }
-        sendResponseUp(event, nullptr, inMSHR, line->getTimestamp());
+        sendResponseUp(event, nullptr, inMSHR, line->getTimestamp(), false);
         recordLatencyType(event->getID(), LatType::MISS);
         cleanUpAfterRequest(event, inMSHR);
         return true;
@@ -280,7 +286,7 @@ bool IncoherentL1::handleFlushLineInv(MemEvent* event, bool inMSHR) {
     /* Flush fails if line is locked */
     if (state != I && line->isLocked()) {
         stat_eventState[(int)Command::FlushLineInv][state]->addData(1);
-        sendResponseUp(event, nullptr, inMSHR, line->getTimestamp());
+        sendResponseUp(event, nullptr, inMSHR, line->getTimestamp(), false);
         recordLatencyType(event->getID(), LatType::MISS);
         cleanUpAfterRequest(event, inMSHR);
         return true;
@@ -371,12 +377,15 @@ bool IncoherentL1::handleGetXResp(MemEvent * event, bool inMSHR) {
     /* Execute write */
     Addr offset = req->getAddr() - req->getBaseAddr();
     std::vector<uint8_t> data;
-    if (req->getCmd() == Command::GetX) {
+    bool success = true;
+    if (req->getCmd() == Command::GetX || req->getCmd() == Command::Write) {
         if (!req->isStoreConditional() || line->isAtomic()) {
             line->setData(req->getPayload(), offset);
             if (is_debug_addr(line->getAddr()))
                 printData(line->getData(), true);
             line->atomicEnd();
+        } else {
+            success = false;
         }
 
         if (req->queryFlag(MemEventBase::F_LOCKED)) {
@@ -389,7 +398,7 @@ bool IncoherentL1::handleGetXResp(MemEvent * event, bool inMSHR) {
 
     // Return response
     data.assign(line->getData()->begin() + offset, line->getData()->begin() + offset + req->getSize());
-    uint64_t sendTime = sendResponseUp(req, &data, true, line->getTimestamp(), false);
+    uint64_t sendTime = sendResponseUp(req, &data, true, line->getTimestamp(), success);
     line->setTimestamp(sendTime-1);
 
     stat_eventState[(int)Command::GetXResp][state]->addData(1);
@@ -674,9 +683,8 @@ uint64_t IncoherentL1::sendResponseUp(MemEvent * event, vector<uint8_t> * data, 
         }
     }
 
-    if (success)
-        responseEvent->setSuccess(true);
-
+    if (!success)
+        responseEvent->setFail();
 
     // Compute latency, accounting for serialization of requests to the address
     if (time < timestamp_) time = timestamp_;
@@ -852,6 +860,7 @@ void IncoherentL1::recordLatency(Command cmd, int type, uint64_t latency) {
         case Command::GetS:
             stat_latencyGetS[type]->addData(latency);
             break;
+        case Command::Write:
         case Command::GetX:
             stat_latencyGetX[type]->addData(latency);
             break;

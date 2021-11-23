@@ -27,7 +27,7 @@ dir_src = [core_group,mmio_group]
 dir_dst = [mem_group]
 mem_src = [dir_group]
 
-# Constans shared across components
+# Constants shared across components
 network_bw = "25GB/s"
 clock = "2GHz"
 mmio_addr = 1024

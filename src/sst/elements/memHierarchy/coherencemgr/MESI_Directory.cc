@@ -1119,7 +1119,7 @@ void MESIDirectory::handleFlushLineResponse(MemEvent * ev) {
     MemEvent * me = reqEv->makeResponse();
     me->setDst(reqEv->getSrc());
     me->setRqstr(reqEv->getRqstr());
-    me->setSuccess(ev->queryFlag(MemEvent::F_SUCCESS));
+    me->setSuccess(ev->success());
     me->setMemFlags(reqEv->getMemFlags());
 
     profileResponseSent(me);

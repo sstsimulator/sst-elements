@@ -90,7 +90,7 @@ void MemHierarchyInterface::init(unsigned int phase) {
 }
 
 void MemHierarchyInterface::sendInitData(SimpleMem::Request *req){
-    MemEventInit *me = new MemEventInit(getName(), Command::GetX, req->addrs[0], req->data);
+    MemEventInit *me = new MemEventInit(getName(), Command::Write, req->addrs[0], req->data);
     if (initDone_)
         link_->sendInitData(me);
     else
@@ -127,7 +127,7 @@ MemEventBase* MemHierarchyInterface::createMemEvent(SimpleMem::Request *req) con
 
     switch ( req->cmd ) {
         case SimpleMem::Request::Read:          cmd = Command::GetS;         break;
-        case SimpleMem::Request::Write:         cmd = Command::GetX;         break;
+        case SimpleMem::Request::Write:         cmd = Command::Write;        break;
         case SimpleMem::Request::ReadResp:      cmd = Command::GetXResp;     break;
         case SimpleMem::Request::WriteResp:     cmd = Command::GetSResp;     break;
         case SimpleMem::Request::FlushLine:     cmd = Command::FlushLine;    break;
@@ -258,6 +258,7 @@ void MemHierarchyInterface::updateRequest(SimpleMem::Request* req, MemEvent *me)
             req->data  = me->getPayload();
             req->size  = me->getPayload().size();
             break;
+        case Command::WriteResp:
         case Command::GetXResp:
             req->cmd   = SimpleMem::Request::WriteResp;
             if (me->success())
@@ -269,7 +270,7 @@ void MemHierarchyInterface::updateRequest(SimpleMem::Request* req, MemEvent *me)
                 req->flags |= (SimpleMem::Request::F_FLUSH_SUCCESS);
             break;
     default:
-        output.fatal(CALL_INFO, -1, "Don't know how to deal with command %s\n", CommandString[(int)me->getCmd()]);
+        output.fatal(CALL_INFO, -1, "%s, Don't know how to deal with command %s\n", getName().c_str(), CommandString[(int)me->getCmd()]);
     }
     // Always update memFlags to faciliate mem->processor communication
     req->memFlags = me->getMemFlags();

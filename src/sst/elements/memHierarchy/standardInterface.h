@@ -144,16 +144,28 @@ private:
      * Called by receive() on incoming requests
      */
     StandardMem::Request* convertResponseGetSResp(StandardMem::Request* req, MemEventBase* meb);
-    StandardMem::Request* convertResponseGetXResp(StandardMem::Request* req, MemEventBase* meb);
+    StandardMem::Request* convertResponseWriteResp(StandardMem::Request* req, MemEventBase* meb);
     StandardMem::Request* convertResponseFlushResp(StandardMem::Request* req, MemEventBase* meb);
     StandardMem::Request* convertRequestInv(MemEventBase* req);
     StandardMem::Request* convertRequestGetS(MemEventBase* req);
-    StandardMem::Request* convertRequestGetX(MemEventBase* req);
+    StandardMem::Request* convertRequestWrite(MemEventBase* req);
     StandardMem::Request* convertRequestCustom(MemEventBase* req);
     StandardMem::Request* convertRequestLL(MemEventBase* req);
     StandardMem::Request* convertRequestSC(MemEventBase* req);
     StandardMem::Request* convertRequestLock(MemEventBase* req);
     StandardMem::Request* convertRequestUnlock(MemEventBase* req);
+    
+    /* Handling NACKs
+     * These do not occur if the interface is linked to a cache. 
+     * However, if the endpoint issues coherent accesses (not flagged F_NONCACHEABLE), is not linked to a cache,
+     * and there are caches in the system, NACKs are possible.
+     * 
+     * NOTE that if a NACK is received, the interface will resend the request.
+     * This **can** lead to request reordering if the endpoint has issued multiple
+     * requests for the same address in parallel. If the endpoint requires both ordering AND will
+     * issue multiple requests for the same address in parallel, the endpoint should use a cache.
+     */
+    void handleNACK(MemEventBase* meb);
 
     /* Record noncacheable regions (e.g., MMIO device addresses) */
     std::multimap<Addr, MemRegion> noncacheableRegions;
