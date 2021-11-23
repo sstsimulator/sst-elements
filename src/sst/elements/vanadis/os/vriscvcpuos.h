@@ -40,12 +40,14 @@
 #define VANADIS_SYSCALL_RISCV_FSTAT 4215
 #define VANADIS_SYSCALL_RISCV_MADVISE 4218
 #define VANADIS_SYSCALL_RISCV_FUTEX 4238
-#define VANADIS_SYSCALL_RISCV_SET_TID 4252
-#define VANADIS_SYSCALL_RISCV_EXIT_GROUP 4246
+#define VANADIS_SYSCALL_RISCV_SET_TID 96
+#define VANADIS_SYSCALL_RISCV_EXIT_GROUP 94
 #define VANADIS_SYSCALL_RISCV_SET_THREAD_AREA 4283
 #define VANADIS_SYSCALL_RISCV_RM_INOTIFY 4286
 #define VANADIS_SYSCALL_RISCV_OPENAT 4288
 #define VANADIS_SYSCALL_RISCV_GETTIME64 4403
+
+#define VANADIS_SYSCALL_RISCV_RET_REG 10
 
 namespace SST {
 namespace Vanadis {
@@ -165,10 +167,8 @@ public:
             output->verbose(CALL_INFO, 8, 0,
                             "[syscall-handler] found a call to inotify_rm_watch(), "
                             "by-passing and removing.\n");
-            const uint16_t rc_reg = isaTable->getIntPhysReg(7);
+            const uint16_t rc_reg = isaTable->getIntPhysReg(VANADIS_SYSCALL_RISCV_RET_REG);
             regFile->setIntReg(rc_reg, (uint64_t)0);
-
-            writeSyscallResult(true);
 
             for (int i = 0; i < returnCallbacks.size(); ++i) {
                 returnCallbacks[i](hw_thr);
@@ -254,8 +254,8 @@ public:
         } break;
 
         case VANADIS_SYSCALL_RISCV_EXIT_GROUP: {
-            const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
-            int64_t exit_code = regFile->getIntReg<int64_t>(phys_reg_4);
+            const uint16_t phys_reg_10 = isaTable->getIntPhysReg(10);
+            int64_t exit_code = regFile->getIntReg<int64_t>(phys_reg_10);
 
             output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to exit_group( %" PRId64 " )\n",
                             exit_code);
@@ -279,11 +279,11 @@ public:
         } break;
 
         case VANADIS_SYSCALL_RISCV_SET_TID: {
-            const uint16_t phys_reg_4 = isaTable->getIntPhysReg(4);
-            int64_t new_tid = regFile->getIntReg<int64_t>(phys_reg_4);
+            const uint16_t phys_reg_10 = isaTable->getIntPhysReg(10);
+            int64_t new_tid = regFile->getIntReg<int64_t>(phys_reg_10);
 
             setThreadID(new_tid);
-            output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found call to set_tid( %" PRId64 " )\n", new_tid);
+            output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found call to set_tid( %" PRId64 " / 0x%llx )\n", new_tid, new_tid);
 
             recvOSEvent(new VanadisSyscallResponse(new_tid));
         } break;
@@ -485,10 +485,11 @@ public:
     }
 
 protected:
+/*
     void writeSyscallResult(const bool success) {
         const uint64_t os_success = 0;
         const uint64_t os_failed = 1;
-        const uint16_t succ_reg = isaTable->getIntPhysReg(7);
+        const uint16_t succ_reg = isaTable->getIntPhysReg(VANADIS_SYSCALL_RISCV_RET_REG);
 
         if (success) {
             output->verbose(CALL_INFO, 8, 0,
@@ -506,7 +507,7 @@ protected:
             regFile->setIntReg(succ_reg, os_failed);
         }
     }
-
+*/
     void recvOSEvent(SST::Event* ev) {
         output->verbose(CALL_INFO, 8, 0, "-> recv os response\n");
 
@@ -518,20 +519,20 @@ protected:
             output->verbose(CALL_INFO, 8, 0, "-> issuing call-backs to clear syscall ROB stops...\n");
 
             // Set up the return code (according to ABI, this goes in r2)
-            const uint16_t rc_reg = isaTable->getIntPhysReg(2);
+            const uint16_t rc_reg = isaTable->getIntPhysReg(VANADIS_SYSCALL_RISCV_RET_REG);
             const int64_t rc_val = (int64_t)os_resp->getReturnCode();
             regFile->setIntReg(rc_reg, rc_val);
 
-            if (os_resp->isSuccessful()) {
-                if (rc_val < 0) {
-                    writeSyscallResult(false);
-                } else {
-                    // Generate correct markers for OS return code checks
-                    writeSyscallResult(os_resp->isSuccessful());
-                }
-            } else {
-                writeSyscallResult(false);
-            }
+//            if (os_resp->isSuccessful()) {
+//                if (rc_val < 0) {
+//                    writeSyscallResult(false);
+//                } else {
+//                    // Generate correct markers for OS return code checks
+//                    writeSyscallResult(os_resp->isSuccessful());
+//                }
+//            } else {
+//                writeSyscallResult(false);
+//            }
 
             for (int i = 0; i < returnCallbacks.size(); ++i) {
                 returnCallbacks[i](hw_thr);
