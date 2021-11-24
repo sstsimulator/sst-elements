@@ -833,7 +833,7 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
 
 #ifdef VANADIS_BUILD_DEBUG
                 output->verbose(CALL_INFO, 8, 0,
-                                "----> speculated addr: 0x%llx / result addr: 0x%llx / "
+                                "----> Retire: speculated addr: 0x%llx / result addr: 0x%llx / "
                                 "pipeline-clear: %s\n",
                                 spec_ins->getSpeculatedAddress(), pipeline_reset_addr,
                                 perform_pipeline_clear ? "yes" : "no");
