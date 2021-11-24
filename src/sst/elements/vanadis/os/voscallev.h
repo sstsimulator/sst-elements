@@ -47,6 +47,7 @@ protected:
         Event::serialize_order(ser);
         ser& core_id;
         ser& thread_id;
+		  ser& bittage;
     }
 
     ImplementSerializable(SST::Vanadis::VanadisSyscallEvent);
