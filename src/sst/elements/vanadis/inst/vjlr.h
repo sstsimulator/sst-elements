@@ -66,9 +66,9 @@ public:
         takenAddress = regFile->getIntReg<uint64_t>(phys_int_regs_in[0]);
 
 		  // TODO remove this code and check?
-        if ((takenAddress & 0x3) != 0) {
-            flagError();
-        }
+//        if ((takenAddress & 0x3) != 0) {
+//            flagError();
+//        }
 
         markExecuted();
     }
