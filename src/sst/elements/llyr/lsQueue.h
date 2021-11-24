@@ -28,7 +28,7 @@
 
 #include "llyrTypes.h"
 
-using namespace SST::Experimental::Interfaces;
+using namespace SST::Interfaces;
 
 namespace SST {
 namespace Llyr {

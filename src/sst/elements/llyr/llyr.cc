@@ -52,7 +52,7 @@ LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
     time_converter_ = registerClock(clock_rate, clock_tick_handler_);
 
     //set up memory interfaces
-    mem_interface_ = loadUserSubComponent<SST::Experimental::Interfaces::StandardMem>("memory", ComponentInfo::SHARE_NONE, time_converter_,
+    mem_interface_ = loadUserSubComponent<SST::Interfaces::StandardMem>("memory", ComponentInfo::SHARE_NONE, time_converter_,
                                         new StandardMem::Handler<LlyrComponent>(this, &LlyrComponent::handleEvent));
 
     if( !mem_interface_ ) {
@@ -61,7 +61,7 @@ LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
 
         Params interfaceParams = params.get_scoped_params("memoryinterfaceparams");
         interfaceParams.insert("port", "cache_link");
-        mem_interface_ = loadAnonymousSubComponent<SST::Experimental::Interfaces::StandardMem>(interfaceName, "memory", 0, ComponentInfo::SHARE_PORTS |
+        mem_interface_ = loadAnonymousSubComponent<SST::Interfaces::StandardMem>(interfaceName, "memory", 0, ComponentInfo::SHARE_PORTS |
             ComponentInfo::INSERT_STATS, interfaceParams, time_converter_, new StandardMem::Handler<LlyrComponent>(this, &LlyrComponent::handleEvent));
 
         if( !mem_interface_ ) {

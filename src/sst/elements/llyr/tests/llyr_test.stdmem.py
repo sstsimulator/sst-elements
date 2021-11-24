@@ -14,8 +14,9 @@ df_0 = sst.Component("df_0", "llyr.LlyrDataflow")
 df_0.addParams({
     "verbose": 20,
     "clock" : str(tile_clk_mhz) + "GHz",
-    "mem_init"      : "spmm-mem.in",
-    "application"   : "spmm.in",
+    "mem_init"      : "int-1.mem",
+    #"application"   : "conditional.in",
+    "application"   : "llvm_in/cdfg_simple-01.ll",
     "hardware_graph": "hardware.cfg",
     "mapper"        : "llyr.mapper.simple"
 })

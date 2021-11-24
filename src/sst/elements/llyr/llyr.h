@@ -30,7 +30,7 @@
 #include "pes/peList.h"
 #include "mappers/llyrMapper.h"
 
-using namespace SST::Experimental::Interfaces;
+using namespace SST::Interfaces;
 
 namespace SST {
 namespace Llyr {
@@ -75,7 +75,7 @@ public:
     )
 
     SST_ELI_DOCUMENT_SUBCOMPONENT_SLOTS(
-        { "memory",         "The memory interface to use (e.g., interface to caches)", "Experimental::Interfaces::SST::StandardMem" }
+        { "memory",         "The memory interface to use (e.g., interface to caches)", "Interfaces::SST::StandardMem" }
     )
 
     LlyrComponent(SST::ComponentId_t id, SST::Params& params);

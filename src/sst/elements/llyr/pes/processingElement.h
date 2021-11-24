@@ -198,7 +198,7 @@ protected:
     //track outstanding L/S requests (passed from top-level)
     LSQueue* lsqueue_;
 
-    Experimental::Interfaces::StandardMem*  mem_interface_;
+    Interfaces::StandardMem*  mem_interface_;
     SST::Output* output_;
 
     //used to stall execution - waiting on mem/queues full
