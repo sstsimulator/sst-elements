@@ -40,16 +40,15 @@ public:
     void printToBuffer(char* buffer, size_t buffer_size) override {
         snprintf(
             buffer, buffer_size,
-            "XORI    %5" PRIu16 " <- %5" PRIu16 " ^ imm=%" PRIu64 " (phys: %5" PRIu16 " <- %5" PRIu16 " ^ %" PRIu64 ")",
-            isa_int_regs_out[0], isa_int_regs_in[0], imm_value, phys_int_regs_out[0], phys_int_regs_in[0], imm_value);
+            "XORI    %5" PRIu16 " <- %5" PRIu16 " ^ imm=%" PRIu64 " (phys: %5" PRIu16 " <- %5" PRIu16 " ^ %" PRIu64 " (0x%llx))",
+            isa_int_regs_out[0], isa_int_regs_in[0], imm_value, phys_int_regs_out[0], phys_int_regs_in[0], imm_value, imm_value);
     }
 
     void execute(SST::Output* output, VanadisRegisterFile* regFile) override {
 #ifdef VANADIS_BUILD_DEBUG
         output->verbose(CALL_INFO, 16, 0,
-                        "Execute: (addr=%p) XORI phys: out=%" PRIu16 " in=%" PRIu16 " imm=%" PRIu64
-                        ", isa: out=%" PRIu16 " / in=%" PRIu16 "\n",
-                        (void*)getInstructionAddress(), phys_int_regs_out[0], phys_int_regs_in[0], imm_value,
+                        "Execute: (addr=%p) XORI phys: out=%" PRIu16 " in=%" PRIu16 " imm=%" PRIu64 " / (0x%llx) , isa: out=%" PRIu16 " / in=%" PRIu16 "\n",
+                        (void*)getInstructionAddress(), phys_int_regs_out[0], phys_int_regs_in[0], imm_value, imm_value,
                         isa_int_regs_out[0], isa_int_regs_in[0]);
 #endif
         const uint64_t src_1 = regFile->getIntReg<uint64_t>(phys_int_regs_in[0]);
