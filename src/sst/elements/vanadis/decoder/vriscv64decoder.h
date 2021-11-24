@@ -606,6 +606,9 @@ protected:
                 case 0:
                 {
                     // LB
+						  output->verbose(CALL_INFO, 16, 0, "----> LB %" PRIu16 " <- %" PRIu16 " %" PRId64 "\n",
+								rd, rs1, simm64);
+
                     bundle->addInstruction(new VanadisLoadInstruction(
                         ins_address, hw_thr, options, rs1, simm64, rd, 1, true, MEM_TRANSACTION_NONE,
                         LOAD_INT_REGISTER));
@@ -614,6 +617,9 @@ protected:
                 case 1:
                 {
                     // LH
+						  output->verbose(CALL_INFO, 16, 0, "----> LH %" PRIu16 " <- %" PRIu16 " %" PRId64 "\n",
+								rd, rs1, simm64);
+
                     bundle->addInstruction(new VanadisLoadInstruction(
                         ins_address, hw_thr, options, rs1, simm64, rd, 2, true, MEM_TRANSACTION_NONE,
                         LOAD_INT_REGISTER));
@@ -622,6 +628,9 @@ protected:
                 case 2:
                 {
                     // LW
+						  output->verbose(CALL_INFO, 16, 0, "----> LW %" PRIu16 " <- %" PRIu16 " %" PRId64 "\n",
+								rd, rs1, simm64);
+
                     bundle->addInstruction(new VanadisLoadInstruction(
                         ins_address, hw_thr, options, rs1, simm64, rd, 4, true, MEM_TRANSACTION_NONE,
                         LOAD_INT_REGISTER));
@@ -630,6 +639,9 @@ protected:
                 case 3:
                 {
                     // LD
+						  output->verbose(CALL_INFO, 16, 0, "----> LD %" PRIu16 " <- %" PRIu16 " %" PRId64 "\n",
+								rd, rs1, simm64);
+
                     bundle->addInstruction(new VanadisLoadInstruction(
                         ins_address, hw_thr, options, rs1, simm64, rd, 8, true, MEM_TRANSACTION_NONE,
                         LOAD_INT_REGISTER));
@@ -638,6 +650,9 @@ protected:
                 case 4:
                 {
                     // LBU
+						  output->verbose(CALL_INFO, 16, 0, "----> LBU %" PRIu16 " <- %" PRIu16 " %" PRId64 "\n",
+								rd, rs1, simm64);
+
                     bundle->addInstruction(new VanadisLoadInstruction(
                         ins_address, hw_thr, options, rs1, simm64, rd, 1, false, MEM_TRANSACTION_NONE,
                         LOAD_INT_REGISTER));
@@ -646,6 +661,9 @@ protected:
                 case 5:
                 {
                     // LHU
+						  output->verbose(CALL_INFO, 16, 0, "----> LHU %" PRIu16 " <- %" PRIu16 " %" PRId64 "\n",
+								rd, rs1, simm64);
+
                     bundle->addInstruction(new VanadisLoadInstruction(
                         ins_address, hw_thr, options, rs1, simm64, rd, 2, false, MEM_TRANSACTION_NONE,
                         LOAD_INT_REGISTER));
@@ -654,6 +672,9 @@ protected:
                 case 6:
                 {
                     // LWU
+						  output->verbose(CALL_INFO, 16, 0, "----> LWU %" PRIu16 " <- %" PRIu16 " %" PRId64 "\n",
+								rd, rs1, simm64);
+
                     bundle->addInstruction(new VanadisLoadInstruction(
                         ins_address, hw_thr, options, rs1, simm64, rd, 4, false, MEM_TRANSACTION_NONE,
                         LOAD_INT_REGISTER));
@@ -672,7 +693,11 @@ protected:
 
                 if ( func_code < 4 ) {
                     // shift to get the power of 2 number of bytes to store
-                    const uint32_t store_bytes = 1 << func_code;
+                    const uint32_t store_bytes = 1 << func_code3;
+
+						  output->verbose(CALL_INFO, 16, 0, "----> STORE width: %" PRIu32 " bytes == (1 << %" PRIu32 ") %" PRIu16 " -> memory[ %" PRIu16 " + %" PRId64 " / (0x%llx)]\n",
+								store_bytes, func_code3, rs2, rs1, simm64, simm64);
+
                     bundle->addInstruction(new VanadisStoreInstruction(
                         ins_address, hw_thr, options, rs1, simm64, rs2, store_bytes, MEM_TRANSACTION_NONE,
                         STORE_INT_REGISTER));
@@ -691,6 +716,9 @@ protected:
                 {
                     // ADDI
                     processI<int64_t>(ins, op_code, rd, rs1, func_code3, simm64);
+
+						  output->verbose(CALL_INFO, 16, 0, "------> ADDI %" PRIu16 " <- %" PRIu16 " + %" PRId64 "\n",
+								rd, rs1, simm64);
 
                     bundle->addInstruction(new VanadisAddImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
                         ins_address, hw_thr, options, rd, rs1, simm64));
@@ -1055,7 +1083,7 @@ protected:
 								rs1, rs2, simm64);
                     bundle->addInstruction(new VanadisBranchRegCompareInstruction<
                                            VanadisRegisterFormat::VANADIS_FORMAT_INT64, REG_COMPARE_LT>(
-                        ins_address, hw_thr, options, 4, rs1, rs2, simm64, VANADIS_NO_DELAY_SLOT));
+                        ins_address, hw_thr, options, 4, rs1, rs2, simm64, VANADIS_NO_DELAY_SLOT, true));
                     decode_fault = false;
                 } break;
                 case 5:
@@ -1065,7 +1093,7 @@ protected:
 								rs1, rs2, simm64);
                     bundle->addInstruction(new VanadisBranchRegCompareInstruction<
                                            VanadisRegisterFormat::VANADIS_FORMAT_INT64, REG_COMPARE_GTE>(
-                        ins_address, hw_thr, options, 4, rs1, rs2, simm64, VANADIS_NO_DELAY_SLOT));
+                        ins_address, hw_thr, options, 4, rs1, rs2, simm64, VANADIS_NO_DELAY_SLOT, true));
                     decode_fault = false;
                 } break;
                 case 6:
@@ -1116,7 +1144,7 @@ protected:
                         // ADDW
                         // TODO - check register ordering
                         bundle->addInstruction(
-                            new VanadisAddInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64, true>(
+                            new VanadisAddInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32, true>(
                                 ins_address, hw_thr, options, rd, rs1, rs2));
                         decode_fault = false;
                     } break;
@@ -1125,14 +1153,14 @@ protected:
                         // MULW
                         // TODO - check register ordering
                         bundle->addInstruction(
-                            new VanadisMultiplyInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
+                            new VanadisMultiplyInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
                                 ins_address, hw_thr, options, rd, rs1, rs2));
                     } break;
                     case 0x20:
                     {
                         // SUBW
                         // TODO - check register ordering
-                        bundle->addInstruction(new VanadisSubInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
+                        bundle->addInstruction(new VanadisSubInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
                             ins_address, hw_thr, options, rd, rs1, rs2, true));
                         decode_fault = false;
                     } break;
@@ -1146,7 +1174,7 @@ protected:
                         // SLLW
                         // TODO - check register ordering
                         bundle->addInstruction(
-                            new VanadisShiftLeftLogicalInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
+                            new VanadisShiftLeftLogicalInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
                                 ins_address, hw_thr, options, rd, rs1, rs2));
                         decode_fault = false;
                     } break;
@@ -1159,7 +1187,7 @@ protected:
                     {
                         // DIVW
                         bundle->addInstruction(
-                            new VanadisDivideInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64, true>(
+                            new VanadisDivideInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32, true>(
                                 ins_address, hw_thr, options, rd, rs1, rs2));
                         decode_fault = false;
                     } break;
@@ -1173,7 +1201,7 @@ protected:
                         // SRLW
                         // TODO - check register ordering
                         bundle->addInstruction(
-                            new VanadisShiftRightLogicalInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
+                            new VanadisShiftRightLogicalInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
                                 ins_address, hw_thr, options, rd, rs1, rs2));
                         decode_fault = false;
                     } break;
@@ -1181,7 +1209,7 @@ protected:
                     {
                         // DIVUW
                         bundle->addInstruction(
-                            new VanadisDivideInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64, false>(
+                            new VanadisDivideInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32, false>(
                                 ins_address, hw_thr, options, rd, rs1, rs2));
                         decode_fault = false;
                     } break;
@@ -1190,7 +1218,7 @@ protected:
                         // SRAW
                         // TODO - check register ordering
                         bundle->addInstruction(
-                            new VanadisShiftRightArithmeticInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
+                            new VanadisShiftRightArithmeticInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
                                 ins_address, hw_thr, options, rd, rs1, rs2));
                         decode_fault = false;
                     } break;
@@ -1604,7 +1632,7 @@ protected:
                     case 0xC00:
                     {
                         // Arith
-                        uint16_t rvc_rd  = expand_rvc_int_register(extract_rs2_rvc(ins));
+                        uint16_t rvc_rs2 = expand_rvc_int_register(extract_rs2_rvc(ins));
                         uint16_t rvc_rs1 = expand_rvc_int_register(extract_rs1_rvc(ins));
 
                         switch ( ins & 0x1000 ) {
@@ -1618,40 +1646,40 @@ protected:
                                 // SUB
                                 output->verbose(
                                     CALL_INFO, 16, 0, "--------> RVC SUB %" PRIu16 " <- %" PRIu16 " - %" PRIu16 "\n",
-                                    rvc_rd, rvc_rd, rvc_rs1);
+                                    rvc_rs1, rvc_rs1, rvc_rs2);
                                 bundle->addInstruction(
                                     new VanadisSubInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
-                                        ins_address, hw_thr, options, rvc_rd, rvc_rd, rvc_rs1, true));
+                                        ins_address, hw_thr, options, rvc_rs1, rvc_rs1, rvc_rs2, true));
                                 decode_fault = false;
                             } break;
                             case 0x20:
                             {
                                 // XOR
                                 output->verbose(
-                                    CALL_INFO, 16, 0, "--------> RVC XOR %" PRIu16 " <- %" PRIu16 " - %" PRIu16 "\n",
-                                    rvc_rd, rvc_rd, rvc_rs1);
+                                    CALL_INFO, 16, 0, "--------> RVC XOR %" PRIu16 " <- %" PRIu16 " ^ %" PRIu16 "\n",
+                                    rvc_rs1, rvc_rs1, rvc_rs2);
                                 bundle->addInstruction(
-                                    new VanadisXorInstruction(ins_address, hw_thr, options, rvc_rd, rvc_rd, rvc_rs1));
+                                    new VanadisXorInstruction(ins_address, hw_thr, options, rvc_rs1, rvc_rs1, rvc_rs2));
                                 decode_fault = false;
                             } break;
                             case 0x40:
                             {
                                 // OR
                                 output->verbose(
-                                    CALL_INFO, 16, 0, "--------> RVC OR %" PRIu16 " <- %" PRIu16 " - %" PRIu16 "\n",
-                                    rvc_rd, rvc_rd, rvc_rs1);
+                                    CALL_INFO, 16, 0, "--------> RVC OR %" PRIu16 " <- %" PRIu16 " | %" PRIu16 "\n",
+                                    rvc_rs1, rvc_rs1, rvc_rs2);
                                 bundle->addInstruction(
-                                    new VanadisOrInstruction(ins_address, hw_thr, options, rvc_rd, rvc_rd, rvc_rs1));
+                                    new VanadisOrInstruction(ins_address, hw_thr, options, rvc_rs1, rvc_rs1, rvc_rs2));
                                 decode_fault = false;
                             } break;
                             case 0x60:
                             {
                                 // AND
                                 output->verbose(
-                                    CALL_INFO, 16, 0, "--------> RVC AND %" PRIu16 " <- %" PRIu16 " - %" PRIu16 "\n",
-                                    rvc_rd, rvc_rd, rvc_rs1);
+                                    CALL_INFO, 16, 0, "--------> RVC AND %" PRIu16 " <- %" PRIu16 " & %" PRIu16 "\n",
+                                    rvc_rs1, rvc_rs1, rvc_rs2);
                                 bundle->addInstruction(
-                                    new VanadisAndInstruction(ins_address, hw_thr, options, rvc_rd, rvc_rd, rvc_rs1));
+                                    new VanadisAndInstruction(ins_address, hw_thr, options, rvc_rs1, rvc_rs1, rvc_rs2));
                                 decode_fault = false;
                             } break;
                             }
@@ -1670,14 +1698,14 @@ protected:
                             case 0x20:
                             {
                                 // ADDW
-		                           uint16_t rvc_rd  = expand_rvc_int_register(extract_rs2_rvc(ins));
+		                           uint16_t rvc_rs2  = expand_rvc_int_register(extract_rs2_rvc(ins));
       		                    uint16_t rvc_rs1 = expand_rvc_int_register(extract_rs1_rvc(ins));
 
 										  output->verbose(CALL_INFO, 16, 0, "------> RVC ADDW %" PRIu16 " <- %" PRIu16 " + %" PRIu16 "\n",
-											 rvc_rs1, rvc_rs1, rvc_rd);
+											 rvc_rs1, rvc_rs1, rvc_rs2);
 
 										  bundle->addInstruction(new VanadisAddInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32, true>(ins_address,
-												hw_thr, options, rvc_rs1, rvc_rs1, rvc_rd));
+												hw_thr, options, rvc_rs1, rvc_rs1, rvc_rs2));
 										decode_fault = false;
 
                             } break;
@@ -1764,8 +1792,8 @@ protected:
                     if ( imm_8 != 0 ) { imm_final |= 0xFFFFFFFFFFFFFE00; }
 
                     output->verbose(
-                        CALL_INFO, 16, 0, "----> decode RVC BNEZ %" PRIu16 " jump to: 0x%llx\n", rvc_rs1,
-                        ins_address + imm_final);
+                        CALL_INFO, 16, 0, "----> decode RVC BNEZ %" PRIu16 " jump to: 0x%llx + 0x%llx = 0x%llx\n", rvc_rs1,
+                        ins_address, imm_final, ins_address + imm_final);
 
                     bundle->addInstruction(new VanadisBranchRegCompareImmInstruction<
                                            VanadisRegisterFormat::VANADIS_FORMAT_INT64, REG_COMPARE_NEQ>(
@@ -2093,7 +2121,7 @@ protected:
 
         const int32_t ins_i32 = static_cast<int32_t>(ins);
         imm                   = static_cast<T>(
-            sign_extend12(((ins_i32 & VANADIS_RISCV_RD_MASK) >> 6) | ((ins_i32 & VANADIS_RISCV_FUNC7_MASK) >> 24)));
+            sign_extend12(((ins_i32 & VANADIS_RISCV_RD_MASK) >> 7) | ((ins_i32 & VANADIS_RISCV_FUNC7_MASK) >> 20)));
     }
 
     template <typename T>
