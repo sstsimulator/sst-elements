@@ -24,8 +24,8 @@ namespace Vanadis {
 class VanadisSyscallGetTime64Event : public VanadisSyscallEvent {
 public:
     VanadisSyscallGetTime64Event() : VanadisSyscallEvent() {}
-    VanadisSyscallGetTime64Event(uint32_t core, uint32_t thr, int64_t clk_id, uint64_t time_addr)
-        : VanadisSyscallEvent(core, thr), clock_id(clk_id), timestruct_addr(time_addr) {}
+    VanadisSyscallGetTime64Event(uint32_t core, uint32_t thr, VanadisOSBitType bittype, int64_t clk_id, uint64_t time_addr)
+        : VanadisSyscallEvent(core, thr, bittype), clock_id(clk_id), timestruct_addr(time_addr) {}
 
     VanadisSyscallOp getOperation() { return SYSCALL_OP_GETTIME64; }
 

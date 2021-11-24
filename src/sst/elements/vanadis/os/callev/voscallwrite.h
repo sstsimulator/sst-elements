@@ -24,8 +24,8 @@ namespace Vanadis {
 class VanadisSyscallWriteEvent : public VanadisSyscallEvent {
 public:
     VanadisSyscallWriteEvent() : VanadisSyscallEvent() {}
-    VanadisSyscallWriteEvent(uint32_t core, uint32_t thr, int64_t fd, uint64_t buff_addr, int64_t buff_count)
-        : VanadisSyscallEvent(core, thr), write_fd(fd), write_buffer(buff_addr), write_count(buff_count) {}
+    VanadisSyscallWriteEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype, int64_t fd, uint64_t buff_addr, int64_t buff_count)
+        : VanadisSyscallEvent(core, thr, bittype), write_fd(fd), write_buffer(buff_addr), write_count(buff_count) {}
 
     VanadisSyscallOp getOperation() { return SYSCALL_OP_WRITE; }
 
