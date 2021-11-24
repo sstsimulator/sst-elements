@@ -83,16 +83,16 @@ public:
         switch (regType) {
         case LOAD_INT_REGISTER: {
             snprintf(buffer, buffer_size,
-                     "LOAD (%s)  %5" PRIu16 " <- memory[ %5" PRIu16 " + %" PRId64 " (0x%llx) (phys: %5" PRIu16
+                     "LOAD (%s, %" PRIu16 " bytes)  %5" PRIu16 " <- memory[ %5" PRIu16 " + %" PRId64 " (0x%llx) (phys: %5" PRIu16
                      " <- memory[%5" PRIu16 " + %" PRId64 " (0x%llx)])\n",
-                     getTransactionTypeString(memAccessType), isa_int_regs_out[0], isa_int_regs_in[0], offset, offset,
+                     getTransactionTypeString(memAccessType), load_width, isa_int_regs_out[0], isa_int_regs_in[0], offset, offset,
                      phys_int_regs_out[0], phys_int_regs_in[0], offset, offset);
         } break;
         case LOAD_FP_REGISTER: {
             snprintf(buffer, buffer_size,
-                     "LOADFP (%s)  %5" PRIu16 " <- memory[ %5" PRIu16 " + %" PRId64 " (0x%llx) (phys: %5" PRIu16
+                     "LOADFP (%s, %" PRIu16 " bytes)  %5" PRIu16 " <- memory[ %5" PRIu16 " + %" PRId64 " (0x%llx) (phys: %5" PRIu16
                      " <- memory[%5" PRIu16 " + %" PRId64 " (0x%llx)])\n",
-                     getTransactionTypeString(memAccessType), isa_fp_regs_out[0], isa_int_regs_in[0], offset, offset,
+                     getTransactionTypeString(memAccessType), load_width, isa_fp_regs_out[0], isa_int_regs_in[0], offset, offset,
                      phys_fp_regs_out[0], phys_int_regs_in[0], offset, offset);
         } break;
         }
