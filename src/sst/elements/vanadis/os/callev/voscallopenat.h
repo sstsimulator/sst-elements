@@ -24,8 +24,8 @@ namespace Vanadis {
 class VanadisSyscallOpenAtEvent : public VanadisSyscallEvent {
 public:
     VanadisSyscallOpenAtEvent() : VanadisSyscallEvent() {}
-    VanadisSyscallOpenAtEvent(uint32_t core, uint32_t thr, uint64_t dirfd, uint64_t path_ptr, uint64_t flags)
-        : VanadisSyscallEvent(core, thr), openat_dirfd(dirfd), openat_path_ptr(path_ptr), openat_flags(flags) {}
+    VanadisSyscallOpenAtEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype, uint64_t dirfd, uint64_t path_ptr, uint64_t flags)
+        : VanadisSyscallEvent(core, thr, bittype), openat_dirfd(dirfd), openat_path_ptr(path_ptr), openat_flags(flags) {}
 
     VanadisSyscallOp getOperation() { return SYSCALL_OP_OPENAT; }
 

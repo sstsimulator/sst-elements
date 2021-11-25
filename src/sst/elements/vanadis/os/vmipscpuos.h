@@ -77,7 +77,7 @@ public:
         case SYSCALL_INIT_PARAM_INIT_BRK: {
             uint64_t* param_val_64 = (uint64_t*)param_val;
             output->verbose(CALL_INFO, 8, 0, "set initial brk point (init) event (0x%llx)\n", (*param_val_64));
-            os_link->sendInitData(new VanadisSyscallInitBRKEvent(core_id, hw_thr, (*param_val_64)));
+            os_link->sendInitData(new VanadisSyscallInitBRKEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, (*param_val_64)));
         } break;
         }
     }
@@ -109,7 +109,7 @@ public:
             const uint16_t phys_reg_6 = isaTable->getIntPhysReg(6);
             int64_t readlink_size = regFile->getIntReg<uint64_t>(phys_reg_6);
 
-            call_ev = new VanadisSyscallReadLinkEvent(core_id, hw_thr, readlink_path, readlink_buff_ptr, readlink_size);
+            call_ev = new VanadisSyscallReadLinkEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, readlink_path, readlink_buff_ptr, readlink_size);
         } break;
 
         case VANADIS_SYSCALL_MIPS_READ: {
@@ -122,7 +122,7 @@ public:
             const uint16_t phys_reg_6 = isaTable->getIntPhysReg(6);
             int64_t read_count = regFile->getIntReg<int64_t>(phys_reg_6);
 
-            call_ev = new VanadisSyscallReadEvent(core_id, hw_thr, read_fd, read_buff_ptr, read_count);
+            call_ev = new VanadisSyscallReadEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, read_fd, read_buff_ptr, read_count);
         } break;
 
         case VANADIS_SYSCALL_MIPS_ACCESS: {
@@ -134,7 +134,7 @@ public:
 
             output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to access( 0x%llx, %" PRIu64 " )\n",
                             path_ptr, access_mode);
-            call_ev = new VanadisSyscallAccessEvent(core_id, hw_thr, path_ptr, access_mode);
+            call_ev = new VanadisSyscallAccessEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, path_ptr, access_mode);
         } break;
 
         case VANADIS_SYSCALL_MIPS_BRK: {
@@ -143,7 +143,7 @@ public:
 
             output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to brk( value: %" PRIu64 " ), zero: %s\n",
                             newBrk, brk_zero_memory ? "yes" : "no");
-            call_ev = new VanadisSyscallBRKEvent(core_id, hw_thr, newBrk, brk_zero_memory);
+            call_ev = new VanadisSyscallBRKEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, newBrk, brk_zero_memory);
         } break;
 
         case VANADIS_SYSCALL_MIPS_SET_THREAD_AREA: {
@@ -158,7 +158,7 @@ public:
                 (*tls_address) = thread_area_ptr;
             }
 
-            call_ev = new VanadisSyscallSetThreadAreaEvent(core_id, hw_thr, thread_area_ptr);
+            call_ev = new VanadisSyscallSetThreadAreaEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, thread_area_ptr);
         } break;
 
         case VANADIS_SYSCALL_MIPS_RM_INOTIFY: {
@@ -181,7 +181,7 @@ public:
 
             output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to uname()\n");
 
-            call_ev = new VanadisSyscallUnameEvent(core_id, hw_thr, uname_addr);
+            call_ev = new VanadisSyscallUnameEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, uname_addr);
         } break;
 
         case VANADIS_SYSCALL_MIPS_FSTAT: {
@@ -194,7 +194,7 @@ public:
             output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to fstat( %" PRId32 ", %" PRIu64 " )\n",
                             file_handle, fstat_addr);
 
-            call_ev = new VanadisSyscallFstatEvent(core_id, hw_thr, file_handle, fstat_addr);
+            call_ev = new VanadisSyscallFstatEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, file_handle, fstat_addr);
         } break;
 
         case VANADIS_SYSCALL_MIPS_CLOSE: {
@@ -203,7 +203,7 @@ public:
 
             output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to close( %" PRIu32 " )\n", close_file);
 
-            call_ev = new VanadisSyscallCloseEvent(core_id, hw_thr, close_file);
+            call_ev = new VanadisSyscallCloseEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, close_file);
         } break;
 
         case VANADIS_SYSCALL_MIPS_OPEN: {
@@ -220,7 +220,7 @@ public:
                             "[syscall-handler] found a call to open( 0x%llx, %" PRIu64 ", %" PRIu64 " )\n",
                             open_path_ptr, open_flags, open_mode);
 
-            call_ev = new VanadisSyscallOpenEvent(core_id, hw_thr, open_path_ptr, open_flags, open_mode);
+            call_ev = new VanadisSyscallOpenEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, open_path_ptr, open_flags, open_mode);
         } break;
 
         case VANADIS_SYSCALL_MIPS_OPENAT: {
@@ -234,7 +234,7 @@ public:
             uint64_t openat_flags = regFile->getIntReg<uint64_t>(phys_reg_6);
 
             output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to openat()\n");
-            call_ev = new VanadisSyscallOpenAtEvent(core_id, hw_thr, openat_dirfd, openat_path_ptr, openat_flags);
+            call_ev = new VanadisSyscallOpenAtEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, openat_dirfd, openat_path_ptr, openat_flags);
         } break;
 
         case VANADIS_SYSCALL_MIPS_WRITEV: {
@@ -250,7 +250,7 @@ public:
             output->verbose(CALL_INFO, 8, 0,
                             "[syscall-handler] found a call to writev( %" PRId64 ", 0x%llx, %" PRId64 " )\n", writev_fd,
                             writev_iovec_ptr, writev_iovec_count);
-            call_ev = new VanadisSyscallWritevEvent(core_id, hw_thr, writev_fd, writev_iovec_ptr, writev_iovec_count);
+            call_ev = new VanadisSyscallWritevEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, writev_fd, writev_iovec_ptr, writev_iovec_count);
         } break;
 
         case VANADIS_SYSCALL_MIPS_EXIT_GROUP: {
@@ -259,7 +259,7 @@ public:
 
             output->verbose(CALL_INFO, 8, 0, "[syscall-handler] found a call to exit_group( %" PRId64 " )\n",
                             exit_code);
-            call_ev = new VanadisSyscallExitGroupEvent(core_id, hw_thr, exit_code);
+            call_ev = new VanadisSyscallExitGroupEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, exit_code);
         } break;
 
         case VANADIS_SYSCALL_MIPS_WRITE: {
@@ -275,7 +275,7 @@ public:
             output->verbose(CALL_INFO, 8, 0,
                             "[syscall-handler] found a call to write( %" PRId64 ", 0x%llx, %" PRIu64 " )\n", write_fd,
                             write_buff, write_count);
-            call_ev = new VanadisSyscallWriteEvent(core_id, hw_thr, write_fd, write_buff, write_count);
+            call_ev = new VanadisSyscallWriteEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, write_fd, write_buff, write_count);
         } break;
 
         case VANADIS_SYSCALL_MIPS_SET_TID: {
@@ -359,7 +359,7 @@ public:
                             "\n",
                             is_read ? 'y' : 'n', is_write ? 'y' : 'n', data_size, io_op, io_driver);
 
-            call_ev = new VanadisSyscallIOCtlEvent(core_id, hw_thr, fd, is_read, is_write, io_op, io_driver, ptr,
+            call_ev = new VanadisSyscallIOCtlEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, fd, is_read, is_write, io_op, io_driver, ptr,
                                                    data_size);
         } break;
 
@@ -404,7 +404,7 @@ public:
             if ((0 == unmap_addr)) {
                 recvOSEvent(new VanadisSyscallResponse(-22));
             } else {
-                call_ev = new VanadisSyscallMemoryUnMapEvent(core_id, hw_thr, unmap_addr, unmap_len);
+                call_ev = new VanadisSyscallMemoryUnMapEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, unmap_addr, unmap_len);
             }
         } break;
 
@@ -429,7 +429,7 @@ public:
                             ", sp: 0x%llx (> 4 arguments) )\n",
                             map_addr, map_len, map_prot, map_flags, stack_ptr);
 
-            call_ev = new VanadisSyscallMemoryMapEvent(core_id, hw_thr, map_addr, map_len, map_prot, map_flags,
+            call_ev = new VanadisSyscallMemoryMapEvent(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, map_addr, map_len, map_prot, map_flags,
                                                        stack_ptr, 4096);
         } break;
 
@@ -444,7 +444,7 @@ public:
                             "[syscall-handler] found a call to clock_gettime64( %" PRId64 ", 0x%llx )\n", clk_type,
                             time_addr);
 
-            call_ev = new VanadisSyscallGetTime64Event(core_id, hw_thr, clk_type, time_addr);
+            call_ev = new VanadisSyscallGetTime64Event(core_id, hw_thr, VanadisOSBitType::VANADIS_OS_32B, clk_type, time_addr);
         } break;
 
         case VANADIS_SYSCALL_MIPS_RT_SETSIGMASK: {

@@ -17,6 +17,7 @@
 #define _H_VANADIS_SYSCALL_BRK
 
 #include "os/voscallev.h"
+#include "os/vosbittype.h"
 
 namespace SST {
 namespace Vanadis {
@@ -24,8 +25,8 @@ namespace Vanadis {
 class VanadisSyscallBRKEvent : public VanadisSyscallEvent {
 public:
     VanadisSyscallBRKEvent() : VanadisSyscallEvent() {}
-    VanadisSyscallBRKEvent(uint32_t core, uint32_t thr, uint64_t newBrkAddr, bool zero_mem = false)
-        : VanadisSyscallEvent(core, thr), newBrk(newBrkAddr), zero_memory(zero_mem) {}
+    VanadisSyscallBRKEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype, uint64_t newBrkAddr, bool zero_mem = false)
+        : VanadisSyscallEvent(core, thr, bittype), newBrk(newBrkAddr), zero_memory(zero_mem) {}
 
     VanadisSyscallOp getOperation() { return SYSCALL_OP_BRK; }
 

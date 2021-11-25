@@ -94,6 +94,7 @@ lsq/vlsq.h \
 lsq/vlsqseq.h \
 lsq/vlsqstd.h \
 lsq/vmemwriterec.h \
+os/vosbittype.h \
 os/vcpuos.h \
 os/vmipscpuos.h \
 os/vriscvcpuos.h \
