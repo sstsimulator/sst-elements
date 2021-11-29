@@ -24,8 +24,8 @@ namespace Vanadis {
 class VanadisSyscallWritevEvent : public VanadisSyscallEvent {
 public:
     VanadisSyscallWritevEvent() : VanadisSyscallEvent() {}
-    VanadisSyscallWritevEvent(uint32_t core, uint32_t thr, int64_t fd, uint64_t iovec_addr, int64_t iovec_count)
-        : VanadisSyscallEvent(core, thr), writev_fd(fd), writev_iovec_addr(iovec_addr), writev_iov_count(iovec_count) {}
+    VanadisSyscallWritevEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype, int64_t fd, uint64_t iovec_addr, int64_t iovec_count)
+        : VanadisSyscallEvent(core, thr, bittype), writev_fd(fd), writev_iovec_addr(iovec_addr), writev_iov_count(iovec_count) {}
 
     VanadisSyscallOp getOperation() { return SYSCALL_OP_WRITEV; }
 

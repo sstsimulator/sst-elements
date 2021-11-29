@@ -42,16 +42,18 @@ public:
 
     void printToBuffer(char* buffer, size_t buffer_size) override {
         snprintf(buffer, buffer_size,
-                 "BCMPI isa-in: %" PRIu16 " / phys-in: %" PRIu16 " / imm: %" PRId64 " / offset: %" PRId64 "\n",
-                 isa_int_regs_in[0], phys_int_regs_in[0], imm_value, offset);
+                 "BCMPI isa-in: %" PRIu16 " / phys-in: %" PRIu16 " / imm: %" PRId64 " / offset: %" PRId64 " = 0x%llx\n",
+                 isa_int_regs_in[0], phys_int_regs_in[0], imm_value, offset,
+						static_cast<int64_t>(getInstructionAddress()) + offset);
     }
 
     void execute(SST::Output* output, VanadisRegisterFile* regFile) override {
 #ifdef VANADIS_BUILD_DEBUG
         output->verbose(CALL_INFO, 16, 0,
                         "Execute: (addr=0x%0llx) BCMPI isa-in: %" PRIu16 " / phys-in: %" PRIu16 " / imm: %" PRId64
-                        " / offset: %" PRId64 "\n",
-                        getInstructionAddress(), isa_int_regs_in[0], phys_int_regs_in[0], imm_value, offset);
+                        " / offset: %" PRId64 " = (0x%llx) \n",
+                        getInstructionAddress(), isa_int_regs_in[0], phys_int_regs_in[0], imm_value, offset,
+								static_cast<int64_t>(getInstructionAddress()) + offset);
 #endif
         bool compare_result = false;
 

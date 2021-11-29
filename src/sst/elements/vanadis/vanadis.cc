@@ -833,7 +833,7 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
 
 #ifdef VANADIS_BUILD_DEBUG
                 output->verbose(CALL_INFO, 8, 0,
-                                "----> speculated addr: 0x%llx / result addr: 0x%llx / "
+                                "----> Retire: speculated addr: 0x%llx / result addr: 0x%llx / "
                                 "pipeline-clear: %s\n",
                                 spec_ins->getSpeculatedAddress(), pipeline_reset_addr,
                                 perform_pipeline_clear ? "yes" : "no");
@@ -875,8 +875,17 @@ VANADIS_COMPONENT::performRetire(VanadisCircularQueue<VanadisInstruction*>* rob,
             rob->pop();
 
 #ifdef VANADIS_BUILD_DEBUG
-            output->verbose(CALL_INFO, 8, 0, "----> Retire: 0x%0llx / %s\n", rob_front->getInstructionAddress(),
-                            rob_front->getInstCode());
+				if(output->getVerboseLevel() >= 8) {
+					char* inst_asm_buffer = new char[32768];
+	        		rob_front->printToBuffer(inst_asm_buffer, 32768);
+
+					output->verbose(CALL_INFO, 8, 0, "----> Retire: 0x%0llx / %s\n", rob_front->getInstructionAddress(),
+									inst_asm_buffer);
+
+//                            rob_front->getInstCode());
+
+					delete[] inst_asm_buffer;
+				}
 #endif
             if (pipelineTrace != nullptr) {
                 fprintf(pipelineTrace, "0x%08llx %s\n", rob_front->getInstructionAddress(), rob_front->getInstCode());

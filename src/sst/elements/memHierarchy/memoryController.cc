@@ -394,6 +394,7 @@ void MemController::handleEvent(SST::Event* event) {
         case Command::GetS:
         case Command::GetX:
         case Command::GetSX:
+        case Command::Write:
             outstandingEvents_.insert(std::make_pair(ev->getID(), ev));
             memBackendConvertor_->handleMemEvent( ev );
             break;
@@ -493,7 +494,7 @@ void MemController::handleMemResponse( Event::id_type id, uint32_t flags ) {
     bool noncacheable  = ev->queryFlag(MemEvent::F_NONCACHEABLE);
 
     /* Write data. Here instead of receive to try to match backing access order to backend execute order */
-    if (backing_ && (ev->getCmd() == Command::PutM || (ev->getCmd() == Command::GetX && noncacheable)))
+    if (backing_ && (ev->getCmd() == Command::PutM || (ev->getCmd() == Command::Write)))
         writeData(ev);
 
     if (ev->queryFlag(MemEvent::F_NORESPONSE)) {
@@ -504,9 +505,9 @@ void MemController::handleMemResponse( Event::id_type id, uint32_t flags ) {
     MemEvent * resp = ev->makeResponse();
 
     /* Read order matches execute order so that mis-ordering at backend can result in bad data */
-    if (resp->getCmd() == Command::GetSResp || (resp->getCmd() == Command::GetXResp && !noncacheable)) {
+    if (resp->getCmd() == Command::GetSResp || resp->getCmd() == Command::GetXResp) {
         readData(resp);
-        if (!noncacheable) resp->setCmd(Command::GetXResp);
+        if (!resp->queryFlag(MemEvent::F_NONCACHEABLE)) resp->setCmd(Command::GetXResp);
     }
 
     resp->setFlags(flags);
@@ -575,7 +576,7 @@ void MemController::writeData(MemEvent* event) {
         return;
     }
 
-    if (noncacheable && event->getCmd() == Command::GetX) {
+    if (event->getCmd() == Command::Write) {
         if (is_debug_event(event)) { Debug(_L4_, "\tUpdate backing. Addr = %" PRIx64 ", Size = %i\n", addr, event->getSize()); }
 
         backing_->set(addr, event->getSize(), event->getPayload());
@@ -658,10 +659,10 @@ Addr MemController::translateToGlobal(Addr addr) {
 
 void MemController::processInitEvent( MemEventInit* me ) {
     /* Push data to memory */
-    if (Command::GetX == me->getCmd()) {
+    if (Command::Write == me->getCmd()) {
         me->setAddr(translateToLocal(me->getAddr()));
         Addr addr = me->getAddr();
-        if (is_debug_event(me)) { Debug(_L9_,"Memory init %s - Received GetX for %" PRIx64 " size %zu\n", getName().c_str(), me->getAddr(),me->getPayload().size()); }
+        if (is_debug_event(me)) { Debug(_L9_,"Memory init %s - Received Write for %" PRIx64 " size %zu\n", getName().c_str(), me->getAddr(),me->getPayload().size()); }
         if ( isRequestAddressValid(addr) && backing_ ) {
             backing_->set(addr, me->getPayload().size(), me->getPayload());
             if (is_debug_event(me)) {

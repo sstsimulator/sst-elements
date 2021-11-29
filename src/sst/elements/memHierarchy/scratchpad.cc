@@ -349,7 +349,7 @@ void Scratchpad::setup() { }
  */
 void Scratchpad::processIncomingNetworkEvent(SST::Event* event) {
     MemEventBase * ev = static_cast<MemEventBase*>(event);
-    if (ev->getCmd() == Command::GetSResp || ev->getCmd() == Command::GetXResp)
+    if (ev->getCmd() == Command::GetSResp || ev->getCmd() == Command::GetXResp || ev->getCmd() == Command::WriteResp)
         processIncomingRemoteEvent(event);
     else
         processIncomingCPUEvent(event);
@@ -377,6 +377,7 @@ void Scratchpad::processIncomingCPUEvent(SST::Event* event) {
         case Command::GetS:
             handleRead(ev);
             break;
+        case Command::Write:
         case Command::GetX:
         case Command::PutM:
         case Command::PutE:
@@ -1017,7 +1018,7 @@ void Scratchpad::handleRemoteWrite(MemEvent * event) {
     stat_RemoteWriteReceived->addData(1);
 
     event->setBaseAddr((event->getAddr() - remoteAddrOffset_) & ~(remoteLineSize_ - 1));
-    MemEvent * request = new MemEvent(getName(), event->getAddr() - remoteAddrOffset_, event->getBaseAddr(), Command::GetX, event->getPayload());
+    MemEvent * request = new MemEvent(getName(), event->getAddr() - remoteAddrOffset_, event->getBaseAddr(), Command::Write, event->getPayload());
     request->setFlag(MemEvent::F_NORESPONSE);
     request->setFlag(MemEvent::F_NONCACHEABLE);
     request->setRqstr(event->getRqstr());
@@ -1126,7 +1127,7 @@ void Scratchpad::updateMSHR(Addr baseAddr) {
                 cacheStatus_.at(baseAddr/scratchLineSize_) = true;
             }
             break;
-        } else if (entry->cmd == Command::GetX) {
+        } else if (entry->cmd == Command::GetX || entry->cmd == Command::Write) {
             doScratchWrite(entry->scratch);
             finishRequest(entry->id);
             mshr_.find(baseAddr)->second.pop_front();

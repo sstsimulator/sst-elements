@@ -24,9 +24,9 @@ namespace Vanadis {
 class VanadisSyscallIOCtlEvent : public VanadisSyscallEvent {
 public:
     VanadisSyscallIOCtlEvent() : VanadisSyscallEvent() {}
-    VanadisSyscallIOCtlEvent(uint32_t core, uint32_t thr, int64_t file_d, bool o_read, bool o_write,
+    VanadisSyscallIOCtlEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype, int64_t file_d, bool o_read, bool o_write,
                              uint64_t io_request, uint64_t io_driver, uint64_t data_ptr, uint64_t data_len)
-        : VanadisSyscallEvent(core, thr), fd(file_d), op_read(o_read), op_write(o_write), io_op(io_request),
+        : VanadisSyscallEvent(core, thr, bittype), fd(file_d), op_read(o_read), op_write(o_write), io_op(io_request),
           io_drv(io_driver), ptr(data_ptr), ptr_len(data_len) {}
 
     VanadisSyscallOp getOperation() { return SYSCALL_OP_IOCTL; }

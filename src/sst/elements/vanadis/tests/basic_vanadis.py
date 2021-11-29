@@ -99,9 +99,14 @@ if app_args != "":
 else:
 	print("No application arguments found, continuing with argc=0")
 
-decode0     = v_cpu_0.setSubComponent( "decoder0", "vanadis.VanadisMIPSDecoder" )
-os_hdlr     = decode0.setSubComponent( "os_handler", "vanadis.VanadisMIPSOSHandler" )
-branch_pred = decode0.setSubComponent( "branch_unit", "vanadis.VanadisBasicBranchUnit")
+vanadis_isa = os.getenv("VANADIS_ISA", "MIPS")
+vanadis_decoder = "vanadis.Vanadis" + vanadis_isa + "Decoder"
+vanadis_os_hdlr = "vanadis.Vanadis" + vanadis_isa + "OSHandler"
+
+decode0     = v_cpu_0.setSubComponent( "decoder0", vanadis_decoder )
+os_hdlr     = decode0.setSubComponent( "os_handler", vanadis_os_hdlr )
+#os_hdlr     = decode0.setSubComponent( "os_handler", "vanadis.VanadisMIPSOSHandler" )
+branch_pred = decode0.setSubComponent( "branch_unit", "vanadis.VanadisBasicBranchUnit" )
 
 decode0.addParams({
 	"uop_cache_entries" : 1536,

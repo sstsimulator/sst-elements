@@ -438,12 +438,21 @@ public:
 
                     if (out->getVerboseLevel() >= 16) {
                         char* payload_print = new char[256];
-                        snprintf(payload_print, 256, "0x%x 0x%x 0x%x 0x%x", (ev->data.size() > 0 ? ev->data[0] : 0),
-                                 (ev->data.size() > 1 ? ev->data[1] : 0), (ev->data.size() > 2 ? ev->data[2] : 0),
-                                 (ev->data.size() > 3 ? ev->data[3] : 0));
+								char* payload_print_inner = new char[256];
 
-                        out->verbose(CALL_INFO, 16, 0, "-> payload (first 4 bytes): %s\n", payload_print);
+								payload_print[0] = '\0';
+								payload_print_inner[0] = '\0';
+
+								for( int s = 0; s < std::min((int)ev->data.size(), 8); ++s) {
+									std::strncpy(payload_print_inner, payload_print, 256);
+	                        snprintf(payload_print, 256, "%s 0x%02x", payload_print_inner, ev->data[s]);
+								}
+
+                        out->verbose(CALL_INFO, 16, 0, "-> payload (first %d bytes): %s\n",
+									std::min((int)ev->data.size(), 8), payload_print);
+
                         delete[] payload_print;
+								delete[] payload_print_inner;
                     }
 
                     if ((*op_q_itr)->isLoad()) { // TODO it better be since this is a ReadResp

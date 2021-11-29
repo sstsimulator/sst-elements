@@ -40,7 +40,7 @@ public:
     static const uint32_t F_LOCKED          = 0x00000001;
     static const uint32_t F_NONCACHEABLE    = 0x00000010;
     static const uint32_t F_LLSC            = 0x00000100;
-    static const uint32_t F_SUCCESS         = 0x00001000;
+    static const uint32_t F_FAIL            = 0x00001000;
     static const uint32_t F_NORESPONSE      = 0x00010000;
 
 
@@ -150,9 +150,9 @@ public:
             str += "F_LLSC";
             addComma = true;
         }
-        if (flags_ & F_SUCCESS) {
+        if (flags_ & F_FAIL) {
             if (addComma) str += ", ";
-            str += "F_SUCCESS";
+            str += "F_FAIL";
             addComma = true;
         }
         if (flags_ & F_NORESPONSE) {

@@ -775,10 +775,10 @@ void Cache::registerStatistics() {
     statUncacheRecv[(int)Command::Get]      = registerStatistic<uint64_t>("Get_uncache_recv");
     statUncacheRecv[(int)Command::AckMove]  = registerStatistic<uint64_t>("AckMove_uncache_recv");
     statUncacheRecv[(int)Command::GetS]     = registerStatistic<uint64_t>("GetS_uncache_recv");
-    statUncacheRecv[(int)Command::GetX]     = registerStatistic<uint64_t>("GetX_uncache_recv");
+    statUncacheRecv[(int)Command::Write]    = registerStatistic<uint64_t>("Write_uncache_recv");
     statUncacheRecv[(int)Command::GetSX]    = registerStatistic<uint64_t>("GetSX_uncache_recv");
     statUncacheRecv[(int)Command::GetSResp] = registerStatistic<uint64_t>("GetSResp_uncache_recv");
-    statUncacheRecv[(int)Command::GetXResp] = registerStatistic<uint64_t>("GetXResp_uncache_recv");
+    statUncacheRecv[(int)Command::WriteResp]  = registerStatistic<uint64_t>("WriteResp_uncache_recv");
     statUncacheRecv[(int)Command::CustomReq]  = registerStatistic<uint64_t>("CustomReq_uncache_recv");
     statUncacheRecv[(int)Command::CustomResp] = registerStatistic<uint64_t>("CustomResp_uncache_recv");
     statUncacheRecv[(int)Command::CustomAck]  = registerStatistic<uint64_t>("CustomAck_uncache_recv");

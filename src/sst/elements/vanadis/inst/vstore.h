@@ -91,16 +91,16 @@ public:
         switch (regType) {
         case STORE_INT_REGISTER: {
             snprintf(buffer, buffer_size,
-                     "STORE (%s)   %5" PRIu16 " -> memory[%5" PRIu16 " + %" PRId64 "] (phys: %5" PRIu16
+                     "STORE (%s, %" PRIu16 " bytes)   %5" PRIu16 " -> memory[%5" PRIu16 " + %" PRId64 "] (phys: %5" PRIu16
                      " -> memory[%5" PRIu16 " + %" PRId64 "])",
-                     getTransactionTypeString(memAccessType), isa_int_regs_in[1], isa_int_regs_in[0], offset,
+                     getTransactionTypeString(memAccessType), store_width, isa_int_regs_in[1], isa_int_regs_in[0], offset,
                      phys_int_regs_in[1], phys_int_regs_in[0], offset);
         } break;
         case STORE_FP_REGISTER: {
             snprintf(buffer, buffer_size,
-                     "STOREFP (%s)   %5" PRIu16 " -> memory[%5" PRIu16 " + %" PRId64 "] (phys: %5" PRIu16
+                     "STOREFP (%s, %" PRIu16 " bytes))   %5" PRIu16 " -> memory[%5" PRIu16 " + %" PRId64 "] (phys: %5" PRIu16
                      " -> memory[%5" PRIu16 " + %" PRId64 "])",
-                     getTransactionTypeString(memAccessType), isa_fp_regs_in[0], isa_int_regs_in[0], offset,
+                     getTransactionTypeString(memAccessType), store_width, isa_fp_regs_in[0], isa_int_regs_in[0], offset,
                      phys_fp_regs_in[0], phys_int_regs_in[0], offset);
         } break;
         }

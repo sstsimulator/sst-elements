@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "os/node/vnodeoshstate.h"
+#include "os/vosbittype.h"
 #include <sst/core/interfaces/stdMem.h>
 
 using namespace SST::Interfaces;
@@ -29,10 +30,10 @@ namespace Vanadis {
 
 class VanadisWritevHandlerState : public VanadisHandlerState {
 public:
-    VanadisWritevHandlerState(uint32_t verbosity, int64_t fd, uint64_t iovec_addr, int64_t iovec_count, FILE* handle,
+    VanadisWritevHandlerState(uint32_t verbosity, VanadisOSBitType bit_type, int64_t fd, uint64_t iovec_addr, int64_t iovec_count, FILE* handle,
                               std::function<void(StandardMem::Request*)> send_r)
         : VanadisHandlerState(verbosity), writev_fd(fd), writev_iovec_addr(iovec_addr), writev_iovec_count(iovec_count),
-          file_handle(handle), send_mem_req(send_r) {
+          file_handle(handle), send_mem_req(send_r), bittype(bit_type) {
 
         reset_iovec();
         current_offset = 0;
@@ -57,18 +58,49 @@ public:
                         "[syscall-writev] processing incoming request (addr: "
                         "0x%llx, size: %" PRIu64 ")\n",
                         resp_addr, (uint64_t)resp_size);
+		  output->verbose(CALL_INFO, 16, 0, 
+								"[syscall-writev] is OS 64bit? %s\n",
+								bittype == VanadisOSBitType::VANADIS_OS_64B ? "yes" : "no");
 
         switch (state) {
         case 0: {
-            current_iovec_base_addr = (uint64_t)(*((uint32_t*)(&resp_data[0])));
+				switch(bittype) {
+				case VanadisOSBitType::VANADIS_OS_32B:
+					assert(4 == resp_size);
+	            current_iovec_base_addr = (uint64_t)(*((uint32_t*)(&resp_data[0])));
+					break;
+				case VanadisOSBitType::VANADIS_OS_64B:
+					assert(8 == resp_size);
+	            current_iovec_base_addr = (uint64_t)(*((uint64_t*)(&resp_data[0])));
+					break;
+				}
+
             output->verbose(CALL_INFO, 16, 0, "iovec-data-address: 0x%llx\n", current_iovec_base_addr);
 
-            send_mem_req(
-                new StandardMem::Read(writev_iovec_addr + (current_iovec * 8) + 4, 4));
+				switch(bittype) {
+            case VanadisOSBitType::VANADIS_OS_32B:
+	            send_mem_req(
+   	             new StandardMem::Read(writev_iovec_addr + (current_iovec * 8) + resp_size, 4));
+					break;
+            case VanadisOSBitType::VANADIS_OS_64B:
+	            send_mem_req(
+   	             new StandardMem::Read(writev_iovec_addr + (current_iovec * 16) + resp_size, 8));
+					break;
+				}
             state++;
         } break;
         case 1: {
+				switch(bittype) {
+				case VanadisOSBitType::VANADIS_OS_32B:
+					assert(4 == resp_size);
             current_iovec_length = (int64_t)(*((int32_t*)(&resp_data[0])));
+				break;
+				case VanadisOSBitType::VANADIS_OS_64B:
+					assert(8 == resp_size);
+            current_iovec_length = (int64_t)(*((int64_t*)(&resp_data[0])));
+				break;
+				}
+
             uint64_t base_addr_offset = (current_iovec_base_addr % 64);
 
             output->verbose(CALL_INFO, 16, 0, "iovec-data-len: %" PRIu64 "\n", current_iovec_length);
@@ -91,8 +123,16 @@ public:
                     current_offset = 0;
 
                     // Launch the next iovec read
-                    send_mem_req(
-                        new StandardMem::Read(writev_iovec_addr + (current_iovec * 8), 4));
+							switch(bittype) {
+				            case VanadisOSBitType::VANADIS_OS_32B:
+            		        send_mem_req(
+                  	      new StandardMem::Read(writev_iovec_addr + (current_iovec * 8), 4));
+								break;
+				            case VanadisOSBitType::VANADIS_OS_64B:
+            		        send_mem_req(
+                  	      new StandardMem::Read(writev_iovec_addr + (current_iovec * 16), 8));
+								break;
+							}
                     state = 0;
                 } else {
                     output->verbose(CALL_INFO, 16, 0, "iovec processing is completed.\n");
@@ -129,8 +169,17 @@ public:
                     current_offset = 0;
 
                     // Launch the next iovec read
-                    send_mem_req(
-                        new StandardMem::Read(writev_iovec_addr + (current_iovec * 8), 4));
+							switch(bittype) {
+                        case VanadisOSBitType::VANADIS_OS_32B:
+		                    send_mem_req(
+      		                  new StandardMem::Read(writev_iovec_addr + (current_iovec * 8), 4));
+								break;
+                        case VanadisOSBitType::VANADIS_OS_64B:
+		                    send_mem_req(
+      		                  new StandardMem::Read(writev_iovec_addr + (current_iovec * 16), 8));
+								break;
+							}
+
                     state = 0;
                 } else {
                     output->verbose(CALL_INFO, 16, 0, "iovec processing is completed.\n");
@@ -155,7 +204,7 @@ public:
     public:
         StandardMemHandlers(VanadisWritevHandlerState* state, SST::Output* out) :
                 StandardMem::RequestHandler(out), state_handler(state) {}
-        
+
         virtual void handle(StandardMem::ReadResp* req) override {
             state_handler->resp_data = req->data;
             state_handler->resp_size = req->size;
@@ -232,6 +281,8 @@ protected:
     std::vector<uint8_t> resp_data;
     size_t resp_size;
     uint64_t resp_addr;
+
+	VanadisOSBitType bittype;
 };
 
 } // namespace Vanadis

@@ -24,8 +24,8 @@ namespace Vanadis {
 class VanadisSyscallExitGroupEvent : public VanadisSyscallEvent {
 public:
     VanadisSyscallExitGroupEvent() : VanadisSyscallEvent() {}
-    VanadisSyscallExitGroupEvent(uint32_t core, uint32_t thr, uint64_t rc)
-        : VanadisSyscallEvent(core, thr), return_code(rc) {}
+    VanadisSyscallExitGroupEvent(uint32_t core, uint32_t thr, VanadisOSBitType bittype, uint64_t rc)
+        : VanadisSyscallEvent(core, thr, bittype), return_code(rc) {}
 
     VanadisSyscallOp getOperation() { return SYSCALL_OP_EXIT_GROUP; }
 

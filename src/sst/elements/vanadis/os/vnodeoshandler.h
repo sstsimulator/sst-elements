@@ -395,11 +395,21 @@ public:
                         = std::bind(&VanadisNodeOSCoreHandler::sendMemRequest, this, std::placeholders::_1);
 
                     handler_state = new VanadisWritevHandlerState(
-                        output->getVerboseLevel(), writev_ev->getFileDescriptor(), writev_ev->getIOVecAddress(),
+                        output->getVerboseLevel(), writev_ev->getOSBitType(), writev_ev->getFileDescriptor(), writev_ev->getIOVecAddress(),
                         writev_ev->getIOVecCount(), file_des->second->getFileHandle(), send_req_func);
 
                     // Launch read of the initial iovec info
+						  switch(writev_ev->getOSBitType()) {
+							case VanadisOSBitType::VANADIS_OS_32B:
                     sendMemRequest(new StandardMem::Read(writev_ev->getIOVecAddress(), 4));
+								break;
+							case VanadisOSBitType::VANADIS_OS_64B:
+                    sendMemRequest(new StandardMem::Read(writev_ev->getIOVecAddress(), 8));
+								break;
+							default:
+								output->fatal(CALL_INFO, -1, "OS event is neither 32b or 64b, unsupported OS bit type.\n");
+								break;
+						  }
                 } else if (writev_ev->getIOVecCount() == 0) {
                     VanadisSyscallResponse* resp = new VanadisSyscallResponse(0);
                     core_link->send(resp);
