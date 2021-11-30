@@ -61,6 +61,7 @@ inst/vjr.h \
 inst/vjump.h \
 inst/vload.h \
 inst/vmemflagtype.h \
+inst/vmod.h \
 inst/vmovci.h \
 inst/vmul.h \
 inst/vmuli.h \
