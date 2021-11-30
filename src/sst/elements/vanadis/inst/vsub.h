@@ -35,12 +35,20 @@ public:
 
     VanadisSubInstruction* clone() override { return new VanadisSubInstruction(*this); }
     VanadisFunctionalUnitType getInstFuncType() const override { return INST_INT_ARITH; }
-    const char* getInstCode() const override { return "SUB"; }
+    const char* getInstCode() const override {
+		if(register_format == VanadisRegisterFormat::VANADIS_FORMAT_INT32) {
+			return "SUB32";
+		} else if(register_format == VanadisRegisterFormat::VANADIS_FORMAT_INT64) {
+			return "SUB64";
+		} else {
+			return "SUB";
+		}
+	}
 
     void printToBuffer(char* buffer, size_t buffer_size) override {
         snprintf(buffer, buffer_size,
-                 "SUB   %5" PRIu16 " <- %5" PRIu16 " - %5" PRIu16 " (phys: %5" PRIu16 " <- %5" PRIu16 " - %5" PRIu16
-                 ")",
+                 "%6s %5" PRIu16 " <- %5" PRIu16 " - %5" PRIu16 " (phys: %5" PRIu16 " <- %5" PRIu16 " - %5" PRIu16
+                 ")", getInstCode(),
                  isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1], phys_int_regs_out[0], phys_int_regs_in[0],
                  phys_int_regs_in[1]);
     }
@@ -48,9 +56,9 @@ public:
     void execute(SST::Output* output, VanadisRegisterFile* regFile) override {
 #ifdef VANADIS_BUILD_DEBUG
         output->verbose(CALL_INFO, 16, 0,
-                        "Execute: (addr=%p) SUB phys: out=%" PRIu16 " in=%" PRIu16 ", %" PRIu16 ", isa: out=%" PRIu16
+                        "Execute: (addr=%p) %s phys: out=%" PRIu16 " in=%" PRIu16 ", %" PRIu16 ", isa: out=%" PRIu16
                         " / in=%" PRIu16 ", %" PRIu16 "\n",
-                        (void*)getInstructionAddress(), phys_int_regs_out[0], phys_int_regs_in[0], phys_int_regs_in[1],
+                        (void*)getInstructionAddress(), getInstCode(), phys_int_regs_out[0], phys_int_regs_in[0], phys_int_regs_in[1],
                         isa_int_regs_out[0], isa_int_regs_in[0], isa_int_regs_in[1]);
 #endif
         switch (register_format) {

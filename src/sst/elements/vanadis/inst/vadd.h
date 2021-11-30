@@ -37,11 +37,25 @@ public:
     VanadisFunctionalUnitType getInstFuncType() const override { return INST_INT_ARITH; }
 
     const char* getInstCode() const override {
+		  if(VanadisRegisterFormat::VANADIS_FORMAT_INT64 == register_format ) {
+        if (perform_signed) {
+            return "ADD32";
+        } else {
+            return "ADDU32";
+        }
+		  } else if( VanadisRegisterFormat::VANADIS_FORMAT_INT64 == register_format ) {
+        if (perform_signed) {
+            return "ADD64";
+        } else {
+            return "ADDU64";
+        }
+		  } else {
         if (perform_signed) {
             return "ADD";
         } else {
             return "ADDU";
         }
+ 		  }
     }
 
     void printToBuffer(char* buffer, size_t buffer_size) override {
