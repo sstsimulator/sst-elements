@@ -542,11 +542,15 @@ VANADIS_COMPONENT::resetRegisterUseTemps(const uint16_t int_reg_count, const uin
     }
 }
 
+// TODO - rob_start found_store and found_load should be arrays per thread for this call I think?
 int
-VANADIS_COMPONENT::performIssue(const uint64_t cycle) {
+VANADIS_COMPONENT::performIssue(const uint64_t cycle, uint32_t& rob_start, bool& found_store, bool& found_load) {
     const int output_verbosity = output->getVerboseLevel();
     bool issued_an_ins = false;
-    ;
+
+    if(output_verbosity >= 8) {
+	    output->verbose(CALL_INFO, 8, 0, "-> performIssue ROB-start: %" PRIu32 "\n", rob_start);
+    }
 
     for (uint32_t i = 0; i < hw_threads; ++i) {
         if (!halted_masks[i]) {
@@ -555,16 +559,11 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle) {
                 issue_isa_tables[i]->print(output, register_files[i], print_int_reg, print_fp_reg);
             }
 #endif
-
-            bool found_store = false;
-            bool found_load = false;
+			   // we have not issued an instruction this cycle
             issued_an_ins = false;
 
-            // Set all register uses to false for this thread
-            resetRegisterUseTemps(thread_decoders[i]->countISAIntReg(), thread_decoders[i]->countISAFPReg());
-
             // Find the next instruction which has not been issued yet
-            for (uint32_t j = 0; j < rob[i]->size(); ++j) {
+            for (uint32_t j = rob_start; j < rob[i]->size(); ++j) {
                 VanadisInstruction* ins = rob[i]->peekAt(j);
 
                 if (!ins->completedIssue()) {
@@ -660,6 +659,8 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle) {
 
                 // We issued an instruction this cycle, so exit
                 if (issued_an_ins) {
+						  // tell the caller where we got this from
+						  rob_start = j;
                     break;
                 }
             }
@@ -1202,8 +1203,19 @@ VANADIS_COMPONENT::tick(SST::Cycle_t cycle) {
                     "=> Issue Stage  "
                     "<==========================================================\n");
 #endif
+    uint32_t rob_start = 0;
+    bool found_store = false;
+    bool found_load  = false;
+
+    // Clear our temps on a per-thread basis
+	 for(uint32_t i = 0; i < hw_threads; ++i) {
+    	resetRegisterUseTemps(thread_decoders[i]->countISAIntReg(), thread_decoders[i]->countISAFPReg());
+	 }
+
+    // Attempt to perform issues, cranking through the entire ROB call by call or until we
+    // reach the max issues this cycle
     for (uint32_t i = 0; i < issues_per_cycle; ++i) {
-        if (performIssue(cycle) != 0) {
+        if (performIssue(cycle, rob_start, found_store, found_load) != 0) {
             break;
         }
     }
