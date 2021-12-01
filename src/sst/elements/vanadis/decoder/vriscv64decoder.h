@@ -43,6 +43,8 @@ public:
       {"predecode_cache_entries",
        "Number of cache lines that a cached prior to decoding (these support "
        "loading from cache prior to decode)"},
+      {"halt_on_decode_fault",
+		"Fatal error if a decode fault occurs, used for debugging and not recommmended default is 0 (false)", "0"},
       {"stack_start_address",
        "Sets the start of the stack and dynamic program segments"})
 
@@ -58,6 +60,8 @@ public:
         // if not, we will fall back to ELF reading at the core level to work this
         // out
         setInstructionPointer(params.find<uint64_t>("entry_point", 0));
+
+		  fatal_decode_fault = params.find<bool>("halt_on_decode_fault", false);
     }
 
     ~VanadisRISCV64Decoder() {}
@@ -558,6 +562,7 @@ public:
 
 protected:
     const VanadisDecoderOptions* options;
+    bool fatal_decode_fault;
     uint64_t                     start_stack_address;
     uint16_t                     icache_max_bytes_per_cycle;
     uint16_t                     max_decodes_per_cycle;
@@ -2070,13 +2075,17 @@ protected:
             output->verbose(
                 CALL_INFO, 16, 0, "[decode] -> 16bit RVC format / ins-op-code-family: %" PRIu32 " / 0x%x\n", op_code,
                 op_code);
-            if ( decode_fault ) { output->fatal(CALL_INFO, -1, "STOP\n"); }
+//            if ( decode_fault ) { output->fatal(CALL_INFO, -1, "STOP\n"); }
         }
 
-        //		  if(decode_fault) {
-        //				bundle->addInstruction(new VanadisInstructionDecodeFault(ins_address, hw_thr,
-        // options));
-        //			}
+
+		  if(fatal_decode_fault) {
+				output->fatal(CALL_INFO, 16, 0, "[decode] -> decode fault detected at 0x%llx / thr: %" PRIu32 ", set to fatal on detect\n", ins_address,
+					hw_thr);
+		  }
+        		  if(decode_fault) {
+       			bundle->addInstruction(new VanadisInstructionDecodeFault(ins_address, hw_thr, options));
+       			}
     }
 
     uint16_t expand_rvc_int_register(const uint16_t reg_in) const { return reg_in + 8; }
