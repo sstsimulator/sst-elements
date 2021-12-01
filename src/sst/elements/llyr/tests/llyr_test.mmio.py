@@ -1,13 +1,14 @@
 # test configuration for using llyr as an mmio device
 import sst
 
-DEBUG_L1 = 0
-DEBUG_MEM = 0
+DEBUG_L1 = 1
+DEBUG_MEM = 1
 DEBUG_CORE = 1
-DEBUG_DIR = 0
+DEBUG_DIR = 1
+DEBUG_OTHERS = 1
 DEBUG_LEVEL = 10
 
-debug_params = { "debug" : 0, "debug_level" : 10 }
+debug_params = { "debug" : DEBUG_OTHERS, "debug_level" : 10 }
 
 # Define SST core options
 sst.setProgramOption("timebase", "1 ps")
@@ -17,22 +18,23 @@ sst.setProgramOption("stopAtCycle", "10000s")
 network_bw = "25GB/s"
 cpu_clk = 2.6
 tile_clk_mhz = 1
-mem_size = 1024
-mmio_addr = 1024
+backing_size = 16384
+mem_size = 256
+mmio_addr = 256
 statLevel = 16
 
-# On network: (Core, L1), MMIO device, (dir, memory)
-# Logical communication: Core->L1->dir->memory
-#                        Core->(L1)->MMIO
-#                        MMIO->dir->memory
-l1_group = 1
+# Network
+core_group = 1
 mmio_group = 2
 dir_group = 3
+mem_group = 4
 
-l1_dst = [mmio_group, dir_group]
-mmio_src = [l1_group]
+l1_dst = [dir_group,mmio_group]
+mmio_src = [core_group]
 mmio_dst = [dir_group]
-dir_src = [l1_group,mmio_group]
+dir_src = [core_group,mmio_group]
+dir_dst = [mem_group]
+mem_src = [dir_group]
 
 # Define the simulation components
 cpu = sst.Component("cpu", "memHierarchy.standardCPU")
@@ -45,8 +47,12 @@ cpu.addParams({
       "clock" : str(cpu_clk) + "GHz",
       "verbose" : 3,
 })
-iface = cpu.setSubComponent("memory", "memHierarchy.standardInterface")
-iface.addParams(debug_params)
+
+cpu_iface = cpu.setSubComponent("memory", "memHierarchy.standardInterface")
+cpu_iface.addParams(debug_params)
+
+cpu_link = cpu_iface.setSubComponent("memlink", "memHierarchy.MemLink")
+cpu_link.addParams(debug_params)
 
 l1cache = sst.Component("l1cache", "memHierarchy.Cache")
 l1cache.addParams({
@@ -61,12 +67,15 @@ l1cache.addParams({
       "debug" : DEBUG_L1,
       "debug_level" : DEBUG_LEVEL
 })
-l1_cpu = l1cache.setSubComponent("cpulink", "memHierarchy.MemLink")
-l1_nic = l1cache.setSubComponent("memlink", "memHierarchy.MemNIC")
-l1_nic.addParams({ "group" : l1_group,
-                   "destinations" : l1_dst,
-                   "network_bw" : network_bw})
-#l1_nic.addParams(debug_params)
+
+cpu_l1_link = l1cache.setSubComponent("cpulink", "memHierarchy.MemLink") # Non-network link
+cpu_l1_link.addParams(debug_params)
+
+cpu_l1_nic = l1cache.setSubComponent("memlink", "memHierarchy.MemNIC")   # Network link
+cpu_l1_nic.addParams({ "group" : core_group,
+                       "destinations" : l1_dst,
+                       "network_bw" : network_bw})
+cpu_l1_nic.addParams(debug_params)
 
 
 df_0 = sst.Component("df_0", "llyr.LlyrDataflow")
@@ -74,67 +83,89 @@ df_0.addParams({
     "verbose": 20,
     "clock" : str(tile_clk_mhz) + "GHz",
     "device_addr"   : mmio_addr,
-    "mem_init"      : "spmm-mem.in",
-    "application"   : "spmm.in",
+    "mem_init"      : "int-1.mem",
+    #"application"   : "conditional.in",
+    "application"   : "gemm.in",
+    #"application"   : "llvm_in/cdfg-example-02.ll",
     "hardware_graph": "hardware.cfg",
     "mapper"        : "llyr.mapper.simple"
-})
-df_l1 = df_0.setSubComponent("memory", "memHierarchy.standardInterface")
 
-df_l1cache = sst.Component("df_l1cache", "memHierarchy.Cache")
-df_l1cache.addParams({
-    "access_latency_cycles" : "2",
-    "cache_frequency" : str(tile_clk_mhz) + "GHz",
-    "replacement_policy" : "lru",
-    "coherence_protocol" : "MESI",
-    "associativity" : "1",
-    "cache_line_size" : "16",
-    "verbose" : 10,
-    "debug" : 1,
-    "debug_level" : 100,
-    "L1" : "1",
-    "cache_size" : "512B"
 })
-mmio_iface = df_l1cache.setSubComponent("cpulink", "memHierarchy.MemLink")
-mmio_nic = df_l1cache.setSubComponent("memlink", "memHierarchy.MemNIC")
-mmio_nic.addParams({"group" : mmio_group,
+
+df_iface = df_0.setSubComponent("iface", "memHierarchy.standardInterface")
+df_iface.addParams(debug_params)
+
+df_link = df_iface.setSubComponent("memlink", "memHierarchy.MemLink")
+df_link.addParams(debug_params)
+
+df_l1cache = sst.Component("df_l1", "memHierarchy.Cache")
+df_l1cache.addParams({
+      "access_latency_cycles" : "2",
+      "cache_frequency" : str(tile_clk_mhz) + "GHz",
+      "replacement_policy" : "lru",
+      "coherence_protocol" : "MESI",
+      "cache_size" : "512B",
+      "associativity" : "1",
+      "cache_line_size" : "16",
+      "L1" : "1",
+      "debug" : DEBUG_L1,
+      "debug_level" : DEBUG_LEVEL
+})
+
+df_l1_link = df_l1cache.setSubComponent("cpulink", "memHierarchy.MemLink") # Non-network link from device to device's L1
+df_l1_link.addParams(debug_params)
+
+df_l1_nic = df_l1cache.setSubComponent("memlink", "memHierarchy.MemNIC") # Network link
+df_l1_nic.addParams({"group" : mmio_group,
                     "sources" : mmio_src,
                     "destinations" : mmio_dst,
                     "network_bw" : network_bw })
-#mmio_nic.addParams(debug_params)
+df_l1_nic.addParams(debug_params)
 
 dir = sst.Component("directory", "memHierarchy.DirectoryController")
 dir.addParams({
-      "clock" : str(cpu_clk) + "GHz",
+      "clock" : str(tile_clk_mhz) + "GHz",
       "entry_cache_size" : 16384,
       "mshr_num_entries" : 16,
+      "addr_range_start" : 0,
       "addr_range_end" : mmio_addr - 1,
       "debug" : DEBUG_DIR,
       "debug_level" : 10,
 })
 
-dir_link = dir.setSubComponent("memlink", "memHierarchy.MemLink")
 dir_nic = dir.setSubComponent("cpulink", "memHierarchy.MemNIC")
 dir_nic.addParams({
       "group" : dir_group,
       "sources" : dir_src,
+      "destinations" : dir_dst,
       "network_bw" : network_bw,
       "network_input_buffer_size" : "2KiB",
       "network_output_buffer_size" : "2KiB",
 })
+dir_nic.addParams(debug_params)
 
 memctrl = sst.Component("memory", "memHierarchy.MemController")
 memctrl.addParams({
     "debug" : DEBUG_MEM,
     "debug_level" : DEBUG_LEVEL,
-    "clock" : "1GHz",
+    "clock" : str(tile_clk_mhz) + "GHz",
     "addr_range_end" : mmio_addr - 1,
 })
 
 memory = memctrl.setSubComponent("backend", "memHierarchy.simpleMem")
 memory.addParams({
       "access_time" : "100 ns",
-      "mem_size" : "512MiB"
+      "mem_size" : str(backing_size) + "B",
+})
+
+mem_nic = memctrl.setSubComponent("cpulink", "memHierarchy.MemNIC")
+mem_nic.addParams(debug_params)
+mem_nic.addParams({
+    "group" : mem_group,
+    "sources" : mem_src,
+    "network_bw" : network_bw,
+    "network_input_buffer_size" : "2KiB",
+    "network_output_buffer_size" : "2KiB"
 })
 
 chiprtr = sst.Component("chiprtr", "merlin.hr_router")
@@ -142,13 +173,14 @@ chiprtr.addParams({
       "xbar_bw" : "1GB/s",
       "id" : "0",
       "input_buf_size" : "1KB",
-      "num_ports" : "3",
+      "num_ports" : "4",
       "flit_size" : "72B",
       "output_buf_size" : "1KB",
       "link_bw" : "1GB/s",
       "topology" : "merlin.singlerouter"
 })
 chiprtr.setSubComponent("topology","merlin.singlerouter")
+
 
 # Enable SST Statistics Outputs for this simulation
 sst.setStatisticLoadLevel(statLevel)
@@ -157,27 +189,35 @@ sst.setStatisticOutput("sst.statOutputTXT", { "filepath" : "output.csv" })
 
 
 # Define the simulation links
-#                cpu/l1/l1_nic
+#                cpu/l1/cpu_l1_nic
 #                     |
-#  mmio/mmio_nic - chiprtr - dir_nic/dir/mem
+#  mmio/l1/mmio_l1_nic - chiprtr - dir_nic/dir/mem
 #
+# Connect CPU to CPU L1 via the CPU's interface and the L1's cpulink handler
 link_cpu_l1 = sst.Link("link_cpu")
-link_cpu_l1.connect( (iface, "port", "1000ps"), (l1_cpu, "port", "1000ps") )
+link_cpu_l1.connect( (cpu_link, "port", "1000ps"), (cpu_l1_link, "port", "1000ps") )
 
-link_l1_rtr = sst.Link("link_l1")
-link_l1_rtr.connect( (l1_nic, "port", '1000ps'), (chiprtr, "port0", "1000ps") )
+# Connect the CPU L1 to the network via the L1's memlink NIC handler
+link_core_rtr = sst.Link("link_core")
+link_core_rtr.connect( (cpu_l1_nic, "port", '1000ps'), (chiprtr, "port0", "1000ps") )
 
-link_df_l1 = sst.Link("link_df0")
-link_df_l1.connect( (df_l1, "port", "1000ps"), (mmio_iface, "port", "1000ps") )
+# Connect MMIO to MMIO L1 via the MMIO's interface and the L1's cpulink handler
+link_df_l1 = sst.Link("link_mmio")
+link_df_l1.connect( (df_link, "port", "500ps"), (df_l1_link, "port", "500ps") )
 
-link_dfl1_rtr = sst.Link("link_df_l1")
-link_dfl1_rtr.connect( (mmio_nic, "port", '1000ps'), (chiprtr, "port1", "1000ps") )
+# Connect the MMIO L1 to the network via the L1's memlink NIC handler
+link_device_rtr = sst.Link("link_device")
+link_device_rtr.connect( (df_l1_nic, "port", "500ps"), (chiprtr, "port1", "500ps"))
 
+# Connect directory to the network via the directory's NIC handler
 link_dir_rtr = sst.Link("link_dir")
 link_dir_rtr.connect( (dir_nic, "port", "1000ps"), (chiprtr, "port2", "1000ps"))
 
+# Connect directory to the memory
 link_dir_mem = sst.Link("link_mem")
-link_dir_mem.connect( (dir_link, "port", "1000ps"), (memctrl, "direct_link", "1000ps") )
+link_dir_mem.connect( (mem_nic, "port", "1000ps"), (chiprtr, "port3", "1000ps") )
+
+
 
 
 

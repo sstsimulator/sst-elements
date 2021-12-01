@@ -101,6 +101,30 @@ mmio_nic.addParams({"group" : mmio_group,
                     "network_bw" : network_bw })
 #mmio_nic.addParams(debug_params)
 
+df_l1cache = sst.Component("l1cache", "memHierarchy.Cache")
+df_l1cache.addParams({
+      "access_latency_cycles" : "2",
+      "cache_frequency" : str(tile_clk_mhz) + "GHz",
+      "replacement_policy" : "lru",
+      "coherence_protocol" : "MESI",
+      "cache_size" : "512B"
+      "associativity" : "1",
+      "cache_line_size" : "16",
+      "verbose" : 10,
+      "debug" : 1,
+      "debug_level" : 100,
+      "L1" : "1",
+      "addr_range_start" : 0,
+      "addr_range_end" : mmio_addr - 1,
+      "debug" : DEBUG_L1,
+      "debug_level" : DEBUG_LEVEL
+})
+df_l1_nic = df_l1cache.setSubComponent("cpulink", "memHierarchy.MemNIC")
+df_l1_nic.addParams({ "group" : l1_group,
+                      "sources" : l1_src,
+                      "destinations" : l1_dst,
+                      "network_bw" : network_bw})
+
 chiprtr = sst.Component("chiprtr", "merlin.hr_router")
 chiprtr.addParams({
       "xbar_bw" : "1GB/s",
@@ -116,9 +140,10 @@ chiprtr.setSubComponent("topology","merlin.singlerouter")
 
 memctrl = sst.Component("memory", "memHierarchy.MemController")
 memctrl.addParams({
+    "backing" : "mmap",
     "debug" : DEBUG_MEM,
     "debug_level" : DEBUG_LEVEL,
-    "clock" : "1GHz",
+    "clock" : str(tile_clk_mhz) + "GHz",
     "addr_range_end" : mmio_addr - 1,
 })
 mem_nic = memctrl.setSubComponent("cpulink", "memHierarchy.MemNIC")
@@ -127,10 +152,11 @@ mem_nic.addParams({"group" : memory_group,
                    "network_bw" : network_bw})
 #mem_nic.addParams(debug_params)
 
-memory = memctrl.setSubComponent("backend", "memHierarchy.simpleMem")
-memory.addParams({
-      "access_time" : "100 ns",
-      "mem_size" : "512MiB"
+backend = memctrl.setSubComponent("backend", "memHierarchy.simpleMem")
+backend.addParams({
+    "access_time" : "4 ns",
+    #"mem_size" : str(max_addr_gb) + "GiB",
+    "mem_size" : str(16384) + "B",
 })
 
 # Enable SST Statistics Outputs for this simulation
