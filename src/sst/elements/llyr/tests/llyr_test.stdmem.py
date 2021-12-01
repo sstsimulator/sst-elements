@@ -16,11 +16,11 @@ df_0.addParams({
     "clock" : str(tile_clk_mhz) + "GHz",
     "mem_init"      : "int-1.mem",
     #"application"   : "conditional.in",
-    "application"   : "llvm_in/cdfg_simple-01.ll",
+    "application"   : "llvm_in/cdfg-example-02.ll",
     "hardware_graph": "hardware.cfg",
     "mapper"        : "llyr.mapper.simple"
 })
-iface = df_0.setSubComponent("memory", "memHierarchy.standardInterface")
+iface = df_0.setSubComponent("iface", "memHierarchy.standardInterface")
 
 df_l1cache = sst.Component("l1cache", "memHierarchy.Cache")
 df_l1cache.addParams({

@@ -107,7 +107,8 @@ private:
             StandardMem::RequestHandler(out), ls_queue_(ls_queue), llyr_(llyr) {}
         virtual ~LlyrMemHandlers() {}
 
-        virtual void handle(StandardMem::Write* read) override;
+        virtual void handle(StandardMem::Read* read) override;
+        virtual void handle(StandardMem::Write* write) override;
         virtual void handle(StandardMem::ReadResp* resp) override;
         virtual void handle(StandardMem::WriteResp* resp) override;
 

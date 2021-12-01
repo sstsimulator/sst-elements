@@ -52,7 +52,7 @@ LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
     time_converter_ = registerClock(clock_rate, clock_tick_handler_);
 
     //set up memory interfaces
-    mem_interface_ = loadUserSubComponent<SST::Interfaces::StandardMem>("memory", ComponentInfo::SHARE_NONE, time_converter_,
+    mem_interface_ = loadUserSubComponent<SST::Interfaces::StandardMem>("iface", ComponentInfo::SHARE_NONE, time_converter_,
                                         new StandardMem::Handler<LlyrComponent>(this, &LlyrComponent::handleEvent));
 
     if( !mem_interface_ ) {
@@ -61,7 +61,7 @@ LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
 
         Params interfaceParams = params.get_scoped_params("memoryinterfaceparams");
         interfaceParams.insert("port", "cache_link");
-        mem_interface_ = loadAnonymousSubComponent<SST::Interfaces::StandardMem>(interfaceName, "memory", 0, ComponentInfo::SHARE_PORTS |
+        mem_interface_ = loadAnonymousSubComponent<SST::Interfaces::StandardMem>(interfaceName, "iface", 0, ComponentInfo::SHARE_PORTS |
             ComponentInfo::INSERT_STATS, interfaceParams, time_converter_, new StandardMem::Handler<LlyrComponent>(this, &LlyrComponent::handleEvent));
 
         if( !mem_interface_ ) {
@@ -255,8 +255,17 @@ void LlyrComponent::handleEvent(StandardMem::Request* req) {
 }
 
 /* Handler for incoming Read requests */
+void LlyrComponent::LlyrMemHandlers::handle(StandardMem::Read* read) {
+    out->verbose(CALL_INFO, 8, 0, "Handle Read for Address p%lu -- v%lu.\n", read->pAddr, read->vAddr);
+
+    // Make a response. Must fill in payload.
+    StandardMem::ReadResp* resp = static_cast<StandardMem::ReadResp*>(read->makeResponse());
+    llyr_->mem_interface_->send(resp);
+}
+
+/* Handler for incoming Write requests */
 void LlyrComponent::LlyrMemHandlers::handle(StandardMem::Write* write) {
-    out->verbose(CALL_INFO, 8, 0, "Handle Write.\n");
+    out->verbose(CALL_INFO, 8, 0, "Handle Write for Address p%lu -- v%lu.\n", write->pAddr, write->vAddr);
 
     /* Send response (ack) if needed */
     if (!(write->posted)) {
