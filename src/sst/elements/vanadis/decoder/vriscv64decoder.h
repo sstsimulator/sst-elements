@@ -1282,7 +1282,11 @@ protected:
                     case 0x1:
                     {
                         // REMW
-                        // TODO - Implement
+								output->verbose(CALL_INFO, 16, 0, "----> REMW %" PRIu16 " <- %" PRIu16 " %% %" PRIu16 "\n",
+									rd, rs1, rs2);
+								bundle->addInstruction(new VanadisModuloInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32, true>(
+                           ins_address, hw_thr, options, rd, rs1, rs2));
+                        decode_fault = false;
                     } break;
                     };
                 } break;
@@ -1292,7 +1296,11 @@ protected:
                     case 0x1:
                     {
                         // REMUW
-                        // TODO - Implement
+								output->verbose(CALL_INFO, 16, 0, "----> REMUW %" PRIu16 " <- %" PRIu16 " %% %" PRIu16 "\n",
+									rd, rs1, rs2);
+								bundle->addInstruction(new VanadisModuloInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32, false>(
+                           ins_address, hw_thr, options, rd, rs1, rs2));
+                        decode_fault = false;
                     } break;
                     }
                 }; break;
@@ -1744,7 +1752,15 @@ protected:
                             case 0x0:
                             {
                                 // SUBW
-                                output->verbose(CALL_INFO, 16, 0, "------> RVC SUBW\n");
+		                           uint16_t rvc_rs2  = expand_rvc_int_register(extract_rs2_rvc(ins));
+      		                    uint16_t rvc_rs1 = expand_rvc_int_register(extract_rs1_rvc(ins));
+
+										  output->verbose(CALL_INFO, 16, 0, "------> RVC SUBW %" PRIu16 " <- %" PRIu16 " + %" PRIu16 "\n",
+											 rvc_rs1, rvc_rs1, rvc_rs2);
+
+										  bundle->addInstruction(new VanadisSubInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32>(ins_address,
+												hw_thr, options, rvc_rs1, rvc_rs1, rvc_rs2, false));
+										decode_fault = false;
 
                             } break;
                             case 0x20:
