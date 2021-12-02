@@ -531,6 +531,13 @@ VANADIS_COMPONENT::performDecode(const uint64_t cycle) {
 void
 VANADIS_COMPONENT::resetRegisterUseTemps(const uint16_t int_reg_count, const uint16_t fp_reg_count) {
 
+	std::fill_n(tmp_not_issued_int_reg_read.begin(), int_reg_count, false);
+	std::fill_n(tmp_int_reg_write.begin(), int_reg_count, false);
+
+	std::fill_n(tmp_not_issued_fp_reg_read.begin(), fp_reg_count, false);
+	std::fill_n(tmp_fp_reg_write.begin(), fp_reg_count, false);
+
+/*
     for (uint16_t i = 0; i < int_reg_count; ++i) {
         tmp_not_issued_int_reg_read[i] = false;
         tmp_int_reg_write[i] = false;
@@ -540,6 +547,7 @@ VANADIS_COMPONENT::resetRegisterUseTemps(const uint16_t int_reg_count, const uin
         tmp_not_issued_fp_reg_read[i] = false;
         tmp_fp_reg_write[i] = false;
     }
+*/
 }
 
 // TODO - rob_start found_store and found_load should be arrays per thread for this call I think?
@@ -547,10 +555,6 @@ int
 VANADIS_COMPONENT::performIssue(const uint64_t cycle, uint32_t& rob_start, bool& found_store, bool& found_load) {
     const int output_verbosity = output->getVerboseLevel();
     bool issued_an_ins = false;
-
-    if(output_verbosity >= 8) {
-	    output->verbose(CALL_INFO, 8, 0, "-> performIssue ROB-start: %" PRIu32 "\n", rob_start);
-    }
 
     for (uint32_t i = 0; i < hw_threads; ++i) {
         if (!halted_masks[i]) {
@@ -667,10 +671,8 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, uint32_t& rob_start, bool&
 
             // Only print the table if we issued an instruction, reduce print out
             // clutter
-            if (issued_an_ins) {
-                if (output_verbosity >= 8) {
+            if (issued_an_ins && (output_verbosity >= 8)) {
                     issue_isa_tables[i]->print(output, register_files[i], print_int_reg, print_fp_reg);
-                }
             }
         } else {
             output->verbose(CALL_INFO, 8, 0, "thread %" PRIu32 " is halted, did not process for issue this cycle.\n",
@@ -680,13 +682,7 @@ VANADIS_COMPONENT::performIssue(const uint64_t cycle, uint32_t& rob_start, bool&
 
     // if we issued an instruction tell the caller we want to be called again
     // (return 0)
-    if (issued_an_ins) {
-        return 0;
-    } else {
-        // we didn't issue this time, don't call us again this cycle because we will
-        // just repeat the work and conclude we cannot issue again as well
-        return 1;
-    }
+	 return issued_an_ins ? 0 : 1;
 }
 
 int
@@ -1203,14 +1199,14 @@ VANADIS_COMPONENT::tick(SST::Cycle_t cycle) {
                     "=> Issue Stage  "
                     "<==========================================================\n");
 #endif
-    uint32_t rob_start = 0;
-    bool found_store = false;
-    bool found_load  = false;
-
     // Clear our temps on a per-thread basis
 	 for(uint32_t i = 0; i < hw_threads; ++i) {
     	resetRegisterUseTemps(thread_decoders[i]->countISAIntReg(), thread_decoders[i]->countISAFPReg());
 	 }
+
+    uint32_t rob_start = 0;
+    bool found_store = false;
+    bool found_load  = false;
 
     // Attempt to perform issues, cranking through the entire ROB call by call or until we
     // reach the max issues this cycle
