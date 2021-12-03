@@ -13,8 +13,8 @@
 // information, see the LICENSE file in the top level directory of the
 // distribution.
 
-#ifndef _H_VANADIS_FP_SET_REG_COMPARE
-#define _H_VANADIS_FP_SET_REG_COMPARE
+#ifndef _H_VANADIS_MIPS_FP_SET_REG_COMPARE
+#define _H_VANADIS_MIPS_FP_SET_REG_COMPARE
 
 #include "inst/vcmptype.h"
 #include "inst/vinst.h"
@@ -28,9 +28,9 @@ namespace SST {
 namespace Vanadis {
 
 template<VanadisRegisterCompareType compare_type, VanadisRegisterFormat register_format>
-class VanadisFPSetRegCompareInstruction : public VanadisInstruction {
+class VanadisMIPSFPSetRegCompareInstruction : public VanadisInstruction {
 public:
-    VanadisFPSetRegCompareInstruction(const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts,
+    VanadisMIPSFPSetRegCompareInstruction(const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts,
                                       const uint16_t dest, const uint16_t src_1, const uint16_t src_2)
         : VanadisInstruction(
             addr, hw_thr, isa_opts, 0, 0, 0, 0,
@@ -54,7 +54,7 @@ public:
         }
     }
 
-    VanadisFPSetRegCompareInstruction* clone() override { return new VanadisFPSetRegCompareInstruction(*this); }
+    VanadisMIPSFPSetRegCompareInstruction* clone() override { return new VanadisMIPSFPSetRegCompareInstruction(*this); }
 
     virtual VanadisFunctionalUnitType getInstFuncType() const override { return INST_FP_ARITH; }
 

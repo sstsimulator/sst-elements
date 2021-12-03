@@ -95,7 +95,7 @@
 #include "inst/vfpadd.h"
 #include "inst/vfpdiv.h"
 #include "inst/vfpmul.h"
-#include "inst/vfpscmp.h"
+#include "inst/vmipsfpscmp.h"
 #include "inst/vfpsub.h"
 
 // Truncate

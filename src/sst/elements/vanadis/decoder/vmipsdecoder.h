@@ -2214,7 +2214,7 @@ protected:
                             case 0x2:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_eq);
 
-                                bundle->addInstruction(new VanadisFPSetRegCompareInstruction<
+                                bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
                                                        REG_COMPARE_EQ, VanadisRegisterFormat::VANADIS_FORMAT_FP32>(
                                     ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
@@ -2223,7 +2223,7 @@ protected:
                             case 0xC:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_lt);
 
-                                bundle->addInstruction(new VanadisFPSetRegCompareInstruction<
+                                bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
                                                        REG_COMPARE_LT, VanadisRegisterFormat::VANADIS_FORMAT_FP32>(
                                     ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
@@ -2232,7 +2232,7 @@ protected:
                             case 0xE:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_lte);
 
-                                bundle->addInstruction(new VanadisFPSetRegCompareInstruction<
+                                bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
                                                        REG_COMPARE_LTE, VanadisRegisterFormat::VANADIS_FORMAT_FP32>(
                                     ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
@@ -2248,7 +2248,7 @@ protected:
                             case 0x2:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_eq);
 
-                                bundle->addInstruction(new VanadisFPSetRegCompareInstruction<
+                                bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
                                                        REG_COMPARE_EQ, VanadisRegisterFormat::VANADIS_FORMAT_FP64>(
                                     ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
@@ -2257,7 +2257,7 @@ protected:
                             case 0xC:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_lt);
 
-                                bundle->addInstruction(new VanadisFPSetRegCompareInstruction<
+                                bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
                                                        REG_COMPARE_LT, VanadisRegisterFormat::VANADIS_FORMAT_FP64>(
                                     ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
@@ -2266,7 +2266,7 @@ protected:
                             case 0xE:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_lte);
 
-                                bundle->addInstruction(new VanadisFPSetRegCompareInstruction<
+                                bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
                                                        REG_COMPARE_LTE, VanadisRegisterFormat::VANADIS_FORMAT_FP64>(
                                     ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
@@ -2282,7 +2282,7 @@ protected:
                             case 0x2:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_eq);
 
-                                bundle->addInstruction(new VanadisFPSetRegCompareInstruction<
+                                bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
                                                        REG_COMPARE_EQ, VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
                                     ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
@@ -2291,7 +2291,7 @@ protected:
                             case 0xC:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_lt);
 
-                                bundle->addInstruction(new VanadisFPSetRegCompareInstruction<
+                                bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
                                                        REG_COMPARE_LT, VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
                                     ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
@@ -2300,7 +2300,7 @@ protected:
                             case 0xE:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_lte);
 
-                                bundle->addInstruction(new VanadisFPSetRegCompareInstruction<
+                                bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
                                                        REG_COMPARE_LTE, VanadisRegisterFormat::VANADIS_FORMAT_INT32>(
                                     ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
@@ -2316,7 +2316,7 @@ protected:
                             case 0x2:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_eq);
 
-                                bundle->addInstruction(new VanadisFPSetRegCompareInstruction<
+                                bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
                                                        REG_COMPARE_EQ, VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
                                     ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
@@ -2325,7 +2325,7 @@ protected:
                             case 0xC:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_lt);
 
-                                bundle->addInstruction(new VanadisFPSetRegCompareInstruction<
+                                bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
                                                        REG_COMPARE_LT, VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
                                     ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
@@ -2334,7 +2334,7 @@ protected:
                             case 0xE:
                                 MIPS_INC_DECODE_STAT(stat_decode_cop1_lte);
 
-                                bundle->addInstruction(new VanadisFPSetRegCompareInstruction<
+                                bundle->addInstruction(new VanadisMIPSFPSetRegCompareInstruction<
                                                        REG_COMPARE_LTE, VanadisRegisterFormat::VANADIS_FORMAT_INT64>(
                                     ins_addr, hw_thr, options, MIPS_FP_STATUS_REG, fs, ft));
                                 insertDecodeFault = false;
