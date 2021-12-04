@@ -95,8 +95,10 @@
 #include "inst/vfpadd.h"
 #include "inst/vfpdiv.h"
 #include "inst/vfpmul.h"
+#include "inst/vmipsfpscmp.h"
 #include "inst/vfpscmp.h"
 #include "inst/vfpsub.h"
+#include "inst/vfpsignlogic.h"
 
 // Truncate
 #include "inst/vtrunc.h"
