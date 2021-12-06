@@ -79,7 +79,6 @@ void StandardInterface::setMemoryMappedAddressRegion(Addr start, Addr size) {
 }
 
 void StandardInterface::init(unsigned int phase) {
-    printf("INIT ROUND %u\n", phase);
     link_->init(phase);
     /* Send region message */
     if (!phase) {
