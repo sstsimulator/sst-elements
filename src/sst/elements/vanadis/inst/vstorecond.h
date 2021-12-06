@@ -21,20 +21,23 @@
 namespace SST {
 namespace Vanadis {
 
-class VanadisStoreConditionalInstruction : public VanadisStoreInstruction {
+class VanadisStoreConditionalInstruction : public VanadisStoreInstruction
+{
 
 public:
-	VanadisStoreConditionalInstruction(const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts,
-		const uint16_t memAddrReg, const int64_t offset, const uint16_t valueReg, const uint16_t condResultReg,
-		const uint16_t store_width, VanadisStoreRegisterType reg_type) :
-		VanadisStoreInstruction(addr, hw_thr, isa_opts, memAddrReg, offset, valueReg, store_width, MEM_TRANSACTION_LLSC_STORE, reg_type) {
+    VanadisStoreConditionalInstruction(
+        const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint16_t memAddrReg,
+        const int64_t offset, const uint16_t valueReg, const uint16_t condResultReg, const uint16_t store_width,
+        VanadisStoreRegisterType reg_type) :
+        VanadisStoreInstruction(
+            addr, hw_thr, isa_opts, memAddrReg, offset, valueReg, store_width, MEM_TRANSACTION_LLSC_STORE, reg_type)
+    {
 
-		isa_int_regs_out[0] = condResultReg;
-	}
-
+        isa_int_regs_out[0] = condResultReg;
+    }
 };
 
-}
-}
+} // namespace Vanadis
+} // namespace SST
 
 #endif

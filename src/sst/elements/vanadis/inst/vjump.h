@@ -29,8 +29,8 @@ class VanadisJumpInstruction : public VanadisSpeculatedInstruction
 
 public:
     VanadisJumpInstruction(
-        const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint64_t ins_width, const uint64_t pc,
-        const VanadisDelaySlotRequirement delayT) :
+        const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint64_t ins_width,
+        const uint64_t pc, const VanadisDelaySlotRequirement delayT) :
         VanadisSpeculatedInstruction(addr, hw_thr, isa_opts, ins_width, 0, 0, 0, 0, 0, 0, 0, 0, delayT)
     {
 

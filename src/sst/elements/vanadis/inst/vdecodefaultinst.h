@@ -23,12 +23,16 @@
 namespace SST {
 namespace Vanadis {
 
-class VanadisInstructionDecodeFault : public VanadisInstructionFault {
+class VanadisInstructionDecodeFault : public VanadisInstructionFault
+{
 public:
-    VanadisInstructionDecodeFault(const uint64_t address, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts) :
-		VanadisInstructionFault(address, hw_thr, isa_opts) {}
+    VanadisInstructionDecodeFault(
+        const uint64_t address, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts) :
+        VanadisInstructionFault(address, hw_thr, isa_opts)
+    {}
 
-    VanadisInstruction* clone() override {
+    VanadisInstruction* clone() override
+    {
         return new VanadisInstructionDecodeFault(ins_address, hw_thread, isa_options);
     }
 
