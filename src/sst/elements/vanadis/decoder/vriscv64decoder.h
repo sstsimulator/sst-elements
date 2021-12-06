@@ -1154,7 +1154,7 @@ protected:
 						  output->verbose(CALL_INFO, 16, 0, "-----> BEQ %" PRIu16 " == %" PRIu16 " / offset: %" PRId64 "\n",
 								rs1, rs2, simm64);
                     bundle->addInstruction(new VanadisBranchRegCompareInstruction<
-                                           VanadisRegisterFormat::VANADIS_FORMAT_INT64, REG_COMPARE_EQ>(
+                                           VanadisRegisterFormat::VANADIS_FORMAT_INT64, REG_COMPARE_EQ, true>(
                         ins_address, hw_thr, options, 4, rs1, rs2, simm64, VANADIS_NO_DELAY_SLOT));
                     decode_fault = false;
                 } break;
@@ -1164,7 +1164,7 @@ protected:
 						  output->verbose(CALL_INFO, 16, 0, "-----> BNE %" PRIu16 " != %" PRIu16 " / offset: %" PRId64 " (ip+offset %" PRIu64 ")\n",
 								rs1, rs2, simm64, ins_address + simm64);
                     bundle->addInstruction(new VanadisBranchRegCompareInstruction<
-                                           VanadisRegisterFormat::VANADIS_FORMAT_INT64, REG_COMPARE_NEQ>(
+                                           VanadisRegisterFormat::VANADIS_FORMAT_INT64, REG_COMPARE_NEQ, true>(
                         ins_address, hw_thr, options, 4, rs1, rs2, simm64, VANADIS_NO_DELAY_SLOT));
                     decode_fault = false;
                 } break;
@@ -1174,8 +1174,8 @@ protected:
 						  output->verbose(CALL_INFO, 16, 0, "-----> BLT %" PRIu16 " < %" PRIu16 " / offset: %" PRId64 "\n",
 								rs1, rs2, simm64);
                     bundle->addInstruction(new VanadisBranchRegCompareInstruction<
-                                           VanadisRegisterFormat::VANADIS_FORMAT_INT64, REG_COMPARE_LT>(
-                        ins_address, hw_thr, options, 4, rs1, rs2, simm64, VANADIS_NO_DELAY_SLOT, true));
+                                           VanadisRegisterFormat::VANADIS_FORMAT_INT64, REG_COMPARE_LT, true>(
+                        ins_address, hw_thr, options, 4, rs1, rs2, simm64, VANADIS_NO_DELAY_SLOT));
                     decode_fault = false;
                 } break;
                 case 5:
@@ -1184,24 +1184,24 @@ protected:
 						  output->verbose(CALL_INFO, 16, 0, "-----> BGE %" PRIu16 " >= %" PRIu16 " / offset: %" PRId64 "\n",
 								rs1, rs2, simm64);
                     bundle->addInstruction(new VanadisBranchRegCompareInstruction<
-                                           VanadisRegisterFormat::VANADIS_FORMAT_INT64, REG_COMPARE_GTE>(
-                        ins_address, hw_thr, options, 4, rs1, rs2, simm64, VANADIS_NO_DELAY_SLOT, true));
+                                           VanadisRegisterFormat::VANADIS_FORMAT_INT64, REG_COMPARE_GTE, true>(
+                        ins_address, hw_thr, options, 4, rs1, rs2, simm64, VANADIS_NO_DELAY_SLOT));
                     decode_fault = false;
                 } break;
                 case 6:
                 {
                     // BLTU
                     bundle->addInstruction(new VanadisBranchRegCompareInstruction<
-                                           VanadisRegisterFormat::VANADIS_FORMAT_INT64, REG_COMPARE_LT>(
-                        ins_address, hw_thr, options, 4, rs1, rs2, simm64, VANADIS_NO_DELAY_SLOT, false));
+                                           VanadisRegisterFormat::VANADIS_FORMAT_INT64, REG_COMPARE_LT, false>(
+                        ins_address, hw_thr, options, 4, rs1, rs2, simm64, VANADIS_NO_DELAY_SLOT));
                     decode_fault = false;
                 } break;
                 case 7:
                 {
                     // BGEU
                     bundle->addInstruction(new VanadisBranchRegCompareInstruction<
-                                           VanadisRegisterFormat::VANADIS_FORMAT_INT64, REG_COMPARE_GTE>(
-                        ins_address, hw_thr, options, 4, rs1, rs2, simm64, VANADIS_NO_DELAY_SLOT, false));
+                                           VanadisRegisterFormat::VANADIS_FORMAT_INT64, REG_COMPARE_GTE, false>(
+                        ins_address, hw_thr, options, 4, rs1, rs2, simm64, VANADIS_NO_DELAY_SLOT));
                     decode_fault = false;
                 } break;
                 };
