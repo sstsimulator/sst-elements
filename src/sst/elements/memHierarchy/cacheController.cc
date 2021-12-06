@@ -490,8 +490,7 @@ void Cache::init(unsigned int phase) {
                     getName().c_str(), memEvent->getVerboseString().c_str());
             MemEventInit * mEv = memEvent->clone();
             mEv->setSrc(getName());
-            mEv->setDst(linkDown_->getTargetDestination(mEv->getRoutingAddress()));
-            linkDown_->sendInitData(mEv);
+            linkDown_->sendInitData(mEv, false);
         }
         delete memEvent;
     }

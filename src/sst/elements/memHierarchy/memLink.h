@@ -106,7 +106,7 @@ public:
     virtual bool isReachable(std::string dst);
 
     /* Send and receive functions for MemLink */
-    virtual void sendInitData(MemEventInit * ev);
+    virtual void sendInitData(MemEventInit * ev, bool broadcast = true);
     virtual MemEventInit* recvInitData();
     virtual void send(MemEventBase * ev);
     virtual MemEventBase * recv();
@@ -128,6 +128,9 @@ protected:
     std::set<EndpointInfo> remotes;             // Tracks remotes immediately accessible on the other side of our link
     std::set<EndpointInfo> endpoints;           // Tracks endpoints in the system with info on how to get there
     std::set<std::string> remoteNames;          // Tracks remote names for faster lookup than iteratinv via remotes
+    
+    // For events that require destination names during init
+    std::set<MemEventInit*> initSendQ;
 
 private:
 
