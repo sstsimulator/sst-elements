@@ -23,11 +23,14 @@ namespace Vanadis {
 
 enum VanadisFenceType { VANADIS_LOAD_FENCE, VANADIS_STORE_FENCE, VANADIS_LOAD_STORE_FENCE };
 
-class VanadisFenceInstruction : public VanadisInstruction {
+class VanadisFenceInstruction : public VanadisInstruction
+{
 public:
-    VanadisFenceInstruction(const uint64_t address, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts,
-                            const VanadisFenceType fenceT)
-        : VanadisInstruction(address, hw_thr, isa_opts, 0, 0, 0, 0, 0, 0, 0, 0) {
+    VanadisFenceInstruction(
+        const uint64_t address, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts,
+        const VanadisFenceType fenceT) :
+        VanadisInstruction(address, hw_thr, isa_opts, 0, 0, 0, 0, 0, 0, 0, 0)
+    {
         fence = fenceT;
     }
 
@@ -37,7 +40,8 @@ public:
 
     bool createsStoreFence() const { return (fence == VANADIS_STORE_FENCE) || (fence == VANADIS_LOAD_STORE_FENCE); }
 
-    virtual const char* getInstCode() const {
+    virtual const char* getInstCode() const
+    {
         return (fence == VANADIS_LOAD_STORE_FENCE) ? "SYNC" : (fence == VANADIS_LOAD_FENCE) ? "LFENCE" : "SFENCE";
     }
 

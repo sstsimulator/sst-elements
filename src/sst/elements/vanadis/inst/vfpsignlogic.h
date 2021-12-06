@@ -16,21 +16,16 @@
 #ifndef _H_VANADIS_FP_SIGN_LOGIC
 #define _H_VANADIS_FP_SIGN_LOGIC
 
-#include <cmath>
-
 #include "inst/vinst.h"
 #include "inst/vregfmt.h"
 #include "util/vfpreghandler.h"
 
+#include <cmath>
+
 namespace SST {
 namespace Vanadis {
 
-enum class VanadisFPSignLogicOperation
-{
-    SIGN_COPY,
-    SIGN_XOR,
-	 SIGN_NEG
-};
+enum class VanadisFPSignLogicOperation { SIGN_COPY, SIGN_XOR, SIGN_NEG };
 
 template <VanadisRegisterFormat register_format, VanadisFPSignLogicOperation sign_op>
 class VanadisFPSignLogicInstruction : public VanadisInstruction
@@ -111,14 +106,13 @@ public:
 
         if ( std::isnormal(src_1) || std::isnormal(src_2) ) {
             // true is negative
-				const bool src_1_neg = std::signbit(src_1);
-				const bool src_2_neg = std::signbit(src_2);
+            const bool src_1_neg = std::signbit(src_1);
+            const bool src_2_neg = std::signbit(src_2);
 
-            if ( src_2_neg ) {
-					src_1 = src_1_neg ? src_1 : (-src_1);
-				} else {
-					src_1 = src_1_neg ? (-src_1) : (src_1);
-				}
+            if ( src_2_neg ) { src_1 = src_1_neg ? src_1 : (-src_1); }
+            else {
+                src_1 = src_1_neg ? (-src_1) : (src_1);
+            }
 
             output->verbose(CALL_INFO, 16, 0, "---> take-sign-from: %f to: %f = %f\n", src_2, src_1, src_1);
 
@@ -134,14 +128,13 @@ public:
 
         if ( std::isnormal(src_1) || std::isnormal(src_2) ) {
             // true is negative
-				const bool src_1_neg = std::signbit(src_1);
-				const bool src_2_neg = std::signbit(src_2);
+            const bool src_1_neg = std::signbit(src_1);
+            const bool src_2_neg = std::signbit(src_2);
 
-            if ( src_2_neg ) {
-					src_1 = src_1_neg ? (-src_1) : (src_1);
-				} else {
-					src_1 = src_1_neg ? (src_1) : (-src_1);
-				}
+            if ( src_2_neg ) { src_1 = src_1_neg ? (-src_1) : (src_1); }
+            else {
+                src_1 = src_1_neg ? (src_1) : (-src_1);
+            }
 
             output->verbose(CALL_INFO, 16, 0, "---> neg-sign-from: %f to: %f = %f\n", src_2, src_1, src_1);
 
@@ -157,14 +150,13 @@ public:
 
         if ( std::isnormal(src_1) || std::isnormal(src_2) ) {
             // true is negative
-				const bool src_1_neg = std::signbit(src_1);
-				const bool src_2_neg = std::signbit(src_2);
+            const bool src_1_neg = std::signbit(src_1);
+            const bool src_2_neg = std::signbit(src_2);
 
-            if ( src_1_neg ^ src_2_neg ) {
-					src_1 = (src_1 > 0) ? (-src_1) : src_1;
-				} else {
-					src_1 = (src_1 > 0) ? src_1 : (-src_1);
-				}
+            if ( src_1_neg ^ src_2_neg ) { src_1 = (src_1 > 0) ? (-src_1) : src_1; }
+            else {
+                src_1 = (src_1 > 0) ? src_1 : (-src_1);
+            }
 
             output->verbose(CALL_INFO, 16, 0, "---> xor-sign-from: %f and %f = %f\n", src_2, src_1, src_1);
 
@@ -180,14 +172,13 @@ public:
 
         if ( std::isnormal(src_1) || std::isnormal(src_2) ) {
             // true is negative
-				const bool src_1_neg = std::signbit(src_1);
-				const bool src_2_neg = std::signbit(src_2);
+            const bool src_1_neg = std::signbit(src_1);
+            const bool src_2_neg = std::signbit(src_2);
 
-            if ( src_2_neg ) {
-					src_1 = src_1_neg ? src_1 : (-src_1);
-				} else {
-					src_1 = src_1_neg ? (-src_1) : (src_1);
-				}
+            if ( src_2_neg ) { src_1 = src_1_neg ? src_1 : (-src_1); }
+            else {
+                src_1 = src_1_neg ? (-src_1) : (src_1);
+            }
 
             output->verbose(CALL_INFO, 16, 0, "---> take-sign-from: %f to: %f = %f\n", src_2, src_1, src_1);
 
@@ -203,14 +194,13 @@ public:
 
         if ( std::isnormal(src_1) || std::isnormal(src_2) ) {
             // true is negative
-				const bool src_1_neg = std::signbit(src_1);
-				const bool src_2_neg = std::signbit(src_2);
+            const bool src_1_neg = std::signbit(src_1);
+            const bool src_2_neg = std::signbit(src_2);
 
-            if ( src_2_neg ) {
-					src_1 = src_1_neg ? (-src_1) : (src_1);
-				} else {
-					src_1 = src_1_neg ? (src_1) : (-src_1);
-				}
+            if ( src_2_neg ) { src_1 = src_1_neg ? (-src_1) : (src_1); }
+            else {
+                src_1 = src_1_neg ? (src_1) : (-src_1);
+            }
 
             output->verbose(CALL_INFO, 16, 0, "---> neg-sign-from: %f to: %f = %f\n", src_2, src_1, src_1);
 
@@ -226,14 +216,13 @@ public:
 
         if ( std::isnormal(src_1) || std::isnormal(src_2) ) {
             // true is negative
-				const bool src_1_neg = std::signbit(src_1);
-				const bool src_2_neg = std::signbit(src_2);
+            const bool src_1_neg = std::signbit(src_1);
+            const bool src_2_neg = std::signbit(src_2);
 
-            if ( src_1_neg ^ src_2_neg ) {
-					src_1 = (src_1 > 0) ? (-src_1) : src_1;
-				} else {
-					src_1 = (src_1 > 0) ? src_1 : (-src_1);
-				}
+            if ( src_1_neg ^ src_2_neg ) { src_1 = (src_1 > 0) ? (-src_1) : src_1; }
+            else {
+                src_1 = (src_1 > 0) ? src_1 : (-src_1);
+            }
 
             output->verbose(CALL_INFO, 16, 0, "---> xor-sign-from: %f and %f = %f\n", src_2, src_1, src_1);
 
@@ -266,14 +255,14 @@ public:
             {
                 perform_sign_copy<float>(output, regFile);
             } break;
-				case VanadisFPSignLogicOperation::SIGN_XOR:
-				{
-					perform_sign_xor<float>(output, regFile);
-				} break;
-				case VanadisFPSignLogicOperation::SIGN_NEG:
-				{
-					perform_sign_neg<float>(output, regFile);
-				} break;
+            case VanadisFPSignLogicOperation::SIGN_XOR:
+            {
+                perform_sign_xor<float>(output, regFile);
+            } break;
+            case VanadisFPSignLogicOperation::SIGN_NEG:
+            {
+                perform_sign_neg<float>(output, regFile);
+            } break;
             }
         } break;
         case VanadisRegisterFormat::VANADIS_FORMAT_FP64:
@@ -288,22 +277,24 @@ public:
                     perform_sign_copy<double>(output, regFile);
                 }
             } break;
-				case VanadisFPSignLogicOperation::SIGN_XOR:
-				{
-					if ( VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode() ) {
-						perform_sign_xor_split<double>(output, regFile);
-					} else {
-						perform_sign_xor<double>(output, regFile);
-					}
-				} break;
-				case VanadisFPSignLogicOperation::SIGN_NEG:
-				{
-					if ( VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode() ) {
-						perform_sign_neg_split<double>(output, regFile);
-					} else {
-						perform_sign_neg<double>(output, regFile);
-					}
-				} break;
+            case VanadisFPSignLogicOperation::SIGN_XOR:
+            {
+                if ( VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode() ) {
+                    perform_sign_xor_split<double>(output, regFile);
+                }
+                else {
+                    perform_sign_xor<double>(output, regFile);
+                }
+            } break;
+            case VanadisFPSignLogicOperation::SIGN_NEG:
+            {
+                if ( VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode() ) {
+                    perform_sign_neg_split<double>(output, regFile);
+                }
+                else {
+                    perform_sign_neg<double>(output, regFile);
+                }
+            } break;
             }
         } break;
         default:

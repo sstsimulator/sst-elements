@@ -1593,10 +1593,11 @@ protected:
                 //				output->verbose(CALL_INFO, 16, 0,
                 //"[decoder/SC]: -> reg: %" PRIu16 " -> base: %" PRIu16 " + offset=%"
                 // PRId64 "\n", 					rt, rs, imm_value_64);
-					bundle->addInstruction( new VanadisStoreConditionalInstruction(ins_addr, hw_thr, options, rs, imm_value_64, rt, rt, 4, STORE_INT_REGISTER));
-//                bundle->addInstruction(new VanadisStoreInstruction(
-//                    ins_addr, hw_thr, options, rs, imm_value_64, rt, 4, MEM_TRANSACTION_LLSC_STORE,
-//                    STORE_INT_REGISTER));
+                bundle->addInstruction(new VanadisStoreConditionalInstruction(
+                    ins_addr, hw_thr, options, rs, imm_value_64, rt, rt, 4, STORE_INT_REGISTER));
+                //                bundle->addInstruction(new VanadisStoreInstruction(
+                //                    ins_addr, hw_thr, options, rs, imm_value_64, rt, 4, MEM_TRANSACTION_LLSC_STORE,
+                //                    STORE_INT_REGISTER));
                 insertDecodeFault = false;
                 MIPS_INC_DECODE_STAT(stat_decode_sc);
             } break;
@@ -1624,7 +1625,8 @@ protected:
                 {
                     bundle->addInstruction(new VanadisBranchRegCompareImmLinkInstruction<
                                            VanadisRegisterFormat::VANADIS_FORMAT_INT32, REG_COMPARE_GTE>(
-                        ins_addr, hw_thr, options, 4, rs, 0, offset_value_64 + 4, (uint16_t)31, VANADIS_SINGLE_DELAY_SLOT));
+                        ins_addr, hw_thr, options, 4, rs, 0, offset_value_64 + 4, (uint16_t)31,
+                        VANADIS_SINGLE_DELAY_SLOT));
                     insertDecodeFault = false;
                     MIPS_INC_DECODE_STAT(stat_decode_bgezal);
                 } break;
@@ -1673,9 +1675,9 @@ protected:
                 //"[decoder/BEQ]: -> r1: %" PRIu16 " r2: %" PRIu16 " offset: %" PRId64
                 //"\n",
                 //                                        rt, rs, imm_value_64 );
-                bundle->addInstruction(
-                    new VanadisBranchRegCompareInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32, REG_COMPARE_EQ>(
-                        ins_addr, hw_thr, options, 4, rt, rs, imm_value_64 + 4, VANADIS_SINGLE_DELAY_SLOT));
+                bundle->addInstruction(new VanadisBranchRegCompareInstruction<
+                                       VanadisRegisterFormat::VANADIS_FORMAT_INT32, REG_COMPARE_EQ, true>(
+                    ins_addr, hw_thr, options, 4, rt, rs, imm_value_64 + 4, VANADIS_SINGLE_DELAY_SLOT));
                 insertDecodeFault = false;
                 MIPS_INC_DECODE_STAT(stat_decode_beq);
             } break;
@@ -1717,7 +1719,7 @@ protected:
                 //"\n",
                 //                                        rt, rs, imm_value_64 );
                 bundle->addInstruction(new VanadisBranchRegCompareInstruction<
-                                       VanadisRegisterFormat::VANADIS_FORMAT_INT32, REG_COMPARE_NEQ>(
+                                       VanadisRegisterFormat::VANADIS_FORMAT_INT32, REG_COMPARE_NEQ, true>(
                     ins_addr, hw_thr, options, 4, rt, rs, imm_value_64 + 4, VANADIS_SINGLE_DELAY_SLOT));
                 insertDecodeFault = false;
                 MIPS_INC_DECODE_STAT(stat_decode_bne);
@@ -1809,8 +1811,8 @@ protected:
                 //				bundle->addInstruction( new
                 // VanadisSetRegisterInstruction( ins_addr, hw_thr, options, 31, ins_addr
                 //+ 8 ) );
-                bundle->addInstruction(
-                    new VanadisJumpLinkInstruction(ins_addr, hw_thr, options, 4, 31, jump_to, VANADIS_SINGLE_DELAY_SLOT));
+                bundle->addInstruction(new VanadisJumpLinkInstruction(
+                    ins_addr, hw_thr, options, 4, 31, jump_to, VANADIS_SINGLE_DELAY_SLOT));
                 insertDecodeFault = false;
                 MIPS_INC_DECODE_STAT(stat_decode_jal);
             } break;
