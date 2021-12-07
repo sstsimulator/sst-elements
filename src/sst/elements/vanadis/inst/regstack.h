@@ -19,12 +19,14 @@
 namespace SST {
 namespace Vanadis {
 
-class VanadisRegisterStack {
+class VanadisRegisterStack
+{
 public:
-    VanadisRegisterStack(const size_t count) : reg_count(count), max_capacity(count) {
+    VanadisRegisterStack(const size_t count) : reg_count(count), max_capacity(count)
+    {
 
         regs = new uint16_t[count];
-        for (size_t i = count - 1; i > 0; --i) {
+        for ( size_t i = count - 1; i > 0; --i ) {
             regs[i] = (uint16_t)i;
         }
 
@@ -33,13 +35,15 @@ public:
 
     ~VanadisRegisterStack() { delete[] regs; }
 
-    uint16_t pop() {
+    uint16_t pop()
+    {
         uint16_t temp = regs[index];
         index--;
         return temp;
     }
 
-    void push(const uint16_t v) {
+    void push(const uint16_t v)
+    {
         index++;
         regs[index] = v;
     }
@@ -56,9 +60,9 @@ public:
     void clear() { index = -1; }
 
 private:
-    size_t max_capacity;
-    size_t reg_count;
-    size_t index;
+    size_t    max_capacity;
+    size_t    reg_count;
+    size_t    index;
     uint16_t* regs;
 };
 

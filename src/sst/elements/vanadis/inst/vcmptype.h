@@ -29,8 +29,9 @@ enum VanadisRegisterCompareType {
 };
 
 const char*
-convertCompareTypeToString(VanadisRegisterCompareType cType) {
-    switch (cType) {
+convertCompareTypeToString(VanadisRegisterCompareType cType)
+{
+    switch ( cType ) {
     case REG_COMPARE_EQ:
         return "EQ";
     case REG_COMPARE_LT:

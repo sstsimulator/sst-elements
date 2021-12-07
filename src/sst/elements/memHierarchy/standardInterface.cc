@@ -129,7 +129,7 @@ void StandardInterface::init(unsigned int phase) {
 
     if (initDone_) { // Drain send queue
         while (!initSendQueue_.empty()) {
-            link_->sendInitData(initSendQueue_.front());
+            link_->sendInitData(initSendQueue_.front(), false);
             initSendQueue_.pop();
         }
     }
@@ -166,7 +166,7 @@ void StandardInterface::sendUntimedData(StandardMem::Request *req) {
 
     MemEventInit *me = new MemEventInit(getName(), Command::Write, wr->pAddr, wr->data);
     if (initDone_)
-        link_->sendInitData(me);
+        link_->sendInitData(me, false);
     else
         initSendQueue_.push(me);
 }

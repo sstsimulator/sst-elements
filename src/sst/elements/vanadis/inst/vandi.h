@@ -21,34 +21,41 @@
 namespace SST {
 namespace Vanadis {
 
-class VanadisAndImmInstruction : public VanadisInstruction {
+class VanadisAndImmInstruction : public VanadisInstruction
+{
 public:
-    VanadisAndImmInstruction(const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts,
-                             const uint16_t dest, const uint16_t src_1, const uint64_t immediate)
-        : VanadisInstruction(addr, hw_thr, isa_opts, 1, 1, 1, 1, 0, 0, 0, 0), imm_value(immediate) {
+    VanadisAndImmInstruction(
+        const uint64_t addr, const uint32_t hw_thr, const VanadisDecoderOptions* isa_opts, const uint16_t dest,
+        const uint16_t src_1, const uint64_t immediate) :
+        VanadisInstruction(addr, hw_thr, isa_opts, 1, 1, 1, 1, 0, 0, 0, 0),
+        imm_value(immediate)
+    {
 
-        isa_int_regs_in[0] = src_1;
+        isa_int_regs_in[0]  = src_1;
         isa_int_regs_out[0] = dest;
     }
 
     VanadisAndImmInstruction* clone() override { return new VanadisAndImmInstruction(*this); }
     VanadisFunctionalUnitType getInstFuncType() const override { return INST_INT_ARITH; }
-    const char* getInstCode() const override { return "ANDI"; }
+    const char*               getInstCode() const override { return "ANDI"; }
 
-    void printToBuffer(char* buffer, size_t buffer_size) override {
+    void printToBuffer(char* buffer, size_t buffer_size) override
+    {
         snprintf(
             buffer, buffer_size,
             "ANDI    %5" PRIu16 " <- %5" PRIu16 " + imm=%" PRId64 " (phys: %5" PRIu16 " <- %5" PRIu16 " + %" PRId64 ")",
             isa_int_regs_out[0], isa_int_regs_in[0], imm_value, phys_int_regs_out[0], phys_int_regs_in[0], imm_value);
     }
 
-    void execute(SST::Output* output, VanadisRegisterFile* regFile) override {
+    void execute(SST::Output* output, VanadisRegisterFile* regFile) override
+    {
 #ifdef VANADIS_BUILD_DEBUG
-        output->verbose(CALL_INFO, 16, 0,
-                        "Execute: (addr=%p) ANDI phys: out=%" PRIu16 " in=%" PRIu16 " imm=%" PRIu64
-                        ", isa: out=%" PRIu16 " / in=%" PRIu16 "\n",
-                        (void*)getInstructionAddress(), phys_int_regs_out[0], phys_int_regs_in[0], imm_value,
-                        isa_int_regs_out[0], isa_int_regs_in[0]);
+        output->verbose(
+            CALL_INFO, 16, 0,
+            "Execute: (addr=%p) ANDI phys: out=%" PRIu16 " in=%" PRIu16 " imm=%" PRIu64 ", isa: out=%" PRIu16
+            " / in=%" PRIu16 "\n",
+            (void*)getInstructionAddress(), phys_int_regs_out[0], phys_int_regs_in[0], imm_value, isa_int_regs_out[0],
+            isa_int_regs_in[0]);
 #endif
         const uint64_t src_1 = regFile->getIntReg<uint64_t>(phys_int_regs_in[0]);
         regFile->setIntReg<uint64_t>(phys_int_regs_out[0], (src_1 & imm_value));

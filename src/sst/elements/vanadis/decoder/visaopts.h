@@ -16,36 +16,46 @@
 #ifndef _H_VANADIS_ISA_OPTIONS
 #define _H_VANADIS_ISA_OPTIONS
 
+#include "inst/fpregmode.h"
+
 #include <cinttypes>
 #include <cstdint>
-
-#include "inst/fpregmode.h"
 
 namespace SST {
 namespace Vanadis {
 
-class VanadisDecoderOptions {
+class VanadisDecoderOptions
+{
 public:
-    VanadisDecoderOptions(const uint16_t reg_ignore, const uint16_t isa_int_reg_c, const uint16_t isa_fp_reg_c,
-                          const uint16_t isa_sysc_reg, const VanadisFPRegisterMode fp_reg_m)
-        : reg_ignore_writes(reg_ignore), isa_int_reg_count(isa_int_reg_c), isa_fp_reg_count(isa_fp_reg_c),
-          isa_syscall_code_reg(isa_sysc_reg), fp_reg_mode(fp_reg_m) {}
+    VanadisDecoderOptions(
+        const uint16_t reg_ignore, const uint16_t isa_int_reg_c, const uint16_t isa_fp_reg_c,
+        const uint16_t isa_sysc_reg, const VanadisFPRegisterMode fp_reg_m) :
+        reg_ignore_writes(reg_ignore),
+        isa_int_reg_count(isa_int_reg_c),
+        isa_fp_reg_count(isa_fp_reg_c),
+        isa_syscall_code_reg(isa_sysc_reg),
+        fp_reg_mode(fp_reg_m)
+    {}
 
-    VanadisDecoderOptions()
-        : reg_ignore_writes(0), isa_int_reg_count(0), isa_fp_reg_count(0), isa_syscall_code_reg(0),
-          fp_reg_mode(VANADIS_REGISTER_MODE_FP32) {}
+    VanadisDecoderOptions() :
+        reg_ignore_writes(0),
+        isa_int_reg_count(0),
+        isa_fp_reg_count(0),
+        isa_syscall_code_reg(0),
+        fp_reg_mode(VANADIS_REGISTER_MODE_FP32)
+    {}
 
-    uint16_t getRegisterIgnoreWrites() const { return reg_ignore_writes; }
-    uint16_t countISAIntRegisters() const { return isa_int_reg_count; }
-    uint16_t countISAFPRegisters() const { return isa_fp_reg_count; }
-    uint16_t getISASysCallCodeReg() const { return isa_syscall_code_reg; }
+    uint16_t              getRegisterIgnoreWrites() const { return reg_ignore_writes; }
+    uint16_t              countISAIntRegisters() const { return isa_int_reg_count; }
+    uint16_t              countISAFPRegisters() const { return isa_fp_reg_count; }
+    uint16_t              getISASysCallCodeReg() const { return isa_syscall_code_reg; }
     VanadisFPRegisterMode getFPRegisterMode() const { return fp_reg_mode; }
 
 protected:
-    const uint16_t reg_ignore_writes;
-    const uint16_t isa_int_reg_count;
-    const uint16_t isa_fp_reg_count;
-    const uint16_t isa_syscall_code_reg;
+    const uint16_t              reg_ignore_writes;
+    const uint16_t              isa_int_reg_count;
+    const uint16_t              isa_fp_reg_count;
+    const uint16_t              isa_syscall_code_reg;
     const VanadisFPRegisterMode fp_reg_mode;
 };
 
