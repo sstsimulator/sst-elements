@@ -112,7 +112,16 @@ class MemNICBase : public MemLinkBase {
         };
 
         // Init functions
-        virtual void sendInitData(MemEventInit * ev) {
+        virtual void sendInitData(MemEventInit * ev, bool broadcast = true) {
+            if (!broadcast) {
+                std::string dst = findTargetDestination(ev->getRoutingAddress());
+                if (dst == "") {
+                    // Hold this request until we know the right address
+                    initWaitForDst.insert(ev);
+                    return;
+                }
+                ev->setDst(dst);
+            }
             MemRtrEvent * mre = new MemRtrEvent(ev);
             SST::Interfaces::SimpleNetwork::Request* req = new SST::Interfaces::SimpleNetwork::Request();
             req->dest = SST::Interfaces::SimpleNetwork::INIT_BROADCAST_ADDR;
@@ -225,6 +234,21 @@ class MemNICBase : public MemLinkBase {
                 while (!initSendQueue.empty()) {
                     linkcontrol->sendInitData(initSendQueue.front());
                     initSendQueue.pop();
+                }
+
+                for (auto it = initWaitForDst.begin(); it != initWaitForDst.end();) {
+                    std::string dst = findTargetDestination((*it)->getRoutingAddress());
+                    if (dst != "") {
+                        (*it)->setDst(dst);
+                        MemRtrEvent * mre = new MemRtrEvent(*it);
+                        SST::Interfaces::SimpleNetwork::Request* req = new SST::Interfaces::SimpleNetwork::Request();
+                        req->dest = SST::Interfaces::SimpleNetwork::INIT_BROADCAST_ADDR;
+                        req->givePayload(mre);
+                        linkcontrol->sendInitData(req);
+                        it = initWaitForDst.erase(it);
+                    } else {
+                        it++;
+                    }
                 }
             }
 
@@ -369,6 +393,11 @@ class MemNICBase : public MemLinkBase {
             for (auto it = endpointInfo.begin(); it != endpointInfo.end(); it++) {
                 dbg.debug(_L10_, "    Endpoint: %s\n", it->toString().c_str()); 
             }
+
+            if (!initWaitForDst.empty()) {
+                dbg.fatal(CALL_INFO, -1, "%s, Error: Unable to find destination for init event %s\n",
+                        getName().c_str(), (*initWaitForDst.begin())->getVerboseString().c_str());
+            }
         }
 
         // Lookup the network address for a given endpoint
@@ -457,6 +486,7 @@ class MemNICBase : public MemLinkBase {
         // Init queues
         std::queue<MemRtrEvent*> initQueue; // Queue for received init events
         std::queue<SST::Interfaces::SimpleNetwork::Request*> initSendQueue; // Queue of events waiting to be sent after network (linkcontrol) initializes
+        std::set<MemEventInit*> initWaitForDst; // Set of events with unknown destinations    
 
         // Other parameters
         std::unordered_set<uint32_t> sourceIDs, destIDs; // IDs which this endpoint cares about

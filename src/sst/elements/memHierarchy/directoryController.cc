@@ -665,8 +665,7 @@ void DirectoryController::init(unsigned int phase) {
             if (isRequestAddressValid(ev->getAddr())){
                 dbg.debug(_L10_, "I: %-20s   Event:SendInitData    %" PRIx64 "\n",
                         getName().c_str(), ev->getAddr());
-                ev->setDst(memLink->getTargetDestination(ev->getRoutingAddress()));
-                memLink->sendInitData(ev);
+                memLink->sendInitData(ev, false);
             } else
                 delete ev;
 
