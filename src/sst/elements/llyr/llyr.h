@@ -52,7 +52,7 @@ public:
     SST_ELI_DOCUMENT_PARAMS(
         { "verbose",        "Level of output verbosity, higher is more output, 0 is no output", 0 },
         { "clock",          "Clock frequency", "1GHz" },
-        { "device_addr",    "Address of device", "0" },
+        { "device_addr",    "Address of device (must be non-zero if not standalone)", "0" },
         { "clockcount",     "Number of clock ticks to execute", "100000" },
         { "application",    "Application in affine IR", "app.in" },
         { "hardware_graph", "Hardware connectivity graph", "grid.cfg" },
@@ -123,6 +123,7 @@ private:
     SST::TimeConverter*     time_converter_;
     Clock::HandlerBase*     clock_tick_handler_;
     bool                    handler_registered_;
+    bool                    clock_enabled_;
 
     bool compute_complete;
 

@@ -5,53 +5,55 @@ import sst
 sst.setProgramOption("timebase", "1 ps")
 sst.setProgramOption("stopAtCycle", "10000s")
 
-statLevel = 16
-max_addr_gb = 1
+# Constants shared across components
 tile_clk_mhz = 1
+backing_size = 16384
+l1_size = 512
+statLevel = 16
 
 # Define the simulation components
 df_0 = sst.Component("df_0", "llyr.LlyrDataflow")
 df_0.addParams({
-    "verbose": 20,
-    "clock" : str(tile_clk_mhz) + "GHz",
-    "mem_init"      : "int-1.mem",
-    #"application"   : "conditional.in",
-    "application"   : "gemm.in",
-    #"application"   : "llvm_in/cdfg-example-02.ll",
-    "hardware_graph": "hardware.cfg",
-    "mapper"        : "llyr.mapper.simple"
+   "verbose": 20,
+   "clock" : str(tile_clk_mhz) + "GHz",
+   "mem_init"      : "int-1.mem",
+   #"application"   : "conditional.in",
+   "application"   : "gemm.in",
+   #"application"   : "llvm_in/cdfg-example-02.ll",
+   "hardware_graph": "hardware.cfg",
+   "mapper"        : "llyr.mapper.simple"
 })
 iface = df_0.setSubComponent("iface", "memHierarchy.standardInterface")
 
-df_l1cache = sst.Component("l1cache", "memHierarchy.Cache")
+df_l1cache = sst.Component("df_l1", "memHierarchy.Cache")
 df_l1cache.addParams({
-    "access_latency_cycles" : "2",
-    "cache_frequency" : str(tile_clk_mhz) + "GHz",
-    "replacement_policy" : "lru",
-    "coherence_protocol" : "MESI",
-    "associativity" : "1",
-    "cache_line_size" : "16",
-    "verbose" : 10,
-    "debug" : 1,
-    "debug_level" : 100,
-    "L1" : "1",
-    "cache_size" : "512B"
+   "access_latency_cycles" : "2",
+   "cache_frequency" : str(tile_clk_mhz) + "GHz",
+   "replacement_policy" : "lru",
+   "coherence_protocol" : "MESI",
+   "cache_size" : str(l1_size) + "B",
+   "associativity" : "1",
+   "cache_line_size" : "16",
+   "verbose" : 10,
+   "debug" : 1,
+   "debug_level" : 100,
+   "L1" : "1"
 })
 
 df_memory = sst.Component("memory", "memHierarchy.MemController")
 df_memory.addParams({
-    "backing" : "mmap",
-    "verbose" : 10,
-    "debug" : 1,
-    "debug_level" : 100,
-    "clock" : str(tile_clk_mhz) + "GHz",
+   "backing" : "mmap",
+   "verbose" : 10,
+   "debug" : 1,
+   "debug_level" : 100,
+   "addr_range_start" : "0",
+   "clock" : str(tile_clk_mhz) + "GHz",
 })
 
 backend = df_memory.setSubComponent("backend", "memHierarchy.simpleMem")
 backend.addParams({
-    "access_time" : "4 ns",
-    #"mem_size" : str(max_addr_gb) + "GiB",
-    "mem_size" : str(16384) + "B",
+   "access_time" : "100 ns",
+   "mem_size" : str(backing_size) + "B",
 })
 
 # Enable SST Statistics Outputs for this simulation

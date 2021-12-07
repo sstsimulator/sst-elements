@@ -33,6 +33,7 @@ LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
   Component(id)
 {
     //initial params
+    clock_enabled_ = 1;
     compute_complete = 0;
     const uint32_t verbosity = params.find< uint32_t >("verbose", 0);
 
@@ -71,7 +72,10 @@ LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
 
     // set up MMIO address for device
     device_addr_ = params.find< uint64_t >("device_addr", 0);
-    mem_interface_->setMemoryMappedAddressRegion(device_addr_, 1);
+    if( device_addr_ != 0x00 ) {
+        clock_enabled_ = 0;
+        mem_interface_->setMemoryMappedAddressRegion(device_addr_, 1);
+    }
 
     //need a 'global' LS queue for reordering
     ls_queue_ = new LSQueue();
@@ -189,6 +193,10 @@ void LlyrComponent::finish()
 
 bool LlyrComponent::tick( Cycle_t )
 {
+    if( clock_enabled_ == 0 ) {
+        return false;
+    }
+
     compute_complete = 0;
     //On each tick perform BFS on graph and compute based on operand availability
     //NOTE node0 is a dummy node to simplify the algorithm
@@ -256,7 +264,7 @@ void LlyrComponent::handleEvent(StandardMem::Request* req) {
 
 /* Handler for incoming Read requests */
 void LlyrComponent::LlyrMemHandlers::handle(StandardMem::Read* read) {
-    out->verbose(CALL_INFO, 8, 0, "Handle Read for Address p%lu -- v%lu.\n", read->pAddr, read->vAddr);
+    out->verbose(CALL_INFO, 8, 0, "Handle Read for Address p-0x%" PRIx64 " -- v-0x%" PRIx64 ".\n", read->pAddr, read->vAddr);
 
     // Make a response. Must fill in payload.
     StandardMem::ReadResp* resp = static_cast<StandardMem::ReadResp*>(read->makeResponse());
@@ -265,7 +273,9 @@ void LlyrComponent::LlyrMemHandlers::handle(StandardMem::Read* read) {
 
 /* Handler for incoming Write requests */
 void LlyrComponent::LlyrMemHandlers::handle(StandardMem::Write* write) {
-    out->verbose(CALL_INFO, 8, 0, "Handle Write for Address p%lu -- v%lu.\n", write->pAddr, write->vAddr);
+    out->verbose(CALL_INFO, 8, 0, "Handle Write for Address p-0x%" PRIx64 " -- v-0x%" PRIx64 ".\n", write->pAddr, write->vAddr);
+
+    llyr_->clock_enabled_ = 1;
 
     /* Send response (ack) if needed */
     if (!(write->posted)) {
