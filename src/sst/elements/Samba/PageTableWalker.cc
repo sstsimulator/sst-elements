@@ -96,18 +96,19 @@ PageTableWalker::PageTableWalker(ComponentId_t id, int tlb_id, PageTableWalker *
 
 	upper_link_latency = ((uint32_t) params.find<uint32_t>("upper_link_L"+LEVEL, 0));
 
+    max_width = ((uint32_t) params.find<uint32_t>("max_width_PTWC", 4));
+
+    os_page_size = ((uint32_t) params.find<uint32_t>("os_page_size", 4));
 
 	char* subID = (char*) malloc(sizeof(char) * 32);
 	sprintf(subID, "Core%d_PTWC", tlb_id);
+
 
 
 	// The stats that will appear, not that these stats are going to be part of the Samba unit
 	statPageTableWalkerHits = registerStatistic<uint64_t>( "tlb_hits", subID);
 	statPageTableWalkerMisses = registerStatistic<uint64_t>( "tlb_misses", subID );
 
-	max_width = ((uint32_t) params.find<uint32_t>("max_width_PTWC", 4));
-
-	os_page_size = ((uint32_t) params.find<uint32_t>("os_page_size", 4));
 
 	size = new int[sizes];
 	assoc = new int[sizes];
@@ -381,7 +382,8 @@ void PageTableWalker::recvResp(SST::Event * event)
 	else
 		pw_id = MEM_REQ[ev->getID()];
 
-	insert_way(WID_Add[pw_id], find_victim_way(WID_Add[pw_id], WSR_COUNT[pw_id]), WSR_COUNT[pw_id]);
+    //WID_Add[] is virtual address, WSR_PT_LEVEL[] is level of page table
+	insert_way(WID_Add[pw_id], find_victim_way(WID_Add[pw_id], WSR_PT_LEVEL[pw_id]), WSR_PT_LEVEL[pw_id]);
 
 	Address_t addr = WID_Add[pw_id];
 
@@ -391,7 +393,7 @@ void PageTableWalker::recvResp(SST::Event * event)
 	MEM_REQ.erase(ev->getID());
 	delete ev;
 
-	if(WSR_COUNT[pw_id]==0)
+	if(WSR_PT_LEVEL[pw_id]==0)
 	{
 		ready_by[WID_EV[pw_id]] =  currTime + latency + 2*upper_link_latency;
 
@@ -409,28 +411,28 @@ void PageTableWalker::recvResp(SST::Event * event)
 			if(!ptw_confined)
 			{
 				Address_t page_table_start = 0;
-				if(WSR_COUNT[pw_id]==4)
+				if(WSR_PT_LEVEL[pw_id]==4)
 					page_table_start = (*PGD)[addr/page_size[3]];
-				else if(WSR_COUNT[pw_id]==3)
+				else if(WSR_PT_LEVEL[pw_id]==3)
 					page_table_start = (*PUD) [addr/page_size[2]];
-				else if(WSR_COUNT[pw_id]==2)
+				else if(WSR_PT_LEVEL[pw_id]==2)
 					page_table_start = (*PMD) [addr/page_size[1]];
-				else if (WSR_COUNT[pw_id] == 1)
+				else if (WSR_PT_LEVEL[pw_id] == 1)
 					page_table_start = (*PTE) [addr/page_size[0]];
 
-				dummy_add = page_table_start + (addr/page_size[WSR_COUNT[pw_id]-1])%512;
+				dummy_add = page_table_start + (addr/page_size[WSR_PT_LEVEL[pw_id]-1])%512;
 			}
 			else
 			{
-				if(WSR_COUNT[pw_id]==4) {
+				if(WSR_PT_LEVEL[pw_id]==4) {
 					dummy_add = (*CR3) + ((addr/page_size[3])%512)*8;
 				}
-				else if(WSR_COUNT[pw_id]==3) {
+				else if(WSR_PT_LEVEL[pw_id]==3) {
 					dummy_add = (*PGD)[(addr/page_size[3])%512] + ((addr/page_size[2])%512)*8;
 				}
-				else if(WSR_COUNT[pw_id]==2) {
+				else if(WSR_PT_LEVEL[pw_id]==2) {
 					dummy_add = (*PUD)[(addr/page_size[2])%(512*512)] + ((addr/page_size[1])%512)*8;}
-				else if(WSR_COUNT[pw_id]==1) {
+				else if(WSR_PT_LEVEL[pw_id]==1) {
 					uint64_t offset = (uint64_t)512*512*512;
 					dummy_add = (*PMD)[(addr/page_size[1])%offset] + ((addr/page_size[0])%512)*8;
 				}
@@ -442,7 +444,7 @@ void PageTableWalker::recvResp(SST::Event * event)
 		MemEvent *e = new MemEvent(getName(), dummy_add, dummy_base_add, Command::GetS);
 		e->setVirtualAddress(addr);
 
-		WSR_COUNT[pw_id]--;
+		WSR_PT_LEVEL[pw_id]--;
 		MEM_REQ[e->getID()]=pw_id;
 		to_mem->send(e);
 
@@ -687,7 +689,7 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 		// Those track if any hit in one of the supported pages' structures
 		int hit_id=0;
 
-		// We check the structures in parallel to find if it hits
+		// We check the PTWC-es in parallel to find if it hits
 		int k;
 		for(k=0; k < sizes; k++)
 			if(check_hit(addr, k))
@@ -766,10 +768,8 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 					Address_t dummy_base_add = dummy_add & ~(line_size - 1);
 					MemEvent *e = new MemEvent(getName(), dummy_add, dummy_base_add, Command::GetS);
 
-
-
-
-					WSR_COUNT[mmu_id] = k-1;
+                    // Record this walk request into WSR_ and WID_ structs
+					WSR_PT_LEVEL[mmu_id] = k-1;
 					//		WID_EV[mmu_id] = e;
 					WID_Add[mmu_id] = addr;
 					e->setVirtualAddress(addr);
@@ -787,9 +787,9 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 
 
 				}
-				else
+				else // (to_mem == nullptr)
 				{
-
+                    // JVOROBY: We don't actually have a memory link, so instead just wait for an appropriate latency
 
 
 					ready_by[ev] = x + latency + 2*upper_link_latency + page_walk_latency;  // the upper link latency is substituted for sending the miss request and reciving it, Note this is hard coded for the last-level as memory access walk latency, this ****definitely**** needs to change
@@ -817,9 +817,8 @@ bool PageTableWalker::tick(SST::Cycle_t x)
 	{
 
 		bool deleted=false;
-		if(st->second <= x)
+		if(st->second <= x) // if this event is ready
 		{
-
 
 			Address_t addr = ((MemEvent*) st->first)->getVirtualAddress();
 

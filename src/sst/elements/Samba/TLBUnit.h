@@ -105,7 +105,9 @@ class TLB : public ComponentExtension
 
     // === Buffers for sending requests up/down TLB hierarchy:
     
-    // requests sent lower in TLB hierarchy, will be returned into `this->pushed_back` by lower levels
+    // When we miss, we send requests to next level down through `next_level->push_request()` or `PTW->push_request()`
+    
+    // completed requests from deeper in TLB hierarchy will be returned into `this->pushed_back`
 	std::vector<MemHierarchy::MemEventBase *> pushed_back; // translation for requests, returned from lower-level structures
 	std::map<MemHierarchy::MemEventBase *, long long int, MemEventPtrCompare> pushed_back_size; // page_sizes of the returned translations
 
