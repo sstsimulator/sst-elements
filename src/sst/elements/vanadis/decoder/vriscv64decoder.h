@@ -53,7 +53,6 @@ public:
         options = new VanadisDecoderOptions(static_cast<uint16_t>(0), 32, 32, 2, VANADIS_REGISTER_MODE_FP64);
         max_decodes_per_cycle = params.find<uint16_t>("decode_max_ins_per_cycle", 2);
 
-        // MIPS default is 0x7fffffff according to SYS-V manual
         start_stack_address = params.find<uint64_t>("stack_start_address", 0x7ffffff0);
 
         // See if we get an entry point the sub-component says we have to use
@@ -82,7 +81,7 @@ public:
         const uint32_t arg_count = params.find<uint32_t>("argc", 1);
         const uint32_t env_count = params.find<uint32_t>("env_count", 0);
 
-        char*                 arg_name = new char[32];
+        char                  arg_name[32];
         std::vector<uint8_t>  arg_data_block;
         std::vector<uint64_t> arg_start_offsets;
 
@@ -117,9 +116,8 @@ public:
 
             arg_data_block.push_back((uint8_t)('\0'));
         }
-        delete[] arg_name;
 
-        char*                 env_var_name = new char[32];
+        char                  env_var_name[32];
         std::vector<uint8_t>  env_data_block;
         std::vector<uint64_t> env_start_offsets;
 
@@ -147,7 +145,6 @@ public:
             }
             env_data_block.push_back((uint8_t)('\0'));
         }
-        delete[] env_var_name;
 
         std::vector<uint8_t> phdr_data_block;
 
