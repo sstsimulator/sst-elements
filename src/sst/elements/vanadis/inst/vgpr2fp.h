@@ -22,7 +22,7 @@
 namespace SST {
 namespace Vanadis {
 
-template <VanadisRegisterFormat register_format>
+template <VanadisRegisterFormat int_register_format, VanadisRegisterFormat fp_register_format>
 class VanadisGPR2FPInstruction : public VanadisInstruction
 {
 public:
@@ -31,22 +31,22 @@ public:
         const uint16_t int_src) :
         VanadisInstruction(
             addr, hw_thr, isa_opts, 1, 0, 1, 0, 0,
-            ((register_format == VanadisRegisterFormat::VANADIS_FORMAT_FP64 ||
-              register_format == VanadisRegisterFormat::VANADIS_FORMAT_INT64) &&
+            ((fp_register_format == VanadisRegisterFormat::VANADIS_FORMAT_FP64 ||
+              fp_register_format == VanadisRegisterFormat::VANADIS_FORMAT_INT64) &&
              (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode()))
                 ? 2
                 : 1,
             0,
-            ((register_format == VanadisRegisterFormat::VANADIS_FORMAT_FP64 ||
-              register_format == VanadisRegisterFormat::VANADIS_FORMAT_INT64) &&
+            ((fp_register_format == VanadisRegisterFormat::VANADIS_FORMAT_FP64 ||
+              fp_register_format == VanadisRegisterFormat::VANADIS_FORMAT_INT64) &&
              (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode()))
                 ? 2
                 : 1)
     {
         isa_int_regs_in[0] = int_src;
 
-        if ( ((register_format == VanadisRegisterFormat::VANADIS_FORMAT_FP64 ||
-               register_format == VanadisRegisterFormat::VANADIS_FORMAT_INT64) &&
+        if ( ((fp_register_format == VanadisRegisterFormat::VANADIS_FORMAT_FP64 ||
+               fp_register_format == VanadisRegisterFormat::VANADIS_FORMAT_INT64) &&
               (VANADIS_REGISTER_MODE_FP32 == isa_opts->getFPRegisterMode())) ) {
 
             isa_fp_regs_out[0] = fp_dest;
@@ -62,13 +62,43 @@ public:
 
     const char* getInstCode() const override
     {
-        switch ( register_format ) {
+        switch ( fp_register_format ) {
         case VanadisRegisterFormat::VANADIS_FORMAT_INT32:
+            switch(int_register_format)
+            {
+            case VanadisRegisterFormat::VANADIS_FORMAT_INT32:
+                return "GPR32FP32";
+            case VanadisRegisterFormat::VANADIS_FORMAT_INT64:
+                return "GPR64FP32";
+            }
+            break;
         case VanadisRegisterFormat::VANADIS_FORMAT_FP32:
-            return "GPR2FP32";
+            switch(int_register_format)
+            {
+            case VanadisRegisterFormat::VANADIS_FORMAT_INT32:
+                return "GPR32FP32";
+            case VanadisRegisterFormat::VANADIS_FORMAT_INT64:
+                return "GPR64FP32";
+            }
+            break;
         case VanadisRegisterFormat::VANADIS_FORMAT_INT64:
+            switch(int_register_format)
+            {
+            case VanadisRegisterFormat::VANADIS_FORMAT_INT32:
+                return "GPR32FP64";
+            case VanadisRegisterFormat::VANADIS_FORMAT_INT64:
+                return "GPR64FP64";
+            }
+            break;
         case VanadisRegisterFormat::VANADIS_FORMAT_FP64:
-            return "GPR2FP64";
+            switch(int_register_format)
+            {
+            case VanadisRegisterFormat::VANADIS_FORMAT_INT32:
+                return "GPR32FP64";
+            case VanadisRegisterFormat::VANADIS_FORMAT_INT64:
+                return "GPR64FP64";
+            }
+            break;
         }
 
         return "GPRCONVUNK";
@@ -82,6 +112,20 @@ public:
             getInstCode(), isa_fp_regs_out[0], phys_fp_regs_out[0], isa_int_regs_in[0], phys_int_regs_in[0]);
     }
 
+    template <typename FP_TYPE, typename INT_TYPE>
+    void execute_inner(SST::Output* output, VanadisRegisterFile* regFile)
+    {
+        INT_TYPE v = regFile->getIntReg<INT_TYPE>(phys_int_regs_in[0]);
+
+        // Data type is 8 bytes wide, but we are in 4 byte register width mode
+        if ( (8 == sizeof(FP_TYPE)) && (VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode()) ) {
+            fractureToRegisters<FP_TYPE>(regFile, phys_fp_regs_out[0], phys_fp_regs_out[1], static_cast<FP_TYPE>(v));
+        }
+        else {
+            regFile->setFPReg<FP_TYPE>(phys_fp_regs_out[0], static_cast<FP_TYPE>(v));
+        }
+    }
+
     void execute(SST::Output* output, VanadisRegisterFile* regFile) override
     {
 #ifdef VANADIS_BUILD_DEBUG
@@ -92,27 +136,92 @@ public:
             getInstructionAddress(), getInstCode(), isa_fp_regs_out[0], phys_fp_regs_out[0], isa_int_regs_in[0],
             phys_int_regs_in[0]);
 #endif
-        switch ( register_format ) {
+        switch ( fp_register_format ) {
         case VanadisRegisterFormat::VANADIS_FORMAT_INT32:
+        {
+            switch ( int_register_format ) {
+            case VanadisRegisterFormat::VANADIS_FORMAT_INT32:
+            {
+                execute_inner<int32_t, int32_t>(output, regFile);
+            } break;
+            case VanadisRegisterFormat::VANADIS_FORMAT_INT64:
+            {
+                execute_inner<int32_t, int64_t>(output, regFile);
+            } break;
+            case VanadisRegisterFormat::VANADIS_FORMAT_FP32:
+            {
+                execute_inner<int32_t, float>(output, regFile);
+            } break;
+            case VanadisRegisterFormat::VANADIS_FORMAT_FP64:
+            {
+                execute_inner<int32_t, double>(output, regFile);
+            } break;
+            }
+        } break;
         case VanadisRegisterFormat::VANADIS_FORMAT_FP32:
         {
-            const int32_t v = regFile->getIntReg<int32_t>(phys_int_regs_in[0]);
-            regFile->setFPReg<int32_t>(phys_fp_regs_out[0], v);
+            switch ( int_register_format ) {
+            case VanadisRegisterFormat::VANADIS_FORMAT_INT32:
+            {
+                execute_inner<float, int32_t>(output, regFile);
+            } break;
+            case VanadisRegisterFormat::VANADIS_FORMAT_INT64:
+            {
+                execute_inner<float, int64_t>(output, regFile);
+            } break;
+            case VanadisRegisterFormat::VANADIS_FORMAT_FP32:
+            {
+                execute_inner<float, float>(output, regFile);
+            } break;
+            case VanadisRegisterFormat::VANADIS_FORMAT_FP64:
+            {
+                execute_inner<float, double>(output, regFile);
+            } break;
+            }
         } break;
         case VanadisRegisterFormat::VANADIS_FORMAT_INT64:
+        {
+            switch ( int_register_format ) {
+            case VanadisRegisterFormat::VANADIS_FORMAT_INT32:
+            {
+                execute_inner<int64_t, int32_t>(output, regFile);
+            } break;
+            case VanadisRegisterFormat::VANADIS_FORMAT_INT64:
+            {
+                execute_inner<int64_t, int64_t>(output, regFile);
+            } break;
+            case VanadisRegisterFormat::VANADIS_FORMAT_FP32:
+            {
+                execute_inner<int64_t, float>(output, regFile);
+            } break;
+            case VanadisRegisterFormat::VANADIS_FORMAT_FP64:
+            {
+                execute_inner<int64_t, double>(output, regFile);
+            } break;
+            }
+        } break;
         case VanadisRegisterFormat::VANADIS_FORMAT_FP64:
         {
-            if ( VANADIS_REGISTER_MODE_FP32 == isa_options->getFPRegisterMode() ) {
-                const int64_t v = regFile->getIntReg<int64_t>(phys_int_regs_in[0]);
-                fractureToRegisters<int64_t>(regFile, phys_fp_regs_out[0], phys_fp_regs_out[1], v);
-            }
-            else {
-                const int64_t v = regFile->getIntReg<int64_t>(phys_int_regs_in[0]);
-                regFile->setFPReg<int64_t>(phys_fp_regs_out[0], v);
+            switch ( int_register_format ) {
+            case VanadisRegisterFormat::VANADIS_FORMAT_INT32:
+            {
+                execute_inner<double, int32_t>(output, regFile);
+            } break;
+            case VanadisRegisterFormat::VANADIS_FORMAT_INT64:
+            {
+                execute_inner<double, int64_t>(output, regFile);
+            } break;
+            case VanadisRegisterFormat::VANADIS_FORMAT_FP32:
+            {
+                execute_inner<double, float>(output, regFile);
+            } break;
+            case VanadisRegisterFormat::VANADIS_FORMAT_FP64:
+            {
+                execute_inner<double, double>(output, regFile);
+            } break;
             }
         } break;
         }
-
         markExecuted();
     }
 };

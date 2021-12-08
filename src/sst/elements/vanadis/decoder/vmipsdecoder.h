@@ -1867,7 +1867,7 @@ protected:
                     {
                         if ( (0 == fd) && (MIPS_SPEC_COP_MASK_MTC == fr) ) {
                             bundle->addInstruction(
-                                new VanadisGPR2FPInstruction<VanadisRegisterFormat::VANADIS_FORMAT_FP32>(
+                                new VanadisGPR2FPInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32, VanadisRegisterFormat::VANADIS_FORMAT_FP32>(
                                     ins_addr, hw_thr, options, fs, rt));
                             insertDecodeFault = false;
                         }
@@ -1920,7 +1920,7 @@ protected:
 
                             if ( fp_matched ) {
                                 bundle->addInstruction(
-                                    new VanadisGPR2FPInstruction<VanadisRegisterFormat::VANADIS_FORMAT_FP32>(
+                                    new VanadisGPR2FPInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT32, VanadisRegisterFormat::VANADIS_FORMAT_FP32>(
                                         ins_addr, hw_thr, options, fp_ctrl_reg, rt));
                                 insertDecodeFault = false;
                             }

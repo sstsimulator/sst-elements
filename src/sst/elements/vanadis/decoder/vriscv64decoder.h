@@ -1239,16 +1239,68 @@ protected:
                 // Syscall/ECALL and EBREAK
                 // Control registers
 
-                uint32_t func_code12 = (ins & 0xFFF00000);
+					 processI<uint64_t>(ins, op_code, rd, rs1, func_code, uimm64);
 
-                switch ( func_code12 ) {
-                case 0x0:
-                {
-                    output->verbose(CALL_INFO, 16, 0, "------> ECALL/SYSCALL\n");
-                    bundle->addInstruction(new VanadisSysCallInstruction(ins_address, hw_thr, options));
-                    decode_fault = false;
-                } break;
-                }
+					 if( (0 == rd) && (0 == rs1) && (0 == func_code) ) {
+	                uint32_t func_code12 = (ins & 0xFFF00000);
+
+	                switch ( func_code12 ) {
+	                case 0x0:
+	                {
+	                    output->verbose(CALL_INFO, 16, 0, "------> ECALL/SYSCALL\n");
+   	                 bundle->addInstruction(new VanadisSysCallInstruction(ins_address, hw_thr, options));
+      	              decode_fault = false;
+         	       } break;
+            	    }
+					} else {
+						switch(func_code) {
+						case 0x1:
+							{
+								// CSRRW
+							} break;
+						case 0x2:
+							{
+								// CSRRS
+								output->verbose(CALL_INFO, 16, 0, "-----> CSRRS CSR: %" PRIu64 " / reg: %" PRIu16 "\n", uimm64, rd);
+								// ignore for now?
+
+								// Switch based on the CSR being read
+								switch(uimm64) {
+								case 0x1:
+									{
+										// FFLAGs register is being read
+										output->verbose(CALL_INFO, 16, 0, "-----> CSRRS CSR: %" PRIu64 " / rd: %" PRIu16 " / rs1: %" PRIu16 "\n", uimm64, rd, rs1);
+
+										if(0 == rd) {
+											bundle->addInstruction(new VanadisAddImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(ins_address, hw_thr, options,
+                           rd, rs1, 0));
+                        decode_fault = false;
+										}
+									} break;
+								case 0x2:
+									{
+										// Floating point rounding mode is being read
+										output->verbose(CALL_INFO, 16, 0, "-------> Mapping read rounding-mode register, set this to 000 (round-to-nearest)\n");
+										// TODO: we will set rounding mode to 000 (Round to nearest) always
+								bundle->addInstruction(new VanadisAddImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(ins_address, hw_thr, options,
+									rd, 0, 0));
+								decode_fault = false;
+									} break;
+								}
+							} break;
+						case 0x6:
+							{
+								// CSRRSI
+								output->verbose(CALL_INFO, 16, 0, "-----> CSRRS CSRI: %" PRIu64 " / reg: %" PRIu16 " / UIMMM: %" PRIu16 "\n", uimm64, rd, rs1);
+
+								if(0 == rd) {
+									bundle->addInstruction(new VanadisAddImmInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(ins_address, hw_thr, options,
+                           rd, 0, 0));
+									decode_fault = false;
+								}
+							} break;
+						}
+					}
             } break;
             case 0x3B:
             {
@@ -1504,6 +1556,39 @@ protected:
                     } break;
                     }
                 } break;
+					 case 0xD:
+					{
+						output->verbose(CALL_INFO, 16, 0, "---> FDIV.D %" PRIu16 " <- %" PRIu16 " / %" PRIu16 "\n",
+							rd, rs1, rs2);
+						bundle->addInstruction(new VanadisFPDivideInstruction<VanadisRegisterFormat::VANADIS_FORMAT_FP64>(ins_address,
+							hw_thr, options, rd, rs1, rs2));
+						decode_fault = false;
+					} break;
+                case 105:
+                {
+                    processR(ins, op_code, rd, rs1, rs2, func_code3, func_code7);
+
+                    output->verbose(
+                        CALL_INFO, 16, 0, "---> func_code3=%" PRIu32 " / func_code7=%" PRIu32 "\n", func_code3,
+                        func_code7);
+
+                    // rs2 dictates the signed nature of the operands
+                    switch ( rs2 ) {
+                    case 0:
+                    {
+                        output->verbose(CALL_INFO, 16, 0, "-----> FCVT.D.W %" PRIu16 " <- %" PRIu16 "\n", rs1, rd);
+                        bundle->addInstruction(
+                            new VanadisGPR2FPInstruction<
+                                VanadisRegisterFormat::VANADIS_FORMAT_INT32,
+                                VanadisRegisterFormat::VANADIS_FORMAT_FP64>(ins_address, hw_thr, options, rd, rs1));
+                        decode_fault = false;
+                    } break;
+                    case 1:
+                    {
+                        output->verbose(CALL_INFO, 16, 0, "-----> FCVT.D.WU %" PRIu16 " <- %" PRIu16 "\n", rs1, rd);
+                    } break;
+                    }
+                } break;
                 case 0x50:
                 {
                     switch ( func_code3 ) {
@@ -1513,8 +1598,8 @@ protected:
                         output->verbose(
                             CALL_INFO, 16, 0, "-----> FLE.S %" PRIu16 " <- %" PRIu16 " <= %" PRIu16 "\n", rd, rs1, rs2);
                         //								bundle->addInstruction(new
-                        //VanadisFPSetRegCompareInstruction<REG_COMPARE_LTE,
-                        //VanadisRegisterFormat::VANADIS_FORMAT_FP64>(ins_address, hw_thr, options, rd, rs1, rs2));
+                        // VanadisFPSetRegCompareInstruction<REG_COMPARE_LTE,
+                        // VanadisRegisterFormat::VANADIS_FORMAT_FP64>(ins_address, hw_thr, options, rd, rs1, rs2));
                         //								decode_fault = false;
                     } break;
                     }
@@ -1544,6 +1629,33 @@ protected:
                     } break;
                     }
                 } break;
+					case 0x71:
+					{
+						processR(ins, op_code, rd, rs1, rs2, func_code3, func_code7);
+
+						if(0 == rs2) {
+							if(0 == func_code3) {
+								output->verbose(CALL_INFO, 16, 0, "-----> FMV.X.D %" PRIu16 " <- %" PRIu16 "\n", rd, rs1);
+								bundle->addInstruction(new VanadisFP2GPRInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64>(ins_address,
+									hw_thr, options, rd, rs1));
+								decode_fault = false;
+							}
+						}
+					} break;
+					case 0x79:
+					{
+						processR(ins, op_code, rd, rs1, rs2, func_code3, func_code7);
+
+						if(0 == rs2) {
+							if(0 == func_code3) {
+								output->verbose(CALL_INFO, 16, 0, "-----> FMV.D.X %" PRIu16 " <- %" PRIu16 "\n",
+									rd, rs1);
+								bundle->addInstruction(new VanadisGPR2FPInstruction<VanadisRegisterFormat::VANADIS_FORMAT_INT64,
+									VanadisRegisterFormat::VANADIS_FORMAT_FP64>(ins_address, hw_thr, options, rd, rs1));
+								decode_fault = false;
+							}
+						}
+					} break;
                 }
             } break;
             case 0x43:
@@ -2111,6 +2223,20 @@ protected:
                 case 0x2000:
                 {
                     // FLDSP
+						  uint32_t imm_86 = (ins & 0x1C) << 4;
+						  uint32_t imm_43 = (ins & 0x60) >> 2;
+                    uint32_t imm_5  = (ins & 0x1000) >> 7;
+
+                    uint32_t offset = imm_5 | imm_43 | imm_86;
+
+                    uint16_t rvc_rd = static_cast<uint16_t>((ins & 0xF80) >> 7);
+
+							output->verbose(CALL_INFO, 16, 0, "--------> RVC FLDSP %" PRIu16 " <- memory[sp (r2) + %" PRIu32 "]\n",
+								rvc_rd, offset);
+							bundle->addInstruction(new VanadisLoadInstruction(ins_address, hw_thr, options, 2, offset, rvc_rd, 8, false,
+								MEM_TRANSACTION_NONE, LOAD_FP_REGISTER));
+							decode_fault = false;
+
                 } break;
                 case 0x4000:
                 {
@@ -2247,12 +2373,24 @@ protected:
                 case 0xA000:
                 {
                     // FSDSP
+                    uint16_t rvc_src = (ins & 0x7C) >> 2;
+
+                    uint32_t offset_53 = (ins & 0x1C00) >> 7;
+                    uint32_t offset_86 = (ins & 0x380) >> 1;
+
+                    uint32_t offset = offset_86 | offset_53;
+
+                    output->verbose(
+                        CALL_INFO, 16, 0, "-----> RVC FSDSP %" PRIu16 " -> memory[ sp + %" PRIu32 " ]\n", rvc_src,
+                        offset);
+                    bundle->addInstruction(new VanadisStoreInstruction(
+                        ins_address, hw_thr, options, 2, offset, rvc_src, 8, MEM_TRANSACTION_NONE, STORE_FP_REGISTER));
+                    decode_fault = false;
                 } break;
                 case 0xC000:
                 {
                     // SWSP
                     uint16_t rvc_src = (ins & 0x7C) >> 2;
-                    ;
 
                     uint32_t offset_52 = (ins & 0x1E00) >> 7;
                     uint32_t offset_76 = (ins & 0x180) >> 1;
