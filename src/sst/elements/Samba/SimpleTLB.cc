@@ -296,7 +296,11 @@ Addr SimpleTLB::translatePage(Addr virtPageAddr) {
     //TODO: send proper page fault here once implmemented
     //TODO: check MemEvent size?
     if(virtPageAddr < fixed_mapping_va_start || virtPageAddr >= fixed_mapping_va_start + fixed_mapping_len) {
-        out->fatal(CALL_INFO, -1, "Page fault: virtual addr 0x%lx is outside of mapped range: 0x%lx - 0x%lx\n", virtPageAddr, fixed_mapping_va_start, fixed_mapping_va_start + fixed_mapping_len-1);
+        ////Option 1: anything not explicitly mapped is page fault
+        //out->fatal(CALL_INFO, -1, "Page fault: virtual addr 0x%lx is outside of mapped range: 0x%lx - 0x%lx\n", virtPageAddr, fixed_mapping_va_start, fixed_mapping_va_start + fixed_mapping_len-1);
+        
+        ////Option 2: all other addresses get mapped to themselves (might be useful for e.g. faking multiprocess)
+        return virtPageAddr;
     }
 
 

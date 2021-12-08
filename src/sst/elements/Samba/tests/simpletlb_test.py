@@ -6,7 +6,10 @@ sst.setProgramOption("stopAtCycle", "0 ns")
 
 
 memory_mb = 1024 #1GB
-virt_region_size_mb = 128
+virt_region_size_mb = 256
+KB=1024
+MB=1024 * KB
+GB=1024 * MB
 
 # Define the simulation components
 comp_cpu = sst.Component("cpu", "miranda.BaseCPU")
@@ -17,7 +20,7 @@ cpugen = comp_cpu.setSubComponent("generator", "miranda.GUPSGenerator")
 cpugen.addParams({
 	"verbose" : 0,
 	"count" : 10000,
-	"max_address" : virt_region_size_mb
+	"max_address" : str(virt_region_size_mb * MB) + "B",
 })
 
 
@@ -62,7 +65,7 @@ memory.addParams({
 # ====== Custom TLB component
 comp_tlb = sst.Component("comp_TLB", "Samba.SimpleTLB")
 comp_tlb.addParams({
-    "verbose": 1,
+    "verbose": 3,
     "fixed_mapping_va_start": "0x0",
     "fixed_mapping_pa_start": "0xF000000",
     "fixed_mapping_len": "128MB",
