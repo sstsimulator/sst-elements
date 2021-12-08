@@ -18,6 +18,7 @@ libllyr_la_SOURCES = \
 	parser/parser.cc \
 	mappers/llyrMapper.h \
 	mappers/simpleMapper.h \
+	mappers/pyMapper.h \
 	mappers/gemmMapper.h \
 	processingElement.h \
 	pes/dummyPE.h \
