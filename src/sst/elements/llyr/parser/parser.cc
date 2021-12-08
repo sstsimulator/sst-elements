@@ -76,7 +76,7 @@ void Parser::generateAppGraph(std::string functionName)
         }
     }// function loop
 
-    std::cout << "Finished parsing..." << std::endl;
+    output_->verbose(CALL_INFO, 1, 0, "Finished parsing...\n");
     printCDFG( "00_func-ins.dot" );
     printPyomo( "00_pyomo.out", mod.release() );
 
@@ -84,7 +84,7 @@ void Parser::generateAppGraph(std::string functionName)
 
 void Parser::generatebBasicBlockGraph(llvm::Function* func)
 {
-    std::cout << "Generating BB Graph..." << std::endl;
+    output_->verbose(CALL_INFO, 1, 0, "Generating BB Graph...\n");
     llvm::errs().write_escaped(llvm::demangle(func->getName().str() )) << '\n';
 
     for( auto blockIter = func->getBasicBlockList().begin(), blockEnd = func->getBasicBlockList().end(); blockIter != blockEnd; ++blockIter ) {
@@ -122,15 +122,16 @@ void Parser::generatebBasicBlockGraph(llvm::Function* func)
     }// basic block loop
 
     // bb_Graph should be complete here
-    std::cout << "...Basic Block Graph Done." << std::endl;
+    output_->verbose(CALL_INFO, 1, 0, "...Basic Block Graph Done.\n");
     bbGraph_->printDot("00_bb.dot");
 }// generatebBasicBlockGraph
 
 
 void Parser::expandBBGraph(llvm::Function* func)
 {
-    std::cout << "\n\nGenerating Flow Graph..." << std::endl;
-    CDFGVertex* entryVertex;
+    output_->verbose(CALL_INFO, 1, 0, "\n\nGenerating Flow Graph...\n");
+
+    [[maybe_unused]] CDFGVertex* entryVertex;
     CDFGVertex* outputVertex;
     CDFGVertex* inputVertex;
     std::map< llvm::Instruction*, CDFGVertex* >* instructionMap_ = new std::map< llvm::Instruction*, CDFGVertex* >;
@@ -243,7 +244,7 @@ void Parser::expandBBGraph(llvm::Function* func)
                         inputVertex->floatConst_ = 0x00;
                         inputVertex->doubleConst_ = 0x00;
 
-                        __attribute__((unused)) uint32_t inputVertexID = g.addVertex(inputVertex);
+                        [[maybe_unused]] uint32_t inputVertexID = g.addVertex(inputVertex);
                         (*vertexList_)[&*blockIter].push_back(inputVertex);
 
                         // create the node/use entries
@@ -310,7 +311,7 @@ void Parser::expandBBGraph(llvm::Function* func)
                             inputVertex->floatConst_ = 0x00;
                             inputVertex->doubleConst_ = 0x00;
 
-                            __attribute__((unused)) uint32_t inputVertexID = g.addVertex(inputVertex);
+                            [[maybe_unused]] uint32_t inputVertexID = g.addVertex(inputVertex);
                             (*vertexList_)[&*blockIter].push_back(inputVertex);
 
                             // create the node/use entries
@@ -362,7 +363,7 @@ void Parser::expandBBGraph(llvm::Function* func)
                         inputVertex->floatConst_ = 0x00;
                         inputVertex->doubleConst_ = 0x00;
 
-                        __attribute__((unused)) uint32_t inputVertexID = g.addVertex(inputVertex);
+                        [[maybe_unused]] uint32_t inputVertexID = g.addVertex(inputVertex);
                         (*vertexList_)[&*blockIter].push_back(inputVertex);
 
                         // create the node/use entries
@@ -414,7 +415,7 @@ void Parser::expandBBGraph(llvm::Function* func)
                         inputVertex->floatConst_ = 0x00;
                         inputVertex->doubleConst_ = 0x00;
 
-                        __attribute__((unused)) uint32_t inputVertexID = g.addVertex(inputVertex);
+                        [[maybe_unused]] uint32_t inputVertexID = g.addVertex(inputVertex);
                         (*vertexList_)[&*blockIter].push_back(inputVertex);
 
                         // create the node/use entries
@@ -492,7 +493,7 @@ void Parser::expandBBGraph(llvm::Function* func)
                         inputVertex->floatConst_ = 0x00;
                         inputVertex->doubleConst_ = 0x00;
 
-                        __attribute__((unused)) uint32_t inputVertexID = g.addVertex(inputVertex);
+                        [[maybe_unused]] uint32_t inputVertexID = g.addVertex(inputVertex);
                         (*vertexList_)[&*blockIter].push_back(inputVertex);
 
                         // create the node/use entries
@@ -615,7 +616,7 @@ void Parser::expandBBGraph(llvm::Function* func)
                         inputVertex->floatConst_ = 0x00;
                         inputVertex->doubleConst_ = 0x00;
 
-                        __attribute__((unused)) uint32_t inputVertexID = g.addVertex(inputVertex);
+                        [[maybe_unused]] uint32_t inputVertexID = g.addVertex(inputVertex);
                         (*vertexList_)[&*blockIter].push_back(inputVertex);
 
                         // create the node/use entries
@@ -813,7 +814,7 @@ void Parser::expandBBGraph(llvm::Function* func)
                             inputVertex->floatConst_ = 0x00;
                             inputVertex->doubleConst_ = 0x00;
 
-                            __attribute__((unused)) uint32_t inputVertexID = g.addVertex(inputVertex);
+                            [[maybe_unused]] uint32_t inputVertexID = g.addVertex(inputVertex);
                             (*vertexList_)[&*blockIter].push_back(inputVertex);
 
                             // create the node/use entries
@@ -920,7 +921,7 @@ void Parser::expandBBGraph(llvm::Function* func)
                             inputVertex->floatConst_ = 0x00;
                             inputVertex->doubleConst_ = 0x00;
 
-                            __attribute__((unused)) uint32_t inputVertexID = g.addVertex(inputVertex);
+                            [[maybe_unused]] uint32_t inputVertexID = g.addVertex(inputVertex);
                             (*vertexList_)[&*blockIter].push_back(inputVertex);
 
                             // create the node/use entries
@@ -1050,7 +1051,7 @@ void Parser::expandBBGraph(llvm::Function* func)
                             inputVertex->floatConst_ = 0x00;
                             inputVertex->doubleConst_ = 0x00;
 
-                            __attribute__((unused)) uint32_t inputVertexID = g.addVertex(inputVertex);
+                            [[maybe_unused]] uint32_t inputVertexID = g.addVertex(inputVertex);
                             (*vertexList_)[&*blockIter].push_back(inputVertex);
 
                             // create the node/use entries
@@ -1158,7 +1159,7 @@ void Parser::expandBBGraph(llvm::Function* func)
                             inputVertex->floatConst_ = 0x00;
                             inputVertex->doubleConst_ = 0x00;
 
-                            __attribute__((unused))uint32_t inputVertexID = g.addVertex(inputVertex);
+                            [[maybe_unused]]uint32_t inputVertexID = g.addVertex(inputVertex);
                             (*vertexList_)[&*blockIter].push_back(inputVertex);
 
                             // create the node/use entries
@@ -1242,7 +1243,7 @@ void Parser::expandBBGraph(llvm::Function* func)
     }
 
     // should be complete here
-    std::cout << "...Flow Graph Done." << std::endl;
+    output_->verbose(CALL_INFO, 1, 0, "...Flow Graph Done.\n");
 
 }//END expandBBGraph
 

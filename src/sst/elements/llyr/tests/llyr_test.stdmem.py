@@ -9,12 +9,15 @@ sst.setProgramOption("stopAtCycle", "10000s")
 tile_clk_mhz = 1
 backing_size = 16384
 l1_size = 512
+verboseLevel = 0
 statLevel = 16
+mainDebug = 0
+otherDebug = 0
 
 # Define the simulation components
 df_0 = sst.Component("df_0", "llyr.LlyrDataflow")
 df_0.addParams({
-   "verbose": 20,
+   "verbose" : str(verboseLevel),
    "clock" : str(tile_clk_mhz) + "GHz",
    "mem_init"      : "int-1.mem",
    #"application"   : "conditional.in",
@@ -34,18 +37,18 @@ df_l1cache.addParams({
    "cache_size" : str(l1_size) + "B",
    "associativity" : "1",
    "cache_line_size" : "16",
-   "verbose" : 10,
-   "debug" : 1,
-   "debug_level" : 100,
+   "verbose" : str(verboseLevel),
+   "debug" : str(otherDebug),
+   "debug_level" : str(statLevel),
    "L1" : "1"
 })
 
 df_memory = sst.Component("memory", "memHierarchy.MemController")
 df_memory.addParams({
    "backing" : "mmap",
-   "verbose" : 10,
-   "debug" : 1,
-   "debug_level" : 100,
+   "verbose" : str(verboseLevel),
+   "debug" : str(otherDebug),
+   "debug_level" : str(statLevel),
    "addr_range_start" : "0",
    "clock" : str(tile_clk_mhz) + "GHz",
 })

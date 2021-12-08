@@ -2131,7 +2131,7 @@ graphOut.addEdge( 348, 408 );
         vertex_map_->at(currentNode).setVisited(1);
 
         output_->verbose(CALL_INFO, 10, 0, "Adjacency list of vertex:  %" PRIu32 "\n head ", currentNode);
-//         std::cout << "\n Adjacency list of vertex " << currentNode << "\n head ";
+
         std::vector< Edge* >* adjacencyList = vertex_map_->at(currentNode).getAdjacencyList();
         ProcessingElement* srcNode;
         ProcessingElement* dstNode;
@@ -2148,14 +2148,13 @@ graphOut.addEdge( 348, 408 );
 
             if( vertex_map_->at(destinationVertx).getVisited() == 0 ) {
                 output_->verbose(CALL_INFO, 10, 0, " -> %" PRIu32, destinationVertx);
-//                 std::cout << " -> " << destinationVertx;
+
                 vertex_map_->at(destinationVertx).setVisited(1);
                 nodeQueue.push(destinationVertx);
             }
         }
 
         vertex_map_->at(currentNode).getValue()->queueInit();
-        std::cout << std::endl;
     }
 
 }// mapGraph

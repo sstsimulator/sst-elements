@@ -123,42 +123,44 @@ public:
         }
 
         double fpResult;
+        std::stringstream dataOut;
         switch( op_binding_ ) {
             case FPADD :
                 fpResult = convList[0] + convList[1];
-                std::cout << std::setprecision(std::numeric_limits<decltype(fpResult)>::max_digits10) << fpResult << " = ";
-                std::cout << std::setprecision(std::numeric_limits<decltype(fpResult)>::max_digits10) << convList[0] << " + " << convList[1];
-                std::cout << std::endl;
+                dataOut << std::setprecision(std::numeric_limits<decltype(fpResult)>::max_digits10) << fpResult << " = ";
+                dataOut << std::setprecision(std::numeric_limits<decltype(fpResult)>::max_digits10) << convList[0] << " + " << convList[1];
+                dataOut << std::endl;
                 break;
             case FPSUB :
                 fpResult = convList[0] - convList[1];
-                std::cout << std::setprecision(std::numeric_limits<decltype(fpResult)>::max_digits10) << fpResult << " = ";
-                std::cout << std::setprecision(std::numeric_limits<decltype(fpResult)>::max_digits10) << convList[0] << " - " << convList[1];
-                std::cout << std::endl;
+                dataOut << std::setprecision(std::numeric_limits<decltype(fpResult)>::max_digits10) << fpResult << " = ";
+                dataOut << std::setprecision(std::numeric_limits<decltype(fpResult)>::max_digits10) << convList[0] << " - " << convList[1];
+                dataOut << std::endl;
                 break;
             case FPMUL :
                 fpResult = convList[0] * convList[1];
-                std::cout << std::setprecision(std::numeric_limits<decltype(fpResult)>::max_digits10) << fpResult << " = ";
-                std::cout << std::setprecision(std::numeric_limits<decltype(fpResult)>::max_digits10) << convList[0] << " * " << convList[1];
-                std::cout << std::endl;
+                dataOut << std::setprecision(std::numeric_limits<decltype(fpResult)>::max_digits10) << fpResult << " = ";
+                dataOut << std::setprecision(std::numeric_limits<decltype(fpResult)>::max_digits10) << convList[0] << " * " << convList[1];
+                dataOut << std::endl;
                 break;
             case FPDIV :
                 fpResult = convList[0] / convList[1];
-                std::cout << std::setprecision(std::numeric_limits<decltype(fpResult)>::max_digits10) << fpResult << " = ";
-                std::cout << std::setprecision(std::numeric_limits<decltype(fpResult)>::max_digits10) << convList[0] << " / " << convList[1];
-                std::cout << std::endl;
+                dataOut << std::setprecision(std::numeric_limits<decltype(fpResult)>::max_digits10) << fpResult << " = ";
+                dataOut << std::setprecision(std::numeric_limits<decltype(fpResult)>::max_digits10) << convList[0] << " / " << convList[1];
+                dataOut << std::endl;
                 break;
             default :
                 output_->verbose(CALL_INFO, 0, 0, "Error: could not find corresponding op-%" PRIu32 ".\n", op_binding_);
                 exit(-1);
         }
+        output_->verbose(CALL_INFO, 32, 0, "%s\n", dataOut.str().c_str());
 
         //convert the fp value back to raw bits for storage
         retVal = LlyrData(fp_to_bits(&fpResult));
 
-        std::cout << "fpResult = " << fpResult << std::endl;
-        std::cout << "intResult = " << intResult << std::endl;
-        std::cout << "retVal = " << retVal << std::endl;
+        output_->verbose(CALL_INFO, 32, 0, "intResult = %f\n", fpResult);
+        output_->verbose(CALL_INFO, 32, 0, "intResult = %" PRIu64 "\n", intResult);
+        output_->verbose(CALL_INFO, 32, 0, "retVal = %s\n", retVal.to_string().c_str());
 
         //for now push the result to all output queues
         for( uint32_t i = 0; i < output_queues_->size(); ++i) {

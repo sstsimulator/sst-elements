@@ -128,8 +128,8 @@ public:
 
         retVal = LlyrData(intResult);
 
-        std::cout << "intResult = " << intResult << std::endl;
-        std::cout << "retVal = " << retVal << std::endl;
+        output_->verbose(CALL_INFO, 32, 0, "intResult = %" PRIu64 "\n", intResult);
+        output_->verbose(CALL_INFO, 32, 0, "retVal = %s\n", retVal.to_string().c_str());
 
         //for now push the result to all output queues
         for( uint32_t i = 0; i < output_queues_->size(); ++i) {

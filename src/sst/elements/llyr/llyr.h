@@ -23,6 +23,7 @@
 
 #include <string>
 #include <fstream>
+#include <cinttypes>
 
 #include "graph/graph.h"
 #include "lsQueue.h"

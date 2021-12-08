@@ -25,6 +25,7 @@
 #include <vector>
 #include <bitset>
 #include <cstdint>
+#include <sstream>
 #include <cstring>
 
 #include "../graph/graph.h"

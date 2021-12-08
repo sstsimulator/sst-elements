@@ -97,7 +97,7 @@ public:
     {
         output_->verbose(CALL_INFO, 4, 0, ">> Compute 0x%" PRIx32 "\n", op_binding_);
 
-        if( output_->getVerboseLevel() >= 10 ) {
+        if( output_->getVerboseLevel() >= 64 ) {
             printInputQueue();
             printOutputQueue();
         }
@@ -178,21 +178,29 @@ private:
         uint8_t buffer[size] = {};
         std::memcpy(buffer, std::addressof(newValue), size);
 
-        std::cout << "llyr:  " << data << "\n";
-        std::cout << "conv:  " << newValue << "\n";
-        for(uint32_t i = 0; i < size; ++i) {
-            std::cout << static_cast<uint16_t>(buffer[i]) << ", ";
+        output_->verbose(CALL_INFO, 64, 0, "llyr = %s\n", data.to_string().c_str());
+        output_->verbose(CALL_INFO, 64, 0, "conv = %llu\n", newValue);
+
+        if( output_->getVerboseLevel() >= 64 ) {
+            std::stringstream dataOut;
+            for(uint32_t i = 0; i < size; ++i) {
+                dataOut << static_cast< uint16_t >(buffer[i]) << ", ";
+            }
+            output_->verbose(CALL_INFO, 64, 0, "%s\n", dataOut.str().c_str());
         }
-        std::cout << std::endl;
 
         std::vector< uint8_t > payload(8);
         memcpy( std::addressof(payload[0]), std::addressof(newValue), size );
-        for( auto it = payload.begin(); it != payload.end(); ++it ) {
-            std::cout << static_cast<uint16_t>(*it) << ", ";
-        }
-        std::cout << std::endl;
-        StandardMem::Request* req = new StandardMem::Write(addr, 8, payload);
 
+        if( output_->getVerboseLevel() >= 64 ) {
+            std::stringstream dataOut;
+            for( auto it = payload.begin(); it != payload.end(); ++it ) {
+                dataOut << static_cast< uint16_t >(*it) << ", ";
+            }
+            output_->verbose(CALL_INFO, 64, 0, "%s\n", dataOut.str().c_str());
+        }
+
+        StandardMem::Request* req = new StandardMem::Write(addr, 8, payload);
         output_->verbose(CALL_INFO, 4, 0, "Creating a store request (%" PRIu32 ") to address: %" PRIu64 "\n", uint32_t(req->getID()), addr);
 
         LSEntry* tempEntry = new LSEntry( req->getID(), processor_id_, targetPe );

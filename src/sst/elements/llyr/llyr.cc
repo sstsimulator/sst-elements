@@ -19,6 +19,7 @@
 #include <regex>
 #include <queue>
 #include <vector>
+#include <sstream>
 #include <algorithm>
 
 #include "llyr.h"
@@ -48,7 +49,7 @@ LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
 
     //set our Main Clock
     const std::string clock_rate = params.find< std::string >("clock", "1.0GHz");
-    std::cout << "Clock is configured for: " << clock_rate << std::endl;
+    output_->verbose(CALL_INFO, 1, 0, "Clock is configured for %s\n", clock_rate.c_str());
     clock_tick_handler_ = new Clock::Handler<LlyrComponent>(this, &LlyrComponent::tick);
     time_converter_ = registerClock(clock_rate, clock_tick_handler_);
 
@@ -239,12 +240,10 @@ bool LlyrComponent::tick( Cycle_t )
         for( auto it = adjacencyList->begin(); it != adjacencyList->end(); it++ ) {
             uint32_t destinationVertx = (*it)->getDestination();
             if( vertex_map_->at(destinationVertx).getVisited() == 0 ) {
-//                 std::cout << " -> " << destinationVertx;
                 vertex_map_->at(destinationVertx).setVisited(1);
                 nodeQueue.push(destinationVertx);
             }
         }
-        std::cout << std::endl;
     }
 
     // return false so we keep going
@@ -287,26 +286,28 @@ void LlyrComponent::LlyrMemHandlers::handle(StandardMem::Write* write) {
 /* Handler for incoming Read responses - should be a response to a Read we issued */
 void LlyrComponent::LlyrMemHandlers::handle(StandardMem::ReadResp* resp) {
 
+    std::stringstream dataOut;
     for( auto &it : resp->data ) {
-        std::cout << unsigned(it) << " ";
+        dataOut << unsigned(it) << " ";
     }
-    std::cout << std::endl;
+    out->verbose(CALL_INFO, 24, 0, "%s\n", dataOut.str().c_str());
 
     // Read request needs some special handling
     uint64_t addr = resp->pAddr;
     uint64_t memValue = 0;
 
+    dataOut.str(std::string());
     LlyrData testArg;
     for( auto &it : resp->data ) {
         testArg = it;
-        std::cout << testArg << " ";
+        dataOut << testArg << " ";
     }
-    std::cout << std::endl;
+    out->verbose(CALL_INFO, 24, 0, "\n%s\n", dataOut.str().c_str());
 
     std::memcpy( std::addressof(memValue), std::addressof(resp->data[0]), sizeof(memValue) );
 
     testArg = memValue;
-    std::cout << "*" << testArg << std::endl;
+//     std::cout << "*" << testArg << std::endl;
 
     out->verbose(CALL_INFO, 8, 0, "Response to a read, payload=%" PRIu64 ", for addr: %" PRIu64
     " to PE %" PRIu32 "\n", memValue, addr, ls_queue_->lookupEntry( resp->getID() ).second );
@@ -430,8 +431,7 @@ void LlyrComponent::constructSoftwareGraph(std::string fileName)
         std::getline( inputStream, thisLine );
         position = thisLine.find( "ModuleID" );
 
-        output_->verbose(CALL_INFO, 15, 0, "Parsing:  %s\n", thisLine.c_str());
-        std::cout << ::std::endl;
+        output_->verbose(CALL_INFO, 16, 0, "Parsing:  %s\n", thisLine.c_str());
         if( position !=  std::string::npos ) {
             constructSoftwareGraphIR(inputStream);
         } else {
@@ -502,8 +502,8 @@ void LlyrComponent::constructSoftwareGraphIR(std::ifstream& inputStream)
 {
     std::string thisLine;
 
-    output_->verbose(CALL_INFO, 15, 0, "Sending to LLVM parser\n");
-    std::cout << ::std::endl;
+    output_->verbose(CALL_INFO, 16, 0, "Sending to LLVM parser\n");
+
     inputStream.seekg (0, inputStream.beg);
     std::string irString( (std::istreambuf_iterator< char >( inputStream )),
                           (std::istreambuf_iterator< char >() ));
