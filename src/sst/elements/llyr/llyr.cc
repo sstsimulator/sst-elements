@@ -129,19 +129,19 @@ LlyrComponent::~LlyrComponent()
 {
     output_->verbose(CALL_INFO, 1, 0, "Llyr destructor fired, closing down.\n");
 
-//     output_->verbose(CALL_INFO, 10, 0, "Dumping hardware graph\n");
+//     output_->verbose(CALL_INFO, 10, 0, "Dumping hardware graph...\n");
 //     if( output_->getVerboseLevel() >= 10 ) {
 //         hardwareGraph_.printGraph();
 //         hardwareGraph_.printDot("llyr_hdwr.dot");
 //     }
-//
-//     output_->verbose(CALL_INFO, 10, 0, "Dumping application graph\n");
+
+//     output_->verbose(CALL_INFO, 10, 0, "Dumping application graph...\n");
 //     if( output_->getVerboseLevel() >= 10 ) {
 //         applicationGraph_.printGraph();
 //         applicationGraph_.printDot("llyr_app.dot");
 //     }
-//
-//     output_->verbose(CALL_INFO, 10, 0, "Dumping mapping\n");
+
+//     output_->verbose(CALL_INFO, 10, 0, "Dumping mapping...\n");
 //     if( output_->getVerboseLevel() >= 10 ) {
 //         mappedGraph_.printGraph();
 //         mappedGraph_.printDot("llyr_mapped.dot");
@@ -548,119 +548,6 @@ std::vector< uint64_t >* LlyrComponent::constructMemory(std::string fileName)
     }
 
     return tempVector;
-}
-
-opType LlyrComponent::getOptype(std::string &opString) const
-{
-    opType operation;
-
-    //transform to make opString case insensitive
-    std::transform(opString.begin(), opString.end(), opString.begin(),
-                   [](unsigned char c){ return std::toupper(c); }
-                  );
-
-    if( opString == "ANY" )
-        operation = ANY;
-    else if( opString == "ANY_MEM" )
-        operation = ANY_MEM;
-    else if( opString == "LD" )
-        operation = LD;
-    else if( opString == "LDADDR" )
-        operation = LDADDR;
-    else if( opString == "LD_ST" )
-        operation = LD_ST;
-    else if( opString == "ST" )
-        operation = ST;
-    else if( opString == "STADDR" )
-        operation = STADDR;
-    else if( opString == "ANY_LOGIC" )
-        operation = ANY_LOGIC;
-    else if( opString == "AND" )
-        operation = AND;
-    else if( opString == "OR" )
-        operation = OR;
-    else if( opString == "XOR" )
-        operation = XOR;
-    else if( opString == "NOT" )
-        operation = NOT;
-    else if( opString == "SLL" )
-        operation = SLL;
-    else if( opString == "SLR" )
-        operation = SLR;
-    else if( opString == "ROL" )
-        operation = ROL;
-    else if( opString == "ROR" )
-        operation = ROR;
-    else if( opString == "EQ" )
-        operation = EQ;
-    else if( opString == "NE" )
-        operation = NE;
-    else if( opString == "UGT" )
-        operation = UGT;
-    else if( opString == "UGE" )
-        operation = UGE;
-    else if( opString == "SGT" )
-        operation = SGT;
-    else if( opString == "SGE" )
-        operation = SGE;
-    else if( opString == "ULT" )
-        operation = ULT;
-    else if( opString == "ULE" )
-        operation = ULE;
-    else if( opString == "SLT" )
-        operation = SLT;
-    else if( opString == "SLE" )
-        operation = SLE;
-    else if( opString == "ANY_INT" )
-        operation = ANY_INT;
-    else if( opString == "ADD" )
-        operation = ADD;
-    else if( opString == "SUB" )
-        operation = SUB;
-    else if( opString == "MUL" )
-        operation = MUL;
-    else if( opString == "DIV" )
-        operation = DIV;
-    else if( opString == "REM" )
-        operation = REM;
-    else if( opString == "ADDCONST" )
-        operation = ADDCONST;
-    else if( opString == "SUBCONST" )
-        operation = SUBCONST;
-    else if( opString == "MULCONST" )
-        operation = MULCONST;
-    else if( opString == "DIVCONST" )
-        operation = DIVCONST;
-    else if( opString == "REMCONST" )
-        operation = REMCONST;
-    else if( opString == "ANY_FP" )
-        operation = ANY_FP;
-    else if( opString == "FPADD" )
-        operation = FPADD;
-    else if( opString == "FPSUB" )
-        operation = FPSUB;
-    else if( opString == "FPMUL" )
-        operation = FPMUL;
-    else if( opString == "FPDIV" )
-        operation = FPDIV;
-    else if( opString == "FPMATMUL" )
-        operation = FPMATMUL;
-    else if( opString == "ANY_CP" )
-        operation = ANY_CP;
-    else if( opString == "TSIN" )
-        operation = TSIN;
-    else if( opString == "TCOS" )
-        operation = TCOS;
-    else if( opString == "DUMMY" )
-        operation = DUMMY;
-    else if( opString == "BUFFER" )
-        operation = BUFFER;
-    else if( opString == "SEL" )
-        operation = SEL;
-    else
-        operation = OTHER;
-
-    return operation;
 }
 
 } // namespace llyr

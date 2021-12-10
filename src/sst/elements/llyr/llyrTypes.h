@@ -103,6 +103,229 @@ typedef enum {
     OTHER
 } opType;
 
+inline opType getOptype(std::string &opString)
+{
+    opType operation;
+
+    // transform to make opString case insensitive
+    std::transform(opString.begin(), opString.end(), opString.begin(),
+                   [](unsigned char c){ return std::toupper(c); }
+    );
+
+    std::cout << "Op in:  " << opString << std::endl;
+
+    if( opString == "ANY" )
+        operation = ANY;
+    else if( opString == "ANY_MEM" )
+        operation = ANY_MEM;
+    else if( opString == "LD" )
+        operation = LD;
+    else if( opString == "LDADDR" )
+        operation = LDADDR;
+    else if( opString == "LD_ST" )
+        operation = LD_ST;
+    else if( opString == "ST" )
+        operation = ST;
+    else if( opString == "STADDR" )
+        operation = STADDR;
+    else if( opString == "ANY_LOGIC" )
+        operation = ANY_LOGIC;
+    else if( opString == "AND" )
+        operation = AND;
+    else if( opString == "OR" )
+        operation = OR;
+    else if( opString == "XOR" )
+        operation = XOR;
+    else if( opString == "NOT" )
+        operation = NOT;
+    else if( opString == "SLL" )
+        operation = SLL;
+    else if( opString == "SLR" )
+        operation = SLR;
+    else if( opString == "ROL" )
+        operation = ROL;
+    else if( opString == "ROR" )
+        operation = ROR;
+    else if( opString == "EQ" )
+        operation = EQ;
+    else if( opString == "NE" )
+        operation = NE;
+    else if( opString == "UGT" )
+        operation = UGT;
+    else if( opString == "UGE" )
+        operation = UGE;
+    else if( opString == "SGT" )
+        operation = SGT;
+    else if( opString == "SGE" )
+        operation = SGE;
+    else if( opString == "ULT" )
+        operation = ULT;
+    else if( opString == "ULE" )
+        operation = ULE;
+    else if( opString == "SLT" )
+        operation = SLT;
+    else if( opString == "SLE" )
+        operation = SLE;
+    else if( opString == "ANY_INT" )
+        operation = ANY_INT;
+    else if( opString == "ADD" )
+        operation = ADD;
+    else if( opString == "SUB" )
+        operation = SUB;
+    else if( opString == "MUL" )
+        operation = MUL;
+    else if( opString == "DIV" )
+        operation = DIV;
+    else if( opString == "REM" )
+        operation = REM;
+    else if( opString == "ADDCONST" )
+        operation = ADDCONST;
+    else if( opString == "SUBCONST" )
+        operation = SUBCONST;
+    else if( opString == "MULCONST" )
+        operation = MULCONST;
+    else if( opString == "DIVCONST" )
+        operation = DIVCONST;
+    else if( opString == "REMCONST" )
+        operation = REMCONST;
+    else if( opString == "ANY_FP" )
+        operation = ANY_FP;
+    else if( opString == "FPADD" )
+        operation = FPADD;
+    else if( opString == "FPSUB" )
+        operation = FPSUB;
+    else if( opString == "FPMUL" )
+        operation = FPMUL;
+    else if( opString == "FPDIV" )
+        operation = FPDIV;
+    else if( opString == "FPMATMUL" )
+        operation = FPMATMUL;
+    else if( opString == "ANY_CP" )
+        operation = ANY_CP;
+    else if( opString == "TSIN" )
+        operation = TSIN;
+    else if( opString == "TCOS" )
+        operation = TCOS;
+    else if( opString == "DUMMY" )
+        operation = DUMMY;
+    else if( opString == "BUFFER" )
+        operation = BUFFER;
+    else if( opString == "SEL" )
+        operation = SEL;
+    else
+        operation = OTHER;
+
+    return operation;
+}
+
+inline std::string getOpString(opType &op)
+{
+    std::string operation;
+
+    if( op == ANY )
+        operation = "ANY";
+    else if( op == ANY_MEM )
+        operation = "ANY_MEM";
+    else if( op == LD )
+        operation = "LD";
+    else if( op == LDADDR )
+        operation = "LDADDR";
+    else if( op == LD_ST )
+        operation = "LD_ST";
+    else if( op == ST )
+        operation = "ST";
+    else if( op == STADDR )
+        operation = "STADDR";
+    else if( op == ANY_LOGIC )
+        operation = "ANY_LOGIC";
+    else if( op == AND )
+        operation = "AND";
+    else if( op == OR )
+        operation = "OR";
+    else if( op == XOR )
+        operation = "XOR";
+    else if( op == NOT )
+        operation = "NOT";
+    else if( op == SLL )
+        operation = "SLL";
+    else if( op == SLR )
+        operation = "SLR";
+    else if( op == ROL )
+        operation = "ROL";
+    else if( op == ROR )
+        operation = "ROR";
+    else if( op == EQ )
+        operation = "EQ";
+    else if( op == NE )
+        operation = "NE";
+    else if( op == UGT )
+        operation = "UGT";
+    else if( op == UGE )
+        operation = "UGE";
+    else if( op == SGT )
+        operation = "SGT";
+    else if( op == SGE )
+        operation = "SGE";
+    else if( op == ULT )
+        operation = "ULT";
+    else if( op == ULE )
+        operation = "ULE";
+    else if( op == SLT )
+        operation = "SLT";
+    else if( op == SLE )
+        operation = "SLE";
+    else if( op == ANY_INT )
+        operation = "ANY_INT";
+    else if( op == ADD )
+        operation = "ADD";
+    else if( op == SUB )
+        operation = "SUB";
+    else if( op == MUL )
+        operation = "MUL";
+    else if( op == DIV )
+        operation = "DIV";
+    else if( op == REM )
+        operation = "REM";
+    else if( op == ADDCONST )
+        operation = "ADDCONST";
+    else if( op == SUBCONST )
+        operation = "SUBCONST";
+    else if( op == MULCONST )
+        operation = "MULCONST";
+    else if( op == DIVCONST )
+        operation = "DIVCONST";
+    else if( op == REMCONST )
+        operation = "REMCONST";
+    else if( op == ANY_FP )
+        operation = "ANY_FP";
+    else if( op == FPADD )
+        operation = "FPADD";
+    else if( op == FPSUB )
+        operation = "FPSUB";
+    else if( op == FPMUL )
+        operation = "FPMUL";
+    else if( op == FPDIV )
+        operation = "FPDIV";
+    else if( op == FPMATMUL )
+        operation = "FPMATMUL";
+    else if( op == ANY_CP )
+        operation = "ANY_CP";
+    else if( op == TSIN )
+        operation = "TSIN";
+    else if( op == TCOS )
+        operation = "TCOS";
+    else if( op == DUMMY )
+        operation = "DUMMY";
+    else if( op == BUFFER )
+        operation = "BUFFER";
+    else if( op == SEL )
+        operation = "SEL";
+    else
+        operation = "OTHER";
+
+    return operation;
+}
+
 // application graph node
 typedef struct alignas(64) {
     opType      optype_;

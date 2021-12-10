@@ -151,8 +151,6 @@ private:
     std::vector< uint64_t >* constructMemory( std::string fileName );
     std::string memFileName_;
 
-    opType getOptype( std::string &opString ) const;
-
     uint32_t ls_entries_;
     LSQueue* ls_queue_;
     void doLoadStoreOps( uint32_t numOps );
