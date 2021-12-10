@@ -38,6 +38,7 @@ class LSQueue;
 typedef struct alignas(64) {
     LSQueue*        lsqueue_;
     StandardMem*    mem_interface_;
+    Addr            starting_addr_;
 
     uint32_t    verbosity_;
     uint16_t    queueDepth_;

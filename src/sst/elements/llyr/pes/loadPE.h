@@ -157,7 +157,7 @@ public:
 
         } else {
             //for now assume that the address queue is on in-0
-            uint64_t addr = (processor_id_ - 1) * (Bit_Length / 8);
+            uint64_t addr = llyr_config_->starting_addr_ + ( (processor_id_ - 1) * (Bit_Length / 8) );
             if( input_queues_->size() > 0 ) {
                 LlyrData temp = LlyrData(addr);
                 output_->verbose(CALL_INFO, 8, 0, "Init(%" PRIu32 ")::%" PRIx64 "::%" PRIu64 "\n", 0, addr, temp.to_ulong());

@@ -71,6 +71,9 @@ LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
         }
     }
 
+    // set up device address space
+    starting_addr_ = params.find< uint64_t >("starting_addr", 0);
+
     // set up MMIO address for device
     device_addr_ = params.find< uint64_t >("device_addr", 0);
     if( device_addr_ != 0x00 ) {
@@ -92,8 +95,8 @@ LlyrComponent::LlyrComponent(ComponentId_t id, Params& params) :
     uint16_t fp_mul_latency = params.find< uint16_t >("fp_mul_latency", 1);
     uint16_t fp_div_latency = params.find< uint16_t >("fp_div_latency", 1);
 
-    configData_ = new LlyrConfig { ls_queue_, mem_interface_, verbosity, queue_depth, arith_latency,
-                                   int_latency, fp_latency, fp_mul_latency, fp_div_latency };
+    configData_ = new LlyrConfig { ls_queue_, mem_interface_, starting_addr_, verbosity, queue_depth,
+                                   arith_latency, int_latency, fp_latency, fp_mul_latency, fp_div_latency };
 
     memFileName_ = params.find<std::string>("mem_init", "");
 
@@ -147,6 +150,8 @@ LlyrComponent::~LlyrComponent()
 
 void LlyrComponent::init( uint32_t phase )
 {
+    output_->verbose(CALL_INFO, 2, 0, "Initializing...\n");
+
     mem_interface_->init( phase );
 
     if( 0 == phase ) {
@@ -177,7 +182,7 @@ void LlyrComponent::init( uint32_t phase )
 //
 //         std::cout << "\n";
 
-        StandardMem::Request* initMemory = new StandardMem::Write(0, memInit.size(), memInit);
+        StandardMem::Request* initMemory = new StandardMem::Write(starting_addr_, memInit.size(), memInit);
         output_->verbose(CALL_INFO, 1, 0, "Sending initialization data to memory...\n");
         mem_interface_->sendUntimedData(initMemory);
         output_->verbose(CALL_INFO, 1, 0, "Initialization data sent.\n");
