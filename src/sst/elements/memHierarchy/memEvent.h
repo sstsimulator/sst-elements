@@ -137,12 +137,10 @@ public:
         prefetch_           = false;
         NACKedEvent_        = nullptr;
         retries_            = 0;
-        blocked_            = false;
         payload_.clear();
         dirty_              = false;
 	instPtr_	    = 0;
 	vAddr_		    = 0;
-        inProgress_         = false;
         isEvict_            = false;
     }
 
@@ -182,12 +180,6 @@ public:
     /** Increments the number of retries */
     void incrementRetries() { retries_++; }
     int getRetries() { return retries_; }
-
-    bool blocked() { return blocked_; }
-    void setBlocked(bool value) { blocked_ = value; }
-
-    bool inProgress() { return inProgress_; }
-    void setInProgress(bool value) { inProgress_ = value; }
 
     void setLoadLink() { setFlag(MemEventBase::F_LLSC); }
     bool isLoadLink() { return cmd_ == Command::GetS && queryFlag(MemEventBase::F_LLSC); }
@@ -305,12 +297,10 @@ private:
     int             retries_;           // For NACKed events, how many times a retry has been sent
     dataVec         payload_;           // Data
     bool            prefetch_;          // Whether this request came from a prefetcher
-    bool            blocked_;           // Whether this request blocked for another pending request (for profiling) TODO move to mshrs
     bool            dirty_;             // For a replacement, whether the data is dirty or not
     bool            isEvict_;           // Whether an event is an eviction
     Addr	    instPtr_;           // Instruction pointer associated with the request
     Addr 	    vAddr_;             // Virtual address associated with the request
-    bool            inProgress_;        // Whether this request is currently being handled, if in MSHR TODO move to mshrs
 
     MemEvent() : MemEventBase() {} // For serialization only
 
@@ -325,12 +315,10 @@ public:
         ser & retries_;
         ser & payload_;
         ser & prefetch_;
-        ser & blocked_;
         ser & dirty_;
         ser & isEvict_;
         ser & instPtr_;
         ser & vAddr_;
-        ser & inProgress_;
     }
 
     ImplementSerializable(SST::MemHierarchy::MemEvent);

@@ -191,6 +191,7 @@ bool CoherenceController::handleGetSX(MemEvent* event, bool inMSHR) {
 bool CoherenceController::handleWrite(MemEvent* event, bool inMSHR) {
     debug->fatal(CALL_INFO, -1, "%s, Error: Write events are not handled by this coherence manager. Event: %s. Time: %" PRIu64 "ns.\n",
             getName().c_str(), event->getVerboseString().c_str(), getCurrentSimTimeNano());
+    return false;
 }
 
 bool CoherenceController::handleFlushLine(MemEvent* event, bool inMSHR) {
