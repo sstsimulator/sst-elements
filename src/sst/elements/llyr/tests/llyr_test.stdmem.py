@@ -9,7 +9,7 @@ sst.setProgramOption("stopAtCycle", "10000s")
 tile_clk_mhz = 1
 backing_size = 16384
 l1_size = 512
-verboseLevel = 0
+verboseLevel = 100
 statLevel = 16
 mainDebug = 0
 otherDebug = 0
