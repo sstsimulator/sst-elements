@@ -112,8 +112,6 @@ inline opType getOptype(std::string &opString)
                    [](unsigned char c){ return std::toupper(c); }
     );
 
-    std::cout << "Op in:  " << opString << std::endl;
-
     if( opString == "ANY" )
         operation = ANY;
     else if( opString == "ANY_MEM" )

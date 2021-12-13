@@ -19,25 +19,23 @@
 #include <iostream>
 #include <algorithm>
 
-#include "llvm/Pass.h"
-#include "llvm/IR/Attributes.h"
-#include "llvm/IR/Function.h"
-#include "llvm/IR/Module.h"
-#include "llvm/IR/InstrTypes.h"
-#include "llvm/IR/Instructions.h"
-#include "llvm/IR/Constant.h"
-#include "llvm/IR/Constants.h"
-#include "llvm/IR/DerivedTypes.h"
-#include "llvm/Support/raw_ostream.h"
+#include <llvm/Pass.h>
+#include <llvm/IR/Attributes.h>
+#include <llvm/IR/Function.h>
+#include <llvm/IR/InstrTypes.h>
+#include <llvm/IR/Instructions.h>
+#include <llvm/IR/Constant.h>
+#include <llvm/IR/Constants.h>
+#include <llvm/IR/DerivedTypes.h>
+#include <llvm/IR/Metadata.h>
+#include <llvm/IR/LegacyPassManager.h>
+#include <llvm/IRReader/IRReader.h>
 
-#include "llvm/IR/Metadata.h"
-#include "llvm/IRReader/IRReader.h"
-#include "llvm/Support/SourceMgr.h"
-#include "llvm/Demangle/Demangle.h"
-
-#include "llvm/IR/LegacyPassManager.h"
-#include "llvm/Transforms/Utils.h"
-#include "llvm/Transforms/Utils/InstructionNamer.h"
+#include <llvm/Demangle/Demangle.h>
+#include <llvm/Support/SourceMgr.h>
+#include <llvm/Support/raw_ostream.h>
+#include <llvm/Transforms/Utils.h>
+#include <llvm/Transforms/Utils/InstructionNamer.h>
 
 #include "parser.h"
 
@@ -57,9 +55,11 @@ void Parser::generateAppGraph(std::string functionName)
     pm.run(*mod);
 
     for( auto functionIter = mod->getFunctionList().begin(), functionEnd = mod->getFunctionList().end(); functionIter != functionEnd; ++functionIter ) {
-        llvm::errs() << "Function Name: ";
-        llvm::errs().write_escaped(functionIter->getName()) << "     ";
-        llvm::errs().write_escaped(llvm::demangle(functionIter->getName().str() )) << '\n';
+        if( output_->getVerboseLevel() > 64 ) {
+            llvm::errs() << "Function Name: ";
+            llvm::errs().write_escaped(functionIter->getName()) << "     ";
+            llvm::errs().write_escaped(llvm::demangle(functionIter->getName().str() )) << '\n';
+        }
 
         //check each located function to see if it's the offload target
         if( functionIter->getName().find(functionName) != std::string::npos ) {
@@ -85,13 +85,18 @@ void Parser::generateAppGraph(std::string functionName)
 void Parser::generatebBasicBlockGraph(llvm::Function* func)
 {
     output_->verbose(CALL_INFO, 1, 0, "Generating BB Graph...\n");
-    llvm::errs().write_escaped(llvm::demangle(func->getName().str() )) << '\n';
+
+    if( output_->getVerboseLevel() > 64 ) {
+        llvm::errs().write_escaped(llvm::demangle(func->getName().str() )) << '\n';
+    }
 
     for( auto blockIter = func->getBasicBlockList().begin(), blockEnd = func->getBasicBlockList().end(); blockIter != blockEnd; ++blockIter ) {
         llvm::Instruction *Inst = llvm::dyn_cast<llvm::Instruction>(blockIter->getTerminator());
 
-        llvm::errs() << "\t+++Basic Block Name(" << &*blockIter << "): ";
-        llvm::errs().write_escaped(blockIter->getName()) << "  --->  " << &*Inst << '\n';
+        if( output_->getVerboseLevel() > 64 ) {
+            llvm::errs() << "\t+++Basic Block Name(" << &*blockIter << "): ";
+            llvm::errs().write_escaped(blockIter->getName()) << "  --->  " << &*Inst << '\n';
+        }
 
         bbGraph_->addVertex(&*blockIter);
     }
@@ -99,19 +104,26 @@ void Parser::generatebBasicBlockGraph(llvm::Function* func)
     std::map< uint32_t, Vertex< llvm::BasicBlock* > >* vertex_map_ = bbGraph_->getVertexMap();
     typename std::map< uint32_t, Vertex< llvm::BasicBlock* > >::iterator vertexIterator;
     for(vertexIterator = vertex_map_->begin(); vertexIterator != vertex_map_->end(); ++vertexIterator) {
-        llvm::errs() << "\nBasic Block " << vertexIterator->second.getValue() << "\n";
+        if( output_->getVerboseLevel() > 64 ) {
+            llvm::errs() << "\nBasic Block " << vertexIterator->second.getValue() << "\n";
+        }
 
         uint32_t totalSuccessors = vertexIterator->second.getValue()->getTerminator()->getNumSuccessors();
         for( uint32_t successor = 0; successor < totalSuccessors; successor++ ) {
-            llvm::errs() << "\tSuccessors " << successor << " of " << totalSuccessors << "\n";
-
             llvm::BasicBlock* tempBB = vertexIterator->second.getValue()->getTerminator()->getSuccessor(successor);
-            llvm::errs() << "\nBasic Block " << tempBB << "\n";
+
+            if( output_->getVerboseLevel() > 64 ) {
+                llvm::errs() << "\tSuccessors " << successor << " of " << totalSuccessors << "\n";
+                llvm::errs() << "\nBasic Block " << tempBB << "\n";
+            }
 
             typename std::map< uint32_t, Vertex< llvm::BasicBlock* > >::iterator vertexIteratorInner;
             for(vertexIteratorInner = vertex_map_->begin(); vertexIteratorInner != vertex_map_->end(); ++vertexIteratorInner) {
                 if( vertexIteratorInner->second.getValue() == tempBB ) {
-                    llvm::errs() << "\t\tFound:  " << vertexIteratorInner->second.getValue() << "\n";
+
+                    if( output_->getVerboseLevel() > 64 ) {
+                        llvm::errs() << "\t\tFound:  " << vertexIteratorInner->second.getValue() << "\n";
+                    }
 
                     bbGraph_->addEdge(vertexIterator->first, vertexIteratorInner->first);
 
@@ -144,16 +156,20 @@ void Parser::expandBBGraph(llvm::Function* func)
         (*useNode_)[&*blockIter] = new std::map< CDFGVertex*, std::vector< llvm::Instruction* >* >;
         (*defNode_)[&*blockIter] = new std::map< CDFGVertex*, std::vector< llvm::Instruction* >* >;
 
-        llvm::errs() << "\t+++Basic Block Name(" << &*blockIter << "): ";
-        llvm::errs().write_escaped(blockIter->getName()) << '\n';
+        if( output_->getVerboseLevel() > 64 ) {
+            llvm::errs() << "\t+++Basic Block Name(" << &*blockIter << "): ";
+            llvm::errs().write_escaped(blockIter->getName()) << '\n';
+        }
 
         for( auto instructionIter = blockIter->begin(), instructionEnd = blockIter->end(); instructionIter != instructionEnd; ++instructionIter ) {
             tempOpcode = instructionIter->getOpcode();
 
-            llvm::errs() << "\t\t**(" << &*instructionIter << ")  " << *instructionIter   << "  --  ";
-            llvm::errs() << "Opcode Name:  ";
-            llvm::errs().write_escaped(instructionIter->getName()) << "  ";
-            llvm::errs().write_escaped(std::to_string(instructionIter->getOpcode())) << "\n";
+            if( output_->getVerboseLevel() > 64 ) {
+                llvm::errs() << "\t\t**(" << &*instructionIter << ")  " << *instructionIter   << "  --  ";
+                llvm::errs() << "Opcode Name:  ";
+                llvm::errs().write_escaped(instructionIter->getName()) << "  ";
+                llvm::errs().write_escaped(std::to_string(instructionIter->getOpcode())) << "\n";
+            }
 
             outputVertex = new CDFGVertex;
             std::string tutu;
@@ -174,17 +190,19 @@ void Parser::expandBBGraph(llvm::Function* func)
 
             instructionMap_->insert( std::pair< llvm::Instruction*, CDFGVertex* >(&*instructionIter, outputVertex) );
 
-            llvm::errs() << "-------------------------------------------- Users List --------------------------------------------\n";
-            for( llvm::User *U : instructionIter->users() )
-            {
-                if( llvm::Instruction *Inst = llvm::dyn_cast<llvm::Instruction>(U) )
-                {
-                    llvm::errs() << *instructionIter << " is used in instruction:\t";
-                    llvm::errs() << "(" << &*Inst << ") " << *Inst << "\n";
+            if( output_->getVerboseLevel() > 64 ) {
+                llvm::errs() << "-------------------------------------------- Users List --------------------------------------------\n";
+
+                for( llvm::User *U : instructionIter->users() ) {
+                    if( llvm::Instruction *Inst = llvm::dyn_cast<llvm::Instruction>(U) ) {
+                        llvm::errs() << *instructionIter << " is used in instruction:\t";
+                        llvm::errs() << "(" << &*Inst << ") " << *Inst << "\n";
+                    }
+
                 }
 
+                llvm::errs() << "----------------------------------------------------------------------------------------------------\n";
             }
-            llvm::errs() << "----------------------------------------------------------------------------------------------------\n";
 
             //determine operation
             if( tempOpcode == llvm::Instruction::Alloca ) {                                     // BEGIN Allocate
@@ -201,12 +219,18 @@ void Parser::expandBBGraph(llvm::Function* func)
 
                 for( auto nodeUseEntry = (*useNode_)[&*blockIter]->at(outputVertex)->begin(); nodeUseEntry != (*useNode_)[&*blockIter]->at(outputVertex)->end(); nodeUseEntry++ ) {
                     CDFGVertex* tempVal = g.getVertex(outputVertexID)->getValue();
-                    llvm::errs() << "Node-Use Entry (" << tempVal->instruction_ << "):  " << *nodeUseEntry << "\n";
+
+                    if( output_->getVerboseLevel() > 64 ) {
+                        llvm::errs() << "Node-Use Entry (" << tempVal->instruction_ << "):  " << *nodeUseEntry << "\n";
+                    }
                 }
 
                 for( auto nodeDefEntry = (*defNode_)[&*blockIter]->at(outputVertex)->begin(); nodeDefEntry != (*defNode_)[&*blockIter]->at(outputVertex)->end(); nodeDefEntry++ ) {
                     CDFGVertex* tempVal = g.getVertex(outputVertexID)->getValue();
-                    llvm::errs() << "Node-Def Entry (" << tempVal->instruction_ << "):  " << *nodeDefEntry << "\n";
+
+                    if( output_->getVerboseLevel() > 64 ) {
+                        llvm::errs() << "Node-Def Entry (" << tempVal->instruction_ << "):  " << *nodeDefEntry << "\n";
+                    }
                 }
 
             // END Allocate
@@ -234,9 +258,9 @@ void Parser::expandBBGraph(llvm::Function* func)
                     if( it != instructionMap_->end() ) {
                         inputVertex = instructionMap_->at(llvm::cast<llvm::Instruction>(tempOperand));
 
-                        #ifdef DEBUG
-                        llvm::errs() << "+Found " << inputVertex->instruction_ << " in instructionMap_\n";
-                        #endif
+                        if( output_->getVerboseLevel() > 64 ) {
+                            llvm::errs() << "+Found " << inputVertex->instruction_ << " in instructionMap_\n";
+                        }
                     } else {
                         inputVertex = new CDFGVertex;
                         inputVertex->instruction_ = 0x00;
@@ -264,13 +288,15 @@ void Parser::expandBBGraph(llvm::Function* func)
                     (*defNode_)[&*blockIter]->insert( std::pair<CDFGVertex*, std::vector< llvm::Instruction* >* >(outputVertex, new std::vector< llvm::Instruction* >) );
                 }
 
-                #ifdef DEBUG
-                for( auto nodeUseEntry = (*useNode_)[&*blockIter]->at(outputVertex)->begin(); nodeUseEntry != (*useNode_)[&*blockIter]->at(outputVertex)->end(); nodeUseEntry++ )
-                    llvm::errs() << "Node-Use Entry (" << outputVertex->instruction_ << "):  " << *nodeUseEntry << "\n";
+                if( output_->getVerboseLevel() > 64 ) {
+                    for( auto nodeUseEntry = (*useNode_)[&*blockIter]->at(outputVertex)->begin(); nodeUseEntry != (*useNode_)[&*blockIter]->at(outputVertex)->end(); nodeUseEntry++ ) {
+                        llvm::errs() << "Node-Use Entry (" << outputVertex->instruction_ << "):  " << *nodeUseEntry << "\n";
+                    }
 
-                for( auto nodeDefEntry = (*defNode_)[&*blockIter]->at(outputVertex)->begin(); nodeDefEntry != (*defNode_)[&*blockIter]->at(outputVertex)->end(); nodeDefEntry++ )
-                    llvm::errs() << "Node-Def Entry (" << outputVertex->instruction_ << "):  " << *nodeDefEntry << "\n";
-                #endif
+                    for( auto nodeDefEntry = (*defNode_)[&*blockIter]->at(outputVertex)->begin(); nodeDefEntry != (*defNode_)[&*blockIter]->at(outputVertex)->end(); nodeDefEntry++ ) {
+                        llvm::errs() << "Node-Def Entry (" << outputVertex->instruction_ << "):  " << *nodeDefEntry << "\n";
+                    }
+                }
 
             // END Return
             } else if( tempOpcode == llvm::Instruction::Call ) {                                      // BEGIN Call
@@ -293,17 +319,18 @@ void Parser::expandBBGraph(llvm::Function* func)
                     } else if( llvm::isa<llvm::Instruction>(tempOperand) ) {
                         std::map< llvm::Instruction*,CDFGVertex* >::iterator it = instructionMap_->find(llvm::cast<llvm::Instruction>(tempOperand));
 
-                        #ifdef DEBUG
-                        llvm::errs() << "**** " << static_cast<llvm::Instruction*>(operandIter->get()) << "   --   " << llvm::cast<llvm::Instruction>(tempOperand) << "   --   ";
-                        #endif
+                        if( output_->getVerboseLevel() > 64 ) {
+                            llvm::errs() << "**** " << static_cast<llvm::Instruction*>(operandIter->get()) << "   --   " << llvm::cast<llvm::Instruction>(tempOperand) << "   --   ";
+                        }
 
 
                         if( it != instructionMap_->end() ) {
                             inputVertex = instructionMap_->at(llvm::cast<llvm::Instruction>(tempOperand));
 
-                            #ifdef DEBUG
-                            llvm::errs() << "+Found " << inputVertex->instruction_ << " in instructionMap_\n";
-                            #endif
+                            if( output_->getVerboseLevel() > 64 ) {
+                                llvm::errs() << "+Found " << inputVertex->instruction_ << " in instructionMap_\n";
+                            }
+
                         } else {
                             inputVertex = new CDFGVertex;
                             inputVertex->instruction_ = 0x00;
@@ -333,13 +360,15 @@ void Parser::expandBBGraph(llvm::Function* func)
                 tempDefVector->push_back(&*instructionIter);
                 (*defNode_)[&*blockIter]->insert( std::pair<CDFGVertex*, std::vector< llvm::Instruction* >* >(outputVertex, tempDefVector) );
 
-                #ifdef DEBUG
-                for( auto nodeUseEntry = (*useNode_)[&*blockIter]->at(outputVertex)->begin(); nodeUseEntry != (*useNode_)[&*blockIter]->at(outputVertex)->end(); nodeUseEntry++ )
-                    llvm::errs() << "Node-Use Entry (" << outputVertex->instruction_ << "):  " << *nodeUseEntry << "\n";
+                if( output_->getVerboseLevel() > 64 ) {
+                    for( auto nodeUseEntry = (*useNode_)[&*blockIter]->at(outputVertex)->begin(); nodeUseEntry != (*useNode_)[&*blockIter]->at(outputVertex)->end(); nodeUseEntry++ ) {
+                        llvm::errs() << "Node-Use Entry (" << outputVertex->instruction_ << "):  " << *nodeUseEntry << "\n";
+                    }
 
-                for( auto nodeDefEntry = (*defNode_)[&*blockIter]->at(outputVertex)->begin(); nodeDefEntry != (*defNode_)[&*blockIter]->at(outputVertex)->end(); nodeDefEntry++ )
-                    llvm::errs() << "Node-Def Entry (" << outputVertex->instruction_ << "):  " << *nodeDefEntry << "\n";
-                #endif
+                    for( auto nodeDefEntry = (*defNode_)[&*blockIter]->at(outputVertex)->begin(); nodeDefEntry != (*defNode_)[&*blockIter]->at(outputVertex)->end(); nodeDefEntry++ ) {
+                        llvm::errs() << "Node-Def Entry (" << outputVertex->instruction_ << "):  " << *nodeDefEntry << "\n";
+                    }
+                }
 
             //END Call
             } else if( tempOpcode == llvm::Instruction::Br ) {                                        // BEGIN Branch
@@ -353,9 +382,9 @@ void Parser::expandBBGraph(llvm::Function* func)
                     if( it != instructionMap_->end() ) {
                         inputVertex = instructionMap_->at(llvm::cast<llvm::Instruction>(tempCond));
 
-                        #ifdef DEBUG
-                        llvm::errs() << "+src Found " << inputVertex->instruction_ << " in instructionMap_\n";
-                        #endif
+                        if( output_->getVerboseLevel() > 64 ) {
+                            llvm::errs() << "+src Found " << inputVertex->instruction_ << " in instructionMap_\n";
+                        }
                     } else {
                         inputVertex = new CDFGVertex;
                         inputVertex->instruction_ = 0x00;
@@ -383,13 +412,15 @@ void Parser::expandBBGraph(llvm::Function* func)
                 //create the node/def entries
                 (*defNode_)[&*blockIter]->insert( std::pair<CDFGVertex*, std::vector< llvm::Instruction* >* >(outputVertex, tempDefVector) );
 
-                #ifdef DEBUG
-                for( auto nodeUseEntry = (*useNode_)[&*blockIter]->at(outputVertex)->begin(); nodeUseEntry != (*useNode_)[&*blockIter]->at(outputVertex)->end(); nodeUseEntry++ )
-                    llvm::errs() << "Node-Use Entry (" << outputVertex->instruction_ << "):  " << *nodeUseEntry << "\n";
+                if( output_->getVerboseLevel() > 64 ) {
+                    for( auto nodeUseEntry = (*useNode_)[&*blockIter]->at(outputVertex)->begin(); nodeUseEntry != (*useNode_)[&*blockIter]->at(outputVertex)->end(); nodeUseEntry++ ) {
+                        llvm::errs() << "Node-Use Entry (" << outputVertex->instruction_ << "):  " << *nodeUseEntry << "\n";
+                    }
 
-                for( auto nodeDefEntry = (*defNode_)[&*blockIter]->at(outputVertex)->begin(); nodeDefEntry != (*defNode_)[&*blockIter]->at(outputVertex)->end(); nodeDefEntry++ )
-                    llvm::errs() << "Node-Def Entry (" << outputVertex->instruction_ << "):  " << *nodeDefEntry << "\n";
-                #endif
+                    for( auto nodeDefEntry = (*defNode_)[&*blockIter]->at(outputVertex)->begin(); nodeDefEntry != (*defNode_)[&*blockIter]->at(outputVertex)->end(); nodeDefEntry++ ) {
+                        llvm::errs() << "Node-Def Entry (" << outputVertex->instruction_ << "):  " << *nodeDefEntry << "\n";
+                    }
+                }
 
             // END Branch
             } else if( tempOpcode == llvm::Instruction::Load ) {                                       // BEGIN Load
@@ -405,9 +436,9 @@ void Parser::expandBBGraph(llvm::Function* func)
                     if( it != instructionMap_->end() ) {
                         inputVertex = instructionMap_->at(llvm::cast<llvm::Instruction>(tempSrc));
 
-                        #ifdef DEBUG
-                        llvm::errs() << "+src Found " << inputVertex->instruction_ << " in instructionMap_\n";
-                        #endif
+                        if( output_->getVerboseLevel() > 64 ) {
+                            llvm::errs() << "+src Found " << inputVertex->instruction_ << " in instructionMap_\n";
+                        }
                     } else {
                         inputVertex = new CDFGVertex;
                         inputVertex->instruction_ = 0x00;
@@ -461,13 +492,15 @@ void Parser::expandBBGraph(llvm::Function* func)
                 tempDefVector->push_back(&*instructionIter);
                 (*defNode_)[&*blockIter]->insert( std::pair<CDFGVertex*, std::vector< llvm::Instruction* >* >(outputVertex, tempDefVector) );
 
-                #ifdef DEBUG
-                for( auto nodeUseEntry = (*useNode_)[&*blockIter]->at(outputVertex)->begin(); nodeUseEntry != (*useNode_)[&*blockIter]->at(outputVertex)->end(); nodeUseEntry++ )
-                    llvm::errs() << "Node-Use Entry (" << outputVertex->instruction_ << "):  " << *nodeUseEntry << "\n";
+                if( output_->getVerboseLevel() > 64 ) {
+                    for( auto nodeUseEntry = (*useNode_)[&*blockIter]->at(outputVertex)->begin(); nodeUseEntry != (*useNode_)[&*blockIter]->at(outputVertex)->end(); nodeUseEntry++ ) {
+                        llvm::errs() << "Node-Use Entry (" << outputVertex->instruction_ << "):  " << *nodeUseEntry << "\n";
+                    }
 
-                for( auto nodeDefEntry = (*defNode_)[&*blockIter]->at(outputVertex)->begin(); nodeDefEntry != (*defNode_)[&*blockIter]->at(outputVertex)->end(); nodeDefEntry++ )
-                    llvm::errs() << "Node-Def Entry (" << outputVertex->instruction_ << "):  " << *nodeDefEntry << "\n";
-                #endif
+                    for( auto nodeDefEntry = (*defNode_)[&*blockIter]->at(outputVertex)->begin(); nodeDefEntry != (*defNode_)[&*blockIter]->at(outputVertex)->end(); nodeDefEntry++ ) {
+                        llvm::errs() << "Node-Def Entry (" << outputVertex->instruction_ << "):  " << *nodeDefEntry << "\n";
+                    }
+                }
 
             //END Load
             } else if( tempOpcode == llvm::Instruction::Store ) {                                     // BEGIN Store
@@ -483,9 +516,9 @@ void Parser::expandBBGraph(llvm::Function* func)
                     if( it != instructionMap_->end() ) {
                         inputVertex = instructionMap_->at(llvm::cast<llvm::Instruction>(tempDst));
 
-                        #ifdef DEBUG
-                        llvm::errs() << "+dst Found " << inputVertex->instruction_ << " in instructionMap_\n";
-                        #endif
+                        if( output_->getVerboseLevel() > 64 ) {
+                            llvm::errs() << "+dst Found " << inputVertex->instruction_ << " in instructionMap_\n";
+                        }
                     } else {
                         inputVertex = new CDFGVertex;
                         inputVertex->instruction_ = 0x00;
@@ -606,9 +639,9 @@ void Parser::expandBBGraph(llvm::Function* func)
                     if( it != instructionMap_->end() ) {
                         inputVertex = instructionMap_->at(llvm::cast<llvm::Instruction>(tempSrc));
 
-                        #ifdef DEBUG
-                        llvm::errs() << "+src Found " << inputVertex->instruction_ << " in instructionMap_\n";
-                        #endif
+                        if( output_->getVerboseLevel() > 64 ) {
+                            llvm::errs() << "+src Found " << inputVertex->instruction_ << " in instructionMap_\n";
+                        }
                     } else {
                         inputVertex = new CDFGVertex;
                         inputVertex->instruction_ = 0x00;
@@ -728,13 +761,15 @@ void Parser::expandBBGraph(llvm::Function* func)
                 tempDefVector->push_back(&*instructionIter);
                 (*defNode_)[&*blockIter]->insert( std::pair<CDFGVertex*, std::vector< llvm::Instruction* >* >(outputVertex, tempDefVector) );
 
-                #ifdef DEBUG
-                for( auto nodeUseEntry = (*useNode_)[&*blockIter]->at(outputVertex)->begin(); nodeUseEntry != (*useNode_)[&*blockIter]->at(outputVertex)->end(); nodeUseEntry++ )
-                    llvm::errs() << "Node-Use Entry (" << outputVertex->instruction_ << "):  " << *nodeUseEntry << "\n";
+                if( output_->getVerboseLevel() > 64 ) {
+                    for( auto nodeUseEntry = (*useNode_)[&*blockIter]->at(outputVertex)->begin(); nodeUseEntry != (*useNode_)[&*blockIter]->at(outputVertex)->end(); nodeUseEntry++ ) {
+                        llvm::errs() << "Node-Use Entry (" << outputVertex->instruction_ << "):  " << *nodeUseEntry << "\n";
+                    }
 
-                for( auto nodeDefEntry = (*defNode_)[&*blockIter]->at(outputVertex)->begin(); nodeDefEntry != (*defNode_)[&*blockIter]->at(outputVertex)->end(); nodeDefEntry++ )
-                    llvm::errs() << "Node-Def Entry (" << outputVertex->instruction_ << "):  " << *nodeDefEntry << "\n";
-                #endif
+                    for( auto nodeDefEntry = (*defNode_)[&*blockIter]->at(outputVertex)->begin(); nodeDefEntry != (*defNode_)[&*blockIter]->at(outputVertex)->end(); nodeDefEntry++ ) {
+                        llvm::errs() << "Node-Def Entry (" << outputVertex->instruction_ << "):  " << *nodeDefEntry << "\n";
+                    }
+                }
             //END Store
             } else if( tempOpcode == llvm::Instruction::GetElementPtr ){                                     // BEGIN GEP
                 std::vector< llvm::Instruction* > *tempUseVector = new std::vector< llvm::Instruction* >;
@@ -796,17 +831,17 @@ void Parser::expandBBGraph(llvm::Function* func)
                     } else if( llvm::isa<llvm::Instruction>(tempOperand) ) {
                         std::map< llvm::Instruction*,CDFGVertex* >::iterator it = instructionMap_->find(llvm::cast<llvm::Instruction>(tempOperand));
 
-                        #ifdef DEBUG
-                        llvm::errs() << "**** " << static_cast<llvm::Instruction*>(operandIter->get()) << "   --   " <<
-                        llvm::cast<llvm::Instruction>(tempOperand) << "   --   ";
-                        #endif
+                        if( output_->getVerboseLevel() > 64 ) {
+                            llvm::errs() << "**** " << static_cast<llvm::Instruction*>(operandIter->get()) << "   --   " <<
+                            llvm::cast<llvm::Instruction>(tempOperand) << "   --   ";
+                        }
 
                         if( it != instructionMap_->end() ) {
                             inputVertex = instructionMap_->at(llvm::cast<llvm::Instruction>(tempOperand));
 
-                            #ifdef DEBUG
-                            llvm::errs() << "+Found " << inputVertex->instruction_ << " in instructionMap_\n";
-                            #endif
+                            if( output_->getVerboseLevel() > 64 ) {
+                                llvm::errs() << "+Found " << inputVertex->instruction_ << " in instructionMap_\n";
+                            }
                         } else {
                             inputVertex = new CDFGVertex;
                             inputVertex->instruction_ = 0x00;
@@ -836,13 +871,15 @@ void Parser::expandBBGraph(llvm::Function* func)
                 tempDefVector->push_back(&*instructionIter);
                 (*defNode_)[&*blockIter]->insert( std::pair<CDFGVertex*, std::vector< llvm::Instruction* >* >(outputVertex, tempDefVector) );
 
-                #ifdef DEBUG
-                for( auto nodeUseEntry = (*useNode_)[&*blockIter]->at(outputVertex)->begin(); nodeUseEntry != (*useNode_)[&*blockIter]->at(outputVertex)->end(); nodeUseEntry++ )
-                    llvm::errs() << "Node-Use Entry (" << outputVertex->instruction_ << "):  " << *nodeUseEntry << "\n";
+                if( output_->getVerboseLevel() > 64 ) {
+                    for( auto nodeUseEntry = (*useNode_)[&*blockIter]->at(outputVertex)->begin(); nodeUseEntry != (*useNode_)[&*blockIter]->at(outputVertex)->end(); nodeUseEntry++ ) {
+                        llvm::errs() << "Node-Use Entry (" << outputVertex->instruction_ << "):  " << *nodeUseEntry << "\n";
+                    }
 
-                for( auto nodeDefEntry = (*defNode_)[&*blockIter]->at(outputVertex)->begin(); nodeDefEntry != (*defNode_)[&*blockIter]->at(outputVertex)->end(); nodeDefEntry++ )
-                    llvm::errs() << "Node-Def Entry (" << outputVertex->instruction_ << "):  " << *nodeDefEntry << "\n";
-                #endif
+                    for( auto nodeDefEntry = (*defNode_)[&*blockIter]->at(outputVertex)->begin(); nodeDefEntry != (*defNode_)[&*blockIter]->at(outputVertex)->end(); nodeDefEntry++ ) {
+                        llvm::errs() << "Node-Def Entry (" << outputVertex->instruction_ << "):  " << *nodeDefEntry << "\n";
+                    }
+                }
 
             //END GEP
             } else if( tempOpcode == llvm::Instruction::ICmp || tempOpcode == llvm::Instruction::FCmp ) {   // BEGIN Int/Float Compare
@@ -904,16 +941,16 @@ void Parser::expandBBGraph(llvm::Function* func)
                     } else if( llvm::isa<llvm::Instruction>(tempOperand) ) {
                         std::map< llvm::Instruction*,CDFGVertex* >::iterator it = instructionMap_->find(llvm::cast<llvm::Instruction>(tempOperand));
 
-                        #ifdef DEBUG
-                        llvm::errs() << "**** " << static_cast<llvm::Instruction*>(operandIter->get()) << "   --   " << llvm::cast<llvm::Instruction>(tempOperand) << "   --   ";
-                        #endif
+                        if( output_->getVerboseLevel() > 64 ) {
+                            llvm::errs() << "**** " << static_cast<llvm::Instruction*>(operandIter->get()) << "   --   " << llvm::cast<llvm::Instruction>(tempOperand) << "   --   ";
+                        }
 
                         if( it != instructionMap_->end() ) {
                             inputVertex = instructionMap_->at(llvm::cast<llvm::Instruction>(tempOperand));
 
-                            #ifdef DEBUG
-                            llvm::errs() << "+Found " << inputVertex->instruction_ << " in instructionMap_\n";
-                            #endif
+                            if( output_->getVerboseLevel() > 64 ) {
+                                llvm::errs() << "+Found " << inputVertex->instruction_ << " in instructionMap_\n";
+                            }
                         } else {
                             inputVertex = new CDFGVertex;
                             inputVertex->instruction_ = 0x00;
@@ -962,13 +999,15 @@ void Parser::expandBBGraph(llvm::Function* func)
                 tempDefVector->push_back(&*instructionIter);
                 (*defNode_)[&*blockIter]->insert( std::pair<CDFGVertex*, std::vector< llvm::Instruction* >* >(outputVertex, tempDefVector) );
 
-                #ifdef DEBUG
-                for( auto nodeUseEntry = (*useNode_)[&*blockIter]->at(outputVertex)->begin(); nodeUseEntry != (*useNode_)[&*blockIter]->at(outputVertex)->end(); nodeUseEntry++ )
-                    llvm::errs() << "Node-Use Entry (" << outputVertex->instruction_ << "):  " << *nodeUseEntry << "\n";
+                if( output_->getVerboseLevel() > 64 ) {
+                    for( auto nodeUseEntry = (*useNode_)[&*blockIter]->at(outputVertex)->begin(); nodeUseEntry != (*useNode_)[&*blockIter]->at(outputVertex)->end(); nodeUseEntry++ ) {
+                        llvm::errs() << "Node-Use Entry (" << outputVertex->instruction_ << "):  " << *nodeUseEntry << "\n";
+                    }
 
-                for( auto nodeDefEntry = (*defNode_)[&*blockIter]->at(outputVertex)->begin(); nodeDefEntry != (*defNode_)[&*blockIter]->at(outputVertex)->end(); nodeDefEntry++ )
-                    llvm::errs() << "Node-Def Entry (" << outputVertex->instruction_ << "):  " << *nodeDefEntry << "\n";
-                #endif
+                    for( auto nodeDefEntry = (*defNode_)[&*blockIter]->at(outputVertex)->begin(); nodeDefEntry != (*defNode_)[&*blockIter]->at(outputVertex)->end(); nodeDefEntry++ ) {
+                        llvm::errs() << "Node-Def Entry (" << outputVertex->instruction_ << "):  " << *nodeDefEntry << "\n";
+                    }
+                }
 
             // END Int/Float Compare
             } else if( tempOpcode > 35 && tempOpcode < 49 ) {                                   // BEGINllvm::cast operators 36-48
@@ -1033,16 +1072,16 @@ void Parser::expandBBGraph(llvm::Function* func)
                     } else if( llvm::isa<llvm::Instruction>(tempOperand) ) {
                         std::map< llvm::Instruction*,CDFGVertex* >::iterator it = instructionMap_->find(llvm::cast<llvm::Instruction>(tempOperand));
 
-                        #ifdef DEBUG
-                        llvm::errs() << "**** " << static_cast<llvm::Instruction*>(operandIter->get()) << "   --   " << llvm::cast<llvm::Instruction>(tempOperand) << "   --   ";
-                        #endif
+                        if( output_->getVerboseLevel() > 64 ) {
+                            llvm::errs() << "**** " << static_cast<llvm::Instruction*>(operandIter->get()) << "   --   " << llvm::cast<llvm::Instruction>(tempOperand) << "   --   ";
+                        }
 
                         if( it != instructionMap_->end() ) {
                             inputVertex = instructionMap_->at(llvm::cast<llvm::Instruction>(tempOperand));
 
-                            #ifdef DEBUG
-                            llvm::errs() << "+Found " << inputVertex->instruction_ << " in instructionMap_\n";
-                            #endif
+                            if( output_->getVerboseLevel() > 64 ) {
+                                llvm::errs() << "+Found " << inputVertex->instruction_ << " in instructionMap_\n";
+                            }
 
                         } else {
                             inputVertex = new CDFGVertex;
@@ -1074,13 +1113,15 @@ void Parser::expandBBGraph(llvm::Function* func)
                 tempDefVector->push_back(&*instructionIter);
                 (*defNode_)[&*blockIter]->insert( std::pair<CDFGVertex*, std::vector< llvm::Instruction* >* >(outputVertex, tempDefVector) );
 
-                #ifdef DEBUG
-                for( auto nodeUseEntry = (*useNode_)[&*blockIter]->at(outputVertex)->begin(); nodeUseEntry != (*useNode_)[&*blockIter]->at(outputVertex)->end(); nodeUseEntry++ )
-                    llvm::errs() << "Node-Use Entry (" << outputVertex->instruction_ << "):  " << *nodeUseEntry << "\n";
+                if( output_->getVerboseLevel() > 64 ) {
+                    for( auto nodeUseEntry = (*useNode_)[&*blockIter]->at(outputVertex)->begin(); nodeUseEntry != (*useNode_)[&*blockIter]->at(outputVertex)->end(); nodeUseEntry++ ) {
+                        llvm::errs() << "Node-Use Entry (" << outputVertex->instruction_ << "):  " << *nodeUseEntry << "\n";
+                    }
 
-                for( auto nodeDefEntry = (*defNode_)[&*blockIter]->at(outputVertex)->begin(); nodeDefEntry != (*defNode_)[&*blockIter]->at(outputVertex)->end(); nodeDefEntry++ )
-                    llvm::errs() << "Node-Def Entry (" << outputVertex->instruction_ << "):  " << *nodeDefEntry << "\n";
-                #endif
+                    for( auto nodeDefEntry = (*defNode_)[&*blockIter]->at(outputVertex)->begin(); nodeDefEntry != (*defNode_)[&*blockIter]->at(outputVertex)->end(); nodeDefEntry++ ) {
+                        llvm::errs() << "Node-Def Entry (" << outputVertex->instruction_ << "):  " << *nodeDefEntry << "\n";
+                    }
+                }
 
             //END CAST
             } else if( tempOpcode > 10 && tempOpcode < 29 ) {                // BEGIN binary operators 11-22, logical operators 23-28 -- two operands
@@ -1142,16 +1183,16 @@ void Parser::expandBBGraph(llvm::Function* func)
                     } else if( llvm::isa<llvm::Instruction>(tempOperand) ) {
                         std::map< llvm::Instruction*,CDFGVertex* >::iterator it = instructionMap_->find(llvm::cast<llvm::Instruction>(tempOperand));
 
-                        #ifdef DEBUG
-                        llvm::errs() << "**** " << static_cast<llvm::Instruction*>(operandIter->get()) << "   --   " << llvm::cast<llvm::Instruction>(tempOperand) << "   --   ";
-                        #endif
+                        if( output_->getVerboseLevel() > 64 ) {
+                            llvm::errs() << "**** " << static_cast<llvm::Instruction*>(operandIter->get()) << "   --   " << llvm::cast<llvm::Instruction>(tempOperand) << "   --   ";
+                        }
 
                         if( it != instructionMap_->end() ) {
                             inputVertex = instructionMap_->at(llvm::cast<llvm::Instruction>(tempOperand));
 
-                            #ifdef DEBUG
-                            llvm::errs() << "+Found " << inputVertex->instruction_ << " in instructionMap_\n";
-                            #endif
+                            if( output_->getVerboseLevel() > 64 ) {
+                                llvm::errs() << "+Found " << inputVertex->instruction_ << " in instructionMap_\n";
+                            }
                         } else {
                             inputVertex = new CDFGVertex;
                             inputVertex->instruction_ = 0x00;
@@ -1182,13 +1223,15 @@ void Parser::expandBBGraph(llvm::Function* func)
                 tempDefVector->push_back(&*instructionIter);
                 (*defNode_)[&*blockIter]->insert( std::pair<CDFGVertex*, std::vector< llvm::Instruction* >* >(outputVertex, tempDefVector) );
 
-                #ifdef DEBUG
-                for( auto nodeUseEntry = (*useNode_)[&*blockIter]->at(outputVertex)->begin(); nodeUseEntry != (*useNode_)[&*blockIter]->at(outputVertex)->end(); nodeUseEntry++ )
-                    llvm::errs() << "Node-Use Entry (" << outputVertex->instruction_ << "):  " << *nodeUseEntry << "\n";
+                if( output_->getVerboseLevel() > 64 ) {
+                    for( auto nodeUseEntry = (*useNode_)[&*blockIter]->at(outputVertex)->begin(); nodeUseEntry != (*useNode_)[&*blockIter]->at(outputVertex)->end(); nodeUseEntry++ ) {
+                        llvm::errs() << "Node-Use Entry (" << outputVertex->instruction_ << "):  " << *nodeUseEntry << "\n";
+                    }
 
-                for( auto nodeDefEntry = (*defNode_)[&*blockIter]->at(outputVertex)->begin(); nodeDefEntry != (*defNode_)[&*blockIter]->at(outputVertex)->end(); nodeDefEntry++ )
-                    llvm::errs() << "Node-Def Entry (" << outputVertex->instruction_ << "):  " << *nodeDefEntry << "\n";
-                #endif
+                    for( auto nodeDefEntry = (*defNode_)[&*blockIter]->at(outputVertex)->begin(); nodeDefEntry != (*defNode_)[&*blockIter]->at(outputVertex)->end(); nodeDefEntry++ ) {
+                        llvm::errs() << "Node-Def Entry (" << outputVertex->instruction_ << "):  " << *nodeDefEntry << "\n";
+                    }
+                }
 
             //END ALU
             } else {
@@ -1198,47 +1241,43 @@ void Parser::expandBBGraph(llvm::Function* func)
                 //create the node/def entries
                 (*defNode_)[&*blockIter]->insert( std::pair<CDFGVertex*, std::vector< llvm::Instruction* >* >(outputVertex, new std::vector< llvm::Instruction* >) );
 
-                #ifdef DEBUG
-                for( auto nodeUseEntry = (*useNode_)[&*blockIter]->at(outputVertex)->begin(); nodeUseEntry != (*useNode_)[&*blockIter]->at(outputVertex)->end(); nodeUseEntry++ )
-                    llvm::errs() << "Node-Use Entry (" << outputVertex->instruction_ << "):  " << *nodeUseEntry << "\n";
+                if( output_->getVerboseLevel() > 64 ) {
+                    for( auto nodeUseEntry = (*useNode_)[&*blockIter]->at(outputVertex)->begin(); nodeUseEntry != (*useNode_)[&*blockIter]->at(outputVertex)->end(); nodeUseEntry++ ) {
+                        llvm::errs() << "Node-Use Entry (" << outputVertex->instruction_ << "):  " << *nodeUseEntry << "\n";
+                    }
 
-                for( auto nodeDefEntry = (*defNode_)[&*blockIter]->at(outputVertex)->begin(); nodeDefEntry != (*defNode_)[&*blockIter]->at(outputVertex)->end(); nodeDefEntry++ )
-                    llvm::errs() << "Node-Def Entry (" << outputVertex->instruction_ << "):  " << *nodeDefEntry << "\n";
-                #endif
-
+                    for( auto nodeDefEntry = (*defNode_)[&*blockIter]->at(outputVertex)->begin(); nodeDefEntry != (*defNode_)[&*blockIter]->at(outputVertex)->end(); nodeDefEntry++ ) {
+                        llvm::errs() << "Node-Def Entry (" << outputVertex->instruction_ << "):  " << *nodeDefEntry << "\n";
+                    }
+                }
             }
 
-            #ifdef DEBUG
-            llvm::errs() <<   "********************************************* Ins Map  *********************************************\n";
-            for( std::map< llvm::Instruction*,CDFGVertex* >::iterator it = instructionMap_->begin(); it != instructionMap_->end(); ++it )
-            {
-                llvm::errs() << it->first;
-                llvm::errs() << "  ";
-            }
-            llvm::errs() << "\n****************************************************************************************************\n";
+            if( output_->getVerboseLevel() > 64 ) {
+                llvm::errs() <<   "********************************************* Ins Map  *********************************************\n";
+                for( std::map< llvm::Instruction*,CDFGVertex* >::iterator it = instructionMap_->begin(); it != instructionMap_->end(); ++it )            {
+                    llvm::errs() << it->first;
+                    llvm::errs() << "  ";
+                }
+                llvm::errs() << "\n****************************************************************************************************\n";
 
-            llvm::errs() << "\t\t\tnum operands " << instructionIter->getNumOperands() << "\n";
-            for( auto operandIter = instructionIter->op_begin(), operandEnd = instructionIter->op_end(); operandIter != operandEnd; ++operandIter )
-            {
-                llvm::errs() << "\t\t\top get  " << operandIter->get() << "\n";
-                llvm::errs() << "\t\t\top uses " << operandIter->get()->getNumUses() << "\n";
-                llvm::errs() << "\t\t\top dump ";
-                operandIter->get()->dump();
-                if( operandIter->get()->hasName() == 1 )
-                {
-                    llvm::errs() << "\t\t\tfound  ";
-                    llvm::errs().write_escaped(operandIter->get()->getName().str()) << "  ";
+                llvm::errs() << "\t\t\tnum operands " << instructionIter->getNumOperands() << "\n";
+                for( auto operandIter = instructionIter->op_begin(), operandEnd = instructionIter->op_end(); operandIter != operandEnd; ++operandIter )  {
+                    llvm::errs() << "\t\t\top get  " << operandIter->get() << "\n";
+                    llvm::errs() << "\t\t\top uses " << operandIter->get()->getNumUses() << "\n";
+                    llvm::errs() << "\t\t\top dump ";
+                    operandIter->get()->dump();
+
+                    if( operandIter->get()->hasName() == 1 ) {
+                        llvm::errs() << "\t\t\tfound  ";
+                        llvm::errs().write_escaped(operandIter->get()->getName().str()) << "  ";
+                    } else {
+                        llvm::errs() << "\t\t\tempty \n";
+                    }
+                    llvm::errs() << "\n";
                 }
-                else
-                {
-                    llvm::errs() << "\t\t\tempty \n";
-                }
+
                 llvm::errs() << "\n";
             }
-            llvm::errs() << "\n";
-            #endif
-
-
         }
     }
 
@@ -1258,38 +1297,45 @@ void Parser::assembleGraph(void)
 //         std::cout << bbGraphIter->first << "[label=\"";
 //         std::cout << bbGraphIter->second.getValue();
 //         std::cout << "\"];\n";
-        llvm::errs() << "\nConstructing graph for basic block " << bbGraphIter->second.getValue() << "...\n";
+
+        if( output_->getVerboseLevel() > 64 ) {
+            llvm::errs() << "\nConstructing graph for basic block " << bbGraphIter->second.getValue() << "...\n";
+        }
 
         llvm::BasicBlock* basicBlock = bbGraphIter->second.getValue();
         CDFG &g = *((*flowGraph_)[basicBlock]);
 
-        #ifdef DEBUG
-        // Prints list of all instructions in the basic block before processing
-        for( auto revIt = (*vertexList_)[basicBlock].rbegin(); revIt != (*vertexList_)[basicBlock].rend(); ++revIt) {
-            llvm::errs() << "\t" << (*revIt)->instruction_  << "\n";
+        if( output_->getVerboseLevel() > 64 ) {
+            // Prints list of all instructions in the basic block before processing
+            for( auto revIt = (*vertexList_)[basicBlock].rbegin(); revIt != (*vertexList_)[basicBlock].rend(); ++revIt) {
+                llvm::errs() << "\t" << (*revIt)->instruction_  << "\n";
+            }
+            llvm::errs() << "\n\n";
         }
-        llvm::errs() << "\n\n";
-        #endif
 
         for( auto revIt = (*vertexList_)[basicBlock].rbegin(); revIt != (*vertexList_)[basicBlock].rend(); ++revIt) {
 
-            #ifdef DEBUG
-            llvm::errs() << "\n\t" << (*revIt)->instruction_  << "\n";
-            #endif
+            if( output_->getVerboseLevel() > 64 ) {
+                llvm::errs() << "\n\t" << (*revIt)->instruction_  << "\n";
+            }
 
             // For each vertex, iterate through the instruction's use list -- insert an edge between the uses and the next def.
             // Defs may be origin node, previous store, etc.
             for( auto nodeUseEntry = (*useNode_)[basicBlock]->at(*revIt)->begin(); nodeUseEntry != (*useNode_)[basicBlock]->at(*revIt)->end(); ++nodeUseEntry ) {
-                #ifdef DEBUG
-                llvm::errs() << "\t\t" << *nodeUseEntry << "\n";
-                #endif
+                if( output_->getVerboseLevel() > 64 ) {
+                    llvm::errs() << "\t\t" << *nodeUseEntry << "\n";
+                }
 
                 bool found = 0;
 
                 // Check for actual instructions used in this vertex
                 for( auto innerRevIt = revIt; innerRevIt != (*vertexList_)[basicBlock].rend(); ++innerRevIt ) {
                     llvm::Instruction* innerInst = (*innerRevIt)->instruction_;
-                    llvm::errs() << "\t\t\t" << innerInst << "\n";
+
+                    if( output_->getVerboseLevel() > 64 ) {
+                        llvm::errs() << "\t\t\t" << innerInst << "\n";
+                    }
+
                     if( innerRevIt == revIt || innerInst == 0x00 ) {
                         continue;
                     }
@@ -1297,9 +1343,9 @@ void Parser::assembleGraph(void)
                     if( innerInst == *nodeUseEntry ) {
                         found = 1;
 
-                        #ifdef DEBUG
-                        llvm::errs() << "\t\t\t\tinstruction " << innerInst << "\n";
-                        #endif
+                        if( output_->getVerboseLevel() > 64 ) {
+                            llvm::errs() << "\t\t\t\tinstruction " << innerInst << "\n";
+                        }
 
                         ParserEdgeProperties* edgeProp = new ParserEdgeProperties;
                         edgeProp->value_ = 0x00;
@@ -1322,9 +1368,9 @@ void Parser::assembleGraph(void)
                             if( *operandIter == *nodeUseEntry ) {
                                 found = 1;
 
-                                #ifdef DEBUG
-                                llvm::errs() << "\t\t\t\t(" << innerInst << ") operand " << *operandIter << "\n";
-                                #endif
+                                if( output_->getVerboseLevel() > 64 ) {
+                                    llvm::errs() << "\t\t\t\t(" << innerInst << ") operand " << *operandIter << "\n";
+                                }
 
                                 ParserEdgeProperties* edgeProp = new ParserEdgeProperties;
                                 edgeProp->value_ = 0x00;
@@ -1344,7 +1390,8 @@ void Parser::assembleGraph(void)
 
         // Finally, check for orphaned nodes
         // Want to connect them with any previous node that is non-zero and has zero out-edges
-        llvm::errs() << "\nChecking for orphans...\n";
+        output_->verbose(CALL_INFO, 1, 0, "\nChecking for orphans...\n");
+
         auto cdfgVertexMap = g.getVertexMap();
         for(auto cdfgGraphIter = cdfgVertexMap->begin(); cdfgGraphIter != cdfgVertexMap->end(); ++cdfgGraphIter) {
 
@@ -1354,10 +1401,11 @@ void Parser::assembleGraph(void)
                     if( cdfgGraphIter->second.getInDegree() <= 0 && cdfgGraphIter->second.getOutDegree() <= 0 ) {
                         for( auto revIt = (*vertexList_)[basicBlock].rbegin(); revIt != (*vertexList_)[basicBlock].rend(); ++revIt) {
                             if( (*revIt)->instruction_ != 0x00 && g.getVertex(g[*revIt])->getOutDegree() <= 0 && (*revIt)->instruction_ != tempIns) {
-                                #ifdef DEBUG
-                                llvm::errs() << "@@@@@@@@@@@@@@@@@@@@@@@@@    " << (*revIt)->instruction_;
-                                llvm::errs() << "   to   " << tempIns << "\n";
-                                #endif
+
+                                if( output_->getVerboseLevel() > 64 ) {
+                                    llvm::errs() << "@@@@@@@@@@@@@@@@@@@@@@@@@    " << (*revIt)->instruction_;
+                                    llvm::errs() << "   to   " << tempIns << "\n";
+                                }
 
                                 ParserEdgeProperties* edgeProp = new ParserEdgeProperties;
                                 edgeProp->value_ = 0x00;
@@ -1373,9 +1421,9 @@ void Parser::assembleGraph(void)
 
 void Parser::mergeGraphs()
 {
-    functionGraph_ = new CDFG;
+    output_->verbose(CALL_INFO, 1, 0, "\nMerging graphs\n");
 
-    llvm::errs() << "\nMerging graphs\n";
+    functionGraph_ = new CDFG;
     BBGraph &bbg = *bbGraph_;
     auto bbVertexMap = bbg.getVertexMap();
     for(auto bbGraphIter = bbVertexMap->begin(); bbGraphIter != bbVertexMap->end(); ++bbGraphIter) {
@@ -1387,7 +1435,8 @@ void Parser::mergeGraphs()
     functionGraph_->printDot("00_func.dot");
 
     // Connect the individual basic blocks back together
-    llvm::errs() << "...Adding edges...\n";
+    output_->verbose(CALL_INFO, 1, 0, "...adding edges...\n");
+
     auto funcVertexMap = functionGraph_->getVertexMap();
     for( auto vertexIterator = funcVertexMap->begin(); vertexIterator != funcVertexMap ->end(); ++vertexIterator ) {
         llvm::Instruction* tempIns = vertexIterator->second.getValue()->instruction_;
@@ -1396,9 +1445,9 @@ void Parser::mergeGraphs()
             if( tempIns->getOpcode() == llvm::Instruction::Br ) {
                 llvm::BasicBlock* currentBB = tempIns->getParent();
 
-                #ifdef DEBUG
-                llvm::errs() << "Ins " << &*tempIns << " located in " << &*currentBB << "\n";
-                #endif
+                if( output_->getVerboseLevel() > 64 ) {
+                    llvm::errs() << "Ins " << &*tempIns << " located in " << &*currentBB << "\n";
+                }
 
                 // Identify all successor basic bloacks and identify all entry instructions for each one
                 // An entry instruction is a non-zero instruction with no in-edges
@@ -1408,9 +1457,9 @@ void Parser::mergeGraphs()
                 for( uint32_t successor = 0; successor < totalSuccessors; successor++ ) {
                     nextBB = currentBB->getTerminator()->getSuccessor(successor);
 
-                    #ifdef DEBUG
-                    llvm::errs() << "-----Next BB:  " << nextBB << "\n";
-                    #endif
+                    if( output_->getVerboseLevel() > 64 ) {
+                        llvm::errs() << "-----Next BB:  " << nextBB << "\n";
+                    }
 
                     CDFG &g = *((*flowGraph_)[nextBB]);
                     auto vertexMap = g.getVertexMap();
@@ -1444,24 +1493,25 @@ void Parser::mergeGraphs()
                         }
                     }
 
-                    #ifdef DEBUG
-                    llvm::errs() << "Dumping connector list for " << &*currentBB << ":  ";
-                    for( auto connectorIter = connectorList.begin(); connectorIter != connectorList.end(); connectorIter++ ) {
-                        llvm::errs() << *connectorIter << ", ";
+                    if( output_->getVerboseLevel() > 64 ) {
+                        llvm::errs() << "Dumping connector list for " << &*currentBB << ":  ";
+                        for( auto connectorIter = connectorList.begin(); connectorIter != connectorList.end(); connectorIter++ ) {
+                            llvm::errs() << *connectorIter << ", ";
+                        }
+                        llvm::errs() << "\n";
                     }
-                    llvm::errs() << "\n";
-                    #endif
                 }
 
                 for( auto connectorIter = connectorList.begin(); connectorIter != connectorList.end(); connectorIter++ ) {
                     for( auto vertexIteratorInner = funcVertexMap->begin(); vertexIteratorInner != funcVertexMap ->end(); ++vertexIteratorInner ) {
                         if( *connectorIter == vertexIteratorInner->second.getValue()->instruction_ ) {
-                            #ifdef DEBUG
-                            llvm::errs() << "\tConnecting (" << &*currentBB;
-                            llvm::errs() << ") " << vertexIterator->second.getValue()->instruction_ << " in " << vertexIterator->second.getValue()->instruction_->getParent();
-                            llvm::errs() << " to (" << &*nextBB;
-                            llvm::errs() << ") " << vertexIteratorInner->second.getValue()->instruction_ << " in " << vertexIteratorInner->second.getValue()->instruction_->getParent() << "\n";
-                            #endif
+
+                            if( output_->getVerboseLevel() > 64 ) {
+                                llvm::errs() << "\tConnecting (" << &*currentBB;
+                                llvm::errs() << ") " << vertexIterator->second.getValue()->instruction_ << " in " << vertexIterator->second.getValue()->instruction_->getParent();
+                                llvm::errs() << " to (" << &*nextBB;
+                                llvm::errs() << ") " << vertexIteratorInner->second.getValue()->instruction_ << " in " << vertexIteratorInner->second.getValue()->instruction_->getParent() << "\n";
+                            }
 
                             ParserEdgeProperties* edgeProp = new ParserEdgeProperties;
                             edgeProp->value_ = 0x00;
@@ -1473,7 +1523,7 @@ void Parser::mergeGraphs()
         }
     }
 
-    llvm::errs() << "...merge finished\n";
+    output_->verbose(CALL_INFO, 1, 0, "...merge finished\n");
     functionGraph_->printDot("00_func-m.dot");
 
 }//END mergeGraphs

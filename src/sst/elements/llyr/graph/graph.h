@@ -17,6 +17,9 @@
 #ifndef _LLYR_GRAPH_H
 #define _LLYR_GRAPH_H
 
+// enable debugging in the graph lib
+#define GRAPH_DEBUG
+
 #include <sst/core/sst_config.h>
 #include <sst/core/output.h>
 
@@ -110,7 +113,9 @@ void LlyrGraph<T>::copyGraph( const LlyrGraph<T> &graphIn, LlyrGraph<T> &graphOu
             ///TODO
         }
 
+#ifdef GRAPH_DEBUG
         std::cout << "Old: " << vertexIterator->first << "  New: " << newVertex << std::endl;
+#endif
     }
 
     //go back and add all of the outEdges
@@ -128,7 +133,7 @@ void LlyrGraph<T>::copyGraph( const LlyrGraph<T> &graphIn, LlyrGraph<T> &graphOu
             graphOut.addEdge(sourceVertex, destinationVertex, tempProperties);
 
         }
-        std::cout << std::endl;
+//         std::cout << std::endl;
     }
 
 }
@@ -194,7 +199,10 @@ uint32_t LlyrGraph<T>::numVertices(void) const
 template<class T>
 void LlyrGraph<T>::addEdge( uint32_t beginVertex, uint32_t endVertex )
 {
+#ifdef GRAPH_DEBUG
     std::cout << "add edge:  " << beginVertex << " --> " << endVertex << "\n" << std::endl;
+#endif
+
     Edge* edge = new Edge( endVertex );
 
     vertex_map_->at(beginVertex).addEdge(edge);
@@ -205,7 +213,9 @@ void LlyrGraph<T>::addEdge( uint32_t beginVertex, uint32_t endVertex )
 template<class T>
 void LlyrGraph<T>::addEdge( uint32_t beginVertex, uint32_t endVertex, EdgeProperties* properties )
 {
+#ifdef GRAPH_DEBUG
     std::cout << "add edge:  " << beginVertex << " --> " << endVertex << "\n" << std::endl;
+#endif
 
     Edge* edge = new Edge( properties, endVertex );
 
@@ -219,9 +229,12 @@ uint32_t LlyrGraph<T>::addVertex(T type)
 {
     Vertex<T> vertex;
     vertex.setValue(type);
-
     uint32_t vertexNum = vertices_;
+
+#ifdef GRAPH_DEBUG
     std::cout << "add vertex:  " << vertexNum << "\n" << std::endl;
+#endif
+
     auto retVal = vertex_map_->emplace( vertexNum, vertex );
     if( retVal.second == false ) {
         ///TODO
@@ -237,7 +250,10 @@ uint32_t LlyrGraph<T>::addVertex(uint32_t vertexNum, T type)
     Vertex<T> vertex;
     vertex.setValue(type);
 
+#ifdef GRAPH_DEBUG
     std::cout << "add vertex:  " << vertexNum << "\n" << std::endl;
+#endif
+
     auto retVal = vertex_map_->emplace( vertexNum, vertex );
     if( retVal.second == false ) {
         ///TODO
