@@ -97,6 +97,7 @@ typedef enum {
     ANY_CP = 0xF0,
     TSIN,
     TCOS,
+    TTAN,
     DUMMY = 0xFF,
     BUFFER,
     SEL,
@@ -203,6 +204,8 @@ inline opType getOptype(std::string &opString)
     else if( opString == "TSIN" )
         operation = TSIN;
     else if( opString == "TCOS" )
+        operation = TCOS;
+    else if( opString == "TTAN" )
         operation = TCOS;
     else if( opString == "DUMMY" )
         operation = DUMMY;
@@ -312,6 +315,8 @@ inline std::string getOpString(opType &op)
         operation = "TSIN";
     else if( op == TCOS )
         operation = "TCOS";
+    else if( op == TTAN )
+        operation = "TTAN";
     else if( op == DUMMY )
         operation = "DUMMY";
     else if( op == BUFFER )

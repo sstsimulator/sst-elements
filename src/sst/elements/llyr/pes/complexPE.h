@@ -121,6 +121,9 @@ public:
             case TCOS :
                 intResult = cos(argList[0].to_ullong());
                 break;
+            case TTAN :
+                intResult = tan(argList[0].to_ullong());
+                break;
             default :
                 output_->verbose(CALL_INFO, 0, 0, "Error: could not find corresponding op-%" PRIu32 ".\n", op_binding_);
                 exit(-1);
